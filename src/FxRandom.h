@@ -40,7 +40,7 @@ public:
 class CFxRandomManager : public CFxPoolManager<CRandomFx, CFxRandomScenaricData>
 {
 public:
-	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
+	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
 };
 
 #endif //FX_RANDOM_H

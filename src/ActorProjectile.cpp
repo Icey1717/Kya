@@ -132,11 +132,6 @@ void CPatternPart::FUN_003a7cc0(float param_2)
 
 CActorProjectile::CActorProjectile()
 {
-	this->field_0x354 = 0;
-	this->field_0x358 = 0;
-	this->field_0x35c = 0;
-	this->field_0x360 = 0;
-
 	//this->field_0x574 = 0;
 	//this->field_0x578 = 0;
 	//this->field_0x590 = 0;
@@ -232,25 +227,7 @@ void CActorProjectile::Reset()
 	CActorAutonomous::Reset();
 	this->patternPart.Reset();
 
-	piVar1 = this->field_0x358;
-	if (((piVar1 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar1[6])) {
-		bVar3 = false;
-	}
-
-	if (((bVar3) && (piVar1 != (int*)0x0)) && ((this->field_0x354 != 0 && (this->field_0x354 == piVar1[6])))) {
-		IMPLEMENTATION_GUARD(
-		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
-	}
-
-	piVar1 = (int*)this->field_0x360;
-	if (((piVar1 == (int*)0x0) || (this->field_0x35c == 0)) || (bVar3 = true, this->field_0x35c != piVar1[6])) {
-		bVar3 = false;
-	}
-
-	if ((((bVar3) && (piVar1 != (int*)0x0)) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-		IMPLEMENTATION_GUARD(
-		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
-	}
+	StopAllFx();
 	
 	this->lightAmbient = gF32Vector4Zero;
 	this->lightDirections = gF32Matrix4Unit;
@@ -373,15 +350,7 @@ void CActorProjectile::ChangeManageState(int state)
 		if (state == 0) {
 			pProjectile = pBehaviourPortable->pOwner;
 
-			IMPLEMENTATION_GUARD_LOG(
-			piVar2 = (int*)pProjectile->field_0x358;
-			if (((piVar2 != (int*)0x0) && (pProjectile->field_0x354 != 0)) && (pProjectile->field_0x354 == piVar2[6])) {
-				(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
-			}
-			piVar2 = (int*)pProjectile->field_0x360;
-			if (((piVar2 != (int*)0x0) && (pProjectile->field_0x35c != 0)) && (pProjectile->field_0x35c == piVar2[6])) {
-				(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
-			})
+			StopAllFx();
 
 			pProjectile = pBehaviourPortable->pOwner;
 			pProjectile->flags = pProjectile->flags & 0xffffff7f;
@@ -409,15 +378,7 @@ void CActorProjectile::ChangeManageState(int state)
 			(pBehaviourStand = reinterpret_cast<CBehaviourProjectileStand*>(GetBehaviour(this->curBehaviourId)), state == 0)) && ((pBehaviourStand->field_0x4 == 3 || (pBehaviourStand->field_0x4 == 9)))) {
 			pProjectile = pBehaviourStand->pOwner;
 
-			IMPLEMENTATION_GUARD_LOG(
-			piVar2 = (int*)pProjectile->field_0x358;
-			if (((piVar2 != (int*)0x0) && (pProjectile->field_0x354 != 0)) && (pProjectile->field_0x354 == piVar2[6])) {
-				(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
-			}
-			piVar2 = (int*)pProjectile->field_0x360;
-			if (((piVar2 != (int*)0x0) && (pProjectile->field_0x35c != 0)) && (pProjectile->field_0x35c == piVar2[6])) {
-				(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
-			})
+			StopAllFx();
 
 			pProjectile = pBehaviourStand->pOwner;
 			pProjectile->flags = pProjectile->flags & 0xffffff7f;
@@ -520,48 +481,45 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
-	if (msg == 0x35) {
+	if (msg == MESSAGE_SOCCER_START) {
+		MessageSoccerParamsDetailed* pSoccerMsgParam = reinterpret_cast<MessageSoccerParamsDetailed*>(pMsgParam);
+
 		if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 			if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
-				IMPLEMENTATION_GUARD(
-				/* WARNING: Load size is inaccurate */
-				if (*pMsgParam == 0) {
-					this->rotationEuler.y = *(float*)((int)pMsgParam + 8);
-					SetVectorFromAngles(&this->rotationQuat, (edF32VECTOR3*)&this->rotationEuler
-					);
-					this->dynamic.rotationQuat.x = this->rotationQuat.x;
-					this->dynamic.rotationQuat.y = this->rotationQuat.y;
-					this->dynamic.rotationQuat.z = this->rotationQuat.z;
-					this->dynamic.rotationQuat.w = this->rotationQuat.w;
-					this->dynamic.speed = *(float*)((int)pMsgParam + 4);
+				if (pSoccerMsgParam->field_0x0 == 0) {
+					this->rotationEuler.y = pSoccerMsgParam->rotation;
+					SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+					this->dynamic.rotationQuat = this->rotationQuat;
+					this->dynamic.speed = pSoccerMsgParam->speed;
+
 					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
 						SetState(8, -1);
 					}
 					else {
 						if (this->currentAnimType == 10) {
-							SetState(0x11, 0);
+							SetState(PROJECTILE_STATE_AUT_ROLL_ON_GROUND, 0);
 						}
 						else {
-							SetState(0x11, -1);
+							SetState(PROJECTILE_STATE_AUT_ROLL_ON_GROUND, -1);
 						}
 					}
 				}
 				else {
-					this->field_0x400 = pSender;
-					SetState(0xf, -1);
-				})
+					this->pSoccerActor = static_cast<CActorMovable*>(pSender);
+					SetState(PROJECTILE_STATE_SOCCER, -1);
+				}
+
 				return 1;
 			}
 		}
 
-		/* WARNING: Load size is inaccurate */
-		IMPLEMENTATION_GUARD(
 		if (((((GetStateFlags(this->actorState) & 0x800) != 0) && ((this->field_0x350->flags & 0x10) != 0)) &&
-			(this->actorState == 0x10)) && (*pMsgParam == 0)) {
-			pTVar7 = GetTimer();
-			this->field_0x404 = this->field_0x404 + pTVar7->cutsceneDeltaTime;
+			(this->actorState == PROJECTILE_STATE_AUT_KICKED)) && (pSoccerMsgParam->field_0x0 == 0)) {
+			this->field_0x404 = this->field_0x404 + GetTimer()->cutsceneDeltaTime;
+
 			return 1;
-		})
+		}
+
 		return 0;
 	}
 
@@ -578,15 +536,14 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 				if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 					if (pHitMsgParam->projectileType == 3) {
-						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == 0x10)) {
+						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == PROJECTILE_STATE_AUT_KICKED)) {
 							local_10.x = this->currentLocation.x;
 							local_10.z = this->currentLocation.z;
 							local_10.w = this->currentLocation.w;
 							local_10.y = pHitMsgParam->field_0x40.y;
 							UpdatePosition(&local_10, true);
 							edF32Vector4ScaleHard(pHitMsgParam->field_0x30, &eStack32, &pHitMsgParam->field_0x20);
-							IMPLEMENTATION_GUARD(
-							Project(&eStack32, false, (CActor*)0x0);)
+							Project(&eStack32, false, (CActor*)0x0);
 						}
 
 						return 1;
@@ -660,8 +617,8 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 	if (pSender->pAnimationController != (CAnimation*)0x0) {
 		if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
-			this->field_0x3fc = pSender;
-			SetState(0x10, -1);
+			this->pKickedByActor = static_cast<CActorMovable*>(pSender);
+			SetState(PROJECTILE_STATE_AUT_KICKED, -1);
 			return 1;
 		}
 	}
@@ -685,8 +642,8 @@ void CActorProjectile::ClearLocalData()
 	this->field_0x3f4 = 0;
 	this->pFiringActor = (CActor*)0x0;
 	this->field_0x40c = (CActor*)0x0;
-	this->field_0x3fc = (CActor*)0x0;
-	this->field_0x400 = 0;
+	this->pKickedByActor = (CActorMovable*)0x0;
+	this->pSoccerActor = (CActorMovable*)0x0;
 	this->field_0x404 = 0.0f;
 
 	this->field_0x350->flags = this->field_0x350->flags & 0xff7fffff;
@@ -738,15 +695,7 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 	}
 	else {
 		if (newState == 0xd) {
-			IMPLEMENTATION_GUARD_LOG(
-			piVar1 = (int*)this->field_0x358;
-			if (((piVar1 != (int*)0x0) && (this->field_0x354 != 0)) && (this->field_0x354 == piVar1[6])) {
-				(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
-			}
-			piVar1 = (int*)this->field_0x360;
-			if (((piVar1 != (int*)0x0) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-				(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
-			})
+			StopAllFx();
 
 			this->field_0x350->flags = this->field_0x350->flags & 0xff7fffff;
 			pAnimation = this->pAnimationController;
@@ -935,28 +884,25 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 	}
 
 	iVar1 = this->actorState;
-	if (iVar1 == 0x11) {
-		IMPLEMENTATION_GUARD(
-		StateAutRollOnGround(8.0, 2.0, 0.3, 0xc, 8);)
+	if (iVar1 == PROJECTILE_STATE_AUT_ROLL_ON_GROUND) {
+		StateAutRollOnGround(8.0f, 2.0f, 0.3f, 0xc, 8);
 	}
 	else {
-		if (iVar1 == 0x10) {
-			IMPLEMENTATION_GUARD(
-			CActorAutonomous::StateAutSoccer(0.0, (CActorAutonomous*)this, 0, 0, (CActorMovable*)this->field_0x3fc);
-			if (0.0 < this->field_0x404) {
-				pTVar8 = GetTimer();
-				fVar10 = this->field_0x404 + pTVar8->cutsceneDeltaTime;
+		if (iVar1 == PROJECTILE_STATE_AUT_KICKED) {
+			StateAutSoccer(0.0f,  0, 0, this->pKickedByActor);
+
+			if (0.0f < this->field_0x404) {
+				fVar10 = this->field_0x404 + GetTimer()->cutsceneDeltaTime;
 				this->field_0x404 = fVar10;
-				if (0.06 < fVar10) {
-					this->dynamic.speed = 0.0;
-					(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+				if (0.06f < fVar10) {
+					this->dynamic.speed = 0.0f;
+					SetState(7, -1);
 				}
-			})
+			}
 		}
 		else {
-			if (iVar1 == 0xf) {
-				IMPLEMENTATION_GUARD(
-				CActorAutonomous::StateAutSoccer(4.0, (CActorAutonomous*)this, 1, 9, (CActorMovable*)this->field_0x400);)
+			if (iVar1 == PROJECTILE_STATE_SOCCER) {
+				StateAutSoccer(4.0f, 1, 9, this->pSoccerActor);
 			}
 			else {
 				if (iVar1 == 0x12) {
@@ -970,7 +916,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 					if (iVar1 == 0xd) {
 						if (pBehaviourStand->field_0xc == 2) {
 							IMPLEMENTATION_GUARD(
-							(*(this->pVTable)->SetState)((CActor*)this, 0xe, -1);
+							SetState(0xe, -1);
 							CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
 						}
 						else {
@@ -983,18 +929,15 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 						}
 						else {
 							if (iVar1 == 8) {
-								IMPLEMENTATION_GUARD(
-								StateFlying(0.0, this, uVar9, -1, (long)pBehaviourStand->field_0xc);)
+								StateFlying(0.0f, uVar9, -1, pBehaviourStand->field_0xc);
 							}
 							else {
 								if (iVar1 == 7) {
-									IMPLEMENTATION_GUARD(
-									StateFlying(0.2, this, uVar9, 8, (long)pBehaviourStand->field_0xc);)
+									StateFlying(0.2f, uVar9, 8, pBehaviourStand->field_0xc);
 								}
 								else {
 									if (iVar1 == 0xc) {
-										IMPLEMENTATION_GUARD(
-										StateLiving(this, uVar9, (long)pBehaviourStand->field_0xc);)
+										StateLiving(uVar9, pBehaviourStand->field_0xc);
 									}
 									else {
 										if (iVar1 == 0x20) {
@@ -1012,7 +955,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 												}
 											}
 											if (bVar5) {
-												(*(this->pVTable)->SetState)((CActor*)this, 0xc, -1);
+												SetState(0xc, -1);
 											})
 										}
 										else {
@@ -1236,11 +1179,47 @@ void CActorProjectile::Die()
 	return;
 }
 
-void CActorProjectile::ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, bool param_5, CActor* pFiringActor)
+
+void CActorProjectile::Project(edF32VECTOR4* pDestination, bool bShowFx, CActor* pFiringActor)
 {
-	uint uVar1;
-	int* piVar2;
-	bool bVar3;
+	edF32VECTOR4* v0;
+	edF32VECTOR4 newRotation;
+
+	this->pFiringActor = pFiringActor;
+	this->dynamic.speed = 0.0f;
+	v0 = this->dynamicExt.aImpulseVelocities;
+	edF32Vector4AddHard(v0, v0, pDestination);
+	this->dynamicExt.aImpulseVelocityMagnitudes[0] = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+
+	SetState(7, -1);
+
+	if ((this->field_0x350->flags & 0x2000) != 0) {
+		edF32Vector4NormalizeHard(&newRotation, pDestination);
+		this->rotationQuat = newRotation;
+	}
+
+	if (bShowFx != false) {
+		this->timeToExplode = this->field_0x350->timeToExplode;
+		ShowFx();
+	}
+
+	return;
+}
+
+
+
+void CActorProjectile::Project(float velocity, edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor)
+{
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4ScaleHard(velocity, &eStack16, pDirection);
+	Project(&eStack16, bShowFx, pFiringActor);
+
+	return;
+}
+
+void CActorProjectile::ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, bool bShowFx, CActor* pFiringActor)
+{
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 
@@ -1252,37 +1231,227 @@ void CActorProjectile::ProjectDirected(float velocity, edF32VECTOR4* pSource, ed
 
 	SetState(10, -1);
 
-	if (param_5 != false) {
+	if (bShowFx != false) {
 		this->timeToExplode = this->field_0x350->timeToExplode;
+		ShowFx();
+	}
 
-		uVar1 = this->field_0x350->field_0x3c;
-		if (uVar1 != 0xffffffff) {
+	return;
+}
 
-			IMPLEMENTATION_GUARD_LOG(
-			CParticlesManager::GetDynamicFx
-			(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x354, uVar1, 0xffffffffffffffff);
-			piVar2 = (int*)this->field_0x358;
-			if (((piVar2 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar2[6])) {
-				bVar3 = false;
-			}
-			if (bVar3) {
-				if (this->pAnimationController == (CAnimation*)0x0) {
-					if (((piVar2 != (int*)0x0) && (this->field_0x354 != 0)) && (this->field_0x354 == piVar2[6])) {
-						(**(code**)(*piVar2 + 0x38))(piVar2, 0xe, this, 0);
-					}
-				}
-				else {
-					if (((piVar2 != (int*)0x0) && (this->field_0x354 != 0)) && (this->field_0x354 == piVar2[6])) {
-						(**(code**)(*piVar2 + 0x38))(piVar2, 0xe, this, 0x686365d2);
-					}
-				}
-				piVar2 = (int*)this->field_0x358;
-				if (((piVar2 != (int*)0x0) && (this->field_0x354 != 0)) && (this->field_0x354 == piVar2[6])) {
-					(**(code**)(*piVar2 + 0x10))(0, 0);
-				}
-			})
+void CActorProjectile::StateLiving(uint param_2, int param_3)
+{
+	CCollision* pCVar1;
+	CActor* pHitActor;
+	uint uVar3;
+	float fVar4;
+	edF32VECTOR4 local_120;
+	CActorsTable local_110;
+
+	local_110.nbEntries = 0;
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	if ((this->field_0x350->flags & 0x2000) == 0) {
+		uVar3 = 0x100a023b;
+	}
+	else {
+		pCVar1 = this->pCollisionData;
+		uVar3 = 0;
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfffffffe;
+	}
+
+	if ((this->field_0x350->flags & 0x4000) == 0) {
+		ManageDyn(4.0f, uVar3, (CActorsTable*)0x0);
+	}
+	else {
+		ManageDyn(4.0f, uVar3, &local_110);
+	}
+
+	if (0.0f < this->field_0x350->timeToExplode) {
+		SV_AUT_WarnActors(this->field_0x350->warnRadius, 0.0f, (CActor*)0x0);
+	}
+
+	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && ((this->field_0x350->flags & 0x2000) == 0)) {
+		if (0.2f < this->timeInAir) {
+			SetState(8, -1);
 		}
 	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if ((this->field_0x350->flags & 0x4000) != 0) {
+		while (local_110.nbEntries != 0) {
+			pHitActor = local_110.PopCurrent();
+			if ((pHitActor != this->pFiringActor) && (pHitActor->typeID != PROJECTILE)) {
+				local_120.xyz = this->currentLocation.xyz;
+				local_120.w = 3.402823e+38f;
+				HitActor(&local_120, pHitActor, param_3, 0);
+				LifeDecrease(1.0f);
+			}
+		}
+
+		if (GetLifeInterface()->GetValue() <= 0.0f) {
+			SetState(0xd, -1);
+		}
+	}
+
+	return;
+}
+
+void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, int param_5)
+{
+	CCollision* pCVar1;
+	bool bVar2;
+	CActor* pHitActor;
+	uint uVar3;
+	float fVar4;
+	float value;
+	edF32VECTOR4 local_160;
+	edF32VECTOR4 eStack336;
+	edF32VECTOR4 local_140;
+	edF32VECTOR4 local_130;
+	edF32VECTOR4 local_120;
+	CActorsTable local_110;
+
+	pCVar1 = this->pCollisionData;
+	value = fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
+	fVar4 = edFIntervalUnitDstLERP(value, 10.0f, 0.0f);
+	this->field_0x3f0 = fVar4;
+	if ((this->field_0x350->flags & 0x4800) == 0) {
+		ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+	}
+	else {
+		local_110.nbEntries = 0;
+		ManageDyn(4.0f, dynFlags, &local_110);
+
+		while (local_110.nbEntries != 0) {
+			pHitActor = local_110.PopCurrent();
+			if (pHitActor != this->pFiringActor) {
+				uVar3 = this->field_0x350->flags;
+				if ((uVar3 & 0x4000) != 0) {
+					local_120.xyz = this->currentLocation.xyz;
+					local_120.w = 3.402823e+38f;
+					if (pHitActor->typeID == PROJECTILE) {
+						if ((this->field_0x350->flags & 0x40000) != 0) {
+							pHitActor->SetState(0xd, -1);
+						}
+					}
+					else {
+						HitActor(&local_120, pHitActor, param_5, 0);
+
+						this->dynamic.speed = 0.0f;
+
+						uVar3 = this->field_0x350->flags;
+						if ((uVar3 & 0x2000) != 0) {
+							this->field_0x350->flags = uVar3 | 0x800000;
+						}
+					}
+
+					this->dynamic.speed = 0.0f;
+					SetState(0xd, -1);
+
+					return;
+				}
+
+				if ((uVar3 & 0x800) != 0) {
+					this->dynamic.speed = 0.0f;
+					SetState(0xd, -1);
+					return;
+				}
+			}
+		}
+	}
+
+	if ((this->field_0x350->flags & 0x20) != 0) {
+		edF32Vector4NormalizeHard(&local_130, &this->dynamic.velocityDirectionEuler);
+		this->rotationQuat = local_130;
+	}
+
+	if ((pCVar1->flags_0x4 & 7) != 0) {
+		uVar3 = this->field_0x350->flags;
+		if ((uVar3 & 4) != 0) {
+			this->dynamic.speed = 0.0f;
+			SetState(0xd, -1);
+			return;
+		}
+
+		if ((uVar3 & 0x2000) != 0) {
+			local_140 = gF32Vector4Zero;
+
+			bVar2 = (pCVar1->flags_0x4 & 2) != 0;
+			if (bVar2) {
+				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[1].field_0x10);
+			}
+
+			uVar3 = (uint)bVar2;
+			if ((pCVar1->flags_0x4 & 1) != 0) {
+				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[0].field_0x10);
+				uVar3 = uVar3 + 1;
+			}
+
+			if ((pCVar1->flags_0x4 & 4) != 0) {
+				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[2].field_0x10);
+				uVar3 = uVar3 + 1;
+			}
+
+			if (uVar3 != 0) {
+				edF32Vector4ScaleHard(1.0f / (float)uVar3, &local_140, &local_140);
+			}
+
+			edF32Vector4SubHard(&eStack336, &this->currentLocation, &local_140);
+			edF32Vector4ScaleHard(0.175f, &eStack336, &eStack336);
+			edF32Vector4AddHard(&local_140, &local_140, &eStack336);
+			this->dynamic.speed = 0.0f;
+			UpdatePosition(&local_140, true);
+			local_160.x = this->rotationQuat.x;
+			local_160.z = this->rotationQuat.z;
+			local_160.w = this->rotationQuat.w;
+			local_160.y = 0.0f;
+
+			edF32Vector4NormalizeHard(&local_160, &local_160);
+
+			this->rotationQuat = local_160;
+			SetState(0x20, -1);
+
+			return;
+		}
+
+		if ((pCVar1->flags_0x4 & 2) != 0) {
+			if (6.0f < value) {
+				fVar4 = edFIntervalUnitDstLERP(value, 0.0f, 10.0f);
+				this->field_0x3f0 = -fVar4 * 0.5f;
+			}
+			else {
+				PlayAnim(0);
+			}
+
+			if (value < 1.0f) {
+				this->field_0x3f0 = 0.0f;
+				this->dynamic.speed = 0.0f;
+
+				if ((this->field_0x350->flags & 1) != 0) {
+					SetState(0xd, -1);
+					return;
+				}
+
+				SetState(0xc, -1);
+
+				return;
+			}
+		}
+	}
+
+	if ((nextState != -1) && (param_1 < this->timeInAir)) {
+		SetState(nextState, -1);
+	}
+
 	return;
 }
 
@@ -1674,6 +1843,58 @@ float CActorProjectile::GetTimeToExplode()
 	}
 
 	return fVar4;
+}
+
+void CActorProjectile::ShowFx()
+{
+	int iVar3;
+	bool bVar3;
+
+	uint uVar1 = this->field_0x350->field_0x3c;
+	if (uVar1 != 0xffffffff) {
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x354, uVar1, FX_MATERIAL_SELECTOR_NONE);
+		CNewFx* pFx = (this->field_0x354).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar3 = (this->field_0x354).id, iVar3 == 0)) || (bVar3 = true, iVar3 != pFx->id)) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (this->pAnimationController == (CAnimation*)0x0) {
+				if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x354).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+					pFx->SpatializeOnActor(0xe, this, 0);
+				}
+			}
+			else {
+				if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x354).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+					pFx->SpatializeOnActor(0xe, this, 0x686365d2);
+				}
+			}
+
+			pFx = (this->field_0x354).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x354).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+				pFx->Start(0, 0);
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorProjectile::StopAllFx()
+{
+	int iVar4;
+
+	CNewFx* pCVar1 = (this->field_0x354).pFx;
+	if (((pCVar1 != (CNewFx*)0x0) && (iVar4 = (this->field_0x354).id, iVar4 != 0)) && (iVar4 == pCVar1->id)) {
+		pCVar1->Stop(-1.0f);
+	}
+
+	pCVar1 = (this->field_0x35c).pFx;
+	if (((pCVar1 != (CNewFx*)0x0) && (iVar4 = (this->field_0x35c).id, iVar4 != 0)) && (iVar4 == pCVar1->id)) {
+		pCVar1->Stop(-1.0f);
+	}
+
+	return;
 }
 
 void CBehaviourProjectile::Create(ByteCode* pByteCode)

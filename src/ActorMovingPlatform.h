@@ -121,14 +121,24 @@ class CBehaviourPlatformDestroyed : public CBehaviourPlatform
 {
 public:
 	CBehaviourPlatformDestroyed();
+
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
 
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 	CActorAlternateModel alternateModel;
 
-	int field_0x3c;
+	int altModelId;
 	int field_0x40;
+
+	S_TRAJ_POS trajPos;
+
+	edF32VECTOR4 field_0x50;
 };
 
 class CBehaviourWeighingMachine : public CBehaviourPlatform
@@ -274,14 +284,14 @@ struct S_BRIDGE_ZONE_STREAM {
 
 static_assert(sizeof(S_STREAM_REF<ed_zone_3d>) == 0x4);
 
-PACK(
-struct S_BRIDGE_CAMERA_STREAM_ENTRY {
+struct S_BRIDGE_CAMERA_STREAM_ENTRY
+{
 	int field_0x0;
 	uint field_0x4;
 	S_STREAM_NTF_TARGET_SWITCH streamTarget;
 	S_STREAM_EVENT_CAMERA streamCameraEvent;
 	int field_0x44;
-});
+};
 
 static_assert(sizeof(S_BRIDGE_CAMERA_STREAM_ENTRY) == 0x48);
 
@@ -321,7 +331,7 @@ public:
 
 	void Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int param_3, CActorsTable* pActorTable);
 	void Platform_UpdatePosition(edF32VECTOR4* pPosition, int param_3, CActorsTable* pActorsTable);
-	void Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbsolute* pPathFollowerAbs, int param_3, int param_4, S_TRAJ_POS* pTrajPos, CActorsTable* pActorsTable, edF32VECTOR4* param_7);
+	int Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbsolute* pPathFollowerAbs, int param_3, int param_4, S_TRAJ_POS* pTrajPos, CActorsTable* pActorsTable, edF32VECTOR4* param_7);
 
 	void ForceCarriedStuff();
 
@@ -336,6 +346,8 @@ public:
 
 	void StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour);
 	bool StateWeighingMaster(CBehaviourWeighingMachineMaster* pBehaviour);
+
+	void Die(int param_2);
 
 	int noFrictionZoneCount;
 	S_STREAM_MPF_NO_FRICTION_ZONE* aNoFrictionZones;

@@ -49,7 +49,58 @@ void CFxNewSound::Draw()
 	return;
 }
 
+void CFxNewSound::Kill()
+{
+	IMPLEMENTATION_GUARD_AUDIO(
+	CSound* pCVar1;
+	bool bVar2;
+	uint uVar3;
+
+	bVar2 = edSoundInstanceIsAlive(&this->soundInstance);
+	if ((bVar2 != false) && (NoAudio == 0)) {
+		pCVar1 = (this->soundInstance).SoundStructPtr;
+		if (pCVar1 != (CSound*)0x0) {
+			uVar3 = (*(code*)pCVar1->vt->Stop)(pCVar1, (this->soundInstance).SoundID);
+			(this->soundInstance).SoundID = uVar3;
+		}
+	}
+	if (this->field_0x88 != 0) {
+		CAudioManager::ReleaseSound3DData
+		((int)CScene::ptable.g_AudioManager_00451698, (long)(this->soundInstance).field_0x14);
+	})
+
+	CNewFx::Kill();
+
+	return;
+}
+
+void CFxNewSound::Start(float param_1, float param_2)
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+}
+
 int CFxNewSound::GetType()
 {
 	return FX_TYPE_SOUND;
+}
+
+void CFxNewSound::Instanciate(CFxSoundScenaricData* pData, FX_MATERIAL_SELECTOR selector)
+{
+	this->field_0x84 = pData;
+	this->field_0x80 = selector;
+
+	return;
+}
+
+void* CFxSoundManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector)
+{
+	CFxNewSound* pNewParticle;
+
+	pNewParticle = _InstanciateFx();
+
+	if ((pNewParticle != 0) && (scenaricDataIndex != 0xffffffff)) {
+		pNewParticle->Instanciate(this->aScenaricData + scenaricDataIndex, selector);
+	}
+
+	return pNewParticle;
 }

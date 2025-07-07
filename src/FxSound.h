@@ -6,14 +6,21 @@
 
 struct ByteCode;
 
+class CFxSoundScenaricData;
+
 class CFxNewSound : public CNewFx
 {
 public:
 	virtual void Draw();
-	virtual void Kill() { IMPLEMENTATION_GUARD(); }
-	virtual void Start(float param_1, float param_2) { IMPLEMENTATION_GUARD(); }
+	virtual void Kill();
+	virtual void Start(float param_1, float param_2);
 	virtual int GetType();
 	void Manage() { IMPLEMENTATION_GUARD(); }
+
+	void Instanciate(CFxSoundScenaricData* pData, FX_MATERIAL_SELECTOR selector);
+
+	FX_MATERIAL_SELECTOR field_0x80;
+	CFxSoundScenaricData* field_0x84;
 };
 
 class CFxSoundScenaricData
@@ -29,7 +36,7 @@ public:
 class CFxSoundManager : public CFxPoolManager<CFxNewSound, CFxSoundScenaricData>
 {
 public:
-	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
+	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
 };
 
 #endif //FX_SOUND_H

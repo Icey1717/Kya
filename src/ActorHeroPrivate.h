@@ -177,6 +177,7 @@ public:
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAttack();
+	bool AccomplishMagic();
 	bool AccomplishAction(int bUpdateActiveActionId);
 
 	void GetPossibleAction();

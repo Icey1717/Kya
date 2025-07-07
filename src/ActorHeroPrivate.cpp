@@ -1577,7 +1577,58 @@ bool CActorHeroPrivate::AccomplishAttack()
 	return bVar2;
 }
 
+bool CActorHeroPrivate::AccomplishMagic()
+{
+	bool bIsWolfen;
+	long lVar2;
+	CActor** pCVar3;
+	int iVar4;
+	CActorsTable local_110;
+	uint local_4;
 
+	if (this->magicInterface.IsActive() == false) {
+		local_110.nbEntries = 0;
+		GetPossibleMagicalTargets(&local_110);
+
+		if (local_110.nbEntries != 0) {
+			this->magicInterface.Activate(1);
+
+			iVar4 = 0;
+			if (0 < local_110.nbEntries) {
+				local_4 = 0;
+				pCVar3 = local_110.aEntries;
+				for (; iVar4 < local_110.nbEntries; iVar4 = iVar4 + 1) {
+					DoMessage(*pCVar3, (ACTOR_MESSAGE)0x30, (MSG_PARAM)local_4);
+					pCVar3 = pCVar3 + 1;
+				}
+			}
+
+			bIsWolfen = local_110.aEntries[0]->IsKindOfObject(0x10);
+			if (bIsWolfen == false) {
+				if (local_110.aEntries[0]->typeID == SWITCH) {
+					SetState(0x108, -1);
+				}
+				else {
+					// Must be amber for healing.
+					SetState(0x107, -1);
+				}
+			}
+			else {
+				SetState(0x109, -1);
+			}
+
+			return true;
+		}
+
+		this->field_0x1a44 = 0;
+	}
+	else {
+		this->magicInterface.Activate(0);
+		this->field_0x1a44 = 0;
+	}
+
+	return false;
+}
 
 bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 {
@@ -1779,11 +1830,10 @@ bool CActorHeroPrivate::ManageActions()
 
 		if ((uVar7 != 0) && (uVar7 = TestState_AllowMagic(0xffffffff), uVar7 != 0)) {
 			this->field_0x1a44 = this->field_0x1a40;
-			IMPLEMENTATION_GUARD(
 			iVar5 = AccomplishMagic();
 			if (iVar5 != 0) {
 				return true;
-			})
+			}
 		}
 
 		if (this->field_0x1a44 == 1) {

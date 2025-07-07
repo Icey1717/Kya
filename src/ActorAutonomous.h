@@ -194,6 +194,7 @@ public:
 	void ClearAllSumForceExt();
 
 	void StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5);
+	void StateAutRollOnGround(float param_1, float param_2, float param_3, int param_5, int param_6);
 
 	void SV_AUT_WarnActors(float radius, float param_2, CActor* pActor);
 	void SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pPosition);

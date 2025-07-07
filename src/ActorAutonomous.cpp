@@ -1304,6 +1304,34 @@ void CActorAutonomous::StateAutSoccer(float param_1, int param_3, int param_4, C
 	return;
 }
 
+void CActorAutonomous::StateAutRollOnGround(float param_1, float param_2, float param_3, int param_5, int param_6)
+{
+	CCollision* pCVar1;
+
+	pCVar1 = this->pCollisionData;
+	SV_MOV_UpdateSpeedIntensity(0.0f, param_1);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if ((pCVar1->flags_0x4 & 2) == 0) {
+		if (param_3 < this->timeInAir) {
+			SetState(param_6, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (this->dynamic.linearAcceleration < param_2) {
+		SetState(param_5, -1);
+	}
+
+	return;
+}
+
+
+
 void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, CActor* pActor)
 {
 	CActor* pReceiver;

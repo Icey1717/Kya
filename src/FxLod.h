@@ -27,7 +27,7 @@ public:
 class CFxLodManager : public CFxPoolManager<CLodFx, CFxLodScenaricData>
 {
 public:
-	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
+	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
 };
 
 #endif //FX_LOD_H

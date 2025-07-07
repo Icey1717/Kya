@@ -4495,18 +4495,22 @@ void S_STREAM_EVENT_CAMERA::Init()
 	this->field_0x8 = this->field_0x8 * this->field_0x8;
 	this->field_0x4 = (uint)((ulong)((long)this->field_0x4 << 0x23) >> 0x23);
 	this->field_0x1c = 0;
+
 	if (this->pActor == -1) {
 		pCVar2 = (CActor*)0x0;
 	}
 	else {
 		pCVar2 = (CScene::ptable.g_ActorManager_004516a4)->aActors[(int)this->pActor];
 	}
+
 	this->pActor = STORE_SECTION(pCVar2);
+
 	pEVar1 = (ed_zone_3d*)0x0;
-	if (this->pEventChunk24_0x18 != -1) {
-		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->pEventChunk24_0x18);
+	if (this->pZone != -1) {
+		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->pZone);
 	}
-	this->pEventChunk24_0x18 = STORE_SECTION(pEVar1);
+	this->pZone = STORE_SECTION(pEVar1);
+
 	return;
 }
 
@@ -4546,7 +4550,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 			}
 
 			puVar1 = LOAD_SECTION_CAST(CActor*, this->pActor);
-			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_SECTION_CAST(ed_zone_3d*, this->pEventChunk24_0x18), pEVar2 != (ed_zone_3d*)0x0)) {
+			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_SECTION_CAST(ed_zone_3d*, this->pZone), pEVar2 != (ed_zone_3d*)0x0)) {
 				uVar9 = this->field_0x4 & 0x20000000;
 				this->field_0x4 = this->field_0x4 & 0xdfffffff;
 				if ((puVar1 != (CActor*)0x0) && ((pEVar2 != (ed_zone_3d*)0x0 &&
@@ -4598,7 +4602,6 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 {
 	int iVar1;
-	Timer* pTVar2;
 	uint uVar3;
 
 	uVar3 = this->field_0x4;
@@ -4613,11 +4616,11 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 			pActor->DoMessage(CActorHero::_gThis, MESSAGE_DISABLE_INPUT, 0);
 		}
 
-		pTVar2 = GetTimer();
-		this->field_0x1c = pTVar2->scaledTotalTime;
+		this->field_0x1c = GetTimer()->scaledTotalTime;
 		this->field_0x4 = this->field_0x4 & 0xdfffffff;
-		if (((this->pActor != 0x0) && (this->pEventChunk24_0x18 != 0x0)) &&
-			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_SECTION_CAST(ed_zone_3d*, this->pEventChunk24_0x18),
+
+		if (((this->pActor != 0x0) && (this->pZone != 0x0)) &&
+			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_SECTION_CAST(ed_zone_3d*, this->pZone),
 				&LOAD_SECTION_CAST(CActor*, this->pActor)->currentLocation, 0), (uVar3 & 1) != 0)) {
 			this->field_0x4 = this->field_0x4 | 0x20000000;
 		}

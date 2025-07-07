@@ -23,28 +23,28 @@ void SV_FX_Start(CFxHandleExt* pFxHandle)
 {
 	CNewFx* pFx;
 	uint uVar1;
-	uint uVar2;
+	uint scenaricDataIndex;
 	uint* pEffectCounts;
 	CFxManager* pFxManager;
 
 	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
-	uVar2 = pFxHandle->type;
+	scenaricDataIndex = pFxHandle->type;
 
-	if (uVar2 != 0xffffffff) {
-		if (uVar2 == 0xffffffff) {
+	if (scenaricDataIndex != 0xffffffff) {
+		if (scenaricDataIndex == 0xffffffff) {
 			pFx = (CNewFx*)0x0;
 		}
 		else {
 			pEffectCounts = (CScene::ptable.g_EffectsManager_004516b8)->effectCountByType;
 			uVar1 = 0;
 			do {
-				if (uVar2 < *pEffectCounts) break;
+				if (scenaricDataIndex < *pEffectCounts) break;
 				uVar1 = uVar1 + 1;
-				uVar2 = uVar2 - *pEffectCounts;
+				scenaricDataIndex = scenaricDataIndex - *pEffectCounts;
 				pEffectCounts = pEffectCounts + 1;
 			} while (uVar1 < 7);
 
-			pFx = reinterpret_cast<CNewFx*>(CScene::ptable.g_EffectsManager_004516b8->aEffectCategory[uVar1]->InstanciateFx(uVar2, FX_MATERIAL_SELECTOR_NONE));
+			pFx = reinterpret_cast<CNewFx*>(CScene::ptable.g_EffectsManager_004516b8->aEffectCategory[uVar1]->InstanciateFx(scenaricDataIndex, FX_MATERIAL_SELECTOR_NONE));
 		}
 
 		pFxHandle->pFx = pFx;
@@ -551,13 +551,13 @@ uint CFxManager::AddFxClass(ByteCode* pByteCode, CFx** pOutEffectObj, int* outCl
 	return outCount;
 }
 
-void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELECTOR selector)
+void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector)
 {
 	CNewFx* pNewFx;
 	uint i;
 	uint* pEffectCountIt;
 
-	if (param_3 == 0xffffffff) {
+	if (scenaricDataIndex == 0xffffffff) {
 		pNewFx = 0;
 	}
 	else {
@@ -565,13 +565,13 @@ void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELE
 		i = 0;
 
 		do {
-			if (param_3 < *pEffectCountIt) break;
+			if (scenaricDataIndex < *pEffectCountIt) break;
 			i = i + 1;
-			param_3 = param_3 - *pEffectCountIt;
+			scenaricDataIndex = scenaricDataIndex - *pEffectCountIt;
 			pEffectCountIt = pEffectCountIt + 1;
 		} while (i < 7);
 
-		pNewFx = static_cast<CNewFx*>(this->aEffectCategory[i]->InstanciateFx(param_3, selector));
+		pNewFx = static_cast<CNewFx*>(this->aEffectCategory[i]->InstanciateFx(scenaricDataIndex, selector));
 	}
 
 	pHandle->pFx = pNewFx;

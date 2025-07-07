@@ -345,7 +345,12 @@ struct _msg_hit_param
 	edF32VECTOR4 field_0x80;
 };
 
-class CActorAlternateModel {};
+class CActorAlternateModel
+{
+public:
+	edF32VECTOR4 cachedBoundingSphere;
+	ed_3d_hierarchy_node* pHierarchy;
+};
 
 class CActorSound
 {
@@ -524,6 +529,11 @@ public:
 	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
 	void SV_InstanciateMaterialBank();
 	bool SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation);
+
+	void SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel);
+	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere);
+	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, int meshIndex, int materialIndex, edF32VECTOR4* pBoundingSphere);
+
 
 	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);

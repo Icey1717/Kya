@@ -324,12 +324,12 @@ struct CCineActorConfig {
 
 struct S_STREAM_EVENT_CAMERA {
 	int cameraIndex;
-	int field_0x4;
+	uint field_0x4;
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
 	int pActor; // CActor*
-	int pEventChunk24_0x18; // EventChunk_24*
+	int pZone; // EventChunk_24*
 	float field_0x1c;
 
 	void Init();

@@ -12,6 +12,10 @@ namespace PointerConv
 
 int PointerConv::AddTextureSectionValue(void* value)
 {
+	if (value == nullptr) {
+		return 0; // Return 0 for null values
+	}
+
 	TextureSections.push_back(value);
 
 	if ((TextureSections.size() - 1) == 0x39ef4) {

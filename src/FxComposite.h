@@ -44,7 +44,7 @@ public:
 class CFxCompositeManager : public CFxPoolManager<CFxNewComposite, CFxCompositeScenaricData>
 {
 public:
-	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector);
+	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
 };
 
 #endif //FX_COMPOSITE_H

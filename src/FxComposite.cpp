@@ -35,12 +35,12 @@ void CFxCompositeScenaricData::Create(ByteCode* pByteCode)
 	return;
 }
 
-void* CFxCompositeManager::InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector)
+void* CFxCompositeManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector)
 {
 	CFxNewComposite* pNewComposite = _InstanciateFx();
 
-	if ((pNewComposite != 0) && (param_2 != 0xffffffff)) {
-		pNewComposite->Instanciate(this->aScenaricData + param_2, selector);
+	if ((pNewComposite != 0) && (scenaricDataIndex != 0xffffffff)) {
+		pNewComposite->Instanciate(this->aScenaricData + scenaricDataIndex, selector);
 	}
 
 	return pNewComposite;
@@ -69,7 +69,33 @@ int CFxNewComposite::GetType()
 
 void CFxNewComposite::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 {
-	IMPLEMENTATION_GUARD();
+	CNewFx* pChildFx;
+	bool bValid;
+	uint handleIndex;
+	CFxHandle* pHandle;
+
+	CNewFx::SpatializeOnActor(flags, pActor, boneId);
+
+	handleIndex = this->nbComponentParticles;
+	pHandle = this->aFxHandles;
+	if (handleIndex != 0) {
+		do {
+			handleIndex = handleIndex - 1;
+			pChildFx = pHandle->pFx;
+
+			if (((pChildFx == (CNewFx*)0x0) || (pHandle->id == 0)) || (bValid = true, pHandle->id != pChildFx->id)) {
+				bValid = false;
+			}
+
+			if (((bValid) && (pChildFx != (CNewFx*)0x0)) && ((pHandle->id != 0 && (pHandle->id == pChildFx->id)))) {
+				pChildFx->SpatializeOnActor(flags | 0x40, pActor, boneId);
+			}
+
+			pHandle = pHandle + 1;
+		} while (handleIndex != 0);
+	}
+
+	return;
 }
 
 void CFxNewComposite::Manage()

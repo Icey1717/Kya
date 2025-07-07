@@ -2055,8 +2055,7 @@ bool CCameraManager::PopCamera(CCamera* pCameraView)
 	SWITCH_MODE switchMode;
 	CCamera* pCamera;
 	bool bSuccess;
-	ECameraType EVar1;
-	uint* puVar2;
+	uint* pFlags;
 
 	if ((pCameraView == (CCamera*)0x0) ||
 		(bSuccess = this->cameraStack.Pop(pCameraView), bSuccess == false)) {
@@ -2067,8 +2066,7 @@ bool CCameraManager::PopCamera(CCamera* pCameraView)
 		pCamera = (this->cameraStack).pActiveCamera;
 		bSuccess = this->activeCamManager.SwitchActiveCam((this->cameraStack).field_0x218, pCamera, switchMode);
 		if ((bSuccess == false) && (pCamera != (CCamera*)0x0)) {
-			EVar1 = pCamera->GetMode();
-			if (EVar1 == CT_ShadowSun) {
+			if (pCamera->GetMode() == CT_ShadowSun) {
 				IMPLEMENTATION_GUARD(
 				this->pActiveCamera = pCamera;
 				pCamera[0x22].field_0x80 = (ed_zone_3d*)0xffffffff;
@@ -2078,21 +2076,42 @@ bool CCameraManager::PopCamera(CCamera* pCameraView)
 				this->pActiveCamera = pCamera;
 			}
 		}
-		puVar2 = &this->flags;
+
+		pFlags = &this->flags;
 		if (switchMode == SWITCH_MODE_B) {
-			*puVar2 = *puVar2 & 0xfbffffff;
+			*pFlags = *pFlags & 0xfbffffff;
 		}
 		else {
-			*puVar2 = *puVar2 | 0x4000000;
+			*pFlags = *pFlags | 0x4000000;
 		}
 		bSuccess = true;
 	}
+
 	return bSuccess;
 }
 
-bool CCameraManager::PopCamera(int cameraIndex)
+bool CCameraManager::PopCamera(int index)
 {
-	IMPLEMENTATION_GUARD();
+	SWITCH_MODE switchMode;
+	bool bVar1;
+	int currentIndex;
+	CCamera* pCamera;
+	int targetIndex;
+
+	currentIndex = 0;
+	targetIndex = this->count_0x9fc + index;
+	pCamera = this->pInitialView_0x4b4;
+	if (0 < targetIndex) {
+		do {
+			if (pCamera->pNextCameraView_0xa4 != (CCamera*)0x0) {
+				pCamera = pCamera->pNextCameraView_0xa4;
+			}
+
+			currentIndex = currentIndex + 1;
+		} while (currentIndex < targetIndex);
+	}
+
+	return PopCamera(pCamera);
 }
 
 void CCameraManager::SetMainCamera(CCamera* pCamera)

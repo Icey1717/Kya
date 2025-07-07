@@ -828,7 +828,6 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 }
 
 CActorClusteriser::CActorClusteriser()
-	: CActor()
 {
 
 }

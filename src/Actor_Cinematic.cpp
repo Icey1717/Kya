@@ -12,7 +12,6 @@
 
 
 CActorCinematic::CActorCinematic()
-	: CActor()
 {
 	//CSound* pSound;
 	//

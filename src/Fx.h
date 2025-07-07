@@ -151,7 +151,7 @@ public:
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager) = 0;
 	virtual void SetupPool(ByteCode* pByteCode, uint param_3) = 0;
 	virtual uint InstallFxScenaricData(ByteCode* pByteCode) = 0;
-	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) = 0;
+	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector) = 0;
 	virtual void Remove(CNewFx* pFx) = 0;
 	virtual int GetNbPool() = 0;
 
@@ -466,7 +466,7 @@ struct CFxManager : public CObjectManager
 
 	uint AddFxClass(ByteCode* pByteCode, CFx** pOutEffectObj, int* outClass);
 
-	void GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELECTOR selector);
+	void GetDynamicFx(CFxHandle* pHandle, uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
 
 	uint count_0x4;
 	CFx** aFx;

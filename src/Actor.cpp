@@ -389,17 +389,13 @@ CActor::CActor()
 	this->distanceToGround = -1.0f;
 	this->field_0xf0 = 3.0f;
 	this->field_0xf4 = 0xffff;
-	fVar2 = gF32Vector3Zero.z;
-	fVar1 = gF32Vector3Zero.y;
-
 	this->previousLocation = gF32Vector3Zero;
-
-	fVar2 = gF32Vector3Zero.z;
-	fVar1 = gF32Vector3Zero.y;
 	this->vector_0x12c = gF32Vector3Zero;
+
 	//this->field_0x13c = 0;
 	//this->field_0x138 = 0.0;
-	//this->field_0x98 = 0;
+	this->pMBNK = (void*)0x0;
+
 	return;
 }
 
@@ -1690,17 +1686,10 @@ void CActor::SetupClippingInfo()
 	this->hierarchySetup.pBoundingSphere = &this->subObjA->boundingSphere;
 }
 
-struct GetVisualDetectionPointParams
-{
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
-};
-
 void CActor::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
 {
 	edColPRIM_OBJECT* peVar1;
-	GetVisualDetectionPointParams local_40;
+	GetPositionMsgParams local_40;
 	float fVar3;
 
 	if (IsLockable() == 0) {
@@ -1718,20 +1707,20 @@ void CActor::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
 		pOutPoint->w = 1.0f;
 	}
 	else {
-		local_40.field_0x0.x = 0.0f;
-		local_40.field_0x20.x = 0.0f;
-		local_40.field_0x20.y = 0.0f;
-		local_40.field_0x20.z = 0.0f;
-		local_40.field_0x20.w = 0.0f;
-		local_40.field_0x10.x = (this->currentLocation).x;
-		local_40.field_0x10.y = (this->currentLocation).y;
-		local_40.field_0x10.z = (this->currentLocation).z;
-		local_40.field_0x10.w = (this->currentLocation).w;
+		local_40.field_0x0 = 0;
+
+		local_40.vectorFieldB.x = 0.0f;
+		local_40.vectorFieldB.y = 0.0f;
+		local_40.vectorFieldB.z = 0.0f;
+		local_40.vectorFieldB.w = 0.0f;
+
+		local_40.vectorFieldA = this->currentLocation;
+
 		if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
 			ReceiveMessage(this, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_40);
 		}
 
-		*pOutPoint = this->currentLocation + local_40.field_0x20;
+		*pOutPoint = this->currentLocation + local_40.vectorFieldB;
 	}
 
 	return;
@@ -1826,6 +1815,165 @@ bool CActor::SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrient
 	}
 
 	return uVar1;
+}
+
+void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
+{
+	int inAnimType;
+	int textureIndex;
+	int meshIndex;
+	KyaUpdateObjA* pKVar1;
+	ed_g3d_manager* pMeshInfo;
+	ed_g2d_manager* peVar2;
+	ed_g2d_manager* peVar3;
+	ed_g2d_manager* pTextureInfo;
+	float fVar4;
+	float fVar5;
+	C3DFileManager* p3DManager;
+
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pMeshNode);
+		if (this->pMBNK != (void*)0x0) {
+			edMemFree(this->pMBNK);
+			this->pMBNK = (void*)0x0;
+		}
+	}
+
+	inAnimType = this->currentAnimType;
+	PlayAnim(-1);
+	p3DManager = CScene::ptable.g_C3DFileManager_00451664;
+	pMeshInfo = (ed_g3d_manager*)0x0;
+	textureIndex = this->pCinData->textureIndex;
+	meshIndex = this->pCinData->meshIndex;
+	pTextureInfo = (ed_g2d_manager*)0x0;
+	if (textureIndex == -1) {
+		textureIndex = CScene::_pinstance->defaultTextureIndex_0x2c;
+	}
+	if ((meshIndex != -1) && (textureIndex != -1)) {
+		pMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(meshIndex, textureIndex);
+		peVar2 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(textureIndex);
+		peVar3 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMeshMaterial(meshIndex);
+		if (peVar3 != peVar2) {
+			pTextureInfo = peVar2;
+		}
+	}
+
+	SV_SetModel(pMeshInfo, 0, (MeshTextureHash*)0x0, pTextureInfo);
+
+	pKVar1 = this->subObjA;
+	pKVar1->boundingSphere = pActorAlternateModel->cachedBoundingSphere;
+	if (this->pMeshTransform == (ed_3d_hierarchy_node*)0x0) {
+		this->pMeshTransform = pActorAlternateModel->pHierarchy;
+	}
+
+	SetupClippingInfo();
+	PlayAnim(inAnimType);
+	UpdatePosition(&this->currentLocation, false);
+
+	if (this->pAnimationController != (CAnimation*)0x0) {
+		this->pAnimationController->Manage(0.0f, this, this->flags & 0x4800, 0);
+	}
+
+	return;
+}
+
+void CActor::SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere)
+{
+	KyaUpdateObjA* pKVar1;
+	int inAnimType;
+	float fVar2;
+	float fVar3;
+
+	pKVar1 = this->subObjA;
+	pAlternateModel->cachedBoundingSphere = pKVar1->boundingSphere;
+	pAlternateModel->pHierarchy = this->pMeshTransform;
+
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pMeshNode);
+		if (this->pMBNK != (void*)0x0) {
+			edMemFree(this->pMBNK);
+			this->pMBNK = (void*)0x0;
+		}
+	}
+
+	inAnimType = this->currentAnimType;
+	PlayAnim(-1);
+
+	if (pBoundingSphere != (edF32VECTOR4*)0x0) {
+		pKVar1 = this->subObjA;
+		pKVar1->boundingSphere = *pBoundingSphere;
+	}
+
+	SV_SetModel(p3dManager, 0, (MeshTextureHash*)0x0, (ed_g2d_manager*)0x0);
+	SetupClippingInfo();
+	PlayAnim(inAnimType);
+	UpdatePosition(&this->currentLocation, false);
+
+	if (this->pAnimationController != (CAnimation*)0x0) {
+		this->pAnimationController->Manage(0.0f, this, this->flags & 0x4800, 0);
+	}
+
+	return;
+}
+
+void CActor::SV_SwitchToModel(CActorAlternateModel* pAlternateModel, int meshIndex, int materialIndex, edF32VECTOR4* pBoundingSphere)
+{
+	KyaUpdateObjA* pKVar1;
+	int inAnimType;
+	float fVar2;
+	float fVar3;
+
+	ed_g3d_manager* pMeshInfo;
+	ed_g2d_manager* peVar2;
+	ed_g2d_manager* peVar3;
+	ed_g2d_manager* pTextureInfo;
+	C3DFileManager* pFileManager;
+
+	pKVar1 = this->subObjA;
+	pAlternateModel->cachedBoundingSphere = pKVar1->boundingSphere;
+	pAlternateModel->pHierarchy = this->pMeshTransform;
+
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pMeshNode);
+		if (this->pMBNK != (void*)0x0) {
+			edMemFree(this->pMBNK);
+			this->pMBNK = (void*)0x0;
+		}
+	}
+
+	inAnimType = this->currentAnimType;
+	PlayAnim(-1);
+
+	if (pBoundingSphere != (edF32VECTOR4*)0x0) {
+		pKVar1 = this->subObjA;
+		pKVar1->boundingSphere = *pBoundingSphere;
+	}
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pMeshInfo = (ed_g3d_manager*)0x0;
+	pTextureInfo = (ed_g2d_manager*)0x0;
+	if (materialIndex == -1) {
+		materialIndex = CScene::_pinstance->defaultTextureIndex_0x2c;
+	}
+	if ((meshIndex != -1) && (materialIndex != -1)) {
+		pMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(meshIndex, materialIndex);
+		peVar2 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(materialIndex);
+		peVar3 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMeshMaterial(meshIndex);
+		if (peVar3 != peVar2) {
+			pTextureInfo = peVar2;
+		}
+	}
+
+	SV_SetModel(pMeshInfo, 0, (MeshTextureHash*)0x0, pTextureInfo);
+	SetupClippingInfo();
+	PlayAnim(inAnimType);
+	UpdatePosition(&this->currentLocation, false);
+
+	if (this->pAnimationController != (CAnimation*)0x0) {
+		this->pAnimationController->Manage(0.0f, this, this->flags & 0x4800, 0);
+	}
+
+	return;
 }
 
 int CActor::SV_InstallMaterialId(int materialId)

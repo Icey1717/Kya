@@ -5,6 +5,7 @@
 #include "ActorAutonomous.h"
 #include "Fx_Spark.h"
 #include "Dynamic.h"
+#include "Fx.h"
 
 #define PROJECTILE_BEHAVIOUR_STAND 0x3
 #define PROJECTILE_BEHAVIOUR_STRAIGHT 0x4
@@ -13,6 +14,10 @@
 #define PROJECTILE_BEHAVIOUR_LAVA_BALL 0xa
 #define PROJECTILE_BEHAVIOUR_EXCUSE 0xb
 #define PROJECTILE_BEHAVIOUR_INACTIVE 0xc
+
+#define PROJECTILE_STATE_SOCCER 0xf
+#define PROJECTILE_STATE_AUT_KICKED 0x10
+#define PROJECTILE_STATE_AUT_ROLL_ON_GROUND 0x11
 
 class CPointPattern
 {
@@ -222,14 +227,22 @@ public:
 
 	void UpdateSmoke() { IMPLEMENTATION_GUARD_LOG(); }
 
-	void ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, bool param_5, CActor* pFiringActor);
+	void Project(edF32VECTOR4* pDestination, bool bShowFx, CActor* pFiringActor);
+	void Project(float velocity, edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor);
+	void ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, bool bShowFx, CActor* pFiringActor);
 
+	void StateLiving(uint param_2, int param_3);
+	void StateFlying(float param_1, uint dynFlags, int nextState, int param_5);
 	void StateFlyingDirected(ulong flags, int param_3);
 	void StateDie(uint dynFlags, int param_3, int param_4);
 
 	void HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int explode, int param_5);
 
 	float GetTimeToExplode();
+
+	// New
+	void ShowFx();
+	void StopAllFx();
 
 	CBehaviourProjectileStand behaviourProjectileStand;
 
@@ -242,15 +255,13 @@ public:
 	ed_3D_Light_Config lightConfig;
 
 	ProjectileSubObj* field_0x350;
-	int field_0x354;
-	int* field_0x358;
-	int field_0x35c;
-	int* field_0x360;
+	CFxHandle field_0x354;
+	CFxHandle field_0x35c;
 
 	float field_0x3f0;
 	undefined4 field_0x3f4;
 	float timeToExplode;
-	CActor* field_0x3fc;
+	CActorMovable* pKickedByActor;
 
 	undefined4 field_0x410;
 
@@ -258,7 +269,7 @@ public:
 
 	CVectorDyn vectorDyn;
 
-	undefined4 field_0x400;
+	CActorMovable* pSoccerActor;
 	float field_0x404;
 	CActor* field_0x40c;
 
