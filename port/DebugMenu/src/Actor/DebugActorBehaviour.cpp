@@ -10,6 +10,7 @@
 #include "ActorAraignos.h"
 #include "ActorBonus.h"
 #include "ActorMoney.h"
+#include "ActorProjectile.h"
 
 namespace Aton
 {
@@ -590,6 +591,61 @@ namespace Money
 	}
 }
 
+namespace Projectile
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case PROJECTILE_BEHAVIOUR_STAND:
+			return "Stand";
+		case PROJECTILE_BEHAVIOUR_STRAIGHT:
+			return "Straight";
+		case PROJECTILE_BEHAVIOUR_PORTABLE:
+			return "Portable";
+		case PROJECTILE_BEHAVIOUR_INVENTORY:
+			return "Inventory";
+		case PROJECTILE_BEHAVIOUR_LAVA_BALL:
+			return "Lava Ball";
+		case PROJECTILE_BEHAVIOUR_EXCUSE:
+			return "Excuse";
+		case PROJECTILE_BEHAVIOUR_INACTIVE:
+			return "Inactive";
+		default:
+			return "Unknown";
+			break;
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case PROJECTILE_STATE_FLYING_LAVA_BALL:
+			return "Flying Lava Ball";
+		case PROJECTILE_STATE_FLYING_PROJECTED:
+			return "Flying Projected";
+		case PROJECTILE_STATE_FLYING:
+			return "Flying";
+		case PROJECTILE_STATE_FLYING_DIRECTED:
+			return "Flying Directed";
+		case PROJECTILE_STATE_LIVING:
+			return "Living";
+		case PROJECTILE_STATE_DIE:
+			return "Die";
+		case PROJECTILE_STATE_DYING:
+			return "Dying";
+		case PROJECTILE_STATE_SOCCER:
+			return "Soccer";
+		case PROJECTILE_STATE_AUT_KICKED:
+			return "Auto Kicked";
+		case PROJECTILE_STATE_AUT_ROLL_ON_GROUND:
+			return "Auto Roll On Ground";
+		default:
+			return "Unknown";
+			break;
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -624,6 +680,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Bonus::GetBehaviourName(behaviourId);
 	case MONEY:
 		return Money::GetBehaviourName(behaviourId);
+	case PROJECTILE:
+		return Projectile::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -640,6 +698,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Nativ::GetStateName(pActor->actorState);
 	case ARAIGNOS:
 		return Araignos::GetStateName(pActor->actorState);
+	case PROJECTILE:
+		return Projectile::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

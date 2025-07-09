@@ -587,6 +587,7 @@ void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene);
 void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam);
 void edPartEffectorComputeMatrices(_ed_particle_effector_param* pParam);
 _ed_particle_effector_param* edPartGetEffector(_ed_particle_manager* pManager, char* szName);
+void edPartSetRespawning(_ed_particle_manager* pManager, int bRespawning);
 
 template<typename T>
 T* _edPartGetEntityByHashcode(T* pEntities, int nbEntities, ulong* pHash)

@@ -52,6 +52,40 @@ void CFxNewComposite::Draw()
 	return;
 }
 
+void CFxNewComposite::Kill()
+{
+	uint curIndex;
+	CFxHandle* pHandle;
+	bool bValidFx;
+	CNewFx* pChildFx;
+
+	pHandle = this->aFxHandles;
+	curIndex = this->nbComponentParticles;
+
+	while (curIndex != 0) {
+		curIndex = curIndex - 1;
+		pChildFx = pHandle->pFx;
+		if (((pChildFx == (CNewFx*)0x0) || (pHandle->id == 0)) || (bValidFx = true, pHandle->id != pChildFx->id)) {
+			bValidFx = false;
+		}
+
+		if (bValidFx) {
+			if (((pChildFx != (CNewFx*)0x0) && (pHandle->id != 0)) && (pHandle->id == pChildFx->id)) {
+				pChildFx->Kill();
+			}
+
+			pHandle->pFx = (CNewFx*)0x0;
+			pHandle->id = 0;
+		}
+
+		pHandle = pHandle + 1;
+	}
+
+	CNewFx::Kill();
+
+	return;
+}
+
 void CFxNewComposite::Start(float param_1, float param_2)
 {
 	CNewFx::Start(param_1, param_2);
@@ -62,9 +96,45 @@ void CFxNewComposite::Start(float param_1, float param_2)
 	return;
 }
 
+void CFxNewComposite::Stop(float param_1)
+{
+	CNewFx* pFxChild;
+	bool bValidFx;
+	uint curIndex;
+	CFxHandle* pHandle;
+
+	pHandle = this->aFxHandles;
+	this->flags = this->flags | 0x20000;
+	curIndex = this->nbComponentParticles;
+	while (curIndex != 0) {
+		curIndex = curIndex - 1;
+		pFxChild = pHandle->pFx;
+
+		if (((pFxChild == (CNewFx*)0x0) || (pHandle->id == 0)) || (bValidFx = true, pHandle->id != pFxChild->id)) {
+			bValidFx = false;
+		}
+
+		if (((bValidFx) && (pFxChild != (CNewFx*)0x0)) && ((pHandle->id != 0 && (pHandle->id == pFxChild->id)))) {
+			pFxChild->Stop(param_1);
+		}
+
+		pHandle = pHandle + 1;
+	}
+
+	return;
+}
+
 int CFxNewComposite::GetType()
 {
 	return FX_TYPE_COMPOSITE;
+}
+
+void CFxNewComposite::NotifySonIsDead(CNewFx* pSon, int index)
+{
+	this->aFxHandles[index].id = 0;
+	this->aFxHandles[index].pFx = (CNewFx*)0x0;
+
+	return;
 }
 
 void CFxNewComposite::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
@@ -113,7 +183,7 @@ void CFxNewComposite::Manage()
 	if ((this->flags & 0x20) == 0) {
 		bVar2 = (this->flags & 1) != 0;
 		if (bVar2) {
-			bVar2 = (this->flags & 4) == 0;
+			bVar2 = (this->flags & FX_FLAG_PAUSED) == 0;
 		}
 
 		if (bVar2) {
@@ -136,7 +206,7 @@ void CFxNewComposite::Manage()
 						}
 						else {
 							bVar2 = false;
-							if (((pCVar1->flags & 1) != 0) && ((pCVar1->flags & 4) == 0)) {
+							if (((pCVar1->flags & 1) != 0) && ((pCVar1->flags & FX_FLAG_PAUSED) == 0)) {
 								bVar2 = true;
 							}
 						}

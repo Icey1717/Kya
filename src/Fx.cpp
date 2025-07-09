@@ -665,6 +665,34 @@ void CNewFx::Start(float param_1, float param_2)
 	return;
 }
 
+void CNewFx::Pause()
+{
+	this->flags = this->flags | FX_FLAG_PAUSED;
+
+	return;
+}
+
+void CNewFx::Resume()
+{
+	this->flags = this->flags & ~FX_FLAG_PAUSED;
+
+	return;
+}
+
+void CNewFx::Hide()
+{
+	this->flags = this->flags | FX_FLAG_HIDDEN;
+
+	return;
+}
+
+void CNewFx::Reveal()
+{
+	this->flags = this->flags & ~FX_FLAG_HIDDEN;
+
+	return;
+}
+
 void CNewFx::Stop(float param_1)
 {
 	this->flags = this->flags | 0x20010;
@@ -685,7 +713,6 @@ void CNewFx::NotifySonIsDead(CNewFx* pSon, int)
 {
 	return;
 }
-
 
 void CNewFx::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 {

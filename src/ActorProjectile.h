@@ -15,6 +15,13 @@
 #define PROJECTILE_BEHAVIOUR_EXCUSE 0xb
 #define PROJECTILE_BEHAVIOUR_INACTIVE 0xc
 
+#define PROJECTILE_STATE_FLYING_LAVA_BALL 0x6
+#define PROJECTILE_STATE_FLYING_PROJECTED 0x7
+#define PROJECTILE_STATE_FLYING 0x8
+#define PROJECTILE_STATE_FLYING_DIRECTED 0xa
+#define PROJECTILE_STATE_LIVING 0xc
+#define PROJECTILE_STATE_DIE 0xd
+#define PROJECTILE_STATE_DYING 0xe
 #define PROJECTILE_STATE_SOCCER 0xf
 #define PROJECTILE_STATE_AUT_KICKED 0x10
 #define PROJECTILE_STATE_AUT_ROLL_ON_GROUND 0x11
@@ -225,7 +232,7 @@ public:
 	void GoToSleep();
 	void Die();
 
-	void UpdateSmoke() { IMPLEMENTATION_GUARD_LOG(); }
+	void UpdateSmoke();
 
 	void Project(edF32VECTOR4* pDestination, bool bShowFx, CActor* pFiringActor);
 	void Project(float velocity, edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor);
@@ -254,7 +261,7 @@ public:
 
 	ed_3D_Light_Config lightConfig;
 
-	ProjectileSubObj* field_0x350;
+	ProjectileSubObj* aProjectileSubObjs;
 	CFxHandle field_0x354;
 	CFxHandle field_0x35c;
 

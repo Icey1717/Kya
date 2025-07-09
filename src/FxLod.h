@@ -12,9 +12,14 @@ public:
 	virtual void Draw();
 	virtual void Kill() { IMPLEMENTATION_GUARD(); }
 	virtual void Start(float param_1, float param_2) { IMPLEMENTATION_GUARD(); }
+	virtual void Stop(float param_1) { IMPLEMENTATION_GUARD(); }
+	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();
 	virtual void NotifySonIsDead(CNewFx* pSon, int) { IMPLEMENTATION_GUARD(); }
-	void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId) { IMPLEMENTATION_GUARD(); }
+	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }
+
+	virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CFxLodScenaricData

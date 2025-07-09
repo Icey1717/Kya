@@ -13,6 +13,9 @@
 #define FX_TYPE_RANDOM 5
 #define FX_TYPE_LOD 6
 
+#define FX_FLAG_PAUSED 0x4
+#define FX_FLAG_HIDDEN 0x8
+
 struct ByteCode;
 
 struct EffectsManagerObj_60;
@@ -99,11 +102,18 @@ public:
 	virtual void Draw() = 0;
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
+	virtual void Pause();
+	virtual void Resume();
+	virtual void Hide();
+	virtual void Reveal();
 	virtual void Stop(float param_1);
+	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType() = 0;
 	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
+	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler() { IMPLEMENTATION_GUARD(); }
 
 	void Manage();
 

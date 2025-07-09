@@ -79,6 +79,30 @@ void CFxNewSound::Start(float param_1, float param_2)
 	IMPLEMENTATION_GUARD_AUDIO();
 }
 
+void CFxNewSound::Stop(float param_1)
+{
+	CSound* pCVar1;
+
+	this->flags = this->flags | 0x20000;
+
+	if (param_1 != -1.0f) {
+		this->field_0x10 = param_1;
+	}
+
+	if (this->field_0x10 == 0.0f) {
+		Kill();
+	}
+	else {
+		IMPLEMENTATION_GUARD_AUDIO(
+		pCVar1 = (this->soundInstance).SoundStructPtr;
+		if (pCVar1 != (CSound*)0x0) {
+			CSound::FadeTo(0.0, -2.0, param_1, pCVar1, (this->soundInstance).SoundID);
+		})
+	}
+
+	return;
+}
+
 int CFxNewSound::GetType()
 {
 	return FX_TYPE_SOUND;

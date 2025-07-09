@@ -213,10 +213,21 @@ void CFxNewParticle::Kill()
 {
 	if (this->pManager != (_ed_particle_manager*)0x0) {
 		edParticlesUnInstall(this->pManager, CScene::_scene_handleA);
-		//edMemFree(this->pFileData);
+		edMemFree(this->pFileData);
 	}
 
 	CNewFx::Kill();
+
+	return;
+}
+
+void CFxNewParticle::Stop(float param_1)
+{
+	this->flags = this->flags | 0x20000;
+
+	if (this->pManager != (_ed_particle_manager*)0x0) {
+		edPartSetRespawning(this->pManager, 0);
+	}
 
 	return;
 }

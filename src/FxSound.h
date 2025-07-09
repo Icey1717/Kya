@@ -14,7 +14,14 @@ public:
 	virtual void Draw();
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
+	virtual void Pause() { IMPLEMENTATION_GUARD(); }
+	virtual void Resume() { IMPLEMENTATION_GUARD(); }
+	virtual void Stop(float param_1);
+	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();
+	virtual void Func_0x30(float param_1) { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler() { IMPLEMENTATION_GUARD(); }
+
 	void Manage() { IMPLEMENTATION_GUARD(); }
 
 	void Instanciate(CFxSoundScenaricData* pData, FX_MATERIAL_SELECTOR selector);

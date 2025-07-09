@@ -257,7 +257,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 			CallHandlerFunction(&edMemHandlers, 4, (char*)0x0);
 		}
 
-		pHeap = edmemGetMainHeader((void*)heap);
+		pHeap = edmemGetMainHeader(heap);
 		pNewAllocation = (*MemoryHandlers[(char)pHeap->funcTableID].alloc)(pHeap, (int)size, align, offset);
 		if (pNewAllocation == (void*)0x0) {
 			FLUSH_LOG();
@@ -847,26 +847,6 @@ void edmemWorkFree(S_MAIN_MEMORY_HEADER* pBlockToFree)
 	}
 
 	PrintBlockInfo("EndFree", pBlockToFree);
-
-	// Sanity check that we can find our way back to the big block
-	{
-		S_MAIN_MEMORY_HEADER* pMainMemHeader = edmemGetMasterMemoryHeader(pBlockToFree);
-
-		auto currentBlockIndex = pMainMemHeader->freeListHead;
-
-		while (true) {
-			auto* pBlock = pBlocks + currentBlockIndex;
-
-			if (pBlock->freeBytes > 0x100000) {
-				ED_MEM_LOG(LogLevel::Error, "edmemWorkFree SANITY Block 0x{:x} has freeBytes > 0x100000 (0x{:x} free)", currentBlockIndex, pBlock->freeBytes);
-				break;
-			}
-
-			if (pBlock->nextFreeBlock != -1) {
-				currentBlockIndex = pBlock->nextFreeBlock;
-			}
-		}
-	}
 
 	return;
 }

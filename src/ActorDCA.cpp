@@ -736,7 +736,7 @@ CActor* CFireShot::_ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocat
 		pRef->UpdatePosition(pLocation, true);
 
 		(*pShotData)->field_0x10 = velocity;
-		(*pShotData)->timeToExplode = pRef->field_0x350->timeToExplode;
+		(*pShotData)->timeToExplode = pRef->aProjectileSubObjs->timeToExplode;
 		(*pShotData)->field_0x18 = 0.0f;
 	}
 

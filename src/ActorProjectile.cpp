@@ -149,21 +149,21 @@ void CActorProjectile::Create(ByteCode* pByteCode)
 
 	pPVar1 = (ProjectileSubObj*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pPVar1 + 1);
-	this->field_0x350 = pPVar1;
+	this->aProjectileSubObjs = pPVar1;
 
-	pPVar1 = this->field_0x350;
+	pPVar1 = this->aProjectileSubObjs;
 	fVar3 = pPVar1->field_0x44;
 	if (fVar3 < pPVar1->field_0x40) {
 		pPVar1->field_0x44 = pPVar1->field_0x40;
-		this->field_0x350->field_0x40 = fVar3;
+		this->aProjectileSubObjs->field_0x40 = fVar3;
 	}
-	pPVar1 = this->field_0x350;
+	pPVar1 = this->aProjectileSubObjs;
 	if ((pPVar1->timeToExplode != 0.0f) && (pPVar1->timeToExplode < pPVar1->field_0x40 + pPVar1->field_0x44)) {
 		pPVar1->field_0x40 = 0.0f;
-		this->field_0x350->field_0x44 = 0.0f;
+		this->aProjectileSubObjs->field_0x44 = 0.0f;
 	}
 
-	SV_InstallMaterialId(this->field_0x350->materialId);
+	SV_InstallMaterialId(this->aProjectileSubObjs->materialId);
 	this->patternPart.Create(pByteCode);
 
 	pCVar2 = this->pCollisionData;
@@ -357,11 +357,11 @@ void CActorProjectile::ChangeManageState(int state)
 			pProjectile->flags = pProjectile->flags | 0x20;
 			pProjectile->EvaluateDisplayState();
 			iVar1 = pProjectile->curBehaviourId;
-			if (iVar1 == 10) {
-				pProjectile->SetState(6, -1);
+			if (iVar1 == PROJECTILE_BEHAVIOUR_LAVA_BALL) {
+				pProjectile->SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 			}
 			else {
-				if (iVar1 == 4) {
+				if (iVar1 == PROJECTILE_BEHAVIOUR_STRAIGHT) {
 					pProjectile->ClearLocalData();
 					pProjectile->SetBehaviour(-1, -1, -1);
 					pProjectile->SetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT, -1, -1);
@@ -385,11 +385,11 @@ void CActorProjectile::ChangeManageState(int state)
 			pProjectile->flags = pProjectile->flags | 0x20;
 			pProjectile->EvaluateDisplayState();
 			iVar1 = pProjectile->curBehaviourId;
-			if (iVar1 == 10) {
-				pProjectile->SetState(6, -1);
+			if (iVar1 == PROJECTILE_BEHAVIOUR_LAVA_BALL) {
+				pProjectile->SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 			}
 			else {
-				if (iVar1 == 4) {
+				if (iVar1 == PROJECTILE_BEHAVIOUR_STRAIGHT) {
 					pProjectile->ClearLocalData();
 					pProjectile->SetBehaviour(-1, -1, -1);
 					pProjectile->SetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT, -1, -1);
@@ -414,20 +414,20 @@ bool CActorProjectile::IsLockable()
 	uint uVar5;
 	StateConfig* pSVar6;
 
-	if ((this->field_0x350->flags & 0x100) != 0) {
+	if ((this->aProjectileSubObjs->flags & 0x100) != 0) {
 		if ((GetStateFlags(this->actorState) & 0x8000) != 0) {
 			if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 				if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
 					return false;
 				}
 
-				if ((this->field_0x350->flags & 0x20000) != 0) {
+				if ((this->aProjectileSubObjs->flags & 0x20000) != 0) {
 					return false;
 				}
 			}
 
 			fVar2 = edF32Vector4DotProductHard_I(&CActorHero::_gThis->currentLocation, &this->currentLocation);
-			if ((11.56f < fVar2) || ((this->field_0x350->flags & 0x2000) != 0)) {
+			if ((11.56f < fVar2) || ((this->aProjectileSubObjs->flags & 0x2000) != 0)) {
 				return true;
 			}
 		}
@@ -485,7 +485,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		MessageSoccerParamsDetailed* pSoccerMsgParam = reinterpret_cast<MessageSoccerParamsDetailed*>(pMsgParam);
 
 		if ((GetStateFlags(this->actorState) & 0x800) != 0) {
-			if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
+			if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->aProjectileSubObjs->flags & 0x10) != 0)) {
 				if (pSoccerMsgParam->field_0x0 == 0) {
 					this->rotationEuler.y = pSoccerMsgParam->rotation;
 					SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
@@ -493,7 +493,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					this->dynamic.speed = pSoccerMsgParam->speed;
 
 					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
-						SetState(8, -1);
+						SetState(PROJECTILE_STATE_FLYING, -1);
 					}
 					else {
 						if (this->currentAnimType == 10) {
@@ -513,7 +513,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			}
 		}
 
-		if (((((GetStateFlags(this->actorState) & 0x800) != 0) && ((this->field_0x350->flags & 0x10) != 0)) &&
+		if (((((GetStateFlags(this->actorState) & 0x800) != 0) && ((this->aProjectileSubObjs->flags & 0x10) != 0)) &&
 			(this->actorState == PROJECTILE_STATE_AUT_KICKED)) && (pSoccerMsgParam->field_0x0 == 0)) {
 			this->field_0x404 = this->field_0x404 + GetTimer()->cutsceneDeltaTime;
 
@@ -526,7 +526,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	if (msg != 0x22) {
 		if (msg == 3) {
 			if ((GetStateFlags(this->actorState) & 0x800) != 0) {
-				SetState(0xd, -1);
+				SetState(PROJECTILE_STATE_DIE, -1);
 				return 1;
 			}
 		}
@@ -536,7 +536,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 				if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 					if (pHitMsgParam->projectileType == 3) {
-						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == PROJECTILE_STATE_AUT_KICKED)) {
+						if (((this->aProjectileSubObjs->flags & 0x10) != 0) && (this->actorState == PROJECTILE_STATE_AUT_KICKED)) {
 							local_10.x = this->currentLocation.x;
 							local_10.z = this->currentLocation.z;
 							local_10.w = this->currentLocation.w;
@@ -550,12 +550,12 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					}
 
 					if (pHitMsgParam->projectileType == 4) {
-						if (((GetStateFlags(this->actorState) & 0x1000) != 0) && ((this->field_0x350->flags & 0x20000) != 0)) {
+						if (((GetStateFlags(this->actorState) & 0x1000) != 0) && ((this->aProjectileSubObjs->flags & 0x20000) != 0)) {
 							return 0;
 						}
 					}
 
-					if ((this->field_0x350->flags & 2) != 0) {
+					if ((this->aProjectileSubObjs->flags & 2) != 0) {
 						/* WARNING: Load size is inaccurate */
 						uVar10 = 1.0f;
 						if ((pHitMsgParam->projectileType != 4) && (uVar10 = 1.0f/*unaff_f20*/, pSender->typeID != PROJECTILE)) {
@@ -569,12 +569,12 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					fVar9 = pCVar6->GetValue();
 
 					bVar1 = fVar9 <= 0.0f;
-					if (((this->field_0x350->flags & 0x80) != 0) && (pSender->typeID == PROJECTILE)) {
+					if (((this->aProjectileSubObjs->flags & 0x80) != 0) && (pSender->typeID == PROJECTILE)) {
 						bVar1 = true;
 					}
 
 					if (bVar1) {
-						SetState(0xd, -1);
+						SetState(PROJECTILE_STATE_DIE, -1);
 						return 1;
 					}
 				}
@@ -587,7 +587,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 				}
 				else {
 					if (msg == MESSAGE_GET_ACTION) {
-						if (((GetStateFlags(this->actorState) & 0x2000) == 0) || ((this->field_0x350->flags & 0x10) == 0)) {
+						if (((GetStateFlags(this->actorState) & 0x2000) == 0) || ((this->aProjectileSubObjs->flags & 0x10) == 0)) {
 							return 0;
 						}
 
@@ -616,7 +616,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	}
 
 	if (pSender->pAnimationController != (CAnimation*)0x0) {
-		if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
+		if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->aProjectileSubObjs->flags & 0x10) != 0)) {
 			this->pKickedByActor = static_cast<CActorMovable*>(pSender);
 			SetState(PROJECTILE_STATE_AUT_KICKED, -1);
 			return 1;
@@ -646,24 +646,24 @@ void CActorProjectile::ClearLocalData()
 	this->pSoccerActor = (CActorMovable*)0x0;
 	this->field_0x404 = 0.0f;
 
-	this->field_0x350->flags = this->field_0x350->flags & 0xff7fffff;
+	this->aProjectileSubObjs->flags = this->aProjectileSubObjs->flags & 0xff7fffff;
 
 	this->vectorDyn.Reset();
 
 	this->field_0x570 = 0.0f;
 	this->field_0x3f0 = 0.0f;
-	this->timeToExplode = this->field_0x350->timeToExplode;
+	this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
 
-	if ((this->field_0x350->animDuration == 0.0f) && (pAnimation = this->pAnimationController, pAnimation != (CAnimation*)0x0)) {
-		pSVar1 = GetStateCfg(0xd);
+	if ((this->aProjectileSubObjs->animDuration == 0.0f) && (pAnimation = this->pAnimationController, pAnimation != (CAnimation*)0x0)) {
+		pSVar1 = GetStateCfg(PROJECTILE_STATE_DIE);
 		iVar2 = GetIdMacroAnim(pSVar1->animId);
 		if (iVar2 < 0) {
 			fVar4 = 0.0f;
-			pPVar3 = this->field_0x350;
+			pPVar3 = this->aProjectileSubObjs;
 		}
 		else {
 			fVar4 = pAnimation->GetAnimLength(iVar2, 0);
-			pPVar3 = this->field_0x350;
+			pPVar3 = this->aProjectileSubObjs;
 		}
 
 		pPVar3->animDuration = fVar4;
@@ -694,31 +694,31 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 		pCol->flags_0x0 = pCol->flags_0x0 & 0xfff7ffff;
 	}
 	else {
-		if (newState == 0xd) {
+		if (newState == PROJECTILE_STATE_DIE) {
 			StopAllFx();
 
-			this->field_0x350->flags = this->field_0x350->flags & 0xff7fffff;
+			this->aProjectileSubObjs->flags = this->aProjectileSubObjs->flags & 0xff7fffff;
 			pAnimation = this->pAnimationController;
-			if ((pAnimation != (CAnimation*)0x0) && (0.0f < this->field_0x350->animDuration)) {
-				pStateConfig = GetStateCfg(0xd);
+			if ((pAnimation != (CAnimation*)0x0) && (0.0f < this->aProjectileSubObjs->animDuration)) {
+				pStateConfig = GetStateCfg(PROJECTILE_STATE_DIE);
 				iVar4 = GetIdMacroAnim(pStateConfig->animId);
 				if (iVar4 < 0) {
 					fVar5 = 0.0f;
-					pSubObj = this->field_0x350;
+					pSubObj = this->aProjectileSubObjs;
 				}
 				else {
 					fVar5 = pAnimation->GetAnimLength(iVar4, 0);
-					pSubObj = this->field_0x350;
+					pSubObj = this->aProjectileSubObjs;
 				}
 
 				this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(pSubObj->animDuration / fVar5, 0);
 			}
 
-			this->field_0x570 = this->field_0x350->animDuration;
+			this->field_0x570 = this->aProjectileSubObjs->animDuration;
 		}
 		else {
-			if (newState == 0xc) {
-				if ((this->field_0x350->flags & 0x8000) != 0) {
+			if (newState == PROJECTILE_STATE_LIVING) {
+				if ((this->aProjectileSubObjs->flags & 0x8000) != 0) {
 					IMPLEMENTATION_GUARD(
 					piVar1 = (int*)this->field_0x358;
 					if (((piVar1 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar1[6])) {
@@ -729,7 +729,7 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 					})
 				}
 
-				if ((this->field_0x350->flags & 0x200000) != 0) {
+				if ((this->aProjectileSubObjs->flags & 0x200000) != 0) {
 					IMPLEMENTATION_GUARD(
 					if (((this->field_0x360 == 0) || (this->field_0x35c == 0)) ||
 						(this->field_0x35c != *(int*)(this->field_0x360 + 0x18))) {
@@ -738,7 +738,7 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 					else {
 						bVar3 = true;
 					}
-					if ((!bVar3) && (uVar2 = this->field_0x350->field_0x38, uVar2 != 0xffffffff)) {
+					if ((!bVar3) && (uVar2 = this->aProjectileSubObjs->field_0x38, uVar2 != 0xffffffff)) {
 						CParticlesManager::GetDynamicFx
 						(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x35c, uVar2, 0xffffffffffffffff);
 						piVar1 = (int*)this->field_0x360;
@@ -765,8 +765,8 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 					})
 				}
 
-				if (0.0f < this->field_0x350->timeToExplode) {
-					SV_AUT_WarnActors(this->field_0x350->warnRadius, 0.0f, 0);
+				if (0.0f < this->aProjectileSubObjs->timeToExplode) {
+					SV_AUT_WarnActors(this->aProjectileSubObjs->warnRadius, 0.0f, 0);
 				}
 			}
 			else {
@@ -812,7 +812,7 @@ bool Projectile_CriterionExploder(CActor* pActor, void* pParams)
 				(fVar1 = (pActor->currentLocation).x - pProjectile->currentLocation.x,
 					fVar2 = (pActor->currentLocation).y - pProjectile->currentLocation.y,
 					fVar3 = (pActor->currentLocation).z - pProjectile->currentLocation.z,
-					sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) < pProjectile->field_0x350->explosionRange)) {
+					sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) < pProjectile->aProjectileSubObjs->explosionRange)) {
 				return true;
 			}
 		}
@@ -836,15 +836,8 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 	CActorsTable local_120;
 	edF32VECTOR4 local_10;
 
-	if ((this->field_0x350->flags & 0x100000) != 0) {
-		iVar1 = this->actorState;
-		if (iVar1 == -1) {
-			uVar6 = 0;
-		}
-		else {
-			pSVar7 = GetStateCfg(iVar1);
-			uVar6 = pSVar7->flags_0x4 & 0x800;
-		}
+	if ((this->aProjectileSubObjs->flags & 0x100000) != 0) {
+		uVar6 = GetStateFlags(this->actorState) & 0x800;
 
 		IMPLEMENTATION_GUARD_LOG(
 		if (uVar6 != 0) {
@@ -870,7 +863,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 		uVar9 = 0x41920;
 	}
 
-	uVar6 = this->field_0x350->flags;
+	uVar6 = this->aProjectileSubObjs->flags;
 	if ((uVar6 & 0x2000) != 0) {
 		uVar9 = uVar9 & 0xfffffffffffbe7ff;
 	}
@@ -885,7 +878,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 
 	iVar1 = this->actorState;
 	if (iVar1 == PROJECTILE_STATE_AUT_ROLL_ON_GROUND) {
-		StateAutRollOnGround(8.0f, 2.0f, 0.3f, 0xc, 8);
+		StateAutRollOnGround(8.0f, 2.0f, 0.3f, PROJECTILE_STATE_LIVING, PROJECTILE_STATE_FLYING);
 	}
 	else {
 		if (iVar1 == PROJECTILE_STATE_AUT_KICKED) {
@@ -896,7 +889,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 				this->field_0x404 = fVar10;
 				if (0.06f < fVar10) {
 					this->dynamic.speed = 0.0f;
-					SetState(7, -1);
+					SetState(PROJECTILE_STATE_FLYING_PROJECTED, -1);
 				}
 			}
 		}
@@ -908,15 +901,16 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 				if (iVar1 == 0x12) {
 					return;
 				}
-				if (iVar1 == 0xe) {
+
+				if (iVar1 == PROJECTILE_STATE_DYING) {
 					IMPLEMENTATION_GUARD(
 					CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
 				}
 				else {
-					if (iVar1 == 0xd) {
+					if (iVar1 == PROJECTILE_STATE_DIE) {
 						if (pBehaviourStand->field_0xc == 2) {
 							IMPLEMENTATION_GUARD(
-							SetState(0xe, -1);
+							SetState(PROJECTILE_STATE_DYING, -1);
 							CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
 						}
 						else {
@@ -924,19 +918,19 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 						}
 					}
 					else {
-						if (iVar1 == 10) {
+						if (iVar1 == PROJECTILE_STATE_FLYING_DIRECTED) {
 							StateFlyingDirected(uVar9, pBehaviourStand->field_0xc);
 						}
 						else {
-							if (iVar1 == 8) {
+							if (iVar1 == PROJECTILE_STATE_FLYING) {
 								StateFlying(0.0f, uVar9, -1, pBehaviourStand->field_0xc);
 							}
 							else {
-								if (iVar1 == 7) {
-									StateFlying(0.2f, uVar9, 8, pBehaviourStand->field_0xc);
+								if (iVar1 == PROJECTILE_STATE_FLYING_PROJECTED) {
+									StateFlying(0.2f, uVar9, PROJECTILE_STATE_FLYING, pBehaviourStand->field_0xc);
 								}
 								else {
-									if (iVar1 == 0xc) {
+									if (iVar1 == PROJECTILE_STATE_LIVING) {
 										StateLiving(uVar9, pBehaviourStand->field_0xc);
 									}
 									else {
@@ -954,12 +948,13 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 													bVar5 = (peVar4->field_0xcc & 2) != 0;
 												}
 											}
+
 											if (bVar5) {
-												SetState(0xc, -1);
+												SetState(PROJECTILE_STATE_LIVING, -1);
 											})
 										}
 										else {
-											if (iVar1 == 6) {
+											if (iVar1 == PROJECTILE_STATE_FLYING_LAVA_BALL) {
 												ManageDyn(4.0f, 0, (CActorsTable*)0x0);
 											}
 										}
@@ -985,7 +980,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 	if ((uVar6 == 0) || (this->curBehaviourId != 3)) goto LAB_00208f00;
 
 	bVar5 = false;
-	if (0.0f < this->field_0x350->timeToExplode) {
+	if (0.0f < this->aProjectileSubObjs->timeToExplode) {
 		pTVar8 = Timer::GetTimer();
 		fVar10 = this->timeToExplode - pTVar8->cutsceneDeltaTime;
 		this->timeToExplode = fVar10;
@@ -996,14 +991,14 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 
 	if (bVar5) {
 	LAB_00208ee0:
-		SetState(0xd, -1);
+		SetState(PROJECTILE_STATE_DIE, -1);
 	}
 	else {
 		bVar5 = false;
-		if (0.0f < this->field_0x350->explosionRange) {
+		if (0.0f < this->aProjectileSubObjs->explosionRange) {
 			local_120.nbEntries = 0;
 			local_10.xyz = this->currentLocation.xyz;
-			local_10.w = this->field_0x350->explosionRange;
+			local_10.w = this->aProjectileSubObjs->explosionRange;
 			(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_120, &local_10, Projectile_CriterionExploder, this);
 			if (0 < local_120.nbEntries) {
 				bVar5 = true;
@@ -1028,13 +1023,13 @@ void CActorProjectile::BehaviourProjectileStand_InitState(int newState, CBehavio
 	int local_8;
 	int* local_4;
 
-	if (newState == 0xe) {
-		if (this->field_0x350->field_0x30 != -1) {
+	if (newState == PROJECTILE_STATE_DYING) {
+		if (this->aProjectileSubObjs->field_0x30 != -1) {
 			IMPLEMENTATION_GUARD_LOG(
 			local_8 = 0;
 			local_4 = (int*)0x0;
 			CParticlesManager::GetDynamicFx
-			(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->field_0x350->field_0x30, 0xffffffffffffffff);
+			(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->aProjectileSubObjs->field_0x30, 0xffffffffffffffff);
 
 			if (((local_4 == (int*)0x0) || (local_8 == 0)) || (bVar1 = true, local_8 != local_4[6])) {
 				bVar1 = false;
@@ -1051,7 +1046,7 @@ void CActorProjectile::BehaviourProjectileStand_InitState(int newState, CBehavio
 		}
 	}
 	else {
-		if (((newState == 10) || (newState == 8)) || (newState == 7)) {
+		if (((newState == PROJECTILE_STATE_FLYING_DIRECTED) || (newState == PROJECTILE_STATE_FLYING)) || (newState == PROJECTILE_STATE_FLYING_PROJECTED)) {
 			if (this->pFiringActor != (CActor*)0x0) {
 				(this->pCollisionData)->actorFieldA = this->pFiringActor;
 				this->pFiringActor->pCollisionData->actorFieldA = this;
@@ -1073,7 +1068,7 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 	int iVar2;
 	int iVar3;
 
-	if (oldState == 0xe) {
+	if (oldState == PROJECTILE_STATE_DYING) {
 		iVar3 = 0;
 		iVar2 = 0;
 		do {
@@ -1084,7 +1079,7 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 		} while (iVar3 < 4);
 	}
 	else {
-		if ((oldState == 10) || (oldState == 8)) {
+		if ((oldState == PROJECTILE_STATE_FLYING_DIRECTED) || (oldState == PROJECTILE_STATE_FLYING)) {
 			(this->pCollisionData)->actorFieldA = (CActor*)0x0;
 
 			if (this->pFiringActor != (CActor*)0x0) {
@@ -1092,10 +1087,10 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 			}
 		}
 		else {
-			if (oldState == 7) {
+			if (oldState == PROJECTILE_STATE_FLYING_PROJECTED) {
 				this->field_0x404 = 0.0f;
 
-				if ((newState != 8) && (newState != 10)) {
+				if ((newState != PROJECTILE_STATE_FLYING) && (newState != PROJECTILE_STATE_FLYING_DIRECTED)) {
 					(this->pCollisionData)->actorFieldA = (CActor*)0x0;
 
 					if (this->pFiringActor != (CActor*)0x0) {
@@ -1105,7 +1100,7 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 			}
 			else {
 				pProjectile = pBehaviourStand->pOwner;
-				if (oldState == 0xd) {
+				if (oldState == PROJECTILE_STATE_DIE) {
 					this_01 = pProjectile->pAnimationController;
 					if (this_01 != (CAnimation*)0x0) {
 						this_01->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
@@ -1119,7 +1114,7 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 						pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
 						pCVar1 = pProjectile->pCollisionData;
 						pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x80000;
-						pProjectile->timeToExplode = (((ed_g3d_hierarchy*)pProjectile->field_0x350)->transformA).aa;
+						pProjectile->timeToExplode = (((ed_g3d_hierarchy*)pProjectile->aProjectileSubObjs)->transformA).aa;
 						pProjectile->flags = pProjectile->flags & 0xfffffffc;
 						pProjectile->flags = pProjectile->flags & 0xffffff5f;
 						pProjectile->EvaluateDisplayState();
@@ -1137,9 +1132,9 @@ void CActorProjectile::AppearToDie()
 	this->flags = this->flags & 0xffffff5f;
 	EvaluateDisplayState();
 	this->flags = this->flags & 0xfffffffc;
-	SetState(0xc, -1);
+	SetState(PROJECTILE_STATE_LIVING, -1);
 
-	this->timeToExplode = this->field_0x350->timeToExplode;
+	this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
 
 	return;
 }
@@ -1154,11 +1149,11 @@ void CActorProjectile::GoToSleep()
 	EvaluateDisplayState();
 
 	behaviourId = this->curBehaviourId;
-	if (behaviourId == 10) {
-		SetState(6, -1);
+	if (behaviourId == PROJECTILE_BEHAVIOUR_LAVA_BALL) {
+		SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 	}
 	else {
-		if (behaviourId == 4) {
+		if (behaviourId == PROJECTILE_BEHAVIOUR_STRAIGHT) {
 			ClearLocalData();
 			SetBehaviour(-1, -1, -1);
 			SetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT, -1, -1);
@@ -1174,11 +1169,72 @@ void CActorProjectile::GoToSleep()
 
 void CActorProjectile::Die()
 {
-	this->SetState(0xd, -1);
+	this->SetState(PROJECTILE_STATE_DIE, -1);
 
 	return;
 }
 
+void CActorProjectile::UpdateSmoke()
+{
+	ProjectileSubObj* pProjectileSubObj;
+	CNewFx* pFx;
+	int iVar3;
+	bool bVar4;
+
+	if (0.0 < this->timeToExplode) {
+		if (((this->aProjectileSubObjs->flags & 0x8000) == 0) && (this->timeToExplode <= this->aProjectileSubObjs->field_0x44)) {
+			pFx = (this->field_0x354).pFx;
+
+			if ((pFx == (CNewFx*)0x0) ||
+				((iVar3 = (this->field_0x354).id, iVar3 == 0 || (bVar4 = true, iVar3 != pFx->id)))) {
+				bVar4 = false;
+			}
+
+			if ((((bVar4) && (pFx != (CNewFx*)0x0)) && (iVar3 = (this->field_0x354).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+				pFx->Stop(-1.0f);
+			}
+		}
+
+		pProjectileSubObj = this->aProjectileSubObjs;
+		if (((pProjectileSubObj->flags & 0x200000) == 0) && (this->timeToExplode <= pProjectileSubObj->field_0x40)) {
+			pFx = (this->field_0x35c).pFx;
+			if ((pFx == (CNewFx*)0x0) || ((iVar3 = (this->field_0x35c).id, iVar3 == 0 || (iVar3 != pFx->id)))) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = true;
+			}
+
+			if ((!bVar4) && (pProjectileSubObj->field_0x38 != 0xffffffff)) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x35c, pProjectileSubObj->field_0x38, FX_MATERIAL_SELECTOR_NONE);
+				pFx = (this->field_0x35c).pFx;
+				if ((pFx == (CNewFx*)0x0) || ((iVar3 = (this->field_0x35c).id, iVar3 == 0 || (bVar4 = true, iVar3 != pFx->id)))) {
+					bVar4 = false;
+				}
+
+				if (bVar4) {
+					if (this->pAnimationController == (CAnimation*)0x0) {
+						if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x35c).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+							pFx->SpatializeOnActor(0xe, (CActor*)this, 0);
+						}
+					}
+					else {
+						if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x35c).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+							pFx->SpatializeOnActor(0xe, (CActor*)this, 0x686365d2);
+						}
+					}
+
+					pFx = (this->field_0x35c).pFx;
+					if (((pFx != (CNewFx*)0x0) && (iVar3 = (this->field_0x35c).id, iVar3 != 0)) && (iVar3 == pFx->id)) {
+						pFx->Start(0, 0);
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
 
 void CActorProjectile::Project(edF32VECTOR4* pDestination, bool bShowFx, CActor* pFiringActor)
 {
@@ -1191,15 +1247,15 @@ void CActorProjectile::Project(edF32VECTOR4* pDestination, bool bShowFx, CActor*
 	edF32Vector4AddHard(v0, v0, pDestination);
 	this->dynamicExt.aImpulseVelocityMagnitudes[0] = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 
-	SetState(7, -1);
+	SetState(PROJECTILE_STATE_FLYING_PROJECTED, -1);
 
-	if ((this->field_0x350->flags & 0x2000) != 0) {
+	if ((this->aProjectileSubObjs->flags & 0x2000) != 0) {
 		edF32Vector4NormalizeHard(&newRotation, pDestination);
 		this->rotationQuat = newRotation;
 	}
 
 	if (bShowFx != false) {
-		this->timeToExplode = this->field_0x350->timeToExplode;
+		this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
 		ShowFx();
 	}
 
@@ -1229,10 +1285,10 @@ void CActorProjectile::ProjectDirected(float velocity, edF32VECTOR4* pSource, ed
 	edF32Vector4ScaleHard(2.0f, &eStack32, &CDynamicExt::gForceGravity);
 	this->vectorDyn.BuildFromAccelDistAmplitude(velocity, &CDynamicExt::gForceGravity, &eStack16, 1);
 
-	SetState(10, -1);
+	SetState(PROJECTILE_STATE_FLYING_DIRECTED, -1);
 
 	if (bShowFx != false) {
-		this->timeToExplode = this->field_0x350->timeToExplode;
+		this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
 		ShowFx();
 	}
 
@@ -1257,7 +1313,7 @@ void CActorProjectile::StateLiving(uint param_2, int param_3)
 	this->dynamicExt.normalizedTranslation.w = 0.0f;
 	this->dynamicExt.field_0x6c = 0.0f;
 
-	if ((this->field_0x350->flags & 0x2000) == 0) {
+	if ((this->aProjectileSubObjs->flags & 0x2000) == 0) {
 		uVar3 = 0x100a023b;
 	}
 	else {
@@ -1266,27 +1322,27 @@ void CActorProjectile::StateLiving(uint param_2, int param_3)
 		pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfffffffe;
 	}
 
-	if ((this->field_0x350->flags & 0x4000) == 0) {
+	if ((this->aProjectileSubObjs->flags & 0x4000) == 0) {
 		ManageDyn(4.0f, uVar3, (CActorsTable*)0x0);
 	}
 	else {
 		ManageDyn(4.0f, uVar3, &local_110);
 	}
 
-	if (0.0f < this->field_0x350->timeToExplode) {
-		SV_AUT_WarnActors(this->field_0x350->warnRadius, 0.0f, (CActor*)0x0);
+	if (0.0f < this->aProjectileSubObjs->timeToExplode) {
+		SV_AUT_WarnActors(this->aProjectileSubObjs->warnRadius, 0.0f, (CActor*)0x0);
 	}
 
-	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && ((this->field_0x350->flags & 0x2000) == 0)) {
+	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && ((this->aProjectileSubObjs->flags & 0x2000) == 0)) {
 		if (0.2f < this->timeInAir) {
-			SetState(8, -1);
+			SetState(PROJECTILE_STATE_FLYING, -1);
 		}
 	}
 	else {
 		this->timeInAir = 0.0f;
 	}
 
-	if ((this->field_0x350->flags & 0x4000) != 0) {
+	if ((this->aProjectileSubObjs->flags & 0x4000) != 0) {
 		while (local_110.nbEntries != 0) {
 			pHitActor = local_110.PopCurrent();
 			if ((pHitActor != this->pFiringActor) && (pHitActor->typeID != PROJECTILE)) {
@@ -1298,7 +1354,7 @@ void CActorProjectile::StateLiving(uint param_2, int param_3)
 		}
 
 		if (GetLifeInterface()->GetValue() <= 0.0f) {
-			SetState(0xd, -1);
+			SetState(PROJECTILE_STATE_DIE, -1);
 		}
 	}
 
@@ -1324,7 +1380,7 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 	value = fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
 	fVar4 = edFIntervalUnitDstLERP(value, 10.0f, 0.0f);
 	this->field_0x3f0 = fVar4;
-	if ((this->field_0x350->flags & 0x4800) == 0) {
+	if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
 		ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
 	}
 	else {
@@ -1334,13 +1390,13 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 		while (local_110.nbEntries != 0) {
 			pHitActor = local_110.PopCurrent();
 			if (pHitActor != this->pFiringActor) {
-				uVar3 = this->field_0x350->flags;
+				uVar3 = this->aProjectileSubObjs->flags;
 				if ((uVar3 & 0x4000) != 0) {
 					local_120.xyz = this->currentLocation.xyz;
 					local_120.w = 3.402823e+38f;
 					if (pHitActor->typeID == PROJECTILE) {
-						if ((this->field_0x350->flags & 0x40000) != 0) {
-							pHitActor->SetState(0xd, -1);
+						if ((this->aProjectileSubObjs->flags & 0x40000) != 0) {
+							pHitActor->SetState(PROJECTILE_STATE_DIE, -1);
 						}
 					}
 					else {
@@ -1348,37 +1404,38 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 
 						this->dynamic.speed = 0.0f;
 
-						uVar3 = this->field_0x350->flags;
+						uVar3 = this->aProjectileSubObjs->flags;
 						if ((uVar3 & 0x2000) != 0) {
-							this->field_0x350->flags = uVar3 | 0x800000;
+							this->aProjectileSubObjs->flags = uVar3 | 0x800000;
 						}
 					}
 
 					this->dynamic.speed = 0.0f;
-					SetState(0xd, -1);
+					SetState(PROJECTILE_STATE_DIE, -1);
 
 					return;
 				}
 
 				if ((uVar3 & 0x800) != 0) {
 					this->dynamic.speed = 0.0f;
-					SetState(0xd, -1);
+					SetState(PROJECTILE_STATE_DIE, -1);
 					return;
 				}
 			}
 		}
 	}
 
-	if ((this->field_0x350->flags & 0x20) != 0) {
+	if ((this->aProjectileSubObjs->flags & 0x20) != 0) {
 		edF32Vector4NormalizeHard(&local_130, &this->dynamic.velocityDirectionEuler);
 		this->rotationQuat = local_130;
 	}
 
 	if ((pCVar1->flags_0x4 & 7) != 0) {
-		uVar3 = this->field_0x350->flags;
+		uVar3 = this->aProjectileSubObjs->flags;
 		if ((uVar3 & 4) != 0) {
 			this->dynamic.speed = 0.0f;
-			SetState(0xd, -1);
+			SetState(PROJECTILE_STATE_DIE, -1);
+
 			return;
 		}
 
@@ -1436,12 +1493,12 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 				this->field_0x3f0 = 0.0f;
 				this->dynamic.speed = 0.0f;
 
-				if ((this->field_0x350->flags & 1) != 0) {
-					SetState(0xd, -1);
+				if ((this->aProjectileSubObjs->flags & 1) != 0) {
+					SetState(PROJECTILE_STATE_DIE, -1);
 					return;
 				}
 
-				SetState(0xc, -1);
+				SetState(PROJECTILE_STATE_LIVING, -1);
 
 				return;
 			}
@@ -1471,7 +1528,7 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 	this->vectorDyn.Integrate(pTVar2->cutsceneDeltaTime);
 
 	dynFlags = 0x4392b;
-	if ((this->field_0x350->flags & 0x2000) != 0) {
+	if ((this->aProjectileSubObjs->flags & 0x2000) != 0) {
 		dynFlags = 0x212b;
 	}
 
@@ -1490,21 +1547,22 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 		this->dynamic.speed = 0.0f;
 	}
 
-	if ((this->field_0x350->flags & 0x4800) == 0) {
+	if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
 		ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
 	LAB_002061f0:
-		if ((this->field_0x350->flags & 0x20) != 0) {
+		if ((this->aProjectileSubObjs->flags & 0x20) != 0) {
 			edF32Vector4NormalizeHard(&local_130, &this->dynamic.velocityDirectionEuler);
 			this->rotationQuat = local_130;
 		}
 
 		if (((this->pCollisionData)->flags_0x4 & 2) != 0) {
-			this->dynamic.speed = 0.0;
-			if ((this->field_0x350->flags & 4) == 0) {
-				SetState(0xc, -1);
+			this->dynamic.speed = 0.0f;
+
+			if ((this->aProjectileSubObjs->flags & 4) == 0) {
+				SetState(PROJECTILE_STATE_LIVING, -1);
 			}
 			else {
-				SetState(0xd, -1);
+				SetState(PROJECTILE_STATE_DIE, -1);
 			}
 		}
 	}
@@ -1519,26 +1577,26 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 				pCVar3 = local_110.PopCurrent();
 			} while (pCVar3 == this->pFiringActor);
 
-			if ((this->field_0x350->flags & 0x4000) != 0) {
+			if ((this->aProjectileSubObjs->flags & 0x4000) != 0) {
 				local_120.xyz = this->currentLocation.xyz;
 				local_120.w = 3.402823e+38f;
 				HitActor(&local_120, pCVar3, param_3, 0);
 
 				if (!bVar1) {
 					this->dynamic.speed = 0.0;
-					dynFlags = this->field_0x350->flags;
+					dynFlags = this->aProjectileSubObjs->flags;
 					bVar1 = true;
 
 					if ((dynFlags & 0x2000) != 0) {
-						this->field_0x350->flags = dynFlags | 0x800000;
+						this->aProjectileSubObjs->flags = dynFlags | 0x800000;
 						bVar1 = true;
 					}
 				}
 			}
-		} while ((this->field_0x350->flags & 0x800) == 0);
+		} while ((this->aProjectileSubObjs->flags & 0x800) == 0);
 
 		this->dynamic.speed = 0.0f;
-		SetState(0xd, -1);
+		SetState(PROJECTILE_STATE_DIE, -1);
 	}
 
 	return;
@@ -1572,20 +1630,20 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 
 	ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
 
-	if (((this->field_0x350->flags & 8) != 0) && ((this->field_0x3f4 & 1) == 0)) {
-		if (this->field_0x350->animDuration == 0.0) {
+	if (((this->aProjectileSubObjs->flags & 8) != 0) && ((this->field_0x3f4 & 1) == 0)) {
+		if (this->aProjectileSubObjs->animDuration == 0.0f) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
 			EvaluateDisplayState();
 		}
 
 		if (this->field_0x540 == 0) {
-			if ((this->field_0x350->field_0x30 != -1) && (this->field_0x5a8 == 0)) {
+			if ((this->aProjectileSubObjs->field_0x30 != -1) && (this->field_0x5a8 == 0)) {
 				IMPLEMENTATION_GUARD_LOG(
 				local_10 = 0;
 				local_c = (int*)0x0;
 				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_10, this->field_0x350->field_0x30, 0xffffffffffffffff);
+				(CScene::ptable.g_EffectsManager_004516b8, &local_10, this->aProjectileSubObjs->field_0x30, 0xffffffffffffffff);
 				if ((local_c == (int*)0x0) || ((local_10 == 0 || (bVar2 = true, local_10 != local_c[6])))) {
 					bVar2 = false;
 				}
@@ -1601,12 +1659,12 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 			}
 		}
 		else {
-			if ((this->field_0x350->field_0x34 != -1) && (this->field_0x5a8 == 0)) {
+			if ((this->aProjectileSubObjs->field_0x34 != -1) && (this->field_0x5a8 == 0)) {
 				IMPLEMENTATION_GUARD_LOG(
 				local_8 = 0;
 				local_4 = (int*)0x0;
 				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->field_0x350->field_0x34,
+				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->aProjectileSubObjs->field_0x34,
 					0xffffffffffffffff);
 				if ((local_4 == (int*)0x0) || ((local_8 == 0 || (bVar2 = true, local_8 != local_4[6])))) {
 					bVar2 = false;
@@ -1630,13 +1688,13 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 			}
 		}
 
-		if ((this->field_0x350->flags & 0x10000) == 0) {
+		if ((this->aProjectileSubObjs->flags & 0x10000) == 0) {
 			if (((param_3 == 3) || (param_3 == 1)) || (param_3 == 0)) {
 				this->field_0x3f4 = this->field_0x3f4 | 1;
 			}
 
 			local_20.xyz = this->currentLocation.xyz;
-			local_20.w = this->field_0x350->hitRadius;
+			local_20.w = this->aProjectileSubObjs->hitRadius;
 
 			if ((this->actorFieldS & 8) == 0) {
 				local_130.nbEntries = 0;
@@ -1657,10 +1715,10 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 	pTVar3 = Timer::GetTimer();
 	this->field_0x570 = this->field_0x570 - pTVar3->cutsceneDeltaTime;
 
-	pPVar1 = this->field_0x350;
+	pPVar1 = this->aProjectileSubObjs;
 	if ((pPVar1->flags & 0x10000) == 0) {
 		fVar9 = pPVar1->hitRadius;
-		radius = this->field_0x350->field_0x1c;
+		radius = this->aProjectileSubObjs->field_0x1c;
 
 		if (fVar9 < radius) {
 			fVar8 = pPVar1->animDuration;
@@ -1692,8 +1750,8 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 			EvaluateDisplayState();
 
 			iVar5 = this->curBehaviourId;
-			if (iVar5 == 10) {
-				SetState(6, -1);
+			if (iVar5 == PROJECTILE_BEHAVIOUR_LAVA_BALL) {
+				SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 			}
 			else {
 				if (iVar5 == PROJECTILE_BEHAVIOUR_STRAIGHT) {
@@ -1751,7 +1809,7 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 		}
 
 		if (fVar5 < pSphere->w) {
-			if ((param_5 != 0) && ((this->field_0x350->flags & 0x400000) != 0)) {
+			if ((param_5 != 0) && ((this->aProjectileSubObjs->flags & 0x400000) != 0)) {
 				SV_GetActorColCenter(&eStack192);
 				pHitActor->SV_GetActorColCenter(&eStack208);
 				edF32Vector4SubHard(&eStack224, &eStack208, &eStack192);
@@ -1792,8 +1850,8 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 				}
 			}
 
-			auStack160.damage = this->field_0x350->damage;
-			auStack160.field_0x30 = edFIntervalUnitSrcLERP(fVar5 / pSphere->w, this->field_0x350->field_0x20, this->field_0x350->field_0x24);
+			auStack160.damage = this->aProjectileSubObjs->damage;
+			auStack160.field_0x30 = edFIntervalUnitSrcLERP(fVar5 / pSphere->w, this->aProjectileSubObjs->field_0x20, this->aProjectileSubObjs->field_0x24);
 			local_b0 = (pHitActor->currentLocation).x;
 			local_ac = (pHitActor->currentLocation).y;
 			fStack168 = (pHitActor->currentLocation).z;
@@ -1850,7 +1908,7 @@ void CActorProjectile::ShowFx()
 	int iVar3;
 	bool bVar3;
 
-	uint uVar1 = this->field_0x350->field_0x3c;
+	uint uVar1 = this->aProjectileSubObjs->field_0x3c;
 	if (uVar1 != 0xffffffff) {
 		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x354, uVar1, FX_MATERIAL_SELECTOR_NONE);
 		CNewFx* pFx = (this->field_0x354).pFx;
@@ -1915,11 +1973,11 @@ void CBehaviourProjectile::Begin(CActor* pOwner, int newState, int newAnimationT
 
 	if (newState == -1) {
 		pProjectile = this->pOwner;
-		if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INVENTORY) || (pProjectile->field_0x350->timeToExplode == 0.0f)) {
-			pProjectile->SetState(0xc, -1);
+		if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INVENTORY) || (pProjectile->aProjectileSubObjs->timeToExplode == 0.0f)) {
+			pProjectile->SetState(PROJECTILE_STATE_LIVING, -1);
 		}
 		else {
-			pProjectile->SetState(6, -1);
+			pProjectile->SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 		}
 	}
 	else {
@@ -1943,7 +2001,7 @@ void CBehaviourProjectile::TermState(int oldState, int newState)
 
 	pProjectile = this->pOwner;
 
-	if (oldState == 0xd) {
+	if (oldState == PROJECTILE_STATE_DIE) {
 		pAnimation = pProjectile->pAnimationController;
 		if (pAnimation != (CAnimation*)0x0) {
 			pAnimation->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
@@ -1952,13 +2010,13 @@ void CBehaviourProjectile::TermState(int oldState, int newState)
 		pProjectile->field_0x5a8 = 0;
 	}
 	else {
-		if (oldState == 6) {
+		if (oldState == PROJECTILE_STATE_FLYING_LAVA_BALL) {
 			pCol = pProjectile->pCollisionData;
 			pCol->flags_0x0 = pCol->flags_0x0 | 0x1000;
 			pCol = pProjectile->pCollisionData;
 			pCol->flags_0x0 = pCol->flags_0x0 | 0x80000;
 
-			pProjectile->timeToExplode = pProjectile->field_0x350->timeToExplode;
+			pProjectile->timeToExplode = pProjectile->aProjectileSubObjs->timeToExplode;
 
 			pProjectile->flags = pProjectile->flags & 0xfffffffc;
 			pProjectile->flags = pProjectile->flags & 0xffffff5f;
@@ -2044,11 +2102,11 @@ void CBehaviourProjectileStand::Begin(CActor* pOwner, int newState, int newAnima
 
 	if (newState == -1) {
 		pProjectile = this->pOwner;
-		if ((pProjectile->prevBehaviourId == 9) || (pProjectile->field_0x350->timeToExplode == 0.0f)) {
-			pProjectile->SetState(0xc, -1);
+		if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INVENTORY) || (pProjectile->aProjectileSubObjs->timeToExplode == 0.0f)) {
+			pProjectile->SetState(PROJECTILE_STATE_LIVING, -1);
 		}
 		else {
-			pProjectile->SetState(6, -1);
+			pProjectile->SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 		}
 	}
 	else {
@@ -2056,8 +2114,8 @@ void CBehaviourProjectileStand::Begin(CActor* pOwner, int newState, int newAnima
 	}
 
 	pProjectile = this->pOwner;
-	if ((pProjectile->prevBehaviourId == 0xc) && (newState == -1)) {
-		pProjectile->SetState(0xc, -1);
+	if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INACTIVE) && (newState == -1)) {
+		pProjectile->SetState(PROJECTILE_STATE_LIVING, -1);
 	}
 
 	this->pOwner->field_0x404 = 0.0f;
@@ -2090,7 +2148,7 @@ void CBehaviourProjectileStraight::Init(CActor* pOwner)
 {
 	this->pOwner = reinterpret_cast<CActorProjectile*>(pOwner);
 
-	if ((this->pOwner->field_0x350->flags & 0x100000) != 0) {
+	if ((this->pOwner->aProjectileSubObjs->flags & 0x100000) != 0) {
 		this->pOwner->patternPart.FUN_003a7cc0(this->field_0x10);
 	}
 
@@ -2173,11 +2231,11 @@ void CBehaviourProjectilePortable::Begin(CActor* pOwner, int newState, int newAn
 
 	if (newState == -1) {
 		pProjectile = this->pOwner;
-		if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INVENTORY) || (pProjectile->field_0x350->timeToExplode == 0.0f)) {
-			pProjectile->SetState(0xc, -1);
+		if ((pProjectile->prevBehaviourId == PROJECTILE_BEHAVIOUR_INVENTORY) || (pProjectile->aProjectileSubObjs->timeToExplode == 0.0f)) {
+			pProjectile->SetState(PROJECTILE_STATE_LIVING, -1);
 		}
 		else {
-			pProjectile->SetState(6, -1);
+			pProjectile->SetState(PROJECTILE_STATE_FLYING_LAVA_BALL, -1);
 		}
 	}
 	else {
@@ -2186,8 +2244,8 @@ void CBehaviourProjectilePortable::Begin(CActor* pOwner, int newState, int newAn
 
 	if (newState == -1) {
 		pProjectile = this->pOwner;
-		if (pProjectile->actorState != 0xc) {
-			pProjectile->SetState(0xc, -1);
+		if (pProjectile->actorState != PROJECTILE_STATE_LIVING) {
+			pProjectile->SetState(PROJECTILE_STATE_LIVING, -1);
 		}
 	}
 	else {
