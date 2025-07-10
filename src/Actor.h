@@ -53,15 +53,6 @@ struct GetActionMsgParams
 	edF32VECTOR4 field_0x10;
 };
 
-struct MessageKickedParams
-{
-	int field_0x0;
-	float field_0xc;
-	edF32VECTOR4 impulseDirection;
-	float field_0x30;
-	float field_0x44;
-};
-
 enum ACTOR_MESSAGE {
 	MESSAGE_KICKED = 0x2,
 	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
@@ -279,6 +270,8 @@ struct CActorParamsIn
 	float rotSpeed;
 	edF32VECTOR4* pRotation;
 };
+
+#define HIT_TYPE_KICK 0x3
 
 struct _msg_hit_param
 {
@@ -529,6 +522,7 @@ public:
 	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
 	void SV_InstanciateMaterialBank();
 	bool SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation);
+	bool SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3);
 
 	void SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel);
 	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere);

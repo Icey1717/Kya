@@ -1817,6 +1817,55 @@ bool CActor::SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrient
 	return uVar1;
 }
 
+bool CActor::SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3)
+{
+	bool bVar1;
+	float fVar3;
+	float puVar4;
+	float puVar5;
+	float fVar4;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	if (param_1 == 0.0f) {
+		bVar1 = false;
+	}
+	else {
+		local_10.x = (this->rotationQuat).x;
+		local_10.y = 0.0f;
+		local_10.z = (this->rotationQuat).z;
+		local_10.w = 0.0f;
+
+		edF32Vector4NormalizeHard(&local_10, &local_10);
+
+		local_20.x = param_3->x;
+		local_20.y = 0.0f;
+		local_20.z = param_3->z;
+		local_20.w = 0.0f;
+
+		edF32Vector4NormalizeHard(&local_20, &local_20);
+
+		fVar3 = GetTimer()->cutsceneDeltaTime;
+		puVar4 = edF32Vector4DotProductHard(&local_10, &local_20);
+		if (1.0f < puVar4) {
+			puVar5 = 1.0f;
+		}
+		else {
+			puVar5 = -1.0f;
+			if (-1.0f <= puVar4) {
+				puVar5 = puVar4;
+			}
+		}
+
+		fVar4 = acosf(puVar5);
+		bVar1 = fVar4 <= param_1 * fVar3;
+	}
+
+	return bVar1;
+}
+
+
+
 void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
 {
 	int inAnimType;

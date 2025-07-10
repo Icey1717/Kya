@@ -17,7 +17,7 @@ public:
 	virtual void Stop(float param_1);
 	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();
-	virtual void Func_0x30(float param_1) { IMPLEMENTATION_GUARD(); }
+	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int index);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
 	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }

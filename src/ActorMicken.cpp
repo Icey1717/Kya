@@ -1611,20 +1611,20 @@ int CBehaviourMickenKicked::InterpretMessage(CActor* pSender, int msg, void* pMs
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 eStack16;
 
-	MessageKickedParams* pParam = reinterpret_cast<MessageKickedParams*>(pMsgParam);
+	_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 
 	/* WARNING: Load size is inaccurate */
-	if (((msg == 2) && (pParam->field_0x0)) && (pMicken = this->pOwner, pMicken->actorState == 0x1c)) {
+	if (((MESSAGE_KICKED == 2) && (pMsgHitParam->projectileType == HIT_TYPE_KICK)) && (pMicken = this->pOwner, pMicken->actorState == 0x1c)) {
 		pMicken->SetState(0x17, -1);
 
 		local_20.x = this->pOwner->currentLocation.x;
 		local_20.z = this->pOwner->currentLocation.z;
 		local_20.w = this->pOwner->currentLocation.w;
-		local_20.y = pParam->field_0x44;
+		local_20.y = pMsgHitParam->field_0x40.y;
 
 		this->pOwner->UpdatePosition(&local_20, true);
 
-		edF32Vector4ScaleHard(pParam->field_0x30 / this->pOwner->scale.y, &eStack16, &pParam->impulseDirection);
+		edF32Vector4ScaleHard(pMsgHitParam->field_0x30 / this->pOwner->scale.y, &eStack16, &pMsgHitParam->field_0x20);
 
 		pMicken = this->pOwner;
 		pTVar2 = GetTimer();

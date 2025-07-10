@@ -1910,12 +1910,13 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 			}
 			else {
 				if (((newAnim == 0x27) || (newAnim == 0x18)) || (newAnim == 0x16)) {
-					IMPLEMENTATION_GUARD(
 					peVar1 = pAnimator->pAnimKeyTableEntry;
-					if (peVar1->keyIndex_0x8 == 2) {
-						peVar1[2].count_0x0 = *(int*)&this->field_0x4fc;
-						pValue->field_0xc = (int)(1.0 - *(float*)&this->field_0x4fc);
-					})
+					if (peVar1->keyIndex_0x8.asKey == 2) {
+						char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+						AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+						pValue->field_0x10 = this->field_0x4fc;
+						pValue->field_0xc = 1.0f - this->field_0x4fc;
+					}
 				}
 				else {
 					if ((newAnim == 0x74) || (newAnim == 0x73)) {
@@ -3760,6 +3761,105 @@ void CActorFighter::_StateFighterHitStaggerFallInit(float param_1)
 	fVar8 = edF32Vector4NormalizeHard(&this->field_0x740, &this->field_0x740);
 	this->dynamic.speed = fVar8;
 	this->dynamic.rotationQuat = this->field_0x740;
+
+	return;
+}
+
+void CActorFighter::_StateFighter_0xaInit()
+{
+	CCollision* pCVar1;
+	int iVar2;
+	byte bVar3;
+	float time;
+	CAnimation* pAnim;
+
+	pAnim = this->pAnimationController;
+	iVar2 = CActor::GetIdMacroAnim(0x16);
+	if (iVar2 < 0) {
+		time = 0.0f;
+	}
+	else {
+		time = pAnim->GetAnimLength(iVar2, 1);
+	}
+
+	pAnim->anmBinMetaAnimator.SetLayerTimeWarper(time / (this->scalarDynJump).duration, 0);
+
+	pCVar1 = this->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffffcf;
+	this->field_0x4f0 = this->currentLocation.y;
+	this->fightFlags = this->fightFlags & 0xfffffffd;
+
+	bVar3 = this->field_0x44c & 0xf;
+	if ((((this->field_0x44c & 0xf) == 0) || (bVar3 == 2)) || (bVar3 == 1)) {
+		this->field_0x4fc = 0.5f;
+	}
+	else {
+		if (bVar3 < 6) {
+			this->field_0x4fc = 0.0f;
+		}
+		else {
+			this->field_0x4fc = 1.0f;
+		}
+	}
+
+	return;
+}
+
+void CActorFighter::_StateFighter_0xbInit(float dist)
+{
+	CCollision* pCVar1;
+	int iVar2;
+	byte bVar3;
+	float time;
+	CAnimation* pAnim;
+
+	pAnim = this->pAnimationController;
+	iVar2 = CActor::GetIdMacroAnim(0x16);
+	if (iVar2 < 0) {
+		time = 0.0f;
+	}
+	else {
+		time = pAnim->GetAnimLength(iVar2, 1);
+	}
+
+	pAnim->anmBinMetaAnimator.SetLayerTimeWarper(time / (this->scalarDynJump).duration, 0);
+
+	this->field_0x36c = this->field_0x36c & 0xfffffffe;
+	this->scalarDynA.BuildFromDistTime(dist, time);
+	this->field_0x44c = this->field_0x44c & 0xf0 | 3;
+	pCVar1 = this->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffffcf;
+	this->field_0x4f0 = this->currentLocation.y;
+	this->fightFlags = this->fightFlags & 0xfffffffd;
+
+	bVar3 = this->field_0x44c & 0xf;
+	if ((((this->field_0x44c & 0xf) == 0) || (bVar3 == 2)) || (bVar3 == 1)) {
+		this->field_0x4fc = 0.5f;
+	}
+	else {
+		if (bVar3 < 6) {
+			this->field_0x4fc = 0.0f;
+		}
+		else {
+			this->field_0x4fc = 1.0f;
+		}
+	}
+
+	return;
+}
+
+void CActorFighter::_StateFighter_0xb()
+{
+	CActorFighter::_ManageFighterDyn(0x3b, 0x129, (CActorsTable*)0x0);
+
+	if (this->scalarDynJump.IsFinished() == true) {
+		if ((this->field_0x444 & 1) == 0) {
+			SetState(0xd, -1);
+		}
+		else {
+			SetState(0xe, -1);
+		}
+	}
 
 	return;
 }
@@ -6513,6 +6613,10 @@ void CBehaviourFighter::Manage()
 		}
 	}
 	break;
+	case 0xa:
+	case 0xb:
+		pFighter->_StateFighter_0xb();
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 	}
@@ -6798,6 +6902,11 @@ void CBehaviourFighter::InitState(int newState)
 	case 0x6a:
 		this->pOwner->_StateFighterFightActionDynInit(&this->pOwner->pBlow->blowStageEnd);
 		break;
+	case 0xa:
+		this->pOwner->_StateFighter_0xaInit();
+	case 0xb:
+		this->pOwner->_StateFighter_0xbInit(1.6f);
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 	}
@@ -6918,6 +7027,11 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 
 		pFighter->FUN_0031aad0(pFighter->_GetFighterAnimationLength(pFighter->currentAnimType), pFighter->field_0x834);
 	}
+		break;
+	case 0xa:
+	case 0xb:
+		pFighter = this->pOwner;
+		pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		break;
 	default:
 		IMPLEMENTATION_GUARD();

@@ -129,6 +129,30 @@ int CFxNewComposite::GetType()
 	return FX_TYPE_COMPOSITE;
 }
 
+void CFxNewComposite::Func_0x30(float param_1)
+{
+	uint curIndex;
+	CFxHandle* pHandle;
+	CNewFx* pFxChild;
+
+	pHandle = this->aFxHandles;
+	this->field_0x70 = param_1;
+
+	curIndex = this->nbComponentParticles;
+	while (curIndex != 0) {
+		curIndex = curIndex - 1;
+		pFxChild = pHandle->pFx;
+
+		if (((pFxChild != (CNewFx*)0x0) && (pHandle->id != 0)) && (pHandle->id == pFxChild->id)) {
+			pFxChild->Func_0x30(param_1);
+		}
+
+		pHandle = pHandle + 1;
+	}
+
+	return;
+}
+
 void CFxNewComposite::NotifySonIsDead(CNewFx* pSon, int index)
 {
 	this->aFxHandles[index].id = 0;

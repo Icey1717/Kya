@@ -535,7 +535,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 				_msg_hit_param* pHitMsgParam = (_msg_hit_param*)pMsgParam;
 
 				if ((GetStateFlags(this->actorState) & 0x800) != 0) {
-					if (pHitMsgParam->projectileType == 3) {
+					if (pHitMsgParam->projectileType == HIT_TYPE_KICK) {
 						if (((this->aProjectileSubObjs->flags & 0x10) != 0) && (this->actorState == PROJECTILE_STATE_AUT_KICKED)) {
 							local_10.x = this->currentLocation.x;
 							local_10.z = this->currentLocation.z;

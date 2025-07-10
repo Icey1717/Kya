@@ -505,6 +505,11 @@ public:
 
 	void _StateFighterHitStaggerFallInit(float param_1);
 
+	void _StateFighter_0xaInit();
+
+	void _StateFighter_0xbInit(float param_1);
+	void _StateFighter_0xb();
+
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
 
@@ -656,6 +661,7 @@ public:
 	float field_0x4f0;
 	float field_0x4f4;
 	float field_0x4f8;
+	float field_0x4fc;
 
 	float field_0x504;
 	float field_0x50c;

@@ -421,6 +421,26 @@ bool CVibrationDyn::MakeVibrate(edF32VECTOR3* param_2)
 	return bFinished != 0;
 }
 
+
+void CScalarDyn::BuildFromDistTime(float dist, float time)
+{
+	float fVar1;
+
+	this->field_0xc = 0.0f;
+	this->field_0x10 = 0.0f;
+	fVar1 = dist / (time * time);
+	this->field_0x14 = fVar1;
+	this->field_0x24 = fVar1;
+	this->flags = 0;
+	this->field_0x4 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x20 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->duration = time;
+
+	return;
+}
+
 void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float distance)
 {
 	if (distance == 0.0f) {

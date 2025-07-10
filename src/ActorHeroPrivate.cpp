@@ -10773,9 +10773,9 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 
 			if (fVar8 < fVar9) {
 				if (this->pKickedActor != (CActorMovable*)0x0) {
-					MessageKickedParams kickedParams;
-					kickedParams.field_0x0 = 3;
-					kickedParams.field_0xc = 1.0f;
+					_msg_hit_param kickedParams;
+					kickedParams.projectileType = HIT_TYPE_KICK;
+					kickedParams.damage = 1.0f;
 
 					if ((this->pKickedActor)->typeID == MICKEN) {
 						fVar9 = 700.0f;
@@ -10789,14 +10789,14 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 					fVar9 = edFIntervalLERP(this->field_0xa84, 0.0f, this->runSpeed, 1.0f, 2.5f);
 					kickedParams.field_0x30 = kickedParams.field_0x30 * fVar9;
 
-					kickedParams.impulseDirection.x = this->rotationQuat.x;
-					kickedParams.impulseDirection.z = this->rotationQuat.z;
-					kickedParams.impulseDirection.w = this->rotationQuat.w;
-					kickedParams.impulseDirection.y = 0.64265704f;
-					edF32Vector4SafeNormalize1Hard(&kickedParams.impulseDirection, &kickedParams.impulseDirection);
+					kickedParams.field_0x20.x = this->rotationQuat.x;
+					kickedParams.field_0x20.z = this->rotationQuat.z;
+					kickedParams.field_0x20.w = this->rotationQuat.w;
+					kickedParams.field_0x20.y = 0.64265704f;
+					edF32Vector4SafeNormalize1Hard(&kickedParams.field_0x20, &kickedParams.field_0x20);
 
 					local_5c = edFIntervalLERP(fVar8, 0.6f, 1.0f, 1.5f, 1.9f);
-					kickedParams.field_0x44 = local_5c + this->currentLocation.y;
+					kickedParams.field_0x40.y = local_5c + this->currentLocation.y;
 					DoMessage(this->pKickedActor, MESSAGE_KICKED, &kickedParams);
 					this->pKickedActor = (CActorMovable*)0x0;
 					this->field_0x1544 = 0.0f;

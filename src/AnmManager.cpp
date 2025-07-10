@@ -21,6 +21,7 @@ void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* p
 	} while (iVar3 != 0);
 
 	pActor->AnimEvaluate(uVar2 & 0x7fffffff, pAnmMacroAnimator, newAnim);
+
 	return;
 }
 
@@ -41,11 +42,32 @@ void gAnimation_Callback_Layer1(edAnmMacroAnimator* pAnmMacroAnimator, CActor* p
 	} while (iVar3 != 0);
 
 	pActor->AnimEvaluate(uVar2 & 0x7fffffff, pAnmMacroAnimator, newAnim);
+
 	return;
 }
 
-void gAnimation_Callback_Layer2(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
-void gAnimation_Callback_Layer3(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
+void gAnimation_Callback_Layer2(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint newAnim)
+{
+	uint uVar1;
+	uint uVar2;
+	int iVar3;
+
+	iVar3 = 3;
+	uVar1 = 1;
+	do {
+		uVar2 = uVar1;
+		if ((pActor->pAnimationController->count_0x2c & uVar2) != 0) {
+			iVar3 = iVar3 + -1;
+		}
+		uVar1 = uVar2 << 1;
+	} while (iVar3 != 0);
+
+	pActor->AnimEvaluate(uVar2 & 0x7fffffff, pAnmMacroAnimator, newAnim);
+
+	return;
+}
+
+void gAnimation_Callback_Layer3(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint newAnim) { IMPLEMENTATION_GUARD() };
 
 AnimationCallback CAnimationManager::_gLayersCallbacks[4] = { gAnimation_Callback_Layer0, gAnimation_Callback_Layer1, gAnimation_Callback_Layer2, gAnimation_Callback_Layer3 };
 
@@ -350,26 +372,29 @@ void edAnmMacroAnimator::Animate()
 		ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate mode: {}", iVar5);
 
 		if (iVar5 == 2) {
-			fVar8 = 0.0;
+			fVar8 = 0.0f;
 			iVar5 = peVar2->keyIndex_0x8.asKey + -1;
 			if (-1 < iVar5) {
-				IMPLEMENTATION_GUARD(
-				pfVar4 = (float*)((int)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8 * 4 + 0xc);
-				piVar3 = (int*)((int)peVar2 + iVar5 * 4 + 0xc);
+				char* pData = reinterpret_cast<char*>(peVar2) + (iVar5 * 4) + (peVar2->keyIndex_0x8.asKey * 4);
+
+				pfVar4 = reinterpret_cast<float*>(pData + 0xc);
+				piVar3 = (int*)((ulong)peVar2 + iVar5 * 4 + 0xc);
 				do {
 					fVar7 = *pfVar4;
 					fVar8 = fVar8 + fVar7;
-					if (0.0001 < fVar7) {
-						edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
-						edAnmStage::SetTimeAsRatio(0.0f, &TheAnimStage);
-						edAnmStage::AnimBlendToWRTS(fVar7, &TheAnimStage);
+					if (0.0001f < fVar7) {
+						TheAnimStage.SetAnim((edANM_HDR*)this->pKeyDataArray[*piVar3]);
+						TheAnimStage.SetTimeAsRatio(0.0f);
+						TheAnimStage.AnimBlendToWRTS(fVar7);
 					}
+
 					iVar5 = iVar5 + -1;
 					pfVar4 = pfVar4 + -1;
 					piVar3 = piVar3 + -1;
-				} while (-1 < iVar5);)
+				} while (-1 < iVar5);
 			}
-			if ((0.0 < fVar8) && (fVar8 < 1.0)) {
+
+			if ((0.0f < fVar8) && (fVar8 < 1.0f)) {
 				IMPLEMENTATION_GUARD(
 				edAnmStage::BlendDefaultRTSWithDestWRTS(1.0, &TheAnimStage, 1);)
 			}

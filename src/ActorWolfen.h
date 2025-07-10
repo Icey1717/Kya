@@ -22,23 +22,35 @@
 #define WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE 0x13
 #define WOLFEN_BEHAVIOUR_SNIPE 0x15
 #define WOLFEN_BEHAVIOUR_LOST 0x16
-#define WOLFEN_BEHAVIOUR_WOLFEN_UNKNOWN 0x17
-#define WOLFEN_BEHAVIOUR_DCA 0x18
-#define WOLFEN_BEHAVIOUR_AVOID 0x19
+#define WOLFEN_BEHAVIOUR_WOLFEN_DCA 0x17
+#define WOLFEN_BEHAVIOUR_AVOID 0x18
+#define WOLFEN_BEHAVIOUR_UNKNOWN 0x19
 
 #define WOLFEN_STATE_WATCH_DOG_GUARD 0x72
 #define WOLFEN_STATE_TRACK_CHASE 0x73
+#define WOLFEN_STATE_BREAK_OBJECT 0x74
 #define WOLFEN_STATE_TRACK_DEFEND 0x76
 #define WOLFEN_STATE_COME_BACK 0x77
-#define WOLFEN_STATE_RELOAD 0x91
-#define WOLFEN_STATE_AIM 0x94
-#define WOLFEN_STATE_FIRE 0x95
-#define WOLFEN_STATE_SURPRISE 0x9a
-#define WOLFEN_STATE_LOCATE 0x9c
-
 #define WOLFEN_STATE_EXORCISE_IDLE 0x79
 #define WOLFEN_STATE_EXORCISE_EXORCIZE 0x7a
 #define WOLFEN_STATE_EXORCISE_AWAKE 0x7e
+#define WOLFEN_STATE_RELOAD 0x91
+#define WOLFEN_STATE_AIM 0x94
+#define WOLFEN_STATE_FIRE 0x95
+#define WOLFEN_STATE_BOOMY_HIT 0x98
+#define WOLFEN_STATE_SURPRISE 0x9a
+#define WOLFEN_STATE_LOCATE 0x9c
+
+#define WOLFEN_STATE_INSULT 0x9d
+#define WOLFEN_STATE_INSULT_STAND 0x9e
+#define WOLFEN_STATE_INSULT_RECEIVE 0x9f
+#define WOLFEN_STATE_INSULT_END 0xa0
+
+#define WOLFEN_STATE_BOMB_FLIP 0xa1
+#define WOLFEN_STATE_BOMB_STAND 0xa2
+#define WOLFEN_STATE_BOMB_WALK_TO 0xa3
+#define WOLFEN_STATE_BOMB_ORIENT_TO 0xa4
+#define WOLFEN_STATE_BOMB_SHOOT 0xa5
 
 #define WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION 0xab
 
@@ -374,7 +386,6 @@ public:
 
 	void CheckDetection();
 	void CheckDetection_Intruder();
-	void NEW_FUN_A();
 
 	int FUN_001f0ab0();
 
@@ -400,6 +411,9 @@ public:
 	CSwitchBehaviour switchBehaviour;
 
 	bool bool_0x68;
+
+	S_TARGET_STREAM_REF_CONTAINER pTargetStreamRef;
+	S_STREAM_EVENT_CAMERA_CONTAINER pCameraStreamEvent;
 };
 
 class CBehaviourLost : public CBehaviourWolfen
@@ -483,12 +497,8 @@ public:
 	// CBehaviourWolfen
 	virtual int GetTrackBehaviour();
 
-	S_STREAM_EVENT_CAMERA* field_0x70;
 	S_STREAM_REF<CWayPoint> field_0x80;
 	int trackBehaviourId;
-
-	S_TARGET_STREAM_REF_CONTAINER pTargetStreamRef;
-	S_STREAM_EVENT_CAMERA_CONTAINER pCameraStreamEvent;
 };
 
 class CBehaviourSleep : public CBehaviourWatchDog
@@ -588,9 +598,17 @@ class CBehaviourTrackWeaponSnipe : public CBehaviourTrackWeaponStand
 public:
 };
 
-class CBehaviourDCA : public CBehaviourWolfen
+class CBehaviourAvoid : public CBehaviourWolfen
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+
+	float field_0x80;
+	float field_0x84;
+	int returnBehaviourId;
 };
 
 class CBehaviourGuardArea : public CBehaviourWolfen
@@ -608,21 +626,44 @@ public:
 	virtual int GetStateWolfenGuard();
 
 	CPathFollowReader pathFollowReader;
-	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
-	int trackBehaviourId;
-	undefined4 field_0x68;
-	S_TARGET_ON_OFF_STREAM_REF* field_0x6c;
-
 	int field_0x90;
+	int trackBehaviourId;
 	float field_0x98;
 };
 
-class CBehaviourWolfenUnknown : public CBehaviourWolfen
+class CBehaviourDCA : public CBehaviourWolfen
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+
+	virtual edF32VECTOR4* GetComeBackPosition();
+	virtual edF32VECTOR4* GetComeBackAngles();
+	virtual int GetTrackBehaviour();
+	virtual int GetStateWolfenComeBack();
+	virtual int GetStateWolfenTrack();
+
+	CActor* GetActor();
+	void GetPosition(edF32VECTOR4* pOutPosition);
+
+	bool CanShoot();
+	void HasShoot();
+
+	S_STREAM_REF<CActor> actorRef;
+
+	float lastShootTime;
+	float shootCooldown;
+	int trackBehaviourId;
+	edF32VECTOR4 field_0x90;
+	edF32VECTOR4 field_0xa0;
 };
 
-class CBehaviourAvoid : public CBehaviour
+class CBehaviourUnknown : public CBehaviour
 {
 public:
 };
@@ -889,6 +930,7 @@ public:
 	void BehaviourTrack_Manage(CBehaviourTrack* pBehaviour);
 	void BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour);
 	void BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour);
+	void BehaviourDCA_Manage(CBehaviourDCA* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -911,6 +953,21 @@ public:
 	void StateTrackCheckPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackChase(CBehaviourTrack* pBehaviour);
 	void StateTrackDefend(CBehaviourTrack* pBehaviour);
+	void StateWolfenBombShoot(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombOrientTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombWalkTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombFlip(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenInsultEnd(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenInsultReceive(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenInsultStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenInsult(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBreakObject(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void State_001750a0(CBehaviourDCA* pBehaviour);
+	void State_00174cb0(CBehaviourDCA* pBehaviour);
+	void StateDCAStand(CBehaviourDCA* pBehaviour);
+	void StateDCADefend(CBehaviourDCA* pBehaviour);
 
 	void StateExorcizeIdle(CBehaviourExorcism* pBehaviour);
 
@@ -965,9 +1022,14 @@ public:
 	bool IsExorcizable(CActorHero* pHero);
 	int GetExorciseAnim();
 
+	// New
+	void PostManageA();
+	void PostManageB(CBehaviourWolfen* pBehaviour);
+	void PostManageC(CBehaviourWolfen* pBehaviour);
+	void PostManageD(CBehaviourWolfen* pBehaviour); // new
+	void ManageSwitches(CBehaviourWolfen* pBehaviour);
 	void UpdateCombatMode(); // new
 	WFIGS_Capability* GetActiveCapability(); // new
-	void NEW_FUN_B(CBehaviourWolfen* pBehaviour); // new
 
 	CBehaviourWolfenFighterProjected behaviourWolfenFighterProjected;
 	CBehaviourWolfenFighterRidden behaviourWolfenFighterRidden;

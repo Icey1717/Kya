@@ -68,6 +68,7 @@ public:
 class CScalarDyn
 {
 public:
+	void BuildFromDistTime(float dist, float time);
 	void BuildFromSpeedDist(float param_1, float param_2, float distance);
 	void BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time);
 	void BuildFromSpeedTime(float param_1, float param_2, float param_3);

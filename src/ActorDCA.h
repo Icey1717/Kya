@@ -48,6 +48,16 @@ public:
 	uint field_0x29c;
 };
 
+struct CONTROLLED_PARAMS
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
+
 class CActorDCA : public CActor 
 {
 public:
@@ -77,18 +87,7 @@ public:
 		virtual void End(int newBehaviourId);
 		virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-		float field_0x10;
-		float field_0x14;
-		float field_0x18;
-		float field_0x1c;
-		float field_0x20;
-		float field_0x24;
-		float field_0x28;
-		float field_0x2c;
-		float field_0x30;
-		float field_0x34;
-		float field_0x38;
-		float field_0x3c;
+		CONTROLLED_PARAMS controlledParams;
 	};
 
 	class CBhvIAControlled : public CBhvControlled
@@ -133,6 +132,7 @@ public:
 
 	void BehaviourDefault_InitState(int state);
 	void BehaviourDefault_Manage(CBhvDefault* pBehaviour);
+	void BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLED_PARAMS* pParams);
 
 	float field_0x160;
 	edF32VECTOR3 field_0x164;
@@ -140,7 +140,7 @@ public:
 	edF32VECTOR4 field_0x180;
 	edF32VECTOR4 field_0x190;
 
-	CActor* field_0x1a0;
+	CActor* pControlledByActor;
 	undefined4 field_0x1a4;
 
 	CFireShot fireShot;
@@ -151,30 +151,34 @@ public:
 
 	CCamera* pCamera;
 
-	int field_0x440;
-
 	uint field_0x450;
 	uint field_0x454;
 
 	byte field_0x458;
 	byte field_0x459;
 
+	byte field_0x45a;
 	byte field_0x45b;
 
 	undefined4 field_0x45c;
 
-	undefined4 field_0x460;
+	float field_0x460;
 	float field_0x464;
 
 	CVectorDyn vectorDyn;
 
 	float field_0x4f0;
+	byte field_0x4f8;
 	CActorSound* field_0x4fc;
 
 	S_STREAM_REF<CSound> field_0x500;
 	S_STREAM_REF<CSound> field_0x504;
 	S_STREAM_REF<CSound> field_0x508;
 	S_STREAM_REF<CSound> field_0x50c;
+
+	float field_0x530;
+	float field_0x534;
+	float field_0x538;
 
 };
 

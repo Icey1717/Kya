@@ -45,7 +45,7 @@ void CActorDCA::Create(ByteCode* pByteCode)
 
 	this->field_0x164 = gF32Vertex4Zero.xyz;
 	this->field_0x170 = gF32Vertex4Zero.xyz;
-	this->field_0x1a0 = (CActor*)0x0;
+	this->pControlledByActor = (CActor*)0x0;
 	this->field_0x4f0 = 3.0f;
 
 	return;
@@ -87,9 +87,9 @@ void CActorDCA::Init()
 	(this->field_0x170).y = 0.0f;
 	(this->field_0x170).z = 0.0f;
 
-	this->field_0x1a0 = (CActor*)0x0;
-	this->field_0x460 = 0;
-	this->field_0x45c = 0;
+	this->pControlledByActor = (CActor*)0x0;
+	this->field_0x460 = 0.0f;
+	this->field_0x45c = 0.0f;
 
 	this->field_0x180 = gF32Vertex4Zero;
 	this->field_0x190 = gF32Vertex4Zero;
@@ -98,7 +98,7 @@ void CActorDCA::Init()
 	this->field_0x459 = 0;
 
 	this->fireShot.Reset();
-	this->field_0x440 = 1;
+	(this->fireShot).field_0x290 = 1;
 
 	return;
 }
@@ -122,9 +122,9 @@ void CActorDCA::Reset()
 	(this->field_0x170).y = 0.0f;
 	(this->field_0x170).z = 0.0f;
 
-	this->field_0x1a0 = (CActor*)0x0;
-	this->field_0x460 = 0;
-	this->field_0x45c = 0.0;
+	this->pControlledByActor = (CActor*)0x0;
+	this->field_0x460 = 0.0f;
+	this->field_0x45c = 0.0f;
 	
 	this->field_0x180 = gF32Vertex4Zero;
 	this->field_0x190 = gF32Vertex4Zero;
@@ -202,24 +202,26 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 
 	if (layerId == 8) {
 		if (newAnim == 9) {
-			IMPLEMENTATION_GUARD(
-			fVar3 = 0.0;
-			peVar1 = pAnimator->pAnimKeyTableEntry;
-			if ((float)this->field_0x460 != 0.0) {
-				pTVar2 = GetTimer();
-				fVar3 = *(float*)&this->field_0x530;
-				fVar3 = ((fVar3 + (pTVar2->scaledTotalTime - (float)this->field_0x460) * *(float*)&this->field_0x538) - fVar3)
-					/ (*(float*)&this->field_0x534 - fVar3);
+			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+
+			fVar3 = 0.0f;
+			if (this->field_0x460 != 0.0f) {
+				fVar3 = this->field_0x530;
+				fVar3 = ((fVar3 + (GetTimer()->scaledTotalTime - this->field_0x460) * this->field_0x538) - fVar3) / (this->field_0x534 - fVar3);
 			}
-			fVar4 = 1.0;
-			if (fVar3 <= 1.0) {
+
+			fVar4 = 1.0f;
+			if (fVar3 <= 1.0f) {
 				fVar4 = fVar3;
 			}
-			if (fVar4 < 0.0) {
-				fVar4 = 0.0;
+
+			if (fVar4 < 0.0f) {
+				fVar4 = 0.0f;
 			}
-			(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = (int)(1.0 - fVar4);
-			(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = (int)fVar4;)
+
+			pValue->field_0xc = 1.0f - fVar4;
+			pValue->field_0x10 = fVar4;
 		}
 	}
 	else {
@@ -398,11 +400,11 @@ void CActorDCA::BehaviourDefault_Manage(CBhvDefault* pBehaviour)
 				this->field_0x190 = local_80;
 			}
 
-			if (this->field_0x1a0 == (CActor*)0x0) {
+			if (this->pControlledByActor == (CActor*)0x0) {
 				bVar5 = false;
 			}
 			else {
-				bVar5 = this->field_0x1a0->typeID == ACTOR_HERO_PRIVATE;
+				bVar5 = this->pControlledByActor->typeID == ACTOR_HERO_PRIVATE;
 			}
 
 			if (bVar5) {
@@ -467,6 +469,195 @@ void CActorDCA::BehaviourDefault_Manage(CBhvDefault* pBehaviour)
 	}
 
 	this->fireShot.ManageShots();
+
+	return;
+}
+
+void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLED_PARAMS* pParams)
+{
+	CCamera* pCVar1;
+	CPlayerInput* pPlayerInput;
+	Timer* pTVar3;
+	edF32MATRIX4* peVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 local_c0;
+	edF32VECTOR4 local_b0;
+	edF32MATRIX4 auStack160;
+	edF32MATRIX4 local_60;
+	edF32VECTOR4 local_20;
+	edF32VECTOR3 local_10;
+	bool bControlledByHero;
+	CCameraManager* pCameraManager;
+
+	BehaviourDefault_Manage(pBehaviour);
+
+	if (this->pControlledByActor == (CActor*)0x0) {
+		bControlledByHero = false;
+	}
+	else {
+		bControlledByHero = this->pControlledByActor->typeID == ACTOR_HERO_PRIVATE;
+	}
+
+	if ((bControlledByHero) && (pPlayerInput = this->pControlledByActor->GetInputManager(0, 0), pPlayerInput != (CPlayerInput*)0x0)) {
+		IMPLEMENTATION_GUARD(
+		CActor::ToggleMeshAlpha((CActor*)this);
+		CActor::SetBFCulling((CActor*)this, 0);
+		fVar7 = pPlayerInput->aAnalogSticks[0].y;
+		fVar5 = pPlayerInput->aAnalogSticks[0].x;
+		pTVar3 = GetTimer();
+		fVar6 = pTVar3->cutsceneDeltaTime;
+		if ((0.001 < ABS(fVar5)) || (0.001 < ABS(fVar7))) {
+			if (this->field_0x45a == 0) {
+				CActorSound::SoundStart
+				(this->field_0x4fc, (CActor*)this, 3, (this->field_0x50c).pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+				this->field_0x45a = 1;
+			}
+		}
+		else {
+			if (this->field_0x45a != 0) {
+				CActorSound::FadeTo(0.0, -2.0, 0.1, this->field_0x4fc, 3);
+				this->field_0x45a = 0;
+			}
+		}
+		fVar7 = (this->field_0x170).x + fVar7 * this->field_0x160 * fVar6;
+		(this->field_0x170).x = fVar7;
+		if (1.047198 <= fVar7) {
+			(this->field_0x170).x = (float)&DAT_3f860a92;
+		}
+		else {
+			if (fVar7 < -1.047198) {
+				(this->field_0x170).x = -1.047198;
+			}
+		}
+		fVar5 = (this->field_0x170).y - fVar5 * this->field_0x160 * fVar6;
+		(this->field_0x170).y = fVar5;
+		if (1.919862 <= fVar5) {
+			(this->field_0x170).y = 1.919862;
+		}
+		else {
+			if (fVar5 < -1.919862) {
+				(this->field_0x170).y = -1.919862;
+			}
+		}
+		fVar6 = (this->field_0x170).y;
+		fVar5 = (this->field_0x170).z;
+		(this->field_0x164).x = (this->field_0x170).x;
+		(this->field_0x164).y = fVar6;
+		(this->field_0x164).z = fVar5;
+		local_10.y = (this->field_0x170).y;
+		local_10.z = (this->field_0x170).z;
+		local_10.x = (this->field_0x170).x * -0.5;
+		edF32Matrix4FromEulerSoft(&auStack160, &local_10, s_XYZ_00433cb8);
+		edF32Matrix4MulF32Matrix4Hard(&auStack160, &auStack160, (edF32MATRIX4*)(this->base).pMeshTransform);
+		edF32Matrix4MulF32Vector4Hard(&local_b0, &auStack160, &edF32VECTOR4_00425700);
+		edF32Vector4NormalizeHard(&local_c0, (edF32VECTOR4*)&auStack160.ca);
+		if (&this->field_0x180 != (edF32VECTOR4*)0x0) {
+			(this->field_0x180).x = local_b0.x;
+			(this->field_0x180).y = local_b0.y;
+			(this->field_0x180).z = local_b0.z;
+			(this->field_0x180).w = local_b0.w;
+		}
+		if (&this->field_0x190 != (edF32VECTOR4*)0x0) {
+			(this->field_0x190).x = local_c0.x;
+			(this->field_0x190).y = local_c0.y;
+			(this->field_0x190).z = local_c0.z;
+			(this->field_0x190).w = local_c0.w;
+		}
+		local_60.aa = (float)gF32Matrix4Unit._0_8_;
+		local_60.ab = (float)((ulong)gF32Matrix4Unit._0_8_ >> 0x20);
+		local_60.ac = gF32Matrix4Unit.ac;
+		local_60.ad = gF32Matrix4Unit.ad;
+		local_60.ba = gF32Matrix4Unit.ba;
+		local_60.bb = gF32Matrix4Unit.bb;
+		local_60.bc = gF32Matrix4Unit.bc;
+		local_60.bd = gF32Matrix4Unit.bd;
+		local_60.ca = gF32Matrix4Unit.ca;
+		local_60.cb = gF32Matrix4Unit.cb;
+		local_60.cc = gF32Matrix4Unit.cc;
+		local_60.cd = gF32Matrix4Unit.cd;
+		local_60.da = gF32Matrix4Unit.da;
+		local_60.db = gF32Matrix4Unit.db;
+		local_60.dc = gF32Matrix4Unit.dc;
+		local_60.dd = gF32Matrix4Unit.dd;
+		peVar4 = CAnimation::GetCurBoneMatrix((this->base).pAnimationController, this->field_0x450);
+		edF32Matrix4MulF32Vector4Hard(&local_20, (edF32MATRIX4*)(this->base).pMeshTransform, (edF32VECTOR4*)&peVar4->da);
+		edF32Vector4CrossProductHard((edF32VECTOR4*)&local_60, &gF32Vector4UnitY, (edF32VECTOR4*)&peVar4->ca);
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60, (edF32VECTOR4*)&local_60);
+		edF32Vector4CrossProductHard((edF32VECTOR4*)&local_60.ba, (edF32VECTOR4*)&peVar4->ca, (edF32VECTOR4*)&local_60);
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60.ba, (edF32VECTOR4*)&local_60.ba);
+		local_60.ca = peVar4->ca;
+		local_60.cb = peVar4->cb;
+		local_60.cc = peVar4->cc;
+		local_60.cd = peVar4->cd;
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60.ca, (edF32VECTOR4*)&local_60.ca);
+		edF32Matrix4MulF32Matrix4Hard(&local_60, &local_60, (edF32MATRIX4*)(this->base).pMeshTransform);
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60, (edF32VECTOR4*)&local_60);
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60.ba, (edF32VECTOR4*)&local_60.ba);
+		edF32Vector4NormalizeHard((edF32VECTOR4*)&local_60.ca, (edF32VECTOR4*)&local_60.ca);
+		local_60.da = local_20.x;
+		local_60.db = local_20.y;
+		local_60.dc = local_20.z;
+		local_60.dd = local_20.w;
+		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&local_60.da, &local_60, &pParams->field_0x10);
+		pCVar1 = this->pCamera;
+		pCVar1[1].field_0x8 = (int)local_60.da;
+		pCVar1[1].flags_0xc = (uint)local_60.db;
+		pCVar1[1].transformationMatrix.aa = local_60.dc;
+		pCVar1[1].transformationMatrix.ab = local_60.dd;
+		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&local_60.da, &local_60, &pParams->field_0x20);
+		pCVar1 = this->pCamera;
+		(pCVar1->lookAt).x = local_60.da;
+		(pCVar1->lookAt).y = local_60.db;
+		(pCVar1->lookAt).z = local_60.dc;
+		(pCVar1->lookAt).w = local_60.dd;
+		pCameraManager = CCameraManager::_gThis;
+		if (this->field_0x4f8 == 0) {
+			this->pCamera->fov = pParams->field_0xc;
+			(*((this->pCamera->objBase).pVTable)->SetOtherTarget)(this->pCamera, (this->base).pTiedActor);
+			CCameraManager::PushCamera(pCameraManager, this->pCamera, 1);
+			this->field_0x4f8 = 1;
+		}
+		else {
+			if (this->field_0x45b == 0) {
+				if (pPlayerInput->aButtons[9].clickValue == 0.0) {
+					this->field_0x45b = 1;
+				}
+			}
+			else {
+				if (pPlayerInput->aButtons[9].clickValue == 0.0) {
+					if ((this->field_0x459 != 0) && ((this->base).actorState != 6)) {
+						this->field_0x459 = 0;
+						pTVar3 = GetTimer();
+						fVar5 = pTVar3->scaledTotalTime - this->field_0x460;
+						this->field_0x460 = fVar5;
+						fVar5 = pParams->field_0x0 + fVar5 * pParams->field_0x8;
+						this->field_0x45c = fVar5;
+						if (pParams->field_0x4 < fVar5) {
+							this->field_0x45c = pParams->field_0x4;
+						}
+						this->field_0x458 = 1;
+						this->field_0x460 = 0.0;
+						CActorSound::FadeTo(1.0, 1.0, 0.0, this->field_0x4fc, 0);
+					}
+				}
+				else {
+					if (this->field_0x459 == 0) {
+						this->field_0x459 = 1;
+						if (this->field_0x460 == 0.0) {
+							pTVar3 = GetTimer();
+							this->field_0x460 = pTVar3->scaledTotalTime;
+						}
+						if ((0.0 < pParams->field_0x8) && (CScene::ptable.g_AudioManager_00451698 != (CAudioManager*)0x0)) {
+							CActorSound::FadeTo(1.0, this->field_0x464, (pParams->field_0x4 - pParams->field_0x0) / pParams->field_0x8,
+								this->field_0x4fc, 0);
+						}
+					}
+				}
+			}
+		})
+	}
 
 	return;
 }
@@ -786,7 +977,7 @@ void CActorDCA::CBhvDefault::TermState(int oldState, int newState)
 
 int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	CActorDCA* pCVar1;
+	CActorDCA* pDCA;
 	ed_3d_hierarchy_node* peVar2;
 	undefined8 uVar3;
 	int result;
@@ -802,14 +993,14 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 	}
 	else {
 		if (msg == 0x28) {
-			pCVar1 = this->pOwner;
+			pDCA = this->pOwner;
 			if (pMsgParam == (void*)0x0) {
-				(pCVar1->field_0x164).y = 0.0f;
-				(pCVar1->field_0x164).x = 0.0f;
+				(pDCA->field_0x164).y = 0.0f;
+				(pDCA->field_0x164).x = 0.0f;
 			}
 			else {
 				IMPLEMENTATION_GUARD(
-				peVar2 = (pCVar1->base).pMeshTransform;
+				peVar2 = (pDCA->base).pMeshTransform;
 				uVar3 = *(undefined8*)&(peVar2->base).transformA;
 				local_40.ac = (peVar2->base).transformA.ac;
 				local_40.ad = (peVar2->base).transformA.ad;
@@ -827,9 +1018,9 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 				local_40.dd = (peVar2->base).transformA.dd;
 				local_40.aa = (float)uVar3;
 				local_40.ab = (float)((ulong)uVar3 >> 0x20);
-				peVar4 = CAnimation::GetCurBoneMatrix((pCVar1->base).pAnimationController, pCVar1->field_0x450);
+				peVar4 = CAnimation::GetCurBoneMatrix((pDCA->base).pAnimationController, pDCA->field_0x450);
 				edF32Matrix4MulF32Vector4Hard
-				(&local_60, (edF32MATRIX4*)(pCVar1->base).pMeshTransform, (edF32VECTOR4*)&peVar4->da);
+				(&local_60, (edF32MATRIX4*)(pDCA->base).pMeshTransform, (edF32VECTOR4*)&peVar4->da);
 				local_40.da = local_60.x;
 				local_40.db = local_60.y;
 				local_40.dc = local_60.z;
@@ -838,31 +1029,32 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 				edF32Matrix4MulF32Vector4Hard(&local_50, &local_40, (edF32VECTOR4*)pMsgParam);
 				edF32Vector4NormalizeHard(&local_50, &local_50);
 				fVar5 = atan2f(-local_50.x, local_50.z);
-				(pCVar1->field_0x164).y = -fVar5;
+				(pDCA->field_0x164).y = -fVar5;
 				fVar5 = atan2f(local_50.y, SQRT(local_50.z * local_50.z + local_50.x * local_50.x));
-				(pCVar1->field_0x164).x = fVar5;)
+				(pDCA->field_0x164).x = fVar5;)
 			}
 
 			result = 1;
 		}
 		else {
 			if (msg == 0x14) {
-				if (pMsgParam == (void*)0x0) {
-					pCVar1 = this->pOwner;
+				const int bState = static_cast<int>(reinterpret_cast<uintptr_t>(pMsgParam));
+				if (bState == 0) {
+					pDCA = this->pOwner;
 					if (pSender == (CActor*)0x0) {
-						pCVar1->SetBehaviour(2, -1, -1);
-						pCVar1->field_0x1a0 = (CActor*)0x0;
+						pDCA->SetBehaviour(DCA_BEHAVIOUR_DEFAULT, -1, -1);
+						pDCA->pControlledByActor = (CActor*)0x0;
 					}
 					else {
-						pCVar1->field_0x1a0 = pSender;
-						pCVar1->SetBehaviour(3, -1, -1);
+						pDCA->pControlledByActor = pSender;
+						pDCA->SetBehaviour(DCA_BEHAVIOUR_CONTROLLED, -1, -1);
 					}
 				}
 				else {
-					pCVar1 = this->pOwner;
-					if (pCVar1->field_0x1a0 == pSender) {
-						pCVar1->SetBehaviour(2, -1, -1);
-						pCVar1->field_0x1a0 = (CActor*)0x0;
+					pDCA = this->pOwner;
+					if (pDCA->pControlledByActor == pSender) {
+						pDCA->SetBehaviour(DCA_BEHAVIOUR_DEFAULT, -1, -1);
+						pDCA->pControlledByActor = (CActor*)0x0;
 					}
 				}
 
@@ -870,7 +1062,7 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 			}
 			else {
 				if (msg == MESSAGE_GET_ACTION) {
-					if ((this->pOwner == pSender->pTiedActor) && (this->pOwner->field_0x1a0 == (CActor*)0x0)) {
+					if ((this->pOwner == pSender->pTiedActor) && (this->pOwner->pControlledByActor == (CActor*)0x0)) {
 						result = 1;
 					}
 					else {
@@ -899,30 +1091,85 @@ bool CActorDCA::CBhvDefault::GetShouldDoSomething()
 
 void CActorDCA::CBhvControlled::Create(ByteCode* pByteCode)
 {
-	this->field_0x10 = pByteCode->GetF32();
-	this->field_0x14 = pByteCode->GetF32();
-	this->field_0x18 = pByteCode->GetF32();
-	this->field_0x1c = pByteCode->GetF32() * 0.01745329f;
-	this->field_0x20 = pByteCode->GetF32();
-	this->field_0x24 = pByteCode->GetF32();
-	this->field_0x28 = pByteCode->GetF32();
-	this->field_0x2c = 1.0f;
-	this->field_0x30 = pByteCode->GetF32();
-	this->field_0x34 = pByteCode->GetF32();
-	this->field_0x38 = pByteCode->GetF32();
-	this->field_0x3c = 1.0f;
+	this->controlledParams.field_0x0 = pByteCode->GetF32();
+	this->controlledParams.field_0x4 = pByteCode->GetF32();
+	this->controlledParams.field_0x8 = pByteCode->GetF32();
+	this->controlledParams.field_0xc = pByteCode->GetF32() * 0.01745329f;
+
+	this->controlledParams.field_0x10.x = pByteCode->GetF32();
+	this->controlledParams.field_0x10.y = pByteCode->GetF32();
+	this->controlledParams.field_0x10.z = pByteCode->GetF32();
+	this->controlledParams.field_0x10.w = 1.0f;
+
+	this->controlledParams.field_0x20.x = pByteCode->GetF32();
+	this->controlledParams.field_0x20.y = pByteCode->GetF32();
+	this->controlledParams.field_0x20.z = pByteCode->GetF32();
+	this->controlledParams.field_0x20.w = 1.0f;
 
 	return;
 }
 
 void CActorDCA::CBhvControlled::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourControlled_Manage(this, &this->controlledParams);
+
+	return;
 }
 
 void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	CActorDCA* pDCA;
+	CActor* pActor;
+	CAnimation* pAnimationController;
+	bool bControlledByHero;
+	int mode;
+	int layerIndex;
+
+	this->pOwner = static_cast<CActorDCA*>(pOwner);
+
+	if (newState == -1) {
+		pDCA = this->pOwner;
+		pActor = pDCA->pControlledByActor;
+		if (pActor == (CActor*)0x0) {
+			bControlledByHero = false;
+		}
+		else {
+			bControlledByHero = pDCA->typeID == ACTOR_HERO_PRIVATE;
+		}
+
+		if (bControlledByHero) {
+			pDCA->field_0x4f8 = 0;
+
+			IMPLEMENTATION_GUARD_AUDIO(
+			CActorSound::SoundStart
+			((CActorSound*)pDCA->field_0x4fc, (CActor*)pDCA, 0, (CSound*)pDCA->field_0x500, 1, 0,
+				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+		}
+
+		pDCA->field_0x458 = 0;
+		pDCA->field_0x460 = 0.0f;
+		pDCA->field_0x45a = 0;
+
+		pDCA->SetState(5, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	bool bIsLayerActive;
+
+	pDCA = this->pOwner;
+	pAnimationController = pDCA->pAnimationController;
+	if (((pAnimationController != (CAnimation*)0x0) &&
+		(bIsLayerActive = pAnimationController->IsLayerActive(8), bIsLayerActive != false)) &&
+		(mode = pDCA->GetIdMacroAnim(9), mode != -1)) {
+		layerIndex = pAnimationController->PhysicalLayerFromLayerId(8);
+		pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 3);
+		(pAnimationController->anmBinMetaAnimator).aAnimData[layerIndex].field_0x4 = 1.0f;
+		pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(mode, layerIndex, 9);
+	}
+
+	return;
 }
 
 void CActorDCA::CBhvControlled::End(int newBehaviourId)
@@ -932,7 +1179,127 @@ void CActorDCA::CBhvControlled::End(int newBehaviourId)
 
 int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	CActorDCA* pDCA;
+	CActor* pCVar2;
+	ed_3d_hierarchy_node* peVar3;
+	bool bControlledByHero;
+	undefined8 uVar5;
+	edF32MATRIX4* peVar6;
+	uint uVar7;
+	float fVar8;
+	edF32VECTOR4 local_120;
+	edF32VECTOR4 local_110;
+	edF32MATRIX4 local_100;
+	edF32VECTOR4 local_c0;
+	edF32VECTOR4 local_b0;
+	edF32MATRIX4 auStack160;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR3 local_10;
+
+	if (msg == 0xf) {
+		pCVar2 = this->pOwner->pControlledByActor;
+		if (pCVar2 == (CActor*)0x0) {
+			bControlledByHero = false;
+		}
+		else {
+			bControlledByHero = pCVar2->typeID == ACTOR_HERO_PRIVATE;
+		}
+
+		if (!bControlledByHero) {
+			this->pOwner->field_0x458 = 1;
+		}
+
+		uVar7 = 1;
+	}
+	else {
+		if (msg == 0x28) {
+			pCVar2 = this->pOwner->pControlledByActor;
+			uVar7 = 1;
+			if (pCVar2 == (CActor*)0x0) {
+				bControlledByHero = false;
+			}
+			else {
+				bControlledByHero = pCVar2->typeID == ACTOR_HERO_PRIVATE;
+			}
+
+			if (!bControlledByHero) {
+				pDCA = this->pOwner;
+				if (pMsgParam == (edF32VECTOR4*)0x0) {
+					(pDCA->field_0x164).y = 0.0f;
+					(pDCA->field_0x164).x = 0.0f;
+					fVar8 = fabs((pDCA->field_0x170).x - (pDCA->field_0x164).x) + fabs((pDCA->field_0x170).y - (pDCA->field_0x164).y);
+				}
+				else {
+					local_10.y = (pDCA->field_0x170).y;
+					local_10.z = (pDCA->field_0x170).z;
+					local_10.x = (pDCA->field_0x170).x * -0.5f;
+					edF32Matrix4FromEulerSoft(&auStack160, &local_10, "XYZ");
+					edF32Matrix4MulF32Matrix4Hard(&auStack160, &auStack160, &pDCA->pMeshTransform->base.transformA);
+
+					edF32Matrix4MulF32Vector4Hard(&local_b0, &auStack160, &edF32VECTOR4_00425700);
+					edF32Vector4NormalizeHard(&local_c0, &auStack160.rowZ);
+					local_20 = local_b0;
+					local_30 = local_c0;
+					edF32Vector4SubHard(&eStack64, reinterpret_cast<edF32VECTOR4*>(pMsgParam), &local_20);
+					pDCA->vectorDyn.BuildFromAccelDistAmplitude(1.0f, &CDynamicExt::gForceGravity, &eStack64, 1);
+					pDCA->vectorDyn.Integrate(0.05f);
+					edF32Vector4NormalizeHard(&eStack80, &(pDCA->vectorDyn).field_0x60);
+					fVar8 = edF32Vector4GetDistHard(&eStack64);
+					edF32Vector4ScaleHard(fVar8, &eStack80, &eStack80);
+					edF32Vector4AddHard(&eStack96, &local_20, &eStack80);
+					if (pMsgParam == (edF32VECTOR4*)0x0) {
+						(pDCA->field_0x164).y = 0.0;
+						(pDCA->field_0x164).x = 0.0;
+					}
+					else {
+						local_100 = pDCA->pMeshTransform->base.transformA;
+						peVar6 = pDCA->pAnimationController->GetCurBoneMatrix(pDCA->field_0x450);
+						edF32Matrix4MulF32Vector4Hard(&local_120, &pDCA->pMeshTransform->base.transformA, &peVar6->rowT);
+						local_100.rowT = local_120;
+						edF32Matrix4InverseOrthoSoft(&local_100);
+						edF32Matrix4MulF32Vector4Hard(&local_110, &local_100, &eStack96);
+						edF32Vector4NormalizeHard(&local_110, &local_110);
+						fVar8 = atan2f(-local_110.x, local_110.z);
+						(pDCA->field_0x164).y = -fVar8;
+						fVar8 = atan2f(local_110.y, sqrtf(local_110.z * local_110.z + local_110.x * local_110.x));
+						(pDCA->field_0x164).x = fVar8;
+					}
+
+					fVar8 = fabs((pDCA->field_0x170).x - (pDCA->field_0x164).x) +
+						fabs((pDCA->field_0x170).y - (pDCA->field_0x164).y);
+				}
+
+				uVar7 = (uint)(fVar8 < 0.01);
+			}
+		}
+		else {
+			if (msg == 0x14) {
+				if (pMsgParam != (void*)0x0) {
+					this->pOwner->field_0x459 = 0;
+					pDCA = this->pOwner;
+					pDCA->SetBehaviour(DCA_BEHAVIOUR_DEFAULT, -1, -1);
+					pDCA->pControlledByActor = (CActor*)0x0;
+				}
+			}
+			else {
+				if (msg == 0x12) {
+					if (this->pOwner->pControlledByActor != (CActor*)0x0) {
+						return 0;
+					}
+
+					return 1;
+				}
+			}
+
+			uVar7 = 0;
+		}
+	}
+
+	return uVar7;
 }
 
 void CActorDCA::CBhvIAControlled::Create(ByteCode* pByteCode)

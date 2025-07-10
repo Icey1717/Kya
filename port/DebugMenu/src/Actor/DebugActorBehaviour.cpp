@@ -412,21 +412,6 @@ namespace MovingPlatform
 	}
 }
 
-#define WOLFEN_BEHAVIOUR_WATCH_DOG 0x8
-#define WOLFEN_BEHAVIOUR_GUARD_AREA 0xa
-#define WOLFEN_BEHAVIOUR_SLEEP 0xc
-#define WOLFEN_BEHAVIOUR_ESCAPE 0xd
-#define WOLFEN_BEHAVIOUR_EXORCISM 0xe
-#define WOLFEN_BEHAVIOUR_TRACK 0xf
-#define WOLFEN_BEHAVIOUR_TRACK_WEAPON 0x11
-#define WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND 0x12
-#define WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE 0x13
-#define WOLFEN_BEHAVIOUR_SNIPE 0x15
-#define WOLFEN_BEHAVIOUR_LOST 0x16
-#define WOLFEN_BEHAVIOUR_WOLFEN_UNKNOWN 0x17
-#define WOLFEN_BEHAVIOUR_DCA 0x18
-#define WOLFEN_BEHAVIOUR_AVOID 0x19
-
 namespace Wolfen
 {
 	static const char* GetBehaviourName(int curBehaviourId)
@@ -456,12 +441,12 @@ namespace Wolfen
 			return "Snipe";
 		case WOLFEN_BEHAVIOUR_LOST:
 			return "Lost";
-		case WOLFEN_BEHAVIOUR_WOLFEN_UNKNOWN:
-			return "Wolfen Unknown";
-		case WOLFEN_BEHAVIOUR_DCA:
-			return "DCA";
+		case WOLFEN_BEHAVIOUR_WOLFEN_DCA:
+			return "Wolfen DCA";
 		case WOLFEN_BEHAVIOUR_AVOID:
 			return "Avoid";
+		case WOLFEN_BEHAVIOUR_UNKNOWN:
+			return "Unkown";
 		default:
 			return "Unknown";
 		}
