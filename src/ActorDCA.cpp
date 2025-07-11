@@ -1174,7 +1174,44 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 
 void CActorDCA::CBhvControlled::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	CAnimation* pAnimationController;
+	CActorDCA* pCVar1;
+	bool bControlledByHero;
+	int layerIndex;
+	float fVar3;
+	float fVar4;
+
+	pAnimationController = this->pOwner->pAnimationController;
+	if ((pAnimationController != (CAnimation*)0x0) &&
+		(bControlledByHero = pAnimationController->IsLayerActive(8), bControlledByHero != false)) {
+		layerIndex = pAnimationController->PhysicalLayerFromLayerId(8);
+		pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(-1, layerIndex, 0xffffffff);
+	}
+
+	pCVar1 = this->pOwner;
+	if (pCVar1->pControlledByActor == (CActor*)0x0) {
+		bControlledByHero = false;
+	}
+	else {
+		bControlledByHero = pCVar1->pControlledByActor->typeID == ACTOR_HERO_PRIVATE;
+	}
+
+	if (bControlledByHero) {
+		if (pCVar1->field_0x4f8 != 0) {
+			CCameraManager::_gThis->PopCamera(pCVar1->pCamera);
+		}
+
+		pCVar1->field_0x4fc->SoundStop(0);
+		pCVar1->field_0x4fc->SoundStop(3);
+	}
+
+	pCVar1->field_0x458 = 0;
+	pCVar1->field_0x164.y = 0.0f;
+	pCVar1->field_0x164.x = 0.0f;
+
+	pCVar1->field_0x170 = pCVar1->field_0x164;
+
+	return;
 }
 
 int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)

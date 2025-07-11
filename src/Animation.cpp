@@ -2260,6 +2260,18 @@ void edAnmBinMetaAnimator::SetAnimOnLayer(int mode, int layerIndex, int param_4)
 	return;
 }
 
+bool edAnmBinMetaAnimator::IsLayerAnimEndReached(int layerIndex)
+{
+	bool bEndReached;
+
+	bEndReached = false;
+	if (this->aAnimData[layerIndex].animPlayState != 0) {
+		bEndReached = (this->aAnimData[layerIndex].field_0xcc & 2) != 0;
+	}
+
+	return bEndReached;
+}
+
 void edAnmMetaAnimator::AnimateDT(float deltaTime)
 {
 	int index;
@@ -3298,4 +3310,15 @@ bool CAnimation::SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices)
 	}
 
 	return bSuccess;
+}
+
+bool CAnimation::IsCurrentLayerAnimEndReached(uint layerIndex)
+{
+	bool bAnimEndReached = false;
+
+	if (this->anmBinMetaAnimator.aAnimData[layerIndex].currentAnimDesc.animType == this->currentAnimType_0x30) {
+		bAnimEndReached = this->anmBinMetaAnimator.IsLayerAnimEndReached(layerIndex);
+	}
+
+	return bAnimEndReached;
 }

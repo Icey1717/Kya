@@ -876,6 +876,14 @@ void CVertexDyn::MoveTo(edF32VECTOR4* pPosition)
 		edF32Vector4AddHard(&this->field_0x20, &this->field_0x20, &eStack16);
 		(this->field_0x20).w = 1.0f;
 	}
+
+	return;
+}
+
+void CVertexDyn::FUN_00213b90(edF32MATRIX4* param_2)
+{
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x20, param_2, &this->field_0x20);
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x30, param_2, &this->field_0x30);
 	return;
 }
 

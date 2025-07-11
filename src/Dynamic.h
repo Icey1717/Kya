@@ -163,6 +163,7 @@ public:
 
 	void Init(float param_1, edF32VECTOR4* pPosition);
 	void MoveTo(edF32VECTOR4* pPosition);
+	void FUN_00213b90(edF32MATRIX4* param_2);
 
 	edF32VECTOR4 field_0x20;
 	edF32VECTOR4 field_0x30;

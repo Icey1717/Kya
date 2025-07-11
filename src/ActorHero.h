@@ -228,7 +228,7 @@ public:
 	edF32VECTOR4 field_0xec0;
 	int field_0xed0;
 
-	int* field_0x14a4;
+	S_ZONE_STREAM_REF* pClimbZoneStreamRef;
 
 	// Bones
 	uint field_0x157c;

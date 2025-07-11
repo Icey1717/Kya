@@ -964,6 +964,8 @@ public:
 	void StateWolfenInsult(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBreakObject(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void State_00174dc0(CBehaviourDCA* pBehaviour);
+	void State_00174f20(CBehaviourDCA* pBehaviour);
 	void State_001750a0(CBehaviourDCA* pBehaviour);
 	void State_00174cb0(CBehaviourDCA* pBehaviour);
 	void StateDCAStand(CBehaviourDCA* pBehaviour);

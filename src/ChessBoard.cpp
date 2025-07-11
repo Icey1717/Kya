@@ -1270,8 +1270,8 @@ bool CChessBoard::MoveTo(s_chess_board_pawn* pPawn)
 	uint uVar2;
 	bool bVar3;
 	int iVar4;
-	uint uVar5;
-	uint uVar6;
+	int uVar5;
+	int uVar6;
 	float fVar7;
 	float fVar8;
 	edF32VECTOR4 eStack96;
@@ -1333,24 +1333,24 @@ bool CChessBoard::MoveTo(s_chess_board_pawn* pPawn)
 			do {
 				pPawn->field_0x48 = pPawn->field_0x48 + 1;
 				uVar6 = pPawn->field_0x40.field_0x4;
-				if ((int)uVar6 < 1) {
+				if (uVar6 < 1) {
 					uVar6 = -uVar6;
 				}
 
 				uVar5 = pPawn->field_0x40.field_0x0;
-				if ((int)uVar5 < 1) {
+				if (uVar5 < 1) {
 					uVar5 = -uVar5;
 				}
 
-				if ((int)uVar6 < (int)uVar5) {
+				if (uVar6 < uVar5) {
 					uVar6 = pPawn->field_0x40.field_0x0;
-					if ((int)uVar6 < 1) {
+					if (uVar6 < 1) {
 						uVar6 = -uVar6;
 					}
 				}
 				else {
 					uVar6 = pPawn->field_0x40.field_0x4;
-					if ((int)uVar6 < 1) {
+					if (uVar6 < 1) {
 						uVar6 = -uVar6;
 					}
 				}
@@ -1358,15 +1358,15 @@ bool CChessBoard::MoveTo(s_chess_board_pawn* pPawn)
 				fVar7 = CoordinateToFloat(pPawn->field_0x48);
 
 				uVar5 = pPawn->field_0x38.field_0x4 + (int)((float)pPawn->field_0x40.field_0x4 * (fVar7 / (float)uVar6));
-				if ((int)uVar5 < 0) {
+				if (uVar5 < 0) {
 					fVar8 = CoordinateToFloat(this->nbRows);
-					uVar5 = (uint)((float)uVar5 + fVar8);
+					uVar5 = (int)((float)uVar5 + fVar8);
 				}
 
 				uVar2 = this->nbRows;
 				if (uVar2 <= uVar5) {
 					fVar8 = CoordinateToFloat(uVar2);
-					uVar5 = (uint)((float)uVar5 - fVar8);
+					uVar5 = (int)((float)uVar5 - fVar8);
 				}
 
 				(pPawn->field_0x28).field_0x0 = pPawn->field_0x38.field_0x0 + (int)((float)pPawn->field_0x40.field_0x0 * (fVar7 / (float)uVar6));

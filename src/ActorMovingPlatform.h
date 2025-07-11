@@ -277,13 +277,6 @@ struct S_BRIDGE_ACTOR_STREAM {
 	S_BRIDGE_ACTOR_STREAM_ENTRY aEntries[];
 };
 
-struct S_BRIDGE_ZONE_STREAM {
-	int entryCount;
-	S_STREAM_REF<ed_zone_3d> aEntries[];
-};
-
-static_assert(sizeof(S_STREAM_REF<ed_zone_3d>) == 0x4);
-
 struct S_BRIDGE_CAMERA_STREAM_ENTRY
 {
 	int field_0x0;
@@ -365,7 +358,7 @@ public:
 	edF32MATRIX4 field_0x200;
 
 	S_BRIDGE_ACTOR_STREAM* pActorStream;
-	S_BRIDGE_ZONE_STREAM* pZoneStream;
+	S_ZONE_STREAM_REF* pZoneStream;
 	S_BRIDGE_CAMERA_STREAM* pCameraStream;
 
 	CActorSound* pActorSound;

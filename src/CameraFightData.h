@@ -39,6 +39,7 @@ struct CamUpdate
 	void FUN_003c4a40(edF32VECTOR4* param_2);
 	void CalculateIntersection(int index);
 	uint FUN_Count(float param_1);
+	float FUN_003c4e20(float param_1, float param_2);
 
 	edF32VECTOR4 position;
 	float field_0x10;
@@ -75,6 +76,7 @@ public:
 	void Reset() {}
 	cam_temp_struct* Cam_Update(edF32VECTOR4* param_2, int param_3);
 	void ComputeData();
+	void DetermineBetaAndWay();
 	float SV_TestCollisionSphere(ParCamFigLAB* param_2, edF32VECTOR4* param_3);
 	void _UpdateCameraData();
 
@@ -132,6 +134,8 @@ public:
 
 	float field_0x300;
 	int field_0x304;
+	int field_0x308;
+	float field_0x30c;
 
 	CAngleDyn angleDynA;
 	CAngleDyn angleBetaDyn;

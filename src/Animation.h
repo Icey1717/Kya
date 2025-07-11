@@ -13,7 +13,8 @@
 
 struct edAnmAnim;
 
-struct edAnmStage {
+struct edAnmStage
+{
 	edAnmStage();
 
 	int animMode;
@@ -65,12 +66,14 @@ struct edAnmStage {
 
 };
 
-union edANM_HDR_Internal {
+union edANM_HDR_Internal
+{
 	float asTime;
 	int asKey;
 };
 
-struct edANM_HDR {
+struct edANM_HDR
+{
 	int count_0x0;
 	edANM_HDR_Internal field_0x4;
 	edANM_HDR_Internal keyIndex_0x8;
@@ -79,7 +82,8 @@ struct edANM_HDR {
 
 static_assert(sizeof(edANM_HDR) == 0xc, "Invalid edANM_HDR size");
 
-struct edAnmMacroBlendN {
+struct edAnmMacroBlendN
+{
 	edAnmMacroBlendN() {}
 	edAnmMacroBlendN(edANM_HDR* pInHdr)
 		: pHdr(pInHdr) {}
@@ -87,7 +91,8 @@ struct edAnmMacroBlendN {
 	edANM_HDR* pHdr;
 };
 
-struct AnimDesc {
+struct AnimDesc
+{
 	int animType;
 	edANM_HDR* pHdrA;
 	uint flags;
@@ -100,7 +105,8 @@ struct AnimDesc {
 };
 
 
-struct edAnmStateDesc {
+struct edAnmStateDesc
+{
 	int field_0x0;
 	int animType;
 	edANM_HDR* pHdrA;
@@ -110,7 +116,8 @@ struct edAnmStateDesc {
 	int origAnimType;
 };
 
-struct edAnmLayer {
+struct edAnmLayer
+{
 	void Reset();
 	void AnimateDT(float deltaTime);
 	bool MorphingDT(float playTime);
@@ -136,7 +143,8 @@ struct edAnmLayer {
 	float field_0xd4;
 };
 
-struct edAnmMetaAnimator {
+struct edAnmMetaAnimator
+{
 	int layerCount;
 	edAnmLayer* aAnimData;
 
@@ -148,7 +156,8 @@ struct edAnmMetaAnimator {
 	float GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int lengthMode);
 };
 
-struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
+struct edAnmBinMetaAnimator : public edAnmMetaAnimator
+{
 	int* pAnimKeyEntryData;
 	void SetAnimStatesBinary(void* pAnimKeyEntryData);
 	void SetLayerMacroAnimCallback(int index, AnimationCallback callback);
@@ -160,9 +169,11 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	void SetLayerAnimTime(float time, int index, byte param_4);
 	void SetLayerBlendingOp(int layerIndex, int op);
 	void SetAnimOnLayer(int mode, int layerIndex, int param_4);
+	bool IsLayerAnimEndReached(int layerIndex);
 };
 
-class CAnimation {
+class CAnimation
+{
 public:
 	CAnimation();
 
@@ -194,7 +205,10 @@ public:
 
 	bool SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices);
 
-	struct DisabledBoneEntry {
+	bool IsCurrentLayerAnimEndReached(uint layerIndex);
+
+	struct DisabledBoneEntry
+	{
 		uint boneId;
 		int nodeId;
 	};

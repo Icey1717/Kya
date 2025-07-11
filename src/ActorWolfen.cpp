@@ -2894,13 +2894,11 @@ void CActorWolfen::BehaviourDCA_Manage(CBehaviourDCA* pBehaviour)
 															}
 															else {
 																if (iVar6 == 0x89) {
-																	IMPLEMENTATION_GUARD(
-																	FUN_00174dc0(pBehaviour);)
+																	State_00174dc0(pBehaviour);
 																}
 																else {
 																	if (iVar6 == 0x88) {
-																		IMPLEMENTATION_GUARD(
-																		FUN_00174f20(pBehaviour);)
+																		State_00174f20(pBehaviour);
 																	}
 																	else {
 																		if (iVar6 == 0x87) {
@@ -4655,45 +4653,76 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 	return;
 }
 
+void CActorWolfen::State_00174dc0(CBehaviourDCA* pBehaviour)
+{
+	edF32VECTOR4* pComeBackPosition;
+	float fVar6;
+	edF32VECTOR4 local_10;
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(0xb1, -1);
+	}
+	else {
+		local_10 = gF32Vertex4Zero;
+		fVar6 = _GetFighterAnimationLength(this->currentAnimType);
+
+		pComeBackPosition = pBehaviour->GetComeBackPosition();
+		edF32Vector3LERPSoft(this->timeInAir / fVar6, &local_10.xyz, &pBehaviour->field_0x90.xyz, &pComeBackPosition->xyz);
+		UpdatePosition(&local_10, true);
+	}
+
+	this->dynamic.speed = 0.0f;
+	ManageDyn(4.0f, 0x53, (CActorsTable*)0x0);
+
+	return;
+}
+
+void CActorWolfen::State_00174f20(CBehaviourDCA* pBehaviour)
+{
+	edF32VECTOR4* pComeBackPosition;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4 eStack16;
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(0x89, -1);
+	}
+
+	pComeBackPosition = pBehaviour->GetComeBackPosition();
+	edF32Vector4SubHard(&eStack16, pComeBackPosition, &this->currentLocation);
+	edF32Vector4NormalizeHard(&eStack16, &eStack16);
+	fVar5 = GetAngleYFromVector(&eStack16);
+	fVar5 = edF32Between_Pi(fVar5 - this->field_0xcfc);
+	fVar6 = _GetFighterAnimationLength(this->currentAnimType);
+
+	if (fVar5 <= 0.0f) {
+		fVar5 = -fVar5;
+	}
+
+	SV_UpdateOrientationToPosition2D(fVar5 / fVar6, pComeBackPosition);
+
+	this->dynamic.speed = 0.0f;
+	ManageDyn(4.0f, 0x53, (CActorsTable*)0x0);
+
+	return;
+}
+
+
+
 void CActorWolfen::State_001750a0(CBehaviourDCA* pBehaviour)
 {
-	CAnimation* pAnim;
-	edAnmLayer* pLayer;
-	bool bVar3;
-	int iVar4;
-	CActor* pCVar5;
 	float fVar6;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
-	pAnim = this->pAnimationController;
-	pLayer = pAnim->anmBinMetaAnimator.aAnimData;
-
-	if ((pLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-		if (pLayer->animPlayState == 0) {
-			bVar3 = false;
-		}
-		else {
-			bVar3 = (pLayer->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar3 = false;
-	}
-
-	if (bVar3) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		SetState(0x82, -1);
 	}
 	else {
 		local_10 = gF32Vertex4Zero;
-		pAnim = this->pAnimationController;
-		iVar4 = GetIdMacroAnim(this->currentAnimType);
-		if (iVar4 < 0) {
-			fVar6 = 0.0f;
-		}
-		else {
-			fVar6 = pAnim->GetAnimLength(iVar4, 1);
-		}
+
+		fVar6 = _GetFighterAnimationLength(this->currentAnimType);
 
 		pBehaviour->GetPosition(&eStack32);
 

@@ -4685,7 +4685,7 @@ void CActorFighter::_SV_HIT_FightCollisionProcessHit(CActor* pHitActor, s_fighte
 
 
 
-int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, CActorsTable* param_6, CFighterExcludedTable* param_7, bool param_8, ushort param_9, ushort param_10)
+int CActorFighter::_SV_HIT_ProcessActorsCollisions(float damage, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, CActorsTable* param_6, CFighterExcludedTable* pExclusionTable, bool param_8, ushort param_9, ushort param_10)
 {
 	CActor* pReceiver;
 	CCollision* pCVar1;
@@ -4698,33 +4698,11 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 	int local_1f0;
 	edF32VECTOR4 eStack464;
 	edF32VECTOR4 eStack448;
-	undefined4 local_1b0[2];
-	undefined4 local_1a8;
-	float local_1a4;
-	undefined4 local_1a0;
-	edF32VECTOR4 eStack400;
-	float local_180;
-	float local_170;
-	float local_16c;
-	float local_168;
-	float local_164;
-	undefined2 local_160;
-	undefined2 local_15e;
+	_msg_hit_param local_1b0;
 	edF32MATRIX4 local_130;
 	edF32VECTOR4 eStack240;
 	edF32VECTOR4 local_e0[2];
-	undefined4 local_c0[2];
-	uint local_b8;
-	float local_b4;
-	undefined4 local_b0;
-	edF32VECTOR4 eStack160;
-	float local_90;
-	float local_80;
-	float local_7c;
-	float local_78;
-	float local_74;
-	ushort local_70;
-	ushort local_6e;
+	_msg_hit_param local_c0;
 	edF32VECTOR4 local_40;
 	edF32VECTOR4 eStack48;
 	CActor* local_18;
@@ -4760,7 +4738,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 			bVar4 = pReceiver->IsKindOfObject(OBJ_TYPE_FIGHTER);
 
 			if (bVar4 != false) {
-				if (param_7 != (CFighterExcludedTable*)0x0) goto code_r0x0030b96c;
+				if (pExclusionTable != (CFighterExcludedTable*)0x0) goto code_r0x0030b96c;
 				goto LAB_0030b9e0;
 			}
 
@@ -4795,20 +4773,16 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 				}
 			}
 
-			local_1b0[0] = 8;
-			local_1a8 = 0;
-			local_180 = edF32Vector4SafeNormalize0Hard(&eStack400, param_5);
+			local_1b0.projectileType = 8;
+			local_1b0.flags = 0;
+			local_1b0.field_0x30 = edF32Vector4SafeNormalize0Hard(&local_1b0.field_0x20, param_5);
 			pCVar1 = pReceiver->pCollisionData;
-			local_170 = (pCVar1->field_0x90).x;
-			local_16c = (pCVar1->field_0x90).y;
-			local_168 = (pCVar1->field_0x90).z;
-			local_164 = (pCVar1->field_0x90).w;
-			local_1a0 = 0;
-			local_160 = 0;
-			local_15e = 0;
-			local_8 = local_1b0;
-			local_1a4 = param_1;
-			DoMessage(pReceiver, (ACTOR_MESSAGE)2, (MSG_PARAM)local_8);
+			local_1b0.field_0x40 = pCVar1->field_0x90;
+			local_1b0.field_0x10 = 0.0f;
+			local_1b0.field_0x50 = 0;
+			local_1b0.field_0x52 = 0;
+			local_1b0.damage = damage;
+			DoMessage(pReceiver, MESSAGE_KICKED, &local_1b0);
 		}
 		if (uVar7 != 0x0) {
 			if (param_3 != (edF32VECTOR4*)0x0) {
@@ -4840,8 +4814,8 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 	return uVar7;
 code_r0x0030b96c:
 	iVar6 = 0;
-	s_fighter_hit_exclusion* pCVar5 = param_7->aEntries;
-	if (0 < param_7->nbEntries) {
+	s_fighter_hit_exclusion* pCVar5 = pExclusionTable->aEntries;
+	if (0 < pExclusionTable->nbEntries) {
 		do {
 			local_18 = pCVar5->pActor;
 			//local_14 = pCVar5->field_0x8; UNUSED?
@@ -4853,7 +4827,7 @@ code_r0x0030b96c:
 
 			iVar6 = iVar6 + 1;
 			pCVar5 = pCVar5 + 1;
-		} while (iVar6 < param_7->nbEntries);
+		} while (iVar6 < pExclusionTable->nbEntries);
 	}
 
 	bVar4 = false;
@@ -4861,11 +4835,13 @@ code_r0x0030b96c:
 LAB_0030b9d0:
 	if (!bVar4) {
 	LAB_0030b9e0:
-		pCVar1 = pReceiver->pCollisionData;
+		// Receiver is a CActorFighter
+		CActorFighter* pFighterReceiver = static_cast<CActorFighter*>(pReceiver);
+
+		pCVar1 = pFighterReceiver->pCollisionData;
 		local_40 = pCVar1->field_0x90;
 
-		IMPLEMENTATION_GUARD(
-		edF32Vector4AddHard(&eStack448, &pReceiver->currentLocation, (edF32VECTOR4*)&pReceiver[2].field_0x140);)
+		edF32Vector4AddHard(&eStack448, &pFighterReceiver->currentLocation, &pFighterReceiver->fighterAnatomyZones.field_0x0);
 
 		eStack448.w = 1.0f;
 		edF32Vector4SubHard(&eStack48, &local_40, &eStack448);
@@ -4881,26 +4857,22 @@ LAB_0030b9d0:
 		}
 
 		if (param_8 == true) {
-			local_c0[0] = 8;
-			local_b0 = 0x3e99999a;
-			local_90 = edF32Vector4SafeNormalize0Hard(&eStack160, param_5);
-			local_b8 = (uint)(this->field_0x7d4 <= local_90);
-			local_80 = local_40.x;
-			local_7c = local_40.y;
-			local_78 = local_40.z;
-			local_74 = local_40.w;
-			local_6e = param_10;
-			local_4 = local_c0;
-			local_b4 = param_1;
-			local_70 = param_9;
-			IMPLEMENTATION_GUARD(
-			CActor::DoMessage((CActor*)this, pReceiver, 2, (uint)local_4);
-			if ((param_7 != (CFighterExcludedTable*)0x0) && (param_7->nbEntries < 6)) {
-				(&param_7->field_0x4)[param_7->nbEntries * 3] = pReceiver;
-				(&param_7->field_0xc)[param_7->nbEntries * 3] = 0x3f800000;
-				(&param_7->field_0x8)[param_7->nbEntries * 3] = 0;
-				param_7->nbEntries = param_7->nbEntries + 1;
-			})
+			local_c0.projectileType = 8;
+			local_c0.field_0x10 = 0.3f;
+			local_c0.field_0x30 = edF32Vector4SafeNormalize0Hard(&local_c0.field_0x20, param_5);
+			local_c0.flags = (uint)(this->field_0x7d4 <= local_c0.field_0x30);
+			local_c0.field_0x40 = local_40;
+			local_c0.field_0x52 = param_10;
+			local_c0.damage = damage;
+			local_c0.field_0x50 = param_9;
+			CActor::DoMessage(pReceiver, MESSAGE_KICKED, &local_c0);
+
+			if ((pExclusionTable != (CFighterExcludedTable*)0x0) && (pExclusionTable->nbEntries < 6)) {
+				pExclusionTable->aEntries[pExclusionTable->nbEntries].pActor = pReceiver;
+				pExclusionTable->aEntries[pExclusionTable->nbEntries].maxDuration = 1.0f;
+				pExclusionTable->aEntries[pExclusionTable->nbEntries].currentDuration = 0.0f;
+				pExclusionTable->nbEntries = pExclusionTable->nbEntries + 1;
+			}
 		}
 	}
 
@@ -6544,6 +6516,42 @@ void CBehaviourFighter::Manage()
 	pFighter = this->pOwner;
 	
 	switch (this->pOwner->actorState) {
+	case 0xc:
+		pCVar5 = pFighter->pAnimationController;
+		peVar6 = (pCVar5->anmBinMetaAnimator).aAnimData;
+
+		if ((peVar6->currentAnimDesc).animType == pCVar5->currentAnimType_0x30) {
+			bVar8 = false;
+			if (peVar6->animPlayState != 0) {
+				bVar8 = (peVar6->field_0xcc & 2) != 0;
+			}
+		}
+		else {
+			bVar8 = false;
+		}
+
+		if (bVar8) {
+			pFighter->SetState(FIGHTER_DEFAULT_STATE_IDLE, pFighter->standAnim);
+		}
+
+		pFighter->_ManageFighterDyn(0, 0x1002023b, (CActorsTable*)0x0);
+		break;
+	case 0xd:
+		pFighter->_ManageFighterDyn(0x19, 0x1002023b, (CActorsTable*)0x0);
+		if ((pFighter->pCollisionData->flags_0x4 & 2) == 0) {
+			pFighter->field_0x4fc = pFighter->dynamic.linearAcceleration * fabs(pFighter->dynamic.velocityDirectionEuler.y) / 8.0f;
+			if (1.0f < pFighter->field_0x4fc) {
+				pFighter->field_0x4fc = 1.0;
+			}
+
+			if (pFighter->currentLocation.y < pFighter->field_0x4f0) {
+				pFighter->fightFlags = pFighter->fightFlags | 2;
+			}
+		}
+		else {
+			pFighter->SetState(0xc, -1);
+		}
+		break;
 	case FIGHTER_DEFAULT_STATE_IDLE:
 		if (pFighter->field_0x474 <= pFighter->timeInAir) {
 			pFighter->AcquireAdversary();
@@ -6832,6 +6840,11 @@ void CBehaviourFighter::InitState(int newState)
 	}
 
 	switch (newState) {
+	case 0xc:
+		pCVar4 = this->pOwner->pCollisionData;
+		pCVar4->flags_0x0 = pCVar4->flags_0x0 | 0x30;
+	case 0xd:
+		break;
 	case FIGHTER_DEFAULT_STATE_IDLE:
 		pFighter = this->pOwner;
 		pFighter->actorsExcludeTable.nbEntries = 0;
@@ -6938,6 +6951,13 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_DEFAULT_STATE_RUN:
 	case FIGHTER_HIT_STEP_BACK:
 	case FIGHTER_BLOW_END:
+	case 0xc:
+		break;
+	case 0xd:
+		pFighter = this->pOwner;
+		if ((pFighter->GetStateFlags(newState) & 0x100) != 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 2;
+		}
 		break;
 	case FIGHTER_BLOW_BEGIN:
 	case 0x68:

@@ -196,12 +196,12 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->braceletBone = pByteCode->GetU32();
 	this->medallionBone = pByteCode->GetU32();
 
-	int* pSeekpiVar5 = (int*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(pSeekpiVar5 + 1);
-	if (*pSeekpiVar5 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *pSeekpiVar5 * 4;
+	S_ZONE_STREAM_REF* pZoneStreamRef = reinterpret_cast<S_ZONE_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+	if (pZoneStreamRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pZoneStreamRef->entryCount * sizeof(S_STREAM_REF<ed_zone_3d>);
 	}
-	this->field_0x14a4 = pSeekpiVar5;
+	this->pClimbZoneStreamRef = pZoneStreamRef;
 
 	iVar11 = 0;
 	byte(*pCVar12)[16]  = this->field_0xd34;
@@ -467,11 +467,11 @@ void CActorHeroPrivate::Init()
 	this->pAnimationController->RegisterBone(this->field_0x157c);
 	this->pAnimationController->RegisterBone(0x45544554);
 	this->pAnimationController->RegisterBone(this->animKey_0x1588);
-	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0x14a4;
-	//for (peVar8 = pSVar13->pZone; peVar8 != (ed_zone_3d*)0x0; peVar8 = (ed_zone_3d*)((int)&peVar8[-1].field_0x20 + 3)) {
-	//	pSVar13 = pSVar13 + 1;
-	//	S_STREAM_REF<ed_zone_3d>::Init(pSVar13);
-	//}
+
+	for (int i = 0; i < this->pClimbZoneStreamRef->entryCount; i++) {
+		this->pClimbZoneStreamRef->aEntries[i].Init();
+	}
+
 	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0xd24;
 	//iVar12 = 0;
 	//if (0 < (int)this->pEventChunk24_0xd24) {
@@ -4591,13 +4591,12 @@ int CActorHeroPrivate::StateEvaluate()
 		iVar4 = GetPossibleWind(fVar10, &this->dynamicExt.aImpulseVelocities[2], peVar9);
 		if (iVar4 == -1) {
 			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
-				IMPLEMENTATION_GUARD(
 				bVar3 = InClimbZone(&this->currentLocation);
 				this->field_0x1454 = bVar3;
 				iVar4 = 0xa9;
 				if (this->field_0x1454 == false) {
 					iVar4 = ChooseStateFall(0);
-				})
+				}
 			}
 			else {
 				if ((GetStateFlags(this->prevActorState) & 0x100) == 0) {
@@ -13927,6 +13926,38 @@ void CActorHeroPrivate::DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int
 	}
 
 	return;
+}
+
+bool CActorHeroPrivate::InClimbZone(edF32VECTOR4* pPosition)
+{
+	ed_zone_3d* pZone;
+	S_ZONE_STREAM_REF* pSVar1;
+	CEventManager* pCVar2;
+	uint uVar3;
+	int iVar4;
+	int iVar6;
+
+	pCVar2 = CScene::ptable.g_EventManager_006f5080;
+	iVar6 = 0;
+	while (true) {
+		pSVar1 = this->pClimbZoneStreamRef;
+		iVar4 = 0;
+		if (pSVar1 != (S_ZONE_STREAM_REF*)0x0) {
+			iVar4 = pSVar1->entryCount;
+		}
+
+		if (iVar4 <= iVar6) break;
+
+		pZone = pSVar1->aEntries[iVar6].Get();
+
+		if ((pZone != (ed_zone_3d*)0x0) && (uVar3 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, pZone, pPosition, 0), (uVar3 & 1) != 0)) {
+			return true;
+		}
+
+		iVar6 = iVar6 + 1;
+	}
+
+	return false;
 }
 
 void CActorHeroPrivate::UngripAllObjects()

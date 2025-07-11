@@ -906,24 +906,24 @@ uint SquadSemaphoreManager::GetToken(CTeamElt* pTeamElt, int param_3)
 	}
 
 	if (uVar7 != 0xffffffff) {
-		IMPLEMENTATION_GUARD(
-		pfVar2 = &this->aSemaphores[uVar7 - 1].duration;
-		fVar10 = SemaphoreEval(pTeamElt, (long)(int)pfVar2[5]);
-		pfVar3 = &this->aSemaphores[uVar7 - 1].duration;
+		SquadSemaphore* pPrevSemaphore = this->aSemaphores + uVar7;
+
+		fVar10 = SemaphoreEval(pTeamElt, pPrevSemaphore->field_0x4);
 		if (fVar9 < fVar10) {
-			if (((uint)pfVar3[7] & 5) == 0) {
+			if ((pPrevSemaphore->flags & 5) == 0) {
 				this->field_0xc = this->field_0xc + -1;
 			}
-			pfVar4 = &this->aSemaphores[uVar7 - 1].duration;
-			fVar9 = pfVar4[4];
-			if (fVar9 != 0.0) {
-				pfVar2[5] = fVar9;
+
+			CTeamElt* pCVar1 = pPrevSemaphore->pTeamElt;
+			if (pCVar1 != (CTeamElt*)0x0) {
+				pPrevSemaphore->field_0x4 = pCVar1;
 			}
-			pfVar4[4] = (float)pTeamElt;
-			this->aSemaphores[uVar7].field_0x8 = fVar10;
-			pfVar3[7] = 4.203895e-45;
+
+			pPrevSemaphore->pTeamElt = pTeamElt;
+			pPrevSemaphore->field_0x8 = fVar10;
+			pPrevSemaphore->flags = 3;
 			return uVar7;
-		})
+		}
 	}
 
 	return 0xffffffff;

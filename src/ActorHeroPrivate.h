@@ -332,6 +332,7 @@ public:
 	bool DetectGripablePrecipice();
 	void DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int* param_4, edF32VECTOR4* v1);
 
+	bool InClimbZone(edF32VECTOR4* pPosition);
 	void UngripAllObjects();
 
 	int SlideOnGround(float param_1, float param_2, float param_3, float param_4, uint flags);

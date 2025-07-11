@@ -338,8 +338,7 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 
 		if (fVar18 == 0.0f) {
 			if (1 < this->field_0x2b4) {
-				IMPLEMENTATION_GUARD(
-				DetermineBetaAndWay();)
+				DetermineBetaAndWay();
 			}
 		}
 		else {
@@ -570,10 +569,9 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 	if (this->pCamera->pOtherTarget != (CActor*)0x0) {
 		this->pCamera->FillThisFrameExpectedDifferentialMatrix(&eStack128);
 
-		IMPLEMENTATION_GUARD(
 		this->vertexDynExtA.FUN_00213b90(&eStack128);
 		this->vertexDynExtD.FUN_00213b90(&eStack128);
-		this->vertexDynExtE.FUN_00213b90(&eStack128);)
+		this->vertexDynExtE.FUN_00213b90(&eStack128);
 		edF32Matrix4MulF32Vector4Hard(&this->adversaryPos, &eStack128, &this->adversaryPos);
 		v0 = &(this->boundingSphereDyn).field_0x20;
 		edF32Matrix4MulF32Vector4Hard(v0, &eStack128, v0);
@@ -726,6 +724,260 @@ void CCamFigData::ComputeData()
 	eStack64.y = 0.0f;
 	this->field_0x2f0 = edFIntervalLERP(fVar9 + this->field_0x24 * edF32Vector4GetDistHard(&eStack64), this->field_0x18, this->field_0x1c, this->field_0xc, this->field_0x10);
 	gSP_Manager.ReleaseBuffer(pComputeDataBuffer);
+
+	return;
+}
+
+void CCamFigData::DetermineBetaAndWay()
+{
+	bool bVar1;
+	bool bVar2;
+	edF32VECTOR3* peVar3;
+	edF32VECTOR3* peVar4;
+	CActor* pCVar5;
+	uint uVar6;
+	edF32VECTOR3* peVar7;
+	int iVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float unaff_f20;
+	CCollisionRay CStack624;
+	edF32VECTOR4 local_250;
+	edF32MATRIX4 auStack576;
+	edF32VECTOR4 local_200;
+	CCollisionRay CStack496;
+	edF32VECTOR4 local_1d0;
+	edF32MATRIX4 auStack448;
+	edF32VECTOR4 local_180;
+	CCollisionRay CStack368;
+	edF32VECTOR4 local_150;
+	edF32MATRIX4 auStack320;
+	edF32VECTOR4 local_100;
+	CCollisionRay CStack240;
+	edF32VECTOR4 local_d0;
+	edF32MATRIX4 auStack192;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 eStack96;
+	undefined4 local_50;
+	float local_4c;
+	float local_48;
+	float local_44;
+	edF32VECTOR3 local_40;
+	edF32VECTOR3 local_30;
+	edF32VECTOR3 local_20;
+	edF32VECTOR3 local_10;
+
+	if (this->field_0x2b4 == 2) {
+		fVar9 = CamUpdate_0049c760.FUN_003c4e20((this->angleBetaDyn).field_0x4, 0.6283185f);
+		fVar10 = edF32GetAnglesDelta(this->angleBetaDyn.field_0x4, fVar9);
+		if (this->field_0x2b8 == 2) {
+			if (this->angleBetaDyn.field_0x4 < fVar9) {
+				fVar9 = fVar9 - 6.283185f;
+			}
+		}
+		else {
+			if (fVar9 < this->angleBetaDyn.field_0x4) {
+				fVar9 = fVar9 + 6.283185f;
+			}
+		}
+
+		local_50 = 1;
+		bVar1 = false;
+		local_4c = this->angleDynA.field_0x4;
+		local_44 = this->field_0x264;
+		local_48 = fVar9;
+		fVar11 = edF32Between_0_2Pi_Incr(fVar9);
+		if (CamUpdate_0049c760.field_0x18 <=
+			CamUpdate_0049c760.aSubObjB[(int)((fVar11 * 35.0) / 6.283185)].intersectionDistance) {
+			local_80 = (this->vertexDynExtC).field_0x20;
+			local_d0 = gF32Vector4UnitY;
+			local_10 = {};
+			local_10.x = local_4c;
+			local_10.y = local_48;
+			edF32Matrix4FromEulerSoft(&auStack192, &local_10, "XYZ");
+			edF32Vector4SubHard(&auStack192.rowZ, &gF32Vector4Zero, &auStack192.rowZ);
+			CCollisionRay CStack240 = CCollisionRay(local_44, &local_80, (edF32VECTOR4*)&auStack192.ca);
+			pCVar5 = this->pCamera->GetTarget();
+			fVar11 = CStack240.Intersect(3, pCVar5, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (this->field_0xc <= fVar11) {
+				local_100 = this->adversaryPos;
+				local_150 = gF32Vector4UnitY;
+				local_20 = {};
+				local_20.x = local_4c;
+				local_20.y = local_48;
+				edF32Matrix4FromEulerSoft(&auStack320, &local_20, "XYZ");
+				edF32Vector4SubHard(&auStack320.rowZ, &gF32Vector4Zero, &auStack320.rowZ);
+				CCollisionRay CStack368 = CCollisionRay(local_44, &local_100, &auStack320.rowZ);
+				pCVar5 = this->pCamera->GetTarget();
+				fVar11 = CStack368.Intersect(3, pCVar5, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				if (this->field_0xc <= fVar11) {
+					bVar1 = true;
+				}
+			}
+		}
+		if (bVar1) {
+			this->field_0x2bc = 1;
+			if (fVar10 < 0.0f) {
+				iVar8 = 2;
+			}
+			else {
+				iVar8 = 3;
+			}
+
+			this->field_0x2b8 = iVar8;
+			this->field_0x2c0 = 0.0f;
+			this->field_0x304 = 6;
+			this->field_0x300 = fVar9;
+		}
+		else {
+			this->field_0x2bc = 0;
+			this->field_0x2b8 = 0;
+			this->field_0x2b4 = 3;
+			this->field_0x304 = 6;
+		}
+	}
+	else {
+		bVar1 = true;
+		iVar8 = 0;
+		if (this->field_0x304 == 6) {
+			this->field_0x30c = 0.0f;
+
+			if (this->field_0x288 == 1e+30f) {
+				edF32Vector4SubHard(&eStack96, &this->adversaryPos, &(this->vertexDynExtB).field_0x20);
+			}
+			else {
+				edF32Vector4SubHard(&eStack96, &(this->vertexDynExtC).field_0x20, &(this->vertexDynExtB).field_0x20);
+			}
+
+			fVar9 = edF32Vector4DotProductHard(&eStack96, &this->pCamera->transformationMatrix.rowX);
+			iVar8 = 2;
+			if (0.0f <= fVar9) {
+				iVar8 = 3;
+			}
+
+			uVar6 = 2;
+			this->field_0x308 = iVar8;
+			if (iVar8 != 2) {
+				uVar6 = 3;
+			}
+
+			this->field_0x304 = uVar6;
+		}
+
+		uVar6 = this->field_0x304;
+		if (uVar6 == 5) {
+			unaff_f20 = 0.0f;
+		}
+		else {
+			if ((uVar6 != 4) && ((uVar6 == 3 || (uVar6 == 2)))) {
+				if (this->field_0x304 == 2) {
+					fVar9 = -0.3141593f;
+				}
+				else {
+					fVar9 = 0.3141593f;
+				}
+
+				unaff_f20 = this->field_0x30c + fVar9;
+				this->field_0x30c = unaff_f20;
+				bVar1 = 2.792527f <= fabs(unaff_f20);
+				iVar8 = 2;
+				if (this->field_0x304 != 2) {
+					iVar8 = 3;
+				}
+			}
+		}
+
+		fVar9 = this->angleDynA.field_0x4;
+		fVar10 = edF32Between_2Pi(unaff_f20 + this->angleBetaDyn.field_0x4);
+		bVar2 = false;
+		fVar11 = this->field_0x264;
+		fVar12 = edF32Between_0_2Pi_Incr(fVar10);
+		if (CamUpdate_0049c760.field_0x18 <= CamUpdate_0049c760.aSubObjB[(int)((fVar12 * 35.0f) / 6.283185f)].intersectionDistance) {
+			local_180 = (this->vertexDynExtC).field_0x20;
+			local_1d0 = gF32Vector4UnitY;
+			local_30 = {};
+			local_30.x = fVar9;
+			local_30.y = fVar10;
+			edF32Matrix4FromEulerSoft(&auStack448, &local_30, "XYZ");
+			edF32Vector4SubHard(&auStack448.rowZ, &gF32Vector4Zero, &auStack448.rowZ);
+			CCollisionRay CStack496 = CCollisionRay(fVar11, &local_180, &auStack448.rowZ);
+			pCVar5 = this->pCamera->GetTarget();
+			fVar12 = CStack496.Intersect(3, pCVar5, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (this->field_0xc <= fVar12) {
+				local_200 = this->adversaryPos;
+				local_250 = gF32Vector4UnitY;
+				local_40 = {};
+				local_40.x = fVar9;
+				local_40.y = fVar10;
+				edF32Matrix4FromEulerSoft(&auStack576, &local_40, "XYZ");
+				edF32Vector4SubHard(&auStack576.rowZ, &gF32Vector4Zero, &auStack576.rowZ);
+				CCollisionRay CStack624 = CCollisionRay(fVar11, &local_200, &auStack576.rowZ);
+				pCVar5 = this->pCamera->GetTarget();
+				fVar9 = CStack624.Intersect(3, pCVar5, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				if (this->field_0xc <= fVar9) {
+					bVar2 = true;
+				}
+			}
+		}
+
+		if (bVar2) {
+			fVar9 = edF32Between_2Pi(unaff_f20 + this->angleBetaDyn.field_0x4);
+			if (iVar8 == 2) {
+				if (this->angleBetaDyn.field_0x4 < fVar9) {
+					fVar9 = fVar9 - 6.283185f;
+				}
+			}
+			else {
+				if (fVar9 < this->angleBetaDyn.field_0x4) {
+					fVar9 = fVar9 + 6.283185f;
+				}
+			}
+
+			this->field_0x2bc = 1;
+			this->field_0x2b8 = iVar8;
+			this->field_0x2c0 = 0.0f;
+			this->field_0x304 = 6;
+			this->field_0x300 = fVar9;
+		}
+		else {
+			this->field_0x2bc = 0;
+
+			if (bVar1) {
+				uVar6 = this->field_0x304;
+
+				if (uVar6 == 5) {
+					uVar6 = 2;
+					if (this->field_0x308 != 2) {
+						uVar6 = 3;
+					}
+
+					this->field_0x304 = uVar6;
+				}
+				else {
+					if (uVar6 == 3) {
+						if (this->field_0x308 == 3) {
+							this->field_0x304 = 2;
+						}
+						else {
+							this->field_0x304 = 5;
+						}
+					}
+					else {
+						if (uVar6 == 2) {
+							if (this->field_0x308 == 2) {
+								this->field_0x304 = 3;
+							}
+							else {
+								this->field_0x304 = 5;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	return;
 }
@@ -1141,4 +1393,119 @@ uint CamUpdate::FUN_Count(float param_1)
 	}
 
 	return uVar6;
+}
+
+float CamUpdate::FUN_003c4e20(float param_1, float param_2)
+{
+	CamUpdateSubObjA* puVar1;
+	CamUpdateSubObjA* puVar2;
+	int iVar1;
+	short sVar2;
+	int iVar3;
+	uint uVar4;
+	uint uVar5;
+	float fVar6;
+	uint uVar7;
+	float fVar8;
+
+	fVar6 = edF32Between_0_2Pi_Incr(param_1);
+	uVar5 = 0;
+	uVar7 = (uint)((fVar6 * 35.0f) / 6.283185f);
+
+	while (true) {
+		puVar1 = this->aSubObjA + uVar5;
+		sVar2 = 0;
+		if ((puVar1->field_0x4 <= uVar7) && (uVar7 < puVar1->field_0x6)) {
+			sVar2 = 1;
+		}
+		if ((puVar1->field_0x2 != sVar2) || (this->field_0x20 <= uVar5)) break;
+		uVar5 = uVar5 + 1;
+	}
+
+	if (uVar5 == this->field_0x20) {
+		uVar5 = 0;
+	}
+
+	puVar2 = this->aSubObjA + uVar5;
+	uVar7 = uVar5;
+	if (puVar2->field_0x0 == 0) {
+		fVar6 = FUN_00193e30(((float)(uint)this->aSubObjA[uVar5].field_0x4 * 6.283185f) / 35.0f, ((float)(uint)puVar2->field_0x6 * 6.283185f) / 35.0f);
+
+		if (this->aSubObjA[uVar5].field_0x2 != 0) {
+			fVar6 = 6.283185f - fVar6;
+		}
+		if (fVar6 * 0.5f < param_2) {
+			fVar6 = fVar6 * 0.5f + ((float)(uint)this->aSubObjA[uVar5].field_0x4 * 6.283185f) / 35.0f;
+		}
+		else {
+			fVar8 = edF32Between_0_2Pi_Incr(param_1 - param_2);
+			fVar6 = param_1 - param_2;
+			if (this->aSubObjB[(int)((fVar8 * 35.0f) / 6.283185f)].intersectionDistance < this->field_0x18) {
+				fVar6 = param_1 + param_2;
+			}
+		}
+	}
+	else {
+		do {
+			uVar4 = this->field_0x20;
+			uVar7 = (int)(uVar7 + uVar4 + -1) % (int)uVar4;
+			if (uVar4 == 0) {
+				trap(7);
+			}
+
+			fVar6 = FUN_00193e30(((float)(uint)this->aSubObjA[uVar7].field_0x4 * 6.283185f) / 35.0f, ((float)(uint)this->aSubObjA[uVar7].field_0x6 * 6.283185f) / 35.0f);
+			if (this->aSubObjA[uVar7].field_0x2 != 0) {
+				fVar6 = 6.283185f - fVar6;
+			}
+
+			uVar4 = uVar5;
+		} while (((this->aSubObjA[uVar7].field_0x0 != 0) || (fVar6 < param_2)) && (uVar7 != uVar5));
+
+		do {
+			uVar4 = (int)(uVar4 + 1) % (int)this->field_0x20;
+			if (this->field_0x20 == 0) {
+				trap(7);
+			}
+
+			fVar6 = FUN_00193e30(((float)(uint)this->aSubObjA[uVar4].field_0x4 * 6.283185f) / 35.0f, ((float)(uint)this->aSubObjA[uVar4].field_0x6 * 6.283185f) / 35.0f);
+			if (this->aSubObjA[uVar4].field_0x2 != 0) {
+				fVar6 = 6.283185f - fVar6;
+			}
+		} while (((this->aSubObjA[uVar4].field_0x0 != 0) || (fVar6 < param_2)) && (uVar4 != uVar5));
+
+		fVar8 = edF32GetAnglesDelta(param_1, ((float)(uint)this->aSubObjA[uVar7].field_0x6 * 6.283185f) / 35.0f);
+		fVar6 = edF32GetAnglesDelta(param_1, ((float)(uint)this->aSubObjA[uVar4].field_0x4 * 6.283185f) / 35.0f);
+		iVar3 = uVar4 - uVar5;
+		if (iVar3 == 0) {
+			iVar3 = 0;
+		}
+
+		iVar1 = uVar7 - uVar5;
+		if (iVar1 == 0) {
+			iVar1 = 0;
+		}
+
+		if (((uint)(iVar1 % 0x23) <= (uint)(iVar3 % 0x23)) && (fabs(fVar8) <= fabs(fVar6))) {
+			fVar6 = fVar8;
+			uVar4 = uVar7;
+		}
+
+		fVar8 = FUN_00193e30(((float)(uint)this->aSubObjA[uVar4].field_0x4 * 6.283185f) / 35.0f, ((float)(uint)this->aSubObjA[uVar4].field_0x6 * 6.283185f) / 35.0f);
+		if (this->aSubObjA[uVar4].field_0x2 != 0) {
+			fVar8 = 6.283185f - fVar8;
+		}
+
+		fVar8 = fVar8 * 0.5f;
+		if (param_2 <= fVar8) {
+			fVar8 = param_2;
+		}
+
+		if (fVar6 < 0.0f) {
+			fVar8 = -fVar8;
+		}
+
+		fVar6 = edF32Between_2Pi(param_1 + fVar6 + fVar8);
+	}
+
+	return fVar6;
 }

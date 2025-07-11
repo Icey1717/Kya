@@ -118,9 +118,9 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(S_BRIDGE_ZONE_STREAM);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(S_ZONE_STREAM_REF);
 	}
-	this->pZoneStream = (S_BRIDGE_ZONE_STREAM*)piVar5;
+	this->pZoneStream = (S_ZONE_STREAM_REF*)piVar5;
 
 	uVar4 = pByteCode->GetS32();
 	this->noFrictionZoneCount = uVar4;
@@ -705,7 +705,7 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		SV_UpdateMatrix_Rel(&eStack144, 1, 1, pActorsTable, &local_10);
 	}
 
-	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream == (S_ZONE_STREAM_REF*)0x0) {
 		iVar2 = 0;
 	}
 	else {
@@ -802,7 +802,7 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	}
 
 	iVar2 = 0;
-	if (this->pZoneStream != (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream != (S_ZONE_STREAM_REF*)0x0) {
 		iVar2 = this->pZoneStream->entryCount;
 	}
 
@@ -1540,7 +1540,7 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 		}
 	}
 
-	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream == (S_ZONE_STREAM_REF*)0x0) {
 		iVar8 = 0;
 	}
 	else {
@@ -3524,7 +3524,7 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 		SV_UpdateMatrix_Rel(&local_50, 1, 1, pActorTable, &local_10);
 	}
 
-	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream == (S_ZONE_STREAM_REF*)0x0) {
 		iVar5 = 0;
 	}
 	else {
