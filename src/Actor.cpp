@@ -1864,7 +1864,12 @@ bool CActor::SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3)
 	return bVar1;
 }
 
-
+bool CActor::SV_IAmInFrontOfThisActor(CActor* pOther)
+{
+	return 0.0f <= ((this->currentLocation).x - (pOther->currentLocation).x) * (pOther->rotationQuat).x +
+		((this->currentLocation).y - (pOther->currentLocation).y) * (pOther->rotationQuat).y +
+		((this->currentLocation).z - (pOther->currentLocation).z) * (pOther->rotationQuat).z;
+}
 
 void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
 {
@@ -4240,17 +4245,7 @@ bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimT
 			}
 		}
 		else {
-			peVar1 = (pAnimation->anmBinMetaAnimator).aAnimData;
-			bVar2 = false;
-			if ((peVar1->currentAnimDesc).animType == ((edAnmMetaAnimator*)&pAnimation->currentAnimType_0x30)->layerCount) {
-				if (peVar1->animPlayState == STATE_ANIM_NONE) {
-					bVar2 = false;
-				}
-				else {
-					bVar2 = (peVar1->field_0xcc & 2) != 0;
-				}
-			}
-			if ((bVar2) && (this->numIdleLoops = this->numIdleLoops - 1, (char)this->numIdleLoops < '\x01')) {
+			if ((pAnimation->IsCurrentLayerAnimEndReached(0)) && (this->numIdleLoops = this->numIdleLoops - 1, (char)this->numIdleLoops < '\x01')) {
 				pAnimation->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 				if (regularAnimType == -1) {
 					if (this->prevAnimType == -1) {

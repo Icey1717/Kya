@@ -39,14 +39,7 @@ void CActorBasicBox::Create(ByteCode* pByteCode)
 	this->field_0x198 = pByteCode->GetS32();
 	this->field_0x194 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF* pSeekTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos += sizeof(S_TARGET_STREAM_REF);
-	if (pSeekTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (pSeekTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH));
-
-		static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);
-	}
-	this->targetStreamRef = pSeekTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->targetStreamRef, pByteCode);
 	
 	S_STREAM_EVENT_CAMERA* pSeekStreamCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos += sizeof(S_STREAM_EVENT_CAMERA);
@@ -77,15 +70,7 @@ void CActorBasicBox::Init()
 
 	CActor::Init();
 
-	pStream = this->targetStreamRef;
-	iVar5 = 0;
-	if (0 < pStream->entryCount) {
-		do {
-			pStream->aEntries[iVar5].Init();
-			iVar5 = iVar5 + 1;
-		} while (iVar5 < pStream->entryCount);
-	}
-
+	this->targetStreamRef->Init();
 	this->streamEventCamera->Init();
 
 	this->field_0x168 = (float)(int)this->field_0x16c;
@@ -101,15 +86,8 @@ void CActorBasicBox::Init()
 	this->vibrationDyn.Init(&vibrationParam);
 
 	this->field_0x2e0 = 0;
-	pStream = this->targetStreamRef;
-	iVar5 = 0;
-	if (0 < pStream->entryCount) {
-		do {
-			pStream->aEntries[iVar5].Reset();
-			iVar5 = iVar5 + 1;
-		} while (iVar5 < pStream->entryCount);
-	}
 
+	this->targetStreamRef->Reset();
 	this->streamEventCamera->Reset(this);
 
 	pCVar1 = this->pCollisionData;
@@ -154,10 +132,7 @@ void CActorBasicBox::Reset()
 
 	this->field_0x2e0 = 0;
 
-	for (int i = 0; i < this->targetStreamRef->entryCount; i++) {
-		this->targetStreamRef->aEntries[i].Reset();
-	}
-
+	this->targetStreamRef->Reset();
 	this->streamEventCamera->Reset(this);
 
 	pCVar1 = this->pCollisionData;
@@ -444,21 +419,7 @@ void CBehaviourBasicBoxStand::Manage()
 				pCVar2 = pBasicBox->pAnimationController;
 
 				if (pCVar2 != (CAnimation*)0x0) {
-					pAnimData = (pCVar2->anmBinMetaAnimator).aAnimData;
-
-					if ((pAnimData->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-						if (pAnimData->animPlayState == 0) {
-							bVar5 = false;
-						}
-						else {
-							bVar5 = (pAnimData->field_0xcc & 2) != 0;
-						}
-					}
-					else {
-						bVar5 = false;
-					}
-
-					if (!bVar5) goto LAB_0038cdc0;
+					if (!pCVar2->IsCurrentLayerAnimEndReached(0)) goto LAB_0038cdc0;
 				}
 
 				pBasicBox->SetState(8, -1);

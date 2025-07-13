@@ -40,23 +40,13 @@ void CActorStiller::Create(ByteCode* pByteCode)
 
 	this->field_0x200 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->field_0x204 = pTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->field_0x204, pByteCode);
 
 	S_STREAM_EVENT_CAMERA* pCameraEvent = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
 	this->field_0x208 = pCameraEvent;
 
-	pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->field_0x20c = pTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->field_0x20c, pByteCode);
 
 	pCameraEvent = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
@@ -86,16 +76,10 @@ void CActorStiller::Init()
 		this->field_0x1fc->aEntries[i].Init();
 	}
 
-	for (int i = 0; i < this->field_0x204->entryCount; i++) {
-		this->field_0x204->aEntries[i].Init();
-	}
-
+	this->field_0x204->Init();
 	this->field_0x208->Init();
 
-	for (int i = 0; i < this->field_0x20c->entryCount; i++) {
-		this->field_0x20c->aEntries[i].Init();
-	}
-
+	this->field_0x20c->Init();
 	this->field_0x210->Init();
 
 	for (int i = 0; i < this->field_0x1fc->entryCount; i++) {
@@ -112,16 +96,10 @@ void CActorStiller::Init()
 
 	this->field_0x25c = 0;
 
-	for (int i = 0; i < this->field_0x204->entryCount; i++) {
-		this->field_0x204->aEntries[i].Reset();
-	}
-
+	this->field_0x204->Reset();
 	this->field_0x208->Reset(this);
 
-	for (int i = 0; i < this->field_0x20c->entryCount; i++) {
-		this->field_0x20c->aEntries[i].Reset();
-	}
-
+	this->field_0x20c->Reset();
 	this->field_0x210->Reset(this);
 
 	this->pAnimationController->RegisterBone(this->field_0x1d0);
@@ -166,16 +144,10 @@ void CActorStiller::Reset()
 
 	this->field_0x25c = 0;
 
-	for (int i = 0; i < this->field_0x204->entryCount; i++) {
-		this->field_0x204->aEntries[i].Reset();
-	}
-
+	this->field_0x204->Reset();
 	this->field_0x208->Reset(this);
 
-	for (int i = 0; i < this->field_0x20c->entryCount; i++) {
-		this->field_0x20c->aEntries[i].Reset();
-	}
-
+	this->field_0x20c->Reset();
 	this->field_0x210->Reset(this);
 
 	return;
@@ -365,10 +337,7 @@ void CActorStiller::BehaviourStillerStand_InitState(int newState)
 	}
 	else {
 		if ((newState == 9) || (newState == 0xd)) {
-			for (int i = 0; i < this->field_0x204->entryCount; i++) {
-				this->field_0x204->aEntries[i].Switch(this);
-			}
-
+			this->field_0x204->Switch(this);
 			this->field_0x208->SwitchOn(this);
 		}
 	}
@@ -403,18 +372,7 @@ void CActorStiller::BehaviourStillerStand_Manage()
 		else {
 			bVar3 = CheckAttackArea(this);
 			if (bVar3 == false) {
-				pCVar1 = this->pAnimationController;
-				peVar2 = (pCVar1->anmBinMetaAnimator).base.aAnimData;
-				bVar3 = false;
-				if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-					if (peVar2->animPlayState == 0) {
-						bVar3 = false;
-					}
-					else {
-						bVar3 = (peVar2->field_0xcc & 2) != 0;
-					}
-				}
-				if (bVar3) {
+				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 					(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
 				}
 			}
@@ -443,18 +401,7 @@ void CActorStiller::BehaviourStillerStand_Manage()
 	case 9:
 		IMPLEMENTATION_GUARD(
 		if (((this->field_0x1f8 & 1) == 0) || (bVar3 = CheckAttackArea(this), bVar3 == false)) {
-			pCVar1 = this->pAnimationController;
-			peVar2 = (pCVar1->anmBinMetaAnimator).base.aAnimData;
-			bVar3 = false;
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar3 = false;
-				}
-				else {
-					bVar3 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-			if (bVar3) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				if ((this->field_0x1f8 & 1) == 0) {
 					(*(this->pVTable)->SetState)((CActor*)this, 0xc, -1);
 				}
@@ -469,18 +416,7 @@ void CActorStiller::BehaviourStillerStand_Manage()
 		break;
 	case 10:
 		IMPLEMENTATION_GUARD(
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).base.aAnimData;
-		bVar3 = false;
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar2->animPlayState == 0) {
-				bVar3 = false;
-			}
-			else {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		if (bVar3) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			(*(this->pVTable)->SetState)((CActor*)this, 5, -1);
 		}
 		bVar3 = CheckDetectArea(this);
@@ -496,18 +432,7 @@ void CActorStiller::BehaviourStillerStand_Manage()
 		break;
 	case 0xb:
 		IMPLEMENTATION_GUARD(
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).base.aAnimData;
-		bVar3 = false;
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar2->animPlayState == 0) {
-				bVar3 = false;
-			}
-			else {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		if (bVar3) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			newValue = CLifeBase::GetValueMax((CLifeBase*)&this->lifeBase);
 			CLifeBase::SetValue(newValue, (CLifeBase*)&this->lifeBase);
 			(*(this->pVTable)->SetState)((CActor*)this, 0xc, -1);

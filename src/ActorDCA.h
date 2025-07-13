@@ -13,7 +13,7 @@
 #define DCA_BEHAVIOUR_TRAJECTORY 0x5
 
 
-class CCamera;
+class CCameraDCA;
 struct ProjectileSubObj;
 
 struct S_SHOT_DATA
@@ -34,6 +34,7 @@ public:
 
 	void ManageShots();
 
+	bool Project(float velocity, edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pFiringActor);
 	bool ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, CActor* pFiringActor);
 
 	uint GetProjectileIndex(edF32VECTOR4* pLocation, bool param_3);
@@ -53,7 +54,7 @@ struct CONTROLLED_PARAMS
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
-	float field_0xc;
+	float fov;
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 field_0x20;
 };
@@ -149,7 +150,7 @@ public:
 	CBhvControlled behaviourControlled;
 	CBhvIAControlled behaviourAiControlled;
 
-	CCamera* pCamera;
+	CCameraDCA* pCamera;
 
 	uint field_0x450;
 	uint field_0x454;

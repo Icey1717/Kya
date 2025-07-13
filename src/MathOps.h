@@ -32,6 +32,7 @@ void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2);
 void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3);
 float edQuatToAngAxis(edF32VECTOR4* v0, float* f0, edF32VECTOR3* v1);
 void edQuatFromEuler(edF32VECTOR4* v0, float x, float y, float z);
+edF32VECTOR4* edQuatFromAngAxis(float param_1, edF32VECTOR4* v0, edF32VECTOR4* v1);
 void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);

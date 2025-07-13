@@ -410,9 +410,16 @@ struct S_TARGET_STREAM_REF
 {
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH aEntries[];
+
+	static void Create(S_TARGET_STREAM_REF** pThis, ByteCode* pByteCode);
+	void Init();
+	void Reset();
+	void Switch(CActor* pActor);
+	void PostSwitch(CActor* pActor);
 };
 
-struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH {
+struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH
+{
 	void Reset();
 	bool SwitchOn(CActor* pActor);
 	int SwitchOff(CActor* pActor);
@@ -420,41 +427,32 @@ struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH {
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_ONOFF) == 0x1c);
 
-struct S_TARGET_ON_OFF_STREAM_REF {
+struct S_TARGET_ON_OFF_STREAM_REF
+{
 	int entryCount;
 	S_STREAM_NTF_TARGET_ONOFF aEntries[];
-};
 
-struct S_TARGET_STREAM_REF_CONTAINER
-{
-	S_TARGET_ON_OFF_STREAM_REF* pTargetStreamRef;
-
-	void Create(ByteCode* pByteCode);
+	static void Create(S_TARGET_ON_OFF_STREAM_REF** pThis, ByteCode* pByteCode);
 	void Init();
-
-	// overload arrow operator
-	S_TARGET_ON_OFF_STREAM_REF* operator->() const { return pTargetStreamRef; }
+	void Reset();
+	void SwitchOn(CActor* pActor);
+	void SwitchOff(CActor* pActor);
 };
 
-PACK(
-struct S_STREAM_NTF_TARGET_SWITCH_LIST {
-	int count;
-	S_STREAM_NTF_TARGET_SWITCH aSwitches[];
-});
-
-PACK(
-struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST {
+struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST
+{
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH_EX aEntries[];
-});
+};
 
-PACK(
-	struct S_STREAM_NTF_TARGET_ANALOG_LIST {
+struct S_STREAM_NTF_TARGET_ANALOG_LIST
+{
 	int entryCount;
 	S_STREAM_NTF_TARGET_ANALOG aEntries[];
-});
+};
 
-struct S_TRAP_STREAM_ENTRY {
+struct S_TRAP_STREAM_ENTRY
+{
 	S_STREAM_NTF_TARGET_ONOFF onoff;
 	S_STREAM_EVENT_CAMERA eventCamera;
 };
@@ -680,9 +678,9 @@ public:
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListA;
+	S_TARGET_STREAM_REF* pSwitchListA;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraA;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListB;
+	S_TARGET_STREAM_REF* pSwitchListB;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
 	uint aAudioTrackIds[5];

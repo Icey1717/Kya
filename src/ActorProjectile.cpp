@@ -937,19 +937,8 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 										if (iVar1 == 0x20) {
 											IMPLEMENTATION_GUARD(
 											StateLiving(this, uVar9, (long)pBehaviourStand->field_0xc);
-											pCVar3 = this->pAnimationController;
-											peVar4 = (pCVar3->anmBinMetaAnimator).base.aAnimData;
-											bVar5 = false;
-											if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-												if (peVar4->animPlayState == 0) {
-													bVar5 = false;
-												}
-												else {
-													bVar5 = (peVar4->field_0xcc & 2) != 0;
-												}
-											}
 
-											if (bVar5) {
+											if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 												SetState(PROJECTILE_STATE_LIVING, -1);
 											})
 										}

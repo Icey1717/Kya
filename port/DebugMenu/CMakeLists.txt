@@ -38,6 +38,8 @@ set(SOURCES
 	"src/DebugTexture.cpp"
 	"src/DebugMesh.h"
 	"src/DebugMesh.cpp"
+	"src/DebugWolfen.h"
+	"src/DebugWolfen.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"src/DebugSetting.cpp"
 	"src/DebugSetting.h"

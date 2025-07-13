@@ -1623,20 +1623,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			SetState(0xf, -1);
 		}
 		else {
-			pCVar3 = this->pAnimationController;
-			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-
-			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-				bVar10 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar10 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar10 = false;
-			}
-
-			if (bVar10) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(9, -1);
 			}
 		}
@@ -1725,19 +1712,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		if ((bVar10 == false) || (this->field_0x3d4 <= 0.8f)) {
-			pCVar3 = this->pAnimationController;
-			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-				bVar10 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar10 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar10 = false;
-			}
-
-			if (bVar10) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				this->field_0x480 = this->field_0x480 + 1;
 			}
 
@@ -1795,19 +1770,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			SetState(ATON_ESCAPE_STATE_PATH_BEGIN, -1);
 		}
 
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			bVar10 = false;
-			if (peVar4->animPlayState != 0) {
-				bVar10 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar10 = false;
-		}
-
-		if (bVar10) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->field_0x480 = this->field_0x480 + 1;
 		}
 
@@ -1942,19 +1905,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 
 		ManageDyn(4.0f, 0x2003b, (CActorsTable*)0x0);
 
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			bVar10 = false;
-			if (peVar4->animPlayState != 0) {
-				bVar10 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar10 = false;
-		}
-
-		if (bVar10) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			SetState(ATON_ESCAPE_STATE_IDLE_WAIT, -1);
 		}
 		break;
@@ -2064,20 +2015,10 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			SetState(ATON_ESCAPE_STATE_PATH_JUMP_1_4, -1);
 		}
 		else {
-			pCVar3 = this->pAnimationController;
-			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-				bVar10 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar10 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar10 = false;
-			}
-			if (bVar10) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				this->field_0x480 = this->field_0x480 + 1;
 			}
+
 			if ((this->field_0x480 == 2) || (sqrtf(fVar23 + fVar24 + fVar27) < 2.0)) {
 				SetState(ATON_ESCAPE_STATE_IDLE_WAIT, -1);
 			}
@@ -2169,19 +2110,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			bVar10 = AnalyseForRun();
 
 			if (!bVar10) {
-				pCVar3 = this->pAnimationController;
-				peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-				if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-					bVar10 = false;
-					if (peVar4->animPlayState != 0) {
-						bVar10 = (peVar4->field_0xcc & 2) != 0;
-					}
-				}
-				else {
-					bVar10 = false;
-				}
-
-				if (bVar10) {
+				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 					this->field_0x480 = this->field_0x480 + 1;
 				}
 
@@ -2221,18 +2150,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			SetState(0x27, -1);
 		}
 		else {
-			peVar4 = (this->pAnimationController->anmBinMetaAnimator).aAnimData;
-			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-				bVar10 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar10 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar10 = false;
-			}
-
-			if (bVar10) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(ATON_ESCAPE_STATE_STAND_WIND_TRACK, -1);
 			}
 		}
@@ -2390,19 +2308,7 @@ LAB_00381768:
 		SetState(0x1c, -1);
 	}
 	else {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar4 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar4 = false;
-		}
-
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if (fVar14 < 5.0f) {
 				SetState(0x19, -1);
 				return;
@@ -2463,19 +2369,7 @@ void CActorAton::StateAtonPathStandCallNear()
 
 		float fVar12 = sqrtf(fVar4 * fVar4 + fVar5 * fVar5 + fVar6 * fVar6);
 
-		pAnim = this->pAnimationController;
-		peVar3 = (pAnim->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-			bVar9 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar9 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar9 = false;
-		}
-
-		if (bVar9) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if (5.0f < fVar12) {
 				SetState(ATON_ESCAPE_STATE_PATH_STAND_CALL_FAR, -1);
 			}
@@ -2536,19 +2430,7 @@ void CActorAton::StateAtonPathStandCallFar()
 
 		float fVar12 = sqrtf(fVar4 * fVar4 + fVar5 * fVar5 + fVar6 * fVar6);
 
-		pAnim = this->pAnimationController;
-		peVar3 = (pAnim->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-			bVar9 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar9 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar9 = false;
-		}
-
-		if (bVar9) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if (5.0f < fVar12) {
 				SetState(ATON_ESCAPE_STATE_PATH_STAND_CALL_NEAR, -1);
 			}
@@ -2607,19 +2489,7 @@ void CActorAton::StateAtonPathStandCallBack()
 		fVar5 = pActorHero->currentLocation.y - this->currentLocation.y;
 		fVar6 = pActorHero->currentLocation.z - this->currentLocation.z;
 
-		pAnim = this->pAnimationController;
-		peVar3 = (pAnim->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-			bVar9 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar9 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar9 = false;
-		}
-
-		if (bVar9) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->field_0x480 = this->field_0x480 + 1;
 		}
 
@@ -2825,19 +2695,7 @@ void CActorAton::StateAtonPathJump_1_4()
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	pCVar3 = this->pAnimationController;
-	edAnmLayer* peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-	if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-		bVar10 = false;
-		if (peVar4->animPlayState != 0) {
-			bVar10 = (peVar4->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar10 = false;
-	}
-
-	if (bVar10) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		SetState(ATON_ESCAPE_STATE_PATH_JUMP_2_4, -1);
 	}
 
@@ -2967,19 +2825,8 @@ void CActorAton::StateAtonPathJump_4_4()
 	bool bVar10;
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
-	CAnimation* pCVar3 = this->pAnimationController;
-	edAnmLayer* peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-	if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-		bVar10 = false;
-		if (peVar4->animPlayState != 0) {
-			bVar10 = (peVar4->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar10 = false;
-	}
 
-	if (bVar10) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		bVar10 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.AtGoal((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).splinePointIndex,
 			(this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).field_0xc);
 		if (bVar10 != false) {
@@ -3364,20 +3211,7 @@ void CActorAton::StateAtonPathRoll()
 
 	pCVar4 = CActorHero::_gThis;
 	if (4.0f < (fVar9 + fVar7) / 2.0f) {
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			bVar3 = false;
-
-			if (peVar2->animPlayState != 0) {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			bVar3 = AnalyseForRun();
 
 			if (!bVar3) {

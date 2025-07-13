@@ -1268,12 +1268,7 @@ void CBehaviourCommander::Create(ByteCode* pByteCode)
 
 	this->squadConfig.Create(pByteCode);
 
-	pSVar1 = (S_TARGET_ON_OFF_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(&pSVar1->aEntries);
-	if (pSVar1->entryCount != 0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->pMagicalSwitch1C_0x10 = pSVar1;
+	S_TARGET_ON_OFF_STREAM_REF::Create(&this->pMagicalSwitch1C_0x10, pByteCode);
 
 	pSVar3 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar3 + 1);
@@ -1400,16 +1395,7 @@ void CBehaviourCommanderDefault::Begin(CActor* pOwner, int newState, int newAnim
 
 	this->field_0x20 = 0;
 
-	S_STREAM_NTF_TARGET_SWITCH* pSVar2 = this->pMagicalSwitch1C_0x10->aEntries;
-	int iVar3 = 0;
-	if (0 < this->pMagicalSwitch1C_0x10->entryCount) {
-		do {
-			pSVar2->Reset();
-			pSVar2 = pSVar2 + 1;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < this->pMagicalSwitch1C_0x10->entryCount);
-	}
-
+	this->pMagicalSwitch1C_0x10->Reset();
 	this->pMagicalSwitch20_0x14->Reset(this->pOwner);
 
 	return;
@@ -1478,28 +1464,11 @@ void CBehaviourCommanderDefault::TestSwitch()
 
 	if (this->field_0x20 != bVar7) {
 		if ((this->field_0x20 == 1) && (bVar7 == 0)) {
-			pSVar6 = this->pMagicalSwitch1C_0x10;
-			pCommander = this->pOwner;
-			iVar9 = 0;
-			if (0 < pSVar6->entryCount) {
-				do {
-					pSVar6->aEntries[iVar9].SwitchOff(pCommander);
-					iVar9 = iVar9 + 1;
-				} while (iVar9 < pSVar6->entryCount);
-			}
+			this->pMagicalSwitch1C_0x10->SwitchOff(pCommander);
 		}
 
 		if ((this->field_0x20 == 0) && (bVar7 == 1)) {
-			pSVar6 = this->pMagicalSwitch1C_0x10;
-			pCommander = this->pOwner;
-			iVar9 = 0;
-			if (0 < pSVar6->entryCount) {
-				do {
-					pSVar6->aEntries[iVar9].SwitchOn(pCommander);
-					iVar9 = iVar9 + 1;
-				} while (iVar9 < pSVar6->entryCount);
-			}
-
+			this->pMagicalSwitch1C_0x10->SwitchOn(pCommander);
 			this->pMagicalSwitch20_0x14->SwitchOn(pCommander);
 		}
 

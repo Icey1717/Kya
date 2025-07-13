@@ -340,7 +340,10 @@ public:
 	void StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour);
 	bool StateWeighingMaster(CBehaviourWeighingMachineMaster* pBehaviour);
 
-	void Die(int param_2);
+	void Die(int bTriggerSwitches);
+
+	// New
+	void TriggerSwitches(int conditionType);
 
 	int noFrictionZoneCount;
 	S_STREAM_MPF_NO_FRICTION_ZONE* aNoFrictionZones;

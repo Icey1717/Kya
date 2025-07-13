@@ -116,7 +116,8 @@ struct SV_MOV_PATH_PARAM
 	float rotationSpeed;
 };
 
-class CActorMovable : public CActor {
+class CActorMovable : public CActor
+{
 public:
 	CActorMovable();
 

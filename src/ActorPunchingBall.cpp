@@ -108,19 +108,7 @@ void CActorPunchingBall::Manage()
 	if (this->currentAnimType == 0x81) {
 		fVar9 = GetLifeInterface()->GetValue();
 		if (fVar9 <= 0.0f) {
-			pCVar1 = this->pAnimationController;
-			peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-			bVar3 = false;
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar3 = false;
-				}
-				else {
-					bVar3 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar3) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				ProcessDeath();
 			}
 		}

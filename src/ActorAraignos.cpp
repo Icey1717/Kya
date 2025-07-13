@@ -364,20 +364,7 @@ void CActorAraignos::BehaviourDefault_Manage()
 
 	iVar4 = this->actorState;
 	if (iVar4 == 6) {
-		pAnimation = this->pAnimationController;
-		peVar1 = (pAnimation->anmBinMetaAnimator).aAnimData;
-
-		bVar2 = false;
-		if ((peVar1->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (peVar1->animPlayState == 0) {
-				bVar2 = false;
-			}
-			else {
-				bVar2 = (peVar1->field_0xcc & 2) != 0;
-			}
-		}
-
-		if ((bVar2) && (bVar2 = pAnimation->FUN_0017f730(), bVar2 == false)) {
+		if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) && (bVar2 = pAnimation->FUN_0017f730(), bVar2 == false)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
 

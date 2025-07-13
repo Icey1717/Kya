@@ -299,6 +299,17 @@ public:
 
 	void StateHeroFlyInit();
 
+	void StateHeroLever_1_2Init();
+	void StateHeroLever_1_2();
+	void StateHeroLever_1_2Term();
+
+	void StateHeroLever_2_2();
+	void StateHeroLever_2_2Term();
+
+	void StateHeroDCAInit();
+	void StateHeroDCA();
+	void StateHeroDCATerm();
+
 	void StateHeroWindFly(int param_2);
 	void StateHeroFlyJumpInit();
 	void StateHeroFlyTerm();
@@ -439,6 +450,7 @@ public:
 
 	float field_0x1000;
 
+	int field_0x100c;
 	int field_0x1010;
 
 	float field_0x102c;

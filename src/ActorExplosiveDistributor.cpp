@@ -266,18 +266,7 @@ void CBehaviourExplosiveDistributor::Manage()
 				pExplosiveDistributor->field_0x190 = 1;
 			}
 
-			peVar2 = (pAnimationController->anmBinMetaAnimator).aAnimData;
-			bVar3 = false;
-			if ((peVar2->currentAnimDesc).animType == pAnimationController->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar3 = false;
-				}
-				else {
-					bVar3 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar3) {
+			if (pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				pExplosiveDistributor->field_0x190 = 0;
 				pExplosiveDistributor->SetState(0, -1);
 			}

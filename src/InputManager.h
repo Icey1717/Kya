@@ -57,6 +57,7 @@ struct CPlayerInputSubObj {
 };
 
 #define PAD_BITMASK_CROSS 0x10
+#define PAD_BITMASK_TRIANGLE 0x80
 #define PAD_BITMASK_SQUARE 0x200
 #define PAD_BITMASK_TRIANGLE 0x4000000
 

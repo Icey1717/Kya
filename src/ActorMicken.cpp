@@ -689,20 +689,7 @@ void CActorMicken::StateMickenRollOnGround(CBehaviourMickenKicked* pBehaviour, i
 			return;
 		}
 
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		bVar4 = false;
-
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			if (peVar3->animPlayState == 0) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (!bVar4) {
+		if (!this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			return;
 		}
 	}
@@ -725,29 +712,16 @@ void CActorMicken::StateMickenRollOnGround(CBehaviourMickenKicked* pBehaviour, i
 void CActorMicken::StateMickenKickImpactFly(CBehaviourMicken* pBehaviour, int param_3)
 {
 	CCollision* pCVar1;
-	CAnimation* pCVar2;
 	edAnmLayer* peVar3;
 	bool bVar4;
 
 	pCVar1 = this->pCollisionData;
-	pCVar2 = this->pAnimationController;
 	ManageDyn(4.0f, 0x41920, (CActorsTable*)0x0);
 
 	if (((pCVar1->flags_0x4 & 2) == 0) ||
 		(1.0f <= fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y))) {
 		if (param_3 != 0) {
-			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				bVar4 = false;
-				if (peVar3->animPlayState != 0) {
-					bVar4 = (peVar3->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar4 = false;
-			}
-
-			if (bVar4) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				if (4.0f < this->dynamic.horizontalLinearAcceleration) {
 					SetState(0x19, -1);
 				}
@@ -773,7 +747,6 @@ void CActorMicken::StateMickenKickImpactFly(CBehaviourMicken* pBehaviour, int pa
 void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 {
 	CCollision* pCVar1;
-	CAnimation* pCVar2;
 	CActor* pReceiver;
 	edAnmLayer* peVar3;
 	bool bVar4;
@@ -782,7 +755,6 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 	undefined4 local_4;
 
 	pCVar1 = this->pCollisionData;
-	pCVar2 = this->pAnimationController;
 	local_110.nbEntries = 0;
 	ManageDyn(4.0f, 0x41920, &local_110);
 
@@ -814,20 +786,7 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 	}
 
 	if ((this->flags_0x3e8 & 2) != 0) {
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar4 = false;
-
-			if (peVar3->animPlayState != 0) {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar4 = false;
-		}
-
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->flags_0x3e8 = this->flags_0x3e8 & 0xfffffffd;
 			SetState(0x1a, -1);
 		}
@@ -968,18 +927,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		IMPLEMENTATION_GUARD(
 		this->base.dynamic.speed = 0.0;
 		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x129, (CActorsTable*)0x0);
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).base.aAnimData;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			bVar5 = false;
-			if (peVar4->animPlayState != 0) {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar5 = false;
-		}
-		if (bVar5) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
 			CActor::EvaluateDisplayState(this);
@@ -996,18 +944,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		IMPLEMENTATION_GUARD(
 		this->base.dynamic.speed = 0.0;
 		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x129, (CActorsTable*)0x0);
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).base.aAnimData;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			bVar5 = false;
-			if (peVar4->animPlayState != 0) {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar5 = false;
-		}
-		if (bVar5) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
 			CActor::EvaluateDisplayState(this);
@@ -1138,20 +1075,10 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			}
 		}
 		else {
-			this->timeInAir = 0.0;
+			this->timeInAir = 0.0f;
 		}
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).base.aAnimData;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			bVar5 = false;
-			if (peVar4->animPlayState != 0) {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar5 = false;
-		}
-		if (bVar5) {
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->SetState(MICKEN_EAT_STATE_STAND, -1);
 		})
 	}
@@ -1196,7 +1123,6 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBehaviour)
 {
 	int* piVar1;
-	CAnimation* pCVar2;
 	edAnmLayer* peVar3;
 	bool bVar4;
 	CPlayerInput* pCVar5;
@@ -1274,20 +1200,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 		pBehaviour->field_0xc = 1;
 	}
 
-	pCVar2 = this->pAnimationController;
-	peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-	bVar4 = false;
-
-	if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-		if (peVar3->animPlayState == 0) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (peVar3->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar4) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		this->SetState(0x16, -1);
 	}
 

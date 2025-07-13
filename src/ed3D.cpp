@@ -134,6 +134,15 @@ int gZBUF_BASE_BIS = 0;
 int gZBUF_BASE_BIS_TEX = 0;
 int gZBUF_TEXBASE = 0;
 
+struct BFCVect {
+	uint alphaON;
+	uint flagTest;
+	float y;
+	int flag;
+};
+
+BFCVect pBFCVect = {};
+
 edF32MATRIX4 CHierarchyAnm::_gscale_mat;
 
 ed3DConfig::ed3DConfig()
@@ -3279,11 +3288,12 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			p3dStrip->flags = p3dStrip->flags & 0xfffffff7;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 			p3dStrip->flags = p3dStrip->flags | 8;
+
 			pNextPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 			pNextPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
 			pNextPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 			if ((bNegBFC$1276 == 0) && ((gCurScene->flags & 0x200) == 0)) {
 				CurBFCFlag$1277 = 0xfffe;
 				CurBFCFlagTest$1278 = 0xfffe;
@@ -3292,16 +3302,17 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 				CurBFCFlag$1277 = 0x7ffe;
 				CurBFCFlagTest$1278 = 0x7ffe;
 			}
-			pBFCVect.w = (float)CurBFCFlag$1277;
-			pBFCVect.y = (float)CurBFCFlagTest$1278;
+
+			pBFCVect.flag = CurBFCFlag$1277;
+			pBFCVect.flagTest = CurBFCFlagTest$1278;
 			pNextPkt[1].cmdA = ED_VIF1_SET_TAG_CNT(1);
 			pNextPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pNextPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 
 			pNextPkt[2].asU32[0] = pBFCVect.alphaON;
-			pNextPkt[2].asF32[1] = pBFCVect.x;
+			pNextPkt[2].asU32[1] = pBFCVect.flagTest;
 			pNextPkt[2].asF32[2] = pBFCVect.y;
-			pNextPkt[2].asF32[3] = pBFCVect.z;)
+			pNextPkt[2].asU32[3] = pBFCVect.flag;
 		}
 	}
 
@@ -3319,15 +3330,6 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 	return pNextPkt;
 }
-
-struct BFCVect {
-	uint alphaON;
-	float x;
-	float y;
-	float z;
-};
-
-BFCVect pBFCVect = {};
 
 int ed3DG3DNbMaxBaseRGBA(ed_3d_strip* pStrip)
 {
@@ -3478,9 +3480,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 		pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 
 		pCurPkt[1].asU32[0] = pBFCVect.alphaON;
-		pCurPkt[1].asF32[1] = pBFCVect.x;
+		pCurPkt[1].asU32[1] = pBFCVect.flagTest;
 		pCurPkt[1].asF32[2] = pBFCVect.y;
-		pCurPkt[1].asF32[3] = pBFCVect.z;
+		pCurPkt[1].asU32[3] = pBFCVect.flag;
 
 		pCurPkt = pCurPkt + 2;
 	}
@@ -3671,9 +3673,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 				pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 
 				pCurPkt[1].asU32[0] = pBFCVect.alphaON;
-				pCurPkt[1].asF32[1] = pBFCVect.x;
+				pCurPkt[1].asU32[1] = pBFCVect.flagTest;
 				pCurPkt[1].asF32[2] = pBFCVect.y;
-				pCurPkt[1].asF32[3] = pBFCVect.z;
+				pCurPkt[1].asU32[3] = pBFCVect.flag;
 
 				pCurPkt = pCurPkt + 2;
 				if (gGlobalAlhaON != 0x80) {
@@ -3798,9 +3800,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 
 			pCurPkt[1].asU32[0] = pBFCVect.alphaON;
-			pCurPkt[1].asF32[1] = pBFCVect.x;
+			pCurPkt[1].asU32[1] = pBFCVect.flagTest;
 			pCurPkt[1].asF32[2] = pBFCVect.y;
-			pCurPkt[1].asF32[3] = pBFCVect.z;
+			pCurPkt[1].asU32[3] = pBFCVect.flag;
 
 			pCurPkt[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 			pCurPkt[2].asU32[2] = SCE_VIF1_SET_FLUSH(0);
@@ -4122,7 +4124,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			pPktBufferA[2].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPktBufferA[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x01, UNPACK_V4_32_MASKED, 0);
 
-			pBFCVect.z = 256.0f - fVar11 * 256.0f;
+			pBFCVect.y = 256.0f - fVar11 * 256.0f;
 			pPktBufferA[3].asVector = *reinterpret_cast<edF32VECTOR4*>(&pBFCVect);
 
 			pPktBufferA[4].cmdA = ED_VIF1_SET_TAG_REF(0, 0);

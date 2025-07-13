@@ -1451,7 +1451,7 @@ void CActorWolfen::LifeDecrease(float amount)
 	return;
 }
 
-void CActorWolfen::LifeLifeAnnihilate()
+void CActorWolfen::LifeAnnihilate()
 {
 	CActorAutonomous::LifeAnnihilate();
 
@@ -2262,20 +2262,8 @@ void CActorWolfen::BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour
 	if (iVar6 == 0x97) {
 		this->dynamic.speed = 0.0f;
 		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		bVar5 = false;
 
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar2->animPlayState == 0) {
-				bVar5 = false;
-			}
-			else {
-				bVar5 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar5) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			SetState(this->field_0xcf8, -1);
 		}
 		else {
@@ -2289,18 +2277,8 @@ void CActorWolfen::BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour
 		if (iVar6 == 0x96) {
 			this->dynamic.speed = 0.0f;
 			ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-			pCVar1 = this->pAnimationController;
-			peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-			bVar5 = false;
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar5 = false;
-				}
-				else {
-					bVar5 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-			if (bVar5) {
+
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(this->field_0xcf8, -1);
 			}
 			else {
@@ -2436,20 +2414,8 @@ void CActorWolfen::BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* 
 		if (iVar6 == 0x97) {
 			this->dynamic.speed = 0.0f;
 			ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-			pCVar1 = this->pAnimationController;
-			peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-			bVar5 = false;
 
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar5 = false;
-				}
-				else {
-					bVar5 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar5) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(this->field_0xcf8, -1);
 			}
 			else {
@@ -2463,18 +2429,8 @@ void CActorWolfen::BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* 
 			if (iVar6 == 0x96) {
 				this->dynamic.speed = 0.0f;
 				ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-				pCVar1 = this->pAnimationController;
-				peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-				bVar5 = false;
-				if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-					if (peVar2->animPlayState == 0) {
-						bVar5 = false;
-					}
-					else {
-						bVar5 = (peVar2->field_0xcc & 2) != 0;
-					}
-				}
-				if (bVar5) {
+
+				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 					SetState(this->field_0xcf8, -1);
 				}
 				else {
@@ -2805,8 +2761,7 @@ void CActorWolfen::BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour)
 		FUN_00176910(this);)
 		break;
 	case WOLFEN_STATE_EXORCISE_AWAKE:
-		IMPLEMENTATION_GUARD(
-		StateExorcizeAwake(pBehaviour);)
+		StateExorcizeAwake(pBehaviour);
 		break;
 	case 0x7f:
 		IMPLEMENTATION_GUARD(
@@ -3224,19 +3179,7 @@ void CActorWolfen::StateTrackWeaponStandFire(CBehaviourTrackWeaponStand* pBehavi
 		else {
 			nextAnim = nextState;
 			if (pBehaviour->field_0x94 == 2) {
-				pCVar2 = this->pAnimationController;
-				peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-				bVar4 = false;
-				if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-					if (peVar3->animPlayState == 0) {
-						bVar4 = false;
-					}
-					else {
-						bVar4 = (peVar3->field_0xcc & 2) != 0;
-					}
-				}
-
-				if (bVar4) {
+				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 					PlayAnim(0xaa);
 					nextAnim = -1;
 				}
@@ -3391,19 +3334,7 @@ void CActorWolfen::StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour)
 		}
 	}
 
-	pCVar3 = this->pAnimationController;
-	peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-	if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-		bVar8 = false;
-		if (peVar4->animPlayState != 0) {
-			bVar8 = (peVar4->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar8 = false;
-	}
-
-	if (bVar8) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		PlayAnim(0xaa);
 	}
 
@@ -3509,19 +3440,7 @@ void CActorWolfen::StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour
 	}
 	else {
 		if (pBehaviour->field_0x94 == 2) {
-			pCVar2 = this->pAnimationController;
-			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-			bVar4 = false;
-			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				if (peVar3->animPlayState == 0) {
-					bVar4 = false;
-				}
-				else {
-					bVar4 = (peVar3->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar4) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				PlayAnim(0xaa);
 			}
 		}
@@ -3666,19 +3585,7 @@ void CActorWolfen::StateWolfen_00179db0(CBehaviourWolfen* pBehaviour)
 	iVar4 = pBehaviour->GetState_001f0930();
 	if (iVar4 == -1) {
 		if ((int)this->combatMode_0xb7c < 2) {
-			pCVar1 = this->pAnimationController;
-			peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-			bVar3 = false;
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				if (peVar2->animPlayState == 0) {
-					bVar3 = false;
-				}
-				else {
-					bVar3 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar3) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(WOLFEN_STATE_LOCATE, -1);
 			}
 		}
@@ -3760,20 +3667,7 @@ void CActorWolfen::StateWolfenSurprise(CBehaviourWolfen* pBehaviour)
 
 	iVar4 = pBehaviour->GetState_001f0930();
 	if (iVar4 == -1) {
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			bVar3 = false;
-			if (peVar2->animPlayState != 0) {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if ((int)this->combatMode_0xb7c < 1) {
 				if (((this->combatFlags_0xb78 & 0x80) == 0) || (v1 == (edF32VECTOR4*)0x0)) {
 					if (this->field_0xd04 != (CActor*)0x0) {
@@ -3901,19 +3795,7 @@ void CActorWolfen::StateWolfenLocate(CBehaviourWolfen* pBehaviour)
 	}
 
 	if (iVar7 == -1) {
-		pCVar1 = this->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			bVar3 = false;
-			if (peVar2->animPlayState != 0) {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if ((int)this->combatMode_0xb7c < 1) {
 				lVar11 = pBehaviour->GetStateWolfenComeBack();
 			}
@@ -4161,19 +4043,7 @@ void CActorWolfen::StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour)
 		}
 	}
 
-	pCVar3 = this->pAnimationController;
-	peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-	if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-		bVar8 = false;
-		if (peVar4->animPlayState != 0) {
-			bVar8 = (peVar4->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar8 = false;
-	}
-
-	if (bVar8) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		PlayAnim(0xaa);
 	}
 
@@ -4316,18 +4186,7 @@ void CActorWolfen::StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBe
 
 	pCVar1 = this->pCommander;
 	if (pCVar1->field_0x194 < 1) {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar7 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar7 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar7 = false;
-		}
-		if (bVar7) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			bVar7 = pBehaviour->GetNotificationTargetArray()->FUN_003c38c0(this);
 			if (bVar7 == false) {
 				SetState(0xb3, -1);
@@ -4426,20 +4285,7 @@ void CActorWolfen::StateTrackCheckPosition(CBehaviourWolfen* pBehaviour)
 	InternState_WolfenLocate();
 
 	if (this->pCommander->field_0x194 < 1) {
-		pAnim = this->pAnimationController;
-		pAnmLayer = (pAnim->anmBinMetaAnimator).aAnimData;
-
-		bVar7 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar7 = false;
-			}
-			else {
-				bVar7 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar7) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			if (pBehaviour->GetNotificationTargetArray()->FUN_003c38c0(this) == false) {
 				SetState(0xb3, -1);
 			}
@@ -4842,6 +4688,27 @@ void CActorWolfen::StateExorcizeIdle(CBehaviourExorcism* pBehaviour)
 		this->hitFlags = 4;
 		this->field_0x6b0 = 0.0f;
 		SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x56, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeAwake(CBehaviourExorcism* pBehaviour)
+{
+	int newAnimId;
+	CBehaviourFighter* pCVar3;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (2.0f < this->timeInAir) {
+		int pCVar1 = pBehaviour->behaviourId;
+		newAnimId = _SV_ANM_GetTwoSidedAnim(0x77, (int)this->field_0x7dc);
+		SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x59, newAnimId);
+
+		if (pCVar1 != -1) {
+			pCVar3 = static_cast<CBehaviourFighter*>(GetBehaviour(FIGHTER_BEHAVIOUR_DEFAULT));
+			pCVar3->behaviourId = pCVar1;
+		}
 	}
 
 	return;
@@ -5938,17 +5805,12 @@ void CActorWolfen::ManageSwitches(CBehaviourWolfen* pBehaviour)
 
 	if (bVar4 != pBehaviour->bool_0x68) {
 		if ((bVar4) && (pBehaviour->bool_0x68 == false)) {
-			for (int i = 0; i < pBehaviour->pTargetStreamRef->entryCount; i++) {
-				pBehaviour->pTargetStreamRef->aEntries[i].SwitchOn(pBehaviour->pOwner);
-			}
-
+			pBehaviour->pTargetStreamRef->SwitchOn(pBehaviour->pOwner);
 			pBehaviour->pCameraStreamEvent->SwitchOn(pBehaviour->pOwner);
 		}
 
 		if ((!bVar4) && (pBehaviour->bool_0x68 == true)) {
-			for (int i = 0; i < pBehaviour->pTargetStreamRef->entryCount; i++) {
-				pBehaviour->pTargetStreamRef->aEntries[i].SwitchOff(pBehaviour->pOwner);
-			}
+			pBehaviour->pTargetStreamRef->SwitchOff(pBehaviour->pOwner);
 		}
 	}
 
@@ -5999,7 +5861,7 @@ void CBehaviourWatchDog::Create(ByteCode* pByteCode)
 
 	this->switchBehaviour.Create(pByteCode);
 
-	this->pTargetStreamRef.Create(pByteCode);
+	S_TARGET_ON_OFF_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
 	this->pCameraStreamEvent.Create(pByteCode);
 
 	return;
@@ -6038,7 +5900,7 @@ void CBehaviourWatchDog::Init(CActor* pOwner)
 
 	this->switchBehaviour.Init(pOwner);
 
-	this->pTargetStreamRef.Init();
+	this->pTargetStreamRef->Init();
 
 	this->pCameraStreamEvent->Init();
 	return;
@@ -6071,9 +5933,7 @@ void CBehaviourWatchDog::Begin(CActor* pOwner, int newState, int newAnimationTyp
 
 	this->bool_0x68 = false;
 
-	for (int i = 0; i < this->pTargetStreamRef->entryCount; i++) {
-		this->pTargetStreamRef->aEntries[i].Reset();
-	}
+	this->pTargetStreamRef->Reset();
 
 	this->pCameraStreamEvent->Reset(pOwner);
 
@@ -6089,13 +5949,7 @@ void CBehaviourWatchDog::End(int newBehaviourId)
 
 	if ((this->bool_0x68 != false) && (this->bool_0x68 == true)) {
 		pActor = this->pOwner;
-		iVar3 = 0;
-		if (0 < this->pTargetStreamRef->entryCount) {
-			do {
-				this->pTargetStreamRef->aEntries[iVar3].SwitchOff(this->pOwner);
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < this->pTargetStreamRef->entryCount);
-		}
+		this->pTargetStreamRef->SwitchOff(pOwner);
 	}
 	this->bool_0x68 = false;
 	return;
@@ -7626,20 +7480,7 @@ void CBehaviourFighterWolfen::Manage()
 					}
 
 					if (pWolfen->currentAnimType == 0xe5) {
-						pCVar1 = pWolfen->pAnimationController;
-						peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-
-						bVar3 = false;
-						if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-							if (peVar2->animPlayState == 0) {
-								bVar3 = false;
-							}
-							else {
-								bVar3 = (peVar2->field_0xcc & 2) != 0;
-							}
-						}
-
-						if (bVar3) {
+						if (pWolfen->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 							pWolfen->SetState(6, -1);
 						}
 					}
@@ -9705,7 +9546,7 @@ void CBehaviourGuardArea::Create(ByteCode* pByteCode)
 
 	this->switchBehaviour.Create(pByteCode);
 
-	this->pTargetStreamRef.Create(pByteCode);
+	S_TARGET_ON_OFF_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
 	this->pCameraStreamEvent.Create(pByteCode);
 
 	return;
@@ -9722,7 +9563,7 @@ void CBehaviourGuardArea::Init(CActor* pOwner)
 
 	this->pathFollowReader.Init();
 
-	this->pTargetStreamRef.Init();
+	this->pTargetStreamRef->Init();
 
 	this->pCameraStreamEvent->Init();
 	this->switchBehaviour.Init(pOwner);
@@ -9741,16 +9582,7 @@ void CBehaviourGuardArea::Manage()
 
 void CBehaviourGuardArea::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	int iVar3;
-
-	iVar3 = 0;
-	if (0 < this->pTargetStreamRef->entryCount) {
-		do {
-			this->pTargetStreamRef->aEntries[iVar3].Reset();
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < this->pTargetStreamRef->entryCount);
-	}
-
+	this->pTargetStreamRef->Reset();
 	this->pCameraStreamEvent->Reset(pOwner);
 
 	if (newState == -1) {
@@ -9776,13 +9608,7 @@ void CBehaviourGuardArea::End(int newBehaviourId)
 
 	if ((this->bool_0x68 != false) && (this->bool_0x68 == true)) {
 		pWolfen = this->pOwner;
-		iVar3 = 0;
-		if (0 < this->pTargetStreamRef->entryCount) {
-			do {
-				this->pTargetStreamRef->aEntries[iVar3].SwitchOff(pWolfen);
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < this->pTargetStreamRef->entryCount);
-		}
+		this->pTargetStreamRef->SwitchOff(pWolfen);
 	}
 
 	this->bool_0x68 = false;
@@ -9958,7 +9784,7 @@ void CBehaviourExorcism::Init(CActor* pOwner)
 	}
 	
 	this->field_0x14 = fVar6;
-	this->field_0x8 = 0xffffffff;
+	this->behaviourId = 0xffffffff;
 
 	return;
 }
@@ -10113,7 +9939,7 @@ void CBehaviourExorcism::End(int newBehaviourId)
 	CNewFx* pFx;
 	bool bVar3;
 
-	this->field_0x8 = 0xffffffff;
+	this->behaviourId = 0xffffffff;
 	pCVar1 = this->pOwner->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
 	pFx = this->fxHandle.pFx;
@@ -10218,8 +10044,7 @@ void CBehaviourExorcism::TermState(int oldState, int newState)
 		}
 
 		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((this->fxHandle.id != 0 && (this->fxHandle.id == pFx->id)))) {
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*pFx + 0x24))(&DAT_bf800000);)
+			pFx->Stop(-1.0f);
 		}
 	}
 	else {

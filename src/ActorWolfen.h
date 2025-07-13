@@ -412,7 +412,7 @@ public:
 
 	bool bool_0x68;
 
-	S_TARGET_STREAM_REF_CONTAINER pTargetStreamRef;
+	S_TARGET_ON_OFF_STREAM_REF* pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA_CONTAINER pCameraStreamEvent;
 };
 
@@ -449,7 +449,7 @@ public:
 
 	CActorWolfen* pOwner;
 
-	undefined4 field_0x8;
+	int behaviourId;
 
 	float field_0xc;
 	float field_0x10;
@@ -879,7 +879,7 @@ public:
 	virtual CActorWindState* GetWindState();
 
 	virtual void LifeDecrease(float amount);
-	virtual void LifeLifeAnnihilate();
+	virtual void LifeAnnihilate();
 
 	virtual float GetWalkSpeed();
 	virtual float GetWalkRotSpeed();
@@ -972,6 +972,7 @@ public:
 	void StateDCADefend(CBehaviourDCA* pBehaviour);
 
 	void StateExorcizeIdle(CBehaviourExorcism* pBehaviour);
+	void StateExorcizeAwake(CBehaviourExorcism* pBehaviour);
 
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);

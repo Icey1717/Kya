@@ -26,12 +26,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	pSVar1 = (S_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)pSVar1->aEntries;
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->pTargetStreamRef = pSVar1;
+	S_TARGET_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
 
 	pSVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSVar2 + 1);
@@ -50,10 +45,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 
 void CActorSwitch::Init()
 {
-	for (int i = 0; i < this->pTargetStreamRef->entryCount; i++) {
-		this->pTargetStreamRef->aEntries[i].Init();
-	}
-
+	this->pTargetStreamRef->Init();
 	this->pStreamEventCamera->Init();
 	CActor::Init();
 
@@ -64,10 +56,7 @@ void CActorSwitch::Reset()
 {
 	CActor::Reset();
 
-	for (int i = 0; i < this->pTargetStreamRef->entryCount; i++) {
-		this->pTargetStreamRef->aEntries[i].Reset();
-	}
-
+	this->pTargetStreamRef->Reset();
 	this->pStreamEventCamera->Reset(this);
 
 	return;
@@ -308,6 +297,50 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			pCVar1->Reset();
 		}
 	}
+	return;
+}
+
+void CActorSwitch::StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour)
+{
+	ed_3d_hierarchy_node* m2;
+	CActor* this_00;
+	edF32MATRIX4* m1;
+	float fVar1;
+	edF32MATRIX4 eStack304;
+	edF32VECTOR4 eStack240;
+	edF32MATRIX4 eStack224;
+	edF32VECTOR4 eStack160;
+	edF32MATRIX4 eStack144;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	m2 = pBehaviour->pActor->pMeshTransform;
+	m1 = pBehaviour->pActor->pAnimationController->GetCurBoneMatrix(0x414dad8d);
+	edF32Matrix4MulF32Matrix4Hard(&eStack64, m1, &m2->base.transformA);
+
+	static edF32VECTOR4 edF32VECTOR4_0042a120 = { -0.04f, -0.05f, 0.0f, 1.0f };
+	edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &edF32VECTOR4_0042a120);
+	local_50 = local_50 - this->currentLocation;
+	this_00 = this->pTiedActor;
+	if (this_00 != (CActor*)0x0) {
+		this_00->SV_ComputeDiffMatrixFromInit(&eStack144);
+		edF32Matrix4GetInverseOrthoHard(&eStack144, &eStack144);
+		edF32Matrix4MulF32Vector4Hard(&local_50, &eStack144, &local_50);
+	}
+
+	edF32Vector4CrossProductHard(&eStack160, &local_50, &gF32Vector4UnitY);
+	eStack160.y = 0.0f;
+	edF32Vector4SafeNormalize1Hard(&eStack160, &eStack160);
+	fVar1 = GetAngleXFromVector(&local_50);
+	fVar1 = edF32Between_2Pi(fVar1 + 1.570796f);
+	edQuatFromAngAxis(fVar1, &pBehaviour->field_0x20.field_0x0, &eStack160);
+	edF32Matrix4FromEulerSoft(&eStack224, &(this->pCinData)->rotationEuler, "XYZ");
+	edQuatFromMatrix4(&eStack240, &eStack224);
+	edQuatMul(&pBehaviour->field_0x20.field_0x0, &eStack240, &pBehaviour->field_0x20.field_0x0);
+	edQuatToMatrix4Hard(&pBehaviour->field_0x20.field_0x0, &eStack304);
+	eStack304.rowT = this->baseLocation;
+	SV_UpdateMatrix_Rel(&eStack304, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
 	return;
 }
 
@@ -751,7 +784,7 @@ void CBehaviourSwitchTarget::Manage()
 		edF32Vector4AddHard(&sStack48, &pSwitch->baseLocation, &sStack48);
 		CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack48, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 		if (bVar1 != false) {
-			(*(pSwitch->pVTable)->SetState)((CActor*)pSwitch, 5, -1);
+			pSwitch->SetState(5, -1);
 		})
 	}
 	else {
@@ -780,7 +813,7 @@ void CBehaviourSwitchTarget::Manage()
 					fVar5 = &DAT_bf800000;
 				}
 				if ((float)fVar5 == (float)puVar2) {
-					(*(pSwitch->pVTable)->SetState)((CActor*)pSwitch, 9, -1);
+					pSwitch->SetState(9, -1);
 				}
 			})
 		}
@@ -819,30 +852,28 @@ int CBehaviourSwitchTarget::InterpretMessage(CActor* pSender, int msg, void* pMs
 	CActorSwitch* pActor;
 	CActorSwitch* pAVar1;
 
-	int* pIntParam = reinterpret_cast<int*>(pMsgParam);
+	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 
-	if ((msg == 2) && (*pIntParam == 4)) {
-		IMPLEMENTATION_GUARD(
-		pCVar1 = (this->base).pOwner;
-		(*((pCVar1->base).pVTable)->SetState)((CActor*)pCVar1, 8, -1);
-		pActor = (this->base).pOwner;
-		for (iVar3 = 0; iVar3 < pActor->pTargetStreamRef->entryCount; iVar3 = iVar3 + 1) {
-			/* Will fill bar. */
-			S_STREAM_NTF_TARGET_SWITCH::Switch(pActor->pTargetStreamRef->aEntries + iVar3, (CActor*)pActor);
-		}
-		S_STREAM_EVENT_CAMERA::SwitchOn(pActor->pStreamEventCamera, (CActor*)pActor);
-		pAVar1 = (this->base).pOwner;
-		for (iVar3 = 0; iVar3 < pAVar1->pTargetStreamRef->entryCount; iVar3 = iVar3 + 1) {
-			S_STREAM_NTF_TARGET_SWITCH::PostSwitch(pAVar1->pTargetStreamRef->aEntries + iVar3, (CActor*)pAVar1);
-		}
-		fVar4 = edF32Vector4DotProductHard((edF32VECTOR4*)(pMsgParam + 8), &(((this->base).pOwner)->base).rotationQuat);
-		if (fVar4 < 0.0) {
-			this->field_0x8 = -ABS(this->field_0x8);
+	if ((msg == MESSAGE_KICKED) && (pHitParam->projectileType == HIT_TYPE_BOOMY)) {
+		pCVar1 = this->pOwner;
+		pCVar1->SetState(8, -1);
+		pActor = this->pOwner;
+
+		/* Will fill bar. */
+
+		pActor->pTargetStreamRef->Switch(pActor);
+		pActor->pStreamEventCamera->SwitchOn(pActor);
+
+		pAVar1 = this->pOwner;
+		pAVar1->pTargetStreamRef->PostSwitch(pAVar1);
+		fVar4 = edF32Vector4DotProductHard(&pHitParam->field_0x20, &this->pOwner->rotationQuat);
+		if (fVar4 < 0.0f) {
+			this->field_0x8 = -fabs(this->field_0x8);
 		}
 		else {
-			this->field_0x8 = ABS(this->field_0x8);
+			this->field_0x8 = fabs(this->field_0x8);
 		}
-		bVar2 = true;)
+		bVar2 = true;
 	}
 	else {
 		bVar2 = false;
@@ -922,8 +953,7 @@ void CBehaviourSwitchLever::Manage()
 		}
 		else {
 			if (iVar1 == 6) {
-				IMPLEMENTATION_GUARD(
-				pSwitch->StateSwitchLeverOff2On(this);)
+				pSwitch->StateSwitchLeverOff2On(this);
 			}
 			else {
 				if ((iVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
@@ -992,6 +1022,96 @@ void CBehaviourSwitchLever::TermState(int oldState, int newState)
 	return;
 }
 
+int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorSwitch* pSwitch;
+	CSound* pCVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	int iVar6;
+	edF32VECTOR4 eStack160;
+	edF32MATRIX4 eStack144;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 eStack16;
+	CActor* pActor;
+
+	if (msg == 2) {
+		_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+		if (pHitParam->projectileType == 4) {
+			edF32Vector4CrossProductHard(&eStack16, &pHitParam->field_0x20, &gF32Vector4UnitY);
+			edF32Vector4SafeNormalize1Hard(&eStack16, &eStack16);
+			pActor = this->pOwner->pTiedActor;
+			if (pActor != (CActor*)0x0) {
+				pActor->SV_ComputeDiffMatrixFromInit(&eStack80);
+				edF32Matrix4GetInverseOrthoHard(&eStack80, &eStack80);
+				edF32Matrix4MulF32Vector4Hard(&eStack16, &eStack80, &eStack16);
+			}
+
+			edQuatFromAngAxis(0.5235988f, &this->field_0x10, &eStack16);
+			edF32Matrix4FromEulerSoft(&eStack144, &this->pOwner->pCinData->rotationEuler, "XYZ");
+			edQuatFromMatrix4(&eStack160, &eStack144);
+			edQuatMul(&this->field_0x10, &eStack160, &this->field_0x10);
+			pCVar2 = (this->field_0x40).Get();
+			if (pCVar2 != (CSound*)0x0) {
+				pSwitch = this->pOwner;
+				IMPLEMENTATION_GUARD_AUDIO(
+				CActorSound::SoundStart((CActorSound*)pSwitch->pActorSound, (CActor*)pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+			}
+			pSwitch = this->pOwner;
+			pSwitch->SetState(7, -1);
+			pSwitch = this->pOwner;
+			pSwitch->pTargetStreamRef->Switch(pSwitch);
+			pSwitch->pStreamEventCamera->SwitchOn(pSwitch);
+			pSwitch->pTargetStreamRef->PostSwitch(pSwitch);
+			return 1;
+		}
+	}
+	else {
+		if (msg == 0x15) {
+			pSwitch = this->pOwner;
+			if (pSwitch->actorState == 6) {
+				pSwitch->SetState(9, -1);
+				return 1;
+			}
+		}
+		else {
+			if (msg == 0x14) {
+				pCVar2 = (this->field_0x40).Get();
+				if (pCVar2 != (CSound*)0x0) {
+					pSwitch = this->pOwner;
+					IMPLEMENTATION_GUARD_AUDIO(
+					CActorSound::SoundStart((CActorSound*)pSwitch->pActorSound, (CActor*)pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+				}
+				this->pActor = pSender;
+				pSwitch = this->pOwner;
+				pSwitch->SetState(6, -1);
+				pSwitch = this->pOwner;
+
+				pSwitch->pTargetStreamRef->Switch(pSwitch);
+				pSwitch->pStreamEventCamera->SwitchOn(pSwitch);
+				pSwitch->pTargetStreamRef->PostSwitch(pSwitch);
+
+				return 1;
+			}
+
+			if (msg == 0x13) {
+				return 1;
+			}
+
+			if (((msg == 0x12) && (pSwitch = this->pOwner, fVar3 = (pSender->currentLocation).x - pSwitch->currentLocation.x,
+					fVar4 = (pSender->currentLocation).y - pSwitch->currentLocation.y,
+					fVar5 = (pSender->currentLocation).z - pSwitch->currentLocation.z,
+					fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5 < 1.0f)) &&
+				(iVar6 = this->pOwner->SV_IAmInFrontOfThisActor(pSender), iVar6 != 0)) {
+				return 6;
+			}
+		}
+	}
+
+	return 0;
+}
+
 void CBehaviourSwitchMultiCondition::Create(ByteCode* pByteCode)
 {
 	this->field_0x14 = pByteCode->GetU32();
@@ -1033,10 +1153,7 @@ void CBehaviourSwitchMultiCondition::Begin(CActor* pOwner, int newState, int new
 		if (this->field_0x10 == this->field_0xc) {
 			this->pOwner->SetState(8, -1);
 
-			for (int i = 0; i < this->pOwner->pTargetStreamRef->entryCount; i++) {
-				this->pOwner->pTargetStreamRef->aEntries[i].Switch(this->pOwner);
-			}
-
+			this->pOwner->pTargetStreamRef->Switch(this->pOwner);
 			this->pOwner->pStreamEventCamera->SwitchOn(this->pOwner);
 		}
 		else {
@@ -1074,9 +1191,8 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 					pCVar2 = this->pOwner;
 					pCVar2->SetState(5, -1);
 					pCVar2 = this->pOwner;
-					for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-						pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-					}
+
+					pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 				}
 			}
 			else {
@@ -1085,10 +1201,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 					pCVar2->SetState(8, -1);
 					pCVar2 = this->pOwner;
 
-					for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-						pCVar2->pTargetStreamRef->aEntries[i].Switch(pCVar2);
-					}
-
+					pCVar2->pTargetStreamRef->Switch(pCVar2);
 					pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
 
 					if ((this->field_0x14 & 1) != 0) {
@@ -1096,9 +1209,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 						pCVar2->SetState(5, -1);
 						pCVar2 = this->pOwner;
 
-						for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-							pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-						}
+						pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 
 						this->field_0x10 = this->field_0x8;
 						return 1;
@@ -1118,9 +1229,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 				pCVar2->SetState(5, -1);
 				pCVar2 = this->pOwner;
 
-				for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-					pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-				}
+				pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 			}
 		}
 		else {
@@ -1129,10 +1238,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 				pCVar2->SetState(8, -1);
 				pCVar2 = this->pOwner;
 
-				for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-					pCVar2->pTargetStreamRef->aEntries[i].Switch(pCVar2);
-				}
-
+				pCVar2->pTargetStreamRef->Switch(pCVar2);
 				pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
 
 				if ((this->field_0x14 & 1) != 0) {
@@ -1140,9 +1246,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 					pCVar2->SetState(5, -1);
 					pCVar2 = this->pOwner;
 
-					for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-						pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-					}
+					pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 
 					this->field_0x10 = this->field_0x8;
 					return 1;
@@ -1162,9 +1266,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 			pCVar2->SetState(5, -1);
 			pCVar2 = this->pOwner;
 
-			for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-				pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-			}
+			pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 		}
 	}
 	else {
@@ -1173,10 +1275,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 			pCVar2->SetState(8, -1);
 			pCVar2 = this->pOwner;
 
-			for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-				pCVar2->pTargetStreamRef->aEntries[i].Switch(pCVar2);
-			}
-
+			pCVar2->pTargetStreamRef->Switch(pCVar2);
 			pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
 
 			if ((this->field_0x14 & 1) != 0) {
@@ -1184,9 +1283,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 				pCVar2->SetState(5, -1);
 				pCVar2 = this->pOwner;
 
-				for (int i = 0; i < pCVar2->pTargetStreamRef->entryCount; i++) {
-					pCVar2->pTargetStreamRef->aEntries[i].PostSwitch(pCVar2);
-				}
+				pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
 
 				this->field_0x10 = this->field_0x8;
 				return 1;

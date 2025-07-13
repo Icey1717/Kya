@@ -54,23 +54,13 @@ void CActorAmortos::Create(ByteCode* pByteCode)
 	this->addOnGenerator.Create(this, pByteCode);
 	this->field_0x1c8 = pByteCode->GetU32();
 
-	S_TARGET_STREAM_REF* pTargetStreamRef = (S_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->field_0x1cc = pTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->field_0x1cc, pByteCode);
 
 	pcVar3 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar3 + sizeof(S_STREAM_EVENT_CAMERA);
 	this->field_0x1d0 = (S_STREAM_EVENT_CAMERA*)pcVar3;
 
-	pTargetStreamRef = (S_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->field_0x1d4 = pTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->field_0x1d4, pByteCode);
 
 	pcVar3 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar3 + sizeof(S_STREAM_EVENT_CAMERA);
@@ -110,30 +100,12 @@ void CActorAmortos::Init()
 		pStreamRefActor = pStreamRefActor + 1;
 	}
 
-	field_0x190.Init();
+	this->field_0x190.Init();
 
-	pSVar1 = this->field_0x1cc;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Init();
-			pSVar1 = this->field_0x1cc;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
+	this->field_0x1cc->Init();
 	this->field_0x1d0->Init();
 
-	pSVar1 = this->field_0x1d4;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Init();
-			pSVar1 = this->field_0x1d4;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
+	this->field_0x1d4->Init();
 	this->field_0x1d8->Init();
 
 	SV_GetBoneDefaultWorldPosition(this->field_0x1c8, &local_10);
@@ -149,28 +121,10 @@ void CActorAmortos::Init()
 	(this->cylinderDetection).field_0x20 = local_10;
 	(this->cylinderDetection).field_0x30 = local_20;
 
-	pSVar1 = this->field_0x1cc;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Reset();
-			pSVar1 = this->field_0x1cc;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
+	this->field_0x1cc->Reset();
 	this->field_0x1d0->Reset(this);
 
-	pSVar1 = this->field_0x1d4;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Reset();
-			pSVar1 = this->field_0x1d4;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
+	this->field_0x1d4->Reset();
 	this->field_0x1d8->Reset(this);
 
 	this->field_0x2a0 = 1.08f;
@@ -197,16 +151,10 @@ void CActorAmortos::Reset()
 	int iVar3;
 	int iVar4;
 
-	for (int i = 0; i < this->field_0x1cc->entryCount; i++) {
-		this->field_0x1cc->aEntries[i].Reset();
-	}
-
+	this->field_0x1cc->Reset();
 	this->field_0x1d0->Reset(this);
 
-	for (int i = 0; i < this->field_0x1d4->entryCount; i++) {
-		this->field_0x1d4->aEntries[i].Reset();
-	}
-
+	this->field_0x1d4->Reset();
 	this->field_0x1d8->Reset(this);
 
 	this->field_0x2a0 = 1.08f;
@@ -388,19 +336,7 @@ void CActorAmortos::BehaviourAmortosStand_Manage()
 			SetState(6, -1);
 		}
 
-		pCVar3 = this->pAnimationController;
-		peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-		bVar5 = false;
-		if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-			if (peVar4->animPlayState == 0) {
-				bVar5 = false;
-			}
-			else {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar5) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->field_0x2a0 = 1.08f;
 			SetState(5, -1);
 		}
@@ -415,19 +351,7 @@ void CActorAmortos::BehaviourAmortosStand_Manage()
 			}
 			else {
 				if (iVar1 == 6) {
-					pCVar3 = this->pAnimationController;
-					peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-					bVar5 = false;
-					if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-						if (peVar4->animPlayState == 0) {
-							bVar5 = false;
-						}
-						else {
-							bVar5 = (peVar4->field_0xcc & 2) != 0;
-						}
-					}
-
-					if (bVar5) {
+					if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 						local_30.field_0x10 = 650.0f;
 						SV_GetBoneWorldPosition(this->field_0x1c8, &eStack96);
 						edF32Vector4SubHard(&local_50, &eStack96, &this->currentLocation);
@@ -850,18 +774,12 @@ void CBehaviourAmortosStand::InitState(int newState)
 				pCVar1 = pAmortos->pCollisionData;
 				pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x80000;
 
-				for (int i = 0; i < pAmortos->field_0x1d4->entryCount; i++) {
-					pAmortos->field_0x1d4->aEntries[i].Switch(pAmortos);
-				}
-
+				pAmortos->field_0x1d4->Switch(pAmortos);
 				pAmortos->field_0x1d8->SwitchOn(pAmortos);
 			}
 			else {
 				if (iVar5 == 7) {
-					for (int i = 0; i < pAmortos->field_0x1cc->entryCount; i++) {
-						pAmortos->field_0x1cc->aEntries[i].Switch(pAmortos);
-					}
-
+					pAmortos->field_0x1cc->Switch(pAmortos);
 					pAmortos->field_0x1d0->SwitchOn(pAmortos);
 
 					pCVar1 = pAmortos->pCollisionData;

@@ -314,6 +314,15 @@ namespace Hero
 		case STATE_HERO_WIND_FLY_C:
 			return "StateHeroWindFlyC";
 			break;
+		case STATE_HERO_LEVER_1_2:
+			return "StateHeroLever1_2";
+			break;
+		case STATE_HERO_LEVER_2_2:
+			return "StateHeroLever2_2";
+			break;
+		case STATE_HERO_DCA_A:
+			return "StateHeroDCA_A";
+			break;
 		case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 			return "StateHeroTrampolineJump_1_2_A";
 			break;

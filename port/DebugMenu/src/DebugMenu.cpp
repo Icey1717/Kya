@@ -49,6 +49,7 @@
 #include "Native/NativeRenderer.h"
 #include "LevelScheduleManager.h"
 #include "DebugShop.h"
+#include "DebugWolfen.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -530,6 +531,7 @@ namespace Debug {
 		{"Event", Debug::Event::ShowMenu, false },
 		{"Scene", ShowSceneMenu, true },
 		{"Shop", Debug::Shop::ShowMenu, true },
+		{"Wolfen", Debug::Wolfen::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {

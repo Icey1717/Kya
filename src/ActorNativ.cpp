@@ -922,38 +922,16 @@ void CActorNativ::BehaviourExorcisme_Manage()
 		else {
 			if (iVar1 == 0xf) {
 				ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-				pCVar2 = this->pAnimationController;
-				peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-				bVar4 = false;
-				if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-					if (peVar3->animPlayState == 0) {
-						bVar4 = false;
-					}
-					else {
-						bVar4 = (peVar3->field_0xcc & 2) != 0;
-					}
-				}
 
-				if (bVar4) {
+				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 					SetState(0x10, -1);
 				}
 			}
 			else {
 				if (iVar1 == 0xe) {
 					ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
-					pCVar2 = this->pAnimationController;
-					peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-					bVar4 = false;
-					if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-						if (peVar3->animPlayState == 0) {
-							bVar4 = false;
-						}
-						else {
-							bVar4 = (peVar3->field_0xcc & 2) != 0;
-						}
-					}
 
-					if ((bVar4) && (((this->pCollisionData)->flags_0x4 & 2) != 0)) {
+					if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) && (((this->pCollisionData)->flags_0x4 & 2) != 0)) {
 						SetState(0xf, -1);
 					}
 				}
@@ -1074,20 +1052,8 @@ void CActorNativ::BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBe
 	iVar1 = this->actorState;
 	if (iVar1 == 0x19) {
 		ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		bVar4 = false;
 
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			if (peVar3->animPlayState == 0) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			bVar4 = this->behaviourTakeAndPut.GetCurrentPathFollowReader()->AtGoal(pCVar7->splinePointIndex, pCVar7->field_0xc);
 			if (bVar4 == false) {
 				SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
@@ -1102,19 +1068,8 @@ void CActorNativ::BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBe
 			ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
 			pTVar6 = GetTimer();
 			this->field_0x408 = this->field_0x408 + pTVar6->cutsceneDeltaTime;
-			pCVar2 = this->pAnimationController;
-			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-			bVar4 = false;
-			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				if (peVar3->animPlayState == 0) {
-					bVar4 = false;
-				}
-				else {
-					bVar4 = (peVar3->field_0xcc & 2) != 0;
-				}
-			}
 
-			if (bVar4) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				this->field_0x534 = this->field_0x534 + 1;
 			}
 
@@ -1308,18 +1263,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 			SetState(0x1b, -1);
 		}
 		else {
-			pCVar1 = this->pAnimationController;
-			peVar2 = pCVar1->anmBinMetaAnimator.aAnimData;
-			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-				bVar3 = false;
-				if (peVar2->animPlayState != 0) {
-					bVar3 = (peVar2->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar3 = false;
-			}
-			if (bVar3) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(0x1a, -1);
 			}
 		}
@@ -1342,19 +1286,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 						SetState(0x1e, -1);
 					}
 					else {
-						pCVar1 = this->pAnimationController;
-						peVar2 = pCVar1->anmBinMetaAnimator.aAnimData;
-						if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-							bVar3 = false;
-							if (peVar2->animPlayState != 0) {
-								bVar3 = (peVar2->field_0xcc & 2) != 0;
-							}
-						}
-						else {
-							bVar3 = false;
-						}
-
-						if (bVar3) {
+						if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 							if (pBehaviour->addOn.Func_0x20(1, (CActor*)0x0, 0) == 0) {
 								SetState(0x1c, -1);
 							}
@@ -1778,38 +1710,14 @@ void CActorNativ::StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviou
 			}
 		}
 		else {
-			pCVar2 = this->pAnimationController;
-			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-			bVar4 = false;
-			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				if (peVar3->animPlayState == 0) {
-					bVar4 = false;
-				}
-				else {
-					bVar4 = (peVar3->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar4) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				pBehaviour->GetCurrentPathFollowReader()->NextWayPoint();
 				SetState(NATIVE_STATE_TAKE_PUT_WALK, 0x17);
 			}
 		}
 	}
 	else {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		bVar4 = false;
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			if (peVar3->animPlayState == 0) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->field_0x534 = this->field_0x534 + 1;
 		}
 
@@ -3929,54 +3837,25 @@ void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 
 	this->addOn.Create(pByteCode);
 
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-		if (pTargetStreamRef->entryCount != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-		}
-		this->field_0x38 = pTargetStreamRef;
-	}
+	S_TARGET_STREAM_REF::Create(&this->field_0x38, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x3c = pSVar2;
 
-
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-		if (pTargetStreamRef->entryCount != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-		}
-		this->field_0x40 = pTargetStreamRef;
-	}
+	S_TARGET_STREAM_REF::Create(&this->field_0x40, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x44 = pSVar2;
 
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-		if (pTargetStreamRef->entryCount != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-		}
-		this->field_0x48 = pTargetStreamRef;
-	}
+	S_TARGET_STREAM_REF::Create(&this->field_0x48, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x4c = pSVar2;
 
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-		if (pTargetStreamRef->entryCount != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-		}
-		this->field_0x50 = pTargetStreamRef;
-	}
+	S_TARGET_STREAM_REF::Create(&this->field_0x50, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
@@ -4001,54 +3880,16 @@ void CBehaviourNativAkasa::Init(CActor* pOwner)
 
 	this->comboTutorialManager.Init();
 
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x38;
-		iVar3 = 0;
-		if (0 < pTargetStreamRef->entryCount) {
-			do {
-				pTargetStreamRef->aEntries[iVar3].Init();
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < pTargetStreamRef->entryCount);
-		}
-	}
-
+	this->field_0x38->Init();
 	this->streamEventCamera_0x3c->Init();
 
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x40;
-		iVar3 = 0;
-		if (0 < pTargetStreamRef->entryCount) {
-			do {
-				pTargetStreamRef->aEntries[iVar3].Init();
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < pTargetStreamRef->entryCount);
-		}
-	}
-
+	this->field_0x40->Init();
 	this->streamEventCamera_0x44->Init();
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x48;
-		iVar3 = 0;
-		if (0 < pTargetStreamRef->entryCount) {
-			do {
-				pTargetStreamRef->aEntries[iVar3].Init();
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < pTargetStreamRef->entryCount);
-		}
-	}
 
+	this->field_0x48->Init();
 	this->streamEventCamera_0x4c->Init();
-	{
-		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x50;
-		iVar3 = 0;
-		if (0 < pTargetStreamRef->entryCount) {
-			do {
-				pTargetStreamRef->aEntries[iVar3].Init();
-				iVar3 = iVar3 + 1;
-			} while (iVar3 < pTargetStreamRef->entryCount);
-		}
-	}
 
+	this->field_0x50->Init();
 	this->streamEventCamera_0x54->Init();
 
 	this->addOn.Reset();
@@ -4300,14 +4141,7 @@ void CBehaviourNativAkasa::ManageComboTutorial()
 				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
 		pNativ = this->pOwner;
 
-		iVar6 = 0;
-		if (0 < this->field_0x38->entryCount) {
-			do {
-				this->field_0x38->aEntries[iVar6].Switch(pNativ);
-				iVar6 = iVar6 + 1;
-			} while (iVar6 < this->field_0x38->entryCount);
-		}
-
+		this->field_0x38->Switch(pNativ);
 		this->streamEventCamera_0x3c->SwitchOn(pNativ);
 
 		this->field_0x16a4 = 1;

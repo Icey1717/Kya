@@ -162,6 +162,27 @@ void edQuatFromEuler(edF32VECTOR4* v0, float x, float y, float z)
 	return;
 }
 
+edF32VECTOR4* edQuatFromAngAxis(float param_1, edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar4;
+
+	static edF32VECTOR4 edF32VECTOR4_0041e7b0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	fVar4 = sqrtf(v1->z * v1->z + v1->x * v1->x + v1->y * v1->y);
+	if (fVar4 < g_TinyFloat_00448548) {
+		*v0 = edF32VECTOR4_0041e7b0;
+	}
+	else {
+		fVar4 = sinf(param_1 / 2.0f) / fVar4;
+		v0->x = v1->x * fVar4;
+		v0->y = v1->y * fVar4;
+		v0->z = v1->z * fVar4;
+		v0->w = cosf(param_1 / 2.0f);
+	}
+
+	return v0;
+}
+
 void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	bool bVar1;

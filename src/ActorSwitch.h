@@ -32,7 +32,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(uint*, int) {}
 	virtual void LoadContext(uint*, int) {}
@@ -195,6 +195,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour);
+	void StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour);
 
 	S_TARGET_STREAM_REF* pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;

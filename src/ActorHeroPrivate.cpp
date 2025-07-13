@@ -1644,34 +1644,32 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 
 	switch (this->heroActionParams.activeActionId) {
 	case 1:
-		IMPLEMENTATION_GUARD(
-		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
-		*(CActor**)&this->field_0xf14 = this->heroActionParams.pActor;
-		SetBehaviour(7, 0x106, 0xffffffff);)
+		DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x14, 0);
+		this->field_0xf14 = this->heroActionParams.pActor;
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_DCA_A, 0xffffffff);
 		break;
 	case 2:
-		SetBehaviour(7, STATE_HERO_KICK_A, 0xffffffff);
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_KICK_A, 0xffffffff);
 		break;
 	case 3:
-		SetBehaviour(7, STATE_HERO_JOKE, 0xffffffff);
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_JOKE, 0xffffffff);
 		break;
 	case 4:
 		IMPLEMENTATION_GUARD(
 		uVar2 = TestState_IsFalling(0xffffffff);
 		if ((uVar2 == 0) && (uVar2 = TestState_IsInTheWind(0xffffffff), uVar2 == 0)) {
-			SetBehaviour(7, 0xa9, 0xffffffff);
+			SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa9, 0xffffffff);
 		}
 		else {
-			SetBehaviour(7, 0xbb, 0xffffffff);
+			SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xbb, 0xffffffff);
 		})
 		break;
 	case 5:
 	case 0xb:
 		break;
 	case 6:
-		IMPLEMENTATION_GUARD(
-		CActor::DoMessage(this, this->heroActionParams.pActor, 0x13, 0);
-		SetBehaviour(7, 0x103, 0xffffffff);)
+		DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x13, 0);
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_LEVER_1_2, 0xffffffff);
 		break;
 	case 7:
 		IMPLEMENTATION_GUARD(
@@ -1679,10 +1677,10 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		if (uVar2 == 0) {
 			uVar2 = TestState_IsFalling(0xffffffff);
 			if (uVar2 == 0) {
-				SetBehaviour(7, 0x10f, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x10f, 0xffffffff);
 			}
 			else {
-				SetBehaviour(7, 0x115, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x115, 0xffffffff);
 			}
 			GripObject(this, (Actor*)this->heroActionParams.pActor);
 		}
@@ -1691,7 +1689,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 			this->field_0x1490.y = this->heroActionParams.field_0x10.y;
 			this->field_0x1490.z = this->heroActionParams.field_0x10.z;
 			this->field_0x1490.w = this->heroActionParams.field_0x10.w;
-			SetBehaviour(7, 0x113, 0xffffffff);
+			SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x113, 0xffffffff);
 		})
 		break;
 	case 8:
@@ -1711,7 +1709,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		this->field_0xf40.z = fVar3;
 		this->field_0xf40.w = fVar4;
 		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
-		SetBehaviour(7, 0x105, 0xffffffff);)
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x105, 0xffffffff);)
 		break;
 	case 9:
 	case 0xc:
@@ -1723,7 +1721,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		break;
 	case 0xd:
 		IMPLEMENTATION_GUARD(
-		SetBehaviour(7, 0x11c, 0xffffffff);)
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x11c, 0xffffffff);)
 		break;
 	case ACTION_SPEAK:
 		DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x14, 0);
@@ -2251,21 +2249,7 @@ bool CActorHeroPrivate::IsLayerAnimFinished(uint layerId)
 
 bool CActorHeroPrivate::IsLayerAnimEndReached(uint layerId)
 {
-	bool bVar1;
-	int iVar2;
-	edAnmLayer* pLayer;
-
-	iVar2 = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
-	pLayer = (this->pAnimationController->anmBinMetaAnimator).aAnimData + iVar2;
-
-	if (pLayer->animPlayState == 0) {
-		bVar1 = false;
-	}
-	else {
-		bVar1 = (pLayer->field_0xcc & 2) != 0;
-	}
-
-	return bVar1;
+	return this->pAnimationController->anmBinMetaAnimator.IsLayerAnimEndReached(this->pAnimationController->PhysicalLayerFromLayerId(layerId));
 }
 
 void CActorHeroPrivate::SetLayerAnim(float param_1, uint layerId, int animId)
@@ -2565,16 +2549,7 @@ void CActorHeroPrivate::Manage()
 
 	if (0.0f <= this->field_0x1000) {
 		IMPLEMENTATION_GUARD(
-		pCVar1 = this->pAnimationController;
-		iVar8 = CAnimation::PhysicalLayerFromLayerId(pCVar1, 8);
-		peVar11 = (pCVar1->anmBinMetaAnimator).base.aAnimData + iVar8;
-		if (peVar11->animPlayState == 0) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (peVar11->field_0xcc & 2) != 0;
-		}
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			CActor::SV_UpdateValue
 			(0.0, *(float*)&this->field_0x1008, this, this->field_0x1000 = -1.0f);
 			pCVar1 = this->pAnimationController;
@@ -5107,7 +5082,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->field_0xff4 = 0;
 	this->effort = 0.0f;
 	this->animIdleSequenceIndex = 0xe6;
-	//*(undefined4*)&this->field_0x100c = 0;
+	this->field_0x100c = 0;
 	this->field_0x1a54 = 0;
 	this->field_0x1610 = 0;
 	this->field_0x1614 = 0;
@@ -5573,6 +5548,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_WIND_FLY:
 	case STATE_HERO_SHOP:
+	case STATE_HERO_LEVER_2_2:
 		break;
 	case STATE_HERO_STAND:
 		this->field_0x1048 = 0.0f;
@@ -5645,6 +5621,12 @@ LAB_00341590:
 		break;
 	case STATE_HERO_WIND_FLY_C:
 		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.75f, 0);
+		break;
+	case STATE_HERO_LEVER_1_2:
+		StateHeroLever_1_2Init();
+		break;
+	case STATE_HERO_DCA_A:
+		StateHeroDCAInit();
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
@@ -5825,6 +5807,15 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_WIND_FLY_C:
 		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		break;
+	case STATE_HERO_LEVER_1_2:
+		StateHeroLever_1_2Term();
+		break;
+	case STATE_HERO_LEVER_2_2:
+		StateHeroLever_2_2Term();
+		break;
+	case STATE_HERO_DCA_A:
+		StateHeroDCATerm();
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	{
@@ -6339,6 +6330,15 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_WIND_FLY_C:
 		StateHeroWindFly(1);
 		break;
+	case STATE_HERO_LEVER_1_2:
+		StateHeroLever_1_2();
+		break;
+	case STATE_HERO_LEVER_2_2:
+		StateHeroLever_2_2();
+		break;
+	case STATE_HERO_DCA_A:
+		StateHeroDCA();
+		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
 		break;
@@ -6530,18 +6530,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 		if (iVar4 == 0xf0) {
 			SV_UpdateValue(0.0f, 5.0f, &this->effort);
 			if (this->effort == 0.0f) {
-				edAnmLayer* peVar3 = (pAnimController->anmBinMetaAnimator).aAnimData;
-				if ((peVar3->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
-					bSuccess = false;
-					if (peVar3->animPlayState != STATE_ANIM_NONE) {
-						bSuccess = (peVar3->field_0xcc & 2) != 0;
-					}
-				}
-				else {
-					bSuccess = false;
-				}
-
-				if (bSuccess) {
+				if (pAnimController->IsCurrentLayerAnimEndReached(0)) {
 					PlayAnim(0xf1);
 				}
 			}
@@ -6550,17 +6539,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 		}
 		else {
 			if (iVar4 == 0xf1) {
-				edAnmLayer* peVar3 = (pAnimController->anmBinMetaAnimator).aAnimData;
-				if ((peVar3->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
-					bSuccess = false;
-					if (peVar3->animPlayState != STATE_ANIM_NONE) {
-						bSuccess = (peVar3->field_0xcc & 2) != 0;
-					}
-				}
-				else {
-					bSuccess = false;
-				}
-				if (bSuccess) {
+				if (pAnimController->IsCurrentLayerAnimEndReached(0)) {
 					StateConfig* pAnimResult = GetStateCfg(this->actorState);
 					PlayAnim(pAnimResult->animId);
 				}
@@ -6788,17 +6767,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 										this->idleTimer = 0.0f;
 									}
 									else {
-										edAnmLayer* peVar5 = (pAnimController->anmBinMetaAnimator).aAnimData;
-										if ((peVar5->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
-											bSuccess = false;
-											if (peVar5->animPlayState != STATE_ANIM_NONE) {
-												bSuccess = (peVar5->field_0xcc & 2) != 0;
-											}
-										}
-										else {
-											bSuccess = false;
-										}
-										if (bSuccess) {
+										if (pAnimController->IsCurrentLayerAnimEndReached(0)) {
 											/* Idle animation trigger */
 											regularAnimType = -1;
 
@@ -7131,18 +7100,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	})
 
 	if (param_2 != 0) {
-		peVar6 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		if ((peVar6->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar7 = false;
-			if (peVar6->animPlayState != STATE_ANIM_NONE) {
-				bVar7 = (peVar6->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar7 = false;
-		}
-
-		if (bVar7) {
+		if (pCVar2->IsCurrentLayerAnimEndReached(0)) {
 			SetState(STATE_HERO_TOBOGGAN_3, 0xffffffff);
 			return;
 		}
@@ -7423,19 +7381,7 @@ void CActorHeroPrivate::StateHeroTobogganJump(int param_2, int param_3, int para
 
 LAB_00328d38:
 	if (param_4 != 0) {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar4 = false;
-			if (peVar3->animPlayState != STATE_ANIM_NONE) {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar4 = false;
-		}
-
-		if (bVar4) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			SetState(STATE_HERO_TOBOGGAN_JUMP_1, 0xffffffff);
 			return;
 		}
@@ -7890,20 +7836,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 
 	if ((GetStateFlags(this->actorState) & 1) == 0) {
 		if (nextState != -1) {
-			pCVar3 = this->pAnimationController;
-			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-
-			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-				bVar5 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar5 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar5 = false;
-			}
-
-			if (bVar5) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				SetState(nextState, 0xffffffff);
 				return;
 			}
@@ -8162,35 +8095,13 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 							}
 
 							if (this->actorState == 0xff) {
-								peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
-								if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-									bVar5 = false;
-									if (peVar4->animPlayState != 0) {
-										bVar5 = (peVar4->field_0xcc & 2) != 0;
-									}
-								}
-								else {
-									bVar5 = false;
-								}
-
-								if (bVar5) {
+								if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 									SetState(STATE_HERO_WIND_FLY_B, 0xffffffff);
 									return;
 								}
 							}
 
-							peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
-							if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-								bVar5 = false;
-								if (peVar4->animPlayState != 0) {
-									bVar5 = (peVar4->field_0xcc & 2) != 0;
-								}
-							}
-							else {
-								bVar5 = false;
-							}
-
-							if ((bVar5) || (bIsJump == 0)) {
+							if ((pCVar1->IsCurrentLayerAnimEndReached(0)) || (bIsJump == 0)) {
 								GetPadRelativeToPlane(&this->field_0x13f0, &local_c, &local_10);
 								if (0.3f < local_c) {
 									SetState(STATE_HERO_WIND_WALL_MOVE_D, 0xffffffff);
@@ -8445,18 +8356,7 @@ void CActorHeroPrivate::StateHeroRun()
 
 	CActor* pSoccer = this->pSoccerActor;
 	if ((pSoccer == (CActor*)0x0) || (pSoccer->currentAnimType != 9)) {
-		pCVar4 = this->pAnimationController;
-		peVar5 = (pCVar4->anmBinMetaAnimator).aAnimData;
-		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
-			bVar6 = false;
-			if (peVar5->animPlayState != STATE_ANIM_NONE) {
-				bVar6 = (peVar5->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar6 = false;
-		}
-		if (bVar6) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			pAVar7 = GetStateCfg(this->actorState);
 			PlayAnim(pAVar7->animId);
 		}
@@ -8743,19 +8643,7 @@ void CActorHeroPrivate::StateHeroJoke()
 		}
 	}
 
-	pCVar2 = this->pAnimationController;
-	peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-	bVar4 = false;
-	if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-		if (peVar3->animPlayState == 0) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (peVar3->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar4) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		SetState(STATE_HERO_STAND, 0xffffffff);
 	}
 
@@ -8931,18 +8819,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 									fVar11 = pCVar2->aButtons[5].clickValue;
 								}
 								if (fVar11 == 0.0f) {
-									pCVar3 = this->pAnimationController;
-									peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-									if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-										bVar5 = false;
-										if (peVar4->animPlayState != STATE_ANIM_NONE) {
-											bVar5 = (peVar4->field_0xcc & 2) != 0;
-										}
-									}
-									else {
-										bVar5 = false;
-									}
-									if (bVar5) {
+									if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 										this->dynamic.speed = 0.0f;
 										SetState(nextState, 0xffffffff);
 									}
@@ -9557,18 +9434,7 @@ void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
 		SetState(0x85, 0xffffffff);
 	}
 	else {
-		peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		bVar5 = false;
-		if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar4->animPlayState == 0) {
-				bVar5 = false;
-			}
-			else {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar5) {
+		if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 			SetState(0x85, 0xffffffff);
 		}
 	}
@@ -9612,19 +9478,7 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 	bVar5 = DetectGripablePrecipice();
 	if (bVar5 == false) {
 		if (nextState != AS_None) {
-			pCVar2 = this->pAnimationController;
-			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-			bVar5 = false;
-			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				if (peVar3->animPlayState == 0) {
-					bVar5 = false;
-				}
-				else {
-					bVar5 = (peVar3->field_0xcc & 2) != 0;
-				}
-			}
-
-			if (bVar5) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				this->SetState(nextState, 0xffffffff);
 				return;
 			}
@@ -10061,19 +9915,7 @@ void CActorHeroPrivate::StateHeroRoll()
 	uVar4 = this->dynamic.flags;
 	if (((uVar4 & 2) == 0) || (this->dynamicExt.field_0x6c <= 0.2)) {
 	LAB_00141cf8:
-		peVar5 = (pCVar1->anmBinMetaAnimator).aAnimData;
-
-		if ((peVar5->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			bVar6 = false;
-			if (peVar5->animPlayState != STATE_ANIM_NONE) {
-				bVar6 = (peVar5->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar6 = false;
-		}
-
-		if (bVar6) {
+		if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 			pCVar3 = this->pPlayerInput;
 			if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				fVar8 = 0.0;
@@ -10325,18 +10167,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 			}
 		}
 
-		peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		bVar5 = false;
-		if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar4->animPlayState == 0) {
-				bVar5 = false;
-			}
-			else {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (!bVar5) {
+		if (!pCVar1->IsCurrentLayerAnimEndReached(0)) {
 			pCVar3 = this->pPlayerInput;
 			if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				fVar8 = 0.0f;
@@ -10376,19 +10207,7 @@ void CActorHeroPrivate::StateHeroHit()
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
 	if ((pCVar1->flags_0x4 & 2) == 0) {
-		peVar4 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		bVar5 = false;
-
-		if ((peVar4->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			if (peVar4->animPlayState == 0) {
-				bVar5 = false;
-			}
-			else {
-				bVar5 = (peVar4->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar5) {
+		if (pCVar2->IsCurrentLayerAnimEndReached(0)) {
 			CLifeInterface* pLifeInterface = GetLifeInterface();
 			fVar9 = pLifeInterface->GetValue();
 			bVar5 = fVar9 - this->field_0x2e4 <= 0.0f;
@@ -10686,20 +10505,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 		}
 
 		if (uVar6 == 0) {
-			pCVar2 = this->pAnimationController;
-			peVar4 = (pCVar2->anmBinMetaAnimator).aAnimData;
-
-			if ((peVar4->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-				bVar5 = false;
-				if (peVar4->animPlayState != 0) {
-					bVar5 = (peVar4->field_0xcc & 2) != 0;
-				}
-			}
-			else {
-				bVar5 = false;
-			}
-
-			if (bVar5) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				if (this->field_0x1574 == 0) {
 					pCVar1 = this->pPlayerInput;
 					if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -11299,20 +11105,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 						this->timeInAir = 0.0f;
 					}
 
-					peVar4 = (pCVar2->anmBinMetaAnimator).aAnimData;
-					AVar5 = pCVar2->currentAnimType_0x30;
-					AVar6 = (peVar4->currentAnimDesc).animType;
-					bVar7 = false;
-					if (AVar6 == AVar5) {
-						if (peVar4->animPlayState == STATE_ANIM_NONE) {
-							bVar7 = false;
-						}
-						else {
-							bVar7 = (peVar4->field_0xcc & 2) != 0;
-						}
-					}
-
-					if ((bVar7) || (param_2 != 0)) {
+					if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) || (param_2 != 0)) {
 						if (this->field_0x1a4c == 0) {
 							pCVar3 = this->pPlayerInput;
 							if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -11345,16 +11138,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 									}
 								}
 								else {
-									bVar7 = false;
-									if (AVar6 == AVar5) {
-										if (peVar4->animPlayState == STATE_ANIM_NONE) {
-											bVar7 = false;
-										}
-										else {
-											bVar7 = (peVar4->field_0xcc & 2) != 0;
-										}
-									}
-									if (bVar7) {
+									if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 										/* Land Animation */
 										SetState(STATE_HERO_STAND, 0xffffffff);
 									}
@@ -11367,6 +11151,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 								else {
 									fVar11 = pCVar3->aAnalogSticks[PAD_STICK_LEFT].magnitude;
 								}
+
 								if (0.3f < fVar11) {
 									SetState(STATE_HERO_ROLL, 0xffffffff);
 								}
@@ -11660,21 +11445,7 @@ LAB_00139008:
 		else {
 			if (param_4 == 0) {
 				if (nextState != -1) {
-					pAnim = this->pAnimationController;
-					pAnmLayer = (pAnim->anmBinMetaAnimator).aAnimData;
-
-					if ((pAnmLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-						bVar5 = false;
-
-						if (pAnmLayer->animPlayState != STATE_ANIM_NONE) {
-							bVar5 = (pAnmLayer->field_0xcc & 2) != 0;
-						}
-					}
-					else {
-						bVar5 = false;
-					}
-
-					if (bVar5) {
+					if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 						SetState(nextState, 0xffffffff);
 						return;
 					}
@@ -11863,19 +11634,7 @@ void CActorHeroPrivate::StateHeroGripUp(float param_1, float param_2, int nextSt
 			return;
 		}
 
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			bVar3 = false;
-			if (peVar2->animPlayState != STATE_ANIM_NONE) {
-				bVar3 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar3 = false;
-		}
-
-		if (!bVar3) {
+		if (!pCVar1->IsCurrentLayerAnimEndReached(0)) {
 			return;
 		}
 	}
@@ -12042,19 +11801,7 @@ void CActorHeroPrivate::StateHeroColWall()
 		this->timeInAir = 0.0f;
 	}
 
-	peVar3 = (pCVar1->anmBinMetaAnimator).aAnimData;
-	bVar4 = false;
-
-	if ((peVar3->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-		if (peVar3->animPlayState == 0) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (peVar3->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar4) {
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		SetState(STATE_HERO_STAND, 0xffffffff);
 	}
 
@@ -12084,6 +11831,196 @@ void CActorHeroPrivate::StateHeroFlyInit()
 	if (((piVar1 != (int*)0x0) && (iVar2 = *(int*)&this->field_0x13c0, iVar2 != 0)) && (iVar2 == piVar1[6])) {
 		(**(code**)(*piVar1 + 0x10))(0, 0);
 	})
+
+	return;
+}
+
+
+void CActorHeroPrivate::StateHeroLever_1_2Init()
+{
+	this->field_0x100c = 0;
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroLever_1_2()
+{
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	SV_UpdateOrientationToPosition2D(this->field_0x1040, &(this->pKickedActor)->currentLocation);
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 2.0f;
+	movParamsIn.field_0x18 = 0.75f;
+	movParamsIn.flags = 0x1001;
+	CActorMovable::SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &(this->pKickedActor)->currentLocation);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		this->field_0x100c = 1;
+		SetState(STATE_HERO_LEVER_2_2, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroLever_1_2Term()
+{
+	DoMessage(this->pKickedActor, (ACTOR_MESSAGE)0x14, 0);
+
+	if (this->field_0x100c == 0) {
+		DoMessage(this->pKickedActor, (ACTOR_MESSAGE)0x15, 0);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroLever_2_2()
+{
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	SV_UpdateOrientationToPosition2D(this->field_0x1040, &(this->pKickedActor)->currentLocation);
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 2.0f;
+	movParamsIn.field_0x18 = 0.75f;
+	movParamsIn.flags = 0x1001;
+	CActorMovable::SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &(this->pKickedActor)->currentLocation);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		this->field_0x100c = 1;
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroLever_2_2Term()
+{
+	DoMessage(this->pKickedActor, (ACTOR_MESSAGE)0x15, 0);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDCAInit()
+{
+	this->field_0x1a54 = 1;
+	this->field_0x100c = 0;
+	this->bFacingControlDirection = 0;
+	TieToActor(this->field_0xf14, 0, 1, (edF32MATRIX4*)0x0);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDCA()
+{
+	CPlayerInput* pInput;
+	float fVar2;
+	uint uVar3;
+	float fVar4;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	SV_UpdateOrientation2D(this->field_0x1040 * 2.0f, &this->field_0xf14->rotationQuat, 0);
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	local_10.x = ((this->field_0xf14)->currentLocation).x;
+	local_10.z = ((this->field_0xf14)->currentLocation).z;
+	local_10.w = ((this->field_0xf14)->currentLocation).w;
+	local_10.y = this->currentLocation.y;
+
+	edF32Vector4ScaleHard(-0.4f, &eStack32, &this->field_0xf14->rotationQuat);
+	edF32Vector4AddHard(&local_10, &local_10, &eStack32);
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	movParamsIn.flags = 0x1001;
+	fVar4 = local_10.x - this->currentLocation.x;
+	fVar2 = local_10.z - this->currentLocation.z;
+	fVar4 = sqrtf(fVar4 * fVar4 + 0.0f + fVar2 * fVar2);
+	if (0.05f < fVar4) {
+		movParamsIn.speed = edFIntervalLERP(fVar4, 1.0f, 0.1f, 3.0f, 1.0f);
+		movParamsIn.field_0x18 = 0.05f;
+		movParamsIn.flags = movParamsIn.flags & 0xfffffbff;
+		SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &local_10);
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	}
+	else {
+		if (this->bFacingControlDirection == 0) {
+			this->dynamic.speed = 0.0f;
+			UpdatePosition(&local_10, true);
+			this->bFacingControlDirection = 1;
+		}
+	}
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		uVar3 = 0;
+	}
+	else {
+		uVar3 = pInput->pressedBitfield & PAD_BITMASK_TRIANGLE;
+	}
+
+	if (uVar3 != 0) {
+		this->field_0x100c = 1;
+		SetState(0x73, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDCATerm()
+{
+	CPlayerInput* pInput;
+
+	pInput = this->pPlayerInput;
+	if ((pInput != (CPlayerInput*)0x0) && (this->field_0x18dc == 0)) {
+		pInput->pressedBitfield = pInput->pressedBitfield & 0xfffff80f;
+	}
+
+	TieToActor((CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+	TieToActor(this->field_0xf14, 0, 0, (edF32MATRIX4*)0x0);
+
+	CActor::DoMessage(this->field_0xf14, (ACTOR_MESSAGE)0x14, (MSG_PARAM)1);
+	this->field_0xf14 = (CActor*)0x0;
+
+	this->flags = this->flags | 0x100;
+
+	if (this->field_0x100c == 0) {
+		SetBFCulling(0);
+		SetAlpha(0x80);
+		this->field_0x1a54 = 0;
+	}
+	else {
+		this->field_0x1a54 = 3;
+	}
 
 	return;
 }
@@ -12830,18 +12767,7 @@ LAB_0014a028:
 				uVar22 = TestState_IsGripped(uVar22);
 				if ((bVar6) || (uVar22 = CanGrip(uVar22, &this->rotationQuat), uVar22 == 0)) {
 					if (nextState != -1) {
-						peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
-						if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
-							bVar5 = false;
-							if (peVar4->animPlayState != STATE_ANIM_NONE) {
-								bVar5 = (peVar4->field_0xcc & 2) != 0;
-							}
-						}
-						else {
-							bVar5 = false;
-						}
-
-						if (bVar5) {
+						if (pCVar3->IsCurrentLayerAnimEndReached(0)) {
 							SetState(nextState, 0xffffffff);
 							return;
 						}
@@ -13006,20 +12932,7 @@ void CActorHeroPrivate::StateHeroBasic(float param_1, float param_2, int nextSta
 	}
 
 	if (param_2 < 0.0f) {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		bVar4 = false;
-
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			if (peVar3->animPlayState == 0) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = (peVar3->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar4) goto LAB_003489d0;
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) goto LAB_003489d0;
 	}
 
 	if (param_2 <= 0.0f) {

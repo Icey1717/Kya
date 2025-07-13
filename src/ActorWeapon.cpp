@@ -237,19 +237,7 @@ void CBehaviourWeapon::Manage()
 	pWeapon = this->pOwner;
 	switch (pWeapon->actorState) {
 	case 6:
-		pCVar1 = pWeapon->pAnimationController;
-		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-		bVar4 = false;
-		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-			if (peVar2->animPlayState == 0) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = (peVar2->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar4) {
+		if (pWeapon->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			pWeapon->SetState(WEAPON_STATE_IDLE, -1);
 		}
 		break;

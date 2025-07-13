@@ -130,12 +130,7 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 
 	this->field_0x1d0 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF* pTargetStreamRef = (S_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->pMagicalSwitch1CBase_0x1224 = pTargetStreamRef;
+	S_TARGET_STREAM_REF::Create(&this->pMagicalSwitch1CBase_0x1224, pByteCode);
 
 	pSVar3 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSVar3 + 1);
@@ -214,15 +209,11 @@ void CActorAmbre::Init()
 		pFxSpark = pFxSpark + 1;
 	} while (iVar3 < 3);
 
-	for (int i = 0; i < this->pMagicalSwitch1CBase_0x1224->entryCount; i++) {
-		this->pMagicalSwitch1CBase_0x1224->aEntries[i].Init();
-	}
+	this->pMagicalSwitch1CBase_0x1224->Init();
 
 	this->field_0x1228->Init();
 
-	for (int i = 0; i < this->pMagicalSwitch1CBase_0x1224->entryCount; i++) {
-		this->pMagicalSwitch1CBase_0x1224->aEntries[i].Reset();
-	}
+	this->pMagicalSwitch1CBase_0x1224->Init();
 
 	this->field_0x1228->Reset(this);
 

@@ -272,6 +272,7 @@ struct CActorParamsIn
 };
 
 #define HIT_TYPE_KICK 0x3
+#define HIT_TYPE_BOOMY 0x4
 
 struct _msg_hit_param
 {
@@ -523,6 +524,7 @@ public:
 	void SV_InstanciateMaterialBank();
 	bool SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation);
 	bool SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3);
+	bool SV_IAmInFrontOfThisActor(CActor* pOther);
 
 	void SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel);
 	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere);

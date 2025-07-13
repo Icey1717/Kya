@@ -183,20 +183,8 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 	}
 
 	pTrap = this->pOwner;
-	pAnim = pTrap->pAnimationController;
-	pLayer = (pAnim->anmBinMetaAnimator).aAnimData;
-	bVar4 = false;
 
-	if ((pLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-		if (pLayer->animPlayState == STATE_ANIM_NONE) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (pLayer->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar4) {
+	if (pTrap->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
 			pTrap->SetState(nextState, -1);
 		}
@@ -317,20 +305,8 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 	}
 
 	pCVar5 = CActorHero::_gThis;
-	pCVar2 = this->pOwner->pAnimationController;
-	peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-	bVar6 = false;
 
-	if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-		if (peVar3->animPlayState == STATE_ANIM_NONE) {
-			bVar6 = false;
-		}
-		else {
-			bVar6 = (peVar3->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar6) {
+	if (this->pOwner->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 		pCVar9 = this->pCaughtActor->GetBehaviour(2);
 		if (((pCVar9 == (CBehaviour*)0x0) || (pCVar5 == (CActorHero*)this->pCaughtActor)) || ((this->flags & 1) == 0)) {
 			pOwningActor = this->pOwner;
@@ -533,20 +509,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 
 	switch (pTrap->actorState) {
 	case 5:
-		pCVar4 = pTrap->pAnimationController;
-		peVar5 = (pCVar4->anmBinMetaAnimator).aAnimData;
-		bVar8 = false;
-
-		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
-			if (peVar5->animPlayState == STATE_ANIM_NONE) {
-				bVar8 = false;
-			}
-			else {
-				bVar8 = (peVar5->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar8) {
+		if (pTrap->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			pTrap->SetState(TRAP_STATE_IDLE, -1);
 		}
 		break;
@@ -623,20 +586,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		}
 		break;
 	case 0xf:
-		pCVar4 = pTrap->pAnimationController;
-		peVar5 = (pCVar4->anmBinMetaAnimator).aAnimData;
-		bVar8 = false;
-
-		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
-			if (peVar5->animPlayState == STATE_ANIM_NONE) {
-				bVar8 = false;
-			}
-			else {
-				bVar8 = (peVar5->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar8) {
+		if (pTrap->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			pTrap->SetState(0x12, -1);
 		}
 		break;

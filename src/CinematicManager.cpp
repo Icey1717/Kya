@@ -375,7 +375,7 @@ void CCinematicManager::Level_SectorChange(int param_2, int param_3)
 void CCinematicManager::WillLoadCinematic()
 {
 	bool bVar1;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList;
+	S_TARGET_STREAM_REF* pSwitchList;
 	int iVar3;
 	int iVar4;
 	CCinematic** pCVar6;
@@ -388,56 +388,44 @@ void CCinematicManager::WillLoadCinematic()
 		pCinematic = *pCVar6;
 		if ((pCinematic->flags_0x4 & 0x800) != 0) {
 			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+
 			if (bVar1) {
 				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
 			}
+
 			if (!bVar1) {
 				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
 			}
+
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
 				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
 			}
-			if ((bVar1) &&
-				((pCinematic->baseB == -1 ||
-					(pCinematic->baseB == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
+
+			if ((bVar1) && ((pCinematic->baseB == -1 || (pCinematic->baseB == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
 				pCinematic->pActor = (CActor*)0x0;
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
 					pSwitchList = pCinematic->pSwitchListA;
 					bVar1 = false;
-					if ((pSwitchList != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (pCinematic->pStreamEventCameraA != 0)) {
+
+					if ((pSwitchList != (S_TARGET_STREAM_REF*)0x0) && (pCinematic->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
 						bVar1 = true;
 					}
+
 					if (bVar1) {
-						iVar4 = 0;
-						if (0 < pSwitchList->count) {
-							iVar3 = 0;
-							do {
-								IMPLEMENTATION_GUARD(ActorContainerFunc_00119780((S_STREAM_NTF_TARGET_BASE*)((int)pSwitchList + iVar3 + 4), (Actor*)0x0));
-								pSwitchList = pCinematic->pSwitchListA;
-								iVar4 = iVar4 + 1;
-								iVar3 = iVar3 + 0x1c;
-							} while (iVar4 < pSwitchList->count);
-						}
+						pSwitchList->Switch((CActor*)0x0);
 						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-						pSwitchList = pCinematic->pSwitchListA;
-						iVar4 = 0;
-						if (0 < pSwitchList->count) {
-							iVar3 = 0;
-							do {
-								IMPLEMENTATION_GUARD(ActorContainerFunc_00119690((S_STREAM_NTF_TARGET_BASE*)((int)pSwitchList + iVar3 + 4), (AActorBase*)0x0));
-								pSwitchList = pCinematic->pSwitchListA;
-								iVar4 = iVar4 + 1;
-								iVar3 = iVar3 + 0x1c;
-							} while (iVar4 < pSwitchList->count);
-						}
+						pSwitchList->PostSwitch((CActor*)0x0);
 					}
 				}
+
 				pCinematic->Start();
 			}
 		}
+
 		pCVar6 = pCVar6 + 1;
 	}
+
 	return;
 }
 
@@ -857,23 +845,13 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x25c = piVar2;
 	this->condArray_0x244.Create(pByteCode);
 
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = (S_STREAM_NTF_TARGET_SWITCH_LIST*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(&pSwitchList->aSwitches);
-	if (pSwitchList->count != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSwitchList->count * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->pSwitchListA = pSwitchList;
+	S_TARGET_STREAM_REF::Create(&this->pSwitchListA, pByteCode);
 
 	pcVar6 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar6 + sizeof(S_STREAM_EVENT_CAMERA);
 	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)pcVar6;
 
-	pSwitchList = (S_STREAM_NTF_TARGET_SWITCH_LIST*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(&pSwitchList->aSwitches);
-	if (pSwitchList->count != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSwitchList->count * sizeof(S_STREAM_NTF_TARGET_SWITCH);
-	}
-	this->pSwitchListB = pSwitchList;
+	S_TARGET_STREAM_REF::Create(&this->pSwitchListB, pByteCode);
 
 	pcVar6 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar6 + sizeof(S_STREAM_EVENT_CAMERA);
@@ -947,8 +925,7 @@ void S_STREAM_NTF_TARGET_BASE::Init()
 
 void CCinematic::Init()
 {
-	Timer* pTVar1;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList;
+	S_TARGET_STREAM_REF* pSwitchList;
 	undefined4* puVar3;
 	uint uVar4;
 	int iVar5;
@@ -972,25 +949,12 @@ void CCinematic::Init()
 	}
 
 	pSwitchList = this->pSwitchListA;
-	iVar6 = 0;
-	if (0 < pSwitchList->count) {
-		do {
-			pSwitchList->aSwitches[iVar6].Init();
-			iVar6 = iVar6 + 1;
-		} while (iVar6 < pSwitchList->count);
-	}
 
+	pSwitchList->Init();
 	this->pStreamEventCameraA->Init();
 
 	pSwitchList = this->pSwitchListB;
-	iVar6 = 0;
-	if (0 < pSwitchList->count) {
-		do {
-			pSwitchList->aSwitches[iVar6].Init();
-			iVar6 = iVar6 + 1;
-		} while (iVar6 < pSwitchList->count);
-	}
-
+	pSwitchList->Init();
 	this->pStreamEventCameraB->Init();
 
 	if (this->field_0x25c == (int*)0x0) {
@@ -1010,8 +974,7 @@ void CCinematic::Init()
 	this->count_0x2d8 = 0;
 	this->cineBankLoadStage_0x2b4 = 0;
 	this->state = CS_Stopped;
-	pTVar1 = GetTimer();
-	this->time_0x88 = pTVar1->scaledTotalTime;
+	this->time_0x88 = GetTimer()->scaledTotalTime;
 	if ((this->flags_0x8 & 0x10) != 0) {
 		IMPLEMENTATION_GUARD(this->cinFileData.Shutdown());
 		this->flags_0x8 = this->flags_0x8 & 0xffffffef;
@@ -1291,46 +1254,34 @@ void CCinematic::Start()
 				pCinematicManager->startTime = GetTimer()->totalTime;
 
 				if ((this->flags_0x8 & 0x800) == 0) {
-					S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListA;
+					S_TARGET_STREAM_REF* pSwitchList = this->pSwitchListA;
 
 					bool bHasEventData = false;
-					if ((pSwitchList != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
+					if ((pSwitchList != (S_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
 						bHasEventData = true;
 					}
 
 					if (bHasEventData) {
-						for (int i = 0; i < pSwitchList->count; i++) {
-							pSwitchList->aSwitches[i].Switch((CActor*)0x0);
-						}
-
+						pSwitchList->Switch((CActor*)0x0);
 						this->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-
-						for (int i = 0; i < pSwitchList->count; i++) {
-							pSwitchList->aSwitches[i].PostSwitch((CActor*)0x0);
-						}
+						pSwitchList->PostSwitch((CActor*)0x0);
 					}
 				}
 
 				if ((this->flags_0x8 & 0x800) == 0) {
 					this->condArray_0x244.Perform();
 
-					S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListB;
+					S_TARGET_STREAM_REF* pSwitchList = this->pSwitchListB;
 
 					bool bHasEventData = false;
-					if ((pSwitchList != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
+					if ((pSwitchList != (S_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
 						bHasEventData = true;
 					}
 
 					if (bHasEventData) {
-						for (int i = 0; i < pSwitchList->count; i++) {
-							pSwitchList->aSwitches[i].Switch((CActor*)0x0);
-						}
-
+						pSwitchList->Switch((CActor*)0x0);
 						this->pStreamEventCameraB->SwitchOn((CActor*)0x0);
-
-						for (int i = 0; i < pSwitchList->count; i++) {
-							pSwitchList->aSwitches[i].PostSwitch((CActor*)0x0);
-						}
+						pSwitchList->PostSwitch((CActor*)0x0);
 					}
 
 					if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
@@ -1809,19 +1760,6 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	return (int*)outMeshInfo;
 }
 
-void S_TARGET_STREAM_REF_CONTAINER::Init()
-{
-	int iVar4 = 0;
-	if (0 < this->pTargetStreamRef->entryCount) {
-		do {
-			this->pTargetStreamRef->aEntries[iVar4].Init();
-			iVar4 = iVar4 + 1;
-		} while (iVar4 < this->pTargetStreamRef->entryCount);
-	}
-
-	return;
-}
-
 void S_STREAM_NTF_TARGET_ONOFF::Reset()
 {
 	this->flags = this->flags & 1;
@@ -2067,18 +2005,6 @@ bool CCinematic::ParticleEntry::InstallFromDSC(char* pFileBuffer, int fileLength
 	return false;
 }
 
-void S_TARGET_STREAM_REF_CONTAINER::Create(ByteCode* pByteCode)
-{
-	this->pTargetStreamRef = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-
-	if (this->pTargetStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + this->pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
-	}
-
-	return;
-}
-
 bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 {
 	uint uVar1;
@@ -2092,6 +2018,7 @@ bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 	if (((uVar1 & 1) != 0) && ((uVar1 & 0x80000000) != 0)) {
 		bVar2 = false;
 	}
+
 	if (bVar2) {
 		this->flags = this->flags | 0x80000000;
 
@@ -2108,6 +2035,7 @@ bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 			}
 		}
 	}
+
 	return (bool)uVar4;
 }
 
@@ -2144,18 +2072,18 @@ void CCinematic::Manage()
 		}
 	}
 
-	bVar1 = this->pSwitchListA != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	bVar1 = this->pSwitchListA != (S_TARGET_STREAM_REF*)0x0;
 	if (bVar1) {
-		bVar1 = this->pStreamEventCameraA != 0;
+		bVar1 = this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0;
 	}
 
 	if (bVar1) {
 		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
 
-	bVar1 = this->pSwitchListB != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	bVar1 = this->pSwitchListB != (S_TARGET_STREAM_REF*)0x0;
 	if (bVar1) {
-		bVar1 = this->pStreamEventCameraB != 0;
+		bVar1 = this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0;
 	}
 
 	if (bVar1) {
@@ -2163,7 +2091,6 @@ void CCinematic::Manage()
 	}
 
 	if ((this->state != CS_Stopped) && ((GameFlags & GAME_STATE_PAUSED) == 0)) {
-
 		IncrementCutsceneDelta();
 
 		CUTSCENE_LOG(LogLevel::Verbose, "CCinematic::Manage Updating cutscene time: {}", this->totalCutsceneDelta);
@@ -2450,30 +2377,17 @@ void CCinematic::Stop()
 		pCVar2->pCurCinematic = (CCinematic*)0x0;
 		if ((this->flags_0x8 & 0x800) == 0) {
 			this->condArray_0x244.Perform();
-			S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListB;
+			S_TARGET_STREAM_REF* pSwitchList = this->pSwitchListB;
 			bVar1 = false;
-			if ((pSwitchList != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
+			if ((pSwitchList != (S_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
 				bVar1 = true;
 			}
 
 			if (bVar1) {
-				iVar4 = 0;
-				if (0 < pSwitchList->count) {
-					do {
-						pSwitchList->aSwitches[iVar4].Switch((CActor*)0x0);
-						iVar4 = iVar4 + 1;
-					} while (iVar4 < pSwitchList->count);
-				}
-
+				pSwitchList->Switch((CActor*)0x0);
 				this->pStreamEventCameraB->SwitchOn((CActor*)0x0);
 				pSwitchList = this->pSwitchListB;
-				iVar4 = 0;
-				if (0 < pSwitchList->count) {
-					do {
-						pSwitchList->aSwitches[iVar4].PostSwitch((CActor*)0x0);
-						iVar4 = iVar4 + 1;
-					} while (iVar4 < pSwitchList->count);
-				}
+				pSwitchList->PostSwitch((CActor*)0x0);
 			}
 
 			if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
@@ -3089,7 +3003,7 @@ void CCinematic::FUN_001cbe40()
 void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 {
 	bool bVar1;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSVar2;
+	S_TARGET_STREAM_REF* pSVar2;
 	int iVar3;
 	int iVar4;
 
@@ -3129,21 +3043,15 @@ void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 			if (((bVar1) || (this->cineBankLoadStage_0x2b4 == 4)) && ((this->flags_0x8 & 0x800) == 0)) {
 				pSVar2 = this->pSwitchListA;
 				bVar1 = false;
-				if ((pSVar2 != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) &&
+				if ((pSVar2 != (S_TARGET_STREAM_REF*)0x0) &&
 					(this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
 					bVar1 = true;
 				}
 
 				if (bVar1) {
-					for (int i = 0; i < pSVar2->count; i++) {
-						pSVar2->aSwitches[i].Switch((CActor*)0x0);
-					}
-
+					pSVar2->Switch((CActor*)0x0);
 					this->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-
-					for (int i = 0; i < pSVar2->count; i++) {
-						pSVar2->aSwitches[i].PostSwitch((CActor*)0x0);
-					}
+					pSVar2->PostSwitch((CActor*)0x0);
 				}
 			}
 		}
@@ -3276,7 +3184,7 @@ void CCinematic::PreReset()
 {
 	bool bVar1;
 	CCinematicManager* pCVar2;
-	S_STREAM_NTF_TARGET_SWITCH_LIST* pSVar3;
+	S_TARGET_STREAM_REF* pSVar3;
 	uint uVar4;
 	int iVar5;
 	int iVar6;
@@ -3318,36 +3226,24 @@ void CCinematic::PreReset()
 	pSVar3 = this->pSwitchListA;
 	bVar1 = false;
 
-	if ((pSVar3 != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0))
+	if ((pSVar3 != (S_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0))
 	{
 		bVar1 = true;
 	}
 	if (bVar1) {
-		iVar6 = 0;
-		if (0 < pSVar3->count) {
-			do {
-				pSVar3->aSwitches[iVar6].Reset();
-				iVar6 = iVar6 + 1;
-			} while (iVar6 < pSVar3->count);
-		}
+		pSVar3->Reset();
 		this->pStreamEventCameraA->Reset((CActor*)0x0);
 	}
 
 	pSVar3 = this->pSwitchListB;
 	bVar1 = false;
-	if ((pSVar3 != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0))
+	if ((pSVar3 != (S_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0))
 	{
 		bVar1 = true;
 	}
 
 	if (bVar1) {
-		iVar6 = 0;
-		if (0 < pSVar3->count) {
-			do {
-				pSVar3->aSwitches[iVar6].Reset();
-				iVar6 = iVar6 + 1;
-			} while (iVar6 < pSVar3->count);
-		}
+		pSVar3->Reset();
 		this->pStreamEventCameraB->Reset((CActor*)0x0);
 	}
 
@@ -3698,9 +3594,9 @@ void CCinematic::FUN_001caeb0()
 
 	this->condArray_0x244.Invalidate();
 
-	this->pSwitchListA = (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	this->pSwitchListA = (S_TARGET_STREAM_REF*)0x0;
 	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)0x0;
-	this->pSwitchListB = (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	this->pSwitchListB = (S_TARGET_STREAM_REF*)0x0;
 	this->pStreamEventCameraB = (S_STREAM_EVENT_CAMERA*)0x0;
 	this->pActor = (CActor*)0x0;
 	this->defaultAudioTrackId = -1;
@@ -4918,22 +4814,16 @@ bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
 				pCinematic->pActor = param_3;
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
 					bVar1 = false;
-					if ((pCinematic->pSwitchListA != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) &&
+					if ((pCinematic->pSwitchListA != (S_TARGET_STREAM_REF*)0x0) &&
 						(pCinematic->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
 						bVar1 = true;
 					}
 
 					if (bVar1) {
 						iVar3 = 0;
-						for (int i = 0; i < pCinematic->pSwitchListA->count; i++) {
-							pCinematic->pSwitchListA->aSwitches[i].Switch((CActor*)0x0);
-						}
-
+						pCinematic->pSwitchListA->Switch((CActor*)0x0);
 						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-
-						for (int i = 0; i < pCinematic->pSwitchListA->count; i++) {
-							pCinematic->pSwitchListA->aSwitches[i].PostSwitch((CActor*)0x0);
-						}
+						pCinematic->pSwitchListA->PostSwitch((CActor*)0x0);
 					}
 				}
 
@@ -5475,4 +5365,132 @@ bool CBWCinSourceSubtitle::SetSubtitle(float keyTime, SUBTITLE_PARAMStag* pTag)
 	}
 
 	return bSuccess;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::Create(S_TARGET_ON_OFF_STREAM_REF** pThis, ByteCode* pByteCode)
+{
+	*pThis = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if ((*pThis)->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (*pThis)->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
+	}
+
+	return;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::Init()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Init();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::Reset()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Reset();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::SwitchOn(CActor* pActor)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].SwitchOn(pActor);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::SwitchOff(CActor* pActor)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].SwitchOff(pActor);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_STREAM_REF::Create(S_TARGET_STREAM_REF** pThis, ByteCode* pByteCode)
+{
+	*pThis = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if ((*pThis)->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (*pThis)->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+	}
+
+	return;
+}
+
+void S_TARGET_STREAM_REF::Init()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Init();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_STREAM_REF::Reset()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Reset();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_STREAM_REF::Switch(CActor* pActor)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Switch(pActor);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_STREAM_REF::PostSwitch(CActor* pActor)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].PostSwitch(pActor);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
 }

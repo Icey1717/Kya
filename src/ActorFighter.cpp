@@ -3402,18 +3402,8 @@ void CActorFighter::_StateFighterHitSlide()
 	edF32Vector4ScaleHard(this->dynamic.linearAcceleration, &this->field_0x740, &this->field_0x740);
 	ManageDyn(4.0f, this->field_0x7e0 | 0x53, (CActorsTable*)0x0);
 	pCVar1 = this->pAnimationController;
-	peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-	if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-		bVar3 = false;
-		if (peVar2->animPlayState != 0) {
-			bVar3 = (peVar2->field_0xcc & 2) != 0;
-		}
-	}
-	else {
-		bVar3 = false;
-	}
 
-	if (bVar3) {
+	if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 		edF32Vector4ScaleHard(this->field_0x7dc, &eStack16, &this->pCollisionData->aCollisionContact[1].location);
 		if ((0.8f <= this->dynamic.linearAcceleration) || (fVar6 = edF32Vector4DotProductHard(&eStack16, &g_xVector), fabs(fVar6) <= 0.8f)) {
 			PlayAnim(_SV_ANM_GetTwoSidedAnim(0x73, (int)this->field_0x7dc));
@@ -3589,19 +3579,8 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 	}
 
 	pCVar1 = this->pAnimationController;
-	peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
-	bVar4 = false;
 
-	if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
-		if (peVar2->animPlayState == 0) {
-			bVar4 = false;
-		}
-		else {
-			bVar4 = (peVar2->field_0xcc & 2) != 0;
-		}
-	}
-
-	if (bVar4) {
+	if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 		if ((this->fightFlags & 0x40) != 0) {
 			_Std_OnFightActionSuccess();
 		}
@@ -6518,19 +6497,8 @@ void CBehaviourFighter::Manage()
 	switch (this->pOwner->actorState) {
 	case 0xc:
 		pCVar5 = pFighter->pAnimationController;
-		peVar6 = (pCVar5->anmBinMetaAnimator).aAnimData;
 
-		if ((peVar6->currentAnimDesc).animType == pCVar5->currentAnimType_0x30) {
-			bVar8 = false;
-			if (peVar6->animPlayState != 0) {
-				bVar8 = (peVar6->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar8 = false;
-		}
-
-		if (bVar8) {
+		if (pCVar5->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->SetState(FIGHTER_DEFAULT_STATE_IDLE, pFighter->standAnim);
 		}
 
@@ -6575,19 +6543,8 @@ void CBehaviourFighter::Manage()
 		this->pOwner->_ManageFighterDyn((this->pOwner->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
 
 		pCVar5 = this->pOwner->pAnimationController;
-		peVar6 = pCVar5->anmBinMetaAnimator.aAnimData;
 
-		if ((peVar6->currentAnimDesc).animType == pCVar5->currentAnimType_0x30) {
-			bVar8 = false;
-			if (peVar6->animPlayState != 0) {
-				bVar8 = (peVar6->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar8 = false;
-		}
-
-		if (bVar8) {
+		if (pCVar5->IsCurrentLayerAnimEndReached(0)) {
 			this->pOwner->SetState(FIGHTER_EXECUTE_BLOW, (this->pOwner->pBlow->blowStageExecute).animId);
 		}
 		break;
@@ -6599,19 +6556,8 @@ void CBehaviourFighter::Manage()
 		pFighter->_ManageFighterDyn((pFighter->pBlow->blowStageEnd).flags, 0x40323, (CActorsTable*)0x0);
 
 		pCVar5 = pFighter->pAnimationController;
-		peVar6 = (pCVar5->anmBinMetaAnimator).aAnimData;
-		if ((peVar6->currentAnimDesc).animType == pCVar5->currentAnimType_0x30) {
-			bVar8 = false;
 
-			if (peVar6->animPlayState != 0) {
-				bVar8 = (peVar6->field_0xcc & 2) != 0;
-			}
-		}
-		else {
-			bVar8 = false;
-		}
-
-		if (bVar8) {
+		if (pCVar5->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->scalarDynA.Reset();
 			pFighter->scalarDynB.Reset();
 			pFighter->scalarDynJump.Reset();
@@ -7447,18 +7393,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->rotationEuler.xyz = local_50;
 
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pCVar4 = static_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
 			pFighter->SetBehaviour(pCVar4->behaviourId, -1, -1);
 		}
@@ -7471,36 +7407,16 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->rotationEuler.y = fVar7;
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->SetState(0x5c, -1);
 		}
 	break;
 	case 0x5c:
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->SetState(0x5d, -1);
 		}
 		break;
@@ -7508,18 +7424,8 @@ void CBehaviourFighterProjected::Manage()
 		fVar7 = pFighter->field_0x7b4 * pFighter->timeInAir;
 		if (fVar7 <= pFighter->field_0x7b0) {
 			pAnimation = pFighter->pAnimationController;
-			pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-			bVar1 = false;
-			if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-				if (pAnmLayer->animPlayState == 0) {
-					bVar1 = false;
-				}
-				else {
-					bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-				}
-			}
 
-			if (bVar1) goto LAB_00305528;
+			if (pAnimation->IsCurrentLayerAnimEndReached(0)) goto LAB_00305528;
 		}
 		else {
 		LAB_00305528:
@@ -7533,18 +7439,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->rotationEuler.xyz = local_a0;
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->SetState(0x5e, -1);
 		}
 		break;
@@ -7552,18 +7448,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			fVar7 = pFighter->GetLifeInterface()->GetValue();
 			if (fVar7 <= 0.0f) {
 				iVar3 = 0x7f;
@@ -7584,17 +7470,7 @@ void CBehaviourFighterProjected::Manage()
 		fVar7 = pFighter->field_0x7b4 * pFighter->timeInAir;
 		if (fVar7 <= pFighter->field_0x7b0) {
 			pAnimation = pFighter->pAnimationController;
-			pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-			bVar1 = false;
-			if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-				if (pAnmLayer->animPlayState == 0) {
-					bVar1 = false;
-				}
-				else {
-					bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-				}
-			}
-			if (bVar1) goto LAB_00305798;
+			if (pAnimation->IsCurrentLayerAnimEndReached(0)) goto LAB_00305798;
 		}
 		else {
 		LAB_00305798:
@@ -7609,18 +7485,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->SetState(0x60, -1);
 		}
 		break;
@@ -7628,18 +7494,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
 
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			fVar7 = pFighter->GetLifeInterface()->GetValue();
 			if (fVar7 <= 0.0f) {
 				iVar3 = 0x7f;
@@ -7660,19 +7516,8 @@ void CBehaviourFighterProjected::Manage()
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		pAnimation = pFighter->pAnimationController;
-		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
 
-		bVar1 = false;
-		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
-			if (pAnmLayer->animPlayState == 0) {
-				bVar1 = false;
-			}
-			else {
-				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
-			}
-		}
-
-		if (bVar1) {
+		if (pAnimation->IsCurrentLayerAnimEndReached(0)) {
 			pFighter->ProcessDeath();
 		}
 		break;
