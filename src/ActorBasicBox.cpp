@@ -39,7 +39,7 @@ void CActorBasicBox::Create(ByteCode* pByteCode)
 	this->field_0x198 = pByteCode->GetS32();
 	this->field_0x194 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF::Create(&this->targetStreamRef, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->targetStreamRef, pByteCode);
 	
 	S_STREAM_EVENT_CAMERA* pSeekStreamCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos += sizeof(S_STREAM_EVENT_CAMERA);
@@ -53,7 +53,7 @@ void CActorBasicBox::Init()
 {
 	CCollision* pCVar1;
 	edF32VECTOR4* pBottomPosition;
-	S_TARGET_STREAM_REF* pStream;
+	S_NTF_TARGET_STREAM_REF* pStream;
 	S_ACTOR_STREAM_REF* pActorStreamRef;
 	int iVar4;
 	int iVar5;
@@ -111,7 +111,7 @@ void CActorBasicBox::Reset()
 {
 	CCollision* pCVar1;
 	edF32VECTOR4* peVar2;
-	S_TARGET_STREAM_REF* pSVar3;
+	S_NTF_TARGET_STREAM_REF* pSVar3;
 	int iVar4;
 	int iVar5;
 	VibrationParam local_20;

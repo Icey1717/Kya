@@ -9,7 +9,7 @@
 #define GRAVITY_AWARE_BEHAVIOUR_BELL 0x4
 
 class CActorGravityAware;
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 class CBehaviourGravityAwareBell : public CBehaviour
@@ -27,7 +27,7 @@ public:
 	CActorGravityAware* pOwner;
 	S_STREAM_REF<CSound> soundRef;
 
-	S_TARGET_STREAM_REF* pTargetStreamRef;
+	S_NTF_TARGET_STREAM_REF* pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 };
 

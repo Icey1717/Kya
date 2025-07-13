@@ -28,7 +28,7 @@
 #define NATIVE_MESSAGE_FACE_TOWARDS 0xa
 #define NATIVE_MESSAGE_FACE_AWAY 0xb
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 class edCTextStyle;
 
@@ -177,16 +177,16 @@ public:
 
 	CAddOnNativ addOn;
 
-	S_TARGET_STREAM_REF* field_0x38;
+	S_NTF_TARGET_STREAM_REF* field_0x38;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x3c;
 
-	S_TARGET_STREAM_REF* field_0x40;
+	S_NTF_TARGET_STREAM_REF* field_0x40;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x44;
 
-	S_TARGET_STREAM_REF* field_0x48;
+	S_NTF_TARGET_STREAM_REF* field_0x48;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x4c;
 
-	S_TARGET_STREAM_REF* field_0x50;
+	S_NTF_TARGET_STREAM_REF* field_0x50;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x54;
 
 	NativSubObjD field_0x60;

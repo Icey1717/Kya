@@ -130,7 +130,7 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 
 	this->field_0x1d0 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF::Create(&this->pMagicalSwitch1CBase_0x1224, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->pMagicalSwitch1CBase_0x1224, pByteCode);
 
 	pSVar3 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSVar3 + 1);
@@ -167,7 +167,7 @@ void CActorAmbre::Init()
 	bool bVar2;
 	CActorHero* pReceiver;
 	int iVar3;
-	S_TARGET_STREAM_REF* pSVar4;
+	S_NTF_TARGET_STREAM_REF* pSVar4;
 	AmberSparkProps* pCurProps;
 	CFxSparkNoAlloc<4, 12>* pFxSpark;
 	CActorAmbre* iVar6;

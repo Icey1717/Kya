@@ -40,13 +40,13 @@ void CActorStiller::Create(ByteCode* pByteCode)
 
 	this->field_0x200 = pByteCode->GetS32();
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x204, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x204, pByteCode);
 
 	S_STREAM_EVENT_CAMERA* pCameraEvent = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
 	this->field_0x208 = pCameraEvent;
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x20c, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x20c, pByteCode);
 
 	pCameraEvent = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);

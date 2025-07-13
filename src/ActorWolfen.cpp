@@ -2145,7 +2145,7 @@ void CActorWolfen::BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour)
 	CLifeInterface* pCVar6;
 	undefined4 uVar7;
 	CBehaviour* pCVar8;
-	S_TARGET_STREAM_REF* pSVar9;
+	S_NTF_TARGET_STREAM_REF* pSVar9;
 	long lVar10;
 	int iVar11;
 	int iVar12;
@@ -5849,7 +5849,7 @@ WFIGS_Capability* CActorWolfen::GetActiveCapability()
 
 void CBehaviourWatchDog::Create(ByteCode* pByteCode)
 {
-	S_TARGET_STREAM_REF* piVar1;
+	S_NTF_TARGET_STREAM_REF* piVar1;
 	S_STREAM_EVENT_CAMERA* pSVar2;
 	uint uVar3;
 	CWayPoint* pCVar4;
@@ -5870,7 +5870,7 @@ void CBehaviourWatchDog::Create(ByteCode* pByteCode)
 void CBehaviourWatchDog::Init(CActor* pOwner)
 {
 	CWayPoint* pCVar1;
-	S_TARGET_STREAM_REF* pSVar2;
+	S_NTF_TARGET_STREAM_REF* pSVar2;
 	int iVar3;
 	int iVar4;
 	float fVar5;
@@ -5918,7 +5918,7 @@ void CBehaviourWatchDog::Begin(CActor* pOwner, int newState, int newAnimationTyp
 {
 	CActorWolfen* pCVar1;
 	undefined4 uVar2;
-	S_TARGET_STREAM_REF* pSVar3;
+	S_NTF_TARGET_STREAM_REF* pSVar3;
 	int iVar4;
 	int iVar5;
 

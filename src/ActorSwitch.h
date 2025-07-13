@@ -6,7 +6,7 @@
 #include "ActorMovable.h"
 #include "Fx.h"
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 class CActorSwitch;
@@ -197,7 +197,7 @@ public:
 	void BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour);
 	void StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour);
 
-	S_TARGET_STREAM_REF* pTargetStreamRef;
+	S_NTF_TARGET_STREAM_REF* pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 	CActorSound* pActorSound;
 

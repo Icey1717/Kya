@@ -134,11 +134,11 @@ public:
 
 	S_STREAM_REF<CWayPoint> field_0x1cc;
 
-	S_TARGET_STREAM_REF* field_0x1d0;
+	S_NTF_TARGET_STREAM_REF* field_0x1d0;
 	S_STREAM_EVENT_CAMERA* field_0x1d4;
-	S_TARGET_STREAM_REF* field_0x1d8;
+	S_NTF_TARGET_STREAM_REF* field_0x1d8;
 	S_STREAM_EVENT_CAMERA* field_0x1dc;
-	S_TARGET_STREAM_REF* field_0x1e0;
+	S_NTF_TARGET_STREAM_REF* field_0x1e0;
 	S_STREAM_EVENT_CAMERA* field_0x1e4;
 
 	edF32MATRIX4* field_0x1e8;

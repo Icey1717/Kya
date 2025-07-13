@@ -9,7 +9,7 @@ class CActorHero;
 class CActorCompanion;
 class CCamera;
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 #define COMPANION_BEHAVIOUR_DEFAULT 0x3
@@ -45,7 +45,7 @@ struct CBehaviourCompanionSubObj_80 {
 	float field_0x5c;
 	float field_0x60;
 	ScenaricCondition field_0x64;
-	S_TARGET_STREAM_REF* field_0x68;
+	S_NTF_TARGET_STREAM_REF* field_0x68;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 	ConditionedOperationArray field_0x70;
 	undefined field_0x74;

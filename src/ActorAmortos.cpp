@@ -54,13 +54,13 @@ void CActorAmortos::Create(ByteCode* pByteCode)
 	this->addOnGenerator.Create(this, pByteCode);
 	this->field_0x1c8 = pByteCode->GetU32();
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x1cc, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x1cc, pByteCode);
 
 	pcVar3 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar3 + sizeof(S_STREAM_EVENT_CAMERA);
 	this->field_0x1d0 = (S_STREAM_EVENT_CAMERA*)pcVar3;
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x1d4, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x1d4, pByteCode);
 
 	pcVar3 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar3 + sizeof(S_STREAM_EVENT_CAMERA);
@@ -71,7 +71,7 @@ void CActorAmortos::Create(ByteCode* pByteCode)
 
 void CActorAmortos::Init()
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	S_STREAM_REF<CActor>* pStreamRefActor;
 	int iVar3;
 	edF32VECTOR4 eStack48;
@@ -147,7 +147,7 @@ void CActorAmortos::Term()
 void CActorAmortos::Reset()
 {
 	CCollision* pCVar1;
-	S_TARGET_STREAM_REF* pSVar2;
+	S_NTF_TARGET_STREAM_REF* pSVar2;
 	int iVar3;
 	int iVar4;
 

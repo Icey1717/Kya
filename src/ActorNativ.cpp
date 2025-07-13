@@ -3793,7 +3793,7 @@ CBehaviourNativAkasa::CBehaviourNativAkasa()
 
 void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	S_STREAM_EVENT_CAMERA* pSVar2;
 	int uVar3;
 	int iVar4;
@@ -3837,25 +3837,25 @@ void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 
 	this->addOn.Create(pByteCode);
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x38, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x38, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x3c = pSVar2;
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x40, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x40, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x44 = pSVar2;
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x48, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x48, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
 	this->streamEventCamera_0x4c = pSVar2;
 
-	S_TARGET_STREAM_REF::Create(&this->field_0x50, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x50, pByteCode);
 
 	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
@@ -3868,7 +3868,7 @@ void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 
 void CBehaviourNativAkasa::Init(CActor* pOwner)
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	int iVar2;
 	int iVar3;
 

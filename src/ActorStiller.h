@@ -12,7 +12,7 @@
 
 #define STILLER_BEHAVIOUR_STAND 2
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 class CActorStiller;
 
@@ -96,9 +96,9 @@ public:
 
 	int field_0x200;
 
-	S_TARGET_STREAM_REF* field_0x204;
+	S_NTF_TARGET_STREAM_REF* field_0x204;
 	S_STREAM_EVENT_CAMERA* field_0x208;
-	S_TARGET_STREAM_REF* field_0x20c;
+	S_NTF_TARGET_STREAM_REF* field_0x20c;
 	S_STREAM_EVENT_CAMERA* field_0x210;
 
 	int field_0x214;

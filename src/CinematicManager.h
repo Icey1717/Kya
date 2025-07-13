@@ -406,12 +406,12 @@ struct S_STREAM_NTF_TARGET_ANALOG : public S_STREAM_NTF_TARGET_BASE
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_ANALOG) == 0x28);
 
-struct S_TARGET_STREAM_REF
+struct S_NTF_TARGET_STREAM_REF
 {
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH aEntries[];
 
-	static void Create(S_TARGET_STREAM_REF** pThis, ByteCode* pByteCode);
+	static void Create(S_NTF_TARGET_STREAM_REF** pThis, ByteCode* pByteCode);
 	void Init();
 	void Reset();
 	void Switch(CActor* pActor);
@@ -678,9 +678,9 @@ public:
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;
-	S_TARGET_STREAM_REF* pSwitchListA;
+	S_NTF_TARGET_STREAM_REF* pSwitchListA;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraA;
-	S_TARGET_STREAM_REF* pSwitchListB;
+	S_NTF_TARGET_STREAM_REF* pSwitchListB;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
 	uint aAudioTrackIds[5];

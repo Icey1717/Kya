@@ -6,7 +6,7 @@
 #include "Fx_Spark.h"
 #include "Fx.h"
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 class CActorAmbre;
@@ -83,7 +83,7 @@ public:
 
 	CFxHandle effectsStructD;
 
-	S_TARGET_STREAM_REF* pMagicalSwitch1CBase_0x1224;
+	S_NTF_TARGET_STREAM_REF* pMagicalSwitch1CBase_0x1224;
 
 	S_STREAM_EVENT_CAMERA* field_0x1228;
 

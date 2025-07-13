@@ -59,7 +59,7 @@ public:
 	CBehaviourBasicBoxStand behaviourStand;
 
 	S_ACTOR_STREAM_REF* pActorStream;
-	S_TARGET_STREAM_REF* targetStreamRef;
+	S_NTF_TARGET_STREAM_REF* targetStreamRef;
 	S_STREAM_EVENT_CAMERA* streamEventCamera;
 
 	int field_0x160;

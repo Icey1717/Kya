@@ -385,7 +385,7 @@ StateConfig* CActorCompanion::GetStateCfg(int state)
 
 void CBehaviourCompanion::Create(ByteCode* pByteCode)
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	S_STREAM_EVENT_CAMERA* pSVar2;
 	int iVar3;
 	int* pBase;
@@ -477,7 +477,7 @@ void CBehaviourCompanion::Create(ByteCode* pByteCode)
 				pCVar9->flags_0x2 = pCVar9->flags_0x2 | 0x100;
 			}
 
-			pSVar1 = (S_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
+			pSVar1 = (S_NTF_TARGET_STREAM_REF*)pByteCode->currentSeekPos;
 			pByteCode->currentSeekPos = (char*)pSVar1->aEntries;
 			if (pSVar1->entryCount != 0) {
 				pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * 0x1c;
@@ -499,7 +499,7 @@ void CBehaviourCompanion::Create(ByteCode* pByteCode)
 
 void CBehaviourCompanion::Init(CActor* pOwner)
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	int iVar2;
 	CBehaviourCompanionSubObj_80* pCVar3;
 	int iVar4;

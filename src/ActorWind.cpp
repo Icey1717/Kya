@@ -104,7 +104,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 		if (*piVar2 != 0) {
 			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
 		}
-		this->field_0x1d0 = reinterpret_cast<S_TARGET_STREAM_REF*>(piVar2);
+		this->field_0x1d0 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
 
 		pcVar3 = pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pcVar3 + 0x20;
@@ -115,7 +115,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 		if (*piVar2 != 0) {
 			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
 		}
-		this->field_0x1d8 = reinterpret_cast<S_TARGET_STREAM_REF*>(piVar2);
+		this->field_0x1d8 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
 
 		pcVar3 = pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pcVar3 + 0x20;
@@ -126,7 +126,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 		if (*piVar2 != 0) {
 			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
 		}
-		this->field_0x1e0 = reinterpret_cast<S_TARGET_STREAM_REF*>(piVar2);
+		this->field_0x1e0 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
 
 		pcVar3 = pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pcVar3 + 0x20;
@@ -187,7 +187,7 @@ void CActorWind::Init()
 	CFxWind* pCVar5;
 	int iVar6;
 	Timer* pTVar7;
-	S_TARGET_STREAM_REF* pSVar8;
+	S_NTF_TARGET_STREAM_REF* pSVar8;
 	int iVar9;
 	S_STREAM_REF<CActor>* pSVar10;
 	S_ACTOR_STREAM_REF* pSVar12;
@@ -394,7 +394,7 @@ void CActorWind::Reset()
 {
 	int iVar1;
 	Timer* pTVar2;
-	S_TARGET_STREAM_REF* pSVar3;
+	S_NTF_TARGET_STREAM_REF* pSVar3;
 	int iVar4;
 	CFxWind* pWindFx;
 	int iVar5;

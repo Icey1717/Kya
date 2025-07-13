@@ -23,7 +23,7 @@ public:
 	edF32VECTOR4 field_0x30;
 };
 
-struct S_TARGET_STREAM_REF;
+struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 class CActorMovable;
@@ -98,10 +98,10 @@ public:
 	S_STREAM_REF<CActor> field_0x190;
 
 	uint field_0x1c8;
-	S_TARGET_STREAM_REF* field_0x1cc;
+	S_NTF_TARGET_STREAM_REF* field_0x1cc;
 
 	S_STREAM_EVENT_CAMERA* field_0x1d0;
-	S_TARGET_STREAM_REF* field_0x1d4;
+	S_NTF_TARGET_STREAM_REF* field_0x1d4;
 	S_STREAM_EVENT_CAMERA* field_0x1d8;
 
 	CBehaviourAmortosStand behaviourStand;

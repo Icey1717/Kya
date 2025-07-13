@@ -19,14 +19,14 @@ StateConfig CActorSwitch::_gStateCfg_SWT[5] = {
 
 void CActorSwitch::Create(ByteCode* pByteCode)
 {
-	S_TARGET_STREAM_REF* pSVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
 	S_STREAM_EVENT_CAMERA* pSVar2;
 	CBehaviour* pCVar3;
 	int* piVar4;
 
 	CActor::Create(pByteCode);
 
-	S_TARGET_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
+	S_NTF_TARGET_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
 
 	pSVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSVar2 + 1);
@@ -1341,7 +1341,7 @@ void CBehaviourSwitchSequence::Manage()
 
 void CBehaviourSwitchSequence::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	S_TARGET_STREAM_REF* pCVar2;
+	S_NTF_TARGET_STREAM_REF* pCVar2;
 	int iVar4;
 
 	this->field_0x18 = this->field_0xc;
