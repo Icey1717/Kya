@@ -1,7 +1,6 @@
 #include "ActorGravityAware.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
-#include "CinematicManager.h"
 
 void CActorGravityAware::Create(ByteCode* pByteCode)
 {
@@ -250,37 +249,142 @@ void CBehaviourGravityAwareFall::End(int newBehaviourId)
 
 void CBehaviourGravityAwareBell::Create(ByteCode* pByteCode)
 {
+	this->soundRef.index = pByteCode->GetS32();
+	this->field_0xc = pByteCode->GetF32();
 
+	this->targetSwitch.Create(pByteCode);
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::Init(CActor* pOwner)
 {
+	this->pOwner = reinterpret_cast<CActorGravityAware*>(pOwner);
+	this->soundRef.Init();
 
+	this->targetSwitch.Init();
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::Manage()
 {
+	int iVar1;
+	float fVar3;
+	float fVar4;
+	float x;
+	CActorGravityAware* pGravityAware;
 
+	pGravityAware = this->pOwner;
+	iVar1 = pGravityAware->actorState;
+
+	if (iVar1 == 8) {
+		fVar3 = pGravityAware->rotationEuler.z;
+		x = Timer::GetTimer()->scaledTotalTime - this->field_0x10;
+		fVar4 = fmodf(x, 1.02f);
+		pGravityAware->rotationEuler.z = cosf(fabs((((fVar4 * 2.0f) / 1.02f - 1.0f) * 3.141593f))) * 0.1745329f;
+		pGravityAware->UpdatePosition(&pGravityAware->currentLocation, true);
+
+		if (this->field_0xc <= x) {
+			pGravityAware->SetState(8, -1);
+		}
+
+		if (fVar3 < 0.0f != pGravityAware->rotationEuler.z < 0.0f) {
+			pGravityAware->rotationEuler.z = 0.0f;
+			pGravityAware->UpdatePosition(&pGravityAware->currentLocation, true);
+			pGravityAware->SetState(6, -1);
+		}
+	}
+	else {
+		if (iVar1 == 7) {
+			fVar4 = Timer::GetTimer()->scaledTotalTime - this->field_0x10;
+			fVar3 = fmodf(fVar4, 1.02f);
+			pGravityAware->rotationEuler.z = cosf(fabs((((fVar4 * 2.0f) / 1.02f - 1.0f) * 3.141593f))) * 0.1745329f;
+
+			pGravityAware->UpdatePosition(&pGravityAware->currentLocation, true);
+
+			if (this->field_0xc <= fVar4) {
+				pGravityAware->SetState(8, -1);
+			}
+		}
+		else {
+			if ((iVar1 == 6) && ((pGravityAware->pTiedActor == (CActor*)0x0 || ((pGravityAware->flags & 0x40000) == 0)))) {
+				pGravityAware->flags = pGravityAware->flags | 0x200000;
+				pGravityAware->flags = pGravityAware->flags & 0xfffbffff;
+			}
+		}
+	}
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
+	if (newState == -1) {
+		this->pOwner->SetState(6, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
 
+	this->field_0x10 = 0.0f;
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::End(int newBehaviourId)
 {
+	if ((this->soundRef).Get() != (CSound*)0x0) {
+		this->pOwner->pActorSound->SoundStop(0);
+	}
 
+	this->pOwner->rotationEuler.z = 0.0f;
+	this->pOwner->UpdatePosition(&this->pOwner->currentLocation, true);
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::InitState(int newState)
 {
+	CSound* pSound;
+	CActorGravityAware* pActor;
+	S_NTF_TARGET_STREAM_REF* pSVar2;
+	int iVar3;
+	int iVar4;
 
+	if (newState == 7) {
+		pSound = (this->soundRef).Get();
+		if (pSound != (CSound*)0x0) {
+			IMPLEMENTATION_GUARD_AUDIO(
+			this->pOwner->pActorSound->SoundStart(this->pOwner, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+		}
+
+		this->field_0x10 = Timer::GetTimer()->scaledTotalTime;
+		this->targetSwitch.SwitchOn(this->pOwner);
+	}
+
+	return;
 }
 
 void CBehaviourGravityAwareBell::TermState(int oldState, int newState)
 {
+	S_NTF_TARGET_STREAM_REF* pSVar1;
+	int iVar2;
+	int iVar3;
+	CActorGravityAware* pGravityAware;
 
+	if (oldState == 8) {
+		if ((this->soundRef).Get() != (CSound*)0x0) {
+			this->pOwner->pActorSound->SoundStop(0);
+		}
+	}
+	else {
+		if (oldState == 7) {
+			this->targetSwitch.SwitchOff(this->pOwner);
+		}
+	}
+
+	return;
 }
 
 int CBehaviourGravityAwareBell::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)

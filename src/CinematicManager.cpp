@@ -5494,3 +5494,97 @@ void S_NTF_TARGET_STREAM_REF::PostSwitch(CActor* pActor)
 
 	return;
 }
+
+void S_NTF_SWITCH::Create(ByteCode* pByteCode)
+{
+	this->pTargetStreamRef = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if (this->pTargetStreamRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + this->pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+	}
+
+	this->pStreamEventCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = (char*)(this->pStreamEventCamera + 1);
+
+	return;
+
+}
+
+void S_NTF_SWITCH::Init()
+{
+	this->pTargetStreamRef->Init();
+	this->pStreamEventCamera->Init();
+
+	return;
+}
+
+void S_NTF_SWITCH::Reset(CActor* pActor)
+{
+	this->pTargetStreamRef->Reset();
+	this->pStreamEventCamera->Reset(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH::Switch(CActor* pActor)
+{
+	this->pTargetStreamRef->Switch(pActor);
+	this->pStreamEventCamera->SwitchOn(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH::PostSwitch(CActor* pActor)
+{
+	this->pTargetStreamRef->PostSwitch(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::Create(ByteCode* pByteCode)
+{
+	this->pTargetStreamRef = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if (this->pTargetStreamRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + this->pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
+	}
+
+	this->pStreamEventCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = (char*)(this->pStreamEventCamera + 1);
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::Init()
+{
+	this->pTargetStreamRef->Init();
+	this->pStreamEventCamera->Init();
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::Reset(CActor* pActor)
+{
+	this->pTargetStreamRef->Reset();
+	this->pStreamEventCamera->Reset(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::SwitchOn(CActor* pActor)
+{
+	this->pTargetStreamRef->SwitchOn(pActor);
+	this->pStreamEventCamera->SwitchOn(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::SwitchOff(CActor* pActor)
+{
+	this->pTargetStreamRef->SwitchOff(pActor);
+	this->pStreamEventCamera->SwitchOff(pActor);
+
+	return;
+}

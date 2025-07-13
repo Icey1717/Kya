@@ -418,6 +418,19 @@ struct S_NTF_TARGET_STREAM_REF
 	void PostSwitch(CActor* pActor);
 };
 
+// This is likely what the real implementation is, as S_NTF_TARGET_STREAM_REF and S_STREAM_EVENT_CAMERA alway appear together in the code.
+struct S_NTF_SWITCH
+{
+	S_NTF_TARGET_STREAM_REF* pTargetStreamRef;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	void Create(ByteCode* pByteCode);
+	void Init();
+	void Reset(CActor* pActor);
+	void Switch(CActor* pActor);
+	void PostSwitch(CActor* pActor);
+};
+
 struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH
 {
 	void Reset();
@@ -435,6 +448,18 @@ struct S_TARGET_ON_OFF_STREAM_REF
 	static void Create(S_TARGET_ON_OFF_STREAM_REF** pThis, ByteCode* pByteCode);
 	void Init();
 	void Reset();
+	void SwitchOn(CActor* pActor);
+	void SwitchOff(CActor* pActor);
+};
+
+struct S_NTF_SWITCH_ONOFF
+{
+	S_TARGET_ON_OFF_STREAM_REF* pTargetStreamRef;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	void Create(ByteCode* pByteCode);
+	void Init();
+	void Reset(CActor* pActor);
 	void SwitchOn(CActor* pActor);
 	void SwitchOff(CActor* pActor);
 };

@@ -3,14 +3,13 @@
 
 #include "Types.h"
 #include "ActorAutonomous.h"
+#include "CinematicManager.h"
 
 
 #define GRAVITY_AWARE_BEHAVIOUR_FALL 0x3
 #define GRAVITY_AWARE_BEHAVIOUR_BELL 0x4
 
 class CActorGravityAware;
-struct S_NTF_TARGET_STREAM_REF;
-struct S_STREAM_EVENT_CAMERA;
 
 class CBehaviourGravityAwareBell : public CBehaviour
 {
@@ -26,9 +25,10 @@ public:
 
 	CActorGravityAware* pOwner;
 	S_STREAM_REF<CSound> soundRef;
+	float field_0xc;
+	float field_0x10;
 
-	S_NTF_TARGET_STREAM_REF* pTargetStreamRef;
-	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+	S_NTF_SWITCH_ONOFF targetSwitch;
 };
 
 class CBehaviourGravityAwareFall : public CBehaviour
