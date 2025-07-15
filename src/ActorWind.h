@@ -35,6 +35,7 @@ public:
 
 	edF32MATRIX4 field_0x10;
 
+	uint field_0x54;
 	int field_0x58;
 	edF32MATRIX4* field_0x5c;
 

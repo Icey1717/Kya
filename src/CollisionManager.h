@@ -70,6 +70,8 @@ public:
 	void Init() {}
 
 	void Create(CActor* pActor, int index);
+	void Create(CActor* pActor, int nbPrims, int primType, edF32VECTOR4* param_5, edF32VECTOR4* param_6, edF32VECTOR4* param_7);
+	void AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6);
 	void ClearInternalData(void);
 	void SetupInternalData(CActor* pActor);
 	void InvalidatePrims();

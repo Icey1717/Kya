@@ -609,38 +609,34 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	if (msg == 0xe) {
 		uVar5 = this->flags & 0x2000001;
 		if (uVar5 == 0) {
-			IMPLEMENTATION_GUARD(
 			this->flags = this->flags & 0xfffffffd;
 			this->flags = this->flags | 1;
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState(this);
-			CSectorHierarchy::SetHiddenOn(&this->sectorObj);)
+			EvaluateDisplayState();
+			this->sectorObj.SetHiddenOn();
 		}
 		else {
 			this->flags = this->flags & 0xfffffffc;
 			this->flags = this->flags & 0xffffff5f;
-			IMPLEMENTATION_GUARD(
-			CActor::EvaluateDisplayState(this);
-			ResetTiming(this);
-			CSectorHierarchy::SetHiddenOff(&this->sectorObj);)
+			EvaluateDisplayState();
+			ResetTiming();
+			this->sectorObj.SetHiddenOff();
 		}
 
-		iVar1 = 0;
-		if (0 < (int)this->nbFxWind) {
-			iVar4 = 0;
-			IMPLEMENTATION_GUARD(
+		iVar4 = 0;
+		if (0 < this->nbFxWind) {
 			do {
-				iVar2 = &this->aFxWind->field_0x0 + iVar4;
-				if (uVar5 == 0) {
-					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
+				CFxWind* pFxWind = this->aFxWind + iVar4;
+				if (iVar1 == 0) {
+					pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
 				}
 				else {
-					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) | 1;
+					pFxWind->field_0x54 = pFxWind->field_0x54 | 1;
 				}
-				iVar1 = iVar1 + 1;
-				iVar4 = iVar4 + 0x3c0;
-			} while (iVar1 < (int)this->nbFxWind);)
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->nbFxWind);
 		}
 
 		iVar1 = 1;
@@ -653,17 +649,15 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			ResetTiming();
 			this->sectorObj.SetHiddenOff();
 
-			IMPLEMENTATION_GUARD_WIND_FX(
-			iVar1 = 0;
-			if (0 < (int)this->nbFxWind) {
-				iVar4 = 0;
+			iVar4 = 0;
+			if (0 < this->nbFxWind) {
 				do {
-					iVar1 = iVar1 + 1;
-					iVar2 = &this->aFxWind->field_0x0 + iVar4;
-					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) | 1;
-					iVar4 = iVar4 + 0x3c0;
-				} while (iVar1 < (int)this->nbFxWind);
-			})
+					CFxWind* pFxWind = this->aFxWind + iVar4;
+					pFxWind->field_0x54 = pFxWind->field_0x54 | 1;
+
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < this->nbFxWind);
+			}
 
 			iVar1 = 1;
 		}
@@ -676,55 +670,56 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				EvaluateDisplayState();
 				this->sectorObj.SetHiddenOn();
 
-				IMPLEMENTATION_GUARD_WIND_FX(
-				iVar1 = 0;
-				if (0 < (int)this->nbFxWind) {
-					iVar4 = 0;
+				iVar4 = 0;
+				if (0 < this->nbFxWind) {
 					do {
-						iVar1 = iVar1 + 1;
-						iVar2 = &this->aFxWind->field_0x0 + iVar4;
-						*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
-						iVar4 = iVar4 + 0x3c0;
-					} while (iVar1 < (int)this->nbFxWind);
-				})
+						CFxWind* pFxWind = this->aFxWind + iVar4;
+						pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
+
+						iVar4 = iVar4 + 1;
+					} while (iVar4 < this->nbFxWind);
+				}
 
 				iVar1 = 1;
 			}
 			else {
-				if (msg == 0xd) {
-					IMPLEMENTATION_GUARD(
-					iVar1 = *(int*)((int)pMsgParam + 4);
+				if (msg == MESSAGE_TIED) {
+					_msg_tied_params* pTiedParams = reinterpret_cast<_msg_tied_params*>(pMsgParam);
+					iVar1 = pTiedParams->bTied;
+
 					if (iVar1 == 0) {
 						this->flags = this->flags & 0xfffffffd;
 						this->flags = this->flags | 1;
 						this->flags = this->flags & 0xffffff7f;
 						this->flags = this->flags | 0x20;
-						CActor::EvaluateDisplayState(this);
-						CSectorHierarchy::SetHiddenOn(&this->sectorObj);
+						EvaluateDisplayState();
+
+						this->sectorObj.SetHiddenOn();
 					}
 					else {
 						this->flags = this->flags & 0xfffffffc;
 						this->flags = this->flags & 0xffffff5f;
-						CActor::EvaluateDisplayState(this);
-						ResetTiming(this);
-						CSectorHierarchy::SetHiddenOff(&this->sectorObj);
+						EvaluateDisplayState();
+						ResetTiming();
+						this->sectorObj.SetHiddenOff();
 					}
+
 					iVar4 = 0;
-					if (0 < (int)this->nbFxWind) {
-						iVar2 = 0;
+					if (0 < this->nbFxWind) {
 						do {
-							iVar3 = &this->aFxWind->field_0x0 + iVar2;
+							CFxWind* pFxWind = this->aFxWind + iVar4;
 							if (iVar1 == 0) {
-								*(uint*)(iVar3 + 0x54) = *(uint*)(iVar3 + 0x54) & 0xfffffffe;
+								pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
 							}
 							else {
-								*(uint*)(iVar3 + 0x54) = *(uint*)(iVar3 + 0x54) | 1;
+								pFxWind->field_0x54 = pFxWind->field_0x54 | 1;
 							}
+
 							iVar4 = iVar4 + 1;
-							iVar2 = iVar2 + 0x3c0;
-						} while (iVar4 < (int)this->nbFxWind);
+						} while (iVar4 < this->nbFxWind);
 					}
-					iVar1 = 1;)
+
+					iVar1 = 1;
 				}
 				else {
 					iVar1 = CActor::InterpretMessage(pSender, msg, pMsgParam);
@@ -952,17 +947,15 @@ float CActorWind::ComputeCurTime()
 			EvaluateDisplayState();
 			this->sectorObj.SetHiddenOn();
 
-			IMPLEMENTATION_GUARD_WIND_FX(
 			iVar4 = 0;
-			if (0 < (int)this->nbFxWind) {
-				iVar3 = 0;
+			if (0 < this->nbFxWind) {
 				do {
+					CFxWind* pFxWind = this->aFxWind + iVar4;
+					pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
+
 					iVar4 = iVar4 + 1;
-					iVar2 = &this->aFxWind->field_0x0 + iVar3;
-					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
-					iVar3 = iVar3 + 0x3c0;
-				} while (iVar4 < (int)this->nbFxWind);
-			})
+				} while (iVar4 < this->nbFxWind);
+			}
 
 			return -1.0f;
 		}
@@ -985,17 +978,15 @@ float CActorWind::ComputeCurTime()
 	EvaluateDisplayState();
 	this->sectorObj.SetHiddenOn();
 
-	IMPLEMENTATION_GUARD_WIND_FX(
 	iVar4 = 0;
-	if (0 < (int)this->nbFxWind) {
-		iVar3 = 0;
+	if (0 < this->nbFxWind) {
 		do {
+			CFxWind* pFxWind = this->aFxWind + iVar4;
+			pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
+
 			iVar4 = iVar4 + 1;
-			iVar2 = &this->aFxWind->field_0x0 + iVar3;
-			*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
-			iVar3 = iVar3 + 0x3c0;
-		} while (iVar4 < (int)this->nbFxWind);
-	})
+		} while (iVar4 < this->nbFxWind);
+	}
 
 	return  -1.0f;
 }

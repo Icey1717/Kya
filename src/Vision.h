@@ -20,6 +20,7 @@ public:
 	bool SV_PointIsInVision(edF32VECTOR4* v0);
 
 	bool _PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor);
+	uint _ScanForTargetMultiPoint(CActor* pTargetActor, int mode);
 
 	void ScanAccurate(float param_1, CActorsTable* pTable, int param_4);
 	void Scan(CActorsTable* pTable, int param_3);
@@ -40,6 +41,9 @@ public:
 	float field_0x40;
 	float field_0x44;
 	CActor* pActor_0x48;
+	int field_0x4c;
+	uint field_0x50;
+	int field_0x54;
 	float field_0x58;
 };
 

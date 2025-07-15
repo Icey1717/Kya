@@ -102,19 +102,10 @@ PACK(
 struct edColPRIM_SPHERE {
 	edF32MATRIX4 vertices;
 	edF32MATRIX4 worldTransform;
-	uint flags_0x80;
-	undefined field_0x84;
-	undefined field_0x85;
-	undefined field_0x86;
-	undefined field_0x87;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
-	undefined field_0x8c;
-	undefined field_0x8d;
-	undefined field_0x8e;
-	undefined field_0x8f;
+	uint flags_0x80;	
+	undefined4 field_0x84;
+	undefined4 field_0x88;
+	undefined4 field_0x8c;
 });
 
 static_assert(sizeof(edColPRIM_SPHERE) == 0x90);
@@ -125,18 +116,9 @@ PACK(
 	edF32MATRIX4 vertices;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
-	undefined field_0x84;
-	undefined field_0x85;
-	undefined field_0x86;
-	undefined field_0x87;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
-	undefined field_0x8c;
-	undefined field_0x8d;
-	undefined field_0x8e;
-	undefined field_0x8f;
+	undefined4 field_0x84;
+	undefined4 field_0x88;
+	undefined4 field_0x8c;
 });
 
 
@@ -148,18 +130,9 @@ PACK(
 	edF32MATRIX4 vertices;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
-	undefined field_0x84;
-	undefined field_0x85;
-	undefined field_0x86;
-	undefined field_0x87;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
-	undefined field_0x8c;
-	undefined field_0x8d;
-	undefined field_0x8e;
-	undefined field_0x8f;
+	undefined4 field_0x84;
+	undefined4 field_0x88;
+	undefined4 field_0x8c;
 	edF32VECTOR4 field_0x90;
 	edF32VECTOR4 field_0xa0;
 	edF32VECTOR4 field_0xb0;
@@ -237,8 +210,7 @@ PACK(
 	int vertexCount;
 	int nbTriangles;
 	int field_0x18;
-	undefined field_0x1c;
-	undefined field_0x1d;
+	short field_0x1c;
 	undefined field_0x1e;
 	undefined field_0x1f;
 	int aSourceVertices; //edF32VECTOR*

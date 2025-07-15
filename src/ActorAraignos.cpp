@@ -233,31 +233,35 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					iVar3 = 1;
 				}
 				else {
-					if (msg == 0xd) {
-						IMPLEMENTATION_GUARD(
-						if (*(int*)((int)pMsgParam + 4) == 0) {
+					if (msg == MESSAGE_TIED) {
+						_msg_tied_params* pTiedParams = reinterpret_cast<_msg_tied_params*>(pMsgParam);
+
+						if (pTiedParams->bTied == 0) {
 							this->flags = this->flags & 0xfffffffd;
 							this->flags = this->flags | 1;
 							this->flags = this->flags & 0xffffff7f;
 							this->flags = this->flags | 0x20;
 							EvaluateDisplayState();
+
+							IMPLEMENTATION_GUARD_AUDIO(
 							if ((this->pActorSound != (CActorSound*)0x0) &&
 								(iVar3 = CActorSound::IsInstanceAlive(this->pActorSound, 1), iVar3 != 0)) {
 								CActorSound::FUN_0032c600(this->pActorSound, 1);
-							}
+							})
 						}
 						else {
 							this->flags = this->flags & 0xfffffffc;
 							this->flags = this->flags & 0xffffff5f;
 							EvaluateDisplayState();
+
 							if (this->pActorSound != (CActorSound*)0x0) {
-								CActorSound::SoundStart
-								(this->pActorSound, (CActor*)this, 1, (CSound*)this->field_0x240, 0, 0,
-									(SOUND_SPATIALIZATION_PARAM*)0x0);
-								CActorSound::SetFrequency(this->field_0x1f8, this->pActorSound, 1);
+								this->pActorSound->SoundStart(this, 1, (CSound*)this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+								this->pActorSound->SetFrequency(this->field_0x1f8, 1);
 							}
+
 							this->field_0x1d0 = 0.0f;
-						})
+						}
+
 						iVar3 = 1;
 					}
 					else {

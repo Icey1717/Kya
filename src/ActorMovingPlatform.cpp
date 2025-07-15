@@ -3028,7 +3028,7 @@ void CBehaviourPlatformTrajectory::End(int newBehaviourId)
 int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	CPathFollow* pCVar1;
-	int iVar2;
+	int bProcessed;
 	Timer* pTVar3;
 	float fVar4;
 	float local_18;
@@ -3075,7 +3075,7 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 				this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
 			}
 		}
-		iVar2 = 1;)
+		bProcessed = 1;)
 	}
 	else {
 		if (msg == 0x67) {
@@ -3113,7 +3113,7 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
 				}
 			}
-			iVar2 = 1;)
+			bProcessed = 1;)
 		}
 		else {
 			if (msg == 0x3b) {
@@ -3134,29 +3134,30 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 				else {
 					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
 				}
-				iVar2 = 1;)
+				bProcessed = 1;)
 			}
 			else {
-				if (msg == 0xd) {
-					IMPLEMENTATION_GUARD(
-					if (*(int*)((int)pMsgParam + 4) != 0) {
+				if (msg == MESSAGE_TIED) {
+					_msg_tied_params* pTiedParams = reinterpret_cast<_msg_tied_params*>(pMsgParam);
+					if (pTiedParams->bTied != 0) {
 						this->pOwner->BehaviourTrajectory_Switch(this, 0xf);
 					}
-					iVar2 = 1;)
+
+					bProcessed = 1;
 				}
 				else {
 					if (((msg == 0xe) || (msg == 0x10)) || (msg == 0xf)) {
 						this->pOwner->BehaviourTrajectory_Switch(this, msg);
-						iVar2 = 1;
+						bProcessed = 1;
 					}
 					else {
-						iVar2 = 0;
+						bProcessed = 0;
 					}
 				}
 			}
 		}
 	}
-	return iVar2;
+	return bProcessed;
 }
 
 void CBehaviourPlatformTrajectory::Manage()

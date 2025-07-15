@@ -698,7 +698,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 			}
 		}
 
-		uStack240.projectileType = 4;
+		uStack240.projectileType = HIT_TYPE_BOOMY;
 		uStack240.field_0x4 = 2;
 		if (this->field_0x2c4 == 2) {
 			uStack240.field_0x4 = 4;

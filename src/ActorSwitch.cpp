@@ -730,8 +730,8 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 void CBehaviourSwitchTarget::Create(ByteCode* pByteCode)
 {
 	this->field_0x8 = pByteCode->GetF32();
-	this->field_0xc = pByteCode->GetF32();
-	this->field_0x10 = pByteCode->GetF32();
+	this->oscConfig.field_0x0 = pByteCode->GetF32();
+	this->oscConfig.field_0x4 = pByteCode->GetF32();
 
 	return;
 }
@@ -743,8 +743,8 @@ void CBehaviourSwitchTarget::Init(CActor* pOwner)
 
 	this->pOwner = static_cast<CActorSwitch*>(pOwner);
 
-	this->field_0xc = this->field_0xc * 100.0f;
-	this->field_0x10 = this->field_0x10 * 100.0f;
+	this->oscConfig.field_0x0 = this->oscConfig.field_0x0 * 100.0f;
+	this->oscConfig.field_0x4 = this->oscConfig.field_0x4 * 100.0f;
 
 	pCVar1 = this->pOwner->pCollisionData;
 	if (pCVar1 != (CCollision*)0x0) {
@@ -761,8 +761,8 @@ void CBehaviourSwitchTarget::Manage()
 	CActorSwitch* pSwitch;
 	bool bVar1;
 	Timer* pTVar3;
-	undefined* fVar5;
-	undefined* puVar2;
+	float fVar5;
+	float puVar2;
 	float fVar6;
 	edF32VECTOR4 sStack48;
 	edF32VECTOR4 sStack32;
@@ -774,48 +774,41 @@ void CBehaviourSwitchTarget::Manage()
 	pSwitch->pStreamEventCamera->Manage(pSwitch);
 	AVar1 = pSwitch->actorState;
 	if (AVar1 == 9) {
-		IMPLEMENTATION_GUARD(
-		pTVar3 = Timer::GetTimer();
-		bVar1 = S_OSCILLATING_VALUE::Update
-		(0.0, pTVar3->cutsceneDeltaTime, (S_OSCILLATING_VALUE*)&this->field_0x14,
-			(S_OSCILLATION_CONFIG*)&this->field_0xc);
+		bVar1 = oscValue.Update(0.0f, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
 		SetVectorFromAngles(&sStack48, &(pSwitch->pCinData)->rotationEuler);
-		edF32Vector4ScaleHard(this->field_0x14, &sStack48, &sStack48);
+		edF32Vector4ScaleHard(this->oscValue.field_0x0, &sStack48, &sStack48);
 		edF32Vector4AddHard(&sStack48, &pSwitch->baseLocation, &sStack48);
-		CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack48, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		pSwitch->SV_UpdatePosition_Rel(&sStack48, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 		if (bVar1 != false) {
 			pSwitch->SetState(5, -1);
-		})
+		}
 	}
 	else {
 		if (AVar1 == 8) {
-			IMPLEMENTATION_GUARD(
 			fVar6 = this->field_0x8;
-			pTVar3 = Timer::GetTimer();
-			S_OSCILLATING_VALUE::Update
-			(fVar6, pTVar3->cutsceneDeltaTime, (S_OSCILLATING_VALUE*)&this->field_0x14,
-				(S_OSCILLATION_CONFIG*)&this->field_0xc);
+			oscValue.Update(fVar6, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
 			SetVectorFromAngles(&sStack32, &(pSwitch->pCinData)->rotationEuler);
-			edF32Vector4ScaleHard(this->field_0x14, &sStack32, &sStack32);
+			edF32Vector4ScaleHard(this->oscValue.field_0x0, &sStack32, &sStack32);
 			edF32Vector4AddHard(&sStack32, &pSwitch->baseLocation, &sStack32);
-			CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack32, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-			if (fabs(this->field_0x8) <= fabs(this->field_0x14)) {
-				if (0.0 <= this->field_0x8) {
-					puVar2 = (undefined*)0x3f800000;
+			pSwitch->SV_UpdatePosition_Rel(&sStack32, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+			if (fabs(this->field_0x8) <= fabs(this->oscValue.field_0x0)) {
+				if (0.0f <= this->field_0x8) {
+					puVar2 = 1.0f;
 				}
 				else {
-					puVar2 = &DAT_bf800000;
+					puVar2 = -1.0f;
 				}
-				if (0.0 <= this->field_0x14) {
-					fVar5 = (undefined*)0x3f800000;
+				if (0.0f <= this->oscValue.field_0x0) {
+					fVar5 = 1.0f;
 				}
 				else {
-					fVar5 = &DAT_bf800000;
+					fVar5 = -1.0f;
 				}
-				if ((float)fVar5 == (float)puVar2) {
+
+				if (fVar5 == puVar2) {
 					pSwitch->SetState(9, -1);
 				}
-			})
+			}
 		}
 		else {
 			if ((AVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
@@ -830,8 +823,8 @@ void CBehaviourSwitchTarget::Manage()
 
 void CBehaviourSwitchTarget::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	this->field_0x14 = 0.0f;
-	this->field_0x18 = 0;
+	this->oscValue.field_0x0 = 0.0f;
+	this->oscValue.field_0x4 = 0;
 
 	if (newState == -1) {
 		this->pOwner->SetState(5, -1);

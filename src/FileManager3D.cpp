@@ -462,7 +462,29 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 		pCommonLevelMesh->pTextureInfo = this->aCommonLevelTextures + textureIndex;
 		ed3DInstallG3D(pCommonLevelMesh->pFileData, pCommonLevelMesh->fileLength, 0, &iStack4, &pCommonLevelMesh->pTextureInfo->manager, 0xc, &pCommonLevelMesh->meshInfo);
 	}
+
 	return &pCommonLevelMesh->meshInfo;
+}
+
+ed_g2d_manager* C3DFileManager::GetG2DManager(char* pFileData)
+{
+	TextureInfo* pTVar1;
+	int iVar2;
+
+	pTVar1 = this->aCommonLevelTextures;
+	iVar2 = this->textureCount;
+	while (true) {
+		if (iVar2 == 0) {
+			return (ed_g2d_manager*)0x0;
+		}
+
+		if (pFileData == pTVar1->pFileBuffer) break;
+
+		iVar2 = iVar2 + -1;
+		pTVar1 = pTVar1 + 1;
+	}
+
+	return &pTVar1->manager;
 }
 
 ParticleInfo* C3DFileManager::GetG2DInfo(int index)
@@ -504,7 +526,7 @@ ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
 	return &pTVar1->manager;
 }
 
-ed_g3d_manager* C3DFileManager::GetInfoForCommonLevelMesh(char* pFileData)
+ed_g3d_manager* C3DFileManager::GetG3DManager(char* pFileData)
 {
 	int curMeshIndex;
 	Mesh* pMesh;

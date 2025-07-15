@@ -452,6 +452,224 @@ void CCollision::Create(CActor* pActor, int index)
 	return;
 }
 
+
+void CCollision::Create(CActor* pActor, int nbPrims, int primType, edF32VECTOR4* param_5, edF32VECTOR4* param_6, edF32VECTOR4* param_7)
+{
+	AllocatePrims(nbPrims, primType, param_5, param_6, param_7);
+	SetupInternalData(pActor);
+	this->flags_0x4 = this->flags_0x4 | 8;
+
+	return;
+}
+
+#define MAX_COL_OBJ_SIZE sizeof(edColPRIM_OBJECT)
+
+void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6)
+{
+	edObbTREE_DYN* peVar1;
+	edF32VECTOR4* peVar2;
+	float fVar3;
+	edF32MATRIX4* m0;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	edF32VECTOR4* peVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	edColPRIM_OBJECT* peVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	int iVar18;
+	int iVar19;
+	int iVar20;
+	int iVar21;
+	float fVar22;
+	float fVar23;
+	float fVar24;
+	edF32VECTOR4 local_d0;
+	edF32MATRIX4 eStack192;
+	edF32MATRIX4 local_80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	int totalSize = nbPrims * MAX_COL_OBJ_SIZE + 0xfc;
+	peVar1 = (edObbTREE_DYN*)edMemAlloc(TO_HEAP(H_MAIN), totalSize);
+	this->pObbTree = peVar1;
+	memset(this->pObbTree, 0, totalSize);
+	peVar1 = this->pObbTree + 1;
+	this->pDynCol = (edColG3D_OBB_TREE_DYN*)(reinterpret_cast<char*>(peVar1) + nbPrims * MAX_COL_OBJ_SIZE);
+	this->pDynCol->field_0x18 = 1;
+	this->pDynCol->field_0x1c = 1;
+	this->pDynCol->pObbTree = STORE_SECTION(this->pObbTree);
+
+	for (iVar18 = 0; iVar18 < 7; iVar18 = iVar18 + 1) {
+		this->pObbTree->field_0x54[iVar18] = 0x0;
+	}
+
+	fVar22 = 1.0f;
+	this->pObbTree->count_0x52 = (byte)nbPrims;
+	this->pObbTree->field_0x50 = 0;
+	this->pObbTree->field_0x54[0] = STORE_SECTION(peVar1);
+
+	if (primType == 1) {
+		fVar22 = 2.0f;
+		this->pDynCol->field_0x8 = nbPrims;
+		this->pDynCol->field_0x30 = STORE_SECTION(peVar1);
+		this->pObbTree->type = 0xd;
+	}
+	else {
+		if (primType == 0) {
+			this->pDynCol->field_0xc = nbPrims;
+			this->pDynCol->field_0x34 = STORE_SECTION(peVar1);
+			this->pObbTree->type = COL_TYPE_PRIM_OBJ;
+		}
+		else {
+			this->pObbTree->type = COL_TYPE_PRIM_OBJ;
+			fVar22 = 1.0f;
+		}
+	}
+
+	for (iVar18 = 0; iVar18 < nbPrims; iVar18 = iVar18 + 1) {
+		peVar14 = reinterpret_cast<edColPRIM_OBJECT*>(reinterpret_cast<char*>(peVar1) + iVar18 * MAX_COL_OBJ_SIZE);
+
+		peVar14->flags_0x80 = 0;
+		peVar14->field_0x84 = 0;
+		peVar14->field_0x88 = 0;
+		peVar14->field_0x8c = 0;
+
+		(peVar14->field_0xc0).x = 0.0f;
+		(peVar14->field_0xc0).y = 0.0f;
+		(peVar14->field_0xc0).z = 0.0f;
+		(peVar14->field_0xc0).w = 0.0f;
+
+		(peVar14->field_0xd0).x = 0.0f;
+		(peVar14->field_0xd0).y = 0.0f;
+		(peVar14->field_0xd0).z = 0.0f;
+		(peVar14->field_0xd0).w = 0.0f;
+
+		if (param_6 == (edF32VECTOR4*)0x0) {
+			(peVar14->field_0xa0).x = 0.0f;
+			(peVar14->field_0xa0).y = 0.0f;
+			(peVar14->field_0xa0).z = 0.0f;
+			(peVar14->field_0xa0).w = 0.0f;
+		}
+		else {
+			peVar2 = param_6 + iVar18;
+			peVar14->field_0xb0 = *peVar2;
+		}
+
+		peVar2 = param_5 + iVar18;
+		peVar9 = param_4 + iVar18;
+		peVar14->field_0xb0 = *peVar2;
+		peVar14->field_0x90 = *peVar9 * fVar22;
+	}
+
+	local_10.w = 0.0f;
+	local_10.x = 0.01f;
+	local_10.y = 0.01f;
+	local_10.z = 0.01f;
+
+	edF32Matrix4SetIdentityHard(&this->pObbTree->matrix_0x70);
+
+	if (nbPrims == 1) {
+		if (param_6 != (edF32VECTOR4*)0x0) {
+			edF32Matrix4FromEulerSoft(&this->pObbTree->matrix_0x70, &param_6->xyz, "XYZ");
+		}
+
+		m0 = &this->pObbTree->matrix_0x70;
+		edF32Matrix4TranslateHard(m0, m0, param_5);
+		peVar1 = this->pObbTree;
+		peVar1->field_0xb0 = *param_4 + local_10;
+	}
+	else {
+		local_20.x = 1e+30f;
+		local_20.y = 1e+30f;
+		local_20.z = 1e+30f;
+		local_20.w = 1.0f;
+
+		local_30.w = 1.0f;
+		local_30.x = -1e+30f;
+		local_30.y = -1e+30f;
+		local_30.z = -1e+30f;
+
+		for (iVar18 = 0; iVar18 < nbPrims; iVar18 = iVar18 + 1) {
+			peVar2 = param_4 + iVar18;
+
+			local_80 = gF32Matrix4Unit;
+
+			local_80.aa = peVar2->x;
+			local_80.bb = peVar2->y;
+			local_80.cc = peVar2->z;
+
+			if (param_6 != (edF32VECTOR4*)0x0) {
+				edF32Matrix4FromEulerSoft(&eStack192, &param_6[iVar18].xyz, "XYZ");
+				edF32Matrix4MulF32Matrix4Hard(&local_80, &local_80, &eStack192);
+			}
+
+			peVar2 = param_5 + iVar18;
+			local_80.rowT = *peVar2;
+			local_40.w = 1.0f;
+			local_40.x = 1.0f;
+			for (iVar19 = 0; iVar19 < 2; iVar19 = iVar19 + 1) {
+				local_40.y = 1.0f;
+				for (iVar20 = 0; iVar20 < 2; iVar20 = iVar20 + 1) {
+					local_40.z = 1.0f;
+					for (iVar21 = 0; iVar21 < 2; iVar21 = iVar21 + 1) {
+						edF32Matrix4MulF32Vector4Hard(&local_d0, &local_80, &local_40);
+						for (iVar4 = 0; iVar4 < 3; iVar4 = iVar4 + 1) {
+							fVar22 = local_d0.raw[iVar4];
+
+							if (fVar22 < local_20.raw[iVar4]) {
+								local_20.raw[iVar4] = fVar22;
+							}
+
+							if (local_30.raw[iVar4] < fVar22) {
+								local_30.raw[iVar4] = fVar22;
+							}
+						}
+
+						local_40.z = -1.0f;
+					}
+
+					local_40.y = -1.0f;
+				}
+
+				local_40.x = -1.0f;
+			}
+		}
+
+		peVar1 = this->pObbTree;
+		(peVar1->matrix_0x70).rowT = local_20 + local_30 * 0.5f;
+
+		peVar1 = this->pObbTree;
+		(peVar1->field_0xb0).x = (local_30.x - local_20.x) * 0.5f + 0.01f;
+		(peVar1->field_0xb0).y = (local_30.y - local_20.y) * 0.5f + 0.01f;
+		(peVar1->field_0xb0).z = (local_30.z - local_20.z) * 0.5f + 0.01f;
+		(peVar1->field_0xb0).w = local_10.w + 1.0f;
+	}
+
+	peVar1 = this->pObbTree;
+
+	(peVar1->bbox).transform = peVar1->matrix_0x70;
+
+	fVar22 = (peVar1->field_0xb0).y;
+	fVar23 = (peVar1->field_0xb0).z;
+	fVar24 = (peVar1->field_0xb0).w;
+	(peVar1->bbox).width = (peVar1->field_0xb0).x;
+	(peVar1->bbox).height = fVar22;
+	(peVar1->bbox).depth = fVar23;
+	(peVar1->bbox).field_0x4c = fVar24;
+
+	return;
+}
+
 void CCollision::ClearInternalData()
 {
 	this->field_0x18 = 0;

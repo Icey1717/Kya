@@ -101,39 +101,38 @@ StateConfig* CActorGravityAware::GetStateCfg(int state)
 
 int CActorGravityAware::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	int iVar1;
+	int bProcessed;
 
-	if (msg == 0xd) {
-		IMPLEMENTATION_GUARD(
-		if (*(int*)((int)pMsgParam + 4) == 0) {
+	if (msg == MESSAGE_TIED) {
+		_msg_tied_params* pTiedParams = reinterpret_cast<_msg_tied_params*>(pMsgParam);
+		if (pTiedParams->bTied == 0) {
 			SetBehaviour(this->subObjA->defaultBehaviourId, -1, -1);
 		}
 		else {
 			SetBehaviour(GRAVITY_AWARE_BEHAVIOUR_FALL, -1, -1);
 		}
 
-		if (*(int*)((int)pMsgParam + 4) == 0) {
+		if (pTiedParams->bTied == 0) {
 			this->field_0x354 = this->field_0x354 & 0xfe;
 		}
 		else {
 			this->field_0x354 = this->field_0x354 | 1;
 		}
 
-		/* WARNING: Load size is inaccurate */
-		CActor::UpdatePosition((CActor*)this, *pMsgParam, true);
-		iVar1 = 1;)
+		UpdatePosition(pTiedParams->pPosition, true);
+		bProcessed = 1;
 	}
 	else {
 		if (((msg == 0xe) || (msg == 0x10)) || (msg == 0xf)) {
 			SetBehaviour(GRAVITY_AWARE_BEHAVIOUR_FALL, -1, -1);
-			iVar1 = 1;
+			bProcessed = 1;
 		}
 		else {
-			iVar1 = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
+			bProcessed = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
 		}
 	}
 
-	return iVar1;
+	return bProcessed;
 }
 
 int CActorGravityAware::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)

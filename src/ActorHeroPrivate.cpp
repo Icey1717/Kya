@@ -13238,34 +13238,14 @@ void CActorHeroPrivate::ManageBoomyState()
 	float fStack452;
 	edF32VECTOR4 eStack448;
 	edF32MATRIX4 eStack432;
-	undefined4 local_170[2];
-	undefined4 local_168;
-	float local_164;
-	float local_160;
-	undefined* local_150;
-	undefined4 local_14c;
-	float local_148;
-	undefined4 local_144;
-	float local_140;
-	float local_130;
-	float local_12c;
-	float local_128;
-	float local_124;
-	ushort local_120;
-	float local_110;
-	undefined4 local_10c;
-	float local_108;
-	undefined4 local_104;
-	float local_100;
+	_msg_hit_param local_170;
 	edF32VECTOR4 local_f0;
 	edF32VECTOR4 local_e0;
 	edF32VECTOR4 local_d0;
 	s_fighter_collision_desc local_c0;
 	edF32VECTOR4 eStack128;
 	edF32VECTOR4 local_70;
-	undefined4 local_60[4];
-	edF32VECTOR4 local_50;
-	edF32VECTOR4 eStack64;
+	GetPositionMsgParams local_60;
 	edF32VECTOR4 eStack48;
 	edF32VECTOR4 eStack32;
 	undefined4* local_10;
@@ -13325,6 +13305,7 @@ void CActorHeroPrivate::ManageBoomyState()
 
 			if (bVar10) {
 				pBoomy->UpdateFromOwner(4, &this->rotationQuat);
+
 				pCVar12 = this->pActorBoomy->GetBestActorInVision();
 				pBoomy = this->pActorBoomy;
 				pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags & 0xfffffffe;
@@ -13341,16 +13322,16 @@ void CActorHeroPrivate::ManageBoomyState()
 				}
 				else {
 					this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
-					local_60[0] = 0;
+
+					local_60.field_0x0 = 0;
 					pBoomy = this->pActorBoomy;
-					local_4 = local_60;
-					local_50 = pBoomy->currentLocation;
-					iVar14 = DoMessage(pCVar12, (ACTOR_MESSAGE)7, (void*)local_4);
+					local_60.vectorFieldA = pBoomy->currentLocation;
+					iVar14 = DoMessage(pCVar12, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_60);
 					if (iVar14 == 0) {
 						local_70 = pCVar12->currentLocation;
 					}
 					else {
-						edF32Vector4AddHard(&local_70, &eStack64, &pCVar12->currentLocation);
+						edF32Vector4AddHard(&local_70, &local_60.vectorFieldB, &pCVar12->currentLocation);
 					}
 
 					this->pActorBoomy->SetTarget(pCVar12, &local_70);

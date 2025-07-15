@@ -5,6 +5,7 @@
 #include "ActorFactory.h"
 #include "CollisionRay.h"
 #include "ActorManager.h"
+#include "TimeController.h"
 
 CVision::CVision()
 	: pOwner((CActor*)0x0)
@@ -75,9 +76,9 @@ CActor* CVision::ScanForTarget(CActor* pTarget, int mode)
 					uVar1 = _PointIsDetected(&eStack16, pTarget);
 				}
 				else {
-					IMPLEMENTATION_GUARD(
-						uVar1 = _ScanForTargetMultiPoint(this, pTarget, mode);)
+					uVar1 = _ScanForTargetMultiPoint(pTarget, mode);
 				}
+
 				if (uVar1 == 0) {
 					pTarget = (CActor*)0x0;
 				}
@@ -244,6 +245,63 @@ bool CVision::_PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor)
 	}
 
 	return bResult;
+}
+
+uint CVision::_ScanForTargetMultiPoint(CActor* pTargetActor, int mode)
+{
+	bool bVar1;
+	int nbVisualDetectionPoints;
+	long lVar4;
+	int index;
+	float fVar5;
+	edF32VECTOR4 eStack16;
+
+	fVar5 = Timer::GetTimer()->scaledTotalTime;
+
+	if (((Timer::GetTimer()->cutsceneDeltaTime + 0.001f < fVar5 - this->field_0x58) || (this->pActor_0x48 != pTargetActor)) || (mode == 0)) {
+		this->pActor_0x48 = pTargetActor;
+		this->field_0x54 = 0;
+		this->field_0x50 = 0;
+		this->field_0x4c = 0;
+	}
+
+	this->field_0x58 = fVar5;
+
+	nbVisualDetectionPoints = pTargetActor->GetNumVisualDetectionPoints();
+	if ((mode == 0) || (nbVisualDetectionPoints == 0)) {
+		index = 0;
+		lVar4 = 0;
+		while ((index < nbVisualDetectionPoints && (lVar4 == 0))) {
+			pTargetActor->GetVisualDetectionPoint(&eStack16, index);
+			bVar1 = _PointIsDetected(&eStack16, pTargetActor);
+			index = index + 1;
+			lVar4 = bVar1;
+		}
+
+		this->field_0x50 = lVar4;
+		this->field_0x54 = 0;
+	}
+	else {
+		this->field_0x4c = this->field_0x4c + 1;
+		if (nbVisualDetectionPoints == 0) {
+			trap(7);
+		}
+
+		this->field_0x4c = this->field_0x4c % nbVisualDetectionPoints;
+
+		if (this->field_0x54 == 0) {
+			pTargetActor->GetVisualDetectionPoint(&eStack16, this->field_0x4c);
+			bVar1 = _PointIsDetected(&eStack16, pTargetActor);
+			this->field_0x54 = bVar1;
+		}
+
+		if (this->field_0x4c == 0) {
+			this->field_0x50 = this->field_0x54;
+			this->field_0x54 = 0;
+		}
+	}
+
+	return this->field_0x50;
 }
 
 struct ScanActorsParams

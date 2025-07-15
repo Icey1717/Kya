@@ -3063,6 +3063,35 @@ void edDlistSetUseUV(int newUseUV)
 	return;
 }
 
+void edDListChangeMatrix(DisplayList* pDisplayList, uint nbMatrices, edF32MATRIX4* aMatrices)
+{
+	int iVar2;
+	DisplayListCommand* pDVar4;
+	uint uVar5;
+	DisplayList* pDVar6;
+
+	pDVar6 = pDisplayList + gCurRenderState;
+	if ((pDisplayList[gCurRenderState].flags_0x0 & 4) != 0) {
+		pDVar6 = pDisplayList;
+	}
+
+	uVar5 = 0;
+	if ((pDVar6->flags_0x0 & 1) != 0) {
+		for (; uVar5 != nbMatrices; uVar5 = uVar5 + 1) {
+			pDVar4 = pDVar6->aCommands + uVar5;
+			if (pDVar4->dataType == 4) {
+				do {
+					pDVar4->matrix = *aMatrices;
+				} while (0 < iVar2);
+			}
+
+			aMatrices = aMatrices + 1;
+		}
+	}
+
+	return;
+}
+
 DisplayList* gCurDListHandle = NULL;
 void* gCurDListBuf = NULL;
 void* gCurDListBufEnd = NULL;

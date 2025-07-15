@@ -128,10 +128,8 @@ public:
 	virtual void ChangeManageState(int state) {}
 
 	float field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	undefined4 field_0x18;
+	S_OSCILLATION_CONFIG oscConfig;
+	S_OSCILLATING_VALUE oscValue;
 };
 
 class CBehaviourSwitchNew : public CBehaviourSwitch

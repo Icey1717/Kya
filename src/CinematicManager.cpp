@@ -1741,15 +1741,12 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 					}
 					else {
 						if (objectType == edResCollection::COT_MeshModel) {
-							outMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetInfoForCommonLevelMesh(outFileData.fileBufferStart);
+							outMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(outFileData.fileBufferStart);
 						}
 						else {
 							outMeshInfo = (ed_g3d_manager*)outFileData.fileBufferStart;
 							if (objectType == edResCollection::COT_MeshTexture) {
-								IMPLEMENTATION_GUARD(
-								outMeshInfo = (ed_g3d_manager*)
-									3DFileManager::GetTextureInfoAtAddress_001a6d60
-									(CScene::ptable.g_C3DFileManager_00451664, (int)outFileData.fileBufferStart);)
+								outMeshInfo = (ed_g3d_manager*)CScene::ptable.g_C3DFileManager_00451664->GetG2DManager(outFileData.fileBufferStart);
 							}
 						}
 					}

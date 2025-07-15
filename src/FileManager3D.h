@@ -54,7 +54,8 @@ struct C3DFileManager : public CObjectManager {
 	ed_g2d_manager* GetActorsCommonMeshMaterial(int index);
 
 	ed_g2d_manager * LoadDefaultTexture_001a65d0();
-	ed_g3d_manager* GetInfoForCommonLevelMesh(char* pFileData);
+	ed_g3d_manager* GetG3DManager(char* pFileData);
+	ed_g2d_manager* GetG2DManager(char* pFileData);
 
 	int GetNbMaterialInG2D(int id);
 
