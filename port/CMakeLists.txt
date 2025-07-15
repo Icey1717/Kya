@@ -23,7 +23,7 @@ add_subdirectory("pcsx2/VU")
 
 add_subdirectory("Windows/Renderer")
 add_subdirectory("KyaTexture")
-add_subdirectory("Mesh")
+add_subdirectory("KyaMesh")
 add_subdirectory("Sprite")
 
 set(SOURCES 

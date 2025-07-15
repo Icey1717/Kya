@@ -58,3 +58,6 @@
 [submodule "port/Windows/Renderer/ext/glfw"]
 	path = port/Windows/Renderer/ext/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "port/KyaMesh"]
+	path = port/KyaMesh
+	url = https://github.com/Icey1717/KyaMesh.git
