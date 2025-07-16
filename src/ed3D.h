@@ -113,7 +113,8 @@ struct GXD_FileHeader
 
 static_assert(sizeof(GXD_FileHeader) == 0x10);
 
-struct ed_g3d_manager {
+struct ed_g3d_manager
+{
 	GXD_FileHeader* fileBufferStart;
 	char* field_0x4;
 	int fileLengthA;
@@ -131,6 +132,7 @@ struct ed_g3d_manager {
 	ed_Chunck* CDZA;
 	ed_Chunck* ANMA;
 };
+
 struct ed_g2d_manager {
 	GXD_FileHeader* pFileBuffer;
 	int textureFileLengthA;
@@ -250,7 +252,8 @@ struct ed_3d_octree {
 	float field_0x30;
 };
 
-struct ClusterDetails {
+struct ClusterDetails
+{
 	int field_0x20; // int*
 	int field_0x24; // int*
 	ushort count_0x28; // int*
@@ -262,7 +265,8 @@ struct ClusterDetails {
 
 static_assert(sizeof(ClusterDetails) == 0x10);
 
-struct ed_g3d_cluster {
+struct ed_g3d_cluster
+{
 	ushort aClusterStripCounts[5];
 	ushort field_0x1a;
 	ushort flags_0x1c;
@@ -283,7 +287,8 @@ struct ed_g3d_cluster {
 
 static_assert(sizeof(ed_g3d_cluster) == 0x40);
 
-struct ed_g3d_Anim_def {
+struct ed_g3d_Anim_def
+{
 	uint field_0x0;
 	uint field_0x4;
 	uint field_0x8;
@@ -311,14 +316,17 @@ struct ed_g3d_Anim_def {
 
 static_assert(sizeof(ed_g3d_Anim_def) == 0x38, "ed_g3d_Anim_def size is incorrect");
 
-PACK(struct MeshData_CSTA {
+struct MeshData_CSTA
+{
 	edF32VECTOR3 field_0x20;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
+	undefined field_0x2c; // pad
+	undefined field_0x2d; // pad
+	undefined field_0x2e; // pad
+	undefined field_0x2f; // pad
 	edF32VECTOR4 worldLocation;
-};)
+};
+
+static_assert(sizeof(MeshData_CSTA) == 0x20, "MeshData_CSTA size is incorrect");
 
 struct ed_3D_Scene
 {
@@ -450,7 +458,7 @@ PACK(struct ANHR_Internal
 	float field_0x34;
 });
 
-PACK(struct ed_g3d_hierarchy
+struct ed_g3d_hierarchy
 {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
@@ -471,7 +479,9 @@ PACK(struct ed_g3d_hierarchy
 	byte desiredLod;
 	char GlobalAlhaON;
 	ed3DLod aLods[];
-});
+};
+
+static_assert(sizeof(ed_g3d_hierarchy) == 0xb0, "Invalid ed_g3d_hierarchy size");
 
 struct ed_3d_hierarchy_node
 {
@@ -673,6 +683,14 @@ union edVertex
 	edF32VECTOR4 vector;
 };
 
+struct edVertexNormal
+{
+	int16_t x;
+	int16_t y;
+	int16_t z;
+	int16_t pad;
+};
+
 PACK(
 	struct ed_Bound_Sphere_packet 
 {
@@ -705,7 +723,7 @@ struct ed_3d_strip
 	int pSTBuf; // char*
 	int pColorBuf; // _rgba*
 	int pVertexBuf; // edVertex*
-	int field_0x2c; // char*
+	int pNormalBuf; // char*
 	short shadowCastFlags;
 	short shadowReceiveFlags;
 	DMA_Matrix pDMA_Matrix; // ed_dma_matrix*
@@ -788,7 +806,8 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
 ed_dma_matrix* ed3DListCreateDmaMatrixNode(ScratchPadRenderInfo* pRenderInfo, ed_3d_hierarchy* pHierarchy);
 
-PACK(struct ed_g3d_object {
+struct ed_g3d_object
+{
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
@@ -800,7 +819,9 @@ PACK(struct ed_g3d_object {
 	undefined field_0x2a;
 	undefined field_0x2b;
 	int p3DData; //ed_3d_strip* or ed_3d_sprite* 
-});
+};
+
+static_assert(sizeof(ed_g3d_object) == 0x20, "Invalid ed_g3d_object size");
 
 ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);
 ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy);

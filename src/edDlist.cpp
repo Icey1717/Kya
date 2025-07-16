@@ -1609,7 +1609,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 
 	gStartVertexBuf = gCurVertexBuf;
 	pNewStrip->vifListOffset = newVifOffset;
-	pNewStrip->field_0x2c = 0x0;
+	pNewStrip->pNormalBuf = 0x0;
 	peVar2 = gCurVertexBuf;
 	gCurVertexBuf->uSkip = 0xc000;
 	peVar2[1].uSkip = 0xc000;

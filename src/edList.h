@@ -7,12 +7,14 @@
 typedef int(edListFunc)(void*, void*);
 typedef void(edListApply)(void*);
 
-struct ShortField {
+struct ShortField
+{
 	short type;
 	ushort flags;
 };
 
-union NodeHeaderUnion {
+union NodeHeaderUnion
+{
 	byte byteFlags[4];
 	short field_0x0[2];
 	int count;
@@ -22,21 +24,24 @@ union NodeHeaderUnion {
 	edListFunc* pListFunc;
 };
 
-struct edNODE {
+struct edNODE
+{
 	NodeHeaderUnion header;
 	edNODE* pPrev;
 	edNODE* pNext;
 	void* pData;
 };
 
-struct edNODE_MANAGER {
+struct edNODE_MANAGER
+{
 	char name[4];
 	edNODE* pNodeHead;
 	int totalCount;
 	int linkCount;
 };
 
-struct edLIST : public edNODE {
+struct edLIST : public edNODE
+{
 	undefined4 field_0x10;
 	int nodeCount;
 	undefined field_0x18;

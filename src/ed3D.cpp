@@ -3200,6 +3200,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			pNextPkt = pPkt + 7;
 		}
 	}
+
 	if (((p3dStrip->flags & 0x10000) != 0) && (gpCurHierarchy != (ed_3d_hierarchy*)0x0)) {
 		pAnimIndexes = (short*)((char*)p3dStrip + p3dStrip->vifListOffset + -0x30);
 		if ((p3dStrip->flags & 0x8000000) == 0) {
@@ -3216,6 +3217,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 				maxAnimMatrixCount = 7;
 			}
 		}
+
 		if ((p3dStrip->shadowCastFlags == 0) || (pAnimMatrices = gpCurHierarchy->pShadowAnimMatrix, pAnimMatrices == (edF32MATRIX4*)0x0)) {
 			pAnimMatrices = gpCurHierarchy->pAnimMatrix;
 		}
@@ -3279,6 +3281,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 		}
 	}
+
 	if (((gpCurHierarchy == (ed_3d_hierarchy*)0x0) || (gpCurHierarchy == (ed_3d_hierarchy*)0x0000ffff))
 		|| (gpCurHierarchy == &ed_3d_hierarchy_0048cad0)) {
 		p3dStrip->flags = p3dStrip->flags & 0xfffffff7;

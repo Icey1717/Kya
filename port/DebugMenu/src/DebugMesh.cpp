@@ -84,7 +84,7 @@ namespace Debug
 				DebugHelpers::TextValidValue("pSTBuf: %p", LOAD_SECTION(pStrip->pSTBuf));
 				DebugHelpers::TextValidValue("pColorBuf: %p", LOAD_SECTION(pStrip->pColorBuf));
 				DebugHelpers::TextValidValue("pVertexBuf: %p", LOAD_SECTION(pStrip->pVertexBuf));
-				DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_SECTION(pStrip->field_0x2c));
+				DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_SECTION(pStrip->pNormalBuf));
 
 				ImGui::Spacing();
 				ImGui::Spacing();
