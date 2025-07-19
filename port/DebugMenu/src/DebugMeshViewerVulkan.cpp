@@ -28,7 +28,7 @@ namespace DebugMeshViewer {
 
 		constexpr int maxDrawCommands = 128;
 
-		using PreviewerVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t>;
+		using PreviewerVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessedNormal, uint16_t>;
 		using PreviewerDrawCommandArray = std::array<std::pair<Renderer::SimpleTexture*, PreviewerVertexBuffer>, maxDrawCommands>;
 		PreviewerDrawCommandArray gPreviewerDrawCommands;
 
@@ -147,24 +147,18 @@ namespace DebugMeshViewer {
 		return Vulkan::gVertexConstantBuffer.GetBufferData();
 	}
 
-	PreviewerVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh)
+	Renderer::NativeVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh)
 	{
-		if (Vulkan::pBoundTexture != pTexture) {
-			if (Vulkan::pBoundTexture != nullptr) {
-				Vulkan::drawCounter++;
-			}
+		assert(Vulkan::drawCounter < Vulkan::maxDrawCommands);
 
-			assert(Vulkan::drawCounter < Vulkan::maxDrawCommands);
+		Vulkan::pBoundTexture = pTexture;
+		Vulkan::pBoundMesh = pMesh;
 
-			Vulkan::pBoundTexture = pTexture;
-			Vulkan::pBoundMesh = pMesh;
+		Vulkan::UpdateDescriptors(pTexture);
 
-			Vulkan::UpdateDescriptors(pTexture);
+		Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 
-			Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
-		}
-
-		return Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].second.GetDrawBufferData();
+		return Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter++].second.GetDrawBufferData();
 	}
 
 	int GetPreviewerDrawCommandCount()
@@ -185,11 +179,11 @@ namespace DebugMeshViewer {
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = GetSwapchainImageFormat();
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference colorAttachmentRef{};
@@ -199,11 +193,11 @@ namespace DebugMeshViewer {
 		VkAttachmentDescription depthAttachment{};
 		depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference depthAttachmentRef{};
@@ -286,7 +280,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 
 	std::array<VkClearValue, 2> clearColors;
 	clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearColors[1] = { {1.0f, 0.0f } };
+	clearColors[1] = { {0.0f, 0.0f } };
 	renderPassInfo.clearValueCount = clearColors.size();
 	renderPassInfo.pClearValues = clearColors.data();
 
@@ -306,6 +300,22 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 
 	auto& pipeline = GetPipeline();
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+	vkCmdSetDepthWriteEnable(cmd, true);
+
+	const VkBool32 colorWriteEnable = VK_TRUE;
+
+	static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
+	assert(pvkCmdSetColorWriteEnableEXT);
+	pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+
+	std::array<VkBool32, 1> colorWriteMasks = {
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+	};
+
+	static auto pvkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
+	assert(pvkCmdSetColorWriteMaskEXT);
+	pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 
 	gVertexConstantBuffer.Map(GetCurrentFrame());
 

@@ -37,7 +37,18 @@ namespace DebugMeshViewer {
 	int gHighlightStripIndex = -1;
 	int gHighlightAnimMatrixIndex = -1;
 
-	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate, PreviewerVertexBufferData& vertexBufferData)
+	void FillVertexBufferData(const Renderer::NativeVertexBufferData& pCachedStripBuffer, Renderer::NativeVertexBufferData& newBuffer)
+	{
+		assert(newBuffer.GetVertexTail() + pCachedStripBuffer.GetVertexTail() <= newBuffer.vertex.maxcount);
+		memcpy(newBuffer.vertex.buff + newBuffer.vertex.tail, pCachedStripBuffer.vertex.buff, sizeof(Renderer::GSVertexUnprocessedNormal) * pCachedStripBuffer.GetVertexTail());
+		newBuffer.vertex.tail += pCachedStripBuffer.GetVertexTail();
+
+		assert(newBuffer.GetIndexTail() + pCachedStripBuffer.GetIndexTail() <= newBuffer.index.maxcount);
+		memcpy(newBuffer.index.buff + newBuffer.index.tail, pCachedStripBuffer.index.buff, sizeof(uint16_t) * pCachedStripBuffer.GetIndexTail());
+		newBuffer.index.tail += pCachedStripBuffer.GetIndexTail();
+	}
+
+	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate, Renderer::NativeVertexBufferData& vertexBufferData)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Strip: 0x{:x}", (uintptr_t)pCurrentStrip);
 
@@ -123,89 +134,12 @@ namespace DebugMeshViewer {
 			MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Final anim index: {}", animMatrixIndex);
 		}
 
-		const uint stripFlags = pCurrentStrip->flags;
+		auto* pMesh = Renderer::Kya::GetMeshLibrary().FindStrip(pCurrentStrip);
 
-		auto AddVertices = [stripIndex, stripFlags, &vertexBufferData]() {
-			char* vtxStart = VU1Emu::GetVertexDataStart();
-
-			int* pFlag = reinterpret_cast<int*>(vtxStart - 0x10);
-
-			Gif_Tag gifTag;
-			gifTag.setTag((u8*)vtxStart, true);
-
-			vtxStart += 0x10;
-
-			for (int i = 0; i < gifTag.nLoop; i++) {
-				const int addr = VU1Emu::GetExecVuCodeAddr();
-
-				int drawMode = 0;
-
-				if ((stripFlags & 0x400) != 0) {
-					drawMode = 1;
-				}
-
-				Renderer::GSVertexUnprocessed vtx;
-				memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
-				memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
-				memcpy(&vtx.XYZFlags, vtxStart + 0x20, sizeof(vtx.XYZFlags));
-
-				if (drawMode == 1) {
-					vtx.XYZFlags.fXYZ[0] = int12_to_float(vtx.XYZFlags.iXYZ[0]);
-					vtx.XYZFlags.fXYZ[1] = int12_to_float(vtx.XYZFlags.iXYZ[1]);
-					vtx.XYZFlags.fXYZ[2] = int12_to_float(vtx.XYZFlags.iXYZ[2]);
-				}
-
-				const uint vtxAnimMatrix = ((vtx.XYZFlags.flags & 0x7ff) - 0x3dc) / 4;
-
-				if (gHighlightStripIndex == stripIndex || vtxAnimMatrix == gHighlightAnimMatrixIndex) {
-					vtx.RGBA[0] = 0xff;
-					vtx.RGBA[1] = 0xff;
-					vtx.RGBA[2] = 0xff;
-					vtx.RGBA[3] = 0xff;
-				}
-
-				const uint primReg = gifTag.tag.PRIM;
-				const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
-
-				const uint skip = vtx.XYZFlags.flags & 0x8000;
-
-				const uint shiftedStripIndex = stripIndex << 16;
-				//vtx.XYZSkip.Skip |= shiftedStripIndex;
-				vtx.XYZFlags.flags |= (drawMode << 16);
-
-				Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
-
-				vtxStart += 0x30;
-			};
-		};
-
-		if ((pCurrentStrip->flags & 4) == 0) {
-			bool bCompletedPartial;
-
-			while (bCompletedPartial = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bCompletedPartial) {
-				VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
-				AddVertices();
-				pVifList = pVifList + incPacketSize * 0x10;
-			}
-
-			for (; fullMeshSectionCount != 0; fullMeshSectionCount = fullMeshSectionCount + -3) {
-
-				char* pVifListB = pVifList + incPacketSize * 0x10;
-				char* pVifListC = pVifList + incPacketSize * 0x20;
-
-				VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
-				AddVertices();
-				VU1Emu::ProcessVifList((edpkt_data*)pVifListB, false);
-				AddVertices();
-				VU1Emu::ProcessVifList((edpkt_data*)pVifListC, false);
-				AddVertices();
-
-				pVifList = pVifList + incPacketSize * 0x30;
-			}
-		}
+		FillVertexBufferData(pMesh->pSimpleMesh->GetVertexBufferData(), vertexBufferData);
 	}
 
-	PreviewerVertexBufferData* UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
+	Renderer::NativeVertexBufferData* UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 	{
 		ed_g2d_material* pStripMaterial;
 
@@ -234,7 +168,7 @@ namespace DebugMeshViewer {
 		return nullptr;
 	}
 
-	bool UpdateDrawBuffer(ed_3d_strip* pStrip, PreviewerVertexBufferData& vertexBufferData)
+	bool UpdateDrawBuffer(ed_3d_strip* pStrip, Renderer::NativeVertexBufferData& vertexBufferData)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
 

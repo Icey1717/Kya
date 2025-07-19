@@ -343,6 +343,7 @@ namespace Renderer
 	template<typename VertexType, typename IndexType>
 	void TraceUpdateSkip(uint32_t& skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m);
 
+	// We only get a vertex buffer from the engine, and we use this code to kick that single vertex into a draw buffer with both vertex and index data.
 	template<typename VertexType, typename IndexType>
 	void KickVertex(VertexType& vtx, GIFReg::GSPrim primReg, uint32_t skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer)
 	{

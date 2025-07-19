@@ -12121,7 +12121,8 @@ void ed3DPrepareMaterialBank(ed_Chunck* pMBNA, ed_g2d_manager* pTextureInfo)
 	return;
 }
 
-struct astruct_14 {
+struct astruct_14
+{
 	int* field_0x0;
 	int* field_0x4;
 	int* field_0x8;
