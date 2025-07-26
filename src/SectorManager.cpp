@@ -155,7 +155,7 @@ void CSectorManager::LevelLoading_Begin()
 	uVar12 = 0;
 	memset(auStack144, 0, 0x78);
 	this->nbSectors = 0;
-	this->count_0x368 = pcVar5->sectorCount_0x14;
+	this->count_0x368 = pcVar5->maxSectorId;
 
 	SECTOR_LOG(LogLevel::Info, "CSectorManager::LevelLoading_Begin Count: {}", this->count_0x368);
 
@@ -240,7 +240,7 @@ void CSectorManager::LevelLoading_Begin()
 		piVar2 = local_190;
 
 		for (int i = 0; i < 0x1e; i++) {
-			piVar2[i] = local_1a0->aSectorSubObj[i].field_0x4;
+			piVar2[i] = local_1a0->aSectorSubObj[i].bankSize;
 		}
 
 		iVar13 = 0;

@@ -37,7 +37,7 @@ struct LoadLoopObject_50 {
 	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
-	undefined4 field_0x20;
+	int levelId;
 	undefined4 field_0x24;
 	undefined4 field_0x28;
 	undefined4 field_0x2c;
@@ -123,8 +123,8 @@ struct S_COMPANION_INFO
 
 struct S_LVLNFO_SECTOR_V7_V9
 {
-	uint sectorIndex;
-	uint field_0x4;
+	uint sectorId;
+	uint sectBankSize;
 	int nbConditions;
 };
 
@@ -140,6 +140,33 @@ struct S_LVLNFO_TELEPORTERS_V7_V9
 });
 
 static_assert(sizeof(S_LVLNFO_TELEPORTERS_V7_V9) == 0x1c);
+
+struct S_LVLNFO_LEVEL_HEADER_V7
+{
+	int levelId;
+
+	char levelName[8];
+
+	int bankSizeLevel;
+	int bankSizeSect;
+	int bankSizeIOP;
+
+	uint hashA;
+	uint hashB;
+
+	int sectorStartIndex;
+	int nbSectors;
+
+	int field_0x28;
+
+	int nbTeleporters;
+
+	int field_0x30;
+
+	int nbLanguageFileNames;
+};
+
+static_assert(sizeof(S_LVLNFO_LEVEL_HEADER_V7) == 0x38);
 
 struct S_SUBSECTOR_INFO
 {
@@ -165,7 +192,7 @@ struct S_LEVEL_INFO {
 	int bankSizeLevel;
 	int bankSizeSect;
 	int bankSizeIOP;
-	int sectorCount_0x14;
+	int maxSectorId;
 	int maxElevatorId;
 	int sectorStartIndex;
 	int field_0x20;
@@ -285,10 +312,10 @@ public:
 	void Level_LoadObjectives(ByteCode* pMemoryStream);
 
 	void MoreLoadLoopObjectSetup(bool param_2);
-	void LevelsInfo_ReadHeader_V7_V9(char* fileData, S_LEVEL_INFO* pLevelInfo);
+	void LevelsInfo_ReadHeader_V7_V9(S_LVLNFO_LEVEL_HEADER_V7* pLevelInfoHeader, S_LEVEL_INFO* pLevelInfo);
 	int* LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* pFileBuffer, int count, S_LEVEL_INFO* pLevelInfo);
 	void LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
-	void LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* param_2, int nbObj, undefined4 param_4);
+	void LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* pLevelInfoLanguage, int nbLanguageFileNames, int levelId);
 	void Levels_LoadInfoBank();
 	void Episode_ComputeCurrent();
 	void Episode_LoadFromIniFile();

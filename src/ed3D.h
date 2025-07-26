@@ -411,7 +411,7 @@ struct ed_3d_hierarchy
 	union edF32MATRIX4* pShadowAnimMatrix;
 	struct ed_3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
-	char* pTextureInfo;
+	ed_Chunck* pTextureInfo;
 	ushort lodCount;
 	ushort flags_0x9e;
 	struct ed_3d_hierarchy_setup* pHierarchySetup;

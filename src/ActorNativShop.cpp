@@ -236,7 +236,7 @@ void CBehaviourNativShopSell::Init(CActor* pOwner)
 	(this->objData).pActor = (CActor*)0x0;
 	(this->objData).pNode = (edNODE*)0x0;
 	(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
-	(this->objData).pTextureInfo = (char*)0x0;
+	(this->objData).pTextureInfo = (ed_Chunck*)0x0;
 
 	CActor::SV_InstallMaterialId(this->materialId);
 
@@ -275,7 +275,7 @@ void CBehaviourNativShopSell::Term()
 	(this->objData).pActor = (CActor*)0x0;
 	(this->objData).pNode = (edNODE*)0x0;
 	(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
-	(this->objData).pTextureInfo = (char*)0x0;
+	(this->objData).pTextureInfo = (ed_Chunck*)0x0;
 
 	return;
 }
@@ -465,7 +465,7 @@ void CBehaviourNativShopSell::Draw()
 		(this->objData).pActor = (CActor*)0x0;
 		(this->objData).pNode = (edNODE*)0x0;
 		(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
-		(this->objData).pTextureInfo = (char*)0x0;
+		(this->objData).pTextureInfo = (ed_Chunck*)0x0;
 		return;
 	}
 
@@ -819,7 +819,7 @@ void CBehaviourNativShopSell::TermState(int oldState, int newState)
 			(this->objData).pActor = (CActor*)0x0;
 			(this->objData).pNode = (edNODE*)0x0;
 			(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
-			(this->objData).pTextureInfo = (char*)0x0;
+			(this->objData).pTextureInfo = (ed_Chunck*)0x0;
 
 			GameFlags = GameFlags & 0xffff7eff;
 		}
@@ -967,7 +967,7 @@ void CBehaviourNativShopSell::State_Entering_Init()
 	(this->objData).pActor = (CActor*)0x0;
 	(this->objData).pNode = (edNODE*)0x0;
 	(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
-	(this->objData).pTextureInfo = (char*)0x0;
+	(this->objData).pTextureInfo = (ed_Chunck*)0x0;
 
 	pCamera = (this->streamRefCamera).Get();
 	if (pCamera != (CCamera*)0x0) {
@@ -1498,7 +1498,7 @@ void CBehaviourNativShopSell::Display_Mts(float param_1, float param_2, edCTextS
 
 void ShopObjData::Display_Object(CActor* pActor)
 {
-	char* pcVar1;
+	ed_Chunck* pcVar1;
 	CinNamedObject30* pCVar2;
 	ed_g3d_manager* pG3D;
 	edNODE* peVar3;
@@ -1511,7 +1511,7 @@ void ShopObjData::Display_Object(CActor* pActor)
 		this->pActor = (CActor*)0x0;
 		this->pNode = (edNODE*)0x0;
 		this->pHierarchy = (ed_3d_hierarchy*)0x0;
-		this->pTextureInfo = (char*)0x0;
+		this->pTextureInfo = (ed_Chunck*)0x0;
 	}
 	else {
 		pcVar1 = (pActor->p3DHierNode->base).pTextureInfo;
@@ -1534,7 +1534,7 @@ void ShopObjData::Display_Object(CActor* pActor)
 			this->pActor = (CActor*)0x0;
 			this->pNode = (edNODE*)0x0;
 			this->pHierarchy = (ed_3d_hierarchy*)0x0;
-			this->pTextureInfo = (char*)0x0;
+			this->pTextureInfo = (ed_Chunck*)0x0;
 			this->pActor = pActor;
 			this->pTextureInfo = pcVar1;
 			peVar3 = ed3DHierarchyAddToScene(CFrontend::_scene_handle, pG3D, (char*)0x0);

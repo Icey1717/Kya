@@ -10194,11 +10194,11 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 			pObjHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
 			if (((pObjHash != (ed_hash_code*)0x0) && (sVar1 = pLod->renderType, sVar1 != 2)) && (sVar1 != 1)) {
 				if (sVar1 == 3) {
-					ed3DRenderSprite(pObjHash, reinterpret_cast<ed_hash_code*>(pHierarchy->pTextureInfo + 0x10));
+					ed3DRenderSprite(pObjHash, reinterpret_cast<ed_hash_code*>(pHierarchy->pTextureInfo + 1));
 				}
 				else {
 					if (sVar1 == 0) {
-						ed3DRenderObject(pObjHash, reinterpret_cast<ed_hash_code*>(pHierarchy->pTextureInfo + 0x10));
+						ed3DRenderObject(pObjHash, reinterpret_cast<ed_hash_code*>(pHierarchy->pTextureInfo + 1));
 					}
 				}
 			}
@@ -10254,20 +10254,20 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pHierarchy)
 			if (sVar3 == 3) {
 				IMPLEMENTATION_GUARD(
 					MeshHeader::ReadRenderTransform_002b0e80
-					(pLod->pObj, pHierarchy->pTextureInfo + 0x10);)
+					(pLod->pObj, pHierarchy->pTextureInfo + 1);)
 			}
 			else {
 				if (((sVar3 != 2) && (sVar3 != 1)) && (sVar3 == 0)) {
 					if ((pHierarchy->flags_0x9e & 0x100) == 0) {
 						ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchyForShadow Get texture hash code 0x{:x} -> 0x{:x}", (uintptr_t)pHierarchy, (uintptr_t)pHierarchy->pTextureInfo);
-						ed3DRenderObject((ed_hash_code*)LOAD_SECTION(pLod->pObj), (ed_hash_code*)(pHierarchy->pTextureInfo + 0x10));
+						ed3DRenderObject((ed_hash_code*)LOAD_SECTION(pLod->pObj), (ed_hash_code*)(pHierarchy->pTextureInfo + 1));
 					}
 					else {
 						cVar1 = pHierarchy->GlobalAlhaON;
 						pHierarchy->GlobalAlhaON = -1;
 						ed3DLod* peVar3 = ed3DHierarcGetLOD((ed_g3d_hierarchy*)pHierarchy, pHierarchy->lodCount - 1);
 						if (peVar3 != (ed3DLod*)0x0) {
-							ed3DRenderObject((ed_hash_code*)LOAD_SECTION(peVar3->pObj), (ed_hash_code*)(pHierarchy->pTextureInfo + 0x10));
+							ed3DRenderObject((ed_hash_code*)LOAD_SECTION(peVar3->pObj), (ed_hash_code*)(pHierarchy->pTextureInfo + 1));
 						}
 						pHierarchy->GlobalAlhaON = cVar1;
 					}
@@ -12657,7 +12657,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 	(pNewHierarchyNode->base).pLinkTransformData = (ed_3d_hierarchy*)LOAD_SECTION(pSourceHierarchy->pLinkTransformData);
 	(pNewHierarchyNode->base).field_0x94 = (undefined*)LOAD_SECTION(pSourceHierarchy->field_0x94);
-	(pNewHierarchyNode->base).pTextureInfo = (char*)LOAD_SECTION(pSourceHierarchy->pTextureInfo);
+	(pNewHierarchyNode->base).pTextureInfo = (ed_Chunck*)LOAD_SECTION(pSourceHierarchy->pTextureInfo);
 
 	ED3D_LOG(LogLevel::Info, "ed3DHierarchyAddNode Resolved texture hash code {:x} -> {:x}", (uintptr_t)pNewHierarchyNode, (uintptr_t)(pNewHierarchyNode->base).pTextureInfo);
 
@@ -14724,11 +14724,11 @@ ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
 {
 	ed_hash_code* peVar1;
 
-	if (pHier->pTextureInfo == (char*)0x0) {
+	if (pHier->pTextureInfo == (ed_Chunck*)0x0) {
 		peVar1 = (ed_hash_code*)0x0;
 	}
 	else {
-		peVar1 = (ed_hash_code*)((char*)pHier->pTextureInfo + sizeof(ed_Chunck));
+		peVar1 = (ed_hash_code*)(pHier->pTextureInfo + 1);
 	}
 
 	return peVar1;
@@ -14746,7 +14746,7 @@ int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier)
 
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
 {
-	char* __src;
+	ed_Chunck* __src;
 	ed_hash_code* pHashCode;
 	int iVar1;
 
@@ -14754,7 +14754,7 @@ void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
 	pHashCode = ed3DHierarchyGetMaterialBank(pHier);
 	iVar1 = ed3DG2DGetG2DNbMaterials(pHashCode);
 	memcpy(pData, __src, iVar1 * sizeof(ed_hash_code) + sizeof(ed_Chunck));
-	pHier->pTextureInfo = (char*)pData;
+	pHier->pTextureInfo = (ed_Chunck*)pData;
 	return pData;
 }
 
@@ -14764,7 +14764,7 @@ void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pT
 	uint uVar3;
 	ed_Chunck* puVar4;
 
-	puVar4 = reinterpret_cast<ed_Chunck*>((pHier->base).pTextureInfo);
+	puVar4 = (pHier->base).pTextureInfo;
 
 	if (puVar4->hash == HASH_CODE_MBNK) {
 		uVar3 = puVar4->size - 0x10U >> 4;

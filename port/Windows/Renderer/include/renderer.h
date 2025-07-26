@@ -209,6 +209,8 @@ namespace Renderer
 
 			int layerCount = 0;
 			int materialCount = 0;
+
+			uint64_t hash = 0;
 		};
 
 		SimpleTexture(const std::string inName, const Details& inDetails, const TextureRegisters& inTextureRegisters)

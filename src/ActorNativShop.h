@@ -34,7 +34,7 @@ struct ShopObjData
 	CActor* pActor;
 	edNODE* pNode;
 	ed_3d_hierarchy* pHierarchy;
-	char* pTextureInfo;
+	ed_Chunck* pTextureInfo;
 };
 
 class CBehaviourNativShopSell : public CBehaviour

@@ -58,7 +58,7 @@ struct SectorManagerSubObj {
 
 struct SectorManagerSubObjOther {
 	uint flags;
-	int field_0x4;
+	int bankSize;
 	int nbSectorConditions;
 	S_COMPANION_INFO* aCompanionInfo;
 };

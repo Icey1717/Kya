@@ -383,7 +383,7 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 		pLevelInfo->titleMsgHash = 0;
 		pLevelInfo->bankSizeLevel = 0;
 		pLevelInfo->bankSizeSect = 0;
-		pLevelInfo->sectorCount_0x14 = 0;
+		pLevelInfo->maxSectorId = 0;
 		pLevelInfo->maxElevatorId = 0;
 		pLevelInfo->field_0x20 = 0;
 		pLevelInfo->levelName[0] = '\0';
@@ -545,64 +545,67 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 edCBankCallback _gLevelsTableBankCallback = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
-void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, S_LEVEL_INFO* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(S_LVLNFO_LEVEL_HEADER_V7* pLevelInfoHeader, S_LEVEL_INFO* pLevelInfo)
 {
 	int iVar2;
 	SectorManagerSubObjOther* pLVar3;
 
-	pLevelInfo->titleMsgHash = ByteCode::BuildU64(*(uint*)(fileData + 0x18), *(uint*)(fileData + 0x1c));
+	pLevelInfo->titleMsgHash = ByteCode::BuildU64(pLevelInfoHeader->hashA, pLevelInfoHeader->hashB);
 	pLVar3 = pLevelInfo->aSectorSubObj;
 	iVar2 = 0;
-	pLevelInfo->field_0x20 = *(undefined4*)(fileData + 0x28);
-	pLevelInfo->bankSizeLevel = *(int*)(fileData + 0xc);
-	pLevelInfo->bankSizeSect = *(int*)(fileData + 0x10);
-	pLevelInfo->bankSizeIOP = *(int*)(fileData + 0x14);
-	pLevelInfo->sectorCount_0x14 = *(int*)(fileData + 0x24);
-	pLevelInfo->field_0x30 = *(int*)(fileData + 0x30);
-	pLevelInfo->sectorStartIndex = *(int*)(fileData + 0x20);
+	pLevelInfo->field_0x20 = pLevelInfoHeader->field_0x28;
+	pLevelInfo->bankSizeLevel = pLevelInfoHeader->bankSizeLevel;
+	pLevelInfo->bankSizeSect = pLevelInfoHeader->bankSizeSect;
+	pLevelInfo->bankSizeIOP = pLevelInfoHeader->bankSizeIOP;
+	pLevelInfo->maxSectorId = pLevelInfoHeader->nbSectors;
+	pLevelInfo->field_0x30 = pLevelInfoHeader->field_0x30;
+	pLevelInfo->sectorStartIndex = pLevelInfoHeader->sectorStartIndex;
+
 	do {
-		pLVar3->field_0x4 = 0;
+		pLVar3->bankSize = 0;
 		pLVar3->flags = 0;
 		iVar2 = iVar2 + 6;
 		pLVar3->nbSectorConditions = 0x0;
 		pLVar3->aCompanionInfo = 0;
-		pLVar3[1].field_0x4 = 0;
+		pLVar3[1].bankSize = 0;
 		pLVar3[1].flags = 0;
 		pLVar3[1].nbSectorConditions = 0x0;
 		pLVar3[1].aCompanionInfo = 0;
-		pLVar3[2].field_0x4 = 0;
+		pLVar3[2].bankSize = 0;
 		pLVar3[2].flags = 0;
 		pLVar3[2].nbSectorConditions = 0x0;
 		pLVar3[2].aCompanionInfo = 0;
-		pLVar3[3].field_0x4 = 0;
+		pLVar3[3].bankSize = 0;
 		pLVar3[3].flags = 0;
 		pLVar3[3].nbSectorConditions = 0x0;
 		pLVar3[3].aCompanionInfo = 0;
-		pLVar3[4].field_0x4 = 0;
+		pLVar3[4].bankSize = 0;
 		pLVar3[4].flags = 0;
 		pLVar3[4].nbSectorConditions = 0x0;
 		pLVar3[4].aCompanionInfo = 0;
-		pLVar3[5].field_0x4 = 0;
+		pLVar3[5].bankSize = 0;
 		pLVar3[5].flags = 0;
 		pLVar3[5].nbSectorConditions = 0x0;
 		pLVar3[5].aCompanionInfo = 0;
 		pLVar3 = pLVar3 + 6;
 	} while (iVar2 < 0x1e);
+
 	iVar2 = 8;
 	/* Set the name of the level we will load to memory */
-	pLevelInfo->levelName[0] = fileData[4];
-	pLevelInfo->levelName[1] = fileData[5];
-	pLevelInfo->levelName[2] = fileData[6];
-	pLevelInfo->levelName[3] = fileData[7];
-	pLevelInfo->levelName[4] = fileData[8];
-	pLevelInfo->levelName[5] = fileData[9];
-	pLevelInfo->levelName[6] = fileData[10];
-	pLevelInfo->levelName[7] = fileData[0xb];
+	pLevelInfo->levelName[0] = pLevelInfoHeader->levelName[0];
+	pLevelInfo->levelName[1] = pLevelInfoHeader->levelName[1];
+	pLevelInfo->levelName[2] = pLevelInfoHeader->levelName[2];
+	pLevelInfo->levelName[3] = pLevelInfoHeader->levelName[3];
+	pLevelInfo->levelName[4] = pLevelInfoHeader->levelName[4];
+	pLevelInfo->levelName[5] = pLevelInfoHeader->levelName[5];
+	pLevelInfo->levelName[6] = pLevelInfoHeader->levelName[6];
+	pLevelInfo->levelName[7] = pLevelInfoHeader->levelName[7];
 	do {
-		/* Make sure the 12 characters after the level name are clear */
+		/* Clear the last 4 characters. */
 		pLevelInfo->levelName[iVar2] = '\0';
 		iVar2 = iVar2 + 1;
 	} while (iVar2 < 0xc);
+
 	return;
 }
 
@@ -628,15 +631,15 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 	curSectorIndex = nbSectors;
 	if (nbSectors != 0) {
 		do {
-			if (pLevelInfo->sectorCount_0x14 < pLvlNfoSector->sectorIndex) {
-				pLevelInfo->sectorCount_0x14 = pLvlNfoSector->sectorIndex;
+			if (pLevelInfo->maxSectorId < pLvlNfoSector->sectorId) {
+				pLevelInfo->maxSectorId = pLvlNfoSector->sectorId;
 			}
 
-			LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 sectorIndex: 0x{:x}, field_0x4: 0x{:x}, nbConditions: 0x{:x}",
-				pLvlNfoSector->sectorIndex, pLvlNfoSector->field_0x4, pLvlNfoSector->nbConditions);
+			LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 sectorId: 0x{:x}, sectBankSize: 0x{:x}, nbConditions: 0x{:x}",
+				pLvlNfoSector->sectorId, pLvlNfoSector->sectBankSize, pLvlNfoSector->nbConditions);
 
-			pCurSectorSubObj = pLevelInfo->aSectorSubObj + pLvlNfoSector->sectorIndex;
-			pCurSectorSubObj->field_0x4 = pLvlNfoSector->field_0x4;
+			pCurSectorSubObj = pLevelInfo->aSectorSubObj + pLvlNfoSector->sectorId;
+			pCurSectorSubObj->bankSize = pLvlNfoSector->sectBankSize;
 
 			curConditionIndex = 0;
 			pCurConditionData = reinterpret_cast<int*>(pLvlNfoSector + 1);
@@ -685,8 +688,8 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 
 		if (nbSectors != 0) {
 			do {
-				if (pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorIndex].nbSectorConditions != 0) {
-					pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorIndex].aCompanionInfo = pCurCompanionInfo;
+				if (pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorId].nbSectorConditions != 0) {
+					pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorId].aCompanionInfo = pCurCompanionInfo;
 				}
 
 				curSectorIndex = 0;
@@ -723,14 +726,14 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 	}
 
 	if ((pLevelInfo->sectorStartIndex == -1) ||
-		(pLevelInfo->aSectorSubObj[pLevelInfo->sectorStartIndex].field_0x4 == 0)) {
+		(pLevelInfo->aSectorSubObj[pLevelInfo->sectorStartIndex].bankSize == 0)) {
 		curSectorIndex = 1;
 		pLVar3 = pLevelInfo;
-		while ((curSectorIndex <= pLevelInfo->sectorCount_0x14 &&
-			(pLVar3->aSectorSubObj[curSectorIndex].field_0x4 == 0))) {
+		while ((curSectorIndex <= pLevelInfo->maxSectorId &&
+			(pLVar3->aSectorSubObj[curSectorIndex].bankSize == 0))) {
 			curSectorIndex = curSectorIndex + 1;
 		}
-		if (pLevelInfo->sectorCount_0x14 < curSectorIndex) {
+		if (pLevelInfo->maxSectorId < curSectorIndex) {
 			pLevelInfo->sectorStartIndex = -1;
 		}
 		else {
@@ -741,7 +744,7 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 	return pCurConditionData;
 }
 
-void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* param_2, int nbObj, undefined4 param_4)
+void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* pLevelInfoLanguage, int nbLanguageFileNames, int levelId)
 {
 	int iVar1;
 	float fVar2;
@@ -752,12 +755,12 @@ void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V
 	float fVar6;
 
 	iVar1 = this->objCount_0x4218;
-	iVar4 = iVar1 + nbObj;
+	iVar4 = iVar1 + nbLanguageFileNames;
 	if (iVar4 < 0x41) {
 		this->objCount_0x4218 = iVar4;
 		iVar4 = 0;
 		pLVar6 = this->field_0x4220 + iVar1;
-		if (0 < nbObj) {
+		if (0 < nbLanguageFileNames) {
 			do {
 				pLVar6->field_0x24 = 0x20;
 				pLVar6->field_0x28 = 0;
@@ -765,20 +768,20 @@ void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V
 				pLVar6->field_0x40 = 0;
 				pLVar6->field_0x30 = gF32Vertex4Zero;
 
-				pLVar6->field_0x0 = param_2->field_0x0;
-				pLVar6->field_0x20 = param_4;
-				pLVar6->field_0x4 = param_2->field_0xc;
-				pLVar6->messageKey = ByteCode::BuildU64(param_2->keyA, param_2->keyB);
+				pLVar6->field_0x0 = pLevelInfoLanguage->field_0x0;
+				pLVar6->levelId = levelId;
+				pLVar6->field_0x4 = pLevelInfoLanguage->field_0xc;
+				pLVar6->messageKey = ByteCode::BuildU64(pLevelInfoLanguage->keyA, pLevelInfoLanguage->keyB);
 				iVar4 = iVar4 + 1;
-				fVar5 = param_2->field_0x14;
-				fVar6 = param_2->field_0x18;
-				pLVar6->field_0x10 = param_2->field_0x10;
-				param_2 = param_2 + 1;
+				fVar5 = pLevelInfoLanguage->field_0x14;
+				fVar6 = pLevelInfoLanguage->field_0x18;
+				pLVar6->field_0x10 = pLevelInfoLanguage->field_0x10;
+				pLevelInfoLanguage = pLevelInfoLanguage + 1;
 				pLVar6->field_0x14 = fVar5;
 				pLVar6->field_0x18 = fVar6;
 				pLVar6->field_0x1c = 1.0f;
 				pLVar6 = pLVar6 + 1;
-			} while (iVar4 < nbObj);
+			} while (iVar4 < nbLanguageFileNames);
 		}
 	}
 
@@ -842,7 +845,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "LevelScheduleManager::Levels_LoadInfoBank\n");
 
 	char cVar1;
-	int iVar2;
+	int curLevelId;
 	undefined4* puVar3;
 	edCBankBufferEntry* infoLevelsFileBuffer;
 	int curFileIndex;
@@ -852,7 +855,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	int iVar7;
 	int iVar8;
 	int iVar9;
-	int* fileData;
+	S_LVLNFO_LEVEL_HEADER_V7* pLevelInfoHeader;
 	edBANK_ENTRY_INFO outHeader;
 	char levelInfoFilePath[512];
 	edCBankBuffer bank;
@@ -875,21 +878,126 @@ void CLevelScheduler::Levels_LoadInfoBank()
 			bool bGetInfoSuccess = infoLevelsFileBuffer->get_info(curFileIndex, &outHeader, (char*)0x0);
 			puVar3 = (undefined4*)outHeader.fileBufferStart;
 			if (bGetInfoSuccess != false) {
-				fileData = (int*)(outHeader.fileBufferStart + 4);
+				pLevelInfoHeader = reinterpret_cast<S_LVLNFO_LEVEL_HEADER_V7*>(outHeader.fileBufferStart + 4);
 				if (true) {
 					switch (*(int*)outHeader.fileBufferStart) {
 					case 9:
-						iVar2 = *fileData;
-						if ((-1 < iVar2) && (iVar2 < 0x10)) {
-							pLevelInfo = &aLevelInfo[iVar2];
-							LevelsInfo_ReadHeader_V7_V9((char*)fileData, pLevelInfo);
-							LevelsInfo_ReadTeleporters_V7_V9(reinterpret_cast<S_LVLNFO_TELEPORTERS_V7_V9*>(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
-							puVar5 = LevelsInfo_ReadSectors_V7_V9(reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(puVar3 + 0xf + puVar3[0xc] * 7), puVar3[10], pLevelInfo);
-							LevelsInfo_ReadLanguageFileNames_V7_V9(reinterpret_cast<S_LVLNFO_LANGUAGE_V7_V9*>(puVar5), puVar3[0xe], *fileData);
-							iVar9 = puVar3[0xd];
-							puVar5 = puVar5 + puVar3[0xe] * 7;
+						curLevelId = pLevelInfoHeader->levelId;
+						if ((-1 < curLevelId) && (curLevelId < 0x10)) {
+							pLevelInfo = &aLevelInfo[curLevelId];
 
-							char* pLevelPath = reinterpret_cast<char*>(puVar5);
+#if 0
+							if (curLevelId == 0xf) {
+								// Hotswap for level T
+
+								struct LevelT
+								{
+									S_LVLNFO_LEVEL_HEADER_V7 header;
+									S_LVLNFO_TELEPORTERS_V7_V9 teleporters[0];
+									S_LVLNFO_SECTOR_V7_V9 sectors[12];
+								} levelT;
+
+								memset(&levelT, 0, sizeof(LevelT));
+
+								pLevelInfoHeader = &levelT.header;
+
+								pLevelInfoHeader->levelName[0] = 'L';
+								pLevelInfoHeader->levelName[1] = 'E';
+								pLevelInfoHeader->levelName[2] = 'V';
+								pLevelInfoHeader->levelName[3] = 'E';
+								pLevelInfoHeader->levelName[4] = 'L';
+								pLevelInfoHeader->levelName[5] = '_';
+								pLevelInfoHeader->levelName[6] = 'T';
+
+								int levelId;
+
+								char levelName[8];
+
+								int bankSizeLevel;
+								int bankSizeSect;
+								int bankSizeIOP;
+
+								uint hashA;
+								uint hashB;
+
+								int sectorStartIndex;
+								int nbSectors;
+
+								int field_0x28;
+
+								int nbTeleporters;
+
+								int field_0x30;
+
+								int nbLanguageFileNames;
+
+								pLevelInfoHeader->bankSizeLevel = 0x2a3800;
+								pLevelInfoHeader->bankSizeSect = 0x6f4000;
+								pLevelInfoHeader->bankSizeIOP = 0x57000;
+								pLevelInfoHeader->sectorStartIndex = 1;
+								pLevelInfoHeader->nbSectors = 12;
+								pLevelInfoHeader->nbTeleporters = 0;
+								
+
+								levelT.sectors[0].sectorId = 1;
+								levelT.sectors[0].sectBankSize = 0x6f4000;
+								levelT.sectors[0].nbConditions = 0;
+
+								levelT.sectors[1].sectorId = 2;
+								levelT.sectors[1].sectBankSize = 4298 * 1024;
+								levelT.sectors[1].nbConditions = 0;
+
+								levelT.sectors[2].sectorId = 3;
+								levelT.sectors[2].sectBankSize = 4298 * 1024;
+								levelT.sectors[2].nbConditions = 0;
+
+								levelT.sectors[3].sectorId = 4;
+								levelT.sectors[3].sectBankSize = 4298 * 1024;
+								levelT.sectors[3].nbConditions = 0;
+
+								levelT.sectors[4].sectorId = 5;
+								levelT.sectors[4].sectBankSize = 1252 * 1024;
+								levelT.sectors[4].nbConditions = 0;
+
+								levelT.sectors[5].sectorId = 6;
+								levelT.sectors[5].sectBankSize = 40 * 1024;
+								levelT.sectors[5].nbConditions = 0;
+
+								levelT.sectors[6].sectorId = 7;
+								levelT.sectors[6].sectBankSize = 28 * 1024;
+								levelT.sectors[6].nbConditions = 0;
+
+								levelT.sectors[7].sectorId = 8;
+								levelT.sectors[7].sectBankSize = 932 * 1024;
+								levelT.sectors[7].nbConditions = 0;
+
+								levelT.sectors[8].sectorId = 9;
+								levelT.sectors[8].sectBankSize = 28 * 1024;
+								levelT.sectors[8].nbConditions = 0;
+
+								levelT.sectors[9].sectorId = 10;
+								levelT.sectors[9].sectBankSize = 226 * 1024;
+								levelT.sectors[9].nbConditions = 0;
+
+								levelT.sectors[10].sectorId = 11;
+								levelT.sectors[10].sectBankSize = 28 * 1024;
+								levelT.sectors[10].nbConditions = 0;
+
+								levelT.sectors[11].sectorId = 12;
+								levelT.sectors[11].sectBankSize = 196 * 1024;
+								levelT.sectors[11].nbConditions = 0;
+							}
+#endif
+
+							LevelsInfo_ReadHeader_V7_V9(pLevelInfoHeader, pLevelInfo);
+							S_LVLNFO_TELEPORTERS_V7_V9* pTeleporters = reinterpret_cast<S_LVLNFO_TELEPORTERS_V7_V9*>(pLevelInfoHeader + 1);
+							LevelsInfo_ReadTeleporters_V7_V9(pTeleporters, pLevelInfoHeader->nbTeleporters, pLevelInfo);
+							S_LVLNFO_SECTOR_V7_V9* pSectors = reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(pTeleporters + pLevelInfoHeader->nbTeleporters);
+							puVar5 = LevelsInfo_ReadSectors_V7_V9(pSectors, pLevelInfoHeader->nbSectors, pLevelInfo);
+							S_LVLNFO_LANGUAGE_V7_V9* pLanguages = reinterpret_cast<S_LVLNFO_LANGUAGE_V7_V9*>(puVar5);
+							LevelsInfo_ReadLanguageFileNames_V7_V9(pLanguages, pLevelInfoHeader->nbLanguageFileNames, pLevelInfoHeader->levelId);
+							iVar9 = pLevelInfoHeader->field_0x30;
+							char* pLevelPath = reinterpret_cast<char*>(pLanguages + pLevelInfoHeader->nbLanguageFileNames);
 
 							if (1 < iVar9) {
 								iVar9 = 1;
@@ -905,16 +1013,18 @@ void CLevelScheduler::Levels_LoadInfoBank()
 											iVar7 = iVar6 + 1;
 											pLevelInfo->levelPath[iVar6] = *pLevelPath;
 										}
+
 										cVar1 = *pLevelPath;
 										pLevelPath = pLevelPath + 1;
 										iVar6 = iVar7;
 									} while (cVar1 != '\0');
+
 									iVar8 = iVar8 + 1;
 									pLevelInfo = pLevelInfo + 1;
 								} while (iVar8 < iVar9);
 							}
 
-							this->field_0x4210 = this->field_0x4210 + *(int*)(this->levelPath + iVar2 * 0x418 + -8 + 0xb0);
+							this->field_0x4210 = this->field_0x4210 + this->aLevelInfo[curLevelId].field_0x20;
 						}
 					}
 				}
@@ -1910,12 +2020,10 @@ void CLevelScheduler::LevelLoading_Begin()
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	cachedNextLevelID = nextLevelID;
 	memset(&bankContainer, 0, sizeof(edCBankInstall));
-	levelIOPBank.initialize(aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1,
-		&bankContainer);
+	levelIOPBank.initialize(aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1, &bankContainer);
 	levelIOPBank.bank_buffer_setcb(TableBankCallback);
 	/* / + LevelIOP.bnk */
-	edStrCatMulti(filePath, levelPath,
-		aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
+	edStrCatMulti(filePath, levelPath, aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
 	bankContainer.filePath = filePath;
 	bankContainer.pObjectReference = (void*)0x0;
 	bankContainer.fileFlagA = 4;
