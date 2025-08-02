@@ -3972,7 +3972,7 @@ int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	uint uVar5;
 
 	if (msg == 0x7a) {
-		CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
+		CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
 	}
 	else {
 		if (msg == 0x14) {
@@ -3982,8 +3982,8 @@ int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 		}
 
 		if (msg == 0x12) {
-			CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
-			iVar2 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
+			CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
+			iVar2 = CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
 			if (0 < iVar2) {
 				pCVar1 = this->pOwner;
 				uVar5 = pCVar1->GetStateFlags(pCVar1->actorState);
@@ -3999,8 +3999,8 @@ int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 			return 0;
 		}
 
-		CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
-		iVar2 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
+		CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
+		iVar2 = CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
 		if (iVar2 == 0) {
 			this->field_0x16b4 = 0;
 			if (this->field_0x8 == 0xffffffff) {

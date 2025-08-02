@@ -274,7 +274,7 @@ void CActorCompanion::Reset()
 
 	SetState(0xe, -1);
 
-	bHasCompanion = CLevelScheduler::ScenVar_Get(SCENE_VAR_HAS_COMPANION);
+	bHasCompanion = CLevelScheduler::ScenVar_Get(SCN_GAME_COMPANION);
 
 	iVar4 = 2;
 	if (bHasCompanion == 0) {
@@ -881,7 +881,7 @@ void CBehaviourCompanion::Manage()
 	pCVar7 = CScene::ptable.g_EventManager_006f5080;
 
 	if (this->pOwner->actorState == 0xd) {
-		if (CLevelScheduler::ScenVar_Get(SCENE_VAR_HAS_COMPANION) == 0) {
+		if (CLevelScheduler::ScenVar_Get(SCN_GAME_COMPANION) == 0) {
 			return;
 		}
 
@@ -1215,7 +1215,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 
 	this->pOwner->SetState(0xe, -1);
 
-	if (CLevelScheduler::ScenVar_Get(SCENE_VAR_HAS_COMPANION) == 0) {
+	if (CLevelScheduler::ScenVar_Get(SCN_GAME_COMPANION) == 0) {
 		this->pOwner->SetState(0xd, -1);
 	}
 
@@ -1346,7 +1346,7 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		}
 		else {
 			if (msg == 0x5c) {
-				CLevelScheduler::ScenVar_Set(3, 1);
+				CLevelScheduler::ScenVar_Set(SCN_GAME_COMPANION, 1);
 
 				this->pOwner->flags = this->pOwner->flags | 2;
 				this->pOwner->flags = this->pOwner->flags & 0xfffffffe;
@@ -1363,7 +1363,7 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			}
 			else {
 				if (msg == 0x5d) {
-					CLevelScheduler::ScenVar_Set(3, 0);
+					CLevelScheduler::ScenVar_Set(SCN_GAME_COMPANION, 0);
 
 					this->pOwner->SetState(0xe, -1);
 

@@ -353,11 +353,11 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->jokeWarnRadius = fVar13;
 	this->bCanUseCheats = 0;
 	//this->pCameraViewBase_0xaa8 = (CCamera*)0x0;
-	const int maxHealth = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
+	const int maxHealth = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 	assert(maxHealth != 0);
 	this->lifeInterface.SetValueMax((float)maxHealth);
 
-	this->magicInterface.SetValueMax((float)(CLevelScheduler::ScenVar_Get(SCENE_VAR_CUR_MAGIC) * CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC)));
+	this->magicInterface.SetValueMax((float)(CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_GAUGE) * CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE)));
 	this->magicInterface.SetTransit(0.0f);
 	this->magicInterface.SetValue((float)CLevelScheduler::_gGameNfo.nbMagic);
 
@@ -610,14 +610,14 @@ void CActorHeroPrivate::Init()
 
 	this->bIsSettingUp = 0;
 
-	DoMessage(this, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY));
+	DoMessage(this, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE));
 
 	if (this->pActorBoomy != (CActorBoomy*)0x0) {
-		local_8 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+		local_8 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 		DoMessage(this->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)local_8);
 	}
 
-	DoMessage(this, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING));
+	DoMessage(this, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT));
 
 	local_10 = 0;
 	DoMessage(this, MESSAGE_RECEPTACLE_CHANGED, (MSG_PARAM)0);
@@ -762,7 +762,7 @@ void CActorHeroPrivate::GetPossibleAction()
 
 	if (this->heroActionParams.actionId == 0xd) {
 		this->heroActionParams.actionId = 0;
-		iVar5 = CLevelScheduler::ScenVar_Get(0xd);
+		iVar5 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_JAMGUT_RIDE);
 		if ((iVar5 == 0) || (pCVar6 = GetBehaviour(8), pCVar6 == (CBehaviour*)0x0)) {
 			iVar5 = this->actorState;
 			if ((2 < iVar5 - 0x73U) && ((iVar5 != 0x7a && (iVar5 != 0x7d)))) {
@@ -799,7 +799,7 @@ LAB_00346f50:
 							uVar2 = pSVar7->flags_0x4 & 0x100;
 						}
 
-						if ((((uVar2 != 0) && (uVar2 = TestState_IsSliding(0xffffffff), uVar2 == 0)) && (this->dynamic.linearAcceleration < 0.1f)) && (iVar5 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY), iVar5 < 1)) {
+						if ((((uVar2 != 0) && (uVar2 = TestState_IsSliding(0xffffffff), uVar2 == 0)) && (this->dynamic.linearAcceleration < 0.1f)) && (iVar5 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE), iVar5 < 1)) {
 							this->heroActionParams.actionId = HERO_ACTION_ID_JOKE;
 						}
 					}
@@ -1774,22 +1774,22 @@ bool CActorHeroPrivate::ManageActions()
 	pLifeInterface->field_0x10 = 0;
 
 	if (((GetStateFlags(this->actorState) & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
-		valueMax = (float)(CLevelScheduler::ScenVar_Get(SCENE_VAR_CUR_MAGIC) * CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC));
+		valueMax = (float)(CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_GAUGE) * CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE));
 		fVar12 = this->magicInterface.GetValueMax();
 
 		if (valueMax != fVar12) {
-			iVar5 = CLevelScheduler::ScenVar_Get(0x13);
+			iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
 			if ((float)iVar5 < valueMax) {
-				iVar5 = CLevelScheduler::ScenVar_Get(0x13);
+				iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
 				valueMax = (float)iVar5;
-				iVar5 = CLevelScheduler::ScenVar_Get(0x13);
-				iVar6 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC);
+				iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
+				iVar6 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE);
 
 				if (iVar6 == 0) {
 					trap(7);
 				}
 
-				CLevelScheduler::ScenVar_Set(SCENE_VAR_CUR_MAGIC, iVar5 / iVar6);
+				CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_GAUGE, iVar5 / iVar6);
 			}
 
 			this->magicInterface.SetValueMax(valueMax);
@@ -2180,7 +2180,7 @@ void CActorHeroPrivate::UpdateMedallion()
 	int iVar1;
 	uint uVar2;
 
-	iVar1 = CLevelScheduler::ScenVar_Get(0xf);
+	iVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_RECEPTACLE);
 	if (iVar1 == 0) {
 		this->pAnimationController->AddDisabledBone(this->medallionBone);
 	}
@@ -2844,7 +2844,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 
 	const uint stateHeroFlags = GetStateHeroFlags(newState);
 	const uint onToboggan = TestState_IsOnAToboggan(stateHeroFlags);
-	if (((onToboggan != 0) && (iVar2 = CLevelScheduler::ScenVar_Get(0x10), 0 < iVar2)) && (newState != 0xef)) {
+	if (((onToboggan != 0) && (iVar2 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD), 0 < iVar2)) && (newState != 0xef)) {
 		pStateCfg = GetStateCfg(newState);
 		animType = pStateCfg->animId + 0xa;
 	}
@@ -2883,7 +2883,7 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 	if (behaviourId == 8) {
 		IMPLEMENTATION_GUARD(
 		GetBehaviour(8);
-		CLevelScheduler::ScenVar_Get(0xd);
+		CLevelScheduler::ScenVar_Get(SCN_ABILITY_JAMGUT_RIDE);
 		local_18 = 0x42c80000;
 		local_10 = (CActor*)0x0;
 		local_30.x = (float)this->pCollisionData;
@@ -3072,7 +3072,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	pLVar7 = CLevelScheduler::gThis;
 	if (msg == 0x8c) {
 		IMPLEMENTATION_GUARD(
-		iVar13 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
+		iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 		(*(code*)(this->lifeInterface.pVtable)->SetValue)
 			((float)iVar13, &this->lifeInterface);
 		fVar25 = (float)(*(code*)(this->lifeInterface.pVtable)->GetValue)
@@ -3131,17 +3131,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			if (this->field_0xd28 == 0) {
 				if (CLevelScheduler::gThis->currentLevelID == 0xd) {
 					if (pMsgParam == (void*)0xb5f) {
-						CLevelScheduler::ScenVar_Set(9, 0);
+						CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, 0);
 					}
 					else {
 						if (pMsgParam == (void*)0x452) {
-							CLevelScheduler::ScenVar_Set(9, 0);
-							CLevelScheduler::ScenVar_Set(10, 0x3f);
+							CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, 0);
+							CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, 0x3f);
 						}
 						else {
 							if (pMsgParam == (void*)0x8a0) {
-								CLevelScheduler::ScenVar_Set(9, 1);
-								CLevelScheduler::ScenVar_Set(10, 0);
+								CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, 1);
+								CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, 0);
 							}
 						}
 					}
@@ -3312,7 +3312,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			(*(code*)(CScene::ptable.g_FrontendManager_00451680)->pManagerFunctionData[1].field_0x0)
 				(CScene::ptable.g_FrontendManager_00451680, 0, &this->field_0xee4);
-			iVar13 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
+			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 			CLifeInterface::SetValueMax((float)iVar13, &this->field_0xee4);
 			(*(code*)(this->pVTable)->LifeRestore)(this);
 			pFVar8 = CScene::ptable.g_FrontendManager_00451680;
@@ -3786,19 +3786,19 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 		if (msg == 0x85) {
 			IMPLEMENTATION_GUARD(
-			iVar14 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
-			iVar13 = CLevelScheduler::ScenVar_Get(0x15);
+			iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
+			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 			iVar14 = iVar14 + iVar13;
-			iVar13 = CLevelScheduler::ScenVar_Get(0x16);
+			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
 			if (iVar13 < iVar14) {
-				iVar14 = CLevelScheduler::ScenVar_Get(0x16);
+				iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
 			}
 			pCVar11 = (*(CActorHero::_gThis->pVTable)->GetLifeInterfaceOther)
 				((CActor*)CActorHero::_gThis);
-			CLevelScheduler::ScenVar_Set(0x14, iVar14);
+			CLevelScheduler::ScenVar_Set(SCN_LEVEL_LIFE_GAUGE, iVar14);
 			CLifeInterface::SetValueMax((float)iVar14, pCVar11);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-			iVar13 = CLevelScheduler::ScenVar_Get(0x15);
+			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 			(*(code*)pCVar11->pVtable->SetValue)(fVar25 + (float)iVar13, pCVar11);
 			(*(code*)pCVar11->pVtable->Activate)(pCVar11, 1);)
 			goto LAB_00344ed0;
@@ -5634,7 +5634,7 @@ LAB_00341590:
 				CCameraManager::PushCamera(pCVar5, *(CCamera**)&this->field_0x15bc, 1);
 				this->field_0x1a54 = 1;
 				this->field_0x1b68 = 0;
-				uVar8 = CLevelScheduler::ScenVar_Get(0xe);
+				uVar8 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BINOCULARS);
 				(**(code**)(*(int*)&this->field_0xc84 + 8))(&this->field_0xc84, uVar8);
 			}
 		);
@@ -6416,7 +6416,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		}
 	}
 
-	uVar9 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
+	uVar9 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 	if ((uVar9 & 0x10000) != 0) {
 		uVar9 = 0;
 	}
@@ -14631,34 +14631,34 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 
 bool CActorHeroPrivate::EvolutionBoomyCanControl()
 {
-	return 2 < CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+	return 2 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
 bool CActorHeroPrivate::EvolutionBoomyCanSnipe()
 {
-	return 1 < CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+	return 1 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
 bool CActorHeroPrivate::EvolutionBoomyCanLaunch()
 {
-	return 0 < CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+	return 0 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
 int CActorHeroPrivate::EvolutionBounceCanJump()
 {
-	return CLevelScheduler::ScenVar_Get(SCENE_VAR_BOUNCE_JUMP);
+	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_JUMP_BOUNCE );
 }
 
 bool CActorHeroPrivate::EvolutionCanClimb()
 {
-	return CLevelScheduler::ScenVar_Get(SCENE_VAR_CLIMB);
+	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_CLIMB);
 }
 
 bool CActorHeroPrivate::EvolutionTobogganCanJump()
 {
 	int iVar1;
 
-	iVar1 = CLevelScheduler::ScenVar_Get(0x10);
+	iVar1 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD);
 	return 0 < iVar1;
 }
 
@@ -14666,7 +14666,7 @@ bool CActorHeroPrivate::EvolutionTobogganUnknown()
 {
 	int iVar1;
 
-	iVar1 = CLevelScheduler::ScenVar_Get(0x10);
+	iVar1 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD);
 	return 1 < iVar1;
 }
 
@@ -16853,7 +16853,7 @@ void CActorHeroPrivate::ProcessDeath()
 				if (0.0f < fVar7 - this->field_0x2e4) {
 					iVar4 = CLevelScheduler::ScenVar_Get(4);
 					if (iVar4 == 0) {
-						iVar4 = CLevelScheduler::ScenVar_Get(0x14);
+						iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 						GetLifeInterface()->SetValue(iVar4);
 						fVar7 = GetLifeInterface()->GetValue();
 						fVar8 = this->magicInterface.GetValue();
@@ -16886,7 +16886,7 @@ void CActorHeroPrivate::ProcessDeath()
 					this->field_0x2e4 = 0.0f;
 					ActorTimeFunc_00325c40(20.0f, 0);
 
-					iVar4 = CLevelScheduler::ScenVar_Get(0x14);
+					iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 					GetLifeInterface()->SetValue(iVar4);
 					fVar7 = GetLifeInterface()->GetValue();
 					fVar8 = this->magicInterface.GetValue();
@@ -16999,7 +16999,7 @@ bool FUN_0034ccb0(void)
 {
 	uint uVar1;
 
-	uVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
+	uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 	if ((uVar1 & 0x10000) != 0) {
 		uVar1 = 0;
 	}
@@ -17038,7 +17038,7 @@ bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
 {
 	uint uVar1;
 
-	uVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
+	uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 	return (pCombo->field_0x4.field_0x0byte & uVar1) != 0;
 }
 
@@ -17461,7 +17461,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 				IMPLEMENTATION_GUARD(
 				uVar6 = this->pHero->TestState_IsOnAToboggan(0xffffffff);
 
-				if ((uVar6 == 0) || (iVar7 = CLevelScheduler::ScenVar_Get(0x10), iVar7 < 2)) {
+				if ((uVar6 == 0) || (iVar7 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD), iVar7 < 2)) {
 					iVar7 = 0;
 				}
 				else {

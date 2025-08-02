@@ -402,7 +402,7 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 
 	iVar6 = this->nbExtraFills;
 	fVar9 = this->field_0x388;
-	fVar5 = (float)CLevelScheduler::ScenVar_Get(0x15);
+	fVar5 = (float)CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 	this->nbExtraFills = 0;
 	fVar7 = fVar9 - (float)iVar6 * fVar5;
 	fVar8 = value;
@@ -552,13 +552,13 @@ void CFrontendLifeGauge::UpdateInterface()
 
 void CFrontendLifeGauge::UpdateField0x380()
 {
-	int iVar3 = CLevelScheduler::ScenVar_Get(0x15);
+	int iVar3 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 
 	if (iVar3 == 0) {
 		trap(7);
 	}
 
-	this->nbExtraLifeGauges = CLevelScheduler::ScenVar_Get(0x14) / iVar3 + -1;
+	this->nbExtraLifeGauges = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE) / iVar3 + -1;
 }
 
 void CFrontendLifeGauge::UpdateInternal()

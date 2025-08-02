@@ -426,5 +426,5 @@ bool CInterfaceEnemyCount::Manage()
 
 float CInterfaceEnemyCount::GetValue()
 {
-	return CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
+	return CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS);
 }

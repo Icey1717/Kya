@@ -1020,7 +1020,7 @@ public:
 	void DisableFightAction();
 
 	bool FUN_00173de0(CActorFighter* pAdversary);
-	bool FUN_00174130();
+	bool CanBeExorcised();
 
 	bool IsExorcizable(CActorHero* pHero);
 	int GetExorciseAnim();

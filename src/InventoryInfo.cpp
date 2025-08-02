@@ -171,12 +171,12 @@ void CInventoryInfo::ObjectPurchased()
 
 	switch (this->purchaseId) {
 	case INVENTORY_ITEM_BASE_BOOMY:
-		if (CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY) < 1) {
+		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < 1) {
 			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (void*)1);
 			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (void*)1);
 		}
 
-		CLevelScheduler::ScenVar_Set(SCENE_VAR_BOOMY, 1);
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, 1);
 		break;
 	case INVENTORY_ITEM_WHITE_BRACELET:
 	case INVENTORY_ITEM_YELLOW_BRACELET:
@@ -186,9 +186,9 @@ void CInventoryInfo::ObjectPurchased()
 	case INVENTORY_ITEM_BLACK_BRACELET:
 	case INVENTORY_ITEM_SILVER_BRACELET:
 	case INVENTORY_ITEM_GOLD_BRACELET:
-		uVar2 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 		uVar2 = uVar2 | 1 << (this->purchaseId - 5U & 0x1f);
-		CLevelScheduler::ScenVar_Set(SCENE_VAR_FIGHT_RING, uVar2);
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, uVar2);
 		this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_FIGHT_RING_CHANGED, (void*)uVar2);
 		break;
 	default:
@@ -211,15 +211,15 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 		uVar2 = CLevelScheduler::ScenVar_Get(8);
 		break;
 	case INVENTORY_ITEM_BASE_BOOMY:
-		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+		iVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 		uVar2 = iVar1 < 1 ^ 1;
 		break;
 	case INVENTORY_ITEM_SILVER_BOOMY:
-		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+		iVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 		uVar2 = iVar1 < 2 ^ 1;
 		break;
 	case INVENTORY_ITEM_GOLD_BOOMY:
-		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+		iVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 		uVar2 = iVar1 < 3 ^ 1;
 		break;
 	case INVENTORY_ITEM_WHITE_BRACELET:
@@ -230,17 +230,17 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 	case INVENTORY_ITEM_BLACK_BRACELET:
 	case INVENTORY_ITEM_SILVER_BRACELET:
 	case INVENTORY_ITEM_GOLD_BRACELET:
-		uVar2 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 		uVar2 = 1 << (objId - 5U & 0x1f) & uVar2;
 		break;
 	case 0xd:
-		uVar2 = CLevelScheduler::ScenVar_Get(0xb);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_MAGIC_EXORCISM);
 		break;
 	case 0xe:
-		uVar2 = CLevelScheduler::ScenVar_Get(0xc);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_MAGIC_REGENERATE);
 		break;
 	case 0xf:
-		uVar2 = CLevelScheduler::ScenVar_Get(0xd);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_JAMGUT_RIDE);
 		break;
 	case 0x10:
 		uVar2 = 1;
@@ -249,15 +249,15 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 		uVar2 = 1;
 		break;
 	case 0x12:
-		iVar1 = CLevelScheduler::ScenVar_Get(0x10);
+		iVar1 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD);
 		uVar2 = iVar1 < 1 ^ 1;
 		break;
 	case 0x13:
-		iVar1 = CLevelScheduler::ScenVar_Get(0x10);
+		iVar1 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD);
 		uVar2 = iVar1 < 2 ^ 1;
 		break;
 	case 0x14:
-		uVar2 = CLevelScheduler::ScenVar_Get(0xe);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BINOCULARS);
 		break;
 	case 0x15:
 	case 0x16:

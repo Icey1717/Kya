@@ -1195,7 +1195,7 @@ void CLevelScheduler::Episode_ComputeCurrent()
 
 int CLevelScheduler::GetBoomyLevel() 
 {
-	return _gScenVarInfo[SCENE_VAR_BOOMY].currentValue;
+	return _gScenVarInfo[SCN_ABILITY_BOOMY_TYPE].currentValue;
 }
 
 ulong gFightHashCodes[8] = 
@@ -1216,9 +1216,9 @@ int CLevelScheduler::GetFightLevel()
 	uint uVar1;
 
 	fightLevel = 0;
-	uVar1 = _gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue;
+	uVar1 = _gScenVarInfo[SCN_ABILITY_FIGHT].currentValue;
 
-	if (_gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue != 0) {
+	if (_gScenVarInfo[SCN_ABILITY_FIGHT].currentValue != 0) {
 		do {
 			uVar1 = uVar1 >> 1;
 			fightLevel = fightLevel + 1;
@@ -2771,11 +2771,11 @@ void CLevelScheduler::OnSceneVarSet()
 	pHero = CActorHero::_gThis;
 	if (CActorHero::_gThis != (CActorHero*)0x0) {
 		if (CActorHero::_gThis->pActorBoomy != (CActorBoomy*)0x0) {
-			pHero->DoMessage(pHero, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_BOOMY].currentValue);
-			pHero->DoMessage(pHero->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_BOOMY].currentValue);
+			pHero->DoMessage(pHero, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCN_ABILITY_BOOMY_TYPE].currentValue);
+			pHero->DoMessage(pHero->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCN_ABILITY_BOOMY_TYPE].currentValue);
 		}
 
-		pHero->DoMessage(pHero, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue);
+		pHero->DoMessage(pHero, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)_gScenVarInfo[SCN_ABILITY_FIGHT].currentValue);
 		pHero->DoMessage(pHero, MESSAGE_RECEPTACLE_CHANGED, 0);
 	}
 	return;

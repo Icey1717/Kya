@@ -827,15 +827,15 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		IMPLEMENTATION_GUARD(
 		if (this->pOwner->typeID == ACTOR_HERO_PRIVATE) {
 			if (param_2 == 0x11) {
-				CLevelScheduler::ScenVar_Set(0xf, 1);
+				CLevelScheduler::ScenVar_Set(SCN_ABILITY_RECEPTACLE, 1);
 			}
 			else {
 				if (param_2 == 0x10) {
-					CLevelScheduler::ScenVar_Set(10, param_3);
+					CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, param_3);
 				}
 				else {
 					if (param_2 == 0xf) {
-						CLevelScheduler::ScenVar_Set(9, param_3);
+						CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, param_3);
 					}
 				}
 			}

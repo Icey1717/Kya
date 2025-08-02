@@ -479,7 +479,7 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 		S_STREAM_EVENT_CAMERA::Manage(this->field_0x1228, (CActor*)this);
 		pCVar7 = (*((pCVar6->character).characterBase.base.base.pVTable)->GetLifeInterface)((CActor*)pCVar6);
 		fVar12 = CLifeInterface::GetValueMax(pCVar7);
-		iVar8 = CLevelScheduler::ScenVar_Get(0x15);
+		iVar8 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 		pTVar9 = GetTimer();
 		fVar12 = (fVar12 / (float)iVar8) * pTVar9->cutsceneDeltaTime * 10.0;
 		lVar11 = (*(code*)(((pBehaviour->field_0x0).pVTable)->actorBaseVTable).field_0x4c)(pBehaviour);
@@ -758,7 +758,7 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 			lVar6 = UnknownFunction();
 			if ((lVar6 == 0) &&
-				((iVar5 = CLevelScheduler::ScenVar_Get(0xc), iVar5 == 0 || (fVar8 = pHero->GetMagicalForce(), fVar8 <= 0.0f)))) {
+				((iVar5 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_MAGIC_REGENERATE), iVar5 == 0 || (fVar8 = pHero->GetMagicalForce(), fVar8 <= 0.0f)))) {
 				return 4;
 			}
 

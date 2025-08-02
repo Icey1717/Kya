@@ -5660,10 +5660,9 @@ bool CActorWolfen::FUN_00173de0(CActorFighter* pAdversary)
 }
 
 
-bool CActorWolfen::FUN_00174130()
+bool CActorWolfen::CanBeExorcised()
 {
 	bool bVar1;
-	int iVar2;
 
 	bVar1 = this->field_0xb80 == 1;
 	if ((bVar1) && (bVar1 = true, this->field_0xb84 <= this->field_0xb88)) {
@@ -5671,8 +5670,7 @@ bool CActorWolfen::FUN_00174130()
 	}
 
 	if (bVar1) {
-		iVar2 = CLevelScheduler::ScenVar_Get(0xb);
-		bVar1 = iVar2 != 0;
+		bVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_MAGIC_EXORCISM) != 0;
 	}
 
 	return bVar1;
@@ -10106,7 +10104,7 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 		}
 		else {
 			if (msg == 0x2f) {
-				if ((pSender->typeID == 6) && (this->pOwner->FUN_00174130() != false)) {
+				if ((pSender->typeID == 6) && (this->pOwner->CanBeExorcised() != false)) {
 					if (this->pOwner->IsExorcizable(static_cast<CActorHero*>(pSender)) != false) {
 						return 3;
 					}

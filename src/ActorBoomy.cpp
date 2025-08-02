@@ -97,7 +97,7 @@ void CActorBoomy::Create(ByteCode* pByteCode)
 
 	this->aBoomyTypeInfo[0].flags = 0;
 
-	this->curBoomyTypeId = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+	this->curBoomyTypeId = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 
 	UpdateTypeInfo();
 
