@@ -725,6 +725,7 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 	ulong uVar27;
 	byte bVar33;
 	edTextBitmap* pTextBitmap;
+	edResourceFunc pFunc8;
 	char* pOutputIt;
 	char* curFormatValue;
 	edCTextStyle* pTextStyle;
@@ -1068,23 +1069,20 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 								this->nbBitmaps = this->nbBitmaps + 1;
 								break;
 							case 8:
-								IMPLEMENTATION_GUARD();
-#if 0
-								pcVar4 = (code*)*ppcVar10;
+								pFunc8 = reinterpret_cast<edResourceFunc>(*pCurFormatValueA);
 								*pcVar38 = 2;
 								pcVar38 = (char*)((byte*)pcVar38 + 1);
-								if (paVar38->field_0x20 == 1) {
-									pFVar35[1] = pFVar35[0];
+								if (pFormatSpecC->caseMode == 1) {
+									pTextStyle[1] = pTextStyle[0];
 								}
 								else {
-									pFVar35[1] = fontData_0x850[0];
+									pTextStyle[1] = fontData_0x850[0];
 								}
 
-								pFVar35 = pFVar35 + 1;
-								if (pcVar4 != (code*)0x0) {
-									(*pcVar4)();
+								pTextStyle = pTextStyle + 1;
+								if (pFunc8 != (edResourceFunc)0x0) {
+									pFunc8(pTextStyle);
 								}
-#endif
 							}
 						}
 						uVar40 = uVar40 + 1;

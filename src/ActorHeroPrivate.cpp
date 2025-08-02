@@ -353,13 +353,11 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->jokeWarnRadius = fVar13;
 	this->bCanUseCheats = 0;
 	//this->pCameraViewBase_0xaa8 = (CCamera*)0x0;
-	iVar11 = CLevelScheduler::ScenVar_Get(0x11);
-	iVar10 = CLevelScheduler::ScenVar_Get(0x12);
 	const int maxHealth = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
 	assert(maxHealth != 0);
 	this->lifeInterface.SetValueMax((float)maxHealth);
 
-	this->magicInterface.SetValueMax((float)(iVar11 * iVar10));
+	this->magicInterface.SetValueMax((float)(CLevelScheduler::ScenVar_Get(SCENE_VAR_CUR_MAGIC) * CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC)));
 	this->magicInterface.SetTransit(0.0f);
 	this->magicInterface.SetValue((float)CLevelScheduler::_gGameNfo.nbMagic);
 
@@ -679,8 +677,8 @@ void gHeroActionCallback(CActor* pActor, void* pParams)
 					pParamsData->pActionParams->actionId = newActionId;
 					pParamsData->pActionParams->pActor = pActor;
 					pParamsData->field_0x8 = fVar4;
-					pParamsData->pActionParams->field_0x10 = local_40.field_0x0;
-					pParamsData->pActionParams->field_0x20 = local_40.field_0x10;
+					pParamsData->pActionParams->field_0x10 = local_40.position;
+					pParamsData->pActionParams->field_0x20 = local_40.rotationQuat;
 				}
 			}
 		}
@@ -1776,10 +1774,7 @@ bool CActorHeroPrivate::ManageActions()
 	pLifeInterface->field_0x10 = 0;
 
 	if (((GetStateFlags(this->actorState) & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
-		iVar5 = CLevelScheduler::ScenVar_Get(0x11);
-		iVar6 = CLevelScheduler::ScenVar_Get(0x12);
-
-		valueMax = (float)(iVar5 * iVar6);
+		valueMax = (float)(CLevelScheduler::ScenVar_Get(SCENE_VAR_CUR_MAGIC) * CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC));
 		fVar12 = this->magicInterface.GetValueMax();
 
 		if (valueMax != fVar12) {
@@ -1788,13 +1783,13 @@ bool CActorHeroPrivate::ManageActions()
 				iVar5 = CLevelScheduler::ScenVar_Get(0x13);
 				valueMax = (float)iVar5;
 				iVar5 = CLevelScheduler::ScenVar_Get(0x13);
-				iVar6 = CLevelScheduler::ScenVar_Get(0x12);
+				iVar6 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_MAGIC);
 
 				if (iVar6 == 0) {
 					trap(7);
 				}
 
-				CLevelScheduler::ScenVar_Set(0x11, iVar5 / iVar6);
+				CLevelScheduler::ScenVar_Set(SCENE_VAR_CUR_MAGIC, iVar5 / iVar6);
 			}
 
 			this->magicInterface.SetValueMax(valueMax);

@@ -18,6 +18,7 @@
 #include "LevelScheduleManager.h"
 #include "FrontEndMoney.h"
 #include "FrontEndEnemy.h"
+#include "FrontEndInventory.h"
 
 struct Bank {
 	Bank() {}
@@ -116,6 +117,7 @@ CFrontendAction gFrontendAction;
 CFrontendMoney gFrontendMoney;
 CFrontendEnemyCount gFrontendEnemyCount;
 CFrontendEnemyList gFrontendEnemyList;
+CFrontendInventory gFrontendInventory;
 
 CFrontendDisplay::CFrontendDisplay()
 {
@@ -125,7 +127,7 @@ CFrontendDisplay::CFrontendDisplay()
 	this->pMoney = &gFrontendMoney;
 	this->pFreedWolfun = &gFrontendEnemyCount;
 	this->pFrontendAction = &gFrontendAction;
-	//this->pMenuObj_0x6c = &MenuObj_Big_00452ea0;
+	this->pInventory = &gFrontendInventory;
 	//this->pMenuObj_0x74 = (undefined*)&PTR_DAT_004544c0;
 	this->pFrontendEnemyList = &gFrontendEnemyList;
 	//this->field_0x78 = (char*)&FLOAT_00456220;
@@ -197,7 +199,7 @@ void CFrontendDisplay::Game_Init()
 	this->pFreedWolfun->Init();
 	this->pFrontendAction->Init();
 	this->pFrontendEnemyList->Init();
-	//(*(code*)this->pMenuObj_0x6c->pVTable->field_0x20)();
+	this->pInventory->Init();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
 
 	if (this->bHideHUD == 0) {
@@ -229,7 +231,7 @@ void CFrontendDisplay::Level_Init()
 		Global_00448814 = 0;
 	}
 
-	//FUN_003cb180(this->pMenuObj_0x6c);
+	this->pInventory->Level_Init();
 	//FUN_003c9370((long)(int)this->pMenuObj_0x74);
 
 	DeclareInterface(FRONTEND_INTERFACE_FREED_WOLFEN, &this->interfaceEnemyCount);
@@ -248,7 +250,7 @@ void CFrontendDisplay::Level_Term()
 		this->pMagicOrbs->Magic_SetDisplay(false);
 	}
 
-	//FUN_003cb000(this->pMenuObj_0x6c);
+	this->pInventory->Level_Term();
 	this->pFrontendEnemyList->Level_Term();
 	//FUN_003c9330((int)this->pMenuObj_0x74);
 
@@ -267,7 +269,7 @@ void CFrontendDisplay::Level_Manage()
 		this->pHealthBar->Update(fVar2);
 		this->pFrontendAction->Update(fVar2);
 		this->pFrontendEnemyList->Update(fVar2);
-		//(*(code*)this->pMenuObj_0x6c->pVTable->Update)(fVar2);
+		this->pInventory->Update(fVar2);
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x38))(fVar2);
 	}
 
@@ -291,7 +293,7 @@ void CFrontendDisplay::Level_Draw()
 		this->pFreedWolfun->Draw();
 		this->pFrontendAction->Draw();
 		this->pFrontendEnemyList->Draw();
-		//(*(code*)this->pMenuObj_0x6c->pVTable->Draw)();
+		this->pInventory->Draw();
 	}
 
 	return;
@@ -305,7 +307,7 @@ void CFrontendDisplay::Level_Reset()
 	this->pFreedWolfun->Reset();
 	this->pFrontendAction->Reset();
 	this->pFrontendEnemyList->Reset();
-	//(*this->pMenuObj_0x6c->pVTable->Reset)((CWidget*)this->pMenuObj_0x6c);
+	this->pInventory->Reset();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x18))();
 
 	return;
@@ -324,7 +326,7 @@ void CFrontendDisplay::Level_CheckpointReset()
 	this->pFreedWolfun->ShowEnemy();
 	this->pFrontendAction->Reset();
 	this->pFrontendEnemyList->Reset();
-	//(*(code*)this->pMenuObj_0x6c->pVTable->CheckpointReset)();
+	this->pInventory->CheckpointReset();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x1c))();
 
 	return;

@@ -70,6 +70,7 @@ void edF32Vector3LERPSoft(float alpha, edF32VECTOR3* outWorldLocation, edF32VECT
 void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 
 void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
+void edF32Matrix4FlipXZAxes(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MATRIX4* m2);

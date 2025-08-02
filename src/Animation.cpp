@@ -975,7 +975,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				float sum = (pAnimMatrix->ac * pAnimMatrix->ac +
 					pAnimMatrix->aa * pAnimMatrix->aa + pAnimMatrix->ab * pAnimMatrix->ab);
 
-				assert(sum < 1.0f);
+				assert(sum <= 1.0f);
 
 				pAnimMatrix->ad = sqrtf(1.0f - sum);
 				if ((thirdAxis & 1) != 0) {

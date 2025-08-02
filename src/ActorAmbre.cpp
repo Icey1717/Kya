@@ -743,6 +743,7 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			})
 			return 1;
 		}
+
 		if (msg == 0x2f) {
 			CActorHero* pHero = reinterpret_cast<CActorHero*>(pSender);
 

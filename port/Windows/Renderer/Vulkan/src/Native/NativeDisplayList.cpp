@@ -193,7 +193,11 @@ namespace Renderer::Native::DisplayList
 
 		pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
 		pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
-		pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
+
+		if (bHasGeometryShader) {
+			pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
+		}
+
 		pipeline.CreateDescriptorSetLayouts();
 
 		pipeline.CreateLayout();
@@ -229,6 +233,18 @@ namespace Renderer::Native::DisplayList
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportState.viewportCount = 1;
 		viewportState.scissorCount = 1;
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(gWidth);
+		viewport.height = static_cast<float>(gHeight);
+		viewportState.pViewports = &viewport;
+
+		VkRect2D scissor{};
+		scissor.extent.width = gWidth;
+		scissor.extent.height = gHeight;
+		viewportState.pScissors = &scissor;
 
 		VkPipelineRasterizationStateCreateInfo rasterizer{};
 		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;

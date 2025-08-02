@@ -993,18 +993,18 @@ void CBehaviourWeaponSniper::DrawBullets()
 void WeaponGlobal::Term()
 {
 	IMPLEMENTATION_GUARD_LOG();
-	//WeaponGlobalSubObj* pWVar1;
+	//CInstance3D* pWVar1;
 	//
 	//pWVar1 = this->field_0x18;
-	//if (pWVar1 != (WeaponGlobalSubObj*)0x0) {
-	//	if (pWVar1 != (WeaponGlobalSubObj*)0x0) {
+	//if (pWVar1 != (CInstance3D*)0x0) {
+	//	if (pWVar1 != (CInstance3D*)0x0) {
 	//		delete(&pWVar1[-1].field_0x30);
 	//	}
-	//	this->field_0x18 = (WeaponGlobalSubObj*)0x0;
+	//	this->field_0x18 = (CInstance3D*)0x0;
 	//}
-	//if (this->pEntries != (WeaponGlobalSubObj**)0x0) {
+	//if (this->pEntries != (CInstance3D**)0x0) {
 	//	delete(this->pEntries);
-	//	this->pEntries = (WeaponGlobalSubObj**)0x0;
+	//	this->pEntries = (CInstance3D**)0x0;
 	//}
 	//this->field_0x10 = 0;
 	//this->nbEntries = 0;

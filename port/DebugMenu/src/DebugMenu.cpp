@@ -50,6 +50,7 @@
 #include "LevelScheduleManager.h"
 #include "DebugShop.h"
 #include "DebugWolfen.h"
+#include "DebugScenario.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -532,6 +533,7 @@ namespace Debug {
 		{"Scene", ShowSceneMenu, true },
 		{"Shop", Debug::Shop::ShowMenu, true },
 		{"Wolfen", Debug::Wolfen::ShowMenu, true },
+		{"Scenario", Debug::Scenario::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {

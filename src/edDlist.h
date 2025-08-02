@@ -135,6 +135,8 @@ void edDListLoadIdentity(void);
 void edDlistSetUseUV(int newUseUV);
 
 void edDListChangeMatrix(DisplayList* pDisplayList, uint nbMatrices, edF32MATRIX4* aMatrices);
+void edDListRotateZ(float rotation);
+void edDListTranslate(float x, float y, float z);
 
 DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList);
 DisplayList* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);

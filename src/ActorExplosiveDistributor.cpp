@@ -303,10 +303,7 @@ int CBehaviourExplosiveDistributor::InterpretMessage(CActor* pSender, int msg, v
 	edF32VECTOR4 eStack192;
 	edF32VECTOR4 local_b0;
 	edF32MATRIX4 eStack160;
-	undefined auStack96[52];
-	float local_2c;
-	float local_28;
-	float local_24;
+	edF32MATRIX4 auStack96;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
@@ -322,19 +319,20 @@ int CBehaviourExplosiveDistributor::InterpretMessage(CActor* pSender, int msg, v
 	else {
 		if (((msg != 0xf) && (msg != 0xe)) && (msg != 0x14)) {
 			if (msg != 2) {
-				if (msg != 0x12) {
+				if (msg != MESSAGE_GET_ACTION) {
 					return 0;
 				}
 
-				IMPLEMENTATION_GUARD(
 				edF32Vector4SubHard(&local_10, &this->pOwner->currentLocation, &pSender->currentLocation);
 				fVar5 = edF32Vector4NormalizeHard(&eStack32, &local_10);
-				if (3.0 <= fVar5) {
+				if (3.0f <= fVar5) {
 					return 0;
 				}
-				if (ABS((float)(uint)(local_10.y < 0.5)) == 0.0) {
+
+				if (fabs((float)(uint)(local_10.y < 0.5f)) == 0.0f) {
 					return 0;
 				}
+
 				pExplosiveDistributor = this->pOwner;
 				if (pExplosiveDistributor->pAnimationController == (CAnimation*)0x0) {
 					return 0;
@@ -344,33 +342,27 @@ int CBehaviourExplosiveDistributor::InterpretMessage(CActor* pSender, int msg, v
 					return 0;
 				}
 
-				CAnimation::GetDefaultBoneMatrix(this->pOwner->pAnimationController, 0x48535550, (edF32MATRIX4*)auStack96);
-				edF32Matrix4MulF32Matrix4Hard
-				((edF32MATRIX4*)auStack96, (edF32MATRIX4*)auStack96, (edF32MATRIX4*)this->pOwner->pMeshTransform);
-				edF32Vector4SubHard(&local_10, (edF32VECTOR4*)(auStack96 + 0x30), &pSender->currentLocation);
-				local_10.y = 0.0;
+				this->pOwner->pAnimationController->GetDefaultBoneMatrix(0x48535550, &auStack96);
+				edF32Matrix4MulF32Matrix4Hard(&auStack96, &auStack96, &this->pOwner->pMeshTransform->base.transformA);
+				edF32Vector4SubHard(&local_10, &auStack96.rowZ, &pSender->currentLocation);
+				local_10.y = 0.0f;
 				if (this->pOwner->field_0x160 < local_10.z * local_10.z + local_10.x * local_10.x) {
 					return 0;
 				}
+
 				edF32Vector4NormalizeHard(&local_10, &local_10);
 				fVar5 = edF32Vector4DotProductHard(&local_10, &pSender->rotationQuat);
 				pExplosiveDistributor = this->pOwner;
 				if (fVar5 < pExplosiveDistributor->field_0x164) {
 					return 0;
 				}
-				fVar7 = (pExplosiveDistributor->rotationQuat).y;
-				fVar5 = (pExplosiveDistributor->rotationQuat).z;
-				fVar6 = (pExplosiveDistributor->rotationQuat).w;
-				pMsgParam->field_0x10 = (pExplosiveDistributor->rotationQuat).x;
-				*(float*)&pMsgParam->field_0x14 = fVar7;
-				*(float*)&pMsgParam->field_0x18 = fVar5;
-				*(float*)&pMsgParam->field_0x1c = fVar6;
-				edF32Vector4GetNegHard((edF32VECTOR4*)&pMsgParam->field_0x10, (edF32VECTOR4*)&pMsgParam->field_0x10);
-				pMsgParam->projectileType = (int)auStack96._48_4_;
-				pMsgParam->field_0x4 = (int)local_2c;
-				pMsgParam->flags = (uint)local_28;
-				pMsgParam->damage = local_24;
-				return 8;)
+
+				GetActionMsgParams* pGetActionParams = reinterpret_cast<GetActionMsgParams*>(pMsgParam);
+				pGetActionParams->rotationQuat = pExplosiveDistributor->rotationQuat;
+				edF32Vector4GetNegHard(&pGetActionParams->rotationQuat, &pGetActionParams->rotationQuat);
+				pGetActionParams->position = auStack96.rowT;
+
+				return 8;
 			}
 
 			_msg_hit_param* pHitMsgParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);

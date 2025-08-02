@@ -1122,6 +1122,17 @@ void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
+void edF32Matrix4FlipXZAxes(edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	edF32Vector4ScaleHard(-1.0f, &m0->rowX, &m1->rowX);
+	edF32Vector4ScaleHard(-1.0f, &m0->rowZ, &m1->rowZ);
+
+	m0->rowY = m1->rowY;
+	m0->rowT = m1->rowT;
+
+	return;
+}
+
 void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	*v0 = *v1 * t;

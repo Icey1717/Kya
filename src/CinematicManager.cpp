@@ -592,7 +592,7 @@ void CCinematic::InitInternalData()
 	//this->pCineSpotHolderArray = (CineSpotHolder*)0x0;
 	this->count_0x22c = 0;
 	this->numberOfParticles = 0;
-	this->count_0x2e8 = 0;
+	this->nbInstalledParticles = 0;
 	this->particleSectionStart = (ParticleEntry*)0x0;
 	this->buffer_0x2e4 = (ParticleInstance*)0x0;
 	this->prtFileBufferPool = (void*)0x0;
@@ -684,18 +684,18 @@ void CCinematic::SetupInternalData()
 		this->particleSectionStart = (ParticleEntry*)0x0;
 		this->buffer_0x2e4 = (ParticleInstance*)0x0;
 		this->prtFileBufferPool = (void*)0x0;
-		this->count_0x2e8 = 0;
+		this->nbInstalledParticles = 0;
 	}
 	else {
 		this->particleSectionStart = new ParticleEntry[this->field_0x28];
-		this->count_0x2e8 = this->field_0x28;
-		this->count_0x2e8 = this->count_0x2e8 << 1;
-		if (this->count_0x2e8 < 8) {
-			this->count_0x2e8 = 8;
+		this->nbInstalledParticles = this->field_0x28;
+		this->nbInstalledParticles = this->nbInstalledParticles << 1;
+		if (this->nbInstalledParticles < 8) {
+			this->nbInstalledParticles = 8;
 		}
 
-		this->buffer_0x2e4 = new ParticleInstance[this->count_0x2e8];
-		this->prtFileBufferPool = edMemAlloc(TO_HEAP(H_MAIN), this->field_0x2c * this->count_0x2e8);
+		this->buffer_0x2e4 = new ParticleInstance[this->nbInstalledParticles];
+		this->prtFileBufferPool = edMemAlloc(TO_HEAP(H_MAIN), this->field_0x2c * this->nbInstalledParticles);
 	}
 
 	return;
@@ -983,7 +983,7 @@ void CCinematic::Init()
 	this->count_0x22c = 0;
 
 	iVar6 = 0;
-	if (0 < this->count_0x2e8) {
+	if (0 < this->nbInstalledParticles) {
 		iVar5 = 0;
 		do {
 			ParticleInstance* pParticleInstance = &this->buffer_0x2e4[iVar6];
@@ -997,7 +997,7 @@ void CCinematic::Init()
 			pParticleInstance->pActor = (CActor*)0x0;
 
 			iVar6 = iVar6 + 1;
-		} while (iVar6 < this->count_0x2e8);
+		} while (iVar6 < this->nbInstalledParticles);
 	}
 
 	if ((this->flags_0x4 & 0x2000000) != 0) {
@@ -2344,29 +2344,29 @@ void CCinematic::Stop()
 		}
 
 		iVar4 = 0;
-		if (0 < this->count_0x2e8) {
-			IMPLEMENTATION_GUARD(
-			iVar6 = 0;
+		if (0 < this->nbInstalledParticles) {
 			do {
-				piVar5 = (int*)(this->buffer_0x2e4 + iVar6);
-				if (*piVar5 != -1) {
-					if ((undefined*)piVar5[4] != (undefined*)0x0) {
-						edParticlesUnInstall((undefined*)piVar5[4], (char)CScene::_scene_handleA);
+				ParticleInstance* pParticleInstance = this->buffer_0x2e4 + iVar4;
+				if (pParticleInstance->id != -1) {
+					if (pParticleInstance->pParticle != (_ed_particle_manager*)0x0) {
+						edParticlesUnInstall(pParticleInstance->pParticle, CScene::_scene_handleA);
 					}
-					if ((void*)piVar5[5] != (void*)0x0) {
-						edMemFree((void*)piVar5[5]);
+
+					if (pParticleInstance->pParticleFileData != (ParticleFileData*)0x0) {
+						edMemFree(pParticleInstance->pParticleFileData);
 					}
-					*piVar5 = -1;
-					piVar5[2] = 0;
-					piVar5[1] = 0;
-					*(undefined*)(piVar5 + 3) = 0;
-					piVar5[4] = 0;
-					piVar5[5] = 0;
-					piVar5[6] = 0;
+
+					pParticleInstance->id = -1;
+					pParticleInstance->field_0x8 = 0.0f;
+					pParticleInstance->field_0x4 = 0.0f;
+					pParticleInstance->field_0xc = 0;
+					pParticleInstance->pParticle = (_ed_particle_manager*)0x0;
+					pParticleInstance->pParticleFileData = (ParticleFileData*)0x0;
+					pParticleInstance->pActor = (CActor*)0x0;
 				}
+
 				iVar4 = iVar4 + 1;
-				iVar6 = iVar6 + 0x1c;
-			} while (iVar4 < this->count_0x2e8);)
+			} while (iVar4 < this->nbInstalledParticles);
 		}
 
 		UninstallResources();
@@ -2450,7 +2450,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	//	pBVar8 = pBVar8 + 1;
 	//}
 
-	for (i = 0; i < this->count_0x2e8; i = i + 1) {
+	for (i = 0; i < this->nbInstalledParticles; i = i + 1) {
 		this->buffer_0x2e4[i].field_0xc = 0;
 	}
 
@@ -2521,7 +2521,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	//	pBVar8 = pBVar8 + 1;
 	//}
 
-	for (iVar10 = 0; pCVar5 = g_CinematicManager_0048efc, iVar10 < this->count_0x2e8; iVar10 = iVar10 + 1) {
+	for (iVar10 = 0; pCVar5 = g_CinematicManager_0048efc, iVar10 < this->nbInstalledParticles; iVar10 = iVar10 + 1) {
 		ParticleInstance* pParticleInstance = this->buffer_0x2e4 + iVar10;
 		if (pParticleInstance->id != -1) {
 			if (pParticleInstance->field_0xc == 0) {
@@ -2838,7 +2838,7 @@ int CCinematic::GetParticleInstance(int id)
 	ParticleInstance* piVar2;
 
 	iVar1 = 0;
-	if (0 < this->count_0x2e8) {
+	if (0 < this->nbInstalledParticles) {
 		piVar2 = this->buffer_0x2e4;
 
 		do {
@@ -2848,7 +2848,7 @@ int CCinematic::GetParticleInstance(int id)
 
 			iVar1 = iVar1 + 1;
 			piVar2 = piVar2 + 1;
-		} while (iVar1 < this->count_0x2e8);
+		} while (iVar1 < this->nbInstalledParticles);
 	}
 
 	return -1;
@@ -2865,7 +2865,7 @@ int CCinematic::CreateParticleInstance(float param_1, int index, int particleId,
 	ParticleEntry* pPVar6;
 
 	iVar5 = 0;
-	iVar1 = this->count_0x2e8;
+	iVar1 = this->nbInstalledParticles;
 	if (0 < iVar1) {
 		pPVar4 = this->buffer_0x2e4;
 		do {
@@ -3083,7 +3083,7 @@ void CCinematic::Draw()
 
 		bVar2 = GameDList_BeginCurrent();
 		if (bVar2 != false) {
-			if (0 < this->count_0x2e8) {
+			if (0 < this->nbInstalledParticles) {
 				iVar4 = 0;
 				do {
 					piVar6 = this->buffer_0x2e4 + iVar4;
@@ -3095,7 +3095,7 @@ void CCinematic::Draw()
 						edParticlesDraw(pManager, 1.0f);
 					}
 					iVar4 = iVar4 + 1;
-				} while (iVar4 < this->count_0x2e8);
+				} while (iVar4 < this->nbInstalledParticles);
 			}
 			GameDList_EndCurrent();
 		}
@@ -3259,14 +3259,14 @@ void CCinematic::PreReset()
 
 void CCinematic::UninstallResources()
 {
-	ed_g3d_manager* pMeshInfo;
+	void* pData;
 	int iVar1;
 	int iVar2;
 	int resourceType;
 	int iVar4;
 	int iVar5;
 	int iVar6;
-	CinFileContainer* pCVar7;
+	CinFileContainer* pFileContainer;
 
 	iVar1 = this->textData.get_entry_count();
 	if (iVar1 != 0) {
@@ -3274,55 +3274,56 @@ void CCinematic::UninstallResources()
 	}
 
 	iVar1 = this->cinFileCount + -1;
-	pCVar7 = this->fileInfoStart + iVar1;
+	pFileContainer = this->fileInfoStart + iVar1;
 	for (; iVar1 != -1; iVar1 = iVar1 + -1) {
-		pMeshInfo = (ed_g3d_manager*)pCVar7->pData;
-		if (pMeshInfo != (ed_g3d_manager*)0x0) {
+		pData = pFileContainer->pData;
+		if (pData != (void*)0x0) {
+			resourceType = pFileContainer->type;
 
-			resourceType = *(int*)pCVar7;
 			if (resourceType == edResCollection::COT_Particle) {
-				IMPLEMENTATION_GUARD(
-				iVar6 = this->particleSectionStart + ((int)&pMeshInfo[-1].ANMA + 3) * 0x218;
+				const int index = (int)pData;
+
+				ParticleEntry* pParticleEntry = this->particleSectionStart + index - 1;
 				iVar5 = 0;
-				int otherResourceType = iVar6;
-				if (0 < *(int*)(iVar6 + 0x1d0)) {
+				ed_g2d_manager** pManager = pParticleEntry->aManagers;
+				if (0 < pParticleEntry->nbManagers) {
 					do {
 						iVar4 = 0;
-						iVar2 = iVar6;
-						if (0 < *(int*)(iVar6 + 8)) {
+						if (0 < pParticleEntry->nbMaterials) {
 							do {
-								edDListTermMaterial((edDList_material*)(iVar2 + 0xd0));
+								edDListTermMaterial(pParticleEntry->aMaterials + iVar4);
 								iVar4 = iVar4 + 1;
-								iVar2 = iVar2 + 0x10;
-							} while (iVar4 < *(int*)(iVar6 + 8));
+							} while (iVar4 < pParticleEntry->nbMaterials);
 						}
-						*(undefined4*)(iVar6 + 8) = 0;
-						ed3DUnInstallG2D(*(ed_g2d_manager**)(otherResourceType + 0x1d4));
+						pParticleEntry->nbMaterials = 0;
+
+						ed3DUnInstallG2D(*pManager);
 						iVar5 = iVar5 + 1;
-						otherResourceType = otherResourceType + 4;
-					} while (iVar5 < *(int*)(iVar6 + 0x1d0));
+						pManager = pManager + 1;
+					} while (iVar5 < pParticleEntry->nbManagers);
 				}
-				*(undefined4*)(iVar6 + 0x1d0) = 0;)
+
+				pParticleEntry->nbManagers = 0;
 			}
 			else {
 				if (resourceType == edResCollection::COT_LipTrack) {
 					IMPLEMENTATION_GUARD_LOG(
-					CScene::ptable.g_LipTrackManager_00451694->Remove(pMeshInfo);)
+					CScene::ptable.g_LipTrackManager_00451694->Remove(pData);)
 				}
 				else {
 					if (resourceType == edResCollection::COT_MeshModel) {
-						ed3DUnInstallG3D(pMeshInfo);
+						ed3DUnInstallG3D((ed_g3d_manager*)pData);
 					}
 					else {
 						if (resourceType == edResCollection::COT_MeshTexture) {
-							ed3DUnInstallG2D((ed_g2d_manager*)pMeshInfo);
+							ed3DUnInstallG2D((ed_g2d_manager*)pData);
 						}
 					}
 				}
 			}
-			pCVar7->pData = (char*)0x0;
+			pFileContainer->pData = (char*)0x0;
 		}
-		pCVar7 = pCVar7 + -1;
+		pFileContainer = pFileContainer + -1;
 	}
 	return;
 }
@@ -4252,7 +4253,7 @@ bool CBWCinActor::SetParticles(float param_1, edCinActorInterface::PARTICLE_PARA
 			particleInstanceId = pCinematic->CreateParticleInstance(param_1, pTag->field_0x4 + -1, pTag->particleId, this->pParent);
 		}
 
-		if ((-1 < particleInstanceId) && (particleInstanceId < pCinematic->count_0x2e8)) {
+		if ((-1 < particleInstanceId) && (particleInstanceId < pCinematic->nbInstalledParticles)) {
 			pPVar2 = pCinematic->buffer_0x2e4;
 			if (!bNeedToCreateInstance) {
 				FUN_001c6ab0(param_1, pPVar2 + particleInstanceId);

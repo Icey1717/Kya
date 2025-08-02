@@ -49,8 +49,8 @@ struct MessageSoccerParamsDetailed : public MessageSoccerParams
 
 struct GetActionMsgParams
 {
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 position;
+	edF32VECTOR4 rotationQuat;
 };
 
 struct _msg_tied_params
@@ -517,6 +517,7 @@ public:
 
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
+	void SetScaleVector(edF32VECTOR4* pScale);
 	bool SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2);
 	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
 	void EvaluateManageState();
@@ -539,6 +540,7 @@ public:
 	bool SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation);
 	bool SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3);
 	bool SV_IAmInFrontOfThisActor(CActor* pOther);
+	CActor* SV_GetNearestActor(float radius);
 
 	void SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel);
 	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere);

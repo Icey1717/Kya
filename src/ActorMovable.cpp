@@ -1462,6 +1462,41 @@ void CActorMovable::SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActor
 	return;
 }
 
+void CActorMovable::SV_MOV_MoveTo_AvoidActor(CActorMovParamsOut* pMovParamsOut, CActorMovParamsIn* pMovParamsIn, edF32VECTOR4* pPosition, CActor* pAvoidActor)
+{
+	CActor* pNearestActor;
+	float fVar1;
+	edF32MATRIX4 eStack96;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pNearestActor = SV_GetNearestActor(4.0f);
+	if ((pNearestActor != (CActor*)0x0) && (pNearestActor != pAvoidActor)) {
+		edF32Vector4SubHard(&local_20, &pNearestActor->currentLocation, &this->currentLocation);
+		edF32Vector4SafeNormalize1Hard(&local_20, &local_20);
+		edF32Vector4SubHard(&local_10, pPosition, &this->currentLocation);
+		edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+
+		fVar1 = edF32Vector4DotProductHard(&local_10, &local_20);
+		if (0.0f < fVar1) {
+			edF32Vector4ScaleHard(fVar1 * 1.5f + 2.0f, &local_20, &local_20);
+			if (0.0f < local_10.x * local_20.z - local_10.z * local_20.x) {
+				fVar1 = 1.570796f;
+			}
+			else {
+				fVar1 = -1.570796f;
+			}
+
+			edF32Matrix4RotateYHard(fVar1, &eStack96, &gF32Matrix4Unit);
+			edF32Matrix4MulF32Vector4Hard(&local_20, &eStack96, &local_20);
+		}
+	}
+
+	SV_MOV_MoveTo(pMovParamsOut, pMovParamsIn, pPosition);
+
+	return;
+}
+
 void CActorMovable::SV_MOV_MoveCloserTo(float speed, edF32VECTOR4* param_3)
 {
 	Timer* pTVar1;

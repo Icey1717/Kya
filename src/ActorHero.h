@@ -253,6 +253,7 @@ public:
 	float field_0x1540;
 
 	int bFacingControlDirection;
+	CActor* field_0xf14;
 	int field_0xff4;
 	int animIdleSequenceIndex;
 	float effort;
@@ -364,6 +365,7 @@ public:
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
 	bool FUN_0031c9e0();
+	CActor* GetTalkingToActor();
 
 	float GetMagicalForce();
 

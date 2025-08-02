@@ -725,7 +725,7 @@ public:
 	ParticleEntry* particleSectionStart;
 	int numberOfParticles;
 	ParticleInstance* buffer_0x2e4;
-	int count_0x2e8;
+	int nbInstalledParticles;
 	void* prtFileBufferPool;
 };
 

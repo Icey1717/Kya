@@ -785,8 +785,8 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			if (((0.0f < fVar7) && (fVar7 = (pSender->currentLocation).x - this->currentLocation.x,
 					fVar8 = (pSender->currentLocation).z - this->currentLocation.z, fVar7 * fVar7 + fVar8 * fVar8 <= 1.0f)) &&
 					(fabs((pSender->currentLocation).y - this->currentLocation.y) <= 0.5f)) {
-				pResolvedMsg->field_0x10 = this->rotationQuat;
-				pResolvedMsg->field_0x0 = this->currentLocation;
+				pResolvedMsg->rotationQuat = this->rotationQuat;
+				pResolvedMsg->position = this->currentLocation;
 				return 10;
 			}
 		}

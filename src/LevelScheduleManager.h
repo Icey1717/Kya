@@ -13,10 +13,13 @@
 #define IMPLEMENTATION_GUARD_OBJECTIVE(x)
 
 #define SCENE_VAR_FREED_WOLFEN 0x0
+#define SCENE_VAR_HAS_COMPANION 0x3
 #define SCENE_VAR_BOUNCE_JUMP 0x7
 #define SCENE_VAR_CLIMB 0x8
 #define SCENE_VAR_BOOMY 0x9
 #define SCENE_VAR_FIGHT_RING 0xa
+#define SCENE_VAR_CUR_MAGIC 0x11
+#define SCENE_VAR_MAX_MAGIC 0x12
 #define SCENE_VAR_MAX_HEALTH 0x14
 
 class CActorNativShop;
@@ -151,6 +154,7 @@ struct S_LVLNFO_LEVEL_HEADER_V7
 	int bankSizeSect;
 	int bankSizeIOP;
 
+	// These are combined into a message key used to load the level name.
 	uint hashA;
 	uint hashB;
 
@@ -187,7 +191,8 @@ struct S_SUBSECTOR_INFO
 	undefined field_0x27;
 };
 
-struct S_LEVEL_INFO {
+struct S_LEVEL_INFO
+{
 	ulong titleMsgHash;
 	int bankSizeLevel;
 	int bankSizeSect;
@@ -201,7 +206,7 @@ struct S_LEVEL_INFO {
 	char levelPath[20];
 	S_COMPANION_INFO* aCompanionInfo;
 	char* pSimpleConditionData;
-	undefined4 field_0x50;
+	int field_0x50;
 	undefined field_0x54;
 	undefined field_0x55;
 	undefined field_0x56;

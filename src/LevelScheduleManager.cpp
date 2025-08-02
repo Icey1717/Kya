@@ -909,28 +909,6 @@ void CLevelScheduler::Levels_LoadInfoBank()
 								pLevelInfoHeader->levelName[5] = '_';
 								pLevelInfoHeader->levelName[6] = 'T';
 
-								int levelId;
-
-								char levelName[8];
-
-								int bankSizeLevel;
-								int bankSizeSect;
-								int bankSizeIOP;
-
-								uint hashA;
-								uint hashB;
-
-								int sectorStartIndex;
-								int nbSectors;
-
-								int field_0x28;
-
-								int nbTeleporters;
-
-								int field_0x30;
-
-								int nbLanguageFileNames;
-
 								pLevelInfoHeader->bankSizeLevel = 0x2a3800;
 								pLevelInfoHeader->bankSizeSect = 0x6f4000;
 								pLevelInfoHeader->bankSizeIOP = 0x57000;

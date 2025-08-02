@@ -1871,6 +1871,52 @@ bool CActor::SV_IAmInFrontOfThisActor(CActor* pOther)
 		((this->currentLocation).z - (pOther->currentLocation).z) * (pOther->rotationQuat).z;
 }
 
+struct GetNearestActorParams
+{
+	CActor* pNearestTo;
+	CActor* pNearestActor;
+	float distance;
+};
+
+void gClusterCallback_NearestActor(CActor* pActor, void* pParams)
+{
+	GetNearestActorParams* pNearestActorParams = reinterpret_cast<GetNearestActorParams*>(pParams);
+	CActor* pCVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	pCVar1 = pNearestActorParams->pNearestTo;
+
+	if ((pActor != pCVar1) &&
+		(fVar2 = (pActor->currentLocation).x - (pCVar1->currentLocation).x,
+			fVar3 = (pActor->currentLocation).y - (pCVar1->currentLocation).y,
+			fVar4 = (pActor->currentLocation).z - (pCVar1->currentLocation).z,
+			fVar2 = fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4, fVar2 < pNearestActorParams->distance)) {
+		pNearestActorParams->pNearestActor = pActor;
+		pNearestActorParams->distance = fVar2;
+	}
+
+	return;
+}
+
+CActor* CActor::SV_GetNearestActor(float radius)
+{
+	edF32VECTOR4 local_20;
+	GetNearestActorParams local_10;
+
+	local_20.x = (this->currentLocation).x;
+	local_20.y = (this->currentLocation).y;
+	local_20.z = (this->currentLocation).z;
+	local_10.distance = radius * radius;
+	local_10.pNearestActor = (CActor*)0x0;
+	local_20.w = radius;
+	local_10.pNearestTo = this;
+	CScene::ptable.g_ActorManager_004516a4->cluster.ApplyCallbackToActorsIntersectingSphere(&local_20, gClusterCallback_NearestActor, &local_10);
+
+	return local_10.pNearestActor;
+}
+
 void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
 {
 	int inAnimType;
@@ -2757,6 +2803,20 @@ void CActor::SetupLodInfo()
 	this->lodBiases[2] = fVar1 * fVar1;
 	fVar1 = this->lodBiases[3];
 	this->lodBiases[3] = fVar1 * fVar1;
+	return;
+}
+
+void CActor::SetScaleVector(edF32VECTOR4* pScale)
+{
+	this->scale = *pScale;
+
+	if ((((this->scale).x == 1.0f) && ((this->scale).y == 1.0f)) && ((this->scale).z == 1.0f)) {
+		this->flags = this->flags & 0xfbffffff;
+	}
+	else {
+		this->flags = this->flags | 0x4000000;
+	}
+
 	return;
 }
 

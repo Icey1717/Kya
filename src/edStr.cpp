@@ -72,6 +72,18 @@ int edStrCopy(char* outString, const char* inString)
 	return len;
 }
 
+int edStrnCopy(char* dst, char* src, int n)
+{
+	bool bVar1;
+
+	for (; (bVar1 = n != 0, n = n + -1, bVar1 && (*src != '\0')); src = src + 1) {
+		*dst = *src;
+		dst = dst + 1;
+	}
+
+	return n;
+}
+
 int edStrCopyUpper(char* outBuffer, char* inString)
 {
 	int stringLength;

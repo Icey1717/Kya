@@ -90,7 +90,7 @@ struct CFrontendDisplay : public CFrontend
 	class CFrontendMoney* pMoney;
 	class CFrontendEnemyCount* pFreedWolfun;
 	class CFrontendAction* pFrontendAction;
-	struct MenuObj_Big* pMenuObj_0x6c;
+	class CFrontendInventory* pInventory;
 	class CFrontendEnemyList* pFrontendEnemyList;
 	char* pMenuObj_0x74;
 	char* field_0x78;

@@ -3092,6 +3092,26 @@ void edDListChangeMatrix(DisplayList* pDisplayList, uint nbMatrices, edF32MATRIX
 	return;
 }
 
+void edDListRotateZ(float rotation)
+{
+	edF32Matrix4RotateZHard(rotation, gCurMatrix + gNbMatrix, gCurMatrix + gNbMatrix);
+	return;
+}
+
+void edDListTranslate(float x, float y, float z)
+{
+	edF32VECTOR4 translation;
+
+	translation.w = 1.0f;
+	translation.x = x;
+	translation.y = y;
+	translation.z = z;
+
+	edF32Matrix4TranslateHard(gCurMatrix + gNbMatrix, gCurMatrix + gNbMatrix, &translation);
+
+	return;
+}
+
 DisplayList* gCurDListHandle = NULL;
 void* gCurDListBuf = NULL;
 void* gCurDListBufEnd = NULL;

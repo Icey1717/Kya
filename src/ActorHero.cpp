@@ -1760,6 +1760,11 @@ bool CActorHero::FUN_0031c9e0()
 	return bVar2;
 }
 
+CActor* CActorHero::GetTalkingToActor()
+{
+	return this->field_0xf14;
+}
+
 float CActorHero::GetMagicalForce()
 {
 	return this->magicInterface.GetValue();

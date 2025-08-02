@@ -6,7 +6,7 @@
 #include "InventoryInfo.h"
 #include "DebugHelpers.h"
 #include "DebugSetting.h"
-#include "../../../src/ActorHero.h"
+#include "ActorHero.h"
 
 namespace Debug
 {

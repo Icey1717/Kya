@@ -272,7 +272,7 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 	case 0x1f:
 		IMPLEMENTATION_GUARD(
 		uVar2 = CInventoryInterface::FindByType
-		(*(CInventoryInterface**)(CScene::GetManager(MO_Frontend)->pMenuObj_0x6c->field_0x4.pInterface, (long)(int)auStack8, objId);))
+		(*(CInventoryInterface**)(CScene::GetManager(MO_Frontend)->pInventory->field_0x4.pInterface, (long)(int)auStack8, objId);))
 		break;
 	default:
 		uVar2 = 0;
