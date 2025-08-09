@@ -294,6 +294,7 @@ public:
 	void StateHeroGripUpToJumpInit();
 
 	void StateHeroFall(float param_1, int param_3);
+	void StateHeroDead(float time);
 
 	void StateHeroColWall();
 
@@ -309,6 +310,10 @@ public:
 	void StateHeroDCAInit();
 	void StateHeroDCA();
 	void StateHeroDCATerm();
+
+	void StateHeroUnlockInit();
+	void StateHeroUnlock(ACTOR_CLASS typeId);
+	void StateHeroUnlockTerm();
 
 	void StateHeroWindFly(int param_2);
 	void StateHeroFlyJumpInit();

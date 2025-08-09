@@ -129,7 +129,7 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	int iVar6;
 	float fVar7;
 
-	this->field_0xb80 = 0;
+	this->exorcisedState = 0;
 	CActorFighter::Create(pByteCode);
 	this->field_0xb74 = pByteCode->GetU32();
 
@@ -164,7 +164,7 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	//	}
 	//}
 
-	this->field_0xb8c = pByteCode->GetS32();
+	this->startSectorId = pByteCode->GetS32();
 
 	this->hearingDetectionProps.Create(pByteCode);
 	this->visionDetectionProps.Create(pByteCode);
@@ -484,7 +484,7 @@ void CActorWolfen::Init()
 	this->field_0xbec = fVar14;
 	fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, 0.7f, 0.0f);
 	this->field_0xbf0 = this->field_0xbf0 - fVar14;
-	this->field_0xb80 = 1;
+	this->exorcisedState = 1;
 	this->field_0xb88 = 0;
 	pCVar4 = GetLifeInterfaceOther();
 	//pCVar4->field_0x10 = this;
@@ -623,7 +623,7 @@ void CActorWolfen::Manage()
 	}
 
 	bVar1 = false;
-	if ((this->field_0xb80 != 2) &&
+	if ((this->exorcisedState != 2) &&
 		(((~this->combatFlags_0xb78 & 0x600) != 0x600 ||
 			(bVar1 = true, 50.0f <= this->field_0x7c8 - this->field_0x7d0)))) {
 		bVar1 = false;
@@ -664,7 +664,7 @@ void CActorWolfen::Draw()
 
 void CActorWolfen::Reset()
 {
-	this->field_0xb80 = 1;
+	this->exorcisedState = 1;
 	this->field_0xb88 = 0;
 
 	this->flags = this->flags & 0xffffff5f;
@@ -679,7 +679,7 @@ void CActorWolfen::Reset()
 
 void CActorWolfen::CheckpointReset()
 {
-	if (this->field_0xb80 == 2) {
+	if (this->exorcisedState == 2) {
 		CActorAutonomous::CheckpointReset();
 		ClearLocalData();
 	}
@@ -1250,7 +1250,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 		if (msg == 0x86) {
 			IMPLEMENTATION_GUARD(
-			if ((this->field_0xb80 != 2) && (this->field_0xb80 != 0)) {
+			if ((this->exorcisedState != 2) && (this->exorcisedState != 0)) {
 				(*(code*)(this->pVTable)->LifeAnnihilate)();
 				SetBehaviour(0xe, 0x7f, -1);
 			}
@@ -4805,7 +4805,7 @@ void CActorWolfen::ClearLocalData()
 		if (GetWeapon()->GetLinkFather() == this) {
 			GetWeapon()->UnlinkWeapon();
 		}
-		if (this->field_0xb80 != 2) {
+		if (this->exorcisedState != 2) {
 			GetWeapon()->LinkWeapon(this, 0xcc414f1b);
 		}
 	}
@@ -5664,7 +5664,7 @@ bool CActorWolfen::CanBeExorcised()
 {
 	bool bVar1;
 
-	bVar1 = this->field_0xb80 == 1;
+	bVar1 = this->exorcisedState == 1;
 	if ((bVar1) && (bVar1 = true, this->field_0xb84 <= this->field_0xb88)) {
 		bVar1 = false;
 	}
@@ -5744,7 +5744,7 @@ void CActorWolfen::PostManageD(CBehaviourWolfen* pBehaviour)
 		pCVar1 = pBehaviour->pOwner;
 		behaviourIdA = -1;
 		if (((((~pCVar1->combatFlags_0xb78 & 0x30) == 0x30) && (pCVar1->curBehaviourId != (pCVar1->subObjA)->defaultBehaviourId)) &&
-			(pCVar2 = pCVar1->pAdversary, behaviourIdA = -1, pCVar2 != (CActorFighter*)0x0)) && (pCVar2->IsKindOfObject(0x10) == false)) {
+			(pCVar2 = pCVar1->pAdversary, behaviourIdA = -1, pCVar2 != (CActorFighter*)0x0)) && (pCVar2->IsKindOfObject(OBJ_TYPE_WOLFEN) == false)) {
 			pBehaviour->pOwner->combatFlags_0xb78 = pBehaviour->pOwner->combatFlags_0xb78 & 0xffffe7ff;
 			pBehaviour->pOwner->SetCombatMode(ECM_None);
 			behaviourIdA = pBehaviour->pOwner->subObjA->defaultBehaviourId;
@@ -9309,7 +9309,7 @@ void CActorWolfenKnowledge::Term()
 		uVar1 = 0;
 		if (this->nbSubObjs != 0) {
 			do {
-				edMemFree(this->aSubObjs + uVar1);
+				edMemFree(this->aSubObjs[uVar1].field_0x4);
 				uVar1 = uVar1 + 1;
 			} while (uVar1 < this->nbSubObjs);
 		}
@@ -9906,7 +9906,7 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x40, &this->pOwner->pMeshTransform->base.transformA, &this->field_0x40);
 	(this->field_0x40).y = (this->field_0x40).y + 2.0f;
-	this->pOwner->field_0xb80 = 1;
+	this->pOwner->exorcisedState = 1;
 	this->fxHandle.id = 0;
 	this->fxHandle.pFx = (CNewFx*)0x0;
 
@@ -10093,7 +10093,7 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 		}
 	}
 	else {
-		if (msg == 0x30) {
+		if (msg == MESSAGE_MAGIC_ACTIVATE) {
 			IMPLEMENTATION_GUARD(
 			if ((this->pOwner->base).characterBase.base.base.actorState == 0x79) {
 				local_10[0] = 0;
@@ -10103,7 +10103,7 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 			})
 		}
 		else {
-			if (msg == 0x2f) {
+			if (msg == MESSAGE_MAGIC_DEACTIVATE) {
 				if ((pSender->typeID == 6) && (this->pOwner->CanBeExorcised() != false)) {
 					if (this->pOwner->IsExorcizable(static_cast<CActorHero*>(pSender)) != false) {
 						return 3;

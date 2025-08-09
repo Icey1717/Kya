@@ -5,8 +5,13 @@
 #include "LargeObject.h"
 #include "edBankBuffer.h"
 
-struct MapManager : public CObjectManager {
+struct CMapManager : public CObjectManager
+{
 	void OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream);
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Map"; }
+#endif
 
 	int field_0x4;
 	undefined4 field_0x8;

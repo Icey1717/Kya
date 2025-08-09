@@ -399,10 +399,7 @@ struct GlobalCollisionData {
 	undefined4 field_0x10;
 	undefined4 field_0x14;
 	undefined* field_0x18;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
+	uint field_0x1c;
 };
 
 struct CollisionTD {
@@ -508,6 +505,7 @@ void edColBegin(int param_1, int databaseId);
 void edColObjectSetCollisionsType(byte param_1, byte param_2, byte param_3);
 void edColCollisionAddPrim(int aType, int aCount, void* param_3, void* aData, int bType, int bCount, void* bData);
 edColOBJECT* edColEnd(edDynOBJECT* pDynObj);
+void edColFreeTemporaryMemory();
 
 extern GlobalCollisionData gColData;
 

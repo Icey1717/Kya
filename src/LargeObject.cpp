@@ -18,6 +18,7 @@
 #ifdef PLATFORM_WIN
 #include "port.h"
 #include "renderer.h"
+#include "profiling.h"
 #endif
 #include "edVideo/VideoC.h"
 #include "TimeController.h"
@@ -43,6 +44,7 @@
 #include "kya.h"
 #include "PoolAllocators.h"
 #include "FrontEndBank.h"
+#include "ActorFactory.h"
 
 #define SCENE_STATE_NONE 0x0
 #define SCENE_STATE_CHECKPOINT_FADE_OUT 0x1
@@ -152,7 +154,7 @@ CScene::CScene()
 	CFrontendDisplay* pFrontendManager;
 	//HelpManager* pHelpManager;
 	CPauseManager* pPVar2;
-	//MapManager* pMVar3;
+	//CMapManager* pMVar3;
 	CCameraManager* pCameraViewmanager;
 	CSectorManager* pSectorManager;
 	//LightManager* pLightManager;
@@ -184,11 +186,7 @@ CScene::CScene()
 	CLanguageManager* pManager;
 
 	this->field_0x38 = 1;
-	//errorPrinter = (void**)Allocate(4);
-	//if (errorPrinter != (void**)0x0) {
-	//	errorPrinter = PrintCActorErrors(errorPrinter);
-	//}
-	//this->field_0x0 = (int)errorPrinter;
+	this->pActorFactory = new CActorFactory();
 	this->field_0x38 = 1;
 	iVar19 = 0x17;
 	this->fogClipSettingStackSize = -1;
@@ -235,7 +233,7 @@ CScene::CScene()
 	//g_HelpManager_00451684 = pHelpManager;
 	pPVar2 = new CPauseManager();
 	CScene::ptable.g_PauseManager_00451688 = pPVar2;
-	CScene::ptable.g_MapManager_0045168c = new MapManager;
+	CScene::ptable.g_MapManager_0045168c = new CMapManager;
 	pCameraViewmanager = new CCameraManager;
 	CScene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
 	pSectorManager = new CSectorManager;
@@ -321,6 +319,20 @@ CScene::CScene()
 	return;
 }
 
+
+void S_ELEVATOR_CUTSCENE_LIST::Create(S_ELEVATOR_CUTSCENE_LIST** ppList, ByteCode* pByteCode)
+{
+	S_ELEVATOR_CUTSCENE_LIST* pList = reinterpret_cast<S_ELEVATOR_CUTSCENE_LIST*>(pByteCode->currentSeekPos);
+
+	pByteCode->currentSeekPos = (char*)(pList->aEntries);
+	if (pList->nbEntries != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pList->nbEntries * sizeof(int);
+	}
+
+	*ppList = pList;
+
+	return;
+}
 
 void CScene::CreateScene(void)
 {
@@ -540,17 +552,17 @@ void CScene::Level_Init()
 		loadFuncPtr = loadFuncPtr + 1;
 	} while (loopCounter < 0x18);
 	this->field_0x38 = 1;
-	//edColFreeTemporaryMemory();
-	//(*(code*)LevelScheduleManager::gThis->pManagerFunctionData[1].field_0x0)();
+	edColFreeTemporaryMemory();
+	CLevelScheduler::gThis->Level_PostInit();
 	g_CinematicManager_0048efc->WillLoadCinematic();
-	//FUN_003f95f0((MapManager*)Scene::ptable[11]);
+	//FUN_003f95f0((CMapManager*)Scene::ptable[11]);
 	if (this->fogClipSettingStackSize != -1) {
-		//puVar1 = (undefined4*)(&param_1->field_0x4c)[param_1->field_0xcc * 2];
-		//param_1->field_0xe8 = *puVar1;
-		//param_1->field_0xec = puVar1[1];
-		//param_1->field_0xf0 = (undefined4)puVar1[2];
-		//param_1->field_0xf4 = puVar1[3];
-		//param_1->field_0xd0 = param_1->field_0xd4;
+		pSVar1 = this->aFogClipStack[this->fogClipSettingStackSize].pStreamDef;
+		this->clipValue_0xe8 = pSVar1->clipValue_0x0;
+		this->field_0xec = pSVar1->field_0x4;
+		this->fogRGBA = pSVar1->fogRGBA;
+		this->fogFlags = pSVar1->flags;
+		this->field_0xd0 = this->field_0xd4;
 	}
 	return;
 }
@@ -736,22 +748,22 @@ void CScene::InitiateCheckpointReset(int bFadeOut)
 void CScene::Level_Term(void)
 {
 	FxFogProp* pFVar2;
-	int iVar4;
+	int curIndex;
 
 
 	g_CinematicManager_0048efc->StopAllCutscenes();
 
 	CLevelScheduler::gThis->Level_PreTerm();
 
-	iVar4 = 0;
-	CObjectManager** pMVar2 = CScene::ptable.aManagers;
+	curIndex = 0;
+	CObjectManager** ppManager = CScene::ptable.IterateBackwards();
 	do {
-		if (*pMVar2 != (CObjectManager*)0x0) {
-			(*pMVar2)->Level_Term();
+		if (*ppManager != (CObjectManager*)0x0) {
+			(*ppManager)->Level_Term();
 		}
-		iVar4 = iVar4 + 1;
-		pMVar2 = pMVar2 + 1;
-	} while (iVar4 < 0x18);
+		curIndex = curIndex + 1;
+		ppManager = ppManager - 1;
+	} while (curIndex < 0x18);
 
 	PopFogAndClippingSettings(this->pFogClipStream);
 
@@ -767,7 +779,7 @@ void CScene::Level_Term(void)
 		this->fogClipSettingStackSize = -1;
 	}
 
-	edDListDeleteFrameBufferMaterial(&this->field_0xfc);
+	edDListDeleteFrameBufferMaterial(&this->frameBufferMaterial);
 
 	GlobalDList_AddToView();
 
@@ -775,21 +787,21 @@ void CScene::Level_Term(void)
 	edVideoFlip();
 #endif
 
-	iVar4 = 0;
-	pMVar2 = CScene::ptable.aManagers;
+	curIndex = 0;
+	ppManager = CScene::ptable.IterateBackwards();
 	do {
-		if (*pMVar2 != (CObjectManager*)0x0) {
-			(*pMVar2)->Level_ClearAll();
+		if (*ppManager != (CObjectManager*)0x0) {
+			(*ppManager)->Level_ClearAll();
 		}
-		iVar4 = iVar4 + 1;
-		pMVar2 = pMVar2 + 1;
-	} while (iVar4 < 0x18);
+		curIndex = curIndex + 1;
+		ppManager = ppManager - 1;
+	} while (curIndex < 0x18);
 
 	FreeAllAllocators();
 
 	this->field_0x10c = -1;
 	this->field_0x110 = -1;
-	this->field_0x114 = 0;
+	this->pElevatorCutsceneList = 0;
 
 	return;
 }
@@ -801,8 +813,10 @@ void CScene::Level_Reset()
 
 void CScene::Level_Manage()
 {
-	CObjectManager** ppMVar1;
-	int iVar2;
+	CObjectManager** ppManager;
+	int curManagerIndex;
+
+	ZONE_SCOPED;
 
 	if (this->field_0x48 == 0) {
 		if ((GameFlags & 0x200) != 0) {
@@ -822,26 +836,32 @@ void CScene::Level_Manage()
 	//EmptyFunction();
 
 	if ((GameFlags & GAME_STATE_PAUSED) == 0) {
-		iVar2 = 0;
-		ppMVar1 = CScene::ptable.aManagers;
+		ZONE_SCOPED_NAME("Level_Manage");
+		curManagerIndex = 0;
+		ppManager = CScene::ptable.aManagers;
 		do {
-			if (*ppMVar1 != (CObjectManager*)0x0) {
-				(*ppMVar1)->Level_Manage();
+			if (*ppManager != (CObjectManager*)0x0) {
+				ZONE_SCOPED_NAME("Level_Manage");
+				ZONE_NAME((*ppManager)->ProfileGetName(), strlen((*ppManager)->ProfileGetName()));
+				(*ppManager)->Level_Manage();
 			}
-			iVar2 = iVar2 + 1;
-			ppMVar1 = ppMVar1 + 1;
-		} while (iVar2 < 0x18);
+			curManagerIndex = curManagerIndex + 1;
+			ppManager = ppManager + 1;
+		} while (curManagerIndex < 0x18);
 	}
 	else {
-		iVar2 = 0;
-		ppMVar1 = CScene::ptable.aManagers;
+		ZONE_SCOPED_NAME("Level_ManagePaused");
+		curManagerIndex = 0;
+		ppManager = CScene::ptable.aManagers;
 		do {
-			if (*ppMVar1 != (CObjectManager*)0x0) {
-				(*ppMVar1)->Level_ManagePaused();
+			if (*ppManager != (CObjectManager*)0x0) {
+				ZONE_SCOPED_NAME("Level_ManagePaused");
+				ZONE_NAME((*ppManager)->ProfileGetName(), strlen((*ppManager)->ProfileGetName()));
+				(*ppManager)->Level_ManagePaused();
 			}
-			iVar2 = iVar2 + 1;
-			ppMVar1 = ppMVar1 + 1;
-		} while (iVar2 < 0x18);
+			curManagerIndex = curManagerIndex + 1;
+			ppManager = ppManager + 1;
+		} while (curManagerIndex < 0x18);
 	}
 
 	HandleCurState();
@@ -851,18 +871,22 @@ void CScene::Level_Manage()
 
 void CScene::Level_Draw(void)
 {
-	CObjectManager** ppMVar1;
-	int iVar2;
+	CObjectManager** ppManager;
+	int curManagerIndex;
 
-	iVar2 = 0;
-	ppMVar1 = CScene::ptable.aManagers;
+	ZONE_SCOPED;
+
+	curManagerIndex = 0;
+	ppManager = CScene::ptable.aManagers;
 	do {
-		if (*ppMVar1 != (CObjectManager*)0x0) {
-			(*ppMVar1)->Level_Draw();
+		if (*ppManager != (CObjectManager*)0x0) {
+			ZONE_SCOPED_NAME("Level_Draw");
+			ZONE_NAME((*ppManager)->ProfileGetName(), strlen((*ppManager)->ProfileGetName()));
+			(*ppManager)->Level_Draw();
 		}
-		iVar2 = iVar2 + 1;
-		ppMVar1 = ppMVar1 + 1;
-	} while (iVar2 < 0x18);
+		curManagerIndex = curManagerIndex + 1;
+		ppManager = ppManager + 1;
+	} while (curManagerIndex < 0x18);
 
 	GlobalDList_AddToView();
 
@@ -879,7 +903,6 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	int iVar4;
 	CCameraGame* pCVar5;
 	float fVar5;
-	ConditionedOperationArray local_4;
 
 	pMemoryStream->GetU8();
 	pMemoryStream->GetU8();
@@ -888,51 +911,45 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	pMemoryStream->GetU64();
 	pMemoryStream->GetS32();
 	pMemoryStream->GetS32();
-	uVar3 = pMemoryStream->GetU32();
-	this->field_0x18 = uVar3;
+
+	this->field_0x18 = pMemoryStream->GetU32();
+
 	S_STREAM_FOG_DEF* pSVar1 = (S_STREAM_FOG_DEF*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(pSVar1 + 1);
 	this->pFogClipStream = pSVar1;
-	iVar4 = pMemoryStream->GetS32();
-	this->mipmapL = iVar4;
-	iVar4 = pMemoryStream->GetS32();
-	this->mipmapK = iVar4;
+	this->mipmapL = pMemoryStream->GetS32();
+	this->mipmapK = pMemoryStream->GetS32();
+
 	/* Main Camera */
 	pCVar5 = (CCameraGame*)CScene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
+
 	fVar5 = pMemoryStream->GetF32();
 	this->field_0x118 = fVar5;
 	pCVar5->field_0x2dc = fVar5;
-	uVar3 = pMemoryStream->GetU32();
-	this->field_0x11c = uVar3;
-	uVar3 = pMemoryStream->GetU32();
-	this->count_0x120 = uVar3;
+
+	this->field_0x11c = pMemoryStream->GetU32();
+	this->count_0x120 = pMemoryStream->GetU32();
+
 	LoadFunc_001b87b0();
 	CScene::ptable.g_MapManager_0045168c->OnLoadLevelBnk_003f9a60(pMemoryStream);
-	iVar4 = pMemoryStream->GetS32();
-	this->field_0x28 = iVar4;
-	if (this->field_0x28 != -1) {
-		CScene::ptable.g_C3DFileManager_00451664->InstanciateG2D(this->field_0x28);
+	this->defaultTextureIndex_0x28 = pMemoryStream->GetS32();
+	if (this->defaultTextureIndex_0x28 != -1) {
+		CScene::ptable.g_C3DFileManager_00451664->InstanciateG2D(this->defaultTextureIndex_0x28);
 	}
-	iVar4 = pMemoryStream->GetS32();
-	this->defaultTextureIndex_0x2c = iVar4;
-	edDListCreateFrameBufferMaterial(&this->field_0xfc);
-	iVar4 = pMemoryStream->GetS32();
-	this->defaultMaterialIndex = iVar4;
+	this->defaultTextureIndex_0x2c = pMemoryStream->GetS32();
+	edDListCreateFrameBufferMaterial(&this->frameBufferMaterial);
+	this->defaultMaterialIndex = pMemoryStream->GetS32();
 	CScene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
-	//local_4 = { };
+
+	ConditionedOperationArray local_4;
 	local_4.Create(pMemoryStream);
 	local_4.Perform();
+
 	CLevelScheduler::gThis->Level_LoadObjectives(pMemoryStream);
-	iVar4 = pMemoryStream->GetS32();
-	this->field_0x10c = iVar4;
-	iVar4 = pMemoryStream->GetS32();
-	this->field_0x110 = iVar4;
-	piVar2 = (int*)pMemoryStream->currentSeekPos;
-	pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
-	if (*piVar2 != 0) {
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 4;
-	}
-	this->field_0x114 = piVar2;
+	this->field_0x10c = pMemoryStream->GetS32();
+	this->field_0x110 = pMemoryStream->GetS32();
+
+	S_ELEVATOR_CUTSCENE_LIST::Create(&this->pElevatorCutsceneList, pMemoryStream);
 	return;
 }
 
@@ -949,6 +966,53 @@ bool CScene::IsCutsceneFadeActive(void)
 bool CScene::IsResetFadeActive(void)
 {
 	return (this->curState - 4U) < 2;
+}
+
+CScene::~CScene()
+{
+	CActorFactory* pCVar2;
+	CObjectManager** ppManager;
+	int iVar4;
+
+	if (this != (CScene*)0x0) {
+		iVar4 = 0x17;
+		ppManager = ptable.IterateBackwards();
+		do {
+			if (*ppManager != (CObjectManager*)0x0) {
+				if (*ppManager != (CObjectManager*)0x0) {
+					delete* ppManager;
+				}
+
+				*ppManager = (CGlobalDListManager*)0x0;
+			}
+
+			iVar4 = iVar4 + -1;
+			ppManager = ppManager + -1;
+		} while (-1 < iVar4);
+
+		ed3DSceneTerm(_scene_handleA);
+		_scene_handleA = (ed_3D_Scene*)0xffffffff;
+
+		ed3DSceneTerm(_scene_handleB);
+		_scene_handleB = (ed_3D_Scene*)0xffffffff;
+
+		edViewportDel(this->pViewportA, false);
+		this->pViewportA = (ed_viewport*)0x0;
+
+		edViewportDel(this->pViewportB, false);
+		this->pViewportB = (ed_viewport*)0x0;
+
+		_pinstance = (CScene*)0x0;
+
+		if (this->curState != 0) {
+			this->timeInState = 0.0f;
+			this->curState = 0;
+		}
+
+		delete this->pActorFactory;
+	}
+
+	return;
 }
 
 void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
@@ -1270,4 +1334,9 @@ void CAudioManager::PlayCombatMusic()
 void CAudioManager::StopCombatMusic()
 {
 	IMPLEMENTATION_GUARD_AUDIO();
+}
+
+char* CObjectManager::ProfileGetName()
+{
+	return "unnamed";
 }

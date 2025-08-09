@@ -46,6 +46,10 @@ public:
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
 
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "FrontendBank"; }
+#endif
+
 	char* GetResource(char* pFileName, edBANK_ENTRY_INFO* pEntryInfo);
 	ed_g2d_manager* GetG2D(int index);
 

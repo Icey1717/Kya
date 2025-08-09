@@ -3,7 +3,8 @@
 
 #include "Types.h"
 
-struct ActorClassProperties {
+struct ActorClassProperties
+{
 	uint flags;
 	uint field_0x4;
 	int classPriority;
@@ -14,8 +15,11 @@ struct ActorClassProperties {
 
 class CActor;
 
-class CActorFactory {
+class CActorFactory
+{
 public:
+	CActorFactory();
+
 	static CActor* Factory(ACTOR_CLASS classId, int count, int* outSize, void* pAlloc);
 	static ActorClassProperties gClassProperties[ACTOR_NUM_CLASSES];
 };

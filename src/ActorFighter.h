@@ -567,8 +567,11 @@ public:
 	void _InitGrab(s_fighter_grab* pGrab);
 
 	void _InitBlowsDB();
+	void _DeleteCombosDB();
 	void _InitGrabsDB();
+	void _DeleteGrabsDB();
 	void _InitCombosDB();
+	void _DeleteBlowsDB();
 
 	void _UpdateComboSituation();
 	s_fighter_combo* _FindComboBestRoot(s_input_pattern* pPattern, uint flags);

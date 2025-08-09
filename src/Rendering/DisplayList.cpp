@@ -299,6 +299,15 @@ CGlobalDList::CGlobalDList(int nbCommands, int nbMatrices, int inField_0x10, int
 	edDListSetSceneUsed(this->pDisplayListInternal, pInStaticMeshMaster);
 }
 
+CGlobalDList::~CGlobalDList()
+{
+	if (this->pDisplayListInternal != (DisplayList*)0x0) {
+		edDListDelete(this->pDisplayListInternal);
+	}
+
+	return;
+}
+
 void CGlobalDList::Init()
 {
 	this->bEnabled = 1;

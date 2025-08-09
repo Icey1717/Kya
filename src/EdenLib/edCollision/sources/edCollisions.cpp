@@ -5,7 +5,7 @@
 
 #include "MathOps.h"
 #include "port/pointer_conv.h"
-#include "../../../profile.h"
+#include "profile.h"
 
 GlobalCollisionData gColData;
 CollisionTD gColTD;
@@ -4523,11 +4523,15 @@ void edColInit(void)
 		peVar8->curDbEntryCount = 0;
 	}
 
-	edMemSetFlags(TO_HEAP(H_MAIN), 0x8000);
+	edMemSetFlags(TO_HEAP(H_MAIN), MEM_FLAG_KSEG0_CACHED);
 	gColData.field_0x1c = (uint)gColConfig.field_0x3 << 4;
 	pvVar6 = edMemAlloc(TO_HEAP(H_MAIN), gColData.field_0x1c);
+#ifdef PLATFORM_PS2
 	gColData.field_0x18 = (undefined*)((ulong)pvVar6 | 0x20000000);
-	edMemClearFlags(TO_HEAP(H_MAIN), 0x8000);
+#else
+	gColData.field_0x18 = (undefined*)pvVar6;
+#endif
+	edMemClearFlags(TO_HEAP(H_MAIN), MEM_FLAG_KSEG0_CACHED);
 
 	gColTD.field_0x0 = 0;
 	gColData.bInitialized = 1;
@@ -5507,7 +5511,7 @@ void edColTerm(void)
 	}
 
 	if (gColData.field_0x18 != (undefined*)0x0) {
-	//	edMemFree(gColData.field_0x18);
+		edMemFree(gColData.field_0x18);
 		gColData.field_0x18 = (undefined*)0x0;
 	}
 
@@ -5517,6 +5521,26 @@ void edColTerm(void)
 	}
 
 	gColData.bInitialized = 0;
+
+	return;
+}
+
+void edColFreeTemporaryMemory()
+{
+	if (gColTD.field_0x4 != (undefined*)0x0) {
+		edMemFree(gColTD.field_0x4);
+		gColTD.field_0x4 = (undefined*)0x0;
+	}
+
+	if (gColTD.aPrim != (edColPrimEntry*)0x0) {
+		edMemFree(gColTD.aPrim);
+		gColTD.aPrim = (edColPrimEntry*)0x0;
+	}
+
+	if (gColTD.field_0x14 != (undefined*)0x0) {
+		edMemFree(gColTD.field_0x14);
+		gColTD.field_0x14 = (undefined*)0x0;
+	}
 
 	return;
 }

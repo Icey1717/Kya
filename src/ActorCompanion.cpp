@@ -504,8 +504,7 @@ void CActorCompanion::StateTipsAlert()
 	else {
 		pSubObj = (this->behaviourCompanion).aSubObjs + (this->behaviourCompanion).activeSubObjId;
 		if ((((pSubObj->flags_0x2 & 0x100) != 0) && ((pSubObj->flags_0x0 & 2) != 0)) && ((pSubObj->flags_0x4 & 1) == 0)) {
-			IMPLEMENTATION_GUARD(
-			this->behaviourCompanion.FUN_001e56b0(1);)
+			this->behaviourCompanion.FUN_001e56b0(1);
 		}
 
 		if (((this->behaviourCompanion).aSubObjs[(this->behaviourCompanion).activeSubObjId].flags_0x2 & 4) != 0) {
@@ -766,16 +765,16 @@ void CBehaviourCompanion::Create(ByteCode* pByteCode)
 			}
 
 			pCVar9->pActor.index = pByteCode->GetS32();
-			pCVar9->field_0x20 = pByteCode->GetF32();
-			pCVar9->field_0x24 = pByteCode->GetF32();
-			pCVar9->field_0x28 = pByteCode->GetF32();
-			pCVar9->field_0x2c = 0;
+			pCVar9->field_0x20.x = pByteCode->GetF32();
+			pCVar9->field_0x20.y = pByteCode->GetF32();
+			pCVar9->field_0x20.z = pByteCode->GetF32();
+			pCVar9->field_0x20.w = 0.0f;
 
 			if (pCVar9->pActor.index != -1) {
 				pCVar9->flags_0x2 = pCVar9->flags_0x2 | COMPANION_SUB_OBJ_FLAG_HAS_ACTOR;
 			}
 
-			if (fabs(pCVar9->field_0x28) + fabs(pCVar9->field_0x20) + fabs(pCVar9->field_0x24) != 0.0f) {
+			if (fabs(pCVar9->field_0x20.z) + fabs(pCVar9->field_0x20.x) + fabs(pCVar9->field_0x20.y) != 0.0f) {
 				pCVar9->flags_0x2 = pCVar9->flags_0x2 | 0x80;
 			}
 
@@ -906,8 +905,7 @@ void CBehaviourCompanion::Manage()
 	}
 
 	if (this->field_0x5c != 0) {
-		IMPLEMENTATION_GUARD(
-		FUN_001e56b0(this, 1);)
+		FUN_001e56b0(1);
 	}
 
 	FUN_001e50a0();
@@ -961,8 +959,7 @@ void CBehaviourCompanion::Manage()
 									pCVar14 = this->aSubObjs + this->field_0x10;
 									if ((((pCVar14->flags_0x2 & 0x100) == 0) && ((pCVar14->flags_0x0 & 2) != 0)) &&
 										((pCVar14->flags_0x4 & 1) == 0)) {
-										IMPLEMENTATION_GUARD(
-										FUN_001e56b0(this, 1);)
+										FUN_001e56b0(1);
 									}
 
 									iVar15 = this->pOwner->actorState;
@@ -1021,7 +1018,7 @@ void CBehaviourCompanion::Manage()
 			}
 		}
 		else {
-			pCVar14 = GetActiveAlert();
+			pCVar14 = GetAlert(iVar8);
 
 			if ((pCVar14->flags_0x2 & 1) != 0) {
 				peVar9 = (ed_zone_3d*)0x0;
@@ -1062,8 +1059,7 @@ void CBehaviourCompanion::Manage()
 
 	if (this->field_0x10 != -1) {
 		if (this->field_0x5c != 0) {
-			IMPLEMENTATION_GUARD(
-			FUN_001e56b0(1);)
+			FUN_001e56b0(1);
 		}
 
 		if ((this->aSubObjs[this->field_0x10].flags_0x2 & 0x100) != 0) {
@@ -1325,7 +1321,7 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x5c;
 				pCVar8 = this->aSubObjs + this->field_0x10;
 				if ((((pCVar8->flags_0x2 & 0x100) == 0) && ((pCVar8->flags_0x0 & 2) != 0)) && ((pCVar8->flags_0x4 & 1) == 0)) {
-					FUN_001e56b0(this, 1);
+					FUN_001e56b0(1);
 				}
 				iVar5 = this->pOwner->actorState;
 				if ((iVar5 == 0xb) || (iVar5 == 0xe)) {
@@ -1648,8 +1644,7 @@ void CBehaviourCompanion::FUN_001e5790()
 	pCameraManager = CCameraManager::_gThis;
 	this->aSubObjs[this->activeSubObjId].flags_0x4 = this->aSubObjs[this->activeSubObjId].flags_0x4 & 0xffe7;
 	if (this->field_0x58 != 0) {
-		IMPLEMENTATION_GUARD(
-		FUN_001e56b0(0);)
+		FUN_001e56b0(0);
 	}
 
 	this->field_0x5c = 0;
@@ -1775,9 +1770,9 @@ void CBehaviourCompanion::FUN_001e9660(edF32VECTOR4* param_2)
 	float fVar9;
 	float fVar10;
 	CCameraManager* pCameraManager;
-	int iVar12;
+	CCameraManager* iVar12;
 	int iVar13;
-	CompanionAlert* pCVar14;
+	CompanionAlert* pAlert;
 	CWayPoint* pCVar15;
 	CCamera* pCVar16;
 	edF32VECTOR4 local_b0;
@@ -1787,7 +1782,7 @@ void CBehaviourCompanion::FUN_001e9660(edF32VECTOR4* param_2)
 	edF32VECTOR4 local_40;
 	edF32VECTOR4 eStack48;
 	edF32VECTOR4 local_20;
-	float afStack16[3];
+	edF32VECTOR2 eStack16;
 	float local_4;
 
 	pCameraManager = CCameraManager::_gThis;
@@ -1795,13 +1790,13 @@ void CBehaviourCompanion::FUN_001e9660(edF32VECTOR4* param_2)
 	if ((uVar2 & 0x40) == 0) {
 		if ((uVar2 & 4) == 0) {
 			if (this->activeSubObjId < 0) {
-				pCVar14 = (CompanionAlert*)0x0;
+				pAlert = (CompanionAlert*)0x0;
 			}
 			else {
-				pCVar14 = this->aSubObjs + this->activeSubObjId;
+				pAlert = this->aSubObjs + this->activeSubObjId;
 			}
 
-			edF32Vector4ScaleHard(pCVar14->field_0x18, &local_20, &CCameraManager::_gThis->transformationMatrix.rowX);
+			edF32Vector4ScaleHard(pAlert->field_0x18, &local_20, &CCameraManager::_gThis->transformationMatrix.rowX);
 		}
 		else {
 			local_20.x = 0.0f;
@@ -1810,35 +1805,35 @@ void CBehaviourCompanion::FUN_001e9660(edF32VECTOR4* param_2)
 			local_20.w = 0.0f;
 
 			if (this->activeSubObjId < 0) {
-				pCVar14 = (CompanionAlert*)0x0;
+				pAlert = (CompanionAlert*)0x0;
 			}
 			else {
-				pCVar14 = this->aSubObjs + this->activeSubObjId;
+				pAlert = this->aSubObjs + this->activeSubObjId;
 			}
 
-			pCVar16 = (pCVar14->pCamera).Get();
+			pCVar16 = (pAlert->pCamera).Get();
 			local_90 = (pCVar16->transformationMatrix).rowZ;
 			edF32Vector4CrossProductHard(&local_20, &local_90, &local_20);
 			if (this->activeSubObjId < 0) {
-				pCVar14 = (CompanionAlert*)0x0;
+				pAlert = (CompanionAlert*)0x0;
 			}
 			else {
-				pCVar14 = this->aSubObjs + this->activeSubObjId;
+				pAlert = this->aSubObjs + this->activeSubObjId;
 			}
 
-			edF32Vector4ScaleHard(pCVar14->field_0x18, &local_20, &local_20);
+			edF32Vector4ScaleHard(pAlert->field_0x18, &local_20, &local_20);
 		}
 
 		if (this->activeSubObjId < 0) {
-			pCVar14 = (CompanionAlert*)0x0;
+			pAlert = (CompanionAlert*)0x0;
 		}
 		else {
-			pCVar14 = this->aSubObjs + this->activeSubObjId;
+			pAlert = this->aSubObjs + this->activeSubObjId;
 		}
 
 		pCVar15 = (CWayPoint*)0x0;
-		if (pCVar14->field_0x14 != -1) {
-			pCVar15 = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + pCVar14->field_0x14;
+		if (pAlert->field_0x14 != -1) {
+			pCVar15 = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + pAlert->field_0x14;
 		}
 
 		local_b0.xyz = pCVar15->location;
@@ -1867,69 +1862,87 @@ void CBehaviourCompanion::FUN_001e9660(edF32VECTOR4* param_2)
 		CFrontendInventory* pInventory = pFrontend->pInventory;
 		pCVar3 = this->pOwner->pActorHero;
 		bVar1 = false;
+
 		if (pCVar3 == this->aSubObjs[this->activeSubObjId].pActor.Get()) {
-			IMPLEMENTATION_GUARD(
-			iVar13 = pInventory->ComputeGameScreenCoordinate(afStack16, (edF32VECTOR4*)&pCVar3->character, &local_4, 0);
+			iVar13 = pInventory->ComputeGameScreenCoordinate(&eStack16, &pCVar3->currentLocation, &local_4, 0);
 			bVar1 = iVar13 == 0;
+
 			if ((this->aSubObjs[this->activeSubObjId].flags_0x2 & 4) != 0) {
-				if (this->activeSubObjId < 0) {
-					pCVar14 = (CompanionAlert*)0x0;
-				}
-				else {
-					pCVar14 = this->aSubObjs + this->activeSubObjId;
-				}
-				iVar12 = pInventory->ComputeGameScreenCoordinate(afStack16,
-					&(this->pOwner->pActorHero->character).characterBase.base.base.currentLocation, &local_4,
-					(long)(int)(pCVar14->pCamera).pCamera);
-				if (iVar12 == 0) {
+				pAlert = GetActiveAlert();
+				const int computeResult = pInventory->ComputeGameScreenCoordinate(&eStack16, &this->pOwner->pActorHero->currentLocation, &local_4, (pAlert->pCamera).Get());
+				if (computeResult == 0) {
 					bVar1 = true;
 				}
 			}
-			if (local_4 <= 0.0) {
+
+			if (local_4 <= 0.0f) {
 				bVar1 = true;
-			})
+			}
 		}
 
 		if (bVar1) {
-			IMPLEMENTATION_GUARD(
-			local_40.x = (float)_DAT_0040eda0;
-			local_40.y = (float)((ulong)_DAT_0040eda0 >> 0x20);
-			local_40.z = _DAT_0040eda8;
-			local_40.w = _DAT_0040edac;
+			static edF32VECTOR4 edF32VECTOR4_0040eda0 = { 1.0f, 0.5f, 5.0f, 1.0f };
+			local_40 = edF32VECTOR4_0040eda0;
 			if ((this->aSubObjs[this->activeSubObjId].flags_0x2 & 4) == 0) {
 				pCVar16 = (CCamera*)0x0;
 			}
 			else {
-				if (this->activeSubObjId < 0) {
-					pCVar14 = (CompanionAlert*)0x0;
-				}
-				else {
-					pCVar14 = this->aSubObjs + this->activeSubObjId;
-				}
-				pCVar16 = (pCVar14->pCamera).pCamera;
+				pAlert = GetActiveAlert();
+				pCVar16 = (pAlert->pCamera).Get();
 			}
 
-			iVar12 = CScene::GetManager(MO_Camera);
+			iVar12 = (CCameraManager*)CScene::GetManager(MO_Camera);
 			if (pCVar16 == (CCamera*)0x0) {
-				edF32Matrix4MulF32Vector4Hard(param_2, (edF32MATRIX4*)(iVar12 + 0x50), &local_40);
+				edF32Matrix4MulF32Vector4Hard(param_2, &iVar12->transformationMatrix, &local_40);
 			}
 			else {
 				edF32Matrix4MulF32Vector4Hard(param_2, &pCVar16->transformationMatrix, &local_40);
-			})
+			}
 		}
 		else {
 			if ((this->aSubObjs[this->activeSubObjId].flags_0x2 & 0x80) == 0) {
-				IMPLEMENTATION_GUARD()
-					//edF32Vector4ScaleHard(((this->aSubObjs[this->activeSubObjId].pActor.Get()->subObjA->boundingSphere).w, &eStack48, &pCameraManager->transformationMatrix.rowX);
-					//eStack48.y = eStack48.y + ((this->aSubObjs[this->activeSubObjId].pActor.Get())->subObjA->boundingSphere).w;
+				edF32Vector4ScaleHard(this->aSubObjs[this->activeSubObjId].pActor.Get()->subObjA->boundingSphere.w, &eStack48, &pCameraManager->transformationMatrix.rowX);
+				eStack48.y = eStack48.y + ((this->aSubObjs[this->activeSubObjId].pActor.Get())->subObjA->boundingSphere).w;
 			}
 			else {
 				edF32Matrix4RotateYHard((pCameraManager->angle_0xa08).y, &eStack128, &gF32Matrix4Unit);
-				edF32Matrix4MulF32Vector4Hard
-				(&eStack48, &eStack128, (edF32VECTOR4*)&this->aSubObjs[this->activeSubObjId].field_0x20);
+				edF32Matrix4MulF32Vector4Hard(&eStack48, &eStack128, &this->aSubObjs[this->activeSubObjId].field_0x20);
 			}
 
 			edF32Vector4AddHard(param_2, &(this->aSubObjs[this->activeSubObjId].pActor.Get())->currentLocation, &eStack48);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourCompanion::FUN_001e56b0(int param_2)
+{
+	CActorHero* pHero;
+	_msg_enter_shop msgEnterShop;
+	CActorCompanion* pCompanion;
+
+	pCompanion = this->pOwner;
+	pHero = pCompanion->pActorHero;
+	if (pHero != (CActorHero*)0x0) {
+		if (param_2 == 0) {
+			pCompanion->DoMessage(pCompanion->pActorHero, MESSAGE_LEAVE_SHOP, 0);
+			this->field_0x5c = 0;
+			this->field_0x58 = 0;
+		}
+		else {
+			if ((pHero->GetStateFlags(pHero->actorState) & 0x100) == 0) {
+				this->field_0x5c = 1;
+			}
+			else {
+				msgEnterShop.field_0x0 = 0;
+				msgEnterShop.field_0x8 = 1;
+				msgEnterShop.field_0x4 = 0;
+				msgEnterShop.field_0xc = 0;
+				this->pOwner->DoMessage(this->pOwner->pActorHero, MESSAGE_ENTER_SHOP, &msgEnterShop);
+				this->field_0x5c = 0;
+				this->field_0x58 = 1;
+			}
 		}
 	}
 

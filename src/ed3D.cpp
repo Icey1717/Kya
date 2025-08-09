@@ -1800,6 +1800,35 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bIn
 	return pScene;
 }
 
+void ed3DSceneTermForList(void* pScene)
+{
+	ed3DSceneTerm(reinterpret_cast<ed_3D_Scene*>(pScene));
+}
+
+int ed3DSceneTerm(ed_3D_Scene* pScene)
+{
+	if (pScene->pViewport == gDebugViewport) {
+		gDebugViewport = (ed_viewport*)0x0;
+	}
+
+	if (pScene->bShadowScene == 1) {
+		ed3DShadowTermScene(pScene);
+	}
+
+	if (pScene->pHierListA != (edLIST*)0x0) {
+		ed3DHierarchyListTerm(pScene->pHierListA);
+		ed3DHierarchyListTerm(pScene->pHierListB);
+	}
+
+	edListApplyFunc(&pScene->meshClusterShadowList, ed3DSceneTermForList);
+	edListClear(&pScene->meshClusterShadowList);
+
+	pScene->bShadowScene = 0;
+	pScene->flags = 0;
+	pScene->pCamera = (edFCamera*)0x0;
+
+	return 1;
+}
 
 void ed3DFlushMatrixReset(void)
 {
@@ -6159,6 +6188,9 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 #ifdef PLATFORM_WIN
 		if (pMaterial->pBitmap) {
 			Renderer::Kya::GetTextureLibrary().BindFromDmaMaterial(pMaterial);
+		}
+		else {
+			Renderer::BindNull();
 		}
 #endif
 
@@ -11029,6 +11061,11 @@ void ed3DHierarchyManagerInit(void)
 	return;
 }
 
+bool ed3DHierarchyListTerm(edLIST* pList)
+{
+	return edListDel(pList);
+}
+
 void ed3DListBufferInit(int materialBufferCount, int matrixBufferCount)
 {
 	ed_dma_material* peVar1;
@@ -11855,6 +11892,29 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int in
 	}
 
 	return pMAT_Internal;
+}
+
+ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMaterial)
+{
+	ed_Chunck* pMATA_HASH;
+	ed_Chunck* pcVar2;
+	uint nbMaterials;
+
+	pMATA_HASH = pManager->pMATA_HASH;
+
+	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
+
+	pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+	nbMaterials = pMATA_HASH->nextChunckOffset - 0x10U >> 4;
+
+	while (true) {
+		if ((nbMaterials == 0) || (pMaterial == (ed_g2d_material*)(pcVar2 + 1))) break;
+		nbMaterials = nbMaterials - 1;
+		pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+		pHashCode = pHashCode + 1;
+	}
+
+	return pHashCode;
 }
 
 ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int index)
@@ -13541,6 +13601,27 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 	}
 	pFrameBuffer->pNext = pFrameBuffer;
 	return pFrameBuffer;
+}
+
+void ed3DShadowTermScene(ed_3D_Scene* pShadowScene)
+{
+	edSurface* pSurf;
+
+	pSurf = ((pShadowScene->sceneConfig).pShadowConfig.pCamera_0x10)->pColorBuffer;
+	if (pSurf->pSurfaceDesc != (ed_surface_desc*)0x0) {
+		edMemFree(pSurf->pSurfaceDesc);
+	}
+
+	if (pSurf->pZTags != (ZBufferTags*)0x0) {
+		edMemFree(pSurf->pZTags);
+	}
+
+	edMemFree(pSurf);
+	edViewportDel((pShadowScene->sceneConfig).pShadowConfig.pViewport, false);
+	edViewportDel((pShadowScene->sceneConfig).pShadowConfig.pCamera_0x10, false);
+	pShadowScene->bShadowScene = 0;
+
+	return;
 }
 
 void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag)

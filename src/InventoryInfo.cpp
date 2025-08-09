@@ -205,10 +205,10 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 
 	switch (objId) {
 	case 0:
-		uVar2 = CLevelScheduler::ScenVar_Get(7);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_JUMP_BOUNCE);
 		break;
 	case 1:
-		uVar2 = CLevelScheduler::ScenVar_Get(8);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_CLIMB);
 		break;
 	case INVENTORY_ITEM_BASE_BOOMY:
 		iVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);

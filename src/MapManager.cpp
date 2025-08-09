@@ -1,7 +1,7 @@
 #include "MapManager.h"
 #include "MemoryStream.h"
 
-void MapManager::OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream)
+void CMapManager::OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream)
 {
 	int* piVar1;
 	int iVar2;

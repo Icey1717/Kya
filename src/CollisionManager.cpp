@@ -500,9 +500,9 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 	edF32VECTOR4 local_10;
 
 	int totalSize = nbPrims * MAX_COL_OBJ_SIZE + 0xfc;
-	peVar1 = (edObbTREE_DYN*)edMemAlloc(TO_HEAP(H_MAIN), totalSize);
-	this->pObbTree = peVar1;
+	this->pObbTree = (edObbTREE_DYN*)edMemAlloc(TO_HEAP(H_MAIN), totalSize);
 	memset(this->pObbTree, 0, totalSize);
+
 	peVar1 = this->pObbTree + 1;
 	this->pDynCol = (edColG3D_OBB_TREE_DYN*)(reinterpret_cast<char*>(peVar1) + nbPrims * MAX_COL_OBJ_SIZE);
 	this->pDynCol->field_0x18 = 1;
@@ -2628,6 +2628,15 @@ CCollision::CCollision()
 	this->pCarryActorEntry = (S_CARRY_ACTOR_ENTRY*)0x0;
 	this->actorFieldA = (CActor*)0x0;
 	this->actorField = (CActor*)0x0;
+}
+
+CCollision::~CCollision()
+{
+	if ((this->flags_0x4 & 8) != 0) {
+		edMemFree(this->pObbTree);
+	}
+
+	return;
 }
 
 S_TIED_ACTOR_ENTRY CCollisionManager::_tied_actors_table[0x100] = {};

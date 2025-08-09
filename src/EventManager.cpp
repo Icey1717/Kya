@@ -591,6 +591,11 @@ void CEventManager::Level_CheckpointReset()
 	Level_Reset();
 }
 
+char* CEventManager::ProfileGetName()
+{
+	return "Events ";
+}
+
 uint edEventGetChunkNbEvents(int chunkIndex)
 {
 	return pedEventChunks[chunkIndex]->nbEvents;

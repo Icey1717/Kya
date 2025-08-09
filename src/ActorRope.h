@@ -27,6 +27,8 @@ class CActorRope : public CActor
 public:
 	static StateConfig _gStateCfg_ROP[2];
 
+	~CActorRope();
+
 	virtual void Create(ByteCode* pByteCode);
 
 	virtual void Init();

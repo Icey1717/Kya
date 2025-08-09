@@ -36,6 +36,7 @@ class CCollision
 public:
 
 	CCollision();
+	~CCollision();
 
 	uint flags_0x0;
 	uint flags_0x4;
@@ -163,6 +164,10 @@ public:
 	virtual void Level_ManagePaused() {}
 	virtual void Level_Create(ByteCode* pMemoryStream);
 	virtual void Level_Reset() {}
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Collision"; }
+#endif
 
 	void Level_PostCreate();
 

@@ -40,6 +40,7 @@ public:
 	};
 
 	void Init();
+	void Term();
 	void Create(ByteCode* pByteCode);
 
 	uint field_0x0;
@@ -72,6 +73,7 @@ public:
 	static uint _prt_bank_first_index;
 
 	CFxParticleManager();
+	~CFxParticleManager();
 
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
 

@@ -203,8 +203,8 @@ int C3DFileManager::InstanciateG2D(int index)
 	int iVar2;
 
 	pPVar1 = this->pParticleInfoArray_0x50;
-	for (iVar2 = 0; (pPVar1->ID != index && (iVar2 < 0x80)); iVar2 = iVar2 + 1) {
-		pPVar1 = pPVar1 + 1;
+	for (iVar2 = 0; (iVar2 < 0x80 && pPVar1->ID != index); iVar2++) {
+		pPVar1++;
 	}
 
 	// If we failed to find an entry, we go one past the end of the array. This is fine cause it indexes into the memory footer and 8 bytes in is zeroed out...

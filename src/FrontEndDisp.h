@@ -62,6 +62,8 @@ struct CFrontendDisplay : public CFrontend
 
 	virtual void Level_PauseChange(bool bPaused);
 
+	virtual char* ProfileGetName();
+
 	virtual void Level_LoadContext();
 
 	virtual void DeclareInterface(FRONTEND_INTERFACE interfaceType, CInterface* pInterface);

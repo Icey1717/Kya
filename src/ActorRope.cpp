@@ -194,6 +194,15 @@ StateConfig CActorRope::_gStateCfg_ROP[2] =
 	StateConfig(0x0, 0x200)
 };
 
+CActorRope::~CActorRope()
+{
+	if (this->pDisplayList != (DisplayList*)0x0) {
+		edDListDelete(this->pDisplayList);
+	}
+
+	return;
+}
+
 StateConfig* CActorRope::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;

@@ -319,6 +319,11 @@ void CLightManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+char* CLightManager::ProfileGetName()
+{
+	return "light";
+}
+
 void CLightManager::ComputeLighting(float multiplier, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig)
 {
 	edColPRIM_OBJECT* pObbPrim;

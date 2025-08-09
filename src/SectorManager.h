@@ -29,7 +29,8 @@ static_assert(sizeof(S_HIERANM_HIER) == 0x24);
 
 struct S_COMPANION_INFO;
 
-class CSectorHierarchy {
+class CSectorHierarchy
+{
 public:
 	ulong hash;
 	CSectorHierarchy* pNext;
@@ -89,7 +90,8 @@ public:
 	int currentSectorID;
 };
 
-struct CSectorManager : public CObjectManager {
+struct CSectorManager : public CObjectManager
+{
 	
 public:
 	CSectorManager();
@@ -114,6 +116,8 @@ public:
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
+	virtual char* ProfileGetName();
+
 	void SetupCompanionSectors(uint flags);
 
 	void Level_Create(ByteCode* pMemoryStream);
@@ -123,6 +127,7 @@ public:
 	void Flush();
 
 	edNODE* RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pOutHier);
+	void UnregisterDynamicHierarchy(CSectorHierarchy* pSector, int index);
 
 	char szSectorFileRoot[32];
 	undefined field_0x24;

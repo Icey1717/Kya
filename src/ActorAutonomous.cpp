@@ -1270,7 +1270,7 @@ bool Wolfen_CriterionWarn(CActor* pActor, void* pParams)
 
 	bVar1 = pActor != (CActor*)pParams;
 	if (bVar1) {
-		bVar1 = pActor->IsKindOfObject(0x10);
+		bVar1 = pActor->IsKindOfObject(OBJ_TYPE_WOLFEN);
 		bVar1 = bVar1 != false;
 	}
 

@@ -27,6 +27,7 @@ void CGlobalDListManager::Level_Init()
 	int unaff_s8_lo;
 
 	this->bBeganLevelInit = 1;
+
 	if (this->dlistCount != 0) {
 		pGVar1 = this->ppGlobalDlist;
 		if ((pGVar1->field_0x4 != 0) || (pGVar1->field_0xc != 0)) {
@@ -49,6 +50,7 @@ void CGlobalDListManager::Level_Init()
 			this->ppGlobalDlist->pDlistPatch->Init();
 			this->field_0x1c = 1;
 		}
+
 		if (1 < this->dlistCount) {
 			size = 0;
 			iVar10 = 1;
@@ -106,6 +108,7 @@ void CGlobalDListManager::Level_Init()
 					iVar10 = iVar10 + 1;
 				} while (iVar10 < this->dlistCount);
 			}
+
 			if (size != 0) {
 				iVar10 = edMemGetAvailable(TO_HEAP(H_MAIN));
 				pDVar5 = (DisplayList*)edMemAlloc(TO_HEAP(H_MAIN), size);
@@ -156,10 +159,17 @@ void CGlobalDListManager::Level_Init()
 				}
 			}
 		}
-		/* ----------------------------- */
+
 		edDebugPrintf("-----------------------------");
 	}
+
 	this->bCompletedLevelInit = 1;
+
+	return;
+}
+
+void CGlobalDListManager::Level_Term()
+{
 	return;
 }
 
@@ -817,3 +827,11 @@ bool CGlobalDListManager::_AddCallFuncElement(int param_2, int param_3, int bAct
 	return bSuccess;
 }
 
+CGlobalDListPatch::~CGlobalDListPatch()
+{
+	if (this->field_0x4d9 != 0) {
+		this->pDisplayListInternal = (DisplayList*)0x0;
+	}
+
+	return;
+}

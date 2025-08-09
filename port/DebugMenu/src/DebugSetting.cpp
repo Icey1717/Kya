@@ -41,7 +41,7 @@ bool Debug::Setting<bool>::DrawImguiControl()
 		return UpdateValue();
 	}
 
-	return true;
+	return false;
 }
 
 template<>
@@ -51,7 +51,7 @@ bool Debug::Setting<float>::DrawImguiControl()
 		return UpdateValue();
 	}
 
-	return true;
+	return false;
 }
 
 template<>
@@ -60,7 +60,7 @@ bool Debug::Setting<int>::DrawImguiControl()
 	if (ImGui::InputInt(name.c_str(), &value)) {
 		return UpdateValue();
 	}
-	return true;
+	return false;
 }
 
 template<>
@@ -75,5 +75,5 @@ bool Debug::Setting<std::string>::DrawImguiControl()
 		return UpdateValue();
 	}
 
-	return true;
+	return false;
 }

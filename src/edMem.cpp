@@ -11,13 +11,11 @@
 
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
+#else
+#include "profiling.h"
 #endif
 
 #define ED_MEM_LOG(level, format, ...) MY_LOG_CATEGORY("edMem", level, format, ##__VA_ARGS__)
-
-#define MEM_FLAG_LINKED_DEPENDENT_BLOCKS 0x8
-#define MEM_FLAG_REQUIRES_HEADER 0x10
-#define MEM_FLAG_REVERSE_TRAVERSAL 0x100
 
 struct HeapFuncTable
 {
@@ -37,33 +35,6 @@ char* edVarMemStackStart = (char*)0x01ff8000;
 uint edVarMemStackSize = 0x8000;
 
 // Contiguous
-
-struct MasterMemoryBlk {
-	struct S_MAIN_MEMORY_HEADER* aBlocks;
-	short nbTotalBlocks;
-	short nbFreeBlocks;
-	short nbUsedBlocks;
-	short nextFreeBlock;
-	byte stackLevel;
-	byte field_0xd;
-	byte field_0xe;
-	undefined field_0xf;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	ushort flags;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-};
 
 MasterMemoryBlk MemoryMasterBlock;
 
@@ -226,6 +197,8 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 
 	if (!pNewAllocation) {
 		FLUSH_LOG();
+		int freeMemory = edMemGetAvailable(heapID);
+		assert(freeMemory > size);
 	}
 
 	assert(pNewAllocation);
@@ -265,6 +238,9 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 			edDebugPrintf(g_szCannotAllocate, size, freeMemory);
 		}
 	}
+
+	TRACK_ALLOC(pNewAllocation, size);
+
 	return pNewAllocation;
 }
 
@@ -279,6 +255,7 @@ void edMemFree(void* pAlloc)
 		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemFree_00432598);
 	}
 	else {
+		TRACK_FREE(pAlloc);
 		peVar1 = edmemGetMainHeader(pAlloc);
 		(*MemoryHandlers[(char)peVar1->funcTableID].free)(peVar1);
 	}
@@ -574,9 +551,15 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								pAdjustedReturn = pReturn + -0x10;
 							}
 
-							if ((pMainMemHeader->flags & 0x8000U) != 0) {
+							if ((pMainMemHeader->flags & MEM_FLAG_KSEG0_CACHED) != 0) {
+								//By clearing bit 29, the allocator is ensuring the returned pointer is in the cached address space (KSEG0), 
+								//which is the normal region for most user code and data.
+#ifdef PLATFORM_PS2
 								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc adjusting pReturn");
 								pReturn = (char*)((uint)pReturn & 0xdfffffff);
+#else
+								// On other platforms, this adjustment may not be necessary, but it is included for consistency.
+#endif
 							}
 
 							const ulong allocatedSize = (ulong)pAdjustedReturn + -(ulong)pBlockStart;

@@ -149,6 +149,8 @@ public:
 	virtual void Level_ManagePaused();
 
 	virtual void Level_Draw();
+
+	virtual char* ProfileGetName();
 	// End Manager
 
 	void FUN_001b0860(int param_2);

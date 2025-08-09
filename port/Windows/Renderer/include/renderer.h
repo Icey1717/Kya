@@ -6,8 +6,6 @@
 #include "GIFReg.h"
 #include "GSState.h"
 
-#include "../../../include/profiling.h"
-
 #define int12_to_float(x)	(float)((float)x * 0.000244140625f)
 #define int15_to_float(x)	(float)((float)x * 0.000030517578125)
 
@@ -505,6 +503,7 @@ namespace Renderer
 
 	void BindTexture(SimpleTexture* pNewTexture);
 	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags);
+	void BindNull();
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 	void PushModelMatrix(float* pModel);

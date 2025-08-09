@@ -38,15 +38,10 @@ static_assert(sizeof(CND_OP_HEADER) == 0x4);
 
 struct COND_HEADER {
 	int condCount;
+	S_STREAM_SIMPLE_COND aConds[];
 };
 
 static_assert(sizeof(COND_HEADER) == 0x4);
-
-struct OP_HEADER {
-	int opCount;
-};
-
-static_assert(sizeof(OP_HEADER) == 0x4);
 
 struct S_STREAM_SIMPLE_OPERATION {
 	int scenVarId;
@@ -57,6 +52,13 @@ struct S_STREAM_SIMPLE_OPERATION {
 };
 
 static_assert(sizeof(S_STREAM_SIMPLE_OPERATION) == 0xc);
+
+struct OP_HEADER {
+	int opCount;
+	S_STREAM_SIMPLE_OPERATION aOps[];
+};
+
+static_assert(sizeof(OP_HEADER) == 0x4);
 
 struct ConditionedOperationArray {
 	ConditionedOperationArray() : pHeader((CND_OP_HEADER*)0x0) {}

@@ -121,6 +121,8 @@ public:
 
 	virtual void Level_CheckpointReset();
 
+	virtual char* ProfileGetName();
+
 	int activeChunkId;
 	int nbEvents;
 

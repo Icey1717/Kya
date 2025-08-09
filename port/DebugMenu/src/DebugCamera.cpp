@@ -226,6 +226,10 @@ namespace Debug::Camera {
 
 	static void ShowCameraDetails(CCamera* pCamera)
 	{
+		if (!pCamera) {
+			return;
+		}
+
 		ImGui::Text("Camera Type: %s", gCameraTypeNames[pCamera->GetMode()].c_str());
 		ImGui::Text("field_0x8: %d", pCamera->field_0x8);
 		ImGui::Text("flags_0xc: 0x%x", pCamera->flags_0xc);
@@ -397,74 +401,77 @@ void Debug::Camera::ShowCamera()
 
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
 
-	if (ImGui::CollapsingHeader("Active Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ShowCameraDetails(pActiveCamera);
-	}
+	if (pActiveCamera) {
 
-	if (pActiveCamera->GetMode() == CT_Main) {
-		if (ImGui::Button("Disable Collision")) {
-			CCameraGame* pGameCamera = static_cast<CCameraGame*>(pActiveCamera);
+		if (ImGui::CollapsingHeader("Active Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ShowCameraDetails(pActiveCamera);
+		}
 
-			if (pGameCamera) {
-				pGameCamera->cameraRayFlags = 0;
+		if (pActiveCamera->GetMode() == CT_Main) {
+			if (ImGui::Button("Disable Collision")) {
+				CCameraGame* pGameCamera = static_cast<CCameraGame*>(pActiveCamera);
+
+				if (pGameCamera) {
+					pGameCamera->cameraRayFlags = 0;
+				}
 			}
 		}
-	}
 
-	{
-		static bool bFixAtLocation = false;
-		ImGui::Checkbox("Fix at location", &bFixAtLocation);
+		{
+			static bool bFixAtLocation = false;
+			ImGui::Checkbox("Fix at location", &bFixAtLocation);
 
-		if (bFixAtLocation && pActiveCamera) {
-			GetTimer()->timeScale = 0.0f;
-			//pActiveCamera->transformationMatrix = {
-			//-0.0707696, 0, -0.997493, 0,
-			//-0.907605, 0.414858, 0.0643923, 0,
-			//0.413818, 0.909886, -0.0293593, 0,
-			//214.523, 33.5794, -9.72168, 1,
-			//};
+			if (bFixAtLocation && pActiveCamera) {
+				GetTimer()->timeScale = 0.0f;
+				//pActiveCamera->transformationMatrix = {
+				//-0.0707696, 0, -0.997493, 0,
+				//-0.907605, 0.414858, 0.0643923, 0,
+				//0.413818, 0.909886, -0.0293593, 0,
+				//214.523, 33.5794, -9.72168, 1,
+				//};
+			}
 		}
-	}
 
-	if (ImGui::Button("Save Matrix")) {
-		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
-		// Replace 'viewMatrix' below with your actual matrix variable.
-		DebugHelpers::SaveTypeToFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
-	}
-
-	if (ImGui::Button("Load Matrix")) {
-		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
-		// Replace 'viewMatrix' below with your actual matrix variable.
-		DebugHelpers::LoadTypeFromFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
-	}
-
-	if (ImGui::Button("Copy Matrix")) {
-		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
-		// Replace 'viewMatrix' below with your actual matrix variable.
-		edF32MATRIX4 matrix;
-		DebugHelpers::LoadTypeFromFile("camera.bin", (matrix));
-		CopyMatrixCodeToClipboard(matrix);
-	}
-
-	if (ImGui::Checkbox("Debug Camera", &bActive))
-	{
-		SetActive(bActive, MouseCallback);
-	}
-
-	if (ImGui::CollapsingHeader("Camera List")) {
-		// Show the total number of cameras
-		ImGui::Text("Total Cameras: %d (Active mode: %d)", CCameraManager::_gThis->loadedCameraCount_0x9f0, CCameraManager::_gThis->pActiveCamera->GetMode());
-
-		CCamera* pCamera = CCameraManager::_gThis->pInitialView_0x4b4;
-
-		while (pCamera != nullptr) {
-			ImGui::Text("Camera: %d", pCamera->GetMode());
-			pCamera = pCamera->pNextCameraView_0xa4;
+		if (ImGui::Button("Save Matrix")) {
+			// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
+			// Replace 'viewMatrix' below with your actual matrix variable.
+			DebugHelpers::SaveTypeToFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
 		}
-	}
 
-	if (bActive) {
-		Update();
+		if (ImGui::Button("Load Matrix")) {
+			// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
+			// Replace 'viewMatrix' below with your actual matrix variable.
+			DebugHelpers::LoadTypeFromFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
+		}
+
+		if (ImGui::Button("Copy Matrix")) {
+			// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
+			// Replace 'viewMatrix' below with your actual matrix variable.
+			edF32MATRIX4 matrix;
+			DebugHelpers::LoadTypeFromFile("camera.bin", (matrix));
+			CopyMatrixCodeToClipboard(matrix);
+		}
+
+		if (ImGui::Checkbox("Debug Camera", &bActive))
+		{
+			SetActive(bActive, MouseCallback);
+		}
+
+		if (ImGui::CollapsingHeader("Camera List")) {
+			// Show the total number of cameras
+			ImGui::Text("Total Cameras: %d (Active mode: %d)", CCameraManager::_gThis->loadedCameraCount_0x9f0, CCameraManager::_gThis->pActiveCamera->GetMode());
+
+			CCamera* pCamera = CCameraManager::_gThis->pInitialView_0x4b4;
+
+			while (pCamera != nullptr) {
+				ImGui::Text("Camera: %d", pCamera->GetMode());
+				pCamera = pCamera->pNextCameraView_0xa4;
+			}
+		}
+
+		if (bActive) {
+			Update();
+		}
 	}
 
 	ImGui::End();

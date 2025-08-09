@@ -35,6 +35,7 @@ class CFxSoundScenaricData
 public:
 	void Init();
 	void Create(ByteCode* pByteCode);
+	void Term();
 
 	int field_0x0;
 	int field_0x4;

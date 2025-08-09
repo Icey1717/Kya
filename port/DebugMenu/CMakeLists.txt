@@ -14,6 +14,8 @@ set(SOURCES
 	"src/DebugCamera.cpp"
 	"src/DebugMeshViewer.h"
 	"src/DebugMeshViewer.cpp"
+	"src/DebugMemory.h"
+	"src/DebugMemory.cpp"
 	"src/DebugHero.h"
 	"src/DebugHero.cpp"
 	"src/DebugMeshViewerVulkan.h"

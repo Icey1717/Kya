@@ -11,6 +11,7 @@
 #include <eekernel.h>
 #include <libvu0.h>
 #else
+#include "renderer.h"
 #include "port.h"
 #endif
 
@@ -45,6 +46,7 @@
 #include "ActorNativ.h"
 #include "ActorNativShop.h"
 #include "InventoryInfo.h"
+#include "ActorWolfen.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -368,6 +370,11 @@ void CLevelScheduler::Level_LoadObjectives(ByteCode* pMemoryStream)
 	return;
 }
 
+char* CLevelScheduler::ProfileGetName()
+{
+	return "lvl schd";
+}
+
 struct LoadLoopObject_418_18 {
 	SectorManagerSubObj aSubObj[6];
 };
@@ -391,25 +398,25 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 		pLevelInfo->pSimpleConditionData = 0;
 	}
 
-	pLevelInfo->field_0x50 = 0;
+	pLevelInfo->nbExorcisedWolfen = 0;
 
 	pLevelInfoSubObj = pLevelInfo->aSubSectorInfo;
 	iVar2 = 0;
 	do {
 		if (param_2 != false) {
 			pLevelInfoSubObj->field_0x0 = 0;
-			pLevelInfoSubObj->field_0x8 = 0xffffffff;
+			pLevelInfoSubObj->teleporterActorHashCode = 0xffffffff;
 			pLevelInfoSubObj->field_0xc = -1;
 			pLevelInfoSubObj->field_0x10 = 0;
 			pLevelInfoSubObj->field_0x14 = 0;
 		}
 
-		pLevelInfoSubObj->field_0x18 = 0;
-		pLevelInfoSubObj->field_0x1c = 0;
+		pLevelInfoSubObj->nbExorcisedWolfen = 0;
+		pLevelInfoSubObj->flags = 0;
 		pLevelInfoSubObj->field_0x20 = (edDList_material*)0x0;
 
 		if ((pLevelInfoSubObj->field_0x10 & 1) != 0) {
-			pLevelInfoSubObj->field_0x1c = pLevelInfoSubObj->field_0x1c | 1;
+			pLevelInfoSubObj->flags = pLevelInfoSubObj->flags | 1;
 		}
 
 		iVar2 = iVar2 + 1;
@@ -507,11 +514,11 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 		do {
 			if (param_2 != false) {
 				puVar8->field_0x0 = -1;
-				puVar8->field_0x4 = 0x10;
+				puVar8->currentLevelId = 0x10;
 				puVar8->field_0x8 = 0;
 
-				puVar8->field_0x10 = gF32Vertex4Zero;
-				puVar8->field_0x20 = gF32Vector4UnitZ;
+				puVar8->currentLocation = gF32Vertex4Zero;
+				puVar8->rotationQuat = gF32Vector4UnitZ;
 
 				puVar8->aSubObjs[0].field_0x0 = 0x20;
 				puVar8->aSubObjs[0].field_0x4 = 0;
@@ -811,7 +818,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 			pLevelInfoSubObj = pLevelInfo->aSubSectorInfo + iVar1;
 
 			pLevelInfoSubObj->field_0x0 = pFileData->field_0x14;
-			pLevelInfoSubObj->field_0x8 = pFileData->field_0x0;
+			pLevelInfoSubObj->teleporterActorHashCode = pFileData->field_0x0;
 			pLevelInfoSubObj->field_0xc = pFileData->field_0x4;
 			pLevelInfoSubObj->field_0x10 = pFileData->field_0xc;
 			pLevelInfoSubObj->field_0x14 = pFileData->field_0x10;
@@ -826,7 +833,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 		do {
 			iVar4 = iVar4 + pLevelInfoSubObj->field_0x14;
 			if ((pLevelInfoSubObj->field_0x10 & 1) != 0) {
-				pLevelInfoSubObj->field_0x1c = pLevelInfoSubObj->field_0x1c | 1;
+				pLevelInfoSubObj->flags = pLevelInfoSubObj->flags | 1;
 			}
 
 			iVar1 = iVar1 + 1;
@@ -1100,6 +1107,11 @@ void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
 	IMPLEMENTATION_GUARD_SAVE();
 }
 
+void CLevelScheduler::SaveGame_LoadLevelState(int levelId)
+{
+	IMPLEMENTATION_GUARD_SAVE();
+}
+
 int CLevelScheduler::SaveGame_GetMaxBufferSize()
 {
 	return 0x10000;
@@ -1169,7 +1181,7 @@ void CLevelScheduler::Episode_ComputeCurrent()
 			iVar1 = _gGameNfo.nbEpisodes + -1;
 		}
 
-		if (_gScenVarInfo[0].currentValue < g_EpisodeDataArray_0048eb0[iVar1].minWolfen) break;
+		if (_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue < g_EpisodeDataArray_0048eb0[iVar1].minWolfen) break;
 	}
 
 	iVar1 = iVar2 + -1;
@@ -1987,7 +1999,7 @@ const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
 void CLevelScheduler::LevelLoading_Begin()
 {
-	int cachedNextLevelID;
+	int levelId;
 	char filePath[128];
 	edCBankInstall bankContainer;
 
@@ -1995,13 +2007,25 @@ void CLevelScheduler::LevelLoading_Begin()
 	   It loads in the level IOP bank for the specific level found in the level load
 	   master.
 	   Example: CDEURO/LEVEL/PREINTRO/LevelIOP.bnk */
+
+#ifdef PLATFORM_WIN
+	if (this->nextLevelID == 0x10) {
+		// Trying to load an invalid level. We probably termed the level via the debug menu. Wait for the debug menu to change our next level ID.
+		while (this->nextLevelID == 0x10) {
+			Renderer::Present();
+			Renderer::WaitUntilReady();
+			Renderer::Native::OnVideoFlip();
+		}
+	}
+#endif
+
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
-	cachedNextLevelID = nextLevelID;
+	levelId = this->nextLevelID;
 	memset(&bankContainer, 0, sizeof(edCBankInstall));
-	levelIOPBank.initialize(aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1, &bankContainer);
+	levelIOPBank.initialize(aLevelInfo[levelId].bankSizeIOP + 0x1000, 1, &bankContainer);
 	levelIOPBank.bank_buffer_setcb(TableBankCallback);
 	/* / + LevelIOP.bnk */
-	edStrCatMulti(filePath, levelPath, aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
+	edStrCatMulti(filePath, levelPath, aLevelInfo[levelId].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
 	bankContainer.filePath = filePath;
 	bankContainer.pObjectReference = (void*)0x0;
 	bankContainer.fileFlagA = 4;
@@ -2727,6 +2751,67 @@ void CLevelScheduler::LevelLoading_End()
 	return;
 }
 
+void CLevelScheduler::Level_PostInit()
+{
+	CActorNativShop* pNativ;
+	CLevelScheduler* pThis;
+	CActor** pActor;
+	int iVar2;
+	NativShopLevelSubObj* pSubObj;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	CActorsTable nativShopsTable;
+
+	SaveGame_LoadLevelState(this->currentLevelID);
+
+	if (this->currentLevelID == 0) {
+		nativShopsTable.nbEntries = 0;
+		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(NATIV_SHOP, &nativShopsTable);
+
+		this->nbNativShopSubObjs = nativShopsTable.nbEntries;
+		if (10 < this->nbNativShopSubObjs) {
+			this->nbNativShopSubObjs = 10;
+		}
+
+		pSubObj = this->aNativShopSubObjs;
+		iVar2 = 0;
+		if (0 < this->nbNativShopSubObjs) {
+			pActor = nativShopsTable.aEntries;
+			do {
+				pThis = gThis;
+				pNativ = static_cast<CActorNativShop*>(*pActor);
+				pSubObj->field_0x0 = pNativ->field_0x170;
+				pSubObj->currentLevelId = pThis->currentLevelID;
+				pSubObj->currentLocation = pNativ->currentLocation;
+				pSubObj->rotationQuat = pNativ->rotationQuat;
+				pSubObj->FUN_002d8d10(pNativ);
+				iVar2 = iVar2 + 1;
+				pActor = pActor + 1;
+				pSubObj = pSubObj + 1;
+			} while (iVar2 < this->nbNativShopSubObjs);
+		}
+	}
+
+	if ((((this->field_0x80 | this->field_0x78 | this->field_0x7c) == 0) && (this->currentLevelID != 0xe)) &&
+		(this->currentLevelID != 0xf)) {
+		if (this->field_0x84 < 0.1f) {
+			this->field_0x84 = 0.1f;
+		}
+
+		this->field_0x88 = 0.0f;
+	}
+
+	this->currentElevatorID = this->nextElevatorID;
+	this->nextElevatorID = -1;
+	this->baseSectorIndex = -1;
+	this->field_0x78 = 0;
+	this->field_0x7c = 0;
+	this->field_0x80 = 0;
+
+	return;
+}
+
 void CLevelScheduler::Level_PreTerm()
 {
 	S_SUBSECTOR_INFO* pLVar1;
@@ -2849,6 +2934,130 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 	return;
 }
 
+void CLevelScheduler::Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_SUBSECTOR_INFO* pSubSectorInfo)
+{
+	pSubSectorInfo->field_0x0 = 0;
+	pSubSectorInfo->teleporterActorHashCode = -1;
+	pSubSectorInfo->field_0xc = -1;
+	pSubSectorInfo->field_0x10 = 0;
+	pSubSectorInfo->field_0x14 = 0;
+	pSubSectorInfo->nbExorcisedWolfen = 0;
+	pSubSectorInfo->flags = 0;
+	pSubSectorInfo->field_0x20 = 0;
+
+	if ((pSubSectorInfo->field_0x10 & 1) != 0) {
+		pSubSectorInfo->flags = pSubSectorInfo->flags | 1;
+	}
+
+	if ((-1 < elevatorId) && (elevatorId < this->aLevelInfo[levelIndex].maxElevatorId)) {
+		*pSubSectorInfo = this->aLevelInfo[levelIndex].aSubSectorInfo[elevatorId];
+	}
+
+	return;
+}
+
+void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
+{
+	int iVar1;
+	S_SUBSECTOR_INFO* pWolfenSubSectorInfo;
+	int iVar3;
+	bool bVar4;
+	CActorTeleporter* this_00;
+	edDList_material* peVar5;
+	S_LEVEL_INFO* pLevelInfo;
+	int iVar6;
+	int iVar8;
+	CActor* piVar9;
+	int iVar9;
+	S_SUBSECTOR_INFO* pSubSectorInfo;
+	CActorsTable teleportersTable;
+	CActorManager* pActorManager;
+
+	pActorManager = CScene::ptable.g_ActorManager_004516a4;
+	iVar3 = _gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue;
+	iVar8 = 0;
+	pLevelInfo = this->aLevelInfo + this->currentLevelID;
+	iVar9 = pLevelInfo->nbExorcisedWolfen;
+	pSubSectorInfo = pLevelInfo->aSubSectorInfo;
+	pLevelInfo->nbExorcisedWolfen = 0;
+	do {
+		pSubSectorInfo->nbExorcisedWolfen = 0;
+		pSubSectorInfo->flags = 0;
+		pSubSectorInfo->field_0x20 = (edDList_material*)0x0;
+
+		if ((pSubSectorInfo->field_0x10 & 1) != 0) {
+			pSubSectorInfo->flags = pSubSectorInfo->flags | 1;
+		}
+
+		if ((pSubSectorInfo->teleporterActorHashCode != -1) &&
+			(this_00 = (CActorTeleporter*)pActorManager->GetActorByHashcode(pSubSectorInfo->teleporterActorHashCode), this_00 != (CActorTeleporter*)0x0)) {
+			iVar6 = this_00->field_0x168;
+			if (iVar6 < 0) {
+				iVar6 = 0;
+			}
+
+			pSubSectorInfo->field_0x20 = this_00->GetMySubSectorMaterial(this->currentLevelID, iVar6);
+			if (this_00->bOpen != 0) {
+				pSubSectorInfo->flags = pSubSectorInfo->flags | 1;
+			}
+		}
+
+		iVar8 = iVar8 + 1;
+		pSubSectorInfo = pSubSectorInfo + 1;
+	} while (iVar8 < 0xc);
+
+	iVar8 = 0;
+	if (0 < pActorManager->nbActors) {
+		do {
+			if (iVar8 == -1) {
+				piVar9 = (CActorWolfen*)0x0;
+			}
+			else {
+				piVar9 = CScene::ptable.g_ActorManager_004516a4->aActors[iVar8];
+			}
+			bVar4 = piVar9->IsKindOfObject(OBJ_TYPE_WOLFEN);
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(piVar9);
+			if ((bVar4 != false) && (pWolfen->exorcisedState == 2)) {
+				iVar1 = pWolfen->startSectorId;
+				pWolfenSubSectorInfo = pLevelInfo->aSubSectorInfo;
+				if (-1 < iVar1) {
+					pWolfenSubSectorInfo = pWolfenSubSectorInfo + iVar1;
+				}
+
+				pWolfenSubSectorInfo->nbExorcisedWolfen = pWolfenSubSectorInfo->nbExorcisedWolfen + 1;
+
+				if (0 < iVar1) {
+					pLevelInfo->nbExorcisedWolfen = pLevelInfo->nbExorcisedWolfen + 1;
+				}
+			}
+
+			iVar8 = iVar8 + 1;
+		} while (iVar8 < pActorManager->nbActors);
+	}
+
+	_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue = (iVar3 - iVar9) + pLevelInfo->nbExorcisedWolfen;
+
+	teleportersTable.nbEntries = 0;
+	pActorManager->GetActorsByClassID(TELEPORTER, &teleportersTable);
+	iVar9 = 0;
+	if (0 < teleportersTable.nbEntries) {
+		do {
+			CActorTeleporter* pTeleporter = static_cast<CActorTeleporter*>(teleportersTable.aEntries[iVar9]);
+			pTeleporter->NotifyLevelTeleporterChanged();
+			iVar9 = iVar9 + 1;
+		} while (iVar9 < teleportersTable.nbEntries);
+	}
+
+	return;
+}
+
+void CLevelScheduler::Level_TeleporterChanged()
+{
+	Level_UpdateCurLiveLevelInfo();
+
+	return;
+}
+
 void CLevelScheduler::SetLevelTimerFunc_002df450(float param_1, int mode)
 {
 	Timer* pTVar1;
@@ -2911,8 +3120,8 @@ int CLevelScheduler::GetNbAreas(int currentLevelID)
 				iVar4 = 0;
 				pcVar5 = pcVar3->aSubSectorInfo;
 				while ((iVar4 < 0xc && (pSubSectorMaterial == (edDList_material*)0x0))) {
-					if ((pcVar5->field_0x8 != 0xffffffff) &&
-						(this_00 = (CActorTeleporter*)pActorManager->GetActorByHashcode(pcVar5->field_0x8), this_00 != (CActorTeleporter*)0x0)) {
+					if ((pcVar5->teleporterActorHashCode != 0xffffffff) &&
+						(this_00 = (CActorTeleporter*)pActorManager->GetActorByHashcode(pcVar5->teleporterActorHashCode), this_00 != (CActorTeleporter*)0x0)) {
 						pSubSectorMaterial = this_00->GetMySubSectorMaterial(currentLevelID, nbAreas);
 					}
 
@@ -2984,7 +3193,7 @@ void CLevelScheduler::FUN_002dc200(int elevatorId, int levelId, int param_4)
 	if ((((elevatorId != -1) && (-1 < elevatorId)) && (elevatorId < this->aLevelInfo[this->currentLevelID].maxElevatorId) &&
 		(((pTeleporter = (CActorTeleporter*)
 			CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(this->aLevelInfo[this->currentLevelID].aSubSectorInfo[elevatorId].field_0x0)),
-			pTeleporter != (CActorTeleporter*)0x0 && (pTeleporter->field_0x2a0 != 0)) &&
+			pTeleporter != (CActorTeleporter*)0x0 && (pTeleporter->bOpen != 0)) &&
 			(pTeleporter->UpdateCurTeleporterState(levelId, param_4),
 				(CActorHero::_gThis->flags & 0x800000) == 0)))) {
 		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);

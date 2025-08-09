@@ -1185,7 +1185,7 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 			imageInfo.sampler = GetSampler(samplerSelector);
 
 			const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-			writeList.EmplaceWrite({ 5, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+			writeList.EmplaceWrite({ 5, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 
 			const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
 			writeList.EmplaceWrite({ 6, Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
@@ -1208,6 +1208,10 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 
 	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
 		LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
+		
+		// If the descriptor pool is not created, we need to create it and allocate descriptor sets, and we must provide the write list.
+		assert(pWriteList);
+
 		return AddDescriptorSets(pipeline, pWriteList);
 	}
 

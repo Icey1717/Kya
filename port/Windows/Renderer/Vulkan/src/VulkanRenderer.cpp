@@ -29,6 +29,8 @@
 #include "VulkanHardwarePS2.h"
 #include "Native/NativeRenderer.h"
 
+#include "profiling.h"
+
 //constexpr uint32_t WIDTH = 640;
 //constexpr uint32_t HEIGHT = 480;
 
@@ -1049,6 +1051,8 @@ public:
 
 	void present() 
 	{
+		ZONE_SCOPED;
+
 		if (GetHardwareState().bActivePass) {
 			vkCmdEndRenderPass(GetCurrentCommandBuffer());
 		}
@@ -1099,10 +1103,17 @@ public:
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		vkQueueWaitIdle(graphicsQueue);
+		{
+			ZONE_SCOPED_NAME("vkQueueWaitIdle");
+			vkQueueWaitIdle(graphicsQueue);
+		}
 
-		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to submit draw command buffer!");
+		{
+			ZONE_SCOPED_NAME("vkQueueSubmit");
+
+			if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to submit draw command buffer!");
+			}
 		}
 
 #ifdef BLIT_TO_BACKBUFFER
@@ -1146,8 +1157,10 @@ public:
 
 		EndSingleTimeCommands(cmd);
 #endif
-
-		renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent);
+		{
+			ZONE_SCOPED_NAME("renderDelegate");
+			renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent);
+		}
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1161,14 +1174,18 @@ public:
 
 		presentInfo.pImageIndices = &presentImageIndex;
 
-		VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+		{
+			ZONE_SCOPED_NAME("vkQueuePresentKHR");
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-			framebufferResized = false;
-			recreateSwapChain();
-		}
-		else if (result != VK_SUCCESS) {
-			throw std::runtime_error("failed to present swap chain image!");
+			VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+				framebufferResized = false;
+				recreateSwapChain();
+			}
+			else if (result != VK_SUCCESS) {
+				throw std::runtime_error("failed to present swap chain image!");
+			}
 		}
 
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;

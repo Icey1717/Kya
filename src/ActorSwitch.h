@@ -5,6 +5,18 @@
 #include "Actor.h"
 #include "ActorMovable.h"
 #include "Fx.h"
+#include "CinematicManager.h"
+
+#define SWITCH_BEHAVIOUR_LEVER 0x2
+#define SWITCH_BEHAVIOUR_MAGIC 0x3
+#define SWITCH_BEHAVIOUR_WOLFEN_COUNTER 0x4
+#define SWITCH_BEHAVIOUR_MULTI_CONDITION 0x5
+#define SWITCH_BEHAVIOUR_TARGET 0x6
+#define SWITCH_BEHAVIOUR_SEQUENCE 0x7
+#define SWITCH_BEHAVIOUR_NEW 0x8
+
+#define SWITCH_STATE_MAGIC_STATE_OFF_2_ON 0x6
+#define SWITCH_STATE_LEVER_STATE_OFF_2_ON 0x6
 
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -51,6 +63,7 @@ class CBehaviourSwitchMagic : public CBehaviourSwitch
 {
 public:
 	CBehaviourSwitchMagic();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
@@ -65,27 +78,25 @@ public:
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void ChangeManageState(int state);
 
+	void DisplayOpenFxModel(int bOpen);
 
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
 	int field_0x18;
-	CinNamedObject30* field_0x1c;
-	CActor* field_0x20;
+	CFxHandle field_0x1c;
 	int field_0x24;
 	int field_0x28;
 	edNODE* pHierarchy;
 	int field_0x30;
-	CinNamedObject30* field_0x34;
-	CActor* field_0x38;
-	int field_0x3c;
-	int field_0x40;
-	undefined4 field_0x44;
+	CFxHandle field_0x34;
+	int openMeshId;
+	int openTextureId;
+	edNODE* pOpenModelNode;
 	CFxDigits fxDigits;
 	int field_0x4c;
-	CinNamedObject30* field_0x50;
-	CActor* field_0x54;
+	CFxHandle field_0x50;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 };
 
@@ -193,10 +204,12 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour);
-	void StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour);
 
-	S_NTF_TARGET_STREAM_REF* pTargetStreamRef;
-	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+	void StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour);
+	void StateSwitchMagicOff2On(CBehaviourSwitchMagic* pBehaviour);
+	void StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour);
+
+	S_NTF_SWITCH targetSwitch;
 	CActorSound* pActorSound;
 
 	CBehaviourSwitchMultiCondition behaviourSwitchMultiCondition;

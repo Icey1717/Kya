@@ -28,6 +28,11 @@ void CFxRandomScenaricData::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CFxRandomScenaricData::Term()
+{
+	return;
+}
+
 void CRandomFx::Draw()
 {
 	return;

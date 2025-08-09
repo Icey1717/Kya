@@ -154,6 +154,7 @@ void CFxManager::Game_Init()
 
 void CFxManager::Game_Term()
 {
+	IMPLEMENTATION_GUARD();
 	//edPartSystemTerm();
 	return;
 }
@@ -165,7 +166,72 @@ void CFxManager::Level_Init()
 
 void CFxManager::Level_Term()
 {
-	IMPLEMENTATION_GUARD_FX();
+	CFx* pFx;
+	CFxPoolManagerFather* pCVar2;
+	CFx** ppFx;
+	CFxManager* pCVar4;
+	uint uVar5;
+
+	if (this->pSortData != (s_fx_sort_data*)0x0) {
+		edMemFree(this->pSortData);
+		this->pSortData = (s_fx_sort_data*)0x0;
+	}
+
+	uVar5 = this->count_0x4;
+	ppFx = this->aFx;
+	while (uVar5 != 0) {
+		uVar5 = uVar5 - 1;
+		pFx = *ppFx;
+		if (pFx != (CFx*)0x0) {
+			IMPLEMENTATION_GUARD(
+			pFx->TermAll(pFx);)
+
+			pFx = *ppFx;
+			if (pFx->field_0x40 == 2) {
+				CFxGroup* pFxGroup = static_cast<CFxGroup*>(pFx);
+				delete[] pFxGroup;
+			}
+			else {
+				if (pFx->field_0x40 == 1) {
+					CFxPath* pFxPath = static_cast<CFxPath*>(pFx);
+					delete[] pFxPath;
+				}
+			}
+		}
+
+		ppFx = ppFx + 1;
+	}
+
+	if (this->orderedCountArray != (uint*)0x0) {
+		edMemFree(this->orderedCountArray);
+		this->orderedCountArray = (uint*)0x0;
+	}
+
+	if (this->aFx != (CFx**)0x0) {
+		delete(this->aFx);
+		this->aFx = (CFx**)0x0;
+	}
+
+	uVar5 = 0;
+	CFxPoolManagerFather** pCurCategory = this->aEffectCategory;
+	do {
+		if (*pCurCategory != (CFxPoolManagerFather*)0x0) {
+			(*pCurCategory)->Term();
+
+			delete (*pCurCategory);
+		}
+
+		uVar5 = uVar5 + 1;
+		pCurCategory = pCurCategory + 1;
+	} while (uVar5 < 7);
+
+	this->totalEffectCount_0x2c = 0;
+	this->count_0x4 = 0;
+
+	memset(this->aEffectCategory, 0, sizeof(aEffectCategory));
+	memset(this->effectCountByType, 0, sizeof(effectCountByType));
+
+	return;
 }
 
 void CFxManager::Level_AddAll(struct ByteCode* pByteCode)
@@ -426,6 +492,11 @@ void CFxManager::Level_CheckpointReset()
 void CFxManager::Level_PauseChange(bool bPaused)
 {
 	IMPLEMENTATION_GUARD_FX();
+}
+
+char* CFxManager::ProfileGetName()
+{
+	return "Fx Mgt";
 }
 
 void CFxManager::Level_PreInit()

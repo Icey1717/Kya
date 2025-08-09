@@ -258,10 +258,11 @@ void CActorFighter::Term()
 		}
 		uVar2 = uVar2 + 1;
 		ppuVar1 = ppuVar1 + 0x12;
-	} while (uVar2 < 4);
-	_DeleteCombosDB((int)this);
-	_DeleteGrabsDB((int)this);
-	_DeleteBlowsDB((int)this);)
+	} while (uVar2 < 4);)
+
+	_DeleteCombosDB();
+	_DeleteGrabsDB();
+	_DeleteBlowsDB();
 
 	if (this->pInputAnalyser != (CInputAnalyser*)0x0) {
 		delete this->pInputAnalyser;
@@ -5706,6 +5707,37 @@ void CActorFighter::_InitBlowsDB()
 	return;
 }
 
+void CActorFighter::_DeleteCombosDB()
+{
+	void* pAlloc;
+	int iVar1;
+	uint uVar3;
+
+	if (this->aCombos != (s_fighter_combo*)0x0) {
+		uVar3 = 0;
+
+		if (this->nbComboRoots + this->nbCombos != 0) {
+			do {
+				s_fighter_combo* pCombo = this->aCombos + uVar3;
+				if ((pCombo->nbBranches != 0) && (pAlloc = pCombo->aBranches, pAlloc != (void*)0x0)) {
+					edMemFree(pAlloc);
+					pCombo->aBranches = (s_fighter_action_hash*)0x0;
+				}
+
+				uVar3 = uVar3 + 1;
+			} while (uVar3 < this->nbComboRoots + this->nbCombos);
+		}
+
+		edMemFree(this->aCombos);
+
+		this->aCombos = (s_fighter_combo*)0x0;
+		this->nbCombos = 0;
+		this->nbComboRoots = 0;
+	}
+
+	return;
+}
+
 void CActorFighter::_InitGrabsDB()
 {
 	uint curGrabIndex;
@@ -5716,6 +5748,25 @@ void CActorFighter::_InitGrabsDB()
 			_InitGrab(this->aGrabs + curGrabIndex);
 			curGrabIndex = curGrabIndex + 1;
 		} while (curGrabIndex < this->nbGrabs);
+	}
+
+	return;
+}
+
+void CActorFighter::_DeleteGrabsDB()
+{
+	if (this->aGrabs != (s_fighter_grab*)0x0) {
+		edMemFree(this->aGrabs);
+
+		this->aGrabs = (s_fighter_grab*)0x0;
+		this->nbGrabs = 0;
+	}
+
+	if (this->aGrabReacts != (s_fighter_grab_react*)0x0) {
+		edMemFree(this->aGrabReacts);
+
+		this->aGrabReacts = (s_fighter_grab_react*)0x0;
+		this->nbGrabReacts = 0;
 	}
 
 	return;
@@ -5759,6 +5810,36 @@ void CActorFighter::_InitCombosDB()
 
 			curComboIndex = curComboIndex + 1;
 		} while (curComboIndex < this->nbComboRoots + this->nbCombos);
+	}
+
+	return;
+}
+
+void CActorFighter::_DeleteBlowsDB()
+{
+	uint uVar1;
+	int iVar2;
+	s_fighter_blow* iVar3;
+
+	if (this->aBlows != (s_fighter_blow*)0x0) {
+		uVar1 = 0;
+
+		if (this->nbBlows != 0) {
+			iVar2 = 0;
+			do {
+				iVar3 = this->aBlows + uVar1;
+				if ((iVar3->nbSubObjs != 0) && (iVar3->field_0x48 != (s_fighter_blow_sub_obj*)0x0)) {
+					edMemFree(iVar3->field_0x48);
+					iVar3->field_0x48 = (s_fighter_blow_sub_obj*)0x0;
+				}
+
+				uVar1 = uVar1 + 1;
+			} while (uVar1 < this->nbBlows);
+		}
+
+		edMemFree(this->aBlows);
+		this->aBlows = (s_fighter_blow*)0x0;
+		this->nbBlows = 0;
 	}
 
 	return;

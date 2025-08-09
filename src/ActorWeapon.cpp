@@ -789,7 +789,7 @@ void CBehaviourWeaponBullets::UpdateBulletsLife()
 				if (t <= fVar7) {
 					if (t != 1e+30f) {
 						bVar1 = false;
-						if ((local_10.pActor_0x0 != (CActor*)0x0) && ((bVar3 = local_10.pActor_0x0->IsKindOfObject(0x10), bVar3 == false || (pCVar2->curBehaviourId == 6)))) {
+						if ((local_10.pActor_0x0 != (CActor*)0x0) && ((bVar3 = local_10.pActor_0x0->IsKindOfObject(OBJ_TYPE_WOLFEN), bVar3 == false || (pCVar2->curBehaviourId == 6)))) {
 							bVar1 = true;
 						}
 

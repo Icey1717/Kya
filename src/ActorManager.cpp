@@ -8,6 +8,10 @@
 #include "MathOps.h"
 #include "ActorClusteriser.h"
 
+#ifdef PLATFORM_WIN
+#include "profiling.h"
+#endif
+
 #define MAX_LINKED_ACTORS 0x80
 
 CActorManager::CActorManager()
@@ -349,7 +353,8 @@ void CActorManager::Level_Manage()
 	ppActiveActors = this->aActiveActors;
 	ppActiveActorsEnd = ppActiveActors + this->nbActiveActors;
 	for (; ppActiveActors < ppActiveActorsEnd; ppActiveActors = ppActiveActors + 1) {
-		/* Update animation */
+		ZONE_SCOPED_NAME("Manage");
+		ZONE_NAME((*ppActiveActors)->name, strlen((*ppActiveActors)->name));
 		(*ppActiveActors)->Manage();
 	}
 
@@ -500,6 +505,11 @@ void CActorManager::Level_PauseChange(bool bPaused)
 void CActorManager::Level_SaveContext()
 {
 	IMPLEMENTATION_GUARD();
+}
+
+char* CActorManager::ProfileGetName()
+{
+	return "Actors";
 }
 
 void CActorManager::Level_PreCheckpointReset()

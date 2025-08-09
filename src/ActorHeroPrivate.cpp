@@ -61,8 +61,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//this->field_0x13c4 = 0;
 	//*(undefined4*)&this->field_0x15d4 = 0;
 	//this->field_0x15d8 = 0;
-	//CHero_InputRotationAnalyser::CHero_InputRotationAnalyser
-	//((CHero_InputRotationAnalyser*)&(this->field_0x15dc).field_0x4);
+	//CHero_InputRotationAnalyser::CHero_InputRotationAnalyser(&this->field_0x15e0);
 	//puVar2 = (undefined4*)&this->field_0x1880;
 	//do {
 	//	*puVar2 = 0;
@@ -383,8 +382,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	}
 
 	this->pActorBoomy = (CActorBoomy*)0x0;
-	iVar11 = pByteCode->GetS32();
-	//this->field_0x15dc.field_0x0 = iVar11;
+	this->field_0x15d4.type = pByteCode->GetS32();
 	iVar11 = pByteCode->GetS32();
 
 	// Hack p2
@@ -946,7 +944,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 			pCVar5 = pTable->aEntries;
 			if (0 < iVar2) {
 				do {
-					bVar1 = (*pCVar5)->IsKindOfObject(0x10);
+					bVar1 = (*pCVar5)->IsKindOfObject(OBJ_TYPE_WOLFEN);
 					if (bVar1 == false) {
 						pTable->Pop(iVar3);
 					}
@@ -1596,15 +1594,15 @@ bool CActorHeroPrivate::AccomplishMagic()
 				local_4 = 0;
 				pCVar3 = local_110.aEntries;
 				for (; iVar4 < local_110.nbEntries; iVar4 = iVar4 + 1) {
-					DoMessage(*pCVar3, (ACTOR_MESSAGE)0x30, (MSG_PARAM)local_4);
+					DoMessage(*pCVar3, MESSAGE_MAGIC_ACTIVATE, (MSG_PARAM)local_4);
 					pCVar3 = pCVar3 + 1;
 				}
 			}
 
-			bIsWolfen = local_110.aEntries[0]->IsKindOfObject(0x10);
+			bIsWolfen = local_110.aEntries[0]->IsKindOfObject(OBJ_TYPE_WOLFEN);
 			if (bIsWolfen == false) {
 				if (local_110.aEntries[0]->typeID == SWITCH) {
-					SetState(0x108, -1);
+					SetState(STATE_HERO_UNLOCK_SWITCH, -1);
 				}
 				else {
 					// Must be amber for healing.
@@ -5503,6 +5501,7 @@ LAB_00341590:
 	case STATE_HERO_FALL_BOUNCE_1_2:
 	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
+	case STATE_HERO_DROWN_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
 	case STATE_HERO_GRIP_HANG_IDLE:
@@ -5528,6 +5527,7 @@ LAB_00341590:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
+	case STATE_HERO_TOBOGGAN_JUMP_3:
 	case STATE_HERO_WIND_WALL_MOVE_A:
 	case STATE_HERO_WIND_WALL_MOVE_B:
 	case STATE_HERO_WIND_WALL_MOVE_E:
@@ -5623,6 +5623,9 @@ LAB_00341590:
 	case STATE_HERO_DCA_A:
 		StateHeroDCAInit();
 		break;
+	case STATE_HERO_UNLOCK_SWITCH:
+		StateHeroUnlockInit();
+		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2Init();
@@ -5694,6 +5697,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_FALL_BOUNCE_1_2:
 	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
+	case STATE_HERO_DROWN_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
 	case STATE_HERO_GRIP_HANG_IDLE:
@@ -5706,6 +5710,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_GRIP_UP:
 	case STATE_HERO_GRIP_GRAB:
 	case STATE_HERO_TOBOGGAN_3:
+	case STATE_HERO_TOBOGGAN_JUMP_3:
 	case STATE_HERO_TOBOGGAN_JUMP_1:
 	case STATE_HERO_TOBOGGAN_JUMP_2:
 	case STATE_HERO_TOBOGGAN_2:
@@ -5811,6 +5816,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_DCA_A:
 		StateHeroDCATerm();
+		break;
+	case STATE_HERO_UNLOCK_SWITCH:
+		StateHeroUnlockTerm();
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	{
@@ -6047,9 +6055,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	undefined4 local_8;
 	undefined4 local_4;
 
-	IMPLEMENTATION_GUARD_LOG(
-	bVar2 = InClimbZone(&this->currentLocation);
-	this->field_0x1454 = bVar2;)
+	this->field_0x1454 = InClimbZone(&this->currentLocation);
 
 	bVar2 = TestState_IsInCheatMode();
 	if (bVar2 == false) {
@@ -6190,6 +6196,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
 		break;
+	case STATE_HERO_DROWN_DEATH:
+		StateHeroDead(1.5f);
+		break;
 	case STATE_HERO_KICK_A:
 		StateHeroKick(STATE_HERO_KICK_B, 0x22);
 		break;
@@ -6258,6 +6267,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_TOBOGGAN_3:
 		StateHeroToboggan(0);
+		break;
+	case STATE_HERO_TOBOGGAN_JUMP_3:
+		StateHeroTobogganJump(0, 0, 1, STATE_HERO_TOBOGGAN);
 		break;
 	case STATE_HERO_TOBOGGAN_JUMP_1:
 		StateHeroTobogganJump(0, 1, 0, STATE_HERO_TOBOGGAN);
@@ -6333,6 +6345,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_DCA_A:
 		StateHeroDCA();
+		break;
+	case STATE_HERO_UNLOCK_SWITCH:
+		StateHeroUnlock(SWITCH);
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
@@ -7160,7 +7175,7 @@ LAB_00329a38:
 			edF32Vector4AddHard(v0, v0, &eStack240);
 			fVar13 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 			this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar13;
-			SetState(0xe9, 0xffffffff);
+			SetState(STATE_HERO_TOBOGGAN_JUMP_3, 0xffffffff);
 			return;
 		}
 	}
@@ -11663,14 +11678,7 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
-	iVar4 = this->actorState;
-	if (iVar4 == -1) {
-		uVar5 = 0;
-	}
-	else {
-		pAVar2 = GetStateCfg(iVar4);
-		uVar5 = pAVar2->flags_0x4 & 1;
-	}
+	uVar5 = GetStateFlags(this->actorState) & 1;
 
 	if (uVar5 == 0) {
 		if (param_3 == 0) {
@@ -11749,6 +11757,35 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 			ProcessDeath();
 		}
 	}
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDead(float time)
+{
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (time < 0.0f) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) goto LAB_0013e430;
+	}
+
+	if (time <= 0.0f) {
+		return;
+	}
+
+	if (this->timeInAir <= time) {
+		return;
+	}
+
+LAB_0013e430:
+	ProcessDeath();
+
 	return;
 }
 
@@ -12016,6 +12053,91 @@ void CActorHeroPrivate::StateHeroDCATerm()
 	else {
 		this->field_0x1a54 = 3;
 	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroUnlockInit()
+{
+	CNewFx* pFx;
+	int fxId;
+	bool bVar3;
+
+	if (this->field_0x15d4.type != -1) {
+		pFx = this->field_0x15d4.pFx;
+		if (((pFx == (CNewFx*)0x0) || (fxId = this->field_0x15d4.id, fxId == 0)) ||
+			(bVar3 = true, fxId != pFx->id)) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (((pFx != (CNewFx*)0x0) && (fxId = this->field_0x15d4.id, fxId != 0)) && (fxId == pFx->id)) {
+				pFx->Kill();
+			}
+
+			this->field_0x15d4.pFx = (CNewFx*)0x0;
+			this->field_0x15d4.id = 0;
+		}
+
+		this->field_0x15d4.id = 0;
+		this->field_0x15d4.pFx = (CNewFx*)0x0;
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x15d4, this->field_0x15d4.type, FX_MATERIAL_SELECTOR_NONE);
+
+		pFx = this->field_0x15d4.pFx;
+		if (((pFx == (CNewFx*)0x0) || (fxId = this->field_0x15d4.id, fxId == 0)) ||
+			(bVar3 = true, fxId != pFx->id)) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (((pFx != (CNewFx*)0x0) && (fxId = this->field_0x15d4.id, fxId != 0)) && (fxId == pFx->id)) {
+				pFx->SpatializeOnActor(6, this, 0);
+			}
+			pFx = this->field_0x15d4.pFx;
+			if (((pFx != (CNewFx*)0x0) && (fxId = this->field_0x15d4.id, fxId != 0)) && (fxId == pFx->id)) {
+				pFx->Start(0, 0);
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroUnlock(ACTOR_CLASS typeId)
+{
+	CActorsTable actorsTable;
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 3, (CActorsTable*)0x0);
+
+	actorsTable.nbEntries = 0;
+	GetPossibleMagicalTargets(&actorsTable);
+	if ((actorsTable.nbEntries == 0) || (typeId != actorsTable.aEntries[0]->typeID)) {
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroUnlockTerm()
+{
+	CNewFx* pFx;
+	int fxId;
+
+	if (this->field_0x15d4.type != -1) {
+		pFx = this->field_0x15d4.pFx;
+		if (((pFx != (CNewFx*)0x0) && (fxId = this->field_0x15d4.id, fxId != 0)) && (fxId == pFx->id)) {
+			pFx->Stop(-1.0f);
+		}
+	}
+
+	SetMagicMode(0);
 
 	return;
 }
@@ -15521,7 +15643,7 @@ int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
 			initialAnim = piVar3->animId;
 		}
 
-		bVar2 = pCVar5->IsKindOfObject(0x10);
+		bVar2 = pCVar5->IsKindOfObject(OBJ_TYPE_WOLFEN);
 		if (bVar2 == false) {
 			indexValue = 0;
 		}
@@ -16853,8 +16975,7 @@ void CActorHeroPrivate::ProcessDeath()
 				if (0.0f < fVar7 - this->field_0x2e4) {
 					iVar4 = CLevelScheduler::ScenVar_Get(4);
 					if (iVar4 == 0) {
-						iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
-						GetLifeInterface()->SetValue(iVar4);
+						GetLifeInterface()->SetValue(CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE));
 						fVar7 = GetLifeInterface()->GetValue();
 						fVar8 = this->magicInterface.GetValue();
 						fVar9 = this->moneyInterface.GetValue();
@@ -17025,9 +17146,9 @@ bool CActorHeroPrivate::Func_0x1b0(CActor* pOther)
 {
 	bool bVar1;
 
-	bVar1 = pOther->IsKindOfObject(OBJ_TYPE_HERO);
-	CActorHero* pHero = static_cast<CActorHero*>(pOther);
-	if (((bVar1 == false) || (4 < this->braceletLevel)) || (bVar1 = false, pHero->inventory.aSlots[0][9].field_0x4 == 0)) {
+	bVar1 = pOther->IsKindOfObject(OBJ_TYPE_WOLFEN);
+	CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pOther);
+	if (((bVar1 == false) || (4 < this->braceletLevel)) || (bVar1 = false, pWolfen->field_0xb74 == 0)) {
 		bVar1 = true;
 	}
 
@@ -18059,7 +18180,7 @@ void CFightLock_SE::_Heuristic_Danger()
 
 		if (pActor->Func_0x18c() == 1) {
 			if (pActor->curBehaviourId == 3) {
-				bVar3 = pActor->IsKindOfObject(0x10);
+				bVar3 = pActor->IsKindOfObject(OBJ_TYPE_WOLFEN);
 				dangerRating = 0.5f;
 
 				CActorWolfen* pWolfen = reinterpret_cast<CActorWolfen*>(pActor);

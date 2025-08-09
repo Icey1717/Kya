@@ -31,6 +31,8 @@
 #define SCN_LEVEL_LIFE_UPDATE			0x15
 #define SCN_LEVEL_LIFE_MAX				0x16
 
+#define SCN_MAX							0x17
+
 class CActorNativShop;
 
 struct SaveDataSection_44484c42 {
@@ -184,15 +186,15 @@ static_assert(sizeof(S_LVLNFO_LEVEL_HEADER_V7) == 0x38);
 struct S_SUBSECTOR_INFO
 {
 	ulong field_0x0;
-	uint field_0x8;
+	uint teleporterActorHashCode;
 	int field_0xc;
 	uint field_0x10;
 	int field_0x14;
-	undefined field_0x18;
+	undefined nbExorcisedWolfen;
 	undefined field_0x19;
 	undefined field_0x1a;
 	undefined field_0x1b;
-	uint field_0x1c;
+	uint flags;
 	edDList_material* field_0x20;
 	undefined field_0x24;
 	undefined field_0x25;
@@ -215,7 +217,7 @@ struct S_LEVEL_INFO
 	char levelPath[20];
 	S_COMPANION_INFO* aCompanionInfo;
 	char* pSimpleConditionData;
-	int field_0x50;
+	int nbExorcisedWolfen;
 	undefined field_0x54;
 	undefined field_0x55;
 	undefined field_0x56;
@@ -284,11 +286,11 @@ struct NativShopLevelSubObjSubObj
 struct NativShopLevelSubObj
 {
 	int field_0x0;
-	int field_0x4;
+	int currentLevelId;
 	undefined4 field_0x8;
 
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 currentLocation;
+	edF32VECTOR4 rotationQuat;
 
 	NativShopLevelSubObjSubObj aSubObjs[5];
 	
@@ -318,8 +320,11 @@ public:
 	virtual void Level_ManagePaused();
 	virtual void Level_Draw();
 
+	virtual char* ProfileGetName();
+
 	// End Manager
 
+	virtual void Level_PostInit();
 	virtual void Level_PreTerm();
 
 	void Level_FillRunInfo(int levelID, int elevatorID, int param_4);
@@ -335,6 +340,7 @@ public:
 	void Episode_LoadFromIniFile();
 
 	void SaveGame_SaveCurLevelState(int param_2);
+	void SaveGame_LoadLevelState(int levelId);
 
 	static int SaveGame_GetMaxBufferSize();
 
@@ -351,6 +357,9 @@ public:
 
 	void Level_Run(undefined8 param_2, int levelID, int elevatorID, int param_5, int param_6, bool bFadeOut);
 	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
+	void Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_SUBSECTOR_INFO* pSubSectorInfo);
+	void Level_UpdateCurLiveLevelInfo();
+	void Level_TeleporterChanged();
 
 	void SetLevelTimerFunc_002df450(float param_1, int mode);
 	int GetNbAreas(int currentLevelID);

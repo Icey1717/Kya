@@ -8,6 +8,23 @@ OPTION(SPIRV_REFLECT_STATIC_LIB     "Build a SPIRV-Reflect static library" ON)
 OPTION(SPIRV_REFLECT_BUILD_TESTS    "Build the SPIRV-Reflect test suite" OFF)
 OPTION(SPIRV_REFLECT_ENABLE_ASSERTS "Enable asserts for debugging" OFF)
 
+# Performance profiling option
+if(NOT DEFINED ENABLE_PERFORMANCE_PROFILING)
+	set(ENABLE_PERFORMANCE_PROFILING OFF CACHE BOOL "Enable performance profiling")
+endif()
+
+# Memory profiling option
+if(NOT DEFINED ENABLE_MEMORY_PROFILING)
+	set(ENABLE_MEMORY_PROFILING OFF CACHE BOOL "Enable memory profiling")
+endif()
+
+#if either performance or memory profiling is enabled
+if(ENABLE_PERFORMANCE_PROFILING OR ENABLE_MEMORY_PROFILING)
+	# add global define for TRACY_ENABLE
+	add_compile_definitions(TRACY_ENABLE)
+	add_compile_definitions(TRACY_CALLSTACK=10)
+endif()
+
 include("src/port/ispc/ispc.cmake")
 
 set(CMAKE_C_COMPILER "clang")
@@ -687,6 +704,14 @@ else()
 		target_sources(Kya PRIVATE ${ISPC_OBJECTS})
 		target_include_directories(Kya PRIVATE "${ISPC_INCLUDE_DIR}")
 		target_compile_definitions(Kya PRIVATE "ENABLE_ISPC")
+	endif()
+
+	if (ENABLE_PERFORMANCE_PROFILING)
+		target_compile_definitions(Kya PUBLIC "ENABLE_PERFORMANCE_PROFILING")
+	endif()
+
+	if (ENABLE_MEMORY_PROFILING)
+		target_compile_definitions(Kya PUBLIC "ENABLE_MEMORY_PROFILING")
 	endif()
 
 	target_sources(Kya PRIVATE debug/PackedType.natvis)

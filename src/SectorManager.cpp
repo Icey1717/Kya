@@ -556,6 +556,7 @@ void CSector::InstallCallback()
 	edBANK_ENTRY_INFO bankEntry;
 	int iStack8;
 	short sStack2;
+	S_HIERANM_HIER* pHier;
 
 #ifdef PLATFORM_WIN
 	std::string szBackgroundFileName;
@@ -691,35 +692,39 @@ void CSector::InstallCallback()
 			return;
 		}
 
-		IMPLEMENTATION_GUARD(
-		lVar13 = pSectorHierarchy->hash;
-		if (lVar13 != 0) {
-			iVar8 = this->field_0x138;
-			if (iVar8 != 0) {
-				ppiVar10 = (int**)(iVar8 + 0x10);
-				meshSize = 0;
-				if (*(uint*)(iVar8 + 8) != 0) {
+		edNODE* pNode;
+		ulong hash = pSectorHierarchy->hash;
+		if (hash != 0) {
+			MeshData_ANHR* pMVar1 = (this->pANHR).pThis;
+			if (pMVar1 != (MeshData_ANHR*)0x0) {
+				int* pCurHier = reinterpret_cast<int*>(pMVar1 + 1);
+				int curHierarchy = 0;
+				if (pMVar1->nb3dHierarchies != 0) {
 					do {
-						piVar11 = *ppiVar10;
-						if ((piVar11[1] != 0) && (lVar13 == *(long*)(piVar11[1] + 0x80))) goto LAB_001fe180;
-						meshSize = meshSize + 1;
-						ppiVar10 = ppiVar10 + 1;
-					} while (meshSize < *(uint*)(iVar8 + 8));
+						pHier = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pCurHier);
+						ed_3d_hierarchy* pHierarchy3d = LOAD_SECTION_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy);
+						if ((pHierarchy3d != (ed_3d_hierarchy*)0x0) && (hash == pHierarchy3d->hash.number)) goto LAB_001fe180;
+						curHierarchy = curHierarchy + 1;
+						pCurHier = pCurHier + 1;
+					} while (curHierarchy < pMVar1->nb3dHierarchies);
 				}
 			}
-			piVar11 = (int*)0x0;
+
+			pHier = (S_HIERANM_HIER*)0x0;
 		LAB_001fe180:
-			if (piVar11 == (int*)0x0) {
-				iVar8 = ed3DHierarchyNodeGetByHashcodeFromList(this->pMeshTransformParent_0x130, lVar13);
+			if (pHier == (S_HIERANM_HIER*)0x0) {
+				pNode = ed3DHierarchyNodeGetByHashcodeFromList(this->pMeshTransformParent_0x130, hash);
 			}
 			else {
-				iVar8 = *piVar11;
+				pNode = LOAD_SECTION_CAST(edNODE*, pHier->pNode);
 			}
-			if (iVar8 != 0) {
-				CSectorHierarchy::Sector_Enter(pSectorHierarchy, iVar8, piVar11);
+
+			if (pNode != 0) {
+				pSectorHierarchy->Sector_Enter(pNode, pHier);
 			}
 		}
-		pSectorHierarchy = pSectorHierarchy->pSectorHierarchy;)
+		pSectorHierarchy = pSectorHierarchy->pNext;
+
 	} while (true);
 }
 
@@ -1096,6 +1101,11 @@ void CSectorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+char* CSectorManager::ProfileGetName()
+{
+	return "Sector";
+}
+
 void CSectorManager::Level_Create(ByteCode* pMemoryStream)
 {
 	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + 4;
@@ -1256,6 +1266,43 @@ edNODE* CSectorManager::RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pO
 	}
 
 	return peVar3;
+}
+
+void CSectorManager::UnregisterDynamicHierarchy(CSectorHierarchy* pSector, int index)
+{
+	CSectorHierarchy* pCVar1;
+	CSectorHierarchy* pCVar2;
+	CSectorHierarchy* pCVar3;
+
+	if (index == -1) {
+		pCVar1 = this->pSectorHierarchy;
+	}
+	else {
+		pCVar1 = this->subObjArray[index].aSectorHierarchies;
+	}
+
+	pCVar2 = (CSectorHierarchy*)0x0;
+	while ((pCVar3 = pCVar1, pCVar3 != (CSectorHierarchy*)0x0 && (pCVar3 != pSector))) {
+		pCVar2 = pCVar3;
+		pCVar1 = pCVar3->pNext;
+	}
+
+	if (pCVar3 != (CSectorHierarchy*)0x0) {
+		if (pCVar2 == (CSectorHierarchy*)0x0) {
+			if (index == -1) {
+				this->pSectorHierarchy = pCVar3->pNext;
+			}
+			else {
+				this->subObjArray[index].aSectorHierarchies = pCVar3->pNext;
+			}
+		}
+		else {
+			pCVar2->pNext = pCVar3->pNext;
+		}
+		pCVar3->pNext = (CSectorHierarchy*)0x0;
+	}
+
+	return;
 }
 
 void CSector::Level_Manage(int sectID, int param_3)
@@ -1483,8 +1530,7 @@ void CSectorHierarchy::Term(int index)
 	if (this->hash != 0) {
 		this->pNode = (edNODE*)0x0;
 		this->pHier = (S_HIERANM_HIER*)0x0;
-		IMPLEMENTATION_GUARD(
-		CScene::ptable.g_SectorManager_00451670->UnregisterDynamicHierarchy(this, index);)
+		CScene::ptable.g_SectorManager_00451670->UnregisterDynamicHierarchy(this, index);
 	}
 
 	return;

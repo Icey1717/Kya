@@ -51,6 +51,7 @@
 #include "DebugShop.h"
 #include "DebugWolfen.h"
 #include "DebugScenario.h"
+#include "DebugMemory.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -460,47 +461,6 @@ namespace Debug {
 		ImGui::End();
 	}
 
-	static void ShowMemoryMenu(bool* bOpen) {
-		ImGui::Begin("Memory", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		ImGui::Text("Main Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_MAIN)));
-		ImGui::Text("Memkit Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_MEMKIT)));
-		ImGui::Text("Scratchpad Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_SCRATCHPAD)));
-		ImGui::Text("Video Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_VIDEO)));
-
-		if (ImGui::Button("Dump Memory")) {
-			std::ofstream inFile("memory_dump.bin", std::ios::binary);
-			assert(inFile.is_open());
-
-			const char* pMem = reinterpret_cast<const char*>(edmemGetMainHeader());
-			inFile.write(pMem, sizeof(VirtualMemory));
-			inFile.close();
-		}
-
-		if (ImGui::Button("Load Memory")) {
-			std::ifstream inFile("memory_dump.bin", std::ios::binary);
-			assert(inFile.is_open());
-
-			char* pMem = reinterpret_cast<char*>(edmemGetMainHeader());
-			inFile.read(pMem, sizeof(VirtualMemory));
-			inFile.close();
-		}
-
-		ImGui::Spacing();
-		ImGui::Spacing();
-
-		if (ImGui::CollapsingHeader("Vulkan")) {
-			ImGui::Text("Allocations:");
-			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_COMMAND: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
-			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_OBJECT: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_OBJECT));
-			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_CACHE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_CACHE));
-			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_DEVICE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_DEVICE));
-			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE));
-		}
-
-		ImGui::End();
-	}
-
 	struct Menu {
 		void Show() {
 			if (bOpen) {
@@ -524,7 +484,7 @@ namespace Debug {
 		{"Hero", Debug::Hero::ShowMenu, true },
 		{"Sector", ShowSectorMenu, true },
 		{"Level Scheduler", ShowLevelSchedulerMenu, true },
-		{"Memory", ShowMemoryMenu, false },
+		{"Memory", Debug::Memory::ShowMenu, false },
 		{"Texture", Debug::Texture::ShowMenu, false },
 		{"Mesh", Debug::Mesh::ShowMenu, false },
 		{"Actor", Debug::Actor::ShowMenu, true },
@@ -566,6 +526,7 @@ namespace Debug {
 			Texture::Update();
 			Debug::Camera::ShowCamera();
 			Debug::Shop::Update();
+			Debug::Scenario::Update();
 
 			ForEachMenu([](Menu& menu) {
 				menu.Show();

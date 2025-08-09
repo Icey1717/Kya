@@ -136,6 +136,7 @@ void ConditionedOperationArray::Create(ByteCode* pByteCode)
 	puVar1 = (CND_OP_HEADER*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(puVar1 + 1);
 	this->pHeader = puVar1;
+
 	uVar4 = 0;
 	if (this->pHeader->cndOpCount != 0) {
 		do {
@@ -218,11 +219,11 @@ void ConditionedOperationArray::Perform()
 			do {
 				uVar2 = 1;
 
-				S_STREAM_SIMPLE_OPERATION* pOp = (S_STREAM_SIMPLE_OPERATION*)(pOpHeader + 1);
+				S_STREAM_SIMPLE_OPERATION* pOp = pOpHeader->aOps;
 
 				COND_HEADER* pCondHeader = (COND_HEADER*)(pOp + pOpHeader->opCount);
 				int condCount = pCondHeader->condCount;
-				pCond = (S_STREAM_SIMPLE_COND*)(pCondHeader + 1);
+				pCond = pCondHeader->aConds;
 
 				for (; 0 < condCount; condCount = condCount + -1) {
 					uVar2 = ScenaricCondition::IsVerified(pCond, uVar2);
@@ -240,7 +241,7 @@ void ConditionedOperationArray::Perform()
 				}
 
 				uVar3 = uVar3 + 1;
-				pOpHeader = (OP_HEADER*)(pOp + pOpHeader->opCount);
+				pOpHeader = (OP_HEADER*)(pOpHeader->aOps + pOpHeader->opCount);
 			} while (uVar3 < this->pHeader->cndOpCount);
 		}
 	}

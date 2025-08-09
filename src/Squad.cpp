@@ -416,8 +416,7 @@ void CSquad::InitSemaphores(CSquadConfig* pConfig)
 				if (((uVar3 != 0) && (uVar5 != 0xffffffff)) && (uVar3 != 0)) {
 					pCVar2 = this->aSemaphores[uVar6].aSemaphores[uVar5].pTeamElt;
 					if (pCVar2 != (CTeamElt*)0x0) {
-						IMPLEMENTATION_GUARD(
-						CActorWolfen::DisableFightAction(pCVar2);)
+						pCVar2->DisableFightAction();
 					}
 
 					pCVar2 = this->aSemaphores[uVar6].aSemaphores[uVar5].pTeamElt;
@@ -495,7 +494,7 @@ void CSquad::SynchronizePattern(CChessBoardPawnsRefTable* pTable)
 				if (iVar2 != 0) {
 					pActor = this->chessboard.GetPawnActor(currentPawnIndex);
 					lVar5 = pTable->IsInList(pActor);
-					if (((lVar5 == 0) && (pActor->curBehaviourId == 3)) && (pActor->IsKindOfObject(0x10) != false)) {
+					if (((lVar5 == 0) && (pActor->curBehaviourId == 3)) && (pActor->IsKindOfObject(OBJ_TYPE_WOLFEN) != false)) {
 						pCVar3 = static_cast<CBehaviourFighterWolfen*>(pActor->GetBehaviour(pActor->curBehaviourId));
 						puVar4 = this->chessboard.GetPawnPosition(currentPawnIndex);
 						pCVar3->SetPositionToHold(0.05f, puVar4);

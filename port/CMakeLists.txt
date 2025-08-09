@@ -15,6 +15,7 @@ add_subdirectory("ext/pss/pss")
 #Tracy profiler
 option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" OFF)
+option(TRACY_CALLSTACK "" ON)
 add_subdirectory("ext/tracy") 
 
 add_subdirectory("ext/readerwriterqueue")

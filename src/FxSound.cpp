@@ -44,6 +44,11 @@ void CFxSoundScenaricData::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CFxSoundScenaricData::Term()
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+}
+
 void CFxNewSound::Draw()
 {
 	return;

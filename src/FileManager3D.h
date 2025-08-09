@@ -32,6 +32,10 @@ struct C3DFileManager : public CObjectManager {
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
 
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "FileManager3D"; }
+#endif
+
 	edDList_material* GetMaterialFromId(int materialId, int internalId);
 
 	int InstanciateG2D(int index);

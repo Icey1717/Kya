@@ -40,6 +40,7 @@ public:
 	CFxCompositeScenaricData();
 	void Init();
 	void Create(ByteCode* pByteCode);
+	void Term();
 
 	uint nbData;
 	uint* aComponentParticles;

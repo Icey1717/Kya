@@ -59,6 +59,12 @@ struct _msg_tied_params
 	int bTied;
 };
 
+struct _msg_params_0x2e
+{
+	uint field_0x0;
+	int field_0x4;
+};
+
 enum ACTOR_MESSAGE {
 	MESSAGE_KICKED = 0x2,
 	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
@@ -76,6 +82,8 @@ enum ACTOR_MESSAGE {
 	MESSAGE_LEAVE_SHOP = 0x24,
 	MESSAGE_DISABLE_INPUT = 0x25,
 	MESSAGE_ENABLE_INPUT = 0x26,
+	MESSAGE_MAGIC_DEACTIVATE = 0x2f,
+	MESSAGE_MAGIC_ACTIVATE = 0x30,
 	MESSAGE_TRAP_CAUGHT = 0x31,
 	MESSAGE_SOCCER_START = 0x35,
 	MESSAGE_REQUEST_CAMERA_TARGET = 0x49,
@@ -89,7 +97,7 @@ enum ACTOR_MESSAGE {
 #define OBJ_TYPE_MOVABLE	0x2
 #define OBJ_TYPE_AUTONOMOUS 0x4
 #define OBJ_TYPE_FIGHTER	0x8
-#define OBJ_TYPE_HERO		0x10
+#define OBJ_TYPE_WOLFEN		0x10
 
 typedef void* MSG_PARAM;
 
@@ -804,7 +812,8 @@ struct ActorAndWaypoint {
 	S_STREAM_REF<CWayPoint> pWaypoint;
 };
 
-struct S_ACTOR_STREAM_REF {
+struct S_ACTOR_STREAM_REF
+{
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
 };

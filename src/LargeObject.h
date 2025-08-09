@@ -5,6 +5,8 @@
 #include "edMem.h"
 #include "edDlist.h"
 
+class CActorFactory;
+
 class CObjectManager
 {
 public:
@@ -35,6 +37,8 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 
 	virtual void Level_PauseChange(bool bPaused) {}
+
+	virtual char* ProfileGetName();
 
 	virtual void Level_SaveContext() {}
 	virtual void Level_LoadContext() {}
@@ -83,7 +87,7 @@ union ManagerContainer {
 		struct CFrontendDisplay* g_FrontendManager_00451680;
 		struct HelpManager* g_HelpManager_00451684;
 		struct CPauseManager* g_PauseManager_00451688;
-		struct MapManager* g_MapManager_0045168c;
+		struct CMapManager* g_MapManager_0045168c;
 		class CCollisionManager* g_CollisionManager_00451690;
 		struct CLipTrackManager* g_LipTrackManager_00451694;
 		struct CAudioManager* g_AudioManager_00451698;
@@ -99,25 +103,41 @@ union ManagerContainer {
 	};
 
 	CObjectManager* aManagers[0x18];
+
+	CObjectManager** IterateBackwards()
+	{
+		return aManagers + 0x17;
+	}
 };
 
 PACK(
-struct S_STREAM_FOG_DEF {
+struct S_STREAM_FOG_DEF
+{
 	float clipValue_0x0;
 	float field_0x4;
 	_rgba fogRGBA;
 	uint flags;
 });
 
-struct FogClipEntry {
+struct FogClipEntry
+{
 	S_STREAM_FOG_DEF* pStreamDef;
 	float field_0x4;
+};
+
+struct S_ELEVATOR_CUTSCENE_LIST
+{
+	int nbEntries;
+	int aEntries[];
+
+	static void Create(S_ELEVATOR_CUTSCENE_LIST** ppList, ByteCode* pByteCode);
 };
 
 class CScene 
 {
 public:
 	CScene();
+	~CScene();
 
 	void Level_Setup(struct ByteCode* pMemoryStream);
 	bool IsFadeTermActive(void);
@@ -169,13 +189,8 @@ public:
 
 	static ManagerContainer ptable;
 
-	void* operator new(size_t size)
-	{
-		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
-		return p;
-	}
-
 public:
+	CActorFactory* pActorFactory;
 	int clipValue_0x0;
 	struct ed_viewport* pViewportA;
 	struct ed_viewport* pViewportB;
@@ -186,7 +201,7 @@ public:
 	float field_0x1c;
 	undefined4 field_0x20;
 	float field_0x24;
-	int field_0x28;
+	int defaultTextureIndex_0x28;
 	int defaultTextureIndex_0x2c;
 	int defaultMaterialIndex;
 	undefined field_0x34;
@@ -324,10 +339,10 @@ public:
 	short mode_0xf8;
 	undefined field_0xfa;
 	undefined field_0xfb;
-	edDList_material field_0xfc;
+	edDList_material frameBufferMaterial;
 	int field_0x10c;
 	int field_0x110;
-	int* field_0x114;
+	S_ELEVATOR_CUTSCENE_LIST* pElevatorCutsceneList;
 	float field_0x118;
 	undefined4 field_0x11c;
 	uint count_0x120;

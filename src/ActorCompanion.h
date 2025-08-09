@@ -36,10 +36,7 @@ struct CompanionAlert
 	int field_0x14;
 	float field_0x18;
 	S_STREAM_REF<CActor> pActor;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	undefined4 field_0x2c;
+	edF32VECTOR4 field_0x20;
 	S_STREAM_REF<CCamera> pCamera;
 	short field_0x34[8];
 	int field_0x44;
@@ -80,6 +77,7 @@ public:
 	void FUN_001e5790();
 	void FUN_001e58e0();
 	void FUN_001e9660(edF32VECTOR4* param_2);
+	void FUN_001e56b0(int param_2);
 
 	void _Display_BGText(float param_1, float param_2, float param_3);
 	void _Display_Text(float param_1, float param_2, float param_3);

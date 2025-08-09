@@ -1482,6 +1482,11 @@ void Renderer::PushAnimST(float* pAnimST)
 	Native::PushAnimST(pAnimST);
 }
 
+void Renderer::BindNull()
+{
+	Native::gCurrentDraw.reset();
+}
+
 void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 {
 	bFadeActive = true;

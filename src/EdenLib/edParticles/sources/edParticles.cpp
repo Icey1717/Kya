@@ -562,7 +562,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 			fVar14 = M_2_PI * fVar14 * g_ScalingFactor_00448518;
 			local_e0.y = 0.0;
 			if (fVar14 < 0.0) {
-				puVar9 = (float)&DAT_bf000000;
+				puVar9 = -0.5f;
 			}
 			else {
 				puVar9 = 0.5;
@@ -632,7 +632,6 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 		}
 
 		if (bVar1 == 9) {
-			IMPLEMENTATION_GUARD(
 			if ((iVar5 == 2) || (iVar5 == 3)) {
 				iVar5 = 1;
 			}
@@ -641,47 +640,43 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 				param_2->y = fVar14;
 				param_2->z = fVar15;
 				param_2->w = fVar11;
-				param_2->x = GenRandom01(pGeneratorParam) - 0.5;
+				param_2->x = GenRandom01(pGeneratorParam) - 0.5f;
 				if (bVar8 == 1) {
-					local_e0.x = 0.0;
-					local_e0.y = GenRandomCentered01(pGeneratorParam) - 0.5;
-					local_e0.w = 0.0;
-					local_e0.z = GenRandom01(pGeneratorParam) - 0.5;
+					local_e0.x = 0.0f;
+					local_e0.y = GenRandomCentered01(pGeneratorParam) - 0.5f;
+					local_e0.w = 0.0f;
+					local_e0.z = GenRandom01(pGeneratorParam) - 0.5f;
 				}
 			}
 			else {
 				if (iVar5 == 0) {
 					pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-					fVar11 = gF32Vertex4Zero.w;
-					fVar15 = gF32Vertex4Zero.z;
-					fVar14 = gF32Vertex4Zero.y;
 					uVar6 = pGeneratorParam->field_0x21c & 1;
-					param_2->x = gF32Vertex4Zero.x;
-					param_2->y = fVar14;
-					param_2->z = fVar15;
-					param_2->w = fVar11;
+					*param_2 = gF32Vertex4Zero;
 					if (uVar6 == 0) {
 						puVar10 = 0.5f;
 					}
 					else {
 						puVar10 = -0.5f;
 					}
+
 					param_2->x = (float)puVar10;
 					if (bVar8 == 1) {
 						local_e0.y = gF32Vector4Zero.y;
 						local_e0.z = gF32Vector4Zero.z;
 						local_e0.w = gF32Vector4Zero.w;
 						if (uVar6 == 0) {
-							local_e0.x = 1.0;
+							local_e0.x = 1.0f;
 						}
 						else {
-							local_e0.x = (float)&DAT_bf800000;
+							local_e0.x = -1.0f;
 						}
 					}
 				}
 			}
+
 			edF32Matrix4MulF32Vector4Hard(param_2, &pGeneratorParam->field_0x40, param_2);
-			goto LAB_0027a3b0;)
+			goto LAB_0027a3b0;
 		}
 
 		if (bVar1 == 7) {
@@ -836,7 +831,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 							param_2->x = 0.5;
 						}
 						else {
-							param_2->x = (float)&DAT_bf000000;
+							param_2->x = -0.5f;
 						}
 
 						param_2->y = GenRandomCentered01(pGeneratorParam) - 0.5;
@@ -859,7 +854,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 								param_2->y = 0.5;
 							}
 							else {
-								param_2->y = (float)&DAT_bf000000;
+								param_2->y = -0.5f;
 							}
 							param_2->z = GenRandom01(pGeneratorParam) - 0.5;
 							param_2->w = 1.0;
@@ -950,7 +945,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 								param_2->z = 0.5;
 							}
 							else {
-								param_2->z = (float)&DAT_bf000000;
+								param_2->z = -0.5f;
 							}
 							param_2->w = 1.0;
 							if (bVar8 == 1) {
@@ -2639,40 +2634,23 @@ inline void ParticleA(AffineQuad2D& quad, _ed_particle_vectors* pCurVector, _ed_
 	quad.origin.x = (quad.xAxis.x + quad.yAxis.x) * -0.5f + 0.5f;
 	quad.origin.y = (quad.xAxis.x - quad.yAxis.x) * -0.5f + 0.5f;
 	if ((fVar28 != 0.0f) || (quad.yAxis.y = quad.xAxis.x, pDrawData->field_0x94 != 0.0f)) {
-		IMPLEMENTATION_GUARD(
-		fVar29 = pDrawData->field_0x94 * fVar27;
+		fVar29 = pDrawData->field_0x94 * pCurParticle->age / pCurParticle->lifetime;
 		if (0.0f < quad.yAxis.x) {
 			fVar29 = -fVar29;
 		}
-		fVar30 = (fVar28 + fVar29) *
-			g_ScalingFactor_00448518;
-		puVar16 = 0.5f;
-		if (fVar30 < 0.0) {
-			puVar16 = -0.5f;
-		}
-		fVar28 = (fVar28 + fVar29) *
-			g_ScalingFactor_00448518;
-		fVar29 = edFCosinus
-			[(int)(fVar30 + (float)puVar16) &
-			0x1fff];
-		if (fVar28 < 0.0) {
-			puVar16 = -0.5f;
-		}
-		else {
-			puVar16 = 0.5f;
-		}
-		fVar32 = edFSinus[(int)(fVar28 + (float)
-			puVar16) & 0x1fff];
+
+		float fVar32 = sinf(fVar28 + fVar29);
+		fVar29 = cosf(fVar28 + fVar29);
 		fVar30 = -(fVar29 * 0.5f) + fVar32 * 0.5f + 0.5f;
-		fVar31 = (-(fVar32 * 0.5f) - fVar29 * 0.5f) + 0.5f;
-		fVar33 = -fVar32 * quad.xAxis.x;
+		float fVar31 = (-(fVar32 * 0.5f) - fVar29 * 0.5f) + 0.5f;
+		float fVar33 = -fVar32 * quad.xAxis.x;
 		fVar28 = fVar32 * quad.xAxis.x;
 		quad.yAxis.y = fVar29 * quad.xAxis.x + -fVar32 * quad.xAxis.y;
 		quad.origin.x = quad.origin.x + fVar31 * quad.yAxis.x + fVar30 * quad.xAxis.x;
 		quad.origin.y = quad.origin.y + fVar31 * quad.xAxis.x + fVar30 * quad.xAxis.y;
 		quad.xAxis.x = fVar32 * quad.yAxis.x + fVar29 * quad.xAxis.x;
 		quad.xAxis.y = fVar28 + fVar29 * quad.xAxis.y;
-		quad.yAxis.x = fVar29 * quad.yAxis.x + fVar33;)
+		quad.yAxis.x = fVar29 * quad.yAxis.x + fVar33;
 	}
 
 	return;
@@ -2731,6 +2709,16 @@ inline void ParticleB(AffineQuad2D& quad, uint uVar2, uint uVar12, _ed_particle_
 	ApplyAffineC(FLOAT_ARRAY_0041ebb0, quad);
 
 	return;
+}
+
+inline void ParticleC(AffineQuad2D& quad, float fVar28)
+{
+	quad.xAxis.x = cosf(fVar28);
+	quad.xAxis.y = sinf(fVar28);
+	quad.yAxis.x = -quad.xAxis.y;
+	quad.origin.x = -(quad.xAxis.x * 0.5f) + quad.xAxis.y * 0.5f + 0.5f;
+	quad.origin.y = (-(quad.xAxis.y * 0.5f) - quad.xAxis.x * 0.5f) + 0.5f;
+	quad.yAxis.y = quad.xAxis.x;
 }
 
 void ParticleColorA(_rgba* rgbaColor, _ed_particle* pCurParticle, int alphaMultiplier)
@@ -2838,16 +2826,8 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 	AffineQuad2D local_770;
 	AffineQuad2D local_710;
 	AffineQuad2D local_690;
-	float local_670;
-	float local_66c;
-	float local_668;
-	float local_664;
-	float local_660;
-	float local_65c;
-	float local_630;
-	float local_62c;
-	float local_628;
-	float local_624;
+	AffineQuad2D local_670;
+	AffineQuad2D local_65c;
 	float local_620;
 	float local_61c;
 	float local_610;
@@ -2871,28 +2851,15 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 	float local_500;
 	float local_4fc;
 	float local_490;
-	float local_48c;
-	float local_488;
-	float local_484;
-	float local_480;
-	float fStack1148;
-	float local_410;
-	float local_40c;
-	float local_408;
-	float local_404;
-	float local_400;
-	float fStack1020;
+	AffineQuad2D local_48c;
+	AffineQuad2D local_410;
 	float local_3f0;
 	float local_3ec;
 	float local_3e8;
 	float local_3e4;
 	float local_3e0;
 	float local_3dc;
-	float local_350;
-	float local_34c;
-	float local_348;
-	float local_344;
-	float local_340;
+	AffineQuad2D local_350;
 	float local_33c;
 	float local_310;
 	float local_30c;
@@ -3651,33 +3618,11 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																					ParticleA(local_710, pCurVector, pCurParticle, local_220, local_230, fVar28, pDrawData);
 																																				}
 																																				else {
-																																					IMPLEMENTATION_GUARD(
 																																					fVar29 = pDrawData->field_0x94 * fVar27;
 																																					if (((uVar2 & 8) != 0) && ((uVar12 & 0x20) != 0)) {
 																																						fVar29 = -fVar29;
 																																					}
-
-																																					fVar30 = (fVar28 + fVar29) * g_ScalingFactor_00448518;
-																																					puVar16 = 0.5f;
-
-																																					if (fVar30 < 0.0f) {
-																																						puVar16 = -0.5f;
-																																					}
-																																					fVar28 = (fVar28 + fVar29) * g_ScalingFactor_00448518;
-																																					local_710.xAxis.x = edFCosinus
-																																						[(int)(fVar30 + (float)puVar16) & 0x1fff];
-																																					if (fVar28 < 0.0) {
-																																						puVar16 = -0.5f;
-																																					}
-																																					else {
-																																						puVar16 = 0.5f;
-																																					}
-																																					local_710.xAxis.y = edFSinus[(int)(fVar28 + (float)puVar16) &
-																																						0x1fff];
-																																					local_710.origin.x = -(local_710.xAxis.x * 0.5) + local_710.xAxis.y * 0.5 + 0.5;
-																																					local_710.origin.y = (-(local_710.xAxis.y * 0.5) - local_710.xAxis.x * 0.5) + 0.5;
-																																					local_710.yAxis.x = -local_710.xAxis.y;
-																																					local_710.yAxis.y = local_710.xAxis.x;)
+																																					ParticleC(local_710, fVar29);
 																																				}
 																																			}
 
@@ -3744,8 +3689,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																			}
 																																			uVar12 = pCurParticle->seed;
 																																			if ((uVar2 & 1) != 0) {
-																																				fVar27 = pCurParticle->age / pCurParticle->lifetime
-																																					;
+																																				fVar27 = pCurParticle->age / pCurParticle->lifetime;
 																																				if ((uVar2 & 0x20) == 0) {
 																																					local_76c = 0.0;
 																																					local_770 = 1.0;
@@ -3771,26 +3715,8 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																						if (((uVar2 & 8) != 0) && ((uVar12 & 0x20) != 0)) {
 																																							fVar29 = -fVar29;
 																																						}
-																																						fVar30 = (fVar28 + fVar29) * g_ScalingFactor_00448518;
-																																						puVar16 = 0.5f;
-																																						if (fVar30 < 0.0) {
-																																							puVar16 = -0.5f;
-																																						}
-																																						fVar28 = (fVar28 + fVar29) * g_ScalingFactor_00448518;
-																																						local_770 = edFCosinus
-																																							[(int)(fVar30 + (float)puVar16) & 0x1fff];
-																																						if (fVar28 < 0.0) {
-																																							puVar16 = -0.5f;
-																																						}
-																																						else {
-																																							puVar16 = 0.5f;
-																																						}
-																																						local_76c = edFSinus[(int)(fVar28 + (float)puVar16) &
-																																							0x1fff];
-																																						local_760 = -(local_770 * 0.5) + local_76c * 0.5 + 0.5;
-																																						fStack1884 = (-(local_76c * 0.5) - local_770 * 0.5) + 0.5;
-																																						local_768 = -local_76c;
-																																						local_764 = local_770;
+
+																																						ParticleC(local_770, fVar29);
 																																					}
 																																				}
 																																				if ((uVar2 & 0x300) != 0) {
@@ -4037,47 +3963,15 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																															for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																																if (pCurParticle->field_0xd != 0) {
 																																	uVar12 = pCurParticle->seed;
-																																	fVar27 = pDrawData->field_0x94 *
-																																		(pCurParticle->age / pCurParticle->lifetime);
+																																	fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 																																	if ((uVar12 & 0x20) != 0) {
 																																		fVar27 = -fVar27;
 																																	}
 																																	fVar27 = pDrawData->field_0x90 + fVar27;
-																																	fVar28 = fVar27 * g_ScalingFactor_00448518;
-																																	puVar16 = 0.5f;
-																																	if (fVar28 < 0.0) {
-																																		puVar16 = -0.5f;
-																																	}
-																																	fVar27 = fVar27 * g_ScalingFactor_00448518;
-																																	fVar28 = edFCosinus
-																																		[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																																	if (fVar27 < 0.0) {
-																																		puVar16 = -0.5f;
-																																	}
-																																	else {
-																																		puVar16 = 0.5f;
-																																	}
-																																	fVar31 = edFSinus[(int)(fVar27 + (float)puVar16) &
-																																		0x1fff];
-																																	fVar29 = -fVar31;
-																																	fVar27 = -(fVar28 * 0.5) + fVar31 * 0.5 + 0.5;
-																																	fVar30 = (-(fVar31 * 0.5) - fVar28 * 0.5) + 0.5;
-																																	uv0.u = pfVar23[0][1] * fVar29 +
-																																		pfVar23[0][0] * fVar28 + fVar27 + 0.0;
-																																	uv0.v = pfVar23[0][1] * fVar28 +
-																																		pfVar23[0][0] * fVar31 + fVar30 + 0.0;
-																																	uv1.u = pfVar23[1][1] * fVar29 +
-																																		pfVar23[1][0] * fVar28 + fVar27 + 0.0;
-																																	uv1.v = pfVar23[1][1] * fVar28 +
-																																		pfVar23[1][0] * fVar31 + fVar30 + 0.0;
-																																	uv2.u = pfVar23[2][1] * fVar29 +
-																																		pfVar23[2][0] * fVar28 + fVar27 + 0.0;
-																																	uv2.v = pfVar23[2][1] * fVar28 +
-																																		pfVar23[2][0] * fVar31 + fVar30 + 0.0;
-																																	uv3.u = pfVar23[3][1] * fVar29 +
-																																		pfVar23[3][0] * fVar28 + fVar27 + 0.0;
-																																	uv3.v = pfVar23[3][1] * fVar28 +
-																																		pfVar23[3][0] * fVar31 + fVar30 + 0.0;
+
+																																	ParticleC(local_770, fVar27);
+																																	TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
+
 																																	uVar11 = (int)uVar12 >> 3;
 																																	local_44 = (&pDrawData->field_0x9c)[uVar12 & 7];
 																																	iVar15 = 0xff - (uVar11 & 0xff);
@@ -4140,33 +4034,17 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																local_68c = -local_688;
 																																local_680 = (local_690 + local_688) * -0.5 + 0.5;
 																																fStack1660 = (local_690 - local_688) * -0.5 + 0.5;
-																																if ((pDrawData->field_0x90 != 0.0) ||
-																																	(local_684 = local_690, pDrawData->field_0x94 != 0.0)
-																																	) {
+																																if ((pDrawData->field_0x90 != 0.0) || (local_684 = local_690, pDrawData->field_0x94 != 0.0)) {
 																																	fVar27 = pDrawData->field_0x94 *
 																																		(pCurParticle->age / pCurParticle->lifetime);
 																																	if (0.0 < local_688) {
 																																		fVar27 = -fVar27;
 																																	}
 																																	fVar27 = pDrawData->field_0x90 + fVar27;
-																																	fVar28 = fVar27 * g_ScalingFactor_00448518;
-																																	puVar16 = 0.5f;
-																																	if (fVar28 < 0.0) {
-																																		puVar16 = -0.5f;
-																																	}
-																																	fVar27 = fVar27 * g_ScalingFactor_00448518;
-																																	fVar28 = edFCosinus
-																																		[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																																	if (fVar27 < 0.0) {
-																																		puVar16 = -0.5f;
-																																	}
-																																	else {
-																																		puVar16 = 0.5f;
-																																	}
-																																	fVar31 = edFSinus[(int)(fVar27 + (float)puVar16) &
-																																		0x1fff];
-																																	fVar29 = -(fVar28 * 0.5) + fVar31 * 0.5 + 0.5;
-																																	fVar30 = (-(fVar31 * 0.5) - fVar28 * 0.5) + 0.5;
+
+																																	ParticleC(local_690, fVar27);
+
+																																	// Apply affine
 																																	fVar32 = -fVar31 * local_690;
 																																	fVar27 = fVar31 * local_690;
 																																	local_684 = fVar28 * local_690 + -fVar31 * local_68c;
@@ -4178,22 +4056,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																	local_68c = fVar27 + fVar28 * local_68c;
 																																	local_688 = fVar28 * local_688 + fVar32;
 																																}
-																																uv0.u = pfVar23[0][1] * local_688 +
-																																	pfVar23[0][0] * local_690 + local_680 + 0.0;
-																																uv0.v = pfVar23[0][1] * local_684 +
-																																	pfVar23[0][0] * local_68c + fStack1660 + 0.0;
-																																uv1.u = pfVar23[1][1] * local_688 +
-																																	pfVar23[1][0] * local_690 + local_680 + 0.0;
-																																uv1.v = pfVar23[1][1] * local_684 +
-																																	pfVar23[1][0] * local_68c + fStack1660 + 0.0;
-																																uv2.u = pfVar23[2][1] * local_688 +
-																																	pfVar23[2][0] * local_690 + local_680 + 0.0;
-																																uv2.v = pfVar23[2][1] * local_684 +
-																																	pfVar23[2][0] * local_68c + fStack1660 + 0.0;
-																																uv3.u = pfVar23[3][1] * local_688 +
-																																	pfVar23[3][0] * local_690 + local_680 + 0.0;
-																																uv3.v = pfVar23[3][1] * local_684 +
-																																	pfVar23[3][0] * local_68c + fStack1660 + 0.0;
+
+																																TransformUVs(pfVar23, local_690, uv0, uv1, uv2, uv3);
+
 																																uVar26 = pCurParticle->field_0x8;
 																																rgbaColor[0] = (((uVar26 >> 0x18) *
 																																	(uint) * (byte*)&pCurParticle->field_0xc >> 8) *
@@ -4226,34 +4091,14 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																													for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																														if (pCurParticle->field_0xd != 0) {
 																															uVar26 = pCurParticle->seed;
-																															fVar27 = pDrawData->field_0x94 *
-																																(pCurParticle->age / pCurParticle->lifetime);
+																															fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 																															if ((uVar26 & 0x20) != 0) {
 																																fVar27 = -fVar27;
 																															}
 																															fVar27 = pDrawData->field_0x90 + fVar27;
-																															fVar28 = fVar27 * g_ScalingFactor_00448518;
-																															puVar16 = 0.5f;
-																															if (fVar28 < 0.0) {
-																																puVar16 = -0.5f;
-																															}
-																															fVar27 = fVar27 * g_ScalingFactor_00448518;
-																															local_664 = edFCosinus
-																																[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																															if (fVar27 < 0.0) {
-																																puVar16 = -0.5f;
-																															}
-																															else {
-																																puVar16 = 0.5f;
-																															}
-																															local_66c = edFSinus[(int)(fVar27 + (float)puVar16) &
-																																0x1fff];
-																															fVar28 = -(local_664 * 0.5) + local_66c * 0.5 + 0.5;
-																															local_65c = (-(local_66c * 0.5) - local_664 * 0.5) + 0.5;
-																															fVar27 = -local_66c;
-																															local_670 = local_664;
-																															local_668 = fVar27;
-																															local_660 = fVar28;
+
+																															ParticleC(local_670, fVar27);
+
 																															if ((uVar26 & 0x40) != 0) {
 																																local_670 = local_66c * DAT_0041eaf8 +
 																																	local_664 * DAT_0041eaf0;
@@ -4375,40 +4220,10 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																															fVar27 = -fVar27;
 																														}
 																														fVar27 = pDrawData->field_0x90 + fVar27;
-																														fVar28 = fVar27 * g_ScalingFactor_00448518;
-																														puVar16 = 0.5f;
-																														if (fVar28 < 0.0) {
-																															puVar16 = -0.5f;
-																														}
-																														fVar27 = fVar27 * g_ScalingFactor_00448518;
-																														fVar28 = edFCosinus[(int)(fVar28 + (float)puVar16) & 0x1fff]
-																															;
-																														if (fVar27 < 0.0) {
-																															puVar16 = -0.5f;
-																														}
-																														else {
-																															puVar16 = 0.5f;
-																														}
-																														fVar31 = edFSinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																														fVar29 = -fVar31;
-																														fVar27 = -(fVar28 * 0.5) + fVar31 * 0.5 + 0.5;
-																														fVar30 = (-(fVar31 * 0.5) - fVar28 * 0.5) + 0.5;
-																														uv0.u = pfVar23[0][1] * fVar29 +
-																															pfVar23[0][0] * fVar28 + fVar27 + 0.0;
-																														uv0.v = pfVar23[0][1] * fVar28 +
-																															pfVar23[0][0] * fVar31 + fVar30 + 0.0;
-																														uv1.u = pfVar23[1][1] * fVar29 +
-																															pfVar23[1][0] * fVar28 + fVar27 + 0.0;
-																														uv1.v = pfVar23[1][1] * fVar28 +
-																															pfVar23[1][0] * fVar31 + fVar30 + 0.0;
-																														uv2.u = pfVar23[2][1] * fVar29 +
-																															pfVar23[2][0] * fVar28 + fVar27 + 0.0;
-																														uv2.v = pfVar23[2][1] * fVar28 +
-																															pfVar23[2][0] * fVar31 + fVar30 + 0.0;
-																														uv3.u = pfVar23[3][1] * fVar29 +
-																															pfVar23[3][0] * fVar28 + fVar27 + 0.0;
-																														uv3.v = pfVar23[3][1] * fVar28 +
-																															pfVar23[3][0] * fVar31 + fVar30 + 0.0;
+
+																														ParticleC(local_770, fVar27);
+																														TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
+																														
 																														uVar11 = (int)uVar12 >> 3;
 																														local_38 = (&pDrawData->field_0x9c)[uVar12 & 7];
 																														iVar15 = 0xff - (uVar11 & 0xff);
@@ -4451,32 +4266,10 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																											pCurRawVector = pRawVectors + startIndex;
 																											for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																												if (pCurParticle->field_0xd != 0) {
-																													fVar28 = pDrawData->field_0x90 +
-																														pDrawData->field_0x94 *
-																														(pCurParticle->age / pCurParticle->lifetime);
-																													fVar27 = fVar28 * g_ScalingFactor_00448518;
-																													if (fVar27 < 0.0) {
-																														puVar16 = -0.5f;
-																													}
-																													else {
-																														puVar16 = 0.5f;
-																													}
-																													fVar28 = fVar28 * g_ScalingFactor_00448518;
-																													local_624 = edFCosinus
-																														[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																													if (fVar28 < 0.0) {
-																														puVar16 = -0.5f;
-																													}
-																													else {
-																														puVar16 = 0.5f;
-																													}
-																													local_62c = edFSinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																													fVar28 = -(local_624 * 0.5) + local_62c * 0.5 + 0.5;
-																													local_61c = (-(local_62c * 0.5) - local_624 * 0.5) + 0.5;
-																													fVar27 = -local_62c;
-																													local_630 = local_624;
-																													local_628 = fVar27;
-																													local_620 = fVar28;
+																													fVar28 = pDrawData->field_0x90 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+
+																													ParticleC(local_65c, fVar28);
+																													
 																													if ((pCurParticle->seed & 0x40) != 0) {
 																														local_630 = local_62c * DAT_0041ead8 +
 																															local_624 * DAT_0041ead0;
@@ -4491,22 +4284,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																														local_61c = local_61c * DAT_0041eadc +
 																															fVar28 * DAT_0041ead4 + DAT_0041eae4 + 0.0;
 																													}
-																													uv0.u = pfVar23[0][1] * local_628 +
-																														pfVar23[0][0] * local_630 + local_620 + 0.0;
-																													uv0.v = pfVar23[0][1] * local_624 +
-																														pfVar23[0][0] * local_62c + local_61c + 0.0;
-																													uv1.u = pfVar23[1][1] * local_628 +
-																														pfVar23[1][0] * local_630 + local_620 + 0.0;
-																													uv1.v = pfVar23[1][1] * local_624 +
-																														pfVar23[1][0] * local_62c + local_61c + 0.0;
-																													uv2.u = pfVar23[2][1] * local_628 +
-																														pfVar23[2][0] * local_630 + local_620 + 0.0;
-																													uv2.v = pfVar23[2][1] * local_624 +
-																														pfVar23[2][0] * local_62c + local_61c + 0.0;
-																													uv3.u = pfVar23[3][1] * local_628 +
-																														pfVar23[3][0] * local_630 + local_620 + 0.0;
-																													uv3.v = pfVar23[3][1] * local_624 +
-																														pfVar23[3][0] * local_62c + local_61c + 0.0;
+
+																													TransformUVs(pfVar23, local_65c, uv0, uv1, uv2, uv3);
+
 																													uVar26 = pCurParticle->field_0x8;
 																													rgbaColor[0] = (((uVar26 >> 0x18) *
 																														(uint) * (byte*)&pCurParticle->field_0xc >> 8) *
@@ -5019,34 +4799,10 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																			pCurRawVector = pRawVectors + startIndex;
 																			for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																				if (pCurParticle->field_0xd != 0) {
-																					fVar28 = ((float)(uint)pCurParticle->seed * pDrawData->field_0x90) / 65535.0
-																						+ pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime)
-																						;
-																					fVar27 = fVar28 * g_ScalingFactor_00448518;
-																					puVar16 = 0.5f;
-																					if (fVar27 < 0.0) {
-																						puVar16 = -0.5f;
-																					}
-																					fVar28 = fVar28 * g_ScalingFactor_00448518;
-																					fVar27 = edFCosinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																					if (fVar28 < 0.0) {
-																						puVar16 = -0.5f;
-																					}
-																					else {
-																						puVar16 = 0.5f;
-																					}
-																					fVar31 = edFSinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																					fVar29 = -fVar31;
-																					fVar28 = -(fVar27 * 0.5) + fVar31 * 0.5 + 0.5;
-																					fVar30 = (-(fVar31 * 0.5) - fVar27 * 0.5) + 0.5;
-																					uv0.u = pfVar23[0][1] * fVar29 + pfVar23[0][0] * fVar27 + fVar28 + 0.0;
-																					uv0.v = pfVar23[0][1] * fVar27 + pfVar23[0][0] * fVar31 + fVar30 + 0.0;
-																					uv1.u = pfVar23[1][1] * fVar29 + pfVar23[1][0] * fVar27 + fVar28 + 0.0;
-																					uv1.v = pfVar23[1][1] * fVar27 + pfVar23[1][0] * fVar31 + fVar30 + 0.0;
-																					uv2.u = pfVar23[2][1] * fVar29 + pfVar23[2][0] * fVar27 + fVar28 + 0.0;
-																					uv2.v = pfVar23[2][1] * fVar27 + pfVar23[2][0] * fVar31 + fVar30 + 0.0;
-																					uv3.u = pfVar23[3][1] * fVar29 + pfVar23[3][0] * fVar27 + fVar28 + 0.0;
-																					uv3.v = pfVar23[3][1] * fVar27 + pfVar23[3][0] * fVar31 + fVar30 + 0.0;
+																					fVar28 = ((float)(uint)pCurParticle->seed * pDrawData->field_0x90) / 65535.0 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+
+																					ParticleC(local_770, fVar28);
+																					TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
 																					uVar26 = pCurParticle->field_0x8;
 																					rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
 																						alphaMultiplier >> 8) << 0x18;
@@ -5097,24 +4853,8 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																						fVar27 = -fVar27;
 																					}
 																					fVar28 = fVar28 + fVar27;
-																					fVar27 = fVar28 * g_ScalingFactor_00448518;
-																					puVar16 = 0.5f;
-																					if (fVar27 < 0.0) {
-																						puVar16 = -0.5f;
-																					}
-																					fVar28 = fVar28 * g_ScalingFactor_00448518;
-																					fVar27 = edFCosinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																					if (fVar28 < 0.0) {
-																						puVar16 = -0.5f;
-																					}
-																					else {
-																						puVar16 = 0.5f;
-																					}
-																					fVar31 = edFSinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																					fVar29 = -(fVar27 * 0.5) + fVar31 * 0.5 + 0.5;
-																					fVar30 = (-(fVar31 * 0.5) - fVar27 * 0.5) + 0.5;
-																					fVar32 = -fVar31 * local_490;
-																					fVar28 = fVar31 * local_490;
+
+																					ParticleC(local_48c, fVar28);
 																					local_484 = fVar27 * local_490 + -fVar31 * local_48c;
 																					local_480 = fVar30 * local_488 + fVar29 * local_490 + local_480 + 0.0;
 																					fStack1148 = fVar30 * local_490 + fVar29 * local_48c + fStack1148 + 0.0;
@@ -5122,6 +4862,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																					local_48c = fVar28 + fVar27 * local_48c;
 																					local_488 = fVar27 * local_488 + fVar32;
 																				}
+
 																				if ((uVar26 & 0x40) != 0) {
 																					fVar27 = local_48c * DAT_0041e978;
 																					fVar28 = local_484 * DAT_0041e978;
@@ -5134,6 +4875,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																					local_488 = fVar28 + local_488 * DAT_0041e970;
 																					local_480 = fVar29 + local_480 * DAT_0041e970 + DAT_0041e980 + 0.0;
 																				}
+
 																				if ((uVar26 & 0x80) != 0) {
 																					fVar27 = local_48c * DAT_0041e998;
 																					fVar28 = local_484 * DAT_0041e998;
@@ -5146,14 +4888,8 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																					local_488 = fVar28 + local_488 * DAT_0041e990;
 																					local_480 = fVar29 + local_480 * DAT_0041e990 + DAT_0041e9a0 + 0.0;
 																				}
-																				uv0.u = pfVar23[0][1] * local_488 + pfVar23[0][0] * local_490 + local_480 + 0.0;
-																				uv0.v = pfVar23[0][1] * local_484 + pfVar23[0][0] * local_48c + fStack1148 + 0.0;
-																				uv1.u = pfVar23[1][1] * local_488 + pfVar23[1][0] * local_490 + local_480 + 0.0;
-																				uv1.v = pfVar23[1][1] * local_484 + pfVar23[1][0] * local_48c + fStack1148 + 0.0;
-																				uv2.u = pfVar23[2][1] * local_488 + pfVar23[2][0] * local_490 + local_480 + 0.0;
-																				uv2.v = pfVar23[2][1] * local_484 + pfVar23[2][0] * local_48c + fStack1148 + 0.0;
-																				uv3.u = pfVar23[3][1] * local_488 + pfVar23[3][0] * local_490 + local_480 + 0.0;
-																				uv3.v = pfVar23[3][1] * local_484 + pfVar23[3][0] * local_48c + fStack1148 + 0.0;
+
+																				TransformUVs(pfVar23, local_48c, uv0, uv1, uv2, uv3);
 																				uVar26 = pCurParticle->field_0x8;
 																				rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
 																					alphaMultiplier >> 8) << 0x18;
@@ -5187,31 +4923,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																				fVar27 = -fVar27;
 																			}
 																			fVar27 = pDrawData->field_0x90 + fVar27;
-																			fVar28 = fVar27 * g_ScalingFactor_00448518;
-																			puVar16 = 0.5f;
-																			if (fVar28 < 0.0) {
-																				puVar16 = -0.5f;
-																			}
-																			fVar27 = fVar27 * g_ScalingFactor_00448518;
-																			fVar28 = edFCosinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																			if (fVar27 < 0.0) {
-																				puVar16 = -0.5f;
-																			}
-																			else {
-																				puVar16 = 0.5f;
-																			}
-																			fVar31 = edFSinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																			fVar29 = -fVar31;
-																			fVar27 = -(fVar28 * 0.5) + fVar31 * 0.5 + 0.5;
-																			fVar30 = (-(fVar31 * 0.5) - fVar28 * 0.5) + 0.5;
-																			uv0.u = pfVar23[0][1] * fVar29 + pfVar23[0][0] * fVar28 + fVar27 + 0.0;
-																			uv0.v = pfVar23[0][1] * fVar28 + pfVar23[0][0] * fVar31 + fVar30 + 0.0;
-																			uv1.u = pfVar23[1][1] * fVar29 + pfVar23[1][0] * fVar28 + fVar27 + 0.0;
-																			uv1.v = pfVar23[1][1] * fVar28 + pfVar23[1][0] * fVar31 + fVar30 + 0.0;
-																			uv2.u = pfVar23[2][1] * fVar29 + pfVar23[2][0] * fVar28 + fVar27 + 0.0;
-																			uv2.v = pfVar23[2][1] * fVar28 + pfVar23[2][0] * fVar31 + fVar30 + 0.0;
-																			uv3.u = pfVar23[3][1] * fVar29 + pfVar23[3][0] * fVar28 + fVar27 + 0.0;
-																			uv3.v = pfVar23[3][1] * fVar28 + pfVar23[3][0] * fVar31 + fVar30 + 0.0;
+																			ParticleC(local_770, fVar27);
+																			TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
+
 																			uVar26 = pCurParticle->field_0x8;
 																			rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
 																				alphaMultiplier >> 8) << 0x18;
@@ -5234,85 +4948,24 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																}
 															}
 															else {
-																IMPLEMENTATION_GUARD(
 																pCurParticle = pParticle + startIndex;
 																pCurRawVector = pRawVectors + startIndex;
 																for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																	if (pCurParticle->field_0xd != 0) {
-																		local_408 = (pCurVector->field_0x10.x * local_230.x + pCurVector->field_0x10.y * local_230.y +
-																			pCurVector->field_0x10.z * local_230.z) * pCurParticle->field_0x30;
-																		local_410 = (pCurVector->field_0x10.x * local_220.x + pCurVector->field_0x10.y * local_220.y +
-																			pCurVector->field_0x10.z * local_220.z) * pCurParticle->field_0x30;
-																		fVar28 = SQRT(local_408 * local_408 + local_410 * local_410);
-																		fVar27 = g_TinyFloat_00448548;
-																		if (fVar28 != 0.0) {
-																			fVar27 = fVar28;
-																		}
-																		local_408 = local_408 * (1.0 / fVar27);
-																		local_410 = local_410 * (1.0 / fVar27);
-																		local_40c = -local_408;
-																		local_400 = (local_410 + local_408) * -0.5 + 0.5;
-																		fStack1020 = (local_410 - local_408) * -0.5 + 0.5;
-																		if ((pDrawData->field_0x90 != 0.0) ||
-																			(local_404 = local_410, pDrawData->field_0x94 != 0.0)) {
-																			fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
-																			if (0.0 < local_408) {
-																				fVar27 = -fVar27;
-																			}
-																			fVar27 = pDrawData->field_0x90 + fVar27;
-																			fVar28 = fVar27 * g_ScalingFactor_00448518;
-																			puVar16 = 0.5f;
-																			if (fVar28 < 0.0) {
-																				puVar16 = -0.5f;
-																			}
-																			fVar27 = fVar27 * g_ScalingFactor_00448518;
-																			fVar28 = edFCosinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																			if (fVar27 < 0.0) {
-																				puVar16 = -0.5f;
-																			}
-																			else {
-																				puVar16 = 0.5f;
-																			}
-																			fVar31 = edFSinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																			fVar29 = -(fVar28 * 0.5) + fVar31 * 0.5 + 0.5;
-																			fVar30 = (-(fVar31 * 0.5) - fVar28 * 0.5) + 0.5;
-																			fVar32 = -fVar31 * local_410;
-																			fVar27 = fVar31 * local_410;
-																			local_404 = fVar28 * local_410 + -fVar31 * local_40c;
-																			local_400 = fVar30 * local_408 + fVar29 * local_410 + local_400 + 0.0;
-																			fStack1020 = fVar30 * local_410 + fVar29 * local_40c + fStack1020 + 0.0;
-																			local_410 = fVar31 * local_408 + fVar28 * local_410;
-																			local_40c = fVar27 + fVar28 * local_40c;
-																			local_408 = fVar28 * local_408 + fVar32;
-																		}
-																		uv0.u = pfVar23[0][1] * local_408 + pfVar23[0][0] * local_410 + local_400 + 0.0;
-																		uv0.v = pfVar23[0][1] * local_404 + pfVar23[0][0] * local_40c + fStack1020 + 0.0;
-																		uv1.u = pfVar23[1][1] * local_408 + pfVar23[1][0] * local_410 + local_400 + 0.0;
-																		uv1.v = pfVar23[1][1] * local_404 + pfVar23[1][0] * local_40c + fStack1020 + 0.0;
-																		uv2.u = pfVar23[2][1] * local_408 + pfVar23[2][0] * local_410 + local_400 + 0.0;
-																		uv2.v = pfVar23[2][1] * local_404 + pfVar23[2][0] * local_40c + fStack1020 + 0.0;
-																		uv3.u = pfVar23[3][1] * local_408 + pfVar23[3][0] * local_410 + local_400 + 0.0;
-																		uv3.v = pfVar23[3][1] * local_404 + pfVar23[3][0] * local_40c + fStack1020 + 0.0;
-																		uVar26 = pCurParticle->field_0x8;
-																		rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																			alphaMultiplier >> 8) << 0x18;
-																		rgbaColor[0] = rgbaColor[0] |
-																			CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																				(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																				CONCAT11((char)((uVar26 >> 8 & 0xff) * (uint)pCurParticle->field_0xf
-																					>> 8),
-																					(char)((uVar26 & 0xff) *
-																						(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																		height = gParticleSizeScale * pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 *
-																			0.5;
+																		ParticleA(local_410, pCurVector, pCurParticle, local_220, local_230, pDrawData->field_0x90, pDrawData);
+
+																		TransformUVs(pfVar23, local_410, uv0, uv1, uv2, uv3);
+
+																		ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+																		
+																		height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																		width = height * aspectRatio;
-																		edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3,
-																			&rgbaColor[0], (undefined8*)pCurRawVector);
+																		edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, rgbaColor, pCurRawVector);
 																	}
 																	pCurParticle = pCurParticle + 1;
 																	pCurRawVector = pCurRawVector + 1;
 																	pCurVector = pCurVector + 1;
-																})
+																}
 															}
 														}
 														else {
@@ -5407,26 +5060,10 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 														pCurRawVector = pRawVectors + startIndex;
 														for (; startIndex < endIndex; startIndex = startIndex + 1) {
 															if (pCurParticle->field_0xd != 0) {
-																fVar28 = pDrawData->field_0x90 +
-																	pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
-																fVar27 = fVar28 * g_ScalingFactor_00448518;
-																if (fVar27 < 0.0) {
-																	puVar16 = -0.5f;
-																}
-																else {
-																	puVar16 = 0.5f;
-																}
-																fVar28 = fVar28 * g_ScalingFactor_00448518;
-																fVar27 = edFCosinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-																if (fVar28 < 0.0) {
-																	puVar16 = -0.5f;
-																}
-																else {
-																	puVar16 = 0.5f;
-																}
-																fVar28 = edFSinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-																fVar29 = -(fVar27 * 0.5) + fVar28 * 0.5 + 0.5;
-																fVar30 = (-(fVar28 * 0.5) - fVar27 * 0.5) + 0.5;
+																fVar28 = pDrawData->field_0x90 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+																
+																ParticleC(local_770, fVar28);
+
 																sVar3 = pDrawData->field_0x82;
 																iVar15 = (((int)((*(int*)&pCurParticle->seed >> 8 & 0xffffU) * (int)sVar3) >> 0x10) +
 																	(int)(pCurParticle->age * (float)*(int*)&pDrawData->field_0x98)) %
@@ -5528,55 +5165,22 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 												}
 											}
 											else {
-												IMPLEMENTATION_GUARD(
 												pCurParticle = pParticle + startIndex;
 												pCurRawVector = pRawVectors + startIndex;
 												for (; startIndex < endIndex; startIndex = startIndex + 1) {
 													if (pCurParticle->field_0xd != 0) {
-														fVar28 = pDrawData->field_0x90 +
-															pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
-														fVar27 = fVar28 * g_ScalingFactor_00448518;
-														puVar16 = 0.5f;
-														if (fVar27 < 0.0) {
-															puVar16 = -0.5f;
-														}
-														fVar28 = fVar28 * g_ScalingFactor_00448518;
-														fVar27 = edFCosinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-														if (fVar28 < 0.0) {
-															puVar16 = -0.5f;
-														}
-														else {
-															puVar16 = 0.5f;
-														}
-														fVar31 = edFSinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-														fVar29 = -fVar31;
-														fVar28 = -(fVar27 * 0.5) + fVar31 * 0.5 + 0.5;
-														fVar30 = (-(fVar31 * 0.5) - fVar27 * 0.5) + 0.5;
-														uv0.u = pfVar23[0][1] * fVar29 + pfVar23[0][0] * fVar27 + fVar28 + 0.0;
-														uv0.v = pfVar23[0][1] * fVar27 + pfVar23[0][0] * fVar31 + fVar30 + 0.0;
-														uv1.u = pfVar23[1][1] * fVar29 + pfVar23[1][0] * fVar27 + fVar28 + 0.0;
-														uv1.v = pfVar23[1][1] * fVar27 + pfVar23[1][0] * fVar31 + fVar30 + 0.0;
-														uv2.u = pfVar23[2][1] * fVar29 + pfVar23[2][0] * fVar27 + fVar28 + 0.0;
-														uv2.v = pfVar23[2][1] * fVar27 + pfVar23[2][0] * fVar31 + fVar30 + 0.0;
-														uv3.u = pfVar23[3][1] * fVar29 + pfVar23[3][0] * fVar27 + fVar28 + 0.0;
-														uv3.v = pfVar23[3][1] * fVar27 + pfVar23[3][0] * fVar31 + fVar30 + 0.0;
-														uVar26 = pCurParticle->field_0x8;
-														rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) * alphaMultiplier >> 8)
-															<< 0x18;
-														rgbaColor[0] = rgbaColor[0] |
-															CONCAT12((char)((uVar26 >> 0x10 & 0xff) * (uint) * (byte*)&pCurParticle->field_0x12 >>
-																8), CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																	(uint)pCurParticle->field_0xf >> 8),
-																	(char)((uVar26 & 0xff) *
-																		(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-														height = gParticleSizeScale * pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 * 0.5;
+														fVar28 = pDrawData->field_0x90 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+														ParticleC(local_710, fVar28);
+														TransformUVs(pfVar23, local_710, uv0, uv1, uv2, uv3);
+
+														ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+														height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 														width = height * aspectRatio;
-														edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-															(undefined8*)pCurRawVector);
+														edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, rgbaColor, pCurRawVector);
 													}
 													pCurParticle = pCurParticle + 1;
 													pCurRawVector = pCurRawVector + 1;
-												})
+												}
 											}
 										}
 										else {
@@ -5658,26 +5262,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 													fVar27 = -fVar27;
 												}
 												fVar27 = ((float)(uVar12 & 0xffff) * pDrawData->field_0x90) / 65535.0 + fVar27;
-												fVar28 = fVar27 * g_ScalingFactor_00448518;
-												puVar16 = 0.5f;
-												if (fVar28 < 0.0) {
-													puVar16 = -0.5f;
-												}
-												fVar27 = fVar27 * g_ScalingFactor_00448518;
-												local_344 = edFCosinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-												if (fVar27 < 0.0) {
-													puVar16 = -0.5f;
-												}
-												else {
-													puVar16 = 0.5f;
-												}
-												local_34c = edFSinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-												fVar28 = -(local_344 * 0.5) + local_34c * 0.5 + 0.5;
-												local_33c = (-(local_34c * 0.5) - local_344 * 0.5) + 0.5;
-												fVar27 = -local_34c;
-												local_350 = local_344;
-												local_348 = fVar27;
-												local_340 = fVar28;
+												
+												ParticleC(local_350, fVar27);
+
 												if ((uVar12 & 0x40) != 0) {
 													local_350 = local_34c * FLOAT_ARRAY_0041e850[2] + local_344 * FLOAT_ARRAY_0041e850[0];
 													local_348 = local_344 * FLOAT_ARRAY_0041e850[2] + fVar27 * FLOAT_ARRAY_0041e850[0];
@@ -5783,26 +5370,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 											fVar27 = -fVar27;
 										}
 										fVar27 = pDrawData->field_0x90 + fVar27;
-										fVar28 = fVar27 * g_ScalingFactor_00448518;
-										puVar16 = 0.5f;
-										if (fVar28 < 0.0) {
-											puVar16 = -0.5f;
-										}
-										fVar27 = fVar27 * g_ScalingFactor_00448518;
-										local_304 = edFCosinus[(int)(fVar28 + (float)puVar16) & 0x1fff];
-										if (fVar27 < 0.0) {
-											puVar16 = -0.5f;
-										}
-										else {
-											puVar16 = 0.5f;
-										}
-										local_30c = edFSinus[(int)(fVar27 + (float)puVar16) & 0x1fff];
-										fVar28 = -(local_304 * 0.5) + local_30c * 0.5 + 0.5;
-										local_2fc = (-(local_30c * 0.5) - local_304 * 0.5) + 0.5;
-										fVar27 = -local_30c;
-										local_310 = local_304;
-										local_308 = fVar27;
-										local_300 = fVar28;
+
+										ParticleC(local_2f0, fVar27);
+										
 										if ((uVar26 & 0x40) != 0) {
 											local_310 = local_30c * FLOAT_ARRAY_0041e810[2] + local_304 * FLOAT_ARRAY_0041e810[0];
 											local_308 = local_304 * FLOAT_ARRAY_0041e810[2] + fVar27 * FLOAT_ARRAY_0041e810[0];

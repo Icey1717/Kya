@@ -48,6 +48,7 @@
 #define STATE_HERO_COL_WALL 0x96
 
 #define STATE_HERO_FALL_DEATH 0xa1
+#define STATE_HERO_DROWN_DEATH 0xa2
 
 #define STATE_HERO_KICK_A 0xa5
 #define STATE_HERO_KICK_B 0xa6
@@ -80,6 +81,7 @@
 #define STATE_HERO_U_TURN 0xe7
 
 #define STATE_HERO_TOBOGGAN_3 0xe8
+#define STATE_HERO_TOBOGGAN_JUMP_3 0xe9
 #define STATE_HERO_TOBOGGAN_JUMP_1 0xea
 #define STATE_HERO_TOBOGGAN_JUMP_2 0xeb
 #define STATE_HERO_TOBOGGAN_2 0xed
@@ -110,6 +112,8 @@
 #define STATE_HERO_LEVER_2_2 0x104
 
 #define STATE_HERO_DCA_A 0x106
+
+#define STATE_HERO_UNLOCK_SWITCH 0x108
 
 #define STATE_HERO_TRAMPOLINE_JUMP_1_2_A 0x10b
 #define STATE_HERO_TRAMPOLINE_JUMP_2_3 0x10c
@@ -294,6 +298,8 @@ public:
 
 	float field_0x1558;
 
+	CFxHandleExt field_0x15d4;
+
 	int field_0x1a54;
 
 	CInventoryInterface inventory;
@@ -368,6 +374,7 @@ public:
 	CActor* GetTalkingToActor();
 
 	float GetMagicalForce();
+	void MagicDecrease(float amount);
 
 	void InitBoomy();
 };

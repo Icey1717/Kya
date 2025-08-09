@@ -612,6 +612,11 @@ void CAnimationManager::Level_Create(ByteCode* pMemoryStream)
 	return;
 }
 
+char* CAnimationManager::ProfileGetName()
+{
+	return "Anims  ";
+}
+
 void CAnimationManager::Level_Term()
 {
 	return;

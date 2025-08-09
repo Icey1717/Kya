@@ -4,6 +4,11 @@
 #include "Types.h"
 #include <stdlib.h>
 
+#define MEM_FLAG_LINKED_DEPENDENT_BLOCKS 0x8
+#define MEM_FLAG_REQUIRES_HEADER 0x10
+#define MEM_FLAG_REVERSE_TRAVERSAL 0x100
+#define MEM_FLAG_KSEG0_CACHED 0x8000U
+
 enum EHeapType
 {
 	H_INVALID,
@@ -42,6 +47,33 @@ struct edHeapParams {
 	int offset;
 };
 
+struct MasterMemoryBlk
+{
+	struct S_MAIN_MEMORY_HEADER* aBlocks;
+	short nbTotalBlocks;
+	short nbFreeBlocks;
+	short nbUsedBlocks;
+	short nextFreeBlock;
+	byte stackLevel;
+	byte field_0xd;
+	byte field_0xe;
+	undefined field_0xf;
+	undefined field_0x10;
+	undefined field_0x11;
+	undefined field_0x12;
+	undefined field_0x13;
+	undefined field_0x14;
+	undefined field_0x15;
+	ushort flags;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+};
 
 #ifdef PLATFORM_WIN
 #pragma pack(push,1)

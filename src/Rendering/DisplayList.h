@@ -77,7 +77,8 @@ struct DisplayList
 	DisplayListCommand** aSavedCommands;
 };
 
-struct edCluster {
+struct edCluster
+{
 	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;
@@ -123,6 +124,7 @@ class CGlobalDList {
 public:
 	CGlobalDList();
 	CGlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster);
+	~CGlobalDList();
 
 	void Init();
 	void Term() {}

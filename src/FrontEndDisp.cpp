@@ -347,6 +347,11 @@ void CFrontendDisplay::Level_PauseChange(bool bPaused)
 	return;
 }
 
+char* CFrontendDisplay::ProfileGetName()
+{
+	return "Frntend";
+}
+
 void CFrontendDisplay::Level_LoadContext()
 {
 	if (CLevelScheduler::gThis->field_0x78 != 0) {

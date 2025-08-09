@@ -111,6 +111,7 @@ struct ed_g2d_bitmap* edDListGetG2DBitmap(struct ed_g2d_material* pMAT, int offs
 void edDListSetState(ulong cmdA, ulong cmdB);
 
 void edDListBlendFuncNormal(void);
+void edDListBlendFunc_002ca830(void);
 void edDListBlendSet(uint mode);
 void edDListBlendFunc50(void);
 

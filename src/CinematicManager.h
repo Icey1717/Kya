@@ -754,6 +754,10 @@ public:
 	virtual void Level_CheckpointReset() {};
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "CinematicB"; }
+#endif
 };
 
 class CCinematic;
@@ -789,6 +793,10 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	virtual void Level_PauseChange(bool bPaused);
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Cinematic"; }
+#endif
 
 	void WillLoadCinematic();
 

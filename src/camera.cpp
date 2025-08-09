@@ -455,11 +455,10 @@ void CCamera::EnterManagedCluster()
 
 void CCamera::LeaveManagedCluster()
 {
-	int* piVar1;
+	S_ACTOR_STREAM_REF* piVar1;
 	bool bVar2;
 	int iVar3;
 	ECameraType EVar4;
-	int iVar5;
 	int iVar6;
 	float fVar7;
 
@@ -471,30 +470,29 @@ void CCamera::LeaveManagedCluster()
 		bVar2 = _gpcam_man->cameraStack.Contains(this);
 
 		if (bVar2 != false) {
-			IMPLEMENTATION_GUARD(
 			this->field_0x7c = 0;
 			fVar7 = this->field_0x8c;
 			iVar6 = 0;
 			if ((this->flags_0xc & 2) != 0) {
-				iVar5 = 0;
 				while (true) {
-					piVar1 = (int*)this->field_0x88;
+					piVar1 = this->field_0x88;
 					iVar3 = 0;
-					if (piVar1 != (int*)0x0) {
-						iVar3 = *piVar1;
+					if (piVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+						iVar3 = piVar1->entryCount;
 					}
+
 					if (iVar3 <= iVar6) break;
-					this->field_0x84->pWaypoint->DoMessage(*(CActor**)((int)piVar1 + iVar5 + 4), 0x2a, (uint)(0.0 < fVar7));
-					iVar5 = iVar5 + 4;
+
+					piVar1->aEntries[iVar6].Get()->DoMessage(piVar1->aEntries[iVar6].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar7));
+
 					iVar6 = iVar6 + 1;
 				}
-			})
+			}
 
 			_gpcam_man->PopCamera(this);
 		}
 
-		EVar4 = GetMode();
-		if (EVar4 == 0x14) {
+		if (GetMode() == 0x14) {
 			IMPLEMENTATION_GUARD(
 			_gpcam_man->RemoveSmoothCamera(this);)
 		}

@@ -1041,6 +1041,11 @@ void CPauseManager::Level_Draw()
 	return;
 }
 
+char* CPauseManager::ProfileGetName()
+{
+	return "pause";
+}
+
 void CPauseManager::FUN_001b0860(int param_2)
 {
 	bool bVar1;

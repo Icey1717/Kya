@@ -69,6 +69,11 @@ add_library(Renderer ${SOURCES})
 target_compile_definitions(Renderer PUBLIC "GLFW_INCLUDE_VULKAN")
 target_compile_definitions(Renderer PUBLIC "GLM_FORCE_RADIANS")
 
+#if either performance or memory profiling is enabled
+if(ENABLE_PERFORMANCE_PROFILING OR ENABLE_MEMORY_PROFILING)
+	target_compile_definitions(Renderer PRIVATE "ENABLE_PERFORMANCE_PROFILING")
+endif()
+
 #target_compile_features(Renderer PRIVATE cxx_std_20)
 
 set (ReflectPrintSrc
@@ -90,7 +95,7 @@ add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
-target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue)
+target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue Tracy::TracyClient)
 target_link_libraries(Renderer PUBLIC TextureUpload)
 
 target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src" "${CMAKE_SOURCE_DIR}/port/include")

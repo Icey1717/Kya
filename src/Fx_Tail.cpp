@@ -10,6 +10,20 @@
 
 char* gDefaultOrder = "XYZ";
 
+CFxTail::CFxTail()
+	: pData_0x18((void*)0x0)
+{
+}
+
+CFxTail::~CFxTail()
+{
+	if (this->pData_0x18 != (undefined*)0x0) {
+		edMemFree(this->pData_0x18);
+	}
+
+	return;
+}
+
 bool CFxTail::IsKindOfObject(ulong kind)
 {
 	return (kind & 0x110000) != 0;

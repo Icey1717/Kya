@@ -68,6 +68,13 @@ CFxParticleManager::CFxParticleManager()
 	return;
 }
 
+CFxParticleManager::~CFxParticleManager()
+{
+	_prt_bank_first_index = 0;
+
+	return;
+}
+
 void* CFxParticleManager::InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector)
 {
 	CFxNewParticle* pNewParticle;
@@ -156,6 +163,11 @@ bool CFxParticleManager::ReadPrtResChunk(ByteCode* pByteCode)
 }
 
 void CFxParticleScenaricData::Init()
+{
+	return;
+}
+
+void CFxParticleScenaricData::Term()
 {
 	return;
 }

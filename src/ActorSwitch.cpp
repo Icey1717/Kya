@@ -26,11 +26,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	S_NTF_TARGET_STREAM_REF::Create(&this->pTargetStreamRef, pByteCode);
-
-	pSVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(pSVar2 + 1);
-	this->pStreamEventCamera = pSVar2;
+	targetSwitch.Create(pByteCode);
 
 	pCVar3 = CActor::GetBehaviour(2);
 	if (pCVar3 == (CBehaviour*)0x0) {
@@ -45,8 +41,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 
 void CActorSwitch::Init()
 {
-	this->pTargetStreamRef->Init();
-	this->pStreamEventCamera->Init();
+	targetSwitch.Init();
 	CActor::Init();
 
 	return;
@@ -56,8 +51,7 @@ void CActorSwitch::Reset()
 {
 	CActor::Reset();
 
-	this->pTargetStreamRef->Reset();
-	this->pStreamEventCamera->Reset(this);
+	targetSwitch.Reset(this);
 
 	return;
 }
@@ -72,25 +66,25 @@ CBehaviour* CActorSwitch::BuildBehaviour(int behaviourType)
 		case 1:
 			pBehaviour = CActor::BuildBehaviour(behaviourType);
 			break;
-		case 2:
+		case SWITCH_BEHAVIOUR_LEVER:
 			pBehaviour = new CBehaviourSwitchLever;
 			break;
-		case 3:
+		case SWITCH_BEHAVIOUR_MAGIC:
 			pBehaviour = new CBehaviourSwitchMagic;
 			break;
-		case 4:
+		case SWITCH_BEHAVIOUR_WOLFEN_COUNTER:
 			pBehaviour = new CBehaviourSwitchWolfenCounter;
 			break;
-		case 5:
+		case SWITCH_BEHAVIOUR_MULTI_CONDITION:
 			pBehaviour = &this->behaviourSwitchMultiCondition;
 			break;
-		case 6:
+		case SWITCH_BEHAVIOUR_TARGET:
 			pBehaviour = new CBehaviourSwitchTarget;
 			break;
-		case 7:
+		case SWITCH_BEHAVIOUR_SEQUENCE:
 			pBehaviour = &this->behaviourSwitchSequence;
 			break;
-		case 8:
+		case SWITCH_BEHAVIOUR_NEW:
 			pBehaviour = new CBehaviourSwitchNew;
 			break;
 		}
@@ -123,12 +117,12 @@ void CActorSwitch::ChangeManageState(int state)
 	CActor::ChangeManageState(state);
 
 	switch (this->curBehaviourId) {
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
+	case SWITCH_BEHAVIOUR_LEVER:
+	case SWITCH_BEHAVIOUR_MAGIC:
+	case SWITCH_BEHAVIOUR_WOLFEN_COUNTER:
+	case SWITCH_BEHAVIOUR_MULTI_CONDITION:
+	case SWITCH_BEHAVIOUR_TARGET:
+	case SWITCH_BEHAVIOUR_SEQUENCE:
 		pCVar1 = static_cast<CBehaviourSwitch*>(GetBehaviour(this->curBehaviourId));
 		if (pCVar1 != (CBehaviourSwitch*)0x0) {
 			pCVar1->ChangeManageState(state);
@@ -145,7 +139,7 @@ int CActorSwitch::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour)
 {
-	CActor* pCVar1;
+	CNewFx* pFx;
 	edNODE* peVar2;
 	bool bVar3;
 	int iVar4;
@@ -155,23 +149,18 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 	float fVar9;
 	edF32VECTOR4 eStack64;
 	edF32VECTOR4 local_30;
-	float local_20;
-	float local_1c;
-	float local_18;
-	float local_14;
+	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	this->pStreamEventCamera->Manage(this);
+	targetSwitch.pStreamEventCamera->Manage(this);
 	pBehaviour->pStreamEventCamera->Manage(this);
-	iVar4 = this->actorState;
-	if (iVar4 == 8) {
-		IMPLEMENTATION_GUARD(
-		FUN_00169530(this, pBehaviour);)
+
+	if (this->actorState == 8) {
+		StateSwitchMagic0x8(pBehaviour);
 	}
 	else {
-		if (iVar4 == 6) {
-			IMPLEMENTATION_GUARD(
-			StateSwitchMagicOff2On(this, pBehaviour);)
+		if (this->actorState == SWITCH_STATE_MAGIC_STATE_OFF_2_ON) {
+			StateSwitchMagicOff2On(pBehaviour);
 		}
 	}
 
@@ -180,22 +169,20 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 
 		SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		pCVar1 = pBehaviour->field_0x20;
-		if (((pCVar1 == (CActor*)0x0) || (pBehaviour->field_0x1c == (CinNamedObject30*)0x0)) ||
-			(bVar3 = true, pBehaviour->field_0x1c != pCVar1->pCinData)) {
+		pFx = (pBehaviour->field_0x1c).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x1c).id, iVar4 == 0)) ||
+			(bVar3 = true, iVar4 != pFx->id)) {
 			bVar3 = false;
 		}
 
 		if (bVar3) {
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x1c != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x1c == pCVar1->pCinData)) {
-				pCVar1->currentLocation = this->currentLocation;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x1c).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->position = this->currentLocation;
 			}
 
-			pCVar1 = pBehaviour->field_0x20;
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x1c != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x1c == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = this->rotationEuler;
+			pFx = (pBehaviour->field_0x1c).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x1c).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->rotationEuler = this->rotationEuler;
 			}
 		}
 
@@ -204,69 +191,53 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			peVar5->transformA = this->pMeshTransform->base.transformA;
 		}
 
-		pCVar1 = pBehaviour->field_0x38;
-		if (((pCVar1 == (CActor*)0x0) || (pBehaviour->field_0x34 == (CinNamedObject30*)0x0)) ||
-			(bVar3 = true, pBehaviour->field_0x34 != pCVar1->pCinData)) {
+		pFx = (pBehaviour->field_0x34).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x34).id, iVar4 == 0)) ||
+			(bVar3 = true, iVar4 != pFx->id)) {
 			bVar3 = false;
 		}
 
 		if (bVar3) {
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x34 != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x34 == pCVar1->pCinData)) {
-				pCVar1->currentLocation = this->currentLocation;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->position = this->currentLocation;
 			}
 
-			pCVar1 = pBehaviour->field_0x38;
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x34 != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x34 == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = this->rotationEuler;
-
+			pFx = (pBehaviour->field_0x34).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->rotationEuler = this->rotationEuler;
 			}
 		}
 
-		if (pBehaviour->field_0x44 != 0) {
-			IMPLEMENTATION_GUARD(
-			pfVar6 = *(float**)(pBehaviour->field_0x44 + 0xc);
-			iVar4 = 8;
-			peVar7 = this->pMeshTransform;
-			do {
-				iVar4 = iVar4 + -1;
-				fVar8 = (peVar7->base).transformA.ab;
-				*pfVar6 = (peVar7->base).transformA.aa;
-				peVar7 = (ed_3d_hierarchy_node*)&(peVar7->base).transformA.ac;
-				pfVar6[1] = fVar8;
-				pfVar6 = pfVar6 + 2;
-			} while (0 < iVar4);)
+		if (pBehaviour->pOpenModelNode != (edNODE*)0x0) {
+			ed_g3d_hierarchy* peVar6 = reinterpret_cast<ed_g3d_hierarchy*>(pBehaviour->pOpenModelNode->pData);
+			peVar6->transformA = this->pMeshTransform->base.transformA;
 		}
 
-		pCVar1 = pBehaviour->field_0x54;
-		if (((pCVar1 == (CActor*)0x0) || (pBehaviour->field_0x50 == (CinNamedObject30*)0x0)) ||
-			(bVar3 = true, pBehaviour->field_0x50 != pCVar1->pCinData)) {
+		pFx = (pBehaviour->field_0x50).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) ||
+			(bVar3 = true, iVar4 != pFx->id)) {
 			bVar3 = false;
 		}
 
 		if (bVar3) {
-			local_20 = this->currentLocation.x;
-			local_18 = this->currentLocation.z;
-			local_14 = this->currentLocation.w;
-			local_1c = this->currentLocation.y + pBehaviour->field_0x14;
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x50 != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x50 == pCVar1->pCinData)) {
-				(pCVar1->currentLocation).x = local_20;
-				(pCVar1->currentLocation).y = local_1c;
-				(pCVar1->currentLocation).z = local_18;
-				(pCVar1->currentLocation).w = local_14;
+			local_20.x = this->currentLocation.x;
+			local_20.z = this->currentLocation.z;
+			local_20.w = this->currentLocation.w;
+			local_20.y = this->currentLocation.y + pBehaviour->field_0x14;
+
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->position = local_20;
 			}
-			pCVar1 = pBehaviour->field_0x54;
-			if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x50 != (CinNamedObject30*)0x0)) &&
-				(pBehaviour->field_0x50 == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = this->rotationEuler;
+
+			pFx = (pBehaviour->field_0x50).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->rotationEuler = this->rotationEuler;
 			}
 		}
 	}
 
-	if (((pBehaviour->field_0x54 == (CActor*)0x0) || (pBehaviour->field_0x50 == (CinNamedObject30*)0x0)) ||
-		(pBehaviour->field_0x50 != pBehaviour->field_0x54->pCinData)) {
+	pFx = (pBehaviour->field_0x50).pFx;
+	if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) || (iVar4 != pFx->id)) {
 		bVar3 = false;
 	}
 	else {
@@ -291,12 +262,12 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			}
 		}
 
-		pCVar1 = pBehaviour->field_0x54;
-		if (((pCVar1 != (CActor*)0x0) && (pBehaviour->field_0x50 != (CinNamedObject30*)0x0)) &&
-			(pBehaviour->field_0x50 == pCVar1->pCinData)) {
-			pCVar1->Reset();
+		pFx = (pBehaviour->field_0x50).pFx;
+		if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+			pFx->Func_0x30(fVar9);
 		}
 	}
+
 	return;
 }
 
@@ -344,6 +315,135 @@ void CActorSwitch::StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour)
 	return;
 }
 
+
+void CActorSwitch::StateSwitchMagicOff2On(CBehaviourSwitchMagic* pBehaviour)
+{
+	CNewFx* pFx;
+	bool bVar2;
+	int iVar4;
+	S_NTF_TARGET_STREAM_REF* pSVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+
+	fVar7 = pBehaviour->field_0xc;
+	fVar8 = pBehaviour->field_0xc + GetTimer()->cutsceneDeltaTime * pBehaviour->field_0x10;
+	pBehaviour->field_0xc = fVar8;
+	iVar4 = (int)fVar8 - (int)fVar7;
+	if (iVar4 != 0) {
+		CActorHero::_gThis->MagicDecrease((float)iVar4);
+	}
+
+	if (pBehaviour->field_0x8 <= pBehaviour->field_0xc) {
+		pBehaviour->field_0xc = pBehaviour->field_0x8;
+
+		SetState(8, -1);
+
+		this->targetSwitch.Switch(this);
+		this->targetSwitch.PostSwitch(this);
+
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&pBehaviour->field_0x34, pBehaviour->field_0x30, FX_MATERIAL_SELECTOR_NONE);
+		pFx = pBehaviour->field_0x34.pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x34).id, iVar4 == 0)) ||
+			(bVar2 = true, iVar4 != pFx->id)) {
+			bVar2 = false;
+		}
+
+		if (bVar2) {
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->position = this->currentLocation;
+			}
+
+			pFx = (pBehaviour->field_0x34).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->rotationEuler = this->rotationEuler;
+			}
+
+			pFx = (pBehaviour->field_0x34).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
+				pFx->Start(0, 0);
+			}
+		}
+
+		pBehaviour->DisplayOpenFxModel(1);
+
+		pFx = (pBehaviour->field_0x50).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) ||
+			(bVar2 = true, iVar4 != pFx->id)) {
+			bVar2 = false;
+		}
+
+		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0 && (iVar4 == pFx->id)))) {
+			pFx->Stop(-1.0f);
+		}
+	}
+	else {
+		fVar7 = CActorHero::_gThis->GetMagicalForce();
+		if (fVar7 == 0.0f) {
+			SetState(5, -1);
+		}
+	}
+
+	return;
+}
+
+void CActorSwitch::StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour)
+{
+	CNewFx* pFx;
+	int iVar2;
+	edF32VECTOR4* pAnimSpeedNormalExtruder;
+	bool bVar4;
+	ed_g2d_manager* pManager;
+	ed_g2d_material* pMaterial;
+	ed_g2d_texture* pTexture;
+	byte alpha;
+	float fVar6;
+
+	fVar6 = this->timeInAir;
+	if (fVar6 < 0.5f) {
+		if (pBehaviour->pHierarchy != (edNODE*)0x0) {
+			fVar6 = 128.0f - (fVar6 * 128.0f) / 0.5f;
+			if (fVar6 < 2.147484e+09) {
+				alpha = (byte)(int)fVar6;
+			}
+			else {
+				alpha = (byte)(int)(fVar6 - 2.147484e+09);
+			}
+
+			ed3DHierarchyNodeSetAlpha(pBehaviour->pHierarchy, alpha);
+		}
+	}
+	else {
+		pFx = (pBehaviour->field_0x1c).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar2 = (pBehaviour->field_0x1c).id, iVar2 == 0)) ||
+			(bVar4 = true, iVar2 != pFx->id)) {
+			bVar4 = false;
+		}
+
+		if (((bVar4) && (pFx != (CNewFx*)0x0)) &&
+			((iVar2 = (pBehaviour->field_0x1c).id, iVar2 != 0 && (iVar2 == pFx->id)))) {
+			pFx->Stop(-1.0f);
+		}
+
+		if (pBehaviour->pHierarchy != (edNODE*)0x0) {
+			ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, pBehaviour->pHierarchy);
+			pBehaviour->pHierarchy = (edNODE*)0x0;
+		}
+	}
+
+	if (pBehaviour->pOpenModelNode != (edNODE*)0x0) {
+		pManager = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(pBehaviour->openTextureId);
+		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
+		pTexture = ed3DG2DGetTextureFromMaterial(pMaterial, 0);
+		pAnimSpeedNormalExtruder = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
+		if ((pAnimSpeedNormalExtruder != (edF32VECTOR4*)0x0) && ((pAnimSpeedNormalExtruder->z < pAnimSpeedNormalExtruder->x || (pAnimSpeedNormalExtruder->w < pAnimSpeedNormalExtruder->y)))) {
+			pBehaviour->DisplayOpenFxModel(0);
+		}
+	}
+
+	return;
+}
+
 CBehaviourSwitchMagic::CBehaviourSwitchMagic()
 {
 	//this->field_0x1c = 0;
@@ -377,15 +477,15 @@ void CBehaviourSwitchMagic::Create(ByteCode* pByteCode)
 	this->field_0x28 = pByteCode->GetS32();
 	this->field_0x24 = pByteCode->GetS32();
 	this->field_0x30 = pByteCode->GetS32();
-	this->field_0x40 = pByteCode->GetS32();
-	this->field_0x3c = pByteCode->GetS32();
+	this->openTextureId = pByteCode->GetS32();
+	this->openMeshId = pByteCode->GetS32();
 
 	pSVar1 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSVar1 + 1);
 	this->pStreamEventCamera = pSVar1;
 
 	this->pHierarchy = (edNODE*)0x0;
-	this->field_0x44 = 0;
+	this->pOpenModelNode = (edNODE*)0x0;
 
 	return;
 
@@ -454,12 +554,12 @@ void CBehaviourSwitchMagic::Begin(CActor* pOwner, int newState, int newAnimation
 	local_10.y = this->field_0x14;
 	this->pOwner->SetLocalBoundingSphere(fabs(this->field_0x14 * 2.0f), &local_10);
 
-	this->field_0x1c = 0;
-	this->field_0x20 = 0;
-	this->field_0x34 = 0;
-	this->field_0x38 = 0;
-	this->field_0x50 = 0;
-	this->field_0x54 = 0;
+	this->field_0x1c.id = 0;
+	this->field_0x1c.pFx = (CNewFx*)0x0;
+	this->field_0x34.id = 0;
+	this->field_0x34.pFx = (CNewFx*)0x0;
+	this->field_0x50.id = 0;
+	this->field_0x50.pFx = (CNewFx*)0x0;
 
 	if (newState == -1) {
 		this->pOwner->SetState(5, -1);
@@ -508,15 +608,15 @@ int CBehaviourSwitchMagic::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	CActorSwitch* pSwitch;
 	float magicalForce;
 
-	if (msg == 0x30) {
+	if (msg == MESSAGE_MAGIC_ACTIVATE) {
 		if ((this->field_0xc < this->field_0x8) && (magicalForce = CActorHero::_gThis->GetMagicalForce(), 0.0f < magicalForce)) {
 			pSwitch = this->pOwner;
-			pSwitch->SetState(6, -1);
+			pSwitch->SetState(SWITCH_STATE_MAGIC_STATE_OFF_2_ON, -1);
 			return 1;
 		}
 	}
 	else {
-		if (msg == 0x2f) {
+		if (msg == MESSAGE_MAGIC_DEACTIVATE) {
 			if (this->field_0x8 <= this->field_0xc) {
 				return 0;
 			}
@@ -535,190 +635,167 @@ int CBehaviourSwitchMagic::InterpretMessage(CActor* pSender, int msg, void* pMsg
 
 void CBehaviourSwitchMagic::ChangeManageState(int state)
 {
-	CActor* pCVar1;
-	CActorSwitch* pCVar2;
-	CinNamedObject30* pCVar3;
-	bool bVar4;
+	bool bVar1;
 	ed_g3d_manager* pG3D;
-	edNODE* peVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	int iVar9;
-	long lVar10;
-	ed_3d_hierarchy* peVar11;
-	ed_3d_hierarchy_node* peVar12;
-	float fVar13;
+	edNODE* peVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	int iVar6;
+	ed_g3d_hierarchy* peVar7;
+	ed_3d_hierarchy_node* peVar8;
+	float fVar9;
+	CNewFx* pFx;
+	CActorSwitch* pSwitch;
 
 	if (state == 0) {
-		pCVar1 = this->field_0x20;
-		
-		if (((pCVar1 == (CActor*)0x0) || (this->field_0x1c == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x1c != pCVar1->pCinData)) {
-			bVar4 = false;
+		pFx = (this->field_0x1c).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
+			bVar1 = false;
 		}
 
-		if (bVar4) {
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x1c != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1c == pCVar1->pCinData)) {
-				pCVar1->IsKindOfObject(0);
+		if (bVar1) {
+			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+				pFx->Kill();
 			}
 
-			this->field_0x20 = (CActor*)0x0;
-			this->field_0x1c = (CinNamedObject30*)0x0;
+			(this->field_0x1c).pFx = (CNewFx*)0x0;
+			(this->field_0x1c).id = 0;
 		}
 
-		this->field_0x1c = (CinNamedObject30*)0x0;
-		this->field_0x20 = (CActor*)0x0;
-
-		peVar5 = this->pHierarchy;
-		lVar10 = (long)(int)peVar5;
-		if (lVar10 != 0) {
-			ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, peVar5);
-			peVar5 = (edNODE*)lVar10;
+		(this->field_0x1c).id = 0;
+		(this->field_0x1c).pFx = (CNewFx*)0x0;
+		if (this->pHierarchy != (edNODE*)0x0) {
+			ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pHierarchy);
 			this->pHierarchy = (edNODE*)0x0;
 		}
 
-		pCVar1 = this->field_0x38;
-		if (((pCVar1 == (CActor*)0x0) || (this->field_0x34 == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x34 != pCVar1->pCinData)) {
-			bVar4 = false;
+		pFx = (this->field_0x34).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x34).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
+			bVar1 = false;
 		}
 
-		if (bVar4) {
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x34 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x34 == pCVar1->pCinData)) {
-				pCVar1->IsKindOfObject(0);
+		if (bVar1) {
+			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x34).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+				pFx->Kill();
 			}
 
-			this->field_0x38 = (CActor*)0x0;
-			this->field_0x34 = (CinNamedObject30*)0x0;
+			(this->field_0x34).pFx = (CNewFx*)0x0;
+			(this->field_0x34).id = 0;
 		}
 
-		this->field_0x34 = (CinNamedObject30*)0x0;
-		this->field_0x38 = (CActor*)0x0;
+		(this->field_0x34).id = 0;
+		(this->field_0x34).pFx = (CNewFx*)0x0;
 
-		IMPLEMENTATION_GUARD_FX(
-		DisplayOpenFxModel(0);)
+		DisplayOpenFxModel(0);
 
-		pCVar1 = this->field_0x54;
-		if (((pCVar1 == (CActor*)0x0) || (this->field_0x50 == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x50 != pCVar1->pCinData)) {
-			bVar4 = false;
+		pFx = (this->field_0x50).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
+			bVar1 = false;
 		}
-		if (bVar4) {
-			if (((pCVar1 != (CActor*)0x0) && (pCVar3 = this->field_0x50, pCVar3 != (CinNamedObject30*)0x0)) &&
-				(pCVar3 == pCVar1->pCinData)) {
-				pCVar1->IsKindOfObject(0);
+
+		if (bVar1) {
+			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+				pFx->Kill();
 			}
 
-			this->field_0x54 = (CActor*)0x0;
-			this->field_0x50 = (CinNamedObject30*)0x0;
+			(this->field_0x50).pFx = (CNewFx*)0x0;
+			(this->field_0x50).id = 0;
 		}
-		this->field_0x50 = (CinNamedObject30*)0x0;
-		this->field_0x54 = (CActor*)0x0;
+
+		(this->field_0x50).id = 0;
+		(this->field_0x50).pFx = (CNewFx*)0x0;
 	}
 	else {
 		if (this->field_0xc < this->field_0x8) {
 			if (this->field_0x18 != 0xffffffff) {
-				if (((this->field_0x20 == (CActor*)0x0) || (this->field_0x1c == (CinNamedObject30*)0x0)) ||
-					(this->field_0x1c != this->field_0x20->pCinData)) {
-					bVar4 = false;
+				pFx = (this->field_0x1c).pFx;
+				if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (iVar6 != pFx->id)) {
+					bVar1 = false;
 				}
 				else {
-					bVar4 = true;
+					bVar1 = true;
 				}
-				if (!bVar4) {
-					IMPLEMENTATION_GUARD_FX(
-					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1c, this->field_0x18, 0xffffffffffffffff);)
+
+				if (!bVar1) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1c, this->field_0x18, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pCVar1 = this->field_0x20;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1c == (CinNamedObject30*)0x0)) ||
-				(bVar4 = true, this->field_0x1c != pCVar1->pCinData)) {
-				bVar4 = false;
+			pFx = (this->field_0x1c).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
+				bVar1 = false;
 			}
 
-			if (bVar4) {
-				pCVar2 = this->pOwner;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1c != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1c == pCVar1->pCinData)) {
-					pCVar1->currentLocation = pCVar2->currentLocation;
+			if (bVar1) {
+				pSwitch = this->pOwner;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					pFx->position = pSwitch->currentLocation;
 				}
 
-				pCVar2 = this->pOwner;
-				pCVar1 = this->field_0x20;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1c != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1c == pCVar1->pCinData)) {
-					pCVar1->rotationEuler = pCVar2->rotationEuler;
+				pSwitch = this->pOwner;
+				pFx = (this->field_0x1c).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					pFx->rotationEuler = pSwitch->rotationEuler;
 				}
 
-				pCVar1 = this->field_0x20;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1c != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1c == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable(0);
+				pFx = (this->field_0x1c).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					pFx->Start(0, 0);
 				}
 			}
+
 			if (((this->pHierarchy == (edNODE*)0x0) && (this->field_0x24 != -1)) && (this->field_0x28 != -1)) {
 				pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(this->field_0x24, this->field_0x28);
-				peVar5 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
-				this->pHierarchy = peVar5;
+				peVar2 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+				this->pHierarchy = peVar2;
 				if (this->pHierarchy != (edNODE*)0x0) {
-					peVar11 = reinterpret_cast<ed_3d_hierarchy*>(this->pHierarchy->pData);
-
-					peVar11->transformA = this->pOwner->pMeshTransform->base.transformA;
+					peVar7 = reinterpret_cast<ed_g3d_hierarchy*>(this->pHierarchy->pData);
+					peVar7->transformA = this->pOwner->pMeshTransform->base.transformA;					
 				}
 			}
 
 			if (this->field_0x4c != 0xffffffff) {
-				if (((this->field_0x54 == (CActor*)0x0) || (this->field_0x50 == (CinNamedObject30*)0x0)) ||
-					(this->field_0x50 != this->field_0x54->pCinData)) {
-					bVar4 = false;
+				pFx = (this->field_0x50).pFx;
+				if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (iVar6 != pFx->id)) {
+					bVar1 = false;
 				}
 				else {
-					bVar4 = true;
+					bVar1 = true;
 				}
 
-				if (!bVar4) {
-					IMPLEMENTATION_GUARD_FX(
-					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x50, this->field_0x4c, 0xffffffffffffffff);)
+				if (!bVar1) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x50, this->field_0x4c, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pCVar1 = this->field_0x54;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x50 == (CinNamedObject30*)0x0)) ||
-				(bVar4 = true, this->field_0x50 != pCVar1->pCinData)) {
-				bVar4 = false;
+			pFx = (this->field_0x50).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
+				bVar1 = false;
 			}
 
-			if (bVar4) {
-				pCVar2 = this->pOwner;
-				fVar6 = pCVar2->currentLocation.y;
-				fVar7 = pCVar2->currentLocation.z;
-				fVar8 = pCVar2->currentLocation.w;
-				fVar13 = this->field_0x14;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x50 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x50 == pCVar1->pCinData)) {
-					(pCVar1->currentLocation).x = pCVar2->currentLocation.x;
-					(pCVar1->currentLocation).y = fVar6 + fVar13;
-					(pCVar1->currentLocation).z = fVar7;
-					(pCVar1->currentLocation).w = fVar8;
+			if (bVar1) {
+				pSwitch = this->pOwner;
+				fVar3 = pSwitch->currentLocation.y;
+				fVar4 = pSwitch->currentLocation.z;
+				fVar5 = pSwitch->currentLocation.w;
+				fVar9 = this->field_0x14;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					(pFx->position).x = pSwitch->currentLocation.x;
+					(pFx->position).y = fVar3 + fVar9;
+					(pFx->position).z = fVar4;
+					(pFx->position).w = fVar5;
 				}
 
-				pCVar2 = this->pOwner;
-				pCVar1 = this->field_0x54;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x50 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x50 == pCVar1->pCinData)) {
-					pCVar1->rotationEuler = pCVar2->rotationEuler;
-
+				pSwitch = this->pOwner;
+				pFx = (this->field_0x50).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					pFx->rotationEuler = pSwitch->rotationEuler;
 				}
 
-				pCVar1 = this->field_0x54;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x50 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x50 == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable(0);
+				pFx = (this->field_0x50).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
+					pFx->Start(0, 0);
 				}
 			}
 		}
@@ -726,6 +803,55 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 
 	return;
 }
+
+
+void CBehaviourSwitchMagic::DisplayOpenFxModel(int bOpen)
+{
+	float fVar1;
+	edF32VECTOR4* pAnimSpeedNormalExtruder;
+	ed_g3d_manager* pG3D;
+	ed_g2d_manager* pManager;
+	ed_g2d_material* pMaterial;
+	ed_g2d_texture* pTexture;
+	int iVar5;
+	ed_g3d_hierarchy* peVar6;
+	ed_3d_hierarchy_node* peVar7;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+
+	if (bOpen == 0) {
+		if (this->pOpenModelNode != (edNODE*)0x0) {
+			ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pOpenModelNode);
+			this->pOpenModelNode = (edNODE*)0x0;
+		}
+	}
+	else {
+		if (((this->pOpenModelNode == (edNODE*)0x0) && (this->openMeshId != -1)) && (this->openTextureId != -1)) {
+			pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(this->openMeshId, this->openTextureId);
+			this->pOpenModelNode = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+
+			if (this->pOpenModelNode != (edNODE*)0x0) {
+				peVar6 = reinterpret_cast<ed_g3d_hierarchy*>(this->pOpenModelNode->pData);
+				peVar6->transformA = this->pOwner->pMeshTransform->base.transformA;
+
+				pManager = pFileManager->GetActorsCommonMaterial(this->openTextureId);
+				pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
+				pTexture = ed3DG2DGetTextureFromMaterial(pMaterial, 0);
+
+				pAnimSpeedNormalExtruder = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
+				if (pAnimSpeedNormalExtruder != (edF32VECTOR4*)0x0) {
+					pAnimSpeedNormalExtruder->z = 0.0f;
+					pAnimSpeedNormalExtruder->w = 0.0f;
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+
 
 void CBehaviourSwitchTarget::Create(ByteCode* pByteCode)
 {
@@ -771,7 +897,7 @@ void CBehaviourSwitchTarget::Manage()
 	undefined8 uVar2;
 
 	pSwitch = this->pOwner;
-	pSwitch->pStreamEventCamera->Manage(pSwitch);
+	pSwitch->targetSwitch.pStreamEventCamera->Manage(pSwitch);
 	AVar1 = pSwitch->actorState;
 	if (AVar1 == 9) {
 		bVar1 = oscValue.Update(0.0f, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
@@ -853,12 +979,10 @@ int CBehaviourSwitchTarget::InterpretMessage(CActor* pSender, int msg, void* pMs
 		pActor = this->pOwner;
 
 		/* Will fill bar. */
-
-		pActor->pTargetStreamRef->Switch(pActor);
-		pActor->pStreamEventCamera->SwitchOn(pActor);
+		pActor->targetSwitch.Switch(pActor);
 
 		pAVar1 = this->pOwner;
-		pAVar1->pTargetStreamRef->PostSwitch(pAVar1);
+		pAVar1->targetSwitch.PostSwitch(pAVar1);
 		fVar4 = edF32Vector4DotProductHard(&pHitParam->field_0x20, &this->pOwner->rotationQuat);
 		if (fVar4 < 0.0f) {
 			this->field_0x8 = -fabs(this->field_0x8);
@@ -908,7 +1032,7 @@ void CBehaviourSwitchLever::Manage()
 	CActorSwitch* pSwitch;
 
 	pSwitch = this->pOwner;
-	pSwitch->pStreamEventCamera->Manage(pSwitch);
+	pSwitch->targetSwitch.pStreamEventCamera->Manage(pSwitch);
 
 	iVar1 = pSwitch->actorState;
 	if (iVar1 == 9) {
@@ -945,7 +1069,7 @@ void CBehaviourSwitchLever::Manage()
 			}
 		}
 		else {
-			if (iVar1 == 6) {
+			if (iVar1 == SWITCH_STATE_LEVER_STATE_OFF_2_ON) {
 				pSwitch->StateSwitchLeverOff2On(this);
 			}
 			else {
@@ -1054,9 +1178,8 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 			pSwitch = this->pOwner;
 			pSwitch->SetState(7, -1);
 			pSwitch = this->pOwner;
-			pSwitch->pTargetStreamRef->Switch(pSwitch);
-			pSwitch->pStreamEventCamera->SwitchOn(pSwitch);
-			pSwitch->pTargetStreamRef->PostSwitch(pSwitch);
+			pSwitch->targetSwitch.Switch(pSwitch);
+			pSwitch->targetSwitch.PostSwitch(pSwitch);
 			return 1;
 		}
 	}
@@ -1078,12 +1201,11 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 				}
 				this->pActor = pSender;
 				pSwitch = this->pOwner;
-				pSwitch->SetState(6, -1);
+				pSwitch->SetState(SWITCH_STATE_LEVER_STATE_OFF_2_ON, -1);
 				pSwitch = this->pOwner;
 
-				pSwitch->pTargetStreamRef->Switch(pSwitch);
-				pSwitch->pStreamEventCamera->SwitchOn(pSwitch);
-				pSwitch->pTargetStreamRef->PostSwitch(pSwitch);
+				pSwitch->targetSwitch.Switch(pSwitch);
+				pSwitch->targetSwitch.PostSwitch(pSwitch);
 
 				return 1;
 			}
@@ -1128,7 +1250,7 @@ void CBehaviourSwitchMultiCondition::Manage()
 	edF32VECTOR4 local_10;
 
 	pActor = this->pOwner;
-	pActor->pStreamEventCamera->Manage(pActor);
+	pActor->targetSwitch.pStreamEventCamera->Manage(pActor);
 
 	if (pActor->pTiedActor != (CActor*)0x0) {
 		local_10 = pActor->baseLocation;
@@ -1146,8 +1268,7 @@ void CBehaviourSwitchMultiCondition::Begin(CActor* pOwner, int newState, int new
 		if (this->field_0x10 == this->field_0xc) {
 			this->pOwner->SetState(8, -1);
 
-			this->pOwner->pTargetStreamRef->Switch(this->pOwner);
-			this->pOwner->pStreamEventCamera->SwitchOn(this->pOwner);
+			this->pOwner->targetSwitch.Switch(this->pOwner);
 		}
 		else {
 			this->pOwner->SetState(5, -1);
@@ -1185,7 +1306,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 					pCVar2->SetState(5, -1);
 					pCVar2 = this->pOwner;
 
-					pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+					pCVar2->targetSwitch.PostSwitch(pCVar2);
 				}
 			}
 			else {
@@ -1194,15 +1315,14 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 					pCVar2->SetState(8, -1);
 					pCVar2 = this->pOwner;
 
-					pCVar2->pTargetStreamRef->Switch(pCVar2);
-					pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
+					pCVar2->targetSwitch.Switch(pCVar2);
 
 					if ((this->field_0x14 & 1) != 0) {
 						pCVar2 = this->pOwner;
 						pCVar2->SetState(5, -1);
 						pCVar2 = this->pOwner;
 
-						pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+						pCVar2->targetSwitch.PostSwitch(pCVar2);
 
 						this->field_0x10 = this->field_0x8;
 						return 1;
@@ -1222,7 +1342,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 				pCVar2->SetState(5, -1);
 				pCVar2 = this->pOwner;
 
-				pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+				pCVar2->targetSwitch.PostSwitch(pCVar2);
 			}
 		}
 		else {
@@ -1231,15 +1351,14 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 				pCVar2->SetState(8, -1);
 				pCVar2 = this->pOwner;
 
-				pCVar2->pTargetStreamRef->Switch(pCVar2);
-				pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
+				pCVar2->targetSwitch.Switch(pCVar2);
 
 				if ((this->field_0x14 & 1) != 0) {
 					pCVar2 = this->pOwner;
 					pCVar2->SetState(5, -1);
 					pCVar2 = this->pOwner;
 
-					pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+					pCVar2->targetSwitch.PostSwitch(pCVar2);
 
 					this->field_0x10 = this->field_0x8;
 					return 1;
@@ -1259,7 +1378,7 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 			pCVar2->SetState(5, -1);
 			pCVar2 = this->pOwner;
 
-			pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+			pCVar2->targetSwitch.PostSwitch(pCVar2);
 		}
 	}
 	else {
@@ -1268,15 +1387,14 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 			pCVar2->SetState(8, -1);
 			pCVar2 = this->pOwner;
 
-			pCVar2->pTargetStreamRef->Switch(pCVar2);
-			pCVar2->pStreamEventCamera->SwitchOn(pCVar2);
+			pCVar2->targetSwitch.Switch(pCVar2);
 
 			if ((this->field_0x14 & 1) != 0) {
 				pCVar2 = this->pOwner;
 				pCVar2->SetState(5, -1);
 				pCVar2 = this->pOwner;
 
-				pCVar2->pTargetStreamRef->PostSwitch(pCVar2);
+				pCVar2->targetSwitch.PostSwitch(pCVar2);
 
 				this->field_0x10 = this->field_0x8;
 				return 1;
@@ -1322,7 +1440,7 @@ void CBehaviourSwitchSequence::Manage()
 	edF32VECTOR4 local_10;
 
 	pActor = this->pOwner;
-	pActor->pStreamEventCamera->Manage((CActor*)pActor);
+	pActor->targetSwitch.pStreamEventCamera->Manage((CActor*)pActor);
 
 	if (pActor->pTiedActor != (CActor*)0x0) {
 		local_10 = pActor->baseLocation;
@@ -1350,16 +1468,7 @@ void CBehaviourSwitchSequence::Begin(CActor* pOwner, int newState, int newAnimat
 		if (this->field_0x14 == iVar4) {
 			this->pOwner->SetState(8, -1);
 
-			pCVar2 = this->pOwner->pTargetStreamRef;
-			iVar4 = 0;
-			if (0 < pCVar2->entryCount) {
-				do {
-					pCVar2->aEntries[iVar4].Switch(this->pOwner);
-					iVar4 = iVar4 + 1;
-				} while (iVar4 < pCVar2->entryCount);
-			}
-
-			this->pOwner->pStreamEventCamera->SwitchOn(this->pOwner);
+			this->pOwner->targetSwitch.Switch(this->pOwner);
 		}
 		else {
 			this->pOwner->SetState(5, -1);

@@ -82,7 +82,8 @@ struct _linked_actor {
 	_linked_actor* pNextLink;
 };
 
-class CActorManager : public CObjectManager {
+class CActorManager : public CObjectManager
+{
 public:
 	CActorManager();
 	virtual void Level_Init();
@@ -99,6 +100,8 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	virtual void Level_PauseChange(bool bPaused);
 	virtual void Level_SaveContext();
+
+	virtual char* ProfileGetName();
 
 	void Level_ClearInternalData();
 

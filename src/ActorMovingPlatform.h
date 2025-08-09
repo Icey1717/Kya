@@ -28,8 +28,8 @@ struct S_TRAJ_POS {
 };
 
 struct S_STREAM_MPF_NO_FRICTION_ZONE {
-	int field_0x0;
-	char* field_0x4;
+	S_STREAM_REF<ed_zone_3d> zoneRef;
+	S_ACTOR_STREAM_REF* pActorStreamRef;
 };
 
 class CBehaviourPlatform : public CBehaviour

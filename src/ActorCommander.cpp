@@ -127,7 +127,7 @@ void CActorCommander::Init()
 			pCurTeam->pEnemyActor = pCVar3;
 
 			pWolfen = static_cast<CActorWolfen*>(pCurTeam->pEnemyActor);
-			if (pWolfen->IsKindOfObject(0x10) != false) {
+			if (pWolfen->IsKindOfObject(OBJ_TYPE_WOLFEN) != false) {
 				pWolfen->pCommander = this;
 			}
 
@@ -205,7 +205,7 @@ void CActorCommander::Manage()
 	if (0 < this->nbTeams) {
 		do {
 			CActorWolfen* pEntryWolfen = static_cast<CActorWolfen*>(this->aTeamElt[iVar1].pEnemyActor);
-			if (((0.0f < pEntryWolfen->GetLifeInterface()->GetValue()) && (pEntryWolfen->IsKindOfObject(0x10) != false)) &&
+			if (((0.0f < pEntryWolfen->GetLifeInterface()->GetValue()) && (pEntryWolfen->IsKindOfObject(OBJ_TYPE_WOLFEN) != false)) &&
 				((pEntryWolfen->combatFlags_0xb78 & 7) != 0)) {
 				this->field_0x194 = this->field_0x194 + 1;
 			}
@@ -1043,7 +1043,7 @@ void CActorCommander::StateCommanderDefault()
 		CPathFinderClient* pPathFinderClient = pFirstEntry->GetPathfinderClient();
 
 		if (pPathFinderClient->id == -1) {
-			if (pFirstEntry->IsKindOfObject(0x10) == 0) {
+			if (pFirstEntry->IsKindOfObject(OBJ_TYPE_WOLFEN) == 0) {
 				pChessBoard->InvalidateByRayTrace();
 			}
 			else {
@@ -1446,7 +1446,7 @@ void CBehaviourCommanderDefault::TestSwitch()
 	if (iVar9 == 0) {
 		for (iVar8 = 0; (bVar7 != 0 && (pCommander = this->pOwner, iVar8 < pCommander->nbTeams)); iVar8 = iVar8 + 1) {
 			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pCommander->aTeamElt[iVar8].pEnemyActor);
-			if ((0.0f < pWolfen->GetLifeInterface()->GetValue()) || ((pWolfen->IsKindOfObject(0x10) != 0 && (pWolfen->field_0xb80 != 2)))) {
+			if ((0.0f < pWolfen->GetLifeInterface()->GetValue()) || ((pWolfen->IsKindOfObject(OBJ_TYPE_WOLFEN) != 0 && (pWolfen->exorcisedState != 2)))) {
 				bVar7 = 0;
 			}
 		}

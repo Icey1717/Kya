@@ -35,6 +35,15 @@ void CFxCompositeScenaricData::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CFxCompositeScenaricData::Term()
+{
+	if (this->aComponentParticles != (uint*)0x0) {
+		edMemFree(this->aComponentParticles);
+	}
+
+	return;
+}
+
 void* CFxCompositeManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector)
 {
 	CFxNewComposite* pNewComposite = _InstanciateFx();

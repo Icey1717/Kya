@@ -14,6 +14,8 @@
 #define ZONE_SCOPED
 #define ZONE_SCOPED_NAME(...)
 #define FRAME_MARK
+#define TRACK_ALLOC(...)
+#define TRACK_FREE(...)
 #endif
 
 typedef unsigned char   undefined;

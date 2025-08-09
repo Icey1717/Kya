@@ -1388,6 +1388,8 @@ void MainInit(int argc,char **argv)
 	edSYS_CONFIG *pIVar1;
 	char* pFileBuffer;
 	uint fileSize;
+
+	ZONE_SCOPED;
 	
 	printf("----------------- Main Init begin -----------\n");
 	printf("-------- eden lib init --------------\n");
@@ -2233,6 +2235,7 @@ int main_internal(int argc, char** argv)
 		ShowCompanySplashScreen(atariFileName, 0, 0);
 		ShowCompanySplashScreen(edenFileName, 0, 0);
 	}
+
 	do {
 		LevelInit();
 		GameLoop();

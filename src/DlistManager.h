@@ -11,7 +11,8 @@ struct DisplayList;
 
 struct S_EYES_BRIGHT_SHADOW;
 
-class CGlobalDListPatch : public CGlobalDList {
+class CGlobalDListPatch : public CGlobalDList
+{
 public:
 	S_EYES_BRIGHT_SHADOW* pBrightEye[296];
 	undefined field_0x4c0;
@@ -50,6 +51,8 @@ public:
 			pBrightEye[i] = NULL;
 		}
 	}
+
+	~CGlobalDListPatch();
 };
 
 struct GlobalDlistEntry
@@ -72,7 +75,7 @@ class CGlobalDListManager : public CObjectManager
 {
 public:
 	virtual void Level_Init();
-	virtual void Level_Term() {};
+	virtual void Level_Term();
 
 	virtual void Level_ClearAll();
 	virtual void Level_Manage();
@@ -83,6 +86,10 @@ public:
 
 	virtual void Level_CheckpointReset() {};
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "DList"; }
+#endif
 
 	virtual void Level_Create();
 

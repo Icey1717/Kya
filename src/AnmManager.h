@@ -112,6 +112,7 @@ public:
 	virtual void Level_ClearAll();
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
+	virtual char* ProfileGetName();
 
 	void Level_Create(ByteCode* pMemoryStream);
 

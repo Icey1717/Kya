@@ -11,6 +11,7 @@
 
 #include <math.h>
 #include "FileManager3D.h"
+#include "EventManager.h"
 
 template<typename PlatformBehaviourType>
 struct PlatformHeader
@@ -122,24 +123,23 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	}
 	this->pZoneStream = (S_ZONE_STREAM_REF*)piVar5;
 
-	uVar4 = pByteCode->GetS32();
-	this->noFrictionZoneCount = uVar4;
+	this->noFrictionZoneCount = pByteCode->GetS32();
 	this->aNoFrictionZones = (S_STREAM_MPF_NO_FRICTION_ZONE*)0x0;
-	uVar4 = this->noFrictionZoneCount;
-	if (uVar4 != 0) {
-		this->aNoFrictionZones = new S_STREAM_MPF_NO_FRICTION_ZONE[uVar4];
+
+	const int nbNoFric = this->noFrictionZoneCount;
+	if (nbNoFric != 0) {
+		this->aNoFrictionZones = new S_STREAM_MPF_NO_FRICTION_ZONE[nbNoFric];
 		pSVar6 = this->aNoFrictionZones;
 		iVar11 = 0;
-		if (0 < (int)this->noFrictionZoneCount) {
+		if (0 < this->noFrictionZoneCount) {
 			do {
-				iVar7 = pByteCode->GetS32();
-				pSVar6->field_0x0 = iVar7;
+				pSVar6->zoneRef.index = pByteCode->GetS32();
 				piVar5 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 				if (*piVar5 != 0) {
 					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 4;
 				}
-				pSVar6->field_0x4 = (char*)piVar5;
+				pSVar6->pActorStreamRef = (S_ACTOR_STREAM_REF*)piVar5;
 				iVar11 = iVar11 + 1;
 				pSVar6 = pSVar6 + 1;
 			} while (iVar11 < (int)this->noFrictionZoneCount);
@@ -385,19 +385,17 @@ void CActorMovingPlatform::Init()
 
 	pNoFric = this->aNoFrictionZones;
 	iVar10 = 0;
-	if (0 < (int)this->noFrictionZoneCount) {
-		IMPLEMENTATION_GUARD(
+	if (0 < this->noFrictionZoneCount) {
 		do {
-			S_STREAM_REF<ed_zone_3d>::Init((S_STREAM_REF<ed_zone_3d> *)pNoFric);
-			pSVar13 = (S_STREAM_REF<CActor> *)pNoFric->field_0x4;
-			for (pCVar16 = pSVar13->pActor; pCVar16 != (CActor*)0x0; pCVar16 = (CActor*)((int)&pCVar16[-1].field_0x15c + 3))
-			{
-				pSVar13 = pSVar13 + 1;
-				S_STREAM_REF<CActor>::Init(pSVar13);
+			pNoFric->zoneRef.Init();
+			S_ACTOR_STREAM_REF* pRef = pNoFric->pActorStreamRef;
+			for (int i= 0; i < pNoFric->pActorStreamRef->entryCount; i++) {
+				pRef[i].aEntries->Init();
 			}
+
 			iVar10 = iVar10 + 1;
 			pNoFric = pNoFric + 1;
-		} while (iVar10 < (int)this->noFrictionZoneCount);)
+		} while (iVar10 < this->noFrictionZoneCount);
 	}
 
 	{
@@ -597,7 +595,7 @@ bool CActorMovingPlatform::Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSla
 void CActorMovingPlatform::ManageNoFrictionZones(int param_2)
 {
 	ed_zone_3d* pZone;
-	CActor* this_00;
+	CActor* pActor;
 	ed_zone_3d* peVar1;
 	CEventManager* pCVar2;
 	CActor* pCVar3;
@@ -605,50 +603,53 @@ void CActorMovingPlatform::ManageNoFrictionZones(int param_2)
 	undefined* puVar5;
 	int iVar6;
 	int iVar7;
-	ed_zone_3d* peVar8;
+	S_STREAM_MPF_NO_FRICTION_ZONE* pNoFrictionZone;
 	int iVar9;
 
 	pCVar2 = CScene::ptable.g_EventManager_006f5080;
 	iVar9 = 0;
-	peVar8 = (ed_zone_3d*)this->aNoFrictionZones;
-	if (0 < (int)this->noFrictionZoneCount) {
-		IMPLEMENTATION_GUARD(
+	pNoFrictionZone = this->aNoFrictionZones;
+	if (0 < this->noFrictionZoneCount) {
 		do {
-			pZone = *(ed_zone_3d**)peVar8;
+			pZone = pNoFrictionZone->zoneRef.Get();
 			iVar7 = 0;
-			iVar6 = 0;
 			while (true) {
-				peVar1 = *(ed_zone_3d**)((int)peVar8 + 4);
-				puVar5 = (undefined*)0x0;
-				if (peVar1 != (ed_zone_3d*)0x0) {
-					puVar5 = peVar1->field_0x0[0];
+				S_ACTOR_STREAM_REF* pActorStreamRef = pNoFrictionZone->pActorStreamRef;
+				int nbActors = 0;
+				if (pActorStreamRef != (S_ACTOR_STREAM_REF*)0x0) {
+					nbActors = pActorStreamRef->entryCount;
 				}
-				if ((int)puVar5 <= iVar7) break;
-				this_00 = *(CActor**)((int)peVar1->field_0x0 + iVar6 + 4);
-				if ((((this_00 != (CActor*)0x0) && ((this_00->flags & 4) != 0)) &&
-					(this_00->pCollisionData != (CCollision*)0x0)) &&
-					(pCVar3 = CActor::GetCollidingActor(this_00), pCVar3 == (CActor*)0x0)) {
-					uVar4 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, pZone, &this_00->currentLocation, 0);
-					if (((uVar4 & 1) == 0) || ((this_00->flags & 0x80000) == 0)) {
-						if (((CActorMovingPlatform*)this_00->pTiedActor == this) &&
-							(((this_00->flags & 0x20000) != 0 && (param_2 == 0)))) {
-							(*this_00->pVTable->TieToActor)(this_00, 0, 0, (edF32MATRIX4*)0xffffffff);
+
+				if (nbActors <= iVar7) break;
+
+				pActor = pActorStreamRef->aEntries[iVar7].Get();
+
+				if ((((pActor != (CActor*)0x0) && ((pActor->flags & 4) != 0)) &&
+					(pActor->pCollisionData != (CCollision*)0x0)) &&
+					(pCVar3 = pActor->GetCollidingActor(), pCVar3 == (CActor*)0x0)) {
+					uVar4 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, pZone, &pActor->currentLocation, 0);
+					if (((uVar4 & 1) == 0) || ((pActor->flags & 0x80000) == 0)) {
+						if (((CActorMovingPlatform*)pActor->pTiedActor == this) && (((pActor->flags & 0x20000) != 0 && (param_2 == 0)))) {
+							pActor->TieToActor((CActor*)0x0, 0, -1, (edF32MATRIX4*)0x0);
 						}
 					}
 					else {
-						CActor::FUN_00101110(this_00, this);
-						if ((this_00->pTiedActor == (CActor*)0x0) && (param_2 != 0)) {
-							(*this_00->pVTable->TieToActor)(this_00, (int)this, 0, (edF32MATRIX4*)0xffffffff);
+						pActor->FUN_00101110(this);
+						if ((pActor->pTiedActor == (CActor*)0x0) && (param_2 != 0)) {
+							pActor->TieToActor(this, 0, -1, (edF32MATRIX4*)0x0);
 						}
 					}
 				}
-				iVar6 = iVar6 + 4;
+
 				iVar7 = iVar7 + 1;
 			}
+
 			iVar9 = iVar9 + 1;
-			peVar8 = (ed_zone_3d*)((int)peVar8 + 8);
-		} while (iVar9 < (int)this->noFrictionZoneCount);)
+
+			pNoFrictionZone = pNoFrictionZone + 1;
+		} while (iVar9 < this->noFrictionZoneCount);
 	}
+
 	return;
 }
 
@@ -821,12 +822,11 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	pSVar3 = this->aNoFrictionZones;
 	iVar2 = 0;
 	if (0 < (int)this->noFrictionZoneCount) {
-		IMPLEMENTATION_GUARD(
 		do {
 			iVar2 = iVar2 + 1;
-			*(edF32MATRIX4**)(pSVar3->field_0x0 + 0x20) = &this->field_0x200;
+			((pSVar3->zoneRef).Get())->pMatrix = STORE_SECTION(&this->field_0x200);
 			pSVar3 = pSVar3 + 1;
-		} while (iVar2 < (int)this->noFrictionZoneCount);)
+		} while (iVar2 < (int)this->noFrictionZoneCount);
 	}
 
 	return;
@@ -2329,8 +2329,7 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	edF32VECTOR4 eStack96;
 	edF32VECTOR4 eStack80;
 	edF32VECTOR4 eStack64;
-	uint local_28;
-	int local_24;
+	_msg_params_0x2e local_28;
 	undefined4 local_1c;
 	undefined4 local_18;
 	undefined4 local_14;
@@ -2339,26 +2338,25 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	uint local_8;
 	uint* local_4;
 
-	local_4 = &local_28;
 	iVar8 = -2;
 	uVar7 = 0;
-	local_28 = 0;
-	local_24 = pBehaviour->field_0x38;
+	local_28.field_0x0 = 0;
+	local_28.field_0x4 = pBehaviour->field_0x38;
 	pSVar4 = pBehaviour->field_0x30;
+
 	iVar5 = 0;
-	if (0 < pSVar3->entryCount) {
-		iVar4 = 0;
+	if (0 < pSVar4->entryCount) {
 		do {
-			iVar1 = DoMessage(LOAD_SECTION_CAST(CActor*, pSVar4->aEntries[iVar5].pRef), (ACTOR_MESSAGE)0x2e, (MSG_PARAM)local_4);
+			iVar1 = DoMessage(LOAD_SECTION_CAST(CActor*, pSVar4->aEntries[iVar5].pRef), (ACTOR_MESSAGE)0x2e, &local_28);
 			if (iVar1 != 0) {
-				local_24 = local_24 + -1;
-				uVar7 = uVar7 | local_28;
+				local_28.field_0x4 = local_28.field_0x4 + -1;
+				uVar7 = uVar7 | local_28.field_0x0;
 			}
 			pSVar4 = pBehaviour->field_0x30;
 			iVar5 = iVar5 + 1;
-			iVar4 = iVar4 + 0x10;
 		} while (iVar5 < pSVar4->entryCount);
 	}
+
 	local_8 = (uint)((uVar7 & 1) == 0);
 	iVar5 = DoMessage(this, (ACTOR_MESSAGE)0x2b, (MSG_PARAM)local_8);
 
@@ -2395,8 +2393,9 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	}
 	else {
 		if (iVar8 == -2) {
-			iVar8 = local_24;
+			iVar8 = local_28.field_0x4;
 		}
+
 		if (iVar8 == -2) {
 			iVar8 = -1;
 		}

@@ -73,6 +73,13 @@
 #include "ActorBombLauncher.h"
 #include "ActorWantedZoo.h"
 
+CActorFactory::CActorFactory()
+{
+	edDebugPrintf("class CActor has changed, have you checked it's still aligned on 64 bytes ? \n");
+	edDebugPrintf("class CActorMovable has changed, have you checked it's still aligned on 64 bytes ? \n");
+	edDebugPrintf("class CActorAutonomous has changed, have you checked it's still aligned on 64 bytes ? \n");
+}
+
 class CActorSKIP_HACK : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
 };

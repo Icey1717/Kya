@@ -7,7 +7,8 @@
 #include "PathFollow.h"
 #include "PathFinder.h"
 
-struct CPathManager : public CObjectManager{
+struct CPathManager : public CObjectManager
+{
 	CPathManager();
 	virtual void Level_Init();
 	virtual void Level_Term();
@@ -16,6 +17,10 @@ struct CPathManager : public CObjectManager{
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
 	virtual void Level_Draw();
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Path"; }
+#endif
+
 	CPathFollow* aPathFollow;
 	undefined4 pathFollowCount;
 	CBasicPathFinder* pBasicPathFinder;

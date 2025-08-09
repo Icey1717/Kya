@@ -6,7 +6,8 @@
 class CFxTail : public CObject
 {
 public:
-	CFxTail() : pData_0x18((void*)0x0) {}
+	CFxTail();
+	~CFxTail();
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual bool InitDlistPatchable(int);

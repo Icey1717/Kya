@@ -365,7 +365,20 @@ void CFrontendEnemyList::Reset()
 
 void CFrontendEnemyList::Level_Term()
 {
-	IMPLEMENTATION_GUARD();
+	CFrontendEnemyList* pCurEntry;
+	int iVar1;
+
+	iVar1 = 0;
+	(this->enemyInterfaceTable).nbEntries = 0;
+
+	pCurEntry = this;
+	do {
+		pCurEntry->aEnemies[iVar1].SetInterface((CInterface*)0x0);
+		this->aWidgets[iVar1] = (CFrontendEnemy*)0x0;
+		iVar1 = iVar1 + 1;
+	} while (iVar1 < 5);
+
+	return;
 }
 
 void CFrontendEnemyList::AddFighterInterface(CInterface* pInterface)

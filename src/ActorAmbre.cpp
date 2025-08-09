@@ -679,7 +679,7 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		})
 	}
 	else {
-		if (msg == 0x30) {
+		if (msg == MESSAGE_MAGIC_ACTIVATE) {
 			IMPLEMENTATION_GUARD(
 			(*((this->pOwner->base).pVTable)->SetState)((CActor*)this->pOwner, 5, -1);
 			pCVar1 = this->pOwner;
@@ -744,7 +744,7 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			return 1;
 		}
 
-		if (msg == 0x2f) {
+		if (msg == MESSAGE_MAGIC_DEACTIVATE) {
 			CActorHero* pHero = reinterpret_cast<CActorHero*>(pSender);
 
 			assert(pHero->typeID == ACTOR_HERO_PRIVATE);

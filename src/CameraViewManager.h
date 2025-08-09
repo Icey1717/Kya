@@ -5907,7 +5907,8 @@ struct CAM_QUAKE {
 	float field_0x2c;
 };
 
-class CCameraManager : public CObjectManager {
+class CCameraManager : public CObjectManager
+{
 public:
 	CCameraManager();
 
@@ -5926,6 +5927,10 @@ public:
 	virtual void Level_Reset();
 	virtual void Level_CheckpointReset();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Camera"; }
+#endif
 
 	void KeepSameParam(CCamera* pNewCamera, uint flag);
 	void Func_001947e0();

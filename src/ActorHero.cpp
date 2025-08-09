@@ -1770,6 +1770,18 @@ float CActorHero::GetMagicalForce()
 	return this->magicInterface.GetValue();
 }
 
+void CActorHero::MagicDecrease(float amount)
+{
+	if (this->magicInterface.GetValue() <= amount) {
+		this->magicInterface.SetValue(0.0f);
+	}
+	else {
+		this->magicInterface.SetValue(this->magicInterface.GetValue() - amount);
+	}
+
+	return;
+}
+
 void CActorHero::InitBoomy()
 {
 	CActorsTable boomyTable;

@@ -27,6 +27,7 @@ class CFxLodScenaricData
 public:
 	void Init();
 	void Create(ByteCode* pByteCode);
+	void Term();
 };
 
 class CFxLodManager : public CFxPoolManager<CLodFx, CFxLodScenaricData>

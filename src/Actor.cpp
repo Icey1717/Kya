@@ -5572,7 +5572,7 @@ void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* p
 	if (pOwner->p3DHierNode != (ed_3d_hierarchy_node*)0x0) {
 		textureIndex = pOwner->pCinData->textureIndex;
 		if (textureIndex == -1) {
-			textureIndex = CScene::_pinstance->field_0x28;
+			textureIndex = CScene::_pinstance->defaultTextureIndex_0x28;
 		}
 
 		pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(pOwner->pCinData->meshIndex, textureIndex);

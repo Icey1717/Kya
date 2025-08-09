@@ -625,6 +625,7 @@ ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, e
 ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index);
+ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMaterial);
 ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
 ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pManager);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList);
@@ -882,6 +883,10 @@ void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod);
 
 uint ed3DSpritePreparePacketGetCode(ushort param_1, uint flags);
 edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_hash_code* pHash, int type);
+
+void ed3DShadowTermScene(ed_3D_Scene* pShadowScene);
+bool ed3DHierarchyListTerm(edLIST* pList);
+int ed3DSceneTerm(ed_3D_Scene* pScene);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

@@ -10,6 +10,8 @@
 #include "Vision.h"
 #include "Fx.h"
 
+// <ACTOR_NAME>_BEHAVIOUR_<BEHAVIOUR_NAME>
+
 #define WOLFEN_BEHAVIOUR_WATCH_DOG 0x8
 #define WOLFEN_BEHAVIOUR_GUARD_AREA 0xa
 #define WOLFEN_BEHAVIOUR_SLEEP 0xc
@@ -25,6 +27,8 @@
 #define WOLFEN_BEHAVIOUR_WOLFEN_DCA 0x17
 #define WOLFEN_BEHAVIOUR_AVOID 0x18
 #define WOLFEN_BEHAVIOUR_UNKNOWN 0x19
+
+// <ACTOR_NAME>_STATE_<BEHAVIOUR_NAME>_<STATE_NAME>
 
 #define WOLFEN_STATE_WATCH_DOG_GUARD 0x72
 #define WOLFEN_STATE_TRACK_CHASE 0x73
@@ -1077,10 +1081,10 @@ public:
 
 	uint field_0xb74;
 	uint combatFlags_0xb78 = 0; // delete init
-	undefined4 field_0xb80;
+	int exorcisedState;
 	float field_0xb84;
 	undefined4 field_0xb88;
-	int field_0xb8c;
+	int startSectorId;
 
 	float field_0xb90;
 	float field_0xb94;

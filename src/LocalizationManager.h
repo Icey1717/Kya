@@ -38,6 +38,10 @@ public:
 
 	virtual void Level_SaveContext();
 	virtual void Level_LoadContext();
+
+#ifdef PLATFORM_WIN
+	virtual char* ProfileGetName() { return "Localization"; }
+#endif
 	// End Manager
 
 	char* GetLevelString(ulong key);

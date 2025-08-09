@@ -155,7 +155,15 @@ public:
 	{
 	}
 
+	~CFxPoolManagerFather()
+	{
+		edMemFree(pPoolHeap);
+
+		return;
+	}
+
 	virtual void Init() = 0;
+	virtual void Term() = 0;
 	virtual void CheckpointReset() = 0;
 	virtual void Manage() = 0;
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager) = 0;
@@ -256,6 +264,33 @@ public:
 	{
 		for (uint i = 0; i < this->nbScenaricData; i++) {
 			this->aScenaricData[i].Init();
+		}
+
+		return;
+	}
+
+	virtual void Term()
+	{
+		for (uint i = 0; i < this->nbScenaricData; i++) {
+			this->aScenaricData[i].Term();
+		}
+
+		CDoubleLinkedNode<FxType>* pHead = (this->activeList).pHead;
+		while (pHead != (CDoubleLinkedNode<FxType> *)0x0) {
+			pHead->aFx->Kill();
+			pHead = pHead->pPrev;
+		}
+
+		if (this->aFx != (FxType*)0x0) {
+			delete[] this->aFx;
+		}
+
+		if (this->aNodes != (CDoubleLinkedNode<FxType>*)0x0) {
+			delete[] this->aNodes;
+		}
+
+		if (this->aScenaricData != (ScenaricDataType*)0x0) {
+			delete[] this->aScenaricData;
 		}
 
 		return;
@@ -469,6 +504,8 @@ struct CFxManager : public CObjectManager
 	virtual void Level_CheckpointReset();
 
 	virtual void Level_PauseChange(bool bPaused);
+
+	virtual char* ProfileGetName();
 
 	void Level_PreInit();
 

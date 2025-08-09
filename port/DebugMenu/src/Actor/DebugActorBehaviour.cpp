@@ -11,6 +11,7 @@
 #include "ActorBonus.h"
 #include "ActorMoney.h"
 #include "ActorProjectile.h"
+#include "ActorSwitch.h"
 
 namespace Aton
 {
@@ -197,6 +198,9 @@ namespace Hero
 		case STATE_HERO_FALL_DEATH:
 			return "StateHeroFallDeath";
 			break;
+		case STATE_HERO_DROWN_DEATH:
+			return "StateHeroDrownDeath";
+			break;
 		case STATE_HERO_COL_WALL:
 			return "StateHeroColWall";
 			break;
@@ -247,6 +251,9 @@ namespace Hero
 			break;
 		case STATE_HERO_TOBOGGAN_3:
 			return "StateHeroToboggan3";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_3:
+			return "StateHeroTobogganJump3";
 			break;
 		case STATE_HERO_TOBOGGAN_JUMP_1:
 			return "StateHeroTobogganJump1";
@@ -322,6 +329,9 @@ namespace Hero
 			break;
 		case STATE_HERO_DCA_A:
 			return "StateHeroDCA_A";
+			break;
+		case STATE_HERO_UNLOCK_SWITCH:
+			return "StateHeroUnlockSwitch";
 			break;
 		case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 			return "StateHeroTrampolineJump_1_2_A";
@@ -640,6 +650,32 @@ namespace Projectile
 	}
 }
 
+namespace Switch
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case SWITCH_BEHAVIOUR_LEVER:
+			return "Lever";
+		case SWITCH_BEHAVIOUR_MAGIC:
+			return "Magic";
+		case SWITCH_BEHAVIOUR_WOLFEN_COUNTER:
+			return "Wolfen Counter";
+		case SWITCH_BEHAVIOUR_MULTI_CONDITION:
+			return "Multi Condition";
+		case SWITCH_BEHAVIOUR_TARGET:
+			return "Target";
+		case SWITCH_BEHAVIOUR_SEQUENCE:
+			return "Sequence";
+		case SWITCH_BEHAVIOUR_NEW:
+			return "New";
+		default:
+			return "Unknown";
+			break;
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -676,6 +712,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Money::GetBehaviourName(behaviourId);
 	case PROJECTILE:
 		return Projectile::GetBehaviourName(behaviourId);
+	case SWITCH:
+		return Switch::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}

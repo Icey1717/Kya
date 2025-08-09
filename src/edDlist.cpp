@@ -992,6 +992,13 @@ void edDListBlendFuncNormal(void)
 	return;
 }
 
+void edDListBlendFunc_002ca830(void)
+{
+	edDListBlendSet(1);
+	edDListSetState(0x48, 0x42);
+	return;
+}
+
 void edDListSetActiveViewPort(ed_viewport* pViewport)
 {
 	if (gbInsideBegin == false) {
@@ -1224,8 +1231,6 @@ LAB_002cba4c:
 		edDListSetActiveViewPort(gCurViewport);
 	}
 
-	//DUMP_TAG_ADV(pDVar5->aCommandArray[0].pCommandBuffer[0]);
-
 	return;
 }
 
@@ -1427,35 +1432,44 @@ void edDListPatchGifTag3D(void)
 	int iVar3;
 
 	if (gNbStateAdded != 0) {
-		IMPLEMENTATION_GUARD(
 		pRVar1 = gCurDList->pRenderCommands;
-		*(undefined4*)&pRVar1->cmdA = 0;
-		*(undefined4*)((int)&pRVar1->cmdA + 4) = 0x14000000;
+		pRVar1->asU32[0] = 0;
+		pRVar1->asU32[1] = 0x14000000;
+		pRVar1->asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
 		pRVar1->cmdB = 0;
+
 		pRVar2 = pRVar1 + 1;
 		gCurStatePKTSize = gNbStateAdded + 2;
-		gCurStatePKT =
-			gCurDList->aCommands[gCurDList->nbCommands].
-			pRenderInput;
-		gCurDList->aCommands[gCurDList->nbCommands].pRenderInput
-			= pRVar2;
+		gCurStatePKT = gCurDList->aCommands[gCurDList->nbCommands].pRenderInput.pPkt;
+		gCurDList->aCommands[gCurDList->nbCommands].pRenderInput.pPkt = pRVar2;
+
 		iVar3 = gCurStatePKTSize - 1;
-		pRVar2->cmdA = ((long)(int)gCurStatePKT & 0xfffffffU) << 0x20 |
-			(long)(int)(gCurStatePKTSize | 0x30000000);
-		pRVar1[1].cmdB = ((long)(iVar3 * 0x10000) & 0xffffffffU | 0x6c0003dc) << 0x20 | 0x40003dc;
+
+		pRVar2->asU32[0] = ED_VIF1_SET_TAG_REF(gCurStatePKTSize, 0);
+		pRVar2->asU32[1] = STORE_SECTION(&gCurStatePKT);
+
+		pRVar2->asU32[2] = SCE_VIF1_SET_ITOP(0x03dc, 0);
+		pRVar2->asU32[3] = SCE_VIF1_SET_UNPACK(0x03dc, iVar3, UNPACK_V4_32, 0);
+
 		gCurDList->pRenderCommands = pRVar1 + 2;
-		gCurDList->field_0x10 = (MeshDrawRenderCommand*)gCurDList->pRenderCommands;
+		gCurDList->field_0x10 = gCurDList->pRenderCommands;
 		gCurDListBuf = gCurDList->field_0x10;
 		gCurDList->nbCommands = gCurDList->nbCommands + 1;
-		iVar3 = -gCurStatePKTSize;)
-		IMPLEMENTATION_GUARD();
-		pRVar2[iVar3].cmdA = (long)gNbStateAdded | 0x1000000000008000;
-#ifdef PLATFORM_WIN
-		DUMP_TAG_ADV(pRVar2[iVar3].cmdA);
-#endif
-		pRVar2[iVar3].cmdB = 0xe;
+		iVar3 = -gCurStatePKTSize;
+	
+		pRVar2[iVar3].cmdA = SCE_GIF_SET_TAG(
+			gNbStateAdded,	// NLOOP
+			SCE_GS_TRUE,	// EOP
+			SCE_GS_FALSE,	// PRE
+			0,				// PRIM
+			GIF_FLG_PACKED,	// FLG
+			1				// NREG
+		);
+
+		pRVar2[iVar3].cmdB = SCE_GIF_PACKED_AD;
 		gNbStateAdded = 0;
 	}
+
 	return;
 }
 
@@ -2945,8 +2959,6 @@ void edDListEnd(void)
 				gCurStatePKT->asU32[0] = 0;
 				gCurStatePKT->asU32[0] = existingPktData & 0xffff8000 | nloop & 0x7fff;
 
-				DUMP_TAG_ADV(gCurStatePKT->cmdA);
-
 				DISPLAY_LIST_2D_END();
 			}
 		}
@@ -3273,7 +3285,7 @@ void edDListDelete(DisplayList* pDisplayList)
 	int __n;
 	uint uVar2;
 	DisplayList* pDVar3;
-	uint* puVar4;
+	int* puVar4;
 	uint uVar5;
 
 	uVar5 = 0;
@@ -3296,19 +3308,19 @@ void edDListDelete(DisplayList* pDisplayList)
 				return;
 			}
 
-			IMPLEMENTATION_GUARD(
-			puVar4 = (uint*)(gNbDList_3D + uVar5);
+			puVar4 = gNbDList_3D + uVar5;
 			for (uVar2 = 0; uVar2 < *puVar4; uVar2 = uVar2 + 1) {
-				__dest = *(DisplayList**)(&((DisplayList*)gDList_3D[uVar5])->flags_0x0 + uVar2 * 2);
+				__dest = gDList_3D[uVar5][uVar2];
 				if (__dest == pDVar3) {
 					__n = ((*puVar4 - 1) - uVar2) * 4;
 					if (__n != 0) {
-						memcpy(__dest, *(DisplayList**)((int)(&((DisplayList*)gDList_3D[uVar5])->flags_0x0 + uVar2 * 2) + 4), __n);
+						memcpy(__dest, gDList_3D[uVar5][uVar2 + 1], __n);
 					}
+
 					*puVar4 = *puVar4 - 1;
 					break;
 				}
-			})
+			}
 
 			goto LAB_002cb284;
 		}

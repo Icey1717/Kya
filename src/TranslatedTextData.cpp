@@ -127,7 +127,7 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 	edBANK_ENTRY_INFO BStack544;
 	char acStack512[512];
 
-	MY_LOG("select_language: {}\n", pFilePath);
+	MY_LOG("select_language: {}\n", pFilePath ? pFilePath : "None");
 
 	bVar1 = false;
 	if (this->entryCount != 0) {

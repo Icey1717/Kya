@@ -105,6 +105,8 @@ public:
 	virtual void Level_CheckpointReset();
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	virtual char* ProfileGetName();
 	// End Manager
 
 	void ComputeLighting(float multiplier, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig);

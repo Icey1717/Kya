@@ -10,6 +10,11 @@ void CFxLodScenaricData::Create(ByteCode* pByteCode)
 	IMPLEMENTATION_GUARD();
 }
 
+void CFxLodScenaricData::Term()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CLodFx::Draw()
 {
 	return;
