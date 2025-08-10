@@ -323,7 +323,6 @@ private:
 		createSwapChain();
 		createImageViews();
 		createGlobalRenderPass();
-		CreateDescriptorSetLayout();
 		PS2::Setup();
 		createFramebuffers();
 		createSyncObjects();
@@ -761,7 +760,8 @@ public:
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-		presentInfo.waitSemaphoreCount = 0;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &imageAvailableSemaphores[currentFrame];
 
 		VkSwapchainKHR swapChains[] = { swapChain };
 		presentInfo.swapchainCount = 1;
