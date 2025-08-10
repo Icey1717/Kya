@@ -2037,6 +2037,11 @@ void LoadingLoop(void)
 		/* Play cutscene */
 		bVar2 = pSceneInstance->LevelLoading_Manage();
 
+#ifdef PLATFORM_WIN
+		// We will draw in LevelLoading_Draw, so need to make sure our command buffer is ready.
+		Renderer::WaitUntilReady();
+#endif
+
 		/* Responsible for drawing the loading screen. */
 		pSceneInstance->LevelLoading_Draw();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
@@ -2152,6 +2157,11 @@ void GameLoop(void)
 
 		GetTimer()->Update();
 		CScene::_pinstance->Level_Manage();
+
+#ifdef PLATFORM_WIN
+		// We will draw in Level_Draw, so need to make sure our command buffer is ready.
+		Renderer::WaitUntilReady();
+#endif
 
 		CScene::_pinstance->Level_Draw();
 

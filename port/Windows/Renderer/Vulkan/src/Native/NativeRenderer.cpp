@@ -759,6 +759,8 @@ namespace Renderer
 					std::unique_lock<std::mutex> lock(mutex);
 					cv.wait(lock, [this] { return !bWaitingForCommands || bShouldStop; });
 
+					ZONE_SCOPED_NAME("RenderThread::Run");
+
 					if (bShouldStop) break;
 
 					timer.Start();
@@ -783,7 +785,7 @@ namespace Renderer
 
 			void AddDraw(const Draw& draw)
 			{
-				std::lock_guard<std::mutex> lock(mutex);
+				ZONE_SCOPED;
 				draws.emplace_back(draw);
 			}
 
@@ -813,8 +815,6 @@ namespace Renderer
 			void SignalEndCommands()
 			{
 				{
-					std::lock_guard<std::mutex> lock(mutex);
-
 					if (draws.size() == 0) {
 						// No draws, exit.
 						return;

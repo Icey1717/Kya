@@ -273,7 +273,6 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	uint32_t currentFrame = 0;
-	uint32_t previousFrame = 0;
 
 	bool framebufferResized = false;
 
@@ -728,6 +727,8 @@ public:
 	Renderer::RenderDelegate renderDelegate;
 
 	void waitUntilReady() {
+		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
 		if (glfwWindowShouldClose(window)) {
 			return;
 		}
@@ -805,9 +806,6 @@ public:
 				throw std::runtime_error("failed to present swap chain image!");
 			}
 		}
-
-		previousFrame = currentFrame;
-		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
