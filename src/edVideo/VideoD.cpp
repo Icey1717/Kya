@@ -267,13 +267,16 @@ void edVideoFlip(void)
 	ZONE_SCOPED;
 
 #ifdef PLATFORM_WIN
-	{
+	static bool bFirstFrame = true;
+
+	if (!bFirstFrame) {
 		ZONE_SCOPED_NAME("Win Begin");
 		VU1Emu::BeginFrame();
 		Renderer::Present();
 		FRAME_MARK;
-		Renderer::WaitUntilReady();
 	}
+
+	bFirstFrame = false;
 #endif
 	/* Render scene */
 	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_RENDER, (void*)0x0);
@@ -288,6 +291,7 @@ void edVideoFlip(void)
 	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, 9, (void*)0x0);
 
 #ifdef PLATFORM_WIN
+	Renderer::WaitUntilReady();
 	Renderer::Native::OnVideoFlip();
 #endif
 

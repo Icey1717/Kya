@@ -814,6 +814,12 @@ namespace Renderer
 			{
 				{
 					std::lock_guard<std::mutex> lock(mutex);
+
+					if (draws.size() == 0) {
+						// No draws, exit.
+						return;
+					}
+
 					bWaitingForCommands = false;
 				}
 				cv.notify_one();

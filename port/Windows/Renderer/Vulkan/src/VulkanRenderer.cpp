@@ -273,6 +273,7 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	uint32_t currentFrame = 0;
+	uint32_t previousFrame = 0;
 
 	bool framebufferResized = false;
 
@@ -736,6 +737,9 @@ public:
 		// Wait for the GPU to finish work on this frame
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
+		// Reset the fence for this frame
+		vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -745,9 +749,6 @@ public:
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
-
-		// Reset the fence for this frame
-		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 		return;
 	}
@@ -805,6 +806,7 @@ public:
 			}
 		}
 
+		previousFrame = currentFrame;
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 

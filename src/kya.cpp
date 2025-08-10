@@ -1513,10 +1513,6 @@ void MainInit(int argc,char **argv)
 	CScene::CreateScene();
 	Game_Init();
 
-#ifdef PLATFORM_WIN
-	Renderer::WaitUntilReady();
-#endif
-
 	///* May jump to 003965B8 */
 	bool bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 	/* This doesn't seem to trigger on main run. */
@@ -2040,6 +2036,7 @@ void LoadingLoop(void)
 		inTimeController->Update();
 		/* Play cutscene */
 		bVar2 = pSceneInstance->LevelLoading_Manage();
+
 		/* Responsible for drawing the loading screen. */
 		pSceneInstance->LevelLoading_Draw();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
@@ -2155,6 +2152,7 @@ void GameLoop(void)
 
 		GetTimer()->Update();
 		CScene::_pinstance->Level_Manage();
+
 		CScene::_pinstance->Level_Draw();
 
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
