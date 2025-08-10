@@ -20,6 +20,7 @@
 #include "PostProcessing.h"
 #include "NativeDisplayList.h"
 #include <functional> // For std::hash
+#include "profiling.h"
 
 #define DEBUG_TEXTURE_NAME "BACKGROUND_SECT1_Scene01_Back_sect1.g2d (m: 1 l: 0)"
 
@@ -1339,7 +1340,11 @@ void Renderer::Native::Setup()
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
+	ZONE_SCOPED;
+
 	{
+		ZONE_SCOPED_NAME("Render Thread Wait");
+
 		ScopedTimer waitForRenderThread(gRenderWaitTime);
 		while (!gRenderThread->IsComplete()) {
 			// Spin

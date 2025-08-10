@@ -8,6 +8,8 @@
 #include "FrameBuffer.h"
 #include "backends/imgui_impl_vulkan.h"
 
+#include "profiling.h"
+
 #include <array>
 #include <optional>
 #include "TextureCache.h"
@@ -257,6 +259,8 @@ void DebugMeshViewer::Vulkan::Setup()
 
 void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
+	ZONE_SCOPED;
+
 	if (!pBoundTexture) {
 		return;
 	}

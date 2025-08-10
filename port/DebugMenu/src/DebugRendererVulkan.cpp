@@ -17,6 +17,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "profiling.h"
+
 #include "DebugMeshViewerVulkan.h"
 #include "Native/NativeRenderer.h"
 
@@ -135,6 +137,8 @@ namespace DebugRendererImgui {
 
 	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 	{
+		ZONE_SCOPED;
+
 		const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 		VkCommandBufferBeginInfo beginInfo{};

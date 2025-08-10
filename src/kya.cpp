@@ -1244,7 +1244,8 @@ void SetupSplash(char* pSplashFile, uint count)
 		sceGsSwapDBuff(&g_DoubleBuffer, counter);
 	}
 #else
-	Renderer::RenderImage(pSplashFile, gVideoConfig.screenWidth, gVideoConfig.screenHeight);
+	// Need to reimplement this for PC
+	//Renderer::RenderImage(pSplashFile, gVideoConfig.screenWidth, gVideoConfig.screenHeight);
 #endif
 	return;
 }
@@ -1715,7 +1716,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 			char* image = continuePss();
 
 			if (image) {
-				Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+				//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 			}
 #endif
 		}
@@ -1825,7 +1826,7 @@ void PlayIntroVideo(long mode)
 						char* image = continuePss();
 
 						if (image) {
-							Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+							//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 						}
 #endif
 					}
@@ -1867,7 +1868,7 @@ void PlayIntroVideo(long mode)
 								char* image = continuePss();
 
 								if (image) {
-									Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+									//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 								}
 #endif
 							}
@@ -1908,7 +1909,7 @@ void PlayIntroVideo(long mode)
 								char* image = continuePss();
 
 								if (image) {
-									Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+									//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 								}
 #endif
 							}
@@ -1948,7 +1949,7 @@ void PlayIntroVideo(long mode)
 							char* image = continuePss();
 
 							if (image) {
-								Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+								//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 							}
 #endif
 						}
@@ -1991,7 +1992,7 @@ void PlayIntroVideo(long mode)
 				char* image = continuePss();
 
 				if (image) {
-					Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+					//Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 				}
 #endif
 			}
