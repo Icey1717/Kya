@@ -511,7 +511,8 @@ namespace Renderer
 	void PushAnimMatrix(float* pAnim);
 	void PushAnimST(float* pAnimST);
 
-	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
+	using CommandBufferList = std::vector<VkCommandBuffer>;
+	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&, CommandBufferList&>;
 
 	RenderDelegate& GetRenderDelegate();
 

@@ -10,7 +10,6 @@
 #include <readerwriterqueue.h>
 
 #include "VulkanRenderer.h"
-#include "renderer.h"
 #include "UniformBuffer.h"
 #include "TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
@@ -1338,7 +1337,7 @@ void Renderer::Native::Setup()
 	InitFade();
 }
 
-void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
+void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList)
 {
 	ZONE_SCOPED;
 
@@ -1386,12 +1385,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		cmdBuffers[1] = cmd;
 	}
 
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = cmdBuffers.size();
-	submitInfo.pCommandBuffers = cmdBuffers.data();
-
-	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	for (const auto& cmd : cmdBuffers) {
+		commandBufferList.push_back(cmd);
+	}
 
 	gNativeVertexBuffer.Reset();
 	gAnimationMatrices.clear();

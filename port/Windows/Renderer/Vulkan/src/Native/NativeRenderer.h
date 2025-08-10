@@ -8,6 +8,8 @@
 #include "FrameBuffer.h"
 #include "VulkanIncludes.h"
 
+#include "renderer.h"
+
 namespace Renderer
 {
 	struct SimpleTexture;
@@ -55,7 +57,7 @@ namespace Renderer
 		FrameBufferBase& GetFrameBuffer();
 
 		void Setup();
-		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent);
+		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList);
 
 		void BindTexture(SimpleTexture* pTexture);
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags);

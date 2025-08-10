@@ -727,13 +727,14 @@ public:
 	Renderer::RenderDelegate renderDelegate;
 
 	void waitUntilReady() {
-		vkDeviceWaitIdle(device);
-
 		if (glfwWindowShouldClose(window)) {
 			return;
 		}
 
 		glfwPollEvents();
+
+		// Wait for the GPU to finish work on this frame
+		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
 
@@ -745,6 +746,9 @@ public:
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
+		// Reset the fence for this frame
+		vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
 		return;
 	}
 
@@ -752,27 +756,45 @@ public:
 	{
 		ZONE_SCOPED;
 
+		Renderer::CommandBufferList commandBufferList;
+
 		{
 			ZONE_SCOPED_NAME("renderDelegate");
-			renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent);
+			renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent, commandBufferList);
 		}
 
-		VkPresentInfoKHR presentInfo{};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &imageAvailableSemaphores[currentFrame];
+		{
+			ZONE_SCOPED_NAME("vkQueueSubmit");
 
-		VkSwapchainKHR swapChains[] = { swapChain };
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapChains;
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.pWaitSemaphores = waitSemaphores;
+			submitInfo.pWaitDstStageMask = waitStages;
+			submitInfo.commandBufferCount = commandBufferList.size();
+			submitInfo.pCommandBuffers = commandBufferList.data();
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = &renderFinishedSemaphores[currentFrame];
 
-		presentInfo.pImageIndices = &presentImageIndex;
+			vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+		}
 
 		{
 			ZONE_SCOPED_NAME("vkQueuePresentKHR");
 
-			VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+			// Present
+			VkPresentInfoKHR presentInfo{};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = &swapChain;
+			presentInfo.pImageIndices = &presentImageIndex;
+
+			const VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
 				framebufferResized = false;

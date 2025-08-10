@@ -135,7 +135,7 @@ namespace DebugRendererImgui {
 		Renderer::CreateCommandBuffers(gCommandBuffers);
 	}
 
-	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
+	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList)
 	{
 		ZONE_SCOPED;
 
@@ -179,13 +179,7 @@ namespace DebugRendererImgui {
 		Renderer::Debug::EndLabel(cmd);
 		vkEndCommandBuffer(cmd);
 
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &cmd;
-
-		vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(GetGraphicsQueue());
+		commandBufferList.push_back(cmd);
 	}
 }
 

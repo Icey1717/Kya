@@ -8,13 +8,15 @@
 
 #define VULKAN_LOG(level, format, ...) MY_LOG_CATEGORY("Vulkan", level, format, ##__VA_ARGS__)
 
-struct UniformBufferObject {
+struct UniformBufferObject
+{
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
 };
 
-namespace Renderer {
+namespace Renderer
+{
 	extern bool gHeadless;
 	constexpr int VertexIndexBufferSize = 0x100000;
 	constexpr int VertexIndexBufferSizeGPU = 0x100000;
