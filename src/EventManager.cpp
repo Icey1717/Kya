@@ -254,7 +254,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 					iVar4 = _edEventComputePrimAgainstVertex(pbVar1[*puVar5], puVar2 + *puVar5, pLocation);
 
 					if (iVar4 == 1) {
-						EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex in event {}", *piVar7);
+						EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex in event {}", *piVar7);
 						return *piVar7;
 					}
 
@@ -268,7 +268,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 		uVar6 = uVar6 >> 1;
 	} while (uVar8 < 3);
 
-	EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex not in event");
+	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex not in event");
 	return 2;
 }
 
@@ -399,7 +399,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 	byte* pbVar8;
 	int* pSendInfo;
 
-	EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent flags 0x{:x} colliders: {}", pEvent->flags, pEvent->nbColliders);
+	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent flags 0x{:x} colliders: {}", pEvent->flags, pEvent->nbColliders);
 
 	if ((pEvent->flags & 0x80) != 0) {
 		bVar3 = false;
@@ -408,18 +408,18 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 		if (pEvent->nbColliders != 0) {
 			do {
-				EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
 
 				pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
 
-				EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent processing zone flags: 0x{:x}", pZone->flags);
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing zone flags: 0x{:x}", pZone->flags);
 
 				uint coliderFlags;
 				uint result;
 
 				if ((pZone->flags & 1) == 0) {
 					ed_event_actor_ref* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-					EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent test actor: {}", LOAD_SECTION_CAST(CActor*, pActorRef->pActor)->name);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent test actor: {}", LOAD_SECTION_CAST(CActor*, pActorRef->pActor)->name);
 					result = edEventComputeZoneAgainstVertex(pEventChunk, pZone, LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation), 0);
 					coliderFlags = pCollider->flags;
 				}
@@ -452,17 +452,17 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 		if (pEvent->nbColliders != 0) {
 			do {
-				EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
 
 				uint messageIndex = 0;
 				pSendInfo = pCollider->aSendInfo;
 
 				do {
-					EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent processing zone?: {}", messageIndex);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing zone?: {}", messageIndex);
 
 					byte* pByte = pCollider->messageFlags + messageIndex;
 
-					EVENT_LOG(LogLevel::Verbose, "_edEventComputeEvent byte flags 0x{:x} data: {} collider flags: {} byte pass: {}", *pByte, *pSendInfo, pCollider->flags, (*pByte & 0x80) != 0);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent byte flags 0x{:x} data: {} collider flags: {} byte pass: {}", *pByte, *pSendInfo, pCollider->flags, (*pByte & 0x80) != 0);
 
 					if (((*pSendInfo != 0x0) && ((*pByte & 0x80) != 0)) && ((pCollider->flags & 1 << (messageIndex & 0x1f)) != 0)) {
 						_edEventAddMessage(pEventChunk, messageIndex, pCollider);
@@ -487,6 +487,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 			pEvent->flags = pEvent->flags & 0xffffff7f;
 		}
 	}
+
 	return;
 }
 

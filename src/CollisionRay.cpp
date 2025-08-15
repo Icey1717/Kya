@@ -5,12 +5,14 @@
 #include "CollisionManager.h"
 #include "ActorManager.h"
 
+// Lots of collision rays going off per frame, logging is heavy and can cause performance issues.
+#define COLLISION_RAY_LOG(...)
 
 CCollisionRay::CCollisionRay(float f0, float f1, float f2, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection)
 {
 	edF32MATRIX4 localMatrix;
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::CCollisionRay f0: {} f1: {} f2: {} pLocation: {} pDirection: {}", 
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::CCollisionRay f0: {} f1: {} f2: {} pLocation: {} pDirection: {}", 
 		f0, f1, f2, pLocation->ToString(), pDirection->ToString());
 
 	edF32Matrix4RotateXHard(f0, &localMatrix, &gF32Matrix4Unit);
@@ -26,7 +28,7 @@ CCollisionRay::CCollisionRay(float f0, float f1, float f2, edF32VECTOR4* pLocati
 
 CCollisionRay::CCollisionRay(float f0, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection)
 {
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::CCollisionRay f0: {} pLocation: {} pDirection: {}", f0, pLocation->ToString(), pDirection->ToString());
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::CCollisionRay f0: {} pLocation: {} pDirection: {}", f0, pLocation->ToString(), pDirection->ToString());
 
 	this->pLocation = pLocation;
 	this->pLeadVector = pDirection;
@@ -43,16 +45,16 @@ float CCollisionRay::Intersect(uint type, CActor* pActor, CActor* pOther, uint f
 
 	fVar1 = 1e+30f;
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::Intersect type: {} actor: {} other: {} flags: 0x{:x}", 
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect type: {} actor: {} other: {} flags: 0x{:x}", 
 		type, pActor ? pActor->name : "None", pOther ? pOther->name : "None", flags);
 
 	if ((type & 2) != 0) {
-		COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectActors");
+		COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectActors");
 		fVar1 = IntersectActors(pActor, pOther, flags, pOutVector, pResultData);
 	}
 
 	if ((type & 1) != 0) {
-		COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectScenery");
+		COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectScenery");
 
 		if (pOutVector == (edF32VECTOR4*)0x0) {
 			fVar2 = IntersectScenery((edF32VECTOR4*)0x0, &outResult);
@@ -90,7 +92,7 @@ void gClusterCallback_GetActorsRay(CActor* pActor, void* pInParams)
 {
 	ClusterCallbackParams_0x10* pParams = reinterpret_cast<ClusterCallbackParams_0x10*>(pInParams);
 
-	COLLISION_LOG(LogLevel::Verbose, "gClusterCallback_GetActorsRay actor: {} other: {} flags: {}", 
+	COLLISION_RAY_LOG(LogLevel::Verbose, "gClusterCallback_GetActorsRay actor: {} other: {} flags: {}", 
 		pActor ? pActor->name : "None", pParams->pOtherActor ? pParams->pOtherActor->name : "None", pParams->flags);
 
 	if ((((pActor->pCollisionData != (CCollision*)0x0) && (pParams->pActor != pActor)) &&
@@ -118,7 +120,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 	pLoc = this->pLocation;
 	pDir = this->pLeadVector;
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors location: {} direction: {} length: {}", pLoc->ToString(), pDir->ToString(), z);
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors location: {} direction: {} length: {}", pLoc->ToString(), pDir->ToString(), z);
 
 	x = pDir->x * this->lengthA + pLoc->x;
 	y = pDir->y * this->lengthA + pLoc->y;
@@ -138,7 +140,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 
 	assert(boundingBox.minPoint.x < 4294967296.0f);
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors bounding box: min: {} max: {}", boundingBox.minPoint.ToString(), boundingBox.maxPoint.ToString());
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors bounding box: min: {} max: {}", boundingBox.minPoint.ToString(), boundingBox.maxPoint.ToString());
 
 	callbackParams.pTable = &actorIntersectingBoxTable;
 	callbackParams.pActor = pActor;
@@ -147,11 +149,11 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 
 	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingBox(&boundingBox, gClusterCallback_GetActorsRay, &callbackParams);
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting actors: {}", actorIntersectingBoxTable.nbEntries);
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting actors: {}", actorIntersectingBoxTable.nbEntries);
 
 	const float distance = IntersectActorsTable(&actorIntersectingBoxTable, pOutVector, pOutResult);
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting distance: {}", distance);
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting distance: {}", distance);
 
 	return distance;
 }
@@ -172,7 +174,7 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 	uint local_4;
 	int total;
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable count: {}", pTable->nbEntries);
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable count: {}", pTable->nbEntries);
 
 	distance = 1e+30f;
 
@@ -187,11 +189,11 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 		do {
 			pActor = pTable->aEntries[counter];
 
-			COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable actor: {}", pActor->name);
+			COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable actor: {}", pActor->name);
 
 			obbIntersectDistance = edObbIntersectObbTreeRayPrim(&pHitPrim, &hitType, pActor->pCollisionData->pObbTree, this);
 
-			COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable obbIntersectDistance: {}", obbIntersectDistance);
+			COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable obbIntersectDistance: {}", obbIntersectDistance);
 
 			if ((0.0f <= obbIntersectDistance) && (obbIntersectDistance < distance)) {
 				this->lengthA = obbIntersectDistance;
@@ -221,7 +223,7 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 		pOutResult->type_0x8 = outHitType;
 	}
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable distance: {}", distance);
+	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable distance: {}", distance);
 
 	return distance;
 }

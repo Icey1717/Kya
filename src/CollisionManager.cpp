@@ -944,7 +944,7 @@ void CCollision::SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4
 
 				(peVar3->worldTransform).rowT = local_10;
 
-				COLLISION_LOG(LogLevel::Verbose, "SetObbTreePositionRecurse new transform: {}", peVar3->worldTransform.ToString());
+				COLLISION_LOG_VERBOSE(LogLevel::Verbose, "SetObbTreePositionRecurse new transform: {}", peVar3->worldTransform.ToString());
 			}
 		}
 	}
@@ -983,7 +983,7 @@ void CCollision::SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF3
 				edF32Matrix4TranslateHard(&pPrimObj[iVar4].vertices, &pPrimObj[iVar4].vertices, &param_2->rowT);
 				edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj[iVar4].worldTransform, &param_3->rowT);
 				(pPrimObj[iVar4].worldTransform).rowT = local_10;
-				COLLISION_LOG(LogLevel::Verbose, "SetObbTreeMatrixNoRotationRecurse new transform: {}", (pPrimObj[iVar4].worldTransform).ToString());
+				COLLISION_LOG_VERBOSE(LogLevel::Verbose, "SetObbTreeMatrixNoRotationRecurse new transform: {}", (pPrimObj[iVar4].worldTransform).ToString());
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < pObbTree->count_0x52);
 		}
@@ -1077,7 +1077,7 @@ void CCollision::SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* 
 				edColComputeMatrices(&pPrimObj[iVar3]);
 				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].vertices, &pPrimObj[iVar3].vertices, param_2);
 				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].worldTransform, param_3, &pPrimObj[iVar3].worldTransform);
-				COLLISION_LOG(LogLevel::Verbose, "SetObbTreeMatrixRecurse new transform: {}", (pPrimObj[iVar3].worldTransform).ToString());
+				COLLISION_LOG_VERBOSE(LogLevel::Verbose, "SetObbTreeMatrixRecurse new transform: {}", (pPrimObj[iVar3].worldTransform).ToString());
 				iVar3 = iVar3 + 1;
 			} while (iVar3 < pObbTree->count_0x52);
 		}
@@ -2395,7 +2395,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	undefined4 local_8;
 	CActor* pCollideWithActor;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix {}", pActor->name);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix {}", pActor->name);
 
 	local_110.nbEntries = 0;
 	uVar3 = this->flags_0x0 & 0x480;
@@ -2425,7 +2425,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 	edF32Vector4SubHard(&baseTranslation, &pMatrix->rowT, &(this->transformMatrix).rowT);
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {}", baseTranslation.ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {}", baseTranslation.ToString());
 
 	local_150 = gF32Matrix4Unit;
 
@@ -2449,7 +2449,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 		resultPosition = (this->transformMatrix).rowT;
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {} Original position: {} Step count: {}", 
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {} Original position: {} Step count: {}",
 			baseTranslation.ToString(), resultPosition.ToString(), stepCount);
 
 		assert(stepCount > 0);
@@ -2458,7 +2458,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			currentTranslation = subdividedTranslation;
 			pMatrix->rowT = resultPosition + subdividedTranslation;
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Current translation: {} New position: {} Step count: {}",
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Current translation: {} New position: {} Step count: {}",
 				currentTranslation.ToString(), pMatrix->rowT.ToString(), stepCount);
 
 			if (bVar2) {
@@ -2485,20 +2485,20 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 				TransformG3DObbTreeVertices(this->pDynCol, matrixType, pMatrix);
 			}
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix pMatrix: {}", pMatrix->ToString());
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix local_150: {}", local_150.ToString());
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix pMatrix: {}", pMatrix->ToString());
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix local_150: {}", local_150.ToString());
 
 			uVar5 = CheckCollisions_OBBTree(pActor, pMatrix, &local_150, &currentTranslation, pActorsTable, &pCollideWithActor, param_6);
 			uVar9 = uVar9 | uVar5;
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Out translation: {} - flag: {}", currentTranslation.ToString(), uVar9);
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Out translation: {} - flag: {}", currentTranslation.ToString(), uVar9);
 
 			resultPosition = resultPosition + currentTranslation;
 		}
 
 		pMatrix->rowT = resultPosition;
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Final position: {} result: {} name: {}", pMatrix->rowT.ToString(), uVar9, 
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Final position: {} result: {} name: {}", pMatrix->rowT.ToString(), uVar9,
 			pCollideWithActor ? pCollideWithActor->name : "None");
 
 		if (uVar9 != 0) {

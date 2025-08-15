@@ -989,11 +989,11 @@ namespace Renderer
 			gCachedPerDrawData.renderFlags = renderFlags;
 
 			if (!gCurrentDraw) {
-				NATIVE_LOG(LogLevel::Info, "RenderMesh Creating new draw!");
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Creating new draw!");
 				CreateDraw();
 			}
 
-			NATIVE_LOG(LogLevel::Info, "RenderMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
 			constexpr bool bSanityCheck = false;
 
@@ -1006,7 +1006,7 @@ namespace Renderer
 			constexpr bool bMergingEnabeld = false;
 
 			if (bMergingEnabeld && CanMergeMesh()) {
-				NATIVE_LOG(LogLevel::Info, "RenderMesh: merging");
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh: merging");
 				MergeIndexData();
 			}
 			else {
@@ -1018,13 +1018,13 @@ namespace Renderer
 				instance.lightingDataIndex = gLightingDynamicBuffer.GetInstanceIndex();
 				instance.animStDataIndex = gAnimStBuffer.GetInstanceIndex();
 
-				NATIVE_LOG(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.modelMatrixIndex, instance.animationMatrixStart);
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.modelMatrixIndex, instance.animationMatrixStart);
 			}
 		}
 
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushGlobalMatrices");
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushGlobalMatrices");
 
 			// copy into model.
 			if (pProj) {
@@ -1040,13 +1040,13 @@ namespace Renderer
 
 		void PushModelMatrix(float* pModel)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushModelMatrix: {}", gModelBuffer.GetDebugIndex());
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushModelMatrix: {}", gModelBuffer.GetDebugIndex());
 			gModelBuffer.AddInstanceData(glm::make_mat4(pModel));
 		}
 
 		void PushAnimMatrix(float* pAnim)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
 			gAnimationMatrices.push_back(glm::make_mat4(pAnim));
 		}
 
@@ -1062,7 +1062,7 @@ namespace Renderer
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushMatrixPacket");
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushMatrixPacket");
 
 			assert(pPkt);
 
@@ -1079,26 +1079,26 @@ namespace Renderer
 
 			SetAnimStInstanceData(glm::make_vec4(pPkt->animStNormalExtruder));
 
-			NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[0], pPkt->objLightDirectionsMatrix[1], pPkt->objLightDirectionsMatrix[2]);
-			NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[4], pPkt->objLightDirectionsMatrix[5], pPkt->objLightDirectionsMatrix[6]);
-			NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[8], pPkt->objLightDirectionsMatrix[9], pPkt->objLightDirectionsMatrix[10]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[0], pPkt->objLightDirectionsMatrix[1], pPkt->objLightDirectionsMatrix[2]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[4], pPkt->objLightDirectionsMatrix[5], pPkt->objLightDirectionsMatrix[6]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[8], pPkt->objLightDirectionsMatrix[9], pPkt->objLightDirectionsMatrix[10]);
 
-			NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[0], pPkt->lightColorMatrix[1], pPkt->lightColorMatrix[2], pPkt->lightColorMatrix[3]);
-			NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[4], pPkt->lightColorMatrix[5], pPkt->lightColorMatrix[6], pPkt->lightColorMatrix[7]);
-			NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[8], pPkt->lightColorMatrix[9], pPkt->lightColorMatrix[10], pPkt->lightColorMatrix[11]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[0], pPkt->lightColorMatrix[1], pPkt->lightColorMatrix[2], pPkt->lightColorMatrix[3]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[4], pPkt->lightColorMatrix[5], pPkt->lightColorMatrix[6], pPkt->lightColorMatrix[7]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[8], pPkt->lightColorMatrix[9], pPkt->lightColorMatrix[10], pPkt->lightColorMatrix[11]);
 
-			NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
-			NATIVE_LOG(LogLevel::Info, "PushLightData: flare: {} {} {} {}", pPkt->flare[0], pPkt->flare[1], pPkt->flare[2], pPkt->flare[3]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: flare: {} {} {} {}", pPkt->flare[0], pPkt->flare[1], pPkt->flare[2], pPkt->flare[3]);
 
-			NATIVE_LOG(LogLevel::Info, "PushLightData: animST: {} {} {} {}", pPkt->animStNormalExtruder[0], pPkt->animStNormalExtruder[1], pPkt->animStNormalExtruder[2], pPkt->animStNormalExtruder[3]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushLightData: animST: {} {} {} {}", pPkt->animStNormalExtruder[0], pPkt->animStNormalExtruder[1], pPkt->animStNormalExtruder[2], pPkt->animStNormalExtruder[3]);
 		}
 
 		void PushAnimST(float* pAnimST)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushAnimST: {}", gAnimStBuffer.GetDebugIndex());
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimST: {}", gAnimStBuffer.GetDebugIndex());
 			assert(pAnimST);
-			NATIVE_LOG(LogLevel::Info, "PushAnimST: {} {} {} {}", pAnimST[0], pAnimST[1], pAnimST[2], pAnimST[3]);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimST: {} {} {} {}", pAnimST[0], pAnimST[1], pAnimST[2], pAnimST[3]);
 
 			SetAnimStInstanceData(glm::make_vec4(pAnimST));
 		}

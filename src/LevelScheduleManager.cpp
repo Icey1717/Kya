@@ -2012,9 +2012,8 @@ void CLevelScheduler::LevelLoading_Begin()
 	if (this->nextLevelID == 0x10) {
 		// Trying to load an invalid level. We probably termed the level via the debug menu. Wait for the debug menu to change our next level ID.
 		while (this->nextLevelID == 0x10) {
-			Renderer::Present();
 			Renderer::WaitUntilReady();
-			Renderer::Native::OnVideoFlip();
+			Renderer::Present();
 		}
 	}
 #endif

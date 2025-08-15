@@ -51,6 +51,7 @@
 #define ED_3D_HIDDEN_FLAG 0x40
 
 #define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
+#define ED3D_LOG_SLOW(level, format, ...)
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
@@ -2822,7 +2823,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	ed_3d_hierarchy_setup* pHierarchySetup;
 
 	pObjToWorld = pDmaMatrix->pObjToWorld;
-	ED3D_LOG(LogLevel::VeryVerbose, "DMA Begin ed3DPKTCopyMatrixPacket");
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DMA Begin ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_X_SPR, edF32VECTOR4*), &gCamNormal_X);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
@@ -2889,7 +2890,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	Renderer::PushGlobalMatrices(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw);
 #endif
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
 
 	edF32MATRIX4** pLightDirections = SCRATCHPAD_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_PTR_SPR, edF32MATRIX4**);
 	edF32MATRIX4** pLightColors = SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_PTR_SPR, edF32MATRIX4**);
@@ -2923,7 +2924,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	}
 
 	*vectorD = *gVU1_AnimST_NormalExtruder_Scratch;
-	ED3D_LOG(LogLevel::VeryVerbose, "DMA End ed3DPKTCopyMatrixPacket");
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DMA End ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
 	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(MATRIX_PACKET_START_SPR), 0x1c0, pPkt);
 	return pPkt + 0x1c;
@@ -3025,7 +3026,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	Renderer::Native::PushMatrixPacket(reinterpret_cast<Renderer::Native::MatrixPacket*>(pHierarchy->pMatrixPkt));
 #endif
 
-	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pHierarchy->pMatrixPkt << 0x24) >> 0x24) + 0xa0);
+	*g_pCurFlareMtx = (edF32MATRIX4*)(reinterpret_cast<char*>(pDmaMatrix->pHierarchy->pMatrixPkt) + 0xa0);
 
 	// This will actually overwrite the cam normal X and Y from the global packet, as that writes from 0x0 -> 0x8, and this starts at 0x6.
 	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0x1c, STORE_SECTION(pDmaMatrix->pHierarchy->pMatrixPkt) & 0xfffffffU);

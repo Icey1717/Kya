@@ -780,7 +780,7 @@ bool edObbRayPlaneClip(float param_1, float param_2, float* param_3, float* para
 		}
 	}
 
-	COLLISION_LOG(LogLevel::Verbose, "edObbRayPlaneClip bVar1: {} f1: {} f2: {}", bVar1, *param_3, *param_4);
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbRayPlaneClip bVar1: {} f1: {} f2: {}", bVar1, *param_3, *param_4);
 
 	return bVar1;
 }
@@ -810,7 +810,7 @@ float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* pRayStart, edF32VECTOR4
 	float local_8;
 	float local_4;
 
-	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbRay pRayStart: {} pRayEnd: {}", pRayStart->ToString(), pRayEnd->ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbRay pRayStart: {} pRayEnd: {}", pRayStart->ToString(), pRayEnd->ToString());
 
 	fVar12 = FLOAT_004485a4;
 	fVar1 = pRayStart->x - (pBox->transform).da;
@@ -890,7 +890,7 @@ float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* pRayStart, edF32VECTOR4
 		distance = -1.0f;
 	}
 
-	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbRay distance: {}", distance);
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbRay distance: {}", distance);
 
 	return distance;
 }
@@ -902,8 +902,8 @@ void edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT
 	edF32VECTOR4 local_60;
 	edObbBOX obbBox;
 
-	COLLISION_LOG(LogLevel::Verbose, "edColIntersectRayUnitBoxUnit");
-	COLLISION_LOG(LogLevel::Verbose, "pParams->field_0x0: {} pParams->field_0x4: {}", pParams->field_0x0->ToString(), pParams->field_0x4->ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edColIntersectRayUnitBoxUnit");
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "pParams->field_0x0: {} pParams->field_0x4: {}", pParams->field_0x0->ToString(), pParams->field_0x4->ToString());
 
 	pColInfoOut->result = 0;
 
@@ -1212,7 +1212,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 
 #ifdef DODGY_INCLUDE_LOGGING
 	if (pOtherColObj && pOtherColObj->pActor) {
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColComputeContactQuad4 pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pOtherColObj->pActor)->name);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColComputeContactQuad4 pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pOtherColObj->pActor)->name);
 	}
 #endif
 
@@ -2533,7 +2533,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 		primBoxQuadIn.aType = pParams->aType;
 		primBoxQuadIn.pColObj = pColObj;
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 box count: 0x{:x} quad count: 0x{:x}", pParams->aCount, nbQuads);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 box count: 0x{:x} quad count: 0x{:x}", pParams->aCount, nbQuads);
 
 		for (; pCurrentPrim < pPrimEnd; pCurrentPrim = pCurrentPrim + primSize) {
 			edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pCurrentPrim);
@@ -2547,7 +2547,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 				edColIntersectBoxQuad4(&colInfoOut, &primBoxQuadIn);
 				result = result | colInfoOut.result;
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 intersect result: 0x{:x} result: 0x{:x}", colInfoOut.result, result);
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 intersect result: 0x{:x} result: 0x{:x}", colInfoOut.result, result);
 				pColObj->colResult = result;
 			}
 		}
@@ -2558,7 +2558,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 			primSphereQuadIn.aType = pParams->aType;
 			primSphereQuadIn.pColObj = pColObj;
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 sphere count: 0x{:x} quad count: 0x{:x}", pParams->aCount, nbQuads);
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 sphere count: 0x{:x} quad count: 0x{:x}", pParams->aCount, nbQuads);
 
 			for (; pCurrentPrim < pPrimEnd; pCurrentPrim = pCurrentPrim + primSize) {
 				edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pCurrentPrim);
@@ -2567,7 +2567,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 				primSphereQuadIn.field_0x18 = &pPrim->field_0xd0;
 				primSphereQuadIn.pPrim = pPrim;
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 {} {} {}", 
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 {} {} {}", 
 					primSphereQuadIn.field_0x10->ToString(), primSphereQuadIn.field_0x14->ToString(), primSphereQuadIn.field_0x18->ToString());
 
 				for (pCurrentQuad = aQuads; pCurrentQuad < aQuads + nbQuads; pCurrentQuad = pCurrentQuad + 1) {
@@ -2575,7 +2575,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 					edColIntersectSphereQuad4(&colInfoOut, &primSphereQuadIn);
 					result = result | colInfoOut.result;
 
-					COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 intersect result: 0x{:x} result: 0x{:x}", colInfoOut.result, result);
+					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 intersect result: 0x{:x} result: 0x{:x}", colInfoOut.result, result);
 					pColObj->colResult = result;
 				}
 			}
@@ -2631,7 +2631,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 	fVar5 = edColSqrDistancePointTriangle(&gF32Vertex4Zero, pParams->pTriangle);
 	result = 0;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box sqr distance: {}", fVar5);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box sqr distance: {}", fVar5);
 
 	if (fVar5 < 1.0f) {
 		edColTriangle4GetInfo(&triangleInfo, pParams->pTriangle);
@@ -2645,7 +2645,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 
 		bVar2 = edColIntersectRayTriangle4(&rayHitDistance, &rayTriangleIn);
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box ray origin: {} ray direction: {} intersect result: {}",
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box ray origin: {} ray direction: {} intersect result: {}",
 			rayTriangleIn.pRayOrigin->ToString(), rayTriangleIn.pRayDirection->ToString(), bVar2);
 
 		iVar3 = 0;
@@ -2677,7 +2677,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 
 				edColIntersectRaySphereUnit(&raySphereColInfoOut, &raySphereUnitIn);
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box ray origin: {} ray direction: {} intersect result: {}",
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box ray origin: {} ray direction: {} intersect result: {}",
 										raySphereUnitIn.pRayOrigin->ToString(), raySphereUnitIn.pRayDirection->ToString(), raySphereColInfoOut.result);
 
 				if (raySphereColInfoOut.result != 0) {
@@ -2693,7 +2693,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 
 		result = 0;
 		if (iVar3 != 0) {
-			COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box intersections: {}", iVar3);
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereUnitTriangle4Box intersections: {}", iVar3);
 
 			fVar5 = 1.0f / (float)iVar3;
 
@@ -2883,7 +2883,7 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 	edF32VECTOR4 transformedTriangleNormals[8];
 	edF32MATRIX4 boxVertices;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphereA count: {} {} param_3: {}", pParams->aCentre->ToString(), pParams->bCentre->ToString(), bBoxFirst);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphereA count: {} {} param_3: {}", pParams->aCentre->ToString(), pParams->bCentre->ToString(), bBoxFirst);
 
 	result = 0;
 	intersectingTrianglesCount = 0;
@@ -2912,7 +2912,7 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 
 		intersectionResult = edColIntersectSphereUnitTriangle4Box(pColInfoOut, &primTriIn);
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphereA Testing box tri {} -> result: {}", iVar7, intersectionResult);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphereA Testing box tri {} -> result: {}", iVar7, intersectionResult);
 
 		if (intersectionResult != 0) {
 			intersectingTrianglesCount = intersectingTrianglesCount + 1;
@@ -2923,7 +2923,7 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 		}
 	}
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphereA Total intersections: {}", intersectingTrianglesCount);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphereA Total intersections: {}", intersectingTrianglesCount);
 
 	if (intersectingTrianglesCount != 0) {
 		if (1 < intersectingTrianglesCount) {
@@ -2950,7 +2950,7 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 		// Calculate relative velocity.
 		pColInfoOut->relativeVelocity = colWorldVelocityB - colWorldVelocityA;
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphereA normal {} intersection: {} velocity: {}", pColInfoOut->normal.ToString(), 
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphereA normal {} intersection: {} velocity: {}", pColInfoOut->normal.ToString(), 
 			pColInfoOut->intersectionPoint.ToString(), pColInfoOut->relativeVelocity.ToString());
 
 
@@ -2991,7 +2991,7 @@ void edColIntersectBoxSphere(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_IN
 	edF32VECTOR4 transformedTriangleNormals[8];
 	edF32MATRIX4 boxVertices;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphere count: {} {} param_3: {}", pParams->aCentre->ToString(), pParams->bCentre->ToString(), bBoxFirst);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphere count: {} {} param_3: {}", pParams->aCentre->ToString(), pParams->bCentre->ToString(), bBoxFirst);
 
 	result = 0;
 
@@ -3026,7 +3026,7 @@ LAB_0024e11c:
 
 		intersectionResult = edColIntersectSphereUnitTriangle4Box(pColInfoOut, &primTriIn);
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphere Testing box tri {} -> result: {}", iVar7, intersectionResult);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphere Testing box tri {} -> result: {}", iVar7, intersectionResult);
 
 		if (intersectionResult != 0) {
 			if (bBoxFirst == 0) {
@@ -3049,7 +3049,7 @@ LAB_0024e11c:
 			// Calculate relative velocity.
 			pColInfoOut->relativeVelocity = colWorldVelocityB - colWorldVelocityA;
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectBoxSphere normal {} intersection: {} velocity: {}", pColInfoOut->normal.ToString(),
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectBoxSphere normal {} intersection: {} velocity: {}", pColInfoOut->normal.ToString(),
 				pColInfoOut->intersectionPoint.ToString(), pColInfoOut->relativeVelocity.ToString());
 
 
@@ -3140,7 +3140,7 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 	edF32MATRIX4 eStack128;
 	edF32MATRIX4 transformedVertices;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere");
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere");
 
 	iVar6 = 0;
 
@@ -3203,10 +3203,10 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 
 	const float bVolume = fVar14 * fVar11 * fVar12;
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere bVolume: {} < aVolume: {}", bVolume, aVolume);
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere bVolume: {} < aVolume: {}", bVolume, aVolume);
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere a transform: {}", aPrim->worldTransform.ToString());
-	COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere b transform: {}", bPrim->worldTransform.ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere a transform: {}", aPrim->worldTransform.ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere b transform: {}", bPrim->worldTransform.ToString());
 
 	if (bVolume < aVolume) {
 		// Transform vertices of sphere B into the coordinate space of sphere A
@@ -3215,7 +3215,7 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 		for (sphereVertIndex = 0; sphereVertIndex < gColNbSphereVertices; sphereVertIndex = sphereVertIndex + 1) {
 			edF32Matrix4MulF32Vector4Hard(&local_a0, &transformedVertices, gColSphereVertices + sphereVertIndex);
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere vert: {} -> {}", sphereVertIndex, local_a0.ToString());
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere vert: {} -> {}", sphereVertIndex, local_a0.ToString());
 
 			// Check if the transformed vertex is within the unit sphere
 			if (local_a0.x * local_a0.x + local_a0.y * local_a0.y + local_a0.z * local_a0.z < 1.0f) {
@@ -3224,7 +3224,7 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 			}
 		}
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere count: {}", iVar6);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere count: {}", iVar6);
 
 		if (iVar6 != 0) {
 			fVar11 = 1.0f / (float)iVar6;
@@ -3273,7 +3273,7 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 		for (sphereVertIndex = 0; sphereVertIndex < gColNbSphereVertices; sphereVertIndex = sphereVertIndex + 1) {
 			edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack128, gColSphereVertices + sphereVertIndex);
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere vert: {} -> {}", sphereVertIndex, local_a0.ToString());
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere vert: {} -> {}", sphereVertIndex, local_a0.ToString());
 
 			if (local_a0.x * local_a0.x + local_a0.y * local_a0.y + local_a0.z * local_a0.z < 1.0f) {
 				intersectionPoint = intersectionPoint + local_a0;
@@ -3281,7 +3281,7 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 			}
 		}
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColIntersectSphereSphere count: {}", iVar6);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColIntersectSphereSphere count: {}", iVar6);
 
 		if (iVar6 != 0) {
 			fVar11 = 1.0f / (float)iVar6;
@@ -4014,7 +4014,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 	}
 
 	// Initial BB tests.
-	COLLISION_LOG(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree");
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree");
 
 	iVar8 = 0;
 	do {
@@ -4023,26 +4023,26 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 		local_10[uVar5] = 0;
 		ppeVar20 = local_340[uVar5];
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree flip: {} count: {}", uVar5, local_10[uVar10]);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree flip: {} count: {}", uVar5, local_10[uVar10]);
 
 		for (iVar8 = 0; iVar8 < local_10[uVar10]; iVar8 = iVar8 + 1) {
 			peVar2 = *ppeVar16;
 			iVar18 = 0;
 
-			COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree type: {} (0x{:x})", peVar2->type, peVar2->type);
+			COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree type: {} (0x{:x})", peVar2->type, peVar2->type);
 
 			if (peVar2->type == COL_TYPE_TREE) {
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree count: {}", peVar2->count_0x52);
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree count: {}", peVar2->count_0x52);
 				bVar1 = peVar2->count_0x52;
 				for (; iVar18 < bVar1; iVar18 = iVar18 + 1) {
 
-					COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree checking: {}", iVar18);
+					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree checking: {}", iVar18);
 
 					edObbTREE_DYN* pLinkedTree = (edObbTREE_DYN*)LOAD_SECTION(peVar2->field_0x54[iVar18]);
 					lVar6 = edObbIntersect(&pObbTreeA->bbox, &pLinkedTree->bbox);
 
-					COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect result: {}", lVar6);
+					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect result: {}", lVar6);
 
 					if (lVar6 != 0) {
 						uVar5 = uVar10 != 0 ^ 1;
@@ -4051,7 +4051,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 							ppeVar20 = ppeVar20 + 1;
 							local_10[uVar5] = local_10[uVar5] + 1;
 
-							COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree flip index: {} new count: {}", uVar5, local_10[uVar5]);
+							COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree flip index: {} new count: {}", uVar5, local_10[uVar5]);
 						}
 					}
 				}
@@ -4059,8 +4059,8 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 			else {
 				lVar6 = edObbIntersect(&pObbTreeA->bbox, &peVar2->bbox);
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect {}\n{}", pObbTreeA->bbox.transform.ToString(), peVar2->bbox.transform.ToString());
-				COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect result: {}", lVar6);
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect {}\n{}", pObbTreeA->bbox.transform.ToString(), peVar2->bbox.transform.ToString());
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect result: {}", lVar6);
 
 				if ((lVar6 != 0) && (intersectCountA < 100)) {
 					aIntersectResultsA[intersectCountA].pObbTree = peVar2;
@@ -4069,7 +4069,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 					aIntersectResultsA[intersectCountA].sub.pData = LOAD_SECTION_CAST(void*, peVar2->field_0x54[0]);
 					intersectCountA = intersectCountA + 1;
 
-					COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree new intersect count: {} (type: 0x{:x} - count: 0x{:x})", intersectCountA, peVar2->type, peVar2->count_0x52);
+					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree new intersect count: {} (type: 0x{:x} - count: 0x{:x})", intersectCountA, peVar2->type, peVar2->count_0x52);
 				}
 			}
 
@@ -4080,7 +4080,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 		iVar8 = uVar10 << 2;
 	} while (local_10[uVar10] != 0);
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree Process A Results");
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree Process A Results");
 
 	// Go through first set of results.
 	for (iVar8 = 0; iVar8 < intersectCountA; iVar8 = iVar8 + 1) {
@@ -4124,7 +4124,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 
 						intersectCountB = intersectCountB + 1;
 
-						COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree new intersect B count: {} (type: 0x{:x} - count: 0x{:x})", intersectCountB, peVar3->type, peVar3->count_0x52);
+						COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree new intersect B count: {} (type: 0x{:x} - count: 0x{:x})", intersectCountB, peVar3->type, peVar3->count_0x52);
 
 					}
 				}
@@ -4269,7 +4269,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 						(((((uVar5 == 0xd0d || (uVar5 == 0xd13)) ||
 							((uVar5 == 0xd0b || (((uVar5 == 0xd0e || (uVar5 == 0xe0a)) || (uVar5 == 0xe0d)))))) ||
 							((uVar5 == 0xe13 || (uVar5 == 0xe0b)))) || (uVar5 == 0xe0e)))) {
-						COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimsPenatratingArrayPrims 0x{:x}", uVar5);
+						COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimsPenatratingArrayPrims 0x{:x}", uVar5);
 						local_fc0.pColObj = pColInfoObbTree->pColObj;
 						local_fc0.aData = (puVar12->a).pData;
 						local_fc0.aCount = (puVar12->a).count;
@@ -4300,7 +4300,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 						}
 						else {
 							if ((uVar5 == 0xd08) || (uVar5 == 0xe08)) {
-								COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimPenatratingArrayQuads4 0x{:x}", uVar5);
+								COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimPenatratingArrayQuads4 0x{:x}", uVar5);
 								local_f70.pColObj = pColInfoObbTree->pColObj;
 								local_f70.aData = puVar12->a.pData;
 								local_f70.aCount = puVar12->a.count;
@@ -4310,16 +4310,16 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 								local_f70.bData = puVar12->b.pData;
 								local_f70.bCount = puVar12->b.count;
 
-								COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree aCount: 0x{:x} aType: 0x{:x} bCount: 0x{:x} primSize: 0x{:x}", 
+								COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree aCount: 0x{:x} aType: 0x{:x} bCount: 0x{:x} primSize: 0x{:x}", 
 									local_f70.aCount, local_f70.aType, local_f70.bCount, local_f70.primSize);
 
 								uVar5 = edColArrayObjectPrimPenatratingArrayQuads4(&local_f70);
-								COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimPenatratingArrayQuads4 result: 0x{:x}", uVar5);
+								COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectPrimPenatratingArrayQuads4 result: 0x{:x}", uVar5);
 								uVar13 = uVar13 | uVar5;
 							}
 							else {
 								if ((((uVar5 == 0x40d) || (uVar5 == 0x40e)) || (uVar5 == 0x40a)) || (uVar5 == 0x40b)) {
-									COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectTriangles4PenatratingPrims 0x{:x}", uVar5);
+									COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectTriangles4PenatratingPrims 0x{:x}", uVar5);
 									local_f50.pOtherColObj = pColInfoObbTree->pOtherColObj;
 									local_f50.bData = (puVar12->b).pData;
 									local_f50.bCount = (puVar12->b).count;
@@ -4986,7 +4986,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	local_360[0] = pObbTree;
 	uVar6 = CheckRayObbTreeIntersection(pObbTree, pRay->pLocation, &endLocation);
 
-	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
 
 	if (uVar6 == 0) {
 		bVar5 = false;
@@ -4997,14 +4997,14 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 			while (iVar11 < local_18[uVar8]) {
 				peVar4 = local_360[uVar8 * 100 + iVar11];
 				bVar1 = peVar4->type;
-				COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim type 0x{:x}", bVar1);
+				COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim type 0x{:x}", bVar1);
 
 				if (bVar1 == COL_TYPE_TREE) {
-					COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim count {}", peVar4->count_0x52);
+					COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim count {}", peVar4->count_0x52);
 
 					for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 						uVar6 = CheckRayObbTreeIntersection(LOAD_SECTION_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
-						COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
+						COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
 
 						if (uVar6 == 0) {
 							uVar6 = uVar8 != 0 ^ 1;
@@ -5020,7 +5020,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 				else {
 					if (bVar1 == 0xd) {
 						edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
-						COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim PRIM count {}", peVar4->count_0x52);
+						COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim PRIM count {}", peVar4->count_0x52);
 
 						for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 							pDirection = pRay->pLeadVector;
@@ -5073,7 +5073,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 							edColIntersectRayUnitBoxUnit(&colOut, &primRayUnitBoxUnitIn);
 
-							COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit result {}", colOut.result);
+							COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit result {}", colOut.result);
 
 							if (colOut.result != 0) {
 								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit intersectionPoint {}", colOut.intersectionPoint.ToString());
@@ -5109,7 +5109,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 								outDistance = edF32Vector4GetDistHard(&local_610);
 
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim outDistance {} distance: {} ray length: {}", outDistance, distance, pRay->lengthA);
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim outDistance {} distance: {} ray length: {}", outDistance, distance, pRay->lengthA);
 
 								if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 									*pOutHit = pPrim;

@@ -1564,14 +1564,14 @@ void edAnmStage::AnimToWRTS()
 	edF32MATRIX3 animMatrix;
 	edANM_RTS pCurrentKeyData;
 
-	ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS total keys: 0x{:x}", this->pKeyData->count_0x0);
+	ANIMATION_LOG_VERBOSE(LogLevel::Verbose, "edAnmStage::AnimToWRTS total keys: 0x{:x}", this->pKeyData->count_0x0);
 
 	uVar1 = this->pKeyData->count_0x0;
 
 	for (pKeyData = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1); (uVar1 = uVar1 - 1, -1 < uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
 		pKeyData = (edANM_RTS_Key_Hdr*)((char*)pKeyData + pKeyData->keyOffset)) {
 		if (((pKeyData->flags & 7) != 0) && (nodeIndex = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), nodeIndex != -1)) {
-			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS processing: 0x{:x} node index: {}", uVar1, nodeIndex);
+			ANIMATION_LOG_VERBOSE(LogLevel::Verbose, "edAnmStage::AnimToWRTS processing: 0x{:x} node index: {}", uVar1, nodeIndex);
 
 			puVar3 = this->pConstantMatrixData + nodeIndex;
 
@@ -1580,7 +1580,7 @@ void edAnmStage::AnimToWRTS()
 			pCurrentKeyData = edANM_RTS(pKeyData);
 			edAnmTransformCtrl::GetValue(this->animTime, &pCurrentKeyData, &animMatrix);
 
-			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS node index: {} result: {} {} {}", nodeIndex, animMatrix.rowX.ToString(), animMatrix.rowY.ToString(), animMatrix.rowZ.ToString());
+			ANIMATION_LOG_VERBOSE(LogLevel::Verbose, "edAnmStage::AnimToWRTS node index: {} result: {} {} {}", nodeIndex, animMatrix.rowX.ToString(), animMatrix.rowY.ToString(), animMatrix.rowZ.ToString());
 
 			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + nodeIndex;
 			*pMatrixBuffer = animMatrix;

@@ -2508,8 +2508,6 @@ void CCameraGame::ClampFunc(uint* puVar5)
 
 		edF32VECTOR4 eStack16;
 
-		Log::GetInstance().ForceFlush();
-
 		assert(!std::isnan(field_0x204));
 
 		fVar6 = edF32Between_0_2Pi(this->field_0x204 + 0.0f);
