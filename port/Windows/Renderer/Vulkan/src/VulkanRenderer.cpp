@@ -327,8 +327,6 @@ private:
 		createFramebuffers();
 		createSyncObjects();
 		commandPool = Renderer::CreateCommandPool("Image Renderer Command Pool");
-
-		Renderer::Native::Setup();
 	}
 
 	void cleanupSwapChain() {
@@ -764,6 +762,9 @@ public:
 			ZONE_SCOPED_NAME("renderDelegate");
 			renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent, commandBufferList);
 		}
+
+		// rotate the commandBufferList, hack so that we process the native render, then debug UI
+		std::rotate(commandBufferList.begin(), commandBufferList.begin() + 1, commandBufferList.end());
 
 		VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };

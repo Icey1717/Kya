@@ -723,75 +723,73 @@ namespace Renderer
 				thread.join();
 			}
 
-			void UpdateInstanceDataForDraws()
+			void UpdateInstanceDataForDraw(Draw& draw)
 			{
-				for (auto& draw : draws) {
-					for (auto& instance : draw.instances) {
-						FillIndexData(instance);
-					}
-
-					drawInstanceDataUpdate.UpdateInstanceData(draw);
+				for (auto& instance : draw.instances) {
+					FillIndexData(instance);
 				}
+
+				drawInstanceDataUpdate.UpdateInstanceData(draw);
 			}
 
-			void RecordDrawCommands()
+			void RecordDrawCommands(Draw& draw)
 			{
-				if (draws.size() == 0) {
-					RecordBeginRenderPass(RenderPassKey::Empty);
-					return;
-				}
-
-				for (auto& draw : draws) {
-					drawCommandRecorder.RecordDrawCommand(draw);
-				}
+				drawCommandRecorder.RecordDrawCommand(draw);
 			}
 
-			void BeginWaitingForCommands()
+			void ProcessDraws()
 			{
-				draws.clear();
-				bRecordedCommands = true;
-				bWaitingForCommands = true;
+				Draw draw;
+				while (draws.try_dequeue(draw)) {
+					UpdateInstanceDataForDraw(draw);
+					RecordDrawCommands(draw);
+				}
 			}
 
 			void Run()
 			{
 				while (!bShouldStop) {
 					std::unique_lock<std::mutex> lock(mutex);
-					cv.wait(lock, [this] { return !bWaitingForCommands || bShouldStop; });
+					cv.wait(lock, [this] { return draws.peek() || bShouldStop || bCommandsComplete; });
 
 					ZONE_SCOPED_NAME("RenderThread::Run");
 
 					if (bShouldStop) break;
 
-					timer.Start();
-
 					// Begins render pass, binds pipeline, etc.
-					RecordBeginCommandBuffer();
+					if (bShouldRecordBegin) {
+						RecordBeginCommandBuffer();
+						bShouldRecordBegin = false;
+					}
 
-					UpdateInstanceDataForDraws();
+					ProcessDraws();
 
-					RecordDrawCommands();
-
-					MapBuffers();
-
-					// Ends renderpass etc. 
-					RecordEndCommandBuffer();
-
-					BeginWaitingForCommands();
-
-					timer.End();
+					// Ends renderpass etc.
+					if (bCommandsComplete) {
+						ProcessDraws();
+						MapBuffers();
+						RecordEndCommandBuffer();
+						bRecordedEnd = true;
+						bCommandsComplete = false;
+						timer.End();
+					}
 				}
 			}
 
 			void AddDraw(const Draw& draw)
 			{
-				ZONE_SCOPED;
-				draws.emplace_back(draw);
+				draws.enqueue(draw); // Lock-free push
+
+				if (!bRecordedCommands) {
+					bRecordedCommands = true;
+					timer.Start();
+				}
+				cv.notify_one(); // Wake up render thread if sleeping
 			}
 
 			bool IsComplete()
 			{
-				return bWaitingForCommands;
+				return bRecordedEnd;
 			}
 
 			bool GetHasRecordedCommands()
@@ -805,6 +803,9 @@ namespace Renderer
 				drawCommandRecorder.Reset();
 
 				bRecordedCommands = false;
+				bRecordedEnd = false;
+				bShouldRecordBegin = true;
+				bCommandsComplete = false;
 			}
 
 			double GetRenderThreadTime()
@@ -814,15 +815,14 @@ namespace Renderer
 
 			void SignalEndCommands()
 			{
-				{
-					if (draws.size() == 0) {
-						// No draws, exit.
-						return;
-					}
+				bCommandsComplete = true;
 
-					bWaitingForCommands = false;
+				if (bRecordedCommands) {
+					cv.notify_one();
 				}
-				cv.notify_one();
+				else {
+					bRecordedEnd = true;
+				}
 
 				NATIVE_LOG(LogLevel::Info, "SignalEndCommands");
 			}
@@ -830,12 +830,15 @@ namespace Renderer
 		private:
 
 			std::thread thread;
-			std::vector<Draw> draws;
+			moodycamel::ReaderWriterQueue<Draw> draws;
 			InstanceDataUpdate drawInstanceDataUpdate;
 			DrawCommandRecorder drawCommandRecorder;
 			std::atomic<bool> bShouldStop = false;
-			std::atomic<bool> bWaitingForCommands = true;
+			std::atomic<bool> bCommandsComplete = false;
 			std::atomic<bool> bRecordedCommands = false;
+
+			std::atomic<bool> bShouldRecordBegin = true;
+			std::atomic<bool> bRecordedEnd = false;
 
 			std::mutex mutex;
 			std::condition_variable cv;

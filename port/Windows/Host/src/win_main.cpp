@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
 
 	Renderer::Setup();
 	DebugMenu::SetupRenderer();
+	Renderer::Native::Setup();
 	DebugMenu::Init();
 	Renderer::Kya::TextureLibrary::Init();
 	Renderer::Kya::MeshLibrary::Init();

@@ -56,7 +56,6 @@ namespace Renderer
 
 		FrameBufferBase& GetFrameBuffer();
 
-		void Setup();
 		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList);
 
 		void BindTexture(SimpleTexture* pTexture);

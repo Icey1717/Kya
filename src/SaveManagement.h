@@ -28,7 +28,7 @@ public:
 	undefined8 field_0x8;
 	ulong field_0x10;
 	undefined4 field_0x18;
-	char field_0x1c;
+	byte bBootCheckLoadComplete;
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;

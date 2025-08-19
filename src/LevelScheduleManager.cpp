@@ -1104,12 +1104,12 @@ void CLevelScheduler::Episode_LoadFromIniFile(void)
 
 void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
 {
-	IMPLEMENTATION_GUARD_SAVE();
+	IMPLEMENTATION_GUARD();
 }
 
 void CLevelScheduler::SaveGame_LoadLevelState(int levelId)
 {
-	IMPLEMENTATION_GUARD_SAVE();
+	IMPLEMENTATION_GUARD();
 }
 
 int CLevelScheduler::SaveGame_GetMaxBufferSize()

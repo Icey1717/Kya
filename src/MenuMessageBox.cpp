@@ -24,7 +24,6 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	bool cVar1;
 	bool bVar1;
 	uint uVar2;
-	Timer* pTVar3;
 	edCTextStyle* pNewFont;
 	char* pcVar4;
 	int iVar5;
@@ -39,10 +38,10 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	float fVar12;
 	float x_00;
 	float fVar13;
-	edCTextStyle local_300;
-	edCTextStyle local_240;
-	edCTextStyle local_180;
-	edCTextStyle local_c0;
+	edCTextStyle textStyleA;
+	edCTextStyle textStyleB;
+	edCTextStyle textStyleC;
+	edCTextStyle textStyleD;
 
 	uVar7 = flags & 1;
 	uVar2 = GameFlags & GAME_STATE_PAUSED;
@@ -54,84 +53,84 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	fVar10 = ((float)gVideoConfig.screenHeight * 2.0f) / 2.5f;
 	x = (float)gVideoConfig.screenWidth / 2.0f;
 	fVar12 = ((float)gVideoConfig.screenWidth * 2.0f) / 2.5f;
-	local_c0.Reset();
-	local_c0.SetShadow(0x100);
-	local_c0.rgbaColour = -1;
-	local_c0.alpha = 0xff;
-	local_c0.SetScale(1.0f, 1.0f);
-	local_c0.SetFont(BootDataFont, false);
-	local_c0.SetHorizontalAlignment(2);
-	local_c0.SetVerticalAlignment(0);
-	local_c0.spaceSize = 6.0f;
-	local_180.field_0x8c = local_c0.field_0x8c * 0.5f;
+	textStyleD.Reset();
+	textStyleD.SetShadow(0x100);
+	textStyleD.rgbaColour = -1;
+	textStyleD.alpha = 0xff;
+	textStyleD.SetScale(1.0f, 1.0f);
+	textStyleD.SetFont(BootDataFont, false);
+	textStyleD.SetHorizontalAlignment(2);
+	textStyleD.SetVerticalAlignment(0);
+	textStyleD.spaceSize = 6.0f;
+	textStyleC.field_0x8c = textStyleD.field_0x8c * 0.5f;
 
-	local_180.m0 = local_c0.m0;
-	local_180.m1 = local_c0.m1;
+	textStyleC.m0 = textStyleD.m0;
+	textStyleC.m1 = textStyleD.m1;
 
-	local_180.pFunction = local_c0.pFunction;
-	local_180.flags_0x84 = local_c0.flags_0x84;
-	local_180.pPackedFont = local_c0.pPackedFont;
-	local_180.field_0x90 = local_c0.field_0x90;
-	local_180.spaceSize = 6.0f;
-	local_180.rotation = local_c0.rotation;
-	local_180.xScale = local_c0.xScale;
-	local_180.yScale = local_c0.yScale;
-	local_180.horizontalSize = local_c0.horizontalSize;
-	local_180.verticalSize = local_c0.verticalSize;
-	local_180.shadowShiftX = local_c0.shadowShiftX;
-	local_180.shadowShiftY = local_c0.shadowShiftY;
-	local_180.rgbaColour = local_c0.rgbaColour;
-	local_180.alpha = local_c0.alpha;
-	local_180.altColour = local_c0.altColour;
-	local_c0.field_0x8c = local_180.field_0x8c;
-	local_180.SetEolAutomatic(0x80);
-	local_180.SetHorizontalJustification(0x10);
-	local_180.SetHorizontalAlignment(0);
-	local_180.spaceSize = 6.0f;
+	textStyleC.pFunction = textStyleD.pFunction;
+	textStyleC.flags_0x84 = textStyleD.flags_0x84;
+	textStyleC.pPackedFont = textStyleD.pPackedFont;
+	textStyleC.field_0x90 = textStyleD.field_0x90;
+	textStyleC.spaceSize = 6.0f;
+	textStyleC.rotation = textStyleD.rotation;
+	textStyleC.xScale = textStyleD.xScale;
+	textStyleC.yScale = textStyleD.yScale;
+	textStyleC.horizontalSize = textStyleD.horizontalSize;
+	textStyleC.verticalSize = textStyleD.verticalSize;
+	textStyleC.shadowShiftX = textStyleD.shadowShiftX;
+	textStyleC.shadowShiftY = textStyleD.shadowShiftY;
+	textStyleC.rgbaColour = textStyleD.rgbaColour;
+	textStyleC.alpha = textStyleD.alpha;
+	textStyleC.altColour = textStyleD.altColour;
+	textStyleD.field_0x8c = textStyleC.field_0x8c;
+	textStyleC.SetEolAutomatic(0x80);
+	textStyleC.SetHorizontalJustification(0x10);
+	textStyleC.SetHorizontalAlignment(0);
+	textStyleC.spaceSize = 6.0f;
 
-	local_240.m0 = local_c0.m0;
-	local_240.m1 = local_c0.m1;
+	textStyleB.m0 = textStyleD.m0;
+	textStyleB.m1 = textStyleD.m1;
 
-	local_240.pFunction = local_c0.pFunction;
-	local_240.flags_0x84 = local_c0.flags_0x84;
-	local_240.pPackedFont = local_c0.pPackedFont;
-	local_240.field_0x8c = local_c0.field_0x8c;
-	local_240.field_0x90 = local_c0.field_0x90;
-	local_240.spaceSize = local_c0.spaceSize;
-	local_240.rotation = local_c0.rotation;
-	local_240.xScale = local_c0.xScale;
-	local_240.yScale = local_c0.yScale;
-	local_240.horizontalSize = local_c0.horizontalSize;
-	local_240.verticalSize = local_c0.verticalSize;
-	local_240.shadowShiftX = local_c0.shadowShiftX;
-	local_240.shadowShiftY = local_c0.shadowShiftY;
-	local_240.rgbaColour = local_c0.rgbaColour;
-	local_240.alpha = local_c0.alpha;
-	local_240.altColour = local_c0.altColour;
-	local_240.SetHorizontalAlignment(0);
-	local_240.SetVerticalAlignment(4);
+	textStyleB.pFunction = textStyleD.pFunction;
+	textStyleB.flags_0x84 = textStyleD.flags_0x84;
+	textStyleB.pPackedFont = textStyleD.pPackedFont;
+	textStyleB.field_0x8c = textStyleD.field_0x8c;
+	textStyleB.field_0x90 = textStyleD.field_0x90;
+	textStyleB.spaceSize = textStyleD.spaceSize;
+	textStyleB.rotation = textStyleD.rotation;
+	textStyleB.xScale = textStyleD.xScale;
+	textStyleB.yScale = textStyleD.yScale;
+	textStyleB.horizontalSize = textStyleD.horizontalSize;
+	textStyleB.verticalSize = textStyleD.verticalSize;
+	textStyleB.shadowShiftX = textStyleD.shadowShiftX;
+	textStyleB.shadowShiftY = textStyleD.shadowShiftY;
+	textStyleB.rgbaColour = textStyleD.rgbaColour;
+	textStyleB.alpha = textStyleD.alpha;
+	textStyleB.altColour = textStyleD.altColour;
+	textStyleB.SetHorizontalAlignment(0);
+	textStyleB.SetVerticalAlignment(4);
 
-	local_300.m0 = local_c0.m0;
-	local_300.m1 = local_c0.m1;
+	textStyleA.m0 = textStyleD.m0;
+	textStyleA.m1 = textStyleD.m1;
 
-	local_300.pFunction = local_c0.pFunction;
-	local_300.flags_0x84 = local_c0.flags_0x84;
-	local_300.pPackedFont = local_c0.pPackedFont;
-	local_300.field_0x8c = local_c0.field_0x8c;
-	local_300.field_0x90 = local_c0.field_0x90;
-	local_300.spaceSize = local_c0.spaceSize;
-	local_300.rotation = local_c0.rotation;
-	local_300.xScale = local_c0.xScale;
-	local_300.yScale = local_c0.yScale;
-	local_300.horizontalSize = local_c0.horizontalSize;
-	local_300.verticalSize = local_c0.verticalSize;
-	local_300.shadowShiftX = local_c0.shadowShiftX;
-	local_300.shadowShiftY = local_c0.shadowShiftY;
-	local_300.rgbaColour = local_c0.rgbaColour;
-	local_300.alpha = local_c0.alpha;
-	local_300.altColour = local_c0.altColour;
-	local_300.SetHorizontalAlignment(1);
-	local_300.SetVerticalAlignment(4);
+	textStyleA.pFunction = textStyleD.pFunction;
+	textStyleA.flags_0x84 = textStyleD.flags_0x84;
+	textStyleA.pPackedFont = textStyleD.pPackedFont;
+	textStyleA.field_0x8c = textStyleD.field_0x8c;
+	textStyleA.field_0x90 = textStyleD.field_0x90;
+	textStyleA.spaceSize = textStyleD.spaceSize;
+	textStyleA.rotation = textStyleD.rotation;
+	textStyleA.xScale = textStyleD.xScale;
+	textStyleA.yScale = textStyleD.yScale;
+	textStyleA.horizontalSize = textStyleD.horizontalSize;
+	textStyleA.verticalSize = textStyleD.verticalSize;
+	textStyleA.shadowShiftX = textStyleD.shadowShiftX;
+	textStyleA.shadowShiftY = textStyleD.shadowShiftY;
+	textStyleA.rgbaColour = textStyleD.rgbaColour;
+	textStyleA.alpha = textStyleD.alpha;
+	textStyleA.altColour = textStyleD.altColour;
+	textStyleA.SetHorizontalAlignment(1);
+	textStyleA.SetVerticalAlignment(4);
 	iVar6 = 0;
 
 	do {
@@ -140,10 +139,8 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 #endif
 		bCloseResult = false;
 		if ((flags & 2) == 0) {
-			pTVar3 = GetTimer();
-			CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
-			pTVar3 = GetTimer();
-			pTVar3->Update();
+			CPlayerInput::Update(GetTimer()->cutsceneDeltaTime);
+			GetTimer()->Update();
 			cVar1 = GuiDList_BeginCurrent();
 		}
 		else {
@@ -158,7 +155,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			BootBitmaps[0x12].DrawXYXY(0, 1.0f, fVar11, fVar13, fVar8, fVar9);
 			fVar13 = fVar13 + 20.0f;
 			pNewFont = edTextStyleGetCurrent();
-			edTextStyleSetCurrent(&local_c0);
+			edTextStyleSetCurrent(&textStyleD);
 
 			bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 			if (bVar1 == false) {
@@ -168,21 +165,21 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 					x_00 = x;
 					if ((flags & 8) == 0) {
 						x_00 = fVar11 + 20.0f;
-						local_180.SetHorizontalSize(fVar12 - 40.0f);
-						edTextStyleSetCurrent(&local_180);
+						textStyleC.SetHorizontalSize(fVar12 - 40.0f);
+						edTextStyleSetCurrent(&textStyleC);
 					}
 					pcVar4 = gMessageManager.get_message(msgB);
 					edTextDraw(x_00, fVar13 + 40.0f, pcVar4);
 				}
 
 				if (msgC != 0) {
-					edTextStyleSetCurrent(&local_240);
+					edTextStyleSetCurrent(&textStyleB);
 					pcVar4 = gMessageManager.get_message(msgC);
 					edTextDraw(fVar11 + 20.0f, fVar9 - 20.0f, pcVar4);
 				}
 
 				if (msgD != 0) {
-					edTextStyleSetCurrent(&local_300);
+					edTextStyleSetCurrent(&textStyleA);
 					pcVar4 = gMessageManager.get_message(msgD);
 					edTextDraw(fVar8 - 20.0f, fVar9 - 20.0f, pcVar4);
 				}

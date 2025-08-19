@@ -36,43 +36,38 @@ void SaveManagementBootCheck(void)
 	uint uVar5;
 	char acStack512[512];
 
-	/* icon.sys */
 	BootData_GetResource("icon.sys", &gSaveManagementInfoIconSys);
-	/* KYA.ICO */
 	BootData_GetResource("KYA.ICO", &gSaveManagementInfoFileIco);
-	iVar2 = CLevelScheduler::SaveGame_GetMaxBufferSize();
+
 	gSaveManagement.pBigAlloc_0x34 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
-	gSaveManagement.gameSaveMaxBufferSize = iVar2;
+	gSaveManagement.gameSaveMaxBufferSize = CLevelScheduler::SaveGame_GetMaxBufferSize();
+
 	if (gSaveManagement.pBigAlloc_0x34 == (SaveBigAlloc*)0x0) {
 		gSaveManagement.gameSaveMaxBufferSize = 0;
 	}
-	iVar2 = CSettings::GetMaxSaveBufferSize();
-	gSaveManagement.pSettings_0x38 = edMemAlloc(TO_HEAP(H_MAIN), iVar2);
+
+	gSaveManagement.pSettings_0x38 = edMemAlloc(TO_HEAP(H_MAIN), CSettings::GetMaxSaveBufferSize());
 	if (gSaveManagement.pSettings_0x38 == (void*)0x0) {
 		gSaveManagement.pSettings_0x38 = (void*)0x0;
-		iVar2 = gSaveManagement.settingsSize_0x40;
 	}
-	gSaveManagement.settingsSize_0x40 = iVar2;
+
+	gSaveManagement.settingsSize_0x40 = gSaveManagement.settingsSize_0x40;
 	uVar5 = gSaveManagementInfoIconSys.size + 0x3ff;
 	uVar3 = gSaveManagementInfoFileIco.size + 0x3ff;
-	iVar2 = CSettings::GetMaxSaveBufferSize();
-	sprintf(gSaveManagementSaveGameSize, "%d KB", ((uVar5 >> 10) + 0x10b + (uVar3 >> 10) + (iVar2 + 0x41bU >> 10)) * 0x400 + 0x3ff >> 10);
-	/* SAVESIZE */
+	sprintf(gSaveManagementSaveGameSize, "%d KB", ((uVar5 >> 10) + 0x10b + (uVar3 >> 10) + (CSettings::GetMaxSaveBufferSize() + 0x41bU >> 10)) * 0x400 + 0x3ff >> 10);
+
 	edTextResources.TextAdd("SAVESIZE", gSaveManagementSaveGameSize);
-	/* <mc>0:\\ */
 	edFilePathSplit(gSaveManagement.memCardDriveString, gSaveManagement.memCardPathEnd, (char*)0x0, (char*)0x0, "<mc>0:\\");
 	edStrCopy(gSaveManagement.memCardAccessPath, "<mc>0:\\");
 	gSaveManagement.field_0x8b4 = edFileGetFiler(acStack512, gSaveManagement.memCardAccessPath, 1);
 	if (gVideoConfig.omode == 3) {
-		/* BESLES-51473-KYA */
 		edStrCopy(gSaveManagement.serialNumber, "BESLES-51473-KYA");
 	}
 	else {
-		/* BASLUS-20440-KYA */
 		edStrCopy(gSaveManagement.serialNumber, "BASLUS-20440-KYA");
 	}
-	uVar3 = gSaveManagement.boot_check_load();
-	if ((uVar3 & 0xff) != 0) {
+
+	if ((gSaveManagement.boot_check_load()) != 0) {
 		gSaveManagement.field_0x0 = 0;
 //#ifdef PLATFORM_WIN
 		memcpy(gSaveManagement.pSettings_0x38, gDumpedSettings, CSettings::GetMaxSaveBufferSize());
@@ -91,7 +86,8 @@ void SaveManagementBootCheck(void)
 
 bool CSaveManagement::boot_check_load()
 {
-	int iVar1;
+	int deviceRoomCheckResult;
+	bool bClosed;
 
 	this->field_0x0 = 0;
 	do {
@@ -99,22 +95,26 @@ bool CSaveManagement::boot_check_load()
 #ifdef PLATFORM_PS2
 			scePcStop();
 #endif
-			this->field_0x1c = '\x01';
-			iVar1 = 3; // getType(this);
-			if (iVar1 == 3) {
+			this->bBootCheckLoadComplete = 1;
+			deviceRoomCheckResult = 3; // test_device_has_enough_room();
+			if (deviceRoomCheckResult == 3) {
 				this->field_0x0 = 1;
 				return true;
 			}
-			if (iVar1 != 2) break;
-			iVar1 = message_box(3, 6);
-			if (iVar1 == 1) {
+
+			if (deviceRoomCheckResult != 2) break;
+
+			bClosed = message_box(3, 6);
+			if (bClosed == true) {
 				return false;
 			}
 		}
-		if (iVar1 == 1) {
+
+		if (bClosed == true) {
 			return false;
 		}
-	} while ((iVar1 != 0) || (iVar1 = message_box(3, 0), iVar1 != 1));
+	} while ((deviceRoomCheckResult != 0) || (bClosed = message_box(3, 0), bClosed != true));
+
 	return false;
 }
 
@@ -266,8 +266,8 @@ bool CSaveManagement::message_box(long operationID, long messageID)
 		uVar4 = 0;
 		edDebugPrintf("MCardMenus_Warning: Unknow code");
 	}
-	bVar1 = MenuMessageBoxDisplay(flags, uVar5, uVar4, uVar3, uVar2);
-	return bVar1;
+
+	return MenuMessageBoxDisplay(flags, uVar5, uVar4, uVar3, uVar2);
 }
 
 void CSaveManagement::clear_slot()

@@ -285,6 +285,8 @@ namespace Renderer
 
 		void DrawFade(uint8_t r, uint8_t g, uint8_t b, int a);
 
+		void Setup();
+
 		enum class EClearMode
 		{
 			None,
