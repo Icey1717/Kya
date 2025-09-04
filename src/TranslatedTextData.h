@@ -24,7 +24,7 @@ public:
 
 	LANGUAGE languageID;
 	int entryCount;
-	char field_0x8[32];
+	char szFilePath[32];
 	undefined field_0x28;
 	undefined field_0x29;
 	undefined field_0x2a;

@@ -1044,9 +1044,7 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 								}
 								break;
 							case 5:
-								IMPLEMENTATION_GUARD();
-#if 0
-								pbVar36 = (byte*)*ppcVar10;
+								pbVar36 = (byte*)*pCurFormatValueA;
 								bVar33 = *pbVar36;
 								while (bVar33 != 0) {
 									pbVar36 = pbVar36 + 1;
@@ -1057,7 +1055,6 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 									pcVar38 = (char*)((byte*)pcVar38 + 1);
 									bVar33 = *pbVar36;
 								}
-#endif
 								break;
 							case 7:
 								pTextBitmap = reinterpret_cast<edTextBitmap*>(*pCurFormatValueA);

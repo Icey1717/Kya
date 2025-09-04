@@ -1636,7 +1636,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						   Example:
 						   d:\projects\b-witch\resource\build\level\cinematiques\loading\rsc_cin_airlift_to_native\wav\master_mono.vag
 							*/
-						result = edStrICmp((byte*)this->playingSounds_0x2c0[counter], (byte*)fileName);
+						result = edStrICmp(this->playingSounds_0x2c0[counter], fileName);
 						if (result == 0) {
 							/* We already have the sound file loaded, return it here */
 							return (int*)(&this->sound_0x2bc[counter]);
@@ -1648,7 +1648,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 			}
 			else {
 				IMPLEMENTATION_GUARD(
-				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)CScene::ptable.g_AudioManager_00451698, (byte*)fileName);)
+				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)CScene::ptable.g_AudioManager_00451698, fileName);)
 			}
 		}
 		else {
@@ -1808,7 +1808,7 @@ CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_
 	curIndex = 0;
 	if (0 < this->nbCinematicActors) {
 		do {
-			if (edStrICmp((byte*)this->aActorCinematic[curIndex].cinematicName, (byte*)pTag->name) == 0) {
+			if (edStrICmp(this->aActorCinematic[curIndex].cinematicName, pTag->name) == 0) {
 				pNewCinematicActor = this->aActorCinematic + curIndex;
 			}
 			curIndex = curIndex + 1;

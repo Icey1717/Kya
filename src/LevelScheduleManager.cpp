@@ -158,6 +158,34 @@ ScenarioVariable _gScenVarInfo[98] = {
 	{0x0, 0x0},
 };
 
+#define SAVEGAME_CHUNK_BSAV 0x56415342
+#define SAVEGAME_CHUNK_BSHD 0x44485342
+#define SAVEGAME_CHUNK_BSCN 0x4E435342
+#define SAVEGAME_CHUNK_BGNF 0x464E4742
+#define SAVEGAME_CHUNK_BLEV 0x56454C42
+#define SAVEGAME_CHUNK_BLHD 0x44484C42
+#define SAVEGAME_CHUNK_BLCL 0x4C434C42
+#define SAVEGAME_CHUNK_BLAC 0x43414C42
+#define SAVEGAME_CHUNK_BLCI 0x49434C42
+#define SAVEGAME_CHUNK_BLMP 0x504D4C42
+#define SAVEGAME_CHUNK_BOBJ 0x4A424F42
+
+CChunkDesc _gGameChunks[12] =
+{
+	{ SAVEGAME_CHUNK_BSAV, 0x0, 0x50000, 0x000 },
+	{ SAVEGAME_CHUNK_BSHD, 0x1, 0x40001, 0x014 },
+	{ SAVEGAME_CHUNK_BSCN, 0x1, 0x60000, 0x000 },
+	{ SAVEGAME_CHUNK_BGNF, 0x1, 0x20003, 0x134 },
+	{ SAVEGAME_CHUNK_BLEV, 0x1, 0x10000, 0x000 },
+	{ SAVEGAME_CHUNK_BLHD, 0x1, 0x70000, 0x000 },
+	{ SAVEGAME_CHUNK_BLCL, 0x1, 0x40000, 0x000 },
+	{ SAVEGAME_CHUNK_BLAC, 0x1, 0x20000, 0x000 },
+	{ SAVEGAME_CHUNK_BLCI, 0x1, 0x20000, 0x000 },
+	{ SAVEGAME_CHUNK_BLMP, 0x1, 0x50000, 0x000 },
+	{ SAVEGAME_CHUNK_BOBJ, 0x1, 0x20000, 0x000 },
+	{ 0x0, 0x0, 0x0, 0x0 },
+};
+
 CLevelScheduler* CLevelScheduler::gThis = NULL;
 
 Episode g_EpisodeDataArray_0048eb0[16];
@@ -272,9 +300,9 @@ const char* g_szNoPathError_00433c20 = "No path found in .INI -> use default !\n
 
 CLevelScheduler::CLevelScheduler()
 {
-	pSaveData_0x48 = (SaveBigAlloc*)0x0;
+	pSaveData_0x48 = (CChunk*)0x0;
 	pSaveDataEnd_0x4c = 0;
-	currentSaveIndex = 0;
+	curChunkIndex = 0;
 }
 
 uint SearchForSection_002e3bf0(undefined* param_1, uint param_2, int param_3)
@@ -323,15 +351,15 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 	}
 	else {
 		IMPLEMENTATION_GUARD();
-		pCVar2 = this->aSaveDataArray[this->currentSaveIndex]->FindNextSubChunk(this->aSaveDataArray[this->currentSaveIndex] + 1, 0x44485342);
+		pCVar2 = this->aSaveGameChunks[this->curChunkIndex]->FindNextSubChunk(this->aSaveGameChunks[this->curChunkIndex] + 1, 0x44485342);
 		if (pCVar2 != (CChunk*)0x0) {
-			this->currentSaveIndex = this->currentSaveIndex + 1;
-			this->aSaveDataArray[this->currentSaveIndex] = pCVar2;
+			this->curChunkIndex = this->curChunkIndex + 1;
+			this->aSaveGameChunks[this->curChunkIndex] = pCVar2;
 		}
 
-		this->baseSectorIndex = pCVar2[1].field_0x4;
-		this->aSaveDataArray[this->currentSaveIndex] = (CChunk*)0x0;
-		this->currentSaveIndex = this->currentSaveIndex + -1;
+		this->baseSectorIndex = pCVar2[1].hash;
+		this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
+		this->curChunkIndex = this->curChunkIndex + -1;
 	}
 
 	return;
@@ -423,18 +451,19 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 		pLevelInfoSubObj = pLevelInfoSubObj + 1;
 	} while (iVar2 < 0xc);
 	
-	//pLVar1 = pLevelInfo->field_0x238;
-	//iVar2 = 0;
-	//do {
-	//	if (param_2 != false) {
-	//		pLVar1->field_0x4 = 0;
-	//		pLVar1->field_0x0 = 0;
-	//		pLVar1->field_0x8 = 0;
-	//		pLVar1->field_0xc = 0;
-	//	}
-	//	iVar2 = iVar2 + 1;
-	//	pLVar1 = (LoadLoopObject_418_18*)&pLVar1->field_0x10;
-	//} while (iVar2 < 0x1e);
+	SectorManagerSubObjOther* pSVar1 = pLevelInfo->aSectorSubObj;
+	iVar2 = 0;
+	do {
+		if (param_2 != false) {
+			pSVar1->bankSize = 0;
+			pSVar1->flags = 0;
+			pSVar1->nbSectorConditions = 0;
+			pSVar1->aCompanionInfo = (S_COMPANION_INFO*)0x0;
+		}
+		iVar2 = iVar2 + 1;
+		pSVar1 = pSVar1 + 1;
+	} while (iVar2 < 0x1e);
+
 	return;
 }
 
@@ -490,24 +519,19 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	_gScenVarInfo[iVar9].currentValue = _gScenVarInfo[iVar9].defaultValue;
 	_gScenVarInfo[iVar9 + 1].currentValue = _gScenVarInfo[iVar9 + 1].defaultValue;
 
-	//iVar9 = 0;
-	//if (0 < this->objCount_0x4218) {
-	//	do {
-	//		pLVar7->field_0x24 = 0x20;
-	//		pLVar7->field_0x28 = 0;
-	//		iVar9 = iVar9 + 1;
-	//		pLVar7->field_0x2c = 0;
-	//		pLVar7->field_0x40 = 0;
-	//		fVar3 = gF32Vertex4Zero.w;
-	//		fVar2 = gF32Vertex4Zero.z;
-	//		fVar1 = gF32Vertex4Zero.y;
-	//		(pLVar7->field_0x30).x = gF32Vertex4Zero.x;
-	//		(pLVar7->field_0x30).y = fVar1;
-	//		(pLVar7->field_0x30).z = fVar2;
-	//		(pLVar7->field_0x30).w = fVar3;
-	//		pLVar7 = pLVar7 + 1;
-	//	} while (iVar9 < this->objCount_0x4218);
-	//}
+	iVar9 = 0;
+	if (0 < this->objCount_0x4218) {
+		do {
+			pLVar7->field_0x24 = 0x20;
+			pLVar7->field_0x28 = 0;
+			iVar9 = iVar9 + 1;
+			pLVar7->field_0x2c = 0;
+			pLVar7->field_0x40 = 0;
+			pLVar7->field_0x30 = gF32Vertex4Zero;
+			pLVar7 = pLVar7 + 1;
+		} while (iVar9 < this->objCount_0x4218);
+	}
+
 	puVar8 = this->aNativShopSubObjs;
 	iVar9 = 0;
 	if (0 < this->nbNativShopSubObjs) {
@@ -1109,7 +1133,205 @@ void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
 
 void CLevelScheduler::SaveGame_LoadLevelState(int levelId)
 {
-	IMPLEMENTATION_GUARD();
+	uint uVar1;
+	bool bVar2;
+	bool bVar3;
+	bool bVar4;
+	bool bVar5;
+	bool bVar6;
+	int* piVar7;
+	int* piVar8;
+	int* piVar9;
+	SaveDataSection_44484c42* pSVar10;
+	bool bVar11;
+	CChunk* pCVar12;
+	CChunk* pSVar13;
+	SaveDataSection_44484c42* uVar11;
+	CChunk* pCVar14;
+	int* piVar15;
+	ulong uVar16;
+	ulong uVar17;
+	int* piVar18;
+	int* piVar19;
+	int* piVar20;
+	int* local_60;
+	SaveDataSection_44484c42* local_40;
+	SaveDataSection_56454c42* local_20;
+	bool bFoundLevelSaveData;
+	CAudioManager* pAudioManager;
+	CScene* pScene;
+
+	if (this->field_0x78 != 0) {
+		pCVar12 = SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD);
+
+		IMPLEMENTATION_GUARD_AUDIO(
+		CAudioCScene::ptable.g_AudioManager_00451698->FUN_00181970(pCVar12[1].offset);
+		CAudioCScene::ptable.g_AudioManager_00451698->SetMusic(pCVar12[2].field_0x0);)
+
+		SaveGame_CloseChunk();
+	}
+
+	pSVar13 = this->pSaveData_0x48->FindNextSubChunk(this->pSaveData_0x48 + 1, SAVEGAME_CHUNK_BLEV);
+	local_20 = (SaveDataSection_56454c42*)0x0;
+	while ((pSVar13 != (CChunk*)0x0 && (local_20 == (SaveDataSection_56454c42*)0x0))) {
+		uVar11 = (SaveDataSection_44484c42*)pSVar13->FindNextSubChunk(pSVar13 + 1, SAVEGAME_CHUNK_BLHD);
+		if (levelId == uVar11->field_0x10) {
+			local_20 = reinterpret_cast<SaveDataSection_56454c42*>(pSVar13);
+		}
+
+		pSVar13 = this->pSaveData_0x48->FindNextSubChunk(reinterpret_cast<CChunk*>(reinterpret_cast<char*>(pSVar13 + 1) + pSVar13->offset), SAVEGAME_CHUNK_BLEV);
+	}
+
+	if (local_20 != (SaveDataSection_56454c42*)0x0) {
+		IMPLEMENTATION_GUARD(
+		for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, local_20->field_0x4 != uVar1 && (uVar1 != 0));
+			pCVar12 = pCVar12 + 1) {
+		}
+		if (uVar1 == 0) {
+			pCVar12 = (CChunk*)0x0;
+		}
+
+		bFoundLevelSaveData = true;
+		if (pCVar12 != (CChunk*)0x0) {
+			bFoundLevelSaveData = pCVar12->size >> 0x10 == local_20->field_0x8 >> 0x10;
+		}
+		if ((bFoundLevelSaveData) && (pSVar13 = local_20, local_20->field_0x0 == 0x16660666)) {
+			while ((local_40 = &pSVar13->sec,
+				local_40 < (SaveDataSection_44484c42*)((int)&(local_20->sec).field_0x0 + local_20->field_0xc) &&
+				(bFoundLevelSaveData))) {
+				for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, (pSVar13->sec).field_0x4 != uVar1 && (uVar1 != 0));
+					pCVar12 = pCVar12 + 1) {
+				}
+				if (uVar1 == 0) {
+					pCVar12 = (CChunk*)0x0;
+				}
+				bVar2 = true;
+				if (pCVar12 != (CChunk*)0x0) {
+					bVar2 = pCVar12->size >> 0x10 == (uint)(pSVar13->sec).field_0x8 >> 0x10;
+				}
+				if ((bVar2) && (pSVar10 = local_40, local_40->field_0x0 == 0x16660666)) {
+					while ((local_60 = &pSVar10->field_0x10,
+						local_60 < (int*)((int)&local_40->field_0x10 + (pSVar13->sec).field_0xc) && (bVar2))) {
+						for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, pSVar10[1].field_0x0 != uVar1 && (uVar1 != 0));
+							pCVar12 = pCVar12 + 1) {
+						}
+						if (uVar1 == 0) {
+							pCVar12 = (CChunk*)0x0;
+						}
+						bVar3 = true;
+						if (pCVar12 != (CChunk*)0x0) {
+							bVar3 = pCVar12->size >> 0x10 == (uint)pSVar10[1].field_0x4 >> 0x10;
+						}
+						if ((bVar3) && (piVar9 = local_60, *local_60 == 0x16660666)) {
+							while ((piVar20 = piVar9 + 4, piVar20 < (int*)((int)local_60 + pSVar10[1].field_0x8 + 0x10) && (bVar3)))
+							{
+								for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, piVar9[5] != uVar1 && (uVar1 != 0));
+									pCVar12 = pCVar12 + 1) {
+								}
+								if (uVar1 == 0) {
+									pCVar12 = (CChunk*)0x0;
+								}
+								bVar4 = true;
+								if (pCVar12 != (CChunk*)0x0) {
+									bVar4 = pCVar12->size >> 0x10 == (uint)piVar9[6] >> 0x10;
+								}
+								if ((bVar4) && (piVar8 = piVar20, *piVar20 == 0x16660666)) {
+									while ((piVar19 = piVar8 + 4, piVar19 < (int*)((int)piVar20 + piVar9[7] + 0x10) && (bVar4))) {
+										for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, piVar8[5] != uVar1 && (uVar1 != 0));
+											pCVar12 = pCVar12 + 1) {
+										}
+										if (uVar1 == 0) {
+											pCVar12 = (CChunk*)0x0;
+										}
+										bVar5 = true;
+										if (pCVar12 != (CChunk*)0x0) {
+											bVar5 = pCVar12->size >> 0x10 == (uint)piVar8[6] >> 0x10;
+										}
+										if ((bVar5) && (piVar7 = piVar19, *piVar19 == 0x16660666)) {
+											while ((piVar18 = piVar7 + 4, piVar18 < (int*)((int)piVar19 + piVar8[7] + 0x10) && (bVar5))) {
+												for (pCVar12 = _gGameChunks; (uVar1 = pCVar12->hash, piVar7[5] != uVar1 && (uVar1 != 0));
+													pCVar12 = pCVar12 + 1) {
+												}
+												if (uVar1 == 0) {
+													pCVar12 = (CChunk*)0x0;
+												}
+												bVar6 = true;
+												if (pCVar12 != (CChunk*)0x0) {
+													bVar6 = pCVar12->size >> 0x10 == (uint)piVar7[6] >> 0x10;
+												}
+												if ((bVar6) && (piVar15 = piVar7 + 8, *piVar18 == 0x16660666)) {
+													while ((piVar15 < (int*)((int)piVar18 + piVar7[7] + 0x10) && (bVar6))) {
+														pCVar12 = GetChunkDesc(piVar15[1]);
+														uVar17 = 1;
+														if (pCVar12 != (CChunk*)0x0) {
+															uVar17 = FUN_002d94f0((int)piVar15, pCVar12->size);
+														}
+														if ((uVar17 != 0) && (uVar16 = FUN_002d94d0(piVar15), uVar16 != 0)) {
+															pCVar12 = (CChunk*)FUN_002d94c0((int)piVar15);
+															while ((pCVar14 = (CChunk*)FUN_002d94a0((int)piVar15), pCVar12 < pCVar14 && (uVar17 != 0)
+																)) {
+																bVar11 = IsACompatibleChunkRecurse(this, pCVar12);
+																if (bVar11 == false) {
+																	uVar17 = 0;
+																}
+																pCVar12 = (CChunk*)FUN_002d94b0((int)pCVar12);
+															}
+														}
+														if (uVar17 == 0) {
+															bVar6 = false;
+														}
+														piVar15 = (int*)FUN_002d94a0((int)piVar15);
+													}
+												}
+												if (!bVar6) {
+													bVar5 = false;
+												}
+												piVar7 = (int*)((int)piVar18 + piVar7[7]);
+											}
+										}
+										if (!bVar5) {
+											bVar4 = false;
+										}
+										piVar8 = (int*)((int)piVar19 + piVar8[7]);
+									}
+								}
+								if (!bVar4) {
+									bVar3 = false;
+								}
+								piVar9 = (int*)((int)piVar20 + piVar9[7]);
+							}
+						}
+						if (!bVar3) {
+							bVar2 = false;
+						}
+						pSVar10 = (SaveDataSection_44484c42*)((int)local_60 + pSVar10[1].field_0x8);
+					}
+				}
+				if (!bVar2) {
+					bFoundLevelSaveData = false;
+				}
+				pSVar13 = (SaveDataSection_56454c42*)((int)&local_40->field_0x0 + (pSVar13->sec).field_0xc);
+			}
+		}
+
+		pScene = CScene::_pinstance;
+		if (bFoundLevelSaveData) {
+			IMPLEMENTATION_GUARD(
+			this->curChunkIndex = this->curChunkIndex + 1;
+			this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)local_20;
+			ManagerLoadSaveData_001b8b50();
+			this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
+			this->curChunkIndex = this->curChunkIndex + -1;
+			CMapManager::Func_003f81c0(CScene::ptable.g_MapManager_0045168c);
+			if (this->field_0x78 != 0) {
+				pScene->Level_CheckpointReset();
+			})
+		})
+	}
+
+	Level_UpdateCurLiveLevelInfo();
+
+	return;
 }
 
 int CLevelScheduler::SaveGame_GetMaxBufferSize()
@@ -1243,16 +1465,267 @@ int CLevelScheduler::GetFightLevel()
 int INT_ARRAY_0048ed60[16] = { 0 };
 int INT_ARRAY_0048eda0[16] = { 0 };
 
+CChunkDesc* CLevelScheduler::GetChunkDesc(uint hash)
+{
+	uint gameChunkHash;
+	CChunkDesc* pGameChunk;
+	for (pGameChunk = _gGameChunks; (gameChunkHash = pGameChunk->hash, gameChunkHash != hash && (gameChunkHash != 0)); pGameChunk = pGameChunk + 1) {
+	}
+
+	if (gameChunkHash == 0) {
+		pGameChunk = (CChunkDesc*)0x0;
+	}
+
+	return pGameChunk;
+}
+
+void* CLevelScheduler::SaveGame_BeginChunk(uint hash)
+{
+	CChunkDesc* pGameChunk = GetChunkDesc(hash);
+	CChunk* pSaveChunk = reinterpret_cast<CChunk*>(reinterpret_cast<char*>(this->aSaveGameChunks[this->curChunkIndex]) + this->aSaveGameChunks[this->curChunkIndex]->offset);
+
+	pSaveChunk = pSaveChunk + 1;
+
+	if (pGameChunk->field_0x4 == 0) {
+		pSaveChunk->field_0x0 = 0x16660666;
+	}
+	else {
+		pSaveChunk->field_0x0 = 0x6667666;
+	}
+
+	pSaveChunk->hash = hash;
+	pSaveChunk->size = pGameChunk->size;
+	pSaveChunk->offset = pGameChunk->offset;
+
+	this->curChunkIndex = this->curChunkIndex + 1;
+	this->aSaveGameChunks[this->curChunkIndex] = pSaveChunk;
+
+	void* pData = pSaveChunk + 1;
+
+	if (pSaveChunk->field_0x0 != 0x6667666) {
+		pData = (void*)0x0;
+	}
+
+	return pData;
+}
+
+void CLevelScheduler::SaveGame_EndChunk(void* pDataEnd)
+{
+	CChunk* pChunk = this->aSaveGameChunks[this->curChunkIndex];
+	this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
+	this->curChunkIndex--;
+
+	if (pChunk->offset == 0) {
+		pChunk->offset = reinterpret_cast<char*>(pDataEnd) - reinterpret_cast<char*>(pChunk) - sizeof(CChunk);
+	}
+
+	this->aSaveGameChunks[this->curChunkIndex]->offset = 
+		reinterpret_cast<char*>(pChunk) + pChunk->offset + sizeof(CChunk) - reinterpret_cast<char*>(this->aSaveGameChunks[this->curChunkIndex]);
+
+	return;
+}
+
+CChunk* CLevelScheduler::SaveGame_OpenChunk(uint hash)
+{
+	CChunk* pChunk;
+
+	pChunk = this->aSaveGameChunks[this->curChunkIndex]->FindNextSubChunk(this->aSaveGameChunks[this->curChunkIndex] + 1, hash);
+	if (pChunk != (CChunk*)0x0) {
+		this->curChunkIndex = this->curChunkIndex + 1;
+		this->aSaveGameChunks[this->curChunkIndex] = pChunk;
+	}
+
+	return pChunk;
+}
+
+void CLevelScheduler::SaveGame_CloseChunk()
+{
+	this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
+	this->curChunkIndex = this->curChunkIndex + -1;
+	return;
+}
+
+void CLevelScheduler::SaveGame_SaveScenVars()
+{
+	int* pScenVariables = (int*)SaveGame_BeginChunk(SAVEGAME_CHUNK_BSCN);
+
+	*pScenVariables = 0x62;
+	ScenarioVariable* pSVar8 = _gScenVarInfo;
+	int* pCurScenVariables = pScenVariables;
+	int iVar12 = 0;
+	int iVar3;
+	do {
+		iVar3 = iVar12;
+		iVar12 = iVar3 + 8;
+		pCurScenVariables[1] = pSVar8->currentValue;
+		pCurScenVariables[2] = pSVar8[1].currentValue;
+		pCurScenVariables[3] = pSVar8[2].currentValue;
+		pCurScenVariables[4] = pSVar8[3].currentValue;
+		pCurScenVariables[5] = pSVar8[4].currentValue;
+		pCurScenVariables[6] = pSVar8[5].currentValue;
+		pCurScenVariables[7] = pSVar8[6].currentValue;
+		pCurScenVariables[8] = pSVar8[7].currentValue;
+		pSVar8 = pSVar8 + 8;
+		pCurScenVariables = pCurScenVariables + 8;
+	} while (iVar12 < 0x5a);
+
+	(pScenVariables + iVar12)[1] = _gScenVarInfo[iVar12].currentValue;
+	(pScenVariables + iVar12)[2] = _gScenVarInfo[iVar3 + 9].currentValue;
+
+
+	SaveGame_EndChunk(reinterpret_cast<char*>(pScenVariables) + 0x18c);
+
+	return;
+}
+
+struct EpisodeSaveData
+{
+	float health;
+	float field_0x4;
+	int nbMagic;
+	int field_0xc;
+	int nbMoney;
+	int scenery;
+	int monster;
+	int bet;
+	int bank;
+	int shop;
+	int originalScenery;
+	int originalMonster;
+	int originalBet;
+	EpStruct_80 aEpisodes[2];
+};
+
+void CLevelScheduler::SaveGame_SaveGameNfo()
+{
+	int iVar4;
+	EpisodeSaveData* pfVar10;
+
+	pfVar10 = reinterpret_cast<EpisodeSaveData*>(SaveGame_BeginChunk(SAVEGAME_CHUNK_BGNF));
+
+	pfVar10->health = _gGameNfo.health;
+	pfVar10->nbMagic = _gGameNfo.nbMagic;
+	pfVar10->nbMoney = _gGameNfo.nbMoney;
+	pfVar10->scenery = _gGameNfo.scenery;
+	pfVar10->monster = _gGameNfo.monster;
+	pfVar10->bet = _gGameNfo.bet;
+	pfVar10->bank = _gGameNfo.bank;
+	pfVar10->shop = _gGameNfo.shop;
+	if ((_gScenVarInfo[6].currentValue < 0) || (_gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		pfVar10->originalScenery = 0;
+		pfVar10->originalMonster = 0;
+		pfVar10->originalBet = 0;
+	}
+	else {
+		if ((_gScenVarInfo[6].currentValue < 0) ||
+			(iVar4 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+			iVar4 = _gGameNfo.nbEpisodes + -1;
+		}
+
+		pfVar10->originalScenery = g_EpisodeDataArray_0048eb0[iVar4].scenery;
+		pfVar10->originalMonster = g_EpisodeDataArray_0048eb0[iVar4].monster;
+		pfVar10->originalBet = g_EpisodeDataArray_0048eb0[iVar4].bet;
+	}
+
+	for (int i = 0; i < 2; i = i + 1) {
+		for (int j = 0; j < 0x10; j = j + 1) {
+			pfVar10->aEpisodes[i].aSubObj[j] = _gGameNfo.aEpisodes[i].aSubObj[j];
+		}
+	}
+
+	SaveGame_EndChunk(pfVar10);
+
+	return;
+}
+
+struct LoadLoopObject_50SaveData
+{
+	int field_0x0;
+	undefined4 field_0x4;
+	undefined4 field_0x8;
+	undefined4 field_0xc;
+	undefined8 field_0x10;
+	edF32VECTOR3 field_0x18;
+};
+struct NativShopLevelSubObjSaveData
+{
+	int field_0x0;
+	int currentLevelId;
+	int field_0x8;
+	edF32VECTOR3 currentLocation;
+	edF32VECTOR3 rotationQuat;
+	NativShopLevelSubObjSubObj aSubObjs[5];
+};
+
+struct ObjSaveData
+{
+	int field_0x0;
+	int field_0x4;
+	undefined4 field_0x8;
+	NativShopLevelSubObjSaveData field_0xc[10];
+	LoadLoopObject_50SaveData field_0x494[64];
+};
+
+void CLevelScheduler::SaveGame_SaveGameObj()
+{
+	int iVar4;
+	NativShopLevelSubObj* pShopSubObj;
+	NativShopLevelSubObjSaveData* pShopSave;
+	LoadLoopObject_50* pLL50;
+	ObjSaveData* pObjSave;
+
+	pObjSave = reinterpret_cast<ObjSaveData*>(SaveGame_BeginChunk(SAVEGAME_CHUNK_BOBJ));
+
+	pShopSave = pObjSave->field_0xc;
+	pShopSubObj = this->aNativShopSubObjs;
+	pObjSave->field_0x0 = this->objCount_0x4218;
+	pObjSave->field_0x4 = this->nbNativShopSubObjs;
+	pObjSave->field_0x8 = this->field_0x5b30;
+
+	iVar4 = 0;
+	if (0 < this->nbNativShopSubObjs) {
+		do {
+			pShopSave->field_0x0 = pShopSubObj->field_0x0;
+			pShopSave->currentLevelId = pShopSubObj->currentLevelId;
+			pShopSave->field_0x8 = pShopSubObj->field_0x8;
+			pShopSave->currentLocation = (pShopSubObj->currentLocation).xyz;
+			pShopSave->rotationQuat = (pShopSubObj->rotationQuat).xyz;
+			for (int i = 0; i < 5; i = i + 1) {
+				pShopSave->aSubObjs[i] = pShopSubObj->aSubObjs[i];
+			}
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->nbNativShopSubObjs);
+	}
+
+	LoadLoopObject_50SaveData* pLL50Save = pObjSave->field_0x494;
+	pLL50 = this->field_0x4220;
+	iVar4 = 0;
+	if (0 < this->objCount_0x4218) {
+		do {
+			pLL50Save->field_0x0 = pLL50->field_0x0;
+			pLL50Save->field_0x4 = pLL50->field_0x24;
+			pLL50Save->field_0x8 = pLL50->field_0x28;
+			pLL50Save->field_0xc = pLL50->field_0x2c;
+			pLL50Save->field_0x10 = pLL50->field_0x40;
+			pLL50Save->field_0x18 = (pLL50->field_0x30).xyz;
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->objCount_0x4218);
+	}
+	
+	SaveGame_EndChunk(reinterpret_cast<char*>(pObjSave) + pObjSave->field_0x0 * 0x24 + 0x494);
+
+	return;
+}
+
 void CLevelScheduler::Game_Init()
 {
-	SaveBigAlloc* pSVar1;
+	CChunk* pSVar1;
 	bool bVar2;
-	SaveBigAlloc* lVar2;
 	int iVar3;
 	int iVar4;
 	int iVar5;
 	undefined4* puVar6;
-	undefined4* puVar7;
+	uint* puVar7;
 	undefined4* puVar8;
 	int* piVar9;
 	int* piVar10;
@@ -1260,39 +1733,37 @@ void CLevelScheduler::Game_Init()
 	S_LEVEL_INFO* pLVar12;
 	char local_80[128];
 
-	lVar2 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
-	/* Zero out most of load loop */
-	pSaveData_0x48 = lVar2;
-	pSaveDataEnd_0x4c = (int)(pSaveData_0x48 + 1);
+	this->pSaveData_0x48 = reinterpret_cast<CChunk*>(edMemAlloc(TO_HEAP(H_MAIN), 0x10000));
+	this->pSaveDataEnd_0x4c = pSaveData_0x48 + 1;
 	memset(pSaveData_0x48, 0, 0x10000);
-	aSaveDataArray[0] = (CChunk*)0x0;
-	aSaveDataArray[1] = (CChunk*)0x0;
-	aSaveDataArray[2] = (CChunk*)0x0;
-	aSaveDataArray[3] = (CChunk*)0x0;
-	pLVar12 = aLevelInfo;
-	aSaveDataArray[4] = (CChunk*)0x0;
+	this->aSaveGameChunks[0] = (CChunk*)0x0;
+	this->aSaveGameChunks[1] = (CChunk*)0x0;
+	this->aSaveGameChunks[2] = (CChunk*)0x0;
+	this->aSaveGameChunks[3] = (CChunk*)0x0;
+	pLVar12 = this->aLevelInfo;
+	this->aSaveGameChunks[4] = (CChunk*)0x0;
 	iVar11 = 0;
-	aSaveDataArray[5] = (CChunk*)0x0;
-	aSaveDataArray[6] = (CChunk*)0x0;
-	aSaveDataArray[7] = (CChunk*)0x0;
-	currentSaveIndex = 0;
-	aSaveDataArray[currentSaveIndex] = (CChunk*)pSaveData_0x48;
-	pObjectiveStreamBegin = 0;
-	pObjectiveStreamEnd = 0;
-	field_0x74 = 0;
-	field_0x78 = 0;
-	field_0x7c = 0;
-	field_0x80 = 0;
-	pLevelBankBufferEntry = (edCBankBufferEntry*)0x0;
-	pIOPBankBufferEntry = (edCBankBufferEntry*)0x0;
-	loadStage_0x5b48 = 4;
-	field_0x84 = 0.0;
-	field_0x88 = 0.0;
-	nextLevelId = 0;
-	currentLevelID = 0x10;
-	currentElevatorID = -1;
-	level_0x5b50 = 0x10;
-	level_0x5b54 = -1;
+	this->aSaveGameChunks[5] = (CChunk*)0x0;
+	this->aSaveGameChunks[6] = (CChunk*)0x0;
+	this->aSaveGameChunks[7] = (CChunk*)0x0;
+	curChunkIndex = 0;
+	this->aSaveGameChunks[curChunkIndex] = pSaveData_0x48;
+	this->pObjectiveStreamBegin = 0;
+	this->pObjectiveStreamEnd = 0;
+	this->field_0x74 = 0;
+	this->field_0x78 = 0;
+	this->field_0x7c = 0;
+	this->field_0x80 = 0;
+	this->pLevelBankBufferEntry = (edCBankBufferEntry*)0x0;
+	this->pIOPBankBufferEntry = (edCBankBufferEntry*)0x0;
+	this->loadStage_0x5b48 = 4;
+	this->field_0x84 = 0.0f;
+	this->field_0x88 = 0.0f;
+	this->nextLevelId = 0;
+	this->currentLevelID = 0x10;
+	this->currentElevatorID = -1;
+	this->level_0x5b50 = 0x10;
+	this->level_0x5b54 = -1;
 	do {
 		pLVar12->aCompanionInfo = 0;
 		pLVar12->pSimpleConditionData = 0;
@@ -1313,6 +1784,7 @@ void CLevelScheduler::Game_Init()
 		pLVar12[7].pSimpleConditionData = 0;
 		pLVar12 = pLVar12 + 8;
 	} while (iVar11 < 0x10);
+
 	iVar11 = 0xf;
 	piVar10 = INT_ARRAY_0048ed60 + 0xf;
 	piVar9 = INT_ARRAY_0048eda0 + 0xf;
@@ -1348,9 +1820,9 @@ void CLevelScheduler::Game_Init()
 	INT_ARRAY_0048eda0[8] = 9;
 	/* Copy 'CDEURO/Level/' into load loop object after this ptr */
 	INT_ARRAY_0048ed60[6] = 0;
-	strcpy(levelPath, g_CD_LevelPath_00433bf8);
+	strcpy(this->levelPath, g_CD_LevelPath_00433bf8);
 	/* Try read [Router] - SetPath from INI file */
-	bVar2 = gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, levelPath);
+	bVar2 = gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, this->levelPath);
 	if (bVar2 == false) {
 		/* No path found in .INI -> use default !\n */
 		edDebugPrintf(g_szNoPathError_00433c20);
@@ -1358,7 +1830,7 @@ void CLevelScheduler::Game_Init()
 	/* Try read [Router] - AddLevel from INI file  */
 	local_80[0] = '\0';
 	gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szAddLevel_00433c48, local_80);
-	pLVar12 = aLevelInfo;
+	pLVar12 = this->aLevelInfo;
 	iVar11 = 0;
 	do {
 		if (pLVar12->aCompanionInfo != (S_COMPANION_INFO*)0x0) {
@@ -1378,112 +1850,41 @@ void CLevelScheduler::Game_Init()
 	Levels_LoadInfoBank();
 	Episode_LoadFromIniFile();
 
-	pLVar12 = aLevelInfo;
+	pLVar12 = this->aLevelInfo;
 	iVar11 = 0;
 	do {
-		iVar3 = edStrICmp((byte*)local_80, (byte*)pLVar12->levelName);
+		iVar3 = edStrICmp(local_80, pLVar12->levelName);
+
 		if (iVar3 == 0) goto LAB_002e26c8;
+
 		iVar11 = iVar11 + 1;
 		pLVar12 = pLVar12 + 1;
 	} while (iVar11 < 0x10);
+
 	iVar11 = 0;
 LAB_002e26c8:
 	nextLevelId = iVar11;
-	pSVar1 = pSaveData_0x48;
-	pSVar1->field_0x0 = 0x16660666;
-	pSVar1->field_0x4 = 0x56415342;
-	pSVar1->field_0x8 = 0x50000;
-	pSVar1->size_0xc = 0;
-	iVar11 = *(int*)(aLevelInfo[0].levelName + currentSaveIndex * 4 + -100);
-	//for (piVar9 = &DAT_00433aa0; (iVar3 = *piVar9, iVar3 != 0x44485342 && (iVar3 != 0)); piVar9 = piVar9 + 4) {
-	//}
-	//if (iVar3 == 0) {
-	//	piVar9 = (int*)0x0;
-	//}
-	//iVar3 = piVar9[3];
-	//iVar4 = piVar9[2];
-	//iVar11 = iVar11 + *(int*)(iVar11 + 0xc);
-	//piVar10 = (int*)(iVar11 + 0x10);
-	//if (piVar9[1] == 0) {
-	//	*piVar10 = 0x16660666;
-	//}
-	//else {
-	//	*piVar10 = 0x6667666;
-	//}
-	//*(undefined4*)(iVar11 + 0x14) = 0x44485342;
-	//*(int*)(iVar11 + 0x18) = iVar4;
-	//*(int*)(iVar11 + 0x1c) = iVar3;
-	//count_0x70 = count_0x70 + 1;
-	//*(int**)(loadLoopObjectArray[0].levelName + count_0x70 * 4 + -100) = piVar10;
-	//if (*piVar10 == 0x6667666) {
-	//	puVar7 = (undefined4*)(iVar11 + 0x20);
-	//}
-	//else {
-	//	puVar7 = (undefined4*)0x0;
-	//}
-	//*puVar7 = 0x10;
-	//puVar7[2] = 0;
-	//puVar7[1] = 0xffffffff;
-	//puVar7[3] = 0xffffffff;
-	//puVar7[4] = 0xffffffff;
-	//iVar11 = *(int*)(levelPath + count_0x70 * 4 + -8 + 0x50);
-	//*(undefined4*)(levelPath + count_0x70 * 4 + -8 + 0x50) = 0;
-	//count_0x70 = count_0x70 + -1;
-	//iVar3 = *(int*)(loadLoopObjectArray[0].levelName + count_0x70 * 4 + -100);
-	//*(int*)(iVar3 + 0xc) = (iVar11 + *(int*)(iVar11 + 0xc) + 0x10) - (iVar3 + 0x10);
-	//iVar11 = *(int*)(loadLoopObjectArray[0].levelName + count_0x70 * 4 + -100);
-	//for (piVar9 = &DAT_00433aa0; (iVar3 = *piVar9, iVar3 != 0x4e435342 && (iVar3 != 0)); piVar9 = piVar9 + 4) {
-	//}
-	//if (iVar3 == 0) {
-	//	piVar9 = (int*)0x0;
-	//}
-	//iVar3 = piVar9[3];
-	//iVar4 = piVar9[2];
-	//iVar11 = iVar11 + *(int*)(iVar11 + 0xc);
-	//piVar10 = (int*)(iVar11 + 0x10);
-	//if (piVar9[1] == 0) {
-	//	*piVar10 = 0x16660666;
-	//}
-	//else {
-	//	*piVar10 = 0x6667666;
-	//}
-	//*(undefined4*)(iVar11 + 0x14) = 0x4e435342;
-	//*(int*)(iVar11 + 0x18) = iVar4;
-	//*(int*)(iVar11 + 0x1c) = iVar3;
-	//count_0x70 = count_0x70 + 1;
-	//*(int**)(loadLoopObjectArray[0].levelName + count_0x70 * 4 + -100) = piVar10;
-	//puVar7 = (undefined4*)0x0;
-	//if (*piVar10 == 0x6667666) {
-	//	puVar7 = (undefined4*)(iVar11 + 0x20);
-	//}
-	//iVar11 = 0;
-	//*puVar7 = 0x62;
-	//puVar8 = &DAT_004253d0;
-	//puVar6 = puVar7;
-	//do {
-	//	iVar11 = iVar11 + 8;
-	//	puVar6[1] = puVar8[1];
-	//	puVar6[2] = puVar8[3];
-	//	puVar6[3] = puVar8[5];
-	//	puVar6[4] = puVar8[7];
-	//	puVar6[5] = puVar8[9];
-	//	puVar6[6] = puVar8[0xb];
-	//	puVar6[7] = puVar8[0xd];
-	//	puVar6[8] = puVar8[0xf];
-	//	puVar8 = puVar8 + 0x10;
-	//	puVar6 = puVar6 + 8;
-	//} while (iVar11 < 0x5a);
-	//(puVar7 + iVar11)[1] = (&DAT_004253d4)[iVar11 * 2];
-	//(puVar7 + iVar11)[2] = (&DAT_004253dc)[iVar11 * 2];
-	//iVar11 = *(int*)(levelPath + count_0x70 * 4 + -8 + 0x50);
-	//*(undefined4*)(levelPath + count_0x70 * 4 + -8 + 0x50) = 0;
-	//count_0x70 = count_0x70 + -1;
-	//*(int*)(iVar11 + 0xc) = (int)puVar7 + (0x18c - (iVar11 + 0x10));
-	//iVar3 = *(int*)(loadLoopObjectArray[0].levelName + count_0x70 * 4 + -100);
-	//*(int*)(iVar3 + 0xc) = (iVar11 + *(int*)(iVar11 + 0xc) + 0x10) - (iVar3 + 0x10);
-	//FUN_002da9b0(inLoapLoopObject);
-	//FUN_002da2e0(inLoapLoopObject);
-	if (aLevelInfo[0xe].levelName[0] == '\0') {
+
+	CChunk* pCVar10 = this->pSaveData_0x48;
+	pCVar10->field_0x0 = 0x16660666;
+	pCVar10->hash = SAVEGAME_CHUNK_BSAV;
+	pCVar10->size = 0x50000;
+	pCVar10->offset = 0;
+
+	puVar7 = (uint*)SaveGame_BeginChunk(SAVEGAME_CHUNK_BSHD);
+	*puVar7 = 0x10;
+	puVar7[2] = 0;
+	puVar7[1] = 0xffffffff;
+	puVar7[3] = 0xffffffff;
+	puVar7[4] = 0xffffffff;
+
+	SaveGame_EndChunk(puVar7 + 5);
+
+	SaveGame_SaveScenVars();
+	SaveGame_SaveGameNfo();
+	SaveGame_SaveGameObj();
+
+	if (this->aLevelInfo[0xe].levelName[0] == '\0') {
 		Level_FillRunInfo(nextLevelId, -1, -1);
 	}
 	else {
@@ -1492,7 +1893,7 @@ LAB_002e26c8:
 		//Level_FillRunInfo(0x4, -1, -1);
 		//Level_FillRunInfo(0x4, 9, -1);
 		//Level_FillRunInfo(0x0, 9, 0xb);
-		Level_FillRunInfo(0x2, -1, 0x5c);
+		//Level_FillRunInfo(0x2, -1, 0x5c);
 	}
 	return;
 }
@@ -2339,7 +2740,7 @@ void CLevelScheduler::Level_ClearAll()
 	if (this->field_0x78 != 0) {
 		MoreLoadLoopObjectSetup(false);
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD(
 		Levels_UpdateDataFromSavedGame();)
 	}
 
@@ -2347,7 +2748,7 @@ void CLevelScheduler::Level_ClearAll()
 		MoreLoadLoopObjectSetup(false);
 		Episode_LoadFromIniFile();
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD(
 		pCVar9 = this->pSaveData_0x48;
 		pCVar9->field_0x0 = 0x16660666;
 		pCVar9->field_0x4 = 0x56415342;
@@ -2361,8 +2762,8 @@ void CLevelScheduler::Level_ClearAll()
 		}
 		uVar1 = pSVar8->field_0xc;
 		uVar2 = pSVar8->field_0x8;
-		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
-			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		iVar10 = (int)&this->aSaveGameChunks[this->curChunkIndex]->hash +
+			this->aSaveGameChunks[this->curChunkIndex]->offset;
 		pCVar9 = (CChunk*)(iVar10 + 0x10);
 		if (pSVar8->field_0x4 == 0) {
 			pCVar9->field_0x0 = 0x16660666;
@@ -2373,8 +2774,8 @@ void CLevelScheduler::Level_ClearAll()
 		*(undefined4*)(iVar10 + 0x14) = 0x44485342;
 		*(undefined4*)(iVar10 + 0x18) = uVar2;
 		*(undefined4*)(iVar10 + 0x1c) = uVar1;
-		this->currentSaveIndex = this->currentSaveIndex + 1;
-		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		this->curChunkIndex = this->curChunkIndex + 1;
+		this->aSaveGameChunks[this->curChunkIndex] = pCVar9;
 		if (pCVar9->field_0x0 == 0x6667666) {
 			puVar6 = (undefined4*)(iVar10 + 0x20);
 		}
@@ -2386,11 +2787,11 @@ void CLevelScheduler::Level_ClearAll()
 		puVar6[1] = 0xffffffff;
 		puVar6[3] = 0xffffffff;
 		puVar6[4] = 0xffffffff;
-		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
-		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
-		this->currentSaveIndex = this->currentSaveIndex + -1;
-		this->aSaveDataArray[this->currentSaveIndex]->offset =
-			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		iVar10 = *(int*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50) = 0;
+		this->curChunkIndex = this->curChunkIndex + -1;
+		this->aSaveGameChunks[this->curChunkIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveGameChunks[this->curChunkIndex] + 1));
 		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x4e435342 && (iVar10 != 0))
 			; pSVar8 = pSVar8 + 1) {
 		}
@@ -2399,8 +2800,8 @@ void CLevelScheduler::Level_ClearAll()
 		}
 		uVar1 = pSVar8->field_0xc;
 		uVar2 = pSVar8->field_0x8;
-		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
-			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		iVar10 = (int)&this->aSaveGameChunks[this->curChunkIndex]->hash +
+			this->aSaveGameChunks[this->curChunkIndex]->offset;
 		pCVar9 = (CChunk*)(iVar10 + 0x10);
 		if (pSVar8->field_0x4 == 0) {
 			pCVar9->field_0x0 = 0x16660666;
@@ -2411,8 +2812,8 @@ void CLevelScheduler::Level_ClearAll()
 		*(undefined4*)(iVar10 + 0x14) = 0x4e435342;
 		*(undefined4*)(iVar10 + 0x18) = uVar2;
 		*(undefined4*)(iVar10 + 0x1c) = uVar1;
-		this->currentSaveIndex = this->currentSaveIndex + 1;
-		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		this->curChunkIndex = this->curChunkIndex + 1;
+		this->aSaveGameChunks[this->curChunkIndex] = pCVar9;
 		puVar6 = (undefined4*)0x0;
 		if (pCVar9->field_0x0 == 0x6667666) {
 			puVar6 = (undefined4*)(iVar10 + 0x20);
@@ -2437,12 +2838,12 @@ void CLevelScheduler::Level_ClearAll()
 		} while (iVar10 < 0x5a);
 		(puVar6 + iVar10)[1] = _gScenVarInfo[iVar10].currentValue;
 		(puVar6 + iVar10)[2] = _gScenVarInfo[iVar4 + 9].currentValue;
-		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
-		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
-		this->currentSaveIndex = this->currentSaveIndex + -1;
+		iVar10 = *(int*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50) = 0;
+		this->curChunkIndex = this->curChunkIndex + -1;
 		*(int*)(iVar10 + 0xc) = (int)puVar6 + (0x18c - (iVar10 + 0x10));
-		this->aSaveDataArray[this->currentSaveIndex]->offset =
-			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		this->aSaveGameChunks[this->curChunkIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveGameChunks[this->curChunkIndex] + 1));
 		SaveGame_SaveScenVars(this);
 		SaveGame_SaveGameInfo(this);)
 	}
@@ -2479,7 +2880,7 @@ void CLevelScheduler::Level_ClearAll()
 		Levels_LoadInfoBank();
 		Episode_LoadFromIniFile();
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD(
 		pSVar11 = this->aLevelInfo;
 		iVar10 = 0;
 		do {
@@ -2504,8 +2905,8 @@ void CLevelScheduler::Level_ClearAll()
 		}
 		uVar1 = pSVar8->field_0xc;
 		uVar2 = pSVar8->field_0x8;
-		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
-			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		iVar10 = (int)&this->aSaveGameChunks[this->curChunkIndex]->hash +
+			this->aSaveGameChunks[this->curChunkIndex]->offset;
 		pCVar9 = (CChunk*)(iVar10 + 0x10);
 		if (pSVar8->field_0x4 == 0) {
 			pCVar9->field_0x0 = 0x16660666;
@@ -2516,8 +2917,8 @@ void CLevelScheduler::Level_ClearAll()
 		*(undefined4*)(iVar10 + 0x14) = 0x44485342;
 		*(undefined4*)(iVar10 + 0x18) = uVar2;
 		*(undefined4*)(iVar10 + 0x1c) = uVar1;
-		this->currentSaveIndex = this->currentSaveIndex + 1;
-		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		this->curChunkIndex = this->curChunkIndex + 1;
+		this->aSaveGameChunks[this->curChunkIndex] = pCVar9;
 		if (pCVar9->field_0x0 == 0x6667666) {
 			puVar6 = (undefined4*)(iVar10 + 0x20);
 		}
@@ -2529,11 +2930,11 @@ void CLevelScheduler::Level_ClearAll()
 		puVar6[1] = 0xffffffff;
 		puVar6[3] = 0xffffffff;
 		puVar6[4] = 0xffffffff;
-		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
-		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
-		this->currentSaveIndex = this->currentSaveIndex + -1;
-		this->aSaveDataArray[this->currentSaveIndex]->offset =
-			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		iVar10 = *(int*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50) = 0;
+		this->curChunkIndex = this->curChunkIndex + -1;
+		this->aSaveGameChunks[this->curChunkIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveGameChunks[this->curChunkIndex] + 1));
 		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x4e435342 && (iVar10 != 0))
 			; pSVar8 = pSVar8 + 1) {
 		}
@@ -2542,8 +2943,8 @@ void CLevelScheduler::Level_ClearAll()
 		}
 		uVar1 = pSVar8->field_0xc;
 		uVar2 = pSVar8->field_0x8;
-		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
-			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		iVar10 = (int)&this->aSaveGameChunks[this->curChunkIndex]->hash +
+			this->aSaveGameChunks[this->curChunkIndex]->offset;
 		pCVar9 = (CChunk*)(iVar10 + 0x10);
 		if (pSVar8->field_0x4 == 0) {
 			pCVar9->field_0x0 = 0x16660666;
@@ -2554,8 +2955,8 @@ void CLevelScheduler::Level_ClearAll()
 		*(undefined4*)(iVar10 + 0x14) = 0x4e435342;
 		*(undefined4*)(iVar10 + 0x18) = uVar2;
 		*(undefined4*)(iVar10 + 0x1c) = uVar1;
-		this->currentSaveIndex = this->currentSaveIndex + 1;
-		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		this->curChunkIndex = this->curChunkIndex + 1;
+		this->aSaveGameChunks[this->curChunkIndex] = pCVar9;
 		puVar6 = (undefined4*)0x0;
 		if (pCVar9->field_0x0 == 0x6667666) {
 			puVar6 = (undefined4*)(iVar10 + 0x20);
@@ -2580,12 +2981,12 @@ void CLevelScheduler::Level_ClearAll()
 		} while (iVar10 < 0x5a);
 		(puVar6 + iVar10)[1] = _gScenVarInfo[iVar10].currentValue;
 		(puVar6 + iVar10)[2] = _gScenVarInfo[iVar4 + 9].currentValue;
-		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
-		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
-		this->currentSaveIndex = this->currentSaveIndex + -1;
+		iVar10 = *(int*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->curChunkIndex * 4 + -8 + 0x50) = 0;
+		this->curChunkIndex = this->curChunkIndex + -1;
 		*(int*)(iVar10 + 0xc) = (int)puVar6 + (0x18c - (iVar10 + 0x10));
-		this->aSaveDataArray[this->currentSaveIndex]->offset =
-			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		this->aSaveGameChunks[this->curChunkIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveGameChunks[this->curChunkIndex] + 1));
 		SaveGame_SaveScenVars(this);
 		SaveGame_SaveGameInfo(this);)
 	}
@@ -3206,11 +3607,13 @@ void CLevelScheduler::FUN_002dc200(int elevatorId, int levelId, int param_4)
 
 CChunk* CChunk::FindNextSubChunk(CChunk* pChunk, uint param_3)
 {
-	for (; (pChunk < (CChunk*)((char*)&this[1].field_0x0 + this->offset) && (param_3 != pChunk->field_0x4));
-		pChunk = (CChunk*)((char*)&pChunk[1].field_0x0 + pChunk->offset)) {
+	for (; (pChunk < (CChunk*)(reinterpret_cast<char*>(this + 1) + this->offset) && (param_3 != pChunk->hash));
+		pChunk = (CChunk*)(reinterpret_cast<char*>(this + 1) + pChunk->offset)) {
 	}
-	if (((CChunk*)((char*)&this[1].field_0x0 + this->offset) <= pChunk) || (param_3 != pChunk->field_0x4)) {
+
+	if (((CChunk*)(reinterpret_cast<char*>(this + 1) + this->offset) <= pChunk) || (param_3 != pChunk->hash)) {
 		pChunk = (CChunk*)0x0;
 	}
+
 	return pChunk;
 }

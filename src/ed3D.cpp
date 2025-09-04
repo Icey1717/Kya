@@ -13941,8 +13941,6 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 						ed3DHierarchyNodeClrFlag(pNode, ED_3D_HIDDEN_FLAG);
 					}
 
-					MY_LOG("pObb_Internal %x", peVar3->pObbFloat.pObb_Internal);
-
 					edAnmSkeleton skeleton = edAnmSkeleton((edANM_SKELETON*)LOAD_SECTION(peVar3->pObbFloat.pObb_Internal));
 
 					m0 = TheAnimManager.GetMatrixBuffer(skeleton.pTag->boneCount);

@@ -954,12 +954,12 @@ const float in_vf0x = 0.0f;
 
 enum EBankAction
 {
-	BANK_ACTION_3 = 3,
-	BANK_ACTION_5 = 5,
+	WRITE = 3,
+	SYNC = 5,
 	CLOSE = 4,
 	LOAD = 0,
 	OPEN = 6,
-	READ_STREAM = 2,
+	READ = 2,
 	SEEK = 1
 };
 

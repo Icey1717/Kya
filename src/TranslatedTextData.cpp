@@ -77,8 +77,9 @@ CMessageFile::CMessageFile()
 	entryCount = 0;
 	languageID = (LANGUAGE)0;
 	pDataA = (ulong*)0x0;
-	field_0x8[0] = '\0';
+	szFilePath[0] = '\0';
 	pBankAccessObj = (edCBankBufferEntry*)0x0;
+
 	return;
 }
 
@@ -149,12 +150,12 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 		}
 
 		if (pFilePath != (char*)0x0) {
-			iVar6 = edStrCopy(this->field_0x8, pFilePath);
-			(this->field_0x8 + iVar6 + -8)[2] = '%';
-			(this->field_0x8 + iVar6 + -8)[3] = 's';
+			iVar6 = edStrCopy(this->szFilePath, pFilePath);
+			(this->szFilePath + iVar6 + -8)[2] = '%';
+			(this->szFilePath + iVar6 + -8)[3] = 's';
 		}
 
-		sprintf(acStack512, this->field_0x8, g_LanguageSuffixArray_00425840[languageID]);
+		sprintf(acStack512, this->szFilePath, g_LanguageSuffixArray_00425840[languageID]);
 		iVar6 = pBankAccess->get_index(acStack512);
 		if ((iVar6 != -1) && (bVar5 = pBankAccess->get_info(iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
 			this->languageID = languageID;
@@ -194,7 +195,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 	byte bVar4;
 	edFILEH* pDebugBank;
 	char* pcVar5;
-	char acStack512[512];
+	char szPath[512];
 
 	if (inLanguageID == AUTO) {
 		inLanguageID = CMessageFile::sm_default_language;
@@ -203,20 +204,21 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 	if ((this->pFileData != (char*)0x0) && (inLanguageID == this->languageID)) {
 		return;
 	}
+
 	if (filePath != (char*)0x0) {
-		edStrCopy(this->field_0x8, filePath);
+		edStrCopy(this->szFilePath, filePath);
 	}
 
 	MY_LOG("MessageFile::select_language {} [{}]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
 
 	this->pBankAccessObj = (edCBankBufferEntry*)0x0;
 	this->languageID = inLanguageID;
-	sprintf(acStack512, this->field_0x8, g_LanguageSuffixArray_00425840[inLanguageID]);
+	sprintf(szPath, this->szFilePath, g_LanguageSuffixArray_00425840[inLanguageID]);
 	if (this->pFileData == (char*)0x0) {
-		pcVar5 = edFileOpen(acStack512, &this->size, 0);
+		pcVar5 = edFileOpen(szPath, &this->size, 0);
 		this->pFileData = pcVar5;
 		if (this->pFileData == (char*)0x0) {
-			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: {}\n", acStack512);
+			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: {}\n", szPath);
 			return;
 		}
 		if (this != (CMessageFile*)0x0) {
@@ -241,7 +243,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 		}
 	}
 	else {
-		pDebugBank = edFileOpen(acStack512, 1);
+		pDebugBank = edFileOpen(szPath, 1);
 		if (pDebugBank == (edFILEH*)0x0) {
 			return;
 		}

@@ -75,8 +75,23 @@ struct SaveDataSection_56454c42 {
 	struct SaveDataSection_44484c42 sec;
 };
 
-struct CChunk {
+class CChunk
+{
+public:
 	uint field_0x0;
+	uint hash;
+	uint size;
+	int offset;
+
+	CChunk* FindNextSubChunk(CChunk* pChunk, uint param_3);
+};
+
+static_assert(sizeof(CChunk) == 0x10);
+
+class CChunkDesc
+{
+public:
+	uint hash;
 	uint field_0x4;
 	uint size;
 	int offset;
@@ -373,6 +388,18 @@ public:
 	bool Money_TakeFromMonster(int amount);
 	bool Money_TakeFromScenery(int amount);
 
+	CChunkDesc* GetChunkDesc(uint hash);
+
+	void* SaveGame_BeginChunk(uint hash);
+	void SaveGame_EndChunk(void* pDataEnd);
+
+	CChunk* SaveGame_OpenChunk(uint hash);
+	void SaveGame_CloseChunk();
+
+	void SaveGame_SaveScenVars();
+	void SaveGame_SaveGameNfo();
+	void SaveGame_SaveGameObj();
+
 public:
 
 	static CLevelScheduler* gThis;
@@ -432,10 +459,10 @@ public:
 	undefined field_0x45;
 	undefined field_0x46;
 	undefined field_0x47;
-	struct SaveBigAlloc* pSaveData_0x48;
-	int pSaveDataEnd_0x4c;
-	CChunk* aSaveDataArray[8];
-	int currentSaveIndex;
+	CChunk* pSaveData_0x48;
+	CChunk* pSaveDataEnd_0x4c;
+	CChunk* aSaveGameChunks[8];
+	int curChunkIndex;
 	undefined4 field_0x74;
 	int field_0x78;
 	undefined4 field_0x7c;

@@ -1,5 +1,6 @@
 #include "EdFileBase.h"
 #include "EdenLib/edFile/include/edFileFiler.h"
+#include "EdenLib/edFile/include/edFileNoWaitStack.h"
 
 StaticEdFileBase StaticEdFileBase_004497f0 = { 0 };
 char gFilePath[8];
@@ -20,7 +21,7 @@ bool StaticEdFileBase::FUN_00401f30()
 {
 	bool bVar1;
 	edCFiler* peVar2;
-	edCFiler_28* peVar3;
+	edCFileNoWaitStack* peVar3;
 	char acStack512[512];
 
 	bVar1 = this->field_0x4 == 0;
@@ -34,8 +35,7 @@ bool StaticEdFileBase::FUN_00401f30()
 		peVar2 = this->pEdFileBase;
 		bVar1 = peVar2 != (edCFiler*)0x0;
 		if (bVar1) {
-			peVar3 = peVar2->GetGlobalC_0x1c();
-			bVar1 = peVar3->freeIndexes != 0;
+			bVar1 = peVar2->getnowaitfilestack()->nbInUse != 0;
 		}
 
 		bVar1 = !bVar1;

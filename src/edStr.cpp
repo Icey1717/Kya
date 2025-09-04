@@ -121,17 +121,19 @@ int edStrCmp(char* __s1, char* __s2)
 	return iVar2;
 }
 
-int edStrICmp(byte* __s1, byte* __s2)
+int edStrICmp(char const* __s1, char const* __s2)
 {
-	byte bVar1;
+	char bVar1;
 	int iVar2;
 
 	for (; ((bVar1 = *__s1, bVar1 != 0 && (*__s2 != 0)) && ((bVar1 & 0xdf) == (*__s2 & 0xdf))); __s1 = __s1 + 1) {
 		__s2 = __s2 + 1;
 	}
+
 	if (((bVar1 != 0) || (iVar2 = 0, *__s2 != 0)) && (iVar2 = 1, bVar1 == 0)) {
 		iVar2 = -1;
 	}
+
 	return iVar2;
 }
 

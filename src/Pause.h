@@ -67,6 +67,7 @@ public:
 	void draw_help_line(ulong msgId, int x, int y, uint color);
 
 	void DrawMainMenu();
+	bool DrawNewGame();
 	void DrawInitialSaveMenuHelp(ulong helpMsgId, uint color);
 
 	void update_page();
@@ -81,6 +82,10 @@ public:
 	virtual void on_change_selection();
 
 	float get_time_in_state();
+
+	void pop_page();
+
+	void FUN_002f1b50(ActionFuncPtr pFunc, int slot);
 
 	struct CMessageFile* pTranslatedTextData;
 	struct edCTextFont* pFontA;
@@ -229,6 +234,8 @@ void HelpLeave();
 
 void MapEnter();
 void MapLeave();
+
+void CallPauseChange(int param_1);
 
 extern CSettings gSettings;
 

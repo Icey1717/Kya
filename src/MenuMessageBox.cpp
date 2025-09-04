@@ -46,8 +46,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	uVar7 = flags & 1;
 	uVar2 = GameFlags & GAME_STATE_PAUSED;
 	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
-		IMPLEMENTATION_GUARD(
-		FUN_001a7220(1);)
+		CallPauseChange(1);
 	}
 
 	fVar10 = ((float)gVideoConfig.screenHeight * 2.0f) / 2.5f;
@@ -230,12 +229,15 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			edViewportSetClearMask(pViewport, 0);
 			edVideoFlip();
 			edViewportSetClearMask(pViewport, 0xffffffff);
+#ifdef PLATFORM_WIN
+			Renderer::WaitUntilReady();
+#endif
+
 		}
 	} while (((bCloseResult == false) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
 
 	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
-		IMPLEMENTATION_GUARD(
-		FUN_001a7220(0);)
+		CallPauseChange(0);
 	}
 
 	return bCloseResult;

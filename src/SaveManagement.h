@@ -3,18 +3,39 @@
 
 #include "Types.h"
 
-struct SaveData5 {
-	int field_0x0;
-	byte field_0x4;
+#define ROOM_CHECK_RESULT_ERROR 1
+#define ROOM_CHECK_RESULT_NOT_ENOUGH_ROOM 2
+#define ROOM_CHECK_RESULT_OK 3
+
+struct SaveData5
+{
+	SaveData5() { this->levelId = 0x10; }
+
+	uint levelId;
+	float gameTime;
+	short nbFreedWolfen;
+	ushort bGameCompleted;
+	int nbMagic;
+	int nbMoney;
+
+	bool IsValid() { return this->levelId != 0x10; }
 };
 
-
-class CSaveManagement { /* CSaveManagement */
+class CSaveManagement
+{
 public:
 	bool boot_check_load();
 	bool message_box(long operationID, long messageID);
+	int test_device_has_enough_room();
+	bool file_exists(char* name, uint size);
+	void read_slot_info(int slotId);
+	bool load_settings();
 
 	void clear_slot();
+
+	bool save_sequence();
+
+	SaveData5* GetSaveData5(int index);
 
 public:
 	byte field_0x0;
@@ -25,15 +46,15 @@ public:
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	undefined8 field_0x8;
+	ulong freeBytes;
 	ulong field_0x10;
-	undefined4 field_0x18;
+	int deviceRoomState;
 	byte bBootCheckLoadComplete;
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	int field_0x20;
-	uint field_0x24;
+	int nbSaveFiles;
+	uint fileExistsFlags;
 	int slotID_0x28;
 	char* field_0x2c;
 	undefined field_0x30;
@@ -2061,58 +2082,7 @@ public:
 	undefined field_0x845;
 	undefined field_0x846;
 	undefined field_0x847;
-	struct SaveData5 field_0x848[4];
-	undefined4 field_0x85c;
-	undefined field_0x860;
-	undefined field_0x861;
-	undefined field_0x862;
-	undefined field_0x863;
-	undefined field_0x864;
-	undefined field_0x865;
-	undefined field_0x866;
-	undefined field_0x867;
-	undefined field_0x868;
-	undefined field_0x869;
-	undefined field_0x86a;
-	undefined field_0x86b;
-	undefined field_0x86c;
-	undefined field_0x86d;
-	undefined field_0x86e;
-	undefined field_0x86f;
-	undefined4 field_0x870;
-	undefined field_0x874;
-	undefined field_0x875;
-	undefined field_0x876;
-	undefined field_0x877;
-	undefined field_0x878;
-	undefined field_0x879;
-	undefined field_0x87a;
-	undefined field_0x87b;
-	undefined field_0x87c;
-	undefined field_0x87d;
-	undefined field_0x87e;
-	undefined field_0x87f;
-	undefined field_0x880;
-	undefined field_0x881;
-	undefined field_0x882;
-	undefined field_0x883;
-	undefined4 field_0x884;
-	undefined field_0x888;
-	undefined field_0x889;
-	undefined field_0x88a;
-	undefined field_0x88b;
-	undefined field_0x88c;
-	undefined field_0x88d;
-	undefined field_0x88e;
-	undefined field_0x88f;
-	undefined field_0x890;
-	undefined field_0x891;
-	undefined field_0x892;
-	undefined field_0x893;
-	undefined field_0x894;
-	undefined field_0x895;
-	undefined field_0x896;
-	undefined field_0x897;
+	SaveData5 field_0x848[4];
 	undefined field_0x898;
 	undefined field_0x899;
 	undefined field_0x89a;
@@ -2141,7 +2111,7 @@ public:
 	undefined field_0x8b1;
 	undefined field_0x8b2;
 	undefined field_0x8b3;
-	struct edCFiler* field_0x8b4;
+	struct edCFiler* pFiler;
 };
 
 extern CSaveManagement gSaveManagement;

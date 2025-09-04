@@ -30,6 +30,8 @@
 #include "FrontEndDisp.h"
 #include "Cheat.h"
 #include "MenuMessageBox.h"
+#include "EdenLib/edFile/include/edFileFiler.h"
+#include "EdenLib/edFile/include/edFileNoWaitStack.h"
 
 CSimpleMenuPause gPauseMenu;
 
@@ -1678,6 +1680,36 @@ void CSimpleMenu::draw_help_line(ulong msgId, int x, int y, uint color)
 
 int gDebugLevelCheatEnabled_00449824 = 0;
 
+
+void UpdateForFreedWolfen(int nbFreedWolfen)
+{
+	if (nbFreedWolfen < 0x104) {
+		if (nbFreedWolfen < 0xf0) {
+			if (nbFreedWolfen < 0xdc) {
+				if ((199 < nbFreedWolfen) && (INT_0044982c < 1)) {
+					INT_0044982c = 1;
+				}
+			}
+			else {
+				if (INT_0044982c < 2) {
+					INT_0044982c = 2;
+				}
+			}
+		}
+		else {
+			if (INT_0044982c < 3) {
+				INT_0044982c = 3;
+			}
+		}
+	}
+	else {
+		if (INT_0044982c < 4) {
+			INT_0044982c = 4;
+		}
+	}
+	return;
+}
+
 void CSimpleMenu::DrawMainMenu()
 {
 	CPauseManager* pCVar1;
@@ -1694,16 +1726,16 @@ void CSimpleMenu::DrawMainMenu()
 		iVar5 = 0;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
 	iVar4 = 0;
 	do {
-		pSVar3 = FUN_002f5230(&gSaveManagement, iVar4);
-		bVar2 = FUN_002f2e80(pSVar3);
-		if ((bVar2 != false) && (*(short*)&pSVar3[2].field_0x0 != 0)) {
-			FUN_00407850((ulong) * (ushort*)((int)&pSVar3[1].field_0x0 + 3));
+		pSVar3 = gSaveManagement.GetSaveData5(iVar4);
+		bVar2 = pSVar3->IsValid();
+		if ((bVar2 != false) && (pSVar3->bGameCompleted != 0)) {
+			UpdateForFreedWolfen(pSVar3->nbFreedWolfen);
 		}
+
 		iVar4 = iVar4 + 1;
-	} while (iVar4 < 4);)
+	} while (iVar4 < 4);
 
 	iVar4 = gVideoConfig.screenHeight;
 	if (gVideoConfig.screenHeight < 0) {
@@ -1724,11 +1756,11 @@ void CSimpleMenu::DrawMainMenu()
 	draw_option_type_page(0, 0x40a00065f4f5054, PM_OptionsMenu, 0, 0);
 	draw_option_type_page(0, 0x18164e555f424f4e, PM_Bonus, 0, 0);
 
-	IMPLEMENTATION_GUARD_LOG(
 	if (pCVar1->field_0x24 != 0) {
+		IMPLEMENTATION_GUARD(
 		FUN_002f1b50(FUN_002f33e0, 0);
-		pCVar1->field_0x24 = 0;
-	})
+		pCVar1->field_0x24 = 0;)
+	}
 
 	gSettings.SetSettingsToGlobal();
 
@@ -1742,6 +1774,194 @@ void CSimpleMenu::DrawMainMenu()
 	gSettings.musicVolume = gSettings.musicVolume;
 	gSettings.sfxVolume = gSettings.sfxVolume;
 	return;
+}
+
+void FUN_002f2f00(int param_1)
+{
+	edCFiler* pFiler;
+	bool bVar1;
+	int iVar2;
+	edCFileNoWaitStack* pFilerEntry;
+
+	gSaveManagement.field_0x0 = 0;
+	while (true) {
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+		iVar2 = gSaveManagement.test_device_has_enough_room();
+		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 0)) || (iVar2 != 1)) break;
+		gSaveManagement.message_box(4, 5);
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+		IMPLEMENTATION_GUARD(
+		bVar1 = edFileFormat(gSaveManagement.memCardAccessPath, 0);
+		if ((bVar1 == false) && (bVar1 = gSaveManagement.message_box(4, 2), bVar1 == true)) {
+			return;
+		})
+
+		if (gSaveManagement.pFiler != (edCFiler*)0x0) {
+			gSaveManagement.pFiler->getnowaitfilestack()->AddFilerSync(gSaveManagement.pFiler);
+		}
+
+		edFileNoWaitStackFlush();
+	}
+
+	return;
+}
+
+void SaveSaveData_002f2ef0(int)
+{
+	gSaveManagement.save_sequence();
+	return;
+}
+
+bool CSimpleMenu::DrawNewGame()
+{
+	bool bVar1;
+	int iVar2;
+	Timer* pTVar3;
+	ulong uVar4;
+
+	iVar2 = gSaveManagement.test_device_has_enough_room();
+	if (iVar2 != 3) {
+		if (iVar2 == 1) {
+			bVar1 = MenuMessageBoxDisplay(7, 0x5e40464d5e010000, 0x445f425e42480708, 0x12041a06190e1a, 0x120c1a54544f4e);
+			if (bVar1 == true) {
+				pop_page();
+			}
+			else {
+				if (bVar1 == true) {
+					FUN_002f1b50(FUN_002f2f00, 0);
+				}
+			}
+			return false;
+		}
+
+		if (iVar2 == 2) {
+			bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x14474442585e4b46, 0x4155440c0600011c, 0x1201141a170a02);
+			if (bVar1 == true) {
+				pop_page();
+			}
+			else {
+				if (bVar1 == true) {
+					pop_page();
+
+					if (gDebugLevelCheatEnabled_00449824 == 0) {
+						CLevelScheduler::gThis->Level_Run(0, CLevelScheduler::gThis->nextLevelId, 0xffffffff, CScene::_pinstance->field_0x110, 0xffffffff, true);
+					}
+					else {
+						CLevelScheduler::gThis->Level_Run(0, 0xd, 0xffffffff, 0xffffffff, 0xffffffff, true);
+					}
+					if ((GameFlags & 0xc) != 0) {
+						if (DAT_00448ea8 == 0) {
+							GetTimer()->Update();
+						}
+
+						PauseLeave();
+					}
+
+					UINT_00448eac = 0;
+
+					CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+				}
+			}
+			return false;
+		}
+
+		if (iVar2 == 0) {
+			bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x594d5d4557521e09, 0x4155440c0600011c, 0x1201141a170a02);
+			if (bVar1 == true) {
+				pop_page();
+			}
+			else {
+				if (bVar1 == true) {
+					pop_page();
+
+					if (gDebugLevelCheatEnabled_00449824 == 0) {
+						CLevelScheduler::gThis->Level_Run(0, CLevelScheduler::gThis->nextLevelId, 0xffffffff,
+							CScene::_pinstance->field_0x110, 0xffffffff, true);
+					}
+					else {
+						CLevelScheduler::gThis->Level_Run(0, 0xd, 0xffffffff, 0xffffffff, 0xffffffff, true);
+					}
+
+					if ((GameFlags & 0xc) != 0) {
+						if (DAT_00448ea8 == 0) {
+							GetTimer()->Update();
+						}
+
+						PauseLeave();
+					}
+
+					UINT_00448eac = 0;
+
+					CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+				}
+			}
+
+			return false;
+		}
+	}
+
+	if (gSaveManagement.fileExistsFlags == 0x1ff) {
+		IMPLEMENTATION_GUARD(
+		DrawFileSelectBackground_001b32a0(this->selectedIndex);
+		draw_title(this, 0x57555b5c5c1a0909, -0xaa);
+		this->field_0xdc = -6.0;
+		this->field_0xd8 = 0x78;
+		set_vertical_spacing(this, 0x38);
+		this->scaleX = (float)&DAT_3f4ccccd;
+		this->scaleY = (float)&DAT_3f4ccccd;
+		this->selectedScaleX = 0.9;
+		this->selectedScaleY = 0.9;
+		set_justification_left(this);
+		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 0);
+		draw_action(this, uVar4, MemCardSelect0, 0, ~PM_MiniGame);
+		set_vertical_spacing(this, 0x46);
+		FUN_002f2c90(this);
+		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 1);
+		draw_action(this, uVar4, MemCardSelect0, 1, ~PM_MiniGame);
+		set_justification_left(this);
+		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 2);
+		draw_action(this, uVar4, MemCardSelect0, 2, ~PM_MiniGame);
+		FUN_002f2c90(this);
+		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 3);
+		draw_action(this, uVar4, MemCardSelect0, 3, ~PM_MiniGame);
+		bVar1 = true;)
+	}
+	else {
+		bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x1614191e025f4343, 0x121b1007544f4e, 0x120c1a54544f4e);
+		if (bVar1 == true) {
+			FUN_002f1b50(SaveSaveData_002f2ef0, 0);
+		}
+		else {
+			if (bVar1 == true) {
+				if (gDebugLevelCheatEnabled_00449824 == 0) {
+					CLevelScheduler::gThis->Level_Run(0, CLevelScheduler::gThis->nextLevelId, 0xffffffff,
+						CScene::_pinstance->field_0x110, 0xffffffff, true);
+				}
+				else {
+					CLevelScheduler::gThis->Level_Run(0, 0xd, 0xffffffff, 0xffffffff, 0xffffffff, true);
+				}
+
+				if ((GameFlags & 0xc) != 0) {
+					if (DAT_00448ea8 == 0) {
+						GetTimer()->Update();
+					}
+
+					PauseLeave();
+				}
+
+				UINT_00448eac = 0;
+
+				CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+			}
+		}
+		bVar1 = false;
+	}
+
+	return bVar1;
 }
 
 void CSimpleMenu::DrawInitialSaveMenuHelp(ulong helpMsgId, uint color)
@@ -1795,9 +2015,8 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 					}
 					else {
 						if (EVar4 == PM_InitialSave) {
-							IMPLEMENTATION_GUARD(
-							uVar5 = DrawNewGameScreen_001b24b0(pMenu);
-							uVar5 = uVar5 & 0xff;)
+							uVar5 = pMenu->DrawNewGame();
+							uVar5 = uVar5 & 0xff;
 						}
 						else {
 							if (EVar4 == PM_MainMenu) {
@@ -1969,6 +2188,27 @@ void CSimpleMenu::on_change_selection()
 float CSimpleMenu::get_time_in_state()
 {
 	return Timer::GetTimer()->totalTime - this->totalTime;
+}
+
+void CSimpleMenu::pop_page()
+{
+	HistoryEntry* pHVar1;
+
+	this->field_0x2c = this->field_0x2c + -1;
+	pHVar1 = this->aHistory + this->field_0x2c + -7;
+	this->currentPage = (EPauseMenu)pHVar1[7].currentPage;
+	this->selectedIndex = pHVar1[7].selectedIndex;
+	this->field_0x50 = pHVar1[7].field_0x8;
+
+	return;
+}
+
+void CSimpleMenu::FUN_002f1b50(ActionFuncPtr pFunc, int slot)
+{
+	this->pFunc_0x40 = pFunc;
+	this->slotID_0x44 = slot;
+
+	return;
 }
 
 CSplashScreen::CSplashScreen()
