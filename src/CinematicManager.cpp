@@ -4690,6 +4690,83 @@ int CCinematicManager::GetNumCutscenes_001c50b0()
 	return this->numCutscenes_0x8;
 }
 
+struct SaveDataChunk_BLCI
+{
+	int nbCutscenes;
+
+	struct CutsceneData
+	{
+		uint bitFlags;
+		uint flags;
+		float totalCutsceneDelta;
+	} data[];
+};
+
+void CCinematicManager::Level_SaveContext()
+{
+	SaveDataChunk_BLCI* piVar1;
+	CCinematic** ppCinematic;
+	int iVar2;
+	int iVar3;
+	CCinematic* pCinematic;
+	CLevelScheduler* pLevelScheduler;
+
+	pLevelScheduler = CLevelScheduler::gThis;
+	ppCinematic = this->ppCinematicObjB_A;
+	iVar3 = 0;
+	for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
+		if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
+			iVar3 = iVar3 + 1;
+		}
+		ppCinematic = ppCinematic + 1;
+	}
+	if (iVar3 != 0) {
+		piVar1 = reinterpret_cast<SaveDataChunk_BLCI*>(CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCI));
+		piVar1->nbCutscenes = iVar3;
+		SaveDataChunk_BLCI::CutsceneData* pData = reinterpret_cast<SaveDataChunk_BLCI::CutsceneData*>(piVar1 + 1);
+		ppCinematic = this->ppCinematicObjB_A;
+		for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
+			if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
+				pData->bitFlags = *reinterpret_cast<uint*>(&(*ppCinematic)->field_0x10);
+				pCinematic = *ppCinematic;
+				pData->flags = 0;
+				pData->totalCutsceneDelta = pCinematic->totalCutsceneDelta;
+				if ((pCinematic->flags_0x8 & 0x400) != 0) {
+					pData->flags = pData->flags | 2;
+				}
+
+				if (pCinematic->state != CS_Stopped) {
+					pData->flags = pData->flags | 1;
+				}
+
+				if ((pCinematic->flags_0x8 & 0x20) != 0) {
+					pData->flags = pData->flags | 4;
+				}
+
+				if ((pCinematic->flags_0x8 & 0x40) != 0) {
+					pData->flags = pData->flags | 8;
+				}
+
+				if ((pCinematic->flags_0x8 & 0x1000) != 0) {
+					pData->flags = pData->flags | 0x10;
+				}
+
+				pData = pData + 1;
+			}
+			ppCinematic = ppCinematic + 1;
+		}
+
+		pLevelScheduler->SaveGame_EndChunk(pData);
+	}
+
+	return;
+}
+
+void CCinematicManager::Level_LoadContext()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CCinematicManager::LevelLoading_Draw()
 {
 	int iVar1;

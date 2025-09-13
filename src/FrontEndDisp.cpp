@@ -354,7 +354,7 @@ char* CFrontendDisplay::ProfileGetName()
 
 void CFrontendDisplay::Level_LoadContext()
 {
-	if (CLevelScheduler::gThis->field_0x78 != 0) {
+	if (CLevelScheduler::gThis->bShouldLoad != 0) {
 		//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
 		this->pHealthBar->ShowLife();
 		this->pMoney->ShowMoney();

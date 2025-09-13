@@ -745,6 +745,27 @@ void CScene::InitiateCheckpointReset(int bFadeOut)
 	return;
 }
 
+void CScene::Level_SaveContext()
+{
+	CObjectManager** ppManager;
+	int curManagerIndex;
+
+	curManagerIndex = 0;
+	ppManager = CScene::ptable.aManagers;
+	do {
+		if (*ppManager != (CObjectManager*)0x0) {
+			(*ppManager)->Level_SaveContext();
+		}
+
+		curManagerIndex = curManagerIndex + 1;
+		ppManager = ppManager + 1;
+	} while (curManagerIndex < 0x18);
+
+	GlobalDList_AddToView();
+
+	return;
+}
+
 void CScene::Level_Term(void)
 {
 	FxFogProp* pFVar2;

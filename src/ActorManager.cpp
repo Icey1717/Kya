@@ -11,6 +11,7 @@
 #ifdef PLATFORM_WIN
 #include "profiling.h"
 #endif
+#include "LevelScheduleManager.h"
 
 #define MAX_LINKED_ACTORS 0x80
 
@@ -502,7 +503,77 @@ void CActorManager::Level_PauseChange(bool bPaused)
 	return;
 }
 
+// Bit in CActor::actorFieldS meaning "include in save"
+static constexpr uint32_t SAVE_FLAG = 0x10;
+
 void CActorManager::Level_SaveContext()
+{
+	// 1) Count how many savable actors per class
+	int perClassCount[87] = { 0 }; // matches the loop limit 0x57
+	int totalSavable = 0;
+	int distinctClasses = 0;
+
+	for (int i = 0; i < nbActors; ++i) {
+		CActor* a = aActors[i];
+		if ((a->actorFieldS & SAVE_FLAG) != 0) {
+			int& count = perClassCount[a->typeID];
+			++totalSavable;
+			if (count == 0) ++distinctClasses;
+			++count;
+		}
+	}
+
+	if (totalSavable == 0) {
+		return; // nothing to write
+	}
+
+	// 2) CLASS SUMMARY CHUNK ("BLCL")
+	uint32_t* out = (uint32_t*)CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCL);
+	*out++ = distinctClasses;
+
+	for (int classIdx = 0; classIdx < 87; ++classIdx) {
+		int n = perClassCount[classIdx];
+		if (n > 0) {
+			const ActorClassProperties& props = CActorFactory::gClassProperties[classIdx];
+			*out++ = props.field_0x10;	// identifies the class in the save stream
+			*out++ = props.field_0x14;	// bytes that each instance of this class will write
+			*out++ = n;					// how many instances to expect in the actor data chunk
+		}
+	}
+
+	CLevelScheduler::gThis->SaveGame_EndChunk(out);
+
+	// 3) ACTOR DATA CHUNK ("BLAC")
+	uint8_t* outBytes = (uint8_t*)CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLAC);
+
+	// Walk each class’s storage and serialize the instances flagged for saving
+	for (int classIdx = 0; classIdx < 87; ++classIdx) {
+		if (perClassCount[classIdx] <= 0) continue;
+
+		const ActorClassProperties& props = CActorFactory::gClassProperties[classIdx];
+		const CClassInfo& ci = aClassInfo[classIdx];
+
+		for (int i = 0; i < ci.totalCount; ++i) {
+			CActor* actor = *(CActor**)((uint8_t*)ci.aActors + i * ci.size); // or reinterpret_cast if it’s an array of actors
+			if ((actor->actorFieldS & SAVE_FLAG) == 0) continue;
+
+			// Write a placement/identity hash first
+			*(uint32_t*)outBytes = actor->subObjA->hashCode;
+			outBytes += 4;
+
+			// Then the instance payload exactly saveSize bytes (implemented by each class)
+			// Signature looks like: actor->SaveContext(void* dst, uint32 classId, uint32 payloadSize)
+			IMPLEMENTATION_GUARD(
+			actor->SaveContext(outBytes, props.classId, props.saveSize);
+
+			outBytes += props.saveSize;)
+		}
+	}
+
+	CLevelScheduler::gThis->SaveGame_EndChunk(outBytes);
+}
+
+void CActorManager::Level_LoadContext()
 {
 	IMPLEMENTATION_GUARD();
 }

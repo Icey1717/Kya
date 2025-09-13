@@ -794,6 +794,9 @@ public:
 
 	virtual void Level_PauseChange(bool bPaused);
 
+	virtual void Level_SaveContext();
+	virtual void Level_LoadContext();
+
 #ifdef PLATFORM_WIN
 	virtual char* ProfileGetName() { return "Cinematic"; }
 #endif

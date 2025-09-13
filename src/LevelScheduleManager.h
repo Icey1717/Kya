@@ -33,17 +33,49 @@
 
 #define SCN_MAX							0x17
 
+#define SAVEGAME_CHUNK_BSAV 0x56415342
+#define SAVEGAME_CHUNK_BSHD 0x44485342
+#define SAVEGAME_CHUNK_BSCN 0x4E435342
+#define SAVEGAME_CHUNK_BGNF 0x464E4742
+#define SAVEGAME_CHUNK_BLEV 0x56454C42
+#define SAVEGAME_CHUNK_BLHD 0x44484C42
+#define SAVEGAME_CHUNK_BLCL 0x4C434C42
+#define SAVEGAME_CHUNK_BLAC 0x43414C42
+#define SAVEGAME_CHUNK_BLCI 0x49434C42
+#define SAVEGAME_CHUNK_BLMP 0x504D4C42
+#define SAVEGAME_CHUNK_BOBJ 0x4A424F42
+
 class CActorNativShop;
 
-struct SaveDataSection_44484c42 {
-	int field_0x0;
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
-	int field_0x10;
+struct SaveDataDesc;
+
+struct SubSectorSaveData
+{
+	uint flags;
+	int nbExorcisedWolfen;
 };
 
-struct LoadLoopObject_50 {
+struct SaveDataChunk_BLHD
+{
+	int levelId;
+	int nbExorcisedWolfen;
+	int maxElevatorId;
+	SubSectorSaveData aSubSectorData[];
+};
+
+struct SaveDataChunk_BSHD
+{
+	int levelId;
+	int sectorId;
+	int gameTime;
+	int field_0xc;
+	int musicId;
+};
+
+static_assert(sizeof(SaveDataChunk_BSHD) == 0x14);	
+
+struct LoadLoopObject_50
+{
 	int field_0x0;
 	undefined4 field_0x4;
 	ulong messageKey;
@@ -67,12 +99,12 @@ struct LoadLoopObject_50 {
 	undefined field_0x4f;
 };
 
-struct SaveDataSection_56454c42 {
+struct SaveDataChunk_BLEV {
 	int field_0x0;
 	int field_0x4;
 	uint field_0x8;
 	int field_0xc;
-	struct SaveDataSection_44484c42 sec;
+	struct SaveDataChunk_BLHD sec;
 };
 
 class CChunk
@@ -84,6 +116,7 @@ public:
 	int offset;
 
 	CChunk* FindNextSubChunk(CChunk* pChunk, uint param_3);
+	void* DeleteSubChunk(CChunk* pChunk);
 };
 
 static_assert(sizeof(CChunk) == 0x10);
@@ -140,7 +173,7 @@ struct SaveBigAlloc {
 	undefined field_0x31;
 	undefined field_0x32;
 	undefined field_0x33;
-	struct SaveDataSection_56454c42 field_0x34;
+	struct SaveDataChunk_BLEV field_0x34;
 	undefined field_0x58[65448];
 };
 
@@ -351,10 +384,13 @@ public:
 	void LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
 	void LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* pLevelInfoLanguage, int nbLanguageFileNames, int levelId);
 	void Levels_LoadInfoBank();
+	void Levels_UpdateDataFromSavedGame();
+	void Levels_SaveDataToSavedGame();
 	void Episode_ComputeCurrent();
 	void Episode_LoadFromIniFile();
 
 	void SaveGame_SaveCurLevelState(int param_2);
+	CChunk* SaveGame_GetLevelChunk(int levelId);
 	void SaveGame_LoadLevelState(int levelId);
 
 	static int SaveGame_GetMaxBufferSize();
@@ -397,8 +433,16 @@ public:
 	void SaveGame_CloseChunk();
 
 	void SaveGame_SaveScenVars();
-	void SaveGame_SaveGameNfo();
+	void SaveGame_SaveGameInfo();
 	void SaveGame_SaveGameObj();
+
+	void LoadGame_LoadScenVars();
+	void LoadGame_LoadGameInfo();
+	void LoadGame_LoadGameObj();
+
+	void ResetAutoSaveTriggerTime();
+	uint SaveGame_SaveToBuffer(SaveBigAlloc* pSaveData, SaveDataDesc* pSaveDesc);
+	void SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size);
 
 public:
 
@@ -464,18 +508,18 @@ public:
 	CChunk* aSaveGameChunks[8];
 	int curChunkIndex;
 	undefined4 field_0x74;
-	int field_0x78;
-	undefined4 field_0x7c;
+	int bShouldLoad;
+	undefined4 bShouldSave;
 	undefined4 field_0x80;
-	float field_0x84;
-	float field_0x88;
+	float autoSaveTriggerTime;
+	float curAutoSaveTime;
 	undefined field_0x8c;
 	undefined field_0x8d;
 	undefined field_0x8e;
 	undefined field_0x8f;
 	S_LEVEL_INFO aLevelInfo[16];
 	int field_0x4210;
-	float field_0x4214;
+	float gameTime;
 	int objCount_0x4218;
 	undefined field_0x421c;
 	undefined field_0x421d;

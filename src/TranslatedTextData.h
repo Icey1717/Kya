@@ -22,6 +22,8 @@ public:
 
 	char* get_message(ulong key, long mode);
 
+	static ulong pointer2hash(char* pStr);
+
 	LANGUAGE languageID;
 	int entryCount;
 	char szFilePath[32];

@@ -100,6 +100,7 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	virtual void Level_PauseChange(bool bPaused);
 	virtual void Level_SaveContext();
+	virtual void Level_LoadContext();
 
 	virtual char* ProfileGetName();
 

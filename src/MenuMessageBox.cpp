@@ -18,7 +18,7 @@
 #include "LevelScheduleManager.h"
 #include "CompatibilityHandlingPS2.h"
 
-bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD)
+byte MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD)
 {
 	ed_viewport* pViewport;
 	bool cVar1;
@@ -26,9 +26,9 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	uint uVar2;
 	edCTextStyle* pNewFont;
 	char* pcVar4;
-	int iVar5;
+	int confirmKey;
 	int iVar6;
-	bool bCloseResult;
+	byte closeResult;
 	ulong uVar7;
 	float fVar8;
 	float fVar9;
@@ -136,7 +136,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 #ifdef PLATFORM_PS2
 		scePcStop();
 #endif
-		bCloseResult = false;
+		closeResult = 0;
 		if ((flags & 2) == 0) {
 			CPlayerInput::Update(GetTimer()->cutsceneDeltaTime);
 			GetTimer()->Update();
@@ -193,27 +193,27 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			if ((msgC == 0) && (msgD == 0)) {
 				iVar6 = iVar6 + 1;
 				if (5 < iVar6) {
-					bCloseResult = true;
+					closeResult = 1;
 				}
 			}
 			else {
-				iVar5 = 0x19;
+				confirmKey = 0x19;
 				if ((flags & 4) == 0) {
-					iVar5 = 0x18;
+					confirmKey = 0x18;
 				}
 
-				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & 1 << iVar5) == 0)) {
+				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & (1 << confirmKey)) == 0)) {
 					if ((msgD != 0) && (((gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) != 0 &&
-							(bCloseResult = true, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
+							(closeResult = 2, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
 						IMPLEMENTATION_GUARD_AUDIO(
-						PlaySample(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
+						PlaySample(1.0f, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
 					}
 				}
 				else {
-					bCloseResult = true;
+					closeResult = 1;
 					if (CLevelScheduler::gThis->currentLevelID != 0x10) {
 						IMPLEMENTATION_GUARD_AUDIO(
-						PlaySample(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
+						PlaySample(1.0f, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
 					}
 				}
 			}
@@ -234,11 +234,11 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 #endif
 
 		}
-	} while (((bCloseResult == false) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
+	} while (((closeResult == 0) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
 
 	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
 		CallPauseChange(0);
 	}
 
-	return bCloseResult;
+	return closeResult;
 }

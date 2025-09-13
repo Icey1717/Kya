@@ -1006,4 +1006,28 @@ struct ed_Bound_Sphere
 	float radius;
 };
 
+const float INT32_LIMIT = 2147484000.0f; // ~INT32_MAX
+
+inline uint EncodeFloat(float value)
+{
+	// If value fits in 31 bits, just cast. Otherwise, encode overflow with high bit.
+	if (value < INT32_LIMIT) {
+		return static_cast<uint>(value);
+	}
+	else {
+		return (static_cast<uint>(value - INT32_LIMIT) | 0x80000000);
+	}
+}
+
+inline float DecodeFloat(uint32_t value) {
+	if ((int32_t)value < 0) {
+		// High bit set: decode overflowed value
+		return float((value & 0x7FFFFFFF)) + INT32_LIMIT;
+	}
+	else {
+		// Normal value
+		return float(value);
+	}
+}
+
 #endif //_TYPES_H

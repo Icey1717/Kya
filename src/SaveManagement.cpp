@@ -21,6 +21,8 @@
 #include "EdenLib/edFile/include/edFile.h"
 #include "EdenLib/edFile/include/edFileNoWaitStack.h"
 #include "EdenLib/edFile/include/edFileCRC32.h"
+#include "TranslatedTextData.h"
+#include "TimeController.h"
 
 edBANK_ENTRY_INFO gSaveManagementInfoIconSys;
 edBANK_ENTRY_INFO gSaveManagementInfoFileIco;
@@ -29,6 +31,8 @@ char gSaveManagementSaveGameSize[256];
 CSaveManagement gSaveManagement = {};
 
 char gDumpedSettings[256] = {0x53, 0x47, 0x54, 0x53, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+#define SAVE_HEADER_HASH_EDEN 0x4544454e
 
 void SaveManagementBootCheck(void)
 {
@@ -83,6 +87,84 @@ void SaveManagementBootCheck(void)
 	return;
 }
 
+bool SaveManagement_MemCardSave(int slotIndex)
+{
+	CLevelScheduler* pCVar1;
+	edCFiler* pFiler;
+	bool bVar2;
+	bool bVar3;
+	int iVar4;
+	SaveDataDesc* pSVar5;
+
+	while (true) {
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+
+		bVar3 = true;
+		iVar4 = gSaveManagement.test_device_has_enough_room();
+		if (iVar4 != 3) {
+			return false;
+		}
+
+		if ((slotIndex < 0) || (3 < slotIndex)) {
+			bVar2 = true;
+		}
+		else {
+			bVar2 = true;
+			if (gSaveManagement.aSaveDataDescriptions[slotIndex].levelId != 0x10) {
+				bVar2 = false;
+			}
+		}
+
+		if (!bVar2) {
+			byte msgBoxResult = gSaveManagement.message_box(0, 1);
+			if (msgBoxResult == 2) {
+				return false;
+			}
+
+			if ((msgBoxResult != 1) && (msgBoxResult == 0)) {
+				bVar3 = false;
+			}
+		}
+
+		pFiler = gSaveManagement.pFiler;
+		pCVar1 = CLevelScheduler::gThis;
+
+		if (bVar3) break;
+
+		if (gSaveManagement.pFiler != (edCFiler*)0x0) {
+			gSaveManagement.pFiler->getnowaitfilestack()->AddFilerSync(pFiler);
+		}
+		edFileNoWaitStackFlush();
+	}
+
+	if ((slotIndex < 0) || (3 < slotIndex)) {
+		pSVar5 = (SaveDataDesc*)0x0;
+	}
+	else {
+		pSVar5 = gSaveManagement.aSaveDataDescriptions + slotIndex;
+	}
+
+	gSaveManagement.saveSize_0x44 = CLevelScheduler::gThis->SaveGame_SaveToBuffer(gSaveManagement.pBigAlloc_0x34, pSVar5);
+	if (gSaveManagement.slotID_0x28 != slotIndex) {
+		gSaveManagement.slotID_0x28 = slotIndex;
+	}
+
+	bVar3 = gSaveManagement.save(0);
+	if (bVar3 != false) {
+		pCVar1->ResetAutoSaveTriggerTime();
+		return true;
+	}
+
+	return false;
+}
+
+bool SaveManagement_MemCardLoad(int slotIndex)
+{
+	return gSaveManagement.load_sequence(slotIndex);
+}
+
 bool CSaveManagement::boot_check_load()
 {
 	int deviceRoomCheckResult;
@@ -104,8 +186,7 @@ bool CSaveManagement::boot_check_load()
 
 			if (deviceRoomCheckResult != ROOM_CHECK_RESULT_NOT_ENOUGH_ROOM) break;
 
-			bClosed = message_box(3, 6);
-			if (bClosed == true) {
+			if (message_box(3, 6) == 1) {
 				return false;
 			}
 		}
@@ -113,12 +194,12 @@ bool CSaveManagement::boot_check_load()
 		if (bClosed == true) {
 			return false;
 		}
-	} while ((deviceRoomCheckResult != 0) || (bClosed = message_box(3, 0), bClosed != true));
+	} while ((deviceRoomCheckResult != 0) || (message_box(3, 0) != 1));
 
 	return false;
 }
 
-bool CSaveManagement::message_box(long operationID, long messageID)
+byte CSaveManagement::message_box(long operationID, long messageID)
 {
 	bool bVar1;
 	ulong uVar2;
@@ -308,10 +389,10 @@ int CSaveManagement::test_device_has_enough_room()
 		this->nbSaveFiles = 0;
 		this->bBootCheckLoadComplete = 0;
 
-		this->field_0x848[0].levelId = 0x10;
-		this->field_0x848[1].levelId = 0x10;
-		this->field_0x848[2].levelId = 0x10;
-		this->field_0x848[3].levelId = 0x10;
+		this->aSaveDataDescriptions[0].levelId = 0x10;
+		this->aSaveDataDescriptions[1].levelId = 0x10;
+		this->aSaveDataDescriptions[2].levelId = 0x10;
+		this->aSaveDataDescriptions[3].levelId = 0x10;
 
 		// Now that we have synced we can get the free space of the MC.
 		if (edFileGetFreeSpace(this->memCardAccessPath, &this->freeBytes, 0, &this->field_0x2) != false) {
@@ -389,6 +470,19 @@ int CSaveManagement::test_device_has_enough_room()
 	return this->deviceRoomState;
 }
 
+bool CSaveManagement::is_valid(int index)
+{
+	bool bVar1;
+
+	if ((index < 0) || (3 < index)) {
+		bVar1 = true;
+	}
+	else {
+		bVar1 = this->aSaveDataDescriptions[index].levelId == 0x10;
+	}
+	return bVar1;
+}
+
 bool CSaveManagement::file_exists(char* name, uint size)
 {
 	bool bResult;
@@ -429,21 +523,57 @@ bool CSaveManagement::file_exists(char* name, uint size)
 
 void CSaveManagement::read_slot_info(int slotId)
 {
+	byte bVar1;
+	int iVar2;
+	edFILEH* pFile;
+	uint uVar3;
+	SaveDataDesc* pReadBuffer;
+	char* pcVar4;
+	SaveDataHeader saveHeader;
+	char acStack512[512];
 
+	iVar2 = edStrCopy(acStack512, this->memCardDriveString);
+	pcVar4 = acStack512 + iVar2;
+	iVar2 = edStrCopy(pcVar4, this->memCardPathEnd);
+	pcVar4 = pcVar4 + iVar2;
+	iVar2 = edStrCopy(pcVar4, this->serialNumber);
+	pcVar4 = pcVar4 + iVar2;
+	iVar2 = edStrCopy(pcVar4, "\\slot_");
+	pcVar4[iVar2] = (char)slotId + '0';
+	edStrCopy(pcVar4 + iVar2 + 1, ".dat");
+
+	if ((slotId < 0) || (3 < slotId)) {
+		pReadBuffer = (SaveDataDesc*)0x0;
+	}
+	else {
+		pReadBuffer = this->aSaveDataDescriptions + slotId;
+	}
+
+	pReadBuffer->levelId = 0x10;
+
+	pFile = edFileOpen(acStack512, 1);
+	if (pFile != (edFILEH*)0x0) {
+		bVar1 = edFileRead(pFile, (char*)&saveHeader, 0x1c);
+		if ((((bVar1 != 0) && (saveHeader.hash == SAVE_HEADER_HASH_EDEN)) && (saveHeader.headerSize == 0x1c)) &&
+			((uVar3 = edFileComputeCRC32(&saveHeader.headerSize, 0x14), saveHeader.headerCrc == uVar3 &&
+				(saveHeader.initialBlockSize == 0x14)))) {
+			bVar1 = edFileRead(pFile, (char*)pReadBuffer, 0x14);
+			if (bVar1 == 0) {
+				pReadBuffer->levelId = 0x10;
+			}
+			else {
+				uVar3 = edFileComputeCRC32(pReadBuffer, 0x14);
+				if (uVar3 != saveHeader.initialBlockCrc) {
+					pReadBuffer->levelId = 0x10;
+				}
+			}
+		}
+
+		edFileClose(pFile);
+	}
+
+	return;
 }
-
-struct SettingsHeader
-{
-	uint hash;
-	uint headerCrc;
-	int headerSize;
-	uint settingsCrc;
-	int settingsSize;
-	int field_0x14;
-	int field_0x18;
-};
-
-static_assert(sizeof(SettingsHeader) == 0x1c, "Incorrect padding in SettingsHeader structure");
 
 bool CSaveManagement::load_settings()
 {
@@ -454,7 +584,7 @@ bool CSaveManagement::load_settings()
 	uint uVar2;
 	char* filePath;
 	bool bResult;
-	SettingsHeader local_220;
+	SaveDataHeader local_220;
 	char memCardPath[512];
 
 	bResult = false;
@@ -468,10 +598,10 @@ bool CSaveManagement::load_settings()
 	settingsFilePtr = edFileOpen(memCardPath, 1);
 	if (settingsFilePtr != (edFILEH*)0x0) {
 		bVar1 = edFileRead(settingsFilePtr, (char*)&local_220, 0x1c);
-		if ((((((bVar1 != 0) && (local_220.hash == 0x4544454e)) && (local_220.headerSize == 0x1c)) && (local_220.headerCrc == edFileComputeCRC32(&local_220.headerSize, 0x14))) &&
-			(((local_220.settingsSize != 0 || (local_220.field_0x18 != 0)) || ((local_220.settingsCrc != 0 || (local_220.field_0x14 != 0)))))) &&
-			(((this->settingsSize_0x40 == local_220.settingsSize && (edFileRead(settingsFilePtr, (char*)this->pSettings_0x38, this->settingsSize_0x40) != false)) &&
-				(edFileComputeCRC32(this->pSettings_0x38, this->settingsSize_0x40) == local_220.settingsCrc)))) {
+		if ((((((bVar1 != 0) && (local_220.hash == SAVE_HEADER_HASH_EDEN)) && (local_220.headerSize == 0x1c)) && (local_220.headerCrc == edFileComputeCRC32(&local_220.headerSize, 0x14))) &&
+			(((local_220.initialBlockSize != 0 || (local_220.mainBlockSize != 0)) || ((local_220.initialBlockCrc != 0 || (local_220.mainBlockCrc != 0)))))) &&
+			(((this->settingsSize_0x40 == local_220.initialBlockSize && (edFileRead(settingsFilePtr, (char*)this->pSettings_0x38, this->settingsSize_0x40) != false)) &&
+				(edFileComputeCRC32(this->pSettings_0x38, this->settingsSize_0x40) == local_220.initialBlockCrc)))) {
 			bResult = true;
 		}
 
@@ -497,6 +627,7 @@ bool CSaveManagement::save_sequence()
 	SaveBigAlloc* pData_00;
 	char* pLVar1;
 	bool bVar2;
+	byte msgBoxResult;
 	char cVar3;
 	int iVar4;
 	int iVar5;
@@ -504,7 +635,7 @@ bool CSaveManagement::save_sequence()
 	char* pcVar7;
 	uint uVar8;
 	undefined auStack1568[1024];
-	SettingsHeader settingsHeader;
+	SaveDataHeader settingsHeader;
 	char acStack512[512];
 
 	this->field_0x0 = 0;
@@ -536,8 +667,7 @@ LAB_002f3a30:
 
 					if ((this->fileExistsFlags & 1) != 0) break;
 
-					bVar2 = edFileMakeDir(acStack512);
-					if ((bVar2 == false) && (bVar2 = message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL), bVar2 == true)) {
+					if ((edFileMakeDir(acStack512) == false) && (msgBoxResult = message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL), msgBoxResult == 2)) {
 						return false;
 					}
 				}
@@ -549,16 +679,16 @@ LAB_002f3a30:
 				iVar5 = edStrCopy(pcVar7 + iVar4, this->serialNumber);
 				edStrCopy(pcVar7 + iVar4 + iVar5, "\\icon.sys");
 				bVar2 = edFileDelete(acStack512);
-				if ((bVar2 == false) && (bVar2 = message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL), bVar2 == true)) {
+				if ((bVar2 == false) && (msgBoxResult = message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL), msgBoxResult == 2)) {
 					return false;
 				}
 			}
 
-			settingsHeader.settingsCrc = 0;
-			settingsHeader.settingsSize = 0;
-			settingsHeader.field_0x14 = 0;
-			settingsHeader.field_0x18 = 0;
-			settingsHeader.hash = 0x4544454e;
+			settingsHeader.initialBlockCrc = 0;
+			settingsHeader.initialBlockSize = 0;
+			settingsHeader.mainBlockCrc = 0;
+			settingsHeader.mainBlockSize = 0;
+			settingsHeader.hash = SAVE_HEADER_HASH_EDEN;
 			settingsHeader.headerSize = 0x1c;
 			settingsHeader.headerCrc = edFileComputeCRC32(&settingsHeader.headerSize, 0x14);
 
@@ -596,8 +726,7 @@ LAB_002f3a30:
 
 			if (bVar2) break;
 
-			bVar2 = message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL);
-			if (bVar2 == true) {
+			if (message_box(MESSAGE_BOX_CATEGORY_SAVE, MESSAGE_BOX_SAVE_ID_RETRY_CANCEL) == 2) {
 				return false;
 			}
 		}
@@ -668,8 +797,7 @@ LAB_002f3a30:
 				}
 
 				if (!bVar2) {
-					bVar2 = message_box(5, 2);
-					if (bVar2 == true) {
+					if (message_box(5, 2) == 2) {
 						return false;
 					}
 
@@ -705,8 +833,7 @@ LAB_002f3a30:
 				}
 
 				if (!bVar2) {
-					bVar2 = message_box(5, 2);
-					if (bVar2 == true) {
+					if (message_box(5, 2) == 2) {
 						return false;
 					}
 
@@ -743,30 +870,378 @@ LAB_002f3a30:
 					return true;
 				}
 
-				bVar2 = message_box(5, 2);
-				if (bVar2 == true) {
+				if (message_box(5, 2) == 2) {
 					return false;
 				}
 			}
 			goto LAB_002f3a30;
 		}
 
-		bVar2 = message_box(5, 2);
-		if (bVar2 == true) {
+		if (message_box(5, 2) == 2) {
 			return false;
 		}
 	} while (true);
 }
 
-SaveData5* CSaveManagement::GetSaveData5(int index)
+bool CSaveManagement::load_sequence(int slotIndex)
 {
-	SaveData5* pSVar1;
+	edCFiler* pFiler;
+	bool bLoadGameSuccess;
+	bool bVar1;
+	int deviceRoomResult;
+	float startTime;
+	float currentTime;
+
+	if (this->slotID_0x28 != slotIndex) {
+		this->slotID_0x28 = slotIndex;
+	}
+	this->field_0x0 = 0;
+	while (true) {
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+		deviceRoomResult = test_device_has_enough_room();
+		if (((deviceRoomResult != 3) && (deviceRoomResult != 2)) && ((deviceRoomResult == 1 || (deviceRoomResult == 0)))) {
+			return false;
+		}
+
+		message_box(2, 5);
+
+		startTime = edTimerTimeGet();
+		bLoadGameSuccess = false;
+		currentTime = edTimerTimeGet();
+		while (currentTime - startTime < 1.0) {
+			bLoadGameSuccess = load_game();
+			currentTime = edTimerTimeGet();
+		}
+
+		if (bLoadGameSuccess != false) break;
+
+		if (message_box(2, 2) == 2) {
+			return false;
+		}
+
+		pFiler = this->pFiler;
+		if (pFiler != (edCFiler*)0x0) {
+			pFiler->getnowaitfilestack()->AddFilerSync(pFiler);
+		}
+
+		edFileNoWaitStackFlush();
+	}
+
+	this->field_0x0 = 1;
+	test_device_has_enough_room();
+
+	return true;
+}
+
+static char gSlotBuffer[256];
+
+ulong CSaveManagement::get_slot_string(int index)
+{
+	char* pLevelString;
+	char* format;
+	ulong msgId;
+	SaveDataDesc* pcVar2;
+	float fVar3;
+	uint uVar4;
+	uint uVar5;
+	float fVar6;
+	char acStack64[64];
+	bool bEmpty;
 
 	if ((index < 0) || (3 < index)) {
-		pSVar1 = (SaveData5*)0x0;
+		msgId = 0;
 	}
 	else {
-		pSVar1 = this->field_0x848 + index;
+		if ((index < 0) || (3 < index)) {
+			bEmpty = true;
+		}
+		else {
+			bEmpty = true;
+
+			if (this->aSaveDataDescriptions[index].levelId != 0x10) {
+				bEmpty = false;
+			}
+		}
+
+		if (bEmpty) {
+			msgId = 0x191c1106130a1950;
+		}
+		else {
+			msgId = CLevelScheduler::gThis->aLevelInfo[this->aSaveDataDescriptions[index].levelId].titleMsgHash;
+			if (msgId == 0) {
+				sprintf(acStack64, "UNKNOWN LEVEL (%d)");
+				pLevelString = acStack64;
+			}
+			else {
+				pLevelString = gMessageManager.get_message(msgId);
+			}
+
+			float gameTime = this->aSaveDataDescriptions[index].gameTime;
+			uVar4 = EncodeFloat(gameTime / 3600.0f);
+
+			format = gMessageManager.get_message(0xc0f170802414d45);
+
+			fVar3 = DecodeFloat(uVar4);
+
+			uVar5 = EncodeFloat((gameTime - fVar3 * 3600.0f) / 60.0f);
+			pcVar2 = this->aSaveDataDescriptions + index;
+			sprintf(gSlotBuffer, format, uVar4, uVar5, pLevelString, pcVar2->nbFreedWolfen, pcVar2->nbMagic, pcVar2->nbMoney);
+			msgId = CMessageFile::pointer2hash(gSlotBuffer);
+		}
+	}
+
+	return msgId;
+}
+
+void CSaveManagement::load_level()
+{
+	CLevelScheduler::gThis->SaveGame_LoadFromBuffer(this->pBigAlloc_0x34, this->saveSize_0x44);
+	return;
+}
+
+bool CSaveManagement::save(int mode)
+{
+	edCFiler* pFiler;
+	bool bVar1;
+	int iVar2;
+	edCFileNoWaitStack* pStack;
+	ulong uVar3;
+
+	this->field_0x0 = 0;
+	while (true) {
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+
+		iVar2 = test_device_has_enough_room();
+		if ((iVar2 != 3) || (this->fileExistsFlags != 0x1ff)) {
+			return false;
+		}
+
+		message_box(mode, 5);
+
+		uVar3 = 0;
+		if (mode == 0) {
+			uVar3 = save_game(0);
+			uVar3 = uVar3 & 0xff;
+		}
+		else {
+			if (mode == 1) {
+				bVar1 = save_settings();
+				uVar3 = (long)bVar1 & 0xff;
+			}
+		}
+
+		if (uVar3 != 0) break;
+
+		if (message_box(mode, 2) == 2) {
+			return false;
+		}
+
+		pFiler = this->pFiler;
+		if (pFiler != (edCFiler*)0x0) {
+			pFiler->getnowaitfilestack()->AddFilerSync(pFiler);
+		}
+
+		edFileNoWaitStackFlush();
+	}
+
+	this->field_0x0 = 1;
+	test_device_has_enough_room();
+
+	return true;
+}
+
+bool CSaveManagement::save_game(int param_2)
+{
+	bool bVar1;
+	int iVar2;
+	edFILEH* pFile;
+	uint uVar3;
+	uint openFlags;
+	SaveDataDesc* pData;
+	char* pcVar4;
+	bool bSuccess;
+	char szDatFile[512];
+
+	bSuccess = false;
+	iVar2 = edStrCopy(szDatFile, this->memCardDriveString);
+	pcVar4 = szDatFile + iVar2;
+	iVar2 = edStrCopy(pcVar4, this->memCardPathEnd);
+	pcVar4 = pcVar4 + iVar2;
+	iVar2 = edStrCopy(pcVar4, this->serialNumber);
+	pcVar4 = pcVar4 + iVar2;
+	iVar2 = edStrCopy(pcVar4, "\\slot_");
+	pcVar4[iVar2] = (char)this->slotID_0x28 + '0';
+	edStrCopy(pcVar4 + iVar2 + 1, ".dat");
+	openFlags = 6;
+	if (param_2 != 0) {
+		openFlags = 0x2e;
+	}
+
+	pFile = edFileOpen(szDatFile, openFlags);
+	if (param_2 != 0) {
+		this->pFile_0x2c = pFile;
+	}
+
+	if (pFile != (edFILEH*)0x0) {
+		iVar2 = this->slotID_0x28;
+		if ((iVar2 < 0) || (3 < iVar2)) {
+			pData = (SaveDataDesc*)0x0;
+		}
+		else {
+			pData = this->aSaveDataDescriptions + iVar2;
+		}
+
+		(this->saveDataHeader).initialBlockCrc = edFileComputeCRC32(pData, sizeof(SaveDataDesc));
+		(this->saveDataHeader).initialBlockSize = sizeof(SaveDataDesc);
+
+		(this->saveDataHeader).mainBlockCrc = edFileComputeCRC32(this->pBigAlloc_0x34, this->saveSize_0x44);
+		(this->saveDataHeader).mainBlockSize = this->saveSize_0x44;
+
+		(this->saveDataHeader).hash = SAVE_HEADER_HASH_EDEN;
+		(this->saveDataHeader).headerSize = sizeof(SaveDataHeader);
+
+		(this->saveDataHeader).headerCrc = edFileComputeCRC32(&(this->saveDataHeader).headerSize, sizeof(SaveDataDesc));
+
+		bVar1 = edFileWrite(pFile, &this->saveDataHeader, sizeof(SaveDataHeader));
+		if (((bVar1 != false) && (bVar1 = edFileWrite(pFile, pData, sizeof(SaveDataDesc)), bVar1 != false)) &&
+			(bVar1 = edFileWrite(pFile, this->pBigAlloc_0x34, 0x10000), bVar1 != false)) {
+			bSuccess = true;
+			this->fileExistsFlags = this->fileExistsFlags | 0x20 << (this->slotID_0x28 & 0x1fU);
+		}
+
+		edFileClose(pFile);
+	}
+
+	return bSuccess;
+}
+
+
+bool CSaveManagement::load_game()
+{
+	byte bVar1;
+	int iVar2;
+	edFILEH* pSaveFile;
+	uint crc;
+	char* pcVar3;
+	bool bSuccess;
+	SaveDataDesc* pReadBuffer;
+	SaveDataHeader saveHeader;
+	char szSavePath[512];
+
+	bSuccess = false;
+	iVar2 = edStrCopy(szSavePath, this->memCardDriveString);
+	pcVar3 = szSavePath + iVar2;
+	iVar2 = edStrCopy(pcVar3, this->memCardPathEnd);
+	pcVar3 = pcVar3 + iVar2;
+	iVar2 = edStrCopy(pcVar3, this->serialNumber);
+	pcVar3 = pcVar3 + iVar2;
+	iVar2 = edStrCopy(pcVar3, "\\slot_");
+	pcVar3[iVar2] = (char)this->slotID_0x28 + '0';
+	edStrCopy(pcVar3 + iVar2 + 1, ".dat");
+
+	pSaveFile = edFileOpen(szSavePath, 1);
+	if (pSaveFile != (edFILEH*)0x0) {
+		bVar1 = edFileRead(pSaveFile, (char*)&saveHeader, 0x1c);
+
+		if ((((bVar1 != 0) && (saveHeader.hash == 0x4544454e)) && (saveHeader.headerSize == 0x1c)) &&
+			(crc = edFileComputeCRC32(&saveHeader.headerSize, 0x14), saveHeader.headerCrc == crc)) {
+			if (((saveHeader.initialBlockSize == 0) && (saveHeader.mainBlockSize == 0)) &&
+				((saveHeader.initialBlockCrc == 0 && (saveHeader.mainBlockCrc == 0)))) {
+				bSuccess = true;
+				this->aSaveDataDescriptions[this->slotID_0x28].levelId = 0x10;
+			}
+			else {
+				if (((uint)saveHeader.initialBlockSize < 0x10000) && (saveHeader.initialBlockSize == 0x14)) {
+					iVar2 = this->slotID_0x28;
+					if ((iVar2 < 0) || (3 < iVar2)) {
+						pReadBuffer = (SaveDataDesc*)0x0;
+					}
+					else {
+						pReadBuffer = this->aSaveDataDescriptions + iVar2;
+					}
+
+					pReadBuffer->levelId = 0x10;
+					bVar1 = edFileRead(pSaveFile, (char*)pReadBuffer, 0x14);
+					if (bVar1 != 0) {
+						crc = edFileComputeCRC32(pReadBuffer, 0x14);
+						if (((crc == saveHeader.initialBlockCrc) &&
+							(bVar1 = edFileRead(pSaveFile, (char*)this->pBigAlloc_0x34, saveHeader.mainBlockSize), bVar1 != 0)) &&
+							(crc = edFileComputeCRC32(this->pBigAlloc_0x34, saveHeader.mainBlockSize), crc == saveHeader.mainBlockCrc)
+							) {
+							bSuccess = true;
+							this->saveSize_0x44 = saveHeader.mainBlockSize;
+						}
+					}
+				}
+			}
+		}
+
+		edFileClose(pSaveFile);
+	}
+
+	return bSuccess;
+}
+
+bool CSaveManagement::save_settings()
+{
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	edFILEH* pFile;
+	uint uVar4;
+	bool bSuccess;
+	char* outString;
+	char acStack512[512];
+
+	bSuccess = false;
+	iVar2 = edStrCopy(acStack512, this->memCardDriveString);
+	outString = acStack512 + iVar2;
+	iVar2 = edStrCopy(outString, this->memCardPathEnd);
+	iVar3 = edStrCopy(outString + iVar2, this->serialNumber);
+	edStrCopy(outString + iVar2 + iVar3, "\\settings.dat");
+
+	pFile = edFileOpen(acStack512, 2);
+	if (pFile != (edFILEH*)0x0) {
+		uVar4 = edFileComputeCRC32(this->pSettings_0x38, this->settingsSize_0x40);
+		(this->saveDataHeader).initialBlockCrc = uVar4;
+		(this->saveDataHeader).initialBlockSize = this->settingsSize_0x40;
+
+		(this->saveDataHeader).mainBlockCrc = 0;
+		(this->saveDataHeader).mainBlockSize = 0;
+
+		(this->saveDataHeader).hash = 0x4544454e;
+		(this->saveDataHeader).headerSize = 0x1c;
+
+		(this->saveDataHeader).headerCrc = edFileComputeCRC32(&(this->saveDataHeader).headerSize, sizeof(SaveDataHeader));
+		bVar1 = edFileWrite(pFile, &this->saveDataHeader, 0x1c);
+		if (bVar1 != false) {
+			bVar1 = edFileWrite(pFile, this->pSettings_0x38, CSettings::GetMaxSaveBufferSize() + 0x1c);
+			if (bVar1 != false) {
+				bSuccess = true;
+			}
+		}
+
+		edFileClose(pFile);
+	}
+
+	return bSuccess;
+}
+
+
+
+SaveDataDesc* CSaveManagement::get_save_data_desc(int index)
+{
+	SaveDataDesc* pSVar1;
+
+	if ((index < 0) || (3 < index)) {
+		pSVar1 = (SaveDataDesc*)0x0;
+	}
+	else {
+		pSVar1 = this->aSaveDataDescriptions + index;
 	}
 
 	return pSVar1;

@@ -46,6 +46,9 @@ public:
 	void set_vertical_position(int verticalPos);
 	void set_vertical_spacing(int verticalSpacing);
 
+	void set_justification_left();
+	void set_justification_right();
+
 	float draw_func(float param_2);
 
 	void draw_option(char* pMessage, uint color);
@@ -67,7 +70,8 @@ public:
 	void draw_help_line(ulong msgId, int x, int y, uint color);
 
 	void DrawMainMenu();
-	bool DrawNewGame();
+	bool MenuFrameLoad_Draw();
+	bool MenuFrameNewGame_Draw();
 	void DrawInitialSaveMenuHelp(ulong helpMsgId, uint color);
 
 	void update_page();

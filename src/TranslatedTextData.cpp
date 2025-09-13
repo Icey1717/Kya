@@ -276,9 +276,16 @@ char* CMessageFile::get_message(ulong key, long mode)
 		}
 	}
 	else {
+#ifdef PLATFORM_PS2
 		if (key >> 0x20 == 0xffffffff) {
 			pcVar1 = (char*)key;
 		}
+#else
+		if ((key & 0xffff000000000000) == 0xffff000000000000)
+		{
+			pcVar1 = (char*)(key & 0xffffffffffff);
+		}
+#endif
 		else {
 			uVar3 = 0;
 			if (this->entryCount != 0) {
@@ -303,6 +310,17 @@ char* CMessageFile::get_message(ulong key, long mode)
 	//MY_LOG("MessageFile::get_message %c%c%c%c -> {} [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
+}
+
+ulong CMessageFile::pointer2hash(char* pStr)
+{
+#ifdef PLATFORM_PS2
+	return (ulong)(int)pStr & 0xffffffffU | 0xffffffff00000000;
+#else
+	// Set the upper 16 bits to 0xffff
+	// Hack for x86-64, check CMessageFile::get_message for the other end.
+	return reinterpret_cast<uintptr_t>(pStr) & 0xffffffffffff | 0xffff000000000000;
+#endif
 }
 
 char* MessageManager::get_message(ulong key)

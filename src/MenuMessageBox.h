@@ -3,6 +3,6 @@
 
 #include "Types.h"
 
-bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD);
+byte MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD);
 
 #endif // _MENU_MESSAGE_BOX_H

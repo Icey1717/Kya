@@ -13741,13 +13741,7 @@ void CActorHeroPrivate::ManageBoomyState()
 			CActor::SV_GetBoneWorldPosition((psVar5->boneRefB).pActor, *(uint*)&psVar5->boneRefB, (edF32VECTOR4*)&local_1d0);
 			edF32Vector4SubHard(&local_f0, &eStack448, (edF32VECTOR4*)&local_1d0);
 			fVar20 = edF32Vector4NormalizeHard(&local_f0, &local_f0);
-			fVar18 = fVar20 + 0.5;
-			if (fVar18 < 2.147484e+09) {
-				uVar17 = (uint)fVar18;
-			}
-			else {
-				uVar17 = (int)(fVar18 - 2.147484e+09) | 0x80000000;
-			}
+			uVar17 = EncodeFloat(fVar20 + 0.5f);
 			if (uVar17 == 0) {
 				uVar17 = 1;
 			}
@@ -16132,12 +16126,7 @@ void CActorHeroPrivate::_InitHeroFight()
 	//}
 	//if (iVar4 == 0) {
 	//	fVar6 = 0.5 / fVar7;
-	//	if (fVar6 < 2.147484e+09) {
-	//		*(int*)&this->field_0xcd4 = (int)fVar6;
-	//	}
-	//	else {
-	//		*(uint*)&this->field_0xcd4 = (int)(fVar6 - 2.147484e+09) | 0x80000000;
-	//	}
+	//	this->field_0xcd4 = EncodeFloat(fVar6);
 	//	pvVar1 = edMemAlloc(H_MAIN, *(int*)&this->field_0xcd4 << 2);
 	//	*(void**)&this->field_0xcd0 = pvVar1;
 	//	(**(code**)(*(int*)&this->field_0xcf0 + 0x10))();

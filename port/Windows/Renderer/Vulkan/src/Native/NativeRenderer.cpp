@@ -750,7 +750,7 @@ namespace Renderer
 			{
 				while (!bShouldStop) {
 					std::unique_lock<std::mutex> lock(mutex);
-					cv.wait(lock, [this] { return draws.peek() || bShouldStop || bCommandsComplete; });
+					cv.wait(lock, [this] { return draws.peek() || bShouldStop; });
 
 					ZONE_SCOPED_NAME("RenderThread::Run");
 
@@ -763,17 +763,23 @@ namespace Renderer
 					}
 
 					ProcessDraws();
-
-					// Ends renderpass etc.
-					if (bCommandsComplete) {
-						ProcessDraws();
-						MapBuffers();
-						RecordEndCommandBuffer();
-						bRecordedEnd = true;
-						bCommandsComplete = false;
-						timer.End();
-					}
 				}
+			}
+
+			void MainThreadEndCommands()
+			{
+				std::unique_lock<std::mutex> lock(mutex);
+
+				if (!bRecordedCommands) {
+					return;
+				}
+
+				// Any leftover draws to process.
+				ProcessDraws();
+
+				MapBuffers();
+				RecordEndCommandBuffer();
+				timer.End();
 			}
 
 			void AddDraw(const Draw& draw)
@@ -787,11 +793,6 @@ namespace Renderer
 				cv.notify_one(); // Wake up render thread if sleeping
 			}
 
-			bool IsComplete()
-			{
-				return bRecordedEnd;
-			}
-
 			bool GetHasRecordedCommands()
 			{
 				return bRecordedCommands;
@@ -803,9 +804,7 @@ namespace Renderer
 				drawCommandRecorder.Reset();
 
 				bRecordedCommands = false;
-				bRecordedEnd = false;
 				bShouldRecordBegin = true;
-				bCommandsComplete = false;
 			}
 
 			double GetRenderThreadTime()
@@ -815,15 +814,6 @@ namespace Renderer
 
 			void SignalEndCommands()
 			{
-				bCommandsComplete = true;
-
-				if (bRecordedCommands) {
-					cv.notify_one();
-				}
-				else {
-					bRecordedEnd = true;
-				}
-
 				NATIVE_LOG(LogLevel::Info, "SignalEndCommands");
 			}
 
@@ -834,11 +824,9 @@ namespace Renderer
 			InstanceDataUpdate drawInstanceDataUpdate;
 			DrawCommandRecorder drawCommandRecorder;
 			std::atomic<bool> bShouldStop = false;
-			std::atomic<bool> bCommandsComplete = false;
 			std::atomic<bool> bRecordedCommands = false;
 
 			std::atomic<bool> bShouldRecordBegin = true;
-			std::atomic<bool> bRecordedEnd = false;
 
 			std::mutex mutex;
 			std::condition_variable cv;
@@ -1353,9 +1341,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	{
 		ZONE_SCOPED_NAME("Render Thread Wait");
 
-		ScopedTimer waitForRenderThread(gRenderWaitTime);
-		while (!gRenderThread->IsComplete()) {
-			// Spin
+		{
+			ScopedTimer waitForRenderThread(gRenderWaitTime);
+			gRenderThread->MainThreadEndCommands();
 		}
 
 		if (!gRenderThread->GetHasRecordedCommands()) {

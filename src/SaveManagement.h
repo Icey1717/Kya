@@ -7,9 +7,11 @@
 #define ROOM_CHECK_RESULT_NOT_ENOUGH_ROOM 2
 #define ROOM_CHECK_RESULT_OK 3
 
-struct SaveData5
+struct edFILEH;
+
+struct SaveDataDesc
 {
-	SaveData5() { this->levelId = 0x10; }
+	SaveDataDesc() { this->levelId = 0x10; }
 
 	uint levelId;
 	float gameTime;
@@ -21,12 +23,26 @@ struct SaveData5
 	bool IsValid() { return this->levelId != 0x10; }
 };
 
+struct SaveDataHeader
+{
+	uint hash;
+	uint headerCrc;
+	int headerSize;
+	uint initialBlockCrc;
+	int initialBlockSize;
+	uint mainBlockCrc;
+	int mainBlockSize;
+};
+
+static_assert(sizeof(SaveDataHeader) == 0x1c, "Incorrect padding in SaveDataHeader structure");
+
 class CSaveManagement
 {
 public:
 	bool boot_check_load();
-	bool message_box(long operationID, long messageID);
+	byte message_box(long operationID, long messageID);
 	int test_device_has_enough_room();
+	bool is_valid(int index);
 	bool file_exists(char* name, uint size);
 	void read_slot_info(int slotId);
 	bool load_settings();
@@ -34,8 +50,18 @@ public:
 	void clear_slot();
 
 	bool save_sequence();
+	bool load_sequence(int slotIndex);
 
-	SaveData5* GetSaveData5(int index);
+	ulong get_slot_string(int index);
+
+	void load_level();
+	bool save(int mode);
+
+	bool load_game();
+	bool save_game(int param_2);
+	bool save_settings();
+
+	SaveDataDesc* get_save_data_desc(int index);
 
 public:
 	byte field_0x0;
@@ -56,7 +82,7 @@ public:
 	int nbSaveFiles;
 	uint fileExistsFlags;
 	int slotID_0x28;
-	char* field_0x2c;
+	edFILEH* pFile_0x2c;
 	undefined field_0x30;
 	undefined field_0x31;
 	undefined field_0x32;
@@ -2082,40 +2108,15 @@ public:
 	undefined field_0x845;
 	undefined field_0x846;
 	undefined field_0x847;
-	SaveData5 field_0x848[4];
-	undefined field_0x898;
-	undefined field_0x899;
-	undefined field_0x89a;
-	undefined field_0x89b;
-	undefined field_0x89c;
-	undefined field_0x89d;
-	undefined field_0x89e;
-	undefined field_0x89f;
-	undefined field_0x8a0;
-	undefined field_0x8a1;
-	undefined field_0x8a2;
-	undefined field_0x8a3;
-	undefined field_0x8a4;
-	undefined field_0x8a5;
-	undefined field_0x8a6;
-	undefined field_0x8a7;
-	undefined field_0x8a8;
-	undefined field_0x8a9;
-	undefined field_0x8aa;
-	undefined field_0x8ab;
-	undefined field_0x8ac;
-	undefined field_0x8ad;
-	undefined field_0x8ae;
-	undefined field_0x8af;
-	undefined field_0x8b0;
-	undefined field_0x8b1;
-	undefined field_0x8b2;
-	undefined field_0x8b3;
+	SaveDataDesc aSaveDataDescriptions[4];
+	SaveDataHeader saveDataHeader;
 	struct edCFiler* pFiler;
 };
 
 extern CSaveManagement gSaveManagement;
 
 void SaveManagementBootCheck(void);
+bool SaveManagement_MemCardSave(int slotIndex);
+bool SaveManagement_MemCardLoad(int slotIndex);
 
 #endif // _SAVE_H

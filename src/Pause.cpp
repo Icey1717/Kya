@@ -32,6 +32,8 @@
 #include "MenuMessageBox.h"
 #include "EdenLib/edFile/include/edFileFiler.h"
 #include "EdenLib/edFile/include/edFileNoWaitStack.h"
+#include "edVideo/Viewport.h"
+#include "edVideo/VideoD.h"
 
 CSimpleMenuPause gPauseMenu;
 
@@ -798,7 +800,370 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	return;
 }
 
+void MemCardSelect(int index)
+{
+	ed_viewport* pViewport;
+	bool bVar1;
+	bool cVar2;
+	int iVar3;
 
+	if (SaveManagement_MemCardSave(index) != false) {
+		if (gSaveManagement.field_0x0 != 0) {
+			cVar2 = false;
+			pViewport = (CScene::ptable.g_FrontendManager_00451680)->pViewport;
+			edViewportSetClearMask(pViewport, 0);
+			do {
+				CPlayerInput::Update(GetTimer()->cutsceneDeltaTime);
+				GetTimer()->Update();
+				bVar1 = GuiDList_BeginCurrent();
+				if (bVar1 != false) {
+					cVar2 = MenuMessageBoxDisplay(3, 0x414147001a0b1a18, 0x555d500d1c041e0e, 0x120d1e54544f4e, 0);
+					GuiDList_EndCurrent();
+				}
+				bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+				if (bVar1 == false) {
+					CScene::ptable.g_PauseManager_00451688->FUN_001b0860(1);
+				}
+
+				GlobalDList_AddToView();
+				edVideoFlip();
+#ifdef PLATFORM_WIN
+				Renderer::WaitUntilReady();
+#endif
+			} while (cVar2 == false);
+			edViewportSetClearMask(pViewport, 0xffffffff);
+		}
+
+		if (gDebugLevelCheatEnabled_00449824 == 0) {
+			CLevelScheduler::gThis->Level_Run(0, CLevelScheduler::gThis->nextLevelId, 0xffffffff, CScene::_pinstance->field_0x110, 0xffffffff, true);
+		}
+		else {
+			CLevelScheduler::gThis->Level_Run(0, 0xd, 0xffffffff, 0xffffffff, 0xffffffff, true);
+		}
+
+		if ((GameFlags & 0xc) != 0) {
+			if (DAT_00448ea8 == 0) {
+				GetTimer()->Update();
+			}
+
+			PauseLeave();
+		}
+
+		UINT_00448eac = 0;
+		CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+	}
+
+	return;
+}
+
+void MemCardSelect0(int index)
+{
+	MemCardSelect(index);
+	return;
+}
+
+void MemCardLoad0(int slotIndex)
+{
+	if ((gSaveManagement.is_valid(slotIndex) == false) && (SaveManagement_MemCardLoad(slotIndex) != false)) {
+		gSaveManagement.load_level();
+
+		if ((GameFlags & 0xc) != 0) {
+			if (DAT_00448ea8 == 0) {
+				GetTimer()->Update();
+			}
+
+			PauseLeave();
+		}
+
+		UINT_00448eac = 0;
+		CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+	}
+
+	return;
+}
+
+uint gFileSelectTextColor = 0xffffffff;
+
+int GetScreenWidth()
+{
+	int width;
+	width = gVideoConfig.screenWidth;
+
+	if (gVideoConfig.screenWidth < 0) {
+		width = gVideoConfig.screenWidth + 1;
+	}
+
+	return width;
+}
+
+int GetScreenHeight()
+{
+	int height;
+	height = gVideoConfig.screenHeight;
+
+	if (gVideoConfig.screenHeight < 0) {
+		height = gVideoConfig.screenHeight + 1;
+	}
+
+	return height;
+}
+
+static float gFileSelectBorderWidth = 6.0f;
+
+static uint gFileSelectBorderColor1 = 0x407f7f7f;
+static uint gFileSelectBorderColor2 = 0x187F7F7F;
+
+static edF32VECTOR2 gRectBackgroundPos = { 0.0f, -170.0f };
+static edF32VECTOR2 gRectBackgroundSize = { 340.0f, 40.0f };
+
+static edF32VECTOR2 gSlotOffset1 = { -180.0f, -90.0f };
+static edF32VECTOR2 gSlotOffset2 = { 180.0f, -20.0f };
+static edF32VECTOR2 gSlotOffset3 = { -180.0f,  50.0f };
+static edF32VECTOR2 gSlotOffset4 = { 180.0f,  120.0f };
+
+static edF32VECTOR2 gSlotRectSize1 = { 64.0f, 64.0f };
+static edF32VECTOR2 gSlotRectSize2 = { 64.0f, 64.0f };
+static edF32VECTOR2 gSlotRectSize3 = { 64.0f, 64.0f };
+static edF32VECTOR2 gSlotRectSize4 = { 64.0f, 64.0f };
+
+static edF32VECTOR2 gSlotTextPos1 = { 20.0f, 20.0f };
+static edF32VECTOR2 gSlotTextPos2 = { 20.0f, 20.0f };
+static edF32VECTOR2 gSlotTextPos3 = { 20.0f, 20.0f };
+static edF32VECTOR2 gSlotTextPos4 = { 20.0f, 20.0f };
+
+static edF32VECTOR2 gSpriteSlot1 = { 0.5f, 0.5f };
+static edF32VECTOR2 gSpriteSlot2 = { 0.5f, 0.5f };
+static edF32VECTOR2 gSpriteSlot3 = { 0.5f, 0.5f };
+static edF32VECTOR2 gSpriteSlot4 = { 0.5f, 0.5f };
+
+static edF32VECTOR2 gSelectedPos1 = { 33.0f, -90.0f };
+static edF32VECTOR2 gSelectedPos2 = { -33.0f, -20.0f };
+static edF32VECTOR2 gSelectedPos3 = { 33.0f,  50.0f };
+static edF32VECTOR2 gSelectedPos4 = { -33.0f,  120.0f };
+
+static edF32VECTOR2 gSelectedSize = { 355.0f,  64.0f };
+
+static uint gSelectedBorderColor1 = 0x007f7f7f;
+static uint gSelectedBorderColor2 = 0x407f7f7f;
+
+void DrawFileSelectBackground_001b32a0(int selectedIndex)
+{
+	edCTextStyle* pTextStyle;
+	edCTextStyle textStyle;
+
+	textStyle.Reset();
+	textStyle.SetShadow(0);
+	textStyle.rgbaColour = gFileSelectTextColor;
+
+	textStyle.SetHorizontalAlignment(2);
+	textStyle.SetVerticalAlignment(8);
+	textStyle.SetFont(BootDataFont, false);
+	pTextStyle = edTextStyleSetCurrent(&textStyle);
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gRectBackgroundPos.x, (float)(GetScreenHeight() >> 1) + gRectBackgroundPos.y,
+		gRectBackgroundSize.x, gRectBackgroundSize.y, 4.0f, 4.0f, 0x407f7f7f, 0x007f7f7f, 1);
+
+	MenuBitmaps[5].Draw(gSpriteSlot1.x, gSpriteSlot1.y, (float)(GetScreenWidth() >> 1) + gSlotOffset1.x, (float)(GetScreenHeight() >> 1) + gSlotOffset1.y, 0x12);
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSlotOffset1.x, (float)(GetScreenHeight() >> 1) + gSlotOffset1.y, gSlotRectSize1.x,
+		gSlotRectSize1.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderColor1, gFileSelectBorderColor2, 1);
+
+	edTextDraw(gSlotTextPos1.x + (float)(GetScreenWidth() >> 1) + gSlotOffset1.x,
+		gSlotTextPos1.y + (float)(GetScreenHeight() >> 1) + gSlotOffset1.y, "1");
+
+	MenuBitmaps[5].Draw(gSpriteSlot2.x, gSpriteSlot2.y, (float)(GetScreenWidth() >> 1) + gSlotOffset2.x,
+		(float)(GetScreenHeight() >> 1) + gSlotOffset2.y, 0x12);
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSlotOffset2.x, (float)(GetScreenHeight() >> 1) + gSlotOffset2.y, gSlotRectSize2.x,
+		gSlotRectSize2.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderColor1, gFileSelectBorderColor2, 1);
+
+	edTextDraw(gSlotTextPos2.x + (float)(GetScreenWidth() >> 1) + gSlotOffset2.x,
+		gSlotTextPos2.y + (float)(GetScreenHeight() >> 1) + gSlotOffset2.y, "2");
+
+	MenuBitmaps[5].Draw(gSpriteSlot3.x, gSpriteSlot3.y, (float)(GetScreenWidth() >> 1) + gSlotOffset3.x,
+		(float)(GetScreenHeight() >> 1) + gSlotOffset3.y, 0x12);
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSlotOffset3.x, (float)(GetScreenHeight() >> 1) + gSlotOffset3.y, gSlotRectSize3.x,
+		gSlotRectSize3.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderColor1, gFileSelectBorderColor2, 1);
+
+	edTextDraw(gSlotTextPos3.x + (float)(GetScreenWidth() >> 1) + gSlotOffset3.x,
+		gSlotTextPos3.y + (float)(GetScreenHeight() >> 1) + gSlotOffset3.y, "3");
+
+	MenuBitmaps[5].Draw(gSpriteSlot4.x, gSpriteSlot4.y, (float)(GetScreenWidth() >> 1) + gSlotOffset4.x,
+		(float)(GetScreenHeight() >> 1) + gSlotOffset4.y, 0x12);
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSlotOffset4.x, (float)(GetScreenHeight() >> 1) + gSlotOffset4.y, gSlotRectSize4.x,
+		gSlotRectSize4.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderColor1, gFileSelectBorderColor2, 1);
+
+	edTextDraw(gSlotTextPos4.x + (float)(GetScreenWidth() >> 1) + gSlotOffset4.x,
+		gSlotTextPos4.y + (float)(GetScreenHeight() >> 1) + gSlotOffset4.y, "4");
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSelectedPos1.x, (float)(GetScreenHeight() >> 1) + gSelectedPos1.y, gSelectedSize.x,
+		gSelectedSize.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gSelectedBorderColor1, gSelectedBorderColor2, 1);
+	if (selectedIndex == 0) {
+		CPauseManager::DrawRectangleBorder
+		((float)(GetScreenWidth() >> 1) + gSelectedPos1.x, (float)(GetScreenHeight() >> 1) + gSelectedPos1.y,
+			gSelectedSize.x - gFileSelectBorderWidth, gSelectedSize.y - gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderWidth,
+			gSelectedBorderColor2, gSelectedBorderColor1, 1);
+	}
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSelectedPos2.x, (float)(GetScreenHeight() >> 1) + gSelectedPos2.y, gSelectedSize.x,
+		gSelectedSize.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gSelectedBorderColor1, gSelectedBorderColor2, 1);
+	if (selectedIndex == 1) {
+		CPauseManager::DrawRectangleBorder
+		((float)(GetScreenWidth() >> 1) + gSelectedPos2.x, (float)(GetScreenHeight() >> 1) + gSelectedPos2.y,
+			gSelectedSize.x - gFileSelectBorderWidth, gSelectedSize.y - gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderWidth,
+			gSelectedBorderColor2, gSelectedBorderColor1, 1);
+	}
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSelectedPos3.x, (float)(GetScreenHeight() >> 1) + gSelectedPos3.y, gSelectedSize.x,
+		gSelectedSize.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gSelectedBorderColor1, gSelectedBorderColor2, 1);
+	if (selectedIndex == 2) {
+
+		CPauseManager::DrawRectangleBorder
+		((float)(GetScreenWidth() >> 1) + gSelectedPos3.x, (float)(GetScreenHeight() >> 1) + gSelectedPos3.y,
+			gSelectedSize.x - gFileSelectBorderWidth, gSelectedSize.y - gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderWidth,
+			gSelectedBorderColor2, gSelectedBorderColor1, 1);
+	}
+
+	CPauseManager::DrawRectangleBorder
+	((float)(GetScreenWidth() >> 1) + gSelectedPos4.x, (float)(GetScreenHeight() >> 1) + gSelectedPos4.y, gSelectedSize.x,
+		gSelectedSize.y, gFileSelectBorderWidth, gFileSelectBorderWidth, gSelectedBorderColor1, gSelectedBorderColor2, 1);
+	if (selectedIndex == 3) {
+		CPauseManager::DrawRectangleBorder
+		((float)(GetScreenWidth() >> 1) + gSelectedPos4.x, (float)(GetScreenHeight() >> 1) + gSelectedPos4.y,
+			gSelectedSize.x - gFileSelectBorderWidth, gSelectedSize.y - gFileSelectBorderWidth, gFileSelectBorderWidth, gFileSelectBorderWidth,
+			gSelectedBorderColor2, gSelectedBorderColor1, 1);
+	}
+
+	edTextStyleSetCurrent(pTextStyle);
+
+	return;
+}
+
+#define TITLE_KEY_LOAD_GAME 0x574a554b5d1a0909
+
+void FUN_002f2f00(int param_1)
+{
+	edCFiler* pFiler;
+	bool bVar1;
+	int iVar2;
+	edCFileNoWaitStack* pFilerEntry;
+
+	gSaveManagement.field_0x0 = 0;
+	while (true) {
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+		iVar2 = gSaveManagement.test_device_has_enough_room();
+		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 0)) || (iVar2 != 1)) break;
+		gSaveManagement.message_box(4, 5);
+#ifdef PLATFORM_PS2
+		scePcStop();
+#endif
+		IMPLEMENTATION_GUARD(
+			bVar1 = edFileFormat(gSaveManagement.memCardAccessPath, 0);
+		if ((bVar1 == false) && (gSaveManagement.message_box(4, 2) == 2)) {
+			return;
+		})
+
+			if (gSaveManagement.pFiler != (edCFiler*)0x0) {
+				gSaveManagement.pFiler->getnowaitfilestack()->AddFilerSync(gSaveManagement.pFiler);
+			}
+
+		edFileNoWaitStackFlush();
+	}
+
+	return;
+}
+
+void SaveSaveData_002f2ef0(int)
+{
+	gSaveManagement.save_sequence();
+	return;
+}
+
+bool MenuFrameSave_Draw(CSimpleMenu* pMenu)
+{
+	bool bResult;
+	int iVar1;
+	ulong uVar2;
+
+	iVar1 = gSaveManagement.test_device_has_enough_room();
+	if (iVar1 != 3) {
+		if (iVar1 == 1) {
+			bResult = MenuMessageBoxDisplay(7, 0x4347020c0b0f0d1a, 0x445f425e42480708, 0x12041a06190e1a, 0x120c1a54544f4e);
+			if (bResult == true) {
+				pMenu->pop_page();
+			}
+			else {
+				if (bResult == true) {
+					pMenu->FUN_002f1b50(FUN_002f2f00, 0);
+				}
+			}
+			return false;
+		}
+		if (iVar1 == 2) {
+			bResult = MenuMessageBoxDisplay(3, 0x4347020c0b0f0d1a, 0x14474442585e4b46, 0, 0x120014171f4f4e);
+			if (bResult == true) {
+				pMenu->pop_page();
+			}
+			return false;
+		}
+		if (iVar1 == 0) {
+			bResult = MenuMessageBoxDisplay(3, 0x4347020c0b0f0d1a, 0x594d5d4557521e09, 0, 0x120014171f4f4e);
+			if (bResult == true) {
+				pMenu->pop_page();
+			}
+			return false;
+		}
+	}
+
+	if (gSaveManagement.fileExistsFlags == 0x1ff) {
+		DrawFileSelectBackground_001b32a0(pMenu->selectedIndex);
+		pMenu->draw_title(TITLE_KEY_LOAD_GAME, -0xaa);
+		pMenu->field_0xdc = -6.0f;
+		pMenu->field_0xd8 = 0x78;
+		pMenu->set_vertical_spacing(0x38);
+		pMenu->scaleX = 0.8f;
+		pMenu->scaleY = 0.8f;
+		pMenu->selectedScaleX = 0.9f;
+		pMenu->selectedScaleY = 0.9f;
+		pMenu->set_justification_left();
+		pMenu->draw_action(gSaveManagement.get_slot_string(0), MemCardSelect0, 0, ~PM_MiniGame);
+		pMenu->set_vertical_spacing(0x46);
+		pMenu->set_justification_right();
+		pMenu->draw_action(gSaveManagement.get_slot_string(1), MemCardSelect0, 1, ~PM_MiniGame);
+		pMenu->set_justification_left();
+		pMenu->draw_action(gSaveManagement.get_slot_string(2), MemCardSelect0, 2, ~PM_MiniGame);
+		pMenu->set_justification_right();
+		pMenu->draw_action(gSaveManagement.get_slot_string(3), MemCardSelect0, 3, ~PM_MiniGame);
+		bResult = true;
+	}
+	else {
+		bResult = MenuMessageBoxDisplay(3, 0x4347020c0b0f0d1a, 0x1614191e025f4343, 0x121b1007544f4e, 0x120c1a54544f4e);
+		if (bResult == true) {
+			pMenu->FUN_002f1b50(SaveSaveData_002f2ef0, 0);
+		}
+		else {
+			if (bResult == true) {
+				pMenu->pop_page();
+			}
+		}
+
+		bResult = false;
+	}
+
+	return bResult;
+}
 
 uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 {
@@ -860,9 +1225,7 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 			draw_action(pMenu, 0x5e5b000c110c1f08, FUN_001b5030, -2, -3);)
 			break;
 		case PM_SaveMenu:
-			IMPLEMENTATION_GUARD(
-			bHandleDisconnectedDevicesResult = MenuFrameSave_Draw(pMenu);
-			bResult = (int)bHandleDisconnectedDevicesResult & 0xff;)
+			bResult = MenuFrameSave_Draw(pMenu);
 			break;
 		case PM_LoadMenu:
 			IMPLEMENTATION_GUARD(
@@ -990,7 +1353,7 @@ void CPauseManager::Level_Draw()
 				}
 			}
 			else {
-				if (pActiveCinematic->totalCutsceneDelta < 0.5) {
+				if (pActiveCinematic->totalCutsceneDelta < 0.5f) {
 					IMPLEMENTATION_GUARD();
 					pLevelScheduleManager->Level_Run(0, 0xe, -1, -1, -1, 1);
 					GameFlags = GameFlags | 2;
@@ -1060,14 +1423,7 @@ void CPauseManager::FUN_001b0860(int param_2)
 	IMPLEMENTATION_GUARD_LOG(
 	uVar3 = CSaveManagement::FUN_002f39c0(&gSaveManagement);
 	if ((uVar3 != 0) || (param_2 != 0)) {
-		pTVar2 = Timer::GetTimer();
-		fVar5 = pTVar2->totalTime * 256.0;
-		if (fVar5 < 2.147484e+09) {
-			uVar4 = (uint)fVar5;
-		}
-		else {
-			uVar4 = (int)(fVar5 - 2.147484e+09) | 0x80000000;
-		}
+		uVar4 = EncodeFloat(Timer::GetTimer()->totalTime * 256.0f);
 		uVar4 = (int)uVar4 % 0x140;
 		if (0xff < uVar4) {
 			uVar4 = (0x40 - (uVar4 - 0x100)) * 0xff >> 6;
@@ -1130,6 +1486,22 @@ void CSimpleMenu::set_vertical_position(int verticalPos)
 void CSimpleMenu::set_vertical_spacing(int verticalSpacing)
 {
 	this->verticalSpacing = verticalSpacing;
+	return;
+}
+
+void CSimpleMenu::set_justification_left()
+{
+	this->horizontalPos = this->field_0xd8;
+	this->horizontalAllignment = 1;
+
+	return;
+}
+
+void CSimpleMenu::set_justification_right()
+{
+	this->horizontalPos = this->field_0xd8;
+	this->horizontalAllignment = 2;
+
 	return;
 }
 
@@ -1714,7 +2086,7 @@ void CSimpleMenu::DrawMainMenu()
 {
 	CPauseManager* pCVar1;
 	bool bVar2;
-	SaveData5* pSVar3;
+	SaveDataDesc* pSVar3;
 	int iVar4;
 	int iVar5;
 
@@ -1728,7 +2100,7 @@ void CSimpleMenu::DrawMainMenu()
 
 	iVar4 = 0;
 	do {
-		pSVar3 = gSaveManagement.GetSaveData5(iVar4);
+		pSVar3 = gSaveManagement.get_save_data_desc(iVar4);
 		bVar2 = pSVar3->IsValid();
 		if ((bVar2 != false) && (pSVar3->bGameCompleted != 0)) {
 			UpdateForFreedWolfen(pSVar3->nbFreedWolfen);
@@ -1776,49 +2148,94 @@ void CSimpleMenu::DrawMainMenu()
 	return;
 }
 
-void FUN_002f2f00(int param_1)
+bool CSimpleMenu::MenuFrameLoad_Draw()
 {
-	edCFiler* pFiler;
-	bool bVar1;
-	int iVar2;
-	edCFileNoWaitStack* pFilerEntry;
+	bool bSuccess;
+	int iVar1;
+	ulong uVar2;
 
-	gSaveManagement.field_0x0 = 0;
-	while (true) {
-#ifdef PLATFORM_PS2
-		scePcStop();
-#endif
-		iVar2 = gSaveManagement.test_device_has_enough_room();
-		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 0)) || (iVar2 != 1)) break;
-		gSaveManagement.message_box(4, 5);
-#ifdef PLATFORM_PS2
-		scePcStop();
-#endif
-		IMPLEMENTATION_GUARD(
-		bVar1 = edFileFormat(gSaveManagement.memCardAccessPath, 0);
-		if ((bVar1 == false) && (bVar1 = gSaveManagement.message_box(4, 2), bVar1 == true)) {
-			return;
-		})
+	iVar1 = gSaveManagement.test_device_has_enough_room();
+	if ((((iVar1 == 3) || (iVar1 == 2)) || (iVar1 == 1)) || (iVar1 != 0)) {
+		if ((iVar1 == 3) && (gSaveManagement.fileExistsFlags == 0x1ff)) {
+			DrawFileSelectBackground_001b32a0(this->selectedIndex);
+			draw_title(TITLE_KEY_LOAD_GAME, -0xaa);
+			this->field_0xdc = -6.0f;
+			this->field_0xd8 = 0x78;
+			set_vertical_spacing(0x38);
+			this->scaleX = 0.8f;
+			this->scaleY = 0.8f;
+			this->selectedScaleX = 0.9f;
+			this->selectedScaleY = 0.9f;
+			set_justification_left();
+			bSuccess = gSaveManagement.is_valid(0);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(0);
+				draw_action(uVar2, MemCardLoad0, 0, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(0);
+				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+			set_vertical_spacing(0x46);
+			set_justification_right();
+			bSuccess = gSaveManagement.is_valid(1);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(1);
+				draw_action(uVar2, MemCardLoad0, 1, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(1);
+				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+			set_justification_left();
+			bSuccess = gSaveManagement.is_valid(2);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(2);
+				draw_action(uVar2, MemCardLoad0, 2, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(2);
+				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
 
-		if (gSaveManagement.pFiler != (edCFiler*)0x0) {
-			gSaveManagement.pFiler->getnowaitfilestack()->AddFilerSync(gSaveManagement.pFiler);
+			set_justification_right();
+
+			bSuccess = gSaveManagement.is_valid(3);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(3);
+				draw_action(uVar2, MemCardLoad0, 3, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(3);
+				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+
+			bSuccess = true;
+		}
+		else {
+			bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x1408524b44525948, 0, 0x120014171f4f4e);
+			if (bSuccess == true) {
+				pop_page();
+			}
+
+			bSuccess = false;
+		}
+	}
+	else {
+		bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x594d424b40531e09, 0, 0x120014171f4f4e);
+		if (bSuccess == true) {
+			pop_page();
 		}
 
-		edFileNoWaitStackFlush();
+		bSuccess = false;
 	}
 
-	return;
+	return bSuccess;
 }
 
-void SaveSaveData_002f2ef0(int)
+bool CSimpleMenu::MenuFrameNewGame_Draw()
 {
-	gSaveManagement.save_sequence();
-	return;
-}
-
-bool CSimpleMenu::DrawNewGame()
-{
-	bool bVar1;
+	bool bResult;
 	int iVar2;
 	Timer* pTVar3;
 	ulong uVar4;
@@ -1826,12 +2243,12 @@ bool CSimpleMenu::DrawNewGame()
 	iVar2 = gSaveManagement.test_device_has_enough_room();
 	if (iVar2 != 3) {
 		if (iVar2 == 1) {
-			bVar1 = MenuMessageBoxDisplay(7, 0x5e40464d5e010000, 0x445f425e42480708, 0x12041a06190e1a, 0x120c1a54544f4e);
-			if (bVar1 == true) {
+			bResult = MenuMessageBoxDisplay(7, 0x5e40464d5e010000, 0x445f425e42480708, 0x12041a06190e1a, 0x120c1a54544f4e);
+			if (bResult == true) {
 				pop_page();
 			}
 			else {
-				if (bVar1 == true) {
+				if (bResult == true) {
 					FUN_002f1b50(FUN_002f2f00, 0);
 				}
 			}
@@ -1839,12 +2256,12 @@ bool CSimpleMenu::DrawNewGame()
 		}
 
 		if (iVar2 == 2) {
-			bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x14474442585e4b46, 0x4155440c0600011c, 0x1201141a170a02);
-			if (bVar1 == true) {
+			bResult = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x14474442585e4b46, 0x4155440c0600011c, 0x1201141a170a02);
+			if (bResult == true) {
 				pop_page();
 			}
 			else {
-				if (bVar1 == true) {
+				if (bResult == true) {
 					pop_page();
 
 					if (gDebugLevelCheatEnabled_00449824 == 0) {
@@ -1870,12 +2287,12 @@ bool CSimpleMenu::DrawNewGame()
 		}
 
 		if (iVar2 == 0) {
-			bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x594d5d4557521e09, 0x4155440c0600011c, 0x1201141a170a02);
-			if (bVar1 == true) {
+			bResult = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x594d5d4557521e09, 0x4155440c0600011c, 0x1201141a170a02);
+			if (bResult == true) {
 				pop_page();
 			}
 			else {
-				if (bVar1 == true) {
+				if (bResult == true) {
 					pop_page();
 
 					if (gDebugLevelCheatEnabled_00449824 == 0) {
@@ -1905,38 +2322,33 @@ bool CSimpleMenu::DrawNewGame()
 	}
 
 	if (gSaveManagement.fileExistsFlags == 0x1ff) {
-		IMPLEMENTATION_GUARD(
 		DrawFileSelectBackground_001b32a0(this->selectedIndex);
-		draw_title(this, 0x57555b5c5c1a0909, -0xaa);
-		this->field_0xdc = -6.0;
+		draw_title(TITLE_KEY_LOAD_GAME, -0xaa);
+		this->field_0xdc = -6.0f;
 		this->field_0xd8 = 0x78;
-		set_vertical_spacing(this, 0x38);
-		this->scaleX = (float)&DAT_3f4ccccd;
-		this->scaleY = (float)&DAT_3f4ccccd;
-		this->selectedScaleX = 0.9;
-		this->selectedScaleY = 0.9;
-		set_justification_left(this);
-		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 0);
-		draw_action(this, uVar4, MemCardSelect0, 0, ~PM_MiniGame);
-		set_vertical_spacing(this, 0x46);
-		FUN_002f2c90(this);
-		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 1);
-		draw_action(this, uVar4, MemCardSelect0, 1, ~PM_MiniGame);
-		set_justification_left(this);
-		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 2);
-		draw_action(this, uVar4, MemCardSelect0, 2, ~PM_MiniGame);
-		FUN_002f2c90(this);
-		uVar4 = CSaveManagement::get_slot_string(&gSaveManagement, 3);
-		draw_action(this, uVar4, MemCardSelect0, 3, ~PM_MiniGame);
-		bVar1 = true;)
+		set_vertical_spacing(0x38);
+		this->scaleX = 0.8f;
+		this->scaleY = 0.8f;
+		this->selectedScaleX = 0.9f;
+		this->selectedScaleY = 0.9f;
+		set_justification_left();
+		draw_action(gSaveManagement.get_slot_string(0), MemCardSelect0, 0, ~PM_MiniGame);
+		set_vertical_spacing(0x46);
+		set_justification_right();
+		draw_action(gSaveManagement.get_slot_string(1), MemCardSelect0, 1, ~PM_MiniGame);
+		set_justification_left();
+		draw_action(gSaveManagement.get_slot_string(2), MemCardSelect0, 2, ~PM_MiniGame);
+		set_justification_right();
+		draw_action(gSaveManagement.get_slot_string(3), MemCardSelect0, 3, ~PM_MiniGame);
+		bResult = true;
 	}
 	else {
-		bVar1 = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x1614191e025f4343, 0x121b1007544f4e, 0x120c1a54544f4e);
-		if (bVar1 == true) {
+		bResult = MenuMessageBoxDisplay(3, 0x5e40464d5e010000, 0x1614191e025f4343, 0x121b1007544f4e, 0x120c1a54544f4e);
+		if (bResult == true) {
 			FUN_002f1b50(SaveSaveData_002f2ef0, 0);
 		}
 		else {
-			if (bVar1 == true) {
+			if (bResult == true) {
 				if (gDebugLevelCheatEnabled_00449824 == 0) {
 					CLevelScheduler::gThis->Level_Run(0, CLevelScheduler::gThis->nextLevelId, 0xffffffff,
 						CScene::_pinstance->field_0x110, 0xffffffff, true);
@@ -1958,10 +2370,11 @@ bool CSimpleMenu::DrawNewGame()
 				CScene::_pinstance->SetGlobalPaused_001b8c30(0);
 			}
 		}
-		bVar1 = false;
+
+		bResult = false;
 	}
 
-	return bVar1;
+	return bResult;
 }
 
 void CSimpleMenu::DrawInitialSaveMenuHelp(ulong helpMsgId, uint color)
@@ -2009,13 +2422,12 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 				}
 				else {
 					if (EVar4 == PM_LoadMenu) {
-						IMPLEMENTATION_GUARD(
-						uVar5 = DrawLoadMenu_001b2ad0(pMenu);
-						uVar5 = uVar5 & 0xff;)
+						uVar5 = pMenu->MenuFrameLoad_Draw();
+						uVar5 = uVar5 & 0xff;
 					}
 					else {
 						if (EVar4 == PM_InitialSave) {
-							uVar5 = pMenu->DrawNewGame();
+							uVar5 = pMenu->MenuFrameNewGame_Draw();
 							uVar5 = uVar5 & 0xff;
 						}
 						else {
@@ -2064,12 +2476,12 @@ void CSimpleMenu::update_page()
 	if (uVar1 == 8) {
 		if (this->field_0x2c != 0) {
 			this->field_0x2c = this->field_0x2c + -1;
-			IMPLEMENTATION_GUARD(
-			ppSVar2 = &this->pVTable + this->field_0x2c * 3;
-			this->currentPage = (EPauseMenu)ppSVar2[0x15];
-			this->selectedIndex = (int)ppSVar2[0x16];
-			this->field_0x50 = (int)ppSVar2[0x17];
-			(*(code*)this->pVTable->on_cancel)();)
+			HistoryEntry* pHVar2 = this->aHistory + this->field_0x2c;
+			this->currentPage = (EPauseMenu)pHVar2->currentPage;
+			this->selectedIndex = pHVar2->selectedIndex;
+			this->field_0x50 = pHVar2->field_0x8;
+
+			on_cancel();
 		}
 	}
 	else {
@@ -2079,6 +2491,7 @@ void CSimpleMenu::update_page()
 				if (this->selectedIndex == this->field_0x50) {
 					this->selectedIndex = 0;
 				}
+
 				if (1 < this->field_0x50) {
 					on_change_selection();
 				}
