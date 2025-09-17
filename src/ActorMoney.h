@@ -49,6 +49,8 @@ public:
 
 	virtual void CheckpointReset();
 
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+
 	S_STREAM_REF<CPathFollow> pathFollow;
 
 	int nbMoneyInstances;
@@ -81,7 +83,7 @@ public:
 	virtual void Init();
 	virtual void Reset();
 	virtual void CheckpointReset();
-	virtual void SaveContext(uint*, int);
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

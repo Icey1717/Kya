@@ -317,9 +317,34 @@ void CActorCompanion::Reset()
 	return;
 }
 
-void CActorCompanion::SaveContext(uint*, int)
+struct S_SAVE_CLASS_COMPANION
 {
-	IMPLEMENTATION_GUARD();
+	uint bits[8]; // supports up to 256 companion instances
+};
+
+void CActorCompanion::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_COMPANION* pSaveData = reinterpret_cast<S_SAVE_CLASS_COMPANION*>(pData);
+
+	// Clear out all bitfields
+	std::memset(pSaveData->bits, 0, sizeof(pSaveData->bits));
+
+	CBehaviourCompanion* pBehaviour = static_cast<CBehaviourCompanion*>(GetBehaviour(this->curBehaviourId));
+
+	for (uint32_t i = 0; i < pBehaviour->nbSubObjs; ++i)
+	{
+		const CompanionAlert& inst = pBehaviour->aSubObjs[i];
+
+		if (inst.flags_0x4 & 4) // active?
+		{
+			uint32_t wordIndex = i / 32;
+			uint32_t bitIndex = i % 32;
+
+			pSaveData->bits[wordIndex] |= (1u << bitIndex);
+		}
+	}
+
+	return;
 }
 
 void CActorCompanion::LoadContext(uint*, int)

@@ -3511,6 +3511,20 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 	return iVar3;
 }
 
+void S_STREAM_NTF_TARGET_SWITCH_EX::Reset()
+{
+	this->flags = this->flags & 1;
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG::Reset()
+{
+	this->flags = this->flags & 1;
+
+	return;
+}
+
 void CCinematic::FUN_001c7390(bool param_2)
 {
 	ed_zone_3d* peVar1;
@@ -4387,7 +4401,7 @@ void S_STREAM_EVENT_CAMERA::Init()
 	CActor* pCVar2;
 
 	this->field_0x8 = this->field_0x8 * this->field_0x8;
-	this->field_0x4 = (uint)((ulong)((long)this->field_0x4 << 0x23) >> 0x23);
+	this->flags = (uint)((ulong)((long)this->flags << 0x23) >> 0x23);
 	this->field_0x1c = 0;
 
 	if (this->pActor == -1) {
@@ -4421,12 +4435,12 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 	float fVar10;
 	ed_zone_3d* pEVar2;
 
-	if ((this->field_0x4 & 0x40000000U) != 0) {
+	if ((this->flags & 0x40000000U) != 0) {
 		pTVar7 = GetTimer();
 		fVar10 = pTVar7->scaledTotalTime - this->field_0x1c;
 		if (this->field_0xc <= fVar10) {
 			bVar6 = false;
-			if (((this->field_0x4 & 1U) != 0) &&
+			if (((this->flags & 1U) != 0) &&
 				((0.4f <= gPlayerInput.aAnalogSticks[PAD_STICK_LEFT].magnitude || ((gPlayerInput.pressedBitfield & 0x7f0) != 0)))) {
 				bVar6 = true;
 			}
@@ -4445,20 +4459,20 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 
 			puVar1 = LOAD_SECTION_CAST(CActor*, this->pActor);
 			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_SECTION_CAST(ed_zone_3d*, this->pZone), pEVar2 != (ed_zone_3d*)0x0)) {
-				uVar9 = this->field_0x4 & 0x20000000;
-				this->field_0x4 = this->field_0x4 & 0xdfffffff;
+				uVar9 = this->flags & 0x20000000;
+				this->flags = this->flags & 0xdfffffff;
 				if ((puVar1 != (CActor*)0x0) && ((pEVar2 != (ed_zone_3d*)0x0 &&
 						(uVar8 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pEVar2, &puVar1->currentLocation, 0), (uVar8 & 1) != 0)))) {
-					this->field_0x4 = this->field_0x4 | 0x20000000;
+					this->flags = this->flags | 0x20000000;
 				}
 
-				uVar8 = this->field_0x4;
+				uVar8 = this->flags;
 				if ((uVar8 & 0x20000000) == 0) {
 					if ((uVar8 & 0x20) != 0) {
 						bVar6 = true;
 					}
 
-					if ((uVar9 != 0) && ((this->field_0x4 & 8U) != 0)) {
+					if ((uVar9 != 0) && ((this->flags & 8U) != 0)) {
 						bVar6 = true;
 					}
 				}
@@ -4467,19 +4481,19 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 						bVar6 = true;
 					}
 
-					if ((uVar9 == 0) && ((this->field_0x4 & 4U) != 0)) {
+					if ((uVar9 == 0) && ((this->flags & 4U) != 0)) {
 						bVar6 = true;
 					}
 				}
 			}
 
-			if ((bVar6) && ((this->field_0x4 & 0x40000000U) != 0)) {
+			if ((bVar6) && ((this->flags & 0x40000000U) != 0)) {
 				if ((this->cameraIndex != -1)) {
 					CCameraManager::_gThis->PopCamera(this->cameraIndex);
-					this->field_0x4 = this->field_0x4 & 0xbfffffff;
+					this->flags = this->flags & 0xbfffffff;
 				}
 
-				if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+				if (((this->flags & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 					if (pActor == (CActor*)0x0) {
 						pActor = (CActor*)CActorHero::_gThis;
 					}
@@ -4498,12 +4512,12 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 	int iVar1;
 	uint uVar3;
 
-	uVar3 = this->field_0x4;
+	uVar3 = this->flags;
 	if (((((uVar3 & 2) == 0) || ((uVar3 & 0x80000000) == 0)) && ((uVar3 & 0x40000000) == 0)) &&
 		((this->cameraIndex != -1 && (iVar1 = CCameraManager::_gThis->PushCamera(this->cameraIndex, 0), iVar1 != 0)))) {
-		this->field_0x4 = this->field_0x4 | 0xc0000000;
+		this->flags = this->flags | 0xc0000000;
 
-		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+		if (((this->flags & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)CActorHero::_gThis;
 			}
@@ -4511,12 +4525,12 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 		}
 
 		this->field_0x1c = GetTimer()->scaledTotalTime;
-		this->field_0x4 = this->field_0x4 & 0xdfffffff;
+		this->flags = this->flags & 0xdfffffff;
 
 		if (((this->pActor != 0x0) && (this->pZone != 0x0)) &&
 			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_SECTION_CAST(ed_zone_3d*, this->pZone),
 				&LOAD_SECTION_CAST(CActor*, this->pActor)->currentLocation, 0), (uVar3 & 1) != 0)) {
-			this->field_0x4 = this->field_0x4 | 0x20000000;
+			this->flags = this->flags | 0x20000000;
 		}
 	}
 
@@ -4527,13 +4541,13 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 void S_STREAM_EVENT_CAMERA::SwitchOff(CActor* pActor)
 
 {
-	if ((this->field_0x4 & 0x40000000U) != 0) {
+	if ((this->flags & 0x40000000U) != 0) {
 		if (this->cameraIndex != -1) {
 			CCameraManager::_gThis->PopCamera(this->cameraIndex);
-			this->field_0x4 = this->field_0x4 & 0xbfffffff;
+			this->flags = this->flags & 0xbfffffff;
 		}
 
-		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+		if (((this->flags & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)CActorHero::_gThis;
 			}
@@ -4549,13 +4563,13 @@ void S_STREAM_EVENT_CAMERA::SwitchOff(CActor* pActor)
 
 void S_STREAM_EVENT_CAMERA::Reset(CActor* pActor)
 {
-	if ((this->field_0x4 & 0x40000000U) != 0) {
+	if ((this->flags & 0x40000000U) != 0) {
 		if (this->cameraIndex != -1) {
 			CCameraManager::_gThis->PopCamera(this->cameraIndex);
-			this->field_0x4 = this->field_0x4 & 0xbfffffff;
+			this->flags = this->flags & 0xbfffffff;
 		}
 
-		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+		if (((this->flags & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)CActorHero::_gThis;
 			}
@@ -4564,8 +4578,20 @@ void S_STREAM_EVENT_CAMERA::Reset(CActor* pActor)
 		}
 	}
 
-	this->field_0x4 = (uint)((ulong)((ulong)this->field_0x4 << 0x23) >> 0x23);
+	this->flags = (uint)((ulong)((ulong)this->flags << 0x23) >> 0x23);
 	this->field_0x1c = 0;
+	return;
+}
+
+void S_STREAM_EVENT_CAMERA::SaveContext(uint* pData)
+{
+	if ((this->flags & 0x80000000) == 0) {
+		*pData = 0;
+	}
+	else {
+		*pData = 1;
+	}
+
 	return;
 }
 
@@ -5617,6 +5643,36 @@ void S_NTF_SWITCH::PostSwitch(CActor* pActor)
 	return;
 }
 
+void S_NTF_TARGET_STREAM_REF::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+
+	pSaveData->mode = 2;
+	pSaveData->switchBits = 0;
+
+	if (0 < this->entryCount) {
+		do {
+			if ((this->aEntries[i].flags & 0x40000000) != 0) {
+				pSaveData->switchBits = pSaveData->switchBits | shift;
+			}
+
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
+void S_NTF_SWITCH::SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	this->pTargetStreamRef->SaveContext(&pSaveData->switchData);
+	this->pStreamEventCamera->SaveContext(&pSaveData->cameraData);
+
+	return;
+}
+
 void S_NTF_SWITCH_ONOFF::Create(ByteCode* pByteCode)
 {
 	this->pTargetStreamRef = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
@@ -5660,6 +5716,168 @@ void S_NTF_SWITCH_ONOFF::SwitchOff(CActor* pActor)
 {
 	this->pTargetStreamRef->SwitchOff(pActor);
 	this->pStreamEventCamera->SwitchOff(pActor);
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::Create(S_STREAM_NTF_TARGET_ANALOG_LIST** pThis, ByteCode* pByteCode)
+{
+	*pThis = reinterpret_cast<S_STREAM_NTF_TARGET_ANALOG_LIST*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if ((*pThis)->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (*pThis)->entryCount * sizeof(S_STREAM_NTF_TARGET_ANALOG);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::Init()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Init();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].NotifyAnalog(param_1, param_2, param_4, param_5);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_NTF_SWITCH_EX_LIST::Init()
+{
+	this->pTargetStreamRef->Init();
+	this->pStreamEventCamera->Init();
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::Reset()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Reset();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_NTF_SWITCH_EX_LIST::Create(ByteCode* pByteCode)
+{
+	this->pTargetStreamRef = reinterpret_cast<S_STREAM_NTF_TARGET_SWITCH_EX_LIST*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if (this->pTargetStreamRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + this->pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH_EX);
+	}
+
+	this->pStreamEventCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = (char*)(this->pStreamEventCamera + 1);
+
+	return;
+}
+
+void S_NTF_SWITCH_ANALOG::Create(ByteCode* pByteCode)
+{
+	S_STREAM_NTF_TARGET_ANALOG_LIST::Create(&pTargetStreamRef, pByteCode);
+
+	this->pStreamEventCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = (char*)(this->pStreamEventCamera + 1);
+
+	return;
+}
+
+void S_NTF_SWITCH_ANALOG::Init()
+{
+	this->pTargetStreamRef->Init();
+	this->pStreamEventCamera->Init();
+
+	return;
+}
+
+void S_NTF_SWITCH_ANALOG::NotifyAnalog(float param_1, float param_2, CActor* param_4)
+{
+	this->pTargetStreamRef->NotifyAnalog(param_1, param_2, param_4, this->pStreamEventCamera);
+
+	return;
+}
+
+void S_NTF_SWITCH_ANALOG::Reset(CActor* pActor)
+{
+	this->pTargetStreamRef->Reset();
+	this->pStreamEventCamera->Reset(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH_EX_LIST::Switch(CActor* pActor, uint flags)
+{
+	this->pTargetStreamRef->Switch(pActor, flags);
+	this->pStreamEventCamera->SwitchOn(pActor);
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::Init()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Init();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_NTF_SWITCH_EX_LIST::Reset(CActor* pActor)
+{
+	this->pTargetStreamRef->Reset();
+	this->pStreamEventCamera->Reset(pActor);
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::Switch(CActor* pActor, uint flags)
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Switch(pActor, flags);
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::Reset()
+{
+	int curSwitchIndex = 0;
+	if (0 < this->entryCount) {
+		do {
+			this->aEntries[curSwitchIndex].Reset();
+			curSwitchIndex = curSwitchIndex + 1;
+		} while (curSwitchIndex < this->entryCount);
+	}
 
 	return;
 }

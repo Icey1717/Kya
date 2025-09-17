@@ -370,9 +370,29 @@ void CActorTeleporter::Reset()
 	IMPLEMENTATION_GUARD();
 }
 
-void CActorTeleporter::SaveContext(uint*, int)
+struct S_SAVE_CLASS_TELEPORTER
 {
-	IMPLEMENTATION_GUARD();
+	int bOpen;
+	int activeButtonIndex;
+	int field_0x8;
+	int field_0xc;
+};
+
+void CActorTeleporter::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_TELEPORTER* pDataTeleporter = reinterpret_cast<S_SAVE_CLASS_TELEPORTER*>(pData);
+	if (this->bOpen == 0) {
+		pDataTeleporter->bOpen = 0;
+	}
+	else {
+		pDataTeleporter->bOpen = 1;
+	}
+
+	pDataTeleporter->activeButtonIndex = this->activeButtonIndex;
+	pDataTeleporter->field_0x8 = this->field_0x2ac;
+	pDataTeleporter->field_0xc = this->field_0x2b0;
+
+	return;
 }
 
 void CActorTeleporter::LoadContext(uint*, int)

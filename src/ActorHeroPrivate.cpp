@@ -2487,6 +2487,69 @@ void CActorHeroPrivate::CheckpointReset()
 	return;
 }
 
+struct S_SAVE_CLASS_HERO
+{
+	edF32VECTOR3 field_0x0;
+	edF32VECTOR3 field_0xc;
+	int lastCheckPointSector;
+	edF32VECTOR3 field_0x1c;
+	edF32VECTOR3 field_0x28;
+	int field_0x34;
+	byte field_0x38[16][16];
+};
+
+
+void CActorHeroPrivate::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	byte bVar1;
+	int iVar3;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	CLevelScheduler* pLevel;
+
+	pLevel = CLevelScheduler::gThis;
+	fVar5 = GetLifeInterface()->GetValue();
+
+	if (fVar5 - this->field_0x2e4 <= 0.0f) {
+		iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
+		this->lifeInterface.SetValue((float)CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE));
+	}
+
+	pLevel->UpdateGameInfo(this->lifeInterface.GetValue(), (int)this->magicInterface.GetValue(), (int)this->moneyInterface.GetValue());
+	pLevel->SaveInventoryToNfo(&this->inventory);
+
+	S_SAVE_CLASS_HERO* pHeroSave = reinterpret_cast<S_SAVE_CLASS_HERO*>(pData);
+
+	iVar4 = 0;
+	pHeroSave->field_0x0 = this->field_0xe50.xyz;
+	pHeroSave->field_0xc = this->field_0xe60;
+	pHeroSave->lastCheckPointSector = this->lastCheckPointSector;
+
+	pHeroSave->field_0x1c = this->field_0xe80.xyz;
+	pHeroSave->field_0x28 = this->field_0xe90;
+	pHeroSave->field_0x34 = this->field_0xea0;
+
+	do {
+		iVar3 = 0;
+		do {
+			bVar1 = this->field_0xd34[iVar4][iVar3];
+			if ((bVar1 == 1) || ((pLevel->field_0x74 == 0 && (1 < bVar1)))) {
+				pHeroSave->field_0x38[iVar4][iVar3] = 1;
+			}
+			else {
+				pHeroSave->field_0x38[iVar4][iVar3] = 0;
+			}
+
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < 0x10);
+		iVar4 = iVar4 + 1;
+	} while (iVar4 < 0x10);
+
+	return;
+}
+
 void CActorHeroPrivate::Manage()
 {
 	CAnimation* pCVar1;

@@ -42,6 +42,8 @@ set(SOURCES
 	"src/DebugTexture.cpp"
 	"src/DebugMesh.h"
 	"src/DebugMesh.cpp"
+	"src/DebugSaveLoad.h"
+	"src/DebugSaveLoad.cpp"
 	"src/DebugWolfen.h"
 	"src/DebugWolfen.cpp"
 	"src/DebugRendererVulkan.cpp"

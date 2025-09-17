@@ -97,9 +97,15 @@ void CActorBonus::CheckpointReset()
 	return;
 }
 
-void CActorBonus::SaveContext(uint*, int)
+void CActorBonus::SaveContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviour* pBehaviour;
+
+	pBehaviour = GetBehaviour(this->curBehaviourId);
+	if (pBehaviour != (CBehaviour*)0x0) {
+		CBehaviourBonusBase* pBehaviourBonus = static_cast<CBehaviourBonusBase*>(pBehaviour);
+		pBehaviourBonus->SaveContext(pData, mode, maxSize);
+	}
 }
 
 void CActorBonus::LoadContext(uint*, int)
@@ -215,5 +221,10 @@ void CActorBonus::ChangeVisibleState(int state)
 		}
 	}
 
+	return;
+}
+
+void CBehaviourBonusBase::SaveContext(void* pData, uint mode, uint maxSize)
+{
 	return;
 }

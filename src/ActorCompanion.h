@@ -122,7 +122,7 @@ public:
 	virtual void Term();
 	virtual void Draw();
 	virtual void Reset();
-	virtual void SaveContext(uint*, int);
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

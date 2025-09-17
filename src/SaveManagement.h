@@ -2116,6 +2116,7 @@ public:
 extern CSaveManagement gSaveManagement;
 
 void SaveManagementBootCheck(void);
+void SaveManagement_MemCardSave0(int slotIndex);
 bool SaveManagement_MemCardSave(int slotIndex);
 bool SaveManagement_MemCardLoad(int slotIndex);
 

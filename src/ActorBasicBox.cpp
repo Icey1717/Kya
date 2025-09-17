@@ -145,9 +145,20 @@ void CActorBasicBox::Reset()
 	return;
 }
 
-void CActorBasicBox::SaveContext(uint*, int)
+struct S_SAVE_CLASS_BASIC_BOX
 {
-	IMPLEMENTATION_GUARD();
+	uint field_0x0;
+};
+
+void CActorBasicBox::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_BASIC_BOX* pSaveData = reinterpret_cast<S_SAVE_CLASS_BASIC_BOX*>(pData);
+
+	if (mode == 1) {
+		pSaveData->field_0x0 = (uint)(0.0f < this->field_0x168);
+	}
+
+	return;
 }
 
 void CActorBasicBox::LoadContext(uint*, int)

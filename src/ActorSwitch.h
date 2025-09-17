@@ -7,12 +7,12 @@
 #include "Fx.h"
 #include "CinematicManager.h"
 
-#define SWITCH_BEHAVIOUR_LEVER 0x2
-#define SWITCH_BEHAVIOUR_MAGIC 0x3
-#define SWITCH_BEHAVIOUR_WOLFEN_COUNTER 0x4
-#define SWITCH_BEHAVIOUR_MULTI_CONDITION 0x5
-#define SWITCH_BEHAVIOUR_TARGET 0x6
-#define SWITCH_BEHAVIOUR_SEQUENCE 0x7
+#define SWITCH_BEHAVIOUR_LEVER				0x2
+#define SWITCH_BEHAVIOUR_MAGIC				0x3
+#define SWITCH_BEHAVIOUR_WOLFEN_COUNTER		0x4
+#define SWITCH_BEHAVIOUR_MULTI_CONDITION	0x5
+#define SWITCH_BEHAVIOUR_TARGET				0x6
+#define SWITCH_BEHAVIOUR_SEQUENCE			0x7
 #define SWITCH_BEHAVIOUR_NEW 0x8
 
 #define SWITCH_STATE_MAGIC_STATE_OFF_2_ON 0x6
@@ -21,13 +21,21 @@
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
+struct S_SAVE_CLASS_SWITCH
+{
+	S_SAVE_CLASS_SWITCH_CAMERA switchCamera;
+	int behaviourId;
+	int bActive;
+	int field_0x14;
+};
+
 class CActorSwitch;
 
 class CBehaviourSwitch : public CBehaviour
 {
 public:
 	// Needs to be deleted functions.
-	virtual void SaveContext(uint*, int) {}
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData) = 0;
 	virtual void LoadContext(uint*, int) {}
 	virtual void ChangeManageState(int state) {}
 
@@ -46,7 +54,7 @@ public:
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int) {}
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int) {}
 
 	CActor* pActor;
@@ -74,7 +82,7 @@ public:
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void ChangeManageState(int state);
 
@@ -112,7 +120,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int);
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int);
 
 	ParticleInfo* field_0x8;
@@ -134,7 +142,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int) {}
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int) {}
 	virtual void ChangeManageState(int state) {}
 
@@ -143,7 +151,7 @@ public:
 	S_OSCILLATING_VALUE oscValue;
 };
 
-class CBehaviourSwitchNew : public CBehaviourSwitch
+class CBehaviourSwitchNew : public CBehaviourSwitchTarget
 {
 public:
 };
@@ -158,7 +166,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 
 	uint field_0x8;
@@ -177,7 +185,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 
 	uint field_0x8;
@@ -188,7 +196,8 @@ public:
 	uint field_0x18;
 };
 
-class CActorSwitch : public CActor {
+class CActorSwitch : public CActor
+{
 public:
 
 	static StateConfig _gStateCfg_SWT[5];
@@ -196,7 +205,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Reset();
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

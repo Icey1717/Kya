@@ -46,6 +46,7 @@
 #define SAVEGAME_CHUNK_BOBJ 0x4A424F42
 
 class CActorNativShop;
+class CInventoryInterface;
 
 struct SaveDataDesc;
 
@@ -396,6 +397,8 @@ public:
 	static int SaveGame_GetMaxBufferSize();
 
 	void UpdateGameInfo(float health, int magic, int money);
+
+	void SaveInventoryToNfo(CInventoryInterface* pInventory);
 
 	static uint GetMedallionLevel();
 	static int GetBoomyLevel();

@@ -75,7 +75,7 @@ public:
 	virtual void ComputeLighting() {}
 	virtual void Reset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

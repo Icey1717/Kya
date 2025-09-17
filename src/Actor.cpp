@@ -771,12 +771,15 @@ void CActor::Create(ByteCode* pByteCode)
 		this->lightingFlags = this->lightingFlags | 4;
 	}
 	this->lightingFloat_0xe0 = (this->subObjA)->lightingFloat_0x4c;
+
 	if ((CActorFactory::gClassProperties[this->typeID].flags & 0x20) != 0) {
 		this->actorFieldS = this->actorFieldS | 0x10;
 	}
-	if (CActorFactory::gClassProperties[this->typeID].field_0x14 == 0) {
-		this->actorFieldS = this->actorFieldS & 0xffffffef;
+
+	if (CActorFactory::gClassProperties[this->typeID].maxSaveBytes == 0) {
+		this->actorFieldS = this->actorFieldS & ~SAVE_FLAG;
 	}
+
 	if ((this->actorFieldS & 0x80) != 0) {
 		FUN_00115ea0(0);
 	}
@@ -2739,9 +2742,9 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 	return;
 }
 
-void CActor::SaveContext(uint*, int)
+void CActor::SaveContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	return;
 }
 
 void CActor::LoadContext(uint*, int)
@@ -3111,8 +3114,8 @@ void CActor::SetupLighting()
 	if ((CActorFactory::gClassProperties[this->typeID].flags & 0x20) != 0) {
 		this->actorFieldS = this->actorFieldS | 0x10;
 	}
-	if (CActorFactory::gClassProperties[this->typeID].field_0x14 == 0) {
-		this->actorFieldS = this->actorFieldS & 0xffffffef;
+	if (CActorFactory::gClassProperties[this->typeID].maxSaveBytes == 0) {
+		this->actorFieldS = this->actorFieldS & ~SAVE_FLAG;
 	}
 	return;
 }

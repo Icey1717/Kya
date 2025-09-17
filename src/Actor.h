@@ -22,6 +22,9 @@
 
 #define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
 
+// Bit in CActor::actorFieldS meaning "include in save"
+constexpr uint32_t SAVE_FLAG = 0x10;
+
 struct edNODE;
 struct ed_g3d_hierarchy;
 struct ed_3d_hierarchy_node;
@@ -460,7 +463,7 @@ public:
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual void PauseChange(int bIsPaused);
 
-	virtual void SaveContext(uint*, int);
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int);
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);

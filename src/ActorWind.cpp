@@ -476,6 +476,25 @@ void CActorWind::SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+struct S_SAVE_CLASS_WIND
+{
+	int field_0x0;
+};
+
+void CActorWind::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_WIND* pSaveData = reinterpret_cast<S_SAVE_CLASS_WIND*>(pData);
+
+	if ((this->flags & 0x2000001) == 0) {
+		pSaveData->field_0x0 = 1;
+	}
+	else {
+		pSaveData->field_0x0 = 0;
+	}
+
+	return;
+}
+
 CBehaviour* CActorWind::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;

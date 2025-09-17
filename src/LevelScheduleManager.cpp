@@ -1510,6 +1510,36 @@ void CLevelScheduler::UpdateGameInfo(float health, int magic, int money)
 	return;
 }
 
+void CLevelScheduler::SaveInventoryToNfo(CInventoryInterface* pInventory)
+{
+	bool bVar1;
+	EpStruct_80* pEVar2;
+	int iVar3;
+	InventorySlot* ppIVar4;
+	int local_4;
+
+	iVar3 = 0;
+	pEVar2 = _gGameNfo.aEpisodes;
+	do {
+		local_4 = 0;
+		bVar1 = true;
+
+		while (bVar1) {
+			ppIVar4 = pInventory->aSlots[iVar3] + local_4;
+			pEVar2->aSubObj[local_4].field_0x0 = ppIVar4->field_0x0;
+			pEVar2->aSubObj[local_4].field_0x4 = ppIVar4->field_0x4;
+			local_4 = local_4 + 1;
+			bVar1 = local_4 < 0x10;
+		}
+
+		iVar3 = iVar3 + 1;
+		pEVar2 = pEVar2 + 1;
+	} while (iVar3 < 2);
+
+	return;
+}
+
+
 ulong gMedallionHashCodes[9] = 
 {
 	CHAR_TO_UINT64("FIGHT_08"),
@@ -2275,9 +2305,9 @@ LAB_002e26c8:
 		Level_FillRunInfo(nextLevelId, -1, -1);
 	}
 	else {
-		Level_FillRunInfo(0xe, -1, -1);
+		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		//Level_FillRunInfo(0x4, -1, -1);
+		Level_FillRunInfo(0x2, -1, -1);
 		//Level_FillRunInfo(0x4, 9, -1);
 		//Level_FillRunInfo(0x0, 9, 0xb);
 		//Level_FillRunInfo(0x2, -1, 0x5c);

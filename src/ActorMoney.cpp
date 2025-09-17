@@ -78,9 +78,11 @@ void CActorMoney::CheckpointReset()
 	return;
 }
 
-void CActorMoney::SaveContext(uint*, int)
+void CActorMoney::SaveContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	static_cast<CBehaviourMoneyFlock*>(GetBehaviour(this->curBehaviourId))->SaveContext(pData, mode, maxSize);
+
+	return;
 }
 
 void CActorMoney::LoadContext(uint*, int)
@@ -504,6 +506,34 @@ bool CBehaviourMoneyFlock::InitDlistPatchable(int)
 
 void CBehaviourMoneyFlock::CheckpointReset()
 {
+	return;
+}
+
+struct S_SAVE_CLASS_MONEY
+{
+	uint bits[8]; // supports up to 256 money instances
+};
+
+void CBehaviourMoneyFlock::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_MONEY* pSaveData = reinterpret_cast<S_SAVE_CLASS_MONEY*>(pData);
+
+	// Clear out all bitfields
+	std::memset(pSaveData->bits, 0, sizeof(pSaveData->bits));
+
+	for (uint32_t i = 0; i < nbMoneyInstances; ++i)
+	{
+		const CMnyInstance& inst = aMoneyInstances[i];
+
+		if (inst.flags & 1) // active?
+		{
+			uint32_t wordIndex = i / 32;
+			uint32_t bitIndex = i % 32;
+
+			pSaveData->bits[wordIndex] |= (1u << bitIndex);
+		}
+	}
+
 	return;
 }
 

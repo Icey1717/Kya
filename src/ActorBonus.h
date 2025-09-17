@@ -13,6 +13,8 @@ class CBehaviourBonusBase : public CBehaviour
 {
 public:
 	virtual void ChangeVisibleState(int state) {}
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+
 };
 
 class CBehaviourBonusFlock : public CBehaviourBonusBase
@@ -67,7 +69,7 @@ public:
 	virtual void Draw();
 	virtual void ComputeLighting() {}
 	virtual void CheckpointReset();
-	virtual void SaveContext(uint*, int);
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

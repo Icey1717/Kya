@@ -87,6 +87,11 @@ void SaveManagementBootCheck(void)
 	return;
 }
 
+void SaveManagement_MemCardSave0(int slotIndex)
+{
+	SaveManagement_MemCardSave(slotIndex);
+}
+
 bool SaveManagement_MemCardSave(int slotIndex)
 {
 	CLevelScheduler* pCVar1;

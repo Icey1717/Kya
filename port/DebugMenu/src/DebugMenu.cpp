@@ -45,6 +45,7 @@
 #include "DebugFrameBuffer.h"
 #include "DebugCheckpoint.h"
 #include "DebugEvent.h"
+#include "DebugSaveLoad.h"
 #include "DebugCinematic.h"
 #include "Native/NativeRenderer.h"
 #include "LevelScheduleManager.h"
@@ -494,6 +495,7 @@ namespace Debug {
 		{"Shop", Debug::Shop::ShowMenu, true },
 		{"Wolfen", Debug::Wolfen::ShowMenu, true },
 		{"Scenario", Debug::Scenario::ShowMenu, true },
+		{"Save/Load", Debug::SaveLoad::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {
@@ -527,6 +529,7 @@ namespace Debug {
 			Debug::Camera::ShowCamera();
 			Debug::Shop::Update();
 			Debug::Scenario::Update();
+			Debug::SaveLoad::Update();
 
 			ForEachMenu([](Menu& menu) {
 				menu.Show();

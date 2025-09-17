@@ -128,6 +128,8 @@ public:
 	virtual void PreCheckpointReset();
 	virtual void CheckpointReset();
 
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);

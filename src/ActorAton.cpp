@@ -169,9 +169,34 @@ void CActorAton::CheckpointReset()
 	return;
 }
 
-void CActorAton::SaveContext(uint*, int)
+struct S_SAVE_CLASS_ATON
 {
-	IMPLEMENTATION_GUARD();
+	edF32VECTOR4 field_0x0;
+	uint field_0x20;
+	uint field_0x21;
+};
+
+void CActorAton::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_ATON* pSaveData = reinterpret_cast<S_SAVE_CLASS_ATON*>(pData);
+
+	if (this->field_0x1c0.x == 1e+30f) {
+		pSaveData->field_0x20 = 0;
+	}
+	else {
+		pSaveData->field_0x20 = 1;
+		(pSaveData->field_0x0).xyz = this->field_0x1c0.xyz;
+		(pSaveData->field_0x0).w = 1.0f;
+	}
+
+	if (this->field_0x475 == 0) {
+		pSaveData->field_0x21 = 0;
+	}
+	else {
+		pSaveData->field_0x21 = 1;
+	}
+
+	return;
 }
 
 void CActorAton::LoadContext(uint*, int)

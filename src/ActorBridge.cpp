@@ -577,6 +577,20 @@ void CActorBridge::Term()
 	return;
 }
 
+struct S_SAVE_CLASS_BRIDGE
+{
+	int field_0x0;
+};
+
+void CActorBridge::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_BRIDGE* pSaveData = reinterpret_cast<S_SAVE_CLASS_BRIDGE*>(pData);
+
+	pSaveData->field_0x0 = this->field_0x354;
+
+	return;
+}
+
 StateConfig CActorBridge::gStateCfg_BRG[3] =
 {
 	StateConfig(0, 0),

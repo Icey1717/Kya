@@ -712,6 +712,27 @@ void CActorWolfen::SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+struct S_SAVE_CLASS_WOLFEN
+{
+	int bExorcised;
+};
+
+void CActorWolfen::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_WOLFEN* pSaveData = reinterpret_cast<S_SAVE_CLASS_WOLFEN*>(pData);
+
+	if (this->exorcisedState == 2) {
+		pSaveData->bExorcised = 1;
+	}
+	else {
+		pSaveData->bExorcised = 0;
+	}
+
+	assert(sizeof(S_SAVE_CLASS_WOLFEN) <= maxSize);
+
+	return;
+}
+
 CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;

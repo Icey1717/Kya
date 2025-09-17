@@ -503,9 +503,6 @@ void CActorManager::Level_PauseChange(bool bPaused)
 	return;
 }
 
-// Bit in CActor::actorFieldS meaning "include in save"
-static constexpr uint32_t SAVE_FLAG = 0x10;
-
 void CActorManager::Level_SaveContext()
 {
 	// 1) Count how many savable actors per class
@@ -535,9 +532,9 @@ void CActorManager::Level_SaveContext()
 		int n = perClassCount[classIdx];
 		if (n > 0) {
 			const ActorClassProperties& props = CActorFactory::gClassProperties[classIdx];
-			*out++ = props.field_0x10;	// identifies the class in the save stream
-			*out++ = props.field_0x14;	// bytes that each instance of this class will write
-			*out++ = n;					// how many instances to expect in the actor data chunk
+			*out++ = props.saveMode;		// identifies the class in the save stream
+			*out++ = props.maxSaveBytes;	// bytes that each instance of this class will write
+			*out++ = n;						// how many instances to expect in the actor data chunk
 		}
 	}
 
@@ -554,19 +551,18 @@ void CActorManager::Level_SaveContext()
 		const CClassInfo& ci = aClassInfo[classIdx];
 
 		for (int i = 0; i < ci.totalCount; ++i) {
-			CActor* actor = *(CActor**)((uint8_t*)ci.aActors + i * ci.size); // or reinterpret_cast if it’s an array of actors
-			if ((actor->actorFieldS & SAVE_FLAG) == 0) continue;
+			CActor* pActor = reinterpret_cast<CActor*>(reinterpret_cast<char*>(ci.aActors) + (i * ci.size));
+
+			if ((pActor->actorFieldS & SAVE_FLAG) == 0) continue;
 
 			// Write a placement/identity hash first
-			*(uint32_t*)outBytes = actor->subObjA->hashCode;
+			*reinterpret_cast<uint*>(outBytes) = pActor->subObjA->hashCode;
 			outBytes += 4;
 
 			// Then the instance payload exactly saveSize bytes (implemented by each class)
-			// Signature looks like: actor->SaveContext(void* dst, uint32 classId, uint32 payloadSize)
-			IMPLEMENTATION_GUARD(
-			actor->SaveContext(outBytes, props.classId, props.saveSize);
-
-			outBytes += props.saveSize;)
+			// Signature looks like: actor->SaveContext(void* dst, uint32 classId, uint32 payloadSize
+			pActor->SaveContext(outBytes, props.saveMode, props.maxSaveBytes);
+			outBytes += props.maxSaveBytes;
 		}
 	}
 

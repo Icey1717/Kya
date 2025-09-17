@@ -56,6 +56,37 @@ void CActorSwitch::Reset()
 	return;
 }
 
+void CActorSwitch::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	CBehaviourSwitch* pCVar1;
+	S_NTF_TARGET_STREAM_REF* pSVar1;
+	int iVar2;
+	int iVar3;
+	uint uVar4;
+
+	S_SAVE_CLASS_SWITCH* pSaveData = reinterpret_cast<S_SAVE_CLASS_SWITCH*>(pData);
+
+	this->targetSwitch.SaveContext(&pSaveData->switchCamera);
+	
+	pSaveData->bActive = 0;
+	pSaveData->field_0x14 = 0;
+	pSaveData->behaviourId = this->curBehaviourId;
+
+	switch (this->curBehaviourId) {
+	case SWITCH_BEHAVIOUR_LEVER:
+	case SWITCH_BEHAVIOUR_MAGIC:
+	case SWITCH_BEHAVIOUR_WOLFEN_COUNTER:
+	case SWITCH_BEHAVIOUR_MULTI_CONDITION:
+	case SWITCH_BEHAVIOUR_TARGET:
+	case SWITCH_BEHAVIOUR_SEQUENCE:
+		pCVar1 = (CBehaviourSwitch*)GetBehaviour(this->curBehaviourId);
+		if (pCVar1 != (CBehaviourSwitch*)0x0) {
+			pCVar1->SaveContext(pSaveData);
+		}
+	}
+	return;
+}
+
 CBehaviour* CActorSwitch::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
@@ -633,6 +664,18 @@ int CBehaviourSwitchMagic::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	return 0;
 }
 
+void CBehaviourSwitchMagic::SaveContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	if (this->pOwner->actorState == 8) {
+		pData->bActive = 1;
+	}
+	else {
+		pData->bActive = 0;
+	}
+
+	return;
+}
+
 void CBehaviourSwitchMagic::ChangeManageState(int state)
 {
 	bool bVar1;
@@ -999,6 +1042,11 @@ int CBehaviourSwitchTarget::InterpretMessage(CActor* pSender, int msg, void* pMs
 	return bVar2;
 }
 
+void CBehaviourSwitchTarget::SaveContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	return;
+}
+
 void CBehaviourSwitchLever::Create(ByteCode* pByteCode)
 {
 	this->field_0x40.index = pByteCode->GetS32();
@@ -1227,6 +1275,11 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	return 0;
 }
 
+void CBehaviourSwitchLever::SaveContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	return;
+}
+
 void CBehaviourSwitchMultiCondition::Create(ByteCode* pByteCode)
 {
 	this->field_0x14 = pByteCode->GetU32();
@@ -1407,6 +1460,20 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 	return 1;
 }
 
+void CBehaviourSwitchMultiCondition::SaveContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	pData->field_0x14 = this->field_0x10;
+
+	if (this->pOwner->actorState == 8) {
+		pData->bActive = 1;
+	}
+	else {
+		pData->bActive = 0;
+	}
+
+	return;
+}
+
 void CBehaviourSwitchSequence::Create(ByteCode* pByteCode)
 {
 	int* piVar1;
@@ -1485,6 +1552,14 @@ int CBehaviourSwitchSequence::InterpretMessage(CActor* pSender, int msg, void* p
 {
 	IMPLEMENTATION_GUARD();
 	return 0;
+}
+
+void CBehaviourSwitchSequence::SaveContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	pData->field_0x14 = this->field_0x18;
+	pData->bActive = this->field_0x14;
+
+	return;
 }
 
 void CBehaviourSwitchWolfenCounter::Create(ByteCode* pByteCode)
@@ -1568,9 +1643,16 @@ int CBehaviourSwitchWolfenCounter::InterpretMessage(CActor* pSender, int msg, vo
 	IMPLEMENTATION_GUARD();
 }
 
-void CBehaviourSwitchWolfenCounter::SaveContext(uint*, int)
+void CBehaviourSwitchWolfenCounter::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 {
-	IMPLEMENTATION_GUARD();
+	if (this->pOwner->actorState == 8) {
+		pData->bActive = 1;
+	}
+	else {
+		pData->bActive = 0;
+	}
+
+	return;
 }
 
 void CBehaviourSwitchWolfenCounter::LoadContext(uint*, int)

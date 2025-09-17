@@ -20,22 +20,41 @@
 
 class CActorMovingPlatform;
 
-struct S_TRAJ_POS {
+struct S_TRAJ_POS
+{
 	float field_0x0;
 	short field_0x4;
 	short field_0x6;
 	short field_0x8;
 };
 
-struct S_STREAM_MPF_NO_FRICTION_ZONE {
+struct S_STREAM_MPF_NO_FRICTION_ZONE
+{
 	S_STREAM_REF<ed_zone_3d> zoneRef;
 	S_ACTOR_STREAM_REF* pActorStreamRef;
+};
+
+struct S_SAVE_CLASS_MOVING_PLATFORM
+{
+	uint flags;
+	int behaviourId;
+	int field_0x8;
+	uint field_0xc;
+	uint field_0x10;
+	short field_0x14;
+	short field_0x16;
+	short field_0x18;
+	float field_0x1c;
+	float field_0x20;
 };
 
 class CBehaviourPlatform : public CBehaviour
 {
 public:
 	virtual void Create(ByteCode* pByteCode) {}
+
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData) = 0;
+
 	virtual void ChangeManageState(int state) {}
 	CActorMovingPlatform* pOwner;
 };
@@ -50,6 +69,7 @@ public:
 	virtual void ManageFrozen();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 	virtual void ChangeManageState(int state);
 
 	int field_0x8;
@@ -67,6 +87,7 @@ public:
 	virtual void ManageFrozen();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	CPathFollow* pPathFollow;
 	undefined2 field_0xc;
@@ -82,6 +103,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 
@@ -103,6 +125,7 @@ public:
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	S_TARGET_ON_OFF_STREAM_REF* pTargetStream;
 	S_STREAM_EVENT_CAMERA* streamEventCamera;
@@ -129,6 +152,7 @@ public:
 	virtual void ManageFrozen();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 	CActorAlternateModel alternateModel;
@@ -162,12 +186,11 @@ public:
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	S_STREAM_REF<CActor> streamActorRef;
 
-	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
-
-	S_STREAM_NTF_TARGET_ANALOG_LIST* field_0x34;
+	S_NTF_SWITCH_ANALOG analogSwitch;
 
 	float field_0x40;
 	float field_0x44;
@@ -180,6 +203,7 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	float field_0x34;
 };
@@ -194,6 +218,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) { IMPLEMENTATION_GUARD(); }
 	virtual void InitState(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	float field_0x8;
 	float field_0xc;
@@ -216,10 +241,10 @@ public:
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 
 	S_ACTOR_STREAM_REF* pActorStreamRef;
-	S_STREAM_NTF_TARGET_SWITCH_EX_LIST* field_0x30;
-	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+	S_NTF_SWITCH_EX_LIST switchExList;
 	int field_0x38;
 };
 
@@ -233,13 +258,15 @@ public:
 };
 
 PACK(
-struct AudioSetupParams {
+struct AudioSetupParams
+{
 	int field_0x0;
 	int field_0x4;
 });
 
 PACK(
-struct CActorMovingPlatform_SubObj {
+struct CActorMovingPlatform_SubObj
+{
 	AudioSetupParams field_0x0;
 	AudioSetupParams field_0x8;
 	undefined field_0x10;
@@ -304,7 +331,7 @@ public:
 	virtual void Init();
 	virtual void Reset();
 	virtual void CheckpointReset();
-	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);

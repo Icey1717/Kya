@@ -322,9 +322,10 @@ struct CCineActorConfig {
 	edF32VECTOR4 postCinematicRotationEuler;
 };
 
-struct S_STREAM_EVENT_CAMERA {
+struct S_STREAM_EVENT_CAMERA
+{
 	int cameraIndex;
-	uint field_0x4;
+	uint flags;
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
@@ -337,6 +338,7 @@ struct S_STREAM_EVENT_CAMERA {
 	void SwitchOn(CActor* pActor);
 	void SwitchOff(CActor* pActor);
 	void Reset(CActor* pActor);
+	void SaveContext(uint* pData);
 };
 
 static_assert(sizeof(S_STREAM_EVENT_CAMERA) == 0x20);
@@ -370,6 +372,18 @@ PACK(
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_BASE) == 0xc);
 
+struct S_SAVE_CLASS_NTF_SWITCH
+{
+	int mode;
+	uint switchBits;
+};
+
+struct S_SAVE_CLASS_SWITCH_CAMERA
+{
+	S_SAVE_CLASS_NTF_SWITCH switchData;
+	uint cameraData;
+};
+
 struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 {
 	void Reset();
@@ -387,6 +401,7 @@ static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);
 
 struct S_STREAM_NTF_TARGET_SWITCH_EX : public S_STREAM_NTF_TARGET_BASE
 {
+	void Reset();
 	bool Switch(CActor* pActor, uint messageFlags);
 	int messageId;
 };
@@ -394,6 +409,7 @@ struct S_STREAM_NTF_TARGET_SWITCH_EX : public S_STREAM_NTF_TARGET_BASE
 
 struct S_STREAM_NTF_TARGET_ANALOG : public S_STREAM_NTF_TARGET_BASE
 {
+	void Reset();
 	int NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5);
 	uint field_0xc;
 	uint field_0x10;
@@ -416,6 +432,7 @@ struct S_NTF_TARGET_STREAM_REF
 	void Reset();
 	void Switch(CActor* pActor);
 	void PostSwitch(CActor* pActor);
+	void SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
 };
 
 // This is likely what the real implementation is, as S_NTF_TARGET_STREAM_REF and S_STREAM_EVENT_CAMERA alway appear together in the code.
@@ -429,6 +446,7 @@ struct S_NTF_SWITCH
 	void Reset(CActor* pActor);
 	void Switch(CActor* pActor);
 	void PostSwitch(CActor* pActor);
+	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 };
 
 struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH
@@ -468,12 +486,43 @@ struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST
 {
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH_EX aEntries[];
+
+	void Init();
+	void Reset();
+	void Switch(CActor* pActor, uint flags);
+};
+
+struct S_NTF_SWITCH_EX_LIST
+{
+	S_STREAM_NTF_TARGET_SWITCH_EX_LIST* pTargetStreamRef;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	void Create(ByteCode* pByteCode);
+	void Init();
+	void Reset(CActor* pActor);
+	void Switch(CActor* pActor, uint flags);
 };
 
 struct S_STREAM_NTF_TARGET_ANALOG_LIST
 {
 	int entryCount;
 	S_STREAM_NTF_TARGET_ANALOG aEntries[];
+
+	static void Create(S_STREAM_NTF_TARGET_ANALOG_LIST** pThis, ByteCode* pByteCode);
+	void Init();
+	void Reset();
+	void NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5);
+};
+
+struct S_NTF_SWITCH_ANALOG
+{
+	S_STREAM_NTF_TARGET_ANALOG_LIST* pTargetStreamRef;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	void Create(ByteCode* pByteCode);
+	void Init();
+	void Reset(CActor* pActor);
+	void NotifyAnalog(float param_1, float param_2, CActor* param_4);
 };
 
 struct S_TRAP_STREAM_ENTRY

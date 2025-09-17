@@ -164,9 +164,26 @@ void CActorRope::Reset()
 	return;
 }
 
-void CActorRope::SaveContext(uint*, int)
+struct S_SAVE_CLASS_ROPE
 {
-	IMPLEMENTATION_GUARD();
+	int field_0x0;
+	S_SAVE_CLASS_SWITCH_CAMERA switchData;
+};
+
+void CActorRope::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_ROPE* pSaveData = reinterpret_cast<S_SAVE_CLASS_ROPE*>(pData);
+
+	if (this->field_0x188 == 0) {
+		pSaveData->field_0x0 = 0;
+	}
+	else {
+		pSaveData->field_0x0 = 1;
+	}
+
+	this->targetSwitch.SaveContext(&pSaveData->switchData);
+
+	return;
 }
 
 void CActorRope::LoadContext(uint*, int)
@@ -788,7 +805,7 @@ void CBehaviourRopeStand::Manage()
 
 	iVar1 = pRope->actorState;
 	if (iVar1 == ROPE_STAND_STATE_SNAPPED) {
-		if ((((pRope->targetSwitch).pStreamEventCamera)->field_0x4 & 0x40000000U) == 0) {
+		if ((((pRope->targetSwitch).pStreamEventCamera)->flags & 0x40000000U) == 0) {
 			pRope->flags = pRope->flags & 0xfffffffd;
 			pRope->flags = pRope->flags | 1;
 			pRope->flags = pRope->flags & 0xffffff7f;

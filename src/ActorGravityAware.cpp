@@ -48,9 +48,28 @@ void CActorGravityAware::Reset()
 	return;
 }
 
-void CActorGravityAware::SaveContext(uint*, int)
+struct S_SAVE_CLASS_GRAVITY_AWARE
 {
-	IMPLEMENTATION_GUARD();
+	edF32VECTOR3 position;
+	uint flags;
+};
+
+void CActorGravityAware::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_GRAVITY_AWARE* pSaveData = reinterpret_cast<S_SAVE_CLASS_GRAVITY_AWARE*>(pData);
+
+	pSaveData->position = this->currentLocation.xyz;
+
+	pSaveData->flags = 0;
+
+	if ((this->field_0x354 & 1) != 0) {
+		pSaveData->flags = pSaveData->flags | 1;
+	}
+	if ((this->field_0x354 & 2) != 0) {
+		pSaveData->flags = pSaveData->flags | 2;
+	}
+
+	return;
 }
 
 void CActorGravityAware::LoadContext(uint*, int)

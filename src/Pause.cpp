@@ -1138,14 +1138,14 @@ bool MenuFrameSave_Draw(CSimpleMenu* pMenu)
 		pMenu->selectedScaleX = 0.9f;
 		pMenu->selectedScaleY = 0.9f;
 		pMenu->set_justification_left();
-		pMenu->draw_action(gSaveManagement.get_slot_string(0), MemCardSelect0, 0, ~PM_MiniGame);
+		pMenu->draw_action(gSaveManagement.get_slot_string(0), SaveManagement_MemCardSave0, 0, ~PM_MiniGame);
 		pMenu->set_vertical_spacing(0x46);
 		pMenu->set_justification_right();
-		pMenu->draw_action(gSaveManagement.get_slot_string(1), MemCardSelect0, 1, ~PM_MiniGame);
+		pMenu->draw_action(gSaveManagement.get_slot_string(1), SaveManagement_MemCardSave0, 1, ~PM_MiniGame);
 		pMenu->set_justification_left();
-		pMenu->draw_action(gSaveManagement.get_slot_string(2), MemCardSelect0, 2, ~PM_MiniGame);
+		pMenu->draw_action(gSaveManagement.get_slot_string(2), SaveManagement_MemCardSave0, 2, ~PM_MiniGame);
 		pMenu->set_justification_right();
-		pMenu->draw_action(gSaveManagement.get_slot_string(3), MemCardSelect0, 3, ~PM_MiniGame);
+		pMenu->draw_action(gSaveManagement.get_slot_string(3), SaveManagement_MemCardSave0, 3, ~PM_MiniGame);
 		bResult = true;
 	}
 	else {

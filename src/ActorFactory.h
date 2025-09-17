@@ -9,8 +9,8 @@ struct ActorClassProperties
 	uint field_0x4;
 	int classPriority;
 	uint field_0xc;
-	int field_0x10;
-	int field_0x14;
+	uint saveMode;
+	uint maxSaveBytes;
 };
 
 class CActor;
