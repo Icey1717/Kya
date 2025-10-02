@@ -41,7 +41,7 @@ public:
 	virtual void Term();
 	virtual void Reset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);

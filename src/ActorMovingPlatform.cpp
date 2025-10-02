@@ -1776,6 +1776,49 @@ void CActorMovingPlatform::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+void CActorMovingPlatform::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	int bhvrId;
+	CBehaviourPlatform* pBehaviourMovingPlatform;
+
+	S_SAVE_CLASS_MOVING_PLATFORM* pSaveData = reinterpret_cast<S_SAVE_CLASS_MOVING_PLATFORM*>(pData);
+
+	if (mode == 0x20004) {
+		if ((pSaveData->flags & 1) == 0) {
+			if ((pSaveData->flags & 2) != 0) {
+				SetBehaviour(MOVING_PLATFORM_BEHAVIOUR_DESTROYED, -1, -1);
+			}
+		}
+		else {
+			Die(0);
+		}
+
+		if ((pSaveData->flags & 0x20) != 0) {
+			this->flags = this->flags | 0x400000;
+		}
+
+		bhvrId = this->curBehaviourId;
+		if (pSaveData->behaviourId == bhvrId) {
+			switch (bhvrId) {
+			case MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY:
+			case MOVING_PLATFORM_BEHAVIOUR_SLAB:
+			case MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_SLAVE:
+			case MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_MASTER:
+			case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
+			case MOVING_PLATFORM_BEHAVIOUR_STAND:
+			case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
+			case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+			case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
+				pBehaviourMovingPlatform = static_cast<CBehaviourPlatform*>(GetBehaviour(bhvrId));
+				if (pBehaviourMovingPlatform != (CBehaviour*)0x0) {
+					pBehaviourMovingPlatform->LoadContext(pSaveData);
+				}
+			}
+		}
+	}
+	return;
+}
+
 void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehaviour)
 {
 	bool bVar1;
@@ -1818,15 +1861,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 			if (bVar1 == false) {
 				if (fVar7 <= 0.0f) {
 					if ((this->pProperties->flags_0x24 & 0x1000000) == 0) {
-						pSVar3 = pBehaviour->pTargetStream;
-						iVar6 = 0;
-						if (0 < pSVar3->entryCount) {
-							do {
-								pSVar3->aEntries[iVar5].SwitchOff(this);
-								pSVar3 = pBehaviour->pTargetStream;
-								iVar6 = iVar6 + 1;
-							} while (iVar6 < pSVar3->entryCount);
-						}
+						pBehaviour->switchOnOff.pTargetStreamRef->SwitchOff(this);
 					}
 
 					SetState(0xb, -1);
@@ -1844,17 +1879,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 
 				if (bVar1 == false) {
 					if ((this->pProperties->flags_0x24 & 0x1000000) != 0) {
-						pSVar3 = pBehaviour->pTargetStream;
-
-						iVar6 = 0;
-						if (0 < pSVar3->entryCount) {
-							do {
-								IMPLEMENTATION_GUARD(
-								pSVar3->aEntries[iVar4].SwitchOff(this);)
-								pSVar3 = pBehaviour->pTargetStream;
-								iVar6 = iVar6 + 1;
-							} while (iVar6 < pSVar3->entryCount);
-						}
+						pBehaviour->switchOnOff.pTargetStreamRef->SwitchOff(this);
 					}
 
 					SetState(0xe, -1);
@@ -1905,24 +1930,14 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	else {
 		if (bVar1) {
 			IMPLEMENTATION_GUARD_AUDIO(
-			pSound = (CSound*)(pBehaviour->field_0x20).field_0x0;
+				pSound = (CSound*)(pBehaviour->field_0x20).field_0x0;
 			if (pSound != (CSound*)0x0) {
 				CActorSound::SoundStart
 				(this->pActorSound, this, (uint)((this->movingPlatformFlags & 1) != 0), pSound, 1, 0,
 					(float**)0x0);
 			})
 
-			pSVar4 = pBehaviour->pTargetStream;
-			iVar6 = 0;
-			if (0 < pSVar4->entryCount) {
-				do {
-					pSVar4->aEntries[iVar6].SwitchOn(this);
-					pSVar4 = pBehaviour->pTargetStream;
-					iVar6 = iVar6 + 1;
-				} while (iVar6 < pSVar4->entryCount);
-			}
-
-			pBehaviour->streamEventCamera->SwitchOn(this);
+			pBehaviour->switchOnOff.SwitchOn(this);
 
 			SetState(0xd, -1);
 
@@ -2381,7 +2396,7 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	iVar8 = -2;
 	uVar7 = 0;
 	local_28.field_0x0 = 0;
-	local_28.field_0x4 = pBehaviour->field_0x38;
+	local_28.field_0x4 = pBehaviour->actorEntryIndex;
 	pSVar4 = pBehaviour->switchExList.pTargetStreamRef;
 
 	iVar5 = 0;
@@ -2449,7 +2464,7 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	}
 	iVar8 = -1;
 LAB_00153528:
-	iVar5 = pBehaviour->field_0x38;
+	iVar5 = pBehaviour->actorEntryIndex;
 	if (iVar8 != iVar5) {
 		if (iVar5 != -2) {
 			if (iVar5 == -1) {
@@ -2462,8 +2477,8 @@ LAB_00153528:
 			}
 		}
 
-		pBehaviour->field_0x38 = iVar8;
-		iVar8 = pBehaviour->field_0x38;
+		pBehaviour->actorEntryIndex = iVar8;
+		iVar8 = pBehaviour->actorEntryIndex;
 		if (iVar8 != -2) {
 			if (iVar8 == -1) {
 				local_18 = 0;
@@ -2474,7 +2489,7 @@ LAB_00153528:
 				DoMessage(pBehaviour->pActorStreamRef->aEntries[iVar8].Get(), (ACTOR_MESSAGE)0xf, 0);
 			}
 
-			iVar8 = pBehaviour->field_0x38;
+			iVar8 = pBehaviour->actorEntryIndex;
 
 			pBehaviour->switchExList.Switch(this, iVar8 + 1);
 		}
@@ -2907,6 +2922,11 @@ void CBehaviourPlatformStand::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	return;
 }
 
+void CBehaviourPlatformStand::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	return;
+}
+
 void CBehaviourPlatformStand::ChangeManageState(int state)
 {
 	CActor* pCVar1;
@@ -3224,6 +3244,32 @@ void CBehaviourPlatformTrajectory::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pDa
 		pData->flags = pData->flags | 4;
 		pData->field_0x1c = this->field_0x34;
 	}
+
+	return;
+}
+
+void CBehaviourPlatformTrajectory::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	(this->currentFillAmount_0x38).field_0x0 = pData->field_0x1c;
+	(this->currentFillAmount_0x38).field_0x4 = pData->field_0x14;
+	(this->currentFillAmount_0x38).field_0x6 = pData->field_0x16;
+	(this->currentFillAmount_0x38).field_0x8 = pData->field_0x18;
+
+	this->goalAmount_0x30 = pData->field_0x20 + GetTimer()->scaledTotalTime;
+
+	if ((pData->flags & 4) == 0) {
+		if ((pData->flags & 0x10) == 0) {
+			this->pOwner->SetState(5, -1);
+		}
+		else {
+			this->pOwner->SetState(7, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(6, -1);
+	}
+
+	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, &this->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
 	return;
 }
@@ -3646,16 +3692,7 @@ void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 
 	ACTOR_LOG(LogLevel::Info, "CBehaviourPlatformSlab::Create");
 
-	piVar1 = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (piVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + piVar1->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
-	}
-	this->pTargetStream = piVar1;
-
-	pcVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
-	this->streamEventCamera = pcVar2;
+	switchOnOff.Create(pByteCode);
 
 	this->field_0x10 = pByteCode->GetF32();
 	this->field_0x14 = pByteCode->GetF32();
@@ -3673,20 +3710,11 @@ void CBehaviourPlatformSlab::Init(CActor* pOwner)
 
 	this->pOwner = (CActorMovingPlatform*)pOwner;
 
-	pSVar1 = this->pTargetStream;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Init();
-			pSVar1 = this->pTargetStream;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
-	this->streamEventCamera->Init();
+	switchOnOff.Init();
 
 	IMPLEMENTATION_GUARD_AUDIO(
 	S_STREAM_REF<CSound>::Init(&this->field_0x20);)
+
 	return;
 }
 
@@ -3694,26 +3722,13 @@ void CBehaviourPlatformSlab::Manage()
 {
 	ACTOR_LOG(LogLevel::Verbose, "CBehaviourPlatformSlab::Manage");
 
-	this->streamEventCamera->Manage(this->pOwner);
+	this->switchOnOff.pStreamEventCamera->Manage(this->pOwner);
 	this->pOwner->BehaviourSlab_Manage(this);
 }
 
 void CBehaviourPlatformSlab::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	S_TARGET_ON_OFF_STREAM_REF* pSVar1;
-	int iVar3;
-
-	pSVar1 = this->pTargetStream;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			pSVar1->aEntries[iVar3].Reset();
-			pSVar1 = this->pTargetStream;
-			iVar3 = iVar3 + 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
-	this->streamEventCamera->Reset(pOwner);
+	switchOnOff.Reset(pOwner);
 
 	if (newState == -1) {
 		this->pOwner->SetState(0xb, -1);
@@ -3732,36 +3747,26 @@ void CBehaviourPlatformSlab::Begin(CActor* pOwner, int newState, int newAnimatio
 
 void CBehaviourPlatformSlab::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	S_TARGET_ON_OFF_STREAM_REF* pSVar1;
-	int iVar2;
-	int iVar3;
-	uint uVar4;
+	switchOnOff.SaveContext(&pData->switchCamera);
 
-	uVar4 = 1;
-	iVar3 = 0;
-
-	pData->field_0x8 = 2;
-	pData->field_0xc = 0;
-
-	pSVar1 = this->pTargetStream;
-	if (0 < pSVar1->entryCount) {
-		iVar2 = 0;
-		do {
-			if ((pSVar1->aEntries[iVar3].flags & 0x40000000) != 0) {
-				pData->field_0xc = pData->field_0xc | uVar4;
-			}
-
-			pSVar1 = this->pTargetStream;
-			iVar3 = iVar3 + 1;
-			uVar4 = uVar4 << 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
-
-	this->streamEventCamera->SaveContext(&pData->field_0x10);
-
-	iVar3 = this->pOwner->actorState;
+	int iVar3 = this->pOwner->actorState;
 	if ((iVar3 == 0xf) || (iVar3 == 0xd)) {
 		pData->flags = pData->flags | 8;
+	}
+
+	return;
+}
+
+void CBehaviourPlatformSlab::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	this->field_0x2c = (CActor*)0x0;
+
+	switchOnOff.LoadContext(&pData->switchCamera);
+
+	if ((pData->flags & 8) != 0) {
+		this->field_0x24 = this->field_0x18;
+		this->pOwner->SetState(0xd, -1);
+		this->pOwner->Slab_MoveAndDetectCarriedObject(this, 1);
 	}
 
 	return;
@@ -3990,6 +3995,11 @@ void CBehaviourPlatformDestroyed::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pDat
 	return;
 }
 
+void CBehaviourPlatformDestroyed::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	return;
+}
+
 void CBehaviourWeighingMachine::Create(ByteCode* pByteCode)
 {
 	CPathManager* pPathManager;
@@ -4194,20 +4204,32 @@ void CBehaviourWeighingMachineMaster::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* 
 	pData->field_0x16 = (this->trajPos).field_0x6;
 	pData->field_0x18 = (this->trajPos).field_0x8;
 
-	S_STREAM_NTF_TARGET_ANALOG_LIST* pSVar1 = this->analogSwitch.pTargetStreamRef;
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			if ((pSVar1->aEntries[iVar3].flags & 0x40000000) != 0) {
-				pData->field_0xc = pData->field_0xc | uVar4;
-			}
+	this->analogSwitch.SaveContext(&pData->switchCamera);
+}
 
-			iVar3 = iVar3 + 1;
-			uVar4 = uVar4 << 1;
-		} while (iVar3 < pSVar1->entryCount);
-	}
+void CBehaviourWeighingMachineMaster::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	S_STREAM_NTF_TARGET_ANALOG_LIST* pSVar2;
+	int iVar3;
+	int iVar4;
+	uint uVar5;
+	S_TRAJ_POS* pTrajPos;
+	CActorMovingPlatform* pPlatform;
 
-	this->analogSwitch.pStreamEventCamera->SaveContext(&pData->field_0x10);
+	this->trajPos.field_0x0 = pData->field_0x1c;
+	this->trajPos.field_0x4 = pData->field_0x14;
+	this->trajPos.field_0x6 = pData->field_0x16;
+	this->trajPos.field_0x8 = pData->field_0x18;
+
+	this->analogSwitch.LoadContext(&pData->switchCamera);
+	
+	pTrajPos = &this->trajPos;
+	pPlatform = this->pOwner;
+	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+
+	return;
 }
 
 void CBehaviourWeighingMachineSlave::Create(ByteCode* pByteCode)
@@ -4314,6 +4336,25 @@ void CBehaviourWeighingMachineSlave::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* p
 	pData->field_0x14 = this->trajPos.field_0x4;
 	pData->field_0x16 = this->trajPos.field_0x6;
 	pData->field_0x18 = this->trajPos.field_0x8;
+
+	return;
+}
+
+void CBehaviourWeighingMachineSlave::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	S_TRAJ_POS* pTrajPos;
+	CActorMovingPlatform* pPlatform;
+
+	this->trajPos.field_0x0 = pData->field_0x1c;
+	this->trajPos.field_0x4 = pData->field_0x14;
+	this->trajPos.field_0x6 = pData->field_0x16;
+	this->trajPos.field_0x8 = pData->field_0x18;
+
+	pTrajPos = &this->trajPos;
+	pPlatform = this->pOwner;
+	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
 
 	return;
 }
@@ -4426,6 +4467,28 @@ void CBehaviourSelector::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	return;
 }
 
+void CBehaviourSelector::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	edF32VECTOR4 position;
+	CActorMovingPlatform* pMovingPlatform;
+
+	if ((pData->flags & 8) == 0) {
+		this->pOwner->SetState(0xb, -1);
+		this->field_0x24 = 0.0f;
+	}
+	else {
+		this->pOwner->SetState(0xd, -1);
+		this->field_0x24 = this->field_0x10;
+	}
+
+	pMovingPlatform = this->pOwner;
+	edF32Vector4ScaleHard(-this->field_0x24, &position, &gF32Vector4UnitY);
+	edF32Vector4AddHard(&position, &position, &pMovingPlatform->baseLocation);
+	pMovingPlatform->Platform_UpdatePosition(&position, 1, (CActorsTable*)0x0);
+
+	return;
+}
+
 void CBehaviourSelectorMaster::Create(ByteCode* pByteCode)
 {
 	int iVar1;
@@ -4532,7 +4595,7 @@ void CBehaviourSelectorMaster::Begin(CActor* pOwner, int newState, int newAnimat
 		this->pActorStreamRef->aEntries[iVar4].Reset();
 	}
 
-	this->field_0x38 = -1;
+	this->actorEntryIndex = -1;
 
 	if (newState == -1) {
 		pCVar1 = this->pOwner;
@@ -4562,25 +4625,57 @@ void CBehaviourSelectorMaster::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	}
 
 	uVar4 = 1;
-	pData->field_0x1c = (float)this->field_0x38;
-	pData->field_0x8 = 2;
-	pData->field_0xc = 0;
+	pData->field_0x1c = (float)this->actorEntryIndex;
 
-	pSVar1 = this->switchExList.pTargetStreamRef;
+	this->switchExList.SaveContext(&pData->switchCamera);
 
-	iVar3 = 0;
-	if (0 < pSVar1->entryCount) {
-		do {
-			if ((pSVar1->aEntries[iVar3].flags & 0x40000000) != 0) {
-				pData->field_0xc = pData->field_0xc | uVar4;
-			}
+	return;
+}
 
-			iVar3 = iVar3 + 1;
-			uVar4 = uVar4 << 1;
-		} while (iVar3 < pSVar1->entryCount);
+void CBehaviourSelectorMaster::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	CActorMovingPlatform* pMovingPlatform;
+	int entryCount;
+	edF32VECTOR4 position;
+	undefined4 local_4;
+
+	if ((pData->flags & 8) == 0) {
+		pMovingPlatform = this->pOwner;
+		pMovingPlatform->SetState(0xb, -1);
+		this->field_0x24 = 0.0f;
+	}
+	else {
+		pMovingPlatform = this->pOwner;
+		pMovingPlatform->SetState(0xd, -1);
+		this->field_0x24 = this->field_0x10;
 	}
 
-	this->switchExList.pStreamEventCamera->SaveContext(&pData->field_0x10);
+	pMovingPlatform = this->pOwner;
+	edF32Vector4ScaleHard(-this->field_0x24, &position, &gF32Vector4UnitY);
+	edF32Vector4AddHard(&position, &position, &pMovingPlatform->baseLocation);
+	pMovingPlatform->Platform_UpdatePosition(&position, 1, (CActorsTable*)0x0);
+	this->actorEntryIndex = (int)pData->field_0x1c;
+
+	this->switchExList.LoadContext(&pData->switchCamera);
+
+	if (-3 < this->actorEntryIndex) {
+		if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
+			entryCount = 0;
+		}
+		else {
+			entryCount = this->pActorStreamRef->entryCount;
+		}
+
+		if (this->actorEntryIndex < entryCount) goto LAB_00154070;
+	}
+
+	this->actorEntryIndex = -1;
+
+LAB_00154070:
+	if (-1 < this->actorEntryIndex) {
+		local_4 = 0;
+		this->pOwner->DoMessage(this->pActorStreamRef->aEntries[this->actorEntryIndex].Get(), (ACTOR_MESSAGE)0xf, 0);
+	}
 
 	return;
 }
@@ -4725,7 +4820,7 @@ void CBehaviourTeleportRandom::Create(ByteCode* pByteCode)
 	}
 	this->pPathFollow = pNewPathFollow;
 
-	this->field_0xc = 0;
+	this->activeSplinePoint = 0;
 
 	return;
 }
@@ -4758,7 +4853,28 @@ int CBehaviourTeleportRandom::InterpretMessage(CActor* pSender, int msg, void* p
 
 void CBehaviourTeleportRandom::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	pData->field_0x14 = this->field_0xc;
+	pData->field_0x14 = this->activeSplinePoint;
+
+	return;
+}
+
+void CBehaviourTeleportRandom::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
+{
+	edF32MATRIX4 pathMatrix;
+
+	this->activeSplinePoint = pData->field_0x14;
+
+	if ((this->pPathFollow != (CPathFollow*)0x0) && (this->pPathFollow->splinePointCount <= this->activeSplinePoint))
+	{
+		this->activeSplinePoint = 0;
+	}
+
+	this->pOwner->SetState(6, -1);
+
+	if (this->pPathFollow != (CPathFollow*)0x0) {
+		this->pPathFollow->ComputeMatrix(&pathMatrix, this->activeSplinePoint);
+		this->pOwner->Platform_UpdateMatrix(&pathMatrix, 1, (CActorsTable*)0x0);
+	}
 
 	return;
 }

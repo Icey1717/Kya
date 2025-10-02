@@ -2747,9 +2747,9 @@ void CActor::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActor::LoadContext(uint*, int)
+void CActor::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	return;
 }
 
 void CBehaviour::GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites)

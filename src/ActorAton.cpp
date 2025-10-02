@@ -199,9 +199,32 @@ void CActorAton::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorAton::LoadContext(uint*, int)
+void CActorAton::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	S_SAVE_CLASS_ATON* pSaveData = reinterpret_cast<S_SAVE_CLASS_ATON*>(pData);
+
+	if (mode == 1) {
+		this->field_0x475 = pSaveData->field_0x21;
+
+		if (pSaveData->field_0x20 == 0) {
+			this->field_0x1c0.x = 1e+30f;
+		}
+		else {
+			this->field_0x1c0.xyz = pSaveData->field_0x0.xyz;
+			this->field_0x1c0.w = 1.0f;
+		}
+	}
+
+	if (this->curBehaviourId == 3) {
+		if (this->field_0x475 == 0) {
+			SetState(6, -1);
+		}
+		else {
+			SetState(0x33, -1);
+		}
+	}
+
+	return;
 }
 
 CBehaviour* CActorAton::BuildBehaviour(int behaviourType)

@@ -53,7 +53,7 @@ public:
 	virtual void Init();
 	virtual void Reset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 

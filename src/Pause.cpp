@@ -1461,7 +1461,7 @@ void CSimpleMenu::reset()
 	this->currentPage = PM_MainMenu;
 	this->selectedIndex = 0;
 	this->field_0x50 = 3;
-	this->screenState_0x1c = 0;
+	this->screenState_0x1c = MENU_STATE_APPEAR;
 	pTVar1 = GetTimer();
 	this->totalTime = pTVar1->totalTime;
 	this->colorA = 0xfff609ff;
@@ -1670,11 +1670,11 @@ void CSimpleMenu::draw_option(char* pMessage, uint color)
 	textStyle.field_0x8c = this->field_0xdc;
 
 	if (this->field_0x20 == this->selectedIndex) {
-		if (this->screenState_0x1c == 1) {
+		if (this->screenState_0x1c == MENU_STATE_SELECT) {
 			textStyle.rgbaColour = this->colorB;
 		}
 		else {
-			if (this->screenState_0x1c == 2) {
+			if (this->screenState_0x1c == MENU_STATE_DISAPPEAR) {
 				pTVar2 = Timer::GetTimer();
 				fVar3 = fmodf(pTVar2->totalTime, 0.1f);
 				if (fVar3 < 0.05f) {
@@ -1747,9 +1747,9 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseM
 			this->counter_0x24 = this->counter_0x24 + 1;)
 		}
 
-		if (this->screenState_0x1c == 1) {
+		if (this->screenState_0x1c == MENU_STATE_SELECT) {
 			if (this->lastInput_0x14 == 5) {
-				this->screenState_0x1c = 2;
+				this->screenState_0x1c = MENU_STATE_DISAPPEAR;
 				pTVar1 = Timer::GetTimer();
 				this->totalTime = pTVar1->totalTime;
 				if (mode == PM_None) {
@@ -1761,7 +1761,7 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseM
 			}
 		}
 		else {
-			if (this->screenState_0x1c == 3) {
+			if (this->screenState_0x1c == MENU_STATE_EXIT) {
 				if (mode == PM_None) {
 					IMPLEMENTATION_GUARD(
 					this->field_0x2c = this->field_0x2c + -1;
@@ -1779,7 +1779,7 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseM
 					this->selectedIndex = param_5;
 				}
 
-				this->screenState_0x1c = 4;
+				this->screenState_0x1c = MENU_STATE_IDLE;
 				pTVar1 = Timer::GetTimer();
 				this->totalTime = pTVar1->totalTime;
 			}
@@ -1820,28 +1820,28 @@ bool CSimpleMenu::draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int p
 	if ((iVar1 != this->selectedIndex) || (pFunc == (ActionFuncPtr)0x0)) {
 		return false;
 	}
-	if (this->screenState_0x1c == 1) {
+	if (this->screenState_0x1c == MENU_STATE_SELECT) {
 		if (this->lastInput_0x14 == 5) {
-			this->screenState_0x1c = 2;
+			this->screenState_0x1c = MENU_STATE_DISAPPEAR;
 			this->totalTime = Timer::GetTimer()->totalTime;
 			on_validate();
 		}
 	}
 	else {
-		if (this->screenState_0x1c == 3) {
+		if (this->screenState_0x1c == MENU_STATE_EXIT) {
 			this->pFunc_0x40 = pFunc;
 			this->slotID_0x44 = slotID;
 
 			if (param_5 != -1) {
 				if (param_5 == -2) {
-					this->screenState_0x1c = 4;
+					this->screenState_0x1c = MENU_STATE_IDLE;
 					this->totalTime = Timer::GetTimer()->totalTime;
 					reset();
 					return true;
 				}
 
 				if (param_5 == -3) {
-					this->screenState_0x1c = 4;
+					this->screenState_0x1c = MENU_STATE_IDLE;
 					this->totalTime = Timer::GetTimer()->totalTime;
 					return true;
 				}
@@ -1865,7 +1865,7 @@ bool CSimpleMenu::draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int p
 				this->selectedIndex = 0;
 			}
 
-			this->screenState_0x1c = 4;
+			this->screenState_0x1c = MENU_STATE_IDLE;
 			this->totalTime = Timer::GetTimer()->totalTime;
 		}
 	}
@@ -1933,7 +1933,7 @@ uint CSimpleMenu::get_action()
 
 	uVar1 = 0;
 
-	if (this->screenState_0x1c == 1) {
+	if (this->screenState_0x1c == MENU_STATE_SELECT) {
 		if (((gPlayerInput.pressedBitfield & 0x100000) == 0) && ((gPlayerInput.pressedBitfield & 4) == 0)) {
 			if (((gPlayerInput.pressedBitfield & 0x200000) == 0) && ((gPlayerInput.pressedBitfield & 8) == 0)) {
 				if (((gPlayerInput.pressedBitfield & 0x400000) == 0) && ((gPlayerInput.pressedBitfield & 1) == 0)) {
@@ -2017,7 +2017,7 @@ void CSimpleMenu::draw_help_line(ulong msgId, int x, int y, uint color)
 	edCTextStyle* pTextStyle;
 	edCTextStyle textStyle;
 
-	if ((gPlayerInput.disconnectedController == 0) && (this->screenState_0x1c == 1)) {
+	if ((gPlayerInput.disconnectedController == 0) && (this->screenState_0x1c == MENU_STATE_SELECT)) {
 		if (this->pTranslatedTextData == (CMessageFile*)0x0) {
 			pMsg = gMessageManager.get_message(msgId);
 		}
@@ -2515,7 +2515,7 @@ void CSimpleMenu::update_page()
 
 void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 {
-	int iVar1;
+	int state;
 
 	this->field_0x20 = 0;
 	this->counter_0x24 = 0;
@@ -2527,37 +2527,37 @@ void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 	this->scaleX = 1.0f;
 	this->scaleY = 1.0f;
 	this->bShadow = 1;
-	iVar1 = this->field_0x2c;
+	state = this->field_0x2c;
 	this->pFunc_0x40 = 0;
 	this->slotID_0x44 = 0;
 	this->lastInput_0x14 = get_action();
-	if ((iVar1 == this->field_0x2c) && (pInputFunc(this, this->lastInput_0x14) != false)) {
+	if ((state == this->field_0x2c) && (pInputFunc(this, this->lastInput_0x14) != false)) {
 		update_page();
 	}
 
-	iVar1 = this->screenState_0x1c;
-	if (iVar1 == 4) {
-		this->screenState_0x1c = 0;
+	state = this->screenState_0x1c;
+	if (state == MENU_STATE_IDLE) {
+		this->screenState_0x1c = MENU_STATE_APPEAR;
 		this->totalTime = Timer::GetTimer()->totalTime;
 	}
 	else {
-		if (iVar1 != 3) {
-			if (iVar1 == 2) {
+		if (state != MENU_STATE_EXIT) {
+			if (state == MENU_STATE_DISAPPEAR) {
 				if (disappear_draw() != 0) {
-					this->screenState_0x1c = 3;
+					this->screenState_0x1c = MENU_STATE_EXIT;
 					this->totalTime = Timer::GetTimer()->totalTime;
 				}
 			}
 			else {
-				if (iVar1 == 1) {
+				if (state == MENU_STATE_SELECT) {
 					if (select_draw() != 0) {
-						this->screenState_0x1c = 2;
+						this->screenState_0x1c = MENU_STATE_DISAPPEAR;
 						this->totalTime = Timer::GetTimer()->totalTime;
 					}
 				}
 				else {
-					if ((iVar1 == 0) && (appear_draw() != 0)) {
-						this->screenState_0x1c = 1;
+					if ((state == MENU_STATE_APPEAR) && (appear_draw() != 0)) {
+						this->screenState_0x1c = MENU_STATE_SELECT;
 						this->totalTime = Timer::GetTimer()->totalTime;
 					}
 				}

@@ -53,6 +53,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual void UpdateValidity();
 
 	void State_Entering_Init();
@@ -113,7 +114,7 @@ public:
 	virtual void Init();
 
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 

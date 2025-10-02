@@ -108,9 +108,16 @@ void CActorBonus::SaveContext(void* pData, uint mode, uint maxSize)
 	}
 }
 
-void CActorBonus::LoadContext(uint*, int)
+void CActorBonus::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviourBonusBase* pBehaviour;
+
+	pBehaviour = static_cast<CBehaviourBonusBase*>(GetBehaviour(this->curBehaviourId));
+	if (pBehaviour != (CBehaviourBonusBase*)0x0) {
+		pBehaviour->LoadContext(pData, mode, maxSize);
+	}
+
+	return;
 }
 
 CBehaviour* CActorBonus::BuildBehaviour(int behaviourType)
@@ -163,7 +170,7 @@ StateConfig* CActorBonus::GetStateCfg(int state)
 void CActorBonus::ChangeManageState(int state)
 {
 	int iVar1;
-	CBehaviour* pCVar2;
+	CBehaviourBonusFlock* pCVar2;
 
 	CActor::ChangeManageState(state);
 
@@ -180,21 +187,23 @@ void CActorBonus::ChangeManageState(int state)
 		}
 	}
 
-	if ((((this->flags & 0x800000) != 0) && (state != 0)) && (pCVar2 = GetBehaviour(5), pCVar2 != (CBehaviour*)0x0)) {
-		IMPLEMENTATION_GUARD(
-			pCVar3 = (CBehaviourVtable*)0x0;
-		if (0 < (int)pCVar2[0xc].pVTable) {
-			pCVar3 = pCVar2[0x14].pVTable;
+	if ((((this->flags & 0x800000) != 0) && (state != 0)) && (pCVar2 = static_cast<CBehaviourBonusFlock*>(GetBehaviour(5)), pCVar2 != (CBehaviourBonusFlock*)0x0)) {
+		CActInstance* pCVar3 = (CActInstance*)0x0;
+
+		if (0 < pCVar2->nbInstances) {
+			pCVar3 = pCVar2->pNext;
 		}
-		if (pCVar3 != (CBehaviourVtable*)0x0) {
-			if ((int)pCVar2[0xc].pVTable < 1) {
-				pCVar3 = (CBehaviourVtable*)0x0;
+
+		if (pCVar3 != (CActInstance*)0x0) {
+			if (pCVar2->nbInstances < 1) {
+				pCVar3 = (CActInstance*)0x0;
 			}
 			else {
-				pCVar3 = pCVar2[0x14].pVTable;
+				pCVar3 = pCVar2->pNext;
 			}
-			FUN_003984f0((int)pCVar3, 1);
-		});
+
+			pCVar3->SetAlive(1);
+		}
 	}
 
 	return;
@@ -224,7 +233,40 @@ void CActorBonus::ChangeVisibleState(int state)
 	return;
 }
 
+void CBehaviourBonusBase::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorBonus*>(pOwner);
+
+	this->field_0x8 = ((float)rand() / 2.147484e+09) * 6.283185;
+	this->field_0xc = ((float)rand() / 2.147484e+09) * 6.283185;
+	this->field_0x10 = ((float)rand() / 2.147484e+09) * 6.283185;
+	return;
+}
+
+void CBehaviourBonusBase::Manage()
+{
+}
+
+void CBehaviourBonusBase::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+}
+
+void CBehaviourBonusBase::Func_0x4c()
+{
+	return;
+}
+
+void CBehaviourBonusBase::ChangeVisibleState(int state)
+{
+	return;
+}
+
 void CBehaviourBonusBase::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	return;
+}
+
+void CBehaviourBonusBase::LoadContext(void* pData, uint mode, uint maxSize)
 {
 	return;
 }

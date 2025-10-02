@@ -186,7 +186,7 @@ public:
 	virtual void Init();
 	virtual void Term();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(void* pData, uint mode, uint maxSize) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 

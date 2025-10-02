@@ -186,7 +186,7 @@ void CActorRope::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorRope::LoadContext(uint*, int)
+void CActorRope::LoadContext(void* pData, uint mode, uint maxSize)
 {
 	IMPLEMENTATION_GUARD();
 }

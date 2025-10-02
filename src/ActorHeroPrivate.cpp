@@ -202,26 +202,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	}
 	this->pClimbZoneStreamRef = pZoneStreamRef;
 
-	iVar11 = 0;
-	byte(*pCVar12)[16]  = this->field_0xd34;
-	do {
-		iVar10 = 0;
-		do {
-			*pCVar12[iVar10 + 0] = 0;
-			*pCVar12[iVar10 + 1] = 0;
-			*pCVar12[iVar10 + 2] = 0;
-			*pCVar12[iVar10 + 3] = 0;
-			*pCVar12[iVar10 + 4] = 0;
-			*pCVar12[iVar10 + 5] = 0;
-			*pCVar12[iVar10 + 6] = 0;
-			*pCVar12[iVar10 + 7] = 0;
-
-			iVar10 = iVar10 + 8;
-		} while (iVar10 < 0x10);
-
-		iVar11 = iVar11 + 1;
-		pCVar12 = pCVar12 + 1;
-	} while (iVar11 < 0x10);
+	memset(this->field_0xd34, 0, sizeof(this->field_0xd34));
 
 	iVar11 = pByteCode->GetS32();
 	//this->field_0xd20 = iVar11;
@@ -964,12 +945,15 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 					iVar6 = iVar3 + 1;
 					if (iVar6 < iVar2) {
 						ppCVar4 = pTable->aEntries + iVar3;
+
 						do {
-							IMPLEMENTATION_GUARD(
-							if ((float)ppCVar4[1][8].pClusterNode - (float)ppCVar4[1][8].pMeshNode <
-								(float)pCVar5->aEntries[0][8].pClusterNode - (float)pCVar5->aEntries[0][8].pMeshNode) {
+							CActorWolfen* pWolfenA = (CActorWolfen*)ppCVar4[1];
+							CActorWolfen* pWolfenB = (CActorWolfen*)*pCVar5;
+
+							if (pWolfenA->field_0xb84 - pWolfenA->field_0xb88 < pWolfenB->field_0xb84 - pWolfenB->field_0xb88) {
 								pTable->Swap(iVar3, iVar6);
-							})
+							}
+
 							iVar2 = pTable->nbEntries;
 							iVar6 = iVar6 + 1;
 							ppCVar4 = ppCVar4 + 1;
@@ -985,8 +969,9 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 			fVar7 = GetMagicalForce();
 			if (0 < pTable->nbEntries) {
 				do {
-					IMPLEMENTATION_GUARD(
-					fVar8 = (float)pTable->aEntries[iVar2][8].pClusterNode - (float)pTable->aEntries[iVar2][8].pMeshNode;)
+					CActorWolfen* pWolfen = (CActorWolfen*)(pTable->aEntries[iVar2]);
+
+					fVar8 = pWolfen->field_0xb84 - pWolfen->field_0xb88;
 					if (fVar8 <= fVar7) {
 						fVar7 = fVar7 - fVar8;
 						iVar2 = iVar2 + 1;
@@ -1610,7 +1595,7 @@ bool CActorHeroPrivate::AccomplishMagic()
 				}
 			}
 			else {
-				SetState(0x109, -1);
+				SetState(STATE_HERO_EXORCISE, -1);
 			}
 
 			return true;
@@ -2518,7 +2503,7 @@ void CActorHeroPrivate::SaveContext(void* pData, uint mode, uint maxSize)
 	}
 
 	pLevel->UpdateGameInfo(this->lifeInterface.GetValue(), (int)this->magicInterface.GetValue(), (int)this->moneyInterface.GetValue());
-	pLevel->SaveInventoryToNfo(&this->inventory);
+	pLevel->Game_SaveInventory(&this->inventory);
 
 	S_SAVE_CLASS_HERO* pHeroSave = reinterpret_cast<S_SAVE_CLASS_HERO*>(pData);
 
@@ -2546,6 +2531,76 @@ void CActorHeroPrivate::SaveContext(void* pData, uint mode, uint maxSize)
 		} while (iVar3 < 0x10);
 		iVar4 = iVar4 + 1;
 	} while (iVar4 < 0x10);
+
+	return;
+}
+
+void CActorHeroPrivate::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	CLevelScheduler* pLevelScheduleManager;
+	uint uVar1;
+	int iVar2;
+	byte* pbVar3;
+	int iVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+
+	float money;
+	float magic;
+	float health;
+
+	pLevelScheduleManager = CLevelScheduler::gThis;
+
+	S_SAVE_CLASS_HERO* pSaveData = reinterpret_cast<S_SAVE_CLASS_HERO*>(pData);
+
+	if ((mode == 3) || (mode == 2)) {
+		if (CLevelScheduler::gThis->bShouldLoad != 0) {
+			this->field_0xe50.xyz = pSaveData->field_0x0;
+			(this->field_0xe50).w = 1.0f;
+			this->field_0xe60 = pSaveData->field_0xc;
+			this->levelDataField1C_0xe6c = 0;
+			this->lastCheckPointSector = pSaveData->lastCheckPointSector;
+
+			if (2 < mode) {
+				this->field_0xe80.xyz = pSaveData->field_0x1c;
+				this->field_0xe80.w = 1.0f;
+				this->field_0xe90 = pSaveData->field_0x28;
+				this->levelDataField1C_0xe9c = 0;
+				this->field_0xea0 = pSaveData->field_0x34;
+			}
+
+			pLevelScheduleManager->GetGameInfo(&health, &magic, &money);
+
+			this->lifeInterface.SetValue(health);
+			this->magicInterface.SetValue(magic);
+
+			pLevelScheduleManager->Game_LoadInventory(&this->inventory);
+
+			uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
+			DoMessage(this, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)uVar1);
+
+			if (this->pActorBoomy != (CActorBoomy*)0x0) {
+				uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
+				DoMessage(this->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)uVar1);
+			}
+
+			uVar1 = CLevelScheduler::ScenVar_Get(10);
+			DoMessage(this, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)uVar1);
+			DoMessage(this, MESSAGE_RECEPTACLE_CHANGED, 0);
+		}
+
+		iVar5 = 0;
+		do {
+			iVar4 = 0;
+			do {
+				this->field_0xd34[iVar5][iVar4] = pSaveData->field_0x38[iVar5][iVar4];
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < 0x10);
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < 0x10);
+	}
 
 	return;
 }
@@ -3150,8 +3205,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		return 1;
 	}
 	if (msg == 0x88) {
-		IMPLEMENTATION_GUARD(
-		FUN_001dc5c0(&this->field_0xadc);)
+		this->inventory.Clear();
 		return 1;
 	}
 	if (msg == 0x84) {
@@ -5689,6 +5743,9 @@ LAB_00341590:
 	case STATE_HERO_UNLOCK_SWITCH:
 		StateHeroUnlockInit();
 		break;
+	case STATE_HERO_EXORCISE:
+		StateHeroExorciseInit();
+		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2Init();
@@ -5882,6 +5939,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_UNLOCK_SWITCH:
 		StateHeroUnlockTerm();
+		break;
+	case STATE_HERO_EXORCISE:
+		StateHeroExorciseTerm(newState);
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	{
@@ -6411,6 +6471,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_UNLOCK_SWITCH:
 		StateHeroUnlock(SWITCH);
+		break;
+	case STATE_HERO_EXORCISE:
+		StateHeroExorcise();
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
@@ -12181,6 +12244,7 @@ void CActorHeroPrivate::StateHeroUnlock(ACTOR_CLASS typeId)
 
 	actorsTable.nbEntries = 0;
 	GetPossibleMagicalTargets(&actorsTable);
+
 	if ((actorsTable.nbEntries == 0) || (typeId != actorsTable.aEntries[0]->typeID)) {
 		SetState(STATE_HERO_STAND, 0xffffffff);
 	}
@@ -12201,6 +12265,56 @@ void CActorHeroPrivate::StateHeroUnlockTerm()
 	}
 
 	SetMagicMode(0);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroExorciseInit()
+{
+	return;
+}
+
+void CActorHeroPrivate::StateHeroExorcise()
+{
+	bool bVar2;
+	int iVar3;
+	float fVar4;
+	CActorsTable actorsTable;
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 3, (CActorsTable*)0x0);
+
+	actorsTable.nbEntries = 0;
+	GetPossibleMagicalTargets(&actorsTable);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(0x10a, 0xffffffff);
+	}
+
+	CActorWolfen* pWolfen = static_cast<CActorWolfen*>(actorsTable.aEntries[0]);
+
+	if (((actorsTable.nbEntries == 0) ||
+		(bVar2 = actorsTable.aEntries[0]->IsKindOfObject(OBJ_TYPE_WOLFEN), bVar2 == false)) ||
+		(pWolfen->pCommander->FUN_001710c0() == false) ||
+		(fVar4 = GetMagicalForce(), fVar4 == 0.0f)) {
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+	return;
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroExorciseTerm(int nextState)
+{
+	if (nextState != 0x10a) {
+		SetMagicMode(0);
+	}
 
 	return;
 }

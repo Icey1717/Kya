@@ -236,7 +236,7 @@ CBehaviour* CActorCommander::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
 
-	if (behaviourType == 3) {
+	if (behaviourType == COMMANDER_BEHAVIOUR_BEAT_UP) {
 		pBehaviour = new CBehaviourCommanderBeatUp;
 	}
 	else {
@@ -279,6 +279,119 @@ void CActorCommander::ChangeManageState(int state)
 	CActor::ChangeManageState(state);
 
 	return;
+}
+
+int CActorCommander::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorFighter* pCVar1;
+	CEventManager* pCVar2;
+	bool bVar3;
+	CPathFinderClient* this_00;
+	ed_zone_3d* pZone;
+	int iVar4;
+	CTeamElt* pCVar5;
+	CTeamElt* pTeamElt;
+	int iVar6;
+	edF32VECTOR4 local_10;
+
+	if (msg == 0x10) {
+		if (this->count_0x16c != 0) {
+			this->flags_0x18c = this->flags_0x18c & 0xfffffff7;
+			this->field_0x174 = 0;
+			return 1;
+		}
+	}
+	else {
+		if (msg == 0xf) {
+			if (this->count_0x16c != 0) {
+				this->flags_0x18c = this->flags_0x18c | 8;
+				this->field_0x174 = pSender;
+
+				if (this->field_0x194 < 1) {
+					pSender->SV_GetActorColCenter(&local_10);
+					this->targetPosition = local_10;
+				}
+
+				pSender->SV_GetGroundPosition(&local_10);
+
+				pCVar1 = this->aTeamElt->pEnemyActor;
+				this_00 = pCVar1->GetPathfinderClient();
+				pCVar2 = CScene::ptable.g_EventManager_006f5080;
+				pZone = (ed_zone_3d*)0x0;
+				if (this->guardAreaZoneId != 0xffffffff) {
+					pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->guardAreaZoneId);
+				}
+
+				iVar4 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, pZone, &local_10, 0);
+				if ((iVar4 == 1) &&
+					((this_00->id == -1 || (bVar3 = this_00->IsValidPosition(&local_10), bVar3 != false)))) {
+					this->targetGroundPosition = local_10;
+					this->bInCombat_0x1b0 = 1;
+				}
+
+				return 1;
+			}
+		}
+		else {
+			if (msg == 0x1b) {
+				int* pMsg = reinterpret_cast<int*>(pMsgParam);
+
+				iVar4 = *pMsg;
+				if (iVar4 == 3) {
+					return 1;
+				}
+
+				if (iVar4 == 2) {
+					this->field_0x9f4 = static_cast<CActorFighter*>(pSender);
+					pCVar1 = this->field_0x9f4;
+					iVar4 = 0;
+					pTeamElt = (CTeamElt*)0x0;
+					if (0 < this->nbTeams) {
+						pCVar5 = this->aTeamElt;
+						do {
+							pTeamElt = pCVar5;
+							if (pTeamElt->pEnemyActor == pCVar1) break;
+							iVar4 = iVar4 + 1;
+							pCVar5 = pTeamElt + 1;
+							pTeamElt = (CTeamElt*)0x0;
+						} while (iVar4 < this->nbTeams);
+					}
+
+					this->squad.RemoveFighter(pTeamElt);
+					pCVar1->SetStandAnim(-1);
+
+					SetBehaviour(COMMANDER_BEHAVIOUR_BEAT_UP, -1, -1);
+					return 1;
+				}
+
+				if (iVar4 == 0) {
+					this->exorcismActorsTable.Add(pSender);
+					return 1;
+				}
+			}
+			else {
+				int* pMsg = reinterpret_cast<int*>(pMsgParam);
+
+				if ((msg == 0x1a) && ((*pMsg == 0xd || (*pMsg == 0xc)))) {
+					iVar4 = 0;
+					if (0 < this->nbTeams) {
+						do {
+							if (this->aTeamElt[iVar4].pEnemyActor != pSender) {
+								DoMessage(pSender, (ACTOR_MESSAGE)msg, pMsgParam);
+							}
+
+							iVar4 = iVar4 + 1;
+						} while (iVar4 < this->nbTeams);
+					}
+
+					return 1;
+				}
+			}
+		}
+	}
+
+	iVar4 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+	return iVar4;
 }
 
 void CActorCommander::ClearLocalData()
@@ -810,7 +923,11 @@ void CActorCommander::FUN_001717b0(CCameraGame* pCamera)
 	return;
 }
 
-
+bool CActorCommander::FUN_001710c0()
+{
+	IMPLEMENTATION_GUARD();
+	return false;
+}
 
 void CActorCommander::_UpdateCamera()
 {

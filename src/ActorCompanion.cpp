@@ -347,9 +347,30 @@ void CActorCompanion::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorCompanion::LoadContext(uint*, int)
+void CActorCompanion::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviourCompanion* pBehaviour;
+	int iVar1;
+	uint uVar3;
+
+	S_SAVE_CLASS_COMPANION* pSaveData = reinterpret_cast<S_SAVE_CLASS_COMPANION*>(pData);
+	pBehaviour = static_cast<CBehaviourCompanion*>(GetBehaviour(this->curBehaviourId));
+
+	if ((mode == 1) && (uVar3 = 0, pBehaviour->nbSubObjs != 0)) {
+		do {
+			CompanionAlert& inst = pBehaviour->aSubObjs[uVar3];
+			if ((1 << (uVar3 & 0x1f) & pSaveData->bits[uVar3 >> 5]) == 0) {
+				inst.flags_0x4 = inst.flags_0x4 & 0xfffb;
+			}
+			else {
+				inst.flags_0x4 = inst.flags_0x4 | 4;
+			}
+
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < (uint)pBehaviour->nbSubObjs);
+	}
+
+	return;
 }
 
 CBehaviour* CActorCompanion::BuildBehaviour(int behaviourType)

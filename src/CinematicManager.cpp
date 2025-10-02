@@ -3525,70 +3525,76 @@ void S_STREAM_NTF_TARGET_ANALOG::Reset()
 	return;
 }
 
-void CCinematic::FUN_001c7390(bool param_2)
+void CCinematic::ConditionallyStartCinematic(bool bShouldStartCinematic)
 {
-	ed_zone_3d* peVar1;
+	ed_zone_3d* pZone;
 	bool bVar2;
-	int iVar3;
-	long lVar4;
 
 	if ((this->state == CS_Stopped) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) != 0)) {
 		Start();
 	}
 
-	if ((param_2 != false) && (this->state == CS_Stopped)) {
+	if ((bShouldStartCinematic != false) && (this->state == CS_Stopped)) {
 		bVar2 = (this->flags_0x4 & 1) != 0;
 		if (bVar2) {
 			bVar2 = (this->flags_0x8 & 0x400) != 0;
 		}
+
 		if (!bVar2) {
 			bVar2 = (this->flags_0x8 & 0x28) != 0;
 		}
+
 		bVar2 = (bool)(bVar2 ^ 1);
 		if (!bVar2) {
 			bVar2 = (this->flags_0x8 & 0x800) != 0;
 		}
+
 		if (bVar2) {
-			bVar2 = this->cineBankLoadStage_0x2b4 != 4;
-			if ((bVar2) && (this->pCineBankEntry == (edCBankBufferEntry*)0x0 || !bVar2)) {
-				bVar2 = true;
+			bool bLoading = this->cineBankLoadStage_0x2b4 != 4;
+
+			if ((bLoading) && (this->pCineBankEntry == (edCBankBufferEntry*)0x0 || !bLoading)) {
+				bool bInZone = true;
+
 				if (this->count_0x2d8 < 1) {
-					peVar1 = (this->zoneRefB).Get();
-					bVar2 = false;
+					pZone = (this->zoneRefB).Get();
+					bInZone = false;
 		
-					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
-						(iVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
-						bVar2 = true;
+					if ((pZone != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
+						(edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0) != 2)) {
+						bInZone = true;
 					}
 				}
 
-				if (bVar2) {
+				if (bInZone) {
 					Load(1);
 				}
 			}
 
 			if (this->cineBankLoadStage_0x2b4 == 4) {
-				bVar2 = true;
+				bool bInZone = true;
+
 				if ((this->flags_0x4 & 0x4000000) == 0) {
-					peVar1 = (this->zoneRefC).Get();
-					bVar2 = false;
-					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
-						(iVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
-						bVar2 = true;
+					pZone = (this->zoneRefC).Get();
+					bInZone = false;
+
+					if ((pZone != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
+						(edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0) != 2)) {
+						bInZone = true;
 					}
 				}
 
-				if ((bVar2) && (this->defaultAudioTrackId != -1)) {
-					lVar4 = this->aAudioTrackIds[CMessageFile::get_default_language()];
-					if (lVar4 == -1) {
-						lVar4 = this->defaultAudioTrackId;
+				if ((bInZone) && (this->defaultAudioTrackId != -1)) {
+					uint audioTrackId = this->aAudioTrackIds[CMessageFile::get_default_language()];
+					if (audioTrackId == -1) {
+						audioTrackId = this->defaultAudioTrackId;
 					}
 
-					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(lVar4);
+					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(audioTrackId);
 				}
 			}
 		}
 	}
+
 	return;
 }
 
@@ -4595,6 +4601,15 @@ void S_STREAM_EVENT_CAMERA::SaveContext(uint* pData)
 	return;
 }
 
+void S_STREAM_EVENT_CAMERA::LoadContext(uint* pData)
+{
+	if (*pData != 0) {
+		this->flags = this->flags | 0x80000000;
+	}
+
+	return;
+}
+
 bool CCinematicManagerB::LevelLoading_Manage()
 {
 	CCinematicManager* pCVar1;
@@ -4602,7 +4617,7 @@ bool CCinematicManagerB::LevelLoading_Manage()
 	pCVar1 = g_CinematicManager_0048efc;
 	if (g_CinematicManager_0048efc->pCinematic != (CCinematic*)0x0) {
 		g_CinematicManager_0048efc->pCinematic->Level_ClearAll();
-		pCVar1->pCinematic->FUN_001c7390(true);
+		pCVar1->pCinematic->ConditionallyStartCinematic(true);
 	}
 
 	return false;
@@ -4628,7 +4643,7 @@ void CCinematicManagerB::Level_Manage()
 
 	for (int i = 0; i < g_CinematicManager_0048efc->activeCinematicCount; i++) {
 		pCinematic = g_CinematicManager_0048efc->ppCinematicObjB_B[i];
-		pCinematic->FUN_001c7390(bVar3);
+		pCinematic->ConditionallyStartCinematic(bVar3);
 	}
 
 	return;
@@ -4657,7 +4672,7 @@ void CCinematicManagerB::Level_ManagePaused()
 		for (int i = 0; i < g_CinematicManager_0048efc->activeCinematicCount; i++) {
 			pCinematic = g_CinematicManager_0048efc->ppCinematicObjB_B[i];
 			IMPLEMENTATION_GUARD(
-				pCinematic->FUN_001c7390(bVar3);)
+				pCinematic->ConditionallyStartCinematic(bVar3);)
 		}
 	}
 
@@ -4730,26 +4745,28 @@ struct SaveDataChunk_BLCI
 
 void CCinematicManager::Level_SaveContext()
 {
-	SaveDataChunk_BLCI* piVar1;
+	SaveDataChunk_BLCI* pBLCI;
 	CCinematic** ppCinematic;
 	int iVar2;
-	int iVar3;
+	int nbCutscenes;
 	CCinematic* pCinematic;
 	CLevelScheduler* pLevelScheduler;
 
 	pLevelScheduler = CLevelScheduler::gThis;
 	ppCinematic = this->ppCinematicObjB_A;
-	iVar3 = 0;
+	nbCutscenes = 0;
 	for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
 		if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
-			iVar3 = iVar3 + 1;
+			nbCutscenes = nbCutscenes + 1;
 		}
 		ppCinematic = ppCinematic + 1;
 	}
-	if (iVar3 != 0) {
-		piVar1 = reinterpret_cast<SaveDataChunk_BLCI*>(CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCI));
-		piVar1->nbCutscenes = iVar3;
-		SaveDataChunk_BLCI::CutsceneData* pData = reinterpret_cast<SaveDataChunk_BLCI::CutsceneData*>(piVar1 + 1);
+
+	if (nbCutscenes != 0) {
+		pBLCI = reinterpret_cast<SaveDataChunk_BLCI*>(CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCI));
+		pBLCI->nbCutscenes = nbCutscenes;
+
+		SaveDataChunk_BLCI::CutsceneData* pData = reinterpret_cast<SaveDataChunk_BLCI::CutsceneData*>(pBLCI + 1);
 		ppCinematic = this->ppCinematicObjB_A;
 		for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
 			if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
@@ -4790,7 +4807,77 @@ void CCinematicManager::Level_SaveContext()
 
 void CCinematicManager::Level_LoadContext()
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	SaveDataChunk_BLCI* pBLCI;
+	CCinematic* pCVar2;
+	int iVar3;
+	SaveDataChunk_BLCI::CutsceneData* pData;
+	CCinematic** ppCinematic;
+	int iVar4;
+	int nbCutscenes;
+	CLevelScheduler* pLevel;
+
+	pLevel = CLevelScheduler::gThis;
+	pBLCI = reinterpret_cast<SaveDataChunk_BLCI*>(CLevelScheduler::gThis->SaveGame_OpenChunk(0x49434c42) + 1);
+	if (pBLCI != (SaveDataChunk_BLCI*)0x0) {
+		nbCutscenes = pBLCI->nbCutscenes;
+		pData = pBLCI->data;
+
+		iVar3 = 0;
+		if (0 < nbCutscenes) {
+			do {
+				iVar4 = 0;
+				if (0 < this->numCutscenes_0x8) {
+					ppCinematic = this->ppCinematicObjB_A;
+					do {
+						if (pData->bitFlags == *(uint*)&(*ppCinematic)->field_0x10) {
+							pCVar2 = this->ppCinematicObjB_A[iVar4];
+							goto LAB_001c51a8;
+						}
+						iVar4 = iVar4 + 1;
+						ppCinematic = ppCinematic + 1;
+					} while (iVar4 < this->numCutscenes_0x8);
+				}
+
+				pCVar2 = (CCinematic*)0x0;
+			LAB_001c51a8:
+				if (pCVar2 != (CCinematic*)0x0) {
+					pCVar2->totalCutsceneDelta = pData->totalCutsceneDelta;
+
+					if ((pData->flags & 2) != 0) {
+						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x400;
+					}
+
+					if ((pData->flags & 8) != 0) {
+						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x40;
+					}
+
+					if ((pData->flags & 4) != 0) {
+						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x20;
+						bVar1 = pCVar2->state != CS_Stopped;
+						if ((bVar1) && (bVar1)) {
+							pCVar2->flags_0x8 = pCVar2->flags_0x8 & 0xffffff7f;
+							pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x100;
+						}
+					}
+
+					if ((pData->flags & 0x10) == 0) {
+						pCVar2->flags_0x8 = pCVar2->flags_0x8 & 0xffffefff;
+					}
+					else {
+						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x1000;
+					}
+				}
+
+				iVar3 = iVar3 + 1;
+				pData = pData + 1;
+			} while (iVar3 < nbCutscenes);
+		}
+
+		pLevel->SaveGame_CloseChunk();
+	}
+
+	return;
 }
 
 void CCinematicManager::LevelLoading_Draw()
@@ -5532,6 +5619,45 @@ void S_TARGET_ON_OFF_STREAM_REF::SwitchOff(CActor* pActor)
 	return;
 }
 
+void S_TARGET_ON_OFF_STREAM_REF::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+
+	pSaveData->switchBits = 0;
+
+	if (0 < this->entryCount) {
+		do {
+			if ((this->aEntries[i].flags & 0x40000000) != 0) {
+				pSaveData->switchBits = pSaveData->switchBits | shift;
+			}
+
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
+void S_TARGET_ON_OFF_STREAM_REF::LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+
+	if (0 < this->entryCount) {
+		do {
+			if ((pSaveData->switchBits & shift) != 0) {
+				this->aEntries[i].flags = this->aEntries[i].flags | 0x40000000;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
 void S_NTF_TARGET_STREAM_REF::Create(S_NTF_TARGET_STREAM_REF** pThis, ByteCode* pByteCode)
 {
 	*pThis = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
@@ -5648,7 +5774,6 @@ void S_NTF_TARGET_STREAM_REF::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
 	uint shift = 1;
 	int i = 0;
 
-	pSaveData->mode = 2;
 	pSaveData->switchBits = 0;
 
 	if (0 < this->entryCount) {
@@ -5665,10 +5790,39 @@ void S_NTF_TARGET_STREAM_REF::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
 	return;
 }
 
+void S_NTF_TARGET_STREAM_REF::LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+	if (0 < this->entryCount) {
+		do {
+			if ((pSaveData->switchBits & shift) != 0) {
+				this->aEntries[i].flags = this->aEntries[i].flags | 0x40000000;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
 void S_NTF_SWITCH::SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
 {
+	pSaveData->mode = 2;
+
 	this->pTargetStreamRef->SaveContext(&pSaveData->switchData);
 	this->pStreamEventCamera->SaveContext(&pSaveData->cameraData);
+
+	return;
+}
+
+void S_NTF_SWITCH::LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	if (pSaveData->mode == 2) {
+		this->pTargetStreamRef->LoadContext(&pSaveData->switchData);
+		this->pStreamEventCamera->LoadContext(&pSaveData->cameraData);
+	}
 
 	return;
 }
@@ -5720,6 +5874,26 @@ void S_NTF_SWITCH_ONOFF::SwitchOff(CActor* pActor)
 	return;
 }
 
+void S_NTF_SWITCH_ONOFF::SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	pSaveData->mode = 2;
+
+	this->pTargetStreamRef->SaveContext(&pSaveData->switchData);
+	this->pStreamEventCamera->SaveContext(&pSaveData->cameraData);
+
+	return;
+}
+
+void S_NTF_SWITCH_ONOFF::LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	if (pSaveData->mode == 2) {
+		this->pTargetStreamRef->LoadContext(&pSaveData->switchData);
+		this->pStreamEventCamera->LoadContext(&pSaveData->cameraData);
+	}
+
+	return;
+}
+
 void S_STREAM_NTF_TARGET_ANALOG_LIST::Create(S_STREAM_NTF_TARGET_ANALOG_LIST** pThis, ByteCode* pByteCode)
 {
 	*pThis = reinterpret_cast<S_STREAM_NTF_TARGET_ANALOG_LIST*>(pByteCode->currentSeekPos);
@@ -5753,6 +5927,41 @@ void S_STREAM_NTF_TARGET_ANALOG_LIST::NotifyAnalog(float param_1, float param_2,
 			this->aEntries[curSwitchIndex].NotifyAnalog(param_1, param_2, param_4, param_5);
 			curSwitchIndex = curSwitchIndex + 1;
 		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+	pSaveData->switchBits = 0;
+	if (0 < this->entryCount) {
+		do {
+			if ((this->aEntries[i].flags & 0x40000000) != 0) {
+				pSaveData->switchBits = pSaveData->switchBits | shift;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ANALOG_LIST::LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+	if (0 < this->entryCount) {
+		do {
+			if ((pSaveData->switchBits & shift) != 0) {
+				this->aEntries[i].flags = this->aEntries[i].flags | 0x40000000;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
 	}
 
 	return;
@@ -5819,6 +6028,26 @@ void S_NTF_SWITCH_ANALOG::NotifyAnalog(float param_1, float param_2, CActor* par
 	return;
 }
 
+void S_NTF_SWITCH_ANALOG::SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	pSaveData->mode = 2;
+
+	this->pTargetStreamRef->SaveContext(&pSaveData->switchData);
+	this->pStreamEventCamera->SaveContext(&pSaveData->cameraData);
+
+	return;
+}
+
+void S_NTF_SWITCH_ANALOG::LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	if (pSaveData->mode == 2) {
+		this->pTargetStreamRef->LoadContext(&pSaveData->switchData);
+		this->pStreamEventCamera->LoadContext(&pSaveData->cameraData);
+	}
+
+	return;
+}
+
 void S_NTF_SWITCH_ANALOG::Reset(CActor* pActor)
 {
 	this->pTargetStreamRef->Reset();
@@ -5831,6 +6060,26 @@ void S_NTF_SWITCH_EX_LIST::Switch(CActor* pActor, uint flags)
 {
 	this->pTargetStreamRef->Switch(pActor, flags);
 	this->pStreamEventCamera->SwitchOn(pActor);
+
+	return;
+}
+
+void S_NTF_SWITCH_EX_LIST::SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	pSaveData->mode = 2;
+
+	this->pTargetStreamRef->SaveContext(&pSaveData->switchData);
+	this->pStreamEventCamera->SaveContext(&pSaveData->cameraData);
+	return;
+
+}
+
+void S_NTF_SWITCH_EX_LIST::LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
+{
+	if (pSaveData->mode == 2) {
+		this->pTargetStreamRef->LoadContext(&pSaveData->switchData);
+		this->pStreamEventCamera->LoadContext(&pSaveData->cameraData);
+	}
 
 	return;
 }
@@ -5864,6 +6113,42 @@ void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::Switch(CActor* pActor, uint flags)
 			this->aEntries[curSwitchIndex].Switch(pActor, flags);
 			curSwitchIndex = curSwitchIndex + 1;
 		} while (curSwitchIndex < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+
+	pSaveData->switchBits = 0;
+	if (0 < this->entryCount) {
+		do {
+			if ((this->aEntries[i].flags & 0x40000000) != 0) {
+				pSaveData->switchBits = pSaveData->switchBits | shift;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData)
+{
+	uint shift = 1;
+	int i = 0;
+	if (0 < this->entryCount) {
+		do {
+			if ((pSaveData->switchBits & shift) != 0) {
+				this->aEntries[i].flags = this->aEntries[i].flags | 0x40000000;
+			}
+			i = i + 1;
+			shift = shift << 1;
+		} while (i < this->entryCount);
 	}
 
 	return;

@@ -5,11 +5,14 @@
 #include "MemoryStream.h"
 #include "Path.h"
 
-class CPathFollow : public CPath {
+class CPathFollow : public CPath
+{
 public:
 	CPathFollow();
 
 	virtual void Create(ByteCode* pByteCode);
+
+	void ComputeMatrix(edF32MATRIX4* pMatrix, int param_3);
 
 	static edF32VECTOR4 gPathDefQuat;
 

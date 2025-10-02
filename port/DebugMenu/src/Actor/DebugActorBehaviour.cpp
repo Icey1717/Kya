@@ -333,6 +333,9 @@ namespace Hero
 		case STATE_HERO_UNLOCK_SWITCH:
 			return "StateHeroUnlockSwitch";
 			break;
+		case STATE_HERO_EXORCISE:
+			return "StateHeroExorcise";
+			break;
 		case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 			return "StateHeroTrampolineJump_1_2_A";
 			break;

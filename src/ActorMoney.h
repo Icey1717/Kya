@@ -50,6 +50,7 @@ public:
 	virtual void CheckpointReset();
 
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 
 	S_STREAM_REF<CPathFollow> pathFollow;
 
@@ -84,7 +85,7 @@ public:
 	virtual void Reset();
 	virtual void CheckpointReset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeVisibleState(int bVisible);

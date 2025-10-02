@@ -72,7 +72,7 @@ void CActorGravityAware::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorGravityAware::LoadContext(uint*, int)
+void CActorGravityAware::LoadContext(void* pData, uint mode, uint maxSize)
 {
 	IMPLEMENTATION_GUARD();
 }

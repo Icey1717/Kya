@@ -10,6 +10,7 @@
 
 class CActorWind;
 class CWayPoint;
+class CSoundWind;
 
 class CFxEmitterPool
 {
@@ -76,7 +77,7 @@ public:
 	virtual void Reset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
@@ -128,6 +129,8 @@ public:
 	float field_0x1ac;
 	float field_0x1b0;
 
+	CSoundWind* pSoundWind;
+
 	S_STREAM_REF<ed_zone_3d> activationZone;
 	S_ACTOR_STREAM_REF* pActorStreamRef;
 	S_STREAM_REF<ed_zone_3d> field_0x1c4;
@@ -135,12 +138,9 @@ public:
 
 	S_STREAM_REF<CWayPoint> field_0x1cc;
 
-	S_NTF_TARGET_STREAM_REF* field_0x1d0;
-	S_STREAM_EVENT_CAMERA* field_0x1d4;
-	S_NTF_TARGET_STREAM_REF* field_0x1d8;
-	S_STREAM_EVENT_CAMERA* field_0x1dc;
-	S_NTF_TARGET_STREAM_REF* field_0x1e0;
-	S_STREAM_EVENT_CAMERA* field_0x1e4;
+	S_NTF_SWITCH field_0x1d0;
+	S_NTF_SWITCH field_0x1d8;
+	S_NTF_SWITCH field_0x1e0;
 
 	edF32MATRIX4* field_0x1e8;
 	int* aAppliedToActorFlags;

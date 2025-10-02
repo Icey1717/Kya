@@ -106,9 +106,29 @@ void CActorNativShop::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorNativShop::LoadContext(uint*, int)
+void CActorNativShop::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviour* pBehaviour;
+
+	S_SAVE_CLASS_NATIV_SHOP* pSaveData = reinterpret_cast<S_SAVE_CLASS_NATIV_SHOP*>(pData);
+
+	pBehaviour = GetBehaviour(this->curBehaviourId);
+
+	if (pBehaviour != (CBehaviour*)0x0) {
+		CBehaviourNativShopSell* pNativShopBehaviour = static_cast<CBehaviourNativShopSell*>(GetBehaviour(this->curBehaviourId));
+		pNativShopBehaviour->LoadContext(pData, mode, maxSize);
+	}
+
+	if (mode == 4) {
+		if (pSaveData->field_0x2 == 0) {
+			this->field_0x17c = 0;
+		}
+		else {
+			this->field_0x17c = 1;
+		}
+	}
+
+	return;
 }
 
 CBehaviour* CActorNativShop::BuildBehaviour(int behaviourType)
@@ -412,7 +432,21 @@ void CBehaviourNativShopSell::SectorChange(int oldSectorId, int newSectorId)
 
 void CBehaviourNativShopSell::PauseChange(int bPaused)
 {
-	IMPLEMENTATION_GUARD();
+	edNODE* pNode;
+
+	if (bPaused != 0) {
+		pNode = (this->objData).pNode;
+		if (pNode != (edNODE*)0x0) {
+			ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNode);
+		}
+
+		(this->objData).pActor = (CActor*)0x0;
+		(this->objData).pNode = (edNODE*)0x0;
+		(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
+		(this->objData).pTextureInfo = (ed_Chunck*)0x0;
+	}
+
+	return;
 }
 
 float gSHO_Cursor1OffsetXTime = 0.0f;
@@ -909,6 +943,68 @@ void CBehaviourNativShopSell::SaveContext(void* pData, uint mode, uint maxSize)
 	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[2].bPurchased << 2);
 	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[3].bPurchased << 3);
 	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[4].bPurchased << 4);
+
+	return;
+}
+
+void CBehaviourNativShopSell::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	CActor* pReceiver;
+	CInventoryInfo* pInventoryInfo;
+	edF32VECTOR4* pWayPoint;
+	int iVar1;
+	NativShopSubObj* pCVar2;
+	NativShopSubObj* pCVar3;
+	uint uVar4;
+	uint uVar5;
+
+	S_SAVE_CLASS_NATIV_SHOP* pSaveData = static_cast<S_SAVE_CLASS_NATIV_SHOP*>(pData);
+
+	if ((mode == 4) && (pSaveData->purchasedBitField != 0x4544)) {
+		uVar5 = 0;
+		pCVar3 = this->aSubObjs;
+		do {
+			pReceiver = pCVar3->streamRefActor.Get();
+			uVar4 = (uint)pSaveData->purchasedBitField & 1 << (uVar5 & 0x1f);
+			if ((pReceiver != (CActor*)0x0) &&
+				(pInventoryInfo = pReceiver->GetInventoryInfo(), pInventoryInfo->field_0x28 == 1)) {
+				uVar4 = 1;
+			}
+
+			pCVar3->bPurchased = (uint)(uVar4 != 0);
+
+			if (pReceiver != (CActor*)0x0) {
+				pWayPoint = this->pathFollowReader.GetWayPoint(uVar5 + 2);
+				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x53, (MSG_PARAM)pWayPoint);
+				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x5f, 0);
+
+				uVar4 = 5;
+				if (pCVar3->bPurchased == 0) {
+					uVar4 = 6;
+				}
+
+				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)uVar4);
+			}
+
+			uVar5 = uVar5 + 1;
+			pCVar3 = pCVar3 + 1;
+		} while (uVar5 < 5);
+
+		iVar1 = 0;
+		pCVar3 = this->aSubObjs;
+		pCVar2 = this->aSubObjs;
+		do {
+			if (pCVar2->bPurchased == 0) {
+				pCVar3->bPurchased = 0;
+			}
+
+			iVar1 = iVar1 + 1;
+			pCVar2 = pCVar2 + 1;
+			pCVar3 = pCVar3 + 1;
+		} while (iVar1 < 5);
+
+		UpdateValidity();
+	}
 
 	return;
 }

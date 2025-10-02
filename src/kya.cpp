@@ -2156,13 +2156,13 @@ void GameLoop(void)
 		}
 
 		GetTimer()->Update();
-		CScene::_pinstance->Level_Manage();
 
 #ifdef PLATFORM_WIN
-		// We will draw in Level_Draw, so need to make sure our command buffer is ready.
+		// Some actors might try and draw within their manage execution... so we end our rendering here.
 		Renderer::WaitUntilReady();
 #endif
 
+		CScene::_pinstance->Level_Manage();
 		CScene::_pinstance->Level_Draw();
 
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);

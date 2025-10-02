@@ -8,6 +8,8 @@
 #include "ChessBoard.h"
 #include "CameraFightData.h"
 
+#define COMMANDER_BEHAVIOUR_BEAT_UP 3
+
 class CActorFighter;
 class CActorWolfen;
 class CActorCommander;
@@ -71,7 +73,7 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void _UpdateSquad();
 	virtual void _UpdateSequence();
@@ -116,6 +118,7 @@ public:
 	void KickIntruderFighter();
 
 	void FUN_001717b0(CCameraGame* pCamera);
+	bool FUN_001710c0();
 
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
@@ -165,6 +168,7 @@ public:
 	int field_0x6d0;
 
 	CActorFighter* field_0x9f0;
+	CActorFighter* field_0x9f4;
 };
 
 #endif //ACTOR_COMMANDER_H

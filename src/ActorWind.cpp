@@ -99,59 +99,22 @@ void CActorWind::Create(ByteCode* pByteCode)
 	this->sectorObj.Create(pByteCode);
 
 	if (2.2f <= CScene::_pinstance->field_0x1c) {
-		piVar2 = (int*)pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-		if (*piVar2 != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
-		}
-		this->field_0x1d0 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
-
-		pcVar3 = pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = pcVar3 + 0x20;
-		this->field_0x1d4 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pcVar3);
-
-		piVar2 = (int*)pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-		if (*piVar2 != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
-		}
-		this->field_0x1d8 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
-
-		pcVar3 = pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = pcVar3 + 0x20;
-		this->field_0x1dc = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pcVar3);
-
-		piVar2 = (int*)pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-		if (*piVar2 != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x1c;
-		}
-		this->field_0x1e0 = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(piVar2);
-
-		pcVar3 = pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = pcVar3 + 0x20;
-		this->field_0x1e4 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pcVar3);
+		this->field_0x1d0.Create(pByteCode);
+		this->field_0x1d8.Create(pByteCode);
+		this->field_0x1e0.Create(pByteCode);
 	}
 
 	this->field_0x170 = 4.0f;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x194 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x198 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x19c = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x1a0 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x1a4 = fVar9;
+	this->field_0x194 = pByteCode->GetF32();
+	this->field_0x198 = pByteCode->GetF32();
+	this->field_0x19c = pByteCode->GetF32();
+	this->field_0x1a0 = pByteCode->GetF32();
+	this->field_0x1a4 = pByteCode->GetF32();
 
-	iVar7 = pByteCode->GetS32();
-	this->pWayPointRef.index = iVar7;
+	this->pWayPointRef.index = pByteCode->GetS32();
 
-	fVar9 = pByteCode->GetF32();
-	this->field_0x1ac = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x1b0 = fVar9;
+	this->field_0x1ac = pByteCode->GetF32();
+	this->field_0x1b0 = pByteCode->GetF32();
 
 	if (100.0f < this->field_0x16c) {
 		this->field_0x16c = 100.0f;
@@ -168,12 +131,14 @@ void CActorWind::Create(ByteCode* pByteCode)
 		this->field_0x200 = 0.0f;
 	}
 
-	//iVar7 = FUN_00184590((int)pGVar5, (long)(int)uVar6);
-	//this->field_0x1b4 = iVar7;
+	IMPLEMENTATION_GUARD_AUDIO(
+	this->pSoundWind = pGVar5->GetWindSound();)
+
 	this->aFxWind = (CFxWind*)0x0;
 	this->nbFxWind = 0;
 	this->field_0x1e8 = (edF32MATRIX4*)0x0;
-	//this->field_0x1ec = 0;
+	this->aAppliedToActorFlags = (int*)0x0;
+
 	return;
 }
 
@@ -221,35 +186,9 @@ void CActorWind::Init()
 	this->sectorObj.Init(this->objectId);
 
 	if (2.2f <= CScene::_pinstance->field_0x1c) {
-		pSVar8 = this->field_0x1d0;
-		iVar11 = 0;
-		if (0 < pSVar8->entryCount) {
-			do {
-				pSVar8->aEntries[iVar11].Init();
-				iVar11 = iVar11 + 1;
-			} while (iVar11 < pSVar8->entryCount);
-		}
-		this->field_0x1d4->Init();
-
-		pSVar8 = this->field_0x1d8;
-		iVar11 = 0;
-		if (0 < pSVar8->entryCount) {
-			do {
-				pSVar8->aEntries[iVar11].Init();
-				iVar11 = iVar11 + 1;
-			} while (iVar11 < pSVar8->entryCount);
-		}
-		this->field_0x1dc->Init();
-
-		pSVar8 = this->field_0x1e0;
-		iVar11 = 0;
-		if (0 < pSVar8->entryCount) {
-			do {
-				pSVar8->aEntries[iVar11].Init();
-				iVar11 = iVar11 + 1;
-			} while (iVar11 < pSVar8->entryCount);
-		}
-		this->field_0x1e4->Init();
+		this->field_0x1d0.Init();
+		this->field_0x1d8.Init();
+		this->field_0x1e0.Init();
 	}
 
 	edF32Matrix4FromEulerSoft(&eStack64, &this->rotationEuler.xyz, "XYZ");
@@ -436,24 +375,9 @@ void CActorWind::Reset()
 	}
 
 	if (2.2f <= CScene::_pinstance->field_0x1c) {
-
-		for (int i = 0; i < this->field_0x1d0->entryCount; i++) {
-			this->field_0x1d0->aEntries[i].Reset();
-		}
-
-		this->field_0x1d4->Reset(this);
-
-		for (int i = 0; i < this->field_0x1d8->entryCount; i++) {
-			this->field_0x1d8->aEntries[i].Reset();
-		}
-
-		this->field_0x1dc->Reset(this);
-
-		for (int i = 0; i < this->field_0x1e0->entryCount; i++) {
-			this->field_0x1e0->aEntries[i].Reset();
-		}
-		
-		this->field_0x1e4->Reset(this);
+		this->field_0x1d0.Reset(this);
+		this->field_0x1d8.Reset(this);
+		this->field_0x1e0.Reset(this);
 	}
 
 	return;
@@ -490,6 +414,51 @@ void CActorWind::SaveContext(void* pData, uint mode, uint maxSize)
 	}
 	else {
 		pSaveData->field_0x0 = 0;
+	}
+
+	return;
+}
+
+void CActorWind::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	int iVar1;
+	int iVar4;
+
+	S_SAVE_CLASS_WIND* pSaveData = reinterpret_cast<S_SAVE_CLASS_WIND*>(pData);
+
+	if (mode == 1) {
+		iVar1 = pSaveData->field_0x0;
+
+		if (iVar1 == 0) {
+			this->flags = this->flags & 0xfffffffd;
+			this->flags = this->flags | 1;
+			this->flags = this->flags & 0xffffff7f;
+			this->flags = this->flags | 0x20;
+			EvaluateDisplayState();
+			this->sectorObj.SetHiddenOn();
+		}
+		else {
+			this->flags = this->flags & 0xfffffffc;
+			this->flags = this->flags & 0xffffff5f;
+			EvaluateDisplayState();
+			ResetTiming();
+			this->sectorObj.SetHiddenOff();
+		}
+
+		iVar4 = 0;
+		if (0 < this->nbFxWind) {
+			do {
+				CFxWind* pFxWind = this->aFxWind + iVar4;
+				if (iVar1 == 0) {
+					pFxWind->field_0x54 = pFxWind->field_0x54 & 0xfffffffe;
+				}
+				else {
+					pFxWind->field_0x54 = pFxWind->field_0x54 | 1;
+				}
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->nbFxWind);
+		}
 	}
 
 	return;
@@ -924,9 +893,9 @@ void CActorWind::BehaviourWind_Manage()
 		})
 
 		if (2.2f <= CScene::_pinstance->field_0x1c) {
-			this->field_0x1d4->Manage(this);
-			this->field_0x1dc->Manage(this);
-			this->field_0x1e4->Manage(this);
+			this->field_0x1d0.pStreamEventCamera->Manage(this);
+			this->field_0x1d8.pStreamEventCamera->Manage(this);
+			this->field_0x1e0.pStreamEventCamera->Manage(this);
 		}
 	}
 
@@ -1455,42 +1424,18 @@ void CBehaviourWind::InitState(int newState)
 
 	if (newState == WIND_STATE_RECHARGE) {
 		if (2.2f <= CScene::_pinstance->field_0x1c) {
-			entryIndex = 0;
-			if (0 < pActorWind->field_0x1e0->entryCount) {
-				do {
-					pActorWind->field_0x1e0->aEntries[entryIndex].Switch(pActorWind);
-					entryIndex = entryIndex + 1;
-				} while (entryIndex < pActorWind->field_0x1e0->entryCount);
-			}
-
-			pActorWind->field_0x1e4->SwitchOn(pActorWind);
+			pActorWind->field_0x1e0.Switch(pActorWind);
 		}
 	}
 	else {
 		if (newState == WIND_STATE_ON) {
 			if (2.2f <= CScene::_pinstance->field_0x1c) {
-				entryIndex = 0;
-				if (0 < pActorWind->field_0x1d8->entryCount) {
-					do {
-						pActorWind->field_0x1d8->aEntries[entryIndex].Switch(pActorWind);
-						entryIndex = entryIndex + 1;
-					} while (entryIndex < pActorWind->field_0x1d8->entryCount);
-				}
-
-				pActorWind->field_0x1dc->SwitchOn(pActorWind);
+				pActorWind->field_0x1d8.Switch(pActorWind);
 			}
 		}
 		else {
 			if ((newState == WIND_STATE_OFF) && (2.2f <= CScene::_pinstance->field_0x1c)) {
-				entryIndex = 0;
-				if (0 < pActorWind->field_0x1d0->entryCount) {
-					do {
-						pActorWind->field_0x1d0->aEntries[entryIndex].Switch(pActorWind);
-						entryIndex = entryIndex + 1;
-					} while (entryIndex < pActorWind->field_0x1d0->entryCount);
-				}
-
-				pActorWind->field_0x1d4->SwitchOn(pActorWind);
+				pActorWind->field_0x1d0.Switch(pActorWind);
 			}
 		}
 	}

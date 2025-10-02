@@ -129,6 +129,7 @@ public:
 	virtual void CheckpointReset();
 
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
@@ -316,6 +317,10 @@ public:
 	void StateHeroUnlockInit();
 	void StateHeroUnlock(ACTOR_CLASS typeId);
 	void StateHeroUnlockTerm();
+
+	void StateHeroExorciseInit();
+	void StateHeroExorcise();
+	void StateHeroExorciseTerm(int nextState);
 
 	void StateHeroWindFly(int param_2);
 	void StateHeroFlyJumpInit();

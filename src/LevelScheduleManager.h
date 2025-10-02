@@ -10,6 +10,11 @@
 #include "ScenaricCondition.h"
 #include "SectorManager.h"
 
+#ifdef PLATFORM_WIN
+#include <vector>
+#include <future>
+#endif
+
 #define IMPLEMENTATION_GUARD_OBJECTIVE(x)
 
 #define SCN_GAME_NUM_FREED_WOLFENS		0x0
@@ -292,7 +297,7 @@ class CActor;
 
 struct EpStruct_8
 {
-	int field_0x0;
+	int itemId;
 	int field_0x4;
 };
 
@@ -394,11 +399,15 @@ public:
 	CChunk* SaveGame_GetLevelChunk(int levelId);
 	void SaveGame_LoadLevelState(int levelId);
 
+	bool IsACompatibleChunkRecurse(CChunk* pChunk);
+
 	static int SaveGame_GetMaxBufferSize();
 
 	void UpdateGameInfo(float health, int magic, int money);
+	void GetGameInfo(float* pHealth, float* pMagic, float* pMoney);
 
-	void SaveInventoryToNfo(CInventoryInterface* pInventory);
+	void Game_SaveInventory(CInventoryInterface* pInventory);
+	void Game_LoadInventory(CInventoryInterface* pInventory);
 
 	static uint GetMedallionLevel();
 	static int GetBoomyLevel();
@@ -576,5 +585,11 @@ extern ulong gMedallionHashCodes[9];
 extern ulong gFightHashCodes[8];
 
 extern int INT_ARRAY_0048ed60[16];
+
+#ifdef PLATFORM_WIN
+using QueuedTaskList = std::vector<std::future<void>>;
+void EnqueueLevelManageTask(std::function<void()> task);
+extern int gDebugLevelLoadOverride;
+#endif
 
 #endif //_LEVELSCHEDULEMANAGER_H

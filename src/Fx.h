@@ -277,8 +277,9 @@ public:
 
 		CDoubleLinkedNode<FxType>* pHead = (this->activeList).pHead;
 		while (pHead != (CDoubleLinkedNode<FxType> *)0x0) {
+			CDoubleLinkedNode<FxType>* pPrev = pHead->pPrev;
 			pHead->aFx->Kill();
-			pHead = pHead->pPrev;
+			pHead = pPrev;
 		}
 
 		if (this->aFx != (FxType*)0x0) {

@@ -79,6 +79,7 @@ void CPathFollow::Create(ByteCode* pByteCode)
 			} while (iVar3 < (int)this->splinePointCount);
 		}
 	}
+
 	if ((flags & 0x20) != 0) {
 		pcVar1 = pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * 4;
@@ -95,6 +96,37 @@ void CPathFollow::Create(ByteCode* pByteCode)
 	this->type = pByteCode->GetU32();
 	this->pathType = pByteCode->GetU32();
 
+	return;
+}
+
+void CPathFollow::ComputeMatrix(edF32MATRIX4* pMatrix, int param_3)
+{
+	edF32VECTOR4* peVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	if (this->aSplineRotationsQuat == (edF32VECTOR4*)0x0) {
+		if (this->aSplineRotationsEuler == (edF32VECTOR4*)0x0) {
+			edF32Matrix4SetIdentityHard(pMatrix);
+		}
+		else {
+			edF32Matrix4FromEulerSoft(pMatrix, (edF32VECTOR3*)(this->aSplineRotationsEuler + param_3), "XYZ");
+		}
+	}
+	else {
+		edQuatToMatrix4Hard(this->aSplineRotationsQuat + param_3, pMatrix);
+	}
+	if (this->aSplinePoints != (edF32VECTOR4*)0x0) {
+		peVar1 = this->aSplinePoints + param_3;
+		fVar4 = peVar1->y;
+		fVar2 = peVar1->z;
+		fVar3 = peVar1->w;
+		pMatrix->da = peVar1->x;
+		pMatrix->db = fVar4;
+		pMatrix->dc = fVar2;
+		pMatrix->dd = fVar3;
+	}
 	return;
 }
 

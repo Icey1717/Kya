@@ -339,6 +339,7 @@ struct S_STREAM_EVENT_CAMERA
 	void SwitchOff(CActor* pActor);
 	void Reset(CActor* pActor);
 	void SaveContext(uint* pData);
+	void LoadContext(uint* pData);
 };
 
 static_assert(sizeof(S_STREAM_EVENT_CAMERA) == 0x20);
@@ -374,12 +375,12 @@ static_assert(sizeof(S_STREAM_NTF_TARGET_BASE) == 0xc);
 
 struct S_SAVE_CLASS_NTF_SWITCH
 {
-	int mode;
 	uint switchBits;
 };
 
 struct S_SAVE_CLASS_SWITCH_CAMERA
 {
+	int mode;
 	S_SAVE_CLASS_NTF_SWITCH switchData;
 	uint cameraData;
 };
@@ -433,6 +434,7 @@ struct S_NTF_TARGET_STREAM_REF
 	void Switch(CActor* pActor);
 	void PostSwitch(CActor* pActor);
 	void SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
+	void LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
 };
 
 // This is likely what the real implementation is, as S_NTF_TARGET_STREAM_REF and S_STREAM_EVENT_CAMERA alway appear together in the code.
@@ -447,6 +449,7 @@ struct S_NTF_SWITCH
 	void Switch(CActor* pActor);
 	void PostSwitch(CActor* pActor);
 	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
+	void LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 };
 
 struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH
@@ -468,6 +471,8 @@ struct S_TARGET_ON_OFF_STREAM_REF
 	void Reset();
 	void SwitchOn(CActor* pActor);
 	void SwitchOff(CActor* pActor);
+	void SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
+	void LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
 };
 
 struct S_NTF_SWITCH_ONOFF
@@ -480,6 +485,8 @@ struct S_NTF_SWITCH_ONOFF
 	void Reset(CActor* pActor);
 	void SwitchOn(CActor* pActor);
 	void SwitchOff(CActor* pActor);
+	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
+	void LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 };
 
 struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST
@@ -490,6 +497,8 @@ struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST
 	void Init();
 	void Reset();
 	void Switch(CActor* pActor, uint flags);
+	void SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
+	void LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
 };
 
 struct S_NTF_SWITCH_EX_LIST
@@ -501,6 +510,8 @@ struct S_NTF_SWITCH_EX_LIST
 	void Init();
 	void Reset(CActor* pActor);
 	void Switch(CActor* pActor, uint flags);
+	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
+	void LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 };
 
 struct S_STREAM_NTF_TARGET_ANALOG_LIST
@@ -512,6 +523,8 @@ struct S_STREAM_NTF_TARGET_ANALOG_LIST
 	void Init();
 	void Reset();
 	void NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5);
+	void SaveContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
+	void LoadContext(S_SAVE_CLASS_NTF_SWITCH* pSaveData);
 };
 
 struct S_NTF_SWITCH_ANALOG
@@ -523,6 +536,8 @@ struct S_NTF_SWITCH_ANALOG
 	void Init();
 	void Reset(CActor* pActor);
 	void NotifyAnalog(float param_1, float param_2, CActor* param_4);
+	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
+	void LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 };
 
 struct S_TRAP_STREAM_ENTRY
@@ -608,7 +623,7 @@ public:
 
 	void Level_ClearAll();
 
-	void FUN_001c7390(bool param_2);
+	void ConditionallyStartCinematic(bool bShouldStartCinematic);
 	void FUN_001caeb0();
 
 	void FUN_001c92b0();

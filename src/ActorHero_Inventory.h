@@ -5,7 +5,7 @@
 
 struct InventorySlot
 {
-	undefined4 field_0x0;
+	int itemId;
 	undefined4 field_0x4;
 	undefined4 field_0x8;
 };
@@ -36,6 +36,8 @@ public:
 	virtual void Reset() {}
 	virtual void SetValue(float value) {}
 	virtual float GetValue() { return 0.0f; }
+
+	void Clear();
 };
 
 #endif // ACTOR_HERO_INVENTORY_H

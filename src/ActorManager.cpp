@@ -503,6 +503,25 @@ void CActorManager::Level_PauseChange(bool bPaused)
 	return;
 }
 
+struct SaveDataClassEntry
+{
+	uint classSaveMode;
+	uint classInstanceSaveSize;
+	uint classInstanceCount;
+};
+
+struct SaveDataChunk_BLCL
+{
+	uint distinctClassCount;
+	SaveDataClassEntry aClassEntries[];
+};
+
+struct SaveDataChunk_BLAC
+{
+	uint actorHash;
+	byte aBytes[];
+};
+
 void CActorManager::Level_SaveContext()
 {
 	// 1) Count how many savable actors per class
@@ -525,23 +544,26 @@ void CActorManager::Level_SaveContext()
 	}
 
 	// 2) CLASS SUMMARY CHUNK ("BLCL")
-	uint32_t* out = (uint32_t*)CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCL);
-	*out++ = distinctClasses;
+	SaveDataChunk_BLCL* pBLCL = (SaveDataChunk_BLCL*)CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLCL);
+	pBLCL->distinctClassCount = distinctClasses;
+
+	SaveDataClassEntry* pEntry = pBLCL->aClassEntries;
 
 	for (int classIdx = 0; classIdx < 87; ++classIdx) {
 		int n = perClassCount[classIdx];
 		if (n > 0) {
 			const ActorClassProperties& props = CActorFactory::gClassProperties[classIdx];
-			*out++ = props.saveMode;		// identifies the class in the save stream
-			*out++ = props.maxSaveBytes;	// bytes that each instance of this class will write
-			*out++ = n;						// how many instances to expect in the actor data chunk
+			pEntry->classSaveMode = props.saveMode;				// identifies the class in the save stream
+			pEntry->classInstanceSaveSize = props.maxSaveBytes;	// bytes that each instance of this class will write
+			pEntry->classInstanceCount = n;						// how many instances to expect in the actor data chunk
+			pEntry = pEntry + 1;
 		}
 	}
 
-	CLevelScheduler::gThis->SaveGame_EndChunk(out);
+	CLevelScheduler::gThis->SaveGame_EndChunk(pEntry);
 
 	// 3) ACTOR DATA CHUNK ("BLAC")
-	uint8_t* outBytes = (uint8_t*)CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLAC);
+	SaveDataChunk_BLAC* pBLAC = reinterpret_cast<SaveDataChunk_BLAC*>(CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLAC));
 
 	// Walk each class’s storage and serialize the instances flagged for saving
 	for (int classIdx = 0; classIdx < 87; ++classIdx) {
@@ -556,22 +578,80 @@ void CActorManager::Level_SaveContext()
 			if ((pActor->actorFieldS & SAVE_FLAG) == 0) continue;
 
 			// Write a placement/identity hash first
-			*reinterpret_cast<uint*>(outBytes) = pActor->subObjA->hashCode;
-			outBytes += 4;
+			pBLAC->actorHash = pActor->subObjA->hashCode;
 
 			// Then the instance payload exactly saveSize bytes (implemented by each class)
 			// Signature looks like: actor->SaveContext(void* dst, uint32 classId, uint32 payloadSize
-			pActor->SaveContext(outBytes, props.saveMode, props.maxSaveBytes);
-			outBytes += props.maxSaveBytes;
+			pActor->SaveContext(pBLAC->aBytes, props.saveMode, props.maxSaveBytes);
+			pBLAC = reinterpret_cast<SaveDataChunk_BLAC*>(pBLAC->aBytes + props.maxSaveBytes);
 		}
 	}
 
-	CLevelScheduler::gThis->SaveGame_EndChunk(outBytes);
+	CLevelScheduler::gThis->SaveGame_EndChunk(pBLAC);
 }
 
 void CActorManager::Level_LoadContext()
 {
-	IMPLEMENTATION_GUARD();
+	SaveDataChunk_BLCL* pBLCL;
+	CChunk* pChunk;
+	CActor* pCVar1;
+	CActor** ppCVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	SaveDataChunk_BLAC* pBLAC;
+	SaveDataClassEntry* pSVar6;
+	CLevelScheduler* pLevel;
+
+	pLevel = CLevelScheduler::gThis;
+	pBLCL = reinterpret_cast<SaveDataChunk_BLCL*>(CLevelScheduler::gThis->SaveGame_OpenChunk(SAVEGAME_CHUNK_BLCL) + 1);
+	if (pBLCL != (SaveDataChunk_BLCL*)0x0) {
+		pLevel->SaveGame_CloseChunk();
+
+		pChunk = pLevel->SaveGame_OpenChunk(SAVEGAME_CHUNK_BLAC);
+		pBLAC = (SaveDataChunk_BLAC*)(pChunk + 1);
+		if (pChunk != (CChunk*)0x0) {
+			pSVar6 = pBLCL->aClassEntries;
+			iVar5 = 0;
+
+			if (0 < pBLCL->distinctClassCount) {
+				do {
+					iVar4 = 0;
+					if (0 < (int)pSVar6->classInstanceCount) {
+						do {
+							iVar3 = 0;
+							if (0 < this->nbActors) {
+								ppCVar2 = this->aActors;
+								do {
+									pCVar1 = *ppCVar2;
+									if (pBLAC->actorHash == pCVar1->subObjA->hashCode) goto LAB_001060f8;
+									iVar3 = iVar3 + 1;
+									ppCVar2 = ppCVar2 + 1;
+								} while (iVar3 < this->nbActors);
+							}
+
+							pCVar1 = (CActor*)0x0;
+
+						LAB_001060f8:
+							if (pCVar1 != (CActor*)0x0) {
+								pCVar1->LoadContext(pBLAC->aBytes, pSVar6->classSaveMode, pSVar6->classInstanceSaveSize);
+							}
+
+							iVar4 = iVar4 + 1;
+							pBLAC = (SaveDataChunk_BLAC*)(pBLAC->aBytes + pSVar6->classInstanceSaveSize);
+						} while (iVar4 < (int)pSVar6->classInstanceCount);
+					}
+
+					iVar5 = iVar5 + 1;
+					pSVar6 = pSVar6 + 1;
+				} while (iVar5 < pBLCL->distinctClassCount);
+			}
+
+			pLevel->SaveGame_CloseChunk();
+		}
+	}
+
+	return;
 }
 
 char* CActorManager::ProfileGetName()

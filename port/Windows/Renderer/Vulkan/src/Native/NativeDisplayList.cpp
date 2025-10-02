@@ -49,6 +49,8 @@ namespace Renderer::Native::DisplayList
 	int gIndexStart = 0;
 	int gVertexStart = 0;
 
+	Pipeline* gBoundPipeline = nullptr;
+
 	struct {
 		float width;
 		float height;
@@ -361,7 +363,9 @@ namespace Renderer::Native::DisplayList
 			return;
 		}
 
-		if (pTexture->GetRenderer()->HasDescriptorSets(GetPipeline())) {
+		auto& pipeline = GetPipeline();
+
+		if (pTexture->GetRenderer()->HasDescriptorSets(pipeline)) {
 			return;
 		}
 
@@ -382,7 +386,7 @@ namespace Renderer::Native::DisplayList
 		writeList.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			pTextureData->UpdateDescriptorSets(GetPipeline(), writeList, i);
+			pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
 		}
 	}
 
@@ -398,10 +402,9 @@ namespace Renderer::Native::DisplayList
 					return gBoundTexture ? Native::SetBlendingDynamicState(gBoundTexture, true, cmd) : Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
 				}();
 
-			auto& pipeline = GetPipeline();
+			auto& pipeline = *gBoundPipeline;
 
 			if (gBoundTexture) {
-				
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			}
 			else {
@@ -414,6 +417,7 @@ namespace Renderer::Native::DisplayList
 		}
 
 		gVertexBuffers.Reset();
+		gBoundPipeline = nullptr;
 	}
 }
 
@@ -455,7 +459,9 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	// Need to do this after we have updated prim.
 	InitializeDescriptorsSets(gBoundTexture);
 
-	vkCmdBindPipeline(GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().pipeline);
+	gBoundPipeline = &GetPipeline();
+
+	vkCmdBindPipeline(GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, gBoundPipeline->pipeline);
 }
 
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)

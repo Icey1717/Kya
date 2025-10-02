@@ -19,7 +19,7 @@ namespace Renderer::Kya::Sprite
 				GIFReg::GSPrim prim;
 				prim.ABE = 1;
 				sprite = std::make_unique<SimpleMesh>("Sprite", prim);
-				sprite->GetVertexBufferData().Init(0x100, 0x1000);
+				sprite->GetVertexBufferData().Init(0x200, 0x1000);
 			}
 		}
 

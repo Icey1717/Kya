@@ -42,8 +42,6 @@ struct AnalogStickData {
 
 class CIniFile;
 
-#define PAD_BITMASK_START 0x40000
-
 struct CPlayerInputSubObj {
 	float field_0x0;
 	float field_0x4;
@@ -56,6 +54,7 @@ struct CPlayerInputSubObj {
 	float field_0x20;
 };
 
+#define PAD_BITMASK_START 0x40000
 #define PAD_BITMASK_CROSS 0x10
 #define PAD_BITMASK_SQUARE 0x200
 #define PAD_BITMASK_TRIANGLE 0x4000000

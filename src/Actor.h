@@ -464,7 +464,7 @@ public:
 	virtual void PauseChange(int bIsPaused);
 
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);

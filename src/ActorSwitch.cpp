@@ -8,6 +8,8 @@
 #include "TimeController.h"
 #include "ActorHero.h"
 #include "EventManager.h"
+#include "ActorTeleporter.h"
+#include "LevelScheduleManager.h"
 
 StateConfig CActorSwitch::_gStateCfg_SWT[5] = {
 	StateConfig(0x0, 0x4),
@@ -84,6 +86,42 @@ void CActorSwitch::SaveContext(void* pData, uint mode, uint maxSize)
 			pCVar1->SaveContext(pSaveData);
 		}
 	}
+	return;
+}
+
+void CActorSwitch::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	CBehaviourSwitch* pBehaviour;
+	S_NTF_TARGET_STREAM_REF* pSVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	uint uVar6;
+
+	S_SAVE_CLASS_SWITCH* pSaveData = reinterpret_cast<S_SAVE_CLASS_SWITCH*>(pData);
+
+	if (mode == 0x20001) {
+		this->targetSwitch.LoadContext(&pSaveData->switchCamera);
+
+		iVar5 = this->curBehaviourId;
+		if (pSaveData->behaviourId == iVar5) {
+			switch (iVar5) {
+			case SWITCH_BEHAVIOUR_LEVER:
+			case SWITCH_BEHAVIOUR_MAGIC:
+			case SWITCH_BEHAVIOUR_WOLFEN_COUNTER:
+			case SWITCH_BEHAVIOUR_MULTI_CONDITION:
+			case SWITCH_BEHAVIOUR_TARGET:
+			case SWITCH_BEHAVIOUR_SEQUENCE:
+				pBehaviour = static_cast<CBehaviourSwitch*>(GetBehaviour(this->curBehaviourId));
+				if (pBehaviour != (CBehaviourSwitch*)0x0) {
+					pBehaviour->LoadContext(pSaveData);
+				}
+			}
+		}
+
+		ManageNativElevators();
+	}
+
 	return;
 }
 
@@ -475,6 +513,67 @@ void CActorSwitch::StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour)
 	return;
 }
 
+void CActorSwitch::ManageNativElevators()
+{
+	bool bVar1;
+	bool bVar2;
+	S_NTF_TARGET_STREAM_REF* pSVar3;
+	int iVar4;
+	int iVar5;
+	int iVar6;
+	CActorTeleporter* pTeleporter;
+
+	if (CLevelScheduler::gThis->currentLevelID == 0) {
+		IMPLEMENTATION_GUARD(
+		pSVar3 = (this->targetSwitch).pTargetStreamRef;
+		bVar1 = false;
+		iVar5 = pSVar3->entryCount;
+		iVar6 = 0;
+		if (0 < iVar5) {
+			iVar4 = 0;
+			do {
+				pTeleporter = *(CActorTeleporter**)((int)&pSVar3->aEntries[0].base.pRef + iVar4);
+				if (((pTeleporter != (CActorTeleporter*)0x0) && ((pTeleporter->base).typeID == 0x24)) &&
+					(bVar2 = CActorTeleporter::LevelHasTeleporters(pTeleporter), bVar2 != false)) {
+					bVar1 = true;
+				}
+				pSVar3 = (this->targetSwitch).pTargetStreamRef;
+				iVar6 = iVar6 + 1;
+				iVar5 = pSVar3->entryCount;
+				iVar4 = iVar4 + 0x1c;
+			} while (iVar6 < iVar5);
+		}
+
+		if (bVar1) {
+			iVar6 = 0;
+			if (0 < iVar5) {
+				iVar4 = 0;
+				do {
+					S_STREAM_NTF_TARGET_SWITCH::Switch
+					((S_STREAM_NTF_TARGET_SWITCH*)((int)&pSVar3->aEntries[0].base.pRef + iVar4), (CActor*)this);
+					pSVar3 = (this->targetSwitch).pTargetStreamRef;
+					iVar6 = iVar6 + 1;
+					iVar5 = pSVar3->entryCount;
+					iVar4 = iVar4 + 0x1c;
+				} while (iVar6 < iVar5);
+			}
+
+			iVar6 = 0;
+			if (0 < iVar5) {
+				iVar5 = 0;
+				do {
+					S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)((int)&pSVar3->aEntries[0].base.pRef + iVar5), (CActor*)this);
+					pSVar3 = (this->targetSwitch).pTargetStreamRef;
+					iVar6 = iVar6 + 1;
+					iVar5 = iVar5 + 0x1c;
+				} while (iVar6 < pSVar3->entryCount);
+			}
+		})
+	}
+
+	return;
+}
+
 CBehaviourSwitchMagic::CBehaviourSwitchMagic()
 {
 	//this->field_0x1c = 0;
@@ -671,6 +770,21 @@ void CBehaviourSwitchMagic::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	}
 	else {
 		pData->bActive = 0;
+	}
+
+	return;
+}
+
+void CBehaviourSwitchMagic::LoadContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	CActorSwitch* pSwitch;
+
+	if (pData->bActive != 0) {
+		this->field_0xc = this->field_0x8;
+		pSwitch = this->pOwner;
+		pSwitch->SetState(8, -1);
+
+		ChangeManageState(0);
 	}
 
 	return;
@@ -1047,6 +1161,11 @@ void CBehaviourSwitchTarget::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	return;
 }
 
+void CBehaviourSwitchTarget::LoadContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	return;
+}
+
 void CBehaviourSwitchLever::Create(ByteCode* pByteCode)
 {
 	this->field_0x40.index = pByteCode->GetS32();
@@ -1280,6 +1399,11 @@ void CBehaviourSwitchLever::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	return;
 }
 
+void CBehaviourSwitchLever::LoadContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	return;
+}
+
 void CBehaviourSwitchMultiCondition::Create(ByteCode* pByteCode)
 {
 	this->field_0x14 = pByteCode->GetU32();
@@ -1474,6 +1598,24 @@ void CBehaviourSwitchMultiCondition::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	return;
 }
 
+void CBehaviourSwitchMultiCondition::LoadContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	CActorSwitch* pSwitch;
+
+	this->field_0x10 = pData->field_0x14;
+
+	if (pData->bActive == 0) {
+		pSwitch = this->pOwner;
+		pSwitch->SetState(5, -1);
+	}
+	else {
+		pSwitch = this->pOwner;
+		pSwitch->SetState(8, -1);
+	}
+
+	return;
+}
+
 void CBehaviourSwitchSequence::Create(ByteCode* pByteCode)
 {
 	int* piVar1;
@@ -1562,6 +1704,47 @@ void CBehaviourSwitchSequence::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	return;
 }
 
+void CBehaviourSwitchSequence::LoadContext(S_SAVE_CLASS_SWITCH* pData)
+{
+	int iVar1;
+	CActorSwitch* pSwitch;
+
+	this->field_0x18 = pData->field_0x14;
+	this->field_0x14 = pData->bActive;
+
+	if (-1 < this->field_0x14) {
+		if (this->field_0x10 == (int*)0x0) {
+			iVar1 = 0;
+		}
+		else {
+			iVar1 = *this->field_0x10;
+		}
+
+		if (this->field_0x14 <= iVar1) goto LAB_00167e60;
+	}
+
+	this->field_0x14 = 0;
+
+LAB_00167e60:
+	if (this->field_0x10 == (int*)0x0) {
+		iVar1 = 0;
+	}
+	else {
+		iVar1 = *this->field_0x10;
+	}
+
+	if (this->field_0x14 == iVar1) {
+		pSwitch = this->pOwner;
+		pSwitch->SetState(8, -1);
+	}
+	else {
+		pSwitch = this->pOwner;
+		pSwitch->SetState(5, -1);
+	}
+
+	return;
+}
+
 void CBehaviourSwitchWolfenCounter::Create(ByteCode* pByteCode)
 {
 	this->field_0x14 = pByteCode->GetS32();
@@ -1645,7 +1828,7 @@ int CBehaviourSwitchWolfenCounter::InterpretMessage(CActor* pSender, int msg, vo
 
 void CBehaviourSwitchWolfenCounter::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 {
-	if (this->pOwner->actorState == 8) {
+	if (this->pOwner->actorState == SWITCH_STATE_WOLFEN_COUNTER_ON) {
 		pData->bActive = 1;
 	}
 	else {
@@ -1655,7 +1838,11 @@ void CBehaviourSwitchWolfenCounter::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 	return;
 }
 
-void CBehaviourSwitchWolfenCounter::LoadContext(uint*, int)
+void CBehaviourSwitchWolfenCounter::LoadContext(S_SAVE_CLASS_SWITCH* pData)
 {
-	IMPLEMENTATION_GUARD();
+	if (pData->bActive != 0) {
+		this->pOwner->SetState(SWITCH_STATE_WOLFEN_COUNTER_ON, -1);
+	}
+
+	return;
 }

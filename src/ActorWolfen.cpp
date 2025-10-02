@@ -733,6 +733,30 @@ void CActorWolfen::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+void CActorWolfen::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_WOLFEN* pSaveData = reinterpret_cast<S_SAVE_CLASS_WOLFEN*>(pData);
+
+	if ((mode == 1) && (pSaveData->bExorcised != 0)) {
+		SetState(0x80, -1);
+		this->exorcisedState = 2;
+
+		this->flags = this->flags & 0xffffff7f;
+		this->flags = this->flags | 0x20;
+		EvaluateDisplayState();
+		this->flags = this->flags & 0xfffffffd;
+		this->flags = this->flags | 1;
+
+		if (GetWeapon() != (CActorWeapon*)0x0) {
+			if (GetWeapon()->GetLinkFather() == this) {
+				GetWeapon()->UnlinkWeapon();
+			}
+		}
+	}
+
+	return;
+}
+
 CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
@@ -6800,14 +6824,12 @@ void CBehaviourTrackWeapon::Begin(CActor* pOwner, int newState, int newAnimation
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			iVar3 = pWolfen->FUN_00173a20();
-			if (iVar3 == 0) {
+			if (pWolfen->IsCurrentPositionValid()) {
 				newState = 0x78;
 			}
 			else {
 				newState = Func_0x70();
-			})
+			}
 		}
 	}
 
@@ -10115,13 +10137,11 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	}
 	else {
 		if (msg == MESSAGE_MAGIC_ACTIVATE) {
-			IMPLEMENTATION_GUARD(
-			if ((this->pOwner->base).characterBase.base.base.actorState == 0x79) {
+			if (this->pOwner->actorState == 0x79) {
 				local_10[0] = 0;
-				local_4 = local_10;
-				CActor::DoMessage((CActor*)this->pOwner, (CActor*)this->pOwner->pCommander, 0x1b, (uint)local_4);
+				this->pOwner->DoMessage(this->pOwner->pCommander, (ACTOR_MESSAGE)0x1b, local_10);
 				return 1;
-			})
+			}
 		}
 		else {
 			if (msg == MESSAGE_MAGIC_DEACTIVATE) {

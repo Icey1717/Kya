@@ -161,7 +161,7 @@ void CActorBasicBox::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorBasicBox::LoadContext(uint*, int)
+void CActorBasicBox::LoadContext(void* pData, uint mode, uint maxSize)
 {
 	IMPLEMENTATION_GUARD();
 }

@@ -85,9 +85,11 @@ void CActorMoney::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CActorMoney::LoadContext(uint*, int)
+void CActorMoney::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	static_cast<CBehaviourMoneyFlock*>(GetBehaviour(this->curBehaviourId))->LoadContext(pData, mode, maxSize);
+
+	return;
 }
 
 CBehaviour* CActorMoney::BuildBehaviour(int behaviourType)
@@ -521,16 +523,48 @@ void CBehaviourMoneyFlock::SaveContext(void* pData, uint mode, uint maxSize)
 	// Clear out all bitfields
 	std::memset(pSaveData->bits, 0, sizeof(pSaveData->bits));
 
-	for (uint32_t i = 0; i < nbMoneyInstances; ++i)
+	for (uint i = 0; i < nbMoneyInstances; ++i)
 	{
 		const CMnyInstance& inst = aMoneyInstances[i];
 
 		if (inst.flags & 1) // active?
 		{
-			uint32_t wordIndex = i / 32;
-			uint32_t bitIndex = i % 32;
+			uint wordIndex = i / 32;
+			uint bitIndex = i % 32;
 
 			pSaveData->bits[wordIndex] |= (1u << bitIndex);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourMoneyFlock::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	uint uVar2;
+	CActorMoney* pMoney;
+
+	S_SAVE_CLASS_MONEY* pSaveData = reinterpret_cast<S_SAVE_CLASS_MONEY*>(pData);
+
+	if (mode == 1) {
+		uVar2 = 0;
+
+		if (this->nbMoneyInstances != 0) {
+			do {
+				this->aMoneyInstances[uVar2].SetAlive(1 << (uVar2 & 0x1f) & pSaveData->bits[uVar2 >> 5]);
+
+				uVar2 = uVar2 + 1;
+			} while (uVar2 < this->nbMoneyInstances);
+		}
+
+		if (pSaveData == (S_SAVE_CLASS_MONEY*)0x0) {
+			pMoney = this->pOwner;
+			pMoney->flags = pMoney->flags & 0xffffff7f;
+			pMoney->flags = pMoney->flags | 0x20;
+			pMoney->EvaluateDisplayState();
+			pMoney = this->pOwner;
+			pMoney->flags = pMoney->flags & 0xfffffffd;
+			pMoney->flags = pMoney->flags | 1;
 		}
 	}
 

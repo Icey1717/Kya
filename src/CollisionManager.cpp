@@ -2376,7 +2376,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	int* piVar1;
 	bool bVar2;
 	uint uVar3;
-	int stepCount;
+	uint stepCount;
 	uint uVar5;
 	long lVar6;
 	uint matrixType;

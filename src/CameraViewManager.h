@@ -5898,7 +5898,8 @@ struct ActiveCamManager {
 };
 
 
-struct CAM_QUAKE {
+struct CAM_QUAKE
+{
 	edF32VECTOR4 field_0x0;
 	edF32VECTOR4 field_0x10;
 	int field_0x20;

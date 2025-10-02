@@ -12,9 +12,21 @@
 class CBehaviourBonusBase : public CBehaviour
 {
 public:
-	virtual void ChangeVisibleState(int state) {}
-	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
+	virtual void Func_0x4c();
+	virtual void Func_0x50() {} // Needs deletion.
+	virtual void ChangeVisibleState(int state);
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
+
+	CActorBonus* pOwner;
+
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
 };
 
 class CBehaviourBonusFlock : public CBehaviourBonusBase
@@ -54,7 +66,8 @@ public:
 	undefined4 field_0x0;
 };
 
-class CActorBonus : public CActorMovable {
+class CActorBonus : public CActorMovable
+{
 public:
 	CActorBonus() {
 		IMPLEMENTATION_GUARD_ACTOR()
@@ -70,7 +83,7 @@ public:
 	virtual void ComputeLighting() {}
 	virtual void CheckpointReset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);

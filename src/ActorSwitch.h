@@ -18,6 +18,8 @@
 #define SWITCH_STATE_MAGIC_STATE_OFF_2_ON 0x6
 #define SWITCH_STATE_LEVER_STATE_OFF_2_ON 0x6
 
+#define SWITCH_STATE_WOLFEN_COUNTER_ON	0x8
+
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
@@ -36,7 +38,7 @@ class CBehaviourSwitch : public CBehaviour
 public:
 	// Needs to be deleted functions.
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData) = 0;
-	virtual void LoadContext(uint*, int) {}
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData) = 0;
 	virtual void ChangeManageState(int state) {}
 
 	CActorSwitch* pOwner;
@@ -55,7 +57,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int) {}
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 
 	CActor* pActor;
 
@@ -83,7 +85,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void ChangeManageState(int state);
 
 	void DisplayOpenFxModel(int bOpen);
@@ -121,7 +123,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int);
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 
 	ParticleInfo* field_0x8;
 	S_STREAM_REF<ed_zone_3d> streamRefZone;
@@ -143,7 +145,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int) {}
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void ChangeManageState(int state) {}
 
 	float field_0x8;
@@ -167,7 +169,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 
 	uint field_0x8;
 	uint field_0xc;
@@ -186,13 +188,13 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 
 	uint field_0x8;
 	uint field_0xc;
 
 	int* field_0x10;
-	undefined4 field_0x14;
+	int field_0x14;
 	uint field_0x18;
 };
 
@@ -206,7 +208,7 @@ public:
 	virtual void Init();
 	virtual void Reset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
-	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
@@ -217,6 +219,8 @@ public:
 	void StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour);
 	void StateSwitchMagicOff2On(CBehaviourSwitchMagic* pBehaviour);
 	void StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour);
+
+	void ManageNativElevators();
 
 	S_NTF_SWITCH targetSwitch;
 	CActorSound* pActorSound;

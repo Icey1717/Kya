@@ -380,24 +380,65 @@ struct S_SAVE_CLASS_TELEPORTER
 
 void CActorTeleporter::SaveContext(void* pData, uint mode, uint maxSize)
 {
-	S_SAVE_CLASS_TELEPORTER* pDataTeleporter = reinterpret_cast<S_SAVE_CLASS_TELEPORTER*>(pData);
+	S_SAVE_CLASS_TELEPORTER* pSaveData = reinterpret_cast<S_SAVE_CLASS_TELEPORTER*>(pData);
+
 	if (this->bOpen == 0) {
-		pDataTeleporter->bOpen = 0;
+		pSaveData->bOpen = 0;
 	}
 	else {
-		pDataTeleporter->bOpen = 1;
+		pSaveData->bOpen = 1;
 	}
 
-	pDataTeleporter->activeButtonIndex = this->activeButtonIndex;
-	pDataTeleporter->field_0x8 = this->field_0x2ac;
-	pDataTeleporter->field_0xc = this->field_0x2b0;
+	pSaveData->activeButtonIndex = this->activeButtonIndex;
+	pSaveData->field_0x8 = this->field_0x2ac;
+	pSaveData->field_0xc = this->field_0x2b0;
 
 	return;
 }
 
-void CActorTeleporter::LoadContext(uint*, int)
+void CActorTeleporter::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	S_NTF_TARGET_STREAM_REF* pSVar1;
+	int iVar2;
+	int iVar3;
+
+	S_SAVE_CLASS_TELEPORTER* pSaveData = reinterpret_cast<S_SAVE_CLASS_TELEPORTER*>(pData);
+
+	this->field_0x2ac = -1;
+	this->field_0x2b0 = -1;
+
+	if (mode == 3) {
+		this->field_0x2ac = pSaveData->field_0x8;
+		this->field_0x2b0 = pSaveData->field_0xc;
+		this->bOpen = pSaveData->bOpen;
+
+		this->activeButtonIndex = pSaveData->activeButtonIndex;
+		if (this->activeButtonIndex < 0) {
+			this->activeButtonIndex = 0;
+		}
+
+		this->field_0x298 = this->activeButtonIndex;
+
+		if (this->bOpen != 0) {
+			SetState(6, -1);
+
+			this->field_0x2a4 = (this->disabledDestinationMask & 1 << (this->activeButtonIndex & 0x1fU)) != 0 ^ 1;
+
+			if (this->field_0x2a4 == 0) {
+				this->field_0x170.pTargetStreamRef->SwitchOff(this);
+
+				this->field_0x180.pTargetStreamRef->SwitchOn(this);
+			}
+			else {
+				this->field_0x170.SwitchOn(this);
+				this->field_0x180.pTargetStreamRef->SwitchOff(this);
+			}
+
+			this->field_0x178.pTargetStreamRef->SwitchOff(this);
+		}
+	}
+
+	return;
 }
 
 CBehaviour* CActorTeleporter::BuildBehaviour(int behaviourType)

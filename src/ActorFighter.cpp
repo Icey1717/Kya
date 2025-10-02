@@ -8067,11 +8067,8 @@ void CBehaviourFighterProjected::_ComputeDynamics()
 
 		if ((uVar1 & 2) != 0) {
 			if ((uVar1 & 8) == 0) {
-				IMPLEMENTATION_GUARD(
 				pFighter = this->pOwner;
-				uVar3 = CActorFighter::_SV_HIT_GetHitZoneFromImpact
-				(pFighter, &pFighter->fighterAnatomyZones, (edF32VECTOR4*)&pFighter->field_0x690,
-					&pFighter->base.base.currentLocation);)
+				uVar3 = pFighter->_SV_HIT_GetHitZoneFromImpact(&pFighter->fighterAnatomyZones, &pFighter->field_0x690, &pFighter->currentLocation);
 			}
 			else {
 				uVar3 = (ulong)this->pOwner->field_0x686;

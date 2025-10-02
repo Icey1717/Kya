@@ -1526,8 +1526,7 @@ int CBehaviourMickenKicked::InterpretMessage(CActor* pSender, int msg, void* pMs
 
 	_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 
-	/* WARNING: Load size is inaccurate */
-	if (((MESSAGE_KICKED == 2) && (pMsgHitParam->projectileType == HIT_TYPE_KICK)) && (pMicken = this->pOwner, pMicken->actorState == 0x1c)) {
+	if (((msg == MESSAGE_KICKED) && (pMsgHitParam->projectileType == HIT_TYPE_KICK)) && (pMicken = this->pOwner, pMicken->actorState == 0x1c)) {
 		pMicken->SetState(0x17, -1);
 
 		local_20.x = this->pOwner->currentLocation.x;

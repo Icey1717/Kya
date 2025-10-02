@@ -172,6 +172,7 @@ public:
 	void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void Level_SaveContext();
+	void Level_LoadContext();
 
 	void SetGlobalPaused_001b8c30(int param_2);
 

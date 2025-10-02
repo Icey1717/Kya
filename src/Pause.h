@@ -12,7 +12,14 @@
 #include "Settings.h"
 #include "SpriteWidget.h"
 
-typedef enum EPauseMenu {
+#define MENU_STATE_APPEAR 0
+#define MENU_STATE_SELECT 1
+#define MENU_STATE_DISAPPEAR 2
+#define MENU_STATE_EXIT 3
+#define MENU_STATE_IDLE 4
+
+typedef enum EPauseMenu
+{
 	PM_Bonus = 13,
 	PM_DisplayOptions = 7,
 	PM_InitialSave = 5,
@@ -240,6 +247,8 @@ void MapEnter();
 void MapLeave();
 
 void CallPauseChange(int param_1);
+
+void MemCardLoad0(int slotIndex);
 
 extern CSettings gSettings;
 
