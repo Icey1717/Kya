@@ -1,10 +1,10 @@
 #include "CameraStack.h"
 #include "TimeController.h"
 #include "CameraViewManager.h"
-#include "../ActorHero.h"
+#include "ActorHero.h"
 #include "CameraGame.h"
 #include "CameraViewManager.h"
-#include "../CameraFightData.h"
+#include "CameraFightData.h"
 
 CCamera* CCameraStack::FindActivableCameraInStack(uint param_2)
 {

@@ -7,7 +7,7 @@
 #include "port.h"
 #endif
 #include "Viewport.h"
-#include "../kya.h"
+#include "kya.h"
 
 edSurface* psurf = NULL;
 edSurface* pzbuf = NULL;

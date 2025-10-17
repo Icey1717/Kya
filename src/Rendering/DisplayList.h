@@ -7,7 +7,7 @@
 #include <libvu0.h>
 #endif
 #include "CameraPanMasterHeader.h"
-#include "../edList.h"
+#include "edList.h"
 
 union edF32VECTOR4;
 union edpkt_data;

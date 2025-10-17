@@ -6,13 +6,13 @@
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
 #endif
-#include "../edDlist.h"
+#include "edDlist.h"
 #include <assert.h>
-#include "../LargeObject.h"
-#include "../FrontendDisp.h"
-#include "../DlistManager.h"
-#include "../Actor.h"
-#include "../PoolAllocators.h"
+#include "LargeObject.h"
+#include "FrontendDisp.h"
+#include "DlistManager.h"
+#include "Actor.h"
+#include "PoolAllocators.h"
 
 CGlobalDList* pGameDList = NULL;
 CGlobalDList* pFrontend2DDList = NULL;
