@@ -140,7 +140,7 @@ void CFxSpark::Init(int id)
 	//	} while (iVar2 < this->count_0x98);
 	//}
 
-	this->objectId = id;
+	this->sectorId = id;
 	this->field_0xe0 = 0;
 
 	this->vector_0x80 = gF32Vector4Zero;

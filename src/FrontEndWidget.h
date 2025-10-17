@@ -34,7 +34,7 @@ public:
 	CWidgetSlot widgetSlotB;
 	CWidgetSlot widgetSlotC;
 
-	int field_0x38;
+	int posState;
 
 	float prevTime;
 	float slotAlpha;

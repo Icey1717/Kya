@@ -47,7 +47,7 @@ float CWidget::GetPopupTime()
 
 void CWidget::Reset()
 {
-	this->field_0x38 = 1;
+	this->posState = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
@@ -58,7 +58,7 @@ void CWidget::Reset()
 
 void CWidget::CheckpointReset()
 {
-	this->field_0x38 = 1;
+	this->posState = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
@@ -69,7 +69,7 @@ void CWidget::CheckpointReset()
 
 void CWidget::Init()
 {
-	this->field_0x38 = 1;
+	this->posState = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
@@ -91,7 +91,7 @@ bool CWidget::UpdatePos(float time)
 	bool bVar2;
 	float fVar3;
 
-	iVar1 = this->field_0x38;
+	iVar1 = this->posState;
 	fVar3 = this->slotAlpha;
 
 	if (iVar1 == 0) {
@@ -105,7 +105,7 @@ bool CWidget::UpdatePos(float time)
 
 	bVar2 = fVar3 != this->slotAlpha;
 	if (!bVar2) {
-		bVar2 = this->field_0x38 != iVar1;
+		bVar2 = this->posState != iVar1;
 	}
 
 	return bVar2;
@@ -123,11 +123,10 @@ void CWidget::UpdatePos_StateMove(float time)
 	deltaTime = time - this->prevTime;
 	if (GetPopupTime() < deltaTime) {
 		this->slotAlpha = 1.0f;
-		this->field_0x38 = 1;
+		this->posState = 1;
 		this->prevTime = time;
 
-		(this->widgetSlotC).position = (this->widgetSlotB).position;
-		(this->widgetSlotC).scale = (this->widgetSlotB).scale;
+		this->widgetSlotC = this->widgetSlotB;
 	}
 	else {
 		this->slotAlpha = deltaTime / GetPopupTime();
@@ -176,7 +175,7 @@ void CWidget::MoveToNext(CWidgetSlot* pNext)
 	this->widgetSlotB.scale = pNext->scale;
 
 	this->prevTime = CFrontend::GetTime();
-	this->field_0x38 = 0;
+	this->posState = 0;
 	this->bDisplayDirty = 1;
 	this->slotAlpha = 0.0f;
 
@@ -456,7 +455,7 @@ void CFrontendAction::SetActionA(int actionId)
 			this->widgetSlotB.scale = this->slotOn.scale;
 
 			this->prevTime = CFrontend::GetTime();
-			this->field_0x38 = 0;
+			this->posState = 0;
 			this->bDisplayDirty = 1;
 			this->slotAlpha = 0.0f;
 			this->field_0x130 = 0;
@@ -472,7 +471,7 @@ void CFrontendAction::SetActionA(int actionId)
 				this->widgetSlotB.scale = this->slotOff.scale;
 
 				this->prevTime = CFrontend::GetTime();
-				this->field_0x38 = 0;
+				this->posState = 0;
 				this->bDisplayDirty = 1;
 				this->slotAlpha = 0.0f;
 				this->field_0x130 = 1;
@@ -505,7 +504,7 @@ void CFrontendAction::SetActionB(int actionId)
 					this->widgetSlotB.scale = this->slotOn.scale;
 
 					this->prevTime = CFrontend::GetTime();
-					this->field_0x38 = 0;
+					this->posState = 0;
 					this->bDisplayDirty = 1;
 					this->slotAlpha = 0.0f;
 					this->field_0x130 = 0;
@@ -522,7 +521,7 @@ void CFrontendAction::SetActionB(int actionId)
 						this->widgetSlotB.scale = this->slotOff.scale;
 
 						this->prevTime = CFrontend::GetTime();
-						this->field_0x38 = 0;
+						this->posState = 0;
 						this->bDisplayDirty = 1;
 						this->slotAlpha = 0.0f;
 						this->field_0x130 = 1;

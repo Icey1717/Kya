@@ -17,16 +17,6 @@ public:
 	float GetAngleRotY();
 };
 
-class CBnsInstance : public CActInstance
-{
-
-};
-
-class CShadowShared
-{
-	
-};
-
 class CInstantFlares
 {
 public:

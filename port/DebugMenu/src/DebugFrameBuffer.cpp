@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include "DebugSetting.h"
 #include "DebugRenderer.h"
-#include "DebugMenu.h"
+#include "DebugRendering.h"
 #include "FrameBuffer.h"
 
 namespace Debug {
@@ -29,7 +29,7 @@ void Debug::FrameBuffer::ShowNativeFrameBuffer(bool* bOpen) {
 	// Use ImGui::Image to display the image
 	static ImTextureID gFrameBuffer = DebugMenu::AddNativeFrameBuffer();
 
-	if (DebugMenu::GetEnableEmulatedRendering()) {
+	if (Debug::Rendering::GetEnableEmulatedRendering()) {
 		ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 		const ImVec2 image_size(400.0f * 4.0f, 300.0f * 4.0f);
 		ImGui::Image(gFrameBuffer, image_size);
@@ -90,7 +90,7 @@ void Debug::FrameBuffer::ShowFramebuffers(bool* bOpen) {
 static bool swapValue = false;
 
 void Debug::FrameBuffer::ShowGame() {
-	if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80) || !DebugMenu::GetEnableEmulatedRendering()) {
+	if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80) || !Debug::Rendering::GetEnableEmulatedRendering()) {
 		return;
 	}
 

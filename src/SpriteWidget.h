@@ -33,6 +33,7 @@ public:
 	void Install(char* pFileBuffer);
 	void Install(edDList_material* pMaterial);
 	ed_g2d_layer* Install(ed_g2d_manager* pManager, char* pFileName);
+	edDList_material* Install(ed_g2d_manager* pManager, int index);
 
 	void Remove();
 

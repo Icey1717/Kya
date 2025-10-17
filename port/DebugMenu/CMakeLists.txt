@@ -29,6 +29,8 @@ set(SOURCES
 	"src/DebugShop.h"
     "src/DebugScene.cpp"
 	"src/DebugScene.h"
+    "src/DebugRendering.cpp"
+	"src/DebugRendering.h"
 	"src/DebugScenario.cpp"
 	"src/DebugScenario.h"
 	"src/DebugProjection.h"

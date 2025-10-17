@@ -269,7 +269,7 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 			iVar4 = 0;
 			if (0 < this->nbSharedShadows) {
 				do {
-					CShadowShared::Init(pCVar7, this->pOwner->objectId);
+					CShadowShared::Init(pCVar7, this->pOwner->sectorId);
 					fVar13 = gF32Vector4UnitY.w;
 					fVar12 = gF32Vector4UnitY.z;
 					fVar11 = gF32Vector4UnitY.y;

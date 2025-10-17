@@ -26,32 +26,46 @@ void GuiDList_EndCurrent(void)
 	return;
 }
 
-int GameDListPatch_Register(CObject* pObject, int param_2, int param_3)
+uint GameDListPatch_Register(CObject* pObject, int nbMatrices, int nbInstances)
 {
-	CGlobalDListPatch* pCVar1;
-	int iVar2;
+	CGlobalDListPatch* pSectorPatch;
+	int nbPatches;
 	CGlobalDListManager* pCVar3;
-	S_EYES_BRIGHT_SHADOW* pSVar4;
-	int iVar5;
+	S_GLOBAL_DLIST_PATCH* pNewPatch;
+	int sectorId;
 
 	pCVar3 = CScene::ptable.g_GlobalDListManager_004516bc;
-	iVar5 = pObject->objectId;
-	if (iVar5 == -1) {
-		iVar5 = 0;
+	sectorId = pObject->sectorId;
+	if (sectorId == -1) {
+		sectorId = 0;
 	}
-	pCVar1 = (CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist[iVar5].pDlistPatch;
-	pSVar4 = NewPool_S_EYES_BRIGHT_SHADOW(1);
-	pCVar1->pBrightEye[pCVar1->brightEyeCount] = pSVar4;
-	pSVar4->field_0x0 = 0;
-	pSVar4->pObject = pObject;
-	pSVar4->field_0x8 = param_2;
-	pSVar4->field_0xc = param_3;
-	iVar2 = pCVar1->brightEyeCount;
-	pCVar1->brightEyeCount = iVar2 + 1;
-	pCVar3->ppGlobalDlist[iVar5].field_0x4 = pCVar3->ppGlobalDlist[iVar5].field_0x4 + param_2;
-	pCVar3->ppGlobalDlist[iVar5].field_0xc = pCVar3->ppGlobalDlist[iVar5].field_0xc + param_3;
-	pCVar3->ppGlobalDlist[iVar5].field_0x8 = pCVar3->ppGlobalDlist[iVar5].field_0x8 + 1;
-	return iVar5 * 0x10000 + iVar2;
+
+	pSectorPatch = (CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist[sectorId].pDlistPatch;
+
+	pNewPatch = NewPool_S_EYES_BRIGHT_SHADOW(1);
+	pSectorPatch->aPatches[pSectorPatch->nbTotalPatches] = pNewPatch;
+	pNewPatch->field_0x0 = 0;
+	pNewPatch->pOwner = pObject;
+	pNewPatch->nbMatrices = nbMatrices;
+	pNewPatch->nbInstances = nbInstances;
+
+	nbPatches = pSectorPatch->nbTotalPatches;
+	pSectorPatch->nbTotalPatches = nbPatches + 1;
+	pCVar3->ppGlobalDlist[sectorId].nbMatrices = pCVar3->ppGlobalDlist[sectorId].nbMatrices + nbMatrices;
+	pCVar3->ppGlobalDlist[sectorId].nbInstances = pCVar3->ppGlobalDlist[sectorId].nbInstances + nbInstances;
+	pCVar3->ppGlobalDlist[sectorId].nbRegisteredPatches = pCVar3->ppGlobalDlist[sectorId].nbRegisteredPatches + 1;
+
+	// Store patch ID and index in one unsigned integer to return.
+	return sectorId * 0x10000 + nbPatches;
+}
+
+CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId)
+{
+	return CScene::ptable.g_GlobalDListManager_004516bc->BeginCurrent(patchId);
+}
+
+void GameDListPatch_EndCurrent(int nbVertex, int param_2)
+{
 }
 
 char* g_NewLine = "\n";
@@ -226,12 +240,15 @@ void GlobalDList_AddToView(void)
 	if (pGameDList->bEnabled != 0) {
 		edDlistAddtoView(pGameDList->pDisplayListInternal);
 	}
+
 	if (pFrontend2DDList->bEnabled != 0) {
 		edDlistAddtoView(pFrontend2DDList->pDisplayListInternal);
 	}
+
 	if ((pGuiDList != (CGlobalDList*)0x0) && (pGuiDList->bEnabled != 0)) {
 		edDlistAddtoView(pGuiDList->pDisplayListInternal);
 	}
+
 	return;
 }
 

@@ -528,15 +528,15 @@ struct _ed_particle_manager
 	undefined field_0x1f;
 
 	OffsetPointer<_ed_particle_vectors*> aParticleVectors;
-	int field_0x24;
+	int nbParticleVectors;
 
 	undefined field_0x28;
 	undefined field_0x29;
 	undefined field_0x2a;
 	undefined field_0x2b;
 
-	OffsetPointer<edF32VECTOR4*> field_0x2c;
-	int field_0x30;
+	OffsetPointer<edF32VECTOR4*> aVectors;
+	int nbVectors;
 
 	undefined field_0x34;
 	undefined field_0x35;
@@ -548,19 +548,19 @@ struct _ed_particle_manager
 	int nbTotalGroups;
 
 	OffsetPointer<_ed_particle_generator_param*> aGeneratorParams;
-	int field_0x48;
+	int nbConfigGeneratorParams;
 	int nbGeneratorParams;
 
 	OffsetPointer<_ed_particle_effector_param*> aEffectorParams;
-	int field_0x54;
+	int nbConfigEffectorParams;
 	int nbEffectorParams;
 
 	OffsetPointer<_ed_particle_selector_param*> aSelectorParams;
-	int field_0x60;
+	int nbConfigSelectorParams;
 	int nbSelectorParams;
 
 	OffsetPointer<_ed_particle_shaper_param*> aShaperParams;
-	int field_0x6c;
+	int nbConfigShaperParams;
 	int nbShaperParams;
 };
 
@@ -578,6 +578,42 @@ struct ed_3D_Scene;
 struct ed_g2d_manager;
 struct ed_g3d_manager;
 
+struct ed_part_config
+{
+	int nbParticles;
+	int nbGroups;
+	int field_0x8;
+	int nbGeneratorParams;
+	int field_0x10;
+	int nbEffectorParams;
+	int field_0x18;
+	int nbSelectorParams;
+	int field_0x20;
+	int nbShaperParams;
+	int field_0x28;
+	int heapId;
+};
+
+struct ed_part_system_config
+{
+	byte bObjectsAllocated;
+	byte nbEffectObj;
+	short bProfile;
+	int heapId;
+};
+
+struct ed_particle_system
+{
+	ed_part_config config;
+	_ed_particle_manager manager;
+};
+
+void edPartInit();
+ed_part_config* edParticlesGetConfig();
+
+void edPartSystemInit();
+ed_part_system_config* edParticlesGetSystemConfig();
+
 _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scene* pScene, ed_g2d_manager* param_3, edDList_material** ppMaterials, ulong* pHashes, int materialIndex, ed_g3d_manager* p3dManager, bool param_8);
 void edParticlesSetSystem(_ed_particle_manager* pManager);
 void edParticlesUpdate(float time);
@@ -588,6 +624,8 @@ void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam);
 void edPartEffectorComputeMatrices(_ed_particle_effector_param* pParam);
 _ed_particle_effector_param* edPartGetEffector(_ed_particle_manager* pManager, char* szName);
 void edPartSetRespawning(_ed_particle_manager* pManager, int bRespawning);
+
+void edPart_0027cd80(int param_1);
 
 template<typename T>
 T* _edPartGetEntityByHashcode(T* pEntities, int nbEntities, ulong* pHash)

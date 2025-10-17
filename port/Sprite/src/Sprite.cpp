@@ -42,13 +42,18 @@ namespace Renderer::Kya::Sprite
 		int32_t spriteIndex = 0;
 	} gSpritePool;
 
+	edpkt_data* GetVifStart(ed_3d_sprite* pSprite)
+	{
+		char* const pVifList = reinterpret_cast<char*>(pSprite) + pSprite->offsetA;
+		return reinterpret_cast<edpkt_data*>(pVifList);
+	}
+
 	constexpr uint32_t gGifTagCopyCode = 0x6c018000;
 
 	static Gif_Tag ExtractGifTagFromVifList(ed_3d_sprite* pSprite, int index = 0)
 	{
 		// Pull the prim reg out from the gif packet, not a big fan of this.
-		char* const pVifList = reinterpret_cast<char*>(pSprite) + pSprite->offsetA;
-		edpkt_data* pPkt = reinterpret_cast<edpkt_data*>(pVifList);
+		edpkt_data* pPkt = GetVifStart(pSprite);
 
 		while (index > 0) {
 			if (pPkt->asU32[0] == gVifEndCode) {
@@ -56,10 +61,6 @@ namespace Renderer::Kya::Sprite
 			}
 
 			pPkt++;
-		}
-
-		if (pPkt[1].asU32[3] != gGifTagCopyCode) {
-			pPkt = reinterpret_cast<edpkt_data*>(pVifList);
 		}
 
 		assert(pPkt[1].asU32[3] == gGifTagCopyCode);
@@ -70,9 +71,29 @@ namespace Renderer::Kya::Sprite
 		return gifTag;
 	}
 
+	constexpr uint32_t gExecCode = 0x14000000;
+	constexpr uint32_t gExecCodeMask = 0xffff0000;
+	constexpr uint32_t gExecCodeAddr = 0x0000ffff;
+
+	static uint ExtractExecCodeFromVifList(ed_3d_sprite* pSprite)
+	{
+		edpkt_data* pPkt = GetVifStart(pSprite);
+
+		// Seek forward to the end code.
+		while (pPkt->asU32[0] != gVifEndCode) {
+			pPkt++;
+		}
+
+		// Make sure the highest bits match the exec code.
+		assert((pPkt[-1].asU32[3] & gExecCodeMask) == gExecCode);
+		return pPkt[-1].asU32[3] & gExecCodeAddr;
+	}
+
 	void ProcessVertices(ed_3d_sprite* pSprite, SimpleMesh* pMesh)
 	{
 		const Gif_Tag firstGifTag = ExtractGifTagFromVifList(pSprite);
+
+		const uint execCode = ExtractExecCodeFromVifList(pSprite);
 
 		auto& vertexBufferData = pMesh->GetVertexBufferData();
 
@@ -131,10 +152,14 @@ namespace Renderer::Kya::Sprite
 		// Color
 		// Width Height
 
+		constexpr int nbStagingVertices = 0x200;
+		static edF32VECTOR4 vtxStagingBuff[nbStagingVertices]; // 512 vertices max
+
 		VertexColor* pRgba = LOAD_SECTION_CAST(VertexColor*, pSprite->pColorBuf);
 		TextureData* pStq = LOAD_SECTION_CAST(TextureData*, pSprite->pSTBuf);
 		edF32VECTOR4* pVectorVertex = LOAD_SECTION_CAST(edF32VECTOR4*, pSprite->pVertexBuf);
-		GSVertexUnprocessed::Vertex* pVertex = LOAD_SECTION_CAST(GSVertexUnprocessed::Vertex*, pSprite->pVertexBuf);
+		edF32VECTOR4* pVectorVertexOut = vtxStagingBuff;
+		GSVertexUnprocessed::Vertex* pVertex = reinterpret_cast<GSVertexUnprocessed::Vertex*>(vtxStagingBuff);
 		WidthHeightData* pWh = LOAD_SECTION_CAST(WidthHeightData*, pSprite->pWHBuf);
 
 		// This increases by 2 every loop because we start the next vtx at the end of the previous vtx.
@@ -169,6 +194,8 @@ namespace Renderer::Kya::Sprite
 			for (int i = 0; i < vtxCount; i += 4) {
 				const int index = i + meshOffset;
 
+				assert(index < nbStagingVertices);
+
 				assert(pVectorVertex[index + 0].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 1].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 2].wi != gGifTagCopyCode);
@@ -190,14 +217,14 @@ namespace Renderer::Kya::Sprite
 				const edF32VECTOR4 br = vtx + normalizedX - normalizedY;
 
 				// Store the vertices in the vertex buffer data.
-				pVectorVertex[index + 0] = tl;
-				pVectorVertex[index + 1] = bl;
-				pVectorVertex[index + 2] = tr;
-				pVectorVertex[index + 3] = br;
+				pVectorVertexOut[index + 0] = tl;
+				pVectorVertexOut[index + 1] = bl;
+				pVectorVertexOut[index + 2] = tr;
+				pVectorVertexOut[index + 3] = br;
 
 				// Emulated unpacking, vu1 would usually fill these values in within the data row for W and H.
-				pVectorVertex[index + 0].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
-				pVectorVertex[index + 1].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
+				pVectorVertexOut[index + 0].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
+				pVectorVertexOut[index + 1].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
 			}
 
 			for (int i = 0; i < vtxCount; i++) {
@@ -261,6 +288,8 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 					auto* pSimpleMesh = gSpritePool.GetSimpleMesh();
 					pSimpleMesh->GetVertexBufferData().ResetAfterDraw();
 					ProcessVertices(pSprite, pSimpleMesh);
+
+					uint execCode = ExtractExecCodeFromVifList(pSprite);
 
 					Renderer::RenderMesh(pSimpleMesh, pNode->header.typeField.flags);
 				}

@@ -117,7 +117,7 @@ public:
 	int horizontalAllignment;
 	undefined4 verticalSpacing;
 	ActionFuncPtr pFunc_0x40;
-	undefined4 slotID_0x44;
+	int slotID_0x44;
 	enum EPauseMenu currentPage;
 	int selectedIndex;
 	int field_0x50;

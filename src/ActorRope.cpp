@@ -188,7 +188,29 @@ void CActorRope::SaveContext(void* pData, uint mode, uint maxSize)
 
 void CActorRope::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	S_SAVE_CLASS_ROPE* pSaveData = reinterpret_cast<S_SAVE_CLASS_ROPE*>(pData);
+
+	CCollision* pCol;
+
+	if (mode == 0x20001) {
+		if (pSaveData->field_0x0 != 0) {
+			this->field_0x188 = 1;
+			pCol = this->pCollisionData;
+			if (pCol != (CCollision*)0x0) {
+				pCol->flags_0x0 = pCol->flags_0x0 & 0xffffefff;
+			}
+
+			SetState(6, -1);
+
+			this->flags = this->flags & 0xfffffffd;
+			this->flags = this->flags | 1;
+			this->flags = this->flags & 0xffffff7f;
+			this->flags = this->flags | 0x20;
+			CActor::EvaluateDisplayState();
+		}
+
+		this->targetSwitch.LoadContext(&pSaveData->switchData);
+	}
 }
 
 CBehaviour* CActorRope::BuildBehaviour(int behaviourType)

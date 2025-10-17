@@ -106,17 +106,22 @@ struct CPathPlaneOutData
 	PlaneData* aPlaneData;
 };
 
-class CPathPlane {
+class CPathPlane
+{
 public:
 	CPathFollowReader pathFollowReader;
 	CPathPlaneOutData outData;
+
+	void Init();
+	void Reset();
 
 	void computePlanesFromKeys(PlaneData* aPlaneData, int nbPoints);
 	void InitTargetPos(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
 	void ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
 };
 
-class CPathPlaneArray {
+class CPathPlaneArray
+{
 public:
 	CPathPlaneArray();
 

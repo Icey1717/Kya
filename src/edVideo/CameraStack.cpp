@@ -427,7 +427,7 @@ void CCameraStack::Level_SectorChange(int oldSectorId)
 	if (0 < iVar4) {
 		pCVar2 = this->aCameras + iVar4;
 		do {
-			if ((oldSectorId == pCVar2->pCamera->objectId) && (oldSectorId != -1)) {
+			if ((oldSectorId == pCVar2->pCamera->sectorId) && (oldSectorId != -1)) {
 				if (iVar4 < this->stackSize) {
 					pCVar1 = this->aCameras + iVar4;
 					iVar3 = iVar4;

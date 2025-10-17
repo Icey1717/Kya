@@ -14,6 +14,7 @@
 #include "MathOps.h"
 #include "FrontEndBank.h"
 #include "FrontEndLife.h"
+#include "FrontEndMagic.h"
 #include "TimeController.h"
 #include "LevelScheduleManager.h"
 #include "FrontEndMoney.h"
@@ -194,7 +195,7 @@ void CFrontendDisplay::Game_Init()
 	} while (iVar5 < 0xd);
 
 	this->pHealthBar->Init();
-	//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.field_0x20)();
+	this->pMagicOrbs->Init();
 	this->pMoney->Init();
 	this->pFreedWolfun->Init();
 	this->pFrontendAction->Init();
@@ -224,7 +225,7 @@ void CFrontendDisplay::Level_Init()
 	}
 
 	if (Global_00448814 != 0) {
-		//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
+		this->pMagicOrbs->ShowMagic();
 		this->pHealthBar->ShowLife();
 		this->pMoney->ShowMoney();
 		this->pFreedWolfun->ShowEnemy();
@@ -263,7 +264,7 @@ void CFrontendDisplay::Level_Manage()
 
 	if (this->bHideHUD == 0) {
 		fVar2 = Timer::GetTimer()->totalTime;
-		//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.Update)(fVar2);
+		this->pMagicOrbs->Update(fVar2);
 		this->pMoney->Update(fVar2);
 		this->pFreedWolfun->Update(fVar2);
 		this->pHealthBar->Update(fVar2);
@@ -288,7 +289,7 @@ void CFrontendDisplay::Level_Draw()
 	if (this->bHideHUD == 0) {
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x3c))();
 		this->pHealthBar->Draw();
-		//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.Draw)();
+		this->pMagicOrbs->Draw();
 		this->pMoney->Draw();
 		this->pFreedWolfun->Draw();
 		this->pFrontendAction->Draw();
@@ -302,7 +303,7 @@ void CFrontendDisplay::Level_Draw()
 void CFrontendDisplay::Level_Reset()
 {
 	this->pHealthBar->Reset();
-	//(*(this->pMagicOrbs->pVTable->pVTable).pVTable.Reset)((CWidget*)this->pMagicOrbs);
+	this->pMagicOrbs->Reset();
 	this->pMoney->Reset();
 	this->pFreedWolfun->Reset();
 	this->pFrontendAction->Reset();
@@ -318,8 +319,8 @@ void CFrontendDisplay::Level_CheckpointReset()
 	this->pHealthBar->Reset();
 	this->pHealthBar->ShowLife();
 
-	//(*(this->pMagicOrbs->pVTable->pVTable).pVTable.Reset)((CWidget*)this->pMagicOrbs);
-	//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
+	this->pMagicOrbs->Reset();
+	this->pMagicOrbs->ShowMagic();
 	this->pMoney->Reset();
 	this->pMoney->ShowMoney();
 	this->pFreedWolfun->Reset();
@@ -336,12 +337,12 @@ void CFrontendDisplay::Level_PauseChange(bool bPaused)
 {
 	if (bPaused == 0) {
 		this->pHealthBar->HideLifeAlways();
-		//CFrontendMagicGauge::HideMagicAlways(this->pMagicOrbs, 0);
+		this->pMagicOrbs->HideMagicAlways(false);
 		this->pMoney->HideMoneyAlways();
 	}
 	else {
 		this->pHealthBar->ShowLifeAlways();
-		//CFrontendMagicGauge::ShowMagicAlways((int)this->pMagicOrbs);
+		this->pMagicOrbs->ShowMagicAlways();
 		this->pMoney->ShowMoneyAlways();
 	}
 	return;
@@ -355,7 +356,7 @@ char* CFrontendDisplay::ProfileGetName()
 void CFrontendDisplay::Level_LoadContext()
 {
 	if (CLevelScheduler::gThis->bShouldLoad != 0) {
-		//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
+		this->pMagicOrbs->ShowMagic();
 		this->pHealthBar->ShowLife();
 		this->pMoney->ShowMoney();
 		this->pFreedWolfun->ShowEnemy();
@@ -373,7 +374,7 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 	case FRONTEND_INTERFACE_ENEMY_LIST:
 		this->pFrontendEnemyList->AddFighterInterface(pInterface);
 	case FRONTEND_INTERFACE_MAGIC:
-		//this->pMagicOrbs->SetInterface(pInterface);
+		this->pMagicOrbs->SetInterface(pInterface);
 		break;
 	case FRONTEND_INTERFACE_MONEY:
 		this->pMoney->SetInterface(pInterface);
@@ -412,14 +413,6 @@ void CFrontendDisplay::SetActive(bool bActive)
 	if ((uint)this->bHideHUD == (bActive & 0xffU)) {
 		this->bHideHUD = bActive == 0;
 		this->pMagicOrbs->Magic_SetDisplay(bActive);
-	}
-	return;
-}
-
-void CFrontendMagicGauge::Magic_SetDisplay(unsigned char bNewVisible)
-{
-	if (bNewVisible != this->bVisible) {
-		this->bVisible = bNewVisible;
 	}
 	return;
 }

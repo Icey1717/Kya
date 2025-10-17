@@ -1354,6 +1354,7 @@ void CPauseManager::Level_Draw()
 			}
 			else {
 				if (pActiveCinematic->totalCutsceneDelta < 0.5f) {
+					// Took too long to load??
 					IMPLEMENTATION_GUARD();
 					pLevelScheduleManager->Level_Run(0, 0xe, -1, -1, -1, 1);
 					GameFlags = GameFlags | 2;

@@ -1203,6 +1203,48 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 	return;
 }
 
+void CPathPlane::Init()
+{
+	PlaneData* pPVar1;
+	CPathFollow* pPathFollow;
+	int iVar4;
+	float fVar5;
+
+	this->pathFollowReader.Init();
+
+	pPathFollow = (this->pathFollowReader).pPathFollow;
+	if (pPathFollow != (CPathFollow*)0x0) {
+		(this->outData).aPlaneData = new PlaneData[pPathFollow->splinePointCount];
+
+		pPathFollow = (this->pathFollowReader).pPathFollow;
+
+		iVar4 = 0;
+		if (0 < pPathFollow->splinePointCount) {
+			do {
+				fVar5 = (float)iVar4;
+				(this->outData).aPlaneData[iVar4].field_0x10 = fVar5 / (float)(pPathFollow->splinePointCount + -1);
+				pPathFollow = (this->pathFollowReader).pPathFollow;
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pPathFollow->splinePointCount);
+		}
+
+		computePlanesFromKeys((this->outData).aPlaneData, pPathFollow->splinePointCount);
+	}
+
+	return;
+}
+
+void CPathPlane::Reset()
+{
+	(this->pathFollowReader).splinePointIndex = 0;
+	(this->pathFollowReader).field_0xc = 1;
+	(this->outData).field_0x0 = -1;
+	(this->outData).field_0x4 = 0.0f;
+	(this->outData).field_0x8 = 0.0f;
+
+	return;
+}
+
 void CPathPlane::computePlanesFromKeys(PlaneData* aPlaneData, int nbPoints)
 {
 	CPathFollow* pCVar1;

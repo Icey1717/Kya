@@ -15,7 +15,7 @@ PoolAllocator* g_CBehaviourCinematic_allocator;
 PoolAllocator* g_U32_allocator;
 PoolAllocator* g_edDLIST_MATERIAL_allocator;
 
-S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
+S_GLOBAL_DLIST_PATCH* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 {
 	int iVar1;
 	bool bVar2;
@@ -23,7 +23,7 @@ S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 	PoolAllocator* pPVar4;
 	PoolAllocator* pPVar5;
 	void* pvVar6;
-	S_EYES_BRIGHT_SHADOW* pSVar7;
+	S_GLOBAL_DLIST_PATCH* pSVar7;
 	int iVar8;
 
 	bVar2 = true;
@@ -40,7 +40,7 @@ S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 			pPVar4 = g_S_EYES_BRIGHT_SHADOW_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = 0x80;
-				pvVar6 = new S_EYES_BRIGHT_SHADOW[pPVar5->size];
+				pvVar6 = new S_GLOBAL_DLIST_PATCH[pPVar5->size];
 				pPVar5->pValue = pvVar6;
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
@@ -51,7 +51,7 @@ S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 			pPVar4 = g_S_EYES_BRIGHT_SHADOW_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = count;
-				pvVar6 = new S_EYES_BRIGHT_SHADOW[pPVar5->size];
+				pvVar6 = new S_GLOBAL_DLIST_PATCH[pPVar5->size];
 				pPVar5->pValue = pvVar6;
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
@@ -64,12 +64,12 @@ S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 	iVar8 = iVar1 + count;
 
 	if (g_S_EYES_BRIGHT_SHADOW_allocator->size < iVar8) {
-		pSVar7 = (S_EYES_BRIGHT_SHADOW*)0x0;
+		pSVar7 = (S_GLOBAL_DLIST_PATCH*)0x0;
 	}
 	else {
 		ppvVar3 = &g_S_EYES_BRIGHT_SHADOW_allocator->pValue;
 		g_S_EYES_BRIGHT_SHADOW_allocator->free = iVar8;
-		pSVar7 = (S_EYES_BRIGHT_SHADOW*)(*ppvVar3) + iVar1;
+		pSVar7 = (S_GLOBAL_DLIST_PATCH*)(*ppvVar3) + iVar1;
 	}
 
 	return pSVar7;

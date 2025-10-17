@@ -16,9 +16,17 @@
 
 #define DISPLAY_LIST_SCENE_ALWAYS (ed_3D_Scene*)0x1
 
-#define DISPLAY_LIST_FLAG_RECORDING_PATCH 0x2
+#define DISPLAY_LIST_FLAG_3D				(1 << 0) // 1 0x1
+#define DISPLAY_LIST_FLAG_RECORDING_PATCH	(1 << 1) // 2 0x2
+//#define DISPLAY_LIST_FLAG_RECORDING_PATCH	(1 << 2) // 4 0x4
+//#define DISPLAY_LIST_FLAG_RECORDING_PATCH	(1 << 3) // 8 0x8
+//#define DISPLAY_LIST_FLAG_RECORDING_PATCH	(1 << 4) // 16 0x10
+#define DISPLAY_LIST_FLAG_2D_BEFORE_3D		(1 << 5) // 32 0x20
 
 #define DISPLAY_LIST_FLAG_SAVE_COMMANDS 0x100
+
+#define SPRITE_PER_INSTANCE_WH_FLAG 0x1
+#define SPRITE_PER_INSTANCE_ST_FLAG 0x2
 
 struct DisplayList_0x10
 {
@@ -47,6 +55,10 @@ struct ed_g2d_material;
 struct TextureData_HASH_Internal_MAT;
 struct ed_hash_code;
 struct ed_dma_material;
+struct DisplayListCommand;
+
+union edVertex;
+union _rgba;
 
 extern int gNbUsedMaterial;
 extern int gCurRenderState;
@@ -125,6 +137,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a);
 
 void edDListTexCoo2f(float param_1, float param_2);
 void edDListVertex4f(float x, float y, float param_3, float skip);
+void edDListWidthHeight2f(float width, float height);
 void edDListSetProperty(uint type, uint value);
 
 void edDListEnd(void);
@@ -155,6 +168,11 @@ edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, 
 void edDListCreateFrameBufferMaterial(edDList_material* pMaterial);
 
 void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR2* uv1, edF32VECTOR2* uv2, edF32VECTOR2* uv3, _rgba* pColor, edF32VECTOR4* pVtx);
+
+void edDListPatcheEnd(int param_1, int param_2);
+DisplayListCommand* edDListPatchableInfo(edVertex** pVertexBufOut, _rgba** pColorBufOut, uint** pSTBufOut, uint** pUvOut, uint nbAddedVertex, uint index);
+
+bool edDListPatchableShowProp(uint index, uchar bActive);
 
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();

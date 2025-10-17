@@ -183,7 +183,7 @@ void CActorWind::Init()
 		}
 	}
 
-	this->sectorObj.Init(this->objectId);
+	this->sectorObj.Init(this->sectorId);
 
 	if (2.2f <= CScene::_pinstance->field_0x1c) {
 		this->field_0x1d0.Init();
@@ -283,7 +283,7 @@ void CActorWind::Init()
 void CActorWind::Term()
 {
 	CActor::Term();
-	this->sectorObj.Term(this->objectId);
+	this->sectorObj.Term(this->sectorId);
 }
 
 void CActorWind::Draw()

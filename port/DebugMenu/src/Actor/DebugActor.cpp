@@ -284,7 +284,7 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 	if (pSelectedActor) {
 		ImGui::Begin("Selected Actor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("Name: %s", pSelectedActor->name);
-		ImGui::Text("Sector: 0x%x", pSelectedActor->objectId);
+		ImGui::Text("Sector: 0x%x", pSelectedActor->sectorId);
 		ImGui::Text("Type: %s", GetActorTypeString(pSelectedActor->typeID));
 		ImGui::Text("Location: %s", pSelectedActor->currentLocation.ToString().c_str());
 		ImGui::Text("Behaviour: %s", Actor::Behaviour::GetActorBehaviourName(pSelectedActor).c_str());

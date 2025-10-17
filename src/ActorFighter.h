@@ -555,6 +555,7 @@ public:
 	int FUN_0030a6a0();
 	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
 	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
+	bool FUN_001740a0();
 
 	void PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5);
 	void PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, int param_4, bool param_5);

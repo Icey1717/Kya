@@ -5488,6 +5488,23 @@ bool CActorFighter::FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_par
 	return bVar2;
 }
 
+bool CActorFighter::FUN_001740a0()
+{
+	int iVar1;
+	bool bVar2;
+
+	iVar1 = this->actorState;
+	if (((iVar1 == 0x7c) || (iVar1 == 0x7b)) || (iVar1 == 0x7a)) {
+		bVar2 = true;
+	}
+	else {
+		bVar2 = false;
+	}
+
+	return bVar2;
+}
+
+
 void CActorFighter::PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5)
 {
 	IMPLEMENTATION_GUARD_FX();

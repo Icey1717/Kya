@@ -21,7 +21,7 @@
 #include <functional> // For std::hash
 #include "profiling.h"
 
-#define DEBUG_TEXTURE_NAME "BACKGROUND_SECT1_Scene01_Back_sect1.g2d (m: 1 l: 0)"
+#define DEBUG_TEXTURE_NAME "NEW_BONUS_ANI.G2D (m: 0 l: 0)"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)
@@ -75,10 +75,46 @@ namespace Renderer
 				return currentInstanceIndex;
 			}
 
+			template<typename T>
+			bool MatchesLastInstance(const T& data) const
+			{
+				if (currentInstanceIndex == 0) {
+					return false;
+				}
+
+				return data == *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
+			}
+
+			bool MatchesLastInstance(const glm::vec4& data) const
+			{
+				if (currentInstanceIndex == 0) {
+					return false;
+				}
+
+				const glm::vec4& lastData = *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
+				return glm::all(glm::equal(data, lastData));
+			}
+
+			bool MatchesLastInstance(const glm::mat4& data) const
+			{
+				if (currentInstanceIndex == 0) {
+					return false;
+				}
+
+				const glm::mat4& lastData = *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
+				for (int i = 0; i < 4; ++i) {
+					if (!glm::all(glm::equal(data[i], lastData[i]))) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+
 			void AddInstanceData(const T& data)
 			{
 				// Re-use the current instance index if it matches the data.
-				if (currentInstanceIndex > 0 && data == *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1)) {
+				if (MatchesLastInstance(data)) {
 					return;
 				}
 
@@ -249,10 +285,15 @@ namespace Renderer
 			glm::vec4 flare;
 
 			bool operator==(const LightingDynamicBufferData& other) const {
-				return lightDirection == other.lightDirection &&
-					lightColor == other.lightColor &&
-					lightAmbient == other.lightAmbient && 
-					flare == other.flare;
+				// Compare mat4 by columns
+				for (int i = 0; i < 4; ++i) {
+					if (!glm::all(glm::equal(lightDirection[i], other.lightDirection[i]))) return false;
+					if (!glm::all(glm::equal(lightColor[i], other.lightColor[i]))) return false;
+				}
+				// Compare vec4
+				if (!glm::all(glm::equal(lightAmbient, other.lightAmbient))) return false;
+				if (!glm::all(glm::equal(flare, other.flare))) return false;
+				return true;
 			}
 		};
 
@@ -555,6 +596,10 @@ namespace Renderer
 					PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 					std::optional<uint> primState;
+
+					if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
+						pTexture->GetName();
+					}
 
 					for (auto& instance : drawCommand.instances) {
 						if (instance.indexCount == 0) {
@@ -1160,6 +1205,8 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
 {
+	pipeline.debugName = name;
+
 	auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 	auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
 

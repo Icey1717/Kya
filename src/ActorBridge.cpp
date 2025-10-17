@@ -591,6 +591,17 @@ void CActorBridge::SaveContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+void CActorBridge::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_BRIDGE* pSaveData = reinterpret_cast<S_SAVE_CLASS_BRIDGE*>(pData);
+
+	if ((mode == 1) && (this->field_0x354 = pSaveData->field_0x0, this->field_0x354 != -1)) {
+		SetState(6, -1);
+	}
+
+	return;
+}
+
 StateConfig CActorBridge::gStateCfg_BRG[3] =
 {
 	StateConfig(0, 0),

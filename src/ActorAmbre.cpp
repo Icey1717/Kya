@@ -197,7 +197,7 @@ void CActorAmbre::Init()
 	pCurProps = this->aFxSparkProps;
 	pFxSpark = this->aFxSparks;
 	do {
-		pFxSpark->Init(this->objectId);
+		pFxSpark->Init(this->sectorId);
 
 		iVar3 = iVar3 + 1;
 		pFxSpark->vector_0x80.x = pCurProps->field_0x4;

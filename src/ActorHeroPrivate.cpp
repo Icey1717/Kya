@@ -579,12 +579,12 @@ void CActorHeroPrivate::Init()
 		this->pAnimationController->RegisterBone(this->fxGlideBoneA);
 		this->pAnimationController->RegisterBone(this->fxGlideBoneB);
 
-		this->fxTrailA.Init(0.3333333f, this->objectId);
+		this->fxTrailA.Init(0.3333333f, this->sectorId);
 
 		this->pAnimationController->RegisterBone(this->fxGlideBoneC);
 		this->pAnimationController->RegisterBone(this->fxGlideBoneD);
 
-		this->fxTrailB.Init(0.3333333f, this->objectId);
+		this->fxTrailB.Init(0.3333333f, this->sectorId);
 	}
 
 	this->bIsSettingUp = 0;
@@ -3374,7 +3374,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	else {
 		if (msg == 0x58) {
 			IMPLEMENTATION_GUARD(
-			this->field_0x2e4 = 0.0;
+				this->field_0x2e4 = 0.0;
 			this->field_0xcbc = 0;
 			this->field_0x1a48 = 0;
 			this->field_0x1a4c = 0;
@@ -3384,7 +3384,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			(*(code*)pFVar8->pManagerFunctionData[1].field_0x0)(pFVar8, 0, pCVar11);
 			FUN_001d9df0((int)(CScene::ptable.g_FrontendManager_00451680)->pHealthBar, 0);
 			FUN_001b9400((int)CScene::_pinstance, 1);)
-			goto LAB_00344ed0;
+				goto LAB_00344ed0;
 		}
 		if (msg == 0x5b) {
 			struct Message_0x5b
@@ -3406,7 +3406,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x57) {
 			IMPLEMENTATION_GUARD(
-			this->field_0xcbc = (int)pSender;
+				this->field_0xcbc = (int)pSender;
 			if (((uint)pMsgParam & 1) == 0) {
 				this->field_0x1a48 = 0;
 			}
@@ -3440,11 +3440,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			FUN_001daa60(fVar25 / fVar26, (int)puVar3);
 			FUN_001daff0((long)(int)pFVar8->pHealthBar);
 			FUN_001da810(pFVar8->pHealthBar);)
-			goto LAB_00344ed0;
+				goto LAB_00344ed0;
 		}
 		if (msg == 0x50) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3455,11 +3455,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				this->field_0x1554 = 0.0;
 				return 1;
 			})
-			return 0;
+				return 0;
 		}
 		if (msg == 0x4f) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3473,11 +3473,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 				return 1;
 			})
-			return 0;
+				return 0;
 		}
 		if (msg == 0x61) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3490,7 +3490,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				(*(this->pVTable)->SetBehaviour)(this, 7, 0x119, 0xffffffff);
 				return 1;
 			})
-			return 0;
+				return 0;
 		}
 		if (msg == 0x40) {
 			iVar13 = this->actorState;
@@ -3534,25 +3534,25 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x3c) {
 			IMPLEMENTATION_GUARD(
-			if (this != (CActorHeroPrivate*)CActorHero::_gThis) {
-				uVar10 = this->flags;
-				CActorFighter::InterpretMessage((CActorFighter*)this, pSender, 0x3c, pMsgParam);
-				if ((uVar10 & 2) != 0) {
-					this->flags =
-						this->flags | 2;
-					this->flags =
-						this->flags & 0xfffffffe;
-					this->flags =
-						this->flags | 0x80;
-					this->flags =
-						this->flags & 0xffffffdf;
-					CActor::EvaluateDisplayState(this);
-					this->flags =
-						this->flags | 0x800;
-				}
-				return 1;
-			})
-			goto LAB_00344ed0;
+				if (this != (CActorHeroPrivate*)CActorHero::_gThis) {
+					uVar10 = this->flags;
+					CActorFighter::InterpretMessage((CActorFighter*)this, pSender, 0x3c, pMsgParam);
+					if ((uVar10 & 2) != 0) {
+						this->flags =
+							this->flags | 2;
+						this->flags =
+							this->flags & 0xfffffffe;
+						this->flags =
+							this->flags | 0x80;
+						this->flags =
+							this->flags & 0xffffffdf;
+						CActor::EvaluateDisplayState(this);
+						this->flags =
+							this->flags | 0x800;
+					}
+					return 1;
+				})
+				goto LAB_00344ed0;
 		}
 		if (msg == 0x83) {
 			pCVar11 = GetLifeInterface();
@@ -3710,7 +3710,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 		if (msg == 0x2c) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3732,7 +3732,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				CActor::UpdatePosition(this, (edF32VECTOR4*)pMsgParam, true);
 				return 1;
 			})
-			return 0;
+				return 0;
 		}
 
 		if (msg == MESSAGE_IMPULSE) {
@@ -3884,7 +3884,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 		if (msg == 10) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3896,12 +3896,12 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				this->field_0x155c = (float)(int)pMsgParam + pTVar15->scaledTotalTime;
 				return 1;
 			})
-			return 0;
+				return 0;
 		}
 
 		if (msg == 0x85) {
 			IMPLEMENTATION_GUARD(
-			iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
+				iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 			iVar14 = iVar14 + iVar13;
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
@@ -3916,17 +3916,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 			(*(code*)pCVar11->pVtable->SetValue)(fVar25 + (float)iVar13, pCVar11);
 			(*(code*)pCVar11->pVtable->Activate)(pCVar11, 1);)
-			goto LAB_00344ed0;
+				goto LAB_00344ed0;
 		}
 		if (msg != 9) {
 			if (msg == 8) {
 				IMPLEMENTATION_GUARD(
-				CLevelScheduler::FUN_002dadd0(CLevelScheduler::gThis, (int)pMsgParam);)
+					CLevelScheduler::FUN_002dadd0(CLevelScheduler::gThis, (int)pMsgParam);)
 			}
 			else {
 				if (msg == 0x8b) {
 					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+						pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
@@ -3945,11 +3945,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						}
 						return 1;
 					})
-					return 0;
+						return 0;
 				}
 				if (msg == 3) {
 					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
+						pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
@@ -3972,7 +3972,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						}
 						return 0;
 					})
-					return 0;
+						return 0;
 				}
 				if (msg == 2) {
 					fVar25 = GetLifeInterface()->GetValue();
@@ -4024,7 +4024,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				else {
 					if (msg == 1) {
 						IMPLEMENTATION_GUARD(
-						pTVar15 = Timer::GetTimer();
+							pTVar15 = Timer::GetTimer();
 						return pTVar15->scaledTotalTime < this->field_0x155c ^ 1;)
 					}
 
@@ -4039,7 +4039,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						if ((bVar9) || (0.0f < this->field_0x1558)) {
 							return 0;
 						}
-						
+
 						UpdateMedallion();
 					}
 					else {
@@ -4255,31 +4255,29 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			goto LAB_00344ed0;
 		}
-		IMPLEMENTATION_GUARD(
-		piVar17 = (int*)&this->field_0xab8;
+
+		CMagicInterface* pMagicInterface = &this->magicInterface;
 		if (0 < (int)pMsgParam) {
-			fVar26 = (float)(**(code**)(*piVar17 + 0x24))(piVar17);
-			fVar25 = fVar26;
-			GetParam1_0x18((int)piVar17);
-			if (fVar26 < fVar25) goto LAB_00343180;
+			if (pMagicInterface->GetValue() < pMagicInterface->GetValueMax()) goto LAB_00343180;
 		}
+
 		if ((int)pMsgParam < 0) {
-			fVar25 = (float)(**(code**)(*piVar17 + 0x24))(piVar17);
-			fVar26 = GetFloatParam1_0x1c((int)piVar17);
-			fVar25 = fVar25 + fVar26;
-			GetParam1_0x18((int)piVar17);
-			if (fVar25 < fVar26) {
+			float magicValue = pMagicInterface->GetValue();
+			float magicValueTransit = pMagicInterface->GetTransit();
+			float magicValueMax = pMagicInterface->GetValueMax();
+
+			if (magicValue + magicValueTransit < magicValueMax) {
 			LAB_00343180:
-				fVar25 = GetFloatParam1_0x1c(&this->field_0xab8);
-				SetFloatParam1_0x1cToParam2(fVar25 - (float)(int)pMsgParam, &this->field_0xab8);
-				if (0.0 < (float)(int)pMsgParam) {
-					fVar25 = (float)(**(code**)(*(int*)&this->field_0xab8 + 0x24))(&this->field_0xab8);
-					(**(code**)(*(int*)&this->field_0xab8 + 0x20))
-						((float)(int)pMsgParam + fVar25, &this->field_0xab8);
+				magicValue = pMagicInterface->GetTransit();
+				pMagicInterface->SetTransit(magicValue - (float)(int)pMsgParam);
+				if (0.0f < (float)(int)pMsgParam) {
+					magicValue = pMagicInterface->GetValue();
+					pMagicInterface->SetValue((float)(int)pMsgParam + magicValue);
 				}
+
 				return 1;
 			}
-		})
+		}
 	}
 LAB_00344ed0:
 	uVar20 = CActorFighter::InterpretMessage(pSender, msg, pMsgParam);

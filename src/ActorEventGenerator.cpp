@@ -8,6 +8,57 @@
 CActorEventGenerator* CActorEventGenerator::gGlobalEvG = NULL;
 CActorEventGenerator* CActorEventGenerator::gActiveEvG = NULL;
 
+int PTMF_Ext::CheckComboA(EVC_PHASE phase, undefined8 param_3, void* pData)
+{
+	CActorFighter** pMVar1;
+	s_fighter_combo* psVar2;
+	CActorHero* pHero;
+	bool bVar3;
+	CActorFighter* pAdversary;
+
+	pHero = CActorHero::_gThis;
+
+	pMVar1 = reinterpret_cast<CActorFighter**>(this->pData);
+	if (phase == EVC_PHASE_7) {
+		pAdversary = *pMVar1;
+	}
+	else {
+		if (phase == EVC_PHASE_RESET) {
+			*pMVar1 = (CActorFighter*)0x0;
+		}
+		else {
+			if ((phase == EVC_PHASE_MANAGE) && (pAdversary = CActorHero::_gThis->pAdversary, pAdversary != (CActorFighter*)0x0)) {
+				if ((pAdversary->GetLifeInterface()->GetValue() <= 0.0f) && (pHero->FUN_0031b790(pHero->actorState) != false)) {
+					psVar2 = pHero->pFighterCombo;
+					bVar3 = false;
+					if (psVar2 != (s_fighter_combo*)0x0) {
+						if ((psVar2->field_0x4.field_0x0ushort & 0x400) == 0) {
+							if (((pHero->pBlow)->field_0x4.field_0x2ushort & 1) != 0) {
+								bVar3 = true;
+							}
+						}
+						else {
+							IMPLEMENTATION_GUARD(
+							if (((pHero->field_0x840)->field_0x30).z == 2.802597e-45) {
+								bVar3 = true;
+							})
+						}
+					}
+
+					if ((bVar3) && (*pMVar1 != pAdversary)) {
+						*pMVar1 = pAdversary;
+						return 1;
+					}
+				}
+			}
+		}
+
+		pAdversary = (CActorFighter*)0x0;
+	}
+
+	return (int)pAdversary;
+}
+
 int PTMF_Ext::ManageActorA(EVC_PHASE phase, undefined8 param_3, void* pData)
 {
 	S_STREAM_REF<CActor>* pActor;
@@ -33,11 +84,51 @@ int PTMF_Ext::ManageActorA(EVC_PHASE phase, undefined8 param_3, void* pData)
 	return 0;
 }
 
+int PTMF_Ext::ManageActorB(EVC_PHASE phase, undefined8 param_3, void* pData)
+{
+	ManageMsgBParams* pParams;
+
+	pParams = reinterpret_cast<ManageMsgBParams*>(this->pData);
+	if (phase == EVC_PHASE_MANAGE) {
+		const bool bWolfen = pParams->actorRef.Get()->IsKindOfObject(OBJ_TYPE_WOLFEN);
+		if (bWolfen != false) {
+			const bool bVar1 = static_cast<CActorFighter*>(pParams->actorRef.Get())->FUN_001740a0();
+			if (bVar1 == false) {
+				pParams->bActive = 0;
+			}
+			else {
+				if (pParams->bActive == 0x0) {
+					pParams->bActive = 1;
+					return 1;
+				}
+			}
+		}
+	}
+	else {
+		if ((phase == (EVC_PHASE_3)) || (phase == EVC_PHASE_RESET)) {
+			pParams->bActive = 0;
+		}
+		else {
+			if (phase == EVC_PHASE_INIT) {
+				pParams->actorRef.Init();
+				pParams->bActive = 0;
+			}
+			else {
+				if (phase == EVC_PHASE_CREATE) {
+					pParams->actorRef.index = reinterpret_cast<ByteCode*>(pData)->GetS32();
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
 int PTMF_Ext::ManageMsgReceived(EVC_PHASE phase, undefined8 param_3, void* pData)
 {
-	ManageMsgParams* pParams;
+	ManageMsgAParams* pParams;
 
-	pParams = reinterpret_cast<ManageMsgParams*>(this->pData);
+	pParams = reinterpret_cast<ManageMsgAParams*>(this->pData);
 
 	if (phase == EVC_PHASE_INIT) {
 		pParams->actorRef.Init();
@@ -153,8 +244,10 @@ int PTMF_Ext::__ptmf_scall_NOT(PTMF_Ext::EVC_PHASE phase, uint param_3, void* pD
 	return result;
 }
 
+static PTMF_Ext::PTMF_TYPE CheckComboA = &PTMF_Ext::CheckComboA;
+static PTMF_Ext::PTMF_TYPE ManageActorB = &PTMF_Ext::ManageActorB;
 static PTMF_Ext::PTMF_TYPE ManageActorA = &PTMF_Ext::ManageActorA;
-static PTMF_Ext::PTMF_TYPE ManageMsgReceived = &PTMF_Ext::ManageActorA;
+static PTMF_Ext::PTMF_TYPE ManageMsgReceived = &PTMF_Ext::ManageMsgReceived;
 static PTMF_Ext::PTMF_TYPE DummyTempFunc = &PTMF_Ext::DummyTempFunc;
 
 void CActorEventGenerator::Create(ByteCode* pByteCode)
@@ -190,7 +283,7 @@ void CActorEventGenerator::Create(ByteCode* pByteCode)
 	this->nbRegisteredMemberFunctions = 0;
 
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265a8, &this->field_0x530);
-	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265b8, &this->field_0x538);
+	Register12(&CheckComboA, &this->field_0x538);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265c8, &this->field_0x53c);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265d8, &this->field_0x540);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265e8, &this->field_0x544);
@@ -199,7 +292,7 @@ void CActorEventGenerator::Create(ByteCode* pByteCode)
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_00426618, &this->field_0x564);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_00426628, &this->field_0x570);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_00426638, &this->field_0x574);
-	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_00426648, &this->field_0x580);
+	Register12(&ManageActorB, &this->field_0x580);
 	Register12(&ManageActorA, &this->field_0x578);
 
 	uVar5 = 0;
@@ -365,7 +458,7 @@ int CActorEventGenerator::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 		pManageMsgReceived = (PTMF_Ext*)0x0;
 	}
 
-	ManageMsgParams* pParams = pManageMsgReceived ? reinterpret_cast<ManageMsgParams*>(pManageMsgReceived->pData) : (ManageMsgParams*)0x0;
+	ManageMsgAParams* pParams = pManageMsgReceived ? reinterpret_cast<ManageMsgAParams*>(pManageMsgReceived->pData) : (ManageMsgAParams*)0x0;
 
 	if (((pManageMsgReceived != (PTMF_Ext*)0x0) && (msg == pParams->msgId)) && (pSender == pParams->actorRef.Get())) {
 		pManageMsgReceived->flagB = pManageMsgReceived->flagB | 2;

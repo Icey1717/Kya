@@ -57,7 +57,7 @@ struct DynamicUniformBuffer
 
 	inline BufferType* GetBufferData() { return bufferData; }
 
-	inline BufferType* GetInstancePtr(int index) {
+	inline BufferType* GetInstancePtr(int index) const {
 		return reinterpret_cast<BufferType*>(
 			reinterpret_cast<char*>(bufferData) + index * dynamicAlignment);
 	}

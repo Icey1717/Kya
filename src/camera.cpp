@@ -179,7 +179,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->transformationMatrix).ac = local_10.z;
 	(this->transformationMatrix).ad = 0.0f;
 	iVar3 = pMemoryStream->GetS32();
-	this->objectId = iVar3;
+	this->sectorId = iVar3;
 	iVar3 = pMemoryStream->GetS32();
 	this->field_0x8 = iVar3;
 	uVar4 = pMemoryStream->GetU32();
@@ -254,7 +254,7 @@ CCamera::CCamera()
 	this->field_0x50.z = 0.0f;
 	this->field_0x50.w = 0.0f;
 	this->nbManagedByClusters = 0;
-	this->objectId = -1;
+	this->sectorId = -1;
 	this->field_0x8 = -1;
 	this->field_0x8c = 0.0f;
 

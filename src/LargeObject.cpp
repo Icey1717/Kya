@@ -497,8 +497,8 @@ void CScene::Level_Init()
 {
 	undefined4* puVar1;
 	Timer* pTimeController;
-	CObjectManager** loadFuncPtr;
-	int loopCounter;
+	CObjectManager** ppManager;
+	int managerIndex;
 	
 	SetState(SCENE_STATE_NONE);
 	this->timeInState = 0.0f;
@@ -511,9 +511,9 @@ void CScene::Level_Init()
 		this->prevFogFlags = this->fogFlags;
 		this->field_0xd0 = 0.0f;
 		this->field_0xd4 = 0.0f;
-		loopCounter = this->fogClipSettingStackSize;
-		this->aFogClipStack[loopCounter].pStreamDef = this->pFogClipStream;
-		this->aFogClipStack[loopCounter].field_0x4 = 0.0f;
+		managerIndex = this->fogClipSettingStackSize;
+		this->aFogClipStack[managerIndex].pStreamDef = this->pFogClipStream;
+		this->aFogClipStack[managerIndex].field_0x4 = 0.0f;
 	}
 
 	S_STREAM_FOG_DEF* pSVar1 = this->pFogClipStream;
@@ -540,17 +540,19 @@ void CScene::Level_Init()
 	ed3DResetTime();
 	this->field_0x38 = 1;
 	ptable.g_EffectsManager_004516b8->Level_PreInit();
-	loopCounter = 0;
-	/* Init loop Initially points at 006db5b0 */
-	loadFuncPtr = CScene::ptable.aManagers;
+
+	// Level_Init
+	managerIndex = 0;
+	ppManager = CScene::ptable.aManagers;
 	do {
-		/* This will call load functions */
-		if (*loadFuncPtr != (CObjectManager*)0x0) {
-			(*loadFuncPtr)->Level_Init();
+		if (*ppManager != (CObjectManager*)0x0) {
+			(*ppManager)->Level_Init();
 		}
-		loopCounter = loopCounter + 1;
-		loadFuncPtr = loadFuncPtr + 1;
-	} while (loopCounter < 0x18);
+
+		managerIndex = managerIndex + 1;
+		ppManager = ppManager + 1;
+	} while (managerIndex < 0x18);
+
 	this->field_0x38 = 1;
 	edColFreeTemporaryMemory();
 	CLevelScheduler::gThis->Level_PostInit();

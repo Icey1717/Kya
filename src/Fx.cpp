@@ -131,24 +131,26 @@ CFxManager::CFxManager()
 
 void CFxManager::Game_Init()
 {
-	//EffectsManagerProps* pEVar1;
-	//EffectsManagerObjSetupParams* pSetupParams;
-	//
-	//pEVar1 = edParticlesGetSystemConfig();
-	//pEVar1->effectObjCount = 1;
-	//edPartSystemInit();
-	//pSetupParams = edParticlesGetConfig();
-	//pSetupParams->field_0x0 = 1000;
-	//pSetupParams->field_0x4 = 0x14;
-	//pSetupParams->field_0xc = 0x14;
-	//pSetupParams->field_0x8 = 0x14;
-	//pSetupParams->field_0x14 = 0x1e;
-	//pSetupParams->field_0x10 = 0x1e;
-	//pSetupParams->field_0x1c = 1;
-	//pSetupParams->field_0x18 = 1;
-	//pSetupParams->field_0x24 = 0x14;
-	//pSetupParams->field_0x20 = 0x14;
-	//edPartInit();
+	ed_part_system_config* pParticlesSystemConfig;
+	ed_part_config* pParticlesConfig;
+	
+	pParticlesSystemConfig = edParticlesGetSystemConfig();
+	pParticlesSystemConfig->nbEffectObj = 1;
+	edPartSystemInit();
+	pParticlesConfig = edParticlesGetConfig();
+	pParticlesConfig->nbParticles = 1000;
+	pParticlesConfig->nbGroups = 0x14;
+	pParticlesConfig->nbGeneratorParams = 0x14;
+	pParticlesConfig->field_0x8 = 0x14;
+	pParticlesConfig->nbEffectorParams = 0x1e;
+	pParticlesConfig->field_0x10 = 0x1e;
+	pParticlesConfig->nbSelectorParams = 1;
+	pParticlesConfig->field_0x18 = 1;
+	pParticlesConfig->nbShaperParams = 0x14;
+	pParticlesConfig->field_0x20 = 0x14;
+
+	edPartInit();
+
 	return;
 }
 
@@ -926,7 +928,7 @@ void CNewFx::Manage()
 						pCVar3 = this->pActor;
 						IMPLEMENTATION_GUARD(
 						(this->position).x = (float)pCVar3->pVTable;
-						(this->position).y = (float)pCVar3->objectId;
+						(this->position).y = (float)pCVar3->sectorId;
 						(this->position).z = (float)pCVar3->flags;
 						(this->position).w = (float)pCVar3->actorFieldS;)
 					}

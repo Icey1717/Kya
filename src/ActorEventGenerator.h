@@ -9,6 +9,7 @@
 struct ByteCode;
 
 class CCamera;
+class CActorFighter;
 
 class PTMF_Ext
 {
@@ -18,14 +19,18 @@ public:
 		EVC_PHASE_CREATE = 0,
 		EVC_PHASE_INIT = 1,
 		EVC_PHASE_MANAGE = 2,
+		EVC_PHASE_3 = 3,
 		EVC_PHASE_RESET = 4,
+		EVC_PHASE_7 = 7,
 	};
 
 	typedef int (PTMF_Ext::* PTMF_TYPE)(PTMF_Ext::EVC_PHASE, undefined8, void*);
 
 	int __ptmf_scall_NOT(EVC_PHASE phase, uint param_3, void* pData);
 
+	int PTMF_Ext::CheckComboA(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageActorA(EVC_PHASE phase, undefined8 param_3, void* pData);
+	int ManageActorB(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageMsgReceived(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int DummyTempFunc(EVC_PHASE phase, undefined8 param_3, void* pData);
 
@@ -38,10 +43,16 @@ public:
 	void* pData;
 };
 
-struct ManageMsgParams
+struct ManageMsgAParams
 {
 	S_STREAM_REF<CActor> actorRef;
 	uint msgId;
+};
+
+struct ManageMsgBParams
+{
+	S_STREAM_REF<CActor> actorRef;
+	int bActive;
 };
 
 class CActorEventGenerator;
@@ -167,8 +178,10 @@ public:
 
 	float field_0x308;
 
-	ManageMsgParams field_0x550;
+	CActorFighter** field_0x538;
+	ManageMsgAParams field_0x550;
 	S_STREAM_REF<CActor> field_0x578;
+	ManageMsgBParams field_0x580;
 
 	CBehaviourEventGen behaviourEventGen;
 };

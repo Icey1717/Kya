@@ -799,11 +799,11 @@ void CCameraManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	this->cameraStack.Level_SectorChange(oldSectorId);
 
 	for (; pCamera != (CCamera*)0x0; pCamera = pCamera->pNextCameraView_0xa4) {
-		if ((oldSectorId == pCamera->objectId) && (oldSectorId != -1)) {
+		if ((oldSectorId == pCamera->sectorId) && (oldSectorId != -1)) {
 			pCamera->flags_0xc = pCamera->flags_0xc & 0xffdfffff;
 		}
 
-		iVar1 = pCamera->objectId;
+		iVar1 = pCamera->sectorId;
 		if ((newSectorId == iVar1) || (iVar1 == -1)) {
 			pCamera->flags_0xc = pCamera->flags_0xc | 0x200000;
 		}

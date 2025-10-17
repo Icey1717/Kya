@@ -19,6 +19,4 @@ namespace DebugMenu {
 	bool GetKeyPressed(uint32_t routeId);
 	bool GetKeyReleased(uint32_t routeId);
 	float GetKeyAnalog(uint32_t routeId);
-
-	bool GetEnableEmulatedRendering();
 }

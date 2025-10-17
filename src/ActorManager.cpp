@@ -433,7 +433,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		pActorItr = this->aSectorActors;
 		for (iVar8 = this->nbSectorActors; 0 < iVar8; iVar8 = iVar8 + -1) {
 			pActor = *pActorItr;
-			if (oldSectorId == pActor->objectId) {
+			if (oldSectorId == pActor->sectorId) {
 				pActor->EvaluateManageState();
 				pActor->EvaluateDisplayState();
 			}
@@ -455,7 +455,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	pActorItr = this->aActors;
 	for (iVar8 = this->nbActors; 0 < iVar8; iVar8 = iVar8 + -1) {
 		pActor = *pActorItr;
-		iVar1 = pActor->objectId;
+		iVar1 = pActor->sectorId;
 		if ((iVar1 == newSectorId) || (iVar1 == -1)) {
 			if (iVar1 == newSectorId) {
 				const edF32VECTOR3 sphereCentre = pActor->sphereCentre.xyz - sphereOffset;
@@ -474,7 +474,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 
 	for (iVar8 = 0; iVar8 < this->nbActors; iVar8 = iVar8 + 1) {
 		pActor = this->aActors[iVar8];
-		iVar1 = pActor->objectId;
+		iVar1 = pActor->sectorId;
 		if ((newSectorId == iVar1) || (oldSectorId == iVar1)) {
 			pActor->SectorChange(oldSectorId, newSectorId);
 		}
@@ -800,7 +800,7 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 			pActor = this->aActors[iVar4];
 
 			peVar6 = &pActor->sphereCentre;
-			iVar7 = pActor->objectId;
+			iVar7 = pActor->sectorId;
 
 			if (iVar7 == -1) {
 				peVar2 = this->aSectorBoundingBoxes;

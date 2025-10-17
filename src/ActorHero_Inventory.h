@@ -2,6 +2,7 @@
 #define ACTOR_HERO_INVENTORY_H
 
 #include "Actor.h"
+#include "Frontend.h"
 
 struct InventorySlot
 {

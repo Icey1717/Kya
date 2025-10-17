@@ -20,14 +20,8 @@ enum FRONTEND_INTERFACE
 	FRONTEND_INTERFACE_MENU_0x74,
 };
 
-class CFrontendMagicGauge
-{
-public:
-	unsigned char bVisible;
-	void Magic_SetDisplay(unsigned char bNewVisible);
-};
-
 class CFrontendLifeGauge;
+class CFrontendMagicGauge;
 
 class CInterfaceEnemyCount : public CInterface
 {
@@ -88,7 +82,7 @@ struct CFrontendDisplay : public CFrontend
 	undefined field_0x53;
 	CInterfaceEnemyCount interfaceEnemyCount;
 	CFrontendLifeGauge* pHealthBar;
-	class CFrontendMagicGauge* pMagicOrbs;
+	CFrontendMagicGauge* pMagicOrbs;
 	class CFrontendMoney* pMoney;
 	class CFrontendEnemyCount* pFreedWolfun;
 	class CFrontendAction* pFrontendAction;

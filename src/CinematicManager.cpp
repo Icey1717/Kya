@@ -2559,8 +2559,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 
 				float fVar12 = pParticleInstance->field_0x8 - pParticleInstance->field_0x4;
 				if (fVar12 < 0.0f) {
-					IMPLEMENTATION_GUARD(
-					FUN_0027cd80(0);)
+					edPart_0027cd80(0);
 					fVar12 = pParticleInstance->field_0x8;
 				}
 

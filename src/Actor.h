@@ -39,6 +39,8 @@ class CVision;
 
 class CInventoryInfo;
 
+class CInterface;
+
 struct MessageSoccerParams
 {
 	int field_0x0;
@@ -126,19 +128,6 @@ public:
 	edF32VECTOR4 field_0x20;
 };
 
-class CInterface {
-public:
-	virtual bool Activate(int bActive) { return true; }
-	virtual bool CanActivate() { return true; }
-	virtual bool IsActive() { return true; }
-	virtual bool Manage() { return true; }
-
-	virtual void Draw() = 0;
-	virtual void Reset() = 0;
-	virtual void SetValue(float value) = 0;
-	virtual float GetValue() = 0;
-};
-
 class CBehaviour : public CObject
 {
 public:
@@ -154,6 +143,7 @@ public:
 	virtual void End(int newBehaviourId) {}
 	virtual void InitState(int newState) {}
 	virtual void TermState(int oldState, int newState) {}
+	virtual bool InitDlistPatchable(int patchId);
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
@@ -401,11 +391,15 @@ public:
 	void SetAlive(int bAlive);
 
 	float DistSquared(edF32VECTOR4* pPosition);
+	void ComputeDistanceToKim(edF32VECTOR4* pPosition);
 
 	void State_GotoKim();
 	void State_Wait();
 
 	void FUN_003982c0();
+
+	void SetBasePosition(edF32VECTOR4* pBasePosition);
+	void SetPosition(edF32VECTOR4* pPosition);
 
 	uint flags;
 
@@ -413,10 +407,10 @@ public:
 
 	edF32VECTOR4 basePosition;
 	edF32VECTOR4 currentPosition;
-	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 pathDelta;
 
 	float field_0x54;
-	float field_0x58;
+	float distanceToKim;
 	float field_0x5c;
 	int field_0x60;
 
@@ -810,7 +804,8 @@ public:
 	byte field_0xd;
 };
 
-struct ActorAndWaypoint {
+struct ActorAndWaypoint
+{
 	S_STREAM_REF<CActor> pActor;
 	S_STREAM_REF<CWayPoint> pWaypoint;
 };
@@ -821,7 +816,8 @@ struct S_ACTOR_STREAM_REF
 	S_STREAM_REF<CActor> aEntries[];
 };
 
-class CEmotionInfo {
+class CEmotionInfo
+{
 public:
 	void DoAnimation(float, float, CActor*);
 
@@ -838,6 +834,11 @@ public:
 	float field_0x28;
 	float field_0x2c;
 	float field_0x30;
+};
+
+class CShadowShared
+{
+
 };
 
 #endif // _ACTOR_H

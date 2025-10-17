@@ -74,7 +74,48 @@ void CActorGravityAware::SaveContext(void* pData, uint mode, uint maxSize)
 
 void CActorGravityAware::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	edF32VECTOR4 loadedPosition;
+
+	S_SAVE_CLASS_GRAVITY_AWARE* pSaveData = reinterpret_cast<S_SAVE_CLASS_GRAVITY_AWARE*>(pData);
+
+	if (mode == 1) {
+		if ((pSaveData->flags & 1) == 0) {
+			this->field_0x354 = this->field_0x354 & 0xfe;
+		}
+		else {
+			this->field_0x354 = this->field_0x354 | 1;
+		}
+
+		if ((pSaveData->flags & 2) == 0) {
+			this->field_0x354 = this->field_0x354 & 0xfd;
+		}
+		else {
+			this->field_0x354 = this->field_0x354 | 2;
+		}
+
+		loadedPosition.xyz = pSaveData->position;
+		loadedPosition.w = 1.0f;
+
+		UpdatePosition(&loadedPosition, true);
+
+		if ((this->field_0x354 & 2) == 0) {
+			if ((this->field_0x354 & 1) == 0) {
+				SetBehaviour(this->subObjA->defaultBehaviourId, -1, -1);
+			}
+			else {
+				SetBehaviour(GRAVITY_AWARE_BEHAVIOUR_FALL, -1, -1);
+			}
+		}
+		else {
+			this->flags = this->flags & 0xfffffffd;
+			this->flags = this->flags | 1;
+			this->flags = this->flags & 0xffffff7f;
+			this->flags = this->flags | 0x20;
+			EvaluateDisplayState();
+		}
+	}
+
+	return;
 }
 
 CBehaviour* CActorGravityAware::BuildBehaviour(int behaviourType)

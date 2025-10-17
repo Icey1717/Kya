@@ -17,6 +17,7 @@ layout( push_constant ) uniform PerDrawData
 {
 	mat4 projXView;
 	uint renderFlags;
+    uint _pad[15];
 } perDrawData;
 
 layout(set = 0, binding = 4) uniform LightingData {

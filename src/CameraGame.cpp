@@ -2163,11 +2163,11 @@ void CCameraGame::_UpdateAngleAlphaData()
 						else {
 							pCVar7 = GetTarget();
 							IMPLEMENTATION_GUARD(
-							if (fabs((float)pCVar7[1].objectId) <= 0.1) {
+							if (fabs((float)pCVar7[1].sectorId) <= 0.1) {
 								(this->cameraConfig).targetPitch = this->cameraConfig.baseTargetPitch;
 							}
 							else {
-								if (0.0 < (float)pCVar7[1].objectId) {
+								if (0.0 < (float)pCVar7[1].sectorId) {
 									(this->cameraConfig).targetPitch = this->cameraConfig.field_0x2c;
 								}
 								else {

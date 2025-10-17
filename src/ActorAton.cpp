@@ -97,8 +97,8 @@ void CActorAton::Init()
 	this->field_0x475 = 0;
 
 	if (this->trailMaterialId != -1) {
-		this->fxTailA.Init(0.3333333f, this->objectId);
-		this->fxTailB.Init(0.3333333f, this->objectId);
+		this->fxTailA.Init(0.3333333f, this->sectorId);
+		this->fxTailB.Init(0.3333333f, this->sectorId);
 	}
 
 	this->behaviourAddOn.Init(this);

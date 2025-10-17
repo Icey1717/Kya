@@ -63,7 +63,7 @@ public:
 	S_STREAM_EVENT_CAMERA* streamEventCamera;
 
 	int field_0x160;
-	float field_0x168;
+	float remainingHealth;
 	float field_0x16c;
 
 	float field_0x170;

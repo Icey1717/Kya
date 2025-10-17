@@ -68,6 +68,8 @@ add_library(Renderer ${SOURCES})
 
 target_compile_definitions(Renderer PUBLIC "GLFW_INCLUDE_VULKAN")
 target_compile_definitions(Renderer PUBLIC "GLM_FORCE_RADIANS")
+target_compile_definitions(Renderer PRIVATE "GLM_FORCE_INTRINSICS")
+
 
 #if either performance or memory profiling is enabled
 if(ENABLE_PERFORMANCE_PROFILING OR ENABLE_MEMORY_PROFILING)

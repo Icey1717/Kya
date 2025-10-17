@@ -556,11 +556,10 @@ void CActorCommander::CheckExorcism()
 	if (0 < (this->exorcismActorsTable).nbEntries) {
 		if (this->field_0x1e0 == 0) {
 			this->field_0x1e0 = 1;
-			IMPLEMENTATION_GUARD(
-				pMagicInterface = &CActorHero::_gThis->magicInterface;
+			pMagicInterface = &CActorHero::_gThis->magicInterface;
 			fVar2 = pMagicInterface->GetValue();
 			fVar3 = pMagicInterface->GetTransit();
-			this->field_0x1dc = fVar2 + fVar3;);
+			this->field_0x1dc = fVar2 + fVar3;;
 		}
 
 		if (0.5f <= Timer::GetTimer()->scaledTotalTime - this->field_0x1e4) {

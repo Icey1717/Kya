@@ -54,6 +54,7 @@
 #include "DebugScenario.h"
 #include "DebugMemory.h"
 #include "DebugScene.h"
+#include "DebugRendering.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -189,53 +190,6 @@ namespace Debug {
 		ImGui::Text("Fight Level: %d", CLevelScheduler::GetFightLevel());
 
 		ImGui::InputInt("Current Level", &CLevelScheduler::gThis->currentLevelID);
-		// End the ImGui window
-		ImGui::End();
-	}
-
-	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
-	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
-	static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
-
-	static void ShowRenderingMenu(bool* bOpen) {
-		// Create a new ImGui window
-		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
-		ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
-		ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
-
-		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());
-			ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
-			ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
-			ImGui::Checkbox("Simplified Code", &VU1Emu::GetRunSimplifiedCode());
-		}
-
-		if (ImGui::Button("Enable Vertex Trace")) {
-			VU1Emu::GetTraceVtx() = true;
-		}
-
-		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
-			Renderer::ResetRenderer();
-		}
-
-		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
-
-		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
-
-		if (gDisableClusterRendering.DrawImguiControl()) {
-			ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
-		}
-
-		if (gForceAnimMatrixIdentity.DrawImguiControl()) {
-			Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
-		}
-
-		if (gEnableEmulatedRendering.DrawImguiControl()) {
-			VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
-		}
-
 		// End the ImGui window
 		ImGui::End();
 	}
@@ -389,7 +343,7 @@ namespace Debug {
 		{"Framebuffer", Debug::FrameBuffer::ShowMenu },
 		{"Framebuffers", Debug::FrameBuffer::ShowFramebuffers },
 		{"Cutscene", Debug::Cinematic::ShowMenu, true },
-		{"Rendering", ShowRenderingMenu },
+		{"Rendering", Debug::Rendering::ShowMenu, true },
 		{"Hero", Debug::Hero::ShowMenu, true },
 		{"Sector", ShowSectorMenu, true },
 		{"Level Scheduler", ShowLevelSchedulerMenu, true },
@@ -478,11 +432,8 @@ void DebugMenu::Init()
 	ed3DGetTextureLoadedDelegate() += Debug::OnTextureLoaded;
 	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
 
-	ed3D::DebugOptions::GetDisableClusterRendering() = Debug::gDisableClusterRendering;
-	Renderer::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
-	VU1Emu::GetEnableEmulatedRendering() = Debug::gEnableEmulatedRendering;
-
 	Debug::Scene::Startup();
+	Debug::Rendering::Init();
 }
 
 static Input::InputFunctions gInputFunctions;
@@ -552,11 +503,6 @@ float DebugMenu::GetKeyAnalog(uint32_t routeId)
 	assert(gKeyMap.find(routeId) != gKeyMap.end());
 
 	return ImGui::IsKeyDown(gKeyMap[routeId]) ? 1.0f : 0.0f;
-}
-
-bool DebugMenu::GetEnableEmulatedRendering()
-{
-	return Debug::gEnableEmulatedRendering;
 }
 
 bool DebugMenu::GetMousePressed(uint32_t routeId)

@@ -316,8 +316,8 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 					ppCVar15 = aCameras;
 					for (pCVar3 = (CScene::ptable.g_CameraManager_0045167c)->pInitialView_0x4b4; pCVar3 != (CCamera*)0x0;
 						pCVar3 = pCVar3->pNextCameraView_0xa4) {
-						iVar13 = pCVar2->objectId;
-						if (((iVar13 == -1) || (pCVar3->objectId == iVar13)) &&
+						iVar13 = pCVar2->sectorId;
+						if (((iVar13 == -1) || (pCVar3->sectorId == iVar13)) &&
 							(iVar13 = edEventComputeZoneAgainstVertex(pCVar7->activeChunkId, pZone, &pCVar3->transformationMatrix.rowT, 0), iVar13 != 2)) {
 							*ppCVar15 = pCVar3;
 							iVar12 = iVar12 + 1;
@@ -946,7 +946,7 @@ void gClusterCallback_Clusteriser_Sector(CActor* pActor, void* pData)
 		bVar1 = false;
 
 	LAB_001e4da0:
-		if ((!bVar1) && ((pActor->objectId == pClusterizerCallbackParams->objId || (pActor->objectId == -1)))) {
+		if ((!bVar1) && ((pActor->sectorId == pClusterizerCallbackParams->objId || (pActor->sectorId == -1)))) {
 			pClusterizerCallbackParams->ppActors[pClusterizerCallbackParams->count] = pActor;
 			pClusterizerCallbackParams->count = pClusterizerCallbackParams->count + 1;
 		}
@@ -991,12 +991,12 @@ int CActorClusteriser::FillActorsTableFromZone(CActor** param_2, ed_zone_3d* pZo
 	}
 	else {
 		local_90.count = 0;
-		local_90.objId = this->objectId;
+		local_90.objId = this->sectorId;
 		local_90.pZone = pZone;
 		local_90.ppActors = param_2;
 		local_90.field_0x10 = param_5;
 
-		if (this->objectId == -1) {
+		if (this->sectorId == -1) {
 			pCluster->ApplyCallbackToActorsIntersectingSphere(pSphere, gClusterCallback_Clusteriser_All, &local_90);
 		}
 		else {

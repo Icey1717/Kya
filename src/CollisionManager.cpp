@@ -2251,7 +2251,7 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 	if ((this->flags_0x0 & 1) != 0) {
 		iVar1 = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
 
-		uVar4 = (ulong)(iVar1 == pActor->objectId);
+		uVar4 = (ulong)(iVar1 == pActor->sectorId);
 		if (uVar4 != 0) {
 			uVar4 = (ulong)(iVar1 != -1);
 		}

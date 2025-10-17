@@ -932,6 +932,13 @@ extern ed3DConfig ged3DConfig;
 extern edpkt_data* gPKTMatrixCur;
 
 extern edpkt_data g_PKTHeaderRef[9];
+
+#define SPRITE_GIF_HEADER_INDEX				0
+#define SPRITE_ST_HEADER_INDEX				1
+#define SPRITE_RGBA_HEADER_INDEX			2
+#define SPRITE_XYZ_HEADER_INDEX				3
+#define SPRITE_WIDTH_HEIGHT_HEADER_INDEX	4
+
 extern edpkt_data g_PKTSpriteHeaderRef[5];
 
 extern edF32VECTOR4 gCamNormal_X;

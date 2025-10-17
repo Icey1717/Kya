@@ -283,6 +283,26 @@ ed_g2d_layer* CSprite::Install(ed_g2d_manager* pManager, char* pFileName)
 	return ed3DG2DMaterialGetLayer(pMaterial, 0);
 }
 
+edDList_material* CSprite::Install(ed_g2d_manager* pManager, int index)
+{
+	ed_g2d_material* pMaterial;
+	ed_g2d_bitmap* pBitmap;
+	edDList_material* pDlistMaterial;
+
+	this->bValid = false;
+	pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
+	pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterial, 0);
+	pDlistMaterial = edDListCreatMaterialFromIndex(&this->materialInfo, index, pManager, 2);
+	this->flags_0x7c = this->flags_0x7c | 1;
+	this->iWidth = pBitmap->width;
+	this->iHeight = pBitmap->height;
+	(this->textBitmap).pMaterial = &this->materialInfo;
+	(this->textBitmap).fWidth = (float)(uint)this->iWidth;
+	(this->textBitmap).fHeight = (float)(uint)this->iHeight;
+
+	return pDlistMaterial;
+}
+
 void CSprite::Install(edDList_material* pMaterial)
 {
 	ed_g2d_bitmap* pBitmap;

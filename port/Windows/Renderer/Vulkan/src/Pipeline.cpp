@@ -352,7 +352,7 @@ void Renderer::Pipeline::CreateLayout()
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
-	SetObjectName(reinterpret_cast<uint64_t>(layout), VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Renderer Pipeline Layout (Layout Count: %d)", pipelineLayoutInfo.setLayoutCount);
+	SetObjectName(reinterpret_cast<uint64_t>(layout), VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Layout <%s> (Layout Count: %d)", debugName.c_str(), pipelineLayoutInfo.setLayoutCount);
 }
 
 void Renderer::Pipeline::CreateDescriptorPool()

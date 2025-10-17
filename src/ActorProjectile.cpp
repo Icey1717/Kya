@@ -2054,7 +2054,7 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 	if (this->field_0xc == 2) {
 		iVar2 = 0;
 		do {
-			this->aFxSparks[iVar2].Init(this->pOwner->objectId);
+			this->aFxSparks[iVar2].Init(this->pOwner->sectorId);
 			this->aFxSparks[iVar2].field_0x90 = 0x80f09614;
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < 4);

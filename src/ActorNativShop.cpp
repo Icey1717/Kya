@@ -14,6 +14,7 @@
 #include "FileManager3D.h"
 #include "FrontEndDisp.h"
 #include "FrontEndMoney.h"
+#include "FrontEndMagic.h"
 #include "FrontEndEnemy.h"
 #include "ActorHero.h"
 #include "InputManager.h"
@@ -400,7 +401,7 @@ void CBehaviourNativShopSell::Manage()
 
 void CBehaviourNativShopSell::SectorChange(int oldSectorId, int newSectorId)
 {
-	if (newSectorId == this->pOwner->objectId) {
+	if (newSectorId == this->pOwner->sectorId) {
 		int iVar4 = 0;
 		NativShopSubObj* pCVar2 = this->aSubObjs;
 		NativShopSubObj* pCVar3 = this->aSubObjs;

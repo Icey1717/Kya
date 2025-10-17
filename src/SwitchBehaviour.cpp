@@ -238,7 +238,7 @@ int CondMessage::InterpretMessage(CActor* pOwner, CActor* pSender, int msg, void
 	bVar1 = pMsgParam == (void*)pOwner->flags;
 	if (bVar1) {
 		IMPLEMENTATION_GUARD(
-		*(undefined*)&pOwner->objectId = 1;)
+		*(undefined*)&pOwner->sectorId = 1;)
 	}
 
 	return bVar1;

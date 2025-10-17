@@ -99,7 +99,7 @@ void CFxTail::Create(float param_1, int count, int param_4, int materialId)
 
 void CFxTail::Init(float param_1, int id)
 {
-	this->objectId = id;
+	this->sectorId = id;
 	this->field_0xc0 = 0.0f;
 	this->field_0xc4 = 1.0f;
 	this->field_0xb8 = param_1 / (float)this->count_0x34;

@@ -8,3 +8,4 @@ ps2/ezmpegstr
 .idea/
 cmake-build-debug/
 .github
+__pycache__

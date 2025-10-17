@@ -5,16 +5,20 @@
 #include "LargeObject.h"
 #include "Rendering/DisplayList.h"
 
-#define IMPLEMENTATION_GUARD_DLIST_PATCH(x)
+#define IMPLEMENTATION_GUARD_DLIST_PATCH(x) assert(false);
 
 struct DisplayList;
 
-struct S_EYES_BRIGHT_SHADOW;
+struct S_GLOBAL_DLIST_PATCH;
+
+#define CALL_ELEMENT_SET_ACTIVE 1
+#define CALL_ELEMENT_HIDE_VERTEX 2
+#define CALL_ELEMENT_HIDE_SPRITE 3
 
 class CGlobalDListPatch : public CGlobalDList
 {
 public:
-	S_EYES_BRIGHT_SHADOW* pBrightEye[296];
+	S_GLOBAL_DLIST_PATCH* aPatches[296];
 	undefined field_0x4c0;
 	undefined field_0x4c1;
 	undefined field_0x4c2;
@@ -31,8 +35,8 @@ public:
 	undefined field_0x4cd;
 	undefined field_0x4ce;
 	undefined field_0x4cf;
-	undefined4 field_0x4d0;
-	int brightEyeCount;
+	S_GLOBAL_DLIST_PATCH* pCurrentPatch;
+	int nbTotalPatches;
 	byte field_0x4d8;
 	byte field_0x4d9;
 	undefined field_0x4da;
@@ -42,13 +46,13 @@ public:
 	inline CGlobalDListPatch(uint index)
 	{
 		this->field_0x4dc = index;
-		this->brightEyeCount = 0;
-		this->field_0x4d0 = 0;
+		this->nbTotalPatches = 0;
+		this->pCurrentPatch = 0;
 		this->field_0x4d8 = 0;
 		this->field_0x4d9 = 0;
 
 		for (int i = 0; i < 296; i++) {
-			pBrightEye[i] = NULL;
+			aPatches[i] = NULL;
 		}
 	}
 
@@ -58,14 +62,14 @@ public:
 struct GlobalDlistEntry
 {
 	CGlobalDListPatch* pDlistPatch;
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
+	int nbMatrices;
+	int nbRegisteredPatches;
+	int nbInstances;
 };
 
 struct CallFuncElement
 {
-	int field_0x0;
+	int patchId;
 	int bActive;
 	byte type;
 	byte nbElements;
@@ -96,9 +100,11 @@ public:
 	void SectorChange(int newSectorId);
 	void _ExecuteCallFunc();
 
-	bool SetActive(int param_2, int param_3);
+	bool SetActive(int patchId, int index);
+	CGlobalDListPatch* BeginCurrent(int patchId);
+	void EndCurrent(int nbVertex, int param_2);
 
-	bool _AddCallFuncElement(int param_2, int param_3, int bActive);
+	bool _AddCallFuncElement(int patchId, int type, int bActive);
 
 	int dlistCount;
 	byte bBeganLevelInit;
@@ -115,5 +121,8 @@ public:
 	int nbActiveCallFuncElements;
 	int field_0x29b0;
 };
+
+void GameDListPatch_HideSprite(int patchId, uint index);
+void GameDListPatch_HideVertex(int patchId, int index);
 
 #endif // DLIST_MANAGER_H

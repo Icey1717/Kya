@@ -143,7 +143,7 @@ void CActorBoomy::Init()
 	this->field_0x2b8.Init();
 	this->field_0x2bc.Init();
 
-	this->fxTail.Init(16.0f, this->objectId);
+	this->fxTail.Init(16.0f, this->sectorId);
 
 	local_4 = this->aBoomyTypeInfo[0].fxColorA;
 	iVar2 = (this->fxTail).count_0x34;
@@ -542,7 +542,7 @@ void CActorBoomy::ClearLocalData()
 	return;
 }
 
-float FLOAT_00448604 = 3.0f;
+float DBG_TAIL_MIN_DIST = 3.0f;
 
 void CActorBoomy::StateBoomyGetTarget()
 {
@@ -625,7 +625,7 @@ void CActorBoomy::StateBoomyGetTarget()
 
 	this->fxTail.SetPatchActive(1);
 	(this->speedDyn).currentAlpha = (this->pSpline->aPoints->position).y;
-	this->field_0x1d4 = FLOAT_00448604 <= this->distanceToTarget;
+	this->field_0x1d4 = DBG_TAIL_MIN_DIST <= this->distanceToTarget;
 	if (this->field_0x2c4 == 2) {
 		IMPLEMENTATION_GUARD_AUDIO(
 		CActorSound::SoundStart

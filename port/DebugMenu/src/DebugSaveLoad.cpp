@@ -63,6 +63,7 @@ namespace Debug::SaveLoad
 			}
 
 			CScene::ptable.g_PauseManager_00451688->pSimpleMenu->currentPage = PM_LoadMenu;
+			CScene::ptable.g_PauseManager_00451688->pSimpleMenu->selectedIndex = gDefaultSaveSlot;
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

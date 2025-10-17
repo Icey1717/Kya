@@ -26,6 +26,7 @@
 #include "displaylist.h"
 #endif
 #include "ActorMoney.h"
+#include "ActorBonus.h"
 #include "ActorHero.h"
 
 CPathFollowReader::CPathFollowReader()
@@ -324,14 +325,14 @@ CActor::CActor()
 {
 	float fVar1;
 	float fVar2;
-	this->objectId = -1;
+	this->sectorId = -1;
 	//this->field_0x138 = -1.0f;
 	//this->field_0x140 = 0;
 	//this->field_0x144 = 0;
 	//this->aActorSounds = (CActorSound*)0x0;
 	//this->field_0x14c = 0;
 	this->actorManagerIndex = -1;
-	this->objectId = -1;
+	this->sectorId = -1;
 	this->pCinData = (CinNamedObject30*)0x0;
 	this->subObjA = (KyaUpdateObjA*)0x0;
 	this->flags = 0;
@@ -473,7 +474,7 @@ void CActor::EvaluateManageState()
 	int iVar1;
 	ulong uVar2;
 
-	iVar1 = this->objectId;
+	iVar1 = this->sectorId;
 	if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 		uVar2 = this->flags;
 		if ((uVar2 & 0x2000001) == 0) {
@@ -506,7 +507,7 @@ void CActor::EvaluateDisplayState()
 	int iVar1;
 	uint uVar2;
 
-	iVar1 = this->objectId;
+	iVar1 = this->sectorId;
 	if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 		uVar2 = this->flags;
 		if ((uVar2 & 0x2000060) == 0) {
@@ -741,9 +742,9 @@ void CActor::Create(ByteCode* pByteCode)
 		pKVar2->defaultBehaviourId = -1;
 	}
 	this->actorFieldS = (this->subObjA)->actorFieldS;
-	this->objectId = (this->subObjA)->field_0x24;
-	if (this->objectId == 0) {
-		this->objectId = -1;
+	this->sectorId = (this->subObjA)->field_0x24;
+	if (this->sectorId == 0) {
+		this->sectorId = -1;
 	}
 	SetupModel(iVar7, local_110);
 	SetupDefaultPosition();
@@ -2750,6 +2751,11 @@ void CActor::SaveContext(void* pData, uint mode, uint maxSize)
 void CActor::LoadContext(void* pData, uint mode, uint maxSize)
 {
 	return;
+}
+
+bool CBehaviour::InitDlistPatchable(int patchId)
+{
+	return false;
 }
 
 void CBehaviour::GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites)
@@ -5541,7 +5547,7 @@ void CActInstance::SetState(int newState)
 	if (this->state == 3) {
 		this->field_0x54 = 0.0f;
 
-		this->field_0x40 = this->currentPosition;
+		this->pathDelta = this->currentPosition;
 	}
 	return;
 }
@@ -5568,7 +5574,7 @@ void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* p
 
 	this->field_0x60 = param_5;
 	this->field_0x5c = 0.0f;
-	this->field_0x58 = 0.0f;
+	this->distanceToKim = 0.0f;
 
 	this->flags = 1;
 
@@ -5644,7 +5650,7 @@ void CActInstance::Reset()
 	this->field_0x70 = gF32Vector3Zero;
 
 	this->field_0x5c = 0.0f;
-	this->field_0x58 = 0.0f;
+	this->distanceToKim = 0.0f;
 	this->flags = this->flags | 1;
 	
 	SetState(1);
@@ -5684,6 +5690,25 @@ float CActInstance::DistSquared(edF32VECTOR4* pPosition)
 	return fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3;
 }
 
+void CActInstance::ComputeDistanceToKim(edF32VECTOR4* pPosition)
+{
+	edF32VECTOR4* pHeroPosition;
+	edF32VECTOR4 deltaToKim;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	pHeroPosition = CActorHero::_gThis->GetPosition_00369c80();
+	edF32Vector4SubHard(&deltaToKim, pHeroPosition, &this->currentPosition);
+	deltaToKim.y = deltaToKim.y + (pHero->subObjA->boundingSphere).w;
+	this->distanceToKim = edF32Vector4GetDistHard(&deltaToKim);
+
+	if (pPosition != (edF32VECTOR4*)0x0) {
+		*pPosition = deltaToKim;
+	}
+
+	return;
+}
+
 void CActInstance::State_GotoKim()
 {
 	ed_3d_hierarchy* peVar1;
@@ -5705,7 +5730,7 @@ void CActInstance::State_GotoKim()
 	local_10.w = peVar3->w;
 	local_10.y = peVar3->y + pCVar2->subObjA->boundingSphere.w;
 
-	edF32Vector4LERPHard(this->field_0x54, &local_20, &this->field_0x40, &local_10);
+	edF32Vector4LERPHard(this->field_0x54, &local_20, &this->pathDelta, &local_10);
 	local_20.w = 1.0f;
 
 	(this->currentPosition).xyz = local_20.xyz;
@@ -5729,7 +5754,7 @@ void CActInstance::State_Wait()
 	CActorHero* pCVar1;
 	edF32VECTOR4* v1;
 	int iVar2;
-	long lVar3;
+	long newState;
 	float fVar4;
 	edF32VECTOR4 eStack32;
 	undefined4 local_4;
@@ -5739,30 +5764,30 @@ void CActInstance::State_Wait()
 	edF32Vector4SubHard(&eStack32, v1, &this->currentPosition);
 	eStack32.y = eStack32.y + pCVar1->subObjA->boundingSphere.w;
 	fVar4 = edF32Vector4GetDistHard(&eStack32);
-	this->field_0x58 = fVar4;
-	lVar3 = 7;
-	if (this->field_0x58 <= 0.85f) {
-		lVar3 = 4;
+	this->distanceToKim = fVar4;
+
+	newState = 7;
+	if (this->distanceToKim <= 0.85f) {
+		newState = 4;
 	}
 	else {
-		if (this->field_0x58 <= 2.0f) {
-			lVar3 = 3;
+		if (this->distanceToKim <= 2.0f) {
+			newState = 3;
 		}
 	}
 
-	if (lVar3 != 7) {
+	if (newState != 7) {
 		if ((this->flags & 8) == 0) {
-			SetState(lVar3);
+			SetState(newState);
 		}
 		else {
 			local_4 = 0xffffffff;
 			iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (void*)0xffffffff);
 			if (iVar2 == 0) {
-				IMPLEMENTATION_GUARD(
-				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->field_0x58);)
+				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
 			}
 			else {
-				SetState(lVar3);
+				SetState(newState);
 			}
 		}
 	}
@@ -5802,6 +5827,21 @@ void CActInstance::FUN_003982c0()
 		}
 	}
 
+	return;
+}
+
+void CActInstance::SetBasePosition(edF32VECTOR4* pBasePosition)
+{
+	this->basePosition = *pBasePosition;
+	return;
+}
+
+void CActInstance::SetPosition(edF32VECTOR4* pPosition)
+{
+	this->currentPosition = *pPosition;
+	if ((this->flags & 0x80) != 0) {
+		this->pHierarchy->transformA.rowT = this->currentPosition;
+	}
 	return;
 }
 

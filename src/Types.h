@@ -982,9 +982,9 @@ struct sceCdlFILE {
 
 class CObject {
 public:
-	CObject() : objectId(-1) {}
+	CObject() : sectorId(-1) {}
 
-	int objectId;
+	int sectorId;
 
 	virtual bool IsKindOfObject(ulong kind) { return false; }
 	virtual bool InitDlistPatchable(int) { return false; }

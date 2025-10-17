@@ -7,6 +7,7 @@
 #include "CollisionManager.h"
 #include "ScenaricCondition.h"
 #include "PathFinderClient.h"
+#include "Frontend.h"
 
 class CWayPoint;
 
@@ -100,32 +101,6 @@ public:
 	float field_0x6c;
 
 	float scaledTotalTime;
-};
-
-class CLifeInterface : public CInterface
-{
-public:
-	CLifeInterface();
-
-	int priority;
-	float currentValue;
-	float valueMax;
-	int field_0x10;
-
-	// CInterface
-	virtual bool Manage();
-	virtual void Draw() {}
-	virtual void Reset() {}
-	virtual float GetValue();
-	virtual void SetValue(float value);
-
-	float GetValueMax();
-	void SetValueMax(float max);
-
-	void SetPriority(int newPriority);
-	float GetPriority();
-
-	float GetPercent();
 };
 
 class CActorAutonomous : public CActorMovable

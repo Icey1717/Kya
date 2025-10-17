@@ -16,8 +16,9 @@ struct ed_3d_strip;
 struct ed_3d_sprite;
 struct ed_3D_Scene;
 struct ed_g3d_manager;
-
 struct DisplayList;
+
+class CGlobalDListPatch;
 
 struct RenderCommandUint
 {
@@ -120,7 +121,8 @@ struct edCluster
 	undefined field_0x2f;
 };
 
-class CGlobalDList {
+class CGlobalDList
+{
 public:
 	CGlobalDList();
 	CGlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster);
@@ -142,12 +144,19 @@ public:
 };
 
 class CObject;
+union edVertex;
 
-struct S_EYES_BRIGHT_SHADOW {
+struct S_GLOBAL_DLIST_PATCH
+{
 	undefined4 field_0x0;
-	CObject* pObject;
-	int field_0x8;
-	int field_0xc;
+	CObject* pOwner;
+	int nbMatrices;
+	int nbInstances;
+	edVertex* pVertex;
+	_rgba* pRgba;
+	uint* pSt;
+	uint* pUv;
+	DisplayListCommand* field_0x20;
 };
 
 void GlobalDList_Init(void);
@@ -161,8 +170,9 @@ void FrontendDList_EndCurrent(void);
 bool GameDList_BeginCurrent(void);
 void GameDList_EndCurrent(void);
 
-int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
-
+uint GameDListPatch_Register(CObject* pObject, int param_2, int nbInstances);
+CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId);
+void GameDListPatch_EndCurrent(int nbVertex, int param_2);
 
 extern DisplayList* gCurDListHandle;
 extern void* gCurDListBuf;

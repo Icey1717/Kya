@@ -156,48 +156,6 @@ struct AnimResultHero : public StateConfig {
 
 #define ACTOR_HERO_LOG(level, format, ...) MY_LOG_CATEGORY("ActorHero", level, format, ##__VA_ARGS__)
 
-class CMagicInterface : public CInterface
-{
-public:
-	// CInterface
-	virtual bool Activate(int bActive);
-	virtual bool CanActivate();
-	virtual bool IsActive();
-	virtual bool Manage();
-	virtual void Draw();
-	virtual void Reset() {}
-	virtual void SetValue(float value);
-	virtual float GetValue();
-
-	float GetValueMax();
-	void SetValueMax(float max);
-
-	void SetTransit(float transit);
-
-	void FUN_001dcd70();
-
-	void SetHasMagicInteractionAround(int bHasMagicAround);
-
-	int bActive;
-	int bHasMagicAround;
-	float field_0xc;
-	float field_0x10;
-	float value;
-	float valueMax;
-	float transit;
-};
-
-class CMoneyInterface : public CInterface
-{
-public:
-	// CInterface
-	virtual bool Manage();
-	virtual void Draw() {}
-	virtual void Reset() {}
-	virtual void SetValue(float value) {}
-	virtual float GetValue();
-};
-
 struct BounceParams
 {
 	edF32VECTOR4 field_0x0;

@@ -146,6 +146,8 @@ set(main_src
 	"${src_root}/FrontEndDisp.h"
 	"${src_root}/FrontEndLife.cpp"
 	"${src_root}/FrontEndLife.h"
+    "${src_root}/FrontEndMagic.cpp"
+	"${src_root}/FrontEndMagic.h"
 	"${src_root}/FrontEndInventory.cpp"
 	"${src_root}/FrontEndInventory.h"
 	"${src_root}/FrontEndEnemy.cpp"
