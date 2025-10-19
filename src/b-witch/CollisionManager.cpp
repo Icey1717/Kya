@@ -18,6 +18,7 @@ struct ClusterCallbackParams
 	CActor* pActor;
 };
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 void CCollisionManager::ClearStaticData()
 {
 	S_TIED_ACTOR_ENTRY* pSVar1;
@@ -148,6 +149,7 @@ void CCollisionManager::Level_Create(ByteCode* pMemoryStream)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 void CCollisionManager::Level_PostCreate()
 {
 	uint count;
@@ -236,6 +238,7 @@ float CCollisionManager::GetMaterialSlidingCoef(s_collision_contact* pContact)
 	return _material_table[uVar1].slidingCoefficient;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 CCollision* CCollisionManager::NewCCollision()
 {
 	int nextCollisionId;
@@ -290,6 +293,7 @@ void CCollisionManager::Level_AddAll(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 edColG3D_OBB_TREE_DYN* CCollisionManager::InstanciateDynCol(int index)
 {
 	byte bVar1;
@@ -670,6 +674,7 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/collisions.cpp
 void CCollision::ClearInternalData()
 {
 	this->field_0x18 = 0;
@@ -696,6 +701,7 @@ void CCollision::ClearInternalData()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/collisions.cpp
 void CCollision::SetupInternalData(CActor* pActor)
 {
 	edColOBJECT* puVar1;
@@ -732,6 +738,7 @@ void CCollision::SetupInternalData(CActor* pActor)
 
 static edF32VECTOR4 edF32VECTOR4_0040f120 = { 0.01f, 0.01f, 0.01f, 0.0f };
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 void CCollision::InvalidatePrims()
 {
 	byte bVar1;
@@ -805,6 +812,7 @@ void CCollision::InvalidatePrims()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/collisions.cpp
 void CCollision::Reset()
 {
 	ClearInternalData();
@@ -1194,6 +1202,7 @@ float CCollisionManager::GetWallNormalYLimit(s_collision_contact* pContact)
 	return _material_table[uVar1].field_0x8;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 void CCollisionManager::Level_ClearAll()
 {
 	edObbTREE_DYN** pCVar1;
@@ -1705,6 +1714,7 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 	return result;
 }
 
+// Should be in: D:/Projects/b-witch/collisions.cpp
 uint CCollision::CheckCollisionsWithScenery(int param_2)
 {
 	edObbTREE_DYN* pObbTreeA;
@@ -2698,6 +2708,7 @@ LAB_00212060:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 void CCollision::UnregisterTiedActor(CActor* pActor)
 {
 	S_TIED_ACTOR_ENTRY* pSVar1;
@@ -2729,6 +2740,7 @@ void CCollision::UnregisterTiedActor(CActor* pActor)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CollisionsServices.cpp
 CActor* CCollision::FindTiedActor(CActor* pActor)
 {
 	S_TIED_ACTOR_ENTRY* pEntry;

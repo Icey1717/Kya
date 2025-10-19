@@ -274,6 +274,7 @@ StateConfig* CActorBoomy::GetStateCfg(int state)
 	return pSVar1;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBoomy.h
 CVision* CActorBoomy::GetVision()
 {
 	return &this->vision;

@@ -50,6 +50,7 @@ CActor* EventCallbackGetActorIdent(int index) {
 	return NULL;
 }
 
+// Should be in: D:/Projects/b-witch/EventCollision.cpp
 void EventCallbackSendMessage(edCEventMessage* pEventMessage)
 {
 	bool bVar1;
@@ -491,6 +492,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edEvent/sources/edEventMessage.cpp
 void edEventClearMessageQueue(void)
 {
 	EventQueue_00448fbc.inUseCount = 0;
@@ -608,6 +610,7 @@ struct EdEventConfig {
 
 EdEventConfig edEventConfig = { 0xa };
 
+// Should be in: D:/Projects/EdenLib/edEvent/sources/edEventInit.cpp
 void edEventInit(void)
 {
 	edEventNbChunks = edEventConfig.nbChunks;
@@ -799,6 +802,7 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edEvent/sources/edEventData.cpp
 void _edEventInitChunk(ed_event_chunk* pEventChunk)
 {
 	byte bVar1;
@@ -859,6 +863,7 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edEvent/sources/edEventData.cpp
 static void _edEventUninstallGameData(ed_event_chunk* pEventChunk)
 {
 	_edCluster* p_Var1;
@@ -895,6 +900,7 @@ static void _edEventUninstallGameData(ed_event_chunk* pEventChunk)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edEvent/sources/edEventData.cpp
 static void _edEventUninstallChunk(ed_event_chunk* pEventChunk)
 {
 	_edEventUninstallGameData(pEventChunk);

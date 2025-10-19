@@ -469,6 +469,7 @@ void edCTextFormat::SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderComma
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextDraw.cpp
 void edCTextFormat::GetRect()
 {
 	ushort uVar1;

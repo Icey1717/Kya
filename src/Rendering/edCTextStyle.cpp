@@ -4,11 +4,13 @@
 extern edCTextFont* g_PackedFontPtr_004324d0;
 edCTextStyle* pedTextCurrentStyle;
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 edCTextStyle* edTextStyleGetCurrent()
 {
 	return pedTextCurrentStyle;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 edCTextStyle* edTextStyleSetCurrent(edCTextStyle* pNewFont)
 {
 	edCTextStyle* pFVar1;
@@ -42,6 +44,7 @@ void edCTextStyle::TransformMatrix(float x, float y, edF32MATRIX4* outMatrix)
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 void edCTextStyle::SetRotation(float angle)
 {
 	this->rotation = angle;
@@ -64,18 +67,21 @@ void edCTextStyle::SetScale(float xScale, float yScale)
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 void edCTextStyle::SetVerticalSize(float verticalSize)
 {
 	this->verticalSize = verticalSize;
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 float edCTextStyle::GetHorizontalSize()
 {
 	return this->horizontalSize;
 }
 
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 void edCTextStyle::SetHorizontalSize(float horizontalSize)
 {
 	this->horizontalSize = horizontalSize;
@@ -96,6 +102,7 @@ void edCTextStyle::SetShadowShift(float x, float y)
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 uint edCTextStyle::GetDebug()
 {
 	return this->flags_0x84 & 0x200;
@@ -149,6 +156,7 @@ void edCTextStyle::SetFont(edCTextFont* pPackedFont, bool bUpdateSpacing)
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextStyle.cpp
 void edCTextStyle::Reset()
 {
 	this->pPackedFont = g_PackedFontPtr_004324d0;

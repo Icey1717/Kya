@@ -14,6 +14,7 @@ CSprite::CSprite()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSprite::ClearLocalData()
 {
 	undefined4* puVar1;
@@ -135,6 +136,7 @@ void CSprite::Draw(float ratio, float x1, float y1, float param_4, uint drawFlag
 edF32VECTOR2 edF32VECTOR2_00448cd8 = { -0.5f, -0.5f };
 edF32VECTOR2 edF32VECTOR2_00448ce0 = { 0.5f, 0.5f };
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSprite::Validate()
 {
 	edF32VECTOR2 screenDimensions;
@@ -185,6 +187,7 @@ void CSprite::PrepareDraw(bool bUpdateMaterial)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSprite::DrawSprite()
 {
 	float fVar2;
@@ -303,6 +306,7 @@ edDList_material* CSprite::Install(ed_g2d_manager* pManager, int index)
 	return pDlistMaterial;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSprite::Install(edDList_material* pMaterial)
 {
 	ed_g2d_bitmap* pBitmap;
@@ -324,6 +328,7 @@ void CSprite::Install(edDList_material* pMaterial)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSprite::Remove()
 {
 	if ((this->flags_0x7c & 1) != 0) {
@@ -653,6 +658,7 @@ bool CSprite::GetIsValid()
 	return this->bValid;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSpriteWindow::Validate()
 {
 	CSprite::Validate();
@@ -671,6 +677,7 @@ void CSpriteWindow::Validate()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Bitmap.cpp
 void CSpriteWindow::DrawSprite()
 {
 	float fVar2;

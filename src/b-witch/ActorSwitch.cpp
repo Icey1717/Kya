@@ -1394,6 +1394,7 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	return 0;
 }
 
+// Should be in: D:/Projects/b-witch/ActorSwitch.h
 void CBehaviourSwitchLever::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 {
 	return;

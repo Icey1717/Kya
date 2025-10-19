@@ -2917,6 +2917,7 @@ void CBehaviourPlatformStand::End(int newBehaviourId)
 	ChangeManageState(0);
 }
 
+// Should be in: D:/Projects/b-witch/ActorMovingPlatform.h
 void CBehaviourPlatformStand::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
 	return;
@@ -3990,6 +3991,7 @@ void CBehaviourPlatformDestroyed::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorMovingPlatform.h
 void CBehaviourPlatformDestroyed::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
 	return;

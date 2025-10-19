@@ -202,6 +202,7 @@ edCTextResourcePool::edCTextResourcePool()
 	return;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextResources.cpp
 bool edCTextResourcePool::Init(int maxEntries)
 {
 	bool bVar1;

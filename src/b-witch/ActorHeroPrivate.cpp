@@ -393,6 +393,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::Init()
 {
 	ushort uVar1;
@@ -666,6 +667,7 @@ void gHeroActionCallback(CActor* pActor, void* pParams)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::GetPossibleAction()
 {
 	bool bVar1;
@@ -839,6 +841,7 @@ bool gHeroMagicCallback(CActor* pActor, void* pParams)
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 {
 	bool bVar1;
@@ -995,6 +998,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 bool CActorHeroPrivate::AbleTo_AttackByBoomyBlow()
 {
 	CActorBoomy* pCVar1;
@@ -1028,6 +1032,7 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomyBlow()
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 bool CActorHeroPrivate::AbleTo_AttackByBoomyLaunch()
 {
 	CActorBoomy* pCVar1;
@@ -1058,6 +1063,7 @@ LAB_00136c48:
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 bool CActorHeroPrivate::AbleTo_AttackByBoomySnipe()
 {
 	CActorBoomy* pCVar1;
@@ -1088,6 +1094,7 @@ LAB_00136b08:
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 bool CActorHeroPrivate::AbleTo_AttackByBoomyControl()
 {
 	CActorBoomy* pCVar1;
@@ -1129,6 +1136,7 @@ LAB_00136998:
 
 float FLOAT_00434cc8 = 0.965992f;
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 {
 	CPlayerInput* pCVar1;
@@ -1459,6 +1467,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::AccomplishAttack()
 {
 	CAnimation* pCVar1;
@@ -1558,6 +1567,7 @@ bool CActorHeroPrivate::AccomplishAttack()
 	return bVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::AccomplishMagic()
 {
 	bool bIsWolfen;
@@ -1611,6 +1621,7 @@ bool CActorHeroPrivate::AccomplishMagic()
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 {
 	CPlayerInput* pCVar1;
@@ -1988,6 +1999,7 @@ bool CActorHeroPrivate::ManageActions()
 edF32VECTOR4 edF32VECTOR4_004258b0 = { 1.0f, 1.0f, 1.0f, 0.0f };
 edF32VECTOR4 edF32VECTOR4_004258c0 = { 1.0f, 0.0f, 0.0f, 0.0f };
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fx.cpp
 void CActorHeroPrivate::FxManageGlideTail()
 {
 	bool bVar1;
@@ -2351,11 +2363,13 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 	return iVar8;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::PreCheckpointReset()
 {
 	SetBehaviour(-1, -1, -1);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::CheckpointReset()
 {
 	Timer* pTimer;
@@ -2605,6 +2619,7 @@ void CActorHeroPrivate::LoadContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::Manage()
 {
 	CAnimation* pCVar1;
@@ -2867,6 +2882,7 @@ void CActorHeroPrivate::Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pNewBehaviour;
@@ -4472,6 +4488,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 	return iVar9;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::ResetStdDefaultSettings()
 {
 	this->field_0x1040 = 9.77f;
@@ -4503,6 +4520,7 @@ void CActorHeroPrivate::ResetStdDefaultSettings()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::ResetSlideDefaultSettings()
 {
 	bool bVar1;
@@ -4544,6 +4562,7 @@ void CActorHeroPrivate::ResetSlideDefaultSettings()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 void CActorHeroPrivate::ResetBoomyDefaultSettings()
 {
 	uint* puVar1;
@@ -4589,6 +4608,7 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 void CActorHeroPrivate::ResetGripClimbDefaultSettings()
 {
 	//this->field_0x14ac = 2.0;
@@ -4622,6 +4642,7 @@ void CActorHeroPrivate::ResetGripClimbDefaultSettings()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::ResetWindDefaultSettings()
 {
 	this->windBoostStrength = 0.0f;
@@ -4645,6 +4666,7 @@ void CActorHeroPrivate::ResetWindDefaultSettings()
 	this->field_0x141c = 10.0f;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_JamGut.cpp
 void CActorHeroPrivate::ResetJamGutSettings()
 {
 	return;
@@ -4826,6 +4848,7 @@ int CActorHeroPrivate::ChooseStateFall(int param_2)
 	return fallState;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 int CActorHeroPrivate::ChooseStateLanding(float speed)
 {
 	CPlayerInput* pCVar1;
@@ -5158,6 +5181,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 	return iVar5;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ClearLocalData()
 {
 	//float fVar1;
@@ -6592,6 +6616,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroStandInit(int bCheckEffort)
 {
 	this->bFacingControlDirection = 1;
@@ -6608,6 +6633,7 @@ void CActorHeroPrivate::StateHeroStandInit(int bCheckEffort)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroStandTerm()
 {
 	if (0xea < this->animIdleSequenceIndex) {
@@ -6616,6 +6642,7 @@ void CActorHeroPrivate::StateHeroStandTerm()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 {
 	CActorNativ* pNativ;
@@ -7008,6 +7035,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroTobogganInit()
 {
 	float fVar1;
@@ -7049,6 +7077,7 @@ void CActorHeroPrivate::StateHeroTobogganInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroToboggan(int param_2)
 {
 	CCollision* pCVar1;
@@ -7843,12 +7872,14 @@ void CActorHeroPrivate::StateHeroFlyJumpInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroWindSlideInit()
 {
 	this->field_0x13d8 = 0.0f;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 {
 	CCollision* pCollision;
@@ -8318,6 +8349,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroTrampolineJump_1_2Init()
 {
 	this->dynamicExt.normalizedTranslation.x = 0.0f;
@@ -8328,6 +8360,7 @@ void CActorHeroPrivate::StateHeroTrampolineJump_1_2Init()
 	this->pBounceOnActor->pAnimationController->RegisterBone(this->bounceBoneId);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroTrampolineJump_1_2Term()
 {
 	this->dynamic.speed = 0.0f;
@@ -8336,6 +8369,7 @@ void CActorHeroPrivate::StateHeroTrampolineJump_1_2Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroTrampolineJump_1_2(float param_1)
 {
 	float fVar1;
@@ -8368,6 +8402,7 @@ void CActorHeroPrivate::StateHeroTrampolineJump_1_2(float param_1)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroTrampolineStomachToFall(float param_1)
 {
 	float fVar1;
@@ -8392,6 +8427,7 @@ void CActorHeroPrivate::StateHeroTrampolineStomachToFall(float param_1)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroRun()
 {
 	CCollision* pCVar1;
@@ -8696,6 +8732,7 @@ void CActorHeroPrivate::StateHeroRun()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::StateHeroJoke()
 {
 	CPlayerInput* pCVar1;
@@ -8784,6 +8821,7 @@ void CActorHeroPrivate::StateHeroJoke()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroSlideSlipInit()
 {
 	ConvertSpeedSumForceExtToSpeedPlayer2D();
@@ -9000,6 +9038,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 	} while (true);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroSlideInit(int param_2)
 {
 	CCollision* pCVar1;
@@ -9319,6 +9358,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroSlideTerm(int param_2)
 {
 	if ((this->dynamic.flags & 2) == 0) {
@@ -9336,6 +9376,7 @@ void CActorHeroPrivate::StateHeroSlideTerm(int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroUTurnInit()
 {
 	CPlayerInput* pCVar1;
@@ -9386,6 +9427,7 @@ void CActorHeroPrivate::StateHeroUTurnInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroUTurn()
 {
 	CCollision* pCVar1;
@@ -9483,11 +9525,13 @@ void CActorHeroPrivate::StateHeroUTurn()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroUTurnTerm()
 {
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
 {
 	CAnimation* pCVar1;
@@ -9576,12 +9620,14 @@ void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroCrouchInit()
 {
 	this->bFacingControlDirection = 1;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroCrouch(int nextState)
 {
 	CCollision* pCVar1;
@@ -9773,6 +9819,7 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroCrouchWalk()
 {
 	CPlayerInput* pCVar1;
@@ -9969,11 +10016,13 @@ void CActorHeroPrivate::StateHeroCrouchWalk()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroRollInit()
 {
 	this->field_0xf00 = this->currentLocation;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroRoll()
 {
 	CAnimation* pCVar1;
@@ -10200,6 +10249,7 @@ void CActorHeroPrivate::StateHeroRoll()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroRoll2Crouch()
 {
 	CAnimation* pCVar1;
@@ -10323,6 +10373,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroHit()
 {
 	CCollision* pCVar1;
@@ -10418,6 +10469,7 @@ void CActorHeroPrivate::StateHeroHit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroKickInit()
 {
 	CAnimation* pCVar1;
@@ -10775,6 +10827,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroKickTerm()
 {
 	uint uVar1;
@@ -10798,6 +10851,7 @@ void CActorHeroPrivate::StateHeroKickTermSimple()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroJump_1_3(int nextState)
 {
 	CPlayerInput* pCVar1;
@@ -10847,6 +10901,7 @@ void CActorHeroPrivate::StateHeroJump_1_3(int nextState)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroJump_2_3Init()
 {
 	this->scalarDynJump.BuildFromSpeedDist(this->jmp_field_0x113c, 0.0f, this->jmp_field_0x1140);
@@ -11098,11 +11153,13 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroJump_2_3Term()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 {
 	CCollision* pCVar1;
@@ -11777,6 +11834,7 @@ void CActorHeroPrivate::StateHeroGripUp(float param_1, float param_2, int nextSt
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 void CActorHeroPrivate::StateHeroGripUpToJumpInit()
 {
 	this->dynamic.rotationQuat = this->rotationQuat;
@@ -11884,6 +11942,7 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroDead(float time)
 {
 	this->dynamic.speed = 0.0f;
@@ -11913,6 +11972,7 @@ LAB_0013e430:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroColWall()
 {
 	CAnimation* pCVar1;
@@ -11964,6 +12024,7 @@ void CActorHeroPrivate::StateHeroColWall()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroFlyInit()
 {
 	int* piVar1;
@@ -11992,6 +12053,7 @@ void CActorHeroPrivate::StateHeroFlyInit()
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroLever_1_2Init()
 {
 	this->field_0x100c = 0;
@@ -11999,6 +12061,7 @@ void CActorHeroPrivate::StateHeroLever_1_2Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroLever_1_2()
 {
 	CActorMovParamsIn movParamsIn;
@@ -12029,6 +12092,7 @@ void CActorHeroPrivate::StateHeroLever_1_2()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroLever_1_2Term()
 {
 	DoMessage(this->pKickedActor, (ACTOR_MESSAGE)0x14, 0);
@@ -12040,6 +12104,7 @@ void CActorHeroPrivate::StateHeroLever_1_2Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroLever_2_2()
 {
 	CActorMovParamsIn movParamsIn;
@@ -12070,6 +12135,7 @@ void CActorHeroPrivate::StateHeroLever_2_2()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroLever_2_2Term()
 {
 	DoMessage(this->pKickedActor, (ACTOR_MESSAGE)0x15, 0);
@@ -12272,6 +12338,7 @@ void CActorHeroPrivate::StateHeroExorciseInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroExorcise()
 {
 	bool bVar2;
@@ -12317,6 +12384,7 @@ void CActorHeroPrivate::StateHeroExorciseTerm(int nextState)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroFlyTerm()
 {
 	CFxHandle* pCVar1;
@@ -12356,6 +12424,7 @@ void CActorHeroPrivate::StateHeroFlyTerm()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroGlideInit()
 {
 	return;
@@ -13099,6 +13168,7 @@ LAB_0014a028:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroWindCanonInit()
 {
 	CActorWindState* pCVar1;
@@ -13184,6 +13254,7 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroWindCanonTerm()
 {
 	RestoreVerticalOrientation();
@@ -13242,6 +13313,7 @@ LAB_003489d0:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroFallBounce_2_2Init()
 {
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(this->field_0x118c, 0);
@@ -13249,6 +13321,7 @@ void CActorHeroPrivate::StateHeroFallBounce_2_2Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
 void CActorHeroPrivate::StateHeroFallBounce_2_2Term()
 {
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
@@ -13256,6 +13329,7 @@ void CActorHeroPrivate::StateHeroFallBounce_2_2Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::SetJumpCfgFromGround(float param_1)
 {
 	CCollision* pCVar1;
@@ -13310,6 +13384,7 @@ void CActorHeroPrivate::SetJumpCfg(float param_1, float horizonalSpeed, float pa
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ConvertSpeedSumForceExtToSpeedPlayer2D()
 {
 	edF32VECTOR4 translation;
@@ -13473,6 +13548,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::IncreaseEffort(float param_1)
 {
 	Timer* pTVar1;
@@ -13492,11 +13568,13 @@ void CActorHeroPrivate::IncreaseEffort(float param_1)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 void CActorHeroPrivate::ManageBoomyStateInit()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 void CActorHeroPrivate::ManageBoomyState()
 {
 	CPlayerInput* pCVar1;
@@ -14028,6 +14106,7 @@ void CActorHeroPrivate::ManageBoomyStateTerm()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::RestoreVerticalOrientation()
 {
 	edF32VECTOR4 newRotationQuat;
@@ -14048,6 +14127,7 @@ void CActorHeroPrivate::RestoreVerticalOrientation()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 bool CActorHeroPrivate::DetectGripablePrecipice()
 {
 	IMPLEMENTATION_GUARD_LOG();
@@ -14140,6 +14220,7 @@ bool CActorHeroPrivate::InClimbZone(edF32VECTOR4* pPosition)
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 void CActorHeroPrivate::UngripAllObjects()
 {
 	CActor* pCVar1;
@@ -14445,6 +14526,7 @@ void CActorHeroPrivate::SetBoomyHairOff()
 	this->pAnimationController->AddDisabledBone(this->animKey_0x1584);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Boomy.cpp
 void CActorHeroPrivate::SetBoomyHairOn()
 {
 	this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
@@ -14490,6 +14572,7 @@ void CActorHeroPrivate::GetPadRelativeToPlane(edF32VECTOR4* param_2, float* para
 
 
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 void CActorHeroPrivate::SetGripState()
 {
 	int curState;
@@ -14920,31 +15003,37 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 	return bClimbCeilingFromGrip;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::EvolutionBoomyCanControl()
 {
 	return 2 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::EvolutionBoomyCanSnipe()
 {
 	return 1 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::EvolutionBoomyCanLaunch()
 {
 	return 0 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 int CActorHeroPrivate::EvolutionBounceCanJump()
 {
 	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_JUMP_BOUNCE );
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::EvolutionCanClimb()
 {
 	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_CLIMB);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 bool CActorHeroPrivate::EvolutionTobogganCanJump()
 {
 	int iVar1;
@@ -15023,6 +15112,7 @@ LAB_0013bd58:
 	return uVar4;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_GripClimb.cpp
 bool CActorHeroPrivate::CanBounceAgainstWall()
 {
 	CCollision* pCVar1;
@@ -15079,6 +15169,7 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 	return bVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ChangeCollisionSphereForLying(float param_2)
 {
 	edF32VECTOR4 local_20;
@@ -15097,6 +15188,7 @@ void CActorHeroPrivate::ChangeCollisionSphereForLying(float param_2)
 	ChangeCollisionSphere(param_2, &local_10, &local_20);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ChangeCollisionSphereForToboggan(float param_2)
 {
 	edF32VECTOR4 local_20;
@@ -15148,6 +15240,7 @@ void CActorHeroPrivate::ChangeCollisionSphereForGlide(float param_1, float param
 	ChangeCollisionSphere(param_1, &local_10, &local_20);
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 
 {
@@ -15169,6 +15262,7 @@ void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt2D()
 {
 	edF32VECTOR4 eStack32;
@@ -15189,6 +15283,7 @@ void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt2D()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::BeginToboggan()
 {
 	CFxHandle* pCVar1;
@@ -15386,6 +15481,7 @@ void CActorHeroPrivate::SlideOnToboggan(float param_1, float param_2, float para
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::EndToboggan()
 {
 	CFxHandle* pCVar1;
@@ -15544,6 +15640,7 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::Landing()
 {
 	CActor* pReceiver;
@@ -15611,6 +15708,7 @@ bool CActorHeroPrivate::UpdateOrientationFromWind(edF32VECTOR4* v0, edF32VECTOR4
 	return ret;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ConvertSpeedSumForceExtToSpeedPlayer()
 {
 	float fVar1;
@@ -15667,6 +15765,7 @@ void CActorHeroPrivate::SetInvincible(float t0, int param_3)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 bool CActorHeroPrivate::CheckHitAndDeath()
 {
 	CCollision* pCVar1;
@@ -16256,6 +16355,7 @@ uint CFightLock_SE::_Rule_DistMin(CFightLock_SE* pLock, uint prevValue)
 	return 0;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::_InitHeroFight()
 {
 	void* pvVar1;
@@ -16359,6 +16459,7 @@ void CActorHeroPrivate::_InitHeroFight()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::_ResetHeroFight()
 {
 	this->field_0x187c = 0;
@@ -16370,6 +16471,7 @@ void CActorHeroPrivate::_ResetHeroFight()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::UpdateNextAdversary()
 {
 	CActorFighter* pCVar1;
@@ -16510,6 +16612,7 @@ void CActorHeroPrivate::UpdateBracelet(uint flags)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ManageInternalView()
 {
 	int iVar3;
@@ -16717,6 +16820,7 @@ void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActor
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::SoccerOff()
 {
 	CActorMovable* pCVar1;
@@ -16758,6 +16862,7 @@ void CActorHeroPrivate::SoccerOff()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::PlaySoccer()
 {
 	CPlayerInput* pCVar1;
@@ -16942,6 +17047,7 @@ CActorWindState* CActorHeroPrivate::GetWindState()
 	return &field_0x1190;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::StoreCollisionSphere()
 {
 	edF32VECTOR4 local_20;
@@ -17018,6 +17124,7 @@ void CActorHeroPrivate::BuildHorizontalSpeedVector(float runSpeed, float param_2
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::LifeDecrease(float amount)
 {
 	Timer* pTVar1;
@@ -17047,6 +17154,7 @@ void CActorHeroPrivate::LifeRestore()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::LifeAnnihilate()
 {
 	if (this->field_0xaa4 == 0) {
@@ -17082,6 +17190,7 @@ CLifeInterface* CActorHeroPrivate::GetLifeInterfaceOther()
 	return pLifeInterface;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::SetInitialState()
 {
 	bool bVar2;
@@ -17108,6 +17217,7 @@ void CActorHeroPrivate::SetInitialState()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CActorHeroPrivate::ProcessDeath()
 {
 	CActor* pReceiver;
@@ -17212,6 +17322,7 @@ void CActorHeroPrivate::ProcessDeath()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::EnableFightCamera(int bEnable)
 {
 	CCameraManager* pCameraManager;
@@ -17224,6 +17335,7 @@ void CActorHeroPrivate::EnableFightCamera(int bEnable)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::AcquireAdversary()
 {
 	SetAdversary(this->field_0x1618);
@@ -17231,6 +17343,7 @@ void CActorHeroPrivate::AcquireAdversary()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 edF32VECTOR4* CActorHeroPrivate::GetAdversaryPos()
 {
 	bool bVar3;
@@ -17269,6 +17382,7 @@ void CActorHeroPrivate::Func_0x194(float param_1)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::UpdateFightCommand()
 {
 	UpdateFightCommandInternal(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
@@ -17327,6 +17441,7 @@ bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
 	return (pCombo->field_0x4.field_0x0byte & uVar1) != 0;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::_Proj_GetPossibleExit()
 {
 	if (((GetStateFlags(this->actorState) & 0x100000) != 0) && (2.0f < this->timeInAir)) {
@@ -17597,6 +17712,7 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CBehaviourHeroDefault::Manage()
 {
 	this->pHero->BehaviourHero_Manage();
@@ -17656,6 +17772,7 @@ void CBehaviourHeroDefault::Begin(CActor* pOwner, int newState, int newAnimation
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CBehaviourHeroDefault::End(int newBehaviourId)
 {
 	this->pHero->ResetBoomyDefaultSettings();
@@ -17933,6 +18050,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	return iVar7;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CBehaviourHeroDefault::InitState(int newState)
 {
 	this->pHero->BehaviourHero_InitState(newState);
@@ -18170,6 +18288,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 CActorFighter* CFightLock_SE::ApplyInferenceRules()
 {
 	bool bVar1;
@@ -18319,6 +18438,7 @@ void CFightLock_SE::_Heuristic_Aim(edF32VECTOR4* pDirection)
 
 float FLOAT_00448b4c = 5.0f;
 
+// Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CFightLock_SE::_Heuristic_Danger()
 {
 	CActorFighter* pActor;
@@ -18404,6 +18524,7 @@ void CBehaviourHero::Begin(CActor* pOwner, int newState, int newAnimationType)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CBehaviourHero::End(int newBehaviourId)
 {
 	this->pHero = (CActorHeroPrivate*)0x0;
@@ -18411,6 +18532,7 @@ void CBehaviourHero::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
 void CBehaviourHero::SetInitialState()
 {
 	this->pHero->SetInitialState();

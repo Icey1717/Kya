@@ -88,6 +88,7 @@ bool edDebugMenuIsDisplayed(void)
 	return p_Var1 != (_eddebug_module*)0x0;
 }
 
+// Should be in: D:/Projects/b-witch/screenshot.cpp
 void ToggleCameraHack(void)
 {
 	CCameraManager* pCameraManager;

@@ -55,8 +55,8 @@ float CCameraFixe::GetAngleGamma()
 	return this->angleGamma;
 }
 
+// Should be in: D:/Projects/b-witch/CameraFixe.h
 void CCameraFixe::SetAngleGamma(float angle)
 {
 	this->angleGamma = angle;
 }
-

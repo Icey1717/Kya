@@ -107,6 +107,7 @@ bool Install(edCTextFont* pFont)
 
 int g_iMaxTextIconEntryCount_0044916c = 0x26;
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextFont.cpp
 bool edTextInstallFont(edCTextFont* pFontData)
 {
 	bool bInstallSuccess;
@@ -120,6 +121,7 @@ bool edTextInstallFont(edCTextFont* pFontData)
 	return bInstallSuccess;
 }
 
+// Should be in: D:/projects/EdenLib/edText/sources/edTextInit.cpp
 bool edTextInit(void)
 {
 	bool bVar1;

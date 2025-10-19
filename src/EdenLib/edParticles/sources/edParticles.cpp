@@ -2481,6 +2481,7 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edParticles/sources/edParticles2.cpp
 void edParticlesUpdate(float time)
 {
 	int iVar1;
@@ -5810,6 +5811,7 @@ void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edParticles/sources/edParticleGenerator.cpp
 void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam)
 {
 	edF32Matrix4SetIdentityHard(&pParam->field_0x40);
@@ -5820,6 +5822,7 @@ void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edParticles/sources/edParticleEffector.cpp
 void edPartEffectorComputeMatrices(_ed_particle_effector_param* pParam)
 {
 	edF32VECTOR4 local_30;
@@ -5925,5 +5928,4 @@ void edPart_0027cd80(int param_1)
 
 	return;
 }
-
 

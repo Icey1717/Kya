@@ -334,6 +334,7 @@ void S_ELEVATOR_CUTSCENE_LIST::Create(S_ELEVATOR_CUTSCENE_LIST** ppList, ByteCod
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::CreateScene(void)
 {
 	new CScene;
@@ -357,6 +358,7 @@ void Game_Init(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::LevelLoading_Draw(void)
 {
 	CObjectManager** ppMVar1;
@@ -375,6 +377,7 @@ void CScene::LevelLoading_Draw(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::LevelLoading_Begin(void)
 {
 	Timer* pTimeController;
@@ -396,6 +399,7 @@ void CScene::LevelLoading_Begin(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 bool CScene::LevelLoading_Manage()
 {
 	bool bVar1;
@@ -417,6 +421,7 @@ bool CScene::LevelLoading_Manage()
 	return bVar3;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::LevelLoading_End(void)
 {
 	CObjectManager** ppMVar1;
@@ -434,6 +439,7 @@ void CScene::LevelLoading_End(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Install(void)
 {
 	CObjectManager** ppMVar1;
@@ -452,6 +458,7 @@ void CScene::Level_Install(void)
 }
 
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_PauseChange(int bPaused)
 {
 	CObjectManager** ppMVar1;
@@ -493,6 +500,7 @@ void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Init()
 {
 	undefined4* puVar1;
@@ -640,6 +648,7 @@ void CScene::SetState(int state)
 	}
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::HandleCurState()
 {
 	HandleFogAndClippingSettings();
@@ -691,6 +700,7 @@ void CScene::HandleCurState()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_CheckpointReset(void)
 {
 	S_STREAM_FOG_DEF* pSVar1;
@@ -747,6 +757,7 @@ void CScene::InitiateCheckpointReset(int bFadeOut)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_SaveContext()
 {
 	CObjectManager** ppManager;
@@ -766,6 +777,7 @@ void CScene::Level_SaveContext()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_LoadContext()
 {
 	CObjectManager** ppManager;
@@ -784,6 +796,7 @@ void CScene::Level_LoadContext()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Term(void)
 {
 	FxFogProp* pFVar2;
@@ -845,11 +858,13 @@ void CScene::Level_Term(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Reset()
 {
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Manage()
 {
 	CObjectManager** ppManager;
@@ -908,6 +923,7 @@ void CScene::Level_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_Draw(void)
 {
 	CObjectManager** ppManager;
@@ -1165,6 +1181,7 @@ void _rgba::LerpRGBA(float alpha, uint src, uint dst)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::HandleFogAndClippingSettings()
 {
 	S_STREAM_FOG_DEF* pSVar1;
@@ -1347,6 +1364,7 @@ void CScene::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Scene.h
 void* CScene::GetManager(MANAGER_TYPE type)
 {
 	CObjectManager* pManager = ptable.aManagers[type];
@@ -1365,11 +1383,13 @@ ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)
 	return CScene::_scene_handleA;
 }
 
+// Should be in: D:/Projects/b-witch/Audio.cpp
 void CAudioManager::PlayCombatMusic()
 {
 	IMPLEMENTATION_GUARD_AUDIO();
 }
 
+// Should be in: D:/Projects/b-witch/Audio.cpp
 void CAudioManager::StopCombatMusic()
 {
 	IMPLEMENTATION_GUARD_AUDIO();

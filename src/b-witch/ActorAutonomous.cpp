@@ -143,6 +143,7 @@ CDynamicExt::CDynamicExt()
 	this->field_0x8 = 0.0f;
 }
 
+// Should be in: D:/Projects/b-witch/Dynamic.cpp
 void CDynamicExt::ClearLocalData()
 {
 	Timer* pTVar1;
@@ -439,6 +440,7 @@ void CActorAutonomous::SetLookingAtOn(float param_1)
 	IMPLEMENTATION_GUARD_LOG();
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomous.h
 void CActorAutonomous::SetLookingAtOn()
 {
 	this->SetLookingAtOn(0.0f);
@@ -1620,6 +1622,7 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CActorAutonomous::SV_AUT_PathfindingEnd()
 {
 	if (this->GetPathfinderClient() != (CPathFinderClient*)0x0) {
@@ -1643,6 +1646,7 @@ bool CActorAutonomous::SV_AUT_CanMoveTo(edF32VECTOR4* v0)
 	return bCanMoveTo;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomous.h
 void CActorAutonomous::LifeRestore()
 {
 	ACTOR_LOG(LogLevel::Info, "CActorAutonomous::LifeRestore Restoring life to max {}", GetLifeInterfaceOther()->GetValueMax());
@@ -1650,6 +1654,7 @@ void CActorAutonomous::LifeRestore()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomous.h
 void CActorAutonomous::LifeAnnihilate()
 {
 	ACTOR_LOG(LogLevel::Info, "CActorAutonomous::LifeAnnihilate Setting life to 0.0f");

@@ -9,6 +9,7 @@
 
 CLanguageManager* g_LocalizationManager_00449744 = (CLanguageManager*)0x0;
 
+// Should be in: D:/Projects/b-witch/LanguageManager.cpp
 CLanguageManager* CLanguageManager::GetLanguageManager()
 {
 	return g_LocalizationManager_00449744;
@@ -21,6 +22,7 @@ CLanguageManager::CLanguageManager()
 
 char* sz_GAMENAME_004349a8 = "GAMENAME";
 
+// Should be in: D:/Projects/b-witch/LanguageManager.cpp
 void CLanguageManager::Game_Init()
 {
 	char* pcVar1;
@@ -32,6 +34,7 @@ void CLanguageManager::Game_Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.cpp
 void CLanguageManager::Game_Term()
 {
 	IMPLEMENTATION_GUARD();
@@ -39,6 +42,7 @@ void CLanguageManager::Game_Term()
 
 char* sz_LevelTextSuffix_004349a0 = "_xx.bin";
 
+// Should be in: D:/Projects/b-witch/LanguageManager.cpp
 void CLanguageManager::Level_Init()
 {
 	int iVar1;
@@ -55,6 +59,7 @@ void CLanguageManager::Level_Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.cpp
 void CLanguageManager::Level_Term()
 {
 	this->levelText.select_language((edCBankBufferEntry*)0x0, (char*)0x0, AUTO);
@@ -66,31 +71,37 @@ void CLanguageManager::Level_AddAll(struct ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_ClearAll()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_Manage()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_ManagePaused()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_Draw()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_Reset()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_CheckpointReset()
 {
 	return;
@@ -106,11 +117,13 @@ void CLanguageManager::Level_PauseChange(bool bPaused)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_SaveContext()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LanguageManager.h
 void CLanguageManager::Level_LoadContext()
 {
 	return;

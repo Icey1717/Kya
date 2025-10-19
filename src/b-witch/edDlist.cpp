@@ -124,6 +124,7 @@ edSysHandler3D ed3DHandlers;
 _rgba gCurColor[4];
 _rgba* gCurColor_SPR = gCurColor;
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSystem.c
 void edDListInitMemory(void)
 {
 	uint size;
@@ -312,6 +313,7 @@ struct ed_3d_extra_stuff_param {
 
 int gNbToPix = 0;
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListManage3D.c
 void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 {
 	ushort dataType;
@@ -403,6 +405,7 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListManage.c
 void edDListSwapList(void)
 {
 	DisplayList* pDVar1;
@@ -478,6 +481,7 @@ edpkt_data gPKTStrip[0xa];
 
 #define PKT_STRIP_ADDR_MARKER 0x0fddffdd
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDList.c
 void edDListInitStripPKT(void)
 {
 	gPKTStrip[0].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
@@ -631,6 +635,7 @@ void edDlistFrameBufMaterialInit(void)
 
 ed_3d_hierarchy gCurUnitHierachy;
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDList.c
 void edDListInit(void)
 {
 	DisplayList** pDVar1;
@@ -738,6 +743,7 @@ void edDListLoadMatrix(edF32MATRIX4* m0)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListBegin.c
 void edDListPatchGifTag2D(void)
 {
 	edpkt_data* pRVar1;
@@ -780,6 +786,7 @@ void edDListBlendSet(uint bAlphaBlendEnable)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSetStates.c
 void edDListBlendFunc50(void)
 {
 	edDListBlendSet(1);
@@ -976,6 +983,7 @@ void edDListAlphaBlend(uint a, uint b, uint c, uint d, uint fix)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSetStates.c
 void edDListBlendFuncNormal(void)
 {
 	edDListBlendSet(1);
@@ -998,6 +1006,7 @@ void edDListBlendFunc_002ca830(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSetStates.c
 void edDListSetActiveViewPort(ed_viewport* pViewport)
 {
 	if (gbInsideBegin == false) {
@@ -1124,6 +1133,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, ed_g
 }
 #endif
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListMaterial.c
 void edDListUseMaterial(edDList_material* pMaterialInfo)
 {
 	edpkt_data* pRVar1;
@@ -1428,6 +1438,7 @@ void edDListBegin2D(ulong mode)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListBegin.c
 void edDListPatchGifTag3D(void)
 {
 	edpkt_data* pRVar1;
@@ -2487,6 +2498,7 @@ float FLOAT_ARRAY_004253a0[12] = {
 	0.0f, 0.0f, 0.0f, 1.0f
 };
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
 float edDListMatrixGetBigerScale(edF32MATRIX4* m0)
 {
 	float fVar1;
@@ -2916,6 +2928,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 	return pPkt;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListEnd.c
 void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 {
 	ed_3d_strip* pNewStrip;
@@ -2961,6 +2974,7 @@ void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListEnd.c
 void edDListEndStrip(ed_3d_strip* pStrip)
 {
 	edVertex* peVar1;
@@ -3011,6 +3025,7 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListEnd.c
 void edDListEndSprite(ed_3d_sprite* pSprite)
 {
 	ed_3d_sprite* pRenderSprite;
@@ -3066,6 +3081,7 @@ void edDListEndSprite(ed_3d_sprite* pSprite)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListEnd.c
 void edDListEnd(void)
 {
 	ushort dataType;
@@ -3585,6 +3601,7 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListMaterial.c
 bool edDListTermMaterial(edDList_material* pMaterial)
 {
 	if ((gBankMaterial[pMaterial->index].hash.number != 0) &&
@@ -3601,6 +3618,7 @@ bool edDListTermMaterial(edDList_material* pMaterial)
 	return true;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListMaterial.c
 void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial)
 {
 	if ((gBankMaterial[pMaterial->index].hash.number != 0) && (gBankMaterial[pMaterial->index].pData != 0x0)) {
@@ -3642,6 +3660,7 @@ edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, 
 	return pMaterial;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListMaterial.c
 void edDListCreateFrameBufferMaterial(edDList_material* pMaterial)
 {
 	ed_hash_code* pBankHashes;

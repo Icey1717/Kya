@@ -308,6 +308,7 @@ void CCamera::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 bool CCamera::Manage()
 {
 	bool returnVal;
@@ -685,6 +686,7 @@ CActor* CCameraExt::GetTarget()
 	return this->pActorView;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 void CCameraExt::SetTarget(CActor* pActor)
 {
 	this->pActorView = pActor;
@@ -695,6 +697,7 @@ float CCameraExt::GetDistance()
 	return this->distance;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 void CCameraExt::SetDistance(float distance)
 {
 	this->distance = distance;
@@ -716,18 +719,21 @@ float CCameraExt::GetAngleGamma()
 	return this->angles.gamma;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 void CCameraExt::SetAngleAlpha(float angle)
 {
 	(this->angles).alpha = angle;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 void CCameraExt::SetAngleBeta(float angle)
 {
 	(this->angles).beta = angle;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Camera.h
 void CCameraExt::SetAngleGamma(float angle)
 {
 	(this->angles).gamma = angle;
@@ -819,6 +825,7 @@ ECameraType CCameraDCA::GetMode()
 	return CT_DCA;
 }
 
+// Should be in: D:/Projects/b-witch/ActorDCA.h
 void CCameraDCA::Init()
 {
 	CCamera::Init();

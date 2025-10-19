@@ -147,6 +147,7 @@ edAnmManager TheAnimManager = {};
 
 #define NUM_ANIM_MATRIX_DATA 0xc0
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 void CAnimationManager::Game_Init()
 {
 	BoneData* pAVar1;
@@ -164,6 +165,7 @@ void CAnimationManager::Game_Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 void CAnimationManager::Game_Term()
 {
 	if (this->pBufferB_0x8 != (edF32MATRIX4*)0x0) {
@@ -175,12 +177,14 @@ void CAnimationManager::Game_Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 bool CAnimationManager::LevelLoading_Manage()
 {
 	Level_Manage();
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 void CAnimationManager::Level_ClearAll()
 {
 	BoneData* m0;
@@ -207,11 +211,13 @@ void CAnimationManager::Level_ClearAll()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 void CAnimationManager::Level_Manage()
 {
 	TheAnimManager.Reset();
 }
 
+// Should be in: D:/Projects/b-witch/Animation.cpp
 void CAnimationManager::Level_ManagePaused()
 {
 	Level_Manage();
@@ -617,6 +623,7 @@ char* CAnimationManager::ProfileGetName()
 	return "Anims  ";
 }
 
+// Should be in: D:/Projects/b-witch/Animation.h
 void CAnimationManager::Level_Term()
 {
 	return;

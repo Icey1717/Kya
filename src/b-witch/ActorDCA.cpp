@@ -638,6 +638,7 @@ void CFireShot::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FireShot.cpp
 void CFireShot::Reset()
 {
 	bool bVar1;
@@ -918,6 +919,7 @@ void CActorDCA::CBhvDefault::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorDCA.h
 void CActorDCA::CBhvDefault::InitState(int newState)
 {
 	this->pOwner->BehaviourDefault_InitState(newState);

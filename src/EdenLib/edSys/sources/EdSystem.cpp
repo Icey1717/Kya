@@ -31,6 +31,7 @@ void _edSystemPrintf(int type, int eventID, char* format)
 	scePrintf(format);
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edsystem.h
 void edSystemBreak(void)
 {
 	trap(0);
@@ -93,6 +94,7 @@ bool _edSystemInit(int argc, char** argv)
 	return bSuccess;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 void _edSystemTerm()
 {
 	exit(0);

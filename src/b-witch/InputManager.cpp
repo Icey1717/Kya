@@ -260,11 +260,13 @@ RouteEntry PlayerInputConfig_DevicesList[10] = {
 	{ 0x000, "" },
 };
 
+// Should be in: D:/Projects/b-witch/PlayerInputConfig.cpp
 RouteEntry* PlayerInputConfig_GetDevicesList(void)
 {
 	return PlayerInputConfig_DevicesList;
 }
 
+// Should be in: D:/Projects/b-witch/PlayerInput.cpp
 void CPlayerInput::ScanPorts()
 {
 	RouteEntry* pCurrentPlayerInputDevice;
@@ -343,6 +345,7 @@ void CPlayerInput::ScanPorts()
 }
 
 
+// Should be in: D:/Projects/b-witch/PlayerInput.cpp
 bool CPlayerInput::SoftReset()
 {
 	bool bVar1;
@@ -431,6 +434,7 @@ CPlayerInput* GetPlayerInput(int playerId)
 	return pPlayerInput;
 }
 
+// Should be in: D:/Projects/b-witch/PlayerInput.cpp
 void CPlayerInput::ComputeForce()
 {
 	CCameraManager* pCameraManager;
@@ -521,6 +525,7 @@ void CPlayerInput::ComputeForce()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PlayerInput.cpp
 void CPlayerInput::UpdateOne(float delta)
 {
 	bool bVar1;
@@ -927,6 +932,7 @@ void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PlayerInput.cpp
 void CPlayerInput::Update(float delta)
 {
 	edDevReadUpdate();

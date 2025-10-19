@@ -289,6 +289,7 @@ void CFxManager::Level_AddAll(struct ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CFxManager::Level_ClearAll()
 {
 	return;
@@ -326,6 +327,7 @@ void CFxManager::Level_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CFxManager::Level_ManagePaused()
 {
 	return;
@@ -738,6 +740,7 @@ void CNewFx::Start(float param_1, float param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CNewFx::Pause()
 {
 	this->flags = this->flags | FX_FLAG_PAUSED;
@@ -745,6 +748,7 @@ void CNewFx::Pause()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CNewFx::Resume()
 {
 	this->flags = this->flags & ~FX_FLAG_PAUSED;
@@ -752,6 +756,7 @@ void CNewFx::Resume()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CNewFx::Hide()
 {
 	this->flags = this->flags | FX_FLAG_HIDDEN;
@@ -759,6 +764,7 @@ void CNewFx::Hide()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CNewFx::Reveal()
 {
 	this->flags = this->flags & ~FX_FLAG_HIDDEN;
@@ -766,6 +772,7 @@ void CNewFx::Reveal()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Fx.h
 void CNewFx::Stop(float param_1)
 {
 	this->flags = this->flags | 0x20010;

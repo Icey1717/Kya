@@ -28,6 +28,7 @@ void _edDevScanPorts(uint flags)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDev/Sources/ps2/_edDevInitRoot.cpp
 void _edDevInitRoot(void)
 {
 	uint uVar1;

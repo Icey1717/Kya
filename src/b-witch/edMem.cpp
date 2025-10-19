@@ -135,6 +135,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	return freeBytes;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemTools.cpp
 void* edMemGetLocalAddress(void* pAlloc)
 {
 	S_MAIN_MEMORY_HEADER* pHeap;
@@ -244,6 +245,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 	return pNewAllocation;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemAlloc.cpp
 void edMemFree(void* pAlloc)
 {
 	S_MAIN_MEMORY_HEADER* peVar1;
@@ -631,6 +633,7 @@ void* edmemWorkAllocForce(S_MAIN_MEMORY_HEADER* param_1, void* addr)
 	return NULL;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemAllocWork.cpp
 void edmemWorkFree(S_MAIN_MEMORY_HEADER* pBlockToFree)
 {
 	bool bHasFlag_0x4;
@@ -904,6 +907,7 @@ void edmemFillBlock(uint* pData, int numWords, int isFree)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemCheck.cpp
 void edmemSetReadOnly(S_MAIN_MEMORY_HEADER* pHeap)
 {
 	if ((pHeap->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
@@ -1008,6 +1012,7 @@ S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int 
 	return pNewBlock;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemHeader.cpp
 S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID)
 {
 	short sVar1;
@@ -1021,6 +1026,7 @@ S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID)
 	return MemoryMasterBlock.aBlocks + sVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemHeader.cpp
 S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 {
 	short sVar1;
@@ -1034,6 +1040,7 @@ S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 	return peVar2;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemHeader.cpp
 void edmemFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 {
 	short sVar1;
@@ -1079,6 +1086,7 @@ void edmemFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemHeader.cpp
 bool edmemMakeMaster(S_MAIN_MEMORY_HEADER* pHeap)
 {
 	bool bSuccess;
@@ -1155,6 +1163,7 @@ void edMemClearFlags(EHeap heapID, ushort flags)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 void memMemoryHeadersBlockInit(void)
 {
 	short blockIndex;
@@ -1172,6 +1181,7 @@ void memMemoryHeadersBlockInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 void memMastersInit(void)
 {
 	// Use the first 4 blocks as the first block for each heap.
@@ -1263,6 +1273,7 @@ void memMastersInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 void memHandlersInit(void)
 {
 	MemoryHandlers[0].alloc = edmemWorkAlloc;
@@ -1273,6 +1284,7 @@ void memHandlersInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 void memDebugInformationInit(void)
 {
 	return;
@@ -1290,6 +1302,7 @@ S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
 	return edVarMemWorkStart;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 void edMemInit(short nbTotalBlocks)
 {
 	MemoryMasterBlock.nbUsedBlocks = 0;
@@ -1308,27 +1321,32 @@ void edMemInit(short nbTotalBlocks)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 int edMemGetNbAlloc(void)
 {
 	return (int)MemoryMasterBlock.nbTotalBlocks - (int)MemoryMasterBlock.nbFreeBlocks;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 int edMemGetNbAllocLeft(void)
 {
 	return (int)MemoryMasterBlock.nbFreeBlocks;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 int edMemGetNbMaxAlloc(void)
 {
 	return (int)MemoryMasterBlock.nbUsedBlocks;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemLevel.cpp
 void edMemStackLevelPush(void)
 {
 	MemoryMasterBlock.stackLevel = MemoryMasterBlock.stackLevel + 1;
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdMemInit.cpp
 bool edMemTerm(void)
 {
 	ushort flags;
@@ -1350,6 +1368,7 @@ bool edMemTerm(void)
 	return bSuccess;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdSystem.cpp
 void* edSystemFastRamGetAddr(void)
 {
 #ifndef PLATFORM_PS2
@@ -1377,6 +1396,7 @@ void* Allocate(long amount)
 	return pvVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 void _edSystemInitVideoHandlers(void)
 {
 	MemoryHandlers[1].alloc = edmemWorkAlloc;

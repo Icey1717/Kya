@@ -60,6 +60,7 @@ void CPathFollowReader::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PathFollow.cpp
 void CPathFollowReader::Reset()
 {
 	this->splinePointIndex = 0;
@@ -67,6 +68,7 @@ void CPathFollowReader::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PathFollow.cpp
 void CPathFollowReader::NextWayPoint()
 {
 	bool bVar1;
@@ -1289,6 +1291,7 @@ uint CActor::IsLookingAt()
 	return this->flags & 0x2000;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 void CActor::SetLookingAtOn()
 {
 	this->flags = this->flags | 0x2000;
@@ -1296,6 +1299,7 @@ void CActor::SetLookingAtOn()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 void CActor::SetLookingAtOff()
 {
 	this->flags = this->flags & 0xffffdfff;
@@ -1303,11 +1307,13 @@ void CActor::SetLookingAtOff()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 void CActor::UpdateLookingAt()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 void CActor::UpdateAnimEffects()
 {
 	CBehaviour* pBehaviour;
@@ -1320,6 +1326,7 @@ void CActor::UpdateAnimEffects()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 void CActor::UpdatePostAnimEffects()
 {
 	return;
@@ -1868,6 +1875,7 @@ bool CActor::SV_IsOrientation2DInRange(float param_1, edF32VECTOR4* param_3)
 	return bVar1;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 bool CActor::SV_IAmInFrontOfThisActor(CActor* pOther)
 {
 	return 0.0f <= ((this->currentLocation).x - (pOther->currentLocation).x) * (pOther->rotationQuat).x +
@@ -1904,6 +1912,7 @@ void gClusterCallback_NearestActor(CActor* pActor, void* pParams)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 CActor* CActor::SV_GetNearestActor(float radius)
 {
 	edF32VECTOR4 local_20;
@@ -1921,6 +1930,7 @@ CActor* CActor::SV_GetNearestActor(float radius)
 	return local_10.pNearestActor;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
 {
 	int inAnimType;
@@ -2080,6 +2090,7 @@ void CActor::SV_SwitchToModel(CActorAlternateModel* pAlternateModel, int meshInd
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 int CActor::SV_InstallMaterialId(int materialId)
 {
 	int index;
@@ -2093,6 +2104,7 @@ int CActor::SV_InstallMaterialId(int materialId)
 	return index;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_InstanciateMaterialBank()
 {
 	int size;
@@ -2753,6 +2765,7 @@ void CActor::LoadContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 bool CBehaviour::InitDlistPatchable(int patchId)
 {
 	return false;
@@ -3566,6 +3579,7 @@ CBehaviour* CActor::BuildBehaviour(int behaviourType)
 	return pCVar1;
 }
 
+// Should be in: D:/Projects/b-witch/Actor.h
 void CBehaviourStand::Init(CActor* pOwner)
 {
 	this->pOwner = pOwner;
@@ -4469,6 +4483,7 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 	return bSuccess;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_GetGroundPosition(edF32VECTOR4* v0)
 {
 	CCollision* pCol;
@@ -4616,6 +4631,7 @@ void CActor::SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int par
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0)
 {
 	S_CARRY_ACTOR_ENTRY* peVar1;
@@ -4905,6 +4921,7 @@ void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int bCheckCollis
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0)
 {
 	CActor* pCVar1;
@@ -5406,6 +5423,7 @@ CActor* CActorsTable::Remove(CActor* pActor)
 	return pRemovedActor;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActorsTable::SortByClassPriority()
 {
 	int iVar1;
@@ -5460,6 +5478,7 @@ void CBehaviourInactive::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/BehaviourInactive.cpp
 void CBehaviourInactive::Init(CActor* pOwner)
 {
 	this->pOwner = pOwner;
@@ -5501,6 +5520,7 @@ void CBehaviourInactive::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/BehaviourInactive.cpp
 void CBehaviourInactive::End(int newBehaviourId)
 {
 	CActor* pOwn;
@@ -5552,6 +5572,7 @@ void CActInstance::SetState(int newState)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.h
 void CActInstance::CheckpointReset()
 {
 	return;
@@ -5613,6 +5634,7 @@ void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* p
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::SetVisible(int bVisible)
 {
 	ed_3D_Scene* peVar1;
@@ -5638,6 +5660,7 @@ void CActInstance::SetVisible(int bVisible)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::Reset()
 {
 	this->currentPosition = this->basePosition;
@@ -5658,6 +5681,7 @@ void CActInstance::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::SetAlive(int bAlive)
 {
 	ed_3D_Scene* pScene;
@@ -5690,6 +5714,7 @@ float CActInstance::DistSquared(edF32VECTOR4* pPosition)
 	return fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::ComputeDistanceToKim(edF32VECTOR4* pPosition)
 {
 	edF32VECTOR4* pHeroPosition;
@@ -5709,6 +5734,7 @@ void CActInstance::ComputeDistanceToKim(edF32VECTOR4* pPosition)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::State_GotoKim()
 {
 	ed_3d_hierarchy* peVar1;
@@ -5749,6 +5775,7 @@ void CActInstance::State_GotoKim()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::State_Wait()
 {
 	CActorHero* pCVar1;
@@ -5845,6 +5872,7 @@ void CActInstance::SetPosition(edF32VECTOR4* pPosition)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
 void CActInstance::Term()
 {
 	if ((this->flags & 0x80) != 0) {
@@ -5854,5 +5882,4 @@ void CActInstance::Term()
 
 	return;
 }
-
 

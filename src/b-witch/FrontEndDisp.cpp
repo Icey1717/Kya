@@ -277,6 +277,7 @@ void CFrontendDisplay::Level_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendDisp.h
 void CFrontendDisplay::Level_ManagePaused()
 {
 	this->Level_Manage();

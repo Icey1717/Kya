@@ -485,6 +485,7 @@ void CLifeBase::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CLifeBase::Reset()
 {
 	this->value = this->maxValue;

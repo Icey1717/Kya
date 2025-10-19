@@ -556,6 +556,7 @@ void CActorWolfen::Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::Manage()
 {
 	bool bVar1;
@@ -1128,6 +1129,7 @@ bool CActorWolfen::IsMakingNoise()
 	return bVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen.h
 CVision* CActorWolfen::GetVision()
 {
 	return &vision;
@@ -1619,6 +1621,7 @@ bool CActorWolfen::Func_0x1ac()
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::_Std_OnFightActionSuccess()
 {
 	_msg_fight_action_success_params params;
@@ -1630,11 +1633,13 @@ void CActorWolfen::_Std_OnFightActionSuccess()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 CActorFighter* CActorWolfen::_Std_GetCaughtAdversary()
 {
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::_StateFighterRun(CActorsTable* pTable)
 {
 	int collideWithBoxState;
@@ -1651,6 +1656,7 @@ void CActorWolfen::_StateFighterRun(CActorsTable* pTable)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::_BeginFighterHold()
 {
 	IMPLEMENTATION_GUARD();
@@ -1751,6 +1757,7 @@ void CActorWolfen::AcquireAdversary()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen.h
 void CActorWolfen::SetRunSpeed(float param_1)
 {
 	this->runSpeed = param_1;
@@ -2180,6 +2187,7 @@ void CActorWolfen::BehaviourStand_Manage(CBehaviourWolfen* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CActorWolfen::BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour)
 {
 	CActorWolfen* pCVar1;
@@ -2289,6 +2297,7 @@ void CActorWolfen::BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CActorWolfen::BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour)
 {
 	CAnimation* pCVar1;
@@ -2437,6 +2446,7 @@ void CActorWolfen::BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CActorWolfen::BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour)
 {
 	CAnimation* pCVar1;
@@ -2563,6 +2573,7 @@ void CActorWolfen::BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* 
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Track.cpp
 void CActorWolfen::BehaviourTrack_Manage(CBehaviourTrack* pBehaviour)
 {
 	int iVar1;
@@ -2646,6 +2657,7 @@ void CActorWolfen::BehaviourTrack_Manage(CBehaviourTrack* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CActorWolfen::BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour)
 {
 	CActorWolfen* pCVar1;
@@ -2820,6 +2832,7 @@ void CActorWolfen::BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CActorWolfen::BehaviourDCA_Manage(CBehaviourDCA* pBehaviour)
 {
 	CActorWolfen* pCVar1;
@@ -2954,6 +2967,7 @@ void CActorWolfen::BehaviourDCA_Manage(CBehaviourDCA* pBehaviour)
 	PostManageD(pBehaviour);
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour)
 {
 	int iVar1;
@@ -4098,6 +4112,7 @@ void CActorWolfen::StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CActorWolfen::StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour)
 {
 	float fVar1;
@@ -4352,6 +4367,7 @@ void CActorWolfen::StateTrackCheckPosition(CBehaviourWolfen* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Track.cpp
 void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 {
 	CActorFighter* pTarget;
@@ -4478,6 +4494,7 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Track.cpp
 void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 {
 	CActorFighter* pTarget;
@@ -4759,6 +4776,7 @@ void CActorWolfen::StateExorcizeAwake(CBehaviourExorcism* pBehaviour)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour)
 {
 	CActorCommander* pCVar1;
@@ -4808,6 +4826,7 @@ void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Track.cpp
 int CActorWolfen::SV_WLF_CheckBoxOnWay(CActorsTable* pTable)
 {
 	int nextState;
@@ -5374,6 +5393,7 @@ void CActorWolfen::InternState_WolfenLocate()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::TermFightAction()
 {
 	bool bVar1;
@@ -5402,6 +5422,7 @@ bool CActorWolfen::CheckLost()
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::CheckValidPatterns(CRndChooser<CFightIA::WFIGS_Chain>* pRndChooser)
 {
 	bool bVar1;
@@ -5564,6 +5585,7 @@ bool CActorWolfen::RequestFightAction(int index)
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 float CActorWolfen::SemaphoreEval()
 {
 	CBehaviourFighterWolfen* pCVar1;
@@ -5593,6 +5615,7 @@ float CActorWolfen::SemaphoreEval()
 	return fVar5;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 bool CActorWolfen::SemaphoreKeepIt()
 {
 	CActorWolfen* pCVar1;
@@ -5640,6 +5663,7 @@ bool CActorWolfen::SemaphoreKeepIt()
 
 
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::EnableFightAction()
 {
 	if (this->curBehaviourId == 3) {
@@ -5664,6 +5688,7 @@ void CActorWolfen::EnableFightAction()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::DisableFightAction()
 {
 	CBehaviourFighterWolfen* pCVar3;
@@ -5910,6 +5935,7 @@ void CBehaviourWatchDog::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWatchDog::Init(CActor* pOwner)
 {
 	CWayPoint* pCVar1;
@@ -5949,6 +5975,7 @@ void CBehaviourWatchDog::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWatchDog::Manage()
 {
 	this->pCameraStreamEvent->Manage(this->pOwner);
@@ -5983,6 +6010,7 @@ void CBehaviourWatchDog::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWatchDog::End(int newBehaviourId)
 {
 	CActorWolfen* pActor;
@@ -6022,6 +6050,7 @@ void CBehaviourWolfen::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWolfen::Init(CActor* pOwner)
 {
 
@@ -6033,6 +6062,7 @@ void CBehaviourWolfen::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWolfen::End(int newBehaviourId)
 {	
 	this->pOwner->SV_AUT_PathfindingEnd();
@@ -6040,6 +6070,7 @@ void CBehaviourWolfen::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWolfen::InitState(int newState)
 {
 	CAnimation* pCVar1;
@@ -6500,6 +6531,7 @@ void CBehaviourWolfen::CheckDetection()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourWolfen::CheckDetection_Intruder()
 {
 	if ((this->pOwner->GetStateWolfenFlags(this->pOwner->actorState) & 1) == 0) {
@@ -6665,6 +6697,7 @@ void CBehaviourTrack::Create(ByteCode* pByteCode)
 	GetNotificationTargetArray()->field_0x0 = pByteCode->GetF32();
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Track.cpp
 void CBehaviourTrack::Manage()
 {
 	this->pOwner->BehaviourTrack_Manage(this);
@@ -6761,6 +6794,7 @@ void CBehaviourWolfenWeapon::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourWolfenWeapon::End(int newBehaviourId)
 {
 	this->pOwner->flags = this->pOwner->flags & 0xfffffbff;
@@ -6778,6 +6812,7 @@ void CBehaviourTrackWeapon::Create(ByteCode* pByteCode)
 	GetNotificationTargetArray()->field_0x0 = pByteCode->GetF32();
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourTrackWeapon::Init(CActor* pOwner)
 {
 	CBehaviourTrackWeaponStand::Init(pOwner);
@@ -6785,6 +6820,7 @@ void CBehaviourTrackWeapon::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourTrackWeapon::Manage()
 {
 	int iVar1;
@@ -6923,6 +6959,7 @@ void CBehaviourTrackWeaponStand::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourTrackWeaponStand::Init(CActor* pOwner)
 {
 	CBehaviourWolfen::Init(pOwner);
@@ -6951,6 +6988,7 @@ void CBehaviourTrackWeaponStand::Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourTrackWeaponStand::Manage()
 {
 	int iVar1;
@@ -7090,6 +7128,7 @@ void CBehaviourTrackWeaponStand::Begin(CActor* pOwner, int newState, int newAnim
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CBehaviourTrackWeaponStand::End(int newBehaviourId)
 {
 	this->pOwner->flags = this->pOwner->flags & 0xfffffbff;
@@ -7322,6 +7361,7 @@ void CBehaviourLost::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourLost::Manage()
 {
 	this->pOwner->BehaviourStand_Manage(this);
@@ -7383,6 +7423,7 @@ float _Rule_Agressivity(CActorWolfen* pWolfen)
 	return fVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::Init(CActor* pOwner)
 {
 	CActorWolfen* pWolfen;
@@ -7429,6 +7470,7 @@ void CBehaviourFighterWolfen::Init(CActor* pOwner)
 
 CActorWolfen* gWolfenPtr;
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::Manage()
 {
 	CAnimation* pCVar1;
@@ -7575,6 +7617,7 @@ LAB_001f96e0:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::Draw()
 {
 	return;
@@ -7640,6 +7683,7 @@ void CBehaviourFighterWolfen::Begin(CActor* pOwner, int newState, int newAnimati
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::End(int newBehaviourId)
 {
 	CActorWolfen* pWolfen;
@@ -7673,6 +7717,7 @@ void CBehaviourFighterWolfen::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::InitState(int newState)
 {
 	CActorWolfen* pWolfen;
@@ -7820,6 +7865,7 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 	return iVar6;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::ManageExit()
 {
 	StateConfig* pSVar1;
@@ -7906,6 +7952,7 @@ void CBehaviourFighterWolfen::InputPunch(uint cmd)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::FlushInput()
 {
 	float fVar1;
@@ -7946,6 +7993,7 @@ void CBehaviourFighterWolfen::FlushInput()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::UpdateFightContext(CFightContext* pFightContext)
 {
 	byte bVar1;
@@ -8152,6 +8200,7 @@ void CBehaviourFighterWolfen::ManageWFigState(uint commandId)
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 bool CBehaviourFighterWolfen::TreatContext(CFightContext* pFightContext)
 {
 	CActorWolfen* pCVar1;
@@ -8800,6 +8849,7 @@ void CBehaviourFighterWolfen::ValidateCommand()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::PickCommand()
 {
 	CActorWolfen* pWolfen;
@@ -9318,6 +9368,7 @@ void CActorWolfenKnowledge::Init(int memMode, uint param_3, uint param_4, uint n
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Knowledge.cpp
 void CActorWolfenKnowledge::Reset()
 {
 	uint uVar2;
@@ -9344,6 +9395,7 @@ void CActorWolfenKnowledge::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Knowledge.cpp
 void CActorWolfenKnowledge::Term()
 {
 	uint uVar1;
@@ -9484,6 +9536,7 @@ int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
 	return this->field_0x1c;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Knowledge.cpp
 void CActorWolfenKnowledge::EndMemory()
 {
 	CActorWolfenKnowledge_0x14* piVar1;
@@ -9593,6 +9646,7 @@ void CBehaviourGuardArea::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourGuardArea::Init(CActor* pOwner)
 {
 	int iVar3;
@@ -9613,6 +9667,7 @@ void CBehaviourGuardArea::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourGuardArea::Manage()
 {
 	this->pCameraStreamEvent->Manage(this->pOwner);
@@ -9640,6 +9695,7 @@ void CBehaviourGuardArea::Begin(CActor* pOwner, int newState, int newAnimationTy
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourGuardArea::End(int newBehaviourId)
 {
 	CActorWolfen* pWolfen;
@@ -9765,6 +9821,7 @@ void CBehaviourExorcism::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::Init(CActor* pOwner)
 {
 	edF32VECTOR4* peVar1;
@@ -9837,6 +9894,7 @@ void CBehaviourExorcism::Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::Manage()
 {
 	CNewFx* pFx;
@@ -9908,6 +9966,7 @@ void CBehaviourExorcism::Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::Draw()
 {
 	float fVar1;
@@ -9974,6 +10033,7 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::End(int newBehaviourId)
 {
 	CCollision* pCVar1;
@@ -10003,6 +10063,7 @@ void CBehaviourExorcism::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::InitState(int newState)
 {
 	CNewFx* pFx;
@@ -10165,6 +10226,7 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	return 0;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourExorcism::ChangeManageState(int state)
 {
 	CNewFx* pFx;
@@ -10239,6 +10301,7 @@ void CBehaviourDCA::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourDCA::Init(CActor* pOwner)
 {
 	edF32VECTOR4* peVar1;
@@ -10260,6 +10323,7 @@ void CBehaviourDCA::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourDCA::Manage()
 {
 	this->pOwner->BehaviourDCA_Manage(this);
@@ -10281,6 +10345,7 @@ void CBehaviourDCA::Begin(CActor* pOwner, int newState, int newAnimationType)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourDCA::End(int newBehaviourId)
 {
 	CBehaviourWolfen::End(newBehaviourId);
@@ -10290,6 +10355,7 @@ void CBehaviourDCA::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourDCA::InitState(int newState)
 {
 	CActorWolfen* pWolfen;
@@ -10527,6 +10593,7 @@ bool CBehaviourDCA::CanShoot()
 	return this->shootCooldown < Timer::GetTimer()->scaledTotalTime - this->lastShootTime;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourDCA::HasShoot()
 {
 	this->lastShootTime = Timer::GetTimer()->scaledTotalTime;
@@ -10545,6 +10612,7 @@ void CBehaviourAvoid::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourAvoid::Manage()
 {
 	IMPLEMENTATION_GUARD();
@@ -10575,6 +10643,7 @@ void CBehaviourAvoid::Begin(CActor* pOwner, int newState, int newAnimationType)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorWolfen_Std.cpp
 void CBehaviourAvoid::End(int newBehaviourId)
 {
 	CCollision* pCVar1;

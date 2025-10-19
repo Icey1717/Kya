@@ -279,11 +279,13 @@ void CLightManager::Level_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LightManager.h
 void CLightManager::Level_ManagePaused()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/LightManager.h
 void CLightManager::Level_Draw()
 {
 	return;
@@ -2271,6 +2273,7 @@ CLight::CLight()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/light.cpp
 void CLight::Init()
 {
 	bool bVar1;
@@ -2357,6 +2360,7 @@ void CLight::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/light.cpp
 void CLight::Activate()
 {
 	CScene::ptable.g_LightManager_004516b0->Activate(this, -2);

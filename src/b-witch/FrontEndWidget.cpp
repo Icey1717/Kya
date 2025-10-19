@@ -40,6 +40,7 @@ CInterface* CWidget::GetInterface()
 	return this->pInterface;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendWidget.h
 float CWidget::GetPopupTime()
 {
 	return this->popupTime;
@@ -56,6 +57,7 @@ void CWidget::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendWidget.h
 void CWidget::CheckpointReset()
 {
 	this->posState = 1;
@@ -78,6 +80,7 @@ void CWidget::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendWidget.h
 void CWidget::Term()
 {
 	SetInterface((CInterface*)0x0);
@@ -111,6 +114,7 @@ bool CWidget::UpdatePos(float time)
 	return bVar2;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendWidget.h
 void CWidget::UpdatePos_StateWait(float time)
 {
 	return;
@@ -159,6 +163,7 @@ void CWidget::Update(float time)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendWidget.h
 void CWidget::Draw()
 {
 	return;

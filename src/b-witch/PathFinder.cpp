@@ -76,6 +76,7 @@ CPathDynamic* CAstarMemBank::NewPathDynamic(edF32VECTOR4* pStart, edF32VECTOR4* 
 	return pDynamicPath;
 }
 
+// Should be in: D:/Projects/b-witch/PathBank.cpp
 void CAstarMemBank::RecycleNodeFromNodeBank(CPathNode* pNewPathNode)
 {
 	pNewPathNode->Reset();
@@ -87,6 +88,7 @@ void CAstarMemBank::RecycleNodeFromNodeBank(CPathNode* pNewPathNode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PathBank.cpp
 CPathNode* CAstarMemBank::GetFreeNodeFromNodeBank()
 {
 	CPathNode* pFreeNode;
@@ -804,6 +806,7 @@ CPriorityQueue::CPriorityQueue()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PriorityQueue.cpp
 void CPriorityQueue::Clear()
 {
 	for (int i = 0; i < 0x100; i++) {
@@ -815,6 +818,7 @@ void CPriorityQueue::Clear()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PriorityQueue.cpp
 void CPriorityQueue::PushPriorityQueue(CPathNode* pPathNode)
 {
 	CPathNode* pCVar1;
@@ -851,6 +855,7 @@ void CPriorityQueue::PushPriorityQueue(CPathNode* pPathNode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PriorityQueue.cpp
 CPathNode* CPriorityQueue::PopPriorityQueue()
 {
 	int iVar1;
@@ -872,6 +877,7 @@ CPathNode* CPriorityQueue::PopPriorityQueue()
 	return pCVar2;
 }
 
+// Should be in: D:/Projects/b-witch/PriorityQueue.cpp
 void CPriorityQueue::UpdateNodeOnPriorityQueue(CPathNode* pNode)
 {
 	int iVar1;

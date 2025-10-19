@@ -104,6 +104,7 @@ void CActorCommander::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::Init()
 {
 	CActorManager* pCVar1;
@@ -142,6 +143,7 @@ void CActorCommander::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::Term()
 {
 	CTeamElt* pCVar1;
@@ -165,6 +167,7 @@ void CActorCommander::Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::Manage()
 {
 	int iVar1;
@@ -224,6 +227,7 @@ void CActorCommander::Manage()
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::Reset()
 {
 	CActor::Reset();
@@ -232,6 +236,7 @@ void CActorCommander::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 CBehaviour* CActorCommander::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
@@ -394,6 +399,7 @@ int CActorCommander::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	return iVar4;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::ClearLocalData()
 {
 	float fVar1;
@@ -472,6 +478,7 @@ bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 	return bSuccess;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::EndFightIntruder(CActorFighter* pIntruder)
 {
 	this->squad.RemoveFighter(GetTeamElt(pIntruder));
@@ -503,6 +510,7 @@ void CActorCommander::RemoveTracked()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 CActorFighter* CActorCommander::GetIntruder()
 {
 	CActor* pIntruder;
@@ -543,6 +551,7 @@ int CActorCommander::CheckGuardArea(edF32VECTOR4* v0)
 	return edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, v0, 0);
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::CheckExorcism()
 {
 	CMagicInterface* pMagicInterface;
@@ -590,6 +599,7 @@ void CActorCommander::CheckExorcism()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::CheckArea_IntruderDetectArea()
 {
 	bool bDetected;
@@ -645,6 +655,7 @@ void CActorCommander::CheckArea_IntruderDetectArea()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::CheckArea_IntruderGuardArea()
 {
 	bool bDetected;
@@ -700,6 +711,7 @@ void CActorCommander::CheckArea_IntruderGuardArea()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::CheckArea_SoldiersDetectArea()
 {
 	CActorFighter* pReceiver;
@@ -744,6 +756,7 @@ void CActorCommander::CheckArea_SoldiersDetectArea()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::CheckArea_SoldiersGuardArea()
 {
 	CActorFighter* pReceiver;
@@ -928,6 +941,7 @@ bool CActorCommander::FUN_001710c0()
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::_UpdateCamera()
 {
 	CCameraGame* pFightCamera;
@@ -1065,6 +1079,7 @@ void CActorCommander::_UpdateCamera()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::StateCommanderDefault()
 {
 	CActorFighter* pFirstEntry;
@@ -1182,11 +1197,13 @@ void CActorCommander::StateCommanderDefault()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 bool CActorCommander::CanContinueToFight(CActorFighter* pFighter)
 {
 	return (this->squad).eltTable.IsInList(GetTeamElt(pFighter));
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 bool CActorCommander::CanReleaseSemaphore(CActorWolfen* pWolfen)
 {
 	CBehaviourCommander* pCVar1;
@@ -1291,6 +1308,7 @@ void CActorCommander::KickIntruderFighter()
 
 
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::_UpdateSquad()
 {
 	CActorFighter* this_00;
@@ -1329,6 +1347,7 @@ LAB_00172118:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::_UpdateSequence()
 {
 	int iVar1;
@@ -1368,6 +1387,7 @@ void CActorCommander::_UpdateSequence()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CActorCommander::_UpdatePattern()
 {
 	if (this->field_0x6d0 != 0) {
@@ -1414,16 +1434,19 @@ bool CBehaviourCommander::CanReleaseSemaphore(int, CActorWolfen*)
 	return 1 < this->pOwner->squad.NbElt();
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 CActorFighter* CBehaviourCommander::GetFocus()
 {
 	return CActorHero::_gThis->pAdversary;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.h
 void CBehaviourCommander::TestSwitch()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 bool CBehaviourCommander::UpdateTeamAnim()
 {
 	CTeamElt* pCurEntry;
@@ -1485,6 +1508,7 @@ bool CBehaviourCommander::UpdateTeamAnim()
 	return bVar3;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CBehaviourCommanderDefault::Manage()
 {
 	CActorCommander* pCommander;
@@ -1544,6 +1568,7 @@ int CBehaviourCommanderDefault::InterpretMessage(CActor* pSender, int msg, void*
 	return iVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 void CBehaviourCommanderDefault::TestSwitch()
 {
 	CActorCommander* pCommander;
@@ -1594,6 +1619,7 @@ void CBehaviourCommanderDefault::TestSwitch()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorCmd.cpp
 bool CBehaviourCommanderDefault::UpdateTeamAnim()
 {
 	if (!CBehaviourCommander::UpdateTeamAnim()) {

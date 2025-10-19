@@ -19,6 +19,7 @@ void CPathManager::Level_Init()
 	}
 }
 
+// Should be in: D:/Projects/b-witch/PathManager.h
 void CPathManager::Level_Term()
 {
 	return;
@@ -70,11 +71,13 @@ void CPathManager::Level_ClearAll()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PathManager.h
 void CPathManager::Level_Manage()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/PathManager.h
 void CPathManager::Level_ManagePaused()
 {
 	return;

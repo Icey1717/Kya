@@ -356,6 +356,7 @@ int GetPowerVal(uint val)
 
 edpkt_data gOptionFlagCNT[3];
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DOptionFlag.c
 void ed3DOptionFlagCNTInit(void)
 {
 	gOptionFlagCNT[0].cmdB = 0;
@@ -404,6 +405,7 @@ edpkt_data g_stMatrixHeader;
 edpkt_data g_stVertexGIFHeader;
 edpkt_data g_stVertexSTHeader[2];
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DDMAGenerateHeaders(void)
 {
 	int iVar1;
@@ -633,11 +635,13 @@ int GetBppFromModeInVRAM(int psm)
 	return iVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DFX.c
 bool ed3DFXIsTrue(ed_g2d_layer* pLAY)
 {
 	return (pLAY->flags_0x0 & 0x7fff8000) != 0;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3D.c
 void ed3DPrepareVRAMBuf(void)
 {
 	int iVar1;
@@ -765,6 +769,7 @@ struct ed3DFXConfig {
 
 ed3DFXConfig ged3DFXConfig[16] = { 0 };
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DFX.c
 void ed3DFXClearALLFXSendedTOVRAM(void)
 {
 	uint uVar1;
@@ -781,6 +786,7 @@ void ed3DFXClearALLFXSendedTOVRAM(void)
 
 ed_3d_hierarchy ed_3d_hierarchy_0048cad0 = { 0 };
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRenderList.c
 void ed3DPrimlistMatrixBufferReset(void)
 {
 	DmaMatrixDefault = DmaMatrixBuffer;
@@ -877,6 +883,7 @@ void ed3DG2DMaterialGetLayerBitmap(ed_dma_material* pMaterial, ed_g2d_bitmap** p
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushTex.c
 void ed3DFlushTexReset(edLIST* pList)
 {
 	ed_g2d_bitmap* peVar1;
@@ -931,6 +938,7 @@ void ed3DFlushTexReset(edLIST* pList)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushTex.c
 void ed3DFlushTexPrepareDMA(edLIST* pCommandInfo)
 {
 	edpkt_data* puVar1;
@@ -954,6 +962,7 @@ void ed3DFlushTexPrepareDMA(edLIST* pCommandInfo)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlush.c
 void ed3DFlushSendDMA3D(void)
 {
 #ifdef PLATFORM_PS2
@@ -1007,6 +1016,7 @@ ed3D_SubAllocator ed3D_SubAllocator_004491b8 = { 0 };
 
 edpkt_data g_PKTHeaderRef[9] = {};
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DDMAGeneratePacketRefHeader(void)
 {
 	g_PKTHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexGIFHeader));
@@ -1048,6 +1058,7 @@ char* SubAllocate_0029ce60(int size)
 	return pcVar2;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMatrix.c
 void ed3DPKTMatrixBufferInit(void)
 {
 	g_ScratchBase_004493d0 = SubAllocate_0029ce60(ged3DConfig.matrixBufferCount * 0x380);
@@ -1061,6 +1072,7 @@ edpkt_data g_PKTSpriteHeaderRef[5] = { 0 };
 
 edpkt_data* gPKTMultiTex = NULL;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DDMAGenerateSpritePacketRefHeader(void)
 {
 	g_PKTSpriteHeaderRef[SPRITE_GIF_HEADER_INDEX].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexGIFHeader));
@@ -1150,6 +1162,7 @@ ed_dma_material* gpLastMaterial = NULL;
 int gVRAMBufferFlush = 0;
 byte gbFirstTex = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMatrix.c
 void ed3DPKTMatrixBufferFlip(void)
 {
 	gPKTMatrixCur = (edpkt_data*)g_ScratchBase_004493d0;
@@ -1208,6 +1221,7 @@ ed_dma_material* ed3DListCreateDmaMaterialNode(float z, ed_g2d_material* pMateri
 	return pMaterialNode;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlush.c
 void ed3DFlushListInit(void)
 {
 	uint uVar1;
@@ -1327,6 +1341,7 @@ ed_g2d_material gDefault_Material_Flat_Cluster = { 0 };
 ed_g2d_material gMaterial_Render_Zbuffer_Only = { 0 };
 ed_g2d_material gMaterial_Render_Zbuffer_Only_Cluster = { 0 };
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DShadowResetPrimList(void)
 {
 	edLIST* pInternalMeshTransformSpecial;
@@ -1368,6 +1383,7 @@ void ed3DShadowResetPrimList(void)
 
 int gCurSceneID = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRenderList.c
 void ed3DPrimlistInitMaterialRenderList(void)
 {
 	edLIST* peVar1;
@@ -1583,6 +1599,7 @@ void ed3DComputeSonHierarchy(void)
 
 byte BYTE_004492e8 = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DDMALoadVU1MicroCode(void)
 {
 	if (BYTE_004492e8 == 0) {
@@ -1602,6 +1619,7 @@ void ed3DDMALoadVU1MicroCode(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DVU1BufferInit(void)
 {
 	ed3DVU1BufferCur = 1;
@@ -1622,6 +1640,7 @@ void ed3DVU1BufferInit(void)
 
 int gCurFreeScene = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DClusterManager.c
 void ed3DClusterReset(void)
 {
 	//gClusterTabListCurrent = gClusterTabList;
@@ -1664,6 +1683,7 @@ void ed3DSceneCompute(int param_1, int param_2, char* param_3)
 ed_viewport* gDebugViewport = NULL;
 void* gScene_list_buffer = NULL;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyManager.c
 edLIST* ed3DHierarchyListInit(void)
 {
 	edLIST* pList;
@@ -1673,6 +1693,7 @@ edLIST* ed3DHierarchyListInit(void)
 	return pList;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DShadowConfigSetDefault(ed_3D_Shadow_Config* pShadowConfig)
 {
 	pShadowConfig->field_0x0 = 0;
@@ -1710,6 +1731,7 @@ edF32VECTOR4* LightAmbiant_DEBUG = &LightAmbiant_DEBUG_DATA;
 edF32MATRIX4* LightDirections_Matrix_DEBUG = &LightDirections_Matrix_DEBUG_DATA;
 edF32MATRIX4* LightColor_Matrix_DEBUG = &LightColor_Matrix_DEBUG_DATA;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DLight.c
 void ed3DSceneLightConfigSetDefault(ed_3D_Light_Config* pLightConfig)
 {
 	pLightConfig->pLightAmbient = LightAmbiant_DEBUG;
@@ -1803,6 +1825,7 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bIn
 	return pScene;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DSceneManager.c
 void ed3DSceneTermForList(void* pScene)
 {
 	ed3DSceneTerm(reinterpret_cast<ed_3D_Scene*>(pScene));
@@ -1833,18 +1856,21 @@ int ed3DSceneTerm(ed_3D_Scene* pScene)
 	return 1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMatrix.c
 void ed3DFlushMatrixReset(void)
 {
 	gpCurHierarchy = (ed_3d_hierarchy*)0xefefefef;
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFANGifTag.c
 void ed3DFANGifTagReset(void)
 {
 	pOldFANGifTag = (edpkt_data*)0x0;
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlush.c
 void ed3DFlushSceneInit(void)
 {
 	ed3DFlushMatrixReset();
@@ -1858,6 +1884,7 @@ edF32VECTOR4* gLightAmbiant = NULL;
 edF32MATRIX4* gLightDirections_Matrix = NULL;
 edF32MATRIX4* gLightColor_Matrix = NULL;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DLight.c
 void ed3DSceneLightSetGlobals(ed_3D_Light_Config* pConfig)
 {
 	gLightAmbiant = pConfig->pLightAmbient;
@@ -2036,6 +2063,7 @@ ed_3D_Scene* gShadowRenderScene = NULL;
 
 ed_viewport* gShadowRenderViewport = NULL;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DShadowSetRenderViewport(ed_viewport* pViewport)
 {
 	gShadowRenderViewport = pViewport;
@@ -2321,6 +2349,7 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 	return pPkt + 9;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlush.c
 void ed3DInitVU1Globals(void)
 {
 	g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stMatrixHeader));
@@ -2432,6 +2461,7 @@ edpkt_data* ed3DFlushResetOffset(edpkt_data* pPkt, edRECT16* pRect)
 	return pPkt + 4;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DClusterManager.c
 void ed3DClustersRenderComputeSceneHierarchyList(ed_3D_Scene* pStaticMeshMaster)
 {
 	int iVar1;
@@ -2503,6 +2533,7 @@ uint ed3DClusterGetEdgeWithSon(uint param_1, uchar param_2)
 	return uVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DSceneManager.c
 void ed3DSceneSortClusters(ed_3D_Scene* pScene)
 {
 	edNODE* peVar1;
@@ -3366,12 +3397,14 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	return pNextPkt;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
 int ed3DG3DNbMaxBaseRGBA(ed_3d_strip* pStrip)
 {
 	int* pRGBA = LOAD_SECTION_CAST(int*, pStrip->pColorBuf);
 	return pRGBA[2];
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
 ed_g3d_Anim_def* ed3DG3DAnimGet(ed_3d_strip* pStrip)
 {
 	int* pData = LOAD_SECTION_CAST(int*, pStrip->pColorBuf);
@@ -3399,6 +3432,7 @@ struct ed_g2d_Anim_def
 
 static_assert(sizeof(ed_g2d_Anim_def) == 0x20);
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
 ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pTexture)
 {
 	ed_Chunck* pAnimChunck = LOAD_SECTION_CAST(ed_Chunck*, pTexture->pAnimChunck);
@@ -3408,6 +3442,7 @@ ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pTexture)
 
 byte gbEnv = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3Ddma.c
 void ed3DSwapVU1Buffer(void)
 {
 	uint uVar1;
@@ -3909,6 +3944,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushStrip.c
 void ed3DFlushStrip(edNODE* pNode)
 {
 	undefined8 uVar1;
@@ -5273,6 +5309,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushStrip.c
 void ed3DFlushOptionState(edNODE* pNode)
 {
 	edpkt_data* pPkt = (edpkt_data*)pNode->pData;
@@ -5916,6 +5953,7 @@ void ed3DFlushMatrixForShadow(ed_dma_matrix* pDmaMatrix)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMaterial.c
 void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 {
 	edNODE_MANAGER* pNodeManager;
@@ -5970,6 +6008,7 @@ void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG2D.c
 ed_g2d_bitmap* ed3DG2DGetBitmapFromTexture(ed_g2d_texture* pTexture)
 {
 	ed_hash_code* pBitmapHash = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
@@ -6161,6 +6200,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 	return pPkt;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMaterial.c
 void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 {
 	bool bVar1;
@@ -6352,6 +6392,7 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 }
 #endif
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMaterial.c
 void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 {
 	ed_g2d_material* peVar1;
@@ -6584,6 +6625,7 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 
 bool gbFA2AObject = true;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlush.c
 void ed3DFlushList(void)
 {
 	float fVar1;
@@ -6892,6 +6934,7 @@ edpkt_data* ed3DShadowFlushResetOffset(edpkt_data* pPkt, edRECT16* pRect)
 	return pPkt + 4;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DFlushShadowList(void)
 {
 	bool bRenderedShadow;
@@ -7257,6 +7300,7 @@ EVectorMode_A ed3DTestBoundingSphereSide(edF32VECTOR4* param_1)
 
 float FLOAT_00448514 = 0.1f;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DDisplayEnv.c
 EVectorMode_A ed3DTestBoundingSpherePacketZNearOnly(ed_Bound_Sphere_packet* param_1)
 {
 	EVectorMode_A EVar1;
@@ -7316,6 +7360,7 @@ EVectorMode_A ed3DTestBoundingSpherePacketZNearOnly(ed_Bound_Sphere_packet* para
 	return EVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DDisplayEnv.c
 EVectorMode_A ed3DTestBoundingSpherePacketSide(ed_Bound_Sphere_packet* param_1)
 {
 	EVectorMode_A EVar1;
@@ -7397,6 +7442,7 @@ EVectorMode_A ed3DTestBoundingSpherePacketSide(ed_Bound_Sphere_packet* param_1)
 
 uint UINT_00448978 = 0x14;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DStrip.c
 bool ed3DCheckSpherePacket(ed_3d_strip* param_1)
 {
 	byte bVar1;
@@ -7540,6 +7586,7 @@ void ed3DLinkStripManageLinkToDMALink(edLIST* pList, ed_dma_material* pMaterial,
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
 void ed3DManageAnim(ed_g3d_Anim_def* pAnimDef)
 {
 	uint* puVar1;
@@ -8205,6 +8252,7 @@ LAB_002b1758:
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRender.c
 void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 {
 	bool bVar1;
@@ -8448,6 +8496,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRender.c
 bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 {
 	bool bVar1;
@@ -8510,6 +8559,7 @@ edF32MATRIX3 Matrix_00424f50 = {
 	0.0f, 0.0f, 1.0f, 0.0f
 };
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchy.c
 float ed3DMatrixGetBigerScale(edF32MATRIX4* m0)
 {
 	float fVar1;
@@ -8559,6 +8609,7 @@ void ed3DSetSceneRender(ed_3d_hierarchy* pMeshTransformData, byte bNewSceneRende
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchy.c
 ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 {
 	ed_3d_hierarchy_setup* pHierarchySetup;
@@ -10190,6 +10241,7 @@ LAB_002b0d68:
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DHierarchy_ps2.cpp
 void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 {
 	short sVar1;
@@ -10258,6 +10310,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DHierarchy_ps2.cpp
 void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pHierarchy)
 {
 	char cVar1;
@@ -10516,6 +10569,7 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DSceneManager_ps2.cpp
 uint ed3DSceneRenderDlist(ed_3D_Scene* pScene)
 {
 	bool bVar1;
@@ -10696,6 +10750,7 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 	return pRenderCommand;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRenderList.c
 void ed3DPrimlistTermMaterialRenderList(void)
 {
 	if (gPrim_List_FlushTex_Last != (edNODE*)0x0) {
@@ -10712,6 +10767,7 @@ byte BYTE_0044941c = 0;
 int ed3DVU1Addr[3] = { 0x76, 0x198, 0x2BA };
 int ed3DVU1AddrWithBufCur[3][3] = { { 0x76, 0x198, 0x2BA }, {0x198, 0x2BA, 0x76}, {0x2BA, 0x76, 0x198} };
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DScratchPadGlobalVar.c
 void ed3DRefreshSracthGlobalVar(void)
 {
 	AnimScratchpad* pAVar1;
@@ -11003,6 +11059,7 @@ void ed3DSceneRender(int, int, char*)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DShadowInitPrimList(edNODE_MANAGER** aHeaders)
 {
 	int iVar1;
@@ -11056,6 +11113,7 @@ char* g_szed3DAllocInfo_004333d0 = "ed3D Init total allocation ammount:<< %d >>"
 
 byte BYTE_00449344 = 0;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushTex.c
 void ed3DFlushTexInit(void)
 {
 	if (BYTE_00449344 == 0) {
@@ -11068,6 +11126,7 @@ void ed3DFlushTexInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyManager.c
 void ed3DHierarchyManagerInit(void)
 {
 	gHierarchyManagerBuffer = (ed_3d_hierarchy_node*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshTransformDataCount * sizeof(ed_3d_hierarchy_node));
@@ -11078,6 +11137,7 @@ void ed3DHierarchyManagerInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyManager.c
 bool ed3DHierarchyListTerm(edLIST* pList)
 {
 	return edListDel(pList);
@@ -11323,6 +11383,7 @@ static bool bAlreadyInit;
 
 int gFlagOptionVU1[3];
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DOptionFlag.c
 void ed3DOptionFlagReset(void)
 {
 	gFlagOptionVU1[0] = -1;
@@ -11338,12 +11399,14 @@ void ed3DFlushInit()
 
 undefined* gClusterTabList = NULL;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DClusterManager.c
 void ed3DClusterInit(void)
 {
 	gClusterTabList = (undefined*)edMemAlloc(TO_HEAP(H_MAIN), (uint)(ushort)ged3DConfig.clusterTabListSize * sizeof(undefined*));
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3D.c
 void ed3DInit(void)
 {
 	ed_g2d_manager* pTVar1;
@@ -11436,6 +11499,7 @@ void ed3DInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3D.c
 ed3DConfig* ed3DGetConfig(void)
 {
 	return &ged3DConfig;
@@ -11456,6 +11520,7 @@ void ed3DSetFxConfig(int index, undefined4 param_2, undefined4 param_3, uint par
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DFX.c
 void ed3DSetFXAnimSTMaxDist(float animSTMaxDist)
 {
 	gAnimSTMaxDist = animSTMaxDist;
@@ -11469,11 +11534,13 @@ struct ed3DLodSetup {
 	float field_0xc;
 } gLodNfo;
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchy.c
 ed3DLodSetup* ed3DGetLodSetup(void)
 {
 	return &gLodNfo;
 }
 
+// Should be in: D:/Projects/b-witch/3d.cpp
 void Init3D(void)
 {
 	ed3DConfig* puVar1;
@@ -12646,6 +12713,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileBuffer, int fileLength, ulong flags, i
 int gLoadedClusterCount = 0;
 
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyManager.c
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo)
 {
 	uint uVar1;
@@ -13105,6 +13173,7 @@ edNODE* ed3DHierarchyRefreshSonNumbers(edNODE* pInNode, short* outMeshCount)
 	return pOutNode;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DInstall.c
 void ed3DRunTimeStripBufferReset(void)
 {
 	g_pStrippBufLastPos = g_pStripBufResetPos;
@@ -13559,6 +13628,7 @@ SceneConfig* ed3DSceneGetConfig(ed_3D_Scene* pStaticMeshMaster)
 	return pCVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 {
 	ed_surface_desc* pVidModeCopy;
@@ -13623,6 +13693,7 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 	return pFrameBuffer;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DShadowTermScene(ed_3D_Scene* pShadowScene)
 {
 	edSurface* pSurf;
@@ -14179,6 +14250,7 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
 void ed3DResetTime(void)
 {
 	gCurTime = 0;
@@ -14192,6 +14264,7 @@ void ed3DSetDeltaTime(int newTime)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DFX.c
 FxFogProp* ed3DGetFxFogProp(void)
 {
 	return &g3DFXFog;
@@ -14752,12 +14825,14 @@ void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DObject.c
 ed_g3d_object* ed3DObjectGetFromHashCode(ed_hash_code* pMeshHeader)
 {
 	ed_Chunck* pObj = (ed_Chunck*)LOAD_SECTION(pMeshHeader->pData);
 	return (ed_g3d_object*)(pObj + 1);
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchy.c
 ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier)
 {
 	short sVar1;
@@ -14806,12 +14881,14 @@ int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck)
 	return materialCount;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
 int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode)
 {
 	ed_Chunck* pChunck = reinterpret_cast<ed_Chunck*>(pHashCode - 1);
 	return ed3DG2DGetG2DNbMaterials(pChunck);
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
 int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager)
 {
 	// Get the hash code out
@@ -14819,6 +14896,7 @@ int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager)
 	return ed3DG2DGetG2DNbMaterials(pHashCode);
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
 ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
 {
 	ed_hash_code* peVar1;
@@ -14833,6 +14911,7 @@ ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
 	return peVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyBankMat.c
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier)
 {
 	ed_hash_code* pHashCode;
@@ -15107,6 +15186,7 @@ void RemoveTexturesG2D(ed_g2d_manager* pTextureInfo)
 }
 #endif
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DInstall.c
 void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo)
 {
 #ifdef  PLATFORM_WIN
@@ -15130,6 +15210,7 @@ void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DInstall.c
 void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo)
 {
 #ifdef  PLATFORM_WIN

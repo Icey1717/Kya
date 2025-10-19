@@ -600,6 +600,7 @@ void CCinematic::InitInternalData()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 int S_STREAM_NTF_TARGET_ONOFF::SwitchOff(CActor* pActor)
 {
 	uint uVar1;
@@ -1763,6 +1764,7 @@ void S_STREAM_NTF_TARGET_ONOFF::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
 {
 	uint uVar1;
@@ -2002,6 +2004,7 @@ bool CCinematic::ParticleEntry::InstallFromDSC(char* pFileBuffer, int fileLength
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 {
 	uint uVar1;
@@ -3327,6 +3330,7 @@ void CCinematic::UninstallResources()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 bool S_STREAM_NTF_TARGET_SWITCH::Switch(CActor* pActor)
 {
 	uint uVar1;
@@ -4032,6 +4036,7 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::Initialize()
 {
 	CActor* pActor;
@@ -4183,6 +4188,7 @@ bool CBWCinActor::SetScale(float x, float y, float z)
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 {
 	char cVar1;
@@ -4312,6 +4318,7 @@ bool CBWCinActor::SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARA
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::Shutdown()
 {
 	//CSound* pCVar1;
@@ -4360,6 +4367,7 @@ bool CBWCinActor::Shutdown()
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::SetVisibility(bool bVisible)
 {
 	CActor* pActor;
@@ -4427,6 +4435,7 @@ void S_STREAM_EVENT_CAMERA::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 {
 	CActor* puVar1;
@@ -4512,6 +4521,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 {
 	int iVar1;
@@ -4543,6 +4553,7 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void S_STREAM_EVENT_CAMERA::SwitchOff(CActor* pActor)
 
 {
@@ -4566,6 +4577,7 @@ void S_STREAM_EVENT_CAMERA::SwitchOff(CActor* pActor)
 
 
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void S_STREAM_EVENT_CAMERA::Reset(CActor* pActor)
 {
 	if ((this->flags & 0x40000000U) != 0) {

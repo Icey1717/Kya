@@ -31,6 +31,7 @@ Timer::Timer()
 	SetDesiredFrameTime(frameTime);
 }
 
+// Should be in: D:/Projects/b-witch/Timer.cpp
 Timer* GetTimer(void)
 {
 	return &gTimer;
@@ -49,6 +50,7 @@ unsigned int GetCountValue_Time(void)
 	return i;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 uint _edSystemTimerGetU32(void)
 {
 	uint uVar1;
@@ -65,6 +67,7 @@ uint _edSystemTimerGetU32(void)
 }
 #endif
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 float _edSystemTimerGet(void)
 {
 #ifdef PLATFORM_PS2
@@ -89,8 +92,10 @@ float _edSystemTimerGet(void)
 #endif
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdTimer.cpp
 float edTimerTimeGet(void)
 {
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 	return _edSystemTimerGet();
 }
 

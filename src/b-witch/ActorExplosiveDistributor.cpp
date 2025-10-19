@@ -100,6 +100,7 @@ void CActorExplosiveDistributor::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 void CActorExplosiveDistributor::Init()
 {
 	CCollision* pCollision;
@@ -129,11 +130,13 @@ void CActorExplosiveDistributor::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 void CActorExplosiveDistributor::Draw()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 void CActorExplosiveDistributor::Reset()
 {
 	CActor::Reset();
@@ -143,11 +146,13 @@ void CActorExplosiveDistributor::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 void CActorExplosiveDistributor::CheckpointReset()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 CBehaviour* CActorExplosiveDistributor::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
@@ -204,6 +209,7 @@ void CBehaviourExplosiveDistributor::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorExplosive.cpp
 void CBehaviourExplosiveDistributor::Manage()
 {
 	CAnimation* pAnimationController;

@@ -506,6 +506,7 @@ bool CBehaviourMoneyFlock::InitDlistPatchable(int)
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorMoney.h
 void CBehaviourMoneyFlock::CheckpointReset()
 {
 	return;

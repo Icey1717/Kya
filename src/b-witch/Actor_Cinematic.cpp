@@ -660,6 +660,7 @@ void CBehaviourCinematic::Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Actor_Cinematic.h
 void CBehaviourCinematic::InitState(int newState)
 {
 	CCinematic* pCVar1;

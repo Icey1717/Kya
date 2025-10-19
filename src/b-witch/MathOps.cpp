@@ -2253,6 +2253,7 @@ float edF32GetAnglesDelta(float t0, float t1)
 	return fVar1;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float edF32Between_2Pi(float param_1)
 {
 	float fVar1;
@@ -2261,6 +2262,7 @@ float edF32Between_2Pi(float param_1)
 	return fVar1;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float edF32Between_0_2Pi(float param_1)
 {
 	float fVar1;
@@ -2272,6 +2274,7 @@ float edF32Between_0_2Pi(float param_1)
 	return fVar1;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float edF32Between_0_2Pi_Incr(float param_1)
 {
 	if (param_1 < 0.0f) {
@@ -2286,6 +2289,7 @@ float edF32Between_0_2Pi_Incr(float param_1)
 	return param_1;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float edF32Between_Pi(float param_1)
 {
 	float fVar1;

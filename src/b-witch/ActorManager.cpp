@@ -1137,6 +1137,7 @@ void CCluster::Init(int actorCount, ed_Bound_Box* pBoundBox, int param_4)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Cluster.cpp
 void CCluster::Term()
 {
 	if (this->ppNodes != (CClusterNode**)0x0) {
@@ -1249,6 +1250,7 @@ uint CCluster::GetMapCoords(edS32VECTOR3* pOutCoords, edF32VECTOR4* pLocation)
 	return uVar1;
 }
 
+// Should be in: D:/Projects/b-witch/Cluster.cpp
 void CCluster::DeleteNode(CClusterNode* pNode)
 {
 	CClusterNode* pCVar1;
@@ -1284,6 +1286,7 @@ void CCluster::DeleteNode(CClusterNode* pNode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Cluster.cpp
 CClusterNode* CCluster::NewNode(CActor* pActor)
 {
 	CClusterNode* pCVar1;
@@ -1563,6 +1566,7 @@ void CClusterNode::Insert(CCluster* pCluster, CActor* pActor)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Cluster.cpp
 void CClusterNode::Update(CCluster* pCluster)
 {
 	int iVar1;

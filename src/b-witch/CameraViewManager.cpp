@@ -45,6 +45,7 @@ CCameraManager::CCameraManager()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Game_Init()
 {
 	this->aspectRatio = 1.333333f;
@@ -740,11 +741,13 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_Init()
 {
 	Level_Init(true);
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.h
 void CCameraManager::Level_Term()
 {
 	return;
@@ -772,6 +775,7 @@ void CCameraManager::Level_AddAll(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_ClearAll()
 {
 	CCamera* pCVar1;
@@ -880,6 +884,7 @@ void CCameraManager::Func_001947e0()
 	}
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 {
 	float fVar2;
@@ -1020,6 +1025,7 @@ void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::BuildDisplayMatrix()
 {
 	float fVar1;
@@ -1093,6 +1099,7 @@ void CCameraManager::BuildDisplayMatrix()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_Manage()
 {
 	SWITCH_MODE switchMode;
@@ -1242,6 +1249,7 @@ void CCameraManager::Level_Manage()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_ManagePaused()
 {
 	Level_Manage();
@@ -1249,6 +1257,7 @@ void CCameraManager::Level_ManagePaused()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_Draw()
 {
 	CCameraShadow** pCVar1;
@@ -1276,6 +1285,7 @@ void CCameraManager::Level_Draw()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_Reset()
 {
 	CCamera* pCVar1;
@@ -1336,6 +1346,7 @@ void CCameraManager::Level_Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_CheckpointReset()
 {
 	CCamera* piVar1;
@@ -1358,6 +1369,7 @@ void CCameraManager::Level_CheckpointReset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::LevelLoading_Begin()
 {
 	Level_Init(false);
@@ -1365,6 +1377,7 @@ void CCameraManager::LevelLoading_Begin()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::LevelLoading_End()
 {
 	Level_Term();
@@ -1373,6 +1386,7 @@ void CCameraManager::LevelLoading_End()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 bool CCameraManager::LevelLoading_Manage()
 {
 	Level_Manage();
@@ -1397,6 +1411,7 @@ float edFCameraGetRatio(edFCamera* pCamera)
 	return pCamera->finalHorizontalHalfFOV / pCamera->baseHorizontalHalfFOV;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::Level_ClearInternalData()
 {
 	edFCamera* m0;
@@ -1757,6 +1772,7 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 	return uVar1 == 1;
 }
 
+// Should be in: D:/Projects/b-witch/camera.cpp
 void CCamConfig::ResetWithConfig()
 {
 	this->field_0x74 = this->field_0xc;
@@ -1840,6 +1856,7 @@ CCameraShadow::CCameraShadow(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraShadow.cpp
 bool CCameraShadow::InitDlistPatchable(int)
 {
 	CGlobalDListManager* pDlistmanager;
@@ -1867,6 +1884,7 @@ bool CCameraShadow::InitDlistPatchable(int)
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/CameraShadow.cpp
 void CCameraShadow::Init()
 {
 	CCameraExt::Init();
@@ -1886,6 +1904,7 @@ ECameraType CCameraShadow::GetMode()
 	return CT_ShadowSun;
 }
 
+// Should be in: D:/Projects/b-witch/CameraShadow.cpp
 bool CCameraShadow::Manage()
 {
 	int iVar1;
@@ -2027,6 +2046,7 @@ bool CCameraManager::PushCamera(int cameraIndex, int param_3)
 	return bVar1;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::ApplyActiveCamera()
 {
 	CCamera* pCVar1;
@@ -2050,6 +2070,7 @@ void CCameraManager::ApplyActiveCamera()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 bool CCameraManager::PopCamera(CCamera* pCameraView)
 {
 	SWITCH_MODE switchMode;
@@ -2090,6 +2111,7 @@ bool CCameraManager::PopCamera(CCamera* pCameraView)
 	return bSuccess;
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 bool CCameraManager::PopCamera(int index)
 {
 	SWITCH_MODE switchMode;
@@ -2114,6 +2136,7 @@ bool CCameraManager::PopCamera(int index)
 	return PopCamera(pCamera);
 }
 
+// Should be in: D:/Projects/b-witch/CameraManager.cpp
 void CCameraManager::SetMainCamera(CCamera* pCamera)
 {
 	bool bVar1;

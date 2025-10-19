@@ -5,6 +5,7 @@
 #include "Actor.h"
 
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CVibrationDyn::Init(VibrationParam* pParams)
 {
 	this->field_0x0 = 0.0f;
@@ -244,6 +245,7 @@ void CVibrationDyn::UpdateAllFactors(float param_1, edF32VECTOR4* param_3, edF32
 
 
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 int CVibrationDyn::UpdateKineticToPotentialUpDown()
 {
 	int iVar2;
@@ -277,6 +279,7 @@ int CVibrationDyn::UpdateKineticToPotentialUpDown()
 	return iVar2;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 int CVibrationDyn::ComputeCurFactor()
 {
 	bool bVar1;
@@ -492,6 +495,7 @@ void CScalarDyn::BuildFromSpeedDistTime(float param_1, float param_2, float dist
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CScalarDyn::Reset()
 {
 	this->field_0x24 = 0.0f;
@@ -507,6 +511,7 @@ void CScalarDyn::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 bool CScalarDyn::IsFinished()
 {
 	return (this->flags & 1) != 0;
@@ -547,11 +552,13 @@ void CScalarDyn::Integrate(float param_1, float param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CScalarDyn::Integrate(float param_1)
 {
 	Integrate(param_1, param_1);
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 float CScalarDyn::GetInstantSpeed()
 {
 	float fVar1;
@@ -560,6 +567,7 @@ float CScalarDyn::GetInstantSpeed()
 	return this->field_0xc + (fVar1 * this->field_0x10 * fVar1) / 2.0f + this->field_0x14 * fVar1;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 bool CScalarDyn::OnLastValidSample()
 {
 	return (this->flags & 2) != 0;
@@ -597,6 +605,7 @@ void CScalarDyn::BuildFromDistTimeNoAccel(float dist, float time)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CScalarDyn::Stop()
 {
 	this->field_0xc = 0.0f;
@@ -659,11 +668,13 @@ void CVectorDyn::Integrate(float param_1, float param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CVectorDyn::Integrate(float param_1)
 {
 	Integrate(param_1, param_1);
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 void CVectorDyn::Reset()
 {
 	this->field_0x0 = 1;
@@ -702,6 +713,7 @@ void CVectorDyn::Reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
 bool CVectorDyn::IsFinished()
 {
 	return (this->field_0x0 & 1) != 0;
@@ -887,6 +899,7 @@ void CVertexDyn::FUN_00213b90(edF32MATRIX4* param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/CameraFightData.cpp
 void CValueDyn::MoveTo(float param_1)
 {
 	float fVar2;
@@ -1013,6 +1026,7 @@ void SPEED_DYN::Init(float param_1, float param_2)
 	this->field_0x4 = param_2;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float SPEED_DYN::UpdateLerp(float target)
 {
 	Timer* pTimeController;
@@ -1042,6 +1056,7 @@ float SPEED_DYN::UpdateLerp(float target)
 	return this->currentAlpha;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void SPEED_DYN::Update(float param_1)
 {
 	float fVar2;
@@ -1185,5 +1200,4 @@ void CAngleDyn::MoveTo(float angle, int mode)
 
 	return;
 }
-
 

@@ -25,6 +25,7 @@ edF32VECTOR4* CPathDynamic::GetStart()
 	return &this->startPosition;
 }
 
+// Should be in: D:/Projects/b-witch/PathDynamic.h
 void CPathDynamic::NextWayPoint()
 {
 	this->field_0x54 = this->field_0x54->pNext;
@@ -53,6 +54,7 @@ edF32VECTOR4* CPathDynamic::GetGoalB()
 	return &this->destinationPosition;
 }
 
+// Should be in: D:/Projects/b-witch/PathDynamic.h
 void CPathDynamic::Reset()
 {
 	this->field_0x54 = this->pPathNode;

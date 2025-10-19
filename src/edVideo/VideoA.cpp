@@ -12,16 +12,19 @@
 edSurface* psurf = NULL;
 edSurface* pzbuf = NULL;
 
+// Should be in: D:/Projects/b-witch/video.cpp
 edSurface* VideoGetDisplaybuffer(void)
 {
 	return psurf;
 }
 
+// Should be in: D:/Projects/b-witch/video.cpp
 edSurface* VideoGetZbuffer(void)
 {
 	return pzbuf;
 }
 
+// Should be in: D:/Projects/b-witch/video.cpp
 void ClearVideoMode(void)
 {
 	if (psurf != (edSurface*)0x0) {

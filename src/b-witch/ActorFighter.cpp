@@ -1071,6 +1071,7 @@ bool CActorFighter::Func_0x1c0(s_fighter_combo* pCombo)
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighter.h
 void CActorFighter::UpdateFightCommand()
 {
 	return;
@@ -1615,6 +1616,7 @@ void CActorFighter::_Std_GetPossibleExit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighter.h
 void CActorFighter::_Std_OnFightActionSuccess()
 {
 	return;
@@ -1644,6 +1646,7 @@ void CActorFighter::_Ride_GetPossibleHit(bool bPlayImpact)
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterRide.cpp
 void CActorFighter::_Ride_GetPossibleExit()
 {
 	byte bVar1;
@@ -1749,6 +1752,7 @@ void CActorFighter::_Hold_GetPossibleHit(bool bPlayImpact)
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterSlave.cpp
 void CActorFighter::_Hold_GetPossibleExit()
 {
 	int iVar1;
@@ -1813,6 +1817,7 @@ void CActorFighter::_Hold_GetPossibleExit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterSlave.cpp
 void CActorFighter::_BeginFighterHold()
 {
 	IMPLEMENTATION_GUARD();
@@ -1823,6 +1828,7 @@ void CActorFighter::_EndFighterHold()
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_Proj_GetPossibleExit()
 {
 	int iVar1;
@@ -3023,6 +3029,7 @@ void CActorFighter::_InterpretCollisions(int param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_InterpretSlides()
 {
 	CCollision* pCVar1;
@@ -3162,6 +3169,7 @@ void CActorFighter::_StateFighterHitFall(float param_1, edF32VECTOR4* pRotation,
 
 static float FLOAT_00448b04 = 10.0f;
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitFly()
 {
 	int iVar2;
@@ -3197,6 +3205,7 @@ void CActorFighter::_StateFighterHitFly()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitWakingUpInit()
 {
 	edF32VECTOR4* v0;
@@ -3256,6 +3265,7 @@ void CActorFighter::_StateFighterHitWakingUpInit()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitFlyToSlide()
 {
 	Timer* pTVar1;
@@ -3390,6 +3400,7 @@ LAB_00306b50:
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitSlide()
 {
 	CAnimation* pCVar1;
@@ -3627,6 +3638,7 @@ float CActorFighter::_pStagger_check[8] = {
 	5.4977875f,
 };
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitStaggerCheck()
 {
 	float fVar1;
@@ -3682,6 +3694,7 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 
 edF32VECTOR4 edF32VECTOR4_00425760 = { 0.0f, -1.0f, 0.0f, 0.0f };
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CActorFighter::_StateFighterHitStaggerFallInit(float param_1)
 {
 	edColPRIM_OBJECT* peVar1;
@@ -4408,6 +4421,7 @@ uint CActorFighter::_SV_HIT_GetHitZoneFromImpact(s_fighter_anatomy_zones* pAnato
 	return uVar1;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterServices.cpp
 void CActorFighter::_SV_HIT_FightCollisionsBegin()
 {
 	uint curColIndex;
@@ -4565,6 +4579,7 @@ uint CActorFighter::_SV_HIT_FightCollisionsGet(s_fighter_collision_desc* aCollis
 	return nbCollisions;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterServices.cpp
 void CActorFighter::_SV_HIT_FightCollisionsEnd()
 {
 	s_fighter_fight_collision* psVar1;
@@ -5052,6 +5067,7 @@ void CActorFighter::SetFighterCombo(s_fighter_combo* pCombo)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 s_fighter_blow* CActorFighter::FindBlowByName(char* szName)
 {
 	return _FindByHashcode<s_fighter_blow>(this->aBlows, this->nbBlows, CreateHashFromName(szName));
@@ -5631,6 +5647,7 @@ void CActorFighter::_InitBoneRef(s_fighter_blow_bone_ref* pBoneRef)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_InitBlow(s_fighter_blow* pBlow)
 {
 	CAnimation* pCVar1;
@@ -5709,6 +5726,7 @@ void CActorFighter::_InitGrab(s_fighter_grab* pGrab)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_InitBlowsDB()
 {
 	uint curBlowIndex;
@@ -5724,6 +5742,7 @@ void CActorFighter::_InitBlowsDB()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_DeleteCombosDB()
 {
 	void* pAlloc;
@@ -5755,6 +5774,7 @@ void CActorFighter::_DeleteCombosDB()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_InitGrabsDB()
 {
 	uint curGrabIndex;
@@ -5770,6 +5790,7 @@ void CActorFighter::_InitGrabsDB()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_DeleteGrabsDB()
 {
 	if (this->aGrabs != (s_fighter_grab*)0x0) {
@@ -5791,6 +5812,7 @@ void CActorFighter::_DeleteGrabsDB()
 
 #define ACTION_FLAG_GRAB 0x400
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_InitCombosDB()
 {
 	uint curBranchIndex;
@@ -5832,6 +5854,7 @@ void CActorFighter::_InitCombosDB()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_DeleteBlowsDB()
 {
 	uint uVar1;
@@ -5862,6 +5885,7 @@ void CActorFighter::_DeleteBlowsDB()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterBlowDB.cpp
 void CActorFighter::_UpdateComboSituation()
 {
 	CActorFighter* pCVar1;
@@ -7421,6 +7445,7 @@ LAB_00313260:
 	return bVar4;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CBehaviourFighterProjected::Manage()
 {
 	bool bVar1;
@@ -7704,6 +7729,7 @@ void CBehaviourFighterProjected::Begin(CActor* pOwner, int newState, int newAnim
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CBehaviourFighterProjected::End(int newBehaviourId)
 {
 	CActorFighter* pCVar2;
@@ -7724,6 +7750,7 @@ void CBehaviourFighterProjected::End(int newBehaviourId)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CBehaviourFighterProjected::InitState(int newState)
 {
 	CActorFighter* pFighter;
@@ -8044,6 +8071,7 @@ void CBehaviourFighterProjected::_ManageHit(bool bPlayImpact)
 }
 
 
+// Should be in: D:/Projects/b-witch/ActorFighterProjected.cpp
 void CBehaviourFighterProjected::_ComputeDynamics()
 {
 	ushort uVar1;
@@ -8307,6 +8335,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, 
 	return 0;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterInputServices.cpp
 void CInputAnalyser::Reset()
 {
 	_last_dir_time = GetTimer()->scaledTotalTime;
@@ -8429,6 +8458,7 @@ bool CInputAnalyser::Compare(s_input_pattern* pPatternA, s_input_pattern* pPatte
 
 ushort _u16Rot_precompute[8] = { 0x1, 0x3, 0x2, 0x6, 0x4, 0xc, 0x8, 0x9 };
 
+// Should be in: D:/Projects/b-witch/ActorFighterInputServices.cpp
 void CInputAnalyser::_SV_RotatePattern(int index)
 {
 	uint uVar1;
@@ -8624,6 +8654,7 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 	return peVar4;
 }
 
+// Should be in: D:/Projects/b-witch/ActorFighterServices.cpp
 void CFighterExcludedTable::EmptyByTime(float time)
 {
 	s_fighter_hit_exclusion sStack16;

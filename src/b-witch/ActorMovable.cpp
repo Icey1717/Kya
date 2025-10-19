@@ -15,6 +15,7 @@ int INT_00448e04 = 0;
 float CDynamic::gMaxSpeed_Horiz = 32.0f;
 float CDynamic::gMaxSpeed_Vert = 20.0f;
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_TILT_STREAM_DEF::Init()
 {
 	this->field_0x4 = this->field_0x4 * 0.01745329f;
@@ -23,6 +24,7 @@ void S_TILT_STREAM_DEF::Init()
 }
 
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_PUSH_STREAM_DEF::Init()
 {
 	this->oscConfig.field_0x0 = this->oscConfig.field_0x0 * 100.0f;
@@ -127,6 +129,7 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_TILT_DATA::Reset()
 {
 	this->oscQuat.field_0x0 = gF32Vertex4Zero;
@@ -179,6 +182,7 @@ void S_PUSH_DATA::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_PUSH_DATA::Reset()
 {
 	(this->oscValue).field_0x0 = 0.0f;
@@ -449,6 +453,7 @@ void CActorMovable::SV_MOV_UpdateSpeedIntensity(float param_1, float param_2)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorMovableServices.cpp
 void CActorMovable::SV_MOV_DecreaseSpeedIntensity(float param_1)
 {
 	Timer* pTVar1;
@@ -1658,6 +1663,7 @@ void CDynamic::Reset(CActor* pActor)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Dynamic.cpp
 void CDynamic::ClearLocalData()
 {
 	this->field_0x4c = 0;

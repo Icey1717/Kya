@@ -81,6 +81,7 @@ void CPatternPart::Init(float param_1, CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorPatternService.cpp
 void CPatternPart::Reset()
 {
 	CPointPattern* pPointPattern;
@@ -2181,6 +2182,7 @@ void CBehaviourProjectileExcuse::Init(CActor* pOwner)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorProjectile.h
 void CBehaviourProjectileExcuse::Manage()
 {
 	IMPLEMENTATION_GUARD();

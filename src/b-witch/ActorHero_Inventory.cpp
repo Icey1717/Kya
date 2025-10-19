@@ -11,6 +11,7 @@ CInventoryInterface::CInventoryInterface()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Frontend.cpp
 bool CInventoryInterface::Activate(int bActive)
 {
 	if (bActive == 0) {

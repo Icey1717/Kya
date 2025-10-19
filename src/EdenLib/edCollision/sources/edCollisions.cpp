@@ -4546,6 +4546,7 @@ void edColInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edCollision/sources/edCollisionCreation.cpp
 void edColSetDataBase(int databaseId)
 {
 	gColData.activeDatabaseId = (byte)databaseId;
@@ -4591,6 +4592,7 @@ void edColCollisionAddPrim(int aType, int aCount, void* param_3, void* aData, in
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edCollision/sources/edCollisionCreation.cpp
 edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 {
 	undefined8 uVar1;

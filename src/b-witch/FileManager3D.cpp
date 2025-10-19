@@ -19,6 +19,7 @@ C3DFileManager::C3DFileManager()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::Level_Term()
 {
 	int iVar1;
@@ -145,6 +146,7 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::Level_ClearAll()
 {
 	delete[] this->aCommonLevelMeshes;
@@ -155,11 +157,13 @@ void C3DFileManager::Level_ClearAll()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::Level_Manage()
 {
 	ManageBackground(this->pBackgroundNode, CScene::_pinstance->field_0x18);
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::Level_ManagePaused()
 {
 	if ((GameFlags & 0x200) == 0) {
@@ -197,6 +201,7 @@ edDList_material* C3DFileManager::GetMaterialFromId(int materialId, int internal
 	return pMaterial;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 int C3DFileManager::InstanciateG2D(int index)
 {
 	ParticleInfo* pPVar1;
@@ -234,6 +239,7 @@ int C3DFileManager::InstanciateG2D(int index)
 	return iVar2;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 ParticleInfo* C3DFileManager::_CreateG2DInfo(int index)
 {
 	TextureInfo* pTVar1;
@@ -272,6 +278,7 @@ TextureInfo* C3DFileManager::GetCommonSectorG2D()
 	return this->aCommonLevelTextures + this->levelSectorTextureIndex;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::Level_ClearInternalData()
 {
 	ParticleInfo* pPVar2;
@@ -364,6 +371,7 @@ void C3DFileManager::Level_Create(ByteCode* pMemoryStream)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::ShowCommonBackground()
 {
 	if (this->pBackgroundNode != (edNODE*)0x0) {
@@ -372,6 +380,7 @@ void C3DFileManager::ShowCommonBackground()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::HideCommonBackground()
 {
 	if (this->pBackgroundNode != (edNODE*)0x0) {
@@ -380,6 +389,7 @@ void C3DFileManager::HideCommonBackground()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 void C3DFileManager::SetupBackground(edNODE* pNode)
 {
 	edNODE* pPrevNode;
@@ -487,6 +497,7 @@ ed_g2d_manager* C3DFileManager::GetG2DManager(char* pFileData)
 	return &pTVar1->manager;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 ParticleInfo* C3DFileManager::GetG2DInfo(int index)
 {
 	ParticleInfo* pParticleInfo;
@@ -548,6 +559,7 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(char* pFileData)
 	return &pMesh->meshInfo;
 }
 
+// Should be in: D:/Projects/b-witch/3DFileManager.cpp
 int C3DFileManager::GetNbMaterialInG2D(int id)
 {
 	int nbMaterials;

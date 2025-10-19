@@ -18,6 +18,7 @@ CGlobalDList* pGameDList = NULL;
 CGlobalDList* pFrontend2DDList = NULL;
 CGlobalDList* pGuiDList = NULL;
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void GuiDList_EndCurrent(void)
 {
 	if (pGuiDList->bEnabled != 0) {
@@ -59,6 +60,7 @@ uint GameDListPatch_Register(CObject* pObject, int nbMatrices, int nbInstances)
 	return sectorId * 0x10000 + nbPatches;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId)
 {
 	return CScene::ptable.g_GlobalDListManager_004516bc->BeginCurrent(patchId);
@@ -161,6 +163,7 @@ char* WorkOutMo(float param_1, int param_2, char* param_3, long param_4, char* p
 
 char g_DebugTextBuffer_00468ef0[16] = { 0 };
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void GlobalDList_Init(void)
 {
 	ed_3D_Scene* pSVar1;
@@ -222,6 +225,7 @@ void GlobalDList_Init(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 bool GuiDList_BeginCurrent(void)
 {
 	bool bVar1;
@@ -235,6 +239,7 @@ bool GuiDList_BeginCurrent(void)
 	return bVar1;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void GlobalDList_AddToView(void)
 {
 	if (pGameDList->bEnabled != 0) {
@@ -252,6 +257,7 @@ void GlobalDList_AddToView(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 bool Frontend2DDList_BeginCurrent(void)
 {
 	bool bVar1;
@@ -266,6 +272,7 @@ bool Frontend2DDList_BeginCurrent(void)
 	return bVar1;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void FrontendDList_EndCurrent(void)
 {
 	if (pFrontend2DDList->bEnabled != 0) {
@@ -274,6 +281,7 @@ void FrontendDList_EndCurrent(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 bool GameDList_BeginCurrent(void)
 {
 	bool bVar1;
@@ -288,6 +296,7 @@ bool GameDList_BeginCurrent(void)
 	return bVar1;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void GameDList_EndCurrent(void)
 {
 	if (pGameDList->bEnabled != 0) {
@@ -325,6 +334,7 @@ CGlobalDList::~CGlobalDList()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/DlistManager.cpp
 void CGlobalDList::Init()
 {
 	this->bEnabled = 1;

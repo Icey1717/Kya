@@ -423,6 +423,7 @@ void CActorAraignos::CBhvDefault::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAraignos.h
 void CActorAraignos::CBhvDefault::Manage()
 {
 	this->pOwner->BehaviourDefault_Manage();
@@ -439,11 +440,13 @@ void CActorAraignos::CBhvDefault::Begin(CActor* pOwner, int newState, int newAni
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAraignos.h
 void CActorAraignos::CBhvDefault::End(int newBehaviourId)
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAraignos.h
 void CActorAraignos::CBhvDefault::InitState(int newState)
 {
 	this->pOwner->BehaviourDefault_InitState(newState);

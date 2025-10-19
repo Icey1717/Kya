@@ -330,6 +330,7 @@ int FUN_00284930(void)
 	return INT_00483804;
 }
 
+// Should be in: D:/Projects/b-witch/Settings.cpp
 void CSettings::StoreGlobalSettings()
 {
 	CCinematicManager* cCinematicManagerInstance;
@@ -453,6 +454,7 @@ void CPauseManager::Level_Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Pause.h
 void CPauseManager::Level_ClearAll()
 {
 	return;
@@ -1454,6 +1456,7 @@ CSimpleMenu::CSimpleMenu()
 	reset();
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::reset()
 {
 	Timer* pTVar1;
@@ -1478,18 +1481,21 @@ void CSimpleMenu::reset()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_vertical_position(int verticalPos)
 {
 	this->verticalPos = verticalPos;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_vertical_spacing(int verticalSpacing)
 {
 	this->verticalSpacing = verticalSpacing;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_justification_left()
 {
 	this->horizontalPos = this->field_0xd8;
@@ -1889,35 +1895,41 @@ bool CSimpleMenu::draw_action(ulong actionMsgId, ActionFuncPtr pFunc, int slotID
 	return draw_option(pMsg, pFunc, slotID, param_5);
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_font_help(edCTextFont* pFont)
 {
 	pFontC = pFont;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_font_message(edCTextFont* pFont)
 {
 	pFontB = pFont;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_font_title(edCTextFont* pFont)
 {
 	pFontA = pFont;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::set_message_manager(CMessageFile* pTextData)
 {
 	pTranslatedTextData = pTextData;
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 EPauseMenu CSimpleMenu::get_current_page()
 {
 	return currentPage;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::perform_action()
 {
 	if (this->pFunc_0x40 != 0x0) {
@@ -1928,6 +1940,7 @@ void CSimpleMenu::perform_action()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 uint CSimpleMenu::get_action()
 {
 	uint uVar1;
@@ -2569,31 +2582,37 @@ void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 bool CSimpleMenu::select_draw()
 {
 	return false;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 bool CSimpleMenu::appear_draw()
 {
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 bool CSimpleMenu::disappear_draw()
 {
 	return true;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_validate()
 {
 
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_cancel()
 {
 
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_change_selection()
 {
 
@@ -2604,6 +2623,7 @@ float CSimpleMenu::get_time_in_state()
 	return Timer::GetTimer()->totalTime - this->totalTime;
 }
 
+// Should be in: D:/Projects/b-witch/MenuElements.cpp
 void CSimpleMenu::pop_page()
 {
 	HistoryEntry* pHVar1;
@@ -2905,11 +2925,13 @@ void CSimpleMenuPause::set_mode(EPauseMenu mode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Help.cpp
 void HelpEnter()
 {
 	IMPLEMENTATION_GUARD();
 }
 
+// Should be in: D:/Projects/b-witch/Help.cpp
 void HelpLeave()
 {
 	IMPLEMENTATION_GUARD();

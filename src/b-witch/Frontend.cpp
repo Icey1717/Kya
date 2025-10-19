@@ -12,11 +12,13 @@ CFrontend::CFrontend()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendDisp.h
 void CFrontend::Level_ClearAll()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontEndDisp.cpp
 float CFrontend::GetTime()
 {
 	return Timer::GetTimer()->totalTime;

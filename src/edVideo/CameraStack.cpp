@@ -187,6 +187,7 @@ bool CCameraStack::Contains(CCamera* pCamera)
 	return -1 < iVar2;
 }
 
+// Should be in: D:/Projects/b-witch/CameraStack.cpp
 bool CCameraStack::Pop(CCamera* pCamera)
 {
 	int iVar1;
@@ -285,6 +286,7 @@ bool CCameraStack::Push(CCamera* pCamera, int param_3)
 	return bUpdated;
 }
 
+// Should be in: D:/Projects/b-witch/CameraStack.cpp
 void CCameraStack::SetMainCamera(CCamera* pCamera)
 {
 	this->aCameras[0].field_0x0 = 0;
@@ -380,6 +382,7 @@ bool CCameraStack::Manage()
 	return bUpdatedState;
 }
 
+// Should be in: D:/Projects/b-witch/CameraStack.cpp
 void CCameraStack::Reset()
 {
 	CCameraStack* pCVar1;

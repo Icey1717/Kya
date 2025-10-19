@@ -40,6 +40,7 @@ void MessageManager::remove_entry(CMessageFile* pToRemove)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MessageManager.cpp
 void CMessageFile::prepare_buffer()
 {
 	int* piVar1;
@@ -112,6 +113,7 @@ void CMessageFile::set_default_language(LANGUAGE newID)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/MessageManager.cpp
 LANGUAGE CMessageFile::get_default_language(void)
 {
 	return sm_default_language;

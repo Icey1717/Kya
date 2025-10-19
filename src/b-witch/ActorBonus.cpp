@@ -66,6 +66,7 @@ void CActorBonus::Init()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonus.h
 void CActorBonus::Term()
 {
 	CActor::Term();
@@ -369,6 +370,7 @@ void CBehaviourBonusBase::Func_0x4c()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorBonus.h
 void CBehaviourBonusBase::ChangeVisibleState(int state)
 {
 	return;
@@ -1934,4 +1936,3 @@ void CBnsInstance::MoveOnPath(float param_1, float speed, CBehaviourBonusPath* p
 
 	return;
 }
-

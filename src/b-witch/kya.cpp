@@ -89,6 +89,7 @@ T* CreateNew()
 
 edSYS_CONFIG g_InputSetupParams = { 0, 0, 0, 0x8C };
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdServices.cpp
 edSYS_CONFIG* edSysGetConfig(void)
 {
 	return &g_InputSetupParams;
@@ -769,6 +770,7 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 
 
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 void _edSystemInitSpecific(void)
 {
 	ED_PSX2_MODULES_INIT* pIopPaths;
@@ -824,6 +826,7 @@ int SetupLibdcbAndLibpad(void)
 int edTime = 0;
 int DAT_00449174 = 0;
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/ps2/_edSystem.cpp
 void _edSystemTimerReset(void)
 {
 	DAT_00449174 = 0;
@@ -835,6 +838,7 @@ void _edSystemSetTimer(int a, void(pFunc)(void))
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdTimer.cpp
 void edTimerInit(void)
 {
 	edTime = 0;
@@ -844,6 +848,7 @@ void edTimerInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdServices.cpp
 void edSysInit(void)
 {
 	_edSystemInit(g_InputSetupParams.argc, g_InputSetupParams.argv);
@@ -1257,6 +1262,7 @@ char* sz_ModeFullPC_0042b810 = "<pc>0:d:\\Projects\\BWitch\\Psx2\\";
 
 edCdlFolder* PTR_edCdlFolder_00448ef4;
 
+// Should be in: D:/Projects/b-witch/main.cpp
 void Init_edFile(void)
 {
 	bool bVar1;
@@ -2013,6 +2019,7 @@ void PlayIntroVideo(long mode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Game.cpp
 void LoadingLoop(void)
 {
 	CScene* pSceneInstance;
@@ -2057,6 +2064,7 @@ void LoadingLoop(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Game.cpp
 void GameLoop(void)
 {
 	MY_LOG("GameLoop Begin\n");
@@ -2179,6 +2187,7 @@ void GameLoop(void)
 	MY_LOG("GameLoop End\n");
 }
 
+// Should be in: D:/Projects/b-witch/Level.cpp
 void LevelInit(void)
 {
 	CScene* pSceneInstance;
@@ -2194,6 +2203,7 @@ void LevelInit(void)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/Level.cpp
 void LevelTerm(void)
 {
 	CScene::_pinstance->Level_Term();

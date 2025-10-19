@@ -33,6 +33,7 @@ CBehaviour* CActorAddOnPurchase::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAddOnPurchase.h
 CInventoryInfo* CActorAddOnPurchase::GetInventoryInfo()
 {
 	return &this->inventoryInfo;
@@ -59,6 +60,7 @@ void CBhvAddOnPurchase::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorAddOnPurchase.h
 void CBhvAddOnPurchase::Manage()
 {
 	return;
@@ -69,6 +71,7 @@ void CBhvAddOnPurchase::Begin(CActor* pOwner, int newState, int newAnimationType
 	pOwner->SetState(0x4, -1);
 }
 
+// Should be in: D:/Projects/b-witch/ActorAddOnPurchase.h
 void CBhvAddOnPurchase::End(int newBehaviourId)
 {
 	return;

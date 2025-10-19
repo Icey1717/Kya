@@ -161,6 +161,7 @@ void ConditionedOperationArray::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 void S_STREAM_SIMPLE_OPERATION::Perform()
 {
 	int scenVarValue;

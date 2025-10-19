@@ -1263,6 +1263,7 @@ void CVerletBridge::Config::ComputeNbLinks(int* param_1, int* param_2)
 	}
 }
 
+// Should be in: D:/Projects/b-witch/ActorBridge.h
 void CVerletBridge::Split(int param_1)
 {
 	IMPLEMENTATION_GUARD();

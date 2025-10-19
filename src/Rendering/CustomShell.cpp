@@ -76,6 +76,7 @@ DMA_Register_Struct edDmaChannelList[10] =
 	},
 };
 
+// Should be in: D:/Projects/EdenLib/edDma/sources/ps2/eddma.cpp
 void edDmaResetAll(void)
 {
 	edDebugPrintf("#\n");
@@ -194,6 +195,7 @@ bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
 	return bVar2;
 }
 
+// Should be in: D:/Projects/EdenLib/edDma/sources/ps2/eddma.cpp
 void edDmaFlushCache(void)
 {
 #ifdef PLATFORM_PS2
@@ -218,6 +220,7 @@ unsigned int GetCOUNT(void)
 int UINT_00449180 = 0;
 int UINT_00449184 = 0;
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdTimer.cpp
 int edTimerTimeGetCycleElapsedU32(void)
 {
 	int iVar1;
@@ -232,6 +235,7 @@ int edTimerTimeGetCycleElapsedU32(void)
 }
 
 
+// Should be in: D:/Projects/EdenLib/edDma/sources/ps2/eddma.cpp
 int edDmaSyncPath(void)
 {
 	char cVar1;

@@ -1022,6 +1022,7 @@ uint CActorHero::GetBehaviourFlags(int state)
 	return bhvrFlags;
 }
 
+// Should be in: D:/Projects/b-witch/ActorHero.h
 edF32VECTOR4* CActorHero::GetAdversaryPos()
 {
 	return (edF32VECTOR4*)0x0;

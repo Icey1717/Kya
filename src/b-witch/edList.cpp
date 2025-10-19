@@ -102,6 +102,7 @@ edLIST* edListNew(int listCount, int nodeCount, EHeap heapID)
 	return peVar2;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdList.cpp
 bool edListDel(edLIST* pList)
 {
 	edMemFree(pList);
@@ -122,6 +123,7 @@ edNODE_MANAGER* edListCreateNodesTable(int count, EHeap heapID)
 	return pNodeManager;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdList.cpp
 void edListDeleteNodesTables(edNODE_MANAGER* pNodeManager)
 {
 	edMemFree(pNodeManager);
@@ -162,6 +164,7 @@ bool edListLink(edLIST* pList, edNODE_MANAGER* pManager, int mode, edListFunc* p
 	return bVar1;
 }
 
+// Should be in: D:/Projects/EdenLib/edSys/sources/EdList.cpp
 void edListClear(edLIST* pList)
 {
 	edNODE* pNode;

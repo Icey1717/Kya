@@ -175,16 +175,19 @@ void CFrontendBank::Level_Term()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendBank.h
 void CFrontendBank::Level_ClearAll()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendBank.h
 void CFrontendBank::Level_Manage()
 {
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/FrontendBank.h
 void CFrontendBank::Level_ManagePaused()
 {
 	return;

@@ -873,6 +873,7 @@ CCylinderDetection::CCylinderDetection()
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/ActorServices.cpp
 bool CCylinderDetection::DetectAttract(CActor* pActor)
 {
 	bool bVar1;

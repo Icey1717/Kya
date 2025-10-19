@@ -226,6 +226,7 @@ void CondMessage::Create(ByteCode* pByteCode)
 	return;
 }
 
+// Should be in: D:/Projects/b-witch/SwitchBehaviour.h
 void CondMessage::Init(CActor* pOwner)
 {
 	return;
