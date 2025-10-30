@@ -1,5 +1,5 @@
 #include "FrontendDisp.h"
-#include "edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "Pause.h"
@@ -374,6 +374,7 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 		break;
 	case FRONTEND_INTERFACE_ENEMY_LIST:
 		this->pFrontendEnemyList->AddFighterInterface(pInterface);
+		break;
 	case FRONTEND_INTERFACE_MAGIC:
 		this->pMagicOrbs->SetInterface(pInterface);
 		break;

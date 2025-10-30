@@ -433,6 +433,10 @@ public:
 struct astruct_18
 {
 	uint FUN_001eeea0(float param_1);
+
+	CActorWolfen* pWolfen;
+	float field_0xc;
+	int field_0x10;
 };
 
 class CBehaviourExorcism : public CBehaviour
@@ -450,6 +454,9 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void ChangeManageState(int state);
+
+	bool FUN_001edbe0();
+	void DecreaseNbBonusReq();
 
 	CActorWolfen* pOwner;
 
@@ -664,7 +671,7 @@ public:
 	float shootCooldown;
 	int trackBehaviourId;
 	edF32VECTOR4 field_0x90;
-	edF32VECTOR4 field_0xa0;
+	edF32VECTOR4 angleRotY;
 };
 
 class CBehaviourUnknown : public CBehaviour
@@ -978,10 +985,15 @@ public:
 	void StateExorcizeIdle(CBehaviourExorcism* pBehaviour);
 	void StateExorcizeAwake(CBehaviourExorcism* pBehaviour);
 
+	void StateExorcizeInit(CBehaviourExorcism* pBehaviour);
+	void StateExorcize(CBehaviourExorcism* pBehaviour);
+	void StateExorciseTerm();
+
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
 
 	int SV_WLF_CheckBoxOnWay(CActorsTable* pTable);
+	void SV_WLF_ExorcismComputeCenter(edF32VECTOR4* pCenter);
 
 	void ClearLocalData();
 

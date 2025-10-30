@@ -125,7 +125,7 @@ struct CCamConfig : public CAMERA_CONFIG {
 	float field_0x94;
 	undefined4 field_0x98;
 	undefined4 field_0x9c;
-	undefined4 field_0xa0;
+	undefined4 angleRotY;
 	undefined field_0xa4;
 	undefined field_0xa5;
 	undefined field_0xa6;

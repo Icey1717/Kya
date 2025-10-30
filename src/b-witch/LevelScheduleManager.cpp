@@ -1,7 +1,7 @@
 #include "LevelScheduleManager.h"
 #include "IniFile.h"
 #include "edMem.h"
-#include "edBankFile.h"
+#include "edBank/edBankFile.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -2560,9 +2560,9 @@ bool BnkInstallBank(char* pFileData, int length)
 
 	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
-		*(char**)(*(int*)&(CScene::ptable.g_AudioManager_00451698)->field_0x60 +
+		*(char**)(*(int*)&(CScene::ptable.g_AudioManager_00451698)->instanceIndex +
 			(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8) = pFileData;
-		*(int*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4) = length;
+		*(int*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->instanceIndex + 4) = length;
 	}
 	pGVar1->field_0xc = pGVar1->field_0xc + 1;
 	if (pGVar1->field_0xc == pGVar1->field_0x48) {
@@ -2584,11 +2584,11 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
 		puVar2 = (undefined4*)
-			(*(int*)&(CScene::ptable.g_AudioManager_00451698)->field_0x60 +
+			(*(int*)&(CScene::ptable.g_AudioManager_00451698)->instanceIndex +
 				(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8);
 		uVar3 = FUN_00267e20(*puVar2, pFileData, (long)(int)puVar2[1], (long)length);
 		*(uint*)(pGVar1->field_0x50 + pGVar1->field_0xc * 4) = uVar3;
-		*(undefined4*)&pGVar1->field_0xb8 = *(undefined4*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4);
+		*(undefined4*)&pGVar1->field_0xb8 = *(undefined4*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->instanceIndex + 4);
 		if ((*(uint*)&pGVar1->field_0xb8 & 0x3f) != 0) {
 			*(uint*)&pGVar1->field_0xb8 = (*(uint*)&pGVar1->field_0xb8 & 0xffffffc0) + 0x40;
 		}
@@ -2597,7 +2597,7 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 	pGVar1->field_0xc = pGVar1->field_0xc + 1;
 	if (pGVar1->field_0xc == pGVar1->field_0x48) {
 		pGVar1->field_0xc = 0;
-		edMemFree(*(void**)&pGVar1->field_0x60);
+		edMemFree(*(void**)&pGVar1->instanceIndex);
 	})
 	return false;
 }

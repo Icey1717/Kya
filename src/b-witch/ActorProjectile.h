@@ -64,7 +64,7 @@ public:
 	undefined4 field_0x50;
 	int field_0x5c;
 
-	float field_0x60;
+	float instanceIndex;
 	float field_0x64;
 	float field_0x68;
 	float field_0x6c;

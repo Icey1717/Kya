@@ -653,17 +653,17 @@ void CVectorDyn::Integrate(float param_1, float param_2)
 
 		edF32Vector4AddHard(&this->field_0x30, &this->field_0x30, &this->field_0x50);
 		this->field_0x8 = this->field_0x8 + param_1;
-		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x60, &this->field_0x50);
-		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->field_0x60);
+		edF32Vector4ScaleHard(1.0f / param_2, &this->instanceIndex, &this->field_0x50);
+		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->instanceIndex);
 	}
 
 	assert(std::isnan(this->field_0x50.x) == false);
 	assert(std::isnan(this->field_0x50.y) == false);
 	assert(std::isnan(this->field_0x50.z) == false);
 
-	assert(std::isnan(this->field_0x60.x) == false);
-	assert(std::isnan(this->field_0x60.y) == false);
-	assert(std::isnan(this->field_0x60.z) == false);
+	assert(std::isnan(this->instanceIndex.x) == false);
+	assert(std::isnan(this->instanceIndex.y) == false);
+	assert(std::isnan(this->instanceIndex.z) == false);
 
 	return;
 }
@@ -696,10 +696,10 @@ void CVectorDyn::Reset()
 	(this->field_0x50).z = 0.0f;
 	(this->field_0x50).w = 0.0f;
 
-	(this->field_0x60).x = 0.0f;
-	(this->field_0x60).y = 0.0f;
-	(this->field_0x60).z = 0.0f;
-	(this->field_0x60).w = 0.0f;
+	(this->instanceIndex).x = 0.0f;
+	(this->instanceIndex).y = 0.0f;
+	(this->instanceIndex).z = 0.0f;
+	(this->instanceIndex).w = 0.0f;
 
 	(this->field_0x70).x = 0.0f;
 	(this->field_0x70).y = 0.0f;
@@ -786,10 +786,10 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	(this->field_0x50).z = 0.0f;
 	(this->field_0x50).w = 0.0f;
 
-	(this->field_0x60).x = 0.0f;
-	(this->field_0x60).y = 0.0f;
-	(this->field_0x60).z = 0.0f;
-	(this->field_0x60).w = 0.0f;
+	(this->instanceIndex).x = 0.0f;
+	(this->instanceIndex).y = 0.0f;
+	(this->instanceIndex).z = 0.0f;
+	(this->instanceIndex).w = 0.0f;
 
 	(this->field_0x70).x = 0.0f;
 	(this->field_0x70).y = 0.0f;

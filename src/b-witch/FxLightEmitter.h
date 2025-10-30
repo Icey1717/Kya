@@ -36,7 +36,7 @@ public:
 	float field_0x40;
 	float field_0x44;
 
-	float field_0x60;
+	float instanceIndex;
 
 	// Length or width
 	float field_0x64;

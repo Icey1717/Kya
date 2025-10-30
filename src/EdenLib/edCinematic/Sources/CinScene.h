@@ -65,7 +65,7 @@ PACK(
 	undefined field_0x9d;
 	undefined field_0x9e;
 	undefined field_0x9f;
-	undefined field_0xa0;
+	undefined angleRotY;
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;

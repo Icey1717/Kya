@@ -20,7 +20,11 @@ class CBehaviourBonusFlock;
 class CBnsInstance : public CActInstance
 {
 public:
-	void InitBns(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere);
+	virtual void SetState(int newState);
+	virtual float GetAngleRotY();
+	virtual void CheckpointReset();
+
+	void InitBns(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex);
 	bool InitDlistPatchable(int bIsFlare);
 	void BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour);
 	void BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour);
@@ -30,8 +34,10 @@ public:
 
 	void MoveOnPath(float param_1, float speed, CBehaviourBonusPath* pBehaviour);
 
+	void State_Turn(CBehaviourBonusTurn* pBehaviour);
+
 	float field_0x9c;
-	float field_0xa0;
+	float angleRotY;
 	float field_0xa4;
 	SV_MOV_FLEE_ON_PATH_PARAM field_0xa8;
 };
@@ -140,6 +146,7 @@ public:
 	S_STREAM_REF<CPathFollow> pathFollowRef;
 	CShadowShared* aShadowShared;
 	int nbSharedShadows;
+	float field_0x18;
 	int field_0x20;
 	int flarePatchId;
 	int animPatchId;

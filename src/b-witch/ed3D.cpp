@@ -22,7 +22,7 @@
 #include "port/pointer_conv.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoC.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edVideo/Viewport.h"
 
 #include "Rendering/CustomShell.h"
@@ -7085,6 +7085,41 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index)
 
 	return pMaterial;
 }
+
+int ed3DG2DGetNeededSizeForDuplicateMaterial(ed_hash_code* pHashCode)
+{
+	bool bVar1;
+	byte bVar2;
+	int iVar3;
+	int requiredSize;
+	uint nbMaterials;
+	int* pLayerIt;
+
+	ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+	ed_g2d_material* pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
+	bVar2 = pMaterial->nbLayers;
+	nbMaterials = (uint)bVar2;
+
+	pLayerIt = pMaterial->aLayers;
+	requiredSize = ((uint)(bVar2 >> 2) * 4 + 4) * 4 + 0x90;
+	
+	while (bVar1 = nbMaterials != 0, nbMaterials = nbMaterials - 1, bVar1) {
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, *pLayerIt);
+		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+		ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+		ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+		requiredSize = requiredSize + ((uint)(pLayer->bHasTexture >> 2) * 4 + 4) * 4 + pTexture->bHasPalette * 0x10 + 0x60;
+
+		if (pTexture->pAnimSpeedNormalExtruder != 0x0) {
+			requiredSize = requiredSize + 0x10;
+		}
+	
+		pLayerIt = pLayerIt + 1;
+	}
+
+	return requiredSize;
+}
+
 
 
 ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index)

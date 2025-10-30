@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "EdenLib/edBank/include/edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 #include "ed3D.h"
 
 struct FrontendTextureListEntry

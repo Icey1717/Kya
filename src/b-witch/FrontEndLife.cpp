@@ -4,7 +4,7 @@
 #include "ActorAutonomous.h"
 #include "FrontEndBank.h"
 #include "Frontend.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "TimeController.h"
 #include "MathOps.h"
 

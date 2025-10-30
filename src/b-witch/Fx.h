@@ -133,7 +133,7 @@ public:
 	edF32VECTOR4 scale;
 
 	edF32VECTOR4 rotationEuler;
-	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 instanceIndex;
 
 	float field_0x70;
 	float field_0x74;

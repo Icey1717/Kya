@@ -1,5 +1,5 @@
 #include "Fx_Spark.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "MathOps.h"
 #include "edDlist.h"
 #include "FileManager3D.h"

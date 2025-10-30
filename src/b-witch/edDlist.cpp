@@ -11,7 +11,7 @@
 #endif
 
 #include "ed3D.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "LargeObject.h"
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
@@ -123,6 +123,14 @@ edSysHandler3D ed3DHandlers;
 
 _rgba gCurColor[4];
 _rgba* gCurColor_SPR = gCurColor;
+
+DisplayList* gCurDListHandle = NULL;
+void* gCurDListBuf = NULL;
+void* gCurDListBufEnd = NULL;
+
+DisplayListCommand* gCurDListInfo3DPatchable;
+byte gCurPacketPatched[256];
+int gLastPacketPatched = -1;
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSystem.c
 void edDListInitMemory(void)
@@ -3263,14 +3271,6 @@ void edDListTranslate(float x, float y, float z)
 	return;
 }
 
-DisplayList* gCurDListHandle = NULL;
-void* gCurDListBuf = NULL;
-void* gCurDListBufEnd = NULL;
-
-DisplayListCommand* gCurDListInfo3DPatchable;
-byte gCurPacketPatched[256];
-int gLastPacketPatched = -1;
-
 DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList)
 {
 	DisplayList* pList;
@@ -3754,6 +3754,7 @@ void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR
 	return;
 }
 
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
 void edDListPatcheEnd(int param_1, int param_2)
 {
 	int iVar1;

@@ -1354,10 +1354,10 @@ bool CActorWind::IsAValidFxPrimitive(CFxWind* pFx, byte param_3, edF32MATRIX4* p
 
 		edF32Matrix4MulF32Vector4Hard(&local_f0, param_5, &local_40.rowT);
 
-		pFx->field_0x60 = this->pMeshTransform->base.transformA;
+		pFx->instanceIndex = this->pMeshTransform->base.transformA;
 		pFx->field_0x58 = param_3;
 		
-		pFx->field_0xa0 = local_40;
+		pFx->angleRotY = local_40;
 
 		pFx->field_0x130 = local_50;
 		pFx->field_0x150 = local_f0;

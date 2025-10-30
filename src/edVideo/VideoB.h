@@ -120,7 +120,7 @@ struct edSurface {
 
 struct VideoListData_AC {
 	ulong field_0x0[20];
-	ulong* field_0xa0;
+	ulong* angleRotY;
 	ulong* field_0xa4;
 	ulong* field_0xa8;
 };

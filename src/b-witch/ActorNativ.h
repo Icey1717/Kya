@@ -189,7 +189,7 @@ public:
 	S_NTF_TARGET_STREAM_REF* field_0x50;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x54;
 
-	NativSubObjD field_0x60;
+	NativSubObjD instanceIndex;
 
 	int initialAnimId;
 

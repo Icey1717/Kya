@@ -557,9 +557,7 @@ void CActorCommander::CheckExorcism()
 	CMagicInterface* pMagicInterface;
 	float fVar2;
 	float fVar3;
-	undefined4 local_20;
-	float local_1c;
-	undefined4* local_4;
+	InitPathfindingClientMsgParams local_20;
 	CActorWolfen* pWolfen;
 
 	if (0 < (this->exorcismActorsTable).nbEntries) {
@@ -568,27 +566,26 @@ void CActorCommander::CheckExorcism()
 			pMagicInterface = &CActorHero::_gThis->magicInterface;
 			fVar2 = pMagicInterface->GetValue();
 			fVar3 = pMagicInterface->GetTransit();
-			this->field_0x1dc = fVar2 + fVar3;;
+			this->field_0x1dc = fVar2 + fVar3;
 		}
 
 		if (0.5f <= Timer::GetTimer()->scaledTotalTime - this->field_0x1e4) {
 			pWolfen = static_cast<CActorWolfen*>((this->exorcismActorsTable).aEntries[0]);
 
-			IMPLEMENTATION_GUARD(
-			local_20 = 0xe;
-			local_1c = this->field_0x1dc;
+			local_20.msgId = 0xe;
+			local_20.time = this->field_0x1dc;
 			fVar2 = pWolfen->field_0xb84 - pWolfen->field_0xb88;
-			if (local_1c < fVar2) {
+			if (local_20.time < fVar2) {
 				this->field_0x1dc = 0.0f;
 			}
 			else {
 				this->field_0x1dc = this->field_0x1dc - (pWolfen->field_0xb84 - pWolfen->field_0xb88);
-				local_1c = fVar2;
+				local_20.time = fVar2;
 			}
-			local_4 = &local_20;
-			CActor::DoMessage((CActor*)this, (CActor*)pWolfen, 0x1a, (uint)local_4);
+			DoMessage(pWolfen, (ACTOR_MESSAGE)0x1a, &local_20);
+
 			this->exorcismActorsTable.Pop(0);
-			this->field_0x1e4 = Timer::GetTimer()->scaledTotalTime;)
+			this->field_0x1e4 = Timer::GetTimer()->scaledTotalTime;
 		}
 
 		if ((this->exorcismActorsTable).nbEntries == 0) {

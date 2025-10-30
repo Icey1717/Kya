@@ -1223,7 +1223,7 @@ public:
 	int lightType;
 	BaseShape baseShape;
 
-	edF32VECTOR4 field_0xa0;
+	edF32VECTOR4 angleRotY;
 	edF32VECTOR4 field_0xb0;
 	edF32VECTOR4 field_0xc0;
 };
@@ -1266,7 +1266,7 @@ void CLightTorch::Manage()
 	fVar6 = (this->field_0xc0).x;
 	fVar5 = (this->field_0xc0).z;
 	puVar6 = ((fVar6 - (this->field_0xc0).y) * ((this->field_0xc0).w - fVar5)) / fVar6;
-	edF32Vector4LERPHard(fVar5 + puVar6, &(this->colorModel).color, &this->field_0xa0, &this->field_0xb0);
+	edF32Vector4LERPHard(fVar5 + puVar6, &(this->colorModel).color, &this->angleRotY, &this->field_0xb0);
 	pCVar1 = CScene::ptable.g_LightManager_004516b0;
 	if (((this->field_0x8 & 1) == 0) && (this->lightType == 1)) {
 		IMPLEMENTATION_GUARD(
@@ -1394,7 +1394,7 @@ void CLightTorch::Create(ByteCode* pByteCode)
 	}
 	this->pZoneHolderB = reinterpret_cast<S_ZONE_STREAM_REF*>(piVar2);
 
-	(this->field_0xa0) = this->colorModel.color;
+	(this->angleRotY) = this->colorModel.color;
 	bVar3 = pByteCode->GetU8();
 	if ((char)bVar3 < '\0') {
 		fVar7 = (float)((uint)(int)(char)bVar3 >> 1 | (int)(char)bVar3 & 1U);

@@ -1,5 +1,5 @@
 #include "BootData.h"
-#include "edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 #include "Pause.h"
 #include "edText.h"
 #include "Rendering/edCTextFont.h"

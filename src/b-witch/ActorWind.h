@@ -40,8 +40,8 @@ public:
 	int field_0x58;
 	edF32MATRIX4* field_0x5c;
 
-	edF32MATRIX4 field_0x60;
-	edF32MATRIX4 field_0xa0;
+	edF32MATRIX4 instanceIndex;
+	edF32MATRIX4 angleRotY;
 
 	edF32VECTOR4 field_0x130;
 	edF32VECTOR4 field_0x140;

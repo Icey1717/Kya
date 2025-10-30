@@ -1,8 +1,8 @@
 #include "TranslatedTextData.h"
 #include "edMem.h"
-#include "edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 #include <stdio.h>
-#include "edFile.h"
+#include "edFile/edFile.h"
 #include <assert.h>
 #include "edStr.h"
 #include "Pause.h"

@@ -123,7 +123,7 @@ public:
 
 	CAM_QUAKE field_0x70;
 
-	uint field_0xa0;
+	uint angleRotY;
 
 	_rgba field_0xb0;
 	float field_0xb4;

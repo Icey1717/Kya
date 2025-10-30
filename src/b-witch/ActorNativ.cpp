@@ -11,7 +11,7 @@
 #include "kya.h"
 #include "Rendering/edCTextStyle.h"
 #include "Pause.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edText.h"
 #include "FrontEndMoney.h"
 #include "ActorNativShop.h"
@@ -2315,7 +2315,7 @@ int CBehaviourNativAkasa::FUN_003f1b90(int param_2)
 			bVar1 = true;
 		}
 		else {
-			if ((param_2 == 1) && (this->field_0x60.Set_0x1630(this->field_0x16b0) == false)) {
+			if ((param_2 == 1) && (this->instanceIndex.Set_0x1630(this->field_0x16b0) == false)) {
 				bVar1 = true;
 			}
 			else {
@@ -2553,7 +2553,7 @@ void CActorNativ::State_0x25(CBehaviourNativAkasa* pBehaviour)
 	bVar1 = pHero->FUN_0031b790(pHero->actorState);
 	if (bVar1 == false) {
 		pBehaviour->field_0x16a4 = 0;
-		(pBehaviour->field_0x60).activeSubObjIndex = 0;
+		(pBehaviour->instanceIndex).activeSubObjIndex = 0;
 		pBehaviour->SetBehaviourState(0x22);
 	}
 
@@ -4016,8 +4016,8 @@ int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 
 				if (iVar2 == 1) {
 					IMPLEMENTATION_GUARD(
-					this->field_0x60.FUN_003fff90();
-					if (this->field_0x60.FUN_003ffea0(this->field_0x16b0) == 0) {
+					this->instanceIndex.FUN_003fff90();
+					if (this->instanceIndex.FUN_003ffea0(this->field_0x16b0) == 0) {
 						return 0;
 					})
 				}
@@ -4447,8 +4447,8 @@ bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 
 	if (param_2 == 1) {
 		IMPLEMENTATION_GUARD(
-		FUN_003fff90((int)&this->field_0x60);
-		iVar1 = FUN_003ffea0(&this->field_0x60, (long)(int)this->field_0x16b0);
+		FUN_003fff90((int)&this->instanceIndex);
+		iVar1 = FUN_003ffea0(&this->instanceIndex, (long)(int)this->field_0x16b0);
 		if (iVar1 == 0) {
 			return true;
 		})

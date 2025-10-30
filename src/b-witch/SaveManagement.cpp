@@ -10,17 +10,17 @@
 #include "kya.h"
 #include <string.h>
 
-#include "edFilePath.h"
-#include "edFileFiler.h"
+#include "edFile/edFilePath.h"
+#include "edFile/edFileFiler.h"
 
 #ifdef PLATFORM_PS2
 #include "libpc.h"
 #include <stdio.h>
 #include <eekernel.h>
 #endif
-#include "EdenLib/edFile/include/edFile.h"
-#include "EdenLib/edFile/include/edFileNoWaitStack.h"
-#include "EdenLib/edFile/include/edFileCRC32.h"
+#include "edFile/edFile.h"
+#include "edFile/edFileNoWaitStack.h"
+#include "edFile/edFileCRC32.h"
 #include "TranslatedTextData.h"
 #include "TimeController.h"
 

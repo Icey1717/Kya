@@ -126,7 +126,7 @@ public:
 	undefined field_0x4e;
 	undefined field_0x4f;
 	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 instanceIndex;
 	edF32VECTOR4 field_0x70;
 };
 

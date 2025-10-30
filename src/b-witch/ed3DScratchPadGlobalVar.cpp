@@ -1,5 +1,5 @@
 #include "ed3DScratchPadGlobalVar.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "Types.h"
 #include "ed3D.h"
 #include "CameraViewManager.h"

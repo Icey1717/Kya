@@ -4,13 +4,13 @@
 #include "LevelScheduleManager.h"
 #include "TimeController.h"
 #include "Rendering/CameraPanMasterHeader.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edStr.h"
 #include "MathOps.h"
 #include "ScenaricCondition.h"
 #include "MemoryStream.h"
 
-#include "edBankFile.h"
+#include "edBank/edBankFile.h"
 
 #ifdef PLATFORM_WIN
 #include "port.h"

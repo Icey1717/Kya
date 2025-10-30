@@ -5,7 +5,7 @@
 #include "edStr.h"
 #include "Frontend.h"
 #include "kya.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edText.h"
 #include "ActorAutonomous.h"
 #include "FrontEndBank.h"

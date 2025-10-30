@@ -559,10 +559,10 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 		(peVar14->field_0xd0).w = 0.0f;
 
 		if (param_6 == (edF32VECTOR4*)0x0) {
-			(peVar14->field_0xa0).x = 0.0f;
-			(peVar14->field_0xa0).y = 0.0f;
-			(peVar14->field_0xa0).z = 0.0f;
-			(peVar14->field_0xa0).w = 0.0f;
+			(peVar14->angleRotY).x = 0.0f;
+			(peVar14->angleRotY).y = 0.0f;
+			(peVar14->angleRotY).z = 0.0f;
+			(peVar14->angleRotY).w = 0.0f;
 		}
 		else {
 			peVar2 = param_6 + iVar18;
@@ -772,7 +772,7 @@ void CCollision::InvalidatePrims()
 
 	if (((bVar1 == 0xe) || (bVar1 == 0xd)) &&
 		(peVar2->field_0x4 + peVar2->nbTriangles + peVar2->field_0x8 + peVar2->field_0xc == 1)) {
-		edF32Matrix4FromEulerSoft(&this->pObbTree->matrix_0x70, &peVar3->field_0xa0.xyz, "XYZ");
+		edF32Matrix4FromEulerSoft(&this->pObbTree->matrix_0x70, &peVar3->angleRotY.xyz, "XYZ");
 		peVar4 = this->pObbTree;
 		(peVar4->matrix_0x70).rowT = peVar3->field_0xb0;
 
@@ -1006,7 +1006,7 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 	float fVar2;
 	float fVar3;
 
-	if ((param_3 == 0) && (pPrimObj->field_0xa0.z + pPrimObj->field_0xa0.x + pPrimObj->field_0xa0.y == 0.0f)) {
+	if ((param_3 == 0) && (pPrimObj->angleRotY.z + pPrimObj->angleRotY.x + pPrimObj->angleRotY.y == 0.0f)) {
 	
 		*pHighestVertex = (pPrimObj->vertices).rowT;
 		*pLowestVertex = (pPrimObj->vertices).rowT;

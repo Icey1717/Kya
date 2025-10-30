@@ -2,7 +2,7 @@
 #include "TimeController.h"
 #include "CinematicManager.h"
 #include "LevelScheduleManager.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "Rendering/Font.h"
 #include "edText.h"
 #include "TranslatedTextData.h"
@@ -16,7 +16,7 @@
 #include "MathOps.h"
 #include <math.h>
 
-#include "edFile.h"
+#include "edFile/edFile.h"
 
 #ifdef PLATFORM_WIN
 #include "renderer.h"
@@ -30,8 +30,8 @@
 #include "FrontEndDisp.h"
 #include "Cheat.h"
 #include "MenuMessageBox.h"
-#include "EdenLib/edFile/include/edFileFiler.h"
-#include "EdenLib/edFile/include/edFileNoWaitStack.h"
+#include "edFile/edFileFiler.h"
+#include "edFile/edFileNoWaitStack.h"
 #include "edVideo/Viewport.h"
 #include "edVideo/VideoD.h"
 

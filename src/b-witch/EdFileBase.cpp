@@ -1,6 +1,6 @@
 #include "EdFileBase.h"
-#include "EdenLib/edFile/include/edFileFiler.h"
-#include "EdenLib/edFile/include/edFileNoWaitStack.h"
+#include "edFile/edFileFiler.h"
+#include "edFile/edFileNoWaitStack.h"
 
 StaticEdFileBase StaticEdFileBase_004497f0 = { 0 };
 char gFilePath[8];

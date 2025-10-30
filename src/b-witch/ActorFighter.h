@@ -124,12 +124,14 @@ public:
 	virtual void SetVisible(ed_3D_Scene* pScene);
 	virtual bool HasMesh();
 
+	virtual bool IsValid();
+
 	void Create(ByteCode* pByteCode);
 	void ResetInternal(int textureIndex, int meshIndex);
 
 	edF32VECTOR4* GetTextureAnimSpeedNormalExtruder();
 
-	byte field_0x60;
+	byte instanceIndex;
 	byte field_0x61;
 
 	int field_0x64;
@@ -246,7 +248,7 @@ struct s_fighter_grab : public s_fighter_move
 	undefined4 field_0x4c;
 	edF32VECTOR3 field_0x50;
 	undefined4 field_0x5c;
-	float field_0x60;
+	float instanceIndex;
 	float field_0x64;
 	uint field_0x68;
 	undefined field_0x6c;
@@ -277,7 +279,7 @@ struct s_fighter_grab : public s_fighter_move
 	float field_0x94;
 	float field_0x98;
 	undefined4 field_0x9c;
-	int field_0xa0;
+	int angleRotY;
 	float field_0xa4;
 	float field_0xa8;
 	uint field_0xac;

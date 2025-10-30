@@ -13,7 +13,7 @@
 #include "WayPoint.h"
 #include "Frontend.h"
 #include "FrontEndDisp.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "Pause.h"
 #include "kya.h"
 #include "FrontEndInventory.h"
@@ -1001,7 +1001,7 @@ void CBehaviourCompanion::Manage()
 									this->field_0x1c = 0;
 									this->displayTime = 0.0;
 									this->field_0x10 = iVar8;
-									this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x5c;
+									this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].field_0x5c;
 									pCVar14 = this->aSubObjs + this->field_0x10;
 									if ((((pCVar14->flags_0x2 & 0x100) == 0) && ((pCVar14->flags_0x0 & 2) != 0)) &&
 										((pCVar14->flags_0x4 & 1) == 0)) {
@@ -1109,9 +1109,9 @@ void CBehaviourCompanion::Manage()
 		}
 
 		if ((this->aSubObjs[this->field_0x10].flags_0x2 & 0x100) != 0) {
-			this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x60 - GetTimer()->cutsceneDeltaTime;
+			this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].instanceIndex - GetTimer()->cutsceneDeltaTime;
 
-			if (0.0f < this->aSubObjs[this->field_0x10].field_0x60) goto LAB_001e7598;
+			if (0.0f < this->aSubObjs[this->field_0x10].instanceIndex) goto LAB_001e7598;
 		}
 
 		FUN_001e58e0();
@@ -1153,7 +1153,7 @@ void CBehaviourCompanion::Draw()
 
 		if (GetAlert(iVar1) != (CompanionAlert*)0x0) {
 			if ((GetAlert(iVar1)->flags_0x2 & 2) != 0) {
-				if (this->field_0x60 == 0) {
+				if (this->instanceIndex == 0) {
 					if ((GetAlert(iVar1)->flags_0x4 & 2) != 0) {
 						pCVar4 = GetAlert(iVar1);
 
@@ -1177,7 +1177,7 @@ void CBehaviourCompanion::Draw()
 					}
 				}
 				else {
-					if (this->field_0x60 == 1) {
+					if (this->instanceIndex == 1) {
 						x = this->field_0x1c + GetTimer()->cutsceneDeltaTime;
 						this->field_0x1c = x;
 
@@ -1200,7 +1200,7 @@ void CBehaviourCompanion::Draw()
 						if (x < 0.0f) {
 							this->displayTime = 0.0f;
 							this->field_0x1c = 0.0f;
-							this->field_0x60 = 0;
+							this->instanceIndex = 0;
 							GetAlert(this->field_0x18)->flags_0x4 = GetAlert(this->field_0x18)->flags_0x4 & 0xffdf;
 						}
 						x = -0.15f;
@@ -1278,7 +1278,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 		do {
 			this->aSubObjs[iVar4].flags_0x4 = this->aSubObjs[iVar4].flags_0x4 & 0xfff4;
 			this->aSubObjs[iVar4].flags_0x4 = this->aSubObjs[iVar4].flags_0x4 | 4;
-			this->aSubObjs[iVar4].field_0x60 = this->aSubObjs[iVar4].field_0x5c;
+			this->aSubObjs[iVar4].instanceIndex = this->aSubObjs[iVar4].field_0x5c;
 
 			iVar9 = this->aSubObjs + iVar4;
 			if ((iVar9->flags_0x2 & 2) != 0) {
@@ -1311,7 +1311,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 		} while (iVar4 < this->nbSubObjs);
 	}
 
-	this->field_0x60 = 0;
+	this->instanceIndex = 0;
 	this->field_0x64 = 0;
 	this->field_0x5c = 0;
 	this->field_0x58 = 0;
@@ -1364,7 +1364,7 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				this->field_0x1c = 0;
 				this->displayTime = 0.0;
 				this->field_0x10 = pMsgParam;
-				this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x5c;
+				this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].field_0x5c;
 				pCVar8 = this->aSubObjs + this->field_0x10;
 				if ((((pCVar8->flags_0x2 & 0x100) == 0) && ((pCVar8->flags_0x0 & 2) != 0)) && ((pCVar8->flags_0x4 & 1) == 0)) {
 					FUN_001e56b0(1);
@@ -1482,7 +1482,7 @@ void CBehaviourCompanion::FUN_001e50a0()
 	if (this->field_0x64 == 0) {
 		this->field_0x1c = 0;
 		this->displayTime = 0.0f;
-		this->field_0x60 = 0;
+		this->instanceIndex = 0;
 
 		if (this->field_0x18 < 0) {
 			pCVar7 = (CompanionAlert*)0x0;
@@ -1578,8 +1578,8 @@ void CBehaviourCompanion::FUN_001e50a0()
 		}
 
 		pCVar7->flags_0x4 = pCVar7->flags_0x4 | 2;
-		if (this->field_0x60 == 0) {
-			this->field_0x60 = 1;
+		if (this->instanceIndex == 0) {
+			this->instanceIndex = 1;
 			if (this->field_0x18 < 0) {
 				pCVar7 = (CompanionAlert*)0x0;
 			}
@@ -1620,7 +1620,7 @@ void CBehaviourCompanion::FUN_001e50a0()
 	}
 
 	if (bVar4) {
-		this->field_0x60 = 2;
+		this->instanceIndex = 2;
 		if (this->field_0x18 < 0) {
 			pCVar7 = (CompanionAlert*)0x0;
 		}
@@ -1665,7 +1665,7 @@ LAB_001e5488:
 		}
 
 		if (pCVar7->field_0x50 < fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) {
-			this->field_0x60 = 2;
+			this->instanceIndex = 2;
 			if (this->field_0x18 < 0) {
 				pCVar7 = (CompanionAlert*)0x0;
 			}
@@ -1745,7 +1745,7 @@ void CBehaviourCompanion::FUN_001e58e0()
 	this->field_0x10 = -1;
 	this->field_0x1c = 0;
 	this->displayTime = 0.0f;
-	this->field_0x60 = 0;
+	this->instanceIndex = 0;
 	this->aSubObjs[this->activeSubObjId].flags_0x4 = this->aSubObjs[this->activeSubObjId].flags_0x4 & 0xffdf;
 	pHero = this->pOwner->pActorHero;
 	this->field_0x30 = pHero->currentLocation;

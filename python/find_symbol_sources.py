@@ -15,7 +15,7 @@ def try_demangle_mwcc(name: str) -> str:
 
 # Configuration
 SEARCH_WINDOW = 0x400  # bytes to scan backward from symbol string
-SOURCE_PATTERNS = (b'.cpp', b'.c', b'.h')
+SOURCE_PATTERNS = (b'.cpp', b'.c', b'.h', b'.inl')
 
 def find_symbol_file_offset(data, symbol_name: str):
     """

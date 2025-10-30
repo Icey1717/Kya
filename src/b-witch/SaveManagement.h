@@ -109,7 +109,7 @@ public:
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	undefined field_0x60;
+	undefined instanceIndex;
 	undefined field_0x61;
 	undefined field_0x62;
 	undefined field_0x63;
@@ -173,7 +173,7 @@ public:
 	undefined field_0x9d;
 	undefined field_0x9e;
 	undefined field_0x9f;
-	undefined field_0xa0;
+	undefined angleRotY;
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;

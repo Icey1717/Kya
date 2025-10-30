@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "EdenLib/edCollision/sources/edCollisions.h"
+#include "edCollision/edCollisions.h"
 
 #define MATERIAL_TABLE_SIZE 0xc
 

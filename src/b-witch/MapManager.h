@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 
 struct CMapManager : public CObjectManager
 {
@@ -36,7 +36,7 @@ struct CMapManager : public CObjectManager
 	undefined4 field_0x54;
 	undefined4 field_0x58;
 	float field_0x5c;
-	undefined4 field_0x60;
+	undefined4 instanceIndex;
 	undefined4 field_0x64;
 	undefined4 field_0x68;
 	undefined4 field_0x6c;

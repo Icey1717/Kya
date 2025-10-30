@@ -1,4 +1,4 @@
-#include "edCollisions.h"
+#include "edCollision/edCollisions.h"
 
 #include <string.h>
 #include <math.h>
@@ -71,14 +71,14 @@ void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj)
 
 	pfVar1 = &pPrimObj->field_0x90;
 
-	fVar2 = cosf(pPrimObj->field_0xa0.x);
-	fVar4 = sinf(pPrimObj->field_0xa0.x);
+	fVar2 = cosf(pPrimObj->angleRotY.x);
+	fVar4 = sinf(pPrimObj->angleRotY.x);
 
-	fVar3 = cosf(pPrimObj->field_0xa0.y);
-	fVar6 = sinf(pPrimObj->field_0xa0.y);
+	fVar3 = cosf(pPrimObj->angleRotY.y);
+	fVar6 = sinf(pPrimObj->angleRotY.y);
 
-	fVar7 = cosf(pPrimObj->field_0xa0.z);
-	fVar8 = sinf(pPrimObj->field_0xa0.z);
+	fVar7 = cosf(pPrimObj->angleRotY.z);
+	fVar8 = sinf(pPrimObj->angleRotY.z);
 
 	(pPrimObj->vertices).aa = pfVar1->x * fVar7 * fVar3;
 	(pPrimObj->vertices).ab = pfVar1->x * fVar3 * fVar8;

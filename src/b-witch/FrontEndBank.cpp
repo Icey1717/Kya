@@ -1,6 +1,6 @@
 #include "FrontEndBank.h"
 #include "edStr.h"
-#include "EdenLib/edBank/include/edBankFile.h"
+#include "edBank/edBankFile.h"
 
 char* FRONTEND_BANK_NAME = "Frontend";
 

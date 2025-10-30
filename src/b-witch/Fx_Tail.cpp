@@ -1,6 +1,6 @@
 #include "Fx_Tail.h"
 #include "edMem.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "DlistManager.h"
 #include "FileManager3D.h"
 

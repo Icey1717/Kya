@@ -12,8 +12,8 @@
 #include "edStr.h"
 #include "port/pointer_conv.h"
 
-#include "edBankFile.h"
-#include "edFile.h"
+#include "edBank/edBankFile.h"
+#include "edFile/edFile.h"
 
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
@@ -32,7 +32,7 @@
 #include "ActorHero.h"
 #include "Actor.h"
 #include "EventManager.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edVideo/VideoD.h"
 #include "Rendering/edCTextFormat.h"
 #include "Rendering/edCTextFont.h"
@@ -40,7 +40,7 @@
 #include "edVideo/VideoA.h"
 #include "TranslatedTextData.h"
 #include "EdFileBase.h"
-#include "EdenLib/edParticles/include/edParticles.h"
+#include "edParticles/edParticles.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -780,7 +780,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x58 = pByteCode->GetF32();
 
 	this->field_0x5c = (SWITCH_MODE)pByteCode->GetS32();
-	this->field_0x60 = pByteCode->GetF32();
+	this->instanceIndex = pByteCode->GetF32();
 	this->field_0x64 = (SWITCH_MODE)pByteCode->GetS32();
 	this->field_0x68 = pByteCode->GetF32();
 
@@ -3912,7 +3912,7 @@ bool CBWCinCam::Activate()
 		iVar3 = pCVar1->field_0x64;
 		fVar5 = pCVar1->field_0x68;
 		SVar4 = pCVar1->field_0x5c;
-		fVar6 = pCVar1->field_0x60;
+		fVar6 = pCVar1->instanceIndex;
 		(pCVar2)->field_0x8c = pCVar1->field_0x58;
 		(pCVar2)->switchMode = SVar4;
 		(pCVar2)->field_0x98 = fVar6;

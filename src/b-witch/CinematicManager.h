@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "EdenLib/edBank/include/edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 
 #ifdef PLATFORM_PS2
 #include <libvu0.h>
@@ -242,7 +242,7 @@ struct CinematicFileDataHeader {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	undefined field_0x60;
+	undefined instanceIndex;
 	undefined field_0x61;
 	undefined field_0x62;
 	undefined field_0x63;
@@ -680,7 +680,7 @@ public:
 	uint field_0x54;
 	float field_0x58;
 	SWITCH_MODE field_0x5c;
-	float field_0x60;
+	float instanceIndex;
 	SWITCH_MODE field_0x64;
 	float field_0x68;
 

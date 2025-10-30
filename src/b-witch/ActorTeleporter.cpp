@@ -6,7 +6,7 @@
 #include "PoolAllocators.h"
 #include "EventManager.h"
 #include "MathOps.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "ActorHero.h"
 
 void CActorTeleporter::Create(ByteCode* pByteCode)

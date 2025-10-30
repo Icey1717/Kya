@@ -22,7 +22,7 @@
 #include "ActorCommander.h"
 #include "ActorWolfen.h"
 #include "FrontEndLife.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edText.h"
 #include "ActorNativ.h"
 
@@ -7746,9 +7746,9 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 			pTVar4 = GetTimer();
 			this->scalarDynJump.Integrate(pTVar4->cutsceneDeltaTime);
 			edF32Vector4ScaleHard(-this->scalarDynJump.field_0x20, &local_100, &this->rotationQuat);
-			this->dynamicExt.field_0x60.x = local_100.x;
+			this->dynamicExt.instanceIndex.x = local_100.x;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x4000;
-			this->dynamicExt.field_0x60.z = local_100.z;
+			this->dynamicExt.instanceIndex.z = local_100.z;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x10000;
 
 			ManageDyn(4.0f, 0x101, (CActorsTable*)0x0);
@@ -10979,7 +10979,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		pTVar5 = GetTimer();
 		fVar8 = this->field_0x1170;
 		this->scalarDynJump.Integrate(fVar8 * this->field_0x116c * pTVar5->cutsceneDeltaTime, fVar8 * fVar9);
-		this->dynamicExt.field_0x60.y = this->scalarDynJump.field_0x20;
+		this->dynamicExt.instanceIndex.y = this->scalarDynJump.field_0x20;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 	}
 

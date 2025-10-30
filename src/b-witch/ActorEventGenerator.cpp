@@ -1151,7 +1151,7 @@ int CBehaviourEventGen::ManageEarthQuakeB(BHVR_PTMF* pPMTF, EVG_PHASE phase, voi
 		for (; uVar1 != 0; uVar1 = uVar1 - 1) {
 			pByteCode->GetF32();
 			//CAM_QUAKE::FUN_00194760(0.0f, 0.0f, 0.0f, pByteCode->GetF32(), &this->field_0x70);
-			this->field_0xa0 = pByteCode->GetU32();
+			this->angleRotY = pByteCode->GetU32();
 			(this->field_0x70).field_0x28 = pByteCode->GetF32();
 			(this->field_0x70).field_0x24 = pByteCode->GetF32();
 			(this->field_0x70).field_0x2c = pByteCode->GetF32();

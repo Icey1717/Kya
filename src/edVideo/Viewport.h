@@ -2,7 +2,7 @@
 #define CAMERA_H
 
 #include "Types.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 
 struct edSurface;
 

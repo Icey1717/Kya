@@ -5,8 +5,8 @@
 #include "LargeObject.h"
 #include "FileManager3D.h"
 #include "ed3D.h"
-#include "EdenLib/edCollision/sources/edCollisions.h"
-#include "EdenLib/edBank/include/edBankBuffer.h"
+#include "edCollision/edCollisions.h"
+#include "edBank/edBankBuffer.h"
 
 namespace ed3D
 {

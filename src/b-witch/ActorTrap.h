@@ -66,7 +66,7 @@ public:
 	undefined field_0x5a;
 	undefined field_0x5b;
 	undefined4 field_0x5c;
-	float field_0x60;
+	float instanceIndex;
 	CActor* pCaughtActor;
 	bool field_0x68;
 	bool field_0x69;

@@ -780,7 +780,7 @@ void CBehaviourTrapStand::Begin(CActor* pOwner, int newState, int newAnimationTy
 	int iVar4;
 	int entryCount;
 
-	this->field_0x60 = this->pOwner->subObjA->boundingSphere.w;
+	this->instanceIndex = this->pOwner->subObjA->boundingSphere.w;
 	this->pCaughtActor = (CActor*)0x0;
 
 	if (this->field_0x48 == (S_TRAP_STREAM_REF*)0x0) {
@@ -901,7 +901,7 @@ void CBehaviourTrapStand::InitState(int newState)
 			this->pOwner->UpdatePosition(&local_40, true);
 		}
 
-		this->field_0x60 = ((this->pOwner->subObjA)->boundingSphere).w;
+		this->instanceIndex = ((this->pOwner->subObjA)->boundingSphere).w;
 		pKVar2 = this->pOwner->subObjA;
 		local_50.xyz = (pKVar2->boundingSphere).xyz;
 		local_50.w = 0.0f;
@@ -927,7 +927,7 @@ void CBehaviourTrapStand::InitState(int newState)
 			local_60.y = pTrap->currentLocation.y - 1.58f;
 			this->pOwner->UpdatePosition(&local_60, true);
 		}
-		this->field_0x60 = ((this->pOwner->subObjA)->boundingSphere).w;
+		this->instanceIndex = ((this->pOwner->subObjA)->boundingSphere).w;
 		pKVar2 = this->pOwner->subObjA;
 		local_70.x = (pKVar2->boundingSphere).x;
 		local_70.y = (pKVar2->boundingSphere).y;

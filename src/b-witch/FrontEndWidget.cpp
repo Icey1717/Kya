@@ -4,7 +4,7 @@
 #include "Pause.h"
 #include "LocalizationManager.h"
 #include "edStr.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "Rendering/edCTextFormat.h"
 #include "kya.h"
 

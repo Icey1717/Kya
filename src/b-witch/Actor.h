@@ -330,7 +330,7 @@ struct _msg_hit_param
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 instanceIndex;
 	undefined field_0x70;
 	undefined field_0x71;
 	undefined field_0x72;
@@ -356,7 +356,7 @@ public:
 
 struct SOUND_SPATIALIZATION_PARAM
 {
-
+	float* field_0x0;
 };
 
 class CActorSound
@@ -382,9 +382,10 @@ public:
 	CActInstance();
 
 	virtual void SetState(int newState);
+	virtual float GetAngleRotY() = 0;
 	virtual void CheckpointReset();
 
-	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5); 
+	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex);
 	void Term();
 	void SetVisible(int bVisible);
 	void Reset();
@@ -397,6 +398,7 @@ public:
 	void State_Wait();
 
 	void FUN_003982c0();
+	void FUN_00397ba0();
 
 	void SetBasePosition(edF32VECTOR4* pBasePosition);
 	void SetPosition(edF32VECTOR4* pPosition);
@@ -412,7 +414,7 @@ public:
 	float field_0x54;
 	float distanceToKim;
 	float field_0x5c;
-	int field_0x60;
+	int instanceIndex;
 
 	edNODE* pNode;
 	ed_3d_hierarchy* pHierarchy;

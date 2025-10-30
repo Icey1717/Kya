@@ -3,7 +3,7 @@
 #include "LevelScheduleManager.h"
 #include "Pause.h"
 #include "CinematicManager.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "LocalizationManager.h"
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
@@ -45,6 +45,7 @@
 #include "PoolAllocators.h"
 #include "FrontEndBank.h"
 #include "ActorFactory.h"
+#include "ed3D/ed3DSceneManager.h"
 
 #define SCENE_STATE_NONE 0x0
 #define SCENE_STATE_CHECKPOINT_FADE_OUT 0x1
@@ -277,9 +278,9 @@ CScene::CScene()
 	this->pViewportA = pCVar14;
 	edViewportSetBackgroundColor(this->pViewportA, 0, 0, 0);
 	CScene::_scene_handleA = ed3DSceneCreate(&_gDisplayCamera, this->pViewportA, 1);
-	CScene::_scene_handleA->ed3DSceneSetFlag(0x20);
-	CScene::_scene_handleA->ed3DSceneSetFogProperty(1);
-	CScene::_scene_handleA->SetFlag_002a5440(1);
+	ed3DSceneSetFlag(CScene::_scene_handleA, 0x20);
+	ed3DSceneSetFogProperty(CScene::_scene_handleA, 1);
+	SetFlag_002a5440(CScene::_scene_handleA, 1);
 	pCVar15 = ed3DSceneGetConfig(CScene::_scene_handleA);
 	pCVar15->projectionScaleFactorB = (uint)pCVar15->projectionScaleFactorB >> 3;
 	(pCVar15->pShadowConfig).texWidth = 0x200;
@@ -297,8 +298,8 @@ CScene::CScene()
 	this->pViewportB = pCVar14;
 	edViewportSetBackgroundColor(this->pViewportB, 0, 0, 0);
 	_scene_handleB = ed3DSceneCreate(&_gDisplayCamera, this->pViewportB, 1);
-	_scene_handleB->ed3DSceneSetFlag(0);
-	_scene_handleB->ed3DSceneSetFogProperty(0);
+	ed3DSceneSetFlag(_scene_handleB, 0);
+	ed3DSceneSetFogProperty(_scene_handleB, 0);
 	pCVar15 = ed3DSceneGetConfig(_scene_handleB);
 	pCVar15->projectionScaleFactorB = (uint)pCVar15->projectionScaleFactorB >> 3;
 	ed3DSceneGetConfig(CScene::_scene_handleA);
@@ -308,7 +309,7 @@ CScene::CScene()
 	do {
 		pSVar16 = ed3DSceneCastShadow(CScene::_scene_handleA, pCVar21);
 		*ppSVar20 = pSVar16;
-		(*ppSVar20)->ed3DSceneSetFlag(4);
+		ed3DSceneSetFlag(*ppSVar20, 4);
 		iVar19 = iVar19 + 1;
 		pCVar21 = pCVar21 + 1;
 		ppSVar20 = ppSVar20 + 1;
@@ -874,16 +875,16 @@ void CScene::Level_Manage()
 
 	if (this->field_0x48 == 0) {
 		if ((GameFlags & 0x200) != 0) {
-			CScene::_scene_handleA->ed3DSceneRemoveFlag(4);
-			_scene_handleB->ed3DSceneRemoveFlag(4);
+			ed3DSceneRemoveFlag(CScene::_scene_handleA, 4);
+			ed3DSceneRemoveFlag(_scene_handleB, 4);
 			GameFlags = GameFlags & 0xfffffdff;
 		}
 	}
 	else {
 		if ((GameFlags & 0x200) == 0) {
 			GameFlags = GameFlags | 0x200;
-			CScene::_scene_handleA->ed3DSceneSetFlag(4);
-			_scene_handleB->ed3DSceneSetFlag(4);
+			ed3DSceneSetFlag(CScene::_scene_handleA, 4);
+			ed3DSceneSetFlag(_scene_handleB, 4);
 		}
 	}
 
@@ -1141,10 +1142,10 @@ void CScene::LoadFunc_001b87b0()
 	ppSVar2 = g_CameraPanStaticMasterArray_00451630;
 	do {
 		if (uVar3 < this->count_0x120) {
-			(*ppSVar2)->ed3DSceneRemoveFlag(4);
+			ed3DSceneRemoveFlag(*ppSVar2, 4);
 		}
 		else {
-			(*ppSVar2)->ed3DSceneSetFlag(4);
+			ed3DSceneSetFlag(*ppSVar2, 4);
 		}
 
 		Func_002b6db0(*ppSVar2, unaff_s2_lo, unaff_s1_lo);

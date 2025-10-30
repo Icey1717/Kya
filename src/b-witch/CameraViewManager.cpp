@@ -8,7 +8,7 @@
 #include <libvu0.h>
 #endif
 #include "TimeController.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edDlist.h"
 #include "DlistManager.h"
 #include "ActorHero.h"
@@ -24,6 +24,7 @@
 #include "ActorFactory.h"
 #include "CameraFixe.h"
 #include "CameraRail.h"
+#include "ed3D/ed3DSceneManager.h"
 
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
@@ -1784,7 +1785,7 @@ void CCamConfig::ResetWithConfig()
 	this->field_0x80 = 0;
 	this->field_0x94 = this->field_0x38.x;
 	this->field_0x98 = this->field_0x38.y;
-	this->field_0xa0 = this->field_0x38.z;
+	this->angleRotY = this->field_0x38.z;
 	this->field_0xac = 0.0f;
 	this->field_0xa8 = 0.0f;
 	this->field_0x9c = 0;
@@ -2260,12 +2261,10 @@ void CCameraManager::Func_00194a10(CActorsTable* pTable)
 	if (uVar13 != this->field_0xa04) {
 		for (; (int)uVar10 < 10; uVar10 = uVar10 + 1) {
 			if (uVar10 < uVar13) {
-				peVar8 = ed3DGetScene(uVar10);
-				peVar8->ed3DSceneRemoveFlag(4);
+				ed3DSceneRemoveFlag(ed3DGetScene(uVar10), 4);
 			}
 			else {
-				peVar8 = ed3DGetScene(uVar10);
-				peVar8->ed3DSceneSetFlag(4);
+				ed3DSceneSetFlag(ed3DGetScene(uVar10), 4);
 				pCVar2 = this->aCameraShadow[uVar10];
 				if (pCVar2 != (CCameraShadow*)0x0) {
 					pCVar2->SetTarget((CActor*)0x0);

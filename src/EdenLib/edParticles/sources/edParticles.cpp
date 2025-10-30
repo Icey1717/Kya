@@ -1,5 +1,5 @@
-#include "edParticles.h"
-#include "Rendering/DisplayList.h"
+#include "edParticles/edParticles.h"
+#include "DlistManager.h"
 #include "ed3D.h"
 #include "MathOps.h"
 #include "profile.h"
@@ -1807,13 +1807,13 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	}
 
 	if (local_bc0 != 0) {
-		if ((pGroup->field_0x9 != 0) && (((FLOAT_00448590 < fabs((pGroup->field_0x60).x) || (FLOAT_00448590 < fabs((pGroup->field_0x60).y))) ||
-				(FLOAT_00448590 < fabs((pGroup->field_0x60).z))))) {
+		if ((pGroup->field_0x9 != 0) && (((FLOAT_00448590 < fabs((pGroup->instanceIndex).x) || (FLOAT_00448590 < fabs((pGroup->instanceIndex).y))) ||
+				(FLOAT_00448590 < fabs((pGroup->instanceIndex).z))))) {
 			pp_Var27 = aParticleVectors;
-			fVar30 = (pGroup->field_0x60).x;
-			fVar31 = (pGroup->field_0x60).y;
-			fVar32 = (pGroup->field_0x60).z;
-			fVar34 = (pGroup->field_0x60).w;
+			fVar30 = (pGroup->instanceIndex).x;
+			fVar31 = (pGroup->instanceIndex).y;
+			fVar32 = (pGroup->instanceIndex).z;
+			fVar34 = (pGroup->instanceIndex).w;
 
 			do {
 				pParticleVectorIt = *pp_Var27;
@@ -4098,7 +4098,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																																	uVar11 = (int)uVar12 >> 3;
 																																	local_44 = (&pDrawData->field_0x9c)[uVar12 & 7];
 																																	iVar15 = 0xff - (uVar11 & 0xff);
-																																	local_48 = (&pDrawData->field_0xa0)[uVar12 & 7];
+																																	local_48 = (&pDrawData->angleRotY)[uVar12 & 7];
 																																	uVar22 = (pCurParticle->field_0x8 & 0xff00ff) *
 																																		(0xff - uVar26) +
 																																		((local_44 & 0xff00ff) * iVar15 +
@@ -4350,7 +4350,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																														uVar11 = (int)uVar12 >> 3;
 																														local_38 = (&pDrawData->field_0x9c)[uVar12 & 7];
 																														iVar15 = 0xff - (uVar11 & 0xff);
-																														local_3c = (&pDrawData->field_0xa0)[uVar12 & 7];
+																														local_3c = (&pDrawData->angleRotY)[uVar12 & 7];
 																														uVar22 = (pCurParticle->field_0x8 & 0xff00ff) * (0xff - uVar26) +
 																															((local_38 & 0xff00ff) * iVar15 +
 																																(local_3c & 0xff00ff) * (uVar11 & 0xff) >> 8 &
@@ -5421,7 +5421,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 												uVar11 = (int)uVar12 >> 3;
 												local_8 = (&pDrawData->field_0x9c)[uVar12 & 7];
 												iVar15 = 0xff - (uVar11 & 0xff);
-												local_c = (&pDrawData->field_0xa0)[uVar12 & 7];
+												local_c = (&pDrawData->angleRotY)[uVar12 & 7];
 												uVar22 = (pCurParticle->field_0x8 & 0xff00ff) * (0xff - uVar26) +
 													((local_8 & 0xff00ff) * iVar15 + (local_c & 0xff00ff) * (uVar11 & 0xff) >> 8 & 0xff00ff
 														) * uVar26;
@@ -5678,7 +5678,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 									for (iVar10 = 0; iVar10 < pGroup->field_0x10; iVar10 = iVar10 + 1) {
 										edDListColor4u8((pDrawData->field_0x50).r, (pDrawData->field_0x50).g, (pDrawData->field_0x50).b, (pDrawData->field_0x50).a);
 										edDListTexCoo2f(pDrawData->field_0x54, pDrawData->field_0x58);
-										edDListTexCoo2f(pDrawData->field_0x5c, pDrawData->field_0x60);
+										edDListTexCoo2f(pDrawData->field_0x5c, pDrawData->instanceIndex);
 										edDListWidthHeight2f(pDrawData->field_0x64, pDrawData->field_0x68);
 										edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 									}

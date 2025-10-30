@@ -1,10 +1,10 @@
 #include "FxParticle.h"
 #include "MemoryStream.h"
-#include "EdenLib/edBank/include/edBankBuffer.h"
+#include "edBank/edBankBuffer.h"
 #include "LevelScheduleManager.h"
 #include "MathOps.h"
 #include "TimeController.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 
 bool CParticleRes::Init()
 {

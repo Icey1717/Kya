@@ -167,9 +167,9 @@ void CDynamicExt::ClearLocalData()
 	(this->normalizedTranslation).y = 0.0f;
 	(this->normalizedTranslation).z = 0.0f;
 	(this->normalizedTranslation).w = 0.0f;
-	(this->field_0x60).x = 0.0f;
-	(this->field_0x60).y = 0.0f;
-	(this->field_0x60).z = 0.0f;
+	(this->instanceIndex).x = 0.0f;
+	(this->instanceIndex).y = 0.0f;
+	(this->instanceIndex).z = 0.0f;
 	this->field_0x6c = 0.0f;
 	this->field_0xc = 1.7f;
 	this->field_0x1c = 0.7f;
@@ -654,13 +654,13 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	edF32Vector4AddHard(&translation, &translation, &summedImpulseVelocities);
 
 	if ((uVar10 & 0x4000) != 0) {
-		translation.x = this->dynamicExt.field_0x60.x;
+		translation.x = this->dynamicExt.instanceIndex.x;
 	}
 	if ((uVar10 & 0x8000) != 0) {
-		translation.y = this->dynamicExt.field_0x60.y;
+		translation.y = this->dynamicExt.instanceIndex.y;
 	}
 	if ((uVar10 & 0x10000) != 0) {
-		translation.z = this->dynamicExt.field_0x60.z;
+		translation.z = this->dynamicExt.instanceIndex.z;
 	}
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation: {}", translation.ToString());

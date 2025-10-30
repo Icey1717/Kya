@@ -9,7 +9,7 @@
 #include "TimeController.h"
 #include "ed3D.h"
 #include "Frontend.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "Pause.h"
 #include "FileManager3D.h"
 #include "FrontEndDisp.h"

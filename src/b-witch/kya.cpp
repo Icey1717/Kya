@@ -75,11 +75,11 @@ extern "C" {
 #include "Debug.h"
 #include "MenuMessageBox.h"
 
-#include "edFileFiler.h"
-#include "edFile.h"
-#include "edBank.h"
-#include "ps2/_edFileFilerCDVD.h"
-#include "edFilePath.h"
+#include "edFile/edFileFiler.h"
+#include "edFile/edFile.h"
+#include "edBank/edBank.h"
+#include "edFile/ps2/_edFileFilerCDVD.h"
+#include "edFile/edFilePath.h"
 
 template<class T>
 T* CreateNew()
@@ -370,7 +370,7 @@ struct edModule {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	undefined field_0x60;
+	undefined instanceIndex;
 	undefined field_0x61;
 	undefined field_0x62;
 	undefined field_0x63;
@@ -434,7 +434,7 @@ struct edModule {
 	undefined field_0x9d;
 	undefined field_0x9e;
 	undefined field_0x9f;
-	undefined field_0xa0;
+	undefined angleRotY;
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;

@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "Fx.h"
-#include "edParticles.h"
+#include "edParticles/edParticles.h"
 
 struct ed_g2d_manager;
 struct ByteCode;

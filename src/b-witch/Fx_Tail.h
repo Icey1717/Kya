@@ -41,7 +41,7 @@ public:
 	int field_0x40;
 
 	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 instanceIndex;
 	edF32MATRIX4 field_0x70;
 
 	uint field_0xb0;

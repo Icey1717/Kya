@@ -170,7 +170,7 @@ void _FadeInit(void)
 	);
 	VideoManager.listDataAC.field_0x0[19] = SCE_GS_TEST_1;
 
-	VideoManager.listDataAC.field_0xa0 = (ulong*)((char*)&VideoManager + 0xf0);
+	VideoManager.listDataAC.angleRotY = (ulong*)((char*)&VideoManager + 0xf0);
 	VideoManager.listDataAC.field_0xa4 = (ulong*)((char*)&VideoManager + 0x100);
 	VideoManager.listDataAC.field_0xa8 = (ulong*)((char*)&VideoManager + 0x110);
 	return;

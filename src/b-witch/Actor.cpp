@@ -5578,7 +5578,7 @@ void CActInstance::CheckpointReset()
 	return;
 }
 
-void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5)
+void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex)
 {
 	ed_3d_hierarchy* peVar1;
 	ed_g3d_manager* pG3D;
@@ -5593,7 +5593,7 @@ void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* p
 
 	this->basePosition = *pPosition;
 
-	this->field_0x60 = param_5;
+	this->instanceIndex = instanceIndex;
 	this->field_0x5c = 0.0f;
 	this->distanceToKim = 0.0f;
 
@@ -5850,6 +5850,128 @@ void CActInstance::FUN_003982c0()
 			if ((this->flags & 0x80) != 0) {
 				peVar3 = GetStaticMeshMasterA_001031b0();
 				ed3DHierarchyNodeSetRenderOff(peVar3, this->pNode);
+			}
+		}
+	}
+
+	return;
+}
+
+
+void CActInstance::FUN_00397ba0()
+{
+	ed_3d_hierarchy* peVar1;
+	CActorHero* pCVar2;
+	edF32VECTOR4* v1;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack160;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	undefined4 local_8;
+	undefined4 local_4;
+
+	pCVar2 = CActorHero::_gThis;
+	v1 = CActorHero::_gThis->GetPosition_00369c80();
+	edF32Vector4SubHard(&eStack160, v1, &this->currentPosition);
+	eStack160.y = eStack160.y + pCVar2->subObjA->boundingSphere.w;
+	fVar5 = edF32Vector4GetDistHard(&eStack160);
+	this->distanceToKim = fVar5;
+	if ((this->flags & 0x10) == 0) {
+		if ((this->flags & 0x40) != 0) {
+			local_20.y = -1.0f;
+			local_20.x = 0.0f;
+			local_20.z = 0.0f;
+			local_20.w = 0.0f;
+
+			CCollisionRay CStack144 = CCollisionRay(0.5f, &this->currentPosition, &local_20);
+			fVar5 = CStack144.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (fVar5 < 0.5f) {
+				edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime * 1.5, &local_20, &gF32Vector4UnitY);
+				edF32Vector4AddHard(&local_20, &this->currentPosition, &local_20);
+				this->currentPosition = local_20;
+				if ((this->flags & 0x80) != 0) {
+					peVar1 = this->pHierarchy;
+					peVar1->transformA.rowT = this->currentPosition;
+				}
+			}
+			else {
+				this->flags = this->flags & 0xffffffbf;
+			}
+		}
+	}
+	else {
+		local_30.y = -0.25f;
+		local_30.x = 0.0f;
+		local_30.z = 0.0f;
+		local_30.w = 0.0f;
+		edF32Vector4AddHard(&this->pathDelta, &this->pathDelta, &local_30);
+		edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime, &local_20, &this->pathDelta);
+		fVar5 = edF32Vector4NormalizeHard(&local_20, &local_20);
+		if (fVar5 < 0.02f) {
+			this->flags = this->flags & 0xffffffef;
+			this->flags = this->flags | 0x40;
+		}
+		else {
+			if ((this->pathDelta).y < -50.0f) {
+				SetState(5);
+			}
+		}
+		local_50.z = this->currentPosition.z;
+		local_50.w = this->currentPosition.w;
+		local_50.x = this->currentPosition.x;
+		local_50.y = this->currentPosition.y - 0.2f;
+		CCollisionRay CStack112 = CCollisionRay(fVar5, &local_50, &local_20);
+		fVar6 = CStack112.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &eStack64, (_ray_info_out*)0x0);
+		if (fVar6 == 1e+30) {
+			edF32Vector4ScaleHard(fVar5, &local_20, &local_20);
+		}
+		else {
+			edReflectVectorOnPlane(0.7f, &this->pathDelta, &this->pathDelta, &eStack64, 1);
+			edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime, &local_20, &this->pathDelta);
+		}
+
+		edF32Vector4AddHard(&local_20, &this->currentPosition, &local_20);
+		this->currentPosition = local_20;
+		if ((this->flags & 0x80) != 0) {
+			peVar1 = this->pHierarchy;
+			peVar1->transformA.rowT = this->currentPosition;
+		}
+	}
+
+	if (this->distanceToKim <= 0.85f) {
+		if ((this->flags & 8) == 0) {
+			SetState(4);
+		}
+		else {
+			local_4 = 0xffffffff;
+			iVar4 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
+			if (iVar4 == 0) {
+				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
+			}
+			else {
+				SetState(4);
+			}
+		}
+	}
+	else {
+		if (this->distanceToKim <= 2.0) {
+			if ((this->flags & 8) == 0) {
+				SetState(3);
+			}
+			else {
+				local_8 = 0xffffffff;
+				iVar4 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
+				if (iVar4 == 0) {
+					CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
+				}
+				else {
+					SetState(3);
+				}
 			}
 		}
 	}

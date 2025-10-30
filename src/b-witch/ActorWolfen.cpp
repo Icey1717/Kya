@@ -1409,7 +1409,6 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 
 	InitPathfindingClientMsgParams* pMsgParams = reinterpret_cast<InitPathfindingClientMsgParams*>(pMsgParam);
-	/* WARNING: Load size is inaccurate */
 	switch (pMsgParams->msgId) {
 	case 0:
 		IMPLEMENTATION_GUARD(
@@ -2802,8 +2801,7 @@ void CActorWolfen::BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour)
 		StateExorcizeIdle(pBehaviour);
 		break;
 	case WOLFEN_STATE_EXORCISE_EXORCIZE:
-		IMPLEMENTATION_GUARD(
-		StateExorcize(pBehaviour);)
+		StateExorcize(pBehaviour);
 		break;
 	case 0x7b:
 		IMPLEMENTATION_GUARD(
@@ -4776,6 +4774,129 @@ void CActorWolfen::StateExorcizeAwake(CBehaviourExorcism* pBehaviour)
 	return;
 }
 
+void CActorWolfen::StateExorcizeInit(CBehaviourExorcism* pBehaviour)
+{
+	int iVar1;
+	edF32VECTOR4* v0;
+	edF32MATRIX4* m0;
+	float puVar2;
+	float puVar3;
+	float fVar4;
+	float fVar5;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
+	CAnimation* pAnim;
+
+	this->scalarDynJump.BuildFromDistTimeNoAccel(1.5f, pBehaviour->field_0x10);
+	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+
+	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
+	edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
+	edF32Matrix4MulF32Vector4Hard(&this->fighterAnatomyZones.field_0x0, &this->field_0x760, &this->fighterAnatomyZones.field_0x10);
+	if (this->field_0x7dc < 0.0f) {
+		edF32Vector4GetNegHard(&local_10, &this->field_0x760.rowZ);
+	}
+	else {
+		local_10 = this->field_0x760.rowZ;
+	}
+
+	edF32Vector4CrossProductHard(&this->field_0x7a0, &local_10, &gF32Vector4UnitY);
+	v0 = &this->field_0x7a0;
+	edF32Vector4SafeNormalize0Hard(v0, v0);
+
+	puVar2 = edF32Vector4DotProductHard(&local_10, &gF32Vector4UnitY);
+	if (1.0f < puVar2) {
+		puVar3 = 1.0f;
+	}
+	else {
+		puVar3 = -1.0f;
+		if (-1.0f <= puVar2) {
+			puVar3 = puVar2;
+		}
+	}
+
+	fVar4 = acosf(puVar3);
+	this->field_0x7b4 = fVar4;
+	this->field_0x7b4 = this->field_0x7b4 / pBehaviour->field_0x10;
+	this->field_0x7b0 = 0.0f;
+
+	if (this->field_0x7dc < 0.0f) {
+		edF32Matrix4FromAngAxisSoft(3.141593f, &eStack80, &this->field_0x760.rowY);
+		m0 = &this->field_0x760;
+		edF32Matrix4MulF32Matrix4Hard(m0, m0, &eStack80);
+		_SV_DYN_SetRotationAroundMassCenter(&this->field_0x760);
+	}
+
+	pAnim = this->pAnimationController;
+	iVar1 = CActor::GetIdMacroAnim(this->currentAnimType);
+	if (iVar1 < 0) {
+		fVar5 = 0.0f;
+	}
+	else {
+		fVar5 = pAnim->GetAnimLength(iVar1, 1);
+	}
+
+	fVar4 = pBehaviour->field_0x10;
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(fVar5 / fVar4, 0);
+
+	return;
+}
+
+void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
+{
+	float fVar1;
+	bool bVar2;
+	float fVar4;
+	edF32MATRIX4 newRotation;
+
+	if (this->timeInAir <= pBehaviour->field_0x10) {
+		this->scalarDynJump.Integrate(GetTimer()->cutsceneDeltaTime);
+		this->dynamicExt.instanceIndex.y = this->scalarDynJump.field_0x20;
+		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
+		fVar4 = this->field_0x7b0 + this->field_0x7b4 * GetTimer()->cutsceneDeltaTime;
+		this->field_0x7b0 = fVar4;
+		edF32Matrix4FromAngAxisSoft(-fVar4, &newRotation, &this->field_0x7a0);
+		edF32Matrix4MulF32Matrix4Hard(&newRotation, &this->field_0x760, &newRotation);
+		_SV_DYN_SetRotationAroundMassCenter(&newRotation);
+	}
+
+	ManageDyn(4.0f, 0x1c129, (CActorsTable*)0x0);
+
+	pBehaviour->DecreaseNbBonusReq();
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		if (this->field_0xb84 <= this->field_0xb88) {
+			this->exorcisedState = 2;
+			this->scalarDynJump.Reset();
+			this->field_0x7b4 = 0.0f;
+			this->dynamic.speed = 0.0f;
+			this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
+			bVar2 = pBehaviour->FUN_001edbe0();
+			if (bVar2 == true) {
+				SetState(0x7b, -1);
+			}
+		}
+		else {
+			this->field_0x6b0 = 0.0f;
+			SetBehaviour(4, 0x56, -1);
+		}
+	}
+	return;
+}
+
+
+
+void CActorWolfen::StateExorciseTerm()
+{
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorWolfen_FireArm.cpp
 void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour)
 {
@@ -4852,6 +4973,15 @@ int CActorWolfen::SV_WLF_CheckBoxOnWay(CActorsTable* pTable)
 	}
 
 	return nextState;
+}
+
+void CActorWolfen::SV_WLF_ExorcismComputeCenter(edF32VECTOR4* pCenter)
+{
+	*pCenter = this->fighterAnatomyZones.field_0x0;
+	edF32Vector4AddHard(pCenter, &this->currentLocation, pCenter);
+	pCenter->w = 1.0f;
+
+	return;
 }
 
 void CActorWolfen::ClearLocalData()
@@ -9789,26 +9919,187 @@ void CBehaviourWolfenFighterProjected::End(int newBehaviourId)
 	return;
 }
 
+edF32MATRIX4 edF32MATRIX4_004a56b0;
+
 class StaticMeshComponentAdvancedEx : public StaticMeshComponentAdvanced
 {
 public:
+	void FUN_00406400(edF32MATRIX4* param_2, int param_3)
+	{
+		this->nbMatrices = param_3;
+		if (this->nbMatrices != 0) {
+			this->pMatrices = param_2;
+		}
 
+		edQuatFromEuler(&edF32MATRIX4_004a56b0.rowX, 0.0f, 0.0f, 0.0f);
+
+		edF32MATRIX4_004a56b0.ba = 0.0f;
+		edF32MATRIX4_004a56b0.bb = 0.0f;
+		edF32MATRIX4_004a56b0.bc = 0.0f;
+		edF32MATRIX4_004a56b0.bd = 1.0f;
+		edF32MATRIX4_004a56b0.ca = 1.0f;
+		edF32MATRIX4_004a56b0.cb = 1.0f;
+		edF32MATRIX4_004a56b0.cc = 1.0f;
+		edF32MATRIX4_004a56b0.cd = 1.0f;
+
+		this->field_0x80 = 2;
+
+		Reset();
+
+		return;
+	}
+
+	uint field_0x80;
+	edF32MATRIX4* pMatrices;
+	int nbMatrices;
 };
 
 #define IMPLEMENTATION_GUARD_ASTRUCT_5(...)
+
+int INT_00448f38 = 0;
+
+edF32MATRIX4 edF32MATRIX4_ARRAY_0040edc0[5] = {
+	{
+		// [0]
+		0.0f,  0.0f,  0.0f,  0.0f,
+		0.0f,  1.63f, 0.0f,  1.0f,
+		0.0f,  1.95f, 0.0f,  1.0f,
+		0.0f,  0.0f,  0.0f,  0.0f
+	},
+	{
+		// [1]
+		0.0f,  0.0f,  0.0f,  0.0f,
+		0.0f,  1.78f, 0.0f,  1.0f,
+		0.35f, 0.5f,  0.35f, 1.0f,
+		1.0f,  0.0f,  0.0f,  0.0f
+	},
+	{
+		// [2]
+		0.0f,  -15.0f, 0.0f,  0.0f,
+		0.0f,   1.67f, 0.0f,  1.0f,
+		0.64f,  0.65f, 0.64f, 1.0f,
+		1.5f,   0.0f,  0.0f,  0.0f
+	},
+	{
+		// [3]
+		0.0f,  0.0f,  0.0f,  0.0f,
+		0.0f,  1.5f,  0.0f,  1.0f,
+		0.63f, 0.28f, 0.63f, 1.0f,
+		2.0f,  0.0f,  0.0f,  0.0f
+	},
+	{
+		// [4]
+		0.0f,   180.0f, 0.0f,  0.0f,
+		0.0f,   1.65f,  0.0f,  1.0f,
+		0.0f,   0.0f,   0.0f,  1.0f,
+		2.17f,  0.0f,   0.0f,  0.0f
+	}
+};
+
+edF32MATRIX4 edF32MATRIX4_ARRAY_0040ef00[5] = {
+	{ // [0]
+		0.0f, 107.33f, 0.0f, 0.0f,
+		0.0f, 2.07f,   0.0f, 1.0f,
+		0.84f, 0.06f,  0.84f, 1.0f,
+		0.0f,  0.0f,   0.0f,  0.0f
+	},
+	{ // [1]
+		0.0f,  0.0f,  0.0f,  0.0f,
+		0.0f,  0.0f,  0.0f,  1.0f,
+		0.81f, 0.67f, 0.81f, 1.0f,
+		0.8f,  0.0f,  0.0f,  0.0f
+	},
+	{ // [2]
+		0.0f,  -46.34f, 0.0f,  0.0f,
+		0.0f,  -0.15f,  0.0f,  1.0f,
+		0.67f,  0.94f,  0.67f, 1.0f,
+		1.87f,  0.0f,   0.0f,  0.0f
+	},
+	{ // [3]
+		0.0f,  -63.35f, 0.0f,  0.0f,
+		0.0f,  -0.06f,  0.0f,  1.0f,
+		0.46f,  0.99f,  0.46f, 1.0f,
+		2.4f,   0.0f,   0.0f,  0.0f
+	},
+	{ // [4]
+		0.0f,  -71.22f, 0.0f,  0.0f,
+		0.0f,   0.0f,   0.0f,  1.0f,
+		0.0f,   1.25f,  0.0f,  1.0f,
+		2.67f,  0.0f,   0.0f,  0.0f
+	}
+};
+
+
+struct astruct_17
+{
+	StaticMeshComponentAdvancedEx* field_0x0;
+	uint* field_0x4;
+	undefined field_0x8[4];
+	int* field_0xc;
+	int* field_0x10;
+
+	void Init(StaticMeshComponentAdvancedEx* pStaticMeshComponent, uint* param_3)
+	{
+		edF32MATRIX4* peVar2;
+		uint uVar3;
+
+		if (INT_00448f38 == 0) {
+			uVar3 = 0;
+			peVar2 = edF32MATRIX4_ARRAY_0040edc0;
+			do {
+				edQuatFromEuler(&peVar2->rowX, (peVar2->aa / 180.0f) * 3.141593f, (peVar2->ab / 180.0f) * 3.141593f, (peVar2->ac / 180.0f) * 3.141593f);
+				uVar3 = uVar3 + 1;
+				peVar2 = peVar2 + 1;
+			} while (uVar3 < 5);
+
+			uVar3 = 0;
+			peVar2 = edF32MATRIX4_ARRAY_0040ef00;
+			do {
+				edQuatFromEuler(&peVar2->rowX, (peVar2->aa / 180.0f) * 3.141593f, (peVar2->ab / 180.0f) * 3.141593f, (peVar2->ac / 180.0f) * 3.141593f);
+				uVar3 = uVar3 + 1;
+				peVar2 = peVar2 + 1;
+			} while (uVar3 < 5);
+
+			INT_00448f38 = 1;
+		}
+
+		this->field_0x0 = pStaticMeshComponent;
+
+		if (this->field_0x0[0].IsValid() != false) {
+			this->field_0x0[0].FUN_00406400(edF32MATRIX4_ARRAY_0040edc0, 5);
+		}
+
+		if (this->field_0x0[1].IsValid() != 0) {
+			this->field_0x0[1].FUN_00406400(edF32MATRIX4_ARRAY_0040ef00, 5);
+		}
+
+		this->field_0x4 = param_3;
+		this->field_0x10 = (int*)0x0;
+		this->field_0xc = (int*)0x0;
+
+		return;
+	}
+};
 
 struct astruct_5
 {
 	astruct_5()
 	{
 		this->flags = 0;
+		this->count_0xb18 = 0;
 	}
 
-	void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD_ASTRUCT_5(); }
+	void Create(ByteCode* pByteCode);
 	void Term() { IMPLEMENTATION_GUARD_ASTRUCT_5(); }
 
+	edNODE* field_0x0[8];
 	StaticMeshComponentAdvancedEx aStaticMeshComponents[8];
+
+	void* field_0x1a0[12];
 	uint flags;
+	uint field_0xab0[5];
+	astruct_17 field_0xac4[4];
+	int count_0xb18;
 } astruct_5_00456980;
 
 void CBehaviourExorcism::Create(ByteCode* pByteCode)
@@ -10124,8 +10415,7 @@ void CBehaviourExorcism::InitState(int newState)
 				}
 				else {
 					if (newState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
-						IMPLEMENTATION_GUARD(
-						CActorWolfen::StateExorcizeInit(this->pOwner, (int)this);)
+						this->pOwner->StateExorcizeInit(this);
 					}
 				}
 			}
@@ -10166,8 +10456,7 @@ void CBehaviourExorcism::TermState(int oldState, int newState)
 				}
 				else {
 					if (oldState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
-						IMPLEMENTATION_GUARD(
-						CActorWolfen::FUN_00176b50(this->pOwner);)
+						this->pOwner->StateExorciseTerm();
 					}
 				}
 			}
@@ -10188,12 +10477,11 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	if (msg == 0x1a) {
 		InitPathfindingClientMsgParams* pPathfindingClientMsgParams = (InitPathfindingClientMsgParams*)pMsgParam;
 		if (pPathfindingClientMsgParams->msgId == 0xe) {
-			IMPLEMENTATION_GUARD(
 			this->field_0xc = pPathfindingClientMsgParams->time / this->field_0x10;
 			pWolfen = this->pOwner;
 			iVar2 = pWolfen->GetExorciseAnim();
 			pWolfen->SetState(0x7a, iVar2);
-			return 1;)
+			return 1;
 		}
 	}
 	else {
@@ -10282,6 +10570,79 @@ void CBehaviourExorcism::ChangeManageState(int state)
 			}
 		}
 	}
+	return;
+}
+
+float FLOAT_ARRAY_004488d0[2] = { 0.0f, 1.33f };
+
+bool CBehaviourExorcism::FUN_001edbe0()
+{
+	astruct_17* paVar1;
+	int* piVar2;
+	astruct_18* paVar3;
+	int iVar4;
+	float* pfVar5;
+	uint uVar6;
+	edF32VECTOR4 exorcismCenter;
+	edF32MATRIX4 eStack64;
+
+	if (this->aSubObjA == (astruct_18*)0x0) {
+		paVar3 = (astruct_18*)0x0;
+		if ((astruct_5_00456980.flags & 3) == 3) {
+			uVar6 = 0;
+			paVar1 = astruct_5_00456980.field_0xac4;
+			while ((uVar6 < 4 && (paVar3 == (astruct_18*)0x0))) {
+				if (paVar1->field_0x8 == 0) {
+					//paVar3 = paVar1->field_0x0;
+				}
+
+				paVar1 = paVar1 + 1;
+				uVar6 = uVar6 + 1;
+			}
+		}
+
+		this->aSubObjA = paVar3;
+		paVar3 = this->aSubObjA;
+		if (paVar3 != (astruct_18*)0x0) {
+			paVar3->pWolfen = this->pOwner;
+
+			paVar3->pWolfen->SV_WLF_ExorcismComputeCenter(&exorcismCenter);
+			exorcismCenter.y = exorcismCenter.y - paVar3->pWolfen->distanceToGround;
+			edF32Matrix4TranslateHard(&eStack64, &gF32Matrix4Unit, &exorcismCenter);
+			uVar6 = 0;
+			pfVar5 = FLOAT_ARRAY_004488d0;
+			iVar4 = 0;
+			do {
+				IMPLEMENTATION_GUARD(
+				(**(code**)(*(int*)(paVar3->field_0x0 + iVar4) + 0x28))(0, *pfVar5);
+				piVar2 = (int*)(paVar3->field_0x0 + iVar4);
+				(**(code**)(*piVar2 + 0x24))(piVar2, &eStack64);
+				uVar6 = uVar6 + 1;
+				pfVar5 = pfVar5 + 1;
+				iVar4 = iVar4 + 0x120;)
+			} while (uVar6 < 2);
+
+			paVar3->field_0x10 = 1;
+			paVar3->field_0xc = 0.0f;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void CBehaviourExorcism::DecreaseNbBonusReq()
+{
+	int nbDecrease;
+
+	this->pOwner->field_0xb88 = GetTimer()->cutsceneDeltaTime * this->field_0xc + this->pOwner->field_0xb88;
+
+	nbDecrease = (int)this->pOwner->field_0xb88 - (int)this->pOwner->field_0xb88;
+	if (nbDecrease != 0) {
+		CActorHero::_gThis->MagicDecrease((float)nbDecrease);
+	}
+
 	return;
 }
 
@@ -10375,7 +10736,7 @@ void CBehaviourDCA::InitState(int newState)
 				this->field_0x90 = pWolfen->currentLocation;
 
 				pWolfen = this->pOwner;
-				this->field_0xa0 = pWolfen->rotationEuler;
+				this->angleRotY = pWolfen->rotationEuler;
 
 				this->pOwner->pCollisionData->actorFieldA = (this->actorRef).Get();
 
@@ -10388,7 +10749,7 @@ void CBehaviourDCA::InitState(int newState)
 					this->field_0x90 = pWolfen->currentLocation;
 
 					pWolfen = this->pOwner;
-					this->field_0xa0 = pWolfen->rotationEuler;
+					this->angleRotY = pWolfen->rotationEuler;
 				}
 				else {
 					if (newState == 0x72) {
@@ -10653,5 +11014,132 @@ void CBehaviourAvoid::End(int newBehaviourId)
 
 	CBehaviourWolfen::End(newBehaviourId);
 
+	return;
+}
+
+void astruct_5::Create(ByteCode* pByteCode)
+{
+	ed_3d_hierarchy* peVar1;
+	void* pvVar2;
+	int textureIndex;
+	int meshIndex;
+	ed_g3d_manager* pG3D;
+	edNODE* peVar5;
+	ed_hash_code* pMBNK;
+	void* pvVar7;
+	edNODE** ppeVar8;
+	void** paVar9;
+	uint uVar10;
+	astruct_5* paVar11;
+	uint uVar12;
+	uint uVar13;
+	int iVar14;
+	int local_80;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	if ((this->flags & 1) == 0) {
+		uVar12 = 0;
+		paVar9 = this->field_0x1a0;
+		do {
+			textureIndex = pByteCode->GetS32();
+			meshIndex = pByteCode->GetS32();
+			this->field_0x0[uVar12] = (edNODE*)0x0;
+			this->field_0x0[uVar12 + 2] = (edNODE*)0x0;
+			this->field_0x0[uVar12 + 4] = (edNODE*)0x0;
+			this->field_0x0[uVar12 + 6] = (edNODE*)0x0;
+
+			if ((textureIndex != -1) && (meshIndex != -1)) {
+				pG3D = pFileManager->GetG3DManager(meshIndex, textureIndex);
+
+				if (pG3D != (ed_g3d_manager*)0x0) {
+					peVar5 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+					peVar1 = reinterpret_cast<ed_3d_hierarchy*>(peVar5->pData);
+
+					pMBNK = ed3DHierarchyGetMaterialBank(peVar1);
+					ed_hash_code* pHashCode = LOAD_SECTION_CAST(ed_hash_code*, pMBNK->pData);
+
+					int bankMatSize = ed3DHierarchyBankMatGetSize(peVar1);
+
+					int duplicateMaterialSize = ed3DG2DGetNeededSizeForDuplicateMaterial(pHashCode);
+					ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, peVar5);
+
+					pvVar7 = edMemAlloc(TO_HEAP(H_MAIN), bankMatSize << 2);
+					paVar9[2] = pvVar7;
+					pvVar7 = edMemAlloc(TO_HEAP(H_MAIN), duplicateMaterialSize << 2);
+					paVar9[0] = pvVar7;
+
+					uVar13 = 0;
+					iVar14 = 0;
+					local_80 = 0;
+					uVar10 = uVar12;
+					do {
+						pvVar7 = paVar9[2];
+						pvVar2 = paVar9[0];
+						ppeVar8 = this->field_0x0 + uVar10;
+						peVar5 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+						*ppeVar8 = peVar5;
+						//peVar1 = (*ppeVar8)->pData;
+						//peVar6 = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)peVar1);
+						//peVar6 = (ed_hash_code*)peVar6->pData;
+						//ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)peVar1, (void*)((int)pvVar7 + iVar14));
+						//ed3DG2DDuplicateMaterial
+						//(peVar6, (char*)((int)pvVar2 + local_80), (ed_g2d_manager*)(this->field_0x0 + uVar10 * 0xc + 8));
+						//ed3DHierarchyBankMatLinkG2D
+						//((ed_3d_hierarchy_node*)peVar1, (ed_g2d_manager*)(this->field_0x0 + uVar10 * 0xc + 8));
+						//StaticMeshComponentAdvanced::SetNode
+						//((StaticMeshComponentAdvanced*)(this->aStaticMeshComponents + uVar10), *ppeVar8);
+						//uVar13 = uVar13 + 1;
+						//uVar10 = uVar10 + 2;
+						//iVar14 = iVar14 + bankMatSize;
+						//local_80 = local_80 + duplicateMaterialSize;
+					} while (uVar13 < 4);
+				}
+			}
+
+			uVar12 = uVar12 + 1;
+			paVar9 = paVar9 + 1;
+		} while (uVar12 < 2);
+
+		pByteCode->GetU32();
+
+		uVar12 = 0;
+		uint* p5 = this->field_0xab0;
+		do {
+			*p5 = pByteCode->GetU32();
+			uVar12 = uVar12 + 1;
+			p5 = p5 + 1;
+		} while (uVar12 < 5);
+
+		uVar12 = 0;
+		astruct_17* pOther = this->field_0xac4;
+		StaticMeshComponentAdvancedEx* pCurStaticMeshComponent = this->aStaticMeshComponents;
+		do {
+			pOther->Init(pCurStaticMeshComponent, this->field_0xab0);
+			uVar12 = uVar12 + 1;
+			pCurStaticMeshComponent = pCurStaticMeshComponent + 2;
+			pOther = pOther + 1;
+		} while (uVar12 < 4);
+
+		this->flags = this->flags | 1;
+	}
+	else {
+		uVar12 = 0;
+		do {
+			pByteCode->GetS32();
+			pByteCode->GetS32();
+			uVar12 = uVar12 + 1;
+		} while (uVar12 < 2);
+
+		pByteCode->GetU32();
+
+		uVar12 = 0;
+		do {
+			pByteCode->GetU32();
+			uVar12 = uVar12 + 1;
+		} while (uVar12 < 5);
+	}
+
+	this->count_0xb18 = this->count_0xb18 + 1;
 	return;
 }

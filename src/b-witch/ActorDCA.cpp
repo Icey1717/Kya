@@ -1245,7 +1245,7 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 					edF32Vector4SubHard(&eStack64, reinterpret_cast<edF32VECTOR4*>(pMsgParam), &local_20);
 					pDCA->vectorDyn.BuildFromAccelDistAmplitude(1.0f, &CDynamicExt::gForceGravity, &eStack64, 1);
 					pDCA->vectorDyn.Integrate(0.05f);
-					edF32Vector4NormalizeHard(&eStack80, &(pDCA->vectorDyn).field_0x60);
+					edF32Vector4NormalizeHard(&eStack80, &(pDCA->vectorDyn).instanceIndex);
 					fVar8 = edF32Vector4GetDistHard(&eStack64);
 					edF32Vector4ScaleHard(fVar8, &eStack80, &eStack80);
 					edF32Vector4AddHard(&eStack96, &local_20, &eStack80);
@@ -1387,7 +1387,7 @@ void CActorDCA::CBhvTrajectory::Manage()
 
 			pDCA->vectorDyn.BuildFromAccelDistAmplitude(1.0f, &CDynamicExt::gForceGravity, &eStack144, 1);
 			pDCA->vectorDyn.Integrate(0.05f);
-			edF32Vector4NormalizeHard(&eStack160, &pDCA->vectorDyn.field_0x60);
+			edF32Vector4NormalizeHard(&eStack160, &pDCA->vectorDyn.instanceIndex);
 			fVar10 = edF32Vector4GetDistHard(&eStack144);
 			edF32Vector4ScaleHard(fVar10, &eStack160, &eStack160);
 			edF32Vector4AddHard(&eStack176, &local_70, &eStack160);

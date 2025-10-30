@@ -7,6 +7,7 @@
 #include "DlistManager.h"
 #include "CollisionRay.h"
 #include "ActorHero.h"
+#include "edDList/edDList.inl"
 
 CSharedLights<COmniLight, 3> CActorBonus::_gBNS_Lights;
 
@@ -286,15 +287,15 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 				pBnsInstance->field_0x64 = pBnsInstance->currentPosition.xyz;
 			}
 
-			fieldA0 = pBnsInstance->field_0xa0 + GetTimer()->cutsceneDeltaTime * 1.8f;
-			pBnsInstance->field_0xa0 = (fieldA0 >= 6.283185f) ? fieldA0 - 6.283185f : fieldA0;
+			fieldA0 = pBnsInstance->angleRotY + GetTimer()->cutsceneDeltaTime * 1.8f;
+			pBnsInstance->angleRotY = (fieldA0 >= 6.283185f) ? fieldA0 - 6.283185f : fieldA0;
 			fieldA4 = pBnsInstance->field_0xa4 + GetTimer()->cutsceneDeltaTime * 2.2f;
 			pBnsInstance->field_0xa4 = (fieldA4 >= 6.283185f) ? fieldA4 - 6.283185f : fieldA4;
 
 			pBnsInstance->SetBasePosition(&pPosition->rowT);
 
 			localPosition.x = cosf(pBnsInstance->field_0xa4);
-			localPosition.y = cosf(pBnsInstance->field_0xa0);
+			localPosition.y = cosf(pBnsInstance->angleRotY);
 			localPosition.z = sinf(pBnsInstance->field_0xa4);
 			localPosition.w = 0.0f;
 
@@ -421,7 +422,7 @@ void CBehaviourBonusAlone::Init(CActor* pOwner)
 	CBehaviourBonusBase::Init(pOwner);
 
 	pBonus = this->pOwner;
-	this->actInstance.InitBns(pBonus, &pBonus->baseLocation, &pBonus->vector_0x1e0);
+	this->actInstance.InitBns(pBonus, &pBonus->baseLocation, &pBonus->vector_0x1e0, 0);
 
 	this->fxTail.Init(0.5f, pOwner->sectorId);
 
@@ -872,7 +873,7 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 	uint uVar2;
 	CActorBonus* pCVar3;
 	CShadow* pCVar4;
-	int iVar5;
+	int curInstnanceIndex;
 	int* piVar6;
 	CBnsInstance* pCVar7;
 	CShadowShared* pCVar8;
@@ -904,11 +905,11 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 	}
 
 	if (this->nbInstances == 1) {
-		this->aBnsInstances->InitBns(this->pOwner, &this->pOwner->baseLocation, &this->pOwner->vector_0x1e0);
+		this->aBnsInstances->InitBns(this->pOwner, &this->pOwner->baseLocation, &this->pOwner->vector_0x1e0, 0);
 	}
 	else {
 		pCVar7 = this->aBnsInstances;
-		iVar5 = 0;
+		curInstnanceIndex = 0;
 		if (0 < this->nbInstances) {
 			do {
 				peVar10 = (this->pathFollowRef).Get()->aSplinePoints;
@@ -917,19 +918,19 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 					peVar10 = &gF32Vertex4Zero;
 				}
 				else {
-					peVar10 = peVar10 + iVar5;
+					peVar10 = peVar10 + curInstnanceIndex;
 				}
 
 				pCVar3 = this->pOwner;
-				pCVar7->InitBns(pCVar3, peVar10, &pCVar3->vector_0x1e0);
+				pCVar7->InitBns(pCVar3, peVar10, &pCVar3->vector_0x1e0, curInstnanceIndex);
 				pCVar7 = pCVar7 + 1;
-				iVar5 = iVar5 + 1;
-			} while (iVar5 < this->nbInstances);
+				curInstnanceIndex = curInstnanceIndex + 1;
+			} while (curInstnanceIndex < this->nbInstances);
 		}
 
 		if (this->nbSharedShadows != 0) {
 			pCVar8 = this->aShadowShared;
-			iVar5 = 0;
+			curInstnanceIndex = 0;
 			if (0 < this->nbSharedShadows) {
 				do {
 					IMPLEMENTATION_GUARD_SHADOW(
@@ -948,9 +949,9 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 						peVar10 = &gF32Vertex4Zero;
 					}
 					else {
-						peVar10 = peVar10 + iVar5 + 1;
+						peVar10 = peVar10 + curInstnanceIndex + 1;
 					}
-					iVar5 = iVar5 + 1;
+					curInstnanceIndex = curInstnanceIndex + 1;
 					fVar14 = peVar10->y;
 					fVar12 = peVar10->z;
 					fVar13 = peVar10->w;
@@ -959,7 +960,7 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 					(pCVar8->field_0x10).z = fVar12;
 					(pCVar8->field_0x10).w = fVar13;)
 					pCVar8 = pCVar8 + 1;
-				} while (iVar5 < this->nbSharedShadows);
+				} while (curInstnanceIndex < this->nbSharedShadows);
 			}
 		}
 	}
@@ -1240,9 +1241,8 @@ void CBehaviourBonusFlock::Draw()
 {
 	_rgba* p_Var1;
 	CCameraManager* pCVar2;
-	CGlobalDListManager* this_00;
-	CGlobalDListPatch* pCVar3;
-	Timer* pTVar4;
+	CGlobalDListManager* pGlobalDlistManager;
+	CGlobalDListPatch* pNewPatch;
 	edVertex* peVar5;
 	int iVar6;
 	CGlobalDListManager* lVar6;
@@ -1256,7 +1256,7 @@ void CBehaviourBonusFlock::Draw()
 	undefined2* puVar14;
 	undefined2* puVar15;
 	uint uVar16;
-	CBnsInstance* pCVar17;
+	CBnsInstance* pCurInstance;
 	uint uVar18;
 	int iVar19;
 	float fVar20;
@@ -1270,144 +1270,141 @@ void CBehaviourBonusFlock::Draw()
 	_rgba local_8;
 	_rgba local_4;
 
-	IMPLEMENTATION_GUARD(
-
 	if (0 < this->nbInstances) {
-		this_00 = (CGlobalDListManager*)CScene::GetManager(MO_GlobalDListManager);
-		pCVar3 = GameDListPatch_BeginCurrent(this->flarePatchId);
-		if (pCVar3 != (CGlobalDListPatch*)0x0) {
-			pCVar17 = this->aBnsInstances;
-			for (uVar16 = 0; pCVar2 = CCameraManager::_gThis, uVar16 < (uint)this->nbInstances; uVar16 = uVar16 + 1) {
-				uVar7 = (pCVar17->base).flags;
+		pGlobalDlistManager = (CGlobalDListManager*)CScene::GetManager(MO_GlobalDListManager);
+
+		// Flare patch
+		pNewPatch = GameDListPatch_BeginCurrent(this->flarePatchId);
+		if (pNewPatch != (CGlobalDListPatch*)0x0) {
+			pCurInstance = this->aBnsInstances;
+			for (uVar16 = 0; pCVar2 = CCameraManager::_gThis, uVar16 < this->nbInstances; uVar16 = uVar16 + 1) {
+				uVar7 = pCurInstance->flags;
 				if ((uVar7 & 4) == 0) {
 					if ((uVar7 & 2) != 0) {
 						iVar19 = this->flarePatchId;
-						p_Var1 = (this_00->ppGlobalDlist[iVar19 >> 0x10].pDlistPatch)->pCurrentPatch->pRgba;
-						p_Var8 = p_Var1 + uVar16 * 4;
-						local_c = (_rgba)((uint)p_Var1[uVar16 * 4] & 0xffffff);
+						p_Var1 = (pGlobalDlistManager->ppGlobalDlist[iVar19 >> 0x10].pDlistPatch)->pCurrentPatch->pRgba;
+						uint temp = (p_Var1[uVar16 * 4].rgba & 0xffffff);
+						local_c.rgba = temp;
 						gpCurPatchRGBABuf = 0;
-						*p_Var8 = local_c;
-						p_Var8[1] = local_c;
-						p_Var8[2] = local_c;
-						p_Var8[3] = local_c;
-						CGlobalDListManager::_AddCallFuncElement2(this_00, iVar19, 9, (short)uVar16, 0);
+						edDListPatchRGBASprite_Inline(p_Var1, &local_c, uVar16);
+						pGlobalDlistManager->_AddCallFuncElement2(iVar19, 9, (short)uVar16, 0);
 					}
 				}
 				else {
-					pTVar4 = GetTimer();
-					fVar21 = edF32Between_0_2Pi((pCVar17->base).field_0x90 + pTVar4->cutsceneDeltaTime * 7.0);
-					(pCVar17->base).field_0x90 = fVar21;
-					local_70.x = edFCosinus[(int)(ABS(fVar21 * 1303.797) + 0.5) & 0x1fff] * 0.05;
-					local_70.y = edFCosinus[(int)(ABS(((pCVar17->base).field_0x90 - 1.570796) * 1303.797) + 0.5) & 0x1fff] * 0.05;
-					local_70.z = 0.0;
-					local_70.w = 1.0;
+					pCurInstance->field_0x90 = edF32Between_0_2Pi(pCurInstance->field_0x90 + GetTimer()->cutsceneDeltaTime * 7.0f);
+					local_70.x = cosf(pCurInstance->field_0x90) * 0.05f;
+					local_70.y = sinf(pCurInstance->field_0x90) * 0.05f;
+					local_70.z = 0.0f;
+					local_70.w = 1.0f;
+
 					edF32Matrix4CopyHard(&eStack96, &pCVar2->transMatrix_0x390);
-					eStack96.da = (pCVar17->base).currentPosition.x;
-					eStack96.db = (pCVar17->base).currentPosition.y;
-					eStack96.dc = (pCVar17->base).currentPosition.z;
-					eStack96.dd = (pCVar17->base).currentPosition.w;
+					eStack96.rowT = pCurInstance->currentPosition;
+
 					edF32Matrix4MulF32Vector4Hard(&local_70, &eStack96, &local_70);
-					peVar5 = pCVar3->pCurrentPatch->pVertex + (pCVar17->base).field_0x60 * 4;
+					peVar5 = pNewPatch->pCurrentPatch->pVertex + pCurInstance->instanceIndex * 4;
 					peVar5->x = local_70.x;
 					peVar5->y = local_70.y;
 					peVar5->z = local_70.z;
-					iVar19 = (pCVar17->base).field_0x60;
+					iVar19 = pCurInstance->instanceIndex;
 					iVar6 = rand();
-					p_Var1 = pCVar3->pCurrentPatch->pRgba;
-					p_Var8 = p_Var1 + iVar19 * 4;
+					p_Var1 = pNewPatch->pCurrentPatch->pRgba;
 					gpCurPatchRGBABuf = 0;
-					local_4 = (_rgba)((uint)p_Var1[iVar19 * 4] & 0xffffff |
-						(int)(((float)iVar6 / 2.147484e+09) * 96.0 + 64.0) << 0x18);
-					*p_Var8 = local_4;
-					p_Var8[1] = local_4;
-					p_Var8[2] = local_4;
-					p_Var8[3] = local_4;
+					local_4.rgba = ((uint)p_Var1[iVar19 * 4].rgba & 0xffffff | (int)(((float)iVar6 / 2.147484e+09f) * 96.0f + 64.0f) << 0x18);
+					edDListPatchRGBASprite_Inline(p_Var1, &local_4, iVar19);
 				}
-				pCVar17 = pCVar17 + 1;
+
+				pCurInstance = pCurInstance + 1;
 			}
+
 			GameDListPatch_EndCurrent(-1, 0);
 		}
-		pCVar3 = GameDListPatch_BeginCurrent(this->animPatchId);
-		if (pCVar3 != (CGlobalDListPatch*)0x0) {
-			pCVar17 = this->aBnsInstances;
+
+		// Anim patch
+		pNewPatch = GameDListPatch_BeginCurrent(this->animPatchId);
+		if (pNewPatch != (CGlobalDListPatch*)0x0) {
+			pCurInstance = this->aBnsInstances;
 			for (uVar16 = 0; uVar16 < (uint)this->nbInstances; uVar16 = uVar16 + 1) {
-				uVar7 = (pCVar17->base).flags;
+				uVar7 = pCurInstance->flags;
 				if ((uVar7 & 4) == 0) {
 					if ((uVar7 & 2) != 0) {
 						iVar19 = this->animPatchId;
-						p_Var1 = (this_00->ppGlobalDlist[iVar19 >> 0x10].pDlistPatch)->pCurrentPatch->pRgba;
-						p_Var8 = p_Var1 + uVar16 * 4;
-						local_10 = (_rgba)((uint)p_Var1[uVar16 * 4] & 0xffffff);
+						p_Var1 = (pGlobalDlistManager->ppGlobalDlist[iVar19 >> 0x10].pDlistPatch)->pCurrentPatch->pRgba;
+						uint temp = (p_Var1[uVar16 * 4].rgba & 0xffffff);
+						local_10.rgba = temp;
 						gpCurPatchRGBABuf = 0;
-						*p_Var8 = local_10;
-						p_Var8[1] = local_10;
-						p_Var8[2] = local_10;
-						p_Var8[3] = local_10;
-						CGlobalDListManager::_AddCallFuncElement2(this_00, iVar19, 9, (short)uVar16, 0);
+						edDListPatchRGBASprite_Inline(p_Var1, &local_10, uVar16);
+						pGlobalDlistManager->_AddCallFuncElement2(iVar19, 9, (short)uVar16, 0);
 					}
 				}
 				else {
-					fVar21 = (pCVar17->base).angleRotY;
+					fVar21 = pCurInstance->angleRotY;
 					uVar18 = (uint)fVar21;
 					uVar7 = uVar18 & 7;
 					if (((int)uVar18 < 0) && (uVar7 != 0)) {
 						uVar7 = uVar7 - 8;
 					}
-					local_18 = (float)uVar7 * 0.125;
+					local_18 = (float)uVar7 * 0.125f;
 					iVar19 = (int)fVar21;
 					if (iVar19 < 0) {
 						iVar19 = iVar19 + 7;
 					}
-					iVar6 = (pCVar17->base).field_0x60;
+					iVar6 = pCurInstance->instanceIndex;
 					iVar12 = iVar6 * 4;
-					uVar7 = pCVar3->pCurrentPatch->pSt;
+					uint* pSt = pNewPatch->pCurrentPatch->pSt;
 					local_14 = (float)(iVar19 >> 3) * 0.5;
-					puVar15 = (undefined2*)(uVar7 + iVar6 * 0x10);
-					puVar14 = (undefined2*)(uVar7 + (iVar12 + 1) * 4);
-					puVar11 = (undefined2*)(uVar7 + (iVar12 + 3) * 4);
-					puVar13 = (undefined2*)(uVar7 + (iVar12 + 2) * 4);
-					uVar10 = (undefined2)(int)((local_18 + 0.125) * 4096.0);
-					*puVar15 = uVar10;
-					puVar15[1] = (short)(int)((local_14 + 0.5) * 4096.0);
-					uVar9 = (undefined2)(int)(local_18 * 4096.0);
-					*puVar14 = uVar9;
-					puVar14[1] = (short)(int)((local_14 + 0.5) * 4096.0);
-					*puVar13 = uVar10;
-					puVar13[1] = (short)(int)(local_14 * 4096.0);
-					*puVar11 = uVar9;
-					puVar11[1] = (short)(int)(local_14 * 4096.0);
-					fVar21 = (pCVar17->base).currentPosition.y;
-					fVar20 = (pCVar17->base).currentPosition.z;
-					peVar5 = pCVar3->pCurrentPatch->pVertex + (pCVar17->base).field_0x60 * 4;
-					peVar5->x = (pCVar17->base).currentPosition.x;
+					puVar15 = (undefined2*)(pSt + (iVar12 + 0) * 4);
+					puVar14 = (undefined2*)(pSt + (iVar12 + 1) * 4);
+					puVar11 = (undefined2*)(pSt + (iVar12 + 3) * 4);
+					puVar13 = (undefined2*)(pSt + (iVar12 + 2) * 4);
+
+					uVar10 = (undefined2)(int)((local_18 + 0.125f) * 4096.0f);
+
+					puVar15[0] = uVar10;
+					puVar15[1] = (short)(int)((local_14 + 0.5f) * 4096.0f);
+					uVar9 = (undefined2)(int)(local_18 * 4096.0f);
+
+					puVar14[0] = uVar9;
+					puVar14[1] = (short)(int)((local_14 + 0.5f) * 4096.0f);
+
+					puVar13[0] = uVar10;
+					puVar13[1] = (short)(int)(local_14 * 4096.0f);
+
+					puVar11[0] = uVar9;
+					puVar11[1] = (short)(int)(local_14 * 4096.0f);
+
+					fVar21 = pCurInstance->currentPosition.y;
+					fVar20 = pCurInstance->currentPosition.z;
+					peVar5 = pNewPatch->pCurrentPatch->pVertex + pCurInstance->instanceIndex * 4;
+					peVar5->x = pCurInstance->currentPosition.x;
 					peVar5->y = fVar21;
 					peVar5->z = fVar20;
-					iVar19 = (pCVar17->base).field_0x60;
-					p_Var1 = pCVar3->pCurrentPatch->pRgba;
-					p_Var8 = p_Var1 + iVar19 * 4;
-					local_8 = (_rgba)CONCAT13(0x80, SUB43(p_Var1[iVar19 * 4], 0));
+					iVar19 = pCurInstance->instanceIndex;
+					p_Var1 = pNewPatch->pCurrentPatch->pRgba;
+					uint32_t rawColor = (0x80 << 24) | (p_Var1[iVar19 * 4].rgba & 0xFFFFFF);
+					local_8 = _rgba((rawColor >> 16) & 0xFF, (rawColor >> 8) & 0xFF, rawColor & 0xFF, (rawColor >> 24) & 0xFF);
 					gpCurPatchRGBABuf = 0;
-					*p_Var8 = local_8;
-					p_Var8[1] = local_8;
-					p_Var8[2] = local_8;
-					p_Var8[3] = local_8;
+					edDListPatchRGBASprite_Inline(p_Var1, &local_8, iVar19);
 				}
-				pCVar17 = pCVar17 + 1;
+
+				pCurInstance = pCurInstance + 1;
 			}
+
 			GameDListPatch_EndCurrent(-1, 0);
 		}
+
 		if (this->aShadowShared != (CShadowShared*)0x0) {
-			pCVar3 = GameDListPatch_BeginCurrent(this->field_0x2c);
+			pNewPatch = GameDListPatch_BeginCurrent(this->field_0x2c);
 			uVar16 = 0;
-			if (pCVar3 != (CGlobalDListPatch*)0x0) {
-				for (; uVar16 < (uint)this->nbSharedShadows; uVar16 = uVar16 + 1) {
-					CShadowShared::Draw(this->aShadowShared + uVar16, pCVar3, uVar16 * 4);
+			if (pNewPatch != (CGlobalDListPatch*)0x0) {
+				for (; uVar16 < this->nbSharedShadows; uVar16 = uVar16 + 1) {
+					IMPLEMENTATION_GUARD_SHADOW(
+					this->aShadowShared[uVar16].Draw(pNewPatch, uVar16 * 4);)
 				}
 				GameDListPatch_EndCurrent(-1, 0);
 			}
 		}
 	}
-	return;)
+	return;
 }
 
 void CBehaviourBonusFlock::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -1556,15 +1553,48 @@ void CBehaviourBonusFlock::ChangeVisibleState(int state)
 	return;
 }
 
-void CBnsInstance::InitBns(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere)
+void CBnsInstance::SetState(int newState)
 {
-	this->Init(pOwner, pPosition, pBoundSphere, 0);
+	SOUND_SPATIALIZATION_PARAM soundSpatParam;
+	undefined4 local_4;
+	CActorBonus* pBonus;
+
+	CActInstance::SetState(newState);
+
+	if (this->state == 4) {
+		pBonus = static_cast<CActorBonus*>(this->pOwner);
+		pBonus->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)1);
+		IMPLEMENTATION_GUARD_LIGHT(
+		CActorBonus::_gBNS_Lights.Register(this);)
+		IMPLEMENTATION_GUARD_AUDIO(
+		soundSpatParam.field_0x0 = this->field_0x64.raw;
+		CActorSound::SoundStart(pBonus->pActorSound, (CActor*)pBonus, 0, (pBonus->soundRef).pSound, 1, 2, &soundSpatParam);)
+	}
+
+	return;
+}
+
+float CBnsInstance::GetAngleRotY()
+{
+	return this->angleRotY;
+}
+
+void CBnsInstance::CheckpointReset()
+{
+	this->field_0x98 = 0.0f;
+
+	return;
+}
+
+void CBnsInstance::InitBns(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex)
+{
+	this->Init(pOwner, pPosition, pBoundSphere, instanceIndex);
 
 	this->flags |= 8;
 	this->field_0x98 = 0.0f;
 	this->field_0x90 = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->field_0x9c = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
-	this->field_0xa0 = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
+	this->angleRotY = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->field_0xa4 = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->angleRotY = (static_cast<float>(rand()) / 2.147484e+09f) * 16.0f;
 
@@ -1645,11 +1675,10 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 		}
 		else {
 			if (curState == 3) {
-				this->State_GotoKim();
+				State_GotoKim();
 			}
 			else if ((curState == 2) || (curState == 1)) {
-				IMPLEMENTATION_GUARD(
-				State_Turn(pBehaviour);)
+				State_Turn(pBehaviour);
 			}
 		}
 
@@ -1668,7 +1697,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 				this->angleRotY = angleRotY - 16.0f;
 			}
 
-			this->FUN_003982c0();
+			FUN_003982c0();
 			this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
 			this->field_0x64 = this->currentPosition.xyz;
 		}
@@ -1684,7 +1713,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 			nextZ = pOwner->rotationEuler.y;
 			nextW = pOwner->rotationEuler.z;
 			pFxTail = pOwner->pFxTail;
-			pFxTail->field_0x60 = pFxTail->field_0x50;
+			pFxTail->instanceIndex = pFxTail->field_0x50;
 			pFxTail->field_0x50.x = nextY;
 			pFxTail->field_0x50.y = nextZ;
 			pFxTail->field_0x50.z = nextW;
@@ -1712,7 +1741,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 	switch (this->state) {
 	case 0:
 		if (pBehaviour->field_0x1b8 <= this->field_0x5c) {
-			this->SetState(1);
+			SetState(1);
 		}
 		break;
 	case 1:
@@ -1721,13 +1750,13 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		if (this->distanceToKim <= 2.0f) {
 			msgResult = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
 			if (msgResult != 0) {
-				this->SetState(3);
+				SetState(3);
 				break;
 			}
 		}
 
 		if (this->distanceToKim <= pBehaviour->field_0x1f8 * 3.0f) {
-			this->SetState(2);
+			SetState(2);
 			pBehaviour->pathPlane.InitTargetPos(&CActorHero::_gThis->currentLocation, &pBehaviour->pathPlane.outData);
 		}
 
@@ -1747,16 +1776,16 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		if (this->distanceToKim <= 2.0f) {
 			msgResult = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
 			if (msgResult != 0) {
-				this->SetState(3);
+				SetState(3);
 			}
 		}
 
 		if (pBehaviour->field_0x1f8 * 3.0f <= this->distanceToKim) {
-			this->SetState(1);
+			SetState(1);
 		}
 		break;
 	case 3:
-		this->State_GotoKim();
+		State_GotoKim();
 		break;
 	case 4:
 	case 5:
@@ -1802,7 +1831,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		tailY = pFxTail->field_0x50.y;
 		tailZ = pFxTail->field_0x50.z;
 		tailW = pFxTail->field_0x50.w;
-		pFxTail->field_0x60 = pFxTail->field_0x50;
+		pFxTail->instanceIndex = pFxTail->field_0x50;
 		pFxTail->field_0x50.x = nextY;
 		pFxTail->field_0x50.y = nextZ;
 		pFxTail->field_0x50.z = nextW;
@@ -1814,7 +1843,47 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 
 void CBnsInstance::BehaviourAddOn_Manage(CBehaviourBonusFlock* pBehaviour)
 {
-	IMPLEMENTATION_GUARD();
+	if ((this->flags & 1) != 0) {
+		int currentState = this->state;
+
+		if ((currentState == 5) || (currentState == 4)) {
+			IMPLEMENTATION_GUARD_LIGHT(
+			CActorBonus::_gBNS_Lights.Update(this, &this->currentPosition);
+			CActorBonus::_gBNS_Lights.Unregister(this);)
+			pBehaviour->KillInstance(this);
+		}
+		else if (currentState == 3) {
+			this->State_GotoKim();
+		}
+		else if ((currentState == 2) || (currentState == 1)) {
+			this->FUN_00397ba0();
+
+			if ((0.0f < pBehaviour->field_0x18) && (pBehaviour->field_0x18 < this->field_0x5c)) {
+				SetState(5);
+			}
+		}
+
+		if ((this->flags & 4) == 0) {
+			this->flags &= ~2;
+		}
+		else {
+			this->flags |= 2;
+		}
+
+		if ((this->flags & 1) != 0) {
+			this->angleRotY += GetTimer()->cutsceneDeltaTime * 24.0f;
+
+			if (this->angleRotY >= 16.0f) {
+				this->angleRotY -= 16.0f;
+			}
+
+			this->FUN_003982c0();
+			this->field_0x5c += GetTimer()->cutsceneDeltaTime;
+			this->field_0x64 = this->currentPosition.xyz;
+		}
+	}
+
+	return;
 }
 
 void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
@@ -1838,9 +1907,9 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 				if ((curState == 2) || (curState == 1)) {
 					State_Wait();
 
-					this->field_0xa0 += GetTimer()->cutsceneDeltaTime * 1.8f;
-					if (6.283185f <= this->field_0xa0) {
-						this->field_0xa0 = this->field_0xa0 - 6.283185f;
+					this->angleRotY += GetTimer()->cutsceneDeltaTime * 1.8f;
+					if (6.283185f <= this->angleRotY) {
+						this->angleRotY = this->angleRotY - 6.283185f;
 					}
 
 					this->field_0xa4 += GetTimer()->cutsceneDeltaTime * 2.2f;
@@ -1851,7 +1920,7 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 					SetBasePosition(&this->basePosition);
 
 					newPosition.x = cosf(this->field_0xa4);
-					newPosition.y = cosf(this->field_0xa0);
+					newPosition.y = cosf(this->angleRotY);
 					newPosition.z = sinf(this->field_0xa4);
 					newPosition.w = 0.0f;
 
@@ -1930,9 +1999,63 @@ void CBnsInstance::MoveOnPath(float param_1, float speed, CBehaviourBonusPath* p
 			pBehaviour->pathPlane.pathFollowReader.NextWayPoint();
 		}
 		else {
-			this->SetState(1);
+			SetState(1);
 		}
 	}
 
 	return;
 }
+
+void CBnsInstance::State_Turn(CBehaviourBonusTurn* pBehaviour)
+{
+	int iVar2;
+	float distanceToKim;
+	edF32VECTOR4 rotatedPosition;
+	edF32MATRIX4 rotationMatrix;
+	undefined4 local_8;
+	undefined4 local_4;
+
+	this->field_0x9c = edF32Between_2Pi(((pBehaviour->field_0x1b8 + GetTimer()->scaledTotalTime * pBehaviour->field_0x14) * 6.283185f));
+	edF32Matrix4RotateXHard(this->field_0x9c, &rotationMatrix, &gF32Matrix4Unit);
+
+	float rotY = this->pOwner->rotationEuler.y;
+	if (rotY != 0.0f) {
+		edF32Matrix4RotateYHard(rotY, &rotationMatrix, &rotationMatrix);
+	}
+
+	float rotZ = this->pOwner->rotationEuler.z;
+	if (rotZ != 0.0f) {
+		edF32Matrix4RotateZHard(rotZ, &rotationMatrix, &rotationMatrix);
+	}
+
+	rotatedPosition.x = 0.0f;
+	rotatedPosition.y = 0.0f;
+	rotatedPosition.z = pBehaviour->field_0x1d0;
+	rotatedPosition.w = 0.0f;
+
+	edF32Matrix4MulF32Vector4Hard(&rotatedPosition, &rotationMatrix, &rotatedPosition);
+	edF32Vector4AddHard(&rotatedPosition, &this->basePosition, &rotatedPosition);
+	SetPosition(&rotatedPosition);
+	ComputeDistanceToKim((edF32VECTOR4*)0x0);
+
+	distanceToKim = this->distanceToKim;
+	if (distanceToKim <= 0.85f) {
+		local_4 = 0xffffffff;
+		iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
+		if (iVar2 != 0) {
+			SetState(4);
+		}
+	}
+	else {
+		if (distanceToKim <= 2.0f) {
+			local_8 = 0xffffffff;
+			iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
+			if (iVar2 != 0) {
+				SetState(3);
+			}
+		}
+	}
+
+	return;
+}
+

@@ -2538,7 +2538,7 @@ void CActorFighter::_ManageFighterDyn(uint flags, uint dynFlags, CActorsTable* p
 				}
 			}
 
-			this->dynamicExt.field_0x60.y = (this->scalarDynJump).field_0x20 * this->field_0x3f4;
+			this->dynamicExt.instanceIndex.y = (this->scalarDynJump).field_0x20 * this->field_0x3f4;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 		}
 
@@ -4108,7 +4108,7 @@ void CActorFighter::_LoadGrab(s_fighter_grab* pGrab, ByteCode* pByteCode)
 	
 	pGrab->field_0x3c = pByteCode->GetF32();
 	
-	pGrab->field_0x60 = pByteCode->GetF32();
+	pGrab->instanceIndex = pByteCode->GetF32();
 	
 	pGrab->field_0x40 = pByteCode->GetF32();
 	
@@ -4144,7 +4144,7 @@ void CActorFighter::_LoadGrab(s_fighter_grab* pGrab, ByteCode* pByteCode)
 	pGrab->field_0x9c = 0;
 	
 	pGrab->field_0x8c = pByteCode->GetU32();
-	pGrab->field_0xa0 = pByteCode->GetS32();
+	pGrab->angleRotY = pByteCode->GetS32();
 	
 	pGrab->field_0xa4 = pByteCode->GetF32();
 	
@@ -4649,7 +4649,7 @@ void CActorFighter::_SV_HIT_FightCollisionProcessHit(CActor* pHitActor, s_fighte
 		}
 
 		edF32Matrix4MulF32Vector4Hard(&hitMsg.field_0x20, &rotMatrix, &pBlow->field_0x20);
-		edF32Matrix4MulF32Vector4Hard(&hitMsg.field_0x60, &rotMatrix, &pBlow->field_0x30);
+		edF32Matrix4MulF32Vector4Hard(&hitMsg.instanceIndex, &rotMatrix, &pBlow->field_0x30);
 		hitMsg.field_0x40 = *pPosition;
 
 		CActor::DoMessage(pHitActor, MESSAGE_KICKED, &hitMsg);
@@ -6236,7 +6236,7 @@ void CActorFighter::_UpdateDynForHit(float maxDuration, _msg_hit_param* pHitPara
 	this->field_0x686 = pHitParams->field_0x52;
 
 	if ((this->field_0x684 & 1U) != 0) {
-		this->field_0x7a0 = pHitParams->field_0x60;
+		this->field_0x7a0 = pHitParams->instanceIndex;
 		this->field_0x7b4 = pHitParams->field_0x70;
 	}
 
@@ -7972,7 +7972,7 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 							pFighter->field_0x686 = pMsgHitParam->field_0x52;
 
 							if ((pFighter->field_0x684 & 1U) != 0) {
-								pFighter->field_0x7a0 = pMsgHitParam->field_0x60;
+								pFighter->field_0x7a0 = pMsgHitParam->instanceIndex;
 								pFighter->field_0x7b4 = pMsgHitParam->field_0x70;
 							}
 
@@ -7999,7 +7999,7 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 								pFighter->field_0x686 = pMsgHitParam->field_0x52;
 
 								if ((pFighter->field_0x684 & 1U) != 0) {
-									pFighter->field_0x7a0 = pMsgHitParam->field_0x60;
+									pFighter->field_0x7a0 = pMsgHitParam->instanceIndex;
 									pFighter->field_0x7b4 = pMsgHitParam->field_0x70;
 								}
 
@@ -8519,9 +8519,9 @@ void StaticMeshComponentAdvanced::Create(ByteCode* pByteCode)
 		peVar3->y = peVar3->y * 0.8333333f;
 	}
 
-	this->field_0x60 = 0;
+	this->instanceIndex = 0;
 	this->field_0x61 = 0;
-	this->field_0x60 = 0;
+	this->instanceIndex = 0;
 	this->field_0x61 = 0;
 
 	return;
@@ -8542,7 +8542,7 @@ void StaticMeshComponentAdvanced::ResetInternal(int textureIndex, int meshIndex)
 		peVar1->y = peVar1->y * 0.8333333;
 	}
 
-	this->field_0x60 = 0;
+	this->instanceIndex = 0;
 	this->field_0x61 = 0;
 	return;
 }
@@ -8562,7 +8562,7 @@ void StaticMeshComponentAdvanced::Reset()
 	this->field_0x6c = 0;
 	this->field_0x68 = 0;
 
-	if (this->field_0x60 == 0) {
+	if (this->instanceIndex == 0) {
 		if (HasMesh() != false) {
 			IMPLEMENTATION_GUARD(
 			StaticMeshComponent::Unload_00114e80((StaticMeshComponent*)this, (ed_3D_Scene*)0x0);)
@@ -8598,7 +8598,7 @@ bool StaticMeshComponentAdvanced::HasMesh()
 {
 	bool bVar1;
 
-	if (this->field_0x60 == 1) {
+	if (this->instanceIndex == 1) {
 		bVar1 = false;
 		if (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
 			bVar1 = this->field_0x61 == 0;
@@ -8609,6 +8609,23 @@ bool StaticMeshComponentAdvanced::HasMesh()
 	}
 
 	return bVar1;
+}
+
+bool StaticMeshComponentAdvanced::IsValid()
+{
+	bool bValid;
+
+	bValid = this->textureIndex != -1;
+
+	if (bValid) {
+		bValid = this->meshIndex != -1;
+	}
+
+	if (bValid == false) {
+		bValid = this->pMeshTransformParent != (edNODE*)0x0;
+	}
+
+	return bValid;
 }
 
 edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
@@ -8622,7 +8639,7 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 	edF32VECTOR4* peVar4;
 
 	peVar1 = (ed_g2d_material*)0x0;
-	if (this->field_0x60 == 0) {
+	if (this->instanceIndex == 0) {
 		index = this->textureIndex;
 		if ((index != -1) && (pManager = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(index), pManager != (ed_g2d_manager*)0x0)) {
 			peVar1 = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);

@@ -1,7 +1,7 @@
 #include "ActorMicken.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
-#include "EdenLib/edCollision/sources/edCollisions.h"
+#include "edCollision/edCollisions.h"
 #include "ActorHero.h"
 #include "ActorManager.h"
 #include "ActorFactory.h"

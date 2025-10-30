@@ -5,7 +5,7 @@
 #include "FrontendDisp.h"
 #include "Pause.h"
 #include "LargeObject.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "edStr.h"
 #include "MathOps.h"
 #include "TimeController.h"

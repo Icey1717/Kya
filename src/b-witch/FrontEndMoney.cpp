@@ -7,7 +7,7 @@
 #include "MathOps.h"
 #include "edStr.h"
 #include "Frontend.h"
-#include "Rendering/DisplayList.h"
+#include "DlistManager.h"
 #include "kya.h"
 #include "edText.h"
 

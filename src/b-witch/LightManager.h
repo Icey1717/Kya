@@ -3,18 +3,13 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "ed3D/ed3DSceneManager.h"
 
 class CActor;
 struct ed_3d_hierarchy;
 struct S_CHECKPOINT;
 struct ByteCode;
 struct BaseShape;
-
-struct ed_3D_Light_Config {
-	edF32VECTOR4* pLightAmbient;
-	edF32MATRIX4* pLightDirections;
-	edF32MATRIX4* pLightColorMatrix;
-};
 
 struct CLightConfig {
 	edF32VECTOR4 lightAmbient;

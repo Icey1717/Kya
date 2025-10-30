@@ -2,7 +2,7 @@
 #define _COLLISION_RAY_H
 
 #include "Types.h"
-#include "EdenLib/edCollision/sources/edCollisions.h"
+#include "edCollision/edCollisions.h"
 
 #define RAY_FLAG_SCENERY 1
 #define RAY_FLAG_ACTOR 2
