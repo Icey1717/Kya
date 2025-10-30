@@ -208,8 +208,6 @@ set(main_src
 	"${src_root}/b-witch/InputManager.h"
 	"${src_root}/b-witch/ActorFactory.cpp"
 	"${src_root}/b-witch/ActorFactory.h"
-	"${src_root}/Rendering/DisplayList.cpp"
-	"${src_root}/Rendering/DisplayList.h"
 	"${src_root}/Rendering/DisplayListData.cpp"
 	"${src_root}/Rendering/DisplayListData.h"
 	"${src_root}/Rendering/CameraPanMasterHeader.cpp"
@@ -310,7 +308,7 @@ set(main_src
 	"${src_root}/EdenLib/edAnim/AnmSkeleton.cpp"
 	"${src_root}/EdenLib/edAnim/AnmSkeleton.h"
 	"${src_root}/EdenLib/edCollision/sources/edCollisions.cpp"
-	"${src_root}/EdenLib/edCollision/sources/edCollisions.h"
+	"${src_root}/EdenLib/Include/edCollision/edCollisions.h"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPsxPorts.cpp"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPsxPorts.h"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPorts.cpp"
@@ -376,20 +374,22 @@ set(main_src
 	"${src_root}/EdenLib/edBank/sources/edBankFiler.cpp"
 	"${src_root}/EdenLib/edBank/sources/edBankStackFile.cpp"
 
-	"${src_root}/EdenLib/edBank/include/edBank.h"
-	"${src_root}/EdenLib/edBank/include/edBankBuffer.h"
-	"${src_root}/EdenLib/edBank/include/edBankDebug.h"
-	"${src_root}/EdenLib/edBank/include/edBankFile.h"
-	"${src_root}/EdenLib/edBank/include/edBankFiler.h"
-	"${src_root}/EdenLib/edBank/include/edBankStackFile.h"
+	"${src_root}/EdenLib/Include/edDlist/edDlist.inl"
 
-	"${src_root}/EdenLib/edFile/include/edFileFiler.h"
-	"${src_root}/EdenLib/edFile/include/edFile.h"
-	"${src_root}/EdenLib/edFile/include/edFilePath.h"
-	"${src_root}/EdenLib/edFile/include/edFileCRC32.h"
-	"${src_root}/EdenLib/edFile/include/edFileNoWaitStack.h"
-	"${src_root}/EdenLib/edFile/include/ps2/_edFileFilerCDVD.h"
-	"${src_root}/EdenLib/edFile/include/ps2/_edFileFilerMCard.h"
+	"${src_root}/EdenLib/Include/edBank/edBank.h"
+	"${src_root}/EdenLib/Include/edBank/edBankBuffer.h"
+	"${src_root}/EdenLib/Include/edBank/edBankDebug.h"
+	"${src_root}/EdenLib/Include/edBank/edBankFile.h"
+	"${src_root}/EdenLib/Include/edBank/edBankFiler.h"
+	"${src_root}/EdenLib/Include/edBank/edBankStackFile.h"
+
+	"${src_root}/EdenLib/Include/edFile/edFileFiler.h"
+	"${src_root}/EdenLib/Include/edFile/edFile.h"
+	"${src_root}/EdenLib/Include/edFile/edFilePath.h"
+	"${src_root}/EdenLib/Include/edFile/edFileCRC32.h"
+	"${src_root}/EdenLib/Include/edFile/edFileNoWaitStack.h"
+	"${src_root}/EdenLib/Include/edFile/ps2/_edFileFilerCDVD.h"
+	"${src_root}/EdenLib/Include/edFile/ps2/_edFileFilerMCard.h"
 
 	"${src_root}/EdenLib/edFile/sources/edFileFiler.cpp"
 	"${src_root}/EdenLib/edFile/sources/edFile.cpp"
@@ -414,7 +414,10 @@ set(main_src
 	"${src_root}/EdenLib/edParticles/sources/edParticleGenerator.cpp"
 	"${src_root}/EdenLib/edParticles/sources/edParticleEffector.cpp"
 	"${src_root}/EdenLib/edParticles/sources/edParticle.cpp"
-	"${src_root}/EdenLib/edParticles/include/edParticles.h"
+	"${src_root}/EdenLib/Include/edParticles/edParticles.h"
+
+    "${src_root}/EdenLib/Include/ed3D/ed3DSceneManager.h"
+    "${src_root}/EdenLib/ed3D/sources/ed3DSceneManager.cpp"
 
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"
@@ -636,6 +639,8 @@ else()
 		${main_src}
 	)
 endif()
+
+target_include_directories(Kya PUBLIC "${src_root}/EdenLib/Include")
 
 if (PS2)
 	message("Using src directory: ${CMAKE_CURRENT_SOURCE_DIR}")
