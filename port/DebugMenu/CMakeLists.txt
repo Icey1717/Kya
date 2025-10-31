@@ -70,7 +70,7 @@ add_subdirectory("ext/magic_enum")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("ext/json")
 
-target_link_libraries(${TargetName} PRIVATE Renderer Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json)
+target_link_libraries(${TargetName} PRIVATE Renderer Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json glm)
 
 target_include_directories(${TargetName} PUBLIC "include")
 target_include_directories(${TargetName} PRIVATE "src")

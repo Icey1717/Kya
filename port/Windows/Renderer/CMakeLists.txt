@@ -97,7 +97,7 @@ add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
-target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue Tracy::TracyClient)
+target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue Tracy::TracyClient glm)
 target_link_libraries(Renderer PUBLIC TextureUpload)
 
 target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src" "${CMAKE_SOURCE_DIR}/port/include")

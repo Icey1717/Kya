@@ -63,6 +63,10 @@ namespace Renderer::Kya::Sprite
 			pPkt++;
 		}
 
+		if (pPkt[1].asU32[3] != gGifTagCopyCode) {
+			pPkt = GetVifStart(pSprite);
+		}
+
 		assert(pPkt[1].asU32[3] == gGifTagCopyCode);
 
 		u8* const pGifPkt = LOAD_SECTION_CAST(u8*, pPkt[1].asU32[1]);
@@ -82,6 +86,10 @@ namespace Renderer::Kya::Sprite
 		// Seek forward to the end code.
 		while (pPkt->asU32[0] != gVifEndCode) {
 			pPkt++;
+		}
+
+		if (pPkt == GetVifStart(pSprite)) {
+			return 0;
 		}
 
 		// Make sure the highest bits match the exec code.
