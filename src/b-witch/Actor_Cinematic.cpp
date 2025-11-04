@@ -1,5 +1,6 @@
 #include "Actor_Cinematic.h"
 #include "ed3D.h"
+#include "ed3D/ed3DG3D.h"
 #include "edList.h"
 #include <string>
 #include "MathOps.h"

@@ -1,8 +1,8 @@
 #include "ActorWolfen.h"
 #include "MemoryStream.h"
 #include "ActorHero.h"
-#include "ActorCommander.h"
-#include "ActorWeapon.h"
+#include "ActorNativ.h"
+#include "ActorManager.h"
 #include "CinematicManager.h"
 #include "WayPoint.h"
 #include "MathOps.h"
@@ -13,6 +13,7 @@
 #include <string>
 #include "kya.h"
 #include "LevelScheduleManager.h"
+#include "ed3D/ed3DG2D.h"
 
 struct WolfenAnimMatrixData
 {
@@ -178,20 +179,19 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	this->runSpeedScale = pByteCode->GetF32();
 	fVar7 = pByteCode->GetF32();
 	this->defaultRunSpeed = fVar7;
-
 	this->runSpeed = fVar7;
 	this->runAcceleration = pByteCode->GetF32();
 	this->rotRunSpeed = pByteCode->GetF32();
 
-	uVar3 = pByteCode->GetU32();
-	if ((int)uVar3 < 0) {
-		fVar7 = (float)(uVar3 >> 1 | uVar3 & 1);
+	const uint nbMagicRequired = pByteCode->GetU32();
+	if ((int)nbMagicRequired < 0) {
+		fVar7 = (float)(nbMagicRequired >> 1 | nbMagicRequired & 1);
 		fVar7 = fVar7 + fVar7;
 	}
 	else {
-		fVar7 = (float)uVar3;
+		fVar7 = (float)nbMagicRequired;
 	}
-	this->field_0xb84 = fVar7;
+	this->nbRequiredMagicForExorcism = fVar7;
 
 	this->field_0xd30 = pByteCode->GetU32();
 
@@ -485,7 +485,7 @@ void CActorWolfen::Init()
 	fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, 0.7f, 0.0f);
 	this->field_0xbf0 = this->field_0xbf0 - fVar14;
 	this->exorcisedState = 1;
-	this->field_0xb88 = 0;
+	this->nbConsumedMagicForExorcism = 0;
 	pCVar4 = GetLifeInterfaceOther();
 	//pCVar4->field_0x10 = this;
 	ClearLocalData();
@@ -666,7 +666,7 @@ void CActorWolfen::Draw()
 void CActorWolfen::Reset()
 {
 	this->exorcisedState = 1;
-	this->field_0xb88 = 0;
+	this->nbConsumedMagicForExorcism = 0;
 
 	this->flags = this->flags & 0xffffff5f;
 	EvaluateDisplayState();
@@ -1299,7 +1299,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			IMPLEMENTATION_GUARD(
 			if ((this->exorcisedState != 2) && (this->exorcisedState != 0)) {
 				(*(code*)(this->pVTable)->LifeAnnihilate)();
-				SetBehaviour(0xe, 0x7f, -1);
+				SetBehaviour(0xe, WOLFEN_STATE_EXORCISE_LIVING_DEAD, -1);
 			}
 			return 1;)
 		}
@@ -2803,24 +2803,20 @@ void CActorWolfen::BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour)
 	case WOLFEN_STATE_EXORCISE_EXORCIZE:
 		StateExorcize(pBehaviour);
 		break;
-	case 0x7b:
-		IMPLEMENTATION_GUARD(
-		FUN_00176910(this);)
+	case WOLFEN_STATE_EXORCISE_TRANSFORM:
+		StateExorcizeTransform();
 		break;
-	case 0x7c:
-		IMPLEMENTATION_GUARD(
-		FUN_001767f0(this);)
+	case WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE:
+		StateExorcizeTransformComplete();
 		break;
-	case 0x7d:
-		IMPLEMENTATION_GUARD(
-		FUN_00176910(this);)
+	case WOLFEN_STATE_EXORCISE_END:
+		StateExorcizeTransform();
 		break;
 	case WOLFEN_STATE_EXORCISE_AWAKE:
 		StateExorcizeAwake(pBehaviour);
 		break;
-	case 0x7f:
-		IMPLEMENTATION_GUARD(
-		FUN_001763c0(this);)
+	case WOLFEN_STATE_EXORCISE_LIVING_DEAD:
+		StateDeadLivingDead();
 		break;
 	case 0x80:
 		IMPLEMENTATION_GUARD(
@@ -4865,7 +4861,7 @@ void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
 	pBehaviour->DecreaseNbBonusReq();
 
 	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-		if (this->field_0xb84 <= this->field_0xb88) {
+		if (this->nbRequiredMagicForExorcism <= this->nbConsumedMagicForExorcism) {
 			this->exorcisedState = 2;
 			this->scalarDynJump.Reset();
 			this->field_0x7b4 = 0.0f;
@@ -4874,12 +4870,12 @@ void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 			bVar2 = pBehaviour->FUN_001edbe0();
 			if (bVar2 == true) {
-				SetState(0x7b, -1);
+				SetState(WOLFEN_STATE_EXORCISE_TRANSFORM, -1);
 			}
 		}
 		else {
 			this->field_0x6b0 = 0.0f;
-			SetBehaviour(4, 0x56, -1);
+			SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x56, -1);
 		}
 	}
 	return;
@@ -4893,6 +4889,187 @@ void CActorWolfen::StateExorciseTerm()
 	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
 	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeTransformInit()
+{
+	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeTransform()
+{
+	ManageDyn(4.0f, 0x1c129, (CActorsTable*)0x0);
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeTransformCompleteInit()
+{
+	edNODE* pNode;
+
+	pNode = this->pMeshNode;
+	if (pNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetBFCulling(pNode, 1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeTransformComplete()
+{
+	float fVar1;
+	edF32VECTOR3 local_10;
+
+	ManageDyn(4.0f, 0x1c129, (CActorsTable*)0x0);
+	fVar1 = edFIntervalUnitSrcLERP(this->timeInAir / 0.3f, 128.0f, 0.0f);
+	local_10.z = edFIntervalUnitSrcLERP(this->timeInAir / 0.3f, 1.0f, 3.0f);
+	local_10.x = edFIntervalUnitSrcLERP(this->timeInAir / 0.3f, 1.0f, 0.0f);
+	local_10.y = local_10.x;
+	UpdateScale_0030ac50(&local_10);
+	SetAlpha((byte)(int)fVar1);
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeTransformCompleteTerm()
+{
+	SetScaleVector(1.0f, 1.0f, 1.0f);
+	ToggleMeshAlpha();
+	SetBFCulling(0);
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+	EvaluateDisplayState();
+
+	return;
+}
+
+CAM_QUAKE CAM_QUAKE_0040e730 = {
+	{0.25f, 0.25f, 0.05f, 0.0f},
+	{20.0f, 20.0f, 20.0f, 0.0f},
+	0xa,
+	0.7f,
+	0.f,
+	0.6f
+};
+
+void CActorWolfen::StateExorcizeEndInit()
+{
+	uint uVar1;
+	int iVar2;
+	bool bVar3;
+	CActorManager* pActorManager;
+	CActor* pReceiver;
+	int iVar4;
+	CActorWeapon* pCVar5;
+	CActorWolfen* pCVar6;
+	_msg_exorcised local_130;
+	CActorsTable local_110;
+
+	pActorManager = CScene::ptable.g_ActorManager_004516a4;
+	pReceiver = (CActor*)0x0;
+	iVar4 = 0;
+	local_110.nbEntries = 0;
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+	EvaluateDisplayState();
+	pActorManager->GetActorsByClassID(NATIV, &local_110);
+	local_130.field_0x0 = 3;
+	local_130.field_x10 = this->fighterAnatomyZones.field_0x0;
+	edF32Vector4AddHard(&local_130.field_x10, &this->currentLocation, &local_130.field_x10);
+	local_130.field_x10.w = 1.0f;
+	local_130.field_x10.y = local_130.field_x10.y - (this->distanceToGround + ((this->pCollisionData)->pObbPrim->field_0x90).z);
+	uVar1 = this->field_0xb74;
+	while ((iVar4 == 0 && (local_110.nbEntries != 0))) {
+		bVar3 = false;
+		pReceiver = local_110.PopCurrent();
+		CActorNativ* pNativ = static_cast<CActorNativ*>(pReceiver);
+		if (((pReceiver->flags & 8) == 0) || (pReceiver->state_0x10 != 0)) {
+			iVar2 = pNativ->field_0x378;
+			if (iVar2 == 6) {
+				if (uVar1 == 3) {
+					bVar3 = true;
+				}
+			}
+			else {
+				if (iVar2 == 1) {
+					if ((uVar1 - 1 < 2) || (uVar1 == 4)) {
+						bVar3 = true;
+					}
+				}
+				else {
+					if ((iVar2 == 0) && (uVar1 == 0)) {
+						bVar3 = true;
+					}
+				}
+			}
+
+			if (bVar3) {
+				iVar4 = DoMessage(pReceiver, (ACTOR_MESSAGE)0x19, &local_130);
+			}
+		}
+	}
+
+	if (iVar4 != 0) {
+		local_130.field_0x0 = 0;
+		DoMessage(pReceiver, (ACTOR_MESSAGE)0x19, &local_130);
+	}
+
+	CScene::ptable.g_CameraManager_0045167c->SetEarthQuake(&CAM_QUAKE_0040e730);
+
+	if (GetWeapon()) {
+		if (GetWeapon()->GetLinkFather() == this) {
+			GetWeapon()->UnlinkWeapon();
+		}
+	}
+
+	CLevelScheduler::gThis->Level_WolfenChanged();
+
+	return;
+}
+
+void CActorWolfen::StateExorcizeEndTerm(CBehaviourExorcism* pBehaviour)
+{
+	pBehaviour->ClearStruct_001edb50();
+
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+	EvaluateDisplayState();
+	this->flags = this->flags & 0xfffffffd;
+	this->flags = this->flags | 1;
+
+	return;
+}
+
+void CActorWolfen::StateDeadLivingDead()
+{
+	SetState(- 1, -1);
+
+	return;
+}
+
+void CActorWolfen::StateDeadLivingDeadTerm(CBehaviourExorcism* pBehaviour)
+{
+	pBehaviour->ClearStruct_001edb50();
+
+	if (GetWeapon()) {
+		if (GetWeapon()->GetLinkFather() == this) {
+			GetWeapon()->UnlinkWeapon();
+		}
+	}
+
+	this->exorcisedState = 2;
+	CLevelScheduler::gThis->Level_WolfenChanged();
+
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+	EvaluateDisplayState();
+	this->flags = this->flags & 0xfffffffd;
+	this->flags = this->flags | 1;
 
 	return;
 }
@@ -5865,7 +6042,7 @@ bool CActorWolfen::CanBeExorcised()
 	bool bVar1;
 
 	bVar1 = this->exorcisedState == 1;
-	if ((bVar1) && (bVar1 = true, this->field_0xb84 <= this->field_0xb88)) {
+	if ((bVar1) && (bVar1 = true, this->nbRequiredMagicForExorcism <= this->nbConsumedMagicForExorcism)) {
 		bVar1 = false;
 	}
 
@@ -9949,9 +10126,161 @@ public:
 		return;
 	}
 
+	void SetNode(edNODE* pNode)
+	{
+		this->pMeshTransformParent = pNode;
+		this->pMeshTransformData = reinterpret_cast<ed_3d_hierarchy_node*>(pMeshTransformParent->pData);
+		this->instanceIndex = 1;
+		this->field_0x61 = 0;
+		return;
+	}
+
+	virtual edF32MATRIX4* GetMatrix()
+	{
+		return &this->field_0xe0;
+	}
+
+	virtual void Term()
+	{
+		if (((this->field_0x80 & 2) == 0) && (this->pMatrices != (edF32MATRIX4*)0x0)) {
+			delete(this->pMatrices);
+		}
+
+		this->pMatrices = (edF32MATRIX4*)0x0;
+		this->nbMatrices = 0;
+
+		StaticMeshComponent::Term();
+
+		return;
+	}
+
+	virtual void SetMatrix(edF32MATRIX4* pMatrix)
+	{
+		edF32Matrix4CopyHard(&this->field_0xe0, pMatrix);
+		edF32Matrix4MulF32Matrix4Hard(&this->pMeshTransformData->base.transformA, &this->field_0xa0, &this->field_0xe0);
+		return;
+	}
+
+	virtual void Func_0x28(float param_1, float param_2)
+	{
+		edF32MATRIX4* peVar1;
+		uint uVar2;
+
+		if (this->nbMatrices == 0) {
+			if (param_1 == -1.0) {
+				param_1 = 0.0;
+			}
+		}
+		else {
+			this->field_0x80 = this->field_0x80 | 1;
+			this->activeMatrixIndex = 0;
+			this->field_0x90 = 0.0f;
+			edF32Matrix4CopyHard(&this->field_0xa0, &gF32Matrix4Unit);
+
+			peVar1 = this->pMatrices;
+			for (uVar2 = 0; (peVar1->da == 0.0f && (uVar2 < this->nbMatrices)); uVar2 = uVar2 + 1) {
+				peVar1 = peVar1 + 1;
+			}
+
+			if (uVar2 < this->nbMatrices) {
+				this->activeMatrixIndex = uVar2;
+			}
+			else {
+				this->activeMatrixIndex = this->nbMatrices - 1;
+			}
+
+			if (param_1 == -1.0f) {
+				param_1 = this->pMatrices[this->activeMatrixIndex].da;
+			}
+		}
+
+		StaticMeshComponentAdvanced::Func_0x28(param_1, param_2);
+		return;
+	}
+
+	virtual void Func_0x2c(float param_1)
+	{
+		if (param_1 == -1.0f) {
+			if ((this->nbMatrices == 0) || ((this->field_0x80 & 1) == 0)) {
+				param_1 = 0.0f;
+			}
+			else {
+				param_1 = this->pMatrices[this->activeMatrixIndex].da;
+			}
+		}
+
+		StaticMeshComponentAdvanced::Func_0x2c(param_1);
+		return;
+	}
+
+	virtual void Func_0x30(edF32MATRIX4* pMatrix, float param_3)
+	{
+		uint matrixIndex;
+		bool bVar2;
+		undefined8 uVar3;
+		edF32MATRIX4* targetRotation;
+		edF32MATRIX4* currentRotation;
+		float fVar4;
+		edF32VECTOR4 eStack112;
+		edF32VECTOR4 eStack96;
+		edF32VECTOR4 eStack80;
+		edF32MATRIX4 eStack64;
+
+		StaticMeshComponentAdvanced::Func_0x30(pMatrix, param_3);
+
+		bVar2 = HasMesh();
+		bVar2 = bVar2 != false;
+		if (bVar2) {
+			bVar2 = this->field_0x64 != 1;
+		}
+
+		if (bVar2) {
+			if ((this->field_0x80 & 1) != 0) {
+				matrixIndex = this->activeMatrixIndex;
+				targetRotation = this->pMatrices + matrixIndex;
+				if (matrixIndex == 0) {
+					currentRotation = &edF32MATRIX4_004a56b0;
+				}
+				else {
+					currentRotation = this->pMatrices + matrixIndex + -1;
+				}
+
+				float rotationAlpha = 1.0f;
+				if (targetRotation->da != 0.0f) {
+					rotationAlpha = edFIntervalUnitDstLERP(this->field_0x90, currentRotation->da, targetRotation->da);
+				}
+				edQuatShortestSLERPHard(rotationAlpha, &eStack80, &currentRotation->rowX, &targetRotation->rowX);
+				edF32Vector4LERPHard(rotationAlpha, &eStack96, &currentRotation->rowY, &targetRotation->rowY);
+				edF32Vector4LERPHard(rotationAlpha, &eStack112, &currentRotation->rowZ, &targetRotation->rowZ);
+				edF32Matrix4ScaleHard(&eStack64, &gF32Matrix4Unit, &eStack112);
+				edQuatToMatrix4Hard(&eStack80, &this->field_0xa0);
+				edF32Matrix4TranslateHard(&this->field_0xa0, &this->field_0xa0, &eStack96);
+				edF32Matrix4MulF32Matrix4Hard(&this->field_0xa0, &eStack64, &this->field_0xa0);
+
+				fVar4 = this->field_0x90 + param_3;
+				this->field_0x90 = fVar4;
+				if ((targetRotation->da <= fVar4) && (this->activeMatrixIndex = this->activeMatrixIndex + 1, this->nbMatrices <= this->activeMatrixIndex)) {
+					this->activeMatrixIndex = 0;
+					this->field_0x90 = 0.0f;
+					this->field_0x80 = this->field_0x80 & 0xfffffffe;
+					Func_0x2c(0);
+				}
+			}
+
+			SetMatrix(GetMatrix());
+		}
+
+		return;
+	}
+
 	uint field_0x80;
 	edF32MATRIX4* pMatrices;
 	int nbMatrices;
+	undefined4 activeMatrixIndex;
+	float field_0x90;
+
+	edF32MATRIX4 field_0xa0;
+	edF32MATRIX4 field_0xe0;
 };
 
 #define IMPLEMENTATION_GUARD_ASTRUCT_5(...)
@@ -10033,10 +10362,12 @@ edF32MATRIX4 edF32MATRIX4_ARRAY_0040ef00[5] = {
 struct astruct_17
 {
 	StaticMeshComponentAdvancedEx* field_0x0;
-	uint* field_0x4;
-	undefined field_0x8[4];
-	int* field_0xc;
-	int* field_0x10;
+	uint* pFxScenariacData;
+	CActorWolfen* pWolfen;
+	float timeInState;
+	int field_0x10;
+
+	uint Manage(float deltaTime);
 
 	void Init(StaticMeshComponentAdvancedEx* pStaticMeshComponent, uint* param_3)
 	{
@@ -10073,9 +10404,9 @@ struct astruct_17
 			this->field_0x0[1].FUN_00406400(edF32MATRIX4_ARRAY_0040ef00, 5);
 		}
 
-		this->field_0x4 = param_3;
-		this->field_0x10 = (int*)0x0;
-		this->field_0xc = (int*)0x0;
+		this->pFxScenariacData = param_3;
+		this->field_0x10 = 0;
+		this->timeInState = 0.0f;
 
 		return;
 	}
@@ -10090,12 +10421,13 @@ struct astruct_5
 	}
 
 	void Create(ByteCode* pByteCode);
-	void Term() { IMPLEMENTATION_GUARD_ASTRUCT_5(); }
+	void Term();
 
 	edNODE* field_0x0[8];
 	StaticMeshComponentAdvancedEx aStaticMeshComponents[8];
 
-	void* field_0x1a0[12];
+	void* field_0x1a0[2];
+	void* field_0x1a8[2];
 	uint flags;
 	uint field_0xab0[5];
 	astruct_17 field_0xac4[4];
@@ -10106,7 +10438,7 @@ void CBehaviourExorcism::Create(ByteCode* pByteCode)
 {
 	this->digitMaterialId = pByteCode->GetS32();
 	this->field_0x24 = pByteCode->GetS32();
-	this->aSubObjA = (astruct_18*)0x0;
+	this->aSubObjA = (astruct_17*)0x0;
 	astruct_5_00456980.Create(pByteCode);
 
 	return;
@@ -10236,19 +10568,19 @@ void CBehaviourExorcism::Manage()
 		}
 	}
 
-	if (this->aSubObjA != (astruct_18*)0x0) {
+	if (this->aSubObjA != (astruct_17*)0x0) {
 		pTVar4 = GetTimer();
-		uVar5 = this->aSubObjA->FUN_001eeea0(pTVar4->cutsceneDeltaTime);
+		uVar5 = this->aSubObjA->Manage(pTVar4->cutsceneDeltaTime);
 		if (uVar5 == 3) {
 			this->pOwner->SetState(-1, -1);
 		}
 		else {
 			if (uVar5 == 2) {
-				this->pOwner->SetState(0x7d, -1);
+				this->pOwner->SetState(WOLFEN_STATE_EXORCISE_END, -1);
 			}
 			else {
 				if (uVar5 == 1) {
-					this->pOwner->SetState(0x7c, -1);
+					this->pOwner->SetState(WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE, -1);
 				}
 			}
 		}
@@ -10265,7 +10597,7 @@ void CBehaviourExorcism::Draw()
 	edF32VECTOR4 eStack16;
 	CActorWolfen* pWolfen;
 
-	if (this->pOwner->field_0xb88 < this->pOwner->field_0xb84) {
+	if (this->pOwner->nbConsumedMagicForExorcism < this->pOwner->nbRequiredMagicForExorcism) {
 		edF32Vector4SubHard(&eStack16, &this->field_0x40, &(CCameraManager::_gThis->transformationMatrix).rowT);
 
 		fVar1 = edF32Vector4GetDistHard(&eStack16);
@@ -10281,7 +10613,7 @@ void CBehaviourExorcism::Draw()
 
 		pWolfen = this->pOwner;
 
-		this->fxDigits.Draw(pWolfen->field_0xb84, pWolfen->field_0xb88, 0.8f, fVar2, &this->field_0x40, pWolfen->actorState == WOLFEN_STATE_EXORCISE_EXORCIZE);
+		this->fxDigits.Draw(pWolfen->nbRequiredMagicForExorcism, pWolfen->nbConsumedMagicForExorcism, 0.8f, fVar2, &this->field_0x40, pWolfen->actorState == WOLFEN_STATE_EXORCISE_EXORCIZE);
 	}
 
 	return;
@@ -10399,19 +10731,16 @@ void CBehaviourExorcism::InitState(int newState)
 		}
 	}
 	else {
-		if (newState == 0x7d) {
-			IMPLEMENTATION_GUARD(
-			CActorWolfen::StateExorcizeInit(this->pOwner);)
+		if (newState == WOLFEN_STATE_EXORCISE_END) {
+			this->pOwner->StateExorcizeEndInit();
 		}
 		else {
-			if (newState == 0x7c) {
-				IMPLEMENTATION_GUARD(
-				CActorWolfen::FUN_00176900(this->pOwner);)
+			if (newState == WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE) {
+					this->pOwner->StateExorcizeTransformCompleteInit();
 			}
 			else {
-				if (newState == 0x7b) {
-					IMPLEMENTATION_GUARD(
-					CActorWolfen::FUN_00176940(this->pOwner);)
+				if (newState == WOLFEN_STATE_EXORCISE_TRANSFORM) {
+					this->pOwner->StateExorcizeTransformInit();
 				}
 				else {
 					if (newState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
@@ -10440,19 +10769,16 @@ void CBehaviourExorcism::TermState(int oldState, int newState)
 		}
 	}
 	else {
-		if (oldState == 0x7f) {
-			IMPLEMENTATION_GUARD(
-			CActorWolfen::FUN_00176300(this->pOwner, this);)
+		if (oldState == WOLFEN_STATE_EXORCISE_LIVING_DEAD) {
+			this->pOwner->StateDeadLivingDeadTerm(this);
 		}
 		else {
-			if (oldState == 0x7d) {
-				IMPLEMENTATION_GUARD(
-				CActorWolfen::FUN_001764a0(this->pOwner, this);)
+			if (oldState == WOLFEN_STATE_EXORCISE_END) {
+				this->pOwner->StateExorcizeEndTerm(this);
 			}
 			else {
-				if (oldState == 0x7c) {
-					IMPLEMENTATION_GUARD(
-					CActorWolfen::FUN_00176780(this->pOwner);)
+				if (oldState == WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE) {
+					this->pOwner->StateExorcizeTransformCompleteTerm();
 				}
 				else {
 					if (oldState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
@@ -10477,7 +10803,7 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	if (msg == 0x1a) {
 		InitPathfindingClientMsgParams* pPathfindingClientMsgParams = (InitPathfindingClientMsgParams*)pMsgParam;
 		if (pPathfindingClientMsgParams->msgId == 0xe) {
-			this->field_0xc = pPathfindingClientMsgParams->time / this->field_0x10;
+			this->rateMagicDecreaseForExorcism = pPathfindingClientMsgParams->time / this->field_0x10;
 			pWolfen = this->pOwner;
 			iVar2 = pWolfen->GetExorciseAnim();
 			pWolfen->SetState(0x7a, iVar2);
@@ -10579,21 +10905,20 @@ bool CBehaviourExorcism::FUN_001edbe0()
 {
 	astruct_17* paVar1;
 	int* piVar2;
-	astruct_18* paVar3;
-	int iVar4;
+	astruct_17* paVar3;
 	float* pfVar5;
 	uint uVar6;
 	edF32VECTOR4 exorcismCenter;
 	edF32MATRIX4 eStack64;
 
-	if (this->aSubObjA == (astruct_18*)0x0) {
-		paVar3 = (astruct_18*)0x0;
+	if (this->aSubObjA == (astruct_17*)0x0) {
+		paVar3 = (astruct_17*)0x0;
 		if ((astruct_5_00456980.flags & 3) == 3) {
 			uVar6 = 0;
 			paVar1 = astruct_5_00456980.field_0xac4;
-			while ((uVar6 < 4 && (paVar3 == (astruct_18*)0x0))) {
-				if (paVar1->field_0x8 == 0) {
-					//paVar3 = paVar1->field_0x0;
+			while ((uVar6 < 4 && (paVar3 == (astruct_17*)0x0))) {
+				if (paVar1->pWolfen == (CActorWolfen*)0x0) {
+					paVar3 = paVar1;
 				}
 
 				paVar1 = paVar1 + 1;
@@ -10603,7 +10928,7 @@ bool CBehaviourExorcism::FUN_001edbe0()
 
 		this->aSubObjA = paVar3;
 		paVar3 = this->aSubObjA;
-		if (paVar3 != (astruct_18*)0x0) {
+		if (paVar3 != (astruct_17*)0x0) {
 			paVar3->pWolfen = this->pOwner;
 
 			paVar3->pWolfen->SV_WLF_ExorcismComputeCenter(&exorcismCenter);
@@ -10611,19 +10936,15 @@ bool CBehaviourExorcism::FUN_001edbe0()
 			edF32Matrix4TranslateHard(&eStack64, &gF32Matrix4Unit, &exorcismCenter);
 			uVar6 = 0;
 			pfVar5 = FLOAT_ARRAY_004488d0;
-			iVar4 = 0;
 			do {
-				IMPLEMENTATION_GUARD(
-				(**(code**)(*(int*)(paVar3->field_0x0 + iVar4) + 0x28))(0, *pfVar5);
-				piVar2 = (int*)(paVar3->field_0x0 + iVar4);
-				(**(code**)(*piVar2 + 0x24))(piVar2, &eStack64);
+				paVar3->field_0x0[uVar6].Func_0x28(0.0f, *pfVar5);
+				paVar3->field_0x0[uVar6].SetMatrix(&eStack64);
 				uVar6 = uVar6 + 1;
 				pfVar5 = pfVar5 + 1;
-				iVar4 = iVar4 + 0x120;)
 			} while (uVar6 < 2);
 
 			paVar3->field_0x10 = 1;
-			paVar3->field_0xc = 0.0f;
+			paVar3->timeInState = 0.0f;
 
 			return true;
 		}
@@ -10636,9 +10957,11 @@ void CBehaviourExorcism::DecreaseNbBonusReq()
 {
 	int nbDecrease;
 
-	this->pOwner->field_0xb88 = GetTimer()->cutsceneDeltaTime * this->field_0xc + this->pOwner->field_0xb88;
+	float initialNbConsumedMagic = this->pOwner->nbConsumedMagicForExorcism;
 
-	nbDecrease = (int)this->pOwner->field_0xb88 - (int)this->pOwner->field_0xb88;
+	this->pOwner->nbConsumedMagicForExorcism = GetTimer()->cutsceneDeltaTime * this->rateMagicDecreaseForExorcism + this->pOwner->nbConsumedMagicForExorcism;
+
+	nbDecrease = (int)this->pOwner->nbConsumedMagicForExorcism - (int)initialNbConsumedMagic;
 	if (nbDecrease != 0) {
 		CActorHero::_gThis->MagicDecrease((float)nbDecrease);
 	}
@@ -10646,9 +10969,98 @@ void CBehaviourExorcism::DecreaseNbBonusReq()
 	return;
 }
 
-uint astruct_18::FUN_001eeea0(float param_1)
+void CBehaviourExorcism::ClearStruct_001edb50()
 {
-	IMPLEMENTATION_GUARD();
+	astruct_17* paVar1;
+	uint uVar3;
+
+	paVar1 = this->aSubObjA;
+	if (paVar1 != (astruct_17*)0x0) {
+		uVar3 = 0;
+		do {
+			paVar1->field_0x0[uVar3].Func_0x2c(0.0f);
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < 2);
+		paVar1->field_0x10 = 0;
+		paVar1->timeInState = 0.0f;
+		paVar1->pWolfen = (CActorWolfen*)0x0;
+		this->aSubObjA = (astruct_17*)0x0;
+	}
+
+	return;
+}
+
+float EXORCISM_EFFECT_SPAWN_TIMES[5] = { 0.0f, 0.0f, 1.83f, 2.17f, 2.67f };
+float EXORCISM_STATE_TRANSITION_TIMES[4] = { 0.0f, 1.83f, 2.17f, 4.0f };
+
+uint astruct_17::Manage(float deltaTime)
+{
+	bool bVar1;
+	uint uVar2;
+	int iVar3;
+	uint curIndex;
+	float* pfVar5;
+	uint outState;
+	edF32VECTOR4 center;
+	CFxHandle fxHandle;
+	CFxManager* pFx;
+
+	pFx = CScene::ptable.g_EffectsManager_004516b8;
+	outState = 4;
+	if (this->field_0x10 == 1) {
+		fxHandle.id = 0;
+		curIndex = 0;
+		fxHandle.pFx = (CNewFx*)0x0;
+		do {
+			this->field_0x0[curIndex].Func_0x30((edF32MATRIX4*)0x0, deltaTime);
+			curIndex = curIndex + 1;
+		} while (curIndex < 2);
+
+		this->pWolfen->SV_WLF_ExorcismComputeCenter(&center);
+
+		curIndex = 0;
+		pfVar5 = EXORCISM_EFFECT_SPAWN_TIMES;
+		center.y = center.y - this->pWolfen->distanceToGround;
+		do {
+			if ((this->timeInState <= *pfVar5) && (*pfVar5 < this->timeInState + deltaTime)) {
+				pFx->GetDynamicFx(&fxHandle, this->pFxScenariacData[curIndex], FX_MATERIAL_SELECTOR_NONE);
+				if ((fxHandle.pFx == (CNewFx*)0x0) || ((fxHandle.id == 0 || (bVar1 = true, fxHandle.id != (fxHandle.pFx)->id)))) {
+					bVar1 = false;
+				}
+
+				if (bVar1) {
+					if (((fxHandle.pFx != (CNewFx*)0x0) && (fxHandle.id != 0)) &&
+						(fxHandle.id == (fxHandle.pFx)->id)) {
+						fxHandle.pFx->position = center;
+					}
+
+					if (((fxHandle.pFx != (CNewFx*)0x0) && (fxHandle.id != 0)) && (fxHandle.id == (fxHandle.pFx)->id)) {
+						fxHandle.pFx->Start(0, 0);
+					}
+				}
+			}
+
+			curIndex = curIndex + 1;
+			pfVar5 = pfVar5 + 1;
+		} while (curIndex < 5);
+
+		curIndex = 0;
+		pfVar5 = EXORCISM_STATE_TRANSITION_TIMES;
+		do {
+			uVar2 = outState;
+			if ((this->timeInState <= *pfVar5) && (uVar2 = curIndex, this->timeInState + deltaTime <= *pfVar5)) {
+				uVar2 = outState;
+			}
+
+			outState = uVar2;
+			curIndex = curIndex + 1;
+			pfVar5 = pfVar5 + 1;
+		} while (curIndex < 4);
+
+		this->timeInState = this->timeInState + deltaTime;
+	}
+
+	return outState;
 }
 
 void CBehaviourDCA::Create(ByteCode* pByteCode)
@@ -11019,16 +11431,15 @@ void CBehaviourAvoid::End(int newBehaviourId)
 
 void astruct_5::Create(ByteCode* pByteCode)
 {
-	ed_3d_hierarchy* peVar1;
+	ed_3d_hierarchy* pHier;
 	void* pvVar2;
 	int textureIndex;
 	int meshIndex;
 	ed_g3d_manager* pG3D;
-	edNODE* peVar5;
+	edNODE* pNewNode;
 	ed_hash_code* pMBNK;
 	void* pvVar7;
 	edNODE** ppeVar8;
-	void** paVar9;
 	uint uVar10;
 	astruct_5* paVar11;
 	uint uVar12;
@@ -11040,7 +11451,6 @@ void astruct_5::Create(ByteCode* pByteCode)
 	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
 	if ((this->flags & 1) == 0) {
 		uVar12 = 0;
-		paVar9 = this->field_0x1a0;
 		do {
 			textureIndex = pByteCode->GetS32();
 			meshIndex = pByteCode->GetS32();
@@ -11053,52 +11463,47 @@ void astruct_5::Create(ByteCode* pByteCode)
 				pG3D = pFileManager->GetG3DManager(meshIndex, textureIndex);
 
 				if (pG3D != (ed_g3d_manager*)0x0) {
-					peVar5 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
-					peVar1 = reinterpret_cast<ed_3d_hierarchy*>(peVar5->pData);
+					pNewNode = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+					pHier = reinterpret_cast<ed_3d_hierarchy*>(pNewNode->pData);
 
-					pMBNK = ed3DHierarchyGetMaterialBank(peVar1);
+					pMBNK = ed3DHierarchyGetMaterialBank(pHier);
 					ed_hash_code* pHashCode = LOAD_SECTION_CAST(ed_hash_code*, pMBNK->pData);
 
-					int bankMatSize = ed3DHierarchyBankMatGetSize(peVar1);
+					int bankMatSize = ed3DHierarchyBankMatGetSize(pHier);
 
 					int duplicateMaterialSize = ed3DG2DGetNeededSizeForDuplicateMaterial(pHashCode);
-					ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, peVar5);
+					ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, pNewNode);
 
-					pvVar7 = edMemAlloc(TO_HEAP(H_MAIN), bankMatSize << 2);
-					paVar9[2] = pvVar7;
-					pvVar7 = edMemAlloc(TO_HEAP(H_MAIN), duplicateMaterialSize << 2);
-					paVar9[0] = pvVar7;
+					this->field_0x1a8[uVar12] = edMemAlloc(TO_HEAP(H_MAIN), bankMatSize << 2);
+					this->field_0x1a0[uVar12] = edMemAlloc(TO_HEAP(H_MAIN), duplicateMaterialSize << 2);
 
 					uVar13 = 0;
 					iVar14 = 0;
 					local_80 = 0;
 					uVar10 = uVar12;
 					do {
-						pvVar7 = paVar9[2];
-						pvVar2 = paVar9[0];
+						pvVar7 = this->field_0x1a8[uVar12];
+						pvVar2 = this->field_0x1a0[uVar12];
+
 						ppeVar8 = this->field_0x0 + uVar10;
-						peVar5 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
-						*ppeVar8 = peVar5;
-						//peVar1 = (*ppeVar8)->pData;
-						//peVar6 = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)peVar1);
-						//peVar6 = (ed_hash_code*)peVar6->pData;
-						//ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)peVar1, (void*)((int)pvVar7 + iVar14));
-						//ed3DG2DDuplicateMaterial
-						//(peVar6, (char*)((int)pvVar2 + local_80), (ed_g2d_manager*)(this->field_0x0 + uVar10 * 0xc + 8));
-						//ed3DHierarchyBankMatLinkG2D
-						//((ed_3d_hierarchy_node*)peVar1, (ed_g2d_manager*)(this->field_0x0 + uVar10 * 0xc + 8));
-						//StaticMeshComponentAdvanced::SetNode
-						//((StaticMeshComponentAdvanced*)(this->aStaticMeshComponents + uVar10), *ppeVar8);
-						//uVar13 = uVar13 + 1;
-						//uVar10 = uVar10 + 2;
-						//iVar14 = iVar14 + bankMatSize;
-						//local_80 = local_80 + duplicateMaterialSize;
+						pNewNode = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+						*ppeVar8 = pNewNode;
+						pHier = reinterpret_cast<ed_3d_hierarchy*>((*ppeVar8)->pData);
+						pMBNK = ed3DHierarchyGetMaterialBank(pHier);
+						pHashCode = LOAD_SECTION_CAST(ed_hash_code*, pMBNK->pData);
+						ed3DHierarchyBankMatInstanciate(pHier, reinterpret_cast<char*>(pvVar7) + iVar14);
+						ed3DG2DDuplicateMaterial(pHashCode, reinterpret_cast<char*>(pvVar2) + local_80, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));
+						ed3DHierarchyBankMatLinkG2D(pHier, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));
+						aStaticMeshComponents[uVar10].SetNode(*ppeVar8);
+						uVar13 = uVar13 + 1;
+						uVar10 = uVar10 + 2;
+						iVar14 = iVar14 + bankMatSize;
+						local_80 = local_80 + duplicateMaterialSize;
 					} while (uVar13 < 4);
 				}
 			}
 
 			uVar12 = uVar12 + 1;
-			paVar9 = paVar9 + 1;
 		} while (uVar12 < 2);
 
 		pByteCode->GetU32();
@@ -11141,5 +11546,72 @@ void astruct_5::Create(ByteCode* pByteCode)
 	}
 
 	this->count_0xb18 = this->count_0xb18 + 1;
+	return;
+}
+
+void astruct_5::Term()
+{
+	astruct_17* paVar2;
+	uint uVar3;
+	astruct_5* paVar4;
+	uint uVar5;
+
+	if ((this->flags & 1) != 0) {
+		this->count_0xb18 = this->count_0xb18 + -1;
+		uVar5 = 0;
+		paVar2 = this->field_0xac4;
+
+		if (this->count_0xb18 == 0) {
+			do {
+				uVar3 = 0;
+				do {
+					paVar2->field_0x0[uVar3].Func_0x2c(0.0f);
+					uVar3 = uVar3 + 1;
+				} while (uVar3 < 2);
+
+				paVar2->field_0x10 = 0;
+				uVar5 = uVar5 + 1;
+				paVar2->timeInState = 0.0f;
+				paVar2->pWolfen = (CActorWolfen*)0x0;
+				paVar2->field_0x0 = (StaticMeshComponentAdvancedEx*)0x0;
+				paVar2->pFxScenariacData = (uint*)0x0;
+				paVar2 = paVar2 + 1;
+			} while (uVar5 < 4);
+
+			uVar5 = 0;
+			StaticMeshComponentAdvancedEx* pSM = this->aStaticMeshComponents;
+			edNODE** pNode = this->field_0x0;
+			do {
+				pSM->Func_0x2c(0.0f);
+				pSM->Term();
+				if (*pNode != (edNODE*)0x0) {
+					ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, *pNode);
+				}
+				uVar5 = uVar5 + 1;
+				pSM = pSM + 1;
+				pNode = pNode + 1;
+			} while (uVar5 < 8);
+
+			uVar5 = 0;
+
+			do {
+				if (this->field_0x1a8[uVar5] != (void*)0x0) {
+					edMemFree(this->field_0x1a8[uVar5]);
+					this->field_0x1a8[uVar5] = (void*)0x0;
+				}
+
+				if (this->field_0x1a0[uVar5] != (void*)0x0) {
+					edMemFree(this->field_0x1a0[uVar5]);
+					this->field_0x1a0[uVar5] = (void*)0x0;
+				}
+
+				uVar5 = uVar5 + 1;
+			} while (uVar5 < 2);
+
+			this->flags = 0;
+			this->count_0xb18 = 0;
+		}
+	}
+
 	return;
 }

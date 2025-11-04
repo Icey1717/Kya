@@ -131,6 +131,11 @@ namespace Debug {
 					ImGui::InputText("Checkpoint Name", checkpointName, IM_ARRAYSIZE(checkpointName));
 
 					if (ImGui::Button("Save")) {
+						std::filesystem::path checkpointsFolder = "checkpoints";
+						if (!std::filesystem::exists(checkpointsFolder)) {
+							std::filesystem::create_directory(checkpointsFolder);
+						}
+
 						if (!std::filesystem::exists(path)) {
 							std::filesystem::create_directory(path);
 						}

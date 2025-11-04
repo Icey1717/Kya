@@ -55,6 +55,16 @@ bool StaticMeshComponent::HasMesh()
 	return this->pMeshTransformParent != (edNODE*)0x0;
 }
 
+void StaticMeshComponent::Term()
+{
+	this->pMeshTransformParent = (edNODE*)0x0;
+	this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
+	this->meshIndex = -1;
+	this->textureIndex = -1;
+
+	return;
+}
+
 void StaticMeshComponent::Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString)
 {
 	if (pScene == (ed_3D_Scene*)0x0) {

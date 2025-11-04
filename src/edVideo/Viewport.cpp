@@ -185,7 +185,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 			pPktA->cmdA = SCE_GS_SET_ZBUF(
 				pViewport->pZBuffer->frameBasePtr,	// ZBP
 				iVar3,								// PSM
-				1									// ZMASK
+				SCE_GS_TRUE							// ZMASK
 			);
 		}
 		else {
@@ -194,7 +194,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 			pPktA->cmdA = SCE_GS_SET_ZBUF(
 				pViewport->pZBuffer->frameBasePtr,	// ZBP
 				iVar3,								// PSM
-				0									// ZMASK
+				SCE_GS_FALSE						// ZMASK
 			);
 		}
 
@@ -454,7 +454,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 		pPktA->cmdA = SCE_GS_SET_ZBUF(
 			pViewport->pZBuffer->frameBasePtr,	// ZBP
 			iVar3,								// PSM
-			0									// ZMASK
+			SCE_GS_FALSE						// ZMASK
 		);
 
 		pPktB[3].cmdB = SCE_GS_ZBUF_1;

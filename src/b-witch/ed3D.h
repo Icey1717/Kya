@@ -20,6 +20,18 @@
 
 #define HASH_CODE_HIER 0x52454948
 
+#define HASH_CODE_MATA 0x4154414d
+#define HASH_CODE_2D 0x2a44322a
+
+#define HASH_CODE_MAT 0x2e54414d
+#define HASH_CODE_LAYA 0x4159414c
+#define HASH_CODE_LAY 0x2e59414c
+
+#define HASH_CODE_T2D 0x4432472e
+
+#define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
+#define ED3D_LOG_SLOW(level, format, ...)
+
 // Scratchpad addresses										Offset		VRAM
 #define MATRIX_PACKET_START_SPR				0x70000800 //	0x000		0x06
 #define CAM_NORMAL_X_SPR					0x70000800 //	0x000		0x06
@@ -101,9 +113,10 @@ static_assert(sizeof(ed_Chunck) == 0x10, "Invalid ed_Chunck size");
 
 struct GXD_FileHeader
 {
-	undefined4 field_0x0;
+	ushort field_0x0;
+	ushort field_0x2;
 	uint flags;
-	undefined4 field_0x8;
+	int field_0x8;
 	uint hash;
 };
 
@@ -129,7 +142,8 @@ struct ed_g3d_manager
 	ed_Chunck* ANMA;
 };
 
-struct ed_g2d_manager {
+struct ed_g2d_manager
+{
 	GXD_FileHeader* pFileBuffer;
 	int textureFileLengthA;
 	ed_Chunck* pTextureChunk;
@@ -405,7 +419,7 @@ PACK(
 	int pDMA_Material; // ed_dma_material*
 	int pCommandBufferTexture; // RenderCommand*
 	int commandBufferTextureSize;
-	int aLayers[];
+	int aLayers[4]; // ed_Chunck*[4] (ed_g2d_layer chunks)
 });
 
 struct edPSX2Header
@@ -485,12 +499,6 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 
 void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5);
-ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
-ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index);
-ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMaterial);
-ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
-ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pManager);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
@@ -647,8 +655,6 @@ void ed3DSetDeltaTime(int newTime);
 
 FxFogProp* ed3DGetFxFogProp(void);
 
-ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int count);
-void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag);
 void ed3DSetMeshTransformFlag_002abd80(edNODE* pNode, ushort flag);
 void ed3DSetMeshTransformFlag_002abff0(edNODE* pNode, ushort flag);
 void ed3DHierarchySetSetup(ed_3d_hierarchy* pHier, ed_3d_hierarchy_setup* pHierarchySetup);
@@ -698,23 +704,13 @@ edLIST* ed3DHierarchyListInit(void);
 edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_manager* pMeshInfo, char* szString);
 void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,
 	ed_hash_code* pHashCode, uint count);
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index);
-int ed3DG2DGetNeededSizeForDuplicateMaterial(ed_hash_code* pHashCode);
 
 ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier);
 
-// Possibly an inlined function that doesn't exist in the compiled code.
-int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck);
-
-int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode);
-int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager);
-
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier);
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData);
-void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pTexture);
-ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash);
+void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy* pHier, ed_g2d_manager* pTexture);
 ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong hash);
-void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag);
 
 uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere);
 
@@ -739,8 +735,6 @@ ed_3D_Scene* ed3DGetScene(int index);
 ulong ed3DComputeHashCode(char* inString);
 bool ed3DComputeScreenCoordinate(float param_1, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene);
 bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene);
-ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode);
-ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);
 
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier);
 void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod);
@@ -751,6 +745,10 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 void ed3DShadowTermScene(ed_3D_Scene* pShadowScene);
 bool ed3DHierarchyListTerm(edLIST* pList);
 int ed3DSceneTerm(ed_3D_Scene* pScene);
+
+ed_Chunck* edChunckGetNext(ed_Chunck* pCurChunck, char* pBuffEnd);
+void ed3DObjectSetStripShadowReceive(ed_hash_code* pLodHash, ushort param_2, uint param_3);
+void ed3DObjectSetStripShadowCast(ed_hash_code* pLodHash, ushort flag, uint bApply);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

@@ -39,6 +39,7 @@ public:
 	virtual void SetHidden(ed_3D_Scene* pScene);
 	virtual void SetVisible(ed_3D_Scene* pScene);
 	virtual bool HasMesh();
+	virtual void Term();
 
 	void Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString);
 	void Term(ed_3D_Scene* pScene);

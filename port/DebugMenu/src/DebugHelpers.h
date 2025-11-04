@@ -5,6 +5,7 @@
 #include <fstream>
 #include "ed3D.h"
 #include <iostream>
+#include <filesystem>
 
 namespace DebugHelpers {
 	namespace ImGui {

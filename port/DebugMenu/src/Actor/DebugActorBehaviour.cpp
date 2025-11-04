@@ -108,6 +108,9 @@ namespace Hero
 		case STATE_HERO_RUN:
 			return "StateHeroRun";
 			break;
+		case STATE_HERO_RUN_B:
+			return "StateHeroRunB";
+			break;
 		case STATE_HERO_JOKE:
 			return "StateHeroJoke";
 			break;
@@ -332,6 +335,9 @@ namespace Hero
 			break;
 		case STATE_HERO_UNLOCK_SWITCH:
 			return "StateHeroUnlockSwitch";
+			break;
+		case STATE_HERO_EXORCISE_BEGIN:
+			return "StateHeroExorciseBegin";
 			break;
 		case STATE_HERO_EXORCISE:
 			return "StateHeroExorcise";

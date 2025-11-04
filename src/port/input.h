@@ -5,10 +5,7 @@
 #include "EdenLib/edDev/Sources/edDev.h"
 #include "input_functions.h"
 
-namespace Input {
-
-	void SetInputFunctions(InputFunctions inputFunctions);
-	
+namespace Input {	
 	uint _edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3);
 	uint _edDevMouse(uint eventID, EDDEV_PORT* pController, void* param_3);
 }

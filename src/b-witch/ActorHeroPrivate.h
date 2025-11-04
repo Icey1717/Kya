@@ -248,6 +248,7 @@ public:
 
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
+	void StateHeroRun_B();
 
 	void StateHeroJoke();
 

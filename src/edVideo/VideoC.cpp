@@ -74,7 +74,7 @@ void _SetSurfaceZEnv(edSurface* pFrameBuffer)
 	pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
 		pFrameBuffer->frameBasePtr,	// ZBP
 		zBufferFormat,				// PSM
-		0							// ZMASK
+		SCE_GS_FALSE				// ZMASK
 	);
 	pTags->commandBuffer[1].cmdB = SCE_GS_ZBUF_1;
 

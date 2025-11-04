@@ -4,6 +4,7 @@
 #include "DebugRenderer.h"
 
 #include "port/input.h"
+#include "gamepad.h"
 #include "Texture.h"
 #include "Mesh.h"
 
@@ -24,6 +25,7 @@ int main(int argc, char** argv) {
 	DebugMenu::Init();
 	Renderer::Kya::TextureLibrary::Init();
 	Renderer::Kya::MeshLibrary::Init();
-	Input::SetInputFunctions(DebugMenu::GetInputFunctions());
+	DebugMenu::AddKeyboardMouseSupport();
+	KyaGamepad::AddGamepadSupport();
 	main_internal(argc, argv);
 }

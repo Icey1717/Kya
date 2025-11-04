@@ -1,6 +1,7 @@
 #include "edParticles/edParticles.h"
 #include "DlistManager.h"
 #include "ed3D.h"
+#include "ed3D/ed3DG2D.h"
 #include "MathOps.h"
 #include "profile.h"
 #include "CameraViewManager.h"
@@ -2570,6 +2571,18 @@ static Mat2x3 FLOAT_ARRAY_0041e7f0 =
 	-1.0f, 0.0f,  1.0f
 };
 
+static Mat2x3 FLOAT_ARRAY_0041e810 =
+{
+	-1.0f, 0.0f, 0.0f,
+	1.0f, 1.0f, 0.0f
+};
+
+static Mat2x3 FLOAT_ARRAY_0041e830 =
+{
+	1.0f, 0.0f, 0.0f,
+	-1.0f, 0.0f, 1.0f
+};
+
 static Mat2x3 FLOAT_ARRAY_0041e890 =
 {
 	1.0f, 0.0f, 0.0f,
@@ -2580,6 +2593,24 @@ static Mat2x3 FLOAT_ARRAY_0041e8b0 =
 {
 	1.0f, 0.0f,	0.0f,
 	1.0f, 1.0f, 1.0f
+};
+
+static Mat2x3 Mat2x3_0041e970 =
+{
+	-1.0f, 0.0f, 0.0f,
+	 1.0f, 1.0f, 0.0f
+};
+
+static Mat2x3 Mat2x3_0041e990 =
+{
+	 1.0f,  0.0f, 0.0f,
+	-1.0f, 0.0f,  1.0f
+};
+
+static Mat2x3 Mat2x3_0041e9b0 =
+{
+	1.0f, 0.0f, 0.0f,
+	-1.0f, 0.0f, 1.0f
 };
 
 static Mat2x3 Mat2x3_0041ea50 =
@@ -4864,175 +4895,217 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																				}
 																			}
 																			else {
-																				IMPLEMENTATION_GUARD(
 																				pCurParticle = pParticle + startIndex;
 																				pCurRawVector = pRawVectors + startIndex;
+
 																				for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																					if (pCurParticle->field_0xd != 0) {
+																						// Apply vertical flip transformation if flag is set
 																						if ((pCurParticle->seed & 0x80) != 0) {
-																							fVar27 = local_50c * DAT_0041e9b8;
-																							fVar28 = local_504 * DAT_0041e9b8;
-																							local_50c = local_50c * DAT_0041e9bc + local_510 * DAT_0041e9b4;
-																							local_504 = local_504 * DAT_0041e9bc + local_508 * DAT_0041e9b4;
-																							fVar29 = local_4fc * DAT_0041e9b8;
-																							local_4fc = local_4fc * DAT_0041e9bc +
-																								local_500 * DAT_0041e9b4 + DAT_0041e9c4 + 0.0;
-																							local_510 = fVar27 + local_510 * DAT_0041e9b0;
-																							local_508 = fVar28 + local_508 * DAT_0041e9b0;
-																							local_500 = fVar29 + local_500 * DAT_0041e9b0 + DAT_0041e9c0 + 0.0;
+																							const Mat2x3& flipTransform = Mat2x3_0041e9b0; // Assuming this is a Mat2x3 array
+
+																							fVar27 = local_50c * flipTransform.m02;
+																							fVar28 = local_504 * flipTransform.m02;
+
+																							local_50c = local_50c * flipTransform.m10 + local_510 * flipTransform.m01;
+																							local_504 = local_504 * flipTransform.m10 + local_508 * flipTransform.m01;
+
+																							fVar29 = local_4fc * flipTransform.m02;
+																							local_4fc = local_4fc * flipTransform.m10 + local_500 * flipTransform.m01 + flipTransform.m12 + 0.0f;
+
+																							local_510 = fVar27 + local_510 * flipTransform.m00;
+																							local_508 = fVar28 + local_508 * flipTransform.m00;
+																							local_500 = fVar29 + local_500 * flipTransform.m00 + flipTransform.m11 + 0.0f;
 																						}
-																						uv0.u = pfVar23[0][1] * local_508 + pfVar23[0][0] * local_510 + local_500 + 0.0;
-																						uv0.v = pfVar23[0][1] * local_504 + pfVar23[0][0] * local_50c + local_4fc + 0.0;
-																						uv1.u = pfVar23[1][1] * local_508 +
-																							pfVar23[1][0] * local_510 + local_500 + 0.0;
-																						uv1.v = pfVar23[1][1] * local_504 +
-																							pfVar23[1][0] * local_50c + local_4fc + 0.0;
-																						uv2.u = pfVar23[2][1] * local_508 +
-																							pfVar23[2][0] * local_510 + local_500 + 0.0;
-																						uv2.v = pfVar23[2][1] * local_504 +
-																							pfVar23[2][0] * local_50c + local_4fc + 0.0;
-																						uv3.u = pfVar23[3][1] * local_508 +
-																							pfVar23[3][0] * local_510 + local_500 + 0.0;
-																						uv3.v = pfVar23[3][1] * local_504 +
-																							pfVar23[3][0] * local_50c + local_4fc + 0.0;
+
+																						// Transform UV coordinates using the affine transformation
+																						uv0.u = pfVar23[0].y * local_508 + pfVar23[0].x * local_510 + local_500 + 0.0f;
+																						uv0.v = pfVar23[0].y * local_504 + pfVar23[0].x * local_50c + local_4fc + 0.0f;
+																						uv1.u = pfVar23[1].y * local_508 + pfVar23[1].x * local_510 + local_500 + 0.0f;
+																						uv1.v = pfVar23[1].y * local_504 + pfVar23[1].x * local_50c + local_4fc + 0.0f;
+																						uv2.u = pfVar23[2].y * local_508 + pfVar23[2].x * local_510 + local_500 + 0.0f;
+																						uv2.v = pfVar23[2].y * local_504 + pfVar23[2].x * local_50c + local_4fc + 0.0f;
+																						uv3.u = pfVar23[3].y * local_508 + pfVar23[3].x * local_510 + local_500 + 0.0f;
+																						uv3.v = pfVar23[3].y * local_504 + pfVar23[3].x * local_50c + local_4fc + 0.0f;
+
+																						// Calculate particle color with alpha blending
 																						uVar26 = pCurParticle->field_0x8;
-																						rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																							alphaMultiplier >> 8) << 0x18;
-																						rgbaColor[0] = rgbaColor[0] |
-																							CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																								(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																								CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																									(uint)pCurParticle->field_0xf >> 8),
-																									(char)((uVar26 & 0xff) *
-																										(uint) * (byte*)&pCurParticle->field_0xe >> 8
-																										)));
-																						height = gParticleSizeScale *
-																							pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 * 0.5;
+																						uint8_t alpha = ((uVar26 >> 24) * pCurParticle->field_0xc * alphaMultiplier) >> 16;
+																						uint8_t red = ((uVar26 >> 16 & 0xFF) * pCurParticle->field_0x12) >> 8;
+																						uint8_t green = ((uVar26 >> 8 & 0xFF) * pCurParticle->field_0xf) >> 8;
+																						uint8_t blue = ((uVar26 & 0xFF) * pCurParticle->field_0xe) >> 8;
+
+																						rgbaColor[0].rgba = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+																						// Calculate particle dimensions
+																						height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																						width = height * aspectRatio;
-																						edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3 , &rgbaColor[0], (undefined8*)pCurRawVector);
+
+																						// Submit vertex data for rendering
+																						edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																					}
+
 																					pCurParticle = pCurParticle + 1;
 																					pCurRawVector = pCurRawVector + 1;
-																				})
+																				}
 																			}
 																		}
 																		else {
-																			IMPLEMENTATION_GUARD(
 																			pCurParticle = pParticle + startIndex;
 																			pCurRawVector = pRawVectors + startIndex;
+
 																			for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																				if (pCurParticle->field_0xd != 0) {
-																					fVar28 = ((float)(uint)pCurParticle->seed * pDrawData->field_0x90) / 65535.0 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+																					// Calculate rotation angle based on particle seed and lifetime
+																					fVar28 = ((float)(uint)pCurParticle->seed * pDrawData->field_0x90) / 65535.0f +
+																						pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 
+																					// Initialize base quad transformation with rotation
 																					ParticleC(local_770, fVar28);
+
+																					// Transform UV coordinates
 																					TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
+
+																					// Calculate particle color with alpha blending
 																					uVar26 = pCurParticle->field_0x8;
-																					rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																						alphaMultiplier >> 8) << 0x18;
-																					rgbaColor[0] = rgbaColor[0] |
-																						CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																							(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																							CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																								(uint)pCurParticle->field_0xf >> 8),
-																								(char)((uVar26 & 0xff) *
-																									(uint) * (byte*)&pCurParticle->field_0xe >> 8))
-																						);
-																					height = gParticleSizeScale *
-																						pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 * 0.5;
+																					uint8_t alpha = ((uVar26 >> 24) * pCurParticle->field_0xc * alphaMultiplier) >> 16;
+																					uint8_t red = ((uVar26 >> 16 & 0xFF) * pCurParticle->field_0x12) >> 8;
+																					uint8_t green = ((uVar26 >> 8 & 0xFF) * pCurParticle->field_0xf) >> 8;
+																					uint8_t blue = ((uVar26 & 0xFF) * pCurParticle->field_0xe) >> 8;
+
+																					rgbaColor[0].rgba = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+																					// Calculate particle dimensions
+																					height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																					width = height * aspectRatio;
-																					edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3,
-																						&rgbaColor[0], (undefined8*)pCurRawVector);
+
+																					// Submit vertex data for rendering
+																					edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																				}
+
 																				pCurParticle = pCurParticle + 1;
 																				pCurRawVector = pCurRawVector + 1;
-																			})
+																			}
 																		}
 																	}
 																	else {
-																		IMPLEMENTATION_GUARD(
 																		pCurParticle = pParticle + startIndex;
 																		pCurRawVector = pRawVectors + startIndex;
+
 																		for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																			if (pCurParticle->field_0xd != 0) {
 																				uVar26 = pCurParticle->seed;
-																				fVar28 = ((float)(uVar26 & 0xffff) * pDrawData->field_0x90) / 65535.0;
-																				local_488 = (pCurVector->field_0x10.x * local_230.x + pCurVector->field_0x10.y * local_230.y +
+
+																				// Calculate base rotation from seed
+																				fVar28 = ((float)(uVar26 & 0xffff) * pDrawData->field_0x90) / 65535.0f;
+
+																				// Project particle velocity onto camera axes and scale by lifetime factor
+																				float projectedX = (pCurVector->field_0x10.x * local_230.x +
+																					pCurVector->field_0x10.y * local_230.y +
 																					pCurVector->field_0x10.z * local_230.z) * pCurParticle->field_0x30;
-																				local_490 = (pCurVector->field_0x10.x * local_220.x + pCurVector->field_0x10.y * local_220.y +
+
+																				float projectedY = (pCurVector->field_0x10.x * local_220.x +
+																					pCurVector->field_0x10.y * local_220.y +
 																					pCurVector->field_0x10.z * local_220.z) * pCurParticle->field_0x30;
-																				fVar29 = SQRT(local_488 * local_488 + local_490 * local_490);
+
+																				// Calculate magnitude and normalize direction
+																				fVar29 = sqrtf(projectedX * projectedX + projectedY * projectedY);
 																				fVar27 = g_TinyFloat_00448548;
-																				if (fVar29 != 0.0) {
+																				if (fVar29 != 0.0f) {
 																					fVar27 = fVar29;
 																				}
-																				local_488 = local_488 * (1.0 / fVar27);
-																				local_490 = local_490 * (1.0 / fVar27);
-																				local_48c = -local_488;
-																				local_480 = (local_490 + local_488) * -0.5 + 0.5;
-																				fStack1148 = (local_490 - local_488) * -0.5 + 0.5;
-																				if ((fVar28 != 0.0) || (local_484 = local_490, pDrawData->field_0x94 != 0.0)) {
+
+																				float normalizedX = projectedX * (1.0f / fVar27);
+																				float normalizedY = projectedY * (1.0f / fVar27);
+																				float negNormalizedX = -normalizedX;
+
+																				// Calculate initial quad transformation offsets
+																				float originOffsetX = (normalizedY + normalizedX) * -0.5f + 0.5f;
+																				float originOffsetY = (normalizedY - normalizedX) * -0.5f + 0.5f;
+
+																				// Apply rotation if base or lifetime-based rotation is enabled
+																				AffineQuad2D quad;
+																				if ((fVar28 != 0.0f) || (quad.yAxis.y = normalizedY, pDrawData->field_0x94 != 0.0f)) {
 																					fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
-																					if (0.0 < local_488) {
+																					if (0.0f < normalizedX) {
 																						fVar27 = -fVar27;
 																					}
 																					fVar28 = fVar28 + fVar27;
 
-																					ParticleC(local_48c, fVar28);
-																					local_484 = fVar27 * local_490 + -fVar31 * local_48c;
-																					local_480 = fVar30 * local_488 + fVar29 * local_490 + local_480 + 0.0;
-																					fStack1148 = fVar30 * local_490 + fVar29 * local_48c + fStack1148 + 0.0;
-																					local_490 = fVar31 * local_488 + fVar27 * local_490;
-																					local_48c = fVar28 + fVar27 * local_48c;
-																					local_488 = fVar27 * local_488 + fVar32;
+																					// Initialize base quad transformation with rotation
+																					ParticleC(quad, fVar28);
+
+																					// Apply the normalized direction vectors
+																					quad.yAxis.y = fVar27 * normalizedY + -fVar31 * negNormalizedX;
+																					quad.origin.x = fVar30 * normalizedX + fVar29 * normalizedY + originOffsetX + 0.0f;
+																					quad.origin.y = fVar30 * normalizedY + fVar29 * negNormalizedX + originOffsetY + 0.0f;
+																					quad.yAxis.x = fVar31 * normalizedX + fVar27 * normalizedY;
+																					quad.xAxis.x = fVar28 + fVar27 * negNormalizedX;
+																					quad.xAxis.y = fVar27 * normalizedX + fVar32;
+																				}
+																				else {
+																					quad.xAxis.x = normalizedX;
+																					quad.xAxis.y = normalizedY;
+																					quad.yAxis.x = negNormalizedX;
+																					quad.yAxis.y = normalizedY;
+																					quad.origin.x = originOffsetX;
+																					quad.origin.y = originOffsetY;
 																				}
 
+																				// Apply horizontal flip transformation if flag is set
 																				if ((uVar26 & 0x40) != 0) {
-																					fVar27 = local_48c * DAT_0041e978;
-																					fVar28 = local_484 * DAT_0041e978;
-																					local_48c = local_48c * DAT_0041e97c + local_490 * DAT_0041e974;
-																					local_484 = local_484 * DAT_0041e97c + local_488 * DAT_0041e974;
-																					fVar29 = fStack1148 * DAT_0041e978;
-																					fStack1148 = fStack1148 * DAT_0041e97c +
-																						local_480 * DAT_0041e974 + DAT_0041e984 + 0.0;
-																					local_490 = fVar27 + local_490 * DAT_0041e970;
-																					local_488 = fVar28 + local_488 * DAT_0041e970;
-																					local_480 = fVar29 + local_480 * DAT_0041e970 + DAT_0041e980 + 0.0;
+																					const Mat2x3& flipTransform = Mat2x3_0041e970; // Assuming DAT values are Mat2x3
+
+																					fVar27 = quad.xAxis.x * flipTransform.m02;
+																					fVar28 = quad.yAxis.y * flipTransform.m02;
+																					quad.xAxis.x = quad.xAxis.x * flipTransform.m10 + quad.yAxis.x * flipTransform.m01;
+																					quad.yAxis.y = quad.yAxis.y * flipTransform.m10 + quad.xAxis.y * flipTransform.m01;
+																					fVar29 = quad.origin.y * flipTransform.m02;
+																					quad.origin.y = quad.origin.y * flipTransform.m10 + quad.origin.x * flipTransform.m01 + flipTransform.m12 + 0.0f;
+																					quad.yAxis.x = fVar27 + quad.yAxis.x * flipTransform.m00;
+																					quad.xAxis.y = fVar28 + quad.xAxis.y * flipTransform.m00;
+																					quad.origin.x = fVar29 + quad.origin.x * flipTransform.m00 + flipTransform.m11 + 0.0f;
 																				}
 
+																				// Apply vertical flip transformation if flag is set
 																				if ((uVar26 & 0x80) != 0) {
-																					fVar27 = local_48c * DAT_0041e998;
-																					fVar28 = local_484 * DAT_0041e998;
-																					local_48c = local_48c * DAT_0041e99c + local_490 * DAT_0041e994;
-																					local_484 = local_484 * DAT_0041e99c + local_488 * DAT_0041e994;
-																					fVar29 = fStack1148 * DAT_0041e998;
-																					fStack1148 = fStack1148 * DAT_0041e99c +
-																						local_480 * DAT_0041e994 + DAT_0041e9a4 + 0.0;
-																					local_490 = fVar27 + local_490 * DAT_0041e990;
-																					local_488 = fVar28 + local_488 * DAT_0041e990;
-																					local_480 = fVar29 + local_480 * DAT_0041e990 + DAT_0041e9a0 + 0.0;
+																					const Mat2x3& flipTransform2 = Mat2x3_0041e990; // Assuming DAT values are Mat2x3
+
+																					fVar27 = quad.xAxis.x * flipTransform2.m02;
+																					fVar28 = quad.yAxis.y * flipTransform2.m02;
+																					quad.xAxis.x = quad.xAxis.x * flipTransform2.m10 + quad.yAxis.x * flipTransform2.m01;
+																					quad.yAxis.y = quad.yAxis.y * flipTransform2.m10 + quad.xAxis.y * flipTransform2.m01;
+																					fVar29 = quad.origin.y * flipTransform2.m02;
+																					quad.origin.y = quad.origin.y * flipTransform2.m10 + quad.origin.x * flipTransform2.m01 + flipTransform2.m12 + 0.0f;
+																					quad.yAxis.x = fVar27 + quad.yAxis.x * flipTransform2.m00;
+																					quad.xAxis.y = fVar28 + quad.xAxis.y * flipTransform2.m00;
+																					quad.origin.x = fVar29 + quad.origin.x * flipTransform2.m00 + flipTransform2.m11 + 0.0f;
 																				}
 
-																				TransformUVs(pfVar23, local_48c, uv0, uv1, uv2, uv3);
+																				// Transform UV coordinates using the final transformation matrix
+																				TransformUVs(pfVar23, quad, uv0, uv1, uv2, uv3);
+
+																				// Calculate particle color with alpha blending
 																				uVar26 = pCurParticle->field_0x8;
-																				rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																					alphaMultiplier >> 8) << 0x18;
-																				rgbaColor[0] = rgbaColor[0] |
-																					CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																						(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																						CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																							(uint)pCurParticle->field_0xf >> 8),
-																							(char)((uVar26 & 0xff) *
-																								(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																				height = gParticleSizeScale * pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4
-																					* 0.5;
+																				uint8_t alpha = ((uVar26 >> 24) * pCurParticle->field_0xc * alphaMultiplier) >> 16;
+																				uint8_t red = ((uVar26 >> 16 & 0xFF) * pCurParticle->field_0x12) >> 8;
+																				uint8_t green = ((uVar26 >> 8 & 0xFF) * pCurParticle->field_0xf) >> 8;
+																				uint8_t blue = ((uVar26 & 0xFF) * pCurParticle->field_0xe) >> 8;
+
+																				rgbaColor[0].rgba = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+																				// Calculate particle dimensions
+																				height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																				width = height * aspectRatio;
-																				edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3,
-																					&rgbaColor[0], (undefined8*)pCurRawVector);
+
+																				// Submit vertex data for rendering
+																				edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																			}
+
 																			pCurParticle = pCurParticle + 1;
 																			pCurRawVector = pCurRawVector + 1;
 																			pCurVector = pCurVector + 1;
-																		})
+																		}
 																	}
 																}
 																else {
@@ -5482,64 +5555,80 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 								}
 							}
 							else {
-								IMPLEMENTATION_GUARD(
 								pCurParticle = pParticle + startIndex;
 								pCurRawVector = pRawVectors + startIndex;
+
 								for (; startIndex < endIndex; startIndex = startIndex + 1) {
 									if (pCurParticle->field_0xd != 0) {
 										uVar26 = pCurParticle->seed;
+
+										// Calculate rotation angle based on particle lifetime
 										fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 										if ((uVar26 & 0x20) != 0) {
 											fVar27 = -fVar27;
 										}
 										fVar27 = pDrawData->field_0x90 + fVar27;
 
+										// Initialize base quad transformation
 										ParticleC(local_2f0, fVar27);
-										
+
+										// Apply horizontal flip transformation if flag is set
 										if ((uVar26 & 0x40) != 0) {
-											local_310 = local_30c * FLOAT_ARRAY_0041e810[2] + local_304 * FLOAT_ARRAY_0041e810[0];
-											local_308 = local_304 * FLOAT_ARRAY_0041e810[2] + fVar27 * FLOAT_ARRAY_0041e810[0];
-											local_30c = local_30c * FLOAT_ARRAY_0041e810[3] + local_304 * FLOAT_ARRAY_0041e810[1];
-											local_304 = local_304 * FLOAT_ARRAY_0041e810[3] + fVar27 * FLOAT_ARRAY_0041e810[1];
-											local_300 = local_2fc * FLOAT_ARRAY_0041e810[2] +
-												fVar28 * FLOAT_ARRAY_0041e810[0] + FLOAT_ARRAY_0041e810[4] + 0.0;
-											local_2fc = local_2fc * FLOAT_ARRAY_0041e810[3] +
-												fVar28 * FLOAT_ARRAY_0041e810[1] + FLOAT_ARRAY_0041e810[5] + 0.0;
+											const Mat2x3& flipTransform = FLOAT_ARRAY_0041e810;
+
+											local_310 = local_30c * flipTransform.m02 + local_304 * flipTransform.m00;
+											local_308 = local_304 * flipTransform.m02 + fVar27 * flipTransform.m00;
+											local_30c = local_30c * flipTransform.m10 + local_304 * flipTransform.m01;
+											local_304 = local_304 * flipTransform.m10 + fVar27 * flipTransform.m01;
+											local_300 = local_2fc * flipTransform.m02 + fVar28 * flipTransform.m00 + flipTransform.m11 + 0.0f;
+											local_2fc = local_2fc * flipTransform.m10 + fVar28 * flipTransform.m01 + flipTransform.m12 + 0.0f;
 										}
+
+										// Apply vertical flip transformation if flag is set
 										if ((uVar26 & 0x80) != 0) {
-											fVar27 = local_30c * FLOAT_ARRAY_0041e830[2];
-											fVar28 = local_304 * FLOAT_ARRAY_0041e830[2];
-											local_30c = local_30c * FLOAT_ARRAY_0041e830[3] + local_310 * FLOAT_ARRAY_0041e830[1];
-											local_304 = local_304 * FLOAT_ARRAY_0041e830[3] + local_308 * FLOAT_ARRAY_0041e830[1];
-											fVar29 = local_2fc * FLOAT_ARRAY_0041e830[2];
-											local_2fc = local_2fc * FLOAT_ARRAY_0041e830[3] +
-												local_300 * FLOAT_ARRAY_0041e830[1] + FLOAT_ARRAY_0041e830[5] + 0.0;
-											local_310 = fVar27 + local_310 * FLOAT_ARRAY_0041e830[0];
-											local_308 = fVar28 + local_308 * FLOAT_ARRAY_0041e830[0];
-											local_300 = fVar29 + local_300 * FLOAT_ARRAY_0041e830[0] + FLOAT_ARRAY_0041e830[4] + 0.0;
+											const Mat2x3& flipTransform = FLOAT_ARRAY_0041e830;
+
+											fVar27 = local_30c * flipTransform.m02;
+											fVar28 = local_304 * flipTransform.m02;
+											local_30c = local_30c * flipTransform.m10 + local_310 * flipTransform.m01;
+											local_304 = local_304 * flipTransform.m10 + local_308 * flipTransform.m01;
+											fVar29 = local_2fc * flipTransform.m02;
+											local_2fc = local_2fc * flipTransform.m10 + local_300 * flipTransform.m01 + flipTransform.m12 + 0.0f;
+											local_310 = fVar27 + local_310 * flipTransform.m00;
+											local_308 = fVar28 + local_308 * flipTransform.m00;
+											local_300 = fVar29 + local_300 * flipTransform.m00 + flipTransform.m11 + 0.0f;
 										}
-										uv0.u = pfVar23[0][1] * local_308 + pfVar23[0][0] * local_310 + local_300 + 0.0;
-										uv0.v = pfVar23[0][1] * local_304 + pfVar23[0][0] * local_30c + local_2fc + 0.0;
-										uv1.u = pfVar23[1][1] * local_308 + pfVar23[1][0] * local_310 + local_300 + 0.0;
-										uv1.v = pfVar23[1][1] * local_304 + pfVar23[1][0] * local_30c + local_2fc + 0.0;
-										uv2.u = pfVar23[2][1] * local_308 + pfVar23[2][0] * local_310 + local_300 + 0.0;
-										uv2.v = pfVar23[2][1] * local_304 + pfVar23[2][0] * local_30c + local_2fc + 0.0;
-										uv3.u = pfVar23[3][1] * local_308 + pfVar23[3][0] * local_310 + local_300 + 0.0;
-										uv3.v = pfVar23[3][1] * local_304 + pfVar23[3][0] * local_30c + local_2fc + 0.0;
-										uVar26 = pCurParticle->field_0x8;
-										rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) * alphaMultiplier >> 8) << 0x18;
-										rgbaColor[0] = rgbaColor[0] |
-											CONCAT12((char)((uVar26 >> 0x10 & 0xff) * (uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-												CONCAT11((char)((uVar26 >> 8 & 0xff) * (uint)pCurParticle->field_0xf >> 8),
-													(char)((uVar26 & 0xff) * (uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-										height = gParticleSizeScale * pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 * 0.5;
+
+										// Transform UV coordinates using the final transformation matrix
+										uv0.u = pfVar23[0].y * local_308 + pfVar23[0].x * local_310 + local_300 + 0.0f;
+										uv0.v = pfVar23[0].y * local_304 + pfVar23[0].x * local_30c + local_2fc + 0.0f;
+										uv1.u = pfVar23[1].y * local_308 + pfVar23[1].x * local_310 + local_300 + 0.0f;
+										uv1.v = pfVar23[1].y * local_304 + pfVar23[1].x * local_30c + local_2fc + 0.0f;
+										uv2.u = pfVar23[2].y * local_308 + pfVar23[2].x * local_310 + local_300 + 0.0f;
+										uv2.v = pfVar23[2].y * local_304 + pfVar23[2].x * local_30c + local_2fc + 0.0f;
+										uv3.u = pfVar23[3].y * local_308 + pfVar23[3].x * local_310 + local_300 + 0.0f;
+										uv3.v = pfVar23[3].y * local_304 + pfVar23[3].x * local_30c + local_2fc + 0.0f;
+
+										// Calculate particle color with alpha blending
+										uVar26 = pCurParticle->field_0x8_uint;
+										uint8_t alpha = ((uVar26 >> 24) * pCurParticle->field_0xc * alphaMultiplier) >> 16;
+										uint8_t red = ((uVar26 >> 16 & 0xFF) * pCurParticle->field_0x12) >> 8;
+										uint8_t green = ((uVar26 >> 8 & 0xFF) * pCurParticle->field_0xf) >> 8;
+										uint8_t blue = ((uVar26 & 0xFF) * pCurParticle->field_0xe) >> 8;
+
+										rgbaColor[0].rgba = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+										// Calculate particle dimensions
+										height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 										width = height * aspectRatio;
-										edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-											(undefined8*)pCurRawVector);
+
+										// Submit vertex data for rendering
+										edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 									}
+
 									pCurParticle = pCurParticle + 1;
 									pCurRawVector = pCurRawVector + 1;
-								})
+								}
 							}
 						}
 						else {

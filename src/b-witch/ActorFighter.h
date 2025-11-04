@@ -124,6 +124,21 @@ public:
 	virtual void SetVisible(ed_3D_Scene* pScene);
 	virtual bool HasMesh();
 
+	virtual edF32MATRIX4* GetMatrix()
+	{
+		IMPLEMENTATION_GUARD();
+		return nullptr;
+	}
+
+	virtual void SetMatrix(edF32MATRIX4* pMatrix)
+	{
+		IMPLEMENTATION_GUARD();
+	}
+
+	virtual void Func_0x28(float, float);
+	virtual void Func_0x2c(float param_1);
+	virtual void Func_0x30(edF32MATRIX4* pMatrix, float param_3);
+
 	virtual bool IsValid();
 
 	void Create(ByteCode* pByteCode);
@@ -139,7 +154,7 @@ public:
 	undefined4 field_0x68;
 	undefined4 field_0x6c;
 
-	undefined4 field_0x70;
+	float field_0x70;
 	float field_0x74;
 	float field_0x78;
 };
@@ -558,6 +573,7 @@ public:
 	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
 	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
 	bool FUN_001740a0();
+	void UpdateScale_0030ac50(edF32VECTOR3* param_2);
 
 	void PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5);
 	void PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, int param_4, bool param_5);

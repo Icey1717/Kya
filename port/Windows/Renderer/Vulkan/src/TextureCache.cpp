@@ -1137,10 +1137,10 @@ void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
 	memcpy(data, readBuffer, static_cast<size_t>(bufferSize));
 	vkUnmapMemory(GetDevice(), stagingBufferMemory);
 
-	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
 	VulkanImage::CopyBufferToImage(stagingBuffer, image, width, height);
 	
-	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
 
 	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
 	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());

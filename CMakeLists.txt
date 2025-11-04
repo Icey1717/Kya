@@ -418,6 +418,12 @@ set(main_src
 
     "${src_root}/EdenLib/Include/ed3D/ed3DSceneManager.h"
     "${src_root}/EdenLib/ed3D/sources/ed3DSceneManager.cpp"
+	"${src_root}/EdenLib/Include/ed3D/ed3DG3D.h"
+    "${src_root}/EdenLib/ed3D/sources/ed3DG3D.cpp"
+	"${src_root}/EdenLib/Include/ed3D/ed3DG2D.h"
+    "${src_root}/EdenLib/ed3D/sources/ed3DG2D.cpp"
+	"${src_root}/EdenLib/Include/ed3D/ed3DG3D_PS2.h"
+    "${src_root}/EdenLib/ed3D/sources/ed3DG3D_PS2.cpp"
 
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"

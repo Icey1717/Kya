@@ -48,10 +48,11 @@
 #include "Sprite.h"
 #endif
 
-#define ED_3D_HIDDEN_FLAG 0x40
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
+#include "ed3D/ed3DG3D_PS2.h"
 
-#define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
-#define ED3D_LOG_SLOW(level, format, ...)
+#define ED_3D_HIDDEN_FLAG 0x40
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
@@ -70,9 +71,6 @@ char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 #endif
 
 #define PKT_SIZE(end, begin) (ulong)end - (ulong)begin
-
-#define HASH_CODE_MATA 0x4154414d
-#define HASH_CODE_2D 0x2a44322a
 
 #define PRIM_LIST_0 0x0
 #define PRIM_LIST_1 0x1
@@ -117,8 +115,6 @@ namespace ed3D {
 }
 #endif
 
-int gCurTime = 0;
-int gStepTime = 0;
 byte gRenderDlist_00448a5c = 1;
 
 FxFogProp g3DFXFog = { };
@@ -229,7 +225,6 @@ int gIDProfileFlush = 0;
 bool bcalcFrame = false;
 byte BYTE_00449424 = 0;
 ed_viewport* gCurViewportUsed = NULL;
-int gCurFrame = 0;
 
 uint gZBUF_BASE = 0;
 
@@ -1308,8 +1303,7 @@ ed_g2d_bitmap* ed3DGetG2DPalette(ed_dma_material* pMaterial, uint index)
 	pG2dMaterial = pMaterial->pMaterial;
 	pBitmap = (ed_g2d_bitmap*)0x0;
 	if (pG2dMaterial != (ed_g2d_material*)0x0) {
-		int* pHash = reinterpret_cast<int*>(pG2dMaterial + 1);
-		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pHash[index]);
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pG2dMaterial->aLayers[index]);
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 		ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
 		ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
@@ -3395,49 +3389,6 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	}
 
 	return pNextPkt;
-}
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
-int ed3DG3DNbMaxBaseRGBA(ed_3d_strip* pStrip)
-{
-	int* pRGBA = LOAD_SECTION_CAST(int*, pStrip->pColorBuf);
-	return pRGBA[2];
-}
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
-ed_g3d_Anim_def* ed3DG3DAnimGet(ed_3d_strip* pStrip)
-{
-	int* pData = LOAD_SECTION_CAST(int*, pStrip->pColorBuf);
-	return LOAD_SECTION_CAST(ed_g3d_Anim_def*, pData[1]);
-}
-
-struct ed_g2d_Anim_def
-{
-	int p3dAnimDef; // ed_g3d_Anim_def*
-	uint field_0x4;
-	uint field_0x8;
-	uint field_0xc;
-	uint field_0x10;
-	ushort field_0x14;
-	ushort field_0x16;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-};
-
-static_assert(sizeof(ed_g2d_Anim_def) == 0x20);
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DG3D_PS2.cpp
-ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pTexture)
-{
-	ed_Chunck* pAnimChunck = LOAD_SECTION_CAST(ed_Chunck*, pTexture->pAnimChunck);
-	ed_g2d_Anim_def* p2dAnimDef =  reinterpret_cast<ed_g2d_Anim_def*>(pAnimChunck + 1);
-	return LOAD_SECTION_CAST(ed_g3d_Anim_def*, p2dAnimDef->p3dAnimDef);
 }
 
 byte gbEnv = 0;
@@ -5739,8 +5690,7 @@ ed_g2d_layer* ed3DGetG2DLayer(ed_g2d_material* pMAT, int index)
 			pTVar1 = (ed_g2d_layer*)0x0;
 		}
 		else {
-			int* pHash = reinterpret_cast<int*>(pMAT + 1);
-			pTVar1 = (ed_g2d_layer*)((char*)LOAD_SECTION(pHash[index]) + 0x10);
+			pTVar1 = (ed_g2d_layer*)((ed_Chunck*)LOAD_SECTION(pMAT->aLayers[index]) + 1);
 		}
 	}
 	return pTVar1;
@@ -7063,73 +7013,6 @@ typedef enum EVectorMode_A {
 	VM_4 = 4
 } EVectorMode_A;
 
-#define HASH_CODE_MAT 0x2e54414d
-
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index)
-{
-	ed_Chunck* pChunk;
-	ed_g2d_material* pMaterial;
-	pChunk = LOAD_SECTION_CAST(ed_Chunck*, pMBNK[index].pData);
-
-	pMaterial = (ed_g2d_material*)0x0;
-	if ((pChunk != (ed_Chunck*)0x0) && (pMaterial = reinterpret_cast<ed_g2d_material*>(pChunk + 1), pChunk->hash != HASH_CODE_MAT)) {
-		// Header didn't match MAT, so must actually be a hash code.
-		ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pChunk);
-		pChunk = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-
-		// Check we definitely found a material.
-		assert(pChunk->hash == HASH_CODE_MAT);
-
-		pMaterial = reinterpret_cast<ed_g2d_material*>(pChunk + 1);
-	}
-
-	return pMaterial;
-}
-
-int ed3DG2DGetNeededSizeForDuplicateMaterial(ed_hash_code* pHashCode)
-{
-	bool bVar1;
-	byte bVar2;
-	int iVar3;
-	int requiredSize;
-	uint nbMaterials;
-	int* pLayerIt;
-
-	ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-	ed_g2d_material* pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
-	bVar2 = pMaterial->nbLayers;
-	nbMaterials = (uint)bVar2;
-
-	pLayerIt = pMaterial->aLayers;
-	requiredSize = ((uint)(bVar2 >> 2) * 4 + 4) * 4 + 0x90;
-	
-	while (bVar1 = nbMaterials != 0, nbMaterials = nbMaterials - 1, bVar1) {
-		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, *pLayerIt);
-		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-		ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
-		ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-		requiredSize = requiredSize + ((uint)(pLayer->bHasTexture >> 2) * 4 + 4) * 4 + pTexture->bHasPalette * 0x10 + 0x60;
-
-		if (pTexture->pAnimSpeedNormalExtruder != 0x0) {
-			requiredSize = requiredSize + 0x10;
-		}
-	
-		pLayerIt = pLayerIt + 1;
-	}
-
-	return requiredSize;
-}
-
-
-
-ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index)
-{
-	ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[index]);
-	ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-	ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
-	return reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-}
-
 EVectorMode_A ed3DTestBoundingSphere(edF32VECTOR4* pInSphere)
 {
 	EVectorMode_A EVar1;
@@ -7621,186 +7504,6 @@ void ed3DLinkStripManageLinkToDMALink(edLIST* pList, ed_dma_material* pMaterial,
 	return;
 }
 
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
-void ed3DManageAnim(ed_g3d_Anim_def* pAnimDef)
-{
-	uint* puVar1;
-	uint* puVar2;
-	uint uVar3;
-	ulong uVar4;
-	uint uVar5;
-	uint uVar6;
-	uint uVar7;
-	uint* puVar8;
-	float fVar9;
-	float fVar10;
-
-	uVar4 = pAnimDef->field_0x4;
-	if (gCurFrame == pAnimDef->field_0x4 >> 0x1a) {
-		return;
-	}
-
-	if (((uVar4 & 4) == 0) && ((uVar4 & 8) == 0)) {
-		return;
-	}
-
-	pAnimDef->field_0x4 = (uint)((uVar4 << 0x26) >> 0x26) | gCurFrame << 0x1a;
-
-	if ((pAnimDef->field_0x4 & 0x20) == 0) {
-		if (pAnimDef->field_0x14 == 0) {
-			pAnimDef->field_0x14 = gCurTime;
-		}
-		pAnimDef->field_0x18 = gCurTime;
-	}
-	else {
-		pAnimDef->field_0x18 = pAnimDef->field_0x18 + pAnimDef->field_0xc;
-	}
-
-	puVar1 = &pAnimDef->field_0x20;
-	uVar6 = pAnimDef->field_0x4;
-	uVar3 = pAnimDef->field_0x18 - pAnimDef->field_0x14;
-	uVar5 = puVar1[(pAnimDef->field_0x0 - 1) * 4];
-
-	if ((uVar6 & 8) == 0) {
-		if (uVar5 < uVar3) {
-			uVar3 = (int)uVar3 % (int)uVar5;
-			if (uVar5 == 0) {
-				trap(7);
-			}
-			if ((uVar6 & 2) != 0) {
-				pAnimDef->field_0x4 = pAnimDef->field_0x4 | 8;
-				pAnimDef->field_0x4 = pAnimDef->field_0x4 & 0xfffffffb;
-				pAnimDef->field_0x14 = gCurTime - uVar3;
-				goto LAB_0029edbc;
-			}
-			if ((uVar6 & 1) == 0) {
-				uVar3 = uVar5;
-			}
-		}
-	LAB_0029ef30:
-		uVar6 = *puVar1;
-		for (uVar5 = 0; (uVar6 < uVar3 && (uVar5 != pAnimDef->field_0x0)); uVar5 = uVar5 + 1) {
-			puVar1 = puVar1 + 4;
-			uVar6 = *puVar1;
-		}
-		pAnimDef->field_0x8 = uVar5;
-		if (uVar5 == pAnimDef->field_0x0) {
-			puVar2 = puVar1 + -4;
-			puVar1 = puVar1 + -8;
-		}
-		else {
-			if (uVar5 == 0) {
-				puVar2 = puVar1 + 4;
-			}
-			else {
-				puVar2 = puVar1;
-				puVar1 = puVar1 + -4;
-			}
-		}
-		uVar3 = uVar3 - *puVar1;
-		if ((int)uVar3 < 0) {
-			fVar9 = (float)(uVar3 >> 1 | uVar3 & 1);
-			fVar9 = fVar9 + fVar9;
-		}
-		else {
-			fVar9 = (float)uVar3;
-		}
-		uVar3 = *puVar2 - *puVar1;
-		if ((int)uVar3 < 0) {
-			fVar10 = (float)(uVar3 >> 1 | uVar3 & 1);
-			fVar10 = fVar10 + fVar10;
-		}
-		else {
-			fVar10 = (float)uVar3;
-		}
-		pAnimDef->field_0x10 = (float)puVar1[1] + (fVar9 / fVar10) * ((float)puVar2[1] - (float)puVar1[1]);
-		if ((pAnimDef->field_0x8 == pAnimDef->field_0x0) &&
-			((uVar3 = pAnimDef->field_0x4, (uVar3 & 1) != 0 || ((uVar3 & 2) != 0)))) {
-			if ((uVar3 & 2) == 0) {
-				pAnimDef->field_0x8 = 0;
-			}
-			else {
-				pAnimDef->field_0x4 = pAnimDef->field_0x4 | 8;
-			}
-			pAnimDef->field_0x14 = 0;
-			pAnimDef->field_0x18 = 0;
-		}
-	}
-	else {
-		if (uVar5 < uVar3) {
-			uVar3 = (int)uVar3 % (int)uVar5;
-			if (uVar5 == 0) {
-				trap(7);
-			}
-			if ((uVar6 & 2) != 0) {
-				pAnimDef->field_0x4 = pAnimDef->field_0x4 & 0xfffffff7;
-				pAnimDef->field_0x4 = pAnimDef->field_0x4 | 4;
-				pAnimDef->field_0x14 = gCurTime - uVar3;
-				goto LAB_0029ef30;
-			}
-			if ((uVar6 & 1) == 0) {
-				uVar3 = uVar5;
-			}
-		}
-	LAB_0029edbc:
-		uVar6 = pAnimDef->field_0x0;
-		puVar2 = puVar1 + (uVar6 - 1) * 4;
-		for (uVar7 = 0; (uVar5 - *puVar2 < uVar3 && (uVar7 != uVar6)); uVar7 = uVar7 + 1) {
-			puVar2 = puVar2 + -4;
-		}
-		pAnimDef->field_0x8 = uVar6 - uVar7;
-		puVar8 = puVar2 + 4;
-		if (pAnimDef->field_0x8 == 0) {
-			puVar8 = &pAnimDef->field_0x30;
-			puVar2 = puVar1;
-		}
-		else {
-			uVar6 = pAnimDef->field_0x0 - 1;
-			if (uVar6 <= pAnimDef->field_0x8) {
-				puVar8 = puVar1 + uVar6 * 4;
-				puVar2 = puVar8 + -4;
-			}
-		}
-		uVar3 = uVar3 - (uVar5 - *puVar8);
-		if ((int)uVar3 < 0) {
-			fVar9 = (float)(uVar3 >> 1 | uVar3 & 1);
-			fVar9 = fVar9 + fVar9;
-		}
-		else {
-			fVar9 = (float)uVar3;
-		}
-		uVar3 = *puVar8 - *puVar2;
-		if ((int)uVar3 < 0) {
-			fVar10 = (float)(uVar3 >> 1 | uVar3 & 1);
-			fVar10 = fVar10 + fVar10;
-		}
-		else {
-			fVar10 = (float)uVar3;
-		}
-		pAnimDef->field_0x10 = (float)puVar8[1] - (fVar9 / fVar10) * ((float)puVar8[1] - (float)puVar2[1]);
-	}
-
-	if ((pAnimDef->field_0x4 & 0x10) != 0) {
-		fVar9 = pAnimDef->field_0x10;
-		if (fVar9 < 2.147484e+09f) {
-			uVar3 = (uint)fVar9;
-		}
-		else {
-			uVar3 = (int)(fVar9 - 2.147484e+09f) | 0x80000000;
-		}
-		if ((int)uVar3 < 0) {
-			fVar9 = (float)(uVar3 >> 1 | uVar3 & 1);
-			fVar9 = fVar9 + fVar9;
-		}
-		else {
-			fVar9 = (float)uVar3;
-		}
-
-		pAnimDef->field_0x10 = fVar9;
-	}
-	return;
-}
-
 void ed3DLinkClusterStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 {
 	edF32MATRIX4* peVar1;
@@ -8195,7 +7898,7 @@ LAB_002b181c:
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DRenderClusterObject calculated bounding sphere: {} base sphere: {}", gBoundSphereCenter->ToString(), pSphere->ToString());
 
 	EVar3 = ed3DTestBoundingSphere(pSphere);
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DRenderClusterObject bounding sphere test result: {}", EVar3);
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DRenderClusterObject bounding sphere test result: {}", (int)EVar3);
 	if (EVar3 != VM_4) {
 		gRender_info_SPR->boundingSphereTestResult = 1;
 		if ((EVar3 != VM_1) && (testResult = ed3DTestBoundingSphereObjectNoZFar(pSphere), testResult != 1)) {
@@ -9824,8 +9527,7 @@ edpkt_data* ed3DDMAGetGifTag(uint type, uint flags, ed_g2d_material* pMaterial)
 {
 	edpkt_data* pPkt;
 
-	int* hash = reinterpret_cast<int*>(pMaterial + 1);
-	ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[0]);
+	ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[0]);
 	ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 
 	if (type == ST_GIF_TAG_TYPE_POINT) {
@@ -11849,7 +11551,7 @@ void ed3DPrepareG2D(ed_g2d_manager* pManager, ulong mode)
 		for (pBuffer = edChunckGetFirst(texHeaderStart + 1, (char*)texHeaderStart + texHeaderSize); pBuffer != (ed_Chunck*)0x0;
 			pBuffer = edChunckGetNext(pBuffer, (char*)texHeaderStart + texHeaderSize)) {
 			/* Check if the value in the buffer is 'LAYA' */
-			if (pBuffer->hash == 0x4159414c) {
+			if (pBuffer->hash == HASH_CODE_LAYA) {
 				//ed3DPrepareLayer(pBuffer, textureInfoObj);
 			}
 		}
@@ -11876,8 +11578,6 @@ Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate()
 	return onMeshLoadedDelegate;
 }
 #endif
-
-#define HASH_CODE_T2D 0x4432472e
 
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5)
 {
@@ -11930,141 +11630,6 @@ ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, e
 #endif
 
 	return pOutManager;
-}
-
-ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index)
-{
-	ed_Chunck* pMATA_HASH;
-	ed_Chunck* pNextChunk;
-	uint materialIndex;
-	ed_hash_code* pHashCode;
-	char* pChunkEnd;
-
-	ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Looking for index: {}", index);
-
-	pMATA_HASH = pManager->pMATA_HASH;
-	ed_Chunck* pMATA = pManager->pMATA_HASH - 1;
-
-	/* Ensure we are trying to read something from the 'MATA' section */
-	if (pMATA->hash == HASH_CODE_MATA) {
-		/* Work out the section end address */
-		pChunkEnd = (char*)pMATA + pMATA->size;
-		for (pNextChunk = edChunckGetFirst(pMATA_HASH, pChunkEnd); pNextChunk != (ed_Chunck*)0x0; pNextChunk = edChunckGetNext(pNextChunk, pChunkEnd)) {
-			ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Chunk: {}", pNextChunk->GetHeaderString());
-
-			/* Check the first value in the buffer is *MAT.* */
-			if (pNextChunk->hash == HASH_CODE_MAT) {
-				ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Found MAT. chunk - size: 0x{:x}", pNextChunk->size);
-
-				if ((index == 0) && (pMATA_HASH->hash == HASH_CODE_HASH)) {
-					ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Found HASH chunk - size: 0x{:x}", pNextChunk->size);
-
-					/* Check the first value in the buffer is *HASH* */
-					pHashCode = (ed_hash_code*)(pMATA_HASH + 1);
-
-					const int materialCount = ed3DG2DGetG2DNbMaterials(pMATA_HASH);
-
-					ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Searching through {} materials for hash: {}", materialCount, pHashCode->hash.ToString());
-
-					for (materialIndex = materialCount; materialIndex != 0; materialIndex = materialIndex - 1) {
-
-						ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-
-						assert(pMAT->hash == HASH_CODE_MAT);
-
-						if (pMAT == pNextChunk) {
-							ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetMaterialFromIndex Found material at index {}", materialCount - materialIndex);
-							return pHashCode;
-						}
-
-						pHashCode = pHashCode + 1;
-					}
-				}
-
-				index = index + -1;
-			}
-			/* Jump to the next section */
-		}
-	}
-
-	return (ed_hash_code*)0x0;
-}
-
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index)
-{
-	ed_hash_code* pMAT_HASH;
-	ed_g2d_material* pMAT_Internal;
-
-	ED3D_LOG(LogLevel::Verbose, "ed3DG2DGetG2DMaterialFromIndex Looking for index: {}", index);
-
-	pMAT_HASH = ed3DG2DGetMaterialFromIndex(pManager, index);
-
-	if (pMAT_HASH == (ed_hash_code*)0x0) {
-		pMAT_Internal = (ed_g2d_material*)0x0;
-	}
-	else {
-		ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pMAT_HASH->pData);
-
-		assert(pMAT->hash == HASH_CODE_MAT);
-
-		pMAT_Internal = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
-	}
-
-	return pMAT_Internal;
-}
-
-ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMaterial)
-{
-	ed_Chunck* pMATA_HASH;
-	ed_Chunck* pcVar2;
-	uint nbMaterials;
-
-	pMATA_HASH = pManager->pMATA_HASH;
-
-	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
-
-	pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-	nbMaterials = pMATA_HASH->nextChunckOffset - 0x10U >> 4;
-
-	while (true) {
-		if ((nbMaterials == 0) || (pMaterial == (ed_g2d_material*)(pcVar2 + 1))) break;
-		nbMaterials = nbMaterials - 1;
-		pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-		pHashCode = pHashCode + 1;
-	}
-
-	return pHashCode;
-}
-
-ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int index)
-{
-	ed_g2d_bitmap* pBitmap;
-	ed_g2d_texture* pTexture;
-	ed_Chunck* pLAY;
-
-	pTexture = (ed_g2d_texture*)0x0;
-	pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[index]);
-	ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-
-	pBitmap = (ed_g2d_bitmap*)0x0;
-
-	if ((pLAY != (ed_Chunck*)0xfffffff0) && (pLayer->bHasTexture != 0)) {
-		ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
-		pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-	}
-
-	if (pTexture == (ed_g2d_texture*)0x0) {
-		pBitmap = (ed_g2d_bitmap*)0x0;
-	}
-	else {
-		ed_hash_code* pBitmapHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
-		if (pBitmapHashCode != (ed_hash_code*)0x0) {
-			ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pBitmapHashCode->pData);
-			pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
-		}
-	}
-
-	return pBitmap;
 }
 
 #define HASH_CODE_CDZA 0x415a4443
@@ -13705,7 +13270,7 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
 			pFrameBuffer->frameBasePtr,	// ZBP
 			zBufferFormat,				// PSM
-			0							// ZMASK
+			SCE_GS_FALSE				// ZMASK
 		);
 		pTags->commandBuffer[1].cmdB = SCE_GS_ZBUF_1;
 
@@ -14285,39 +13850,10 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	return;
 }
 
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
-void ed3DResetTime(void)
-{
-	gCurTime = 0;
-	return;
-}
-
-void ed3DSetDeltaTime(int newTime)
-{
-	gStepTime = newTime;
-	gCurTime = gCurTime + newTime;
-	return;
-}
-
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DFX.c
 FxFogProp* ed3DGetFxFogProp(void)
 {
 	return &g3DFXFog;
-}
-
-ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int count)
-{
-	ed_hash_code* pMVar1;
-
-	pMVar1 = (ed_hash_code*)(pMeshInfo->HALL + 2);
-
-	for (; count != 0; count = count + -1) {
-		pMVar1 = pMVar1 + 1;
-	}
-
-	char* pLoaded = (char*)LOAD_SECTION(pMVar1->pData);
-
-	return (ed_g3d_hierarchy*)(pLoaded + 0x10);
 }
 
 void ed3DObjectSetStripShadowCast(ed_hash_code* pLodHash, ushort flag, uint bApply)
@@ -14396,114 +13932,6 @@ ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index)
 		peVar1 = pHier->aLods + index;
 	}
 	return peVar1;
-}
-
-void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag, byte param_3, uint param_4)
-{
-	short sVar1;
-	ed3DLod* peVar2;
-	float* pfVar3;
-	uint uVar4;
-	ed_hash_code* ppeVar5;
-	uint uVar6;
-	ed3DLod* pLod;
-
-	if (((pHier->flags_0x9e & 2) != 0) || ((pHier->flags_0x9e & 4) != 0)) {
-		if (param_3 == 0) {
-			pHier->flags_0x9e = pHier->flags_0x9e & 0xfdff;
-		}
-		else {
-			pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
-		}
-	}
-	uVar4 = (int)(char)param_3 & 0xff;
-	uVar6 = 0;
-	do {
-		while (true) {
-			if (pHier->lodCount <= uVar6) {
-				return;
-			}
-
-			pLod = &pHier->aLods[uVar6];
-
-			sVar1 = pLod->renderType;
-			ppeVar5 = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
-			if (((sVar1 != 3) && (sVar1 != 2)) && (sVar1 != 1)) break;
-		LAB_0029f5e0:
-			uVar6 = uVar6 + 1;
-		}
-		if (sVar1 == 0) {
-			if (param_4 == 4) {
-				ed3DObjectSetStripShadowReceive(ppeVar5, flag, uVar4);
-			}
-			else {
-				if (param_4 == 2) {
-					if ((pHier->flags_0x9e & 0x100) == 0) {
-						ed3DObjectSetStripShadowCast(ppeVar5, flag, uVar4);
-					}
-					else {
-						peVar2 = ed3DHierarcGetLOD(pHier, pHier->lodCount - 1);
-						if (peVar2 != (ed3DLod*)0x0) {
-							ed3DObjectSetStripShadowCast((ed_hash_code*)LOAD_SECTION(peVar2->pObj), flag, uVar4);
-						}
-					}
-				}
-				else {
-					if (param_4 == 1) {
-						IMPLEMENTATION_GUARD(
-						ed3DObjectSetStripProperty(ppeVar5, flag, uVar4);)
-					}
-				}
-			}
-			goto LAB_0029f5e0;
-		}
-		uVar6 = uVar6 + 1;
-	} while (true);
-}
-
-void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag)
-{
-	ed_g3d_hierarchy* peVar1;
-	ed3DLod* peVar2;
-	ed_hash_code* peVar3;
-
-	pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
-	if (pHier != (ed_g3d_hierarchy*)0x0) {
-		if (((pHier->flags_0x9e & 2) != 0) || ((pHier->flags_0x9e & 4) != 0)) {
-			pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
-		}
-
-		// Walk back to chunk.
-		ed_Chunck* pChunck = (ed_Chunck*)(((char*)pHier) - sizeof(ed_Chunck));
-
-		if (pChunck->hash == 0x52454948) {
-			while (pChunck->hash == 0x52454948) {
-				ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pChunck + 1);
-
-				ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
-
-				if (pNode != (ed_3d_hierarchy_node*)0x0) {
-					IMPLEMENTATION_GUARD(
-					peVar1 = (ed_g3d_hierarchy*)(peVar2[0x14].pObj + 1);
-					while (peVar1 != (ed_g3d_hierarchy*)0x0) {
-						if (peVar1 == pHier) {
-							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(peVar2 + 2), flag, 1, 2);
-							break;
-						}
-						if (peVar1->pLinkTransformData == (ed_3d_hierarchy_node*)0x0) {
-							peVar1 = (ed_g3d_hierarchy*)0x0;
-						}
-						else {
-							peVar1 = (ed_g3d_hierarchy*)&(peVar1->pLinkTransformData->base).transformA.ba;
-						}
-					})
-				}
-				pChunck = edChunckGetNext(pChunck, (char*)0x0);
-			}
-			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 2);
-		}
-	}
-	return;
 }
 
 void ed3DSetMeshTransformFlag_002abd80(edNODE* pNode, ushort flag)
@@ -14900,52 +14328,6 @@ ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier)
 	return piVar3;
 }
 
-int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck)
-{
-	int materialCount;
-	int adjustedChunkSize;
-
-	if ((pChunck->hash == HASH_CODE_HASH) || (materialCount = -1, pChunck->hash == HASH_CODE_MBNK /*MBNK*/)) {
-		adjustedChunkSize = pChunck->size + -0x10;
-		materialCount = adjustedChunkSize >> 4;
-		if (adjustedChunkSize < 0) {
-			materialCount = pChunck->size + -1 >> 4;
-		}
-	}
-
-	return materialCount;
-}
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
-int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode)
-{
-	ed_Chunck* pChunck = reinterpret_cast<ed_Chunck*>(pHashCode - 1);
-	return ed3DG2DGetG2DNbMaterials(pChunck);
-}
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
-int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager)
-{
-	// Get the hash code out
-	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
-	return ed3DG2DGetG2DNbMaterials(pHashCode);
-}
-
-// Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DG3D.c
-ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
-{
-	ed_hash_code* peVar1;
-
-	if (pHier->pTextureInfo == (ed_Chunck*)0x0) {
-		peVar1 = (ed_hash_code*)0x0;
-	}
-	else {
-		peVar1 = (ed_hash_code*)(pHier->pTextureInfo + 1);
-	}
-
-	return peVar1;
-}
-
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DHierarchyBankMat.c
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier)
 {
@@ -14971,13 +14353,13 @@ void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
 	return pData;
 }
 
-void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pTexture)
+void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy* pHier, ed_g2d_manager* pTexture)
 {
 	ed_hash_code* peVar2;
 	uint uVar3;
 	ed_Chunck* puVar4;
 
-	puVar4 = (pHier->base).pTextureInfo;
+	puVar4 = pHier->pTextureInfo;
 
 	if (puVar4->hash == HASH_CODE_MBNK) {
 		uVar3 = puVar4->size - 0x10U >> 4;
@@ -14997,14 +14379,6 @@ void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pT
 	return;
 }
 
-ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash)
-{
-	ed_hash_code* pcVar1;
-
-	pcVar1 = edHashcodeGet(hash, pTextureInfo->pMATA_HASH);
-	return pcVar1;
-}
-
 ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong hash)
 {
 	ed_hash_code* pcVar1;
@@ -15019,55 +14393,6 @@ ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong ha
 	}
 
 	return peVar1;
-}
-
-void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag)
-{
-	ed_g3d_hierarchy* peVar1;
-	ed_Chunck* pChunk;
-	uint curChunkHash;
-
-	pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
-
-	if (pHier != (ed_g3d_hierarchy*)0x0) {
-		if (((pHier->flags_0x9e & 2) != 0) || ((pHier->flags_0x9e & 4) != 0)) {
-			pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
-		}
-
-		// Walk back to the chunk, which is right before the hierarchy.
-		pChunk = reinterpret_cast<ed_Chunck*>(reinterpret_cast<char*>(pHier) - sizeof(ed_Chunck));
-
-		if (pChunk->hash == HASH_CODE_HIER) {
-			curChunkHash = pChunk->hash;
-
-			while (curChunkHash == HASH_CODE_HIER) {
-				if (pHier->pHierarchySetup != 0) {
-					IMPLEMENTATION_GUARD(); // This needs fixing, it doesn't look correct.
-					ed_Chunck* pNextChunk = (ed_Chunck*)(pHier->aLods);
-					peVar1 = (ed_g3d_hierarchy*)(pNextChunk + 1);
-					while (peVar1 != (ed_g3d_hierarchy*)0x0) {
-						if (peVar1 == pHier) {
-							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(&pChunk->hash + 4), flag, 1, 4);
-							break;
-						}
-						if (peVar1->pLinkTransformData == 0x0) {
-							peVar1 = (ed_g3d_hierarchy*)0x0;
-						}
-						else {
-							peVar1 = (ed_g3d_hierarchy*)((ed_Chunck*)LOAD_SECTION(peVar1->pLinkTransformData) + 1);
-						}
-					}
-				}
-
-				pChunk = edChunckGetNext(pChunk, (char*)0x0);
-				curChunkHash = pChunk->hash;
-			}
-
-			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 4);
-		}
-	}
-
-	return;
 }
 
 void ed3DHierarchyRemoveNode(edLIST* pList, edNODE* pNode)
@@ -15355,37 +14680,6 @@ bool ed3DComputeScreenCoordinate(float z, edF32VECTOR4* pWorldPosition, edF32VEC
 	}
 
 	return 0.0f < z;
-}
-
-ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode)
-{
-	ed_hash_code* pHashCode;
-	ed_g2d_material* pMaterial;
-
-	pHashCode = edHashcodeGet(hashCode, pManager->pMATA_HASH);
-
-	if (pHashCode == (ed_hash_code*)0x0) {
-		pMaterial = (ed_g2d_material*)0x0;
-	}
-	else {
-		ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
-		pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
-	}
-
-	return pMaterial;
-}
-
-ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index)
-{
-	ed_g2d_layer* pLayer = (ed_g2d_layer*)0x0;
-
-	if (index < pMaterial->nbLayers) {
-		int* hash = reinterpret_cast<int*>(pMaterial + 1);
-		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[index]);
-		pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-	}
-
-	return pLayer;
 }
 
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier)

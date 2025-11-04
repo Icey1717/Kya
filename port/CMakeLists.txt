@@ -1,5 +1,8 @@
 project(Port)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -28,9 +31,12 @@ add_subdirectory("KyaMesh")
 add_subdirectory("Sprite")
 
 set(SOURCES 
-	"Windows/WindowsFunctions.cpp"
-	"src/ObjectNaming.cpp"
+	"Windows/windows_impl.cpp"
+	"Windows/Input/gamepad.cpp"
+	"src/object_naming.cpp"
+	"src/input_functions.cpp"
 	"include/port.h"
+	"include/gamepad.h"
 )
 
 add_library(Port ${SOURCES})

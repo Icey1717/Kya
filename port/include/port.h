@@ -483,9 +483,22 @@ inline ulong SetRGBAQWin(A r, B g, C b, D a, E q)
 #define SCE_GS_SET_RGBAQ SCE_GS_SET_RGBAQ_PS2
 #endif
 
-#define SCE_GS_SET_ZBUF(zbp, psm, zmsk) \
+#define SCE_GS_SET_ZBUF_PS2(zbp, psm, zmsk) \
     ((ulong)(zbp) | ((ulong)(psm) << 24) | \
     ((ulong)(zmsk) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C>
+inline ulong SetZbufWin(A zbp, B psm, C zmsk)
+{
+	Renderer::SetZbuf(zmsk);
+	return SCE_GS_SET_ZBUF_PS2(zbp, psm, zmsk);
+}
+#define SCE_GS_SET_ZBUF(zbp, psm, zmsk) \
+	 SetZbufWin(zbp, psm, zmsk)
+#else
+#define SCE_GS_SET_ZBUF SCE_GS_SET_ZBUF_PS2
+#endif
 
 #define SCE_GS_SET_XYOFFSET_PS2(ofx, ofy) ((ulong)(ofx) | ((ulong)(ofy) << 32))
 

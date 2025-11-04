@@ -2106,6 +2106,13 @@ void CLevelScheduler::SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size
 	return;
 }
 
+void CLevelScheduler::Level_WolfenChanged()
+{
+	Level_UpdateCurLiveLevelInfo();
+
+	return;
+}
+
 #ifdef PLATFORM_WIN
 int gDebugLevelLoadOverride = -1;
 #endif

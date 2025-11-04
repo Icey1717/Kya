@@ -169,6 +169,11 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
+	void SetZbuf(uint32_t zmask)
+	{
+		PS2::GetGSState().ZBUF.ZMSK = zmask;
+	}
+
 	void SetPrim(GIFReg::GSPrim prim, PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
 		if (!pDrawBuffer) {
 			ResetVertIndexBuffers();

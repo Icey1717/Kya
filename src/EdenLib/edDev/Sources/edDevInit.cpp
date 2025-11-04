@@ -147,18 +147,15 @@ int edDevInitPortMouse(EDDEV_PORT* pController)
 	int result = 0;
 
 	pController->pEventFunc = Input::_edDevMouse;
-
-	uint uVar2 = pController->pEventFunc(0x90000000, pController, (void*)0x0);
-	pController->maxControlId = uVar2;
+	pController->maxControlId = pController->pEventFunc(EVENT_GET_NUM_BUTTONS, pController, (void*)0x0);
 
 	if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
 		result = -5;
 	}
 	else {
 		pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
-		uVar2 = pController->pEventFunc(0x90000001, pController, (void*)0x0);
 
-		if (uVar2 == 0) {
+		if (pController->pEventFunc(EVENT_INIT_CONTROLLER, pController, (void*)0x0) == 0) {
 			pController->flags = pController->flags | 0x40000000;
 			pController->controllerId = edDevRoot.nbPorts;
 			g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
@@ -220,37 +217,33 @@ int edDevInitPort(uint port, int slot, uint type)
 				pPVar2->socketNumber = iVar3;
 #endif
 #ifdef PLATFORM_PS2
-				//pController->pEventFunc = _edDevDualShock2;
-				//uVar2 = (*pController->pEventFunc)(0x90000000, pController, (InputEventData*)0x0);
-				//pController->maxControlId = uVar2;
-				//if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
-				//	result = -5;
-				//}
-				//else {
-				//	pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
-				//	uVar2 = (*pController->pEventFunc)(0x90000001, pController, (InputEventData*)0x0);
-				//	if (uVar2 == 0) {
-				//		pController->flags = pController->flags | 0x40000000;
-				//		pPVar2->state = 0;
-				//		pPVar2->prevState = 0;
-				//		pController->controllerId = edDevRoot.nbPorts;
-				//		g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
-				//		edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
-				//		edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
-				//	}
-				//}
-#else
-				pController->pEventFunc = Input::_edDevKeyboard;
-
-				uVar2 = (*pController->pEventFunc)(0x90000000, pController, (void*)0x0);
-				pController->maxControlId = uVar2;
+				pController->pEventFunc = _edDevDualShock2;
+				pController->maxControlId = (*pController->pEventFunc)(EVENT_GET_NUM_BUTTONS, pController, (InputEventData*)0x0);
 				if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
 					result = -5;
 				}
 				else {
 					pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
-					uVar2 = (*pController->pEventFunc)(0x90000001, pController, (void*)0x0);
-					if (uVar2 == 0) {
+					if ((*pController->pEventFunc)(EVENT_INIT_CONTROLLER, pController, (InputEventData*)0x0) == 0) {
+						pController->flags = pController->flags | 0x40000000;
+						pPVar2->state = 0;
+						pPVar2->prevState = 0;
+						pController->controllerId = edDevRoot.nbPorts;
+						g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
+						edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
+						edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
+					}
+				}
+#else
+				pController->pEventFunc = Input::_edDevKeyboard;
+
+				pController->maxControlId = (*pController->pEventFunc)(EVENT_GET_NUM_BUTTONS, pController, (void*)0x0);
+				if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
+					result = -5;
+				}
+				else {
+					pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
+					if ((*pController->pEventFunc)(EVENT_INIT_CONTROLLER, pController, (void*)0x0) == 0) {
 						pController->flags = pController->flags | 0x40000000;
 						pPVar2->state = 0;
 						pPVar2->prevState = 0;

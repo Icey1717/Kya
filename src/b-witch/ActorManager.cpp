@@ -146,7 +146,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 		pActor->actorManagerIndex = actorIndex;
 		pActor->typeID = (ACTOR_CLASS)actorType;
 
-		ACTOR_LOG(LogLevel::Info, "id: {0} type: 0x{1:x} ({1})", actorCount, pActor->typeID);
+		ACTOR_LOG(LogLevel::Info, "id: {0} type: 0x{1:x} ({1})", actorCount, (int)pActor->typeID);
 
 		pActor->Create(pMemoryStream);
 

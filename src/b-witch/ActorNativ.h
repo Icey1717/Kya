@@ -302,6 +302,12 @@ struct ActionEntry {
 	float field_0x4;
 };
 
+struct _msg_exorcised
+{
+	int field_0x0;
+	edF32VECTOR4 field_x10;
+};
+
 class CActorNativ : public CActorAutonomous 
 {
 public:

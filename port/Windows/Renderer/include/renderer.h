@@ -331,6 +331,7 @@ namespace Renderer
 	void SetRGBAQ(uint32_t R, uint32_t G, uint32_t B, uint32_t A, float Q);
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
+	void SetZbuf(uint32_t zmask);
 
 	void SetPrim(GIFReg::GSPrim prim, PS2::DrawBufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
@@ -524,23 +525,23 @@ namespace Renderer
 	void ResetRenderer();
 
 	namespace Debug {
+		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);
+		void EndLabel(const VkCommandBuffer& cmdBuffer);
+		void BeginLabel(const char* szLabel);
+		void EndLabel();
+
 		template<typename... Args>
 		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* format, Args... args) {
 			char buffer[512];
 			sprintf_s(buffer, 512, format, args...);
-			BeginLabel(cmdBuffer, buffer);
+			BeginLabel(cmdBuffer, static_cast<const char*>(buffer));  // Explicitly call non-template version
 		}
 
 		template<typename... Args>
 		void BeginLabel(const char* format, Args... args) {
 			char buffer[512];
 			sprintf_s(buffer, 512, format, args...);
-			BeginLabel(buffer);
+			BeginLabel(static_cast<const char*>(buffer));  // Explicitly call non-template version
 		}
-
-		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);
-		void EndLabel(const VkCommandBuffer& cmdBuffer);
-		void BeginLabel(const char* szLabel);
-		void EndLabel();
 	}
 }

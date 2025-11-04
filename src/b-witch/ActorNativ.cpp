@@ -15,6 +15,7 @@
 #include "edText.h"
 #include "FrontEndMoney.h"
 #include "ActorNativShop.h"
+#include "ed3D/ed3DG3D.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -3458,17 +3459,18 @@ int CBehaviourNativExorcisme::InterpretMessage(CActor* pSender, int msg, void* p
 {
 	int iVar2;
 
+	CActorNativ* pCVar1;
+
+	_msg_exorcised* pMsg = reinterpret_cast<_msg_exorcised*>(pMsgParam);
+
 	if (msg == 0x19) {
-		IMPLEMENTATION_GUARD(
-		/* WARNING: Load size is inaccurate */
-		iVar2 = *pMsgParam;
+		iVar2 = pMsg->field_0x0;
 		if (iVar2 == 3) {
 			iVar2 = (this->pOwner)->field_0x53c;
 		}
 		else {
 			if (iVar2 == 1) {
-				pCVar1 = this->pOwner;
-				(*(this->pOwner->pVTable)->SetState)((CActor*)pCVar1, 0x12, -1);
+				this->pOwner->SetState(0x12, -1);
 			}
 			else {
 				if (iVar2 == 0) {
@@ -3477,15 +3479,15 @@ int CBehaviourNativExorcisme::InterpretMessage(CActor* pSender, int msg, void* p
 					this->pOwner->flags = this->pOwner->flags & 0xfffffffc;
 					pCVar1 = this->pOwner;
 					this->pOwner->flags = this->pOwner->flags & 0xffffff5f;
-					CActor::EvaluateDisplayState((CActor*)pCVar1);
-					CActor::UpdatePosition((CActor*)this->pOwner, (edF32VECTOR4*)((int)pMsgParam + 0x10), true);
+					pCVar1->EvaluateDisplayState();
+					this->pOwner->UpdatePosition(&pMsg->field_x10, true);
 					pCVar1 = this->pOwner;
-					(*(this->pOwner->pVTable)->SetState)((CActor*)pCVar1, 0xe, -1);
+					pCVar1->SetState(0xe, -1);
 				}
 			}
 
 			iVar2 = 1;
-		})
+		}
 	}
 	else {
 		iVar2 = 0;

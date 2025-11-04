@@ -5,6 +5,7 @@
 #include "MathOps.h"
 #include "TimeController.h"
 #include "DlistManager.h"
+#include "ed3D/ed3DG2D.h"
 
 bool CParticleRes::Init()
 {

@@ -34,6 +34,8 @@
 #include "edFile/edFileNoWaitStack.h"
 #include "edVideo/Viewport.h"
 #include "edVideo/VideoD.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 
 CSimpleMenuPause gPauseMenu;
 
@@ -438,12 +440,11 @@ void CPauseManager::Level_Term()
 {
 	CSimpleMenu* pCVar1;
 
-	IMPLEMENTATION_GUARD_LOG(
-	if (this->pTexture_0x2c != (CSplashScreen*)0x0) {
-		this->pTexture_0x2c->Term();
-		delete this->pTexture_0x2c;
-		this->pTexture_0x2c = (CSplashScreen*)0x0;
-	})
+	if (this->pSplashScreen != (CSplashScreen*)0x0) {
+		this->pSplashScreen->Term();
+		delete this->pSplashScreen;
+		this->pSplashScreen = (CSplashScreen*)0x0;
+	}
 
 	pCVar1 = this->pSimpleMenu;
 	if (pCVar1 != (CSimpleMenu*)0x0) {
@@ -2720,6 +2721,28 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 	(this->drawOffsets).w = (float)gVideoConfig.screenHeight;
 
 	return this->pTextureFileData != (char*)0x0;
+}
+
+void CSplashScreen::Term()
+{
+	if (this->pTextureFileData != (char*)0x0) {
+		if ((this->flags_0x7c & 1) != 0) {
+			edDListTermMaterial(&this->materialInfo);
+			this->flags_0x7c = this->flags_0x7c & 0xfffffffe;
+		}
+
+		if ((this->flags_0x7c & 2) != 0) {
+			ed3DUnInstallG2D(&this->textureManager);
+			this->flags_0x7c = this->flags_0x7c & 0xfffffffd;
+		}
+
+		ClearLocalData();
+
+		edMemFree(this->pTextureFileData);
+		this->pTextureFileData = (char*)0x0;
+	}
+
+	return;
 }
 
 bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)

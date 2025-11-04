@@ -11,6 +11,8 @@
 #include "edDlist.h"
 #include "CameraViewManager.h"
 #include "PoolAllocators.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 
 C3DFileManager::C3DFileManager()
 {

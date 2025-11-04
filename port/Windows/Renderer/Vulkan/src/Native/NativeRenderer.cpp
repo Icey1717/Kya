@@ -10,6 +10,7 @@
 #include <readerwriterqueue.h>
 
 #include "VulkanRenderer.h"
+#include "VulkanImage.h"
 #include "UniformBuffer.h"
 #include "TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
@@ -344,6 +345,7 @@ namespace Renderer
 
 			// When true, is a fake second draw that only draws the Z buffer.
 			bool bIsAfailZOnly = false;
+			bool bIsZMask = false;
 		};
 
 		static std::optional<Draw> gCurrentDraw;
@@ -539,6 +541,10 @@ namespace Renderer
 				colorWriteEnable = VK_FALSE;
 			}
 
+			if (drawCommand.bIsZMask) {
+				depthWriteEnable = VK_FALSE;
+			}
+
 			// Depth.
 			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
 
@@ -727,6 +733,36 @@ namespace Renderer
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 			gNativeVertexBuffer.BindBuffers(cmd);
+
+			// Explicitly clear the framebuffer attachments
+			VkClearColorValue clearColor = { {0.0f, 0.0f, 0.0f, 1.0f} };
+			VkClearDepthStencilValue depthStencil = { 0.0f, 0 };
+
+			// Color attachment subresource range
+			VkImageSubresourceRange colorRange{};
+			colorRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			colorRange.baseMipLevel = 0;
+			colorRange.levelCount = 1;
+			colorRange.baseArrayLayer = 0;
+			colorRange.layerCount = 1;
+
+			// Depth attachment subresource range
+			VkImageSubresourceRange depthRange{};
+			depthRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			depthRange.baseMipLevel = 0;
+			depthRange.levelCount = 1;
+			depthRange.baseArrayLayer = 0;
+			depthRange.layerCount = 1;
+
+			VulkanImage::TransitionImageLayout(gFrameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, colorRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(gFrameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, depthRange.aspectMask, cmd);
+
+			vkCmdClearColorImage(cmd, gFrameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &colorRange);
+			vkCmdClearDepthStencilImage(cmd, gFrameBuffer.depthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depthStencil, 1, &depthRange);
+
+			// Transition to read optimal for rendering
+			VulkanImage::TransitionImageLayout(gFrameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, colorRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(gFrameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, depthRange.aspectMask, cmd);
 		}
 
 		// Copy all our data to the GPU.
@@ -801,7 +837,6 @@ namespace Renderer
 
 					if (bShouldStop) break;
 
-					// Begins render pass, binds pipeline, etc.
 					if (bShouldRecordBegin) {
 						RecordBeginCommandBuffer();
 						bShouldRecordBegin = false;
@@ -1463,6 +1498,8 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 		for (auto& instance : gCurrentDraw->instances) {
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
 		}
+
+		gCurrentDraw->bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 
 		gRenderThread->AddDraw(*gCurrentDraw);
 

@@ -6,6 +6,8 @@
 
 #include "Texture.h"
 #include "ed3D.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 #include "port.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "DebugHelpers.h"

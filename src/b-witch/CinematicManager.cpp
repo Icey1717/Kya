@@ -42,6 +42,9 @@
 #include "EdFileBase.h"
 #include "edParticles/edParticles.h"
 
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
+
 CCinematicManager* g_CinematicManager_0048efc;
 
 #define CUTSCENE_MAX_LOAD_TIME 15.0f

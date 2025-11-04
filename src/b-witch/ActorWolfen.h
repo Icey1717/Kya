@@ -4,9 +4,11 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorFighter.h"
+#include "ActorCommander.h"
 #include "CinematicManager.h"
 #include "SwitchBehaviour.h"
 #include "TimeController.h"
+#include "ActorWeapon.h"
 #include "Vision.h"
 #include "Fx.h"
 
@@ -37,7 +39,11 @@
 #define WOLFEN_STATE_COME_BACK 0x77
 #define WOLFEN_STATE_EXORCISE_IDLE 0x79
 #define WOLFEN_STATE_EXORCISE_EXORCIZE 0x7a
+#define WOLFEN_STATE_EXORCISE_TRANSFORM 0x7b
+#define WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE 0x7c
+#define WOLFEN_STATE_EXORCISE_END 0x7d
 #define WOLFEN_STATE_EXORCISE_AWAKE 0x7e
+#define WOLFEN_STATE_EXORCISE_LIVING_DEAD 0x7f
 #define WOLFEN_STATE_RELOAD 0x91
 #define WOLFEN_STATE_AIM 0x94
 #define WOLFEN_STATE_FIRE 0x95
@@ -69,6 +75,24 @@ class CActorWolfen;
 class CActorCommander;
 class CActorProjectile;
 class CActorHero;
+
+struct RndData
+{
+	uint field_0x0;
+	uint commandId;
+};
+
+class CFightIA
+{
+public:
+	struct WFIGS_Chain
+	{
+		byte field_0x0;
+		float field_0x4;
+		int field_0x8;
+		RndData rndData;
+	};
+};
 
 union f4data
 {
@@ -152,48 +176,9 @@ public:
 		return;
 	}
 
-	bool FUN_003c38c0(CActorWolfen* pWolfen)
-	{
-		Timer* pTVar1;
-		bool bVar2;
+	bool FUN_003c38c0(CActorWolfen* pWolfen);
 
-		bVar2 = true;
-		if (((pWolfen->pCommander->flags_0x18c & 8) == 0) &&
-			(pTVar1 = Timer::GetTimer(), this->field_0x4 < pTVar1->scaledTotalTime)) {
-			bVar2 = false;
-		}
-
-		return bVar2;
-	}
-
-	int GetState_003c37c0(CActorWolfen* pActor)
-	{
-		bool bVar1;
-		int iVar5;
-
-		bVar1 = true;
-		iVar5 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
-		if (pActor->GetWeapon() != (CActorWeapon*)0x0) {
-			if (pActor->GetWeapon()->FUN_002d58a0() != 0) {
-				if (pActor->GetWeapon()->FUN_002d5830() == 0) {
-					bVar1 = false;
-				}
-			}
-		}
-
-		if (!bVar1) {
-			iVar5 = 0x97;
-			pActor->field_0xcf8 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
-		}
-
-		if (((pActor->pCommander->flags_0x18c & 8) == 0) && (1 < (int)pActor->combatMode_0xb7c)) {
-			if (this->field_0x4 < Timer::GetTimer()->scaledTotalTime) {
-				this->field_0x4 = Timer::GetTimer()->scaledTotalTime + this->field_0x0;
-			}
-		}
-
-		return iVar5;
-	}
+	int GetState_003c37c0(CActorWolfen* pActor);
 
 	float field_0x0;
 	float field_0x4;
@@ -201,12 +186,6 @@ public:
 	EEnemyCombatMode combatMode;
 
 	int field_0x34;
-};
-
-struct RndData
-{
-	uint field_0x0;
-	uint commandId;
 };
 
 template<typename T>
@@ -330,18 +309,6 @@ public:
 	int field_0x14;
 };
 
-class CFightIA
-{
-public:
-	struct WFIGS_Chain
-	{
-		byte field_0x0;
-		float field_0x4;
-		int field_0x8;
-		RndData rndData;
-	};
-};
-
 struct WolfenComboData
 {
 	uint field_0x0;
@@ -432,12 +399,12 @@ public:
 
 struct astruct_18
 {
-	uint FUN_001eeea0(float param_1);
-
 	CActorWolfen* pWolfen;
 	float field_0xc;
 	int field_0x10;
 };
+
+struct astruct_17;
 
 class CBehaviourExorcism : public CBehaviour
 {
@@ -457,17 +424,18 @@ public:
 
 	bool FUN_001edbe0();
 	void DecreaseNbBonusReq();
+	void ClearStruct_001edb50();
 
 	CActorWolfen* pOwner;
 
 	int behaviourId;
 
-	float field_0xc;
+	float rateMagicDecreaseForExorcism;
 	float field_0x10;
 	float field_0x14;
 	float field_0x18;
 
-	astruct_18* aSubObjA;
+	astruct_17* aSubObjA;
 	CFxDigits fxDigits;
 	int field_0x24;
 	int digitMaterialId;
@@ -989,6 +957,19 @@ public:
 	void StateExorcize(CBehaviourExorcism* pBehaviour);
 	void StateExorciseTerm();
 
+	void StateExorcizeTransformInit();
+	void StateExorcizeTransform();
+
+	void StateExorcizeTransformCompleteInit();
+	void StateExorcizeTransformComplete();
+	void StateExorcizeTransformCompleteTerm();
+
+	void StateExorcizeEndInit();
+	void StateExorcizeEndTerm(CBehaviourExorcism* pBehaviour);
+
+	void StateDeadLivingDead();
+	void StateDeadLivingDeadTerm(CBehaviourExorcism* pBehaviour);
+
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
 
@@ -1094,8 +1075,8 @@ public:
 	uint field_0xb74;
 	uint combatFlags_0xb78 = 0; // delete init
 	int exorcisedState;
-	float field_0xb84;
-	undefined4 field_0xb88;
+	float nbRequiredMagicForExorcism;
+	float nbConsumedMagicForExorcism;
 	int startSectorId;
 
 	float field_0xb90;
@@ -1162,5 +1143,50 @@ public:
 
 	CActorWolfenKnowledge* pWolfenKnowledge;
 };
+
+template<typename T>
+bool CNotificationTargetArray<T>::FUN_003c38c0(CActorWolfen* pWolfen)
+{
+	Timer* pTVar1;
+	bool bVar2;
+
+	bVar2 = true;
+	if (((pWolfen->pCommander->flags_0x18c & 8) == 0) &&
+		(pTVar1 = Timer::GetTimer(), this->field_0x4 < pTVar1->scaledTotalTime)) {
+		bVar2 = false;
+	}
+
+	return bVar2;
+}
+
+template<typename T>
+int CNotificationTargetArray<T>::GetState_003c37c0(CActorWolfen* pActor)
+{
+	bool bVar1;
+	int iVar5;
+
+	bVar1 = true;
+	iVar5 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
+	if (pActor->GetWeapon() != (CActorWeapon*)0x0) {
+		if (pActor->GetWeapon()->FUN_002d58a0() != 0) {
+			if (pActor->GetWeapon()->FUN_002d5830() == 0) {
+				bVar1 = false;
+			}
+		}
+	}
+
+	if (!bVar1) {
+		iVar5 = 0x97;
+		pActor->field_0xcf8 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
+	}
+
+	if (((pActor->pCommander->flags_0x18c & 8) == 0) && (1 < (int)pActor->combatMode_0xb7c)) {
+		if (this->field_0x4 < Timer::GetTimer()->scaledTotalTime) {
+			this->field_0x4 = Timer::GetTimer()->scaledTotalTime + this->field_0x0;
+		}
+	}
+
+	return iVar5;
+}
 
 #endif //ACTOR_WOLFEN_H

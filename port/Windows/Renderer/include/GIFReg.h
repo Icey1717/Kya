@@ -136,6 +136,14 @@ namespace GIFReg
 		uint32_t Y;
 	};
 
+	struct GSZBuf {
+		uint32_t ZBP : 14;
+		uint32_t _PAD1 : 2;
+		uint32_t PSM : 6;
+		uint32_t _PAD2 : 10;
+		uint32_t ZMSK;
+	};
+
 	union GSClamp
 	{
 		struct

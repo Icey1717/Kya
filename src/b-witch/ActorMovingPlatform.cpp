@@ -4434,7 +4434,7 @@ int CBehaviourSelector::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 						}
 
 						if (pTexture != (ed_g2d_manager*)0x0) {
-							ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+							ed3DHierarchyBankMatLinkG2D(&this->pOwner->p3DHierNode->base, pTexture);
 						}
 					}
 
@@ -4585,7 +4585,7 @@ void CBehaviourSelectorMaster::Begin(CActor* pOwner, int newState, int newAnimat
 
 	if ((this->field_0x18 != -1) && (pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->pOwner->pCinData->textureIndex),
 			pTexture != (ed_g2d_manager*)0x0)) {
-		ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+		ed3DHierarchyBankMatLinkG2D(&this->pOwner->p3DHierNode->base, pTexture);
 	}
 
 	this->field_0x28 = 1;
@@ -4788,7 +4788,7 @@ void CBehaviourSelectorNew::Begin(CActor* pOwner, int newState, int newAnimation
 
 	if ((this->field_0x18 != -1) && (pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->pOwner->pCinData->textureIndex),
 		pTexture != (ed_g2d_manager*)0x0)) {
-		ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+		ed3DHierarchyBankMatLinkG2D(&this->pOwner->p3DHierNode->base, pTexture);
 	}
 
 	this->field_0x28 = 1;

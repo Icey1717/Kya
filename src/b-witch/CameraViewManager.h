@@ -5903,9 +5903,9 @@ struct CAM_QUAKE
 	edF32VECTOR4 field_0x0;
 	edF32VECTOR4 field_0x10;
 	int field_0x20;
-	float field_0x24;
-	float field_0x28;
-	float field_0x2c;
+	float sustainDuration;
+	float attackDuration;
+	float decayDuration;
 };
 
 class CCameraManager : public CObjectManager
@@ -6630,8 +6630,8 @@ public:
 	float field_0x474;
 	float field_0x478;
 	float field_0x47c;
-	CAM_QUAKE field_0x480;
-	undefined4 field_0x4b0;
+	CAM_QUAKE camQuakeParams;
+	float camQuakeActiveDuration;
 	CCamera* pInitialView_0x4b4;
 	CCamera* pActiveCamera;
 	CCameraShadow* aCameraShadow[10];

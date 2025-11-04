@@ -1,6 +1,8 @@
 #include "SpriteWidget.h"
 #include "kya.h"
 #include "MathOps.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 
 
 edF32VECTOR2 FLOAT_ARRAY_00448cd0 = { 1.0f, 1.0f };

@@ -451,7 +451,7 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, voi
 		default:
 			classId;
 			IMPLEMENTATION_GUARD();
-			ACTOR_LOG(LogLevel::Info, "Unimplemented class: 0x{:x} ({})", classId, classId);
+			ACTOR_LOG(LogLevel::Info, "Unimplemented class: 0x{:x} ({})", (int)classId, (int)classId);
 
 			if (pAlloc != (void*)0x0) { CActorSKIP_HACK* pType = reinterpret_cast<CActorSKIP_HACK*>(pAlloc); delete[] pType; return 0x0; }
 			*outSize = sizeof(CActorSKIP_HACK);

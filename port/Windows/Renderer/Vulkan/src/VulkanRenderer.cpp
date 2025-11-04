@@ -295,7 +295,6 @@ private:
 
 	void createSyncObjects() {
 		imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
 		VkSemaphoreCreateInfo semaphoreInfo{};
@@ -307,9 +306,16 @@ private:
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			if (vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-				vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &renderFinishedSemaphores[i]) != VK_SUCCESS ||
 				vkCreateFence(device, &fenceInfo, GetAllocator(), &inFlightFences[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create synchronization objects for a frame!");
+			}
+		}
+
+		// Create renderFinishedSemaphores per swapchain image
+		renderFinishedSemaphores.resize(swapChainImages.size());
+		for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
+			if (vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create renderFinished semaphore for swapchain image!");
 			}
 		}
 	}
@@ -361,8 +367,12 @@ private:
 		vkDestroyBuffer(device, vertexBuffer, GetAllocator());
 		vkFreeMemory(device, vertexBufferMemory, GetAllocator());
 
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		// Destroy renderFinished semaphores per swapchain image
+		for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
 			vkDestroySemaphore(device, renderFinishedSemaphores[i], GetAllocator());
+		}
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], GetAllocator());
 			vkDestroyFence(device, inFlightFences[i], GetAllocator());
 		}
@@ -780,7 +790,8 @@ public:
 			submitInfo.commandBufferCount = commandBufferList.size();
 			submitInfo.pCommandBuffers = commandBufferList.data();
 			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = &renderFinishedSemaphores[currentFrame];
+			// Use the renderFinished semaphore for the current swapchain image
+			submitInfo.pSignalSemaphores = &renderFinishedSemaphores[presentImageIndex];
 
 			vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
 		}
@@ -792,7 +803,8 @@ public:
 			VkPresentInfoKHR presentInfo{};
 			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 			presentInfo.waitSemaphoreCount = 1;
-			presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
+			// Wait on the renderFinished semaphore for the current swapchain image
+			presentInfo.pWaitSemaphores = &renderFinishedSemaphores[presentImageIndex];
 			presentInfo.swapchainCount = 1;
 			presentInfo.pSwapchains = &swapChain;
 			presentInfo.pImageIndices = &presentImageIndex;

@@ -1152,9 +1152,9 @@ int CBehaviourEventGen::ManageEarthQuakeB(BHVR_PTMF* pPMTF, EVG_PHASE phase, voi
 			pByteCode->GetF32();
 			//CAM_QUAKE::FUN_00194760(0.0f, 0.0f, 0.0f, pByteCode->GetF32(), &this->field_0x70);
 			this->angleRotY = pByteCode->GetU32();
-			(this->field_0x70).field_0x28 = pByteCode->GetF32();
-			(this->field_0x70).field_0x24 = pByteCode->GetF32();
-			(this->field_0x70).field_0x2c = pByteCode->GetF32();
+			(this->field_0x70).attackDuration = pByteCode->GetF32();
+			(this->field_0x70).sustainDuration = pByteCode->GetF32();
+			(this->field_0x70).decayDuration = pByteCode->GetF32();
 			IMPLEMENTATION_GUARD();
 			//CAM_QUAKE::FUN_00194740(0.0f, 0.0f, 0.0f, 0.0f, &this->field_0x70);
 			//CAM_QUAKE::SetMode(&this->field_0x70, 0x100);
@@ -1187,9 +1187,9 @@ int CBehaviourEventGen::ManageEarthQuakeC(BHVR_PTMF* pPMTF, EVG_PHASE phase, voi
 		}
 
 		for (; uVar1 != 0; uVar1 = uVar1 - 1) {
-			(this->field_0xe0).field_0x28 = pByteCode->GetF32();
-			(this->field_0xe0).field_0x24 = pByteCode->GetF32();
-			(this->field_0xe0).field_0x2c = pByteCode->GetF32();
+			(this->field_0xe0).attackDuration = pByteCode->GetF32();
+			(this->field_0xe0).sustainDuration = pByteCode->GetF32();
+			(this->field_0xe0).decayDuration = pByteCode->GetF32();
 
 			this->field_0x110 = pByteCode->GetF32();
 			this->field_0x114 = pByteCode->GetF32();

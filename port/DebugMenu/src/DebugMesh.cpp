@@ -2,6 +2,7 @@
 #include <imgui.h>
 
 #include "ed3D.h"
+#include "ed3D/ed3DG3D.h"
 #include "Mesh.h"
 #include "FileManager3D.h"
 #include "DebugHelpers.h"

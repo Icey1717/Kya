@@ -55,8 +55,12 @@
 #include "DebugMemory.h"
 #include "DebugScene.h"
 #include "DebugRendering.h"
+#include "DebugTutorial.h"
+#include "ed3D/ed3DG2D.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
+
+std::unique_ptr<std::vector<Debug::Menu>> Debug::MenuRegisterer::menus;
 
 extern bool bOther;
 
@@ -324,19 +328,7 @@ namespace Debug {
 		ImGui::End();
 	}
 
-	struct Menu {
-		void Show() {
-			if (bOpen) {
-				ShowFunction(&bOpen);
-			}
-		}
-
-		std::string name{};
-		std::function<void(bool*)> ShowFunction;
-		bool bOpen{};
-	};
-
-	static std::vector<Menu> gMenus = 
+	std::vector<Menu> gOldMenus = 
 	{
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
@@ -358,10 +350,11 @@ namespace Debug {
 		{"Scenario", Debug::Scenario::ShowMenu, true },
 		{"Save/Load", Debug::SaveLoad::ShowMenu, true },
 		{"Scene", Debug::Scene::ShowMenu, true },
+		{"Tutorial", Debug::Tutorial::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {
-		for (auto& currentMenu : gMenus) {
+		for (auto& currentMenu : MenuRegisterer::GetMenus()) {
 			action(currentMenu);
 		}
 	}
@@ -434,23 +427,26 @@ void DebugMenu::Init()
 
 	Debug::Scene::Startup();
 	Debug::Rendering::Init();
+
+	// Register old menus
+	for (const auto& menu : Debug::gOldMenus) {
+		Debug::MenuRegisterer registerer(menu.name, menu.ShowFunction);
+		registerer.GetMenus().back().bOpen = menu.bOpen;
+	}
 }
 
-static Input::InputFunctions gInputFunctions;
-
-Input::InputFunctions& DebugMenu::GetInputFunctions()
+void DebugMenu::AddKeyboardMouseSupport()
 {
-	gInputFunctions.keyPressed = GetKeyPressed;
-	gInputFunctions.keyReleased = GetKeyReleased;
-	gInputFunctions.keyAnalog = GetKeyAnalog;
+	Input::gInputFunctions.keyPressed = GetKeyPressed;
+	Input::gInputFunctions.keyReleased = GetKeyReleased;
+	Input::gInputFunctions.keyAnalog = GetKeyAnalog;
 
-	gInputFunctions.mousePressed = GetMousePressed;
-	gInputFunctions.mouseReleased = GetMouseReleased;
-	gInputFunctions.mouseAnalog = GetMouseAnalog;
-	return gInputFunctions;
+	Input::gInputFunctions.mousePressed = GetMousePressed;
+	Input::gInputFunctions.mouseReleased = GetMouseReleased;
+	Input::gInputFunctions.mouseAnalog = GetMouseAnalog;
 }
 
-std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
+static std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_START,				ImGuiKey_Enter },
 	{ ROUTE_L2,					ImGuiKey_Q },		// 0x0
 	{ ROUTE_R2,					ImGuiKey_W },		// 0x1
@@ -468,6 +464,7 @@ std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_L_ANALOG_LEFT,		ImGuiKey_D },
 	{ ROUTE_L_ANALOG_RIGHT,		ImGuiKey_T },
 };
+
 
 bool DebugMenu::GetKeyPressed(uint32_t routeId)
 {
@@ -533,16 +530,16 @@ namespace Debug::Camera {
 float DebugMenu::GetMouseAnalog(uint32_t routeId)
 {
 	float delta = 0.0f;
-
+		
 	if (routeId == MOUSE_INPUT_DX) {
 		delta = Debug::Camera::gMouseDeltaX;
-	}
+		}
 	else if (routeId == MOUSE_INPUT_DY) {
 		delta = Debug::Camera::gMouseDeltaY;
 	}
 	else if (routeId == MOUSE_INPUT_WHEEL) {
 		delta = ImGui::GetIO().MouseWheel;
-	}
+}
 
 	return delta;
 }

@@ -10,6 +10,7 @@
 #include "LargeObject.h"
 #include "CameraViewManager.h"
 #include "ActorWeapon.h"
+#include "ed3D/ed3DG2D.h"
 
 #define FIGHTER_LOG(level, format, ...) MY_LOG_CATEGORY("Fighter", level, format, ##__VA_ARGS__)
 
@@ -5520,6 +5521,25 @@ bool CActorFighter::FUN_001740a0()
 	return bVar2;
 }
 
+void CActorFighter::UpdateScale_0030ac50(edF32VECTOR3* pNewScale)
+{
+	edF32VECTOR4* v0;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
+
+	SetScaleVector(pNewScale->x, pNewScale->y, pNewScale->z);
+
+	local_10 = (this->fighterAnatomyZones).field_0x0;
+	(this->fighterAnatomyZones).field_0x0.xyz = (this->fighterAnatomyZones).field_0x10.xyz * *pNewScale;
+	(this->fighterAnatomyZones).field_0x0.w = 1.0f;
+	edF32Matrix4FromEulerSoft(&eStack80, &this->rotationEuler.xyz, "XYZ");
+	edF32Matrix4MulF32Vector4Hard(&this->fighterAnatomyZones.field_0x0, &eStack80, &this->fighterAnatomyZones.field_0x0);
+	edF32Vector4SubHard(&local_10, &local_10, &this->fighterAnatomyZones.field_0x0);
+	v0 = &this->currentLocation;
+	edF32Vector4AddHard(v0, v0, &local_10);
+
+	return;
+}
 
 void CActorFighter::PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5)
 {
@@ -8548,7 +8568,6 @@ void StaticMeshComponentAdvanced::ResetInternal(int textureIndex, int meshIndex)
 }
 
 void StaticMeshComponentAdvanced::Reset()
-
 {
 	edF32VECTOR4* peVar1;
 
@@ -8558,14 +8577,13 @@ void StaticMeshComponentAdvanced::Reset()
 	}
 
 	this->field_0x64 = 0;
-	this->field_0x70 = 0;
+	this->field_0x70 = 0.0f;
 	this->field_0x6c = 0;
 	this->field_0x68 = 0;
 
 	if (this->instanceIndex == 0) {
 		if (HasMesh() != false) {
-			IMPLEMENTATION_GUARD(
-			StaticMeshComponent::Unload_00114e80((StaticMeshComponent*)this, (ed_3D_Scene*)0x0);)
+			Term((ed_3D_Scene*)0x0);
 		}
 
 		this->pMeshTransformParent = (edNODE*)0x0;
@@ -8609,6 +8627,191 @@ bool StaticMeshComponentAdvanced::HasMesh()
 	}
 
 	return bVar1;
+}
+
+void StaticMeshComponentAdvanced::Func_0x28(float param_1, float param_2)
+{
+	edNODE* pNode;
+	edF32VECTOR4* peVar1;
+
+	if (((HasMesh() == false) && (this->field_0x64 != 2)) && (this->field_0x64 != 1)) {
+		peVar1 = GetTextureAnimSpeedNormalExtruder();
+		if (param_2 == 0.0f) {
+			if (peVar1 != (edF32VECTOR4*)0x0) {
+				peVar1->z = 0.0f;
+				peVar1->w = 0.0f;
+			}
+
+			this->field_0x64 = 2;
+		}
+		else {
+			if (peVar1 != (edF32VECTOR4*)0x0) {
+				this->field_0x74 = peVar1->x;
+				this->field_0x78 = peVar1->y;
+				peVar1->x = 0.0f;
+				peVar1->y = 0.0f;
+				peVar1->z = 0.0f;
+				peVar1->w = 0.0f;
+			}
+
+			this->field_0x64 = 1;
+		}
+
+		this->field_0x6c = param_1;
+		this->field_0x70 = param_2;
+		this->field_0x68 = 0.0f;
+
+		if (this->instanceIndex == 0) {
+			Init((ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (ed_3d_hierarchy_setup*)0x0, (char*)0x0);
+		}
+		else {
+			SetHidden((ed_3D_Scene*)0x0);
+		}
+
+		pNode = this->pMeshTransformParent;
+		if (pNode != (edNODE*)0x0) {
+			ed3DHierarchyNodeSetAlpha(pNode, 0);
+		}
+	}
+
+	return;
+}
+
+void StaticMeshComponentAdvanced::Func_0x2c(float param_1)
+{
+	edNODE* pNode;
+	bool bVar1;
+	byte alpha;
+	float fVar2;
+
+	if (HasMesh() == true) {
+		if (param_1 == 0.0f) {
+			if (this->instanceIndex == 0) {
+				if (HasMesh() != false) {
+					Term((ed_3D_Scene*)0x0);
+				}
+			}
+			else {
+				SetVisible((ed_3D_Scene*)0x0);
+			}
+		}
+		else {
+			if (this->field_0x64 != 3) {
+				if (this->field_0x64 == 2) {
+					this->field_0x68 = param_1 * (1.0f - this->field_0x68 / this->field_0x6c);
+				}
+				else {
+					this->field_0x68 = 0.0f;
+				}
+
+				this->field_0x64 = 3;
+				this->field_0x6c = param_1;
+				pNode = this->pMeshTransformParent;
+				fVar2 = (1.0f - this->field_0x68 / this->field_0x6c) * 128.0f;
+				if (pNode != (edNODE*)0x0) {
+					if (fVar2 < 2.147484e+09f) {
+						alpha = (byte)(int)fVar2;
+					}
+					else {
+						alpha = (byte)(int)(fVar2 - 2.147484e+09f);
+					}
+
+					ed3DHierarchyNodeSetAlpha(pNode, alpha);
+				}
+			}
+		}
+	}
+	return;
+}
+
+void StaticMeshComponentAdvanced::Func_0x30(edF32MATRIX4* pMatrix, float param_3)
+{
+	int iVar1;
+	edNODE* peVar2;
+	bool bVar3;
+	edF32VECTOR4* peVar5;
+	byte bVar6;
+	float fVar7;
+
+	if (HasMesh() != false) {
+		this->field_0x68 = this->field_0x68 + GetTimer()->cutsceneDeltaTime;
+		iVar1 = this->field_0x64;
+
+		if (iVar1 == 3) {
+			if (this->field_0x6c <= this->field_0x68) {
+				this->field_0x64 = 0;
+				fVar7 = 0.0f;
+
+				if (this->instanceIndex == 0) {
+					if (HasMesh() != false) {
+						Term((ed_3D_Scene*)0x0);
+					}
+				}
+				else {
+					SetVisible((ed_3D_Scene*)0x0);
+				}
+			}
+			else {
+				fVar7 = 1.0f - this->field_0x68 / this->field_0x6c;
+			}
+
+			if ((HasMesh() != false) && (peVar2 = this->pMeshTransformParent, peVar2 != (edNODE*)0x0))
+			{
+				fVar7 = fVar7 * 128.0f;
+				if (fVar7 < 2.147484e+09f) {
+					bVar6 = (byte)(int)fVar7;
+				}
+				else {
+					bVar6 = (byte)(int)(fVar7 - 2.147484e+09f);
+				}
+
+				ed3DHierarchyNodeSetAlpha(peVar2, bVar6);
+			}
+		}
+		else {
+			if (iVar1 == 2) {
+				fVar7 = 1.0f;
+
+				if (this->field_0x6c <= this->field_0x68) {
+					this->field_0x64 = 0;
+				}
+				else {
+					fVar7 = this->field_0x68 / this->field_0x6c;
+				}
+
+				peVar2 = this->pMeshTransformParent;
+				if (peVar2 != (edNODE*)0x0) {
+					fVar7 = fVar7 * 128.0f;
+					if (fVar7 < 2.147484e+09f) {
+						bVar6 = (byte)(int)fVar7;
+					}
+					else {
+						bVar6 = (byte)(int)(fVar7 - 2.147484e+09f);
+					}
+
+					ed3DHierarchyNodeSetAlpha(peVar2, bVar6);
+				}
+			}
+			else {
+				if ((iVar1 == 1) && (this->field_0x70 <= this->field_0x68)) {
+					peVar5 = GetTextureAnimSpeedNormalExtruder();
+					if (peVar5 != (edF32VECTOR4*)0x0) {
+						peVar5->x = this->field_0x74;
+						peVar5->y = this->field_0x78;
+					}
+
+					this->field_0x64 = 2;
+					this->field_0x68 = 0.0f;
+				}
+			}
+		}
+
+		if (pMatrix != (edF32MATRIX4*)0x0) {
+			SetMatrix(pMatrix);
+		}
+	}
+
+	return;
 }
 
 bool StaticMeshComponentAdvanced::IsValid()

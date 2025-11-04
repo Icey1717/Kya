@@ -11,6 +11,8 @@
 #endif
 
 #include "ed3D.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 #include "DlistManager.h"
 #include "LargeObject.h"
 #include "edVideo/VideoA.h"
@@ -547,11 +549,7 @@ ed_g2d_material* gFrameBufMaterialPtr;
 struct
 {
 	// Header
-	ushort field_0x0;
-	ushort field_0x2;
-	int field_0x4;
-	int field_0x8;
-	Hash_4 hash;
+	GXD_FileHeader fileHeader;
 
 	ed_Chunck TWOD;
 	ed_Chunck MATA;
@@ -576,25 +574,25 @@ void edDlistFrameBufMaterialInit(void)
 {
 	// Construct a whole .G2D file from scratch.
 
-	gFrameBufG2D.field_0x0 = 1;
-	gFrameBufG2D.field_0x2 = 0;
-	gFrameBufG2D.field_0x4 = 5;
-	gFrameBufG2D.field_0x8 = 0x10;
-	gFrameBufG2D.hash.number = 0x4432472e; // .G2D
+	gFrameBufG2D.fileHeader.field_0x0 = 1;
+	gFrameBufG2D.fileHeader.field_0x2 = 0;
+	gFrameBufG2D.fileHeader.flags = 5;
+	gFrameBufG2D.fileHeader.field_0x8 = 0x10;
+	gFrameBufG2D.fileHeader.hash = HASH_CODE_T2D; // .G2D
 
-	gFrameBufG2D.TWOD.hash = 0x2a44322a; // *2D*
+	gFrameBufG2D.TWOD.hash = HASH_CODE_2D; // *2D*
 	gFrameBufG2D.TWOD.field_0x4 = 1;
 	gFrameBufG2D.TWOD.field_0x6 = 0;
 	gFrameBufG2D.TWOD.size = 0xd0;
 	gFrameBufG2D.TWOD.nextChunckOffset = 0x10;
 
-	gFrameBufG2D.MATA.hash = 0x4154414d; // MATA
+	gFrameBufG2D.MATA.hash = HASH_CODE_MATA; // MATA
 	gFrameBufG2D.MATA.field_0x4 = 1;
 	gFrameBufG2D.MATA.field_0x6 = 0;
 	gFrameBufG2D.MATA.size = 0x60;
 	gFrameBufG2D.MATA.nextChunckOffset = 0x10;
 
-	gFrameBufG2D.HASH.hash = 0x48534148; // HASH
+	gFrameBufG2D.HASH.hash = HASH_CODE_HASH; // HASH
 	gFrameBufG2D.HASH.field_0x4 = 1;
 	gFrameBufG2D.HASH.field_0x6 = 0;
 	gFrameBufG2D.HASH.size = 0x20;
@@ -605,7 +603,7 @@ void edDlistFrameBufMaterialInit(void)
 	gFrameBufMaterialPtr = &gFrameBufG2D.material;
 	gFrameBufG2D.hashCode.pData = STORE_SECTION(&gFrameBufG2D.MAT);
 
-	gFrameBufG2D.MAT.hash = 0x2e54414d; // MAT.
+	gFrameBufG2D.MAT.hash = HASH_CODE_MAT; // MAT.
 	gFrameBufG2D.MAT.field_0x4 = 1;
 	gFrameBufG2D.MAT.field_0x6 = 0;
 	gFrameBufG2D.MAT.size = 0x20;
@@ -620,13 +618,13 @@ void edDlistFrameBufMaterialInit(void)
 
 	gFrameBufG2D.aLayers[0] = STORE_SECTION(&gFrameBufG2D.LAY);
 
-	gFrameBufG2D.LAYA.hash = 0x4159414c; // LAYA
+	gFrameBufG2D.LAYA.hash = HASH_CODE_LAYA; // LAYA
 	gFrameBufG2D.LAYA.field_0x4 = 1;
 	gFrameBufG2D.LAYA.field_0x6 = 0;
 	gFrameBufG2D.LAYA.size = 0x50;
 	gFrameBufG2D.LAYA.nextChunckOffset = 0x10;
 
-	gFrameBufG2D.LAY.hash = 0x2e59414c; // LAY.
+	gFrameBufG2D.LAY.hash = HASH_CODE_LAY; // LAY.
 	gFrameBufG2D.LAY.field_0x4 = 1;
 	gFrameBufG2D.LAY.field_0x6 = 1;
 	gFrameBufG2D.LAY.size = 0x40;
@@ -776,8 +774,7 @@ void edDListPatchGifTag2D(void)
 void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->nbLayers) {
-		int* hash = reinterpret_cast<int*>(pMAT_Internal + 1);
-		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[index]);
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 		pLayer->flags_0x0 |= flag;

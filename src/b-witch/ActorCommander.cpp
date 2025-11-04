@@ -574,12 +574,12 @@ void CActorCommander::CheckExorcism()
 
 			local_20.msgId = 0xe;
 			local_20.time = this->field_0x1dc;
-			fVar2 = pWolfen->field_0xb84 - pWolfen->field_0xb88;
+			fVar2 = pWolfen->nbRequiredMagicForExorcism - pWolfen->nbConsumedMagicForExorcism;
 			if (local_20.time < fVar2) {
 				this->field_0x1dc = 0.0f;
 			}
 			else {
-				this->field_0x1dc = this->field_0x1dc - (pWolfen->field_0xb84 - pWolfen->field_0xb88);
+				this->field_0x1dc = this->field_0x1dc - (pWolfen->nbRequiredMagicForExorcism - pWolfen->nbConsumedMagicForExorcism);
 				local_20.time = fVar2;
 			}
 			DoMessage(pWolfen, (ACTOR_MESSAGE)0x1a, &local_20);
@@ -934,8 +934,29 @@ void CActorCommander::FUN_001717b0(CCameraGame* pCamera)
 
 bool CActorCommander::FUN_001710c0()
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	bool bVar1;
+	int iVar3;
+	bool bVar4;
+
+	bVar4 = false;
+	if (this->field_0x1e0 == 0) {
+		iVar3 = 0;
+
+		if (0 < this->nbTeams) {
+			do {
+				bVar1 = this->aTeamElt[iVar3].pEnemyActor->FUN_001740a0();
+				if (bVar1 != false) {
+					return true;
+				}
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < this->nbTeams);
+		}
+	}
+	else {
+		bVar4 = true;
+	}
+
+	return bVar4;
 }
 
 // Should be in: D:/Projects/b-witch/ActorCmd.cpp

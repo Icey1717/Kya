@@ -205,6 +205,7 @@ public:
 	CSplashScreen();
 
 	bool Init(float param_1, char* filePath);
+	void Term();
 	bool Manage(uint param_2, bool param_3, bool param_4);
 	void SetDrawLocation(float x, float y, float z, float w);
 

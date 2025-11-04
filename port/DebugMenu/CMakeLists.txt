@@ -48,6 +48,8 @@ set(SOURCES
 	"src/DebugMesh.cpp"
 	"src/DebugSaveLoad.h"
 	"src/DebugSaveLoad.cpp"
+	"src/DebugTutorial.h"
+	"src/DebugTutorial.cpp"
 	"src/DebugWolfen.h"
 	"src/DebugWolfen.cpp"
 	"src/DebugRendererVulkan.cpp"

@@ -8,6 +8,7 @@
 #include "MathOps.h"
 #include "DlistManager.h"
 #include "ActorHero.h"
+#include "ed3D/ed3DG3D.h"
 
 void CActorTeleporter::Create(ByteCode* pByteCode)
 {

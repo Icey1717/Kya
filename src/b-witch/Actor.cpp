@@ -28,6 +28,8 @@
 #include "ActorMoney.h"
 #include "ActorBonus.h"
 #include "ActorHero.h"
+#include "ed3D/ed3DG2D.h"
+#include "ed3D/ed3DG3D.h"
 
 CPathFollowReader::CPathFollowReader()
 {
@@ -2701,8 +2703,8 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 		}
 
 		if (pTextureInfo != (ed_g2d_manager*)0x0) {
-			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo);
-			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo_00);
+			ed3DHierarchyBankMatLinkG2D(&this->p3DHierNode->base, pTextureInfo);
+			ed3DHierarchyBankMatLinkG2D(&this->p3DHierNode->base, pTextureInfo_00);
 		}
 
 		if (((count != 0) && (pHier = this->p3DHierNode, pHier != (ed_3d_hierarchy_node*)0x0)) &&

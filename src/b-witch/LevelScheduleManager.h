@@ -456,6 +456,8 @@ public:
 	uint SaveGame_SaveToBuffer(SaveBigAlloc* pSaveData, SaveDataDesc* pSaveDesc);
 	void SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size);
 
+	void Level_WolfenChanged();
+
 public:
 
 	static CLevelScheduler* gThis;

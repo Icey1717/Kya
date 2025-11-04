@@ -1,6 +1,7 @@
 #include "DebugMeshViewer.h"
 
 #include "ed3D.h"
+#include "ed3D/ed3DG2D.h"
 #include "port/vu1_emu.h"
 #include "ed3DScratchPadGlobalVar.h"
 #include "port/pointer_conv.h"

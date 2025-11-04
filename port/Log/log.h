@@ -95,8 +95,9 @@ public:
 		}
 
 		// Log to async log and the specified log.
-		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
-		pLog->second.logPtr->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
+		// Use fmt::runtime to wrap the runtime format string
+		asyncLog->log(LogLevelToSpdLog(level), fmt::runtime(format), std::forward<Args>(args)...);
+		pLog->second.logPtr->log(LogLevelToSpdLog(level), fmt::runtime(format), std::forward<Args>(args)...);
 	}
 
 	inline LogMap& GetLogs() { return logs; }
