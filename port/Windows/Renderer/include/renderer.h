@@ -292,6 +292,7 @@ namespace Renderer
 			None,
 			Depth,
 			ColorDepth,
+			Color,
 		};
 
 		void UpdateRenderPassKey(EClearMode clearMode);

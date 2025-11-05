@@ -235,27 +235,33 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 
 	pPktB = pPktA + 5;
 
-	Renderer::Native::EClearMode clearMode = Renderer::Native::EClearMode::ColorDepth;
-
-	if ((pViewport->clearColor.a == 3)) {
-		clearMode = Renderer::Native::EClearMode::ColorDepth;
-		VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR DEPTH COLOR");
-	}
-
-	if ((pViewport->clearColor.a == 2)) {
-		clearMode = Renderer::Native::EClearMode::Depth;
-		VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR DEPTH");
-	}
-
-	if ((pViewport->clearColor.a <= 1)) {
-		clearMode = Renderer::Native::EClearMode::None;
-		VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR NONE");
-	}
-
-	Renderer::Native::UpdateRenderPassKey(clearMode);
-
 	if (((pViewport->clearColor.a & 2) != 0) || ((pViewport->clearColor.a & 1) != 0)) {
 		VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR");
+
+		Renderer::Native::EClearMode clearMode = Renderer::Native::EClearMode::ColorDepth;
+
+		if (pViewport->clearColor.a == 3) {
+			clearMode = Renderer::Native::EClearMode::ColorDepth;
+			VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR DEPTH COLOR");
+		}
+
+		if (pViewport->clearColor.a == 2) {
+			clearMode = Renderer::Native::EClearMode::Depth;
+			VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR DEPTH");
+		}
+
+		if (pViewport->clearColor.a = 1) {
+			clearMode = Renderer::Native::EClearMode::Depth;
+			VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR DEPTH 2");
+		}
+
+		if (pViewport->clearMask == 0x0)
+		{
+			clearMode = Renderer::Native::EClearMode::None;
+			VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR NONE");
+		}
+
+		Renderer::Native::UpdateRenderPassKey(clearMode);
 
 		// FRAME
 		pPktB->cmdA = SCE_GS_SET_FRAME(

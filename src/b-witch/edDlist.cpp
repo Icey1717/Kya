@@ -461,7 +461,7 @@ void edDListInterrupt(int callingID, int eventID, char* pRenderTaskData)
 	}
 	else {
 		if (callingID == ED_SYSTEM_HANDLER_VIDEO) {
-			if (eventID == 10) {
+			if (eventID == ED_HANDLER_VIDEO_SEND_2D) {
 				edDListSend2DList(gDList_2D[gCurRenderState]);
 				DAT_00449660 = 1;
 			}

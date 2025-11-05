@@ -254,7 +254,6 @@ namespace Renderer
 		static std::unordered_map<RenderPassKey, RenderStage> gRenderPass;
 		static VkCommandPool gCommandPool;
 		static CommandBufferVector gCommandBuffers;
-		static CommandBufferVector gCommandBuffersDummy;
 
 		static DynamicBuffer<glm::mat4, gMaxInstances> gModelBuffer;
 
@@ -313,6 +312,7 @@ namespace Renderer
 		static std::vector<glm::mat4> gAnimationMatrices;
 
 		RenderPassKey gCachedRenderPassKey;
+		bool gRenderPassDirty = true;
 
 		RenderPassKey RenderPassKey::Empty = RenderPassKey{ EClearMode::ColorDepth };
 
@@ -324,6 +324,7 @@ namespace Renderer
 			glm::mat4 viewMatrix;
 
 			RenderPassKey renderPassKey;
+			bool bRenderPassDirty = true;
 
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
@@ -346,6 +347,8 @@ namespace Renderer
 			// When true, is a fake second draw that only draws the Z buffer.
 			bool bIsAfailZOnly = false;
 			bool bIsZMask = false;
+
+			const VkDescriptorSet* pDescriptorSets = nullptr;
 		};
 
 		static std::optional<Draw> gCurrentDraw;
@@ -574,7 +577,7 @@ namespace Renderer
 		public:
 			void RecordDrawCommand(Draw& drawCommand)
 			{
-				if (!bInRenderPass || drawCommand.renderPassKey != currentRenderPassKey) {
+				if (!bInRenderPass || drawCommand.bRenderPassDirty) {
 					if (bInRenderPass) {
 						const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 						Debug::Reset(cmd);
@@ -635,7 +638,7 @@ namespace Renderer
 							drawCommandIndex * gAlphaBuffer.GetDynamicAlignment(),
 						};
 
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), dynamicOffsets.size(), dynamicOffsets.data());
+						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, drawCommand.pDescriptorSets, dynamicOffsets.size(), dynamicOffsets.data());
 
 						vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 
@@ -706,6 +709,8 @@ namespace Renderer
 		{
 			gCurrentDraw = Draw{};
 			gCurrentDraw->renderPassKey = gCachedRenderPassKey;
+			gCurrentDraw->bRenderPassDirty = gRenderPassDirty;
+			gRenderPassDirty = false;
 		}
 
 		static void RecordBeginCommandBuffer()
@@ -1010,11 +1015,11 @@ namespace Renderer
 			VkAttachmentDescription depthAttachment{};
 			depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
 			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			depthAttachment.loadOp = key.clearMode == EClearMode::None ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depthAttachment.loadOp = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Color) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depthAttachment.initialLayout = key.clearMode == EClearMode::None ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+			depthAttachment.initialLayout = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Color) ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
 			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
 
 			VkAttachmentReference depthAttachmentRef{};
@@ -1385,12 +1390,13 @@ void Renderer::Native::Setup()
 	CreateRenderStage(key, "Native Render Pass CM Depth");
 	key.clearMode = EClearMode::ColorDepth;
 	CreateRenderStage(key, "Native Render Pass CM ColorDepth");
+	key.clearMode = EClearMode::Color;
+	CreateRenderStage(key, "Native Render Pass CM Color");
 
 	CreateFramebuffer();
 	CreateFramebufferSampler();
 	gCommandPool = CreateCommandPool("Native Renderer Command Pool");
 	CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
-	CreateCommandBuffers(gCommandPool, gCommandBuffersDummy, "Native Renderer Command Buffer Dummy");
 
 	gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4));
 
@@ -1491,6 +1497,8 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 	if (gCurrentDraw) {
 		gCurrentDraw->pTexture = pTexture;
 
+		gCurrentDraw->pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(gRenderPass[gCachedRenderPassKey].GetPipeline()).GetSet(GetCurrentFrame());
+
 		gCurrentDraw->projMatrix = gCachedProjMatrix;
 		gCurrentDraw->viewMatrix = gCachedViewMatrix;
 
@@ -1580,4 +1588,8 @@ void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMode)
 {
 	gCachedRenderPassKey.clearMode = clearMode;
+
+	if (clearMode != EClearMode::None) {
+		gRenderPassDirty = true;
+	}
 }

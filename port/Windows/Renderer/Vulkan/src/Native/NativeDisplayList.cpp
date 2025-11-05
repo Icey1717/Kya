@@ -416,7 +416,6 @@ namespace Renderer::Native::DisplayList
 			Renderer::Debug::EndLabel(GetCommandBuffer());
 		}
 
-		gVertexBuffers.Reset();
 		gBoundPipeline = nullptr;
 	}
 }
