@@ -709,7 +709,7 @@ void CNewFx::Kill()
 		curFlags = this->flags;
 		if ((curFlags & 0x100) != 0) {
 			if (((this->boneId != 0) && ((curFlags & 0x200) == 0)) && ((curFlags & 0x400) == 0)) {
-				this->pActor->pAnimationController->UnRegisterBone(this->boneId);
+				static_cast<CActor*>(this->pActor)->pAnimationController->UnRegisterBone(this->boneId);
 			}
 		}
 
@@ -907,6 +907,66 @@ void CNewFx::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 	return;
 }
 
+void CNewFx::UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition)
+{
+	CNewFx* pFx;
+
+	this->flags = this->flags | 0x80;
+	if ((newFlags & 1) != 0) {
+		this->flags = this->flags | 0x200;
+	}
+
+	if ((newFlags & 2) != 0) {
+		this->flags = this->flags | 0x1000;
+	}
+
+	if ((newFlags & 4) != 0) {
+		this->flags = this->flags | 0x2000;
+	}
+
+	if ((newFlags & 8) != 0) {
+		this->flags = this->flags | 0x4000;
+	}
+
+	if ((newFlags & 0x10) != 0) {
+		this->flags = this->flags | 0x8000;
+	}
+
+	if ((newFlags & 0x40) == 0) {
+		if ((this->flags & 0x1000) != 0) {
+			this->position = *pNewPosition;
+		}
+	}
+	else {
+		this->flags = this->flags | 0x400;
+
+		if ((this->flags & 0x1000) != 0) {
+			pFx = this->pSon;
+			this->position = pFx->position;
+		}
+
+		if ((this->flags & 0x2000) != 0) {
+			pFx = this->pSon;
+			this->rotationEuler = pFx->rotationEuler;
+		}
+
+		if ((this->flags & 0x4000) != 0) {
+			pFx = this->pSon;
+			this->scale = pFx->scale;
+		}
+
+		if ((this->flags & 0x8000) != 0) {
+			pFx = this->pSon;
+			this->instanceIndex = pFx->instanceIndex;
+		}
+	}
+
+	this->pActor = pNewPosition;
+
+	return;
+
+}
+
 void CNewFx::Manage()
 {
 	uint uVar1;
@@ -932,7 +992,7 @@ void CNewFx::Manage()
 			if ((uVar1 & 0x200) == 0) {
 				if ((uVar1 & 0x100) == 0) {
 					if (((uVar1 & 0x80) != 0) && ((uVar1 & 0x1000) != 0)) {
-						pCVar3 = this->pActor;
+						pCVar3 = static_cast<CActor*>(this->pActor);
 						IMPLEMENTATION_GUARD(
 						(this->position).x = (float)pCVar3->pVTable;
 						(this->position).y = (float)pCVar3->sectorId;
@@ -944,22 +1004,22 @@ void CNewFx::Manage()
 					if ((uVar1 & 0x800) != 0) {
 						if (this->boneId == 0) {
 							if ((uVar1 & 0x1000) != 0) {
-								pCVar3 = this->pActor;
+								pCVar3 = static_cast<CActor*>(this->pActor);
 								this->position = pCVar3->currentLocation;
 							}
 
 							if ((this->flags & 0x2000) != 0) {
-								pCVar3 = this->pActor;
+								pCVar3 = static_cast<CActor*>(this->pActor);
 								this->rotationEuler = pCVar3->rotationEuler;
 								(this->rotationEuler).w = 0.0f;
 							}
 							if ((this->flags & 0x4000) != 0) {
-								pCVar3 = this->pActor;
+								pCVar3 = static_cast<CActor*>(this->pActor);
 								this->scale = pCVar3->scale;
 							}
 						}
 						else {
-							pCVar3 = this->pActor;
+							pCVar3 = static_cast<CActor*>(this->pActor);
 							m1 = pCVar3->pAnimationController->GetCurBoneMatrix(this->boneId);
 							edF32Matrix4MulF32Matrix4Hard(&local_40, m1, &pCVar3->pMeshTransform->base.transformA);
 							if ((this->flags & 0x1000) != 0) {

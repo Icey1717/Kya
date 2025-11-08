@@ -1084,6 +1084,31 @@ void CActorManager::RemoveLinkedActor(_linked_actor* pLinkedActor)
 	return;
 }
 
+int CActorManager::GetClassActorsWithCriterion(CActorsTable* pOutTable, int classId, CActor* pExcludeActor, CriterionActorFunc* pCriterion)
+{
+	CActor** pOutActors;
+	CClassInfo* pClassInfo;
+	CActor* pActor;
+	int curActorIndex;
+
+	pOutActors = pOutTable->aEntries;
+	pClassInfo = &this->aClassInfo[classId];
+	curActorIndex = 0;
+	if (0 < pClassInfo->totalCount) {
+		do {
+			pActor = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curActorIndex * pClassInfo->size));
+
+			if ((pActor != pExcludeActor) && (pCriterion(pExcludeActor, pActor))) {
+				pOutTable->Add(pActor);
+			}
+
+			curActorIndex = curActorIndex + 1;
+		} while (curActorIndex < pClassInfo->totalCount);
+	}
+
+	return pOutTable->nbEntries;
+}
+
 CCluster::CCluster()
 {
 	this->ppNodes = (CClusterNode**)0x0;
@@ -1341,7 +1366,7 @@ CClusterNode* CCluster::NewNode(CActor* pActor)
 struct ClusterCriterionCallbackParams
 {
 	CActorsTable* pTable;
-	CritenionFunc* pFunc;
+	CriterionFunc* pFunc;
 	void* pData;
 };
 
@@ -1360,7 +1385,7 @@ void gClusterCallback_GetActorsWithCriterion(CActor* pActor, void* pData)
 	return;
 }
 
-bool CCluster::GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CritenionFunc* pFunc, void* pData)
+bool CCluster::GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CriterionFunc* pFunc, void* pData)
 {
 	ClusterCriterionCallbackParams local_10;
 

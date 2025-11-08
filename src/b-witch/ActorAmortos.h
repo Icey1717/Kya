@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "ActorBonusServices.h"
 
 #define AMORTOS_STATE_EXPLODE 0x7
 #define AMORTOS_STATE_WAIT_RESWELL 0x8

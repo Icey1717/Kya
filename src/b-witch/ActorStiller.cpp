@@ -105,7 +105,7 @@ void CActorStiller::Init()
 	this->pAnimationController->RegisterBone(this->field_0x1d0);
 	this->pAnimationController->RegisterBone(this->field_0x1d4);
 
-	this->addOnGenerator.Init(0);
+	this->addOnGenerator.Init(1);
 
 	return;
 }
@@ -475,21 +475,6 @@ void CActorStiller::BehaviourStillerStand_TermState(int oldState)
 			this->field_0x210->SwitchOn(this);
 		}
 	}
-	return;
-}
-
-void CLifeBase::Create(ByteCode* pByteCode)
-{
-	this->maxValue = pByteCode->GetF32();
-
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorServices.cpp
-void CLifeBase::Reset()
-{
-	this->value = this->maxValue;
-
 	return;
 }
 

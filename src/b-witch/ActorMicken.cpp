@@ -384,7 +384,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 		})
 
-		SetBehaviour(MICKEN_BEHAVIOUR_EAT, 0x10, -1);
+		SetBehaviour(MICKEN_BEHAVIOUR_EAT, MICKEN_EAT_STATE_ROLL_IN_THE_WIND, -1);
 
 		return 1;
 	}
@@ -924,21 +924,22 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		}
 		break;
 	case 0xc:
-		IMPLEMENTATION_GUARD(
-		this->base.dynamic.speed = 0.0;
-		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x129, (CActorsTable*)0x0);
+		this->dynamic.speed = 0.0f;
+
+		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState(this);
-			this->dynamicExt.normalizedTranslation.x = 0.0;
-			this->dynamicExt.normalizedTranslation.y = 0.0;
-			this->dynamicExt.normalizedTranslation.z = 0.0;
-			this->dynamicExt.normalizedTranslation.w = 0.0;
-			this->dynamicExt.field_0x6c = 0.0;
-			this->base.dynamic.speed = 0.0;
+			EvaluateDisplayState();
+			this->dynamicExt.normalizedTranslation.x = 0.0f;
+			this->dynamicExt.normalizedTranslation.y = 0.0f;
+			this->dynamicExt.normalizedTranslation.z = 0.0f;
+			this->dynamicExt.normalizedTranslation.w = 0.0f;
+			this->dynamicExt.field_0x6c = 0.0f;
+			this->dynamic.speed = 0.0f;
 			this->SetState(0xe, -1);
-		})
+		}
 		break;
 	case 0xd:
 		IMPLEMENTATION_GUARD(
@@ -958,30 +959,30 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		})
 		break;
 	case 0xe:
-		IMPLEMENTATION_GUARD(
 		if (this->field_0x35c < this->timeInAir) {
-			if ((this->streamRefWayPoint).pWayPoint == (CWayPoint*)0x0) {
+			if ((this->streamRefWayPoint).Get() == (CWayPoint*)0x0) {
+
 				this->SetState(3, -1);
+
 				this->flags = this->flags & 0xffffff7f;
 				this->flags = this->flags | 0x20;
-				CActor::EvaluateDisplayState(this);
+				EvaluateDisplayState();
 				this->flags = this->flags & 0xfffffffd;
 				this->flags = this->flags | 1;
 			}
 			else {
-				this->SetState(0xf, -1);
+				this->SetState(MICKEN_EAT_STATE_HOLE, -1);
 				this->flags = this->flags & 0xfffffffc;
 				this->flags = this->flags & 0xffffff5f;
-				CActor::EvaluateDisplayState(this);
+				EvaluateDisplayState();
 				this->field_0x410 = 0;
 			}
-		})
+		}
 		break;
-	case 0xf:
-		IMPLEMENTATION_GUARD(
-		ActorFunc_0014edc0((Actor*)this);)
+	case MICKEN_EAT_STATE_HOLE:
+		StateMickenHole();
 		break;
-	case 0x10:
+	case MICKEN_EAT_STATE_ROLL_IN_THE_WIND:
 		IMPLEMENTATION_GUARD(
 		StateMickenRollInTheWind(this);)
 		break;
@@ -1429,6 +1430,81 @@ int CActorMicken::WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF3
 	}
 
 	return iVar4;
+}
+
+void CActorMicken::StateMickenHole()
+{
+	CWayPoint* pWayPoint;
+	CActorMicken* pCVar1;
+	CBehaviour* pCVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 eStack16;
+	CActor* pActorRef;
+
+	pWayPoint = (this->streamRefWayPoint).Get();
+	pActorRef = (this->streamRefActor).Get();
+	if (pActorRef == (CActor*)0x0) {
+		UpdatePosition(pWayPoint, true);
+	}
+	else {
+		pActorRef->SV_ComputeDiffMatrixFromInit(&eStack80);
+		local_60.xyz = pWayPoint->location;
+		local_60.w = 1.0f;
+		edF32Matrix4MulF32Vector4Hard(&eStack16, &eStack80, &local_60);
+		UpdatePosition(&eStack16, true);
+	}
+
+	this->rotationEuler.xyz = pWayPoint->rotation;
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+
+	pCVar2 = GetBehaviour(MICKEN_BEHAVIOUR_EAT);
+	if (pCVar2 != (CBehaviour*)0x0) {
+		if ((this->behaviourMickenEat).pathFollowReader.pPathFollow == (CPathFollow*)0x0) {
+			pCVar1 = (this->behaviourMickenEat).pOwner;
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 0x10;
+		}
+		else {
+			this->behaviourMickenEat.pathFollowReader.Reset();
+			pCVar1 = (this->behaviourMickenEat).pOwner;
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xffffffef;
+		}
+
+		pCVar1 = (this->behaviourMickenEat).pOwner;
+		if (((this->behaviourMickenEat).field_0x10 & 4) == 0) {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xfffffffb;
+		}
+		else {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 4;
+		}
+
+		pCVar1 = (this->behaviourMickenEat).pOwner;
+		if (((this->behaviourMickenEat).field_0x10 & 8) == 0) {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xfffffff7;
+		}
+		else {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 8;
+		}
+	}
+
+	this->rotationEuler.x = 0.0f;
+	this->rotationEuler.y = GetAngleYFromVector(&this->rotationQuat);
+	this->rotationEuler.z = 0.0f;
+
+	this->flags = this->flags & 0xffffff5f;
+
+	EvaluateDisplayState();
+
+	if ((this->streamRefActor).Get() == (CActor*)0x0) {
+		SetState(0xb, -1);
+	}
+	else {
+		SetState(6, -1);
+	}
+
+	return;
 }
 
 void CBehaviourMicken::Init(CActor* pOwner)

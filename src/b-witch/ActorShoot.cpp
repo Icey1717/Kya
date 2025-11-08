@@ -46,3 +46,10 @@ void CActorShoot::Create(ByteCode* pByteCode)
 	this->addOnGenerator.Create(this, pByteCode);
 	return;
 }
+
+void CActorShoot::Init()
+{
+	CActorAutonomous::Init();
+	this->addOnGenerator.Init(0);
+	return;
+}

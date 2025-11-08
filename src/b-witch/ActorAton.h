@@ -12,7 +12,8 @@
 struct edDList_material;
 class CActorAton;
 
-class CBehaviourAddOnAton : public CAddOn {
+class CBehaviourAddOnAton : public CAddOn
+{
 public:
 	CBehaviourAddOnAton();
 	virtual void Create(ByteCode* pByteCode);

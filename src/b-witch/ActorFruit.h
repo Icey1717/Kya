@@ -4,7 +4,8 @@
 #include "Types.h"
 #include "ActorAutonomous.h"
 
-class CActorFruit : public CActorAutonomous {
+class CActorFruit : public CActorAutonomous
+{
 public:
 	CActorFruit(){
 		IMPLEMENTATION_GUARD_ACTOR()

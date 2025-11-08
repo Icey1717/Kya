@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorMovable.h"
 #include "PathFollow.h"
+#include "ActorBonusServices.h"
 
 #define ARAIGNOS_BEHAVIOUR_DEFAULT 2
 

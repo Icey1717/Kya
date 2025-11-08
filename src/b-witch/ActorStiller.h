@@ -3,8 +3,10 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "ActorServices.h"
 #include "PathFollow.h"
 #include "Vision.h"
+#include "ActorBonusServices.h"
 
 /*
 * Stillers are the snake like enemies that usually guard the bulbous entities that provide magic when hit.
@@ -15,16 +17,6 @@
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 class CActorStiller;
-
-class CLifeBase
-{
-public:
-	void Create(ByteCode* pByteCode);
-	void Reset();
-
-	float value;
-	float maxValue;
-};
 
 class CBehaviourStiller : public CBehaviour
 {

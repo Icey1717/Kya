@@ -123,7 +123,7 @@ CBehaviour* CActorBonus::BuildBehaviour(int behaviourType)
 	}
 	else {
 		if (behaviourType == BONUS_BEHAVIOUR_ADD_ON) {
-			pCVar1 = new CCBehaviourBonusAddOn;
+			pCVar1 = new CBehaviourBonusAddOn;
 		}
 		else {
 			if (behaviourType == BONUS_BEHAVIOUR_FLOCK) {
@@ -282,7 +282,7 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 				deltaTime = GetTimer()->cutsceneDeltaTime;
 				angleRotY = pBnsInstance->angleRotY + deltaTime * 24.0f;
 				pBnsInstance->angleRotY = (angleRotY >= 16.0f) ? angleRotY - 16.0f : angleRotY;
-				pBnsInstance->FUN_003982c0();
+				pBnsInstance->UpdateVisibility();
 				pBnsInstance->field_0x5c += deltaTime;
 				pBnsInstance->field_0x64 = pBnsInstance->currentPosition.xyz;
 			}
@@ -1674,7 +1674,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 			pBehaviour->KillInstance(this);
 		}
 		else {
-			if (curState == 3) {
+			if (curState == CActInstance::STT_INS_GOTO_KIM) {
 				State_GotoKim();
 			}
 			else if ((curState == 2) || (curState == 1)) {
@@ -1697,7 +1697,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 				this->angleRotY = angleRotY - 16.0f;
 			}
 
-			FUN_003982c0();
+			UpdateVisibility();
 			this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
 			this->field_0x64 = this->currentPosition.xyz;
 		}
@@ -1741,7 +1741,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 	switch (this->state) {
 	case 0:
 		if (pBehaviour->field_0x1b8 <= this->field_0x5c) {
-			SetState(1);
+			SetState(CActInstance::STT_INS_WAIT);
 		}
 		break;
 	case 1:
@@ -1750,7 +1750,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		if (this->distanceToKim <= 2.0f) {
 			msgResult = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
 			if (msgResult != 0) {
-				SetState(3);
+				SetState(CActInstance::STT_INS_GOTO_KIM);
 				break;
 			}
 		}
@@ -1776,15 +1776,15 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		if (this->distanceToKim <= 2.0f) {
 			msgResult = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
 			if (msgResult != 0) {
-				SetState(3);
+				SetState(CActInstance::STT_INS_GOTO_KIM);
 			}
 		}
 
 		if (pBehaviour->field_0x1f8 * 3.0f <= this->distanceToKim) {
-			SetState(1);
+			SetState(CActInstance::STT_INS_WAIT);
 		}
 		break;
-	case 3:
+	case CActInstance::STT_INS_GOTO_KIM:
 		State_GotoKim();
 		break;
 	case 4:
@@ -1811,7 +1811,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 			this->angleRotY = angleRotY - 16.0f;
 		}
 
-		this->FUN_003982c0();
+		this->UpdateVisibility();
 		this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
 		this->field_0x64 = this->currentPosition.xyz;
 	}
@@ -1852,11 +1852,11 @@ void CBnsInstance::BehaviourAddOn_Manage(CBehaviourBonusFlock* pBehaviour)
 			CActorBonus::_gBNS_Lights.Unregister(this);)
 			pBehaviour->KillInstance(this);
 		}
-		else if (currentState == 3) {
-			this->State_GotoKim();
+		else if (currentState == CActInstance::STT_INS_GOTO_KIM) {
+			State_GotoKim();
 		}
 		else if ((currentState == 2) || (currentState == 1)) {
-			this->FUN_00397ba0();
+			FUN_00397ba0();
 
 			if ((0.0f < pBehaviour->field_0x18) && (pBehaviour->field_0x18 < this->field_0x5c)) {
 				SetState(5);
@@ -1877,7 +1877,7 @@ void CBnsInstance::BehaviourAddOn_Manage(CBehaviourBonusFlock* pBehaviour)
 				this->angleRotY -= 16.0f;
 			}
 
-			this->FUN_003982c0();
+			this->UpdateVisibility();
 			this->field_0x5c += GetTimer()->cutsceneDeltaTime;
 			this->field_0x64 = this->currentPosition.xyz;
 		}
@@ -1900,11 +1900,11 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 			pBehaviour->KillInstance(this);
 		}
 		else {
-			if (curState == 3) {
+			if (curState == CActInstance::STT_INS_GOTO_KIM) {
 				State_GotoKim();
 			}
 			else {
-				if ((curState == 2) || (curState == 1)) {
+				if ((curState == 2) || (curState == CActInstance::STT_INS_WAIT)) {
 					State_Wait();
 
 					this->angleRotY += GetTimer()->cutsceneDeltaTime * 1.8f;
@@ -1947,7 +1947,7 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 				this->angleRotY = tmpf1 - 16.0f;
 			}
 
-			this->FUN_003982c0();
+			this->UpdateVisibility();
 			this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
 			this->field_0x64 = this->currentPosition.xyz;
 		}
@@ -1999,7 +1999,7 @@ void CBnsInstance::MoveOnPath(float param_1, float speed, CBehaviourBonusPath* p
 			pBehaviour->pathPlane.pathFollowReader.NextWayPoint();
 		}
 		else {
-			SetState(1);
+			SetState(CActInstance::STT_INS_WAIT);
 		}
 	}
 
@@ -2051,7 +2051,7 @@ void CBnsInstance::State_Turn(CBehaviourBonusTurn* pBehaviour)
 			local_8 = 0xffffffff;
 			iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
 			if (iVar2 != 0) {
-				SetState(3);
+				SetState(CActInstance::STT_INS_GOTO_KIM);
 			}
 		}
 	}

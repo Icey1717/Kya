@@ -4,7 +4,10 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorWind.h"
+#include "ActorServices.h"
 #include "Dynamic.h"
+#include "Fx.h"
+#include "ActorBonusServices.h"
 
 class CActorBasicBox;
 
@@ -32,7 +35,8 @@ public:
 
 #define BASIC_BOX_STATE_COUNT 4
 
-class CActorBasicBox : public CActor {
+class CActorBasicBox : public CActor
+{
 public:
 	CActorBasicBox();
 
@@ -48,23 +52,24 @@ public:
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	void StateBasicBoxStandInit();
+	void StateBasicBoxExplosionInit();
+
+	void ApplyHit(_msg_hit_param** ppHitParam);
 
 	static StateConfig _gStateCfg_BAB[BASIC_BOX_STATE_COUNT];
 
 	CActorAlternateModel actorAlternateModel;
 	CAddOnGenerator addOnGenerator;
-	undefined4 classObj_0x1e4;
-	undefined4 classObj_0x1e8;
+	CFxHandle classObj_0x1e4;
 	CVibrationDyn vibrationDyn;
 	CBehaviourBasicBoxStand behaviourStand;
 
 	S_ACTOR_STREAM_REF* pActorStream;
-	S_NTF_TARGET_STREAM_REF* targetStreamRef;
-	S_STREAM_EVENT_CAMERA* streamEventCamera;
+	S_NTF_SWITCH targetSwitch;
 
 	int field_0x160;
-	float remainingHealth;
-	float field_0x16c;
+
+	CLifeBase lifeBase;
 
 	float field_0x170;
 	float field_0x174;
@@ -80,7 +85,7 @@ public:
 	int field_0x194;
 	int field_0x198;
 
-	undefined4 field_0x2e0;
+	float field_0x2e0;
 };
 
 #endif //ACTOR_BASIC_BOX_H

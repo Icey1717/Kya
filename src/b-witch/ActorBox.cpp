@@ -49,3 +49,10 @@ void CActorBox::Create(ByteCode* pByteCode)
 	//this->field_0x2c->flags_0x0 = this->field_0x2c->flags_0x0 | 0x180;
 	return;
 }
+
+void CActorBox::Init()
+{
+	CActorAutonomous::Init();
+	addOnGenerator.Init(1);
+	return;
+}

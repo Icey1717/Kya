@@ -1364,9 +1364,9 @@ bool CActorWind::IsAValidFxPrimitive(CFxWind* pFx, byte param_3, edF32MATRIX4* p
 		edF32Matrix4MulF32Vector4Hard(&local_f0, &this->pMeshTransform->base.transformA, &local_f0);
 		pFx->field_0x140 = local_f0;
 
-		local_100.x = local_50.x;
-		local_100.z = local_50.z;
-		local_100.w = local_50.w;
+		// Setting y not showing up in decomp even though its a sq instruction.
+		local_100 = local_50;
+
 		if (param_3 == 2) {
 			local_100.x = local_50.x * 2.0f;
 			local_100.z = local_50.z * 2.0f;

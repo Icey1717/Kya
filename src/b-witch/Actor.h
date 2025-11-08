@@ -375,63 +375,7 @@ struct GetPositionMsgParams
 };
 
 struct CCineActorConfig;
-
-class CActInstance
-{
-public:
-	CActInstance();
-
-	virtual void SetState(int newState);
-	virtual float GetAngleRotY() = 0;
-	virtual void CheckpointReset();
-
-	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex);
-	void Term();
-	void SetVisible(int bVisible);
-	void Reset();
-	void SetAlive(int bAlive);
-
-	float DistSquared(edF32VECTOR4* pPosition);
-	void ComputeDistanceToKim(edF32VECTOR4* pPosition);
-
-	void State_GotoKim();
-	void State_Wait();
-
-	void FUN_003982c0();
-	void FUN_00397ba0();
-
-	void SetBasePosition(edF32VECTOR4* pBasePosition);
-	void SetPosition(edF32VECTOR4* pPosition);
-
-	uint flags;
-
-	CActor* pOwner;
-
-	edF32VECTOR4 basePosition;
-	edF32VECTOR4 currentPosition;
-	edF32VECTOR4 pathDelta;
-
-	float field_0x54;
-	float distanceToKim;
-	float field_0x5c;
-	int instanceIndex;
-
-	edNODE* pNode;
-	ed_3d_hierarchy* pHierarchy;
-
-	int state;
-
-	edF32VECTOR3 field_0x64;
-	edF32VECTOR3 field_0x70;
-
-	float field_0x7c;
-	undefined4 field_0x84;
-	undefined4 field_0x88;
-
-	float field_0x90;
-	float angleRotY;
-	float field_0x98;
-};
+class CActInstance;
 
 class CActor : public CObject
 {
@@ -576,6 +520,7 @@ public:
 
 	void RestoreInitData();
 	void UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision);
+	void UpdatePosition(CWayPoint* pWayPoint, bool param_3);
 	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
 
 	void LinkToActor(CActor* pLinkedActor, uint key, int param_4);
@@ -598,6 +543,7 @@ public:
 	void SkipToNextActorNoBase(ByteCode* pByteCode);
 
 	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
+	void SV_PatchG2D(ed_g2d_manager* pG2d);
 
 	void SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0);
 	float SV_GetDirectionalAlignmentToTarget(edF32VECTOR4* v0);
@@ -743,30 +689,6 @@ public:
 	static uint _gBehaviourFlags_ACT[2];
 
 	float lodBiases[4];
-};
-
-class CAddOnGenerator_SubObj 
-{
-public:
-	void Create(ByteCode* pByteCode);
-
-	float field_0x0;
-	float field_0x4;
-	float field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-};
-
-class CAddOnGenerator {
-public:
-	void Create(CActor* pActor, ByteCode* pByteCode);
-	void Init(int) { IMPLEMENTATION_GUARD_ADD_ON(); }
-	void Term() { IMPLEMENTATION_GUARD_ADD_ON(); }
-
-	void Generate(edF32VECTOR4* pPosition) { IMPLEMENTATION_GUARD_ADD_ON(); }
-
-	CAddOnGenerator_SubObj subObj;
 };
 
 class CCinematic;

@@ -6,6 +6,8 @@
 
 #define BASIC_BOX_BEHAVIOUR_STAND 2
 
+#define BASIC_BOX_STAND_STATE_STAND 5
+#define BASIC_BOX_STAND_STATE_EXPLODE 7
 #define BASIC_BOX_STAND_STATE_DESTROYED 8
 
 CActorBasicBox::CActorBasicBox()
@@ -21,7 +23,7 @@ void CActorBasicBox::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 	this->field_0x160 = pByteCode->GetS32();
-	this->field_0x16c = (float)(int)(float)pByteCode->GetU32();
+	this->lifeBase.maxValue = (float)(int)(float)pByteCode->GetU32();
 	
 	S_ACTOR_STREAM_REF* pSeekActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos += sizeof(S_ACTOR_STREAM_REF);
@@ -41,11 +43,7 @@ void CActorBasicBox::Create(ByteCode* pByteCode)
 	this->field_0x198 = pByteCode->GetS32();
 	this->field_0x194 = pByteCode->GetS32();
 
-	S_NTF_TARGET_STREAM_REF::Create(&this->targetStreamRef, pByteCode);
-	
-	S_STREAM_EVENT_CAMERA* pSeekStreamCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos += sizeof(S_STREAM_EVENT_CAMERA);
-	this->streamEventCamera = pSeekStreamCamera;
+	targetSwitch.Create(pByteCode);
 
 	this->addOnGenerator.Create(this, pByteCode);
 	return;
@@ -72,10 +70,9 @@ void CActorBasicBox::Init()
 
 	CActor::Init();
 
-	this->targetStreamRef->Init();
-	this->streamEventCamera->Init();
+	targetSwitch.Init();
 
-	this->remainingHealth = (float)(int)this->field_0x16c;
+	lifeBase.SetValue(this->lifeBase.GetValueMax());
 
 	vibrationParam.field_0x0 = this->field_0x17c;
 	vibrationParam.field_0x4 = this->field_0x170;
@@ -87,10 +84,9 @@ void CActorBasicBox::Init()
 	vibrationParam.pActor = this;
 	this->vibrationDyn.Init(&vibrationParam);
 
-	this->field_0x2e0 = 0;
+	this->field_0x2e0 = 0.0f;
 
-	this->targetStreamRef->Reset();
-	this->streamEventCamera->Reset(this);
+	targetSwitch.Reset(this);
 
 	pCVar1 = this->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
@@ -120,7 +116,7 @@ void CActorBasicBox::Reset()
 
 	CActor::Reset();
 
-	this->remainingHealth = (float)(int)this->field_0x16c;
+	lifeBase.SetValue(this->lifeBase.GetValueMax());
 	local_20.field_0x0 = this->field_0x17c;
 	local_20.field_0x4 = this->field_0x170;
 	local_20.field_0x8 = this->field_0x174;
@@ -132,10 +128,9 @@ void CActorBasicBox::Reset()
 	local_20.pActor = this;
 	this->vibrationDyn.Init(&local_20);
 
-	this->field_0x2e0 = 0;
+	this->field_0x2e0 = 0.0f;
 
-	this->targetStreamRef->Reset();
-	this->streamEventCamera->Reset(this);
+	targetSwitch.Reset(this);
 
 	pCVar1 = this->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
@@ -157,7 +152,7 @@ void CActorBasicBox::SaveContext(void* pData, uint mode, uint maxSize)
 	S_SAVE_CLASS_BASIC_BOX* pSaveData = reinterpret_cast<S_SAVE_CLASS_BASIC_BOX*>(pData);
 
 	if (mode == 1) {
-		pSaveData->field_0x0 = (uint)(0.0f < this->remainingHealth);
+		pSaveData->field_0x0 = (uint)(0.0f < lifeBase.GetValue());
 	}
 
 	return;
@@ -168,7 +163,7 @@ void CActorBasicBox::LoadContext(void* pData, uint mode, uint maxSize)
 	S_SAVE_CLASS_BASIC_BOX* pSaveData = reinterpret_cast<S_SAVE_CLASS_BASIC_BOX*>(pData);
 
 	if ((mode == 1) && (pSaveData->field_0x0 == 0)) {
-		this->remainingHealth = 0.0f;
+		lifeBase.SetValue(0.0f);
 		this->flags = this->flags & 0xffffff7f;
 		this->flags = this->flags | 0x20;
 
@@ -214,10 +209,9 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* v2;
-	int iVar2;
+	int result;
 	long lVar3;
 	float fVar4;
-	void* local_64;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 eStack80;
 	edF32VECTOR4 local_40;
@@ -225,17 +219,15 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 eStack16;
 
-	lVar3 = (long)(int)this;
-	local_64 = pMsgParam;
+	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 	if (msg == 3) {
-		IMPLEMENTATION_GUARD(
-		if (this->remainingHealth <= 1.0f) {
-			iVar2 = 0;
+		if (lifeBase.GetValue() <= 1.0f) {
+			result = 0;
 		}
 		else {
-			(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
-			iVar2 = 1;
-		})
+			SetState(BASIC_BOX_STAND_STATE_EXPLODE, -1);
+			result = 1;
+		}
 	}
 	else {
 		if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
@@ -250,128 +242,138 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			fVar4 = edF32Vector4DotProductHard(&pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
 			edF32Vector4ScaleHard(fVar4 * 0.5f, &pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
 			edF32Vector4AddHard(&pGetPosMsgParams->vectorFieldB, &pGetPosMsgParams->vectorFieldB, &eStack16);
-			iVar2 = 1;
+			result = 1;
 		}
 		else {
 			if (msg == 2) {
-				IMPLEMENTATION_GUARD(
-				if (this->remainingHealth <= 1.0f) {
-					iVar2 = 0;
+				if (lifeBase.GetValue() <= 0.0f) {
+					result = 0;
 				}
 				else {
-					this->field_0x2e0 = *(undefined4*)((int)pMsgParam + 0x30);
-					/* WARNING: Load size is inaccurate */
-					switch (*pMsgParam) {
-					case 4:
+					this->field_0x2e0 = pHitParam->field_0x30;
+
+					switch (pHitParam->projectileType) {
+					case HIT_TYPE_BOOMY:
 						if ((this->field_0x180 & 2) != 0) {
-							FUN_0038d5d0(lVar3, (int*)&local_64);
+							ApplyHit(&pHitParam);
+
 							return 1;
 						}
 						break;
 					case 7:
+						IMPLEMENTATION_GUARD(
 						if ((this->field_0x180 & 0x40) != 0) {
-							FUN_00114fc0(*(undefined4*)((int)pMsgParam + 0xc));
-							if (this->remainingHealth <= 1.0f) {
-								peVar1 = (edF32VECTOR4*)((int)local_64 + 0x40);
+							FUN_00114fc0(pHitParam->damage);
+							if (lifeBase.GetValue() <= 1.0f) {
+								peVar1 = pHitParam->field_0x40;
 								if ((this->field_0x180 & 1) != 0) {
 									if ((this->flags & 0x1000) != 0) {
-										SetVectorFromAngles(&this->rotationQuat, (edF32VECTOR3*)&this->rotationEuler);
+										SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
 									}
+
 									edF32Vector4SubHard(&eStack80, &this->currentLocation, peVar1);
+
 									fVar4 = edF32Vector4DotProductHard(&eStack80, &this->rotationQuat);
 									if (fVar4 < 1.0f) {
-										edF32Vector4ScaleHard((float)&DAT_bf800000, &local_60, &this->rotationQuat);
-										this->rotationQuat.x = local_60.x;
-										this->rotationQuat.y = local_60.y;
-										this->rotationQuat.z = local_60.z;
-										this->rotationQuat.w = local_60.w;
+										edF32Vector4ScaleHard(-1.0f, &local_60, &this->rotationQuat);
+										this->rotationQuat = local_60;
+
 										if ((this->flags & 0x1000) != 0) {
-											GetAnglesFromVector((edF32VECTOR3*)&this->rotationEuler, &this->rotationQuat);
+											GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
 										}
 									}
 								}
-								(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+
+								SetState(BASIC_BOX_STAND_STATE_EXPLODE, -1);
+
 								return 1;
 							}
-							iVar2 = FUN_0038ce50((int)this, (edF32VECTOR4*)&this->field_0x290, (edF32VECTOR4*)((int)local_64 + 0x40), 0
-							);
-							if (iVar2 != 0) {
+
+							result = FUN_0038ce50((int)this, (edF32VECTOR4*)&this->field_0x290, &pHitParam->field_0x40, 0);
+							if (result != 0) {
 								(this->vibrationDyn).field_0x40 = this->field_0x170;
-								FUN_00116a00(*(float*)((int)local_64 + 0x30), (float*)&this->vibrationDyn,
-									(edF32VECTOR4*)&this->field_0x290, (edF32VECTOR4*)((int)local_64 + 0x40));
-								(*(this->pVTable)->SetState)((CActor*)this, 6, -1);
+								FUN_00116a00(pHitParam->field_0x30, (float*)&this->vibrationDyn,
+									(edF32VECTOR4*)&this->field_0x290, &pHitParam->field_0x40);
+								SetState(6, -1);
+
 								return 1;
 							}
-						}
+						})
 						break;
 					case 8:
 						if ((this->field_0x180 & 4) != 0) {
 							if ((this->field_0x180 & 1) != 0) {
 								if ((this->flags & 0x1000) != 0) {
-									SetVectorFromAngles(&this->rotationQuat, (edF32VECTOR3*)&this->rotationEuler);
+									SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
 								}
-								edF32Vector4SubHard(&eStack48, &this->currentLocation, (edF32VECTOR4*)((int)pMsgParam + 0x40));
+
+								edF32Vector4SubHard(&eStack48, &this->currentLocation, &pHitParam->field_0x40);
+
 								fVar4 = edF32Vector4DotProductHard(&eStack48, &this->rotationQuat);
 								if (fVar4 < 1.0f) {
-									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_40, &this->rotationQuat);
-									this->rotationQuat.x = local_40.x;
-									this->rotationQuat.y = local_40.y;
-									this->rotationQuat.z = local_40.z;
-									this->rotationQuat.w = local_40.w;
+									edF32Vector4ScaleHard(-1.0f, &local_40, &this->rotationQuat);
+									this->rotationQuat = local_40;
+
 									if ((this->flags & 0x1000) != 0) {
-										GetAnglesFromVector((edF32VECTOR3*)&this->rotationEuler, &this->rotationQuat);
+										GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 									}
 								}
 							}
-							(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+
+							SetState(BASIC_BOX_STAND_STATE_EXPLODE, -1);
+
 							return 1;
 						}
 						break;
 					case 9:
 						if ((this->field_0x180 & 8) != 0) {
-							FUN_0038d5d0(lVar3, (int*)&local_64);
+							ApplyHit(&pHitParam);
+
 							return 1;
 						}
 						break;
 					case 10:
-						if (((this->field_0x180 & 0x10) != 0) && (1.0f < *(float*)((int)pMsgParam + 0xc))) {
+						if (((this->field_0x180 & 0x10) != 0) && (1.0f < pHitParam->damage)) {
 							if ((this->field_0x180 & 1) != 0) {
 								if ((this->flags & 0x1000) != 0) {
-									SetVectorFromAngles(&this->rotationQuat, (edF32VECTOR3*)&this->rotationEuler);
+									SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
 								}
-								fVar4 = edF32Vector4DotProductHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &this->rotationQuat);
+
+								fVar4 = edF32Vector4DotProductHard(&pHitParam->field_0x20, &this->rotationQuat);
 								if (fVar4 < 1.0f) {
-									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_20, &this->rotationQuat);
-									this->rotationQuat.x = local_20.x;
-									this->rotationQuat.y = local_20.y;
-									this->rotationQuat.z = local_20.z;
-									this->rotationQuat.w = local_20.w;
+									edF32Vector4ScaleHard(-1.0f, &local_20, &this->rotationQuat);
+									this->rotationQuat = local_20;
+
 									if ((this->flags & 0x1000) != 0) {
-										GetAnglesFromVector((edF32VECTOR3*)&this->rotationEuler, &this->rotationQuat);
+										GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 									}
 								}
 							}
-							(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+
+							SetState(BASIC_BOX_STAND_STATE_EXPLODE, -1);
+
 							return 1;
 						}
 						break;
 					case 0xb:
 						if ((this->field_0x180 & 0x20) != 0) {
-							*(float*)((int)pMsgParam + 0xc) = this->field_0x16c;
-							FUN_0038d5d0(lVar3, (int*)&local_64);
+							pHitParam->damage = lifeBase.GetValueMax();
+							ApplyHit(&pHitParam);
+
 							return 1;
 						}
 					}
-					iVar2 = 0;
-				})
+
+					result = 0;
+				}
 			}
 			else {
-				iVar2 = CActor::InterpretMessage(pSender, msg, (GetPositionMsgParams*)pMsgParam);
+				result = CActor::InterpretMessage(pSender, msg, pMsgParam);
 			}
 		}
 	}
 
-	return iVar2;
+	return result;
 }
 
 int CActorBasicBox::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
@@ -406,6 +408,149 @@ void CActorBasicBox::StateBasicBoxStandInit()
 	}
 }
 
+void CActorBasicBox::StateBasicBoxExplosionInit()
+{
+	S_ACTOR_STREAM_REF* pSVar1;
+	KyaUpdateObjA* pKVar2;
+	CCollision* pCVar3;
+	CNewFx* pCVar4;
+	undefined8 uVar5;
+	int iVar6;
+	edF32VECTOR4* peVar7;
+	S_NTF_TARGET_STREAM_REF* pSVar8;
+	int iVar9;
+	int iVar10;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+	CActor* pActor;
+
+	iVar9 = 0;
+	while (true) {
+		pSVar1 = this->pActorStream;
+		iVar6 = 0;
+
+		if (pSVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar6 = pSVar1->entryCount;
+		}
+
+		if (iVar6 <= iVar9) break;
+
+		pActor = pSVar1->aEntries[iVar9].Get();
+		if (pActor != (CActor*)0x0) {
+			pActor->flags = pActor->flags & 0xffffff5f;
+			pActor->EvaluateDisplayState();
+			pActor->flags = pActor->flags & 0xfffffffc;
+		}
+
+		iVar9 = iVar9 + 1;
+	}
+
+	local_10 = this->currentLocation;
+
+	peVar7 = GetBottomPosition();
+	local_10.y = local_10.y + (peVar7->y - this->currentLocation.y) / 2.0f;
+
+	this->addOnGenerator.Generate(&local_10);
+
+	if (this->field_0x194 != -1) {
+		pKVar2 = this->subObjA;
+		local_20 = pKVar2->boundingSphere;
+		if (local_20.w < 20.0f) {
+			local_20.w = 20.0f;
+		}
+
+		SV_SwitchToModel(&this->actorAlternateModel, this->field_0x194, (this->pCinData)->textureIndex, &local_20);
+	}
+
+	pCVar3 = this->pCollisionData;
+	pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xffffefff;
+	pCVar3 = this->pCollisionData;
+	pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xfffffffd;
+	pCVar3 = this->pCollisionData;
+	pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xfff7ffff;
+
+	CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->classObj_0x1e4, this->field_0x160, FX_MATERIAL_SELECTOR_NONE);
+	pCVar4 = (this->classObj_0x1e4).pFx;
+	if (((pCVar4 != (CNewFx*)0x0) && (iVar10 = (this->classObj_0x1e4).id, iVar10 != 0)) && (iVar10 == pCVar4->id)) {
+		pCVar4->SpatializeOnActor(6, this, 0);
+	}
+	pCVar4 = (this->classObj_0x1e4).pFx;
+	if (((pCVar4 != (CNewFx*)0x0) && (iVar10 = (this->classObj_0x1e4).id, iVar10 != 0)) && (iVar10 == pCVar4->id)) {
+		pCVar4->Start(0, 0);
+	}
+
+	targetSwitch.Switch(this);
+
+	return;
+}
+
+void CActorBasicBox::ApplyHit(_msg_hit_param** ppHitParam)
+{
+	_msg_hit_param* p_Var1;
+	undefined8 uVar2;
+	C3DFileManager* pFileManager;
+	ed_g2d_manager* peVar3;
+	edF32VECTOR4* peVar4;
+	float fVar5;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+
+	lifeBase.LifeDecrease((*ppHitParam)->damage);
+
+	fVar5 = lifeBase.GetValue();
+	if ((lifeBase.GetValueMax() * 2.0f) / 3.0f <= fVar5) {
+		if (this->field_0x18c != -1) {
+			peVar3 = pFileManager->GetActorsCommonMaterial(this->field_0x18c);
+			SV_PatchG2D(peVar3);
+		}
+	}
+	else {
+		if (lifeBase.GetValueMax() / 3.0f <= fVar5) {
+			if (this->field_0x190 != -1) {
+				peVar3 = pFileManager->GetActorsCommonMaterial(this->field_0x190);
+				SV_PatchG2D(peVar3);
+			}
+		}
+		else {
+			if (fVar5 <= 0.0f) {
+				(*ppHitParam)->field_0x74 = 1;
+				p_Var1 = *ppHitParam;
+
+				if ((this->field_0x180 & 1) != 0) {
+					if ((this->flags & 0x1000) != 0) {
+						SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+					}
+
+					fVar5 = edF32Vector4DotProductHard(&p_Var1->field_0x20, &this->rotationQuat);
+					if (fVar5 < 0.0) {
+						edF32Vector4ScaleHard(-1.0f, &local_20, &this->rotationQuat);
+						this->rotationQuat = local_20;
+						if ((this->flags & 0x1000) != 0) {
+							GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
+						}
+					}
+				}
+
+				SetState(BASIC_BOX_STAND_STATE_EXPLODE, -1);
+				return;
+			}
+		}
+	}
+
+	(this->vibrationDyn).field_0x40 = 5.1f;
+	local_10 = this->currentLocation;
+	peVar4 = GetBottomPosition();
+	local_10.y = local_10.y + (peVar4->y - this->currentLocation.y);
+	this->vibrationDyn.UpdateAllFactors((*ppHitParam)->damage, &(*ppHitParam)->field_0x20, &local_10);
+	SetState(6, -1);
+
+	return;
+}
+
+
+
 StateConfig CActorBasicBox::_gStateCfg_BAB[4] = {
 	StateConfig(0x0, 0x4),
 	StateConfig(0x0, 0x4),
@@ -436,12 +581,12 @@ void CBehaviourBasicBoxStand::Manage()
 
 	pBasicBox = this->pOwner;
 
-	pBasicBox->streamEventCamera->Manage(pBasicBox);
+	pBasicBox->targetSwitch.pStreamEventCamera->Manage(pBasicBox);
 
 	curState = pBasicBox->actorState;
 
 	if (curState != BASIC_BOX_STAND_STATE_DESTROYED) {
-		if (curState == 7) {
+		if (curState == BASIC_BOX_STAND_STATE_EXPLODE) {
 			if (((pBasicBox->field_0x180 & 0x80) == 0) && (0.2f < pBasicBox->timeInAir)) {
 				pCVar2 = pBasicBox->pAnimationController;
 
@@ -457,7 +602,7 @@ void CBehaviourBasicBoxStand::Manage()
 				bVar5 = pBasicBox->vibrationDyn.MakeVibrate(&local_20);
 
 				if (bVar5 != false) {
-					pBasicBox->SetState(5, -1);
+					pBasicBox->SetState(BASIC_BOX_STAND_STATE_STAND, -1);
 				}
 
 				pBasicBox->rotationEuler.x = local_20.x;
@@ -482,7 +627,7 @@ void CBehaviourBasicBoxStand::Begin(CActor* pOwner, int newState, int newAnimati
 	this->pOwner = static_cast<CActorBasicBox*>(pOwner);
 
 	if (newState == -1) {
-		this->pOwner->SetState(5, -1);
+		this->pOwner->SetState(BASIC_BOX_STAND_STATE_STAND, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -513,12 +658,11 @@ void CBehaviourBasicBoxStand::InitState(int newState)
 		pBasicBox->flags = pBasicBox->flags | 1;
 	}
 	else {
-		if (newState == 7) {
-			IMPLEMENTATION_GUARD(
-			pBasicBox->StateBasicBoxExplosionInit();)
+		if (newState == BASIC_BOX_STAND_STATE_EXPLODE) {
+			pBasicBox->StateBasicBoxExplosionInit();
 		}
 		else {
-			if (newState == 5) {
+			if (newState == BASIC_BOX_STAND_STATE_STAND) {
 				pBasicBox->StateBasicBoxStandInit();
 			}
 		}
@@ -532,9 +676,8 @@ void CBehaviourBasicBoxStand::TermState(int oldState, int newState)
 
 	pBasicBox = this->pOwner;
 
-	if ((oldState == 7) && (pBasicBox->field_0x194 != -1)) {
-		IMPLEMENTATION_GUARD(
-		CActor::SV_RestoreOrgModel((CActor*)pBasicBox, &pBasicBox->actorAlternateModel);)
+	if ((oldState == BASIC_BOX_STAND_STATE_EXPLODE) && (pBasicBox->field_0x194 != -1)) {
+		pBasicBox->SV_RestoreOrgModel(&pBasicBox->actorAlternateModel);
 	}
 
 	return;
@@ -543,4 +686,21 @@ void CBehaviourBasicBoxStand::TermState(int oldState, int newState)
 int CBehaviourBasicBoxStand::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	return 0;
+}
+
+void CLifeBase::SetValue(float newValue)
+{
+	this->value = (float)(int)newValue;
+
+	return;
+}
+
+float CLifeBase::GetValue()
+{
+	return this->value;
+}
+
+float CLifeBase::GetValueMax()
+{
+	return this->maxValue;
 }

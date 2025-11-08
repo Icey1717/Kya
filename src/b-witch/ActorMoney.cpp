@@ -5,6 +5,7 @@
 #include "CameraViewManager.h"
 #include "TimeController.h"
 #include "LevelScheduleManager.h"
+#include "ActorBonusServices.h"
 
 void CActorMoney::Create(ByteCode* pByteCode)
 {
@@ -60,7 +61,7 @@ void CActorMoney::Reset()
 {
 	CActor::Reset();
 
-	if (this->curBehaviourId == 3) {
+	if (this->curBehaviourId == MONEY_BEHAVIOUR_ADD_ON) {
 		CheckpointReset();
 	}
 
@@ -139,7 +140,7 @@ void CActorMoney::ChangeVisibleState(int bVisible)
 	if (bVisible == 0) {
 		this->flags = this->flags & 0xffffbfff;
 
-		if (this->curBehaviourId == 2) {
+		if (this->curBehaviourId == MONEY_BEHAVIOUR_FLOCK) {
 			pFlock = static_cast<CBehaviourMoneyFlock*>(GetBehaviour(this->curBehaviourId));
 			iVar2 = 0;
 			if (0 < pFlock->nbMoneyInstances) {
@@ -155,6 +156,25 @@ void CActorMoney::ChangeVisibleState(int bVisible)
 	}
 
 	return;
+}
+
+int CActorMoney::GetType()
+{
+	uint moneyType;
+
+	if (this->moneyValue < 2) {
+		moneyType = 0;
+	}
+	else {
+		if (this->moneyValue < 6) {
+			moneyType = 1;
+		}
+		else {
+			moneyType = 2;
+		}
+	}
+
+	return moneyType;
 }
 
 CBehaviourMoneyFlock::CBehaviourMoneyFlock()
@@ -346,7 +366,7 @@ void CBehaviourMoneyFlock::Manage()
 	ed_3d_hierarchy* peVar2;
 	edF32MATRIX4* peVar3;
 	Timer* pTVar4;
-	int iVar5;
+	int curState;
 	int iVar6;
 	CMnyInstance* pCurrentInstance;
 	float fVar7;
@@ -361,9 +381,9 @@ void CBehaviourMoneyFlock::Manage()
 	this->field_0x18 = 0;
 	pMoney = this->pOwner;
 	CScene::ptable.g_LightManager_004516b0->ComputeLighting(pMoney->lightingFloat_0xe0, pMoney, pMoney->lightingFlags, &(pMoney->lightConfig).config);
-	iVar5 = this->nbMoneyInstances;
+	curState = this->nbMoneyInstances;
 	iVar6 = 0;
-	if (0 < iVar5) {
+	if (0 < curState) {
 		do {
 			if ((pCurrentInstance->flags & 1) != 0) {
 				this->field_0x18 = this->field_0x18 + 1;
@@ -371,16 +391,16 @@ void CBehaviourMoneyFlock::Manage()
 				if (fVar8 < fVar7 * fVar7) {
 					this->pOwner->GetBehaviour(this->pOwner->curBehaviourId);
 					if ((pCurrentInstance->flags & 1) != 0) {
-						iVar5 = pCurrentInstance->state;
-						if ((iVar5 == 5) || (iVar5 == 4)) {
+						curState = pCurrentInstance->state;
+						if ((curState == 5) || (curState == 4)) {
 							pCurrentInstance->SetAlive(0);
 						}
 						else {
-							if (iVar5 == 3) {
+							if (curState == CActInstance::STT_INS_GOTO_KIM) {
 								pCurrentInstance->State_GotoKim();
 							}
 							else {
-								if (iVar5 == 1) {
+								if (curState == CActInstance::STT_INS_WAIT) {
 									pCurrentInstance->State_Wait();
 								}
 							}
@@ -394,8 +414,8 @@ void CBehaviourMoneyFlock::Manage()
 						}
 
 						if ((pCurrentInstance->flags & 1) != 0) {
-							iVar5 = pCurrentInstance->state;
-							if (((iVar5 != 5) && (iVar5 != 4)) && ((iVar5 == 3 || (iVar5 == 1)))) {
+							curState = pCurrentInstance->state;
+							if (((curState != 5) && (curState != 4)) && ((curState == CActInstance::STT_INS_GOTO_KIM || (curState == CActInstance::STT_INS_WAIT)))) {
 								fVar8 = edF32Between_0_2Pi(pCurrentInstance->angleRotY + GetTimer()->cutsceneDeltaTime * pCurrentInstance->field_0x90);
 								pCurrentInstance->angleRotY = fVar8;
 								edF32Matrix4RotateZHard(pCurrentInstance->field_0x98, &pCurrentInstance->pHierarchy->transformA, &gF32Matrix4Unit);
@@ -403,7 +423,7 @@ void CBehaviourMoneyFlock::Manage()
 								(pCurrentInstance->pHierarchy->transformA).rowT = pCurrentInstance->currentPosition;
 							}
 
-							pCurrentInstance->FUN_003982c0();
+							pCurrentInstance->UpdateVisibility();
 							
 							pCurrentInstance->field_0x64 = pCurrentInstance->currentPosition.xyz;
 							pCurrentInstance->field_0x5c = pCurrentInstance->field_0x5c + GetTimer()->cutsceneDeltaTime;
@@ -414,13 +434,13 @@ void CBehaviourMoneyFlock::Manage()
 				}
 			}
 
-			iVar5 = this->nbMoneyInstances;
+			curState = this->nbMoneyInstances;
 			iVar6 = iVar6 + 1;
 			pCurrentInstance = pCurrentInstance + 1;
-		} while (iVar6 < iVar5);
+		} while (iVar6 < curState);
 	}
 
-	this->instantFlares.Manage(this->aMoneyInstances, iVar5);
+	this->instantFlares.Manage(this->aMoneyInstances, curState);
 
 	if (this->field_0x18 == 0) {
 		this->pOwner->SetState(5, -1);
@@ -611,4 +631,323 @@ void CMnyInstance::SetState(int newState)
 float CMnyInstance::GetAngleRotY()
 {
 	return this->angleRotY;
+}
+
+void CBehaviourMoneyAddOn::Allocate(int nbNewInstances)
+{
+	uint count;
+	CActorMoney* pOwner;
+	int* pBase;
+	CMnyInstance* pCVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+
+	this->nbMoneyInstances = nbNewInstances;
+	this->field_0x18 = 0;
+
+	count = this->nbMoneyInstances;
+	if (count != 0) {
+		this->aMoneyInstances = new CMnyInstance[count];
+		iVar2 = this->nbMoneyInstances;
+		pCVar1 = this->aMoneyInstances;
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				pOwner = this->pOwner;
+				pCVar1->Init(pOwner, &pOwner->baseLocation, &pOwner->field_0x288, -1);
+				pCVar1->angleRotY = ((float)rand() / 2.147484e+09f) * 6.283185f;
+				pCVar1->field_0x98 = ((float)rand() / 2.147484e+09f) * 6.283185f;
+				pCVar1->field_0x90 = ((float)rand() / 2.147484e+09f) * 4.712389f + 1.570796f;
+				pCVar1->SetVisible(0);
+				iVar2 = this->nbMoneyInstances;
+				iVar3 = iVar3 + 1;
+				pCVar1 = pCVar1 + 1;
+			} while (iVar3 < iVar2);
+		}
+
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				this->aMoneyInstances[iVar3].Reset();
+				this->aMoneyInstances[iVar3].SetAlive(0);
+				this->aMoneyInstances[iVar3].flags = this->aMoneyInstances[iVar3].flags | 0x20;
+				iVar3 = iVar3 + 1;
+				iVar2 = this->nbMoneyInstances;
+			} while (iVar3 < iVar2);
+		}
+
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 7;
+		}
+
+		this->instantFlares.Create(0.5f, 2.0f, (iVar2 >> 3) + 1);
+	}
+
+	return;
+}
+
+CMnyInstance** CBehaviourMoneyAddOn::Generate(edF32VECTOR4* pPosition, CAddOnGenerator_SubObj* pSubObj, int nbToSpawn, CMnyInstance** pInstance)
+{
+	CActorMoney* pMoney;
+	int iVar3;
+	CMnyInstance* pCurInstance;
+	int byteOffset;
+	int curInstanceIndex;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	curInstanceIndex = 0;
+
+	if (this->field_0x18 == 0) {
+		pMoney = this->pOwner;
+		pMoney->SetState(5, -1);
+		pMoney = this->pOwner;
+		pMoney->flags = pMoney->flags | 2;
+		pMoney->flags = pMoney->flags & 0xfffffffe;
+		pMoney = this->pOwner;
+		pMoney->flags = pMoney->flags | 0x80;
+		pMoney->flags = pMoney->flags & 0xffffffdf;
+		pMoney->EvaluateDisplayState();
+	}
+
+	byteOffset = 0;
+	for (; (nbToSpawn != 0 && (curInstanceIndex < this->nbMoneyInstances)); curInstanceIndex = curInstanceIndex + 1) {
+		pCurInstance = reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset);
+
+		if ((pCurInstance->flags & 1) == 0) {
+			nbToSpawn = nbToSpawn + -1;
+			pCurInstance->SetPosition(pPosition);
+
+			reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset)->SetAlive(1);
+			reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset)->SetVisible(1);
+
+			pCurInstance = reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset);
+			pCurInstance->SetState(1);
+			local_50.x = 0.0f;
+			local_50.y = 0.0f;
+
+			fVar6 = pSubObj->field_0x14;
+			fVar5 = -fVar6;
+			local_50.z = pSubObj->field_0x10 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f);
+			local_50.w = 0.0f;
+
+			fVar6 = pSubObj->field_0x4;
+			fVar5 = -fVar6;
+			edF32Matrix4RotateXHard(pSubObj->field_0x0 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f), &eStack64, &gF32Matrix4Unit);
+			fVar6 = pSubObj->field_0xc;
+			fVar5 = -fVar6;
+			edF32Matrix4RotateYHard(pSubObj->field_0x8 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f), &eStack64, &eStack64);
+			edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &local_50);
+
+			pCurInstance = reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset);
+			pCurInstance->pathDelta = local_50;
+
+			if (pInstance != (CMnyInstance**)0x0) {
+				*pInstance = reinterpret_cast<CMnyInstance*>(reinterpret_cast<char*>(this->aMoneyInstances) + byteOffset);
+				pInstance = pInstance + 1;
+			}
+		}
+
+		byteOffset = byteOffset + sizeof(CMnyInstance);
+	}
+
+	return pInstance;
+}
+
+void CBehaviourMoneyAddOn::Create(ByteCode* pByteCode)
+{
+	this->field_0x18 = 0;
+	this->nbMoneyInstances = 0;
+
+	return;
+}
+
+void CBehaviourMoneyAddOn::Init(CActor* pOwner)
+{
+	edF32VECTOR4 local_10;
+
+	this->pOwner = static_cast<CActorMoney*>(pOwner);
+
+	this->field_0x20 = ((float)rand() / 2.147484e+09f) * 6.283185f;
+	this->field_0x24 = ((float)rand() / 2.147484e+09f) * 6.283185f;
+	this->field_0x28 = ((float)rand() / 2.147484e+09f) * 6.283185f;
+	local_10.xyz = (this->pOwner->subObjA->boundingSphere).xyz;
+	this->pOwner->SetLocalBoundingSphere(500.0f, &local_10);
+
+	return;
+}
+
+void CBehaviourMoneyAddOn::Manage()
+{
+	CActorMoney* pCVar1;
+	ed_3d_hierarchy* peVar2;
+	edF32MATRIX4* peVar3;
+	int iVar5;
+	int iVar6;
+	CMnyInstance* pInstanceIt;
+	float visibilityDistance;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+
+	pInstanceIt = this->aMoneyInstances;
+	peVar3 = &CCameraManager::_gThis->transformationMatrix;
+	visibilityDistance = this->pOwner->subObjA->visibilityDistance;
+	this->field_0x18 = 0;
+	pCVar1 = this->pOwner;
+	CScene::ptable.g_LightManager_004516b0->ComputeLighting(pCVar1->lightingFloat_0xe0, pCVar1, pCVar1->lightingFlags, &(pCVar1->lightConfig).config);
+	iVar5 = this->nbMoneyInstances;
+	iVar6 = 0;
+	if (0 < iVar5) {
+		do {
+			if ((pInstanceIt->flags & 1) != 0) {
+				this->field_0x18 = this->field_0x18 + 1;
+				fVar8 = pInstanceIt->DistSquared(&peVar3->rowT);
+				if (fVar8 < visibilityDistance * visibilityDistance) {
+					pCVar1 = this->pOwner;
+					pCVar1->GetBehaviour(pCVar1->curBehaviourId);
+
+					if ((pInstanceIt->flags & 1) != 0) {
+						iVar5 = pInstanceIt->state;
+						if ((iVar5 == 5) || (iVar5 == 4)) {
+							pInstanceIt->SetAlive(0);
+						}
+						else {
+							if (iVar5 == CActInstance::STT_INS_GOTO_KIM) {
+								pInstanceIt->State_GotoKim();
+							}
+							else {
+								if (iVar5 == 1) {
+									pInstanceIt->FUN_00397ba0();
+								}
+							}
+						}
+
+						if ((pInstanceIt->flags & 4) == 0) {
+							pInstanceIt->flags = pInstanceIt->flags & 0xfffffffd;
+						}
+						else {
+							pInstanceIt->flags = pInstanceIt->flags | 2;
+						}
+
+						if ((pInstanceIt->flags & 1) != 0) {
+							iVar5 = pInstanceIt->state;
+
+							if (((iVar5 != 5) && (iVar5 != 4)) && ((iVar5 == 3 || (iVar5 == 1)))) {
+								fVar8 = edF32Between_0_2Pi(pInstanceIt->angleRotY + GetTimer()->cutsceneDeltaTime * pInstanceIt->field_0x90);
+								pInstanceIt->angleRotY = fVar8;
+								edF32Matrix4RotateZHard(pInstanceIt->field_0x98, &pInstanceIt->pHierarchy->transformA, &gF32Matrix4Unit);
+								peVar2 = pInstanceIt->pHierarchy;
+								edF32Matrix4RotateYHard(pInstanceIt->angleRotY, &peVar2->transformA, &peVar2->transformA);
+								peVar2 = pInstanceIt->pHierarchy;
+								(peVar2->transformA).rowT = pInstanceIt->currentPosition;
+							}
+
+							pInstanceIt->UpdateVisibility();
+							fVar8 = pInstanceIt->currentPosition.y;
+							fVar9 = pInstanceIt->currentPosition.z;
+							pInstanceIt->field_0x64.x = pInstanceIt->currentPosition.x;
+							pInstanceIt->field_0x64.y = fVar8;
+							pInstanceIt->field_0x64.z = fVar9;
+							pInstanceIt->field_0x5c = pInstanceIt->field_0x5c + GetTimer()->cutsceneDeltaTime;
+						}
+					}
+
+					(pInstanceIt->pHierarchy)->pHierarchySetup->pLightData = &((this->pOwner)->lightConfig).config;
+				}
+			}
+
+			iVar5 = this->nbMoneyInstances;
+			iVar6 = iVar6 + 1;
+			pInstanceIt = pInstanceIt + 1;
+		} while (iVar6 < iVar5);
+	}
+
+	this->instantFlares.Manage(this->aMoneyInstances, iVar5);
+
+	if (this->field_0x18 == 0) {
+		pCVar1 = this->pOwner;
+		pCVar1->SetState(5, -1);
+		pCVar1 = this->pOwner;
+		pCVar1->flags = pCVar1->flags & 0xfffffffd;
+		pCVar1->flags = pCVar1->flags | 1;
+		pCVar1 = this->pOwner;
+		pCVar1->flags = pCVar1->flags & 0xffffff7f;
+		pCVar1->flags = pCVar1->flags | 0x20;
+		pCVar1->EvaluateDisplayState();
+	}
+	return;
+}
+
+void CBehaviourMoneyAddOn::SectorChange(int oldSectorId, int newSectorId)
+{
+	if ((newSectorId != -1) && (this->pOwner->sectorId != -1)) {
+		CheckpointReset();
+	}
+
+	return;
+
+}
+
+void CBehaviourMoneyAddOn::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorMoney* pCVar1;
+	int curMoneyIndex;
+
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xfffffffd;
+	pCVar1->flags = pCVar1->flags | 1;
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xffffff7f;
+	pCVar1->flags = pCVar1->flags | 0x20;
+	pCVar1->EvaluateDisplayState();
+
+	curMoneyIndex = 0;
+	if (0 < this->nbMoneyInstances) {
+		do {
+			this->aMoneyInstances[curMoneyIndex].Reset();
+			this->aMoneyInstances[curMoneyIndex].SetAlive(0);
+			curMoneyIndex = curMoneyIndex + 1;
+		} while (curMoneyIndex < this->nbMoneyInstances);
+	}
+
+	return;
+}
+
+void CBehaviourMoneyAddOn::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	return;
+}
+
+void CBehaviourMoneyAddOn::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	return;
+}
+
+void CBehaviourMoneyAddOn::CheckpointReset()
+{
+	CActorMoney* pCVar1;
+	int curMoneyIndex;
+
+	curMoneyIndex = 0;
+	if (0 < this->nbMoneyInstances) {
+		do {
+			this->aMoneyInstances[curMoneyIndex].SetAlive(0);
+			curMoneyIndex = curMoneyIndex + 1;
+		} while (curMoneyIndex < this->nbMoneyInstances);
+	}
+
+	this->field_0x18 = 0;
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xfffffffd;
+	pCVar1->flags = pCVar1->flags | 1;
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xffffff7f;
+	pCVar1->flags = pCVar1->flags | 0x20;
+	pCVar1->EvaluateDisplayState();
+
+	return;
 }

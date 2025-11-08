@@ -8,3 +8,9 @@ void CActorBonusFountain::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CActorBonusFountain::Init()
+{
+	CActor::Init();
+	this->addOnGenerator.Init(1);
+	return;
+}

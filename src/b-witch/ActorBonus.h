@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorMovable.h"
+#include "ActorBonusServices.h"
 #include "Fx_Tail.h"
 #include "PathFollow.h"
 
@@ -157,9 +158,10 @@ public:
 	int nbInstances;
 };
 
-class CCBehaviourBonusAddOn : public CBehaviourBonusFlock
+class CBehaviourBonusAddOn : public CBehaviourBonusFlock
 {
-
+public:
+	void Allocate(int nbNewInstances) {}
 };
 
 class COmniLight { };

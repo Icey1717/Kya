@@ -62,3 +62,10 @@ void CActorShocker::Create(ByteCode* pByteCode)
 	this->addOnGenerator.Create(this, pByteCode);
 	return;
 }
+
+void CActorShocker::Init()
+{
+	CActorAutonomous::Init();
+	this->addOnGenerator.Init(0);
+	return;
+}

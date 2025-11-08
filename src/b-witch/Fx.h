@@ -112,7 +112,7 @@ public:
 	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
-	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }
+	virtual void UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition);
 	virtual void SetTimeScaler() { IMPLEMENTATION_GUARD(); }
 
 	void Manage();
@@ -125,7 +125,7 @@ public:
 
 	uint flags;
 	int id;
-	CActor* pActor;
+	void* pActor;
 	uint boneId;
 
 	edF32VECTOR4 position;

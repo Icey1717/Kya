@@ -17,7 +17,7 @@ public:
 	virtual int GetType();
 	virtual void NotifySonIsDead(CNewFx* pSon, int) { IMPLEMENTATION_GUARD(); }
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId) { IMPLEMENTATION_GUARD(); }
-	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }
+	virtual void UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition) { IMPLEMENTATION_GUARD(); }
 
 	virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };

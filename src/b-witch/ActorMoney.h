@@ -3,12 +3,14 @@
 
 #include "Types.h"
 #include "ActorMovable.h"
+#include "ActorBonusServices.h"
 #include "PathFollow.h"
 
 #define MONEY_BEHAVIOUR_FLOCK 0x2
 #define MONEY_BEHAVIOUR_ADD_ON 0x3
 
 class CActorMoney;
+class CAddOnGenerator_SubObj;
 
 class CMnyInstance : public CActInstance
 {
@@ -62,7 +64,19 @@ public:
 
 class CBehaviourMoneyAddOn : public CBehaviourMoneyFlock
 {
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
+	virtual void CheckpointReset();
+
+	void Allocate(int nbNewInstances);
+	CMnyInstance** Generate(edF32VECTOR4* pPosition, CAddOnGenerator_SubObj* pSubObj, int nbToSpawn, CMnyInstance** pInstance);
 };
 
 class CActorMoney : public CActorMovable
@@ -79,6 +93,8 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeVisibleState(int bVisible);
+
+	int GetType();
 
 	uint moneyValue;
 	int field_0x1d4;

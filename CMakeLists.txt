@@ -89,6 +89,10 @@ set(main_src
 	"${src_root}/b-witch/kya.h"
 	"${src_root}/b-witch/Actor.cpp"
 	"${src_root}/b-witch/Actor.h"
+	"${src_root}/b-witch/ActorServices.cpp"
+	"${src_root}/b-witch/ActorServices.h"
+	"${src_root}/b-witch/ActorBonusServices.cpp"
+	"${src_root}/b-witch/ActorBonusServices.h"
 	"${src_root}/b-witch/ActorHero.cpp"
 	"${src_root}/b-witch/ActorHero.h"
 	"${src_root}/b-witch/IniFile.cpp"
@@ -619,6 +623,7 @@ else()
 		"${src_root}/port/vu1_emu.h"
 		"${src_root}/port/hardware_draw.cpp"
 		"${src_root}/port/hardware_draw.h"
+		"${src_root}/port/random.cpp"
 		"${src_root}/port/input.cpp"
 		"${src_root}/port/input.h"
 	)

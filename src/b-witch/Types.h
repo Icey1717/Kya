@@ -728,7 +728,6 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #define IMPLEMENTATION_GUARD_LIGHT(x)
 #define IMPLEMENTATION_GUARD_UI(x)
 #define IMPLEMENTATION_GUARD_SHADOW(x)
-#define IMPLEMENTATION_GUARD_ADD_ON(x)
 #define IMPLEMENTATION_GUARD_LOOK_AT(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
@@ -923,6 +922,7 @@ public:
 };
 
 class CActor;
+typedef bool (PredicateFunc)(CActor*, void*);
 class CActorsTable : public CFixedTable<CActor*, 64>
 {
 public:
@@ -931,6 +931,8 @@ public:
 	CActor* Remove(CActor* pActor);
 	void SortByClassPriority();
 	void Swap(int a, int b);
+
+	CActor* GetByPredicate(PredicateFunc* pFunc, void* pParams);
 };
 
 PACK(
@@ -1029,5 +1031,8 @@ inline float DecodeFloat(uint32_t value) {
 		return float(value);
 	}
 }
+
+extern int randImpl();
+#define rand() randImpl()
 
 #endif //_TYPES_H

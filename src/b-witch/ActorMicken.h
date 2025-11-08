@@ -7,10 +7,12 @@
 
 #define MICKEN_BEHAVIOUR_EAT 4
 
-#define MICKEN_EAT_STATE_STAND			0x6
-#define MICKEN_EAT_STATE_WALK_TO_FRUIT	0x8
-#define MICKEN_EAT_STATE_EAT			0x9
-#define MICKEN_EAT_STATE_CHEW			0xa
+#define MICKEN_EAT_STATE_STAND				0x6
+#define MICKEN_EAT_STATE_WALK_TO_FRUIT		0x8
+#define MICKEN_EAT_STATE_EAT				0x9
+#define MICKEN_EAT_STATE_CHEW				0xa
+#define MICKEN_EAT_STATE_HOLE				0xf
+#define MICKEN_EAT_STATE_ROLL_IN_THE_WIND	0x10
 
 class CActorMicken;
 class CActorHeroPrivate;
@@ -96,6 +98,8 @@ public:
 	void BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviourMicken);
 
 	int WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF32VECTOR4* pPosition, int param_5);
+	void StateMickenHole();
+
 
 	S_STREAM_REF<CWayPoint> streamRefWayPoint;
 	S_STREAM_REF<CActor> streamRefActor;

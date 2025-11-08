@@ -38,8 +38,8 @@ public:
 };
 
 typedef void (ColCallbackFuncPtr)(CActor*, void*);
-typedef bool (CritenionFunc)(CActor*, void*);
-
+typedef bool (CriterionFunc)(CActor*, void*);
+typedef bool (CriterionActorFunc)(CActor*, CActor*);
 
 class CCluster 
 {
@@ -52,7 +52,7 @@ public:
 	void DeleteNode(CClusterNode* pNode);
 	CClusterNode* NewNode(CActor* pActor);
 
-	bool GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CritenionFunc* pFunc, void* pData);
+	bool GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CriterionFunc* pFunc, void* pData);
 
 	void ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams);
 	void ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox, ColCallbackFuncPtr* pFunc, void* pParams);
@@ -117,6 +117,8 @@ public:
 	_linked_actor* FindLinkedActor(CActor* pActor);
 	_linked_actor* AddLinkedActor();
 	void RemoveLinkedActor(_linked_actor* pLinkedActor);
+
+	int GetClassActorsWithCriterion(CActorsTable* pOutTable, int classId, CActor* pExcludeActor, CriterionActorFunc* pCriterion);
 
 	_linked_actor* aLinkedActorData;
 	_linked_actor* pActorArray_0x8;

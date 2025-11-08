@@ -20,7 +20,7 @@ public:
 	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int index);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
-	virtual void Func_0x3c() { IMPLEMENTATION_GUARD(); }
+	virtual void UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition) { IMPLEMENTATION_GUARD(); }
 
 	void Manage();
 	void Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_SELECTOR selector);

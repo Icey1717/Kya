@@ -21,6 +21,7 @@
 #include "CollisionRay.h"
 #include "ActorAutonomous.h"
 #include "Vision.h"
+#include "WayPoint.h"
 
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
@@ -2301,6 +2302,17 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 	return;
 }
 
+void CActor::UpdatePosition(CWayPoint* pWayPoint, bool param_3)
+{
+	edF32VECTOR4 local_10;
+
+	local_10.xyz = pWayPoint->location;
+	local_10.w = 1.0f;
+	UpdatePosition(&local_10, param_3);
+
+	return;
+}
+
 void CActor::UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision)
 {
 	ed_3d_hierarchy_node* pHier;
@@ -3054,61 +3066,6 @@ uint CActor::GetBehaviourFlags(int state)
 	return uVar1;
 }
 
-void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
-{
-	uint uVar1;
-	int iVar2;
-	int iVar3;
-	int* piVar4;
-	void* pvVar5;
-	int iVar6;
-	int iVar7;
-
-	//iVar6 = (pActor->data).objectId;
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x0 = (ushort)uVar1 & 3;
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x2 = (ushort)uVar1;
-	iVar2 = pByteCode->GetS32();
-	//this->field_0x4 = iVar2;
-	iVar2 = pByteCode->GetS32();
-	//this->currentOrbs_0x8 = iVar2;
-	iVar2 = pByteCode->GetS32();
-	//this->field_0xc = (float)iVar2 * 0.01;
-	this->subObj.Create(pByteCode);
-	//this->field_0x28 = 0;
-	//this->maxOrbs_0x2c = 0;
-	//this->field_0x30 = 0;
-	//if (_gAddOn_sectors == (void*)0x0) {
-	//	iVar7 = LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].sectorCount_0x14 + 1;
-	//	_gAddOn_sectors = operator.new.array((long)(iVar7 * 0x10));
-	//	iVar2 = 0;
-	//	if (0 < iVar7) {
-	//		iVar3 = 0;
-	//		do {
-	//			iVar2 = iVar2 + 1;
-	//			*(undefined4*)((int)_gAddOn_sectors + iVar3) = 0;
-	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 4) = 0;
-	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 8) = 0;
-	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 0xc) = 0;
-	//			iVar3 = iVar3 + 0x10;
-	//		} while (iVar2 < iVar7);
-	//	}
-	//}
-	//_gAddOn_NbTotalAddOn = _gAddOn_NbTotalAddOn + 1;
-	//(&_gAddOn_NbTotalMoneyInLevel)[(uint)this->field_0x2 * 4] =
-	//	(&_gAddOn_NbTotalMoneyInLevel)[(uint)this->field_0x2 * 4] + this->field_0x4;
-	//_gAddOn_NbTotalBonusInLevel = _gAddOn_NbTotalBonusInLevel + this->currentOrbs_0x8;
-	//if (iVar6 == -1) {
-	//	iVar6 = 0;
-	//}
-	//piVar4 = (int*)((int)_gAddOn_sectors + (uint)this->field_0x2 * 4 + iVar6 * 0x10);
-	//*piVar4 = *piVar4 + this->field_0x4;
-	//pvVar5 = (void*)(iVar6 * 0x10 + (int)_gAddOn_sectors);
-	//*(int*)((int)pvVar5 + 0xc) = *(int*)((int)pvVar5 + 0xc) + this->currentOrbs_0x8;
-	return;
-}
-
 void CActor::RestartCurAnim()
 {
 	if ((this->pAnimationController != (CAnimation*)0x0) && (this->currentAnimType != -1)) {
@@ -3153,36 +3110,6 @@ int CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
 	}
 
 	return uVar1;
-}
-
-void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
-{
-	uint uVar1;
-	float fVar2;
-
-	uVar1 = pByteCode->GetU32();
-	if (uVar1 == 1) {
-		fVar2 = pByteCode->GetF32();
-		this->field_0x0 = fVar2 * 0.01745329f;
-		fVar2 = pByteCode->GetF32();
-		this->field_0x4 = fVar2 * 0.01745329f;
-		this->field_0x8 = 0.0;
-		fVar2 = pByteCode->GetF32();
-		this->field_0xc = fVar2 * 0.01745329f;
-		fVar2 = pByteCode->GetF32();
-		this->field_0x10 = fVar2;
-		fVar2 = pByteCode->GetF32();
-		this->field_0x14 = fVar2;
-	}
-	else {
-		this->field_0x0 = 0.7853982f;
-		this->field_0x4 = 0.3926991f;
-		this->field_0x8 = 0.0f;
-		this->field_0xc = 3.141593f;
-		this->field_0x10 = 3.0f;
-		this->field_0x14 = 2.5f;
-	}
-	return;
 }
 
 void CActor::SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorParamsIn)
@@ -3636,6 +3563,15 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 	}
 
 	return bVar1;
+}
+
+void CActor::SV_PatchG2D(ed_g2d_manager* pG2d)
+{
+	if (pG2d != (ed_g2d_manager*)0x0) {
+		ed3DHierarchyBankMatLinkG2D(&this->p3DHierNode->base, pG2d);
+	}
+
+	return;
 }
 
 void CActor::ComputeLighting()
@@ -5471,6 +5407,28 @@ void CActorsTable::Swap(int a, int b)
 	this->aEntries[b] = tmp;
 }
 
+CActor* CActorsTable::GetByPredicate(PredicateFunc* pFunc, void* pParams)
+{
+	CActor** pCurActorIt;
+	int curActorIndex;
+
+	pCurActorIt = this->aEntries;
+	curActorIndex = 0;
+
+	if (0 < this->nbEntries) {
+		do {
+			if (pFunc(*pCurActorIt, pParams) != false) {
+				return *pCurActorIt;
+			}
+
+			curActorIndex = curActorIndex + 1;
+			pCurActorIt = pCurActorIt + 1;
+		} while (curActorIndex < this->nbEntries);
+	}
+
+	return (CActor*)0x0;
+}
+
 void CBehaviourInactive::Create(ByteCode* pByteCode)
 {
 	this->activateMsgId = pByteCode->GetS32();
@@ -5546,464 +5504,3 @@ int CBehaviourInactive::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 	return bVar1;
 }
-
-CActInstance::CActInstance()
-{
-	this->field_0x7c = -1.0f;
-	this->field_0x84 = 0;
-	this->field_0x88 = 0;
-
-	return;
-}
-
-void CActInstance::SetState(int newState)
-{
-	this->state = newState;
-
-	this->field_0x5c = 0.0f;
-
-	if (this->state == 1) {
-		this->flags = this->flags | 0x10;
-	}
-
-	if (this->state == 3) {
-		this->field_0x54 = 0.0f;
-
-		this->pathDelta = this->currentPosition;
-	}
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.h
-void CActInstance::CheckpointReset()
-{
-	return;
-}
-
-void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int instanceIndex)
-{
-	ed_3d_hierarchy* peVar1;
-	ed_g3d_manager* pG3D;
-	edNODE* peVar2;
-	ed_3D_Scene* pScene;
-	int textureIndex;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-
-	this->pOwner = pOwner;
-
-	this->basePosition = *pPosition;
-
-	this->instanceIndex = instanceIndex;
-	this->field_0x5c = 0.0f;
-	this->distanceToKim = 0.0f;
-
-	this->flags = 1;
-
-	if (pOwner->p3DHierNode != (ed_3d_hierarchy_node*)0x0) {
-		textureIndex = pOwner->pCinData->textureIndex;
-		if (textureIndex == -1) {
-			textureIndex = CScene::_pinstance->defaultTextureIndex_0x28;
-		}
-
-		pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(pOwner->pCinData->meshIndex, textureIndex);
-
-		this->flags = this->flags | 0x80;
-		peVar2 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
-		this->pNode = peVar2;
-		this->pHierarchy = (ed_3d_hierarchy*)this->pNode->pData;
-		ed3DHierarchySetSetup(this->pHierarchy, &pOwner->hierarchySetup);
-		this->pHierarchy->pHierarchySetup->pBoundingSphere = pBoundSphere;
-	}
-
-	this->currentPosition = this->basePosition;
-
-	if ((this->flags & 0x80) != 0) {
-		this->pHierarchy->transformA.rowT = this->currentPosition;
-	}
-
-	this->field_0x64 = this->basePosition.xyz;
-	this->field_0x70 = gF32Vector3Zero;
-
-	this->flags = this->flags & 0xfffffffb;
-
-	if ((this->flags & 0x80) != 0) {
-		pScene = GetStaticMeshMasterA_001031b0();
-		ed3DHierarchyNodeSetRenderOn(pScene, this->pNode);
-	}
-
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::SetVisible(int bVisible)
-{
-	ed_3D_Scene* peVar1;
-
-	if (bVisible == 0) {
-		this->flags = this->flags & 0xfffffffb;
-	}
-	else {
-		this->flags = this->flags | 4;
-	}
-
-	if ((this->flags & 0x80) != 0) {
-		if (bVisible == 1) {
-			peVar1 = GetStaticMeshMasterA_001031b0();
-			ed3DHierarchyNodeSetRenderOff(peVar1, this->pNode);
-		}
-		else {
-			peVar1 = GetStaticMeshMasterA_001031b0();
-			ed3DHierarchyNodeSetRenderOn(peVar1, this->pNode);
-		}
-	}
-
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::Reset()
-{
-	this->currentPosition = this->basePosition;
-
-	if ((this->flags & 0x80) != 0) {
-		this->pHierarchy->transformA.rowT = this->currentPosition;
-	}
-
-	this->field_0x64 = this->basePosition.xyz;
-	this->field_0x70 = gF32Vector3Zero;
-
-	this->field_0x5c = 0.0f;
-	this->distanceToKim = 0.0f;
-	this->flags = this->flags | 1;
-	
-	SetState(1);
-
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::SetAlive(int bAlive)
-{
-	ed_3D_Scene* pScene;
-
-	if (bAlive == 0) {
-		this->flags = this->flags & 0xfffffffe;
-		this->flags = this->flags & 0xfffffffb;
-
-		if ((this->flags & 0x80) != 0) {
-			pScene = GetStaticMeshMasterA_001031b0();
-			ed3DHierarchyNodeSetRenderOn(pScene, this->pNode);
-		}
-	}
-	else {
-		this->flags = this->flags | 1;
-	}
-
-	return;
-}
-
-float CActInstance::DistSquared(edF32VECTOR4* pPosition)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-
-	fVar1 = (this->currentPosition).x - pPosition->x;
-	fVar2 = (this->currentPosition).y - pPosition->y;
-	fVar3 = (this->currentPosition).z - pPosition->z;
-	return fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::ComputeDistanceToKim(edF32VECTOR4* pPosition)
-{
-	edF32VECTOR4* pHeroPosition;
-	edF32VECTOR4 deltaToKim;
-	CActorHero* pHero;
-
-	pHero = CActorHero::_gThis;
-	pHeroPosition = CActorHero::_gThis->GetPosition_00369c80();
-	edF32Vector4SubHard(&deltaToKim, pHeroPosition, &this->currentPosition);
-	deltaToKim.y = deltaToKim.y + (pHero->subObjA->boundingSphere).w;
-	this->distanceToKim = edF32Vector4GetDistHard(&deltaToKim);
-
-	if (pPosition != (edF32VECTOR4*)0x0) {
-		*pPosition = deltaToKim;
-	}
-
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::State_GotoKim()
-{
-	ed_3d_hierarchy* peVar1;
-	CActorHero* pCVar2;
-	edF32VECTOR4* peVar3;
-	Timer* pTVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	edF32VECTOR4 eStack48;
-	edF32VECTOR4 local_20;
-	edF32VECTOR4 local_10;
-
-	pCVar2 = CActorHero::_gThis;
-	peVar3 = CActorHero::_gThis->GetPosition_00369c80();
-
-	local_10.x = peVar3->x;
-	local_10.z = peVar3->z;
-	local_10.w = peVar3->w;
-	local_10.y = peVar3->y + pCVar2->subObjA->boundingSphere.w;
-
-	edF32Vector4LERPHard(this->field_0x54, &local_20, &this->pathDelta, &local_10);
-	local_20.w = 1.0f;
-
-	(this->currentPosition).xyz = local_20.xyz;
-	(this->currentPosition).w = 1.0f;
-
-	if ((this->flags & 0x80) != 0) {
-		(this->pHierarchy->transformA).rowT = this->currentPosition;
-	}
-
-	this->field_0x54 = this->field_0x54 + GetTimer()->cutsceneDeltaTime / 0.25f;
-	edF32Vector4SubHard(&eStack48, &local_10, &this->currentPosition);
-	fVar5 = edF32Vector4GetDistHard(&eStack48);
-	if ((1.0f <= this->field_0x54) || (fVar5 <= 0.25f)) {
-		SetState(4);
-	}
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::State_Wait()
-{
-	CActorHero* pCVar1;
-	edF32VECTOR4* v1;
-	int iVar2;
-	long newState;
-	float fVar4;
-	edF32VECTOR4 eStack32;
-	undefined4 local_4;
-
-	pCVar1 = CActorHero::_gThis;
-	v1 = CActorHero::_gThis->GetPosition_00369c80();
-	edF32Vector4SubHard(&eStack32, v1, &this->currentPosition);
-	eStack32.y = eStack32.y + pCVar1->subObjA->boundingSphere.w;
-	fVar4 = edF32Vector4GetDistHard(&eStack32);
-	this->distanceToKim = fVar4;
-
-	newState = 7;
-	if (this->distanceToKim <= 0.85f) {
-		newState = 4;
-	}
-	else {
-		if (this->distanceToKim <= 2.0f) {
-			newState = 3;
-		}
-	}
-
-	if (newState != 7) {
-		if ((this->flags & 8) == 0) {
-			SetState(newState);
-		}
-		else {
-			local_4 = 0xffffffff;
-			iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (void*)0xffffffff);
-			if (iVar2 == 0) {
-				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
-			}
-			else {
-				SetState(newState);
-			}
-		}
-	}
-	return;
-}
-
-void CActInstance::FUN_003982c0()
-{
-	bool bVar1;
-	bool bVar2;
-	ed_3D_Scene* peVar3;
-
-	if (((this->flags & 1) == 0) && ((this->flags & 4) != 0)) {
-		this->flags = this->flags & 0xfffffffb;
-		if ((this->flags & 0x80) != 0) {
-			peVar3 = GetStaticMeshMasterA_001031b0();
-			ed3DHierarchyNodeSetRenderOn(peVar3, this->pNode);
-		}
-	}
-	else {
-		bVar2 = CCameraManager::_gThis->InFrustum(0.35f, this->pOwner->subObjA->field_0x1c, &this->currentPosition);
-		bVar1 = (this->flags & 4) != 0;
-
-		if ((bVar1) || (bVar2 == false)) {
-			if (((bVar1) && (bVar2 == false)) && (this->flags = this->flags & 0xfffffffb, (this->flags & 0x80) != 0)) {
-				peVar3 = GetStaticMeshMasterA_001031b0();
-				ed3DHierarchyNodeSetRenderOn(peVar3, this->pNode);
-			}
-		}
-		else {
-			this->flags = this->flags | 4;
-
-			if ((this->flags & 0x80) != 0) {
-				peVar3 = GetStaticMeshMasterA_001031b0();
-				ed3DHierarchyNodeSetRenderOff(peVar3, this->pNode);
-			}
-		}
-	}
-
-	return;
-}
-
-
-void CActInstance::FUN_00397ba0()
-{
-	ed_3d_hierarchy* peVar1;
-	CActorHero* pCVar2;
-	edF32VECTOR4* v1;
-	int iVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	edF32VECTOR4 eStack160;
-	edF32VECTOR4 local_50;
-	edF32VECTOR4 eStack64;
-	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
-	undefined4 local_8;
-	undefined4 local_4;
-
-	pCVar2 = CActorHero::_gThis;
-	v1 = CActorHero::_gThis->GetPosition_00369c80();
-	edF32Vector4SubHard(&eStack160, v1, &this->currentPosition);
-	eStack160.y = eStack160.y + pCVar2->subObjA->boundingSphere.w;
-	fVar5 = edF32Vector4GetDistHard(&eStack160);
-	this->distanceToKim = fVar5;
-	if ((this->flags & 0x10) == 0) {
-		if ((this->flags & 0x40) != 0) {
-			local_20.y = -1.0f;
-			local_20.x = 0.0f;
-			local_20.z = 0.0f;
-			local_20.w = 0.0f;
-
-			CCollisionRay CStack144 = CCollisionRay(0.5f, &this->currentPosition, &local_20);
-			fVar5 = CStack144.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
-			if (fVar5 < 0.5f) {
-				edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime * 1.5, &local_20, &gF32Vector4UnitY);
-				edF32Vector4AddHard(&local_20, &this->currentPosition, &local_20);
-				this->currentPosition = local_20;
-				if ((this->flags & 0x80) != 0) {
-					peVar1 = this->pHierarchy;
-					peVar1->transformA.rowT = this->currentPosition;
-				}
-			}
-			else {
-				this->flags = this->flags & 0xffffffbf;
-			}
-		}
-	}
-	else {
-		local_30.y = -0.25f;
-		local_30.x = 0.0f;
-		local_30.z = 0.0f;
-		local_30.w = 0.0f;
-		edF32Vector4AddHard(&this->pathDelta, &this->pathDelta, &local_30);
-		edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime, &local_20, &this->pathDelta);
-		fVar5 = edF32Vector4NormalizeHard(&local_20, &local_20);
-		if (fVar5 < 0.02f) {
-			this->flags = this->flags & 0xffffffef;
-			this->flags = this->flags | 0x40;
-		}
-		else {
-			if ((this->pathDelta).y < -50.0f) {
-				SetState(5);
-			}
-		}
-		local_50.z = this->currentPosition.z;
-		local_50.w = this->currentPosition.w;
-		local_50.x = this->currentPosition.x;
-		local_50.y = this->currentPosition.y - 0.2f;
-		CCollisionRay CStack112 = CCollisionRay(fVar5, &local_50, &local_20);
-		fVar6 = CStack112.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &eStack64, (_ray_info_out*)0x0);
-		if (fVar6 == 1e+30) {
-			edF32Vector4ScaleHard(fVar5, &local_20, &local_20);
-		}
-		else {
-			edReflectVectorOnPlane(0.7f, &this->pathDelta, &this->pathDelta, &eStack64, 1);
-			edF32Vector4ScaleHard(GetTimer()->cutsceneDeltaTime, &local_20, &this->pathDelta);
-		}
-
-		edF32Vector4AddHard(&local_20, &this->currentPosition, &local_20);
-		this->currentPosition = local_20;
-		if ((this->flags & 0x80) != 0) {
-			peVar1 = this->pHierarchy;
-			peVar1->transformA.rowT = this->currentPosition;
-		}
-	}
-
-	if (this->distanceToKim <= 0.85f) {
-		if ((this->flags & 8) == 0) {
-			SetState(4);
-		}
-		else {
-			local_4 = 0xffffffff;
-			iVar4 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
-			if (iVar4 == 0) {
-				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
-			}
-			else {
-				SetState(4);
-			}
-		}
-	}
-	else {
-		if (this->distanceToKim <= 2.0) {
-			if ((this->flags & 8) == 0) {
-				SetState(3);
-			}
-			else {
-				local_8 = 0xffffffff;
-				iVar4 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)0xffffffff);
-				if (iVar4 == 0) {
-					CActorHero::_gThis->magicInterface.FUN_001dcda0(this->distanceToKim);
-				}
-				else {
-					SetState(3);
-				}
-			}
-		}
-	}
-
-	return;
-}
-
-void CActInstance::SetBasePosition(edF32VECTOR4* pBasePosition)
-{
-	this->basePosition = *pBasePosition;
-	return;
-}
-
-void CActInstance::SetPosition(edF32VECTOR4* pPosition)
-{
-	this->currentPosition = *pPosition;
-	if ((this->flags & 0x80) != 0) {
-		this->pHierarchy->transformA.rowT = this->currentPosition;
-	}
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorBonusServices.cpp
-void CActInstance::Term()
-{
-	if ((this->flags & 0x80) != 0) {
-		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pNode);
-	}
-	this->pNode = (edNODE*)0x0;
-
-	return;
-}
-
