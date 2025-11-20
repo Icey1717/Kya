@@ -47,6 +47,9 @@ public:
 class CFxHandleExt : public CFxHandle
 {
 public:
+	void Create(ByteCode* pByteCode);
+	void Init(uint newType);
+
 	uint type;
 };
 
@@ -69,6 +72,8 @@ class CFx
 {
 public:
 	CFx();
+
+	virtual ~CFx() {}
 	virtual void AddAll(ByteCode* pByteCode, CFx* aFx, int count) = 0;
 	virtual void InitAll(CFx* aFx, int count) = 0;
 	virtual void ManageAll(uint count, CFx* aFx) = 0;

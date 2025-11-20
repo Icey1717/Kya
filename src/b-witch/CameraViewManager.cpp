@@ -2518,6 +2518,6 @@ void S_STREAM_REF<CCamera>::Init()
 
 	pCVar1 = CScene::ptable.g_CameraManager_0045167c->GetScenaricCamera(this->index);
 
-	this->pObj = STORE_SECTION(pCVar1);
+	this->pObj = STORE_POINTER(pCVar1);
 	return;
 }

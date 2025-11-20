@@ -374,6 +374,7 @@ public:
 
 	bool CanSpeak();
 
+	void StateNativ_0x14();
 	void StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour);
 	void State_0x22(CBehaviourNativAkasa* pBehaviour);
 	void State_0x23(CBehaviourNativAkasa* pBehaviour);

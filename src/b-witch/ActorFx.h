@@ -4,7 +4,8 @@
 #include "Types.h"
 #include "Actor.h"
 
-class CActorFx : public CActor {
+class CActorFx : public CActor
+{
 public:
 	class CBhvSingle : public CBehaviour {
 

@@ -3,25 +3,26 @@
 
 #ifdef PLATFORM_WIN
 
-#include <unordered_map>
 #include <optional>
 #include <string>
 
+#define strd_ptr(type) int
+
 namespace PointerConv
 {
-	int AddTextureSectionValue(void* value);
-	std::optional<void*> ResolveTextureSectionKey(int key);
-	void* ResolveTextureSectionKeyChecked(int key);
+	int AddPointer(void* value);
+	std::optional<void*> ResolvePointer(int key);
+	void* ResolvePointerChecked(int key);
 }
 
-#define STORE_SECTION(a) PointerConv::AddTextureSectionValue(a)
-#define LOAD_SECTION(a) PointerConv::ResolveTextureSectionKeyChecked(a)
+#define STORE_POINTER(a) PointerConv::AddPointer(a)
+#define LOAD_POINTER(a) PointerConv::ResolvePointerChecked(a)
 
-#define LOAD_SECTION_CAST(type, a) reinterpret_cast<type>(PointerConv::ResolveTextureSectionKeyChecked(a))
+#define LOAD_POINTER_CAST(type, a) reinterpret_cast<type>(PointerConv::ResolvePointerChecked(a))
 #else
-#define STORE_SECTION(a) (int)(a)
-#define LOAD_SECTION(a) a
-#define LOAD_SECTION_CAST(type, a) ((type)a)
+#define STORE_POINTER(a) (int)(a)
+#define LOAD_POINTER(a) a
+#define LOAD_POINTER_CAST(type, a) ((type)a)
 #endif
 
 #endif //_POINTER_CONV_H

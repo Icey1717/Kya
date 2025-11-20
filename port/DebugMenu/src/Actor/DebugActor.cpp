@@ -199,15 +199,29 @@ namespace Debug {
 	}
 }
 
+static std::vector<CActor*> gDisabledActors;
+
 void Debug::Actor::ShowMenu(bool* bOpen)
 {
 	ImGui::Begin("Actor", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 	if (ImGui::CollapsingHeader("Active Actors")) {
 		ForEachActiveActor([](CActor* pActor) {
+			ImGui::PushID(pActor->name);
 			ImGui::Text(pActor->name);
+			ImGui::SameLine();
+			if (ImGui::Button("Destroy")) {
+				gDisabledActors.push_back(pActor);
+			}
+			ImGui::PopID();
 			});
 	}
+
+	for (auto& pActor : gDisabledActors) {
+		pActor->ChangeManageState(0);
+	}
+
+	static char specificActorFilter[128] = "";
 
 	gShowActorNamesOverlay.DrawImguiControl();
 	gOnlyActiveActors.DrawImguiControl();
@@ -217,6 +231,9 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 			for (auto& [setting, _] : gOverlaySettings) {
 				setting.DrawImguiControl();
 			}
+
+			// Specific actor filter option:
+			ImGui::InputText("Specific Actor Filter", specificActorFilter, sizeof(specificActorFilter));
 		}
 	}
 
@@ -236,7 +253,19 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		ImGui::SetWindowPos(FrameBuffer::GetGameWindowPosition(), ImGuiCond_Always);
 		ImGui::SetWindowSize(FrameBuffer::GetGameWindowSize(), ImGuiCond_Always);
 
-		if (gOnlyActiveActors) {
+		if (specificActorFilter[0] != '\0') {
+			auto ShowActorOverlayIfMatches = [](CActor* pActor) {
+				std::string actorNameLower = pActor->name;
+				std::transform(actorNameLower.begin(), actorNameLower.end(), actorNameLower.begin(), ::tolower);
+				std::string filterLower = specificActorFilter;
+				std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+				if (actorNameLower.find(filterLower) != std::string::npos) {
+					ShowActorOverlay(pActor);
+				}
+			};
+			ForEachActor(ShowActorOverlayIfMatches);
+		}
+		else if (gOnlyActiveActors) {
 			ForEachActiveActor(ShowActorOverlay);
 		}
 		else {

@@ -329,75 +329,75 @@ edColG3D_OBB_TREE_DYN* CCollisionManager::InstanciateDynCol(int index)
 		{
 			const int srcVerticesOffset = (pDynColEntry->dynCollision).aSourceVertices;
 			if (srcVerticesOffset != 0x0) {
-				(pDynColEntry->dynCollision).aSourceVertices = STORE_SECTION((char*)pDynColEntry + srcVerticesOffset);
+				(pDynColEntry->dynCollision).aSourceVertices = STORE_POINTER((char*)pDynColEntry + srcVerticesOffset);
 			}
 		}
 
 		{
 			const int verticesOffset = (pDynColEntry->dynCollision).aVertices;
 			if (verticesOffset != 0x0) {
-				(pDynColEntry->dynCollision).aVertices = STORE_SECTION((char*)pDynColEntry + verticesOffset);
+				(pDynColEntry->dynCollision).aVertices = STORE_POINTER((char*)pDynColEntry + verticesOffset);
 			}
 		}
 
 		{
 			const int offset = (pDynColEntry->dynCollision).aTriangles;
 			if (offset != 0) {
-				(pDynColEntry->dynCollision).aTriangles = STORE_SECTION((char*)pDynColEntry + offset);
+				(pDynColEntry->dynCollision).aTriangles = STORE_POINTER((char*)pDynColEntry + offset);
 			}
 		}
 
 		{
 			const int offset = (pDynColEntry->dynCollision).field_0x2c;
 			if (offset != 0) {
-				(pDynColEntry->dynCollision).field_0x2c = STORE_SECTION((char*)pDynColEntry + offset);
+				(pDynColEntry->dynCollision).field_0x2c = STORE_POINTER((char*)pDynColEntry + offset);
 			}
 		}
 
 		{
 			const int offset = (pDynColEntry->dynCollision).field_0x34;
 			if (offset != 0) {
-				(pDynColEntry->dynCollision).field_0x34 = STORE_SECTION((char*)pDynColEntry + offset);
+				(pDynColEntry->dynCollision).field_0x34 = STORE_POINTER((char*)pDynColEntry + offset);
 			}
 		}
 
 		{
 			const int offset = (pDynColEntry->dynCollision).field_0x30;
 			if (offset != 0) {
-				(pDynColEntry->dynCollision).field_0x30 = STORE_SECTION((char*)pDynColEntry + offset);
+				(pDynColEntry->dynCollision).field_0x30 = STORE_POINTER((char*)pDynColEntry + offset);
 			}
 		}
 
 		const int obbTreeOffset = (pDynColEntry->dynCollision).pObbTree;
 		if (obbTreeOffset != 0x0) {
-			(pDynColEntry->dynCollision).pObbTree = STORE_SECTION((char*)pDynColEntry + obbTreeOffset);
+			(pDynColEntry->dynCollision).pObbTree = STORE_POINTER((char*)pDynColEntry + obbTreeOffset);
 		}
 
 	
-		pTriangle = (edF32TRIANGLE4*)LOAD_SECTION((pDynColEntry->dynCollision).aTriangles);
+		pTriangle = (edF32TRIANGLE4*)LOAD_POINTER((pDynColEntry->dynCollision).aTriangles);
 		for (iVar8 = (pDynColEntry->dynCollision).nbTriangles; iVar8 != 0; iVar8 = iVar8 + -1) {
-			pTriangle->p1 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p1);
-			pTriangle->p2 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p2);
-			pTriangle->p3 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p3);
+			pTriangle->p1 = STORE_POINTER(LOAD_POINTER_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p1);
+			pTriangle->p2 = STORE_POINTER(LOAD_POINTER_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p2);
+			pTriangle->p3 = STORE_POINTER(LOAD_POINTER_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p3);
 			pTriangle = pTriangle + 1;
 		}
 
-		edObbTREE_DYN* pObbTreeBase = (edObbTREE_DYN*)LOAD_SECTION((pDynColEntry->dynCollision).pObbTree);
+		edObbTREE_DYN* pObbTreeBase = (edObbTREE_DYN*)LOAD_POINTER((pDynColEntry->dynCollision).pObbTree);
 
 		pObbTree = pObbTreeBase;
 		for (iVar8 = (pDynColEntry->dynCollision).field_0x18; iVar8 != 0; iVar8 = iVar8 + -1) {
 
 			bVar1 = pObbTree->type;
 			if (bVar1 == 0xd) {
-				pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pDynColEntry->dynCollision).field_0x30) + pObbTree->field_0x54[0] * 0x150));
+				pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pDynColEntry->dynCollision).field_0x30) + pObbTree->field_0x54[0] * 0x150));
 			}
 			else {
 				if (bVar1 == COL_TYPE_PRIM_OBJ) {
-					pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pDynColEntry->dynCollision).field_0x34) + pObbTree->field_0x54[0] * 0x150));
+					pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pDynColEntry->dynCollision).field_0x34) + pObbTree->field_0x54[0] * 0x150));
 				}
 				else {
 					if (bVar1 == 4) {
-						pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pDynColEntry->dynCollision).aTriangles) + pObbTree->field_0x54[0] * 0x10));
+						pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pDynColEntry->dynCollision).aTriangles) + pObbTree->field_0x54[0] * 0x10));
 					}
 					else {
 						iVar10 = 0;
@@ -405,7 +405,7 @@ edColG3D_OBB_TREE_DYN* CCollisionManager::InstanciateDynCol(int index)
 							bVar1 = pObbTree->count_0x52;
 							for (; iVar10 < (int)(uint)bVar1; iVar10 = iVar10 + 1) {
 								edObbTREE_DYN* pNext = (edObbTREE_DYN*)((char*)pObbTreeBase + (pObbTree->field_0x54[iVar10] * sizeof(edObbTREE_DYN)));
-								pObbTree->field_0x54[iVar10] = STORE_SECTION(pNext);
+								pObbTree->field_0x54[iVar10] = STORE_POINTER(pNext);
 							}
 						}
 					}
@@ -423,9 +423,9 @@ edObbTREE_DYN* CCollisionManager::InstallColFile(char* pFile, uint size)
 	edColG3D_OBB_TREE* peVar1;
 
 	peVar1 = edColLoadStatic(pFile, size, 0);
-	this->aStaticCollisionRefs[this->staticCollisionCount] = (edObbTREE_DYN*)LOAD_SECTION(peVar1->pObbTree);
+	this->aStaticCollisionRefs[this->staticCollisionCount] = (edObbTREE_DYN*)LOAD_POINTER(peVar1->pObbTree);
 	this->staticCollisionCount = this->staticCollisionCount + 1;
-	return (edObbTREE_DYN*)LOAD_SECTION(peVar1->pObbTree);
+	return (edObbTREE_DYN*)LOAD_POINTER(peVar1->pObbTree);
 }
 
 void CCollisionManager::UninstallColFile(edObbTREE_DYN* pObbTree)
@@ -451,7 +451,7 @@ void CCollision::Create(CActor* pActor, int index)
 
 	pDVar1 = CScene::ptable.g_CollisionManager_00451690->InstanciateDynCol(index);
 	this->pDynCol = pDVar1;
-	this->pObbTree = (edObbTREE_DYN*)LOAD_SECTION(this->pDynCol->pObbTree);
+	this->pObbTree = (edObbTREE_DYN*)LOAD_POINTER(this->pDynCol->pObbTree);
 	SetupInternalData(pActor);
 	return;
 }
@@ -511,7 +511,7 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 	this->pDynCol = (edColG3D_OBB_TREE_DYN*)(reinterpret_cast<char*>(peVar1) + nbPrims * MAX_COL_OBJ_SIZE);
 	this->pDynCol->field_0x18 = 1;
 	this->pDynCol->field_0x1c = 1;
-	this->pDynCol->pObbTree = STORE_SECTION(this->pObbTree);
+	this->pDynCol->pObbTree = STORE_POINTER(this->pObbTree);
 
 	for (iVar18 = 0; iVar18 < 7; iVar18 = iVar18 + 1) {
 		this->pObbTree->field_0x54[iVar18] = 0x0;
@@ -520,18 +520,18 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 	fVar22 = 1.0f;
 	this->pObbTree->count_0x52 = (byte)nbPrims;
 	this->pObbTree->field_0x50 = 0;
-	this->pObbTree->field_0x54[0] = STORE_SECTION(peVar1);
+	this->pObbTree->field_0x54[0] = STORE_POINTER(peVar1);
 
 	if (primType == 1) {
 		fVar22 = 2.0f;
 		this->pDynCol->field_0x8 = nbPrims;
-		this->pDynCol->field_0x30 = STORE_SECTION(peVar1);
+		this->pDynCol->field_0x30 = STORE_POINTER(peVar1);
 		this->pObbTree->type = 0xd;
 	}
 	else {
 		if (primType == 0) {
 			this->pDynCol->field_0xc = nbPrims;
-			this->pDynCol->field_0x34 = STORE_SECTION(peVar1);
+			this->pDynCol->field_0x34 = STORE_POINTER(peVar1);
 			this->pObbTree->type = COL_TYPE_PRIM_OBJ;
 		}
 		else {
@@ -722,14 +722,14 @@ void CCollision::SetupInternalData(CActor* pActor)
 	puVar1 = edColEnd(0);
 	this->pColObj = puVar1;
 
-	this->pColObj->pActor = STORE_SECTION(pActor);
+	this->pColObj->pActor = STORE_POINTER(pActor);
 
 	this->pObbPrim = 0;
 	this->primType = 0;
 
 	pObbTree = GetFirstObbPrimRecurse(this->pObbTree);
 	if (pObbTree != 0) {
-		this->pObbPrim = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+		this->pObbPrim = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 		this->primType = pObbTree->type;
 	}
 
@@ -834,13 +834,13 @@ edObbTREE_DYN* CCollision::GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree)
 	if ((bVar1 != 0xe) && (bVar1 != 0xd)) {
 		if ((bVar1 == COL_TYPE_TREE) && (iVar7 = 0, pObbTree->count_0x52 != 0)) {
 			do {
-				pMainTree = (edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar7]);
+				pMainTree = (edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[iVar7]);
 				bVar1 = pMainTree->type;
 				pResult = pMainTree;
 				if ((bVar1 != 0xe) && (bVar1 != 0xd)) {
 					if ((bVar1 == COL_TYPE_TREE) && (iVar6 = 0, pMainTree->count_0x52 != 0)) {
 						do {
-							pResult = GetFirstObbPrimRecurse((edObbTREE_DYN*)LOAD_SECTION(pMainTree->field_0x54[iVar6]));
+							pResult = GetFirstObbPrimRecurse((edObbTREE_DYN*)LOAD_POINTER(pMainTree->field_0x54[iVar6]));
 
 							if (pResult != (edObbTREE_DYN*)0x0) goto LAB_001e1da0;
 
@@ -878,7 +878,7 @@ void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, 
 		iVar4 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
-				PatchObbTreeFlagsRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar4]), param_2, param_3, param_4);
+				PatchObbTreeFlagsRecurse((edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[iVar4]), param_2, param_3, param_4);
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < pObbTree->count_0x52);
 		}
@@ -887,7 +887,7 @@ void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, 
 		if (obbType == COL_TYPE_TRIANGLE) {
 			iVar4 = 0;
 			if (pObbTree->count_0x52 != 0) {
-				edF32TRIANGLE4* pTri = LOAD_SECTION_CAST(edF32TRIANGLE4*, pObbTree->field_0x54[0]);
+				edF32TRIANGLE4* pTri = LOAD_POINTER_CAST(edF32TRIANGLE4*, pObbTree->field_0x54[0]);
 				do {
 					pTri[iVar4].flags = pTri[iVar4].flags & param_3;
 					pTri[iVar4].flags = pTri[iVar4].flags | param_2;
@@ -899,7 +899,7 @@ void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, 
 		else {
 			if (((obbType == COL_TYPE_PRIM_OBJ) || (obbType == 0xd)) && (iVar4 = 0, pObbTree->count_0x52 != 0)) {
 				iVar2 = 0;
-				edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+				edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 				do {					
 					pPrimObj[iVar4].flags_0x80 = pPrimObj[iVar4].flags_0x80 & param_3;
 					pPrimObj[iVar4].flags_0x80 = pPrimObj[iVar4].flags_0x80 | param_2;
@@ -927,12 +927,12 @@ void CCollision::SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4
 
 	if (bVar1 == COL_TYPE_TREE) {
 		for (; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
-			SetObbTreePositionRecurse(LOAD_SECTION_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar2]), pMatrix);
+			SetObbTreePositionRecurse(LOAD_POINTER_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar2]), pMatrix);
 		}
 	}
 	else {
 		if (((bVar1 != 8) && (bVar1 != 4)) && ((bVar1 == 0xe || (bVar1 == 0xd)))) {
-			edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, pObbTree->field_0x54[0]);
+			edColPRIM_OBJECT* pPrim = LOAD_POINTER_CAST(edColPRIM_OBJECT*, pObbTree->field_0x54[0]);
 			for (iVar2 = 0; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 				peVar3 = pPrim + iVar2;
 
@@ -976,7 +976,7 @@ void CCollision::SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF3
 		iVar4 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
-				SetObbTreeMatrixNoRotationRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar4]), param_2, param_3);
+				SetObbTreeMatrixNoRotationRecurse((edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[iVar4]), param_2, param_3);
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < pObbTree->count_0x52);
 		}
@@ -984,7 +984,7 @@ void CCollision::SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF3
 	else {
 		if ((((obbType != 8) && (obbType != 4)) && ((obbType == COL_TYPE_PRIM_OBJ || (obbType == 0xd)))) && (iVar4 = 0, pObbTree->count_0x52 != 0))
 		{
-			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 
 			do {
 				edColComputeMatrices(&pPrimObj[iVar4]);
@@ -1073,14 +1073,14 @@ void CCollision::SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* 
 		iVar3 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
-				SetObbTreeMatrixRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar3]), param_2, param_3);
+				SetObbTreeMatrixRecurse((edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[iVar3]), param_2, param_3);
 				iVar3 = iVar3 + 1;
 			} while (iVar3 < pObbTree->count_0x52);
 		}
 	}
 	else {
 		if ((((bVar1 != 8) && (bVar1 != 4)) && ((bVar1 == 0xe || (bVar1 == 0xd)))) && (iVar3 = 0, pObbTree->count_0x52 != 0)) {
-			pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+			pPrimObj = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 			do {
 				edColComputeMatrices(&pPrimObj[iVar3]);
 				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].vertices, &pPrimObj[iVar3].vertices, param_2);
@@ -1106,7 +1106,7 @@ void CCollision::ComputeObbTreeLowestAndHighestVerticesRecurse(edF32VECTOR4* pHi
 		index = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
-				ComputeObbTreeLowestAndHighestVerticesRecurse(pHighestVertex, pLowestVertex, param_3, (edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[index]));
+				ComputeObbTreeLowestAndHighestVerticesRecurse(pHighestVertex, pLowestVertex, param_3, (edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[index]));
 				index = index + 1;
 			} while (index < pObbTree->count_0x52);
 		}
@@ -1114,7 +1114,7 @@ void CCollision::ComputeObbTreeLowestAndHighestVerticesRecurse(edF32VECTOR4* pHi
 	else {
 		if ((((colType != 8) && (colType != 4)) && ((colType == COL_TYPE_PRIM_OBJ || (colType == 0xd)))) && (index = 0, pObbTree->count_0x52 != 0)) {
 
-			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 
 			do {
 				ComputePrimLowestAndHighestVertices(&outHighestVertex, &outLowestVertex, param_3, &pPrimObj[index], pObbTree->type);
@@ -1139,9 +1139,9 @@ void CCollision::ComputeG3DObbTreeLowestAndHighestVertices(edF32VECTOR4* pHighes
 	pHighestVertex->y = 1e+30f;
 	pLowestVertex->y = -1e+30f;
 
-	ComputeObbTreeLowestAndHighestVerticesRecurse(pHighestVertex, pLowestVertex, param_3, (edObbTREE_DYN*)LOAD_SECTION(pDynCol->pObbTree));
+	ComputeObbTreeLowestAndHighestVerticesRecurse(pHighestVertex, pLowestVertex, param_3, (edObbTREE_DYN*)LOAD_POINTER(pDynCol->pObbTree));
 
-	pVertex = (edF32VECTOR4*)LOAD_SECTION(pDynCol->aVertices);
+	pVertex = (edF32VECTOR4*)LOAD_POINTER(pDynCol->aVertices);
 	for (iVar2 = pDynCol->vertexCount; iVar2 != 0; iVar2 = iVar2 + -1) {
 		if (pVertex->y < pHighestVertex->y) {
 			*pHighestVertex = *pVertex;
@@ -1164,8 +1164,8 @@ void CCollision::TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int
 	int index;
 
 	index = pDynCol->vertexCount;
-	pSrcVertex = (edF32VECTOR4*)LOAD_SECTION(pDynCol->aSourceVertices);
-	pResultVertex = (edF32VECTOR4*)LOAD_SECTION(pDynCol->aVertices);
+	pSrcVertex = (edF32VECTOR4*)LOAD_POINTER(pDynCol->aSourceVertices);
+	pResultVertex = (edF32VECTOR4*)LOAD_POINTER(pDynCol->aVertices);
 	if (matrixType == 0) {
 		const edF32VECTOR4 rowT = pTransformMatrix->rowT;
 		for (; index != 0; index = index + -1) {
@@ -1405,7 +1405,7 @@ float CCollision::GetObbTreeDistanceFromPosition(edObbTREE_DYN* pObbTree, edF32V
 
 		if (pObbTree->count_0x52 != 0) {
 			do {
-				fVar4 = GetObbTreeDistanceFromPosition(LOAD_SECTION_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar3]), v0);
+				fVar4 = GetObbTreeDistanceFromPosition(LOAD_POINTER_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar3]), v0);
 
 				if (fVar5 <= fVar4) {
 					fVar4 = fVar5;
@@ -1419,7 +1419,7 @@ float CCollision::GetObbTreeDistanceFromPosition(edObbTREE_DYN* pObbTree, edF32V
 	else {
 		iVar3 = 0;
 		if (pObbTree->count_0x52 != 0) {
-			edColPRIM_OBJECT* pPrimObj = LOAD_SECTION_CAST(edColPRIM_OBJECT*, pObbTree->field_0x54[0]);
+			edColPRIM_OBJECT* pPrimObj = LOAD_POINTER_CAST(edColPRIM_OBJECT*, pObbTree->field_0x54[0]);
 			do {
 				fVar4 = GetPrimDistanceFromPosition(pPrimObj + iVar3, pObbTree->type, v0);
 
@@ -1457,12 +1457,12 @@ void CCollision::SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, ed
 
 	if (colType == COL_TYPE_TREE) {
 		for (; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
-			SetObbTreePositionNoRotationRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar2]), param_2);
+			SetObbTreePositionNoRotationRecurse((edObbTREE_DYN*)LOAD_POINTER(pObbTree->field_0x54[iVar2]), param_2);
 		}
 	}
 	else {
 		if (((colType != 8) && (colType != 4)) && ((colType == 0xe || (colType == 0xd)))) {
-			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
+			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_POINTER(pObbTree->field_0x54[0]);
 			for (iVar2 = 0; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 
 				pPrimObj[iVar2].vertices.rowT = param_2->rowT + pPrimObj[iVar2].field_0xb0;
@@ -1891,11 +1891,11 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	for (; pColDbObj < pColDbObjEnd; pColDbObj = pColDbObj + 1) {
 
 		if (pColDbObj->pColObj && pColDbObj->pColObj->pActor) {
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pColDbObj {}", LOAD_SECTION_CAST(CActor*, pColDbObj->pColObj->pActor)->name);
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pColDbObj {}", LOAD_POINTER_CAST(CActor*, pColDbObj->pColObj->pActor)->name);
 		}
 
 		if (pColDbObj->pOtherColObj && pColDbObj->pOtherColObj->pActor) {
-			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pColDbObj->pOtherColObj->pActor)->name);
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pOtherColObj {}", LOAD_POINTER_CAST(CActor*, pColDbObj->pOtherColObj->pActor)->name);
 		}
 
 		primFlags = pColDbObj->flags;
@@ -1907,7 +1907,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 				iVar14 = 0;
 			}
 			else {
-				pReceiver = LOAD_SECTION_CAST(CActor*, pColDbObj->pOtherColObj->pActor);
+				pReceiver = LOAD_POINTER_CAST(CActor*, pColDbObj->pOtherColObj->pActor);
 
 				if (pReceiver != (CActor*)0x0) {
 					pCVar2 = pReceiver->pCollisionData;
@@ -2183,7 +2183,7 @@ void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsT
 	pColDbEnd = pColDb + (gColData.pActiveDatabase)->curDbEntryCount;
 
 	for (; pColDb < pColDbEnd; pColDb = pColDb + 1) {
-		pNewEntry = LOAD_SECTION_CAST(CActor*, pColDb->pOtherColObj->pActor);
+		pNewEntry = LOAD_POINTER_CAST(CActor*, pColDb->pOtherColObj->pActor);
 
 		COLLISION_LOG(LogLevel::Verbose, "CCollision::PreprocessActorContacts {} colliding with {}", pActor->name, pNewEntry->name);
 

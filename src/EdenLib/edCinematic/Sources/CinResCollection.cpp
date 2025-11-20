@@ -43,12 +43,12 @@ char* edResCollection::LoadResource(edCinGameInterface& cinGameInterface, int of
 		}
 		/* This will call LoadCutsceneFile and return a pointer to the start of the file buffer */
 		fileBuffer = cinGameInterface.GetResource((edResCollection::RES_TYPE)(pTag->flags & 0x7fffffff), (pTag->flags & 0x80000000) != 0, resNameStart, &pTag->size);
-		pTag->pData = STORE_SECTION(fileBuffer);
+		pTag->pData = STORE_POINTER(fileBuffer);
 	}
 	if (outSize != (int*)0x0) {
 		*outSize = pTag->size;
 	}
-	return (char*)LOAD_SECTION(pTag->pData);
+	return (char*)LOAD_POINTER(pTag->pData);
 }
 
 void edResCollection::FlushAllResources(edCinGameInterface& cinGameInterface)
@@ -62,7 +62,7 @@ void edResCollection::FlushAllResources(edCinGameInterface& cinGameInterface)
 		do {
 			pcVar1 = &this->pData->aTags[iVar3];
 			if (((pcVar1->flags & 0x80000000) == 0) && (pcVar1->pData != 0)) {
-				cinGameInterface.ReleaseResource(pcVar1->flags, false, (void*)LOAD_SECTION(pcVar1->pData));
+				cinGameInterface.ReleaseResource(pcVar1->flags, false, (void*)LOAD_POINTER(pcVar1->pData));
 				pcVar1->pData = 0;
 			}
 			iVar3 = iVar3 + -1;

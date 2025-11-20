@@ -69,7 +69,7 @@ namespace Renderer::Kya::Sprite
 
 		assert(pPkt[1].asU32[3] == gGifTagCopyCode);
 
-		u8* const pGifPkt = LOAD_SECTION_CAST(u8*, pPkt[1].asU32[1]);
+		u8* const pGifPkt = LOAD_POINTER_CAST(u8*, pPkt[1].asU32[1]);
 		Gif_Tag gifTag;
 		gifTag.setTag(pGifPkt, true);
 		return gifTag;
@@ -163,12 +163,12 @@ namespace Renderer::Kya::Sprite
 		constexpr int nbStagingVertices = 0x200;
 		static edF32VECTOR4 vtxStagingBuff[nbStagingVertices]; // 512 vertices max
 
-		VertexColor* pRgba = LOAD_SECTION_CAST(VertexColor*, pSprite->pColorBuf);
-		TextureData* pStq = LOAD_SECTION_CAST(TextureData*, pSprite->pSTBuf);
-		edF32VECTOR4* pVectorVertex = LOAD_SECTION_CAST(edF32VECTOR4*, pSprite->pVertexBuf);
+		VertexColor* pRgba = LOAD_POINTER_CAST(VertexColor*, pSprite->pColorBuf);
+		TextureData* pStq = LOAD_POINTER_CAST(TextureData*, pSprite->pSTBuf);
+		edF32VECTOR4* pVectorVertex = LOAD_POINTER_CAST(edF32VECTOR4*, pSprite->pVertexBuf);
 		edF32VECTOR4* pVectorVertexOut = vtxStagingBuff;
 		GSVertexUnprocessed::Vertex* pVertex = reinterpret_cast<GSVertexUnprocessed::Vertex*>(vtxStagingBuff);
-		WidthHeightData* pWh = LOAD_SECTION_CAST(WidthHeightData*, pSprite->pWHBuf);
+		WidthHeightData* pWh = LOAD_POINTER_CAST(WidthHeightData*, pSprite->pWHBuf);
 
 		// This increases by 2 every loop because we start the next vtx at the end of the previous vtx.
 		int vtxOffset = 0;

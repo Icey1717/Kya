@@ -205,8 +205,8 @@ namespace Renderer
 			glm::vec4 fadeColor;
 		};
 
-		glm::mat4 gFinalViewMatrix;
-		glm::mat4 gFinalProjMatrix;
+		glm::mat4 gInitialViewMatrix;
+		glm::mat4 gInitialProjMatrix;
 
 		// Maximum number of instances we can draw in a single frame. (Meshes are split into instances for rendering)
 		constexpr int gMaxInstances = 1000;
@@ -1509,6 +1509,11 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		gCurrentDraw->bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 
+		if (!gRenderThread->GetHasRecordedCommands()) {
+			gInitialViewMatrix = gCachedViewMatrix;
+			gInitialProjMatrix = gCachedProjMatrix;
+		}
+
 		gRenderThread->AddDraw(*gCurrentDraw);
 
 		// If the texture is expecting to do a Z only draw, need to duplicate it.
@@ -1516,9 +1521,6 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 			gCurrentDraw->bIsAfailZOnly = true;
 			gRenderThread->AddDraw(*gCurrentDraw);
 		}
-
-		gFinalViewMatrix = gCachedViewMatrix;
-		gFinalProjMatrix = gCachedProjMatrix;
 
 		gCurrentDraw.reset();
 	}

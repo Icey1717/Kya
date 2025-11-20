@@ -2995,7 +2995,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			ExecTag* pOther = (ExecTag*)(&(pVifPkt->asU32[0]));
 
 			if (pOther->cmd == 0x30) {
-				edpkt_data* pExecPktBase = (edpkt_data*)LOAD_SECTION(pVifPkt->asU32[1]);
+				edpkt_data* pExecPktBase = (edpkt_data*)LOAD_POINTER(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pOther->count; i++) {
 					edpkt_data* pExecPkt = pExecPktBase + i;
@@ -3107,7 +3107,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			{
 				LogUpdate(pTag);
 
-				char* pUnpack = (char*)LOAD_SECTION(pVifPkt->asU32[1]);
+				char* pUnpack = (char*)LOAD_POINTER(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
@@ -3121,7 +3121,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			{
 				LogUpdate(pTag);
 
-				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
+				short* pUnpack = (short*)LOAD_POINTER(pVifPkt->asU32[1]);
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
 					assert(pStart < pFakeMem + FAKE_VU1_MEM_SIZE);
@@ -3142,7 +3142,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			{
 				LogUpdate(pTag);
 
-				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
+				short* pUnpack = (short*)LOAD_POINTER(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
@@ -3164,7 +3164,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			{
 				LogUpdate(pTag);
 
-				byte* pUnpack = (byte*)LOAD_SECTION(pVifPkt->asU32[1]);
+				byte* pUnpack = (byte*)LOAD_POINTER(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
@@ -3244,10 +3244,10 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 					// Flag writes not supported yet, itop isn't correct!
 					addr += gItop;
 					addr = addr & 0x3ff;
-					gDelayedFlagWrites.push_back({ *pTag, (char*)LOAD_SECTION(pVifPkt->asU32[1]) });
+					gDelayedFlagWrites.push_back({ *pTag, (char*)LOAD_POINTER(pVifPkt->asU32[1]) });
 				}
 				else {
-					UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
+					UnpackToAddr(addr, LOAD_POINTER(pVifPkt->asU32[1]), pTag->count * 0x10);
 				}
 			}
 		}
@@ -3276,7 +3276,7 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 					addr = addr & 0x3ff;
 				}
 
-				UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x4);
+				UnpackToAddr(addr, LOAD_POINTER(pVifPkt->asU32[1]), pTag->count * 0x4);
 			}
 		}
 		else if (pTag->type == UNPACK_V2_16_MASKED) {

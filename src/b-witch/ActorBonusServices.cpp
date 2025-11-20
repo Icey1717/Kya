@@ -672,6 +672,31 @@ void CAddOnGenerator::Init(int param_2)
 
 void CAddOnGenerator::Term()
 {
+	if (this->aInstances != (CActInstance**)0x0) {
+		edMemFree(this->aInstances);
+	}
+
+	_gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel = _gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel - this->nbMoney;
+	_gAddOn_NbTotalBonusInLevel = _gAddOn_NbTotalBonusInLevel - this->nbBonus;
+	if (_gAddOn_aMoney[0]._gAddOn_NbTotalMoneyInLevel + _gAddOn_aMoney[1]._gAddOn_NbTotalMoneyInLevel + _gAddOn_aMoney[2]._gAddOn_NbTotalMoneyInLevel + _gAddOn_NbTotalBonusInLevel == 0) {
+		_gAddOn_bComputeDone = 0;
+		_gAddOn_aMoney[0].field_0x4 = 0;
+		_gAddOn_NbRemaining = 0;
+		_gAddOn_aMoney[0].pActor = (CActorMoney*)0x0;
+		_gAddOn_NbTotalAddOn = 0;
+		_gAddOn_aMoney[0].pBehaviour = (CBehaviourMoneyAddOn*)0x0;
+		_gAddOn_aMoney[1].field_0x4 = 0;
+		_gAddOn_aMoney[1].pActor = (CActorMoney*)0x0;
+		_gAddOn_aMoney[1].pBehaviour = (CBehaviourMoneyAddOn*)0x0;
+		_gAddOn_aMoney[2].field_0x4 = 0;
+		_gAddOn_aMoney[2].pActor = (CActorMoney*)0x0;
+		_gAddOn_aMoney[2].pBehaviour = (CBehaviourMoneyAddOn*)0x0;
+		_gAddOn_NbMaxBonusInSector = 0;
+		_gAddOn_pBonusAct = (CActorBonus*)0x0;
+		_gAddOn_pBonusBhv = (CBehaviourBonusAddOn*)0x0;
+	}
+
+	return;
 }
 
 void CAddOnGenerator::Generate(edF32VECTOR4* pPosition)
@@ -694,35 +719,34 @@ void CAddOnGenerator::Generate(edF32VECTOR4* pPosition)
 	pInstance = pCVar4;
 
 	if (this->nbBonus != 0) {
-		IMPLEMENTATION_GUARD(
 		pMagicInterface = &CActorHero::_gThis->magicInterface;
 		if ((this->field_0x0 & 2) == 0) {
-			fVar8 = 0.0;
+			fVar8 = 0.0f;
 			fVar6 = this->field_0xc;
-			iVar2 = rand();
-			fVar6 = (float)this->nbBonus * fVar6 * ((float)iVar2 / 2.147484e+09);
+			fVar6 = (float)this->nbBonus * fVar6 * ((float)rand() / 2.147484e+09f);
 		}
 		else {
-			fVar6 = (*pMagicInterface->pVTable->GetValue)((CInterface*)pMagicInterface);
-			fVar7 = CMagicInterface::GetValueMax(pMagicInterface);
-			fVar8 = 1.0;
-			if (fVar6 / fVar7 <= 1.0) {
+			fVar6 = pMagicInterface->GetValue();
+			fVar7 = pMagicInterface->GetValueMax();
+
+			fVar8 = 1.0f;
+			if (fVar6 / fVar7 <= 1.0f) {
 				fVar8 = fVar6 / fVar7;
 			}
-			fVar6 = 0.0;
+
+			fVar6 = 0.0f;
 		}
 
-		fVar8 = floorf((1.0 - fVar8) * ((float)this->nbBonus - fVar6));
+		fVar8 = floorf((1.0f - fVar8) * ((float)this->nbBonus - fVar6));
+
 		if (_gAddOn_pBonusBhv != (CBehaviour*)0x0) {
-			pInstance = CBehaviourBonusAddOn::Generate
-			((CBehaviourBonusAddOn*)_gAddOn_pBonusBhv, pVelocity, &this->subObj,
-				(int)fVar8 - this->maxOrbs_0x2c, pCVar4);
-			pCVar4 = (CBnsInstance*)((int)pInstance - (int)pCVar4);
-			if ((int)pCVar4 < 0) {
-				pCVar4 = (CBnsInstance*)((int)&(pCVar4->base).pVTable + 3);
+			pInstance = _gAddOn_pBonusBhv->Generate(pPosition, &this->subObj, (int)fVar8 - this->maxOrbs_0x2c, pCVar4);
+			int diff = (char*)pInstance - (char*)pCVar4;
+			if (diff < 0) {
+				diff = diff + 3;
 			}
-			this->maxOrbs_0x2c = this->maxOrbs_0x2c + ((int)pCVar4 >> 2);
-		})
+			this->maxOrbs_0x2c = this->maxOrbs_0x2c + (diff / sizeof(CBnsInstance*));
+		}
 	}
 
 	pLevelScheduler = CLevelScheduler::gThis;

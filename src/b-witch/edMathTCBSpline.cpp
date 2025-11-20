@@ -197,24 +197,24 @@ static edF32VECTOR4 gSplineDefault =
 
 void CedMathTCBSpline::GetPosition(float time, edF32VECTOR4* pOutPosition)
 {
-	uint uVar1;
+	uint activeKeyIndex;
 	edF32VECTOR4 local_20;
 	float local_4;
 
-	uVar1 = GetKeyFromTime(time, &local_4);
+	activeKeyIndex = GetKeyFromTime(time, &local_4);
 
 	local_20 = gSplineDefault;
-	local_20.y = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
+	local_20.y = local_4 / (this->aPoints[activeKeyIndex + 1].time - this->aPoints[activeKeyIndex].time);
 	local_20.z = local_20.y * local_20.y;
 	local_20.w = local_20.y * local_20.z;
 	local_4 = local_20.y;
 
-	edF32Matrix4MulF32Vector4Hard(pOutPosition, &this->aPoints[uVar1].matrix, &local_20);
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, &this->aPoints[activeKeyIndex].matrix, &local_20);
 	pOutPosition->w = 1.0f;
 
 	if (this->field_0x10 != (undefined*)0x0) {
 		IMPLEMENTATION_GUARD(
-		(*(code*)this->field_0x10)(local_4, this, uVar1, uVar1 + 1);)
+		(*(code*)this->field_0x10)(local_4, this, activeKeyIndex, activeKeyIndex + 1);)
 	}
 	
 	return;
@@ -239,7 +239,7 @@ uint CedMathTCBSpline::GetKeyFromTime(float time, float* param_3)
 		fVar5 = pCVar1[uVar4].time;
 		if (fVar5 <= time) {
 			uVar2 = this->nbPoints - 2;
-			*param_3 = fVar5 - pCVar1[uVar2 - 1].time;
+			*param_3 = fVar5 - pCVar1[uVar4 - 1].time;
 		}
 		else {
 			uVar2 = 0;

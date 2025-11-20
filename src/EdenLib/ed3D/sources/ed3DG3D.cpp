@@ -234,13 +234,13 @@ ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMat
 
 	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
 
-	pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+	pcVar2 = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 	nbMaterials = pMATA_HASH->nextChunckOffset - 0x10U >> 4;
 
 	while (true) {
 		if ((nbMaterials == 0) || (pMaterial == (ed_g2d_material*)(pcVar2 + 1))) break;
 		nbMaterials = nbMaterials - 1;
-		pcVar2 = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+		pcVar2 = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 		pHashCode = pHashCode + 1;
 	}
 
@@ -273,7 +273,7 @@ ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int co
 		pMVar1 = pMVar1 + 1;
 	}
 
-	char* pLoaded = (char*)LOAD_SECTION(pMVar1->pData);
+	char* pLoaded = (char*)LOAD_POINTER(pMVar1->pData);
 
 	return (ed_g3d_hierarchy*)(pLoaded + 0x10);
 }
@@ -307,7 +307,7 @@ void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag
 			pLod = &pHier->aLods[uVar6];
 
 			sVar1 = pLod->renderType;
-			ppeVar5 = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+			ppeVar5 = (ed_hash_code*)LOAD_POINTER(pLod->pObj);
 			if (((sVar1 != 3) && (sVar1 != 2)) && (sVar1 != 1)) break;
 		LAB_0029f5e0:
 			uVar6 = uVar6 + 1;
@@ -324,7 +324,7 @@ void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag
 					else {
 						peVar2 = ed3DHierarcGetLOD(pHier, pHier->lodCount - 1);
 						if (peVar2 != (ed3DLod*)0x0) {
-							ed3DObjectSetStripShadowCast((ed_hash_code*)LOAD_SECTION(peVar2->pObj), flag, uVar4);
+							ed3DObjectSetStripShadowCast((ed_hash_code*)LOAD_POINTER(peVar2->pObj), flag, uVar4);
 						}
 					}
 				}
@@ -360,7 +360,7 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 			while (pChunck->hash == 0x52454948) {
 				ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pChunck + 1);
 
-				ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
+				ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_POINTER(pHier->pLinkTransformData);
 
 				if (pNode != (ed_3d_hierarchy_node*)0x0) {
 					IMPLEMENTATION_GUARD(
@@ -419,7 +419,7 @@ void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort f
 							peVar1 = (ed_g3d_hierarchy*)0x0;
 						}
 						else {
-							peVar1 = (ed_g3d_hierarchy*)((ed_Chunck*)LOAD_SECTION(peVar1->pLinkTransformData) + 1);
+							peVar1 = (ed_g3d_hierarchy*)((ed_Chunck*)LOAD_POINTER(peVar1->pLinkTransformData) + 1);
 						}
 					}
 				}

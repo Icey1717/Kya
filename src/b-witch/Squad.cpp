@@ -76,7 +76,7 @@ void CSquad::Create(ByteCode* pByteCode)
 	this->aSemaphores[0].field_0x4 = 0.6f;
 	this->aSemaphores[0].field_0xc = 0;
 	this->aSemaphores[0].nbSemaphores = 0;
-	memset(this->aSemaphores[0].aSemaphores, 0, sizeof(this->aSemaphores[0].aSemaphores));
+	memset(this->aSemaphores, 0, sizeof(this->aSemaphores));
 
 	this->aSemaphores[1].field_0x0 = 1;
 	this->aSemaphores[1].field_0x4 = 0.0f;
@@ -734,6 +734,11 @@ bool CSquad::QuerySemaphoreCold(int index, CTeamElt* pTeamElt)
 	return this->aSemaphores[index].GetToken(pTeamElt, 1) != 0xffffffff;
 }
 
+bool CSquad::QuerySemaphoreWarm(int index, CTeamElt* pTeamElt)
+{
+	return this->aSemaphores[index].ForceGetToken(pTeamElt, 1) != 0xffffffff;
+}
+
 void SquadSemaphoreManager::ManageSemaphore()
 {
 	uint uVar1;
@@ -926,4 +931,225 @@ uint SquadSemaphoreManager::GetToken(CTeamElt* pTeamElt, int param_3)
 	}
 
 	return 0xffffffff;
+}
+
+uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
+{
+	CTeamElt* pCVar1;
+	bool bVar2;
+	SquadSemaphore* pfVar3;
+	SquadSemaphore* pfVar4;
+	SquadSemaphore* pfVar5;
+	SquadSemaphore* pfVar10;
+	SquadSemaphore* pfVar11;
+	SquadSemaphore* pfVar12;
+	SquadSemaphore* pfVar7;
+	SquadSemaphore* pfVar8;
+	SquadSemaphore* pfVar9;
+	uint uVar3;
+	SquadSemaphore* pfVar6;
+	SquadSemaphore* pCVar4;
+	uint uVar5;
+	uint uVar6;
+	uint uVar7;
+	uint* puVar8;
+	SquadSemaphore* pSVar9;
+	uint uVar10;
+	uint uVar11;
+	SquadSemaphore* pSVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+
+	if (param_3 == 1) {
+		uVar5 = 0;
+		bVar2 = false;
+		pCVar4 = this->aSemaphores;
+
+		while ((uVar5 < this->nbSemaphores && (!bVar2))) {
+			if (((pCVar4->flags & 1) == 0) ||
+				(pCVar4->pTeamElt != pTeamElt)) {
+				pCVar4 = pCVar4 + 1;
+				uVar5 = uVar5 + 1;
+			}
+			else {
+				bVar2 = true;
+			}
+		}
+
+		if (!bVar2) {
+			uVar5 = 0xffffffff;
+		}
+
+		if (uVar5 != 0xffffffff) {
+			return uVar5;
+		}
+	}
+
+	uVar5 = this->nbSemaphores;
+	uVar6 = 0;
+	pCVar4 = this->aSemaphores;
+	if (uVar5 != 0) {
+		do {
+			if ((pCVar4->flags & 1) == 0) {
+				pfVar3 = &this->aSemaphores[uVar6];
+				fVar13 = SemaphoreEval(pTeamElt, pfVar3->field_0x4);
+				pfVar4 = &this->aSemaphores[uVar6];
+				if ((pfVar4->flags & 5) == 0) {
+					this->field_0xc = this->field_0xc + -1;
+				}
+				pfVar5 = &this->aSemaphores[uVar6];
+				pCVar1 = pfVar5->pTeamElt;
+				if (pCVar1 != (CTeamElt*)0x0) {
+					pfVar3->field_0x4 = pCVar1;
+				}
+				pfVar5->pTeamElt = pTeamElt;
+				this->aSemaphores[uVar6].field_0x8 = fVar13;
+				pfVar4->flags = 1;
+				pTeamElt->EnableFightAction(this->field_0x0);
+				return uVar6;
+			}
+
+			uVar6 = uVar6 + 1;
+			pCVar4 = pCVar4 + 1;
+		} while (uVar6 < uVar5);
+	}
+
+	fVar13 = 3.402823e+38f;
+	uVar11 = 0xffffffff;
+	uVar3 = 0;
+	uVar6 = 0xffffffff;
+	fVar16 = fVar13;
+	pCVar4 = this->aSemaphores;
+	uVar7 = uVar6;
+	uVar10 = uVar11;
+	if (uVar5 != 0) {
+		do {
+			fVar15 = fVar13;
+			fVar14 = fVar16;
+			uVar6 = uVar7;
+			uVar11 = uVar10;
+			if ((pCVar4->flags & 2) == 0) {
+				fVar15 = pCVar4->field_0x8;
+				uVar11 = uVar3;
+				if (fVar13 <= fVar15) {
+					fVar15 = fVar13;
+					uVar11 = uVar10;
+				}
+			}
+			else {
+				fVar14 = pCVar4->field_0x8;
+				uVar6 = uVar3;
+				if (fVar16 <= fVar14) {
+					fVar14 = fVar16;
+					uVar6 = uVar7;
+				}
+			}
+
+			uVar3 = uVar3 + 1;
+			fVar13 = fVar15;
+			fVar16 = fVar14;
+			pCVar4 = pCVar4 + 1;
+			uVar7 = uVar6;
+			uVar10 = uVar11;
+		} while (uVar3 < uVar5);
+	}
+
+	if (uVar6 == 0xffffffff) {
+		uVar6 = 0xffffffff;
+
+		if (uVar11 != 0xffffffff) {
+			pfVar7 = &this->aSemaphores[uVar11];
+			uVar5 = 0;
+			bVar2 = false;
+			pSVar12 = pfVar7;
+			pCVar4 = this->aSemaphores;
+			while ((uVar5 < this->nbSemaphores && (!bVar2))) {
+				if (((pCVar4->flags & 1) == 0) || (pCVar4->pTeamElt != pfVar7->pTeamElt)) {
+					pCVar4 = pCVar4 + 1;
+					uVar5 = uVar5 + 1;
+				}
+				else {
+					bVar2 = true;
+				}
+			}
+
+			if (!bVar2) {
+				uVar5 = 0xffffffff;
+			}
+
+			if (uVar5 != 0xffffffff) {
+				pfVar6 = &this->aSemaphores[uVar5];
+				puVar8 = &pfVar6->flags;
+				if ((pfVar6->flags & 1) != 0) {
+					pCVar1 = pfVar6->pTeamElt;
+					pSVar9 = pfVar6;
+					if (pCVar1 != (CTeamElt*)0x0) {
+						pCVar1->DisableFightAction();
+					}
+
+					pCVar1 = pSVar9->pTeamElt;
+					if (pCVar1 != (CTeamElt*)0x0) {
+						this->aSemaphores[uVar5].field_0x4 = pCVar1;
+					}
+
+					if (this->field_0x4 == 0.0f) {
+						if ((*puVar8 & 5) != 0) {
+							this->field_0xc = this->field_0xc + 1;
+						}
+
+						*puVar8 = 0;
+						this->aSemaphores[uVar5].duration = 0.0f;
+					}
+					else {
+						*puVar8 = 4;
+						this->aSemaphores[uVar5].duration = this->field_0x4;
+					}
+
+					pSVar9->pTeamElt = (CTeamElt*)0x0;
+					this->aSemaphores[uVar5].field_0x8 = 0.0f;
+				}
+			}
+
+			pfVar8 = &this->aSemaphores[uVar11];
+			fVar13 = SemaphoreEval(pTeamElt, pfVar8->field_0x4);
+			pfVar9 = &this->aSemaphores[uVar11];
+			if ((pfVar9->flags & 5) == 0) {
+				this->field_0xc = this->field_0xc + -1;
+			}
+
+			pCVar1 = pSVar12->pTeamElt;
+			if (pCVar1 != (CTeamElt*)0x0) {
+				pfVar8->field_0x4 = pCVar1;
+			}
+
+			pSVar12->pTeamElt = pTeamElt;
+			this->aSemaphores[uVar11].field_0x8 = fVar13;
+			pfVar9->flags = 1;
+			pTeamElt->EnableFightAction(this->field_0x0);
+			uVar6 = uVar11;
+		}
+	}
+	else {
+		pfVar10 = &this->aSemaphores[uVar6];
+		fVar13 = SemaphoreEval(pTeamElt, pfVar10->field_0x4);
+		pfVar11 = &this->aSemaphores[uVar6];
+		if ((pfVar11->flags & 5) == 0) {
+			this->field_0xc = this->field_0xc + -1;
+		}
+
+		pfVar12 = &this->aSemaphores[uVar6];
+		pCVar1 = pfVar12->pTeamElt;
+		if (pCVar1 != (CTeamElt*)0x0) {
+			pfVar10->field_0x4 = pCVar1;
+		}
+
+		pfVar12->pTeamElt = pTeamElt;
+		this->aSemaphores[uVar6].field_0x8 = fVar13;
+		pfVar11->flags = 1;
+		pTeamElt->EnableFightAction(this->field_0x0);
+	}
+
+	return uVar6;
 }

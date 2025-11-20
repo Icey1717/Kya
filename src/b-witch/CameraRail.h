@@ -19,11 +19,11 @@ public:
 	CedMathTCBSpline* pSpline;
 };
 
-struct CameraRailSubObj
+struct CameraRailSegment
 {
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
-	float field_0x20;
+	edF32VECTOR4 position;
+	edF32VECTOR4 tangent;
+	float alpha;
 };
 
 class CCameraRail : public CCameraRailVirtual
@@ -39,14 +39,14 @@ public:
 	void Alert();
 	void _UpdateTargetPosWithPlane();
 
-	int field_0xe0;
-	uint field_0xe4;
-	float field_0xe8;
-	float field_0xec;
-	int field_0xf0;
-	CameraRailSubObj* field_0xf4;
+	int pathFollowIndex;
+	uint currentSegmentIndex;
+	float distanceToPlaneA;
+	float distanceToPlaneB;
+	int nbSegments;
+	CameraRailSegment* aRailSegments;
 
-	edF32VECTOR4 field_0x100;
+	edF32VECTOR4 railTargetPosition;
 };
 
 class CCameraRailSimple : public CCameraRailVirtual

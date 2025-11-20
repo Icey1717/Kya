@@ -2481,6 +2481,6 @@ void CLightManager::LeaveManagedCluster(CLight* pLight)
 template<>
 void S_STREAM_REF<CLight>::Init()
 {
-	this->pObj = STORE_SECTION(&CScene::ptable.g_LightManager_004516b0->aLights[this->index]);
+	this->pObj = STORE_POINTER(&CScene::ptable.g_LightManager_004516b0->aLights[this->index]);
 	return;
 }

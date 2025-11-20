@@ -47,6 +47,6 @@ void S_STREAM_REF<CWayPoint>::Init()
 		pZone = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + this->index;
 	}
 
-	this->pObj = STORE_SECTION(pZone);
+	this->pObj = STORE_POINTER(pZone);
 	return;
 }

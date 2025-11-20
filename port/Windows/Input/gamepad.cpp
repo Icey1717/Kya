@@ -95,9 +95,17 @@ namespace GamepadImpl
 
 	bool GetGamepadReleased(uint32_t routeId)
 	{
-		// For released state, simply return the inverse of pressed
-		// For production use, maintain state between frames to detect transitions
-		return !GetGamepadPressed(routeId);
+		// Track previous state for each button
+		static bool previousButtonState[ROUTE_END] = {};
+
+		bool currentlyPressed = GetGamepadPressed(routeId);
+		bool wasPressed = previousButtonState[routeId];
+
+		// Store the current state for next frame
+		previousButtonState[routeId] = currentlyPressed;
+
+		// Return true only if button was previously pressed and is now released
+		return wasPressed && !currentlyPressed;
 	}
 
 	float GetGamepadAnalog(uint32_t routeId)

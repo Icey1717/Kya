@@ -124,14 +124,14 @@ void CTrackManager::Level_Init()
 			if (piVar5->eventCount != 0) {
 				do {
 					uVar5 = uVar5 - 1;
-					if (((psVar4->field_0x1c == 0x0) || (psVar4->field_0x18 == 0)) || (psVar4->field_0x18 != LOAD_SECTION_CAST(int*, psVar4->field_0x1c)[6])) {
+					if (((psVar4->field_0x1c == 0x0) || (psVar4->field_0x18 == 0)) || (psVar4->field_0x18 != LOAD_POINTER_CAST(int*, psVar4->field_0x1c)[6])) {
 						bVar1 = false;
 					}
 					else {
 						bVar1 = true;
 					}
 					if (bVar1) {
-						piVar2 = LOAD_SECTION_CAST(int*, psVar4->field_0x1c);
+						piVar2 = LOAD_POINTER_CAST(int*, psVar4->field_0x1c);
 						if (((piVar2 != (int*)0x0) && (iVar3 = psVar4->field_0x18, iVar3 != 0)) && (iVar3 == piVar2[6])) {
 							IMPLEMENTATION_GUARD(
 							(**(code**)(*piVar2 + 0xc))();)
@@ -163,7 +163,7 @@ void CEventTrack::Resume()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_SECTION_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
+			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_POINTER_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
 				&& (psVar2->field_0x18 == piVar1[6])) {
 				IMPLEMENTATION_GUARD(
 				(**(code**)(*piVar1 + 0x18))();)
@@ -185,7 +185,7 @@ void CEventTrack::Pause()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_SECTION_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
+			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_POINTER_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
 				&& (psVar2->field_0x18 == piVar1[6])) {
 				IMPLEMENTATION_GUARD(
 					(**(code**)(*piVar1 + 0x14))();)
@@ -219,7 +219,7 @@ bool CEventTrack::FUN_0019f140()
 		do {
 			uVar3 = uVar3 - 1;
 			if (((psVar2->field_0x1c == 0x0) || (psVar2->field_0x18 == 0)) ||
-				(psVar2->field_0x18 != LOAD_SECTION_CAST(int*, psVar2->field_0x1c)[6])) {
+				(psVar2->field_0x18 != LOAD_POINTER_CAST(int*, psVar2->field_0x1c)[6])) {
 				bVar1 = false;
 			}
 			else {
@@ -250,7 +250,7 @@ void CEventTrack::Stop()
 		do {
 			uVar3 = uVar3 - 1;
 			if (pEvent->type == 0x39) {
-				piVar1 = LOAD_SECTION_CAST(int*, pEvent->field_0x1c);
+				piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c);
 				if (((piVar1 == (int*)0x0) || (pEvent->field_0x18 == 0)) || (pEvent->field_0x18 != piVar1[6])) {
 					lVar2 = 7;
 				}
@@ -258,7 +258,7 @@ void CEventTrack::Stop()
 					IMPLEMENTATION_GUARD(
 					lVar2 = (**(code**)(*piVar1 + 0x28))();)
 				}
-				if (((lVar2 != 0) && (piVar1 = LOAD_SECTION_CAST(int*, pEvent->field_0x1c), piVar1 != (int*)0x0)) &&
+				if (((lVar2 != 0) && (piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c), piVar1 != (int*)0x0)) &&
 					((pEvent->field_0x18 != 0 && (pEvent->field_0x18 == piVar1[6])))) {
 					IMPLEMENTATION_GUARD(
 					(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
@@ -320,7 +320,7 @@ void CEventTrack::Reset()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			piVar1 = LOAD_SECTION_CAST(int*, pEvent->field_0x1c);
+			piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c);
 			if (((piVar1 == (int*)0x0) || (pEvent->field_0x18 == 0)) || (bVar2 = true, pEvent->field_0x18 != piVar1[6])) {
 				bVar2 = false;
 			}

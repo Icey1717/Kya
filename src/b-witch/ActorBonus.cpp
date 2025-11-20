@@ -259,7 +259,7 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 {
 	CBehaviourBonusFlock* pBehaviourBonusFlock;
 	CBnsInstance* pBnsInstance;
-	float angleRotY, deltaTime, fieldA0, fieldA4;
+	float newAngleRotY, deltaTime, fieldA0, fieldA4;
 	edF32VECTOR4 localPosition;
 	CShadow* pShadow;
 
@@ -280,22 +280,22 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 
 			if ((pBnsInstance->flags & 1) != 0) {
 				deltaTime = GetTimer()->cutsceneDeltaTime;
-				angleRotY = pBnsInstance->angleRotY + deltaTime * 24.0f;
-				pBnsInstance->angleRotY = (angleRotY >= 16.0f) ? angleRotY - 16.0f : angleRotY;
+				newAngleRotY = pBnsInstance->angleRotY + deltaTime * 24.0f;
+				pBnsInstance->angleRotYalt = (newAngleRotY >= 16.0f) ? newAngleRotY - 16.0f : newAngleRotY;
 				pBnsInstance->UpdateVisibility();
 				pBnsInstance->field_0x5c += deltaTime;
 				pBnsInstance->field_0x64 = pBnsInstance->currentPosition.xyz;
 			}
 
-			fieldA0 = pBnsInstance->angleRotY + GetTimer()->cutsceneDeltaTime * 1.8f;
-			pBnsInstance->angleRotY = (fieldA0 >= 6.283185f) ? fieldA0 - 6.283185f : fieldA0;
+			fieldA0 = pBnsInstance->angleRotYalt + GetTimer()->cutsceneDeltaTime * 1.8f;
+			pBnsInstance->angleRotYalt = (fieldA0 >= 6.283185f) ? fieldA0 - 6.283185f : fieldA0;
 			fieldA4 = pBnsInstance->field_0xa4 + GetTimer()->cutsceneDeltaTime * 2.2f;
 			pBnsInstance->field_0xa4 = (fieldA4 >= 6.283185f) ? fieldA4 - 6.283185f : fieldA4;
 
 			pBnsInstance->SetBasePosition(&pPosition->rowT);
 
 			localPosition.x = cosf(pBnsInstance->field_0xa4);
-			localPosition.y = cosf(pBnsInstance->angleRotY);
+			localPosition.y = cosf(pBnsInstance->angleRotYalt);
 			localPosition.z = sinf(pBnsInstance->field_0xa4);
 			localPosition.w = 0.0f;
 
@@ -1352,10 +1352,10 @@ void CBehaviourBonusFlock::Draw()
 					iVar12 = iVar6 * 4;
 					uint* pSt = pNewPatch->pCurrentPatch->pSt;
 					local_14 = (float)(iVar19 >> 3) * 0.5;
-					puVar15 = (undefined2*)(pSt + (iVar12 + 0) * 4);
-					puVar14 = (undefined2*)(pSt + (iVar12 + 1) * 4);
-					puVar11 = (undefined2*)(pSt + (iVar12 + 3) * 4);
-					puVar13 = (undefined2*)(pSt + (iVar12 + 2) * 4);
+					puVar15 = (undefined2*)(pSt + (iVar12 + 0));
+					puVar14 = (undefined2*)(pSt + (iVar12 + 1));
+					puVar11 = (undefined2*)(pSt + (iVar12 + 3));
+					puVar13 = (undefined2*)(pSt + (iVar12 + 2));
 
 					uVar10 = (undefined2)(int)((local_18 + 0.125f) * 4096.0f);
 
@@ -1576,7 +1576,7 @@ void CBnsInstance::SetState(int newState)
 
 float CBnsInstance::GetAngleRotY()
 {
-	return this->angleRotY;
+	return this->angleRotYalt;
 }
 
 void CBnsInstance::CheckpointReset()
@@ -1594,7 +1594,7 @@ void CBnsInstance::InitBns(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4
 	this->field_0x98 = 0.0f;
 	this->field_0x90 = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->field_0x9c = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
-	this->angleRotY = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
+	this->angleRotYalt = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->field_0xa4 = (static_cast<float>(rand()) / 2.147484e+09f) * 6.283185f;
 	this->angleRotY = (static_cast<float>(rand()) / 2.147484e+09f) * 16.0f;
 
@@ -1907,9 +1907,9 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 				if ((curState == 2) || (curState == CActInstance::STT_INS_WAIT)) {
 					State_Wait();
 
-					this->angleRotY += GetTimer()->cutsceneDeltaTime * 1.8f;
-					if (6.283185f <= this->angleRotY) {
-						this->angleRotY = this->angleRotY - 6.283185f;
+					this->angleRotYalt += GetTimer()->cutsceneDeltaTime * 1.8f;
+					if (6.283185f <= this->angleRotYalt) {
+						this->angleRotYalt = this->angleRotYalt - 6.283185f;
 					}
 
 					this->field_0xa4 += GetTimer()->cutsceneDeltaTime * 2.2f;
@@ -1920,7 +1920,7 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 					SetBasePosition(&this->basePosition);
 
 					newPosition.x = cosf(this->field_0xa4);
-					newPosition.y = cosf(this->angleRotY);
+					newPosition.y = cosf(this->angleRotYalt);
 					newPosition.z = sinf(this->field_0xa4);
 					newPosition.w = 0.0f;
 
@@ -2059,3 +2059,265 @@ void CBnsInstance::State_Turn(CBehaviourBonusTurn* pBehaviour)
 	return;
 }
 
+void CBehaviourBonusAddOn::Create(ByteCode* pByteCode)
+{
+	this->field_0x18 = pByteCode->GetF32();
+	this->field_0x18 = 20.0f;
+	this->field_0x38 = 0;
+	this->nbInstances = 0;
+	this->flarePatchId = -1;
+	this->animPatchId = -1;
+
+	return;
+}
+
+void CBehaviourBonusAddOn::Init(CActor* pOwner)
+{
+	edF32VECTOR4 local_10;
+
+	CBehaviourBonusBase::Init(pOwner);
+
+	KyaUpdateObjA* pKVar1 = this->pOwner->subObjA;
+	local_10.xyz = (pKVar1->boundingSphere).xyz;
+	this->pOwner->SetLocalBoundingSphere(500.0f, &local_10);
+
+	return;
+}
+
+void CBehaviourBonusAddOn::Term()
+{
+	int curInstanceIndex;
+	CBnsInstance* pInstances;
+
+	curInstanceIndex = 0;
+	if (0 < this->nbInstances) {
+		do {
+			this->aBnsInstances[curInstanceIndex].Term();
+			curInstanceIndex = curInstanceIndex + 1;
+		} while (curInstanceIndex < this->nbInstances);
+	}
+
+	pInstances = this->aBnsInstances;
+	if (pInstances != (CBnsInstance*)0x0) {
+		delete[] pInstances;
+	}
+
+	return;
+}
+
+void CBehaviourBonusAddOn::SectorChange(int oldSectorId, int newSectorId)
+{
+	if ((newSectorId != -1) && (this->pOwner->sectorId != -1)) {
+		Func_0x4c();
+	}
+
+	return;
+}
+
+void CBehaviourBonusAddOn::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	int curInstanceIndex;
+	CActInstance* this_00;
+	CActorBonus* pBonus;
+
+	this->pOwner->field_0xf0 = 20.0f;
+	this->pOwner->ComputeAltitude();
+
+	pBonus = this->pOwner;
+	pBonus->field_0xf0 = pBonus->distanceToGround + 0.2f;
+	if (newState == -1) {
+		pBonus = this->pOwner;
+		pBonus->SetState(6, -1);
+	}
+	else {
+		pBonus = this->pOwner;
+		pBonus->SetState(newState, newAnimationType);
+	}
+
+	pBonus = this->pOwner;
+	pBonus->flags = pBonus->flags & 0xfffffffc;
+	pBonus = this->pOwner;
+	pBonus->flags = pBonus->flags & 0xffffff5f;
+	pBonus->EvaluateDisplayState();
+	curInstanceIndex = 0;
+	if (0 < this->nbInstances) {
+		do {
+			this->aBnsInstances[curInstanceIndex].Reset();
+			this->aBnsInstances[curInstanceIndex].field_0x98 = 0.0f;
+			this->aBnsInstances[curInstanceIndex].SetAlive(0);
+			curInstanceIndex = curInstanceIndex + 1;
+		} while (curInstanceIndex < this->nbInstances);
+	}
+
+	this->field_0x20 = 1;
+
+	return;
+}
+
+void CBehaviourBonusAddOn::Func_0x4c()
+{
+	int curInstanceIndex;
+	CActorBonus* pBonus;
+
+	curInstanceIndex = 0;
+	if (0 < this->nbInstances) {
+		do {
+			KillInstance(this->aBnsInstances + curInstanceIndex);
+			curInstanceIndex = curInstanceIndex + 1;
+		} while (curInstanceIndex < this->nbInstances);
+	}
+
+	this->field_0x38 = 0;
+
+	pBonus = this->pOwner;
+	pBonus->flags = pBonus->flags & 0xfffffffd;
+	pBonus->flags = pBonus->flags | 1;
+
+	pBonus = this->pOwner;
+	pBonus->flags = pBonus->flags & 0xffffff7f;
+	pBonus->flags = pBonus->flags | 0x20;
+	pBonus->EvaluateDisplayState();
+
+	return;
+}
+
+void CBehaviourBonusAddOn::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	return;
+}
+
+void CBehaviourBonusAddOn::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	Func_0x4c();
+
+	return;
+}
+
+void CBehaviourBonusAddOn::Allocate(int nbNewInstances)
+{
+	uint count;
+	CActorBonus* pOwner;
+	int* pBase;
+	CBnsInstance* pCVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+
+	this->nbInstances = nbNewInstances;
+	this->field_0x18 = 0;
+
+	count = this->nbInstances;
+	if (count != 0) {
+		this->aBnsInstances = new CBnsInstance[count];
+		iVar2 = this->nbInstances;
+		pCVar1 = this->aBnsInstances;
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				pOwner = this->pOwner;
+				pCVar1->Init(pOwner, &pOwner->baseLocation, &pOwner->vector_0x1e0, iVar3);
+				pCVar1->flags = pCVar1->flags | 8;
+				pCVar1->field_0x98 = 0.0f;
+				pCVar1->field_0x90 = ((float)rand() / 2.147484e+09f) * 6.283185f;
+				pCVar1->field_0x9c = (float)(((float)rand() / 2.147484e+09f) * 6.283185f);
+				pCVar1->angleRotYalt = ((float)rand() / 2.147484e+09f) * 6.283185f;
+				pCVar1->field_0xa4 = (float)(((float)rand() / 2.147484e+09f) * 6.283185f);
+				iVar3 = iVar3 + 1;
+				pCVar1->angleRotY = ((float)rand() / 2.147484e+09f) * 16.0f;
+				pCVar1 = pCVar1 + 1;
+			} while (iVar3 < iVar2);
+		}
+
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				this->aBnsInstances[iVar3].Reset();
+				this->aBnsInstances[iVar3].field_0x98 = 0.0f;
+				this->aBnsInstances[iVar3].SetAlive(0);
+				this->aBnsInstances[iVar3].flags = this->aBnsInstances[iVar3].flags | 0x20;
+				iVar3 = iVar3 + 1;
+				iVar2 = this->nbInstances;
+			} while (iVar3 < iVar2);
+		}
+
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 7;
+		}
+
+		this->flarePatchId = GameDListPatch_Register(this->pOwner, 0, this->nbInstances);
+		this->animPatchId = GameDListPatch_Register(this->pOwner, 0, this->nbInstances);
+	}
+
+	return;
+}
+
+CBnsInstance** CBehaviourBonusAddOn::Generate(edF32VECTOR4* pPosition, CAddOnGenerator_SubObj* pSubObj, int nbToSpawn, CBnsInstance** pInstance)
+{
+	CActorBonus* pBonus;
+	int iVar3;
+	CBnsInstance* pCurInstance;
+	int byteOffset;
+	int curInstanceIndex;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	curInstanceIndex = 0;
+
+	if (this->field_0x18 == 0) {
+		pBonus = this->pOwner;
+		pBonus->SetState(6, -1);
+		pBonus = this->pOwner;
+		pBonus->flags = pBonus->flags | 2;
+		pBonus->flags = pBonus->flags & 0xfffffffe;
+		pBonus = this->pOwner;
+		pBonus->flags = pBonus->flags | 0x80;
+		pBonus->flags = pBonus->flags & 0xffffffdf;
+		pBonus->EvaluateDisplayState();
+	}
+
+	byteOffset = 0;
+	for (; (nbToSpawn != 0 && (curInstanceIndex < this->nbInstances)); curInstanceIndex = curInstanceIndex + 1) {
+		pCurInstance = reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset);
+
+		if ((pCurInstance->flags & 1) == 0) {
+			nbToSpawn = nbToSpawn + -1;
+			pCurInstance->Reset();
+			pCurInstance->field_0x98 = 0.0f;
+
+			reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset)->SetPosition(pPosition);
+			reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset)->SetVisible(1);
+
+			pCurInstance = reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset);
+			pCurInstance->SetState(1);
+			local_50.x = 0.0f;
+			local_50.y = 0.0f;
+
+			fVar6 = pSubObj->field_0x14;
+			fVar5 = -fVar6;
+			local_50.z = pSubObj->field_0x10 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f);
+			local_50.w = 0.0f;
+
+			fVar6 = pSubObj->field_0x4;
+			fVar5 = -fVar6;
+			edF32Matrix4RotateXHard(pSubObj->field_0x0 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f), &eStack64, &gF32Matrix4Unit);
+			fVar6 = pSubObj->field_0xc;
+			fVar5 = -fVar6;
+			edF32Matrix4RotateYHard(pSubObj->field_0x8 + fVar5 + (fVar6 - fVar5) * ((float)rand() / 2.147484e+09f), &eStack64, &eStack64);
+			edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &local_50);
+
+			pCurInstance = reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset);
+			pCurInstance->pathDelta = local_50;
+
+			if (pInstance != (CBnsInstance**)0x0) {
+				*pInstance = reinterpret_cast<CBnsInstance*>(reinterpret_cast<char*>(this->aBnsInstances) + byteOffset);
+				pInstance = pInstance + 1;
+			}
+		}
+
+		byteOffset = byteOffset + sizeof(CBnsInstance);
+	}
+
+	return pInstance;
+}

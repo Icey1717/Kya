@@ -40,9 +40,9 @@ struct edF32TRIANGLE4_Stack
 
 	// Conversion constructor from edF32TRIANGLE4*
 	edF32TRIANGLE4_Stack(edF32TRIANGLE4* other) {
-		p1 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p1);
-		p2 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p2);
-		p3 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p3);
+		p1 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p1);
+		p2 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p2);
+		p3 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p3);
 		flags = other->flags;
 	}
 };
@@ -154,95 +154,95 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 		{
 			const int offset = (pStaticColEntry->obbTree).field_0x28;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).field_0x28 = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).field_0x28 = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).aTriangles;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).aTriangles = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aTriangles = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).field_0x30;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).field_0x30 = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).field_0x30 = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).aQuads;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).aQuads = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aQuads = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).aSpheres;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).aSpheres = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aSpheres = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).aBoxes;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).aBoxes = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aBoxes = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
 		{
 			const int offset = (pStaticColEntry->obbTree).pObbTree;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).pObbTree = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).pObbTree = STORE_POINTER(pFileBuffer + offset);
 			}
 		}
 
-		edF32TRIANGLE4* pTriangle = LOAD_SECTION_CAST(edF32TRIANGLE4*, (pStaticColEntry->obbTree).aTriangles);
-		char* pBase = LOAD_SECTION_CAST(char*, (pStaticColEntry->obbTree).field_0x28);
+		edF32TRIANGLE4* pTriangle = LOAD_POINTER_CAST(edF32TRIANGLE4*, (pStaticColEntry->obbTree).aTriangles);
+		char* pBase = LOAD_POINTER_CAST(char*, (pStaticColEntry->obbTree).field_0x28);
 		for (iVar8 = (pStaticColEntry->obbTree).nbTriangles; iVar8 != 0; iVar8 = iVar8 + -1) {
-			pTriangle->p1 = STORE_SECTION(pBase + pTriangle->p1 * 0x10);
-			pTriangle->p2 = STORE_SECTION(pBase + pTriangle->p2 * 0x10);
-			pTriangle->p3 = STORE_SECTION(pBase + pTriangle->p3 * 0x10);
+			pTriangle->p1 = STORE_POINTER(pBase + pTriangle->p1 * 0x10);
+			pTriangle->p2 = STORE_POINTER(pBase + pTriangle->p2 * 0x10);
+			pTriangle->p3 = STORE_POINTER(pBase + pTriangle->p3 * 0x10);
 			pTriangle = pTriangle + 1;
 		}
 
-		edF32QUAD4* pQuad = LOAD_SECTION_CAST(edF32QUAD4*, (pStaticColEntry->obbTree).aQuads);
+		edF32QUAD4* pQuad = LOAD_POINTER_CAST(edF32QUAD4*, (pStaticColEntry->obbTree).aQuads);
 
 		for (iVar6 = (pStaticColEntry->obbTree).nbQuads; iVar6 != 0; iVar6 = iVar6 + -1) {
-			pQuad->p1 = STORE_SECTION(pBase + pQuad->p1 * 0x10);
-			pQuad->p2 = STORE_SECTION(pBase + pQuad->p2 * 0x10);
-			pQuad->p3 = STORE_SECTION(pBase + pQuad->p3 * 0x10);
-			pQuad->p4 = STORE_SECTION(pBase + pQuad->p4 * 0x10);
+			pQuad->p1 = STORE_POINTER(pBase + pQuad->p1 * 0x10);
+			pQuad->p2 = STORE_POINTER(pBase + pQuad->p2 * 0x10);
+			pQuad->p3 = STORE_POINTER(pBase + pQuad->p3 * 0x10);
+			pQuad->p4 = STORE_POINTER(pBase + pQuad->p4 * 0x10);
 			pQuad = pQuad + 1;
 		}
 
-		edObbTREE* pObbTreeBase = (edObbTREE*)LOAD_SECTION((pStaticColEntry->obbTree).pObbTree);
+		edObbTREE* pObbTreeBase = (edObbTREE*)LOAD_POINTER((pStaticColEntry->obbTree).pObbTree);
 
 		pObbTree = pObbTreeBase;
 		for (iVar6 = (pStaticColEntry->obbTree).field_0x20; iVar6 != 0; iVar6 = iVar6 + -1) {
 			bVar1 = pObbTree->type;
 			if (bVar1 == COL_TYPE_BOX) {
-				edColPRIM_BOX* pBox = LOAD_SECTION_CAST(edColPRIM_BOX*, pStaticColEntry->obbTree.aBoxes) + pObbTree->field_0x54[0];
-				pObbTree->field_0x54[0] = STORE_SECTION(pBox);
+				edColPRIM_BOX* pBox = LOAD_POINTER_CAST(edColPRIM_BOX*, pStaticColEntry->obbTree.aBoxes) + pObbTree->field_0x54[0];
+				pObbTree->field_0x54[0] = STORE_POINTER(pBox);
 			}
 			else {
 				if (bVar1 == COL_TYPE_SPHERE) {
-					pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aSpheres) + pObbTree->field_0x54[0] * sizeof(edColPRIM_SPHERE)));
+					pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pStaticColEntry->obbTree).aSpheres) + pObbTree->field_0x54[0] * sizeof(edColPRIM_SPHERE)));
 				}
 				else {
 					if (bVar1 == COL_TYPE_QUAD) {
-						pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aQuads) + pObbTree->field_0x54[0] * sizeof(edF32QUAD4)));
+						pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pStaticColEntry->obbTree).aQuads) + pObbTree->field_0x54[0] * sizeof(edF32QUAD4)));
 					}
 					else {
 						if (bVar1 == 5) {
-							pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).field_0x30) + pObbTree->field_0x54[0] * 0x18));
+							pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pStaticColEntry->obbTree).field_0x30) + pObbTree->field_0x54[0] * 0x18));
 						}
 						else {
 							if (bVar1 == COL_TYPE_TRIANGLE) {
-								pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aTriangles) + pObbTree->field_0x54[0] * sizeof(edF32TRIANGLE4)));
+								pObbTree->field_0x54[0] = STORE_POINTER(((char*)LOAD_POINTER((pStaticColEntry->obbTree).aTriangles) + pObbTree->field_0x54[0] * sizeof(edF32TRIANGLE4)));
 							}
 							else {
 								iVar8 = 0;
@@ -250,7 +250,7 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 									bVar1 = pObbTree->count_0x52;
 									for (; iVar8 < bVar1; iVar8 = iVar8 + 1) {
 										edObbTREE* pNext = (edObbTREE*)((char*)pObbTreeBase + (pObbTree->field_0x54[iVar8] * sizeof(edObbTREE)));
-										pObbTree->field_0x54[iVar8] = STORE_SECTION(pNext);
+										pObbTree->field_0x54[iVar8] = STORE_POINTER(pNext);
 									}
 								}
 							}
@@ -1212,7 +1212,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 
 #ifdef DODGY_INCLUDE_LOGGING
 	if (pOtherColObj && pOtherColObj->pActor) {
-		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColComputeContactQuad4 pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pOtherColObj->pActor)->name);
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edColComputeContactQuad4 pOtherColObj {}", LOAD_POINTER_CAST(CActor*, pOtherColObj->pActor)->name);
 	}
 #endif
 
@@ -1290,7 +1290,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 				pColInfo->field_0x0.rowY = peVar4[1];
 
 				pColInfo->field_0x48 = 4;
-				pColInfo->field_0x40 = STORE_SECTION(pTriangle);
+				pColInfo->field_0x40 = STORE_POINTER(pTriangle);
 				pColInfo->field_0x44 = pTriangle->flags;
 			}
 		}
@@ -1320,28 +1320,28 @@ void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD
 	uVar4 = 0;
 	peVar1 = pPrimSphereQuadIn->pQuad;
 	m0 = &(pPrimSphereQuadIn->pPrim)->worldTransform;
-	edF32Matrix4MulF32Vector4Hard(&eStack64, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1));
-	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p2));
-	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3));
-	edF32Matrix4MulF32Vector4Hard(&eStack16, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p4));
+	edF32Matrix4MulF32Vector4Hard(&eStack64, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p1));
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p2));
+	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3));
+	edF32Matrix4MulF32Vector4Hard(&eStack16, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p4));
 	local_44 = peVar1->flags;
 	
 	local_60.p1 = &eStack64;
 	iVar5 = 0;
 	local_54 = peVar1->flags;
-	local_50.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
+	local_50.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p1);
 
 	do {
 		if (iVar5 == 0) {
-			local_50.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p2);
-			local_50.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3);
+			local_50.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p2);
+			local_50.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3);
 			local_60.p2 = &eStack48;
 			local_60.p3 = &eStack32;
 		}
 		else {
-			local_50.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3);
+			local_50.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3);
 			local_60.p3 = &eStack16;
-			local_50.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p4);
+			local_50.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p4);
 			local_60.p2 = &eStack32;
 		}
 
@@ -1519,7 +1519,7 @@ void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColOb
 				pColInfo->field_0x0 = local_40;
 
 				pColInfo->field_0x48 = 4;
-				pColInfo->field_0x40 = STORE_SECTION(pTriangle);
+				pColInfo->field_0x40 = STORE_POINTER(pTriangle);
 				pColInfo->field_0x44 = pTriangle->flags;
 			}
 		}
@@ -2351,12 +2351,12 @@ void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* 
 	pQuad = pPrimBoxQuadIn->pQuad;
 	m0 = pPrimBoxQuadIn->pPrim;
 	m0_00 = &m0->worldTransform;
-	edF32Matrix4MulF32Vector4Hard(&eStack80, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1));
-	edF32Matrix4MulF32Vector4Hard(&eStack64, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2));
-	edF32Matrix4MulF32Vector4Hard(&eStack48, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3));
-	edF32Matrix4MulF32Vector4Hard(&local_20, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4));
+	edF32Matrix4MulF32Vector4Hard(&eStack80, m0_00, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1));
+	edF32Matrix4MulF32Vector4Hard(&eStack64, m0_00, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2));
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0_00, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3));
+	edF32Matrix4MulF32Vector4Hard(&local_20, m0_00, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4));
 	local_90.p1 = &eStack80;
-	local_80.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
+	local_80.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1);
 	local_10[0] = local_90.p1;
 
 	for (iVar4 = 0; iVar4 < 2; iVar4 = iVar4 + 1) {
@@ -2365,13 +2365,13 @@ void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* 
 		if (iVar4 == 0) {
 			local_90.p2 = &eStack64;
 			local_90.p3 = &eStack48;
-			local_80.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2);
-			local_80.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
+			local_80.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2);
+			local_80.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
 		}
 		else {
 			local_90.p3 = &local_20;
-			local_80.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
-			local_80.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4);
+			local_80.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
+			local_80.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4);
 		}
 
 		local_10[1] = local_90.p2;
@@ -2761,7 +2761,7 @@ void edColComputeContactPrim(edColOBJECT* pColObjA, edColOBJECT* pColObjB, edCol
 
 #ifdef DODGY_INCLUDE_LOGGING
 	if (pColObjB && pColObjB->pActor) {
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColComputeContactPrim pColObjB {}", LOAD_SECTION_CAST(CActor*, pColObjB->pActor)->name);
+		COLLISION_LOG(LogLevel::VeryVerbose, "edColComputeContactPrim pColObjB {}", LOAD_POINTER_CAST(CActor*, pColObjB->pActor)->name);
 	}
 #endif
 
@@ -2842,7 +2842,7 @@ void edColComputeContactPrim(edColOBJECT* pColObjA, edColOBJECT* pColObjB, edCol
 				peVar2->field_0x0 = local_40;
 
 				pColInfo->field_0x48 = (byte)bType;
-				pColInfo->field_0x40 = STORE_SECTION(pPrimB);
+				pColInfo->field_0x40 = STORE_POINTER(pPrimB);
 				pColInfo->field_0x44 = pPrimB->flags_0x80;
 			}
 		}
@@ -4039,7 +4039,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 
 					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree checking: {}", iVar18);
 
-					edObbTREE_DYN* pLinkedTree = (edObbTREE_DYN*)LOAD_SECTION(peVar2->field_0x54[iVar18]);
+					edObbTREE_DYN* pLinkedTree = (edObbTREE_DYN*)LOAD_POINTER(peVar2->field_0x54[iVar18]);
 					lVar6 = edObbIntersect(&pObbTreeA->bbox, &pLinkedTree->bbox);
 
 					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edObbIntersect result: {}", lVar6);
@@ -4066,7 +4066,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 					aIntersectResultsA[intersectCountA].pObbTree = peVar2;
 					aIntersectResultsA[intersectCountA].sub.type = peVar2->type;
 					aIntersectResultsA[intersectCountA].sub.count = peVar2->count_0x52;
-					aIntersectResultsA[intersectCountA].sub.pData = LOAD_SECTION_CAST(void*, peVar2->field_0x54[0]);
+					aIntersectResultsA[intersectCountA].sub.pData = LOAD_POINTER_CAST(void*, peVar2->field_0x54[0]);
 					intersectCountA = intersectCountA + 1;
 
 					COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree new intersect count: {} (type: 0x{:x} - count: 0x{:x})", intersectCountA, peVar2->type, peVar2->count_0x52);
@@ -4099,7 +4099,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 				if (peVar3->type == COL_TYPE_TREE) {
 					bVar1 = peVar3->count_0x52;
 					for (; iVar17 < bVar1; iVar17 = iVar17 + 1) {
-						edObbTREE_DYN* pLinkedTree = (edObbTREE_DYN*)LOAD_SECTION(peVar3->field_0x54[iVar17]);
+						edObbTREE_DYN* pLinkedTree = (edObbTREE_DYN*)LOAD_POINTER(peVar3->field_0x54[iVar17]);
 
 						lVar6 = edObbIntersect(&peVar2->bbox, &pLinkedTree->bbox);
 						if (lVar6 != 0) {
@@ -4118,7 +4118,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 					if ((lVar6 != 0) && (intersectCountB < 100)) {
 						aIntersectResultsB[intersectCountB].a.type = peVar3->type;
 						aIntersectResultsB[intersectCountB].a.count = peVar3->count_0x52;
-						aIntersectResultsB[intersectCountB].a.pData = LOAD_SECTION_CAST(void*, peVar3->field_0x54[0]);
+						aIntersectResultsB[intersectCountB].a.pData = LOAD_POINTER_CAST(void*, peVar3->field_0x54[0]);
 
 						aIntersectResultsB[intersectCountB].b = aIntersectResultsA[iVar8].sub;
 
@@ -4628,7 +4628,7 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 	}
 #endif
 
-	(gColTD.pCurColObj)->pDynObj = STORE_SECTION(pDynObj);
+	(gColTD.pCurColObj)->pDynObj = STORE_POINTER(pDynObj);
 
 	if (gColTD.field_0x38 != 0) {
 		IMPLEMENTATION_GUARD(
@@ -4646,7 +4646,7 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 	if (gColTD.nbPrim != 0) {
 		(gColTD.pCurColObj)->nbPrimUsed = (short)gColTD.nbPrim;
 
-		(gColTD.pCurColObj)->pPrim = STORE_SECTION((gColData.pActiveDatabase)->aPrim + (gColData.pActiveDatabase)->curPrimId);
+		(gColTD.pCurColObj)->pPrim = STORE_POINTER((gColData.pActiveDatabase)->aPrim + (gColData.pActiveDatabase)->curPrimId);
 
 		(gColData.pActiveDatabase)->curPrimId = (gColData.pActiveDatabase)->curPrimId + gColTD.nbPrim;
 	}
@@ -4758,7 +4758,7 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 	// Copy prims.
 	for (iVar2 = 0; iVar2 < gColTD.nbPrim; iVar2 = iVar2 + 1) {
 		pIVar10 = gColTD.aPrim + iVar2;
-		edColPrimEntry* pPrimStart = (edColPrimEntry*)LOAD_SECTION((gColTD.pCurColObj)->pPrim);
+		edColPrimEntry* pPrimStart = (edColPrimEntry*)LOAD_POINTER((gColTD.pCurColObj)->pPrim);
 		edColPrimEntry* peVar4 = pPrimStart + iVar2;
 		*peVar4 = *pIVar10;
 	}
@@ -5005,13 +5005,13 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 					COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim count {}", peVar4->count_0x52);
 
 					for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-						uVar6 = CheckRayObbTreeIntersection(LOAD_SECTION_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
+						uVar6 = CheckRayObbTreeIntersection(LOAD_POINTER_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
 						COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
 
 						if (uVar6 == 0) {
 							uVar6 = uVar8 != 0 ^ 1;
 							if (local_18[uVar6] < 100) {
-								local_360[uVar6 * 100 + local_18[uVar6]] = LOAD_SECTION_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]);
+								local_360[uVar6 * 100 + local_18[uVar6]] = LOAD_POINTER_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]);
 								local_18[uVar6] = local_18[uVar6] + 1;
 							}
 						}
@@ -5021,7 +5021,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 				}
 				else {
 					if (bVar1 == 0xd) {
-						edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
+						edColPRIM_OBJECT* pPrim = LOAD_POINTER_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
 						COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim PRIM count {}", peVar4->count_0x52);
 
 						for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
@@ -5125,7 +5125,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 					}
 					else {
 						if (bVar1 == COL_TYPE_BOX) {
-							edColPRIM_BOX* pBox = LOAD_SECTION_CAST(edColPRIM_BOX*, peVar4->field_0x54[0]);
+							edColPRIM_BOX* pBox = LOAD_POINTER_CAST(edColPRIM_BOX*, peVar4->field_0x54[0]);
 							for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 								pDirection = pRay->pLeadVector;
 								pLocation = pRay->pLocation;
@@ -5186,7 +5186,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 						}
 						else {
 							if (bVar1 == 0xe) {
-								edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
+								edColPRIM_OBJECT* pPrim = LOAD_POINTER_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
 								for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 									pDirection = pRay->pLeadVector;
 									pLocation = pRay->pLocation;
@@ -5267,7 +5267,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 							}
 							else {
 								if (bVar1 == COL_TYPE_SPHERE) {
-									edColPRIM_SPHERE* pSphere = LOAD_SECTION_CAST(edColPRIM_SPHERE*, peVar4->field_0x54[0]);
+									edColPRIM_SPHERE* pSphere = LOAD_POINTER_CAST(edColPRIM_SPHERE*, peVar4->field_0x54[0]);
 									for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 										pDirection = pRay->pLeadVector;
 										pLocation = pRay->pLocation;
@@ -5348,7 +5348,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								}
 								else {
 									if (bVar1 == COL_TYPE_QUAD) {
-										edF32QUAD4* pQuad = LOAD_SECTION_CAST(edF32QUAD4*, peVar4->field_0x54[0]);
+										edF32QUAD4* pQuad = LOAD_POINTER_CAST(edF32QUAD4*, peVar4->field_0x54[0]);
 
 										for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 
@@ -5356,14 +5356,14 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 											for (iVar10 = 0; iVar10 < 2; iVar10 = iVar10 + 1) {
 												if (iVar10 == 0) {
-													triangle.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
-													triangle.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2);
-													triangle.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
+													triangle.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1);
+													triangle.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2);
+													triangle.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
 												}
 												else {
-													triangle.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
-													triangle.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
-													triangle.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4);
+													triangle.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1);
+													triangle.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
+													triangle.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4);
 												}
 
 												triangle.flags = pQuad->flags;
@@ -5412,7 +5412,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 										}
 										else {
 											if (bVar1 == 4) {
-												edF32TRIANGLE4* pTriangle = LOAD_SECTION_CAST(edF32TRIANGLE4*, peVar4->field_0x54[0]);
+												edF32TRIANGLE4* pTriangle = LOAD_POINTER_CAST(edF32TRIANGLE4*, peVar4->field_0x54[0]);
 												for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 													local_10.pRayOrigin = pRay->pLocation;
 													local_10.pRayDirection = pRay->pLeadVector;

@@ -29,7 +29,7 @@ bool Install(edCTextFont* pFont)
 					pFVar3 = new FontPacked_2C();
 
 #ifdef PLATFORM_WIN
-					pFont->pSubData = STORE_SECTION(pFVar3);
+					pFont->pSubData = STORE_POINTER(pFVar3);
 #else
 					pFont->pSubData = pFVar3;
 #endif

@@ -163,7 +163,7 @@ TEST(IO, MenuSplashOpen) {
 TEST(Image, ReadFont) {
 	EXPECT_NE(BootDataFont, nullptr);
 
-	FontPacked_2C* pPackedData = (FontPacked_2C*)LOAD_SECTION(BootDataFont->pSubData);
+	FontPacked_2C* pPackedData = (FontPacked_2C*)LOAD_POINTER(BootDataFont->pSubData);
 	
 	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&pPackedData->materialInfo), 0x380);
 	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);

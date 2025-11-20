@@ -1261,6 +1261,11 @@ bool CActorCommander::QuerySemaphoreCold(int index, CActorWolfen* pWolfen)
 	return this->squad.QuerySemaphoreCold(index, GetTeamElt(pWolfen));
 }
 
+bool CActorCommander::QuerySemaphoreWarm(int index, CActorWolfen* pWolfen)
+{
+	return this->squad.QuerySemaphoreWarm(index, GetTeamElt(pWolfen));
+}
+
 bool CActorCommander::IsValidEnemy(CActorWolfen* pWolfen)
 {
 	return this->squad.eltTable.IsInList(GetTeamElt(pWolfen));

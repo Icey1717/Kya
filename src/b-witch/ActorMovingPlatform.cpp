@@ -813,7 +813,7 @@ void CActorMovingPlatform::ForceCarriedStuff()
 		do {
 			S_STREAM_REF<ed_zone_3d>* pEntry = &this->pZoneStream->aEntries[iVar5];
 			if (pEntry->Get() != 0) {
-				pEntry->Get()->pMatrix = STORE_SECTION(&this->field_0x200);
+				pEntry->Get()->pMatrix = STORE_POINTER(&this->field_0x200);
 			}
 			iVar5 = iVar5 + 1;
 		} while (iVar5 < iVar2);
@@ -824,7 +824,7 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	if (0 < (int)this->noFrictionZoneCount) {
 		do {
 			iVar2 = iVar2 + 1;
-			((pSVar3->zoneRef).Get())->pMatrix = STORE_SECTION(&this->field_0x200);
+			((pSVar3->zoneRef).Get())->pMatrix = STORE_POINTER(&this->field_0x200);
 			pSVar3 = pSVar3 + 1;
 		} while (iVar2 < (int)this->noFrictionZoneCount);
 	}
@@ -2402,7 +2402,7 @@ void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMast
 	iVar5 = 0;
 	if (0 < pSVar4->entryCount) {
 		do {
-			iVar1 = DoMessage(LOAD_SECTION_CAST(CActor*, pSVar4->aEntries[iVar5].pRef), (ACTOR_MESSAGE)0x2e, &local_28);
+			iVar1 = DoMessage(LOAD_POINTER_CAST(CActor*, pSVar4->aEntries[iVar5].pRef), (ACTOR_MESSAGE)0x2e, &local_28);
 			if (iVar1 != 0) {
 				local_28.field_0x4 = local_28.field_0x4 + -1;
 				uVar7 = uVar7 | local_28.field_0x0;

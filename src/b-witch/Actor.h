@@ -97,6 +97,8 @@ enum ACTOR_MESSAGE {
 	MESSAGE_BOOMY_CHANGED = 0x62,
 	MESSAGE_FIGHT_RING_CHANGED = 0x6b,
 	MESSAGE_RECEPTACLE_CHANGED = 0x79,
+	MESSAGE_CINEMATIC_INSTALL = 0x7c,
+	MESSAGE_NEW_MAP_GAINED = 0x7d,
 };
 
 #define OBJ_TYPE_MOVABLE	0x2
@@ -105,6 +107,12 @@ enum ACTOR_MESSAGE {
 #define OBJ_TYPE_WOLFEN		0x10
 
 typedef void* MSG_PARAM;
+
+struct _msg_cinematic_install_param
+{
+	class CCinematic* pCinematic;
+	int action;
+};
 
 #define HERO_ACTION_ID_JOKE 0x3
 #define HERO_ACTION_ID_ESCAPE_TRAP 0xc
@@ -131,6 +139,7 @@ public:
 class CBehaviour : public CObject
 {
 public:
+	virtual ~CBehaviour() {}
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Init(CActor* pOwner) {}
 	virtual void Term() {}
@@ -182,11 +191,11 @@ PACK( struct BehaviourEntry {
 	int pBehaviour; // CBehaviour*
 
 	inline CBehaviour* GetBehaviour() {
-		return (CBehaviour*)LOAD_SECTION(pBehaviour);
+		return (CBehaviour*)LOAD_POINTER(pBehaviour);
 	}
 
 	inline void SetBehaviour(CBehaviour* pNewBehaviour) {
-		pBehaviour = STORE_SECTION(pNewBehaviour);
+		pBehaviour = STORE_POINTER(pNewBehaviour);
 	}
 
 	// Only valid when loading behaviours.
@@ -381,6 +390,7 @@ class CActor : public CObject
 {
 public:
 	CActor();
+	virtual ~CActor() {}
 
 	// CActor Interface
 	virtual bool IsKindOfObject(ulong kind);

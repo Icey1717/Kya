@@ -1165,3 +1165,27 @@ CFxDigits::CFxDigits()
 {
 
 }
+
+void CFxHandleExt::Create(ByteCode* pByteCode)
+{
+	this->type = pByteCode->GetU32();
+
+	pFx = this->pFx;
+	if (((pFx != (CNewFx*)0x0) && (this->id != 0)) && (this->id == pFx->id)) {
+		pFx->Stop(-1.0f);
+	}
+
+	return;
+}
+
+void CFxHandleExt::Init(uint newType)
+{
+	this->type = newType;
+
+	pFx = this->pFx;
+	if (((pFx != (CNewFx*)0x0) && (this->id != 0)) && (this->id == pFx->id)) {
+		pFx->Stop(-1.0f);
+	}
+
+	return;
+}

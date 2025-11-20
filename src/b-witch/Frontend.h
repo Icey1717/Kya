@@ -109,7 +109,7 @@ public:
 
 	static float GetTime();
 
-	bool ComputeSceneCoordinate(float param_1, edF32VECTOR4* v0, edF32VECTOR2* pRect);
+	bool ComputeSceneCoordinate(float z, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pRect);
 
 	struct ed_viewport* pViewport;
 };

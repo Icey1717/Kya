@@ -58,7 +58,7 @@ namespace Debug
 							pStrip = pCurrentStrip;
 						}
 
-						pCurrentStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCurrentStrip->pNext);
+						pCurrentStrip = LOAD_POINTER_CAST(ed_3d_strip*, pCurrentStrip->pNext);
 
 						stripIndex++;
 					}
@@ -72,7 +72,7 @@ namespace Debug
 				ImGui::Spacing();
 				ImGui::Spacing();
 
-				DebugHelpers::TextValidValue("pNext: %p", LOAD_SECTION(pStrip->pNext));
+				DebugHelpers::TextValidValue("pNext: %p", LOAD_POINTER(pStrip->pNext));
 
 				ImGui::Spacing();
 				ImGui::Spacing();
@@ -82,10 +82,10 @@ namespace Debug
 				ImGui::Spacing();
 				ImGui::Spacing();
 
-				DebugHelpers::TextValidValue("pSTBuf: %p", LOAD_SECTION(pStrip->pSTBuf));
-				DebugHelpers::TextValidValue("pColorBuf: %p", LOAD_SECTION(pStrip->pColorBuf));
-				DebugHelpers::TextValidValue("pVertexBuf: %p", LOAD_SECTION(pStrip->pVertexBuf));
-				DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_SECTION(pStrip->pNormalBuf));
+				DebugHelpers::TextValidValue("pSTBuf: %p", LOAD_POINTER(pStrip->pSTBuf));
+				DebugHelpers::TextValidValue("pColorBuf: %p", LOAD_POINTER(pStrip->pColorBuf));
+				DebugHelpers::TextValidValue("pVertexBuf: %p", LOAD_POINTER(pStrip->pVertexBuf));
+				DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_POINTER(pStrip->pNormalBuf));
 
 				ImGui::Spacing();
 				ImGui::Spacing();
@@ -108,7 +108,7 @@ namespace Debug
 				ImGui::Spacing();
 				ImGui::Spacing();
 
-				DebugHelpers::TextValidValue("pBoundSpherePkt: %p", LOAD_SECTION(pStrip->pBoundSpherePkt));
+				DebugHelpers::TextValidValue("pBoundSpherePkt: %p", LOAD_POINTER(pStrip->pBoundSpherePkt));
 
 				{
 					if (ImGui::Button("<<")) {
@@ -131,7 +131,7 @@ namespace Debug
 
 			if (ImGui::CollapsingHeader("LOD Details", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-				DebugHelpers::TextValidValue("pObj: %p", LOAD_SECTION(pLod->pObj));
+				DebugHelpers::TextValidValue("pObj: %p", LOAD_POINTER(pLod->pObj));
 				ImGui::Text("renderType: %u", pLod->renderType);
 				ImGui::Text("sizeBias: %f", pLod->sizeBias);
 
@@ -141,10 +141,10 @@ namespace Debug
 				ed_Chunck* pMBNK = pManager->MBNA + 1;
 				ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
 
-				ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
+				ed_hash_code* pHash = LOAD_POINTER_CAST(ed_hash_code*, pLod->pObj);
 				ImGui::Text("Hash: %s", pHash->hash.ToString().c_str());
 
-				ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
+				ed_Chunck* pOBJ = LOAD_POINTER_CAST(ed_Chunck*, pHash->pData);
 
 				if (pOBJ) {
 					DebugHelpers::ListChunckDetails(pOBJ);
@@ -153,7 +153,7 @@ namespace Debug
 
 					ImGui::Text("stripCount: %d", pObject->stripCount);
 					ImGui::Text("boundingSphere: %s", pObject->boundingSphere.ToString().c_str());
-					DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_SECTION(pObject->p3DData));
+					DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_POINTER(pObject->p3DData));
 
 					// clamp our strip count
 					gSelectedStripIndex = std::clamp(gSelectedStripIndex, 0, pObject->stripCount - 1);
@@ -162,7 +162,7 @@ namespace Debug
 					ImGui::Spacing();
 
 					if (pObject->p3DData) {
-						ShowStripDetails(pMaterialBank, LOAD_SECTION_CAST(ed_3d_strip* ,pObject->p3DData), pObject->stripCount);
+						ShowStripDetails(pMaterialBank, LOAD_POINTER_CAST(ed_3d_strip* ,pObject->p3DData), pObject->stripCount);
 					}
 				}
 			}
@@ -193,10 +193,10 @@ namespace Debug
 					ImGui::Spacing();
 					ImGui::Spacing();
 
-					//DebugHelpers::TextValidValue("pShadowAnimMatrix: %p", LOAD_SECTION(gSelectedHierarchy->pShadowAnimMatrix));
-					DebugHelpers::TextValidValue("pLinkTransformData: %p", LOAD_SECTION(gSelectedHierarchy->pLinkTransformData));
-					DebugHelpers::TextValidValue("field_0x94: %p", LOAD_SECTION(gSelectedHierarchy->field_0x94));
-					DebugHelpers::TextValidValue("pTextureInfo: %p", LOAD_SECTION(gSelectedHierarchy->pTextureInfo));
+					//DebugHelpers::TextValidValue("pShadowAnimMatrix: %p", LOAD_POINTER(gSelectedHierarchy->pShadowAnimMatrix));
+					DebugHelpers::TextValidValue("pLinkTransformData: %p", LOAD_POINTER(gSelectedHierarchy->pLinkTransformData));
+					DebugHelpers::TextValidValue("field_0x94: %p", LOAD_POINTER(gSelectedHierarchy->field_0x94));
+					DebugHelpers::TextValidValue("pTextureInfo: %p", LOAD_POINTER(gSelectedHierarchy->pTextureInfo));
 
 					ImGui::Spacing();
 					ImGui::Spacing();
@@ -207,9 +207,9 @@ namespace Debug
 					ImGui::Spacing();
 					ImGui::Spacing();
 
-					DebugHelpers::TextValidValue("pHierarchySetup: %p", LOAD_SECTION(gSelectedHierarchy->pHierarchySetup));
-					DebugHelpers::TextValidValue("pMatrixPkt: %p", LOAD_SECTION(gSelectedHierarchy->pMatrixPkt));
-					DebugHelpers::TextValidValue("pAnimMatrix: %p", LOAD_SECTION(gSelectedHierarchy->pAnimMatrix));
+					DebugHelpers::TextValidValue("pHierarchySetup: %p", LOAD_POINTER(gSelectedHierarchy->pHierarchySetup));
+					DebugHelpers::TextValidValue("pMatrixPkt: %p", LOAD_POINTER(gSelectedHierarchy->pMatrixPkt));
+					DebugHelpers::TextValidValue("pAnimMatrix: %p", LOAD_POINTER(gSelectedHierarchy->pAnimMatrix));
 
 					ImGui::Text("subMeshParentCount_0xac: %d", gSelectedHierarchy->subMeshParentCount_0xac);
 					ImGui::Text("desiredLod: %d", gSelectedHierarchy->desiredLod);
@@ -387,8 +387,8 @@ namespace Debug
 							bool bProcessedStrip = false;
 
 							if ((stripCount != 0) && (bProcessedStrip = true, stripCount != 0)) {
-								ed_Chunck* pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pCluster->pMBNK);
-								ed_3d_strip* p3DStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCluster->p3DStrip);
+								ed_Chunck* pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->pMBNK);
+								ed_3d_strip* p3DStrip = LOAD_POINTER_CAST(ed_3d_strip*, pCluster->p3DStrip);
 
 								// clamp our strip count
 								gSelectedStripIndex = std::clamp(gSelectedStripIndex, 0, static_cast<int>(stripCount - 1));
@@ -424,7 +424,7 @@ namespace Debug
 									sprintf_s(buff, 256, "%d - %s", clusterHierCount, pHashCode->hash.ToString().c_str());
 
 									if (gSelectedHierarchy == nullptr || ImGui::Selectable(buff)) {
-										ed_Chunck* pHIER = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+										ed_Chunck* pHIER = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 										assert(pHIER->hash == HASH_CODE_HIER);
 										gSelectedHierarchy = reinterpret_cast<ed_g3d_hierarchy*>(pHIER + 1);
 									}
@@ -470,8 +470,8 @@ namespace Debug
 					sprintf_s(buff, 256, "%d - %s", i, pHashCode->hash.ToString().c_str());
 
 					if (ImGui::Selectable(buff)) {
-						ed_hash_code* pMatHash = LOAD_SECTION_CAST(ed_hash_code*, pHashCode->pData);
-						ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pMatHash->pData);
+						ed_hash_code* pMatHash = LOAD_POINTER_CAST(ed_hash_code*, pHashCode->pData);
+						ed_Chunck* pMAT = LOAD_POINTER_CAST(ed_Chunck*, pMatHash->pData);
 						
 						const ed_g2d_material* pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
 						Texture::ShowMaterialDetails(pMaterial);

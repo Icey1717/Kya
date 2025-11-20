@@ -289,7 +289,7 @@ void CCamera::Init()
 		if (this->field_0x80.index != -1) {
 			pZone = edEventGetChunkZone(CScene::ptable.g_EventManager_006f5080->activeChunkId, this->field_0x80.index);
 		}
-		this->field_0x80.pObj = STORE_SECTION(pZone);
+		this->field_0x80.pObj = STORE_POINTER(pZone);
 
 		pCVar3 = this->field_0x84;
 
@@ -661,7 +661,7 @@ void CCameraExt::Init()
 		if (this->field_0x80.index != -1) {
 			pZone = edEventGetChunkZone(CScene::ptable.g_EventManager_006f5080->activeChunkId, this->field_0x80.index);
 		}
-		this->field_0x80.pObj = STORE_SECTION(pZone);
+		this->field_0x80.pObj = STORE_POINTER(pZone);
 
 		pCVar3 = this->field_0x84;
 		

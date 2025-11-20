@@ -91,6 +91,9 @@ public:
 	void StateMickenKickImpactFly(CBehaviourMicken* pBehaviour, int param_3);
 	void StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3);
 
+	void StateMickenEat(CBehaviourMickenEat* pBehaviour);
+	void StateMickenChew(CBehaviourMickenEat* pBehaviour);
+
 	void BehaviourMickenKicked_Manage(CBehaviourMickenKicked* pBehaviour);
 	void BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour);
 	void BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBehaviour);

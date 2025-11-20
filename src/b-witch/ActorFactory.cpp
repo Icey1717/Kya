@@ -2,7 +2,7 @@
 #include "Actor.h"
 
 #include "ActorBoomy.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "ActorMicken.h"
 #include "ActorWolfen.h"
 #include "ActorNativ.h"

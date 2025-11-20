@@ -256,7 +256,7 @@ void CActorNativ::Manage()
 	if (peVar4 != (ed_zone_3d*)0x0) {
 		SV_ComputeDiffMatrixFromInit(&this->field_0x580);
 		edF32Matrix4GetInverseOrthoHard(&this->field_0x580, &this->field_0x580);
-		peVar4->pMatrix = STORE_SECTION(&this->field_0x580);
+		peVar4->pMatrix = STORE_POINTER(&this->field_0x580);
 	}
 
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_AKASA);
@@ -1009,8 +1009,7 @@ void CActorNativ::BehaviourNativLive_Manage()
 
 	iVar1 = this->actorState;
 	if (iVar1 == 0x14) {
-		IMPLEMENTATION_GUARD(
-		ActorFunc_001617c0(this);)
+		StateNativ_0x14();
 	}
 	else {
 		if (iVar1 == 0x13) {
@@ -2431,6 +2430,59 @@ void CBehaviourNativAkasa::FUN_003f1810(int param_2, int param_3, int param_4)
 	return;
 }
 
+void CActorNativ::StateNativ_0x14()
+{
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	bool bVar4;
+	float fVar5;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = 5.0f;
+	movParamsIn.speed = this->moveSpeedNoHeldObject;
+	movParamsIn.flags = 0x552;
+	movParamsIn.acceleration = 5.0f;
+	bVar3 = false;
+	if (GetPathfinderClient()->id != -1) {
+		bVar4 = GetPathfinderClient()->IsValidPosition(&this->currentLocation);
+		if (bVar4 != false) {
+			SV_AUT_MoveTo(&movParamsOut, &movParamsIn, &this->cinematicCachedLocation);
+			bVar3 = true;
+			ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		}
+	}
+
+	fVar1 = (this->cinematicCachedLocation).x - this->currentLocation.x;
+	fVar2 = (this->cinematicCachedLocation).z - this->currentLocation.z;
+	fVar5 = FUN_00120250(0.2f);
+	fVar5 = FUN_00120250(fVar5);
+
+	if ((sqrtf(fVar1 * fVar1 + 0.0f + fVar2 * fVar2) < fVar5) || (!bVar3)) {
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		if ((this->cinematicCachedBehaviour == -1) || (this->cinematicCachedState == -1)) {
+			SetBehaviour(NATIVE_BEHAVIOUR_LIVE, 6, -1);
+		}
+		else {
+			SetBehaviour(this->cinematicCachedBehaviour, this->cinematicCachedState, this->cinematicCachedAnim);
+		}
+		this->cinematicCachedBehaviour = -1;
+		this->cinematicCachedState = -1;
+		this->cinematicCachedAnim = -1;
+	}
+	return;
+}
+
+
+
 void CActorNativ::StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour)
 {
 	int curSwitchIndex;
@@ -3618,8 +3670,8 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					if (iVar7 != 7) {
 						if (iVar7 == 9) {
 							IMPLEMENTATION_GUARD(
-							*(undefined4*)&(((this->base).pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-							pNativ = (this->base).pOwner;
+							*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4);
+							pNativ = this->pOwner;
 							puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 							uVar15 = puVar3[1];
 							uVar11 = puVar3[2];
@@ -3628,18 +3680,18 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 							*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
 							*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
 							*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
-							(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
-							(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
-							pNativ = (this->base).pOwner;
+							((this->pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
+							((this->pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
+							pNativ = this->pOwner;
 							(*(pNativ->pVTable)->SetBehaviour)
 								((CActor*)pNativ, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
 						}
 						else {
 							if (iVar7 == 6) {
 								IMPLEMENTATION_GUARD(
-								*(undefined4*)&(((this->base).pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4)
+								*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4)
 									;
-								pNativ = (this->base).pOwner;
+								pNativ = this->pOwner;
 								puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 								uVar15 = puVar3[1];
 								uVar11 = puVar3[2];
@@ -3648,22 +3700,22 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 								*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
 								*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
 								*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
-								(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
-								(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
-								pNativ = (this->base).pOwner;
+								((this->pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
+								((this->pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
+								pNativ = this->pOwner;
 								(pNativ->field_0x570).x = pNativ->currentLocation.x;
 								(pNativ->field_0x570).y = pNativ->currentLocation.y;
 								(pNativ->field_0x570).z = pNativ->currentLocation.z;
 								(pNativ->field_0x570).w = pNativ->currentLocation.w;
-								pNativ = (this->base).pOwner;
+								pNativ = this->pOwner;
 								(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 10, -1);)
 							}
 							else {
 								if (iVar7 == 5) {
 									IMPLEMENTATION_GUARD(
-									*(undefined4*)&(((this->base).pOwner)->behaviourSpeak).field_0x20 =
+									*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 =
 										*(undefined4*)((int)pMsgParam + 4);
-									pNativ = (this->base).pOwner;
+									pNativ = this->pOwner;
 									puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 									uVar15 = puVar3[1];
 									uVar11 = puVar3[2];
@@ -3672,11 +3724,11 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 									*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
 									*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
 									*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
-									(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
-									(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
-									pNativ = (this->base).pOwner;
+									((this->pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
+									((this->pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
+									pNativ = this->pOwner;
 									(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xb, -1);
-									pNativ = (this->base).pOwner;
+									pNativ = this->pOwner;
 									(pNativ->field_0x570).x = pNativ->currentLocation.x;
 									(pNativ->field_0x570).y = pNativ->currentLocation.y;
 									(pNativ->field_0x570).z = pNativ->currentLocation.z;
@@ -3693,17 +3745,17 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 									else {
 										if (iVar7 == 3) {
 											IMPLEMENTATION_GUARD(
-											(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
-											pNativ = (this->base).pOwner;
+											((this->pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
+											pNativ = this->pOwner;
 											if ((pNativ->field_0x4f8 == -1) && (pNativ->field_0x4fc == -1)) {
 												(*(pNativ->pVTable)->SetState)((CActor*)pNativ, 6, -1);
 											}
 											else {
 												(*(pNativ->pVTable)->SetBehaviour)
 													((CActor*)pNativ, pNativ->field_0x4f8, pNativ->field_0x4fc, pNativ->field_0x500);
-												((this->base).pOwner)->field_0x4f8 = -1;
-												((this->base).pOwner)->field_0x4fc = -1;
-												((this->base).pOwner)->field_0x500 = -1;
+												(this->pOwner)->field_0x4f8 = -1;
+												(this->pOwner)->field_0x4fc = -1;
+												(this->pOwner)->field_0x500 = -1;
 											})
 										}
 										else {
@@ -3714,7 +3766,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 											else {
 												if (iVar7 == 0x10) {
 													IMPLEMENTATION_GUARD(
-													pCVar8 = CActor::GetBehaviour((CActor*)(this->base).pOwner, 9);
+													pCVar8 = CActor::GetBehaviour((CActor*)this->pOwner, 9);
 													pCVar2 = pCVar8[1].pVTable;
 													if (((pCVar2[0xe].field_0x0.Draw == (undefined*)0xffffffff) &&
 														(pCVar2[0xe].field_0x0.Begin == (BehaviourBeginFunc*)0xffffffff)) &&
@@ -3732,7 +3784,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 														pCVar8[6].pVTable = pCVar10;
 														pCVar8[7].pVTable = pCVar12;
 													}
-													pNativ = (this->base).pOwner;
+													pNativ = this->pOwner;
 													(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 9, 0x3a, -1);)
 												}
 											}
@@ -3750,16 +3802,16 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		if (msg == 0x14) {
 			IMPLEMENTATION_GUARD(
 			local_20[0] = 9;
-			local_10 = CActorNativ::FUN_00162a70((this->base).pOwner);
-			pNativ = (this->base).pOwner;
+			local_10 = CActorNativ::FUN_00162a70(this->pOwner);
+			pNativ = this->pOwner;
 			local_4 = local_20;
 			iVar7 = CActor::DoMessage((CActor*)pNativ, pNativ->field_0x3f0, 0x4e, (uint)local_4);
 			if (iVar7 != 0) {
-				pNativ = (this->base).pOwner;
+				pNativ = this->pOwner;
 				pNativ->cinematicCachedBehaviour = pNativ->curBehaviourId;
-				pNativ = (this->base).pOwner;
+				pNativ = this->pOwner;
 				pNativ->cinematicCachedState = pNativ->actorState;
-				pNativ = (this->base).pOwner;
+				pNativ = this->pOwner;
 				pNativ->cinematicCachedAnim = pNativ->currentAnimType;
 				return 1;
 			})
@@ -4202,7 +4254,7 @@ void CBehaviourNativAkasa::ArenaUpdateDisplayBorderSize()
 				for (; iVar4 < pReqCombo->nbRequiredMoves; iVar4 = iVar4 + 1) {
 					pCurrentCombo = pReqCombo->aRequiredMoves[iVar4].aRequiredCombos[0];
 
-					s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCurrentCombo->actionHash.pData);
+					s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCurrentCombo->actionHash.pData);
 
 					bVar1 = pMove->field_0x4.field_0x0byte;
 					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
@@ -4357,7 +4409,7 @@ void CBehaviourNativAkasa::GetComboButtonDisplaySize(s_fighter_combo* pCombo, fl
 			}
 		}
 
-		s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+		s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCombo->actionHash.pData);
 
 		cVar2 = (pMove->field_0x4.field_0x0byte & 1) != 0;
 		if ((pMove->field_0x4.field_0x0byte & 2) != 0) {
@@ -4419,7 +4471,7 @@ void CBehaviourNativAkasa::GetComboButtonDisplaySize(s_fighter_combo* pCombo, fl
 void CBehaviourNativAkasa::FUN_003f1da0(s_fighter_combo* pCombo)
 {
 	if ((pCombo->field_0x4.field_0x0ushort & 0x400U) == 0) {
-		s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+		s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCombo->actionHash.pData);
 		if ((pMove->field_0x4.field_0x2ushort & 1) == 0) {
 			this->field_0x16ac = 1;
 		}
@@ -4731,7 +4783,7 @@ bool CBehaviourNativAkasa::DrawButton(s_fighter_combo* pCombo, float* pOutWidth,
 	textStyle.GetScale(&textScale, &textScale);
 	textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
 
-	s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+	s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCombo->actionHash.pData);
 
 	bVar1 = pMove->field_0x4.field_0x1byte;
 	bVar3 = true;
@@ -4937,7 +4989,7 @@ bool CBehaviourNativAkasa::FUN_003ede90(s_fighter_combo* pCombo, float* pOutWidt
 	bVar5 = true;
 	textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
 
-	s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+	s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCombo->actionHash.pData);
 	bVar1 = pMove->field_0x4.field_0x1byte;
 	cVar3 = (bVar1 & 1) != 0;
 

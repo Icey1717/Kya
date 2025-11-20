@@ -2277,20 +2277,19 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 				}
 
 				if ((pEffectorParam->field_0x226 & 8) != 0) {
-					IMPLEMENTATION_GUARD(
 					for (pp_Var27 = aParticleVectors; pp_Var27 < aParticleVectors + local_bc0; pp_Var27 = pp_Var27 + 1) {
 						pParticleVectorIt = *pp_Var27;
 						fVar30 = (pParticleVectorIt->field_0x10).x;
 						fVar31 = (pParticleVectorIt->field_0x10).y;
 						fVar32 = (pParticleVectorIt->field_0x10).z;
-						local_20 = fVar31 * *(float*)&pEffectorParam->field_0x168 - *(float*)&pEffectorParam->field_0x164 * fVar32;
-						fStack28 = fVar32 * *(float*)&pEffectorParam->field_0x160 - *(float*)&pEffectorParam->field_0x168 * fVar30;
-						fStack24 = fVar30 * *(float*)&pEffectorParam->field_0x164 - *(float*)&pEffectorParam->field_0x160 * fVar31;
+						local_20 = fVar31 * pEffectorParam->field_0x160.z - pEffectorParam->field_0x160.y * fVar32;
+						fStack28 = fVar32 * pEffectorParam->field_0x160.x - pEffectorParam->field_0x160.z * fVar30;
+						fStack24 = fVar30 * pEffectorParam->field_0x160.y - pEffectorParam->field_0x160.x * fVar31;
 						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_20;
 						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + fStack28;
 						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + fStack24;
 						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + in_vf0x;
-					})
+					}
 				}
 
 				if ((pEffectorParam->field_0x226 & 0x200) != 0) {

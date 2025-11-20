@@ -125,7 +125,7 @@ void InstallBootData(void)
 	NAME_NEXT_OBJECT(sz_MediumFontFileName_00448b60);
 	edTextInstallFont(BootDataFont);
 	if ((FontPacked_2C*)BootDataFont->pSubData != (FontPacked_2C*)0x0) {
-		LOAD_SECTION_CAST(FontPacked_2C*, BootDataFont->pSubData)->pOverrideData = USHORT_ARRAY_0048fc60;
+		LOAD_POINTER_CAST(FontPacked_2C*, BootDataFont->pSubData)->pOverrideData = USHORT_ARRAY_0048fc60;
 	}
 	USHORT_ARRAY_0048fc60[156] = 0x153;
 	USHORT_ARRAY_0048fc60[241] = 0xf1;

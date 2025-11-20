@@ -112,6 +112,7 @@ public:
 	bool CanReleaseSemaphore(CActorWolfen* pWolfen);
 	void ReleaseSemaphore(int index, CActorWolfen* pWolfen);
 	bool QuerySemaphoreCold(int index, CActorWolfen* pWolfen);
+	bool QuerySemaphoreWarm(int index, CActorWolfen* pWolfen);
 	bool IsValidEnemy(CActorWolfen* pWolfen);
 
 	bool CanFightIntruder(CActorFighter* pIntruder);

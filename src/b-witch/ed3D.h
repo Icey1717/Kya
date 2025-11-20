@@ -733,7 +733,7 @@ void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
 ed_3D_Scene* ed3DGetScene(int index);
 
 ulong ed3DComputeHashCode(char* inString);
-bool ed3DComputeScreenCoordinate(float param_1, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene);
+bool ed3DComputeScreenCoordinate(float z, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene);
 bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene);
 
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier);

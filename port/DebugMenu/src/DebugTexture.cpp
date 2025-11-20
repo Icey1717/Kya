@@ -278,13 +278,13 @@ namespace Debug
 						case 0x30:
 						{
 							ImGui::Text("IMAGE");
-							DebugHelpers::TextValidValue("Image: %p", LOAD_SECTION(pkt.asU32[1]));
+							DebugHelpers::TextValidValue("Image: %p", LOAD_POINTER(pkt.asU32[1]));
 						}
 						break;
 						case 0x50:
 						{
 							ImGui::Text("OTHER");
-							DebugHelpers::TextValidValue("Other: %p", LOAD_SECTION(pkt.asU32[1]));
+							DebugHelpers::TextValidValue("Other: %p", LOAD_POINTER(pkt.asU32[1]));
 						}
 						break;
 						case 0x70:
@@ -307,30 +307,30 @@ namespace Debug
 			ImGui::Text("Height: %d", pBitmap->height);
 			ImGui::Text("PSM: %d", pBitmap->psm);
 			ImGui::Text("Max Mip Level: %d", pBitmap->maxMipLevel);
-			DebugHelpers::TextValidValue("PSX2: %p", LOAD_SECTION(pBitmap->pPSX2));
+			DebugHelpers::TextValidValue("PSX2: %p", LOAD_POINTER(pBitmap->pPSX2));
 
 			if (pBitmap->pPSX2 && ImGui::CollapsingHeader("PSX2")) {
 				// We have two header structures (double buffered).
 
-				edPSX2Header* pHeader = LOAD_SECTION_CAST(edPSX2Header*, pBitmap->pPSX2);
+				edPSX2Header* pHeader = LOAD_POINTER_CAST(edPSX2Header*, pBitmap->pPSX2);
 
 				ImGui::Text("[0]");
-				DebugHelpers::TextValidValue("List: %p", LOAD_SECTION(pHeader[0].pPkt));
+				DebugHelpers::TextValidValue("List: %p", LOAD_POINTER(pHeader[0].pPkt));
 				ImGui::Text("size: %d (0x%x)", pHeader[0].size, pHeader[0].size);
 
 				if (pHeader[0].pPkt && ImGui::CollapsingHeader("[0] Command Buffer Contents")) {
-					ShowTextureCommandDetails(LOAD_SECTION_CAST(edpkt_data*, pHeader[0].pPkt), pHeader[0].size);
+					ShowTextureCommandDetails(LOAD_POINTER_CAST(edpkt_data*, pHeader[0].pPkt), pHeader[0].size);
 				}
 
 				ImGui::Spacing();
 				ImGui::Spacing();
 
 				ImGui::Text("[1]");
-				DebugHelpers::TextValidValue("List: %p", LOAD_SECTION(pHeader[1].pPkt));
+				DebugHelpers::TextValidValue("List: %p", LOAD_POINTER(pHeader[1].pPkt));
 				ImGui::Text("size: %d (0x%x)", pHeader[1].size, pHeader[1].size);
 
 				if (pHeader[1].pPkt && ImGui::CollapsingHeader("[1] Command Buffer Contents")) {
-					ShowTextureCommandDetails(LOAD_SECTION_CAST(edpkt_data*, pHeader[1].pPkt), pHeader[1].size);
+					ShowTextureCommandDetails(LOAD_POINTER_CAST(edpkt_data*, pHeader[1].pPkt), pHeader[1].size);
 				}
 			}
 		}
@@ -346,13 +346,13 @@ namespace Debug
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			DebugHelpers::TextValidValue("DMA Material: %p", LOAD_SECTION(gSelectedMaterial->pDMA_Material));
-			DebugHelpers::TextValidValue("Command Buffer Texture: %p", LOAD_SECTION(gSelectedMaterial->pCommandBufferTexture));
+			DebugHelpers::TextValidValue("DMA Material: %p", LOAD_POINTER(gSelectedMaterial->pDMA_Material));
+			DebugHelpers::TextValidValue("Command Buffer Texture: %p", LOAD_POINTER(gSelectedMaterial->pCommandBufferTexture));
 
 			ImGui::Text("Command Buffer Texture Size: %d", gSelectedMaterial->commandBufferTextureSize);
 
 			if ((gSelectedMaterial->pCommandBufferTexture && gSelectedMaterial->commandBufferTextureSize > 0) && ImGui::CollapsingHeader("Command Buffer Contents")) {
-				ShowTextureCommandDetails(LOAD_SECTION_CAST(edpkt_data*, gSelectedMaterial->pCommandBufferTexture), gSelectedMaterial->commandBufferTextureSize);
+				ShowTextureCommandDetails(LOAD_POINTER_CAST(edpkt_data*, gSelectedMaterial->pCommandBufferTexture), gSelectedMaterial->commandBufferTextureSize);
 			}
 
 			ImGui::Spacing();
@@ -362,7 +362,7 @@ namespace Debug
 				char buffer[256];
 				sprintf_s(buffer, "Layer %d", i);
 				if (ImGui::CollapsingHeader(buffer)) {
-					ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, gSelectedMaterial->aLayers[i]);
+					ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, gSelectedMaterial->aLayers[i]);
 
 					DebugHelpers::ListChunckDetails(pLAY);
 
@@ -377,13 +377,13 @@ namespace Debug
 					ImGui::Text("Field 0x1b: %d", pLayer->field_0x1b);
 					ImGui::Text("bHasTexture: %d", pLayer->bHasTexture);
 					ImGui::Text("Palette ID: %d", pLayer->paletteId);
-					DebugHelpers::TextValidValue("TEX: %p", LOAD_SECTION(pLayer->pTex));
+					DebugHelpers::TextValidValue("TEX: %p", LOAD_POINTER(pLayer->pTex));
 
 					ImGui::Spacing();
 					ImGui::Spacing();
 
 					if (pLayer->bHasTexture && ImGui::CollapsingHeader("Texture")) {
-						ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+						ed_Chunck* pTEX = LOAD_POINTER_CAST(ed_Chunck*, pLayer->pTex);
 						DebugHelpers::ListChunckDetails(pTEX);
 
 						ImGui::Spacing();
@@ -399,7 +399,7 @@ namespace Debug
 						ImGui::Spacing();
 						ImGui::Spacing();
 
-						ed_hash_code* pBitmapHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+						ed_hash_code* pBitmapHashCode = LOAD_POINTER_CAST(ed_hash_code*, pTexture->hashCode.pData);
 						if (pBitmapHashCode != (ed_hash_code*)0x0) {
 							if (ImGui::CollapsingHeader("Bitmap")) {
 								ImGui::Text("Bitmap Details");
@@ -408,7 +408,7 @@ namespace Debug
 								ImGui::Spacing();
 								ImGui::Spacing();
 
-								ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pBitmapHashCode->pData);
+								ed_Chunck* pT2D = LOAD_POINTER_CAST(ed_Chunck*, pBitmapHashCode->pData);
 
 								DebugHelpers::ListChunckDetails(pT2D);
 
@@ -425,8 +425,8 @@ namespace Debug
 
 						if (pTexture->bHasPalette && ImGui::CollapsingHeader("Palette")) {
 							ed_hash_code* pPaletteHashCodes = reinterpret_cast<ed_hash_code*>(pTexture + 1);
-							ed_hash_code* pPaletteHashCode = LOAD_SECTION_CAST(ed_hash_code*, pPaletteHashCodes[pLayer->paletteId].pData);
-							ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHashCode->pData);
+							ed_hash_code* pPaletteHashCode = LOAD_POINTER_CAST(ed_hash_code*, pPaletteHashCodes[pLayer->paletteId].pData);
+							ed_Chunck* pT2D = LOAD_POINTER_CAST(ed_Chunck*, pPaletteHashCode->pData);
 
 							DebugHelpers::ListChunckDetails(pT2D);
 

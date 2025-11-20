@@ -174,12 +174,12 @@ void CActorWind::Init()
 	if (this->field_0x1e8 != (edF32MATRIX4*)0x0) {
 		peVar1 = (this->activationZone).Get();
 		if (peVar1 != (ed_zone_3d*)0x0) {
-			peVar1->pMatrix = STORE_SECTION(this->field_0x1e8);
+			peVar1->pMatrix = STORE_POINTER(this->field_0x1e8);
 		}
 
 		peVar1 = (this->field_0x1c4).Get();
 		if (peVar1 != (ed_zone_3d*)0x0) {
-			peVar1->pMatrix = STORE_SECTION(this->field_0x1e8);
+			peVar1->pMatrix = STORE_POINTER(this->field_0x1e8);
 		}
 	}
 

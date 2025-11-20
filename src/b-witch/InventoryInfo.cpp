@@ -191,6 +191,9 @@ void CInventoryInfo::ObjectPurchased()
 		CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, uVar2);
 		this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_FIGHT_RING_CHANGED, (void*)uVar2);
 		break;
+	case INVENTORY_ITEM_BASIC_BOARD:
+		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 1);
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 		return;

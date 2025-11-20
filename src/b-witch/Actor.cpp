@@ -1251,8 +1251,8 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 	pAnimation = this->pAnimationController;
 	if (pAnimation != (CAnimation*)0x0) {
 		pAnimation->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
-		pDstHdr = (edANM_HDR*)LOAD_SECTION(pTag->dstAnim.pHdr);
-		pSrcHdr = (edANM_HDR*)LOAD_SECTION(pTag->srcAnim.pHdr);
+		pDstHdr = (edANM_HDR*)LOAD_POINTER(pTag->dstAnim.pHdr);
+		pSrcHdr = (edANM_HDR*)LOAD_POINTER(pTag->srcAnim.pHdr);
 		if ((pDstHdr == (edANM_HDR*)0x0) || (param_3 != 0)) {
 			peVar3 = (pAnimation->anmBinMetaAnimator).aAnimData;
 			cVar1 = pTag->srcAnim.field_0x8;
@@ -2731,7 +2731,7 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 					if ((lVar7 != (ed_hash_code*)0x0) && (iVar9 = 0, peVar8 = pHashCode, 0 < iVar3)) {
 						do {
 							if (uVar10 == peVar8->hash.number) {
-								pHashCode[iVar9].pData = STORE_SECTION(lVar7);
+								pHashCode[iVar9].pData = STORE_POINTER(lVar7);
 								break;
 							}
 							iVar9 = iVar9 + 1;
@@ -3558,7 +3558,7 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 		bVar1 = false;
 	}
 	else {
-		pHashCode->pData = STORE_SECTION(peVar2);
+		pHashCode->pData = STORE_POINTER(peVar2);
 		bVar1 = true;
 	}
 

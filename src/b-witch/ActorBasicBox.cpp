@@ -232,13 +232,10 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	else {
 		if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 			GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
-			peVar1 = GetTopPosition();
-			edF32Vector4SubHard(&eStack16, peVar1, &this->currentLocation);
+			edF32Vector4SubHard(&eStack16, GetTopPosition(), &this->currentLocation);
 			fVar4 = edF32Vector4DotProductHard(&eStack16, &this->pMeshTransform->base.transformA.rowY);
 			edF32Vector4ScaleHard(fVar4, &eStack16, &this->pMeshTransform->base.transformA.rowY);
-			peVar1 = GetBottomPosition();
-			v2 = GetTopPosition();
-			edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, peVar1, v2);
+			edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, GetBottomPosition(), GetTopPosition());
 			fVar4 = edF32Vector4DotProductHard(&pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
 			edF32Vector4ScaleHard(fVar4 * 0.5f, &pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
 			edF32Vector4AddHard(&pGetPosMsgParams->vectorFieldB, &pGetPosMsgParams->vectorFieldB, &eStack16);
@@ -548,8 +545,6 @@ void CActorBasicBox::ApplyHit(_msg_hit_param** ppHitParam)
 
 	return;
 }
-
-
 
 StateConfig CActorBasicBox::_gStateCfg_BAB[4] = {
 	StateConfig(0x0, 0x4),

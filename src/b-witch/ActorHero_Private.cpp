@@ -1,4 +1,4 @@
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include "TimeController.h"
@@ -67,13 +67,8 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//	*puVar2 = 0;
 	//	puVar2[1] = 0;
 	//	puVar2 = puVar2 + 3;
-	//} while (puVar2 != (undefined4*)&this->field_0x18b0);
-	//*(undefined4*)&this->field_0x18b4 = 0;
-	//*(undefined4*)&this->field_0x18b8 = 0;
-	//*(undefined4*)&this->field_0x18c0 = 0;
-	//*(undefined4*)&this->field_0x18c4 = 0;
-	//*(undefined4*)&this->field_0x18cc = 0;
-	//*(undefined4*)&this->field_0x18d0 = 0;
+	//} while (puVar2 != (undefined4*)&this->field_0x18b0)
+
 	//this->field_0x1994 = 0.0;
 	//(this->field_0x1998).x = 0.0;
 	//(this->field_0x1998).y = 0.2;
@@ -84,9 +79,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//*(undefined*)&this->pAnimKeyData_0x19b4 = 0;
 	//this->pAnimKeyData_0x19b8 = (edAnmAnim*)0x0;
 	//*(undefined4*)&this->field_0x19b8 = 0;
-	this->boomyTargetTable.nbEntries = 0x0;
-	//Particle::Constructor_00401590((long)&(this->playerSubStruct_64_0x1bf0).field_0x4);
-	
+	this->boomyTargetTable.nbEntries = 0x0;	
 
 	//*(undefined4*)&this->field_0x1c60 = 0;
 	//*(undefined4*)&this->field_0x1c64 = 0;
@@ -366,34 +359,28 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->field_0x15d4.type = pByteCode->GetS32();
 	iVar11 = pByteCode->GetS32();
 
-	// Hack p2
-	char* pCurrent = pByteCode->currentSeekPos;
+	uVar2 = 0;
+	CFxHandleExt* pHandleExt = this->field_0x1880;
+	do {
+		pHandleExt->Init(iVar11);
+		uVar2 = uVar2 + 1;
+		pHandleExt = pHandleExt + 1;
+	} while (uVar2 < 4);
 
-	while (true) {
-		if (strncmp(pCurrent, "TSNI", 4) == 0) {
-			break;
-		}
-		pCurrent++;
-	}
+	this->field_0x18b0 = 0;
 
-	pByteCode->currentSeekPos = pCurrent;
+	this->field_0x18b4.Create(pByteCode);
+	this->field_0x18c0.Create(pByteCode);
+	this->field_0x18cc.Create(pByteCode);
 
-	//uVar2 = 0;
-	//pCVar12 = this;
-	//do {
-	//	FUN_00407690((int*)&(pCVar12->base).field_0x1880, iVar11);
-	//	uVar2 = uVar2 + 1;
-	//	pCVar12 = (CActorHeroPrivate*)&(pCVar12->base).base.data.actorFieldS;
-	//} while (uVar2 < 4);
-	//*(undefined4*)&this->field_0x18b0 = 0;
-	//FUN_004076f0((int*)&this->field_0x18b4, pByteCode);
-	//FUN_004076f0((int*)&this->field_0x18c0, pByteCode);
-	//FUN_004076f0((int*)&this->field_0x18cc, pByteCode);
-	//FUN_00401470(&this->playerSubStruct_64_0x1bf0.field_0x4, 4);
+	this->playerSubStruct_64_0x1bf0.Init(4);
+
+	assert(strncmp(pByteCode->currentSeekPos, "TSNI", 4) == 0);
+
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::Init()
 {
 	ushort uVar1;
@@ -667,7 +654,7 @@ void gHeroActionCallback(CActor* pActor, void* pParams)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::GetPossibleAction()
 {
 	bool bVar1;
@@ -841,7 +828,7 @@ bool gHeroMagicCallback(CActor* pActor, void* pParams)
 	return false;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 {
 	bool bVar1;
@@ -1018,7 +1005,7 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomyBlow()
 
 		if ((((bVar3) && (uVar4 = TestState_AllowAttack(0xffffffff), uVar4 != 0)) &&
 			(bVar3 = EvolutionBoomyCanLaunch(), bVar3 != false)) && (((1 < this->actorState - 0x11aU && (uVar4 = TestState_00132b90(0xffffffff), uVar4 == 0)) &&
-				(this->field_0x1bb0 != 0x0)))) {
+				(this->aBoomyBlows[0] != (s_fighter_blow*)0x0)))) {
 			uVar4 = GetStateFlags(this->actorState) & 0x100;
 
 			if (((uVar4 != 0) && (this->field_0x1a48 == 0)) && ((this->curBehaviourId != 8 &&
@@ -1136,7 +1123,7 @@ LAB_00136998:
 
 float FLOAT_00434cc8 = 0.965992f;
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 {
 	CPlayerInput* pCVar1;
@@ -1467,61 +1454,62 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 	return false;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::AccomplishAttack()
 {
 	CAnimation* pCVar1;
 	bool bVar2;
-	uint uVar3;
-	int iVar4;
+	uint curBoomyBlowStage;
+	int boomyState;
 	int iVar5;
 	edAnmLayer* peVar6;
 	float fVar7;
 
-	iVar4 = this->activeBoomyThrowState;
-	if (iVar4 == 0) {
+	boomyState = this->activeBoomyThrowState;
+	if (boomyState == 0) {
 		bVar2 = false;
 	}
 	else {
-		if (iVar4 == 6) {
-			this->field_0x1ba4 = 0;
+		if (boomyState == 6) {
+			this->boomyBlowStage = 0;
 			DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)6, 0);
 			SetState(0x73, 0xffffffff);
 		}
 		else {
-			if (iVar4 == 5) {
+			if (boomyState == 5) {
 				this->field_0xe44 = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
-				this->field_0x1ba4 = 0;
+				this->boomyBlowStage = 0;
 				SetState(0xda, 0xffffffff);
 			}
 			else {
-				if (iVar4 == 3) {
-					this->field_0x1ba4 = 0;
+				if (boomyState == 3) {
+					this->boomyBlowStage = 0;
 					bVar2 = FUN_00133fb0();
 					if (bVar2 == false) {
-						uVar3 = TestState_IsCrouched(0xffffffff);
-						if (uVar3 == 0) {
+						curBoomyBlowStage = TestState_IsCrouched(0xffffffff);
+						if (curBoomyBlowStage == 0) {
 							pCVar1 = this->pAnimationController;
 							fVar7 = this->field_0x1b98;
 							this->field_0x1000 = -1.0f;
-							iVar4 = pCVar1->PhysicalLayerFromLayerId(8);
-							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar4;
+							boomyState = pCVar1->PhysicalLayerFromLayerId(8);
+							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + boomyState;
 							peVar6->blendOp = 3;
 							peVar6->field_0x4 = fVar7;
 							iVar5 = GetIdMacroAnim(0x8c);
-							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, iVar4, 0xffffffff);
+							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, boomyState, 0xffffffff);
 						}
 						else {
 							pCVar1 = this->pAnimationController;
 							fVar7 = this->field_0x1b98;
 							this->field_0x1000 = -1.0f;
-							iVar4 = pCVar1->PhysicalLayerFromLayerId(8);
-							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar4;
+							boomyState = pCVar1->PhysicalLayerFromLayerId(8);
+							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + boomyState;
 							peVar6->blendOp = 3;
 							peVar6->field_0x4 = fVar7;
 							iVar5 = GetIdMacroAnim(0x8d);
-							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, iVar4, 0xffffffff);
+							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, boomyState, 0xffffffff);
 						}
+
 						if (this->actorState - 0x73U < 3) {
 							SetState(STATE_HERO_BOOMY, 0x88);
 						}
@@ -1530,31 +1518,29 @@ bool CActorHeroPrivate::AccomplishAttack()
 					}
 				}
 				else {
-					if (iVar4 == 4) {
-						this->field_0x1ba4 = 0;
+					if (boomyState == 4) {
+						this->boomyBlowStage = 0;
 						this->field_0x1b64 = 1;
 						SetState(0xd2, 0xffffffff);
 					}
 					else {
-						if (iVar4 == 2) {
-							IMPLEMENTATION_GUARD(
-							uVar3 = this->field_0x1ba4;
-							if (uVar3 == 0) {
-								this->character.pBlow = *(s_fighter_blow**)&this->field_0x1bb0;
-								(*(this->character.characterBase.base.base.pVTable)->SetState)
-									((CActor*)this, 0xdc, ((this->character.pBlow)->blowStageBegin).animId);
+						if (boomyState == 2) {
+							curBoomyBlowStage = this->boomyBlowStage;
+
+							if (curBoomyBlowStage == 0) {
+								this->pBlow = this->aBoomyBlows[0];
+								SetState(0xdc, this->pBlow->blowStageBegin.animId);
 								this->field_0x1ba8 = 0xffffffff;
-								this->field_0x1ba4 = 1;
+								this->boomyBlowStage = 1;
 							}
 							else {
-								iVar4 = this->character.characterBase.base.base.actorState;
-								if ((((iVar4 == 0xdc) || (iVar4 == 0xdd)) && (this->character.field_0x860 == 0)) &&
-									((int)uVar3 < 3)) {
-									this->character.field_0x864 = *(s_fighter_blow**)(&this->field_0x1bb0 + uVar3 * 4);
-									this->character.field_0x860 = 1;
-									this->field_0x1ba4 = this->field_0x1ba4 + 1;
+								boomyState = this->actorState;
+								if ((((boomyState == 0xdc) || (boomyState == 0xdd)) && (this->field_0x860 == 0)) && (curBoomyBlowStage < 3)) {
+									this->field_0x864 = this->aBoomyBlows[curBoomyBlowStage];
+									this->field_0x860 = 1;
+									this->boomyBlowStage = this->boomyBlowStage + 1;
 								}
-							})
+							}
 						}
 					}
 				}
@@ -1567,7 +1553,7 @@ bool CActorHeroPrivate::AccomplishAttack()
 	return bVar2;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::AccomplishMagic()
 {
 	bool bIsWolfen;
@@ -1621,7 +1607,7 @@ bool CActorHeroPrivate::AccomplishMagic()
 	return false;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 {
 	CPlayerInput* pCVar1;
@@ -2363,13 +2349,13 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 	return iVar8;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::PreCheckpointReset()
 {
 	SetBehaviour(-1, -1, -1);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::CheckpointReset()
 {
 	Timer* pTimer;
@@ -2619,7 +2605,7 @@ void CActorHeroPrivate::LoadContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::Manage()
 {
 	CAnimation* pCVar1;
@@ -2882,7 +2868,7 @@ void CActorHeroPrivate::Manage()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pNewBehaviour;
@@ -3310,20 +3296,19 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		return 0;
 	}
 
-	if (msg == 0x7d) {
-		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+	if (msg == MESSAGE_NEW_MAP_GAINED) {
+		fVar25 = this->GetLifeInterface()->GetValue();
+		bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 		if (!bVar9) {
 			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
 
-		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
-			GameFlags = GameFlags | 0x400;
-			CLevelScheduler::SetLevelTimerFunc_002df450(1.0, CLevelScheduler::gThis, 0);
+		if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
+			GameFlags = GameFlags | GAME_REQUEST_MAP;
+			CLevelScheduler::gThis->SetLevelTimerFunc_002df450(1.0f, 0);
 			return 1;
-		})
+		}
+
 		return 0;
 	}
 
@@ -4570,22 +4555,18 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 	CScene::GetManager(MO_Camera);
 	this->field_0x1ba0 = 8.0f;
 	this->field_0x1b98 = 0.0f;
-	IMPLEMENTATION_GUARD_BOOMY(
-	*(undefined4*)&this->field_0x1b9c = 0;)
+	this->field_0x1b9c = 0.0f;
 	this->field_0x1b94 = 0;
 	this->boomyTargetRayDist = -1.0f;
 	this->field_0x1b64 = 0;
-	IMPLEMENTATION_GUARD_BOOMY(
-	this->field_0x1b68 = 0;)
+	this->field_0x1b68 = 0;
 	this->field_0x1b6c = 0;
 	SetBoomyFunc(0);
 	this->field_0x1b78 = 0;
 	this->field_0x1b74 = 0.0f;
 	this->field_0x1000 = -1.0f;
-
-	IMPLEMENTATION_GUARD_BOOMY(
 	this->field_0x1004 = 10.0f;
-	this->field_0x1008 = 5.0f;)
+	this->field_0x1008 = 5.0f;
 
 	DisableLayer(8);
 	SetMagicMode(0);
@@ -4597,14 +4578,12 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 		this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
 	}
 
-	this->field_0x1ba4 = 0;
-	IMPLEMENTATION_GUARD_BOOMY(
-	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_1_00429998);
-	*(uint**)&this->field_0x1bb0 = puVar1;
-	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_2_004299a0);
-	*(uint**)&this->field_0x1bb4 = puVar1;
-	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_3_004299a8);
-	this->field_0x1bb8 = (undefined*)puVar1;)
+	this->boomyBlowStage = 0;
+
+	this->aBoomyBlows[0] = FindBlowByName("BOOMY_1");
+	this->aBoomyBlows[1] = FindBlowByName("BOOMY_2");
+	this->aBoomyBlows[2] = FindBlowByName("BOOMY_3");
+
 	return;
 }
 
@@ -5181,7 +5160,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 	return iVar5;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ClearLocalData()
 {
 	//float fVar1;
@@ -5727,6 +5706,15 @@ LAB_00341590:
 		StateHeroGripUpToJumpInit();
 		StateHeroJump_2_3Init();
 		break;
+	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
+		StateHeroBoomyPrepareFightBlowInit();
+			break;
+	case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
+		StateBoomyExecuteFightBlowInit();
+		break;
+	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
+		StateHeroBoomyReturnFightBlowInit();
+		break;
 	case STATE_HERO_SLIDE_SLIP_A:
 	case STATE_HERO_SLIDE_SLIP_B:
 		StateHeroSlideSlipInit();
@@ -5937,6 +5925,11 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_FALL_BOUNCE_2_2:
 		StateHeroFallBounce_2_2Term();
+		break;
+	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
+	case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
+	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
+		StateBoomyTerm();
 		break;
 	case STATE_HERO_SLIDE_A:
 		StateHeroSlideTerm(0);
@@ -6395,6 +6388,15 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_GRIP_GRAB:
 		StateHeroGrip(0.0f, STATE_HERO_GRIP_B, 0);
+		break;
+	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
+		_StateFighterPrepareFightAction(STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW);
+		break;
+	case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
+		StateBoomyExecuteFightBlow();
+		break;
+	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
+		_StateFighterReturnFromFightAction();
 		break;
 	case STATE_HERO_JOKE:
 		StateHeroJoke();
@@ -8948,7 +8950,7 @@ void CActorHeroPrivate::StateHeroRun_B()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::StateHeroJoke()
 {
 	CPlayerInput* pCVar1;
@@ -12059,6 +12061,132 @@ void CActorHeroPrivate::StateHeroGripUpToJumpInit()
 	return;
 }
 
+void CActorHeroPrivate::StateHeroBoomyPrepareFightBlowInit()
+{
+	s_fighter_blow* psVar1;
+	s_fighter_blow_sub_obj* psVar2;
+	int iVar3;
+	uint uVar4;
+	undefined4 uVar5;
+
+	_StateFighterFightActionDynInit(&this->pBlow->blowStageBegin);
+
+	iVar3 = this->prevActorState;
+	if ((iVar3 < STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW) || (0xde < iVar3)) {
+		psVar1 = this->pBlow;
+
+		if ((psVar1 == (s_fighter_blow*)0x0) ||
+			(psVar2 = psVar1->field_0x48, psVar2 == (s_fighter_blow_sub_obj*)0x0)) {
+			uVar4 = 0x20;
+			iVar3 = -1;
+			uVar5 = 0x80808080;
+		}
+		else {
+			iVar3 = psVar2->materialId;
+			uVar5 = psVar2->field_0x14uint;
+			uVar4 = psVar2->field_0x18;
+		}
+
+		if ((this->playerSubStruct_64_0x1bf0.flags & 2) == 0) {
+			this->playerSubStruct_64_0x1bf0.FUN_00401460(0.0f, 6);
+			this->playerSubStruct_64_0x1bf0.FUN_004012f0(0.1f, uVar4, iVar3, uVar5);
+			this->field_0x1c38 = -1;
+			this->field_0x1c3c = 0;
+		}
+	}
+	return;
+}
+
+void CActorHeroPrivate::StateBoomyExecuteFightBlowInit()
+{
+	_StateFighterFightActionDynInit(&this->pBlow->blowStageExecute);
+	this->field_0x834 = this->pBlow;
+
+	return;
+}
+
+void CActorHeroPrivate::StateBoomyExecuteFightBlow()
+{
+	float fVar3;
+	void* pcVar4;
+	bool bVar5;
+	_msg_hit_param* p_Var6;
+	int iVar7;
+	edF32MATRIX4* peVar8;
+	ed_3d_hierarchy_node* peVar9;
+	CActor** pCVar10;
+	_msg_hit_param local_d0;
+	edF32MATRIX4 local_50;
+	_msg_hit_param* local_4;
+
+	_ManageFighterDyn(this->pBlow->blowStageExecute.flags, 0x40323, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		local_d0.projectileType = 4;
+		local_d0.field_0x4 = 1;
+		iVar7 = 8;
+		local_d0.flags = (uint)(byte)this->pBlow->field_0x4.field_0x2ushort;
+		local_d0.field_0x10 = this->pBlow->field_0x10;
+		local_d0.field_0x30 = this->pBlow->field_0x18;
+		local_d0.field_0x70 = this->pBlow->field_0x1c;
+		local_d0.damage = this->pBlow->damage;
+		local_d0.field_0x50 = 1;
+
+		local_50 = this->pMeshTransform->base.transformA;
+		local_50.rowT = gF32Vertex4Zero;
+
+		edF32Matrix4MulF32Vector4Hard(&local_d0.field_0x20, &local_50, &this->pBlow->field_0x20);
+		edF32Matrix4MulF32Vector4Hard(&local_d0.instanceIndex, &local_50, &this->pBlow->field_0x30);
+
+		iVar7 = 0;
+		pCVar10 = this->boomyTargetTable.aEntries;
+
+		p_Var6 = &local_d0;
+		if (0 < this->boomyTargetTable.nbEntries) {
+			for (; local_4 = p_Var6, iVar7 < this->boomyTargetTable.nbEntries; iVar7 = iVar7 + 1) {
+				DoMessage(*pCVar10, MESSAGE_KICKED, local_4);
+				pCVar10 = pCVar10 + 1;
+				p_Var6 = local_4;
+			}
+		}
+
+		pcVar4 = this->pBlow->field_0xd0;
+		if (pcVar4 != (void*)0x0) {
+			IMPLEMENTATION_GUARD(
+			(*pcVar4)(this, 1);)
+		}
+
+		if (this->field_0x860 == 0) {
+			SetState(0xde, (this->pBlow->blowStageEnd).animId);
+		}
+		else {
+			this->field_0x860 = 0;
+			this->pBlow = this->field_0x864;
+			this->field_0x474 = this->pBlow->field_0xc;
+			SetState(0xdc, (this->pBlow->blowStageBegin).animId);
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBoomyReturnFightBlowInit()
+{
+	_StateFighterFightActionDynInit(&this->pBlow->blowStageEnd);
+
+	return;
+}
+
+void CActorHeroPrivate::StateBoomyTerm()
+{
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+	this->field_0x36c = this->field_0x36c | 1;
+	this->field_0x47c = 23.56194f;
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 {
 	CCollision* pCVar1;
@@ -13599,7 +13727,7 @@ void CActorHeroPrivate::SetJumpCfg(float param_1, float horizonalSpeed, float pa
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ConvertSpeedSumForceExtToSpeedPlayer2D()
 {
 	edF32VECTOR4 translation;
@@ -13763,7 +13891,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::IncreaseEffort(float param_1)
 {
 	Timer* pTVar1;
@@ -14321,7 +14449,7 @@ void CActorHeroPrivate::ManageBoomyStateTerm()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::RestoreVerticalOrientation()
 {
 	edF32VECTOR4 newRotationQuat;
@@ -15218,37 +15346,37 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 	return bClimbCeilingFromGrip;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::EvolutionBoomyCanControl()
 {
 	return 2 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::EvolutionBoomyCanSnipe()
 {
 	return 1 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::EvolutionBoomyCanLaunch()
 {
 	return 0 < CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 int CActorHeroPrivate::EvolutionBounceCanJump()
 {
 	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_JUMP_BOUNCE );
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::EvolutionCanClimb()
 {
 	return CLevelScheduler::ScenVar_Get(SCN_ABILITY_CLIMB);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 bool CActorHeroPrivate::EvolutionTobogganCanJump()
 {
 	int iVar1;
@@ -15384,7 +15512,7 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 	return bVar2;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ChangeCollisionSphereForLying(float param_2)
 {
 	edF32VECTOR4 local_20;
@@ -15403,7 +15531,7 @@ void CActorHeroPrivate::ChangeCollisionSphereForLying(float param_2)
 	ChangeCollisionSphere(param_2, &local_10, &local_20);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ChangeCollisionSphereForToboggan(float param_2)
 {
 	edF32VECTOR4 local_20;
@@ -15455,7 +15583,7 @@ void CActorHeroPrivate::ChangeCollisionSphereForGlide(float param_1, float param
 	ChangeCollisionSphere(param_1, &local_10, &local_20);
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 
 {
@@ -15477,7 +15605,7 @@ void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt2D()
 {
 	edF32VECTOR4 eStack32;
@@ -15923,7 +16051,7 @@ bool CActorHeroPrivate::UpdateOrientationFromWind(edF32VECTOR4* v0, edF32VECTOR4
 	return ret;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ConvertSpeedSumForceExtToSpeedPlayer()
 {
 	float fVar1;
@@ -16827,7 +16955,7 @@ void CActorHeroPrivate::UpdateBracelet(uint flags)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ManageInternalView()
 {
 	int iVar3;
@@ -17262,7 +17390,7 @@ CActorWindState* CActorHeroPrivate::GetWindState()
 	return &field_0x1190;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::StoreCollisionSphere()
 {
 	edF32VECTOR4 local_20;
@@ -17339,7 +17467,7 @@ void CActorHeroPrivate::BuildHorizontalSpeedVector(float runSpeed, float param_2
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::LifeDecrease(float amount)
 {
 	Timer* pTVar1;
@@ -17369,7 +17497,7 @@ void CActorHeroPrivate::LifeRestore()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::LifeAnnihilate()
 {
 	if (this->field_0xaa4 == 0) {
@@ -17417,7 +17545,7 @@ void CActorHeroPrivate::SetInitialState()
 
 	if (bVar2) {
 		SetState(0x73, 0xffffffff);
-		this->field_0x1ba4 = 0;
+		this->boomyBlowStage = 0;
 	}
 
 	else {
@@ -17432,7 +17560,7 @@ void CActorHeroPrivate::SetInitialState()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CActorHeroPrivate::ProcessDeath()
 {
 	CActor* pReceiver;
@@ -17558,7 +17686,7 @@ void CActorHeroPrivate::AcquireAdversary()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 edF32VECTOR4* CActorHeroPrivate::GetAdversaryPos()
 {
 	bool bVar3;
@@ -17927,7 +18055,7 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CBehaviourHeroDefault::Manage()
 {
 	this->pHero->BehaviourHero_Manage();
@@ -17987,7 +18115,7 @@ void CBehaviourHeroDefault::Begin(CActor* pOwner, int newState, int newAnimation
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CBehaviourHeroDefault::End(int newBehaviourId)
 {
 	this->pHero->ResetBoomyDefaultSettings();
@@ -18265,7 +18393,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	return iVar7;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CBehaviourHeroDefault::InitState(int newState)
 {
 	this->pHero->BehaviourHero_InitState(newState);
@@ -18739,7 +18867,7 @@ void CBehaviourHero::Begin(CActor* pOwner, int newState, int newAnimationType)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CBehaviourHero::End(int newBehaviourId)
 {
 	this->pHero = (CActorHeroPrivate*)0x0;
@@ -18747,10 +18875,87 @@ void CBehaviourHero::End(int newBehaviourId)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/ActorHero_Private.cpp
+
 void CBehaviourHero::SetInitialState()
 {
 	this->pHero->SetInitialState();
+
+	return;
+}
+
+PlayerSubStruct_64::PlayerSubStruct_64()
+{
+	this->field_0x4 = 0xffffffff;
+	this->field_0x8[0] = (undefined*)0x0;
+	this->field_0x18[0] = (undefined*)0x0;
+
+	this->field_0x8[1] = (undefined*)0x0;
+	this->field_0x18[1] = (undefined*)0x0;
+
+	this->field_0x14 = 0;
+	this->field_0x10 = 0;
+	this->flags = 0;
+
+	return;
+}
+
+void PlayerSubStruct_64::Init(uint param_2)
+{
+	undefined* puVar1;
+	uint uVar3;
+
+	this->field_0x10 = param_2;
+
+	if (this->field_0x10 < 9) {
+		if (this->field_0x10 < 2) {
+			this->field_0x10 = 2;
+		}
+	}
+	else {
+		this->field_0x10 = 8;
+	}
+
+	uVar3 = 0;
+	do {
+		this->field_0x8[uVar3] = puVar1;
+		this->field_0x18[uVar3] = puVar1;
+		uVar3 = uVar3 + 1;
+	} while (uVar3 < 2);
+
+	this->flags = this->flags | 1;
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_00401460(float param_1, int param_3)
+{
+	this->field_0x24 = param_1;
+	this->field_0x28 = param_3;
+	this->field_0x20 = 0.0f;
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_004012f0(float param_1, uint param_3, int materialId, uint param_5)
+{
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	this->flags = this->flags & 0xffffff8f;
+	this->flags = this->flags | 10;
+	this->flags = this->flags | param_3 & 0x60;
+	this->field_0x14 = 0;
+	this->field_0x20 = 0.0f;
+	this->field_0x30 = param_1;
+	this->field_0x34 = 0;
+	this->field_0x3c = 1.0f / this->field_0x30;
+	this->field_0x38 = 0.0f;
+	this->field_0x44 = param_5;
+
+	this->pMaterial = pFileManager->GetMaterialFromId(materialId, 0);
+	if (this->pMaterial == (edDList_material*)0x0) {
+		this->pMaterial = pFileManager->GetMaterialFromId(CScene::_pinstance->defaultTextureIndex_0x28, 0);
+	}
 
 	return;
 }

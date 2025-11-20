@@ -58,10 +58,6 @@ class CActorTeleporter : public CActor
 public:
 	static StateConfig _gStateCfg_TLP[3];
 
-	CActorTeleporter(){
-		IMPLEMENTATION_GUARD_ACTOR()
-	}
-
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Term();
@@ -77,6 +73,9 @@ public:
 
 	void UpdateCurTeleporterState(int levelId, int param_3);
 	void NotifyLevelTeleporterChanged();
+
+	bool LevelHasTeleporters();
+	int FUN_002ee670();
 
 	edDList_material* GetMySubSectorMaterial(int levelId, int nbAreas);
 	void DetectDisabledDestinations(int param_2);

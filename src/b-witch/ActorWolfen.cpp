@@ -300,20 +300,20 @@ void CActorWolfen::Init()
 			fVar23 = 0.0f;
 			fVar21 = 0.0f;
 			s_fighter_combo* pCombo = this->aCombos + uVar9;
-			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+			s_fighter_blow* pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, pCombo->actionHash.pData);
 
 			fVar25 = pCurrentBlow->field_0x50;
 			fVar22 = pCurrentBlow->canActivateRange;
 
 			do {
-				pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+				pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, pCombo->actionHash.pData);
 				fVar23 = fVar23 + pCurrentBlow->damage;
 				if (pCombo->nbBranches == 0) {
 					pCombo = (s_fighter_combo*)0x0;
 					fVar25 = fVar25 + pCurrentBlow->field_0x54;
 				}
 				else {
-					pCombo = LOAD_SECTION_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
+					pCombo = LOAD_POINTER_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
 				}
 
 				fVar21 = fVar21 + 1.0f;
@@ -2128,8 +2128,8 @@ void CActorWolfen::ManageKnowledge()
 				fVar1 = pAdv->currentLocation.x - this->currentLocation.x,
 				fVar2 = pAdv->currentLocation.z - this->currentLocation.z,
 				fVar1 * fVar1 + fVar2 * fVar2 <= 
-				LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 
-				LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 1.25f)) {
+				LOAD_POINTER_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 
+				LOAD_POINTER_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 1.25f)) {
 
 			pKnowledge = this->pWolfenKnowledge;
 			if (pKnowledge->field_0x1c == 0) {
@@ -6017,6 +6017,102 @@ void CActorWolfen::DisableFightAction()
 	return;
 }
 
+bool CActorWolfen::ForceFightAction(int index, bool param_3)
+{
+	uint uVar1;
+	uint uVar2;
+	bool bSuccess;
+	int iVar3;
+	CBehaviourFighterWolfen* pBehaviourFighter;
+	WFIGS_Capability* pCabability;
+	WFIGS_Capability* pCurCapability;
+	ulong uVar5;
+	int iVar6;
+	CActorCommander* pCommander;
+
+	pCurCapability = &this->aCapabilities[index];
+
+	uVar1 = pCurCapability->field_0xc;
+	uVar2 = pCurCapability->field_0x8;
+	uVar5 = CScene::Rand();
+	iVar3 = ((uVar1 - uVar2) + 1) * ((uint)(uVar5 >> 0x10) & 0x7fff);
+	if (iVar3 < 0) {
+		iVar3 = iVar3 + 0x7fff;
+	}
+	iVar6 = uVar2 + (iVar3 >> 0xf);
+	uVar1 = pCurCapability->field_0x14;
+	uVar2 = pCurCapability->field_0x10;
+	uVar5 = CScene::Rand();
+	iVar3 = ((uVar1 - uVar2) + 1) * ((uint)(uVar5 >> 0x10) & 0x7fff);
+	if (iVar3 < 0) {
+		iVar3 = iVar3 + 0x7fff;
+	}
+
+	iVar3 = uVar2 + (iVar3 >> 0xf);
+	if (param_3 == false) {
+		if (iVar6 == 0) {
+			iVar6 = 1;
+		}
+
+		if (iVar3 == 0) {
+			iVar3 = 1;
+		}
+	}
+
+	if ((iVar6 == 0) || (iVar3 == 0)) {
+		bSuccess = false;
+	}
+	else {
+		pBehaviourFighter = (CBehaviourFighterWolfen*)CActor::GetBehaviour(3);
+		if ((this->activeCapabilityIndex != 3) && (this->activeCapabilityIndex != 3)) {
+			pCommander = this->pCommander;
+			bSuccess = pCommander->IsValidEnemy(this);
+			if (bSuccess != false) {
+				pCabability = (WFIGS_Capability*)0x0;
+				if (this->activeCapabilityIndex != 3) {
+					pCabability = this->aCapabilities + this->activeCapabilityIndex;
+				}
+
+				pCommander->ReleaseSemaphore(pCabability->semaphoreId, this);
+			}
+		}
+
+		pBehaviourFighter->field_0x24 = iVar6;
+		pBehaviourFighter->field_0x2c = iVar3;
+		pBehaviourFighter->field_0x30 = 0;
+		pBehaviourFighter->field_0x28 = 0;
+		this->activeCapabilityIndex = 3;
+		this->field_0xb30 = index;
+
+		bSuccess = this->pCommander->IsValidEnemy(this);
+		if (bSuccess == false) {
+			if (this->curBehaviourId == 3) {
+				this->activeCapabilityIndex = this->field_0xb30;
+				this->field_0xb30 = 3;
+			}
+			else {
+				this->pCommander->ReleaseSemaphore(this->aCapabilities[this->field_0xb30].semaphoreId, this);
+				this->field_0xb30 = 3;
+				this->activeCapabilityIndex = 3;
+			}
+
+			if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
+				if (gWolfenAnimMatrixData.pWolfen != (CActorWolfen*)0x0) {
+					gWolfenAnimMatrixData.pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+				}
+
+				gWolfenAnimMatrixData.pWolfen = this;
+				this->pAnimationController->SetBoneMatrixData(gWolfenAnimMatrixData.aMatrices, gWolfenAnimMatrixData.nbBones);
+			}
+		}
+		else {
+			this->pCommander->QuerySemaphoreWarm(pCurCapability->semaphoreId, this);
+		}
+		bSuccess = true;
+	}
+	return bSuccess;
+}
+
 bool CActorWolfen::FUN_00173de0(CActorFighter* pAdversary)
 {
 	bool bVar1;
@@ -8247,12 +8343,12 @@ void CBehaviourFighterWolfen::InputPunch(uint cmd)
 		if ((pCombo->field_0x4.field_0x0ushort & 0x400U) == 0) {
 			bVar1 = (this->field_0x74).field_0x1;
 			(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 1;
-			this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+			this->pActiveBlow = LOAD_POINTER_CAST(s_fighter_blow*, pCombo->actionHash.pData);
 		}
 		else {
 			bVar1 = (this->field_0x74).field_0x1;
 			(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 4;
-			this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+			this->pActiveBlow = LOAD_POINTER_CAST(s_fighter_blow*, pCombo->actionHash.pData);
 		}
 	}
 
@@ -8541,8 +8637,7 @@ bool CBehaviourFighterWolfen::TreatContext(CFightContext* pFightContext)
 						this->currentCommandId = -1;
 					}
 					else {
-						IMPLEMENTATION_GUARD(
-						pCVar1->FUN_001fbff0(1, '\0');)
+						pCVar1->ForceFightAction(1, false);
 						ValidateCommand();
 						this->currentCommandId = -1;
 					}
@@ -8921,18 +9016,18 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 												this->field_0x70 = 0;
 											}
 											else {
-												this->pActiveCombo = LOAD_SECTION_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
+												this->pActiveCombo = LOAD_POINTER_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
 												this->field_0x70 = 1;
 
 												if ((this->pActiveCombo->field_0x4.field_0x0ushort & 0x400) == 0) {
 													bVar1 = (this->field_0x74).field_0x1;
 													(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 1;
-													this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
+													this->pActiveBlow = LOAD_POINTER_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
 												}
 												else {
 													bVar1 = (this->field_0x74).field_0x1;
 													(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 4;
-													this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
+													this->pActiveBlow = LOAD_POINTER_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
 												}
 											}
 
@@ -9245,8 +9340,7 @@ void CBehaviourFighterWolfen::PickCommand()
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		pWolfen->FUN_001fbff0(0, '\x01');)
+		pWolfen->ForceFightAction(0, true);
 
 		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
 
@@ -9804,7 +9898,7 @@ int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
 		uVar8 = 0;
 		bVar4 = false;
 		while ((uVar8 < psVar2->nbBranches && (!bVar4))) {
-			if (LOAD_SECTION_CAST(s_fighter_combo*, psVar2->aBranches[uVar8].pData) == pFighterCombo) {
+			if (LOAD_POINTER_CAST(s_fighter_combo*, psVar2->aBranches[uVar8].pData) == pFighterCombo) {
 				bVar4 = true;
 			}
 			else {
@@ -9816,7 +9910,7 @@ int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
 		piVar7 = this->field_0x20->field_0x4 + (pvVar3->field_0x1byte + uVar8);
 		if (piVar7->field_0x0uint == 0xffffffff) {
 			uVar5 = 0;
-			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData);
+			s_fighter_blow* pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData);
 			if (WLF_KNW_MAX_DODGABLE_DIST$14420 < pCurrentBlow->field_0x50) {
 				bVar1 = pCurrentBlow->field_0x4.field_0x0byte;
 				uVar5 = (ushort)((bVar1 & 4) == 0);
@@ -11467,7 +11561,7 @@ void astruct_5::Create(ByteCode* pByteCode)
 					pHier = reinterpret_cast<ed_3d_hierarchy*>(pNewNode->pData);
 
 					pMBNK = ed3DHierarchyGetMaterialBank(pHier);
-					ed_hash_code* pHashCode = LOAD_SECTION_CAST(ed_hash_code*, pMBNK->pData);
+					ed_hash_code* pHashCode = LOAD_POINTER_CAST(ed_hash_code*, pMBNK->pData);
 
 					int bankMatSize = ed3DHierarchyBankMatGetSize(pHier);
 
@@ -11490,7 +11584,7 @@ void astruct_5::Create(ByteCode* pByteCode)
 						*ppeVar8 = pNewNode;
 						pHier = reinterpret_cast<ed_3d_hierarchy*>((*ppeVar8)->pData);
 						pMBNK = ed3DHierarchyGetMaterialBank(pHier);
-						pHashCode = LOAD_SECTION_CAST(ed_hash_code*, pMBNK->pData);
+						pHashCode = LOAD_POINTER_CAST(ed_hash_code*, pMBNK->pData);
 						ed3DHierarchyBankMatInstanciate(pHier, reinterpret_cast<char*>(pvVar7) + iVar14);
 						ed3DG2DDuplicateMaterial(pHashCode, reinterpret_cast<char*>(pvVar2) + local_80, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));
 						ed3DHierarchyBankMatLinkG2D(pHier, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));

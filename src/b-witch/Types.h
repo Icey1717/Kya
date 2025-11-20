@@ -739,7 +739,7 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #endif
 
 #ifdef PLATFORM_WIN
-#define RESOLVE_FONT_SUB_DATA(a) (FontPacked_2C*)LOAD_SECTION(a)
+#define RESOLVE_FONT_SUB_DATA(a) (FontPacked_2C*)LOAD_POINTER(a)
 #else
 #define RESOLVE_FONT_SUB_DATA(a) a
 #endif
@@ -783,7 +783,7 @@ struct S_STREAM_REF {
 	void Init();
 
 	T* Get() {
-		return (T*)LOAD_SECTION(this->pObj);
+		return (T*)LOAD_POINTER(this->pObj);
 	}
 
 	void Reset() {}

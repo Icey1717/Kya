@@ -23,6 +23,8 @@
 #define ROUTE_L_ANALOG_LEFT 0x14
 #define ROUTE_L_ANALOG_RIGHT 0x15
 
+#define ROUTE_END 0x16
+
 namespace Input
 {
 	struct InputFunctions

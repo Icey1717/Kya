@@ -29,7 +29,7 @@
 #include "Actor/DebugActor.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 
 #include "input_functions.h"
 

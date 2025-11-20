@@ -1,7 +1,7 @@
 #include "CameraGame.h"
 #include "MathOps.h"
 #include "TimeController.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "edVideo/CameraStack.h"
 #include "ActorManager.h"
 #include "ActorFactory.h"

@@ -314,11 +314,11 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			peVar2 = this->pLocation;
 			local_10 = *peVar1 * distance + *peVar2;
 
-			ComputeNormal(&local_30, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3));
-			ComputeNormal(&local_40, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4));
+			ComputeNormal(&local_30, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1), LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2), LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3));
+			ComputeNormal(&local_40, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1), LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3), LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4));
 
-			fVar3 = edDistPointToPlane(LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), &local_30, &local_10);
-			fVar4 = edDistPointToPlane(LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), &local_40, &local_10);
+			fVar3 = edDistPointToPlane(LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1), &local_30, &local_10);
+			fVar4 = edDistPointToPlane(LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1), &local_40, &local_10);
 
 			if (fVar3 <= fVar4) {
 				*pOutNormal = local_30;
@@ -331,7 +331,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			if (colType == 4) {
 				edF32TRIANGLE4* pTriangle = reinterpret_cast<edF32TRIANGLE4*>(pColObj);
 				*pOutProps = pTriangle->flags;
-				ComputeNormal(pOutNormal, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2), LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3));
+				ComputeNormal(pOutNormal, LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p1), LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p2), LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p3));
 			}
 			else {
 				*pOutProps = 0;

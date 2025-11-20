@@ -2432,7 +2432,7 @@ bool BnkInstallCol(char* pFileBuffer, int length)
 
 	pCollisionManager = CScene::ptable.g_CollisionManager_00451690;
 	pObbTree = edColLoadStatic(pFileBuffer, length, 0);
-	pCollisionManager->aStaticCollisionRefs[pCollisionManager->staticCollisionCount] = (edObbTREE_DYN*)LOAD_SECTION(pObbTree->pObbTree);
+	pCollisionManager->aStaticCollisionRefs[pCollisionManager->staticCollisionCount] = (edObbTREE_DYN*)LOAD_POINTER(pObbTree->pObbTree);
 	pCollisionManager->staticCollisionCount = pCollisionManager->staticCollisionCount + 1;
 	return false;
 }

@@ -38,7 +38,7 @@ public:
 	void State_Turn(CBehaviourBonusTurn* pBehaviour);
 
 	float field_0x9c;
-	float angleRotY;
+	float angleRotYalt;
 	float field_0xa4;
 	SV_MOV_FLEE_ON_PATH_PARAM field_0xa8;
 };
@@ -161,7 +161,18 @@ public:
 class CBehaviourBonusAddOn : public CBehaviourBonusFlock
 {
 public:
-	void Allocate(int nbNewInstances) {}
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+
+	virtual void Func_0x4c();
+	virtual void SaveContext(void* pData, uint mode, uint maxSize);
+	virtual void LoadContext(void* pData, uint mode, uint maxSize);
+
+	void Allocate(int nbNewInstances);
+	CBnsInstance** Generate(edF32VECTOR4* pPosition, CAddOnGenerator_SubObj* pSubObj, int nbToSpawn, CBnsInstance** pInstance);
 };
 
 class COmniLight { };
@@ -179,10 +190,6 @@ public:
 class CActorBonus : public CActorMovable
 {
 public:
-	CActorBonus() {
-		IMPLEMENTATION_GUARD_ACTOR()
-	}
-
 	static CSharedLights<COmniLight, 3> _gBNS_Lights;
 	static StateConfig _gStateCfg_BNS[6];
 

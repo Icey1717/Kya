@@ -6,7 +6,7 @@
 #include "DebugHelpers.h"
 
 #include "ActorHero.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "InputManager.h"
 #include "SectorManager.h"
 #include "DebugSetting.h"

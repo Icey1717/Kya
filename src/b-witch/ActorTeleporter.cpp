@@ -482,40 +482,41 @@ int CActorTeleporter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 {
 	CCinematic* pCVar1;
 	int iVar2;
-	int iVar3;
 
-	if (msg != 0x7c) {
+	if (msg != MESSAGE_CINEMATIC_INSTALL) {
 		iVar2 = CActor::InterpretMessage(pSender, msg, pMsgParam);
 		return iVar2;
 	}
 
-	IMPLEMENTATION_GUARD(
+	_msg_cinematic_install_param* pMsg = reinterpret_cast<_msg_cinematic_install_param*>(pMsgParam);
+
 	pCVar1 = g_CinematicManager_0048efc->GetCinematic(this->cinematicId);
-	if ((this->aMaterials != (edDList_material*)0x0) && (pCVar1 == (CCinematic*)*pMsgParam)) {
-		if (pMsgParam[1] == 1) {
+	if ((this->aMaterials != (edDList_material*)0x0) && (pCVar1 == pMsg->pCinematic)) {
+		if (pMsg->action == 1) {
 			if (this->nbMaterials != 0) {
 				iVar2 = 0;
 				if (0 < this->nbMaterials) {
-					iVar3 = 0;
 					do {
-						edDListTermMaterial((edDList_material*)((int)&this->aMaterials->pManager + iVar3));
+						edDListTermMaterial(this->aMaterials + iVar2);
 						iVar2 = iVar2 + 1;
-						iVar3 = iVar3 + 0x10;
 					} while (iVar2 < this->nbMaterials);
 				}
+
 				this->nbMaterials = 0;
-				CLevelScheduler::Level_TeleporterChanged(CLevelScheduler::gThis);
+				CLevelScheduler::gThis->Level_TeleporterChanged();
 				ed3DUnInstallG2D(&this->g2dManager);
+
 				return 1;
 			}
+
 			return 0;
 		}
 
-		if (pMsgParam[1] == 0) {
-			iVar2 = FUN_002ee670(this);
+		if (pMsg->action == 0) {
+			iVar2 = FUN_002ee670();
 			return iVar2;
 		}
-	})
+	}
 
 	return 0;
 }
@@ -623,6 +624,96 @@ void CActorTeleporter::NotifyLevelTeleporterChanged()
 	DetectDisabledDestinations(0);
 
 	return;
+}
+
+bool CActorTeleporter::LevelHasTeleporters()
+{
+	S_DESTINATION_LIST* pSVar1;
+	S_DESTINATION_ENTRY* iVar2;
+	int iVar3;
+	int iVar4;
+	int curIndex;
+	bool bHasTeleporters;
+	S_SUBSECTOR_INFO SStack48;
+	CLevelScheduler* pLevel;
+
+	pLevel = CLevelScheduler::gThis;
+	bHasTeleporters = false;
+
+	if (((CLevelScheduler::gThis->currentLevelID == 0) && (this->bOpen != 0)) && (curIndex = 0, (this->field_0x1e0).Get() != (ed_zone_3d*)0x0)) {
+		bHasTeleporters = false;
+		while (true) {
+			pSVar1 = this->pDestinationList;
+			iVar3 = 0;
+			if (pSVar1 != (S_DESTINATION_LIST*)0x0) {
+				iVar3 = pSVar1->nbEntries;
+			}
+
+			if (iVar3 <= curIndex) break;
+
+			iVar2 = pSVar1->aEntries + curIndex;
+			iVar3 = iVar2->field_0x4;
+			if (((iVar3 != 0x10) && (iVar4 = iVar2->field_0x8, 0 < iVar4)) && (pLevel->Level_GetSubSectorInfo(iVar3, iVar4, &SStack48), (SStack48.flags & 1) != 0)) {
+				bHasTeleporters = true;
+			}
+
+			curIndex = curIndex + 1;
+		}
+	}
+
+	return bHasTeleporters;
+}
+
+int CActorTeleporter::FUN_002ee670()
+{
+	S_DESTINATION_LIST* pSVar1;
+	bool bVar2;
+	CCinematic* pCinematic;
+	int iVar3;
+	edBANK_ENTRY_INFO bankEntryInfo;
+	int iStack4;
+
+	pCinematic = g_CinematicManager_0048efc->GetCinematic(this->cinematicId);
+	bVar2 = pCinematic->LoadEntryByFile(&bankEntryInfo, "G2D", 0);
+	if (bVar2 == false) {
+		iVar3 = 0;
+	}
+	else {
+		ObjectNaming::SetNextObjectName("Cin G2D");
+		ed3DInstallG2D(bankEntryInfo.fileBufferStart, bankEntryInfo.size, &iStack4, &this->g2dManager, 1);
+		iVar3 = ed3DG2DGetG2DNbMaterials(&this->g2dManager);
+		this->nbMaterials = iVar3;
+
+		pSVar1 = this->pDestinationList;
+		if (pSVar1 == (S_DESTINATION_LIST*)0x0) {
+			iVar3 = 0;
+		}
+		else {
+			iVar3 = pSVar1->nbEntries;
+		}
+
+		if (iVar3 < this->nbMaterials) {
+			iVar3 = 0;
+			if (pSVar1 != (S_DESTINATION_LIST*)0x0) {
+				iVar3 = pSVar1->nbEntries;
+			}
+
+			this->nbMaterials = iVar3;
+		}
+
+		iVar3 = 0;
+		if (0 < this->nbMaterials) {
+			do {
+				edDListCreatMaterialFromIndex(&this->aMaterials[iVar3], iVar3, &this->g2dManager, 2);
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < this->nbMaterials);
+		}
+
+		CLevelScheduler::gThis->Level_TeleporterChanged();
+		iVar3 = 1;
+	}
+
+	return iVar3;
 }
 
 edDList_material* CActorTeleporter::GetMySubSectorMaterial(int levelId, int nbAreas)

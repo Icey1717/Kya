@@ -7,6 +7,7 @@
 #include "ActorFactory.h"
 #include "CollisionRay.h"
 #include "ActorHero.h"
+#include "BehaviourInventory.h"
 
 CPatternPart::CPatternPart()
 {
@@ -464,6 +465,23 @@ void CActorProjectile::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator,
 	}
 
 	return;
+}
+
+CInventoryInfo* CActorProjectile::GetInventoryInfo()
+{
+	CBehaviourInventory* pBehaviourInventory;
+	CInventoryInfo* pInfo;
+
+	pBehaviourInventory = (CBehaviourInventory*)CActor::GetBehaviour(PROJECTILE_BEHAVIOUR_INVENTORY);
+
+	if (pBehaviourInventory == (CBehaviourInventory*)0x0) {
+		pInfo = (CInventoryInfo*)0x0;
+	}
+	else {
+		pInfo = &pBehaviourInventory->inventoryInfo;
+	}
+
+	return pInfo;
 }
 
 int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
@@ -1948,12 +1966,14 @@ void CActorProjectile::StopAllFx()
 void CBehaviourProjectile::Create(ByteCode* pByteCode)
 {
 	this->field_0x4 = pByteCode->GetS32();
+
 	return;
 }
 
 void CBehaviourProjectile::Init(CActor* pOwner)
 {
 	this->pOwner = reinterpret_cast<CActorProjectile*>(pOwner);
+
 	return;
 }
 
@@ -2262,4 +2282,54 @@ void CBehaviourProjectilePortable::InitState(int newState)
 void CBehaviourProjectilePortable::TermState(int oldState, int newState)
 {
 	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourProjectileNew::Create(ByteCode* pByteCode)
+{
+	CBehaviourProjectile::Create(pByteCode);
+
+	return;
+}
+
+void CBehaviourProjectileNew::Init(CActor* pOwner)
+{
+	CBehaviourProjectile::Init(pOwner);
+
+	return;
+}
+
+void CBehaviourProjectileNew::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourProjectileNew::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CInventoryInfo* pInfo;
+	CActorProjectile* pProjectile;
+
+	pProjectile = this->pOwner;
+	pInfo = pProjectile->GetInventoryInfo();
+	pInfo->Reset();
+	pProjectile = this->pOwner;
+	pProjectile->SetState(4, -1);
+
+	return;
+}
+
+void CBehaviourProjectileNew::End(int newBehaviourId)
+{
+	CActorProjectile* pProjectile;
+
+	pProjectile = this->pOwner;
+	pProjectile->flags = pProjectile->flags & 0xfffffffd;
+	pProjectile->flags = pProjectile->flags | 1;
+
+	pProjectile = this->pOwner;
+	pProjectile->flags = pProjectile->flags & 0xffffff7f;
+	pProjectile->flags = pProjectile->flags | 0x20;
+
+	pProjectile->EvaluateDisplayState();
+
+	return;
 }

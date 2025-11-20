@@ -495,16 +495,16 @@ edpkt_data gPKTStrip[0xa];
 void edDListInitStripPKT(void)
 {
 	gPKTStrip[0].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-	gPKTStrip[0].asU32[1] = STORE_SECTION(&g_stVertexGIFHeader);
+	gPKTStrip[0].asU32[1] = STORE_POINTER(&g_stVertexGIFHeader);
 	gPKTStrip[0].cmdB = 0;
 
 	gPKTStrip[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-	gPKTStrip[1].asU32[1] = STORE_SECTION(&g_stGifTAG_Texture_NoFog[72]);
+	gPKTStrip[1].asU32[1] = STORE_POINTER(&g_stGifTAG_Texture_NoFog[72]);
 	gPKTStrip[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 	gPKTStrip[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x8000, 0x01, UNPACK_V4_32, 0);
 
 	gPKTStrip[2].asU32[0] = ED_VIF1_SET_TAG_REF(2, 0);
-	gPKTStrip[2].asU32[1] = STORE_SECTION(&g_stVertexSTHeader);
+	gPKTStrip[2].asU32[1] = STORE_POINTER(&g_stVertexSTHeader);
 	gPKTStrip[2].cmdB = 0;
 
 	gPKTStrip[3].asU32[0] = ED_VIF1_SET_TAG_REF(0x12, 0);
@@ -513,7 +513,7 @@ void edDListInitStripPKT(void)
 	gPKTStrip[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, 0x48, UNPACK_V2_16_MASKED, 0);
 
 	gPKTStrip[4].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-	gPKTStrip[4].asU32[1] = STORE_SECTION(&g_stVertexRGBAHeader);
+	gPKTStrip[4].asU32[1] = STORE_POINTER(&g_stVertexRGBAHeader);
 	gPKTStrip[4].cmdB = 0;
 
 	gPKTStrip[5].asU32[0] = ED_VIF1_SET_TAG_REF(0x12, 0);
@@ -522,7 +522,7 @@ void edDListInitStripPKT(void)
 	gPKTStrip[5].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, 0x48, UNPACK_V4_8_MASKED, 0);
 
 	gPKTStrip[6].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-	gPKTStrip[6].asU32[1] = STORE_SECTION(&g_stVertexXYZHeader);
+	gPKTStrip[6].asU32[1] = STORE_POINTER(&g_stVertexXYZHeader);
 	gPKTStrip[6].cmdB = 0;
 
 	gPKTStrip[7].asU32[0] = ED_VIF1_SET_TAG_REF(0x48, 0);
@@ -531,7 +531,7 @@ void edDListInitStripPKT(void)
 	gPKTStrip[7].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, 0x48, UNPACK_V4_32_MASKED, 0);
 
 	gPKTStrip[8].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-	gPKTStrip[8].asU32[1] = STORE_SECTION(&g_stExecuteCode);
+	gPKTStrip[8].asU32[1] = STORE_POINTER(&g_stExecuteCode);
 	gPKTStrip[8].asU32[2] = SCE_VIF1_SET_NOP(0);
 	gPKTStrip[8].asU32[3] = SCE_VIF1_SET_MSCAL(0x0003, 0);
 
@@ -601,7 +601,7 @@ void edDlistFrameBufMaterialInit(void)
 	gFrameBufHASHPtr = &gFrameBufG2D.hashCode;
 	gFrameBufG2D.hashCode.hash = ed3DComputeHashCode("FRAMEBUF");
 	gFrameBufMaterialPtr = &gFrameBufG2D.material;
-	gFrameBufG2D.hashCode.pData = STORE_SECTION(&gFrameBufG2D.MAT);
+	gFrameBufG2D.hashCode.pData = STORE_POINTER(&gFrameBufG2D.MAT);
 
 	gFrameBufG2D.MAT.hash = HASH_CODE_MAT; // MAT.
 	gFrameBufG2D.MAT.field_0x4 = 1;
@@ -616,7 +616,7 @@ void edDlistFrameBufMaterialInit(void)
 	gFrameBufG2D.material.pCommandBufferTexture = 0x0;
 	gFrameBufG2D.material.commandBufferTextureSize = 0;
 
-	gFrameBufG2D.aLayers[0] = STORE_SECTION(&gFrameBufG2D.LAY);
+	gFrameBufG2D.aLayers[0] = STORE_POINTER(&gFrameBufG2D.LAY);
 
 	gFrameBufG2D.LAYA.hash = HASH_CODE_LAYA; // LAYA
 	gFrameBufG2D.LAYA.field_0x4 = 1;
@@ -774,7 +774,7 @@ void edDListPatchGifTag2D(void)
 void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->nbLayers) {
-		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
+		ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 		pLayer->flags_0x0 |= flag;
@@ -824,13 +824,13 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMaterial, int offset, bool*
 			return (ed_g2d_bitmap*)0x0;
 		}
 
-		pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[offset]);
+		pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMaterial->aLayers[offset]);
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 
 		if (((pLAY != (ed_Chunck*)0xfffffff0) && (pLAY != (ed_Chunck*)0xfffffff0)) && (pLayer->bHasTexture != 0)) {
 
-			pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+			pTEX = LOAD_POINTER_CAST(ed_Chunck*, pLayer->pTex);
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
 
 			pBitmap = (ed_g2d_bitmap *)0x0;
@@ -843,29 +843,29 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMaterial, int offset, bool*
 				*bHasPalette = true;
 
 				ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pTexture + 1);
-				pPaletteHashCode = LOAD_SECTION_CAST(ed_hash_code*, pHashCode[pLayer->paletteId].pData);
+				pPaletteHashCode = LOAD_POINTER_CAST(ed_hash_code*, pHashCode[pLayer->paletteId].pData);
 
 				if (pPaletteHashCode != (ed_hash_code*)0x0) {
-					ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHashCode->pData);
+					ed_Chunck* pT2D = LOAD_POINTER_CAST(ed_Chunck*, pPaletteHashCode->pData);
 					pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 				}
 
-				pTextureHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+				pTextureHashCode = LOAD_POINTER_CAST(ed_hash_code*, pTexture->hashCode.pData);
 				if (pTextureHashCode == 0) {
 					return pBitmap;
 				}
 
-				ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pTextureHashCode->pData);
+				ed_Chunck* pT2D = LOAD_POINTER_CAST(ed_Chunck*, pTextureHashCode->pData);
 				*ppBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 				return pBitmap;
 			}
 
-			pTextureHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+			pTextureHashCode = LOAD_POINTER_CAST(ed_hash_code*, pTexture->hashCode.pData);
 			if (pTextureHashCode == 0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
 
-			ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pTextureHashCode->pData);
+			ed_Chunck* pT2D = LOAD_POINTER_CAST(ed_Chunck*, pTextureHashCode->pData);
 			return reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 		}
 	}
@@ -1064,8 +1064,8 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, ed_g
 	LogBitmap("MakeTextureDataFromPacket TEX", pTextureBitmap);
 	LogBitmap("MakeTextureDataFromPacket PAL", pPaletteBitmap);
 
-	edPSX2Header* pHeader = (edPSX2Header*)LOAD_SECTION(pPaletteBitmap->pPSX2);
-	edpkt_data* pPkt = (edpkt_data*)(LOAD_SECTION((pHeader + index)->pPkt));
+	edPSX2Header* pHeader = (edPSX2Header*)LOAD_POINTER(pPaletteBitmap->pPSX2);
+	edpkt_data* pPkt = (edpkt_data*)(LOAD_POINTER((pHeader + index)->pPkt));
 	pPkt += 2;
 
 	int imageIndex = -1;
@@ -1091,7 +1091,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, ed_g
 			}
 			else {
 				const int paletteIndex = pPkt->asU32[1];
-				palettes[clutBasePtr] = { LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel };
+				palettes[clutBasePtr] = { LOAD_POINTER(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel };
 
 				EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket PAL - CBP: {} (0x{:x}) w: {} h: {} rw: {} rh: {} psm: {} max mip: {}", clutBasePtr, clutBasePtr, pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel);
 			}
@@ -1133,7 +1133,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, ed_g
 
 	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: {} (0x{:x}) rh: {} (0x{:x})", texWidth, texWidth, texHeight, texHeight);
 
-	return { pMaterial, { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
+	return { pMaterial, { LOAD_POINTER(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
 		palettes };
 }
 #endif
@@ -1188,7 +1188,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 				pPaletteBitmap = edDListGetG2DBitmap(pMaterialInfo->pMaterial, 0, &bHasPalette, &pTextureBitmap);
 				pDVar6 = pDVar5->aCommandArray;
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0) {
-					pDVar5->aCommandArray[0].pCommandBuffer = ((edpkt_data*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x4;
+					pDVar5->aCommandArray[0].pCommandBuffer = ((edpkt_data*)LOAD_POINTER(pPaletteBitmap->pPSX2)) + 0x4;
 					pDVar5->aCommandArray[0].type = LM_CALL;
 						
 					if ((bHasPalette != false) && (iVar3 = (uint)pTextureBitmap->width * (uint)pTextureBitmap->height, 0x3ffff < iVar3)) {
@@ -1203,7 +1203,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->nbCommands = gCurDList->nbCommands + 1;
 				}
 
-				pDVar6->pCommandBuffer = (edpkt_data*)((char*)LOAD_SECTION(pMaterialInfo->pMaterial->pCommandBufferTexture) + 0x10);
+				pDVar6->pCommandBuffer = (edpkt_data*)((char*)LOAD_POINTER(pMaterialInfo->pMaterial->pCommandBufferTexture) + 0x10);
 
 				if ((bHasPalette != false) && (0x3ffff < (uint)pTextureBitmap->width * (uint)pTextureBitmap->height)) {
 					*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) =
@@ -1465,7 +1465,7 @@ void edDListPatchGifTag3D(void)
 		iVar3 = gCurStatePKTSize - 1;
 
 		pRVar2->asU32[0] = ED_VIF1_SET_TAG_REF(gCurStatePKTSize, 0);
-		pRVar2->asU32[1] = STORE_SECTION(&gCurStatePKT);
+		pRVar2->asU32[1] = STORE_POINTER(&gCurStatePKT);
 
 		pRVar2->asU32[2] = SCE_VIF1_SET_ITOP(0x03dc, 0);
 		pRVar2->asU32[3] = SCE_VIF1_SET_UNPACK(0x03dc, iVar3, UNPACK_V4_32, 0);
@@ -1591,49 +1591,49 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 
 	if ((gCurDList->flags_0x0 & 0x100) == 0) {
 		pNewStrip->pBoundSpherePkt = 0x0;
-		pNewStrip->pSTBuf = STORE_SECTION((char*)&pNewStrip[1].boundingSphere);
+		pNewStrip->pSTBuf = STORE_POINTER((char*)&pNewStrip[1].boundingSphere);
 
-		uVar10 = (uint)LOAD_SECTION(pNewStrip->pSTBuf) & 0xf;
+		uVar10 = (uint)LOAD_POINTER(pNewStrip->pSTBuf) & 0xf;
 		if (uVar10 != 0) {
-			pNewStrip->pSTBuf = STORE_SECTION((char*)LOAD_SECTION(pNewStrip->pSTBuf) + (0x10 - uVar10));
+			pNewStrip->pSTBuf = STORE_POINTER((char*)LOAD_POINTER(pNewStrip->pSTBuf) + (0x10 - uVar10));
 		}
 	}
 	else {
-		pNewStrip->pBoundSpherePkt = STORE_SECTION(&pNewStrip[1].boundingSphere);
-		uVar10 = (uint)LOAD_SECTION(pNewStrip->pBoundSpherePkt) & 0xf;
+		pNewStrip->pBoundSpherePkt = STORE_POINTER(&pNewStrip[1].boundingSphere);
+		uVar10 = (uint)LOAD_POINTER(pNewStrip->pBoundSpherePkt) & 0xf;
 		if (uVar10 != 0) {
-			char* pPkt = (char*)LOAD_SECTION(pNewStrip->pBoundSpherePkt);
-			pNewStrip->pBoundSpherePkt = STORE_SECTION(pPkt + (0x10 - uVar10));
+			char* pPkt = (char*)LOAD_POINTER(pNewStrip->pBoundSpherePkt);
+			pNewStrip->pBoundSpherePkt = STORE_POINTER(pPkt + (0x10 - uVar10));
 		}
 
-		pNewStrip->pSTBuf = STORE_SECTION((char*)LOAD_SECTION(pNewStrip->pBoundSpherePkt) + meshCount);
+		pNewStrip->pSTBuf = STORE_POINTER((char*)LOAD_POINTER(pNewStrip->pBoundSpherePkt) + meshCount);
 		pNewCommand->field_0x41 = (byte)meshCount;
-		uVar10 = (uint)LOAD_SECTION(pNewStrip->pSTBuf) & 0xf;
+		uVar10 = (uint)LOAD_POINTER(pNewStrip->pSTBuf) & 0xf;
 		if (uVar10 != 0) {
-			char* pPkt = (char*)LOAD_SECTION(pNewStrip->pBoundSpherePkt);
-			pNewStrip->pSTBuf = STORE_SECTION(pPkt + (0x10 - uVar10));
+			char* pPkt = (char*)LOAD_POINTER(pNewStrip->pBoundSpherePkt);
+			pNewStrip->pSTBuf = STORE_POINTER(pPkt + (0x10 - uVar10));
 		}
 	}
 
-	pNewStrip->pColorBuf = STORE_SECTION((char*)LOAD_SECTION(pNewStrip->pSTBuf) + uVar6);
-	pNewStrip->pColorBuf = STORE_SECTION((char*)LOAD_SECTION(pNewStrip->pColorBuf) + 4);
+	pNewStrip->pColorBuf = STORE_POINTER((char*)LOAD_POINTER(pNewStrip->pSTBuf) + uVar6);
+	pNewStrip->pColorBuf = STORE_POINTER((char*)LOAD_POINTER(pNewStrip->pColorBuf) + 4);
 
-	uVar10 = (uint)LOAD_SECTION(pNewStrip->pColorBuf) & 0xf;
+	uVar10 = (uint)LOAD_POINTER(pNewStrip->pColorBuf) & 0xf;
 	if (uVar10 != 0) {
-		char* pPkt = (char*)LOAD_SECTION(pNewStrip->pColorBuf);
-		pNewStrip->pColorBuf = STORE_SECTION(pPkt + (0x10 - uVar10));
+		char* pPkt = (char*)LOAD_POINTER(pNewStrip->pColorBuf);
+		pNewStrip->pColorBuf = STORE_POINTER(pPkt + (0x10 - uVar10));
 	}
 
-	pNewStrip->pVertexBuf = STORE_SECTION((char*)LOAD_SECTION(pNewStrip->pColorBuf) + uVar4);
-	uVar10 = (uint)LOAD_SECTION(pNewStrip->pVertexBuf) & 0xf;
+	pNewStrip->pVertexBuf = STORE_POINTER((char*)LOAD_POINTER(pNewStrip->pColorBuf) + uVar4);
+	uVar10 = (uint)LOAD_POINTER(pNewStrip->pVertexBuf) & 0xf;
 	if (uVar10 != 0) {
-		char* pPkt = (char*)LOAD_SECTION(pNewStrip->pVertexBuf);
-		pNewStrip->pVertexBuf = STORE_SECTION(pPkt + (0x10 - uVar10));
+		char* pPkt = (char*)LOAD_POINTER(pNewStrip->pVertexBuf);
+		pNewStrip->pVertexBuf = STORE_POINTER(pPkt + (0x10 - uVar10));
 	}
 
-	gCurColorBuf = (_rgba*)LOAD_SECTION(pNewStrip->pColorBuf);
-	gCurSTBuf = LOAD_SECTION_CAST(short*, pNewStrip->pSTBuf) + 0x8;
-	gCurVertexBuf = (edVertex*)LOAD_SECTION(pNewStrip->pVertexBuf);
+	gCurColorBuf = (_rgba*)LOAD_POINTER(pNewStrip->pColorBuf);
+	gCurSTBuf = LOAD_POINTER_CAST(short*, pNewStrip->pSTBuf) + 0x8;
+	gCurVertexBuf = (edVertex*)LOAD_POINTER(pNewStrip->pVertexBuf);
 	if ((nbVertex & 3) != 0) {
 		nbVertex = nbVertex + (4 - (nbVertex & 3));
 	}
@@ -1746,41 +1746,41 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 		}
 	}
 
-	pNewSprite->pVertexBuf = STORE_SECTION(pNewSprite + 1);
-	uVar2 = (uint)LOAD_SECTION(pNewSprite->pVertexBuf) & 0xf;
+	pNewSprite->pVertexBuf = STORE_POINTER(pNewSprite + 1);
+	uVar2 = (uint)LOAD_POINTER(pNewSprite->pVertexBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pVertexBuf = (edF32VECTOR4*)((int)pNewSprite->pVertexBuf + (0x10 - uVar2));)
 	}
 
 	// DEBUG MEMSET clear the vertex buffer.
-	memset(LOAD_SECTION(pNewSprite->pVertexBuf), 0, nbRects * 4 * sizeof(edVertex));
+	memset(LOAD_POINTER(pNewSprite->pVertexBuf), 0, nbRects * 4 * sizeof(edVertex));
 
-	pNewSprite->pSTBuf = STORE_SECTION(LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4); // Multiply by 4 because we will unpack each float into 4 verts to make a quad.
-	uVar2 = (uint)LOAD_SECTION(pNewSprite->pSTBuf) & 0xf;
+	pNewSprite->pSTBuf = STORE_POINTER(LOAD_POINTER_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4); // Multiply by 4 because we will unpack each float into 4 verts to make a quad.
+	uVar2 = (uint)LOAD_POINTER(pNewSprite->pSTBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pSTBuf = pNewSprite->pSTBuf + (0x10 - uVar2);)
 	}
 
-	pNewSprite->pColorBuf = STORE_SECTION(LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf) + nbSt * 2);
-	uVar2 = (uint)LOAD_SECTION(pNewSprite->pColorBuf) & 0xf;
+	pNewSprite->pColorBuf = STORE_POINTER(LOAD_POINTER_CAST(short*, pNewSprite->pSTBuf) + nbSt * 2);
+	uVar2 = (uint)LOAD_POINTER(pNewSprite->pColorBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pColorBuf = pNewSprite->pColorBuf + (0x10 - uVar2);)
 	}
 
-	pNewSprite->pWHBuf = STORE_SECTION(LOAD_SECTION_CAST(_rgba*, pNewSprite->pColorBuf) + nbRects * 4);
-	uVar2 = (uint)LOAD_SECTION(pNewSprite->pWHBuf) & 0xf;
+	pNewSprite->pWHBuf = STORE_POINTER(LOAD_POINTER_CAST(_rgba*, pNewSprite->pColorBuf) + nbRects * 4);
+	uVar2 = (uint)LOAD_POINTER(pNewSprite->pWHBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pWHBuf = pNewSprite->pWHBuf + (0x10 - uVar2);)
 	}
 
-	gCurColorBuf = LOAD_SECTION_CAST(_rgba*, pNewSprite->pColorBuf);
-	gCurSTBuf = LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf);
-	gCurVertexBuf = LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf);
-	gCurWHBuf = LOAD_SECTION_CAST(short*, pNewSprite->pWHBuf);
+	gCurColorBuf = LOAD_POINTER_CAST(_rgba*, pNewSprite->pColorBuf);
+	gCurSTBuf = LOAD_POINTER_CAST(short*, pNewSprite->pSTBuf);
+	gCurVertexBuf = LOAD_POINTER_CAST(edVertex*, pNewSprite->pVertexBuf);
+	gCurWHBuf = LOAD_POINTER_CAST(short*, pNewSprite->pWHBuf);
 
 	gCurDListBuf = gCurWHBuf + nbWh * 2;
 	if (((uint)gCurDListBuf & 0xf) != 0) {
@@ -2696,20 +2696,20 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 	int meshCount;
 	uint remainderCnt;
 
-	pColorBuf = (_rgba*)LOAD_SECTION(pStrip->pColorBuf);
-	pVertexBuf = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
+	pColorBuf = (_rgba*)LOAD_POINTER(pStrip->pColorBuf);
+	pVertexBuf = (edVertex*)LOAD_POINTER(pStrip->pVertexBuf);
 	meshCount = (ushort)pStrip->meshCount - 1;
-	pSTBuf = (char*)LOAD_SECTION(pStrip->pSTBuf) + 0x10;
+	pSTBuf = (char*)LOAD_POINTER(pStrip->pSTBuf) + 0x10;
 
 	if ((gCurMaterial == (edDList_material*)0x0) && (gbForceMaterialUse == false)) {
 		while (bVar1 = meshCount != 0, meshCount = meshCount + -1, bVar1) {
 			memcpy(pPkt, &gPKTStrip, sizeof(gPKTStrip));
 
-			pPkt[1].asU32[1] = STORE_SECTION(&g_stGifTAG_Texture_NoFog[72]);
+			pPkt[1].asU32[1] = STORE_POINTER(&g_stGifTAG_Texture_NoFog[72]);
 
-			pPkt[3].asU32[1] = STORE_SECTION(pSTBuf); // ST
-			pPkt[5].asU32[1] = STORE_SECTION(pColorBuf); // RGBA
-			pPkt[7].asU32[1] = STORE_SECTION(pVertexBuf); // VTX
+			pPkt[3].asU32[1] = STORE_POINTER(pSTBuf); // ST
+			pPkt[5].asU32[1] = STORE_POINTER(pColorBuf); // RGBA
+			pPkt[7].asU32[1] = STORE_POINTER(pVertexBuf); // VTX
 
 			pSTBuf = pSTBuf + 0x120;
 			pColorBuf = pColorBuf + 0x48;
@@ -2731,22 +2731,22 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 		// Fill in the remainder of the data (the last block that's bigger than 0x48.
 		memcpy(pPkt, &gPKTStrip, sizeof(gPKTStrip));
 
-		pPkt[1].asU32[1] = STORE_SECTION(g_stGifTAG_Gouraud_NoFog + bVar2);
+		pPkt[1].asU32[1] = STORE_POINTER(g_stGifTAG_Gouraud_NoFog + bVar2);
 
 		uint pktTagRef = ED_VIF1_SET_TAG_REF(remainderCnt >> 2, 0);
 
 		pPkt[3].asU32[0] = pktTagRef;
-		pPkt[3].asU32[1] = STORE_SECTION(pSTBuf);
+		pPkt[3].asU32[1] = STORE_POINTER(pSTBuf);
 		pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, remainderCnt, UNPACK_V2_16_MASKED, 0);
 
 		pPkt[5].asU32[0] = pktTagRef;
-		pPkt[5].asU32[1] = STORE_SECTION(pColorBuf);
+		pPkt[5].asU32[1] = STORE_POINTER(pColorBuf);
 		pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, remainderCnt, UNPACK_V4_8_MASKED, 0);
 
 		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(remainderCnt, 0);
-		pPkt[7].asU32[1] = STORE_SECTION(pVertexBuf);
+		pPkt[7].asU32[1] = STORE_POINTER(pVertexBuf);
 		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, remainderCnt, UNPACK_V4_32_MASKED, 0);
 	}
@@ -2757,9 +2757,9 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 
 			memcpy(pPkt, &gPKTStrip, sizeof(gPKTStrip));
 
-			pPkt[3].asU32[1] = STORE_SECTION(pSTBuf); // ST
-			pPkt[5].asU32[1] = STORE_SECTION(pColorBuf); // RGBA
-			pPkt[7].asU32[1] = STORE_SECTION(pVertexBuf); // VTX
+			pPkt[3].asU32[1] = STORE_POINTER(pSTBuf); // ST
+			pPkt[5].asU32[1] = STORE_POINTER(pColorBuf); // RGBA
+			pPkt[7].asU32[1] = STORE_POINTER(pVertexBuf); // VTX
 
 			pSTBuf = pSTBuf + 0x120;
 			pColorBuf = pColorBuf + 0x48;
@@ -2781,22 +2781,22 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 		// Fill in the remainder of the data (the last block that's bigger than 0x48.
 		memcpy(pPkt, &gPKTStrip, sizeof(gPKTStrip));
 
-		pPkt[1].asU32[1] = STORE_SECTION(g_stGifTAG_Texture_NoFog + bVar2);
+		pPkt[1].asU32[1] = STORE_POINTER(g_stGifTAG_Texture_NoFog + bVar2);
 
 		uint pktTagRef = ED_VIF1_SET_TAG_REF(remainderCnt >> 2, 0);
 
 		pPkt[3].asU32[0] = pktTagRef;
-		pPkt[3].asU32[1] = STORE_SECTION(pSTBuf);
+		pPkt[3].asU32[1] = STORE_POINTER(pSTBuf);
 		pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, remainderCnt, UNPACK_V2_16_MASKED, 0);
 
 		pPkt[5].asU32[0] = pktTagRef;
-		pPkt[5].asU32[1] = STORE_SECTION(pColorBuf);
+		pPkt[5].asU32[1] = STORE_POINTER(pColorBuf);
 		pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, remainderCnt, UNPACK_V4_8_MASKED, 0);
 
 		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(remainderCnt, 0);
-		pPkt[7].asU32[1] = STORE_SECTION(pVertexBuf);
+		pPkt[7].asU32[1] = STORE_POINTER(pVertexBuf);
 		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, remainderCnt, UNPACK_V4_32_MASKED, 0);
 	}
@@ -2822,10 +2822,10 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 
 	uVar30 = 0x48;
 
-	pSTBuf = LOAD_SECTION_CAST(short*, pSprite->pSTBuf);
-	pColorBuf = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
-	pVertexBuf = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
-	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
+	pSTBuf = LOAD_POINTER_CAST(short*, pSprite->pSTBuf);
+	pColorBuf = LOAD_POINTER_CAST(_rgba*, pSprite->pColorBuf);
+	pVertexBuf = LOAD_POINTER_CAST(edVertex*, pSprite->pVertexBuf);
+	pWHBuf = LOAD_POINTER_CAST(char*, pSprite->pWHBuf);
 
 	nbBatches = (uint)pSprite->nbBatches;
 
@@ -2846,7 +2846,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		pPkt[0] = g_PKTSpriteHeaderRef[SPRITE_GIF_HEADER_INDEX];
 
 		pPkt[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-		pPkt[1].asU32[1] = STORE_SECTION(g_stGifTAG_Texture_NoFog + uVar30);
+		pPkt[1].asU32[1] = STORE_POINTER(g_stGifTAG_Texture_NoFog + uVar30);
 
 		pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x8000, 1, UNPACK_V4_32, 0);
@@ -2859,7 +2859,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 			}
 
 			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
-			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+			pPkt[3].asU32[1] = STORE_POINTER(pWHBuf);
 
 			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, uVar29, UNPACK_V2_16_MASKED, 0);
@@ -2868,7 +2868,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		}
 		else {
 			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+			pPkt[3].asU32[1] = STORE_POINTER(pWHBuf);
 
 			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, 1, UNPACK_V2_16_MASKED, 0);
@@ -2881,7 +2881,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 			}
 
 			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
-			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+			pPkt[5].asU32[1] = STORE_POINTER(pSTBuf);
 
 			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, uVar30, UNPACK_V2_16_MASKED, 0);
@@ -2890,7 +2890,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		}
 		else {
 			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+			pPkt[5].asU32[1] = STORE_POINTER(pSTBuf);
 			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, 1, UNPACK_V2_16_MASKED, 0);
 		}
@@ -2898,7 +2898,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		pPkt[6] = g_PKTSpriteHeaderRef[SPRITE_RGBA_HEADER_INDEX];
 
 		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
-		pPkt[7].asU32[1] = STORE_SECTION(pColorBuf);
+		pPkt[7].asU32[1] = STORE_POINTER(pColorBuf);
 		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, uVar30, UNPACK_V4_8_MASKED, 0);
 
@@ -2907,7 +2907,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		pPkt[8] = g_PKTSpriteHeaderRef[SPRITE_XYZ_HEADER_INDEX];
 
 		pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
-		pPkt[9].asU32[1] = STORE_SECTION(pVertexBuf);
+		pPkt[9].asU32[1] = STORE_POINTER(pVertexBuf);
 		pPkt[9].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, uVar30, UNPACK_V4_32_MASKED, 0);
 
@@ -2919,7 +2919,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		pPkt[0xc].cmdB = 0;
 
 		pPkt[0xb].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-		pPkt[0xb].asU32[1] = STORE_SECTION(&g_stExecuteCode);
+		pPkt[0xb].asU32[1] = STORE_POINTER(&g_stExecuteCode);
 		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(uVar26, 0);
 
@@ -2954,10 +2954,10 @@ void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 	assert(pNewStrip->meshCount > 0);
 
 	pNewStrip->field_0x38 = pStrip->field_0x38;
-	peVar1 = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
+	peVar1 = (edVertex*)LOAD_POINTER(pStrip->pVertexBuf);
 	uVar3 = 0;
 	while (uVar3 < (ushort)pStrip->meshCount) {
-		ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_SECTION(pStrip->pBoundSpherePkt) + uVar3;
+		ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_POINTER(pStrip->pBoundSpherePkt) + uVar3;
 		if (uVar3 == (ushort)pNewStrip->meshCount - 1) {
 			edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar3 * 0x46), (uint)pNewStrip->field_0x38, pSpherePkt);
 			uVar3 = uVar3 + 1;
@@ -3010,10 +3010,10 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 	}
 
 	if (((gCurDList->flags_0x0 & 0x100) != 0) && (gCurStripPatchable == 0)) {
-		peVar1 = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
+		peVar1 = (edVertex*)LOAD_POINTER(pStrip->pVertexBuf);
 		uVar4 = 0;
 		while (uVar4 < (ushort)pStrip->meshCount) {
-			ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_SECTION(pStrip->pBoundSpherePkt) + uVar4;
+			ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_POINTER(pStrip->pBoundSpherePkt) + uVar4;
 			if (uVar4 == (ushort)pStrip->meshCount - 1) {
 				edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar4 * 0x46), (uint)pStrip->field_0x38, pSpherePkt);
 				uVar4 = uVar4 + 1;
@@ -3574,7 +3574,7 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 	counter = 0;
 	memset(pDlistMaterial, 0, sizeof(edDList_material));
 
-	ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHASH_MAT->pData);
+	ed_Chunck* pMAT = LOAD_POINTER_CAST(ed_Chunck*, pHASH_MAT->pData);
 
 	pDlistMaterial->pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
 
@@ -3585,7 +3585,7 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 
 	pNewHashCode = gBankMaterial + counter;
 	pNewHashCode->hash = pHASH_MAT->hash;
-	pNewHashCode->pData = STORE_SECTION(pHASH_MAT);
+	pNewHashCode->pData = STORE_POINTER(pHASH_MAT);
 	pDlistMaterial->index = counter;
 	gNbUsedMaterial = gNbUsedMaterial + 1;
 	pDlistMaterial->mode = mode;
@@ -3671,7 +3671,7 @@ void edDListCreateFrameBufferMaterial(edDList_material* pMaterial)
 	}
 
 	pBankHashes[freeIndex].hash = ed3DComputeHashCode("FRAMEBUF");
-	pBankHashes[freeIndex].pData = STORE_SECTION(gFrameBufHASHPtr);
+	pBankHashes[freeIndex].pData = STORE_POINTER(gFrameBufHASHPtr);
 	pMaterial->index = freeIndex;
 
 	gNbUsedMaterial = gNbUsedMaterial + 1;
@@ -3848,19 +3848,19 @@ DisplayListCommand* edDListPatchableInfo(edVertex** pVertexBufOut, _rgba** pColo
 				pSprite = pDisplayListCommand->pRenderInput.pSprite;
 				gCurSpritePatchable = pSprite;
 				if (pVertexBufOut != (edVertex**)0x0) {
-					*pVertexBufOut = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
+					*pVertexBufOut = LOAD_POINTER_CAST(edVertex*, pSprite->pVertexBuf);
 				}
 
 				if (pColorBufOut != (_rgba**)0x0) {
-					*pColorBufOut = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
+					*pColorBufOut = LOAD_POINTER_CAST(_rgba*, pSprite->pColorBuf);
 				}
 
 				if (pSTBufOut != (uint**)0x0) {
-					*pSTBufOut = LOAD_SECTION_CAST(uint*, pSprite->pSTBuf);
+					*pSTBufOut = LOAD_POINTER_CAST(uint*, pSprite->pSTBuf);
 				}
 
 				if (pUvOut != (uint**)0x0) {
-					*pUvOut = LOAD_SECTION_CAST(uint*, pSprite->pWHBuf);
+					*pUvOut = LOAD_POINTER_CAST(uint*, pSprite->pWHBuf);
 				}
 
 				gNbAddedVertex = nbAddedVertex;
@@ -3875,16 +3875,16 @@ DisplayListCommand* edDListPatchableInfo(edVertex** pVertexBufOut, _rgba** pColo
 				}
 
 				pStrip = pDisplayListCommand->pRenderInput.pStrip;
-				gCurVertBufPatched = LOAD_SECTION_CAST(edVertex*, pStrip->pVertexBuf);
+				gCurVertBufPatched = LOAD_POINTER_CAST(edVertex*, pStrip->pVertexBuf);
 				gCurStripPatchable = pStrip;
 				if (pVertexBufOut != (edVertex**)0x0) {
-					*pVertexBufOut = LOAD_SECTION_CAST(edVertex*, pStrip->pVertexBuf);
+					*pVertexBufOut = LOAD_POINTER_CAST(edVertex*, pStrip->pVertexBuf);
 				}
 				if (pColorBufOut != (_rgba**)0x0) {
-					*pColorBufOut = LOAD_SECTION_CAST(_rgba*, pStrip->pColorBuf);
+					*pColorBufOut = LOAD_POINTER_CAST(_rgba*, pStrip->pColorBuf);
 				}
 				if (pSTBufOut != (uint**)0x0) {
-					*pSTBufOut = LOAD_SECTION_CAST(uint*, pStrip->pSTBuf);
+					*pSTBufOut = LOAD_POINTER_CAST(uint*, pStrip->pSTBuf);
 					*pSTBufOut = *pSTBufOut + 0x10;
 				}
 

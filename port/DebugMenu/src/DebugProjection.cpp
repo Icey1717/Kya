@@ -4,20 +4,21 @@
 
 #include "DebugFrameBuffer.h"
 #include "Types.h"
+#include "ed3D.h"
 #include "MathOps.h"
 
 namespace Renderer
 {
 	namespace Native
 	{
-		extern glm::mat4 gFinalViewMatrix;
-		extern glm::mat4 gFinalProjMatrix;
+		extern glm::mat4 gInitialViewMatrix;
+		extern glm::mat4 gInitialProjMatrix;
 	}
 }
 
 bool Debug::Projection::WorldToScreen(const edF32VECTOR4& worldPos, ImVec2& screenPos)
 {
-	auto viewProjMatrix = Renderer::Native::gFinalProjMatrix * Renderer::Native::gFinalViewMatrix;
+	auto viewProjMatrix = Renderer::Native::gInitialProjMatrix * Renderer::Native::gInitialViewMatrix;
 
 	// Step 1: Multiply the world position by the view-projection matrix to get clip space coordinates
 	glm::vec4 clipSpacePos = viewProjMatrix * glm::vec4(worldPos.x, worldPos.y, worldPos.z, 1.0f);

@@ -90,9 +90,9 @@ void CCameraRailVirtual::Init()
 CCameraRail::CCameraRail(ByteCode* pByteCode)
 	: CCameraRailVirtual(pByteCode)
 {
-	this->field_0xe0 = pByteCode->GetS32();
+	this->pathFollowIndex = pByteCode->GetS32();
 	this->flags_0xc = this->flags_0xc | pByteCode->GetU32() << 10;
-	this->field_0xf4 = (CameraRailSubObj*)0x0;
+	this->aRailSegments = (CameraRailSegment*)0x0;
 
 	return;
 }
@@ -104,90 +104,96 @@ ECameraType CCameraRail::GetMode()
 
 void CCameraRail::Init()
 {
-	CameraRailSubObj* pCVar1;
-	CameraRailSubObj* pCVar2;
-	edF32VECTOR4* peVar3;
+	CameraRailSegment* pInnerSegment;
+	CameraRailSegment* pSegmentIt;
+	edF32VECTOR4* pTangent;
 	int iVar4;
-	CameraRailSubObj* pfVar7;
+	CameraRailSegment* pCurSegment;
 	int iVar7;
-	CPathFollow* pCVar8;
+	CPathFollow* pPathFollow;
 	float fVar9;
 
 	CCameraRailVirtual::Init();
 
-	if (this->field_0xe0 == -1) {
-		pCVar8 = (CPathFollow*)0x0;
+	if (this->pathFollowIndex == -1) {
+		pPathFollow = (CPathFollow*)0x0;
 	}
 	else {
-		pCVar8 = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + this->field_0xe0;
+		pPathFollow = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + this->pathFollowIndex;
 	}
 
-	this->field_0xf0 = pCVar8->splinePointCount;
-	this->field_0xf4 = new CameraRailSubObj[this->field_0xf0];
-	iVar4 = this->field_0xf0;
+	this->nbSegments = pPathFollow->splinePointCount;
+	this->aRailSegments = new CameraRailSegment[this->nbSegments];
+	iVar4 = this->nbSegments;
 	iVar7 = 0;
 	if (0 < iVar4) {
 		do {
-			pfVar7 = this->field_0xf4 + iVar7;
+			pCurSegment = this->aRailSegments + iVar7;
 
-			if (pCVar8->aSplinePoints == (edF32VECTOR4*)0x0) {
-				peVar3 = &gF32Vertex4Zero;
+			if (pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+				pTangent = &gF32Vertex4Zero;
 			}
 			else {
-				peVar3 = pCVar8->aSplinePoints + iVar7;
+				pTangent = pPathFollow->aSplinePoints + iVar7;
 			}
-			(pfVar7->field_0x0).x = peVar3->x;
+			(pCurSegment->position).x = pTangent->x;
 
-			if (pCVar8->aSplinePoints == (edF32VECTOR4*)0x0) {
-				peVar3 = &gF32Vertex4Zero;
+			if (pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+				pTangent = &gF32Vertex4Zero;
 			}
 			else {
-				peVar3 = pCVar8->aSplinePoints + iVar7;
+				pTangent = pPathFollow->aSplinePoints + iVar7;
 			}
-			(pfVar7->field_0x0).y = peVar3->y;
+			(pCurSegment->position).y = pTangent->y;
 
-			if (pCVar8->aSplinePoints == (edF32VECTOR4*)0x0) {
-				peVar3 = &gF32Vertex4Zero;
+			if (pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+				pTangent = &gF32Vertex4Zero;
 			}
 			else {
-				peVar3 = pCVar8->aSplinePoints + iVar7;
+				pTangent = pPathFollow->aSplinePoints + iVar7;
 			}
-			(pfVar7->field_0x0).z = peVar3->z;
+			(pCurSegment->position).z = pTangent->z;
 
-			if (pCVar8->aSplinePoints == (edF32VECTOR4*)0x0) {
-				peVar3 = &gF32Vertex4Zero;
+			if (pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+				pTangent = &gF32Vertex4Zero;
 			}
 			else {
-				peVar3 = pCVar8->aSplinePoints + iVar7;
+				pTangent = pPathFollow->aSplinePoints + iVar7;
 			}
-			(pfVar7->field_0x0).w = peVar3->w;
+			(pCurSegment->position).w = pTangent->w;
+
 			fVar9 = (float)iVar7;
-			pfVar7->field_0x20 = fVar9 / (float)(this->field_0xf0 + -1);
-			iVar4 = this->field_0xf0;
+			pCurSegment->alpha = fVar9 / (float)(this->nbSegments + -1);
+			iVar4 = this->nbSegments;
 			iVar7 = iVar7 + 1;
 		} while (iVar7 < iVar4);
 	}
 
-	pCVar2 = this->field_0xf4;
+	// First segment tangent (index 0)
+	pSegmentIt = this->aRailSegments;
 	int iVar5 = iVar4 + -1;
-	edF32Vector4SubHard(&pCVar2->field_0x10, &pCVar2[1].field_0x0, &pCVar2->field_0x0);
-	edF32Vector4NormalizeHard(&pCVar2->field_0x10, &pCVar2->field_0x10);
+	edF32Vector4SubHard(&pSegmentIt->tangent, &pSegmentIt[1].position, &pSegmentIt->position);
+	edF32Vector4NormalizeHard(&pSegmentIt->tangent, &pSegmentIt->tangent);
 
+	// Middle segments (index 1 to nbSegments-2)
 	iVar7 = 1;
 	if (1 < iVar5) {
-		pCVar1 = pCVar2;
+		pInnerSegment = pSegmentIt;
 		do {
-			peVar3 = &pCVar1[1].field_0x10;
-			edF32Vector4SubHard(peVar3, &pCVar2[iVar7 + 1].field_0x0, &pCVar2[iVar7 - 1].field_0x0);
-			edF32Vector4NormalizeHard(peVar3, peVar3);
+			pTangent = &pInnerSegment[1].tangent;
+			edF32Vector4SubHard(pTangent, &pSegmentIt[iVar7 + 1].position, &pSegmentIt[iVar7 - 1].position);
+			edF32Vector4NormalizeHard(pTangent, pTangent);
+
 			iVar7 = iVar7 + 1;
-			pCVar1 = pCVar1 + 1;
+			pInnerSegment = pInnerSegment + 1;
 		} while (iVar7 < iVar5);
 	}
 
-	peVar3 = &pCVar2[iVar5].field_0x10;
-	edF32Vector4SubHard(peVar3, &pCVar2[iVar5].field_0x0, &pCVar2[iVar4 + -2].field_0x0);
-	edF32Vector4NormalizeHard(peVar3, peVar3);
+	// Last segment tangent (index nbSegments-1)
+	pTangent = &pSegmentIt[iVar5].tangent;
+	edF32Vector4SubHard(pTangent, &pSegmentIt[iVar5].position, &pSegmentIt[iVar4 + -2].position);
+	edF32Vector4NormalizeHard(pTangent, pTangent);
+
 	return;
 }
 
@@ -208,19 +214,19 @@ bool CCameraRail::Manage()
 		if (bVar1 == false) {
 			_UpdateTargetPosWithPlane();
 
-			fVar5 = this->field_0xe8 / (this->field_0xe8 - this->field_0xec);
+			fVar5 = this->distanceToPlaneA / (this->distanceToPlaneA - this->distanceToPlaneB);
 
 			if ((this->flags_0xc & 0x400) != 0) {
-				edF32Vector4LERPHard(fVar5, &this->lookAt, &this->field_0xf4[this->field_0xe4].field_0x0, &this->field_0xf4[this->field_0xe4 + 1].field_0x0);
+				edF32Vector4LERPHard(fVar5, &this->lookAt, &this->aRailSegments[this->currentSegmentIndex].position, &this->aRailSegments[this->currentSegmentIndex + 1].position);
 				this->lookAt.w = 1.0f;
 			}
 
-			fVar4 = this->field_0xf4[this->field_0xe4].field_0x20;
-			this->pSpline->GetPosition(fVar5 * (this->field_0xf4[this->field_0xe4 + 1].field_0x20 - fVar4) + fVar4, &local_10);
+			fVar4 = this->aRailSegments[this->currentSegmentIndex].alpha;
+			this->pSpline->GetPosition(fVar5 * (this->aRailSegments[this->currentSegmentIndex + 1].alpha - fVar4) + fVar4, &local_10);
 			this->transformationMatrix.rowT = local_10;
 
 			if ((this->flags_0xc & 0x400) == 0) {
-				this->lookAt = this->field_0x100;
+				this->lookAt = this->railTargetPosition;
 			}
 
 			edF32Vector4SubHard(&local_10, &this->lookAt, &this->transformationMatrix.rowT);
@@ -268,7 +274,7 @@ void CCameraRail::Alert()
 		uVar4 = unaff_s2_lo;
 		do {
 			pCVar1 = GetTarget();
-			edF32Vector4SubHard(&eStack16, &pCVar1->currentLocation, &this->field_0xf4[uVar3].field_0x0);
+			edF32Vector4SubHard(&eStack16, &pCVar1->currentLocation, &this->aRailSegments[uVar3].position);
 			fVar5 = edF32Vector4GetDistHard(&eStack16);
 			unaff_s2_lo = uVar3;
 			if (fVar6 <= fVar5) {
@@ -281,11 +287,11 @@ void CCameraRail::Alert()
 		} while (uVar3 < (this->pSpline)->nbPoints - 1);
 	}
 
-	this->field_0xe4 = unaff_s2_lo;
+	this->currentSegmentIndex = unaff_s2_lo;
 
-	ComputeTargetPosition(&this->field_0x100);
+	ComputeTargetPosition(&this->railTargetPosition);
 	ComputeTargetOffset(&eStack32);
-	edF32Vector4AddHard(&this->field_0x100, &this->field_0x100, &eStack32);
+	edF32Vector4AddHard(&this->railTargetPosition, &this->railTargetPosition, &eStack32);
 
 	_UpdateTargetPosWithPlane();
 
@@ -295,51 +301,50 @@ void CCameraRail::Alert()
 void CCameraRail::_UpdateTargetPosWithPlane()
 {
 	bool bVar1;
-	int iVar2;
-	uint uVar3;
+	int processedSegments;
+	uint currentIndex;
 	float fVar4;
-	edF32VECTOR4 eStack16;
+	edF32VECTOR4 computedOffset;
 
-	uVar3 = this->field_0xe4;
-	iVar2 = 0;
-	ComputeTargetPosition(&this->field_0x100);
-	ComputeTargetOffset(&eStack16);
-	edF32Vector4AddHard(&this->field_0x100, &this->field_0x100, &eStack16);
+	currentIndex = this->currentSegmentIndex;
+
+	processedSegments = 0;
+	ComputeTargetPosition(&this->railTargetPosition);
+	ComputeTargetOffset(&computedOffset);
+	edF32Vector4AddHard(&this->railTargetPosition, &this->railTargetPosition, &computedOffset);
 
 	do {
-		fVar4 = edDistPointToPlane(&this->field_0xf4[uVar3].field_0x0, &this->field_0xf4[uVar3].field_0x10, &this->field_0x100);
-		this->field_0xe8 = -fVar4;
-		fVar4 = edDistPointToPlane(&this->field_0xf4[uVar3 + 1].field_0x0, &this->field_0xf4[uVar3 + 1].field_0x10, &this->field_0x100);
-		this->field_0xec = -fVar4;
+		this->distanceToPlaneA = -edDistPointToPlane(&this->aRailSegments[currentIndex].position, &this->aRailSegments[currentIndex].tangent, &this->railTargetPosition);
+		this->distanceToPlaneB = -edDistPointToPlane(&this->aRailSegments[currentIndex + 1].position, &this->aRailSegments[currentIndex + 1].tangent, &this->railTargetPosition);
 		bVar1 = false;
 
-		if (0.0f < this->field_0xe8) {
-			if ((int)uVar3 < 1) {
-				this->field_0xe8 = -1e-20;
+		if (0.0f < this->distanceToPlaneA) {
+			if (currentIndex < 1) {
+				this->distanceToPlaneA = -1e-20f;
 			}
 			else {
-				uVar3 = uVar3 - 1;
+				currentIndex = currentIndex - 1;
 				bVar1 = true;
 			}
 		}
 
-		if (this->field_0xec < 0.0f) {
-			if ((int)(uVar3 + 2) < this->field_0xf0) {
-				uVar3 = uVar3 + 1;
+		if (this->distanceToPlaneB < 0.0f) {
+			if (currentIndex + 2 < this->nbSegments) {
+				currentIndex = currentIndex + 1;
 				bVar1 = true;
 			}
 			else {
-				this->field_0xec = 1e-20f;
+				this->distanceToPlaneB = 1e-20f;
 			}
 		}
 
-		iVar2 = iVar2 + 1;
-		if (this->field_0xf0 < iVar2) {
+		processedSegments = processedSegments + 1;
+		if (this->nbSegments < processedSegments) {
 			bVar1 = false;
 		}
 	} while (bVar1);
 
-	this->field_0xe4 = uVar3;
+	this->currentSegmentIndex = currentIndex;
 
 	return;
 }

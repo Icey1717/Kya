@@ -632,6 +632,8 @@ public:
 	void Remove_0x2d8();
 	void Add_0x2d8();
 
+	bool LoadEntryByFile(edBANK_ENTRY_INFO* param_2, char* pFileName, long bLevelBnk);
+
 	void Manage();
 	void ManageState_Playing();
 

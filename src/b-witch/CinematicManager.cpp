@@ -623,10 +623,10 @@ int S_STREAM_NTF_TARGET_ONOFF::SwitchOff(CActor* pActor)
 		if (this->field_0x14 != 0) {
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, *(uint*)&this->field_0x18);
 			if (pActor == (CActor*)0x0) {
-				pActor = LOAD_SECTION_CAST(CActor*, this->pRef);
+				pActor = LOAD_POINTER_CAST(CActor*, this->pRef);
 			}
 			if (pActor != (CActor*)0x0) {
-				iVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, &this->field_0x18);
+				iVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, &this->field_0x18);
 			}
 		}
 	}
@@ -882,7 +882,7 @@ void S_STREAM_REF<CActor>::Init()
 		pActor = ((CScene::ptable.g_ActorManager_004516a4)->aActors)[this->index];
 	}
 
-	this->pObj = STORE_SECTION(pActor);
+	this->pObj = STORE_POINTER(pActor);
 	return;
 }
 
@@ -902,7 +902,7 @@ void S_STREAM_REF<ed_zone_3d>::Init()
 	if (this->index != -1) {
 		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->index);
 	}
-	this->pObj = STORE_SECTION(pZone);
+	this->pObj = STORE_POINTER(pZone);
 	return;
 }
 
@@ -924,7 +924,7 @@ void S_STREAM_NTF_TARGET_BASE::Init()
 		pActor = ((CScene::ptable.g_ActorManager_004516a4)->aActors)[this->index];
 	}
 
-	this->pRef = STORE_SECTION(pActor);
+	this->pRef = STORE_POINTER(pActor);
 }
 
 void CCinematic::Init()
@@ -1516,10 +1516,10 @@ void CCinematic::Install()
 	this->cineBankLoadStage_0x2b4 = 4;
 
 	if (this->pActor != (CActor*)0x0) {
-		CCinematic** local_4;// = &local_10;
-		undefined4 local_c = 0;
-		CCinematic* local_10 = this;
-		this->pActor->ReceiveMessage(0, (ACTOR_MESSAGE)0x7c, local_4);
+		_msg_cinematic_install_param param;
+		param.pCinematic = this;
+		param.action = 0;
+		this->pActor->ReceiveMessage(0, MESSAGE_CINEMATIC_INSTALL, &param);
 	}
 
 	return;
@@ -1789,11 +1789,11 @@ bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
 
 			if (pActor == (CActor*)0x0) {
-				pActor = (CActor*)LOAD_SECTION(this->pRef);
+				pActor = LOAD_POINTER_CAST(CActor*, this->pRef);
 			}
 
 			if (pActor != (CActor*)0x0) {
-				uVar3 = pActor->DoMessage(pActor, (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
+				uVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
 			}
 		}
 	}
@@ -2029,11 +2029,11 @@ bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, this->flags);
 
 			if (pActor == (CActor*)0x0) {
-				pActor = LOAD_SECTION_CAST(CActor*, this->pRef);
+				pActor = LOAD_POINTER_CAST(CActor*, this->pRef);
 			}
 
 			if (pActor != (CActor*)0x0) {
-				iVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)this->flags);
+				iVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)this->flags);
 				uVar4 = (undefined)iVar3;
 			}
 		}
@@ -3355,11 +3355,11 @@ bool S_STREAM_NTF_TARGET_SWITCH::Switch(CActor* pActor)
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
 
 			if (pActor == (CActor*)0x0) {
-				pActor = (CActor*)LOAD_SECTION(this->pRef);
+				pActor = (CActor*)LOAD_POINTER(this->pRef);
 			}
 
 			if (pActor != (CActor*)0x0) {
-				uVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
+				uVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
 			}
 		}
 	}
@@ -3395,11 +3395,11 @@ bool S_STREAM_NTF_TARGET_SWITCH_EX::Switch(CActor* pActor, uint messageFlags)
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, messageFlags);
 
 			if (pActor == (CActor*)0x0) {
-				pActor = (CActor*)LOAD_SECTION(this->pRef);
+				pActor = (CActor*)LOAD_POINTER(this->pRef);
 			}
 
 			if (pActor != (CActor*)0x0) {
-				uVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)messageFlags);
+				uVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)messageFlags);
 			}
 		}
 	}
@@ -3453,13 +3453,13 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 			if (iVar1 == 0) {
 				local_14 = this->field_0x10;
 				if (param_4 == (CActor*)0x0) {
-					param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+					param_4 = LOAD_POINTER_CAST(CActor*, this->pRef);
 				}
 
 				local_18 = param_2;
 				if (param_4 != (CActor*)0x0) {
 					local_4 = &local_18;
-					iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
+					iVar3 = param_4->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
 				}
 
 				pCVar4 = (CActor*)1;
@@ -3480,12 +3480,12 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 				if (this->field_0x14 != 0) {
 					g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, param_4, this->field_0x14, this->field_0x18);
 					if (param_4 == (CActor*)0x0) {
-						param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+						param_4 = LOAD_POINTER_CAST(CActor*, this->pRef);
 					}
 
 					if (param_4 != (CActor*)0x0) {
 						local_c = this->field_0x18;
-						iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)local_c);
+						iVar3 = param_4->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)local_c);
 					}
 				}
 			}
@@ -3503,11 +3503,11 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 				if (this->field_0xc != 0) {
 					g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, param_4, this->field_0xc, this->field_0x10);
 					if (param_4 == (CActor*)0x0) {
-						param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+						param_4 = LOAD_POINTER_CAST(CActor*, this->pRef);
 					}
 					if (param_4 != (CActor*)0x0) {
 						local_8 = this->field_0x10;
-						iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0xc, (MSG_PARAM)local_8);
+						iVar3 = param_4->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0xc, (MSG_PARAM)local_8);
 					}
 				}
 			}
@@ -3659,6 +3659,46 @@ void CCinematic::Add_0x2d8()
 	return;
 }
 
+bool CCinematic::LoadEntryByFile(edBANK_ENTRY_INFO* param_2, char* pFileName, long bLevelBnk)
+{
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	int iVar4;
+	uint inFileIndex;
+	char abStack512[512];
+	edCBankBufferEntry* pEntry;
+
+	if (this->cineBankLoadStage_0x2b4 == 4) {
+		if (bLevelBnk == 0) {
+			pEntry = this->pCineBankEntry;
+		}
+		else {
+			pEntry = CLevelScheduler::gThis->pLevelBankBufferEntry;
+		}
+
+		iVar2 = edStrLength(pFileName);
+		uVar3 = pEntry->get_element_count();
+		inFileIndex = 0;
+		if (uVar3 != 0) {
+			do {
+				bVar1 = pEntry->get_info(inFileIndex, param_2, abStack512);
+				if (bVar1 != false) {
+					iVar4 = edStrLength(abStack512);
+					iVar4 = edStrICmp((abStack512 + (iVar4 - iVar2)), pFileName);
+					if (iVar4 == 0) {
+						return true;
+					}
+				}
+
+				inFileIndex = inFileIndex + 1;
+			} while (inFileIndex < uVar3);
+		}
+	}
+
+	return false;
+}
+
 void CCinematic::Level_ClearAll()
 {
 	ed_zone_3d* pZone;
@@ -3769,7 +3809,7 @@ bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameIn
 
 	// HACK! Don't write 8 bytes here on win!
 	int* pInt = (int*)ppActorInterface;
-	*pInt = STORE_SECTION(&lVar1->behaviourCinematic.cinActor);
+	*pInt = STORE_POINTER(&lVar1->behaviourCinematic.cinActor);
 
 	CUTSCENE_LOG(LogLevel::Info, "CBWitchCin::CreateActor Created 0x{:x}", *pInt);
 
@@ -3807,7 +3847,7 @@ bool CBWitchCin::GetActor(edCinActorInterface** ppActorInterface, uint hashCode,
 
 	// HACK! Don't write 8 bytes here on win!
 	int* pInt = (int*)ppActorInterface;
-	*pInt = STORE_SECTION(&pBehaviourCinematic->cinActor);
+	*pInt = STORE_POINTER(&pBehaviourCinematic->cinActor);
 
 	CUTSCENE_LOG(LogLevel::Info, "CBWitchCin::GetActor Retrieved 0x{:x}", *pInt);
 
@@ -4217,8 +4257,8 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 		pAnimationController = this->pParent->pAnimationController;
 		if (pAnimationController != (CAnimation*)0x0) {
 			pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
-			pDstAnimation = (edANM_HDR*)LOAD_SECTION(pTag->dstAnim.pHdr);
-			pSrcAnimation = (edANM_HDR*)LOAD_SECTION(pTag->srcAnim.pHdr);
+			pDstAnimation = (edANM_HDR*)LOAD_POINTER(pTag->dstAnim.pHdr);
+			pSrcAnimation = (edANM_HDR*)LOAD_POINTER(pTag->srcAnim.pHdr);
 			if ((pDstAnimation == 0) || (bVar6)) {
 				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
 				cVar1 = pTag->srcAnim.field_0x8;
@@ -4427,13 +4467,13 @@ void S_STREAM_EVENT_CAMERA::Init()
 		pCVar2 = (CScene::ptable.g_ActorManager_004516a4)->aActors[(int)this->pActor];
 	}
 
-	this->pActor = STORE_SECTION(pCVar2);
+	this->pActor = STORE_POINTER(pCVar2);
 
 	pEVar1 = (ed_zone_3d*)0x0;
 	if (this->pZone != -1) {
 		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->pZone);
 	}
-	this->pZone = STORE_SECTION(pEVar1);
+	this->pZone = STORE_POINTER(pEVar1);
 
 	return;
 }
@@ -4474,8 +4514,8 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 				bVar6 = true;
 			}
 
-			puVar1 = LOAD_SECTION_CAST(CActor*, this->pActor);
-			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_SECTION_CAST(ed_zone_3d*, this->pZone), pEVar2 != (ed_zone_3d*)0x0)) {
+			puVar1 = LOAD_POINTER_CAST(CActor*, this->pActor);
+			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_POINTER_CAST(ed_zone_3d*, this->pZone), pEVar2 != (ed_zone_3d*)0x0)) {
 				uVar9 = this->flags & 0x20000000;
 				this->flags = this->flags & 0xdfffffff;
 				if ((puVar1 != (CActor*)0x0) && ((pEVar2 != (ed_zone_3d*)0x0 &&
@@ -4546,8 +4586,8 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 		this->flags = this->flags & 0xdfffffff;
 
 		if (((this->pActor != 0x0) && (this->pZone != 0x0)) &&
-			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_SECTION_CAST(ed_zone_3d*, this->pZone),
-				&LOAD_SECTION_CAST(CActor*, this->pActor)->currentLocation, 0), (uVar3 & 1) != 0)) {
+			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_POINTER_CAST(ed_zone_3d*, this->pZone),
+				&LOAD_POINTER_CAST(CActor*, this->pActor)->currentLocation, 0), (uVar3 & 1) != 0)) {
 			this->flags = this->flags | 0x20000000;
 		}
 	}

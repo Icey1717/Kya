@@ -63,23 +63,23 @@ void edSceneCamera::Create(edCinGameInterface& pCinematic)
 	edCinCamInterface* cinCam;
 
 	pCinematic.GetCamera(&cinCam, &tag);
-	cameraInfoPtr->cinCam = STORE_SECTION(cinCam);
+	cameraInfoPtr->cinCam = STORE_POINTER(cinCam);
 	return;
 }
 
 void edSceneCamera::Initialize()
 {
-	((edCinCamInterface*)LOAD_SECTION(pInternal->cinCam))->Activate();
+	((edCinCamInterface*)LOAD_POINTER(pInternal->cinCam))->Activate();
 }
 
 void edSceneCamera::Shutdown()
 {
-	((edCinCamInterface*)LOAD_SECTION(pInternal->cinCam))->Shutdown();
+	((edCinCamInterface*)LOAD_POINTER(pInternal->cinCam))->Shutdown();
 }
 
 bool edSceneCamera::Destroy(edCinGameInterface& pInterface)
 {
-	const bool bSuccess = pInterface.ReleaseCamera((edCinCamInterface*)LOAD_SECTION(this->pInternal->cinCam));
+	const bool bSuccess = pInterface.ReleaseCamera((edCinCamInterface*)LOAD_POINTER(this->pInternal->cinCam));
 	this->pInternal->cinCam = 0x0;
 	return bSuccess;
 }
@@ -453,7 +453,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 	uint type;
 	ushort keyframeCount;
 
-	objectPtr = (edCinCamInterface*)LOAD_SECTION(this->pInternal->cinCam);
+	objectPtr = (edCinCamInterface*)LOAD_POINTER(this->pInternal->cinCam);
 	local_4 = 0;
 	lVar6 = objectPtr->Initialize(true, &local_4);
 	if (lVar6 != 0) {
@@ -642,7 +642,7 @@ struct edSceneActor {
 
 void edSceneActor::Initialize()
 {
-	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface);
+	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_POINTER(this->pObj->pCinActorInterface);
 
 	CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Initialize Init {}", this->pObj->pCinActorInterface);
 	pCinActor->Initialize();
@@ -650,7 +650,7 @@ void edSceneActor::Initialize()
 
 void edSceneActor::Shutdown()
 {
-	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface);
+	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_POINTER(this->pObj->pCinActorInterface);
 	pCinActor->Shutdown();
 }
 
@@ -716,7 +716,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 bool edSceneActorVirtual::Destroy(edCinGameInterface& cinGameInterface)
 {
-	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface));
+	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_POINTER(this->pObj->pCinActorInterface));
 	this->pObj->pCinActorInterface = 0x0;
 	return bSuccess;
 }
@@ -785,7 +785,7 @@ bool edSceneActorBehavior::Create(edCinGameInterface& cinGameInterface, edResCol
 
 bool edSceneActorBehavior::Destroy(edCinGameInterface& cinGameInterface)
 {
-	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface));
+	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_POINTER(this->pObj->pCinActorInterface));
 	this->pObj->pCinActorInterface = 0x0;
 	return bSuccess;
 }
@@ -843,7 +843,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 
 	/* Load the element start buffer into v1 */
 	pCineCreature = this->pObj;
-	pCinActorInterface = (edCinActorInterface*)LOAD_SECTION(pCineCreature->pCinActorInterface);
+	pCinActorInterface = (edCinActorInterface*)LOAD_POINTER(pCineCreature->pCinActorInterface);
 
 	numTracks = pCineCreature->trackCount;
 	edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)(((char*)pCineCreature) + pCineCreature->trackDataOffset);
@@ -948,7 +948,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 									ParticleTagData* pParticleTagData = (ParticleTagData*)(pTrackDataStart + 1);
 
 									local_78.particleId = reinterpret_cast<int>(pParticleTagData);
-									local_78.field_0x4 = LOAD_SECTION_CAST(int, resCollection.pData->aTags[pParticleTagData->field_0x0].pData);
+									local_78.field_0x4 = LOAD_POINTER_CAST(int, resCollection.pData->aTags[pParticleTagData->field_0x0].pData);
 									local_78.field_0x8 = pParticleTagData->field_0x4;
 									pCinActorInterface->SetParticles(currentPlayTime - *currentKeyframePtr, &local_78);
 								}
@@ -1212,7 +1212,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 		else {
 			this->pTag = dataPtr;
 			seekCounter = 0;
-			this->pTag->pCollection = STORE_SECTION(resPtr);
+			this->pTag->pCollection = STORE_POINTER(resPtr);
 			int pcVar1 = resPtr->resCount;
 			filePath = (char*)resPtr + pcVar1 * sizeof(edResCollectionTag) + sizeof(edResCollectionHeader) + 1;
 			if (0 < pcVar1) {
@@ -1223,14 +1223,14 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 					uVar2 = pResData->flags & 0x7fffffff;
 					if (uVar2 == 7) {
 						/* Set some value along the res ptr */
-						pResData->pData = STORE_SECTION(filePath);
+						pResData->pData = STORE_POINTER(filePath);
 					}
 					else {
 						if ((uVar2 != 1) && (uVar2 != 4)) {
 							/* Will call Load Cutscene File */
 							returnPtr = loadObj.GetResource((edResCollection::RES_TYPE)uVar2, (pResData->flags & 0x80000000) != 0, filePath, &pResData->size);
 							/* Store the pointer we got back */
-							pResData->pData = STORE_SECTION(returnPtr);
+							pResData->pData = STORE_POINTER(returnPtr);
 							/* If the pointer we got back was null, then exit */
 							if (pResData->pData == 0) {
 								return (edSCENEtag*)0x0;
@@ -1379,7 +1379,7 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 
 	iVar1 = 0;
 	numElements = this->pTag->size;
-	edResCollection local_4 = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
+	edResCollection local_4 = { (edResCollectionHeader*)LOAD_POINTER(this->pTag->pCollection) };
 	pItemStream = (edSceneItemHeader*)(this->pTag + 1);
 	if (0 < numElements) {
 		do {
@@ -1530,7 +1530,7 @@ bool edScene::Destroy(edCinGameInterface& pInterface)
 			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
 		} while (iVar3 < tagSize);
 	}
-	edResCollection resCol = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
+	edResCollection resCol = { (edResCollectionHeader*)LOAD_POINTER(this->pTag->pCollection) };
 	resCol.FlushAllResources(pInterface);
 	return true;
 }
@@ -1567,7 +1567,7 @@ void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collec
 
 bool edSceneScenery::Destroy(edCinGameInterface& pInterface)
 {
-	const bool bSuccess = pInterface.ReleaseScenery((edCinSceneryInterface*)LOAD_SECTION(this->pTag->pInterface));
+	const bool bSuccess = pInterface.ReleaseScenery((edCinSceneryInterface*)LOAD_POINTER(this->pTag->pInterface));
 	this->pTag->pInterface = 0x0;
 	return bSuccess;
 }

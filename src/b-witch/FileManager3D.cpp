@@ -408,7 +408,7 @@ void C3DFileManager::SetupBackground(edNODE* pNode)
 			if (pPrevHier->hash.number == 0x4c464e99b2a49e87) {
 				piVar2 = ed3DHierarchyGetObject(pPrevHier);
 
-				ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(piVar2->p3DData);
+				ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_POINTER(piVar2->p3DData);
 
 				pStrip->pDMA_Matrix.flagsA = 0x200;
 			}

@@ -112,11 +112,6 @@ public:
 	CFxSparkNoAlloc<3, 12>* aFxSparks;
 };
 
-class CBehaviourInventory : public CBehaviour
-{
-
-};
-
 class CBehaviourProjectileLavaBall : public CBehaviour
 {
 
@@ -170,6 +165,11 @@ public:
 class CBehaviourProjectileNew : public CBehaviourProjectile
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
 };
 
 struct ProjectileSubObj
@@ -217,6 +217,7 @@ public:
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual CInventoryInfo* GetInventoryInfo();
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 

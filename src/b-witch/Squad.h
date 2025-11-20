@@ -46,6 +46,7 @@ struct SquadSemaphoreManager
 {
 	void ManageSemaphore();
 	uint GetToken(CTeamElt* pTeamElt, int param_3);
+	uint ForceGetToken(CTeamElt* pTeamElt, int param_3);
 
 	int field_0x0;
 	float field_0x4;
@@ -81,6 +82,7 @@ public:
 
 	void ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4);
 	bool QuerySemaphoreCold(int index, CTeamElt* pTeamElt);
+	bool QuerySemaphoreWarm(int index, CTeamElt* pTeamElt);
 
 	CSquadTeam eltTable;
 	CChessBoard chessboard;

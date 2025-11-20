@@ -38,14 +38,11 @@ struct BoomySubObj_0x1c {
 	int hitProjectileType;
 };
 
-class CActorBoomy : public CActorMovable {
+class CActorBoomy : public CActorMovable
+{
 public:
 	static CActorBoomy* _gThis;
 	static StateConfig _gStateCfg_BMY[7];
-
-	CActorBoomy() {
-		IMPLEMENTATION_GUARD_ACTOR()
-	}
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

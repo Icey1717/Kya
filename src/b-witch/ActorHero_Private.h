@@ -11,6 +11,32 @@
 
 #define ACTION_SPEAK 0xf
 
+class PlayerSubStruct_64 : public CObject
+{
+public:
+	PlayerSubStruct_64();
+
+	void Init(uint param_2);
+	void FUN_00401460(float param_1, int param_3);
+	void FUN_004012f0(float param_1, uint param_3, int materialId, uint param_5);
+
+	undefined4 field_0x4;
+	undefined* field_0x8[2];
+	int field_0x10;
+	undefined4 field_0x14;
+	undefined* field_0x18[2];
+	float field_0x20;
+	float field_0x24;
+	int field_0x28;
+	uint flags;
+	float field_0x30;
+	undefined4 field_0x34;
+	float field_0x38;
+	float field_0x3c;
+	edDList_material* pMaterial;
+	uint field_0x44;
+};
+
 enum EBoomyThrowState
 {
 	BTS_None,
@@ -297,6 +323,12 @@ public:
 	void StateHeroGripUp(float param_1, float param_2, int nextState, int param_5);
 	void StateHeroGripUpToJumpInit();
 
+	void StateHeroBoomyPrepareFightBlowInit();
+	void StateBoomyExecuteFightBlowInit();
+	void StateBoomyExecuteFightBlow();
+	void StateHeroBoomyReturnFightBlowInit();
+	void StateBoomyTerm();
+
 	void StateHeroFall(float param_1, int param_3);
 	void StateHeroDead(float time);
 
@@ -462,6 +494,8 @@ public:
 	CFxTail fxTrailB;
 
 	float field_0x1000;
+	float field_0x1004;
+	float field_0x1008;
 
 	int field_0x100c;
 	int field_0x1010;
@@ -476,7 +510,8 @@ public:
 
 	int bUnknownBool;
 
-	undefined4 field_0x1ba4;
+	int boomyBlowStage;
+	undefined4 field_0x1ba8;
 
 	float field_0x13cc;
 	float field_0x13d0;
@@ -488,9 +523,14 @@ public:
 	int field_0x1b78;
 	int field_0x1b6c;
 
-	void* field_0x1bb0;
+	s_fighter_blow* aBoomyBlows[3];
+
+	PlayerSubStruct_64 playerSubStruct_64_0x1bf0;
 
 	int field_0x187c;
+
+	int field_0x1c38;
+	undefined4 field_0x1c3c;
 
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
@@ -686,8 +726,18 @@ public:
 	undefined4 jmp_field_0x1144;
 	edF32VECTOR4 jmpDirection;
 
+	CFxHandleExt field_0x1880[4];
+
+	undefined4 field_0x18b0;
+
+	CFxHandleExt field_0x18b4;
+	CFxHandleExt field_0x18c0;
+	CFxHandleExt field_0x18cc;
+
+
 	float boomyTargetRayDist;
 	int field_0x1b64;
+	undefined4 field_0x1b68;
 
 	int field_0x1b94;
 	float field_0x1b98;

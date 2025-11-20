@@ -95,7 +95,7 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 		pcVar1 = resPtr.LoadResource(loadObj, this->pInternal->offset, &sceFileLength);
 		/* This will load all the assets from the SCE file */
 		edSCENEtag* pTag = local_4.Create(pcVar1, sceFileLength, loadObj);
-		this->pInternal->pTag = STORE_SECTION(pTag);
+		this->pInternal->pTag = STORE_POINTER(pTag);
 	}
 	else {
 		if (dataValue == 2) {
@@ -103,7 +103,7 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 			loadObj.GetSourceAudioInterface(&local_c);
 			pcVar1 = resPtr.GetResFilename(this->pInternal->offset);
 			local_c->Create(pcVar1);
-			this->pInternal->pTag = STORE_SECTION(local_c);
+			this->pInternal->pTag = STORE_POINTER(local_c);
 		}
 		else {
 			if (dataValue == 3) {
@@ -118,7 +118,7 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 				uint* pOffsetDataPtr = reinterpret_cast<uint*>(pOffsetData);
 
 				local_10->Create(pcVar1, (pOffsetDataPtr[1] & 0x80000000) != 0);
-				this->pInternal->pTag = STORE_SECTION(local_10);
+				this->pInternal->pTag = STORE_POINTER(local_10);
 			}
 		}
 	}
@@ -134,17 +134,17 @@ bool edCinematicSource::Initialize()
 	peVar1 = this->pInternal;
 	iVar2 = peVar1->type;
 	if (iVar2 == 1) {
-		eStack4 = edScene(LOAD_SECTION_CAST(edSCENEtag*, peVar1->pTag));
+		eStack4 = edScene(LOAD_POINTER_CAST(edSCENEtag*, peVar1->pTag));
 		eStack4.Initialize();
 	}
 	else {
 		if (iVar2 == 2) {
-			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, peVar1->pTag);
+			edCinSourceAudioI* pAudioInterface = LOAD_POINTER_CAST(edCinSourceAudioI*, peVar1->pTag);
 			pAudioInterface->Play();
 		}
 		else {
 			if (iVar2 == 3) {
-				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, peVar1->pTag);
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_POINTER_CAST(edCinSourceSubtitleI*, peVar1->pTag);
 				pSubtitleInterface->Init();
 			}
 		}
@@ -157,7 +157,7 @@ bool edCinematicSource::Timeslice(float currentPlayTime, uint param_3)
 	if (this->pInternal->type == 1) {
 		/* Stores a pointer to the SCE file in the input variable, then returns the pointer to the
 		   variable */
-		edScene scene = edScene((edSCENEtag*)LOAD_SECTION(this->pInternal->pTag));
+		edScene scene = edScene((edSCENEtag*)LOAD_POINTER(this->pInternal->pTag));
 		scene.Timeslice(currentPlayTime, param_3);
 	}
 	return true;
@@ -172,17 +172,17 @@ bool edCinematicSource::Shutdown()
 	peVar1 = this->pInternal;
 	iVar2 = peVar1->type;
 	if (iVar2 == 1) {
-		eStack4 = edScene((edSCENEtag*)LOAD_SECTION(peVar1->pTag));
+		eStack4 = edScene((edSCENEtag*)LOAD_POINTER(peVar1->pTag));
 		eStack4.Shutdown();
 	}
 	else {
 		if (iVar2 == 2) {
-			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, peVar1->pTag);
+			edCinSourceAudioI* pAudioInterface = LOAD_POINTER_CAST(edCinSourceAudioI*, peVar1->pTag);
 			pAudioInterface->Stop();
 		}
 		else {
 			if (iVar2 == 3) {
-				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, peVar1->pTag);
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_POINTER_CAST(edCinSourceSubtitleI*, peVar1->pTag);
 				pSubtitleInterface->Shutdown();
 			}
 		}
@@ -200,20 +200,20 @@ bool edCinematicSource::Destroy(edCinGameInterface& pCinGameInterface)
 	pSrcTag = this->pInternal;
 	type = pSrcTag->type;
 	if (type == 1) {
-		eStack4 = edScene((edSCENEtag*)LOAD_SECTION(pSrcTag->pTag));
+		eStack4 = edScene((edSCENEtag*)LOAD_POINTER(pSrcTag->pTag));
 		eStack4.Destroy(pCinGameInterface);
 		this->pInternal->pTag = 0x0;
 	}
 	else {
 		if (type == 2) {
-			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, pSrcTag->pTag);
+			edCinSourceAudioI* pAudioInterface = LOAD_POINTER_CAST(edCinSourceAudioI*, pSrcTag->pTag);
 			pAudioInterface->Destroy();
 			pCinGameInterface.ReleaseSourceAudioInterface(pAudioInterface);
 			this->pInternal->pTag = 0x0;
 		}
 		else {
 			if (type == 3) {
-				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, pSrcTag->pTag);
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_POINTER_CAST(edCinSourceSubtitleI*, pSrcTag->pTag);
 				pSubtitleInterface->Destroy();
 				pCinGameInterface.ReleaseSourceSubtitleInterface(pSubtitleInterface);
 				this->pInternal->pTag = 0x0;
@@ -400,7 +400,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 
 				// Find the end of the cin tag cause that's where the 
 				edCinematicSourceInternal* pSourceInternals = reinterpret_cast<edCinematicSourceInternal*>(this->pCinTag + 1);
-				edCinSourceSubtitleI* pSubtitle = LOAD_SECTION_CAST(edCinSourceSubtitleI*, pSourceInternals[pSubtitleTags[keyIndex].field_0x0].pTag);
+				edCinSourceSubtitleI* pSubtitle = LOAD_POINTER_CAST(edCinSourceSubtitleI*, pSourceInternals[pSubtitleTags[keyIndex].field_0x0].pTag);
 
 				pSubtitle->SetSubtitle(keyTime, &subtitleParams);
 			}

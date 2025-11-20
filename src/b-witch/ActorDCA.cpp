@@ -29,7 +29,7 @@ void CActorDCA::Create(ByteCode* pByteCode)
 	this->field_0x508.index = pByteCode->GetS32();
 	this->field_0x50c.index = pByteCode->GetS32();
 
-	this->field_0x160 = pByteCode->GetF32() * 0.01745329f;
+	this->aimAdjustSpeed = pByteCode->GetF32() * 0.01745329f;
 
 	this->fireShot.Create(pByteCode);
 
@@ -44,8 +44,8 @@ void CActorDCA::Create(ByteCode* pByteCode)
 
 	this->field_0x4fc = CreateActorSound(4);
 
-	this->field_0x164 = gF32Vertex4Zero.xyz;
-	this->field_0x170 = gF32Vertex4Zero.xyz;
+	this->aimInputDirection = gF32Vertex4Zero.xyz;
+	this->aimDirection = gF32Vertex4Zero.xyz;
 	this->pControlledByActor = (CActor*)0x0;
 	this->field_0x4f0 = 3.0f;
 
@@ -80,21 +80,21 @@ void CActorDCA::Init()
 	this->field_0x508.Init();
 	this->field_0x50c.Init();
 
-	this->field_0x164.x = 0.0f;
-	this->field_0x164.y = 0.0f;
-	this->field_0x164.z = 0.0f;
+	this->aimInputDirection.x = 0.0f;
+	this->aimInputDirection.y = 0.0f;
+	this->aimInputDirection.z = 0.0f;
 
-	(this->field_0x170).x = 0.0f;
-	(this->field_0x170).y = 0.0f;
-	(this->field_0x170).z = 0.0f;
+	(this->aimDirection).x = 0.0f;
+	(this->aimDirection).y = 0.0f;
+	(this->aimDirection).z = 0.0f;
 
 	this->pControlledByActor = (CActor*)0x0;
 	this->field_0x460 = 0.0f;
 	this->field_0x45c = 0.0f;
 
-	this->field_0x180 = gF32Vertex4Zero;
-	this->field_0x190 = gF32Vertex4Zero;
-	this->field_0x170 = gF32Vertex4Zero.xyz;
+	this->projectAimLocation = gF32Vertex4Zero;
+	this->projectAimDirection = gF32Vertex4Zero;
+	this->aimDirection = gF32Vertex4Zero.xyz;
 
 	this->field_0x459 = 0;
 
@@ -115,21 +115,21 @@ void CActorDCA::Term()
 void CActorDCA::Reset()
 {
 	CActor::Reset();
-	(this->field_0x164).x = 0.0f;
-	(this->field_0x164).y = 0.0f;
-	(this->field_0x164).z = 0.0f;
+	(this->aimInputDirection).x = 0.0f;
+	(this->aimInputDirection).y = 0.0f;
+	(this->aimInputDirection).z = 0.0f;
 
-	(this->field_0x170).x = 0.0f;
-	(this->field_0x170).y = 0.0f;
-	(this->field_0x170).z = 0.0f;
+	(this->aimDirection).x = 0.0f;
+	(this->aimDirection).y = 0.0f;
+	(this->aimDirection).z = 0.0f;
 
 	this->pControlledByActor = (CActor*)0x0;
 	this->field_0x460 = 0.0f;
 	this->field_0x45c = 0.0f;
 	
-	this->field_0x180 = gF32Vertex4Zero;
-	this->field_0x190 = gF32Vertex4Zero;
-	this->field_0x170 = gF32Vertex4Zero.xyz;
+	this->projectAimLocation = gF32Vertex4Zero;
+	this->projectAimDirection = gF32Vertex4Zero;
+	this->aimDirection = gF32Vertex4Zero.xyz;
 
 	this->field_0x459 = 0;
 	this->fireShot.Reset();
@@ -196,7 +196,6 @@ StateConfig* CActorDCA::GetStateCfg(int state)
 void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edANM_HDR* peVar1;
-	Timer* pTVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;
@@ -208,8 +207,8 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 
 			fVar3 = 0.0f;
 			if (this->field_0x460 != 0.0f) {
-				fVar3 = this->field_0x530;
-				fVar3 = ((fVar3 + (GetTimer()->scaledTotalTime - this->field_0x460) * this->field_0x538) - fVar3) / (this->field_0x534 - fVar3);
+				fVar3 = (this->behaviourControlled).controlledParams.field_0x0;
+				fVar3 = ((fVar3 + (GetTimer()->scaledTotalTime - this->field_0x460) * (this->behaviourControlled).controlledParams.field_0x8) - fVar3) / ((this->behaviourControlled).controlledParams.field_0x4 - fVar3);
 			}
 
 			fVar4 = 1.0f;
@@ -230,8 +229,8 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
 
-			fVar4 = ((this->field_0x170).x * 0.5f) / 3.141593f + 0.5f;
-			fVar3 = ((this->field_0x170).y * 0.5f) / 3.141593f + 0.5f;
+			fVar4 = ((this->aimDirection).x * 0.5f) / 3.141593f + 0.5f;
+			fVar3 = ((this->aimDirection).y * 0.5f) / 3.141593f + 0.5f;
 
 			if (fVar4 < 0.0f) {
 				fVar5 = 0.0f;
@@ -261,17 +260,15 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 	return;
 }
 
-void CActorDCA::FUN_002e6600()
+void CActorDCA::UpdateAimAngle()
 {
-	Timer* pTVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;
 
-	pTVar1 = Timer::GetTimer();
-	fVar4 = (this->field_0x164).x - (this->field_0x170).x;
-	fVar5 = this->field_0x160 * pTVar1->cutsceneDeltaTime;
+	fVar4 = (this->aimInputDirection).x - (this->aimDirection).x;
+	fVar5 = this->aimAdjustSpeed * Timer::GetTimer()->cutsceneDeltaTime;
 	fVar3 = -fVar5;
 	if (fVar4 != 0.0f) {
 		fVar2 = fVar3;
@@ -280,35 +277,35 @@ void CActorDCA::FUN_002e6600()
 			fVar2 = fVar4;
 		}
 
-		fVar2 = (this->field_0x170).x + fVar2;
-		(this->field_0x170).x = fVar2;
+		fVar2 = (this->aimDirection).x + fVar2;
+		(this->aimDirection).x = fVar2;
 
 		if (1.047198f <= fVar2) {
-			(this->field_0x170).x = 1.0472f;
+			(this->aimDirection).x = 1.0472f;
 		}
 		else {
 			if (fVar2 < -1.047198f) {
-				(this->field_0x170).x = -1.047198f;
+				(this->aimDirection).x = -1.047198f;
 			}
 		}
 	}
 
-	fVar4 = (this->field_0x164).y - (this->field_0x170).y;
+	fVar4 = (this->aimInputDirection).y - (this->aimDirection).y;
 
 	if ((fVar3 <= fVar4) && (fVar3 = fVar5, fVar4 <= fVar5)) {
 		fVar3 = fVar4;
 	}
 
 	if (fVar3 != 0.0f) {
-		fVar3 = (this->field_0x170).y + fVar3;
-		(this->field_0x170).y = fVar3;
+		fVar3 = (this->aimDirection).y + fVar3;
+		(this->aimDirection).y = fVar3;
 
 		if (1.919862f <= fVar3) {
-			(this->field_0x170).y = 1.919862f;
+			(this->aimDirection).y = 1.919862f;
 		}
 		else {
 			if (fVar3 < -1.919862f) {
-				(this->field_0x170).y = -1.919862f;
+				(this->aimDirection).y = -1.919862f;
 			}
 		}
 	}
@@ -374,31 +371,32 @@ void CActorDCA::BehaviourDefault_Manage(CBhvDefault* pBehaviour)
 	bool bVar5;
 	bool uVar6;
 	edF32VECTOR4* peVar7;
-	edF32VECTOR4 local_80;
-	edF32VECTOR4 local_70;
+	edF32VECTOR4 aimDirection;
+	edF32VECTOR4 aimLocation;
 	edF32MATRIX4 auStack96;
 	edF32VECTOR4 local_20;
-	edF32VECTOR3 local_10;
+	edF32VECTOR3 adjustedAimDirection;
 
 	bVar5 = pBehaviour->GetShouldDoSomething();
 	if (bVar5 != false) {
-		FUN_002e6600();
+		UpdateAimAngle();
 
-		if (this->field_0x458 != 0) {
-			local_10.y = (this->field_0x170).y;
-			local_10.z = (this->field_0x170).z;
-			local_10.x = (this->field_0x170).x * -0.5f;
-			edF32Matrix4FromEulerSoft(&auStack96, &local_10, "XYZ");
+		if (this->bIsFiring != 0) {
+			adjustedAimDirection.y = (this->aimDirection).y;
+			adjustedAimDirection.z = (this->aimDirection).z;
+			adjustedAimDirection.x = (this->aimDirection).x * -0.5f;
+
+			edF32Matrix4FromEulerSoft(&auStack96, &adjustedAimDirection, "XYZ");
 			edF32Matrix4MulF32Matrix4Hard(&auStack96, &auStack96, &this->pMeshTransform->base.transformA);
-			edF32Matrix4MulF32Vector4Hard(&local_70, &auStack96, &edF32VECTOR4_00425700);
-			edF32Vector4NormalizeHard(&local_80, &auStack96.rowY);
+			edF32Matrix4MulF32Vector4Hard(&aimLocation, &auStack96, &edF32VECTOR4_00425700);
+			edF32Vector4NormalizeHard(&aimDirection, &auStack96.rowZ);
 
-			if (&this->field_0x180 != (edF32VECTOR4*)0x0) {
-				this->field_0x180 = local_70;
+			if (&this->projectAimLocation != (edF32VECTOR4*)0x0) {
+				this->projectAimLocation = aimLocation;
 			}
 
-			if (&this->field_0x190 != (edF32VECTOR4*)0x0) {
-				this->field_0x190 = local_80;
+			if (&this->projectAimDirection != (edF32VECTOR4*)0x0) {
+				this->projectAimDirection = aimDirection;
 			}
 
 			if (this->pControlledByActor == (CActor*)0x0) {
@@ -409,17 +407,17 @@ void CActorDCA::BehaviourDefault_Manage(CBhvDefault* pBehaviour)
 			}
 
 			if (bVar5) {
-				uVar6 = this->fireShot.Project(this->field_0x45c, &this->field_0x180, &this->field_0x190, this);
+				uVar6 = this->fireShot.Project(this->field_0x45c, &this->projectAimLocation, &this->projectAimDirection, this);
 			}
 			else {
-				uVar6 = this->fireShot.ProjectDirected(this->field_0x4f0, &this->field_0x180, pBehaviour->GetLocation(), this);
+				uVar6 = this->fireShot.ProjectDirected(this->field_0x4f0, &this->projectAimLocation, pBehaviour->GetLocation(), this);
 			}
 
 			if (uVar6 != false) {
 				SetState(7, -1);
 			}
 
-			this->field_0x458 = 0;
+			this->bIsFiring = 0;
 			this->field_0x45c = 500.0f;
 		}
 
@@ -453,9 +451,9 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 	CCameraDCA* pCVar1;
 	CPlayerInput* pPlayerInput;
 	edF32MATRIX4* peVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
+	float lx;
+	float delta;
+	float ly;
 	edF32VECTOR4 local_c0;
 	edF32VECTOR4 local_b0;
 	edF32MATRIX4 auStack160;
@@ -477,14 +475,15 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 	if ((bControlledByHero) && (pPlayerInput = this->pControlledByActor->GetInputManager(0, 0), pPlayerInput != (CPlayerInput*)0x0)) {
 		ToggleMeshAlpha();
 		SetBFCulling(0);
-		fVar7 = pPlayerInput->aAnalogSticks[0].y;
-		fVar5 = pPlayerInput->aAnalogSticks[0].x;
-		fVar6 = GetTimer()->cutsceneDeltaTime;
+		ly = pPlayerInput->aAnalogSticks[0].y;
+		lx = pPlayerInput->aAnalogSticks[0].x;
 
-		if ((0.001f < fabs(fVar5)) || (0.001f < fabs(fVar7))) {
+		delta = GetTimer()->cutsceneDeltaTime;
+
+		if ((0.001f < fabs(lx)) || (0.001f < fabs(ly))) {
 			if (this->field_0x45a == 0) {
 				IMPLEMENTATION_GUARD_AUDIO(
-				CActorSound::SoundStart(this->field_0x4fc, 3, (this->field_0x50c).pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+				CActorSound::SoundStart(this->field_0x4fc, 3, this->field_0x50c.pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
 				this->field_0x45a = 1;
 			}
 		}
@@ -496,43 +495,41 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 			}
 		}
 
-		fVar7 = (this->field_0x170).x + fVar7 * this->field_0x160 * fVar6;
-		(this->field_0x170).x = fVar7;
-		if (1.047198f <= fVar7) {
-			(this->field_0x170).x = 1.047198f;
+		(this->aimDirection).x = (this->aimDirection).x + ly * this->aimAdjustSpeed * delta;
+		if (1.047198f <= (this->aimDirection).x) {
+			(this->aimDirection).x = 1.047198f;
 		}
 		else {
-			if (fVar7 < -1.047198f) {
-				(this->field_0x170).x = -1.047198f;
+			if ((this->aimDirection).x < -1.047198f) {
+				(this->aimDirection).x = -1.047198f;
 			}
 		}
 
-		fVar5 = (this->field_0x170).y - fVar5 * this->field_0x160 * fVar6;
-		(this->field_0x170).y = fVar5;
-		if (1.919862f <= fVar5) {
-			(this->field_0x170).y = 1.919862f;
+		(this->aimDirection).y = (this->aimDirection).y - lx * this->aimAdjustSpeed * delta;
+		if (1.919862f <= (this->aimDirection).y) {
+			(this->aimDirection).y = 1.919862f;
 		}
 		else {
-			if (fVar5 < -1.919862f) {
-				(this->field_0x170).y = -1.919862f;
+			if ((this->aimDirection).y < -1.919862f) {
+				(this->aimDirection).y = -1.919862f;
 			}
 		}
 
-		this->field_0x164 = this->field_0x170;
-		local_10.y = (this->field_0x170).y;
-		local_10.z = (this->field_0x170).z;
-		local_10.x = (this->field_0x170).x * -0.5f;
+		this->aimInputDirection = this->aimDirection;
+		local_10.y = (this->aimDirection).y;
+		local_10.z = (this->aimDirection).z;
+		local_10.x = (this->aimDirection).x * -0.5f;
 
 		edF32Matrix4FromEulerSoft(&auStack160, &local_10, "XYZ");
 		edF32Matrix4MulF32Matrix4Hard(&auStack160, &auStack160, &this->pMeshTransform->base.transformA);
 		edF32Matrix4MulF32Vector4Hard(&local_b0, &auStack160, &edF32VECTOR4_00425700);
 		edF32Vector4NormalizeHard(&local_c0, &auStack160.rowZ);
-		if (&this->field_0x180 != (edF32VECTOR4*)0x0) {
-			this->field_0x180 = local_b0;
+		if (&this->projectAimLocation != (edF32VECTOR4*)0x0) {
+			this->projectAimLocation = local_b0;
 		}
 
-		if (&this->field_0x190 != (edF32VECTOR4*)0x0) {
-			this->field_0x190 = local_c0;
+		if (&this->projectAimDirection != (edF32VECTOR4*)0x0) {
+			this->projectAimDirection = local_c0;
 		}
 
 		local_60 = gF32Matrix4Unit;
@@ -572,16 +569,16 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 				if (pPlayerInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue == 0.0f) {
 					if ((this->field_0x459 != 0) && (this->actorState != 6)) {
 						this->field_0x459 = 0;
-						fVar5 = GetTimer()->scaledTotalTime - this->field_0x460;
-						this->field_0x460 = fVar5;
-						fVar5 = pParams->field_0x0 + fVar5 * pParams->field_0x8;
-						this->field_0x45c = fVar5;
+						lx = GetTimer()->scaledTotalTime - this->field_0x460;
+						this->field_0x460 = lx;
+						lx = pParams->field_0x0 + lx * pParams->field_0x8;
+						this->field_0x45c = lx;
 
-						if (pParams->field_0x4 < fVar5) {
+						if (pParams->field_0x4 < lx) {
 							this->field_0x45c = pParams->field_0x4;
 						}
 
-						this->field_0x458 = 1;
+						this->bIsFiring = 1;
 						this->field_0x460 = 0.0;
 						IMPLEMENTATION_GUARD_AUDIO(
 						CActorSound::FadeTo(1.0f, 1.0f, 0.0f, this->field_0x4fc, 0);)
@@ -909,7 +906,7 @@ void CActorDCA::CBhvDefault::Begin(CActor* pOwner, int newState, int newAnimatio
 
 	if (newState == -1) {
 		pDCA = this->pOwner;
-		pDCA->field_0x458 = 0;
+		pDCA->bIsFiring = 0;
 		pDCA->SetState(5, -1);
 	}
 	else {
@@ -950,14 +947,14 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 
 	if (msg == 0xf) {
 		result = 1;
-		this->pOwner->field_0x458 = 1;
+		this->pOwner->bIsFiring = 1;
 	}
 	else {
 		if (msg == 0x28) {
 			pDCA = this->pOwner;
 			if (pMsgParam == (void*)0x0) {
-				(pDCA->field_0x164).y = 0.0f;
-				(pDCA->field_0x164).x = 0.0f;
+				(pDCA->aimInputDirection).y = 0.0f;
+				(pDCA->aimInputDirection).x = 0.0f;
 			}
 			else {
 				IMPLEMENTATION_GUARD(
@@ -990,9 +987,9 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 				edF32Matrix4MulF32Vector4Hard(&local_50, &local_40, (edF32VECTOR4*)pMsgParam);
 				edF32Vector4NormalizeHard(&local_50, &local_50);
 				fVar5 = atan2f(-local_50.x, local_50.z);
-				(pDCA->field_0x164).y = -fVar5;
+				(pDCA->aimInputDirection).y = -fVar5;
 				fVar5 = atan2f(local_50.y, SQRT(local_50.z * local_50.z + local_50.x * local_50.x));
-				(pDCA->field_0x164).x = fVar5;)
+				(pDCA->aimInputDirection).x = fVar5;)
 			}
 
 			result = 1;
@@ -1107,7 +1104,7 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 				(SOUND_SPATIALIZATION_PARAM*)0x0);)
 		}
 
-		pDCA->field_0x458 = 0;
+		pDCA->bIsFiring = 0;
 		pDCA->field_0x460 = 0.0f;
 		pDCA->field_0x45a = 0;
 
@@ -1166,11 +1163,11 @@ void CActorDCA::CBhvControlled::End(int newBehaviourId)
 		pCVar1->field_0x4fc->SoundStop(3);
 	}
 
-	pCVar1->field_0x458 = 0;
-	pCVar1->field_0x164.y = 0.0f;
-	pCVar1->field_0x164.x = 0.0f;
+	pCVar1->bIsFiring = 0;
+	pCVar1->aimInputDirection.y = 0.0f;
+	pCVar1->aimInputDirection.x = 0.0f;
 
-	pCVar1->field_0x170 = pCVar1->field_0x164;
+	pCVar1->aimDirection = pCVar1->aimInputDirection;
 
 	return;
 }
@@ -1208,7 +1205,7 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 		}
 
 		if (!bControlledByHero) {
-			this->pOwner->field_0x458 = 1;
+			this->pOwner->bIsFiring = 1;
 		}
 
 		uVar7 = 1;
@@ -1227,14 +1224,14 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 			if (!bControlledByHero) {
 				pDCA = this->pOwner;
 				if (pMsgParam == (edF32VECTOR4*)0x0) {
-					(pDCA->field_0x164).y = 0.0f;
-					(pDCA->field_0x164).x = 0.0f;
-					fVar8 = fabs((pDCA->field_0x170).x - (pDCA->field_0x164).x) + fabs((pDCA->field_0x170).y - (pDCA->field_0x164).y);
+					(pDCA->aimInputDirection).y = 0.0f;
+					(pDCA->aimInputDirection).x = 0.0f;
+					fVar8 = fabs((pDCA->aimDirection).x - (pDCA->aimInputDirection).x) + fabs((pDCA->aimDirection).y - (pDCA->aimInputDirection).y);
 				}
 				else {
-					local_10.y = (pDCA->field_0x170).y;
-					local_10.z = (pDCA->field_0x170).z;
-					local_10.x = (pDCA->field_0x170).x * -0.5f;
+					local_10.y = (pDCA->aimDirection).y;
+					local_10.z = (pDCA->aimDirection).z;
+					local_10.x = (pDCA->aimDirection).x * -0.5f;
 					edF32Matrix4FromEulerSoft(&auStack160, &local_10, "XYZ");
 					edF32Matrix4MulF32Matrix4Hard(&auStack160, &auStack160, &pDCA->pMeshTransform->base.transformA);
 
@@ -1250,8 +1247,8 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 					edF32Vector4ScaleHard(fVar8, &eStack80, &eStack80);
 					edF32Vector4AddHard(&eStack96, &local_20, &eStack80);
 					if (pMsgParam == (edF32VECTOR4*)0x0) {
-						(pDCA->field_0x164).y = 0.0;
-						(pDCA->field_0x164).x = 0.0;
+						(pDCA->aimInputDirection).y = 0.0;
+						(pDCA->aimInputDirection).x = 0.0;
 					}
 					else {
 						local_100 = pDCA->pMeshTransform->base.transformA;
@@ -1262,13 +1259,13 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 						edF32Matrix4MulF32Vector4Hard(&local_110, &local_100, &eStack96);
 						edF32Vector4NormalizeHard(&local_110, &local_110);
 						fVar8 = atan2f(-local_110.x, local_110.z);
-						(pDCA->field_0x164).y = -fVar8;
+						(pDCA->aimInputDirection).y = -fVar8;
 						fVar8 = atan2f(local_110.y, sqrtf(local_110.z * local_110.z + local_110.x * local_110.x));
-						(pDCA->field_0x164).x = fVar8;
+						(pDCA->aimInputDirection).x = fVar8;
 					}
 
-					fVar8 = fabs((pDCA->field_0x170).x - (pDCA->field_0x164).x) +
-						fabs((pDCA->field_0x170).y - (pDCA->field_0x164).y);
+					fVar8 = fabs((pDCA->aimDirection).x - (pDCA->aimInputDirection).x) +
+						fabs((pDCA->aimDirection).y - (pDCA->aimInputDirection).y);
 				}
 
 				uVar7 = (uint)(fVar8 < 0.01);
@@ -1357,8 +1354,7 @@ void CActorDCA::CBhvTrajectory::Manage()
 	undefined4 local_4;
 
 	pDCA = this->pOwner;
-	lVar9 = GetShouldDoSomething();
-	if (lVar9 != 0) {
+	if (GetShouldDoSomething() != 0) {
 		pfVar6 = GetLocation();
 		local_20 = *pfVar6;
 
@@ -1368,13 +1364,13 @@ void CActorDCA::CBhvTrajectory::Manage()
 		}
 
 		if (false) { // (undefined*)register0x000001d0 == (undefined*)0x20) {
-			(pDCA->field_0x164).y = 0.0f;
-			(pDCA->field_0x164).x = 0.0f;
+			(pDCA->aimInputDirection).y = 0.0f;
+			(pDCA->aimInputDirection).x = 0.0f;
 		}
 		else {
-			local_10.y = (pDCA->field_0x170).y;
-			local_10.z = (pDCA->field_0x170).z;
-			local_10.x = (pDCA->field_0x170).x * -0.5f;
+			local_10.y = (pDCA->aimDirection).y;
+			local_10.z = (pDCA->aimDirection).z;
+			local_10.x = (pDCA->aimDirection).x * -0.5f;
 			edF32Matrix4FromEulerSoft(&auStack240, &local_10, "XYZ");
 			edF32Matrix4MulF32Matrix4Hard(&auStack240, &auStack240, &pDCA->pMeshTransform->base.transformA);
 			edF32Matrix4MulF32Vector4Hard(&local_100, &auStack240, &edF32VECTOR4_00425700);
@@ -1392,8 +1388,8 @@ void CActorDCA::CBhvTrajectory::Manage()
 			edF32Vector4ScaleHard(fVar10, &eStack160, &eStack160);
 			edF32Vector4AddHard(&eStack176, &local_70, &eStack160);
 			if (false) { // ((undefined*)register0x000001d0 == (undefined*)0xb0) {
-				(pDCA->field_0x164).y = 0.0f;
-				(pDCA->field_0x164).x = 0.0f;
+				(pDCA->aimInputDirection).y = 0.0f;
+				(pDCA->aimInputDirection).x = 0.0f;
 			}
 			else {
 				local_150 = pDCA->pMeshTransform->base.transformA;
@@ -1405,9 +1401,9 @@ void CActorDCA::CBhvTrajectory::Manage()
 				edF32Matrix4MulF32Vector4Hard(&local_160, &local_150, &eStack176);
 				edF32Vector4NormalizeHard(&local_160, &local_160);
 				fVar10 = atan2f(-local_160.x, local_160.z);
-				(pDCA->field_0x164).y = -fVar10;
+				(pDCA->aimInputDirection).y = -fVar10;
 				fVar10 = atan2f(local_160.y, sqrtf(local_160.z * local_160.z + local_160.x * local_160.x));
-				(pDCA->field_0x164).x = fVar10;
+				(pDCA->aimInputDirection).x = fVar10;
 			}
 		}
 
@@ -1461,7 +1457,7 @@ void CActorDCA::CBhvTrajectory::Begin(CActor* pOwner, int newState, int newAnima
 
 	if (newState == -1) {
 		pDCA = this->pOwner;
-		pDCA->field_0x458 = 0;
+		pDCA->bIsFiring = 0;
 		pDCA->SetState(5, -1);
 	}
 	else {

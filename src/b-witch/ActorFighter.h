@@ -518,6 +518,9 @@ public:
 	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
 	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
 
+	void _StateFighterPrepareFightAction(int nextState);
+	void _StateFighterReturnFromFightAction();
+
 	void _StateFighterHitStaggerCheck();
 
 	void _StateFighterHitStaggerFallInit(float param_1);

@@ -1015,6 +1015,7 @@ public:
 
 	void EnableFightAction();
 	void DisableFightAction();
+	bool ForceFightAction(int index, bool param_3);
 
 	bool FUN_00173de0(CActorFighter* pAdversary);
 	bool CanBeExorcised();

@@ -1402,6 +1402,6 @@ void S_STREAM_REF<CPathFollow>::Init()
 		pPathFollow = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + this->index;
 	}
 
-	this->pObj = STORE_SECTION(pPathFollow);
+	this->pObj = STORE_POINTER(pPathFollow);
 	return;
 }

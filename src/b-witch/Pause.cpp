@@ -2962,10 +2962,10 @@ void HelpLeave()
 
 void MapEnter()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_LOG();
 }
 
 void MapLeave()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_LOG();
 }

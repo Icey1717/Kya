@@ -669,7 +669,7 @@ void CSector::InstallCallback()
 	ed_hash_code* pHashCode = (ed_hash_code*)edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->sectorMesh).HALL + 1));
 	ed_Chunck* pChunck = 0;
 	if (pHashCode != (ed_hash_code*)0x0) {
-		pChunck = (ed_Chunck*)LOAD_SECTION(pHashCode->pData);
+		pChunck = (ed_Chunck*)LOAD_POINTER(pHashCode->pData);
 	}
 
 	if (pChunck == (ed_Chunck*)0x0) {
@@ -701,8 +701,8 @@ void CSector::InstallCallback()
 				int curHierarchy = 0;
 				if (pMVar1->nb3dHierarchies != 0) {
 					do {
-						pHier = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pCurHier);
-						ed_3d_hierarchy* pHierarchy3d = LOAD_SECTION_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy);
+						pHier = LOAD_POINTER_CAST(S_HIERANM_HIER*, *pCurHier);
+						ed_3d_hierarchy* pHierarchy3d = LOAD_POINTER_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy);
 						if ((pHierarchy3d != (ed_3d_hierarchy*)0x0) && (hash == pHierarchy3d->hash.number)) goto LAB_001fe180;
 						curHierarchy = curHierarchy + 1;
 						pCurHier = pCurHier + 1;
@@ -716,7 +716,7 @@ void CSector::InstallCallback()
 				pNode = ed3DHierarchyNodeGetByHashcodeFromList(this->pMeshTransformParent_0x130, hash);
 			}
 			else {
-				pNode = LOAD_SECTION_CAST(edNODE*, pHier->pNode);
+				pNode = LOAD_POINTER_CAST(edNODE*, pHier->pNode);
 			}
 
 			if (pNode != 0) {
@@ -1201,9 +1201,9 @@ edNODE* CSectorManager::RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pO
 			uVar5 = 0;
 			if (pMVar1->nb3dHierarchies != 0) {
 				do {
-					pSVar9 = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar4);
+					pSVar9 = LOAD_POINTER_CAST(S_HIERANM_HIER*, *pMVar4);
 
-					if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_SECTION_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
+					if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_POINTER_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
 						goto LAB_001fe910;
 
 					uVar5 = uVar5 + 1;
@@ -1227,9 +1227,9 @@ edNODE* CSectorManager::RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pO
 					uVar5 = 0;
 					if (pMVar1->nb3dHierarchies != 0) {
 						do {
-							pSVar9 = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar4);
+							pSVar9 = LOAD_POINTER_CAST(S_HIERANM_HIER*, *pMVar4);
 
-							if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_SECTION_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
+							if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_POINTER_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
 								goto LAB_001fe9a0;
 
 							uVar5 = uVar5 + 1;
@@ -1259,7 +1259,7 @@ edNODE* CSectorManager::RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pO
 			}
 		}
 		else {
-			peVar3 = LOAD_SECTION_CAST(edNODE*, pSVar9->pNode);
+			peVar3 = LOAD_POINTER_CAST(edNODE*, pSVar9->pNode);
 		}
 
 		*pOutHier = pSVar9;
@@ -1388,10 +1388,10 @@ void CSector::Flush()
 		uVar3 = 0;
 		if (uVar2 != 0) {
 			do {
-				ANHR_Internal* peVar3 = LOAD_SECTION_CAST(ANHR_Internal*, pNext[uVar3]);
+				ANHR_Internal* peVar3 = LOAD_POINTER_CAST(ANHR_Internal*, pNext[uVar3]);
 
 				if (peVar3->pHierNode != 0x0) {
-					ed3DHierarchyRemoveFromScene(pScene, LOAD_SECTION_CAST(edNODE*, peVar3->pHierNode));
+					ed3DHierarchyRemoveFromScene(pScene, LOAD_POINTER_CAST(edNODE*, peVar3->pHierNode));
 				}
 
 				uVar3 = uVar3 + 1;
@@ -1496,8 +1496,8 @@ void CSectorHierarchy::Init(int param_2)
 							uVar6 = 0;
 							if (pMVar1->nb3dHierarchies != 0) {
 								do {
-									pHier = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar9);
-									if ((pHier->p3dHierarchy != 0x0) && (lVar5 == LOAD_SECTION_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy)->hash.number))
+									pHier = LOAD_POINTER_CAST(S_HIERANM_HIER*, *pMVar9);
+									if ((pHier->p3dHierarchy != 0x0) && (lVar5 == LOAD_POINTER_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy)->hash.number))
 										goto LAB_001fdb90;
 									
 									uVar6 = uVar6 + 1;
@@ -1511,7 +1511,7 @@ void CSectorHierarchy::Init(int param_2)
 							peVar3 = ed3DHierarchyNodeGetByHashcodeFromList(pCVar8->pMeshTransformParent_0x130, lVar5);
 						}
 						else {
-							peVar3 = LOAD_SECTION_CAST(edNODE*, pHier->pNode);
+							peVar3 = LOAD_POINTER_CAST(edNODE*, pHier->pNode);
 						}
 
 						if (peVar3 != (edNODE*)0x0) {

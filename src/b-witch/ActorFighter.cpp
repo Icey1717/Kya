@@ -3628,6 +3628,36 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 	return;
 }
 
+void CActorFighter::_StateFighterPrepareFightAction(int nextState)
+{
+	_ManageFighterDyn((this->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(nextState, (this->pBlow->blowStageExecute).animId);
+	}
+
+	return;
+}
+
+void CActorFighter::_StateFighterReturnFromFightAction()
+{
+	CBehaviourFighter* pCVar4;
+
+	_ManageFighterDyn((this->pBlow->blowStageEnd).flags, 0x40323, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		pCVar4 = static_cast<CBehaviourFighter*>(GetBehaviour(this->curBehaviourId));
+
+		this->scalarDynA.Reset();
+		this->scalarDynB.Reset();
+		this->scalarDynJump.Reset();
+
+		pCVar4->SetInitialState();
+	}
+
+	return;
+}
+
 float CActorFighter::_pStagger_check[8] = {
 	2.3561945f,
 	1.5707964f,
@@ -5845,11 +5875,11 @@ void CActorFighter::_InitCombosDB()
 			pCombo = this->aCombos + curComboIndex;
 			uint hash = pCombo->actionHash.hash;
 			s_fighter_blow* pBlow = _FindByHashcode<s_fighter_blow>(this->aBlows, this->nbBlows, hash);
-			pCombo->actionHash.pData = STORE_SECTION(pBlow);
+			pCombo->actionHash.pData = STORE_POINTER(pBlow);
 
 			if (pCombo->actionHash.pData == 0x0) {
 				s_fighter_grab* pGrab = _FindByHashcode<s_fighter_grab>(this->aGrabs, this->nbGrabs, hash);
-				pCombo->actionHash.pData = STORE_SECTION(pGrab);
+				pCombo->actionHash.pData = STORE_POINTER(pGrab);
 				pCombo->field_0x4.field_0x0ushort = pCombo->field_0x4.field_0x0ushort | ACTION_FLAG_GRAB;
 			}
 
@@ -5863,7 +5893,7 @@ void CActorFighter::_InitCombosDB()
 					}
 
 					curBranchIndex = curBranchIndex + 1;
-					pBranch->pData = STORE_SECTION(pCombo);
+					pBranch->pData = STORE_POINTER(pCombo);
 				} while (curBranchIndex < pCombo->nbBranches);
 			}
 
@@ -5983,7 +6013,7 @@ s_fighter_combo* CActorFighter::_FindComboBestRoot(s_input_pattern* pPattern, ui
 	for (; pCurCombo < pComboEnd; pCurCombo = pCurCombo + 1) {
 		FIGHTER_LOG(LogLevel::Info, "\nCActorFighter::_FindComboBestRoot Checking {}", gDebugActionHashToFullName[pCurCombo->hash.hash]);
 
-		s_fighter_move* pAction = LOAD_SECTION_CAST(s_fighter_move*, pCurCombo->actionHash.pData);
+		s_fighter_move* pAction = LOAD_POINTER_CAST(s_fighter_move*, pCurCombo->actionHash.pData);
 
 		FIGHTER_LOG(LogLevel::Info, "CActorFighter::_FindComboBestRoot Action {}", pAction ? gDebugActionHashToFullName[pAction->hash.hash] : "NONE");
 
@@ -6020,10 +6050,10 @@ s_fighter_combo* CActorFighter::_FindComboBestNext(s_input_pattern* pPattern, ui
 	pCombo = (s_fighter_combo*)0x0;
 
 	for (; pCurBranchHash < pBranchHashEnd; pCurBranchHash = pCurBranchHash + 1) {
-		s_fighter_combo* pCurCombo = LOAD_SECTION_CAST(s_fighter_combo*, pCurBranchHash->pData);
+		s_fighter_combo* pCurCombo = LOAD_POINTER_CAST(s_fighter_combo*, pCurBranchHash->pData);
 		FIGHTER_LOG(LogLevel::Info, "\nCActorFighter::_FindComboBestNext Checking {}", gDebugActionHashToFullName[pCurCombo->hash.hash]);
 
-		s_fighter_move* pAction = LOAD_SECTION_CAST(s_fighter_move*, pCurCombo->actionHash.pData);
+		s_fighter_move* pAction = LOAD_POINTER_CAST(s_fighter_move*, pCurCombo->actionHash.pData);
 
 		FIGHTER_LOG(LogLevel::Info, "CActorFighter::_FindComboBestNext Action {}", pAction ? gDebugActionHashToFullName[pAction->hash.hash] : "NONE");
 
@@ -6509,7 +6539,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 	if (iVar9 == 1) {
 		psVar8 = this->pInputAnalyser->pComboB;
 		if (psVar8 != (s_fighter_combo*)0x0) {
-			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, psVar8->actionHash.pData);
+			s_fighter_blow* pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, psVar8->actionHash.pData);
 			s_fighter_blow* pBaseCatch = FindBlowByName("BASE_CATCH");
 			if (pCurrentBlow == pBaseCatch) {
 				local_4.field_0x1 = local_4.field_0x1 & 0xf0 | local_4.field_0x1 & 0xf | 2, local_4.field_0x0;
@@ -6527,7 +6557,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 			}
 
 			psVar8 = this->pInputAnalyser->pComboB;
-			fighterActionParam.pData = LOAD_SECTION(psVar8->actionHash.pData);
+			fighterActionParam.pData = LOAD_POINTER(psVar8->actionHash.pData);
 			this->pInputAnalyser->pComboA = psVar8;
 			this->pInputAnalyser->pComboB = (s_fighter_combo*)0x0;
 		}
@@ -8854,9 +8884,9 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 			peVar2 = ed3DHierarchyGetMaterialBank(&pHier->base);
 			if (peVar2->pData != 0x0) {
 				
-				ed_hash_code* pData = LOAD_SECTION_CAST(ed_hash_code*, peVar2->pData);
+				ed_hash_code* pData = LOAD_POINTER_CAST(ed_hash_code*, peVar2->pData);
 
-				ed_Chunck* pChunk = LOAD_SECTION_CAST(ed_Chunck*, pData->pData);
+				ed_Chunck* pChunk = LOAD_POINTER_CAST(ed_Chunck*, pData->pData);
 
 				peVar1 = reinterpret_cast<ed_g2d_material*>(pChunk + 1);
 			}
@@ -8868,7 +8898,7 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 	}
 	else {
 		peVar3 = ed3DG2DGetTextureFromMaterial(peVar1, 0);
-		peVar4 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar3->pAnimSpeedNormalExtruder);
+		peVar4 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar3->pAnimSpeedNormalExtruder);
 	}
 
 	return peVar4;

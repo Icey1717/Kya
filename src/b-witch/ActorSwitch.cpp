@@ -505,7 +505,7 @@ void CActorSwitch::StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour)
 		pManager = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(pBehaviour->openTextureId);
 		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
 		pTexture = ed3DG2DGetTextureFromMaterial(pMaterial, 0);
-		pAnimSpeedNormalExtruder = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
+		pAnimSpeedNormalExtruder = LOAD_POINTER_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
 		if ((pAnimSpeedNormalExtruder != (edF32VECTOR4*)0x0) && ((pAnimSpeedNormalExtruder->z < pAnimSpeedNormalExtruder->x || (pAnimSpeedNormalExtruder->w < pAnimSpeedNormalExtruder->y)))) {
 			pBehaviour->DisplayOpenFxModel(0);
 		}
@@ -516,60 +516,34 @@ void CActorSwitch::StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour)
 
 void CActorSwitch::ManageNativElevators()
 {
-	bool bVar1;
+	bool bDoSwitch;
 	bool bVar2;
 	S_NTF_TARGET_STREAM_REF* pSVar3;
-	int iVar4;
 	int iVar5;
 	int iVar6;
 	CActorTeleporter* pTeleporter;
 
 	if (CLevelScheduler::gThis->currentLevelID == 0) {
-		IMPLEMENTATION_GUARD(
 		pSVar3 = (this->targetSwitch).pTargetStreamRef;
-		bVar1 = false;
+		bDoSwitch = false;
 		iVar5 = pSVar3->entryCount;
 		iVar6 = 0;
 		if (0 < iVar5) {
-			iVar4 = 0;
 			do {
-				pTeleporter = *(CActorTeleporter**)((int)&pSVar3->aEntries[0].base.pRef + iVar4);
-				if (((pTeleporter != (CActorTeleporter*)0x0) && ((pTeleporter->base).typeID == 0x24)) &&
-					(bVar2 = CActorTeleporter::LevelHasTeleporters(pTeleporter), bVar2 != false)) {
-					bVar1 = true;
+				pTeleporter = LOAD_POINTER_CAST(CActorTeleporter*, pSVar3->aEntries[iVar6].pRef);
+				if (((pTeleporter != (CActorTeleporter*)0x0) && (pTeleporter->typeID == TELEPORTER)) && (bVar2 = pTeleporter->LevelHasTeleporters(), bVar2 != false)) {
+					bDoSwitch = true;
 				}
-				pSVar3 = (this->targetSwitch).pTargetStreamRef;
+
 				iVar6 = iVar6 + 1;
 				iVar5 = pSVar3->entryCount;
-				iVar4 = iVar4 + 0x1c;
 			} while (iVar6 < iVar5);
 		}
 
-		if (bVar1) {
-			iVar6 = 0;
-			if (0 < iVar5) {
-				iVar4 = 0;
-				do {
-					S_STREAM_NTF_TARGET_SWITCH::Switch
-					((S_STREAM_NTF_TARGET_SWITCH*)((int)&pSVar3->aEntries[0].base.pRef + iVar4), (CActor*)this);
-					pSVar3 = (this->targetSwitch).pTargetStreamRef;
-					iVar6 = iVar6 + 1;
-					iVar5 = pSVar3->entryCount;
-					iVar4 = iVar4 + 0x1c;
-				} while (iVar6 < iVar5);
-			}
-
-			iVar6 = 0;
-			if (0 < iVar5) {
-				iVar5 = 0;
-				do {
-					S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)((int)&pSVar3->aEntries[0].base.pRef + iVar5), (CActor*)this);
-					pSVar3 = (this->targetSwitch).pTargetStreamRef;
-					iVar6 = iVar6 + 1;
-					iVar5 = iVar5 + 0x1c;
-				} while (iVar6 < pSVar3->entryCount);
-			}
-		})
+		if (bDoSwitch) {
+			this->targetSwitch.pTargetStreamRef->Switch(this);
+			this->targetSwitch.PostSwitch(this);
+		}
 	}
 
 	return;
@@ -997,7 +971,7 @@ void CBehaviourSwitchMagic::DisplayOpenFxModel(int bOpen)
 				pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
 				pTexture = ed3DG2DGetTextureFromMaterial(pMaterial, 0);
 
-				pAnimSpeedNormalExtruder = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
+				pAnimSpeedNormalExtruder = LOAD_POINTER_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
 				if (pAnimSpeedNormalExtruder != (edF32VECTOR4*)0x0) {
 					pAnimSpeedNormalExtruder->z = 0.0f;
 					pAnimSpeedNormalExtruder->w = 0.0f;
@@ -1783,12 +1757,41 @@ void CBehaviourSwitchWolfenCounter::Init(CActor* pOwner)
 
 void CBehaviourSwitchWolfenCounter::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	undefined8 uVar4;
+	int iVar5;
+	edF32VECTOR4 local_10;
+	CActorSwitch* pSwitch;
+
+	pSwitch = this->pOwner;
+	(pSwitch->targetSwitch).pStreamEventCamera->Manage(pSwitch);
+
+	iVar5 = pSwitch->actorState;
+	if ((((iVar5 != 8) && (iVar5 == 5)) &&
+		(iVar5 = CLevelScheduler::ScenVar_Get(0), this->field_0x14 <= iVar5)) &&
+		(fVar1 = CActorHero::_gThis->currentLocation.x - pSwitch->currentLocation.x,
+			fVar2 = CActorHero::_gThis->currentLocation.y - pSwitch->currentLocation.y,
+			fVar3 = CActorHero::_gThis->currentLocation.z - pSwitch->currentLocation.z,
+			fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 <= this->field_0x18 * this->field_0x18)) {
+		pSwitch->SetState(8, -1);
+
+		pSwitch->targetSwitch.Switch(pSwitch);
+		pSwitch->targetSwitch.PostSwitch(pSwitch);
+	}
+
+	if (pSwitch->pTiedActor != (CActor*)0x0) {
+		local_10 = pSwitch->baseLocation;
+		pSwitch->SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	}
+
+	return;
 }
 
 void CBehaviourSwitchWolfenCounter::Draw()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_LOG();
 }
 
 edF32VECTOR4 edF32VECTOR4_0040e700 = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -1825,7 +1828,7 @@ void CBehaviourSwitchWolfenCounter::Begin(CActor* pOwner, int newState, int newA
 
 int CBehaviourSwitchWolfenCounter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	return 0;
 }
 
 void CBehaviourSwitchWolfenCounter::SaveContext(S_SAVE_CLASS_SWITCH* pData)

@@ -15,6 +15,7 @@
 #include "Debug.h"
 #include "TimeController.h"
 #include "CameraGame.h"
+#include "CameraRail.h"
 #include "DebugSetting.h"
 #include "CameraFixePerso.h"
 #include "ActorHero.h"
@@ -254,6 +255,40 @@ namespace Debug::Camera {
 		}
 
 		ImGui::Text("fov: %f", pCamera->fov);
+
+		// Distance and angle
+		if (ImGui::CollapsingHeader("Distance and Angles")) {
+			ImGui::Text("Distance: %f", pCamera->GetDistance());
+			const float angleAlpha = pCamera->GetAngleAlpha();
+			const float angleBeta = pCamera->GetAngleBeta();
+			const float angleGamma = pCamera->GetAngleGamma();
+
+			ImGui::Text("Angle Alpha: %f", angleAlpha);
+			ImGui::Text("Angle Beta: %f", angleBeta);
+			ImGui::Text("Angle Gamma: %f", angleGamma);
+		}
+
+		if (pCamera->GetMode() == CT_RailSimple && ImGui::CollapsingHeader("Rail Simple")) {
+			CCameraRailSimple* pRailSimple = static_cast<CCameraRailSimple*>(pCamera);
+
+			ImGui::Text("Path Follow Index: %d", pRailSimple->pathFollowIndex);
+			ImGui::Text("Spline: %p", pRailSimple->pSpline);
+			ImGui::Text("Field 0xe0: %s", pRailSimple->field_0xe0.ToString().c_str());
+			ImGui::Text("Spline Alpha: %f", pRailSimple->splineAlpha);
+		}
+
+		if (pCamera->GetMode() == CT_Rail && ImGui::CollapsingHeader("Rail")) {
+			CCameraRail* pCameraRail = static_cast<CCameraRail*>(pCamera);
+
+			ImGui::Text("Path Follow Index: %d", pCameraRail->pathFollowIndex);
+			ImGui::Text("Spline: %p", pCameraRail->pSpline);
+			ImGui::Text("Current Segment Index: %u", pCameraRail->currentSegmentIndex);
+			ImGui::Text("Distance to Plane A: %f", pCameraRail->distanceToPlaneA);
+			ImGui::Text("Distance to Plane B: %f", pCameraRail->distanceToPlaneB);
+			ImGui::Text("Number of Segments: %d", pCameraRail->nbSegments);
+			ImGui::Text("Rail Segments: %p", pCameraRail->aRailSegments);
+			ImGui::Text("Rail Target Position: %s", pCameraRail->railTargetPosition.ToString().c_str());
+		}
 	}
 
 	static CCameraFixePerso* pDebugCamera = nullptr;

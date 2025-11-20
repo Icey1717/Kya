@@ -62,7 +62,7 @@ void EventCallbackSendMessage(edCEventMessage* pEventMessage)
 	int iVar6;
 	int nbActorIndexes;
 
-	pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[pEventMessage->colliderId]);
+	pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[pEventMessage->colliderId]);
 
 	nbActorIndexes = pSendInfo->nbActorIndexes;
 	pCurrentActorIndex = reinterpret_cast<int*>(pSendInfo + 1);
@@ -71,8 +71,8 @@ void EventCallbackSendMessage(edCEventMessage* pEventMessage)
 	int* pReceiveData = pCurrentActorIndex + nbActorIndexes;
 
 	if (nbActorIndexes == 0) {
-		ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
-		CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+		ed_event_actor_ref* pRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+		CActor* pActorRef = LOAD_POINTER_CAST(CActor*, pRef->pActor);
 		pActorRef->ReceiveEvent(pEventMessage, pEventMessage->colliderId, iVar6, reinterpret_cast<uint*>(pReceiveData));
 	}
 	else {
@@ -80,8 +80,8 @@ void EventCallbackSendMessage(edCEventMessage* pEventMessage)
 			iVar3 = *pCurrentActorIndex;
 
 			if (iVar3 == -1) {
-				ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
-				CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+				ed_event_actor_ref* pRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+				CActor* pActorRef = LOAD_POINTER_CAST(CActor*, pRef->pActor);
 
 				pActor = pActorRef;
 			}
@@ -219,7 +219,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex zone sphere: {} location: {} mode: {} zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
 
 	if (pZone->pMatrix != 0x0) {
-		edF32Matrix4MulF32Vector4Hard(&eStack32, LOAD_SECTION_CAST(edF32MATRIX4*, pZone->pMatrix), pLocation);
+		edF32Matrix4MulF32Vector4Hard(&eStack32, LOAD_POINTER_CAST(edF32MATRIX4*, pZone->pMatrix), pLocation);
 		pLocation = &eStack32;
 		EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex updated location: {}", pLocation->ToString());
 	}
@@ -246,7 +246,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	uVar8 = 0;
 	piVar7 = _edEventZoneAgainstVertexValidatedResult;
 	do {
-		if (((uVar6 & 1) != 0) && (puVar5 = LOAD_SECTION_CAST(uint*, pZone->field_0x0[uVar8]), puVar5 != (uint*)0x0)) {
+		if (((uVar6 & 1) != 0) && (puVar5 = LOAD_POINTER_CAST(uint*, pZone->field_0x0[uVar8]), puVar5 != (uint*)0x0)) {
 			uVar3 = *puVar5;
 			local_30 = 0;
 			if (uVar3 != 0) {
@@ -282,9 +282,9 @@ int _edEventComputeZeroVolumeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_z
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	puVar1 = LOAD_SECTION_CAST(uint*, pZone->field_0x0[0]);
+	puVar1 = LOAD_POINTER_CAST(uint*, pZone->field_0x0[0]);
 	if (puVar1 == (uint*)0x0) {
-		puVar1 = LOAD_SECTION_CAST(uint*, pZone->field_0x0[2]);
+		puVar1 = LOAD_POINTER_CAST(uint*, pZone->field_0x0[2]);
 		local_10.x = param_4->x;
 	}
 	else {
@@ -341,10 +341,10 @@ int edEventGetChunkZoneNbInclusivePrimitives(int param_1, ed_zone_3d* param_2)
 
 	iVar1 = 0;
 	if (param_2->field_0x0[0] != 0x0) {
-		iVar1 = *LOAD_SECTION_CAST(int*, param_2->field_0x0[0]);
+		iVar1 = *LOAD_POINTER_CAST(int*, param_2->field_0x0[0]);
 	}
 	if (param_2->field_0x0[2] != 0x0) {
-		iVar1 = iVar1 + *LOAD_SECTION_CAST(int*, param_2->field_0x0[2]);
+		iVar1 = iVar1 + *LOAD_POINTER_CAST(int*, param_2->field_0x0[2]);
 	}
 	return iVar1;
 }
@@ -355,16 +355,16 @@ edF32MATRIX4* edEventGetChunkZonePrimitive(uint param_1, ed_zone_3d* param_2, ui
 	uint uVar2;
 	uint* puVar3;
 
-	puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[0]);
+	puVar3 = LOAD_POINTER_CAST(uint*, param_2->field_0x0[0]);
 	peVar1 = pedEventChunks[param_1];
 
 	if (puVar3 == (uint*)0x0) {
-		puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[2]);
+		puVar3 = LOAD_POINTER_CAST(uint*, param_2->field_0x0[2]);
 	}
 	else {
 		uVar2 = *puVar3;
 		if (uVar2 <= param_3) {
-			puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[2]);
+			puVar3 = LOAD_POINTER_CAST(uint*, param_2->field_0x0[2]);
 			param_3 = param_3 - uVar2;
 		}
 	}
@@ -411,7 +411,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 			do {
 				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
 
-				pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
+				pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 
 				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing zone flags: 0x{:x}", pZone->flags);
 
@@ -419,14 +419,14 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 				uint result;
 
 				if ((pZone->flags & 1) == 0) {
-					ed_event_actor_ref* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent test actor: {}", LOAD_SECTION_CAST(CActor*, pActorRef->pActor)->name);
-					result = edEventComputeZoneAgainstVertex(pEventChunk, pZone, LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation), 0);
+					ed_event_actor_ref* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent test actor: {}", LOAD_POINTER_CAST(CActor*, pActorRef->pActor)->name);
+					result = edEventComputeZoneAgainstVertex(pEventChunk, pZone, LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation), 0);
 					coliderFlags = pCollider->flags;
 				}
 				else {
-					ed_event_actor_ref* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-					result = _edEventComputeZeroVolumeZoneAgainstVertex(pEventChunk, pZone, LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation), &pCollider->worldLocation,
+					ed_event_actor_ref* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+					result = _edEventComputeZeroVolumeZoneAgainstVertex(pEventChunk, pZone, LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation), &pCollider->worldLocation,
 						&pCollider->flags);
 					coliderFlags = pCollider->flags;
 				}
@@ -543,7 +543,7 @@ void edEventComputeChunk(int activeChunkID, bool param_2)
 		if (pEventchunk->nbEvents != 0) {
 			do {
 				EVENT_LOG(LogLevel::Verbose, "\nedEventComputeChunk compute {}", uVar2);
-				_edEventComputeEvent(pEventchunk, LOAD_SECTION_CAST(ed_event*, *pEvent));
+				_edEventComputeEvent(pEventchunk, LOAD_POINTER_CAST(ed_event*, *pEvent));
 				uVar2 = uVar2 + 1;
 				pEvent = pEvent + 1;
 			} while (uVar2 < pEventchunk->nbEvents);
@@ -661,14 +661,14 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 	uVar9 = 0;
 	if (pEventChunk->nbEvents != 0) {
 		do {
-			pEvent = LOAD_SECTION_CAST(ed_event*, *ppeVar13);
+			pEvent = LOAD_POINTER_CAST(ed_event*, *ppeVar13);
 			uVar12 = 0;
 			pCollider = (_ed_event_collider_test*)(pEvent + 1);
 
 			if (pEvent->nbColliders != 0) {
 				do {
 					uVar12 = uVar12 + 1;
-					ed_event_actor_ref* pLoaded = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+					ed_event_actor_ref* pLoaded = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
 					pLoaded->pLocation = pLoaded->pLocation + 1;
 					pCollider = pCollider + 1;
 				} while (uVar12 < pEvent->nbColliders);
@@ -721,12 +721,12 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 				uVar14 = 0;
 				if (pEventChunk->nbEvents != 0) {
 					do {
-						pEvent = LOAD_SECTION_CAST(ed_event*, *ppeVar13);
+						pEvent = LOAD_POINTER_CAST(ed_event*, *ppeVar13);
 						uVar7 = 0;
 						pCollider = (_ed_event_collider_test*)(pEvent + 1);
 						if (pEvent->nbColliders != 0) {
 							do {
-								if (LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef) == pActorRef) {
+								if (LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef) == pActorRef) {
 									IMPLEMENTATION_GUARD(
 									pfVar5 = edClusterInsertNode(ppfVar15, 4, (long)(int)&pEvent->field_0x4->field_0xc, pEvent);
 									ppfVar15->field_0x30 = pfVar5;
@@ -755,8 +755,8 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 	if (pEventChunk->nbActorRefs != 0) {
 		do {
 			CActor* pActor = CEventManager::callbackFunctions.pGetActorPointer(pActorRef->pActor);
-			pActorRef->pActor = STORE_SECTION(pActor);
-			pActorRef->pLocation = STORE_SECTION(CEventManager::callbackFunctions.pGetActorPositionVector(pActor));
+			pActorRef->pActor = STORE_POINTER(pActor);
+			pActorRef->pLocation = STORE_POINTER(CEventManager::callbackFunctions.pGetActorPositionVector(pActor));
 			uVar9 = uVar9 + 1;
 			pActorRef = pActorRef + 1;
 		} while (uVar9 < pEventChunk->nbActorRefs);
@@ -766,16 +766,16 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 	uVar9 = 0;
 	if (pEventChunk->nbEvents != 0) {
 		do {
-			pEvent = LOAD_SECTION_CAST(ed_event*, *ppeVar13);
-			peVar2 = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
+			pEvent = LOAD_POINTER_CAST(ed_event*, *ppeVar13);
+			peVar2 = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 			uVar12 = 0;
 			pCollider = (_ed_event_collider_test*)(pEvent + 1);
 
 			if (pEvent->nbColliders != 0) {
 				do {
 					if ((peVar2->flags & 1) == 0) {
-						ed_event_actor_ref* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-						pCollider->worldLocation = *LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation);
+						ed_event_actor_ref* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+						pCollider->worldLocation = *LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
 					}
 					else {
 						if (peVar2->field_0x0[0] == 0x0) {
@@ -783,10 +783,10 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 							iVar8 = *(int*)(peVar2->field_0x0[2] + 4);)
 						}
 						else {
-							iVar8 = *(int*)(LOAD_SECTION_CAST(char*, peVar2->field_0x0[0]) + 4);
+							iVar8 = *(int*)(LOAD_POINTER_CAST(char*, peVar2->field_0x0[0]) + 4);
 						}
 
-						edF32Matrix4MulF32Vector4Hard(&pCollider->worldLocation, pEventChunk->aMatrices + iVar8, LOAD_SECTION_CAST(edF32VECTOR4*, LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef)->pLocation));
+						edF32Matrix4MulF32Vector4Hard(&pCollider->worldLocation, pEventChunk->aMatrices + iVar8, LOAD_POINTER_CAST(edF32VECTOR4*, LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef)->pLocation));
 					}
 
 					uVar12 = uVar12 + 1;
@@ -820,7 +820,7 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 	uVar4 = 0;
 	if (pEventChunk->nbEvents != 0) {
 		do {
-			peVar2 = LOAD_SECTION_CAST(ed_event*, *ppeVar3);
+			peVar2 = LOAD_POINTER_CAST(ed_event*, *ppeVar3);
 			uVar10 = 0;
 			peVar9 = (_ed_event_collider_test*)(peVar2 + 1);
 			if (peVar2->nbColliders != 0) {
@@ -975,7 +975,7 @@ void _edEventInstallChunk(ed_event_chunk* pEventChunk, void* pFileData, uint mod
 	uVar7 = puVar3[pEventChunk->field_0x10];
 	if (pEventChunk->field_0x10 != 0) {
 		do {
-			pEventChunk->field_0x14[uVar14] = STORE_SECTION((char*)pEventChunk->field_0x14 + pEventChunk->field_0x14[uVar14]);
+			pEventChunk->field_0x14[uVar14] = STORE_POINTER((char*)pEventChunk->field_0x14 + pEventChunk->field_0x14[uVar14]);
 			uVar14 = uVar14 + 1;
 		} while (uVar14 < pEventChunk->field_0x10);
 	}
@@ -1006,7 +1006,7 @@ void _edEventInstallChunk(ed_event_chunk* pEventChunk, void* pFileData, uint mod
 				else {
 					*pSubZone = pEventChunk->field_0x14[*pSubZone];
 
-					int* pLoaded = (int*)LOAD_SECTION(*pSubZone);
+					int* pLoaded = (int*)LOAD_POINTER(*pSubZone);
 
 					iVar11 = iVar11 + *pLoaded;
 					if ((iVar11 == 1) &&
@@ -1046,7 +1046,7 @@ void _edEventInstallChunk(ed_event_chunk* pEventChunk, void* pFileData, uint mod
 	if (pEventChunk->nbSendInfo != 0) {
 		do {
 			const int offset = pEventChunk->aSendInfo[uVar7];
-			pEventChunk->aSendInfo[uVar7] = STORE_SECTION(reinterpret_cast<char*>(pEventChunk->aSendInfo) + offset);
+			pEventChunk->aSendInfo[uVar7] = STORE_POINTER(reinterpret_cast<char*>(pEventChunk->aSendInfo) + offset);
 			uVar7 = uVar7 + 1;
 		} while (uVar7 < pEventChunk->nbSendInfo);
 	}
@@ -1077,13 +1077,13 @@ void _edEventInstallChunk(ed_event_chunk* pEventChunk, void* pFileData, uint mod
 		do {
 			const int offset = pEventChunk->aEvents[uVar7];
 			ed_event* pEvent = reinterpret_cast<ed_event*>(reinterpret_cast<char*>(pEventChunk->aEvents) + offset);
-			pEventChunk->aEvents[uVar7] = STORE_SECTION(pEvent);
+			pEventChunk->aEvents[uVar7] = STORE_POINTER(pEvent);
 
 			if (pEvent->pZone == -1) {
 				pEvent->pZone = 0;
 			}
 			else {
-				pEvent->pZone = STORE_SECTION(pEventChunk->aZones + pEvent->pZone);
+				pEvent->pZone = STORE_POINTER(pEventChunk->aZones + pEvent->pZone);
 			}
 
 			uVar14 = 0;
@@ -1091,7 +1091,7 @@ void _edEventInstallChunk(ed_event_chunk* pEventChunk, void* pFileData, uint mod
 			if (pEvent->nbColliders != 0) {
 				do {
 					uVar10 = 0;
-					pCollider->pActorRef = STORE_SECTION(reinterpret_cast<char*>(pEventChunk->aActorRefs) + (pCollider->pActorRef * sizeof(ed_event_actor_ref)));
+					pCollider->pActorRef = STORE_POINTER(reinterpret_cast<char*>(pEventChunk->aActorRefs) + (pCollider->pActorRef * sizeof(ed_event_actor_ref)));
 					pCollider->field_0x1c = pEventChunk->aEvents[pCollider->field_0x1c];
 					do {
 						if (pCollider->aSendInfo[uVar10] == -1) {

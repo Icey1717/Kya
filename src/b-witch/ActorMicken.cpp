@@ -6,7 +6,7 @@
 #include "ActorManager.h"
 #include "ActorFactory.h"
 #include "MathOps.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "InputManager.h"
 
 CActorMicken::CActorMicken()
@@ -795,6 +795,102 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 	return;
 }
 
+void CActorMicken::StateMickenEat(CBehaviourMickenEat* pBehaviour)
+{
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (0.2f < this->timeInAir) {
+			SetState(7, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (0.15f < GetTimer()->scaledTotalTime - this->field_0x3f4) {
+		if ((this->flags & 0x8000) != 0) {
+			DoMessage(this->pNearestFruit, (ACTOR_MESSAGE)0x20, 0);
+			this->flags = this->flags & 0xffff7fff;
+		}
+	}
+	else {
+		if ((this->pNearestFruit == (CActor*)0x0) || ((this->pNearestFruit->flags & 0x8000) != 0)) {
+			this->flags = this->flags | 0x8000;
+
+			if (pBehaviour->pathFollowReader.pPathFollow != (CPathFollow*)0x0) {
+				SetState(MICKEN_EAT_STATE_STAND, -1);
+				return;
+			}
+
+			SetState(0xb, -1);
+
+			return;
+		}
+	}
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(MICKEN_EAT_STATE_CHEW, -1);
+	}
+
+	return;
+}
+
+void CActorMicken::StateMickenChew(CBehaviourMickenEat* pBehaviour)
+{
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (0.2f < this->timeInAir) {
+			SetState(7, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (pBehaviour->field_0xc < GetTimer()->scaledTotalTime - this->field_0x3f4) {
+		if ((pBehaviour->field_0x10 & 1) == 0) {
+			if ((pBehaviour->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
+				SetState(0xb, -1);
+			}
+			else {
+				SetState(MICKEN_EAT_STATE_STAND, -1);
+			}
+		}
+		else {
+			this->flags_0x3e8 = this->flags_0x3e8 | 0x10;
+			SetState(MICKEN_EAT_STATE_STAND, -1);
+		}
+	}
+
+	return;
+}
+
 void CActorMicken::BehaviourMickenKicked_Manage(CBehaviourMickenKicked* pBehaviour)
 {
 	Timer* pTVar1;
@@ -910,12 +1006,10 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		}
 		break;
 	case MICKEN_EAT_STATE_EAT:
-		IMPLEMENTATION_GUARD(
-			StateMickenEat(this, (CBehaviourMicken*)pBehaviour);)
+			StateMickenEat(pBehaviour);
 		break;
 	case MICKEN_EAT_STATE_CHEW:
-		IMPLEMENTATION_GUARD(
-			StateMickenChew(this, pBehaviour);)
+			StateMickenChew(pBehaviour);
 		break;
 	case 0xb:
 		iVar7 = WalkToPos(0.3f, pBehaviour, &this->field_0x370, 0);

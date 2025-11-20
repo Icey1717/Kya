@@ -427,10 +427,11 @@ void FreeAllAllocators()
 			PoolAllocator* pPVar2 = pPVar5->pAllocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
-					delete(pPVar5->pValue);
+					float* pOriginalPtr = (float*)pPVar5->pValue;
+					delete[] pOriginalPtr;
 				}
 
-				//edMemFree(pPVar5);
+				delete pPVar5;
 			}
 
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
@@ -445,10 +446,11 @@ void FreeAllAllocators()
 			PoolAllocator* pPVar2 = pPVar5->pAllocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
-					delete(pPVar5->pValue);
+					CBehaviourCinematic* pOriginalPtr = (CBehaviourCinematic*)pPVar5->pValue;
+					delete[] pOriginalPtr;
 				}
 
-				//edMemFree(pPVar5);
+				delete pPVar5;
 			}
 
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
@@ -463,10 +465,11 @@ void FreeAllAllocators()
 			PoolAllocator* pPVar2 = pPVar5->pAllocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
-					delete(pPVar5->pValue);
+					edF32MATRIX4* pOriginalPtr = (edF32MATRIX4*)pPVar5->pValue;
+					delete[] pOriginalPtr;
 				}
 
-				//edMemFree(pPVar5);
+				delete pPVar5;
 			}
 
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
@@ -481,10 +484,11 @@ void FreeAllAllocators()
 			PoolAllocator* pPVar2 = pPVar5->pAllocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
-					delete(pPVar5->pValue);
+					S_GLOBAL_DLIST_PATCH* pOriginalPtr = (S_GLOBAL_DLIST_PATCH*)pPVar5->pValue;
+					delete[] pOriginalPtr;
 				}
 
-				//edMemFree(pPVar5);
+				delete pPVar5;
 			}
 
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
@@ -499,9 +503,11 @@ void FreeAllAllocators()
 			PoolAllocator* pPVar2 = pPVar5->pAllocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
-					delete(pPVar5->pValue);
+					edDList_material* pOriginalPtr = (edDList_material*)pPVar5->pValue;
+					delete[] pOriginalPtr;
 				}
-				//edMemFree(pPVar5);
+
+				delete pPVar5;
 			}
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
 			pPVar5 = pPVar2;

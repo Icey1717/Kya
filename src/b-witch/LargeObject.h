@@ -375,6 +375,7 @@ extern ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10];
 #define GAME_CUTSCENE_100 0x100
 #define GAME_CUTSCENE_80 0x80
 #define GAME_REQUEST_TERM 0x2
+#define GAME_REQUEST_MAP 0x400
 
 extern uint GameFlags;
 

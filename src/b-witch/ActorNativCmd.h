@@ -79,11 +79,9 @@ public:
 	CActorNativCmd* pOwner;
 };
 
-class CActorNativCmd : public CActor {
+class CActorNativCmd : public CActor
+{
 public:
-	CActorNativCmd(){
-		IMPLEMENTATION_GUARD_ACTOR()
-	}
 
 	static StateConfig _gStateCfg_NVC[2];
 

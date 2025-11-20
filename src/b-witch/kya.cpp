@@ -2126,8 +2126,8 @@ void GameLoop(void)
 			}
 
 			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bButtonPressed)) ||
-				((GameFlags & 0x400) != 0)) {
-				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
+				((GameFlags & GAME_REQUEST_MAP) != 0)) {
+				if (((GameFlags & 0x10) == 0) || ((GameFlags & GAME_REQUEST_MAP) != 0)) {
 					if ((GameFlags & 0x3c) == 0) {
 						MapEnter();
 					}

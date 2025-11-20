@@ -21,7 +21,7 @@ struct PackedType
 			return (T)0x0;
 		}
 
-		return LOAD_SECTION_CAST(T, index);
+		return LOAD_POINTER_CAST(T, index);
 	}
 
 	T operator=(T value)
@@ -31,7 +31,7 @@ struct PackedType
 			return value;
 		}
 
-		index = STORE_SECTION(value);
+		index = STORE_POINTER(value);
 		return Get();
 	}
 
@@ -341,7 +341,7 @@ struct _ed_particle_effector_param
 
 	edF32VECTOR4 field_0x150;
 
-	byte _pad_4_[0x10];
+	edF32VECTOR4 field_0x160;
 
 	edF32VECTOR4 field_0x170;
 

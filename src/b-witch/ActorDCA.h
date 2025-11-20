@@ -82,6 +82,7 @@ public:
 
 	class CBhvControlled : public CBhvDefault
 	{
+	public:
 		virtual void Create(ByteCode* pByteCode);
 		virtual void Manage();
 		virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
@@ -129,17 +130,17 @@ public:
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 
-	void FUN_002e6600();
+	void UpdateAimAngle();
 
 	void BehaviourDefault_InitState(int state);
 	void BehaviourDefault_Manage(CBhvDefault* pBehaviour);
 	void BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLED_PARAMS* pParams);
 
-	float field_0x160;
-	edF32VECTOR3 field_0x164;
-	edF32VECTOR3 field_0x170;
-	edF32VECTOR4 field_0x180;
-	edF32VECTOR4 field_0x190;
+	float aimAdjustSpeed;
+	edF32VECTOR3 aimInputDirection;
+	edF32VECTOR3 aimDirection;
+	edF32VECTOR4 projectAimLocation;
+	edF32VECTOR4 projectAimDirection;
 
 	CActor* pControlledByActor;
 	undefined4 field_0x1a4;
@@ -155,7 +156,7 @@ public:
 	uint field_0x450;
 	uint field_0x454;
 
-	byte field_0x458;
+	byte bIsFiring;
 	byte field_0x459;
 
 	byte field_0x45a;
@@ -176,11 +177,6 @@ public:
 	S_STREAM_REF<CSound> field_0x504;
 	S_STREAM_REF<CSound> field_0x508;
 	S_STREAM_REF<CSound> field_0x50c;
-
-	float field_0x530;
-	float field_0x534;
-	float field_0x538;
-
 };
 
 #endif //ACTOR_D_C_A_H

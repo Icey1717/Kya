@@ -73,7 +73,7 @@ namespace Debug {
 			eventKey.colliderId = pEventMessage->colliderId;
 
 			for (int i = 0; i < pEventMessage->pEventChunk->nbEvents; i++) {
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventMessage->pEventChunk->aEvents[i]);
+				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pEventMessage->pEventChunk->aEvents[i]);
 
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
@@ -91,7 +91,7 @@ namespace Debug {
 			EventRecord& record = gEventRecords[eventKey];
 			TriggerRecord newRecord = record.triggers.emplace_back();
 
-			pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[pEventMessage->colliderId]);
+			pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[pEventMessage->colliderId]);
 
 			nbActorIndexes = pSendInfo->nbActorIndexes;
 			pCurrentActorIndex = reinterpret_cast<int*>(pSendInfo + 1);
@@ -100,8 +100,8 @@ namespace Debug {
 			int* pReceiveData = pCurrentActorIndex + nbActorIndexes;
 
 			if (nbActorIndexes == 0) {
-				ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
-				CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+				ed_event_actor_ref* pRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+				CActor* pActorRef = LOAD_POINTER_CAST(CActor*, pRef->pActor);
 				newRecord.receivers.push_back(pActorRef);
 			}
 			else {
@@ -109,8 +109,8 @@ namespace Debug {
 					iVar3 = *pCurrentActorIndex;
 
 					if (iVar3 == -1) {
-						ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
-						CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+						ed_event_actor_ref* pRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+						CActor* pActorRef = LOAD_POINTER_CAST(CActor*, pRef->pActor);
 
 						pActor = pActorRef;
 					}
@@ -251,13 +251,13 @@ void Debug::Event::ShowMenu(bool* bOpen)
 			}
 
 			if (gSelectedEvent < pChunk->nbEvents && ImGui::CollapsingHeader("Event Details")) {
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pChunk->aEvents[gSelectedEvent]);
+				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pChunk->aEvents[gSelectedEvent]);
 
 				ImGui::Text("flags: 0x%x", pEvent->flags);
 
 				DebugHelpers::TextValidValue("pZone %p", pEvent->pZone);
 
-				auto* pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
+				auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 
 				if (pZone) {
 					ImGui::Separator();
@@ -289,13 +289,13 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 					ImGui::Text("flags: 0x%x", pCollider->flags);
 
-					auto* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+					auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
 
 					if (pActorRef) {
-						auto* pActor = LOAD_SECTION_CAST(CActor*, pActorRef->pActor);
+						auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
 						ImGui::Text("pActor (%s)", pActor ? pActor->name : "null");
 
-						auto* pLocation = LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation);
+						auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
 
 						ImGui::Text("pLocation %s", pLocation ? pLocation->ToString().c_str() : "null");
 					}
@@ -312,12 +312,12 @@ void Debug::Event::ShowMenu(bool* bOpen)
 					for (int j = 0; j < 4; j++) {
 						ImGui::Text("aSendInfo - %d: %d", j, pCollider->aSendInfo[j]);
 
-						auto* pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pCollider->aSendInfo[j]);
+						auto* pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pCollider->aSendInfo[j]);
 
 						if (pSendInfo && ImGui::CollapsingHeader(std::to_string(j).c_str())) {
 							if (pSendInfo->nbActorIndexes == 0) {
 								if (pActorRef) {
-									auto* pActor = LOAD_SECTION_CAST(CActor*, pActorRef->pActor);
+									auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
 									ImGui::Text("(TA) %s", pActor->name);
 								}
 							}
@@ -329,7 +329,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 								for (int k = 0; k < pSendInfo->nbActorIndexes; k++) {
 									if (*pIndex == -1) {
 										if (pActorRef) {
-											auto* pActor = LOAD_SECTION_CAST(CActor*, pActorRef->pActor);
+											auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
 											ImGui::Text("(TA) %s", pActor->name);
 										}
 									}
@@ -438,9 +438,9 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 		if (gShowSelectedEvent) {
 			if (gSelectedEvent < pEventChunk->nbEvents) {
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventChunk->aEvents[gSelectedEvent]);
+				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pEventChunk->aEvents[gSelectedEvent]);
 
-				auto* pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
+				auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 
 				{
 					ImVec2 screenPos;
@@ -453,11 +453,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
 				for (int i = 0; i < pEvent->nbColliders; i++) {
-					auto* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+					auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
 
 					if (pActorRef) {
-						auto* pActor = LOAD_SECTION_CAST(CActor*, pActorRef->pActor);
-						auto* pLocation = LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation);
+						auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+						auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
 
 						ImVec2 screenPos;
 						if (Debug::Projection::WorldToScreen(*pLocation, screenPos)) {
@@ -479,9 +479,9 @@ void Debug::Event::ShowMenu(bool* bOpen)
 			for (int i = 0; i < pEventChunk->nbEvents; i++) {
 				bool bActive = false;
 
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventChunk->aEvents[i]);
+				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pEventChunk->aEvents[i]);
 
-				auto* pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
+				auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
@@ -489,14 +489,14 @@ void Debug::Event::ShowMenu(bool* bOpen)
 					if (pCollider->flags & 1) {
 						bActive = true;
 
-						auto* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-						auto* pActor = LOAD_SECTION_CAST(CActor*, pActorRef->pActor);
-						auto* pLocation = LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation);
+						auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+						auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+						auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
 
 						bool bTriggerSelf = false;
 
 						for (int k = 0; k < 4; k++) {
-							auto* pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pCollider->aSendInfo[k]);
+							auto* pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pCollider->aSendInfo[k]);
 
 							if (pSendInfo) {
 								if (pSendInfo->nbActorIndexes == 0) {

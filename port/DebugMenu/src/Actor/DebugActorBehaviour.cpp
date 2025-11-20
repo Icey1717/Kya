@@ -12,6 +12,7 @@
 #include "ActorMoney.h"
 #include "ActorProjectile.h"
 #include "ActorSwitch.h"
+#include "ActorMicken.h"
 
 namespace Aton
 {
@@ -251,6 +252,15 @@ namespace Hero
 			break;
 		case STATE_HERO_GRIP_GRAB:
 			return "StateHeroGripGrab";
+			break;
+		case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
+			return "StateHeroBoomyPrepareFightBlow";
+			break;
+		case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
+			return "StateHeroBoomyExecuteFightBlow";
+			break;
+		case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
+			return "StateHeroBoomyReturnFightBlow";
 			break;
 		case STATE_HERO_TOBOGGAN_3:
 			return "StateHeroToboggan3";
@@ -685,6 +695,39 @@ namespace Switch
 	}
 }
 
+namespace Micken
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case MICKEN_BEHAVIOUR_EAT:
+			return "Eat";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case MICKEN_EAT_STATE_STAND:
+			return "Stand";
+		case MICKEN_EAT_STATE_EAT:
+			return "Eat";
+		case MICKEN_EAT_STATE_WALK_TO_FRUIT:
+			return "Walk to Fruit";
+		case MICKEN_EAT_STATE_CHEW:
+			return "Chew";
+		case MICKEN_EAT_STATE_HOLE:
+			return "Hole";
+		case MICKEN_EAT_STATE_ROLL_IN_THE_WIND:
+			return "Roll in the Wind";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -723,6 +766,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Projectile::GetBehaviourName(behaviourId);
 	case SWITCH:
 		return Switch::GetBehaviourName(behaviourId);
+	case MICKEN:
+		return Micken::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -741,6 +786,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Araignos::GetStateName(pActor->actorState);
 	case PROJECTILE:
 		return Projectile::GetStateName(pActor->actorState);
+	case MICKEN:
+		return Micken::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

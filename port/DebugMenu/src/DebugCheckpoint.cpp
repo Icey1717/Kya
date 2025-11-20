@@ -5,7 +5,7 @@
 #include "ActorCheckpointManager.h"
 #include "ActorManager.h"
 #include "ActorHero.h"
-#include "ActorHeroPrivate.h"
+#include "ActorHero_Private.h"
 #include "DebugSetting.h"
 
 namespace Debug
