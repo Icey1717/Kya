@@ -74,8 +74,10 @@
 
 #endif
 
-union AnimScratchpad {
-	struct {
+union AnimScratchpad
+{
+	struct
+	{
 		int vuFlags;
 		uint flags;
 		undefined4 field_0x8;
@@ -84,9 +86,10 @@ union AnimScratchpad {
 	edpkt_data pkt;
 };
 
-struct ed_hash_code {
+struct ed_hash_code
+{
 	Hash_8 hash;
-	int pData; // char*
+	strd_ptr(char*) pData;
 	char _pad[4];
 };
 
@@ -184,9 +187,9 @@ struct ed_3d_octree {
 
 struct ClusterDetails
 {
-	int field_0x20; // int*
-	int field_0x24; // int*
-	ushort count_0x28; // int*
+	strd_ptr(int*) field_0x20;
+	strd_ptr(int*) field_0x24;
+	ushort count_0x28;
 	ushort clusterHierCount;
 	undefined field_0x2c;
 	undefined field_0x2d;
@@ -202,17 +205,17 @@ struct ed_g3d_cluster
 	ushort flags_0x1c;
 	undefined2 field_0x1e;
 	ClusterDetails clusterDetails;
-	int field_0x30; // int*
-	int field_0x34; // int*
-	int field_0x38; // uint*
-	int field_0x3c; // uint*
-	int pMBNK; // char*
+	strd_ptr(int*) field_0x30;
+	strd_ptr(int*) field_0x34;
+	strd_ptr(uint*) field_0x38;
+	strd_ptr(uint*) field_0x3c;
+	strd_ptr(char*) pMBNK;
 	undefined field_0x44;
 	undefined field_0x45;
 	undefined field_0x46;
 	undefined field_0x47;
-	int p3DStrip; // ed_3d_strip*
-	int p3DSprite; // ed_3d_sprite*
+	strd_ptr(ed_3d_strip*) p3DStrip;
+	strd_ptr(ed_3d_sprite*) p3DSprite;
 };
 
 static_assert(sizeof(ed_g3d_cluster) == 0x40);
@@ -270,7 +273,7 @@ struct ed_3d_hierarchy_setup
 
 struct ed3DLod
 {
-	int pObj; // char*
+	strd_ptr(char*) pObj;
 	short renderType;
 	short sizeBias;
 };
@@ -319,8 +322,8 @@ union ObbFloat
 
 PACK(struct ANHR_Internal
 {
-	int pHierNode; // edNode*
-	int pHierNodeData; // ed_3d_hierarchy_node*
+	strd_ptr(edNode*) pHierNode;
+	strd_ptr(ed_3d_hierarchy_node*) pHierNodeData;
 	int pHierAnimStream; // S_HIERANM_ANIM
 	uint nodeChunkCount;
 	float field_0x10;
@@ -343,15 +346,15 @@ struct ed_g3d_hierarchy
 	byte field_0x88;
 	byte field_0x89;
 	ushort bRenderShadow;
-	uint pShadowAnimMatrix; // edF32MATRIX4*
-	int pLinkTransformData; // ed_3d_hierarchy*
-	int field_0x94; // undefined*
-	int pTextureInfo; // undefined*
+	strd_ptr(edF32MATRIX4*) pShadowAnimMatrix;
+	strd_ptr(ed_3d_hierarchy*) pLinkTransformData;
+	strd_ptr(undefined*) field_0x94;
+	strd_ptr(undefined*) pTextureInfo;
 	ushort lodCount;
 	ushort flags_0x9e;
-	int pHierarchySetup; // ed_3d_hierarchy_setup*
-	int pMatrixPkt; // edpkt_data*
-	int pAnimMatrix; // edF32MATRIX4*
+	strd_ptr(ed_3d_hierarchy_setup*) pHierarchySetup;
+	strd_ptr(edpkt_data*) pMatrixPkt;
+	strd_ptr(edF32MATRIX4*) pAnimMatrix;
 	short subMeshParentCount_0xac;
 	byte desiredLod;
 	char GlobalAlhaON;
@@ -416,8 +419,8 @@ PACK(
 	byte nbLayers;
 	undefined field_0x1;
 	ushort flags;
-	int pDMA_Material; // ed_dma_material*
-	int pCommandBufferTexture; // RenderCommand*
+	strd_ptr(ed_dma_material*) pDMA_Material;
+	strd_ptr(RenderCommand*) pCommandBufferTexture;
 	int commandBufferTextureSize;
 	int aLayers[4]; // ed_Chunck*[4] (ed_g2d_layer chunks)
 });
@@ -455,7 +458,7 @@ PACK(
 	byte field_0x1b;
 	short bHasTexture;
 	ushort paletteId;
-	int pTex; // ed_Chunck*
+	strd_ptr(ed_Chunck*) pTex;
 });
 
 
@@ -464,16 +467,16 @@ PACK(struct ed_g2d_bitmap {
 	ushort height;
 	ushort psm;
 	ushort maxMipLevel;
-	int pPSX2; //edpkt_data*
+	strd_ptr(edpkt_data*) pPSX2;
 });
 
 PACK(
 	struct ed_g2d_texture {
 	ed_hash_code hashCode;
 	int bHasPalette;
-	int pAnimSpeedNormalExtruder; //edF32VECTOR4*
+	strd_ptr(edF32VECTOR4*) pAnimSpeedNormalExtruder;
 	float animSTMaxDist;
-	int pAnimChunck; //ed_Chunck*
+	strd_ptr(ed_Chunck*) pAnimChunck;
 });
 
 struct ed_dma_material {
@@ -590,19 +593,19 @@ struct ed_3d_strip
 	short materialIndex;
 	short cachedIncPacket;
 	int vifListOffset;
-	int pNext; // ed_3d_strip*
+	strd_ptr(ed_3d_strip*) pNext;
 	edF32VECTOR4 boundingSphere;
-	int pSTBuf; // char*
-	int pColorBuf; // _rgba*
-	int pVertexBuf; // edVertex*
-	int pNormalBuf; // char*
+	strd_ptr(char*) pSTBuf;
+	strd_ptr(_rgba*) pColorBuf;
+	strd_ptr(edVertex*) pVertexBuf;
+	strd_ptr(char*) pNormalBuf;
 	short shadowCastFlags;
 	short shadowReceiveFlags;
 	DMA_Matrix pDMA_Matrix; // ed_dma_matrix*
 	byte field_0x38;
 	byte primListIndex;
 	short meshCount;
-	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
+	strd_ptr(ed_Bound_Sphere_packet*) pBoundSpherePkt;
 };
 
 static_assert(sizeof(ed_3d_strip) == 0x40, "Invalid ed_3d_strip size");
@@ -614,12 +617,12 @@ struct ed_3d_sprite
 	short materialIndex;
 	short field_0x6;
 	int offsetA;
-	int pNext; // ed_3d_sprite*
+	strd_ptr(ed_3d_sprite*) pNext;
 	edF32VECTOR4 boundingSphere;
-	int pSTBuf; // short*
-	int pColorBuf; // _rgba*
-	int pVertexBuf; // edVertex*
-	int pWHBuf; // short*
+	strd_ptr(short*) pSTBuf;
+	strd_ptr(_rgba*) pColorBuf;
+	strd_ptr(edVertex*) pVertexBuf;
+	strd_ptr(short*) pWHBuf;
 	short bUseShadowMatrix_0x30;
 	ushort field_0x32;
 	ushort pRenderFrame30;

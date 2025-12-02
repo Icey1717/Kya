@@ -62,6 +62,9 @@
 #define WOLFEN_STATE_BOMB_ORIENT_TO 0xa4
 #define WOLFEN_STATE_BOMB_SHOOT 0xa5
 
+#define WOLFEN_STATE_TRACK_FIND_POSITION 0xa9
+#define WOLFEN_STATE_TRACK_GO_TO_POSITION 0xaa
+
 #define WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION 0xab
 
 struct S_STREAM_EVENT_CAMERA;
@@ -177,6 +180,8 @@ public:
 	}
 
 	bool FUN_003c38c0(CActorWolfen* pWolfen);
+	void FUN_003c39a0(CActorWolfen* pWolfen, edF32VECTOR4* param_3);
+	edF32VECTOR4* FUN_003c3940(CActorWolfen* pWolfen);
 
 	int GetState_003c37c0(CActorWolfen* pActor);
 
@@ -184,6 +189,9 @@ public:
 	float field_0x4;
 
 	EEnemyCombatMode combatMode;
+
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
 
 	int field_0x34;
 };
@@ -916,10 +924,14 @@ public:
 	void WaitingAnimation_Defend();
 	void WaitingAnimation_Guard();
 
+	bool ComputeFindPosition(float param_1, float param_2, edF32VECTOR4* pOutFindPosition);
+
 	void StateStandGuard();
 	void StateTrackWeaponStandDefend(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponStandFire(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackGoToPosition(CBehaviourWolfen* pBehaviour);
+	void StateTrackFindPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);
@@ -935,8 +947,8 @@ public:
 	void StateWolfenBombShoot(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBombOrientTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBombWalkTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenBombStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenBombFlip(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombStand(CBehaviourWolfen* pBehaviour);
+	void StateWolfenBombFlip(CBehaviourWolfen* pBehaviour);
 	void StateWolfenInsultEnd(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsultReceive(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsultStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
@@ -1158,6 +1170,45 @@ bool CNotificationTargetArray<T>::FUN_003c38c0(CActorWolfen* pWolfen)
 	}
 
 	return bVar2;
+}
+
+template<typename T>
+inline void CNotificationTargetArray<T>::FUN_003c39a0(CActorWolfen* pWolfen, edF32VECTOR4* param_3)
+{
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+	CActor* pTiedActor;
+
+	pTiedActor = pWolfen->pTiedActor;
+	if (pTiedActor == (CActor*)0x0) {
+		this->field_0x10 = *param_3;
+	}
+	else {
+		pTiedActor->SV_ComputeDiffMatrixFromInit(&eStack64);
+		edF32Matrix4GetInverseOrthoHard(&eStack128, &eStack64);
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack128, param_3);
+	}
+
+	return;
+}
+
+template<typename T>
+inline edF32VECTOR4* CNotificationTargetArray<T>::FUN_003c3940(CActorWolfen* pWolfen)
+{
+	edF32VECTOR4* peVar1;
+	edF32MATRIX4 eStack64;
+	CActor* pTiedToActor;
+
+	pTiedToActor = pWolfen->pTiedActor;
+	peVar1 = &this->field_0x10;
+
+	if (pTiedToActor != (CActor*)0x0) {
+		pTiedToActor->SV_ComputeDiffMatrixFromInit(&eStack64);
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x20, &eStack64, &this->field_0x10);
+		peVar1 = &this->field_0x20;
+	}
+
+	return peVar1;
 }
 
 template<typename T>

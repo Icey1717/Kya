@@ -50,6 +50,8 @@ set(SOURCES
 	"src/DebugSaveLoad.cpp"
 	"src/DebugTutorial.h"
 	"src/DebugTutorial.cpp"
+	"src/DebugInput.h"
+	"src/DebugInput.cpp"
 	"src/DebugWolfen.h"
 	"src/DebugWolfen.cpp"
 	"src/DebugRendererVulkan.cpp"
@@ -72,7 +74,7 @@ add_subdirectory("ext/magic_enum")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("ext/json")
 
-target_link_libraries(${TargetName} PRIVATE Renderer Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json glm)
+target_link_libraries(${TargetName} PRIVATE Renderer Port Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json glm)
 
 target_include_directories(${TargetName} PUBLIC "include")
 target_include_directories(${TargetName} PRIVATE "src")

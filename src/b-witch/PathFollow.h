@@ -11,6 +11,7 @@ public:
 	CPathFollow();
 
 	virtual void Create(ByteCode* pByteCode);
+	virtual edF32VECTOR4* GetGoal();
 
 	void ComputeMatrix(edF32MATRIX4* pMatrix, int param_3);
 
@@ -132,9 +133,12 @@ public:
 
 	int GetNbPathPlane();
 	CPathPlane* GetCurPathPlane();
+	CPathPlane* GetPathPlane(int index);
 
 	void NextWayPoint();
 	int AtGoal();
+
+	bool FUN_001bffd0();
 
 	void InitPosition(edF32VECTOR4* pPosition);
 

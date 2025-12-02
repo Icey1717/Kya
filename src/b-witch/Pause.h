@@ -18,6 +18,11 @@
 #define MENU_STATE_EXIT 3
 #define MENU_STATE_IDLE 4
 
+#define MENU_INPUT_UP 1
+#define MENU_INPUT_DOWN 2
+#define MENU_INPUT_CONFIRM 5
+#define MENU_INPUT_CANCEL 8
+
 typedef enum EPauseMenu
 {
 	PM_Bonus = 13,
@@ -39,10 +44,11 @@ typedef void(*ActionFuncPtr)(int);
 
 uint DrawGameMenu(CSimpleMenu* pMenu, uint input);
 
-struct HistoryEntry {
+struct HistoryEntry
+{
 	int currentPage;
-	int selectedIndex;
-	undefined4 field_0x8;
+	int defaultSelectedIndex;
+	int nbMaxItemsForMenu;
 };
 
 struct CSimpleMenu {
@@ -111,7 +117,7 @@ public:
 	byte bShadow;
 	undefined field_0x2a;
 	undefined field_0x2b;
-	int field_0x2c;
+	int nbHistoryItems;
 	int horizontalPos;
 	int verticalPos;
 	int horizontalAllignment;
@@ -120,7 +126,7 @@ public:
 	int slotID_0x44;
 	enum EPauseMenu currentPage;
 	int selectedIndex;
-	int field_0x50;
+	int nbMaxItemsForMenu;
 	
 	HistoryEntry aHistory[10];
 

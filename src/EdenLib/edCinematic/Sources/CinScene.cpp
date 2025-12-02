@@ -855,21 +855,26 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 			animatedProperty = edAnimatedProperty(pAnimProp);
 
 			if (currentTrackType == 0x73d8ccae) {
-				IMPLEMENTATION_GUARD(
-				locationOutVector.w = (float)(trackSeekPos + 3);
+				edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+				edAnmSubControler anmSubController = edAnmSubControler(pSubControllerTag);
+				float* pKeyTimes = pSubControllerTag->keyTimes;
 				local_1c = 0;
-				if ((float)trackSeekPos[4] <= currentPlayTime) {
-					currentKeyframePtr =
-						edAnmSubControler::GetClosestKeyIndexSafe
-						(currentPlayTime, (edAnmSubControler*)&locationOutVector.w, &local_1c);
-					pTrackDataStart =
-						(int*)((int)animatedProperty + 0xc) +
-						(uint) * (ushort*)((int)animatedProperty + 0xc) + local_1c * 2;
-					local_98 = pTrackDataStart[1];
-					local_94 = resCollection->pData[pTrackDataStart[1]].pData;
-					local_90 = pTrackDataStart[2];
-					(*(code*)pCinActorInterface->vt->SetMessage)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
-				})
+				if (pKeyTimes[0] <= currentPlayTime) {
+					currentKeyframePtr = anmSubController.GetClosestKeyIndexSafe(currentPlayTime, &local_1c);
+					edCinActorInterface::MESSAGE_PARAMStag messageParams;
+
+					struct MessageTagData
+					{
+						int field_0x0;
+						float field_0x4;
+					};
+
+					MessageTagData* pMessageTagData = reinterpret_cast<MessageTagData*>(pSubControllerTag->keyTimes + pSubControllerTag->keyCount);
+					messageParams.field_0x0 = pMessageTagData->field_0x0;
+					messageParams.field_0x4 = resCollection.pData->aTags[pMessageTagData->field_0x0].pData;
+					messageParams.field_0x8 = pMessageTagData->field_0x4;
+					pCinActorInterface->SetMessage(currentPlayTime - *currentKeyframePtr, &messageParams);
+				}
 			}
 			else {
 				if (currentTrackType == 0xd9cee9bc) {

@@ -239,33 +239,16 @@ void Lerp_Manage(ActiveCamManagerEntry* pTarget, ActiveCamManagerEntry* pSource)
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
 		pCVar2 = pTarget->pCamera;
-		fVar7 = (pCVar2->lookAt).y;
-		fVar8 = (pCVar2->lookAt).z;
-		fVar6 = (pCVar2->lookAt).w;
-		(pTarget->lookAt).x = (pCVar2->lookAt).x;
-		(pTarget->lookAt).y = fVar7;
-		(pTarget->lookAt).z = fVar8;
-		(pTarget->lookAt).w = fVar6;
-		pCVar2 = pTarget->pCamera;
-		fVar7 = (pCVar2->transformationMatrix).db;
-		fVar8 = (pCVar2->transformationMatrix).dc;
-		fVar6 = (pCVar2->transformationMatrix).dd;
-		(pTarget->location).x = (pCVar2->transformationMatrix).da;
-		(pTarget->location).y = fVar7;
-		(pTarget->location).z = fVar8;
-		(pTarget->location).w = fVar6;
-		fVar8 = (*((pTarget->pCamera->objBase).pVTable)->GetDistance)();
-		pTarget->distance = fVar8;
-		pTarget->fov = pTarget->pCamera->fov;
-		fVar8 = (*((pTarget->pCamera->objBase).pVTable)->GetAngleAlpha)();
-		pTarget->alpha = fVar8;
-		fVar8 = (*((pTarget->pCamera->objBase).pVTable)->GetAngleBeta)();
-		pTarget->beta = fVar8;
-		fVar8 = (*((pTarget->pCamera->objBase).pVTable)->GetAngleGamma)();
-		pTarget->gamma = fVar8;)
+		pTarget->props.lookAt = pCVar2->lookAt;
+		pTarget->props.location = (pCVar2->transformationMatrix).rowT;
+		pTarget->props.distance = pTarget->pCamera->GetDistance();
+		pTarget->props.fov = pTarget->pCamera->fov;
+		pTarget->props.alpha = pTarget->pCamera->GetAngleAlpha();
+		pTarget->props.beta = pTarget->pCamera->GetAngleBeta();
+		pTarget->props.gamma = pTarget->pCamera->GetAngleGamma();
 	}
+
 	return;
 }
 

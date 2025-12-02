@@ -21,7 +21,7 @@ struct s_track_event {
 	uint field_0x10;
 	undefined4 field_0x14;
 	int field_0x18;
-	int field_0x1c; //int*
+	strd_ptr(int*) field_0x1c;
 	int field_0x20;
 });
 

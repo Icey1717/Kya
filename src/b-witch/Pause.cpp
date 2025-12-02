@@ -796,7 +796,7 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 
 	//PauseDrawInterface(bShowLevelSwitchUI);
 
-	if (pPauseMenu->lastInput_0x14 == 8) {
+	if (pPauseMenu->lastInput_0x14 == MENU_INPUT_CANCEL) {
 		ResumeGame(0);
 	}
 
@@ -1462,10 +1462,10 @@ void CSimpleMenu::reset()
 {
 	Timer* pTVar1;
 
-	this->field_0x2c = 0;
+	this->nbHistoryItems = 0;
 	this->currentPage = PM_MainMenu;
 	this->selectedIndex = 0;
-	this->field_0x50 = 3;
+	this->nbMaxItemsForMenu = 3;
 	this->screenState_0x1c = MENU_STATE_APPEAR;
 	pTVar1 = GetTimer();
 	this->totalTime = pTVar1->totalTime;
@@ -1756,7 +1756,7 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseM
 		}
 
 		if (this->screenState_0x1c == MENU_STATE_SELECT) {
-			if (this->lastInput_0x14 == 5) {
+			if (this->lastInput_0x14 == MENU_INPUT_CONFIRM) {
 				this->screenState_0x1c = MENU_STATE_DISAPPEAR;
 				pTVar1 = Timer::GetTimer();
 				this->totalTime = pTVar1->totalTime;
@@ -1772,17 +1772,17 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseM
 			if (this->screenState_0x1c == MENU_STATE_EXIT) {
 				if (mode == PM_None) {
 					IMPLEMENTATION_GUARD(
-					this->field_0x2c = this->field_0x2c + -1;
-					ppSVar3 = &this->pVTable + this->field_0x2c * 3;
+					this->nbHistoryItems = this->nbHistoryItems + -1;
+					ppSVar3 = &this->pVTable + this->nbHistoryItems * 3;
 					this->currentPage = (EPauseMenu)ppSVar3[0x15];
 					this->selectedIndex = (int)ppSVar3[0x16];
-					this->field_0x50 = (int)ppSVar3[0x17];)
+					this->nbMaxItemsForMenu = (int)ppSVar3[0x17];)
 				}
 				else {
-					this->aHistory[this->field_0x2c].currentPage = this->currentPage;
-					this->aHistory[this->field_0x2c].selectedIndex = this->selectedIndex;
-					this->aHistory[this->field_0x2c].field_0x8 = this->field_0x50;
-					this->field_0x2c = this->field_0x2c + 1;
+					this->aHistory[this->nbHistoryItems].currentPage = this->currentPage;
+					this->aHistory[this->nbHistoryItems].defaultSelectedIndex = this->selectedIndex;
+					this->aHistory[this->nbHistoryItems].nbMaxItemsForMenu = this->nbMaxItemsForMenu;
+					this->nbHistoryItems = this->nbHistoryItems + 1;
 					this->currentPage = mode;
 					this->selectedIndex = param_5;
 				}
@@ -1829,7 +1829,7 @@ bool CSimpleMenu::draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int p
 		return false;
 	}
 	if (this->screenState_0x1c == MENU_STATE_SELECT) {
-		if (this->lastInput_0x14 == 5) {
+		if (this->lastInput_0x14 == MENU_INPUT_CONFIRM) {
 			this->screenState_0x1c = MENU_STATE_DISAPPEAR;
 			this->totalTime = Timer::GetTimer()->totalTime;
 			on_validate();
@@ -1856,19 +1856,19 @@ bool CSimpleMenu::draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int p
 			}
 
 			if (param_5 == -1) {
-				this->field_0x2c = this->field_0x2c + -1;
-				pHVar3 = this->aHistory + this->field_0x2c + -7;
+				this->nbHistoryItems = this->nbHistoryItems + -1;
+				pHVar3 = this->aHistory + this->nbHistoryItems + -7;
 				this->currentPage = (EPauseMenu)pHVar3[7].currentPage;
-				this->selectedIndex = pHVar3[7].selectedIndex;
-				this->field_0x50 = pHVar3[7].field_0x8;
+				this->selectedIndex = pHVar3[7].defaultSelectedIndex;
+				this->nbMaxItemsForMenu = pHVar3[7].nbMaxItemsForMenu;
 			}
 			else {
 				/* pop page? */
-				pHVar3 = this->aHistory + this->field_0x2c + -7;
+				pHVar3 = this->aHistory + this->nbHistoryItems + -7;
 				pHVar3[7].currentPage = this->currentPage;
-				pHVar3[7].selectedIndex = this->selectedIndex;
-				pHVar3[7].field_0x8 = this->field_0x50;
-				this->field_0x2c = this->field_0x2c + 1;
+				pHVar3[7].defaultSelectedIndex = this->selectedIndex;
+				pHVar3[7].nbMaxItemsForMenu = this->nbMaxItemsForMenu;
+				this->nbHistoryItems = this->nbHistoryItems + 1;
 				this->currentPage = (EPauseMenu)param_5;
 				this->selectedIndex = 0;
 			}
@@ -1944,41 +1944,42 @@ void CSimpleMenu::perform_action()
 // Should be in: D:/Projects/b-witch/MenuElements.cpp
 uint CSimpleMenu::get_action()
 {
-	uint uVar1;
+	uint inputState;
 
-	uVar1 = 0;
+	inputState = 0;
 
 	if (this->screenState_0x1c == MENU_STATE_SELECT) {
 		if (((gPlayerInput.pressedBitfield & 0x100000) == 0) && ((gPlayerInput.pressedBitfield & 4) == 0)) {
 			if (((gPlayerInput.pressedBitfield & 0x200000) == 0) && ((gPlayerInput.pressedBitfield & 8) == 0)) {
 				if (((gPlayerInput.pressedBitfield & 0x400000) == 0) && ((gPlayerInput.pressedBitfield & 1) == 0)) {
 					if (((gPlayerInput.pressedBitfield & 0x800000) == 0) && ((gPlayerInput.pressedBitfield & 2) == 0)) {
-						uVar1 = 5;
+						inputState = MENU_INPUT_CONFIRM;
 
 						if (((((gPlayerInput.pressedBitfield & 0x1000000) == 0) &&
-							(uVar1 = 8, (gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) == 0)) &&
-							(uVar1 = 6, (gPlayerInput.pressedBitfield & 0x20) == 0)) &&
-							(uVar1 = 7, (gPlayerInput.pressedBitfield & 0x40) == 0)) {
-							uVar1 = 0;
+							(inputState = MENU_INPUT_CANCEL, (gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) == 0)) &&
+							(inputState = 6, (gPlayerInput.pressedBitfield & 0x20) == 0)) &&
+							(inputState = 7, (gPlayerInput.pressedBitfield & 0x40) == 0)) {
+							inputState = 0;
 						}
 					}
 					else {
-						uVar1 = 4;
+						inputState = 4;
 					}
 				}
 				else {
-					uVar1 = 3;
+					inputState = 3;
 				}
 			}
 			else {
-				uVar1 = 2;
+				inputState = MENU_INPUT_DOWN;
 			}
 		}
 		else {
-			uVar1 = 1;
+			inputState = MENU_INPUT_UP;
 		}
 	}
-	return uVar1;
+
+	return inputState;
 }
 
 void CSimpleMenu::draw_title(ulong msgHash, int offset)
@@ -2483,48 +2484,52 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 
 void CSimpleMenu::update_page()
 {
-	uint uVar1;
+	uint inputState;
 	//SimpleMenuVTable** ppSVar2;
 
-	this->field_0x50 = this->field_0x20;
-	uVar1 = this->lastInput_0x14;
-	if (uVar1 == 8) {
-		if (this->field_0x2c != 0) {
-			this->field_0x2c = this->field_0x2c + -1;
-			HistoryEntry* pHVar2 = this->aHistory + this->field_0x2c;
-			this->currentPage = (EPauseMenu)pHVar2->currentPage;
-			this->selectedIndex = pHVar2->selectedIndex;
-			this->field_0x50 = pHVar2->field_0x8;
+	this->nbMaxItemsForMenu = this->field_0x20;
+	inputState = this->lastInput_0x14;
+
+	if (inputState == MENU_INPUT_CANCEL) {
+		if (this->nbHistoryItems != 0) {
+			this->nbHistoryItems = this->nbHistoryItems + -1;
+			HistoryEntry* pHistoryEntry = this->aHistory + this->nbHistoryItems;
+			this->currentPage = (EPauseMenu)pHistoryEntry->currentPage;
+			this->selectedIndex = pHistoryEntry->defaultSelectedIndex;
+			this->nbMaxItemsForMenu = pHistoryEntry->nbMaxItemsForMenu;
 
 			on_cancel();
 		}
 	}
 	else {
-		if (uVar1 == 2) {
-			if (this->field_0x50 != 0) {
+		if (inputState == MENU_INPUT_DOWN) {
+			if (this->nbMaxItemsForMenu != 0) {
 				this->selectedIndex = this->selectedIndex + 1;
-				if (this->selectedIndex == this->field_0x50) {
+
+				if (this->selectedIndex == this->nbMaxItemsForMenu) {
 					this->selectedIndex = 0;
 				}
 
-				if (1 < this->field_0x50) {
+				if (1 < this->nbMaxItemsForMenu) {
 					on_change_selection();
 				}
 			}
 		}
 		else {
-			if ((uVar1 == 1) && (this->field_0x50 != 0)) {
+			if ((inputState == MENU_INPUT_UP) && (this->nbMaxItemsForMenu != 0)) {
 				this->selectedIndex = this->selectedIndex + -1;
+
 				if (this->selectedIndex < 0) {
-					this->selectedIndex = this->field_0x50 + -1;
+					this->selectedIndex = this->nbMaxItemsForMenu + -1;
 				}
 
-				if (1 < this->field_0x50) {
+				if (1 < this->nbMaxItemsForMenu) {
 					on_change_selection();
 				}
 			}
 		}
 	}
+
 	return;
 }
 
@@ -2542,11 +2547,11 @@ void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 	this->scaleX = 1.0f;
 	this->scaleY = 1.0f;
 	this->bShadow = 1;
-	state = this->field_0x2c;
+	state = this->nbHistoryItems;
 	this->pFunc_0x40 = 0;
 	this->slotID_0x44 = 0;
 	this->lastInput_0x14 = get_action();
-	if ((state == this->field_0x2c) && (pInputFunc(this, this->lastInput_0x14) != false)) {
+	if ((state == this->nbHistoryItems) && (pInputFunc(this, this->lastInput_0x14) != false)) {
 		update_page();
 	}
 
@@ -2629,11 +2634,11 @@ void CSimpleMenu::pop_page()
 {
 	HistoryEntry* pHVar1;
 
-	this->field_0x2c = this->field_0x2c + -1;
-	pHVar1 = this->aHistory + this->field_0x2c + -7;
+	this->nbHistoryItems = this->nbHistoryItems + -1;
+	pHVar1 = this->aHistory + this->nbHistoryItems + -7;
 	this->currentPage = (EPauseMenu)pHVar1[7].currentPage;
-	this->selectedIndex = pHVar1[7].selectedIndex;
-	this->field_0x50 = pHVar1[7].field_0x8;
+	this->selectedIndex = pHVar1[7].defaultSelectedIndex;
+	this->nbMaxItemsForMenu = pHVar1[7].nbMaxItemsForMenu;
 
 	return;
 }

@@ -8,6 +8,12 @@ char gFilePath[8];
 void StaticEdFileBase::Remove()
 {
 	this->field_0x4 = this->field_0x4 + -1;
+
+	// HACK
+	if (this->field_0x4 < 0) {
+		this->field_0x4 = 0;
+	}
+
 	return;
 }
 

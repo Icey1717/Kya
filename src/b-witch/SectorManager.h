@@ -17,8 +17,8 @@ struct ByteCode;
 
 struct S_HIERANM_HIER
 {
-	int pNode; // edNODE*
-	int p3dHierarchy; // ed_3d_hierarchy*
+	strd_ptr(edNODE*) pNode;
+	strd_ptr(ed_3d_hierarchy*) p3dHierarchy;
 	int field_0x8;
 	undefined4 field_0xc;
 	edF32VECTOR4 field_0x10;

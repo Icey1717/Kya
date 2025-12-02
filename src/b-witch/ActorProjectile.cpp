@@ -377,7 +377,7 @@ void CActorProjectile::ChangeManageState(int state)
 	}
 	else {
 		if (((iVar1 == 3) &&
-			(pBehaviourStand = reinterpret_cast<CBehaviourProjectileStand*>(GetBehaviour(this->curBehaviourId)), state == 0)) && ((pBehaviourStand->field_0x4 == 3 || (pBehaviourStand->field_0x4 == 9)))) {
+			(pBehaviourStand = reinterpret_cast<CBehaviourProjectileStand*>(GetBehaviour(this->curBehaviourId)), state == 0)) && ((pBehaviourStand->behaviourId == PROJECTILE_BEHAVIOUR_STAND || (pBehaviourStand->behaviourId == PROJECTILE_BEHAVIOUR_INVENTORY)))) {
 			pProjectile = pBehaviourStand->pOwner;
 
 			StopAllFx();
@@ -933,7 +933,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 							CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
 						}
 						else {
-							StateDie(uVar9, pBehaviourStand->field_0xc, pBehaviourStand->field_0x4);
+							StateDie(uVar9, pBehaviourStand->field_0xc, pBehaviourStand->behaviourId);
 						}
 					}
 					else {
@@ -1020,7 +1020,7 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 
 LAB_00208f00:
 	if (this->actorState == 0x1e) {
-		SetBehaviour(pBehaviourStand->field_0x4, -1, -1);
+		SetBehaviour(pBehaviourStand->behaviourId, -1, -1);
 	}
 	return;
 }
@@ -1965,7 +1965,7 @@ void CActorProjectile::StopAllFx()
 
 void CBehaviourProjectile::Create(ByteCode* pByteCode)
 {
-	this->field_0x4 = pByteCode->GetS32();
+	this->behaviourId = pByteCode->GetS32();
 
 	return;
 }
@@ -2043,7 +2043,7 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 	int iVar3;
 	CFxSparkNoAlloc<3, 12>* pAVar4;
 
-	this->field_0x4 = pByteCode->GetS32();
+	this->behaviourId = pByteCode->GetS32();
 	this->field_0xc = pByteCode->GetS32();
 	this->materialId = pByteCode->GetS32();
 	if (this->field_0xc == 2) {
@@ -2146,7 +2146,7 @@ void CBehaviourProjectileStand::TermState(int oldState, int newState)
 
 void CBehaviourProjectileStraight::Create(ByteCode* pByteCode)
 {
-	this->field_0x4 = pByteCode->GetS32();
+	this->behaviourId = pByteCode->GetS32();
 	this->field_0xc = pByteCode->GetS32();
 	this->field_0x10 = pByteCode->GetF32();
 	this->field_0x14 = pByteCode->GetF32();
@@ -2187,7 +2187,7 @@ void CBehaviourProjectileStraight::TermState(int oldState, int newState)
 
 void CBehaviourProjectileExcuse::Create(ByteCode* pByteCode)
 {
-	this->field_0x4 = pByteCode->GetS32();
+	this->behaviourId = pByteCode->GetS32();
 	this->field_0xc = pByteCode->GetU32();
 	this->actorRef.index = pByteCode->GetS32();
 
@@ -2217,7 +2217,7 @@ void CBehaviourProjectileExcuse::Begin(CActor* pOwner, int newState, int newAnim
 
 void CBehaviourProjectilePortable::Create(ByteCode* pByteCode)
 {
-	this->field_0x4 = pByteCode->GetS32();
+	this->behaviourId = pByteCode->GetS32();
 	this->field_0xc = pByteCode->GetU32();
 	this->field_0x10 = pByteCode->GetF32();
 
@@ -2300,7 +2300,27 @@ void CBehaviourProjectileNew::Init(CActor* pOwner)
 
 void CBehaviourProjectileNew::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4* peVar4;
+	CActorProjectile* pProjectile;
+
+	if (this->pOwner->actorState == 4) {
+		peVar4 = CActorHero::_gThis->GetPosition_00369c80();
+		pProjectile = this->pOwner;
+		fVar1 = peVar4->x - pProjectile->currentLocation.x;
+		fVar2 = peVar4->y - pProjectile->currentLocation.y;
+		fVar3 = peVar4->z - pProjectile->currentLocation.z;
+		if (fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 < 4.0f) {
+			pProjectile = this->pOwner;
+			pProjectile->SetBehaviour(this->behaviourId, -1, -1);
+			pProjectile = this->pOwner;
+			pProjectile->DoMessage(pProjectile, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)7);
+		}
+	}
+
+	return;
 }
 
 void CBehaviourProjectileNew::Begin(CActor* pOwner, int newState, int newAnimationType)

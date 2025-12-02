@@ -63,7 +63,7 @@ int CVerletBridge::GetMemRequirement(CVerletBridge::Config* pConfig)
 		}
 	}
 
-	return (pConfig->nbLinkConstraints + 1) * sizeof(CLinkConstraint*) + iVar3 * 0x40 + pConfig->nbUnknown * 4 + nbLinkConstraints * sizeof(S_LINK_SUB_OBJ);
+	return (pConfig->nbLinkConstraints + 1) * sizeof(CLinkConstraint*) + iVar3 * 0x40 + pConfig->nbMaxForces * sizeof(CVerletForceGen*) + nbLinkConstraints * sizeof(S_LINK_SUB_OBJ);
 }
 
 CVerletBridge::CVerletBridge()
@@ -77,7 +77,7 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 	edF32VECTOR4* v2;
 	int iVar2;
 	edF32VECTOR4* pfVar3;
-	S_PARTICLE_SUB_OBJ* puVar4;
+	CVParticleInfo* puVar4;
 	edF32VECTOR4* peVar5;
 	edF32VECTOR4* puVar6;
 	int iVar7;
@@ -130,7 +130,7 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 	edF32Vector4SubHard(&eStack16, v1, v2);
 
-	piVar11 = this->linkConstraint.field_0x8;
+	piVar11 = this->linkConstraint.aLinkInfo;
 
 	fVar18 = edF32Vector4GetLengthSoft(&eStack16);
 
@@ -140,9 +140,9 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 	edF32Vector4ScaleHard(1.0f / (float)this->altStepCount, &local_20, &eStack16);
 
-	peVar13 = (edF32VECTOR4*)this->pBridgeMem;
+	peVar13 = this->pBridgeMem;
 	pfVar10 = this->field_0x1c;
-	puVar4 = this->aParticleSubObjs;
+	puVar4 = this->aParticleInfo;
 
 	local_30 = gF32Vector4Zero;
 
@@ -211,7 +211,7 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 			}
 
 			iVar15 = iVar15 + 1;
-			puVar4->field_0x0 = 0.03333334f;
+			puVar4->inverseMass = 0.03333334f;
 			fVar19 = fVar19 + fVar26 / (float)iVar12;
 			pfVar10 = pfVar10 + 1;
 			puVar4 = puVar4 + 1;
@@ -294,7 +294,6 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 	iVar12 = this->altStepCount;
 	iVar15 = 0;
 	if (0 < iVar12) {
-		iVar2 = 0;
 		piVar14 = piVar11;
 
 		do {
@@ -302,16 +301,16 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 			edF32VECTOR4* pVec = this->pBridgeMem;
 
-			piVar14->field_0x0 = iVar15;
-			piVar14->field_0x4 = iVar15 + 1;
+			piVar14->particleIndexA = iVar15;
+			piVar14->particleIndexB = iVar15 + 1;
 
 			if (pvVar8 != (void*)0x0) {
 				edF32Vector4SubHard(&eStack224, pVec + iVar15, pVec + (iVar15 + 1));
 				fVar18 = edF32Vector4DotProductHard(&eStack224, &eStack224);
-				piVar14->field_0x8 = fVar18;
+				piVar14->squaredRestDistance = fVar18;
 			}
 
-			piVar14->field_0x10 = 3;
+			piVar14->iterationCount = 3;
 
 			if (this->field_0x68 == false) {
 				iVar12 = this->altStepCount;
@@ -319,32 +318,32 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 				iVar7 = iVar12 + 2 + iVar15;
 				iVar9 = iVar12 + 1 + iVar15;
 				piVar16 = piVar11 + (iVar15 + iVar12);
-				piVar16->field_0x0 = iVar9;
-				piVar16->field_0x4 = iVar7;
+				piVar16->particleIndexA = iVar9;
+				piVar16->particleIndexB = iVar7;
 
 				if (pvVar8 != (void*)0x0) {
 					edF32Vector4SubHard(&eStack240, pVec + iVar9, pVec + iVar7);
 					fVar18 = edF32Vector4DotProductHard(&eStack240, &eStack240);
-					piVar16->field_0x8 = fVar18;
+					piVar16->squaredRestDistance = fVar18;
 				}
 
-				piVar16->field_0x10 = 3;
+				piVar16->iterationCount = 3;
 
 				if (iVar15 != 0) {
 					iVar12 = this->altStepCount;
 					pvVar8 = this->pBridgeMem;
 					iVar7 = iVar12 + 1 + iVar15;
 					piVar16 = piVar11 + (iVar15 + iVar12 * 2 + -1);
-					piVar16->field_0x0 = iVar15;
-					piVar16->field_0x4 = iVar7;
+					piVar16->particleIndexA = iVar15;
+					piVar16->particleIndexB = iVar7;
 
 					if (pvVar8 != (void*)0x0) {
 						edF32Vector4SubHard(&eStack256, pVec + iVar15, pVec + iVar7);
 						fVar18 = edF32Vector4DotProductHard(&eStack256, &eStack256);
-						piVar16->field_0x8 = fVar18;
+						piVar16->squaredRestDistance = fVar18;
 					}
 
-					piVar16->field_0x10 = 3;
+					piVar16->iterationCount = 3;
 				}
 
 				if (0 < iVar15) {
@@ -354,16 +353,16 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 						iVar7 = iVar12 + 2 + iVar15;
 						pvVar8 = this->pBridgeMem;
 						piVar16 = piVar11 + (iVar15 + iVar12 * 3 + -2);
-						piVar16->field_0x0 = iVar15;
-						piVar16->field_0x4 = iVar7;
+						piVar16->particleIndexA = iVar15;
+						piVar16->particleIndexB = iVar7;
 
 						if (pvVar8 != (void*)0x0) {
 							edF32Vector4SubHard(&eStack272, pVec + iVar15, pVec + iVar7);
 							fVar18 = edF32Vector4DotProductHard(&eStack272, &eStack272);
-							piVar16->field_0x8 = fVar18;
+							piVar16->squaredRestDistance = fVar18;
 						}
 
-						piVar16->field_0x10 = 3;
+						piVar16->iterationCount = 3;
 					}
 				}
 			}
@@ -371,7 +370,6 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 			iVar12 = this->altStepCount;
 			iVar15 = iVar15 + 1;
 			piVar14 = piVar14 + 1;
-			iVar2 = iVar2 + 0x10;
 		} while (iVar15 < iVar12);
 	}
 
@@ -384,97 +382,97 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 			pvVar8 = this->pBridgeMem;
 		}
 
-		edF32VECTOR4* pVec = reinterpret_cast<edF32VECTOR4*>(this->pBridgeMem);
+		edF32VECTOR4* pVec = this->pBridgeMem;
 
 		piVar14 = piVar11 + iVar12;
-		piVar14->field_0x0 = unaff_s7_lo;
-		piVar14->field_0x4 = 1;
+		piVar14->particleIndexA = unaff_s7_lo;
+		piVar14->particleIndexB = 1;
 
 		if (pvVar8 != (void*)0x0) {
 			edF32Vector4SubHard(&eStack288, pVec + unaff_s7_lo, pVec + 1);
 			fVar18 = edF32Vector4DotProductHard(&eStack288, &eStack288);
-			piVar14->field_0x8 = fVar18;
+			piVar14->squaredRestDistance = fVar18;
 		}
 
-		piVar14->field_0x10 = 3;
+		piVar14->iterationCount = 3;
 
 		pvVar8 = this->pBridgeMem;
 		piVar14 = piVar11 + (iVar12 + 1);
 		iVar15 = this->altStepCount + -1;
-		piVar14->field_0x0 = unaff_s7_lo + 1;
-		piVar14->field_0x4 = iVar15;
+		piVar14->particleIndexA = unaff_s7_lo + 1;
+		piVar14->particleIndexB = iVar15;
 
 		if (pvVar8 != (void*)0x0) {
 			edF32Vector4SubHard(&eStack304, pVec + (unaff_s7_lo + 1), pVec + iVar15);
 			fVar18 = edF32Vector4DotProductHard(&eStack304, &eStack304);
-			piVar14->field_0x8 = fVar18;
+			piVar14->squaredRestDistance = fVar18;
 		}
 
-		piVar14->field_0x10 = 3;
+		piVar14->iterationCount = 3;
 
 		if (this->field_0x68 == false) {
 			pvVar8 = this->pBridgeMem;
 			piVar14 = piVar11 + (iVar12 + 2);
 			iVar15 = this->altStepCount + 2;
-			piVar14->field_0x0 = unaff_s7_lo + 2;
-			piVar14->field_0x4 = iVar15;
+			piVar14->particleIndexA = unaff_s7_lo + 2;
+			piVar14->particleIndexB = iVar15;
 			if (pvVar8 != (void*)0x0) {
 				edF32Vector4SubHard(&eStack320, pVec + (unaff_s7_lo + 2), pVec + iVar15);
 				fVar18 = edF32Vector4DotProductHard(&eStack320, &eStack320);
-				piVar14->field_0x8 = fVar18;
+				piVar14->squaredRestDistance = fVar18;
 			}
 
-			piVar14->field_0x10 = 3;
+			piVar14->iterationCount = 3;
 			pvVar8 = this->pBridgeMem;
 			iVar15 = this->altStepCount;
 			piVar11 = piVar11 + (iVar12 + 3);
-			piVar11->field_0x0 = unaff_s7_lo + 3;
-			piVar11->field_0x4 = iVar15 * 2;
+			piVar11->particleIndexA = unaff_s7_lo + 3;
+			piVar11->particleIndexB = iVar15 * 2;
 
 			if (pvVar8 != (void*)0x0) {
 				edF32Vector4SubHard(&eStack336, pVec + (unaff_s7_lo + 3), pVec + iVar15 * 2);
 				fVar18 = edF32Vector4DotProductHard(&eStack336, &eStack336);
-				piVar14->field_0x8 = fVar18;
+				piVar14->squaredRestDistance = fVar18;
 			}
 
-			piVar14->field_0x10 = 3;
+			piVar14->iterationCount = 3;
 		}
 	}
 
 	edF32VECTOR4* pVec = reinterpret_cast<edF32VECTOR4*>(this->pBridgeMem);
 	puVar6 = this->field_0x1c;
 
-	this->aParticleSubObjs[0].field_0x0 = 0.0f;
+	this->aParticleInfo[0].inverseMass = 0.0f;
 	puVar6[0] = pVec[0];
 
 	iVar12 = this->altStepCount;
-	this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
+	this->aParticleInfo[iVar12].inverseMass = 0.0f;
 	puVar6[iVar12] = pVec[iVar12];
 
 	if (this->field_0x69 != false) {
-		this->aParticleSubObjs[unaff_s7_lo].field_0x0 = 0.0f;
+		this->aParticleInfo[unaff_s7_lo].inverseMass = 0.0f;
 		puVar6[unaff_s7_lo] = pVec[unaff_s7_lo];
 
-		this->aParticleSubObjs[unaff_s7_lo + 1].field_0x0 = 0.0f;
+		this->aParticleInfo[unaff_s7_lo + 1].inverseMass = 0.0f;
 		puVar6[unaff_s7_lo + 1] = pVec[unaff_s7_lo + 1];
 	}
 
 	if (this->field_0x68 == false) {
 		iVar12 = this->altStepCount + 1;
 
-		this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
+		this->aParticleInfo[iVar12].inverseMass = 0.0f;
 		puVar6[iVar12] = pVec[iVar12];
 ;
 		iVar12 = this->altStepCount * 2 + 1;
 	
-		this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
+		this->aParticleInfo[iVar12].inverseMass = 0.0f;
 		puVar6[iVar12] = pVec[iVar12];
 
 		if (this->field_0x69 != false) {
-			this->aParticleSubObjs[(unaff_s7_lo + 2)].field_0x0 = 0.0f;
+			this->aParticleInfo[(unaff_s7_lo + 2)].inverseMass = 0.0f;
 			puVar6[unaff_s7_lo + 2] = pVec[unaff_s7_lo + 2];
 
-			this->aParticleSubObjs[(unaff_s7_lo + 3)].field_0x0 = 0.0f;
+			this->aParticleInfo[(unaff_s7_lo + 3)].inverseMass = 0.0f;
 			puVar6[unaff_s7_lo + 3] = pVec[unaff_s7_lo + 3];
 		}
 	}
@@ -517,27 +515,19 @@ void CActorBridge::Create(ByteCode* pByteCode)
 	}
 	this->field_0x164 = pMVar4;
 
-	fVar6 = pByteCode->GetF32();
-	this->field_0x330 = fVar6;
-	fVar6 = pByteCode->GetF32();
-	this->field_0x334 = fVar6;
-	fVar6 = pByteCode->GetF32();
-	this->field_0x33c = fVar6;
-	fVar6 = pByteCode->GetF32();
-	this->field_0x340 = fVar6;
-	fVar6 = pByteCode->GetF32();
-	this->field_0x338 = fVar6;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x344 = uVar5;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x358 = uVar5;
-	iVar3 = pByteCode->GetS32();
-	this->field_0x348 = iVar3;
-	fVar6 = pByteCode->GetF32();
-	this->stepCollisionScale = fVar6;
+	this->field_0x330 = pByteCode->GetF32();
+	this->field_0x334 = pByteCode->GetF32();
+	this->field_0x33c = pByteCode->GetF32();
+	this->field_0x340 = pByteCode->GetF32();
+	this->field_0x338 = pByteCode->GetF32();
+	this->field_0x344 = pByteCode->GetU32();
+	this->bridgeConfigFlags = pByteCode->GetU32();
+	this->field_0x348 = pByteCode->GetS32();
+	this->stepCollisionScale = pByteCode->GetF32();
 
 	//this->field_0x2e0 = 0;
 	//this->field_0x350 = 0;
+
 	return;
 }
 
@@ -596,7 +586,7 @@ void CActorBridge::LoadContext(void* pData, uint mode, uint maxSize)
 	S_SAVE_CLASS_BRIDGE* pSaveData = reinterpret_cast<S_SAVE_CLASS_BRIDGE*>(pData);
 
 	if ((mode == 1) && (this->field_0x354 = pSaveData->field_0x0, this->field_0x354 != -1)) {
-		SetState(6, -1);
+		SetState(BRIDGE_BASIC_STATE_SPLIT, -1);
 	}
 
 	return;
@@ -622,15 +612,34 @@ StateConfig* CActorBridge::GetStateCfg(int state)
 	return pAVar1;
 }
 
+int CActorBridge::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int result;
+
+	if (((msg == 0x10) || (msg == 0xf)) || (msg == 0xe)) {
+		if (this->actorState == BRIDGE_BASIC_STATE_STAND) {
+			this->field_0x354 = (int)pMsgParam;
+			SetState(BRIDGE_BASIC_STATE_SPLIT, -1);
+		}
+
+		result = 1;
+	}
+	else {
+		result = 0;
+	}
+
+	return result;
+}
+
 CBehaviour* CActorBridge::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
 
-	if (behaviourType == 3) {
+	if (behaviourType == BRIDGE_BEHAVIOUR_WIND_AWARE) {
 		pBehaviour = &this->behaviourWindAware;
 	}
 	else {
-		if (behaviourType == 2) {
+		if (behaviourType == BRIDGE_BEHAVIOUR_BASIC) {
 			pBehaviour = &this->behaviourBasic;
 		}
 		else {
@@ -643,7 +652,7 @@ CBehaviour* CActorBridge::BuildBehaviour(int behaviourType)
 void CActorBridge::Initialize()
 {
 	bool bVar1;
-	uint uVar2;
+	uint configFlags;
 	int iVar3;
 	edColPRIM_OBJECT* peVar4;
 	S_ACTOR_STREAM_REF* pSVar5;
@@ -667,7 +676,7 @@ void CActorBridge::Initialize()
 	float fVar19;
 	float fVar20;
 	edF32MATRIX4 local_e0;
-	edF32VECTOR4 local_a0;
+	edF32VECTOR4 gravityForce;
 	edF32VECTOR4 local_90;
 	edF32VECTOR4 local_80;
 	edF32MATRIX4 eStack112;
@@ -694,7 +703,7 @@ void CActorBridge::Initialize()
 	edF32Matrix4MulF32Vector4Hard(&local_90, &eStack112, &local_20);
 	edF32Matrix4MulF32Vector4Hard(&local_80, &eStack112, &local_30);
 
-	uVar2 = this->field_0x358;
+	configFlags = this->bridgeConfigFlags;
 	fVar19 = this->field_0x338;
 	fVar18 = this->field_0x334;
 	fVar20 = this->field_0x330;
@@ -706,16 +715,16 @@ void CActorBridge::Initialize()
 		iVar7 = this->pActorStream->entryCount;
 	}
 
-	this->verletBridgeConfig = CVerletBridge::Config(iVar7, 1, 2, (uVar2 & 1) != 0, (uVar2 & 2) != 0, (uVar2 & 4) != 0, &local_90, &local_80, fVar20, fVar18, fVar19);
+	this->verletBridgeConfig = CVerletBridge::Config(iVar7, 1, 2, (configFlags & 1) != 0, (configFlags & 2) != 0, (configFlags & 4) != 0, &local_90, &local_80, fVar20, fVar18, fVar19);
 
 	this->pBridgeMem = new char[CVerletBridge::GetMemRequirement(&this->verletBridgeConfig)];
 
-	static const edF32VECTOR4 edF32VECTOR4_0040ed60 = { 0.0f, 0.0f, -9.81f, 0.0f };
-	local_a0 = edF32VECTOR4_0040ed60;
+	static const edF32VECTOR4 edF32VECTOR4_0040ed60 = { 0.0f, -9.81f, 0.0f, 0.0f };
+	gravityForce = edF32VECTOR4_0040ed60;
 
-	edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack112, &local_a0);
-	(this->verletBridge).field_0x30 = local_a0;
-	(this->verletBridge).field_0x30.w = 0.0f;
+	edF32Matrix4MulF32Vector4Hard(&gravityForce, &eStack112, &gravityForce);
+	(this->verletBridge).gravityForce = gravityForce;
+	(this->verletBridge).gravityForce.w = 0.0f;
 
 	this->verletBridgeConfig.ComputeNbParticles(&iVar7, &nbSteps);
 	this->verletBridgeConfig.ComputeNbLinks(&piVar12, &piVar8);
@@ -724,54 +733,54 @@ void CActorBridge::Initialize()
 	(this->verletBridge).field_0x68 = (this->verletBridgeConfig).field_0xe;
 	(this->verletBridge).field_0x69 = (this->verletBridgeConfig).field_0xd;
 
-	void* pMem = this->verletBridge.Initialize(pBridgeMem, nbSteps, (this->verletBridgeConfig).nbUnknown, (this->verletBridgeConfig).nbLinkConstraints);
+	void* pMem = this->verletBridge.Initialize(pBridgeMem, nbSteps, (this->verletBridgeConfig).nbMaxForces, (this->verletBridgeConfig).nbLinkConstraints);
 
-	this->verletBridge.field_0x10 = iVar7;
+	this->verletBridge.nbParticleInfo = iVar7;
 
 	(this->verletBridge).linkConstraint.field_0x10 = piVar8;
-	(this->verletBridge).linkConstraint.field_0xc = 0x0;
-	(this->verletBridge).linkConstraint.field_0x8 = (S_LINK_SUB_OBJ*)pMem;
-	(this->verletBridge).linkConstraint.field_0xc = piVar12;
+	(this->verletBridge).linkConstraint.nbLinkInfo = 0x0;
+	(this->verletBridge).linkConstraint.aLinkInfo = (S_LINK_SUB_OBJ*)pMem;
+	(this->verletBridge).linkConstraint.nbLinkInfo = piVar12;
 
 	
-	(this->verletBridge).linkConstraint.field_0x0 = 3;
-	(this->verletBridge).aLinkConstraints[(this->verletBridge).field_0x4] = &(this->verletBridge).linkConstraint;
-	(this->verletBridge).field_0x4 = (this->verletBridge).field_0x4 + 1;
+	(this->verletBridge).linkConstraint.iterationPriority = 3;
+	(this->verletBridge).aVerletConstraints[(this->verletBridge).nbVerletConstraints] = &(this->verletBridge).linkConstraint;
+	(this->verletBridge).nbVerletConstraints = (this->verletBridge).nbVerletConstraints + 1;
 
-	(this->verletBridge).linkConstraint.field_0x0 = this->field_0x344;
+	(this->verletBridge).linkConstraint.iterationPriority = this->field_0x344;
 
-	(this->openBoxConstraint).field_0x30 = 0;
-	(this->openBoxConstraint).field_0x31 = 0;
+	(this->openBoxConstraint).bUseTransform = 0;
+	(this->openBoxConstraint).bEdgeSliding = 0;
 
-	(this->openBoxConstraint).field_0x40 = gF32Matrix4Unit;
+	(this->openBoxConstraint).transformMatrix = gF32Matrix4Unit;
 
-	(this->openBoxConstraint).field_0x10.x = -0.5f;
-	(this->openBoxConstraint).field_0x10.y = -0.5f;
-	(this->openBoxConstraint).field_0x10.z = -0.5f;
-	(this->openBoxConstraint).field_0x10.w = 0.0f;
+	(this->openBoxConstraint).minBounds.x = -0.5f;
+	(this->openBoxConstraint).minBounds.y = -0.5f;
+	(this->openBoxConstraint).minBounds.z = -0.5f;
+	(this->openBoxConstraint).minBounds.w = 0.0f;
 
-	(this->openBoxConstraint).field_0x20.x = 0.5f;
-	(this->openBoxConstraint).field_0x20.y = 0.5f;
-	(this->openBoxConstraint).field_0x20.z = 0.5f;
-	(this->openBoxConstraint).field_0x20.w = 0.0f;
+	(this->openBoxConstraint).maxBounds.x = 0.5f;
+	(this->openBoxConstraint).maxBounds.y = 0.5f;
+	(this->openBoxConstraint).maxBounds.z = 0.5f;
+	(this->openBoxConstraint).maxBounds.w = 0.0f;
 
-	(this->openBoxConstraint).field_0x31 = 0;
+	(this->openBoxConstraint).bEdgeSliding = 0;
 
 	pCVar6 = CScene::ptable.g_EventManager_006f5080;
-	uVar2 = this->field_0x348;
-	if (-1 < (int)uVar2) {
+	configFlags = this->field_0x348;
+	if (-1 < (int)configFlags) {
 		peVar9 = (ed_zone_3d*)0x0;
-		if (uVar2 != 0xffffffff) {
-			peVar9 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, uVar2);
+		if (configFlags != 0xffffffff) {
+			peVar9 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, configFlags);
 		}
 
 		peVar10 = edEventGetChunkZonePrimitive(pCVar6->activeChunkId, peVar9, 0, &eStack4);
 		edF32Matrix4MulF32Matrix4Hard(&local_e0, &this->field_0x2f0, peVar10);
 
-		(this->openBoxConstraint).field_0x30 = 1;
-		(this->openBoxConstraint).field_0x40 = local_e0;
+		(this->openBoxConstraint).bUseTransform = 1;
+		(this->openBoxConstraint).transformMatrix = local_e0;
 
-		edF32Matrix4GetInverseGaussSoft(&(this->openBoxConstraint).field_0x80, &(this->openBoxConstraint).field_0x40);
+		edF32Matrix4GetInverseGaussSoft(&(this->openBoxConstraint).inverseTransformMatrix, &(this->openBoxConstraint).transformMatrix);
 	}
 
 
@@ -896,38 +905,37 @@ void CActorBridge::BehaviourManage(byte param_2, CWindForce* pWindForce)
 	undefined4 local_44;
 	edF32MATRIX4 auStack64;
 
-	//*(int*)this->verletBridge.field_0x0 = &(this->verletBridge).field_0x50;
-	this->verletBridge.field_0x4 = 1;
-	iVar5 = this->actorState;
-	if (((iVar5 == 6) || (iVar5 == 7)) && (this->field_0x348 != -1)) {
-		(this->openBoxConstraint).field_0x31 = 0;
+	this->verletBridge.aVerletConstraints[0] = &(this->verletBridge).linkConstraint;
+	this->verletBridge.nbVerletConstraints = 1;
 
-		//((this->verletBridge.field_0x0)->linkConstraint).pVTable = (CLinkConstraintVTable*)&this->openBoxConstraint;
-		this->verletBridge.field_0x4 = 2;
+	iVar5 = this->actorState;
+	if (((iVar5 == BRIDGE_BASIC_STATE_SPLIT) || (iVar5 == 7)) && (this->field_0x348 != -1)) {
+		(this->openBoxConstraint).bEdgeSliding = 0;
+
+		this->verletBridge.aVerletConstraints[1] = &this->openBoxConstraint;
+		this->verletBridge.nbVerletConstraints = 2;
 	}
 
-	if (this->actorState != 6) goto LAB_001e1120;
+	if (this->actorState != BRIDGE_BASIC_STATE_SPLIT) goto LAB_001e1120;
+
+	ApplyStepsCollisionScale(1);
 
 	this->verletBridge.Split(this->field_0x354);
-	ApplyStepsCollisionScale(1);
 	SetState(7, -1);
 
 LAB_001e1120:
 	if (param_2 == 0) {
 		if (pWindForce == (CWindForce*)0x0) {
-			this->verletBridge.field_0xc = 0;
+			this->verletBridge.nbForces = 0;
 		}
 		else {
-			//((CWindForce*)this->verletBridge.field_0x8)->field_0x0 = (undefined*)pWindForce;
-			this->verletBridge.field_0xc = 1;
+			this->verletBridge.aForces[0] = pWindForce;
+			this->verletBridge.nbForces = 1;
 		}
 
-		pTVar3 = Timer::GetTimer();
-		fVar23 = pTVar3->cutsceneDeltaTime;
-		IMPLEMENTATION_GUARD_LOG(
-		CVerletParticles::ApplyForces((CVerletParticles*)(this + 0x270));
-		CVerletParticles::Verlet((CVerletParticles*)(this + 0x270), fVar10);
-		CVerletParticles::ResolveConstraints((CVerletParticles*)(this + 0x270));)
+		this->verletBridge.ApplyForces();
+		this->verletBridge.Verlet(Timer::GetTimer()->cutsceneDeltaTime);
+		this->verletBridge.ResolveConstraints();
 	}
 
 	for (iVar5 = 0; iVar5 < (this->verletBridge).altStepCount; iVar5 = iVar5 + 1) {
@@ -972,12 +980,12 @@ LAB_001e1120:
 					auStack64.dc = (local_80.z + local_70.z + local_60.z + local_48) * 0.25;)
 				}
 				else {
-					S_LINK_SUB_OBJ* pLinkSubObj = (this->verletBridge).linkConstraint.field_0x8 + iVar5;
+					S_LINK_SUB_OBJ* pLinkSubObj = (this->verletBridge).linkConstraint.aLinkInfo + iVar5;
 
-					edF32VECTOR4* pVectorData = reinterpret_cast<edF32VECTOR4*>(this->verletBridge.pBridgeMem);
+					edF32VECTOR4* pVectorData = this->verletBridge.pBridgeMem;
 
-					edF32VECTOR4* pVecA = pVectorData + pLinkSubObj->field_0x0;
-					edF32VECTOR4* pVecB = pVectorData + pLinkSubObj->field_0x4;
+					edF32VECTOR4* pVecA = pVectorData + pLinkSubObj->particleIndexA;
+					edF32VECTOR4* pVecB = pVectorData + pLinkSubObj->particleIndexB;
 
 					auStack64.ca = pVecB->x - pVecA->x;
 					auStack64.cb = pVecB->y - pVecA->y;
@@ -1021,12 +1029,12 @@ LAB_001e1120:
 						if (local_1a0.nbEntries == 0) {
 							fVar23 = 1.0f / this->field_0x33c;
 							if ((1 < iVar5) &&
-								(this->verletBridge.aParticleSubObjs[iVar5].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
-								(this->verletBridge).aParticleSubObjs[iVar5 + (this->verletBridge).altStepCount + 1].field_0x0 = fVar23;
+								(this->verletBridge.aParticleInfo[iVar5].inverseMass = fVar23, (this->verletBridge).field_0x68 == false)) {
+								(this->verletBridge).aParticleInfo[iVar5 + (this->verletBridge).altStepCount + 1].inverseMass = fVar23;
 							}
 
-							if ((iVar5 < (this->verletBridge).altStepCount + -1) && (this->verletBridge.aParticleSubObjs[iVar5 + 1].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.aParticleSubObjs[iVar5 + 2 + (this->verletBridge).altStepCount].field_0x0 = fVar23;
+							if ((iVar5 < (this->verletBridge).altStepCount + -1) && (this->verletBridge.aParticleInfo[iVar5 + 1].inverseMass = fVar23, (this->verletBridge).field_0x68 == false)) {
+								this->verletBridge.aParticleInfo[iVar5 + 2 + (this->verletBridge).altStepCount].inverseMass = fVar23;
 							}
 						}
 						else {
@@ -1047,15 +1055,15 @@ LAB_001e1120:
 							fVar23 = 1.0f / fVar23;
 
 							if ((1 < iVar5) &&
-								(this->verletBridge.aParticleSubObjs[iVar5 * 8] = fVar23,
+								(this->verletBridge.aParticleInfo[iVar5 * 8] = fVar23,
 									(this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.aParticleSubObjs[(iVar5 + (this->verletBridge).altStepCount) * 8 + 8] = fVar23
+								this->verletBridge.aParticleInfo[(iVar5 + (this->verletBridge).altStepCount) * 8 + 8] = fVar23
 									;
 							}
 							if ((iVar5 < (this->verletBridge).altStepCount + -1) &&
-								(this->verletBridge.aParticleSubObjs[iVar5 * 8 + 8] = fVar23,
+								(this->verletBridge.aParticleInfo[iVar5 * 8 + 8] = fVar23,
 									(this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.aParticleSubObjs[(iVar5 + 2 + (this->verletBridge).altStepCount) * 8] = fVar23
+								this->verletBridge.aParticleInfo[(iVar5 + 2 + (this->verletBridge).altStepCount) * 8] = fVar23
 									;
 							})
 						}
@@ -1078,12 +1086,9 @@ void CActorBridge::CBhvBasic::Create(ByteCode* pByteCode)
 	edF32MATRIX4 eStack80;
 	edF32VECTOR3 local_10;
 
-	fVar1 = pByteCode->GetF32();
-	(this->field_0x30).x = fVar1;
-	fVar1 = pByteCode->GetF32();
-	(this->field_0x30).y = fVar1;
-	fVar1 = pByteCode->GetF32();
-	(this->field_0x30).z = fVar1;
+	(this->field_0x30).x = pByteCode->GetF32();
+	(this->field_0x30).y = pByteCode->GetF32();
+	(this->field_0x30).z = pByteCode->GetF32();
 	(this->field_0x30).w = 0.0f;
 
 	local_10 = edF32VECTOR3_0040ed70;
@@ -1091,16 +1096,13 @@ void CActorBridge::CBhvBasic::Create(ByteCode* pByteCode)
 	edF32Matrix4FromEulerSoft(&eStack80, &local_10, "XYZ");
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x30, &eStack80, &this->field_0x30);
 	edF32Vector4SafeNormalize1Hard(&this->field_0x30, &this->field_0x30);
-	fVar1 = pByteCode->GetF32();
-	this->field_0x40 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x44 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x48 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x4c = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x50 = fVar1;
+
+	this->field_0x40 = pByteCode->GetF32();
+	this->field_0x44 = pByteCode->GetF32();
+	this->field_0x48 = pByteCode->GetF32();
+	this->field_0x4c = pByteCode->GetF32();
+	this->field_0x50 = pByteCode->GetF32();
+
 	return;
 }
 
@@ -1140,11 +1142,12 @@ void CActorBridge::CBhvBasic::Manage()
 		}
 	}
 
-	edF32Vector4ScaleHard(unaff_f20, &this->field_0x20, &this->field_0x30);
+	edF32Vector4ScaleHard(unaff_f20, &this->windForce.force, &this->field_0x30);
 
 	this->field_0x58 = this->field_0x58 + 0.0166666f;
 
 	this->pOwner->BehaviourManage(0, &this->windForce);
+
 	return;
 }
 
@@ -1174,24 +1177,39 @@ void CActorBridge::CBhvBasic::End(int newBehaviourId)
 
 void CActorBridge::CBhvWindAware::Create(ByteCode* pByteCode)
 {
-	float fVar1;
+	this->field_0x40 = pByteCode->GetF32();
+	this->field_0x44 = pByteCode->GetF32();
+	this->field_0x48 = pByteCode->GetF32();
+	this->field_0x4c = pByteCode->GetF32();
+	this->field_0x50 = pByteCode->GetF32();
 
-	fVar1 = pByteCode->GetF32();
-	this->field_0x40 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x44 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x48 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x4c = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x50 = fVar1;
+	return;
 }
 
-CVerletBridge::Config::Config(int stepCount, int param_2, int param_3, bool param_4, bool param_5, bool param_6, edF32VECTOR4* param_7, edF32VECTOR4* param_8, float param_9, float param_10, float param_11)
+void CActorBridge::CBhvWindAware::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorBridge::CBhvWindAware::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorBridge::CBhvWindAware::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+int CActorBridge::CBhvWindAware::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	return 0;
+}
+
+CVerletBridge::Config::Config(int stepCount, int nbMaxForces, int param_3, bool param_4, bool param_5, bool param_6, edF32VECTOR4* param_7, edF32VECTOR4* param_8, float param_9, float param_10, float param_11)
 {
 	this->stepCount = stepCount;
-	this->nbUnknown = param_2;
+	this->nbMaxForces = nbMaxForces;
 	this->nbLinkConstraints = param_3;
 	this->field_0xc = param_4;
 	this->field_0xd = param_5;
@@ -1264,207 +1282,472 @@ void CVerletBridge::Config::ComputeNbLinks(int* param_1, int* param_2)
 }
 
 // Should be in: D:/Projects/b-witch/ActorBridge.h
-void CVerletBridge::Split(int param_1)
+void CVerletBridge::Split(int splitLinkIndex)
 {
-	IMPLEMENTATION_GUARD();
-}
+	int maxParticleInfo;
+	int altParticleIndex;
 
-CVerletParticles::CVerletParticles()
-{
-	this->aLinkConstraints = (CLinkConstraint**)0x0;
-	this->field_0x8 = 0;
-	this->stepCount = 0;
-	this->field_0x10 = 0;
+	if (splitLinkIndex < 0) {
+		maxParticleInfo = this->altStepCount;
+		splitLinkIndex = maxParticleInfo >> 1;
+		if (maxParticleInfo < 0) {
+			splitLinkIndex = maxParticleInfo + 1 >> 1;
+		}
+	}
 
-	this->field_0x30.x = 0.0f;
-	this->field_0x30.y = -9.81f;
-	this->field_0x30.z = 0.0f;
-	this->field_0x30.w = 0.0f;
+	if (this->field_0x69 == false) {
+		if (splitLinkIndex < 0) {
+			splitLinkIndex = 0;
+		}
+		else {
+			maxParticleInfo = this->altStepCount + -1;
+			if (maxParticleInfo < splitLinkIndex) {
+				splitLinkIndex = maxParticleInfo;
+			}
+		}
+	}
+	else {
+		if (splitLinkIndex < 1) {
+			splitLinkIndex = 1;
+		}
+		else {
+			maxParticleInfo = this->altStepCount + -2;
+			if (maxParticleInfo < splitLinkIndex) {
+				splitLinkIndex = maxParticleInfo;
+			}
+		}
+	}
+
+	if (this->field_0x68 == false) {
+		maxParticleInfo = this->nbParticleInfo;
+		if (maxParticleInfo + 2 <= this->stepCount) {
+			this->nbParticleInfo = maxParticleInfo + 2;
+			altParticleIndex = maxParticleInfo + 1;
+			goto LAB_001e0e08;
+		}
+	}
+	else {
+		maxParticleInfo = this->nbParticleInfo;
+
+		if (maxParticleInfo + 1 <= this->stepCount) {
+			this->nbParticleInfo = maxParticleInfo + 1;
+		LAB_001e0e08:
+			edF32VECTOR4* pPos = this->field_0x1c;
+			edF32VECTOR4* pSplitPos = pPos + splitLinkIndex;
+			pPos = pPos + maxParticleInfo;
+
+			*pPos = *pSplitPos;
+
+			pPos = this->pBridgeMem;
+			pSplitPos = pPos + splitLinkIndex;
+			pPos = pPos + maxParticleInfo;
+
+			*pPos = *pSplitPos;
+
+			CVParticleInfo* pCVar16 = this->aParticleInfo;
+			CVParticleInfo*  pCVar9 = pCVar16 + splitLinkIndex + 1;
+			pCVar16 = pCVar16 + maxParticleInfo;
+			pCVar16->inverseMass = pCVar9->inverseMass;
+			pCVar16->accumulatedForce = pCVar9->accumulatedForce;
+
+			if (this->field_0x68 == false) {
+				pPos = this->pBridgeMem;
+				pSplitPos = pPos + altParticleIndex;
+				pPos = pPos + splitLinkIndex + this->altStepCount + 1;
+
+				*pSplitPos = *pPos;
+
+				pPos = this->field_0x1c;
+				pSplitPos = pPos + altParticleIndex;
+				pPos = pPos + splitLinkIndex + this->altStepCount + 1;
+				*pSplitPos = *pPos;
+
+				pCVar16 = this->aParticleInfo;
+				pCVar9 = pCVar16 + altParticleIndex;
+				pCVar16 = pCVar16 + splitLinkIndex + this->altStepCount + 1;
+				pCVar9->inverseMass = pCVar16->inverseMass;
+				pCVar9->accumulatedForce = pCVar16->accumulatedForce;
+			}
+
+			S_LINK_SUB_OBJ* pSplitLink = this->linkConstraint.aLinkInfo + splitLinkIndex;
+			if (pSplitLink->particleIndexA == splitLinkIndex) {
+				pSplitLink->particleIndexA = maxParticleInfo;
+			}
+
+			if (pSplitLink->particleIndexB == splitLinkIndex) {
+				pSplitLink->particleIndexB = maxParticleInfo;
+			}
+
+			if (this->field_0x68 == false) {
+				int iVar10 = splitLinkIndex + this->altStepCount;
+				int iVar12 = iVar10 + 1;
+
+				pSplitLink = this->linkConstraint.aLinkInfo + iVar10;
+				if (pSplitLink->particleIndexA == iVar12) {
+					pSplitLink->particleIndexA = altParticleIndex;
+				}
+
+				if (pSplitLink->particleIndexB == iVar12) {
+					pSplitLink->particleIndexB = altParticleIndex;
+				}
+
+				pSplitLink = this->linkConstraint.aLinkInfo + splitLinkIndex + this->altStepCount * 3 + -2;
+				if (pSplitLink->particleIndexA == splitLinkIndex) {
+					pSplitLink->particleIndexA = maxParticleInfo;
+				}
+
+				if (pSplitLink->particleIndexB == splitLinkIndex) {
+					pSplitLink->particleIndexB = maxParticleInfo;
+				}
+
+				S_LINK_SUB_OBJ* pSrcLink = this->linkConstraint.aLinkInfo;
+				S_LINK_SUB_OBJ* pDestLink = pSrcLink + this->linkConstraint.nbLinkInfo;
+				pSrcLink = pSrcLink + splitLinkIndex + this->altStepCount * 2 + -1;
+				pDestLink->particleIndexA = pSrcLink->particleIndexA;
+				pDestLink->particleIndexB = pSrcLink->particleIndexB;
+				pDestLink->squaredRestDistance = pSrcLink->squaredRestDistance;
+				pDestLink->field_0xc = pSrcLink->field_0xc;
+				pDestLink->iterationCount = pSrcLink->iterationCount;
+
+				S_LINK_SUB_OBJ* pLastLink = this->linkConstraint.aLinkInfo + this->linkConstraint.nbLinkInfo;
+
+				if (pLastLink->particleIndexA == splitLinkIndex) {
+					pLastLink->particleIndexA = maxParticleInfo;
+				}
+
+				if (pLastLink->particleIndexB == splitLinkIndex) {
+					pLastLink->particleIndexB = maxParticleInfo;
+				}
+
+				splitLinkIndex = splitLinkIndex + this->altStepCount + 1;
+				pLastLink = this->linkConstraint.aLinkInfo + this->linkConstraint.nbLinkInfo;
+
+				if (pLastLink->particleIndexA == splitLinkIndex) {
+					pLastLink->particleIndexA = altParticleIndex;
+				}
+
+				if (pLastLink->particleIndexB == splitLinkIndex) {
+					pLastLink->particleIndexB = altParticleIndex;
+				}
+
+				this->linkConstraint.nbLinkInfo = this->linkConstraint.nbLinkInfo + 1;
+			}
+		}
+	}
 
 	return;
 }
 
-void* CVerletParticles::Initialize(void* pBridgeMem, int stepCount, int nbUnknown, int nbLinkConstraints)
+void CVerletBridge::ApplyForces()
 {
-	S_PARTICLE_SUB_OBJ* pEnd;
-	S_PARTICLE_SUB_OBJ* pCurParticleSubObj;
+	CVParticleInfo* pSubObjIt = this->aParticleInfo;
+	CVParticleInfo* pSubObjEnd = pSubObjIt + this->nbParticleInfo;
+	for (;pSubObjIt < pSubObjEnd; pSubObjIt = pSubObjIt + 1) {
+		float fVar23 = pSubObjIt->inverseMass;
+		if (fVar23 == 0.0f) {
+			pSubObjIt->accumulatedForce = gF32Vertex4Zero;
+		}
+		else {
+			if (fVar23 == 0.0f) {
+				pSubObjIt->accumulatedForce = gF32Vertex4Zero;
+			}
+			else {
+				edF32Vector4ScaleHard(1.0f / fVar23, &pSubObjIt->accumulatedForce, &this->gravityForce);
+			}
+		}
+	}
+
+	for (int i = 0; i < this->nbForces; i = i + 1) {
+		this->aForces[i]->ApplyForce(this, this->aParticleInfo, this->nbParticleInfo);
+	}
+
+	return;
+}
+
+void CVerletBridge::Verlet(float param_1)
+{
+	edF32VECTOR4* pMemIt = this->pBridgeMem;
+	edF32VECTOR4* pVecBIt = this->field_0x1c;
+	CVParticleInfo* pSubObjIt = this->aParticleInfo;
+	edF32VECTOR4* pMemEnd = pMemIt + this->nbParticleInfo;
+	edF32VECTOR4* pCurVecB = pVecBIt;
+
+	for (; pMemIt < pMemEnd; pMemIt = pMemIt + 1) {
+		if (pSubObjIt->inverseMass == 0.0f) {
+			*pCurVecB = *pMemIt;
+		}
+		else {
+			*pCurVecB = (*pMemIt - *pVecBIt) + *pMemIt;
+
+			float fVar20 = pSubObjIt->inverseMass * param_1 * param_1;
+			*pCurVecB = *pCurVecB + pSubObjIt->accumulatedForce * fVar20;
+			pCurVecB->w = 1.0f;
+		}
+
+		pVecBIt = pVecBIt + 1;
+		pCurVecB = pCurVecB + 1;
+		pSubObjIt = pSubObjIt + 1;
+	}
+
+	pMemIt = this->pBridgeMem;
+	this->pBridgeMem = this->field_0x1c;
+	this->field_0x1c = pMemIt;
+
+	return;
+}
+
+void CVerletBridge::ResolveConstraints()
+{
+	int iVar6 = 1;
+
+	for (int i = 0; i < iVar6; i = i + 1) {
+		for (int j = 0; j < this->nbVerletConstraints; j = j + 1)
+		{
+			int iVar13 = this->aVerletConstraints[j]->iterationPriority;
+			if (iVar6 < iVar13) {
+				iVar6 = iVar13;
+			}
+
+			this->aVerletConstraints[j]->Resolve(this, this->pBridgeMem, this->nbParticleInfo);
+		}
+	}
+
+	return;
+}
+
+CVerletParticles::CVerletParticles()
+{
+	this->aVerletConstraints = (CVerletConstraint**)0x0;
+	this->aForces = 0;
+	this->stepCount = 0;
+	this->nbParticleInfo = 0;
+
+	this->gravityForce.x = 0.0f;
+	this->gravityForce.y = -9.81f;
+	this->gravityForce.z = 0.0f;
+	this->gravityForce.w = 0.0f;
+
+	return;
+}
+
+void* CVerletParticles::Initialize(void* pBridgeMem, int stepCount, int nbMaxForces, int nbLinkConstraints)
+{
+	CVParticleInfo* pEnd;
+	CVParticleInfo* pCurParticleSubObj;
 
 	this->stepCount = stepCount;
-	this->field_0x10 = 0;
+	this->nbParticleInfo = 0;
 
 	this->pBridgeMem = reinterpret_cast<edF32VECTOR4*>(pBridgeMem);
 	this->field_0x1c = this->pBridgeMem + stepCount;
 
-	this->aParticleSubObjs = reinterpret_cast<S_PARTICLE_SUB_OBJ*>(this->field_0x1c + stepCount);
-	this->field_0x8 = this->aParticleSubObjs + stepCount;
+	this->aParticleInfo = reinterpret_cast<CVParticleInfo*>(this->field_0x1c + stepCount);
+	this->aForces = reinterpret_cast<CVerletForceGen**>(this->aParticleInfo + stepCount);
 
-	this->aLinkConstraints = reinterpret_cast<CLinkConstraint**>(reinterpret_cast<int*>(this->field_0x8) + nbUnknown);
+	this->aVerletConstraints = reinterpret_cast<CVerletConstraint**>(this->aForces + nbMaxForces);
 
-	this->field_0xc = 0;
-	this->field_0x4 = 0;
+	this->nbForces = 0;
+	this->nbVerletConstraints = 0;
 
-	pCurParticleSubObj = this->aParticleSubObjs;
+	pCurParticleSubObj = this->aParticleInfo;
 	pEnd = pCurParticleSubObj + stepCount;
 
 	// #UnrolledLoop
 	if (pCurParticleSubObj < pEnd) {
 		while (pCurParticleSubObj < pEnd) {
-			pCurParticleSubObj->field_0x0 = 1.0f;
+			pCurParticleSubObj->inverseMass = 1.0f;
 			pCurParticleSubObj = pCurParticleSubObj + 1;
 		}
 	}
 
-	return reinterpret_cast<void*>(this->aLinkConstraints + nbLinkConstraints);
+	return reinterpret_cast<void*>(this->aVerletConstraints + nbLinkConstraints);
 }
 
 COpenBoxConstraint::COpenBoxConstraint()
 {
-	this->field_0x30 = 0;
-	this->field_0x31 = 0;
+	this->bUseTransform = 0;
+	this->bEdgeSliding = 0;
 
-	this->field_0x10.x = -0.5f;
-	this->field_0x10.y = -0.5f;
-	this->field_0x10.z = -0.5f;
-	this->field_0x10.w = 0.0f;
-	this->field_0x20.x = 0.5f;
-	this->field_0x20.y = 0.5f;
-	this->field_0x20.z = 0.5f;
-	this->field_0x20.w = 0.0f;
+	this->minBounds.x = -0.5f;
+	this->minBounds.y = -0.5f;
+	this->minBounds.z = -0.5f;
+	this->minBounds.w = 0.0f;
 
-	this->field_0x40 = gF32Matrix4Unit;
+	this->maxBounds.x = 0.5f;
+	this->maxBounds.y = 0.5f;
+	this->maxBounds.z = 0.5f;
+	this->maxBounds.w = 0.0f;
+
+	this->transformMatrix = gF32Matrix4Unit;
 
 	return;
 }
 
-void COpenBoxConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4)
+void COpenBoxConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* pPositions, int nbPositions)
 {
-	bool bVar1;
-	edF32VECTOR4* peVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	edF32VECTOR4 local_10;
+	// Flag indicating whether position was clamped to bounds
+	bool wasPositionClamped;
 
-	peVar2 = param_3 + param_4;
+	// Pointer to the end of the positions array
+	edF32VECTOR4* pPositionsEnd;
 
-	if (this->field_0x31 == 0) {
-		if (this->field_0x30 == 0) {
-			for (; param_3 < peVar2; param_3 = param_3 + 1) {
-				if (param_3->y < (this->field_0x20).y) {
-					fVar3 = (this->field_0x10).x;
-					fVar5 = param_3->x;
-					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).x, fVar5 <= fVar3)) {
-						fVar3 = fVar5;
+	// Temporary values for clamping coordinates
+	float minBoundValue;
+	float maxBoundValue;
+	float currentCoordValue;
+
+	// Position in local/transformed space
+	edF32VECTOR4 transformedPosition;
+
+	// Calculate end pointer for positions array iteration
+	pPositionsEnd = pPositions + nbPositions;
+
+	if (this->bEdgeSliding == 0) {
+		if (this->bUseTransform == 0) {
+			// Simple AABB clamp without transformation
+			for (; pPositions < pPositionsEnd; pPositions = pPositions + 1) {
+				// Only process positions below the upper Y bound
+				if (pPositions->y < (this->maxBounds).y) {
+					// Clamp X coordinate to bounds
+					minBoundValue = (this->minBounds).x;
+					currentCoordValue = pPositions->x;
+					if ((minBoundValue <= currentCoordValue) && (minBoundValue = (this->maxBounds).x, currentCoordValue <= minBoundValue)) {
+						minBoundValue = currentCoordValue;
 					}
-					param_3->x = fVar3;
+					pPositions->x = minBoundValue;
 
-					fVar3 = (this->field_0x10).y;
-					if (param_3->y < fVar3) {
-						param_3->y = fVar3;
+					// Clamp Y coordinate to lower bound only
+					minBoundValue = (this->minBounds).y;
+					if (pPositions->y < minBoundValue) {
+						pPositions->y = minBoundValue;
 					}
 
-					fVar3 = (this->field_0x10).z;
-					fVar5 = param_3->z;
-					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).z, fVar5 <= fVar3)) {
-						fVar3 = fVar5;
+					// Clamp Z coordinate to bounds
+					minBoundValue = (this->minBounds).z;
+					currentCoordValue = pPositions->z;
+					if ((minBoundValue <= currentCoordValue) && (minBoundValue = (this->maxBounds).z, currentCoordValue <= minBoundValue)) {
+						minBoundValue = currentCoordValue;
 					}
-					param_3->z = fVar3;
+					pPositions->z = minBoundValue;
 				}
 			}
 		}
 		else {
-			if (param_3 < peVar2) {
+			// Transform-based AABB clamp (position space to local space)
+			if (pPositions < pPositionsEnd) {
 				do {
-					param_3->w = 1.0f;
+					// Ensure homogeneous coordinate is set for matrix multiplication
+					pPositions->w = 1.0f;
 
-					edF32Matrix4MulF32Vector4Hard(&local_10, &this->field_0x40, param_3);
+					// Transform position to local constraint space
+					edF32Matrix4MulF32Vector4Hard(&transformedPosition, &this->transformMatrix, pPositions);
 
-					if (local_10.y < (this->field_0x20).y) {
-						fVar3 = (this->field_0x10).x;
-						bVar1 = false;
-						if (local_10.x < fVar3) {
-							bVar1 = true;
-							local_10.x = fVar3;
+					// Only process positions below the upper Y bound in local space
+					if (transformedPosition.y < (this->maxBounds).y) {
+						// Initialize clamp flag (true if any coordinate was clamped)
+						minBoundValue = (this->minBounds).x;
+						wasPositionClamped = false;
+
+						// Clamp X coordinate
+						if (transformedPosition.x < minBoundValue) {
+							wasPositionClamped = true;
+							transformedPosition.x = minBoundValue;
 						}
 						else {
-							fVar3 = (this->field_0x20).x;
-							if (fVar3 < local_10.x) {
-								bVar1 = true;
-								local_10.x = fVar3;
+							minBoundValue = (this->maxBounds).x;
+							if (minBoundValue < transformedPosition.x) {
+								wasPositionClamped = true;
+								transformedPosition.x = minBoundValue;
 							}
 						}
 
-						fVar3 = (this->field_0x10).y;
-						if (local_10.y < fVar3) {
-							bVar1 = true;
-							local_10.y = fVar3;
+						// Clamp Y coordinate
+						minBoundValue = (this->minBounds).y;
+						if (transformedPosition.y < minBoundValue) {
+							wasPositionClamped = true;
+							transformedPosition.y = minBoundValue;
 						}
 
-						fVar3 = (this->field_0x10).z;
-						if (local_10.z < fVar3) {
-							bVar1 = true;
-							local_10.z = fVar3;
+						// Clamp Z coordinate
+						minBoundValue = (this->minBounds).z;
+						if (transformedPosition.z < minBoundValue) {
+							wasPositionClamped = true;
+							transformedPosition.z = minBoundValue;
 						}
 						else {
-							fVar3 = (this->field_0x20).z;
-							if (fVar3 < local_10.z) {
-								bVar1 = true;
-								local_10.z = fVar3;
+							minBoundValue = (this->maxBounds).z;
+							if (minBoundValue < transformedPosition.z) {
+								wasPositionClamped = true;
+								transformedPosition.z = minBoundValue;
 							}
 						}
 
-						if (bVar1) {
-							edF32Matrix4MulF32Vector4Hard(param_3, &this->field_0x80, &local_10);
-							param_3->w = 1.0f;
+						// If any coordinate was clamped, transform back to world space
+						if (wasPositionClamped) {
+							edF32Matrix4MulF32Vector4Hard(pPositions, &this->inverseTransformMatrix, &transformedPosition);
+							pPositions->w = 1.0f;
 						}
 					}
 
-					param_3 = param_3 + 1;
-				} while (param_3 < peVar2);
+					pPositions = pPositions + 1;
+				} while (pPositions < pPositionsEnd);
 			}
 		}
 	}
 	else {
-		if (param_3 < peVar2) {
+		// Edge sliding mode: smoothly interpolate near edges instead of hard clamps
+		if (pPositions < pPositionsEnd) {
 			do {
-				if (param_3->y < (this->field_0x20).y) {
-					fVar5 = (this->field_0x10).z;
-					fVar3 = param_3->z;
-					if (fVar3 < fVar5) {
-						param_3->z = fVar5;
+				// Only process positions below the upper Y bound
+				if (pPositions->y < (this->maxBounds).y) {
+					// Handle Z coordinate with edge sliding
+					currentCoordValue = (this->minBounds).z;
+					float zCoordinate = pPositions->z;
+
+					if (zCoordinate < currentCoordValue) {
+						// Below minimum Z: hard clamp
+						pPositions->z = currentCoordValue;
 					}
 					else {
-						fVar4 = (this->field_0x20).z;
-						if (fVar4 < fVar3) {
-							param_3->z = fVar4;
+						maxBoundValue = (this->maxBounds).z;
+						if (maxBoundValue < zCoordinate) {
+							// Above maximum Z: hard clamp
+							pPositions->z = maxBoundValue;
 						}
 						else {
-							if (fVar3 - fVar5 < 0.01f) {
-								param_3->z = fVar5 + (fVar3 - fVar5) * 0.9f;
+							// Within bounds: check if near edges for smooth interpolation
+							float distanceToMinZ = zCoordinate - currentCoordValue;
+							if (distanceToMinZ < 0.01f) {
+								// Near minimum Z edge: smoothly push inward
+								pPositions->z = currentCoordValue + distanceToMinZ * 0.9f;
 							}
 							else {
-								if (fVar4 - fVar3 < 0.01f) {
-									param_3->z = fVar4 - (fVar4 - fVar3) * 0.9f;
+								float distanceToMaxZ = maxBoundValue - zCoordinate;
+								if (distanceToMaxZ < 0.01f) {
+									// Near maximum Z edge: smoothly push inward
+									pPositions->z = maxBoundValue - distanceToMaxZ * 0.9f;
 								}
 							}
 						}
 					}
 
-					fVar3 = (this->field_0x10).y;
-					if (param_3->y < fVar3) {
-						param_3->y = fVar3;
+					// Clamp Y coordinate to lower bound only
+					minBoundValue = (this->minBounds).y;
+					if (pPositions->y < minBoundValue) {
+						pPositions->y = minBoundValue;
 					}
 
-					fVar3 = (this->field_0x10).x;
-					fVar5 = param_3->x;
-					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).x, fVar5 <= fVar3)) {
-						fVar3 = fVar5;
+					// Clamp X coordinate to bounds (standard hard clamp)
+					minBoundValue = (this->minBounds).x;
+					currentCoordValue = pPositions->x;
+					if ((minBoundValue <= currentCoordValue) && (minBoundValue = (this->maxBounds).x, currentCoordValue <= minBoundValue)) {
+						minBoundValue = currentCoordValue;
 					}
-					param_3->x = fVar3;
+					pPositions->x = minBoundValue;
 				}
 
-				param_3 = param_3 + 1;
-			} while (param_3 < peVar2);
+				pPositions = pPositions + 1;
+			} while (pPositions < pPositionsEnd);
 		}
 	}
 
@@ -1473,19 +1756,99 @@ void COpenBoxConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* par
 
 CVerletConstraint::CVerletConstraint()
 {
-	this->field_0x0 = 1;
+	this->iterationPriority = 1;
 
 	return;
 }
 
 CLinkConstraint::CLinkConstraint()
 {
-	this->field_0x8 = (S_LINK_SUB_OBJ*)0x0;
-	this->field_0xc = 0x0;
+	this->aLinkInfo = (S_LINK_SUB_OBJ*)0x0;
+	this->nbLinkInfo = 0x0;
 	this->field_0x10 = 0;
 }
 
-void CLinkConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4)
+void CLinkConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* pPositions, int nbPositions)
 {
-	IMPLEMENTATION_GUARD();
+	// Pointers to particle positions for the two ends of the current link
+	edF32VECTOR4* pPosA;
+	edF32VECTOR4* pPosB;
+
+	// Iterators for traversing the link constraint array
+	S_LINK_SUB_OBJ* pLinkEnd;
+	S_LINK_SUB_OBJ* pLinkIt;
+
+	// Mass (inverse mass) values for particles A and B
+	// squaredRestDistance in S_LINK_SUB_OBJ stores the squared rest distance
+	float invMassA;
+	float invMassB;
+
+	// Correction factor that determines how much to move each particle
+	// to enforce the distance constraint
+	float correctionFactor;
+
+	// Vector representing the current distance offset between particles
+	edF32VECTOR4 deltaPos;
+
+	// Temporary accumulator for scaled correction vectors
+	edF32VECTOR4 correction;
+
+	// Initialize correction accumulator to zero
+	correction = gF32Vector4Zero;
+
+	// Set up iteration bounds for all link constraints
+	pLinkIt = this->aLinkInfo;
+	pLinkEnd = pLinkIt + this->nbLinkInfo;
+
+	// Process each link constraint
+	for (; pLinkIt < pLinkEnd; pLinkIt = pLinkIt + 1) {
+		// Get the two particle indices and retrieve their positions
+		pPosA = pPositions + pLinkIt->particleIndexA;
+		invMassA = pParticles->aParticleInfo[pLinkIt->particleIndexA].inverseMass;
+
+		pPosB = pPositions + pLinkIt->particleIndexB;
+		invMassB = pParticles->aParticleInfo[pLinkIt->particleIndexB].inverseMass;
+
+		// Calculate the vector from particle A to particle B
+		deltaPos = *pPosB - *pPosA;
+
+		// Verlet constraint resolution formula:
+		// correctionFactor = (1 - restDistance² / currentDistance²) / (invMassA + invMassB)
+		// where:
+		//   - pLinkIt->squaredRestDistance is the squared rest distance
+		//   - deltaPos squared is the current distance squared
+		// This ensures the particles stay at the correct distance apart
+		correctionFactor = (1.0f - (pLinkIt->squaredRestDistance + pLinkIt->squaredRestDistance) /
+			(deltaPos.x * deltaPos.x + deltaPos.y * deltaPos.y + deltaPos.z * deltaPos.z +
+				pLinkIt->squaredRestDistance)) / (invMassA + invMassB);
+
+		// Apply constraint correction to particle A (if it's not static)
+		if (invMassA != 0.0f) {
+			edF32Vector4ScaleHard(correctionFactor * invMassA, &correction, &deltaPos);
+			*pPosA = *pPosA + correction;
+		}
+
+		// Apply constraint correction to particle B (if it's not static)
+		if (invMassB != 0.0f) {
+			edF32Vector4ScaleHard(correctionFactor * invMassB, &correction, &deltaPos);
+			*pPosB = *pPosB - correction;
+		}
+	}
+
+	return;
+}
+
+void CWindForce::ApplyForce(CVerletParticlesBase* pParticles, CVParticleInfo* pInfo, int nbInfo)
+{
+	CVParticleInfo* pInfoEnd;
+
+	pInfoEnd = pInfo + nbInfo;
+	if (pInfo < pInfoEnd) {
+		do {
+			edF32Vector4AddHard(&pInfo->accumulatedForce, &pInfo->accumulatedForce, &this->force);
+			pInfo = pInfo + 1;
+		} while (pInfo < pInfoEnd);
+	}
+
+	return;
 }

@@ -427,7 +427,7 @@ public:
 	void SetLevelTimerFunc_002df450(float param_1, int mode);
 	int GetNbAreas(int currentLevelID);
 	void ExitLevel(int param_2);
-	void FUN_002dc200(int elevatorId, int levelId, int param_4);
+	void ManageLoadElevator(int elevatorId, int levelId, int param_4);
 
 	bool Money_GiveToShop(int amount);
 	bool Money_GiveToBet(int amount);

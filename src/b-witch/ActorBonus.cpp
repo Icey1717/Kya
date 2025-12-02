@@ -1213,7 +1213,7 @@ void CBehaviourBonusFlock::SectorChange(int oldSectorId, int newSectorId)
 	if (pActorBonus->sectorId > 0) goto LAB_00127130;
 
 	if (pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0 ||
-		((patchIndex = this->flarePatchId >> 16, pDlistManager->field_0x14 != patchIndex && patchIndex != 0))) {
+		((patchIndex = this->flarePatchId >> 16, pDlistManager->activeSectorPatchId != patchIndex && patchIndex != 0))) {
 	LAB_00127120:
 		sectorFlag = 0xffffffff;
 	}

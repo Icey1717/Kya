@@ -13021,7 +13021,7 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 
 struct NodeChunk {
 	uint nodeIndex;
-	int chunk; // char*
+	strd_ptr(char*) chunk;
 };
 
 static float FLOAT_004488d8 = 9.9999998E17f;

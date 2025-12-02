@@ -170,6 +170,12 @@ void CInventoryInfo::ObjectPurchased()
 	float fVar5;
 
 	switch (this->purchaseId) {
+	case INVENTORY_ITEM_BOUNCE:
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_JUMP_BOUNCE, 1);
+		break;
+	case INVENTORY_ITEM_CLIMBING_GLOVES:
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_CLIMB, 1);
+		break;
 	case INVENTORY_ITEM_BASE_BOOMY:
 		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < 1) {
 			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (void*)1);

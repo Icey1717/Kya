@@ -56,6 +56,7 @@
 #include "DebugScene.h"
 #include "DebugRendering.h"
 #include "DebugTutorial.h"
+#include "DebugInput.h"
 #include "ed3D/ed3DG2D.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -351,6 +352,7 @@ namespace Debug {
 		{"Save/Load", Debug::SaveLoad::ShowMenu, true },
 		{"Scene", Debug::Scene::ShowMenu, true },
 		{"Tutorial", Debug::Tutorial::ShowMenu, true },
+		{"Input", Debug::Input::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {

@@ -10,6 +10,7 @@
 #endif
 #include "ScenaricCondition.h"
 #include "TranslatedTextData.h"
+#include "edSound/edSoundPlay.h"
 
 #include "EdenLib/edCinematic/Sources/Cinematic.h"
 
@@ -24,6 +25,8 @@ struct CActor;
 
 #define CINEMATIC_FLAG_ACTIVE 0x80
 
+#define CINEMATIC_MESSAGE_RECEPTACLE_CHANGED 0x11
+
 class CBWCinActor : public edCinActorInterface
 {
 public:
@@ -37,6 +40,7 @@ public:
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
 	virtual bool SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag);
 	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams);
+	virtual bool SetMessage(float param_1, edCinActorInterface::MESSAGE_PARAMStag* pTag);
 	virtual bool Shutdown();
 
 	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager);
@@ -96,9 +100,8 @@ public:
 	edF32VECTOR4 position;
 };
 
-struct GlobalSound_FileData;
-
-class CBWCinSourceAudio : public edCinSourceAudioI {
+class CBWCinSourceAudio : public edCinSourceAudioI
+{
 public:
 	CBWCinSourceAudio();
 
@@ -107,16 +110,16 @@ public:
 	virtual bool Stop();
 	virtual bool GetTime() { IMPLEMENTATION_GUARD(); }
 	virtual bool Destroy();
-	virtual float Func_0x1c(int audioTrackId) { IMPLEMENTATION_GUARD_AUDIO(); return -1.0f; }
+	virtual float Func_0x1c(int audioTrackId);
 
 	void SetAudioTrack(int audioTrackId);
 
-	int intFieldA;
+	uint soundInstanceId;
 	float field_0x8;
 	float floatFieldA;
 	GlobalSound_FileData* pGlobalSoundFileData;
-	int field_0x14;
-	int* lastIntField;
+	_ed_sound_stream soundStream;
+	_ed_sound_stream* pSoundStream;
 	byte field_0x38;
 	byte field_0x39;
 	undefined field_0x3a;
@@ -329,8 +332,8 @@ struct S_STREAM_EVENT_CAMERA
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
-	int pActor; // CActor*
-	int pZone; // EventChunk_24*
+	strd_ptr(CActor*) pActor;
+	strd_ptr(ed_zone_3d*) pZone;
 	float field_0x1c;
 
 	void Init();
@@ -363,7 +366,7 @@ PACK(
 
 	union
 	{
-		int pRef; // CActor*
+		strd_ptr(CActor*) pRef;
 		int index;
 	};
 
@@ -650,6 +653,7 @@ public:
 	int GetParticleInstance(int id);
 
 	bool CanBePlayed();
+	void Level_PauseChange(bool bPaused);
 
 	int prtBuffer;
 	uint flags_0x4;

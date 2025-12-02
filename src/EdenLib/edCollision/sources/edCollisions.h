@@ -22,10 +22,10 @@ struct edColRAY_OBB_IN {
 
 PACK(
 	struct edF32QUAD4 {
-	int p1; // edF32VECTOR4*
-	int p2; // edF32VECTOR4*
-	int p3; // edF32VECTOR4*
-	int p4; // edF32VECTOR4*
+	strd_ptr(edF32VECTOR4*) p1;
+	strd_ptr(edF32VECTOR4*) p2;
+	strd_ptr(edF32VECTOR4*) p3;
+	strd_ptr(edF32VECTOR4*) p4;
 	uint flags;
 });
 
@@ -34,7 +34,7 @@ static_assert(sizeof(edF32QUAD4) == 0x14);
 PACK(
 struct edColINFO {
 	edF32MATRIX4 field_0x0;
-	int field_0x40; // edF32TRIANGLE4*
+	strd_ptr(edF32TRIANGLE4*) field_0x40;
 	int field_0x44; // edF32VECTOR4* 
 	byte field_0x48;
 	byte field_0x49;
@@ -65,8 +65,8 @@ struct edColOBJECT {
 	undefined field_0x21;
 	undefined field_0x22;
 	undefined field_0x23;
-	int pPrim; // edColPrimEntry*
-	int pActor; // CActor*
+	strd_ptr(edColPrimEntry*) pPrim;
+	strd_ptr(CActor*) pActor;
 });
 
 struct edColINFO_OBBTREE_OBBTREE 
@@ -213,13 +213,13 @@ PACK(
 	short field_0x1c;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	int aSourceVertices; //edF32VECTOR*
-	int aVertices; //edF32VECTOR*
-	int aTriangles; // edF32TRIANGLE4*
-	int field_0x2c; // char*
-	int field_0x30; // char*
-	int field_0x34; // char*
-	int pObbTree; // edObbTREE*
+	strd_ptr(edF32VECTOR*) aSourceVertices;
+	strd_ptr(edF32VECTOR*) aVertices;
+	strd_ptr(edF32TRIANGLE4*) aTriangles;
+	strd_ptr(char*) field_0x2c;
+	strd_ptr(char*) field_0x30;
+	strd_ptr(char*) field_0x34;
+	strd_ptr(edObbTREE*) pObbTree;
 });
 
 static_assert(sizeof(edColG3D_OBB_TREE_DYN) == 0x3c);
@@ -255,16 +255,16 @@ struct edColG3D_OBB_TREE {
 	undefined field_0x26;
 	undefined field_0x27;
 	int field_0x28;
-	int aTriangles; // edF32TRIANGLE4*
-	int field_0x30; // void*
-	int aQuads; // edF32QUAD4*
-	int aBoxes; // edColPRIM_BOX*
-	int aSpheres; // edColPRIM_SPHERE*
+	strd_ptr(edF32TRIANGLE4*) aTriangles;
+	strd_ptr(void*) field_0x30;
+	strd_ptr(edF32QUAD4*) aQuads;
+	strd_ptr(edColPRIM_BOX*) aBoxes;
+	strd_ptr(edColPRIM_SPHERE*) aSpheres;
 	undefined field_0x40;
 	undefined field_0x41;
 	undefined field_0x42;
 	undefined field_0x43;
-	int pObbTree; // edObbTREE_DYN*
+	strd_ptr(edObbTREE_DYN*) pObbTree;
 });
 
 PACK(
@@ -272,9 +272,9 @@ struct edF32TRIANGLE4
 {
 	union {
 		struct {
-			int p1; // edF32Vector*
-			int p2; // edF32Vector*
-			int p3; // edF32Vector*
+			strd_ptr(edF32Vector*) p1;
+			strd_ptr(edF32Vector*) p2;
+			strd_ptr(edF32Vector*) p3;
 		};
 
 		int points[3];

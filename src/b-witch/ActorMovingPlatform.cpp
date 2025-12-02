@@ -1466,9 +1466,7 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 			bBarDepleted = true;
 		}
 
-		uVar6 = (long)(int)this->pProperties->flags_0x24 & 0x20;
-
-		if ((uVar6 != 0) && (fVar11 = fmodf(currentFillAmount, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4), (pBehaviour->pathFollowReaderAbs).field_0xc <= fVar11)) {
+		if (((this->pProperties->flags_0x24 & 0x20) != 0) && ((pBehaviour->pathFollowReaderAbs).field_0xc <= fmodf(currentFillAmount, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4))) {
 			fVar12 = fmodf((pBehaviour->currentFillAmount_0x38).field_0x0, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4);
 			fVar11 = (pBehaviour->pathFollowReaderAbs).field_0xc;
 			if (fVar12 < fVar11) {
@@ -1480,7 +1478,7 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 
 		(pBehaviour->currentFillAmount_0x38).field_0x0 = currentFillAmount;
 
-		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 1, 1, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		int trajResult = Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 1, 1, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
 		if (bBarDepleted) {
 			/* Reached zero bar filled. Transition back to inactive state. */
@@ -1494,11 +1492,11 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 			}
 		}
 		else {
-			if (uVar6 == 1) {
+			if (trajResult == 1) {
 				bVar4 = false;
 			}
 			else {
-				if (uVar6 == 2) {
+				if (trajResult == 2) {
 					uVar2 = this->pProperties->flags_0x24;
 					bBarDepleted = false;
 
@@ -1534,26 +1532,8 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 
 void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajectory* pBehaviour, int msg)
 {
-	CSound* pSound;
-	StateConfig* pSVar1;
-	Timer* pTVar2;
-	S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry;
-	uint uVar4;
-	uint uVar6;
-	int iVar7;
-	int iVar8;
-
 	if (msg == 0xe) {
-		iVar8 = this->actorState;
-		if (iVar8 == -1) {
-			uVar4 = 0;
-		}
-		else {
-			pSVar1 = GetStateCfg(iVar8);
-			uVar4 = pSVar1->flags_0x4 & 0x100;
-		}
-
-		if (uVar4 == 0) {
+		if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 			BehaviourTrajectory_Switch(pBehaviour, 0xf);
 		}
 		else {
@@ -1563,18 +1543,8 @@ void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajecto
 	else {
 		if (msg == 0x10) {
 			if ((this->pProperties->flags_0x24 & 0x200) == 0) {
-				iVar8 = this->actorState;
-				if (iVar8 == -1) {
-					uVar4 = 0;
-				}
-				else {
-					pSVar1 = GetStateCfg(iVar8);
-					uVar4 = pSVar1->flags_0x4 & 0x100;
-				}
-
-				if ((uVar4 != 0) && ((this->pProperties->flags_0x24 & 8) != 0)) {
+				if (((GetStateFlags(this->actorState) & 0x100) != 0) && ((this->pProperties->flags_0x24 & 8) != 0)) {
 					SetState(6, -1);
-					iVar8 = 0;
 
 					TriggerSwitches(0);
 				}
@@ -1586,19 +1556,10 @@ void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajecto
 		}
 		else {
 			if (msg == 0xf) {
-				iVar8 = this->actorState;
-				if (iVar8 == -1) {
-					uVar4 = 0;
-				}
-				else {
-					pSVar1 = GetStateCfg(iVar8);
-					uVar4 = pSVar1->flags_0x4 & 0x100;
-				}
-				if (uVar4 == 0) {
+				if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 					/* Transition this to the fill state. */
 					SetState(5, -1);
-					pTVar2 = GetTimer();
-					pBehaviour->goalAmount_0x30 = (pBehaviour->field_0x28 + pTVar2->scaledTotalTime) - (pBehaviour->currentFillAmount_0x38).field_0x0;
+					pBehaviour->goalAmount_0x30 = (pBehaviour->field_0x28 + GetTimer()->scaledTotalTime) - (pBehaviour->currentFillAmount_0x38).field_0x0;
 				}
 			}
 		}

@@ -9,7 +9,7 @@ class CActor;
 
 struct ed_event {
 	uint flags;
-	int pZone; // ed_zone_3d*
+	strd_ptr(ed_zone_3d*) pZone;
 	undefined4 field_0x8;
 	uint nbColliders;
 };
@@ -18,8 +18,8 @@ struct _ed_event_collider_test {
 	edF32VECTOR4 worldLocation;
 	byte messageFlags[4];
 	uint flags;
-	int pActorRef; // ed_event_actor_ref*
-	int field_0x1c; // ed_event*
+	strd_ptr(ed_event_actor_ref*) pActorRef;
+	strd_ptr(ed_event*) field_0x1c;
 	int aSendInfo[4]; // EventSendInfo*
 };
 
@@ -56,8 +56,8 @@ struct _edCluster {
 
 
 struct ed_event_actor_ref {
-	int pActor; // CActor*
-	int pLocation; // edf32VECTOR4*
+	strd_ptr(CActor*) pActor;
+	strd_ptr(edf32VECTOR4*) pLocation;
 };
 
 static_assert(sizeof(ed_event_actor_ref) == 0x8);

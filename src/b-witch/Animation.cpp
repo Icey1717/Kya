@@ -3299,6 +3299,11 @@ bool CAnimation::FUN_0017f730()
 	return false;
 }
 
+int CAnimation::GetAnimType_00242330(int animIndex)
+{
+	return this->anmBinMetaAnimator.aAnimData[animIndex].animPlayState;
+}
+
 bool CAnimation::SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices)
 {
 	bool bSuccess;

@@ -275,7 +275,7 @@ public:
 	GlobalDlistEntry* ppGlobalDlist;
 	DisplayList* pDisplayList;
 
-	int field_0x14;
+	int activeSectorPatchId;
 	int field_0x18;
 	int lastPatchId;
 	uint field_0x24;

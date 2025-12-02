@@ -87,6 +87,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_LEAVE_SHOP = 0x24,
 	MESSAGE_DISABLE_INPUT = 0x25,
 	MESSAGE_ENABLE_INPUT = 0x26,
+	MESSAGE_SPAWN = 0x2c,
 	MESSAGE_MAGIC_DEACTIVATE = 0x2f,
 	MESSAGE_MAGIC_ACTIVATE = 0x30,
 	MESSAGE_TRAP_CAUGHT = 0x31,
@@ -112,6 +113,19 @@ struct _msg_cinematic_install_param
 {
 	class CCinematic* pCinematic;
 	int action;
+};
+
+struct _msg_input_param
+{
+	int field_0x0;
+	float field_0x4;
+	float field_0x8;
+};
+
+struct _msg_spawn_params
+{
+	edF32VECTOR4 position;
+	edF32VECTOR4 rotation;
 };
 
 #define HERO_ACTION_ID_JOKE 0x3
@@ -188,7 +202,7 @@ public:
 
 PACK( struct BehaviourEntry {
 	int id;
-	int pBehaviour; // CBehaviour*
+	strd_ptr(CBehaviour*) pBehaviour;
 
 	inline CBehaviour* GetBehaviour() {
 		return (CBehaviour*)LOAD_POINTER(pBehaviour);

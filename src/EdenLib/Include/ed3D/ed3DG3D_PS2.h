@@ -9,7 +9,7 @@ struct ed_3d_strip;
 
 struct ed_g2d_Anim_def
 {
-	int p3dAnimDef; // ed_g3d_Anim_def*
+	strd_ptr(ed_g3d_Anim_def*) p3dAnimDef;
 	uint field_0x4;
 	uint field_0x8;
 	uint field_0xc;

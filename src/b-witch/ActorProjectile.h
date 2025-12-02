@@ -90,7 +90,7 @@ public:
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
 
-	int field_0x4;
+	int behaviourId;
 	CActorProjectile* pOwner;
 };
 

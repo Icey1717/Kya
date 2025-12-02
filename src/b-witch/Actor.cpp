@@ -1487,20 +1487,17 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 		else {
 			if (msg == 0x6c) {
-				IMPLEMENTATION_GUARD(
-				lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
-				if (lVar5 != 0) {
-					/* WARNING: Load size is inaccurate */
-					if (*pMsgParam == 0) {
-						CPlayerInput::FUN_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
-							(float*)((int)lVar5 + 0x1c), 0);
+				CPlayerInput* pInput = GetInputManager(1, 0);
+				if (pInput != 0) {
+					_msg_input_param* pMsgParamInput = reinterpret_cast<_msg_input_param*>(pMsgParam);
+					if (pMsgParamInput->field_0x0 == 0) {
+						CPlayerInput::FUN_001b66f0(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, &pInput->field_0x1c, 0);
 					}
 					else {
-						CPlayerInput::FUN_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
-							(float*)((int)lVar5 + 0x40), 0);
+						CPlayerInput::FUN_001b66f0(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, &pInput->field_0x40, 0);
 					}
 				}
-				bVar4 = true;)
+				bVar4 = true;
 			}
 			else {
 				if (msg == 0x5c) {
@@ -3960,18 +3957,12 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	int eventType;
 	CBehaviour* pCVar3;
 	CWayPoint* pCVar4;
+	CWayPoint* pCVar5;
 	long lVar6;
 	edF32VECTOR4 local_c0;
 	edF32VECTOR4 local_b0;
-	undefined4 local_a0[2];
-	undefined4 local_98;
-	int local_94;
-	edF32VECTOR4 local_80;
-	float local_70;
-	undefined4* local_14;
-	int local_10;
-	int local_8;
-	int local_4;
+	_msg_hit_param local_a0;
+	uint uVar1;
 
 	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} {}", this->name, param_4);
 
@@ -3982,94 +3973,95 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	if (eventType == 0x16) {
 		switch (pEventData[1]) {
 		case 0:
-			local_a0[0] = 0;
-			local_98 = 0;
+			local_a0.projectileType = 0;
+			local_a0.flags = 0;
 			break;
 		case 1:
 		case 2:
 		case 5:
-			IMPLEMENTATION_GUARD(
 			if (pEventData[1] == 1) {
-				local_a0[0] = 1;
+				local_a0.projectileType = 1;
 			}
 			else {
 				if ((this->pCollisionData != (CCollision*)0x0) && ((this->pCollisionData->flags_0x4 & 2) == 0)) {
 					return 1;
 				}
-				local_a0[0] = 2;
+
+				local_a0.projectileType = 2;
 			}
-			local_98 = 1;
-			eventType = piVar5[3];
+
+			local_a0.flags = 1;
+			eventType = pEventData[3];
+
 			if (eventType == -1) {
-				local_80.x = (this->rotationQuat).x;
-				local_80.y = (this->rotationQuat).y;
-				local_80.z = (this->rotationQuat).z;
-				local_80.w = (this->rotationQuat).w;
+				local_a0.field_0x20 = this->rotationQuat;
 			}
 			else {
 				pCVar4 = (CWayPoint*)0x0;
-				local_b0.x = fRam00000000;
+				local_b0.x = 0.0f;
 				if (eventType != -1) {
-					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + eventType;
-					local_b0.x = (pCVar4->field_0x0).x;
+					pCVar4 = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + eventType;
 				}
-				local_b0.y = (pCVar4->field_0x0).y;
-				local_b0.z = (pCVar4->field_0x0).z;
-				local_b0.w = 1.0;
-				edF32Vector4SubHard(&local_80, &this->currentLocation, &local_b0);
-				local_80.y = 0.0;
-				edF32Vector4SafeNormalize1Hard(&local_80, &local_80);
+				local_b0.xyz = pCVar4->location;
+				local_b0.w = 1.0f;
+				edF32Vector4SubHard(&local_a0.field_0x20, &this->currentLocation, &local_b0);
+				local_a0.field_0x20.y = 0.0f;
+				edF32Vector4SafeNormalize1Hard(&local_a0.field_0x20, &local_a0.field_0x20);
 			}
-			local_70 = (float)piVar5[4];
-			if (local_70 == 0.0) {
-				local_70 = 200.0;
-			})
+
+			local_a0.field_0x30 = *reinterpret_cast<float*>(&pEventData[4]);
+			if (local_a0.field_0x30 == 0.0f) {
+				local_a0.field_0x30 = 200.0f;
+			}
 			break;
 		case 3:
-			IMPLEMENTATION_GUARD(
-			local_a0[0] = 10;
-			local_98 = 1;
-			eventType = piVar5[3];
-			if (eventType == -1) {
-				edF32Vector4ScaleHard(-1.0f, &local_80, &this->rotationQuat);
+			local_a0.projectileType = 10;
+			local_a0.flags = 1;
+			uVar1 = pEventData[3];
+			if (uVar1 == 0xffffffff) {
+				edF32Vector4ScaleHard(-1.0f, &local_a0.field_0x20, &this->rotationQuat);
 			}
 			else {
-				pCVar4 = (CWayPoint*)0x0;
-				local_c0.x = fRam00000000;
-				if (eventType != -1) {
-					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + eventType;
-					local_c0.x = (pCVar4->field_0x0).x;
+				pCVar5 = (CWayPoint*)0x0;
+				local_c0.x = 0.0f;
+
+				if (uVar1 != 0xffffffff) {
+					pCVar5 = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + uVar1;
+					local_c0.x = (pCVar5->location).x;
 				}
-				local_c0.y = (pCVar4->field_0x0).y;
-				local_c0.z = (pCVar4->field_0x0).z;
-				local_c0.w = 1.0;
-				edF32Vector4SubHard(&local_80, &local_c0, &this->currentLocation);
-				local_80.y = 0.0;
-				edF32Vector4SafeNormalize1Hard(&local_80, &local_80);
+
+				local_c0.y = (pCVar5->location).y;
+				local_c0.z = (pCVar5->location).z;
+				local_c0.w = 1.0f;
+				edF32Vector4SubHard(&local_a0.field_0x20, &local_c0, &this->currentLocation);
+				local_a0.field_0x20.y = 0.0f;
+				edF32Vector4SafeNormalize1Hard(&local_a0.field_0x20, &local_a0.field_0x20);
 			}
-			local_70 = (float)piVar5[4];
-			if (local_70 == 0.0) {
-				local_70 = 700.0;
+
+			local_a0.field_0x30 = *reinterpret_cast<float*>(&pEventData[4]);
+			if (local_a0.field_0x30 == 0.0f) {
+				local_a0.field_0x30 = 700.0f;
 			}
-			local_80.y = 0.707;
-			edF32Vector4NormalizeHard(&local_80, &local_80);)
+
+			local_a0.field_0x20.y = 0.707f;
+			edF32Vector4NormalizeHard(&local_a0.field_0x20, &local_a0.field_0x20);
 			break;
 		case 4:
-			local_98 = 0;
-			local_a0[0] = 6;
+			local_a0.flags = 0;
+			local_a0.projectileType = 6;
 		}
-		local_14 = local_a0;
-		local_94 = pEventData[2];
+
+		local_a0.damage = *reinterpret_cast<float*>(&pEventData[2]);
 		if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-			eventType = ReceiveMessage(this, (ACTOR_MESSAGE)2, (MSG_PARAM)local_14);
-			return eventType;
+			return ReceiveMessage(this, MESSAGE_KICKED, &local_a0);
 		}
+
 		return 0;
 	}
 
 	if (eventType == 0x15) {
 		if (pEventData[1] != 0x7f) {
-			local_10 = pEventData[2];
+			uint local_10 = pEventData[2];
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
 				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)pEventData[1], (MSG_PARAM)local_10);
 				return eventType;
@@ -4088,7 +4080,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 
 		if (eventType == 0x13) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				local_8 = pEventData[1];
+				uint local_8 = pEventData[1];
 				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0x10, (MSG_PARAM)pEventData[1]);
 				return eventType;
 			}
@@ -4097,7 +4089,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 
 		if (eventType == 0x12) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				local_4 = pEventData[1];
+				uint local_4 = pEventData[1];
 				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0xf, (MSG_PARAM)pEventData[1]);
 				return eventType;
 			}

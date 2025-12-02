@@ -72,6 +72,8 @@ public:
 
 	void PlayCombatMusic();
 	void StopCombatMusic();
+
+	float field_0xcc;
 };
 
 union ManagerContainer {

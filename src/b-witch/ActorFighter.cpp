@@ -6,6 +6,7 @@
 #include "InputManager.h"
 #include "CollisionRay.h"
 #include "ActorManager.h"
+#include "ActorWind.h"
 #include "ActorHero.h"
 #include "LargeObject.h"
 #include "CameraViewManager.h"
@@ -7978,18 +7979,17 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 		result = 0;
 	}
 	else {
-		if (msg == 0x16) {
-			IMPLEMENTATION_GUARD(
-			edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x10), &eStack16, (edF32VECTOR4*)pMsgParam);
+		if (msg == MESSAGE_IN_WIND_AREA) {
+			NotifyWindParam* pNotifyWindParam = reinterpret_cast<NotifyWindParam*>(pMsgParam);
+			edF32Vector4ScaleHard(pNotifyWindParam->field_0x10, &eStack16, &pNotifyWindParam->field_0x0);
 			pFighter = this->pOwner;
-			v0 = (pFighter->characterBase).dynamicExt.aImpulseVelocities + 2;
+			v0 = pFighter->dynamicExt.aImpulseVelocities + 2;
 			edF32Vector4AddHard(v0, v0, &eStack16);
-			fVar6 = edF32Vector4GetDistHard(v0);
-			(pFighter->characterBase).dynamicExt.aImpulseVelocityMagnitudes[2] = fVar6;
-			result = 1;)
+			pFighter->dynamicExt.aImpulseVelocityMagnitudes[2] = edF32Vector4GetDistHard(v0);
+			result = 1;
 		}
 		else {
-			if (msg == 2) {
+			if (msg == MESSAGE_KICKED) {
 				pFighter = this->pOwner;
 				uVar5 = pFighter->GetStateFlags(pFighter->actorState);
 

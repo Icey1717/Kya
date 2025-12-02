@@ -64,7 +64,7 @@ struct edCinActorInterface
 {
 	struct ANIM_PARAMStag_Anim
 	{
-		int pHdr; // edANM_HDR*
+		strd_ptr(edANM_HDR*) pHdr;
 		float field_0x4;
 		char field_0x8;
 		undefined field_0x9;
@@ -81,8 +81,15 @@ struct edCinActorInterface
 
 	struct PARTICLE_PARAMStag
 	{
-		int particleId; // void*
+		strd_ptr(void*) particleId;
 		int field_0x4;
+		float field_0x8;
+	};
+
+	struct MESSAGE_PARAMStag
+	{
+		undefined4 field_0x0;
+		strd_ptr(void*) field_0x4;
 		float field_0x8;
 	};
 
@@ -96,6 +103,7 @@ struct edCinActorInterface
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag) = 0;
 	virtual bool SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag) = 0;
 	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams) = 0;
+	virtual bool SetMessage(float param_1, edCinActorInterface::MESSAGE_PARAMStag* pTag) = 0;
 	virtual bool Shutdown() = 0;
 };
 

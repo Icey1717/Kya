@@ -70,7 +70,7 @@ struct s_input_pattern
 union s_fighter_action_hash
 {
 	uint hash;
-	int pData; // void* (s_fighter_combo/blow/grab)
+	strd_ptr(void*) pData; // (s_fighter_combo/blow/grab)
 };
 
 struct s_fighter_move

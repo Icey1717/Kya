@@ -42,7 +42,7 @@ float GenRandom01(_ed_particle_generator_param* pParam)
 float GenRandomCentered01(_ed_particle_generator_param* pParam)
 {
 	pParam->field_0x21c = pParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-	const uint value = ((pParam->field_0x21c << 0x29) >> 0x29) | 0x3F800000;
+	const uint value = ((((uint64_t)pParam->field_0x21c) << 0x29) >> 0x29) | 0x3F800000;
 	return *reinterpret_cast<const float*>(&value) - 1.0f;
 }
 
@@ -201,7 +201,6 @@ ed_part_system_config* edParticlesGetSystemConfig()
 
 _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scene* pScene, ed_g2d_manager* param_3, edDList_material** ppMaterials, ulong* pHashes, int materialIndex, ed_g3d_manager* p3dManager, bool param_8)
 {
-	_ed_particle_vectors* p_Var1;
 	edF32VECTOR4* peVar2;
 	undefined4 uVar3;
 	ed_g2d_manager* peVar4;
@@ -242,7 +241,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 	}
 
 	offset = (pFileData->manager).aParticleVectors.offset;
-	if (p_Var1 != 0x0) {
+	if (offset != 0x0) {
 		(pFileData->manager).aParticleVectors.pData = reinterpret_cast<_ed_particle_vectors*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
@@ -549,6 +548,8 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 		iVar17 = iVar17 + 1;
 	} while (true);
 }
+
+#pragma clang optimize on
 
 void edParticlesSetSystem(_ed_particle_manager* pManager)
 {
@@ -881,8 +882,8 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 		}
 
 		if (bVar1 == PARTICLE_SHAPE_BOX) {
-			IMPLEMENTATION_GUARD(
 			if (iVar5 == 3) {
+				IMPLEMENTATION_GUARD(
 				param_2->x = GenRandomCentered01(pGeneratorParam) - 0.5;
 				param_2->y = GenRandomCentered01(pGeneratorParam) - 0.5;
 				param_2->z = GenRandom01(pGeneratorParam) - 0.5;
@@ -950,7 +951,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 							}
 						}
 					}
-				}
+				})
 			}
 			else {
 				if (iVar5 == 2) {
@@ -959,73 +960,73 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 					iVar5 = (int)uVar6 % 6;
 					if (iVar5 < 2) {
 						if (iVar5 == 0) {
-							param_2->x = 0.5;
+							param_2->x = 0.5f;
 						}
 						else {
 							param_2->x = -0.5f;
 						}
 
-						param_2->y = GenRandomCentered01(pGeneratorParam) - 0.5;
-						param_2->z = GenRandom01(pGeneratorParam) - 0.5;
+						param_2->y = GenRandomCentered01(pGeneratorParam) - 0.5f;
+						param_2->z = GenRandom01(pGeneratorParam) - 0.5f;
 						param_2->w = 1.0;
 						local_e0.y = gF32Vector4Zero.y;
 						local_e0.z = gF32Vector4Zero.z;
 						local_e0.w = gF32Vector4Zero.w;
 						if (iVar5 == 0) {
-							local_e0.x = 1.0;
+							local_e0.x = 1.0f;
 						}
 						else {
-							local_e0.x = (float)&DAT_bf800000;
+							local_e0.x = -1.0f;
 						}
 					}
 					else {
 						if (iVar5 < 4) {
-							param_2->x = GenRandom01(pGeneratorParam) - 0.5;
+							param_2->x = GenRandom01(pGeneratorParam) - 0.5f;
 							if (iVar5 == 2) {
-								param_2->y = 0.5;
+								param_2->y = 0.5f;
 							}
 							else {
 								param_2->y = -0.5f;
 							}
-							param_2->z = GenRandom01(pGeneratorParam) - 0.5;
-							param_2->w = 1.0;
+							param_2->z = GenRandom01(pGeneratorParam) - 0.5f;
+							param_2->w = 1.0f;
 							local_e0.x = gF32Vector4Zero.x;
 							local_e0.z = gF32Vector4Zero.z;
 							local_e0.w = gF32Vector4Zero.w;
 							if (iVar5 == 2) {
-								local_e0.y = 1.0;
+								local_e0.y = 1.0f;
 							}
 							else {
-								local_e0.y = (float)&DAT_bf800000;
+								local_e0.y = -1.0f;
 							}
 						}
 						else {
 							puVar10 = 0.5f;
 							pGeneratorParam->field_0x21c = uVar6 * 0x19660d + 0x3c6ef35f;
-							param_2->x = ((float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) |
-								0x3f800000) - 1.0) - 0.5;
-							pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-							param_2->y = ((float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) |
-								0x3f800000) - 1.0) - 0.5;
+
+							param_2->x = GenRandomCentered01(pGeneratorParam) - 0.5f;
+							param_2->y = GenRandomCentered01(pGeneratorParam) - 0.5f;
+
 							if (iVar5 != 4) {
 								puVar10 = -0.5f;
 							}
 							param_2->z = (float)puVar10;
-							param_2->w = 1.0;
+							param_2->w = 1.0f;
 							local_e0.x = gF32Vector4Zero.x;
 							local_e0.y = gF32Vector4Zero.y;
 							local_e0.w = gF32Vector4Zero.w;
 							if (iVar5 == 4) {
-								local_e0.z = 1.0;
+								local_e0.z = 1.0f;
 							}
 							else {
-								local_e0.z = (float)&DAT_bf800000;
+								local_e0.z = -1.0f;
 							}
 						}
 					}
 				}
 				else {
 					if (iVar5 == 1) {
+						IMPLEMENTATION_GUARD(
 						pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 						iVar7 = ((int)pGeneratorParam->field_0x21c % 0xc) * 8;
 						iVar5 = *(int*)(&DAT_00431930 + iVar7);
@@ -1052,10 +1053,11 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 							local_e0.y = *(float*)(&DAT_004318b4 + iVar7) * 0.5 + *(float*)(&DAT_004318b4 + iVar5) * 0.5;
 							local_e0.z = *(float*)(&DAT_004318b8 + iVar7) * 0.5 + *(float*)(&DAT_004318b8 + iVar5) * 0.5;
 							local_e0.w = 0.0;
-						}
+						})
 					}
 					else {
 						if (iVar5 == 0) {
+							IMPLEMENTATION_GUARD(
 							pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 							uVar6 = pGeneratorParam->field_0x21c;
 							if ((uVar6 & 1) == 0) {
@@ -1084,13 +1086,14 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 								local_e0.y = param_2->y;
 								local_e0.z = param_2->z;
 								local_e0.w = 0.0;
-							}
+							})
 						}
 					}
 				}
 			}
+
 			edF32Matrix4MulF32Vector4Hard(param_2, &pGeneratorParam->field_0x40, param_2);
-			goto LAB_0027a3b0;)
+			goto LAB_0027a3b0;
 		}
 
 		if (bVar1 == PARTICLE_SHAPE_DOT) {
@@ -2626,6 +2629,18 @@ static Mat2x3 Mat2x3_0041ea50 =
 	-1.0f, 0.0f, 1.0f
 };
 
+static Mat2x3 Mat2x3_0041ead0 =
+{
+	-1.0f, 0.0f, 0.0f,
+	 1.0f, 1.0f, 0.0f
+};
+
+static Mat2x3 Mat2x3_0041eaf0 =
+{
+	-1.0f, 0.0f, 0.0f,
+	 1.0f, 1.0f, 0.0f
+};
+
 static Mat2x3 FLOAT_ARRAY_0041eb50 =
 {
 	1.0f, 0.0f, 0.0f, 
@@ -2989,12 +3004,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 	AffineQuad2D local_690;
 	AffineQuad2D local_670;
 	AffineQuad2D local_65c;
-	float local_620;
-	float local_61c;
-	float local_610;
-	float local_60c;
-	float local_608;
-	float local_604;
+	AffineQuad2D local_620;
 	float local_600;
 	float local_5fc;
 	AffineQuad2D local_5f0;
@@ -4171,82 +4181,89 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																														}
 																													}
 																													else {
-																														IMPLEMENTATION_GUARD(
 																														pCurParticle = pParticle + startIndex;
 																														pCurRawVector = pRawVectors + startIndex;
+
 																														for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																															if (pCurParticle->field_0xd != 0) {
-																																local_688 = (pCurVector->field_0x10.x * local_230.x +
+																																// Project particle velocity onto camera axes and scale by lifetime factor
+																																float projectedX = (pCurVector->field_0x10.x * local_230.x +
 																																	pCurVector->field_0x10.y * local_230.y +
-																																	pCurVector->field_0x10.z * local_230.z) *
-																																	pCurParticle->field_0x30;
-																																local_690 = (pCurVector->field_0x10.x * local_220.x +
+																																	pCurVector->field_0x10.z * local_230.z) * pCurParticle->field_0x30;
+
+																																float projectedY = (pCurVector->field_0x10.x * local_220.x +
 																																	pCurVector->field_0x10.y * local_220.y +
-																																	pCurVector->field_0x10.z * local_220.z) *
-																																	pCurParticle->field_0x30;
-																																fVar28 = SQRT(local_688 * local_688 +
-																																	local_690 * local_690);
+																																	pCurVector->field_0x10.z * local_220.z) * pCurParticle->field_0x30;
+
+																																// Calculate magnitude and normalize direction
+																																fVar28 = sqrtf(projectedX * projectedX + projectedY * projectedY);
 																																fVar27 = g_TinyFloat_00448548;
-																																if (fVar28 != 0.0) {
+																																if (fVar28 != 0.0f) {
 																																	fVar27 = fVar28;
 																																}
-																																local_688 = local_688 * (1.0 / fVar27);
-																																local_690 = local_690 * (1.0 / fVar27);
-																																local_68c = -local_688;
-																																local_680 = (local_690 + local_688) * -0.5 + 0.5;
-																																fStack1660 = (local_690 - local_688) * -0.5 + 0.5;
-																																if ((pDrawData->field_0x90 != 0.0) || (local_684 = local_690, pDrawData->field_0x94 != 0.0)) {
-																																	fVar27 = pDrawData->field_0x94 *
-																																		(pCurParticle->age / pCurParticle->lifetime);
-																																	if (0.0 < local_688) {
+
+																																float normalizedX = projectedX * (1.0f / fVar27);
+																																float normalizedY = projectedY * (1.0f / fVar27);
+																																float negNormalizedX = -normalizedX;
+
+																																// Calculate initial quad transformation
+																																AffineQuad2D quad;
+																																quad.xAxis.x = normalizedX;
+																																quad.xAxis.y = normalizedY;
+																																quad.yAxis.x = negNormalizedX;
+																																quad.yAxis.y = normalizedY;
+																																quad.origin.x = (normalizedY + normalizedX) * -0.5f + 0.5f;
+																																quad.origin.y = (normalizedY - normalizedX) * -0.5f + 0.5f;
+
+																																// Apply rotation if base or lifetime-based rotation is enabled
+																																if ((pDrawData->field_0x90 != 0.0f) || (pDrawData->field_0x94 != 0.0f)) {
+																																	fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
+																																	if (0.0f < normalizedX) {
 																																		fVar27 = -fVar27;
 																																	}
 																																	fVar27 = pDrawData->field_0x90 + fVar27;
 
-																																	ParticleC(local_690, fVar27);
+																																	// Create rotation transformation
+																																	AffineQuad2D rotQuad;
+																																	ParticleC(rotQuad, fVar27);
 
-																																	// Apply affine
-																																	fVar32 = -fVar31 * local_690;
-																																	fVar27 = fVar31 * local_690;
-																																	local_684 = fVar28 * local_690 + -fVar31 * local_68c;
-																																	local_680 = fVar30 * local_688 +
-																																		fVar29 * local_690 + local_680 + 0.0;
-																																	fStack1660 = fVar30 * local_690 +
-																																		fVar29 * local_68c + fStack1660 + 0.0;
-																																	local_690 = fVar31 * local_688 + fVar28 * local_690;
-																																	local_68c = fVar27 + fVar28 * local_68c;
-																																	local_688 = fVar28 * local_688 + fVar32;
+																																	// Apply rotation to base quad
+																																	float tempXAxisX = fVar28 * rotQuad.xAxis.x + -rotQuad.xAxis.y * negNormalizedX;
+																																	float tempXAxisY = rotQuad.xAxis.y * normalizedX + fVar28 * rotQuad.xAxis.y;
+																																	float tempYAxisX = rotQuad.yAxis.y * normalizedX + fVar28 * rotQuad.yAxis.x;
+																																	float tempYAxisY = fVar28 * rotQuad.yAxis.y + -rotQuad.xAxis.y * normalizedY;
+																																	float tempOriginX = rotQuad.origin.x * normalizedX + rotQuad.origin.y * normalizedY + quad.origin.x + 0.0f;
+																																	float tempOriginY = rotQuad.origin.x * normalizedY + rotQuad.origin.y * negNormalizedX + quad.origin.y + 0.0f;
+
+																																	quad.xAxis.x = tempXAxisX;
+																																	quad.xAxis.y = tempXAxisY;
+																																	quad.yAxis.x = tempYAxisX;
+																																	quad.yAxis.y = tempYAxisY;
+																																	quad.origin.x = tempOriginX;
+																																	quad.origin.y = tempOriginY;
 																																}
 
-																																TransformUVs(pfVar23, local_690, uv0, uv1, uv2, uv3);
+																																// Transform UV coordinates
+																																TransformUVs(pfVar23, quad, uv0, uv1, uv2, uv3);
 
-																																uVar26 = pCurParticle->field_0x8;
-																																rgbaColor[0] = (((uVar26 >> 0x18) *
-																																	(uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																																	alphaMultiplier >> 8) << 0x18;
-																																rgbaColor[0] = rgbaColor[0] |
-																																	CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																																		(uint) * (byte*)&pCurParticle->
-																																		field_0x12 >> 8),
-																																		CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																																			(uint)pCurParticle->field_0xf >> 8),
-																																			(char)((uVar26 & 0xff) *
-																																				(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																																height = gParticleSizeScale *
-																																	pCurParticle->yScale *
-																																	(float)(uint)pCurParticle->field_0x4 * 0.5;
+																																// Calculate particle color with alpha blending
+																																ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+
+																																// Calculate particle dimensions
+																																height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																																width = height * aspectRatio;
-																																edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-																																	(undefined8*)pCurRawVector);
+
+																																// Submit vertex data for rendering
+																																edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																															}
+
 																															pCurParticle = pCurParticle + 1;
 																															pCurRawVector = pCurRawVector + 1;
 																															pCurVector = pCurVector + 1;
-																														})
+																														}
 																													}
 																												}
 																												else {
-																													IMPLEMENTATION_GUARD(
 																													pCurParticle = pParticle + startIndex;
 																													pCurRawVector = pRawVectors + startIndex;
 																													for (; startIndex < endIndex; startIndex = startIndex + 1) {
@@ -4256,220 +4273,144 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																															if ((uVar26 & 0x20) != 0) {
 																																fVar27 = -fVar27;
 																															}
+
 																															fVar27 = pDrawData->field_0x90 + fVar27;
 
 																															ParticleC(local_670, fVar27);
 
 																															if ((uVar26 & 0x40) != 0) {
-																																local_670 = local_66c * DAT_0041eaf8 +
-																																	local_664 * DAT_0041eaf0;
-																																local_668 = local_664 * DAT_0041eaf8 +
-																																	fVar27 * DAT_0041eaf0;
-																																local_66c = local_66c * DAT_0041eafc +
-																																	local_664 * DAT_0041eaf4;
-																																local_664 = local_664 * DAT_0041eafc +
-																																	fVar27 * DAT_0041eaf4;
-																																local_660 = local_65c * DAT_0041eaf8 +
-																																	fVar28 * DAT_0041eaf0 + DAT_0041eb00 + 0.0;
-																																local_65c = local_65c * DAT_0041eafc +
-																																	fVar28 * DAT_0041eaf4 + DAT_0041eb04 + 0.0;
+																																ApplyAffineC(Mat2x3_0041eaf0, local_670);
 																															}
+
 																															if ((uVar26 & 0x80) != 0) {
-																																fVar27 = local_66c * DAT_0041eb18;
-																																fVar28 = local_664 * DAT_0041eb18;
-																																local_66c = local_66c * DAT_0041eb1c +
-																																	local_670 * DAT_0041eb14;
-																																local_664 = local_664 * DAT_0041eb1c +
-																																	local_668 * DAT_0041eb14;
-																																fVar29 = local_65c * DAT_0041eb18;
-																																local_65c = local_65c * DAT_0041eb1c +
-																																	local_660 * DAT_0041eb14 +
-																																	DAT_0041eb24 + 0.0;
-																																local_670 = fVar27 + local_670 * DAT_0041eb10;
-																																local_668 = fVar28 + local_668 * DAT_0041eb10;
-																																local_660 = fVar29 + local_660 * DAT_0041eb10 +
-																																	DAT_0041eb20 + 0.0;
+																																fVar27 = local_670.xAxis.y * Mat2x3_0041ea50.m02;
+																																fVar28 = local_670.yAxis.y * Mat2x3_0041ea50.m02;
+																																local_670.xAxis.y = local_670.xAxis.y * Mat2x3_0041ea50.m10 + local_670.xAxis.x * Mat2x3_0041ea50.m01;
+																																local_670.yAxis.y = local_670.yAxis.y * Mat2x3_0041ea50.m10 + local_670.yAxis.x * Mat2x3_0041ea50.m01;
+																																fVar29 = local_670.origin.y * Mat2x3_0041ea50.m02;
+																																local_670.origin.y = local_670.origin.y * Mat2x3_0041ea50.m10 + local_670.origin.x * Mat2x3_0041ea50.m01 + Mat2x3_0041ea50.m12 + 0.0f;
+																																local_670.xAxis.x = fVar27 + local_670.xAxis.x * Mat2x3_0041ea50.m00;
+																																local_670.yAxis.x = fVar28 + local_670.yAxis.x * Mat2x3_0041ea50.m00;
+																																local_670.origin.x = fVar29 + local_670.origin.x * Mat2x3_0041ea50.m00 + Mat2x3_0041ea50.m11 + 0.0f;
 																															}
+
 																															sVar3 = pDrawData->field_0x82;
-																															iVar15 = (((int)(((int)uVar26 >> 8 & 0xffffU) * (int)sVar3
-																																) >> 0x10) +
-																																(int)(pCurParticle->age *
-																																	(float)*(int*)&pDrawData->field_0x98)) %
-																																(int)sVar3;
+																															iVar15 = (((int)(((int)uVar26 >> 8 & 0xffffU) * (int)sVar3) >> 0x10) +
+																																(int)(pCurParticle->age * (float)pDrawData->field_0x98)) % (int)sVar3;
+
 																															if (sVar3 == 0) {
 																																trap(7);
 																															}
+
 																															if (iVar15 < 0) {
 																																iVar15 = -iVar15;
 																															}
+
 																															sVar3 = pDrawData->field_0x84;
-																															DAT_0041eb30 = 1.0 / (float)(int)sVar3;
-																															DAT_0041eb3c = 1.0 / (float)(int)pDrawData->field_0x86;
+																															FLOAT_ARRAY_0041ebb0.m00 = 1.0f / (float)(int)sVar3;
+																															FLOAT_ARRAY_0041ebb0.m10 = 1.0f / (float)(int)pDrawData->field_0x86;
 																															if (sVar3 == 0) {
 																																trap(7);
 																															}
-																															DAT_0041eb40 = DAT_0041eb30 * (float)(iVar15 % (int)sVar3)
-																																;
+
+																															FLOAT_ARRAY_0041ebb0.m11 = FLOAT_ARRAY_0041ebb0.m00 * (float)(iVar15 % (int)sVar3);
 																															if (pDrawData->field_0x84 == 0) {
 																																trap(7);
 																															}
-																															DAT_0041eb44 = DAT_0041eb3c *
-																																(float)(iVar15 / (int)pDrawData->field_0x84
-																																	);
-																															fVar27 = local_66c * DAT_0041eb38 +
-																																local_670 * DAT_0041eb30;
-																															fVar28 = local_664 * DAT_0041eb38 +
-																																local_668 * DAT_0041eb30;
-																															fVar29 = local_66c * DAT_0041eb3c +
-																																local_670 * DAT_0041eb34;
-																															fVar31 = local_664 * DAT_0041eb3c +
-																																local_668 * DAT_0041eb34;
-																															fVar30 = local_65c * DAT_0041eb38 +
-																																local_660 * DAT_0041eb30 + DAT_0041eb40 + 0.0;
-																															fVar32 = local_65c * DAT_0041eb3c +
-																																local_660 * DAT_0041eb34 + DAT_0041eb44 + 0.0;
-																															uv0.u = pfVar23[0][1] * fVar28 +
-																																pfVar23[0][0] * fVar27 + fVar30 + 0.0;
-																															uv0.v = pfVar23[0][1] * fVar31 +
-																																pfVar23[0][0] * fVar29 + fVar32 + 0.0;
-																															uv1.u = pfVar23[1][1] * fVar28 +
-																																pfVar23[1][0] * fVar27 + fVar30 + 0.0;
-																															uv1.v = pfVar23[1][1] * fVar31 +
-																																pfVar23[1][0] * fVar29 + fVar32 + 0.0;
-																															uv2.u = pfVar23[2][1] * fVar28 +
-																																pfVar23[2][0] * fVar27 + fVar30 + 0.0;
-																															uv2.v = pfVar23[2][1] * fVar31 +
-																																pfVar23[2][0] * fVar29 + fVar32 + 0.0;
-																															uv3.u = pfVar23[3][1] * fVar28 +
-																																pfVar23[3][0] * fVar27 + fVar30 + 0.0;
-																															uv3.v = pfVar23[3][1] * fVar31 +
-																																pfVar23[3][0] * fVar29 + fVar32 + 0.0;
+
+																															FLOAT_ARRAY_0041ebb0.m12 = FLOAT_ARRAY_0041ebb0.m10 *
+																																(float)(iVar15 / (int)pDrawData->field_0x84);
+
+																															ApplyAffineC(FLOAT_ARRAY_0041ebb0, local_670);
+
+																															TransformUVs(pfVar23, local_670, uv0, uv1, uv2, uv3);
+
 																															uVar26 = pCurParticle->field_0x8;
-																															rgbaColor[0] = (((uVar26 >> 0x18) *
-																																(uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																																alphaMultiplier >> 8) << 0x18;
-																															rgbaColor[0] = rgbaColor[0] |
-																																CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																																	(uint) * (byte*)&pCurParticle->
-																																	field_0x12 >> 8),
-																																	CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																																		(uint)pCurParticle->field_0xf >> 8),
-																																		(char)((uVar26 & 0xff) *
-																																			(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																															height = gParticleSizeScale *
-																																pCurParticle->yScale *
-																																(float)(uint)pCurParticle->field_0x4 * 0.5;
+
+																															ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+																															
+																															height = gParticleSizeScale * pCurParticle->yScale *
+																																(float)(uint)pCurParticle->field_0x4 * 0.5f;
 																															width = height * aspectRatio;
-																															edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-																																(undefined8*)pCurRawVector);
+																															edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																														}
+
 																														pCurParticle = pCurParticle + 1;
 																														pCurRawVector = pCurRawVector + 1;
-																													})
+																													}
 																												}
 																											}
 																											else {
-																												IMPLEMENTATION_GUARD(
 																												pCurParticle = pParticle + startIndex;
 																												pCurRawVector = pRawVectors + startIndex;
+
 																												for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																													if (pCurParticle->field_0xd != 0) {
 																														uVar12 = pCurParticle->seed;
-																														fVar27 = pDrawData->field_0x94 *
-																															(pCurParticle->age / pCurParticle->lifetime);
+
+																														// Calculate rotation based on lifetime
+																														fVar27 = pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 																														if ((uVar12 & 0x20) != 0) {
 																															fVar27 = -fVar27;
 																														}
 																														fVar27 = pDrawData->field_0x90 + fVar27;
 
+																														// Initialize quad with rotation
 																														ParticleC(local_770, fVar27);
+
+																														// Transform UV coordinates
 																														TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
-																														
-																														uVar11 = (int)uVar12 >> 3;
-																														local_38 = (&pDrawData->field_0x9c)[uVar12 & 7];
-																														iVar15 = 0xff - (uVar11 & 0xff);
-																														local_3c = (&pDrawData->angleRotY)[uVar12 & 7];
-																														uVar22 = (pCurParticle->field_0x8 & 0xff00ff) * (0xff - uVar26) +
-																															((local_38 & 0xff00ff) * iVar15 +
-																																(local_3c & 0xff00ff) * (uVar11 & 0xff) >> 8 &
-																																0xff00ff) * uVar26;
-																														uVar12 = (pCurParticle->field_0x8 >> 8 & 0xff00ff) *
-																															(0xff - uVar26) +
-																															(((local_38 >> 8 & 0xff00ff) * iVar15 +
-																																(local_3c >> 8 & 0xff00ff) * (uVar11 & 0xff) &
-																																0xff00ff00) >> 8) * uVar26;
-																														local_34 = CONCAT13((char)(((uVar12 >> 0x18) *
-																															(uint) * (byte*)&pCurParticle->
-																															field_0xc >> 8) * alphaMultiplier >> 8),
-																															CONCAT12((char)((uVar22 >> 0x18) *
-																																(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																																CONCAT11((char)(((uVar12 & 0xff00ff00) >> 8 & 0xff)
-																																	* (uint)pCurParticle->field_0xf >> 8),
-																																	(char)((uVar22 >> 8 & 0xff) *
-																																		(uint) * (byte*)&pCurParticle->field_0xe
-																																		>> 8))));
-																														rgbaColor[0] = local_34;
-																														height = gParticleSizeScale *
-																															pCurParticle->field_0x24 *
-																															(float)(uint)pCurParticle->field_0x4 * 0.5;
+
+																														// Calculate particle color with palette blending
+																														ParticleColorB(rgbaColor, pCurParticle, alphaMultiplier, pDrawData, uVar26);
+
+																														// Calculate particle dimensions
+																														height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																														width = height * aspectRatio;
-																														edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-																															(undefined8*)pCurRawVector);
+
+																														// Submit vertex data for rendering
+																														edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																													}
+
 																													pCurParticle = pCurParticle + 1;
 																													pCurRawVector = pCurRawVector + 1;
-																												})
+																												}
 																											}
 																										}
 																										else {
-																											IMPLEMENTATION_GUARD(
 																											pCurParticle = pParticle + startIndex;
 																											pCurRawVector = pRawVectors + startIndex;
+
 																											for (; startIndex < endIndex; startIndex = startIndex + 1) {
 																												if (pCurParticle->field_0xd != 0) {
+																													// Calculate rotation based on lifetime
 																													fVar28 = pDrawData->field_0x90 + pDrawData->field_0x94 * (pCurParticle->age / pCurParticle->lifetime);
 
+																													// Initialize quad with rotation
 																													ParticleC(local_65c, fVar28);
-																													
+
+																													// Apply horizontal flip transformation if flag is set
 																													if ((pCurParticle->seed & 0x40) != 0) {
-																														local_630 = local_62c * DAT_0041ead8 +
-																															local_624 * DAT_0041ead0;
-																														local_628 = local_624 * DAT_0041ead8 + fVar27 * DAT_0041ead0
-																															;
-																														local_62c = local_62c * DAT_0041eadc +
-																															local_624 * DAT_0041ead4;
-																														local_624 = local_624 * DAT_0041eadc + fVar27 * DAT_0041ead4
-																															;
-																														local_620 = local_61c * DAT_0041ead8 +
-																															fVar28 * DAT_0041ead0 + DAT_0041eae0 + 0.0;
-																														local_61c = local_61c * DAT_0041eadc +
-																															fVar28 * DAT_0041ead4 + DAT_0041eae4 + 0.0;
+																														ApplyAffineC(Mat2x3_0041ead0, local_65c);
 																													}
 
+																													// Transform UV coordinates
 																													TransformUVs(pfVar23, local_65c, uv0, uv1, uv2, uv3);
 
-																													uVar26 = pCurParticle->field_0x8;
-																													rgbaColor[0] = (((uVar26 >> 0x18) *
-																														(uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																														alphaMultiplier >> 8) << 0x18;
-																													rgbaColor[0] = rgbaColor[0] |
-																														CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																															(uint) * (byte*)&pCurParticle->
-																															field_0x12 >> 8),
-																															CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																																(uint)pCurParticle->field_0xf >> 8),
-																																(char)((uVar26 & 0xff) *
-																																	(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																													height = gParticleSizeScale *
-																														pCurParticle->field_0x24 *
-																														(float)(uint)pCurParticle->field_0x4 * 0.5;
+																													// Calculate particle color with alpha blending
+																													ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+
+																													// Calculate particle dimensions
+																													height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																													width = height * aspectRatio;
-																													edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0],
-																														(undefined8*)pCurRawVector);
+
+																													// Submit vertex data for rendering
+																													edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, &rgbaColor[0], pCurRawVector);
 																												}
+
 																												pCurParticle = pCurParticle + 1;
 																												pCurRawVector = pCurRawVector + 1;
-																											})
+																											}
 																										}
 																									}
 																									else {

@@ -8,6 +8,7 @@
 #include "MathOps.h"
 #include "DlistManager.h"
 #include "ActorHero.h"
+#include "WayPoint.h"
 #include "ed3D/ed3DG3D.h"
 
 void CActorTeleporter::Create(ByteCode* pByteCode)
@@ -616,7 +617,78 @@ void CActorTeleporter::StateTeleporterActive()
 
 void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pReceiver;
+	float* pfVar1;
+	S_DESTINATION_LIST* pSVar2;
+	int iVar3;
+	ACTOR_WAYPOINT* iVar4;
+	S_NTF_TARGET_STREAM_REF* pSVar5;
+	int iVar6;
+	int iVar7;
+	_msg_spawn_params local_50;
+	_msg_spawn_params local_30;
+	CAudioManager* pAudioManager;
+
+	local_30.position = this->field_0x270;
+	edF32Vector4GetNegHard(&local_30.rotation, &this->rotationQuat);
+	iVar3 = DoMessage(CActorHero::_gThis, MESSAGE_SPAWN, &local_30);
+	if (iVar3 != 0) {
+		SetState(7, -1);
+
+		this->field_0x2a4 = 0;
+		this->field_0x170.pTargetStreamRef->SwitchOff(this);
+		this->field_0x178.SwitchOn(this);
+		this->field_0x180.pTargetStreamRef->SwitchOff(this);
+
+		iVar3 = 0;
+		if (this->pActorWaypointList != (ACTOR_WAYPOINT_LIST*)0x0) {
+			iVar3 = this->pActorWaypointList->nbEntries;
+		}
+
+		iVar6 = 0;
+		if (0 < iVar3) {
+			do {
+				iVar4 = this->pActorWaypointList->aEntries + iVar6;
+				pReceiver = iVar4->actorRef.Get();
+				CWayPoint* pWayPoint = iVar4->wayPointRef.Get();
+				if ((pReceiver != (CActor*)0x0) && (pfVar1 != (float*)0x0)) {
+					local_50.position.xyz = pWayPoint->location;
+					local_50.position.w = 1.0f;
+					SetVectorFromAngles(&local_50.rotation, &pWayPoint->rotation);
+					CActor::DoMessage(pReceiver, MESSAGE_SPAWN, &local_50);
+				}
+
+				iVar6 = iVar6 + 1;
+			} while (iVar6 < iVar3);
+		}
+
+		if ((levelId != 0x10) && (iVar3 = 0, param_3 != -1)) {
+			while (true) {
+				pSVar2 = this->pDestinationList;
+				iVar7 = 0;
+				if (pSVar2 != (S_DESTINATION_LIST*)0x0) {
+					iVar7 = pSVar2->nbEntries;
+				}
+
+				if (iVar7 <= iVar3) break;
+
+				S_DESTINATION_ENTRY* pEntry = pSVar2->aEntries + iVar3;
+				if ((pEntry->field_0x4 == levelId) && (pEntry->field_0x8 == param_3)) {
+					this->field_0x298 = iVar3;
+				}
+
+				iVar3 = iVar3 + 1;
+			}
+		}
+
+		IMPLEMENTATION_GUARD_AUDIO(
+		pAudioManager = CScene::ptable.g_AudioManager_00451698;
+		CScene::ptable.g_AudioManager_00451698->FUN_00181970(this->field_0x2ac);
+		pAudioManager->SetMusic(this->field_0x2b0);
+		(**(code**)(pAudioManager->field_0x0 + 0x50))();)
+	}
+
+	return;
 }
 
 void CActorTeleporter::NotifyLevelTeleporterChanged()

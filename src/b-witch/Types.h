@@ -789,7 +789,7 @@ struct S_STREAM_REF {
 	void Reset() {}
 
 	union {
-		int pObj;
+		strd_ptr(T*) pObj;
 		int index;
 	};
 };
@@ -937,10 +937,10 @@ public:
 
 PACK(
 	struct ed_zone_3d {
-	int field_0x0[3]; // ptr
+	strd_ptr(void*) field_0x0[3];
 	edF32VECTOR4 boundSphere;
 	uint flags;
-	int pMatrix; // edF32MATRIX4*
+	strd_ptr(edF32MATRIX4*) pMatrix;
 };)
 
 struct S_ZONE_STREAM_REF {

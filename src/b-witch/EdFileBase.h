@@ -11,7 +11,7 @@ struct StaticEdFileBase
 	bool Check();
 
 	struct edCFiler* pEdFileBase;
-	undefined4 field_0x4;
+	int field_0x4;
 };
 
 extern StaticEdFileBase StaticEdFileBase_004497f0;

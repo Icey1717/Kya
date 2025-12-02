@@ -981,11 +981,13 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		StateMickenStand(pBehaviour);
 		break;
 	case 7:
-		IMPLEMENTATION_GUARD(
 		pCVar2 = this->pCollisionData;
-		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x129, (CActorsTable*)0x0);
+		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
 		if ((pCVar2->flags_0x4 & 2) == 0) break;
+
 		pCVar1 = this->pTiedActor;
+
 		if (pCVar1 == (CActor*)0x0) {
 		LAB_0014f970:
 			iVar7 = MICKEN_EAT_STATE_STAND;
@@ -993,11 +995,13 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		else {
 			fVar10 = (pCVar1->currentLocation).x - this->currentLocation.x;
 			fVar11 = (pCVar1->currentLocation).z - this->currentLocation.z;
-			this->field_0x3ec = SQRT(fVar10 * fVar10 + 0.0 + fVar11 * fVar11);
+			this->field_0x3ec = sqrtf(fVar10 * fVar10 + 0.0f + fVar11 * fVar11);
 			iVar7 = 0x11;
-			if (this->field_0x3ec <= 0.3) goto LAB_0014f970;
+
+			if (this->field_0x3ec <= 0.3f) goto LAB_0014f970;
 		}
-		this->SetState(iVar7, -1);)
+
+		this->SetState(iVar7, -1);
 		break;
 	case MICKEN_EAT_STATE_WALK_TO_FRUIT:
 		iVar7 = WalkToPos(0.3f, pBehaviour, &this->pNearestFruit->currentLocation, 0);

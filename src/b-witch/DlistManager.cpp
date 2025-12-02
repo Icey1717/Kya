@@ -313,33 +313,33 @@ void CGlobalDListManager::Level_Manage()
 	CGlobalDListPatch* pCurList;
 	uint uVar4;
 	uint uVar5;
-	int iVar6;
+	int sectorPatchIndex;
+	int nbTotalPatches;
 	S_GLOBAL_DLIST_PATCH** pCurEntry;
-	int iVar8;
-	int iVar9;
+	int curPatchIndex;
 	//ParticleData_b8* piVar2;
 
 	if (this->dlistCount != 0) {
 		if (this->field_0x1c == 1) {
 			pCurList = this->ppGlobalDlist->pDlistPatch;
 
-			if ((pCurList != (CGlobalDListPatch*)0x0) && (iVar6 = pCurList->nbTotalPatches, iVar6 != 0)) {
+			if ((pCurList != (CGlobalDListPatch*)0x0) && (nbTotalPatches = pCurList->nbTotalPatches, nbTotalPatches != 0)) {
 				if (pCurList->bEnabled != 0) {
 					pCurList->field_0x18 = 1;
 					edDListSetCurrent(pCurList->pDisplayListInternal);
 				}
 
-				iVar9 = 0;
+				curPatchIndex = 0;
 				pCurEntry = pCurList->aPatches;
-				if (0 < iVar6) {
+				if (0 < nbTotalPatches) {
 					do {
 						if (*pCurEntry != (S_GLOBAL_DLIST_PATCH*)0x0) {
-							(*pCurEntry)->pOwner->InitDlistPatchable(iVar9);
+							(*pCurEntry)->pOwner->InitDlistPatchable(curPatchIndex);
 						}
 
 						pCurEntry = pCurEntry + 1;
-						iVar9 = iVar9 + 1;
-					} while (iVar9 < iVar6);
+						curPatchIndex = curPatchIndex + 1;
+					} while (curPatchIndex < nbTotalPatches);
 				}
 
 				if (pCurList->bEnabled != 0) {
@@ -350,28 +350,28 @@ void CGlobalDListManager::Level_Manage()
 			this->field_0x1c = 0;
 		}
 
-		if (((1 < this->dlistCount) && (this->field_0x18 == 1)) && (iVar6 = this->field_0x14, iVar6 != -1)) {
-			pCurList = this->ppGlobalDlist[iVar6].pDlistPatch;
+		if (((1 < this->dlistCount) && (this->field_0x18 == 1)) && (sectorPatchIndex = this->activeSectorPatchId, sectorPatchIndex != -1)) {
+			pCurList = this->ppGlobalDlist[sectorPatchIndex].pDlistPatch;
 
-			if ((pCurList != (CGlobalDListPatch*)0x0) && (iVar9 = pCurList->nbTotalPatches, iVar9 != 0)) {
+			if ((pCurList != (CGlobalDListPatch*)0x0) && (nbTotalPatches = pCurList->nbTotalPatches, nbTotalPatches != 0)) {
 				if (pCurList->bEnabled != 0) {
 					pCurList->field_0x18 = 1;
 					edDListSetCurrent(pCurList->pDisplayListInternal);
 				}
 
-				iVar8 = 0;
-				if (0 < iVar9) {
-					iVar6 = iVar6 << 0x10;
+				curPatchIndex = 0;
+				if (0 < nbTotalPatches) {
+					sectorPatchIndex = sectorPatchIndex << 0x10;
 					pCurEntry = pCurList->aPatches;
 					do {
 						if (*pCurEntry != (S_GLOBAL_DLIST_PATCH*)0x0) {
-							(*pCurEntry)->pOwner->InitDlistPatchable(iVar6);
+							(*pCurEntry)->pOwner->InitDlistPatchable(sectorPatchIndex);
 						}
 
-						iVar8 = iVar8 + 1;
+						curPatchIndex = curPatchIndex + 1;
 						pCurEntry = pCurEntry + 1;
-						iVar6 = iVar6 + 1;
-					} while (iVar8 < iVar9);
+						sectorPatchIndex = sectorPatchIndex + 1;
+					} while (curPatchIndex < nbTotalPatches);
 				}
 
 				if (pCurList->bEnabled != 0) {
@@ -414,8 +414,8 @@ void CGlobalDListManager::Level_Draw()
 
 		if (1 < this->dlistCount) {
 			pDlistPatch = (CGlobalDListPatch*)0x0;
-			if (this->field_0x14 != -1) {
-				pDlistPatch = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
+			if (this->activeSectorPatchId != -1) {
+				pDlistPatch = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 			}
 
 			if ((((pDlistPatch != (CGlobalDListPatch*)0x0) && (bEnabled = pDlistPatch->bEnabled, bEnabled != 0)) &&
@@ -436,8 +436,10 @@ void CGlobalDListManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		else {
 			this->field_0x18 = 1;
 		}
+
 		SectorChange(newSectorId);
 	}
+
 	return;
 }
 
@@ -463,7 +465,7 @@ void CGlobalDListManager::Level_Create()
 	this->bBeganLevelInit = 0;
 	this->pDisplayList = (DisplayList*)0x0;
 	this->ppGlobalDlist = (GlobalDlistEntry*)0x0;
-	this->field_0x14 = -1;
+	this->activeSectorPatchId = -1;
 	this->field_0x18 = 0;
 	this->field_0x1c = 0;
 	//this->field_0x20 = -1;
@@ -550,49 +552,50 @@ void CGlobalDListManager::Level_Create()
 
 void CGlobalDListManager::SectorChange(int newSectorId)
 {
-	GlobalDlistEntry* pGVar1;
+	GlobalDlistEntry* pActiveGlobalDlist;
 	int iVar2;
-	CGlobalDListPatch* pCVar3;
+	CGlobalDListPatch* pActiveDlistPatch;
 	uint uVar4;
 	uint uVar5;
 	CGlobalDListPatch* pCVar6;
 
 	if (newSectorId == -1) {
-		if (this->field_0x14 == -1) {
+		if (this->activeSectorPatchId == -1) {
 			pCVar6 = (CGlobalDListPatch*)0x0;
 		}
 		else {
-			pCVar6 = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
+			pCVar6 = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 		}
 
 		if (pCVar6 != (CGlobalDListPatch*)0x0) {
 			pCVar6->bEnabled = 0;
 		}
 
-		this->field_0x14 = -1;
+		this->activeSectorPatchId = -1;
 	}
 	else {
-		this->field_0x14 = newSectorId;
+		this->activeSectorPatchId = newSectorId;
+
 		pCVar6 = (CGlobalDListPatch*)0x0;
-		if (this->field_0x14 != -1) {
-			pCVar6 = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
+		if (this->activeSectorPatchId != -1) {
+			pCVar6 = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 		}
 
 		if (pCVar6 != (CGlobalDListPatch*)0x0) {
-			pGVar1 = &this->ppGlobalDlist[newSectorId];
-			if ((pGVar1->nbRegisteredPatches == 0) ||
-				((pGVar1->nbMatrices == 0 && (pGVar1[newSectorId].nbInstances == 0)))) {
+			pActiveGlobalDlist = &this->ppGlobalDlist[newSectorId];
+
+			if ((pActiveGlobalDlist->nbRegisteredPatches == 0) ||
+				((pActiveGlobalDlist->nbMatrices == 0 && (pActiveGlobalDlist->nbInstances == 0)))) {
 				pCVar6->bEnabled = 0;
 			}
 			else {
-				iVar2 = this->field_0x14;
-				pCVar3 = this->ppGlobalDlist[iVar2].pDlistPatch;
+				pActiveDlistPatch = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 
-				if (pCVar3 != (CGlobalDListPatch*)0x0) {
-					uVar4 = pGVar1->nbRegisteredPatches;
-					uVar5 = pGVar1->nbMatrices;
-					if ((uVar4 != 0) && ((pGVar1->nbInstances != 0 || (uVar5 != 0)))) {
-						edDListPatchableReset(pCVar3->pDisplayListInternal, uVar4, pGVar1[iVar2].nbInstances, uVar5);
+				if (pActiveDlistPatch != (CGlobalDListPatch*)0x0) {
+					uVar4 = pActiveGlobalDlist->nbRegisteredPatches;
+					uVar5 = pActiveGlobalDlist->nbMatrices;
+					if ((uVar4 != 0) && ((pActiveGlobalDlist->nbInstances != 0 || (uVar5 != 0)))) {
+						edDListPatchableReset(pActiveDlistPatch->pDisplayListInternal, uVar4, pActiveGlobalDlist[this->activeSectorPatchId].nbInstances, uVar5);
 					}
 				}
 
@@ -639,8 +642,8 @@ void CGlobalDListManager::_ExecuteCallFunc()
 			pGlobalPatch = ppDlist[curPatchId].pDlistPatch;
 			bVar5 = false;
 			if (curPatchId != 0) {
-				if (this->field_0x14 == curPatchId) {
-					const int id = this->field_0x14;
+				if (this->activeSectorPatchId == curPatchId) {
+					const int id = this->activeSectorPatchId;
 					pCVar13 = (CGlobalDListPatch*)0x0;
 					if (id != -1) {
 						pCVar13 = ppDlist[id].pDlistPatch;
@@ -652,7 +655,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 					else {
 						bVar5 = true;
 						if (this->field_0x18 != 1) {
-							if (this->field_0x14 != 0xffffffff) {
+							if (this->activeSectorPatchId != 0xffffffff) {
 								if (id == -1) {
 									pCVar13 = (CGlobalDListPatch*)0x0;
 								}
@@ -837,7 +840,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 		do {
 			int patchId = pCurRegData->patchId >> 0x10;
 			bVar5 = true;
-			if ((patchId == this->field_0x14) || (patchId == 0)) {
+			if ((patchId == this->activeSectorPatchId) || (patchId == 0)) {
 				pGlobalPatch = BeginCurrent(pCurRegData->patchId);
 				if (pGlobalPatch != (CGlobalDListPatch*)0x0) {
 					_ExecuteCallFunc_BeginDList(pCurRegData);
@@ -877,7 +880,7 @@ bool CGlobalDListManager::SetActive(int patchId, int index)
 	bool uVar1;
 	int iVar1;
 
-	if ((this->bCompletedLevelInit == 0) || (this->field_0x14 == -1)) {
+	if ((this->bCompletedLevelInit == 0) || (this->activeSectorPatchId == -1)) {
 		iVar1 = -1;
 	}
 	else {
@@ -886,7 +889,7 @@ bool CGlobalDListManager::SetActive(int patchId, int index)
 
 	uVar1 = false;
 	if (iVar1 == 1) {
-		if ((this->field_0x14 == patchId >> 0x10) || (patchId >> 0x10 == 0)) {
+		if ((this->activeSectorPatchId == patchId >> 0x10) || (patchId >> 0x10 == 0)) {
 			uVar1 = _AddCallFuncElement(patchId, CALL_ELEMENT_SET_ACTIVE, index);
 		}
 		else {
@@ -916,8 +919,8 @@ CGlobalDListPatch* CGlobalDListManager::BeginCurrent(int patchId)
 	else {
 		pPatch = (CGlobalDListPatch*)0x0;
 
-		if (this->field_0x14 != -1) {
-			pPatch = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
+		if (this->activeSectorPatchId != -1) {
+			pPatch = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 		}
 		if ((pPatch == (CGlobalDListPatch*)0x0) || (this->field_0x18 == 1)) {
 			return (CGlobalDListPatch*)0x0;
@@ -1098,7 +1101,7 @@ void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 					uVar15 = iVar10 >> 0x10;
 					bVar4 = false;
 					if (uVar15 != 0) {
-						iVar10 = this->field_0x14;
+						iVar10 = this->activeSectorPatchId;
 						pCVar6 = (CGlobalDListPatch*)0x0;
 
 						if (iVar10 != -1) {
@@ -1106,7 +1109,7 @@ void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 						}
 
 						if (pCVar6 != (CGlobalDListPatch*)0x0) {
-							if ((this->field_0x18 != 1) && (this->field_0x14 != -1)) {
+							if ((this->field_0x18 != 1) && (this->activeSectorPatchId != -1)) {
 								pCVar6 = (CGlobalDListPatch*)0x0;
 
 								if (iVar10 != -1) {

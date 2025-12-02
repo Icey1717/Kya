@@ -10,6 +10,7 @@
 #include "ActorAraignos.h"
 #include "ActorBonus.h"
 #include "ActorMoney.h"
+#include "ActorBridge.h"
 #include "ActorProjectile.h"
 #include "ActorSwitch.h"
 #include "ActorMicken.h"
@@ -148,6 +149,9 @@ namespace Hero
 		case STATE_HERO_FALL_B:
 			return "StateHeroFallB";
 			break;
+		case STATE_HERO_FALL_BOUNCE:
+			return "StateHeroFallBounce";
+			break;
 		case STATE_HERO_FALL_BOUNCE_1_2:
 			return "StateHeroFallBounce1_2";
 			break;
@@ -184,6 +188,9 @@ namespace Hero
 		case STATE_HERO_ROLL_FALL:
 			return "StateHeroRollFall";
 			break;
+		case STATE_HERO_WIND_HURT:
+			return "StateHeroWindHurt";
+			break;
 		case STATE_HERO_WIND_WALL_HURT:
 			return "StateHeroWindWallHurt";
 			break;
@@ -216,6 +223,63 @@ namespace Hero
 			break;
 		case STATE_HERO_KICK_C:
 			return "StateHeroKickC";
+			break;
+		case STATE_HERO_CLIMB_STAND_A:
+			return "StateHeroClimbStandA";
+			break;
+		case STATE_HERO_CLIMB_STAND_B:
+			return "StateHeroClimbStandB";
+			break;
+		case STATE_HERO_CLIMB_STAND_C:
+			return "StateHeroClimbStandC";
+			break;
+		case STATE_HERO_CLIMB_STAND_D:
+			return "StateHeroClimbStandD";
+			break;
+		case STATE_HERO_CLIMB_MOVE_A:
+			return "StateHeroClimbMoveA";
+			break;
+		case STATE_HERO_CLIMB_MOVE_B:
+			return "StateHeroClimbMoveB";
+			break;
+		case STATE_HERO_CLIMB_MOVE_C:
+			return "StateHeroClimbMoveC";
+			break;
+		case STATE_HERO_CLIMB_MOVE_D:
+			return "StateHeroClimbMoveD";
+			break;
+		case STATE_HERO_CLIMB_MOVE_E:
+			return "StateHeroClimbMoveE";
+			break;
+		case STATE_HERO_CLIMB_MOVE_F:
+			return "StateHeroClimbMoveF";
+			break;
+		case STATE_HERO_CLIMB_MOVE_G:
+			return "StateHeroClimbMoveG";
+			break;
+		case STATE_HERO_CLIMB_MOVE_H:
+			return "StateHeroClimbMoveH";
+			break;
+		case STATE_HERO_CLIMB_MOVE_I:
+			return "StateHeroClimbMoveI";
+			break;
+		case STATE_HERO_CLIMB_MOVE_J:
+			return "StateHeroClimbMoveJ";
+			break;
+		case STATE_HERO_CLIMB_MOVE_K:
+			return "StateHeroClimbMoveK";
+			break;
+		case STATE_HERO_CLIMB_MOVE_L:
+			return "StateHeroClimbMoveL";
+			break;
+		case STATE_HERO_CLIMB_JUMP_A:
+			return "StateHeroClimbJumpBackA";
+			break;
+		case STATE_HERO_CLIMB_JUMP_B:
+			return "StateHeroClimbJumpBackB";
+			break;
+		case STATE_HERO_CLIMB_FROM_AIR:
+			return "StateHeroClimbFromAir";
 			break;
 		case STATE_HERO_GRIP_B:
 			return "StateHeroGripB";
@@ -250,8 +314,20 @@ namespace Hero
 		case STATE_HERO_JUMP_2_3_GRIP:
 			return "StateHeroJump_2_3_Grip";
 			break;
+		case STATE_HERO_JUMP_GRIP_UNKOWN_A:
+			return "StateHeroJumpGripUnknownA";
+			break;
+		case STATE_HERO_JUMP_GRIP_UNKOWN_B:
+			return "StateHeroJumpGripUnknownB";
+			break;
 		case STATE_HERO_GRIP_GRAB:
 			return "StateHeroGripGrab";
+			break;
+		case STATE_HERO_BOUNCE_SOMERSAULT_1:
+			return "StateHeroBounceSomersault1";
+			break;
+		case STATE_HERO_BOUNCE_SOMERSAULT_2:
+			return "StateHeroBounceSomersault2";
 			break;
 		case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
 			return "StateHeroBoomyPrepareFightBlow";
@@ -274,6 +350,9 @@ namespace Hero
 		case STATE_HERO_TOBOGGAN_JUMP_2:
 			return "StateHeroTobogganJump2";
 			break;
+			case STATE_HERO_TOBOGGAN_CRASH:
+				return "StateHeroTobogganCrash";
+				break;
 		case STATE_HERO_TOBOGGAN_2:
 			return "StateHeroToboggan2";
 			break;
@@ -343,6 +422,9 @@ namespace Hero
 		case STATE_HERO_DCA_A:
 			return "StateHeroDCA_A";
 			break;
+		case STATE_HERO_REGENERATE:
+			return "StateHeroRegenerate";
+			break;
 		case STATE_HERO_UNLOCK_SWITCH:
 			return "StateHeroUnlockSwitch";
 			break;
@@ -363,6 +445,27 @@ namespace Hero
 			break;
 		case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
 			return "StateHeroTrampolineJump_1_2_C";
+			break;
+		case STATE_HERO_CEILING_CLIMB_A:
+			return "StateHeroCeilingClimbA";
+			break;
+		case STATE_HERO_CEILING_CLIMB_B:
+			return "StateHeroCeilingClimbB";
+			break;
+		case STATE_HERO_CEILING_CLIMB_C:
+			return "StateHeroCeilingClimbC";
+			break;
+		case STATE_HERO_CEILING_CLIMB_D:
+			return "StateHeroCeilingClimbD";
+			break;
+		case STATE_HERO_GRIP_2_CEILING:
+			return "StateHeroGrip2Ceiling";
+			break;
+		case STATE_HERO_CEILING_2_GRIP:
+			return "StateHeroCeiling2Grip";
+			break;
+		case STATE_HERO_CEILING_CLIMB_GRAB:
+			return "StateHeroCeilingClimbGrab";
 			break;
 		case STATE_HERO_CAUGHT_TRAP_1:
 			return "StateHeroCaughtTrap1";
@@ -728,6 +831,31 @@ namespace Micken
 	}
 }
 
+namespace Bridge
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case BRIDGE_BEHAVIOUR_BASIC:
+			return "Basic";
+		case BRIDGE_BEHAVIOUR_WIND_AWARE:
+			return "Wind Aware";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case BRIDGE_BASIC_STATE_STAND:
+			return "Stand";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -768,6 +896,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Switch::GetBehaviourName(behaviourId);
 	case MICKEN:
 		return Micken::GetBehaviourName(behaviourId);
+	case BRIDGE:
+		return Bridge::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -788,6 +918,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Projectile::GetStateName(pActor->actorState);
 	case MICKEN:
 		return Micken::GetStateName(pActor->actorState);
+	case BRIDGE:
+		return Bridge::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

@@ -99,6 +99,22 @@ void CPathFollow::Create(ByteCode* pByteCode)
 	return;
 }
 
+edF32VECTOR4* CPathFollow::GetGoal()
+{
+	edF32VECTOR4* pGoal;
+
+	if (this->aSplinePoints == (edF32VECTOR4*)0x0) {
+		pGoal = &gF32Vertex4Zero;
+	}
+	else {
+		pGoal = this->aSplinePoints + this->splinePointCount + -1;
+	}
+
+	return pGoal;
+}
+
+
+
 void CPathFollow::ComputeMatrix(edF32MATRIX4* pMatrix, int param_3)
 {
 	edF32VECTOR4* peVar1;
@@ -777,6 +793,11 @@ CPathPlane* CPathPlaneArray::GetCurPathPlane()
 	return this->aPathPlanes + this->curIndex;
 }
 
+CPathPlane* CPathPlaneArray::GetPathPlane(int index)
+{
+	return this->aPathPlanes + index;
+}
+
 void CPathPlaneArray::NextWayPoint()
 {
 	bool bVar1;
@@ -921,6 +942,32 @@ LAB_001bffa8:
 
 	return 1;
 }
+
+
+bool CPathPlaneArray::FUN_001bffd0()
+{
+	int iVar1;
+	CPathFollow* pCVar2;
+
+	iVar1 = this->curIndex;
+	pCVar2 = this->aPathPlanes[iVar1].pathFollowReader.pPathFollow;
+	if (pCVar2->type != 1) {
+		if (this->aPathPlanes[iVar1].pathFollowReader.field_0xc == 0) {
+			if (iVar1 == 0) {
+				return true;
+			}
+		}
+		else {
+			if ((iVar1 == this->nbPathPlanes + -1) && (pCVar2->mode != 1)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
 
 void CPathPlaneArray::InitPosition(edF32VECTOR4* pPosition)
 {

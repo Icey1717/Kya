@@ -9,7 +9,7 @@
 
 #ifdef PLATFORM_WIN
 #define PACKED_FIELD(type) PackedType<type>
-
+#pragma clang optimize off
 template<typename T>
 struct PackedType
 {
@@ -32,7 +32,7 @@ struct PackedType
 		}
 
 		index = STORE_POINTER(value);
-		return Get();
+		return value;
 	}
 
 	// Define == operator for comparison
@@ -49,7 +49,7 @@ struct PackedType
 
 
 	// Define -> operator for direct assignment
-	T operator->()
+	T operator->() const
 	{
 		return Get();
 	}
@@ -74,6 +74,7 @@ union OffsetPointer
 	PACKED_FIELD(T) pData;
 	int offset;
 };
+#pragma clang optimize on
 
 #define PARTICLE_SHAPE_BOX 1
 #define PARTICLE_SHAPE_SPHERE 2

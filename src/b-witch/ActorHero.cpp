@@ -1337,6 +1337,22 @@ bool CActorHero::TestState_IsInCheatMode()
 	return ret;
 }
 
+uint CActorHero::TestState_IsFalling(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x2000;
+}
+
 uint CActorHero::TestState_IsInTheWind(uint inFlags)
 {
 	int iVar1;

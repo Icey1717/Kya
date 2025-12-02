@@ -16,7 +16,7 @@ PACK(
 	undefined field_0xb;
 	int actorHashCode;
 	int trackCount;
-	int pCinActorInterface; // edCinActorInterface*
+	strd_ptr(edCinActorInterface*) pCinActorInterface;
 
 	char name[32];
 	edF32VECTOR4 boundingSphere;
@@ -156,7 +156,7 @@ struct edSceneSceneryTag {
 	char name[32];
 	int meshOffset;
 	int textureOffset;
-	int pInterface; // edCinSceneryInterface*
+	strd_ptr(edCinSceneryInterface*) pInterface;
 });
 
 struct edSceneScenery {
@@ -237,7 +237,7 @@ PACK(
 	float fov;
 	edF32VECTOR3 position;
 	edF32VECTOR4 heading;
-	int cinCam; // edCinCamInterface*
+	strd_ptr(edCinCamInterface*) cinCam;
 });
 
 struct edSCENEtag {

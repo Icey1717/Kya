@@ -258,20 +258,21 @@ void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1)
 
 float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
+	float x;
+	float y;
+	float z;
+	float invMagnitude;
 
-	fVar1 = v1->x;
-	fVar2 = v1->y;
-	fVar3 = v1->z;
-	const float magnitude = sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f;
-	fVar4 = 1.0f / magnitude;
-	v0->x = fVar1 * fVar4;
-	v0->y = fVar2 * fVar4;
-	v0->z = fVar3 * fVar4;
+	x = v1->x;
+	y = v1->y;
+	z = v1->z;
+	const float magnitude = sqrtf(x * x + y * y + z * z) + 0.0f;
+	invMagnitude = 1.0f / magnitude;
+	v0->x = x * invMagnitude;
+	v0->y = y * invMagnitude;
+	v0->z = z * invMagnitude;
 	v0->w = 0.0f;
+
 	return magnitude;
 }
 
@@ -1746,12 +1747,13 @@ void edF32Matrix4InverseSoft(edF32MATRIX4* m0)
 bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_2)
 {
 	float* pfVar1;
-	bool bVar2;
 	int iVar3;
 	int iVar4;
 	int iVar5;
 	float fVar6;
 	float fVar7;
+
+	// Initialize augmented matrix [A | I]
 	float local_a0[4];
 	float* local_90[4];
 
@@ -1765,97 +1767,89 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 	local_90[2] = auStack96;
 	local_90[3] = auStack128;
 
-	for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
-		for (iVar4 = 0; iVar4 < 4; iVar4 = iVar4 + 1) {
-			local_90[iVar5][iVar4] = (&param_2->aa)[iVar5 * 4 + iVar4];
+	// Copy input matrix and initialize identity on right side
+	for (iVar5 = 0; iVar5 < 4; iVar5++) {
+		for (iVar4 = 0; iVar4 < 4; iVar4++) {
+			local_90[iVar5][iVar4] = param_2->raw[iVar5 * 4 + iVar4];
+			local_90[iVar5][iVar4 + 4] = (iVar5 == iVar4) ? 1.0f : 0.0f;
+		}
+	}
 
-			if (iVar5 == iVar4) {
-				local_90[iVar5][iVar4 + 4] = 1.0f;
+	// Forward elimination
+	for (iVar5 = 0; iVar5 < 4; iVar5++) {
+		// Find max in column for pivot (normalize row)
+		local_a0[iVar5] = fabsf(local_90[iVar5][0]);
+		for (iVar4 = 1; iVar4 < 4; iVar4++) {
+			float absVal = fabsf(local_90[iVar5][iVar4]);
+			if (absVal > local_a0[iVar5]) {
+				local_a0[iVar5] = absVal;
 			}
-			else {
-				local_90[iVar5][iVar4 + 4] = 0.0f;
+		}
+
+		// Check for singular matrix
+		if (local_a0[iVar5] < g_TinyFloat_00448548) {
+			return false;
+		}
+
+		// Find pivot row
+		fVar6 = fabsf(local_90[iVar5][iVar5] / local_a0[iVar5]);
+		iVar3 = iVar5;
+
+		for (iVar4 = iVar5 + 1; iVar4 < 4; iVar4++) {
+			float pivotVal = fabsf(local_90[iVar4][iVar5] / local_a0[iVar4]);
+			if (pivotVal > fVar6) {
+				fVar6 = pivotVal;
+				iVar3 = iVar4;
+			}
+		}
+
+		// Swap rows if needed
+		if (iVar3 != iVar5) {
+			pfVar1 = local_90[iVar5];
+			local_90[iVar5] = local_90[iVar3];
+			local_90[iVar3] = pfVar1;
+			float temp = local_a0[iVar5];
+			local_a0[iVar5] = local_a0[iVar3];
+			local_a0[iVar3] = temp;
+		}
+
+		// Eliminate column
+		for (iVar4 = iVar5 + 1; iVar4 < 4; iVar4++) {
+			fVar7 = local_90[iVar5][iVar5];
+			fVar6 = local_90[iVar4][iVar5];
+			local_90[iVar4][iVar5] = 0.0f;
+
+			for (iVar3 = iVar5 + 1; iVar3 < 8; iVar3++) {
+				local_90[iVar4][iVar3] -= (fVar6 / fVar7) * local_90[iVar5][iVar3];
 			}
 		}
 	}
 
-	iVar5 = 0;
-	while (true) {
-		if (3 < iVar5) {
-			for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
-				fVar6 = fabs(local_90[iVar5][iVar5] / local_a0[iVar5]);
-				iVar3 = iVar5;
-				iVar4 = iVar5;
-
-				while (iVar4 = iVar4 + 1, iVar4 < 4) {
-					if (fVar6 < fabs(local_90[iVar4][iVar5] / local_a0[iVar4])) {
-						fVar6 = fabs(local_90[iVar4][iVar5] / local_a0[iVar4]);
-						iVar3 = iVar4;
-					}
-				}
-
-				iVar4 = iVar5;
-				if (iVar3 != iVar5) {
-					pfVar1 = local_90[iVar5];
-					local_90[iVar5] = local_90[iVar3];
-					local_90[iVar3] = pfVar1;
-					fVar6 = local_a0[iVar5];
-					local_a0[iVar5] = local_a0[iVar3];
-					local_a0[iVar3] = fVar6;
-				}
-
-				while (iVar4 = iVar4 + 1, iVar4 < 4) {
-					fVar7 = local_90[iVar5][iVar5];
-					fVar6 = local_90[iVar4][iVar5];
-					local_90[iVar4][iVar5] = 0.0f;
-					iVar3 = iVar5;
-
-					while (iVar3 = iVar3 + 1, iVar3 < 8) {
-						local_90[iVar4][iVar3] = local_90[iVar4][iVar3] - (fVar6 / fVar7) * local_90[iVar5][iVar3];
-					}
-				}
-			}
-
-			iVar5 = 3;
-
-			if (fabs(*(float*)((ulong)local_90[3] + 0xc)) < g_TinyFloat_00448548) {
-				bVar2 = false;
-			}
-			else {
-				for (; iVar4 = iVar5, 0 < iVar5; iVar5 = iVar5 + -1) {
-					while (iVar4 = iVar4 + -1, -1 < iVar4) {
-						fVar7 = local_90[iVar5][iVar5];
-						fVar6 = local_90[iVar4][iVar5];
-						iVar3 = iVar4;
-						while (iVar3 = iVar3 + 1, iVar3 < 8) {
-							local_90[iVar4][iVar3] = local_90[iVar4][iVar3] - (fVar6 / fVar7) * local_90[iVar5][iVar3];
-						}
-					}
-				}
-
-				for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
-					for (iVar4 = 0; iVar4 < 4; iVar4 = iVar4 + 1) {
-						(&param_1->aa)[iVar5 * 4 + iVar4] = local_90[iVar5][iVar4 + 4] / local_90[iVar5][iVar5];
-					}
-				}
-
-				bVar2 = true;
-			}
-			return bVar2;
-		}
-
-		local_a0[iVar5] = fabs(*local_90[iVar5]);
-
-		for (iVar4 = 1; iVar4 < 4; iVar4 = iVar4 + 1) {
-			if (local_a0[iVar5] < fabs(local_90[iVar5][iVar4])) {
-				local_a0[iVar5] = fabs(local_90[iVar5][iVar4]);
-			}
-		}
-
-		if (local_a0[iVar5] < g_TinyFloat_00448548) break;
-
-		iVar5 = iVar5 + 1;
+	// Check diagonal for singularity
+	if (fabsf(local_90[3][3]) < g_TinyFloat_00448548) {
+		return false;
 	}
-	return false;
+
+	// Back substitution
+	for (iVar5 = 3; iVar5 > 0; iVar5--) {
+		for (iVar4 = iVar5 - 1; iVar4 >= 0; iVar4--) {
+			fVar7 = local_90[iVar5][iVar5];
+			fVar6 = local_90[iVar4][iVar5];
+
+			for (iVar3 = iVar5; iVar3 < 8; iVar3++) {
+				local_90[iVar4][iVar3] -= (fVar6 / fVar7) * local_90[iVar5][iVar3];
+			}
+		}
+	}
+
+	// Extract inverse from right side of augmented matrix
+	for (iVar5 = 0; iVar5 < 4; iVar5++) {
+		for (iVar4 = 0; iVar4 < 4; iVar4++) {
+			param_1->raw[iVar5 * 4 + iVar4] = local_90[iVar5][iVar4 + 4] / local_90[iVar5][iVar5];
+		}
+	}
+
+	return true;
 }
 
 void edF32Vector4ScaleV4Hard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)

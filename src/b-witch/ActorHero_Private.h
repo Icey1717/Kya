@@ -53,6 +53,8 @@ class CActorBoomy;
 class CActorHeroPrivate;
 class CFightLock_SE;
 
+struct _ray_info_out;
+
 struct AdversaryEntry
 {
 	CActorFighter* pActorFighter;
@@ -139,6 +141,13 @@ class CBehaviourRideJamGut : public CBehaviour
 class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
 {
 
+};
+
+struct S_DETECT_WALL_CFG
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
 };
 
 class CActorHeroPrivate : public CActorHero 
@@ -239,6 +248,12 @@ public:
 	void ResetWindDefaultSettings();
 	void ResetJamGutSettings();
 
+	void ComputeBlendingWeightsInHitGlide();
+
+	void GetClimbVector(edF32VECTOR4* pOutVector, edF32VECTOR4* pInVector);
+	bool CheckClimbZone(edF32VECTOR4* pInVector);
+	bool SetNextClimbState(int param_2, int param_3);
+
 	int StateEvaluate();
 	int ChooseStateFall(int param_2);
 	int ChooseStateLanding(float speed);
@@ -271,6 +286,11 @@ public:
 	void StateHeroTrampolineJump_1_2(float param_1);
 
 	void StateHeroTrampolineStomachToFall(float param_1);
+
+	void StateHeroCeilingClimb(int param_2, int param_3, int param_4);
+
+	void StateHeroGrip2Ceiling();
+	void StateHeroCeiling2Grip();
 
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
@@ -318,10 +338,20 @@ public:
 
 	void StateHeroJump_3_3(int param_2);
 
+	void FUN_00138700();
+	void FUN_00138520();
+
+	void StateHeroClimbStand(int param_2, int param_3);
+	void StateHeroClimbMove(float param_1, float param_2, int param_4, int param_5, int param_6);
+	void StateHeroClimbJump();
+
 	void StateHeroGrip(float param_1, int nextState, int param_4);
 	void StateHeroGripAngle(int nextState, int param_3);
 	void StateHeroGripUp(float param_1, float param_2, int nextState, int param_5);
 	void StateHeroGripUpToJumpInit();
+
+	void StateHeroBounceSomersault1();
+	void StateHeroBounceSomersault2();
 
 	void StateHeroBoomyPrepareFightBlowInit();
 	void StateBoomyExecuteFightBlowInit();
@@ -385,6 +415,7 @@ public:
 
 	void RestoreVerticalOrientation();
 
+	bool DetectMultipleWallBounces();
 	bool DetectGripablePrecipice();
 	void DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int* param_4, edF32VECTOR4* v1);
 
@@ -403,6 +434,7 @@ public:
 
 	void SetGripState();
 
+	bool DetectWall(uint param_2, uint param_3, edF32VECTOR4* param_4, S_DETECT_WALL_CFG* pDetectWallCfg, edF32VECTOR4* param_6, edF32VECTOR4* param_7, _ray_info_out* pRayInfoOut);
 	int DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor);
 	bool DetectClimbWall(int param_2, CActor** pOutActor, float* param_4);
 	int DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTOR4* pPosition);
@@ -469,6 +501,8 @@ public:
 	bool FUN_00133fb0();
 
 	uint FUN_00132c60(uint state);
+
+	void GripObject(CActor* pOtherActor);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -561,12 +595,38 @@ public:
 	edF32VECTOR4 field_0x1400;
 	edF32VECTOR4 bounceLocation;
 	edF32VECTOR4 field_0x1460;
+	edF32VECTOR4 field_0x1470;
+	edF32VECTOR4 field_0x1480;
 	edF32VECTOR4 field_0x1490;
 
 	CActor* pGrippedActor;
 
+	float field_0x14ac;
 	float field_0x14b0;
 	float field_0x14b4;
+	float field_0x14b8;
+	float field_0x14bc;
+	float field_0x14c0;
+	float field_0x14c4;
+	float field_0x14c8;
+	float field_0x14cc;
+	float field_0x14d0;
+	float field_0x14d4;
+	float field_0x14d8;
+	float field_0x14dc;
+	float field_0x14e0;
+	float field_0x14e4;
+	float field_0x14e8;
+	float field_0x14ec;
+	float field_0x14f0;
+	float field_0x1510;
+	float field_0x1514;
+	float field_0x1520;
+	float field_0x1524;
+	float field_0x1528;
+	float field_0x152c;
+	float field_0x1530;
+	float field_0x1534;
 	float gripHorizontalMoveSpeed;
 	float gripUpMoveSpeed;
 
@@ -596,6 +656,9 @@ public:
 
 	byte field_0x1455;
 	int field_0x1168;
+
+	float field_0x14a8;
+	float field_0x14f4;
 
 	// Run settings.
 	float field_0x1068;
@@ -702,6 +765,10 @@ public:
 	float field_0x11e0;
 	float field_0x11e4;
 	float field_0x11e8;
+
+	float field_0x1200;
+	float field_0x1204;
+	float field_0x1208;
 
 	float field_0x13d4;
 	float field_0x13d8;

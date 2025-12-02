@@ -3287,7 +3287,7 @@ void CLevelScheduler::Level_Manage()
 	}
 
 	if (this->currentElevatorID != -1) {
-		FUN_002dc200(this->currentElevatorID, this->level_0x5b50, this->level_0x5b54);
+		ManageLoadElevator(this->currentElevatorID, this->level_0x5b50, this->level_0x5b54);
 		this->currentElevatorID = -1;
 		this->level_0x5b50 = 0x10;
 		this->level_0x5b54 = -1;
@@ -3802,14 +3802,14 @@ void CLevelScheduler::ExitLevel(int param_2)
 	return;
 }
 
-void CLevelScheduler::FUN_002dc200(int elevatorId, int levelId, int param_4)
+void CLevelScheduler::ManageLoadElevator(int elevatorId, int levelId, int param_4)
 {
 	CActorTeleporter* pTeleporter;
 	CCameraManager* pCameraManager;
 
 	if ((((elevatorId != -1) && (-1 < elevatorId)) && (elevatorId < this->aLevelInfo[this->currentLevelID].maxElevatorId) &&
 		(((pTeleporter = (CActorTeleporter*)
-			CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(this->aLevelInfo[this->currentLevelID].aSubSectorInfo[elevatorId].field_0x0)),
+			CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(this->aLevelInfo[this->currentLevelID].aSubSectorInfo[elevatorId].teleporterActorHashCode)),
 			pTeleporter != (CActorTeleporter*)0x0 && (pTeleporter->bOpen != 0)) &&
 			(pTeleporter->UpdateCurTeleporterState(levelId, param_4),
 				(CActorHero::_gThis->flags & 0x800000) == 0)))) {

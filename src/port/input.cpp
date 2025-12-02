@@ -109,21 +109,26 @@ namespace Input {
 
 			pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.controllerPressed(ROUTE_DOWN);
 			pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.controllerPressed(ROUTE_UP);
+			pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.controllerAnalog(ROUTE_DOWN);
+			pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.controllerAnalog(ROUTE_UP);
+			pController->pPadD[ROUTE_DOWN].bReleased = gInputFunctions.controllerReleased(ROUTE_DOWN);
+			pController->pPadD[ROUTE_UP].bReleased = gInputFunctions.controllerReleased(ROUTE_UP);
+
 
 			pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_UP);
 			pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_DOWN);
-
 			pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_LEFT);
 			pController->pPadD[ROUTE_L_ANALOG_RIGHT].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_RIGHT);
 
-			pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.controllerAnalog(ROUTE_UP);
-			pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.controllerAnalog(ROUTE_DOWN);
-
 			pController->pPadD[ROUTE_L_ANALOG_UP].analogValue = gInputFunctions.controllerAnalog(ROUTE_L_ANALOG_UP);
 			pController->pPadD[ROUTE_L_ANALOG_DOWN].analogValue = gInputFunctions.controllerAnalog(ROUTE_L_ANALOG_DOWN);
-
 			pController->pPadD[ROUTE_L_ANALOG_LEFT].analogValue = gInputFunctions.controllerAnalog(ROUTE_L_ANALOG_LEFT);
 			pController->pPadD[ROUTE_L_ANALOG_RIGHT].analogValue = gInputFunctions.controllerAnalog(ROUTE_L_ANALOG_RIGHT);
+
+			pController->pPadD[ROUTE_L_ANALOG_UP].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_UP);
+			pController->pPadD[ROUTE_L_ANALOG_DOWN].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_DOWN);
+			pController->pPadD[ROUTE_L_ANALOG_LEFT].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_LEFT);
+			pController->pPadD[ROUTE_L_ANALOG_RIGHT].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_RIGHT);
 		}
 	}
 }

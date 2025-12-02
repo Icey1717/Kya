@@ -825,10 +825,9 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		break;
 	case 0xf:
 	case 0x10:
-	case 0x11:
-		IMPLEMENTATION_GUARD(
+	case CINEMATIC_MESSAGE_RECEPTACLE_CHANGED:
 		if (this->pOwner->typeID == ACTOR_HERO_PRIVATE) {
-			if (param_2 == 0x11) {
+			if (param_2 == CINEMATIC_MESSAGE_RECEPTACLE_CHANGED) {
 				CLevelScheduler::ScenVar_Set(SCN_ABILITY_RECEPTACLE, 1);
 			}
 			else {
@@ -841,8 +840,9 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 					}
 				}
 			}
-			CLevelScheduler::ActorGlobalFunc_002db5b0();
-		})
+
+			CLevelScheduler::OnSceneVarSet();
+		}
 	}
 	return bVar3;
 }

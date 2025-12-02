@@ -11,28 +11,26 @@ using namespace Windows::Gaming::Input;
 
 namespace GamepadImpl
 {
-	namespace
+	// Helper to get the first connected gamepad
+	Windows::Gaming::Input::Gamepad GetConnectedGamepad()
 	{
-		// Helper to get the first connected gamepad
-		Windows::Gaming::Input::Gamepad GetConnectedGamepad()
+		try
 		{
-			try
+			auto gamepads = Windows::Gaming::Input::Gamepad::Gamepads();
+			if (gamepads.Size() > 0)
 			{
-				auto gamepads = Windows::Gaming::Input::Gamepad::Gamepads();
-				if (gamepads.Size() > 0)
-				{
-					return gamepads.GetAt(0);
-				}
+				return gamepads.GetAt(0);
 			}
-			catch (...)
-			{
-				// No gamepad available
-			}
-			return nullptr;
 		}
+		catch (...)
+		{
+			// No gamepad available
+		}
+		return nullptr;
 	}
 
-	bool GetGamepadPressed(uint32_t routeId)
+	// Internal function to check current button state
+	static bool IsButtonCurrentlyPressed(uint32_t routeId)
 	{
 		auto gamepad = GetConnectedGamepad();
 		if (!gamepad)
@@ -44,19 +42,19 @@ namespace GamepadImpl
 
 		switch (routeId)
 		{
-		// D-Pad
+			// D-Pad
 		case ROUTE_UP:
 			return (reading.Buttons & GamepadButtons::DPadUp) != GamepadButtons::None;
 		case ROUTE_DOWN:
 			return (reading.Buttons & GamepadButtons::DPadDown) != GamepadButtons::None;
 
-		// Shoulder buttons
+			// Shoulder buttons
 		case ROUTE_L1:
 			return (reading.Buttons & GamepadButtons::LeftShoulder) != GamepadButtons::None;
 		case ROUTE_R1:
 			return (reading.Buttons & GamepadButtons::RightShoulder) != GamepadButtons::None;
 
-		// Face buttons
+			// Face buttons
 		case ROUTE_TRIANGLE:
 			return (reading.Buttons & GamepadButtons::Y) != GamepadButtons::None;
 		case ROUTE_CIRCLE:
@@ -66,13 +64,13 @@ namespace GamepadImpl
 		case ROUTE_SQUARE:
 			return (reading.Buttons & GamepadButtons::X) != GamepadButtons::None;
 
-		// Menu buttons
+			// Menu buttons
 		case ROUTE_SELECT:
 			return (reading.Buttons & GamepadButtons::View) != GamepadButtons::None;
 		case ROUTE_START:
 			return (reading.Buttons & GamepadButtons::Menu) != GamepadButtons::None;
 
-		// Left analog stick - treat as directional
+			// Left analog stick - treat as directional
 		case ROUTE_L_ANALOG_UP:
 			return reading.LeftThumbstickY > 0.5f;
 		case ROUTE_L_ANALOG_DOWN:
@@ -82,7 +80,7 @@ namespace GamepadImpl
 		case ROUTE_L_ANALOG_RIGHT:
 			return reading.LeftThumbstickX > 0.5f;
 
-		// Triggers - treat as pressed if > 0.5
+			// Triggers - treat as pressed if > 0.5
 		case ROUTE_L2:
 			return reading.LeftTrigger > 0.5f;
 		case ROUTE_R2:
@@ -93,12 +91,27 @@ namespace GamepadImpl
 		}
 	}
 
+	bool GetGamepadPressed(uint32_t routeId)
+	{
+		// Track previous state for each button
+		static bool previousButtonState[ROUTE_END] = {};
+
+		bool currentlyPressed = IsButtonCurrentlyPressed(routeId);
+		bool wasPressed = previousButtonState[routeId];
+
+		// Store the current state for next frame
+		previousButtonState[routeId] = currentlyPressed;
+
+		// Return true only if button was NOT previously pressed and is now pressed
+		return !wasPressed && currentlyPressed;
+	}
+
 	bool GetGamepadReleased(uint32_t routeId)
 	{
 		// Track previous state for each button
 		static bool previousButtonState[ROUTE_END] = {};
 
-		bool currentlyPressed = GetGamepadPressed(routeId);
+		bool currentlyPressed = IsButtonCurrentlyPressed(routeId);
 		bool wasPressed = previousButtonState[routeId];
 
 		// Store the current state for next frame
@@ -120,13 +133,13 @@ namespace GamepadImpl
 
 		switch (routeId)
 		{
-		// Triggers return full analog range [0.0, 1.0]
+			// Triggers return full analog range [0.0, 1.0]
 		case ROUTE_L2:
 			return static_cast<float>(reading.LeftTrigger);
 		case ROUTE_R2:
 			return static_cast<float>(reading.RightTrigger);
 
-		// Left analog stick return normalized values [-1.0, 1.0]
+			// Left analog stick return normalized values [-1.0, 1.0]
 		case ROUTE_L_ANALOG_UP:
 			return static_cast<float>(reading.LeftThumbstickY);
 		case ROUTE_L_ANALOG_DOWN:
@@ -138,7 +151,7 @@ namespace GamepadImpl
 		case ROUTE_L_ANALOG_RIGHT:
 			return static_cast<float>(reading.LeftThumbstickX);
 
-		// Buttons return binary [0.0 or 1.0]
+			// Buttons return binary [0.0 or 1.0]
 		case ROUTE_UP:
 			return ((reading.Buttons & GamepadButtons::DPadUp) != GamepadButtons::None) ? 1.0f : 0.0f;
 		case ROUTE_DOWN:

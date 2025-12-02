@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "CinematicManager.h"
 #include "Fx_Spark.h"
 #include "Fx.h"
 
@@ -60,7 +61,8 @@ struct AmberSparkProps
 	float field_0x8;
 };
 
-class CActorAmbre : public CActor {
+class CActorAmbre : public CActor
+{
 public:
 	static StateConfig _gStateCfg_AMB[6];
 
@@ -84,9 +86,7 @@ public:
 
 	CFxHandle effectsStructD;
 
-	S_NTF_TARGET_STREAM_REF* pMagicalSwitch1CBase_0x1224;
-
-	S_STREAM_EVENT_CAMERA* field_0x1228;
+	S_NTF_SWITCH ntfSwitch;
 
 	CBehaviourAmbre behaviourAmber;
 };

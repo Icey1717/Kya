@@ -741,11 +741,11 @@ void CSector::Load(int sectorIndex, int param_3, bool bFileFlag)
 	int iVar1;
 	char cVar2;
 	bool bVar3;
-	edCBankBufferEntry* peVar4;
+	edCBankBufferEntry* pBankBufferEntry;
 	int sectStringLength;
 	float fVar5;
-	edCBankInstall local_60;
-	char acStack64[64];
+	edCBankInstall bankInstall;
+	char bankFilePath[64];
 	char* sectString;
 
 	/* Loads a sectx.bnk file for a level
@@ -756,40 +756,42 @@ void CSector::Load(int sectorIndex, int param_3, bool bFileFlag)
 		this->field_0x134 = fVar5;
 		this->desiredSectorID = -1;
 		this->sectorIndex = sectorIndex;
-		peVar4 = this->pBankBufferEntry;
-		if (peVar4 != (edCBankBufferEntry*)0x0) {
-			peVar4->close();
+		pBankBufferEntry = this->pBankBufferEntry;
+		if (pBankBufferEntry != (edCBankBufferEntry*)0x0) {
+			pBankBufferEntry->close();
 			this->pBankBufferEntry = (edCBankBufferEntry*)0x0;
 		}
-		peVar4 = this->bankObject.get_free_entry();
-		this->pBankBufferEntry = peVar4;
+		pBankBufferEntry = this->bankObject.get_free_entry();
+		this->pBankBufferEntry = pBankBufferEntry;
 		iVar1 = this->sectorIndex;
-		sectStringLength = edStrCopy(acStack64, (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot);
-		sectString = acStack64 + sectStringLength;
+		sectStringLength = edStrCopy(bankFilePath, (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot);
+		sectString = bankFilePath + sectStringLength;
 		if (iVar1 < 10) {
 			*sectString = (char)iVar1 + '0';
-			sectString = acStack64 + 1;
+			sectString = bankFilePath + 1;
 		}
 		else {
 			cVar2 = (char)(iVar1 / 10);
 			*sectString = cVar2 + '0';
-			acStack64[sectStringLength + 1] = (char)iVar1 + cVar2 * -10 + '0';
-			sectString = acStack64 + 2;
+			bankFilePath[sectStringLength + 1] = (char)iVar1 + cVar2 * -10 + '0';
+			sectString = bankFilePath + 2;
 		}
 		/* Add the '.bnk' suffix to the file name */
 		edStrCopy(sectString + sectStringLength, ".bnk");
-		memset(&local_60, 0, sizeof(edCBankInstall));
+		memset(&bankInstall, 0, sizeof(edCBankInstall));
 		if (bFileFlag == false) {
-			local_60.fileFlagA = 0xc;
+			bankInstall.fileFlagA = 0xc;
 		}
 		else {
-			local_60.fileFlagA = 4;
+			bankInstall.fileFlagA = 4;
 		}
-		local_60.filePath = acStack64;
-		local_60.fileFunc = _gSectorInstallCallback;
-		local_60.pObjectReference = this;
-		bVar3 = this->pBankBufferEntry->load(&local_60);
-		if ((bVar3 != false) && (this->loadStage_0x8 = 1, param_3 == 0)) {
+
+		bankInstall.filePath = bankFilePath;
+		bankInstall.fileFunc = _gSectorInstallCallback;
+		bankInstall.pObjectReference = this;
+
+		const bool bSuccess = this->pBankBufferEntry->load(&bankInstall);
+		if ((bSuccess != false) && (this->loadStage_0x8 = 1, param_3 == 0)) {
 			this->pBankBufferEntry->wait();
 		}
 	}
