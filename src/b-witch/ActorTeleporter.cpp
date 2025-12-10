@@ -1,7 +1,7 @@
 #include "ActorTeleporter.h"
 #include "MemoryStream.h"
 #include "FileManager3D.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "CollisionManager.h"
 #include "PoolAllocators.h"
 #include "EventManager.h"

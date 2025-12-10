@@ -3,7 +3,7 @@
 #include "MathOps.h"
 #include "FileManager3D.h"
 #include "DlistManager.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "CollisionManager.h"
 #include "ActorHero.h"
 #include "CinematicManager.h"

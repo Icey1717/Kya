@@ -6,7 +6,7 @@
 #include "FileManager3D.h"
 #include "MathOps.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 StaticMeshComponent::StaticMeshComponent()
 {

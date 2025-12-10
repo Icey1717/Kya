@@ -3,7 +3,7 @@
 #include "CameraGame.h"
 #include "edMathTCBSpline.h"
 #include "CollisionManager.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "MathOps.h"
 #include "ActorHero.h"
 #include "TimeController.h"

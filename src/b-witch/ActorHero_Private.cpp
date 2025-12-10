@@ -2,7 +2,7 @@
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "CameraViewManager.h"
 #include "InputManager.h"
 #include "ActorBoomy.h"

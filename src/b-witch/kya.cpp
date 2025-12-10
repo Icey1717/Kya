@@ -52,7 +52,7 @@ extern "C" {
 #include "EdenLib/edSys/sources/EdSystem.h"
 #include "LargeObject.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "edText.h"
 #include "ed3D.h"
 #include "edDlist.h"

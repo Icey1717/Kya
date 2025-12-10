@@ -4,7 +4,7 @@
 #include "edMem.h"
 #include "EdenLib/edText/sources/edTextResources.h"
 #include "edStr.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "Settings.h"
 #include "MenuMessageBox.h"
 #include "kya.h"

@@ -9,7 +9,7 @@
 #include "edText.h"
 #include "ActorAutonomous.h"
 #include "FrontEndBank.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 int gEnemySpritesInstalled = 0;
 

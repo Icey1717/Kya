@@ -4,7 +4,7 @@
 #include "Actor.h"
 #include "ActorBoomy.h"
 #include "ActorAutonomous.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "ActorHero.h"
 
 int CInventoryInfo::ProcessMessage(CActor* pSender, int msg, void* pMsgParams)

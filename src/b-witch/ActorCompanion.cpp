@@ -1,6 +1,6 @@
 #include "ActorCompanion.h"
 #include "MemoryStream.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "CinematicManager.h"
 #include "camera.h"
 #include "TimeController.h"

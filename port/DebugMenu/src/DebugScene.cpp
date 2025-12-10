@@ -6,7 +6,7 @@
 #include "DebugSetting.h"
 #include "ed3D.h"
 #include "Rendering/DisplayList.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 namespace Debug {
 	namespace Scene {

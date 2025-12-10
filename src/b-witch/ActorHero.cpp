@@ -1,7 +1,7 @@
 #include "ActorHero.h"
 #include "TimeController.h"
 #include "WayPoint.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "EventManager.h"
 #include "ActorBoomy.h"
 #include "ActorManager.h"

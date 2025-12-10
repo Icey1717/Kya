@@ -4,7 +4,7 @@
 #include <imgui.h>
 #include "Types.h"
 
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "DebugSetting.h"
 
 namespace Debug

@@ -15,7 +15,7 @@
 #include "libpc.h"
 #endif
 #include "InputManager.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "CompatibilityHandlingPS2.h"
 
 byte MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD)

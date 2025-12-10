@@ -1,7 +1,7 @@
 #include "Pause.h"
 #include "TimeController.h"
 #include "CinematicManager.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "DlistManager.h"
 #include "Rendering/Font.h"
 #include "edText.h"

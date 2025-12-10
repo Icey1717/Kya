@@ -1,6 +1,6 @@
 #include "ScenaricCondition.h"
 #include "MemoryStream.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include <assert.h>
 
 void ScenaricCondition::Create(int* param_2)

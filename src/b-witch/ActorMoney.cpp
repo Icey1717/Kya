@@ -4,7 +4,7 @@
 #include "FileManager3D.h"
 #include "CameraViewManager.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "ActorBonusServices.h"
 
 void CActorMoney::Create(ByteCode* pByteCode)

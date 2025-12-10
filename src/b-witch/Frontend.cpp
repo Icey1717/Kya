@@ -1,7 +1,7 @@
 #include "Frontend.h"
 #include "TimeController.h"
 #include "CameraViewManager.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 ed_3D_Scene* CFrontend::_scene_handle = (ed_3D_Scene*)0x0;
 

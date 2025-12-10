@@ -48,7 +48,7 @@
 #include "DebugSaveLoad.h"
 #include "DebugCinematic.h"
 #include "Native/NativeRenderer.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "DebugShop.h"
 #include "DebugWolfen.h"
 #include "DebugScenario.h"

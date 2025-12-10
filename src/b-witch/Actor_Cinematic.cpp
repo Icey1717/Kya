@@ -9,7 +9,7 @@
 #include "TimeController.h"
 #include "ActorFactory.h"
 #include "ActorHero.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 
 CActorCinematic::CActorCinematic()

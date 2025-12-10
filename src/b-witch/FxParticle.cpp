@@ -1,7 +1,7 @@
 #include "FxParticle.h"
 #include "MemoryStream.h"
 #include "edBank/edBankBuffer.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "MathOps.h"
 #include "TimeController.h"
 #include "DlistManager.h"

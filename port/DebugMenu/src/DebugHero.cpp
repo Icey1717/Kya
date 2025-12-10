@@ -12,7 +12,7 @@
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor/DebugActorBehaviour.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 namespace Debug {
 	namespace Hero {

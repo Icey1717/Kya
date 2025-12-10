@@ -9,7 +9,7 @@
 #include "ActorHero.h"
 #include "EventManager.h"
 #include "ActorTeleporter.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "ed3D/ed3DG2D.h"
 
 StateConfig CActorSwitch::_gStateCfg_SWT[5] = {

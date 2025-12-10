@@ -1,7 +1,7 @@
 #include "SectorManager.h"
 #include <string.h>
 #include "EdenLib/edSys/sources/EdSystem.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "TimeController.h"
 #include "Rendering/CameraPanMasterHeader.h"
 #include "DlistManager.h"

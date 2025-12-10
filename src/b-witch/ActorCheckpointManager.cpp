@@ -3,7 +3,7 @@
 #include "ActorHero.h"
 #include "EventManager.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "WayPoint.h"
 
 void CActorCheckpointManager::Create(ByteCode* pByteCode)

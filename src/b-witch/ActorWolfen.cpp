@@ -13,7 +13,7 @@
 #include "CollisionRay.h"
 #include <string>
 #include "kya.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "ed3D/ed3DG2D.h"
 
 struct WolfenAnimMatrixData

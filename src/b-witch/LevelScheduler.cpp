@@ -1,4 +1,4 @@
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "IniFile.h"
 #include "edMem.h"
 #include "edBank/edBankFile.h"
@@ -178,7 +178,7 @@ CLevelScheduler* CLevelScheduler::gThis = NULL;
 
 Episode g_EpisodeDataArray_0048eb0[16];
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_GiveToShop(int amount)
 {
 	_gGameNfo.nbMoney = _gGameNfo.nbMoney - amount;
@@ -187,7 +187,7 @@ bool CLevelScheduler::Money_GiveToShop(int amount)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_GiveToBet(int amount)
 {
 	int iVar1;
@@ -223,7 +223,7 @@ bool CLevelScheduler::Money_GiveToBet(int amount)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_TakeFromBet(int amount)
 {
 	int iVar1;
@@ -258,7 +258,7 @@ bool CLevelScheduler::Money_TakeFromBet(int amount)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_TakeFromBank(int amount)
 {
 	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
@@ -267,7 +267,7 @@ bool CLevelScheduler::Money_TakeFromBank(int amount)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_TakeFromMonster(int amount)
 {
 	_gGameNfo.monster = _gGameNfo.monster - amount;
@@ -275,7 +275,7 @@ bool CLevelScheduler::Money_TakeFromMonster(int amount)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::Money_TakeFromScenery(int amount)
 {
 	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
@@ -890,7 +890,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Levels_LoadInfoBank()
 {
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "LevelScheduleManager::Levels_LoadInfoBank\n");
@@ -1067,7 +1067,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Levels_UpdateDataFromSavedGame()
 {
 	CChunk* pChunk;
@@ -1137,7 +1137,7 @@ void CLevelScheduler::Levels_SaveDataToSavedGame()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Episode_LoadFromIniFile(void)
 {
 	int iVar1;
@@ -1405,7 +1405,7 @@ bool CLevelScheduler::IsACompatibleChunkRecurse(CChunk* pChunk)
 	return bFoundLevelSaveData;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 int CLevelScheduler::SaveGame_GetMaxBufferSize()
 {
 	return 0x10000;
@@ -1457,7 +1457,7 @@ void CLevelScheduler::Game_SaveInventory(CInventoryInterface* pInventory)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Game_LoadInventory(CInventoryInterface* pInventory)
 {
 	bool bVar1;
@@ -1533,7 +1533,7 @@ uint CLevelScheduler::GetMedallionLevel()
 	return medallionLevel;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Episode_ComputeCurrent()
 {
 	int iVar1;
@@ -1650,7 +1650,7 @@ void* CLevelScheduler::SaveGame_BeginChunk(uint hash)
 	return pData;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::SaveGame_EndChunk(void* pDataEnd)
 {
 	CChunk* pChunk = this->aSaveGameChunks[this->curChunkIndex];
@@ -1680,7 +1680,7 @@ CChunk* CLevelScheduler::SaveGame_OpenChunk(uint hash)
 	return pChunk;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::SaveGame_CloseChunk()
 {
 	this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
@@ -1691,7 +1691,7 @@ void CLevelScheduler::SaveGame_CloseChunk()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::SaveGame_SaveScenVars()
 {
 	int* pScenVariables = (int*)SaveGame_BeginChunk(SAVEGAME_CHUNK_BSCN);
@@ -1743,7 +1743,7 @@ struct SaveDataChunk_BGNF
 	EpStruct_80 aEpisodes[2];
 };
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::SaveGame_SaveGameInfo()
 {
 	int iVar4;
@@ -2117,7 +2117,7 @@ void CLevelScheduler::Level_WolfenChanged()
 int gDebugLevelLoadOverride = -1;
 #endif
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Game_Init()
 {
 	CChunk* pSVar1;
@@ -2318,7 +2318,7 @@ void NativShopLevelSubObj::FUN_002d8d10(CActorNativShop* pNativ)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Game_Term()
 {
 	IMPLEMENTATION_GUARD();
@@ -2787,7 +2787,7 @@ const char* sz_bankSlash = "/";
 const char* sz_LevelBank_00433bd8 = "Level.bnk";
 const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::LevelLoading_Begin()
 {
 	int levelId;
@@ -2854,7 +2854,7 @@ bool edMusicAreAllMusicDataLoaded()
 	return _edSoundAreAllSoundDataLoaded(_edMusicLastTransferIndex);
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 bool CLevelScheduler::LevelLoading_Manage()
 {
 	bool bVar1;
@@ -2903,7 +2903,7 @@ bool CLevelScheduler::LevelLoading_Manage()
 	return this->loadStage_0x5b48 != 4;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_Install()
 {
 	edCBankInstall SStack32;
@@ -2914,7 +2914,7 @@ void CLevelScheduler::Level_Install()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_Init()
 {
 	uint** ppuVar1;
@@ -3103,7 +3103,7 @@ void CLevelScheduler::Level_AddAll(struct ByteCode* pByteCode)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_ClearAll()
 {
 	int iVar4;
@@ -3198,7 +3198,7 @@ void EnqueueLevelManageTask(std::function<void()> task)
 }
 #endif
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_Manage()
 {
 	int* piVar1;
@@ -3339,7 +3339,7 @@ LAB_002dc8d8:
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_ManagePaused()
 {
 	if ((GameFlags & 0x1c) == 0) {
@@ -3355,7 +3355,7 @@ void CLevelScheduler::Level_Draw()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::LevelLoading_End()
 {
 	this->currentLevelID = this->nextLevelID;
@@ -3364,7 +3364,7 @@ void CLevelScheduler::LevelLoading_End()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_PostInit()
 {
 	CActorNativShop* pNativ;
@@ -3426,7 +3426,7 @@ void CLevelScheduler::Level_PostInit()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_PreTerm()
 {
 	S_SUBSECTOR_INFO* pLVar1;
@@ -3453,7 +3453,7 @@ void CLevelScheduler::Level_PreTerm()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 int CLevelScheduler::ScenVar_Get(SCENARIC_VARIABLE scenVarId)
 {
 	return _gScenVarInfo[scenVarId].currentValue;
@@ -3572,7 +3572,7 @@ void CLevelScheduler::Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_S
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/LevelScheduler.cpp
+
 void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 {
 	int iVar1;

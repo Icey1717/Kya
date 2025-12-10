@@ -1,6 +1,6 @@
 #include "LocalizationManager.h"
 #include "edMem.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "EdenLib/edText/sources/edTextResources.h"
 
 #ifdef PLATFORM_PS2

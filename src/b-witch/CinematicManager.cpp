@@ -8,7 +8,7 @@
 #include "TimeController.h"
 #include "Pause.h"
 #include "MathOps.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "edStr.h"
 #include "port/pointer_conv.h"
 

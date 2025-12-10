@@ -7,7 +7,7 @@
 #include "ActorHero.h"
 #include "CinematicManager.h"
 #include "FrontEndDisp.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "kya.h"
 #include "Rendering/edCTextStyle.h"
 #include "Pause.h"

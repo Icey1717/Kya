@@ -1,7 +1,7 @@
 #include "ActorBonusServices.h"
 #include "MemoryStream.h"
 #include "Actor.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "ActorManager.h"
 #include "TimeController.h"
 #include "CollisionRay.h"

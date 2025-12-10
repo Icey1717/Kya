@@ -16,7 +16,7 @@
 #include "FrontEndLife.h"
 #include "FrontEndMagic.h"
 #include "TimeController.h"
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 #include "FrontEndMoney.h"
 #include "FrontEndEnemy.h"
 #include "FrontEndInventory.h"

@@ -11,7 +11,7 @@
 #ifdef PLATFORM_WIN
 #include "profiling.h"
 #endif
-#include "LevelScheduleManager.h"
+#include "LevelScheduler.h"
 
 #define MAX_LINKED_ACTORS 0x80
 
