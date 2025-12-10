@@ -83,7 +83,6 @@ public:
 	void draw_help_line(ulong msgId, int x, int y, uint color);
 
 	void DrawMainMenu();
-	bool MenuFrameLoad_Draw();
 	bool MenuFrameNewGame_Draw();
 	void DrawInitialSaveMenuHelp(ulong helpMsgId, uint color);
 

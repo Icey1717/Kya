@@ -263,7 +263,7 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		else {
 			if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 				GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
-				edF32Vector4SubHard(&eStack16, GetBottomPosition(), &this->currentLocation);
+				edF32Vector4SubHard(&eStack16, GetTopPosition(), &this->currentLocation);
 				fVar6 = edF32Vector4DotProductHard(&eStack16, &this->pMeshTransform->base.transformA.rowY);
 				edF32Vector4ScaleHard(fVar6, &eStack16, &this->pMeshTransform->base.transformA.rowY);
 				edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, GetBottomPosition(), GetTopPosition());

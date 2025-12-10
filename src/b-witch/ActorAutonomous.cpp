@@ -225,22 +225,19 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	(this->dynamicExt).field_0x4 = fVar7;
 	fVar7 = pByteCode->GetF32();
 	(this->dynamicExt).field_0x8 = fVar7;
-	//fVar2 = gF32Vector4Zero.w;
-	//fVar1 = gF32Vector4Zero.z;
-	//fVar7 = gF32Vector4Zero.y;
-	//*(float*)&this->field_0x2f0 = gF32Vector4Zero.x;
-	//*(float*)&this->field_0x2f4 = fVar7;
-	//*(float*)&this->field_0x2f8 = fVar1;
-	//this->field_0x2fc = fVar2;
-	//(this->lookAtLocation).z = 3.141593;
-	//this->field_0x318 = -1.047198;
-	//this->field_0x31c = 1.047198;
-	//this->field_0x314 = 0.0f;
-	//this->field_0x324 = -1.047198;
-	//this->field_0x328 = 1.047198;
-	//this->field_0x320 = 0.0f;
-	//this->lookingAtBoneLeft = 0x45544554;
-	//this->lookingAtBoneRight = 0x45544554;
+	this->lookAtRotation = gF32Vector4Zero;
+	(this->lookAtLocation).z = 3.141593f;
+
+	this->lookAtBoundsC = -1.047198f;
+	this->lookAtBoundsD = 1.047198f;
+	this->field_0x314 = 0.0f;
+	this->lookAtBoundsA = -1.047198f;
+	this->lookAtBoundsB = 1.047198f;
+	this->field_0x320 = 0.0f;
+
+	this->lookingAtBoneLeft = 0x45544554;
+	this->lookingAtBoneRight = 0x45544554;
+
 	return;
 }
 
@@ -437,33 +434,201 @@ bool CActorAutonomous::IsLockable()
 
 void CActorAutonomous::SetLookingAtOn(float param_1)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	edF32MATRIX4* peVar1;
+	edF32MATRIX4* m1;
+	long lVar2;
+	float fVar3;
+	edF32VECTOR4 eStack80;
+	edF32MATRIX4 eStack64;
+
+	if (IsLookingAt() == 0) {
+		this->flags = this->flags | 0x2000;
+		peVar1 = this->pAnimationController->GetCurBoneMatrix(this->lookingAtBoneLeft);
+		m1 = this->pAnimationController->GetCurBoneMatrix(this->lookingAtBoneRight);
+		edF32Matrix4MulF32Vector4Hard(&eStack80, &this->pMeshTransform->base.transformA, &peVar1->rowZ);
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, m1, &this->pMeshTransform->base.transformA);
+		edF32Matrix4GetTransposeHard(&eStack64, &eStack64);
+		edF32Matrix4MulF32Vector4Hard(&eStack80, &eStack64, &eStack80);
+		eStack80.w = 0.0f;
+		fVar3 = GetAngleXFromVector(&eStack80);
+		this->field_0x320 = fVar3;
+		fVar3 = GetAngleYFromVector(&eStack80);
+		this->field_0x314 = fVar3;
+		this->field_0x30c = param_1;
+		this->field_0x310 = param_1;
+	}
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorAutonomous.h
 void CActorAutonomous::SetLookingAtOn()
 {
-	this->SetLookingAtOn(0.0f);
+	SetLookingAtOn(0.0f);
+}
+
+void CActorAutonomous::SetLookingAtOff()
+{
+	CActor::SetLookingAtOff();
+
+	return;
+}
+
+void CActorAutonomous::UpdateLookingAt()
+{
+	ed_3d_hierarchy_node* m2;
+	int iVar1;
+	edF32MATRIX4* peVar3;
+	edF32MATRIX3* peVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack208;
+	edF32VECTOR4 eStack192;
+	edF32VECTOR4 local_b0;
+	edF32MATRIX4 eStack160;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR3 local_10;
+
+	iVar1 = this->pAnimationController->GetBoneIndex(this->lookingAtBoneLeft);
+	fVar7 = (this->lookAtLocation).z * GetTimer()->cutsceneDeltaTime;
+	if (this->bLookAtActive == 0) {
+		peVar3 = this->pAnimationController->GetCurBoneMatrix(this->lookingAtBoneRight);
+		local_b0 = peVar3->rowT;
+
+		edF32Matrix4MulF32Vector4Hard(&eStack208, &this->pMeshTransform->base.transformA, &local_b0);
+		edF32Vector4SubHard(&eStack192, &this->lookAtRotation, &eStack208);
+		edF32Vector4NormalizeHard(&eStack192, &eStack192);
+
+		m2 = this->pMeshTransform;
+		peVar3 = this->pAnimationController->GetCurBoneMatrix(this->lookingAtBoneRight);
+		edF32Matrix4MulF32Matrix4Hard(&eStack160, peVar3, (edF32MATRIX4*)m2);
+		edF32Matrix4GetTransposeHard(&eStack160, &eStack160);
+		edF32Matrix4MulF32Vector4Hard(&eStack192, &eStack160, &eStack192);
+		eStack192.w = 0.0f;
+
+		(this->lookAtLocation).x = GetAngleXFromVector(&eStack192);
+		(this->lookAtLocation).y = GetAngleYFromVector(&eStack192);
+	}
+
+	fVar5 = this->field_0x320;
+	fVar6 = (this->lookAtLocation).x;
+	if (fabs(fVar5 - fVar6) < fVar7) {
+		this->field_0x320 = fVar6;
+	}
+	else {
+		if (fVar5 < fVar6) {
+			this->field_0x320 = fVar5 + fVar7;
+		}
+		else {
+			this->field_0x320 = fVar5 - fVar7;
+		}
+	}
+
+	fVar5 = this->field_0x314;
+	fVar6 = (this->lookAtLocation).y;
+	if (fabs(fVar5 - fVar6) < fVar7) {
+		this->field_0x314 = fVar6;
+	}
+	else {
+		if (fVar5 < fVar6) {
+			this->field_0x314 = fVar5 + fVar7;
+		}
+		else {
+			this->field_0x314 = fVar5 - fVar7;
+		}
+	}
+
+	if (this->field_0x314 < this->lookAtBoundsC) {
+		this->field_0x314 = this->lookAtBoundsC;
+	}
+
+	if (this->lookAtBoundsD < this->field_0x314) {
+		this->field_0x314 = this->lookAtBoundsD;
+	}
+
+	if (this->field_0x320 < this->lookAtBoundsA) {
+		this->field_0x320 = this->lookAtBoundsA;
+	}
+
+	if (this->lookAtBoundsB < this->field_0x320) {
+		this->field_0x320 = this->lookAtBoundsB;
+	}
+
+	local_10.x = this->field_0x320;
+	local_10.y = this->field_0x314;
+	local_10.z = 0.0f;
+	edF32Matrix4FromEulerSoft(&eStack80, &local_10, "XYZ");
+	edQuatFromMatrix4(&local_60, &eStack80);
+	edQuatNormalize(&local_60, &local_60);
+	fVar7 = this->field_0x310;
+	if (0.0f < fVar7) {
+		fVar5 = this->field_0x30c;
+		this->field_0x310 = this->field_0x310 - GetTimer()->cutsceneDeltaTime;
+		peVar3 = (TheAnimStage.pRelativeTransformMatrixBuffer)->matrices + iVar1;
+		if (peVar3->da == -1.0f) {
+			peVar3 = (edF32MATRIX4*)(TheAnimStage.pConstantMatrixData + iVar1);
+		}
+
+		edQuatShortestSLERPHard(fVar7 / fVar5, &local_60, &local_60, &peVar3->rowX);
+
+		peVar3 = (TheAnimStage.pRelativeTransformMatrixBuffer)->matrices + iVar1;
+		peVar3->rowX = local_60;
+	}
+	else {
+		peVar3 = (TheAnimStage.pRelativeTransformMatrixBuffer)->matrices + iVar1;
+		peVar3->rowX = local_60;
+	}
+
+	peVar4 = TheAnimStage.pConstantMatrixData + iVar1;
+	peVar3 = (TheAnimStage.pRelativeTransformMatrixBuffer)->matrices + iVar1;
+	peVar3->rowY = peVar4->rowY;
+	peVar4 = TheAnimStage.pConstantMatrixData + iVar1;
+	peVar3 = (TheAnimStage.pRelativeTransformMatrixBuffer)->matrices + iVar1;
+	peVar3->rowZ = peVar4->rowZ;
+	(TheAnimStage.pRelativeTransformMatrixBuffer)->matrices[iVar1].da = 1.0f;
+
+	return;
 }
 
 void CActorAutonomous::SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation)
 {
-	IMPLEMENTATION_GUARD_LOOK_AT();
+	this->lookAtRotation = *pRotation;
+
+	(this->lookAtLocation).z = height;
+	this->bLookAtActive = 0;
+
+	return;
 }
 
 void CActorAutonomous::SetLookingAt(float x, float y, float z)
 {
-	IMPLEMENTATION_GUARD_LOOK_AT();
+	(this->lookAtLocation).x = x;
+	(this->lookAtLocation).y = y;
+	(this->lookAtLocation).z = z;
+
+	this->bLookAtActive = 1;
+
+	return;
 }
 
 void CActorAutonomous::SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4)
 {
-	IMPLEMENTATION_GUARD_LOOK_AT();
+	this->lookAtBoundsA = param_1;
+	this->lookAtBoundsB = param_2;
+	this->lookAtBoundsC = param_3;
+	this->lookAtBoundsD = param_4;
+
+	return;
 }
 
 void CActorAutonomous::SetLookingAtBones(uint leftBoneId, uint rightBoneId)
 {
-	IMPLEMENTATION_GUARD_LOOK_AT();
+	this->lookingAtBoneLeft = leftBoneId;
+	this->lookingAtBoneRight = rightBoneId;
+
+	return;
 }
 
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
@@ -523,6 +688,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 			this->vector_0x2f0 = local_30.z;
 		}
 	}
+
 	return;
 }
 
@@ -1765,18 +1931,15 @@ void CBehaviourCatchByTrap::Begin(CActor* pOwner, int newState, int newAnimation
 
 void CBehaviourCatchByTrap::End(int newBehaviourId)
 {
-	undefined4 local_90[3];
-	undefined4 local_84;
-	undefined4 local_6c;
-	undefined4 local_60;
-	undefined4* local_4;
+	_msg_hit_param msg;
 
-	local_90[0] = 10;
-	local_60 = 0;
-	local_84 = 0x42c80000;
-	local_6c = 0x3f000000;
-	local_4 = local_90;
-	this->pOwner->DoMessage(this->field_0x10, (ACTOR_MESSAGE)2, local_4);
+	msg.projectileType = HIT_TYPE_AMORTOS;
+	msg.field_0x30 = 0.0f;
+	msg.damage = 100.0f;
+	msg.field_0x20.y = 0.5f;
+
+	this->pOwner->DoMessage(this->field_0x10, MESSAGE_KICKED, &msg);
+
 	return;
 }
 

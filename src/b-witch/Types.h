@@ -728,7 +728,6 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #define IMPLEMENTATION_GUARD_LIGHT(x)
 #define IMPLEMENTATION_GUARD_UI(x)
 #define IMPLEMENTATION_GUARD_SHADOW(x)
-#define IMPLEMENTATION_GUARD_LOOK_AT(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
 #ifdef PLATFORM_WIN

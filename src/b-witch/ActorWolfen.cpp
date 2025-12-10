@@ -891,6 +891,44 @@ uint CActorWolfen::GetBehaviourFlags(int state)
 	return behaviourFlags;
 }
 
+void CActorWolfen::UpdateLookingAt()
+{
+	int iVar1;
+
+	iVar1 = this->curBehaviourId;
+	if ((iVar1 == WOLFEN_BEHAVIOUR_SNIPE) || (iVar1 == WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE)) {
+		IMPLEMENTATION_GUARD(
+		if (iVar1 == WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE) {
+			pCVar3 = CActor::GetBehaviour
+			((CActor*)this, this->base.curBehaviourId);
+			local_10 = pCVar3[0x20].pVTable;
+			local_c = pCVar3[0x21].pVTable;
+			local_8 = pCVar3[0x22].pVTable;
+			local_4 = pCVar3[0x23].pVTable;
+			(*(code*)(this->base.pVTable)->SetLookingAtRotationHeight)
+				(1.570796, this, (undefined*)&local_10);
+		}
+		else {
+			if (iVar1 == WOLFEN_BEHAVIOUR_SNIPE) {
+				pCVar3 = CActor::GetBehaviour
+				((CActor*)this, this->base.curBehaviourId);
+				local_10 = pCVar3[0x20].pVTable;
+				local_c = pCVar3[0x21].pVTable;
+				local_8 = pCVar3[0x22].pVTable;
+				local_4 = pCVar3[0x23].pVTable;
+				(*(code*)(this->base.pVTable)->SetLookingAtRotationHeight)
+					(1.570796, this, (undefined*)&local_10);
+			}
+		})
+
+		CActorAutonomous::UpdateLookingAt();
+	}
+
+	CActorAutonomous::UpdateLookingAt();
+
+	return;
+}
+
 void CActorWolfen::UpdatePostAnimEffects()
 {
 	uint uVar1;
@@ -4826,6 +4864,18 @@ void CActorWolfen::StateWolfenBombFlip(CBehaviourWolfen* pBehaviour)
 	return;
 }
 
+void CActorWolfen::StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour)
+{
+	this->dynamic.speed = 0.0f;
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(WOLFEN_STATE_LOCATE, -1);
+	}
+
+	return;
+}
+
 void CActorWolfen::State_00174dc0(CBehaviourDCA* pBehaviour)
 {
 	edF32VECTOR4* pComeBackPosition;
@@ -6952,23 +7002,7 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	float local_9c;
 	float local_98;
 	float local_94;
-	undefined4 local_90[2];
-	undefined4 local_88;
-	undefined4 local_84;
-	undefined4 local_80;
-	edF32VECTOR4 eStack112;
-	undefined4 local_60;
-	undefined4 local_50;
-	undefined4 local_4c;
-	undefined4 local_48;
-	undefined4 local_44;
-	undefined2 local_40;
-	float local_30;
-	float local_2c;
-	float local_28;
-	float local_24;
-	undefined4 local_20;
-	undefined4* local_4;
+	_msg_hit_param local_90;
 
 	if (msg == 0xb) {
 		IMPLEMENTATION_GUARD(
@@ -7014,55 +7048,41 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		return 1;
 	}
 
-	if (msg != 2) {
+	if (msg != MESSAGE_KICKED) {
 		return 0;
 	}
 
-	/* WARNING: Load size is inaccurate */
-	int* pMsgParamInt = (int*)pMsgParam;
-	iVar4 = *pMsgParamInt;
-	if (iVar4 == 4) {
-		IMPLEMENTATION_GUARD(
-		this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 | 0x40;)
+	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+	iVar4 = pHitParam->projectileType;
+	if (iVar4 == HIT_TYPE_BOOMY) {
+		this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 | 0x40;
 		return 1;
 	}
+
 	if (((iVar4 != 7) && (iVar4 != 8)) && (iVar4 != 10)) {
-		IMPLEMENTATION_GUARD(
-		pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
-		fVar7 = (*pCVar3->pVtable->GetValue)((CInterface*)pCVar3);
-		if (0.0 < fVar7) {
-			/* WARNING: Load size is inaccurate */
-			if ((pSender->typeID != 0x20) && (*pMsgParam != 4)) {
-				(*(this->pOwner->pVTable)->LifeDecrease)
-					(*(float*)((int)pMsgParam + 0xc), (CActorAutonomous*)this->pOwner);
+		if (0.0f < this->pOwner->GetLifeInterface()->GetValue()) {
+			if ((pSender->typeID != 0x20) && (pHitParam->projectileType != HIT_TYPE_BOOMY)) {
+				this->pOwner->LifeDecrease(pHitParam->damage);
 			}
-			pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
-			fVar7 = (*pCVar3->pVtable->GetValue)();
-			if (fVar7 <= 0.0) {
-				local_90[0] = 7;
-				local_88 = 0;
-				local_84 = 0;
-				local_80 = 0;
-				local_20 = 0;
-				local_30 = g_xVector.x;
-				local_2c = g_xVector.y;
-				local_28 = g_xVector.z;
-				local_24 = g_xVector.w;
-				local_40 = 1;
-				local_50 = *(undefined4*)((int)pMsgParam + 0x40);
-				local_4c = *(undefined4*)((int)pMsgParam + 0x44);
-				local_48 = *(undefined4*)((int)pMsgParam + 0x48);
-				local_44 = *(undefined4*)((int)pMsgParam + 0x4c);
-				local_60 = 0x41800000;
-				edF32Vector4SubHard(&eStack112, &this->pOwner->currentLocation,
-					&pSender->currentLocation);
-				edF32Vector4SafeNormalize1Hard(&eStack112, &eStack112);
-				local_4 = local_90;
-				CActor::DoMessage((CActor*)this->pOwner, (CActor*)this->pOwner, 2, (uint)local_4);
+
+			if (this->pOwner->GetLifeInterface()->GetValue() <= 0.0f) {
+				local_90.projectileType = 7;
+				local_90.flags = 0;
+				local_90.damage = 0.0f;
+				local_90.field_0x10 = 0.0f;
+				local_90.field_0x70 = 0.0f;
+				local_90.field_0x60 = gF32Vector4UnitY;
+				local_90.field_0x50 = 1;
+				local_90.field_0x40 = pHitParam->field_0x40;
+				local_90.field_0x30 = 16.0f;
+				edF32Vector4SubHard(&local_90.field_0x20, &this->pOwner->currentLocation, &pSender->currentLocation);
+				edF32Vector4SafeNormalize1Hard(&local_90.field_0x20, &local_90.field_0x20);
+				this->pOwner->DoMessage(this->pOwner, MESSAGE_KICKED, &local_90);
 			}
+
 			iVar4 = 1;
 			goto LAB_001f0ee8;
-		})
+		}
 	}
 
 	iVar4 = 0;
@@ -8528,7 +8548,7 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 					}
 				}
 
-				iVar6 = CBehaviourFighter::InterpretMessage(pSender, 2, (GetPositionMsgParams*)pMsgParam);
+				iVar6 = CBehaviourFighter::InterpretMessage(pSender, 2, pMsgParam);
 			}
 			else {
 				iVar6 = CBehaviourFighter::InterpretMessage(pSender, msg, pMsgParam);
@@ -10920,16 +10940,8 @@ void CBehaviourExorcism::Manage()
 			pFx->Func_0x30(fVar7);
 		}
 
-		pFx = this->fxHandle.pFx;
-		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
-			pFx->position = this->field_0x40;
-		}
-
-		pCVar2 = this->pOwner;
-		pFx = this->fxHandle.pFx;
-		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
-			pFx->rotationEuler = pCVar2->rotationEuler;
-		}
+		this->fxHandle.SetPosition(&this->field_0x40);
+		this->fxHandle.SetRotationEuler(&this->pOwner->rotationEuler);
 	}
 
 	if (this->aSubObjA != (astruct_17*)0x0) {
@@ -11078,20 +11090,9 @@ void CBehaviourExorcism::InitState(int newState)
 		}
 
 		if (bVar3) {
-			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
-				pFx->position = this->field_0x40;
-			}
-
-			pWolfen = this->pOwner;
-			pFx = this->fxHandle.pFx;
-			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
-				pFx->rotationEuler = pWolfen->rotationEuler;
-			}
-
-			pFx = this->fxHandle.pFx;
-			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
-				pFx->Start(0.0f, 0.0f);
-			}
+			this->fxHandle.SetPosition(&this->field_0x40);
+			this->fxHandle.SetRotationEuler(&this->pOwner->rotationEuler);
+			this->fxHandle.Start();
 		}
 	}
 	else {
@@ -11243,21 +11244,9 @@ void CBehaviourExorcism::ChangeManageState(int state)
 		}
 
 		if (bVar4) {
-			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
-				pFx->position = this->field_0x40;
-			}
-
-			pWolfen = this->pOwner;
-
-			pFx = (this->fxHandle).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
-				pFx->rotationEuler = pWolfen->rotationEuler;
-			}
-
-			pFx = (this->fxHandle).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
-				pFx->Start(0.0f, 0.0f);
-			}
+			this->fxHandle.SetPosition(&this->field_0x40);
+			this->fxHandle.SetRotationEuler(&this->pOwner->rotationEuler);
+			this->fxHandle.Start();
 		}
 	}
 	return;
@@ -11393,10 +11382,7 @@ uint astruct_17::Manage(float deltaTime)
 				}
 
 				if (bVar1) {
-					if (((fxHandle.pFx != (CNewFx*)0x0) && (fxHandle.id != 0)) &&
-						(fxHandle.id == (fxHandle.pFx)->id)) {
-						fxHandle.pFx->position = center;
-					}
+					fxHandle.SetPosition(&center);
 
 					if (((fxHandle.pFx != (CNewFx*)0x0) && (fxHandle.id != 0)) && (fxHandle.id == (fxHandle.pFx)->id)) {
 						fxHandle.pFx->Start(0, 0);

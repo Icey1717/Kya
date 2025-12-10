@@ -1631,32 +1631,28 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 float CActorMovingPlatform::BehaviourTrajectory_ComputeTime(CBehaviourPlatformTrajectory* pBehaviour)
 {
 	bool bVar1;
-	Timer* pTVar2;
 	float fVar3;
 	float fVar4;
 	int state;
 
-	pTVar2 = GetTimer();
 	state = this->actorState;
 	fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0;
 	if (state == 10) {
 		bVar1 = pBehaviour->field_0x34 < fVar3;
 		if ((this->pProperties->flags_0x24 & 1) == 0) {
 			if (bVar1) {
-				pTVar2 = GetTimer();
-				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 - pTVar2->cutsceneDeltaTime;
+				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				pTVar2 = GetTimer();
-				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 + pTVar2->cutsceneDeltaTime;
+				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 + GetTimer()->cutsceneDeltaTime;
 			}
 		}
 		else {
 			if (bVar1) {
-				fVar4 = pBehaviour->goalAmount_0x30 - pTVar2->scaledTotalTime;
+				fVar4 = pBehaviour->goalAmount_0x30 - GetTimer()->scaledTotalTime;
 			}
 			else {
-				fVar4 = pTVar2->scaledTotalTime - pBehaviour->goalAmount_0x30;
+				fVar4 = GetTimer()->scaledTotalTime - pBehaviour->goalAmount_0x30;
 			}
 		}
 		if (bVar1) {
@@ -1675,21 +1671,19 @@ float CActorMovingPlatform::BehaviourTrajectory_ComputeTime(CBehaviourPlatformTr
 	else {
 		if (state == 9) {
 			if ((this->pProperties->flags_0x24 & 1) == 0) {
-				pTVar2 = GetTimer();
-				fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 - pTVar2->cutsceneDeltaTime;
+				fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				fVar3 = pBehaviour->goalAmount_0x30 - pTVar2->scaledTotalTime;
+				fVar3 = pBehaviour->goalAmount_0x30 - GetTimer()->scaledTotalTime;
 			}
 		}
 		else {
 			if (state == 5) {
 				if ((this->pProperties->flags_0x24 & 1) == 0) {
-					pTVar2 = GetTimer();
-					fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 + pTVar2->cutsceneDeltaTime;
+					fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 + GetTimer()->cutsceneDeltaTime;
 				}
 				else {
-					fVar3 = (pBehaviour->field_0x28 + pTVar2->scaledTotalTime) - pBehaviour->goalAmount_0x30;
+					fVar3 = (pBehaviour->field_0x28 + GetTimer()->scaledTotalTime) - pBehaviour->goalAmount_0x30;
 				}
 			}
 		}

@@ -444,9 +444,8 @@ void CActorCompanion::BehaviourCompanion_Manage()
 	this->field_0x354.rgba = 0x4010a010;
 
 	switch (this->actorState) {
-	case 6:
-		IMPLEMENTATION_GUARD(
-		StateStand();)
+	case COMPANION_DEFAULT_STATE_STAND:
+		StateStand();
 		break;
 	case 7:
 		pHero = this->pActorHero;
@@ -456,7 +455,7 @@ void CActorCompanion::BehaviourCompanion_Manage()
 		local_20.y = pHero->currentLocation.y + 2.5f;
 		fVar8 = SV_CMP_MoveToSpecial(CMP_RUN_SPEED, CMP_RUN_ACCELERATION, CMP_WALK_DECELERATION, 8.0f, this->pActorHero, &local_20, 0x14);
 		if (fVar8 <= CMP_DIST_LIMIT) {
-			SetState(6, -1);
+			SetState(COMPANION_DEFAULT_STATE_STAND, -1);
 		}
 		break;
 	case 8:
@@ -519,6 +518,61 @@ void CActorCompanion::BehaviourCompanion_Manage()
 	bVar6 = pHero->IsFightRelated(pHero->curBehaviourId);
 	if ((bVar6 != false) && (this->actorState != 0xb)) {
 		SetState(0xb, -1);
+	}
+
+	return;
+}
+
+void CActorCompanion::StateStand()
+{
+	float fVar1;
+	float fVar2;
+	bool bVar4;
+	float fVar6;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 local_130;
+	edF32VECTOR4 heroPosition;
+	CActorHero* pHero;
+
+	pHero = this->pActorHero;
+	heroPosition.x = pHero->currentLocation.x;
+	heroPosition.z = pHero->currentLocation.z;
+	heroPosition.w = pHero->currentLocation.w;
+	heroPosition.y = pHero->currentLocation.y + 2.5f;
+
+	local_130.z = this->currentLocation.z;
+	local_130.w = this->currentLocation.w;
+	local_130.x = this->currentLocation.x;
+	local_130.y = this->currentLocation.y + cosf(this->field_0x36c - 1.570796f) * 0.01f;
+	fVar6 = edF32Between_2Pi(this->field_0x36c + GetTimer()->cutsceneDeltaTime * 3.141593f);
+	this->field_0x36c = fVar6;
+	UpdatePosition(&local_130, true);
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.acceleration = 10.0f;
+	movParamsIn.rotSpeed = 6.283185f;
+	movParamsIn.speed = 0.0f;
+	movParamsIn.flags = 0x416;
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &heroPosition);
+
+	ManageDyn(4.0f, 0x100, (CActorsTable*)0x0);
+
+	if ((movParamsOut.moveVelocity < 6.0f) || (10.0f < movParamsOut.moveVelocity)) {
+		fVar6 = this->currentLocation.x - this->currentLocation.x;
+		fVar1 = (this->currentLocation.y + 2.5f) - this->currentLocation.y;
+		fVar2 = this->pActorHero->currentLocation.z - this->currentLocation.z;
+		if (this->pActorHero->IsFightRelated(this->pActorHero->curBehaviourId) == false) {
+			if (10.0f < sqrtf(fVar6 * fVar6 + fVar1 * fVar1 + fVar2 * fVar2)) {
+				SetState(7, -1);
+			}
+			else {
+				SetState(COMPANION_DEFAULT_STATE_STAND, -1);
+			}
+		}
+		else {
+			SetState(0xb, -1);
+		}
 	}
 
 	return;

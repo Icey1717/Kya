@@ -738,50 +738,27 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 		else {
 			if (newState == PROJECTILE_STATE_LIVING) {
 				if ((this->aProjectileSubObjs->flags & 0x8000) != 0) {
-					IMPLEMENTATION_GUARD(
-					piVar1 = (int*)this->field_0x358;
-					if (((piVar1 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar1[6])) {
-						bVar3 = false;
+					if (this->field_0x354.IsValid()) {
+						this->field_0x354.Stop();
 					}
-					if (((bVar3) && (piVar1 != (int*)0x0)) && ((this->field_0x354 != 0 && (this->field_0x354 == piVar1[6])))) {
-						(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
-					})
 				}
 
 				if ((this->aProjectileSubObjs->flags & 0x200000) != 0) {
-					IMPLEMENTATION_GUARD(
-					if (((this->field_0x360 == 0) || (this->field_0x35c == 0)) ||
-						(this->field_0x35c != *(int*)(this->field_0x360 + 0x18))) {
-						bVar3 = false;
-					}
-					else {
-						bVar3 = true;
-					}
+					bVar3 = this->field_0x35c.IsValid();
 					if ((!bVar3) && (uVar2 = this->aProjectileSubObjs->field_0x38, uVar2 != 0xffffffff)) {
-						CParticlesManager::GetDynamicFx
-						(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x35c, uVar2, 0xffffffffffffffff);
-						piVar1 = (int*)this->field_0x360;
-						if ((piVar1 == (int*)0x0) || ((this->field_0x35c == 0 || (bVar3 = true, this->field_0x35c != piVar1[6]))))
-						{
-							bVar3 = false;
-						}
-						if (bVar3) {
+						CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x35c, uVar2, FX_MATERIAL_SELECTOR_NONE);
+
+						if (this->field_0x35c.IsValid()) {
 							if (this->pAnimationController == (CAnimation*)0x0) {
-								if (((piVar1 != (int*)0x0) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-									(**(code**)(*piVar1 + 0x38))(piVar1, 0xe, this, 0);
-								}
+								this->field_0x35c.SpatializeOnActor(0xe, this, 0x0);
 							}
 							else {
-								if (((piVar1 != (int*)0x0) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-									(**(code**)(*piVar1 + 0x38))(piVar1, 0xe, this, 0x686365d2);
-								}
+								this->field_0x35c.SpatializeOnActor(0xe, this, 0x686365d2);
 							}
-							piVar1 = (int*)this->field_0x360;
-							if (((piVar1 != (int*)0x0) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-								(**(code**)(*piVar1 + 0x10))(0, 0);
-							}
+
+							this->field_0x35c.Start();
 						}
-					})
+					}
 				}
 
 				if (0.0f < this->aProjectileSubObjs->timeToExplode) {
@@ -954,12 +931,11 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 									}
 									else {
 										if (iVar1 == 0x20) {
-											IMPLEMENTATION_GUARD(
-											StateLiving(this, uVar9, (long)pBehaviourStand->field_0xc);
+											StateLiving(uVar9, pBehaviourStand->field_0xc);
 
 											if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 												SetState(PROJECTILE_STATE_LIVING, -1);
-											})
+											}
 										}
 										else {
 											if (iVar1 == PROJECTILE_STATE_FLYING_LAVA_BALL) {

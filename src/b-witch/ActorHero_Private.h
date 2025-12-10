@@ -258,6 +258,7 @@ public:
 	int ChooseStateFall(int param_2);
 	int ChooseStateLanding(float speed);
 	int ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams, edF32VECTOR4* param_4, int param_5);
+	int ChooseStateDead(int hitType, int dieType, int param_4);
 
 	bool CanEnterToboggan();
 

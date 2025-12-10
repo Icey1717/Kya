@@ -14,6 +14,7 @@
 #include "ActorProjectile.h"
 #include "ActorSwitch.h"
 #include "ActorMicken.h"
+#include "ActorRune.h"
 
 namespace Aton
 {
@@ -131,6 +132,9 @@ namespace Hero
 		case STATE_HERO_SLIDE_B:
 			return "StateHeroSlideB";
 			break;
+		case STATE_HERO_BASIC_TO_STAND:
+			return "StateHeroBasicToStand";
+			break;
 		case STATE_HERO_U_TURN:
 			return "StateHeroUTurn";
 			break;
@@ -211,6 +215,9 @@ namespace Hero
 			break;
 		case STATE_HERO_DROWN_DEATH:
 			return "StateHeroDrownDeath";
+			break;
+		case STATE_HERO_DEAD_A3:
+			return "StateHeroDeadA3";
 			break;
 		case STATE_HERO_COL_WALL:
 			return "StateHeroColWall";
@@ -856,6 +863,35 @@ namespace Bridge
 	}
 }
 
+namespace Rune
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case RUNE_BEHAVIOUR_DEFAULT:
+			return "Default";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case RUNE_STATE_DEFAULT_WAIT_FOR_RECEPTACLE:
+			return "Wait for Receptacle";
+		case RUNE_STATE_DEFAULT_IDLE:
+			return "Idle";
+		case RUNE_STATE_DEFAULT_CINEMATIC:
+			return "Cinematic";
+		case RUNE_STATE_DEFAULT_ACTIVATE:
+			return "Activate";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -898,6 +934,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Micken::GetBehaviourName(behaviourId);
 	case BRIDGE:
 		return Bridge::GetBehaviourName(behaviourId);
+	case RUNE:
+		return Rune::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -920,6 +958,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Micken::GetStateName(pActor->actorState);
 	case BRIDGE:
 		return Bridge::GetStateName(pActor->actorState);
+	case RUNE:
+		return Rune::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

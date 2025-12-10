@@ -793,6 +793,22 @@ void edF32Matrix4FromAngAxisSoft(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1
 	return;
 }
 
+float FLOAT_004485a8 = 6.2831855f;
+
+float edFRndGauss(float param_1, float param_2)
+{
+	int iVar1;
+	float fVar2;
+	float fVar3;
+
+	iVar1 = rand();
+	fVar3 = (float)iVar1 / -2.147484e+09f;
+	iVar1 = rand();
+	fVar3 = logf(1.0f - fVar3);
+	fVar2 = cosf(FLOAT_004485a8 * ((float)iVar1 / 2.147484e+09f));
+	return param_1 + param_2 * sqrtf(fVar3 * -2.0f)* fVar2;
+}
+
 edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order)
 {
 	edF32VECTOR4* puVar2;
@@ -2035,6 +2051,8 @@ float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		const float invMagnitude = 1.0f / v1Magnitude;
 		*v0 = *v1 * invMagnitude;
 	}
+
+	assert(std::isnan(v1Magnitude) == false);
 
 	return v1Magnitude;
 }

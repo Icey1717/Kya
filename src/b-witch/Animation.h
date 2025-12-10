@@ -197,6 +197,7 @@ public:
 	bool IsLayerActive(uint layer);
 	int PhysicalLayerFromLayerId(uint layer);
 
+	int GetBoneIndex(uint boneId);
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 	void GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix);
 

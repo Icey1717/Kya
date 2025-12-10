@@ -680,10 +680,7 @@ void CActorAmortos::StateAmortosExplode()
 	float fVar2;
 	Timer* pTVar3;
 	int iVar4;
-	undefined4 local_1b0[3];
-	undefined4 local_1a4;
-	edF32VECTOR4 eStack400;
-	float local_180;
+	_msg_hit_param local_1b0;
 	CActorsTable table;
 	edF32VECTOR4 intersectSphere;
 	undefined4* local_4;
@@ -700,17 +697,16 @@ void CActorAmortos::StateAmortosExplode()
 	for (iVar4 = 0; iVar4 < table.nbEntries; iVar4 = iVar4 + 1) {
 		pNewEntry = table.aEntries[iVar4];
 		this->field_0x408.Add(pNewEntry);
-		local_1b0[0] = 10;
-		edF32Vector4SubHard(&eStack400, &pNewEntry->currentLocation, &this->currentLocation);
-		edF32Vector4NormalizeHard(&eStack400, &eStack400);
-		eStack400.y = 0.5f;
-		edF32Vector4NormalizeHard(&eStack400, &eStack400);
+		local_1b0.projectileType = HIT_TYPE_AMORTOS;
+		edF32Vector4SubHard(&local_1b0.field_0x20, &pNewEntry->currentLocation, &this->currentLocation);
+		edF32Vector4NormalizeHard(&local_1b0.field_0x20, &local_1b0.field_0x20);
+		local_1b0.field_0x20.y = 0.5f;
+		edF32Vector4NormalizeHard(&local_1b0.field_0x20, &local_1b0.field_0x20);
 		fVar1 = (pNewEntry->currentLocation).x - this->currentLocation.x;
 		fVar2 = (pNewEntry->currentLocation).z - this->currentLocation.z;
-		local_4 = local_1b0;
-		local_1a4 = 0;
-		local_180 = this->field_0x16c - (sqrtf(fVar1 * fVar1 + 0.0f + fVar2 * fVar2) * (this->field_0x16c - this->field_0x170)) / this->field_0x164;
-		DoMessage(pNewEntry, (ACTOR_MESSAGE)2, (MSG_PARAM)local_4);
+		local_1b0.damage = 0.0f;
+		local_1b0.field_0x30 = this->field_0x16c - (sqrtf(fVar1 * fVar1 + 0.0f + fVar2 * fVar2) * (this->field_0x16c - this->field_0x170)) / this->field_0x164;
+		DoMessage(pNewEntry, MESSAGE_KICKED, &local_1b0);
 	}
 
 	if (this->field_0x164 <= this->field_0x2b4) {

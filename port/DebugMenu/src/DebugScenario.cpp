@@ -7,25 +7,6 @@
 #include "LevelScheduleManager.h"
 #include "DebugSetting.h"
 
-#define SCN_GAME_NUM_FREED_WOLFENS		0x0
-#define SCN_GAME_COMPANION				0x3
-#define SCN_ABILITY_JUMP_BOUNCE			0x7
-#define SCN_ABILITY_CLIMB				0x8
-#define SCN_ABILITY_BOOMY_TYPE			0x9
-#define SCN_ABILITY_FIGHT				0xa
-#define SCN_ABILITY_MAGIC_EXORCISM		0xb
-#define SCN_ABILITY_MAGIC_REGENERATE	0xc
-#define SCN_ABILITY_JAMGUT_RIDE			0xd
-#define SCN_ABILITY_BINOCULARS			0xe
-#define SCN_ABILITY_RECEPTACLE			0xf
-#define SCN_LEVEL_MAGIC_BOARD			0x10
-#define SCN_LEVEL_MAGIC_GAUGE			0x11
-#define SCN_LEVEL_MAGIC_UPDATE			0x12
-#define SCN_LEVEL_MAGIC_MAX				0x13
-#define SCN_LEVEL_LIFE_GAUGE			0x14
-#define SCN_LEVEL_LIFE_UPDATE			0x15
-#define SCN_LEVEL_LIFE_MAX				0x16
-
 namespace Debug
 {
 	namespace Scenario

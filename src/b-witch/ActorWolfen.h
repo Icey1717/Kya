@@ -849,7 +849,7 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
-	virtual void UpdateLookingAt() { IMPLEMENTATION_GUARD(); }
+	virtual void UpdateLookingAt();
 	virtual void UpdatePostAnimEffects();
 	virtual void SetState(int newState, int animType);
 	virtual void ChangeManageState(int state);
@@ -953,7 +953,7 @@ public:
 	void StateWolfenInsultReceive(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsultStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsult(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour);
 	void StateWolfenBreakObject(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void State_00174dc0(CBehaviourDCA* pBehaviour);
 	void State_00174f20(CBehaviourDCA* pBehaviour);

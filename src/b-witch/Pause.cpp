@@ -1168,6 +1168,91 @@ bool MenuFrameSave_Draw(CSimpleMenu* pMenu)
 	return bResult;
 }
 
+bool MenuFrameLoad_Draw(CSimpleMenu* pMenu)
+{
+	bool bSuccess;
+	int iVar1;
+	ulong uVar2;
+
+	iVar1 = gSaveManagement.test_device_has_enough_room();
+	if ((((iVar1 == 3) || (iVar1 == 2)) || (iVar1 == 1)) || (iVar1 != 0)) {
+		if ((iVar1 == 3) && (gSaveManagement.fileExistsFlags == 0x1ff)) {
+			DrawFileSelectBackground_001b32a0(pMenu->selectedIndex);
+			pMenu->draw_title(TITLE_KEY_LOAD_GAME, -0xaa);
+			pMenu->field_0xdc = -6.0f;
+			pMenu->field_0xd8 = 0x78;
+			pMenu->set_vertical_spacing(0x38);
+			pMenu->scaleX = 0.8f;
+			pMenu->scaleY = 0.8f;
+			pMenu->selectedScaleX = 0.9f;
+			pMenu->selectedScaleY = 0.9f;
+			pMenu->set_justification_left();
+			bSuccess = gSaveManagement.is_valid(0);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(0);
+				pMenu->draw_action(uVar2, MemCardLoad0, 0, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(0);
+				pMenu->draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+			pMenu->set_vertical_spacing(0x46);
+			pMenu->set_justification_right();
+			bSuccess = gSaveManagement.is_valid(1);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(1);
+				pMenu->draw_action(uVar2, MemCardLoad0, 1, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(1);
+				pMenu->draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+			pMenu->set_justification_left();
+			bSuccess = gSaveManagement.is_valid(2);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(2);
+				pMenu->draw_action(uVar2, MemCardLoad0, 2, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(2);
+				pMenu->draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+
+			pMenu->set_justification_right();
+
+			bSuccess = gSaveManagement.is_valid(3);
+			if (bSuccess == false) {
+				uVar2 = gSaveManagement.get_slot_string(3);
+				pMenu->draw_action(uVar2, MemCardLoad0, 3, ~PM_MiniGame);
+			}
+			else {
+				uVar2 = gSaveManagement.get_slot_string(3);
+				pMenu->draw_action(uVar2, NULL, 0, ~PM_MiniGame);
+			}
+
+			bSuccess = true;
+		}
+		else {
+			bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x1408524b44525948, 0, 0x120014171f4f4e);
+			if (bSuccess == true) {
+				pMenu->pop_page();
+			}
+
+			bSuccess = false;
+		}
+	}
+	else {
+		bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x594d424b40531e09, 0, 0x120014171f4f4e);
+		if (bSuccess == true) {
+			pMenu->pop_page();
+		}
+
+		bSuccess = false;
+	}
+
+	return bSuccess;
+}
+
 uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 {
 	CFrontendDisplay* this_00;
@@ -1231,9 +1316,7 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 			bResult = MenuFrameSave_Draw(pMenu);
 			break;
 		case PM_LoadMenu:
-			IMPLEMENTATION_GUARD(
-			bResult = DrawLoadMenu_001b2ad0(pMenu);
-			bResult = bResult & 0xff;)
+			bResult = MenuFrameLoad_Draw(pMenu);
 			break;
 		case PM_OptionsMenu:
 			IMPLEMENTATION_GUARD(
@@ -2164,91 +2247,6 @@ void CSimpleMenu::DrawMainMenu()
 	return;
 }
 
-bool CSimpleMenu::MenuFrameLoad_Draw()
-{
-	bool bSuccess;
-	int iVar1;
-	ulong uVar2;
-
-	iVar1 = gSaveManagement.test_device_has_enough_room();
-	if ((((iVar1 == 3) || (iVar1 == 2)) || (iVar1 == 1)) || (iVar1 != 0)) {
-		if ((iVar1 == 3) && (gSaveManagement.fileExistsFlags == 0x1ff)) {
-			DrawFileSelectBackground_001b32a0(this->selectedIndex);
-			draw_title(TITLE_KEY_LOAD_GAME, -0xaa);
-			this->field_0xdc = -6.0f;
-			this->field_0xd8 = 0x78;
-			set_vertical_spacing(0x38);
-			this->scaleX = 0.8f;
-			this->scaleY = 0.8f;
-			this->selectedScaleX = 0.9f;
-			this->selectedScaleY = 0.9f;
-			set_justification_left();
-			bSuccess = gSaveManagement.is_valid(0);
-			if (bSuccess == false) {
-				uVar2 = gSaveManagement.get_slot_string(0);
-				draw_action(uVar2, MemCardLoad0, 0, ~PM_MiniGame);
-			}
-			else {
-				uVar2 = gSaveManagement.get_slot_string(0);
-				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
-			}
-			set_vertical_spacing(0x46);
-			set_justification_right();
-			bSuccess = gSaveManagement.is_valid(1);
-			if (bSuccess == false) {
-				uVar2 = gSaveManagement.get_slot_string(1);
-				draw_action(uVar2, MemCardLoad0, 1, ~PM_MiniGame);
-			}
-			else {
-				uVar2 = gSaveManagement.get_slot_string(1);
-				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
-			}
-			set_justification_left();
-			bSuccess = gSaveManagement.is_valid(2);
-			if (bSuccess == false) {
-				uVar2 = gSaveManagement.get_slot_string(2);
-				draw_action(uVar2, MemCardLoad0, 2, ~PM_MiniGame);
-			}
-			else {
-				uVar2 = gSaveManagement.get_slot_string(2);
-				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
-			}
-
-			set_justification_right();
-
-			bSuccess = gSaveManagement.is_valid(3);
-			if (bSuccess == false) {
-				uVar2 = gSaveManagement.get_slot_string(3);
-				draw_action(uVar2, MemCardLoad0, 3, ~PM_MiniGame);
-			}
-			else {
-				uVar2 = gSaveManagement.get_slot_string(3);
-				draw_action(uVar2, NULL, 0, ~PM_MiniGame);
-			}
-
-			bSuccess = true;
-		}
-		else {
-			bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x1408524b44525948, 0, 0x120014171f4f4e);
-			if (bSuccess == true) {
-				pop_page();
-			}
-
-			bSuccess = false;
-		}
-	}
-	else {
-		bSuccess = MenuMessageBoxDisplay(3, 0x40415d485046081a, 0x594d424b40531e09, 0, 0x120014171f4f4e);
-		if (bSuccess == true) {
-			pop_page();
-		}
-
-		bSuccess = false;
-	}
-
-	return bSuccess;
-}
-
 bool CSimpleMenu::MenuFrameNewGame_Draw()
 {
 	bool bResult;
@@ -2438,13 +2436,11 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 				}
 				else {
 					if (EVar4 == PM_LoadMenu) {
-						uVar5 = pMenu->MenuFrameLoad_Draw();
-						uVar5 = uVar5 & 0xff;
+						uVar5 = MenuFrameLoad_Draw(pMenu);
 					}
 					else {
 						if (EVar4 == PM_InitialSave) {
 							uVar5 = pMenu->MenuFrameNewGame_Draw();
-							uVar5 = uVar5 & 0xff;
 						}
 						else {
 							if (EVar4 == PM_MainMenu) {

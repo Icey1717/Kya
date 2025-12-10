@@ -246,14 +246,8 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 		}
 
 		if (bVar3) {
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x1c).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->position = this->currentLocation;
-			}
-
-			pFx = (pBehaviour->field_0x1c).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x1c).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->rotationEuler = this->rotationEuler;
-			}
+			pBehaviour->field_0x1c.SetPosition(&this->currentLocation);
+			pBehaviour->field_0x1c.SetRotationEuler(&this->rotationEuler);
 		}
 
 		if (pBehaviour->pHierarchy != (edNODE*)0x0) {
@@ -268,14 +262,8 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 		}
 
 		if (bVar3) {
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->position = this->currentLocation;
-			}
-
-			pFx = (pBehaviour->field_0x34).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->rotationEuler = this->rotationEuler;
-			}
+			pBehaviour->field_0x34.SetPosition(&this->currentLocation);
+			pBehaviour->field_0x34.SetRotationEuler(&this->rotationEuler);
 		}
 
 		if (pBehaviour->pOpenModelNode != (edNODE*)0x0) {
@@ -295,14 +283,8 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			local_20.w = this->currentLocation.w;
 			local_20.y = this->currentLocation.y + pBehaviour->field_0x14;
 
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->position = local_20;
-			}
-
-			pFx = (pBehaviour->field_0x50).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->rotationEuler = this->rotationEuler;
-			}
+			pBehaviour->field_0x50.SetPosition(&local_20);
+			pBehaviour->field_0x50.SetRotationEuler(&this->rotationEuler);
 		}
 	}
 
@@ -420,19 +402,9 @@ void CActorSwitch::StateSwitchMagicOff2On(CBehaviourSwitchMagic* pBehaviour)
 		}
 
 		if (bVar2) {
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->position = this->currentLocation;
-			}
-
-			pFx = (pBehaviour->field_0x34).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->rotationEuler = this->rotationEuler;
-			}
-
-			pFx = (pBehaviour->field_0x34).pFx;
-			if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x34).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-				pFx->Start(0, 0);
-			}
+			pBehaviour->field_0x34.SetPosition(&this->currentLocation);
+			pBehaviour->field_0x34.SetRotationEuler(&this->rotationEuler);
+			pBehaviour->field_0x34.Start();
 		}
 
 		pBehaviour->DisplayOpenFxModel(1);
@@ -860,21 +832,9 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 			}
 
 			if (bVar1) {
-				pSwitch = this->pOwner;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					pFx->position = pSwitch->currentLocation;
-				}
-
-				pSwitch = this->pOwner;
-				pFx = (this->field_0x1c).pFx;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					pFx->rotationEuler = pSwitch->rotationEuler;
-				}
-
-				pFx = (this->field_0x1c).pFx;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					pFx->Start(0, 0);
-				}
+				this->field_0x1c.SetPosition(&this->pOwner->currentLocation);
+				this->field_0x1c.SetRotationEuler(&this->pOwner->rotationEuler);
+				this->field_0x1c.Start();
 			}
 
 			if (((this->pHierarchy == (edNODE*)0x0) && (this->field_0x24 != -1)) && (this->field_0x28 != -1)) {
@@ -912,23 +872,12 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 				fVar4 = pSwitch->currentLocation.z;
 				fVar5 = pSwitch->currentLocation.w;
 				fVar9 = this->field_0x14;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					(pFx->position).x = pSwitch->currentLocation.x;
-					(pFx->position).y = fVar3 + fVar9;
-					(pFx->position).z = fVar4;
-					(pFx->position).w = fVar5;
-				}
 
-				pSwitch = this->pOwner;
-				pFx = (this->field_0x50).pFx;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					pFx->rotationEuler = pSwitch->rotationEuler;
-				}
+				edF32VECTOR4 newPos = { pSwitch->currentLocation.x, fVar3 + fVar9, fVar4, fVar5 };
 
-				pFx = (this->field_0x50).pFx;
-				if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-					pFx->Start(0, 0);
-				}
+				this->field_0x50.SetPosition(&newPos);
+				this->field_0x50.SetRotationEuler(&pSwitch->rotationEuler);
+				this->field_0x50.Start();
 			}
 		}
 	}

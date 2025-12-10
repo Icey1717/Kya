@@ -939,10 +939,12 @@ uint CBehaviourEventGen::FUN_0038fba0()
 	return uVar7;
 }
 
+static edF32VECTOR4 edF32VECTOR4_00426730 = { 0.0f, 0.8f, 0.0f, 0.0f };
+
 int CBehaviourEventGen::ManageCamera(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* pData)
 {
 	ByteCode* pByteCode = reinterpret_cast<ByteCode*>(pData);
-
+	CCameraManager* pCamera = CScene::ptable.g_CameraManager_0045167c;
 	switch (phase) {
 		case EVG_PHASE_CREATE:
 			this->cameraRef.index = pByteCode->GetS32();
@@ -959,8 +961,45 @@ int CBehaviourEventGen::ManageCamera(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* pD
 			pPMTF->flagB = pPMTF->flagA;
 			break;
 		case EVG_PHASE_MANAGE:
-			IMPLEMENTATION_GUARD();
+		{
+			if ((pPMTF->flagB & 1) != 0) {
+				CCamera* pCVar6 = (this->cameraRef).Get();
+				bool bVar5 = pCVar6->IsKindOfObject(0x80);
+				if (bVar5 != false) {
+					IMPLEMENTATION_GUARD(
+						pCVar6 = (this->cameraRef).Get();
+					pCVar6->flags_0xc = pCVar6->flags_0xc & 0xfffffffe;
+					pCVar6->field_0x50 = edF32VECTOR4_00426730;
+					pCVar6[1].transformationMatrix.ca =
+						(float)((uint)pCVar6[1].transformationMatrix.ca & 0xffffdfff);
+					pCVar6[1].field_0x50.z = 0.25;);
+				}
+
+				CActorEventGenerator* pCVar1 = this->pOwner;
+				uint pCVar7 = 0x0;
+				int iVar10 = 0;
+				PTMF_Ext* pCVar9 = pCVar1->field_0x170;
+				if (0 < pCVar1->nbRegisteredMemberFunctions) {
+					do {
+						pCVar7 = pCVar9->__ptmf_scall_NOT(PTMF_Ext::EVC_PHASE_7, pCVar7, 0);
+						iVar10 = iVar10 + 1;
+						pCVar9 = pCVar9 + 1;
+					} while (iVar10 < pCVar1->nbRegisteredMemberFunctions);
+				}
+
+				if ((pCVar7 != 0x0) && (this->pOwner == CActorEventGenerator::gGlobalEvG)) {
+					pCVar6 = (this->cameraRef).Get();
+					pCVar6->SetTarget(LOAD_POINTER_CAST(CActor*, pCVar7));
+				}
+
+				pCamera->PushCamera((this->cameraRef).Get(), 1);
+
+				pPMTF->flagB = pPMTF->flagB | 2;
+				pPMTF->flagB = pPMTF->flagB | 4;
+			}
+
 			break;
+		}
 		case EVG_PHASE_DRAW:
 			IMPLEMENTATION_GUARD();
 			break;

@@ -100,6 +100,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_RECEPTACLE_CHANGED = 0x79,
 	MESSAGE_CINEMATIC_INSTALL = 0x7c,
 	MESSAGE_NEW_MAP_GAINED = 0x7d,
+	MESSAGE_NEW_LIFE_GAUGE = 0x85,
 };
 
 #define OBJ_TYPE_MOVABLE	0x2
@@ -304,6 +305,7 @@ struct CActorParamsIn
 
 #define HIT_TYPE_KICK 0x3
 #define HIT_TYPE_BOOMY 0x4
+#define HIT_TYPE_AMORTOS 0xa
 
 struct _msg_hit_param
 {
@@ -353,7 +355,7 @@ struct _msg_hit_param
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	edF32VECTOR4 instanceIndex;
+	edF32VECTOR4 field_0x60;
 	undefined field_0x70;
 	undefined field_0x71;
 	undefined field_0x72;
@@ -597,6 +599,8 @@ public:
 	bool UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
 	void RestartCurAnim();
+
+	void FUN_001156e0(int param_2, int param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5);
 
 	void SV_GetGroundPosition(edF32VECTOR4* v0);
 	void SV_GetActorColCenter(edF32VECTOR4* pColCenter);

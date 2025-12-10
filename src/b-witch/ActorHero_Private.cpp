@@ -1323,8 +1323,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 			uVar2 = GetLifeInterface();
 			fVar7 = uVar2->GetValue();
 			if (fVar7 == 0.0f) {
-				IMPLEMENTATION_GUARD(
-				iVar6 = ChooseStateDead(pHitParam->projectileType, 4, 0);)
+				iVar6 = ChooseStateDead(pHitParam->projectileType, 4, 0);
 			}
 
 			if (iVar6 < 0) {
@@ -2942,9 +2941,8 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 		CLifeInterface* pLifeInterface = GetLifeInterface();
 		fVar8 = pLifeInterface->GetValue();
 		if ((fVar8 <= 0.0f) || (0.0f < this->field_0x2e4)) {
-			IMPLEMENTATION_GUARD(
-			newState = ChooseStateDead(this, 0xc, 4, 1);
-			animType = AT_None;)
+			newState = ChooseStateDead(0xc, 4, 1);
+			animType = -1;
 		}
 	}
 
@@ -3892,24 +3890,23 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				return 0;
 		}
 
-		if (msg == 0x85) {
-			IMPLEMENTATION_GUARD(
-				iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
+		if (msg == MESSAGE_NEW_LIFE_GAUGE) {
+			iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
 			iVar14 = iVar14 + iVar13;
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
 			if (iVar13 < iVar14) {
 				iVar14 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
 			}
-			pCVar11 = (*(CActorHero::_gThis->pVTable)->GetLifeInterfaceOther)
-				((CActor*)CActorHero::_gThis);
+
+			pCVar11 = CActorHero::_gThis->GetLifeInterfaceOther();
 			CLevelScheduler::ScenVar_Set(SCN_LEVEL_LIFE_GAUGE, iVar14);
-			CLifeInterface::SetValueMax((float)iVar14, pCVar11);
-			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
+			pCVar11->SetValueMax((float)iVar14);
+			fVar25 = pCVar11->GetValue();
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
-			(*(code*)pCVar11->pVtable->SetValue)(fVar25 + (float)iVar13, pCVar11);
-			(*(code*)pCVar11->pVtable->Activate)(pCVar11, 1);)
-				goto LAB_00344ed0;
+			pCVar11->SetValue(fVar25 + (float)iVar13);
+			pCVar11->Activate(1);
+			goto LAB_00344ed0;
 		}
 		if (msg != 9) {
 			if (msg == 8) {
@@ -4948,6 +4945,70 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 	return iVar5;
 }
 
+int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
+{
+	int deadState;
+	uint uVar1;
+	float fVar2;
+	edF32VECTOR4 local_10;
+
+	SetInvincible(2.0f, 0);
+	FUN_00325c40(20.0f, 0);
+
+	if (param_4 == 0) {
+		if (dieType == 1) {
+			deadState = 0x9d;
+		}
+		else {
+			deadState = 0x9f;
+			if (((dieType != 2) && (deadState = 0xa0, dieType != 3)) && (deadState = -1, hitType == 5)) {
+				deadState = 0x98;
+			}
+		}
+	}
+	else {
+		uVar1 = TestState_IsFlying(0xffffffff);
+		if (uVar1 == 0) {
+			uVar1 = TestState_WindWall(0xffffffff);
+			if (uVar1 == 0) {
+				uVar1 = TestState_IsInTheWind(0xffffffff);
+				if (uVar1 == 0) {
+					uVar1 = TestState_IsOnAToboggan(0xffffffff);
+					if (uVar1 == 0) {
+						uVar1 = TestState_IsCrouched(0xffffffff);
+						if (uVar1 != 0) {
+							local_10.x = this->currentLocation.x;
+							local_10.y = this->currentLocation.y + 0.2f;
+							local_10.z = this->currentLocation.z;
+							local_10.w = 1.0f;
+							CCollisionRay CStack48 = CCollisionRay(1.4f, &local_10, &gF32Vector4UnitY);
+							fVar2 = CStack48.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+							if (fVar2 != 1e+30f) {
+								return 0xa4;
+							}
+						}
+
+						deadState = 0x97;
+					}
+					else {
+						deadState = 0x9c;
+					}
+				}
+				else {
+					deadState = 0x9b;
+				}
+			}
+			else {
+				deadState = 0x9a;
+			}
+		}
+		else {
+			deadState = 0x99;
+		}
+	}
+
+	return deadState;
+}
 
 void CActorHeroPrivate::ClearLocalData()
 {
@@ -5479,6 +5540,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_WIND_FLY:
 	case STATE_HERO_SHOP:
+	case STATE_HERO_BASIC_TO_STAND:
 	case STATE_HERO_LEVER_2_2:
 	case STATE_HERO_EXORCISE:
 	case STATE_HERO_CEILING_CLIMB_A:
@@ -5518,6 +5580,9 @@ LAB_00341590:
 		break;
 	case STATE_HERO_ROLL:
 		StateHeroRollInit();
+		break;
+	case STATE_HERO_DEAD_A3:
+		this->flags = this->flags | 0x10000000;
 		break;
 	case STATE_HERO_KICK_A:
 		StateHeroKickInit();
@@ -5730,6 +5795,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_2_CROUCH:
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
+	case STATE_HERO_BASIC_TO_STAND:
 	case STATE_HERO_CEILING_CLIMB_A:
 	case STATE_HERO_CEILING_CLIMB_B:
 	case STATE_HERO_CEILING_CLIMB_C:
@@ -5768,6 +5834,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_ROLL:
 		StateHeroRunTerm();
+		break;
+	case STATE_HERO_DEAD_A3:
+		this->flags = this->flags & 0xefffffff;
 		break;
 	case STATE_HERO_KICK_A:
 		StateHeroKickTerm();
@@ -5833,9 +5902,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 				this->trapLinkedBone = 0;
 			}
 
-			uint local_140 = 0xb;
-			uint* local_c = &local_140;
-			DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)2, (MSG_PARAM)local_c);
+			_msg_hit_param local_140;
+			local_140.projectileType = 0xb;
+			DoMessage(this->pTrappedByActor, MESSAGE_KICKED, &local_140);
 			this->pTrappedByActor = (CActor*)0x0;
 		}
 	}
@@ -5849,9 +5918,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 				this->trapLinkedBone = 0;
 			}
 
-			uint local_140 = 0xb;
-			uint* local_c = &local_140;
-			DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)2, (MSG_PARAM)local_c);
+			_msg_hit_param local_140;
+			local_140.projectileType = 0xb;
+			DoMessage(this->pTrappedByActor, MESSAGE_KICKED, &local_140);
 			this->pTrappedByActor = (CActor*)0x0;
 		}
 	}
@@ -6212,6 +6281,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_DROWN_DEATH:
 		StateHeroDead(1.5f);
 		break;
+	case STATE_HERO_DEAD_A3:
+		StateHeroDead(1.5f);
+		break;
 	case STATE_HERO_KICK_A:
 		StateHeroKick(STATE_HERO_KICK_B, 0x22);
 		break;
@@ -6351,6 +6423,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_SLIDE_B:
 		StateHeroSlide(0);
+		break;
+	case STATE_HERO_BASIC_TO_STAND:
+		StateHeroBasic(this->field_0x105c, -1.0f, STATE_HERO_STAND);
 		break;
 	case STATE_HERO_U_TURN:
 		StateHeroUTurn();
@@ -9222,7 +9297,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 				if ((this->dynamic.horizontalLinearAcceleration < 0.5f) &&
 					((this->dynamic.flags & 2) == 0)) {
 					if (param_2 == 0) {
-						SetState(0xe6, 0xffffffff);
+						SetState(STATE_HERO_BASIC_TO_STAND, 0xffffffff);
 					}
 					else {
 						SetState(STATE_HERO_STAND, 0xffffffff);
@@ -11514,7 +11589,7 @@ void CActorHeroPrivate::StateBoomyExecuteFightBlow()
 		local_50.rowT = gF32Vertex4Zero;
 
 		edF32Matrix4MulF32Vector4Hard(&local_d0.field_0x20, &local_50, &this->pBlow->field_0x20);
-		edF32Matrix4MulF32Vector4Hard(&local_d0.instanceIndex, &local_50, &this->pBlow->field_0x30);
+		edF32Matrix4MulF32Vector4Hard(&local_d0.field_0x60, &local_50, &this->pBlow->field_0x30);
 
 		iVar7 = 0;
 		pCVar10 = this->boomyTargetTable.aEntries;

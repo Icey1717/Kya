@@ -1815,9 +1815,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 				uint isLooking = pActor->IsLookingAt();
 				if (isLooking != 0) {
-					IMPLEMENTATION_GUARD(
 					pActor->UpdateLookingAt();
-					)
 				}
 
 				pActor->UpdateAnimEffects();
@@ -3179,6 +3177,26 @@ int CAnimation::PhysicalLayerFromLayerId(uint layer)
 
 	return iVar1;
 }
+
+
+int CAnimation::GetBoneIndex(uint boneId)
+{
+	int boneIndex;
+
+	boneIndex = -1;
+
+	if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+		boneIndex = this->anmSkeleton.NodeIndexFromID(boneId);
+	}
+
+	if (boneIndex == -1) {
+		boneIndex = 0;
+	}
+
+	return boneIndex;
+}
+
+
 
 edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)
 {

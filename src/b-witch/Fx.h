@@ -35,24 +35,6 @@ enum FX_MATERIAL_SELECTOR
 	FX_MATERIAL_SELECTOR_NONE = 0xFFFFFFFF
 };
 
-class CFxHandle
-{
-public:
-	CFxHandle();
-
-	int id;
-	CNewFx* pFx;
-};
-
-class CFxHandleExt : public CFxHandle
-{
-public:
-	void Create(ByteCode* pByteCode);
-	void Init(uint newType);
-
-	uint type;
-};
-
 template <typename FxType>
 class CDoubleLinkedNode
 {
@@ -142,6 +124,109 @@ public:
 
 	float field_0x70;
 	float field_0x74;
+};
+
+class CFxHandle
+{
+public:
+	CFxHandle();
+
+	inline bool IsValid()
+	{
+		bool bValidFx;
+
+		if (((pFx == (CNewFx*)0x0) || (id == 0)) || (id != pFx->id)) {
+			bValidFx = false;
+		}
+		else {
+			bValidFx = true;
+		}
+
+		return bValidFx;
+	}
+
+	inline void SetPosition(edF32VECTOR4* pNewPosition)
+	{
+		if (IsValid()) {
+			pFx->position = *pNewPosition;
+		}
+
+		return;
+	}
+
+	inline void SetRotationEuler(edF32VECTOR4* pNewRotationEuler)
+	{
+		if (IsValid()) {
+			pFx->rotationEuler = *pNewRotationEuler;
+		}
+
+		return;
+	}
+
+	inline void SetScale(edF32VECTOR4* pNewScale)
+	{
+		if (IsValid()) {
+			pFx->scale = *pNewScale;
+		}
+
+		return;
+	}
+
+	inline void Start()
+	{
+		if (IsValid()) {
+			pFx->Start(0.0f, 0.0f);
+		}
+
+		return;
+	}
+
+	inline void Stop()
+	{
+		if (IsValid()) {
+			pFx->Stop(-1.0f);
+		}
+
+		return;
+	}
+
+	inline void Kill()
+	{
+		if (IsValid()) {
+			pFx->Kill();
+		}
+
+		return;
+	}
+
+	inline void Reset()
+	{
+		id = 0;
+		pFx = (CNewFx*)0x0;
+
+		return;
+	}
+
+	inline void SpatializeOnActor(uint mode, CActor* pActor, uint boneId)
+	{
+		if (IsValid()) {
+			pFx->SpatializeOnActor(mode, pActor, boneId);
+		}
+
+		return;
+	}
+
+	int id;
+	CNewFx* pFx;
+};
+
+class CFxHandleExt : public CFxHandle
+{
+public:
+	void Create(ByteCode* pByteCode);
+	void Init(uint newType);
+
+	uint type;
 };
 
 struct s_fx_sort_data

@@ -54,6 +54,7 @@
 
 #define STATE_HERO_FALL_DEATH 0xa1
 #define STATE_HERO_DROWN_DEATH 0xa2
+#define STATE_HERO_DEAD_A3 0xa3
 
 #define STATE_HERO_KICK_A 0xa5
 #define STATE_HERO_KICK_B 0xa6
@@ -114,6 +115,8 @@
 
 #define STATE_HERO_SLIDE_A 0xe4
 #define STATE_HERO_SLIDE_B 0xe5
+
+#define STATE_HERO_BASIC_TO_STAND 0xe6
 
 #define STATE_HERO_U_TURN 0xe7
 

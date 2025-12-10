@@ -3072,6 +3072,33 @@ void CActor::RestartCurAnim()
 	return;
 }
 
+
+void CActor::FUN_001156e0(int param_2, int param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5)
+{
+	ed_g2d_manager* pManager;
+	ed_g2d_material* pMaterial;
+	ed_g2d_texture* peVar1;
+
+	if (param_2 != -1) {
+		pManager = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(param_2);
+		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, param_3);
+
+		if ((pMaterial != (ed_g2d_material*)0x0) && (peVar1 = ed3DG2DGetTextureFromMaterial(pMaterial, 0), peVar1 != (ed_g2d_texture*)0x0)) {
+			if ((param_5 != (edF32VECTOR4*)0x0) &&
+				(peVar1->pAnimSpeedNormalExtruder != 0x0)) {
+				*param_5 = *LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->pAnimSpeedNormalExtruder);
+			}
+
+			if ((param_4 != (edF32VECTOR4*)0x0) &&
+				(peVar1->pAnimSpeedNormalExtruder != 0x0)) {
+				*LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->pAnimSpeedNormalExtruder) = *param_4;
+			}
+		}
+	}
+
+	return;
+}
+
 void CActor::SetupLighting()
 {
 	this->lightingFlags = 1;

@@ -17,6 +17,7 @@
 namespace Debug {
 	namespace Hero {
 		Debug::Setting<std::string> gLastCheckpoint("Last Chekpoint", "");
+		Debug::Setting<bool> gInvincible("Invincible", false);
 
 		constexpr int nbCheckpointMaxActors = 0x600;
 
@@ -166,6 +167,19 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 		if (ImGui::Button("Reset State")) {
 			pActorHero->SetState(STATE_HERO_STAND, -1);
+		}
+
+		// Invincibility toggle
+		if (ImGui::Checkbox("Invincible", &gInvincible.operator bool&())) {
+			gInvincible.UpdateValue();
+			
+			// Set invincibility to a very long duration if enabled
+			if (gInvincible) {
+				pActorHero->SetInvincible(999999.0f, 1);
+			} else {
+				pActorHero->field_0x155c = 0.0f;
+				pActorHero->field_0x1560 = 0;
+			}
 		}
 
 		ShowCheckpointMenu();

@@ -11,7 +11,8 @@
 
 class CWayPoint;
 
-struct _wind_param_in {
+struct _wind_param_in
+{
 	float field_0x0;
 	float field_0x4;
 	int field_0x8;
@@ -27,7 +28,8 @@ struct _wind_param_in {
 	float field_0x30;
 };
 
-struct CActorWindState {
+struct CActorWindState
+{
 	int field_0x0;
 	int field_0x4;
 	int field_0x8;
@@ -122,6 +124,8 @@ public:
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();
 	virtual void SetLookingAtOn();
+	virtual void SetLookingAtOff();
+	virtual void UpdateLookingAt();
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
@@ -199,6 +203,21 @@ public:
 
 	float field_0x2e8;
 	float vector_0x2f0;
+	edF32VECTOR4 lookAtRotation;
+	edF32VECTOR4 lookAtLocation;
+
+	float field_0x30c;
+	float field_0x310;
+	float field_0x314;
+	float lookAtBoundsC;
+	float lookAtBoundsD;
+	float field_0x320;
+	float lookAtBoundsA;
+	float lookAtBoundsB;
+
+	uint lookingAtBoneLeft;
+	uint lookingAtBoneRight;
+	int bLookAtActive;
 
 	int field_0x340;
 	byte field_0x344;

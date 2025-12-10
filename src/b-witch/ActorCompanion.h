@@ -15,6 +15,7 @@ struct S_STREAM_EVENT_CAMERA;
 
 #define COMPANION_BEHAVIOUR_DEFAULT 0x3
 
+#define COMPANION_DEFAULT_STATE_STAND 0x6
 #define COMPANION_DEFAULT_STATE_TIPS_ALERT 0x9
 #define COMPANION_DEFAULT_STATE_TIPS_SHOW 0xa
 
@@ -129,6 +130,7 @@ public:
 
 	void BehaviourCompanion_Manage();
 
+	void StateStand();
 	void StateTipsAlert();
 	void StateTipsShow();
 
