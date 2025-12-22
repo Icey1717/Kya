@@ -168,6 +168,8 @@ set(main_src
 	"${src_root}/b-witch/EventTrack.h"
 	"${src_root}/b-witch/FileManager3D.cpp"
 	"${src_root}/b-witch/FileManager3D.h"
+	"${src_root}/b-witch/Help.cpp"
+	"${src_root}/b-witch/Help.h"
 	"${src_root}/b-witch/Pause.cpp"
 	"${src_root}/b-witch/Pause.h"
 	"${src_root}/b-witch/SectorManager.cpp"

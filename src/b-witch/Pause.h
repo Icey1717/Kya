@@ -51,7 +51,8 @@ struct HistoryEntry
 	int nbMaxItemsForMenu;
 };
 
-struct CSimpleMenu {
+struct CSimpleMenu
+{
 public:
 	CSimpleMenu();
 	void reset();
@@ -149,7 +150,13 @@ public:
 	undefined4 field_0x104;
 };
 
-class CPauseManager : public CObjectManager {
+class CSimpleMenuSound : public CSimpleMenu
+{
+
+};
+
+class CPauseManager : public CObjectManager
+{
 
 public:
 	CPauseManager();

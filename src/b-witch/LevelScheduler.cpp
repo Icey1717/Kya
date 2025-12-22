@@ -195,8 +195,8 @@ bool CLevelScheduler::Money_GiveToBet(int amount)
 
 	_gGameNfo.bet = _gGameNfo.bet + amount;
 
-	if ((_gScenVarInfo[6].currentValue < 0) ||
-		(iVar1 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+	if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+		(iVar1 = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
 		iVar1 = _gGameNfo.nbEpisodes + -1;
 	}
 
@@ -230,8 +230,8 @@ bool CLevelScheduler::Money_TakeFromBet(int amount)
 	int iVar2;
 
 	_gGameNfo.bet = _gGameNfo.bet - amount;
-	if ((_gScenVarInfo[6].currentValue < 0) ||
-		(iVar1 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+	if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+		(iVar1 = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
 		iVar1 = _gGameNfo.nbEpisodes + -1;
 	}
 
@@ -1536,31 +1536,38 @@ uint CLevelScheduler::GetMedallionLevel()
 
 void CLevelScheduler::Episode_ComputeCurrent()
 {
-	int iVar1;
-	int iVar2;
+	int episodeIndex;
+	int maxCompletedEpisodeIndex;
 
-	for (iVar2 = 1; iVar2 < _gGameNfo.nbEpisodes; iVar2 = iVar2 + 1) {
-		if ((iVar2 < 0) || (iVar1 = iVar2, _gGameNfo.nbEpisodes <= iVar2)) {
-			iVar1 = _gGameNfo.nbEpisodes + -1;
+	// This must have been the previous logic for doing progression through the game.
+	// Episode data is read from the ini file, and the current episode is determined based on number of freed wolfen below.
+	// Commented out lines in the ini hint at shops opening up in later episodes, but in practice this is done another way.
+	// The only thing left is setting the scenery/monster/bet values for the current episode, but these are the same 
+	// for all episodes in the retail ini file, so it doesn't really matter.
+
+	for (maxCompletedEpisodeIndex = 1; maxCompletedEpisodeIndex < _gGameNfo.nbEpisodes; maxCompletedEpisodeIndex = maxCompletedEpisodeIndex + 1) {
+		if ((maxCompletedEpisodeIndex < 0) || (episodeIndex = maxCompletedEpisodeIndex, _gGameNfo.nbEpisodes <= maxCompletedEpisodeIndex)) {
+			episodeIndex = _gGameNfo.nbEpisodes + -1;
 		}
 
-		if (_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue < g_EpisodeDataArray_0048eb0[iVar1].minWolfen) break;
+		if (_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue < g_EpisodeDataArray_0048eb0[episodeIndex].minWolfen) break;
 	}
 
-	iVar1 = iVar2 + -1;
+	episodeIndex = maxCompletedEpisodeIndex + -1;
 
-	if (iVar1 != _gScenVarInfo[6].currentValue) {
-		if ((iVar1 < 0) || (_gGameNfo.nbEpisodes <= iVar1)) {
-			iVar1 = _gGameNfo.nbEpisodes + -1;
+	if (episodeIndex != _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue) {
+		if ((episodeIndex < 0) || (_gGameNfo.nbEpisodes <= episodeIndex)) {
+			episodeIndex = _gGameNfo.nbEpisodes + -1;
 		}
 
-		_gScenVarInfo[6].currentValue = iVar2 + -1;
-		g_EpisodeDataArray_0048eb0[iVar1].total_0x14 = g_EpisodeDataArray_0048eb0[iVar1].bet +
-			g_EpisodeDataArray_0048eb0[iVar1].scenery + g_EpisodeDataArray_0048eb0[iVar1].monster;
+		_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue = maxCompletedEpisodeIndex + -1;
 
-		_gGameNfo.scenery = _gGameNfo.scenery + g_EpisodeDataArray_0048eb0[iVar1].scenery;
-		_gGameNfo.monster = g_EpisodeDataArray_0048eb0[iVar1].monster;
-		_gGameNfo.bet = g_EpisodeDataArray_0048eb0[iVar1].bet;
+		g_EpisodeDataArray_0048eb0[episodeIndex].total_0x14 = g_EpisodeDataArray_0048eb0[episodeIndex].bet +
+			g_EpisodeDataArray_0048eb0[episodeIndex].scenery + g_EpisodeDataArray_0048eb0[episodeIndex].monster;
+
+		_gGameNfo.scenery = _gGameNfo.scenery + g_EpisodeDataArray_0048eb0[episodeIndex].scenery;
+		_gGameNfo.monster = g_EpisodeDataArray_0048eb0[episodeIndex].monster;
+		_gGameNfo.bet = g_EpisodeDataArray_0048eb0[episodeIndex].bet;
 		_gGameNfo.bank = 0;
 		_gGameNfo.shop = 0;
 	}
@@ -1759,14 +1766,14 @@ void CLevelScheduler::SaveGame_SaveGameInfo()
 	pBGNF->bet = _gGameNfo.bet;
 	pBGNF->bank = _gGameNfo.bank;
 	pBGNF->shop = _gGameNfo.shop;
-	if ((_gScenVarInfo[6].currentValue < 0) || (_gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+	if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) || (_gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
 		pBGNF->originalScenery = 0;
 		pBGNF->originalMonster = 0;
 		pBGNF->originalBet = 0;
 	}
 	else {
-		if ((_gScenVarInfo[6].currentValue < 0) ||
-			(iVar4 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+			(iVar4 = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
 			iVar4 = _gGameNfo.nbEpisodes + -1;
 		}
 
@@ -1909,8 +1916,8 @@ void CLevelScheduler::LoadGame_LoadGameInfo()
 		_gGameNfo.bank = pBGNF->bank;
 		_gGameNfo.shop = pBGNF->shop;
 
-		if ((_gScenVarInfo[6].currentValue < 0) ||
-			(iVar3 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+			(iVar3 = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
 			iVar3 = _gGameNfo.nbEpisodes + -1;
 		}
 

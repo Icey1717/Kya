@@ -6,6 +6,8 @@
 #include "ed3D.h"
 #include "PathFollow.h"
 #include "ActorNativCmd.h"
+#include "ActorFighter.h"
+#include "CinematicManager.h"
 
 #define NATIVE_BEHAVIOUR_SPEAK 0x3
 #define NATIVE_BEHAVIOUR_EXORCISM 0x4
@@ -77,9 +79,17 @@ struct NativSellerSubObjA
 {
 	NativSellerSubObjA();
 
-	NativSubObjB aSubObjB[0x8];
+	bool FUN_003fffb0(uint param_2);
+
+	NativSubObjB aSubObjs[0x8];
+
+	int field_0x80;
+
 	undefined4 field_0x88;
 	undefined4 field_0x8c;
+
+	NativSellerSubObjA* pNext;
+	NativSellerSubObjA* pPrev;
 };
 
 struct ComboTutorialManager
@@ -96,9 +106,21 @@ struct ComboTutorialManager
 
 struct NativSubObjD
 {
+	void Init();
+	void Clear_0x1630();
 	NativSellerSubObjA* Set_0x1630(int param_2);
 
+	void FUN_003fede0();
+
+	NativSellerSubObjA* pSellerSubObjAA;
+	NativSellerSubObjA* pSellerSubObjAB;
 	NativSellerSubObjA field_0x8[0x1e];
+
+	s_fighter_combo field_0x10f0[30];
+
+	int field_0x10e8;
+
+	NativSellerSubObjA* field_0x1630;
 	int activeSubObjIndex;
 };
 
@@ -168,6 +190,25 @@ public:
 	void FUN_003ed820(s_fighter_combo* pCombo, float* param_3, int param_4);
 	void DrawButtonPromptA();
 
+	void FUN_003ef170();
+	void FUN_003f2900();
+
+	// Bracelet grid navigation helpers (3x2 grid: slots 0-2 top row, 3-5 bottom row)
+	void AdvanceSlotInCurrentRow();      // Move to next slot within the same row
+	void RetreatSlotInCurrentRow();      // Move to previous slot within the same row
+	void ToggleRow();                    // Switch between top and bottom row
+	bool IsCurrentSlotValid(uint validMask); // Check if current slot is valid
+	bool TryFindValidSlotInRow(int maxAttempts); // Find a valid slot in current row
+	bool ToggleRowAndFindValidSlot();    // Toggle row and find valid slot, returns true if found
+
+	void FUN_003f0b30();
+	void FUN_003f1140();
+	bool FUN_003f1750();
+
+	int ManageBraceletSelectInput();
+	void DrawBraceletSelect();
+	void DrawBraceletSelectText();
+
 	ArenaTutorial* GetActiveComboTutorial();
 
 	uint field_0x8;
@@ -177,19 +218,12 @@ public:
 
 	CAddOnNativ addOn;
 
-	S_NTF_TARGET_STREAM_REF* field_0x38;
-	S_STREAM_EVENT_CAMERA* streamEventCamera_0x3c;
+	S_NTF_SWITCH field_0x38;
+	S_NTF_SWITCH field_0x40;
+	S_NTF_SWITCH field_0x48;
+	S_NTF_SWITCH field_0x50;
 
-	S_NTF_TARGET_STREAM_REF* field_0x40;
-	S_STREAM_EVENT_CAMERA* streamEventCamera_0x44;
-
-	S_NTF_TARGET_STREAM_REF* field_0x48;
-	S_STREAM_EVENT_CAMERA* streamEventCamera_0x4c;
-
-	S_NTF_TARGET_STREAM_REF* field_0x50;
-	S_STREAM_EVENT_CAMERA* streamEventCamera_0x54;
-
-	NativSubObjD instanceIndex;
+	NativSubObjD field_0x60;
 
 	int initialAnimId;
 

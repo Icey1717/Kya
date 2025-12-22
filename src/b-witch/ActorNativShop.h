@@ -22,7 +22,7 @@ struct NativShopSubObj
 	int field_0x8;
 	int field_0xc;
 	int field_0x10;
-	uint bPurchased;
+	uint bCanPurchase;
 };
 
 class CActorNativShop;
@@ -79,7 +79,7 @@ public:
 
 	CActorNativShop* pOwner;
 
-	int field_0x94;
+	int selectedPurchaseItemIndex;
 	int field_0x98;
 	undefined4 field_0x9c;
 

@@ -18,7 +18,7 @@ namespace Debug
 			"SCN_GAME_COMPANION",
 			"SCN_GAME_4",
 			"SCN_GAME_5",
-			"SCN_GAME_6",
+			"SCN_GAME_CURRENT_EPISODE",
 			"SCN_ABILITY_JUMP_BOUNCE",
 			"SCN_ABILITY_CLIMB",
 			"SCN_ABILITY_BOOMY_TYPE",
@@ -71,6 +71,37 @@ void Debug::Scenario::ShowMenu(bool* bOpen)
 	// Show a window with a grid of items
 	if (ImGui::Begin("Debug Scenario", bOpen, ImGuiWindowFlags_AlwaysAutoResize)) {
 		gApplySavedScenariacVariables.DrawImguiControl();
+
+		// Money manipulation section
+		ImGui::Separator();
+		ImGui::Text("Money Cheats");
+		ImGui::Separator();
+		
+		if (ImGui::Button("Give 100 Money")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(100);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Give 500 Money")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(500);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Give 1000 Money")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(1000);
+		}
+		
+		if (ImGui::Button("Give 5000 Money ??")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(5000);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Give 10000 Money ??")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(10000);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("MAX MONEY!! ??")) {
+			CLevelScheduler::gThis->Money_TakeFromBank(999999);
+		}
+
+		ImGui::Separator();
 
 		ImGui::Text("Scenario Variables");
 		ImGui::Separator();

@@ -57,11 +57,13 @@ public:
 	virtual void Manage();
 	virtual void Reset();
 	virtual CAddOnSubObj* GetSubObj(uint param_2, int param_3);
-	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor);
+	virtual bool Func_0x20(uint param_2, CActor* pActor, int param_4);
 	virtual bool Func_0x24(uint param_2, CActor* pActor);
 	virtual void ClearCinematic(int index);
 	virtual bool Func_0x2c(uint param_2);
 	virtual void Func_0x30(uint param_2);
+
+	CCinematic* GetCinematic();
 
 	int nbSubObjs;
 	CAddOnSubObj* aSubObjs;

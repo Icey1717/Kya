@@ -31,12 +31,11 @@
 #include "WayPoint.h"
 #include "MapManager.h"
 #include "Fx.h"
-#include "Fx.h"
 #include "PathManager.h"
 #include "ActorManager.h"
 #include "AnmManager.h"
-#include "DlistManager.h"
 #include "CollisionManager.h"
+#include "Help.h"
 #include "LightManager.h"
 #include "EventManager.h"
 #include "EventTrack.h"
@@ -226,12 +225,7 @@ CScene::CScene()
 	CScene::ptable.g_LocalizationManager_00451678 = pManager;
 	CScene::ptable.g_FrontEndBank_00451674 = new CFrontendBank();
 	CScene::ptable.g_FrontendManager_00451680 = new CFrontendDisplay();
-	//pHelpManager = (HelpManager*)Allocate(0x1e4);
-	//if (pHelpManager != (HelpManager*)0x0) {
-	//	uVar17 = SetupHelpManager_0037bc70(pHelpManager);
-	//	pHelpManager = (HelpManager*)uVar17;
-	//}
-	//g_HelpManager_00451684 = pHelpManager;
+	CScene::ptable.g_HelpManager_00451684 = new CHelpManager();
 	pPVar2 = new CPauseManager();
 	CScene::ptable.g_PauseManager_00451688 = pPVar2;
 	CScene::ptable.g_MapManager_0045168c = new CMapManager;

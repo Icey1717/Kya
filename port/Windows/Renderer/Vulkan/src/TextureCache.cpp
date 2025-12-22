@@ -1090,6 +1090,16 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 
 	if (palette.pImage && palette.canvasWidth) {
 		palette.Log("Uploading texture PAL - ");
+
+		//uint8_t palBuff[4096];
+		//
+		//memcpy(palBuff, reinterpret_cast<uint8_t*>(palette.pImage), palette.canvasWidth * palette.canvasHeight * 4);
+		//
+		//if (palette.canvasWidth * palette.canvasHeight < 16) {
+		//	// Expand the palette to 16 entries.
+		//	memset(&palBuff[palette.canvasWidth * palette.canvasHeight * 4], 0, (16 - (palette.canvasWidth * palette.canvasHeight)) * 4);
+		//}
+
 		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.registers.tex.CMD);
 	}
 

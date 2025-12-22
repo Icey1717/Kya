@@ -1,16 +1,19 @@
 #include "ActorNativ.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include "BootData.h"
 #include "EventManager.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorHero.h"
+#include "InputManager.h"
 #include "CinematicManager.h"
 #include "FrontEndDisp.h"
 #include "LevelScheduler.h"
 #include "kya.h"
 #include "Rendering/edCTextStyle.h"
 #include "Pause.h"
+#include "Help.h"
 #include "DlistManager.h"
 #include "edText.h"
 #include "FrontEndMoney.h"
@@ -191,11 +194,9 @@ void CActorNativ::Init()
 
 	CActorAutonomous::Init();
 
-	pCVar3 = CActor::GetBehaviour(NATIVE_BEHAVIOUR_AKASA);
-	if (pCVar3 != (CBehaviour*)0x0) {
-		IMPLEMENTATION_GUARD_LOG(
-		pCVar3 = CActor::GetBehaviour(NATIVE_BEHAVIOUR_AKASA);
-		FUN_003f2900((int)pCVar3);)
+	if (GetBehaviour(NATIVE_BEHAVIOUR_AKASA) != (CBehaviour*)0x0) {
+		CBehaviourNativAkasa* pBehaviourAkasa = static_cast<CBehaviourNativAkasa*>(GetBehaviour(NATIVE_BEHAVIOUR_AKASA));
+		pBehaviourAkasa->FUN_003f2900();
 	}
 
 	return;
@@ -720,7 +721,7 @@ void CActorNativ::ClearLocalData()
 
 	this->field_0x4f0 = 1;
 	//*(undefined*)&this->field_0x400 = 0;
-	//SetHasObject(this, false);
+	SetHasObject(false);
 	//*(undefined4*)&this->field_0x404 = 0;
 
 	this->field_0x4f8 = -1;
@@ -1127,11 +1128,7 @@ void CActorNativ::BehaviourNativTakeAndPut_TermState(int oldState)
 
 void CActorNativ::BehaviourNativAkasa_InitState(int newState, CBehaviourNativAkasa* pBehaviour)
 {
-	undefined4 local_20;
-	undefined4 local_1c;
-	undefined4 local_18;
-	undefined4 local_14;
-	undefined4* local_4;
+	_msg_params_0x23 uStack32;
 
 	if (newState == 0x38) {
 		pBehaviour->comboDesiredDisplayWidth = 0.0f;
@@ -1144,13 +1141,11 @@ void CActorNativ::BehaviourNativAkasa_InitState(int newState, CBehaviourNativAka
 		}
 		else {
 			if ((newState != 0x39) && (newState == 0x26)) {
-				IMPLEMENTATION_GUARD(
-				local_4 = &local_20;
-				local_1c = 1;
-				local_18 = 1;
-				local_14 = 1;
-				local_20 = 0;
-				CActor::DoMessage((CActor*)this, (CActor*)CActorHero::_gThis, 0x23, (uint)local_4);)
+				uStack32.field_0x4 = 1;
+				uStack32.field_0x8 = 1;
+				uStack32.field_0xc = 1;
+				uStack32.field_0x0 = 0;
+				DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)0x23, &uStack32);
 			}
 		}
 	}
@@ -1171,14 +1166,14 @@ void CActorNativ::BehaviourNativAkasa_Manage(CBehaviourNativAkasa* pBehaviour)
 		StateInitArenaDisplay(pBehaviour);
 		break;
 	case 0x26:
-		IMPLEMENTATION_GUARD(
-		iVar3 = CBehaviourNativAkasa::FUN_003efdf0(pBehaviour);
-		CBehaviourNativAkasa::FUN_003eef80(pBehaviour);
-		FUN_003eed60();
+		iVar3 = pBehaviour->ManageBraceletSelectInput();
+		pBehaviour->DrawBraceletSelect();
+		pBehaviour->DrawBraceletSelectText();
+
 		if (iVar3 == 1) {
 			if (pBehaviour->field_0x8 == 0xffffffff) {
 				SetState(0x20, -1);
-				CBehaviourNativAkasa::FUN_003f1e90(pBehaviour, 0x28);
+				pBehaviour->SetBehaviourState(0x28);
 			}
 			else {
 				SetState(0x27, -1);
@@ -1188,28 +1183,15 @@ void CActorNativ::BehaviourNativAkasa_Manage(CBehaviourNativAkasa* pBehaviour)
 			if (iVar3 == 2) {
 				SetState(0x1f, -1);
 			}
-		})
+		}
 		break;
 	case 0x27:
-		IMPLEMENTATION_GUARD(
-		ppuVar1 = CBehaviourNativAkasa::IsEventActive(pBehaviour);
-		if (ppuVar1 != (uint**)0x0) {
-			FUN_003ebee0(pBehaviour, 1);
+		if (pBehaviour->IsEventActive() != false) {
+			pBehaviour->FUN_003ebee0(1);
 			SetState(0x20, -1);
-			CBehaviourNativAkasa::FUN_003f1e90(pBehaviour, 0x28);
-			iVar3 = 0;
-			if (0 < pBehaviour->field_0x48->entryCount) {
-				iVar2 = 0;
-				do {
-					S_STREAM_NTF_TARGET_SWITCH::Switch
-					((S_STREAM_NTF_TARGET_SWITCH*)((int)&pBehaviour->field_0x48->aEntries[0].base.pRef + iVar2),
-						(CActor*)this);
-					iVar3 = iVar3 + 1;
-					iVar2 = iVar2 + 0x1c;
-				} while (iVar3 < pBehaviour->field_0x48->entryCount);
-			}
-			S_STREAM_EVENT_CAMERA::SwitchOn(pBehaviour->streamEventCamera_0x4c, (CActor*)this);
-		})
+			pBehaviour->SetBehaviourState(0x28);
+			pBehaviour->field_0x48.Switch(this);
+		}
 	}
 
 	return;
@@ -2315,7 +2297,7 @@ int CBehaviourNativAkasa::FUN_003f1b90(int param_2)
 			bVar1 = true;
 		}
 		else {
-			if ((param_2 == 1) && (this->instanceIndex.Set_0x1630(this->field_0x16b0) == false)) {
+			if ((param_2 == 1) && (this->field_0x60.Set_0x1630(this->field_0x16b0) == false)) {
 				bVar1 = true;
 			}
 			else {
@@ -2326,15 +2308,7 @@ int CBehaviourNativAkasa::FUN_003f1b90(int param_2)
 
 		if (bVar1) {
 			pActor = this->pOwner;
-			iVar2 = 0;
-			if (0 < this->field_0x40->entryCount) {
-				do {
-					this->field_0x40->aEntries[iVar2].Switch(pActor);
-					iVar2 = iVar2 + 1;
-				} while (iVar2 < this->field_0x40->entryCount);
-			}
-
-			this->streamEventCamera_0x44->SwitchOn(pActor);
+			this->field_0x40.Switch(pActor);
 
 			if (this->addOn.Func_0x20(5, (this->addOn).pOwner, 1) == 0) {
 				iVar2 = 4;
@@ -2485,22 +2459,11 @@ void CActorNativ::StateNativ_0x14()
 
 void CActorNativ::StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour)
 {
-	int curSwitchIndex;
-
 	if (pBehaviour->IsEventActive() != false) {
 		pBehaviour->FUN_003ebee0(0);
 		SetState(0x20, -1);
 		pBehaviour->SetBehaviourState(0x22);
-
-		curSwitchIndex = 0;
-		if (0 < pBehaviour->field_0x48->entryCount) {
-			do {
-				pBehaviour->field_0x48->aEntries[curSwitchIndex].Switch(this);
-				curSwitchIndex = curSwitchIndex + 1;
-			} while (curSwitchIndex < pBehaviour->field_0x48->entryCount);
-		}
-
-		pBehaviour->streamEventCamera_0x4c->SwitchOn(this);
+		pBehaviour->field_0x48.Switch(this);
 	}
 
 	return;
@@ -2606,7 +2569,7 @@ void CActorNativ::State_0x25(CBehaviourNativAkasa* pBehaviour)
 	bVar1 = pHero->FUN_0031b790(pHero->actorState);
 	if (bVar1 == false) {
 		pBehaviour->field_0x16a4 = 0;
-		(pBehaviour->instanceIndex).activeSubObjIndex = 0;
+		(pBehaviour->field_0x60).activeSubObjIndex = 0;
 		pBehaviour->SetBehaviourState(0x22);
 	}
 
@@ -3891,29 +3854,10 @@ void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 
 	this->addOn.Create(pByteCode);
 
-	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x38, pByteCode);
-
-	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
-	this->streamEventCamera_0x3c = pSVar2;
-
-	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x40, pByteCode);
-
-	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
-	this->streamEventCamera_0x44 = pSVar2;
-
-	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x48, pByteCode);
-
-	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
-	this->streamEventCamera_0x4c = pSVar2;
-
-	S_NTF_TARGET_STREAM_REF::Create(&this->field_0x50, pByteCode);
-
-	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
-	this->streamEventCamera_0x54 = pSVar2;
+	this->field_0x38.Create(pByteCode);
+	this->field_0x40.Create(pByteCode);
+	this->field_0x48.Create(pByteCode);
+	this->field_0x50.Create(pByteCode);
 
 	CActor::SV_InstallMaterialId(this->field_0xc);
 
@@ -3934,17 +3878,10 @@ void CBehaviourNativAkasa::Init(CActor* pOwner)
 
 	this->comboTutorialManager.Init();
 
-	this->field_0x38->Init();
-	this->streamEventCamera_0x3c->Init();
-
-	this->field_0x40->Init();
-	this->streamEventCamera_0x44->Init();
-
-	this->field_0x48->Init();
-	this->streamEventCamera_0x4c->Init();
-
-	this->field_0x50->Init();
-	this->streamEventCamera_0x54->Init();
+	this->field_0x38.Init();
+	this->field_0x40.Init();
+	this->field_0x48.Init();
+	this->field_0x50.Init();
 
 	this->addOn.Reset();
 
@@ -3952,7 +3889,8 @@ void CBehaviourNativAkasa::Init(CActor* pOwner)
 	this->field_0x16ac = 0;
 	this->field_0x16b0 = 0;
 	this->field_0x16b4 = 0;
-	//FUN_003fffa0((int)&this->field_0x60);
+	
+	this->field_0x60.Init();
 
 	this->currentBehaviourState = -1;
 
@@ -4138,15 +4076,7 @@ void CBehaviourNativAkasa::ManageComboTutorial()
 				this->comboDesiredDisplayAlpha = 0.0f;
 
 				pNativ = this->pOwner;
-				iVar6 = 0;
-				if (0 < this->field_0x50->entryCount) {
-					do {
-						this->field_0x50->aEntries[iVar6].Switch(pNativ);
-						iVar6 = iVar6 + 1;
-					} while (iVar6 < this->field_0x50->entryCount);
-				}
-
-				this->streamEventCamera_0x54->SwitchOn(pNativ);
+				this->field_0x50.Switch(pNativ);
 
 				this->currentBehaviourState = -1;
 
@@ -4195,16 +4125,15 @@ void CBehaviourNativAkasa::ManageComboTutorial()
 				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
 		pNativ = this->pOwner;
 
-		this->field_0x38->Switch(pNativ);
-		this->streamEventCamera_0x3c->SwitchOn(pNativ);
+		this->field_0x38.Switch(pNativ);
 
 		this->field_0x16a4 = 1;
 	}
 
-	this->streamEventCamera_0x3c->Manage(this->pOwner);
-	this->streamEventCamera_0x44->Manage(this->pOwner);
-	this->streamEventCamera_0x4c->Manage(this->pOwner);
-	this->streamEventCamera_0x54->Manage(this->pOwner);
+	this->field_0x38.pStreamEventCamera->Manage(this->pOwner);
+	this->field_0x40.pStreamEventCamera->Manage(this->pOwner);
+	this->field_0x48.pStreamEventCamera->Manage(this->pOwner);
+	this->field_0x50.pStreamEventCamera->Manage(this->pOwner);
 
 	this->addOn.Manage();
 
@@ -4489,6 +4418,7 @@ void CBehaviourNativAkasa::FUN_003f1da0(s_fighter_combo* pCombo)
 bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 {
 	int iVar1;
+	NativSellerSubObjA* pNVar2;
 
 	if (param_2 == 0) {
 		(this->comboTutorialManager).activeTutorialIndex = -1;
@@ -4500,12 +4430,11 @@ bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 	}
 
 	if (param_2 == 1) {
-		IMPLEMENTATION_GUARD(
-		FUN_003fff90((int)&this->instanceIndex);
-		iVar1 = FUN_003ffea0(&this->instanceIndex, (long)(int)this->field_0x16b0);
-		if (iVar1 == 0) {
+		this->field_0x60.Clear_0x1630();
+		pNVar2 = this->field_0x60.Set_0x1630(this->field_0x16b0);
+		if (pNVar2 == (NativSellerSubObjA*)0x0) {
 			return true;
-		})
+		}
 	}
 	
 	ArenaUpdateDisplayBorderSize();
@@ -5233,6 +5162,525 @@ void CBehaviourNativAkasa::DrawButtonPromptA()
 	return;
 }
 
+
+void FUN_003ef8d0(edF32VECTOR2* param_1, edF32VECTOR2* param_2, _rgba* pColor, undefined8 param_4, edDList_material* pMaterial)
+{
+	edF32VECTOR2 local_30;
+	edF32VECTOR2 local_28;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	edF32VECTOR2 local_10;
+	edF32VECTOR2 local_8;
+
+	local_10.x = param_2->x;
+	local_10.y = 1.0f;
+	local_8.x = 1.0f;
+	local_8.y = param_2->y;
+	local_18.x = param_1->x;
+	local_18.y = param_1->y - param_2->y / 2.0f;
+	local_20.x = param_1->x;
+	local_20.y = param_1->y + param_2->y / 2.0f;
+	local_28.x = param_1->x - param_2->x / 2.0f;
+	local_28.y = param_1->y;
+	local_30.x = param_1->x + param_2->x / 2.0f;
+	local_30.y = param_1->y;
+
+	DrawInputBorder(&local_18, &local_10, pColor, pMaterial, 0);
+	DrawInputBorder(&local_20, &local_10, pColor, pMaterial, 0);
+	DrawInputBorder(&local_28, &local_8, pColor, pMaterial, 0);
+	DrawInputBorder(&local_30, &local_8, pColor, pMaterial, 0);
+
+	return;
+}
+
+void DrawSelectionMarker(edF32VECTOR2* param_1, edF32VECTOR2* param_2, int param_3, _rgba* pColor, edDList_material* pMaterial)
+{
+	float fVar1;
+	float fVar2;
+	float y;
+	float x;
+
+	fVar1 = param_2->x / 2.0f;
+	fVar2 = param_2->y / 2.0f;
+	x = param_1->x - fVar1;
+	fVar1 = param_1->x + fVar1;
+	y = param_1->y - fVar2;
+	fVar2 = param_1->y + fVar2;
+	edDListUseMaterial(pMaterial);
+	edDListLoadIdentity();
+	if (param_3 == 3) {
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
+		edDListTexCoo2f(0.0f, 1.0f);
+		edDListVertex4f(x, y, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 1.0f);
+		edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+		edDListTexCoo2f(0.0f, 0.0f);
+		edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 0.0f);
+		edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+		edDListEnd();
+	}
+	else {
+		if (param_3 == 2) {
+			edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+			edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
+			edDListTexCoo2f(1.0f, 1.0f);
+			edDListVertex4f(x, y, 0.0f, 0.0f);
+			edDListTexCoo2f(0.0f, 1.0f);
+			edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+			edDListTexCoo2f(1.0f, 0.0f);
+			edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+			edDListTexCoo2f(0.0f, 0.0f);
+			edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+			edDListEnd();
+		}
+		else {
+			if (param_3 == 1) {
+				edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+				edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
+				edDListTexCoo2f(1.0f, 0.0f);
+				edDListVertex4f(x, y, 0.0f, 0.0f);
+				edDListTexCoo2f(0.0f, 0.0f);
+				edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+				edDListTexCoo2f(1.0f, 1.0f);
+				edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+				edDListTexCoo2f(0.0f, 1.0f);
+				edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+				edDListEnd();
+			}
+			else {
+				if (param_3 == 0) {
+					edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+					edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
+					edDListTexCoo2f(0.0f, 0.0f);
+					edDListVertex4f(x, y, 0.0f, 0.0f);
+					edDListTexCoo2f(1.0f, 0.0f);
+					edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+					edDListTexCoo2f(0.0f, 1.0f);
+					edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+					edDListTexCoo2f(1.0f, 1.0f);
+					edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+					edDListEnd();
+				}
+			}
+		}
+	}
+	return;
+}
+
+void CBehaviourNativAkasa::FUN_003ef170()
+{
+	uint uVar1;
+	uint uVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR2 local_70;
+	edF32VECTOR2 local_68;
+	edF32VECTOR2 local_60;
+	edF32VECTOR2 local_58;
+	edF32VECTOR2 local_50;
+	edF32VECTOR2 local_48;
+	edF32VECTOR2 local_40;
+	edF32VECTOR2 local_38;
+	edF32VECTOR2 local_30;
+	edF32VECTOR2 local_28;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	edF32VECTOR2 local_10;
+	_rgba local_4;
+
+	local_4.r = 0x80;
+	local_4.g = 0x80;
+	local_4.b = 0x80;
+	local_4.a = 0x80;
+
+	local_10.x = (float)gVideoConfig.screenWidth * 0.4f;
+	fVar4 = (float)gVideoConfig.screenHeight;
+	local_18.x = (float)gVideoConfig.screenWidth * 0.055f;
+	local_18.y = fVar4 * 0.055f;
+	local_20.x = local_18.x * 1.25f;
+	local_10.y = fVar4 * 0.06f + fVar4 * 0.08f + (fVar4 * 0.35f - (fVar4 * 0.31f) / 2.0f);
+	local_20.y = local_20.x;
+	uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
+	uVar3 = 0;
+	do {
+		if ((uVar1 & 1 << (uVar3 & 0x1f)) != 0) {
+			if (uVar3 == this->field_0x16b0) {
+				local_28.x = (float)gVideoConfig.screenWidth * 0.055f * 1.25f * 0.5f;
+				local_28.y = (float)gVideoConfig.screenHeight * 0.055f * 1.25f * 0.5f;
+				local_30.x = local_10.x - ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_30.y = local_10.y - ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_38.x = local_10.x - ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_38.y = local_10.y + ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_40.x = local_10.x + ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_40.y = local_10.y - ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_48.x = local_10.x + ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_48.y = local_10.y + ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+
+				DrawSelectionMarker(&local_30, &local_28, 0, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_38, &local_28, 3, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_40, &local_28, 1, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_48, &local_28, 2, &local_4, &BootBitmaps[0x11].materialInfo);
+
+				DrawInputBorder(&local_10, &local_20, &local_4, &g_aEquipmentTextures_00495090[0x19 + uVar3].materialInfo, 0);
+			}
+			else {
+				DrawInputBorder(&local_10, &local_18, &local_4, &g_aEquipmentTextures_00495090[0x19 + uVar3].materialInfo, 0);
+			}
+		}
+
+		uVar3 = uVar3 + 1;
+		fVar5 = (float)gVideoConfig.screenWidth;
+		fVar4 = fVar5 * 0.055f;
+		local_10.x = local_10.x + fVar5 * 0.05f + fVar4;
+	} while (uVar3 < 3);
+
+	local_10.x = fVar5 * 0.4f;
+	uVar3 = 3;
+	fVar5 = (float)gVideoConfig.screenHeight;
+	local_10.y = fVar5 * 0.055f +
+		fVar5 * 0.05f + fVar5 * 0.06f + fVar5 * 0.08f + (fVar5 * 0.35f - (fVar5 * 0.31f) / 2.0f);
+	do {
+		if ((uVar1 & 1 << (uVar3 & 0x1f)) != 0) {
+			if (uVar3 == this->field_0x16b0) {
+				local_50.x = fVar4 * 1.25f * 0.5f;
+				local_50.y = (float)gVideoConfig.screenHeight * 0.055f * 1.25f * 0.5f;
+				local_58.x = local_10.x - ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_58.y = local_10.y - ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_60.x = local_10.x - ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_60.y = local_10.y + ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_68.x = local_10.x + ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_68.y = local_10.y - ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+				local_70.x = local_10.x + ((float)gVideoConfig.screenWidth * 0.055f * 1.25f) / 2.0f;
+				local_70.y = local_10.y + ((float)gVideoConfig.screenHeight * 0.055f * 1.25f) / 2.0f;
+
+				DrawSelectionMarker(&local_58, &local_50, 0, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_60, &local_50, 3, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_68, &local_50, 1, &local_4, &BootBitmaps[0x11].materialInfo);
+				DrawSelectionMarker(&local_70, &local_50, 2, &local_4, &BootBitmaps[0x11].materialInfo);
+
+				DrawInputBorder(&local_10, &local_20, &local_4, &g_aEquipmentTextures_00495090[0x19 + uVar3].materialInfo, 0);
+			}
+			else {
+				DrawInputBorder(&local_10, &local_18, &local_4, &g_aEquipmentTextures_00495090[0x19 + uVar3].materialInfo, 0);
+			}
+		}
+
+		uVar3 = uVar3 + 1;
+		fVar4 = (float)gVideoConfig.screenWidth * 0.055f;
+		local_10.x = local_10.x + (float)gVideoConfig.screenWidth * 0.05f + fVar4;
+	} while (uVar3 < 6);
+
+	return;
+}
+
+void CBehaviourNativAkasa::FUN_003f2900()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+CLevelScheduler* GetLevelScheduler(void)
+{
+	return CLevelScheduler::gThis;
+}
+
+// Bracelet Grid Navigation Helpers
+// Grid layout: slots 0-2 (top row), slots 3-5 (bottom row)
+
+void CBehaviourNativAkasa::AdvanceSlotInCurrentRow()
+{
+	uint slot = this->field_0x16b0;
+	if (slot < 3) {
+		this->field_0x16b0 = (slot + 1) % 3;
+	}
+	else {
+		this->field_0x16b0 = (slot + 1) % 3 + 3;
+	}
+}
+
+void CBehaviourNativAkasa::RetreatSlotInCurrentRow()
+{
+	uint slot = this->field_0x16b0;
+	if (slot < 3) {
+		this->field_0x16b0 = (slot + 2) % 3;  // +2 mod 3 == -1 mod 3
+	}
+	else {
+		this->field_0x16b0 = (slot + 5) % 3 + 3;  // +5 mod 3 == -1 mod 3, then +3 for bottom row
+	}
+}
+
+void CBehaviourNativAkasa::ToggleRow()
+{
+	this->field_0x16b0 = (this->field_0x16b0 + 3) % 6;
+}
+
+bool CBehaviourNativAkasa::IsCurrentSlotValid(uint validMask)
+{
+	return (1 << (this->field_0x16b0 & 0x1f) & validMask) != 0;
+}
+
+bool CBehaviourNativAkasa::TryFindValidSlotInRow(int maxAttempts)
+{
+	for (int i = 0; i < maxAttempts; i++) {
+		AdvanceSlotInCurrentRow();
+		uint validMask = CLevelScheduler::ScenVar_Get(10);
+		if (IsCurrentSlotValid(validMask)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CBehaviourNativAkasa::ToggleRowAndFindValidSlot()
+{
+	uint validMask = CLevelScheduler::ScenVar_Get(10);
+	ToggleRow();
+
+	if (IsCurrentSlotValid(validMask)) {
+		return true;
+	}
+
+	return TryFindValidSlotInRow(6);
+}
+
+bool CBehaviourNativAkasa::FUN_003f1750()
+{
+	for (int i = 0; i < 6; i++) {
+		AdvanceSlotInCurrentRow();
+		uint validMask = CLevelScheduler::ScenVar_Get(10);
+		if (IsCurrentSlotValid(validMask)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void CBehaviourNativAkasa::FUN_003f0b30()
+{
+	// Try toggling rows and finding valid slots (up to 9 attempts matches original nested depth)
+	for (int attempt = 0; attempt < 9; attempt++) {
+		if (ToggleRowAndFindValidSlot()) {
+			return;
+		}
+	}
+
+	// Final fallback
+	GetLevelScheduler();
+	uint validMask = CLevelScheduler::ScenVar_Get(10);
+	ToggleRow();
+
+	if (!IsCurrentSlotValid(validMask)) {
+		if (!FUN_003f1750()) {
+			FUN_003f0b30();
+		}
+	}
+}
+
+void CBehaviourNativAkasa::FUN_003f1140()
+{
+	// Try toggling rows and finding valid slots (up to 9 attempts matches original nested depth)
+	for (int attempt = 0; attempt < 9; attempt++) {
+		if (ToggleRowAndFindValidSlot()) {
+			return;
+		}
+	}
+
+	// Final fallback
+	GetLevelScheduler();
+	uint validMask = CLevelScheduler::ScenVar_Get(10);
+	ToggleRow();
+
+	if (!IsCurrentSlotValid(validMask)) {
+		if (!FUN_003f1750()) {
+			FUN_003f1140();
+		}
+	}
+}
+
+int CBehaviourNativAkasa::ManageBraceletSelectInput()
+{
+	CPlayerInput* pInput = CActorHero::_gThis->GetInputManager(0, 0);
+	CFrontendSamplePlayer* pFrontendSamplePlayer = (CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer;
+
+	if (pInput == (CPlayerInput*)0x0) {
+		return 2;
+	}
+
+	uint validMask = CLevelScheduler::ScenVar_Get(10);
+	if (!IsCurrentSlotValid(validMask)) {
+		this->field_0x16b0 = 0;
+		return 0;
+	}
+
+	// Left input: move backwards in current row
+	if (((pInput->pressedBitfield & 0x400000) != 0) || ((pInput->pressedBitfield & 1) != 0)) {
+		validMask = CLevelScheduler::ScenVar_Get(10);
+		for (int attempts = 0; attempts < 7; attempts++) {
+			RetreatSlotInCurrentRow();
+			if (IsCurrentSlotValid(validMask)) {
+				break;
+			}
+		}
+		pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+	}
+
+	// Right input: move forwards in current row
+	if (((pInput->pressedBitfield & 0x800000) != 0) || ((pInput->pressedBitfield & 2) != 0)) {
+		for (int attempts = 0; attempts < 6; attempts++) {
+			AdvanceSlotInCurrentRow();
+			validMask = CLevelScheduler::ScenVar_Get(10);
+			if (IsCurrentSlotValid(validMask)) {
+				break;
+			}
+		}
+		pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+	}
+
+	// Up input: toggle row and find valid slot
+	if (((pInput->pressedBitfield & 0x100000) != 0) || ((pInput->pressedBitfield & 4) != 0)) {
+		bool found = false;
+		for (int attempt = 0; attempt < 9; attempt++) {
+			if (ToggleRowAndFindValidSlot()) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			GetLevelScheduler();
+			validMask = CLevelScheduler::ScenVar_Get(10);
+			ToggleRow();
+
+			if (!IsCurrentSlotValid(validMask)) {
+				if (!FUN_003f1750()) {
+					FUN_003f0b30();
+				}
+			}
+		}
+		pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+	}
+
+	// Down input: toggle row and find valid slot
+	if (((pInput->pressedBitfield & 0x200000) != 0) || ((pInput->pressedBitfield & 8) != 0)) {
+		bool found = false;
+		for (int attempt = 0; attempt < 9; attempt++) {
+			if (ToggleRowAndFindValidSlot()) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			GetLevelScheduler();
+			validMask = CLevelScheduler::ScenVar_Get(10);
+			ToggleRow();
+
+			if (!IsCurrentSlotValid(validMask)) {
+				if (!FUN_003f1750()) {
+					FUN_003f1140();
+				}
+			}
+		}
+		pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+	}
+
+	// Confirm button
+	if ((pInput->pressedBitfield & 0x1000000) != 0) {
+		pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
+		return 1;
+	}
+
+	// Cancel button
+	if ((pInput->pressedBitfield & 0x4000000) != 0) {
+		pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
+		return 2;
+	}
+
+	return 0;
+}
+
+void CBehaviourNativAkasa::DrawBraceletSelect()
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+	float x;
+	edF32VECTOR2 local_38;
+	edF32VECTOR2 local_30;
+	edF32VECTOR2 local_28;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	edF32VECTOR2 local_10;
+	_rgba color;
+
+	color.a = 0x8a;
+	color.r = 0x51;
+	color.g = 0x51;
+	color.b = 0x51;
+
+	fVar2 = (float)gVideoConfig.screenWidth;
+	fVar3 = fVar2 * 0.48f;
+	local_20.y = (float)gVideoConfig.screenHeight;
+	x = fVar2 * 0.5f;
+	local_38.y = 1.0f;
+	local_10.y = local_20.y * 0.35f;
+	local_38.x = fVar2 * 0.41f;
+	local_18.y = local_20.y * 0.31f;
+	local_28.y = local_20.y * 0.08f;
+	local_30.y = local_28.y + (local_10.y - local_18.y / 2.0f);
+	local_20.y = local_20.y * 0.6f;
+	local_30.x = x;
+	local_28.x = local_38.x;
+	local_20.x = x;
+	local_18.x = local_38.x;
+	local_10.x = x;
+
+	bVar1 = GuiDList_BeginCurrent();
+	if (bVar1 != false) {
+		CPauseManager::DrawRectangleBorder (x, fVar2 * 0.38f, x, fVar3, (float)gVideoConfig.screenWidth * 0.01f, (float)gVideoConfig.screenHeight * 0.01f, 0x40101030, 0, 0);
+		FUN_003ef8d0(&local_10, &local_18, &color, 0, (edDList_material*)0x0);
+		DrawInputBorder(&local_30, &local_38, &color, (edDList_material*)0x0, 0);
+		FUN_003ef170();
+		FUN_003ef8d0(&local_20, &local_28, &color, 0, (edDList_material*)0x0);
+		GuiDList_EndCurrent();
+	}
+
+	return;
+}
+
+void CBehaviourNativAkasa::DrawBraceletSelectText()
+{
+	edCTextStyle* pNewFont;
+	char* szMessage;
+	float fVar3;
+	edCTextStyle textStyle;
+
+	textStyle.Reset();
+	textStyle.SetFont(BootDataFont, false);
+	textStyle.SetHorizontalAlignment(2);
+	textStyle.SetVerticalAlignment(8);
+	textStyle.rgbaColour = -1;
+
+	textStyle.SetShadow(0x100);
+	textStyle.SetScale(0.75f, 0.75f);
+
+	if (GuiDList_BeginCurrent() != false) {
+		pNewFont = edTextStyleSetCurrent(&textStyle);
+		szMessage = gMessageManager.get_message(0x44405b441d01040f);
+		fVar3 = (float)gVideoConfig.screenHeight;
+		edTextDraw((float)gVideoConfig.screenWidth * 0.5f, (fVar3 * 0.08f + (fVar3 * 0.35f - (fVar3 * 0.31f) / 2.0f)) - fVar3 * 0.04f, szMessage);
+		szMessage = gMessageManager.get_message(0x3191d100e1a1a56);
+		edTextDraw((float)gVideoConfig.screenWidth * 0.4f, (float)gVideoConfig.screenHeight * 0.6f - (float)gVideoConfig.screenHeight * 0.005f, szMessage);
+		szMessage = gMessageManager.get_message(0x31b1711034e5f43);
+		edTextDraw((float)gVideoConfig.screenWidth * 0.6f, (float)gVideoConfig.screenHeight * 0.6f - (float)gVideoConfig.screenHeight * 0.005f, szMessage);
+		edTextStyleSetCurrent(pNewFont);
+		GuiDList_EndCurrent();
+	}
+
+	return;
+}
+
 ArenaTutorial* CBehaviourNativAkasa::GetActiveComboTutorial()
 {
 	ArenaTutorial* pReqCombo;
@@ -5358,9 +5806,358 @@ int ComboTutorialManager::StepRequiredCombo()
 	return this->activeTutorialIndex;
 }
 
+void NativSubObjD::Init()
+{
+	this->field_0x1630 = (NativSellerSubObjA*)0x0;
+
+	return;
+}
+
+void NativSubObjD::Clear_0x1630()
+{
+	this->field_0x1630 = (NativSellerSubObjA*)0x0;
+
+	return;
+}
+
+bool NativSellerSubObjA::FUN_003fffb0(uint param_2)
+{
+	int* piVar1;
+	bool bVar2;
+	uint uVar3;
+	int iVar4;
+
+	bVar2 = true;
+	uVar3 = 1 << (param_2 & 0x1f);
+
+	if ((uVar3 & 0x20) == 0) {
+		piVar1 = &this->field_0x80;
+		bVar2 = false;
+		iVar4 = 0;
+		if (0 < *piVar1) {
+			do {
+				bVar2 = (uVar3 & this->aSubObjs[iVar4].aRequiredCombos[0]->field_0x4.field_0x0ushort) != 0;
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < *piVar1);
+		}
+	}
+
+	return bVar2;
+}
+
+void NativSubObjD::FUN_003fede0()
+{
+	byte bVar1;
+	uint uVar2;
+	bool bVar3;
+	s_fighter_combo* pCombo;
+	NativSubObjD* ppNVar5;
+	NativSellerSubObjA* pNVar4;
+	NativSubObjD* ppNVar7;
+	NativSubObjD* ppNVar8;
+	NativSubObjD* ppNVar9;
+	NativSubObjD* ppNVar6;
+	ulong uVar5;
+	NativSellerSubObjA* pNVar6;
+	int iVar7;
+	NativSubObjD* pNVar8;
+	uint index;
+	int iVar9;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	index = 0;
+	uVar2 = CActorHero::_gThis->nbComboRoots;
+	this->field_0x10e8 = 0;
+
+	IMPLEMENTATION_GUARD(
+
+	if (uVar2 != 0) {
+		do {
+			pCombo = pHero->GetComboByIndex(index);
+			FUN_003ff510(pCombo, 0);
+			index = index + 1;
+		} while (index < uVar2);
+	}
+
+	//this->field_0x10f0[4].pattern.nbInputs = 0;
+	//this->field_0x10f0[4].pattern.field_0x0uint = this->field_0x10f0[4].pattern.field_0x0uint & 0xfff00000;
+	//iVar7 = 0;
+	//this->field_0x10f0[4].pattern.field_0x2ushort = this->field_0x10f0[4].pattern.field_0x2ushort & 0xf00f | 0x80;
+	//this->field_0x10f0[4].pattern.field_0x3byte = this->field_0x10f0[4].pattern.field_0x3byte & 0xf;
+	//this->field_0x10f0[4].field_0x4.field_0x0uint = 0;
+	//this->field_0x10f0[4].field_0x4.field_0x0uint = this->field_0x10f0[4].field_0x4.field_0x0uint | 0x204;
+	//*(undefined*)((int)&this->field_0x10f0[0x19].hash + 1) = 0;
+	//*(byte*)((int)&this->field_0x10f0[0x19].hash + 1) =
+	//	*(byte*)((int)&this->field_0x10f0[0x19].hash + 1) | 0x67;
+	//*(byte*)((int)&this->field_0x10f0[0x19].hash + 2) =
+	//	*(byte*)((int)&this->field_0x10f0[0x19].hash + 2) | 1;
+	//this->field_0x10f0[4].actionHash.hash = this->field_0x10f0[0x18].nbBranches;
+	//this->field_0x10f0[3].pattern.nbInputs = 0;
+	//this->field_0x10f0[3].pattern.field_0x0uint = this->field_0x10f0[3].pattern.field_0x0uint & 0xfff00000;
+	//this->field_0x10f0[3].pattern.field_0x2ushort = this->field_0x10f0[3].pattern.field_0x2ushort & 0xf00f | 0x10;
+	//*(byte*)((int)&this->field_0x10f0[3].pattern.field_0x3byte =
+	//	*(byte*)((int)&this->field_0x10f0[3].pattern.field_0x3byte & 0xf;
+	//this->field_0x10f0[3].field_0x4.field_0x0uint = 0;
+	//this->field_0x10f0[3].field_0x4.field_0x0uint = this->field_0x10f0[3].field_0x4.field_0x0uint | 0x204;
+	//*(undefined*)((int)&this->field_0x10f0[0x12].aBranches + 1) = 0;
+	//*(byte*)((int)&this->field_0x10f0[0x12].aBranches + 1) =
+	//	*(byte*)((int)&this->field_0x10f0[0x12].aBranches + 1) | 0x67;
+	//*(undefined*)((int)&this->field_0x10f0[0x12].aBranches + 2) = 0;
+	//this->field_0x10f0[3].actionHash = (s_fighter_combo*)&this->field_0x10f0[0x12].actionHash;
+	//this->field_0x10f0[5].pattern.nbInputs = 0;
+	//this->field_0x10f0[5].pattern.field_0x0uint = this->field_0x10f0[5].pattern.field_0x0uint & 0xfff00000;
+	//this->field_0x10f0[5].pattern.field_0x2ushort = this->field_0x10f0[5].pattern.field_0x2ushort & 0xf00f | 0x80;
+	//*(byte*)((int)&this->field_0x10f0[5].pattern.field_0x3byte =
+	//	*(byte*)((int)&this->field_0x10f0[5].pattern.field_0x3byte & 0xf;
+	//this->field_0x10f0[5].field_0x4.field_0x0uint = 0;
+	//this->field_0x10f0[5].field_0x4.field_0x0uint = this->field_0x10f0[5].field_0x4.field_0x0uint | 0x204;
+	//*(undefined*)&this->field_0x1555 = 0;
+	//*(byte*)&this->field_0x1555 = *(byte*)&this->field_0x1555 | 0x7b;
+	//*(undefined*)&this->field_0x1556 = 0;
+	//this->field_0x10f0[5].actionHash = (s_fighter_combo*)&this->field_0x1550;
+	//ppNVar5 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
+	//ppNVar5->field_0x8[0].aSubObjs[0].nbRequiredCombos = 1;
+	//pNVar6 = ppNVar5->field_0x8;
+	//pNVar4 = pNVar6;
+	if (0 < ppNVar5->field_0x8[0].aSubObjs[0].nbRequiredCombos) {
+		do {
+			pNVar4->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+			iVar7 = iVar7 + 1;
+			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
+		} while (iVar7 < pNVar6->aSubObjs[0].nbRequiredCombos);
+	}
+	if (0 < pNVar6->aSubObjs[0].nbRequiredCombos) {
+		do {
+			if (ppNVar5->field_0x8[0].aSubObjs[0].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
+				ppNVar5->field_0x8[0].aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 4;
+				bVar3 = true;
+				goto LAB_003ff040;
+			}
+		} while (0 < pNVar6->aSubObjs[0].nbRequiredCombos);
+	}
+	bVar3 = false;
+LAB_003ff040:
+	if (bVar3) {
+		ppNVar5->field_0x8[0].field_0x80 = 1;
+	}
+	iVar7 = 0;
+	ppNVar7 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
+	ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos = 1;
+	pNVar4 = ppNVar7->field_0x8;
+	if (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos) {
+		do {
+			pNVar4->aSubObjs[1].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+			iVar7 = iVar7 + 1;
+			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
+		} while (iVar7 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos);
+	}
+	if (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos) {
+		do {
+			if (ppNVar7->field_0x8[0].aSubObjs[1].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
+				ppNVar7->field_0x8[0].aSubObjs[1].aRequiredCombos[0] = this->field_0x10f0 + 3;
+				bVar3 = true;
+				goto LAB_003ff0f0;
+			}
+		} while (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos);
+	}
+	bVar3 = false;
+LAB_003ff0f0:
+	if (bVar3) {
+		ppNVar7->field_0x8[0].field_0x80 = 2;
+	}
+	iVar7 = 0;
+	ppNVar8 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
+	ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos = 1;
+	pNVar4 = ppNVar8->field_0x8;
+	if (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos) {
+		do {
+			pNVar4->aSubObjs[2].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+			iVar7 = iVar7 + 1;
+			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
+		} while (iVar7 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos);
+	}
+	if (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos) {
+		do {
+			if (ppNVar8->field_0x8[0].aSubObjs[2].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
+				ppNVar8->field_0x8[0].aSubObjs[2].aRequiredCombos[0] = this->field_0x10f0 + 3;
+				bVar3 = true;
+				goto LAB_003ff1a0;
+			}
+		} while (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos);
+	}
+	bVar3 = false;
+LAB_003ff1a0:
+	if (bVar3) {
+		ppNVar8->field_0x8[0].field_0x80 = 3;
+	}
+	iVar7 = 0;
+	ppNVar9 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
+	ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos = 1;
+	pNVar4 = ppNVar9->field_0x8;
+	if (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos) {
+		do {
+			pNVar4->aSubObjs[3].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+			iVar7 = iVar7 + 1;
+			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
+		} while (iVar7 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos);
+	}
+	if (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos) {
+		do {
+			if (ppNVar9->field_0x8[0].aSubObjs[3].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
+				ppNVar9->field_0x8[0].aSubObjs[3].aRequiredCombos[0] = this->field_0x10f0 + 3;
+				bVar3 = true;
+				goto LAB_003ff250;
+			}
+		} while (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos);
+	}
+	bVar3 = false;
+LAB_003ff250:
+	if (bVar3) {
+		ppNVar9->field_0x8[0].field_0x80 = 4;
+	}
+	iVar7 = 0;
+	this->field_0x10e8 = this->field_0x10e8 + 1;
+	ppNVar6 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
+	ppNVar6->field_0x8[0].aSubObjs[0].nbRequiredCombos = 1;
+	pNVar6 = ppNVar6->field_0x8;
+	pNVar4 = pNVar6;
+	if (0 < ppNVar6->field_0x8[0].aSubObjs[0].nbRequiredCombos) {
+		do {
+			pNVar4->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+			iVar7 = iVar7 + 1;
+			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
+		} while (iVar7 < pNVar6->aSubObjs[0].nbRequiredCombos);
+	}
+	if (0 < pNVar6->aSubObjs[0].nbRequiredCombos) {
+		do {
+			if (ppNVar6->field_0x8[0].aSubObjs[0].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
+				ppNVar6->field_0x8[0].aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 5;
+				bVar3 = true;
+				goto LAB_003ff310;
+			}
+		} while (0 < pNVar6->aSubObjs[0].nbRequiredCombos);
+	}
+	bVar3 = false;
+LAB_003ff310:
+	if (bVar3) {
+		ppNVar6->field_0x8[0].field_0x80 = 1;
+	}
+	this->field_0x10e8 = this->field_0x10e8 + 1;
+	iVar7 = this->field_0x10e8;
+	iVar9 = 0;
+	pNVar8 = this;
+	if (0 < iVar7) {
+		do {
+			pNVar8->field_0x8[0].field_0x84 = 0;
+			pNVar4 = pNVar8->field_0x8;
+			iVar7 = 0;
+			if (0 < pNVar8->field_0x8[0].field_0x80) {
+				do {
+					pNVar4->aSubObjs[0].aRequiredCombos[2] = (s_fighter_combo*)0x1;
+					bVar1 = *(byte*)((int)&pNVar4->aSubObjs[0].aRequiredCombos[0]->actionHash->field_0x4 + 1)
+						;
+					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
+						bVar3 = true;
+					}
+					else {
+						bVar3 = false;
+					}
+					if (bVar3) {
+						pNVar4->aSubObjs[0].aRequiredCombos[2] =
+							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0xe].field_0x8;
+					}
+					if ((pNVar4->aSubObjs[0].aRequiredCombos[0]->field_0x4 & 0x400U) != 0) {
+						pNVar4->aSubObjs[0].aRequiredCombos[2] =
+							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0x71].aBranches;
+					}
+					if ((pNVar4->aSubObjs[0].aRequiredCombos[0]->pattern).nbInputs != 0) {
+						pNVar4->aSubObjs[0].aRequiredCombos[2] =
+							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2]->field_0x8;
+					}
+					bVar3 = NativSellerSubObjA::FUN_004001b0(pNVar4);
+					if (bVar3 != false) {
+						pNVar4->aSubObjs[0].aRequiredCombos[2] =
+							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][1].aBranches;
+					}
+					uVar5 = ((ulong) * (byte*)((int)&(pNVar4->aSubObjs[0].aRequiredCombos[0]->pattern).
+						field_0x0 + 3) << 0x38) >> 0x3c;
+					if (((uVar5 & 1) == 0) && ((uVar5 & 2) == 0)) {
+						bVar3 = false;
+					}
+					else {
+						bVar3 = true;
+					}
+					if (bVar3) {
+						pNVar4->aSubObjs[0].aRequiredCombos[2] =
+							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0x38e].field_0x8;
+					}
+					iVar7 = iVar7 + 1;
+					pNVar8->field_0x8[0].field_0x84 =
+						(int)&pNVar4->aSubObjs[0].aRequiredCombos[2]->hash + pNVar8->field_0x8[0].field_0x84;
+					pNVar4 = (NativSellerSubObjA*)(pNVar4->aSubObjs + 1);
+				} while (iVar7 < pNVar8->field_0x8[0].field_0x80);
+			}
+			iVar7 = this->field_0x10e8;
+			iVar9 = iVar9 + 1;
+			pNVar8 = (NativSubObjD*)&pNVar8->field_0x8[0].pNext;
+		} while (iVar9 < iVar7);
+	}
+	iVar9 = 0;
+	pNVar8 = this;
+	if (0 < iVar7) {
+		do {
+			FUN_003ffb50(this, pNVar8->field_0x8);
+			iVar9 = iVar9 + 1;
+			pNVar8 = (NativSubObjD*)&pNVar8->field_0x8[0].pNext;
+		} while (iVar9 < this->field_0x10e8);
+	})
+	return;
+}
+
 NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	NativSellerSubObjA* pNVar2;
+
+	pNVar2 = this->field_0x1630;
+	if (pNVar2 == (NativSellerSubObjA*)0x0) {
+		pNVar2 = this->pSellerSubObjAA;
+	}
+	else {
+		if (pNVar2 == this->pSellerSubObjAB) {
+			pNVar2 = this->pSellerSubObjAA;
+		}
+		else {
+			pNVar2 = pNVar2->pPrev;
+		}
+	}
+
+	while (true) {
+		while (true) {
+			if (((pNVar2 == this->field_0x1630) || (pNVar2 == (NativSellerSubObjA*)0x0)) || (bVar1 = pNVar2->FUN_003fffb0(param_2), bVar1 != false))
+				goto LAB_003fff50;
+
+			if (pNVar2 == this->pSellerSubObjAB) break;
+
+			pNVar2 = pNVar2->pPrev;
+		}
+
+		if (this->field_0x1630 == (NativSellerSubObjA*)0x0) break;
+
+		pNVar2 = this->pSellerSubObjAA;
+	}
+
+	pNVar2 = (NativSellerSubObjA*)0x0;
+
+LAB_003fff50:
+	this->field_0x1630 = pNVar2;
+	pNVar2 = this->field_0x1630;
+	if (pNVar2 == (NativSellerSubObjA*)0x0) {
+		pNVar2 = (NativSellerSubObjA*)0x0;
+	}
+
+	return pNVar2;
 }
 
 void CBehaviourNativSeller::Create(ByteCode* pByteCode)
@@ -5444,9 +6241,9 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	long lVar5;
 
 	if (msg == 0x60) {
-		int* pMsg = reinterpret_cast<int*>(pMsgParam);
+		_msg_params_0x60* pMsg = reinterpret_cast<_msg_params_0x60*>(pMsgParam);
 		iVar4 = 1;
-		iVar1 = *pMsg;
+		iVar1 = pMsg->type;
 		if (iVar1 == 1) {
 			if (this->addOn.Func_0x20(0x25, 0, 0) == 0) {
 				pNativ = this->pOwner;
@@ -5473,7 +6270,7 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 			}
 			else {
 				if (iVar1 == 3) {
-					if (this->addOn.Func_0x20(GetPurchaseCutsceneId(pMsg[1]), 0, 1) != 0) {
+					if (this->addOn.Func_0x20(GetPurchaseCutsceneId(pMsg->purchaseId), 0, 1) != 0) {
 						this->cachedStateId = 0x1d;
 					}
 					iVar4 = 1;

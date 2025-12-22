@@ -148,11 +148,11 @@ void CFrontendDisplay::Game_Init()
 	CSprite* pTexture;
 	int iVar5;
 	char** wolfenFileName;
-	char* puVar6;
+	CFrontendSamplePlayer* pSamplePlayer;
 	Bank frontendBank;
 	CameraObjParams local_8;
 
-	puVar6 = this->field_0x78;
+	pSamplePlayer = this->pFrontendSamplePlayer;
 	frontendBank.Init(1, 0x6000);
 	/* Init the frontend IOP Bnk */
 	uVar4 = 0;
@@ -162,10 +162,10 @@ void CFrontendDisplay::Game_Init()
 	do {
 		soundFileBuffer = frontendBank.GetResource(*fileToLoad, (edBANK_ENTRY_INFO*)0x0);
 		IMPLEMENTATION_GUARD_AUDIO(
-			edSoundSampleLoad(soundFileBuffer, (ed_sound_sample*)(puVar6 + 4), 0);)
+			edSoundSampleLoad(soundFileBuffer, (ed_sound_sample*)(pSamplePlayer + 4), 0);)
 			iVar5 = iVar5 + 1;
 		fileToLoad = fileToLoad + 1;
-		puVar6 = puVar6 + 0x18;
+		pSamplePlayer = pSamplePlayer + 0x18;
 	} while (iVar5 < 5);
 	frontendBank.BankUnload();
 	frontendBank.Term();

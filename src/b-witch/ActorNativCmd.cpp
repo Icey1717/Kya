@@ -720,104 +720,57 @@ LAB_003e1d00:
 	return (CAddOnSubObj*)0x0;
 }
 
-bool CAddOnNativ::Func_0x20(uint param_2, CActor* param_3, int pActor)
+bool CAddOnNativ::Func_0x20(uint param_2, CActor* pActor, int param_4)
 {
-	CAddOnSubObj* pCVar1;
+	CAddOnSubObj* pSubObj;
 	bool bVar2;
 	CCinematic* pCinematic;
 
-	if (param_3 == 0) {
-		param_3 = this->pOwner;
+	if (pActor == (CActor*)0x0) {
+		pActor = this->pOwner;
 	}
 
-	pCVar1 = this->pSubObj;
-	pCinematic = (CCinematic*)0x0;
-	if (pCVar1 != (CAddOnSubObj*)0x0) {
-		pCinematic = pCVar1->pCinematic;
-	}
-
-	if (pCinematic == (CCinematic*)0x0) {
+	if (GetCinematic() == (CCinematic*)0x0) {
 	LAB_003e15a8:
 		bVar2 = false;
 	}
 	else {
-		pCinematic = (CCinematic*)0x0;
-		if (pCVar1 != (CAddOnSubObj*)0x0) {
-			pCinematic = pCVar1->pCinematic;
-		}
 
-		if ((pCinematic->state == CS_Stopped) || (bVar2 = true, this->field_0xc == 0)) goto LAB_003e15a8;
+		if ((GetCinematic()->state == CS_Stopped) || (bVar2 = true, this->field_0xc == 0)) goto LAB_003e15a8;
 	}
 
-	if (((bVar2) || (this->field_0xc != 0)) && (pActor == 0x0)) {
+	if (((bVar2) || (this->field_0xc != 0)) && (param_4 == 0x0)) {
 		return false;
 	}
 
-	pCinematic = (CCinematic*)0x0;
-	if (pCVar1 != (CAddOnSubObj*)0x0) {
-		pCinematic = pCVar1->pCinematic;
+	if (GetCinematic() != (CCinematic*)0x0) {
+		if ((GetCinematic()->state != CS_Stopped) && (bVar2 = true, this->field_0xc != 0)) goto LAB_003e1620;
 	}
 
-	if (pCinematic != (CCinematic*)0x0) {
-		pCinematic = (CCinematic*)0x0;
-		if (pCVar1 != (CAddOnSubObj*)0x0) {
-			pCinematic = pCVar1->pCinematic;
-		}
-		if ((pCinematic->state != CS_Stopped) && (bVar2 = true, this->field_0xc != 0)) goto LAB_003e1620;
-	}
 	bVar2 = false;
 LAB_003e1620:
 	if (bVar2) {
-		pCinematic = (CCinematic*)0x0;
-		if (pCVar1 != (CAddOnSubObj*)0x0) {
-			pCinematic = pCVar1->pCinematic;
-		}
+		GetCinematic()->FUN_001c92b0();
 
-		pCinematic->FUN_001c92b0();
-
-		pCVar1 = this->pSubObj;
-		pCinematic = (CCinematic*)0x0;
-		if (pCVar1 != (CAddOnSubObj*)0x0) {
-			pCinematic = pCVar1->pCinematic;
-		}
-
-		bVar2 = pCinematic->Has_0x2d8();
+		bVar2 = GetCinematic()->Has_0x2d8();
 		if (bVar2 != false) {
-			pCVar1 = this->pSubObj;
-			pCinematic = (CCinematic*)0x0;
-			if (pCVar1 != (CAddOnSubObj*)0x0) {
-				pCinematic = pCVar1->pCinematic;
-			}
-
-			pCinematic->Remove_0x2d8();
+			GetCinematic()->Remove_0x2d8();
 		}
 	}
 
-	Func_0x34(param_2, param_3);
+	Func_0x34(param_2, pActor);
 
-	pCVar1 = GetSubObj(param_2, pActor);
-	if ((pCVar1 == (CAddOnSubObj*)0x0) && (pCVar1 = this->pSubObj, pCVar1 != (CAddOnSubObj*)0x0)) {
-		pCVar1->SetCinematic((CCinematic*)0x0);
+	pSubObj = GetSubObj(param_2, param_4);
+	if ((pSubObj == (CAddOnSubObj*)0x0) && (pSubObj = this->pSubObj, pSubObj != (CAddOnSubObj*)0x0)) {
+		pSubObj->SetCinematic((CCinematic*)0x0);
 	}
+	this->pSubObj = pSubObj;
 
-	this->pSubObj = pCVar1;
-	pCVar1 = this->pSubObj;
-
-	pCinematic = (CCinematic*)0x0;
-	if (pCVar1 != (CAddOnSubObj*)0x0) {
-		pCinematic = pCVar1->pCinematic;
-	}
-
-	if (pCinematic == (CCinematic*)0x0) {
+	if (GetCinematic() == (CCinematic*)0x0) {
 		return false;
 	}
 
-	pCinematic = (CCinematic*)0x0;
-	if (pCVar1 != (CAddOnSubObj*)0x0) {
-		pCinematic = pCVar1->pCinematic;
-	}
-
-	pCinematic->TryTriggerCutscene(param_3, 0);
+	GetCinematic()->TryTriggerCutscene(pActor, 0);
 
 	this->field_0xc = 1;
 
@@ -957,6 +910,17 @@ LAB_003e1b78:
 	}
 
 	return;
+}
+
+CCinematic* CAddOnNativ::GetCinematic()
+{
+	CCinematic* pCinematic = (CCinematic*)0x0;
+
+	if (this->pSubObj != (CAddOnSubObj*)0x0) {
+		pCinematic = pSubObj->pCinematic;
+	}
+
+	return pCinematic;
 }
 
 void CBehaviourNativCmdStand::Manage()

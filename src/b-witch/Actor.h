@@ -70,7 +70,22 @@ struct _msg_params_0x2e
 	int field_0x4;
 };
 
-enum ACTOR_MESSAGE {
+struct _msg_params_0x60
+{
+	int type;
+	int purchaseId;
+};
+
+struct _msg_params_0x23
+{
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
+};
+
+enum ACTOR_MESSAGE
+{
 	MESSAGE_KICKED = 0x2,
 	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
 	MESSAGE_GET_RUN_SPEED = 0xc,

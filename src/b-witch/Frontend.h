@@ -7,7 +7,7 @@
 class CFrontendSamplePlayer
 {
 public:
-	static long PlaySample(float, float*, int, int);
+	long PlaySample(float, int, int);
 };
 
 class CInterface

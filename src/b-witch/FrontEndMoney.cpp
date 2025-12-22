@@ -149,7 +149,7 @@ void CFrontendMoney::UpdatePos_StateWait(float time)
 			bVar2 = (int)fVar4 != (int)(((fVar7 - Timer::GetTimer()->lastFrameTime) * 15.0f) / this->field_0x7c);
 		}
 		if (bVar2) {
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 4, 0);
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 4, 0);
 		}
 
 		this->bDisplayDirty = 1;

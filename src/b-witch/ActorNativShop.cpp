@@ -172,7 +172,7 @@ CInventoryInfo* CActorNativShop::GetInventoryInfoForPurchase(int index)
 		pInventoryInfo = (CInventoryInfo*)0x0;
 	}
 	else {
-		if (((index < 0) || (4 < index)) || (pSubObj = this->behaviourNativShop.aSubObjs + index, pSubObj->bPurchased == 0)) {
+		if (((index < 0) || (4 < index)) || (pSubObj = this->behaviourNativShop.aSubObjs + index, pSubObj->bCanPurchase == 0)) {
 			pInventoryInfo = (CInventoryInfo*)0x0;
 		}
 		else {
@@ -200,13 +200,13 @@ void CBehaviourNativShopSell::Create(ByteCode* pByteCode)
 	
 	this->streamRefCamera.index = pByteCode->GetS32();
 	iVar8 = 0;
-	this->field_0x94 = 0;
+	this->selectedPurchaseItemIndex = 0;
 	do {
 		pNVar9->streamRefActor.index = pByteCode->GetS32();
 
-		pNVar9->bPurchased = (int)(pNVar9->streamRefActor).index < 0 ^ 1;
-		if (pNVar9->bPurchased != 0) {
-			this->field_0x94 = iVar8;
+		pNVar9->bCanPurchase = (int)(pNVar9->streamRefActor).index < 0 ^ 1;
+		if (pNVar9->bCanPurchase != 0) {
+			this->selectedPurchaseItemIndex = iVar8;
 		}
 
 		iVar8 = iVar8 + 1;
@@ -345,14 +345,14 @@ void CBehaviourNativShopSell::Manage()
 	iVar5 = this->pOwner->actorState;
 
 	if (iVar5 == 9) {
-		pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
+		pCVar1 = this->aSubObjs[this->selectedPurchaseItemIndex].streamRefActor.Get();
 		pCVar4 = pCVar1->GetInventoryInfo();
 		iVar5 = this->field_0xac;
 		fVar7 = edFIntervalUnitSrcLERP(this->pOwner->timeInAir, this->field_0xa8, this->field_0xa8 - (float)pCVar4->moneyCost);
 		this->field_0xac = (int)fVar7;
 
 		if (iVar5 != this->field_0xac) {
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 4, 0);
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 4, 0);
 		}
 
 		pCVar2 = this->pOwner;
@@ -411,15 +411,15 @@ void CBehaviourNativShopSell::SectorChange(int oldSectorId, int newSectorId)
 				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x53, this->pathFollowReader.GetWayPoint(iVar4 + 2));
 
 				uint local_8 = 5;
-				if (pCVar3->bPurchased == 0) {
+				if (pCVar3->bCanPurchase == 0) {
 					local_8 = 6;
 				}
 
 				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x5f, (void*)local_8);
 			}
 
-			if (pCVar3->bPurchased == 0) {
-				pCVar2->bPurchased = 0;
+			if (pCVar3->bCanPurchase == 0) {
+				pCVar2->bCanPurchase = 0;
 			}
 
 			iVar4 = iVar4 + 1;
@@ -536,7 +536,7 @@ void CBehaviourNativShopSell::Draw()
 	pNewFont = edTextStyleSetCurrent(&textStyle);
 
 	pLanguageManager = CScene::ptable.g_LocalizationManager_00451678;
-	pCVar9 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
+	pCVar9 = this->aSubObjs[this->selectedPurchaseItemIndex].streamRefActor.Get();
 	pCVar4 = (CInventoryInfo*)0x0;
 	textStyle.SetFont(BootDataFont, false);
 	textStyle.SetScale(1.2f, 1.2f);
@@ -548,7 +548,7 @@ void CBehaviourNativShopSell::Draw()
 
 	bVar3 = GameDList_BeginCurrent();
 	if (bVar3 != false) {
-		if (this->aSubObjs[this->field_0x94].bPurchased == 0) {
+		if (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase == 0) {
 			gSHO_Cursor1OffsetX = 1.05f;
 		}
 		else {
@@ -565,7 +565,7 @@ void CBehaviourNativShopSell::Draw()
 	if (bVar3 != false) {
 		Display_BottomBackGround();
 
-		if (this->aSubObjs[this->field_0x94].bPurchased == 0) {
+		if (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase == 0) {
 			pCVar9 = (CActor*)0x0;
 		}
 		
@@ -599,12 +599,12 @@ void CBehaviourNativShopSell::Draw()
 
 	bVar3 = GuiDList_BeginCurrent();
 	if (bVar3 == false) goto LAB_0036e618;
-	if ((this->aSubObjs[this->field_0x94].bPurchased != 0) && (1 < pCVar4->field_0x2c)) {
+	if ((this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase != 0) && (1 < pCVar4->field_0x2c)) {
 		peVar6 = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 4);
 
 		pScene = CScene::_scene_handleA;
-		if ((peVar6 != (edDList_material*)0x0) && (this->aSubObjs[this->field_0x94].bPurchased != 0)) {
-			pPosition = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
+		if ((peVar6 != (edDList_material*)0x0) && (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase != 0)) {
+			pPosition = this->pathFollowReader.GetWayPoint(this->selectedPurchaseItemIndex + 2);
 
 			bVar3 = ed3DComputeSceneCoordinate(&local_10, pPosition, pScene);
 			if (bVar3 != false) {
@@ -620,7 +620,7 @@ void CBehaviourNativShopSell::Draw()
 		Display_BubbleText(&textStyle);
 	}
 
-	if (this->aSubObjs[this->field_0x94].bPurchased != 0) {
+	if (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase != 0) {
 		if (this->field_0xb0 != 0) {
 			IMPLEMENTATION_GUARD(
 			local_e0 = (float)_DAT_004259c0;
@@ -696,7 +696,7 @@ void CBehaviourNativShopSell::Draw()
 	pcVar7 = pLanguageManager->GetHelpString(0xc0d17190b475549);
 	Display_Text(0.675f - this->field_0xa4, 0.875f, &textStyle, pcVar7);
 
-	if (this->aSubObjs[this->field_0x94].bPurchased == 0) {
+	if (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase == 0) {
 	LAB_0036e3f0:
 		textStyle.rgbaColour = 0x808080ff;
 		textStyle.altColour = 0x808080ff;
@@ -714,7 +714,7 @@ void CBehaviourNativShopSell::Draw()
 
 	pcVar7 = pLanguageManager->GetHelpString(0xc0a1a095f475549);
 	Display_Text(0.675f - this->field_0xa4, 0.775f, &textStyle, pcVar7);
-	if (this->aSubObjs[this->field_0x94].bPurchased != 0) {
+	if (this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase != 0) {
 		textStyle.SetHorizontalSize(FLOAT_00435c88 * (float)gVideoConfig.screenWidth);
 		textStyle.SetVerticalSize(FLOAT_00435c8c * (float)gVideoConfig.screenHeight);
 		textStyle.SetHorizontalAlignment(2);
@@ -779,15 +779,15 @@ void CBehaviourNativShopSell::Begin(CActor* pOwner, int newState, int newAnimati
 			this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x53, this->pathFollowReader.GetWayPoint(iVar4 + 2));
 
 			local_8 = 5;
-			if (pCVar3->bPurchased == 0) {
+			if (pCVar3->bCanPurchase == 0) {
 				local_8 = 6;
 			}
 
 			this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x5f, (void*)local_8);
 		}
 
-		if (pCVar3->bPurchased == 0) {
-			pCVar2->bPurchased = 0;
+		if (pCVar3->bCanPurchase == 0) {
+			pCVar2->bCanPurchase = 0;
 		}
 
 		iVar4 = iVar4 + 1;
@@ -842,30 +842,28 @@ void CBehaviourNativShopSell::TermState(int oldState, int newState)
 	CActor* pCVar1;
 	CLevelScheduler* pCVar2;
 	CFrontendDisplay* pCVar3;
-	CInventoryInfo* pCVar4;
-	undefined4 local_20;
-	int local_1c;
+	_msg_params_0x60 local_20;
 	undefined4 local_c;
 	undefined4 local_8;
 	undefined4* local_4;
 
 	pCVar3 = CScene::ptable.g_FrontendManager_00451680;
 	if (oldState == 9) {
-		pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
-		pCVar4 = pCVar1->GetInventoryInfo();
-		local_4 = &local_20;
-		local_20 = 3;
-		local_1c = pCVar4->purchaseId;
+		pCVar1 = this->aSubObjs[this->selectedPurchaseItemIndex].streamRefActor.Get();
+		local_20.type = 3;
+		local_20.purchaseId = pCVar1->GetInventoryInfo()->purchaseId;
 		this->pOwner->DoMessage((this->pOwner->actorRef).Get(), (ACTOR_MESSAGE)0x60, &local_20);
+
 		pCVar2 = CLevelScheduler::gThis;
-		pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
-		pCVar4 = pCVar1->GetInventoryInfo();
-		pCVar2->Money_GiveToShop(pCVar4->moneyCost);
+		pCVar1 = this->aSubObjs[this->selectedPurchaseItemIndex].streamRefActor.Get();
+		pCVar2->Money_GiveToShop(pCVar1->GetInventoryInfo()->moneyCost);
+
 		local_8 = 6;
 		this->pOwner->DoMessage(pCVar1, (ACTOR_MESSAGE)0x5f, (void*)6);
 		local_c = 7;
 		this->pOwner->DoMessage(pCVar1, (ACTOR_MESSAGE)0x5f, (void*)7);
-		this->aSubObjs[this->field_0x94].bPurchased = 0;
+
+		this->aSubObjs[this->selectedPurchaseItemIndex].bCanPurchase = 0;
 
 		UpdateValidity();
 	}
@@ -939,11 +937,11 @@ void CBehaviourNativShopSell::SaveContext(void* pData, uint mode, uint maxSize)
 
 	pSaveData->purchasedBitField = 0;
 
-	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[0].bPurchased << 0);
-	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[1].bPurchased << 1);
-	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[2].bPurchased << 2);
-	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[3].bPurchased << 3);
-	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[4].bPurchased << 4);
+	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[0].bCanPurchase << 0);
+	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[1].bCanPurchase << 1);
+	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[2].bCanPurchase << 2);
+	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[3].bCanPurchase << 3);
+	pSaveData->purchasedBitField = pSaveData->purchasedBitField | (ushort)(this->aSubObjs[4].bCanPurchase << 4);
 
 	return;
 }
@@ -972,7 +970,7 @@ void CBehaviourNativShopSell::LoadContext(void* pData, uint mode, uint maxSize)
 				uVar4 = 1;
 			}
 
-			pCVar3->bPurchased = (uint)(uVar4 != 0);
+			pCVar3->bCanPurchase = (uint)(uVar4 != 0);
 
 			if (pReceiver != (CActor*)0x0) {
 				pWayPoint = this->pathFollowReader.GetWayPoint(uVar5 + 2);
@@ -980,7 +978,7 @@ void CBehaviourNativShopSell::LoadContext(void* pData, uint mode, uint maxSize)
 				this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x5f, 0);
 
 				uVar4 = 5;
-				if (pCVar3->bPurchased == 0) {
+				if (pCVar3->bCanPurchase == 0) {
 					uVar4 = 6;
 				}
 
@@ -995,8 +993,8 @@ void CBehaviourNativShopSell::LoadContext(void* pData, uint mode, uint maxSize)
 		pCVar3 = this->aSubObjs;
 		pCVar2 = this->aSubObjs;
 		do {
-			if (pCVar2->bPurchased == 0) {
-				pCVar3->bPurchased = 0;
+			if (pCVar2->bCanPurchase == 0) {
+				pCVar3->bCanPurchase = 0;
 			}
 
 			iVar1 = iVar1 + 1;
@@ -1032,8 +1030,8 @@ void CBehaviourNativShopSell::UpdateValidity()
 	this->field_0x98 = 0;
 	pCVar7 = this->aSubObjs;
 	do {
-		this->field_0x98 = this->field_0x98 | pCVar7->bPurchased;
-		if ((pCVar7->bPurchased != 0) && (pCVar1 = pCVar7->streamRefActor.Get(), pCVar4 = pCVar1->GetInventoryInfo(), pCVar4->purchaseId < 0x15)) {
+		this->field_0x98 = this->field_0x98 | pCVar7->bCanPurchase;
+		if ((pCVar7->bCanPurchase != 0) && (pCVar1 = pCVar7->streamRefActor.Get(), pCVar4 = pCVar1->GetInventoryInfo(), pCVar4->purchaseId < 0x15)) {
 			bVar3 = true;
 		}
 
@@ -1186,31 +1184,31 @@ void CBehaviourNativShopSell::State_Display()
 
 	if (this->field_0xb0 == 0) {
 		if ((((pCVar1->pressedBitfield & 0x100000) != 0) || ((pCVar1->pressedBitfield & 4) != 0)) &&
-			(iVar2 = this->aSubObjs[this->field_0x94].field_0x4, this->field_0x94 != iVar2)) {
-			this->field_0x94 = iVar2;
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 1, 0);
+			(iVar2 = this->aSubObjs[this->selectedPurchaseItemIndex].field_0x4, this->selectedPurchaseItemIndex != iVar2)) {
+			this->selectedPurchaseItemIndex = iVar2;
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
 		}
 
 		if ((((pCVar1->pressedBitfield & 0x200000) != 0) || ((pCVar1->pressedBitfield & 8) != 0)) &&
-			(iVar2 = this->aSubObjs[this->field_0x94].field_0xc, this->field_0x94 != iVar2)) {
-			this->field_0x94 = iVar2;
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 1, 0);
+			(iVar2 = this->aSubObjs[this->selectedPurchaseItemIndex].field_0xc, this->selectedPurchaseItemIndex != iVar2)) {
+			this->selectedPurchaseItemIndex = iVar2;
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
 		}
 
 		if ((((pCVar1->pressedBitfield & 0x400000) != 0) || ((pCVar1->pressedBitfield & 1) != 0)) &&
-			(iVar2 = this->aSubObjs[this->field_0x94].field_0x8, this->field_0x94 != iVar2)) {
-			this->field_0x94 = iVar2;
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 1, 0);
+			(iVar2 = this->aSubObjs[this->selectedPurchaseItemIndex].field_0x8, this->selectedPurchaseItemIndex != iVar2)) {
+			this->selectedPurchaseItemIndex = iVar2;
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
 		}
 
 		if ((((pCVar1->pressedBitfield & 0x800000) != 0) || ((pCVar1->pressedBitfield & 2) != 0)) &&
-			(iVar2 = this->aSubObjs[this->field_0x94].field_0x10, this->field_0x94 != iVar2)) {
-			this->field_0x94 = iVar2;
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 1, 0);
+			(iVar2 = this->aSubObjs[this->selectedPurchaseItemIndex].field_0x10, this->selectedPurchaseItemIndex != iVar2)) {
+			this->selectedPurchaseItemIndex = iVar2;
+			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
 		}
 	}
 
-	if ((this->field_0x98 == 0) || (puVar5 = this->aSubObjs + this->field_0x94, puVar5->bPurchased == 0))
+	if ((this->field_0x98 == 0) || (puVar5 = this->aSubObjs + this->selectedPurchaseItemIndex, puVar5->bCanPurchase == 0))
 		goto LAB_0036d578;
 
 	CInventoryInfo* pInventoryInfo = puVar5->streamRefActor.Get()->GetInventoryInfo();
@@ -1224,7 +1222,7 @@ void CBehaviourNativShopSell::State_Display()
 			}
 			if (uVar4 != 0) {
 				this->pOwner->SetState(9, -1);
-				CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);
+				(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
 				goto LAB_0036d528;
 			}
 		}
@@ -1233,7 +1231,7 @@ void CBehaviourNativShopSell::State_Display()
 		this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x60, &local_20);
 		this->pOwner->field_0x168 = GetTimer()->scaledTotalTime;
 
-		CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);
+		(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
 	}
 
 LAB_0036d528:
@@ -1326,7 +1324,7 @@ void CBehaviourNativShopSell::Display_Cursor(float scale, _rgba color)
 	edF32Vector4NormalizeHard(&auStack64.rowX, &auStack64.rowX);
 	edF32Vector4CrossProductHard(&auStack64.rowZ, pRowY, &auStack64.rowX);
 	edF32Vector4ScaleHard(scale, &eStack80, &auStack64.rowZ);
-	peVar2 = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
+	peVar2 = this->pathFollowReader.GetWayPoint(this->selectedPurchaseItemIndex + 2);
 	edF32Vector4AddHard(&auStack64.rowT, peVar2, &eStack80);
 	edDListLoadMatrix(&auStack64);
 	peVar4 = pFileManager->GetMaterialFromId(this->materialId, 3);
@@ -1572,10 +1570,10 @@ void CBehaviourNativShopSell::Display_BubbleText(edCTextStyle* pStyle)
 	edF32VECTOR4* pPosition;
 	edF32VECTOR2 local_8;
 
-	pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
+	pCVar1 = this->aSubObjs[this->selectedPurchaseItemIndex].streamRefActor.Get();
 	CInventoryInfo* pInventoryInfo = pCVar1->GetInventoryInfo();
 
-	pPosition = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
+	pPosition = this->pathFollowReader.GetWayPoint(this->selectedPurchaseItemIndex + 2);
 
 	bVar2 = ed3DComputeSceneCoordinate(&local_8, pPosition, CScene::_scene_handleA);
 	if (bVar2 != false) {

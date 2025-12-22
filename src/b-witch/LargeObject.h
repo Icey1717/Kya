@@ -87,7 +87,7 @@ union ManagerContainer {
 		struct CLanguageManager* g_LocalizationManager_00451678;
 		struct CCameraManager* g_CameraManager_0045167c;
 		struct CFrontendDisplay* g_FrontendManager_00451680;
-		struct HelpManager* g_HelpManager_00451684;
+		struct CHelpManager* g_HelpManager_00451684;
 		struct CPauseManager* g_PauseManager_00451688;
 		struct CMapManager* g_MapManager_0045168c;
 		class CCollisionManager* g_CollisionManager_00451690;

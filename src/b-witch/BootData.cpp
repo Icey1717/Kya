@@ -106,12 +106,14 @@ void InstallBootData(void)
 		else {
 			messagesFilePointer = BootData_BankBufferEntry->get_element(fileIndex);
 		}
+
 		pIconTexture->Install(messagesFilePointer);
 		puVar1 = sz_MediumFontFileName_00448b60;
 		iVar3 = iVar3 + 1;
 		ppcVar2 = ppcVar2 + 1;
 		pIconTexture = pIconTexture + 1;
 	} while (iVar3 < 0x17);
+
 	/* Init Medium.Fon */
 	iVar3 = BootData_BankBufferEntry->get_index(sz_MediumFontFileName_00448b60);
 	if (iVar3 == -1) {
