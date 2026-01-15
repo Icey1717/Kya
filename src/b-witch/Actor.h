@@ -621,6 +621,7 @@ public:
 	void SV_GetActorColCenter(edF32VECTOR4* pColCenter);
 	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	void FUN_00119cf0(CActor* pActor);
 	void SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosition);
 	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6);

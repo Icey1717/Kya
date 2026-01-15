@@ -34,13 +34,15 @@ public:
 	char* field_0x38;
 };
 
-struct S_PATHREADER_POS_INFO {
+struct S_PATHREADER_POS_INFO
+{
 	int field_0x0;
 	int field_0x4;
 	float field_0x8;
 };
 
-class CPathFollowReaderAbsolute {
+class CPathFollowReaderAbsolute
+{
 public:
 	CPathFollowReaderAbsolute();
 	void Create(ByteCode* pByteCode);
@@ -51,6 +53,8 @@ public:
 	int ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo);
 	int ComputeMatrix(float param_1, edF32MATRIX4* pMatrix, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo);
 	void ComputeTangent(float param_1, edF32VECTOR4* param_3, int pointA, int pointB);
+
+	float GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInfo);
 
 	CPathFollow* pActor3C_0x0;
 	float barFullAmount_0x4;
@@ -104,7 +108,6 @@ struct CPathPlaneOutData
 	int field_0x0;
 	float field_0x4;
 	float field_0x8;
-	PlaneData* aPlaneData;
 };
 
 class CPathPlane
@@ -112,6 +115,7 @@ class CPathPlane
 public:
 	CPathFollowReader pathFollowReader;
 	CPathPlaneOutData outData;
+	PlaneData* aPlaneData;
 
 	void Init();
 	void Reset();

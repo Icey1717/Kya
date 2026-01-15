@@ -617,6 +617,57 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 	return;
 }
 
+float CPathFollowReaderAbsolute::GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInfo)
+{
+	int iVar1;
+	float* pfVar2;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+
+	iVar1 = pPosInfo->field_0x4;
+	fVar5 = 0.0f;
+	iVar3 = 0;
+
+	if (0 < iVar1) {
+		if (8 < iVar1) {
+			pfVar2 = this->field_0x10;
+			do {
+				iVar3 = iVar3 + 8;
+				fVar5 = fVar5 + *pfVar2 + pfVar2[1] + pfVar2[2] + pfVar2[3] + pfVar2[4] + pfVar2[5] +
+					pfVar2[6] + pfVar2[7];
+				pfVar2 = pfVar2 + 8;
+			} while (iVar3 < iVar1 + -8);
+		}
+
+		if (iVar3 < iVar1) {
+			pfVar2 = this->field_0x10 + iVar3;
+			do {
+				iVar3 = iVar3 + 1;
+				fVar5 = fVar5 + *pfVar2;
+				pfVar2 = pfVar2 + 1;
+			} while (iVar3 < pPosInfo->field_0x4);
+		}
+	}
+
+	if (this->field_0x1c == 0) {
+		pfVar2 = this->pActor3C_0x0->aDelays;
+		if (pfVar2 == (float*)0x0) {
+			fVar4 = 0.0f;
+		}
+		else {
+			fVar4 = pfVar2[iVar3];
+		}
+
+		fVar4 = pPosInfo->field_0x8 * (this->field_0x10[iVar3] - fVar4);
+	}
+	else {
+		fVar4 = pPosInfo->field_0x8 * this->field_0x10[iVar3];
+	}
+
+	return fVar5 + fVar4;
+}
+
 int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 {
 	CPathFollow* pCVar1;
@@ -737,20 +788,20 @@ void CPathPlaneArray::Init()
 
 			if (pCurPathPlane->pathFollowReader.pPathFollow != (CPathFollow*)0x0) {
 				pPVar1 = new PlaneData[pCurPathPlane->pathFollowReader.pPathFollow->splinePointCount];
-				pCurPathPlane->outData.aPlaneData = pPVar1;
+				pCurPathPlane->aPlaneData = pPVar1;
 
 				iVar6 = pCurPathPlane->pathFollowReader.pPathFollow->splinePointCount;
 				if (0 < iVar6) {
 					iVar4 = 0;
 					do {
 						iVar5 = iVar4 + 1;
-						pCurPathPlane->outData.aPlaneData[iVar4].field_0x10 = (float)iVar4 / (float)(iVar6 + -1);
+						pCurPathPlane->aPlaneData[iVar4].field_0x10 = (float)iVar4 / (float)(iVar6 + -1);
 						iVar6 = pCurPathPlane->pathFollowReader.pPathFollow->splinePointCount;
 						iVar4 = iVar5;
 					} while (iVar5 < iVar6);
 				}
 
-				pCurPathPlane->computePlanesFromKeys(pCurPathPlane->outData.aPlaneData, iVar6);
+				pCurPathPlane->computePlanesFromKeys(pCurPathPlane->aPlaneData, iVar6);
 			}
 
 			uVar8 = uVar8 + 1;
@@ -1113,7 +1164,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 			peVar3 = peVar3 + iVar2;
 		}
 
-		fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar2].field_0x0, pTargetPos);
+		fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar2].field_0x0, pTargetPos);
 		pOutData->field_0x4 = fVar6;
 	}
 	else {
@@ -1126,7 +1177,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 			peVar3 = peVar3 + iVar5;
 		}
 
-		fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar5].field_0x0, pTargetPos);
+		fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar5].field_0x0, pTargetPos);
 		pOutData->field_0x4 = fVar6;
 	}
 
@@ -1147,7 +1198,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 				peVar3 = pCVar1->aSplinePoints + pCVar1->splinePointCount + -1;
 			}
 
-			fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar2 - 1].field_0x0, pTargetPos);
+			fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar2 - 1].field_0x0, pTargetPos);
 			pOutData->field_0x4 = fVar6;
 		}
 		else {
@@ -1158,7 +1209,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 				peVar3 = pCVar1->aSplinePoints + iVar5;
 			}
 
-			fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar5].field_0x0, pTargetPos);
+			fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar5].field_0x0, pTargetPos);
 			pOutData->field_0x4 = fVar6;
 		}
 	}
@@ -1172,7 +1223,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 			peVar3 = pCVar1->aSplinePoints + iVar5 + 1;
 		}
 
-		fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar5 + 1].field_0x0, pTargetPos);
+		fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar5 + 1].field_0x0, pTargetPos);
 		pOutData->field_0x8 = fVar6;
 	}
 	else {
@@ -1180,10 +1231,10 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 
 		if (peVar3 == (edF32VECTOR4*)0x0) {
 			peVar3 = &gF32Vertex4Zero;
-			pPVar4 = (this->outData).aPlaneData;
+			pPVar4 = this->aPlaneData;
 		}
 		else {
-			pPVar4 = (this->outData).aPlaneData;
+			pPVar4 = this->aPlaneData;
 		}
 
 		fVar6 = edDistPointToPlane(peVar3, &pPVar4->field_0x0, pTargetPos);
@@ -1206,16 +1257,16 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 				peVar3 = pCVar1->aSplinePoints + pCVar1->splinePointCount + -1;
 			}
 
-			fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar2 - 1].field_0x0, pTargetPos);
+			fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar2 - 1].field_0x0, pTargetPos);
 			pOutData->field_0x4 = fVar6;
 
 			peVar3 = ((this->pathFollowReader).pPathFollow)->aSplinePoints;
 			if (peVar3 == (edF32VECTOR4*)0x0) {
 				peVar3 = &gF32Vertex4Zero;
-				pPVar4 = (this->outData).aPlaneData;
+				pPVar4 = this->aPlaneData;
 			}
 			else {
-				pPVar4 = (this->outData).aPlaneData;
+				pPVar4 = this->aPlaneData;
 			}
 
 			fVar6 = edDistPointToPlane(peVar3, &pPVar4->field_0x0, pTargetPos);
@@ -1229,7 +1280,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 				peVar3 = pCVar1->aSplinePoints + iVar5;
 			}
 
-			fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar5].field_0x0, pTargetPos);
+			fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar5].field_0x0, pTargetPos);
 			pOutData->field_0x4 = fVar6;
 
 			peVar3 = ((this->pathFollowReader).pPathFollow)->aSplinePoints;
@@ -1240,7 +1291,7 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 				peVar3 = peVar3 + iVar5 + 1;
 			}
 
-			fVar6 = edDistPointToPlane(peVar3, &(this->outData).aPlaneData[iVar5 + 1].field_0x0, pTargetPos);
+			fVar6 = edDistPointToPlane(peVar3, &this->aPlaneData[iVar5 + 1].field_0x0, pTargetPos);
 			pOutData->field_0x8 = fVar6;
 		}
 	}
@@ -1261,7 +1312,7 @@ void CPathPlane::Init()
 
 	pPathFollow = (this->pathFollowReader).pPathFollow;
 	if (pPathFollow != (CPathFollow*)0x0) {
-		(this->outData).aPlaneData = new PlaneData[pPathFollow->splinePointCount];
+		this->aPlaneData = new PlaneData[pPathFollow->splinePointCount];
 
 		pPathFollow = (this->pathFollowReader).pPathFollow;
 
@@ -1269,13 +1320,13 @@ void CPathPlane::Init()
 		if (0 < pPathFollow->splinePointCount) {
 			do {
 				fVar5 = (float)iVar4;
-				(this->outData).aPlaneData[iVar4].field_0x10 = fVar5 / (float)(pPathFollow->splinePointCount + -1);
+				this->aPlaneData[iVar4].field_0x10 = fVar5 / (float)(pPathFollow->splinePointCount + -1);
 				pPathFollow = (this->pathFollowReader).pPathFollow;
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < pPathFollow->splinePointCount);
 		}
 
-		computePlanesFromKeys((this->outData).aPlaneData, pPathFollow->splinePointCount);
+		computePlanesFromKeys(this->aPlaneData, pPathFollow->splinePointCount);
 	}
 
 	return;

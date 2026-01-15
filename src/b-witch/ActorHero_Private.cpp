@@ -25,6 +25,7 @@
 #include "DlistManager.h"
 #include "edText.h"
 #include "ActorNativ.h"
+#include "ActorJamGut.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {
@@ -530,8 +531,8 @@ void CActorHeroPrivate::Init()
 	fVar14 = pCVar5->GetDistance();
 	this->field_0x15c8 = fVar14;
 
-	//*(float*)&this->field_0x15cc = (this->pMainCamera)->fov;
-	//*(undefined4*)&this->field_0x15d0 = 6.0;
+	this->field_0x15cc = (this->pMainCamera)->fov;
+	this->field_0x15d0 = 6.0f;
 	//ByteCode::~ByteCode(&BStack32, -1);
 
 	this->field_0xf0 = 10.3f;
@@ -731,12 +732,11 @@ void CActorHeroPrivate::GetPossibleAction()
 	if (this->heroActionParams.actionId == 0xd) {
 		this->heroActionParams.actionId = 0;
 		iVar5 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_JAMGUT_RIDE);
-		if ((iVar5 == 0) || (pCVar6 = GetBehaviour(8), pCVar6 == (CBehaviour*)0x0)) {
+		if ((iVar5 == 0) || (pCVar6 = GetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT), pCVar6 == (CBehaviour*)0x0)) {
 			iVar5 = this->actorState;
 			if ((2 < iVar5 - 0x73U) && ((iVar5 != 0x7a && (iVar5 != 0x7d)))) {
-				IMPLEMENTATION_GUARD(
-				local_4 = 1;
-				DoMessage(this->heroActionParams.pActor, 0x12, 1);)
+				//local_4 = 1;
+				DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x12, (void*)1);
 			}
 		}
 		else {
@@ -755,7 +755,7 @@ LAB_00346f50:
 				if (iVar5 == 0) {
 					if (bVar1) {
 						this->heroActionParams.actionId = 0xd;
-						this->field_0xf50 = puVar10;
+						this->pMountActor = puVar10;
 					}
 					else {
 						iVar5 = this->actorState;
@@ -1695,9 +1695,8 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 	case 10:
 		this->field_0x187c = 1;
 		break;
-	case 0xd:
-		IMPLEMENTATION_GUARD(
-		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x11c, 0xffffffff);)
+	case ACTION_MOUNT:
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x11c, -1);
 		break;
 	case ACTION_SPEAK:
 		DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x14, 0);
@@ -2883,11 +2882,11 @@ CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 				pNewBehaviour = &this->behaviour_0x1c50;
 			}
 			else {
-				if (behaviourType == 8) {
+				if (behaviourType == HERO_BEHAVIOUR_RIDE_JAMGUT) {
 					pNewBehaviour = new CBehaviourHeroRideJamGut;
 				}
 				else {
-					if (behaviourType == 7) {
+					if (behaviourType == HERO_BEHAVIOUR_DEFAULT) {
 						pNewBehaviour = &this->behaviourHeroDefault;
 					}
 					else {
@@ -2923,8 +2922,6 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 {
 	int iVar2;
 	StateConfig* pStateCfg;
-	Timer* pTVar4;
-	undefined8 uVar5;
 	ulong uVar6;
 	bool bFightRelated;
 	float fVar8;
@@ -2967,10 +2964,8 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 	CActorMovable::SetState(newState, animType);
 
 	if (currentState != newState) {
-		pTVar4 = GetTimer();
-		this->time_0x1538 = pTVar4->scaledTotalTime;
-		pTVar4 = GetTimer();
-		this->time_0x153c = pTVar4->scaledTotalTime;
+		this->time_0x1538 = GetTimer()->scaledTotalTime;
+		this->time_0x153c = GetTimer()->scaledTotalTime;
 
 		uVar6 =GetBehaviourFlags(this->curBehaviourId);
 		if ((uVar6 & 0x200) != 0) {
@@ -2979,6 +2974,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 	}
 
 	this->heroFlags = GetStateHeroFlags(this->actorState);
+
 	return;
 }
 
@@ -5132,14 +5128,14 @@ void CActorHeroPrivate::ClearLocalData()
 	this->pTrappedByActor = (CActor*)0x0;
 	this->pTalkingToActor = (CActorNativ*)0x0;
 	this->trapLinkedBone = 0;
-	this->field_0xf50 = (CActor*)0x0;
+	this->pMountActor = (CActor*)0x0;
 	//*(undefined4*)&this->field_0xf58 = 0;
 	this->field_0x1490.x = 0.0f;
 	this->field_0x1490.y = 0.0f;
 	this->field_0x1490.z = 0.0f;
 	this->field_0x1490.w = 0.0f;
-	//*(undefined4*)&this->field_0xf5c = 0;
-	this->field_0x15a0 = 1;
+	this->mountRotationSpeed = 0.0f;
+	this->mountBoneId = 1;
 	this->field_0x1048 = 0.0f;
 	this->time_0x1538 = 0.0f;
 	this->time_0x153c = 0.0f;
@@ -5162,7 +5158,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->field_0xa80 = 0.0f;
 	this->field_0xa84 = 0.0f;
 	this->field_0xa88 = 0.0f;
-	//CVectorDyn::Reset((undefined4*)&this->field_0xf70);
+	this->mountDyn.Reset();
 	SetJumpCfg(0.1f, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 1, (edF32VECTOR4*)0x0);
 	this->pKickedActor = (CActorMovable*)0x0;
 	//fVar4 = gF32Vector4Zero.w;
@@ -5594,6 +5590,21 @@ LAB_00341590:
 		StateHeroGripUpToJumpInit();
 		StateHeroJump_2_3Init();
 		break;
+	case STATE_HERO_BOOMY_SNIPE_PREPARE:
+		StateHeroBoomySnipePrepare_Init();
+		break;
+	case STATE_HERO_BOOMY_SNIPE_STAND:
+		StateHeroBoomySnipeStand_Init();
+		break;
+	case STATE_HERO_BOOMY_SNIPE_LAUNCH:
+		StateHeroBoomySnipeLaunch_Init();
+		break;
+	case STATE_HERO_BOOMY_SNIPE_BACK_2_STAND:
+		StateHeroBoomySnipeBack2Stand_Init();
+		break;
+	case STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH:
+		StateHeroBoomySnipeAfterLaunch_Init();
+		break;
 	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
 		StateHeroBoomyPrepareFightBlowInit();
 			break;
@@ -5653,18 +5664,6 @@ LAB_00341590:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2Init();
 			break;
-	case STATE_HERO_LOOK_INTERNAL: // Also 0x11b
-		IMPLEMENTATION_GUARD(
-			if (1 < this->prevActorState - 0x11aU) {
-				pCVar5 = (CCameraManager*)CScene::GetManager(MO_Camera);
-				CCameraManager::PushCamera(pCVar5, *(CCamera**)&this->field_0x15bc, 1);
-				this->field_0x1a54 = 1;
-				this->field_0x1b68 = 0;
-				uVar8 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_BINOCULARS);
-				(**(code**)(*(int*)&this->field_0xc84 + 8))(&this->field_0xc84, uVar8);
-			}
-		);
-		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	case STATE_HERO_CAUGHT_TRAP_1:
 		this->dynamic.speed = 0.0f;
@@ -5673,6 +5672,12 @@ LAB_00341590:
 		this->dynamicExt.normalizedTranslation.z = 0.0f;
 		this->dynamicExt.normalizedTranslation.w = 0.0f;
 		this->dynamicExt.field_0x6c = 0.0f;
+		break;
+	case STATE_HERO_LOOK_INTERNAL: // Also 0x11b
+		StateHeroInternalView_Init(1 < this->prevActorState - 0x11aU);
+		break;
+	case STATE_HERO_GET_ON_MOUNT:
+		StateHeroGetOnMountInit();
 		break;
 	default:
 		assert(false);
@@ -5854,6 +5859,21 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_FALL_BOUNCE_2_2:
 		StateHeroFallBounce_2_2Term();
 		break;
+	case STATE_HERO_BOOMY_SNIPE_PREPARE:
+		StateHeroBoomySnipePrepare_Term(newState == STATE_HERO_BOOMY_SNIPE_STAND);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_STAND:
+		StateHeroBoomySnipeStand_Term(newState == STATE_HERO_BOOMY_SNIPE_LAUNCH);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_LAUNCH:
+		StateHeroBoomySnipeLaunch_Term(newState);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_BACK_2_STAND:
+		StateHeroBoomySnipeBack2Stand_Term(newState == STATE_HERO_BOOMY_SNIPE_STAND);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH:
+		StateHeroBoomySnipeAfterLaunch_Term(newState == STATE_HERO_BOOMY_SNIPE_BACK_2_STAND);
+		break;
 	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
 	case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
 	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
@@ -5928,6 +5948,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2Term();
+		break;
+	case STATE_HERO_GET_ON_MOUNT:
+		StateHeroGetOnMountTerm();
 		break;
 	default:
 		assert(false);
@@ -6397,6 +6420,21 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_BOUNCE_SOMERSAULT_2:
 		StateHeroBounceSomersault2();
 		break;
+	case STATE_HERO_BOOMY_SNIPE_PREPARE:
+		StateHeroBoomySnipePrepare(0x73, 1);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_STAND:
+		StateHeroBoomySnipeStand(0x73, 1);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_LAUNCH:
+		StateHeroBoomySnipeLaunch(1);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_BACK_2_STAND:
+		StateHeroBoomySnipeBack2Stand(1);
+		break;
+	case STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH:
+		StateHeroBoomySnipeAfterLaunch(0x73, 1);
+		break;
 	case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
 		_StateFighterPrepareFightAction(STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW);
 		break;
@@ -6582,6 +6620,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	}
 	break;
+	case STATE_HERO_GET_ON_MOUNT:
+		StateHeroGetOnMount();
+		break;
 	default:
 		assert(false);
 		break;
@@ -8189,6 +8230,129 @@ void CActorHeroPrivate::StateHeroTrampolineJump_1_2(float param_1)
 	}
 
 	return;
+}
+
+void CActorHeroPrivate::StateHeroGetOnMountInit()
+{
+	float puVar2;
+	float puVar3;
+	float amplitude;
+	edF32VECTOR4 mountBonePosition;
+	edF32VECTOR4 mountSpace;
+	edF32VECTOR4 mountDisplacement;
+
+	this->mountBoneId = CActor::DoMessage(this->pMountActor, (ACTOR_MESSAGE)0x4d, 0);
+	this->pMountActor->SV_GetBoneDefaultWorldPosition(this->mountBoneId, &mountBonePosition);
+	edF32Vector4SubHard(&mountDisplacement, &mountBonePosition, &this->currentLocation);
+
+	amplitude = 0.0f;
+	if ((mountBonePosition.y - this->currentLocation.y) < 0.0f) {
+		edF32Vector4ScaleHard(-3.0f, &mountSpace, &CDynamicExt::gForceGravity);
+	}
+	else {
+		amplitude = 0.4f;
+		edF32Vector4ScaleHard(1.5f, &mountSpace, &CDynamicExt::gForceGravity);
+	}
+
+	this->mountDyn.BuildFromAccelDistAmplitude(amplitude, &mountSpace, &mountDisplacement, 1);
+
+	puVar2 = edF32Vector4DotProductHard(&this->rotationQuat, &(this->pMountActor)->rotationQuat);
+	if (1.0f < puVar2) {
+		puVar3 = 1.0f;
+	}
+	else {
+		puVar3 = -1.0f;
+
+		if (-1.0f <= puVar2) {
+			puVar3 = puVar2;
+		}
+	}
+
+	amplitude = acosf(puVar3);
+	this->mountRotationSpeed = amplitude / this->mountDyn.field_0xc;
+	this->pCollisionData->actorFieldA = this->pMountActor;
+	(this->pMountActor)->pCollisionData->actorFieldA = this;
+	this->field_0x100c = 0;
+	this->mountActorLocation = this->pMountActor->currentLocation;
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroGetOnMount()
+{
+	CActor* pCollidingActor;
+	int msgResult;
+	CBehaviourHeroRideJamGut* pHeroRideBehaviour;
+	float rotSpeed;
+	edF32VECTOR4 relativeVelocity;
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	rotSpeed = this->mountRotationSpeed;
+	if (0.1f < rotSpeed) {
+		SV_UpdateOrientation(rotSpeed, &this->pMountActor->rotationQuat);
+	}
+
+	pCollidingActor = GetCollidingActor();
+	if (pCollidingActor == (CActor*)0x0) {
+		edF32Vector4SubHard(&relativeVelocity, &this->pMountActor->currentLocation, &this->mountActorLocation);
+		this->mountActorLocation = this->pMountActor->currentLocation;
+
+		if (GetTimer()->cutsceneDeltaTime == 0.0f) {
+			relativeVelocity.x = 0.0f;
+			relativeVelocity.y = 0.0f;
+			relativeVelocity.z = 0.0f;
+			relativeVelocity.w = 0.0f;
+		}
+		else {
+			relativeVelocity = relativeVelocity * (1.0f / GetTimer()->cutsceneDeltaTime);
+		}
+	}
+	else {
+		relativeVelocity.x = 0.0f;
+		relativeVelocity.y = 0.0f;
+		relativeVelocity.w = 1.0f;
+		relativeVelocity.z = 0.0f;
+	}
+
+	this->mountDyn.Integrate(GetTimer()->cutsceneDeltaTime);
+	edF32Vector4AddHard(&relativeVelocity, &relativeVelocity, &this->mountDyn.field_0x60);
+	this->dynamic.rotationQuat = relativeVelocity;
+	this->dynamic.speed = edF32Vector4NormalizeHard(&relativeVelocity, &relativeVelocity);
+
+	ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+	if (this->mountDyn.IsFinished() != false) {
+		msgResult = DoMessage(this->pMountActor, MESSAGE_TRAP_STRUGGLE, 0);
+		if (msgResult == 0) {
+			SetState(ChooseStateFall(0), 0xffffffff);
+		}
+		else {
+			CActorJamGut* pJamGut = static_cast<CActorJamGut*>(this->pMountActor);
+			this->field_0x100c = 1;
+			SetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT, 0xffffffff, 0xffffffff);
+
+			pHeroRideBehaviour = static_cast<CBehaviourHeroRideJamGut*>(GetBehaviour(this->curBehaviourId));
+			pHeroRideBehaviour->InitMount(pJamGut, this->mountBoneId, 7, 0x11d);
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroGetOnMountTerm()
+{
+	if (this->field_0x100c == 0) {
+		this->pCollisionData->actorFieldA = (CActor*)0x0;
+		this->pMountActor->pCollisionData->actorFieldA = (CActor*)0x0;
+	}
+
+	this->field_0xf54 = this->pMountActor;
+	this->pMountActor = (CActor*)0x0;
 }
 
 // Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
@@ -11027,7 +11191,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 
 	if ((((this->field_0xf54 == (CActor*)0x0) || (param_4 == 0)) || (-1.0f <= this->dynamic.linearAcceleration *
 			this->dynamic.velocityDirectionEuler.y)) ||
-		(this->field_0xf54->SV_GetBoneDefaultWorldPosition(this->field_0x15a0, &eStack48),
+		(this->field_0xf54->SV_GetBoneDefaultWorldPosition(this->mountBoneId, &eStack48),
 			eStack48.y <= this->currentLocation.y)) {
 		if ((pCVar1->flags_0x4 & 2) == 0) {
 			jumpPressed = CanGrip(param_2, &this->rotationQuat);
@@ -11141,7 +11305,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		}
 	}
 	else {
-		this->field_0xf50 = this->field_0xf54;
+		this->pMountActor = this->field_0xf54;
 		this->heroActionParams.actionId = 0xd;
 
 		IMPLEMENTATION_GUARD(
@@ -14031,19 +14195,16 @@ bool CActorHeroPrivate::GetNormalInFrontOf(float rayLength, edF32VECTOR4* pRayDi
 	return hitDistance != 1e+30f;
 }
 
-void CActorHeroPrivate::SetInvincible(float t0, int param_3)
+void CActorHeroPrivate::SetInvincible(float duration, int bAdd)
 {
-	Timer* pTVar1;
-
-	if (param_3 == 0) {
-		pTVar1 = Timer::GetTimer();
-		this->field_0x155c = pTVar1->scaledTotalTime;
+	if (bAdd == 0) {
+		this->field_0x155c = Timer::GetTimer()->scaledTotalTime;
 		this->field_0x1560 = 0;
 	}
 	else {
-		pTVar1 = Timer::GetTimer();
-		this->field_0x155c = t0 + pTVar1->scaledTotalTime;
+		this->field_0x155c = duration + Timer::GetTimer()->scaledTotalTime;
 	}
+
 	return;
 }
 
@@ -14983,7 +15144,7 @@ bool CActorHeroPrivate::FUN_00133fb0()
 		if (this->boomyTargetRayDist < 0.0f) {
 			SV_GetBoneWorldPosition(0x45544554, &eStack16);
 			CCollisionRay CStack48 = CCollisionRay(2.0f, &eStack16, &this->rotationQuat);
-			this->boomyTargetRayDist = CStack48.Intersect(3, (CActor*)this, this->field_0xf50, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			this->boomyTargetRayDist = CStack48.Intersect(3, (CActor*)this, this->pMountActor, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 		}
 
 		bVar1 = this->boomyTargetRayDist != 1e+30f;

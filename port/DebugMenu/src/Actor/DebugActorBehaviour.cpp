@@ -15,6 +15,7 @@
 #include "ActorSwitch.h"
 #include "ActorMicken.h"
 #include "ActorRune.h"
+#include "ActorJamGut.h"
 
 namespace Aton
 {
@@ -80,6 +81,8 @@ namespace Hero
 		switch (curBehaviourId) {
 		case HERO_BEHAVIOUR_DEFAULT:
 			return "Default";
+		case HERO_BEHAVIOUR_RIDE_JAMGUT:
+			return "RideJamGut";
 		default:
 			return "Unknown";
 		}
@@ -479,6 +482,9 @@ namespace Hero
 			break;
 		case STATE_HERO_CAUGHT_TRAP_2:
 			return "StateHeroCaughtTrap2";
+			break;
+		case STATE_HERO_GET_ON_MOUNT:
+			return "StateHeroGetOnMount";
 			break;
 		case 0x3:
 			return "Cinematic";
@@ -892,6 +898,35 @@ namespace Rune
 	}
 }
 
+namespace JamGut
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case JAMGUT_BEHAVIOUR_STAND:
+			return "Stand";
+		case JAMGUT_BEHAVIOUR_RIDDEN:
+			return "Ridden";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case JAMGUT_STAND_STATE_STAND:
+			return "Stand";
+		case JAMGUT_STAND_STATE_REJECT_HERO_A:
+			return "Reject Hero A";
+		case JAMGUT_STAND_STATE_REJECT_HERO_B:
+			return "Reject Hero B";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -936,6 +971,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Bridge::GetBehaviourName(behaviourId);
 	case RUNE:
 		return Rune::GetBehaviourName(behaviourId);
+	case JAMGUT:
+		return JamGut::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -960,6 +997,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Bridge::GetStateName(pActor->actorState);
 	case RUNE:
 		return Rune::GetStateName(pActor->actorState);
+	case JAMGUT:
+		return JamGut::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

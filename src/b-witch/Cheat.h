@@ -27,6 +27,8 @@ extern CheatCodeSequence gToggleShrinkJamgutCheatCode_004a5720;
 extern CheatCodeSequence gRefillLifeCheatCode_004a5740;
 extern CheatCodeSequence gShowGalleryCheatCode_004a5760;
 
+extern int gShrinkJamgutCheatSeq_00449828;
+
 extern int INT_0044982c;
 
 #endif // CHEAT_H

@@ -9,6 +9,7 @@
 #define IMPLEMENTATION_GUARD_BOOMY(x)
 #define IMPLEMENTATION_GUARD_INVENTORY(x)
 
+#define ACTION_MOUNT 0xd
 #define ACTION_SPEAK 0xf
 
 class PlayerSubStruct_64 : public CObject
@@ -52,6 +53,7 @@ class CCamera;
 class CActorBoomy;
 class CActorHeroPrivate;
 class CFightLock_SE;
+class CBehaviourHeroRideJamGut;
 
 struct _ray_info_out;
 
@@ -131,16 +133,6 @@ public:
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-};
-
-class CBehaviourRideJamGut : public CBehaviour
-{
-
-};
-
-class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
-{
-
 };
 
 struct S_DETECT_WALL_CFG
@@ -268,6 +260,13 @@ public:
 	void BehaviourHero_TermState(int oldState, int newState);
 	void BehaviourHero_Manage();
 
+	void FUN_00348df0();
+	void FUN_003690a0(CBehaviourHeroRideJamGut* pBehaviour);
+
+	void BehaviourHeroRideJamGut_InitState(int newState, CBehaviourHeroRideJamGut* pBehaviour);
+	void BehaviourHeroRideJamGut_TermState(int oldState, int newState);
+	void BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut* pBehaviour);
+
 	void StateHeroStandInit(int bCheckEffort);
 	void StateHeroStandTerm();
 	void StateHeroStand(int bCheckEffort);
@@ -285,6 +284,14 @@ public:
 	void StateHeroTrampolineJump_1_2Init();
 	void StateHeroTrampolineJump_1_2Term();
 	void StateHeroTrampolineJump_1_2(float param_1);
+
+	void StateHeroInternalView_Init(bool param_2) { IMPLEMENTATION_GUARD(); }
+	void StateHeroInternalView(int param_2, int, int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroInternalView_Term(int param_2) { IMPLEMENTATION_GUARD(); }
+
+	void StateHeroGetOnMountInit();
+	void StateHeroGetOnMount();
+	void StateHeroGetOnMountTerm();
 
 	void StateHeroTrampolineStomachToFall(float param_1);
 
@@ -353,6 +360,22 @@ public:
 
 	void StateHeroBounceSomersault1();
 	void StateHeroBounceSomersault2();
+
+	void StateHeroBoomySnipePrepare_Init() { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipePrepare(int, int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipePrepare_Term(bool) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeStand_Init() { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeStand(int, int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeStand_Term(bool) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeLaunch_Init() { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeLaunch(int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeLaunch_Term(int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeBack2Stand_Init() { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeBack2Stand(int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeBack2Stand_Term(bool) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeAfterLaunch_Init() { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeAfterLaunch(int, int) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipeAfterLaunch_Term(bool) { IMPLEMENTATION_GUARD(); }
 
 	void StateHeroBoomyPrepareFightBlowInit();
 	void StateBoomyExecuteFightBlowInit();
@@ -475,7 +498,7 @@ public:
 
 	int GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWayPoint* pWayPoint);
 
-	void SetInvincible(float t0, int param_3);
+	void SetInvincible(float duration, int bAdd);
 	bool CheckHitAndDeath();
 
 	void ComputeSoccerMoving(float param_1, float param_2, CActorMovable* pSoccerActor);
@@ -519,7 +542,7 @@ public:
 	CFightLock_SE fightLock;
 
 	CActorMovable* pKickedActor;
-	CActor* field_0xf50;
+	CActor* pMountActor;
 
 	CActorFighter* field_0x1618;
 
@@ -553,6 +576,8 @@ public:
 
 	float field_0x15c4;
 	float field_0x15c8;
+	float field_0x15cc;
+	float field_0x15d0;
 
 	float field_0x1b74;
 	int field_0x1b78;
@@ -635,7 +660,7 @@ public:
 	edF32VECTOR4 field_0x1030;
 	edF32VECTOR4 normalValue;
 
-	uint field_0x15a0;
+	uint mountBoneId;
 
 	float slideSlipIntensity;
 
@@ -814,6 +839,31 @@ public:
 
 	CActorsTable boomyTargetTable;
 	edF32VECTOR4 vector_0x1be0;
+};
+
+class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
+{
+public:
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void ManageInput();
+	virtual void SetState(int newState, int param_3);
+	virtual void SetSpeedAnim(float speed);
+	virtual void SetInvincible(float duration, int bAdd);
+	virtual void InitMount(CActorJamGut* pJamGut, uint boneId, int param_4, uint flags);
+
+	bool FUN_00369260();
+
+	CActorHeroPrivate* pHero;
+	undefined4 field_0xa4;
+	float field_0xa8;
+	float field_0xac;
+	undefined4 field_0xb0;
 };
 
 #endif //ACTOR_HERO_PRIVATE_H

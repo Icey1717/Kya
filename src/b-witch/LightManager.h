@@ -78,8 +78,8 @@ struct LightZoneEntry
 	int field_0x8;
 };
 
-class CLightManager : public CObjectManager {
-
+class CLightManager : public CObjectManager
+{
 public:
 	CLightManager();
 

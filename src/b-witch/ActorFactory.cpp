@@ -379,9 +379,9 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, voi
 			return new CActorHunter[count];
 			break;
 		case JAMGUT:
-			if (pAlloc != (void*)0x0) { CActorJamgut* pType = reinterpret_cast<CActorJamgut*>(pAlloc); delete[] pType; return 0x0; }
-			*outSize = sizeof(CActorJamgut);
-			return new CActorJamgut[count];
+			if (pAlloc != (void*)0x0) { CActorJamGut* pType = reinterpret_cast<CActorJamGut*>(pAlloc); delete[] pType; return 0x0; }
+			*outSize = sizeof(CActorJamGut);
+			return new CActorJamGut[count];
 			break;
 		case ACCELERATOS:
 			if (pAlloc != (void*)0x0) { CActorAcceleratos* pType = reinterpret_cast<CActorAcceleratos*>(pAlloc); delete[] pType; return 0x0; }

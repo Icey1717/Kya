@@ -479,6 +479,7 @@ set (actor_src
 	"${src_root}/b-witch/ActorHero_Wind.cpp"
 	"${src_root}/b-witch/ActorHero_Private.cpp"
 	"${src_root}/b-witch/ActorHero_Private.h"
+	"${src_root}/b-witch/ActorHero_JamGut.cpp"
 	"${src_root}/b-witch/ActorHero_Inventory.cpp"
 	"${src_root}/b-witch/ActorHero_Inventory.h"
 	"${src_root}/b-witch/ActorMicken.cpp"

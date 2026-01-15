@@ -558,7 +558,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 {
 	bool bVar1;
 	TargetCalc* v1;
-	CActorHeroPrivate* pCVar2;
+	CActorAutonomous* pCVar2;
 	CActor* pCVar3;
 	ECameraType EVar4;
 	int iVar5;
@@ -1918,7 +1918,7 @@ void CCameraGame::CameraFunc_002c5b50()
 
 void CCameraGame::FUN_002c8160()
 {
-	CActorHeroPrivate* pCVar1;
+	CActorAutonomous* pCVar1;
 	uint* puVar2;
 
 	pCVar1 = this->field_0xd0;
@@ -1926,7 +1926,7 @@ void CCameraGame::FUN_002c8160()
 		pCVar1 = this->field_0x1ec;
 	}
 
-	if ((this->field_0x280 == 0) && (pCVar1 != (CActorHeroPrivate*)0x0)) {
+	if ((this->field_0x280 == 0) && (pCVar1 != (CActorAutonomous*)0x0)) {
 		this->field_0x1d8 = pCVar1->dynamic.horizontalLinearAcceleration;
 	}
 	else {
@@ -1976,7 +1976,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 	CActor* pCVar7;
 	Timer* pTimeController;
 	uint* puVar8;
-	CActorHeroPrivate* pCVar9;
+	CActorAutonomous* pCVar9;
 	float pitch;
 	float fVar10;
 	float fVar11;
@@ -3496,11 +3496,9 @@ bool CCameraGame::Manage()
 				(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) {
 				pActorB = GetTarget();
 
-				if (pActorB->curBehaviourId == 8) {
-					/* Generic camera does not go in here (Val is 7) */
-					pCVar1 = pActorB->GetBehaviour(pActorB->curBehaviourId);
-					IMPLEMENTATION_GUARD(
-					*(CBehaviourVtable**)&this->field_0x1ec = pCVar1[0x23].pVTable;)
+				if (pActorB->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+					CBehaviourHeroRideJamGut* pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pActorB->GetBehaviour(pActorB->curBehaviourId));
+					this->field_0x1ec = pHeroRideJamGut->field_0x88;
 				}
 				else {
 					this->field_0x1ec = (CActorHeroPrivate*)0x0;

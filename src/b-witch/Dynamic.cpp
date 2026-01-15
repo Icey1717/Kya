@@ -628,7 +628,7 @@ void CVectorDyn::Integrate(float param_1, float param_2)
 		if (this->field_0x0 == 0) {
 			fVar1 = this->field_0x8 + param_1;
 
-			if (this->field_0x4 != 0) {
+			if (this->bUseDuration != 0) {
 				if ((this->field_0xc <= fVar1) || (fabs(fVar1 - this->field_0xc) < 1e-06f)) {
 					fVar1 = this->field_0xc;
 					this->field_0x0 = 2;
@@ -653,17 +653,17 @@ void CVectorDyn::Integrate(float param_1, float param_2)
 
 		edF32Vector4AddHard(&this->field_0x30, &this->field_0x30, &this->field_0x50);
 		this->field_0x8 = this->field_0x8 + param_1;
-		edF32Vector4ScaleHard(1.0f / param_2, &this->instanceIndex, &this->field_0x50);
-		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->instanceIndex);
+		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x60, &this->field_0x50);
+		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->field_0x60);
 	}
 
 	assert(std::isnan(this->field_0x50.x) == false);
 	assert(std::isnan(this->field_0x50.y) == false);
 	assert(std::isnan(this->field_0x50.z) == false);
 
-	assert(std::isnan(this->instanceIndex.x) == false);
-	assert(std::isnan(this->instanceIndex.y) == false);
-	assert(std::isnan(this->instanceIndex.z) == false);
+	assert(std::isnan(this->field_0x60.x) == false);
+	assert(std::isnan(this->field_0x60.y) == false);
+	assert(std::isnan(this->field_0x60.z) == false);
 
 	return;
 }
@@ -696,10 +696,10 @@ void CVectorDyn::Reset()
 	(this->field_0x50).z = 0.0f;
 	(this->field_0x50).w = 0.0f;
 
-	(this->instanceIndex).x = 0.0f;
-	(this->instanceIndex).y = 0.0f;
-	(this->instanceIndex).z = 0.0f;
-	(this->instanceIndex).w = 0.0f;
+	(this->field_0x60).x = 0.0f;
+	(this->field_0x60).y = 0.0f;
+	(this->field_0x60).z = 0.0f;
+	(this->field_0x60).w = 0.0f;
 
 	(this->field_0x70).x = 0.0f;
 	(this->field_0x70).y = 0.0f;
@@ -719,7 +719,7 @@ bool CVectorDyn::IsFinished()
 	return (this->field_0x0 & 1) != 0;
 }
 
-void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravity, edF32VECTOR4* param_4, byte param_5)
+void CVectorDyn::BuildFromAccelDistAmplitude(float amplitude, edF32VECTOR4* pGravity, edF32VECTOR4* pDisplacement, byte bUseDuration)
 {
 	float fVar1;
 	float angle;
@@ -751,18 +751,18 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 
 	edF32Vector4SafeNormalize0Hard(&local_50, &local_50);
 	edF32Matrix4FromAngAxisSoft(angle, &eStack64, &local_50);
-	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack64, param_4);
+	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack64, pDisplacement);
 
 	if (local_70.y < 0.0f) {
-		param_1 = param_1 - local_70.y;
+		amplitude = amplitude - local_70.y;
 	}
 
-	fVar2 = -sqrtf(param_1 * fVar1 * 2.0f);
+	fVar2 = -sqrtf(amplitude * fVar1 * 2.0f);
 	(this->field_0x10).y = fVar2;
 	this->field_0x40 = -fVar2 / fVar1;
-	float oaeuoaeuoeau = ((local_70.y + param_1) * 2.0f) / fVar1;
+	float oaeuoaeuoeau = ((local_70.y + amplitude) * 2.0f) / fVar1;
 	float aoeuoaeu = sqrtf(oaeuoaeuoeau);
-	this->field_0xc = this->field_0x40 + sqrtf(((local_70.y + param_1) * 2.0f) / fVar1);
+	this->field_0xc = this->field_0x40 + sqrtf(((local_70.y + amplitude) * 2.0f) / fVar1);
 
 	assert(std::isnan(this->field_0xc) == false);
 
@@ -777,7 +777,7 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	edF32Matrix4FromAngAxisSoft(-angle, &eStack64, &local_50);
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack64, &this->field_0x10);
 
-	this->field_0x4 = param_5;
+	this->bUseDuration = bUseDuration;
 	this->field_0x0 = 0;
 	this->field_0x8 = 0.0f;
 
@@ -786,10 +786,10 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	(this->field_0x50).z = 0.0f;
 	(this->field_0x50).w = 0.0f;
 
-	(this->instanceIndex).x = 0.0f;
-	(this->instanceIndex).y = 0.0f;
-	(this->instanceIndex).z = 0.0f;
-	(this->instanceIndex).w = 0.0f;
+	(this->field_0x60).x = 0.0f;
+	(this->field_0x60).y = 0.0f;
+	(this->field_0x60).z = 0.0f;
+	(this->field_0x60).w = 0.0f;
 
 	(this->field_0x70).x = 0.0f;
 	(this->field_0x70).y = 0.0f;

@@ -254,6 +254,8 @@ struct edSYS_CONFIG {
 	ED_PSX2_MODULES_INIT* pIopPaths;
 };
 
+class CMusicManager;
+
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 edSYS_CONFIG* edSysGetConfig(void);
 

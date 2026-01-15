@@ -100,10 +100,10 @@ public:
 	void Integrate(float param_1);
 	void Reset();
 	bool IsFinished();
-	void BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, byte param_5);
+	void BuildFromAccelDistAmplitude(float amplitude, edF32VECTOR4* pGravity, edF32VECTOR4* pDisplacement, byte bUseDuration);
 
 	undefined4 field_0x0;
-	byte field_0x4;
+	byte bUseDuration;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
@@ -126,7 +126,7 @@ public:
 	undefined field_0x4e;
 	undefined field_0x4f;
 	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 instanceIndex;
+	edF32VECTOR4 field_0x60;
 	edF32VECTOR4 field_0x70;
 };
 

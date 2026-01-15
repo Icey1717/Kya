@@ -5,6 +5,7 @@
 #include "EventManager.h"
 #include "ActorBoomy.h"
 #include "ActorManager.h"
+#include "ActorJamGut.h"
 
 CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 
@@ -1030,14 +1031,15 @@ edF32VECTOR4* CActorHero::GetAdversaryPos()
 
 edF32VECTOR4* CActorHero::GetPosition_00369c80()
 {
-	CBehaviour* pCVar1;
+	CBehaviourRideJamGut* pBehaviourHeroRideJamGut;
+	CActorJamGut* pJamGut;
 
-	if (this->curBehaviourId == 8) {
-		IMPLEMENTATION_GUARD(
-		pCVar1 = CActor::GetBehaviour((CActor*)this, 8);
-		if (pCVar1[0x23].pVTable != (CBehaviourFighterVTable*)0x0) {
-			return (edF32VECTOR4*)&(pCVar1[0x23].pVTable)->End;
-		})
+	if (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+		pBehaviourHeroRideJamGut = (CBehaviourRideJamGut*)GetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT);
+		pJamGut = pBehaviourHeroRideJamGut->field_0x8c;
+		if (pJamGut != (CActorJamGut*)0x0) {
+			return &pJamGut->currentLocation;
+		}
 	}
 
 	return &this->currentLocation;
@@ -1827,4 +1829,256 @@ void CActorHero::InitBoomy()
 	}
 
 	return;
+}
+
+void CBehaviourRideJamGut::ManageInput()
+{
+	return;
+}
+
+void CBehaviourRideJamGut::SetState(int newState, int param_3)
+{
+	this->field_0x88->SetState(newState, -1);
+
+	return;
+}
+
+void CBehaviourRideJamGut::SetSpeedAnim(float speed)
+{
+	this->field_0x88->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(speed, 0);
+
+	return;
+}
+
+void CBehaviourRideJamGut::SetInvincible(float duration, int bAdd)
+{
+	return;
+}
+
+void CBehaviourRideJamGut::InitMount(CActorJamGut* pJamGut, uint boneId, int param_4, uint flags)
+{
+	CActorJamGut* pCVar1;
+
+	this->field_0x8c = pJamGut;
+	this->field_0x88->pCollisionData->actorFieldA = this->field_0x8c;
+	pCVar1 = this->field_0x8c;
+	pCVar1->flags = pCVar1->flags | 2;
+	pCVar1->flags = pCVar1->flags & 0xfffffffe;
+	pCVar1 = this->field_0x8c;
+	pCVar1->flags = pCVar1->flags | 0x80;
+	pCVar1->flags = pCVar1->flags & 0xffffffdf;
+	pCVar1->EvaluateDisplayState();
+	this->field_0x8c->pAnimationController->RegisterBone(boneId);
+	this->field_0x8c->pCollisionData->actorFieldA = this->field_0x88;
+	this->field_0x8c->dynamic.weightB = this->field_0x8c->dynamic.weightB + this->field_0x88->dynamic.weightB;
+	this->field_0x7c = 0;
+	this->field_0x84 = 0;
+	this->boneId = boneId;
+	this->behaviourId = param_4;
+	this->mountFlags = flags;
+}
+
+void CBehaviourRideJamGut::Create(ByteCode* pByteCode)
+{
+	int* pCVar1;
+	int iVar2;
+	int iVar3;
+
+	this->field_0x88 = (CActorJamGut*)0x0;
+	this->field_0x8c = (CActorJamGut*)0x0;
+	this->field_0x6c = 0;
+	this->field_0x70 = 0;
+	this->boneId = 1;
+	this->field_0x78 = 0;
+	this->behaviourId = -1;
+	this->mountFlags = 0xffffffff;
+	pCVar1 = this->aCommands;
+	iVar3 = 0;
+	do {
+		iVar2 = iVar3;
+		pCVar1[0] = 0;
+		pCVar1[1] = 0;
+		iVar3 = iVar2 + 6;
+		pCVar1[2] = 0;
+		pCVar1[3] = 0;
+		pCVar1[4] = 0;
+		pCVar1[5] = 0;
+		pCVar1 = pCVar1 + 6;
+	} while (iVar3 < 7);
+
+	this->aCommands[iVar2 + 6] = 0;
+	this->aCommands[iVar2 + 7] = 0;
+
+	this->inputAnalogDir.x = 0.0f;
+	this->inputAnalogDir.y = 0.0f;
+	this->inputAnalogDir.z = 0.0f;
+	this->inputAnalogDir.w = 0.0f;
+	this->inputMagnitude = 0.0f;
+
+	return;
+}
+
+void CBehaviourRideJamGut::Manage()
+{
+	return;
+}
+
+void CBehaviourRideJamGut::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	int* pCVar1;
+	int iVar2;
+	int iVar3;
+	CCollision* pCol;
+	CActorAutonomous* pActor;
+
+	this->field_0x88 = (CActorAutonomous*)0x0;
+	this->field_0x8c = (CActorJamGut*)0x0;
+	this->field_0x6c = 0;
+	this->field_0x70 = 0;
+	this->boneId = 1;
+	this->field_0x78 = 0;
+	this->behaviourId = -1;
+	this->mountFlags = 0xffffffff;
+	pCVar1 = this->aCommands;
+	iVar3 = 0;
+	do {
+		iVar2 = iVar3;
+		pCVar1[0] = 0;
+		pCVar1[1] = 0;
+		iVar3 = iVar2 + 6;
+		pCVar1[2] = 0;
+		pCVar1[3] = 0;
+		pCVar1[4] = 0;
+		pCVar1[5] = 0;
+		pCVar1 = pCVar1 + 6;
+	} while (iVar3 < 7);
+
+	this->aCommands[iVar2 + 6] = 0;
+	this->aCommands[iVar2 + 7] = 0;
+
+	this->inputAnalogDir.x = 0.0f;
+	this->inputAnalogDir.y = 0.0f;
+	this->inputAnalogDir.z = 0.0f;
+	this->inputAnalogDir.w = 0.0f;
+	this->inputMagnitude = 0.0f;
+
+	this->field_0x88 = static_cast<CActorAutonomous*>(pOwner);
+	pCol = this->field_0x88->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 & 0xfffffffc;
+	this->field_0x88->dynamic.speed = 0.0f;
+	pActor = this->field_0x88;
+	pActor->dynamicExt.normalizedTranslation.x = 0.0f;
+	pActor->dynamicExt.normalizedTranslation.y = 0.0f;
+	pActor->dynamicExt.normalizedTranslation.z = 0.0f;
+	pActor->dynamicExt.normalizedTranslation.w = 0.0f;
+	pActor->dynamicExt.field_0x6c = 0.0f;
+	pActor = this->field_0x88;
+	if (pActor->pTiedActor != (CActor*)0x0) {
+		pActor->TieToActor((CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+	}
+
+	if (newState == -1) {
+		this->field_0x88->SetState(0, -1);
+	}
+	else {
+		this->field_0x88->SetState(newState, newAnimationType);
+	}
+
+	return;
+
+}
+
+void CBehaviourRideJamGut::End(int newBehaviourId)
+{
+	CActorAutonomous* pActor;
+	CCollision* pCol;
+	CActorJamGut* pJamGut;
+
+	this->field_0x8c->dynamic.weightB = this->field_0x8c->dynamic.weightB - this->field_0x88->dynamic.weightB;
+	this->field_0x8c->flags = this->field_0x8c->flags & 0xfffffffc;
+	pJamGut = this->field_0x8c;
+	pJamGut->flags = pJamGut->flags & 0xffffff5f;
+	pJamGut->EvaluateDisplayState();
+	this->field_0x8c->pAnimationController->UnRegisterBone(this->boneId);
+	this->field_0x8c->pCollisionData->actorFieldA = (CActor*)0x0;
+	pCol = this->field_0x8c->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 | 0x2000;
+	pCol = this->field_0x88->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 | 3;
+	pCol = this->field_0x88->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 & 0xffffbfff;
+	this->field_0x88->pCollisionData->actorFieldA = (CActor*)0x0;
+	if (this->field_0x84 == 0) {
+		this->field_0x88->DoMessage(this->field_0x8c, (ACTOR_MESSAGE)0x44, 0);
+	}
+	else {
+		this->field_0x84 = 0;
+	}
+
+	pActor = this->field_0x88;
+	pActor->dynamic.field_0x10 = this->field_0x10;
+
+	this->field_0x88 = (CActorAutonomous*)0x0;
+	this->field_0x8c = (CActorJamGut*)0x0;
+
+	return;
+}
+
+void CBehaviourRideJamGut::InitState(int newState)
+{
+	return;
+}
+
+void CBehaviourRideJamGut::TermState(int oldState, int newState)
+{
+	return;
+}
+
+int CBehaviourRideJamGut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int result;
+
+	if (msg == 2) {
+		result = 1;
+	}
+	else {
+		result = 1;
+		if (msg != 1) {
+			if (msg == 0x3f) {
+				result = 2;
+			}
+			else {
+				if (msg == 0x44) {
+					this->field_0x84 = 1;
+					this->field_0x88->SetBehaviour(this->behaviourId, this->mountFlags, -1);
+					result = 1;
+				}
+				else {
+					if (msg == 3) {
+						result = this->field_0x78 != 0;
+					}
+					else {
+						if (msg != 0x16) {
+							result = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+	return result;
+}
+
+int CBehaviourRideJamGut::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	int result;
+
+	if (*param_5 == 1) {
+		result = this->field_0x78 != 0;
+	}
+	else {
+		result = 0;
+	}
+
+	return result;
 }

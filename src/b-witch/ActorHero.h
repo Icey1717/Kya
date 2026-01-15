@@ -103,6 +103,12 @@
 #define STATE_HERO_BOUNCE_SOMERSAULT_1 0xcf
 #define STATE_HERO_BOUNCE_SOMERSAULT_2 0xd0
 
+#define STATE_HERO_BOOMY_SNIPE_PREPARE 0xd2
+#define STATE_HERO_BOOMY_SNIPE_STAND 0xd3
+#define STATE_HERO_BOOMY_SNIPE_LAUNCH 0xd4
+#define STATE_HERO_BOOMY_SNIPE_BACK_2_STAND 0xd5
+#define STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH 0xd6
+
 #define STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW 0xdc
 #define STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW 0xdd
 #define STATE_HERO_BOOMY_RETURN_FIGHT_BLOW 0xde
@@ -179,12 +185,17 @@
 
 #define STATE_HERO_LOOK_INTERNAL 0x11a
 
+#define STATE_HERO_GET_ON_MOUNT 0x11c
+
 #define HERO_BEHAVIOUR_DEFAULT 0x7
+#define HERO_BEHAVIOUR_RIDE_JAMGUT 0x8
 
 struct CPlayerInput;
 class CActorBoomy;
 class CCamera;
 class CActorNativ;
+class CActorJamGut;
+class CActorAutonomous;
 
 struct _msg_enter_shop
 {
@@ -225,6 +236,42 @@ struct _evt_checkpoint_param
 	int sectorId;
 	CWayPoint* pWayPointB;
 	int flags;
+};
+
+class CBehaviourRideJamGut : public CBehaviour
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
+
+	virtual void ManageInput();
+	virtual void SetState(int newState, int param_3);
+	virtual void SetSpeedAnim(float speed);
+	virtual void SetInvincible(float duration, int bAdd);
+	virtual void InitMount(CActorJamGut* pJamGut, uint boneId, int param_4, uint flags);
+
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 inputAnalogDir;
+	float inputMagnitude;
+	int aCommands[13];
+	int field_0x38;
+	undefined4 field_0x6c;
+	undefined4 field_0x70;
+	uint boneId;
+	undefined4 field_0x78;
+	int field_0x7c;
+	undefined4 field_0x84;
+	CActorAutonomous* field_0x88;
+	CActorJamGut* field_0x8c;
+	int behaviourId;
+	uint mountFlags;
 };
 
 class CActorHero : public CActorFighter
@@ -269,6 +316,9 @@ public:
 
 	int bFacingControlDirection;
 	CActor* field_0xf14;
+	float mountRotationSpeed;
+	edF32VECTOR4 mountActorLocation;
+	CVectorDyn mountDyn;
 	int field_0xff4;
 	int animIdleSequenceIndex;
 	float effort;

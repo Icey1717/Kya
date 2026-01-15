@@ -1886,7 +1886,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		break;
 	case ATON_ESCAPE_STATE_PATH_VERT_WIND_TO_JUMP_2_2:
 		this->vectorDyn.Integrate(GetTimer()->cutsceneDeltaTime);
-		this->dynamic.speed = edF32Vector4NormalizeHard(&eStack544, &(this->vectorDyn).instanceIndex);
+		this->dynamic.speed = edF32Vector4NormalizeHard(&eStack544, &(this->vectorDyn).field_0x60);
 		this->dynamic.rotationQuat = eStack544;
 
 		ManageDyn(4.0f, 9, (CActorsTable*)0x0);
@@ -2772,7 +2772,7 @@ void CActorAton::StateAtonPathJump_2_4()
 	SV_UpdateOrientation(3.141593f, &eStack16);
 	pTVar3 = GetTimer();
 	this->vectorDyn.Integrate(pTVar3->cutsceneDeltaTime);
-	fVar4 = edF32Vector4NormalizeHard(&local_20, &(this->vectorDyn).instanceIndex);
+	fVar4 = edF32Vector4NormalizeHard(&local_20, &(this->vectorDyn).field_0x60);
 	this->dynamic.rotationQuat = local_20;
 	this->dynamic.speed = fVar4;
 
@@ -2810,7 +2810,7 @@ void CActorAton::StateAtonPathJump_3_4()
 	if (bVar3 == false) {
 		pTVar4 = GetTimer();
 		this->vectorDyn.Integrate(pTVar4->cutsceneDeltaTime);
-		fVar7 = edF32Vector4NormalizeHard(&local_10, &(this->vectorDyn).instanceIndex);
+		fVar7 = edF32Vector4NormalizeHard(&local_10, &(this->vectorDyn).field_0x60);
 		this->dynamic.rotationQuat = local_10;
 		this->dynamic.speed = fVar7;
 

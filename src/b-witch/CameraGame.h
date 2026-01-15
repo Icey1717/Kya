@@ -4,6 +4,7 @@
 #include "CameraViewManager.h"
 #include "Dynamic.h"
 
+class CActorAutonomous;
 class CActorHeroPrivate;
 class CCamFigData;
 
@@ -75,7 +76,7 @@ struct CCameraGame : public CCameraExt
 	float field_0x1e0;
 	float field_0x1e4;
 	float angleBeta_0x1e8;
-	CActorHeroPrivate* field_0x1ec;
+	CActorAutonomous* field_0x1ec;
 	edF32VECTOR4 gameLookAt;
 	float targetPitch;
 	float field_0x204;
