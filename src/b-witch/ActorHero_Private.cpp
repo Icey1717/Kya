@@ -2447,8 +2447,7 @@ void CActorHeroPrivate::CheckpointReset()
 				CScene::ptable.g_SectorManager_00451670->SwitchToSector(this->lastCheckPointSector, false);
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				CLevelScheduler::gThis->ResetSector(this, this->field_0xea0, CScene::_pinstance->field_0x10c);)
+				CLevelScheduler::gThis->ResetSector(this, this->field_0xea0, CScene::_pinstance->field_0x10c);
 			}
 		}
 		else {
@@ -3014,7 +3013,7 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 	if (behaviourId == 8) {
 		IMPLEMENTATION_GUARD(
 		pCVar1 = GetBehaviour((int)this->aComponents);
-		(*(code*)pCVar1->pVTable[1].Init)(pCVar1, pOtherActor, *(undefined4*)&this->field_0x15a0, 7, 0x11d);
+		(*(code*)pCVar1->pVTable[1].Init)(pCVar1, pOtherActor, *(undefined4*)&this->field_0x15a0, 7, STATE_HERO_GET_OFF_MOUNT);
 		(*((this->pVTable)->actorBase).SetState)(this, 0x11e, -1);)
 	}
 	IMPLEMENTATION_GUARD_LOG(
@@ -3098,6 +3097,11 @@ bool CActorHeroPrivate::IsMakingNoise()
 	}
 
 	return uVar2;
+}
+
+int CActorHeroPrivate::GetNumVisualDetectionPoints()
+{
+	return 2;
 }
 
 void CActorHeroPrivate::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
@@ -4622,7 +4626,7 @@ int CActorHeroPrivate::StateEvaluate()
 						fVar10 = 0.0f;
 					}
 					else {
-						fVar10 = pIVar1->aButtons[5].clickValue;
+						fVar10 = pIVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 					}
 
 					iVar4 = STATE_HERO_CROUCH_A;
@@ -4638,7 +4642,7 @@ int CActorHeroPrivate::StateEvaluate()
 								fVar10 = 0.0f;
 							}
 							else {
-								fVar10 = pIVar1->aButtons[5].clickValue;
+								fVar10 = pIVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 							}
 
 							iVar4 = STATE_HERO_CROUCH_WALK_A;
@@ -5561,6 +5565,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_2_3_RUN:
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
 	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
+	case STATE_HERO_GET_OFF_MOUNT:
 		StateHeroJump_2_3Init();
 			break;
 	case STATE_HERO_FALL_BOUNCE_2_2:
@@ -5854,6 +5859,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_JUMP_2_3_GRIP:
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
 	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
+	case STATE_HERO_GET_OFF_MOUNT:
 		StateHeroJump_2_3Term();
 		break;
 	case STATE_HERO_FALL_BOUNCE_2_2:
@@ -6623,6 +6629,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_GET_ON_MOUNT:
 		StateHeroGetOnMount();
 		break;
+	case STATE_HERO_GET_OFF_MOUNT:
+		StateHeroJump_2_3(1, 1, 1);
+		break;
 	default:
 		assert(false);
 		break;
@@ -6867,7 +6876,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 							fVar14 = 0.0f;
 						}
 						else {
-							fVar14 = pInput->aButtons[5].clickValue;
+							fVar14 = pInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 						}
 
 						if (fVar14 == 0.0f) {							
@@ -8268,8 +8277,8 @@ void CActorHeroPrivate::StateHeroGetOnMountInit()
 		}
 	}
 
-	amplitude = acosf(puVar3);
-	this->mountRotationSpeed = amplitude / this->mountDyn.field_0xc;
+	const float angle = acosf(puVar3);
+	this->mountRotationSpeed = angle / this->mountDyn.field_0xc;
 	this->pCollisionData->actorFieldA = this->pMountActor;
 	(this->pMountActor)->pCollisionData->actorFieldA = this;
 	this->field_0x100c = 0;
@@ -8321,8 +8330,9 @@ void CActorHeroPrivate::StateHeroGetOnMount()
 
 	this->mountDyn.Integrate(GetTimer()->cutsceneDeltaTime);
 	edF32Vector4AddHard(&relativeVelocity, &relativeVelocity, &this->mountDyn.field_0x60);
+	const float newSpeed = edF32Vector4NormalizeHard(&relativeVelocity, &relativeVelocity);
 	this->dynamic.rotationQuat = relativeVelocity;
-	this->dynamic.speed = edF32Vector4NormalizeHard(&relativeVelocity, &relativeVelocity);
+	this->dynamic.speed = newSpeed;
 
 	ManageDyn(4.0f, 9, (CActorsTable*)0x0);
 
@@ -8337,7 +8347,7 @@ void CActorHeroPrivate::StateHeroGetOnMount()
 			SetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT, 0xffffffff, 0xffffffff);
 
 			pHeroRideBehaviour = static_cast<CBehaviourHeroRideJamGut*>(GetBehaviour(this->curBehaviourId));
-			pHeroRideBehaviour->InitMount(pJamGut, this->mountBoneId, 7, 0x11d);
+			pHeroRideBehaviour->InitMount(pJamGut, this->mountBoneId, 7, STATE_HERO_GET_OFF_MOUNT);
 		}
 	}
 
@@ -8589,7 +8599,7 @@ void CActorHeroPrivate::StateHeroRun()
 			fVar12 = 0.0f;
 		}
 		else {
-			fVar12 = pInput->aButtons[5].clickValue;
+			fVar12 = pInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar12 == 0.0f) {
@@ -8829,7 +8839,7 @@ void CActorHeroPrivate::StateHeroRun_B()
 			fVar7 = 0.0f;
 		}
 		else {
-			fVar7 = pCVar2->aButtons[5].clickValue;
+			fVar7 = pCVar2->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar7 == 0.0f) {
@@ -8942,7 +8952,7 @@ void CActorHeroPrivate::StateHeroJoke()
 			fVar6 = 0.0f;
 		}
 		else {
-			fVar6 = pCVar1->aButtons[5].clickValue;
+			fVar6 = pCVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar6 != 0.0f) {
@@ -9149,7 +9159,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 									fVar11 = 0.0f;
 								}
 								else {
-									fVar11 = pCVar2->aButtons[5].clickValue;
+									fVar11 = pCVar2->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 								}
 								if (fVar11 == 0.0f) {
 									if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
@@ -9717,7 +9727,7 @@ void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
 			fVar6 = 0.0f;
 		}
 		else {
-			fVar6 = pCVar3->aButtons[5].clickValue;
+			fVar6 = pCVar3->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 		if (fVar6 == 0.0) {
 			local_10.x = this->currentLocation.x;
@@ -9830,7 +9840,7 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 			fVar10 = 0.0f;
 		}
 		else {
-			fVar10 = pCVar4->aButtons[5].clickValue;
+			fVar10 = pCVar4->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar10 == 0.0f) {
@@ -10063,7 +10073,7 @@ void CActorHeroPrivate::StateHeroCrouchWalk()
 		fVar6 = 0.0f;
 	}
 	else {
-		fVar6 = pCVar1->aButtons[5].clickValue;
+		fVar6 = pCVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 	}
 
 	if (fVar6 == 0.0f) {
@@ -10265,7 +10275,7 @@ void CActorHeroPrivate::StateHeroRoll()
 				fVar8 = 0.0;
 			}
 			else {
-				fVar8 = pCVar3->aButtons[5].clickValue;
+				fVar8 = pCVar3->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 			}
 
 			if (fVar8 == 0.0f) {
@@ -10470,7 +10480,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 			fVar8 = 0.0f;
 		}
 		else {
-			fVar8 = pCVar3->aButtons[5].clickValue;
+			fVar8 = pCVar3->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar8 == 0.0f) {
@@ -10770,7 +10780,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 			fVar9 = 0.0f;
 		}
 		else {
-			fVar9 = pCVar1->aButtons[5].clickValue;
+			fVar9 = pCVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		}
 
 		if (fVar9 == 0.0f) {
@@ -11077,7 +11087,7 @@ void CActorHeroPrivate::StateHeroJump_2_3Init()
 void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int param_4)
 {
 	CCollision* pCVar1;
-	CPlayerInput* pCVar2;
+	CPlayerInput* pInput;
 	CActor* pCVar3;
 	bool bVar4;
 	uint jumpPressed;
@@ -11098,12 +11108,12 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 
 	IncreaseEffort(2.0f);
 
-	pCVar2 = this->pPlayerInput;
-	if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 		jumpPressed = 0;
 	}
 	else {
-		jumpPressed = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
+		jumpPressed = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (jumpPressed != 0) {
@@ -11112,21 +11122,21 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 	}
 
 	if ((this->jmp_field_0x1144 != 0) && (3.0 < this->scalarDynJump.field_0x20)) {
-		pCVar2 = this->pPlayerInput;
-		if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		pInput = this->pPlayerInput;
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 			fVar8 = 1000000.0f;
 		}
 		else {
-			fVar8 = pCVar2->aButtons[4].releasedDuration;
+			fVar8 = pInput->aButtons[4].releasedDuration;
 		}
 
 		IMPLEMENTATION_GUARD(
 		if (fVar8 < this->field_0x115c) {
-			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				fVar8 = 0.0;
 			}
 			else {
-				fVar8 = pCVar2->aButtons[4].clickValue;
+				fVar8 = pInput->aButtons[4].clickValue;
 			}
 			if (fVar8 == 0.0) {
 				this->field_0x1170 = 2.0;
@@ -11160,7 +11170,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 	}
 
 	if (this->heroActionParams.actionId == 0xd) {
-		IMPLEMENTATION_GUARD(
+		// Jump directly on to jamgut.
 		if (param_4 == 0) {
 			AccomplishAction(0);
 			return;
@@ -11173,20 +11183,22 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 				AccomplishAction(0);
 				return;
 			}
-			edF32Vector4SubHard(&eStack32, &pCVar3->currentLocation,
-				&this->currentLocation);
-			eStack32.y = 0.0;
+
+			edF32Vector4SubHard(&eStack32, &pCVar3->currentLocation, &this->currentLocation);
+			eStack32.y = 0.0f;
 			edF32Vector4SafeNormalize0Hard(&eStack32, &eStack32);
-			pCVar2 = this->pPlayerInput;
-			if ((pCVar2 == (CPlayerInput*)0x0) || (v1 = &pCVar2->lAnalogStick, this->field_0x18dc != 0)) {
+
+			pInput = this->pPlayerInput;
+			if ((pInput == (CPlayerInput*)0x0) || (v1 = &pInput->lAnalogStick, this->field_0x18dc != 0)) {
 				v1 = &gF32Vector4Zero;
 			}
+
 			fVar8 = edF32Vector4DotProductHard(&eStack32, v1);
-			if (-0.5 <= fVar8) {
+			if (-0.5f <= fVar8) {
 				AccomplishAction(0);
 				return;
 			}
-		})
+		}
 	}
 
 	if ((((this->field_0xf54 == (CActor*)0x0) || (param_4 == 0)) || (-1.0f <= this->dynamic.linearAcceleration *
@@ -11272,12 +11284,12 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 				this->pBounceOnActor = 0;
 			}
 
-			pCVar2 = this->pPlayerInput;
-			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			pInput = this->pPlayerInput;
+			if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				fVar8 = 0.0f;
 			}
 			else {
-				fVar8 = pCVar2->aButtons[5].clickValue;
+				fVar8 = pInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 			}
 			if ((fVar8 == 0.0f) || (this->field_0x1a4c != 0)) {
 				if (2.0f < this->dynamic.horizontalLinearAcceleration) {
@@ -11289,12 +11301,13 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 				}
 			}
 			else {
-				if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 					fVar8 = 0.0f;
 				}
 				else {
-					fVar8 = pCVar2->aAnalogSticks[PAD_STICK_LEFT].magnitude;
+					fVar8 = pInput->aAnalogSticks[PAD_STICK_LEFT].magnitude;
 				}
+
 				if (0.9f < fVar8) {
 					SetState(0x89, 0xffffffff);
 				}
@@ -11308,9 +11321,9 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		this->pMountActor = this->field_0xf54;
 		this->heroActionParams.actionId = 0xd;
 
-		IMPLEMENTATION_GUARD(
-		AccomplishAction(0);)
+		AccomplishAction(0);
 	}
+
 	return;
 }
 
@@ -11464,7 +11477,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 								fVar11 = 0.0f;
 							}
 							else {
-								fVar11 = pCVar3->aButtons[5].clickValue;
+								fVar11 = pCVar3->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 							}
 							if (fVar11 == 0.0f) {
 								if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -15415,7 +15428,6 @@ void CActorHeroPrivate::PlaySoccer()
 
 void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
 {
-	Timer* pTVar4;
 	StateConfig* pAVar5;
 	uint uVar6;
 	int iVar7;
@@ -15435,29 +15447,31 @@ void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		if (pActorsTable == (CActorsTable*)0x0) {
 			pActorsTable = &local_110;
 		}
+
 		CActorAutonomous::ManageDyn(param_1, flags, pActorsTable);
+
 		iVar7 = 0;
 		if (0 < pActorsTable->nbEntries) {
 			do {
-				IMPLEMENTATION_GUARD()
 				if (pActorsTable->aEntries[iVar7] == this->field_0xf54) {
 					bVar2 = true;
 					break;
 				}
+
 				iVar7 = iVar7 + 1;
 			} while (iVar7 < pActorsTable->nbEntries);
 		}
+
 		if (!bVar2) {
-			IMPLEMENTATION_GUARD(
-			puVar1 = *(uint**)(this->field_0xf54 + 0x2c);
-			*puVar1 = *puVar1 & 0xffffdfff;
-			iVar7 = (int)this->data.pCollisionData;
-			*(uint*)iVar7 = *(uint*)iVar7 | 0x4000;
-			this->field_0xf54 = 0;)
+			CCollision* pCVar1 = this->field_0xf54->pCollisionData;
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffdfff;
+			pCVar1 = this->pCollisionData;
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x4000;
+			this->field_0xf54 = (CActor*)0x0;
 		}
 	}
-	pTVar4 = GetTimer();
-	fVar8 = powf(0.9f, pTVar4->cutsceneDeltaTime * 50.0f);
+
+	fVar8 = powf(0.9f, GetTimer()->cutsceneDeltaTime * 50.0f);
 	fVar9 = 1.0f;
 	if ((fVar8 <= 1.0f) && (fVar9 = fVar8, fVar8 < 0.0f)) {
 		fVar9 = 0.0f;
@@ -15717,12 +15731,11 @@ void CActorHeroPrivate::ProcessDeath()
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					pTVar6 = Timer::GetTimer();
 					this->field_0x155c = pTVar6->scaledTotalTime;
 					this->field_0x1560 = 0;
 					this->field_0x2e4 = 0.0f;
-					ActorTimeFunc_00325c40(20.0f, 0);
+					FUN_00325c40(20.0f, 0);
 
 					iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
 					GetLifeInterface()->SetValue(iVar4);
@@ -15748,7 +15761,7 @@ void CActorHeroPrivate::ProcessDeath()
 					else {
 						this->field_0xcc0 = 1;
 						CScene::_pinstance->InitiateCheckpointReset(1);
-					})
+					}
 				}
 			}
 			else {
@@ -15914,55 +15927,54 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 	ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::AnimEvaluate layerId: {} newAnim: 0x{:x}", layerId, newAnim);
 
 	if (((newAnim == 0x19f) || (newAnim == 0x19e)) || (newAnim == 0x191)) {
-		IMPLEMENTATION_GUARD(
-		local_c = ((edAnmMacroBlendN*)&pAnimator->pAnimKeyTableEntry)->field_0x0;
-		peVar2 = (edANM_HDR*)(*(int*)((int)local_c + 8) * 4 + (int)local_c);
-		if (this->curBehaviourId == 8) {
-			pCVar3 = GetBehaviour(this->curBehaviourId);
+		edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
+		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+
+		if (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+			CBehaviourHeroRideJamGut* pRideBehaviour = static_cast<CBehaviourHeroRideJamGut*>(GetBehaviour(this->curBehaviourId));
+
 			if ((newAnim == 0x19f) || (newAnim == 0x19e)) {
-				*(CBehaviourVtable**)((int)((edANM_HDR*)(*(int*)((int)local_c + 8) * 4 + (int)local_c) + 1) + 4) =
-					pCVar3[0x2c].pVTable;
-				peVar2 = (edANM_HDR*)(*(int*)((int)local_c + 8) * 4 + (int)local_c);
-				peVar2[1].flags = (uint)(1.0 - *(float*)((int)(peVar2 + 1) + 4));
+				float blendValue = pRideBehaviour->field_0xb0;
+				pValue->field_0xc_array[1] = blendValue;
+				pValue->field_0xc_array[0] = 1.0f - pValue->field_0xc_array[1];
 			}
-			else {
-				if (newAnim == 0x191) {
-					pCVar9 = pCVar3[0x1b].pVTable;
-					if (0.0 <= (float)pCVar9) {
-						pCVar10 = pCVar3[0x1c].pVTable;
-						if (0.0 <= (float)pCVar10) {
-							CActor::SV_Blend4AnimationsWith2Ratios((float)pCVar10, (float)pCVar9, &local_c, 4, 5, 7, 8);
-							peVar2[2].flags = 0;
-							peVar2[3].flags = 0;
-						}
-						else {
-							CActor::SV_Blend4AnimationsWith2Ratios(-(float)pCVar10, (float)pCVar9, &local_c, 4, 3, 7, 6);
-							*(int*)((int)(peVar2 + 2) + 8) = 0;
-							*(int*)((int)(peVar2 + 3) + 8) = 0;
-						}
-						peVar2[1].flags = 0;
-						*(int*)((int)(peVar2 + 1) + 4) = 0;
-						*(int*)((int)(peVar2 + 1) + 8) = 0;
+			else if (newAnim == 0x191) {
+				float forwardBackRatio = pRideBehaviour->field_0x6c;
+				float leftRightRatio = pRideBehaviour->field_0x70;
+
+				if (0.0f <= forwardBackRatio) {
+					if (0.0f <= leftRightRatio) {
+						CActor::SV_Blend4AnimationsWith2Ratios(leftRightRatio, forwardBackRatio, &macroBlendN, 4, 5, 7, 8);
+						pValue->field_0xc_array[3] = 0.0f;
+						pValue->field_0xc_array[6] = 0.0f;
 					}
 					else {
-						pCVar10 = pCVar3[0x1c].pVTable;
-						if (0.0 <= (float)pCVar10) {
-							CActor::SV_Blend4AnimationsWith2Ratios((float)pCVar10, -(float)pCVar9, &local_c, 4, 5, 1, 2);
-							peVar2[1].flags = 0;
-							peVar2[2].flags = 0;
-						}
-						else {
-							CActor::SV_Blend4AnimationsWith2Ratios(-(float)pCVar10, -(float)pCVar9, &local_c, 4, 3, 1, 0);
-							*(int*)((int)(peVar2 + 1) + 8) = 0;
-							*(int*)((int)(peVar2 + 2) + 8) = 0;
-						}
-						peVar2[3].flags = 0;
-						*(int*)((int)(peVar2 + 3) + 4) = 0;
-						*(int*)((int)(peVar2 + 3) + 8) = 0;
+						CActor::SV_Blend4AnimationsWith2Ratios(-leftRightRatio, forwardBackRatio, &macroBlendN, 4, 3, 7, 6);
+						pValue->field_0xc_array[5] = 0.0f;
+						pValue->field_0xc_array[6] = 0.0f;
 					}
+					pValue->field_0xc_array[0] = 0.0f;
+					pValue->field_0xc_array[1] = 0.0f;
+					pValue->field_0xc_array[2] = 0.0f;
+				}
+				else {
+					if (0.0f <= leftRightRatio) {
+						CActor::SV_Blend4AnimationsWith2Ratios(leftRightRatio, -forwardBackRatio, &macroBlendN, 4, 5, 1, 2);
+						pValue->field_0xc_array[0] = 0.0f;
+						pValue->field_0xc_array[3] = 0.0f;
+					}
+					else {
+						CActor::SV_Blend4AnimationsWith2Ratios(-leftRightRatio, -forwardBackRatio, &macroBlendN, 4, 3, 1, 0);
+						pValue->field_0xc_array[2] = 0.0f;
+						pValue->field_0xc_array[5] = 0.0f;
+					}
+					pValue->field_0xc_array[6] = 0.0f;
+					pValue->field_0xc_array[7] = 0.0f;
+					pValue->field_0xc_array[8] = 0.0f;
 				}
 			}
-		})
+		}
 	}
 	else {
 		if ((newAnim == 0xe1) || (newAnim == 0xd7)) {
@@ -16166,13 +16178,14 @@ void CBehaviourHeroDefault::Manage()
 void CBehaviourHeroDefault::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	CActorHeroPrivate* pCVar1;
+	CActor* pCVar2;
 	float fVar2;
-	float in_f0;
 	float fVar3;
 	edF32VECTOR4 local_10;
 
 	this->pHero = reinterpret_cast<CActorHeroPrivate*>(pOwner);
 	pCVar1 = this->pHero;
+
 	if ((pCVar1->flags & 0x1000) == 0) {
 		pCVar1->rotationEuler.z = 0.0f;
 		pCVar1->rotationEuler.x = 0.0f;
@@ -16182,36 +16195,32 @@ void CBehaviourHeroDefault::Begin(CActor* pOwner, int newState, int newAnimation
 		edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
 
 		pCVar1->rotationQuat = local_10;
-		in_f0 = local_10.w;
 	}
+
 	if (newState == -1) {
 		this->pHero->StateEvaluate();
 	}
 	else {
-		if (((newState - 0x78U < 2) || (newState - 0x7bU < 2)) || (newState == 0x11d)) {
-			IMPLEMENTATION_GUARD(
-			if (newState == 0x11d) {
+		if (((newState - 0x78U < 2) || (newState - 0x7bU < 2)) || (newState == STATE_HERO_GET_OFF_MOUNT)) {
+			if (newState == STATE_HERO_GET_OFF_MOUNT) {
 				pCVar1 = this->pHero;
-				fVar2 = *(float*)&(pCVar1->base).field_0xf54;
-				fVar3 = (pCVar1->base).field_0x1154;
-				if (fVar2 != 0.0) {
-					in_f0 = 4.0;
-					fVar3 = 4.0 - (*(float*)((int)&pCVar1->currentLocation + 4) -
-						*(float*)((int)fVar2 + 0x34));
+				pCVar2 = pCVar1->field_0xf54;
+				fVar3 = pCVar1->field_0x1154;
+				if (pCVar2 != (CActor*)0x0) {
+					fVar3 = 4.0f - pCVar1->currentLocation.y - pCVar2->currentLocation.y;
 				}
-				(**(GetAnimForState**)((int)((pCVar1->base).base.pVTable + 1) + 0x54))
-					((CActor*)pCVar1, (int)pOwner);
-				ActorFloatFunc_00147a70
-				(0.1, in_f0, *(float*)&(pCVar1->base).field_0x1158, (pCVar1->base).field_0x1150, fVar3, (Actor*)pCVar1, 1,
-					(edF32VECTOR4*)0x0);
+
+				float horizonalSpeed = pCVar1->GetRunSpeed();
+
+				pCVar1->SetJumpCfg(0.1f, horizonalSpeed, pCVar1->field_0x1158, pCVar1->field_0x1150, fVar3, 1, (edF32VECTOR4*)0x0);
 			}
 			else {
 				pCVar1 = this->pHero;
-				(**(GetAnimForState**)((int)((pCVar1->base).base.pVTable + 1) + 0x54))
-					((CActor*)pCVar1, (int)pOwner);
-				ActorFunc_001479b0(in_f0, pCVar1);
-			})
+				float speed = pCVar1->GetRunSpeed();
+				pCVar1->SetJumpCfgFromGround(speed);
+			}
 		}
+
 		this->pHero->SetState(newState, newAnimationType);
 	}
 	return;

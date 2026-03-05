@@ -2223,20 +2223,22 @@ DisplayListSTFunc gTableAddSTFUNC_3D[13] =
 void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 {
 	edpkt_data* pRVar1;
-	int iVar2;
-	edpkt_data* pcVar3;
-	DisplayList* pDVar4;
+	int cachedNbStateAdded;
+	void* pCachedDListBuf;
+	DisplayList* pDisplayList;
 	uint uVar5;
-	DisplayListCommand* pDVar6;
+	DisplayListCommand* pCommand;
 
-	pcVar3 = (edpkt_data*)gCurDListBuf;
-	iVar2 = gNbStateAdded;
-	if (((gCurDList->flags_0x0 & 0x100) != 0) &&
-		(pDVar4 = gCurDListHandle + gCurFlushState, gCurDList != pDVar4)) {
-		gCurDListBuf = (ed_3d_strip*)pDVar4->field_0x10;
-		gCurDList = pDVar4;
+	pCachedDListBuf = gCurDListBuf;
+	cachedNbStateAdded = gNbStateAdded;
+
+	if (((gCurDList->flags_0x0 & 0x100) != 0) && (pDisplayList = gCurDListHandle + gCurFlushState, gCurDList != pDisplayList)) {
+		gCurDListBuf = pDisplayList->field_0x10;
+		gCurDList = pDisplayList;
+
 		edDListBegin(x, y, z, primType, nbVertex);
 		gCurDList->field_0x10 = (edpkt_data*)gCurDListBuf;
+
 		gbInsideBegin = false;
 		gCurDList = gCurDListHandle + gCurRenderState;
 	}
@@ -2245,21 +2247,21 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 	gCurPrimType = uVar5 & 0xff;
 	gNbAddedVertex = 0;
 	gNbDMAVertex = 0;
-	gNbStateAdded = iVar2;
-	gCurDListBuf = (ed_3d_strip*)pcVar3;
+	gNbStateAdded = cachedNbStateAdded;
+	gCurDListBuf = pCachedDListBuf;
 	gMaxNbVertex = nbVertex;
 	if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) == 0) {
-		if (iVar2 != 0) {
+		if (cachedNbStateAdded != 0) {
 			pRVar1 = gCurDList->pRenderCommands;
-			pRVar1[-(iVar2 + 1)].cmdA = SCE_GIF_SET_TAG(
-				iVar2,			// NLOOP
+			pRVar1[-(cachedNbStateAdded + 1)].cmdA = SCE_GIF_SET_TAG(
+				cachedNbStateAdded,			// NLOOP
 				SCE_GS_TRUE,	// EOP
 				SCE_GS_FALSE,	// PRE
 				0,				// PRIM
 				SCE_GIF_PACKED,	// FLG
 				1				// NREG
 			);
-			pRVar1[-(iVar2 + 1)].cmdB = SCE_GIF_PACKED_AD;
+			pRVar1[-(cachedNbStateAdded + 1)].cmdB = SCE_GIF_PACKED_AD;
 			gNbStateAdded = 0;
 		}
 		switch ((int)(primType & 0xff)) {
@@ -2293,15 +2295,15 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 		IMPLEMENTATION_GUARD(edDListSubDivBegin();)
 	}
 
-	pDVar6 = gCurDList->aCommands + gCurDList->nbCommands;
+	pCommand = gCurDList->aCommands + gCurDList->nbCommands;
 
 	if (gNbMatrixInArray < 1) {
-		pDVar6->nbMatrix = 0;
-		pDVar6->pCurMatrixArray = (edF32MATRIX4*)0x0;
+		pCommand->nbMatrix = 0;
+		pCommand->pCurMatrixArray = (edF32MATRIX4*)0x0;
 	}
 	else {
-		pDVar6->pCurMatrixArray = gCurMatrixArray;
-		pDVar6->nbMatrix = gNbMatrixInArray;
+		pCommand->pCurMatrixArray = gCurMatrixArray;
+		pCommand->nbMatrix = gNbMatrixInArray;
 		gCurMatrixArray = (edF32MATRIX4*)0x0;
 		gNbMatrixInArray = 0;
 	}
@@ -2328,8 +2330,7 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 			break;
 		case 10:
 			nbVertex = nbVertex + 1;
-			IMPLEMENTATION_GUARD(
-				gMaxNbVertex = gMaxNbVertex + 1;)
+			gMaxNbVertex = gMaxNbVertex + 1;
 		case 1:
 			edDListBeginStrip(x, y, z, nbVertex, 2);
 	}
@@ -2969,6 +2970,19 @@ void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 	}
 
 	memcpy(pNewStrip + 1, pStrip + 1, pNewStrip->vifListOffset + -0x40);
+
+	const uintptr_t endWritePtr = reinterpret_cast<uintptr_t>(pNewStrip + 1) + pNewStrip->vifListOffset + -0x40;
+	const uintptr_t savedCommandsPtr = reinterpret_cast<uintptr_t>(pDisplayList->aSavedCommands);
+
+	if (endWritePtr >= savedCommandsPtr) {
+		EDDLIST_LOG(LogLevel::Warning,
+			"Writing past the end of the commands buffer! endWritePtr=0x{:x} savedCommandsPtr=0x{:x} overflow={} vifListOffset=0x{:x} meshCount={}\n",
+			endWritePtr, savedCommandsPtr, (intptr_t)(endWritePtr - savedCommandsPtr), pNewStrip->vifListOffset, pNewStrip->meshCount);
+		FLUSH_LOG();
+	}
+
+	assert(endWritePtr < savedCommandsPtr);
+
 	pDisplayList->pRenderCommands = edDListStripPreparePacket(pNewStrip, pCommand->pCurDListBuf);
 	pDisplayList->field_0x10 = pDisplayList->pRenderCommands;
 
@@ -3166,20 +3180,20 @@ void edDListEnd(void)
 	return;
 }
 
-void edDListPatchableReset(DisplayList* pList, uint param_2, uint param_3, uint param_4)
+void edDListPatchableReset(DisplayList* pList, uint nbCommands, uint nbInstances, uint nbMatrices)
 {
 	ed_3D_Scene* pStaticMeshMaster;
 	DisplayList* pDVar1;
 	uint uVar2;
 
-	if (param_2 != 0xffffffff) {
+	if (nbCommands != 0xffffffff) {
 		uVar2 = 0;
 
-		if (param_4 == 0xffffffff) goto LAB_002d0e38;
+		if (nbMatrices == 0xffffffff) goto LAB_002d0e38;
 
-		if (param_3 != 0xffffffff) {
+		if (nbInstances != 0xffffffff) {
 			pStaticMeshMaster = pList->pScene;
-			edDListNew(TO_HEAP(H_MAIN), (uint)pList->flags_0x0, param_2, param_3, param_4, 0, pList);
+			edDListNew(TO_HEAP(H_MAIN), pList->flags_0x0, nbCommands, nbInstances, nbMatrices, 0, pList);
 			edDListSetSceneUsed(pList, pStaticMeshMaster);
 			return;
 		}
@@ -3371,7 +3385,7 @@ void edDListSetBuffer(DisplayList* aDisplayLists, uint* pDataBuf, uint dataBuffe
 	return;
 }
 
-DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int param_4, int nbMatrices, uint param_6, void* pInBuffer)
+DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int nbInstances, int nbMatrices, uint param_6, void* pInBuffer)
 {
 	int commandPtrSize;
 	uint displayListMemSize;
@@ -3382,7 +3396,7 @@ DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int param_4, i
 	uint commandBufferSize;
 	uint dataBufferSize;
 
-	displayListMemSize = edDListGetBufSizeNeeded(flags, nbCommands, param_4, nbMatrices, &commandBufferSize, &dataBufferSize);
+	displayListMemSize = edDListGetBufSizeNeeded(flags, nbCommands, nbInstances, nbMatrices, &commandBufferSize, &dataBufferSize);
 
 	if (pInBuffer == (DisplayList*)0x0) {
 		pInBuffer = (DisplayList*)edMemAlloc(heapID, displayListMemSize);
@@ -3420,6 +3434,9 @@ DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int param_4, i
 			pDVar3->nbSavedCommands = 0;
 		} while (dblBufferIndex < 2);
 	}
+
+	EDDLIST_LOG(LogLevel::Info, "edDListNew heapID={} flags=0x{:x} nbCommands={} param_4={} nbMatrices={} param_6={} pInBuffer={} displayListMemSize={}\n",
+		heapID, flags, nbCommands, nbInstances, nbMatrices, param_6, pInBuffer, displayListMemSize);
 
 	return pDisplayList;
 }
@@ -3495,7 +3512,7 @@ void edDListSetSceneUsed(DisplayList* pDisplayListInternalArray, ed_3D_Scene* pS
 	return;
 }
 
-uint edDListGetBufSizeNeeded(uint flags, int nbMaxCommands, int param_3, int nbMatrices, uint* pCommandBufferSize, uint* pDataBufferSize)
+uint edDListGetBufSizeNeeded(uint flags, int nbMaxCommands, int nbInstances, int nbMatrices, uint* pCommandBufferSize, uint* pDataBufferSize)
 {
 	int iVar1;
 	uint totalSize;
@@ -3503,7 +3520,7 @@ uint edDListGetBufSizeNeeded(uint flags, int nbMaxCommands, int param_3, int nbM
 	int nbMaxMatrices;
 	uint dataBufferSize;
 
-	nbMaxMatrices = nbMatrices + (param_3 * 4);
+	nbMaxMatrices = nbMatrices + (nbInstances * 4);
 
 	if (nbMaxCommands == 0) {
 		trap(7);

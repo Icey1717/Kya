@@ -597,45 +597,6 @@ uint GetGreaterPower2Val(uint value)
 	return value;
 }
 
-float edF32ATanSoft(float val)
-{
-	int iVar1;
-	float fVar2;
-	float fVar3;
-
-	iVar1 = -1;
-	if (val < 0.0) {
-		val = -val;
-	}
-	else {
-		iVar1 = 1;
-	}
-	if (2.414214f < val) {
-		fVar2 = 1.570796f;
-		val = -(1.0f / val);
-	}
-	else {
-		if (0.4142136f < val) {
-			fVar2 = 0.7853982f;
-			val = (val - 1.0f) / (val + 1.0f);
-		}
-		else {
-			fVar2 = 0.0f;
-		}
-	}
-	fVar3 = val * val;
-	fVar2 = fVar2 + val + val * fVar3 * (fVar3 * ((fVar3 * 0.08053745f - 0.1387769f) * fVar3 + 0.1997771f) - 0.3333295f);
-	if (iVar1 < 0) {
-		fVar2 = -fVar2;
-	}
-	return fVar2;
-}
-
-float edF32ATanHard(float val)
-{
-	return edF32ATanSoft(val);
-}
-
 float edF32ATan2Soft(float a, float b)
 {
 	uint uVar1;
@@ -2268,6 +2229,33 @@ float edF32GetAnglesDelta(float t0, float t1)
 	return fVar1;
 }
 
+float edF32IntervalCos(float param_1, float param_2, float param_3, float param_4, float param_5)
+{
+	if (param_2 < param_3) {
+		if (param_1 <= param_2) {
+			return param_4;
+		}
+		if (param_3 <= param_1) {
+			return param_5;
+		}
+	}
+	else {
+		if (param_2 <= param_1) {
+			return param_4;
+		}
+		if (param_1 <= param_3) {
+			return param_5;
+		}
+	}
+
+	if ((param_5 != param_4) && (param_3 != param_2)) {
+		param_5 = param_4 + (cosf((((param_1 - param_2) / (param_3 - param_2)) * 3.141593f + 3.141593f)) * 0.5f + 0.5f) *
+			(param_5 - param_4);
+	}
+
+	return param_5;
+}
+
 // Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 float edF32Between_2Pi(float param_1)
 {
@@ -2447,7 +2435,56 @@ float edF32ACosSoft(float param_1)
 	return fVar1;
 }
 
-float edF32ACosHard(float param_1)
+float edF32ACosHard(float value)
 {
-	return edF32ACosSoft(param_1);
+	return edF32ACosSoft(value);
+}
+
+float FLOAT_00448558 = 2.4142137f;
+float FLOAT_0044855c = 0.41421357f;
+float FLOAT_00448560 = 0.7853982f;
+float FLOAT_00448564 = 0.080537446f;
+float FLOAT_00448568 = 0.13877685f;
+float FLOAT_0044856c = 0.19977711f;
+float FLOAT_00448570 = 0.3333295f;
+
+float edF32ATanSoft(float value)
+{
+	int iVar1;
+	float fVar2;
+	float fVar3;
+
+	iVar1 = 1;
+
+	if (value < 0.0f) {
+		iVar1 = -1;
+		value = -value;
+	}
+
+	if (FLOAT_00448558 < value) {
+		value = -(1.0f / value);
+		fVar2 = M_PI_2;
+	}
+	else {
+		if (FLOAT_0044855c < value) {
+			value = (value - 1.0f) / (value + 1.0f);
+			fVar2 = FLOAT_00448560;
+		}
+		else {
+			fVar2 = 0.0f;
+		}
+	}
+
+	fVar3 = value * value;
+	fVar2 = fVar2 + value + value * fVar3 * (fVar3 * (FLOAT_0044856c + (FLOAT_00448564 * fVar3 - FLOAT_00448568) * fVar3 ) - FLOAT_00448570);
+	if (iVar1 < 0) {
+		fVar2 = -fVar2;
+	}
+
+	return fVar2;
+}
+
+float edF32ATanHard(float value)
+{
+	return edF32ATanSoft(value);
 }

@@ -57,6 +57,7 @@
 #include "DebugRendering.h"
 #include "DebugTutorial.h"
 #include "DebugInput.h"
+#include "DebugHeroReplay.h"
 #include "ed3D/ed3DG2D.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -353,6 +354,7 @@ namespace Debug {
 		{"Scene", Debug::Scene::ShowMenu, true },
 		{"Tutorial", Debug::Tutorial::ShowMenu, true },
 		{"Input", Debug::Input::ShowMenu, true },
+		{"Hero Replay", Debug::HeroReplay::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {
@@ -387,6 +389,7 @@ namespace Debug {
 			Debug::Shop::Update();
 			Debug::Scenario::Update();
 			Debug::SaveLoad::Update();
+			Debug::HeroReplay::Update();
 
 			ForEachMenu([](Menu& menu) {
 				menu.Show();

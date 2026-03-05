@@ -1266,7 +1266,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 							if (param_5 == 0) {
 								if (param_6 == 0) {
 									if ((peVar3->currentAnimDesc).animType ==
-										pAnimationController->currentAnimType_0x30) {
+										pAnimationController->currentAnimType) {
 										bVar6 = (peVar3->field_0xcc & 2) != 0;
 									}
 									else {
@@ -1275,7 +1275,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 								}
 								else {
 									if ((peVar3->currentAnimDesc).animType ==
-										pAnimationController->currentAnimType_0x30) {
+										pAnimationController->currentAnimType) {
 										bVar6 = (peVar3->field_0xcc & 8) != 0;
 									}
 									else {

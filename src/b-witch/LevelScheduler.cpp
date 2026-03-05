@@ -455,7 +455,7 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 			pLevelInfoSubObj->teleporterActorHashCode = 0xffffffff;
 			pLevelInfoSubObj->field_0xc = -1;
 			pLevelInfoSubObj->field_0x10 = 0;
-			pLevelInfoSubObj->field_0x14 = 0;
+			pLevelInfoSubObj->nbMaxExorcisedWolfen = 0;
 		}
 
 		pLevelInfoSubObj->nbExorcisedWolfen = 0;
@@ -864,7 +864,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 			pLevelInfoSubObj->teleporterActorHashCode = pFileData->field_0x0;
 			pLevelInfoSubObj->field_0xc = pFileData->field_0x4;
 			pLevelInfoSubObj->field_0x10 = pFileData->field_0xc;
-			pLevelInfoSubObj->field_0x14 = pFileData->field_0x10;
+			pLevelInfoSubObj->nbMaxExorcisedWolfen = pFileData->field_0x10;
 			pFileData = pFileData + 1;
 		} while (count != 0);
 	}
@@ -874,7 +874,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 	iVar1 = 0;
 	if (0 < pLevelInfo->maxElevatorId) {
 		do {
-			iVar4 = iVar4 + pLevelInfoSubObj->field_0x14;
+			iVar4 = iVar4 + pLevelInfoSubObj->nbMaxExorcisedWolfen;
 			if ((pLevelInfoSubObj->field_0x10 & 1) != 0) {
 				pLevelInfoSubObj->flags = pLevelInfoSubObj->flags | 1;
 			}
@@ -884,8 +884,8 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V
 		} while (iVar1 < pLevelInfo->maxElevatorId);
 	}
 
-	pLevelInfo->aSubSectorInfo[0].field_0x14 = pLevelInfo->aSubSectorInfo[0].field_0x14 + (pLevelInfo->field_0x20 - iVar4);
-	pLevelInfo->field_0x20 = pLevelInfo->field_0x20 - pLevelInfo->aSubSectorInfo[0].field_0x14;
+	pLevelInfo->aSubSectorInfo[0].nbMaxExorcisedWolfen = pLevelInfo->aSubSectorInfo[0].nbMaxExorcisedWolfen + (pLevelInfo->field_0x20 - iVar4);
+	pLevelInfo->field_0x20 = pLevelInfo->field_0x20 - pLevelInfo->aSubSectorInfo[0].nbMaxExorcisedWolfen;
 
 	return;
 }
@@ -1424,6 +1424,22 @@ void CLevelScheduler::GetGameInfo(float* pHealth, float* pMagic, float* pMoney)
 	*pHealth = _gGameNfo.health;
 	*pMagic = (float)_gGameNfo.nbMagic;
 	*pMoney = (float)_gGameNfo.nbMoney;
+
+	return;
+}
+
+void CLevelScheduler::ResetSector(CActor* pHero, int param_3, int index)
+{
+	CCinematic* pCinematic;
+	CCinematicManager* pCinematicManager;
+
+	pCinematicManager = g_CinematicManager_0048efc;
+	pCinematic = g_CinematicManager_0048efc->GetCinematic(index);
+	if (pCinematic != (CCinematic*)0x0) {
+		pCinematicManager->ResetSector(index, pHero);
+	}
+
+	CScene::ptable.g_SectorManager_00451670->SwitchToSector(param_3, pCinematic != (CCinematic*)0x0);
 
 	return;
 }
@@ -2226,6 +2242,7 @@ void CLevelScheduler::Game_Init()
 	INT_ARRAY_0048eda0[5] = 0xb;
 	INT_ARRAY_0048ed60[9] = 8;
 	INT_ARRAY_0048eda0[8] = 9;
+
 	/* Copy 'CDEURO/Level/' into load loop object after this ptr */
 	INT_ARRAY_0048ed60[6] = 0;
 	strcpy(this->levelPath, g_CD_LevelPath_00433bf8);
@@ -3509,7 +3526,7 @@ void CLevelScheduler::Level_Run(undefined8 param_2, int levelID, int elevatorID,
 void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
 {
 	int iVar1;
-	char cVar2;
+	bool cVar2;
 	bool bVar3;
 	CActor* pCVar4;
 	CSectorManager* pSectorManager;
@@ -3528,29 +3545,29 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 	}
 	else {
 		if ((-1 < elevatorId) && (elevatorId < this->aLevelInfo[this->currentLevelID].maxElevatorId)) {
-			IMPLEMENTATION_GUARD(
-			iVar1 = *(int*)(this->levelPath + this->currentLevelID * 0x418 + -8 + elevatorId * 0x28 + 0xf0);
+			S_SUBSECTOR_INFO* pSubSectorInfo = &this->aLevelInfo[this->currentLevelID].aSubSectorInfo[elevatorId];
+			iVar1 = pSubSectorInfo->teleporterActorHashCode;
 			if ((iVar1 != -1) &&
 				(pCVar4 = CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(iVar1),
 					pSectorManager = CScene::ptable.g_SectorManager_00451670, pCVar4 != (CActor*)0x0)) {
-				iVar1 = (pCVar4->data).objectId;
-				cVar2 = '\0';
+				iVar1 = pCVar4->sectorId;
+				cVar2 = false;
 				if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 					if (cutsceneId != -1) {
-						cVar2 = CCinematicManager::RunSectorLoadingCinematic (g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
+						cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, param_6);
 					}
 				}
 				else {
-					cVar2 = CCinematicManager::RunSectorLoadingCinematic
-					(g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
-					CSectorManager::SwitchToSector(pSectorManager, iVar1, (int)cVar2);
+					cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, param_6);
+					pSectorManager->SwitchToSector(iVar1, cVar2);
 				}
-				if (cVar2 == '\0') {
+
+				if (cVar2 == false) {
 					this->currentElevatorID = elevatorId;
 					this->level_0x5b50 = this->currentLevelID;
 					this->level_0x5b54 = param_6;
 				}
-			})
+			}
 		}
 	}
 
@@ -3563,7 +3580,7 @@ void CLevelScheduler::Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_S
 	pSubSectorInfo->teleporterActorHashCode = -1;
 	pSubSectorInfo->field_0xc = -1;
 	pSubSectorInfo->field_0x10 = 0;
-	pSubSectorInfo->field_0x14 = 0;
+	pSubSectorInfo->nbMaxExorcisedWolfen = 0;
 	pSubSectorInfo->nbExorcisedWolfen = 0;
 	pSubSectorInfo->flags = 0;
 	pSubSectorInfo->field_0x20 = 0;

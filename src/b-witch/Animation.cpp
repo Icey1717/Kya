@@ -130,7 +130,7 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	//} while (bVar1);
 	this->nbDisabledBones = 0;
 	this->count_0x2c = 0;
-	this->currentAnimType_0x30 = -1;
+	this->currentAnimType = -1;
 	UpdateCurSkeleton(pActor);
 	pCVar2 = CScene::ptable.g_AnimManager_00451668;
 	this->count_0x2c = count;
@@ -1950,8 +1950,8 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 
 	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::PlayAnim {} type: 0x{:x} originalType: 0x{:x}", pActor->name, animType, origAnimType);
 
-	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) && (animType != this->currentAnimType_0x30)) &&
-		(this->currentAnimType_0x30 != -1)) {
+	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) && (animType != this->currentAnimType)) &&
+		(this->currentAnimType != -1)) {
 		iVar3 = 0;
 		for (uVar5 = this->count_0x2c; uVar5 != 0; uVar5 = uVar5 >> 1) {
 			if ((uVar5 & 1) != 0) {
@@ -1966,7 +1966,7 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 	}
 
 	this->anmBinMetaAnimator.SetAnim(animType, origAnimType);
-	this->currentAnimType_0x30 = animType;
+	this->currentAnimType = animType;
 
 	for (int i = 0; i < 4; i++) {
 		this->aTrackData[i] = 0.0f;
@@ -3340,7 +3340,7 @@ bool CAnimation::IsCurrentLayerAnimEndReached(uint layerIndex)
 {
 	bool bAnimEndReached = false;
 
-	if (this->anmBinMetaAnimator.aAnimData[layerIndex].currentAnimDesc.animType == this->currentAnimType_0x30) {
+	if (this->anmBinMetaAnimator.aAnimData[layerIndex].currentAnimDesc.animType == this->currentAnimType) {
 		bAnimEndReached = this->anmBinMetaAnimator.IsLayerAnimEndReached(layerIndex);
 	}
 

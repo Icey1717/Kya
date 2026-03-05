@@ -17,31 +17,34 @@ bool CFxSpark::InitDlistPatchable(int)
 {
 	int iVar1;
 	uint uVar2;
-	int iVar3;
-	int iVar4;
+	int innerLoopIndex;
+	int outerLoopIndex;
 	float x;
 	float fVar4;
 	float s;
 	_rgba local_4;
+
+	// Broken
+	//IMPLEMENTATION_GUARD();
 
 	edDListLoadIdentity();
 
 	edDListUseMaterial(CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->particleID, 0));
 
 	edDListBegin(0.0f, 0.0f, 0.0f, 4, this->count_0xa0 * this->count_0x98 * 2);
-	iVar4 = 0;
+
+	outerLoopIndex = 0;
 	if (0 < this->count_0x98) {
 		do {
-			iVar1 = this->count_0xa0;
-			s = -8.0;
-			iVar3 = 0;
-			if (0 < iVar1) {
+			s = -8.0f;
+			innerLoopIndex = 0;
+			if (0 < this->count_0xa0) {
 				do {
-					local_4.LerpRGBA((float)iVar3 / (float)iVar1, this->field_0x90, this->field_0x94);
+					local_4.LerpRGBA((float)innerLoopIndex / (float)this->count_0xa0, this->field_0x90, this->field_0x94);
 					uVar2 = local_4.rgba;
 					edDListColor4u8(local_4.r, local_4.g, local_4.b, 0);
 					edDListTexCoo2f(s, 0.0f);
-					if (iVar3 == 0) {
+					if (innerLoopIndex == 0) {
 						fVar4 = 49152.0f;
 						x = this->field_0xb0;
 					}
@@ -52,7 +55,7 @@ bool CFxSpark::InitDlistPatchable(int)
 					edDListVertex4f(x, 0.0f, 0.0f, fVar4);
 					edDListTexCoo2f(s, 1.0f);
 
-					if (iVar3 == 0) {
+					if (innerLoopIndex == 0) {
 						fVar4 = 49152.0f;
 					}
 					else {
@@ -60,13 +63,13 @@ bool CFxSpark::InitDlistPatchable(int)
 					}
 
 					edDListVertex4f(-this->field_0xb0, 0.0f, 0.0f, fVar4);
-					iVar1 = this->count_0xa0;
-					iVar3 = iVar3 + 1;
-					s = s + this->field_0xc0 / (float)iVar1;
-				} while (iVar3 < iVar1);
+					innerLoopIndex = innerLoopIndex + 1;
+					s = s + this->field_0xc0 / (float)this->count_0xa0;
+				} while (innerLoopIndex < this->count_0xa0);
 			}
-			iVar4 = iVar4 + 1;
-		} while (iVar4 < this->count_0x98);
+
+			outerLoopIndex = outerLoopIndex + 1;
+		} while (outerLoopIndex < this->count_0x98);
 	}
 
 	edDListEnd();

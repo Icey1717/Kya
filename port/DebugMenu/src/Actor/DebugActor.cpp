@@ -114,7 +114,7 @@ namespace Debug {
 				CAnimation* pAnim = pActor->pAnimationController;
 
 				if (pAnim) {
-					sstream << "Anim: 0x" << std::hex << pAnim->currentAnimType_0x30;
+					sstream << "Anim: 0x" << std::hex << pAnim->currentAnimType;
 					sstream << " - " << pAnim->anmBinMetaAnimator.aAnimData[0].currentAnimDesc.animType;
 				}
 			}

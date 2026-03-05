@@ -165,6 +165,7 @@ int CSwitchBehaviour::Test(CActor* pOwner)
 	int iVar5;
 	CCoupleConditionExecution* piVar1;
 
+	iVar5 = 0;
 	for (int i = 0; i < this->nbTotalSwitches; i++) {
 		CCoupleConditionExecution* pSwitch = this->apSwitches[i];
 

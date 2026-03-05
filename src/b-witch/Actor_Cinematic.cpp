@@ -218,7 +218,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 		this->pMeshTransform = peVar1;
 	}
 
-	this->field_0x110 = (undefined*)0x0;
+	this->pMacroAnimTable = (MacroAnimTable*)0x0;
 	this->components.count = 1;
 	this->components.aComponents[0].id = 1;
 	this->components.aComponents[0].SetBehaviour(&behaviourCinematic);
@@ -411,8 +411,7 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	(this->pOwner)->flags = (this->pOwner)->flags | 0x1000;
 	peVar1 = (this->cinActor).pAltModelManager;
 	if (peVar1 != (ed_g3d_manager*)0x0) {
-		IMPLEMENTATION_GUARD();
-		//CActor::SV_SwitchToModel((CActor *)this->pOwner,&(this->cinActor).alternateModel,peVar1,(edF32VECTOR4 *)0x0);
+		this->pOwner->SV_SwitchToModel(&(this->cinActor).alternateModel, peVar1, (edF32VECTOR4 *)0x0);
 	}
 	if (newState == -1) {
 		this->pOwner->SetState(3, -1);
@@ -512,8 +511,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	}
 
 	if ((this->cinActor).pAltModelManager != (ed_g3d_manager*)0x0) {
-		IMPLEMENTATION_GUARD(
-		FUN_001159f0(this->pOwner, &(this->cinActor).alternateModel);)
+		this->pOwner->SV_RestoreOrgModel(&(this->cinActor).alternateModel);
 	}
 
 	pNode = this->pOwner->pMeshNode;

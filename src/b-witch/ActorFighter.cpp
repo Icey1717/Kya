@@ -5842,7 +5842,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 	else {
 		local_20.z = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].y;
 		local_20.x = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].x;
-		fVar20 = pPlayerInput->aButtons[5].clickValue;
+		fVar20 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 		fVar19 = pPlayerInput->aButtons[6].clickValue;
 		uVar16 = pPlayerInput->releasedBitfield & 0x20;
 		local_b0 = pPlayerInput->releasedBitfield & 0x40;
@@ -7112,7 +7112,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, 
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) | 1) << 4);
 		}
 
-		if (pPlayerInput->aButtons[5].clickValue == 0.0f) {
+		if (pPlayerInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue == 0.0f) {
 			bVar1 = this->patternB.field_0x3byte;
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xd) << 4);
 		}

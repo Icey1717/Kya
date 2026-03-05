@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "EdenLib/edDev/Sources/edDev.h"
 
+#define INPUT_BUTTON_INDEX_L2 5
 #define INPUT_BUTTON_INDEX_SQUARE 9
 
 struct InputTest {
@@ -62,8 +63,8 @@ struct CPlayerInputSubObj {
 #define PAD_STICK_LEFT 0x0
 #define PAD_STICK_RIGHT 0x1
 
-class CPlayerInput {
-
+class CPlayerInput
+{
 public:
 	static void ReadConfig(CIniFile* pIniFile);
 	static void Update(float delta);

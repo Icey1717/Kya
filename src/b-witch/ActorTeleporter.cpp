@@ -192,6 +192,7 @@ void CActorTeleporter::Init()
 		if (this_00->pMBNK == (void*)0x0) {
 			this_00->SV_InstanciateMaterialBank();
 		}
+
 		pHashCode = ed3DHierarchyGetMaterialBank(&this_00->p3DHierNode->base);
 		int nbMat = ed3DG2DGetG2DNbMaterials(pHashCode);
 		uVar7 = ed3DComputeHashCode("Snapshot");
@@ -241,16 +242,16 @@ void CActorTeleporter::Term()
 
 void CActorTeleporter::Draw()
 {
-	S_DESTINATION_LIST* pSVar1;
-	ed_hash_code* peVar2;
+	S_DESTINATION_LIST* pDestList;
+	ed_hash_code* pSnapCode;
 	bool bVar3;
-	S_DESTINATION_ENTRY* puVar4;
+	S_DESTINATION_ENTRY* pDestEntry;
 	edDList_material* pMaterialInfo;
-	ed_hash_code* puVar5;
-	int iVar6;
-	uint uVar8;
-	int iVar9;
-	S_SUBSECTOR_INFO SStack240;
+	ed_hash_code* pHashCode;
+	int nbMaxExorcisedWolfen;
+	uint unlockedFlag;
+	int nbExorcisedWolfen;
+	S_SUBSECTOR_INFO subSectorInfo;
 	edF32MATRIX4 eStack192;
 	edF32MATRIX4 eStack128;
 	edF32MATRIX4 eStack64;
@@ -259,35 +260,35 @@ void CActorTeleporter::Draw()
 	CActor::Draw();
 
 	if (this->bOpen != 0) {
-		pSVar1 = this->pDestinationList;
-		iVar6 = 0;
-		if (pSVar1 != (S_DESTINATION_LIST*)0x0) {
-			iVar6 = pSVar1->nbEntries;
+		pDestList = this->pDestinationList;
+		nbMaxExorcisedWolfen = 0;
+		if (pDestList != (S_DESTINATION_LIST*)0x0) {
+			nbMaxExorcisedWolfen = pDestList->nbEntries;
 		}
 
-		if (this->activeButtonIndex < iVar6) {
-			puVar4 = pSVar1->aEntries + this->activeButtonIndex;
-			bVar3 = GameDList_BeginCurrent();
-			if (bVar3 != false) {
+		if (this->activeButtonIndex < nbMaxExorcisedWolfen) {
+			pDestEntry = pDestList->aEntries + this->activeButtonIndex;
+
+			if (GameDList_BeginCurrent()) {
 				pActor = (this->field_0x1d8).Get();
 				if (pActor != (CActor*)0x0) {
 					pActor->SV_ComputeDiffMatrixFromInit(&eStack64);
 				}
 
 				pMaterialInfo = (edDList_material*)0x0;
-				uVar8 = 0;
-				iVar6 = 0;
-				iVar9 = 0;
-				if (puVar4->field_0x0 != 0x10) {
-					pMaterialInfo = GetDestinationMaterial(puVar4->field_0x0, puVar4->field_0x4);
-					CLevelScheduler::gThis->Level_GetSubSectorInfo(puVar4->field_0x0, puVar4->field_0x4, &SStack240);
-					uVar8 = SStack240.flags & 1;
-					iVar6 = SStack240.field_0x14;
-					iVar9 = SStack240.nbExorcisedWolfen;
+				unlockedFlag = 0;
+				nbMaxExorcisedWolfen = 0;
+				nbExorcisedWolfen = 0;
+				if (pDestEntry->levelId != 0x10) {
+					pMaterialInfo = GetDestinationMaterial(pDestEntry->levelId, pDestEntry->elevatorId);
+					CLevelScheduler::gThis->Level_GetSubSectorInfo(pDestEntry->levelId, pDestEntry->elevatorId, &subSectorInfo);
+					unlockedFlag = subSectorInfo.flags & 1;
+					nbMaxExorcisedWolfen = subSectorInfo.nbMaxExorcisedWolfen;
+					nbExorcisedWolfen = subSectorInfo.nbExorcisedWolfen;
 				}
 
-				peVar2 = this->pSnapshotHashCode;
-				if (peVar2 == (ed_hash_code*)0x0) {
+				pSnapCode = this->pSnapshotHashCode;
+				if (pSnapCode == (ed_hash_code*)0x0) {
 					if ((this->field_0x1d4).Get() != (ed_zone_3d*)0x0) {
 						if (pActor == (CActor*)0x0) {
 							edDListLoadMatrix(&this->field_0x1f0);
@@ -301,7 +302,7 @@ void CActorTeleporter::Draw()
 							edDListUseMaterial(pMaterialInfo);
 							edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
 
-							if (uVar8 == 0) {
+							if (unlockedFlag == 0) {
 								edDListColor4u8(0x30, 0x30, 0x30, 0x80);
 							}
 							else {
@@ -322,16 +323,16 @@ void CActorTeleporter::Draw()
 				}
 				else {
 					if (pMaterialInfo == (edDList_material*)0x0) {
-						*peVar2 = this->snapshotHashCode;
+						*pSnapCode = this->snapshotHashCode;
 					}
 					else {
-						puVar5 = ed3DG2DGetHashCode(pMaterialInfo->pManager, pMaterialInfo->pMaterial);
-						peVar2 = this->pSnapshotHashCode;
-						*peVar2 = *puVar5;
+						pHashCode = ed3DG2DGetHashCode(pMaterialInfo->pManager, pMaterialInfo->pMaterial);
+						pSnapCode = this->pSnapshotHashCode;
+						*pSnapCode = *pHashCode;
 					}
 				}
 
-				if ((puVar4->field_0x0 != 0x10) && ((this->field_0x1e0).Get() != (ed_zone_3d*)0x0)) {
+				if ((pDestEntry->levelId != 0x10) && ((this->field_0x1e0).Get() != (ed_zone_3d*)0x0)) {
 					if (pActor == (CActor*)0x0) {
 						edDListLoadMatrix(&this->field_0x230);
 					}
@@ -341,21 +342,21 @@ void CActorTeleporter::Draw()
 					}
 
 					if (this->field_0x1dc != 0) {
-						iVar6 = iVar6 - iVar9;
-						if (puVar4->field_0x8 < 1) {
-							iVar6 = 0;
+						nbMaxExorcisedWolfen = nbMaxExorcisedWolfen - nbExorcisedWolfen;
+						if (pDestEntry->field_0x8 < 1) {
+							nbMaxExorcisedWolfen = 0;
 						}
-						if (iVar6 < 1) {
-							iVar9 = 0;
-							iVar6 = 0;
+						if (nbMaxExorcisedWolfen < 1) {
+							nbExorcisedWolfen = 0;
+							nbMaxExorcisedWolfen = 0;
 						}
 						else {
-							iVar9 = iVar6 / 10;
-							iVar6 = iVar6 % 10;
+							nbExorcisedWolfen = nbMaxExorcisedWolfen / 10;
+							nbMaxExorcisedWolfen = nbMaxExorcisedWolfen % 10;
 						}
 
-						DisplayDigit(0.2f, 0.0f, 0.2f, 1.0f, iVar9);
-						DisplayDigit(0.4f, 0.0f, 0.2f, 1.0f, iVar6);
+						DisplayDigit(0.2f, 0.0f, 0.2f, 1.0f, nbExorcisedWolfen);
+						DisplayDigit(0.4f, 0.0f, 0.2f, 1.0f, nbMaxExorcisedWolfen);
 					}
 				}
 
@@ -580,8 +581,8 @@ void CActorTeleporter::StateTeleporterActive()
 
 			if (this->activeButtonIndex < iVar8) {
 				S_DESTINATION_ENTRY* pEntry = &this->pDestinationList->aEntries[this->activeButtonIndex];
-				iVar8 = pEntry->field_0x4;
-				levelId = pEntry->field_0x0;
+				iVar8 = pEntry->elevatorId;
+				levelId = pEntry->levelId;
 				if (iVar8 < 1) {
 					iVar8 = -1;
 				}
@@ -673,7 +674,7 @@ void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
 				if (iVar7 <= iVar3) break;
 
 				S_DESTINATION_ENTRY* pEntry = pSVar2->aEntries + iVar3;
-				if ((pEntry->field_0x4 == levelId) && (pEntry->field_0x8 == param_3)) {
+				if ((pEntry->elevatorId == levelId) && (pEntry->field_0x8 == param_3)) {
 					this->field_0x298 = iVar3;
 				}
 
@@ -724,7 +725,7 @@ bool CActorTeleporter::LevelHasTeleporters()
 			if (iVar3 <= curIndex) break;
 
 			iVar2 = pSVar1->aEntries + curIndex;
-			iVar3 = iVar2->field_0x4;
+			iVar3 = iVar2->elevatorId;
 			if (((iVar3 != 0x10) && (iVar4 = iVar2->field_0x8, 0 < iVar4)) && (pLevel->Level_GetSubSectorInfo(iVar3, iVar4, &SStack48), (SStack48.flags & 1) != 0)) {
 				bHasTeleporters = true;
 			}
@@ -795,13 +796,11 @@ edDList_material* CActorTeleporter::GetMySubSectorMaterial(int levelId, int nbAr
 	CLevelScheduler* pCVar3;
 	edDList_material* pSubSectorMaterial;
 	int iVar5;
-	int iVar6;
 	int iVar7;
 
 	pCVar3 = CLevelScheduler::gThis;
 	pSubSectorMaterial = (edDList_material*)0x0;
 
-	IMPLEMENTATION_GUARD_LOG(
 	bVar2 = levelId == 0 || levelId == INT_ARRAY_0048ed60[0];
 	if (levelId != 0 && levelId != INT_ARRAY_0048ed60[0]) {
 		bVar2 = INT_ARRAY_0048ed60[levelId] == 0;
@@ -812,35 +811,38 @@ edDList_material* CActorTeleporter::GetMySubSectorMaterial(int levelId, int nbAr
 	}
 	else {
 		iVar7 = 0;
-		iVar6 = 0;
 		while (true) {
-			piVar1 = *(int**)&this->pDestinationList;
+			S_DESTINATION_LIST* pDestList = this->pDestinationList;
 			iVar5 = 0;
-			if (piVar1 != (int*)0x0) {
-				iVar5 = *piVar1;
+			if (pDestList != (S_DESTINATION_LIST*)0x0) {
+				iVar5 = pDestList->nbEntries;
 			}
+
 			if ((iVar5 <= iVar7) || (pSubSectorMaterial != (edDList_material*)0x0)) break;
-			iVar5 = *(int*)((int)piVar1 + iVar6 + 4);
+
+			iVar5 = pDestList->aEntries[iVar7].levelId;
 			if (iVar5 != 0x10) {
 				bVar2 = levelId == iVar5;
 				if (!bVar2) {
 					bVar2 = iVar5 == INT_ARRAY_0048ed60[levelId];
 				}
+
 				if (!bVar2) {
 					bVar2 = levelId == INT_ARRAY_0048ed60[iVar5];
 				}
+
 				if (bVar2) {
 					pSubSectorMaterial = GetDestinationMaterial(iVar5, nbAreas);
 				}
 			}
-			iVar6 = iVar6 + 0xc;
+
 			iVar7 = iVar7 + 1;
 		}
 
 		if ((pSubSectorMaterial == (edDList_material*)0x0) && (levelId == pCVar3->currentLevelID)) {
-			pSubSectorMaterial = GetDestinationMaterial(this, levelId, nbAreas);
+			pSubSectorMaterial = GetDestinationMaterial(levelId, nbAreas);
 		}
-	})
+	}
 
 	return pSubSectorMaterial;
 }
@@ -858,6 +860,7 @@ void CActorTeleporter::DetectDisabledDestinations(int param_2)
 	CLevelScheduler* pLevelSched;
 
 	pLevelSched = CLevelScheduler::gThis;
+
 	if (param_2 == 0) {
 		shiftedIndex = 1;
 		curEntryIndex = 0;
@@ -870,11 +873,11 @@ void CActorTeleporter::DetectDisabledDestinations(int param_2)
 
 			if (iVar2 <= curEntryIndex) break;
 
-			S_DESTINATION_ENTRY* pEntry = pSVar1->aEntries;
+			S_DESTINATION_ENTRY* pEntry = pSVar1->aEntries + curEntryIndex;
 
-			iVar2 = pEntry->field_0x0;
+			iVar2 = pEntry->levelId;
 			if (iVar2 == pLevelSched->currentLevelID) {
-				pLevelSched->Level_GetSubSectorInfo(iVar2, pEntry->field_0x4, &SStack96);
+				pLevelSched->Level_GetSubSectorInfo(iVar2, pEntry->elevatorId, &SStack96);
 				if ((SStack96.flags & 1) == 0) {
 					this->disabledDestinationMask = this->disabledDestinationMask | shiftedIndex;
 				}
@@ -906,12 +909,12 @@ void CActorTeleporter::DetectDisabledDestinations(int param_2)
 			if (iVar2 <= curEntryIndex) break;
 
 			S_DESTINATION_ENTRY* pEntry = pSVar1->aEntries + curEntryIndex;
-			if (pEntry->field_0x0 == 0x10) {
+			if (pEntry->levelId == 0x10) {
 				this->disabledDestinationMask = this->disabledDestinationMask | shiftedIndex;
 			}
 			else {
-				pLevelSched->Level_GetSubSectorInfo(pEntry->field_0x0, pEntry->field_0x4, &SStack48);
-				if ((0 < pEntry->field_0x4) && ((SStack48.flags & 1) == 0)) {
+				pLevelSched->Level_GetSubSectorInfo(pEntry->levelId, pEntry->elevatorId, &SStack48);
+				if ((0 < pEntry->elevatorId) && ((SStack48.flags & 1) == 0)) {
 					this->disabledDestinationMask = this->disabledDestinationMask | shiftedIndex;
 				}
 			}
@@ -928,44 +931,49 @@ edDList_material* CActorTeleporter::GetDestinationMaterial(int levelId, int elev
 {
 	ParticleInfo* pPVar1;
 	bool bVar2;
-	edDList_material* peVar3;
-	int iVar4;
-	int iVar5;
-	edDList_material* peVar6;
+	edDList_material* pDestMaterial;
+	int materialIndex;
+	int nbMaxMaterials;
+	edDList_material* ppMaterials;
 
-	peVar6 = (edDList_material*)0x0;
-	peVar3 = (edDList_material*)0x0;
-	iVar5 = 0;
+	ppMaterials = (edDList_material*)0x0;
+	pDestMaterial = (edDList_material*)0x0;
+
+	nbMaxMaterials = 0;
+
 	bVar2 = levelId == 0 || levelId == INT_ARRAY_0048ed60[0];
 	if (levelId != 0 && levelId != INT_ARRAY_0048ed60[0]) {
 		bVar2 = INT_ARRAY_0048ed60[levelId] == 0;
 	}
+
 	if (bVar2) {
 		pPVar1 = this->field_0x194;
 		if (pPVar1 != (ParticleInfo*)0x0) {
-			iVar5 = pPVar1->materialCount_0x4;
+			nbMaxMaterials = pPVar1->materialCount_0x4;
 			elevatorId = 1;
-			peVar6 = pPVar1->materialInfoArray_0x8;
+			ppMaterials = pPVar1->materialInfoArray_0x8;
 		}
 	}
 	else {
 		if (this->aMaterials == (edDList_material*)0x0) {
 			pPVar1 = this->field_0x190;
 			if (pPVar1 != (ParticleInfo*)0x0) {
-				peVar6 = pPVar1->materialInfoArray_0x8;
-				iVar5 = pPVar1->materialCount_0x4;
+				ppMaterials = pPVar1->materialInfoArray_0x8;
+				nbMaxMaterials = pPVar1->materialCount_0x4;
 			}
 		}
 		else {
-			iVar5 = this->nbMaterials;
-			peVar6 = this->aMaterials;
+			nbMaxMaterials = this->nbMaterials;
+			ppMaterials = this->aMaterials;
 		}
 	}
-	iVar4 = elevatorId + -1;
-	if ((((peVar6 != (edDList_material*)0x0) && (0 < iVar5)) && (-1 < iVar4)) && (iVar4 < iVar5)) {
-		peVar3 = peVar6 + iVar4;
+
+	materialIndex = elevatorId + -1;
+	if ((((ppMaterials != (edDList_material*)0x0) && (0 < nbMaxMaterials)) && (-1 < materialIndex)) && (materialIndex < nbMaxMaterials)) {
+		pDestMaterial = ppMaterials + materialIndex;
 	}
-	return peVar3;
+
+	return pDestMaterial;
 }
 
 void CActorTeleporter::DisplayDigit(float param_2, float param_3, float param_4, float param_5, int digit)

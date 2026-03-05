@@ -692,7 +692,19 @@ public:
 	edF32VECTOR4 currentLocation;
 	edF32VECTOR3 previousLocation;
 
-	undefined* field_0x110;
+	struct MacroAnimEntry
+	{
+		int animType;
+		int macroAnimId;
+	};
+
+	struct MacroAnimTable
+	{
+		int nbEntries;
+		MacroAnimEntry aEntries[];
+	};
+
+	MacroAnimTable* pMacroAnimTable;
 	edF32VECTOR3 vector_0x120;
 	edF32VECTOR3 vector_0x12c;
 

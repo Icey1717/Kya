@@ -260,7 +260,7 @@ void CBehaviourExplosiveDistributor::Manage()
 				fVar4 = 0.0f;
 			}
 
-			if (((0.7f <= fVar4) && ((((pAnimationController->anmBinMetaAnimator).aAnimData)->currentAnimDesc).animType == pAnimationController->currentAnimType_0x30)) &&
+			if (((0.7f <= fVar4) && ((((pAnimationController->anmBinMetaAnimator).aAnimData)->currentAnimDesc).animType == pAnimationController->currentAnimType)) &&
 				(pExplosiveDistributor->field_0x190 == 0)) {
 				pProjectile = static_cast<CActorProjectile*>(pExplosiveDistributor->pProjectile->actorRef.Get());
 

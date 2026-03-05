@@ -1081,15 +1081,7 @@ bool CActorHero::CanActivateCheckpoint(uint flags)
 
 	bVar2 = fVar6 - this->field_0x2e4 <= 0.0f;
 	if (!bVar2) {
-		iVar1 = this->actorState;
-		if (iVar1 == -1) {
-			uVar4 = 0;
-		}
-		else {
-			pSVar5 = GetStateCfg(iVar1);
-			uVar4 = pSVar5->flags_0x4 & 1;
-		}
-		bVar2 = uVar4 != 0;
+		bVar2 = (GetStateFlags(this->actorState) & 1) != 0;
 	}
 
 	if (!bVar2) {
@@ -1110,17 +1102,12 @@ bool CActorHero::CanActivateCheckpoint(uint flags)
 			}
 
 			if ((flags & 1) != 0) {
-				iVar1 = this->actorState;
-				if (iVar1 == -1) {
-					uVar4 = 0;
-				}
-				else {
-					pSVar5 = GetStateCfg(iVar1);
-					uVar4 = pSVar5->flags_0x4 & 0x100;
-				}
+				uVar4 = (GetStateFlags(this->actorState) & 0x100);
+
 				if (uVar4 != 0) {
 					return uVar4 != 0;
 				}
+
 				iVar1 = this->actorState;
 				if (iVar1 == -1) {
 					uVar4 = 0;
@@ -1142,19 +1129,13 @@ bool CActorHero::CanActivateCheckpoint(uint flags)
 			}
 
 			if ((flags & 0x40000000) != 0) {
-				bVar2 = this->curBehaviourId == 8;
+				bVar2 = this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT;
+
 				if (!bVar2) {
 					return bVar2;
 				}
 
-				iVar1 = this->actorState;
-				if (iVar1 == -1) {
-					uVar4 = 0;
-				}
-				else {
-					pSVar5 = GetStateCfg(iVar1);
-					uVar4 = pSVar5->flags_0x4 & 0x100;
-				}
+				uVar4 = (GetStateFlags(this->actorState) & 0x100);
 
 				return uVar4 != 0;
 			}
@@ -1886,8 +1867,8 @@ void CBehaviourRideJamGut::Create(ByteCode* pByteCode)
 
 	this->field_0x88 = (CActorJamGut*)0x0;
 	this->field_0x8c = (CActorJamGut*)0x0;
-	this->field_0x6c = 0;
-	this->field_0x70 = 0;
+	this->field_0x6c = 0.0f;
+	this->field_0x70 = 0.0f;
 	this->boneId = 1;
 	this->field_0x78 = 0;
 	this->behaviourId = -1;
@@ -1954,7 +1935,7 @@ void CBehaviourRideJamGut::Begin(CActor* pOwner, int newState, int newAnimationT
 	} while (iVar3 < 7);
 
 	this->aCommands[iVar2 + 6] = 0;
-	this->aCommands[iVar2 + 7] = 0;
+	this->field_0x68 = 0;
 
 	this->inputAnalogDir.x = 0.0f;
 	this->inputAnalogDir.y = 0.0f;

@@ -169,7 +169,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 			for (int i = 0; i < this->nbActors; i++) {
 				CActor* pActor = this->aActors[i];
 
-				if (pActor->field_0x110 == (undefined*)0x0) {
+				if (pActor->pMacroAnimTable == (CActor::MacroAnimTable*)0x0) {
 					aActorLayerCounts[i] = 0;
 				}
 				else {
@@ -565,7 +565,7 @@ void CActorManager::Level_SaveContext()
 	// 3) ACTOR DATA CHUNK ("BLAC")
 	SaveDataChunk_BLAC* pBLAC = reinterpret_cast<SaveDataChunk_BLAC*>(CLevelScheduler::gThis->SaveGame_BeginChunk(SAVEGAME_CHUNK_BLAC));
 
-	// Walk each class’s storage and serialize the instances flagged for saving
+	// Walk each classï¿½s storage and serialize the instances flagged for saving
 	for (int classIdx = 0; classIdx < 87; ++classIdx) {
 		if (perClassCount[classIdx] <= 0) continue;
 
@@ -1400,69 +1400,77 @@ bool CCluster::GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, ed
 
 void CCluster::ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams)
 {
-	CClusterNode* pCVar1;
-	CActor* this_00;
-	int iVar2;
-	CClusterNode** ppCVar3;
-	int iVar4;
-	CClusterNode** ppCVar5;
-	bool bVar6;
-	uint uVar7;
-	uint uVar8;
-	int iVar9;
-	CClusterNode** local_50;
-	edF32VECTOR4 local_40;
-	edF32VECTOR4 local_30;
-	edS32VECTOR3 local_20;
-	edS32VECTOR3 local_10;
+	CClusterNode* pNode;
+	CActor* pActor;
+	int zSteps;
+	CClusterNode** ppZRowBase;
+	int xSteps;
+	CClusterNode** ppCell;
+	bool bIntersects;
+	uint minBoundsFlags;
+	uint maxBoundsFlags;
+	int ySteps;
+	CClusterNode** ppYLayerBase;
+	edF32VECTOR4 boundsMin;
+	edF32VECTOR4 boundsMax;
+	edS32VECTOR3 gridExtents; // initially holds gridMax from GetMapCoords, then converted to extents in-place
+	edS32VECTOR3 gridMin;
 
 	if (this->ppNodes != (CClusterNode**)0x0) {
-		for (pCVar1 = this->field_0x34; pCVar1 != (CClusterNode*)0x0; pCVar1 = pCVar1->pNext) {
-			this_00 = pCVar1->pActor;
-			bVar6 = this_00->SV_IsWorldBoundingSphereIntersectingSphere(pSphere);
-			if (bVar6 != false) {
-				pFunc(this_00, pParams);
+		for (pNode = this->field_0x34; pNode != (CClusterNode*)0x0; pNode = pNode->pNext) {
+			pActor = pNode->pActor;
+			bIntersects = pActor->SV_IsWorldBoundingSphereIntersectingSphere(pSphere);
+			if (bIntersects != false) {
+				pFunc(pActor, pParams);
 			}
 		}
-		local_30.z = pSphere->w + 8.0f;
 
-		local_40.xyz = pSphere->xyz - local_30.z;
-		local_40.w = 1.0f;
+		float extendedRadius = pSphere->w + 8.0f;
 
-		local_30.xyz = pSphere->xyz + local_30.z;
-		local_30.w = 1.0f;
+		boundsMin.xyz = pSphere->xyz - extendedRadius;
+		boundsMin.w = 1.0f;
 
-		uVar7 = GetMapCoords(&local_10, &local_40);
-		uVar8 = GetMapCoords(&local_20, &local_30);
-		if ((uVar7 & uVar8) == 0) {
-			local_20.x = local_20.x - local_10.x;
-			iVar9 = local_20.y - local_10.y;
-			local_20.z = local_20.z - local_10.z;
-			local_10.x = local_10.x + local_10.y * 0x400 + local_10.z * 0x20;
-			local_20.y = iVar9;
-			if (local_10.x == -1) {
-				local_50 = &this->field_0x34;
+		boundsMax.xyz = pSphere->xyz + extendedRadius;
+		boundsMax.w = 1.0f;
+
+		minBoundsFlags = GetMapCoords(&gridMin, &boundsMin);
+		maxBoundsFlags = GetMapCoords(&gridExtents, &boundsMax);
+
+		if ((minBoundsFlags & maxBoundsFlags) == 0) {
+			gridExtents.x = gridExtents.x - gridMin.x;
+			ySteps = gridExtents.y - gridMin.y;
+			gridExtents.z = gridExtents.z - gridMin.z;
+			int flatStartIndex = gridMin.x + gridMin.y * 0x400 + gridMin.z * 0x20;
+			gridExtents.y = ySteps;
+
+			if (flatStartIndex == -1) {
+				ppYLayerBase = &this->field_0x34;
 			}
 			else {
-				local_50 = this->ppNodes + local_10.x;
+				ppYLayerBase = this->ppNodes + flatStartIndex;
 			}
-			for (; iVar2 = local_20.z, ppCVar3 = local_50, -1 < iVar9; iVar9 = iVar9 + -1) {
-				for (; iVar4 = local_20.x, ppCVar5 = ppCVar3, -1 < iVar2; iVar2 = iVar2 + -1) {
-					for (; -1 < iVar4; iVar4 = iVar4 + -1) {
-						for (pCVar1 = *ppCVar5; pCVar1 != (CClusterNode*)0x0; pCVar1 = pCVar1->pNext) {
-							bVar6 = pCVar1->pActor->SV_IsWorldBoundingSphereIntersectingSphere(pSphere);
-							if (bVar6 != false) {
-								pFunc(pCVar1->pActor, pParams);
+
+			for (; zSteps = gridExtents.z, ppZRowBase = ppYLayerBase, -1 < ySteps; ySteps = ySteps + -1) {
+				for (; xSteps = gridExtents.x, ppCell = ppZRowBase, -1 < zSteps; zSteps = zSteps + -1) {
+					for (; -1 < xSteps; xSteps = xSteps + -1) {
+						for (pNode = *ppCell; pNode != (CClusterNode*)0x0; pNode = pNode->pNext) {
+							bIntersects = pNode->pActor->SV_IsWorldBoundingSphereIntersectingSphere(pSphere);
+							if (bIntersects != false) {
+								pFunc(pNode->pActor, pParams);
 							}
 						}
-						ppCVar5 = ppCVar5 + 1;
+
+						ppCell = ppCell + 1;
 					}
-					ppCVar3 = ppCVar3 + 0x20;
+
+					ppZRowBase = ppZRowBase + 0x20;
 				}
-				local_50 = local_50 + 0x400;
+
+				ppYLayerBase = ppYLayerBase + 0x400;
 			}
 		}
 	}
+
 	return;
 }
 

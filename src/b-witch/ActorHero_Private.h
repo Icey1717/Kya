@@ -171,6 +171,7 @@ public:
 
 	virtual bool IsMakingNoise();
 
+	virtual int GetNumVisualDetectionPoints();
 	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
 
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
@@ -261,7 +262,7 @@ public:
 	void BehaviourHero_Manage();
 
 	void FUN_00348df0();
-	void FUN_003690a0(CBehaviourHeroRideJamGut* pBehaviour);
+	void StandOnJamGut(CBehaviourHeroRideJamGut* pBehaviour);
 
 	void BehaviourHeroRideJamGut_InitState(int newState, CBehaviourHeroRideJamGut* pBehaviour);
 	void BehaviourHeroRideJamGut_TermState(int oldState, int newState);
@@ -858,12 +859,13 @@ public:
 	virtual void InitMount(CActorJamGut* pJamGut, uint boneId, int param_4, uint flags);
 
 	bool FUN_00369260();
+	void ResetCommands();
 
 	CActorHeroPrivate* pHero;
-	undefined4 field_0xa4;
+	float field_0xa4;
 	float field_0xa8;
 	float field_0xac;
-	undefined4 field_0xb0;
+	float field_0xb0;
 };
 
 #endif //ACTOR_HERO_PRIVATE_H

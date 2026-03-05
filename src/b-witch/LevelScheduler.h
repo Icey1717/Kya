@@ -244,7 +244,7 @@ struct S_SUBSECTOR_INFO
 	uint teleporterActorHashCode;
 	int field_0xc;
 	uint field_0x10;
-	int field_0x14;
+	int nbMaxExorcisedWolfen;
 	undefined nbExorcisedWolfen;
 	undefined field_0x19;
 	undefined field_0x1a;
@@ -406,6 +406,8 @@ public:
 
 	void UpdateGameInfo(float health, int magic, int money);
 	void GetGameInfo(float* pHealth, float* pMagic, float* pMoney);
+
+	void ResetSector(CActor* pHero, int param_3, int index);
 
 	void Game_SaveInventory(CInventoryInterface* pInventory);
 	void Game_LoadInventory(CInventoryInterface* pInventory);

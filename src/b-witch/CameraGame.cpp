@@ -5,6 +5,7 @@
 #include "edVideo/CameraStack.h"
 #include "ActorManager.h"
 #include "ActorFactory.h"
+#include "ActorJamGut.h"
 
 #include <math.h>
 #include "CollisionRay.h"
@@ -986,7 +987,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 {
 	bool bVar1;
 	undefined uVar2;
-	CBehaviour* pCVar6;
+	CBehaviourHeroRideJamGut* pCVar6;
 	int lVar8;
 	uint* puVar9;
 	float* peVar10;
@@ -1095,13 +1096,12 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 
 	if ((GetTarget() != (CActor*)0x0) && (GetTarget()->typeID == ACTOR_HERO_PRIVATE)) {
 		CActor* pHero = GetTarget();
-		if (pHero->curBehaviourId == 8) {
-			pCVar6 = pHero->GetBehaviour(pHero->curBehaviourId);
-			IMPLEMENTATION_GUARD(
-				*(CBehaviourVtable**)&this->field_0x1ec = pCVar6[0x23].pVTable;)
+		if (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+			pCVar6 = (CBehaviourHeroRideJamGut*)pHero->GetBehaviour(pHero->curBehaviourId);
+			this->field_0x1ec = pCVar6->field_0x8c;
 		}
 		else {
-			this->field_0x1ec = 0;
+			this->field_0x1ec = (CActorAutonomous*)0x0;
 		}
 
 		puVar9 = &(this->cameraConfig).flags_0x70;

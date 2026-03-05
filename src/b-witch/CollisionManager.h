@@ -171,6 +171,7 @@ public:
 
 	void Level_PostCreate();
 
+	static bool IsASomethingGround(int index, edF32VECTOR4* param_2);
 	static bool IsASlidingGround(s_collision_contact* pContact);
 	static float GetMaterialSlidingCoef(s_collision_contact* pContact);
 

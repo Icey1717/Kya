@@ -273,6 +273,7 @@ void CCinematicManager::Level_AddAll(ByteCode* pByteCode)
 	long lVar3;
 
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+
 	pByteCode->GetChunk();
 	iVar1 = pByteCode->GetS32();
 	this->numCutscenes_0x8 = iVar1;
@@ -378,7 +379,7 @@ void CCinematicManager::Level_SectorChange(int param_2, int param_3)
 void CCinematicManager::WillLoadCinematic()
 {
 	bool bVar1;
-	S_NTF_TARGET_STREAM_REF* pSwitchList;
+	S_NTF_SWITCH* pSwitchList;
 	int iVar3;
 	int iVar4;
 	CCinematic** pCVar6;
@@ -407,18 +408,11 @@ void CCinematicManager::WillLoadCinematic()
 
 			if ((bVar1) && ((pCinematic->baseB == -1 || (pCinematic->baseB == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
 				pCinematic->pActor = (CActor*)0x0;
+
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
-					pSwitchList = pCinematic->pSwitchListA;
-					bVar1 = false;
-
-					if ((pSwitchList != (S_NTF_TARGET_STREAM_REF*)0x0) && (pCinematic->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
-						bVar1 = true;
-					}
-
-					if (bVar1) {
-						pSwitchList->Switch((CActor*)0x0);
-						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-						pSwitchList->PostSwitch((CActor*)0x0);
+					if (pCinematic->switchListA.IsValid()) {
+						pCinematic->switchListA.Switch((CActor*)0x0);
+						pCinematic->switchListA.PostSwitch((CActor*)0x0);
 					}
 				}
 
@@ -783,7 +777,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x58 = pByteCode->GetF32();
 
 	this->field_0x5c = (SWITCH_MODE)pByteCode->GetS32();
-	this->instanceIndex = pByteCode->GetF32();
+	this->field_0x60 = pByteCode->GetF32();
 	this->field_0x64 = (SWITCH_MODE)pByteCode->GetS32();
 	this->field_0x68 = pByteCode->GetF32();
 
@@ -849,17 +843,8 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x25c = piVar2;
 	this->condArray_0x244.Create(pByteCode);
 
-	S_NTF_TARGET_STREAM_REF::Create(&this->pSwitchListA, pByteCode);
-
-	pcVar6 = pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pcVar6 + sizeof(S_STREAM_EVENT_CAMERA);
-	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)pcVar6;
-
-	S_NTF_TARGET_STREAM_REF::Create(&this->pSwitchListB, pByteCode);
-
-	pcVar6 = pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pcVar6 + sizeof(S_STREAM_EVENT_CAMERA);
-	this->pStreamEventCameraB = (S_STREAM_EVENT_CAMERA*)pcVar6;
+	this->switchListA.Create(pByteCode);
+	this->switchListB.Create(pByteCode);
 
 	if (this->field_0x4c == 0) {
 		this->flags_0x8 = this->flags_0x8 | 8;
@@ -952,14 +937,8 @@ void CCinematic::Init()
 	for (iVar6 = *this->field_0x25c; iVar6 != 0; iVar6 = iVar6 + -1) {
 	}
 
-	pSwitchList = this->pSwitchListA;
-
-	pSwitchList->Init();
-	this->pStreamEventCameraA->Init();
-
-	pSwitchList = this->pSwitchListB;
-	pSwitchList->Init();
-	this->pStreamEventCameraB->Init();
+	this->switchListA.Init();
+	this->switchListB.Init();
 
 	if (this->field_0x25c == (int*)0x0) {
 		iVar6 = 0;
@@ -1258,34 +1237,18 @@ void CCinematic::Start()
 				pCinematicManager->startTime = GetTimer()->totalTime;
 
 				if ((this->flags_0x8 & 0x800) == 0) {
-					S_NTF_TARGET_STREAM_REF* pSwitchList = this->pSwitchListA;
-
-					bool bHasEventData = false;
-					if ((pSwitchList != (S_NTF_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
-						bHasEventData = true;
-					}
-
-					if (bHasEventData) {
-						pSwitchList->Switch((CActor*)0x0);
-						this->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-						pSwitchList->PostSwitch((CActor*)0x0);
+					if (this->switchListA.IsValid()) {
+						this->switchListA.Switch((CActor*)0x0);
+						this->switchListA.PostSwitch((CActor*)0x0);
 					}
 				}
 
 				if ((this->flags_0x8 & 0x800) == 0) {
 					this->condArray_0x244.Perform();
 
-					S_NTF_TARGET_STREAM_REF* pSwitchList = this->pSwitchListB;
-
-					bool bHasEventData = false;
-					if ((pSwitchList != (S_NTF_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
-						bHasEventData = true;
-					}
-
-					if (bHasEventData) {
-						pSwitchList->Switch((CActor*)0x0);
-						this->pStreamEventCameraB->SwitchOn((CActor*)0x0);
-						pSwitchList->PostSwitch((CActor*)0x0);
+					if (this->switchListB.IsValid()) {
+						this->switchListB.Switch((CActor*)0x0);
+						this->switchListB.PostSwitch((CActor*)0x0);
 					}
 
 					if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
@@ -2075,22 +2038,12 @@ void CCinematic::Manage()
 		}
 	}
 
-	bVar1 = this->pSwitchListA != (S_NTF_TARGET_STREAM_REF*)0x0;
-	if (bVar1) {
-		bVar1 = this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0;
+	if (this->switchListA.IsValid()) {
+		this->switchListA.pStreamEventCamera->Manage((CActor*)0x0);
 	}
 
-	if (bVar1) {
-		this->pStreamEventCameraA->Manage((CActor*)0x0);
-	}
-
-	bVar1 = this->pSwitchListB != (S_NTF_TARGET_STREAM_REF*)0x0;
-	if (bVar1) {
-		bVar1 = this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0;
-	}
-
-	if (bVar1) {
-		this->pStreamEventCameraA->Manage((CActor*)0x0);
+	if (this->switchListB.IsValid()) {
+		this->switchListB.pStreamEventCamera->Manage((CActor*)0x0);
 	}
 
 	if ((this->state != CS_Stopped) && ((GameFlags & GAME_STATE_PAUSED) == 0)) {
@@ -2325,9 +2278,7 @@ void CCinematic::Stop()
 		pActor = CActorHero::_gThis;
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
 			if ((this->flags_0x4 & 0x10000) != 0) {
-				IMPLEMENTATION_GUARD(
-				CActorHero::_gThis->data.objectId =
-					CActorHero::_gThis->data.objectId & 0xffbfffff;)
+				CActorHero::_gThis->flags = CActorHero::_gThis->flags & 0xffbfffff;
 			}
 
 			if ((this->flags_0x4 & 0x10) != 0) {
@@ -2380,17 +2331,10 @@ void CCinematic::Stop()
 		pCVar2->pCurCinematic = (CCinematic*)0x0;
 		if ((this->flags_0x8 & 0x800) == 0) {
 			this->condArray_0x244.Perform();
-			S_NTF_TARGET_STREAM_REF* pSwitchList = this->pSwitchListB;
-			bVar1 = false;
-			if ((pSwitchList != (S_NTF_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
-				bVar1 = true;
-			}
 
-			if (bVar1) {
-				pSwitchList->Switch((CActor*)0x0);
-				this->pStreamEventCameraB->SwitchOn((CActor*)0x0);
-				pSwitchList = this->pSwitchListB;
-				pSwitchList->PostSwitch((CActor*)0x0);
+			if (this->switchListB.IsValid()) {
+				this->switchListB.Switch((CActor*)0x0);
+				this->switchListB.PostSwitch((CActor*)0x0);
 			}
 
 			if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
@@ -3158,17 +3102,9 @@ void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 			}
 
 			if (((bVar1) || (this->cineBankLoadStage_0x2b4 == 4)) && ((this->flags_0x8 & 0x800) == 0)) {
-				pSVar2 = this->pSwitchListA;
-				bVar1 = false;
-				if ((pSVar2 != (S_NTF_TARGET_STREAM_REF*)0x0) &&
-					(this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
-					bVar1 = true;
-				}
-
-				if (bVar1) {
-					pSVar2->Switch((CActor*)0x0);
-					this->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-					pSVar2->PostSwitch((CActor*)0x0);
+				if (this->switchListA.IsValid()) {
+					this->switchListA.Switch((CActor*)0x0);
+					this->switchListA.PostSwitch((CActor*)0x0);
 				}
 			}
 		}
@@ -3339,29 +3275,14 @@ void CCinematic::PreReset()
 
 	this->flags_0x8 = this->flags_0x8 & ~uVar4;
 	this->count_0x2d8 = 0;
-	this->totalCutsceneDelta = 0.0;
-	pSVar3 = this->pSwitchListA;
-	bVar1 = false;
+	this->totalCutsceneDelta = 0.0f;
 
-	if ((pSVar3 != (S_NTF_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0))
-	{
-		bVar1 = true;
-	}
-	if (bVar1) {
-		pSVar3->Reset();
-		this->pStreamEventCameraA->Reset((CActor*)0x0);
+	if (this->switchListA.IsValid()) {
+		this->switchListA.Reset((CActor*)0x0);
 	}
 
-	pSVar3 = this->pSwitchListB;
-	bVar1 = false;
-	if ((pSVar3 != (S_NTF_TARGET_STREAM_REF*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0))
-	{
-		bVar1 = true;
-	}
-
-	if (bVar1) {
-		pSVar3->Reset();
-		this->pStreamEventCameraB->Reset((CActor*)0x0);
+	if (this->switchListB.IsValid()) {
+		this->switchListB.Reset((CActor*)0x0);
 	}
 
 	if (((this->flags_0x4 & 0x800) != 0) &&
@@ -3733,10 +3654,12 @@ void CCinematic::FUN_001caeb0()
 
 	this->condArray_0x244.Invalidate();
 
-	this->pSwitchListA = (S_NTF_TARGET_STREAM_REF*)0x0;
-	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)0x0;
-	this->pSwitchListB = (S_NTF_TARGET_STREAM_REF*)0x0;
-	this->pStreamEventCameraB = (S_STREAM_EVENT_CAMERA*)0x0;
+	this->switchListA.pTargetStreamRef = (S_NTF_TARGET_STREAM_REF*)0x0;
+	this->switchListA.pStreamEventCamera = (S_STREAM_EVENT_CAMERA*)0x0;
+
+	this->switchListB.pTargetStreamRef = (S_NTF_TARGET_STREAM_REF*)0x0;
+	this->switchListB.pStreamEventCamera = (S_STREAM_EVENT_CAMERA*)0x0;
+
 	this->pActor = (CActor*)0x0;
 	this->defaultAudioTrackId = -1;
 	this->flags_0x4 = this->flags_0x4 & 0xffefffff;
@@ -4070,7 +3993,7 @@ bool CBWCinCam::Activate()
 		iVar3 = pCVar1->field_0x64;
 		fVar5 = pCVar1->field_0x68;
 		SVar4 = pCVar1->field_0x5c;
-		fVar6 = pCVar1->instanceIndex;
+		fVar6 = pCVar1->field_0x60;
 		(pCVar2)->field_0x8c = pCVar1->field_0x58;
 		(pCVar2)->switchMode = SVar4;
 		(pCVar2)->field_0x98 = fVar6;
@@ -5266,17 +5189,63 @@ bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
 			if (bVar1) {
 				pCinematic->pActor = param_3;
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
-					bVar1 = false;
-					if ((pCinematic->pSwitchListA != (S_NTF_TARGET_STREAM_REF*)0x0) &&
-						(pCinematic->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
-						bVar1 = true;
+					if (pCinematic->switchListA.IsValid()) {
+						pCinematic->switchListA.Switch((CActor*)0x0);
+						pCinematic->switchListA.PostSwitch((CActor*)0x0);
 					}
+				}
 
-					if (bVar1) {
-						iVar3 = 0;
-						pCinematic->pSwitchListA->Switch((CActor*)0x0);
-						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
-						pCinematic->pSwitchListA->PostSwitch((CActor*)0x0);
+				pCinematic->Start();
+			}
+		}
+
+		if (pCinematic->state != CS_Stopped) {
+			this->pCinematic = pCinematic;
+		}
+	}
+
+	return this->pCinematic != (CCinematic*)0x0;
+}
+
+bool CCinematicManager::RunSectorLoadingCinematic(int cutsceneID, CActor* pActor, int elevatorId, int param_5)
+{
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	CCinematic* pCinematic;
+
+	this->field_0x20 = elevatorId;
+	this->field_0x24 = param_5;
+
+	if ((cutsceneID < 0) || (this->numCutscenes_0x8 <= cutsceneID)) {
+		pCinematic = (CCinematic*)0x0;
+	}
+	else {
+		pCinematic = this->ppCinematicObjB_A[cutsceneID];
+	}
+
+	if (pCinematic != (CCinematic*)0x0) {
+		if (pCinematic->state == CS_Stopped) {
+			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+			if (bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
+			}
+
+			if (!bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
+			}
+
+			bVar1 = (bool)(bVar1 ^ 1);
+			if (!bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
+			}
+
+			if (bVar1) {
+				pCinematic->pActor = pActor;
+				if ((pCinematic->flags_0x8 & 0x800) == 0) {
+					if (pCinematic->switchListA.IsValid()) {
+						pCinematic->switchListA.Switch((CActor*)0x0);
+						pCinematic->switchListA.PostSwitch((CActor*)0x0);
 					}
 				}
 
@@ -5299,6 +5268,74 @@ void CCinematicManager::Level_ManagePaused()
 	}
 
 	return;
+}
+
+bool CCinematicManager::ResetSector(int index, CActor* pHero)
+{
+	bool bVar1;
+	CCinematic* pCVar2;
+	int iVar4;
+
+	if ((index < 0) || (this->numCutscenes_0x8 <= index)) {
+		pCVar2 = (CCinematic*)0x0;
+	}
+	else {
+		pCVar2 = this->ppCinematicObjB_A[index];
+	}
+
+	if (pCVar2 != (CCinematic*)0x0) {
+		pCVar2->flags_0x4 = pCVar2->flags_0x4 | 0xd0200;
+		pCVar2->field_0x58 = 0.0f;
+		pCVar2->field_0x5c = SWITCH_MODE_B;
+		pCVar2->field_0x60 = 0.0f;
+		pCVar2->field_0x64 = SWITCH_MODE_B;
+		pCVar2->field_0x68 = 0.0f;
+	}
+
+	if ((index < 0) || (this->numCutscenes_0x8 <= index)) {
+		pCVar2 = (CCinematic*)0x0;
+	}
+	else {
+		pCVar2 = this->ppCinematicObjB_A[index];
+	}
+
+	if (pCVar2 != (CCinematic*)0x0) {
+		if (pCVar2->state == CS_Stopped) {
+			bVar1 = (pCVar2->flags_0x4 & 1) != 0;
+			if (bVar1) {
+				bVar1 = (pCVar2->flags_0x8 & 0x400) != 0;
+			}
+
+			if (!bVar1) {
+				bVar1 = (pCVar2->flags_0x8 & 0x28) != 0;
+			}
+
+			bVar1 = (bool)(bVar1 ^ 1);
+			if (!bVar1) {
+				bVar1 = (pCVar2->flags_0x8 & 0x800) != 0;
+			}
+
+			if (bVar1) {
+				pCVar2->pActor = (CActor*)pHero;
+				if ((pCVar2->flags_0x8 & 0x800) == 0) {
+					bVar1 = false;
+
+					if (pCVar2->switchListA.IsValid()) {
+						pCVar2->switchListA.Switch((CActor*)0x0);
+						pCVar2->switchListA.PostSwitch((CActor*)0x0);
+					}
+				}
+
+				pCVar2->Start();
+			}
+		}
+
+		if (pCVar2->state != CS_Stopped) {
+			this->pCinematic = pCVar2;
+		}
+	}
+
+	return this->pCinematic != (CCinematic*)0x0;
 }
 
 bool CCinematicManager::FUN_001c5c60()
@@ -6259,6 +6296,17 @@ void S_NTF_SWITCH::LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData)
 	}
 
 	return;
+}
+
+bool S_NTF_SWITCH::IsValid()
+{
+	bool bValid = false;
+
+	if (this->pTargetStreamRef != (S_NTF_TARGET_STREAM_REF*)0x0 && this->pStreamEventCamera != (S_STREAM_EVENT_CAMERA*)0x0) {
+		bValid = true;
+	}
+
+	return bValid;
 }
 
 void S_NTF_SWITCH_ONOFF::Create(ByteCode* pByteCode)

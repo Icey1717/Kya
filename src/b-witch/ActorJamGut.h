@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorAutonomous.h"
 #include "Fx.h"
+#include "Dynamic.h"
 
 #define JAMGUT_BEHAVIOUR_STAND 3
 #define JAMGUT_BEHAVIOUR_RIDDEN 4
@@ -12,10 +13,17 @@
 #define JAMGUT_STAND_STATE_REJECT_HERO_A 0x19
 #define JAMGUT_STAND_STATE_REJECT_HERO_B 0x1a
 
+#define JAMGUT_RIDE_STATE_STAND 7
+#define JAMGUT_RIDE_STATE_RUN 0xa
+#define JAMGUT_RIDE_STATE_JUMP_BEFORE 0xb
+#define JAMGUT_RIDE_STATE_JUMP 0xc
+#define JAMGUT_RIDE_STATE_JUMP_AFTER 0xd
+#define JAMGUT_RIDE_STATE_JUMP_AFTER_B 0xe
+#define JAMGUT_RIDE_STATE_FALL 0xf
+
 #define JAMGUT_CMD_RECEPT 1
 #define JAMGUT_CMD_JUMP 5
 #define JAMGUT_CMD_ATTACK 8
-#define JAMGUT_CMD_WALK 0xd
 
 class CActorHero;
 class CActorJamGut;
@@ -140,38 +148,65 @@ public:
 
 	float ComputeDistanceToPath(edF32VECTOR4* param_2, CPathPlane* param_3, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, float* param_7);
 
-	void FUN_00377030();
-	void FUN_003767d0(float param_1, float param_2, float param_3, float param_4, float param_5,
+	void ResetStdSettings();
+	void SetJumpCfg(float param_1, float param_2, float param_3, float param_4, float param_5,
 		int param_7, edF32VECTOR4* param_8);
 
 	int GetHeroAction(float param_1, CActorHero* pHero);
-	int AccomplishHit(CActor* pActor, CActor* pSender, _msg_hit_param* pParams, edF32VECTOR4* param_5);
+	void SetHitInvincibility(float duration, bool bAdd);
+	int AccomplishHit(CActorAutonomous* pActor, CActor* pSender, _msg_hit_param* pParams, edF32VECTOR4* param_5);
 
 	uint GetStateRider(int state);
 	int ChooseStateDead(int param_2, int param_3, int param_4);
 	int ChooseStateWind(float param_1, edF32VECTOR4* param_3);
 	bool CheckHitAndDeath(CActorHero* pHero);
+	int ChooseStateHit(CActor* pSender, _msg_hit_param* param_3, edF32VECTOR4* param_4, bool param_5);
+
+	// New inlined
+	bool UpdateFunc(float inputFloat);
 
 	void BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour);
 	void BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehaviour);
 
 	void StateJamGutStand(float minTime, CBehaviourJamGutStand* pBehaviour, CActor* param_4, int nextState);
-	void StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int param_3, int param_4);
+	void StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int param_3, int nextState);
 
-	void FUN_00375fe0();
-	void FUN_00364810(float param_1, float param_2, float param_3);
+	void StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState);
+	void StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState);
+	void StateJamGutHit();
+	void StateJamGutFall();
+	void StateJamGutJumpBefore(CBehaviourJamGut*);
+
+	void StateJamGutJumpInit();
+	void StateJamGutJump();
+
+	void StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextState);
+
+	void StateJamGutStandInit();
+	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
+	bool ManageDynAndKillActors(uint dynFlags);
+	bool FUN_003763d0();
+	void UpdatePercentWalkRun(float param_1, float param_2, float param_3);
+
+	void SetAnimSpeed(float animSpeed);
 
 	int RiderCmdAttack();
 	int RiderCmdJump();
 	int RiderCmdRecept();
+	int RiderCmdStand();
 	int RiderCmdWalk();
 	int RiderCmdRun();
 	int RiderCmdNew();
+	int RiderCmd_00367e40();
 
 	edF32VECTOR4* RiderGetForce();
+	float RiderGetIntensity();
+	int RiderGetNew();
 
 	void RiderSetState(int state, int anim);
 
+	void FUN_00367a90(edF32VECTOR4* param_2);
+	void BuildHorizontalSpeedVector(float param_1, float param_2, float param_3, float param_4, float param_5);
 	void UpdatePercentLeftRight(float param_1, float param_2);
 
 	bool FUN_00376710();
@@ -203,12 +238,16 @@ public:
 	float field_0x414;
 	float field_0x418;
 	float field_0x41c;
+	int field_0x420;
 	edF32VECTOR4 field_0x430;
 
+	float field_0x440;
 	float field_0x444;
 	float field_0x448;
+	float field_0x44c;
 
 	edF32VECTOR4 field_0x450;
+	float field_0x460;
 	edF32VECTOR4 field_0x470;
 
 	float field_0x480;
@@ -224,6 +263,11 @@ public:
 	float field_0x4ac;
 	float field_0x4b0;
 	float field_0x4b4;
+	int field_0x4b8;
+	float field_0x4bc;
+	float field_0x4c0;
+
+	CScalarDyn field_0x4c4;
 
 	int field_0x4ec;
 

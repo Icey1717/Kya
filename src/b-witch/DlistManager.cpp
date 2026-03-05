@@ -121,9 +121,9 @@ void CGlobalDListManager::Level_Init()
 	int iVar9;
 	int curIndex;
 	uint size;
-	int unaff_s6_lo;
-	int unaff_s7_lo;
-	int unaff_s8_lo;
+	int nbMatrices;
+	int nbCommands;
+	int nbInstances;
 
 	this->bBeganLevelInit = 1;
 
@@ -208,9 +208,9 @@ void CGlobalDListManager::Level_Init()
 						uVar8 = edDListGetBufSizeNeeded(0x101, iVar7, iVar6, iVar9, (uint*)0x0, (uint*)0x0);
 						if ((int)size < (int)uVar8) {
 							size = uVar8;
-							unaff_s6_lo = iVar9;
-							unaff_s8_lo = iVar6;
-							unaff_s7_lo = iVar7;
+							nbMatrices = iVar9;
+							nbInstances = iVar6;
+							nbCommands = iVar7;
 						}
 					}
 
@@ -219,20 +219,20 @@ void CGlobalDListManager::Level_Init()
 			}
 
 			if (size != 0) {
-				curIndex = edMemGetAvailable(TO_HEAP(H_MAIN));
+				const int memAvailable = edMemGetAvailable(TO_HEAP(H_MAIN));
 				this->pDisplayList = (DisplayList*)edMemAlloc(TO_HEAP(H_MAIN), size);
 				pScene = CScene::_scene_handleA;
 				pCurPatchA = this->ppGlobalDlist[1].pDlistPatch;
-				pCurPatchA->nbCommands = unaff_s7_lo;
-				pCurPatchA->nbMatrices = unaff_s6_lo;
-				pCurPatchA->field_0x10 = unaff_s8_lo;
+				pCurPatchA->nbCommands = nbCommands;
+				pCurPatchA->nbMatrices = nbMatrices;
+				pCurPatchA->field_0x10 = nbInstances;
 				pCurPatchA->flags = 0x101;
-				pCurPatchA->pDisplayListInternal = edDListNew(TO_HEAP(H_MAIN), 0x101, unaff_s7_lo, unaff_s8_lo, unaff_s6_lo, 0, this->pDisplayList);
+				pCurPatchA->pDisplayListInternal = edDListNew(TO_HEAP(H_MAIN), 0x101, nbCommands, nbInstances, nbMatrices, 0, this->pDisplayList);
 				edDListSetSceneUsed(pCurPatchA->pDisplayListInternal, pScene);
 				this->ppGlobalDlist[1].pDlistPatch->Init();
-				iVar9 = edMemGetAvailable(TO_HEAP(H_MAIN));
-				/* - Sector patchable \t\t: %d\n\n */
-				edDebugPrintf("- Sector patchable \t\t: %d\n\n", curIndex - iVar9);
+				const int newMemAvailable = edMemGetAvailable(TO_HEAP(H_MAIN));
+				edDebugPrintf("- Sector patchable \t\t: %d\n\n", memAvailable - newMemAvailable);
+
 				curIndex = 2;
 				if (2 < this->dlistCount) {
 					do {
@@ -552,11 +552,11 @@ void CGlobalDListManager::Level_Create()
 
 void CGlobalDListManager::SectorChange(int newSectorId)
 {
-	GlobalDlistEntry* pActiveGlobalDlist;
+	GlobalDlistEntry* aGlobalDLists;
 	int iVar2;
 	CGlobalDListPatch* pActiveDlistPatch;
-	uint uVar4;
-	uint uVar5;
+	uint nbRegisteredPatches;
+	uint nbMatrices;
 	CGlobalDListPatch* pCVar6;
 
 	if (newSectorId == -1) {
@@ -582,20 +582,20 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 		}
 
 		if (pCVar6 != (CGlobalDListPatch*)0x0) {
-			pActiveGlobalDlist = &this->ppGlobalDlist[newSectorId];
+			aGlobalDLists = this->ppGlobalDlist;
 
-			if ((pActiveGlobalDlist->nbRegisteredPatches == 0) ||
-				((pActiveGlobalDlist->nbMatrices == 0 && (pActiveGlobalDlist->nbInstances == 0)))) {
+			if ((aGlobalDLists[newSectorId].nbRegisteredPatches == 0) ||
+				((aGlobalDLists[newSectorId].nbMatrices == 0 && (aGlobalDLists[newSectorId].nbInstances == 0)))) {
 				pCVar6->bEnabled = 0;
 			}
 			else {
 				pActiveDlistPatch = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 
 				if (pActiveDlistPatch != (CGlobalDListPatch*)0x0) {
-					uVar4 = pActiveGlobalDlist->nbRegisteredPatches;
-					uVar5 = pActiveGlobalDlist->nbMatrices;
-					if ((uVar4 != 0) && ((pActiveGlobalDlist->nbInstances != 0 || (uVar5 != 0)))) {
-						edDListPatchableReset(pActiveDlistPatch->pDisplayListInternal, uVar4, pActiveGlobalDlist[this->activeSectorPatchId].nbInstances, uVar5);
+					nbRegisteredPatches = aGlobalDLists[activeSectorPatchId].nbRegisteredPatches;
+					nbMatrices = aGlobalDLists[activeSectorPatchId].nbMatrices;
+					if ((nbRegisteredPatches != 0) && ((aGlobalDLists[activeSectorPatchId].nbInstances != 0 || (nbMatrices != 0)))) {
+						edDListPatchableReset(pActiveDlistPatch->pDisplayListInternal, nbRegisteredPatches, aGlobalDLists[activeSectorPatchId].nbInstances, nbMatrices);
 					}
 				}
 

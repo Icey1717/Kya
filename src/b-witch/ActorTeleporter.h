@@ -40,9 +40,9 @@ struct ACTOR_WAYPOINT_LIST
 
 struct S_DESTINATION_ENTRY
 {
-	undefined4 field_0x0;
-	undefined4 field_0x4;
-	undefined4 field_0x8;
+	int levelId;
+	int elevatorId;
+	int field_0x8;
 };
 
 struct S_DESTINATION_LIST

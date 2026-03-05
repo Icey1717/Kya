@@ -186,6 +186,22 @@
 #define STATE_HERO_LOOK_INTERNAL 0x11a
 
 #define STATE_HERO_GET_ON_MOUNT 0x11c
+#define STATE_HERO_GET_OFF_MOUNT 0x11d
+#define STATE_HERO_MOUNT_STAND_1 0x11e
+#define STATE_HERO_MOUNT_STAND_2 0x11f
+#define STATE_HERO_MOUNT_RUN_TURN 0x120
+#define STATE_HERO_MOUNT_RUN_1 0x122
+#define STATE_HERO_MOUNT_JUMP_BEFORE 0x124
+#define STATE_HERO_MOUNT_JUMP 0x125
+#define STATE_HERO_MOUNT_JUMP_AFTER 0x126
+#define STATE_HERO_MOUNT_127 0x127
+#define STATE_HERO_MOUNT_128 0x128
+#define STATE_HERO_MOUNT_HIT_A 0x12a
+#define STATE_HERO_MOUNT_STAND_IDLE_KICK 0x12f
+#define STATE_HERO_MOUNT_STAND_ON_1 0x130
+#define STATE_HERO_MOUNT_STAND_ON_2 0x131
+#define STATE_HERO_MOUNT_STAND_ON_3 0x132
+#define STATE_HERO_MOUNT_STAND_ON_SIT 0x133
 
 #define HERO_BEHAVIOUR_DEFAULT 0x7
 #define HERO_BEHAVIOUR_RIDE_JAMGUT 0x8
@@ -257,13 +273,14 @@ public:
 	virtual void SetInvincible(float duration, int bAdd);
 	virtual void InitMount(CActorJamGut* pJamGut, uint boneId, int param_4, uint flags);
 
+	int field_0x8;
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 inputAnalogDir;
 	float inputMagnitude;
-	int aCommands[13];
-	int field_0x38;
-	undefined4 field_0x6c;
-	undefined4 field_0x70;
+	int aCommands[0xd];
+	int field_0x68;
+	float field_0x6c;
+	float field_0x70;
 	uint boneId;
 	undefined4 field_0x78;
 	int field_0x7c;

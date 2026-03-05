@@ -153,10 +153,10 @@ void edDListRotateZ(float rotation);
 void edDListTranslate(float x, float y, float z);
 
 DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList);
-DisplayList* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);
+DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int nbInstances, int nbMatrices, uint param_6, void* pInBuffer);
 void edDListDelete(DisplayList* pDisplayList);
 void edDListSetSceneUsed(DisplayList* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
-uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6);
+uint edDListGetBufSizeNeeded(uint flags, int nbMaxCommands, int nbInstances, int nbMatrices, uint* pCommandBufferSize, uint* pDataBufferSize);
 
 void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g2d_manager* textureInfoObj, uint mode);
 bool edDListTermMaterial(edDList_material* pMaterial);

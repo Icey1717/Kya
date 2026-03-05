@@ -37,6 +37,7 @@
 #define WOLFEN_STATE_BREAK_OBJECT 0x74
 #define WOLFEN_STATE_TRACK_DEFEND 0x76
 #define WOLFEN_STATE_COME_BACK 0x77
+#define WOLFEN_STATE_TRACK_COME_BACK 0x78
 #define WOLFEN_STATE_EXORCISE_IDLE 0x79
 #define WOLFEN_STATE_EXORCISE_EXORCIZE 0x7a
 #define WOLFEN_STATE_EXORCISE_TRANSFORM 0x7b
@@ -44,7 +45,12 @@
 #define WOLFEN_STATE_EXORCISE_END 0x7d
 #define WOLFEN_STATE_EXORCISE_AWAKE 0x7e
 #define WOLFEN_STATE_EXORCISE_LIVING_DEAD 0x7f
+#define WOLFEN_STATE_AVOID_ESCAPE 0x8b
+#define WOLFEN_STATE_GUARD_WALK_TO 0x8c
+#define WOLFEN_STATE_GUARD_STOP 0x8d
+#define WOLFEN_STATE_GUARD_WAIT 0x8f
 #define WOLFEN_STATE_RELOAD 0x91
+#define WOLFEN_STATE_SNIPER_SCAN 0x93
 #define WOLFEN_STATE_AIM 0x94
 #define WOLFEN_STATE_FIRE 0x95
 #define WOLFEN_STATE_BOOMY_HIT 0x98
@@ -358,8 +364,8 @@ public:
 	virtual edF32VECTOR4* GetComeBackAngles();
 	virtual int GetTrackBehaviour();
 	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
-	virtual int GetStateWolfenComeBack();
 	virtual int GetStateWolfenTrack();
+	virtual int GetStateWolfenComeBack();
 	virtual int GetStateWolfenGuard();
 	virtual int GetStateWolfenWeapon();
 
@@ -378,6 +384,11 @@ public:
 
 	int GetState_001f0b30();
 	int GetState_001f08a0();
+
+	void SwitchBhvCommit();
+	void SwitchBhvTest();
+
+	void FinishBehaviour(int param_2);
 
 	uint flags_0x4;
 	CActorWolfen* pOwner;
@@ -455,6 +466,8 @@ public:
 class CBehaviourTrackStand : public CBehaviourWolfen
 {
 public:
+	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) { IMPLEMENTATION_GUARD(); }
 	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
 
 	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF> notificationTargetArray;
@@ -491,11 +504,36 @@ public:
 class CBehaviourSleep : public CBehaviourWatchDog
 {
 public:
+	virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourEscape : public CBehaviourWolfen
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual int GetTrackBehaviour();
+	virtual int GetStateWolfenComeBack();
+
+	int nbPathFollowReaders;
+	CPathFollowReader* aPathFollowReaders;
+
+	uint field_0x88;
+	float field_0x8c;
+	float field_0x90;
+	float field_0x94;
+	float field_0x98;
+	float field_0x9c;
+	int field_0xa0;
+	undefined4 field_0xa4;
+	undefined4 field_0xa8;
 };
 
 class CBehaviourWolfenWeapon : public CBehaviourWolfen
@@ -505,9 +543,83 @@ public:
 	virtual void End(int newBehaviourId);
 };
 
+class CWolfenHaloAgent
+{
+public:
+	void Create();
+	void Init(CActor* pOwner);
+	void Reset(edF32VECTOR4* pPosition, edF32VECTOR4* pAxis);
+
+	void SetVisible(bool bVisible);
+
+	void SetNbSpot(int nbSpot);
+	void SetNbShadow(int nbShadow);
+
+	void UpdateHaloPos(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
+	void RotateSpot();
+
+	CShadow* aShadows;
+
+	int nbSpot;
+	int nbShadow;
+
+	undefined4 field_0xc;
+
+	float field_0x14;
+
+	float rotationSpeed;
+	uint field_0x1c;
+	int shadowMaterialId;
+};
+
 class CBehaviourSnipe : public CBehaviourWolfenWeapon
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Draw();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual int GetTrackBehaviour();
+	virtual int GetStateWolfenGuard();
+
+	virtual int GetSpotTrackBehaviour();
+
+	void ProjectTargetOnScenery(edF32VECTOR4* pOutPosition, edF32VECTOR4* pOutIntersection, edF32VECTOR4* pSource, edF32VECTOR4* pDestination);
+	void ProjectHaloOnScenery(edF32VECTOR4* pSource, edF32VECTOR4* pPosition);
+
+	edF32VECTOR4 field_0x80;
+
+	S_STREAM_REF<CActor> field_0x90;
+	float field_0x94;
+	float field_0x98;
+	float field_0x9c;
+	float field_0xa0;
+
+	int field_0xac;
+
+	float field_0xb0;
+	float field_0xb4;
+
+	int field_0xb8;
+
+	undefined4 field_0xbc;
+	float field_0xc0;
+
+	int field_0xe4;
+	bool field_0xe8;
+	float field_0xec;
+
+	int snipeTrackBehaviourId;
+	int spotTrackBehaviourId;
+
+	CWolfenHaloAgent wolfenHaloAgent;
 };
 
 struct astruct_16
@@ -546,6 +658,7 @@ public:
 	virtual int Func_0x70();
 	virtual int Func_0x74();
 	virtual int Func_0x78();
+	virtual int Func_0x7c() { IMPLEMENTATION_GUARD(); }
 	virtual void Func_0x80(int* param_2, int* param_3, CActor* pTarget);
 
 	int FUN_002faf40();
@@ -583,6 +696,24 @@ public:
 class CBehaviourTrackWeaponSnipe : public CBehaviourTrackWeaponStand
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Draw();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+
+	bool NewFunc(CActorCommander* pCommander);
+
+	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
+
+	float field_0xf0;
+
+	CBehaviourSnipe* pBehaviourSnipe;
+
+	edF32VECTOR4 field_0x100;
 };
 
 class CBehaviourAvoid : public CBehaviourWolfen
@@ -592,6 +723,10 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
+
+	float GetDangerWay2D(edF32VECTOR4* pDirection);
+	bool GetEscapePosition(edF32VECTOR4* param_2, edF32VECTOR4* param_3);
+	void GetHitParams(_msg_hit_param* pHitParams, CActor* pHitBy);
 
 	float field_0x80;
 	float field_0x84;
@@ -616,6 +751,7 @@ public:
 	int field_0x90;
 	int trackBehaviourId;
 	float field_0x98;
+	edF32VECTOR4 field_0xa0;
 };
 
 class CBehaviourDCA : public CBehaviourWolfen
@@ -918,6 +1054,9 @@ public:
 	void BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour);
 	void BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour);
 	void BehaviourDCA_Manage(CBehaviourDCA* pBehaviour);
+	void BehaviourAvoid_Manage(CBehaviourAvoid* pBehaviour);
+	void BehaviourSnipe_Manage(CBehaviourSnipe* pBehaviour);
+	void BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -934,6 +1073,7 @@ public:
 	void StateTrackFindPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
+	void StateWolfenTrackComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);
 	void StateWolfenSurprise(CBehaviourWolfen* pBehaviour);
 	void StateWolfenLocate(CBehaviourWolfen* pBehaviour);
@@ -944,23 +1084,36 @@ public:
 	void StateTrackCheckPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackChase(CBehaviourTrack* pBehaviour);
 	void StateTrackDefend(CBehaviourTrack* pBehaviour);
-	void StateWolfenBombShoot(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBombShoot() { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBombOrientTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenBombWalkTo(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenBombStand(CBehaviourWolfen* pBehaviour);
-	void StateWolfenBombFlip(CBehaviourWolfen* pBehaviour);
+	void StateWolfenBombStand();
+	void StateWolfenBombFlip();
 	void StateWolfenInsultEnd(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsultReceive(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenInsultStand(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenInsultStand() { IMPLEMENTATION_GUARD(); }
 	void StateWolfenInsult(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
-	void StateWolfenBoomyHit(CBehaviourWolfen* pBehaviour);
-	void StateWolfenBreakObject(CBehaviourWolfen* pBehaviour) { IMPLEMENTATION_GUARD(); }
+	void StateWolfenBoomyHit();
+	void StateWolfenBreakObject();
+
+	void StateGuardAreaWP_Wait(CBehaviourGuardArea* pBehaviour);
+	void StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour);
+	void StateGuardAreaWalkTo(CBehaviourGuardArea* pBehaviour);
+	void StateGuardAreaGuard();
+
 	void State_00174dc0(CBehaviourDCA* pBehaviour);
 	void State_00174f20(CBehaviourDCA* pBehaviour);
 	void State_001750a0(CBehaviourDCA* pBehaviour);
 	void State_00174cb0(CBehaviourDCA* pBehaviour);
 	void StateDCAStand(CBehaviourDCA* pBehaviour);
 	void StateDCADefend(CBehaviourDCA* pBehaviour);
+
+	void StateSnipeComeBack(CBehaviourSnipe* pBehaviour);
+	void StateSnipeScan(CBehaviourSnipe* pBehaviour);
+
+	void StateTrackWeaponFire(CBehaviourTrackWeaponSnipe* pBehaviour);
+	void StateTrackWeaponSnipe_Lost(CBehaviourTrackWeaponSnipe* pBehaviour);
+	void StateTrackWeaponSnipe_Track(CBehaviourTrackWeaponSnipe* pBehaviour);
 
 	void StateExorcizeIdle(CBehaviourExorcism* pBehaviour);
 	void StateExorcizeAwake(CBehaviourExorcism* pBehaviour);
@@ -984,6 +1137,9 @@ public:
 
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
+
+	void StateAvoidEscape(CBehaviourAvoid* pBehaviour);
+	void StateAvoidDefend(CBehaviourAvoid* pBehaviour);
 
 	int SV_WLF_CheckBoxOnWay(CActorsTable* pTable);
 	void SV_WLF_ExorcismComputeCenter(edF32VECTOR4* pCenter);
@@ -1034,6 +1190,8 @@ public:
 
 	bool IsExorcizable(CActorHero* pHero);
 	int GetExorciseAnim();
+
+	bool IsSnipeOccludedByScenery(float param_1, CActorFighter* pTarget);
 
 	// New
 	void PostManageA();

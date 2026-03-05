@@ -126,7 +126,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 						fVar12 = 0.0f;
 					}
 					else {
-						fVar12 = pCVar1->aButtons[5].clickValue;
+						fVar12 = pCVar1->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 					}
 
 					if (fVar12 == 0.0f) {

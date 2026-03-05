@@ -227,21 +227,21 @@ void ed3DManageAnim(ed_g3d_Anim_def* pAnimDef)
 ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMaterial)
 {
 	ed_Chunck* pMATA_HASH;
-	ed_Chunck* pcVar2;
+	ed_Chunck* pMAT;
 	uint nbMaterials;
 
 	pMATA_HASH = pManager->pMATA_HASH;
 
 	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
 
-	pcVar2 = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
+	pMAT = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 	nbMaterials = pMATA_HASH->nextChunckOffset - 0x10U >> 4;
 
 	while (true) {
-		if ((nbMaterials == 0) || (pMaterial == (ed_g2d_material*)(pcVar2 + 1))) break;
+		if ((nbMaterials == 0) || (pMaterial == (ed_g2d_material*)(pMAT + 1))) break;
 		nbMaterials = nbMaterials - 1;
-		pcVar2 = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 		pHashCode = pHashCode + 1;
+		pMAT = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
 	}
 
 	return pHashCode;

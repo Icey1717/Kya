@@ -52,6 +52,8 @@ set(SOURCES
 	"src/DebugTutorial.cpp"
 	"src/DebugInput.h"
 	"src/DebugInput.cpp"
+	"src/DebugHeroReplay.h"
+	"src/DebugHeroReplay.cpp"
 	"src/DebugWolfen.h"
 	"src/DebugWolfen.cpp"
 	"src/DebugRendererVulkan.cpp"

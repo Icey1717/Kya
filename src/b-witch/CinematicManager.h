@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "Actor.h"
 #include "edBank/edBankBuffer.h"
 
 #ifdef PLATFORM_PS2
@@ -52,26 +53,7 @@ public:
 	edF32VECTOR4 position;
 	edF32VECTOR4 heading;
 	edF32VECTOR4 scale;
-	undefined field_0x110;
-	undefined field_0x111;
-	undefined field_0x112;
-	undefined field_0x113;
-	undefined field_0x114;
-	undefined field_0x115;
-	undefined field_0x116;
-	undefined field_0x117;
-	undefined field_0x118;
-	undefined field_0x119;
-	undefined field_0x11a;
-	undefined field_0x11b;
-	undefined field_0x11c;
-	undefined field_0x11d;
-	undefined field_0x11e;
-	undefined field_0x11f;
-	undefined field_0x120;
-	undefined field_0x121;
-	undefined field_0x122;
-	undefined field_0x123;
+	CActorAlternateModel alternateModel;
 	ed_g3d_manager* pAltModelManager;
 };
 
@@ -453,6 +435,7 @@ struct S_NTF_SWITCH
 	void PostSwitch(CActor* pActor);
 	void SaveContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
 	void LoadContext(S_SAVE_CLASS_SWITCH_CAMERA* pSaveData);
+	bool IsValid();
 };
 
 struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH
@@ -686,7 +669,7 @@ public:
 	uint field_0x54;
 	float field_0x58;
 	SWITCH_MODE field_0x5c;
-	float instanceIndex;
+	float field_0x60;
 	SWITCH_MODE field_0x64;
 	float field_0x68;
 
@@ -773,10 +756,9 @@ public:
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;
-	S_NTF_TARGET_STREAM_REF* pSwitchListA;
-	S_STREAM_EVENT_CAMERA* pStreamEventCameraA;
-	S_NTF_TARGET_STREAM_REF* pSwitchListB;
-	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
+
+	S_NTF_SWITCH switchListA;
+	S_NTF_SWITCH switchListB;
 	int* field_0x25c;
 	uint aAudioTrackIds[5];
 	uint defaultAudioTrackId;
@@ -884,6 +866,9 @@ public:
 	void StopAllCutscenes();
 
 	bool PlayOutroCinematic(int index, CActor* param_3);
+	bool RunSectorLoadingCinematic(int cutsceneID, CActor* pActor, int elevatorId, int param_5);
+
+	bool ResetSector(int index, CActor* pHero);
 
 	bool FUN_001c5c60();
 

@@ -120,6 +120,7 @@ void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECT
 float GetAngleXFromVector(edF32VECTOR4* v0);
 float GetAngleYFromVector(edF32VECTOR4* v0);
 float edF32GetAnglesDelta(float t0, float t1);
+float edF32IntervalCos(float param_1, float param_2, float param_3, float param_4, float param_5);
 float edF32Between_2Pi(float param_1);
 float edF32Between_0_2Pi(float param_1);
 float edF32Between_0_2Pi_Incr(float param_1);
@@ -137,6 +138,7 @@ void edF32Vector2Add(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2);
 float edF32Vector4DotProductHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1);
 void edF32Vector4SubHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 
-float edF32ACosHard(float param_1);
+float edF32ACosHard(float value);
+float edF32ATanHard(float value);
 
 #endif // _MATH_OPS_H

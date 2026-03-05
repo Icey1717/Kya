@@ -90,6 +90,9 @@ namespace Hero
 
 	static const char* GetDefaultStateName(int state) {
 		switch (state) {
+		case 0:
+			return "ZERO";
+			break;
 		case STATE_HERO_SHOP:
 			return "StateHeroShop";
 			break;
@@ -361,8 +364,8 @@ namespace Hero
 			return "StateHeroTobogganJump2";
 			break;
 			case STATE_HERO_TOBOGGAN_CRASH:
-				return "StateHeroTobogganCrash";
-				break;
+			return "StateHeroTobogganCrash";
+			break;
 		case STATE_HERO_TOBOGGAN_2:
 			return "StateHeroToboggan2";
 			break;
@@ -486,6 +489,54 @@ namespace Hero
 		case STATE_HERO_GET_ON_MOUNT:
 			return "StateHeroGetOnMount";
 			break;
+		case STATE_HERO_GET_OFF_MOUNT:
+			return "StateHeroGetOffMount";
+			break;
+		case STATE_HERO_MOUNT_STAND_1:
+			return "StateHeroMountStand1";
+			break;
+		case STATE_HERO_MOUNT_STAND_2:
+			return "StateHeroMountStand2";
+			break;
+		case STATE_HERO_MOUNT_RUN_TURN:
+			return "StateHeroMountRunTurn";
+			break;
+		case STATE_HERO_MOUNT_RUN_1:
+			return "StateHeroMountRun1";
+			break;
+		case STATE_HERO_MOUNT_JUMP_BEFORE:
+			return "StateHeroMountJumpBefore";
+			break;
+		case STATE_HERO_MOUNT_JUMP:
+			return "StateHeroMountJump";
+			break;
+		case STATE_HERO_MOUNT_JUMP_AFTER:
+			return "StateHeroMountJumpAfter";
+			break;
+		case STATE_HERO_MOUNT_127:
+			return "StateHeroMount127";
+			break;
+		case STATE_HERO_MOUNT_128:
+			return "StateHeroMount128";
+			break;
+		case STATE_HERO_MOUNT_HIT_A:
+			return "StateHeroMountHitA";
+			break;
+		case STATE_HERO_MOUNT_STAND_IDLE_KICK:
+			return "StateHeroMountStandIdleKick";
+			break;
+		case STATE_HERO_MOUNT_STAND_ON_1:
+			return "StateHeroMountStandOn1";
+			break;
+		case STATE_HERO_MOUNT_STAND_ON_2:
+			return "StateHeroMountStandOn2";
+			break;
+		case STATE_HERO_MOUNT_STAND_ON_3:
+			return "StateHeroMountStandOn3";
+			break;
+		case STATE_HERO_MOUNT_STAND_ON_SIT:
+			return "StateHeroMountStandOnSit";
+			break;
 		case 0x3:
 			return "Cinematic";
 			break;
@@ -496,6 +547,10 @@ namespace Hero
 		}
 	}
 
+	static const char* GetRideJamGutStateName(int state) {
+		return GetDefaultStateName(state);
+	}
+
 	static const char* GetStateName(int curBehaviourId, int state)
 	{
 		INHERITS_FROM_FIGHTER_STATE(curBehaviourId, state);
@@ -503,6 +558,8 @@ namespace Hero
 		switch (curBehaviourId) {
 		case HERO_BEHAVIOUR_DEFAULT:
 			return GetDefaultStateName(state);
+		case HERO_BEHAVIOUR_RIDE_JAMGUT:
+			return GetRideJamGutStateName(state);
 		default:
 			return "Unknown";
 		}
@@ -601,6 +658,80 @@ namespace Wolfen
 			return "Avoid";
 		case WOLFEN_BEHAVIOUR_UNKNOWN:
 			return "Unkown";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case WOLFEN_STATE_WATCH_DOG_GUARD:
+			return "Watch Dog Guard";
+		case WOLFEN_STATE_TRACK_CHASE:
+			return "Track Chase";
+		case WOLFEN_STATE_BREAK_OBJECT:
+			return "Break Object";
+		case WOLFEN_STATE_TRACK_DEFEND:
+			return "Track Defend";
+		case WOLFEN_STATE_COME_BACK:
+			return "Come Back";
+		case WOLFEN_STATE_TRACK_COME_BACK:
+			return "Track Come Back";
+		case WOLFEN_STATE_EXORCISE_IDLE:
+			return "Exorcise Idle";
+		case WOLFEN_STATE_EXORCISE_EXORCIZE:
+			return "Exorcise Exorcize";
+		case WOLFEN_STATE_EXORCISE_TRANSFORM:
+			return "Exorcise Transform";
+		case WOLFEN_STATE_EXORCISE_TRANSFORM_COMPLETE:
+			return "Exorcise Transform Complete";
+		case WOLFEN_STATE_EXORCISE_END:
+			return "Exorcise End";
+		case WOLFEN_STATE_EXORCISE_AWAKE:
+			return "Exorcise Awake";
+		case WOLFEN_STATE_EXORCISE_LIVING_DEAD:
+			return "Exorcise Living Dead";
+		case WOLFEN_STATE_AVOID_ESCAPE:
+			return "Avoid Escape";
+		case WOLFEN_STATE_RELOAD:
+			return "Reload";
+		case WOLFEN_STATE_SNIPER_SCAN:
+			return "Sniper Scan";
+		case WOLFEN_STATE_AIM:
+			return "Aim";
+		case WOLFEN_STATE_FIRE:
+			return "Fire";
+		case WOLFEN_STATE_BOOMY_HIT:
+			return "Boomy Hit";
+		case WOLFEN_STATE_SURPRISE:
+			return "Surprise";
+		case WOLFEN_STATE_LOCATE:
+			return "Locate";
+		case WOLFEN_STATE_INSULT:
+			return "Insult";
+		case WOLFEN_STATE_INSULT_STAND:
+			return "Insult Stand";
+		case WOLFEN_STATE_INSULT_RECEIVE:
+			return "Insult Receive";
+		case WOLFEN_STATE_INSULT_END:
+			return "Insult End";
+		case WOLFEN_STATE_BOMB_FLIP:
+			return "Bomb Flip";
+		case WOLFEN_STATE_BOMB_STAND:
+			return "Bomb Stand";
+		case WOLFEN_STATE_BOMB_WALK_TO:
+			return "Bomb Walk To";
+		case WOLFEN_STATE_BOMB_ORIENT_TO:
+			return "Bomb Orient To";
+		case WOLFEN_STATE_BOMB_SHOOT:
+			return "Bomb Shoot";
+		case WOLFEN_STATE_TRACK_FIND_POSITION:
+			return "Track Find Position";
+		case WOLFEN_STATE_TRACK_GO_TO_POSITION:
+			return "Track Go To Position";
+		case WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION:
+			return "Track Weapon Check Position";
 		default:
 			return "Unknown";
 		}
@@ -916,7 +1047,9 @@ namespace JamGut
 	{
 		switch (state) {
 		case JAMGUT_STAND_STATE_STAND:
-			return "Stand";
+			return "Stand Stand";
+		case JAMGUT_RIDE_STATE_STAND:
+			return "Ride Stand";
 		case JAMGUT_STAND_STATE_REJECT_HERO_A:
 			return "Reject Hero A";
 		case JAMGUT_STAND_STATE_REJECT_HERO_B:
@@ -983,6 +1116,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 	switch (pActor->typeID) {
 	case ACTOR_HERO_PRIVATE:
 		return Hero::GetStateName(pActor->curBehaviourId, pActor->actorState);
+	case WOLFEN:
+		return Wolfen::GetStateName(pActor->actorState);
 	case WEAPON:
 		return Weapon::GetStateName(pActor->actorState);
 	case NATIV:

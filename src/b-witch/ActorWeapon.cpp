@@ -987,7 +987,7 @@ void CBehaviourWeaponSniper::Begin(CActor* pOwner, int newState, int newAnimatio
 
 void CBehaviourWeaponSniper::DrawBullets()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_LOG();
 }
 
 void WeaponGlobal::Term()

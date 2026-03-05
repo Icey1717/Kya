@@ -3,12 +3,16 @@
 #include "MathOps.h"
 #include "LightManager.h"
 #include "EventManager.h"
+#include "ActorFactory.h"
+#include "ActorMovingPlatform.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
 #include "TimeController.h"
 #include "LevelScheduler.h"
 #include "Cheat.h"
 #include "WayPoint.h"
+#include "CollisionRay.h"
+#include "InputManager.h"
 
 void CActorJamGut::Create(ByteCode* pByteCode)
 {
@@ -420,80 +424,70 @@ bool CActorJamGut::CanPassThrough()
 
 void CActorJamGut::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
-	uint uVar1;
-	edANM_HDR* peVar2;
-	edANM_HDR* peVar3;
-	float fVar4;
-	float r1;
-	edAnmMacroBlendN local_4;
+	edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
+	char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+	AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
 
-	local_4 = ((edAnmMacroBlendN*)&pAnimator->pAnimKeyTableEntry)->pHdr;
-	//peVar3 = (edANM_HDR*)(*(int*)((int)local_4 + 8) * 4 + (int)local_4);
-	peVar2 = peVar3 + 1;
 	if (newAnim == 0x14) {
-		IMPLEMENTATION_GUARD(
-		fVar4 = this->field_0x380;
-		if (0.0 <= fVar4) {
-			*(float*)((int)(peVar3 + 1) + 8) = fVar4;
-			peVar3 = (edANM_HDR*)(*(int*)((int)local_4 + 8) * 4 + (int)local_4);
-			*(float*)((int)(peVar3 + 1) + 4) = 1.0 - *(float*)((int)(peVar3 + 1) + 8);
-			peVar2->count_0x0 = 0;
+		float fVar4 = this->field_0x380;
+		if (0.0f <= fVar4) {
+			pValue->field_0xc_array[2] = fVar4;
+			pValue->field_0xc_array[1] = 1.0f - pValue->field_0xc_array[2];
+			pValue->field_0xc_array[0] = 0.0f;
 		}
 		else {
-			peVar2->count_0x0 = (int)fVar4;
-			peVar2 = (edANM_HDR*)(*(int*)((int)local_4 + 8) * 4 + (int)local_4);
-			*(float*)((int)(peVar2 + 1) + 4) = 1.0 - (float)peVar2[1].count_0x0;
-			*(int*)((int)(peVar3 + 1) + 8) = 0;
-		})
+			pValue->field_0xc_array[0] = (int)fVar4;
+			pValue->field_0xc_array[1] = 1.0f - pValue->field_0xc_array[0];
+			pValue->field_0xc_array[2] = 0.0f;
+		}
 	}
-	else {
-		if (newAnim == 0xe) {
-			IMPLEMENTATION_GUARD(
-			fVar4 = this->field_0x378;
-			uVar1 = this->flags_0x358 & 1;
-			if ((fVar4 < 0.0) || (uVar1 == 0)) {
-				if (uVar1 == 0) {
-					if (0.0 < fVar4) {
-						this->field_0x378 = 0.0;
-					}
-				}
-				else {
-					peVar3[3].count_0x0 = 0;
-					*(int*)((int)(peVar3 + 3) + 4) = 0;
-					*(int*)((int)(peVar3 + 3) + 8) = 0;
-				}
-				fVar4 = this->field_0x380;
-				if (0.0 <= fVar4) {
-					CActor::SV_Blend4AnimationsWith2Ratios(fVar4, -this->field_0x378, &local_4, 4, 5, 1, 2);
-					peVar2->count_0x0 = 0;
-					peVar3[2].count_0x0 = 0;
-				}
-				else {
-					CActor::SV_Blend4AnimationsWith2Ratios(-fVar4, -this->field_0x378, &local_4, 4, 3, 1, 0);
-					*(int*)((int)(peVar3 + 1) + 8) = 0;
-					*(int*)((int)(peVar3 + 2) + 8) = 0;
+	else if (newAnim == 0xe) {
+		float fVar4 = this->field_0x378;
+		uint uVar1 = this->flags_0x358 & 1;
+
+		if ((fVar4 < 0.0f) || (uVar1 == 0)) {
+			if (uVar1 == 0) {
+				if (0.0f < fVar4) {
+					this->field_0x378 = 0.0f;
 				}
 			}
 			else {
-				r1 = this->field_0x380;
-				if (0.0 <= r1) {
-					CActor::SV_Blend4AnimationsWith2Ratios(r1, fVar4, &local_4, 4, 5, 7, 8);
-					peVar3[2].count_0x0 = 0;
-					peVar3[3].count_0x0 = 0;
-				}
-				else {
-					CActor::SV_Blend4AnimationsWith2Ratios(-r1, fVar4, &local_4, 4, 3, 7, 6);
-					*(int*)((int)(peVar3 + 2) + 8) = 0;
-					*(int*)((int)(peVar3 + 3) + 8) = 0;
-				}
-				peVar2->count_0x0 = 0;
-				*(int*)((int)(peVar3 + 1) + 4) = 0;
-				*(int*)((int)(peVar3 + 1) + 8) = 0;
-			})
+				pValue->field_0xc_array[3] = 0.0f;
+				pValue->field_0xc_array[4] = 0.0f;
+				pValue->field_0xc_array[5] = 0.0f;
+			}
+
+			float r1 = this->field_0x380;
+			if (0.0f <= r1) {
+				CActor::SV_Blend4AnimationsWith2Ratios(r1, -this->field_0x378, &macroBlendN, 4, 5, 1, 2);
+				pValue->field_0xc_array[0] = 0.0f;
+				pValue->field_0xc_array[3] = 0.0f;
+			}
+			else {
+				CActor::SV_Blend4AnimationsWith2Ratios(-r1, -this->field_0x378, &macroBlendN, 4, 3, 1, 0);
+				pValue->field_0xc_array[2] = 0.0f;
+				pValue->field_0xc_array[5] = 0.0f;
+			}
 		}
 		else {
-			CActor::AnimEvaluate(layerId, pAnimator, newAnim);
+			float r1 = this->field_0x380;
+			if (0.0f <= r1) {
+				CActor::SV_Blend4AnimationsWith2Ratios(r1, fVar4, &macroBlendN, 4, 5, 7, 8);
+				pValue->field_0xc_array[3] = 0.0f;
+				pValue->field_0xc_array[6] = 0.0f;
+			}
+			else {
+				CActor::SV_Blend4AnimationsWith2Ratios(-r1, fVar4, &macroBlendN, 4, 3, 7, 6);
+				pValue->field_0xc_array[5] = 0.0f;
+				pValue->field_0xc_array[6] = 0.0f;
+			}
+			pValue->field_0xc_array[0] = 0.0f;
+			pValue->field_0xc_array[1] = 0.0f;
+			pValue->field_0xc_array[2] = 0.0f;
 		}
+	}
+	else {
+		CActor::AnimEvaluate(layerId, pAnimator, newAnim);
 	}
 
 	return;
@@ -705,15 +699,15 @@ void CActorJamGut::ClearLocalData()
 	CActorHero* pHero;
 
 	this->field_0x350 = (CActorHero*)0x0;
-	//this->field_0x354 = 0;
+	this->field_0x354 = (CActorHero*)0x0;
 
 	this->field_0x444 = this->field_0x404;
 	this->field_0x448 = this->field_0x410;
 
-	//*(undefined4*)&this->field_0x440 = 0;
-	//*(undefined4*)&this->field_0x420 = 0;
-	//*(undefined4*)&this->field_0x460 = 0;
-	//*(undefined4*)&this->field_0x4ec = 0;
+	this->field_0x440 = 0.0f;
+	this->field_0x420 = 0;
+	this->field_0x460 = 0.0f;
+	this->field_0x4ec = 0;
 
 	this->field_0x450 = this->currentLocation;
 
@@ -762,7 +756,7 @@ void CActorJamGut::ClearLocalData()
 	//*(undefined4*)&this->field_0x4f8 = 0;
 	this->dynamicExt.field_0xc = 1.3f;
 	this->dynamicExt.field_0x1c = 0.9f;
-	FUN_00377030();
+	ResetStdSettings();
 	this->field_0x62c = -1;
 	this->field_0x64c = 0.0f;
 	this->field_0x640 = 1.0f;
@@ -774,7 +768,8 @@ void CActorJamGut::ClearLocalData()
 	this->field_0x61c = 0;
 	this->field_0x35c = 0;
 	this->field_0x360 = 1;
-	//*(undefined4*)&this->field_0x364 = 0;
+	this->field_0x364 = 0;
+
 	return;
 }
 
@@ -844,7 +839,7 @@ void CActorJamGut::ManagePaths()
 	}
 	else {
 		if ((this->field_0x350 == (CActorHero*)0x0) ||
-			(((this->field_0x350->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT || (iVar10 = this->actorState, iVar10 == 10)) || (iVar10 == 9)))) {
+			(((this->field_0x350->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT || (iVar10 = this->actorState, iVar10 == JAMGUT_RIDE_STATE_RUN)) || (iVar10 == 9)))) {
 			pCurPath = this->aPaths;
 
 			for (iVar10 = 0; iVar10 < this->nbPaths; iVar10 = iVar10 + 1) {
@@ -985,25 +980,21 @@ void CActorJamGut::ManagePaths()
 						}
 
 						if (iVar10 == 0) {
-							IMPLEMENTATION_GUARD(
-							pCVar6 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-							pCVar6[2].pVTable = (CBehaviourVtable*)0x1;
-							(*(this->pVTable)->SetBehaviour)((CActor*)this, 3, -1, -1);)
+							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+							pCVar6->field_0x8 = 1;
+							SetBehaviour(3, -1, -1);
 						}
 						else {
 							SetState(7, -1);
 
-							IMPLEMENTATION_GUARD(
-							pCVar6 = this->field_0x350->GetBehaviour(this->field_0x350->curBehaviourId);
-							FUN_0036a060((int)pCVar6);
+							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+							pCVar6->ResetCommands();
 							pHero = this->field_0x350;
 							if ((pHero != (CActorHero*)0x0) &&
 								(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
-								pCVar6 = CActor::GetBehaviour
-								((CActor*)pHero,
-									pHero->curBehaviourId);
-								(*(code*)pCVar6->pVTable[1].field_0x4)(pCVar6, 0x131, 1);
-							})
+								pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+								pCVar6->SetState(0x131, 1);
+							}
 						}
 
 						this->field_0x62c = -1;
@@ -1211,7 +1202,7 @@ float CActorJamGut::ComputeDistanceToPath(edF32VECTOR4* param_2, CPathPlane* par
 	return t;
 }
 
-void CActorJamGut::FUN_00377030()
+void CActorJamGut::ResetStdSettings()
 {
 	this->field_0x418 = 1.2f;
 	this->field_0x4a0 = 20.0f;
@@ -1220,12 +1211,12 @@ void CActorJamGut::FUN_00377030()
 	this->field_0x4b0 = 0.1f;
 	this->field_0x4b4 = 1.5f;
 
-	FUN_003767d0(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+	SetJumpCfg(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
 
 	return;
 }
 
-void CActorJamGut::FUN_003767d0(float param_1, float param_2, float param_3, float param_4, float param_5,
+void CActorJamGut::SetJumpCfg(float param_1, float param_2, float param_3, float param_4, float param_5,
 	int param_7, edF32VECTOR4* param_8)
 {
 	if (0.0f <= param_1) {
@@ -1311,9 +1302,96 @@ int CActorJamGut::GetHeroAction(float param_1, CActorHero* pHero)
 	return heroAction;
 }
 
-int CActorJamGut::AccomplishHit(CActor* pActor, CActor* pSender, _msg_hit_param* pParams, edF32VECTOR4* param_5)
+void CActorJamGut::SetHitInvincibility(float duration, bool bAdd)
 {
-	IMPLEMENTATION_GUARD();
+	CActorHero* pHero;
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+
+	pHero = this->field_0x350;
+	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+		pHeroRideJamGut->SetInvincible(duration, bAdd);
+	}
+
+	if (bAdd == false) {
+		this->field_0x4fc = Timer::GetTimer()->scaledTotalTime;
+		this->field_0x500 = 0;
+	}
+	else {
+		this->field_0x4fc = duration + Timer::GetTimer()->scaledTotalTime;
+	}
+
+	return;
+}
+
+int CActorJamGut::AccomplishHit(CActorAutonomous* pActor, CActor* pSender, _msg_hit_param* pParams, edF32VECTOR4* param_5)
+{
+	CPlayerInput* pPlayerInput;
+	CLifeInterface* pLifeInterface;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+
+	iVar4 = -1;
+	if (((pActor != (CActor*)0x0) && (this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime)) && (pActor->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		pPlayerInput = GetInputManager(0, 0);
+		if (pPlayerInput != (CPlayerInput*)0x0) {
+			CPlayerInput::FUN_001b66f0(1.0, 0.0, 0.1, 0.0, &pPlayerInput->field_0x1c, 0);
+		}
+
+		pActor->LifeDecrease(pParams->damage);
+	}
+	if (pActor != (CActor*)0x0) {
+		fVar5 = pActor->GetLifeInterface()->GetValue();
+		if (fVar5 == 0.0f) {
+			iVar4 = pParams->projectileType;
+			SetHitInvincibility(2.0f, 0);
+			if (iVar4 == 5) {
+				iVar4 = 0x14;
+			}
+			else {
+				iVar4 = -1;
+			}
+		}
+	}
+
+	if (iVar4 == -1) {
+		if (((pSender == (CActor*)0x0) || (pParams->projectileType == 9)) ||
+			((pParams->projectileType == 2 ||
+				(this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime)))) {
+			fVar6 = Timer::GetTimer()->scaledTotalTime;
+			fVar5 = this->field_0x4fc;
+			if (((pActor != (CActor*)0x0) && (0.0f < pParams->damage)) &&
+				(this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime)) {
+				SetHitInvincibility(2.0f, 1);
+			}
+			if ((pParams->projectileType == 0) && (pParams->flags == 0)) {
+				if (pActor != (CActor*)0x0) {
+					fVar5 = pActor->GetLifeInterface()->GetValue();
+					if (fVar5 == 0.0f) {
+						SetHitInvincibility(2.0f, 0);
+						SetState(0x13, -1);
+					}
+				}
+			}
+			else {
+				iVar4 = ChooseStateHit(pSender, pParams, param_5, (fVar6 < fVar5) ^ 1);
+				if (iVar4 == this->actorState) {
+					fVar5 = pActor->GetLifeInterface()->GetValue();
+					if (0.0f < fVar5) {
+						return 1;
+					}
+				}
+
+				SetState(iVar4, -1);
+			}
+		}
+	}
+	else {
+		SetState(iVar4, -1);
+	}
+
+	return 1;
 }
 
 uint CActorJamGut::GetStateRider(int state)
@@ -1524,6 +1602,168 @@ bool CActorJamGut::CheckHitAndDeath(CActorHero* pHero)
 	return bHit;
 }
 
+int CActorJamGut::ChooseStateHit(CActor* pSender, _msg_hit_param* param_3, edF32VECTOR4* param_4, bool param_5)
+{
+	CCollision* pCol;
+	bool bVar2;
+	bool bVar3;
+	int iVar4;
+	edF32VECTOR4* v0;
+	float fVar6;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	iVar4 = param_3->projectileType;
+	if (iVar4 == 5) {
+		iVar4 = 0x12;
+	}
+	else {
+		bVar3 = true;
+		bVar2 = true;
+
+		if (iVar4 == 9) {
+			edF32Vector4SubHard(&local_10, &this->currentLocation, &pSender->currentLocation);
+			local_10.y = 0.0f;
+			edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+			fVar6 = edF32Vector4DotProductHard(&this->dynamic.horizontalVelocityDirectionEuler, &local_10);
+			bVar2 = fVar6 <= 0.0f;
+			local_10.y = 1.0f;
+
+			if (param_5 == false) {
+				edF32Vector4ScaleHard(param_3->field_0x30, &local_10, &local_10);
+			}
+			else {
+				edF32Vector4ScaleHard(param_3->field_0x30 * 2.0f, &local_10, &local_10);
+			}
+		}
+		else {
+			pCol = this->pCollisionData;
+			if (pSender != (CActor*)0x0) {
+				if ((iVar4 == 1) || (iVar4 == 2)) {
+					if (iVar4 == 2) {
+						param_3->field_0x30 = param_3->field_0x30 * 2.0f;
+					}
+
+					this->rotationQuat = param_3->field_0x20;
+				}
+				else {
+					if (iVar4 != 10) {
+						SV_SetOrientationToPosition2D(&pSender->currentLocation);
+					}
+				}
+			}
+
+			if ((param_4 == (edF32VECTOR4*)0x0) ||
+				(CCollisionManager::_material_table[3].field_0x8 <= param_4->y)) {
+				if (((iVar4 == 1) || (iVar4 == 2)) && (param_3->field_0x30 != 0.0f)) {
+					edF32Vector4ScaleHard(-1.0f, &local_10, &this->rotationQuat);
+					local_10.y = 1.0f;
+					edF32Vector4ScaleHard(param_3->field_0x30, &local_10, &local_10);
+				}
+				else {
+					if ((param_4 != (edF32VECTOR4*)0x0) && (param_4->y < 0.99984443f)) {
+						edProjectVectorOnPlane(0.0f, &local_10, &CDynamicExt::gForceGravity, param_4, 1);
+						local_10.y = 0.0f;
+						edF32Vector4NormalizeHard(&local_10, &local_10);
+						edF32Vector4ScaleHard(-1.0f, &local_10, &local_10);
+						this->rotationQuat = local_10;
+					}
+
+					edF32Vector4ScaleHard(-1.0f, &local_10, &this->rotationQuat);
+					local_10.y = 2.0f;
+					edF32Vector4ScaleHard(200.0f, &local_10, &local_10);
+				}
+			}
+			else {
+				edProjectVectorOnPlane(0.0, &local_10, param_4, &gF32Vector4UnitY, 0);
+				if ((0.001f < fabs(local_10.x)) || (0.001f < fabs(local_10.z))) {
+					local_10.y = 0.0f;
+					edF32Vector4NormalizeHard(&local_20, &local_10);
+					edF32Vector4ScaleHard(-1.0f, &local_20, &local_20);
+					this->rotationQuat = local_20;
+				}
+
+				if (-CCollisionManager::_material_table[3].field_0x8 < param_4->y) {
+					local_10.y = 0.5f;
+				}
+				else {
+					local_10.y = 0.2f;
+					if ((pCol->flags_0x4 & 2) == 0) {
+						bVar3 = false;
+					}
+				}
+
+				edF32Vector4ScaleHard(200.0f, &local_10, &local_10);
+			}
+		}
+		if (bVar2) {
+			this->dynamic.speed = 0.0f;
+			this->dynamicExt.normalizedTranslation.x = 0.0f;
+			this->dynamicExt.normalizedTranslation.y = 0.0f;
+			this->dynamicExt.normalizedTranslation.z = 0.0f;
+			this->dynamicExt.normalizedTranslation.w = 0.0f;
+			this->dynamicExt.field_0x6c = 0.0f;
+		}
+
+		if (bVar3) {
+			edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack48, &local_10);
+			v0 = this->dynamicExt.aImpulseVelocities;
+			edF32Vector4AddHard(v0, v0, &eStack48);
+			fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+			this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar6;
+		}
+
+		RestartCurAnim();
+		iVar4 = 0x11;
+	}
+
+	return iVar4;
+}
+
+bool CActorJamGut::UpdateFunc(float inputFloat)
+{
+	edF32VECTOR4 eStack32;
+
+	float puVar8 = edF32Vector4DotProductHard(&this->rotationQuat, &this->dynamic.horizontalVelocityDirectionEuler);
+	this->field_0x44c = puVar8;
+	if (1.0f < puVar8) {
+		puVar8 = 1.0f;
+	}
+	else {
+		if (puVar8 < -1.0f) {
+			puVar8 = -1.0f;
+		}
+	}
+
+	float fVar7 = acosf(puVar8);
+	this->field_0x44c = fVar7;
+	edF32Vector4ScaleHard(this->dynamic.horizontalLinearAcceleration, &eStack32, &this->dynamic.horizontalVelocityDirectionEuler);
+	fVar7 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack32);
+	float fVar8 = this->field_0x444;
+	if (fVar7 < 1.0f) {
+		this->field_0x440 = fVar8 - fVar7;
+	}
+	else {
+		if (fVar8 == 0.0f) {
+			this->field_0x440 = (-fVar8 * 0.5f) / fVar7;
+		}
+		else {
+			this->field_0x440 = (fVar8 - fVar7) / fVar7;
+		}
+	}
+
+	this->field_0x440 = this->field_0x440;
+	int iVar3 = RiderCmdWalk();
+	if (((iVar3 == 0) && (iVar3 = RiderCmdRun(), iVar3 == 0)) && (iVar3 = RiderCmdAttack(), iVar3 == 0)) {
+		SV_MOV_UpdateSpeedIntensity(0.0f, inputFloat);
+	}
+	else {
+		BuildHorizontalSpeedVector(this->field_0x444, 15.0f, this->field_0x448, 9.424778f, 2.094395f);
+	}
+
+	return ManageDynAndKillActors(0x1006023b);
+}
 
 
 void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour)
@@ -1543,27 +1783,22 @@ void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour
 		break;
 	case 9:
 		IMPLEMENTATION_GUARD(
-		StateJamGutWalk(pBehaviour, 6);)
+		StateJamGutWalk(pBehaviour, JAMGUT_STAND_STATE_STAND);)
 		break;
-	case 10:
-		IMPLEMENTATION_GUARD(
-		StateJamGutRun(pBehaviour, 6);)
+	case JAMGUT_RIDE_STATE_RUN:
+		StateJamGutRun(pBehaviour, JAMGUT_STAND_STATE_STAND);
 		break;
-	case 0xc:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJump();)
+	case JAMGUT_RIDE_STATE_JUMP:
+		StateJamGutJump();
 		break;
-	case 0xd:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJumpAfter(pBehaviour, 6);)
+	case JAMGUT_RIDE_STATE_JUMP_AFTER:
+		StateJamGutJumpAfter(pBehaviour, JAMGUT_STAND_STATE_STAND);
 		break;
-	case 0xe:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJumpAfter(pBehaviour, 6);)
+	case JAMGUT_RIDE_STATE_JUMP_AFTER_B:
+		StateJamGutJumpAfter(pBehaviour, JAMGUT_STAND_STATE_STAND);
 		break;
-	case 0xf:
-		IMPLEMENTATION_GUARD(
-		StateJamGutFall();)
+	case JAMGUT_RIDE_STATE_FALL:
+		StateJamGutFall();
 		break;
 	case 0x11:
 		IMPLEMENTATION_GUARD(
@@ -1571,7 +1806,7 @@ void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour
 		break;
 	case 0x12:
 		IMPLEMENTATION_GUARD(
-		StateJamGutDuration(-1.0f, pBehaviour, 6);)
+		StateJamGutDuration(-1.0f, pBehaviour, JAMGUT_STAND_STATE_STAND);)
 		break;
 	case 0x13:
 		IMPLEMENTATION_GUARD(
@@ -1644,66 +1879,58 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 	this->field_0x364 = iVar4;
 	pHero = this->field_0x350;
 	if ((pHero != (CActorHero*)0x0) &&
-		(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pCVar4 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		pCVar4->field_0x10 = this->dynamic.field_0x10;
 	}
 
 	iVar4 = ChooseStateWind(this->dynamicExt.aImpulseVelocityMagnitudes[2], this->dynamicExt.aImpulseVelocities + 2);
 	switch (this->actorState) {
-	case 7:
+	case JAMGUT_RIDE_STATE_STAND:
 		StateJamGutRideStand(pBehaviour, 0, -1);
 		break;
 	case 8:
-		StateJamGutRideStand(pBehaviour, 1, 7);
+		StateJamGutRideStand(pBehaviour, 1, JAMGUT_RIDE_STATE_STAND);
 		break;
 	case 9:
-		IMPLEMENTATION_GUARD(
-		StateJamGutWalk(this, (CBehaviourJamGut*)pBehaviour, 7);)
+		StateJamGutWalk(pBehaviour, JAMGUT_RIDE_STATE_STAND);
 		break;
-	case 10:
-		IMPLEMENTATION_GUARD(
-		StateJamGutRun(this, (CBehaviourJamGut*)pBehaviour, 7);)
+	case JAMGUT_RIDE_STATE_RUN:
+		StateJamGutRun(pBehaviour, JAMGUT_RIDE_STATE_STAND);
 		break;
-	case 0xb:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJumpBefore((long)(int)this, pBehaviour);)
+	case JAMGUT_RIDE_STATE_JUMP_BEFORE:
+		StateJamGutJumpBefore(pBehaviour);
 		break;
-	case 0xc:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJump(this);)
+	case JAMGUT_RIDE_STATE_JUMP:
+		StateJamGutJump();
 		break;
-	case 0xd:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJumpAfter(this, (CBehaviourJamGut*)pBehaviour, 7);)
+	case JAMGUT_RIDE_STATE_JUMP_AFTER:
+		StateJamGutJumpAfter(pBehaviour, JAMGUT_RIDE_STATE_STAND);
 		break;
-	case 0xe:
-		IMPLEMENTATION_GUARD(
-		StateJamGutJumpAfter(this, (CBehaviourJamGut*)pBehaviour, 7);)
+	case JAMGUT_RIDE_STATE_JUMP_AFTER_B:
+		StateJamGutJumpAfter(pBehaviour, JAMGUT_RIDE_STATE_STAND);
 		break;
-	case 0xf:
-		IMPLEMENTATION_GUARD(
-		StateJamGutFall(this);)
+	case JAMGUT_RIDE_STATE_FALL:
+		StateJamGutFall();
 		break;
 	case 0x10:
 		IMPLEMENTATION_GUARD(
 		StateJamGutCheatFly((long)(int)this);)
 		break;
 	case 0x11:
-		IMPLEMENTATION_GUARD(
-		StateJamGutHit(this);)
+		StateJamGutHit();
 		break;
 	case 0x12:
 		IMPLEMENTATION_GUARD(
-		StateJamGutDuration((float)&DAT_bf800000, this, (CBehaviourJamGut*)pBehaviour, 7);)
+		StateJamGutDuration(-1.0f, this, (CBehaviourJamGut*)pBehaviour, JAMGUT_RIDE_STATE_STAND);)
 		break;
 	case 0x13:
 		IMPLEMENTATION_GUARD(
-		StateJamGutDead((float)&DAT_bf800000, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
+		StateJamGutDead(-1.0f, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
 		break;
 	case 0x14:
 		IMPLEMENTATION_GUARD(
-		StateJamGutDead((float)&DAT_bf800000, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
+		StateJamGutDead(-1.0f, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
 		break;
 	case 0x15:
 		IMPLEMENTATION_GUARD(
@@ -1830,7 +2057,7 @@ void CActorJamGut::StateJamGutStand(float minTime, CBehaviourJamGutStand* pBehav
 				return;
 			}
 
-			SetState(0xf, -1);
+			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 			return;
 		}
 
@@ -1853,7 +2080,7 @@ void CActorJamGut::StateJamGutStand(float minTime, CBehaviourJamGutStand* pBehav
 	return;
 }
 
-void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int param_3, int param_4)
+void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int param_3, int nextState)
 {
 	CCollision* pCVar1;
 	CAnimation* pCVar2;
@@ -1889,7 +2116,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 
 	if ((pCVar1->flags_0x4 & 2) == 0) {
 		if (0.1f < this->timeInAir) {
-			SetState(0xf, -1);
+			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 			return;
 		}
 	}
@@ -1991,7 +2218,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 						if (uVar10 != 0) {
 							this->field_0x3a4 = GetTimer()->scaledTotalTime;
 							if ((0.1f < GetTimer()->scaledTotalTime - this->field_0x3a8) && (this->field_0x3a0 != 0)) {
-								SetState(10, -1);
+								SetState(JAMGUT_RIDE_STATE_RUN, -1);
 								return;
 							}
 						}
@@ -2007,7 +2234,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 
 				if (param_3 != 0) {
 					if (this->pAnimationController->IsLayerActive(0)) {
-						SetState(param_4, -1);
+						SetState(nextState, -1);
 					}
 				}
 			}
@@ -2016,27 +2243,741 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 			}
 		}
 		else {
-			FUN_003767d0(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
-			SetState(0xb, -1);
+			SetJumpCfg(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+			SetState(JAMGUT_RIDE_STATE_JUMP_BEFORE, -1);
 		}
 	}
 	else {
-		SetState(10, -1);
+		SetState(JAMGUT_RIDE_STATE_RUN, -1);
 	}
 
 	return;
 }
 
-void CActorJamGut::FUN_00375fe0()
+void CActorJamGut::StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState)
+{
+	CCollision* pCVar1;
+	bool bVar2;
+	bool bVar3;
+	int iVar4;
+	edF32VECTOR4* peVar5;
+	CBehaviourHeroRideJamGut* pRideBehaviour;
+	float fVar7;
+	float puVar9;
+	float fVar8;
+	edF32VECTOR4 eStack16;
+
+	pCVar1 = this->pCollisionData;
+	fVar7 = RiderGetIntensity();
+	SV_UpdateValue(this->field_0x400 * fVar7, 40.0f, &this->field_0x444);
+	SV_UpdateValue(this->field_0x40c, 40.0f, &this->field_0x448);
+	puVar9 = edF32Vector4DotProductHard(&this->rotationQuat, &this->dynamic.horizontalVelocityDirectionEuler);
+	this->field_0x44c = puVar9;
+	if (1.0f < puVar9) {
+		puVar9 = 1.0f;
+	}
+	else {
+		if (puVar9 < -1.0f) {
+			puVar9 = -1.0f;
+		}
+	}
+
+	fVar7 = acosf(puVar9);
+	this->field_0x44c = fVar7;
+	edF32Vector4ScaleHard(this->dynamic.horizontalLinearAcceleration, &eStack16, &this->dynamic.horizontalVelocityDirectionEuler);
+	fVar7 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack16);
+	fVar8 = this->field_0x444;
+	if (fVar7 < 1.0f) {
+		this->field_0x440 = fVar8 - fVar7;
+	}
+	else {
+		if (fVar8 == 0.0f) {
+			this->field_0x440 = (-fVar8 * 0.5f) / fVar7;
+		}
+		else {
+			this->field_0x440 = (fVar8 - fVar7) / fVar7;
+		}
+	}
+
+	this->field_0x440 = this->field_0x440;
+	iVar4 = RiderCmdWalk();
+
+	if (((iVar4 == 0) && (iVar4 = RiderCmdRun(), iVar4 == 0)) &&
+		(iVar4 = RiderCmdAttack(), iVar4 == 0)) {
+		CActorMovable::SV_MOV_UpdateSpeedIntensity(0.0f, 50.0f);
+	}
+	else {
+		BuildHorizontalSpeedVector(this->field_0x444, 15.0f, this->field_0x448, 9.424778f, 2.094395f);
+	}
+
+	bVar2 = ManageDynAndKillActors(0x1006023b);
+	fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearAcceleration, this->field_0x404, this->field_0x400);
+	UpdatePercentWalkRun(-fVar7, 0.9f, 0.0f);
+	iVar4 = RiderCmdWalk();
+	if ((iVar4 == 0) && (iVar4 = RiderCmdRun(), iVar4 == 0)) {
+		fVar7 = this->rotationQuat.x * this->dynamic.horizontalVelocityDirectionEuler.z -
+			this->dynamic.horizontalVelocityDirectionEuler.x * this->rotationQuat.z;
+	}
+	else {
+		peVar5 = RiderGetForce();
+		fVar7 = peVar5->x * this->dynamic.horizontalVelocityDirectionEuler.z -
+			this->dynamic.horizontalVelocityDirectionEuler.x * peVar5->z;
+	}
+
+	UpdatePercentLeftRight(-fVar7, 0.9f);
+	fVar7 = edFIntervalLERP(this->field_0x440, 1.0f, 8.0f, 1.0f, 1.2f);
+	SetAnimSpeed(fVar7);
+	bVar3 = FUN_003763d0();
+	if (bVar3 == false) {
+		if ((pCVar1->flags_0x4 & 2) == 0) {
+			if (0.1 < this->timeInAir) {
+				SetState(0xf, -1);
+				return;
+			}
+		}
+		else {
+			this->timeInAir = 0.0f;
+		}
+
+		iVar4 = RiderCmdAttack();
+		if (iVar4 == 0) {
+			iVar4 = RiderCmdJump();
+			if (iVar4 == 0) {
+				bVar2 = RiderCmdStand();
+				if ((bVar2 == false) && (iVar4 = RiderCmdRun(), iVar4 == 0)) {
+					this->field_0x3a4 = GetTimer()->scaledTotalTime;
+					this->field_0x3a8 = GetTimer()->scaledTotalTime;
+				}
+				else {
+					bVar2 = RiderCmdStand();
+					if (bVar2 == false) {
+						this->field_0x3a8 = GetTimer()->scaledTotalTime;
+						if (0.1f < GetTimer()->scaledTotalTime - this->field_0x3a4) {
+							SetState(10, -1);
+						}
+					}
+					else {
+						this->field_0x3a4 = GetTimer()->scaledTotalTime;
+						if ((0.1f < GetTimer()->scaledTotalTime - this->field_0x3a8) && (restState != -1)) {
+							SetState(restState, -1);
+						}
+					}
+				}
+			}
+			else {
+				if (bVar2 == false) {
+					SetJumpCfg(0.1f, this->field_0x400, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+				}
+				else {
+					SetJumpCfg(0.1f, this->field_0x400 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
+				}
+				SetState(0xb, -1);
+			}
+		}
+		else {
+			SetState(10, -1);
+		}
+	}
+	else {
+		SetState(7, -1);
+		pRideBehaviour = (CBehaviourHeroRideJamGut*)this->field_0x350->GetBehaviour(this->field_0x350->curBehaviourId);
+		pRideBehaviour->ResetCommands();
+		RiderSetState(0x131, 1);
+	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
+{
+	bool bVar1;
+	bool cVar2;
+	int iVar3;
+	uint uVar5;
+	edF32VECTOR4* peVar6;
+	S_JMG_PATH* pPath;
+	float fVar7;
+	float puVar10;
+	float fVar8;
+	float puVar9;
+	float fVar9;
+	float puVar8;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+	CCollision* pCol;
+	CEventManager* pEventManager;
+
+	pCol = this->pCollisionData;
+	if ((this->flags_0x358 & 1) == 0) {
+		fVar7 = RiderGetIntensity();
+		SV_UpdateValue(this->field_0x404 * fVar7, 20.0f, &this->field_0x444);
+		SV_UpdateValue(this->field_0x410, 80.0f, &this->field_0x448);
+	}
+	else {
+		iVar3 = RiderCmdAttack();
+		if (iVar3 == 0) {
+			fVar7 = RiderGetIntensity();
+			SV_UpdateValue(this->field_0x404 * fVar7, 20.0f, &this->field_0x444);
+			this->field_0x3a8 = GetTimer()->scaledTotalTime;
+		}
+		else {
+			fVar7 = edFIntervalLERP(GetTimer()->scaledTotalTime - this->field_0x3a8, 0.0f, 1.2f,
+				0.0f, this->field_0x418);
+			this->field_0x444 = this->field_0x444 + fVar7;
+			if (this->field_0x408 < this->field_0x444) {
+				this->field_0x444 = this->field_0x408;
+			}
+			this->dynamic.speed = fVar7 + this->dynamic.speed;
+			if (this->field_0x408 < this->dynamic.speed) {
+				this->dynamic.speed = this->field_0x408;
+			}
+		}
+
+		fVar7 = edFIntervalLERP(this->field_0x444, this->field_0x404, this->field_0x408, this->field_0x410, this->field_0x414);
+		this->field_0x448 = fVar7;
+	}
+
+	bVar1 = RiderCmdStand();
+	if (((bVar1 == false) ||
+		(iVar3 = RiderGetNew(), pEventManager = CScene::ptable.g_EventManager_006f5080, iVar3 != 0)) || (this->field_0x350 == (CActorHero*)0x0)) {
+		cVar2 = UpdateFunc(50.0f);
+	}
+	else {
+		pPath = this->aPaths;
+		bVar1 = false;
+		iVar3 = 0;
+		if (0 < this->nbPaths) {
+			for (; iVar3 < this->nbPaths; iVar3 = iVar3 + 1) {
+				uVar5 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, (pPath->zoneRef).Get(), &this->currentLocation, 0);
+				if ((uVar5 & 1) != 0) {
+					bVar1 = true;
+				}
+
+				pPath = pPath + 1;
+			}
+		}
+
+		if (bVar1) {
+			fVar7 = this->field_0x41c;
+			cVar2 = UpdateFunc(fVar7);
+		}
+		else {
+			cVar2 = UpdateFunc(50.0f);
+		}
+	}
+	if (this->field_0x404 < this->field_0x444) {
+		fVar7 = edFIntervalUnitDstLERP
+		(this->dynamic.horizontalLinearAcceleration, this->field_0x404,
+			this->field_0x408);
+		if (((this->flags_0x358 & 1) == 0) || (iVar3 = RiderCmdAttack(), iVar3 == 0)) {
+			this->field_0x3a4 = GetTimer()->scaledTotalTime;
+			UpdatePercentWalkRun(fVar7, 0.9f, 0.9f);
+		}
+		else {
+			if ((1.5f < GetTimer()->scaledTotalTime - this->field_0x3a4) || (this->field_0x420 != 0)) {
+				this->field_0x420 = 1;
+				UpdatePercentWalkRun(fVar7, 0.9f, 0.95f);
+			}
+			else {
+				UpdatePercentWalkRun(fVar7, 0.9f, 1.0f);
+			}
+		}
+	}
+	else {
+		this->field_0x3a4 = GetTimer()->scaledTotalTime;
+		fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearAcceleration, this->field_0x404, this->field_0x400);
+		UpdatePercentWalkRun(-fVar7, 0.9f, 0.9f);
+	}
+
+	if (this->field_0x654 == (CActor*)0x0) {
+		bVar1 = false;
+	}
+	else {
+		bVar1 = this->field_0x654->typeID != MOVING_PLATFORM;
+	}
+
+	if (!bVar1) {
+		iVar3 = RiderCmdWalk();
+		if ((iVar3 == 0) && (iVar3 = RiderCmdRun(), iVar3 == 0)) {
+			fVar7 = this->rotationQuat.x *
+				this->dynamic.horizontalVelocityDirectionEuler.z -
+				this->dynamic.horizontalVelocityDirectionEuler.x *
+				this->rotationQuat.z;
+		}
+		else {
+			peVar6 = RiderGetForce();
+			fVar7 = peVar6->x * this->dynamic.horizontalVelocityDirectionEuler.z -
+				this->dynamic.horizontalVelocityDirectionEuler.x * peVar6->z;
+		}
+
+		UpdatePercentLeftRight(-fVar7, 0.9f);
+	}
+
+	fVar7 = edFIntervalLERP(this->field_0x440, 1.0f, 8.0f, 1.0f, 1.2f);
+	SetAnimSpeed(fVar7);
+	bVar1 = FUN_003763d0();
+	if (bVar1 == false) {
+		if ((pCol->flags_0x4 & 2) == 0) {
+			if (0.1f < this->timeInAir) {
+				SetState(JAMGUT_RIDE_STATE_FALL, -1);
+				return;
+			}
+		}
+		else {
+			this->timeInAir = 0.0f;
+		}
+
+		iVar3 = RiderCmdJump();
+		if (iVar3 == 0) {
+			bVar1 = RiderCmdStand();
+			if ((((bVar1 != false) && (iVar3 = RiderCmdAttack(), iVar3 == 0)) &&
+				(this->dynamic.horizontalLinearAcceleration < 3.0f)) && (nextState != -1)) {
+				SetState(nextState, -1);
+			}
+		}
+		else {
+			if (cVar2 == '\0') {
+				SetJumpCfg(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+			}
+			else {
+				SetJumpCfg(0.1f, this->field_0x404 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
+			}
+
+			SetState(JAMGUT_RIDE_STATE_JUMP_BEFORE, -1);
+		}
+	}
+	else {
+		SetState(9, -1);
+	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutFall()
+{
+	CCollision* pCVar1;
+	float fVar2;
+
+	pCVar1 = this->pCollisionData;
+	fVar2 = RiderGetIntensity();
+	SV_UpdateValue(this->field_0x484 * fVar2, 5.0f, &this->field_0x444);
+	MoveInAir(this->field_0x480, this->field_0x444, this->field_0x488, 10.0f, 4.712389f);
+	ManageDyn(4.0f, 0x140129, (CActorsTable*)0x0);
+
+	if ((pCVar1->flags_0x4 & 2) != 0) {
+		if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER_B, -1);
+		}
+		else {
+			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER, -1);
+		}
+	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutHit()
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	int iVar3;
+	bool bVar4;
+	CLifeInterface* pCVar5;
+	StateConfig* pSVar6;
+	uint uVar7;
+	float fVar8;
+	CCollision* pCol;
+	CActorHero* pHero;
+
+	pCol = this->pCollisionData;
+	pCVar1 = this->pAnimationController;
+	pHero = this->field_0x350;
+
+	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
+			if (pHero == (CActorHero*)0x0) {
+				SetState(0xf, -1);
+			}
+			else {
+				if ((pHero->GetStateFlags(pHero->actorState) & 1) == 0) {
+					fVar8 = pHero->GetLifeInterface()->GetValue();
+					if (0.0f < fVar8 - pHero->field_0x2e4) {
+						SetState(0xf, -1);
+					}
+				}
+			}
+		}
+	}
+	else {
+		bVar4 = ColWithLava();
+		if (bVar4 == false) {
+			SetState(0xd, -1);
+		}
+		else {
+			if (pHero != (CActorHero*)0x0) {
+				fVar8 = pHero->GetLifeInterface()->GetValue();
+				if (fVar8 - pHero->field_0x2e4 <= 0.0f) {
+					SetState(0x13, -1);
+				}
+			}
+		}
+
+		this->timeInAir = 0.0f;
+	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutJumpBefore(CBehaviourJamGut*)
+{
+	bool bVar1;
+	int iVar2;
+	float fVar4;
+	undefined* puVar5;
+	float fVar6;
+	edF32VECTOR4 eStack16;
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	fVar4 = RiderGetIntensity();
+	SV_UpdateValue(this->field_0x484 * fVar4, 20.0f, &this->field_0x444);
+	bVar1 = UpdateFunc(50.0f);
+	if (bVar1 != false) {
+		SetJumpCfg(0.1f, this->field_0x484 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
+	}
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (0.1f < this->timeInAir) {
+			SetState(JAMGUT_RIDE_STATE_FALL, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (0.05f < GetTimer()->scaledTotalTime - this->field_0x3a4) {
+		SetState(JAMGUT_RIDE_STATE_JUMP, -1);
+	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutJumpInit()
+{
+	if (this->field_0x4ec == 0) {
+		this->field_0x4c4.BuildFromSpeedDist(this->field_0x48c, 0.0f, this->field_0x490);
+	}
+
+	this->field_0x4ec = 0;
+	this->field_0x4bc = 1.0f;
+	this->field_0x4c0 = 1.0f;
+	this->field_0x4b8 = 0;
+
+	return;
+}
+
+void CActorJamGut::StateJamGutJump()
+{
+	bool bVar1;
+	int iVar2;
+	float fVar4;
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	iVar2 = RiderCmdJump();
+	if (iVar2 != 0) {
+		this->field_0x4b8 = 1;
+		this->field_0x494 = 0;
+	}
+
+	if (((this->field_0x494 != 0) && (3.0f < (this->field_0x4c4).field_0x20)) &&
+		(iVar2 = RiderCmd_00367e40(), iVar2 == 0)) {
+		this->field_0x4c0 = 2.0f;
+	}
+
+	if ((0.0f < this->field_0x490) &&
+		(bVar1 = this->field_0x4c4.IsFinished(), bVar1 == false)) {
+		fVar4 = GetTimer()->cutsceneDeltaTime;
+		this->field_0x4c4.Integrate(this->field_0x4c0 * this->field_0x4bc * GetTimer()->cutsceneDeltaTime, this->field_0x4c0 * fVar4);
+		this->dynamicExt.instanceIndex.y = (this->field_0x4c4).field_0x20;
+		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
+		this->field_0x3a4 = GetTimer()->scaledTotalTime;
+	}
+
+	fVar4 = RiderGetIntensity();
+	SV_UpdateValue(this->field_0x484 * fVar4, 20.0f, &this->field_0x444);
+
+	MoveInAir(this->field_0x480, this->field_0x444, this->field_0x488, 10.0f, 4.712389f);
+	ManageDynAndKillActors(0x140129);
+
+	if ((pCol->flags_0x4 & 4) != 0) {
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		this->field_0x490 = 0.0f;
+	}
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (this->field_0x4f0 + (this->field_0x4c4).field_0x4 < this->timeInAir) {
+			SetState(JAMGUT_RIDE_STATE_FALL, -1);
+		}
+	}
+	else {
+		if (0.0f < this->dynamic.velocityDirectionEuler.y) {
+			this->field_0x4b8 = 0;
+		}
+
+		if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER_B, -1);
+		}
+		else {
+			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER, -1);
+		}
+	}
+
+	return;
+}
+
+
+void CActorJamGut::StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextState)
+{
+	CCollision* pCVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	int iVar5;
+	float fVar6;
+	undefined* puVar7;
+	float fVar8;
+	edF32VECTOR4 eStack16;
+
+	pCVar1 = this->pCollisionData;
+	pCVar2 = this->pAnimationController;
+	fVar6 = RiderGetIntensity();
+	SV_UpdateValue(this->field_0x484 * fVar6, 80.0f, &this->field_0x444);
+
+	bVar4 = UpdateFunc(200.0f);
+	if ((pCVar1->flags_0x4 & 2) == 0) {
+		if (0.1 < this->timeInAir) {
+			SetState(JAMGUT_RIDE_STATE_FALL, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	iVar5 = RiderCmdJump();
+	if (iVar5 == 0) {
+		if (pCVar2->IsCurrentLayerAnimEndReached(0)) {
+			iVar5 = RiderCmdRun();
+			if (iVar5 == 0) {
+				iVar5 = RiderCmdWalk();
+				if (iVar5 == 0) {
+					SetState(nextState, -1);
+				}
+				else {
+					SetState(9, -1);
+				}
+			}
+			else {
+				SetState(JAMGUT_RIDE_STATE_RUN, -1);
+			}
+		}
+	}
+	else {
+		if (bVar4 == false) {
+			SetJumpCfg(0.1, this->field_0x484, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+		}
+		else {
+			SetJumpCfg(0.1, this->field_0x484 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
+		}
+
+		SetState(JAMGUT_RIDE_STATE_JUMP, -1);
+	}
+
+	return;
+}
+
+
+
+void CActorJamGut::StateJamGutStandInit()
 {
 	this->field_0x3a0 = 1;
-	FUN_00364810(-1.0f, 0.0f, 0.0f);
+	UpdatePercentWalkRun(-1.0f, 0.0f, 0.0f);
 	UpdatePercentLeftRight(0.0f, 0.0f);
 
 	return;
 }
 
-void CActorJamGut::FUN_00364810(float param_1, float param_2, float param_3)
+void CActorJamGut::MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5)
+{
+	int iVar1;
+	float fVar2;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	iVar1 = RiderCmdWalk();
+	if ((iVar1 == 0) && (iVar1 = RiderCmdRun(), iVar1 == 0)) {
+		SV_MOV_UpdateSpeedIntensity(0.0f, param_4);
+	}
+	else {
+		edF32Vector4ScaleHard(this->dynamic.speed, &local_10, &this->dynamic.rotationQuat);
+		FUN_00367a90(&eStack32);
+		edF32Vector4ScaleHard(param_3, &eStack32, &eStack32);
+		edF32Vector4AddHard(&local_10, &local_10, &eStack32);
+		fVar2 = edF32Vector4NormalizeHard(&local_10, &local_10);
+		if ((fVar2 <= param_2) && (param_2 = param_1, param_1 <= fVar2)) {
+			param_2 = fVar2;
+		}
+
+		this->dynamic.speed = param_2;
+
+		if (0.001f < param_2) {
+			this->dynamic.rotationQuat = local_10;
+		}
+
+		SV_UpdateOrientation2D(param_5, &this->dynamic.rotationQuat, 0);
+	}
+
+	return;
+}
+
+bool CActorJamGut::ManageDynAndKillActors(uint dynFlags)
+{
+	CActor* pReceiver;
+	CActor** pEntry;
+	int iVar1;
+	bool bVar2;
+	CActorsTable actorsTable;
+
+	actorsTable.nbEntries = 0;
+	bVar2 = false;
+	ManageDyn(4.0f, dynFlags, &actorsTable);
+
+	iVar1 = 0;
+	if (0 < actorsTable.nbEntries) {
+		pEntry = actorsTable.aEntries;
+		bVar2 = false;
+		do {
+			pReceiver = *pEntry;
+
+			if ((this->field_0x350 != (CActorHero*)0x0) && (((1.0f < this->dynamic.speed || (1.0f < this->dynamic.linearAcceleration)) &&
+					((CActorFactory::gClassProperties[pReceiver->typeID].flags & 0x10000) != 0)))) {
+				DoMessage(pReceiver, (ACTOR_MESSAGE)3, 0);
+			}
+
+			CActorMovingPlatform* pMovingPlatform = static_cast<CActorMovingPlatform*>(pReceiver);
+			if ((pReceiver->typeID == MOVING_PLATFORM) && ((pMovingPlatform->pProperties->flags_0x24 & 0x800000) != 0)) {
+				bVar2 = true;
+			}
+
+			iVar1 = iVar1 + 1;
+			pEntry = pEntry + 1;
+		} while (iVar1 < actorsTable.nbEntries);
+	}
+
+	return bVar2;
+}
+
+bool CActorJamGut::FUN_003763d0()
+{
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	uint uVar5;
+	float fVar6;
+	CCollisionRay CStack144;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 local_60;
+	CCollisionRay CStack80;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	_ray_info_out rayInfo;
+	CCollision* pCol;
+
+	iVar2 = RiderGetNew();
+	if ((iVar2 == 0) || (this->field_0x62c != -1)) {
+		this->field_0x460 = 0.0f;
+		bVar1 = false;
+	}
+	else {
+		pCol = this->pCollisionData;
+		if (((pCol->flags_0x4 & 1) != 0) && (fVar6 = edF32Vector4DotProductHard(&pCol->aCollisionContact[0].location, &this->rotationQuat), fVar6 < -0.5f)) {
+			fVar6 = this->field_0x460 + GetTimer()->cutsceneDeltaTime;
+			this->field_0x460 = fVar6;
+			if (0.05f < fVar6) {
+				return true;
+			}
+		}
+
+		local_20.x = this->currentLocation.x;
+		local_20.z = this->currentLocation.z;
+		local_20.y = this->currentLocation.y + 0.1f;
+		local_20.w = this->currentLocation.w;
+
+		CCollisionRay CStack80 = CCollisionRay(6.0f, &local_20, &this->rotationQuat);
+		fVar6 = CStack80.Intersect(3, this, (CActor*)0x0, 0x40000048, &eStack48, &rayInfo);
+		uVar5 = rayInfo.hitMaterialFlags & 0xf;
+		if (uVar5 == 0) {
+			uVar5 = CScene::_pinstance->defaultMaterialIndex;
+		}
+
+		if ((fVar6 == 1e+30f) ||
+			((((CCollisionManager::_material_table[uVar5].field_0x8 <= fabs(eStack48.y) &&
+				(uVar3 = CCollisionManager::IsASomethingGround(uVar5, &eStack48), uVar3 == 0)) && (uVar5 != 3)) &&
+				((uVar5 != 7 && (uVar5 != 5)))))) {
+			local_60.y = -1.0f;
+			local_60.x = 0.0f;
+			local_60.z = 0.0f;
+			local_60.w = 0.0f;
+			edF32Vector4ScaleHard(6.0f, &eStack112, &this->rotationQuat);
+			edF32Vector4AddHard(&local_20, &this->currentLocation, &eStack112);
+			CCollisionRay CStack144 = CCollisionRay(this->field_0x4a4, &local_20, &local_60);
+			fVar6 = CStack144.Intersect(3, this, (CActor*)0x0, 0x40000048, (edF32VECTOR4*)0x0,
+				&rayInfo);
+
+			rayInfo.hitMaterialFlags = rayInfo.hitMaterialFlags & 0xf;
+
+			if (rayInfo.hitMaterialFlags == 0) {
+				rayInfo.hitMaterialFlags = CScene::_pinstance->defaultMaterialIndex;
+			}
+
+			if (((fVar6 == 1e+30f) || (rayInfo.hitMaterialFlags == 3)) ||
+				((rayInfo.hitMaterialFlags == 7 || (rayInfo.hitMaterialFlags == 5)))) {
+				fVar6 = this->field_0x460 + GetTimer()->cutsceneDeltaTime;
+				this->field_0x460 = fVar6;
+				if (0.05 < fVar6) {
+					return true;
+				}
+			}
+			else {
+				this->field_0x460 = 0.0f;
+			}
+			bVar1 = false;
+		}
+		else {
+			fVar6 = this->field_0x460 + GetTimer()->cutsceneDeltaTime;
+			this->field_0x460 = fVar6;
+			if (0.05f < fVar6) {
+				bVar1 = true;
+			}
+			else {
+				bVar1 = false;
+			}
+		}
+	}
+
+	return bVar1;
+}
+
+void CActorJamGut::UpdatePercentWalkRun(float param_1, float param_2, float param_3)
 {
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	CActorHero* pHero;
@@ -2061,6 +3002,23 @@ void CActorJamGut::FUN_00364810(float param_1, float param_2, float param_3)
 	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		pHeroRideJamGut->field_0x6c = this->field_0x37c;
+	}
+
+	return;
+}
+
+void CActorJamGut::SetAnimSpeed(float animSpeed)
+{
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	CActorHero* pHero;
+
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(animSpeed, 0);
+
+	pHero = this->field_0x350;
+	if ((pHero != (CActorHero*)0x0) &&
+		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+		pHeroRideJamGut->SetSpeedAnim(animSpeed);
 	}
 
 	return;
@@ -2120,6 +3078,28 @@ int CActorJamGut::RiderCmdRecept()
 	return bResult;
 }
 
+int CActorJamGut::RiderCmdStand()
+{
+	CActorHero* pHero;
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	int bResult;
+
+	if (this->field_0x62c == -1) {
+		pHero = this->field_0x350;
+		bResult = 0;
+		if ((pHero != (CActorHero*)0x0) &&
+			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+			pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+			bResult = pHeroRideJamGut->field_0x68 == 2;
+		}
+	}
+	else {
+		bResult = this->field_0x644;
+	}
+
+	return bResult;
+}
+
 int CActorJamGut::RiderCmdWalk()
 {
 	CActorHero* pHero;
@@ -2132,7 +3112,7 @@ int CActorJamGut::RiderCmdWalk()
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 			pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
-			bResult = pHeroRideJamGut->aCommands[JAMGUT_CMD_WALK] == 3;
+			bResult = pHeroRideJamGut->field_0x68 == 3;
 		}
 	}
 	else {
@@ -2154,7 +3134,7 @@ int CActorJamGut::RiderCmdRun()
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 			pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
-			bResult = pHeroRideJamGut->aCommands[JAMGUT_CMD_WALK] == 4;
+			bResult = pHeroRideJamGut->field_0x68 == 4;
 		}
 	}
 	else {
@@ -2181,6 +3161,23 @@ int CActorJamGut::RiderCmdNew()
 	return bResult;
 }
 
+int CActorJamGut::RiderCmd_00367e40()
+{
+	CActorHero* pHero;
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	int bResult;
+
+	pHero = this->field_0x350;
+	bResult = 0;
+	if ((pHero != (CActorHero*)0x0) &&
+		(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+		bResult = pHeroRideJamGut->aCommands[6];
+	}
+
+	return bResult;
+}
+
 edF32VECTOR4* CActorJamGut::RiderGetForce()
 {
 	int iVar1;
@@ -2196,7 +3193,7 @@ edF32VECTOR4* CActorJamGut::RiderGetForce()
 		else {
 			if ((pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 				pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
-				iVar1 = pHeroRideJamGut->aCommands[JAMGUT_CMD_WALK];
+				iVar1 = pHeroRideJamGut->field_0x68;
 				if ((iVar1 == 3) || (iVar1 == 4)) {
 					pForce = &pHeroRideJamGut->inputAnalogDir;
 				}
@@ -2216,7 +3213,56 @@ edF32VECTOR4* CActorJamGut::RiderGetForce()
 	return pForce;
 }
 
+float CActorJamGut::RiderGetIntensity()
+{
+	int iVar1;
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	float intensity;
+	CActorHero* pHero;
 
+	if (this->field_0x62c == -1) {
+		pHero = this->field_0x350;
+		if (pHero == (CActorHero*)0x0) {
+			intensity = 0.0f;
+		}
+		else {
+			if (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+				pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+				iVar1 = pHeroRideJamGut->field_0x68;
+				if ((iVar1 == 3) || (iVar1 == 4)) {
+					intensity = pHeroRideJamGut->inputMagnitude;
+				}
+				else {
+					intensity = 1.0f;
+				}
+			}
+			else {
+				intensity = 0.0f;
+			}
+		}
+	}
+	else {
+		intensity = this->field_0x640;
+	}
+
+	return intensity;
+}
+
+int CActorJamGut::RiderGetNew()
+{
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	int iVar1;
+	CActorHero* pHero;
+
+	pHero = this->field_0x350;
+	iVar1 = 0;
+	if ((pHero != (CActorHero*)0x0) && (iVar1 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+		iVar1 = pHeroRideJamGut->field_0x7c;
+	}
+
+	return iVar1;
+}
 
 void CActorJamGut::RiderSetState(int state, int anim)
 {
@@ -2234,6 +3280,78 @@ void CActorJamGut::RiderSetState(int state, int anim)
 	return;
 }
 
+void CActorJamGut::FUN_00367a90(edF32VECTOR4* param_2)
+{
+	int iVar1;
+	CBehaviourHeroRideJamGut* pHeroRideJamGut;
+	CActorHero* pHero;
+
+	if (this->field_0x62c == -1) {
+		pHero = this->field_0x350;
+
+		if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+			pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
+			iVar1 = pHeroRideJamGut->field_0x68;
+			if ((iVar1 == 3) || (iVar1 == 4)) {
+				edF32Vector4ScaleHard(pHeroRideJamGut->inputMagnitude, param_2, &pHeroRideJamGut->inputAnalogDir);
+			}
+			else {
+				*param_2 = this->rotationQuat;
+			}
+		}
+	}
+	else {
+		edF32Vector4ScaleHard(this->field_0x640, param_2, &this->field_0x630);
+	}
+
+	return;
+}
+
+void CActorJamGut::BuildHorizontalSpeedVector(float param_1, float param_2, float param_3, float param_4, float param_5)
+{
+	edF32VECTOR4* v0;
+	float puVar2;
+	float puVar3;
+	float fVar1;
+	float fVar2;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	FUN_00367a90(&eStack32);
+	v0 = RiderGetForce();
+	puVar2 = edF32Vector4DotProductHard(v0, &this->dynamic.velocityDirectionEuler);
+	if (1.0f < puVar2) {
+		puVar3 = 1.0f;
+	}
+	else {
+		puVar3 = -1.0f;
+		if (-1.0f <= puVar2) {
+			puVar3 = puVar2;
+		}
+	}
+
+	fVar1 = acosf(puVar3);
+	fVar2 = edFIntervalLERP(fVar1, 0.0f, param_5, 0.1f, 2.0f);
+	edF32Vector4ScaleHard(param_3 * fVar2, &eStack32, &eStack32);
+	fVar1 = edFIntervalLERP(fVar1, 0.0f, param_5, 1.0f, 0.5f);
+	fVar1 = param_1 * fVar1;
+	edF32Vector4ScaleHard(this->dynamic.speed, &local_10, &this->dynamic.rotationQuat);
+	edF32Vector4AddHard(&local_10, &local_10, &eStack32);
+	fVar2 = edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+	if (0.001f < fVar2) {
+		this->dynamic.rotationQuat = local_10;
+	}
+
+	if (fVar2 <= fVar1) {
+		fVar1 = fVar2;
+	}
+
+	SV_MOV_UpdateSpeedIntensity(fVar1, param_2);
+	SV_UpdateOrientation2D(param_4, &local_10, 0);
+
+	return;
+}
+
 void CActorJamGut::UpdatePercentLeftRight(float param_1, float param_2)
 {
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
@@ -2243,7 +3361,7 @@ void CActorJamGut::UpdatePercentLeftRight(float param_1, float param_2)
 		this->field_0x380 = param_1;
 	}
 	else {
-		CActor::SV_UpdatePercent(param_1, param_2, &this->field_0x380);
+		SV_UpdatePercent(param_1, param_2, &this->field_0x380);
 	}
 
 	pHero = this->field_0x350;
@@ -2534,7 +3652,7 @@ void CBehaviourJamGutRidden::Begin(CActor* pOwner, int newState, int newAnimatio
 			pJamGut->SetState(8, -1);
 		}
 		else {
-			if (iVar1 == 0xc) {
+			if (iVar1 == JAMGUT_RIDE_STATE_JUMP) {
 				pJamGut->field_0x4ec = 1;
 			}
 
@@ -2653,17 +3771,16 @@ void CBehaviourJamGutRidden::InitState(int newState)
 			FUN_003732c0((int)pJamGut);)
 		}
 		else {
-			if (newState == 0xc) {
-				IMPLEMENTATION_GUARD(
-				pJamGut->StateJamGutJumpInit();)
+			if (newState == JAMGUT_RIDE_STATE_JUMP) {
+				pJamGut->StateJamGutJumpInit();
 			}
 			else {
 				if (newState == JAMGUT_BEHAVIOUR_RIDDEN) {
-					pJamGut->FUN_00375fe0();
+					pJamGut->StateJamGutStandInit();
 				}
 				else {
 					if (newState == 7) {
-						pJamGut->FUN_00375fe0();
+						pJamGut->StateJamGutStandInit();
 					}
 				}
 			}
@@ -2684,7 +3801,7 @@ void CBehaviourJamGutRidden::TermState(int oldState, int newState)
 		pJamGut->RestoreCollisionSphere(0.0f);
 	}
 	else {
-		if ((oldState == 10) || (oldState == 9)) {
+		if ((oldState == JAMGUT_RIDE_STATE_RUN) || (oldState == 9)) {
 			pJamGut->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 			pHero = pJamGut->field_0x350;
 			if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -2751,7 +3868,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 				bVar2 = false;
 			}
 			else {
-				bVar2 = pCVar1->typeID != 0xd;
+				bVar2 = pCVar1->typeID != MOVING_PLATFORM;
 			}
 
 			if (bVar2) {
@@ -2767,7 +3884,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 				bVar2 = false;
 			}
 			else {
-				bVar2 = pCVar1->typeID != 0xd;
+				bVar2 = pCVar1->typeID != MOVING_PLATFORM;
 			}
 
 			if (bVar2) {

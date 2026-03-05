@@ -385,7 +385,7 @@ CActor::CActor()
 	this->prevActorState = AS_None;
 	this->timeInAir = 0.0f;
 	this->idleTimer = 0.0f;
-	this->field_0x110 = (undefined*)0x0;
+	this->pMacroAnimTable = (MacroAnimTable*)0x0;
 	this->currentAnimType = -1;
 	this->prevAnimType = -1;
 	this->lightingFlags = 0;
@@ -699,14 +699,17 @@ void CActor::Create(ByteCode* pByteCode)
 	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pCVar1 + 1);
 	this->pCinData = pCVar1;
-	piVar9 = (int*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(piVar9 + 1);
-	if (*piVar9 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar9 * 8;
+
+	MacroAnimTable* pTable = (MacroAnimTable*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)&pTable->aEntries;
+	if (pTable->nbEntries != 0) {
+		static_assert(sizeof(MacroAnimEntry) == 0x8, "Size of MacroAnimEntry is expected to be 8 bytes");
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTable->nbEntries * sizeof(MacroAnimEntry);
 	}
-	this->field_0x110 = (undefined*)piVar9;
-	if (*(int*)this->field_0x110 < 1) {
-		this->field_0x110 = (undefined*)0x0;
+
+	this->pMacroAnimTable = pTable;
+	if (this->pMacroAnimTable->nbEntries < 1) {
+		this->pMacroAnimTable = (MacroAnimTable*)0x0;
 	}
 	newPos = pByteCode->GetPosition();
 	pByteCode->Align(4);
@@ -2379,7 +2382,7 @@ void CActor::PlayAnim(int inAnimType)
 	if (inAnimType != this->currentAnimType) {
 		/* Continue playing existing animation */
 		pAnimationController = this->pAnimationController;
-		if ((this->field_0x110 == (undefined*)0x0) || (pAnimationController == (CAnimation*)0x0)) {
+		if ((this->pMacroAnimTable == (MacroAnimTable*)0x0) || (pAnimationController == (CAnimation*)0x0)) {
 			this->currentAnimType = -1;
 		}
 		else {
@@ -3645,37 +3648,44 @@ void CActor::Reset()
 
 int CActor::GetIdMacroAnim(int inAnimType)
 {
-	int iVar1;
+	int newHigh;
 	int ret;
-	int* piVar2;
-	int iVar3;
-	int iVar4;
-	int iVar5;
+	MacroAnimTable* pTable;
 
-	piVar2 = (int*)this->field_0x110;
-	if ((piVar2 == (int*)0x0) || (iVar4 = *piVar2, iVar4 == 0)) {
+	int low;
+	int high;
+	int mid;
+
+	// Binary search in the macro anim table for the given anim type.
+
+	pTable = this->pMacroAnimTable;
+	if ((pTable == nullptr) || (high = pTable->nbEntries, high == 0)) {
 		ret = -1;
 	}
 	else {
-		iVar3 = iVar4 >> 1;
-		piVar2 = piVar2 + 1;
-		iVar5 = 0;
-		if (iVar3 != 0) {
+		mid = high >> 1;
+		MacroAnimEntry* pEntry = pTable->aEntries;
+
+		low = 0;
+		if (mid != 0) {
 			do {
-				iVar1 = iVar3;
-				if (piVar2[iVar3 * 2] <= inAnimType) {
-					iVar1 = iVar4;
-					iVar5 = iVar3;
+				newHigh = mid;
+				if (pEntry[mid].animType <= inAnimType) {
+					newHigh = high;
+					low = mid;
 				}
-				iVar4 = iVar1;
-				iVar3 = iVar5 + iVar4 >> 1;
-			} while (iVar3 != iVar5);
+
+				high = newHigh;
+				mid = (low + high) >> 1;
+			} while (mid != low);
 		}
+
 		ret = -1;
-		if (inAnimType == piVar2[iVar5 * 2]) {
-			ret = (piVar2 + iVar5 * 2)[1];
+		if (inAnimType == pEntry[low].animType) {
+			ret = pEntry[low].macroAnimId;
 		}
 	}
+
 	return ret;
 }
 

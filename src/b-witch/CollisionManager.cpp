@@ -216,6 +216,11 @@ void CCollisionManager::Level_PostCreate()
 	return;
 }
 
+bool CCollisionManager::IsASomethingGround(int index, edF32VECTOR4* param_2)
+{
+	return param_2->y < _material_table[index].field_0x0;
+}
+
 bool CCollisionManager::IsASlidingGround(s_collision_contact* pContact)
 {
 	uint uVar1;

@@ -223,7 +223,7 @@ public:
 	edF32MATRIX3* pAnimMatrix;
 	undefined4 bUseAnimMatrixData;
 	uint count_0x2c;
-	int currentAnimType_0x30;
+	int currentAnimType;
 	DisabledBoneEntry aDisabledBoneData[4];
 	int nbDisabledBones;
 };

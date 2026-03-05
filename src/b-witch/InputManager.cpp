@@ -179,7 +179,7 @@ void CPlayerInput::Init(int bInitialActive)
 	this->aButtons[0x1d].bActive = 1;
 	this->aButtons[0x1e].bActive = 1;
 	this->aButtons[0x1f].bActive = 1;
-	this->aButtons[5].bActive = 1;
+	this->aButtons[INPUT_BUTTON_INDEX_L2].bActive = 1;
 	this->aButtons[6].bActive = 1;
 
 	this->bEnableVibration = 1;
@@ -350,7 +350,7 @@ bool CPlayerInput::SoftReset()
 {
 	bool bVar1;
 
-	if ((((this->aButtons[5].clickedDuration <= 0.1f) || (this->aButtons[0x1b].clickedDuration <= 0.1f)) ||
+	if ((((this->aButtons[INPUT_BUTTON_INDEX_L2].clickedDuration <= 0.1f) || (this->aButtons[0x1b].clickedDuration <= 0.1f)) ||
 		(this->aButtons[6].clickedDuration <= 0.1f)) ||
 		((this->aButtons[10].clickedDuration <= 0.1f || (bVar1 = true, VERSION == FLM_CD_DVD)))) {
 		bVar1 = false;

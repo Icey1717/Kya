@@ -144,6 +144,9 @@ void Debug::Checkpoint::ShowMenu(bool* bOpen)
 				if (ImGui::Button("Activate")) {
 					pActiveCheckpointManager->ActivateCheckpoint(gCheckpointIndex);
 					CActorHeroPrivate* pHeroPrivate = reinterpret_cast<CActorHeroPrivate*>(CActorHero::_gThis);
+					edF32VECTOR4 pos = CActorHero::_gThis->currentLocation;
+					pos.y += 100;
+					pHeroPrivate->UpdatePosition(&pos, false);
 					pHeroPrivate->ProcessDeath();
 				}
 				ImGui::EndDisabled();
