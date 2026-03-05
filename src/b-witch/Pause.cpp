@@ -41,6 +41,62 @@ CSimpleMenuPause gPauseMenu;
 
 uint UINT_00448eac;
 
+edF32VECTOR4 edF32VECTOR4_00438120 = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+CInstance3D::CInstance3D()
+{
+	this->pNode = (edNODE*)0x0;
+	this->rotation = gF32Vector4Zero;
+	this->position = gF32Vector4Zero;
+	this->scale = edF32VECTOR4_00438120;
+
+	return;
+}
+
+void CInstance3D::SetDraw(bool bHide, ed_3D_Scene* pScene)
+{
+	edNODE* pNode;
+
+	pNode = this->pNode;
+	if (pNode != (edNODE*)0x0) {
+		if (bHide == false) {
+			ed3DHierarchyNodeSetRenderOn(pScene, pNode);
+		}
+		else {
+			ed3DHierarchyNodeSetRenderOff(pScene, pNode);
+		}
+	}
+
+	return;
+}
+
+void CInstance3D::ComputeObjectMatrix()
+{
+	ed_g3d_hierarchy* pHier;
+
+	if (this->pNode != (edNODE*)0x0) {
+		pHier = static_cast<ed_g3d_hierarchy*>(this->pNode->pData);
+		edF32Matrix4SetIdentityHard(&pHier->transformA);
+		edF32Matrix4ScaleHard(&pHier->transformA, &pHier->transformA, &this->scale);
+		edF32Matrix4RotateXYZHard(&pHier->transformA, &pHier->transformA, &this->rotation);
+		pHier->transformA.rowT = this->position;
+	}
+
+	return;
+}
+
+void CInstance3D::ClearLocalData()
+{
+	this->rotation = gF32Vector4Zero;
+	this->position = gF32Vector4Zero;
+	(this->scale).z = 1.0f;
+	(this->scale).y = 1.0f;
+	(this->scale).x = 1.0f;
+	(this->scale).w = 0.0f;
+
+	return;
+}
+
 CPauseManager::CPauseManager()
 {
 	pSimpleMenu = (CSimpleMenu*)0x0;

@@ -3,20 +3,10 @@
 
 #include "Types.h"
 #include "FrontEndWidget.h"
+#include "Pause.h"
 
 class CCamera;
 
-class CInstance3D
-{
-public:
-	edNODE* pNode;
-};
-
-class CInstance3DAnimated : public CInstance3D
-{
-public:
-
-};
 
 class CFrontendInventory : public CWidget
 {

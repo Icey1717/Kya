@@ -23,6 +23,27 @@
 #define MENU_INPUT_CONFIRM 5
 #define MENU_INPUT_CANCEL 8
 
+class CInstance3D
+{
+public:
+	CInstance3D();
+	void SetDraw(bool bHide, ed_3D_Scene* pScene);
+	void ComputeObjectMatrix();
+	void ClearLocalData();
+
+	edNODE* pNode;
+
+	edF32VECTOR4 rotation;
+	edF32VECTOR4 position;
+	edF32VECTOR4 scale;
+};
+
+class CInstance3DAnimated : public CInstance3D
+{
+public:
+
+};
+
 typedef enum EPauseMenu
 {
 	PM_Bonus = 13,

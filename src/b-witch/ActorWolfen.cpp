@@ -6405,7 +6405,7 @@ void CActorWolfen::StateTrackWeaponSnipe_Track(CBehaviourTrackWeaponSnipe* pBeha
 			}
 			else {
 				if (iVar9 == 1) {
-					iVar9 = GetWeapon()->Action(&local_10, (CActor*)this);
+					iVar9 = GetWeapon()->Action(&local_10, this);
 					if (iVar9 != 0) {
 						iVar13 = WOLFEN_STATE_FIRE;
 					}
@@ -14495,7 +14495,32 @@ void CBehaviourTrackWeaponSnipe::Begin(CActor * pOwner, int newState, int newAni
 
 void CBehaviourTrackWeaponSnipe::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	CAnimation* pAnim;
+	CBehaviourSnipe* pBehaviourSnipe;
+	CActorWolfen* pWolfen;
+
+	pWolfen = this->pOwner;
+	pAnim = pWolfen->pAnimationController;
+	if (pAnim != (CAnimation*)0x0) {
+		pWolfen->SetLookingAtOff();
+		pAnim->UnRegisterBone(0x45544554);
+	}
+
+	pBehaviourSnipe = this->pBehaviourSnipe;
+	pBehaviourSnipe->field_0x80 = this->field_0x80;
+	this->pBehaviourSnipe->wolfenHaloAgent.SetVisible(false);
+	pWolfen = this->pOwner;
+	pWolfen->flags = pWolfen->flags & 0xfffff7ff;
+	pWolfen = this->pOwner;
+	pWolfen->flags = pWolfen->flags & 0xfffffbff;
+	CBehaviourWolfen::End(newBehaviourId);
+
+	pWolfen = this->pOwner;
+	if ((pWolfen->combatFlags_0xb78 & 0x140) != 0) {
+		pWolfen->combatFlags_0xb78 = pWolfen->combatFlags_0xb78 & 0xfffffebf;
+	}
+
+	return;
 }
 
 void CBehaviourTrackWeaponSnipe::InitState(int newState)

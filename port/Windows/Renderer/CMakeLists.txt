@@ -46,6 +46,8 @@ set (SOURCES
 	"Vulkan/src/Native/PostProcessing.cpp"
 	"Vulkan/src/Native/NativeDebug.h"
 	"Vulkan/src/Native/NativeDebug.cpp"
+	"Vulkan/src/Native/NativeDebugShapes.h"
+	"Vulkan/src/Native/NativeDebugShapes.cpp"
 	"Vulkan/src/Native/NativeDisplayList.h"
 	"Vulkan/src/Native/NativeDisplayList.cpp"
 	"Vulkan/src/TextureCache.h"

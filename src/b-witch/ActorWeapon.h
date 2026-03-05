@@ -3,8 +3,7 @@
 
 #include "Types.h"
 #include "ActorMovable.h"
-
-#define IMPLEMENTATION_GUARD_SNIPER_BULLET(x)
+#include "Pause.h"
 
 #define WEAPON_BEHAVIOUR_PISTOL 0x3
 #define WEAPON_BEHAVIOUR_SNIPER 0x4
@@ -66,17 +65,27 @@ public:
 	int field_0x38;
 };
 
+class CSniperBullet
+{
+public:
+	void FUN_002d3be0(float param_1);
+	void Draw(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4* param_4, edF32VECTOR4* param_5, int param_6, uint param_7);
+	edF32VECTOR4 field_0x0[0xc];
+	int bInUse;
+	float field_0xc4;
+};
+
 struct Bullet
 {
 	edF32VECTOR4 position;
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 direction;
 
-	undefined4 field_0x30;
-	undefined4 currentLifetime;
-	float field_0x38;
-	undefined4 field_0x3c;
-	undefined4 field_0x40;
+	int bulletState;
+	float currentLifetime;
+	float speed;
+	CInstance3D* pInstance3d;
+	CSniperBullet* field_0x40;
 };
 
 class CBehaviourWeaponRpg : public CBehaviourWeaponBurst
@@ -112,13 +121,13 @@ public:
 
 	Bullet* GetFreeBullet();
 	void UpdateBulletsLife();
-	void FUN_002d3f60(Bullet* pBullet, uint param_3);
+	void StartFx(Bullet* pBullet, uint param_3);
 
 	S_STREAM_REF<CSound> field_0x3c;
 	uint field_0x40;
 	uint field_0x44;
 	int field_0x48;
-	float field_0x4c;
+	float angle;
 	CActorSound* field_0x50;
 	int nbBullets;
 
@@ -127,9 +136,21 @@ public:
 
 struct WeaponGlobal
 {
+	WeaponGlobal();
+	void Init(float param_1, float param_2, uint param_4, ed_3D_Scene* pScene);
+	CInstance3D* Add();
+	void Remove(CInstance3D* pInstance);
 	void Term();
-	int field_0x0;
-	int field_0x4;
+	int g3dTextureIndex;
+	int g3dMeshIndex;
+	ed_3D_Scene* field_0x8;
+	int nbEntries;
+	int field_0x10;
+	CInstance3D** pEntries;
+	CInstance3D* field_0x18;
+	float field_0x1c;
+	edF32VECTOR4 boundingSphere;
+	ed_3d_hierarchy_setup hierarchySetup;
 };
 
 class CBehaviourWeaponSniper : public CBehaviourWeaponBullets
@@ -140,6 +161,9 @@ public:
 	virtual void Term();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
+	virtual void ResetBullet(Bullet* pBullet);
+	virtual void FireBullet(Bullet* pBullet);
+	virtual void HitBullet(float param_1, Bullet* pBullet);
 	virtual void DrawBullets();
 
 	int field_0x344;
