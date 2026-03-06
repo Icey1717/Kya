@@ -4,6 +4,7 @@
 #include "ActorFactory.h"
 #include "CollisionManager.h"
 #include "ActorManager.h"
+#include "port/debug_draw.h"
 
 // Lots of collision rays going off per frame, logging is heavy and can cause performance issues.
 #define COLLISION_RAY_LOG(...)
@@ -47,6 +48,9 @@ float CCollisionRay::Intersect(uint type, CActor* pActor, CActor* pOther, uint f
 
 	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect type: {} actor: {} other: {} flags: 0x{:x}", 
 		type, pActor ? pActor->name : "None", pOther ? pOther->name : "None", flags);
+
+	const edF32VECTOR4 rayEnd = *this->pLocation + *this->pLeadVector * this->lengthB.x;
+	DebugDraw::AddLine(*this->pLocation, rayEnd, 1.0f, 1.0f, 0.0f, 1.0f);
 
 	if ((type & 2) != 0) {
 		COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectActors");
@@ -270,7 +274,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	if ((((colType == 0xe) || (colType == 0xd)) || (colType == COL_TYPE_BOX)) || (colType == COL_TYPE_SPHERE)) {
+	if ((((colType == COL_TYPE_PRIM_OBJ) || (colType == COL_TYPE_BOX_DYN)) || (colType == COL_TYPE_BOX)) || (colType == COL_TYPE_SPHERE)) {
 		edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColObj);
 
 		*pOutProps = pPrim->flags_0x80;
@@ -281,7 +285,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 		local_10 = *peVar1 * distance + *peVar2;
 
 		edF32Matrix4MulF32Vector4Hard(&local_20, &pPrim->worldTransform, &local_10);
-		if (colType == 10) {
+		if (colType == COL_TYPE_BOX) {
 			if (fabs(local_20.x) <= fabs(local_20.y)) {
 				local_20.x = 0.0f;
 				if (fabs(local_20.y) <= fabs(local_20.z)) {
@@ -306,7 +310,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 
 	}
 	else {
-		if (colType == 8) {
+		if (colType == COL_TYPE_QUAD) {
 			edF32QUAD4* pQuad = reinterpret_cast<edF32QUAD4*>(pColObj);
 			*pOutProps = pQuad->flags;
 
@@ -328,7 +332,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			}
 		}
 		else {
-			if (colType == 4) {
+			if (colType == COL_TYPE_TRIANGLE) {
 				edF32TRIANGLE4* pTriangle = reinterpret_cast<edF32TRIANGLE4*>(pColObj);
 				*pOutProps = pTriangle->flags;
 				ComputeNormal(pOutNormal, LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p1), LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p2), LOAD_POINTER_CAST(edF32VECTOR4*, pTriangle->p3));
@@ -342,6 +346,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			}
 		}
 	}
+
 	return;
 }
 

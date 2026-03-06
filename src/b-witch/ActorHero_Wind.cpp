@@ -26,7 +26,7 @@ void CActorHeroPrivate::ComputeBlendingWeightsInHitGlide()
 	local_30.x = this->currentLocation.x;
 	local_30.z = this->currentLocation.z;
 	local_30.w = this->currentLocation.w;
-	local_30.y = this->currentLocation.y + (pCVar1->pObbPrim->field_0xb0).y;
+	local_30.y = this->currentLocation.y + (pCVar1->pObbPrim->position).y;
 
 	if ((pCVar1->flags_0x4 & 2) != 0) {
 		edF32Vector4SubHard(&eStack16, &pCVar1->aCollisionContact[1].field_0x10, &local_30);

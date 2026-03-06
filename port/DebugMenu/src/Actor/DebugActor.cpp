@@ -12,13 +12,13 @@
 #include "DebugActorBehaviour.h"
 #include "ActorHero.h"
 #include "MathOps.h"
+#include "DebugActorCollision.h"
 
 namespace Debug {
 	namespace Actor {
 		static Setting<bool> gShowActorNamesOverlay("Show Actor Names Overlay", true);
 		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
 		static Setting<float> gActorInfoDistance("Actor Info Distance", 500.0f);
-
 		static bool bShowActorList = false;
 
 		// Helper functions for ImVec2 operations

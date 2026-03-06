@@ -337,7 +337,7 @@ void CLightManager::ComputeLighting(float multiplier, CActor* pActor, uint flags
 
 	pCollision = pActor->pCollisionData;
 	if ((pCollision != (CCollision*)0x0) && (pObbPrim = pCollision->pObbPrim, pObbPrim != 0)) {
-		location.y = location.y + pObbPrim->field_0xb0.y;
+		location.y = location.y + pObbPrim->position.y;
 	}
 
 	if (((flags & 4) != 0) && (((pActor->flags & 0x1000000) == 0 || (4.0f <= pActor->distanceToGround)))) {

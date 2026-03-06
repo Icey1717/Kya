@@ -232,7 +232,7 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	}
 	else {
 		peVar2 = pCVar1->pObbPrim;
-		this->field_0xcf0 = (peVar2->field_0xb0).y + (peVar2->field_0x90).y * 0.6f;
+		this->field_0xcf0 = (peVar2->position).y + (peVar2->scale).y * 0.6f;
 	}
 
 	return;
@@ -468,7 +468,7 @@ void CActorWolfen::Init()
 	}
 
 	fVar14 = this->field_0xbec;
-	fVar24 = ((this->pCollisionData)->pObbPrim->field_0x90).z + (CActorHero::_gThis->pCollisionData->pObbPrim->field_0x90).z + 0.1f;
+	fVar24 = ((this->pCollisionData)->pObbPrim->scale).z + (CActorHero::_gThis->pCollisionData->pObbPrim->scale).z + 0.1f;
 	if (fVar24 < fVar14) {
 		this->field_0xbec = fVar14;
 	}
@@ -1353,7 +1353,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					if ((pGetPosMsgParam->field_0x0 == 1) || (pGetPosMsgParam->field_0x0 == 0)) {
 						peVar2 = (this->pCollisionData)->pObbPrim;
 						pGetPosMsgParam->vectorFieldB.x = 0.0f;
-						pGetPosMsgParam->vectorFieldB.y = (peVar2->field_0x90).y + (peVar2->field_0xb0).y;
+						pGetPosMsgParam->vectorFieldB.y = (peVar2->scale).y + (peVar2->position).y;
 						pGetPosMsgParam->vectorFieldB.z = 0.0f;
 						pGetPosMsgParam->vectorFieldB.w = 0.0f;
 						return 1;
@@ -6703,7 +6703,7 @@ void CActorWolfen::StateExorcizeEndInit()
 	local_130.field_x10 = this->fighterAnatomyZones.field_0x0;
 	edF32Vector4AddHard(&local_130.field_x10, &this->currentLocation, &local_130.field_x10);
 	local_130.field_x10.w = 1.0f;
-	local_130.field_x10.y = local_130.field_x10.y - (this->distanceToGround + ((this->pCollisionData)->pObbPrim->field_0x90).z);
+	local_130.field_x10.y = local_130.field_x10.y - (this->distanceToGround + ((this->pCollisionData)->pObbPrim->scale).z);
 	uVar1 = this->field_0xb74;
 	while ((iVar4 == 0 && (local_110.nbEntries != 0))) {
 		bVar3 = false;
@@ -10960,8 +10960,8 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 							pWolfen = static_cast<CActorWolfen*>(this->pOwner);
 							pCVar3 = pWolfen->pAdversary;
 							if ((pCVar3 == (CActorFighter*)0x0) ||
-								(fVar12 = ((pWolfen->pCollisionData)->pObbPrim->field_0x90).z +
-									((pCVar3->pCollisionData)->pObbPrim->field_0x90).z + 0.2f,
+								(fVar12 = ((pWolfen->pCollisionData)->pObbPrim->scale).z +
+									((pCVar3->pCollisionData)->pObbPrim->scale).z + 0.2f,
 									fVar4 = pCVar3->currentLocation.x -
 									pWolfen->currentLocation.x,
 									fVar5 = pCVar3->currentLocation.z -
@@ -12569,7 +12569,7 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	CActorWolfen* pWolfen;
 
 	(this->field_0x40).x = 0.0f;
-	(this->field_0x40).y = this->pOwner->pCollisionData->pObbPrim->field_0xb0.y;
+	(this->field_0x40).y = this->pOwner->pCollisionData->pObbPrim->position.y;
 	(this->field_0x40).z = 0.0f;
 	(this->field_0x40).w = 1.0f;
 

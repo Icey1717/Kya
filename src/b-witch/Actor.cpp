@@ -1598,7 +1598,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 																(pCVar2 = this->pCollisionData, pCVar2 != (CCollision*)0x0)) &&
 																(pCVar2->pObbPrim != 0)) {
 																(pResolvedMsg->vectorFieldB).x = 0.0f;
-																(pResolvedMsg->vectorFieldB).y = (this->pCollisionData->pObbPrim->field_0xb0).y;
+																(pResolvedMsg->vectorFieldB).y = (this->pCollisionData->pObbPrim->position).y;
 																(pResolvedMsg->vectorFieldB).z = 0.0f;
 																(pResolvedMsg->vectorFieldB).w = 0.0f;
 																edF32Matrix4MulF32Vector4Hard (&pResolvedMsg->vectorFieldB, &this->pMeshTransform->base.transformA, &pResolvedMsg->vectorFieldB);
@@ -1612,7 +1612,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 																edColPRIM_OBJECT* pObj;
 																pCVar2 = this->pCollisionData;
 																if ((pCVar2 != (CCollision*)0x0) && (pObj = pCVar2->pObbPrim, pObj != 0)) {
-																	edF32Matrix4MulF32Vector4Hard(&pResolvedMsg->vectorFieldB, &this->pMeshTransform->base.transformA, &pObj->field_0xb0);
+																	edF32Matrix4MulF32Vector4Hard(&pResolvedMsg->vectorFieldB, &this->pMeshTransform->base.transformA, &pObj->position);
 																	edF32Vector4SubHard(&pResolvedMsg->vectorFieldB, &pResolvedMsg->vectorFieldB, &this->currentLocation);
 																	return true;
 																}
@@ -1712,7 +1712,7 @@ void CActor::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
 			fVar3 = 0.0f;
 		}
 		else {
-			fVar3 = (peVar1->field_0xb0).y;
+			fVar3 = (peVar1->position).y;
 		}
 
 		pOutPoint->x = (this->currentLocation).x;
@@ -2864,8 +2864,8 @@ float CActor::GetPosition_00117db0()
 
 	fVar3 = 0.5f;
 	if ((this->pCollisionData != (CCollision*)0x0) && (peVar1 = this->pCollisionData->pObbPrim, fVar3 = 0.5f, peVar1 != (edColPRIM_OBJECT*)0x0)) {
-		fVar2 = (peVar1->field_0x90).z;
-		fVar3 = (peVar1->field_0x90).x;
+		fVar2 = (peVar1->scale).z;
+		fVar3 = (peVar1->scale).x;
 		if (fVar3 <= fVar2) {
 			fVar3 = fVar2;
 		}
@@ -4474,7 +4474,7 @@ void CActor::SV_GetActorColCenter(edF32VECTOR4* pColCenter)
 		*pColCenter = this->currentLocation;
 	}
 	else {
-		edF32Vector4AddHard(pColCenter, &this->currentLocation, &this->pCollisionData->pObbPrim->field_0xb0);
+		edF32Vector4AddHard(pColCenter, &this->currentLocation, &this->pCollisionData->pObbPrim->position);
 		pColCenter->w = 1.0f;
 	}
 

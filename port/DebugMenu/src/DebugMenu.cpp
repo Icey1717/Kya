@@ -27,6 +27,8 @@
 #include "DebugMeshViewer.h"
 #include "DebugTexture.h"
 #include "Actor/DebugActor.h"
+#include "Actor/DebugActorCollision.h"
+#include "DebugCollision.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorHero_Private.h"
@@ -352,6 +354,7 @@ namespace Debug {
 		{"Scenario", Debug::Scenario::ShowMenu, true },
 		{"Save/Load", Debug::SaveLoad::ShowMenu, true },
 		{"Scene", Debug::Scene::ShowMenu, true },
+		{"Collision", Debug::Collision::ShowMenu, false },
 		{"Tutorial", Debug::Tutorial::ShowMenu, true },
 		{"Input", Debug::Input::ShowMenu, true },
 		{"Hero Replay", Debug::HeroReplay::ShowMenu, true },
@@ -382,6 +385,8 @@ namespace Debug {
 		}
 
 		static bool bRunningTerm = false;
+
+		Debug::Collision::DrawDebugShapes();
 
 		if (bShowMenus && !bRunningTerm) {
 			Texture::Update();

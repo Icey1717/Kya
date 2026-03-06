@@ -650,6 +650,8 @@ else()
 		"${src_root}/port/vu1_emu.h"
 		"${src_root}/port/hardware_draw.cpp"
 		"${src_root}/port/hardware_draw.h"
+		"${src_root}/port/debug_draw.cpp"
+		"${src_root}/port/debug_draw.h"
 		"${src_root}/port/random.cpp"
 		"${src_root}/port/input.cpp"
 		"${src_root}/port/input.h"

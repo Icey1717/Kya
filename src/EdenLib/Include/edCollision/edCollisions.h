@@ -8,11 +8,14 @@
 #define COLLISION_LOG_VERBOSE(level, format, ...) 
 
 #define COL_TYPE_TREE 0x1
+#define COL_TYPE_TREE_DYN 0x3
 #define COL_TYPE_TRIANGLE 0x4
 #define COL_TYPE_QUAD 0x8
 #define COL_TYPE_BOX 0xa
 #define COL_TYPE_SPHERE 0xb
+#define COL_TYPE_BOX_DYN 0xd
 #define COL_TYPE_PRIM_OBJ 0xe
+#define COL_TYPE_CAPSULE 0x13
 
 struct edColRAY_OBB_IN {
 	edF32VECTOR4* pLocation;
@@ -100,7 +103,7 @@ struct edColPRIM_RAY_UNIT_BOX_UNIT_IN {
 
 PACK(
 struct edColPRIM_SPHERE {
-	edF32MATRIX4 vertices;
+	edF32MATRIX4 localToWorld;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;	
 	undefined4 field_0x84;
@@ -113,7 +116,7 @@ static_assert(sizeof(edColPRIM_SPHERE) == 0x90);
 PACK(
 	struct edColPRIM_BOX 
 {
-	edF32MATRIX4 vertices;
+	edF32MATRIX4 localToWorld;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
 	undefined4 field_0x84;
@@ -125,22 +128,22 @@ PACK(
 static_assert(sizeof(edColPRIM_BOX) == 0x90);
 
 PACK(
-	struct edColPRIM_OBJECT
+struct edColPRIM_OBJECT
 {
-	edF32MATRIX4 vertices;
+	edF32MATRIX4 localToWorld;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
 	undefined4 field_0x84;
 	undefined4 field_0x88;
 	undefined4 field_0x8c;
-	edF32VECTOR4 field_0x90;
-	edF32VECTOR4 angleRotY;
-	edF32VECTOR4 field_0xb0;
+	edF32VECTOR4 scale;
+	edF32VECTOR4 eulerAngles;
+	edF32VECTOR4 position;
 	edF32VECTOR4 field_0xc0;
 	edF32VECTOR4 field_0xd0;
-	
+
 	edColINFO colInfo;
-	
+
 	undefined field_0x130;
 	undefined field_0x131;
 	undefined field_0x132;
@@ -191,7 +194,7 @@ static_assert(sizeof(edObbTREE) == 0x70);
 PACK(
 struct edObbTREE_DYN : public edObbTREE
 {
-	edF32MATRIX4 matrix_0x70;
+	edF32MATRIX4 localMatrix;
 	edF32VECTOR4 field_0xb0;
 });
 

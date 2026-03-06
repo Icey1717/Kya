@@ -651,7 +651,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 
 	peVar1 = (this->pCollisionData)->pObbPrim;
 
-	this->field_0x410 = peVar1->field_0xb0;
+	this->field_0x410 = peVar1->position;
 	this->field_0x400 = this->field_0x410;
 
 	this->field_0x420 = pByteCode->GetF32() * 2.0f;
@@ -2665,7 +2665,7 @@ void CActorFighter::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, 
 	CActorAutonomous::ChangeCollisionSphere(param_1, param_3, param_4);
 
 	pPrimObj = this->pCollisionData->pObbPrim;
-	this->fighterAnatomyZones.field_0x10 = pPrimObj->field_0xb0;
+	this->fighterAnatomyZones.field_0x10 = pPrimObj->position;
 	fVar2 = edF32Vector4GetDistHard(&this->fighterAnatomyZones.field_0x10);
 	peVar1 = &this->fighterAnatomyZones.field_0x0;
 	edF32Vector4NormalizeHard(peVar1, peVar1);
@@ -2686,7 +2686,7 @@ void CActorFighter::UpdateCollisionSphere()
 	CActorAutonomous::UpdateCollisionSphere();
 
 	peVar1 = this->pCollisionData->pObbPrim;
-	this->fighterAnatomyZones.field_0x10 = peVar1->field_0xb0;
+	this->fighterAnatomyZones.field_0x10 = peVar1->position;
 
 	fVar2 = edF32Vector4GetDistHard(&this->fighterAnatomyZones.field_0x10);
 	edF32Vector4NormalizeHard(&this->fighterAnatomyZones.field_0x0, &this->fighterAnatomyZones.field_0x0);
@@ -2978,15 +2978,15 @@ void CActorFighter::_InterpretCollisions(int param_2)
 		if (local_100.x == 0.0f) {
 			if (local_100.y == 0.0f) {
 				if (local_100.z != 0.0f) {
-					unaff_f20 = ((this->pCollisionData)->pObbPrim->field_0x90).z;
+					unaff_f20 = ((this->pCollisionData)->pObbPrim->scale).z;
 				}
 			}
 			else {
-				unaff_f20 = ((this->pCollisionData)->pObbPrim->field_0x90).y;
+				unaff_f20 = ((this->pCollisionData)->pObbPrim->scale).y;
 			}
 		}
 		else {
-			unaff_f20 = ((this->pCollisionData)->pObbPrim->field_0x90).x;
+			unaff_f20 = ((this->pCollisionData)->pObbPrim->scale).x;
 		}
 
 		edF32Vector4ScaleHard(unaff_f20 - (fVar9 - 0.05f), &eStack384, &local_10);
@@ -4274,7 +4274,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float damage, edF32VECTOR4* p
 				local_40 = pCVar1->field_0x90;
 
 				peVar2 = pReceiver->pCollisionData->pObbPrim;
-				local_e0[0] = pReceiver->pCollisionData->pObbPrim->field_0xb0;
+				local_e0[0] = pReceiver->pCollisionData->pObbPrim->position;
 
 				peVar3 = pReceiver->pMeshTransform;
 				local_130.rowX = pReceiver->pMeshTransform->base.transformA.rowX;
@@ -4488,7 +4488,7 @@ void CActorFighter::_SV_VOLDYN_GetCollisionPosFromVector(edF32VECTOR4* v0, edF32
 	edF32Matrix4MulF32Vector4Hard(v0, &this->pCollisionData->pObbPrim->worldTransform, v1);
 	edF32Vector4NormalizeHard(v0, v0);
 	v0->w = 1.0f;
-	edF32Matrix4MulF32Vector4Hard(v0, &this->pCollisionData->pObbPrim->vertices, v0);
+	edF32Matrix4MulF32Vector4Hard(v0, &this->pCollisionData->pObbPrim->localToWorld, v0);
 
 	return;
 }
@@ -5258,7 +5258,7 @@ void CActorFighter::_InitGrab(s_fighter_grab* pGrab)
 
 	if (pGrab->field_0x34 == 0.0f) {
 		pGrab->field_0x34 = pGrab->field_0x30;
-		fVar4 = pGrab->field_0x34 - ((this->pCollisionData)->pObbPrim->field_0x90).z;
+		fVar4 = pGrab->field_0x34 - ((this->pCollisionData)->pObbPrim->scale).z;
 		pGrab->field_0x34 = fVar4;
 		pGrab->field_0x34 = fVar4 - 0.4f;
 	}

@@ -402,7 +402,7 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 			edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &this->field_0x7f0);
 			edF32Vector4AddHard(&local_60, &this->currentLocation, &(this->fighterAnatomyZones).field_0x10);
 			local_60.w = 1.0f;
-			f0 = ((this->pCollisionData)->pObbPrim->field_0x90).y * 2.0f * 1.1f;
+			f0 = ((this->pCollisionData)->pObbPrim->scale).y * 2.0f * 1.1f;
 			CCollisionRay CStack128 = CCollisionRay(f0, &local_60, &local_50);
 			fVar1 = CStack128.Intersect(3, (CActor*)this, (CActor*)0x0, 0x7fffffff, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar1 == 1e+30f) {
@@ -463,8 +463,8 @@ void CActorFighter::_StateFighterHitStaggerFallInit(float param_1)
 
 	local_50 = edF32VECTOR4_00425760;
 	peVar1 = this->pCollisionData->pObbPrim;
-	t = (peVar1->field_0x90).y;
-	fVar8 = (peVar1->field_0x90).z;
+	t = (peVar1->scale).y;
+	fVar8 = (peVar1->scale).z;
 	this->field_0x7dc = param_1;
 	SetVectorFromAngleY(this->rotationEuler.y, &eStack64);
 	edF32Vector4ScaleHard(this->field_0x7dc, &eStack64, &eStack64);
@@ -1186,19 +1186,19 @@ void CBehaviourFighterProjected::_ComputeDynamics()
 				local_30.y = (pFighter->fighterAnatomyZones).field_0x10.y;
 				local_30.z = (pFighter->fighterAnatomyZones).field_0x10.z;
 				local_30.w = (pFighter->fighterAnatomyZones).field_0x10.w;
-				unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->field_0x90).z;
+				unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->scale).z;
 			}
 			else {
 				if (uVar3 == 2) {
 					edF32Vector4ScaleHard(this->pOwner->field_0x428, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
 					local_30.w = 1.0f;
-					unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->field_0x90).z / 2.0f;
+					unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->scale).z / 2.0f;
 				}
 				else {
 					if (uVar3 == 0) {
 						edF32Vector4ScaleHard(this->pOwner->field_0x42c, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
 						local_30.w = 1.0f;
-						unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->field_0x90).z / 2.0f;
+						unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->scale).z / 2.0f;
 					}
 				}
 			}

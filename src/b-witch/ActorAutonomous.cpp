@@ -656,8 +656,8 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 		this->field_0x348 = 0;
 		this->field_0x34c = (CActor*)0x0;
 		peVar2 = pCVar1->pObbPrim;
-		fVar7 = (peVar2->field_0xb0).y;
-		fVar6 = (peVar2->field_0x90).y * 0.5f;
+		fVar7 = (peVar2->position).y;
+		fVar6 = (peVar2->scale).y * 0.5f;
 		fVar8 = fVar7 - fVar6;
 		if (0 < pActorsTable->nbEntries) {
 			do {
@@ -1176,8 +1176,8 @@ void CActorAutonomous::StoreCollisionSphere()
 
 	pObbPrim = this->pCollisionData->pObbPrim;
 
-	this->field_0x280 = pObbPrim->field_0x90.xyz;
-	this->field_0x28c = pObbPrim->field_0xb0.xyz;
+	this->field_0x280 = pObbPrim->scale.xyz;
+	this->field_0x28c = pObbPrim->position.xyz;
 	return;
 }
 
@@ -1194,20 +1194,20 @@ void CActorAutonomous::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_
 	if (pCollision != (CCollision*)0x0) {
 		peVar1 = pCollision->pObbPrim;
 		if (param_1 == 0.0) {
-			peVar1->field_0x90 = *param_3;
-			peVar1->field_0xb0 = *param_4;
+			peVar1->scale = *param_3;
+			peVar1->position = *param_4;
 			this->bCollisionSphereDirty = 0;
 		}
 		else {
 			pTVar2 = GetTimer();
 			this->field_0x298 = param_3->xyz;
 			this->field_0x2a4 = param_4->xyz;
-			edF32Vector4SubHard(&local_10, param_3, &peVar1->field_0x90);
+			edF32Vector4SubHard(&local_10, param_3, &peVar1->scale);
 			fVar3 = 1.0f / param_1;
 			edF32Vector4ScaleHard(fVar3, &local_10, &local_10);
 			this->field_0x2b0 = local_10.xyz;
 
-			edF32Vector4SubHard(&local_10, param_4, &peVar1->field_0xb0);
+			edF32Vector4SubHard(&local_10, param_4, &peVar1->position);
 			edF32Vector4ScaleHard(fVar3, &local_10, &local_10);
 
 			this->field_0x2bc = local_10.xyz;
@@ -1233,11 +1233,11 @@ void CActorAutonomous::UpdateCollisionSphere()
 	pTVar2 = GetTimer();
 
 	if (this->field_0x2c8 < pTVar2->scaledTotalTime) {
-		peVar1->field_0x90.xyz = this->field_0x298;
-		(peVar1->field_0x90).w = 0.0f;
+		peVar1->scale.xyz = this->field_0x298;
+		(peVar1->scale).w = 0.0f;
 
-		(peVar1->field_0xb0).xyz = this->field_0x2a4;
-		(peVar1->field_0xb0).w = 1.0f;
+		(peVar1->position).xyz = this->field_0x2a4;
+		(peVar1->position).w = 1.0f;
 		this->bCollisionSphereDirty = 0;
 	}
 	else {
@@ -1249,7 +1249,7 @@ void CActorAutonomous::UpdateCollisionSphere()
 		local_10.z = (this->field_0x2b0).z * local_10.w;
 
 		local_10.w = local_10.w * 0.0f;
-		edF32Vector4AddHard(&peVar1->field_0x90, &peVar1->field_0x90, &local_10);
+		edF32Vector4AddHard(&peVar1->scale, &peVar1->scale, &local_10);
 
 		local_10.w = pTVar2->cutsceneDeltaTime;
 		local_10.x = (this->field_0x2bc).x * local_10.w;
@@ -1257,7 +1257,7 @@ void CActorAutonomous::UpdateCollisionSphere()
 		local_10.z = (this->field_0x2bc).z * local_10.w;
 		local_10.w = local_10.w * 0.0f;
 
-		edF32Vector4AddHard(&peVar1->field_0xb0, &peVar1->field_0xb0, &local_10);
+		edF32Vector4AddHard(&peVar1->position, &peVar1->position, &local_10);
 	}
 
 	pCol->InvalidatePrims();

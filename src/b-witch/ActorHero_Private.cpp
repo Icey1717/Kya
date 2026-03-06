@@ -3112,9 +3112,9 @@ void CActorHeroPrivate::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int ind
 
 	peVar1 = this->pCollisionData->pObbPrim;
 
-	local_10.x = (peVar1->field_0xb0).x;
-	local_10.z = (peVar1->field_0xb0).z;
-	local_10.w = (peVar1->field_0xb0).w;
+	local_10.x = (peVar1->position).x;
+	local_10.z = (peVar1->position).z;
+	local_10.w = (peVar1->position).w;
 
 	if (index == 0) {
 		puVar2 = 1.0f;
@@ -3123,7 +3123,7 @@ void CActorHeroPrivate::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int ind
 		puVar2 = -1.0f;
 	}
 
-	local_10.y = (peVar1->field_0xb0).y + (peVar1->field_0x90).y * 0.8f * puVar2;
+	local_10.y = (peVar1->position).y + (peVar1->scale).y * 0.8f * puVar2;
 
 	edF32Vector4AddHard(&local_10, &local_10, &this->currentLocation);
 
@@ -4164,7 +4164,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 										local_60 = peVar1->base.transformA.rowY;
 
 										peVar2 = (this->pCollisionData)->pObbPrim;
-										fVar25 = (peVar2->field_0xb0).y + (peVar2->field_0x90).y;
+										fVar25 = (peVar2->position).y + (peVar2->scale).y;
 										bVar9 = IsFightRelated(this->curBehaviourId);
 										if (bVar9 == false) {
 											iVar13 = this->actorState;
@@ -7383,7 +7383,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 
 		edF32Vector4ScaleHard(1.2f, &eStack208, &auStack80.rowY);
 
-		bVar7 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.5f, &local_c0, &eStack208, 0x40001000, &eStack176, &local_4);
+		bVar7 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->scale).z + 0.5f, &local_c0, &eStack208, 0x40001000, &eStack176, &local_4);
 
 		if ((bVar7 == false) || (fVar15 = this->field_0x1430, fVar13 = edF32Vector4DotProductHard(&local_c0, &eStack176), cosf(fVar15) < fVar13 + 1.0f)) {
 			fVar15 = this->field_0x1430;
@@ -7621,7 +7621,7 @@ void CActorHeroPrivate::StateHeroTobogganJump(int param_2, int param_3, int para
 		local_4 = (CActor*)0x0;
 		local_d0 = auStack80.rowZ;
 		edF32Vector4ScaleHard(1.2f, &eStack224, &auStack80.rowY);
-		bVar4 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->field_0x90).z + 1.0f, &local_d0, &eStack224, 0x40001000, &eStack192, &local_4);
+		bVar4 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->scale).z + 1.0f, &local_d0, &eStack224, 0x40001000, &eStack192, &local_4);
 
 		if ((bVar4 == false) || (fVar11 = this->field_0x1430, fVar10 = edF32Vector4DotProductHard(&local_d0, &eStack192), cosf(fVar11) < fVar10 + 1.0f)) {
 			fVar11 = this->field_0x1430;
@@ -8621,7 +8621,7 @@ void CActorHeroPrivate::StateHeroRun()
 
 				if (((this->pSoccerActor == (CActor*)0x0) && ((pCVar1->flags_0x4 & 1) != 0)) && (this->field_0x1454 == false)) {
 					edF32Vector4ScaleHard(1.2f, &eStack48, &g_xVector);
-					fVar12 = ((this->pCollisionData)->pObbPrim->field_0x90).z;
+					fVar12 = ((this->pCollisionData)->pObbPrim->scale).z;
 					edF32Vector4AddHard(&eStack96, &this->currentLocation, &eStack48);
 					CCollisionRay CStack128 = CCollisionRay(fVar12 + 0.5f, &eStack96, &this->rotationQuat);
 					fVar12 = CStack128.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40001000, &eStack32, &local_10);
@@ -13193,7 +13193,7 @@ void CActorHeroPrivate::DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int
 
 	edF32Vector4ScaleHard(0.02f, &eStack32, &g_xVector);
 
-	bVar1 = GetNormalInFrontOf((this->pCollisionData->pObbPrim->field_0x90).z + 0.6f, v0, &eStack32, 0x40000040, &eStack16, (CActor**)0x0);
+	bVar1 = GetNormalInFrontOf((this->pCollisionData->pObbPrim->scale).z + 0.6f, v0, &eStack32, 0x40000040, &eStack16, (CActor**)0x0);
 	if (bVar1 != false) {
 		fVar3 = this->field_0x1430;
 		fVar2 = edF32Vector4DotProductHard(v0, &eStack16);
@@ -13209,7 +13209,7 @@ void CActorHeroPrivate::DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int
 
 	edF32Vector4ScaleHard(1.4f, &eStack32, &g_xVector);
 
-	bVar1 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.6f, v0, &eStack32, 0x40000040, &eStack16, (CActor**)0x0);
+	bVar1 = GetNormalInFrontOf(((this->pCollisionData)->pObbPrim->scale).z + 0.6f, v0, &eStack32, 0x40000040, &eStack16, (CActor**)0x0);
 	if (bVar1 != false) {
 		fVar3 = this->field_0x1430;
 		fVar2 = edF32Vector4DotProductHard(v0, &eStack16);
@@ -14123,11 +14123,11 @@ void CActorHeroPrivate::AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4*
 	peVar1 = this->pMeshTransform;
 	peVar2 = (this->pCollisionData)->pObbPrim;
 
-	edF32Vector4ScaleHard(-(peVar2->field_0x90).y, &eStack16, pNormal);
+	edF32Vector4ScaleHard(-(peVar2->scale).y, &eStack16, pNormal);
 
 	v0 = &peVar1->base.transformA.rowT;
 	edF32Vector4AddHard(v0, v0, &eStack16);
-	(peVar1->base).transformA.db = (peVar1->base).transformA.db + (peVar2->field_0xb0).y + param_1;
+	(peVar1->base).transformA.db = (peVar1->base).transformA.db + (peVar2->position).y + param_1;
 	return;
 }
 
@@ -15202,8 +15202,8 @@ void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActor
 	if (pSoccerActor != (CActorMovable*)0x0) {
 		peVar2 = this->pAnimationController->GetCurBoneMatrix(this->field_0x1598);
 		peVar1 = (this->pCollisionData)->pObbPrim;
-		fVar6 = (peVar1->field_0x90).x;
-		fVar4 = (peVar1->field_0x90).z;
+		fVar6 = (peVar1->scale).x;
+		fVar4 = (peVar1->scale).z;
 		if (fVar6 <= fVar4) {
 			fVar6 = fVar4;
 		}
@@ -15214,8 +15214,8 @@ void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActor
 		}
 
 		peVar1 = pSoccerActor->pCollisionData->pObbPrim;
-		fVar4 = (peVar1->field_0x90).x;
-		fVar5 = (peVar1->field_0x90).z;
+		fVar4 = (peVar1->scale).x;
+		fVar5 = (peVar1->scale).z;
 
 		if (fVar4 <= fVar5) {
 			fVar4 = fVar5;
@@ -16569,7 +16569,7 @@ bool Criterion_FightLock(CActor* pActor, void* pParams)
 			local_10.x = pActorParam->currentLocation.x;
 			local_10.z = pActorParam->currentLocation.z;
 			local_10.w = pActorParam->currentLocation.w;
-			local_10.y = pActorParam->currentLocation.y + pActorParam->pCollisionData->pObbPrim->field_0xb0.y * 1.75f;
+			local_10.y = pActorParam->currentLocation.y + pActorParam->pCollisionData->pObbPrim->position.y * 1.75f;
 
 			edF32Vector4SubHard(&eStack32, &pActor->currentLocation, &pActorParam->currentLocation);
 			fVar6 = edF32Vector4NormalizeHard(&eStack32, &eStack32);

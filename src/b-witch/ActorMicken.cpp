@@ -581,8 +581,8 @@ void CActorMicken::StoreCollisionSphere()
 	edF32VECTOR4 eStack16;
 
 	peVar1 = this->pCollisionData->pObbPrim;
-	edF32Vector4ScaleV4Hard(&eStack32, &peVar1->field_0xb0, &scale);
-	edF32Vector4ScaleV4Hard(&eStack16, &peVar1->field_0x90, &scale);
+	edF32Vector4ScaleV4Hard(&eStack32, &peVar1->position, &scale);
+	edF32Vector4ScaleV4Hard(&eStack16, &peVar1->scale, &scale);
 
 	ChangeCollisionSphere(0.0f, &eStack16, &eStack32);
 	CActorAutonomous::StoreCollisionSphere();
@@ -1509,7 +1509,7 @@ int CActorMicken::WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF3
 		}
 	}
 
-	if ((param_1 + ((this->pCollisionData)->pObbPrim->field_0x90).z <= movParamsOut.moveVelocity) ||
+	if ((param_1 + ((this->pCollisionData)->pObbPrim->scale).z <= movParamsOut.moveVelocity) ||
 		(1.0f <= fabs(this->currentLocation.y - pPosition->y))) {
 		if ((pCVar1->flags_0x4 & 2) == 0) {
 			if (0.2f < this->timeInAir) {

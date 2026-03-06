@@ -97,7 +97,7 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 					local_60.z = (peVar1->field_0xb0).z;
 
 					for (iVar3 = 0; iVar3 < 2; iVar3 = iVar3 + 1) {
-						edF32Matrix4MulF32Vector4Hard(&local_70, &peVar1->matrix_0x70, &local_60);
+						edF32Matrix4MulF32Vector4Hard(&local_70, &peVar1->localMatrix, &local_60);
 						if (pMVar6 == (CWayPoint*)0x0) {
 							local_70.w = 0.0f;
 							fVar7 = edF32Vector4GetDistHard(&local_70);
@@ -126,6 +126,7 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 
 		this->field_0x38 = pStreamDef->field_0x4 / (fVar8 * param_1);
 	}
+
 	return;
 }
 

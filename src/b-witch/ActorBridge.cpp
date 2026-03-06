@@ -808,7 +808,7 @@ void CActorBridge::Initialize()
 
 		if (((pCurActor != (CActor*)0x0) && (pCurActor->pCollisionData != (CCollision*)0x0)) &&
 			(peVar4 = pCurActor->pCollisionData->pObbPrim, peVar4 != (edColPRIM_OBJECT*)0x0)) {
-			this->aHeights[nbSteps] = (peVar4->field_0x90).z;
+			this->aHeights[nbSteps] = (peVar4->scale).z;
 		}
 		iVar7 = iVar7 + 4;
 		nbSteps = nbSteps + 1;
@@ -843,10 +843,10 @@ void CActorBridge::ApplyStepsCollisionScale(int bEnable)
 			if (((pCurActor != (CActor*)0x0) && (pCollision = pCurActor->pCollisionData, pCollision != (CCollision*)0x0)) &&
 				(peVar1 = pCollision->pObbPrim, peVar1 != (edColPRIM_OBJECT*)0x0)) {
 				if (bEnable == 0) {
-					(peVar1->field_0x90).z = this->aHeights[iVar6];
+					(peVar1->scale).z = this->aHeights[iVar6];
 				}
 				else {
-					(peVar1->field_0x90).z = this->stepCollisionScale * this->aHeights[iVar6];
+					(peVar1->scale).z = this->stepCollisionScale * this->aHeights[iVar6];
 				}
 
 				pCollision->InvalidatePrims();

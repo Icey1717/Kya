@@ -77,7 +77,7 @@ bool CActorHeroPrivate::DetectGripablePrecipice()
 
 		edF32Vector4NormalizeHard(v0, v0);
 
-		float fStack20 = ((this->pCollisionData)->pObbPrim->field_0x90).z - 0.1f;
+		float fStack20 = ((this->pCollisionData)->pObbPrim->scale).z - 0.1f;
 		local_20 = this->bounceLocation * fStack20;
 		local_30.x = local_20.x + local_40.x;
 		local_30.z = local_20.z + local_40.z;
@@ -96,7 +96,7 @@ bool CActorHeroPrivate::DetectGripablePrecipice()
 			local_30.w = fStack20 + local_30.w;
 			fVar3 = CStack112.Intersect(3, (CActor*)this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar3 == 1e+30f) {
-				fVar3 = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.1f;
+				fVar3 = ((this->pCollisionData)->pObbPrim->scale).z + 0.1f;
 				this->field_0x1490 = this->bounceLocation * fVar3;
 				fVar3 = this->field_0x1490.y;
 				fVar4 = this->field_0x1490.z;
@@ -264,7 +264,7 @@ bool CActorHeroPrivate::DetectClimbWall(int param_2, CActor** pOutActor, float* 
 LAB_0013d298:
 	local_20.field_0x0 = 1.6f;
 	fVar7 = 0.4f;
-	local_20.field_0x4 = ((this->pCollisionData)->pObbPrim->field_0x90).z + 1.0f;
+	local_20.field_0x4 = ((this->pCollisionData)->pObbPrim->scale).z + 1.0f;
 	local_20.field_0x8 = this->field_0x14b8;
 
 	if (param_2 == 0) {
@@ -284,7 +284,7 @@ LAB_0013d298:
 		if (bDetectClimbWall != false) {
 			edF32Vector4SubHard(&eStack96, &this->currentLocation, &eStack80);
 			eStack96.y = 0.0f;
-			fVar8 = ((this->pCollisionData)->pObbPrim->field_0x90).z;
+			fVar8 = ((this->pCollisionData)->pObbPrim->scale).z;
 			fVar6 = edF32Vector4DotProductHard(&eStack96, &this->field_0x1470);
 			unaff_f20 = fVar6 - fVar8;
 			if (fVar7 < unaff_f20) {
@@ -302,7 +302,7 @@ LAB_0013d298:
 		if (bDetectClimbWall != false) {
 			edF32Vector4SubHard(&eStack96, &this->currentLocation, &eStack80);
 			eStack96.y = 0.0f;
-			fVar8 = ((this->pCollisionData)->pObbPrim->field_0x90).z;
+			fVar8 = ((this->pCollisionData)->pObbPrim->scale).z;
 			fVar6 = edF32Vector4DotProductHard(&eStack96, &this->field_0x1470);
 			unaff_f20 = fVar6 - fVar8;
 			if (fVar7 < unaff_f20) {
@@ -343,7 +343,7 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 		bClimbCeilingFromGrip = 0;
 	}
 	else {
-		fVar1 = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.1f;
+		fVar1 = ((this->pCollisionData)->pObbPrim->scale).z + 0.1f;
 		local_10.x = this->rotationQuat.x * fVar1 + this->currentLocation.x;
 		local_10.z = this->rotationQuat.z * fVar1 + this->currentLocation.z;
 		local_10.w = this->rotationQuat.w * fVar1 + this->currentLocation.w;
@@ -356,7 +356,7 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 			local_20.w = this->currentLocation.w;
 			local_20.y = this->currentLocation.y + 1.16f;
 
-			CCollisionRay CStack64 = CCollisionRay(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.1f, &local_20, &this->rotationQuat);
+			CCollisionRay CStack64 = CCollisionRay(((this->pCollisionData)->pObbPrim->scale).z + 0.1f, &local_20, &this->rotationQuat);
 			fVar1 = CStack64.Intersect(3, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar1 != 1e+30f) {
 				bClimbCeilingFromGrip = 0;
@@ -445,10 +445,10 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 			}
 			else {
 				local_10 = 0.0;
-				local_c = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.2;
+				local_c = ((this->pCollisionData)->pObbPrim->scale).z + 0.2;
 				local_8 = this->field_0x14c4;
 				local_20 = *(float*)&this->field_0x14c8;
-				local_1c = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.2;
+				local_1c = ((this->pCollisionData)->pObbPrim->scale).z + 0.2;
 				local_18 = this->field_0x14c4;
 				lVar4 = DetectWall(this, 3, 0x40000080, (float*)&this->rotationQuat,
 					&local_10, 0, 0, 0);
@@ -562,7 +562,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 
 	iVar4 = 0;
 
-	fVar5 = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.1;
+	fVar5 = ((this->pCollisionData)->pObbPrim->scale).z + 0.1;
 
 	local_20.x = param_4->x * fVar5 + param_3->x;
 	local_20.y = param_3->y + 1.75f;
@@ -582,7 +582,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 
 	if ((((fVar5 == 1e+30f) || (fVar5 <= 0.01f)) || (local_30.y < cosf(this->field_0x14b4))) ||
 		(0.0f < local_30.x * local_40.x + local_30.y * local_40.y + local_30.z * local_40.z)) {
-		fVar5 = ((this->pCollisionData)->pObbPrim->field_0x90).z + 0.3f;
+		fVar5 = ((this->pCollisionData)->pObbPrim->scale).z + 0.3f;
 
 		local_20.x = param_4->x * fVar5 + param_3->x;
 		local_20.y = param_3->y + 1.75f;
@@ -609,7 +609,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 			edF32Vector4NormalizeHard(&local_70, &local_70);
 		}
 
-		CStack176 = CCollisionRay(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.5f, &local_90, &local_70);
+		CStack176 = CCollisionRay(((this->pCollisionData)->pObbPrim->scale).z + 0.5f, &local_90, &local_70);
 		fVar6 = CStack176.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000010, &local_80, (_ray_info_out*)0x0);
 
 		ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar6: {}", fVar6);
@@ -624,7 +624,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 		if (((fVar6 != 1e+30f) && (0.01 < fVar6)) &&
 			(((local_10.hitMaterialFlags & 0x1200) == 0 &&
 				((fabs(local_80.y) < cosf(this->field_0x14b0) && (local_80.x * local_70.x + local_80.y * local_70.y + local_80.z * local_70.z <= 0.0f)))))) {
-			fVar7 = ((this->pCollisionData)->pObbPrim->field_0x90).z - 0.2f;
+			fVar7 = ((this->pCollisionData)->pObbPrim->scale).z - 0.2f;
 
 			local_20.x = param_4->x * fVar7 + param_3->x;
 			local_20.y = param_3->y + 1.8f;
@@ -652,7 +652,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 				}
 
 				if (param_6 != (float*)0x0) {
-					*param_6 = fVar6 - ((this->pCollisionData)->pObbPrim->field_0x90).z;
+					*param_6 = fVar6 - ((this->pCollisionData)->pObbPrim->scale).z;
 				}
 
 				GripObject(local_10.pActor_0x0);
@@ -1652,8 +1652,8 @@ LAB_00139008:
 
 				local_30.w = 0.0f;
 				local_30.y = 0.0f;
-				fVar10 = 0.1f - ((this->pCollisionData)->pObbPrim->field_0x90).z;
-				fVar11 = -((this->pCollisionData)->pObbPrim->field_0x90).z - 0.1f;
+				fVar10 = 0.1f - ((this->pCollisionData)->pObbPrim->scale).z;
+				fVar11 = -((this->pCollisionData)->pObbPrim->scale).z - 0.1f;
 
 				local_50 = this->bounceLocation * fVar11;
 
@@ -1665,8 +1665,8 @@ LAB_00139008:
 				iVar7 = DetectGripEdge(0, &local_40, &local_30, (float*)0x0, (float*)0x0, &this->field_0x1460);
 
 				if (iVar7 == 0) {
-					fVar10 = 0.1f - ((this->pCollisionData)->pObbPrim->field_0x90).z;
-					fVar11 = -((this->pCollisionData)->pObbPrim->field_0x90).z - 0.3f;
+					fVar10 = 0.1f - ((this->pCollisionData)->pObbPrim->scale).z;
+					fVar11 = -((this->pCollisionData)->pObbPrim->scale).z - 0.3f;
 					local_50 = this->bounceLocation * fVar11;
 
 					local_40.x = local_30.x * fVar10 + local_50.x + this->currentLocation.x;
@@ -1779,7 +1779,7 @@ void CActorHeroPrivate::StateHeroGripAngle(int nextState, int param_3)
 	local_30 = this->field_0x1490 - this->currentLocation;
 
 	if (param_3 != 0) {
-		fVar5 = -((this->pCollisionData)->pObbPrim->field_0x90).z - 0.1f;
+		fVar5 = -((this->pCollisionData)->pObbPrim->scale).z - 0.1f;
 		local_30 = local_30 - this->bounceLocation * fVar5;
 	}
 
@@ -2102,7 +2102,7 @@ void CActorHeroPrivate::StateHeroCeilingClimb(int param_2, int param_3, int para
 		local_50.y = 0.0 - this->dynamic.rotationQuat.y;
 		local_50.z = 0.0 - this->dynamic.rotationQuat.z;
 		edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
-		fVar8 = -this->pCollisionData->pObbPrim->field_0x90.z;
+		fVar8 = -this->pCollisionData->pObbPrim->scale.z;
 		local_40.x = local_50.x * fVar8 + this->currentLocation.x;
 		local_40.z = local_50.z * fVar8 + this->currentLocation.z;
 		local_40.w = local_50.w * fVar8 + this->currentLocation.w;

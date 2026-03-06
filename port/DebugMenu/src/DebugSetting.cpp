@@ -64,6 +64,15 @@ bool Debug::Setting<int>::DrawImguiControl()
 }
 
 template<>
+bool Debug::Setting<std::array<float, 4>>::DrawImguiControl()
+{
+	if (ImGui::ColorEdit4(name.c_str(), value.data(), ImGuiColorEditFlags_NoInputs)) {
+		return UpdateValue();
+	}
+	return false;
+}
+
+template<>
 bool Debug::Setting<std::string>::DrawImguiControl()
 {
 	char buffer[256];

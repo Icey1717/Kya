@@ -24,11 +24,11 @@ namespace Renderer
 
 			struct DebugLineVertex
 			{
-				glm::vec3 position;
+				glm::vec4 position;
 				glm::vec4 color;
 			};
 
-			constexpr uint32_t gMaxDebugLineVertexCount = 128;
+			constexpr uint32_t gMaxDebugLineVertexCount = 8192*2*16;
 			static std::array<DebugLineVertex, gMaxDebugLineVertexCount> gDebugLineVertices;
 			static uint32_t gDebugLineVertexCount = 0;
 
@@ -41,11 +41,16 @@ namespace Renderer
 			static bool gHasLastModelMatrix = false;
 			static bool gHasInitialViewProjection = false;
 
+			static bool gCollisionLinesEnabled = false;
+		static bool gActorObbEnabled = false;
+
 			static void PushLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color)
 			{
-				assert(gDebugLineVertexCount + 2 <= gMaxDebugLineVertexCount);
-				gDebugLineVertices[gDebugLineVertexCount++] = { start, color };
-				gDebugLineVertices[gDebugLineVertexCount++] = { end, color };
+				if (gDebugLineVertexCount + 2 > gMaxDebugLineVertexCount) {
+					return;
+				}
+				gDebugLineVertices[gDebugLineVertexCount++] = { glm::vec4(start, 1.0f), color };
+				gDebugLineVertices[gDebugLineVertexCount++] = { glm::vec4(end, 1.0f), color };
 			}
 
 			static glm::vec3 GetDebugShapeWorldPosition()
@@ -72,8 +77,6 @@ namespace Renderer
 
 			static void BuildShapeLines()
 			{
-				gDebugLineVertexCount = 0;
-
 				if (!gHasInitialViewProjection) {
 					return;
 				}
@@ -131,6 +134,87 @@ namespace Renderer
 			{
 				gLastModelMatrix = modelMatrix;
 				gHasLastModelMatrix = true;
+			}
+
+			void AddLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color)
+			{
+				if (!gCollisionLinesEnabled) {
+					return;
+				}
+				PushLine(start, end, color);
+			}
+
+			void AddLine(float sx, float sy, float sz, float ex, float ey, float ez, float r, float g, float b, float a)
+			{
+				AddLine(glm::vec3(sx, sy, sz), glm::vec3(ex, ey, ez), glm::vec4(r, g, b, a));
+			}
+
+			bool& GetCollisionLinesEnabled()
+			{
+				return gCollisionLinesEnabled;
+			}
+
+			void AddOBB(const float* mat, float hw, float hh, float hd, float r, float g, float b, float a)
+			{
+				if (!gActorObbEnabled) {
+					return;
+				}
+
+				// mat layout: rowX[0..3], rowY[4..7], rowZ[8..11], rowT[12..15]
+				const glm::vec3 axisX(mat[0], mat[1], mat[2]);
+				const glm::vec3 axisY(mat[4], mat[5], mat[6]);
+				const glm::vec3 axisZ(mat[8], mat[9], mat[10]);
+				const glm::vec3 center(mat[12], mat[13], mat[14]);
+
+				const glm::vec3 ex = axisX * hw;
+				const glm::vec3 ey = axisY * hh;
+				const glm::vec3 ez = axisZ * hd;
+
+				const glm::vec3 corners[8] = {
+					center - ex - ey - ez,
+					center + ex - ey - ez,
+					center + ex + ey - ez,
+					center - ex + ey - ez,
+					center - ex - ey + ez,
+					center + ex - ey + ez,
+					center + ex + ey + ez,
+					center - ex + ey + ez,
+				};
+
+				const glm::vec4 color(r, g, b, a);
+				// Bottom face
+				PushLine(corners[0], corners[1], color);
+				PushLine(corners[1], corners[2], color);
+				PushLine(corners[2], corners[3], color);
+				PushLine(corners[3], corners[0], color);
+				// Top face
+				PushLine(corners[4], corners[5], color);
+				PushLine(corners[5], corners[6], color);
+				PushLine(corners[6], corners[7], color);
+				PushLine(corners[7], corners[4], color);
+				// Vertical edges
+				PushLine(corners[0], corners[4], color);
+				PushLine(corners[1], corners[5], color);
+				PushLine(corners[2], corners[6], color);
+				PushLine(corners[3], corners[7], color);
+			}
+
+			bool& GetActorObbEnabled()
+			{
+				return gActorObbEnabled;
+			}
+
+			uint32_t GetLineCount()
+			{
+				return gDebugLineVertexCount / 2;
+			}
+
+			void AddActorLine(float sx, float sy, float sz, float ex, float ey, float ez, float r, float g, float b, float a)
+			{
+				if (!gActorObbEnabled) {
+					return;
+				}
+				PushLine(glm::vec3(sx, sy, sz), glm::vec3(ex, ey, ez), glm::vec4(r, g, b, a));
 			}
 
 			void CreatePipeline(const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)

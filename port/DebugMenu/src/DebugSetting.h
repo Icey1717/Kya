@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <optional>
 #include <nlohmann/json.hpp>
@@ -56,6 +57,7 @@ namespace Debug {
 
 		virtual operator SettingType() const { return value; }
 		virtual operator SettingType&() { return value; }
+		const SettingType& get() const { return value; }
 
 		inline Setting& operator=(const SettingType& newValue) {
 			value = newValue;

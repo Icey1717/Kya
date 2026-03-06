@@ -598,7 +598,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	ComputeTargetPosition(&v1->field_0x30);
 
 	if ((GetTarget()->pCollisionData != (CCollision*)0x0) && (GetTarget()->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
-		(v1->field_0x30).y = (v1->field_0x30).y + (GetTarget()->pCollisionData->pObbPrim->field_0xb0).y;
+		(v1->field_0x30).y = (v1->field_0x30).y + (GetTarget()->pCollisionData->pObbPrim->position).y;
 	}
 
 	pCVar3 = v1->pActor;
@@ -606,7 +606,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		v1->field_0x20 = v1->field_0x30;
 
 		if ((GetTarget()->pCollisionData != (CCollision*)0x0) && (GetTarget()->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
-			(v1->field_0x20).y = (v1->field_0x20).y + (GetTarget()->pCollisionData->pObbPrim->field_0x90).y;
+			(v1->field_0x20).y = (v1->field_0x20).y + (GetTarget()->pCollisionData->pObbPrim->scale).y;
 		}
 	}
 	else {

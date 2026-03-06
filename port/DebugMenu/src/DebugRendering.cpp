@@ -4,6 +4,7 @@
 #include "DebugSetting.h"
 #include "port/vu1_emu.h"
 #include "Native/NativeRenderer.h"
+#include "Native/NativeDebugShapes.h"
 #include "DebugMeshViewer.h"
 #include "ed3D.h"
 #include "edDlist.h"
@@ -20,6 +21,7 @@ namespace Debug {
 		static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
 		static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 		static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
+		static Debug::Setting<bool> gShowCollisionRays = { "Show Collision Rays", false };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -177,6 +179,10 @@ void Debug::Rendering::ShowMenu(bool* bOpen)
 		VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
 	}
 
+	if (gShowCollisionRays.DrawImguiControl()) {
+		Renderer::Native::DebugShapes::GetCollisionLinesEnabled() = gShowCollisionRays;
+	}
+
 	// Button to toggle the display list viewer
 	static bool bDisplayListViewerOpen = false;
 	if (ImGui::Button("Display List Viewer")) {
@@ -196,6 +202,7 @@ void Debug::Rendering::Init()
 	ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
+	Renderer::Native::DebugShapes::GetCollisionLinesEnabled() = gShowCollisionRays;
 }
 
 bool Debug::Rendering::GetEnableEmulatedRendering()

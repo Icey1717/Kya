@@ -1269,7 +1269,7 @@ int CBehaviourTrapStand::DetectActor()
 		fVar7 = CActorHero::_gThis->currentLocation.x - pCVar1->currentLocation.x;
 		fVar8 = CActorHero::_gThis->currentLocation.y - pCVar1->currentLocation.y;
 		fVar3 = CActorHero::_gThis->currentLocation.z - pCVar1->currentLocation.z;
-		if ((sqrtf(fVar7 * fVar7 + fVar8 * fVar8 + fVar3 * fVar3) < ((CActorHero::_gThis->pCollisionData)->pObbPrim->field_0x90).y + 1.5f) &&
+		if ((sqrtf(fVar7 * fVar7 + fVar8 * fVar8 + fVar3 * fVar3) < ((CActorHero::_gThis->pCollisionData)->pObbPrim->scale).y + 1.5f) &&
 			(iVar6 = gTrpDetectCallback((CActor*)CActorHero::_gThis, this->pOwner), iVar6 != 0)) {
 			pReceiver = pCVar2;
 		}
