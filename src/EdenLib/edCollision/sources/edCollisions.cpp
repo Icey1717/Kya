@@ -638,6 +638,7 @@ void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4_Stack* pT
 
 	// Calculate triangle distance from the origin.
 	pInfo->originDistance = -((pInfo->normal).x * vertex1->x + (pInfo->normal).y * vertex1->y + (pInfo->normal).z * vertex1->z);
+
 	return;
 }
 
@@ -1202,10 +1203,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 	edColINFO* peVar3;
 	edF32VECTOR4* peVar4;
 	edColDbObj_80* pColDbObj;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	edF32TRIANGLE4_INFOS local_90;
+	edF32TRIANGLE4_INFOS triangleInfo;
 	edF32VECTOR4 local_70;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 local_40[2];
@@ -1242,7 +1240,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 		pColDbObj->pPrimitiveB = pQuad;
 
 		if (gColConfig.field_0x4 != 0) {
-			edColTriangle4GetInfo(&local_90, pTriangle);
+			edColTriangle4GetInfo(&triangleInfo, pTriangle);
 			pColDbObj->field_0x10 = pColInfoOut->relativeVelocity;
 
 			if (pColInfo == (edColINFO*)0x0) {
@@ -1265,7 +1263,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 				pColInfo->field_0x49 = 1;
 			}
 
-			local_60 = local_90.normal;
+			local_60 = triangleInfo.normal;
 
 			peVar4 = pTriangle->p1;
 			peVar1 = pTriangle->p3;
@@ -1278,10 +1276,8 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 			local_40[0].y = local_60.z * local_70.x - local_70.z * local_60.x;
 			local_40[0].z = local_60.x * local_70.y - local_70.x * local_60.y;
 			local_40[0].w = in_vf0x;
-			local_40[1].x = local_60.x;
-			local_40[1].y = local_60.y;
-			local_40[1].z = local_60.z;
-			local_40[1].w = local_60.w;
+
+			local_40[1] = local_60;
 
 			if ((pColInfo != (edColINFO*)0x0) && ((pQuad->flags & 0x80000000) == 0)) {
 				pColInfo->field_0x44 = 0x0;
@@ -1301,62 +1297,62 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 
 void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD4_IN* pPrimSphereQuadIn)
 {
-	edF32QUAD4* peVar1;
-	edColPRIM_OBJECT* pUVar2;
+	edF32QUAD4* pQuad;
+	edColPRIM_OBJECT* pPrim;
 	bool bVar3;
-	uint uVar4;
-	edF32MATRIX4* m0;
-	int iVar5;
-	edF32TRIANGLE4_INFOS local_80;
-	edF32TRIANGLE4_Stack local_60;
-	uint local_54;
-	edF32TRIANGLE4_Stack local_50;
-	uint local_44;
-	edF32VECTOR4 eStack64;
-	edF32VECTOR4 eStack48;
-	edF32VECTOR4 eStack32;
-	edF32VECTOR4 eStack16;
+	uint accumulatedResult;
+	edF32MATRIX4* pWorldTransform;
+	int triangleIndex;
+	edF32TRIANGLE4_INFOS triangleInfo;
+	edF32TRIANGLE4_Stack worldSpaceTriangle;
+	edF32TRIANGLE4_Stack localSpaceTriangle;
 
-	uVar4 = 0;
-	peVar1 = pPrimSphereQuadIn->pQuad;
-	m0 = &(pPrimSphereQuadIn->pPrim)->worldTransform;
-	edF32Matrix4MulF32Vector4Hard(&eStack64, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p1));
-	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p2));
-	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3));
-	edF32Matrix4MulF32Vector4Hard(&eStack16, m0, LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p4));
-	local_44 = peVar1->flags;
-	
-	local_60.p1 = &eStack64;
-	iVar5 = 0;
-	local_54 = peVar1->flags;
-	local_50.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p1);
+	edF32VECTOR4 v1;
+	edF32VECTOR4 v2;
+	edF32VECTOR4 v3;
+	edF32VECTOR4 v4;
+
+	accumulatedResult = 0;
+
+	pQuad = pPrimSphereQuadIn->pQuad;
+	pWorldTransform = &(pPrimSphereQuadIn->pPrim)->worldTransform;
+	edF32Matrix4MulF32Vector4Hard(&v1, pWorldTransform, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1));
+	edF32Matrix4MulF32Vector4Hard(&v2, pWorldTransform, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2));
+	edF32Matrix4MulF32Vector4Hard(&v3, pWorldTransform, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3));
+	edF32Matrix4MulF32Vector4Hard(&v4, pWorldTransform, LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4));
+
+	localSpaceTriangle.flags = pQuad->flags;
+	worldSpaceTriangle.p1 = &v1;
+	triangleIndex = 0;
+	worldSpaceTriangle.flags = pQuad->flags;
+	localSpaceTriangle.p1 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p1);
 
 	do {
-		if (iVar5 == 0) {
-			local_50.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p2);
-			local_50.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3);
-			local_60.p2 = &eStack48;
-			local_60.p3 = &eStack32;
+		if (triangleIndex == 0) {
+			localSpaceTriangle.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p2);
+			localSpaceTriangle.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
+			worldSpaceTriangle.p2 = &v2;
+			worldSpaceTriangle.p3 = &v3;
 		}
 		else {
-			local_50.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p3);
-			local_60.p3 = &eStack16;
-			local_50.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, peVar1->p4);
-			local_60.p2 = &eStack32;
+			localSpaceTriangle.p2 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p3);
+			worldSpaceTriangle.p3 = &v4;
+			localSpaceTriangle.p3 = LOAD_POINTER_CAST(edF32VECTOR4*, pQuad->p4);
+			worldSpaceTriangle.p2 = &v3;
 		}
 
-		bVar3 = edColIntersectSphereUnitTriangle4(pColInfoOut, pPrimSphereQuadIn, &local_60);
-		if (bVar3 != false) {
-			edColTriangle4GetInfo(&local_80, &local_50);
-			pColInfoOut->field_0x0 = local_80.normal;
-			pUVar2 = pPrimSphereQuadIn->pPrim;
-			edColComputeContactQuad4(pPrimSphereQuadIn->pColObj, pPrimSphereQuadIn->pOtherColObj, pColInfoOut, pPrimSphereQuadIn->aType, pUVar2, &pUVar2->colInfo, peVar1, &local_50);
-			uVar4 = uVar4 | pColInfoOut->result;
+		if (edColIntersectSphereUnitTriangle4(pColInfoOut, pPrimSphereQuadIn, &worldSpaceTriangle)) {
+			edColTriangle4GetInfo(&triangleInfo, &localSpaceTriangle);
+			pColInfoOut->field_0x0 = triangleInfo.normal;
+			pPrim = pPrimSphereQuadIn->pPrim;
+			edColComputeContactQuad4(pPrimSphereQuadIn->pColObj, pPrimSphereQuadIn->pOtherColObj, pColInfoOut, pPrimSphereQuadIn->aType, pPrim, &pPrim->colInfo, pQuad, &localSpaceTriangle);
+			accumulatedResult = accumulatedResult | pColInfoOut->result;
 		}
-		iVar5 = iVar5 + 1;
-	} while (iVar5 < 2);
 
-	pColInfoOut->result = uVar4;
+		triangleIndex = triangleIndex + 1;
+	} while (triangleIndex < 2);
+
+	pColInfoOut->result = accumulatedResult;
 
 	return;
 }
@@ -1405,9 +1401,9 @@ struct edColPRIM_BOX_TRI4_IN
 	edColOBJECT* pOtherColObj;
 	edColPRIM_OBJECT* pData;
 	int aType;
-	edF32VECTOR4* field_0x10;
-	edF32VECTOR4* field_0x14;
-	edF32VECTOR4* field_0x18;
+	edF32VECTOR4* aCentre;
+	edF32VECTOR4* aPropertyA;
+	edF32VECTOR4* aPropertyB;
 	edF32TRIANGLE4_Stack* pTriangle;
 };
 
@@ -2197,7 +2193,7 @@ void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_I
 
 			edF32Matrix4MulF32Vector4Hard(&local_1b0, &m0->localToWorld, &local_1b0);
 			edColGetNormalInWorldFromLocal(&local_90, m0_00, &local_90);
-			edColGetWorldVelocity(&local_10, &local_80, pParams->field_0x10, pParams->field_0x14, pParams->field_0x18);
+			edColGetWorldVelocity(&local_10, &local_80, pParams->aCentre, pParams->aPropertyA, pParams->aPropertyB);
 
 			if (local_10.x * local_90.x + local_10.y * local_90.y + local_10.z * local_90.z < FLOAT_004485b0) {
 				(pColInfoOut->intersectionPoint).x = local_80.x;
@@ -2237,84 +2233,88 @@ void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_I
 
 uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParams)
 {
-	int iVar1;
-	int iVar2;
-	edF32VECTOR4* peVar3;
-	int iVar4;
-	edColOBJECT* peVar5;
-	uint uVar6;
-	edF32VECTOR4* peVar7;
-	edColPRIM_OBJECT* pUVar8;
-	edColPRIM_OBJECT* pUVar9;
-	edColINFO_OUT eStack160;
-	edColPRIM_SPHERE_TRI4_IN local_40;
-	edColPRIM_BOX_TRI4_IN local_20;
+	int primSize;
+	int bCount;
+	edF32TRIANGLE4* pDataB;
+	int aType;
+	edColOBJECT* pColObj;
+	uint accumulatedResult;
+	edF32TRIANGLE4* pTriangle;
 
-	iVar1 = pParams->primSize;
-	uVar6 = 0;
-	iVar2 = pParams->bCount;
-	peVar3 = (edF32VECTOR4*)pParams->bData;
-	pUVar8 = (edColPRIM_OBJECT*)pParams->aData;
-	iVar4 = pParams->aType;
-	peVar5 = pParams->pColObj;
-	pUVar9 = (edColPRIM_OBJECT*)((char*)pUVar8 + pParams->aCount * iVar1);
-	if ((iVar4 == COL_TYPE_BOX) || (iVar4 == COL_TYPE_BOX_DYN)) {
-		local_20.pOtherColObj = pParams->pOtherColObj;
-		local_20.aType = pParams->aType;
-		local_20.pColObj = peVar5;
+	edColPRIM_OBJECT* pDataA;
+	edColPRIM_OBJECT* pEndA;
 
-		for (; pUVar8 < pUVar9; pUVar8 = (edColPRIM_OBJECT*)((char*)pUVar8 + iVar1)) {
-			local_20.field_0x10 = &pUVar8->localToWorld.rowT;
-			local_20.field_0x14 = &pUVar8->field_0xc0;
-			local_20.field_0x18 = &pUVar8->field_0xd0;
-			local_20.pData = pUVar8;
+	edColINFO_OUT colInfoOut;
+	edColPRIM_SPHERE_TRI4_IN primSphereTriIn;
+	edColPRIM_BOX_TRI4_IN primBoxTriIn;
 
-			for (peVar7 = peVar3; peVar7 < peVar3 + iVar2; peVar7 = peVar7 + 1) {
+	primSize = pParams->primSize;
+	accumulatedResult = 0;
+	bCount = pParams->bCount;
+	pDataB = reinterpret_cast<edF32TRIANGLE4*>(pParams->bData);
+	pDataA = reinterpret_cast<edColPRIM_OBJECT*>(pParams->aData);
+	aType = pParams->aType;
+	pColObj = pParams->pColObj;
+
+	pEndA = reinterpret_cast<edColPRIM_OBJECT*>(reinterpret_cast<char*>(pDataA) + pParams->aCount * primSize);
+	if ((aType == COL_TYPE_BOX) || (aType == COL_TYPE_BOX_DYN)) {
+		primBoxTriIn.pOtherColObj = pParams->pOtherColObj;
+		primBoxTriIn.aType = pParams->aType;
+		primBoxTriIn.pColObj = pColObj;
+
+		for (; pDataA < pEndA; pDataA = reinterpret_cast<edColPRIM_OBJECT*>(reinterpret_cast<char*>(pDataA) + primSize)) {
+			primBoxTriIn.aCentre = &pDataA->localToWorld.rowT;
+			primBoxTriIn.aPropertyA = &pDataA->field_0xc0;
+			primBoxTriIn.aPropertyB = &pDataA->field_0xd0;
+			primBoxTriIn.pData = pDataA;
+
+			for (pTriangle = pDataB; pTriangle < pDataB + bCount; pTriangle = pTriangle + 1) {
 #ifdef PLATFORM_WIN
-				edF32TRIANGLE4_Stack stackTriangle = (edF32TRIANGLE4*)peVar7;
-				local_20.pTriangle = &stackTriangle;
+				edF32TRIANGLE4_Stack stackTriangle = pTriangle;
+				primBoxTriIn.pTriangle = &stackTriangle;
 #else
-				local_20.pTriangle = (edF32TRIANGLE4*)peVar7;
+				primBoxTriIn.pTriangle = pTriangle;
 #endif
 
-				edColIntersectBoxTriangle4(&eStack160, &local_20, 0);
+				edColIntersectBoxTriangle4(&colInfoOut, &primBoxTriIn, 0);
 
-				uVar6 = uVar6 | eStack160.result;
-				peVar5->colResult = uVar6;
+				accumulatedResult = accumulatedResult | colInfoOut.result;
+				pColObj->colResult = accumulatedResult;
 			}
 		}
 	}
 	else {
-		if ((iVar4 == COL_TYPE_SPHERE) || (iVar4 == 0xe)) {
-			local_40.pOtherColObj = pParams->pOtherColObj;
-			local_40.aType = pParams->aType;
-			local_40.pColObj = peVar5;
-			for (; pUVar8 < pUVar9; pUVar8 = (edColPRIM_OBJECT*)((char*)pUVar8 + iVar1)) {
-				local_40.aCentre = &pUVar8->localToWorld.rowT;
-				local_40.aPropertyA = &pUVar8->field_0xc0;
-				local_40.aPropertyB = &pUVar8->field_0xd0;
-				local_40.pData = pUVar8;
+		if ((aType == COL_TYPE_SPHERE) || (aType == COL_TYPE_PRIM_OBJ)) {
+			primSphereTriIn.pOtherColObj = pParams->pOtherColObj;
+			primSphereTriIn.aType = pParams->aType;
+			primSphereTriIn.pColObj = pColObj;
+			for (; pDataA < pEndA; pDataA = (edColPRIM_OBJECT*)((char*)pDataA + primSize)) {
+				primSphereTriIn.aCentre = &pDataA->localToWorld.rowT;
+				primSphereTriIn.aPropertyA = &pDataA->field_0xc0;
+				primSphereTriIn.aPropertyB = &pDataA->field_0xd0;
+				primSphereTriIn.pData = pDataA;
 
-				for (peVar7 = peVar3; peVar7 < peVar3 + iVar2; peVar7 = peVar7 + 1) {
+				for (pTriangle = pDataB; pTriangle < pDataB + bCount; pTriangle = pTriangle + 1) {
 #ifdef PLATFORM_WIN
-					edF32TRIANGLE4_Stack stackTriangle = (edF32TRIANGLE4*)peVar7;
-					local_40.pTriangle = &stackTriangle;
+					edF32TRIANGLE4_Stack stackTriangle = pTriangle;
+					primSphereTriIn.pTriangle = &stackTriangle;
 #else
-					local_40.pTriangle = (edF32TRIANGLE4*)peVar7;
+					primSphereTriIn.pTriangle = pTriangle;
 #endif
 
-					edColIntersectSphereTriangle4(&eStack160, &local_40, 0);
+					edColIntersectSphereTriangle4(&colInfoOut, &primSphereTriIn, 0);
 
-					uVar6 = uVar6 | eStack160.result;
-					peVar5->colResult = uVar6;
+					accumulatedResult = accumulatedResult | colInfoOut.result;
+					pColObj->colResult = accumulatedResult;
 				}
 			}
 		}
 		else {
-			uVar6 = 0;
+			accumulatedResult = 0;
 		}
 	}
-	return uVar6;
+
+	return accumulatedResult;
 }
 
 void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* pPrimBoxQuadIn)
@@ -3884,10 +3884,10 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 
 		for (; peVar7 < pPrimStart + (uVar5 * bSize); peVar7 = peVar7 + bSize) {
 			edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(peVar7);
-			local_a0.field_0x10 = &pPrim->localToWorld.rowT;
+			local_a0.aCentre = &pPrim->localToWorld.rowT;
 			local_a0.pColObj = pParams->pColObj;
-			local_a0.field_0x14 = &pPrim->field_0xc0;
-			local_a0.field_0x18 = &pPrim->field_0xd0;
+			local_a0.aPropertyA = &pPrim->field_0xc0;
+			local_a0.aPropertyB = &pPrim->field_0xd0;
 			local_a0.pOtherColObj = pParams->pOtherColObj;
 			local_a0.aType = pParams->bType;
 			local_a0.pData = pPrim;
@@ -3908,7 +3908,7 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 		}
 	}
 	else {
-		if ((iVar4 == COL_TYPE_SPHERE) || (iVar4 == 0xe)) {
+		if ((iVar4 == COL_TYPE_SPHERE) || (iVar4 == COL_TYPE_PRIM_OBJ)) {
 			uVar5 = pParams->bCount;
 			peVar7 = reinterpret_cast<char*>(pParams->bData);
 			pPrimStart = peVar7;
