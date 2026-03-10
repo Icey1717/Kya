@@ -318,7 +318,7 @@ namespace Debug::Camera {
 
 		// Use a list box
 		const ImVec2 listboxSize = ImVec2(300, 300);
-		if (ImGui::ListBoxHeader("##ActorList", listboxSize)) {
+		if (ImGui::BeginListBox("##ActorList", listboxSize)) {
 			auto pFunc = gFilterBySector ? Debug::Actor::ForEachSectorActor : Debug::Actor::ForEachActor;
 
 			pFunc([](CActor* pActor)

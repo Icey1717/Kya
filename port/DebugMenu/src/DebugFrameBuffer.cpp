@@ -9,9 +9,13 @@ namespace Debug {
 	namespace FrameBuffer {
 		static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
 
+		void DrawContents() {
+			gDisplyScale.DrawImguiControl();
+		}
+
 		void ShowMenu(bool* bOpen) {
 			ImGui::Begin("FrameBuffer", bOpen);
-			gDisplyScale.DrawImguiControl();
+			DrawContents();
 			ImGui::End();
 		}
 

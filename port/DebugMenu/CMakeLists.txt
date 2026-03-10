@@ -1,4 +1,5 @@
 set(TargetName "DebugMenu")
+
 project(${TargetName})
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)

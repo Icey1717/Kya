@@ -159,9 +159,8 @@ namespace Debug {
 			}
 		}
 
-		void ShowMenu(bool* bOpen)
+		void DrawContents()
 		{
-			ImGui::Begin("Collision Debug", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::PushID("CollisionDebug");
 
 			ImGui::Text("Debug lines this frame: %u", Renderer::Native::DebugShapes::GetLineCount());
@@ -203,6 +202,12 @@ namespace Debug {
 			}
 
 			ImGui::PopID();
+		}
+
+		void ShowMenu(bool* bOpen)
+		{
+			ImGui::Begin("Collision Debug", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+			DrawContents();
 			ImGui::End();
 		}
 

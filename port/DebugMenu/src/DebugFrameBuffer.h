@@ -4,6 +4,7 @@
 
 namespace Debug {
 	namespace FrameBuffer {
+		void DrawContents();
 		void ShowMenu(bool* bOpen);
 		void ShowFramebuffers(bool* bOpen);
 		void ShowNativeFrameBuffer(bool* bOpen);

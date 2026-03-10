@@ -12,37 +12,25 @@ namespace Input
 
 namespace Debug
 {
+	template<typename SettingType>
+	class Setting;
+
 	struct Menu
 	{
-		void Show() {
-			if (bOpen) {
-				ShowFunction(&bOpen);
-			}
-		}
+		void Show();
+		bool GetOpen() const;
+		void SetOpen(bool bNewOpen);
 
 		std::string name{};
 		std::function<void(bool*)> ShowFunction;
-		bool bOpen{};
+		std::shared_ptr<Debug::Setting<bool>> pOpenSetting;
 	};
 
 	struct MenuRegisterer
 	{
-		MenuRegisterer(const std::string& name, std::function<void(bool*)> showFunction)
-		{
-			if (!menus) {
-				menus = std::make_unique<std::vector<Menu>>();
-			}
+		MenuRegisterer(const std::string& name, std::function<void(bool*)> showFunction, bool bDefaultOpen = false);
 
-			menus->push_back({
-				name,
-				showFunction,
-				false
-				});
-		}
-
-		static std::vector<Menu>& GetMenus() {
-			return *menus;
-		}
+		static std::vector<Menu>& GetMenus();
 
 		static std::unique_ptr<std::vector<Menu>> menus;
 	};

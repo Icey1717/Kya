@@ -139,11 +139,8 @@ namespace Debug {
 	}
 }
 
-void Debug::Rendering::ShowMenu(bool* bOpen)
+void Debug::Rendering::DrawContents()
 {
-	// Create a new ImGui window
-	ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
 	ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
 	ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
 	ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
@@ -189,7 +186,12 @@ void Debug::Rendering::ShowMenu(bool* bOpen)
 		ShowDisplayListViewer(&bDisplayListViewerOpen);
 	}
 
-	// End the ImGui window
+}
+
+void Debug::Rendering::ShowMenu(bool* bOpen)
+{
+	ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+	DrawContents();
 	ImGui::End();
 }
 

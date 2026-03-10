@@ -28,6 +28,11 @@ namespace DebugRendererImgui {
 	VkRenderPass gImguiRenderPass;
 	Renderer::CommandBufferVector gCommandBuffers;
 
+	static ImTextureID ToImTextureID(VkDescriptorSet descriptorSet)
+	{
+		return (ImTextureID)(uintptr_t)descriptorSet;
+	}
+
 	void Setup()
 	{
 		VkDescriptorPool imguiPool;
@@ -105,6 +110,8 @@ namespace DebugRendererImgui {
 
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		ImGui_ImplVulkan_InitInfo initInfo = {};
 		initInfo.Instance = GetInstance();
 		initInfo.PhysicalDevice = GetPhysicalDevice();
@@ -113,24 +120,15 @@ namespace DebugRendererImgui {
 		initInfo.Queue = GetGraphicsQueue();
 		initInfo.PipelineCache = nullptr;
 		initInfo.DescriptorPool = imguiPool;
-		initInfo.Subpass = 0;
 		initInfo.MinImageCount = minImageCount;
 		initInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
-		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		initInfo.Allocator = GetAllocator();
+		initInfo.PipelineInfoMain.RenderPass = gImguiRenderPass;
+		initInfo.PipelineInfoMain.Subpass = 0;
+		initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		initInfo.CheckVkResultFn = nullptr;
-		ImGui_ImplVulkan_Init(&initInfo, gImguiRenderPass);
+		ImGui_ImplVulkan_Init(&initInfo);
 		ImGui_ImplGlfw_InitForVulkan(GetGLFWWindow(), true);
-
-		// Upload Fonts
-		{
-			VkCommandBuffer fontCommandBuffer = BeginSingleTimeCommands();
-
-			ImGui_ImplVulkan_CreateFontsTexture(fontCommandBuffer);
-			EndSingleTimeCommands(fontCommandBuffer);
-
-			ImGui_ImplVulkan_DestroyFontUploadObjects();
-		}
 
 		Renderer::CreateCommandBuffers(gCommandBuffers);
 	}
@@ -199,7 +197,7 @@ struct DebugFrameBuffer {
 	{}
 
 	DebugFrameBuffer()
-		: texID(nullptr)
+		: texID(0)
 		, sampler(VK_NULL_HANDLE)
 	{}
 
@@ -237,13 +235,13 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 			// Handle sampler creation failure
 		}
 
-		gDebugFrameBuffers.emplace(frameBuffer.FBP, DebugFrameBuffer(ImGui_ImplVulkan_AddTexture(sampler, frameBuffer.finalImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL), sampler));
+		gDebugFrameBuffers.emplace(frameBuffer.FBP, DebugFrameBuffer(DebugRendererImgui::ToImTextureID(ImGui_ImplVulkan_AddTexture(sampler, frameBuffer.finalImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL)), sampler));
 	}
 
 	return gDebugFrameBuffers[frameBuffer.FBP].texID;
 }
 
-ImTextureID DebugMenu::AddNativeFrameBuffer()
-{
-	return ImGui_ImplVulkan_AddTexture(Renderer::Native::GetSampler(), Renderer::Native::GetColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-}
+	ImTextureID DebugMenu::AddNativeFrameBuffer()
+	{
+	return DebugRendererImgui::ToImTextureID(ImGui_ImplVulkan_AddTexture(Renderer::Native::GetSampler(), Renderer::Native::GetColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+	}

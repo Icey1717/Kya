@@ -472,7 +472,7 @@ namespace Debug
 				
 				//ImGui::Image(textureId, ImVec2(pRenderer->width, pRenderer->height));
 				float aspectRatio = static_cast<float>(pRenderer->width) / static_cast<float>(pRenderer->height);
-				ImGui::Image(textureId, ImVec2(256.0f, 256.0f / aspectRatio));
+				ImGui::Image((ImTextureID)(uintptr_t)textureId, ImVec2(256.0f, 256.0f / aspectRatio));
 			}
 
 			ImGui::End();

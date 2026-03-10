@@ -289,7 +289,7 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 
 		auto ShowListFunc = [DisplayActorInfo](auto pFunc) {
 			const ImVec2 listboxSize = ImVec2(300, 300);
-			if (ImGui::ListBoxHeader("##ActorList", listboxSize)) {
+			if (ImGui::BeginListBox("##ActorList", listboxSize)) {
 				pFunc(DisplayActorInfo);
 				ImGui::EndListBox();
 			};

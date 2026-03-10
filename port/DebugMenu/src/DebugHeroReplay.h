@@ -7,6 +7,7 @@ namespace Debug {
 		// frame counter when replaying.
 		void Update();
 
+		void DrawContents();
 		void ShowMenu(bool* bOpen);
 	}
 }

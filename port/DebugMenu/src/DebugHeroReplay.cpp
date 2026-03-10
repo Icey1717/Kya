@@ -277,10 +277,8 @@ void Update()
 	}
 }
 
-void ShowMenu(bool* bOpen)
+void DrawContents()
 {
-	ImGui::Begin("Hero Replay", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
 	// ---- Status --------------------------------------------------------
 	const char* stateStr = "Idle";
 	if (gState == State::Recording) stateStr = "Recording";
@@ -390,7 +388,12 @@ void ShowMenu(bool* bOpen)
 			ImGui::TextDisabled("No recordings found in recordings/");
 		}
 	}
+}
 
+void ShowMenu(bool* bOpen)
+{
+	ImGui::Begin("Hero Replay", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+	DrawContents();
 	ImGui::End();
 }
 

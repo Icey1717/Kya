@@ -26,6 +26,7 @@ namespace Debug {
 		};
 
 		void DrawDebugShapes();
+		void DrawContents();
 		void ShowMenu(bool* bOpen);
 		void AddRay(float sx, float sy, float sz, float ex, float ey, float ez, float r, float g, float b, float a);
 	}

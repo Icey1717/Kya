@@ -2,7 +2,7 @@
 
 #include "renderer.h"
 
-typedef void* ImTextureID;
+typedef uint64_t ImTextureID;
 
 namespace PS2 {
 	struct FrameBuffer;
