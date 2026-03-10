@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugCollision.h"
 
 #include <imgui.h>
@@ -220,3 +221,9 @@ namespace Debug {
 		}
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugCollisionMenuReg("Collision", Debug::Collision::ShowMenu);
+    UpdateRegisterer sDebugCollisionUpdateReg(Debug::Collision::DrawDebugShapes);
+}
+

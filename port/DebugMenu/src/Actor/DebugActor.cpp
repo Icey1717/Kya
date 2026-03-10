@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugActor.h"
 
 #include <imgui.h>
@@ -321,3 +322,8 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		ImGui::End();
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugActorMenuReg("Actor", Debug::Actor::ShowMenu, true);
+}
+

@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugHero.h"
 
 #include <imgui.h>
@@ -341,3 +342,8 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 	// End the ImGui window
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugHeroMenuReg("Hero", Debug::Hero::ShowMenu, true);
+}
+

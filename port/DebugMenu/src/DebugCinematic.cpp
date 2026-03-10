@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugCinematic.h"
 
 #include <imgui.h>
@@ -196,3 +197,8 @@ namespace Debug::Cinematic
 		ImGui::End();
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugCinematicMenuReg("Cutscene", Debug::Cinematic::ShowMenu, true);
+}
+

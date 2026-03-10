@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugWolfen.h"
 
 #include "imgui.h"
@@ -48,3 +49,8 @@ void Debug::Wolfen::ShowMenu(bool* bOpen)
 
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugWolfenMenuReg("Wolfen", Debug::Wolfen::ShowMenu, true);
+}
+

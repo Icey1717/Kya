@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugMemory.h"
 
 #include <imgui.h>
@@ -183,5 +184,9 @@ void Debug::Memory::ShowMenu(bool* bOpen)
 	}
 
 	ImGui::End();
+}
+
+namespace Debug {
+    MenuRegisterer sDebugMemoryMenuReg("Memory", Debug::Memory::ShowMenu);
 }
 

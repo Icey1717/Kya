@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugMesh.h"
 #include <imgui.h>
 
@@ -578,3 +579,8 @@ void Debug::Mesh::ShowMenu(bool* bOpen)
 		ShowMeshDetails();
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugMeshMenuReg("Mesh", Debug::Mesh::ShowMenu);
+}
+

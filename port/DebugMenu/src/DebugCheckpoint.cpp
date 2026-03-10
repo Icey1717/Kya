@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugCheckpoint.h"
 #include <imgui.h>
 #include <vector>
@@ -162,3 +163,8 @@ void Debug::Checkpoint::ShowMenu(bool* bOpen)
 
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugCheckpointMenuReg("Checkpoint", Debug::Checkpoint::ShowMenu, true);
+}
+

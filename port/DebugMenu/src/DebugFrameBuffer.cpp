@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugFrameBuffer.h"
 #include <imgui.h>
 #include "DebugSetting.h"
@@ -122,3 +123,9 @@ ImVec2 Debug::FrameBuffer::GetGameWindowSize()
 {
 	return ImVec2(640.0f * gDisplyScale, 480.0f * gDisplyScale);
 }
+
+namespace Debug {
+    MenuRegisterer sDebugFramebufferMenuReg("Framebuffer", Debug::FrameBuffer::ShowMenu);
+    MenuRegisterer sDebugFramebuffersMenuReg("Framebuffers", Debug::FrameBuffer::ShowFramebuffers);
+}
+

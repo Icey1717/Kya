@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -32,8 +32,32 @@ namespace Debug
 
 		static std::vector<Menu>& GetMenus();
 
-		static std::unique_ptr<std::vector<Menu>> menus;
+		static std::unique_ptr<std::vector<Menu>> gMenus;
 	};
+
+	// Registers a callback to be called once per frame from BuildImguiCommands.
+	struct UpdateRegisterer
+	{
+		UpdateRegisterer(std::function<void()> updateFunction);
+
+		static std::vector<std::function<void()>>& GetCallbacks();
+
+		static std::unique_ptr<std::vector<std::function<void()>>> gCallbacks;
+	};
+
+	// Registers a callback to be called once from DebugMenu::Init.
+	struct StartupRegisterer
+	{
+		StartupRegisterer(std::function<void()> startupFunction);
+
+		static std::vector<std::function<void()>>& GetCallbacks();
+
+		static std::unique_ptr<std::vector<std::function<void()>>> gCallbacks;
+	};
+
+	// Forces all self-registering module TUs to be linked in from the static library.
+	// Must be called before accessing any registerer lists.
+	void EnsureRegistrations();
 }
 
 namespace DebugMenu

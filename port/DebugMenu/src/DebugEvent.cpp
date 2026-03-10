@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugEvent.h"
 #include <imgui.h>
 #include "Types.h"
@@ -546,3 +547,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		ImGui::End();
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugEventMenuReg("Event", Debug::Event::ShowMenu);
+}
+

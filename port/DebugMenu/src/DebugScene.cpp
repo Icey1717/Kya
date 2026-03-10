@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugScene.h"
 
 #include "imgui.h"
@@ -123,3 +124,9 @@ static void Debug::Scene::ShowMenu(bool* bOpen) {
 	ImGui::PopID();
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugSceneMenuReg("Scene", Debug::Scene::ShowMenu, true);
+    StartupRegisterer sDebugSceneStartupReg(Debug::Scene::Startup);
+}
+

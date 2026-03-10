@@ -1,4 +1,4 @@
-#include "DebugTutorial.h"
+﻿#include "DebugTutorial.h"
 #include "DebugMenu.h"
 #include "Actor/DebugActor.h"
 #include <vector>
@@ -72,3 +72,8 @@ void Debug::Tutorial::ShowMenu(bool* bOpen)
 	}
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugTutorialMenuReg("Tutorial", Debug::Tutorial::ShowMenu, true);
+}
+

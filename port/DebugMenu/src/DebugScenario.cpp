@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugScenario.h"
 
 #include <array>
@@ -148,3 +149,9 @@ void Debug::Scenario::Update()
 		}
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugScenarioMenuReg("Scenario", Debug::Scenario::ShowMenu, true);
+    UpdateRegisterer sDebugScenarioUpdateReg(Debug::Scenario::Update);
+}
+

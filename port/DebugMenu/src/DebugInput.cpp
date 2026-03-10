@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugInput.h"
 #include <imgui.h>
 #include <cstdint>
@@ -130,3 +131,8 @@ void Debug::Input::ShowMenu(bool* bOpen)
 
 	ImGui::End();
 }
+
+namespace Debug {
+    MenuRegisterer sDebugInputMenuReg("Input", Debug::Input::ShowMenu, true);
+}
+

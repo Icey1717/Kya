@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugTexture.h"
 
 #include <imgui.h>
@@ -615,3 +616,9 @@ void Debug::Texture::Update()
 		ShowMaterialDetails();
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugTextureMenuReg("Texture", Debug::Texture::ShowMenu);
+    UpdateRegisterer sDebugTextureUpdateReg(Debug::Texture::Update);
+}
+

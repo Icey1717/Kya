@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugHeroReplay.h"
 
 #include <imgui.h>
@@ -399,3 +400,9 @@ void ShowMenu(bool* bOpen)
 
 } // namespace HeroReplay
 } // namespace Debug
+
+namespace Debug {
+    MenuRegisterer sDebugHeroReplayMenuReg("Hero Replay", Debug::HeroReplay::ShowMenu, true);
+    UpdateRegisterer sDebugHeroReplayUpdateReg(Debug::HeroReplay::Update);
+}
+

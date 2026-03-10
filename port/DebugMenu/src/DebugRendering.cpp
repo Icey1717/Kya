@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugRendering.h"
 
 #include "imgui.h"
@@ -206,3 +207,9 @@ bool Debug::Rendering::GetEnableEmulatedRendering()
 {
 	return gEnableEmulatedRendering;
 }
+
+namespace Debug {
+    MenuRegisterer sDebugRenderingMenuReg("Rendering", Debug::Rendering::ShowMenu, true);
+    StartupRegisterer sDebugRenderingStartupReg(Debug::Rendering::Init);
+}
+

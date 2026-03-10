@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugShop.h"
 
 #include <imgui.h>
@@ -88,3 +89,9 @@ void Debug::Shop::Update()
 		}
 	}
 }
+
+namespace Debug {
+    MenuRegisterer sDebugShopMenuReg("Shop", Debug::Shop::ShowMenu, true);
+    UpdateRegisterer sDebugShopUpdateReg(Debug::Shop::Update);
+}
+

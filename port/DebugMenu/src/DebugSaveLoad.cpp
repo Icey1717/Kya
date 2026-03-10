@@ -1,3 +1,4 @@
+﻿#include "DebugMenu.h"
 #include "DebugSaveLoad.h"
 #include "imgui.h"
 
@@ -73,7 +74,7 @@ namespace Debug::SaveLoad
 
 			input.pressedBitfield = 0;
 			gPlayerInput.bActive = 1;
-		});
+			});
 	}
 }
 
@@ -147,4 +148,9 @@ void Debug::SaveLoad::Update()
 			MemCardLoad0(slotId);
 			});
 	}
+}
+
+namespace Debug {
+	MenuRegisterer sDebugSaveLoadMenuReg("Save/Load", Debug::SaveLoad::ShowMenu, true);
+	UpdateRegisterer sDebugSaveLoadUpdateReg(Debug::SaveLoad::Update);
 }

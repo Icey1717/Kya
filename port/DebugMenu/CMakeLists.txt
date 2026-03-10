@@ -1,4 +1,4 @@
-set(TargetName "DebugMenu")
+﻿set(TargetName "DebugMenu")
 
 project(${TargetName})
 
@@ -22,6 +22,18 @@ set(SOURCES
 	"src/DebugMeshViewerVulkan.h"
 	"src/DebugMeshViewerVulkan.cpp"
 	"src/DebugMenu.cpp"
+	"src/DebugMenuLog.h"
+	"src/DebugMenuLog.cpp"
+	"src/DebugMenuInput.cpp"
+	"src/DebugMenuWorld.h"
+	"src/DebugMenuWorld.cpp"
+	"src/DebugMenuDebugPanel.h"
+	"src/DebugMenuDebugPanel.cpp"
+	"src/DebugMenuLayout.h"
+	"src/DebugMenuLayout.cpp"
+	"src/DebugMenuToolbar.h"
+	"src/DebugMenuToolbar.cpp"
+	"src/DebugMenuRegistrations.cpp"
 	"src/DebugHelpers.h"
 	"src/DebugMaterial.h"
 	"src/DebugEvent.cpp"
@@ -75,7 +87,7 @@ set(SOURCES
 	"include/Callstack.h"
 )
 
-add_library(${TargetName} ${SOURCES})
+add_library(${TargetName} OBJECT ${SOURCES})
 
 add_subdirectory("ext/gizmo")
 add_subdirectory("ext/magic_enum")
