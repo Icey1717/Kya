@@ -473,6 +473,10 @@ static std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_L_ANALOG_DOWN,		ImGuiKey_H },
 	{ ROUTE_L_ANALOG_LEFT,		ImGuiKey_D },
 	{ ROUTE_L_ANALOG_RIGHT,		ImGuiKey_T },
+	{ ROUTE_R_ANALOG_DOWN,		ImGuiKey_K },
+	{ ROUTE_R_ANALOG_UP,		ImGuiKey_I },
+	{ ROUTE_R_ANALOG_LEFT,		ImGuiKey_J },
+	{ ROUTE_R_ANALOG_RIGHT,		ImGuiKey_L },
 };
 
 

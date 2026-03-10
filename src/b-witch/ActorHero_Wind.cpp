@@ -1105,13 +1105,11 @@ LAB_0014a028:
 				}
 
 				if (pWaypoint == (CWayPoint*)0x0) {
-					IMPLEMENTATION_GUARD(
-						CActorAutonomous::ComputeFrictionForce2DWithSpeedMax
-						(*(float*)&this->field_0x11e4, (CActorAutonomous*)this, &eStack320, 1);
+					ComputeFrictionForce2DWithSpeedMax(this->field_0x11e4, &eStack320, true);
 					peVar25 = this->dynamicExt.aImpulseVelocities + 1;
 					edF32Vector4AddHard(peVar25, peVar25, &eStack320);
 					fVar29 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 1);
-					this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar29;)
+					this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar29;
 				}
 			}
 		}

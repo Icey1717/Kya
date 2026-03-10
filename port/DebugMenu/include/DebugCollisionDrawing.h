@@ -24,21 +24,60 @@ namespace Debug {
 				edF32Matrix4MulF32Vector4Hard(&v3_transformed, &pBox->localToWorld, (edF32VECTOR4*)&v3);
 
 				// Draw the three edges of the triangle
-				Renderer::Native::DebugShapes::AddActorLine(
+				Renderer::Native::DebugShapes::AddLine(
 					v1_transformed.x, v1_transformed.y, v1_transformed.z,
 					v2_transformed.x, v2_transformed.y, v2_transformed.z,
 					col[0], col[1], col[2], col[3]
 				);
-				Renderer::Native::DebugShapes::AddActorLine(
+				Renderer::Native::DebugShapes::AddLine(
 					v2_transformed.x, v2_transformed.y, v2_transformed.z,
 					v3_transformed.x, v3_transformed.y, v3_transformed.z,
 					col[0], col[1], col[2], col[3]
 				);
-				Renderer::Native::DebugShapes::AddActorLine(
+				Renderer::Native::DebugShapes::AddLine(
 					v3_transformed.x, v3_transformed.y, v3_transformed.z,
 					v1_transformed.x, v1_transformed.y, v1_transformed.z,
 					col[0], col[1], col[2], col[3]
 				);
+			}
+		}
+
+		// Draw sphere collision edges - tests the 12 cube triangles and their 3 edges each
+		inline void DrawSphereCollisionEdges(edColPRIM_SPHERE* pSphere, const std::array<float, 4>& col)
+		{
+			// Draw the 12 triangular faces of the unit cube (same as sphere does for collision)
+			for (int triIdx = 0; triIdx < 12; triIdx++) {
+				const edF32VECTOR4& v1 = g_cube_corners[g_cube_tri[triIdx][0]];
+				const edF32VECTOR4& v2 = g_cube_corners[g_cube_tri[triIdx][1]];
+				const edF32VECTOR4& v3 = g_cube_corners[g_cube_tri[triIdx][2]];
+
+				// Transform each vertex by the sphere's local-to-world matrix
+				edF32VECTOR4 v1_transformed, v2_transformed, v3_transformed;
+				edF32Matrix4MulF32Vector4Hard(&v1_transformed, &pSphere->localToWorld, (edF32VECTOR4*)&v1);
+				edF32Matrix4MulF32Vector4Hard(&v2_transformed, &pSphere->localToWorld, (edF32VECTOR4*)&v2);
+				edF32Matrix4MulF32Vector4Hard(&v3_transformed, &pSphere->localToWorld, (edF32VECTOR4*)&v3);
+
+				// Draw the three edges of the triangle using g_tri_edge indices
+				for (int edgeIdx = 0; edgeIdx < 3; edgeIdx++) {
+					const edF32VECTOR4* pEdgeStart = nullptr;
+					const edF32VECTOR4* pEdgeEnd = nullptr;
+
+					if (g_tri_edge[edgeIdx][0] == 0) pEdgeStart = &v1_transformed;
+					else if (g_tri_edge[edgeIdx][0] == 1) pEdgeStart = &v2_transformed;
+					else if (g_tri_edge[edgeIdx][0] == 2) pEdgeStart = &v3_transformed;
+
+					if (g_tri_edge[edgeIdx][1] == 0) pEdgeEnd = &v1_transformed;
+					else if (g_tri_edge[edgeIdx][1] == 1) pEdgeEnd = &v2_transformed;
+					else if (g_tri_edge[edgeIdx][1] == 2) pEdgeEnd = &v3_transformed;
+
+					if (pEdgeStart && pEdgeEnd) {
+						Renderer::Native::DebugShapes::AddLine(
+							pEdgeStart->x, pEdgeStart->y, pEdgeStart->z,
+							pEdgeEnd->x, pEdgeEnd->y, pEdgeEnd->z,
+							col[0], col[1], col[2], col[3]
+						);
+					}
+				}
 			}
 		}
 
@@ -83,9 +122,9 @@ namespace Debug {
 							const edF32VECTOR4* v2 = LOAD_POINTER_CAST(edF32VECTOR4*, tri.p2);
 							const edF32VECTOR4* v3 = LOAD_POINTER_CAST(edF32VECTOR4*, tri.p3);
 							if (v1 && v2 && v3) {
-								Renderer::Native::DebugShapes::AddActorLine(v1->x, v1->y, v1->z, v2->x, v2->y, v2->z, edge[0], edge[1], edge[2], edge[3]);
-								Renderer::Native::DebugShapes::AddActorLine(v2->x, v2->y, v2->z, v3->x, v3->y, v3->z, edge[0], edge[1], edge[2], edge[3]);
-								Renderer::Native::DebugShapes::AddActorLine(v3->x, v3->y, v3->z, v1->x, v1->y, v1->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v1->x, v1->y, v1->z, v2->x, v2->y, v2->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v2->x, v2->y, v2->z, v3->x, v3->y, v3->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v3->x, v3->y, v3->z, v1->x, v1->y, v1->z, edge[0], edge[1], edge[2], edge[3]);
 							}
 						}
 					}
@@ -112,10 +151,10 @@ namespace Debug {
 							const edF32VECTOR4* v3 = LOAD_POINTER_CAST(edF32VECTOR4*, quad.p3);
 							const edF32VECTOR4* v4 = LOAD_POINTER_CAST(edF32VECTOR4*, quad.p4);
 							if (v1 && v2 && v3 && v4) {
-								Renderer::Native::DebugShapes::AddActorLine(v1->x, v1->y, v1->z, v2->x, v2->y, v2->z, edge[0], edge[1], edge[2], edge[3]);
-								Renderer::Native::DebugShapes::AddActorLine(v2->x, v2->y, v2->z, v3->x, v3->y, v3->z, edge[0], edge[1], edge[2], edge[3]);
-								Renderer::Native::DebugShapes::AddActorLine(v3->x, v3->y, v3->z, v4->x, v4->y, v4->z, edge[0], edge[1], edge[2], edge[3]);
-								Renderer::Native::DebugShapes::AddActorLine(v4->x, v4->y, v4->z, v1->x, v1->y, v1->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v1->x, v1->y, v1->z, v2->x, v2->y, v2->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v2->x, v2->y, v2->z, v3->x, v3->y, v3->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v3->x, v3->y, v3->z, v4->x, v4->y, v4->z, edge[0], edge[1], edge[2], edge[3]);
+								Renderer::Native::DebugShapes::AddLine(v4->x, v4->y, v4->z, v1->x, v1->y, v1->z, edge[0], edge[1], edge[2], edge[3]);
 							}
 						}
 					}
@@ -136,9 +175,11 @@ namespace Debug {
 					const edColPRIM_OBJECT* pPrimArr = LOAD_POINTER_CAST(edColPRIM_OBJECT*, pNode->field_0x54[0]);
 					if (pPrimArr) {
 						for (int i = 0; i < pNode->count_0x52; i++) {
-							Renderer::Native::DebugShapes::AddOBB(
-								pPrimArr[i].localToWorld.raw,
-								1.0f, 1.0f, 1.0f,
+							// Prim objects are unit spheres; center is the translation row of localToWorld
+							const float* raw = pPrimArr[i].localToWorld.raw;
+							Renderer::Native::DebugShapes::AddSphere(
+								raw[12], raw[13], raw[14],
+								1.0f,
 								col[0], col[1], col[2], col[3]
 							);
 						}
@@ -177,14 +218,10 @@ namespace Debug {
 
 				if (config.bShowSpheres) {
 					const auto& col = config.colSphere;
-					const edColPRIM_SPHERE* pSphereArr = LOAD_POINTER_CAST(edColPRIM_SPHERE*, pNode->field_0x54[0]);
+					edColPRIM_SPHERE* pSphereArr = LOAD_POINTER_CAST(edColPRIM_SPHERE*, pNode->field_0x54[0]);
 					if (pSphereArr) {
 						for (int i = 0; i < pNode->count_0x52; i++) {
-							Renderer::Native::DebugShapes::AddOBB(
-								pSphereArr[i].localToWorld.raw,
-								1.0f, 1.0f, 1.0f,
-								col[0], col[1], col[2], col[3]
-							);
+							DrawSphereCollisionEdges(&pSphereArr[i], col);
 						}
 					}
 				}

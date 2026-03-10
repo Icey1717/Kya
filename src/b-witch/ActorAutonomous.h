@@ -131,6 +131,7 @@ public:
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 
 	// CActorAutonomous
+	virtual void SetRestartWaypoint(CWayPoint* pWayPoint, uint param_3);
 	virtual CActorWindState* GetWindState();
 
 	virtual void StoreCollisionSphere();
@@ -168,6 +169,7 @@ public:
 	static StateConfig gStateCfg_AUT[1];
 
 	void ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
+	void ComputeFrictionForce2DWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, bool param_4);
 	void ComputeFrictionForce(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
 	void ClearAllSumForceExt();

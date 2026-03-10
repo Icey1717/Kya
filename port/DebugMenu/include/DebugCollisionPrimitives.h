@@ -31,5 +31,12 @@ namespace Debug {
 			{ 0x2, 0x6, 0x7 },
 			{ 0x2, 0x7, 0x3 },
 		};
+
+		// 3 edges of a triangle, each defined by 2 vertex indices
+		static constexpr int g_tri_edge[3][2] = {
+			{ 0x0, 0x1 },
+			{ 0x1, 0x2 },
+			{ 0x2, 0x0 },
+		};
 	}
 }

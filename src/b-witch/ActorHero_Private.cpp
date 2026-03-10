@@ -1388,12 +1388,12 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 						}
 
 						if (uVar1 == 0) {
-							SetBehaviour(7, STATE_HERO_HURT_A, 0xffffffff);
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_HURT_A, 0xffffffff);
 						}
 						else {
 							IMPLEMENTATION_GUARD(
 							uVar2 = ChooseStateDead(this, pHitParam->projectileType, 4, 1);
-							SetBehaviour(7, uVar2, 0xffffffff);)
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, uVar2, 0xffffffff);)
 						}
 
 						return true;
@@ -1436,14 +1436,14 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 						}
 					}
 
-					SetBehaviour(7, iVar6, this->field_0x1450);
+					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, iVar6, this->field_0x1450);
 				}
 				else {
-					SetBehaviour(7, iVar6, 0xffffffff);
+					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, iVar6, 0xffffffff);
 				}
 			}
 			else {
-				SetBehaviour(7, iVar6, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, iVar6, 0xffffffff);
 			}
 
 			return true;
@@ -2730,7 +2730,7 @@ void CActorHeroPrivate::Manage()
 			if (((bVar4) && (this->field_0x1558 == 0.0f)) && (this->bCanUseCheats == 1)) {
 				this->field_0x1554 = 0.0f;
 				this->field_0x1550 = 0.0f;
-				SetBehaviour(7, 0xa8, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa8, 0xffffffff);
 				return;
 			}
 		}
@@ -2764,7 +2764,7 @@ void CActorHeroPrivate::Manage()
 
 						iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
 						if (iVar8 != -1) {
-							SetBehaviour(7, 0x99, -1);
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x99, -1);
 						}
 					}
 				}
@@ -2821,7 +2821,7 @@ void CActorHeroPrivate::Manage()
 
 							iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
 							if (iVar8 != -1) {
-								SetBehaviour(7, iVar8, -1);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, iVar8, -1);
 								return;
 							}
 						}
@@ -2845,7 +2845,7 @@ void CActorHeroPrivate::Manage()
 							}
 
 							if ((!bVar4) && (bVar4 = CanEnterToboggan(), bVar4 != false)) {
-								SetBehaviour(7, 0xe8, 0xffffffff);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xe8, 0xffffffff);
 								return;
 							}
 						}
@@ -3517,11 +3517,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						return 0;
 					}
 
-					SetBehaviour(7, STATE_HERO_CAUGHT_TRAP_2, 0xffffffff);
+					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_CAUGHT_TRAP_2, 0xffffffff);
 				}
 				else {
 					this->pTrappedByActor = pSender;
-					SetBehaviour(7, STATE_HERO_CAUGHT_TRAP_1, 0xffffffff);
+					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_CAUGHT_TRAP_1, 0xffffffff);
 				}
 
 				return 1;
@@ -3791,12 +3791,12 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 			uVar10 = TestState_IsFlying(0xffffffff);
 			if (uVar10 == 0) {
-				SetBehaviour(7, 0x10b, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x10b, 0xffffffff);
 			}
 			else {
 				this->windRotationStrength = 0.0f;
 				this->windBoostStrength = 0.0f;
-				SetBehaviour(7, 0x10d, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x10d, 0xffffffff);
 			}
 
 			return 1;
@@ -3953,7 +3953,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							*(CActor**)&this->field_0x1028 = pSender;
 							iVar13 = ChooseStateDead(this, 0, (int)pMsgParam, 0);
 							if (iVar13 == -1) {
-								(*(this->pVTable)->SetBehaviour)(this, 7, 0x97, -1);
+								(*(this->pVTable)->SetBehaviour)(this, 7, STATE_HERO_COL_WALL_DEAD, -1);
 							}
 							else {
 								(*(this->pVTable)->SetBehaviour)(this, 7, iVar13, -1);
@@ -4094,7 +4094,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 									if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
 										if (this->actorState == 0xdb) {
-											SetBehaviour(7, STATE_HERO_STAND, 0xffffffff);
+											SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_STAND, 0xffffffff);
 										}
 
 										return 1;
@@ -4336,7 +4336,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 			if ((param_3 == 2) && (bVar1 = TestState_IsInCheatMode(), bVar1 == false)) {
 				if (levelId == 3) {
 					this->field_0x2e4 = 10.0f;
-					SetBehaviour(7, 0x9e, 0xffffffff);
+					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9e, 0xffffffff);
 					pInputManager = GetInputManager(1, 0);
 					if (pInputManager != 0) {
 						CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &pInputManager->field_0x40, 0);
@@ -4347,7 +4347,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 				else {
 					if (levelId == 2) {
 						this->field_0x2e4 = 10.0f;
-						SetBehaviour(7, 0x9d, 0xffffffff);
+						SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9d, 0xffffffff);
 						pInputManager = GetInputManager(1, 0);
 						if (pInputManager != 0) {
 							CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &pInputManager->field_0x40, 0);
@@ -4358,7 +4358,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 					else {
 						if (levelId == 1) {
 							this->field_0x2e4 = 10.0f;
-							SetBehaviour(7, 0xa2, 0xffffffff);
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa2, 0xffffffff);
 							iVar9 = 1;
 						}
 						else {
@@ -4389,12 +4389,12 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 									}
 								}
 
-								SetBehaviour(7, 0xa1, 0xffffffff);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa1, 0xffffffff);
 								iVar9 = 1;
 							}
 							else {
 								this->field_0x2e4 = 10.0f;
-								SetBehaviour(7, 0x97, 0xffffffff);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_COL_WALL_DEAD, 0xffffffff);
 								iVar9 = 1;
 							}
 						}
@@ -4988,7 +4988,7 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 							}
 						}
 
-						deadState = 0x97;
+						deadState = STATE_HERO_COL_WALL_DEAD;
 					}
 					else {
 						deadState = 0x9c;
@@ -5582,6 +5582,9 @@ LAB_00341590:
 	case STATE_HERO_ROLL:
 		StateHeroRollInit();
 		break;
+	case STATE_HERO_COL_WALL_DEAD:
+		StateHeroDeadInit();
+		break;
 	case STATE_HERO_DEAD_A3:
 		this->flags = this->flags | 0x10000000;
 		break;
@@ -5844,6 +5847,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_ROLL:
 		StateHeroRunTerm();
+		break;
+	case STATE_HERO_COL_WALL_DEAD:
+		RestoreCollisionSphere(0.0f);
 		break;
 	case STATE_HERO_DEAD_A3:
 		this->flags = this->flags & 0xefffffff;
@@ -6304,6 +6310,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_COL_WALL:
 		StateHeroColWall();
 		break;
+	case STATE_HERO_COL_WALL_DEAD:
+		StateHeroDead(-1.0f);
+		break;
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
 		break;
@@ -6650,10 +6659,10 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		if (0.15f < fVar11) {
 			uVar9 = TestState_IsCrouched(0xffffffff);
 			if (uVar9 == 0) {
-				SetBehaviour(7, 0x11a, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x11a, 0xffffffff);
 			}
 			else {
-				SetBehaviour(7, 0x11b, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x11b, 0xffffffff);
 			}
 		}
 	}
@@ -10630,7 +10639,7 @@ void CActorHeroPrivate::StateHeroHit()
 			}
 
 			if (bVar5) {
-				SetState(0x97, 0xffffffff);
+				SetState(STATE_HERO_COL_WALL_DEAD, 0xffffffff);
 			}
 		}
 
@@ -11846,8 +11855,7 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 			}
 		}
 		if (this->heroActionParams.actionId == 0xd) {
-			IMPLEMENTATION_GUARD(
-			AccomplishAction(0);)
+			AccomplishAction(0);
 		}
 		else {
 			if ((pCVar1->flags_0x4 & 2) == 0) {
@@ -11913,6 +11921,13 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 			ProcessDeath();
 		}
 	}
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDeadInit()
+{
+	ChangeCollisionSphereForDeath(0.4f);
+
 	return;
 }
 
@@ -12450,6 +12465,26 @@ void CActorHeroPrivate::ConvertSpeedSumForceExtToSpeedPlayer2D()
 
 	this->dynamicExt.field_0x6c = 0.0f;
 	this->dynamicExt.normalizedTranslation = this->dynamic.rotationQuat;
+	return;
+}
+
+void CActorHeroPrivate::ChangeCollisionSphereForDeath(float param_2)
+{
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = 1.6f;
+	local_10.z = 1.6f;
+	local_10.y = 0.8f;
+	local_10.w = 0.0f;
+
+	local_20.x = 0.0f;
+	local_20.z = 0.0f;
+	local_20.y = 0.78f;
+	local_20.w = 1.0f;
+
+	ChangeCollisionSphere(param_2, &local_10, &local_20);
+
 	return;
 }
 
@@ -14264,10 +14299,10 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	if (bVar2 != false) {
 		this->field_0x2e4 = 10.0f;
 		if (((pCVar1->flags_0x4 & 2) == 0) || ((pCVar1->flags_0x4 & 4) == 0)) {
-			this->SetBehaviour(7, 0xa3, 0xffffffff);
+			this->SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa3, 0xffffffff);
 		}
 		else {
-			this->SetBehaviour(7, 0x9e, 0xffffffff);
+			this->SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9e, 0xffffffff);
 		}
 		return true;
 	}

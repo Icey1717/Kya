@@ -23,6 +23,11 @@
 #define ROUTE_L_ANALOG_LEFT 0x14
 #define ROUTE_L_ANALOG_RIGHT 0x15
 
+#define ROUTE_R_ANALOG_UP 0x13
+#define ROUTE_R_ANALOG_DOWN 0x12
+#define ROUTE_R_ANALOG_LEFT 0x11
+#define ROUTE_R_ANALOG_RIGHT 0x10
+
 #define ROUTE_END 0x16
 
 namespace Input

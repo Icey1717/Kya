@@ -5071,44 +5071,106 @@ void CActorFighter::UpdateScale_0030ac50(edF32VECTOR3* pNewScale)
 	return;
 }
 
-void CActorFighter::PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5)
+void CActorFighter::PlayOrientedFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, uint hitZone, CFxHandle* pOutHandle)
 {
-	IMPLEMENTATION_GUARD_FX();
+	bool bVar1;
+	float fVar2;
+	float puVar4;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 rotation;
+	edF32MATRIX4 eStack80;
+	CFxHandle handle;
+	CNewFx* pNewFx;
+
+	if (hitZone != 0xffffffff) {
+		handle.id = 0;
+		handle.pFx = (CNewFx*)0x0;
+
+		if (pOutHandle == (CFxHandle*)0x0) {
+			pOutHandle = &handle;
+		}
+
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(pOutHandle, hitZone, FX_MATERIAL_SELECTOR_NONE);
+
+		if (pOutHandle->IsValid()) {
+			rotation = gF32Vector4Zero;
+
+			fVar2 = edF32Vector4NormalizeHard(&local_80, param_3);
+			if (fVar2 == 0.0f) {
+				local_80 = gF32Vector4UnitX;
+			}
+
+			if (fabsf(local_80.x) == 1.0f) {
+				if (local_80.x < 0.0f) {
+					rotation.y = 3.141593f;
+				}
+			}
+			else {
+				local_70.x = 0.0f;
+				local_70.w = 0.0f;
+				local_70.y = -local_80.z;
+				local_70.z = local_80.y;
+
+				edF32Vector4NormalizeHard(&local_70, &local_70);
+				if (1.0f < local_80.x) {
+					puVar4 = 1.0f;
+				}
+				else {
+					puVar4 = -1.0f;
+					if (-1.0f <= local_80.x) {
+						puVar4 = local_80.x;
+					}
+				}
+
+				fVar2 = acosf(puVar4);
+				edF32Matrix4FromAngAxisSoft(-fVar2, &eStack80, &local_70);
+				edF32Matrix4ToEulerSoft(&eStack80, &rotation.xyz, "XYZ");
+			}
+
+			pOutHandle->SetPosition(&rotation);
+			pOutHandle->SetPosition(pPosition);
+			pOutHandle->Start();
+		}
+	}
+
+	return;
 }
 
 void CActorFighter::PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, int param_4, bool param_5)
 {
-	uint uVar1;
+	uint hitZone;
 
 	if (param_5 == false) {
-		uVar1 = _SV_HIT_GetHitZoneFromImpact(&this->fighterAnatomyZones, pPosition, &this->currentLocation);
-		if (uVar1 == 0) {
+		hitZone = _SV_HIT_GetHitZoneFromImpact(&this->fighterAnatomyZones, pPosition, &this->currentLocation);
+
+		if (hitZone == 0) {
 			if (param_4 == 0) {
-				uVar1 = this->field_0x524;
+				hitZone = this->field_0x524;
 			}
 			else {
-				uVar1 = this->field_0x51c;
+				hitZone = this->field_0x51c;
 			}
 		}
 		else {
 			if (param_4 == 0) {
-				uVar1 = this->field_0x528;
+				hitZone = this->field_0x528;
 			}
 			else {
-				uVar1 = this->field_0x520;
+				hitZone = this->field_0x520;
 			}
 		}
 	}
 	else {
 		if (param_4 == 0) {
-			uVar1 = this->field_0x534;
+			hitZone = this->field_0x534;
 		}
 		else {
-			uVar1 = this->field_0x530;
+			hitZone = this->field_0x530;
 		}
 	}
 
-	PlayOrientedFx(pPosition, param_3, uVar1, (int*)0x0);
+	PlayOrientedFx(pPosition, param_3, hitZone, (CFxHandle*)0x0);
 
 	return;
 }
@@ -6565,6 +6627,7 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 
 	switch (oldState)
 	{
+	case 0x74:
 	case FIGHTER_DEFAULT_STATE_IDLE:
 	case FIGHTER_DEFAULT_STATE_RUN:
 	case FIGHTER_HIT_STEP_BACK:

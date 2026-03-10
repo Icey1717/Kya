@@ -6,6 +6,7 @@
 #include "ActorManager.h"
 #include "ActorFactory.h"
 #include "ActorJamGut.h"
+#include "InputManager.h"
 
 #include <math.h>
 #include "CollisionRay.h"
@@ -241,8 +242,8 @@ CCameraGame::CCameraGame(ECameraType type, ByteCode* pMemoryStream)
 	SetMode(type);
 
 	EVar1 = GetMode();
-	if (((EVar1 == CT_Main) && ((this->cameraConfig).field_0x2c < 1.22173f)) && (1.22173f < (this->cameraConfig).field_0x30)) {
-		(this->cameraConfig).field_0x30 = 1.22173f;
+	if (((EVar1 == CT_Main) && (this->cameraConfig.field_0x2c < 1.22173f)) && (1.22173f < this->cameraConfig.field_0x30)) {
+		this->cameraConfig.field_0x30 = 1.22173f;
 	}
 
 	flags_0xc = flags_0xc | 0x20000;
@@ -296,7 +297,7 @@ void CCameraGame::Reset()
 
 	this->field_0x204 = this->cameraConfig.field_0x38.z;
 
-	fVar7 = (this->cameraConfig).field_0xc0;
+	fVar7 = this->cameraConfig.field_0xc0;
 	if (0.25f <= fVar7) {
 		fVar6 = fVar7;
 	}
@@ -337,7 +338,7 @@ void CCameraGame::Reset()
 	this->mode_0x2e4 = 3;
 	this->field_0x2e8 = 0.0f;
 	this->modeFlags = 0;
-	this->flags_0x2e0 = (this->cameraConfig).flags_0x70;
+	this->flags_0x2e0 = this->cameraConfig.flags_0x70;
 	this->field_0x300 = gF32Vertex4Zero;
 	this->field_0x330 = gF32Vertex4Zero;
 	this->field_0x444 = 0.0f;
@@ -555,6 +556,246 @@ struct TargetCalc
 	float field_0x58;
 };
 
+void CCameraGame::_Manage_Pad()
+{
+	CActor* pCVar1;
+	ECameraType EVar2;
+	uint* puVar4;
+	CPlayerInput* iVar5;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	CCollisionRay CStack192;
+	edF32VECTOR4 eStack160;
+	CCollisionRay CStack144;
+	edF32VECTOR4 eStack112;
+	CCollisionRay CStack96;
+	edF32VECTOR4 eStack64;
+	CCollisionRay CStack48;
+	edF32VECTOR4 eStack16;
+
+	pCVar1 = GetTarget();
+	iVar5 = pCVar1->GetInputManager(0, 0);
+	if (iVar5 == nullptr) {
+		return;
+	}
+
+	EVar2 = GetMode();
+	if ((EVar2 == CT_Main) && ((iVar5->pressedBitfield & 0x800) != 0)) {
+		fVar5 = this->angleBeta_0x1e8;
+		this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 | 0x200000;
+		this->field_0x46c = fVar5;
+	}
+
+	if ((this->cameraConfig.flags & 0x400) != 0) {
+		if (iVar5->aButtons[0x11].clickValue != 0.0f) {
+			puVar4 = &this->cameraConfig.flags_0x70;
+			if (this->cameraConfig.field_0xc0 < this->cameraConfig.field_0x58.z) {
+				*puVar4 = *puVar4 | 0x800000;
+				this->cameraConfig.field_0xc0 = this->cameraConfig.field_0xc0 + CCamera::_gpcam_man->time_0x4 * 4.0f;
+				this->cameraConfig.field_0xbc = this->cameraConfig.field_0xc0;
+				goto LAB_002c2a30;
+			}
+		}
+		if (iVar5->aButtons[0x10].clickValue != 0.0f) {
+			puVar4 = &this->cameraConfig.flags_0x70;
+			if (this->cameraConfig.field_0x58.y < this->cameraConfig.field_0xc0) {
+				*puVar4 = *puVar4 | 0x800000;
+				this->cameraConfig.field_0xc0 = this->cameraConfig.field_0xc0 - CCamera::_gpcam_man->time_0x4 * 4.0f;
+				this->cameraConfig.field_0xbc = this->cameraConfig.field_0xc0;
+			}
+		}
+	}
+LAB_002c2a30:
+	if ((this->cameraConfig.flags & 1) != 0) {
+		fVar5 = iVar5->aAnalogSticks[1].y;
+		fVar8 = -fVar5;
+		if (fVar8 < 0.0f) {
+			fVar8 = 0.0f;
+		}
+		if (fVar5 < 0.0f) {
+			fVar5 = 0.0f;
+		}
+		if ((fVar8 <= 0.0f) || ((this->field_0x1b0 & 0x80) != 0)) {
+			if ((fVar5 <= 0.0f) || ((this->field_0x1b0 & 0x100) != 0)) {
+				if ((~this->field_0x1b0 & 0x181) == 0x181) {
+					this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
+					this->cameraConfig.field_0x8c = 0.0f;
+					this->cameraConfig.field_0x90 = 0.0f;
+					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
+				}
+			}
+			else {
+				puVar4 = &this->cameraConfig.flags_0x70;
+				if ((this->cameraConfig.flags_0x70 & 0x10000) == 0) {
+					*puVar4 = *puVar4 | 0x10000;
+					fVar6 = this->cameraConfig.field_0xbc;
+					fVar7 = edF32Between_Pi(this->targetPitch + 0.1963495f);
+					fVar8 = -1.570796f;
+					if (-1.570796f <= fVar7) {
+						fVar8 = fVar7;
+					}
+
+					fVar7 = 1.570796f;
+					if (fVar8 <= 1.570796f) {
+						fVar7 = fVar8;
+					}
+
+					CStack96 = CCollisionRay(fVar7, this->field_0x204, fVar6 + 0.8, &this->gameLookAt, &eStack64);
+					edF32Vector4ScaleHard(-1.0f, &eStack64, &eStack64);
+					pCVar1 = GetTarget();
+					fVar8 = CStack96.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+					this->field_0x228 = fVar8;
+				}
+				if (this->field_0x228 < this->field_0x208 + 0.8f) {
+					this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
+					this->cameraConfig.field_0x8c = 0.0f;
+					this->cameraConfig.field_0x90 = 0.0f;
+					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
+				}
+				else {
+					this->field_0x1b0 = this->field_0x1b0 | 0x80;
+					this->field_0x1b0 = this->field_0x1b0 & 0xfffffeff;
+					this->cameraConfig.field_0x90 = fVar5 * 1.745329 * 1.0f;
+					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
+					this->field_0x1b0 = this->field_0x1b0 | 8;
+				}
+			}
+		}
+		else {
+			puVar4 = &this->cameraConfig.flags_0x70;
+			if ((this->cameraConfig.flags_0x70 & 0x20000) == 0) {
+				*puVar4 = *puVar4 | 0x20000;
+				fVar6 = this->cameraConfig.field_0xbc + 0.8f;
+				fVar7 = edF32Between_Pi(this->targetPitch + -0.1963495f);
+
+				fVar5 = -1.570796f;
+				if (-1.570796f <= fVar7) {
+					fVar5 = fVar7;
+				}
+
+				fVar7 = 1.570796f;
+				if (fVar5 <= 1.570796f) {
+					fVar7 = fVar5;
+				}
+
+				CStack48 = CCollisionRay(fVar7, this->field_0x204, fVar6, &this->gameLookAt, &eStack16);
+				edF32Vector4ScaleHard(-1.0f, &eStack16, &eStack16);
+				pCVar1 = GetTarget();
+				fVar5 = CStack48.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				this->field_0x22c = fVar5;
+			}
+
+			if (this->field_0x22c < this->field_0x208 + 0.8f) {
+				this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
+				this->cameraConfig.field_0x8c = 0.0f;
+				this->cameraConfig.field_0x90 = 0.0f;
+				this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
+			}
+			else {
+				this->field_0x1b0 = this->field_0x1b0 | 0x100;
+				this->field_0x1b0 = this->field_0x1b0 & 0xffffff7f;
+				this->cameraConfig.field_0x90 = fVar8 * 1.745329 * -1.0f;
+				this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
+				this->field_0x1b0 = this->field_0x1b0 | 0x10;
+			}
+		}
+	}
+
+	if ((this->cameraConfig.flags & 0x40) != 0) {
+		fVar8 = iVar5->aAnalogSticks[1].x;
+		fVar5 = -fVar8;
+		if (fVar5 < 0.0f) {
+			fVar5 = 0.0f;
+		}
+
+		if (fVar8 < 0.0f) {
+			fVar8 = 0.0f;
+		}
+
+		if ((fVar5 <= 0.0f) || ((this->field_0x1b0 & 0x40) != 0)) {
+			if ((0.0f < fVar8) && ((this->field_0x1b0 & 0x20) == 0)) {
+				puVar4 = &this->cameraConfig.flags_0x70;
+				if ((this->cameraConfig.flags_0x70 & 0x8000) == 0) {
+					fVar5 = -1.570796f;
+					*puVar4 = *puVar4 | 0x8000;
+
+					fVar7 = this->cameraConfig.field_0xbc;
+					if (-1.570796f <= this->targetPitch) {
+						fVar5 = this->targetPitch;
+					}
+
+					fVar6 = 1.570796f;
+					if (fVar5 <= 1.570796f) {
+						fVar6 = fVar5;
+					}
+
+					fVar5 = edF32Between_0_2Pi(this->field_0x204 + 0.1963495f);
+					CStack192 = CCollisionRay(fVar6, fVar5, fVar7 + 0.8f, &this->gameLookAt, &eStack160);
+					edF32Vector4ScaleHard(-1.0f, &eStack160, &eStack160);
+					pCVar1 = GetTarget();
+					fVar5 = CStack192.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+					this->field_0x224 = fVar5;
+				}
+				if (this->field_0x224 < this->field_0x208 + 0.8f) {
+					this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
+					this->cameraConfig.field_0xa8 = 0.0f;
+					this->cameraConfig.field_0xac = 0.0f;
+					this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
+				}
+				else {
+					this->field_0x1b0 = this->field_0x1b0 | 0x40;
+					this->field_0x1b0 = this->field_0x1b0 & 0xffffffdf;
+					this->cameraConfig.field_0xac = fVar8 * 2.094395f * 1.0f;
+					this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
+					this->field_0x1b0 = this->field_0x1b0 | 4;
+				}
+			}
+		}
+		else {
+			puVar4 = &this->cameraConfig.flags_0x70;
+			if ((this->cameraConfig.flags_0x70 & 0x4000) == 0) {
+				fVar8 = -1.570796f;
+				*puVar4 = *puVar4 | 0x4000;
+
+				fVar7 = this->cameraConfig.field_0xbc;
+				if (-1.570796f <= this->targetPitch) {
+					fVar8 = this->targetPitch;
+				}
+
+				fVar6 = 1.570796f;
+				if (fVar8 <= 1.570796f) {
+					fVar6 = fVar8;
+				}
+
+				fVar8 = edF32Between_0_2Pi(this->field_0x204 + -0.1963495);
+				CStack144 = CCollisionRay(fVar6, fVar8, fVar7 + 0.8, &this->gameLookAt, &eStack112);
+				edF32Vector4ScaleHard(-1.0f, &eStack112, &eStack112);
+				pCVar1 = GetTarget();
+				fVar8 = CStack144.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				this->field_0x220 = fVar8;
+			}
+
+			if (this->field_0x220 < this->field_0x208 + 0.8f) {
+				this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
+				this->cameraConfig.field_0xa8 = 0.0f;
+				this->cameraConfig.field_0xac = 0.0f;
+				this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
+			}
+			else {
+				this->field_0x1b0 = this->field_0x1b0 | 0x20;
+				this->field_0x1b0 = this->field_0x1b0 & 0xffffffbf;
+				this->cameraConfig.field_0xac = fVar5 * 2.094395f * -1.0f;
+				this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
+				this->field_0x1b0 = this->field_0x1b0 | 2;
+			}
+		}
+	}
+
+	return;
+}
+
 float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0) 
 {
 	bool bVar1;
@@ -583,7 +824,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	v1->pActor = pCVar3;
 	v1->field_0x48 = this->field_0x1d0;
 	v1->field_0x44 = 1;
-	if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
+	if ((this->cameraConfig.flags_0x70 & 0x2000000) != 0) {
 		pCVar2 = this->field_0x1ec;
 	}
 
@@ -665,19 +906,19 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		this->field_0x1d4 = v1->field_0x44;
 	}
 
-	fVar8 = (this->cameraConfig).field_0x74;
+	fVar8 = this->cameraConfig.field_0x74;
 	if (fVar8 < this->field_0x2b4) {
 		fVar8 = fVar8 + CCamera::_gpcam_man->time_0x4 * 2.0f;
-		(this->cameraConfig).field_0x74 = fVar8;
+		this->cameraConfig.field_0x74 = fVar8;
 		if (this->field_0x2b4 < fVar8) {
-			(this->cameraConfig).field_0x74 = this->field_0x2b4;
+			this->cameraConfig.field_0x74 = this->field_0x2b4;
 		}
 	}
 	else {
 		fVar8 = fVar8 - CCamera::_gpcam_man->time_0x4 * 2.0f;
-		(this->cameraConfig).field_0x74 = fVar8;
+		this->cameraConfig.field_0x74 = fVar8;
 		if (fVar8 < this->field_0x2b4) {
-			(this->cameraConfig).field_0x74 = this->field_0x2b4;
+			this->cameraConfig.field_0x74 = this->field_0x2b4;
 		}
 	}
 
@@ -697,8 +938,8 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		}
 	}
 
-	v1->field_0x50 = (this->cameraConfig).field_0x74;
-	if (((this->cameraConfig).flags_0x70 & 0x400000) != 0) {
+	v1->field_0x50 = this->cameraConfig.field_0x74;
+	if ((this->cameraConfig.flags_0x70 & 0x400000) != 0) {
 		v1->field_0x50 = 1.0f;
 	}
 
@@ -816,12 +1057,12 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 		}
 	}
 
-	if ((((this->flags_0xc & 0x37c) != 0x37c) && (this->pOtherTarget != (CActor*)0x0)) && (((this->cameraConfig).flags_0x70 & 0x2000000) == 0)) {
+	if ((((this->flags_0xc & 0x37c) != 0x37c) && (this->pOtherTarget != (CActor*)0x0)) && ((this->cameraConfig.flags_0x70 & 0x2000000) == 0)) {
 		FillThisFrameExpectedDifferentialMatrix(&eStack80);
 
 		m0 = &this->transformationMatrix;
 
-		if (((this->cameraConfig).flags & 0x4000) == 0) {
+		if ((this->cameraConfig.flags & 0x4000) == 0) {
 			peVar4 = &this->transformationMatrix.rowT;
 			edF32Matrix4MulF32Vector4Hard(peVar4, &eStack80, peVar4);
 			peVar4 = &this->lookAt;
@@ -894,12 +1135,12 @@ void CCameraGame::_Toboggan_UpdateCameraData()
 	edQuatNormalize(&this->field_0x450, &this->field_0x450);
 	edQuatToMatrix4Hard(&this->field_0x450, &this->transformationMatrix);
 
-	local_10.x = (this->cameraConfig).field_0x88;
-	local_10.y = (this->cameraConfig).field_0x38.z;
+	local_10.x = this->cameraConfig.field_0x88;
+	local_10.y = this->cameraConfig.field_0x38.z;
 	local_10.z = 0.0f;
 
-	fVar2 = (this->cameraConfig).field_0x88;
-	(this->cameraConfig).field_0x88 = fVar2 + ((this->cameraConfig).baseTargetPitch - fVar2) * 0.05f;
+	fVar2 = this->cameraConfig.field_0x88;
+	this->cameraConfig.field_0x88 = fVar2 + (this->cameraConfig.baseTargetPitch - fVar2) * 0.05f;
 
 	edF32Matrix4FromEulerSoft(&eStack256, &local_10, "ZXY");
 	m0 = &this->transformationMatrix;
@@ -924,22 +1165,22 @@ void CCameraGame::_ResetDataForCut(int param_2)
 	edF32MATRIX4 eStack80 = {};
 	edF32VECTOR4 eStack16 = {};
 
-	(this->cameraConfig).field_0x74 = this->cameraConfig.field_0xc;
+	this->cameraConfig.field_0x74 = this->cameraConfig.field_0xc;
 	this->field_0x2b4 = this->cameraConfig.field_0xc;
-	(this->cameraConfig).field_0x78 = this->cameraConfig.field_0x10;
-	(this->cameraConfig).field_0x7c = this->cameraConfig.field_0x14;
+	this->cameraConfig.field_0x78 = this->cameraConfig.field_0x10;
+	this->cameraConfig.field_0x7c = this->cameraConfig.field_0x14;
 	this->field_0x1b0 = this->field_0x1b0 & 0xfffff9ff;
-	(this->cameraConfig).field_0xc4 = 0;
-	(this->cameraConfig).field_0xc8 = 0;
-	(this->cameraConfig).field_0xcc = this->cameraConfig.field_0x6c;
+	this->cameraConfig.field_0xc4 = 0;
+	this->cameraConfig.field_0xc8 = 0;
+	this->cameraConfig.field_0xcc = this->cameraConfig.field_0x6c;
 	this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-	(this->cameraConfig).field_0x8c = 0.0f;
-	(this->cameraConfig).field_0x90 = 0.0f;
-	(this->cameraConfig).field_0x94 = this->cameraConfig.field_0x38.y;
+	this->cameraConfig.field_0x8c = 0.0f;
+	this->cameraConfig.field_0x90 = 0.0f;
+	this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 	this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-	(this->cameraConfig).field_0xa8 = 0.0f;
-	(this->cameraConfig).field_0xac = 0.0f;
-	(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.w;
+	this->cameraConfig.field_0xa8 = 0.0f;
+	this->cameraConfig.field_0xac = 0.0f;
+	this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 
 	if (param_2 != 0) {
 		this->field_0x1d0 = 0;
@@ -1001,8 +1242,8 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 		IMPLEMENTATION_GUARD(
 			if (*(int*)pParams == 0) {
 				this->field_0x2b4 = this->cameraConfig.field_0xc;
-				(this->cameraConfig).field_0x78 = this->cameraConfig.field_0x10;
-				(this->cameraConfig).field_0x7c = this->cameraConfig.field_0x14;
+				this->cameraConfig.field_0x78 = this->cameraConfig.field_0x10;
+				this->cameraConfig.field_0x7c = this->cameraConfig.field_0x14;
 				(this->field_0x260).x = 0.0;
 				(this->field_0x260).y = 0.0;
 				(this->field_0x260).z = 0.0;
@@ -1011,7 +1252,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 				(this->field_0x270).y = 0.0;
 				(this->field_0x270).z = 0.0;
 				(this->field_0x270).w = 0.0;
-				puVar9 = &(this->cameraConfig).flags_0x70;
+				puVar9 = &this->cameraConfig.flags_0x70;
 				if ((this->cameraConfig.flags & 2) == 0) {
 					*puVar9 = *puVar9 & 0xffffffdf;
 				}
@@ -1028,8 +1269,8 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 			}
 			else {
 				this->field_0x2b4 = 0.0;
-				(this->cameraConfig).field_0x78 = 0x3f800000;
-				(this->cameraConfig).field_0x7c = 0;
+				this->cameraConfig.field_0x78 = 0x3f800000;
+				this->cameraConfig.field_0x7c = 0;
 				if (*(int*)&this->field_0x280 == 0) {
 					fVar14 = *(float*)(pParams + 0x14);
 					fVar12 = *(float*)(pParams + 0x18);
@@ -1047,17 +1288,17 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 					edF32Vector4ScaleHard(-1.0f, &this->field_0x270, &this->field_0x270);
 				}
 				this->field_0x1b0 = this->field_0x1b0 & 0xfffff9ff;
-				(this->cameraConfig).field_0xc4 = 0;
-				(this->cameraConfig).field_0xc8 = 0;
-				(this->cameraConfig).field_0xcc = this->cameraConfig.field_0x6c;
+				this->cameraConfig.field_0xc4 = 0;
+				this->cameraConfig.field_0xc8 = 0;
+				this->cameraConfig.field_0xcc = this->cameraConfig.field_0x6c;
 				this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-				(this->cameraConfig).field_0x8c = 0.0f;
-				(this->cameraConfig).field_0x90 = 0.0f;
-				(this->cameraConfig).field_0x94 = this->cameraConfig.field_0x38.y;
+				this->cameraConfig.field_0x8c = 0.0f;
+				this->cameraConfig.field_0x90 = 0.0f;
+				this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 				this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-				(this->cameraConfig).field_0xa8 = 0.0f;
-				(this->cameraConfig).field_0xac = 0.0f;
-				(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.w;
+				this->cameraConfig.field_0xa8 = 0.0f;
+				this->cameraConfig.field_0xac = 0.0f;
+				this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 				*(undefined4*)&this->field_0x280 = 1;
 			})
 			goto LAB_002c1448;
@@ -1104,7 +1345,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 			this->field_0x1ec = (CActorAutonomous*)0x0;
 		}
 
-		puVar9 = &(this->cameraConfig).flags_0x70;
+		puVar9 = &this->cameraConfig.flags_0x70;
 		if (pHero->curBehaviourId == 8) {
 			*puVar9 = *puVar9 | 0x2000000;
 		}
@@ -1114,10 +1355,10 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 	}
 
 	peVar10 = &this->cameraConfig.baseTargetPitch;
-	puVar9 = &(this->cameraConfig).flags_0x70;
+	puVar9 = &this->cameraConfig.flags_0x70;
 	peVar11 = &this->cameraConfig.field_0x58;
-	(this->cameraConfig).targetPitch = this->cameraConfig.baseTargetPitch;
-	(this->cameraConfig).field_0xbc = this->cameraConfig.field_0x58.x;
+	this->cameraConfig.targetPitch = this->cameraConfig.baseTargetPitch;
+	this->cameraConfig.field_0xbc = this->cameraConfig.field_0x58.x;
 	UpdateTarget(&this->field_0x2a0, false);
 
 	this->mode_0x2e4 = 3;
@@ -1192,10 +1433,10 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 				if (GetMode() == CT_KyaJamgut) {
 					fVar12 = pOtherCamera->GetAngleAlpha();
 					if (fVar12 < 0.1963495) {
-						(this->cameraConfig).field_0x88 = 0.7853982f;
+						this->cameraConfig.field_0x88 = 0.7853982f;
 					}
 					else {
-						(this->cameraConfig).field_0x88 = *peVar10;
+						this->cameraConfig.field_0x88 = *peVar10;
 					}
 				}
 
@@ -1227,7 +1468,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 	_TestRay_Sphere();
 
 	LAB_002c1448:
-	(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xfffffffe;
+	this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 & 0xfffffffe;
 	CCamera::AlertCamera(alertType, pParams, pOtherCamera);
 	return true;
 }
@@ -1252,7 +1493,7 @@ void CCameraGame::_TestRay_Sphere()
 	iVar4 = 0;
 	bVar1 = false;
 	peVar3 = &local_20;
-	pfVar2 = &(this->cameraConfig).field_0xbc;
+	pfVar2 = &this->cameraConfig.field_0xbc;
 	local_20 = edF32VECTOR4_004250a0;
 
 	while ((!bVar1 && (iVar4 < 4))) {
@@ -1323,10 +1564,10 @@ void CCameraGame::UpdateMode()
 		}
 		else {
 			if (typeMode == CT_Main) {
-				if (((((this->cameraConfig).flags_0x70 & 0x2000000) == 0) && ((this->modeFlags & 1) != 0)) &&
+				if ((((this->cameraConfig.flags_0x70 & 0x2000000) == 0) && ((this->modeFlags & 1) != 0)) &&
 					(pCameraActorA = GetTarget(), pCameraActorA->typeID == ACTOR_HERO_PRIVATE)) {
-					this->flags_0x2e0 = (this->cameraConfig).flags_0x70 & 0x60;
-					(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xffffff9f;
+					this->flags_0x2e0 = this->cameraConfig.flags_0x70 & 0x60;
+					this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 & 0xffffff9f;
 
 					pCameraActorB = GetTarget();
 					edF32Vector4SubHard(&localVector, &this->field_0x330, &pCameraActorB->currentLocation);
@@ -1342,7 +1583,7 @@ void CCameraGame::UpdateMode()
 							this->mode_0x2e4 = 3;
 						}
 						else {
-							if (((this->cameraConfig).flags_0x70 & 0x800000) == 0) {
+							if ((this->cameraConfig.flags_0x70 & 0x800000) == 0) {
 								this->field_0x2e8 = 0;
 							}
 							else {
@@ -1495,7 +1736,7 @@ void CCameraGame::FUN_002bff30(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4*
 		local_20.field_0x8 = this->targetPitch;
 		fVar5 = (this->subObj_12).field_0x1c;
 
-		local_20.field_0x10 = (((fVar5 + fVar3 * ((this->subObj_12).field_0x20 - fVar5) + (this->cameraConfig).field_0xbc) - this->field_0x208) + this->field_0x208);
+		local_20.field_0x10 = (((fVar5 + fVar3 * ((this->subObj_12).field_0x20 - fVar5) + this->cameraConfig.field_0xbc) - this->field_0x208) + this->field_0x208);
 
 		CCollisionRay CStack112 = CCollisionRay(local_20.field_0x8, local_20.field_0xc, local_20.field_0x10 + 0.8f, local_20.pVector, &eStack64);
 		edF32Vector4ScaleHard(-1.0f, &eStack64, &eStack64);
@@ -1563,7 +1804,7 @@ void CCameraGame::FUN_002bee80()
 	CActorsTable intersectingActors;
 	edF32VECTOR4 intersectionSphere;
 
-	if ((((this->cameraConfig).flags & 0x20000) == 0) || (((this->cameraConfig).flags_0x70 & 0x2000000) != 0)) {
+	if (((this->cameraConfig.flags & 0x20000) == 0) || ((this->cameraConfig.flags_0x70 & 0x2000000) != 0)) {
 		this->modeFlags = 0;
 	}
 	else {
@@ -1752,7 +1993,7 @@ void CCameraGame::_Normal_ManageIdle()
 
 	if (((this->field_0x450).y == 0.0f) && (fVar3 != 0.0f)) {
 		this->field_0x460 = (uint)((this->flags_0xc & 1) != 0);
-		this->field_0x464 = (this->cameraConfig).field_0xbc;
+		this->field_0x464 = this->cameraConfig.field_0xbc;
 		this->field_0x468 = this->targetPitch;
 		this->field_0x470 = this->field_0x50;
 		(this->field_0x450).z = 0.0f;
@@ -1769,24 +2010,24 @@ void CCameraGame::_Normal_ManageIdle()
 		}
 
 		this->field_0x50 = this->field_0x470;
-		(this->cameraConfig).targetPitch = this->field_0x468;
-		(this->cameraConfig).field_0xbc = this->field_0x464;
+		this->cameraConfig.targetPitch = this->field_0x468;
+		this->cameraConfig.field_0xbc = this->field_0x464;
 	}
 	if (fVar3 != 0.0f) {
 		this->flags_0xc = this->flags_0xc & 0xfffffffe;
 		this->field_0x1b0 = this->field_0x1b0 | 0x46;
 		this->field_0x1b0 = this->field_0x1b0 | 0x40;
 		this->field_0x1b0 = this->field_0x1b0 & 0xffffffdf;
-		(this->cameraConfig).field_0xac = 0.3926991f;
-		(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.z;
-		(this->cameraConfig).field_0xbc = 1.0f;
+		this->cameraConfig.field_0xac = 0.3926991f;
+		this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
+		this->cameraConfig.field_0xbc = 1.0f;
 		this->field_0x50.z = 0.0f;
 		this->field_0x50.x = 0.0f;
 		// Might not be cosf
 		this->field_0x50.y = cosf(this->field_0x450.w) * 0.3f + 1.2f;
 		fVar4 = edF32Between_2Pi((this->field_0x450).w + CCamera::_gpcam_man->time_0x4 * 0.25f);
 		(this->field_0x450).w = fVar4;
-		(this->cameraConfig).targetPitch = cosf((this->field_0x450).z) * 0.3926991f;
+		this->cameraConfig.targetPitch = cosf((this->field_0x450).z) * 0.3926991f;
 		fVar4 = edF32Between_2Pi((this->field_0x450).z + CCamera::_gpcam_man->time_0x4 * 0.25f);
 		(this->field_0x450).z = fVar4;
 	}
@@ -1806,10 +2047,10 @@ void CCameraGame::CameraFunc_002c5b50()
 	edF32VECTOR4 eStack64;
 	edF32VECTOR4 eStack16;
 
-	puVar4 = &(this->cameraConfig).flags_0x70;
-	if (((this->cameraConfig).flags_0x70 & 0x10000) == 0) {
+	puVar4 = &this->cameraConfig.flags_0x70;
+	if ((this->cameraConfig.flags_0x70 & 0x10000) == 0) {
 		*puVar4 = *puVar4 | 0x10000;
-		fVar7 = (this->cameraConfig).field_0xbc;
+		fVar7 = this->cameraConfig.field_0xbc;
 		fVar5 = edF32Between_Pi(this->targetPitch + 0.1963495f);
 		fVar6 = -1.570796;
 
@@ -1832,7 +2073,7 @@ void CCameraGame::CameraFunc_002c5b50()
 	bVar2 = this->field_0x228 < this->field_0x208 + 0.8f;
 
 	if (!bVar2) {
-		bVar2 = (this->cameraConfig).field_0x30 - (this->cameraConfig).field_0x34 * CCamera::_gpcam_man->time_0x4 <= this->targetPitch;
+		bVar2 = this->cameraConfig.field_0x30 - this->cameraConfig.field_0x34 * CCamera::_gpcam_man->time_0x4 <= this->targetPitch;
 	}
 
 	if (bVar2) {
@@ -1844,7 +2085,7 @@ void CCameraGame::CameraFunc_002c5b50()
 
 	if ((*puVar4 & 0x20000) == 0) {
 		*puVar4 = *puVar4 | 0x20000;
-		fVar7 = (this->cameraConfig).field_0xbc;
+		fVar7 = this->cameraConfig.field_0xbc;
 		fVar5 = edF32Between_Pi(this->targetPitch + -0.1963495f);
 
 		fVar6 = -1.570796f;
@@ -1868,7 +2109,7 @@ void CCameraGame::CameraFunc_002c5b50()
 
 	if (!bVar2) {
 		bVar2 = this->targetPitch <=
-			(this->cameraConfig).field_0x34 * CCamera::_gpcam_man->time_0x4 + (this->cameraConfig).field_0x2c;
+			this->cameraConfig.field_0x34 * CCamera::_gpcam_man->time_0x4 + this->cameraConfig.field_0x2c;
 	}
 
 	if (bVar2) {
@@ -1880,25 +2121,25 @@ void CCameraGame::CameraFunc_002c5b50()
 
 	*puVar4 = *puVar4 & 0xfffffffd;
 	if ((*puVar4 & 0x20) != 0) {
-		fVar5 = (this->cameraConfig).field_0x34;
+		fVar5 = this->cameraConfig.field_0x34;
 		fVar6 = fVar5 * CCamera::_gpcam_man->time_0x4;
-		if ((this->targetPitch < (this->cameraConfig).field_0x30 - fVar6) ||
-			(fVar6 + (this->cameraConfig).field_0x2c < this->targetPitch)) {
+		if ((this->targetPitch < this->cameraConfig.field_0x30 - fVar6) ||
+			(fVar6 + this->cameraConfig.field_0x2c < this->targetPitch)) {
 			uVar1 = *puVar4;
 			if (((uVar1 & 0x10) == 0) && ((this->field_0x1b0 & 1) == 0)) {
 				if (((uVar1 & 0x1000) != 0) && ((uVar1 & 0x800) == 0)) {
 					this->field_0x1b0 = this->field_0x1b0 | 0x80;
 					this->field_0x1b0 = this->field_0x1b0 & 0xfffffeff;
-					(this->cameraConfig).field_0x90 = fVar5 * 1.0;
-					(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.x;
+					this->cameraConfig.field_0x90 = fVar5 * 1.0;
+					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 				}
 
 				if (((*puVar4 & 0x800) != 0) && ((*puVar4 & 0x1000) == 0)) {
-					fVar6 = (this->cameraConfig).field_0x34;
+					fVar6 = this->cameraConfig.field_0x34;
 					this->field_0x1b0 = this->field_0x1b0 | 0x100;
 					this->field_0x1b0 = this->field_0x1b0 & 0xffffff7f;
-					(this->cameraConfig).field_0x90 = fVar6 * -1.0;
-					(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.x;
+					this->cameraConfig.field_0x90 = fVar6 * -1.0;
+					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 				}
 			}
 
@@ -1908,9 +2149,9 @@ void CCameraGame::CameraFunc_002c5b50()
 		}
 		else {
 			this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-			(this->cameraConfig).field_0x8c = 0;
-			(this->cameraConfig).field_0x90 = 0;
-			(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.y;
+			this->cameraConfig.field_0x8c = 0;
+			this->cameraConfig.field_0x90 = 0;
+			this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 		}
 	}
 	return;
@@ -1922,7 +2163,7 @@ void CCameraGame::FUN_002c8160()
 	uint* puVar2;
 
 	pCVar1 = this->field_0xd0;
-	if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
+	if ((this->cameraConfig.flags_0x70 & 0x2000000) != 0) {
 		pCVar1 = this->field_0x1ec;
 	}
 
@@ -1941,15 +2182,15 @@ void CCameraGame::FUN_002c8160()
 		this->field_0x1b8 = 0;
 	}
 
-	puVar2 = &(this->cameraConfig).flags_0x70;
-	if (this->field_0x1d8 <= (this->cameraConfig).field_0x20) {
+	puVar2 = &this->cameraConfig.flags_0x70;
+	if (this->field_0x1d8 <= this->cameraConfig.field_0x20) {
 		*puVar2 = *puVar2 & 0xff7fffff;
 	}
 	else {
 		*puVar2 = *puVar2 | 0x800000;
 	}
 
-	puVar2 = &(this->cameraConfig).flags_0x70;
+	puVar2 = &this->cameraConfig.flags_0x70;
 	if (this->pOtherTarget == (CActor*)0x0) {
 		*puVar2 = *puVar2 & 0xffbfffff;
 	}
@@ -1996,7 +2237,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 
 		if (cameraMode == CT_KyaWindWall) {
 			/* Camera mode is (5) */
-			if (((this->cameraConfig).flags_0x70 & 0x2000) != 0) {
+			if ((this->cameraConfig.flags_0x70 & 0x2000) != 0) {
 				this->field_0x1b0 = this->field_0x1b0 | 0x18;
 			}
 
@@ -2028,7 +2269,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 				}
 			}
 
-			pitch = edF32Between_2Pi(this->targetPitch + puVar12 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
+			pitch = edF32Between_2Pi(this->targetPitch + puVar12 * this->cameraConfig.field_0x7c * CCamera::_gpcam_man->time_0x4);
 			this->pitchDyn.currentAlpha = pitch;
 			this->targetPitch = pitch;
 			calculatedPitch = this->cameraConfig.field_0x2c;
@@ -2054,8 +2295,8 @@ void CCameraGame::_UpdateAngleAlphaData()
 				this->targetPitch = pitch;
 			}
 			else {
-				puVar8 = &(this->cameraConfig).flags_0x70;
-				if (((this->cameraConfig).flags_0x70 & 0x800000) != 0) {
+				puVar8 = &this->cameraConfig.flags_0x70;
+				if ((this->cameraConfig.flags_0x70 & 0x800000) != 0) {
 					*puVar8 = *puVar8 & 0xfffffffe;
 				}
 
@@ -2070,7 +2311,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 					}
 
 					pCVar9 = this->field_0xd0;
-					if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
+					if ((this->cameraConfig.flags_0x70 & 0x2000000) != 0) {
 						pCVar9 = this->field_0x1ec;
 					}
 
@@ -2095,7 +2336,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						bVar5 = true;
 					}
 
-					puVar8 = &(this->cameraConfig).flags_0x70;
+					puVar8 = &this->cameraConfig.flags_0x70;
 					if (bVar5) {
 						*puVar8 = *puVar8 | 0x1000000;
 					}
@@ -2104,14 +2345,14 @@ void CCameraGame::_UpdateAngleAlphaData()
 					}
 				}
 
-				uVar1 = (this->cameraConfig).flags_0x70;
+				uVar1 = this->cameraConfig.flags_0x70;
 				if ((uVar1 & 0x1000000) == 0) {
 					if ((uVar1 & 8) == 0) {
 						uVar1 = this->cameraConfig.flags;
 
 						if ((uVar1 & 0x1000) == 0) {
 							if ((uVar1 & 8) == 0) {
-								pitch = (this->cameraConfig).targetPitch;
+								pitch = this->cameraConfig.targetPitch;
 								this->pitchDyn.currentAlpha = pitch;
 								this->targetPitch = pitch;
 								this->pitchDyn.currentAlpha = pitch;
@@ -2121,41 +2362,41 @@ void CCameraGame::_UpdateAngleAlphaData()
 								pTimeController = GetTimer();
 								if (pTimeController->timeScale != 0.0f) {
 									if ((this->field_0x1b0 & 0x180) == 0) {
-										if ((~(this->cameraConfig).flags_0x70 & 3) == 3) {											
-											pitch = this->pitchDyn.UpdateLerp((this->cameraConfig).targetPitch);
+										if ((~this->cameraConfig.flags_0x70 & 3) == 3) {											
+											pitch = this->pitchDyn.UpdateLerp(this->cameraConfig.targetPitch);
 											this->pitchDyn.currentAlpha = pitch;
 											this->targetPitch = pitch;
 
-											CAMERA_LOG(LogLevel::Verbose, "CameraGame::_UpdateAngleAlphaData new pitch: {} target: {}", pitch, (this->cameraConfig).targetPitch);
+											CAMERA_LOG(LogLevel::Verbose, "CameraGame::_UpdateAngleAlphaData new pitch: {} target: {}", pitch, this->cameraConfig.targetPitch);
 										}
 									}
 									else {
-										pitch = (this->cameraConfig).field_0x8c;
+										pitch = this->cameraConfig.field_0x8c;
 
-										if (pitch < (this->cameraConfig).field_0x90) {
-											pitch = pitch + (this->cameraConfig).field_0x94 * CCamera::_gpcam_man->time_0x4;
-											(this->cameraConfig).field_0x8c = pitch;
-											calculatedPitch = (this->cameraConfig).field_0x90;
+										if (pitch < this->cameraConfig.field_0x90) {
+											pitch = pitch + this->cameraConfig.field_0x94 * CCamera::_gpcam_man->time_0x4;
+											this->cameraConfig.field_0x8c = pitch;
+											calculatedPitch = this->cameraConfig.field_0x90;
 
 											if (calculatedPitch < pitch) {
-												(this->cameraConfig).field_0x8c = calculatedPitch;
+												this->cameraConfig.field_0x8c = calculatedPitch;
 											}
 										}
 										else {
-											pitch = pitch - (this->cameraConfig).field_0x94 * CCamera::_gpcam_man->time_0x4;
-											(this->cameraConfig).field_0x8c = pitch;
-											calculatedPitch = (this->cameraConfig).field_0x90;
+											pitch = pitch - this->cameraConfig.field_0x94 * CCamera::_gpcam_man->time_0x4;
+											this->cameraConfig.field_0x8c = pitch;
+											calculatedPitch = this->cameraConfig.field_0x90;
 
 											if (pitch < calculatedPitch) {
-												(this->cameraConfig).field_0x8c = calculatedPitch;
+												this->cameraConfig.field_0x8c = calculatedPitch;
 											}
 										}
 
-										pitch = this->targetPitch + (this->cameraConfig).field_0x8c * CCamera::_gpcam_man->time_0x4;
+										pitch = this->targetPitch + this->cameraConfig.field_0x8c * CCamera::_gpcam_man->time_0x4;
 										this->pitchDyn.currentAlpha = pitch;
 										this->targetPitch = pitch;
 										this->pitchDyn.currentAlpha = pitch;
-										(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 | 1;
+										this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 | 1;
 									}
 								}
 							}
@@ -2164,17 +2405,17 @@ void CCameraGame::_UpdateAngleAlphaData()
 							pCVar7 = GetTarget();
 							IMPLEMENTATION_GUARD(
 							if (fabs((float)pCVar7[1].sectorId) <= 0.1) {
-								(this->cameraConfig).targetPitch = this->cameraConfig.baseTargetPitch;
+								this->cameraConfig.targetPitch = this->cameraConfig.baseTargetPitch;
 							}
 							else {
 								if (0.0 < (float)pCVar7[1].sectorId) {
-									(this->cameraConfig).targetPitch = this->cameraConfig.field_0x2c;
+									this->cameraConfig.targetPitch = this->cameraConfig.field_0x2c;
 								}
 								else {
-									(this->cameraConfig).targetPitch = this->cameraConfig.field_0x30;
+									this->cameraConfig.targetPitch = this->cameraConfig.field_0x30;
 								}
 							}
-							pitch = this->pitchDyn.UpdateLerp((this->cameraConfig).targetPitch);
+							pitch = this->pitchDyn.UpdateLerp(this->cameraConfig.targetPitch);
 							this->pitchDyn.currentAlpha = pitch;
 							this->targetPitch = pitch;)
 						}
@@ -2216,7 +2457,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 
 								edF32Vector4SubHard(&local_90, &this->lookAt, &this->transformationMatrix.rowT);
 
-								if ((~(this->cameraConfig).flags_0x70 & 0x1000008) == 0x1000008) {
+								if ((~this->cameraConfig.flags_0x70 & 0x1000008) == 0x1000008) {
 									local_90.y = 0.0f;
 								}
 
@@ -2251,7 +2492,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 
 								edF32Vector4SubHard(&local_a0, &this->lookAt, &this->transformationMatrix.rowT);
 
-								if ((~(this->cameraConfig).flags_0x70 & 0x1000008) == 0x1000008) {
+								if ((~this->cameraConfig.flags_0x70 & 0x1000008) == 0x1000008) {
 									local_a0.y = 0.0f;
 								}
 
@@ -2313,7 +2554,7 @@ void CCameraGame::_Behind_UpdateAngleBetaData()
 	float fVar4;
 	float puVar5;
 
-	if (((this->cameraConfig).flags_0x70 & 0x2000) != 0) {
+	if ((this->cameraConfig.flags_0x70 & 0x2000) != 0) {
 		this->field_0x1b0 = this->field_0x1b0 | 6;
 	}
 
@@ -2351,18 +2592,18 @@ void CCameraGame::_Behind_UpdateAngleBetaData()
 		}
 	}
 
-	fVar3 = edF32Between_2Pi(this->field_0x204 + puVar5 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
+	fVar3 = edF32Between_2Pi(this->field_0x204 + puVar5 * this->cameraConfig.field_0x7c * CCamera::_gpcam_man->time_0x4);
 	this->field_0x204 = fVar3;
 
-	if (((this->cameraConfig).flags & 0x100) != 0) {
-		fVar3 = edF32GetAnglesDelta((this->cameraConfig).field_0x38.w, this->field_0x204);
-		fVar4 = edF32GetAnglesDelta((this->cameraConfig).field_0x48.x, this->field_0x204);
+	if ((this->cameraConfig.flags & 0x100) != 0) {
+		fVar3 = edF32GetAnglesDelta(this->cameraConfig.field_0x38.w, this->field_0x204);
+		fVar4 = edF32GetAnglesDelta(this->cameraConfig.field_0x48.x, this->field_0x204);
 		if (fVar3 < 0.0f) {
-			this->field_0x204 = (this->cameraConfig).field_0x38.w;
+			this->field_0x204 = this->cameraConfig.field_0x38.w;
 		}
 
 		if (0.0f < fVar4) {
-			this->field_0x204 = (this->cameraConfig).field_0x48.x;
+			this->field_0x204 = this->cameraConfig.field_0x48.x;
 		}
 	}
 
@@ -2387,13 +2628,13 @@ void CCameraGame::_UpdateAngleBetaData()
 		else {
 			if ((((EVar1 == 9) || (EVar1 == 8)) || (EVar1 == 6)) || (EVar1 == CT_Main)) {
 				fVar5 = 0.0f;
-				fVar6 = (this->cameraConfig).field_0x78;
+				fVar6 = this->cameraConfig.field_0x78;
 
 				if (this->mode_0x1bc != 3) {
 					fVar3 = GetAngleYFromVector(&this->transformationMatrix.rowZ);
 
-					if ((((((this->cameraConfig).flags_0x70 & 0x800000) == 0) && (fabs(fVar3 - this->field_0x204) < 0.001f)) ||
-						((((this->cameraConfig).flags_0x70 & 0x400000) != 0 && ((this->cameraConfig.flags & 0x4000) == 0)))
+					if (((((this->cameraConfig.flags_0x70 & 0x800000) == 0) && (fabs(fVar3 - this->field_0x204) < 0.001f)) ||
+						(((this->cameraConfig.flags_0x70 & 0x400000) != 0 && ((this->cameraConfig.flags & 0x4000) == 0)))
 						) || ((EVar1 = GetMode(), EVar1 == 4 ||
 							(EVar1 = GetMode(), EVar1 == 9)))) {
 						fVar3 = this->field_0x204;
@@ -2414,7 +2655,7 @@ void CCameraGame::_UpdateAngleBetaData()
 						this->field_0x204 = fVar3;
 					}
 
-					if (((this->cameraConfig).flags_0x70 & 0x200000) == 0) {
+					if ((this->cameraConfig.flags_0x70 & 0x200000) == 0) {
 						fVar3 = edF32GetAnglesDelta(fVar3, t1);
 
 						if (1.570796f < fVar3) {
@@ -2425,13 +2666,13 @@ void CCameraGame::_UpdateAngleBetaData()
 							fVar3 = -3.141593f - fVar3;
 						}
 
-						if (((this->cameraConfig).flags_0x70 & 0x800000) != 0) {
+						if ((this->cameraConfig.flags_0x70 & 0x800000) != 0) {
 							fVar5 = this->field_0x1d8;
 							if ((fVar5 < 0.0f) || (100.0f < fVar5)) {
 								fVar5 = 0.0f;
 							}
 
-							if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
+							if ((this->cameraConfig.flags_0x70 & 0x2000000) != 0) {
 								fVar6 = 0.05f;
 							}
 
@@ -2455,18 +2696,18 @@ void CCameraGame::_UpdateAngleBetaData()
 						fVar5 = 10.0f;
 
 						if ((fabs(fVar6) <= 0.03490658f) || ((this->field_0x1b0 & 6) != 0)) {
-							(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xffdfffff;
+							this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 & 0xffdfffff;
 						}
 
-						puVar2 = &(this->cameraConfig).flags_0x70;
-						if (((this->cameraConfig).flags_0x70 & 0x600) != 0) {
+						puVar2 = &this->cameraConfig.flags_0x70;
+						if ((this->cameraConfig.flags_0x70 & 0x600) != 0) {
 							*puVar2 = *puVar2 & 0xffdfffff;
 						}
 
 						puVar4 = edFIntervalLERP(fVar6, -1.570796f, 1.570796f, -1.0f, 1.0f);
 					}
 
-					fVar6 = edF32Between_2Pi(this->field_0x204 + puVar4 * (fVar5 + (this->cameraConfig).field_0x7c) * CCamera::_gpcam_man->time_0x4);
+					fVar6 = edF32Between_2Pi(this->field_0x204 + puVar4 * (fVar5 + this->cameraConfig.field_0x7c) * CCamera::_gpcam_man->time_0x4);
 					this->field_0x204 = fVar6;
 
 					if ((this->cameraConfig.flags & 0x100) != 0) {
@@ -2496,7 +2737,7 @@ void CCameraGame::ClampFunc(uint* puVar5)
 		float fVar6 = -1.570796f;
 		*puVar5 = *puVar5 | 0x80000;
 
-		float fVar7 = (this->cameraConfig).field_0xbc + 0.8f;
+		float fVar7 = this->cameraConfig.field_0xbc + 0.8f;
 		if (-1.570796f <= this->targetPitch) {
 			fVar6 = this->targetPitch;
 		}
@@ -2525,7 +2766,7 @@ void CCameraGame::ClampFuncA(uint* puVar5)
 
 	ClampFunc(puVar5);
 
-	float fVar6 = (this->cameraConfig).field_0x58.w;
+	float fVar6 = this->cameraConfig.field_0x58.w;
 	Timer* pTVar4 = GetTimer();
 	if (this->field_0x238 <= fVar6 * pTVar4->cutsceneDeltaTime + this->field_0x208 + 0.8f) {
 		this->field_0x230 = this->field_0x238;
@@ -2546,15 +2787,15 @@ void CCameraGame::SlowHorizontalCameraPan()
 	float fVar7;
 	float fVar8;
 
-	if ((((this->field_0x1b0 & 0x20) != 0) && (((this->cameraConfig).flags_0x70 & 0x400) == 0)) &&
+	if ((((this->field_0x1b0 & 0x20) != 0) && ((this->cameraConfig.flags_0x70 & 0x400) == 0)) &&
 		((~this->field_0x1b0 & 6) == 6)) {
 		this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-		(this->cameraConfig).field_0xac = 0.0f;
-		(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.w;
+		this->cameraConfig.field_0xac = 0.0f;
+		this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 	}
 
-	uVar1 = (this->cameraConfig).flags_0x70;
-	puVar5 = &(this->cameraConfig).flags_0x70;
+	uVar1 = this->cameraConfig.flags_0x70;
+	puVar5 = &this->cameraConfig.flags_0x70;
 	if ((((uVar1 & 0x10) == 0) && ((this->field_0x1b0 & 1) == 0)) && ((uVar1 & 0x200) != 0)) {
 		bVar2 = (uVar1 & 0x40000) == 0;
 
@@ -2563,18 +2804,18 @@ void CCameraGame::SlowHorizontalCameraPan()
 		}
 
 		if ((this->field_0x208 - 0.8f < this->field_0x230) &&
-			(((this->field_0x1b0 & 0x20) != 0 || ((this->cameraConfig).field_0xa8 < -0.001f)))) {
+			(((this->field_0x1b0 & 0x20) != 0 || (this->cameraConfig.field_0xa8 < -0.001f)))) {
 			this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-			(this->cameraConfig).field_0xa8 = 0.0f;
-			(this->cameraConfig).field_0xac = 0.0f;
-			(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.w;
+			this->cameraConfig.field_0xa8 = 0.0f;
+			this->cameraConfig.field_0xac = 0.0f;
+			this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 		}
 	}
 
 	if ((((this->field_0x1b0 & 0x40) != 0) && ((*puVar5 & 0x200) == 0)) && ((~this->field_0x1b0 & 6) == 6)) {
 		this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-		(this->cameraConfig).field_0xac = 0.0f;
-		(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.w;
+		this->cameraConfig.field_0xac = 0.0f;
+		this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 	}
 
 	uVar1 = *puVar5;
@@ -2586,11 +2827,11 @@ void CCameraGame::SlowHorizontalCameraPan()
 		}
 
 		if ((this->field_0x208 - 0.8f < this->field_0x230) &&
-			(((this->field_0x1b0 & 0x40) != 0 || (0.001f < (this->cameraConfig).field_0xa8)))) {
+			(((this->field_0x1b0 & 0x40) != 0 || (0.001f < this->cameraConfig.field_0xa8)))) {
 			this->field_0x1b0 = this->field_0x1b0 & 0xffffff9f;
-			(this->cameraConfig).field_0xa8 = 0.0f;
-			(this->cameraConfig).field_0xac = 0.0f;
-			(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.w;
+			this->cameraConfig.field_0xa8 = 0.0f;
+			this->cameraConfig.field_0xac = 0.0f;
+			this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.w;
 		}
 	}
 	return;
@@ -2607,15 +2848,15 @@ void CCameraGame::SlowVerticalCameraPan()
 	float fVar7;
 	float fVar8;
 
-	if ((((this->field_0x1b0 & 0x80) != 0) && (((this->cameraConfig).flags_0x70 & 0x1000) == 0)) &&
+	if ((((this->field_0x1b0 & 0x80) != 0) && ((this->cameraConfig.flags_0x70 & 0x1000) == 0)) &&
 		((~this->field_0x1b0 & 0x18) == 0x18)) {
 		this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-		(this->cameraConfig).field_0x90 = 0.0f;
-		(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.y;
+		this->cameraConfig.field_0x90 = 0.0f;
+		this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 	}
 
-	uVar1 = (this->cameraConfig).flags_0x70;
-	puVar5 = &(this->cameraConfig).flags_0x70;
+	uVar1 = this->cameraConfig.flags_0x70;
+	puVar5 = &this->cameraConfig.flags_0x70;
 	if ((((uVar1 & 0x10) == 0) && ((this->field_0x1b0 & 1) == 0)) && ((uVar1 & 0x800) != 0)) {
 		bVar2 = (uVar1 & 0x40000) == 0;
 
@@ -2624,18 +2865,18 @@ void CCameraGame::SlowVerticalCameraPan()
 		}
 
 		if ((this->field_0x208 - 0.8f < this->field_0x230) &&
-			(((this->field_0x1b0 & 0x80) != 0 || (0.001f < (this->cameraConfig).field_0x8c)))) {
+			(((this->field_0x1b0 & 0x80) != 0 || (0.001f < this->cameraConfig.field_0x8c)))) {
 			this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-			(this->cameraConfig).field_0x8c = 0.0f;
-			(this->cameraConfig).field_0x90 = 0.0f;
-			(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.y;
+			this->cameraConfig.field_0x8c = 0.0f;
+			this->cameraConfig.field_0x90 = 0.0f;
+			this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 		}
 	}
 
 	if ((((this->field_0x1b0 & 0x100) != 0) && ((*puVar5 & 0x800) == 0)) && ((~this->field_0x1b0 & 0x18) == 0x18)) {
 		this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-		(this->cameraConfig).field_0x90 = 0.0f;
-		(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.y;
+		this->cameraConfig.field_0x90 = 0.0f;
+		this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 	}
 
 	uVar1 = *puVar5;
@@ -2646,11 +2887,11 @@ void CCameraGame::SlowVerticalCameraPan()
 		}
 
 		if ((this->field_0x208 - 0.8f < this->field_0x230) &&
-			(((this->field_0x1b0 & 0x100) != 0 || ((this->cameraConfig).field_0x8c < -0.001f)))) {
+			(((this->field_0x1b0 & 0x100) != 0 || (this->cameraConfig.field_0x8c < -0.001f)))) {
 			this->field_0x1b0 = this->field_0x1b0 & 0xfffffe7f;
-			(this->cameraConfig).field_0x8c = 0.0f;
-			(this->cameraConfig).field_0x90 = 0.0f;
-			(this->cameraConfig).field_0x94 = (this->cameraConfig).field_0x38.y;
+			this->cameraConfig.field_0x8c = 0.0f;
+			this->cameraConfig.field_0x90 = 0.0f;
+			this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.y;
 		}
 	}
 	return;
@@ -2681,11 +2922,11 @@ void CCameraGame::_Manage_Leash()
 	edF32MATRIX4 eStack80 = {};
 	edF32VECTOR4 eStack16 = {};
 
-	puVar8 = &(this->cameraConfig).flags_0x70;
-	fVar9 = (this->cameraConfig).field_0xbc;
+	puVar8 = &this->cameraConfig.flags_0x70;
+	fVar9 = this->cameraConfig.field_0xbc;
 	fVar11 = this->field_0x230 - 0.8f;
 	this->field_0x1b0 = this->field_0x1b0 & 0xfffff9ff;
-	uVar1 = (this->cameraConfig).flags_0x70;
+	uVar1 = this->cameraConfig.flags_0x70;
 	fVar9 = fVar9 - this->field_0x208;
 
 	if ((uVar1 & 0x100) != 0) {
@@ -2695,8 +2936,8 @@ void CCameraGame::_Manage_Leash()
 			fVar11 = this->field_0x208;
 		}
 
-		puVar8 = &(this->cameraConfig).flags_0x70;
-		if (((this->cameraConfig).flags_0x70 & 0x100000) == 0) {
+		puVar8 = &this->cameraConfig.flags_0x70;
+		if ((this->cameraConfig.flags_0x70 & 0x100000) == 0) {
 			//peVar5 = (edF32VECTOR4*)&DAT_00000010;
 			*puVar8 = *puVar8 | 0x100000;
 			//peVar7 = &local_80;
@@ -2730,7 +2971,7 @@ void CCameraGame::_Manage_Leash()
 			this->field_0x208 = fVar10;
 		}
 
-		if (((((this->cameraConfig).flags_0x70 & 0x80) != 0) && (this->mode_0x1bc != 4)) && (this->mode_0x1bc != 3)) {
+		if ((((this->cameraConfig.flags_0x70 & 0x80) != 0) && (this->mode_0x1bc != 4)) && (this->mode_0x1bc != 3)) {
 			EVar6 = GetMode();
 			if ((EVar6 == 9) || (EVar6 == 8)) {
 				fVar13 = 30.0f;
@@ -2748,7 +2989,7 @@ void CCameraGame::_Manage_Leash()
 					fVar10 = fVar12;
 					if (pCVar4->typeID == ACTOR_HERO_PRIVATE) {
 						pHero = (CActorHero*)GetTarget();
-						if ((((this->cameraConfig).flags_0x70 & 0x2000000) != 0) ||
+						if (((this->cameraConfig.flags_0x70 & 0x2000000) != 0) ||
 							(bVar3 = pHero->TestState_IsInCheatMode(), fVar10 = 1.0f, bVar3 != false)) {
 							fVar13 = 36.0f;
 							fVar10 = fVar12;
@@ -2767,7 +3008,7 @@ void CCameraGame::_Manage_Leash()
 			fVar10 = fVar10 * CCamera::_gpcam_man->time_0x4;
 			EVar6 = GetMode();
 			if (EVar6 == CT_KyaJamgut) {
-				if ((fVar11 < this->field_0x208) || (((this->cameraConfig).flags_0x70 & 0x2000) != 0)) {
+				if ((fVar11 < this->field_0x208) || ((this->cameraConfig.flags_0x70 & 0x2000) != 0)) {
 					fVar9 = 0.25f;
 					this->field_0x1b0 = this->field_0x1b0 | 0x400;
 					if (0.25f <= fVar11) {
@@ -2777,7 +3018,7 @@ void CCameraGame::_Manage_Leash()
 					this->field_0x208 = fVar9;
 				}
 				else {
-					fVar9 = (this->cameraConfig).field_0xbc;
+					fVar9 = this->cameraConfig.field_0xbc;
 
 					if (fVar10 + this->field_0x208 <= fVar9) {
 						fVar9 = 0.25f;
@@ -2798,8 +3039,8 @@ void CCameraGame::_Manage_Leash()
 				}
 			}
 			else {
-				if ((((this->cameraConfig).flags & 0x4000) == 0) && (((this->cameraConfig).flags_0x70 & 0x400000) != 0)) {
-					fVar12 = (this->cameraConfig).field_0xbc;
+				if (((this->cameraConfig.flags & 0x4000) == 0) && ((this->cameraConfig.flags_0x70 & 0x400000) != 0)) {
+					fVar12 = this->cameraConfig.field_0xbc;
 					fVar13 = 0.25f;
 					if (0.25f <= fVar12) {
 						fVar13 = fVar12;
@@ -2809,8 +3050,8 @@ void CCameraGame::_Manage_Leash()
 
 				puVar8 = &this->field_0x1b0;
 				if ((this->field_0x1b0 & 1) == 0) {
-					if (((this->field_0x1b0 & 0x1e) == 0) || (((this->cameraConfig).flags_0x70 & 0x2000) == 0)) {
-						uVar1 = (this->cameraConfig).flags_0x70;
+					if (((this->field_0x1b0 & 0x1e) == 0) || ((this->cameraConfig.flags_0x70 & 0x2000) == 0)) {
+						uVar1 = this->cameraConfig.flags_0x70;
 						if ((uVar1 & 0x2000) == 0) {
 							if (fVar10 < fabs(fVar9)) {
 								if (this->field_0x238 == 1e+30f) {
@@ -2855,7 +3096,7 @@ void CCameraGame::_Manage_Leash()
 								else {
 									edF32Vector4SubHard(&eStack16, &this->gameLookAt, &this->transformationMatrix.rowT);
 									fVar11 = edF32Vector4GetDistHard(&eStack16);
-									if ((0.0f < fVar9) && (fVar9 = 0.25f, fVar11 <= (this->cameraConfig).field_0xbc)) {
+									if ((0.0f < fVar9) && (fVar9 = 0.25f, fVar11 <= this->cameraConfig.field_0xbc)) {
 										if (0.25f <= fVar11) {
 											fVar9 = fVar11;
 										}
@@ -2894,7 +3135,7 @@ void CCameraGame::_Manage_Leash()
 							this->field_0x208 = fVar9;
 						}
 						else {
-							if (fVar10 < fabs(fVar11 - (this->cameraConfig).field_0xbc)) {
+							if (fVar10 < fabs(fVar11 - this->cameraConfig.field_0xbc)) {
 								if (fVar10 + this->field_0x208 < fVar11) {
 									fVar9 = 0.25f;
 									*puVar8 = *puVar8 | 0x400;
@@ -2930,26 +3171,26 @@ void CCameraGame::_After_Manage_Beta()
 	float fVar4;
 	edF32VECTOR4 local_10;
 
-	if ((this->cameraConfig).pActorRefB.Get() == (CActor*)0x0) {
+	if (this->cameraConfig.pActorRefB.Get() == (CActor*)0x0) {
 		if (GetMode() != CT_Fight) {
-			fVar3 = (this->cameraConfig).field_0xa8;
-			if (fVar3 < (this->cameraConfig).field_0xac) {
-				fVar3 = fVar3 + (this->cameraConfig).field_0xb0 * CCamera::_gpcam_man->time_0x4;
-				(this->cameraConfig).field_0xa8 = fVar3;
-				fVar4 = (this->cameraConfig).field_0xac;
+			fVar3 = this->cameraConfig.field_0xa8;
+			if (fVar3 < this->cameraConfig.field_0xac) {
+				fVar3 = fVar3 + this->cameraConfig.field_0xb0 * CCamera::_gpcam_man->time_0x4;
+				this->cameraConfig.field_0xa8 = fVar3;
+				fVar4 = this->cameraConfig.field_0xac;
 				if (fVar4 < fVar3) {
-					(this->cameraConfig).field_0xa8 = fVar4;
+					this->cameraConfig.field_0xa8 = fVar4;
 				}
 			}
 			else {
-				fVar3 = fVar3 - (this->cameraConfig).field_0xb0 * CCamera::_gpcam_man->time_0x4;
-				(this->cameraConfig).field_0xa8 = fVar3;
-				fVar4 = (this->cameraConfig).field_0xac;
+				fVar3 = fVar3 - this->cameraConfig.field_0xb0 * CCamera::_gpcam_man->time_0x4;
+				this->cameraConfig.field_0xa8 = fVar3;
+				fVar4 = this->cameraConfig.field_0xac;
 				if (fVar3 < fVar4) {
-					(this->cameraConfig).field_0xa8 = fVar4;
+					this->cameraConfig.field_0xa8 = fVar4;
 				}
 			}
-			fVar3 = (this->cameraConfig).field_0xa8;
+			fVar3 = this->cameraConfig.field_0xa8;
 			if (0.001f < fabs(fVar3)) {
 				fVar3 = edF32Between_0_2Pi(this->field_0x204 + fVar3 * CCamera::_gpcam_man->time_0x4);
 				this->field_0x204 = fVar3;
@@ -2958,7 +3199,7 @@ void CCameraGame::_After_Manage_Beta()
 	}
 	else {
 		pCVar1 = GetTarget();
-		edF32Vector4SubHard(&local_10, &((this->cameraConfig).pActorRefB.Get())->currentLocation, &pCVar1->currentLocation);
+		edF32Vector4SubHard(&local_10, &(this->cameraConfig.pActorRefB.Get())->currentLocation, &pCVar1->currentLocation);
 		fVar3 = GetAngleYFromVector(&local_10);
 		fVar3 = edF32GetAnglesDelta(this->field_0x204, fVar3);
 		fVar3 = fVar3 * CCamera::_gpcam_man->time_0x4 * 2.0f;
@@ -2976,14 +3217,14 @@ void CCameraGame::_After_Manage_Beta()
 		this->field_0x204 = fVar3;
 	}
 
-	if (((this->cameraConfig).flags & 0x100) != 0) {
-		fVar3 = edF32GetAnglesDelta((this->cameraConfig).field_0x38.w, this->field_0x204);
-		fVar4 = edF32GetAnglesDelta((this->cameraConfig).field_0x48.x, this->field_0x204);
+	if ((this->cameraConfig.flags & 0x100) != 0) {
+		fVar3 = edF32GetAnglesDelta(this->cameraConfig.field_0x38.w, this->field_0x204);
+		fVar4 = edF32GetAnglesDelta(this->cameraConfig.field_0x48.x, this->field_0x204);
 		if (fVar3 < 0.0f) {
-			this->field_0x204 = (this->cameraConfig).field_0x38.w;
+			this->field_0x204 = this->cameraConfig.field_0x38.w;
 		}
 		if (0.0f < fVar4) {
-			this->field_0x204 = (this->cameraConfig).field_0x48.x;
+			this->field_0x204 = this->cameraConfig.field_0x48.x;
 		}
 	}
 	return;
@@ -3004,27 +3245,27 @@ void CCameraGame::_After_Manage_Alpha()
 
 	if (GetMode() != CT_Fight) {
 		if (GetMode() == CT_KyaWindWall) {
-			fVar5 = (this->cameraConfig).field_0x8c;
-			if (fVar5 < (this->cameraConfig).field_0x90) {
-				fVar5 = fVar5 + (this->cameraConfig).field_0x94 * CCamera::_gpcam_man->time_0x4;
-				(this->cameraConfig).field_0x8c = fVar5;
-				fVar6 = (this->cameraConfig).field_0x90;
+			fVar5 = this->cameraConfig.field_0x8c;
+			if (fVar5 < this->cameraConfig.field_0x90) {
+				fVar5 = fVar5 + this->cameraConfig.field_0x94 * CCamera::_gpcam_man->time_0x4;
+				this->cameraConfig.field_0x8c = fVar5;
+				fVar6 = this->cameraConfig.field_0x90;
 
 				if (fVar6 < fVar5) {
-					(this->cameraConfig).field_0x8c = fVar6;
+					this->cameraConfig.field_0x8c = fVar6;
 				}
 			}
 			else {
-				fVar5 = fVar5 - (this->cameraConfig).field_0x94 * CCamera::_gpcam_man->time_0x4;
-				(this->cameraConfig).field_0x8c = fVar5;
-				fVar6 = (this->cameraConfig).field_0x90;
+				fVar5 = fVar5 - this->cameraConfig.field_0x94 * CCamera::_gpcam_man->time_0x4;
+				this->cameraConfig.field_0x8c = fVar5;
+				fVar6 = this->cameraConfig.field_0x90;
 
 				if (fVar5 < fVar6) {
-					(this->cameraConfig).field_0x8c = fVar6;
+					this->cameraConfig.field_0x8c = fVar6;
 				}
 			}
 
-			fVar5 = (this->cameraConfig).field_0x8c;
+			fVar5 = this->cameraConfig.field_0x8c;
 			if (0.001f < fabs(fVar5)) {
 				fVar5 = edF32Between_Pi(this->targetPitch + fVar5 * CCamera::_gpcam_man->time_0x4);
 				(this->pitchDyn).currentAlpha = fVar5;
@@ -3032,9 +3273,9 @@ void CCameraGame::_After_Manage_Alpha()
 			}
 		}
 		else {
-			if (((this->field_0x1b0 & 0x180) == 0) && (((this->cameraConfig).flags_0x70 & 0x1000008) == 0)) {
-				if (((this->cameraConfig).flags & 8) == 0) {
-					(this->cameraConfig).targetPitch = (this->cameraConfig).baseTargetPitch;
+			if (((this->field_0x1b0 & 0x180) == 0) && ((this->cameraConfig.flags_0x70 & 0x1000008) == 0)) {
+				if ((this->cameraConfig.flags & 8) == 0) {
+					this->cameraConfig.targetPitch = this->cameraConfig.baseTargetPitch;
 				}
 				else {
 					pHero = (CActorHero*)0x0;
@@ -3058,22 +3299,22 @@ void CCameraGame::_After_Manage_Alpha()
 						((pHero != (CActorHero*)0x0 && (bVar1 = pHero->TestState_IsInCheatMode(), bVar1 != false)))) {
 						if ((pHero != (CActorHero*)0x0) && (uVar4 = pHero->TestState_IsInTheWind(0xffffffff), uVar4 != 0)) {
 							fVar6 = edFIntervalLERP(this->field_0xd0->dynamic.speed, 3.0f, 6.0f, 0.01f, 0.8f);
-							fVar7 = (this->cameraConfig).targetPitch;
-							(this->cameraConfig).targetPitch = fVar7 + fVar6 * (1.047198f - fVar7);
+							fVar7 = this->cameraConfig.targetPitch;
+							this->cameraConfig.targetPitch = fVar7 + fVar6 * (1.047198f - fVar7);
 							this->field_0x240 = fVar5;
 							this->field_0x250 = this->lookAt.y;
 						}
 					}
 					else {
-						if ((((this->cameraConfig).flags & 0x20) == 0) &&
-							((uVar4 = (this->cameraConfig).flags_0x70, (uVar4 & 4) == 0 || ((uVar4 & 0x800000) != 0)))) {
+						if (((this->cameraConfig.flags & 0x20) == 0) &&
+							((uVar4 = this->cameraConfig.flags_0x70, (uVar4 & 4) == 0 || ((uVar4 & 0x800000) != 0)))) {
 							this->field_0x244 = 1.0472f;
 							this->pitchAlpha = 0.2617994f;
 							this->field_0x24c = 0.0f;
 							this->field_0x240 = fVar5;
 							this->field_0x250 = this->lookAt.y;
-							fVar5 = (this->cameraConfig).targetPitch;
-							(this->cameraConfig).targetPitch = fVar5 + ((this->cameraConfig).baseTargetPitch - fVar5) * 0.025f;
+							fVar5 = this->cameraConfig.targetPitch;
+							this->cameraConfig.targetPitch = fVar5 + (this->cameraConfig.baseTargetPitch - fVar5) * 0.025f;
 						}
 						else {
 							this->field_0x240 = fVar5;
@@ -3101,11 +3342,11 @@ void CCameraGame::_After_Manage_Alpha()
 
 							fVar5 = this->field_0x244 - 0.08726646f;
 							this->field_0x244 = fVar5;
-							fVar6 = (this->cameraConfig).baseTargetPitch;
+							fVar6 = this->cameraConfig.baseTargetPitch;
 
 							if (fVar5 <= fVar6 - 0.08726646f) {
 								fVar5 = edFIntervalLERP(this->pitchAlpha, 0.2617994f, 1.0472f, fVar6, 1.0472f);
-								(this->cameraConfig).targetPitch = fVar5;
+								this->cameraConfig.targetPitch = fVar5;
 								this->field_0x244 = 1.0472f;
 								this->pitchAlpha = 0.2617994f;
 								this->field_0x24c = 0.0f;
@@ -3134,7 +3375,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 
 	if (((this->mode_0x1bc == 3) || (this->mode_0x1bc == 4)) ||
 		(EVar1 = GetMode(), EVar1 != CT_Main)) {
-		fVar5 = (this->cameraConfig).field_0x58.y;
+		fVar5 = this->cameraConfig.field_0x58.y;
 		fVar4 = 0.25f;
 
 		if (this->field_0x208 < fVar5) {
@@ -3145,7 +3386,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 			this->field_0x208 = fVar4;
 		}
 		else {
-			fVar5 = (this->cameraConfig).field_0x58.z;
+			fVar5 = this->cameraConfig.field_0x58.z;
 			fVar4 = 0.25f;
 
 			if (fVar5 < this->field_0x208) {
@@ -3157,7 +3398,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 		}
 	}
 	else {
-		fVar5 = (this->cameraConfig).field_0x58.z;
+		fVar5 = this->cameraConfig.field_0x58.z;
 		fVar4 = 0.25f;
 		if (fVar5 < this->field_0x208) {
 			if (0.25f <= fVar5) {
@@ -3166,7 +3407,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 			this->field_0x208 = fVar4;
 		}
 		else {
-			fVar5 = (this->cameraConfig).field_0x58.y;
+			fVar5 = this->cameraConfig.field_0x58.y;
 			fVar4 = 0.25f;
 			if (this->field_0x208 < fVar5) {
 				if (0.25f <= fVar5) {
@@ -3175,8 +3416,8 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 				this->field_0x208 = fVar4;
 			}
 			else {
-				puVar3 = &(this->cameraConfig).flags_0x70;
-				if (((this->cameraConfig).flags & 0x10) == 0) {
+				puVar3 = &this->cameraConfig.flags_0x70;
+				if ((this->cameraConfig.flags & 0x10) == 0) {
 					*puVar3 = *puVar3 & 0xfffffff7;
 				}
 				else {
@@ -3193,7 +3434,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 				pAVar2 = (Actor*)GetTarget();
 				ActorFunc_00115650(pAVar2, 0);)
 
-				if (((this->cameraConfig).flags & 4) == 0) {
+				if ((this->cameraConfig.flags & 4) == 0) {
 					*puVar3 = *puVar3 & 0xfffffffb;
 				}
 				else {
@@ -3206,7 +3447,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 		}
 	}
 
-	fVar5 = (this->cameraConfig).field_0x58.z;
+	fVar5 = this->cameraConfig.field_0x58.z;
 	fVar4 = this->field_0x208;
 	if (fVar5 < fVar4) {
 		fVar4 = 0.25f;
@@ -3287,11 +3528,11 @@ void CCameraGame::InitFromConfig(CAMERA_CONFIG* pConfig)
 
 	this->fov = this->cameraConfig.field_0x18;
 	SetTarget(this->cameraConfig.pActorRefA.Get());
-	(this->cameraConfig).flags_0x70 = 0;
+	this->cameraConfig.flags_0x70 = 0;
 	this->field_0x1ac = 0;
 	this->field_0x1b0 = 0;
 	this->field_0x1b4 = 0;
-	puVar4 = &(this->cameraConfig).flags_0x70;
+	puVar4 = &this->cameraConfig.flags_0x70;
 
 	if ((this->cameraConfig.flags & 0x100) == 0) {
 		bVar1 = this->cameraConfig.field_0x38.w != 0.0f;
@@ -3396,9 +3637,9 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 		}
 	}
 
-	fVar7 = (this->cameraConfig).field_0x58.x;
+	fVar7 = this->cameraConfig.field_0x58.x;
 	if (this->field_0x208 < fVar7 - 0.001f) {
-		fVar5 = edFIntervalUnitDstLERP(this->field_0x208, (this->cameraConfig).field_0x58.y, fVar7);
+		fVar5 = edFIntervalUnitDstLERP(this->field_0x208, this->cameraConfig.field_0x58.y, fVar7);
 		v0->x = v0->x * fVar5;
 		v0->z = v0->z * fVar5;
 	}
@@ -3407,7 +3648,7 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 		fVar5 = 1.0f;
 	}
 	else {
-		if (this->field_0x208 < (this->cameraConfig).field_0x58.x - 0.001f) {
+		if (this->field_0x208 < this->cameraConfig.field_0x58.x - 0.001f) {
 			fVar5 = edFIntervalUnitSrcLERP(fVar5, 0.5f, 0.05f);
 		}
 		else {
@@ -3415,7 +3656,7 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 		}
 
 		EVar1 = GetMode();
-		if ((((EVar1 == CT_Main) && (v0->y = v0->y - 0.15f, ((this->cameraConfig).flags & 0x20000) != 0)) &&
+		if ((((EVar1 == CT_Main) && (v0->y = v0->y - 0.15f, (this->cameraConfig.flags & 0x20000) != 0)) &&
 			((this->modeFlags & 1) != 0)) && ((this->modeFlags & 2) == 0)) {
 			v0->x = 0.0f;
 			v0->z = 0.0f;
@@ -3504,7 +3745,7 @@ bool CCameraGame::Manage()
 					this->field_0x1ec = (CActorHeroPrivate*)0x0;
 				}
 
-				pFlag = &(this->cameraConfig).flags_0x70;
+				pFlag = &this->cameraConfig.flags_0x70;
 				if (pActorB->curBehaviourId == 8) {
 					*pFlag = *pFlag | 0x2000000;
 				}
@@ -3605,8 +3846,8 @@ bool CCameraGame::Manage()
 
 			edF32Vector4SubHard(&vectorG, &lookAt, &transformationMatrix.rowT);
 
-			pFlag = &(this->cameraConfig).flags_0x70;
-			if ((~(this->cameraConfig).flags_0x70 & 0x1000008) == 0x1000008) {
+			pFlag = &this->cameraConfig.flags_0x70;
+			if ((~this->cameraConfig.flags_0x70 & 0x1000008) == 0x1000008) {
 				vectorG.y = 0.0f;
 			}
 
@@ -3615,9 +3856,7 @@ bool CCameraGame::Manage()
 			this->transformationMatrix.rowZ = vectorG;
 			this->field_0x1b0 = this->field_0x1b0 & 0xffffffe1;
 
-			IMPLEMENTATION_GUARD_LOG(
-			_Manage_Pad(this);
-			)
+			_Manage_Pad();
 
 			if (GetMode() == CT_Main) {
 				_Normal_ManageIdle();
@@ -3670,7 +3909,7 @@ bool CCameraGame::Manage()
 				if ((*pFlag & 0x4000) == 0) {
 					floatA = -1.570796;
 					*pFlag = *pFlag | 0x4000;
-					floatB = (this->cameraConfig).field_0xbc + 0.8;
+					floatB = this->cameraConfig.field_0xbc + 0.8;
 					if (-1.570796 <= this->targetPitch) {
 						floatA = this->targetPitch;
 					}
@@ -3695,7 +3934,7 @@ bool CCameraGame::Manage()
 				if ((*pFlag & 0x8000) == 0) {
 					floatA = -1.570796;
 					*pFlag = *pFlag | 0x8000;
-					floatB = (this->cameraConfig).field_0xbc + 0.8;
+					floatB = this->cameraConfig.field_0xbc + 0.8;
 					if (-1.570796 <= this->targetPitch) {
 						floatA = this->targetPitch;
 					}
@@ -3724,15 +3963,15 @@ bool CCameraGame::Manage()
 							floatA = this->cameraConfig.field_0x48.y;
 							this->field_0x1b0 = this->field_0x1b0 | 0x20;
 							this->field_0x1b0 = this->field_0x1b0 & 0xffffffbf;
-							(this->cameraConfig).field_0xac = floatA * -1.0;
-							(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.z;
+							this->cameraConfig.field_0xac = floatA * -1.0;
+							this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 						}
 						if (((*pFlag & 0x200) != 0) && ((*pFlag & 0x400) == 0)) {
 							floatA = this->cameraConfig.field_0x48.y;
 							this->field_0x1b0 = this->field_0x1b0 | 0x40;
 							this->field_0x1b0 = this->field_0x1b0 & 0xffffffdf;
-							(this->cameraConfig).field_0xac = floatA * 1.0;
-							(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.z;
+							this->cameraConfig.field_0xac = floatA * 1.0;
+							this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 						}
 					}
 					if ((this->field_0x1b0 & 0x60) != 0) {
@@ -3756,7 +3995,7 @@ bool CCameraGame::Manage()
 					if ((*pFlag & 0x4000) == 0) {
 						floatA = -1.570796f;
 						*pFlag = *pFlag | 0x4000;
-						floatB = (this->cameraConfig).field_0xbc + 0.8f;
+						floatB = this->cameraConfig.field_0xbc + 0.8f;
 						if (-1.570796f <= this->targetPitch) {
 							floatA = this->targetPitch;
 						}
@@ -3782,7 +4021,7 @@ bool CCameraGame::Manage()
 					if ((*pFlag & 0x8000) == 0) {
 						floatA = -1.570796f;
 						*pFlag = *pFlag | 0x8000;
-						floatB = (this->cameraConfig).field_0xbc + 0.8f;
+						floatB = this->cameraConfig.field_0xbc + 0.8f;
 						if (-1.570796f <= this->targetPitch) {
 							floatA = this->targetPitch;
 						}
@@ -3809,19 +4048,19 @@ bool CCameraGame::Manage()
 					if ((uVar4 & 0x40) != 0) {
 						if (((uVar4 & 0x10) == 0) && ((this->field_0x1b0 & 1) == 0)) {
 							if (((uVar4 & 0x400) != 0) && ((uVar4 & 0x200) == 0)) {
-								floatA = (this->cameraConfig).field_0x48.y;
+								floatA = this->cameraConfig.field_0x48.y;
 								this->field_0x1b0 = this->field_0x1b0 | 0x20;
 								this->field_0x1b0 = this->field_0x1b0 & 0xffffffbf;
-								(this->cameraConfig).field_0xac = floatA * -1.0f;
-								(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.z;
+								this->cameraConfig.field_0xac = floatA * -1.0f;
+								this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 							}
 
 							if (((*pFlag & 0x200) != 0) && ((*pFlag & 0x400) == 0)) {
-								floatA = (this->cameraConfig).field_0x48.y;
+								floatA = this->cameraConfig.field_0x48.y;
 								this->field_0x1b0 = this->field_0x1b0 | 0x40;
 								this->field_0x1b0 = this->field_0x1b0 & 0xffffffdf;
-								(this->cameraConfig).field_0xac = floatA * 1.0f;
-								(this->cameraConfig).field_0xb0 = (this->cameraConfig).field_0x48.z;
+								this->cameraConfig.field_0xac = floatA * 1.0f;
+								this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 							}
 						}
 
@@ -3850,7 +4089,7 @@ bool CCameraGame::Manage()
 						if ((*pFlag & 0x4000) == 0) {
 							floatA = -1.570796f;
 							*pFlag = *pFlag | 0x4000;
-							floatB = (this->cameraConfig).field_0xbc + 0.8f;
+							floatB = this->cameraConfig.field_0xbc + 0.8f;
 
 							if (-1.570796f <= this->targetPitch) {
 								floatA = this->targetPitch;
@@ -3879,7 +4118,7 @@ bool CCameraGame::Manage()
 						if ((*pFlag & 0x8000) == 0) {
 							floatA = -1.570796f;
 							*pFlag = *pFlag | 0x8000;
-							floatB = (this->cameraConfig).field_0xbc + 0.8f;
+							floatB = this->cameraConfig.field_0xbc + 0.8f;
 
 							if (-1.570796f <= this->targetPitch) {
 								floatA = this->targetPitch;
@@ -3913,16 +4152,16 @@ bool CCameraGame::Manage()
 									floatA = this->cameraConfig.field_0x48.y;
 									this->field_0x1b0 = this->field_0x1b0 | 0x20;
 									this->field_0x1b0 = this->field_0x1b0 & 0xffffffbf;
-									(this->cameraConfig).field_0xac = floatA * -1.0f;
-									(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.z;
+									this->cameraConfig.field_0xac = floatA * -1.0f;
+									this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 								}
 
 								if (((*pFlag & 0x200) != 0) && ((*pFlag & 0x400) == 0)) {
 									floatA = this->cameraConfig.field_0x48.y;
 									this->field_0x1b0 = this->field_0x1b0 | 0x40;
 									this->field_0x1b0 = this->field_0x1b0 & 0xffffffdf;
-									(this->cameraConfig).field_0xac = floatA * 1.0f;
-									(this->cameraConfig).field_0xb0 = this->cameraConfig.field_0x48.z;
+									this->cameraConfig.field_0xac = floatA * 1.0f;
+									this->cameraConfig.field_0xb0 = this->cameraConfig.field_0x48.z;
 								}
 							}
 

@@ -228,6 +228,9 @@ namespace Hero
 		case STATE_HERO_COL_WALL:
 			return "StateHeroColWall";
 			break;
+		case STATE_HERO_COL_WALL_DEAD:
+			return "StateHeroColWallDead";
+			break;
 		case STATE_HERO_KICK_A:
 			return "StateHeroKickA";
 			break;
@@ -521,6 +524,9 @@ namespace Hero
 			break;
 		case STATE_HERO_MOUNT_HIT_A:
 			return "StateHeroMountHitA";
+			break;
+		case STATE_HERO_MOUNT_FALL:
+			return "StateHeroMountFall";
 			break;
 		case STATE_HERO_MOUNT_STAND_IDLE_KICK:
 			return "StateHeroMountStandIdleKick";

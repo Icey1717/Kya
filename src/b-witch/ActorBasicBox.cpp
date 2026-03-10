@@ -258,14 +258,13 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						}
 						break;
 					case 7:
-						IMPLEMENTATION_GUARD(
 						if ((this->field_0x180 & 0x40) != 0) {
-							FUN_00114fc0(pHitParam->damage);
+							this->lifeBase.LifeDecrease(pHitParam->damage);
 							if (lifeBase.GetValue() <= 1.0f) {
-								peVar1 = pHitParam->field_0x40;
+								peVar1 = &pHitParam->field_0x40;
 								if ((this->field_0x180 & 1) != 0) {
 									if ((this->flags & 0x1000) != 0) {
-										SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
+										SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
 									}
 
 									edF32Vector4SubHard(&eStack80, &this->currentLocation, peVar1);
@@ -276,7 +275,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 										this->rotationQuat = local_60;
 
 										if ((this->flags & 0x1000) != 0) {
-											GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+											GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 										}
 									}
 								}
@@ -286,16 +285,14 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 								return 1;
 							}
 
-							result = FUN_0038ce50((int)this, (edF32VECTOR4*)&this->field_0x290, &pHitParam->field_0x40, 0);
-							if (result != 0) {
+							if (FUN_0038ce50(&this->field_0x290, &pHitParam->field_0x40, 0) != false) {
 								(this->vibrationDyn).field_0x40 = this->field_0x170;
-								FUN_00116a00(pHitParam->field_0x30, (float*)&this->vibrationDyn,
-									(edF32VECTOR4*)&this->field_0x290, &pHitParam->field_0x40);
+								this->vibrationDyn.UpdateAllFactors(pHitParam->field_0x30, &this->field_0x290, &pHitParam->field_0x40);
 								SetState(6, -1);
 
 								return 1;
 							}
-						})
+						}
 						break;
 					case 8:
 						if ((this->field_0x180 & 4) != 0) {
@@ -544,6 +541,56 @@ void CActorBasicBox::ApplyHit(_msg_hit_param** ppHitParam)
 	SetState(6, -1);
 
 	return;
+}
+
+bool CActorBasicBox::FUN_0038ce50(edF32VECTOR4* pOutRotation, edF32VECTOR4* param_3, bool param_4)
+{
+	bool bVar1;
+	edF32VECTOR4* peVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	local_20 = this->currentLocation;
+	peVar2 = GetBottomPosition();
+	local_20.y = local_20.y + (peVar2->y - this->currentLocation.y) / 2.0f;
+	edF32Vector4SubHard(&eStack16, &local_20, param_3);
+	edF32Vector4NormalizeHard(&eStack16, &eStack16);
+	fVar3 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack16);
+	local_30.x = this->rotationQuat.z;
+	local_30.y = 0.0f;
+	local_30.z = -this->rotationQuat.x;
+	local_30.w = 0.0f;
+	fVar4 = edF32Vector4DotProductHard(&local_30, &eStack16);
+	edF32Vector4CrossProductHard(&eStack64, &local_30, &this->rotationQuat);
+	edF32Vector4GetNegHard(&eStack64, &eStack64);
+	fVar5 = edF32Vector4DotProductHard(&eStack64, &eStack16);
+	if (fabsf(fVar4) < fVar3) {
+		*pOutRotation = this->rotationQuat;
+	}
+
+	if (fVar3 < -fabsf(fVar4)) {
+		edF32Vector4GetNegHard(pOutRotation, &this->rotationQuat);
+	}
+
+	if (fabsf(fVar3) < fVar4) {
+		*pOutRotation = local_30;
+	}
+
+	if (fVar4 < -fabsf(fVar3)) {
+		edF32Vector4GetNegHard(pOutRotation, &local_30);
+	}
+
+	if (((param_4 == false) || (fabsf(fVar5) <= fabsf(fVar3))) ||
+		(bVar1 = false, fabsf(fVar5) <= fabsf(fVar4))) {
+		bVar1 = true;
+	}
+
+	return bVar1;
 }
 
 StateConfig CActorBasicBox::_gStateCfg_BAB[4] = {

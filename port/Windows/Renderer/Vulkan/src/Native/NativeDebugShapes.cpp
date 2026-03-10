@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 #include <vector>
@@ -40,9 +41,6 @@ namespace Renderer
 			static glm::mat4 gLastModelMatrix = glm::mat4(1.0f);
 			static bool gHasLastModelMatrix = false;
 			static bool gHasInitialViewProjection = false;
-
-			static bool gCollisionLinesEnabled = false;
-		static bool gActorObbEnabled = false;
 
 			static void PushLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color)
 			{
@@ -138,9 +136,6 @@ namespace Renderer
 
 			void AddLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color)
 			{
-				if (!gCollisionLinesEnabled) {
-					return;
-				}
 				PushLine(start, end, color);
 			}
 
@@ -149,17 +144,8 @@ namespace Renderer
 				AddLine(glm::vec3(sx, sy, sz), glm::vec3(ex, ey, ez), glm::vec4(r, g, b, a));
 			}
 
-			bool& GetCollisionLinesEnabled()
-			{
-				return gCollisionLinesEnabled;
-			}
-
 			void AddOBB(const float* mat, float hw, float hh, float hd, float r, float g, float b, float a)
 			{
-				if (!gActorObbEnabled) {
-					return;
-				}
-
 				// mat layout: rowX[0..3], rowY[4..7], rowZ[8..11], rowT[12..15]
 				const glm::vec3 axisX(mat[0], mat[1], mat[2]);
 				const glm::vec3 axisY(mat[4], mat[5], mat[6]);
@@ -199,22 +185,38 @@ namespace Renderer
 				PushLine(corners[3], corners[7], color);
 			}
 
-			bool& GetActorObbEnabled()
-			{
-				return gActorObbEnabled;
-			}
-
 			uint32_t GetLineCount()
 			{
 				return gDebugLineVertexCount / 2;
 			}
 
-			void AddActorLine(float sx, float sy, float sz, float ex, float ey, float ez, float r, float g, float b, float a)
+			void AddSphere(const glm::vec3& center, float radius, const glm::vec4& color)
 			{
-				if (!gActorObbEnabled) {
-					return;
+				constexpr int kSegments = 32;
+				constexpr float kStep = 2.0f * 3.14159265358979323846f / kSegments;
+
+				// Draw 3 great circles: XY, XZ, YZ planes
+				for (int i = 0; i < kSegments; ++i) {
+					const float a0 = kStep * i;
+					const float a1 = kStep * (i + 1);
+					const float c0 = std::cos(a0), s0 = std::sin(a0);
+					const float c1 = std::cos(a1), s1 = std::sin(a1);
+
+					// XY plane
+					PushLine(center + glm::vec3(radius * c0, radius * s0, 0.0f),
+					         center + glm::vec3(radius * c1, radius * s1, 0.0f), color);
+					// XZ plane
+					PushLine(center + glm::vec3(radius * c0, 0.0f, radius * s0),
+					         center + glm::vec3(radius * c1, 0.0f, radius * s1), color);
+					// YZ plane
+					PushLine(center + glm::vec3(0.0f, radius * c0, radius * s0),
+					         center + glm::vec3(0.0f, radius * c1, radius * s1), color);
 				}
-				PushLine(glm::vec3(sx, sy, sz), glm::vec3(ex, ey, ez), glm::vec4(r, g, b, a));
+			}
+
+			void AddSphere(float cx, float cy, float cz, float radius, float r, float g, float b, float a)
+			{
+				AddSphere(glm::vec3(cx, cy, cz), radius, glm::vec4(r, g, b, a));
 			}
 
 			void CreatePipeline(const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)

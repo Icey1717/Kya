@@ -49,8 +49,10 @@ float CCollisionRay::Intersect(uint type, CActor* pActor, CActor* pOther, uint f
 	COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect type: {} actor: {} other: {} flags: 0x{:x}", 
 		type, pActor ? pActor->name : "None", pOther ? pOther->name : "None", flags);
 
+#ifdef PLATFORM_WIN
 	const edF32VECTOR4 rayEnd = *this->pLocation + *this->pLeadVector * this->lengthB.x;
-	DebugDraw::AddLine(*this->pLocation, rayEnd, 1.0f, 1.0f, 0.0f, 1.0f);
+	DebugDraw::AddRay(*this->pLocation, rayEnd, 1.0f, 1.0f, 0.0f, 1.0f);
+#endif
 
 	if ((type & 2) != 0) {
 		COLLISION_RAY_LOG(LogLevel::Verbose, "CCollisionRay::Intersect IntersectActors");

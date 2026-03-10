@@ -14,6 +14,9 @@
 
 #define STILLER_BEHAVIOUR_STAND 2
 
+#define STILLER_STAND_STATE_IDLE 0x5
+#define STILLER_STAND_STATE_ATTACK 0x8
+
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 class CActorStiller;
@@ -59,7 +62,10 @@ public:
 
 	void BehaviourStillerStand_InitState(int newState);
 	void BehaviourStillerStand_Manage();
-	void BehaviourStillerStand_TermState(int oldState);	
+	void BehaviourStillerStand_TermState(int oldState);
+
+	bool CheckDetectArea();
+	bool CheckAttackArea();
 
 	CVision vision;
 
@@ -95,7 +101,7 @@ public:
 
 	int field_0x214;
 
-	undefined4 field_0x25c;
+	CActor* pTarget;
 };
 
 #endif //ACTOR_STILLER_H

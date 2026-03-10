@@ -37,6 +37,7 @@ struct CCameraGame : public CCameraExt
 	void SlowHorizontalCameraPan();
 	void SlowVerticalCameraPan();
 
+	void _Manage_Pad();
 	float _Manage_TargetPos(edF32VECTOR4* v0);
 	void _UpdateCameraData(edF32VECTOR4* translation);
 	void _Toboggan_UpdateCameraData();

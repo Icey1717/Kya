@@ -385,6 +385,8 @@ public:
 	void StateBoomyTerm();
 
 	void StateHeroFall(float param_1, int param_3);
+
+	void StateHeroDeadInit();
 	void StateHeroDead(float time);
 
 	void StateHeroColWall();
@@ -437,6 +439,8 @@ public:
 
 	void BuildHorizontalSpeedVector(float runSpeed, float param_2, float param_3, float param_4, float param_5);
 	void ConvertSpeedSumForceExtToSpeedPlayer2D();
+
+	void ChangeCollisionSphereForDeath(float param_2);
 
 	void RestoreVerticalOrientation();
 

@@ -7,19 +7,75 @@
 
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
+#include "CollisionManager.h"
 #include "InputManager.h"
 #include "SectorManager.h"
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor/DebugActorBehaviour.h"
 #include "LevelScheduler.h"
+#include "Native/NativeDebugShapes.h"
 
 namespace Debug {
 	namespace Hero {
 		Debug::Setting<std::string> gLastCheckpoint("Last Chekpoint", "");
 		Debug::Setting<bool> gInvincible("Invincible", false);
 
+		static Setting<bool> gShowCollisionContacts("Hero: Show Collision Contacts", false);
+		static Setting<std::array<float, 4>> gContactColFloor  ("Hero Contact Color: Floor",   { 0.0f, 1.0f, 0.0f, 1.0f });
+		static Setting<std::array<float, 4>> gContactColWall   ("Hero Contact Color: Wall",    { 1.0f, 0.5f, 0.0f, 1.0f });
+		static Setting<std::array<float, 4>> gContactColCeiling("Hero Contact Color: Ceiling", { 0.0f, 0.5f, 1.0f, 1.0f });
+
+		static constexpr float kNormalLineLength = 0.5f;
+		static constexpr float kContactSphereRadius = 0.05f;
+
 		constexpr int nbCheckpointMaxActors = 0x600;
+
+		void DrawCollisionContacts()
+		{
+			if (!gShowCollisionContacts) {
+				return;
+			}
+
+			CActorHeroPrivate* pHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
+			if (!pHero || !pHero->pCollisionData) {
+				return;
+			}
+
+			static constexpr std::array<float, 4> kColors[3] = {
+				{ 0.0f, 1.0f, 0.0f, 1.0f }, // floor   (overridden by settings below)
+				{ 1.0f, 0.5f, 0.0f, 1.0f }, // wall
+				{ 0.0f, 0.5f, 1.0f, 1.0f }, // ceiling
+			};
+			const std::array<float, 4>* settingColors[3] = {
+				&gContactColFloor.get(),
+				&gContactColWall.get(),
+				&gContactColCeiling.get(),
+			};
+
+			for (int i = 0; i < 3; i++) {
+				const s_collision_contact& c = pHero->pCollisionData->aCollisionContact[i];
+				if (c.nbCollisionsA + c.nbCollisionsB == 0) {
+					continue;
+				}
+
+				const auto& col = *settingColors[i];
+				const edF32VECTOR4& pos    = c.field_0x10; // world contact position
+				const edF32VECTOR4& normal = c.location;   // surface normal
+
+				Renderer::Native::DebugShapes::AddSphere(
+					pos.x, pos.y, pos.z,
+					kContactSphereRadius,
+					col[0], col[1], col[2], col[3]);
+
+				Renderer::Native::DebugShapes::AddLine(
+					pos.x, pos.y, pos.z,
+					pos.x + normal.x * kNormalLineLength,
+					pos.y + normal.y * kNormalLineLength,
+					pos.z + normal.z * kNormalLineLength,
+					col[0], col[1], col[2], col[3]);
+			}
+		}
 
 		void ShowCheckpointMenu()
 		{
@@ -238,6 +294,28 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 			if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
 				ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
+			}
+
+			ImGui::Separator();
+			gShowCollisionContacts.DrawImguiControl();
+			if (gShowCollisionContacts) {
+				gContactColFloor.DrawImguiControl();
+				gContactColWall.DrawImguiControl();
+				gContactColCeiling.DrawImguiControl();
+
+				ImGui::Spacing();
+				static constexpr const char* kContactNames[3] = { "Floor", "Wall", "Ceiling" };
+				for (int i = 0; i < 3; i++) {
+					const s_collision_contact& c = pActorHero->pCollisionData->aCollisionContact[i];
+					ImGui::PushID(i);
+					if (ImGui::CollapsingHeader(kContactNames[i])) {
+						ImGui::Text("Collisions: actor=%d scenery=%d", c.nbCollisionsA, c.nbCollisionsB);
+						ImGui::Text("Material Flags: 0x%x", c.materialFlags);
+						DebugHelpers::ImGui::TextVector4("Normal", c.location);
+						DebugHelpers::ImGui::TextVector4("Position", c.field_0x10);
+					}
+					ImGui::PopID();
+				}
 			}
 		}
 

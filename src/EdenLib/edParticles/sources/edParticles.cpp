@@ -5057,7 +5057,6 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																	}
 																}
 																else {
-																	IMPLEMENTATION_GUARD(
 																	pCurParticle = pParticle + startIndex;
 																	pCurRawVector = pRawVectors + startIndex;
 																	for (; startIndex < endIndex; startIndex = startIndex + 1) {
@@ -5070,25 +5069,15 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 																			ParticleC(local_770, fVar27);
 																			TransformUVs(pfVar23, local_770, uv0, uv1, uv2, uv3);
 
-																			uVar26 = pCurParticle->field_0x8;
-																			rgbaColor[0] = (((uVar26 >> 0x18) * (uint) * (byte*)&pCurParticle->field_0xc >> 8) *
-																				alphaMultiplier >> 8) << 0x18;
-																			rgbaColor[0] = rgbaColor[0] |
-																				CONCAT12((char)((uVar26 >> 0x10 & 0xff) *
-																					(uint) * (byte*)&pCurParticle->field_0x12 >> 8),
-																					CONCAT11((char)((uVar26 >> 8 & 0xff) *
-																						(uint)pCurParticle->field_0xf >> 8),
-																						(char)((uVar26 & 0xff) *
-																							(uint) * (byte*)&pCurParticle->field_0xe >> 8)));
-																			height = gParticleSizeScale * pCurParticle->field_0x24 * (float)(uint)pCurParticle->field_0x4 *
-																				0.5;
+																			ParticleColorA(rgbaColor, pCurParticle, alphaMultiplier);
+																			
+																			height = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->field_0x4 * 0.5f;
 																			width = height * aspectRatio;
-																			edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3,
-																				&rgbaColor[0], (undefined8*)pCurRawVector);
+																			edDlistPartVertex(width, height, &uv0, &uv1, &uv2, &uv3, rgbaColor, pCurRawVector);
 																		}
 																		pCurParticle = pCurParticle + 1;
 																		pCurRawVector = pCurRawVector + 1;
-																	})
+																	}
 																}
 															}
 															else {

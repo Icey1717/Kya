@@ -53,6 +53,10 @@ void Debug::Input::ShowMenu(bool* bOpen)
 			{ "L-Analog Down", ROUTE_L_ANALOG_DOWN },
 			{ "L-Analog Left", ROUTE_L_ANALOG_LEFT },
 			{ "L-Analog Right", ROUTE_L_ANALOG_RIGHT },
+			{ "R-Analog Up", ROUTE_R_ANALOG_UP },
+			{ "R-Analog Down", ROUTE_R_ANALOG_DOWN },
+			{ "R-Analog Left", ROUTE_R_ANALOG_LEFT },
+			{ "R-Analog Right", ROUTE_R_ANALOG_RIGHT },
 		};
 
 		for (const auto& button : buttons)
@@ -101,6 +105,23 @@ void Debug::Input::ShowMenu(bool* bOpen)
 
 	ImGui::Text("Y-Axis: %.2f", leftY);
 	ImGui::ProgressBar((leftY + 1.0f) * 0.5f, ImVec2(-1.0f, 0.0f));
+
+	ImGui::Text("Right Analog Stick");
+	ImGui::Spacing();
+
+	leftRight = pPadD[ROUTE_R_ANALOG_RIGHT].analogValue;
+	leftLeft = pPadD[ROUTE_R_ANALOG_LEFT].analogValue;
+	leftDown = pPadD[ROUTE_R_ANALOG_DOWN].analogValue;
+	leftUp = pPadD[ROUTE_R_ANALOG_UP].analogValue;
+
+	float rightX = leftRight - leftLeft;
+	float rightY = leftDown - leftUp;
+
+	ImGui::Text("X-Axis: %.2f", rightX);
+	ImGui::ProgressBar((rightX + 1.0f) * 0.5f, ImVec2(-1.0f, 0.0f));
+
+	ImGui::Text("Y-Axis: %.2f", rightY);
+	ImGui::ProgressBar((rightY + 1.0f) * 0.5f, ImVec2(-1.0f, 0.0f));
 
 	ImGui::Spacing();
 	ImGui::Text("Raw values:");

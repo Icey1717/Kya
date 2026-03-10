@@ -679,6 +679,25 @@ void CActorJamGut::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTab
 	return;
 }
 
+void CActorJamGut::SetRestartWaypoint(CWayPoint* pWayPoint, uint param_3)
+{
+	if (pWayPoint != (CWayPoint*)0x0) {
+		this->field_0x5d0.xyz = pWayPoint->location;
+		(this->field_0x5d0).w = 1.0f;
+		this->field_0x5e0 = pWayPoint->rotation;
+		this->field_0x5ec = 0;
+
+		if (param_3 != 0) {
+			this->field_0x5b0.xyz = pWayPoint->location;
+			(this->field_0x5b0).w = 1.0f;
+			this->field_0x5c0 = pWayPoint->rotation;
+			this->field_0x5cc = 0;
+		}
+	}
+
+	return;
+}
+
 CActorWindState* CActorJamGut::GetWindState()
 {
 	return &this->field_0x3b0;
@@ -3403,8 +3422,6 @@ bool CActorJamGut::FUN_00376710()
 
 	return bVar3;
 }
-
-
 
 void CBehaviourJamGut::Create(ByteCode* pByteCode)
 {

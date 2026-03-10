@@ -822,6 +822,7 @@ public:
 
 	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
 	void InputPunch(uint cmd);
+	bool InputToFar();
 	void FlushInput();
 	void UpdateFightContext(CFightContext* pFightContext);
 	void ManageWFigState(uint commandId);

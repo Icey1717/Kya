@@ -56,6 +56,8 @@ public:
 
 	void ApplyHit(_msg_hit_param** ppHitParam);
 
+	bool FUN_0038ce50(edF32VECTOR4* pOutRotation, edF32VECTOR4* param_3, bool param_4);
+
 	static StateConfig _gStateCfg_BAB[BASIC_BOX_STATE_COUNT];
 
 	CActorAlternateModel actorAlternateModel;
@@ -84,6 +86,8 @@ public:
 	int field_0x190;
 	int field_0x194;
 	int field_0x198;
+
+	edF32VECTOR4 field_0x290;
 
 	float field_0x2e0;
 };

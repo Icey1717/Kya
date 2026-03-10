@@ -1373,7 +1373,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 					if (msg == 3) {
 						if (pSender->typeID == JAMGUT) {
-							if ((GetBehaviour(WOLFEN_BEHAVIOUR_AVOID) != (CBehaviour*)0x0) && (this->curBehaviourId != WOLFEN_BEHAVIOUR_AVOID)) {
+							if ((GetBehaviour(WOLFEN_BEHAVIOUR_AVOID) != (CBehaviour*)0x0) && (this->curBehaviourId != FIGHTER_BEHAVIOUR_PROJECTED)) {
 								CBehaviourAvoid* pAvoid = (CBehaviourAvoid*)GetBehaviour(WOLFEN_BEHAVIOUR_AVOID);
 								pAvoid->GetHitParams(&_Stack144, pSender);
 								pSender->DoMessage(this, MESSAGE_KICKED, &_Stack144);
@@ -9811,8 +9811,7 @@ void CBehaviourFighterWolfen::Manage()
 
 			iVar7 = pWolfen->actorState;
 			if (iVar7 == WOLFEN_STATE_BREAK_OBJECT) {
-				IMPLEMENTATION_GUARD(
-				CActorWolfen::FUN_0035eac0(pWolfen);)
+				pWolfen->StateWolfenBreakObject();
 			}
 			else {
 				if (iVar7 == 0xad) {
@@ -10211,6 +10210,70 @@ void CBehaviourFighterWolfen::InputPunch(uint cmd)
 	}
 
 	return;
+}
+
+bool CBehaviourFighterWolfen::InputToFar()
+{
+	bool bVar1;
+	edF32VECTOR4* v1;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4 eStack96;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 local_10;
+	CActorWolfen* pWolfen;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	fVar6 = pWolfen->field_0x4cc;
+	fVar4 = pWolfen->field_0xbf0;
+	v1 = pWolfen->GetAdversaryPos();
+	edF32Vector4SubHard(&local_10, v1, &pWolfen->currentLocation);
+	local_10.y = 0.0f;
+	if ((1e-05f <= fabsf(local_10.x)) || (1e-05 <= fabsf(local_10.z))) {
+		fVar5 = edF32Vector4NormalizeHard(&local_10, &local_10);
+	}
+	else {
+		edF32Vector4GetNegHard(&local_10, &this->pOwner->rotationQuat);
+		fVar5 = 0.0f;
+	}
+
+	bVar1 = pWolfen->field_0xbf0 < fVar5;
+	if (!bVar1) {
+		edF32Vector4GetNegHard(&local_10, &local_10);
+	}
+
+	if ((GetTimer()->scaledTotalTime - this->field_0x64 <= (fVar4 / fVar6) * 1.25f) || (bVar1)) {
+		movParamsOut.flags = 0;
+		movParamsIn.flags = 0;
+		movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+		movParamsIn.speed = 0.0f;
+		if ((!bVar1) && (pOwner->GetPathfinderClient()->id == -1)) {
+			edF32Vector4ScaleHard(this->pOwner->pCollisionData->pObbPrim->scale.z* 0.75f, &eStack96, &local_10);
+			edF32Vector4AddHard(&eStack96, &eStack96, &this->pOwner->currentLocation);
+			iVar3 = pWolfen->CheckDetectArea(&eStack96);
+			if (iVar3 == 2) {
+				return false;
+			}
+		}
+
+		edF32Vector4AddHard(&local_10, &local_10, &this->pOwner->currentLocation);
+		movParamsIn.flags = movParamsIn.flags | 0x110;
+		movParamsIn.rotSpeed = pWolfen->GetRunRotSpeed();
+		movParamsIn.flags = movParamsIn.flags | 2;
+		movParamsIn.acceleration = pWolfen->GetRunAcceleration();
+		movParamsIn.speed = pWolfen->GetRunSpeed();
+		movParamsIn.flags = movParamsIn.flags | 0x400;
+
+		pWolfen->SV_WLF_MoveTo(&movParamsOut, &movParamsIn, &local_10);
+		if ((movParamsOut.flags & 2) == 0) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
@@ -10846,11 +10909,9 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 							}
 							else {
 								if (param_2 == 0x2000) {
-									IMPLEMENTATION_GUARD(
-									uVar8 = FUN_001faae0((int)this);
-									if ((uVar8 & 0xff) == 0) {
-										(this->fightContext).field_0x4 = 2;
-									})
+									if (InputToFar() == false) {
+										this->fightContext.field_0x4 = 2;
+									}
 								}
 								else {
 									if (((param_2 != 0x400) && (param_2 != 0x200)) &&

@@ -179,10 +179,6 @@ void Debug::Rendering::ShowMenu(bool* bOpen)
 		VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
 	}
 
-	if (gShowCollisionRays.DrawImguiControl()) {
-		Renderer::Native::DebugShapes::GetCollisionLinesEnabled() = gShowCollisionRays;
-	}
-
 	// Button to toggle the display list viewer
 	static bool bDisplayListViewerOpen = false;
 	if (ImGui::Button("Display List Viewer")) {
@@ -202,7 +198,6 @@ void Debug::Rendering::Init()
 	ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
-	Renderer::Native::DebugShapes::GetCollisionLinesEnabled() = gShowCollisionRays;
 }
 
 bool Debug::Rendering::GetEnableEmulatedRendering()

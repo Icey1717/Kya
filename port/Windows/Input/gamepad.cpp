@@ -80,6 +80,15 @@ namespace GamepadImpl
 		case ROUTE_L_ANALOG_RIGHT:
 			return reading.LeftThumbstickX > 0.5f;
 
+		case ROUTE_R_ANALOG_UP:
+			return reading.RightThumbstickY > 0.5f;
+		case ROUTE_R_ANALOG_DOWN:
+			return reading.RightThumbstickY < -0.5f;
+		case ROUTE_R_ANALOG_LEFT:
+			return reading.RightThumbstickX < -0.5f;
+		case ROUTE_R_ANALOG_RIGHT:
+			return reading.RightThumbstickX > 0.5f;
+
 			// Triggers - treat as pressed if > 0.5
 		case ROUTE_L2:
 			return reading.LeftTrigger > 0.5f;
@@ -150,6 +159,18 @@ namespace GamepadImpl
 			return -static_cast<float>(reading.LeftThumbstickX);
 		case ROUTE_L_ANALOG_RIGHT:
 			return static_cast<float>(reading.LeftThumbstickX);
+
+			// Right analog stick return normalized values [-1.0, 1.0]
+		case ROUTE_R_ANALOG_UP:
+			return static_cast<float>(reading.RightThumbstickY);
+		case ROUTE_R_ANALOG_DOWN:
+			// Remap to positive range
+			return -static_cast<float>(reading.RightThumbstickY);
+		case ROUTE_R_ANALOG_LEFT:
+			// Remap to positive range
+			return -static_cast<float>(reading.RightThumbstickX);
+		case ROUTE_R_ANALOG_RIGHT:
+			return static_cast<float>(reading.RightThumbstickX);
 
 			// Buttons return binary [0.0 or 1.0]
 		case ROUTE_UP:

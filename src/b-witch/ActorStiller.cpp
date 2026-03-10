@@ -2,6 +2,8 @@
 #include "MemoryStream.h"
 #include "CinematicManager.h"
 #include "MathOps.h"
+#include "ActorHero.h"
+#include "EventManager.h"
 
 void CActorStiller::Create(ByteCode* pByteCode)
 {
@@ -94,7 +96,7 @@ void CActorStiller::Init()
 
 	this->lifeBase.Reset();
 
-	this->field_0x25c = 0;
+	this->pTarget = (CActor*)0x0;
 
 	this->field_0x204->Reset();
 	this->field_0x208->Reset(this);
@@ -142,7 +144,7 @@ void CActorStiller::Reset()
 
 	lifeBase.Reset();
 
-	this->field_0x25c = 0;
+	this->pTarget = (CActor*)0x0;
 
 	this->field_0x204->Reset();
 	this->field_0x208->Reset(this);
@@ -356,47 +358,45 @@ void CActorStiller::BehaviourStillerStand_Manage()
 	this->field_0x210->Manage(this);
 
 	switch (this->actorState) {
-	case 5:
-		IMPLEMENTATION_GUARD(
-		bVar3 = CheckDetectArea(this);
+	case STILLER_STAND_STATE_IDLE:
+		bVar3 = CheckDetectArea();
 		if (bVar3 != false) {
-			(*(this->pVTable)->SetState)((CActor*)this, 6, -1);
-		})
+			SetState(6, -1);
+		}
 		break;
 	case 6:
-		IMPLEMENTATION_GUARD(
-		bVar3 = CheckDetectArea(this);
+		bVar3 = CheckDetectArea();
 		if (bVar3 == false) {
-			(*(this->pVTable)->SetState)((CActor*)this, 10, -1);
+			SetState(10, -1);
 		}
 		else {
-			bVar3 = CheckAttackArea(this);
+			bVar3 = CheckAttackArea();
+
 			if (bVar3 == false) {
 				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-					(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+					SetState(7, -1);
 				}
 			}
 			else {
-				(*(this->pVTable)->SetState)((CActor*)this, 8, -1);
+				SetState(8, -1);
 			}
-		})
+		}
 		break;
 	case 7:
-		IMPLEMENTATION_GUARD(
-		bVar3 = CheckAttackArea(this);
+		bVar3 = CheckAttackArea();
 		if (bVar3 == false) {
-			bVar3 = CheckDetectArea(this);
+			bVar3 = CheckDetectArea();
 			if (bVar3 == false) {
-				(*(this->pVTable)->SetState)((CActor*)this, 10, -1);
+				SetState(10, -1);
 			}
 		}
 		else {
-			(*(this->pVTable)->SetState)((CActor*)this, 8, -1);
-		})
+			SetState(STILLER_STAND_STATE_ATTACK, -1);
+		}
 		break;
-	case 8:
+	case STILLER_STAND_STATE_ATTACK:
 		IMPLEMENTATION_GUARD(
-		ActorFunc_003d52a0((Actor*)this);)
+		StateAttack();)
 		break;
 	case 9:
 		IMPLEMENTATION_GUARD(
@@ -411,24 +411,23 @@ void CActorStiller::BehaviourStillerStand_Manage()
 			}
 		}
 		else {
-			(*(this->pVTable)->SetState)((CActor*)this, 8, -1);
+			(*(this->pVTable)->SetState)((CActor*)this, STILLER_STAND_STATE_ATTACK, -1);
 		})
 		break;
 	case 10:
-		IMPLEMENTATION_GUARD(
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			(*(this->pVTable)->SetState)((CActor*)this, 5, -1);
+			SetState(STILLER_STAND_STATE_IDLE, -1);
 		}
-		bVar3 = CheckDetectArea(this);
+		bVar3 = CheckDetectArea();
 		if (bVar3 == false) {
-			bVar3 = CheckAttackArea(this);
+			bVar3 = CheckAttackArea();
 			if (bVar3 != false) {
-				(*(this->pVTable)->SetState)((CActor*)this, 8, -1);
+				SetState(STILLER_STAND_STATE_ATTACK, -1);
 			}
 		}
 		else {
-			(*(this->pVTable)->SetState)((CActor*)this, 6, -1);
-		})
+			SetState(6, -1);
+		}
 		break;
 	case 0xb:
 		IMPLEMENTATION_GUARD(
@@ -476,6 +475,104 @@ void CActorStiller::BehaviourStillerStand_TermState(int oldState)
 		}
 	}
 	return;
+}
+
+bool CActorStiller::CheckDetectArea()
+{
+	S_ACTOR_STREAM_REF* piVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	ed_zone_3d* pZone;
+	uint fVar;
+	CEventManager* pEventManager;
+	CActor* pNewTarget;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	fVar = this->field_0x1d8;
+	if ((fVar != 0xffffffff) && (pZone = (ed_zone_3d*)0x0, fVar != 0xffffffff)) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, fVar);
+	}
+
+	pNewTarget = CActorHero::_gThis;
+	iVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
+	if (iVar2 == 1) {
+		this->pTarget = pNewTarget;
+	}
+
+	else {
+		iVar5 = 0;
+		while (true) {
+			piVar1 = this->field_0x1fc;
+			iVar4 = 0;
+			if (piVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+				iVar4 = piVar1->entryCount;
+			}
+
+			if (iVar4 <= iVar5) {
+				this->pTarget = (CActorHero*)0x0;
+				return false;
+			}
+
+			pNewTarget = this->field_0x1fc->aEntries[iVar5].Get();
+			iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pNewTarget->currentLocation, 0);
+
+			if (iVar3 == 1) break;
+
+			iVar5 = iVar5 + 1;
+		}
+
+		this->pTarget = pNewTarget;
+	}
+
+	return true;
+}
+
+bool CActorStiller::CheckAttackArea()
+{
+	S_ACTOR_STREAM_REF* pSVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	bool bVar5;
+	ed_zone_3d* pZone;
+	CEventManager* pEventManager;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	bVar5 = false;
+	if (this->field_0x1d8 != 0xffffffff) {
+		pZone = (ed_zone_3d*)0x0;
+		if (this->field_0x1dc != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x1dc);
+		}
+	}
+
+	iVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
+	if ((this->pTarget != (CActor*)0x0) && (iVar2 == 1)) {
+		bVar5 = true;
+	}
+
+	iVar4 = 0;
+	while (true) {
+		pSVar1 = this->field_0x1fc;
+		iVar3 = 0;
+		if (pSVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar3 = pSVar1->entryCount;
+		}
+
+		if (iVar3 <= iVar4) break;
+
+		iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pSVar1->aEntries[iVar4].Get()->currentLocation, 0);
+
+		if (iVar3 == 1) {
+			bVar5 = true;
+		}
+
+		iVar4 = iVar4 + 1;
+	}
+
+	return bVar5;
 }
 
 void CBehaviourStiller::Create(ByteCode* pByteCode)

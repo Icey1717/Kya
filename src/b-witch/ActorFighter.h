@@ -578,7 +578,7 @@ public:
 	bool FUN_001740a0();
 	void UpdateScale_0030ac50(edF32VECTOR3* param_2);
 
-	void PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5);
+	void PlayOrientedFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, uint hitZone, CFxHandle* pOutHandle);
 	void PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, int param_4, bool param_5);
 
 	float _GetFighterAnimationLength(int animId);

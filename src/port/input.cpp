@@ -50,21 +50,28 @@ namespace Input {
 
 		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
 		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.keyPressed(ROUTE_UP);
-
-		pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_UP);
-		pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_DOWN);
-
-		pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_LEFT);
-		pController->pPadD[ROUTE_L_ANALOG_RIGHT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_RIGHT);
-
 		pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_UP);
 		pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_DOWN);
 
+		pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_UP);
+		pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_DOWN);
+		pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_LEFT);
+		pController->pPadD[ROUTE_L_ANALOG_RIGHT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_RIGHT);
+
 		pController->pPadD[ROUTE_L_ANALOG_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_UP);
 		pController->pPadD[ROUTE_L_ANALOG_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_DOWN);
-
 		pController->pPadD[ROUTE_L_ANALOG_LEFT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_LEFT);
 		pController->pPadD[ROUTE_L_ANALOG_RIGHT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_RIGHT);
+
+		pController->pPadD[ROUTE_R_ANALOG_UP].bPressed = gInputFunctions.keyPressed(ROUTE_R_ANALOG_UP);
+		pController->pPadD[ROUTE_R_ANALOG_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_R_ANALOG_DOWN);
+		pController->pPadD[ROUTE_R_ANALOG_LEFT].bPressed = gInputFunctions.keyPressed(ROUTE_R_ANALOG_LEFT);
+		pController->pPadD[ROUTE_R_ANALOG_RIGHT].bPressed = gInputFunctions.keyPressed(ROUTE_R_ANALOG_RIGHT);
+
+		pController->pPadD[ROUTE_R_ANALOG_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_R_ANALOG_UP);
+		pController->pPadD[ROUTE_R_ANALOG_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_R_ANALOG_DOWN);
+		pController->pPadD[ROUTE_R_ANALOG_LEFT].analogValue = gInputFunctions.keyAnalog(ROUTE_R_ANALOG_LEFT);
+		pController->pPadD[ROUTE_R_ANALOG_RIGHT].analogValue = gInputFunctions.keyAnalog(ROUTE_R_ANALOG_RIGHT);
 	}
 
 	static void PollGamepad(EDDEV_PORT* pController)
@@ -114,7 +121,7 @@ namespace Input {
 			pController->pPadD[ROUTE_DOWN].bReleased = gInputFunctions.controllerReleased(ROUTE_DOWN);
 			pController->pPadD[ROUTE_UP].bReleased = gInputFunctions.controllerReleased(ROUTE_UP);
 
-
+			// Left
 			pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_UP);
 			pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_DOWN);
 			pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.controllerPressed(ROUTE_L_ANALOG_LEFT);
@@ -129,6 +136,22 @@ namespace Input {
 			pController->pPadD[ROUTE_L_ANALOG_DOWN].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_DOWN);
 			pController->pPadD[ROUTE_L_ANALOG_LEFT].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_LEFT);
 			pController->pPadD[ROUTE_L_ANALOG_RIGHT].bReleased = gInputFunctions.controllerReleased(ROUTE_L_ANALOG_RIGHT);
+
+			// Right
+			pController->pPadD[ROUTE_R_ANALOG_UP].bPressed = gInputFunctions.controllerPressed(ROUTE_R_ANALOG_UP);
+			pController->pPadD[ROUTE_R_ANALOG_DOWN].bPressed = gInputFunctions.controllerPressed(ROUTE_R_ANALOG_DOWN);
+			pController->pPadD[ROUTE_R_ANALOG_LEFT].bPressed = gInputFunctions.controllerPressed(ROUTE_R_ANALOG_LEFT);
+			pController->pPadD[ROUTE_R_ANALOG_RIGHT].bPressed = gInputFunctions.controllerPressed(ROUTE_R_ANALOG_RIGHT);
+
+			pController->pPadD[ROUTE_R_ANALOG_UP].analogValue = gInputFunctions.controllerAnalog(ROUTE_R_ANALOG_UP);
+			pController->pPadD[ROUTE_R_ANALOG_DOWN].analogValue = gInputFunctions.controllerAnalog(ROUTE_R_ANALOG_DOWN);
+			pController->pPadD[ROUTE_R_ANALOG_LEFT].analogValue = gInputFunctions.controllerAnalog(ROUTE_R_ANALOG_LEFT);
+			pController->pPadD[ROUTE_R_ANALOG_RIGHT].analogValue = gInputFunctions.controllerAnalog(ROUTE_R_ANALOG_RIGHT);
+
+			pController->pPadD[ROUTE_R_ANALOG_UP].bReleased = gInputFunctions.controllerReleased(ROUTE_R_ANALOG_UP);
+			pController->pPadD[ROUTE_R_ANALOG_DOWN].bReleased = gInputFunctions.controllerReleased(ROUTE_R_ANALOG_DOWN);
+			pController->pPadD[ROUTE_R_ANALOG_LEFT].bReleased = gInputFunctions.controllerReleased(ROUTE_R_ANALOG_LEFT);
+			pController->pPadD[ROUTE_R_ANALOG_RIGHT].bReleased = gInputFunctions.controllerReleased(ROUTE_R_ANALOG_RIGHT);
 		}
 	}
 }

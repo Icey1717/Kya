@@ -1,4 +1,5 @@
 #include "ActorHero.h"
+#include "ActorHero_Private.h"
 #include "TimeController.h"
 #include "WayPoint.h"
 #include "LevelScheduler.h"
@@ -1187,13 +1188,12 @@ void CActorHero::ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam
 		}
 	}
 
-	if (((pEventCheckpointParam->flags & 0x40000000U) != 0) && (this->curBehaviourId == 8)) {
-		IMPLEMENTATION_GUARD(
-		pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
-		pCVar2 = pCVar3[0x23].pVTable;
-		if (pCVar2 != (CBehaviourVtable*)0x0) {
-			(**(code**)(pCVar2->_vt + 0xfc))(pCVar2, pEventCheckpointParam->pWayPointB, pEventCheckpointParam->flags & 8);
-		})
+	if (((pEventCheckpointParam->flags & 0x40000000U) != 0) && (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		CBehaviourHeroRideJamGut* pCVar3 = (CBehaviourHeroRideJamGut*)GetBehaviour(this->curBehaviourId);
+		CActorJamGut* pJamGut = pCVar3->field_0x8c;
+		if (pJamGut != (CActorJamGut*)0x0) {
+			pJamGut->SetRestartWaypoint(pEventCheckpointParam->pWayPointB, pEventCheckpointParam->flags & 8);
+		}
 	}
 
 	iVar6 = 0;

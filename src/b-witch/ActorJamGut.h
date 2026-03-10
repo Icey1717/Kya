@@ -137,6 +137,7 @@ public:
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 
 	// CActorAutonomous Interface
+	virtual void SetRestartWaypoint(CWayPoint* pWayPoint, uint param_3);
 	virtual CActorWindState* GetWindState();
 	virtual float GetRunSpeed();
 

@@ -6,6 +6,7 @@
 #include "Actor/DebugActorCollision.h"
 #include "DebugSceneryCollision.h"
 #include "Native/NativeDebugShapes.h"
+#include "DebugHero.h"
 
 namespace Debug {
 	namespace Collision {
@@ -51,6 +52,8 @@ namespace Debug {
 		static Setting<std::array<float, 4>> gSceneryColBox         ("Scenery OBB Color: Box",                 { 0.8f, 1.0f, 0.2f, 1.0f });
 		static Setting<std::array<float, 4>> gSceneryColSphere      ("Scenery OBB Color: Sphere / Capsule",    { 0.8f, 0.2f, 1.0f, 1.0f });
 		static Setting<std::array<float, 4>> gSceneryColUnknown     ("Scenery OBB Color: Unknown",             { 0.5f, 0.5f, 0.5f, 1.0f });
+
+		static Setting<bool> gShowCollisionRays("Show Collision Rays", false);
 
 		static ObbDrawConfig BuildActorConfig()
 		{
@@ -105,12 +108,9 @@ namespace Debug {
 			const ObbDrawConfig actorCfg   = BuildActorConfig();
 			const ObbDrawConfig sceneryCfg = BuildSceneryConfig();
 
-			if (actorCfg.bEnabled || sceneryCfg.bEnabled) {
-				Renderer::Native::DebugShapes::GetActorObbEnabled() = true;
-			}
-
 			Debug::Actor::DrawDebugShapes(actorCfg);
 			Debug::Scenery::DrawDebugShapes(sceneryCfg);
+			Debug::Hero::DrawCollisionContacts();
 		}
 
 		// Draws a checkbox + color picker on one row.
@@ -168,6 +168,8 @@ namespace Debug {
 
 			ImGui::Separator();
 
+			gShowCollisionRays.DrawImguiControl();
+
 			if (ImGui::CollapsingHeader("Actor Collision")) {
 				ImGui::PushID("Actor");
 				DrawLayerSection(
@@ -202,6 +204,14 @@ namespace Debug {
 
 			ImGui::PopID();
 			ImGui::End();
+		}
+
+
+		void AddRay(float sx, float sy, float sz, float ex, float ey, float ez, float r, float g, float b, float a)
+		{
+			if (gShowCollisionRays) {
+				Renderer::Native::DebugShapes::AddLine(sx, sy, sz, ex, ey, ez, r, g, b, a);
+			}
 		}
 	}
 }

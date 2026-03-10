@@ -1278,6 +1278,11 @@ void CActorAutonomous::RestoreCollisionSphere(float param_2)
 	return;
 }
 
+void CActorAutonomous::SetRestartWaypoint(CWayPoint* pWayPoint, uint param_3)
+{
+	return;
+}
+
 CActorWindState* CActorAutonomous::GetWindState()
 {
 	return (CActorWindState*)0x0;
@@ -1333,6 +1338,43 @@ void CActorAutonomous::ComputeFrictionForceWithSpeedMax(float param_1, edF32VECT
 	}
 	else {
 		*pFrictionForce = gF32Vector4Zero;
+	}
+
+	return;
+}
+
+void CActorAutonomous::ComputeFrictionForce2DWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, bool param_4)
+{
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	fVar3 = 0.001f;
+	*pFrictionForce = (this->dynamicExt).normalizedTranslation;
+
+	pFrictionForce->y = 0.0f;
+	fVar4 = (this->dynamicExt).aImpulseVelocityMagnitudes[0] + (this->dynamicExt).aImpulseVelocityMagnitudes[2];
+	if (0.001f <= fVar4) {
+		if (0.001f <= param_1) {
+			fVar3 = param_1;
+		}
+
+		fVar2 = this->dynamic.horizontalLinearAcceleration;
+		fVar3 = (fVar2 * fVar2) / (fVar3 * fVar3);
+		if ((param_4 == false) || (1.0f <= fVar3)) {
+			edF32Vector4ScaleHard(-fVar4 * fVar3, pFrictionForce, pFrictionForce);
+		}
+		else {
+			*pFrictionForce = gF32Vector4Zero;
+		}
+	}
+	else {
+		fVar3 = this->dynamic.horizontalLinearAcceleration - param_1;
+		if ((0.0f <= fVar3) || (fVar4 = 0.0f, param_4 == false)) {
+			fVar4 = -fVar3 * GetTimer()->cutsceneDeltaTime;
+		}
+
+		edF32Vector4ScaleHard(fVar4, pFrictionForce, pFrictionForce);
 	}
 
 	return;
