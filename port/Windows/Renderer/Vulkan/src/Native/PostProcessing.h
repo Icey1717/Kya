@@ -20,6 +20,7 @@ namespace Renderer
 			};
 
 			void Setup();
+			void Resize();
 			void AddPostProcessEffect(const VkCommandBuffer& cmd, Effect effect);
 			const VkImageView& GetColorImageView();
 			void UpdateDescriptorSets(const Effect effect, const int frameIndex, const DescriptorWriteList& writeList);

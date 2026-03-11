@@ -17,8 +17,10 @@ namespace Renderer
 
 	namespace Native
 	{
-		constexpr int gWidth = 0x200;
-		constexpr int gHeight = 0x200;
+		constexpr int kDefaultWidth = 0x200;
+		constexpr int kDefaultHeight = 0x200;
+		extern int gWidth;
+		extern int gHeight;
 
 		constexpr uint32_t topologyTriangleList = 0;
 		constexpr uint32_t topologyLineList = 1;
@@ -67,5 +69,9 @@ namespace Renderer
 		double GetRenderTime();
 		double GetRenderWaitTime();
 		double GetRenderThreadTime();
+
+		void ResizeFrameBuffer(int width, int height);
+		void ApplyPendingResizeIfNeeded();
+		VkExtent2D GetFrameBufferSize();
 	}
 }

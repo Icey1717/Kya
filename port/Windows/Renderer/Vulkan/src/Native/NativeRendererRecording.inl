@@ -120,7 +120,7 @@ namespace Renderer
 			renderPassInfo.renderPass = stage.gRenderPass;
 			renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
 			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { gWidth, gHeight };
+			renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
 
 			std::array<VkClearValue, 2> clearColors;
 			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
@@ -301,7 +301,7 @@ namespace Renderer
 			viewport.maxDepth = 1.0f;
 			vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-			const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
+			const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) } };
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 			gNativeVertexBuffer.BindBuffers(cmd);

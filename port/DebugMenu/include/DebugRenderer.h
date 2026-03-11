@@ -22,6 +22,7 @@ namespace DebugMenu {
 	ImTextureID AddFrameBuffer(const PS2::FrameBuffer& frameBuffer);
 
 	ImTextureID AddNativeFrameBuffer();
+	void RefreshNativeFrameBuffer(ImTextureID& existingTextureId);
 
 	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
 	Renderer::TextureData LoadTextureData(ed_g2d_material* pMaterial);

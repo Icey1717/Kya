@@ -1093,6 +1093,7 @@ namespace Renderer
 	{
 		if (!gHeadless) {
 			app.waitUntilReady();
+			Renderer::Native::ApplyPendingResizeIfNeeded();
 		}
 	}
 

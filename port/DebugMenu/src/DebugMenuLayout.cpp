@@ -19,6 +19,7 @@ namespace Debug {
 
 	static bool gResetDockLayout = false;
 	static bool gDockLayoutInitialized = false;
+	static ImVec2 gLastGameViewportImageSize = ImVec2(0, 0);
 
 	ImGuiID GetRightDockId() { return gRightDockId; }
 	ImGuiID GetBottomDockId() { return gBottomDockId; }
@@ -91,6 +92,7 @@ namespace Debug {
 
 	static void DrawGameViewportImage() {
 		static ImTextureID gFrameBuffer = DebugMenu::AddNativeFrameBuffer();
+		DebugMenu::RefreshNativeFrameBuffer(gFrameBuffer);
 
 		const ImVec2 available = ImGui::GetContentRegionAvail();
 		if (available.x <= 0.0f || available.y <= 0.0f) {
@@ -104,6 +106,8 @@ namespace Debug {
 		else {
 			imageSize.y = imageSize.x / kGameAspectRatio;
 		}
+
+		gLastGameViewportImageSize = imageSize;
 
 		const ImVec2 cursorPos = ImGui::GetCursorPos();
 		const ImVec2 centeredCursor(
@@ -147,6 +151,10 @@ namespace Debug {
 
 			menu.Show();
 		}
+	}
+
+	ImVec2 GetGameViewportImageSize() {
+		return gLastGameViewportImageSize;
 	}
 
 } // namespace Debug

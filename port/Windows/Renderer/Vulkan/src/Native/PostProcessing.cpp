@@ -235,6 +235,18 @@ namespace Renderer
 	}
 }
 
+void Renderer::Native::PostProcessing::Resize()
+{
+	vkDestroyFramebuffer(GetDevice(), gFrameBuffer.framebuffer, GetAllocator());
+	vkDestroyImageView(GetDevice(), gFrameBuffer.colorImageView, GetAllocator());
+	vkDestroyImage(GetDevice(), gFrameBuffer.colorImage, GetAllocator());
+	vkFreeMemory(GetDevice(), gFrameBuffer.imageMemory, GetAllocator());
+
+	gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, false);
+
+	UpdateDescriptorSets();
+}
+
 void Renderer::Native::PostProcessing::Setup()
 {
 	CreateRenderPass(gRenderPass);
@@ -254,11 +266,23 @@ void Renderer::Native::PostProcessing::AddPostProcessEffect(const VkCommandBuffe
 	renderPassInfo.renderPass = gRenderPass;
 	renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { gWidth, gHeight };
-
+	renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
 	Debug::BeginLabel(cmd, "Post Processing - %s", GetEffectName(effect).c_str());
 
 	vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = static_cast<float>(gWidth);
+	viewport.height = static_cast<float>(gHeight);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+	const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) } };
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
 	vkCmdDraw(cmd, 3, 1, 0, 0); // Draw a single triangle to cover the screen

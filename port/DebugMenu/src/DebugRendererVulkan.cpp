@@ -245,3 +245,19 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 	{
 	return DebugRendererImgui::ToImTextureID(ImGui_ImplVulkan_AddTexture(Renderer::Native::GetSampler(), Renderer::Native::GetColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	}
+
+	void DebugMenu::RefreshNativeFrameBuffer(ImTextureID& existingTextureId)
+	{
+		static VkExtent2D sLastSize = Renderer::Native::GetFrameBufferSize();
+		const VkExtent2D currentSize = Renderer::Native::GetFrameBufferSize();
+		if (currentSize.width == sLastSize.width && currentSize.height == sLastSize.height)
+		{
+			return;
+		}
+		sLastSize = currentSize;
+		ImGui_ImplVulkan_RemoveTexture((VkDescriptorSet)(uintptr_t)existingTextureId);
+		existingTextureId = (ImTextureID)(uintptr_t)ImGui_ImplVulkan_AddTexture(
+			Renderer::Native::GetSampler(),
+			Renderer::Native::GetColorImageView(),
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}

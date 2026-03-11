@@ -82,7 +82,7 @@ namespace Renderer::Native::DisplayList
 		renderPassInfo.renderPass = gRenderPass;
 		renderPassInfo.framebuffer = GetFrameBuffer().framebuffer;
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = { gWidth, gHeight };
+		renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
 
 		std::array<VkClearValue, 0> clearColors;
 		renderPassInfo.clearValueCount = clearColors.size();
@@ -99,7 +99,7 @@ namespace Renderer::Native::DisplayList
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-		const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
+		const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) } };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		gVertexBuffers.BindBuffers(cmd);
@@ -412,7 +412,9 @@ namespace Renderer::Native::DisplayList
 			}
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
+		}
 
+		if (gRecordingCommandBuffer) {
 			Renderer::Debug::EndLabel(GetCommandBuffer());
 		}
 

@@ -2,6 +2,11 @@ namespace Renderer
 {
 	namespace Native
 	{
+		int gWidth = kDefaultWidth;
+		int gHeight = kDefaultHeight;
+		int gPendingResizeWidth = 0;
+		int gPendingResizeHeight = 0;
+
 		static void CreateFramebuffer()
 		{
 			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass[RenderPassKey::Empty].gRenderPass, true);
@@ -308,5 +313,52 @@ void Setup()
 
 	InitFade();
 }
+		void ResizeFrameBuffer(int width, int height)
+		{
+			if (width == gWidth && height == gHeight)
+			{
+				return;
+			}
+
+			gPendingResizeWidth = width;
+			gPendingResizeHeight = height;
+		}
+
+		static void ApplyPendingResizeInternal()
+		{
+			if (gPendingResizeWidth == 0 && gPendingResizeHeight == 0)
+			{
+				return;
+			}
+
+			const int width = gPendingResizeWidth;
+			const int height = gPendingResizeHeight;
+			gPendingResizeWidth = 0;
+			gPendingResizeHeight = 0;
+
+			vkDeviceWaitIdle(GetDevice());
+
+			vkDestroyFramebuffer(GetDevice(), gFrameBuffer.framebuffer, GetAllocator());
+			vkDestroyImageView(GetDevice(), gFrameBuffer.colorImageView, GetAllocator());
+			vkDestroyImage(GetDevice(), gFrameBuffer.colorImage, GetAllocator());
+			vkFreeMemory(GetDevice(), gFrameBuffer.imageMemory, GetAllocator());
+			vkDestroyImageView(GetDevice(), gFrameBuffer.depthImageView, GetAllocator());
+			vkDestroyImage(GetDevice(), gFrameBuffer.depthImage, GetAllocator());
+			vkFreeMemory(GetDevice(), gFrameBuffer.depthImageMemory, GetAllocator());
+			vkDestroySampler(GetDevice(), gFrameBuffer.sampler, GetAllocator());
+
+			gWidth = width;
+			gHeight = height;
+
+			CreateFramebuffer();
+
+			PostProcessing::Resize();
+		}
+
+		VkExtent2D GetFrameBufferSize()
+		{
+			return { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
+		}
+
 	} // Native
 } // Renderer

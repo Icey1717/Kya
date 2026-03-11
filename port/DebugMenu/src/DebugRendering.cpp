@@ -7,9 +7,12 @@
 #include "Native/NativeRenderer.h"
 #include "Native/NativeDebugShapes.h"
 #include "DebugMeshViewer.h"
+#include "DebugMenuLayout.h"
 #include "ed3D.h"
 #include "edDlist.h"
 #include "Rendering/DisplayList.h"
+#include "VulkanRenderer.h"
+#include <algorithm>
 
 // Make sure these external variables are accessible
 extern DisplayList** gDList_3D[2];
@@ -23,6 +26,9 @@ namespace Debug {
 		static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 		static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
 		static Debug::Setting<bool> gShowCollisionRays = { "Show Collision Rays", false };
+		static Debug::Setting<int> gRenderWidth = { "Render Resolution Width", Renderer::Native::kDefaultWidth };
+		static Debug::Setting<int> gRenderHeight = { "Render Resolution Height", Renderer::Native::kDefaultHeight };
+		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -142,51 +148,108 @@ namespace Debug {
 
 void Debug::Rendering::DrawContents()
 {
-	ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
-	ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
-	ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
+	// --- Timings ---
+	if (ImGui::CollapsingHeader("Timings", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text("Render:        %.1f ms", Renderer::Native::GetRenderTime());
+		ImGui::Text("Render Wait:   %.1f ms", Renderer::Native::GetRenderWaitTime());
+		ImGui::Text("Render Thread: %.1f ms", Renderer::Native::GetRenderThreadTime());
+	}
 
-	if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
+	// --- Resolution Info ---
+	if (ImGui::CollapsingHeader("Resolution", ImGuiTreeNodeFlags_DefaultOpen)) {
+		const auto& extent = GetSwapchainExtent();
+		ImGui::Text("Swapchain:      %u x %u", extent.width, extent.height);
+
+		const VkExtent2D renderSize = Renderer::Native::GetFrameBufferSize();
+		ImGui::Text("Render Buffer:  %u x %u", renderSize.width, renderSize.height);
+
+		ImVec2 imageSize = Debug::GetGameViewportImageSize();
+		ImGui::Text("Viewport Image: %.0f x %.0f", imageSize.x, imageSize.y);
+
+		ImGui::Spacing();
+
+		static int sPendingWidth = static_cast<int>(renderSize.width);
+		static int sPendingHeight = static_cast<int>(renderSize.height);
+
+		// Keep pending values in sync with current size when not being edited
+		if (!ImGui::IsAnyItemActive()) {
+			sPendingWidth = static_cast<int>(renderSize.width);
+			sPendingHeight = static_cast<int>(renderSize.height);
+		}
+
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::InputInt("##renderwidth", &sPendingWidth, 0, 0);
+		ImGui::SameLine();
+		ImGui::Text("x");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::InputInt("##renderheight", &sPendingHeight, 0, 0);
+		ImGui::SameLine();
+		if (ImGui::Button("Apply")) {
+			const int w = std::max(1, sPendingWidth);
+			const int h = std::max(1, sPendingHeight);
+			gRenderWidth = w;
+			gRenderHeight = h;
+			Renderer::Native::ResizeFrameBuffer(w, h);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Reset")) {
+			sPendingWidth = Renderer::Native::kDefaultWidth;
+			sPendingHeight = Renderer::Native::kDefaultHeight;
+			gRenderWidth = Renderer::Native::kDefaultWidth;
+			gRenderHeight = Renderer::Native::kDefaultHeight;
+			Renderer::Native::ResizeFrameBuffer(Renderer::Native::kDefaultWidth, Renderer::Native::kDefaultHeight);
+		}
+
+		ImGui::Spacing();
+		if (gAutoApplyResolution.DrawImguiControl()) {
+			gAutoApplyResolution.UpdateValue();
+		}
+	}
+
+	// --- Pipeline ---
+	if (ImGui::CollapsingHeader("Pipeline")) {
+		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
+			Renderer::ResetRenderer();
+		}
+		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
+		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
+
+		if (gDisableClusterRendering.DrawImguiControl()) {
+			ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
+		}
+		if (gForceAnimMatrixIdentity.DrawImguiControl()) {
+			Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
+		}
+	}
+
+	// --- VU1 Emulation ---
+	if (ImGui::CollapsingHeader("VU1 Emulation")) {
 		ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());
 		ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
 		ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
 		ImGui::Checkbox("Simplified Code", &VU1Emu::GetRunSimplifiedCode());
+
+		if (gEnableEmulatedRendering.DrawImguiControl()) {
+			VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
+		}
+
+		ImGui::Spacing();
+		if (ImGui::Button("Enable Vertex Trace")) {
+			VU1Emu::GetTraceVtx() = true;
+		}
 	}
 
-	if (ImGui::Button("Enable Vertex Trace")) {
-		VU1Emu::GetTraceVtx() = true;
+	// --- Tools ---
+	if (ImGui::CollapsingHeader("Tools")) {
+		static bool bDisplayListViewerOpen = false;
+		if (ImGui::Button("Display List Viewer")) {
+			bDisplayListViewerOpen = !bDisplayListViewerOpen;
+		}
+		if (bDisplayListViewerOpen) {
+			ShowDisplayListViewer(&bDisplayListViewerOpen);
+		}
 	}
-
-	if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
-		Renderer::ResetRenderer();
-	}
-
-	ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
-
-	ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
-
-	if (gDisableClusterRendering.DrawImguiControl()) {
-		ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
-	}
-
-	if (gForceAnimMatrixIdentity.DrawImguiControl()) {
-		Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
-	}
-
-	if (gEnableEmulatedRendering.DrawImguiControl()) {
-		VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
-	}
-
-	// Button to toggle the display list viewer
-	static bool bDisplayListViewerOpen = false;
-	if (ImGui::Button("Display List Viewer")) {
-		bDisplayListViewerOpen = !bDisplayListViewerOpen;
-	}
-
-	if (bDisplayListViewerOpen) {
-		ShowDisplayListViewer(&bDisplayListViewerOpen);
-	}
-
 }
 
 void Debug::Rendering::ShowMenu(bool* bOpen)
@@ -201,6 +264,10 @@ void Debug::Rendering::Init()
 	ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
+
+	if (gAutoApplyResolution) {
+		Renderer::Native::ResizeFrameBuffer(gRenderWidth.get(), gRenderHeight.get());
+	}
 }
 
 bool Debug::Rendering::GetEnableEmulatedRendering()

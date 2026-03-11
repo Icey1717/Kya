@@ -195,6 +195,11 @@ void Renderer::Native::OnVideoFlip()
 	gRenderThread->SignalEndCommands();
 }
 
+void Renderer::Native::ApplyPendingResizeIfNeeded()
+{
+	ApplyPendingResizeInternal();
+}
+
 void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 {
 	if (!pTexture) {
