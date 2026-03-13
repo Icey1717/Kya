@@ -15,7 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "DebugMaterialPreviewer.h"
 #include "edDlist.h"
-#include "TextureCache.h"
+#include "Texture/TextureCache.h"
 #include "gizmo.h"
 #include "FileManager3D.h"
 #include "Texture.h"

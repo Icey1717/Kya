@@ -10,9 +10,9 @@
 
 #include "renderer.h"
 #include "VulkanRenderer.h"
-#include "VulkanCommands.h"
-#include "TextureCache.h"
-#include "FrameBuffer.h"
+#include "Objects/VulkanCommands.h"
+#include "Texture/TextureCache.h"
+#include "Objects/FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

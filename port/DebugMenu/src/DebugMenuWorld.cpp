@@ -7,10 +7,12 @@
 #include "Actor.h"
 #include "ActorManager.h"
 #include "ActorCheckpointManager.h"
+#include "ActorWind.h"
 #include "SectorManager.h"
 #include "LevelScheduler.h"
 #include "Types.h"
 #include "Actor/DebugActor.h"
+#include "Actor/DebugActorWind.h"
 
 namespace Debug {
 
@@ -33,6 +35,7 @@ namespace Debug {
 	static InspectorSelection gInspectorSelection;
 	static bool gShowWorldPanel = false;
 	static bool gShowInspectorPanel = false;
+	static int gSectorFilter = -1;
 
 	static constexpr const char* kWorldWindowName = "World";
 	static constexpr const char* kInspectorWindowName = "Inspector";
@@ -142,10 +145,31 @@ namespace Debug {
 			return;
 		}
 
+		// Sector filter controls
+		ImGui::Text("Sector Filter:");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(100);
+		ImGui::InputInt("##SectorFilter", &gSectorFilter);
+		ImGui::SameLine();
+		if (ImGui::Button("Clear Filter")) {
+			gSectorFilter = -1;
+		}
+		ImGui::SameLine();
+		auto* pSectorManager = CScene::ptable.g_SectorManager_00451670;
+		if (pSectorManager != nullptr && ImGui::Button("Current")) {
+			gSectorFilter = pSectorManager->baseSector.currentSectorID;
+		}
+
+		ImGui::Separator();
+
 		std::map<int, std::vector<CActor*>> actorsByType;
 		for (int i = 0; i < pActorManager->nbActors; ++i) {
 			CActor* pActor = pActorManager->aActors[i];
 			if (pActor != nullptr) {
+				// Apply sector filter
+				if (gSectorFilter >= 0 && pActor->sectorId != gSectorFilter) {
+					continue;
+				}
 				actorsByType[pActor->typeID].push_back(pActor);
 			}
 		}
@@ -303,6 +327,13 @@ namespace Debug {
 			ImGui::Text("field_0x11: %u", pActor->field_0x11);
 			ImGui::Text("Macro Anim Table: 0x%p", pActor->pMacroAnimTable);
 			ImGui::Text("Hierarchy: 0x%p", pActor->pHier);
+		}
+
+		// Show wind-specific info if this is a wind actor
+		if (pActor->typeID == WIND) {
+			CActorWind* pWindActor = static_cast<CActorWind*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::Wind::ShowWindActorDetails(pWindActor);
 		}
 	}
 

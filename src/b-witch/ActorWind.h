@@ -16,6 +16,20 @@
 #define WIND_STATE_FADE_OUT 0x9
 #define WIND_STATE_COOLDOWN 0xa
 
+// CFxWind::flags_0x54 bit flags
+#define FXWIND_FLAG_ACTIVE 0x01
+#define FXWIND_FLAG_SOLID_GRAPHICS_ENABLED 0x02
+#define FXWIND_FLAG_CAMERA_ALIGNED 0x04
+
+//The following flags are set from owner actor but never read
+#define FXWIND_FLAG_UNUSED_0x08 0x08
+#define FXWIND_FLAG_UNUSED_0x10 0x10
+#define FXWIND_FLAG_UNUSED_0x20 0x20
+#define FXWIND_FLAG_UNUSED_0x40 0x40
+#define FXWIND_FLAG_UNUSED_0x80 0x80
+
+#define FXWIND_FLAG_EMITTER_POOL_ACTIVE 0x100
+
 class CActorWind;
 class CWayPoint;
 class CSoundWind;
@@ -144,11 +158,11 @@ public:
 	int fakePlanePatchId;
 	void* pAlphaData;
 
-	_wind_fx_draw_state drawStateA;
-	_wind_fx_draw_state drawStateB;
-	_wind_fx_draw_state drawStateC;
-	_wind_fx_draw_state drawStateD;
-	_wind_fx_draw_state drawStateE;
+	_wind_fx_draw_state outerStateA;
+	_wind_fx_draw_state outerStateB;
+	_wind_fx_draw_state fakePlaneState;
+	_wind_fx_draw_state whirlStateA;
+	_wind_fx_draw_state whirlStateB;
 
 	_rgba field_0x8c;
 };
@@ -201,7 +215,7 @@ public:
 	int field_0x58;
 	edF32MATRIX4* field_0x5c;
 
-	edF32MATRIX4 field_0x60;
+	edF32MATRIX4 windMatrix;
 	edF32MATRIX4 field_0xa0;
 	edF32MATRIX4 field_0xe0;
 
@@ -212,15 +226,15 @@ public:
 	float field_0x160;
 
 	int field_0x164;
-	float field_0x168;
+	float distanceToCameraScale;
 	float field_0x16c;
 	float field_0x170;
-	float field_0x174;
-	float field_0x178;
-	float field_0x17c;
+	float baseAlpha;
+	float perpendicularAlpha;
+	float parallelAlpha;
 
 	ed_g2d_manager* field_0x180;
-	MaterialManagerCombined field_0x184[5];
+	MaterialManagerCombined aCombinedMaterials[5];
 
 	float field_0x2c4;
 	float field_0x2c8;
@@ -273,7 +287,6 @@ public:
 	virtual void ChangeVisibleState(int state);
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-
 
 	void BehaviourWind_Manage();
 

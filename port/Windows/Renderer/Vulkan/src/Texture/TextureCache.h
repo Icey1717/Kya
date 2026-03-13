@@ -4,9 +4,9 @@
 #include <vector>
 #include <optional>
 #include "GSState.h"
-#include "Pipeline.h"
+#include "Objects/Pipeline.h"
 #include "renderer.h"
-#include "UniformBuffer.h"
+#include "Objects/UniformBuffer.h"
 #include "VulkanPS2.h"
 
 namespace PS2 {

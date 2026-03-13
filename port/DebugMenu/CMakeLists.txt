@@ -82,6 +82,8 @@ set(SOURCES
 	"src/DebugCollision.cpp"
 	"src/Actor/DebugActorBehaviour.h"
 	"src/Actor/DebugActorBehaviour.cpp"
+	"src/Actor/DebugActorWind.h"
+	"src/Actor/DebugActorWind.cpp"
 	"include/DebugRenderer.h"
 	"include/DebugMenu.h"
 	"include/Callstack.h"

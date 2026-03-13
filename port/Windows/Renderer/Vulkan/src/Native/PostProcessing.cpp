@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include <unordered_map>
 
-#include "Pipeline.h"
+#include "Objects/Pipeline.h"
 #include "VulkanRenderer.h"
-#include "FrameBuffer.h"
+#include "Objects/FrameBuffer.h"
 #include "NativeRenderer.h"
 #include "../../include/renderer.h"
 

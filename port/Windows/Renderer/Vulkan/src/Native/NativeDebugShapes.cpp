@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "VulkanBuffer.h"
+#include "Objects/VulkanBuffer.h"
 #include "VulkanRenderer.h"
 #include "renderer.h"
 #include "glm/glm.hpp"

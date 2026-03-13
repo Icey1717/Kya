@@ -16,7 +16,6 @@ inline void edDListPatchRGBASprite_Inline(_rgba* pRgba, _rgba* pColor, uint inde
 
 inline void edDListPatchRGBA_Inline(_rgba* param_1, _rgba newColor, uint param_3, uint param_4)
 {
-	newColor.a = 0x80;
 	uint uVar2 = param_3;
 
 	if (0x47 < param_3) {

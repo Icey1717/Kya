@@ -4,7 +4,7 @@
 #include "DebugSetting.h"
 #include "DebugRenderer.h"
 #include "DebugRendering.h"
-#include "FrameBuffer.h"
+#include "Objects/FrameBuffer.h"
 
 namespace Debug {
 	namespace FrameBuffer {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Pipeline.h"
+#include "Objects/Pipeline.h"
 #include "VulkanIncludes.h"
 #include "glm/mat4x4.hpp"
 #include "glm/vec3.hpp"

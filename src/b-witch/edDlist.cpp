@@ -3770,18 +3770,18 @@ void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR
 }
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
-void edDListPatcheEnd(int param_1, int param_2)
+void edDListPatcheEnd(int nbVertex, int param_2)
 {
 	int iVar1;
 
 	if (gCurStripPatchable == (ed_3d_strip*)0x0) {
 		if (gCurSpritePatchable != 0) {
-			if (param_1 == -1) {
-				param_1 = gCurDListInfo3DPatchable->nbAddedVertex;
+			if (nbVertex == -1) {
+				nbVertex = gCurDListInfo3DPatchable->nbAddedVertex;
 			}
 
-			gNbAddedVertex = param_1 << 2;
-			if (param_1 == 0) {
+			gNbAddedVertex = nbVertex << 2;
+			if (nbVertex == 0) {
 				gNbAddedVertex = 0x10;
 			}
 
@@ -3790,21 +3790,26 @@ void edDListPatcheEnd(int param_1, int param_2)
 		}
 	}
 	else {
-		if (param_1 == -1) {
-			param_1 = gCurDListInfo3DPatchable->nbAddedVertex;
+		if (nbVertex == -1) {
+			nbVertex = gCurDListInfo3DPatchable->nbAddedVertex;
 		}
 
-		if (param_1 == 0) {
-			param_1 = 1;
+		if (nbVertex == 0) {
+			nbVertex = 1;
 		}
 
 		if (gCurMaterial == (edDList_material*)0x0) {
 			gCurMaterial = (edDList_material*)0xffffffff;
 		}
 
-		gNbAddedVertex = param_1;
+		gNbAddedVertex = nbVertex;
 		edDListEndStrip(gCurStripPatchable);
 		edDListStripPreparePacket(gCurStripPatchable, gCurDListInfo3DPatchable->pCurDListBuf);
+
+		// A bit hacky ... replace the strip in the library with the new one.
+#ifdef PLATFORM_WIN
+		Renderer::Kya::GetMeshLibraryMutable().CacheDlistStrip(gCurStripPatchable);
+#endif
 
 		if (gCurMaterial == (edDList_material*)0xffffffff) {
 			gCurMaterial = (edDList_material*)0x0;

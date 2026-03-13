@@ -1,14 +1,14 @@
 #include "TextureCache.h"
 #include "VulkanIncludes.h"
-#include "Pipeline.h"
+#include "Objects/Pipeline.h"
 #include "VulkanRenderer.h"
 #include "stdexcept"
 #include "renderer.h"
 #include "GSVector.h"
-#include "VulkanBuffer.h"
-#include "VulkanImage.h"
+#include "Objects/VulkanBuffer.h"
+#include "Objects/VulkanImage.h"
 #include <array>
-#include "UniformBuffer.h"
+#include "Objects/UniformBuffer.h"
 #include "log.h"
 #include "TextureCacheRowOffset.h"
 #include "TextureUpload.h"
@@ -1067,14 +1067,6 @@ PS2::GSTexDescriptor::GSTexDescriptor()
 	pixelConstBuffer.Init();
 }
 
-uint8_t gBitmapWriteScratch[0x100000];
-uint8_t gBitmapReadScratch[0x100000];
-
-uint8_t gPaletteWriteScratch[0x100000];
-uint8_t gPaletteReadScratch[0x100000];
-
-uint8_t gPaletteIndexesScratch[0x100000];
-
 using namespace PS2_Internal;
 
 void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
@@ -1084,31 +1076,16 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 
 	const VkDeviceSize bufferSize = bitmap.canvasWidth * bitmap.canvasHeight * 4;
 
-	if (bitmap.trxReg.RRW == (1 << imageData.registers.tex.TW) && bitmap.trxReg.RRH == (1 << imageData.registers.tex.TH)) {
-		gPaletteIndexesScratch[0] = 0;
-	}
-
 	if (palette.pImage && palette.canvasWidth) {
 		palette.Log("Uploading texture PAL - ");
-
-		//uint8_t palBuff[4096];
-		//
-		//memcpy(palBuff, reinterpret_cast<uint8_t*>(palette.pImage), palette.canvasWidth * palette.canvasHeight * 4);
-		//
-		//if (palette.canvasWidth * palette.canvasHeight < 16) {
-		//	// Expand the palette to 16 entries.
-		//	memset(&palBuff[palette.canvasWidth * palette.canvasHeight * 4], 0, (16 - (palette.canvasWidth * palette.canvasHeight)) * 4);
-		//}
 
 		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.registers.tex.CMD);
 	}
 
 	bitmap.Log("Uploading texture TEX - ");
-	auto* pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
+	auto pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
 
-	uint8_t* pResult = gBitmapReadScratch;
-
-	pResult = pOut;
+	uint8_t* pResult = pOut->Get();
 
 	pRenderer = new PS2::GSSimpleTexture();
 	pRenderer->width = bitmap.canvasWidth;

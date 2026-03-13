@@ -1,18 +1,18 @@
 #include "DebugMeshViewerVulkan.h"
 #include "DebugMeshViewer.h"
-#include "UniformBuffer.h"
-#include "Pipeline.h"
+#include "Objects/UniformBuffer.h"
+#include "Objects/Pipeline.h"
 #include "Native/NativeRenderer.h"
 #include "Native/Blending.h"
 #include "Types.h"
-#include "FrameBuffer.h"
+#include "Objects/FrameBuffer.h"
 #include "backends/imgui_impl_vulkan.h"
 
 #include "profiling.h"
 
 #include <array>
 #include <optional>
-#include "TextureCache.h"
+#include "Texture/TextureCache.h"
 
 namespace DebugMeshViewer {
 	namespace Vulkan {

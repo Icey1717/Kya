@@ -693,7 +693,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 					}
 
 					curPatchId = *reinterpret_cast<ushort*>(pCallFuncElement);
-					if (pPatch == 0) {
+					if (pCurCallFuncElement->bActive == 0) {
 						pGlobalPatch->aPatches[curPatchId]->flags = pGlobalPatch->aPatches[curPatchId]->flags & 0xfffffffe;
 					}
 					else {
@@ -876,7 +876,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 	return;
 }
 
-bool CGlobalDListManager::SetActive(int patchId, int index)
+bool CGlobalDListManager::SetActive(int patchId, int bActive)
 {
 	bool uVar1;
 	int iVar1;
@@ -891,7 +891,7 @@ bool CGlobalDListManager::SetActive(int patchId, int index)
 	uVar1 = false;
 	if (iVar1 == 1) {
 		if ((this->activeSectorPatchId == patchId >> 0x10) || (patchId >> 0x10 == 0)) {
-			uVar1 = _AddCallFuncElement(patchId, CALL_ELEMENT_SET_ACTIVE, index);
+			uVar1 = _AddCallFuncElement(patchId, CALL_ELEMENT_SET_ACTIVE, bActive);
 		}
 		else {
 			uVar1 = false;
@@ -923,6 +923,7 @@ CGlobalDListPatch* CGlobalDListManager::BeginCurrent(int patchId)
 		if (this->activeSectorPatchId != -1) {
 			pPatch = this->ppGlobalDlist[this->activeSectorPatchId].pDlistPatch;
 		}
+
 		if ((pPatch == (CGlobalDListPatch*)0x0) || (this->field_0x18 == 1)) {
 			return (CGlobalDListPatch*)0x0;
 		}
@@ -989,26 +990,26 @@ bool CGlobalDListManager::_AddCallFuncElement(int patchId, DLIST_FUNCTION type, 
 {
 	int iVar1;
 	bool bSuccess;
-	CallFuncElement* pCVar3;
+	CallFuncElement* pCallFuncElement;
 	int iVar4;
 
 	iVar1 = this->nbActiveCallFuncElements;
 	bSuccess = false;
 	if (iVar1 < 400) {
 		iVar4 = 0;
-		pCVar3 = this->aActiveCallFuncElements;
+		pCallFuncElement = this->aActiveCallFuncElements;
 		if (0 < iVar1) {
 			do {
-				if (((pCVar3->patchId == patchId) && (pCVar3->type == CALL_ELEMENT_SET_ACTIVE)) && (type == CALL_ELEMENT_SET_ACTIVE)) {
+				if (((pCallFuncElement->patchId == patchId) && (pCallFuncElement->type == CALL_ELEMENT_SET_ACTIVE)) && (type == CALL_ELEMENT_SET_ACTIVE)) {
 					bSuccess = true;
-					pCVar3->type = type;
-					pCVar3->bActive = bActive;
-					pCVar3->nbElements = 2;
+					pCallFuncElement->type = type;
+					pCallFuncElement->bActive = bActive;
+					pCallFuncElement->nbElements = 2;
 					break;
 				}
 
 				iVar4 = iVar4 + 1;
-				pCVar3 = pCVar3 + 1;
+				pCallFuncElement = pCallFuncElement + 1;
 			} while (iVar4 < iVar1);
 		}
 

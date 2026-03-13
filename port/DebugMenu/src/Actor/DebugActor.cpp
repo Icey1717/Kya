@@ -11,7 +11,9 @@
 #include "LargeObject.h"
 #include "DebugFrameBuffer.h"
 #include "DebugActorBehaviour.h"
+#include "DebugActorWind.h"
 #include "ActorHero.h"
+#include "ActorWind.h"
 #include "MathOps.h"
 #include "DebugActorCollision.h"
 
@@ -319,6 +321,14 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		ImGui::Text("Location: %s", pSelectedActor->currentLocation.ToString().c_str());
 		ImGui::Text("Behaviour: %s", Actor::Behaviour::GetActorBehaviourName(pSelectedActor).c_str());
 		ImGui::Text("State: %s", Actor::State::GetActorStateName(pSelectedActor).c_str());
+
+		// Show wind-specific info if this is a wind actor
+		if (pSelectedActor->typeID == WIND) {
+			CActorWind* pWindActor = static_cast<CActorWind*>(pSelectedActor);
+			ImGui::Separator();
+			Debug::Actor::Wind::ShowWindActorDetails(pWindActor);
+		}
+
 		ImGui::End();
 	}
 }

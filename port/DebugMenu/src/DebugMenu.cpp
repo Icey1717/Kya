@@ -16,7 +16,7 @@
 #include "port/pointer_conv.h"
 #include "DebugMaterialPreviewer.h"
 #include "Callstack.h"
-#include "TextureCache.h"
+#include "Texture/TextureCache.h"
 #include "ed3D/ed3DG2D.h"
 #include "DebugSetting.h"
 #include "ActorHero_Private.h"

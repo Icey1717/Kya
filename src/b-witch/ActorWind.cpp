@@ -1,4 +1,4 @@
-#include "ActorWind.h"
+﻿#include "ActorWind.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "MathOps.h"
@@ -451,10 +451,10 @@ void CActorWind::LoadContext(void* pData, uint mode, uint maxSize)
 			do {
 				CFxWind* pFxWind = this->aFxWind + iVar4;
 				if (iVar1 == 0) {
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 				}
 				else {
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 | 1;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 | FXWIND_FLAG_ACTIVE;
 				}
 
 				iVar4 = iVar4 + 1;
@@ -616,10 +616,10 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			do {
 				CFxWind* pFxWind = this->aFxWind + iVar4;
 				if (iVar1 == 0) {
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 				}
 				else {
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 | 1;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 | FXWIND_FLAG_ACTIVE;
 				}
 
 				iVar4 = iVar4 + 1;
@@ -640,7 +640,7 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			if (0 < this->nbFxWind) {
 				do {
 					CFxWind* pFxWind = this->aFxWind + iVar4;
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 | 1;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 | FXWIND_FLAG_ACTIVE;
 
 					iVar4 = iVar4 + 1;
 				} while (iVar4 < this->nbFxWind);
@@ -661,7 +661,7 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				if (0 < this->nbFxWind) {
 					do {
 						CFxWind* pFxWind = this->aFxWind + iVar4;
-						pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+						pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 
 						iVar4 = iVar4 + 1;
 					} while (iVar4 < this->nbFxWind);
@@ -696,10 +696,10 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						do {
 							CFxWind* pFxWind = this->aFxWind + iVar4;
 							if (iVar1 == 0) {
-								pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+								pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 							}
 							else {
-								pFxWind->flags_0x54 = pFxWind->flags_0x54 | 1;
+								pFxWind->flags_0x54 = pFxWind->flags_0x54 | FXWIND_FLAG_ACTIVE;
 							}
 
 							iVar4 = iVar4 + 1;
@@ -937,7 +937,7 @@ float CActorWind::ComputeCurTime()
 			if (0 < this->nbFxWind) {
 				do {
 					CFxWind* pFxWind = this->aFxWind + iVar4;
-					pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+					pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 
 					iVar4 = iVar4 + 1;
 				} while (iVar4 < this->nbFxWind);
@@ -968,7 +968,7 @@ float CActorWind::ComputeCurTime()
 	if (0 < this->nbFxWind) {
 		do {
 			CFxWind* pFxWind = this->aFxWind + iVar4;
-			pFxWind->flags_0x54 = pFxWind->flags_0x54 & 0xfffffffe;
+			pFxWind->flags_0x54 = pFxWind->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 
 			iVar4 = iVar4 + 1;
 		} while (iVar4 < this->nbFxWind);
@@ -1352,7 +1352,7 @@ bool CActorWind::IsAValidFxPrimitive(CFxWind* pFx, byte param_3, edF32MATRIX4* p
 
 		edF32Matrix4MulF32Vector4Hard(&local_f0, param_5, &local_40.rowT);
 
-		pFx->field_0x60 = this->pMeshTransform->base.transformA;
+		pFx->windMatrix = this->pMeshTransform->base.transformA;
 		pFx->field_0x58 = param_3;
 		
 		pFx->field_0xa0 = local_40;
@@ -1540,7 +1540,7 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 	IMPLEMENTATION_GUARD_AUDIO(
 		edCSound3DPrim::Init(&this->field_0x3a0, this->field_0x58, &this->field_0x10);)
 
-	if (((this->flags_0x54 & 0x100) == 0) || ((this->flags_0x54 & 2) != 0)) {
+	if (((this->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0) || ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0)) {
 		pHashCodeIt = aHashCodes;
 		pMaterialSizeIt = aMaterialSizes;
 		totalMaterialSize = 0;
@@ -1568,7 +1568,7 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 		memset(this->field_0x180, 0, totalMaterialSize);
 		pManagerBuffer = reinterpret_cast<char*>(this->field_0x180);
 
-		MaterialManagerCombined* pMaterialIt = this->field_0x184;
+		MaterialManagerCombined* pMaterialIt = this->aCombinedMaterials;
 		index = 0;
 		pWindAnimStIt = gUseAnimST;
 		do {
@@ -1601,22 +1601,22 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 		} while (index < 5);
 	}
 
-	if ((this->flags_0x54 & 2) != 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
 		(this->windSolid).field_0x10 = 1.0f;
 		(this->windSolid).field_0x14 = 1.0f;
 		(this->windSolid).field_0xc = 0.0f;
 		(this->windSolid).field_0x8 = 0.0f;
 
-		(this->windSolid).drawStateA.prevAlpha = 0.0f;
-		(this->windSolid).drawStateA.alpha = 0.0f;
-		(this->windSolid).drawStateB.prevAlpha = 0.0f;
-		(this->windSolid).drawStateB.alpha = 0.0f;
-		(this->windSolid).drawStateC.prevAlpha = 0.0f;
-		(this->windSolid).drawStateC.alpha = 0.0f;
-		(this->windSolid).drawStateD.prevAlpha = 0.0f;
-		(this->windSolid).drawStateD.alpha = 0.0f;
-		(this->windSolid).drawStateE.prevAlpha = 0.0f;
-		(this->windSolid).drawStateE.alpha = 0.0f;
+		(this->windSolid).outerStateA.prevAlpha = 0.0f;
+		(this->windSolid).outerStateA.alpha = 0.0f;
+		(this->windSolid).outerStateB.prevAlpha = 0.0f;
+		(this->windSolid).outerStateB.alpha = 0.0f;
+		(this->windSolid).fakePlaneState.prevAlpha = 0.0f;
+		(this->windSolid).fakePlaneState.alpha = 0.0f;
+		(this->windSolid).whirlStateA.prevAlpha = 0.0f;
+		(this->windSolid).whirlStateA.alpha = 0.0f;
+		(this->windSolid).whirlStateB.prevAlpha = 0.0f;
+		(this->windSolid).whirlStateB.alpha = 0.0f;
 
 
 		fVar22 = edF32Vector4GetDistHard(&((this->windSolid).pOwner)->field_0x130);
@@ -1627,11 +1627,11 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 
 		(this->windSolid).pAlphaData = edMemAlloc(TO_HEAP(H_MAIN), (this->windSolid).field_0x4 * 0x16 + -2);
 		byte* pData = reinterpret_cast<byte*>((this->windSolid).pAlphaData);
-		(this->windSolid).drawStateB.pAlphaMultiplier = pData;
-		(this->windSolid).drawStateA.pAlphaMultiplier = pData;
-		(this->windSolid).drawStateC.pAlphaMultiplier = (this->windSolid).drawStateA.pAlphaMultiplier + ((this->windSolid).field_0x4 - 1) * 0xe;
-		(this->windSolid).drawStateD.pAlphaMultiplier = (this->windSolid).drawStateC.pAlphaMultiplier + (this->windSolid).field_0x4 * 4;
-		(this->windSolid).drawStateE.pAlphaMultiplier = (this->windSolid).drawStateD.pAlphaMultiplier + (this->windSolid).field_0x4 * 4;
+		(this->windSolid).outerStateB.pAlphaMultiplier = pData;
+		(this->windSolid).outerStateA.pAlphaMultiplier = pData;
+		(this->windSolid).fakePlaneState.pAlphaMultiplier = (this->windSolid).outerStateA.pAlphaMultiplier + ((this->windSolid).field_0x4 - 1) * 0xe;
+		(this->windSolid).whirlStateA.pAlphaMultiplier = (this->windSolid).fakePlaneState.pAlphaMultiplier + (this->windSolid).field_0x4 * 4;
+		(this->windSolid).whirlStateB.pAlphaMultiplier = (this->windSolid).whirlStateA.pAlphaMultiplier + (this->windSolid).field_0x4 * 4;
 
 		this->outerPatchId = GameDListPatch_Register(this, ((this->windSolid).field_0x4 - 1) * 0x1c, 0);
 		this->whirlPatchId = GameDListPatch_Register(this, (this->windSolid).field_0x4 * 4 + 0x18, 0);
@@ -1773,12 +1773,12 @@ void CFxWind::SectorChange(int oldSectorId, int newSectorId)
 		pWindPartPool->nbHandles = pWindPartPool->nbHandles + 1;
 	}
 
-	if ((this->flags_0x54 & 2) != 0) {
-		(this->windSolid).drawStateD.drawState = 2;
-		(this->windSolid).drawStateA.drawState = 2;
-		(this->windSolid).drawStateB.drawState = 2;
-		(this->windSolid).drawStateC.drawState = 2;
-		(this->windSolid).drawStateE.drawState = 2;
+	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
+		(this->windSolid).whirlStateA.drawState = 2;
+		(this->windSolid).outerStateA.drawState = 2;
+		(this->windSolid).outerStateB.drawState = 2;
+		(this->windSolid).fakePlaneState.drawState = 2;
+		(this->windSolid).whirlStateB.drawState = 2;
 	}
 
 	return;
@@ -1818,8 +1818,7 @@ void CFxWind::Manage(int param_2)
 	}
 
 	this->field_0x170 = (this->field_0x16c * 2.0f) / (this->field_0x130).y;
-	fVar7 = edFIntervalUnitDstLERP(this->pOwner->distanceToCamera, 0.0f, (this->pOwner->subObjA)->cullingDistance);
-	this->field_0x168 = fVar7;
+	this->distanceToCameraScale = edFIntervalUnitDstLERP(this->pOwner->distanceToCamera, 0.0f, (this->pOwner->subObjA)->cullingDistance);
 
 	bVar2 = false;
 	if ((this->pOwner->field_0x19c < -1.0f) && (this->pOwner->field_0x1a0 < -1.0f)) {
@@ -1827,16 +1826,15 @@ void CFxWind::Manage(int param_2)
 	}
 
 	if (bVar2) {
-		fVar7 = edFIntervalUnitSrcLERP(this->field_0x168, 0.0f, 0.3f);
-		this->field_0x168 = fVar7;
+		this->distanceToCameraScale = edFIntervalUnitSrcLERP(this->distanceToCameraScale, 0.0f, 0.3f);
 	}
 
 	_Compute_Matrix(&CCameraManager::_gThis->transMatrix_0x390);
 
-	if ((this->flags_0x54 & 2) != 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
 		fVar7 = this->field_0x170 * GetTimer()->cutsceneDeltaTime;
 		for (iVar5 = 0; iVar5 < 5; iVar5 = iVar5 + 1) {
-			pTexture = ed3DG2DGetTextureFromMaterial(this->field_0x184[iVar5].material.pMaterial, 0);
+			pTexture = ed3DG2DGetTextureFromMaterial(this->aCombinedMaterials[iVar5].material.pMaterial, 0);
 			if ((pTexture->pAnimSpeedNormalExtruder != 0x0) && (gUseAnimST[iVar5].field_0x0 != 0)) {
 				edF32VECTOR4* pAnimSpeedNormalExtruder = LOAD_POINTER_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
 				pAnimSpeedNormalExtruder->x = fVar7 * gUseAnimST[iVar5].field_0x4 * -(this->windSolid).field_0x14;
@@ -1846,10 +1844,10 @@ void CFxWind::Manage(int param_2)
 	}
 
 	if (param_2 == 0) {
-		this->flags_0x54 = this->flags_0x54 & 0xfffffffe;
+		this->flags_0x54 = this->flags_0x54 & ~FXWIND_FLAG_ACTIVE;
 	}
 	else {
-		this->flags_0x54 = this->flags_0x54 | 1;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_ACTIVE;
 	}
 
 	gpWIND_PartPool->Manage(this);
@@ -1872,13 +1870,13 @@ void CFxWind::Draw()
 	float fVar9;
 	float fVar10;
 	float fVar11;
-	edF32VECTOR4 local_30;
+	edF32VECTOR4 cameraZ;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 	CCameraManager* pCameraManager;
 
 	pCameraManager = CCameraManager::_gThis;
-	if ((this->flags_0x54 & 1) == 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_ACTIVE) == 0) {
 		ChangeVisibleState(0);
 	}
 	else {
@@ -1886,25 +1884,25 @@ void CFxWind::Draw()
 
 		bVar1 = pCameraManager->InFrustum(this->field_0x160, this->pOwner->subObjA->cullingDistance, &this->field_0x140);
 		if (bVar1 != false) {
-			local_30 = (CCameraManager::_gThis->transformationMatrix).rowZ;
-			fVar2 = edF32Vector4DotProductHard(&(this->field_0x60).rowY, &local_30);
-			fVar9 = sqrtf(1.0f - fVar2 * fVar2);
+			cameraZ = (CCameraManager::_gThis->transformationMatrix).rowZ;
+			const float dotYZ = edF32Vector4DotProductHard(&(this->windMatrix).rowY, &cameraZ);
+			fVar9 = sqrtf(1.0f - dotYZ * dotYZ);
 			fVar2 = edFIntervalUnitDstLERP(this->pOwner->curWindAlpha, 0.0f, this->pOwner->maxWind);
-			this->field_0x174 = fVar2;
-			this->field_0x178 = fVar2 * fVar9;
-			this->field_0x17c = this->field_0x174 * (1.0f - fVar9);
-			fVar6 = this->field_0x178;
+			this->baseAlpha = fVar2;
+			this->perpendicularAlpha = fVar2 * fVar9;
+			this->parallelAlpha = this->baseAlpha * (1.0f - fVar9);
+			fVar6 = this->perpendicularAlpha;
 			fVar7 = this->field_0x2c8;
-			fVar10 = this->field_0x174;
-			fVar2 = this->field_0x17c;
+			fVar10 = this->baseAlpha;
+			fVar2 = this->parallelAlpha;
 			fVar9 = this->field_0x2d4;
 			fVar8 = this->field_0x2cc * fVar6;
 			fVar11 = this->field_0x2d0 * fVar10;
-			fVar3 = edFIntervalUnitDstLERP(this->field_0x168, 0.3f, 0.1f);
+			fVar3 = edFIntervalUnitDstLERP(this->distanceToCameraScale, 0.3f, 0.1f);
 			this->field_0x2c4 = fVar10 * fVar3;
 
-			if ((this->flags_0x54 & 2) != 0) {
-				fVar3 = this->field_0x168;
+			if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
+				fVar3 = this->distanceToCameraScale;
 				if (fVar3 < 0.3f) {
 					fVar3 = edFIntervalUnitDstLERP(fVar3, 0.1f, 0.3f);
 				}
@@ -1912,7 +1910,7 @@ void CFxWind::Draw()
 					fVar3 = edFIntervalUnitDstLERP(fVar3, 1.0f, 0.3f);
 				}
 
-				fVar10 = this->field_0x168;
+				fVar10 = this->distanceToCameraScale;
 				fVar8 = fVar8 * fVar3;
 				if (fVar10 <= 0.75f) {
 					fVar10 = edFIntervalLERP(fVar10, 0.2f, 0.75f, 1.0f, 1.0f);
@@ -1935,24 +1933,24 @@ void CFxWind::Draw()
 				edF32Vector4SubHard(&eStack32, pRowT, &eStack16);
 				fVar4 = edF32Vector4GetDistHard(&eStack32);
 				fVar4 = edFIntervalUnitDstLERP(fVar4 / (this->field_0x130).z, 0.12f, 0.22f);
-				fVar5 = edFIntervalUnitDstLERP(this->field_0x168, 0.1f, 0.4f);
+				fVar5 = edFIntervalUnitDstLERP(this->distanceToCameraScale, 0.1f, 0.4f);
 
-				(this->windSolid).drawStateA.prevAlpha = (this->windSolid).drawStateA.alpha;
-				(this->windSolid).drawStateA.alpha = fVar11 * fVar4;
+				(this->windSolid).outerStateA.prevAlpha = (this->windSolid).outerStateA.alpha;
+				(this->windSolid).outerStateA.alpha = fVar11 * fVar4;
 
-				(this->windSolid).drawStateB.prevAlpha = (this->windSolid).drawStateB.alpha;
-				(this->windSolid).drawStateB.alpha = fVar10;
+				(this->windSolid).outerStateB.prevAlpha = (this->windSolid).outerStateB.alpha;
+				(this->windSolid).outerStateB.alpha = fVar10;
 
-				(this->windSolid).drawStateC.prevAlpha = (this->windSolid).drawStateC.alpha;
-				(this->windSolid).drawStateC.alpha = fVar7 * fVar6 * fVar3;
+				(this->windSolid).fakePlaneState.prevAlpha = (this->windSolid).fakePlaneState.alpha;
+				(this->windSolid).fakePlaneState.alpha = fVar7 * fVar6 * fVar3;
 
-				(this->windSolid).drawStateD.prevAlpha = (this->windSolid).drawStateD.alpha;
-				(this->windSolid).drawStateD.alpha = fVar8;
+				(this->windSolid).whirlStateA.prevAlpha = (this->windSolid).whirlStateA.alpha;
+				(this->windSolid).whirlStateA.alpha = fVar8;
 
-				(this->windSolid).drawStateE.prevAlpha = (this->windSolid).drawStateE.alpha;
-				(this->windSolid).drawStateE.alpha = fVar9 * fVar2 * fVar5;
+				(this->windSolid).whirlStateB.prevAlpha = (this->windSolid).whirlStateB.alpha;
+				(this->windSolid).whirlStateB.alpha = fVar9 * fVar2 * fVar5;
 
-				this->windSolid.Draw(&this->field_0x60);
+				this->windSolid.Draw(&this->windMatrix);
 			}
 		}
 	}
@@ -1967,20 +1965,20 @@ void CFxWind::Reset()
 	IMPLEMENTATION_GUARD_AUDIO(
 	this->pOwner->pSoundWind->Reset(this);)
 
-	if ((this->flags_0x54 & 2) != 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
 		(this->windSolid).field_0xc = 0.0f;
 		(this->windSolid).field_0x8 = 0.0f;
 
-		(this->windSolid).drawStateA.prevAlpha = 0.0f;
-		(this->windSolid).drawStateA.alpha = 0.0f;
-		(this->windSolid).drawStateB.prevAlpha = 0.0f;
-		(this->windSolid).drawStateB.alpha = 0.0f;
-		(this->windSolid).drawStateC.prevAlpha = 0.0f;
-		(this->windSolid).drawStateC.alpha = 0.0f;
-		(this->windSolid).drawStateD.prevAlpha = 0.0f;
-		(this->windSolid).drawStateD.alpha = 0.0f;
-		(this->windSolid).drawStateE.prevAlpha = 0.0f;
-		(this->windSolid).drawStateE.alpha = 0.0f;
+		(this->windSolid).outerStateA.prevAlpha = 0.0f;
+		(this->windSolid).outerStateA.alpha = 0.0f;
+		(this->windSolid).outerStateB.prevAlpha = 0.0f;
+		(this->windSolid).outerStateB.alpha = 0.0f;
+		(this->windSolid).fakePlaneState.prevAlpha = 0.0f;
+		(this->windSolid).fakePlaneState.alpha = 0.0f;
+		(this->windSolid).whirlStateA.prevAlpha = 0.0f;
+		(this->windSolid).whirlStateA.alpha = 0.0f;
+		(this->windSolid).whirlStateB.prevAlpha = 0.0f;
+		(this->windSolid).whirlStateB.alpha = 0.0f;
 	}
 	return;
 }
@@ -1996,16 +1994,16 @@ void CFxWind::RetrieveFlags(CActorWind* pWind)
 		}
 
 		if (!bVar1) {
-			this->flags_0x54 = this->flags_0x54 | 2;
+			this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_SOLID_GRAPHICS_ENABLED;
 		}
 	}
 
 	if ((pWind->field_0x160 & 8) != 0) {
-		this->flags_0x54 = this->flags_0x54 | 8;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_UNUSED_0x08;
 	}
 
 	if ((pWind->field_0x160 & 0x10) != 0) {
-		this->flags_0x54 = this->flags_0x54 | 0x10;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_UNUSED_0x10;
 	}
 
 	if ((pWind->field_0x160 & 0x800) == 0) {
@@ -2017,19 +2015,19 @@ void CFxWind::RetrieveFlags(CActorWind* pWind)
 		if (!bVar1) goto LAB_00210ed8;
 	}
 
-	this->flags_0x54 = this->flags_0x54 | 0x20;
+	this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_UNUSED_0x20;
 
 LAB_00210ed8:
 	if ((pWind->field_0x160 & 0x1000) != 0) {
-		this->flags_0x54 = this->flags_0x54 | 0x40;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_UNUSED_0x40;
 	}
 
 	if ((pWind->field_0x160 & 0x4000) != 0) {
-		this->flags_0x54 = this->flags_0x54 | 0x80;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_UNUSED_0x80;
 	}
 
 	if ((pWind->field_0x160 & 0x8000) != 0) {
-		this->flags_0x54 = this->flags_0x54 | 0x100;
+		this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_EMITTER_POOL_ACTIVE;
 	}
 
 	if ((pWind->field_0x160 & 0x2000) == 0) {
@@ -2052,7 +2050,7 @@ LAB_00210ed8:
 		}
 	}
 
-	this->flags_0x54 = this->flags_0x54 | 4;
+	this->flags_0x54 = this->flags_0x54 | FXWIND_FLAG_CAMERA_ALIGNED;
 
 	return;
 }
@@ -2073,14 +2071,14 @@ void CFxWind::_Compute_Matrix(edF32MATRIX4* pCameraMatrix)
 	float fVar10;
 	float fVar11;
 
-	this->field_0x60 = this->pOwner->pMeshTransform->base.transformA;
+	this->windMatrix = this->pOwner->pMeshTransform->base.transformA;
 
-	edF32Matrix4MulF32Vector4Hard(&(this->field_0x60).rowT, &this->field_0x60, &this->field_0x150);
-	this->field_0x140 = (this->field_0x60).rowT;
+	edF32Matrix4MulF32Vector4Hard(&(this->windMatrix).rowT, &this->windMatrix, &this->field_0x150);
+	this->field_0x140 = (this->windMatrix).rowT;
 
-	(this->field_0x60).rowY = (this->field_0x60).rowZ;
+	(this->windMatrix).rowY = (this->windMatrix).rowZ;
 
-	if ((this->flags_0x54 & 4) == 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_CAMERA_ALIGNED) == 0) {
 		peVar3 = &pCameraMatrix->rowZ;
 		peVar1 = &pCameraMatrix->rowY;
 	}
@@ -2089,192 +2087,207 @@ void CFxWind::_Compute_Matrix(edF32MATRIX4* pCameraMatrix)
 		peVar1 = &gF32Vector4UnitZ;
 	}
 
-	if (fabsf((this->field_0x60).ba * peVar3->x + (this->field_0x60).bb * peVar3->y + (this->field_0x60).bc * peVar3->z) <= 0.999f) {
+	if (fabsf((this->windMatrix).ba * peVar3->x + (this->windMatrix).bb * peVar3->y + (this->windMatrix).bc * peVar3->z) <= 0.999f) {
 		peVar1 = peVar3;
 	}
 
 	fVar6 = peVar1->x;
 	fVar7 = peVar1->y;
 	fVar8 = peVar1->z;
-	fVar9 = (this->field_0x60).ba;
-	fVar10 = (this->field_0x60).bb;
-	fVar11 = (this->field_0x60).bc;
-	(this->field_0x60).aa = fVar7 * fVar11 - fVar10 * fVar8;
-	(this->field_0x60).ab = fVar8 * fVar9 - fVar11 * fVar6;
-	(this->field_0x60).ac = fVar6 * fVar10 - fVar9 * fVar7;
-	(this->field_0x60).ad = in_vf0x;
+	fVar9 = (this->windMatrix).ba;
+	fVar10 = (this->windMatrix).bb;
+	fVar11 = (this->windMatrix).bc;
+	(this->windMatrix).aa = fVar7 * fVar11 - fVar10 * fVar8;
+	(this->windMatrix).ab = fVar8 * fVar9 - fVar11 * fVar6;
+	(this->windMatrix).ac = fVar6 * fVar10 - fVar9 * fVar7;
+	(this->windMatrix).ad = in_vf0x;
 
-	fVar6 = (this->field_0x60).aa;
-	fVar7 = (this->field_0x60).ab;
-	fVar8 = (this->field_0x60).ac;
+	fVar6 = (this->windMatrix).aa;
+	fVar7 = (this->windMatrix).ab;
+	fVar8 = (this->windMatrix).ac;
 	fVar9 = 1.0f / (sqrtf(fVar6 * fVar6 + fVar7 * fVar7 + fVar8 * fVar8) + 0.0f);
-	(this->field_0x60).aa = fVar6 * fVar9;
-	(this->field_0x60).ab = fVar7 * fVar9;
-	(this->field_0x60).ac = fVar8 * fVar9;
-	(this->field_0x60).ad = 0.0f;
+	(this->windMatrix).aa = fVar6 * fVar9;
+	(this->windMatrix).ab = fVar7 * fVar9;
+	(this->windMatrix).ac = fVar8 * fVar9;
+	(this->windMatrix).ad = 0.0f;
 
-	fVar6 = (this->field_0x60).aa;
-	fVar7 = (this->field_0x60).ab;
-	fVar8 = (this->field_0x60).ac;
-	fVar9 = (this->field_0x60).ba;
-	fVar10 = (this->field_0x60).bb;
-	fVar11 = (this->field_0x60).bc;
-	(this->field_0x60).ca = fVar7 * fVar11 - fVar10 * fVar8;
-	(this->field_0x60).cb = fVar8 * fVar9 - fVar11 * fVar6;
-	(this->field_0x60).cc = fVar6 * fVar10 - fVar9 * fVar7;
-	(this->field_0x60).cd = 0.0f;
+	fVar6 = (this->windMatrix).aa;
+	fVar7 = (this->windMatrix).ab;
+	fVar8 = (this->windMatrix).ac;
+	fVar9 = (this->windMatrix).ba;
+	fVar10 = (this->windMatrix).bb;
+	fVar11 = (this->windMatrix).bc;
+	(this->windMatrix).ca = fVar7 * fVar11 - fVar10 * fVar8;
+	(this->windMatrix).cb = fVar8 * fVar9 - fVar11 * fVar6;
+	(this->windMatrix).cc = fVar6 * fVar10 - fVar9 * fVar7;
+	(this->windMatrix).cd = 0.0f;
 
-	fVar6 = (this->field_0x60).ca;
-	fVar7 = (this->field_0x60).cb;
-	fVar8 = (this->field_0x60).cc;
+	fVar6 = (this->windMatrix).ca;
+	fVar7 = (this->windMatrix).cb;
+	fVar8 = (this->windMatrix).cc;
 	fVar9 = 1.0f / (sqrtf(fVar6 * fVar6 + fVar7 * fVar7 + fVar8 * fVar8) + 0.0f);
-	(this->field_0x60).ca = fVar6 * fVar9;
-	(this->field_0x60).cb = fVar7 * fVar9;
-	(this->field_0x60).cc = fVar8 * fVar9;
-	(this->field_0x60).cd = 0.0f;
+	(this->windMatrix).ca = fVar6 * fVar9;
+	(this->windMatrix).cb = fVar7 * fVar9;
+	(this->windMatrix).cc = fVar8 * fVar9;
+	(this->windMatrix).cd = 0.0f;
 
 	fVar6 = (this->field_0x130).x;
-	fVar7 = (this->field_0x60).ab;
-	fVar8 = (this->field_0x60).ac;
-	fVar9 = (this->field_0x60).ad;
-	(this->field_0xa0).aa = (this->field_0x60).aa * fVar6;
+	fVar7 = (this->windMatrix).ab;
+	fVar8 = (this->windMatrix).ac;
+	fVar9 = (this->windMatrix).ad;
+	(this->field_0xa0).aa = (this->windMatrix).aa * fVar6;
 	(this->field_0xa0).ab = fVar7 * fVar6;
 	(this->field_0xa0).ac = fVar8 * fVar6;
 	(this->field_0xa0).ad = fVar9 * fVar6;
 
 	fVar6 = (this->field_0x130).y;
-	fVar7 = (this->field_0x60).bb;
-	fVar8 = (this->field_0x60).bc;
-	fVar9 = (this->field_0x60).bd;
-	(this->field_0xa0).ba = (this->field_0x60).ba * fVar6;
+	fVar7 = (this->windMatrix).bb;
+	fVar8 = (this->windMatrix).bc;
+	fVar9 = (this->windMatrix).bd;
+	(this->field_0xa0).ba = (this->windMatrix).ba * fVar6;
 	(this->field_0xa0).bb = fVar7 * fVar6;
 	(this->field_0xa0).bc = fVar8 * fVar6;
 	(this->field_0xa0).bd = fVar9 * fVar6;
 
 	fVar6 = (this->field_0x130).z;
-	fVar7 = (this->field_0x60).cb;
-	fVar8 = (this->field_0x60).cc;
-	fVar9 = (this->field_0x60).cd;
-	(this->field_0xa0).ca = (this->field_0x60).ca * fVar6;
+	fVar7 = (this->windMatrix).cb;
+	fVar8 = (this->windMatrix).cc;
+	fVar9 = (this->windMatrix).cd;
+	(this->field_0xa0).ca = (this->windMatrix).ca * fVar6;
 	(this->field_0xa0).cb = fVar7 * fVar6;
 	(this->field_0xa0).cc = fVar8 * fVar6;
 	(this->field_0xa0).cd = fVar9 * fVar6;
 
-	this->field_0xa0.rowT = this->field_0x60.rowT;
+	this->field_0xa0.rowT = this->windMatrix.rowT;
 
-	edF32Matrix4GetInverseOrthoHard(&this->field_0xe0, &this->field_0x60);
+	edF32Matrix4GetInverseOrthoHard(&this->field_0xe0, &this->windMatrix);
 
 	return;
 }
 
 void CFxWind::ChangeVisibleState(int state)
 {
-	uint uVar1;
-	CGlobalDListPatch* pCVar2;
-	int iVar3;
-	uint uVar4;
+	uint patchId;
+	CGlobalDListPatch* pPatch;
+	int patchSectorId;
+	uint flagActive;
 	CGlobalDListManager* pDlistManager;
 
 	pDlistManager = CScene::ptable.g_GlobalDListManager_004516bc;
-	if ((this->flags_0x54 & 2) == 0) {
+	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) == 0) {
 		return;
 	}
 
-	if (((this->flags_0x54 & 1) != 0) && (state != 0)) {
-		uVar1 = this->outerPatchId;
+	if (((this->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0) && (state != 0)) {
+		// Outer patch
+		patchId = this->outerPatchId;
+
 		if (((CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist == (GlobalDlistEntry*)0x0)
-			|| ((iVar3 = (int)uVar1 >> 0x10, (CScene::ptable.g_GlobalDListManager_004516bc)->activeSectorPatchId != iVar3 &&
-				(iVar3 != 0)))) {
+			|| ((patchSectorId = (int)patchId >> 0x10, (CScene::ptable.g_GlobalDListManager_004516bc)->activeSectorPatchId != patchSectorId &&
+				(patchSectorId != 0)))) {
 		LAB_002105b8:
-			uVar4 = 0xffffffff;
+			flagActive = 0xffffffff;
 		}
 		else {
-			pCVar2 = (CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist[iVar3].pDlistPatch;
-			if (pCVar2 == (CGlobalDListPatch*)0x0) goto LAB_002105b8;
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+			pPatch = (CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist[patchSectorId].pDlistPatch;
+
+			if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_002105b8;
+
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 		}
 
-		if (uVar4 == 0) {
-			CScene::ptable.g_GlobalDListManager_004516bc->SetActive(uVar1, 1);
-			(this->windSolid).drawStateD.drawState = 2;
-			(this->windSolid).drawStateA.drawState = 2;
-			(this->windSolid).drawStateB.drawState = 2;
-			(this->windSolid).drawStateC.drawState = 2;
-			(this->windSolid).drawStateE.drawState = 2;
+		if (flagActive == 0) {
+			CScene::ptable.g_GlobalDListManager_004516bc->SetActive(patchId, 1);
+
+			(this->windSolid).whirlStateA.drawState = 2;
+			(this->windSolid).outerStateA.drawState = 2;
+			(this->windSolid).outerStateB.drawState = 2;
+			(this->windSolid).fakePlaneState.drawState = 2;
+			(this->windSolid).whirlStateB.drawState = 2;
 		}
 	}
+
 	if (state == 0) {
-		uVar1 = this->outerPatchId;
+		// Outer patch
+		patchId = this->outerPatchId;
+
 		if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) ||
-			((iVar3 = (int)uVar1 >> 0x10, pDlistManager->activeSectorPatchId != iVar3 && (iVar3 != 0))))
+			((patchSectorId = (int)patchId >> 0x10, pDlistManager->activeSectorPatchId != patchSectorId && (patchSectorId != 0))))
 		{
 		LAB_00210650:
-			uVar4 = 0xffffffff;
+			flagActive = 0xffffffff;
 		}
 		else {
-			pCVar2 = pDlistManager->ppGlobalDlist[iVar3].pDlistPatch;
-			if (pCVar2 == (CGlobalDListPatch*)0x0) goto LAB_00210650;
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+			pPatch = pDlistManager->ppGlobalDlist[patchSectorId].pDlistPatch;
+			if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_00210650;
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 		}
 
-		if (uVar4 == 1) {
-			pDlistManager->SetActive(uVar1, 0);
+		if (flagActive == 1) {
+			pDlistManager->SetActive(patchId, 0);
 		}
 	}
-	if (((this->flags_0x54 & 1) != 0) && (state != 0)) {
-		uVar1 = this->whirlPatchId;
+
+	if (((this->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0) && (state != 0)) {
+		// Whirl patch
+		patchId = this->whirlPatchId;
+
 		if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) ||
-			((iVar3 = (int)uVar1 >> 0x10, pDlistManager->activeSectorPatchId != iVar3 && (iVar3 != 0))))
+			((patchSectorId = (int)patchId >> 0x10, pDlistManager->activeSectorPatchId != patchSectorId && (patchSectorId != 0))))
 		{
 		LAB_002106e8:
-			uVar4 = 0xffffffff;
+			flagActive = 0xffffffff;
 		}
 		else {
-			pCVar2 = pDlistManager->ppGlobalDlist[iVar3].pDlistPatch;
-			if (pCVar2 == (CGlobalDListPatch*)0x0) goto LAB_002106e8;
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+			pPatch = pDlistManager->ppGlobalDlist[patchSectorId].pDlistPatch;
+			if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_002106e8;
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 		}
 
-		if (uVar4 == 0) {
-			pDlistManager->SetActive(uVar1, 1);
+		if (flagActive == 0) {
+			pDlistManager->SetActive(patchId, 1);
 		}
 	}
 
 	if (state == 0) {
-		uVar1 = this->whirlPatchId;
+		// Whirl patch
+		patchId = this->whirlPatchId;
+
 		if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) ||
-			((iVar3 = (int)uVar1 >> 0x10, pDlistManager->activeSectorPatchId != iVar3 && (iVar3 != 0))))
+			((patchSectorId = (int)patchId >> 0x10, pDlistManager->activeSectorPatchId != patchSectorId && (patchSectorId != 0))))
 		{
 		LAB_00210768:
-			uVar4 = 0xffffffff;
+			flagActive = 0xffffffff;
 		}
 		else {
-			pCVar2 = pDlistManager->ppGlobalDlist[iVar3].pDlistPatch;
-			if (pCVar2 == (CGlobalDListPatch*)0x0) goto LAB_00210768;
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+			pPatch = pDlistManager->ppGlobalDlist[patchSectorId].pDlistPatch;
+			if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_00210768;
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 		}
 
-		if (uVar4 == 1) {
-			pDlistManager->SetActive(uVar1, 0);
+		if (flagActive == 1) {
+			pDlistManager->SetActive(patchId, 0);
 		}
 	}
 
-	if (((this->flags_0x54 & 1) != 0) && (state != 0)) {
-		uVar1 = this->fakePlanePatchId;
+	if (((this->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0) && (state != 0)) {
+		// Fake plane patch
+		patchId = this->fakePlanePatchId;
+
 		if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) ||
-			((iVar3 = (int)uVar1 >> 0x10, pDlistManager->activeSectorPatchId != iVar3 && (iVar3 != 0))))
+			((patchSectorId = (int)patchId >> 0x10, pDlistManager->activeSectorPatchId != patchSectorId && (patchSectorId != 0))))
 		{
 		LAB_00210800:
-			uVar4 = 0xffffffff;
+			flagActive = 0xffffffff;
 		}
 		else {
-			pCVar2 = pDlistManager->ppGlobalDlist[iVar3].pDlistPatch;
-			if (pCVar2 == (CGlobalDListPatch*)0x0) goto LAB_00210800;
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+			pPatch = pDlistManager->ppGlobalDlist[patchSectorId].pDlistPatch;
+			if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_00210800;
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 		}
 
-		if (uVar4 == 0) {
-			pDlistManager->SetActive(uVar1, 1);
+		if (flagActive == 0) {
+			pDlistManager->SetActive(patchId, 1);
 		}
 	}
 
@@ -2282,26 +2295,25 @@ void CFxWind::ChangeVisibleState(int state)
 		return;
 	}
 
-	uVar1 = this->fakePlanePatchId;
+	patchId = this->fakePlanePatchId;
 	if ((pDlistManager->ppGlobalDlist != (GlobalDlistEntry*)0x0) &&
-		((iVar3 = (int)uVar1 >> 0x10, pDlistManager->activeSectorPatchId == iVar3 || (iVar3 == 0)))) {
-		pCVar2 = pDlistManager->ppGlobalDlist[iVar3].pDlistPatch;
-		if (pCVar2 != (CGlobalDListPatch*)0x0) {
-			uVar4 = (uint)((pCVar2->aPatches[uVar1 & 0xffff]->flags & 1) != 0);
+		((patchSectorId = (int)patchId >> 0x10, pDlistManager->activeSectorPatchId == patchSectorId || (patchSectorId == 0)))) {
+		pPatch = pDlistManager->ppGlobalDlist[patchSectorId].pDlistPatch;
+		if (pPatch != (CGlobalDListPatch*)0x0) {
+			flagActive = (pPatch->aPatches[patchId & 0xffff]->flags & 1) != 0;
 			goto LAB_00210888;
 		}
 	}
 
-	uVar4 = 0xffffffff;
+	flagActive = 0xffffffff;
 
 LAB_00210888:
-	if (uVar4 == 1) {
-		pDlistManager->SetActive(uVar1, 0);
+	if (flagActive == 1) {
+		pDlistManager->SetActive(patchId, 0);
 	}
+
 	return;
 }
-
-
 
 edF32VECTOR4 edF32VECTOR4_0040f0f0 = { 0.0f, 0.0f, 6.2831855f, 0.0f };
 edF32VECTOR4 edF32VECTOR4_0040f100 = { 0.0f, 0.0f, 0.25f, 0.25f };
@@ -2454,7 +2466,7 @@ void CFxEmitterPool::Manage(CFxWind* pFxWind)
 		return;
 	}
 
-	if ((pFxWind->flags_0x54 & 1) != 0) {
+	if ((pFxWind->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0) {
 		pCVar1 = pFxWind->pOwner;
 		bVar3 = (pCVar1->flags & 0x4400) != 0;
 		if (bVar3) {
@@ -2462,7 +2474,7 @@ void CFxEmitterPool::Manage(CFxWind* pFxWind)
 		}
 
 		if (bVar3) {
-			pCVar12->field_0x4 = pFxWind->field_0x168;
+			pCVar12->field_0x4 = pFxWind->distanceToCameraScale;
 			goto LAB_0020e508;
 		}
 	}
@@ -2512,7 +2524,7 @@ LAB_0020e508:
 					pCVar12 = this->aWindHandles + iVar19;
 				}
 
-				if ((pCVar12 == (CFxWindHandle*)0x0) || ((pCVar2->flags_0x54 & 1) == 0)) {
+				if ((pCVar12 == (CFxWindHandle*)0x0) || ((pCVar2->flags_0x54 & FXWIND_FLAG_ACTIVE) == 0)) {
 					iVar19 = -1;
 					iVar13 = 0;
 					_EmiNfo* pCurEmiInfoInternal = this->aHolders;
@@ -2572,7 +2584,7 @@ LAB_0020e508:
 				pCurEmiInfo = this->aHolders + iVar20;
 			}
 
-			if ((((pCurEmiInfo == (_EmiNfo*)0x0) && ((pCVar2->flags_0x54 & 1) != 0)) && ((pCVar2->flags_0x54 & 0x100) == 0)) && (pCVar14->field_0x4 < 0.3f)) {
+			if ((((pCurEmiInfo == (_EmiNfo*)0x0) && ((pCVar2->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0)) && ((pCVar2->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0)) && (pCVar14->field_0x4 < 0.3f)) {
 				iVar20 = -1;
 				iVar19 = 0;
 				_EmiNfo* pCurEmiInfoInternal = this->aHolders;
@@ -2649,7 +2661,7 @@ LAB_0020e508:
 			do {
 				pCVar2 = pCurEmiInfo->pFxWind;
 				*pCVar17 = 0;
-				if ((pCVar2 != (CFxWind*)0x0) && ((pCVar2->flags_0x54 & 0x100) == 0)) {
+				if ((pCVar2 != (CFxWind*)0x0) && ((pCVar2->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0)) {
 					bVar3 = pCVar2->pOwner->field_0x19c < -1.0f;
 					if ((bVar3) && (bVar3 = true, -1.0f <= pCVar2->pOwner->field_0x1a0)) {
 						bVar3 = false;
@@ -2697,7 +2709,7 @@ LAB_0020e508:
 				pCurEmiInfo->field_0x2b4 = 0.0f;
 			}
 			else {
-				fVar21 = edFIntervalLERP(pCVar2->field_0x168, 0.1f, 0.3f, 1.0f, 0.0f);
+				fVar21 = edFIntervalLERP(pCVar2->distanceToCameraScale, 0.1f, 0.3f, 1.0f, 0.0f);
 				pCurEmiInfo->field_0x2b4 = fVar21 / (float)iVar20;
 			}
 
@@ -3172,8 +3184,6 @@ void CFxWindSolid::_Create_Whirl(_wind_fx_vtx* pVtx)
 	return;
 }
 
-
-
 bool CFxWindSolid::CreatePatchableDlist(int patchId)
 {
 	byte bVar1;
@@ -3204,20 +3214,20 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 	pVtx = (_wind_fx_vtx*)gSP_Manager.GetFreeBuffer(this->field_0x4 * 0x150);
 	local_40 = this->pOwner->pOwner->pMeshTransform->base.transformA;
 	
-	edF32Matrix4MulF32Vector4Hard(&local_40.rowZ, &local_40, &this->pOwner->field_0x150);
+	edF32Matrix4MulF32Vector4Hard(&local_40.rowT, &local_40, &this->pOwner->field_0x150);
 	this->field_0x8c = this->pOwner->pOwner->field_0x1c8;
 
 	if (patchId == this->outerPatchId) {
 		edDListLoadMatrix(&local_40);
-		edDListUseMaterial(&this->pOwner->field_0x184[0].material);
+		edDListUseMaterial(&this->pOwner->aCombinedMaterials[0].material);
 		edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, (this->field_0x4 - 1) * 0x1c);
 		uVar16 = this->pOwner->flags_0x54;
 		_Create_SemiCylinder(pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0), 0);
-		this->drawStateA.index = 0;
+		this->outerStateA.index = 0;
 		uVar16 = this->pOwner->flags_0x54;
 		_Create_SemiCylinder(pVtx + this->field_0x4 * 7, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0), 1);
 		iVar5 = 0;
-		this->drawStateB.index = (this->field_0x4 - 1) * 0xe;
+		this->outerStateB.index = (this->field_0x4 - 1) * 0xe;
 		p_Var18 = pVtx;
 		do {
 			local_60 = 0;
@@ -3234,10 +3244,10 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 						p_Var13 = p_Var18 + iVar17;
 						if (iVar5 == 0) {
 							iVar6 = iVar15 + 1;
-							puVar2 = this->drawStateA.pAlphaMultiplier + iVar15;
+							puVar2 = this->outerStateA.pAlphaMultiplier + iVar15;
 							iVar15 = iVar15 + 2;
 							*puVar2 = (int)(p_Var14->field_0xc * 128.0f);
-							this->drawStateA.pAlphaMultiplier[iVar6] = (int)(p_Var13->field_0xc * 128.0f);
+							this->outerStateA.pAlphaMultiplier[iVar6] = (int)(p_Var13->field_0xc * 128.0f);
 						}
 
 						edDListTexCoo2f(p_Var14->field_0x10, p_Var14->field_0x14);
@@ -3338,16 +3348,16 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 			} while (uVar16 < 2);
 
 			edDListLoadMatrix(&local_40);
-			edDListUseMaterial(&this->pOwner->field_0x184[4].material);
+			edDListUseMaterial(&this->pOwner->aCombinedMaterials[4].material);
 			edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, this->field_0x4 * 4 + 0x18);
-			this->drawStateD.index = 0;
+			this->whirlStateA.index = 0;
 			uVar16 = this->pOwner->flags_0x54;
 			_Create_FakePlane(0.0f, 0.5f, 1.0f, -0.05f, pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0));
 			uVar16 = 0;
 			if ((this->field_0x4 & 0x3fffffff) != 0) {
 				do {
 					p_Var18 = pVtx + (pbVar3[uVar16] & 0x7f);
-					this->drawStateD.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
+					this->whirlStateA.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
 					edDListTexCoo2f(p_Var18->field_0x10, p_Var18->field_0x14);
 					edDListColor4u8(this->field_0x8c.r, this->field_0x8c.g, this->field_0x8c.b, 0);
 					if ((pbVar3[uVar16] & 0x80) == 0) {
@@ -3367,11 +3377,11 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 			_Create_Whirl(pVtx);
 
 			uVar16 = 0;
-			this->drawStateE.index = this->drawStateD.index + this->field_0x4 * 4;
+			this->whirlStateB.index = this->whirlStateA.index + this->field_0x4 * 4;
 			do {
 				p_Var18 = pVtx + (pbVar4[uVar16] & 0x7f);
 				if (uVar16 < 0xc) {
-					this->drawStateE.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
+					this->whirlStateB.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
 				}
 
 				edDListTexCoo2f(p_Var18->field_0x10, p_Var18->field_0x14);
@@ -3423,16 +3433,16 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 			} while (uVar16 < 2);
 
 			edDListLoadMatrix(&local_40);
-			edDListUseMaterial(&this->pOwner->field_0x184[3].material);
+			edDListUseMaterial(&this->pOwner->aCombinedMaterials[3].material);
 			edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, this->field_0x4 << 2);
-			this->drawStateC.index = 0;
+			this->fakePlaneState.index = 0;
 			uVar16 = this->pOwner->flags_0x54;
 			_Create_FakePlane(0.0f, 3.0f, 3.0f, 0.05f, pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0));
 			uVar16 = 0;
 			if ((this->field_0x4 & 0x3fffffff) != 0) {
 				do {
 					p_Var18 = pVtx + (pbVar3[uVar16] & 0x7f);
-					this->drawStateC.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
+					this->fakePlaneState.pAlphaMultiplier[uVar16] = (int)(p_Var18->field_0xc * 128.0f);
 					edDListTexCoo2f(p_Var18->field_0x10, p_Var18->field_0x14);
 					edDListColor4u8(0, 0x80, 0, 0);
 
@@ -3460,11 +3470,14 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 	return true;
 }
 
+// HACK
+extern ed_3d_strip* gCurStripPatchable;
+
 void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 {
 	CGlobalDListPatch* pPatch;
 	int iVar2;
-	uint uVar3;
+	uint patchActiveState;
 	uint uVar4;
 	_rgba newColor;
 	uint uVar6;
@@ -3473,76 +3486,78 @@ void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 	pDlistManager = CScene::ptable.g_GlobalDListManager_004516bc;
 	(this->field_0x8c).a = 0;
 
-	if (this->drawStateD.alpha != this->drawStateD.prevAlpha) {
-		this->drawStateD.drawState = 2;
+	if (this->whirlStateA.alpha != this->whirlStateA.prevAlpha) {
+		this->whirlStateA.drawState = 2;
 	}
 
-	if (this->drawStateA.alpha != this->drawStateA.prevAlpha) {
-		this->drawStateA.drawState = 2;
+	if (this->outerStateA.alpha != this->outerStateA.prevAlpha) {
+		this->outerStateA.drawState = 2;
 	}
 
-	if (this->drawStateB.alpha != this->drawStateB.prevAlpha) {
-		this->drawStateB.drawState = 2;
+	if (this->outerStateB.alpha != this->outerStateB.prevAlpha) {
+		this->outerStateB.drawState = 2;
 	}
 
-	if (this->drawStateC.alpha != this->drawStateC.prevAlpha) {
-		this->drawStateC.drawState = 2;
+	if (this->fakePlaneState.alpha != this->fakePlaneState.prevAlpha) {
+		this->fakePlaneState.drawState = 2;
 	}
 
-	if (this->drawStateE.alpha != this->drawStateE.prevAlpha) {
-		this->drawStateE.drawState = 2;
+	if (this->whirlStateB.alpha != this->whirlStateB.prevAlpha) {
+		this->whirlStateB.drawState = 2;
 	}
 
 	uVar6 = this->outerPatchId;
 	if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) || ((iVar2 = (int)uVar6 >> 0x10, pDlistManager->activeSectorPatchId != iVar2 && (iVar2 != 0)))) {
 	LAB_0020cca8:
-		uVar3 = 0xffffffff;
+		patchActiveState = 0xffffffff;
 	}
 	else {
 		pPatch = pDlistManager->ppGlobalDlist[iVar2].pDlistPatch;
 
 		if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_0020cca8;
 
-		uVar3 = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
+		patchActiveState = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
 	}
 
-	if (uVar3 == 1) {
+	if (patchActiveState == 1) {
 		pPatch = GameDListPatch_BeginCurrent(uVar6);
+
+		ACTOR_LOG(LogLevel::Info, "Drawing outer patch 0x{:x}", (uintptr_t)gCurStripPatchable);
 
 		// Update the position via matrix.
 		edF32Matrix4CopyHard(&pPatch->pCurrentPatch->pDisplayListCommand->matrix, pMatrix);
 
-		if ((this->drawStateA.drawState != 0) || (this->drawStateB.drawState	 != 0)) {
+		if ((this->outerStateA.drawState != 0) || (this->outerStateB.drawState != 0)) {
 			uVar6 = 0;
 
 			if (((this->field_0x4 - 1) * 7 & 0x7fffffff) != 0) {
 				do {
-					if (this->drawStateA.drawState != 0) {
-						newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->drawStateA.alpha * (float)(uint)this->drawStateA.pAlphaMultiplier[uVar6]) << 0x18);
-						edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateA.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
+					if (this->outerStateA.drawState != 0) {
+						newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->outerStateA.alpha * (float)(uint)this->outerStateA.pAlphaMultiplier[uVar6]) << 0x18);
+						edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->outerStateA.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
 					}
 
-					if (this->drawStateB.drawState != 0) {
-						newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->drawStateB.alpha * (float)(uint)this->drawStateB.pAlphaMultiplier[uVar6]) << 0x18);
-						edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateB.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
+					if (this->outerStateB.drawState != 0) {
+						newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->outerStateB.alpha * (float)(uint)this->outerStateB.pAlphaMultiplier[uVar6]) << 0x18);
+						edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->outerStateB.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
 					}
 
 					uVar6 = uVar6 + 1;
 				} while (uVar6 < (this->field_0x4 - 1) * 0xe);
 			}
 
-			if (this->drawStateA.drawState != 0) {
-				this->drawStateA.drawState = this->drawStateA.drawState + -1;
+			if (this->outerStateA.drawState != 0) {
+				this->outerStateA.drawState = this->outerStateA.drawState + -1;
 			}
 
-			if (this->drawStateB.drawState != 0) {
-				this->drawStateB.drawState = this->drawStateB.drawState + -1;
+			if (this->outerStateB.drawState != 0) {
+				this->outerStateB.drawState = this->outerStateB.drawState + -1;
 			}
 		}
 
 		iVar2 = -1;
 
-		if (this->drawStateB.alpha == 0.0f) {
+		if (this->outerStateB.alpha == 0.0f) {
 			iVar2 = (this->field_0x4 - 1) * 0xe;
 		}
 
@@ -3553,36 +3568,38 @@ void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 	if ((pDlistManager->ppGlobalDlist == (GlobalDlistEntry*)0x0) ||
 		((iVar2 = (int)uVar6 >> 0x10, pDlistManager->activeSectorPatchId != iVar2 && (iVar2 != 0)))) {
 	LAB_0020d070:
-		uVar3 = 0xffffffff;
+		patchActiveState = 0xffffffff;
 	}
 	else {
 		pPatch = pDlistManager->ppGlobalDlist[iVar2].pDlistPatch;
 		if (pPatch == (CGlobalDListPatch*)0x0) goto LAB_0020d070;
-		uVar3 = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
+		patchActiveState = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
 	}
 
-	if (uVar3 == 1) {
+	if (patchActiveState == 1) {
 		pPatch = GameDListPatch_BeginCurrent(uVar6);
+
+		ACTOR_LOG(LogLevel::Info, "Drawing fake plane patch 0x{:x}", (uintptr_t)gCurStripPatchable);
 
 		// Update the position via matrix.
 		edF32Matrix4CopyHard(&pPatch->pCurrentPatch->pDisplayListCommand->matrix, pMatrix);
 
-		if (this->drawStateC.drawState != 0) {
+		if (this->fakePlaneState.drawState != 0) {
 			uVar6 = 0;
 			if ((this->field_0x4 & 0x3fffffff) != 0) {
 				do {
-					newColor = (_rgba)((uint)(this->drawStateC.alpha * (float)(uint)this->drawStateC.pAlphaMultiplier[uVar6]) << 0x18 | 0x808080);
-					edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateC.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
+					newColor = (_rgba)((uint)(this->fakePlaneState.alpha * (float)(uint)this->fakePlaneState.pAlphaMultiplier[uVar6]) << 0x18 | 0x808080);
+					edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->fakePlaneState.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
 					uVar6 = uVar6 + 1;
 				} while (uVar6 < this->field_0x4 << 2);
 			}
 
-			if (this->drawStateC.drawState != 0) {
-				this->drawStateC.drawState = this->drawStateC.drawState + -1;
+			if (this->fakePlaneState.drawState != 0) {
+				this->fakePlaneState.drawState = this->fakePlaneState.drawState + -1;
 			}
 		}
 
-		GameDListPatch_EndCurrent(-(uint)(this->drawStateC.alpha != 0.0f), 0);
+		GameDListPatch_EndCurrent(-(uint)(this->fakePlaneState.alpha != 0.0f), 0);
 	}
 
 	uVar6 = this->whirlPatchId;
@@ -3590,46 +3607,48 @@ void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 		((iVar2 = (int)uVar6 >> 0x10, pDlistManager->activeSectorPatchId == iVar2 || (iVar2 == 0)))) {
 		pPatch = pDlistManager->ppGlobalDlist[iVar2].pDlistPatch;
 		if (pPatch != (CGlobalDListPatch*)0x0) {
-			uVar3 = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
+			patchActiveState = (uint)((pPatch->aPatches[uVar6 & 0xffff]->flags & 1) != 0);
 			goto LAB_0020d2a0;
 		}
 	}
 
-	uVar3 = 0xffffffff;
+	patchActiveState = 0xffffffff;
 LAB_0020d2a0:
-	if (uVar3 == 1) {
+	if (patchActiveState == 1) {
 		pPatch = GameDListPatch_BeginCurrent(uVar6);
+
+		ACTOR_LOG(LogLevel::Info, "Drawing whirl patch 0x{:x}", (uintptr_t)gCurStripPatchable);
 
 		// Update the position via matrix.
 		edF32Matrix4CopyHard(&pPatch->pCurrentPatch->pDisplayListCommand->matrix, pMatrix);
 
-		if (this->drawStateD.drawState != 0) {
+		if (this->whirlStateA.drawState != 0) {
 			uVar6 = 0;
 			if ((this->field_0x4 & 0x3fffffff) != 0) {
 				do {
-					newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->drawStateD.alpha * (float)(uint)this->drawStateD.pAlphaMultiplier[uVar6]) << 0x18);
-					edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateD.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
+					newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->whirlStateA.alpha * (float)(uint)this->whirlStateA.pAlphaMultiplier[uVar6]) << 0x18);
+					edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->whirlStateA.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
 					uVar6 = uVar6 + 1;
 				} while (uVar6 < this->field_0x4 << 2);
 			}
 
-			this->drawStateD.drawState = this->drawStateD.drawState + -1;
+			this->whirlStateA.drawState = this->whirlStateA.drawState + -1;
 		}
 
 		uVar6 = 0;
-		if (this->drawStateE.drawState != 0) {
+		if (this->whirlStateB.drawState != 0) {
 			do {
-				newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->drawStateE.alpha * (float)(uint)this->drawStateE.pAlphaMultiplier[uVar6]) << 0x18);
-				edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateE.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
-				edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->drawStateE.index + uVar6 + 0xc, pPatch->pCurrentPatch->nbMatrices);
+				newColor = (_rgba)(this->field_0x8c.rgba | (uint)(this->whirlStateB.alpha * (float)(uint)this->whirlStateB.pAlphaMultiplier[uVar6]) << 0x18);
+				edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->whirlStateB.index + uVar6, pPatch->pCurrentPatch->nbMatrices);
+				edDListPatchRGBA_Inline(pPatch->pCurrentPatch->pRgba, newColor, this->whirlStateB.index + uVar6 + 0xc, pPatch->pCurrentPatch->nbMatrices);
 				uVar6 = uVar6 + 1;
 			} while (uVar6 < 0xc);
 
-			this->drawStateE.drawState = this->drawStateE.drawState + -1;
+			this->whirlStateB.drawState = this->whirlStateB.drawState + -1;
 		}
 
 		iVar2 = -1;
-		if (this->drawStateE.alpha == 0.0f) {
+		if (this->whirlStateB.alpha == 0.0f) {
 			iVar2 = this->field_0x4 << 2;
 		}
 

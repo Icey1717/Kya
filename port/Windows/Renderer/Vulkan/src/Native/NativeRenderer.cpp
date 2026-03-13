@@ -11,9 +11,9 @@
 #include <readerwriterqueue.h>
 
 #include "VulkanRenderer.h"
-#include "VulkanImage.h"
-#include "UniformBuffer.h"
-#include "TextureCache.h"
+#include "Objects/VulkanImage.h"
+#include "Objects/UniformBuffer.h"
+#include "Texture/TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
 #include "logging.h"
 #include "log.h"
@@ -23,7 +23,8 @@
 #include <functional> // For std::hash
 #include "profiling.h"
 
-#define DEBUG_TEXTURE_NAME "Dupe (m: 0 l: 0)"
+//#define DEBUG_TEXTURE_NAME "Dupe (m: 0 l: 0)"
+#define DEBUG_TEXTURE_NAME "LINER_LAVA_TRAIL_TEXTURE.G2D (m: 0 l: 0)"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)

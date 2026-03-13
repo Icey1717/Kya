@@ -6,8 +6,8 @@
 #include "VulkanRenderer.h"
 #include "NativeRenderer.h"
 #include "renderer.h"
-#include "UniformBuffer.h"
-#include "TextureCache.h"
+#include "Objects/UniformBuffer.h"
+#include "Texture/TextureCache.h"
 #include "Blending.h"
 
 namespace Renderer::Native::DisplayList
