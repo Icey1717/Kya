@@ -1074,8 +1074,6 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 	const ImageData& bitmap = imageData.bitmaps.front();
 	const ImageData& palette = imageData.palette;
 
-	const VkDeviceSize bufferSize = bitmap.canvasWidth * bitmap.canvasHeight * 4;
-
 	if (palette.pImage && palette.canvasWidth) {
 		palette.Log("Uploading texture PAL - ");
 
@@ -1085,14 +1083,12 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 	bitmap.Log("Uploading texture TEX - ");
 	auto pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
 
-	uint8_t* pResult = pOut->Get();
-
 	pRenderer = new PS2::GSSimpleTexture();
-	pRenderer->width = bitmap.canvasWidth;
-	pRenderer->height = bitmap.canvasHeight;
+	pRenderer->width = pOut->Width();
+	pRenderer->height = pOut->Height();
 	pRenderer->imageData = bitmap;
 	pRenderer->CreateResources(false);
-	pRenderer->UploadData(bufferSize, pResult);
+	pRenderer->UploadData(static_cast<int>(pOut->Size()), pOut->Get());
 }
 
 void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
@@ -1101,8 +1097,11 @@ void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	width = bPalette ? imageData.trxReg.RRW : imageData.canvasWidth;
-	height = bPalette ? imageData.trxReg.RRH : imageData.canvasHeight;
+	if (bPalette) {
+		width = imageData.trxReg.RRW;
+		height = imageData.trxReg.RRH;
+	}
+	// else: width/height already set by the caller to the block-aligned upload dimensions
 
 	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
