@@ -2488,3 +2488,8 @@ float edF32ATanHard(float value)
 {
 	return edF32ATanSoft(value);
 }
+
+float ComputeAccelDistance(float param_1, float param_2, float param_3)
+{
+	return ((param_2 + param_1) / 2.0f) * ((param_2 - param_1) / param_3);
+}

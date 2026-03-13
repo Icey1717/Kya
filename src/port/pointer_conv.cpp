@@ -16,7 +16,7 @@ int PointerConv::AddPointer(void* value)
 
 	Pointers.push_back(value);
 
-	if ((Pointers.size() - 1) == 0x0002b79a) {
+	if ((Pointers.size() - 1) == 0x00017faa) {
 		// break the debugger
 		//__debugbreak();
 	}

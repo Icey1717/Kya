@@ -250,24 +250,25 @@ struct dummy_built_g2d_source
 
 ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, ed_g2d_manager* pG2d)
 {
-	bool bVar1;
+	bool bValidPalette;
 	undefined uVar2;
 	undefined uVar3;
 	undefined uVar4;
 	short sVar5;
-	dummy_built_g2d_source* pdVar6;
+	dummy_built_g2d_source* pMAT;
 	ed_Chunck* peVar7;
 	ed_Chunck* pSrcTEX;
 	edF32VECTOR4* peVar9;
 	ed_hash_code* pSrcHashCodes;
 	ed_hash_code* pDstHashCodes;
 	undefined8 uVar12;
-	int iVar13;
+	int paletteIndex;
 	ed_Chunck* peVar14;
 
 	dummy_built_g2d* pNewG2d = reinterpret_cast<dummy_built_g2d*>(pData);
 
-	pdVar6 = LOAD_POINTER_CAST(dummy_built_g2d_source*, pHashCode->pData);
+	pMAT = LOAD_POINTER_CAST(dummy_built_g2d_source*, pHashCode->pData);
+	assert(pMAT->MAT.hash == HASH_CODE_MAT);
 	if (pG2d == (ed_g2d_manager*)0x0) {
 		IMPLEMENTATION_GUARD(
 		pG2d = GetFirstG2DMANAGERFreeAndUseIt((uchar*)pNewG2d);)
@@ -306,10 +307,10 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 	pDstHashCodes = reinterpret_cast<ed_hash_code*>(pNewG2d + 1);
 
 	(pNewG2d->hashCode).hash = pHashCode->hash;
-	(pNewG2d->hashCode).pData = STORE_POINTER(&pNewG2d->material);
+	(pNewG2d->hashCode).pData = STORE_POINTER(&pNewG2d->MAT);
 
-	pNewG2d->MAT = pdVar6->MAT;
-	pNewG2d->material = pdVar6->material;
+	pNewG2d->MAT = pMAT->MAT;
+	pNewG2d->material = pMAT->material;
 
 	(pNewG2d->LAYA).hash = HASH_CODE_LAYA;
 	(pNewG2d->LAYA).field_0x4 = 1;
@@ -317,7 +318,7 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 	(pNewG2d->LAYA).size = 0x50;
 	(pNewG2d->LAYA).nextChunckOffset = 0x10;
 
-	peVar7 = LOAD_POINTER_CAST(ed_Chunck*, pdVar6->material.aLayers[0]);
+	peVar7 = LOAD_POINTER_CAST(ed_Chunck*, pMAT->material.aLayers[0]);
 	pNewG2d->material.aLayers[0] = STORE_POINTER(&pNewG2d->LAY);
 
 	pNewG2d->LAY = *peVar7;
@@ -333,18 +334,27 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 
 	pSrcTEX = LOAD_POINTER_CAST(ed_Chunck*, pLayerSrc->pTex);
 	(pNewG2d->layer).pTex = STORE_POINTER(&pNewG2d->TEX);
-	pSrcHashCodes = reinterpret_cast<ed_hash_code*>(pSrcTEX + 1);
 
 	pNewG2d->TEX = *pSrcTEX;
 
 	ed_g2d_texture* pSrcTexture = reinterpret_cast<ed_g2d_texture*>(pSrcTEX + 1);
 	pNewG2d->texture = *pSrcTexture;
 
-	iVar13 = (pNewG2d->texture).bHasPalette;
-	(pNewG2d->TEXA).size = (pNewG2d->TEXA).size + iVar13 * 0x10;
+	pSrcHashCodes = reinterpret_cast<ed_hash_code*>(pSrcTexture + 1);
 
-	while (bVar1 = iVar13 != 0, iVar13 = iVar13 + -1, bVar1) {
+	paletteIndex = (pNewG2d->texture).bHasPalette;
+	(pNewG2d->TEXA).size = (pNewG2d->TEXA).size + paletteIndex * 0x10;
+
+	while (bValidPalette = paletteIndex != 0, paletteIndex = paletteIndex + -1, bValidPalette) {
 		*pDstHashCodes = *pSrcHashCodes;
+
+		// Sanity
+		{
+			ed_hash_code* pPallHashCode = LOAD_POINTER_CAST(ed_hash_code*, pSrcHashCodes->pData);
+			ed_Chunck* pPallPALL = LOAD_POINTER_CAST(ed_Chunck*, pPallHashCode->pData);
+			assert(pPallPALL->hash == HASH_CODE_PA32);
+		}
+
 		pDstHashCodes = pDstHashCodes + 1;
 		pSrcHashCodes = pSrcHashCodes + 1;
 	}
@@ -364,5 +374,40 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 	pNewG2d->fileHeader.field_0x8 = pNewG2d->fileHeader.field_0x8 + (pNewG2d->TWOD).size;
 	pG2d->textureFileLengthA = pNewG2d->fileHeader.field_0x8;
 
+#ifdef PLATFORM_WIN
+	ObjectNaming::SetNextObjectName("Dupe");
+	ed3DGetTextureLoadedDelegate()(pG2d, "Dupe");
+#endif
+
 	return pG2d;
+}
+
+ed_hash_code* ed3DG2DGetHASHFromMat(ed_g2d_manager* pManager, ed_g2d_material* pMaterial)
+{
+	bool bVar1;
+	ed_Chunck* pHASH;
+	ed_hash_code* pNext;
+	uint nbMaterials;
+	ed_Chunck* pData;
+
+	ed_Chunck* pMAT = reinterpret_cast<ed_Chunck*>(pMaterial) - 1;
+
+	nbMaterials = pManager->pMATA_HASH->size - 0x10U >> 4;
+	pHASH = pManager->pMATA_HASH;
+	ed_hash_code* pCur;
+	pNext = reinterpret_cast<ed_hash_code*>(pHASH + 1);
+	do {
+		pCur = pNext;
+		bVar1 = nbMaterials == 0;
+		nbMaterials = nbMaterials - 1;
+	
+		if (bVar1) {
+			return (ed_hash_code*)0x0;
+		}
+	
+		pNext = pCur + 1;
+		pData = LOAD_POINTER_CAST(ed_Chunck*, pCur->pData);
+	} while (pData != pMAT);
+
+	return pCur;
 }

@@ -23,7 +23,7 @@
 #include <functional> // For std::hash
 #include "profiling.h"
 
-#define DEBUG_TEXTURE_NAME "NEW_BONUS_ANI.G2D (m: 0 l: 0)"
+#define DEBUG_TEXTURE_NAME "Dupe (m: 0 l: 0)"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)

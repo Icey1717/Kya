@@ -76,6 +76,9 @@ struct DisplayList
 	ed_3D_Scene* pScene;
 	float field_0x24;
 	char* field_0x28;
+
+	// These saved commands are pointers to the DList for the corresponding patched DList aka the
+	// VIF list for rendering the associated strip / sprite.
 	DisplayListCommand** aSavedCommands;
 };
 
@@ -103,7 +106,7 @@ public:
 
 struct S_GLOBAL_DLIST_PATCH
 {
-	undefined4 field_0x0;
+	uint flags;
 	CObject* pOwner;
 	int nbMatrices;
 	int nbInstances;
@@ -111,7 +114,7 @@ struct S_GLOBAL_DLIST_PATCH
 	_rgba* pRgba;
 	uint* pSt;
 	uint* pUv;
-	DisplayListCommand* field_0x20;
+	DisplayListCommand* pDisplayListCommand;
 };
 
 class CGlobalDListPatch : public CGlobalDList
@@ -136,7 +139,7 @@ public:
 	undefined field_0x4cf;
 	S_GLOBAL_DLIST_PATCH* pCurrentPatch;
 	int nbTotalPatches;
-	byte field_0x4d8;
+	byte activeState;
 	byte field_0x4d9;
 	undefined field_0x4da;
 	undefined field_0x4db;
@@ -147,7 +150,7 @@ public:
 		this->field_0x4dc = index;
 		this->nbTotalPatches = 0;
 		this->pCurrentPatch = 0;
-		this->field_0x4d8 = 0;
+		this->activeState = 0;
 		this->field_0x4d9 = 0;
 
 		for (int i = 0; i < 296; i++) {

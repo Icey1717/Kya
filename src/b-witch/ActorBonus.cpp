@@ -57,7 +57,7 @@ void CActorBonus::Init()
 	_gBNS_Lights.Init(0x40000000, 0x40800000, 0x41004, 0x10a010, 0);
 
 	pKVar2 = this->subObjA;
-	fVar3 = pKVar2->field_0x1c;
+	fVar3 = pKVar2->cullingDistance;
 	if (pKVar2->visibilityDistance < fVar3) {
 		(this->subObjA)->visibilityDistance = fVar3 + 5.0f;
 	}
@@ -1705,7 +1705,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 		pOwner = static_cast<CActorBonus*>(this->pOwner);
 		isVisible = ((pOwner->flags & 0x4400) != 0);
 		if (isVisible) {
-			isVisible = pOwner->distanceToCamera <= pOwner->subObjA->field_0x1c;
+			isVisible = pOwner->distanceToCamera <= pOwner->subObjA->cullingDistance;
 		}
 
 		if (isVisible) {
@@ -1819,7 +1819,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 	pOwner = static_cast<CActorBonus*>(this->pOwner);
 	atGoal = ((pOwner->flags & 0x4400) != 0);
 	if (atGoal) {
-		atGoal = pOwner->distanceToCamera <= pOwner->subObjA->field_0x1c;
+		atGoal = pOwner->distanceToCamera <= pOwner->subObjA->cullingDistance;
 	}
 
 	if (atGoal) {

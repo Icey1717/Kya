@@ -1019,7 +1019,7 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 		gIncViewportY = (0x800 - ((int)(uint)pViewport->pColorBuffer->pSurfaceDesc->screenHeight >> 1)) * 0x10;
 		gCurViewport = pViewport;
 		if ((((gCurDList != (DisplayList*)0x0) &&
-			(gCurDList->nbCommands != 0)) && ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0))
+			(gCurDList->nbCommands != 0)) && ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) != 0))
 			&& (gCurDList->aCommands->aCommandArray
 				[gCurDList->nbCommands - 1].type == LM_REF_0)) {
 			edDListSetState(
@@ -1157,7 +1157,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 
 	edDListPatchGifTag2D();
 
-	if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) {
+	if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) == 0) {
 		return;
 	}
 
@@ -1269,7 +1269,7 @@ void edDlistAddtoView(DisplayList* pInDisplayList)
 		dlistFlags = pDisplayList->flags_0x0;
 
 		if ((dlistFlags & DISPLAY_LIST_FLAG_3D) == 0) {
-			if ((dlistFlags & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0) {
+			if ((dlistFlags & DISPLAY_LIST_FLAG_PATCHABLE) != 0) {
 				if ((dlistFlags & DISPLAY_LIST_FLAG_2D_BEFORE_3D) == 0) {
 					edListAddNode(gDList_2D[gCurRenderState], pDisplayList);
 				}
@@ -2392,7 +2392,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurColorNbInVertex = gCurColorNbInVertex + 1;
 		}
 
-		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) && (gCurPrimType == 7)) {
+		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) == 0) && (gCurPrimType == 7)) {
 			gCurColorBuf->r = gCurColor_SPR->r;
 			gCurColorBuf->g = gCurColor_SPR->g;
 			gCurColorBuf->b = gCurColor_SPR->b;
@@ -2404,7 +2404,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurColorBuf = gCurColorBuf + 2;
 		}
 
-		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0) {
+		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) != 0) {
 			edDListPatchGifTag2D();
 			if (gbInsideBegin == 0) {
 				pRVar2 = edDListCheckState(gCurDList->pRenderCommands);
@@ -3108,7 +3108,7 @@ void edDListEnd(void)
 
 	if (gbInsideBegin != false) {
 		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) == 0) {
-			if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0) {
+			if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) != 0) {
 				// Update NLOOP of the header packet, based on how many commands were added to the display list.
 				const int nloop = ((static_cast<int>(reinterpret_cast<char*>(gCurDList->pRenderCommands) - reinterpret_cast<char*>(gCurStatePKT))) >> 4) - 1;
 				const uint existingPktData = gCurStatePKT->asU32[0];
@@ -3466,7 +3466,7 @@ void edDListDelete(DisplayList* pDisplayList)
 		}
 
 		dlistFlags = pDVar3->flags_0x0;
-		if ((dlistFlags & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) {
+		if ((dlistFlags & DISPLAY_LIST_FLAG_PATCHABLE) == 0) {
 			if ((dlistFlags & DISPLAY_LIST_FLAG_3D) == 0) {
 				return;
 			}
@@ -3592,6 +3592,7 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 	memset(pDlistMaterial, 0, sizeof(edDList_material));
 
 	ed_Chunck* pMAT = LOAD_POINTER_CAST(ed_Chunck*, pHASH_MAT->pData);
+	assert(pMAT->hash == HASH_CODE_MAT);
 
 	pDlistMaterial->pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
 
@@ -3826,6 +3827,7 @@ void edDListPatcheEnd(int param_1, int param_2)
 							edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x460), 0x48, gCurStripPatchable->pBoundSpherePkt + iVar1);)
 							goto LAB_002d121c;
 						}
+
 						IMPLEMENTATION_GUARD(
 						edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x460), (uint)gCurStripPatchable->field_0x38, gCurStripPatchable->pBoundSpherePkt + iVar1);)
 						iVar1 = iVar1 + 1;
@@ -3855,7 +3857,8 @@ DisplayListCommand* edDListPatchableInfo(edVertex** pVertexBufOut, _rgba** pColo
 		return (DisplayListCommand*)0x0;
 	}
 
-	if ((((dlistFlags & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) && ((dlistFlags & DISPLAY_LIST_FLAG_3D) != 0)) && (index < gCurDList->nbSavedCommands)) {
+	if ((((dlistFlags & DISPLAY_LIST_FLAG_PATCHABLE) == 0) && ((dlistFlags & DISPLAY_LIST_FLAG_3D) != 0)) && (index < gCurDList->nbSavedCommands)) {
+		// Retrieve the display list for the strip/sprite/etc.
 		pDisplayListCommand = gCurDList->aSavedCommands[index];
 
 		dlistCommandDataType = pDisplayListCommand->dataType;
@@ -3923,7 +3926,7 @@ bool edDListPatchableShowProp(uint index, uchar bActive)
 		return false;
 	}
 
-	if ((((dlistFlags & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) && ((dlistFlags & DISPLAY_LIST_FLAG_3D) != 0)) && (index < gCurDList->nbSavedCommands)) {
+	if ((((dlistFlags & DISPLAY_LIST_FLAG_PATCHABLE) == 0) && ((dlistFlags & DISPLAY_LIST_FLAG_3D) != 0)) && (index < gCurDList->nbSavedCommands)) {
 		gCurDListInfo3DPatchable = gCurDList->aSavedCommands[index];
 
 		uVar1 = gCurDListInfo3DPatchable->dataType;

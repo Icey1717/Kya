@@ -1667,7 +1667,7 @@ void CActor::ChangeVisibleState(int bVisible)
 		if (pCVar2 != (CShadow*)0x0) {
 			bVar3 = (this->flags & 0x4400) != 0;
 			if (bVar3) {
-				bVar3 = this->distanceToCamera <= (this->subObjA)->field_0x1c;
+				bVar3 = this->distanceToCamera <= (this->subObjA)->cullingDistance;
 			}
 			if (bVar3 != false) {
 				bVar3 = (this->flags & 0x100) != 0;

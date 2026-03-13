@@ -59,7 +59,7 @@ namespace Debug {
 							ImGui::Text("Flags: 0x%04X", pDisplayList->flags_0x0);
 							ImGui::Indent();
 							if (pDisplayList->flags_0x0 & DISPLAY_LIST_FLAG_3D) ImGui::Text("- 3D");
-							if (pDisplayList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) ImGui::Text("- 2D");
+							if (pDisplayList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) ImGui::Text("- Patchable");
 							if (pDisplayList->flags_0x0 & DISPLAY_LIST_FLAG_2D_BEFORE_3D) ImGui::Text("- 2D Before 3D");
 							if (pDisplayList->flags_0x0 & DISPLAY_LIST_FLAG_SAVE_COMMANDS) ImGui::Text("- Save Commands");
 							ImGui::Unindent();

@@ -386,7 +386,7 @@ void CActorManager::Level_Draw()
 			pActor = *aActors;
 			bShouldDraw = (pActor->flags & 0x4400) != 0;
 			if (bShouldDraw) {
-				bShouldDraw = pActor->distanceToCamera <= (pActor->subObjA)->field_0x1c;
+				bShouldDraw = pActor->distanceToCamera <= (pActor->subObjA)->cullingDistance;
 			}
 			if (bShouldDraw) {
 				pActor->Draw();

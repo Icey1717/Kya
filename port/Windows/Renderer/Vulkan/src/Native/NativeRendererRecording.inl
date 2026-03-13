@@ -230,7 +230,7 @@ namespace Renderer
 							continue;
 						}
 
-						NATIVE_LOG(LogLevel::Verbose, "RecordDrawCommand: {} LD {} AST {}", pTexture->GetName(), instance.lightingDataIndex, instance.animStDataIndex);
+						NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand: {} LD {} AST {}", pTexture->GetName(), instance.lightingDataIndex, instance.animStDataIndex);
 
 						Renderer::Debug::BeginLabel(cmd, "%s", instance.pMesh->GetName().c_str());
 						
@@ -470,7 +470,7 @@ namespace Renderer
 
 			void SignalEndCommands()
 			{
-				NATIVE_LOG(LogLevel::Info, "SignalEndCommands");
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "SignalEndCommands");
 			}
 
 		private:

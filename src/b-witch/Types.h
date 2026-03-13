@@ -123,6 +123,10 @@ union _rgba {
 
 	_rgba() : rgba(0) {}
 
+	_rgba(uint inRgba)
+		: rgba(inRgba)
+	{}
+
 	_rgba(byte ir, byte ig, byte ib, byte ia)
 		: r(ir)
 		, g(ig)

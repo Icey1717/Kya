@@ -22,7 +22,9 @@ static std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_SQUARE,			ImGuiKey_O },		// 0x7
 	{ ROUTE_SELECT,			ImGuiKey_Backspace },
 	{ ROUTE_UP,				ImGuiKey_UpArrow },
+	{ ROUTE_LEFT,			ImGuiKey_LeftArrow },
 	{ ROUTE_DOWN,			ImGuiKey_DownArrow },
+	{ ROUTE_RIGHT,			ImGuiKey_RightArrow },
 	{ ROUTE_L_ANALOG_UP,	ImGuiKey_G },
 	{ ROUTE_L_ANALOG_DOWN,	ImGuiKey_H },
 	{ ROUTE_L_ANALOG_LEFT,	ImGuiKey_D },

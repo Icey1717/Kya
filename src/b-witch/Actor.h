@@ -246,7 +246,7 @@ struct KyaUpdateObjA {
 	edF32VECTOR4 boundingSphere;
 	float floatFieldB; /* Created by retype action */
 	float visibilityDistance;
-	float field_0x1c;
+	float cullingDistance;
 	float field_0x20;
 	int field_0x24;
 	uint hashCode;

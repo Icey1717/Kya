@@ -47,7 +47,7 @@ void CActorMoney::Init()
 	this->lightConfig.config.pLightColorMatrix = &this->lightConfig.lightColorMatrix;
 
 	pKVar1 = this->subObjA;
-	fVar7 = pKVar1->field_0x1c;
+	fVar7 = pKVar1->cullingDistance;
 	if (pKVar1->visibilityDistance < fVar7) {
 		pKVar1->visibilityDistance = fVar7 + 5.0f;
 	}

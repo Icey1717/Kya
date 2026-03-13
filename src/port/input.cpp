@@ -48,10 +48,14 @@ namespace Input {
 		pController->pPadD[ROUTE_CIRCLE].bReleased = gInputFunctions.keyReleased(ROUTE_CIRCLE);
 		pController->pPadD[ROUTE_TRIANGLE].bReleased = gInputFunctions.keyReleased(ROUTE_TRIANGLE);
 
-		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
 		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.keyPressed(ROUTE_UP);
 		pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_UP);
+		pController->pPadD[ROUTE_LEFT].bPressed = gInputFunctions.keyPressed(ROUTE_LEFT);
+		pController->pPadD[ROUTE_LEFT].analogValue = gInputFunctions.keyAnalog(ROUTE_LEFT);
+		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
 		pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_DOWN);
+		pController->pPadD[ROUTE_RIGHT].bPressed = gInputFunctions.keyPressed(ROUTE_RIGHT);
+		pController->pPadD[ROUTE_RIGHT].analogValue = gInputFunctions.keyAnalog(ROUTE_RIGHT);
 
 		pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_UP);
 		pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_DOWN);

@@ -45,8 +45,12 @@ namespace GamepadImpl
 			// D-Pad
 		case ROUTE_UP:
 			return (reading.Buttons & GamepadButtons::DPadUp) != GamepadButtons::None;
+		case ROUTE_LEFT:
+			return (reading.Buttons & GamepadButtons::DPadLeft) != GamepadButtons::None;
 		case ROUTE_DOWN:
 			return (reading.Buttons & GamepadButtons::DPadDown) != GamepadButtons::None;
+		case ROUTE_RIGHT:
+			return (reading.Buttons & GamepadButtons::DPadRight) != GamepadButtons::None;
 
 			// Shoulder buttons
 		case ROUTE_L1:
@@ -175,8 +179,12 @@ namespace GamepadImpl
 			// Buttons return binary [0.0 or 1.0]
 		case ROUTE_UP:
 			return ((reading.Buttons & GamepadButtons::DPadUp) != GamepadButtons::None) ? 1.0f : 0.0f;
+		case ROUTE_LEFT:
+			return ((reading.Buttons & GamepadButtons::DPadLeft) != GamepadButtons::None) ? 1.0f : 0.0f;
 		case ROUTE_DOWN:
 			return ((reading.Buttons & GamepadButtons::DPadDown) != GamepadButtons::None) ? 1.0f : 0.0f;
+		case ROUTE_RIGHT:
+			return ((reading.Buttons & GamepadButtons::DPadRight) != GamepadButtons::None) ? 1.0f : 0.0f;
 
 		case ROUTE_L1:
 			return ((reading.Buttons & GamepadButtons::LeftShoulder) != GamepadButtons::None) ? 1.0f : 0.0f;

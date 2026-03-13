@@ -231,6 +231,22 @@ uint gZBUF_BASE = 0;
 ed_g2d_material ed_g2d_material_0048c3b0 = { 0 };
 ed_g2d_material ed_g2d_material_0048c3c0 = { 0 };
 
+
+#ifdef PLATFORM_WIN
+Multidelegate<ed_g2d_manager*, std::string> onTextureLoadedDelegate;
+Multidelegate<ed_g3d_manager*, std::string> onMeshLoadedDelegate;
+
+Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate()
+{
+	return onTextureLoadedDelegate;
+}
+
+Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate()
+{
+	return onMeshLoadedDelegate;
+}
+#endif
+
 int GetStaticMeshMasterIndex(ed_3D_Scene* pStaticMeshMaster)
 {
 	int staticMeshMasterIndex = 0;
@@ -9001,7 +9017,7 @@ LAB_00297eec:
 			pTEX = LOAD_POINTER_CAST(ed_Chunck*, pLayer->pTex);
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
 
-			ED3D_LOG(LogLevel::Verbose, "ed3DLinkStripToViewport tex: {} Clearing ANIM ST flag", pTexture->hashCode.hash.ToString());
+			ED3D_LOG(LogLevel::Verbose, "_ed3DLinkStripToViewport tex: {} Clearing ANIM ST flag", pTexture->hashCode.hash.ToString());
 
 			// Reset the Anim ST updated flag.
 			pLayer->flags_0x4 = layerFlags1 & ~LAYER_FLAG_ANIM_ST_UPDATED;
@@ -11563,21 +11579,6 @@ void ed3DPrepareG2D(ed_g2d_manager* pManager, ulong mode)
 
 	return;
 }
-
-#ifdef PLATFORM_WIN
-Multidelegate<ed_g2d_manager*, std::string> onTextureLoadedDelegate;
-Multidelegate<ed_g3d_manager*, std::string> onMeshLoadedDelegate;
-
-Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate()
-{
-	return onTextureLoadedDelegate;
-}
-
-Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate()
-{
-	return onMeshLoadedDelegate;
-}
-#endif
 
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5)
 {

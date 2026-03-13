@@ -309,7 +309,7 @@ void CActInstance::UpdateVisibility()
 		SetVisible(0);
 	}
 	else {
-		bInFrustum = CCameraManager::_gThis->InFrustum(0.35f, this->pOwner->subObjA->field_0x1c, &this->currentPosition);
+		bInFrustum = CCameraManager::_gThis->InFrustum(0.35f, this->pOwner->subObjA->cullingDistance, &this->currentPosition);
 		bFlagsVisible = (this->flags & ACTOR_INSTANCE_FLAG_VISIBLE) != 0;
 
 		if ((bFlagsVisible) || (bInFrustum == false)) {

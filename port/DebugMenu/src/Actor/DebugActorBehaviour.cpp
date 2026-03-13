@@ -16,6 +16,7 @@
 #include "ActorMicken.h"
 #include "ActorRune.h"
 #include "ActorJamGut.h"
+#include "ActorWind.h"
 
 namespace Aton
 {
@@ -1066,6 +1067,39 @@ namespace JamGut
 	}
 }
 
+namespace Wind
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case 0x2:
+			return "Default";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case WIND_STATE_IDLE:
+			return "Idle";
+		case WIND_STATE_DORMANT:
+			return "Dormant";
+		case WIND_STATE_FADE_IN:
+			return "Fade In";
+		case WIND_STATE_ACTIVE:
+			return "Active";
+		case WIND_STATE_FADE_OUT:
+			return "Fade Out";
+		case WIND_STATE_COOLDOWN:
+			return "Cooldown";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -1112,6 +1146,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Rune::GetBehaviourName(behaviourId);
 	case JAMGUT:
 		return JamGut::GetBehaviourName(behaviourId);
+	case WIND:
+		return Wind::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -1140,6 +1176,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Rune::GetStateName(pActor->actorState);
 	case JAMGUT:
 		return JamGut::GetStateName(pActor->actorState);
+	case WIND:
+		return Wind::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

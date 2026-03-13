@@ -151,7 +151,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->otherSectionStart).boundingSphere.w = pGameInterface->field_0x30 * 10.0f;
 	(this->otherSectionStart).floatFieldB = 1000.0f;
 	(this->otherSectionStart).visibilityDistance = 1000.0f;
-	(this->otherSectionStart).field_0x1c = 1000.0f;
+	(this->otherSectionStart).cullingDistance = 1000.0f;
 	(this->otherSectionStart).field_0x20 = 100.0f;
 	(this->otherSectionStart).animLayerCount = 1;
 	(this->otherSectionStart).lodBiases[0] = 1e+10f;

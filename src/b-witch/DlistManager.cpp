@@ -675,6 +675,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 					bVar5 = true;
 				}
 			}
+
 		LAB_002d73f0:
 			if (!bVar5) {
 				callType = pCurCallFuncElement->type;
@@ -687,16 +688,16 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						pPatch = pGlobalPatch->pCurrentPatch;
 						pcVar4 = pGlobalPatch->aPatches[uVar2];
 						pDVar6 = edDListPatchableInfo(&pPatch->pVertex, &pPatch->pRgba, &pPatch->pSt, &pPatch->pUv, pcVar4->nbMatrices + pcVar4->nbInstances, (uint)uVar2);
-						pPatch->field_0x20 = pDVar6;
-						pGlobalPatch->field_0x4d8 = 1;
+						pPatch->pDisplayListCommand = pDVar6;
+						pGlobalPatch->activeState = 1;
 					}
 
 					curPatchId = *reinterpret_cast<ushort*>(pCallFuncElement);
 					if (pPatch == 0) {
-						pGlobalPatch->aPatches[curPatchId]->field_0x0 = pGlobalPatch->aPatches[curPatchId]->field_0x0 & 0xfffffffe;
+						pGlobalPatch->aPatches[curPatchId]->flags = pGlobalPatch->aPatches[curPatchId]->flags & 0xfffffffe;
 					}
 					else {
-						pGlobalPatch->aPatches[curPatchId]->field_0x0 = pGlobalPatch->aPatches[curPatchId]->field_0x0 | 1;
+						pGlobalPatch->aPatches[curPatchId]->flags = pGlobalPatch->aPatches[curPatchId]->flags | 1;
 					}
 
 					edDListPatchableShowProp(curPatchId, pCurCallFuncElement->bActive);
@@ -706,7 +707,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						pGlobalPatch->field_0x18 = 0;
 					}
 
-					pGlobalPatch->field_0x4d8 = 0;
+					pGlobalPatch->activeState = 0;
 					pGlobalPatch->pCurrentPatch = 0;
 				}
 				else {
@@ -720,8 +721,8 @@ void CGlobalDListManager::_ExecuteCallFunc()
 							pPatch = pGlobalPatch->pCurrentPatch;
 							pcVar4 = pGlobalPatch->aPatches[uVar2];
 							pDVar6 = edDListPatchableInfo(&pPatch->pVertex, &pPatch->pRgba, &pPatch->pSt, &pPatch->pUv, pcVar4->nbMatrices + pcVar4->nbInstances, (uint)uVar2);
-							pPatch->field_0x20 = pDVar6;
-							pGlobalPatch->field_0x4d8 = 1;
+							pPatch->pDisplayListCommand = pDVar6;
+							pGlobalPatch->activeState = 1;
 						}
 
 						const int bActive = this->aActiveCallFuncElements[curCallFuncElementIndex].bActive;
@@ -744,7 +745,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 							pGlobalPatch->field_0x18 = 0;
 						}
 
-						pGlobalPatch->field_0x4d8 = 0;
+						pGlobalPatch->activeState = 0;
 						pGlobalPatch->pCurrentPatch = 0;
 					}
 					else {
@@ -761,7 +762,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 								((long)(pPatch + 0x10), (long)(pPatch + 0x14), (long)(pPatch + 0x18),
 									(long)(pPatch + 0x1c), *(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
 								*(DisplayListCommand**)(pPatch + 0x20) = pDVar6;
-								pGlobalPatch->field_0x4d8 = 1;
+								pGlobalPatch->activeState = 1;
 							}
 							curPatchId = *(uint*)&pCurCallFuncElement->field_0x2c;
 							iVar14 = curPatchId * 0x10;
@@ -797,7 +798,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 								pGlobalPatch->field_0x18 = 0;
 							}
 
-							pGlobalPatch->field_0x4d8 = 0;
+							pGlobalPatch->activeState = 0;
 							pGlobalPatch->pCurrentPatch = 0;)
 						}
 						else {
@@ -851,7 +852,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						pGlobalPatch->field_0x18 = 0;
 					}
 
-					pGlobalPatch->field_0x4d8 = 0;
+					pGlobalPatch->activeState = 0;
 					pGlobalPatch->pCurrentPatch = 0;
 					this->lastPatchId = -1;
 				}
@@ -949,8 +950,8 @@ CGlobalDListPatch* CGlobalDListManager::BeginCurrent(int patchId)
 		pCurrentPatch = pPatch->pCurrentPatch;
 		pPatchInfo = pPatch->aPatches[patchId & 0xffffU];
 		pDListCmd = edDListPatchableInfo(&pCurrentPatch->pVertex, &pCurrentPatch->pRgba, &pCurrentPatch->pSt, &pCurrentPatch->pUv, pPatchInfo->nbMatrices + pPatchInfo->nbInstances, patchId & 0xffffU);
-		pCurrentPatch->field_0x20 = pDListCmd;
-		pPatch->field_0x4d8 = 1;
+		pCurrentPatch->pDisplayListCommand = pDListCmd;
+		pPatch->activeState = 1;
 		this->lastPatchId = patchId;
 		if (patchId == pNextFree->patchId) {
 			_ExecuteCallFunc_BeginDList(pNextFree);
@@ -977,7 +978,7 @@ void CGlobalDListManager::EndCurrent(int nbVertex, int param_2)
 		pPatch->field_0x18 = 0;
 	}
 
-	pPatch->field_0x4d8 = 0;
+	pPatch->activeState = 0;
 	pPatch->pCurrentPatch = (S_GLOBAL_DLIST_PATCH*)0x0;
 	pManager->lastPatchId = -1;
 
@@ -1403,7 +1404,7 @@ uint GameDListPatch_Register(CObject* pObject, int nbMatrices, int nbInstances)
 
 	pNewPatch = NewPool_S_EYES_BRIGHT_SHADOW(1);
 	pSectorPatch->aPatches[pSectorPatch->nbTotalPatches] = pNewPatch;
-	pNewPatch->field_0x0 = 0;
+	pNewPatch->flags = 0;
 	pNewPatch->pOwner = pObject;
 	pNewPatch->nbMatrices = nbMatrices;
 	pNewPatch->nbInstances = nbInstances;

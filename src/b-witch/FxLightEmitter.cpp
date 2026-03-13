@@ -88,6 +88,43 @@ void CFxLightEmitter::Create(float param_1, uint param_3, uint param_4)
 	return;
 }
 
+void CFxLightEmitter::InitRays(int nbRays)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	int iVar4;
+	int iVar5;
+	int iVar6;
+
+	//this->field_0x54 = 0;
+	//this->field_0x50 = 0;
+	//iVar6 = 0;
+	//if (0 < nbRays) {
+	//	iVar5 = 0;
+	//	do {
+	//		fVar3 = gF32Vector4UnitZ.w;
+	//		fVar2 = gF32Vector4UnitZ.z;
+	//		fVar1 = gF32Vector4UnitZ.y;
+	//		iVar6 = iVar6 + 1;
+	//		iVar4 = &this->pRayDef->field_0x0 + iVar5;
+	//		*(float*)(iVar4 + 0x10) = gF32Vector4UnitZ.x;
+	//		*(float*)(iVar4 + 0x14) = fVar1;
+	//		*(float*)(iVar4 + 0x18) = fVar2;
+	//		*(float*)(iVar4 + 0x1c) = fVar3;
+	//		*(undefined2*)((int)&this->pRayDef->field_0x2c + iVar5) = 0xffff;
+	//		*(undefined2*)(&this->pRayDef->field_0x2e + iVar5) = 0x3039;
+	//		*(undefined2*)(&this->pRayDef->field_0x30 + iVar5) = 0;
+	//		(&this->pRayDef->field_0x33)[iVar5] = 0xff;
+	//		*(undefined4*)(&this->pRayDef->field_0x38 + iVar5) = 0;
+	//		*(undefined4*)(&this->pRayDef->field_0x3c + iVar5) = 0;
+	//		iVar5 = iVar5 + 0x40;
+	//	} while (iVar6 < nbRays);
+	//}
+
+	return;
+}
+
 void CFxLightEmitter::ResetRays()
 {
 	uint uVar1;
@@ -114,6 +151,35 @@ void CFxLightEmitter::ResetRays()
 	//		} while (iVar4 < (int)uVar1);
 	//	}
 	//}
+	return;
+}
+
+void CFxLightEmitter::ChangeUvMapping(edF32VECTOR4* pUvMapping)
+{
+	this->uvMapping = *pUvMapping;
+
+	return;
+}
+
+void CFxLightEmitter::ChangeUvSpeed(float param_1, short param_3, short param_4)
+{
+	this->flags = this->flags | 0x80;
+	this->field_0xb8 = param_1;
+	this->field_0xbc = param_3;
+	this->field_0xbe = param_4;
+
+	return;
+}
+
+void CFxLightEmitter::ChangeColor(int index, uint newColor)
+{
+	this->aColors[index & 0xffff] = newColor;
+	return;
+}
+
+void CFxLightEmitter::SetSharedRays(RAY_DEF* pSharedRays)
+{
+	this->pRayDef = pSharedRays;
 	return;
 }
 
@@ -190,6 +256,27 @@ void CFxLightEmitter::ChangeStallTime(float stalltime)
 	return;
 }
 
+void CFxLightEmitter::ChangeDirection(edF32VECTOR4* pDirection)
+{
+	this->direction = *pDirection;
+
+	return;
+}
+
+void CFxLightEmitter::ChangeAlphaFactor(float alphaFactor)
+{
+	if (alphaFactor == 0.0f) {
+		this->flags = this->flags & 0xfffffffe;
+	}
+	else {
+		this->flags = this->flags | 1;
+	}
+
+	this->alphaFactor = alphaFactor;
+
+	return;
+}
+
 bool CFxLightEmitter::Manage(edF32VECTOR4*, undefined4)
 {
 	IMPLEMENTATION_GUARD_FX();
@@ -199,4 +286,43 @@ bool CFxLightEmitter::Manage(edF32VECTOR4*, undefined4)
 void CFxLightEmitter::GenerateNewOne(edF32VECTOR4* param_2)
 {
 	IMPLEMENTATION_GUARD_FX();
+}
+
+void CFxLightEmitter::Enable(int bEnable)
+{
+	if (bEnable == 0) {
+		this->flags = this->flags & 0xfffffffe;
+	}
+	else {
+		this->flags = this->flags | 1;
+	}
+
+	return;
+}
+
+void CFxLightEmitter::ReleaseRays(int nbRays)
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+
+	IMPLEMENTATION_GUARD_FX(
+	this->field_0x54 = 0;
+	this->field_0x50 = 0;
+	iVar3 = 0;
+	if (0 < nbRays) {
+		iVar2 = 0;
+		do {
+			iVar1 = &this->pRayDef->field_0x0 + iVar2;
+			if (this->countId == *(char*)(iVar1 + 0x33)) {
+				*(undefined2*)(iVar1 + 0x30) = 0;
+				(&this->pRayDef->field_0x33)[iVar2] = 0xff;
+				*(undefined2*)((int)&this->pRayDef->field_0x2c + iVar2) = 0xffff;
+			}
+			iVar3 = iVar3 + 1;
+			iVar2 = iVar2 + 0x40;
+		} while (iVar3 < nbRays);
+	})
+
+	return;
 }

@@ -5,16 +5,96 @@
 #include "Actor.h"
 #include "SectorManager.h"
 #include "CinematicManager.h"
+#include "FxLightEmitter.h"
 
-#define IMPLEMENTATION_GUARD_WIND_FX(x) 
+#define IMPLEMENTATION_GUARD_WIND_FX(x) assert(false);
+
+#define WIND_STATE_IDLE 0x5
+#define WIND_STATE_DORMANT 0x6
+#define WIND_STATE_FADE_IN 0x7
+#define WIND_STATE_ACTIVE 0x8
+#define WIND_STATE_FADE_OUT 0x9
+#define WIND_STATE_COOLDOWN 0xa
 
 class CActorWind;
 class CWayPoint;
 class CSoundWind;
+class CFxWind;
+
+class CFxWindHandle
+{
+public:
+	CFxWind* pFxWind;
+	float field_0x4;
+};
+
+struct _EmiNfo
+{
+	CFxLightEmitter field_0x0[3];
+	CFxWind* pFxWind;
+	undefined4 field_0x2a4[3];
+	float field_0x2b0;
+	float field_0x2b4;
+};
+
+struct HEAT_FX_PARAM
+{
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	uint field_0xc;
+	int field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	int field_0x20;
+};
+
+struct RayMem
+{
+	RAY_DEF* pRayDef;
+	int nbRays;
+};
+
+struct _SP_PartNfo
+{
+	edF32VECTOR4* field_0x0;
+	int field_0x4[3];
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+};
+
+struct FASTRAM_MNG
+{
+
+};
 
 class CFxEmitterPool
 {
+public:
+	CFxEmitterPool();
+	void Manage(CFxWind* pFxWind);
+	void _SortRegNfo(int param_2);
+	void _PrepareCommonSubPart(_EmiNfo* pEmiInfo, _SP_PartNfo* pSubPartInfo);
+	void Draw();
 
+	int field_0x0;
+	undefined4 field_0x4;
+	float field_0x8;
+	undefined4 field_0xc;
+
+	int nbHandles;
+	int field_0x14;
+	float field_0x18;
+	CFxWindHandle aWindHandles[64];
+	_EmiNfo aHolders[4];
+	float field_0xd20[3];
+	float field_0xd2c[3];
+	HEAT_FX_PARAM heatFxParam;
+	RayMem field_0xd5c[3];
+	FASTRAM_MNG field_0xd74;
 };
 
 struct NotifyWindParam
@@ -23,25 +103,107 @@ struct NotifyWindParam
 	float field_0x10;
 };
 
+struct _wind_fx_vtx
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+};
+
+struct _wind_fx_draw_state
+{
+	byte* pAlphaMultiplier;
+	float alpha;
+	float prevAlpha;
+	int index;
+	int drawState;
+};
+
+class CFxWindSolid
+{
+public:
+	void _Create_SemiCylinder(_wind_fx_vtx* pVtx, int param_3, int param_4, int param_5);
+	void _Create_FakePlane(float param_1, float param_2, float param_3, float param_4, _wind_fx_vtx* pVtx, int param_7, int param_8);
+	void _Create_Whirl(_wind_fx_vtx* pVtx);
+	bool CreatePatchableDlist(int patchId);
+	void Draw(edF32MATRIX4* param_2);
+
+	CFxWind* pOwner;
+	uint field_0x4;
+
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+
+	int outerPatchId;
+	int whirlPatchId;
+	int fakePlanePatchId;
+	void* pAlphaData;
+
+	_wind_fx_draw_state drawStateA;
+	_wind_fx_draw_state drawStateB;
+	_wind_fx_draw_state drawStateC;
+	_wind_fx_draw_state drawStateD;
+	_wind_fx_draw_state drawStateE;
+
+	_rgba field_0x8c;
+};
+
+struct MaterialManagerCombined
+{
+	edDList_material material;
+	ed_g2d_manager manager;
+};
+
+struct edCSound3DPrim
+{
+
+};
+
 class CFxWind : public CObject
 {
 public:
+	struct WindAnimST
+	{
+		int field_0x0;
+		float field_0x4;
+		float field_0x8;
+	};
+
+	static WindAnimST gUseAnimST[5];
+
+	CFxWind();
+
+	// CObject
+	virtual bool IsKindOfObject(ulong kind);
+	virtual bool InitDlistPatchable(int patchId);
+
 	void Create(CActorWind* pOwner, int param_3);
 	void Init(edF32MATRIX4* pMatrix);
-	void SectorChange(int oldSectorId, int newSectorId) { IMPLEMENTATION_GUARD_WIND_FX(); }
-	void Draw() { IMPLEMENTATION_GUARD_WIND_FX(); }
-	void Reset() { IMPLEMENTATION_GUARD_WIND_FX(); }
+	void SectorChange(int oldSectorId, int newSectorId);
+	void Manage(int param_2);
+	void Draw();
+	void Reset();
+
+	void RetrieveFlags(CActorWind* pWind);
+	void _Compute_Matrix(edF32MATRIX4* pCameraMatrix);
+	void ChangeVisibleState(int state);
 
 	CActorWind* pOwner;
 
 	edF32MATRIX4 field_0x10;
 
-	uint field_0x54;
+	uint flags_0x54;
 	int field_0x58;
 	edF32MATRIX4* field_0x5c;
 
-	edF32MATRIX4 instanceIndex;
-	edF32MATRIX4 angleRotY;
+	edF32MATRIX4 field_0x60;
+	edF32MATRIX4 field_0xa0;
+	edF32MATRIX4 field_0xe0;
 
 	edF32VECTOR4 field_0x130;
 	edF32VECTOR4 field_0x140;
@@ -50,6 +212,33 @@ public:
 	float field_0x160;
 
 	int field_0x164;
+	float field_0x168;
+	float field_0x16c;
+	float field_0x170;
+	float field_0x174;
+	float field_0x178;
+	float field_0x17c;
+
+	ed_g2d_manager* field_0x180;
+	MaterialManagerCombined field_0x184[5];
+
+	float field_0x2c4;
+	float field_0x2c8;
+	float field_0x2cc;
+	float field_0x2d0;
+	float field_0x2d4;
+
+	CFxWindSolid windSolid;
+
+	int outerPatchId;
+	int whirlPatchId;
+	int fakePlanePatchId;
+	CActorSound* field_0x374;
+
+	float field_0x390;
+
+	edCSound3DPrim field_0x3a0;
+
 };
 
 class CBehaviourWind : public CBehaviour 
@@ -134,7 +323,7 @@ public:
 	S_STREAM_REF<ed_zone_3d> activationZone;
 	S_ACTOR_STREAM_REF* pActorStreamRef;
 	S_STREAM_REF<ed_zone_3d> field_0x1c4;
-	uint field_0x1c8;
+	_rgba field_0x1c8;
 
 	S_STREAM_REF<CWayPoint> field_0x1cc;
 

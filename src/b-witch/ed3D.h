@@ -28,6 +28,7 @@
 #define HASH_CODE_LAY 0x2e59414c
 
 #define HASH_CODE_T2D 0x4432472e
+#define HASH_CODE_PA32 0x32334150
 
 #define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
 #define ED3D_LOG_SLOW(level, format, ...)
@@ -479,7 +480,8 @@ PACK(
 	strd_ptr(ed_Chunck*) pAnimChunck;
 });
 
-struct ed_dma_material {
+struct ed_dma_material
+{
 	ed_g2d_material* pMaterial;
 	float field_0x4;
 	edLIST list;
@@ -732,6 +734,8 @@ void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha);
 void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
+
+ed_g2d_bitmap* ed3DGetG2DBitmap(ed_g2d_material* pMaterial, int index);
 
 ed_3D_Scene* ed3DGetScene(int index);
 
