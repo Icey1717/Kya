@@ -64,6 +64,8 @@ set (SOURCES
 	"Vulkan/src/Texture/TextureCache.cpp"
 	"Vulkan/src/Texture/TextureUpdate.h"
 	"Vulkan/src/Texture/TextureUpdate.cpp"
+	"Vulkan/src/Texture/TextureUpscale.h"
+	"Vulkan/src/Texture/TextureUpscale.cpp"
 
 	"include/renderer.h"
 	"include/displaylist.h"

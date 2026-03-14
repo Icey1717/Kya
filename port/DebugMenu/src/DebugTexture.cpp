@@ -482,6 +482,12 @@ namespace Debug
 					Renderer::Native::TurnTextureWhite(pSimpleTexture);
 				}
 
+				ImGui::SameLine();
+
+				if (ImGui::Button("Revert")) {
+					Renderer::Native::RevertTexture(pSimpleTexture);
+				}
+
 				PS2::GSSimpleTexture* pCurrentRenderer = pSimpleTexture->GetRenderer();
 				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != pCurrentRenderer || lastImageView != pCurrentRenderer->imageView) {
 					if (pRenderer != nullptr) {

@@ -24,6 +24,8 @@ namespace Renderer::Native
 	// Pixel data must be RGBA8, row-major. It is copied into the queue immediately.
 	void RequestTextureUpdate(SimpleTexture* pTexture, uint32_t newWidth, uint32_t newHeight, std::vector<uint8_t> pixels);
 
+	void RevertTexture(SimpleTexture* pTexture);
+
 	void TurnTextureWhite(SimpleTexture* pTexture);
 
 	// Apply all queued texture updates. Called once per frame from WaitUntilReady().

@@ -1081,14 +1081,15 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 	}
 
 	bitmap.Log("Uploading texture TEX - ");
-	auto pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
+	auto pBuffer = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
 
 	pRenderer = new PS2::GSSimpleTexture();
-	pRenderer->width = pOut->Width();
-	pRenderer->height = pOut->Height();
+	pRenderer->width = pBuffer->Width();
+	pRenderer->height = pBuffer->Height();
 	pRenderer->imageData = bitmap;
 	pRenderer->CreateResources(false);
-	pRenderer->UploadData(static_cast<int>(pOut->Size()), pOut->Get());
+	pRenderer->AssignUploadBuffer(std::move(pBuffer));
+	pRenderer->UploadDataFromBuffer();
 }
 
 void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
@@ -1109,6 +1110,16 @@ void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
 	SetObjectName(reinterpret_cast<uint64_t>(image), VK_OBJECT_TYPE_IMAGE, "GSTexImage Image (%d, %d) pallete: %d", width, height, bPalette);
 	SetObjectName(reinterpret_cast<uint64_t>(imageMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "GSTexImage Image Memory (%d, %d)  pallete: %d", width, height, bPalette);
 	SetObjectName(reinterpret_cast<uint64_t>(imageView), VK_OBJECT_TYPE_IMAGE_VIEW, "GSTexImage Image View (%d, %d)  pallete: %d", width, height, bPalette);
+}
+
+void PS2::GSSimpleTexture::AssignUploadBuffer(TextureUpload::UploadBufferPtr&& buffer)
+{
+	pUploadBuffer = std::move(buffer);
+}
+
+void PS2::GSSimpleTexture::UploadDataFromBuffer()
+{
+	UploadData(static_cast<int>(pUploadBuffer->Size()), pUploadBuffer->Get());
 }
 
 void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)

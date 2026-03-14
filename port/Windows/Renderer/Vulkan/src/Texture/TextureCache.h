@@ -7,6 +7,7 @@
 #include "Objects/Pipeline.h"
 #include "renderer.h"
 #include "Objects/UniformBuffer.h"
+#include "UploadBuffer.h"
 #include "VulkanPS2.h"
 
 namespace PS2
@@ -40,6 +41,10 @@ namespace PS2
 
 		Renderer::ImageData imageData;
 
+		// The vulkan compatible pixel data that is uploaded to the GPU. 
+		// Used for upscaling and reverting to original texture data.
+		TextureUpload::UploadBufferPtr pUploadBuffer;
+
 		uint32_t width;
 		uint32_t height;
 
@@ -49,6 +54,8 @@ namespace PS2
 
 		void CreateResources(const bool bPalette);
 		void DestroyImageResources();
+		void AssignUploadBuffer(TextureUpload::UploadBufferPtr&& buffer);
+		void UploadDataFromBuffer();
 		void UploadData(int bufferSize, uint8_t* readBuffer);
 		void Resize(uint32_t newWidth, uint32_t newHeight, int bufferSize, uint8_t* pixels);
 
@@ -60,6 +67,8 @@ namespace PS2
 		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex);
 		void UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList);
 		void RefreshDescriptors();
+
+		const TextureUpload::UploadBuffer& GetUploadBuffer() const { return *pUploadBuffer; }
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 	};

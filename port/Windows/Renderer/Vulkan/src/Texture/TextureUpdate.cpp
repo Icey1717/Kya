@@ -27,6 +27,17 @@ void Renderer::Native::RequestTextureUpdate(SimpleTexture* pTexture, uint32_t ne
 	gPendingTextureUpdates.push_back({ pTexture->GetRenderer(), newWidth, newHeight, std::move(pixels) });
 }
 
+void Renderer::Native::RevertTexture(SimpleTexture* pTexture)
+{
+	assert(pTexture && pTexture->GetRenderer());
+	PS2::GSSimpleTexture* pRenderer = pTexture->GetRenderer();
+
+	const TextureUpload::UploadBuffer& originalData = pRenderer->GetUploadBuffer();
+
+	std::vector<uint8_t> originalPixels(originalData.Get(), originalData.Get() + originalData.Size());
+	RequestTextureUpdate(pTexture, originalData.Width(), originalData.Height(), std::move(originalPixels));
+}
+
 void Renderer::Native::TurnTextureWhite(SimpleTexture* pTexture)
 {
 	const uint32_t whitePixel = 0xFFFFFFFF; // RGBA8 white
