@@ -28,6 +28,7 @@
 #include "log.h"
 #include "VulkanHardwarePS2.h"
 #include "Native/NativeRenderer.h"
+#include "Texture/TextureUpdate.h"
 
 #include "profiling.h"
 
@@ -1094,6 +1095,7 @@ namespace Renderer
 		if (!gHeadless) {
 			app.waitUntilReady();
 			Renderer::Native::ApplyPendingResizeIfNeeded();
+			Renderer::Native::DrainPendingTextureUpdates();
 		}
 	}
 

@@ -1132,6 +1132,59 @@ void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
 	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
 }
 
+void PS2::GSSimpleTexture::DestroyImageResources()
+{
+	if (imageView != VK_NULL_HANDLE)
+	{
+		vkDestroyImageView(GetDevice(), imageView, GetAllocator());
+		imageView = VK_NULL_HANDLE;
+	}
+
+	if (image != VK_NULL_HANDLE)
+	{
+		vkDestroyImage(GetDevice(), image, GetAllocator());
+		image = VK_NULL_HANDLE;
+	}
+
+	if (imageMemory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(GetDevice(), imageMemory, GetAllocator());
+		imageMemory = VK_NULL_HANDLE;
+	}
+}
+
+void PS2::GSSimpleTexture::Resize(uint32_t newWidth, uint32_t newHeight, int bufferSize, uint8_t* pixels)
+{
+	// Must be called when the GPU is not using this texture (after vkWaitForFences).
+	DestroyImageResources();
+
+	width = newWidth;
+	height = newHeight;
+	CreateResources(false);
+	UploadData(bufferSize, pixels);
+	RefreshDescriptors();
+}
+
+void PS2::GSSimpleTexture::RefreshDescriptors()
+{
+	for (auto& [pPipeline, descriptor] : descriptorMap)
+	{
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = imageView;
+		imageInfo.sampler = GetSampler(samplerSelector);
+
+		for (size_t i = 0; i < descriptor.GetSetCount(); i++)
+		{
+			Renderer::DescriptorWriteList writeList;
+			writeList.EmplaceWrite({ 3, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+			writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+			writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
+			UpdateDescriptorSets(descriptor.GetSet(static_cast<int>(i)), descriptor.layoutBindingMap, writeList);
+		}
+	}
+}
+
 PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList)
 {
 	auto& descriptorSets = descriptorMap[&pipeline];

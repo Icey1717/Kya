@@ -138,14 +138,6 @@ namespace Debug {
 		std::string name;
 	};
 
-	static std::vector<TextureListEntry> textureList;
-
-	static void OnTextureLoaded(ed_g2d_manager* pNewTexture, std::string name) {
-		std::vector<DWORD64> backtrace;
-		CollectBacktrace(backtrace);
-		textureList.emplace_back(pNewTexture, backtrace, ObjectNaming::GetNextObjectName());
-	}
-
 	struct MeshListEntry {
 		MeshListEntry(struct ed_g3d_manager* mesh, std::vector<DWORD64> inBacktrace, std::string inName)
 			: pMesh(mesh)
@@ -241,7 +233,6 @@ void DebugMenu::Init()
 {
 	edDListGetMaterialLoadedDelegate() += Debug::OnMaterialLoaded;
 	edDListGetMaterialUnloadedDelegate() += Debug::OnMaterialUnloaded;
-	ed3DGetTextureLoadedDelegate() += Debug::OnTextureLoaded;
 	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
 
 	Debug::EnsureRegistrations();

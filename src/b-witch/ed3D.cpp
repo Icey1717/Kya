@@ -234,17 +234,30 @@ ed_g2d_material ed_g2d_material_0048c3c0 = { 0 };
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*, std::string> onTextureLoadedDelegate;
+Multidelegate<ed_g2d_manager*, std::string> onTextureUnloadedDelegate;
 Multidelegate<ed_g3d_manager*, std::string> onMeshLoadedDelegate;
+Multidelegate<ed_g3d_manager*, std::string> onMeshUnloadedDelegate;
 
 Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate()
 {
 	return onTextureLoadedDelegate;
 }
 
+Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureUnloadedDelegate()
+{
+	return onTextureUnloadedDelegate;
+}
+
 Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate()
 {
 	return onMeshLoadedDelegate;
 }
+
+Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshUnloadedDelegate()
+{
+	return onMeshUnloadedDelegate;
+}
+
 #endif
 
 int GetStaticMeshMasterIndex(ed_3D_Scene* pStaticMeshMaster)

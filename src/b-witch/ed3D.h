@@ -778,7 +778,9 @@ extern edpkt_data g_stExecuteCode;
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate();
+Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureUnloadedDelegate();
 Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate();
+Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshUnloadedDelegate();
 
 namespace ed3D {
 	namespace DebugOptions {

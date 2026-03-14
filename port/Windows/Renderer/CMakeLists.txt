@@ -62,6 +62,8 @@ set (SOURCES
 	"Vulkan/src/Texture/TextureCacheRowOffset.h"
 	"Vulkan/src/Texture/TextureCache.h"
 	"Vulkan/src/Texture/TextureCache.cpp"
+	"Vulkan/src/Texture/TextureUpdate.h"
+	"Vulkan/src/Texture/TextureUpdate.cpp"
 
 	"include/renderer.h"
 	"include/displaylist.h"

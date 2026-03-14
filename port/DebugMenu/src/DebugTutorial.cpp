@@ -7,11 +7,6 @@
 #include "ActorWolfen.h"
 #include "ActorManager.h"
 
-namespace Debug
-{
-	MenuRegisterer tutorialMenuRegisterer("Tutorial", Debug::Tutorial::ShowMenu);
-}
-
 void Debug::Tutorial::ShowMenu(bool* bOpen)
 {
 	if (ImGui::Begin("Debug Tutorial", bOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
@@ -74,6 +69,6 @@ void Debug::Tutorial::ShowMenu(bool* bOpen)
 }
 
 namespace Debug {
-    MenuRegisterer sDebugTutorialMenuReg("Tutorial", Debug::Tutorial::ShowMenu, true);
+	MenuRegisterer sDebugTutorialMenuReg("Tutorial", Debug::Tutorial::ShowMenu, true);
 }
 

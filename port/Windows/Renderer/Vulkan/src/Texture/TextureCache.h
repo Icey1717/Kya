@@ -9,8 +9,10 @@
 #include "Objects/UniformBuffer.h"
 #include "VulkanPS2.h"
 
-namespace PS2 {
-	struct GSTexDescriptor {
+namespace PS2
+{
+	struct GSTexDescriptor
+	{
 		GSTexDescriptor();
 
 		const VkDescriptorSet& GetSet(int index) const {
@@ -30,7 +32,8 @@ namespace PS2 {
 		UniformBuffer<PS2::PSConstantBuffer> pixelConstBuffer;
 	};
 
-	struct GSSimpleTexture {
+	struct GSSimpleTexture
+	{
 		VkImage image = VK_NULL_HANDLE;
 		VkDeviceMemory imageMemory = VK_NULL_HANDLE;
 		VkImageView imageView = VK_NULL_HANDLE;
@@ -45,7 +48,9 @@ namespace PS2 {
 		inline void UpdateSamplerSelector(const PSSamplerSelector& selector) { samplerSelector = selector; }
 
 		void CreateResources(const bool bPalette);
+		void DestroyImageResources();
 		void UploadData(int bufferSize, uint8_t* readBuffer);
+		void Resize(uint32_t newWidth, uint32_t newHeight, int bufferSize, uint8_t* pixels);
 
 		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
 		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
@@ -54,6 +59,7 @@ namespace PS2 {
 
 		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex);
 		void UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList);
+		void RefreshDescriptors();
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 	};
