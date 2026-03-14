@@ -74,4 +74,6 @@ void Renderer::Native::DrainPendingTextureUpdates()
 	{
 		update.pTexture->Resize(update.newWidth, update.newHeight, static_cast<int>(update.pixels.size()), update.pixels.data());
 	}
+
+	vkDeviceWaitIdle(GetDevice());
 }

@@ -1180,6 +1180,31 @@ void PS2::GSSimpleTexture::RefreshDescriptors()
 {
 	for (auto& [pPipeline, descriptor] : descriptorMap)
 	{
+		// Find the binding index used by this pipeline for the combined image sampler,
+		// rather than assuming a fixed index. Different pipelines (e.g. display list vs
+		// native renderer) use different binding slots for their texture sampler.
+		int textureBindingIndex = -1;
+		for (auto& [setIndex, stageMap] : descriptor.layoutBindingMap)
+		{
+			const auto it = stageMap.find(Renderer::EBindingStage::Fragment);
+			if (it != stageMap.end())
+			{
+				for (const auto& layoutBinding : it->second)
+				{
+					if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+					{
+						textureBindingIndex = static_cast<int>(layoutBinding.binding);
+						break;
+					}
+				}
+			}
+			if (textureBindingIndex >= 0)
+				break;
+		}
+
+		if (textureBindingIndex < 0)
+			continue;
+
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
@@ -1188,7 +1213,7 @@ void PS2::GSSimpleTexture::RefreshDescriptors()
 		for (size_t i = 0; i < descriptor.GetSetCount(); i++)
 		{
 			Renderer::DescriptorWriteList writeList;
-			writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+			writeList.EmplaceWrite({ textureBindingIndex, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 			UpdateDescriptorSets(descriptor.GetSet(static_cast<int>(i)), descriptor.layoutBindingMap, writeList);
 		}
 	}

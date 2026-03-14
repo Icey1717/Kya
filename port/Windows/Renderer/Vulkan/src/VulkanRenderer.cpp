@@ -29,6 +29,7 @@
 #include "VulkanHardwarePS2.h"
 #include "Native/NativeRenderer.h"
 #include "Texture/TextureUpdate.h"
+#include "Texture/TextureUpscale.h"
 
 #include "profiling.h"
 
@@ -183,6 +184,7 @@ public:
 	void setup() {
 		initWindow();
 		initVulkan();
+		Renderer::Native::InitUpscalerONNX("../../upscaling/models/4x-UltraSharpV2_fp32_op17.onnx");
 	}
 
 	void run() {

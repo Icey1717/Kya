@@ -18,7 +18,13 @@ add_subdirectory("ext/pss/pss")
 #Tracy profiler
 option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" OFF)
-option(TRACY_CALLSTACK "" ON)
+if(ENABLE_PERFORMANCE_PROFILING OR ENABLE_MEMORY_PROFILING)
+	# Root CMakeLists sets TRACY_CALLSTACK=10 via add_compile_definitions; suppress Tracy's
+	# own boolean define here to avoid a redefinition warning (-DTRACY_CALLSTACK=1 vs =10).
+	set(TRACY_CALLSTACK OFF CACHE BOOL "" FORCE)
+else()
+	option(TRACY_CALLSTACK "" ON)
+endif()
 add_subdirectory("ext/tracy") 
 
 add_subdirectory("ext/readerwriterqueue")

@@ -9,3 +9,4 @@ ps2/ezmpegstr
 cmake-build-debug/
 .github
 __pycache__
+upscaling/

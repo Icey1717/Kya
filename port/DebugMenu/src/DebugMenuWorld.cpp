@@ -11,6 +11,7 @@
 #include "SectorManager.h"
 #include "LevelScheduler.h"
 #include "Types.h"
+#include "DebugSetting.h"
 #include "Actor/DebugActor.h"
 #include "Actor/DebugActorWind.h"
 
@@ -33,8 +34,8 @@ namespace Debug {
 	};
 
 	static InspectorSelection gInspectorSelection;
-	static bool gShowWorldPanel = false;
-	static bool gShowInspectorPanel = false;
+	static Debug::Setting<bool> gShowWorldPanel("Show World Panel", true);
+	static Debug::Setting<bool> gShowInspectorPanel("Show Inspector Panel", true);
 	static int gSectorFilter = -1;
 
 	static constexpr const char* kWorldWindowName = "World";
@@ -265,7 +266,9 @@ namespace Debug {
 			return;
 		}
 
-		ImGui::Begin(kWorldWindowName, &gShowWorldPanel);
+		bool bOpen = gShowWorldPanel;
+
+		ImGui::Begin(kWorldWindowName, &bOpen);
 		if (ImGui::BeginTabBar("WorldTabs")) {
 			if (ImGui::BeginTabItem("World")) {
 				DrawWorldOverviewTab();
@@ -285,6 +288,11 @@ namespace Debug {
 			}
 			ImGui::EndTabBar();
 		}
+
+		if (!bOpen) {
+			gShowWorldPanel = false;
+		}
+
 		ImGui::End();
 	}
 
@@ -432,7 +440,9 @@ namespace Debug {
 			return;
 		}
 
-		ImGui::Begin(kInspectorWindowName, &gShowInspectorPanel);
+		bool bOpen = gShowInspectorPanel;
+
+		ImGui::Begin(kInspectorWindowName, &bOpen);
 		switch (gInspectorSelection.type) {
 		case InspectorSelectionType::Actor:
 			DrawActorInspector(gInspectorSelection.pActor);
@@ -455,6 +465,10 @@ namespace Debug {
 			break;
 		}
 		ImGui::End();
+
+		if (!bOpen) {
+			gShowInspectorPanel = false;
+		}
 	}
 
 } // namespace Debug

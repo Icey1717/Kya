@@ -5,6 +5,7 @@
 
 #include "Texture/TextureCache.h"
 #include "Texture/TextureUpdate.h"
+#include "Texture/TextureUpscale.h"
 
 #include "Texture.h"
 #include "ed3D.h"
@@ -488,6 +489,13 @@ namespace Debug
 					Renderer::Native::RevertTexture(pSimpleTexture);
 				}
 
+				ImGui::SameLine();
+
+				if (ImGui::Button("Upscale")) {
+					Renderer::Native::UpscaleTexture(pSimpleTexture);
+				}
+
+
 				PS2::GSSimpleTexture* pCurrentRenderer = pSimpleTexture->GetRenderer();
 				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != pCurrentRenderer || lastImageView != pCurrentRenderer->imageView) {
 					if (pRenderer != nullptr) {
@@ -632,6 +640,36 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 
 	if (ImGui::Button("Toggle Texture List")) {
 		gShowTextureList = !gShowTextureList;
+	}
+
+	ImGui::SameLine();
+
+	const bool bUpscalerReady = Renderer::Native::IsUpscalerReady();
+	if (!bUpscalerReady) {
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::Button("Upscale All")) {
+		textureLibrary.ForEach([](const Renderer::Kya::G2D& texture) {
+			for (const auto& material : texture.GetMaterials()) {
+				for (const auto& layer : material.layers) {
+					for (const auto& texEntry : layer.textures) {
+						if (texEntry.pSimpleTexture) {
+							// Skip textures using a linear sampler — these are likely palettes.
+							if (texEntry.pSimpleTexture->GetRenderer()->samplerSelector.ltf)
+								continue;
+							Renderer::Native::UpscaleTexture(texEntry.pSimpleTexture.get());
+						}
+					}
+				}
+			}
+		});
+	}
+
+	if (!bUpscalerReady) {
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		ImGui::TextDisabled("(upscaler not ready)");
 	}
 
 	ImGui::End();

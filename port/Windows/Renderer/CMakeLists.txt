@@ -98,6 +98,70 @@ set (ReflectPrintSrc
 
 option(RENDERER_HEADLESS "Skip rendering commands" OFF)
 
+option(ENABLE_UPSCALING "Enable AI texture upscaling via ncnn and Real-ESRGAN" OFF)
+
+if (ENABLE_UPSCALING)
+	include(FetchContent)
+
+	set(NCNN_BUILD_BENCHMARK    OFF CACHE BOOL "" FORCE)
+	set(NCNN_BUILD_TOOLS        OFF CACHE BOOL "" FORCE)
+	set(NCNN_BUILD_EXAMPLES     OFF CACHE BOOL "" FORCE)
+	set(NCNN_BUILD_TESTS        OFF CACHE BOOL "" FORCE)
+	set(NCNN_SHARED_LIB         OFF CACHE BOOL "" FORCE)
+	set(NCNN_OPENMP             OFF CACHE BOOL "" FORCE)
+
+	FetchContent_Declare(
+		ncnn
+		GIT_REPOSITORY https://github.com/Tencent/ncnn.git
+		GIT_TAG        20240410
+		GIT_SHALLOW    TRUE
+	)
+	# cmake_minimum_required in ncnn's CMakeLists.txt pre-dates the 3.5
+	# minimum that CMake 4.0+ requires. Setting this cache variable before
+	# MakeAvailable propagates the workaround into the subproject.
+	set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
+	FetchContent_MakeAvailable(ncnn)
+
+	target_compile_definitions(Renderer PRIVATE UPSCALING_ENABLED)
+	target_link_libraries(Renderer PRIVATE ncnn)
+endif()
+
+option(ENABLE_UPSCALING_ONNX "Enable AI texture upscaling via ONNX Runtime (.onnx model)" OFF)
+
+if (ENABLE_UPSCALING_ONNX)
+	include(FetchContent)
+
+	set(ORT_VERSION "1.20.1")
+	FetchContent_Declare(
+		onnxruntime
+		URL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-win-x64-${ORT_VERSION}.zip"
+		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+	)
+	FetchContent_MakeAvailable(onnxruntime)
+
+	# The zip may or may not have an outer versioned subdirectory; search for
+	# the main C++ API header to locate the include root robustly.
+	file(GLOB_RECURSE _ORT_CXX_API_H "${onnxruntime_SOURCE_DIR}/onnxruntime_cxx_api.h")
+	if(NOT _ORT_CXX_API_H)
+		message(FATAL_ERROR "ONNX Runtime headers not found in downloaded package (${onnxruntime_SOURCE_DIR})")
+	endif()
+	list(GET _ORT_CXX_API_H 0 _ORT_CXX_API_H)
+	get_filename_component(_ORT_INCLUDE_DIR "${_ORT_CXX_API_H}" DIRECTORY)
+	get_filename_component(_ORT_ROOT       "${_ORT_INCLUDE_DIR}" DIRECTORY)
+
+	target_compile_definitions(Renderer PRIVATE UPSCALING_ONNX_ENABLED)
+	target_include_directories(Renderer PRIVATE "${_ORT_INCLUDE_DIR}")
+	target_link_libraries(Renderer PRIVATE "${_ORT_ROOT}/lib/onnxruntime.lib")
+
+	# Copy the runtime DLL next to the executable so Windows can find it.
+	add_custom_command(TARGET Renderer POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${_ORT_ROOT}/lib/onnxruntime.dll"
+			"${CMAKE_SOURCE_DIR}/bin/WIN/onnxruntime.dll"
+		COMMENT "Copying onnxruntime.dll to bin/WIN"
+	)
+endif()
+
 if (RENDERER_HEADLESS OR FORCE_RENDERER_HEADLESS) 
 	target_compile_definitions(Renderer PRIVATE HEADLESS)
 endif()
