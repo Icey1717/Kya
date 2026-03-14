@@ -15,14 +15,12 @@
 #include "ActorHero.h"
 #include "ActorWind.h"
 #include "MathOps.h"
-#include "DebugActorCollision.h"
 
 namespace Debug {
 	namespace Actor {
 		static Setting<bool> gShowActorNamesOverlay("Show Actor Names Overlay", true);
 		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
 		static Setting<float> gActorInfoDistance("Actor Info Distance", 500.0f);
-		static bool bShowActorList = false;
 
 		// Helper functions for ImVec2 operations
 		static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
@@ -242,10 +240,6 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 
 	gActorInfoDistance.DrawImguiControl();
 
-	if (ImGui::Button("Show Actor List")) {
-		bShowActorList = true;
-	}
-
 	ImGui::End();
 
 	if (gShowActorNamesOverlay) {
@@ -273,60 +267,6 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		}
 		else {
 			ForEachActor(ShowActorOverlay);
-		}
-
-		ImGui::End();
-	}
-
-	static CActor* pSelectedActor = nullptr;
-
-	if (bShowActorList) {
-		ImGui::Begin("Actor List", &bShowActorList, ImGuiWindowFlags_AlwaysAutoResize);
-
-		auto DisplayActorInfo = [](CActor* pActor) {
-			std::string name = std::string(pActor->name) + " (" + Debug::Actor::GetActorTypeString(pActor->typeID) + ")";
-			if (ImGui::Selectable(name.c_str())) {
-				pSelectedActor = pActor;
-			}
-			};
-
-		auto ShowListFunc = [DisplayActorInfo](auto pFunc) {
-			const ImVec2 listboxSize = ImVec2(300, 300);
-			if (ImGui::BeginListBox("##ActorList", listboxSize)) {
-				pFunc(DisplayActorInfo);
-				ImGui::EndListBox();
-			};
-			};
-
-		if (ImGui::CollapsingHeader("All")) {
-			ShowListFunc(ForEachActor);
-		}
-
-		if (ImGui::CollapsingHeader("Active")) {
-			ShowListFunc(ForEachActiveActor);
-		}
-
-		if (ImGui::CollapsingHeader("Sector")) {
-			ShowListFunc(ForEachSectorActor);
-		}
-
-		ImGui::End();
-	}
-
-	if (pSelectedActor) {
-		ImGui::Begin("Selected Actor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::Text("Name: %s", pSelectedActor->name);
-		ImGui::Text("Sector: 0x%x", pSelectedActor->sectorId);
-		ImGui::Text("Type: %s", GetActorTypeString(pSelectedActor->typeID));
-		ImGui::Text("Location: %s", pSelectedActor->currentLocation.ToString().c_str());
-		ImGui::Text("Behaviour: %s", Actor::Behaviour::GetActorBehaviourName(pSelectedActor).c_str());
-		ImGui::Text("State: %s", Actor::State::GetActorStateName(pSelectedActor).c_str());
-
-		// Show wind-specific info if this is a wind actor
-		if (pSelectedActor->typeID == WIND) {
-			CActorWind* pWindActor = static_cast<CActorWind*>(pSelectedActor);
-			ImGui::Separator();
-			Debug::Actor::Wind::ShowWindActorDetails(pWindActor);
 		}
 
 		ImGui::End();
