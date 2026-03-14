@@ -148,7 +148,7 @@ void CActorJamGut::Manage()
 	ManageCheckpoints();
 
 	if (this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 			pCVar2 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 			pCVar2->SetInvincible(2.0f, 0);
@@ -392,9 +392,9 @@ void CActorJamGut::SetState(int newState, int animType)
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	float fVar6;
 
-	if (((GetStateFlags(this->actorState) & 0x800) != 0) && (pHero = this->field_0x350, pHero != (CActorHero*)0x0)) {
+	if (((GetStateFlags(this->actorState) & 0x800) != 0) && (pHero = this->pRider, pHero != (CActorHero*)0x0)) {
 		fVar6 = pHero->GetLifeInterface()->GetValue();
-		if ((fVar6 <= 0.0f) || (0.0f < this->field_0x350->field_0x2e4)) {
+		if ((fVar6 <= 0.0f) || (0.0f < this->pRider->field_0x2e4)) {
 			newState = ChooseStateDead(0xc, 4, 1);
 		}
 	}
@@ -407,7 +407,7 @@ void CActorJamGut::SetState(int newState, int animType)
 		riderState = GetStateRider(newState);
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if (((pHero != (CActorHero*)0x0) &&
 		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) && (riderState != -1)) {
 		pHeroRideJamGut = (CBehaviourHeroRideJamGut*)pHero->GetBehaviour(pHero->curBehaviourId);
@@ -520,7 +520,7 @@ CPlayerInput* CActorJamGut::GetInputManager(int param_2, int param_3)
 	CPlayerInput* pInputManager;
 	CActorHero* pHero;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if (pHero == (CActorHero*)0x0) {
 		pInputManager = CActor::GetInputManager(param_2, param_3);
 	}
@@ -612,7 +612,7 @@ int CActorJamGut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						result = 0;
 					}
 					else {
-						this->field_0x350 = (CActorHero*)pSender;
+						this->pRider = (CActorHero*)pSender;
 						result = 1;
 						this->field_0x35c = 1;
 					})
@@ -717,7 +717,7 @@ void CActorJamGut::ClearLocalData()
 	float fVar7;
 	CActorHero* pHero;
 
-	this->field_0x350 = (CActorHero*)0x0;
+	this->pRider = (CActorHero*)0x0;
 	this->field_0x354 = (CActorHero*)0x0;
 
 	this->field_0x444 = this->field_0x404;
@@ -760,7 +760,7 @@ void CActorJamGut::ClearLocalData()
 	(this->lightConfig).config.pLightDirections = &(this->lightConfig).lightDirections;
 	(this->lightConfig).config.pLightColorMatrix = &(this->lightConfig).lightColorMatrix;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pRideJamGut = (CBehaviourHeroRideJamGut*)
 			pHero->GetBehaviour(pHero->curBehaviourId);
@@ -820,7 +820,7 @@ void CActorJamGut::ManagePaths()
 	CActorHero* pHero;
 
 	pEventManager = CScene::ptable.g_EventManager_006f5080;
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if (pHero == (CActorHero*)0x0) {
 		iVar10 = 0;
 	}
@@ -832,8 +832,8 @@ void CActorJamGut::ManagePaths()
 		}
 	}
 
-	if ((iVar10 == 0) && (pHero = this->field_0x350, pHero != (CActorHero*)0x0)) {
-		if (((((pHero->GetStateFlags(pHero->actorState) & 0x100) != 0) && (pHero = this->field_0x350, ((pHero->pCollisionData)->flags_0x4 & 2) != 0)) &&
+	if ((iVar10 == 0) && (pHero = this->pRider, pHero != (CActorHero*)0x0)) {
+		if (((((pHero->GetStateFlags(pHero->actorState) & 0x100) != 0) && (pHero = this->pRider, ((pHero->pCollisionData)->flags_0x4 & 2) != 0)) &&
 			(pHero->pTiedActor == (CActor*)0x0)) &&
 			(pCVar5 = pHero->GetCollidingActor(), pCVar5 == (CActor*)0x0)) {
 			CBehaviourJamGutRidden* pRidden = static_cast<CBehaviourJamGutRidden*>(GetBehaviour(this->curBehaviourId));
@@ -845,7 +845,7 @@ void CActorJamGut::ManagePaths()
 		}
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	iVar10 = 0;
 	if ((pHero != (CActorHero*)0x0) && (iVar10 = 0x0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -857,8 +857,8 @@ void CActorJamGut::ManagePaths()
 		this->field_0x654 = (CActor*)0x0;
 	}
 	else {
-		if ((this->field_0x350 == (CActorHero*)0x0) ||
-			(((this->field_0x350->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT || (iVar10 = this->actorState, iVar10 == JAMGUT_RIDE_STATE_RUN)) || (iVar10 == 9)))) {
+		if ((this->pRider == (CActorHero*)0x0) ||
+			(((this->pRider->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT || (iVar10 = this->actorState, iVar10 == JAMGUT_RIDE_STATE_RUN)) || (iVar10 == 9)))) {
 			pCurPath = this->aPaths;
 
 			for (iVar10 = 0; iVar10 < this->nbPaths; iVar10 = iVar10 + 1) {
@@ -991,7 +991,7 @@ void CActorJamGut::ManagePaths()
 					pCVar1 = (pCurPath->pathFollowReader).pActor3C_0x0;
 					if (((pCVar1->mode == 0) && (pCVar1->type == 0)) &&
 						(fabs(fVar13 - (pCurPath->pathFollowReader).barFullAmount_0x4) < 0.1f)) {
-						pHero = this->field_0x350;
+						pHero = this->pRider;
 						iVar10 = 0;
 						if ((pHero != (CActorHero*)0x0) && (iVar10 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -1008,7 +1008,7 @@ void CActorJamGut::ManagePaths()
 
 							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 							pCVar6->ResetCommands();
-							pHero = this->field_0x350;
+							pHero = this->pRider;
 							if ((pHero != (CActorHero*)0x0) &&
 								(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
 								pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -1285,7 +1285,7 @@ int CActorJamGut::GetHeroAction(float param_1, CActorHero* pHero)
 		heroAction = 0;
 	}
 	else {
-		if ((this->field_0x350 == (CActorHero*)0x0) || (this->field_0x350->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT)) {
+		if ((this->pRider == (CActorHero*)0x0) || (this->pRider->curBehaviourId != HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 			int curState = this->actorState;
 			if ((curState == 0x17) || (curState == 0x18)) {
 				heroAction = 0;
@@ -1326,7 +1326,7 @@ void CActorJamGut::SetHitInvincibility(float duration, bool bAdd)
 	CActorHero* pHero;
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		pHeroRideJamGut->SetInvincible(duration, bAdd);
@@ -1828,16 +1828,13 @@ void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour
 		StateJamGutDuration(-1.0f, pBehaviour, JAMGUT_STAND_STATE_STAND);)
 		break;
 	case 0x13:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(-1.0f, pBehaviour, 0, 0);)
+		StateJamGutDead(-1.0f, pBehaviour, 0, 0);
 		break;
 	case 0x15:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(2.0f, pBehaviour, 1, 0);)
+		StateJamGutDead(2.0f, pBehaviour, 1, 0);
 		break;
 	case 0x16:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(2.0f, pBehaviour, 0, 0);)
+		StateJamGutDead(2.0f, pBehaviour, 0, 0);
 		break;
 	case 0x17:
 		IMPLEMENTATION_GUARD(
@@ -1855,7 +1852,7 @@ void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour
 	}
 
 	if (((GetStateFlags(this->actorState) & 1) == 0) && (this->actorState != 0x10)) {
-		CheckHitAndDeath(this->field_0x350);
+		CheckHitAndDeath(this->pRider);
 	}
 
 	return;
@@ -1896,7 +1893,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 	iVar4 = RiderCmdAttack();
 
 	this->field_0x364 = iVar4;
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) &&
 		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pCVar4 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -1952,15 +1949,14 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 		StateJamGutDead(-1.0f, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
 		break;
 	case 0x15:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(2.0, this, (CBehaviourJamGut*)pBehaviour, 1, 1);)
+		StateJamGutDead(2.0f, pBehaviour, 1, 1);
 		break;
 	case 0x16:
 		IMPLEMENTATION_GUARD(
 		StateJamGutDead(2.0, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	iVar6 = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
@@ -1970,7 +1966,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 
 	if (iVar6 != 0) {
 		if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
-			pHero = this->field_0x350;
+			pHero = this->pRider;
 			iVar6 = 0;
 			if ((pHero != (CActorHero*)0x0) &&
 				(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
@@ -1989,7 +1985,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 				uVar7 = gStateCfg_JMG[iVar6 + -6].field_0x8;
 			}
 
-			pHero = this->field_0x350;
+			pHero = this->pRider;
 			if (((pHero != (CActorHero*)0x0) &&
 				(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) &&
 				(uVar7 != 0xffffffff)) {
@@ -1999,7 +1995,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 		}
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	iVar6 = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
@@ -2009,8 +2005,8 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 
 	if (iVar6 == 0) {
 		if ((((GetStateFlags(this->actorState) & 1) == 0) && (this->actorState != 0x10)) &&
-			(bVar3 = CheckHitAndDeath(this->field_0x350), bVar3 == false)) {
-			pHero = this->field_0x350;
+			(bVar3 = CheckHitAndDeath(this->pRider), bVar3 == false)) {
+			pHero = this->pRider;
 			iVar6 = 0;
 			if ((pHero != (CActorHero*)0x0) &&
 				(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
@@ -2399,7 +2395,7 @@ void CActorJamGut::StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState)
 	}
 	else {
 		SetState(7, -1);
-		pRideBehaviour = (CBehaviourHeroRideJamGut*)this->field_0x350->GetBehaviour(this->field_0x350->curBehaviourId);
+		pRideBehaviour = (CBehaviourHeroRideJamGut*)this->pRider->GetBehaviour(this->pRider->curBehaviourId);
 		pRideBehaviour->ResetCommands();
 		RiderSetState(0x131, 1);
 	}
@@ -2459,7 +2455,7 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 
 	bVar1 = RiderCmdStand();
 	if (((bVar1 == false) ||
-		(iVar3 = RiderGetNew(), pEventManager = CScene::ptable.g_EventManager_006f5080, iVar3 != 0)) || (this->field_0x350 == (CActorHero*)0x0)) {
+		(iVar3 = RiderGetNew(), pEventManager = CScene::ptable.g_EventManager_006f5080, iVar3 != 0)) || (this->pRider == (CActorHero*)0x0)) {
 		cVar2 = UpdateFunc(50.0f);
 	}
 	else {
@@ -2611,7 +2607,7 @@ void CActorJamGut::StateJamGutHit()
 
 	pCol = this->pCollisionData;
 	pCVar1 = this->pAnimationController;
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
@@ -2824,13 +2820,53 @@ void CActorJamGut::StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextSt
 	return;
 }
 
-
-
 void CActorJamGut::StateJamGutStandInit()
 {
 	this->field_0x3a0 = 1;
 	UpdatePercentWalkRun(-1.0f, 0.0f, 0.0f);
 	UpdatePercentLeftRight(0.0f, 0.0f);
+
+	return;
+}
+
+void CActorJamGut::StateJamGutDead(float param_1, CBehaviourJamGut* pBehaviour, int param_4, int param_5)
+{
+	if (param_4 == 0) {
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+	}
+	else {
+		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+	}
+
+	if (param_1 < 0.0f) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) goto LAB_00372290;
+	}
+
+	if (param_1 <= 0.0f) {
+		return;
+	}
+	if (this->timeInAir <= param_1) {
+		return;
+	}
+
+LAB_00372290:
+	if (param_5 == 0) {
+		this->field_0x620 = 1;
+		PreReset();
+		Reset();
+	}
+	else {
+		if (this->pRider->IsKindOfObject(8) != false) {
+			this->pRider->ProcessDeath();
+		}
+	}
 
 	return;
 }
@@ -2887,7 +2923,7 @@ bool CActorJamGut::ManageDynAndKillActors(uint dynFlags)
 		do {
 			pReceiver = *pEntry;
 
-			if ((this->field_0x350 != (CActorHero*)0x0) && (((1.0f < this->dynamic.speed || (1.0f < this->dynamic.linearAcceleration)) &&
+			if ((this->pRider != (CActorHero*)0x0) && (((1.0f < this->dynamic.speed || (1.0f < this->dynamic.linearAcceleration)) &&
 					((CActorFactory::gClassProperties[pReceiver->typeID].flags & 0x10000) != 0)))) {
 				DoMessage(pReceiver, (ACTOR_MESSAGE)3, 0);
 			}
@@ -3017,7 +3053,7 @@ void CActorJamGut::UpdatePercentWalkRun(float param_1, float param_2, float para
 		}
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		pHeroRideJamGut->field_0x6c = this->field_0x37c;
@@ -3033,7 +3069,7 @@ void CActorJamGut::SetAnimSpeed(float animSpeed)
 
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(animSpeed, 0);
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) &&
 		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -3051,7 +3087,7 @@ int CActorJamGut::RiderCmdAttack()
 
 	bResult = 0;
 	if ((this->flags_0x358 & 1) != 0) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3069,7 +3105,7 @@ int CActorJamGut::RiderCmdJump()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	bResult = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3086,7 +3122,7 @@ int CActorJamGut::RiderCmdRecept()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	bResult = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3104,7 +3140,7 @@ int CActorJamGut::RiderCmdStand()
 	int bResult;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3126,7 +3162,7 @@ int CActorJamGut::RiderCmdWalk()
 	int bResult;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3148,7 +3184,7 @@ int CActorJamGut::RiderCmdRun()
 	int bResult;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
 			(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3169,7 +3205,7 @@ int CActorJamGut::RiderCmdNew()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	bResult = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3186,7 +3222,7 @@ int CActorJamGut::RiderCmd_00367e40()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	bResult = 0;
 	if ((pHero != (CActorHero*)0x0) &&
 		(bResult = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3205,7 +3241,7 @@ edF32VECTOR4* CActorJamGut::RiderGetForce()
 	CActorHero* pHero;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		if (pHero == (CActorHero*)0x0) {
 			pForce = &gF32Vector4Zero;
 		}
@@ -3240,7 +3276,7 @@ float CActorJamGut::RiderGetIntensity()
 	CActorHero* pHero;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 		if (pHero == (CActorHero*)0x0) {
 			intensity = 0.0f;
 		}
@@ -3273,7 +3309,7 @@ int CActorJamGut::RiderGetNew()
 	int iVar1;
 	CActorHero* pHero;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	iVar1 = 0;
 	if ((pHero != (CActorHero*)0x0) && (iVar1 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -3289,7 +3325,7 @@ void CActorJamGut::RiderSetState(int state, int anim)
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) &&
 		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) && (state != -1)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -3306,7 +3342,7 @@ void CActorJamGut::FUN_00367a90(edF32VECTOR4* param_2)
 	CActorHero* pHero;
 
 	if (this->field_0x62c == -1) {
-		pHero = this->field_0x350;
+		pHero = this->pRider;
 
 		if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 			pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -3383,7 +3419,7 @@ void CActorJamGut::UpdatePercentLeftRight(float param_1, float param_2)
 		SV_UpdatePercent(param_1, param_2, &this->field_0x380);
 	}
 
-	pHero = this->field_0x350;
+	pHero = this->pRider;
 	if ((pHero != (CActorHero*)0x0) &&
 		(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
@@ -3572,7 +3608,7 @@ int CBehaviourJamGutStand::InterpretMessage(CActor* pSender, int msg, void* pMsg
 		else {
 			if (msg != 1) {
 				if (msg == 0x14) {
-					this->pOwner->field_0x350 = static_cast<CActorHero*>(pSender);
+					this->pOwner->pRider = static_cast<CActorHero*>(pSender);
 					this->pOwner->SetBehaviour(JAMGUT_BEHAVIOUR_RIDDEN, -1, -1);
 					result = 1;
 				}
@@ -3712,16 +3748,16 @@ void CBehaviourJamGutRidden::End(int newBehaviourId)
 	CActorJamGut* pJamGut;
 
 	if (this->field_0x8 == 0) {
-		this->pOwner->DoMessage(this->pOwner->field_0x350, (ACTOR_MESSAGE)0x44, 0);
+		this->pOwner->DoMessage(this->pOwner->pRider, (ACTOR_MESSAGE)0x44, 0);
 	}
 	else {
 		this->field_0x8 = 0;
 	}
 
-	this->pOwner->field_0x350 = (CActorHero*)0x0;
+	this->pOwner->pRider = (CActorHero*)0x0;
 
 	pJamGut = this->pOwner;
-	pHero = pJamGut->field_0x350;
+	pHero = pJamGut->pRider;
 	if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pHeroRideJamGut = (CBehaviourHeroRideJamGut*)pHero->GetBehaviour(pHero->curBehaviourId);
 		pHeroRideJamGut->SetInvincible(2.0f, 0);
@@ -3820,7 +3856,7 @@ void CBehaviourJamGutRidden::TermState(int oldState, int newState)
 	else {
 		if ((oldState == JAMGUT_RIDE_STATE_RUN) || (oldState == 9)) {
 			pJamGut->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
-			pHero = pJamGut->field_0x350;
+			pHero = pJamGut->pRider;
 			if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 				pHeroRideJamGut = (CBehaviourHeroRideJamGut*)pHero->GetBehaviour(pHero->curBehaviourId);
 				pHeroRideJamGut->SetSpeedAnim(1.0f);
@@ -3869,7 +3905,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 
 		uVar3 = pMsgHitParam->projectileType;
 		if ((((uVar3 < 3) || (uVar3 == 5)) || (uVar3 == 10)) || (uVar3 == 9)) {
-			uVar3 = pJamGut->AccomplishHit(pJamGut->field_0x350, pSender, pMsgHitParam, (edF32VECTOR4*)0x0);
+			uVar3 = pJamGut->AccomplishHit(pJamGut->pRider, pSender, pMsgHitParam, (edF32VECTOR4*)0x0);
 			return uVar3;
 		}
 	}
@@ -3917,7 +3953,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 					this->pOwner->SetBehaviour(3, -1, -1);
 				}
 				else {
-					pJamGut->field_0x654 = (CActor*)pJamGut->field_0x350;
+					pJamGut->field_0x654 = (CActor*)pJamGut->pRider;
 					pJamGut->aPaths[pJamGut->field_0x62c].pathPlane.InitTargetPos(&pJamGut->field_0x654->currentLocation, &pJamGut->field_0x658);
 				}
 

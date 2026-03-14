@@ -1,6 +1,7 @@
 ﻿#include "DebugMenu.h"
 #include "DebugRenderer.h"
 
+#include <profiling.h>
 #include <imgui.h>
 #include "log.h"
 #include "DebugHelpers.h"
@@ -180,6 +181,8 @@ namespace Debug {
 	}
 
 	static void DrawInternal() {
+		ZONE_SCOPED;
+
 		if (ImGui::IsKeyPressed(ImGuiKey_F10)) {
 			bShowMenus = !bShowMenus;
 		}

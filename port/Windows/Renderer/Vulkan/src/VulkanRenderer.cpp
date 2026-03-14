@@ -1094,6 +1094,8 @@ namespace Renderer
 
 	void WaitUntilReady()
 	{
+		ZONE_SCOPED;
+
 		if (!gHeadless) {
 			app.waitUntilReady();
 			Renderer::Native::ApplyPendingResizeIfNeeded();

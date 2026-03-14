@@ -2,6 +2,7 @@
 #include "DebugMenuLog.h"
 #include "DebugMenu.h"
 
+#include <profiling.h>
 #include <imgui.h>
 
 #include "DebugRendering.h"
@@ -56,6 +57,8 @@ namespace Debug {
 		if (!gShowDebugPanel) {
 			return;
 		}
+
+		ZONE_SCOPED;
 
 		ImGui::Begin(kDebugWindowName, &gShowDebugPanel);
 		if (ImGui::BeginTabBar("DebugTabs")) {

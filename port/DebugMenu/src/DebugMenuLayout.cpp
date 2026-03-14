@@ -2,6 +2,7 @@
 #include "DebugMenu.h"
 #include "DebugRenderer.h"
 
+#include <profiling.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -31,6 +32,8 @@ namespace Debug {
 	}
 
 	void BuildDefaultDockLayout(ImGuiID dockspaceId) {
+		ZONE_SCOPED;
+
 		ImGuiDockNode* pExistingNode = ImGui::DockBuilderGetNode(dockspaceId);
 		if (!gResetDockLayout) {
 			if (gDockLayoutInitialized) {
@@ -124,6 +127,7 @@ namespace Debug {
 	}
 
 	void DrawFullscreenGameViewportWindow() {
+		ZONE_SCOPED;
 		ImGuiViewport* pViewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(pViewport->Pos);
 		ImGui::SetNextWindowSize(pViewport->Size);
@@ -139,6 +143,8 @@ namespace Debug {
 	}
 
 	void DrawLegacyMenus() {
+		ZONE_SCOPED;
+
 		for (auto& menu : Debug::MenuRegisterer::GetMenus()) {
 			if (!menu.GetOpen()) {
 				continue;

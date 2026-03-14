@@ -184,6 +184,9 @@ public:
 	void StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextState);
 
 	void StateJamGutStandInit();
+
+	void StateJamGutDead(float param_1, CBehaviourJamGut* pBehaviour, int param_4, int param_5);
+
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
 	bool ManageDynAndKillActors(uint dynFlags);
 	bool FUN_003763d0();
@@ -212,7 +215,7 @@ public:
 
 	bool FUN_00376710();
 
-	CActorHero* field_0x350;
+	CActorHero* pRider;
 	CActorHero* field_0x354;
 	uint flags_0x358;
 	undefined4 field_0x35c;

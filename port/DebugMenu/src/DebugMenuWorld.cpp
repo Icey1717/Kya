@@ -1,5 +1,6 @@
 ﻿#include "DebugMenuWorld.h"
 
+#include <profiling.h>
 #include <imgui.h>
 #include <map>
 #include <vector>
@@ -268,6 +269,8 @@ namespace Debug {
 			return;
 		}
 
+		ZONE_SCOPED;
+
 		bool bOpen = gShowWorldPanel;
 
 		ImGui::Begin(kWorldWindowName, &bOpen);
@@ -448,6 +451,8 @@ namespace Debug {
 		if (!gShowInspectorPanel) {
 			return;
 		}
+
+		ZONE_SCOPED;
 
 		bool bOpen = gShowInspectorPanel;
 

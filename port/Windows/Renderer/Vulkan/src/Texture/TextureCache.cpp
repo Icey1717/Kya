@@ -1198,12 +1198,15 @@ void PS2::GSSimpleTexture::RefreshDescriptors()
 					}
 				}
 			}
+
 			if (textureBindingIndex >= 0)
+			{
 				break;
+			}
 		}
 
-		if (textureBindingIndex < 0)
-			continue;
+		// All should have a combined image sampler binding, if not this function needs to be updated to handle these.
+		assert(textureBindingIndex >= 0);
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
