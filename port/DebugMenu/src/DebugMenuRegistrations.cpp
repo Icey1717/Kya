@@ -41,7 +41,6 @@ namespace Debug {
     extern MenuRegisterer sDebugMeshMenuReg;
     extern MenuRegisterer sDebugCheckpointMenuReg;
     extern MenuRegisterer sDebugEventMenuReg;
-    extern MenuRegisterer sDebugWolfenMenuReg;
     extern MenuRegisterer sDebugTutorialMenuReg;
     extern MenuRegisterer sDebugInputMenuReg;
     extern MenuRegisterer sDebugActorMenuReg;
@@ -73,7 +72,6 @@ namespace Debug {
         (void)&sDebugMeshMenuReg;
         (void)&sDebugCheckpointMenuReg;
         (void)&sDebugEventMenuReg;
-        (void)&sDebugWolfenMenuReg;
         (void)&sDebugTutorialMenuReg;
         (void)&sDebugInputMenuReg;
         (void)&sDebugActorMenuReg;

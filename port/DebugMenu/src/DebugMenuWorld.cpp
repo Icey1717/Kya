@@ -8,12 +8,14 @@
 #include "ActorManager.h"
 #include "ActorCheckpointManager.h"
 #include "ActorWind.h"
+#include "ActorWolfen.h"
 #include "SectorManager.h"
 #include "LevelScheduler.h"
 #include "Types.h"
 #include "DebugSetting.h"
 #include "Actor/DebugActor.h"
 #include "Actor/DebugActorWind.h"
+#include "Actor/DebugActorWolfen.h"
 
 namespace Debug {
 
@@ -342,6 +344,13 @@ namespace Debug {
 			CActorWind* pWindActor = static_cast<CActorWind*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Wind::ShowWindActorDetails(pWindActor);
+		}
+
+		// Show wolfen-specific info if this is a wolfen actor
+		if (pActor->typeID == WOLFEN) {
+			CActorWolfen* pWolfenActor = static_cast<CActorWolfen*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::Wolfen::ShowWolfenActorDetails(pWolfenActor);
 		}
 	}
 
