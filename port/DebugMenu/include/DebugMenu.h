@@ -54,10 +54,6 @@ namespace Debug
 
 		static std::unique_ptr<std::vector<std::function<void()>>> gCallbacks;
 	};
-
-	// Forces all self-registering module TUs to be linked in from the static library.
-	// Must be called before accessing any registerer lists.
-	void EnsureRegistrations();
 }
 
 namespace DebugMenu

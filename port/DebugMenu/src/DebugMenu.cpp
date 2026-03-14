@@ -235,8 +235,6 @@ void DebugMenu::Init()
 	edDListGetMaterialUnloadedDelegate() += Debug::OnMaterialUnloaded;
 	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
 
-	Debug::EnsureRegistrations();
-
 	for (auto& cb : Debug::StartupRegisterer::GetCallbacks()) {
 		cb();
 	}
