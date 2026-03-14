@@ -234,16 +234,16 @@ ed_g2d_material ed_g2d_material_0048c3c0 = { 0 };
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*, std::string> onTextureLoadedDelegate;
-Multidelegate<ed_g2d_manager*, std::string> onTextureUnloadedDelegate;
+Multidelegate<ed_g2d_manager*> onTextureUnloadedDelegate;
 Multidelegate<ed_g3d_manager*, std::string> onMeshLoadedDelegate;
-Multidelegate<ed_g3d_manager*, std::string> onMeshUnloadedDelegate;
+Multidelegate<ed_g3d_manager*> onMeshUnloadedDelegate;
 
 Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate()
 {
 	return onTextureLoadedDelegate;
 }
 
-Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureUnloadedDelegate()
+Multidelegate<ed_g2d_manager*>& ed3DGetTextureUnloadedDelegate()
 {
 	return onTextureUnloadedDelegate;
 }
@@ -253,7 +253,7 @@ Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate()
 	return onMeshLoadedDelegate;
 }
 
-Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshUnloadedDelegate()
+Multidelegate<ed_g3d_manager*>& ed3DGetMeshUnloadedDelegate()
 {
 	return onMeshUnloadedDelegate;
 }
@@ -14512,59 +14512,11 @@ void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo)
 	return;
 }
 
-#ifdef PLATFORM_WIN
-void RemoveTexturesG3D(ed_g3d_manager* pMeshInfo)
-{
-	int mbnaSize;
-	ed_Chunck* pChunk;
-	ushort materialCount;
-	ed_hash_code* pcVar4;
-	ed_Chunck* pMBNK;
-
-	mbnaSize = pMeshInfo->MBNA->size;
-	/* Checks all the hashes in the mesh to make sure they match what is in the texture
-
-		Get the end of the current section */
-	for (pChunk = edChunckGetFirst(pMeshInfo->MBNA + 1, (char*)pMeshInfo->MBNA + mbnaSize); pChunk != (ed_Chunck*)0x0; pChunk = edChunckGetNext(pChunk, (char*)pMeshInfo->MBNA + mbnaSize)) {
-		ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Chunk: {}", pChunk->GetHeaderString());
-
-		/* Check if read value is MBNK */
-		if (pChunk->hash == HASH_CODE_MBNK) {
-			ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Found MBNK chunk - size: 0x{:x}", pChunk->size);
-
-			materialCount = (pChunk->size - 0x10U) >> 4;
-			ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Material count: {}", materialCount);
-
-			pMBNK = pChunk;
-			while (true) {
-				if (materialCount == 0) break;
-
-				ed_hash_code* pMaterialHash = (ed_hash_code*)(pMBNK + 1);
-
-				ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Trying to find texture {}: {}", ((pChunk->size - 0x10U) >> 4) - materialCount, pMaterialHash->hash.ToString());
-
-				ed_hash_code* pHash = LOAD_POINTER_CAST(ed_hash_code*, pMaterialHash->pData);
-
-				materialCount = materialCount - 1;
-				pMBNK = pMBNK + 1;
-			}
-		}
-	}
-
-	return;
-}
-
-void RemoveTexturesG2D(ed_g2d_manager* pTextureInfo)
-{
-	auto pHash = ed3DG2DGetMaterialFromIndex(pTextureInfo, 0);
-}
-#endif
-
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DInstall.c
 void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo)
 {
 #ifdef  PLATFORM_WIN
-	RemoveTexturesG3D(pMeshInfo);
+	onMeshUnloadedDelegate(pMeshInfo);
 #endif //  PLATFORM_WIN
 
 	pMeshInfo->fileBufferStart = (GXD_FileHeader*)0x0;
@@ -14588,7 +14540,7 @@ void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo)
 void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo)
 {
 #ifdef  PLATFORM_WIN
-	RemoveTexturesG2D(pTextureInfo);
+	onTextureUnloadedDelegate(pTextureInfo);
 #endif //  PLATFORM_WIN
 
 	pTextureInfo->pFileBuffer = (GXD_FileHeader*)0x0;

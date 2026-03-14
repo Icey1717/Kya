@@ -4,6 +4,7 @@
 #include <imgui.h>
 
 #include "Texture/TextureCache.h"
+#include "Texture/TextureUpdate.h"
 
 #include "Texture.h"
 #include "ed3D.h"
@@ -23,6 +24,14 @@ namespace Debug
 
 		static bool bOpenFirstMaterial = false;
 
+		struct RemovedTextureEntry
+		{
+			VkDescriptorSet textureDescriptorSet = VK_NULL_HANDLE;
+			int lifetime = MAX_FRAMES_IN_FLIGHT + 5;
+		};
+
+		static std::vector<RemovedTextureEntry> gPendingRemovedTextures;
+
 		enum class SortMode
 		{
 			Loaded,
@@ -30,6 +39,11 @@ namespace Debug
 		};
 
 		static SortMode gSortMode = SortMode::Path;
+
+		static void AddPendingRemovedTexture(const VkDescriptorSet& descriptorSet)
+		{
+			gPendingRemovedTextures.push_back({ descriptorSet, MAX_FRAMES_IN_FLIGHT + 1 });
+		}
 
 		static void ShowSortModeControls()
 		{
@@ -102,9 +116,11 @@ namespace Debug
 				});
 			}
 
-			for (auto* pTexture : textureList) {
+			for (size_t i = 0; auto* pTexture : textureList) {
 				if (pTexture) {
 					const Renderer::Kya::G2D& texture = *pTexture;
+
+					ImGui::PushID(static_cast<int>(i));
 
 					if (ImGui::Selectable(texture.GetName().c_str())) {
 						gSelectedTexture = &texture;
@@ -118,7 +134,11 @@ namespace Debug
 						auto bm = texture.GetMaterials().front().layers.front().textures.front().bitmap.GetBitmap();
 						ImGui::Text("(%d, %d) psm: %d", bm->width, bm->height, bm->psm);
 					}
+
+					ImGui::PopID();
 				}
+
+				i++;
 			}
 
 			ImGui::EndChild();
@@ -449,18 +469,27 @@ namespace Debug
 			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 			const auto& texture = textureLibrary.FindMaterial(gSelectedMaterial);
 
-			if (texture->layers.begin()->textures.begin()->pSimpleTexture) {
+			auto* pSimpleTexture = texture->layers.begin()->textures.begin()->pSimpleTexture.get();
+
+			if (pSimpleTexture) {
 				static PS2::GSSimpleTexture* pRenderer = nullptr;
+				static VkImageView lastImageView = VK_NULL_HANDLE;
 				static VkDescriptorSet textureId;
 
 				static bool bLinearSampler = false;
 
-				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->GetRenderer()) {
+				if (ImGui::Button("Whiteify")) {
+					Renderer::Native::TurnTextureWhite(pSimpleTexture);
+				}
+
+				PS2::GSSimpleTexture* pCurrentRenderer = pSimpleTexture->GetRenderer();
+				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != pCurrentRenderer || lastImageView != pCurrentRenderer->imageView) {
 					if (pRenderer != nullptr) {
-						ImGui_ImplVulkan_RemoveTexture(textureId);
+						AddPendingRemovedTexture(textureId);
 					}
 
-					pRenderer = texture->layers.begin()->textures.begin()->pSimpleTexture->GetRenderer();
+					pRenderer = pCurrentRenderer;
+					lastImageView = pRenderer->imageView;
 
 					PS2::PSSamplerSelector sel;
 
@@ -615,6 +644,17 @@ void Debug::Texture::Update()
 	if (gSelectedMaterial) {
 		ShowMaterialDetails();
 	}
+
+	for (auto& entry : gPendingRemovedTextures) {
+		entry.lifetime--;
+		if (entry.lifetime <= 0) {
+			ImGui_ImplVulkan_RemoveTexture(entry.textureDescriptorSet);
+		}
+	}
+
+	// Remove entries that have expired.
+	gPendingRemovedTextures.erase(std::remove_if(gPendingRemovedTextures.begin(), gPendingRemovedTextures.end(),
+		[](const RemovedTextureEntry& entry) { return entry.lifetime <= 0; }), gPendingRemovedTextures.end());
 }
 
 namespace Debug {

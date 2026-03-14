@@ -52,7 +52,7 @@ namespace PS2
 		void UploadData(int bufferSize, uint8_t* readBuffer);
 		void Resize(uint32_t newWidth, uint32_t newHeight, int bufferSize, uint8_t* pixels);
 
-		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
+		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList);
 		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
 
 		bool HasDescriptorSets(const Renderer::Pipeline& pipeline) const;

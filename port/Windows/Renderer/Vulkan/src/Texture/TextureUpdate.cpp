@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "Texture/TextureCache.h"
+#include "VulkanRenderer.h"
 
 namespace
 {
@@ -50,6 +51,13 @@ void Renderer::Native::DrainPendingTextureUpdates()
 		std::lock_guard<std::mutex> lock(gPendingTextureUpdatesMutex);
 		updates = std::move(gPendingTextureUpdates);
 	}
+
+	if (updates.empty()) 
+		return;
+
+	// Ensure no frame is still referencing any of these textures before
+	// DestroyImageResources() is called inside Resize().
+	vkDeviceWaitIdle(GetDevice());
 
 	for (auto& update : updates)
 	{
