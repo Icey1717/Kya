@@ -1359,7 +1359,7 @@ void CActorAutonomous::ComputeFrictionForce2DWithSpeedMax(float param_1, edF32VE
 			fVar3 = param_1;
 		}
 
-		fVar2 = this->dynamic.horizontalLinearAcceleration;
+		fVar2 = this->dynamic.horizontalLinearSpeed;
 		fVar3 = (fVar2 * fVar2) / (fVar3 * fVar3);
 		if ((param_4 == false) || (1.0f <= fVar3)) {
 			edF32Vector4ScaleHard(-fVar4 * fVar3, pFrictionForce, pFrictionForce);
@@ -1369,7 +1369,7 @@ void CActorAutonomous::ComputeFrictionForce2DWithSpeedMax(float param_1, edF32VE
 		}
 	}
 	else {
-		fVar3 = this->dynamic.horizontalLinearAcceleration - param_1;
+		fVar3 = this->dynamic.horizontalLinearSpeed - param_1;
 		if ((0.0f <= fVar3) || (fVar4 = 0.0f, param_4 == false)) {
 			fVar4 = -fVar3 * GetTimer()->cutsceneDeltaTime;
 		}
@@ -1499,7 +1499,7 @@ void CActorAutonomous::StateAutSoccer(float param_1, int param_3, int param_4, C
 			this->timeInAir = 0.0f;
 		}
 		else {
-			if ((param_5->dynamic).horizontalLinearAcceleration < param_1) {
+			if ((param_5->dynamic).horizontalLinearSpeed < param_1) {
 				PlayAnim(0xa);
 				this->timeInAir = 0.0f;
 			}

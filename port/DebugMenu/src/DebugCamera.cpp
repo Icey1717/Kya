@@ -102,21 +102,26 @@ namespace Debug::Camera {
 
 	constexpr float gDeadzone = 5.f;
 
+	static double gHackLastX = 0.0;
+	static double gHackLastY = 0.0;
+	static bool gHackFirstFrame = true;
+
 	void CameraHackCallback(GLFWwindow* window, double xpos, double ypos) {
 		if (bActive) {
-			{
-				static double lastX = xpos;
-				const float delta = static_cast<float>(xpos - lastX);
-				gMouseDeltaX = fabs(delta) > gDeadzone ? delta : 0.0f;
-				lastX = xpos;
+			if (gHackFirstFrame) {
+				gHackLastX = xpos;
+				gHackLastY = ypos;
+				gHackFirstFrame = false;
+				return;
 			}
 
-			{
-				static double lastY = ypos;
-				const float delta = static_cast<float>(lastY - ypos);
-				gMouseDeltaY = fabs(delta) > gDeadzone ? delta : 0.0f;
-				lastY = ypos;
-			}
+			const float deltaX = static_cast<float>(xpos - gHackLastX);
+			gMouseDeltaX = fabs(deltaX) > gDeadzone ? deltaX : 0.0f;
+			gHackLastX = xpos;
+
+			const float deltaY = static_cast<float>(gHackLastY - ypos);
+			gMouseDeltaY = fabs(deltaY) > gDeadzone ? deltaY : 0.0f;
+			gHackLastY = ypos;
 		}
 	}
 
@@ -173,56 +178,16 @@ namespace Debug::Camera {
 
 	void SetActive(const bool bNewActive, GLFWcursorposfun callback)
 	{
+		if (bNewActive) {
+			gHackFirstFrame = true;
+		}
+
 		bActive = bNewActive;
 		GLFWwindow* window = GetGLFWWindow();
 		glfwSetInputMode(window, GLFW_CURSOR, bNewActive ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
 		static GLFWcursorposfun og = NULL;
 		og = glfwSetCursorPosCallback(window, bNewActive ? callback : og);
-	}
-
-	void UpdateCameraPosition(float deltaTime) {
-		auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
-		edF32VECTOR4& cameraLookAt = pActiveCamera->lookAt;
-		edF32VECTOR4& cameraPosition = pActiveCamera->transformationMatrix.rowT;
-		edF32MATRIX4& cameraDirection = pActiveCamera->transformationMatrix;
-
-		GLFWwindow* window = GetGLFWWindow();
-
-		edF32VECTOR4 right = { cameraDirection.rowX.x, cameraDirection.rowX.y, cameraDirection.rowX.z, 1.0f };
-		edF32VECTOR4 up = { cameraDirection.rowY.x, cameraDirection.rowY.y, cameraDirection.rowY.z, 1.0f };
-		edF32VECTOR4 forward = { cameraDirection.rowZ.x, cameraDirection.rowZ.y, cameraDirection.rowZ.z, 1.0f };
-
-		float cameraSpeedDelta = cameraSpeed * deltaTime;
-
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cameraPosition = { cameraPosition.x + forward.x * cameraSpeedDelta,
-							   cameraPosition.y + forward.y * cameraSpeedDelta,
-							   cameraPosition.z + forward.z * cameraSpeedDelta,
-							   1.0f };
-
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cameraPosition = { cameraPosition.x - forward.x * cameraSpeedDelta,
-							   cameraPosition.y - forward.y * cameraSpeedDelta,
-							   cameraPosition.z - forward.z * cameraSpeedDelta,
-							   1.0f };
-
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cameraPosition = { cameraPosition.x - right.x * cameraSpeedDelta,
-							   cameraPosition.y - right.y * cameraSpeedDelta,
-							   cameraPosition.z - right.z * cameraSpeedDelta,
-							   1.0f };
-
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cameraPosition = { cameraPosition.x + right.x * cameraSpeedDelta,
-							   cameraPosition.y + right.y * cameraSpeedDelta,
-							   cameraPosition.z + right.z * cameraSpeedDelta,
-							   1.0f };
-	}
-
-	void Update()
-	{
-		UpdateCameraPosition(DebugMenu::GetDeltaTime());
 	}
 
 	static void ShowCameraDetails(CCamera* pCamera)
@@ -502,10 +467,6 @@ void Debug::Camera::ShowCamera()
 				ImGui::Text("Camera: %d", pCamera->GetMode());
 				pCamera = pCamera->pNextCameraView_0xa4;
 			}
-		}
-
-		if (bActive) {
-			Update();
 		}
 	}
 

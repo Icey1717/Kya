@@ -399,6 +399,7 @@ void CActorJamGut::SetState(int newState, int animType)
 		}
 	}
 
+	JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::SetState: {} -> {}", static_cast<int>(this->actorState), newState);
 	CActorMovable::SetState(newState, animType);
 
 	int riderState = -1;
@@ -436,7 +437,7 @@ void CActorJamGut::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uin
 			pValue->field_0xc_array[0] = 0.0f;
 		}
 		else {
-			pValue->field_0xc_array[0] = (int)fVar4;
+			pValue->field_0xc_array[0] = fVar4;
 			pValue->field_0xc_array[1] = 1.0f - pValue->field_0xc_array[0];
 			pValue->field_0xc_array[2] = 0.0f;
 		}
@@ -776,14 +777,14 @@ void CActorJamGut::ClearLocalData()
 	this->dynamicExt.field_0xc = 1.3f;
 	this->dynamicExt.field_0x1c = 0.9f;
 	ResetStdSettings();
-	this->field_0x62c = -1;
+	this->activePathIndex = -1;
 	this->field_0x64c = 0.0f;
-	this->field_0x640 = 1.0f;
-	this->field_0x644 = 0;
-	this->field_0x648 = 1;
-	this->field_0x650 = 0.0f;
-	this->field_0x630 = this->rotationQuat;
-	this->field_0x654 = (CActor*)0x0;
+	this->pathFollowIntensity = 1.0f;
+	this->pathFollowCmdA = 0;
+	this->pathFollowCmdB = 1;
+	this->pathTimeOnSegment = 0.0f;
+	this->pathFollowDirection = this->rotationQuat;
+	this->pTrackedPathActor = (CActor*)0x0;
 	this->field_0x61c = 0;
 	this->field_0x35c = 0;
 	this->field_0x360 = 1;
@@ -798,7 +799,7 @@ void CActorJamGut::ManagePaths()
 	CEventManager* pEventManager;
 	CBehaviourHeroRideJamGut* pCVar4;
 	StateConfig* pSVar3;
-	CActor* pCVar5;
+	CActor* pPathActor;
 	CBehaviourHeroRideJamGut* pCVar6;
 	uint uVar7;
 	CPathPlane* pPathPlane;
@@ -814,7 +815,7 @@ void CActorJamGut::ManagePaths()
 	edF32VECTOR4 local_50;
 	edF32VECTOR4 eStack64;
 	edF32VECTOR4 eStack48;
-	S_PATHREADER_POS_INFO local_18;
+	S_PATHREADER_POS_INFO pathreaderPosInfo;
 	float local_8;
 	float local_4;
 	CActorHero* pHero;
@@ -835,12 +836,13 @@ void CActorJamGut::ManagePaths()
 	if ((iVar10 == 0) && (pHero = this->pRider, pHero != (CActorHero*)0x0)) {
 		if (((((pHero->GetStateFlags(pHero->actorState) & 0x100) != 0) && (pHero = this->pRider, ((pHero->pCollisionData)->flags_0x4 & 2) != 0)) &&
 			(pHero->pTiedActor == (CActor*)0x0)) &&
-			(pCVar5 = pHero->GetCollidingActor(), pCVar5 == (CActor*)0x0)) {
+			(pPathActor = pHero->GetCollidingActor(), pPathActor == (CActor*)0x0)) {
 			CBehaviourJamGutRidden* pRidden = static_cast<CBehaviourJamGutRidden*>(GetBehaviour(this->curBehaviourId));
 			pRidden->field_0x8 = 1;
+			JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: hero lost footing mid-path, returning to stand");
 			SetBehaviour(JAMGUT_BEHAVIOUR_STAND, -1, -1);
-			this->field_0x62c = -1;
-			this->field_0x654 = (CActor*)0x0;
+			this->activePathIndex = -1;
+			this->pTrackedPathActor = (CActor*)0x0;
 			return;
 		}
 	}
@@ -852,9 +854,9 @@ void CActorJamGut::ManagePaths()
 		iVar10 = pCVar6->field_0x7c;
 	}
 
-	if ((iVar10 == 0) && (this->field_0x62c == -1)) {
-		this->field_0x62c = -1;
-		this->field_0x654 = (CActor*)0x0;
+	if ((iVar10 == 0) && (this->activePathIndex == -1)) {
+		this->activePathIndex = -1;
+		this->pTrackedPathActor = (CActor*)0x0;
 	}
 	else {
 		if ((this->pRider == (CActorHero*)0x0) ||
@@ -866,17 +868,19 @@ void CActorJamGut::ManagePaths()
 				if ((uVar7 & 1) != 0) {
 					pPathPlane = &pCurPath->pathPlane;
 
-					if (this->field_0x62c != iVar10) {
+					if (this->activePathIndex != iVar10) {
 						pPathPlane->InitTargetPos(&this->currentLocation, &(pCurPath->pathPlane).outData);
-						float pathDist = ComputeDistanceToPath(&this->currentLocation, pPathPlane, (pCurPath->pathPlane).outData.field_0x0, &this->field_0x630, 0, &local_4);
+						float pathDist = ComputeDistanceToPath(&this->currentLocation, pPathPlane, (pCurPath->pathPlane).outData.field_0x0, &this->pathFollowDirection, 0, &local_4);
 						this->field_0x64c = pathDist;
 
-						fVar13 = edF32Vector4DotProductHard(&this->field_0x630, &this->dynamic.horizontalVelocityDirectionEuler);
+						fVar13 = edF32Vector4DotProductHard(&this->pathFollowDirection, &this->dynamic.horizontalVelocityDirectionEuler);
 						if (fVar13 < 0.0f) {
+							JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: path {} rejected, moving against path direction (dot={:.2f})", iVar10, fVar13);
 							return;
 						}
 
 						if (pCurPath->field_0x2c < fabs(this->field_0x64c)) {
+							JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: path {} rejected, lateral distance {:.2f} exceeds max {:.2f}", iVar10, fabs(this->field_0x64c), pCurPath->field_0x2c);
 							return;
 						}
 
@@ -900,31 +904,32 @@ void CActorJamGut::ManagePaths()
 							}
 						}
 
-						pCVar5 = (pCurPath->actorRef).Get();
-						if (pCVar5 == (CActor*)0x0) {
+						pPathActor = (pCurPath->actorRef).Get();
+						if (pPathActor == (CActor*)0x0) {
 							peVar12 = (pCurPath->pathPlane).outData.field_0x0;
 							if (peVar12 == -1) {
 								peVar12 = 0x0;
 							}
 
-							local_18.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-							local_18.field_0x4 = peVar12;
-							if (local_18.field_0x0 == -1) {
-								local_18.field_0x4 = peVar12 - 1;
-								local_18.field_0x0 = peVar12;
+							pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+							pathreaderPosInfo.field_0x4 = peVar12;
+							if (pathreaderPosInfo.field_0x0 == -1) {
+								pathreaderPosInfo.field_0x4 = peVar12 - 1;
+								pathreaderPosInfo.field_0x0 = peVar12;
 							}
 
-							local_18.field_0x8 = local_4;
-							fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&local_18);
-							this->field_0x650 = fVar13;
+							pathreaderPosInfo.field_0x8 = local_4;
+							fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
+							this->pathTimeOnSegment = fVar13;
 						}
 						else {
-							if (pCVar5->curBehaviourId != 2) {
+							if (pPathActor->curBehaviourId != 2) {
 								return;
 							}
 
-							this->field_0x654 = pCVar5;
-							this->aPaths[iVar10].pathPlane.InitTargetPos(&this->field_0x654->currentLocation, &this->field_0x658);
+							this->pTrackedPathActor = pPathActor;
+							JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} tracking actor {:p}", iVar10, static_cast<void*>(pPathActor));
+							this->aPaths[iVar10].pathPlane.InitTargetPos(&this->pTrackedPathActor->currentLocation, &this->field_0x658);
 						}
 
 						if (this->field_0x404 < this->dynamic.linearAcceleration) {
@@ -932,41 +937,42 @@ void CActorJamGut::ManagePaths()
 							this->field_0x444 = this->field_0x404;
 						}
 
-						this->field_0x62c = iVar10;
+						this->activePathIndex = iVar10;
+						JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} activated, timeOnSegment={:.2f}", iVar10, this->pathTimeOnSegment);
 					}
 
-					if (this->field_0x654 == (CActor*)0x0) {
-						pCurPath->pathFollowReader.ComputePosition(this->field_0x650, &eStack48, (edF32VECTOR4*)0x0, (S_PATHREADER_POS_INFO*)0x0);
-						this->field_0x650 = this->field_0x650 + GetTimer()->cutsceneDeltaTime;
+					if (this->pTrackedPathActor == (CActor*)0x0) {
+						pCurPath->pathFollowReader.ComputePosition(this->pathTimeOnSegment, &eStack48, (edF32VECTOR4*)0x0, (S_PATHREADER_POS_INFO*)0x0);
+						this->pathTimeOnSegment = this->pathTimeOnSegment + GetTimer()->cutsceneDeltaTime;
 
 						fVar13 = (pCurPath->pathFollowReader).barFullAmount_0x4;
-						if (fVar13 < this->field_0x650) {
-							fVar13 = fmodf(this->field_0x650, fVar13);
-							this->field_0x650 = fVar13;
+						if (fVar13 < this->pathTimeOnSegment) {
+							fVar13 = fmodf(this->pathTimeOnSegment, fVar13);
+							this->pathTimeOnSegment = fVar13;
 						}
 					}
 					else {
-						pPathPlane->ExternComputeTargetPosWithPlane(&this->field_0x654->currentLocation, &this->field_0x658);
-						ComputeDistanceToPath(&this->field_0x654->currentLocation, pPathPlane, this->field_0x658.field_0x0, 0, &eStack48, &local_8);
+						pPathPlane->ExternComputeTargetPosWithPlane(&this->pTrackedPathActor->currentLocation, &this->field_0x658);
+						ComputeDistanceToPath(&this->pTrackedPathActor->currentLocation, pPathPlane, this->field_0x658.field_0x0, 0, &eStack48, &local_8);
 						peVar12 = this->field_0x658.field_0x0;
 						if (peVar12 == -1) {
 							peVar12 = 0;
 						}
 
-						local_18.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-						local_18.field_0x4 = peVar12;
-						if (local_18.field_0x0 == -1) {
-							local_18.field_0x4 = peVar12 - 1;
-							local_18.field_0x0 = peVar12;
+						pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+						pathreaderPosInfo.field_0x4 = peVar12;
+						if (pathreaderPosInfo.field_0x0 == -1) {
+							pathreaderPosInfo.field_0x4 = peVar12 - 1;
+							pathreaderPosInfo.field_0x0 = peVar12;
 						}
 
-						local_18.field_0x8 = local_8;
+						pathreaderPosInfo.field_0x8 = local_8;
 						if (1.0f < local_8) {
-							local_18.field_0x8 = 1.0f;
+							pathreaderPosInfo.field_0x8 = 1.0f;
 						}
 
-						fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&local_18);
-						this->field_0x650 = fVar13;
+						fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
+						this->pathTimeOnSegment = fVar13;
 					}
 
 					pPathPlane->ExternComputeTargetPosWithPlane(&this->currentLocation, &(pCurPath->pathPlane).outData);
@@ -975,19 +981,20 @@ void CActorJamGut::ManagePaths()
 					if (peVar12 == -1) {
 						peVar12 = 0;
 					}
-					local_18.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-					local_18.field_0x4 = peVar12;
-					if (local_18.field_0x0 == -1) {
-						local_18.field_0x4 = peVar12 - 1;
-						local_18.field_0x0 = peVar12;
+
+					pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+					pathreaderPosInfo.field_0x4 = peVar12;
+					if (pathreaderPosInfo.field_0x0 == -1) {
+						pathreaderPosInfo.field_0x4 = peVar12 - 1;
+						pathreaderPosInfo.field_0x0 = peVar12;
 					}
 
-					local_18.field_0x8 = local_4;
+					pathreaderPosInfo.field_0x8 = local_4;
 					if (1.0f < local_4) {
-						local_18.field_0x8 = 1.0f;
+						pathreaderPosInfo.field_0x8 = 1.0f;
 					}
 
-					fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&local_18);
+					fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
 					pCVar1 = (pCurPath->pathFollowReader).pActor3C_0x0;
 					if (((pCVar1->mode == 0) && (pCVar1->type == 0)) &&
 						(fabs(fVar13 - (pCurPath->pathFollowReader).barFullAmount_0x4) < 0.1f)) {
@@ -1001,23 +1008,25 @@ void CActorJamGut::ManagePaths()
 						if (iVar10 == 0) {
 							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 							pCVar6->field_0x8 = 1;
-							SetBehaviour(3, -1, -1);
+							JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} reached end, returning to stand behaviour", this->activePathIndex);
+							SetBehaviour(JAMGUT_BEHAVIOUR_STAND, -1, -1);
 						}
 						else {
-							SetState(7, -1);
+							JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} reached end, advancing rider to next state", this->activePathIndex);
+							SetState(JAMGUT_RIDE_STATE_STAND, -1);
 
 							pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 							pCVar6->ResetCommands();
 							pHero = this->pRider;
 							if ((pHero != (CActorHero*)0x0) &&
-								(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+								(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 								pCVar6 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 								pCVar6->SetState(0x131, 1);
 							}
 						}
 
-						this->field_0x62c = -1;
-						this->field_0x654 = (CActor*)0x0;
+						this->activePathIndex = -1;
+						this->pTrackedPathActor = (CActor*)0x0;
 
 						return;
 					}
@@ -1026,6 +1035,7 @@ void CActorJamGut::ManagePaths()
 					local_60.w = 0.0f;
 					local_60.x = -local_70.z;
 					local_60.z = local_70.x;
+
 					edF32Vector4ScaleHard(this->field_0x64c, &local_60, &local_60);
 					fVar14 = edFIntervalUnitSrcLERP(local_4, 2.0f, 6.0f);
 					edF32Vector4ScaleHard(fVar14, &local_70, &local_70);
@@ -1035,7 +1045,7 @@ void CActorJamGut::ManagePaths()
 					local_50.y = 0.0f;
 					edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
 					fVar16 = (pCurPath->pathFollowReader).barFullAmount_0x4;
-					fVar14 = this->field_0x650;
+					fVar14 = this->pathTimeOnSegment;
 					fVar15 = fVar16 * 0.25f;
 					if ((fVar15 <= fVar14) || (fVar13 <= fVar16 - fVar15)) {
 						if ((fVar13 < fVar15) && (fVar16 - fVar15 < fVar14)) {
@@ -1045,19 +1055,20 @@ void CActorJamGut::ManagePaths()
 					else {
 						fVar14 = fVar14 + fVar16;
 					}
+
 					if (fVar13 < fVar14) {
-						this->field_0x648 = 1;
-						this->field_0x644 = 0;
+						this->pathFollowCmdB = 1;
+						this->pathFollowCmdA = 0;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar14 - fVar13), 0.0f, 3.0f, 1.0f, 1.5f);
 					}
 					else {
-						this->field_0x648 = 0;
-						this->field_0x644 = 1;
+						this->pathFollowCmdB = 0;
+						this->pathFollowCmdA = 1;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar13 - fVar14), 0.0f, 3.0f, 1.0f, 0.5f);
 					}
 
-					this->field_0x630 = local_50;
-					this->field_0x640 = fVar13;
+					this->pathFollowDirection = local_50;
+					this->pathFollowIntensity = fVar13;
 
 					return;
 				}
@@ -1065,12 +1076,14 @@ void CActorJamGut::ManagePaths()
 				pCurPath = pCurPath + 1;
 			}
 
-			this->field_0x62c = -1;
-			this->field_0x654 = (CActor*)0x0;
+			JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: no path zone active, clearing active path");
+			this->activePathIndex = -1;
+			this->pTrackedPathActor = (CActor*)0x0;
 		}
 		else {
-			this->field_0x62c = -1;
-			this->field_0x654 = (CActor*)0x0;
+			JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: rider condition not met, clearing active path");
+			this->activePathIndex = -1;
+			this->pTrackedPathActor = (CActor*)0x0;
 		}
 	}
 
@@ -1110,6 +1123,8 @@ void CActorJamGut::ManageCheckpoints()
 				if (uVar4 != 0) {
 					this->field_0x618 = curIndex;
 					pWayPoint = (pCurCheckpoint->waypointRef).Get();
+					JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManageCheckpoints: checkpoint {} activated, waypoint pos ({:.2f}, {:.2f}, {:.2f})",
+						curIndex, pWayPoint->location.x, pWayPoint->location.y, pWayPoint->location.z);
 					this->field_0x5f0.xyz = pWayPoint->location;
 					this->field_0x5f0.w = 1.0f;
 
@@ -1757,7 +1772,7 @@ bool CActorJamGut::UpdateFunc(float inputFloat)
 
 	float fVar7 = acosf(puVar8);
 	this->field_0x44c = fVar7;
-	edF32Vector4ScaleHard(this->dynamic.horizontalLinearAcceleration, &eStack32, &this->dynamic.horizontalVelocityDirectionEuler);
+	edF32Vector4ScaleHard(this->dynamic.horizontalLinearSpeed, &eStack32, &this->dynamic.horizontalVelocityDirectionEuler);
 	fVar7 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack32);
 	float fVar8 = this->field_0x444;
 	if (fVar7 < 1.0f) {
@@ -1959,7 +1974,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 	pHero = this->pRider;
 	iVar6 = 0;
 	if ((pHero != (CActorHero*)0x0) &&
-		(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+		(iVar6 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pCVar7 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		iVar6 = pCVar7->aCommands[1];
 	}
@@ -1969,14 +1984,14 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 			pHero = this->pRider;
 			iVar6 = 0;
 			if ((pHero != (CActorHero*)0x0) &&
-				(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+				(iVar6 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 				pCVar8 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 				iVar6 = pCVar8->field_0x7c;
 			}
 
 			if (iVar6 == 0) {
-				this->field_0x62c = -1;
-				this->field_0x654 = (CActor*)0x0;
+				this->activePathIndex = -1;
+				this->pTrackedPathActor = (CActor*)0x0;
 			}
 
 			iVar6 = this->actorState;
@@ -1987,7 +2002,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 
 			pHero = this->pRider;
 			if (((pHero != (CActorHero*)0x0) &&
-				(pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) &&
+				(pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) &&
 				(uVar7 != 0xffffffff)) {
 				pCVar9 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 				pCVar9->SetState(uVar7, 0);
@@ -1998,7 +2013,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 	pHero = this->pRider;
 	iVar6 = 0;
 	if ((pHero != (CActorHero*)0x0) &&
-		(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+		(iVar6 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pCVar10 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 		iVar6 = pCVar10->aCommands[10];
 	}
@@ -2009,7 +2024,7 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 			pHero = this->pRider;
 			iVar6 = 0;
 			if ((pHero != (CActorHero*)0x0) &&
-				(iVar6 = 0, pHero->curBehaviourId == JAMGUT_BEHAVIOUR_RIDDEN)) {
+				(iVar6 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 				pCVar11 = static_cast<CBehaviourHeroRideJamGut*>(pHero->GetBehaviour(pHero->curBehaviourId));
 				iVar6 = pCVar11->aCommands[9];
 			}
@@ -2299,7 +2314,7 @@ void CActorJamGut::StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState)
 
 	fVar7 = acosf(puVar9);
 	this->field_0x44c = fVar7;
-	edF32Vector4ScaleHard(this->dynamic.horizontalLinearAcceleration, &eStack16, &this->dynamic.horizontalVelocityDirectionEuler);
+	edF32Vector4ScaleHard(this->dynamic.horizontalLinearSpeed, &eStack16, &this->dynamic.horizontalVelocityDirectionEuler);
 	fVar7 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack16);
 	fVar8 = this->field_0x444;
 	if (fVar7 < 1.0f) {
@@ -2326,7 +2341,7 @@ void CActorJamGut::StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState)
 	}
 
 	bVar2 = ManageDynAndKillActors(0x1006023b);
-	fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearAcceleration, this->field_0x404, this->field_0x400);
+	fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearSpeed, this->field_0x404, this->field_0x400);
 	UpdatePercentWalkRun(-fVar7, 0.9f, 0.0f);
 	iVar4 = RiderCmdWalk();
 	if ((iVar4 == 0) && (iVar4 = RiderCmdRun(), iVar4 == 0)) {
@@ -2481,9 +2496,10 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 			cVar2 = UpdateFunc(50.0f);
 		}
 	}
+
 	if (this->field_0x404 < this->field_0x444) {
 		fVar7 = edFIntervalUnitDstLERP
-		(this->dynamic.horizontalLinearAcceleration, this->field_0x404,
+		(this->dynamic.horizontalLinearSpeed, this->field_0x404,
 			this->field_0x408);
 		if (((this->flags_0x358 & 1) == 0) || (iVar3 = RiderCmdAttack(), iVar3 == 0)) {
 			this->field_0x3a4 = GetTimer()->scaledTotalTime;
@@ -2501,15 +2517,15 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 	}
 	else {
 		this->field_0x3a4 = GetTimer()->scaledTotalTime;
-		fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearAcceleration, this->field_0x404, this->field_0x400);
+		fVar7 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearSpeed, this->field_0x404, this->field_0x400);
 		UpdatePercentWalkRun(-fVar7, 0.9f, 0.9f);
 	}
 
-	if (this->field_0x654 == (CActor*)0x0) {
+	if (this->pTrackedPathActor == (CActor*)0x0) {
 		bVar1 = false;
 	}
 	else {
-		bVar1 = this->field_0x654->typeID != MOVING_PLATFORM;
+		bVar1 = this->pTrackedPathActor->typeID != MOVING_PLATFORM;
 	}
 
 	if (!bVar1) {
@@ -2547,12 +2563,12 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 		if (iVar3 == 0) {
 			bVar1 = RiderCmdStand();
 			if ((((bVar1 != false) && (iVar3 = RiderCmdAttack(), iVar3 == 0)) &&
-				(this->dynamic.horizontalLinearAcceleration < 3.0f)) && (nextState != -1)) {
+				(this->dynamic.horizontalLinearSpeed < 3.0f)) && (nextState != -1)) {
 				SetState(nextState, -1);
 			}
 		}
 		else {
-			if (cVar2 == '\0') {
+			if (cVar2 == false) {
 				SetJumpCfg(0.1f, this->field_0x404, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
 			}
 			else {
@@ -2581,7 +2597,7 @@ void CActorJamGut::StateJamGutFall()
 	ManageDyn(4.0f, 0x140129, (CActorsTable*)0x0);
 
 	if ((pCVar1->flags_0x4 & 2) != 0) {
-		if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+		if (2.0f < this->dynamic.horizontalLinearSpeed) {
 			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER_B, -1);
 		}
 		else {
@@ -2748,7 +2764,7 @@ void CActorJamGut::StateJamGutJump()
 			this->field_0x4b8 = 0;
 		}
 
-		if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+		if (2.0f < this->dynamic.horizontalLinearSpeed) {
 			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER_B, -1);
 		}
 		else {
@@ -2958,7 +2974,7 @@ bool CActorJamGut::FUN_003763d0()
 	CCollision* pCol;
 
 	iVar2 = RiderGetNew();
-	if ((iVar2 == 0) || (this->field_0x62c != -1)) {
+	if ((iVar2 == 0) || (this->activePathIndex != -1)) {
 		this->field_0x460 = 0.0f;
 		bVar1 = false;
 	}
@@ -3139,7 +3155,7 @@ int CActorJamGut::RiderCmdStand()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
@@ -3149,7 +3165,7 @@ int CActorJamGut::RiderCmdStand()
 		}
 	}
 	else {
-		bResult = this->field_0x644;
+		bResult = this->pathFollowCmdA;
 	}
 
 	return bResult;
@@ -3161,7 +3177,7 @@ int CActorJamGut::RiderCmdWalk()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
@@ -3171,7 +3187,7 @@ int CActorJamGut::RiderCmdWalk()
 		}
 	}
 	else {
-		bResult = this->field_0x644;
+		bResult = this->pathFollowCmdA;
 	}
 
 	return bResult;
@@ -3183,7 +3199,7 @@ int CActorJamGut::RiderCmdRun()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	int bResult;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 		bResult = 0;
 		if ((pHero != (CActorHero*)0x0) &&
@@ -3193,7 +3209,7 @@ int CActorJamGut::RiderCmdRun()
 		}
 	}
 	else {
-		bResult = this->field_0x644;
+		bResult = this->pathFollowCmdA;
 	}
 
 	return bResult;
@@ -3240,7 +3256,7 @@ edF32VECTOR4* CActorJamGut::RiderGetForce()
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	CActorHero* pHero;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 		if (pHero == (CActorHero*)0x0) {
 			pForce = &gF32Vector4Zero;
@@ -3262,7 +3278,7 @@ edF32VECTOR4* CActorJamGut::RiderGetForce()
 		}
 	}
 	else {
-		pForce = &this->field_0x630;
+		pForce = &this->pathFollowDirection;
 	}
 
 	return pForce;
@@ -3275,7 +3291,7 @@ float CActorJamGut::RiderGetIntensity()
 	float intensity;
 	CActorHero* pHero;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 		if (pHero == (CActorHero*)0x0) {
 			intensity = 0.0f;
@@ -3297,7 +3313,7 @@ float CActorJamGut::RiderGetIntensity()
 		}
 	}
 	else {
-		intensity = this->field_0x640;
+		intensity = this->pathFollowIntensity;
 	}
 
 	return intensity;
@@ -3341,7 +3357,7 @@ void CActorJamGut::FUN_00367a90(edF32VECTOR4* param_2)
 	CBehaviourHeroRideJamGut* pHeroRideJamGut;
 	CActorHero* pHero;
 
-	if (this->field_0x62c == -1) {
+	if (this->activePathIndex == -1) {
 		pHero = this->pRider;
 
 		if ((pHero != (CActorHero*)0x0) && (pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -3356,7 +3372,7 @@ void CActorJamGut::FUN_00367a90(edF32VECTOR4* param_2)
 		}
 	}
 	else {
-		edF32Vector4ScaleHard(this->field_0x640, param_2, &this->field_0x630);
+		edF32Vector4ScaleHard(this->pathFollowIntensity, param_2, &this->pathFollowDirection);
 	}
 
 	return;
@@ -3916,7 +3932,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 		}
 
 		if (msg == 0x14) {
-			pCVar1 = this->pOwner->field_0x654;
+			pCVar1 = this->pOwner->pTrackedPathActor;
 			if (pCVar1 == (CActor*)0x0) {
 				bVar2 = false;
 			}
@@ -3932,7 +3948,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 		}
 
 		if (msg == 0x12) {
-			pCVar1 = this->pOwner->field_0x654;
+			pCVar1 = this->pOwner->pTrackedPathActor;
 			if (pCVar1 == (CActor*)0x0) {
 				bVar2 = false;
 			}
@@ -3948,13 +3964,13 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 		else {
 			if (msg == 0x44) {
 				pJamGut = this->pOwner;
-				if (pJamGut->field_0x62c == -1) {
+				if (pJamGut->activePathIndex == -1) {
 					this->field_0x8 = 1;
 					this->pOwner->SetBehaviour(3, -1, -1);
 				}
 				else {
-					pJamGut->field_0x654 = (CActor*)pJamGut->pRider;
-					pJamGut->aPaths[pJamGut->field_0x62c].pathPlane.InitTargetPos(&pJamGut->field_0x654->currentLocation, &pJamGut->field_0x658);
+					pJamGut->pTrackedPathActor = (CActor*)pJamGut->pRider;
+					pJamGut->aPaths[pJamGut->activePathIndex].pathPlane.InitTargetPos(&pJamGut->pTrackedPathActor->currentLocation, &pJamGut->field_0x658);
 				}
 
 				return 1;

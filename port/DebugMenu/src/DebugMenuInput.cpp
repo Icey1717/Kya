@@ -107,9 +107,11 @@ float DebugMenu::GetMouseAnalog(uint32_t routeId)
 
 	if (routeId == MOUSE_INPUT_DX) {
 		delta = Debug::Camera::gMouseDeltaX;
+		Debug::Camera::gMouseDeltaX = 0.0f;
 	}
 	else if (routeId == MOUSE_INPUT_DY) {
 		delta = Debug::Camera::gMouseDeltaY;
+		Debug::Camera::gMouseDeltaY = 0.0f;
 	}
 	else if (routeId == MOUSE_INPUT_WHEEL) {
 		delta = ImGui::GetIO().MouseWheel;

@@ -270,7 +270,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			ImGui::Text("Flags: %x", pActorHero->flags);
 
 			ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
-			ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.horizontalLinearAcceleration);
+			ImGui::InputFloat("Linear Speed", &pActorHero->dynamic.horizontalLinearSpeed);
 			ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
 			ImGui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
 			ImGui::InputFloat("Weight A", &pActorHero->dynamic.weightA);

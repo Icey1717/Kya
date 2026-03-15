@@ -422,8 +422,8 @@ void CActorMovable::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTa
 	eStack48.y = 0.0f;
 
 	fVar3 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack48);
-	(this->dynamic).horizontalLinearAcceleration = fVar3;
-	(this->dynamic).horizontalLinearAcceleration = fVar3 / pTimer->cutsceneDeltaTime;
+	(this->dynamic).horizontalLinearSpeed = fVar3;
+	(this->dynamic).horizontalLinearSpeed = fVar3 / pTimer->cutsceneDeltaTime;
 	return;
 }
 
@@ -976,7 +976,7 @@ float CActorMovable::SV_MOV_ManageMovOnPath(CPathFollowReader* pPathFollowReader
 	iVar1 = pMovPathParams->field_0x8;
 	if (iVar1 != 0) {
 		if (iVar1 == 3) {
-			if (0.0f < (this->dynamic).horizontalLinearAcceleration) {
+			if (0.0f < (this->dynamic).horizontalLinearSpeed) {
 				local_160.x = (this->dynamic).velocityDirectionEuler.x;
 				local_160.y = 0.0f;
 				local_160.z = (this->dynamic).velocityDirectionEuler.z;
@@ -1590,8 +1590,8 @@ void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 	eStack16.y = 0.0f;
 
 	fVar2 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack16);
-	(this->dynamic).horizontalLinearAcceleration = fVar2;
-	(this->dynamic).horizontalLinearAcceleration = (this->dynamic).horizontalLinearAcceleration / pTVar1->cutsceneDeltaTime;
+	(this->dynamic).horizontalLinearSpeed = fVar2;
+	(this->dynamic).horizontalLinearSpeed = (this->dynamic).horizontalLinearSpeed / pTVar1->cutsceneDeltaTime;
 	return;
 }
 
@@ -1650,7 +1650,7 @@ void CDynamic::Reset(CActor* pActor)
 
 	this->speed = 0.0f;
 	this->linearAcceleration = 0;
-	this->horizontalLinearAcceleration = 0;
+	this->horizontalLinearSpeed = 0;
 	this->weightA = 1.0f;
 	if (pActor == (CActor*)0x0) {
 		(this->rotationQuat).x = 1.0f;
@@ -1676,7 +1676,7 @@ void CDynamic::ClearLocalData()
 
 	this->speed = 0.0f;
 	this->linearAcceleration = 0.0f;
-	this->horizontalLinearAcceleration = 0.0f;
+	this->horizontalLinearSpeed = 0.0f;
 	this->weightA = 1.0f;
 
 	return;

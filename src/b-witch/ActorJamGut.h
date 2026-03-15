@@ -25,6 +25,8 @@
 #define JAMGUT_CMD_JUMP 5
 #define JAMGUT_CMD_ATTACK 8
 
+#define JAMGUT_LOG(level, format, ...) MY_LOG_CATEGORY("JamGut", level, format, ##__VA_ARGS__)
+
 class CActorHero;
 class CActorJamGut;
 class CMusic;
@@ -297,14 +299,14 @@ public:
 	int field_0x618;
 	uint field_0x61c;
 	undefined4 field_0x620;
-	int field_0x62c;
-	edF32VECTOR4 field_0x630;
-	float field_0x640;
-	int field_0x644;
-	int field_0x648;
+	int activePathIndex;
+	edF32VECTOR4 pathFollowDirection;
+	float pathFollowIntensity;
+	int pathFollowCmdA;
+	int pathFollowCmdB;
 	float field_0x64c;
-	float field_0x650;
-	CActor* field_0x654;
+	float pathTimeOnSegment;
+	CActor* pTrackedPathActor;
 	CPathPlaneOutData field_0x658;
 
 	int nbPaths;

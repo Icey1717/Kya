@@ -2168,7 +2168,7 @@ void CCameraGame::FUN_002c8160()
 	}
 
 	if ((this->field_0x280 == 0) && (pCVar1 != (CActorAutonomous*)0x0)) {
-		this->field_0x1d8 = pCVar1->dynamic.horizontalLinearAcceleration;
+		this->field_0x1d8 = pCVar1->dynamic.horizontalLinearSpeed;
 	}
 	else {
 		this->field_0x1d8 = 7.0f;

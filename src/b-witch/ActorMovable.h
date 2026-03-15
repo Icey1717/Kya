@@ -32,7 +32,7 @@ public:
 
 	uint flags;
 
-	float horizontalLinearAcceleration;
+	float horizontalLinearSpeed;
 	float linearAcceleration;
 	float speed;
 	undefined4 field_0x4c;

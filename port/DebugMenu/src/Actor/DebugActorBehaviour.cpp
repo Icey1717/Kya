@@ -1057,6 +1057,18 @@ namespace JamGut
 			return "Stand Stand";
 		case JAMGUT_RIDE_STATE_STAND:
 			return "Ride Stand";
+		case JAMGUT_RIDE_STATE_RUN:
+			return "Ride Run";
+		case JAMGUT_RIDE_STATE_JUMP_BEFORE:
+			return "Ride Jump Before";
+		case JAMGUT_RIDE_STATE_JUMP:
+			return "Ride Jump";
+		case JAMGUT_RIDE_STATE_JUMP_AFTER:
+			return "Ride Jump After";
+		case JAMGUT_RIDE_STATE_JUMP_AFTER_B:
+			return "Ride Jump After B";
+		case JAMGUT_RIDE_STATE_FALL:
+			return "Ride Fall";
 		case JAMGUT_STAND_STATE_REJECT_HERO_A:
 			return "Reject Hero A";
 		case JAMGUT_STAND_STATE_REJECT_HERO_B:

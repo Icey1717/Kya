@@ -132,7 +132,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 					if (fVar12 == 0.0f) {
 						landingState = STATE_HERO_JUMP_3_3_STAND;
 
-						if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+						if (2.0f < this->dynamic.horizontalLinearSpeed) {
 							landingState = STATE_HERO_JUMP_3_3_RUN;
 						}
 					}

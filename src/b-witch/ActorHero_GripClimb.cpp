@@ -64,7 +64,7 @@ bool CActorHeroPrivate::DetectGripablePrecipice()
 	cfg_wall_far.field_0x8 = this->field_0x14b0;
 	cfg_wall_close.field_0x8 = this->field_0x14b0;
 
-	fVar3 = this->dynamic.horizontalLinearAcceleration;
+	fVar3 = this->dynamic.horizontalLinearSpeed;
 	if (((((0.1 < fVar3) && (fVar3 < this->runSpeed)) && (this->field_0x14ac < this->distanceToGround)
 		) && ((bVar2 = DetectWall(3, 0x40000010, &this->dynamic.velocityDirectionEuler, &cfg_wall_far, &this->bounceLocation, &local_40, &local_10), bVar2 != false
 			|| (bVar2 = DetectWall(3, 0x40000010,

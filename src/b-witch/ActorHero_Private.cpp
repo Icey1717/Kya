@@ -4444,7 +4444,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 						param_2->pEventCollider->field_0x1c->pZone, 0, &eStack4);
 				edF32Matrix4GetInverseGaussSoft((edF32MATRIX4*)auStack80, peVar7);
 				edF32Vector4NormalizeHard(&eStack112, (edF32VECTOR4*)(auStack80 + 0x10));
-				fVar12 = this->dynamic.horizontalLinearAcceleration;
+				fVar12 = this->dynamic.horizontalLinearSpeed;
 				fVar11 = 2.0;
 				if (2.0 <= fVar12) {
 					fVar11 = fVar12;
@@ -7250,7 +7250,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 
 	UpdateNormal(fVar13 * fVar15, &this->normalValue, &local_60);
 
-	if (0.1f < this->dynamic.horizontalLinearAcceleration) {
+	if (0.1f < this->dynamic.horizontalLinearSpeed) {
 		BuildMatrixFromNormalAndSpeed(&auStack80, &this->normalValue, &this->dynamic.velocityDirectionEuler);
 	}
 	else {
@@ -7502,7 +7502,7 @@ void CActorHeroPrivate::StateHeroTobogganJump(int param_2, int param_3, int para
 
 	edFIntervalLERP(this->field_0xa80, this->field_0x10c0, this->field_0x10c4, 1.0f, 4.0f);
 
-	if (0.1f < this->dynamic.horizontalLinearAcceleration) {
+	if (0.1f < this->dynamic.horizontalLinearSpeed) {
 		local_60 = this->dynamic.velocityDirectionEuler;
 	}
 	else {
@@ -8510,7 +8510,7 @@ void CActorHeroPrivate::StateHeroRun()
 		}
 	}
 	if ((this->dynamic.flags & 2) == 0) {
-		fVar12 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearAcceleration, this->field_0x104c, this->runSpeed);
+		fVar12 = edFIntervalUnitDstLERP(this->dynamic.horizontalLinearSpeed, this->field_0x104c, this->runSpeed);
 		SV_UpdatePercent(fVar12, 0.9f, &this->field_0x1048);
 	}
 	else {
@@ -9265,7 +9265,7 @@ void CActorHeroPrivate::StateHeroSlideInit(int param_2)
 	}
 
 	if (((((uVar4 != 0) && (iVar2 = this->prevActorState, iVar2 != STATE_HERO_JUMP_3_3_STAND)) &&
-		(iVar2 != 0x7d)) || (param_2 != 0)) && ((this->dynamic.horizontalLinearAcceleration < this->field_0x104c && (0.0f < this->dynamic.velocityDirectionEuler.y)))) {
+		(iVar2 != 0x7d)) || (param_2 != 0)) && ((this->dynamic.horizontalLinearSpeed < this->field_0x104c && (0.0f < this->dynamic.velocityDirectionEuler.y)))) {
 		if (param_2 == 0) {
 			this->dynamicExt.normalizedTranslation.x = 0.0f;
 			this->dynamicExt.normalizedTranslation.y = 0.0f;
@@ -9477,7 +9477,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 				uVar8 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 			}
 			if ((uVar8 == 0) || (param_2 == 0)) {
-				if ((this->dynamic.horizontalLinearAcceleration < 0.5f) &&
+				if ((this->dynamic.horizontalLinearSpeed < 0.5f) &&
 					((this->dynamic.flags & 2) == 0)) {
 					if (param_2 == 0) {
 						SetState(STATE_HERO_BASIC_TO_STAND, 0xffffffff);
@@ -11301,7 +11301,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 				fVar8 = pInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
 			}
 			if ((fVar8 == 0.0f) || (this->field_0x1a4c != 0)) {
-				if (2.0f < this->dynamic.horizontalLinearAcceleration) {
+				if (2.0f < this->dynamic.horizontalLinearSpeed) {
 					SetState(STATE_HERO_JUMP_3_3_RUN, 0xffffffff);
 				}
 				else {
@@ -15262,7 +15262,7 @@ void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActor
 		fStack8 = this->rotationQuat.z * fVar6 + this->currentLocation.z;
 		fStack4 = this->rotationQuat.w * fVar6 + this->currentLocation.w;
 
-		local_30 = this->dynamic.horizontalVelocityDirectionEuler * this->dynamic.horizontalLinearAcceleration;
+		local_30 = this->dynamic.horizontalVelocityDirectionEuler * this->dynamic.horizontalLinearSpeed;
 
 		pTVar3 = GetTimer();
 		fVar6 = pTVar3->cutsceneDeltaTime;
@@ -15513,7 +15513,7 @@ void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	}
 	fVar8 = 1.0f - fVar9;
 	this->field_0xa80 = fVar8 * this->dynamic.linearAcceleration + fVar9 * this->field_0xa80;
-	this->field_0xa84 = fVar8 * this->dynamic.horizontalLinearAcceleration + fVar9 * this->field_0xa84;
+	this->field_0xa84 = fVar8 * this->dynamic.horizontalLinearSpeed + fVar9 * this->field_0xa84;
 	fVar9 = fVar9 * this->field_0xa88 + fVar8 * this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y;
 	this->field_0xa88 = fVar9;
 

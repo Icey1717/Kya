@@ -82,10 +82,13 @@ set(SOURCES
 	"src/Actor/DebugActorBehaviour.cpp"
 	"src/Actor/DebugActorWind.h"
 	"src/Actor/DebugActorWind.cpp"
+	"src/Actor/DebugActorJamGut.h"
+	"src/Actor/DebugActorJamGut.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"include/DebugRenderer.h"
 	"include/DebugMenu.h"
 	"include/Callstack.h"
+	"include/DebugPathDrawing.h"
 )
 
 add_library(${TargetName} OBJECT ${SOURCES})

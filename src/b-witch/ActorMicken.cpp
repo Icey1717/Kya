@@ -722,7 +722,7 @@ void CActorMicken::StateMickenKickImpactFly(CBehaviourMicken* pBehaviour, int pa
 		(1.0f <= fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y))) {
 		if (param_3 != 0) {
 			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-				if (4.0f < this->dynamic.horizontalLinearAcceleration) {
+				if (4.0f < this->dynamic.horizontalLinearSpeed) {
 					SetState(0x19, -1);
 				}
 				else {

@@ -10,6 +10,7 @@
 #include "ActorCheckpointManager.h"
 #include "ActorWind.h"
 #include "ActorWolfen.h"
+#include "ActorJamGut.h"
 #include "SectorManager.h"
 #include "LevelScheduler.h"
 #include "Types.h"
@@ -17,6 +18,8 @@
 #include "Actor/DebugActor.h"
 #include "Actor/DebugActorWind.h"
 #include "Actor/DebugActorWolfen.h"
+#include "Actor/DebugActorBehaviour.h"
+#include "Actor/DebugActorJamGut.h"
 
 namespace Debug {
 
@@ -166,7 +169,13 @@ namespace Debug {
 
 		ImGui::Separator();
 
-		std::map<int, std::vector<CActor*>> actorsByType;
+		auto sortByTypeName = [](int a, int b) {
+			const char* aName = Debug::Actor::GetActorTypeString(a);
+			const char* bName = Debug::Actor::GetActorTypeString(b);
+			return strcmp(aName, bName) < 0;
+			};
+
+		std::map<int, std::vector<CActor*>, decltype(sortByTypeName)> actorsByType(sortByTypeName);
 		for (int i = 0; i < pActorManager->nbActors; ++i) {
 			CActor* pActor = pActorManager->aActors[i];
 			if (pActor != nullptr) {
@@ -180,7 +189,7 @@ namespace Debug {
 
 		for (auto& [typeId, actors] : actorsByType) {
 			const char* pTypeName = Debug::Actor::GetActorTypeString(typeId);
-			if (ImGui::TreeNodeEx((void*)(intptr_t)typeId, ImGuiTreeNodeFlags_DefaultOpen, "%s (%d)", pTypeName, static_cast<int>(actors.size()))) {
+			if (ImGui::TreeNodeEx((void*)(intptr_t)typeId, ImGuiTreeNodeFlags_None, "%s (%d)", pTypeName, static_cast<int>(actors.size()))) {
 				for (CActor* pActor : actors) {
 					const bool isSelected = gInspectorSelection.type == InspectorSelectionType::Actor && gInspectorSelection.pActor == pActor;
 					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | (isSelected ? ImGuiTreeNodeFlags_Selected : 0);
@@ -321,7 +330,9 @@ namespace Debug {
 
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Current Animation: %d", pActor->currentAnimType);
-			ImGui::Text("Current Behaviour: %d", pActor->curBehaviourId);
+			ImGui::Text("Current State: %s (%d)", Debug::Actor::State::GetActorStateName(pActor).c_str(), pActor->actorState);
+			ImGui::Text("Previous State: %d", pActor->prevActorState);
+			ImGui::Text("Current Behaviour: %s (%d)", Debug::Actor::Behaviour::GetActorBehaviourName(pActor).c_str(), pActor->curBehaviourId);
 			ImGui::Text("Previous Behaviour: %d", pActor->prevBehaviourId);
 			ImGui::Text("Distance To Camera: %.2f", pActor->distanceToCamera);
 			ImGui::Text("Distance To Ground: %.2f", pActor->distanceToGround);
@@ -354,6 +365,13 @@ namespace Debug {
 			CActorWolfen* pWolfenActor = static_cast<CActorWolfen*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Wolfen::ShowWolfenActorDetails(pWolfenActor);
+		}
+
+		// Show jamgut-specific info if this is a jamgut actor
+		if (pActor->typeID == JAMGUT) {
+			CActorJamGut* pJamGutActor = static_cast<CActorJamGut*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::JamGut::ShowJamGutActorDetails(pJamGutActor);
 		}
 	}
 

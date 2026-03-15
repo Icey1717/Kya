@@ -517,7 +517,7 @@ void CActorHeroPrivate::FUN_00348df0()
 	}
 	fVar2 = 1.0f - fVar3;
 	this->field_0xa80 =	fVar2 * this->dynamic.linearAcceleration + fVar3 * this->field_0xa80;
-	this->field_0xa84 = fVar2 * this->dynamic.horizontalLinearAcceleration + fVar3 * this->field_0xa84;
+	this->field_0xa84 = fVar2 * this->dynamic.horizontalLinearSpeed + fVar3 * this->field_0xa84;
 	this->field_0xa88 = fVar3 * this->field_0xa88 + fVar2 * this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y;
 
 	return;
@@ -526,29 +526,27 @@ void CActorHeroPrivate::FUN_00348df0()
 void CActorHeroPrivate::StandOnJamGut(CBehaviourHeroRideJamGut* pBehaviour)
 {
 	CActorJamGut* pJamGut;
-	edF32VECTOR4* peVar2;
+	edF32VECTOR4* pHorizontalVelocityDirectionEuler;
 	CCameraManager* pCameraManager;
 	int* pCVar3;
 	int iVar4;
-	int iVar5;
-	float fVar6;
-	float fVar7;
+	int curState;
 
 	this->rotationEuler.y = pBehaviour->field_0x8c->rotationEuler.y;
 	RestoreVerticalOrientation();
 	pCVar3 = pBehaviour->aCommands;
-	iVar5 = 0;
+	curState = 0;
 	do {
-		iVar4 = iVar5;
+		iVar4 = curState;
 		pCVar3[0] = 0;
 		pCVar3[1] = 0;
-		iVar5 = iVar4 + 6;
+		curState = iVar4 + 6;
 		pCVar3[2] = 0;
 		pCVar3[3] = 0;
 		pCVar3[4] = 0;
 		pCVar3[5] = 0;
 		pCVar3 = pCVar3 + 6;
-	} while (iVar5 < 7);
+	} while (curState < 7);
 	pBehaviour->aCommands[iVar4 + 6] = 0;
 	pBehaviour->field_0x68 = 0;
 	pBehaviour->inputAnalogDir.x = 0.0f;
@@ -557,29 +555,30 @@ void CActorHeroPrivate::StandOnJamGut(CBehaviourHeroRideJamGut* pBehaviour)
 	pBehaviour->inputAnalogDir.w = 0.0f;
 	pBehaviour->inputMagnitude = 0.0f;
 
-	iVar5 = this->actorState;
-	if ((iVar5 == 0x122) || (iVar5 == 0x120)) {
+	curState = this->actorState;
+	if ((curState == STATE_HERO_MOUNT_RUN_1) || (curState == STATE_HERO_MOUNT_RUN_TURN)) {
 		pJamGut = pBehaviour->field_0x8c;
-		fVar6 = 1.0f;
+		float clampedSpeed = 1.0f;
 
-		fVar7 = pJamGut->dynamic.horizontalLinearAcceleration;
-		if (1.0f <= fVar7) {
-			fVar6 = fVar7;
+		const float horizontalLinearSpeed = pJamGut->dynamic.horizontalLinearSpeed;
+		if (1.0f <= horizontalLinearSpeed) {
+			clampedSpeed = horizontalLinearSpeed;
 		}
-		if (iVar5 == 0x122) {
-			fVar7 = pJamGut->GetRunSpeed();
-			fVar6 = edFIntervalUnitDstLERP(fVar6, 0.0f, fVar7);
+
+		float newInputMagnitude;
+
+		if (curState == STATE_HERO_MOUNT_RUN_1) {
+			newInputMagnitude = edFIntervalUnitDstLERP(clampedSpeed, 0.0f, pJamGut->GetRunSpeed());
 			pBehaviour->field_0x68 = 4;
 		}
 		else {
-			fVar7 = pJamGut->GetWalkSpeed();
-			fVar6 = edFIntervalUnitDstLERP(fVar6, 0.0f, fVar7);
+			newInputMagnitude = edFIntervalUnitDstLERP(clampedSpeed, 0.0f, pJamGut->GetWalkSpeed());
 			pBehaviour->field_0x68 = 3;
 		}
 
 		pJamGut = pBehaviour->field_0x8c;
-		peVar2 = &pJamGut->dynamic.horizontalVelocityDirectionEuler;
-		if (peVar2 == (edF32VECTOR4*)0x0) {
+		pHorizontalVelocityDirectionEuler = &pJamGut->dynamic.horizontalVelocityDirectionEuler;
+		if (pHorizontalVelocityDirectionEuler == (edF32VECTOR4*)0x0) {
 			pBehaviour->inputAnalogDir.x = 0.0f;
 			pBehaviour->inputAnalogDir.y = 0.0f;
 			pBehaviour->inputAnalogDir.z = 0.0f;
@@ -587,11 +586,8 @@ void CActorHeroPrivate::StandOnJamGut(CBehaviourHeroRideJamGut* pBehaviour)
 			pBehaviour->inputMagnitude = 0.0f;
 		}
 		else {
-			pBehaviour->inputAnalogDir.x = peVar2->x;
-			pBehaviour->inputAnalogDir.y = pJamGut->dynamic.horizontalVelocityDirectionEuler.y;
-			pBehaviour->inputAnalogDir.z = pJamGut->dynamic.horizontalVelocityDirectionEuler.z;
-			pBehaviour->inputAnalogDir.w = pJamGut->dynamic.horizontalVelocityDirectionEuler.w;
-			pBehaviour->inputMagnitude = fVar6;
+			pBehaviour->inputAnalogDir = *pHorizontalVelocityDirectionEuler;
+			pBehaviour->inputMagnitude = newInputMagnitude;
 		}
 	}
 
