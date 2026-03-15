@@ -923,16 +923,18 @@ void CActorJamGut::ManagePaths()
 							this->pathTimeOnSegment = fVar13;
 						}
 						else {
-							if (pPathActor->curBehaviourId != 2) {
+							if (pPathActor->curBehaviourId != MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY) {
 								return;
 							}
 
 							this->pTrackedPathActor = pPathActor;
 							JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} tracking actor {:p}", iVar10, static_cast<void*>(pPathActor));
-							this->aPaths[iVar10].pathPlane.InitTargetPos(&this->pTrackedPathActor->currentLocation, &this->field_0x658);
+							this->aPaths[iVar10].pathPlane.InitTargetPos(&this->pTrackedPathActor->currentLocation, &this->pathPlaneOutData);
 						}
 
 						if (this->field_0x404 < this->dynamic.linearAcceleration) {
+							JAMGUT_LOG(LogLevel::Info, "CActorJamGut::ManagePaths: path {} activation clamping speed: dynamic.speed={:.2f} field_0x444={:.2f} -> runSpeed={:.2f}",
+								iVar10, this->dynamic.speed, this->field_0x444, this->field_0x404);
 							this->dynamic.speed = this->field_0x404;
 							this->field_0x444 = this->field_0x404;
 						}
@@ -952,9 +954,13 @@ void CActorJamGut::ManagePaths()
 						}
 					}
 					else {
-						pPathPlane->ExternComputeTargetPosWithPlane(&this->pTrackedPathActor->currentLocation, &this->field_0x658);
-						ComputeDistanceToPath(&this->pTrackedPathActor->currentLocation, pPathPlane, this->field_0x658.field_0x0, 0, &eStack48, &local_8);
-						peVar12 = this->field_0x658.field_0x0;
+						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: tracked actor pos=({:.4f},{:.4f},{:.4f})",
+							this->pTrackedPathActor->currentLocation.x,
+							this->pTrackedPathActor->currentLocation.y,
+							this->pTrackedPathActor->currentLocation.z);
+						pPathPlane->ExternComputeTargetPosWithPlane(&this->pTrackedPathActor->currentLocation, &this->pathPlaneOutData);
+						ComputeDistanceToPath(&this->pTrackedPathActor->currentLocation, pPathPlane, this->pathPlaneOutData.field_0x0, 0, &eStack48, &local_8);
+						peVar12 = this->pathPlaneOutData.field_0x0;
 						if (peVar12 == -1) {
 							peVar12 = 0;
 						}
@@ -972,6 +978,8 @@ void CActorJamGut::ManagePaths()
 						}
 
 						fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
+						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: tracked actor pathTimeOnSegment={:.4f} seg={} nextSeg={} t={:.4f}",
+							fVar13, pathreaderPosInfo.field_0x4, pathreaderPosInfo.field_0x0, pathreaderPosInfo.field_0x8);
 						this->pathTimeOnSegment = fVar13;
 					}
 
@@ -1049,26 +1057,34 @@ void CActorJamGut::ManagePaths()
 					fVar15 = fVar16 * 0.25f;
 					if ((fVar15 <= fVar14) || (fVar13 <= fVar16 - fVar15)) {
 						if ((fVar13 < fVar15) && (fVar16 - fVar15 < fVar14)) {
+							// JamGut near path start, target near path end: JamGut has wrapped ahead
 							fVar13 = fVar13 + fVar16;
 						}
 					}
 					else {
+						// Target near start (just wrapped), JamGut near end: target is conceptually past end
 						fVar14 = fVar14 + fVar16;
 					}
 
+					const float fJamGutTime = fVar13;
+					const float fTargetTime = fVar14;
 					if (fVar13 < fVar14) {
 						this->pathFollowCmdB = 1;
 						this->pathFollowCmdA = 0;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar14 - fVar13), 0.0f, 3.0f, 1.0f, 1.5f);
+						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: BEHIND target (jamgut={:.2f} target={:.2f}), intensity={:.2f} (boost)", fJamGutTime, fTargetTime, fVar13);
 					}
 					else {
 						this->pathFollowCmdB = 0;
 						this->pathFollowCmdA = 1;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar13 - fVar14), 0.0f, 3.0f, 1.0f, 0.5f);
+						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: AHEAD of target (jamgut={:.2f} target={:.2f}), intensity={:.2f} (slowdown)", fJamGutTime, fTargetTime, fVar13);
 					}
 
 					this->pathFollowDirection = local_50;
 					this->pathFollowIntensity = fVar13;
+					JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: targetSpeed={:.2f} (runSpeed={:.2f} * intensity={:.2f})",
+						this->field_0x404 * fVar13, this->field_0x404, fVar13);
 
 					return;
 				}
@@ -2441,6 +2457,7 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 	pCol = this->pCollisionData;
 	if ((this->flags_0x358 & 1) == 0) {
 		fVar7 = RiderGetIntensity();
+		JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::StateJamGutRun: intensity={:.2f}, targetSpeed={:.2f} (field_0x444 was {:.2f})", fVar7, this->field_0x404 * fVar7, this->field_0x444);
 		SV_UpdateValue(this->field_0x404 * fVar7, 20.0f, &this->field_0x444);
 		SV_UpdateValue(this->field_0x410, 80.0f, &this->field_0x448);
 	}
@@ -2448,6 +2465,7 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 		iVar3 = RiderCmdAttack();
 		if (iVar3 == 0) {
 			fVar7 = RiderGetIntensity();
+			JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::StateJamGutRun: [attack-flag] intensity={:.2f}, targetSpeed={:.2f} (field_0x444 was {:.2f})", fVar7, this->field_0x404 * fVar7, this->field_0x444);
 			SV_UpdateValue(this->field_0x404 * fVar7, 20.0f, &this->field_0x444);
 			this->field_0x3a8 = GetTimer()->scaledTotalTime;
 		}
@@ -2490,6 +2508,7 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 
 		if (bVar1) {
 			fVar7 = this->field_0x41c;
+			JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::StateJamGutRun: in path zone, UpdateFunc turnRate={:.2f} (vs default 50.0)", fVar7);
 			cVar2 = UpdateFunc(fVar7);
 		}
 		else {
@@ -3209,7 +3228,7 @@ int CActorJamGut::RiderCmdRun()
 		}
 	}
 	else {
-		bResult = this->pathFollowCmdA;
+		bResult = this->pathFollowCmdB;
 	}
 
 	return bResult;
@@ -3970,7 +3989,7 @@ int CBehaviourJamGutRidden::InterpretMessage(CActor* pSender, int msg, void* pMs
 				}
 				else {
 					pJamGut->pTrackedPathActor = (CActor*)pJamGut->pRider;
-					pJamGut->aPaths[pJamGut->activePathIndex].pathPlane.InitTargetPos(&pJamGut->pTrackedPathActor->currentLocation, &pJamGut->field_0x658);
+					pJamGut->aPaths[pJamGut->activePathIndex].pathPlane.InitTargetPos(&pJamGut->pTrackedPathActor->currentLocation, &pJamGut->pathPlaneOutData);
 				}
 
 				return 1;

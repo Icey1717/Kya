@@ -109,9 +109,9 @@ namespace Debug::Actor::JamGut
 			if (pJamGutActor->pTrackedPathActor != nullptr) {
 				ImGui::Separator();
 				ImGui::Text("Tracked Actor Path Plane Out:");
-				ImGui::Text("  Index: %d", pJamGutActor->field_0x658.field_0x0);
-				ImGui::Text("  Dist to Current Plane: %.2f", pJamGutActor->field_0x658.field_0x4);
-				ImGui::Text("  Dist to Next Plane: %.2f", pJamGutActor->field_0x658.field_0x8);
+				ImGui::Text("  Index: %d", pJamGutActor->pathPlaneOutData.field_0x0);
+				ImGui::Text("  Dist to Current Plane: %.2f", pJamGutActor->pathPlaneOutData.field_0x4);
+				ImGui::Text("  Dist to Next Plane: %.2f", pJamGutActor->pathPlaneOutData.field_0x8);
 			}
 
 			ImGui::Separator();

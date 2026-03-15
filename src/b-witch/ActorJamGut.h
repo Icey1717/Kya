@@ -307,7 +307,7 @@ public:
 	float field_0x64c;
 	float pathTimeOnSegment;
 	CActor* pTrackedPathActor;
-	CPathPlaneOutData field_0x658;
+	CPathPlaneOutData pathPlaneOutData;
 
 	int nbPaths;
 	S_JMG_PATH* aPaths;
