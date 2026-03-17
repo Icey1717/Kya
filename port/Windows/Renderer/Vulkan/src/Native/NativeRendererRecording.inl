@@ -109,6 +109,18 @@ namespace Renderer
 			gAnimationBuffer.Map(GetCurrentFrame());
 		}
 
+		static const char* GetClearModeName(EClearMode clearMode)
+		{
+			switch (clearMode)
+			{
+			case EClearMode::None:       return "None";
+			case EClearMode::Depth:      return "Depth";
+			case EClearMode::ColorDepth: return "Color+Depth";
+			case EClearMode::Color:      return "Color";
+			default:                     return "Unknown";
+			}
+		}
+
 		static void RecordBeginRenderPass(const RenderPassKey& key)
 		{
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
@@ -128,7 +140,7 @@ namespace Renderer
 			renderPassInfo.clearValueCount = clearColors.size();
 			renderPassInfo.pClearValues = clearColors.data();
 
-			Renderer::Debug::BeginLabel(cmd, "Begin Pass 0x%x", key.GetKey());
+			Renderer::Debug::BeginLabel(cmd, "Render Pass [clear: %s]", GetClearModeName(key.clearMode));
 
 			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 

@@ -149,10 +149,17 @@ namespace Renderer
 			DynamicUniformBuffer<T> gUniformBuffer;
 		};
 
+		// Uniquely identifies a Vulkan render pass configuration.
+		// Used as the key into gRenderPass (a map of pre-built RenderStages). All valid combinations are
+		// created up-front at setup time, so a lookup always succeeds.
+		// When the key changes between draws (bRenderPassDirty), the recorder ends the active pass and
+		// begins a new one with the appropriate VkRenderPass for the new attachment load behaviour.
 		struct RenderPassKey
 		{
+			// Default key used when no game draws were submitted this frame — clears both color and depth.
 			static RenderPassKey Empty;
 
+			// Packs all key fields into a single uint32 suitable for hashing and equality comparisons.
 			uint32_t GetKey() const
 			{
 				union
@@ -161,7 +168,7 @@ namespace Renderer
 
 					struct
 					{
-						uint32_t clearMode : 2; // 0: Color, 1: Depth, 2: Color + Depth
+						uint32_t clearMode : 2; // maps directly to EClearMode (None=0, Depth=1, ColorDepth=2, Color=3)
 					};
 				} key;
 
@@ -178,11 +185,13 @@ namespace Renderer
 				return !(*this == other);
 			}
 
+			// Resets to EClearMode::None (continuation pass — no clearing).
 			void Reset()
 			{
 				clearMode = EClearMode::None;
 			}
 
+			// Determines the VkAttachmentLoadOp for color and depth at pass begin.
 			EClearMode clearMode = EClearMode::None;
 		};
 

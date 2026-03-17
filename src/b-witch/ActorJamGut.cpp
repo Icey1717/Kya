@@ -780,8 +780,8 @@ void CActorJamGut::ClearLocalData()
 	this->activePathIndex = -1;
 	this->field_0x64c = 0.0f;
 	this->pathFollowIntensity = 1.0f;
-	this->pathFollowCmdA = 0;
-	this->pathFollowCmdB = 1;
+	this->pathFollowCmdWalk = 0;
+	this->pathFollowCmdRun = 1;
 	this->pathTimeOnSegment = 0.0f;
 	this->pathFollowDirection = this->rotationQuat;
 	this->pTrackedPathActor = (CActor*)0x0;
@@ -1069,14 +1069,14 @@ void CActorJamGut::ManagePaths()
 					const float fJamGutTime = fVar13;
 					const float fTargetTime = fVar14;
 					if (fVar13 < fVar14) {
-						this->pathFollowCmdB = 1;
-						this->pathFollowCmdA = 0;
+						this->pathFollowCmdRun = 1;
+						this->pathFollowCmdWalk = 0;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar14 - fVar13), 0.0f, 3.0f, 1.0f, 1.5f);
 						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: BEHIND target (jamgut={:.2f} target={:.2f}), intensity={:.2f} (boost)", fJamGutTime, fTargetTime, fVar13);
 					}
 					else {
-						this->pathFollowCmdB = 0;
-						this->pathFollowCmdA = 1;
+						this->pathFollowCmdRun = 0;
+						this->pathFollowCmdWalk = 1;
 						fVar13 = edFIntervalLERP(this->field_0x404 * (fVar13 - fVar14), 0.0f, 3.0f, 1.0f, 0.5f);
 						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: AHEAD of target (jamgut={:.2f} target={:.2f}), intensity={:.2f} (slowdown)", fJamGutTime, fTargetTime, fVar13);
 					}
@@ -3184,7 +3184,7 @@ int CActorJamGut::RiderCmdStand()
 		}
 	}
 	else {
-		bResult = this->pathFollowCmdA;
+		bResult = this->pathFollowCmdWalk;
 	}
 
 	return bResult;
@@ -3206,7 +3206,7 @@ int CActorJamGut::RiderCmdWalk()
 		}
 	}
 	else {
-		bResult = this->pathFollowCmdA;
+		bResult = this->pathFollowCmdWalk;
 	}
 
 	return bResult;
@@ -3228,7 +3228,7 @@ int CActorJamGut::RiderCmdRun()
 		}
 	}
 	else {
-		bResult = this->pathFollowCmdB;
+		bResult = this->pathFollowCmdRun;
 	}
 
 	return bResult;

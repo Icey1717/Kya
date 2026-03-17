@@ -302,8 +302,8 @@ public:
 	int activePathIndex;
 	edF32VECTOR4 pathFollowDirection;
 	float pathFollowIntensity;
-	int pathFollowCmdA;
-	int pathFollowCmdB;
+	int pathFollowCmdWalk;
+	int pathFollowCmdRun;
 	float field_0x64c;
 	float pathTimeOnSegment;
 	CActor* pTrackedPathActor;

@@ -51,6 +51,11 @@ const std::vector<const char*> deviceExtensions = {
 	VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME,
 };
 
+// Optional extensions enabled when supported (e.g. for OBS Game Capture D3D11 interop)
+const std::vector<const char*> optionalDeviceExtensions = {
+	VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
+};
+
 const std::vector<const char*> instanceExtensions = {
 	VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, 
 };
@@ -573,8 +578,26 @@ private:
 
 		createInfo.pNext = &deviceFeatures;
 
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		// Collect optional extensions that are actually supported
+		std::vector<const char*> enabledExtensions = deviceExtensions;
+		{
+			uint32_t extensionCount;
+			vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+			std::vector<VkExtensionProperties> available(extensionCount);
+			vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, available.data());
+
+			for (const char* optExt : optionalDeviceExtensions) {
+				for (const auto& ext : available) {
+					if (strcmp(ext.extensionName, optExt) == 0) {
+						enabledExtensions.push_back(optExt);
+						break;
+					}
+				}
+			}
+		}
+
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+		createInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
 		if (enableValidationLayers) {
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -613,7 +636,7 @@ private:
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };

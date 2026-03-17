@@ -287,12 +287,15 @@ namespace Renderer
 
 		void Setup();
 
+		// Controls which framebuffer attachments are cleared at the start of a render pass.
+		// Each value maps to a distinct pre-built VkRenderPass (via RenderPassKey) created at setup time.
+		// Changing to any non-None mode marks the pass as dirty, ending the current pass and beginning a new one.
 		enum class EClearMode
 		{
-			None,
-			Depth,
-			ColorDepth,
-			Color,
+			None,       // Load both color and depth — continuation pass, no clearing.
+			Depth,      // Clear depth only, load existing color (e.g. re-render with fresh Z).
+			ColorDepth, // Clear both color and depth — used for full-frame starts. Also the Empty/fallback key.
+			Color,      // Clear color only, load existing depth.
 		};
 
 		void UpdateRenderPassKey(EClearMode clearMode);

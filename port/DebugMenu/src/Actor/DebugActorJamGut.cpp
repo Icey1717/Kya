@@ -100,8 +100,8 @@ namespace Debug::Actor::JamGut
 			ImGui::Text("Active Path Index: %d", pJamGutActor->activePathIndex);
 			ImGui::Text("Path Follow Direction: %s", GetVector4String(pJamGutActor->pathFollowDirection).c_str());
 			ImGui::Text("Path Follow Intensity: %.2f", pJamGutActor->pathFollowIntensity);
-			ImGui::Text("Path Follow Cmd A: %d", pJamGutActor->pathFollowCmdA);
-			ImGui::Text("Path Follow Cmd B: %d", pJamGutActor->pathFollowCmdB);
+			ImGui::Text("Path Follow Cmd Walk: %d", pJamGutActor->pathFollowCmdWalk);
+			ImGui::Text("Path Follow Cmd Run: %d", pJamGutActor->pathFollowCmdRun);
 			ImGui::Text("Field 0x64c: %.2f", pJamGutActor->field_0x64c);
 			ImGui::Text("Time On Segment: %.2f", pJamGutActor->pathTimeOnSegment);
 			ImGui::Text("Tracked Path Actor: %p", pJamGutActor->pTrackedPathActor);
