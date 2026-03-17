@@ -294,6 +294,7 @@ namespace Renderer
 
 			gNativeVertexBuffer.Init(0x100000, 0x100000);
 			DebugShapes::Setup();
+			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
 
 			gModelBuffer.Init();
 			gAnimationBuffer.Init(gMaxAnimationMatrices);
@@ -340,6 +341,8 @@ namespace Renderer
 
 			vkDeviceWaitIdle(GetDevice());
 
+			DebugShapes::DestroyDedicatedPass();
+
 			vkDestroyFramebuffer(GetDevice(), gFrameBuffer.framebuffer, GetAllocator());
 			vkDestroyImageView(GetDevice(), gFrameBuffer.colorImageView, GetAllocator());
 			vkDestroyImage(GetDevice(), gFrameBuffer.colorImage, GetAllocator());
@@ -353,6 +356,8 @@ namespace Renderer
 			gHeight = height;
 
 			CreateFramebuffer();
+
+			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
 
 			PostProcessing::Resize();
 		}

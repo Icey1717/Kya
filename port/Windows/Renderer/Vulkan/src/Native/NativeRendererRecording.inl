@@ -156,6 +156,9 @@ namespace Renderer
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 			vkCmdEndRenderPass(cmd);
 
+			// Save depth from the first render pass before any subsequent pass can clear it.
+			DebugShapes::SaveDepth(cmd, gFrameBuffer.depthImage);
+
 			Renderer::Debug::EndLabel(cmd);
 			gActiveRenderPassKey.Reset();
 			gHasActiveRenderPass = false;
@@ -366,12 +369,11 @@ namespace Renderer
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 			Debug::Reset(cmd);
-			if (gHasActiveRenderPass) {
-				const RenderStage& stage = gRenderPass[gActiveRenderPassKey];
-				DebugShapes::Record(cmd, stage.GetDebugLinePipeline());
-			}
-
 			RecordEndRenderPass();
+
+			// All game passes are done and all debug shapes have been submitted; record the
+			// dedicated debug pass using the depth saved from the first render pass.
+			DebugShapes::RecordDedicatedPass(cmd);
 		}
 
 		class RenderThread

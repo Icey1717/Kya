@@ -30,6 +30,13 @@ namespace Renderer
 
 			void CreatePipeline(const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
 			void Record(const VkCommandBuffer& cmd, const Renderer::Pipeline& pipeline);
+
+			// Dedicated end-of-frame debug pass that depth-tests against a saved copy of
+			// the first render pass depth buffer, bypassing any subsequent depth clears.
+			void SetupDedicatedPass(VkImageView colorImageView, int width, int height);
+			void DestroyDedicatedPass();
+			void SaveDepth(VkCommandBuffer cmd, VkImage srcDepthImage);
+			void RecordDedicatedPass(VkCommandBuffer cmd);
 		}
 	}
 }

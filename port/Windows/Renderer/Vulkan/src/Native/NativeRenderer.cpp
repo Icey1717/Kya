@@ -78,8 +78,8 @@ namespace Renderer
 				return currentInstanceIndex;
 			}
 
-			template<typename T>
-			bool MatchesLastInstance(const T& data) const
+			template<typename InstanceDataType>
+			bool MatchesLastInstance(const InstanceDataType& data) const
 			{
 				if (currentInstanceIndex == 0) {
 					return false;
@@ -195,16 +195,25 @@ namespace Renderer
 			EClearMode clearMode = EClearMode::None;
 		};
 
-		// Specialize std::hash for RenderPassKey
-		template <>
-		struct std::hash<RenderPassKey>
-		{
-			std::size_t operator()(const RenderPassKey& k) const noexcept
-			{
-				return std::hash<uint32_t>{}(k.GetKey());
-			}
-		};
+	} // Native
+} // Renderer
 
+// Specialised in namespace std, outside Renderer::Native, before gRenderPass is
+// instantiated — placing it inside the Renderer::Native namespace would trigger
+// a Clang/MSVC extension warning (template specialization not in enclosing namespace).
+template <>
+struct std::hash<Renderer::Native::RenderPassKey>
+{
+	std::size_t operator()(const Renderer::Native::RenderPassKey& k) const noexcept
+	{
+		return std::hash<uint32_t>{}(k.GetKey());
+	}
+};
+
+namespace Renderer
+{
+	namespace Native
+	{
 		struct PerDrawData
 		{
 			glm::mat4 projXView;
@@ -329,6 +338,7 @@ namespace Renderer
 		bool gRenderPassDirty = true;
 		RenderPassKey gActiveRenderPassKey;
 		bool gHasActiveRenderPass = false;
+		bool gHasSubmittedDebugLineDraw = false;
 
 		RenderPassKey RenderPassKey::Empty = RenderPassKey{ EClearMode::ColorDepth };
 
