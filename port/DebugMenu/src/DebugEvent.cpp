@@ -16,6 +16,101 @@ extern uint edEventNbChunks;
 
 void EventCallbackSendMessage(edCEventMessage* pEventMessage);
 
+// Returns a human-readable name for one of the 4 per-collider send-info slots.
+// Slots 0 and 2 fire while the actor is INSIDE the zone; slots 1 and 3 fire while OUTSIDE.
+// The one-shot bit (messageFlags[slot] & 0x02) distinguishes a transition ("On Enter/Exit")
+// from a sustained trigger ("While Inside/Outside").
+static std::string GetColliderSlotLabel(const _ed_event_collider_test* pCollider, int slotId)
+{
+	bool isInsideSlot = (slotId == 0 || slotId == 2);
+	bool isEnabled    = (pCollider->messageFlags[slotId] & 0x80) != 0;
+	bool isOneShot    = (pCollider->messageFlags[slotId] & 0x02) != 0;
+
+	const char* base;
+	if (isInsideSlot)
+		base = isOneShot ? "On Enter"      : "While Inside";
+	else
+		base = isOneShot ? "On Exit"       : "While Outside";
+
+	std::string label = base;
+	if (!isEnabled) label += " (disabled)";
+	label += " [" + std::to_string(slotId) + "]";
+	return label;
+}
+
+// Returns the ACTOR_MESSAGE name for a known message ID, or nullptr if unknown.
+static const char* GetActorMessageName(int msgId)
+{
+	switch (msgId) {
+	case 0x02: return "KICKED";
+	case 0x07: return "GET_VISUAL_DETECTION_POINT";
+	case 0x0c: return "GET_RUN_SPEED";
+	case 0x0d: return "TIED";
+	case 0x12: return "GET_ACTION";
+	case 0x14: return "TRAP_STRUGGLE";
+	case 0x16: return "IN_WIND_AREA";
+	case 0x17: return "ENTER_WIND";
+	case 0x18: return "LEAVE_WIND";
+	case 0x1b: return "FIGHT_ACTION_SUCCESS";
+	case 0x1d: return "ENTER_TRAMPO";
+	case 0x1e: return "IMPULSE";
+	case 0x23: return "ENTER_SHOP";
+	case 0x24: return "LEAVE_SHOP";
+	case 0x25: return "DISABLE_INPUT";
+	case 0x26: return "ENABLE_INPUT";
+	case 0x2c: return "SPAWN";
+	case 0x2f: return "MAGIC_DEACTIVATE";
+	case 0x30: return "MAGIC_ACTIVATE";
+	case 0x31: return "TRAP_CAUGHT";
+	case 0x35: return "SOCCER_START";
+	case 0x49: return "REQUEST_CAMERA_TARGET";
+	case 0x4d: return "GET_BONE_ID";
+	case 0x4e: return "NATIV_CMD";
+	case 0x62: return "BOOMY_CHANGED";
+	case 0x6b: return "FIGHT_RING_CHANGED";
+	case 0x79: return "RECEPTACLE_CHANGED";
+	case 0x7c: return "CINEMATIC_INSTALL";
+	case 0x7d: return "NEW_MAP_GAINED";
+	case 0x85: return "NEW_LIFE_GAUGE";
+	default:   return nullptr;
+	}
+}
+
+// Builds a short display label for an event slot in the "Select Event" combo.
+// Format: "[idx] ActorName | N coll | ACTIVE"
+static std::string BuildEventLabel(ed_event_chunk* pChunk, int eventIndex)
+{
+	auto* pEvent = LOAD_POINTER_CAST(ed_event*, pChunk->aEvents[eventIndex]);
+
+	const char* actorName = "?";
+	bool bActive = false;
+
+	if (pEvent->nbColliders > 0) {
+		auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+
+		auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+		if (pActorRef) {
+			auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+			if (pActor) actorName = pActor->name;
+		}
+
+		auto* pColliderScan = pCollider;
+		for (uint j = 0; j < pEvent->nbColliders; j++) {
+			if (pColliderScan->flags & 0x1) { // bit 0 = actor is inside zone
+				bActive = true;
+				break;
+			}
+			pColliderScan++;
+		}
+	}
+
+	std::stringstream ss;
+	ss << "[0x" << std::hex << eventIndex << "] " << actorName
+	   << " | " << pEvent->nbColliders << " coll";
+	if (bActive) ss << " | ACTIVE";
+	return ss.str();
+}
+
 namespace Debug {
 	namespace Event {
 		static Setting<bool> gShowEventsOverlay("Show Events Overlay", true);
@@ -174,18 +269,20 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		bTrackingEvents = true;
 	}
 
-	if (ImGui::BeginCombo("Select Chunk", std::to_string(selectedChunk).c_str())) {
-		for (int i = 0; i < edEventNbChunks; i++) {
+	auto BuildChunkLabel = [](int i) -> std::string {
+		auto* pC = pedEventChunks[i];
+		if (!pC) return "Chunk " + std::to_string(i) + " (Invalid)";
+		return "Chunk " + std::to_string(i) + " (" + std::to_string(pC->nbEvents) + " events)";
+	};
+
+	if (ImGui::BeginCombo("Select Chunk", BuildChunkLabel(selectedChunk).c_str())) {
+		for (int i = 0; i < (int)edEventNbChunks; i++) {
 			bool isSelected = selectedChunk == i;
-			if (ImGui::Selectable((std::to_string(i) + (pedEventChunks[i] ? "" : " (Invalid)")).c_str(), isSelected)) {
+			if (ImGui::Selectable(BuildChunkLabel(i).c_str(), isSelected)) {
 				selectedChunk = i;
 			}
-
-			if (isSelected) {
-				ImGui::SetItemDefaultFocus();
-			}
+			if (isSelected) ImGui::SetItemDefaultFocus();
 		}
-
 		ImGui::EndCombo();
 	}
 
@@ -236,18 +333,32 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 			ImGui::Spacing();
 
-			if (ImGui::BeginCombo("Select Event", std::to_string(gSelectedEvent).c_str())) {
-				for (int i = 0; i < pChunk->nbEvents; i++) {
+			static ImGuiTextFilter gEventFilter;
+			gEventFilter.Draw("Filter Events", -1);
+
+			std::string eventPreview = (gSelectedEvent < (int)pChunk->nbEvents)
+				? BuildEventLabel(pChunk, gSelectedEvent)
+				: "(none)";
+
+			if (ImGui::BeginCombo("Select Event", eventPreview.c_str())) {
+				for (int i = 0; i < (int)pChunk->nbEvents; i++) {
+					std::string label = BuildEventLabel(pChunk, i);
+					if (!gEventFilter.PassFilter(label.c_str())) continue;
+
 					bool isSelected = gSelectedEvent == i;
-					if (ImGui::Selectable(std::to_string(i).c_str(), isSelected)) {
+					bool bActive = label.find("ACTIVE") != std::string::npos;
+
+					if (bActive)
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f));
+
+					if (ImGui::Selectable(label.c_str(), isSelected))
 						gSelectedEvent = i;
-					}
 
-					if (isSelected) {
-						ImGui::SetItemDefaultFocus();
-					}
+					if (bActive)
+						ImGui::PopStyleColor();
+
+					if (isSelected) ImGui::SetItemDefaultFocus();
 				}
-
 				ImGui::EndCombo();
 			}
 
@@ -275,16 +386,26 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
-				for (int i = 0; i < pEvent->nbColliders; i++) {
-					ImGui::Text("Collider %d", i);
+				for (int i = 0; i < (int)pEvent->nbColliders; i++) {
+					bool bColliderActive = (pCollider->flags & 0x1) != 0;
+
+					if (bColliderActive)
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f));
+					ImGui::Text("Collider %d%s", i, bColliderActive ? " [ACTIVE]" : "");
+					if (bColliderActive)
+						ImGui::PopStyleColor();
+
 					ImGui::Text("worldLocation: %s", pCollider->worldLocation.ToString().c_str());
 
 					ImGui::Spacing();
 
-					ImGui::Text("messageFlags[0]: %d", pCollider->messageFlags[0]);
-					ImGui::Text("messageFlags[1]: %d", pCollider->messageFlags[1]);
-					ImGui::Text("messageFlags[2]: %d", pCollider->messageFlags[2]);
-					ImGui::Text("messageFlags[3]: %d", pCollider->messageFlags[3]);
+					// Message flags: bit 7 = slot enabled, bit 1 = one-shot
+					for (int s = 0; s < 4; s++) {
+						byte mf = pCollider->messageFlags[s];
+						ImGui::Text("  messageFlags[%d]: 0x%02x  (%s%s)", s, mf,
+							(mf & 0x80) ? "enabled" : "disabled",
+							(mf & 0x02) ? ", one-shot" : "");
+					}
 
 					ImGui::Spacing();
 
@@ -305,52 +426,67 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 					ImGui::Spacing();
 
-					ImGui::Text("aSendInfo - 0: %d", pCollider->aSendInfo[0]);
-					ImGui::Text("aSendInfo - 1: %d", pCollider->aSendInfo[1]);
-					ImGui::Text("aSendInfo - 2: %d", pCollider->aSendInfo[2]);
-					ImGui::Text("aSendInfo - 3: %d", pCollider->aSendInfo[3]);
-
 					for (int j = 0; j < 4; j++) {
-						ImGui::Text("aSendInfo - %d: %d", j, pCollider->aSendInfo[j]);
-
 						auto* pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pCollider->aSendInfo[j]);
 
-						if (pSendInfo && ImGui::CollapsingHeader(std::to_string(j).c_str())) {
-							if (pSendInfo->nbActorIndexes == 0) {
-								if (pActorRef) {
-									auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
-									ImGui::Text("(TA) %s", pActor->name);
+						// Unique ID required because CollapsingHeader uses the label as ID
+						std::string slotLabel = GetColliderSlotLabel(pCollider, j)
+							+ "##col" + std::to_string(i) + "_slot" + std::to_string(j);
+
+						if (pSendInfo) {
+							if (ImGui::CollapsingHeader(slotLabel.c_str())) {
+								if (pSendInfo->nbActorIndexes == 0) {
+									if (pActorRef) {
+										auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+										ImGui::Text("Target Actor (self): %s", pActor->name);
+									}
 								}
-							}
-							else {
-								ImGui::Text("nbActorIndexes: %d", pSendInfo->nbActorIndexes);
+								else {
+									ImGui::Text("nbActorIndexes: %d", pSendInfo->nbActorIndexes);
 
-								int* pIndex = reinterpret_cast<int*>(pSendInfo + 1);
+									int* pIndex = reinterpret_cast<int*>(pSendInfo + 1);
 
-								for (int k = 0; k < pSendInfo->nbActorIndexes; k++) {
-									if (*pIndex == -1) {
-										if (pActorRef) {
-											auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
-											ImGui::Text("(TA) %s", pActor->name);
+									for (int k = 0; k < pSendInfo->nbActorIndexes; k++) {
+										if (*pIndex == -1) {
+											if (pActorRef) {
+												auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+												ImGui::Text("Target Actor (self): %s", pActor->name);
+											}
 										}
-									}
-									else {
-										CActor* pActor = CScene::ptable.g_ActorManager_004516a4->aActors[*pIndex];
-										ImGui::Text("Actor Index %d: %s", k, pActor->name);
-									}
+										else {
+											CActor* pActor = CScene::ptable.g_ActorManager_004516a4->aActors[*pIndex];
+											ImGui::Text("[%d] %s", k, pActor->name);
+										}
 
-									pIndex++;
+										pIndex++;
+									}
+								}
+
+								// Show the message IDs that will be sent
+								int* pIndex = reinterpret_cast<int*>(pSendInfo + 1);
+								int* pReceiveData = pIndex + pSendInfo->nbActorIndexes;
+								int nbMsgs = (pSendInfo->field_0x0 - 1) - pSendInfo->nbActorIndexes;
+								for (int m = 0; m < nbMsgs; m++) {
+									int msgId = pReceiveData[m];
+									const char* msgName = GetActorMessageName(msgId);
+									if (msgName)
+										ImGui::Text("  msg: %s (0x%x)", msgName, msgId);
+									else
+										ImGui::Text("  msg: 0x%x", msgId);
+								}
+
+								if (ImGui::Button(("Activate##" + std::to_string(i) + "_" + std::to_string(j)).c_str())) {
+									edCEventMessage msg;
+									msg.colliderId = j;
+									msg.pEventChunk = pChunk;
+									msg.pEventCollider = pCollider;
+
+									EventCallbackSendMessage(&msg);
 								}
 							}
-
-							if (ImGui::Button("Activate")) {
-								edCEventMessage msg;
-								msg.colliderId = j;
-								msg.pEventChunk = pChunk;
-								msg.pEventCollider = pCollider;
-
-								EventCallbackSendMessage(&msg);
-							}
+						}
+						else {
+							ImGui::TextDisabled("%s (no targets)", GetColliderSlotLabel(pCollider, j).c_str());
 						}
 					}
 
@@ -378,19 +514,50 @@ void Debug::Event::ShowMenu(bool* bOpen)
 	if (bTrackingEvents) {
 		ImGui::Begin("Event Tracking", &bTrackingEvents, ImGuiWindowFlags_AlwaysAutoResize);
 
+		if (ImGui::Button("Clear")) gEventRecords.clear();
+
+		ImGui::Separator();
+
 		// List the events that have been triggered
 		for (auto& record : gEventRecords) {
+			// Build a readable header: slot name + event index + collider index + actor name (if resolvable)
+			const char* slotName = "?";
+			switch (record.first.colliderId) {
+			case 0: slotName = "On Enter";       break;
+			case 1: slotName = "On Exit";         break;
+			case 2: slotName = "While Inside";    break;
+			case 3: slotName = "While Outside";   break;
+			}
+
+			// Try to resolve actor name from the active chunk
+			const char* actorName = "?";
+			auto* pEventChunk = pedEventChunks[selectedChunk];
+			if (pEventChunk && record.first.eventIndex < (int)pEventChunk->nbEvents) {
+				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pEventChunk->aEvents[record.first.eventIndex]);
+				if (record.first.colliderIndex < (int)pEvent->nbColliders) {
+					auto* pCol = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1) + record.first.colliderIndex;
+					auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCol->pActorRef);
+					if (pActorRef) {
+						auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+						if (pActor) actorName = pActor->name;
+					}
+				}
+			}
+
 			std::stringstream ss;
-			ss << "Event: 0x" << std::hex << record.first.colliderId << " 0x" << record.first.eventIndex << " 0x" << record.first.colliderIndex;
+			ss << slotName << " | evt " << record.first.eventIndex
+			   << " coll " << record.first.colliderIndex
+			   << " | " << actorName
+			   << " (" << record.second.triggers.size() << "x)";
 
 			if (ImGui::CollapsingHeader(ss.str().c_str())) {
-				ImGui::Text("Triggered %d times", record.second.triggers.size());
-				
+				ImGui::Text("Triggered %d time(s)", (int)record.second.triggers.size());
+
 				static int selectedTrigger = 0;
 
 				// Add selector for the trigger with a combo box
 				if (ImGui::BeginCombo("Select Trigger", std::to_string(selectedTrigger).c_str())) {
-					for (int i = 0; i < record.second.triggers.size(); i++) {
+					for (int i = 0; i < (int)record.second.triggers.size(); i++) {
 						if (ImGui::Selectable(std::to_string(i).c_str())) {
 							selectedTrigger = i;
 						}
@@ -399,12 +566,19 @@ void Debug::Event::ShowMenu(bool* bOpen)
 					ImGui::EndCombo();
 				}
 
-				selectedTrigger = std::clamp<int>(selectedTrigger, 0, record.second.triggers.size() - 1);
+				selectedTrigger = std::clamp<int>(selectedTrigger, 0, (int)record.second.triggers.size() - 1);
 
-				if (selectedTrigger < record.second.triggers.size()) {
+				if (selectedTrigger < (int)record.second.triggers.size()) {
 					auto& trigger = record.second.triggers[selectedTrigger];
 					for (auto* pActor : trigger.receivers) {
 						ImGui::Text("Receiver: %s", pActor->name);
+					}
+				}
+
+				// Jump to this event in the inspector
+				if (pEventChunk && record.first.eventIndex < (int)pEventChunk->nbEvents) {
+					if (ImGui::Button("Select in Inspector")) {
+						gSelectedEvent = record.first.eventIndex;
 					}
 				}
 			}
