@@ -71,64 +71,31 @@ namespace Renderer
 		{
 			RenderStage& stage = gRenderPass[key];
 
-			VkAttachmentDescription colorAttachment{};
-			colorAttachment.format = GetSwapchainImageFormat();
-			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colorAttachment.loadOp = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Depth) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAttachment.initialLayout = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Depth) ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+			const bool bClearColor = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Depth);
+			const bool bClearDepth = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Color);
 
-			VkAttachmentReference colorAttachmentRef{};
-			colorAttachmentRef.attachment = 0;
-			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			const Renderer::AttachmentInfo colorInfo{
+				GetSwapchainImageFormat(),
+				bClearColor ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+				bClearColor ? VK_IMAGE_LAYOUT_UNDEFINED   : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+				VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+			};
 
-			VkAttachmentDescription depthAttachment{};
-			depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			depthAttachment.loadOp = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Color) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depthAttachment.initialLayout = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Color) ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
-			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+			const Renderer::AttachmentInfo depthInfo{
+				VK_FORMAT_D32_SFLOAT_S8_UINT,
+				bClearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+				bClearDepth ? VK_IMAGE_LAYOUT_UNDEFINED   : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+				VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+			};
 
-			VkAttachmentReference depthAttachmentRef{};
-			depthAttachmentRef.attachment = 1;
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			const VkSubpassDependency dependency{
+				VK_SUBPASS_EXTERNAL, 0,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				0
+			};
 
-			VkSubpassDescription subpass{};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &colorAttachmentRef;
-			subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-			VkSubpassDependency dependency{};
-			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.srcAccessMask = 0;
-			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-			std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-			VkRenderPassCreateInfo renderPassCreateInfo{};
-			renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassCreateInfo.attachmentCount = attachments.size();
-			renderPassCreateInfo.pAttachments = attachments.data();
-			renderPassCreateInfo.subpassCount = 1;
-			renderPassCreateInfo.pSubpasses = &subpass;
-			renderPassCreateInfo.dependencyCount = 1;
-			renderPassCreateInfo.pDependencies = &dependency;
-
-			if (vkCreateRenderPass(GetDevice(), &renderPassCreateInfo, GetAllocator(), &stage.gRenderPass) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create render pass!");
-			}
-
-			SetObjectName(reinterpret_cast<uint64_t>(stage.gRenderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
+			stage.gRenderPass = Renderer::CreateRenderPass2D({ &colorInfo, 1 }, depthInfo, { &dependency, 1 }, name);
 
 			stage.CreatePipeline();
 

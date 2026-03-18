@@ -3,8 +3,68 @@
 #include "VulkanBuffer.h"
 #include "VulkanRenderer.h"
 
-#include <vector>
 #include <stdexcept>
+#include <vector>
+
+// ---------------------------------------------------------------------------
+// Layout access info — used by the table-driven TransitionImageLayout.
+// ---------------------------------------------------------------------------
+namespace
+{
+	struct LayoutAccessInfo
+	{
+		VkAccessFlags        accessMask;
+		VkPipelineStageFlags stageFlags;
+	};
+
+	static LayoutAccessInfo GetLayoutAccessInfo(VkImageLayout layout)
+	{
+		switch (layout)
+		{
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+			return { 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			return { VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT };
+
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			return { VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT };
+
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			return { VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT };
+
+		// Vulkan 1.3 / VK_KHR_synchronization2 unified read-only layout —
+		// covers both shader reads and depth-stencil read access.
+		case VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL:
+			return {
+				VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+				VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+			};
+
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			return { VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			return { VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT };
+
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+			return {
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT  |
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+			};
+
+		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+			return { VK_ACCESS_MEMORY_READ_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT };
+
+		default:
+			throw std::invalid_argument("unsupported image layout in TransitionImageLayout!");
+		}
+	}
+} // anonymous namespace
 
 void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImageAspectFlags aspect, VkImageView& imageView)
 {
@@ -204,78 +264,13 @@ void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageL
 	VkPipelineStageFlags sourceStage;
 	VkPipelineStageFlags destinationStage;
 
-	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	const auto src = GetLayoutAccessInfo(oldLayout);
+	const auto dst = GetLayoutAccessInfo(newLayout);
 
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-	{
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL)
-	{
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else {
-		throw std::invalid_argument("unsupported layout transition!");
-	}
+	barrier.srcAccessMask = src.accessMask;
+	barrier.dstAccessMask = dst.accessMask;
+	sourceStage           = src.stageFlags;
+	destinationStage      = dst.stageFlags;
 
 	vkCmdPipelineBarrier(
 		commandBuffer,
@@ -289,6 +284,54 @@ void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageL
 	if (bEndCommands) {
 		EndSingleTimeCommands(commandBuffer);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// OwnedImage
+// ---------------------------------------------------------------------------
+
+void OwnedImage::Destroy()
+{
+	vkDestroyImageView(GetDevice(), view,   GetAllocator()); view   = VK_NULL_HANDLE;
+	vkDestroyImage    (GetDevice(), image,  GetAllocator()); image  = VK_NULL_HANDLE;
+	vkFreeMemory      (GetDevice(), memory, GetAllocator()); memory = VK_NULL_HANDLE;
+}
+
+// ---------------------------------------------------------------------------
+// VulkanImage factory helpers
+// ---------------------------------------------------------------------------
+
+OwnedImage VulkanImage::CreateColor(uint32_t width, uint32_t height, VkImageUsageFlags extraUsage)
+{
+	constexpr VkImageUsageFlags kBaseUsage =
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT     |
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT     |
+		VK_IMAGE_USAGE_SAMPLED_BIT;
+
+	OwnedImage out;
+	const VkFormat format = GetSwapchainImageFormat();
+	CreateImage(width, height, format, VK_IMAGE_TILING_OPTIMAL,
+		kBaseUsage | extraUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		out.image, out.memory);
+	CreateImageView(out.image, format, VK_IMAGE_ASPECT_COLOR_BIT, out.view);
+	return out;
+}
+
+OwnedImage VulkanImage::CreateDepth(uint32_t width, uint32_t height, VkImageUsageFlags extraUsage)
+{
+	constexpr VkFormat          kFormat    = VK_FORMAT_D32_SFLOAT_S8_UINT;
+	constexpr VkImageUsageFlags kBaseUsage =
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT             |
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+	OwnedImage out;
+	CreateImage(width, height, kFormat, VK_IMAGE_TILING_OPTIMAL,
+		kBaseUsage | extraUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		out.image, out.memory);
+	CreateImageView(out.image, kFormat, VK_IMAGE_ASPECT_DEPTH_BIT, out.view);
+	return out;
 }
 
 void VulkanImage::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer) {

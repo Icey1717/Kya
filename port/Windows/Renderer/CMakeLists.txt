@@ -37,6 +37,8 @@ set (SOURCES
 	"Vulkan/src/Objects/VulkanShader.cpp"
 	"Vulkan/src/Objects/FrameBuffer.h"
 	"Vulkan/src/Objects/FrameBuffer.cpp"
+	"Vulkan/src/Objects/VulkanRenderPass.h"
+	"Vulkan/src/Objects/VulkanRenderPass.cpp"
 	"Vulkan/src/Objects/Pipeline.h"
 	"Vulkan/src/Objects/Pipeline.cpp"
 	"Vulkan/src/Objects/UniformBuffer.h"

@@ -3931,7 +3931,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							pCVar16[0x16].pVTable = (CBehaviourVtable*)0x1;
 						}
 						else {
-							(*(this->pVTable)->SetBehaviour)(this, 7, 0xa1, 0);
+							(*(this->pVTable)->SetBehaviour)(this, 7, STATE_HERO_FALL_DEATH, 0);
 						}
 						return 1;
 					})
@@ -4358,29 +4358,20 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 					else {
 						if (levelId == 1) {
 							this->field_0x2e4 = 10.0f;
-							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa2, 0xffffffff);
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_DROWN_DEATH, 0xffffffff);
 							iVar9 = 1;
 						}
 						else {
 							if (levelId == 0) {
 								this->field_0x2e4 = 5.0f;
 
-								if (this->curBehaviourId == 8) {
+								if (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
 									CLifeInterface* pLifeInterface = GetLifeInterface();
 									fVar11 = pLifeInterface->GetValue();
 									bVar1 = fVar11 - this->field_0x2e4 <= 0.0f;
 
 									if (!bVar1) {
-										iVar9 = this->actorState;
-
-										if (iVar9 == -1) {
-											uVar6 = 0;
-										}
-										else {
-											pAVar3 = GetStateCfg(iVar9);
-											uVar6 = pAVar3->flags_0x4 & 1;
-										}
-
+										uVar6 = GetStateFlags(this->actorState) & 1;
 										bVar1 = uVar6 != 0;
 									}
 
@@ -4389,7 +4380,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 									}
 								}
 
-								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa1, 0xffffffff);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_FALL_DEATH, 0xffffffff);
 								iVar9 = 1;
 							}
 							else {
@@ -5365,7 +5356,7 @@ void CActorHeroPrivate::BehaviourHero_InitState(int newState)
 			pCVar5->PushCamera(this->pWindWallCamera_0x15b4, 0);
 		}
 
-		if (this->actorState == 0xa1) {
+		if (this->actorState == STATE_HERO_FALL_DEATH) {
 			iVar1 = this->prevActorState;
 			if (iVar1 == -1) {
 				uVar6 = 0;
@@ -6128,7 +6119,7 @@ LAB_00340ec0:
 			pCVar5->AlertCamera(5, (int)local_40, (CCamera*)0x0);)
 		}
 
-		if (this->actorState == 0xa1) {
+		if (this->actorState == STATE_HERO_FALL_DEATH) {
 			if ((GetStateFlags(newState) & 1) == 0) {
 				pCameraManager->PopCamera(this->pDeathCamera);
 			}
@@ -7620,7 +7611,7 @@ void CActorHeroPrivate::StateHeroTobogganJump(int param_2, int param_3, int para
 		}
 		else {
 			if (100.0f < this->field_0x11f0 - this->currentLocation.y) {
-				SetState(0xa1, 0xffffffff);
+				SetState(STATE_HERO_FALL_DEATH, 0xffffffff);
 				return;
 			}
 		}

@@ -4,11 +4,13 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
 #include "Objects/VulkanBuffer.h"
 #include "Objects/VulkanImage.h"
+#include "Objects/VulkanRenderPass.h"
 #include "VulkanRenderer.h"
 #include "renderer.h"
 #include "NativeDebug.h"
@@ -45,9 +47,7 @@ namespace Renderer
 			static bool gHasInitialViewProjection = false;
 
 			// Dedicated end-of-frame debug render pass resources.
-			static VkImage            gSavedDepthImage     = VK_NULL_HANDLE;
-			static VkDeviceMemory     gSavedDepthMemory    = VK_NULL_HANDLE;
-			static VkImageView        gSavedDepthImageView = VK_NULL_HANDLE;
+			static OwnedImage         gSavedDepth          = {};
 			static VkRenderPass       gDebugRenderPass     = VK_NULL_HANDLE;
 			static VkFramebuffer      gDebugFramebuffer    = VK_NULL_HANDLE;
 			static Renderer::Pipeline gDebugPipeline;
@@ -377,103 +377,51 @@ namespace Renderer
 				gDedicatedHeight = height;
 
 				// Saved depth image (dimension-dependent, recreated on resize).
-				VulkanImage::CreateImage(
-					width, height,
-					VK_FORMAT_D32_SFLOAT_S8_UINT,
-					VK_IMAGE_TILING_OPTIMAL,
-					VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					gSavedDepthImage, gSavedDepthMemory);
-
-				VulkanImage::CreateImageView(gSavedDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT,
-					VK_IMAGE_ASPECT_DEPTH_BIT, gSavedDepthImageView);
-
-				SetObjectName(reinterpret_cast<uint64_t>(gSavedDepthImage),     VK_OBJECT_TYPE_IMAGE,      "Debug Shapes Saved Depth Image");
-				SetObjectName(reinterpret_cast<uint64_t>(gSavedDepthImageView), VK_OBJECT_TYPE_IMAGE_VIEW, "Debug Shapes Saved Depth Image View");
+				gSavedDepth = VulkanImage::CreateDepth(width, height);
+				SetObjectName(reinterpret_cast<uint64_t>(gSavedDepth.image), VK_OBJECT_TYPE_IMAGE,      "Debug Shapes Saved Depth Image");
+				SetObjectName(reinterpret_cast<uint64_t>(gSavedDepth.view),  VK_OBJECT_TYPE_IMAGE_VIEW, "Debug Shapes Saved Depth Image View");
 
 				// Render pass and pipeline are dimension-independent; only create once.
 				if (gDebugRenderPass == VK_NULL_HANDLE)
 				{
-					VkAttachmentDescription colorAttachment{};
-					colorAttachment.format          = GetSwapchainImageFormat();
-					colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-					colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
-					colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-					colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-					colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-					colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-					colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-
-					VkAttachmentReference colorRef{};
-					colorRef.attachment = 0;
-					colorRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					const Renderer::AttachmentInfo colorInfo{
+						GetSwapchainImageFormat(),
+						VK_ATTACHMENT_LOAD_OP_LOAD,
+						VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+						VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+					};
 
 					// Depth loaded read-only from the saved first-pass copy; no writes.
-					VkAttachmentDescription depthAttachment{};
-					depthAttachment.format          = VK_FORMAT_D32_SFLOAT_S8_UINT;
-					depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-					depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
-					depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-					depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-					depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-					depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-					depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+					const Renderer::AttachmentInfo depthInfo{
+						VK_FORMAT_D32_SFLOAT_S8_UINT,
+						VK_ATTACHMENT_LOAD_OP_LOAD,
+						VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+						VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+						VK_ATTACHMENT_STORE_OP_DONT_CARE,
+					};
 
-					VkAttachmentReference depthRef{};
-					depthRef.attachment = 1;
-					depthRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+					const VkSubpassDependency dependency{
+						VK_SUBPASS_EXTERNAL, 0,
+						VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+						VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+						0,
+						VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+						0
+					};
 
-					VkSubpassDescription subpass{};
-					subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-					subpass.colorAttachmentCount    = 1;
-					subpass.pColorAttachments       = &colorRef;
-					subpass.pDepthStencilAttachment = &depthRef;
-
-					VkSubpassDependency dependency{};
-					dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
-					dependency.dstSubpass    = 0;
-					dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-					dependency.srcAccessMask = 0;
-					dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-					dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-
-					std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-					VkRenderPassCreateInfo renderPassInfo{};
-					renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-					renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-					renderPassInfo.pAttachments    = attachments.data();
-					renderPassInfo.subpassCount    = 1;
-					renderPassInfo.pSubpasses      = &subpass;
-					renderPassInfo.dependencyCount = 1;
-					renderPassInfo.pDependencies   = &dependency;
-
-					if (vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &gDebugRenderPass) != VK_SUCCESS) {
-						throw std::runtime_error("failed to create debug shapes render pass!");
-					}
-
-					SetObjectName(reinterpret_cast<uint64_t>(gDebugRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Debug Shapes Render Pass");
+					gDebugRenderPass = Renderer::CreateRenderPass2D(
+						{ &colorInfo, 1 }, depthInfo, { &dependency, 1 },
+						"Debug Shapes Render Pass");
 
 					CreatePipeline(gDebugRenderPass, gDebugPipeline, "Debug Shapes Dedicated Pipeline");
 				}
 
 				// Framebuffer (dimension-dependent, recreated on resize).
-				std::array<VkImageView, 2> imageViews = { colorImageView, gSavedDepthImageView };
-
-				VkFramebufferCreateInfo framebufferInfo{};
-				framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass      = gDebugRenderPass;
-				framebufferInfo.attachmentCount = static_cast<uint32_t>(imageViews.size());
-				framebufferInfo.pAttachments    = imageViews.data();
-				framebufferInfo.width           = static_cast<uint32_t>(width);
-				framebufferInfo.height          = static_cast<uint32_t>(height);
-				framebufferInfo.layers          = 1;
-
-				if (vkCreateFramebuffer(GetDevice(), &framebufferInfo, GetAllocator(), &gDebugFramebuffer) != VK_SUCCESS) {
-					throw std::runtime_error("failed to create debug shapes framebuffer!");
-				}
-
-				SetObjectName(reinterpret_cast<uint64_t>(gDebugFramebuffer), VK_OBJECT_TYPE_FRAMEBUFFER, "Debug Shapes Framebuffer");
+				const std::array<VkImageView, 2> imageViews = { colorImageView, gSavedDepth.view };
+				gDebugFramebuffer = Renderer::CreateFramebuffer(
+					gDebugRenderPass, imageViews,
+					static_cast<uint32_t>(width), static_cast<uint32_t>(height),
+					"Debug Shapes Framebuffer");
 			}
 
 			void DestroyDedicatedPass()
@@ -481,14 +429,7 @@ namespace Renderer
 				vkDestroyFramebuffer(GetDevice(), gDebugFramebuffer, GetAllocator());
 				gDebugFramebuffer = VK_NULL_HANDLE;
 
-				vkDestroyImageView(GetDevice(), gSavedDepthImageView, GetAllocator());
-				gSavedDepthImageView = VK_NULL_HANDLE;
-
-				vkDestroyImage(GetDevice(), gSavedDepthImage, GetAllocator());
-				gSavedDepthImage = VK_NULL_HANDLE;
-
-				vkFreeMemory(GetDevice(), gSavedDepthMemory, GetAllocator());
-				gSavedDepthMemory = VK_NULL_HANDLE;
+				gSavedDepth.Destroy();
 			}
 
 			void SaveDepth(VkCommandBuffer cmd, VkImage srcDepthImage)
@@ -503,7 +444,7 @@ namespace Renderer
 				VulkanImage::TransitionImageLayout(srcDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT,
 					VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, kDepthAspect, cmd);
 
-				VulkanImage::TransitionImageLayout(gSavedDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT,
+				VulkanImage::TransitionImageLayout(gSavedDepth.image, VK_FORMAT_D32_SFLOAT_S8_UINT,
 					VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, kDepthAspect, cmd);
 
 				VkImageCopy copyRegion{};
@@ -514,15 +455,15 @@ namespace Renderer
 				copyRegion.extent         = { static_cast<uint32_t>(gDedicatedWidth), static_cast<uint32_t>(gDedicatedHeight), 1 };
 
 				vkCmdCopyImage(cmd,
-					srcDepthImage,    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					gSavedDepthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					srcDepthImage,     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					gSavedDepth.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					1, &copyRegion);
 
 				// Restore game depth; put saved depth into the layout the debug pass expects.
 				VulkanImage::TransitionImageLayout(srcDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT,
 					VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, kDepthAspect, cmd);
 
-				VulkanImage::TransitionImageLayout(gSavedDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT,
+				VulkanImage::TransitionImageLayout(gSavedDepth.image, VK_FORMAT_D32_SFLOAT_S8_UINT,
 					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, kDepthAspect, cmd);
 
 				gHasSavedDepth = true;

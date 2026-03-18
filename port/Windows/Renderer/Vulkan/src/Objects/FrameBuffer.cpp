@@ -6,6 +6,7 @@
 #include "VulkanReflect.h"
 #include <array>
 #include "VulkanImage.h"
+#include "VulkanRenderPass.h"
 
 PS2::FrameBuffer::FrameBufferMap passes;
 
@@ -159,55 +160,25 @@ void PS2::FrameBuffer::ExecuteFinalPass()
 void PS2::FrameBuffer::CreateFinalPassPipeline()
 {
 	{
-		const VkFormat format = GetSwapchainImageFormat();
-		const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-		VulkanImage::CreateImage(GetRTSize().x, GetRTSize().y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, finalImage, finalImageMemory);
-		VulkanImage::CreateImageView(finalImage, format, VK_IMAGE_ASPECT_COLOR_BIT, finalImageView);
+		OwnedImage final = VulkanImage::CreateColor(GetRTSize().x, GetRTSize().y);
+		finalImage       = final.image;
+		finalImageMemory = final.memory;
+		finalImageView   = final.view;
 	}
 
-	// Grayscale Render Pass
-	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = GetSwapchainImageFormat();
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // Load the previous content
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Store the result
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+	const Renderer::AttachmentInfo colorInfo{
+		GetSwapchainImageFormat(),
+		VK_ATTACHMENT_LOAD_OP_CLEAR,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+	};
 
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	finalPass = Renderer::CreateRenderPass2D({ &colorInfo, 1 }, std::nullopt, {}, "Framebuffer Final Pass");
 
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-
-	vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &finalPass);
-
-	VkImageView imageAttachments[] = { finalImageView };
-
-	// Create the framebuffer that will use the color image as a render target
-	VkFramebufferCreateInfo framebufferCreateInfo = {};
-	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferCreateInfo.renderPass = finalPass;
-	framebufferCreateInfo.attachmentCount = 1;
-	framebufferCreateInfo.pAttachments = imageAttachments;
-	framebufferCreateInfo.width = GetRTSize().x;
-	framebufferCreateInfo.height = GetRTSize().y;
-	framebufferCreateInfo.layers = 1;
-	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, GetAllocator(), &finalFramebuffer);
+	finalFramebuffer = Renderer::CreateFramebuffer(
+		finalPass, { &finalImageView, 1 },
+		GetRTSize().x, GetRTSize().y,
+		"Framebuffer Final Framebuffer");
 
 	auto vertShader = Shader::ReflectedModule("shaders/fullscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, false);
 	auto fragShader = Shader::ReflectedModule("shaders/gray.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, false);
@@ -367,40 +338,26 @@ PS2::FrameBuffer::FrameBufferMap& PS2::FrameBuffer::GetAll()
 void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment)
 {
 	{
-		const VkFormat format = GetSwapchainImageFormat();
-		const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-
-		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, imageMemory);
-		VulkanImage::CreateImageView(colorImage, format, VK_IMAGE_ASPECT_COLOR_BIT, colorImageView);
+		OwnedImage color = VulkanImage::CreateColor(size.x, size.y);
+		colorImage     = color.image;
+		imageMemory    = color.memory;
+		colorImageView = color.view;
 	}
 
 	if (bDepthAttachment)
 	{
-		VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		VkImageUsageFlags usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-
-		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
-		VulkanImage::CreateImageView(depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView);
+		OwnedImage depth = VulkanImage::CreateDepth(size.x, size.y);
+		depthImage       = depth.image;
+		depthImageMemory = depth.memory;
+		depthImageView   = depth.view;
 	}
 
 	std::vector<VkImageView> imageAttachments = { colorImageView };
-
 	if (bDepthAttachment) {
 		imageAttachments.push_back(depthImageView);
 	}
 
-	// Create the framebuffer that will use the color image as a render target
-	VkFramebufferCreateInfo framebufferCreateInfo = {};
-	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferCreateInfo.renderPass = renderPass;
-	framebufferCreateInfo.attachmentCount = imageAttachments.size();
-	framebufferCreateInfo.pAttachments = imageAttachments.data();
-	framebufferCreateInfo.width = size.x;
-	framebufferCreateInfo.height = size.y;
-	framebufferCreateInfo.layers = 1;
-	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, GetAllocator(), &framebuffer);
+	framebuffer = Renderer::CreateFramebuffer(renderPass, imageAttachments, size.x, size.y);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

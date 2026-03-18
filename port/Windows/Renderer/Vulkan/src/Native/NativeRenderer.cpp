@@ -12,6 +12,7 @@
 
 #include "VulkanRenderer.h"
 #include "Objects/VulkanImage.h"
+#include "Objects/VulkanRenderPass.h"
 #include "Objects/UniformBuffer.h"
 #include "Texture/TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
