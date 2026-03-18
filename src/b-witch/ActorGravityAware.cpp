@@ -1,4 +1,5 @@
 #include "ActorGravityAware.h"
+#include "EventManager.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
 
@@ -199,8 +200,8 @@ int CActorGravityAware::InterpretEvent(edCEventMessage* pEventMessage, undefined
 {
 	int iVar1;
 
-	if ((*param_5 == 1) && ((uint)param_3 == 2)) {
-		if (param_5[1] == 0) {
+	if ((*param_5 == EVENT_PRIM_KILL) && ((uint)param_3 == 2)) {
+		if (param_5[1] == EVENT_PRIM_KILL_FALL) {
 			this->flags = this->flags & 0xfffffffd;
 			this->flags = this->flags | 1;
 			this->flags = this->flags & 0xffffff7f;

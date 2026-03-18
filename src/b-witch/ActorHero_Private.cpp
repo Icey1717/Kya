@@ -4332,7 +4332,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 		default:
 			iVar9 = CActor::InterpretEvent(param_2, (uint)(uint*)param_3, (uint)param_4, param_5);
 			break;
-		case 1:
+		case EVENT_PRIM_KILL:
 			if ((param_3 == 2) && (bVar1 = TestState_IsInCheatMode(), bVar1 == false)) {
 				if (levelId == 3) {
 					this->field_0x2e4 = 10.0f;
@@ -4356,13 +4356,13 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 						iVar9 = 1;
 					}
 					else {
-						if (levelId == 1) {
+						if (levelId == EVENT_PRIM_KILL_DROWN) {
 							this->field_0x2e4 = 10.0f;
 							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_DROWN_DEATH, 0xffffffff);
 							iVar9 = 1;
 						}
 						else {
-							if (levelId == 0) {
+							if (levelId == EVENT_PRIM_KILL_FALL) {
 								this->field_0x2e4 = 5.0f;
 
 								if (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
@@ -4396,15 +4396,15 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 				iVar9 = 1;
 			}
 			break;
-		case 2:
-		case 3:
+		case EVENT_PRIM_SECTOR_SWITCH:
+		case EVENT_PRIM_SECTOR_SWITCH_ANIM:
 			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretEvent 2/3 Switch to Sector: {} - {}", param_3, levelId);
 			if ((param_3 == 2) && (levelId != 0xffffffff)) {
-				CScene::ptable.g_SectorManager_00451670->SwitchToSector(levelId, lVar10 == 2);
+				CScene::ptable.g_SectorManager_00451670->SwitchToSector(levelId, lVar10 == EVENT_PRIM_SECTOR_SWITCH_ANIM);
 			}
 			iVar9 = 1;
 			break;
-		case 5:
+		case EVENT_PRIM_TELEPORT:
 			if (param_3 == 2) {
 				CLevelScheduler::gThis->Level_Teleport(this, levelId, param_5[2], param_5[3], 0xffffffff);
 			}
@@ -4420,13 +4420,13 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 		case 0xd:
 		case 0xe:
 		case 0xf:
-		case 0x10:
+		case EVENT_PRIM_AUDIO_LAST:
 			IMPLEMENTATION_GUARD_AUDIO(
 				CAudioManager::ReceiveEvent(CScene::ptable.g_AudioManager_00451698, (int*)param_2, lVar10, (uint*)param_3,
 				(long)(int)((uint)param_4 - 1), param_5 + 1);)
 			iVar9 = 1;
 			break;
-		case 0x15:
+		case EVENT_PRIM_ZONE_MESSAGE:
 			IMPLEMENTATION_GUARD(
 			if (levelId == 0x7f) {
 				peVar7 = (edF32MATRIX4*)

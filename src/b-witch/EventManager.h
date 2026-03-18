@@ -159,6 +159,24 @@ public:
 
 typedef uint e_ed_event_prim3d_type;
 
+// Values for e_ed_event_prim3d_type (pEventData[0]) passed to ReceiveEvent / InterpretEvent.
+// Values EVENT_PRIM_AUDIO_FIRST–EVENT_PRIM_AUDIO_LAST are forwarded to CAudioManager::ReceiveEvent.
+#define EVENT_PRIM_KILL               0x1  // Kill/death — sub-type in pEventData[1]
+#define EVENT_PRIM_SECTOR_SWITCH      0x2  // Switch sector (immediate)
+#define EVENT_PRIM_SECTOR_SWITCH_ANIM 0x3  // Switch sector (with transition)
+#define EVENT_PRIM_TELEPORT           0x5  // Level teleport
+#define EVENT_PRIM_AUDIO_FIRST        0x6  // First audio event index
+#define EVENT_PRIM_AUDIO_LAST         0x10 // Last audio event index
+#define EVENT_PRIM_ZONE_ACTIVATE      0x12 // Zone trigger: send MESSAGE_ACTIVATE to actor
+#define EVENT_PRIM_ZONE_DEACTIVATE    0x13 // Zone trigger: send MESSAGE_DEACTIVATE to actor
+#define EVENT_PRIM_ZONE_TOGGLE        0x14 // Zone trigger: send MESSAGE_TOGGLE to actor
+#define EVENT_PRIM_ZONE_MESSAGE       0x15 // Zone trigger: relay ACTOR_MESSAGE (pEventData[1]) to actor
+#define EVENT_PRIM_ZONE_PROJECTILE    0x16 // Zone trigger: hit actor with a projectile (MESSAGE_KICKED)
+
+// Kill sub-types — used in pEventData[1] when pEventData[0] == EVENT_PRIM_KILL.
+#define EVENT_PRIM_KILL_FALL  0 // Fall to death
+#define EVENT_PRIM_KILL_DROWN 1 // Drown
+
 void edEventInit(void);
 uint edEventAddChunk(void* pFileData, uint mode);
 uint edEventGetChunkNbEvents(int chunkIndex);

@@ -636,7 +636,7 @@ int CActorJamGut::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 	int result;
 
 	uVar1 = param_5[1];
-	if (*param_5 == 1) {
+	if (*param_5 == EVENT_PRIM_KILL) {
 		if ((GetStateFlags(this->actorState) & 1) == 0) {
 			if ((param_3 == 2) && (this->actorState != 0x10)) {
 				if (uVar1 == 2) {
@@ -644,12 +644,12 @@ int CActorJamGut::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 					return 1;
 				}
 
-				if (uVar1 == 1) {
+				if (uVar1 == EVENT_PRIM_KILL_DROWN) {
 					SetState(0x16, -1);
 					return 1;
 				}
 
-				if (uVar1 == 0) {
+				if (uVar1 == EVENT_PRIM_KILL_FALL) {
 					SetState(0x15, -1);
 					return 1;
 				}

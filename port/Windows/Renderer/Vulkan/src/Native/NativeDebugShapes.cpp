@@ -40,7 +40,7 @@ namespace Renderer
 			static VkBuffer gDebugLineVertexBuffer = VK_NULL_HANDLE;
 			static VkDeviceMemory gDebugLineVertexBufferMemory = VK_NULL_HANDLE;
 
-			constexpr uint32_t gMaxDebugTriVertexCount = 65536;
+			constexpr uint32_t gMaxDebugTriVertexCount = 65536 * 16;
 			static std::array<DebugLineVertex, gMaxDebugTriVertexCount> gDebugTriVertices;
 			static uint32_t gDebugTriVertexCount = 0;
 

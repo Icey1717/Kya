@@ -90,6 +90,9 @@ enum ACTOR_MESSAGE
 	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
 	MESSAGE_GET_RUN_SPEED = 0xc,
 	MESSAGE_TIED = 0xd,
+	MESSAGE_TOGGLE = 0xe,       // Toggle actor state (enable if disabled, disable if enabled)
+	MESSAGE_ACTIVATE = 0xf,     // Activate / enable actor
+	MESSAGE_DEACTIVATE = 0x10,  // Deactivate / disable actor
 	MESSAGE_GET_ACTION = 0x12,
 	MESSAGE_TRAP_STRUGGLE = 0x14,
 	MESSAGE_IN_WIND_AREA = 0x16,

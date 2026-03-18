@@ -1,4 +1,5 @@
 #include "ActorMicken.h"
+#include "EventManager.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "edCollision/edCollisions.h"
@@ -545,7 +546,7 @@ int CActorMicken::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 	int iVar4;
 
 	uVar1 = param_5[1];
-	if (*param_5 == 1) {
+	if (*param_5 == EVENT_PRIM_KILL) {
 		if (param_3 == 2) {
 			IMPLEMENTATION_GUARD(
 			iVar4 = this->actorState;

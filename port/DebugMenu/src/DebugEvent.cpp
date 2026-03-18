@@ -47,6 +47,9 @@ static const char* GetActorMessageName(int msgId)
 	case 0x07: return "GET_VISUAL_DETECTION_POINT";
 	case 0x0c: return "GET_RUN_SPEED";
 	case 0x0d: return "TIED";
+	case 0x0e: return "TOGGLE";
+	case 0x0f: return "ACTIVATE";
+	case 0x10: return "DEACTIVATE";
 	case 0x12: return "GET_ACTION";
 	case 0x14: return "TRAP_STRUGGLE";
 	case 0x16: return "IN_WIND_AREA";
@@ -74,6 +77,132 @@ static const char* GetActorMessageName(int msgId)
 	case 0x7d: return "NEW_MAP_GAINED";
 	case 0x85: return "NEW_LIFE_GAUGE";
 	default:   return nullptr;
+	}
+}
+
+// Returns the EVENT_PRIM_* name for a known event primitive type, or nullptr if unknown.
+static const char* GetEventPrimTypeName(uint eventType)
+{
+	switch (eventType) {
+	case EVENT_PRIM_KILL:               return "KILL";
+	case EVENT_PRIM_SECTOR_SWITCH:      return "SECTOR_SWITCH";
+	case EVENT_PRIM_SECTOR_SWITCH_ANIM: return "SECTOR_SWITCH_ANIM";
+	case EVENT_PRIM_TELEPORT:           return "TELEPORT";
+	case EVENT_PRIM_ZONE_ACTIVATE:      return "ZONE_ACTIVATE";
+	case EVENT_PRIM_ZONE_DEACTIVATE:    return "ZONE_DEACTIVATE";
+	case EVENT_PRIM_ZONE_TOGGLE:        return "ZONE_TOGGLE";
+	case EVENT_PRIM_ZONE_MESSAGE:       return "ZONE_MESSAGE";
+	case EVENT_PRIM_ZONE_PROJECTILE:    return "ZONE_PROJECTILE";
+	default:
+		if (eventType >= EVENT_PRIM_AUDIO_FIRST && eventType <= EVENT_PRIM_AUDIO_LAST)
+			return "AUDIO";
+		return nullptr;
+	}
+}
+
+// Returns the kill sub-type name for pEventData[1] when eventType == EVENT_PRIM_KILL.
+static const char* GetKillSubtypeName(uint subtype)
+{
+	switch (subtype) {
+	case EVENT_PRIM_KILL_FALL:  return "FALL";
+	case EVENT_PRIM_KILL_DROWN: return "DROWN";
+	case 2:                     return "DEATH_TYPE_2";
+	case 3:                     return "DEATH_TYPE_3";
+	default:                    return "COL_WALL";
+	}
+}
+
+// Returns the projectile sub-type name for pEventData[1] when eventType == EVENT_PRIM_ZONE_PROJECTILE.
+static const char* GetProjectileSubtypeName(uint subtype)
+{
+	switch (subtype) {
+	case 0: return "NONE";
+	case 1: return "ARROW";
+	case 2: return "MAGIC_SMALL";
+	case 3: return "MAGIC_LARGE";
+	case 4: return "SHOCKWAVE";
+	case 5: return "MAGIC_WIDE";
+	default: return nullptr;
+	}
+}
+
+// Displays structured, human-readable event data for the payload passed to ReceiveEvent.
+// pData[0] = e_ed_event_prim3d_type; subsequent elements are type-specific parameters.
+static const char* GetZonePrimShapeName(uint shapeType)
+{
+	switch (shapeType) {
+	case 0: return "half-space";
+	case 1: return "open-top box";
+	case 2: return "box";
+	case 3: return "cylinder";
+	case 4: return "cone";
+	case 5: return "sphere";
+	default: return nullptr;
+	}
+}
+
+static void ShowEventData(const int* pData, int count)
+{
+	if (count <= 0) return;
+
+	uint eventType = static_cast<uint>(pData[0]);
+	const char* typeName = GetEventPrimTypeName(eventType);
+
+	if (typeName)
+		ImGui::Text("Event Type: %s (0x%x)", typeName, eventType);
+	else
+		ImGui::Text("Event Type: 0x%x (unknown)", eventType);
+
+	if (count < 2) return;
+	uint param1 = static_cast<uint>(pData[1]);
+
+	switch (eventType) {
+	case EVENT_PRIM_KILL:
+		ImGui::Text("  Kill sub-type: %s (%u)", GetKillSubtypeName(param1), param1);
+		break;
+	case EVENT_PRIM_SECTOR_SWITCH:
+	case EVENT_PRIM_SECTOR_SWITCH_ANIM:
+		ImGui::Text("  Sector ID: %u", param1);
+		break;
+	case EVENT_PRIM_TELEPORT:
+		ImGui::Text("  Level ID: %u", param1);
+		if (count >= 3) ImGui::Text("  Param2: 0x%x", static_cast<uint>(pData[2]));
+		if (count >= 4) ImGui::Text("  Param3: 0x%x", static_cast<uint>(pData[3]));
+		break;
+	case EVENT_PRIM_ZONE_ACTIVATE:
+	case EVENT_PRIM_ZONE_DEACTIVATE:
+	case EVENT_PRIM_ZONE_TOGGLE:
+		ImGui::Text("  Param: 0x%x", param1);
+		break;
+	case EVENT_PRIM_ZONE_MESSAGE: {
+		const char* msgName = GetActorMessageName(static_cast<int>(param1));
+		if (msgName)
+			ImGui::Text("  Message: %s (0x%x)", msgName, param1);
+		else
+			ImGui::Text("  Message: 0x%x (unknown)", param1);
+		if (count >= 3)
+			ImGui::Text("  Msg Param: 0x%x", static_cast<uint>(pData[2]));
+		break;
+	}
+	case EVENT_PRIM_ZONE_PROJECTILE: {
+		const char* projName = GetProjectileSubtypeName(param1);
+		if (projName)
+			ImGui::Text("  Projectile sub-type: %s (%u)", projName, param1);
+		else
+			ImGui::Text("  Projectile sub-type: %u (unknown)", param1);
+		if (count >= 3) ImGui::Text("  Damage: 0x%x", static_cast<uint>(pData[2]));
+		if (count >= 4) ImGui::Text("  Waypoint: 0x%x", static_cast<uint>(pData[3]));
+		if (count >= 5) ImGui::Text("  Force: 0x%x", static_cast<uint>(pData[4]));
+		break;
+	}
+	default:
+		if (eventType >= EVENT_PRIM_AUDIO_FIRST && eventType <= EVENT_PRIM_AUDIO_LAST) {
+			ImGui::Text("  Audio Index: %u (event %u)", eventType - EVENT_PRIM_AUDIO_FIRST, param1);
+		} else {
+			for (int m = 1; m < count; m++)
+				ImGui::Text("  param[%d]: 0x%x", m, static_cast<uint>(pData[m]));
+		}
+		break;
 	}
 }
 
@@ -127,6 +256,7 @@ namespace Debug {
 		static Setting<bool> gShowAllZonePrimitives("3D: All Zone Primitives",       false);
 		static Setting<bool> gShowZonePrimitivesShaded("3D: Zone Primitives Shaded", false);
 		static Setting<bool> gShowColliderPositions("3D: Collider Positions",        true);
+		static Setting<bool> gShowOnlyKillPrimitives("3D: Only Kill Primitives",      false);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
 
@@ -470,18 +600,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 									}
 								}
 
-								// Show the message IDs that will be sent
+								// Show structured event data for the payload passed to ReceiveEvent
 								int* pIndex = reinterpret_cast<int*>(pSendInfo + 1);
 								int* pReceiveData = pIndex + pSendInfo->nbActorIndexes;
-								int nbMsgs = (pSendInfo->field_0x0 - 1) - pSendInfo->nbActorIndexes;
-								for (int m = 0; m < nbMsgs; m++) {
-									int msgId = pReceiveData[m];
-									const char* msgName = GetActorMessageName(msgId);
-									if (msgName)
-										ImGui::Text("  msg: %s (0x%x)", msgName, msgId);
-									else
-										ImGui::Text("  msg: 0x%x", msgId);
-								}
+								int nbEventData = (pSendInfo->field_0x0 - 1) - pSendInfo->nbActorIndexes;
+								ShowEventData(pReceiveData, nbEventData);
 
 								if (ImGui::Button(("Activate##" + std::to_string(i) + "_" + std::to_string(j)).c_str())) {
 									edCEventMessage msg;
@@ -532,6 +655,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 			ImGui::Unindent();
 		}
 		gShowColliderPositions.DrawImguiControl();
+		gShowOnlyKillPrimitives.DrawImguiControl();
 		ImGui::Unindent();
 
 		// Show computed world-space positions for the selected event so the user can cross-check
@@ -569,7 +693,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 							glm::mat4 w2l = glm::make_mat4(pPMat->raw);
 							if (pZMat) w2l = w2l * glm::make_mat4(pZMat->raw);
 							const glm::vec3 wc(glm::inverse(w2l)[3]);
-							ImGui::Text("  [%d] type=%d  world center (%.1f, %.1f, %.1f)", p, static_cast<int>(ptDbg), wc.x, wc.y, wc.z);
+							const char* shapeName = GetZonePrimShapeName(static_cast<uint>(ptDbg));
+						if (shapeName)
+							ImGui::Text("  [%d] shape=%s (%d)  world center (%.1f, %.1f, %.1f)", p, shapeName, static_cast<int>(ptDbg), wc.x, wc.y, wc.z);
+						else
+							ImGui::Text("  [%d] shape=%d (unknown)  world center (%.1f, %.1f, %.1f)", p, static_cast<int>(ptDbg), wc.x, wc.y, wc.z);
 						}
 					}
 
@@ -870,6 +998,24 @@ static void DrawZonePrimitive(const edF32MATRIX4* pPrimMatrix, const edF32MATRIX
 	}
 }
 
+// Returns true if any send-info slot in any collider of pEvent carries EVENT_PRIM_KILL as its event type.
+static bool EventHasKillPrim(ed_event* pEvent)
+{
+	auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+	for (uint c = 0; c < pEvent->nbColliders; c++, pCollider++) {
+		for (int k = 0; k < 4; k++) {
+			auto* pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pCollider->aSendInfo[k]);
+			if (!pSendInfo) continue;
+			int* pIndex      = reinterpret_cast<int*>(pSendInfo + 1);
+			int* pReceiveData = pIndex + pSendInfo->nbActorIndexes;
+			int  nbEventData  = (pSendInfo->field_0x0 - 1) - pSendInfo->nbActorIndexes;
+			if (nbEventData >= 1 && static_cast<uint>(pReceiveData[0]) == EVENT_PRIM_KILL)
+				return true;
+		}
+	}
+	return false;
+}
+
 void Debug::Event::DrawEventShapes()
 {
 	if (!gShowEventShapes3D) return;
@@ -887,6 +1033,8 @@ void Debug::Event::DrawEventShapes()
 	for (int i = 0; i < nbEvents; i++) {
 		auto* pEvent = LOAD_POINTER_CAST(ed_event*, pChunk->aEvents[i]);
 		if (!pEvent) continue;
+
+		if (gShowOnlyKillPrimitives && !EventHasKillPrim(pEvent)) continue;
 
 		auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 		if (!pZone) continue;

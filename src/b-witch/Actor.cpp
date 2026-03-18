@@ -1,5 +1,5 @@
 #include "Actor.h"
-#include "LargeObject.h"
+#include "EventManager.h"
 #include "SectorManager.h"
 #include "CinematicManager.h"
 #include "ActorFactory.h"
@@ -4007,7 +4007,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 
 	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} type: {} param: {}", this->name, eventType, pEventData[1]);
 
-	if (eventType == 0x16) {
+	if (eventType == EVENT_PRIM_ZONE_PROJECTILE) {
 		switch (pEventData[1]) {
 		case 0:
 			local_a0.projectileType = 0;
@@ -4096,7 +4096,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 		return 0;
 	}
 
-	if (eventType == 0x15) {
+	if (eventType == EVENT_PRIM_ZONE_MESSAGE) {
 		if (pEventData[1] != 0x7f) {
 			uint local_10 = pEventData[2];
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
@@ -4107,27 +4107,27 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 		}
 	}
 	else {
-		if (eventType == 0x14) {
+		if (eventType == EVENT_PRIM_ZONE_TOGGLE) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0xe, (MSG_PARAM)pEventData[1]);
+				eventType = ReceiveMessage(this, MESSAGE_TOGGLE, (MSG_PARAM)pEventData[1]);
 				return eventType;
 			}
 			return 0;
 		}
 
-		if (eventType == 0x13) {
+		if (eventType == EVENT_PRIM_ZONE_DEACTIVATE) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
 				uint local_8 = pEventData[1];
-				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0x10, (MSG_PARAM)pEventData[1]);
+				eventType = ReceiveMessage(this, MESSAGE_DEACTIVATE, (MSG_PARAM)pEventData[1]);
 				return eventType;
 			}
 			return 0;
 		}
 
-		if (eventType == 0x12) {
+		if (eventType == EVENT_PRIM_ZONE_ACTIVATE) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
 				uint local_4 = pEventData[1];
-				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0xf, (MSG_PARAM)pEventData[1]);
+				eventType = ReceiveMessage(this, MESSAGE_ACTIVATE, (MSG_PARAM)pEventData[1]);
 				return eventType;
 			}
 			return 0;
