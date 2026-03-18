@@ -402,7 +402,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent flags 0x{:x} colliders: {}", pEvent->flags, pEvent->nbColliders);
 
-	if ((pEvent->flags & 0x80) != 0) {
+	if ((pEvent->flags & ED_EVENT_FLAG_ACTIVE) != 0) {
 		bVar3 = false;
 		curColliderIndex = 0;
 		pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
@@ -433,14 +433,14 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 				if ((result & coliderFlags) == 0) {
 					if ((result & 1) == 0) {
-						pCollider->flags = 0xa;
+						pCollider->flags = ED_COLLIDER_FLAGS_STATE_OUTSIDE;
 					}
 					else {
-						pCollider->flags = 0x5;
+						pCollider->flags = ED_COLLIDER_FLAGS_STATE_INSIDE;
 					}
 				}
 				else {
-					pCollider->flags = coliderFlags & 0xfffffff3;
+					pCollider->flags = coliderFlags & ED_COLLIDER_FLAGS_CLEAR_TRANSITIONS;
 				}
 
 				curColliderIndex = curColliderIndex + 1;
@@ -463,15 +463,15 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 					byte* pByte = pCollider->messageFlags + messageIndex;
 
-					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent byte flags 0x{:x} data: {} collider flags: {} byte pass: {}", *pByte, *pSendInfo, pCollider->flags, (*pByte & 0x80) != 0);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent byte flags 0x{:x} data: {} collider flags: {} byte pass: {}", *pByte, *pSendInfo, pCollider->flags, (*pByte & ED_MSG_FLAG_ENABLED) != 0);
 
-					if (((*pSendInfo != 0x0) && ((*pByte & 0x80) != 0)) && ((pCollider->flags & 1 << (messageIndex & 0x1f)) != 0)) {
+					if (((*pSendInfo != 0x0) && ((*pByte & ED_MSG_FLAG_ENABLED) != 0)) && ((pCollider->flags & 1 << (messageIndex & 0x1f)) != 0)) {
 						_edEventAddMessage(pEventChunk, messageIndex, pCollider);
 						bVar1 = *pByte;
 						bVar3 = true;
 
-						if ((bVar1 & 2) != 0) {
-							*pByte = bVar1 & 0x7f;
+						if ((bVar1 & ED_MSG_FLAG_ONE_SHOT) != 0) {
+							*pByte = bVar1 & ~ED_MSG_FLAG_ENABLED;
 						}
 					}
 
@@ -484,8 +484,8 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 			} while (curColliderIndex < pEvent->nbColliders);
 		}
 
-		if ((bVar3) && ((pEvent->flags & 2) != 0)) {
-			pEvent->flags = pEvent->flags & 0xffffff7f;
+		if ((bVar3) && ((pEvent->flags & ED_EVENT_FLAG_ONE_SHOT) != 0)) {
+			pEvent->flags = pEvent->flags & ~ED_EVENT_FLAG_ACTIVE;
 		}
 	}
 
@@ -825,17 +825,17 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 			peVar9 = (_ed_event_collider_test*)(peVar2 + 1);
 			if (peVar2->nbColliders != 0) {
 				do {
-					peVar9->flags = 2;
+					peVar9->flags = ED_COLLIDER_FLAG_OUTSIDE;
 					uVar8 = 0;
 					ppuVar7 = peVar9->aSendInfo;
 					do {
 						if (*ppuVar7 != 0x0) {
 							bVar1 = peVar9->messageFlags[uVar8];
-							if ((bVar1 & 1) == 0) {
-								peVar9->messageFlags[uVar8] = bVar1 & 0x7f;
+							if ((bVar1 & ED_MSG_FLAG_INIT_ENABLED) == 0) {
+								peVar9->messageFlags[uVar8] = bVar1 & ~ED_MSG_FLAG_ENABLED;
 							}
 							else {
-								peVar9->messageFlags[uVar8] = bVar1 | 0x80;
+								peVar9->messageFlags[uVar8] = bVar1 | ED_MSG_FLAG_ENABLED;
 							}
 						}
 
@@ -849,11 +849,11 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 			}
 
 			uVar10 = peVar2->flags;
-			if ((uVar10 & 1) == 0) {
-				peVar2->flags = uVar10 & 0xffffff7f;
+			if ((uVar10 & ED_EVENT_FLAG_START_ACTIVE) == 0) {
+				peVar2->flags = uVar10 & ~ED_EVENT_FLAG_ACTIVE;
 			}
 			else {
-				peVar2->flags = uVar10 | 0x80;
+				peVar2->flags = uVar10 | ED_EVENT_FLAG_ACTIVE;
 			}
 
 			uVar4 = uVar4 + 1;

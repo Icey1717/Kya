@@ -17,22 +17,20 @@ extern uint edEventNbChunks;
 void EventCallbackSendMessage(edCEventMessage* pEventMessage);
 
 // Returns a human-readable name for one of the 4 per-collider send-info slots.
-// Slots 0 and 2 fire while the actor is INSIDE the zone; slots 1 and 3 fire while OUTSIDE.
-// The one-shot bit (messageFlags[slot] & 0x02) distinguishes a transition ("On Enter/Exit")
-// from a sustained trigger ("While Inside/Outside").
+// Slot index directly corresponds to the collider flag bit that enables it:
+//   slot 0 (ED_COLLIDER_FLAG_INSIDE)       – fires every frame while inside  (sustained)
+//   slot 1 (ED_COLLIDER_FLAG_OUTSIDE)      – fires every frame while outside (sustained)
+//   slot 2 (ED_COLLIDER_FLAG_JUST_ENTERED) – fires once on the frame of entry
+//   slot 3 (ED_COLLIDER_FLAG_JUST_EXITED)  – fires once on the frame of exit
+// ED_MSG_FLAG_ONE_SHOT additionally disables the slot after its first fire.
 static std::string GetColliderSlotLabel(const _ed_event_collider_test* pCollider, int slotId)
 {
-	bool isInsideSlot = (slotId == 0 || slotId == 2);
-	bool isEnabled    = (pCollider->messageFlags[slotId] & 0x80) != 0;
-	bool isOneShot    = (pCollider->messageFlags[slotId] & 0x02) != 0;
+	static const char* const baseNames[] = { "While Inside", "While Outside", "On Enter", "On Exit" };
+	bool isEnabled = (pCollider->messageFlags[slotId] & ED_MSG_FLAG_ENABLED) != 0;
+	bool isOneShot = (pCollider->messageFlags[slotId] & ED_MSG_FLAG_ONE_SHOT) != 0;
 
-	const char* base;
-	if (isInsideSlot)
-		base = isOneShot ? "On Enter"      : "While Inside";
-	else
-		base = isOneShot ? "On Exit"       : "While Outside";
-
-	std::string label = base;
+	std::string label = baseNames[slotId];
+	if (isOneShot)  label += " (one-shot)";
 	if (!isEnabled) label += " (disabled)";
 	label += " [" + std::to_string(slotId) + "]";
 	return label;
@@ -96,7 +94,7 @@ static std::string BuildEventLabel(ed_event_chunk* pChunk, int eventIndex)
 
 		auto* pColliderScan = pCollider;
 		for (uint j = 0; j < pEvent->nbColliders; j++) {
-			if (pColliderScan->flags & 0x1) { // bit 0 = actor is inside zone
+			if (pColliderScan->flags & ED_COLLIDER_FLAG_INSIDE) { // actor is currently inside zone
 				bActive = true;
 				break;
 			}
@@ -387,7 +385,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
 				for (int i = 0; i < (int)pEvent->nbColliders; i++) {
-					bool bColliderActive = (pCollider->flags & 0x1) != 0;
+					bool bColliderActive = (pCollider->flags & ED_COLLIDER_FLAG_INSIDE) != 0;
 
 					if (bColliderActive)
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 0.2f, 1.0f));
@@ -399,12 +397,12 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 					ImGui::Spacing();
 
-					// Message flags: bit 7 = slot enabled, bit 1 = one-shot
+					// messageFlags per slot: bit 7 (ED_MSG_FLAG_ENABLED) = active, bit 1 (ED_MSG_FLAG_ONE_SHOT) = fires once
 					for (int s = 0; s < 4; s++) {
 						byte mf = pCollider->messageFlags[s];
 						ImGui::Text("  messageFlags[%d]: 0x%02x  (%s%s)", s, mf,
-							(mf & 0x80) ? "enabled" : "disabled",
-							(mf & 0x02) ? ", one-shot" : "");
+							(mf & ED_MSG_FLAG_ENABLED)  ? "enabled" : "disabled",
+							(mf & ED_MSG_FLAG_ONE_SHOT) ? ", one-shot" : "");
 					}
 
 					ImGui::Spacing();
@@ -661,7 +659,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 
 				for (int j = 0; j < pEvent->nbColliders; j++) {
-					if (pCollider->flags & 1) {
+					if (pCollider->flags & ED_COLLIDER_FLAG_INSIDE) {
 						bActive = true;
 
 						auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);

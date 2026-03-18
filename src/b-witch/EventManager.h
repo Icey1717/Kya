@@ -14,6 +14,11 @@ struct ed_event {
 	uint nbColliders;
 };
 
+// ed_event::flags bits
+#define ED_EVENT_FLAG_START_ACTIVE 0x01 // Serialised: event activates on load
+#define ED_EVENT_FLAG_ONE_SHOT     0x02 // Event deactivates (clears ACTIVE) after first fire
+#define ED_EVENT_FLAG_ACTIVE       0x80 // Runtime: event is computed each frame
+
 struct _ed_event_collider_test {
 	edF32VECTOR4 worldLocation;
 	byte messageFlags[4];
@@ -24,6 +29,29 @@ struct _ed_event_collider_test {
 };
 
 static_assert(sizeof(_ed_event_collider_test) == 0x30);
+
+// _ed_event_collider_test::flags – recomputed each frame by _edEventComputeEvent.
+// Bits 0 and 2 are set when the actor is inside the zone; bits 1 and 3 when outside.
+// Bits 2 and 3 are "transition" bits and are cleared the frame after a state change.
+// Each bit index directly corresponds to the send-info slot that fires when it is set:
+//   slot 0 (INSIDE)       – fires every frame the actor is inside  (sustained)
+//   slot 1 (OUTSIDE)      – fires every frame the actor is outside (sustained)
+//   slot 2 (JUST_ENTERED) – fires only on the frame the actor enters the zone
+//   slot 3 (JUST_EXITED)  – fires only on the frame the actor exits the zone
+#define ED_COLLIDER_FLAG_INSIDE       0x01u
+#define ED_COLLIDER_FLAG_OUTSIDE      0x02u
+#define ED_COLLIDER_FLAG_JUST_ENTERED 0x04u
+#define ED_COLLIDER_FLAG_JUST_EXITED  0x08u
+
+#define ED_COLLIDER_FLAGS_STATE_INSIDE  (ED_COLLIDER_FLAG_INSIDE  | ED_COLLIDER_FLAG_JUST_ENTERED) // 0x05
+#define ED_COLLIDER_FLAGS_STATE_OUTSIDE (ED_COLLIDER_FLAG_OUTSIDE | ED_COLLIDER_FLAG_JUST_EXITED)  // 0x0a
+// Mask applied when the zone state has not changed: clears the one-frame transition bits.
+#define ED_COLLIDER_FLAGS_CLEAR_TRANSITIONS (~(ED_COLLIDER_FLAG_JUST_ENTERED | ED_COLLIDER_FLAG_JUST_EXITED)) // 0xfffffff3
+
+// _ed_event_collider_test::messageFlags[4] – one control byte per send-info slot.
+#define ED_MSG_FLAG_INIT_ENABLED 0x01 // Serialised: slot should be re-enabled on reset
+#define ED_MSG_FLAG_ONE_SHOT     0x02 // Slot disables itself after firing once
+#define ED_MSG_FLAG_ENABLED      0x80 // Runtime: slot is currently active
 
 struct EventSendInfo
 {
