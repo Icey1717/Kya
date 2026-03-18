@@ -15,7 +15,7 @@ CEventManagerInternal CEventManager::callbackFunctions = {};
 EventQueue EventQueue_00448fbc;
 
 #define EVENT_LOG(level, format, ...) MY_LOG_CATEGORY("event", level, format, ##__VA_ARGS__)
-#define EVENT_LOG_SLOW(level, format, ...)
+#define EVENT_LOG_SLOW(level, format, ...) MY_LOG_CATEGORY("event", level, format, ##__VA_ARGS__)
 
 void edEventSetCallbackFunctions(EventCallbackGetActor* param_1, EventGetActorPositionFunc* param_2, void* param_3, EventSendAllMsgs* param_4)
 {
@@ -36,13 +36,13 @@ CActor* EventCallbackGetActorPointer(int index) {
 		pActor = (CScene::ptable.g_ActorManager_004516a4)->aActors[index];
 	}
 
-	EVENT_LOG(LogLevel::Verbose, "EventCallbackGetActorPointer index: 0x{:x} -> actor: {}", index, pActor->name);
+	EVENT_LOG(LogLevel::Verbose, "EventCallbackGetActorPointer: index 0x{:x} -> actor '{}'", index, pActor->name);
 
 	return pActor;
 }
 
 edF32VECTOR4* EventCallbackGetActorPositionVector(CActor* pActor) {
-	EVENT_LOG(LogLevel::Verbose, "EventCallbackGetActorPositionVector actor: {}", pActor->name);
+	EVENT_LOG(LogLevel::Verbose, "EventCallbackGetActorPositionVector: actor '{}'", pActor->name);
 	return &pActor->currentLocation;
 }
 
@@ -138,7 +138,7 @@ int _edEventComputePrimAgainstVertex(uint prim, edF32MATRIX4* pMatrix, edF32VECT
 	float fVar1;
 	edF32VECTOR4 local_10;
 
-	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputePrimAgainstVertex prim: {} matrix: {} vertex: {}", prim, pMatrix->ToString(), pVertex->ToString());
+	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputePrimAgainstVertex: prim type {}, matrix: {}, vertex: {}", prim, pMatrix->ToString(), pVertex->ToString());
 
 	edF32Matrix4MulF32Vector4Hard(&local_10, pMatrix, pVertex);
 
@@ -216,12 +216,12 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	edF32VECTOR4 eStack32;
 	edF32VECTOR3 local_10;
 
-	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex zone sphere: {} location: {} mode: {} zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
+	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: bound sphere: {}, location: {}, mode: {}, has zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
 
 	if (pZone->pMatrix != 0x0) {
 		edF32Matrix4MulF32Vector4Hard(&eStack32, LOAD_POINTER_CAST(edF32MATRIX4*, pZone->pMatrix), pLocation);
 		pLocation = &eStack32;
-		EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex updated location: {}", pLocation->ToString());
+		EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: zone matrix applied, transformed location: {}", pLocation->ToString());
 	}
 
 	if ((pZone->boundSphere).w != 0.0f) {
@@ -230,7 +230,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 		fVar9 = (pZone->boundSphere).w;
 
 		if (fVar9 * fVar9 < fVar10) {
-			EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex outside bound sphere");
+			EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: actor outside bounding sphere, returning outside");
 			return 2;
 		}
 	}
@@ -255,7 +255,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 					iVar4 = _edEventComputePrimAgainstVertex(pbVar1[*puVar5], puVar2 + *puVar5, pLocation);
 
 					if (iVar4 == 1) {
-						EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex in event {}", *piVar7);
+						EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: inside zone primitive, returning {}", *piVar7);
 						return *piVar7;
 					}
 
@@ -269,7 +269,7 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 		uVar6 = uVar6 >> 1;
 	} while (uVar8 < 3);
 
-	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex not in event");
+	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: no primitives hit, returning outside");
 	return 2;
 }
 
@@ -379,7 +379,7 @@ void _edEventAddMessage(ed_event_chunk* pEventChunk, uint colliderId, _ed_event_
 {
 	edCEventMessage* pMsg;
 
-	EVENT_LOG(LogLevel::Verbose, "_edEventAddMessage collider: {}", colliderId);
+	EVENT_LOG(LogLevel::Verbose, "_edEventAddMessage: ********* queuing message for collider slot {} *********", colliderId);
 
 	pMsg = EventQueue_00448fbc.aEntries + EventQueue_00448fbc.inUseCount;
 	pMsg->colliderId = colliderId;
@@ -400,7 +400,7 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 	byte* pbVar8;
 	int* pSendInfo;
 
-	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent flags 0x{:x} colliders: {}", pEvent->flags, pEvent->nbColliders);
+	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: event flags 0x{:x} (active: {}), {} colliders", pEvent->flags, (pEvent->flags & ED_EVENT_FLAG_ACTIVE) != 0, pEvent->nbColliders);
 
 	if ((pEvent->flags & ED_EVENT_FLAG_ACTIVE) != 0) {
 		bVar3 = false;
@@ -409,18 +409,17 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 		if (pEvent->nbColliders != 0) {
 			do {
-				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: [zone test] collider {}", curColliderIndex);
 
 				pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 
-				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing zone flags: 0x{:x}", pZone->flags);
-
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: zone flags 0x{:x}", pZone->flags);
 				uint coliderFlags;
 				uint result;
 
 				if ((pZone->flags & 1) == 0) {
 					ed_event_actor_ref* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent test actor: {}", LOAD_POINTER_CAST(CActor*, pActorRef->pActor)->name);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: testing actor '{}' against zone", LOAD_POINTER_CAST(CActor*, pActorRef->pActor)->name);
 					result = edEventComputeZoneAgainstVertex(pEventChunk, pZone, LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation), 0);
 					coliderFlags = pCollider->flags;
 				}
@@ -453,17 +452,19 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 
 		if (pEvent->nbColliders != 0) {
 			do {
-				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing collider: {}", curColliderIndex);
+				EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: [message dispatch] collider {}", curColliderIndex);
 
 				uint messageIndex = 0;
 				pSendInfo = pCollider->aSendInfo;
 
 				do {
-					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent processing zone?: {}", messageIndex);
+					static constexpr const char* kSlotNames[] = { "INSIDE", "OUTSIDE", "JUST_ENTERED", "JUST_EXITED" };
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: checking send slot {} ({})", messageIndex, kSlotNames[messageIndex]);
 
 					byte* pByte = pCollider->messageFlags + messageIndex;
 
-					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent byte flags 0x{:x} data: {} collider flags: {} byte pass: {}", *pByte, *pSendInfo, pCollider->flags, (*pByte & ED_MSG_FLAG_ENABLED) != 0);
+					EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputeEvent: slot msg_flags 0x{:x} (enabled: {}), send_info: {}, collider_flags 0x{:x} (slot active: {})",
+						*pByte, (*pByte & ED_MSG_FLAG_ENABLED) != 0, *pSendInfo, pCollider->flags, (pCollider->flags & (1 << messageIndex)) != 0);
 
 					if (((*pSendInfo != 0x0) && ((*pByte & ED_MSG_FLAG_ENABLED) != 0)) && ((pCollider->flags & 1 << (messageIndex & 0x1f)) != 0)) {
 						_edEventAddMessage(pEventChunk, messageIndex, pCollider);
@@ -531,18 +532,18 @@ void edEventComputeChunk(int activeChunkID, bool param_2)
 	int* pEvent;
 	uint uVar2;
 
-	EVENT_LOG(LogLevel::Verbose, "edEventComputeChunk active chunk ID: {} param_2: {}", activeChunkID, param_2);
+	EVENT_LOG(LogLevel::Verbose, "edEventComputeChunk: chunk ID {}, use_clusters: {}", activeChunkID, param_2);
 
 	pEventchunk = pedEventChunks[activeChunkID];
 
-	EVENT_LOG(LogLevel::Verbose, "edEventComputeChunk count: {} events: {}", pEventchunk->count_0x38, pEventchunk->nbEvents);
+	EVENT_LOG(LogLevel::Verbose, "edEventComputeChunk: cluster_count: {}, nb_events: {}", pEventchunk->count_0x38, pEventchunk->nbEvents);
 
 	if ((pEventchunk->count_0x38 == 0) || (param_2 == false)) {
 		pEvent = pEventchunk->aEvents;
 		uVar2 = 0;
 		if (pEventchunk->nbEvents != 0) {
 			do {
-				EVENT_LOG(LogLevel::Verbose, "\nedEventComputeChunk compute {}", uVar2);
+				EVENT_LOG(LogLevel::Verbose, "edEventComputeChunk: computing event 0x{:x}", uVar2);
 				_edEventComputeEvent(pEventchunk, LOAD_POINTER_CAST(ed_event*, *pEvent));
 				uVar2 = uVar2 + 1;
 				pEvent = pEvent + 1;

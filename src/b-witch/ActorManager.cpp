@@ -263,11 +263,14 @@ void CActorManager::Level_Manage()
 	float eleX;
 	float eleY;
 	float eleZ;
-	
-	// Clusterizers
-	CActorClusteriser* pCurrentClusteriser = reinterpret_cast<CActorClusteriser*>(this->aClassInfo[CLUSTERISER].aActors);
-	for (counter = 0; counter < this->aClassInfo[CLUSTERISER].totalCount; counter = counter + 1) {
-		pCurrentClusteriser[counter].Manage();
+
+	{
+		// Clusterizers
+		ZONE_SCOPED_NAME("Clusterisers");
+		CActorClusteriser* pCurrentClusteriser = reinterpret_cast<CActorClusteriser*>(this->aClassInfo[CLUSTERISER].aActors);
+		for (counter = 0; counter < this->aClassInfo[CLUSTERISER].totalCount; counter = counter + 1) {
+			pCurrentClusteriser[counter].Manage();
+		}
 	}
 
 	cameraLocation.xyz = CCameraManager::_gThis->transformationMatrix.rowT.xyz;
@@ -280,65 +283,70 @@ void CActorManager::Level_Manage()
 	ppActiveActors = this->aActiveActors;
 	ppSectorActorsEnd = ppSectorActors + this->nbSectorActors;
 
-	for (; ppSectorActors < ppSectorActorsEnd; ppSectorActors = ppSectorActors + 1) {
-		pActor = *ppSectorActors;
+	{
+		ZONE_SCOPED_NAME("Update Active");
+		for (; ppSectorActors < ppSectorActorsEnd; ppSectorActors = ppSectorActors + 1) {
+			pActor = *ppSectorActors;
 
-		if ((pActor->flags & 0x800000) == 0) {
+			ZONE_NAME(pActor->name, strlen(pActor->name));
 
-			eleX = pActor->sphereCentre.x - cameraLocation.x;
-			eleY = pActor->sphereCentre.y - cameraLocation.y;
-			eleZ = pActor->sphereCentre.z - cameraLocation.z;
-			pActor->distanceToCamera = sqrtf(eleX * eleX + eleY * eleY + eleZ * eleZ) - pActor->sphereCentre.w;
+			if ((pActor->flags & 0x800000) == 0) {
 
-			actorFlags = pActor->flags;
+				eleX = pActor->sphereCentre.x - cameraLocation.x;
+				eleY = pActor->sphereCentre.y - cameraLocation.y;
+				eleZ = pActor->sphereCentre.z - cameraLocation.z;
+				pActor->distanceToCamera = sqrtf(eleX * eleX + eleY * eleY + eleZ * eleZ) - pActor->sphereCentre.w;
 
-			ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} distance: {} flags: 0x{:x}", pActor->name, pActor->distanceToCamera, actorFlags);
+				actorFlags = pActor->flags;
 
-			if ((actorFlags & 8) == 0) {
-				bShouldBeActive = pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance;
-				ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage distance check sector actor: {} {} <= {} result: {}",
-					pActor->name, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
-			}
-			else {
-				if ((actorFlags & 0x10) == 0) {
-					bShouldBeActive = pActor->state_0x10;
-					ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state check sector actor: {} state: {} result: {}",
-						pActor->name, pActor->state_0x10, bShouldBeActive);
+				ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} distance: {} flags: 0x{:x}", pActor->name, pActor->distanceToCamera, actorFlags);
+
+				if ((actorFlags & 8) == 0) {
+					bShouldBeActive = pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance;
+					ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage distance check sector actor: {} {} <= {} result: {}",
+						pActor->name, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
 				}
 				else {
-					bShouldBeActive = false;
+					if ((actorFlags & 0x10) == 0) {
+						bShouldBeActive = pActor->state_0x10;
+						ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state check sector actor: {} state: {} result: {}",
+							pActor->name, pActor->state_0x10, bShouldBeActive);
+					}
+					else {
+						bShouldBeActive = false;
 
-					ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state and distance check sector actor: {} state: {} distance: {} <= {} result: {}",
-						pActor->name, pActor->state_0x10, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
+						ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state and distance check sector actor: {} state: {} distance: {} <= {} result: {}",
+							pActor->name, pActor->state_0x10, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
 
-					if ((pActor->state_0x10 != 0) && (pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance))
-					{
-						bShouldBeActive = true;
+						if ((pActor->state_0x10 != 0) && (pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance))
+						{
+							bShouldBeActive = true;
+						}
 					}
 				}
-			}
 
-			ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} shouldBeActive: {}", pActor->name, bShouldBeActive);
+				ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} shouldBeActive: {}", pActor->name, bShouldBeActive);
 
-			actorFlags = pActor->flags;
-			if (((bShouldBeActive | actorFlags & 2) == 0) || ((actorFlags & 0x2000001) != 0)) {
-				if ((pActor->flags & 4) != 0) {
+				actorFlags = pActor->flags;
+				if (((bShouldBeActive | actorFlags & 2) == 0) || ((actorFlags & 0x2000001) != 0)) {
+					if ((pActor->flags & 4) != 0) {
+						pActor->FUN_00101110((CActor*)0x0);
+						pActor->ChangeManageState(0);
+					}
+
+					pActor->UpdateVisibility();
+				}
+				else {
+					if ((actorFlags & 4) == 0) {
+						pActor->ChangeManageState(1);
+					}
+
 					pActor->FUN_00101110((CActor*)0x0);
-					pActor->ChangeManageState(0);
+					*ppActiveActors = pActor;
+					ppActiveActors = ppActiveActors + 1;
+
+					ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage active actor: {}", pActor->name);
 				}
-
-				pActor->UpdateVisibility();
-			}
-			else {
-				if ((actorFlags & 4) == 0) {
-					pActor->ChangeManageState(1);
-				}
-
-				pActor->FUN_00101110((CActor*)0x0);
-				*ppActiveActors = pActor;
-				ppActiveActors = ppActiveActors + 1;
-
-				ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage active actor: {}", pActor->name);
 			}
 		}
 	}

@@ -42,8 +42,6 @@ namespace Renderer
 
 			static glm::mat4 gInitialViewMatrix = glm::mat4(1.0f);
 			static glm::mat4 gInitialProjMatrix = glm::mat4(1.0f);
-			static glm::mat4 gLastModelMatrix = glm::mat4(1.0f);
-			static bool gHasLastModelMatrix = false;
 			static bool gHasInitialViewProjection = false;
 
 			// Dedicated end-of-frame debug render pass resources.
@@ -62,42 +60,6 @@ namespace Renderer
 				}
 				gDebugLineVertices[gDebugLineVertexCount++] = { glm::vec4(start, 1.0f), color };
 				gDebugLineVertices[gDebugLineVertexCount++] = { glm::vec4(end, 1.0f), color };
-			}
-
-			static glm::vec3 GetDebugShapeWorldPosition()
-			{
-				if (gHasLastModelMatrix) {
-					return glm::vec3(gLastModelMatrix[3]);
-				}
-
-				const glm::mat4 inverseView = glm::inverse(gInitialViewMatrix);
-				const glm::vec3 cameraPosition = glm::vec3(inverseView[3]);
-
-				glm::vec3 cameraForward = -glm::vec3(inverseView[2]);
-				const float forwardLength = glm::length(cameraForward);
-
-				if (forwardLength > 0.0f) {
-					cameraForward /= forwardLength;
-				}
-				else {
-					cameraForward = glm::vec3(0.0f, 0.0f, 1.0f);
-				}
-
-				return cameraPosition + (cameraForward * 100.0f);
-			}
-
-			static void BuildShapeLines()
-			{
-				if (!gHasInitialViewProjection) {
-					return;
-				}
-
-				const glm::vec3 center = GetDebugShapeWorldPosition();
-				constexpr float axisHalfLength = 25.0f;
-
-				PushLine(center + glm::vec3(-axisHalfLength, 0.0f, 0.0f), center + glm::vec3(axisHalfLength, 0.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-				PushLine(center + glm::vec3(0.0f, -axisHalfLength, 0.0f), center + glm::vec3(0.0f, axisHalfLength, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-				PushLine(center + glm::vec3(0.0f, 0.0f, -axisHalfLength), center + glm::vec3(0.0f, 0.0f, axisHalfLength), glm::vec4(0.0f, 0.5f, 1.0f, 1.0f));
 			}
 
 			static void UploadLineVertices()
@@ -129,7 +91,6 @@ namespace Renderer
 
 			void ResetFrame()
 			{
-				gHasLastModelMatrix = false;
 				gHasInitialViewProjection = false;
 				gDebugLineVertexCount = 0;
 				gHasSavedDepth = false;
@@ -140,12 +101,6 @@ namespace Renderer
 				gInitialViewMatrix = viewMatrix;
 				gInitialProjMatrix = projMatrix;
 				gHasInitialViewProjection = true;
-			}
-
-			void SetLastModelMatrix(const glm::mat4& modelMatrix)
-			{
-				gLastModelMatrix = modelMatrix;
-				gHasLastModelMatrix = true;
 			}
 
 			void AddLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color)
@@ -197,6 +152,137 @@ namespace Renderer
 				PushLine(corners[1], corners[5], color);
 				PushLine(corners[2], corners[6], color);
 				PushLine(corners[3], corners[7], color);
+			}
+
+			// Shared helper: decompose a row-major local-to-world matrix (edF32MATRIX4 layout)
+			// into three world-space axis vectors and the world-space center.
+			static void DecomposeLocalToWorld(const float* mat,
+				glm::vec3& axisX, glm::vec3& axisY, glm::vec3& axisZ, glm::vec3& center)
+			{
+				axisX  = glm::vec3(mat[0],  mat[1],  mat[2]);
+				axisY  = glm::vec3(mat[4],  mat[5],  mat[6]);
+				axisZ  = glm::vec3(mat[8],  mat[9],  mat[10]);
+				center = glm::vec3(mat[12], mat[13], mat[14]);
+			}
+
+			// Type 3: cylinder with y ∈ [-0.5, 0.5] and xz radius = 1 in local space.
+			void AddCylinder(const float* mat, float r, float g, float b, float a)
+			{
+				glm::vec3 axisX, axisY, axisZ, center;
+				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
+
+				constexpr int   kSegs = 24;
+				constexpr float kStep = 2.0f * 3.14159265358979323846f / kSegs;
+				const glm::vec4 color(r, g, b, a);
+
+				const glm::vec3 topCenter    = center + 0.5f * axisY;
+				const glm::vec3 bottomCenter = center - 0.5f * axisY;
+
+				for (int i = 0; i < kSegs; ++i) {
+					const float a0 = kStep * i, a1 = kStep * (i + 1);
+					const float c0 = std::cos(a0), s0 = std::sin(a0);
+					const float c1 = std::cos(a1), s1 = std::sin(a1);
+
+					// Top and bottom rings
+					PushLine(topCenter    + c0 * axisX + s0 * axisZ,
+					         topCenter    + c1 * axisX + s1 * axisZ, color);
+					PushLine(bottomCenter + c0 * axisX + s0 * axisZ,
+					         bottomCenter + c1 * axisX + s1 * axisZ, color);
+
+					// Vertical lines at 4 cardinal angles
+					if (i % (kSegs / 4) == 0) {
+						PushLine(topCenter    + c0 * axisX + s0 * axisZ,
+						         bottomCenter + c0 * axisX + s0 * axisZ, color);
+					}
+				}
+			}
+
+			// Type 4: cone with apex at y=0.5 and base circle at y=-0.5 with xz radius=1 in local space.
+			// From the collision test: x²+z² ≤ (0.5-y)², so radius at height y is (0.5-y).
+			void AddCone(const float* mat, float r, float g, float b, float a)
+			{
+				glm::vec3 axisX, axisY, axisZ, center;
+				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
+
+				constexpr int   kSegs = 24;
+				constexpr float kStep = 2.0f * 3.14159265358979323846f / kSegs;
+				const glm::vec4 color(r, g, b, a);
+
+				const glm::vec3 apex       = center + 0.5f * axisY;
+				const glm::vec3 baseCenter = center - 0.5f * axisY;
+
+				for (int i = 0; i < kSegs; ++i) {
+					const float a0 = kStep * i, a1 = kStep * (i + 1);
+					const float c0 = std::cos(a0), s0 = std::sin(a0);
+					const float c1 = std::cos(a1), s1 = std::sin(a1);
+
+					// Base circle
+					PushLine(baseCenter + c0 * axisX + s0 * axisZ,
+					         baseCenter + c1 * axisX + s1 * axisZ, color);
+
+					// Lines from apex at 4 cardinal angles
+					if (i % (kSegs / 4) == 0) {
+						PushLine(apex, baseCenter + c0 * axisX + s0 * axisZ, color);
+					}
+				}
+			}
+
+			// Type 1: plane+box: x,z ∈ [-0.5, 0.5], y ≥ 0 (open top) in local space.
+			// Drawn as an open-top box with floor at y=0 and walls to y=1; tick marks at
+			// the top of each wall indicate the zone continues upward indefinitely.
+			void AddOpenTopBox(const float* mat, float r, float g, float b, float a)
+			{
+				glm::vec3 axisX, axisY, axisZ, center;
+				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
+
+				const glm::vec4 color(r, g, b, a);
+				const glm::vec3 ex = 0.5f * axisX;
+				const glm::vec3 ez = 0.5f * axisZ;
+
+				// Floor corners at y=0 in local space
+				const glm::vec3 f[4] = {
+					center - ex - ez,
+					center + ex - ez,
+					center + ex + ez,
+					center - ex + ez,
+				};
+				// Wall tops at y=1 in local space (no cap drawn)
+				const glm::vec3 t[4] = {
+					f[0] + axisY, f[1] + axisY, f[2] + axisY, f[3] + axisY,
+				};
+
+				PushLine(f[0], f[1], color); PushLine(f[1], f[2], color);
+				PushLine(f[2], f[3], color); PushLine(f[3], f[0], color);
+				PushLine(f[0], t[0], color); PushLine(f[1], t[1], color);
+				PushLine(f[2], t[2], color); PushLine(f[3], t[3], color);
+
+				// Outward ticks to indicate walls continue upward
+				const glm::vec3 tick = 0.15f * axisY;
+				for (int i = 0; i < 4; ++i) {
+					PushLine(t[i], t[i] + tick, color);
+				}
+			}
+
+			// Type 0: half-space y ≥ 0 — draw a cross on the y=0 boundary plane and an arrow in +y.
+			void AddHalfSpace(const float* mat, float r, float g, float b, float a)
+			{
+				glm::vec3 axisX, axisY, axisZ, center;
+				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
+
+				const glm::vec4 color(r, g, b, a);
+				// Cross in the boundary plane
+				PushLine(center - axisX, center + axisX, color);
+				PushLine(center - axisZ, center + axisZ, color);
+				// Arrow shaft in +y
+				PushLine(center, center + axisY, color);
+				// Arrowhead (four fins)
+				const glm::vec3 tip  = center + axisY;
+				const glm::vec3 base = center + 0.8f * axisY;
+				const float kHead = 0.15f;
+				PushLine(tip, base + kHead * axisX, color);
+				PushLine(tip, base - kHead * axisX, color);
+				PushLine(tip, base + kHead * axisZ, color);
+				PushLine(tip, base - kHead * axisZ, color);
 			}
 
 			uint32_t GetLineCount()
@@ -349,8 +435,6 @@ namespace Renderer
 
 			void Record(const VkCommandBuffer& cmd, const Renderer::Pipeline& pipeline)
 			{
-				BuildShapeLines();
-
 				if (gDebugLineVertexCount == 0) {
 					return;
 				}
@@ -474,8 +558,6 @@ namespace Renderer
 				if (!gHasSavedDepth) {
 					return;
 				}
-
-				BuildShapeLines();
 
 				if (gDebugLineVertexCount == 0) {
 					return;

@@ -126,7 +126,6 @@ namespace Renderer
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushModelMatrix: {}", gModelBuffer.GetDebugIndex());
 			const glm::mat4 modelMatrix = glm::make_mat4(pModel);
 			gModelBuffer.AddInstanceData(modelMatrix);
-			DebugShapes::SetLastModelMatrix(modelMatrix);
 		}
 
 		void PushAnimMatrix(float* pAnim)

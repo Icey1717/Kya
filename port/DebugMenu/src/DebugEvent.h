@@ -3,5 +3,6 @@
 namespace Debug {
 	namespace Event {
 		void ShowMenu(bool* bOpen);
+		void DrawEventShapes();
 	}
 }

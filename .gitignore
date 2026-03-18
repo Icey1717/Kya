@@ -10,3 +10,4 @@ cmake-build-debug/
 .github
 __pycache__
 upscaling/
+profiler/

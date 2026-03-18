@@ -1,4 +1,4 @@
-﻿#include "DebugMenu.h"
+#include "DebugMenu.h"
 #include "DebugEvent.h"
 #include <imgui.h>
 #include "Types.h"
@@ -10,6 +10,9 @@
 #include "DebugHelpers.h"
 #include "Actor.h"
 #include "ActorManager.h"
+#include "Native/NativeDebugShapes.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 extern ed_event_chunk** pedEventChunks;
 extern uint edEventNbChunks;
@@ -111,10 +114,18 @@ static std::string BuildEventLabel(ed_event_chunk* pChunk, int eventIndex)
 
 namespace Debug {
 	namespace Event {
+		static int gSelectedChunk = 0;
+
 		static Setting<bool> gShowEventsOverlay("Show Events Overlay", true);
 		static Setting<bool> gShowAllZones("Show All Zones", false);
 		static Setting<bool> gShowSelectedEvent("Show Selected Event", true);
 		static Setting<bool> gShowActiveEvents("Show Active Events", true);
+
+		static Setting<bool> gShowEventShapes3D   ("Show 3D Event Shapes",          false);
+		static Setting<bool> gShowZoneSpheres      ("3D: Zone Bounding Spheres",     true);
+		static Setting<bool> gShowZonePrimitives   ("3D: Zone Primitives",           true);
+		static Setting<bool> gShowAllZonePrimitives("3D: All Zone Primitives",       false);
+		static Setting<bool> gShowColliderPositions("3D: Collider Positions",        true);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
 
@@ -247,8 +258,6 @@ namespace Debug {
 
 void Debug::Event::ShowMenu(bool* bOpen)
 {
-	static int selectedChunk = 0;
-
 	ImGui::Begin("Event", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 	auto* pEventManager = CScene::ptable.g_EventManager_006f5080;
@@ -273,11 +282,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		return "Chunk " + std::to_string(i) + " (" + std::to_string(pC->nbEvents) + " events)";
 	};
 
-	if (ImGui::BeginCombo("Select Chunk", BuildChunkLabel(selectedChunk).c_str())) {
+	if (ImGui::BeginCombo("Select Chunk", BuildChunkLabel(gSelectedChunk).c_str())) {
 		for (int i = 0; i < (int)edEventNbChunks; i++) {
-			bool isSelected = selectedChunk == i;
+			bool isSelected = gSelectedChunk == i;
 			if (ImGui::Selectable(BuildChunkLabel(i).c_str(), isSelected)) {
-				selectedChunk = i;
+				gSelectedChunk = i;
 			}
 			if (isSelected) ImGui::SetItemDefaultFocus();
 		}
@@ -287,8 +296,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 	ImGui::Spacing();
 
 	// show chunk details
-	if (selectedChunk < edEventNbChunks) {
-		auto* pChunk = pedEventChunks[selectedChunk];
+	if (gSelectedChunk < edEventNbChunks) {
+		auto* pChunk = pedEventChunks[gSelectedChunk];
 
 		if (pChunk && ImGui::CollapsingHeader("Chunk Details")) {
 			DebugHelpers::TextValidValue("pFileData %p", pChunk->pFileData);
@@ -507,6 +516,84 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		gShowActiveEvents.DrawImguiControl();
 	}
 
+	ImGui::Spacing();
+
+	gShowEventShapes3D.DrawImguiControl();
+
+	if (gShowEventShapes3D) {
+		ImGui::Indent();
+		gShowZoneSpheres.DrawImguiControl();
+		gShowZonePrimitives.DrawImguiControl();
+		if (gShowZonePrimitives) {
+			ImGui::Indent();
+			gShowAllZonePrimitives.DrawImguiControl();
+			ImGui::Unindent();
+		}
+		gShowColliderPositions.DrawImguiControl();
+		ImGui::Unindent();
+
+		// Show computed world-space positions for the selected event so the user can cross-check
+		// them against what the 3D shapes draw.
+		const uint selChunkU = static_cast<uint>(gSelectedChunk);
+		if (selChunkU < edEventNbChunks) {
+			auto* pChunkDbg = pedEventChunks[selChunkU];
+			const int selEvt = gSelectedEvent.get();
+			if (pChunkDbg && selEvt >= 0 && selEvt < static_cast<int>(pChunkDbg->nbEvents)) {
+				auto* pEvtDbg  = LOAD_POINTER_CAST(ed_event*, pChunkDbg->aEvents[selEvt]);
+				auto* pZoneDbg = LOAD_POINTER_CAST(ed_zone_3d*, pEvtDbg->pZone);
+				if (pZoneDbg && ImGui::CollapsingHeader("3D Shape Debug Info")) {
+					auto* pZMat = LOAD_POINTER_CAST(edF32MATRIX4*, pZoneDbg->pMatrix);
+					ImGui::TextDisabled("Zone pMatrix: %s", pZMat ? "YES (zone-local space)" : "null (world space)");
+
+					// Bounding sphere
+					{
+						float cx = pZoneDbg->boundSphere.x;
+						float cy = pZoneDbg->boundSphere.y;
+						float cz = pZoneDbg->boundSphere.z;
+						ImGui::Text("BoundSphere raw  (%.1f, %.1f, %.1f)  r=%.1f", cx, cy, cz, pZoneDbg->boundSphere.w);
+						if (pZMat) {
+							const glm::vec3 wc(glm::inverse(glm::make_mat4(pZMat->raw)) * glm::vec4(cx, cy, cz, 1.0f));
+							ImGui::Text("BoundSphere world(%.1f, %.1f, %.1f)", wc.x, wc.y, wc.z);
+						}
+					}
+
+					// Primitives
+					const int nbPDbg = edEventGetChunkZoneNbInclusivePrimitives(static_cast<int>(selChunkU), pZoneDbg);
+					ImGui::Text("Primitives: %d", nbPDbg);
+					for (int p = 0; p < nbPDbg; p++) {
+						e_ed_event_prim3d_type ptDbg = 0;
+						edF32MATRIX4* pPMat = edEventGetChunkZonePrimitive(selChunkU, pZoneDbg, static_cast<uint>(p), &ptDbg);
+						if (pPMat) {
+							glm::mat4 w2l = glm::make_mat4(pPMat->raw);
+							if (pZMat) w2l = w2l * glm::make_mat4(pZMat->raw);
+							const glm::vec3 wc(glm::inverse(w2l)[3]);
+							ImGui::Text("  [%d] type=%d  world center (%.1f, %.1f, %.1f)", p, static_cast<int>(ptDbg), wc.x, wc.y, wc.z);
+						}
+					}
+
+					// Colliders
+					auto* pCDbg = reinterpret_cast<_ed_event_collider_test*>(pEvtDbg + 1);
+					for (int c = 0; c < static_cast<int>(pEvtDbg->nbColliders); c++, pCDbg++) {
+						auto* pARef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCDbg->pActorRef);
+						const char* aName = "?";
+						if (pARef) {
+							auto* pAc = LOAD_POINTER_CAST(CActor*, pARef->pActor);
+							if (pAc) aName = pAc->name;
+						}
+						ImGui::Text("  Collider[%d] (%s)", c, aName);
+						if (pARef) {
+							auto* pLoc = LOAD_POINTER_CAST(edF32VECTOR4*, pARef->pLocation);
+							if (pLoc) ImGui::Text("    world pos:  (%.1f, %.1f, %.1f)", pLoc->x, pLoc->y, pLoc->z);
+						}
+						// worldLocation is actually the primitive-local position, not world space
+						ImGui::TextDisabled("    prim-local:  (%.1f, %.1f, %.1f) [worldLocation]",
+						                    pCDbg->worldLocation.x, pCDbg->worldLocation.y, pCDbg->worldLocation.z);
+					}
+				}
+			}
+		}
+	}
+
 	ImGui::End();
 
 	if (bTrackingEvents) {
@@ -529,7 +616,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 			// Try to resolve actor name from the active chunk
 			const char* actorName = "?";
-			auto* pEventChunk = pedEventChunks[selectedChunk];
+			auto* pEventChunk = pedEventChunks[gSelectedChunk];
 			if (pEventChunk && record.first.eventIndex < (int)pEventChunk->nbEvents) {
 				auto* pEvent = LOAD_POINTER_CAST(ed_event*, pEventChunk->aEvents[record.first.eventIndex]);
 				if (record.first.colliderIndex < (int)pEvent->nbColliders) {
@@ -587,7 +674,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		ImGui::End();
 	}
 
-	auto* pEventChunk = pedEventChunks[selectedChunk];
+	auto* pEventChunk = pedEventChunks[gSelectedChunk];
 
 	if (gShowEventsOverlay && pEventChunk) {
 		// Remove the title bar and window border and make the window transparent
@@ -598,8 +685,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		ImGui::SetWindowSize(FrameBuffer::GetGameWindowSize(), ImGuiCond_Always);
 
 		if (gShowAllZones) {
-			for (int i = 0; i < edEventGetChunkNbEvents(selectedChunk); i++) {
-				const auto* pZone = edEventGetChunkZone(selectedChunk, i);
+			for (int i = 0; i < edEventGetChunkNbEvents(gSelectedChunk); i++) {
+				const auto* pZone = edEventGetChunkZone(gSelectedChunk, i);
 
 				ImVec2 screenPos;
 				if (Debug::Projection::WorldToScreen(pZone->boundSphere, screenPos)) {
@@ -720,7 +807,164 @@ void Debug::Event::ShowMenu(bool* bOpen)
 	}
 }
 
+// Draws a zone primitive in world space.
+// pPrimMatrix  : matrix returned by edEventGetChunkZonePrimitive — transforms zone-local positions
+//                into unit-primitive local space.
+// pZoneMatrix  : optional pZone->pMatrix — transforms world positions into zone-local space first.
+//                When non-null the full world-to-primitive-local = pPrimMatrix * pZoneMatrix.
+//
+// GLM key: glm::make_mat4(raw) produces the same linear operator as edF32Matrix4MulF32Vector4Hard,
+// so glm::inverse(glm::make_mat4(raw)) gives the local-to-world transform ready for glm::value_ptr.
+// DecomposeLocalToWorld reads the bytes in column-major order (columns = world-space axes + center).
+static void DrawZonePrimitive(const edF32MATRIX4* pPrimMatrix, const edF32MATRIX4* pZoneMatrix,
+                               e_ed_event_prim3d_type primType, float r, float g, float b, float a)
+{
+	glm::mat4 worldToLocal = glm::make_mat4(pPrimMatrix->raw);
+	if (pZoneMatrix) {
+		// pPrimMatrix maps zone-local → prim-local; compose with pZoneMatrix (world → zone-local)
+		worldToLocal = worldToLocal * glm::make_mat4(pZoneMatrix->raw);
+	}
+	const glm::mat4 localToWorld = glm::inverse(worldToLocal);
+	const float* mat = glm::value_ptr(localToWorld);
+
+	switch (primType) {
+	case 0: // Half-space: y ≥ 0
+		Renderer::Native::DebugShapes::AddHalfSpace(mat, r, g, b, a);
+		break;
+	case 1: // Plane+box: x,z ∈ [-0.5, 0.5], y ≥ 0
+		Renderer::Native::DebugShapes::AddOpenTopBox(mat, r, g, b, a);
+		break;
+	case 2: // Box: x,y,z ∈ [-0.5, 0.5]
+		Renderer::Native::DebugShapes::AddOBB(mat, 0.5f, 0.5f, 0.5f, r, g, b, a);
+		break;
+	case 3: // Cylinder: y ∈ [-0.5, 0.5], xz radius = 1
+		Renderer::Native::DebugShapes::AddCylinder(mat, r, g, b, a);
+		break;
+	case 4: // Cone: apex at y=0.5, base at y=-0.5 with xz radius = 1
+		Renderer::Native::DebugShapes::AddCone(mat, r, g, b, a);
+		break;
+	case 5: { // Sphere: x²+y²+z² ≤ 1 (unit sphere)
+		// Column 3 of localToWorld = world-space origin; column 0 length = scale (radius for unit sphere)
+		const glm::vec3 worldCenter(localToWorld[3]);
+		const float radius = glm::length(glm::vec3(localToWorld[0]));
+		Renderer::Native::DebugShapes::AddSphere(worldCenter.x, worldCenter.y, worldCenter.z, radius, r, g, b, a);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void Debug::Event::DrawEventShapes()
+{
+	if (!gShowEventShapes3D) return;
+	if (!pedEventChunks || edEventNbChunks == 0) return;
+
+	const uint selectedChunk = static_cast<uint>(gSelectedChunk);
+	if (selectedChunk >= edEventNbChunks) return;
+
+	auto* pChunk = pedEventChunks[selectedChunk];
+	if (!pChunk) return;
+
+	const int nbEvents = static_cast<int>(pChunk->nbEvents);
+	const int selectedEvent = gSelectedEvent.get();
+
+	for (int i = 0; i < nbEvents; i++) {
+		auto* pEvent = LOAD_POINTER_CAST(ed_event*, pChunk->aEvents[i]);
+		if (!pEvent) continue;
+
+		auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
+		if (!pZone) continue;
+
+		const bool bEventActive = (pEvent->flags & ED_EVENT_FLAG_ACTIVE) != 0;
+		const bool bIsSelected  = (i == selectedEvent);
+
+		// pZone->pMatrix (when non-null) transforms the actor's world position into zone-local
+		// space before the bounding sphere and primitive tests. In that case the bounding sphere
+		// xyz and the primitive matrices are expressed in zone-local space, NOT world space.
+		auto* pZoneMatrix = LOAD_POINTER_CAST(edF32MATRIX4*, pZone->pMatrix);
+
+		// Zone bounding spheres
+		const bool bZeroVolume = (pZone->boundSphere.w == 0.0f);
+		if (gShowZoneSpheres) {
+			float r, g, b, a;
+			if (bZeroVolume && bIsSelected) {
+				r = 0.2f; g = 0.5f; b = 1.0f; a = 1.0f;   // blue = selected (zero-volume)
+			} else if (bZeroVolume) {
+				r = 1.0f; g = 0.8f; b = 0.0f; a = 1.0f;   // yellow = zero-volume (no sphere cull, always tests primitives)
+			} else if (bIsSelected) {
+				r = 0.2f; g = 0.5f; b = 1.0f; a = 1.0f;   // blue = selected
+			} else if (bEventActive) {
+				r = 0.0f; g = 1.0f; b = 0.0f; a = 0.7f;   // green = active
+			} else {
+				r = 0.5f; g = 0.5f; b = 0.5f; a = 0.4f;   // grey = inactive
+			}
+			float cx = pZone->boundSphere.x;
+			float cy = pZone->boundSphere.y;
+			float cz = pZone->boundSphere.z;
+			if (pZoneMatrix) {
+				// Bounding sphere center is in zone-local space; apply inverse(pZoneMatrix) to
+				// bring it back to world space. Assumes rigid body (radius unchanged by transform).
+				const glm::vec3 worldCenter(glm::inverse(glm::make_mat4(pZoneMatrix->raw))
+				                            * glm::vec4(cx, cy, cz, 1.0f));
+				cx = worldCenter.x; cy = worldCenter.y; cz = worldCenter.z;
+			}
+			const float drawRadius = bZeroVolume ? 0.1f : pZone->boundSphere.w;
+			Renderer::Native::DebugShapes::AddSphere(cx, cy, cz, drawRadius, r, g, b, a);
+		}
+
+		// Zone primitives: always draw for zero-volume zones (their sphere cull is always skipped,
+		// so the primitive is the only shape being tested). For normal zones, draw only for the
+		// selected event to avoid clutter, unless gShowAllZonePrimitives is on.
+		if (gShowZonePrimitives && (bIsSelected || bZeroVolume || gShowAllZonePrimitives)) {
+			const int nbPrims = edEventGetChunkZoneNbInclusivePrimitives(static_cast<int>(selectedChunk), pZone);
+			for (int p = 0; p < nbPrims; p++) {
+				e_ed_event_prim3d_type primType = 0;
+				edF32MATRIX4* pPrimMatrix = edEventGetChunkZonePrimitive(selectedChunk, pZone, static_cast<uint>(p), &primType);
+				if (!pPrimMatrix) continue;
+
+				if (bZeroVolume && !bIsSelected) {
+					// Yellow-tinted to match the marker sphere; dimmer alpha to reduce noise
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 1.0f, 0.8f, 0.0f, 0.6f);
+				} else if (!bIsSelected) {
+					// Non-selected normal events: grey-tinted to distinguish from selected cyan
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.5f, 0.5f, 0.5f, 0.4f);
+				} else {
+					// Selected event primitives in cyan
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.0f, 0.9f, 1.0f, 1.0f);
+				}
+			}
+		}
+
+		// Collider actor positions. Note: pCollider->worldLocation is NOT a world-space position;
+		// it stores the actor's coordinates in primitive-local space (computed by
+		// _edEventComputeZeroVolumeZoneAgainstVertex). Use pActorRef->pLocation for the actual
+		// world position.
+		if (gShowColliderPositions) {
+			auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+			for (int c = 0; c < static_cast<int>(pEvent->nbColliders); c++, pCollider++) {
+				auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+				if (!pActorRef) continue;
+				auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
+				if (!pLocation) continue;
+
+				const bool bInside = (pCollider->flags & ED_COLLIDER_FLAG_INSIDE) != 0;
+				float cr, cg, cb;
+				if (bInside) {
+					cr = 0.0f;  cg = 1.0f;  cb = 0.3f; // green = inside
+				} else {
+					cr = 1.0f;  cg = 0.3f;  cb = 0.0f; // red/orange = outside
+				}
+				Renderer::Native::DebugShapes::AddSphere(
+					pLocation->x, pLocation->y, pLocation->z,
+					15.0f, cr, cg, cb, 1.0f);
+			}
+		}
+	}
+}
+
 namespace Debug {
-    MenuRegisterer sDebugEventMenuReg("Event", Debug::Event::ShowMenu);
+    MenuRegisterer  sDebugEventMenuReg("Event", Debug::Event::ShowMenu);
+    UpdateRegisterer sDebugEventUpdateReg(Debug::Event::DrawEventShapes);
 }
 
