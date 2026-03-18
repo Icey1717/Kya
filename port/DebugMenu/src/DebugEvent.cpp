@@ -125,6 +125,7 @@ namespace Debug {
 		static Setting<bool> gShowZoneSpheres      ("3D: Zone Bounding Spheres",     true);
 		static Setting<bool> gShowZonePrimitives   ("3D: Zone Primitives",           true);
 		static Setting<bool> gShowAllZonePrimitives("3D: All Zone Primitives",       false);
+		static Setting<bool> gShowZonePrimitivesShaded("3D: Zone Primitives Shaded", false);
 		static Setting<bool> gShowColliderPositions("3D: Collider Positions",        true);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
@@ -527,6 +528,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		if (gShowZonePrimitives) {
 			ImGui::Indent();
 			gShowAllZonePrimitives.DrawImguiControl();
+			gShowZonePrimitivesShaded.DrawImguiControl();
 			ImGui::Unindent();
 		}
 		gShowColliderPositions.DrawImguiControl();
@@ -817,7 +819,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 // so glm::inverse(glm::make_mat4(raw)) gives the local-to-world transform ready for glm::value_ptr.
 // DecomposeLocalToWorld reads the bytes in column-major order (columns = world-space axes + center).
 static void DrawZonePrimitive(const edF32MATRIX4* pPrimMatrix, const edF32MATRIX4* pZoneMatrix,
-                               e_ed_event_prim3d_type primType, float r, float g, float b, float a)
+                               e_ed_event_prim3d_type primType, float r, float g, float b, float a,
+                               bool bShaded = false)
 {
 	glm::mat4 worldToLocal = glm::make_mat4(pPrimMatrix->raw);
 	if (pZoneMatrix) {
@@ -835,19 +838,31 @@ static void DrawZonePrimitive(const edF32MATRIX4* pPrimMatrix, const edF32MATRIX
 		Renderer::Native::DebugShapes::AddOpenTopBox(mat, r, g, b, a);
 		break;
 	case 2: // Box: x,y,z ∈ [-0.5, 0.5]
-		Renderer::Native::DebugShapes::AddOBB(mat, 0.5f, 0.5f, 0.5f, r, g, b, a);
+		if (bShaded)
+			Renderer::Native::DebugShapes::AddFilledOBB(mat, 0.5f, 0.5f, 0.5f, r, g, b, a);
+		else
+			Renderer::Native::DebugShapes::AddOBB(mat, 0.5f, 0.5f, 0.5f, r, g, b, a);
 		break;
 	case 3: // Cylinder: y ∈ [-0.5, 0.5], xz radius = 1
-		Renderer::Native::DebugShapes::AddCylinder(mat, r, g, b, a);
+		if (bShaded)
+			Renderer::Native::DebugShapes::AddFilledCylinder(mat, r, g, b, a);
+		else
+			Renderer::Native::DebugShapes::AddCylinder(mat, r, g, b, a);
 		break;
 	case 4: // Cone: apex at y=0.5, base at y=-0.5 with xz radius = 1
-		Renderer::Native::DebugShapes::AddCone(mat, r, g, b, a);
+		if (bShaded)
+			Renderer::Native::DebugShapes::AddFilledCone(mat, r, g, b, a);
+		else
+			Renderer::Native::DebugShapes::AddCone(mat, r, g, b, a);
 		break;
 	case 5: { // Sphere: x²+y²+z² ≤ 1 (unit sphere)
 		// Column 3 of localToWorld = world-space origin; column 0 length = scale (radius for unit sphere)
 		const glm::vec3 worldCenter(localToWorld[3]);
 		const float radius = glm::length(glm::vec3(localToWorld[0]));
-		Renderer::Native::DebugShapes::AddSphere(worldCenter.x, worldCenter.y, worldCenter.z, radius, r, g, b, a);
+		if (bShaded)
+			Renderer::Native::DebugShapes::AddFilledSphere(worldCenter.x, worldCenter.y, worldCenter.z, radius, r, g, b, a);
+		else
+			Renderer::Native::DebugShapes::AddSphere(worldCenter.x, worldCenter.y, worldCenter.z, radius, r, g, b, a);
 		break;
 	}
 	default:
@@ -925,13 +940,13 @@ void Debug::Event::DrawEventShapes()
 
 				if (bZeroVolume && !bIsSelected) {
 					// Yellow-tinted to match the marker sphere; dimmer alpha to reduce noise
-					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 1.0f, 0.8f, 0.0f, 0.6f);
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 1.0f, 0.8f, 0.0f, 0.6f, static_cast<bool>(gShowZonePrimitivesShaded));
 				} else if (!bIsSelected) {
 					// Non-selected normal events: grey-tinted to distinguish from selected cyan
-					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.5f, 0.5f, 0.5f, 0.4f);
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.5f, 0.5f, 0.5f, 0.4f, static_cast<bool>(gShowZonePrimitivesShaded));
 				} else {
 					// Selected event primitives in cyan
-					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.0f, 0.9f, 1.0f, 1.0f);
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.0f, 0.9f, 1.0f, 1.0f, static_cast<bool>(gShowZonePrimitivesShaded));
 				}
 			}
 		}

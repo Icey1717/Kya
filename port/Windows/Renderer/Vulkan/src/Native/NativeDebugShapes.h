@@ -32,6 +32,12 @@ namespace Renderer
 			void AddHalfSpace(const float* mat4x4, float r, float g, float b, float a);
 			void AddSphere(const glm::vec3& center, float radius, const glm::vec4& color);
 			void AddSphere(float cx, float cy, float cz, float radius, float r, float g, float b, float a);
+			// Filled (shaded) variants — rendered as triangle lists with alpha blending.
+			void AddFilledOBB(const float* mat4x4, float hw, float hh, float hd, float r, float g, float b, float a);
+			void AddFilledCylinder(const float* mat4x4, float r, float g, float b, float a);
+			void AddFilledCone(const float* mat4x4, float r, float g, float b, float a);
+			void AddFilledSphere(float cx, float cy, float cz, float radius, float r, float g, float b, float a);
+
 			// Line variant gated on the actor OBB toggle (not the collision ray toggle)
 			uint32_t GetLineCount();
 
