@@ -250,13 +250,13 @@ namespace Debug {
 		static Setting<bool> gShowSelectedEvent("Show Selected Event", true);
 		static Setting<bool> gShowActiveEvents("Show Active Events", true);
 
-		static Setting<bool> gShowEventShapes3D   ("Show 3D Event Shapes",          false);
-		static Setting<bool> gShowZoneSpheres      ("3D: Zone Bounding Spheres",     true);
-		static Setting<bool> gShowZonePrimitives   ("3D: Zone Primitives",           true);
-		static Setting<bool> gShowAllZonePrimitives("3D: All Zone Primitives",       false);
-		static Setting<bool> gShowZonePrimitivesShaded("3D: Zone Primitives Shaded", false);
-		static Setting<bool> gShowColliderPositions("3D: Collider Positions",        true);
-		static Setting<bool> gShowOnlyKillPrimitives("3D: Only Kill Primitives",      false);
+		static Setting<bool> gShowEventShapes3D         ("Show 3D Event Shapes",      false);
+		static ComboSetting  gZoneSphereMode             ("3D: Zone Bounding Spheres", 1, {"None", "Selected", "All"});
+		static ComboSetting  gZoneShapeMode              ("3D: Zone Shapes",           1, {"None", "Selected", "All"});
+		static Setting<bool> gShowZonePrimitivesShaded   ("3D: Filled",                false);
+		static ComboSetting  gColliderPositionMode       ("3D: Collider Positions",    1, {"None", "Selected", "All"});
+		static ComboSetting  gColliderShapeMode          ("3D: Collider State Shapes", 0, {"None", "Selected", "All"});
+		static Setting<bool> gShowOnlyKillPrimitives     ("3D: Only Kill Zones",       false);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
 
@@ -646,16 +646,18 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 	if (gShowEventShapes3D) {
 		ImGui::Indent();
-		gShowZoneSpheres.DrawImguiControl();
-		gShowZonePrimitives.DrawImguiControl();
-		if (gShowZonePrimitives) {
-			ImGui::Indent();
-			gShowAllZonePrimitives.DrawImguiControl();
-			gShowZonePrimitivesShaded.DrawImguiControl();
-			ImGui::Unindent();
-		}
-		gShowColliderPositions.DrawImguiControl();
+		gZoneSphereMode.DrawImguiControl();
+		ImGui::SetItemTooltip("Draw a sphere at each zone's bounding sphere location.\nSelected = blue, active = green, inactive = grey.\nZero-volume zones (no bounding sphere) always shown as a small unit sphere.");
+		gZoneShapeMode.DrawImguiControl();
+		ImGui::SetItemTooltip("Draw the zone's collision shapes (boxes, cylinders, etc.).\nSelected event shown in cyan, others in grey.\nAlso shows zones with no active colliders, which Collider State Shapes cannot.");
+		gColliderPositionMode.DrawImguiControl();
+		ImGui::SetItemTooltip("Draw a dot at each collider actor's world position.\nGreen = actor is inside the zone, red/orange = outside.");
+		gColliderShapeMode.DrawImguiControl();
+		ImGui::SetItemTooltip("Draw the zone's collision shapes once per collider, coloured by inside/outside state.\nGreen = inside, red/orange = outside.");
+		gShowZonePrimitivesShaded.DrawImguiControl();
+		ImGui::SetItemTooltip("Draw zone and collider shapes as filled/shaded solids instead of wireframes.");
 		gShowOnlyKillPrimitives.DrawImguiControl();
+		ImGui::SetItemTooltip("Filter: only draw shapes for events that have a kill zone primitive.");
 		ImGui::Unindent();
 
 		// Show computed world-space positions for the selected event so the user can cross-check
@@ -1047,14 +1049,15 @@ void Debug::Event::DrawEventShapes()
 		// xyz and the primitive matrices are expressed in zone-local space, NOT world space.
 		auto* pZoneMatrix = LOAD_POINTER_CAST(edF32MATRIX4*, pZone->pMatrix);
 
-		// Zone bounding spheres
+		// Zone bounding spheres. Zero-volume zones always shown (their only visual marker).
 		const bool bZeroVolume = (pZone->boundSphere.w == 0.0f);
-		if (gShowZoneSpheres) {
+		const int sphereMode = gZoneSphereMode.get();
+		if (sphereMode > 0 && (bIsSelected || bZeroVolume || sphereMode == 2)) {
 			float r, g, b, a;
 			if (bZeroVolume && bIsSelected) {
 				r = 0.2f; g = 0.5f; b = 1.0f; a = 1.0f;   // blue = selected (zero-volume)
 			} else if (bZeroVolume) {
-				r = 1.0f; g = 0.8f; b = 0.0f; a = 1.0f;   // yellow = zero-volume (no sphere cull, always tests primitives)
+				r = 1.0f; g = 0.8f; b = 0.0f; a = 1.0f;   // yellow = zero-volume
 			} else if (bIsSelected) {
 				r = 0.2f; g = 0.5f; b = 1.0f; a = 1.0f;   // blue = selected
 			} else if (bEventActive) {
@@ -1076,40 +1079,32 @@ void Debug::Event::DrawEventShapes()
 			Renderer::Native::DebugShapes::AddSphere(cx, cy, cz, drawRadius, r, g, b, a);
 		}
 
-		// Zone primitives: always draw for zero-volume zones (their sphere cull is always skipped,
-		// so the primitive is the only shape being tested). For normal zones, draw only for the
-		// selected event to avoid clutter, unless gShowAllZonePrimitives is on.
-		if (gShowZonePrimitives && (bIsSelected || bZeroVolume || gShowAllZonePrimitives)) {
+		// Zone shapes: selected = cyan, unselected = grey.
+		const int zoneShapeMode = gZoneShapeMode.get();
+		if (zoneShapeMode > 0 && (bIsSelected || zoneShapeMode == 2)) {
 			const int nbPrims = edEventGetChunkZoneNbInclusivePrimitives(static_cast<int>(selectedChunk), pZone);
 			for (int p = 0; p < nbPrims; p++) {
 				e_ed_event_prim3d_type primType = 0;
 				edF32MATRIX4* pPrimMatrix = edEventGetChunkZonePrimitive(selectedChunk, pZone, static_cast<uint>(p), &primType);
 				if (!pPrimMatrix) continue;
 
-				if (bZeroVolume && !bIsSelected) {
-					// Yellow-tinted to match the marker sphere; dimmer alpha to reduce noise
-					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 1.0f, 0.8f, 0.0f, 0.6f, static_cast<bool>(gShowZonePrimitivesShaded));
-				} else if (!bIsSelected) {
-					// Non-selected normal events: grey-tinted to distinguish from selected cyan
-					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.5f, 0.5f, 0.5f, 0.4f, static_cast<bool>(gShowZonePrimitivesShaded));
-				} else {
-					// Selected event primitives in cyan
+				if (bIsSelected) {
 					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.0f, 0.9f, 1.0f, 1.0f, static_cast<bool>(gShowZonePrimitivesShaded));
+				} else {
+					DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, 0.5f, 0.5f, 0.5f, 0.4f, static_cast<bool>(gShowZonePrimitivesShaded));
 				}
 			}
 		}
 
-		// Collider actor positions. Note: pCollider->worldLocation is NOT a world-space position;
-		// it stores the actor's coordinates in primitive-local space (computed by
-		// _edEventComputeZeroVolumeZoneAgainstVertex). Use pActorRef->pLocation for the actual
-		// world position.
-		if (gShowColliderPositions) {
+		// Collider positions and state shapes.
+		// Note: pCollider->worldLocation is NOT world-space; use pActorRef->pLocation instead.
+		const int colliderPosMode   = gColliderPositionMode.get();
+		const int colliderShapeMode = gColliderShapeMode.get();
+		if ((colliderPosMode > 0 || colliderShapeMode > 0) && (bIsSelected || colliderPosMode == 2 || colliderShapeMode == 2)) {
 			auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
 			for (int c = 0; c < static_cast<int>(pEvent->nbColliders); c++, pCollider++) {
 				auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
 				if (!pActorRef) continue;
-				auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
-				if (!pLocation) continue;
 
 				const bool bInside = (pCollider->flags & ED_COLLIDER_FLAG_INSIDE) != 0;
 				float cr, cg, cb;
@@ -1118,9 +1113,25 @@ void Debug::Event::DrawEventShapes()
 				} else {
 					cr = 1.0f;  cg = 0.3f;  cb = 0.0f; // red/orange = outside
 				}
-				Renderer::Native::DebugShapes::AddSphere(
-					pLocation->x, pLocation->y, pLocation->z,
-					15.0f, cr, cg, cb, 1.0f);
+
+				if (colliderPosMode > 0 && (bIsSelected || colliderPosMode == 2)) {
+					auto* pLocation = LOAD_POINTER_CAST(edF32VECTOR4*, pActorRef->pLocation);
+					if (pLocation) {
+						Renderer::Native::DebugShapes::AddSphere(
+							pLocation->x, pLocation->y, pLocation->z,
+							0.3f, cr, cg, cb, 1.0f);
+					}
+				}
+
+				if (colliderShapeMode > 0 && (bIsSelected || colliderShapeMode == 2)) {
+					const int nbPrims = edEventGetChunkZoneNbInclusivePrimitives(static_cast<int>(selectedChunk), pZone);
+					for (int p = 0; p < nbPrims; p++) {
+						e_ed_event_prim3d_type primType = 0;
+						edF32MATRIX4* pPrimMatrix = edEventGetChunkZonePrimitive(selectedChunk, pZone, static_cast<uint>(p), &primType);
+						if (!pPrimMatrix) continue;
+						DrawZonePrimitive(pPrimMatrix, pZoneMatrix, primType, cr, cg, cb, 0.5f, static_cast<bool>(gShowZonePrimitivesShaded));
+					}
+				}
 			}
 		}
 	}

@@ -34,6 +34,16 @@ Debug::Settings Debug::LoadSettings(bool bCreateIfNotExisting /*= false*/)
 	return settings;
 }
 
+bool Debug::ComboSetting::DrawImguiControl()
+{
+	int current = value;
+	if (ImGui::Combo(name.c_str(), &current, labels.data(), static_cast<int>(labels.size()))) {
+		value = current;
+		return UpdateValue();
+	}
+	return false;
+}
+
 template<>
 bool Debug::Setting<bool>::DrawImguiControl()
 {

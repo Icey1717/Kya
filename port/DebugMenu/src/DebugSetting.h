@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <string>
 #include <optional>
 #include <nlohmann/json.hpp>
@@ -91,6 +92,21 @@ namespace Debug {
 		}
 
 		bool bCondition = false;
+	};
+
+	// A Setting<int> that renders as a labelled combo box in ImGui.
+	// Values map to the indices of the labels array passed at construction.
+	class ComboSetting : public Setting<int> {
+	public:
+		ComboSetting(const char* inName, int defaultValue, std::initializer_list<const char*> inLabels)
+			: Setting<int>(inName, defaultValue)
+			, labels(inLabels)
+		{}
+
+		bool DrawImguiControl();
+
+	private:
+		std::vector<const char*> labels;
 	};
 
 	class DoOnceBoolSetting : public ConditionalBoolSetting {
