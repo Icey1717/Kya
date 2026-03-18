@@ -607,7 +607,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 	iVar20 = 0;
 	pCVar2 = this->pCollisionData;
 	pCVar3 = this->pAnimationController;
-	bVar5 = false;
+	bool bFallBelowGroundPlane = false;
 	local_130.nbEntries = 0;
 	uVar22 = 0;
 
@@ -724,7 +724,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 				this->field_0x1420 = 1;
 			}
 			else {
-				this->field_0x11f0 = this->currentLocation.y;
+				this->lastKnowGroundY = this->currentLocation.y;
 			}
 
 			pTVar9 = GetTimer();
@@ -762,11 +762,11 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 
 				if (!bVar8) {
 					if (this->distanceToGround < 10.3f) {
-						this->field_0x11f0 = this->currentLocation.y;
+						this->lastKnowGroundY = this->currentLocation.y;
 					}
 					else {
-						if (100.0f < this->field_0x11f0 - this->currentLocation.y) {
-							bVar5 = true;
+						if (100.0f < this->lastKnowGroundY - this->currentLocation.y) {
+							bFallBelowGroundPlane = true;
 						}
 					}
 				}
@@ -1156,9 +1156,10 @@ LAB_0014a028:
 	}
 
 	if ((GetStateFlags(this->actorState) & 1) == 0) {
-		if (bVar5) {
+		if (bFallBelowGroundPlane) {
 			if ((GetStateFlags(this->actorState) & 1) == 0) {
-				SetState(0xa1, 0xffffffff);
+				SetState(STATE_HERO_FALL_DEATH, 0xffffffff);
+
 				return;
 			}
 		}
@@ -1288,6 +1289,7 @@ LAB_0014a028:
 				(*(code*)(this->pVTable)->field_0x16c)(this);)
 		}
 	}
+
 	return;
 }
 

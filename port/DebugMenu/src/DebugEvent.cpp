@@ -256,7 +256,8 @@ namespace Debug {
 		static Setting<bool> gShowZonePrimitivesShaded   ("3D: Filled",                false);
 		static ComboSetting  gColliderPositionMode       ("3D: Collider Positions",    1, {"None", "Selected", "All"});
 		static ComboSetting  gColliderShapeMode          ("3D: Collider State Shapes", 0, {"None", "Selected", "All"});
-		static Setting<bool> gShowOnlyKillPrimitives     ("3D: Only Kill Zones",       false);
+		static Setting<bool> gShowOnlyKillPrimitives    ("3D: Only Kill Zones",       false);
+		static Setting<bool> gShowOnlyKyaEvents         ("3D: Only Kya Events",       false);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
 
@@ -658,6 +659,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		ImGui::SetItemTooltip("Draw zone and collider shapes as filled/shaded solids instead of wireframes.");
 		gShowOnlyKillPrimitives.DrawImguiControl();
 		ImGui::SetItemTooltip("Filter: only draw shapes for events that have a kill zone primitive.");
+		gShowOnlyKyaEvents.DrawImguiControl();
+		ImGui::SetItemTooltip("Filter: only draw shapes for events that have Kya (ACTOR_HERO_PRIVATE) as a collider.");
 		ImGui::Unindent();
 
 		// Show computed world-space positions for the selected event so the user can cross-check
@@ -1018,6 +1021,20 @@ static bool EventHasKillPrim(ed_event* pEvent)
 	return false;
 }
 
+// Returns true if any collider of pEvent is tracking an ACTOR_HERO_PRIVATE actor.
+static bool EventHasKyaCollider(ed_event* pEvent)
+{
+	auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+	for (uint c = 0; c < pEvent->nbColliders; c++, pCollider++) {
+		auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+		if (!pActorRef) continue;
+		auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+		if (pActor && pActor->typeID == ACTOR_HERO_PRIVATE)
+			return true;
+	}
+	return false;
+}
+
 void Debug::Event::DrawEventShapes()
 {
 	if (!gShowEventShapes3D) return;
@@ -1037,6 +1054,7 @@ void Debug::Event::DrawEventShapes()
 		if (!pEvent) continue;
 
 		if (gShowOnlyKillPrimitives && !EventHasKillPrim(pEvent)) continue;
+		if (gShowOnlyKyaEvents && !EventHasKyaCollider(pEvent)) continue;
 
 		auto* pZone = LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone);
 		if (!pZone) continue;
@@ -1077,6 +1095,17 @@ void Debug::Event::DrawEventShapes()
 			}
 			const float drawRadius = bZeroVolume ? 0.1f : pZone->boundSphere.w;
 			Renderer::Native::DebugShapes::AddSphere(cx, cy, cz, drawRadius, r, g, b, a);
+
+			edF32VECTOR4 worldPos{ cx, cy, cz, 1.0f };
+			ImVec2 screenPos;
+			if (Debug::Projection::WorldToScreen(worldPos, screenPos)) {
+				char label[32];
+				snprintf(label, sizeof(label), "Event 0x%x", i);
+				const ImU32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.0f));
+				const ImVec2 gameWinPos = FrameBuffer::GetGameWindowPosition();
+				ImGui::GetForegroundDrawList()->AddText(
+					ImVec2(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y), col, label);
+			}
 		}
 
 		// Zone shapes: selected = cyan, unselected = grey.

@@ -325,6 +325,12 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			ImGui::Text("field_0x10f4: %f", pActorHero->field_0x10f4);
 		}
 
+		if (ImGui::CollapsingHeader("Fall Death", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text("lastKnowGroundY: %f", pActorHero->lastKnowGroundY);
+			ImGui::Text("Y Delta: %f", pActorHero->lastKnowGroundY - pActorHero->currentLocation.y);
+			ImGui::Text("Till Death: %f", 100.0f - (pActorHero->lastKnowGroundY - pActorHero->currentLocation.y));
+		}
+
 		if (ImGui::CollapsingHeader("Wind", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("windBoostStrength %f", pActorHero->windBoostStrength);
 			ImGui::Text("field_0x11f8 %f", pActorHero->windRotationStrength);

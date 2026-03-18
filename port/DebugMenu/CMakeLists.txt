@@ -2,6 +2,8 @@
 
 project(${TargetName})
 
+option(ENABLE_GOOGLE_FONT_LOADER "Download and load fonts from Google Fonts API at startup" OFF)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -100,6 +102,12 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("ext/json")
 
 target_link_libraries(${TargetName} PRIVATE Renderer Port Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json glm)
+
+if(ENABLE_GOOGLE_FONT_LOADER)
+	target_sources(${TargetName} PRIVATE "src/GoogleFontLoader.h" "src/GoogleFontLoader.cpp")
+	target_link_libraries(${TargetName} PRIVATE winhttp.lib)
+	target_compile_definitions(${TargetName} PRIVATE ENABLE_GOOGLE_FONT_LOADER)
+endif()
 
 target_include_directories(${TargetName} PUBLIC "include")
 target_include_directories(${TargetName} PRIVATE "src")

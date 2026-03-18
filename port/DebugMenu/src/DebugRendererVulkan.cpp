@@ -4,6 +4,9 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "backends/imgui_impl_glfw.h"
 
+#ifdef ENABLE_GOOGLE_FONT_LOADER
+#include "GoogleFontLoader.h"
+#endif
 #include "DebugMenu.h"
 
 #include <stdexcept>
@@ -109,6 +112,9 @@ namespace DebugRendererImgui {
 		SetObjectName(reinterpret_cast<uint64_t>(gImguiRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Imgui Render Pass");
 
 		ImGui::CreateContext();
+#ifdef ENABLE_GOOGLE_FONT_LOADER
+		GoogleFontLoader::LoadIntoImGui("Roboto", "regular", 16.0f);
+#endif
 		ImGui::StyleColorsDark();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;

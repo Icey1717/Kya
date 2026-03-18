@@ -5190,7 +5190,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//this->field_0x1988 = (float)&this->field_0x193c.ab;
 	//CActor::SetAlpha(this, 0x80);
 	this->animKey_0x157c = this->currentLocation.y + 20.0f;
-	this->field_0x11f0 = this->currentLocation.y;
+	this->lastKnowGroundY = this->currentLocation.y;
 	_ResetHeroFight();
 	CCollision* pCollision = this->pCollisionData;
 	if (pCollision != (CCollision*)0x0) {
@@ -6844,7 +6844,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 					this->field_0x1020 = 1;
 				}
 
-				this->SetState(uVar12, 0xffffffff);
+				SetState(uVar12, 0xffffffff);
 				return;
 			}
 		}
@@ -7603,14 +7603,14 @@ void CActorHeroPrivate::StateHeroTobogganJump(int param_2, int param_3, int para
 	AdjustLocalMatrixFromNormal(fVar10, &this->normalValue);
 
 	if (((1.0f <= this->field_0xa88) || (this->field_0x142c != 0)) || (bVar4 = FUN_0014cb60(&this->currentLocation), bVar4 != false)) {
-		this->field_0x11f0 = this->currentLocation.y;
+		this->lastKnowGroundY = this->currentLocation.y;
 	}
 	else {
 		if (this->distanceToGround < 10.3f) {
-			this->field_0x11f0 = this->currentLocation.y;
+			this->lastKnowGroundY = this->currentLocation.y;
 		}
 		else {
-			if (100.0f < this->field_0x11f0 - this->currentLocation.y) {
+			if (100.0f < this->lastKnowGroundY - this->currentLocation.y) {
 				SetState(STATE_HERO_FALL_DEATH, 0xffffffff);
 				return;
 			}

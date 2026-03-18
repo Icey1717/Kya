@@ -728,7 +728,7 @@ public:
 	int field_0x1574;
 
 	float animKey_0x157c;
-	float field_0x11f0;
+	float lastKnowGroundY;
 
 	float field_0x1160;
 	float field_0x1164;

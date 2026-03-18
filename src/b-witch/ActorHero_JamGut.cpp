@@ -822,17 +822,17 @@ void CActorHeroPrivate::BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut*
 			bVar6 = FUN_0014cb60(&this->currentLocation);
 			if (bVar6 == false) {
 				if (this->distanceToGround < 10.3f) {
-					this->field_0x11f0 = this->currentLocation.y;
+					this->lastKnowGroundY = this->currentLocation.y;
 				}
 				else {
-					if (100.0f < this->field_0x11f0 - this->currentLocation.y) {
+					if (100.0f < this->lastKnowGroundY - this->currentLocation.y) {
 						pBehaviour->aCommands[9] = 1;
 					}
 				}
 			}
 		}
 		else {
-			this->field_0x11f0 = this->currentLocation.y;
+			this->lastKnowGroundY = this->currentLocation.y;
 		}
 	}
 
