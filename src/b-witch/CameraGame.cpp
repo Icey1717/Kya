@@ -582,7 +582,7 @@ void CCameraGame::_Manage_Pad()
 	}
 
 	EVar2 = GetMode();
-	if ((EVar2 == CT_Main) && ((iVar5->pressedBitfield & 0x800) != 0)) {
+	if ((EVar2 == CT_Main) && ((iVar5->pressedBitfield & PAD_BITMASK_R3) != 0)) {
 		fVar5 = this->angleBeta_0x1e8;
 		this->cameraConfig.flags_0x70 = this->cameraConfig.flags_0x70 | 0x200000;
 		this->field_0x46c = fVar5;

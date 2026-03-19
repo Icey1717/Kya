@@ -2109,7 +2109,7 @@ void GameLoop(void)
 					}
 				}
 			}
-			if ((((GameFlags & 0x8000) == 0) && ((gPlayerInput.pressedBitfield & 0x80000) != 0)) && (gPlayerInput.aButtons[18].clickValue == 0.0f)) {
+			if ((((GameFlags & 0x8000) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_SELECT) != 0)) && (gPlayerInput.aButtons[INPUT_BUTTON_INDEX_START].clickValue == 0.0f)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						HelpEnter();
@@ -2120,12 +2120,12 @@ void GameLoop(void)
 				}
 			}
 
-			bool bButtonPressed = gPlayerInput.aButtons[6].clickValue != 0.0f || gPlayerInput.aButtons[10].clickValue != 0.0f;
+			bool bButtonPressed = gPlayerInput.aButtons[INPUT_BUTTON_INDEX_R2].clickValue != 0.0f || gPlayerInput.aButtons[INPUT_BUTTON_INDEX_R1].clickValue != 0.0f;
 			if ((gPlayerInput.field_0x40.field_0x18 != 4) || (gPlayerInput.field_0x1c.field_0x18 != 4)) {
 				bButtonPressed = true;
 			}
 
-			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bButtonPressed)) ||
+			if ((((gPlayerInput.pressedBitfield & PAD_BITMASK_L1) != 0) && (!bButtonPressed)) ||
 				((GameFlags & GAME_REQUEST_MAP) != 0)) {
 				if (((GameFlags & 0x10) == 0) || ((GameFlags & GAME_REQUEST_MAP) != 0)) {
 					if ((GameFlags & 0x3c) == 0) {
@@ -2139,7 +2139,7 @@ void GameLoop(void)
 				GameFlags = GameFlags & 0xfffffbff;
 			}
 
-			if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) != 0) && ((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
+			if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) != 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_SELECT) == 0)) {
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						if ((GameFlags & 0x800) == 0) {
@@ -2173,6 +2173,7 @@ void GameLoop(void)
 		CScene::_pinstance->Level_Manage();
 		CScene::_pinstance->Level_Draw();
 
+		// Autosave maybe
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 
 		edVideoFlip();

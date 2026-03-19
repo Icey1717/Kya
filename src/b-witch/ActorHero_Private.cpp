@@ -1795,7 +1795,7 @@ bool CActorHeroPrivate::ManageActions()
 			uVar7 = 0;
 		}
 		else {
-			uVar7 = pInput->pressedBitfield & 0x80;
+			uVar7 = pInput->pressedBitfield & PAD_BITMASK_TRIANGLE;
 		}
 
 		if ((uVar7 != 0) && (uVar7 = TestState_AllowMagic(0xffffffff), uVar7 != 0)) {
@@ -2722,15 +2722,16 @@ void CActorHeroPrivate::Manage()
 				bVar4 = false;
 			}
 			else {
-				bVar4 = pCVar2->aButtons[6].clickValue != 0.0f;
+				bVar4 = pCVar2->aButtons[INPUT_BUTTON_INDEX_R2].clickValue != 0.0f;
 				if (bVar4) {
-					bVar4 = (pCVar2->pressedBitfield & 0x800) != 0;
+					bVar4 = (pCVar2->pressedBitfield & PAD_BITMASK_R3) != 0;
 				}
 			}
+
 			if (((bVar4) && (this->field_0x1558 == 0.0f)) && (this->bCanUseCheats == 1)) {
 				this->field_0x1554 = 0.0f;
 				this->field_0x1550 = 0.0f;
-				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa8, 0xffffffff);
+				SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_CHEAT_FLY, 0xffffffff);
 				return;
 			}
 		}
@@ -5585,6 +5586,9 @@ LAB_00341590:
 	case STATE_HERO_KICK_B:
 		StateHeroKickInitSimple();
 		break;
+	case STATE_HERO_CHEAT_FLY:
+		StateHeroCheatFlyInit();
+		break;
 	case STATE_HERO_JUMP_2_3_GRIP:
 		StateHeroGripUpToJumpInit();
 		StateHeroJump_2_3Init();
@@ -5727,6 +5731,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_DROWN_DEATH:
+	case STATE_HERO_CHEAT_FLY:
 	case STATE_HERO_CLIMB_STAND_A:
 	case STATE_HERO_CLIMB_STAND_B:
 	case STATE_HERO_CLIMB_STAND_C:
@@ -6197,7 +6202,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 				uVar9 = 0;
 			}
 			else {
-				uVar9 = pCVar1->pressedBitfield & 0x80;
+				uVar9 = pCVar1->pressedBitfield & PAD_BITMASK_TRIANGLE;
 			}
 
 			if (uVar9 != 0) {
@@ -6321,6 +6326,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_KICK_C:
 		StateHeroKick(-1, 0);
+		break;
+	case STATE_HERO_CHEAT_FLY:
+		StateHeroCheatFly();
 		break;
 	case STATE_HERO_CLIMB_STAND_A:
 		StateHeroClimbStand(1, 0);
@@ -6768,7 +6776,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 		SV_UpdateOrientationToPosition2D(this->field_0x1040 * 0.5f, &pNativ->currentLocation);
 		this->bFacingControlDirection = 1;
 
-		if ((IsLookingAt() != false) && (gPlayerInput.aButtons[4].clickValue != 0.0f)) {
+		if ((IsLookingAt() != false) && (gPlayerInput.aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue != 0.0f)) {
 			fVar14 = gPlayerInput.aAnalogSticks[PAD_STICK_LEFT].x;
 			if (gPlayerInput.aAnalogSticks[PAD_STICK_LEFT].magnitude * 0.7853982f < fabs(gPlayerInput.aAnalogSticks[PAD_STICK_LEFT].y)) {
 				fVar14 = 0.0f;
@@ -8807,7 +8815,7 @@ void CActorHeroPrivate::StateHeroRun_B()
 		uVar4 = 0;
 	}
 	else {
-		uVar4 = pCVar2->pressedBitfield & 0x10;
+		uVar4 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (uVar4 != 0) {
@@ -10292,7 +10300,7 @@ void CActorHeroPrivate::StateHeroRoll()
 						fVar8 = 1000000.0f;
 					}
 					else {
-						fVar8 = pCVar3->aButtons[4].pressedDuration;
+						fVar8 = pCVar3->aButtons[INPUT_BUTTON_INDEX_CROSS].pressedDuration;
 					}
 
 					if (fVar8 < 0.2f) {
@@ -10358,7 +10366,7 @@ void CActorHeroPrivate::StateHeroRoll()
 					fVar8 = 1000000.0f;
 				}
 				else {
-					fVar8 = pCVar3->aButtons[4].pressedDuration;
+					fVar8 = pCVar3->aButtons[INPUT_BUTTON_INDEX_CROSS].pressedDuration;
 				}
 
 				if (fVar8 < 0.1f) {
@@ -11121,27 +11129,27 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		this->jmp_field_0x1144 = 0;
 	}
 
-	if ((this->jmp_field_0x1144 != 0) && (3.0 < this->scalarDynJump.field_0x20)) {
+	if ((this->jmp_field_0x1144 != 0) && (3.0f < this->scalarDynJump.field_0x20)) {
 		pInput = this->pPlayerInput;
 		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 			fVar8 = 1000000.0f;
 		}
 		else {
-			fVar8 = pInput->aButtons[4].releasedDuration;
+			fVar8 = pInput->aButtons[INPUT_BUTTON_INDEX_CROSS].releasedDuration;
 		}
 
-		IMPLEMENTATION_GUARD(
 		if (fVar8 < this->field_0x115c) {
 			if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-				fVar8 = 0.0;
+				fVar8 = 0.0f;
 			}
 			else {
-				fVar8 = pInput->aButtons[4].clickValue;
+				fVar8 = pInput->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
 			}
-			if (fVar8 == 0.0) {
-				this->field_0x1170 = 2.0;
+
+			if (fVar8 == 0.0f) {
+				this->field_0x1170 = 2.0f;
 			}
-		})
+		}
 	}
 
 	if ((0.0f < this->jmp_field_0x1140) && (bVar4 = this->scalarDynJump.IsFinished(), bVar4 == false)) {
@@ -11424,7 +11432,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 		fVar11 = 1000000.0f;
 	}
 	else {
-		fVar11 = pCVar3->aButtons[4].pressedDuration;
+		fVar11 = pCVar3->aButtons[INPUT_BUTTON_INDEX_CROSS].pressedDuration;
 	}
 
 	if (((this->field_0x1160 + 0.04f <= fVar11) ||

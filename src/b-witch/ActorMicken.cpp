@@ -1244,7 +1244,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 		fVar6 = pBehaviour->field_0x8;
 		pCVar5 = this->field_0x3d8->GetInputManager(0, 0);
 
-		if ((pCVar5 == (CPlayerInput*)0x0) || (0.4f <= pCVar5->aButtons[4].pressedDuration)) {
+		if ((pCVar5 == (CPlayerInput*)0x0) || (0.4f <= pCVar5->aButtons[INPUT_BUTTON_INDEX_CROSS].pressedDuration)) {
 			fVar6 = fVar6 - 600.0f;
 		}
 		else {

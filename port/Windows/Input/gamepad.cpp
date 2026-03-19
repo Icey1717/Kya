@@ -95,9 +95,14 @@ namespace GamepadImpl
 
 			// Triggers - treat as pressed if > 0.5
 		case ROUTE_L2:
-			return reading.LeftTrigger > 0.5f;
+			return reading.LeftTrigger > 0.1f;
 		case ROUTE_R2:
-			return reading.RightTrigger > 0.5f;
+			return reading.RightTrigger > 0.1f;
+
+		case ROUTE_L3:
+			return (reading.Buttons & GamepadButtons::LeftThumbstick) != GamepadButtons::None;
+		case ROUTE_R3:
+			return (reading.Buttons & GamepadButtons::RightThumbstick) != GamepadButtons::None;
 
 		default:
 			return false;

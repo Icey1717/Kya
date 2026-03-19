@@ -653,7 +653,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 					fVar28 = 0.0f;
 				}
 				else {
-					fVar28 = pCVar19->aButtons[4].clickValue;
+					fVar28 = pCVar19->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
 				}
 
 				if ((int)fVar28 < 0) {
@@ -677,7 +677,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 				fVar28 = 0.0f;
 			}
 			else {
-				fVar28 = pCVar19->aButtons[4].clickValue;
+				fVar28 = pCVar19->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
 			}
 
 			if ((int)fVar28 < 0) {
@@ -696,7 +696,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 			fVar28 = 0.0f;
 		}
 		else {
-			fVar28 = pCVar19->aButtons[4].clickValue;
+			fVar28 = pCVar19->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
 		}
 
 		if ((int)fVar28 < 0) {
@@ -1405,3 +1405,190 @@ void CActorHeroPrivate::StateHeroFallBounce_2_2Term()
 
 	return;
 }
+
+void CActorHeroPrivate::StateHeroCheatFlyInit()
+{
+	CCameraManager* pCameraManager;
+	edF32VECTOR4 newPosition;
+	CPlayerInput* pInput;
+
+	pInput = this->pPlayerInput;
+	if ((pInput != (CPlayerInput*)0x0) && (this->field_0x18dc == 0)) {
+		pInput->pressedBitfield = pInput->pressedBitfield & 0xfffff7ff;
+	}
+
+	this->field_0x1020 = 0;
+	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+	pCameraManager->AlertCamera(2, 1);
+	this->flags = this->flags | 0x80;
+	this->flags = this->flags & 0xffffffdf;
+
+	EvaluateDisplayState();
+
+	this->effort = 0.0f;
+	newPosition.x = this->currentLocation.x;
+	newPosition.z = this->currentLocation.z;
+	newPosition.w = this->currentLocation.w;
+	newPosition.y = this->animKey_0x157c;
+
+	UpdatePosition(&newPosition, true);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroCheatFly()
+{
+	CCollision* pCol;
+	CPlayerInput* pInput;
+	bool bVar3;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 newPosition;
+
+	pCol = this->pCollisionData;
+
+	newPosition.x = this->currentLocation.x;
+	newPosition.z = this->currentLocation.z;
+	newPosition.w = this->currentLocation.w;
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = pInput->aButtons[INPUT_BUTTON_INDEX_TRIANGLE].clickValue;
+	}
+
+	if ((int)fVar6 < 0) {
+		fVar6 = (float)((uint)fVar6 >> 1 | (uint)fVar6 & 1);
+		fVar6 = fVar6 + fVar6;
+	}
+	else {
+		fVar6 = (float)(int)fVar6;
+	}
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar7 = 0.0f;
+	}
+	else {
+		fVar7 = pInput->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
+	}
+
+	if ((int)fVar7 < 0) {
+		fVar7 = (float)((uint)fVar7 >> 1 | (uint)fVar7 & 1);
+		fVar7 = fVar7 + fVar7;
+	}
+	else {
+		fVar7 = (float)(int)fVar7;
+	}
+
+	newPosition.y = (this->currentLocation.y + fVar6 * 0.5f) - fVar7 * 0.5f;
+	UpdatePosition(&newPosition, true);
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = pInput->aAnalogSticks[PAD_STICK_LEFT].magnitude;
+	}
+
+	if (fVar6 < 0.3f) {
+		this->dynamic.speed = 0.0f;
+		this->timeInAir = 0.0f;
+	}
+	else {
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar6 = 0.0f;
+		}
+		else {
+			fVar6 = pInput->aAnalogSticks[PAD_STICK_LEFT].magnitude;
+		}
+
+		fVar6 = edFIntervalUnitSrcLERP(fVar6, 1.0f, 5.0f);
+		fVar7 = edFIntervalLERP(this->timeInAir, 0.0f, 2.0f, 1.0f, 2.0f);
+		BuildHorizontalSpeedVector(fVar7 * 25.0f, this->field_0x1058 * fVar6, 2.0f, this->field_0x1040, this->field_0x1074);
+	}
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0x40001, (CActorsTable*)0x0);
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+	LAB_0014b9f8:
+		this->time_0x1538 = GetTimer()->scaledTotalTime;
+	}
+	else {
+		pInput = this->pPlayerInput;
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar6 = 0.0f;
+		}
+		else {
+			fVar6 = pInput->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
+		}
+
+		if (fVar6 == 0.0f) goto LAB_0014b9f8;
+
+		if (0.25f < GetTimer()->scaledTotalTime - this->time_0x1538) {
+			newPosition.x = this->currentLocation.x;
+			newPosition.z = this->currentLocation.z;
+			newPosition.w = this->currentLocation.w;
+			newPosition.y = this->currentLocation.y - 1.8f;
+			UpdatePosition(&newPosition, true);
+		}
+	}
+
+	if ((pCol->flags_0x4 & 1) != 0) {
+		pInput = this->pPlayerInput;
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar6 = 0.0f;
+		}
+		else {
+			fVar6 = pInput->aAnalogSticks[PAD_STICK_LEFT].magnitude;
+		}
+
+		if (0.3f <= fVar6) {
+			if (0.25f < GetTimer()->scaledTotalTime - this->time_0x153c) {
+				newPosition = this->currentLocation;
+				edF32Vector4ScaleHard(1.0f, &eStack32, &this->rotationQuat);
+				edF32Vector4AddHard(&newPosition, &newPosition, &eStack32);
+				UpdatePosition(&newPosition, true);
+			}
+
+			goto LAB_0014bb00;
+		}
+	}
+
+	this->time_0x153c = GetTimer()->scaledTotalTime;
+
+LAB_0014bb00:
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		bVar3 = false;
+	}
+	else {
+		bVar3 = pInput->aButtons[INPUT_BUTTON_INDEX_R2].clickValue != 0.0f;
+		if (bVar3) {
+			bVar3 = (pInput->pressedBitfield & PAD_BITMASK_R3) != 0;
+		}
+	}
+
+	if (bVar3) {
+		pInput = this->pPlayerInput;
+		if ((pInput != (CPlayerInput*)0x0) && (this->field_0x18dc == 0)) {
+			pInput->pressedBitfield = pInput->pressedBitfield & 0xfffff7ff;
+		}
+
+		this->dynamic.speed = 0.0f;
+		SetState(ChooseStateFall(0), 0xffffffff);
+	}
+
+	return;
+}
+

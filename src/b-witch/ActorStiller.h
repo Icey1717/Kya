@@ -16,6 +16,9 @@
 
 #define STILLER_STAND_STATE_IDLE 0x5
 #define STILLER_STAND_STATE_ATTACK 0x8
+#define STILLER_STAND_STATE_DEAD 0x9
+#define STILLER_STAND_STATE_RESTORE 0xb
+#define STILLER_STAND_STATE_WAKE 0xc
 
 struct S_NTF_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -47,7 +50,7 @@ class CActorStiller : public CActor
 {
 public:
 
-	static StateConfig _gStateCfg_STI[5];
+	static StateConfig _gStateCfg_STI[0xa];
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
@@ -63,6 +66,8 @@ public:
 	void BehaviourStillerStand_InitState(int newState);
 	void BehaviourStillerStand_Manage();
 	void BehaviourStillerStand_TermState(int oldState);
+
+	void StateAttack();
 
 	bool CheckDetectArea();
 	bool CheckAttackArea();

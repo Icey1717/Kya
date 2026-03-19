@@ -102,7 +102,7 @@ std::string convertToValidPath(const std::string& path) {
 void ConvertToSPIRV(const std::string& configName, const std::string& entryPoint, const std::string& inputName, const std::string& outputName, const std::string& arguments) {
 
 	std::string command = std::string(DXC_COMPILER) + " ";
-	command += "-spirv " + std::string(SHADER_SRC_DIR) + " ";
+	//command += "-spirv " + std::string(SHADER_SRC_DIR) + " ";
 	command += "-DSHADER_MODEL=1" + std::string(" ");
 	command += "-T " + configName + " ";
 	command += "-E " + entryPoint + " ";
@@ -220,7 +220,7 @@ public:
 
 			pool.addTask([=]() {
 				// Convert HLSL to SPIR-V for the current configuration
-				ConvertToSPIRV(type.c_str(), entry.c_str(), shaderHash + extension.c_str(), configDefString);
+				//ConvertToSPIRV(type.c_str(), entry.c_str(), shaderHash + extension.c_str(), configDefString);
 				});
 
 			gParsedFiles.push_back(shaderHash + extension.c_str());

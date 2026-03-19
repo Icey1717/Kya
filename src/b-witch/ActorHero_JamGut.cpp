@@ -191,7 +191,7 @@ void CBehaviourHeroRideJamGut::ManageInput()
 		uVar2 = 0;
 	}
 	else {
-		uVar2 = pPlayerInput->pressedBitfield & 0x10;
+		uVar2 = pPlayerInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 	if (uVar2 != 0) {
 		this->aCommands[5] = 1;
@@ -203,7 +203,7 @@ void CBehaviourHeroRideJamGut::ManageInput()
 		fVar3 = 0.0f;
 	}
 	else {
-		fVar3 = pPlayerInput->aButtons[4].clickValue;
+		fVar3 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_CROSS].clickValue;
 	}
 	if (fVar3 != 0.0f) {
 		this->aCommands[6] = 1;
@@ -215,7 +215,7 @@ void CBehaviourHeroRideJamGut::ManageInput()
 		fVar3 = 0.0f;
 	}
 	else {
-		fVar3 = pPlayerInput->aButtons[9].clickValue;
+		fVar3 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 	}
 	if (fVar3 != 0.0f) {
 		this->aCommands[8] = 1;
@@ -227,7 +227,7 @@ void CBehaviourHeroRideJamGut::ManageInput()
 		bVar1 = false;
 	}
 	else {
-		bVar1 = pPlayerInput->aButtons[6].clickValue != 0.0f;
+		bVar1 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_R2].clickValue != 0.0f;
 		if (bVar1) {
 			bVar1 = (pPlayerInput->pressedBitfield & 0x800) != 0;
 		}
@@ -861,11 +861,12 @@ void CActorHeroPrivate::BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut*
 				if (uVar7 != 0) {
 					pInput = this->pPlayerInput;
 					if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-						fVar10 = 0.0;
+						fVar10 = 0.0f;
 					}
 					else {
-						fVar10 = pInput->aButtons[10].clickValue;
+						fVar10 = pInput->aButtons[INPUT_BUTTON_INDEX_R1].clickValue;
 					}
+
 					if (fVar10 != 0.0f) {
 						SetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT, 0x11a, 0xffffffff);
 						return;
@@ -889,7 +890,7 @@ void CActorHeroPrivate::BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut*
 						uVar7 = 0;
 					}
 					else {
-						uVar7 = pInput->pressedBitfield & 0x10;
+						uVar7 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 					}
 
 					if ((uVar7 != 0) && (iVar8 = pBehaviour->field_0x8c->FUN_00376710(), iVar8 != 0)) {

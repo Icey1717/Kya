@@ -20,6 +20,8 @@
 
 #define MENU_INPUT_UP 1
 #define MENU_INPUT_DOWN 2
+#define MENU_INPUT_LEFT 3
+#define MENU_INPUT_RIGHT 4
 #define MENU_INPUT_CONFIRM 5
 #define MENU_INPUT_CANCEL 8
 

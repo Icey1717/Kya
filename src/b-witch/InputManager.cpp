@@ -350,9 +350,9 @@ bool CPlayerInput::SoftReset()
 {
 	bool bVar1;
 
-	if ((((this->aButtons[INPUT_BUTTON_INDEX_L2].clickedDuration <= 0.1f) || (this->aButtons[0x1b].clickedDuration <= 0.1f)) ||
-		(this->aButtons[6].clickedDuration <= 0.1f)) ||
-		((this->aButtons[10].clickedDuration <= 0.1f || (bVar1 = true, VERSION == FLM_CD_DVD)))) {
+	if ((((this->aButtons[INPUT_BUTTON_INDEX_L2].clickedDuration <= 0.1f) || (this->aButtons[INPUT_BUTTON_INDEX_L1].clickedDuration <= 0.1f)) ||
+		(this->aButtons[INPUT_BUTTON_INDEX_R2].clickedDuration <= 0.1f)) || ((this->aButtons[INPUT_BUTTON_INDEX_R1].clickedDuration <= 0.1f || 
+		(bVar1 = true, VERSION == FLM_CD_DVD)))) {
 		bVar1 = false;
 	}
 	return bVar1;

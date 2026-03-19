@@ -12,6 +12,8 @@
 #define ROUTE_CROSS 0x6
 #define ROUTE_SQUARE 0x7
 #define ROUTE_SELECT 0x8
+#define ROUTE_L3 0x9
+#define ROUTE_R3 0xa
 #define ROUTE_START 0xb
 
 #define ROUTE_UP 0xc
@@ -29,7 +31,7 @@
 #define ROUTE_L_ANALOG_UP 0x16
 #define ROUTE_L_ANALOG_DOWN 0x17
 
-#define ROUTE_END 0x16
+#define ROUTE_END 0x18
 
 namespace Input
 {

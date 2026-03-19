@@ -226,6 +226,12 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			pActorHero->SetState(STATE_HERO_STAND, -1);
 		}
 
+		ImGui::SameLine();
+
+		if (ImGui::Button("Enable Cheat Mode")) {
+			pActorHero->bCanUseCheats = 1;
+		}
+
 		// Invincibility toggle
 		if (ImGui::Checkbox("Invincible", &gInvincible.operator bool&())) {
 			gInvincible.UpdateValue();

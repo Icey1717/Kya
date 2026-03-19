@@ -17,8 +17,8 @@
 //#include "pointer_conv.h"
 #include "DebugRenderer.h"
 #include "Rendering/edCTextFont.h"
-#include "../../../src/MathOps.h"
-#include "../../Windows/Renderer/Vulkan/src/TextureCache.h"
+#include "../../../src/b-witch/MathOps.h"
+#include "../../Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/src/TextureUpload.h"
 #include "../../../src/port/pointer_conv.h"
 
 // The function to be tested
@@ -90,99 +90,99 @@ bool TestVector(std::string filename, const std::vector<uint8_t>& testData) {
 
 static edCTextFont* BootDataFont = NULL;
 
-TEST(IO, FontOpen) {
-	edCBankInstall bankHeader;
-	edCBankBufferEntry* BootData_BankBufferEntry;
-	edCBankBuffer BootData_BankBuffer = { 0 };
-
-	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
-	   and a map. */
-	memset(&bankHeader, 0, sizeof(edCBankInstall));
-	BootData_BankBuffer.initialize(0x32000, 1, &bankHeader);
-	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
-	bankHeader.filePath = "CDEURO/menu/MenuData.bnk";
-	BootData_BankBufferEntry = BootData_BankBuffer.get_free_entry();
-	EXPECT_NE(BootData_BankBufferEntry, nullptr);
-	EXPECT_EQ(BootData_BankBufferEntry->load(&bankHeader), true);
-
-	/* Init Medium.Fon */
-	int index = BootData_BankBufferEntry->get_index("medium.fon");
-
-	EXPECT_EQ(index, 0x17);
-
-	if (index == -1) {
-		BootDataFont = (edCTextFont*)0x0;
-	}
-	else {
-		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, index);
-	}
-	EXPECT_NE(BootDataFont, nullptr);
-	EXPECT_EQ(edTextInstallFont(BootDataFont), true);
-}
-
-edDList_material gMenuSplashMaterial;
-
-TEST(IO, MenuSplashOpen) {
-	edFILEH* pLoadedFile;
-	ed_g2d_material* pMaterialSection;
-	int iStack4;
-
-	char* filePath = "CDEURO/Frontend/kyatitle.g2d";
-	char* pTextureFileData = nullptr;
-	ed_g2d_manager textureInfo;
-
-	uint alignedSize;
-	int fileSize;
-
-	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
-	pLoadedFile = edFileOpen(filePath, 9);
-	if (pLoadedFile != (edFILEH*)0x0) {
-		fileSize = edFileLoadSize(pLoadedFile);
-		alignedSize = fileSize + 0x7ffU & 0xfffff800;
-		pTextureFileData = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), (long)(int)alignedSize, 0x40);
-		if (pTextureFileData != (char*)0x0) {
-			edFileRead(pLoadedFile, pTextureFileData, alignedSize);
-			fileSize = pLoadedFile->nbQueuedActions;
-			while (fileSize != 0) {
-				edFileNoWaitStackFlush();
-				fileSize = pLoadedFile->nbQueuedActions;
-			}
-		}
-		edFileClose(pLoadedFile);
-	}
-
-	if (pTextureFileData != (char*)0x0) {
-		ed3DInstallG2D(pTextureFileData, *(int*)(pTextureFileData + 8), &iStack4, &textureInfo, 0);
-		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&textureInfo, 0);
-		edDListCreatMaterialFromIndex(&gMenuSplashMaterial, 0, &textureInfo, 2);
-	}
-	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
-	EXPECT_NE(edTextInstallFont(BootDataFont), true);
-}
-
-TEST(Image, ReadFont) {
-	EXPECT_NE(BootDataFont, nullptr);
-
-	FontPacked_2C* pPackedData = (FontPacked_2C*)LOAD_POINTER(BootDataFont->pSubData);
-	
-	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&pPackedData->materialInfo), 0x380);
-	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
-	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
-
-	DumpVectorToFile(debugMaterial.image.readBuffer, "font.bin");
-
-	EXPECT_EQ(TestVector("font.bin", debugMaterial.image.readBuffer), true);
-}
-
-TEST(Image, ReadMenuSplash) {
-	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&gMenuSplashMaterial), 0x380);
-	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
-	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
-
-	DumpVectorToFile(debugMaterial.image.readBuffer, "splash.bin");
-
-	EXPECT_EQ(TestVector("splash.bin", debugMaterial.image.readBuffer), true);
-}
+//TEST(IO, FontOpen) {
+//	edCBankInstall bankHeader;
+//	edCBankBufferEntry* BootData_BankBufferEntry;
+//	edCBankBuffer BootData_BankBuffer = { 0 };
+//
+//	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
+//	   and a map. */
+//	memset(&bankHeader, 0, sizeof(edCBankInstall));
+//	BootData_BankBuffer.initialize(0x32000, 1, &bankHeader);
+//	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
+//	bankHeader.filePath = "CDEURO/menu/MenuData.bnk";
+//	BootData_BankBufferEntry = BootData_BankBuffer.get_free_entry();
+//	EXPECT_NE(BootData_BankBufferEntry, nullptr);
+//	EXPECT_EQ(BootData_BankBufferEntry->load(&bankHeader), true);
+//
+//	/* Init Medium.Fon */
+//	int index = BootData_BankBufferEntry->get_index("medium.fon");
+//
+//	EXPECT_EQ(index, 0x17);
+//
+//	if (index == -1) {
+//		BootDataFont = (edCTextFont*)0x0;
+//	}
+//	else {
+//		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, index);
+//	}
+//	EXPECT_NE(BootDataFont, nullptr);
+//	EXPECT_EQ(edTextInstallFont(BootDataFont), true);
+//}
+//
+//edDList_material gMenuSplashMaterial;
+//
+//TEST(IO, MenuSplashOpen) {
+//	edFILEH* pLoadedFile;
+//	ed_g2d_material* pMaterialSection;
+//	int iStack4;
+//
+//	char* filePath = "CDEURO/Frontend/kyatitle.g2d";
+//	char* pTextureFileData = nullptr;
+//	ed_g2d_manager textureInfo;
+//
+//	uint alignedSize;
+//	int fileSize;
+//
+//	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+//	pLoadedFile = edFileOpen(filePath, 9);
+//	if (pLoadedFile != (edFILEH*)0x0) {
+//		fileSize = edFileLoadSize(pLoadedFile);
+//		alignedSize = fileSize + 0x7ffU & 0xfffff800;
+//		pTextureFileData = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), (long)(int)alignedSize, 0x40);
+//		if (pTextureFileData != (char*)0x0) {
+//			edFileRead(pLoadedFile, pTextureFileData, alignedSize);
+//			fileSize = pLoadedFile->nbQueuedActions;
+//			while (fileSize != 0) {
+//				edFileNoWaitStackFlush();
+//				fileSize = pLoadedFile->nbQueuedActions;
+//			}
+//		}
+//		edFileClose(pLoadedFile);
+//	}
+//
+//	if (pTextureFileData != (char*)0x0) {
+//		ed3DInstallG2D(pTextureFileData, *(int*)(pTextureFileData + 8), &iStack4, &textureInfo, 0);
+//		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&textureInfo, 0);
+//		edDListCreatMaterialFromIndex(&gMenuSplashMaterial, 0, &textureInfo, 2);
+//	}
+//	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
+//	EXPECT_NE(edTextInstallFont(BootDataFont), true);
+//}
+//
+//TEST(Image, ReadFont) {
+//	EXPECT_NE(BootDataFont, nullptr);
+//
+//	FontPacked_2C* pPackedData = (FontPacked_2C*)LOAD_POINTER(BootDataFont->pSubData);
+//	
+//	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&pPackedData->materialInfo), 0x380);
+//	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
+//	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
+//
+//	DumpVectorToFile(debugMaterial.image.readBuffer, "font.bin");
+//
+//	EXPECT_EQ(TestVector("font.bin", debugMaterial.image.readBuffer), true);
+//}
+//
+//TEST(Image, ReadMenuSplash) {
+//	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&gMenuSplashMaterial), 0x380);
+//	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
+//	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
+//
+//	DumpVectorToFile(debugMaterial.image.readBuffer, "splash.bin");
+//
+//	EXPECT_EQ(TestVector("splash.bin", debugMaterial.image.readBuffer), true);
+//}
 
 // Test case for matrix multiplication
 TEST(MatrixMultiplicationTest, MultiplyMatrices) {

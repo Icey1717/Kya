@@ -11,3 +11,4 @@ cmake-build-debug/
 __pycache__
 upscaling/
 profiler/
+fonts/

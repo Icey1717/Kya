@@ -1092,14 +1092,7 @@ bool CActorHero::CanActivateCheckpoint(uint flags)
 		}
 		if (!bVar2) {
 			if ((flags & 0x40000000) == 0) {
-				iVar1 = this->actorState;
-				bVar2 = true;
-				if ((iVar1 != 0xa8) && (iVar1 != 0x129)) {
-					bVar2 = false;
-				}
-				if (bVar2) {
-					return true;
-				}
+				return TestState_IsInCheatMode();
 			}
 
 			if ((flags & 1) != 0) {
@@ -1313,7 +1306,7 @@ bool CActorHero::TestState_IsInCheatMode()
 	iVar1 = this->actorState;
 	ret = true;
 
-	if ((iVar1 != 0xa8) && (iVar1 != 0x129)) {
+	if ((iVar1 != STATE_HERO_CHEAT_FLY) && (iVar1 != STATE_HERO_MOUNT_JAMGUT_CHEAT_FLY)) {
 		ret = false;
 	}
 

@@ -46,6 +46,8 @@ void Debug::Input::ShowMenu(bool* bOpen)
 			{ "R1", ROUTE_R1 },
 			{ "L2", ROUTE_L2 },
 			{ "R2", ROUTE_R2 },
+			{ "L3", ROUTE_L3 },
+			{ "R3", ROUTE_R3 },
 			{ "Select", ROUTE_SELECT },
 			{ "Start", ROUTE_START },
 			{ "D-Pad Up", ROUTE_UP },
@@ -130,6 +132,37 @@ void Debug::Input::ShowMenu(bool* bOpen)
 	ImGui::Text("Raw values:");
 	ImGui::BulletText("Up: %.2f, Down: %.2f", leftUp, leftDown);
 	ImGui::BulletText("Left: %.2f, Right: %.2f", leftLeft, leftRight);
+
+	// Button and pressed bitfields
+	ImGui::Separator();
+	ImGui::Text("gPlayerInput");
+
+	if (ImGui::CollapsingHeader("Button States")) {
+		for (int i = 0; i < 32; i++)
+		{
+			ImGui::BulletText("Button 0x%x: Click=%.2f, Active=%d, Analog=%.2f",
+				i,
+				gPlayerInput.aButtons[i].clickValue,
+				gPlayerInput.aButtons[i].bActive,
+				gPlayerInput.aButtons[i].analogValue);
+		}
+	}
+
+	{
+		static uint lastNonZeroPressed = 0;
+		if (gPlayerInput.pressedBitfield != 0) {
+			lastNonZeroPressed = gPlayerInput.pressedBitfield;
+		}
+
+		ImGui::Text("Pressed (non-zero): 0x%x", lastNonZeroPressed);
+
+		static uint lastNonZeroReleased = 0;
+		if (gPlayerInput.releasedBitfield != 0) {
+			lastNonZeroReleased = gPlayerInput.releasedBitfield;
+		}
+
+		ImGui::Text("Released (non-zero): 0x%x", lastNonZeroReleased);
+	}
 
 	ImGui::End();
 }

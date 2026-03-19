@@ -12,27 +12,29 @@
 
 static std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_START,			ImGuiKey_Enter },
-	{ ROUTE_L2,				ImGuiKey_Q },		// 0x0
-	{ ROUTE_R2,				ImGuiKey_W },		// 0x1
-	{ ROUTE_L1,				ImGuiKey_C },		// 0x2
-	{ ROUTE_R1,				ImGuiKey_R },		// 0x3
-	{ ROUTE_TRIANGLE,		ImGuiKey_Comma },	// 0x4
-	{ ROUTE_CIRCLE,			ImGuiKey_E },		// 0x5
-	{ ROUTE_CROSS,			ImGuiKey_A },		// 0x6
-	{ ROUTE_SQUARE,			ImGuiKey_O },		// 0x7
-	{ ROUTE_SELECT,			ImGuiKey_Backspace },
-	{ ROUTE_UP,				ImGuiKey_UpArrow },
-	{ ROUTE_LEFT,			ImGuiKey_LeftArrow },
-	{ ROUTE_DOWN,			ImGuiKey_DownArrow },
-	{ ROUTE_RIGHT,			ImGuiKey_RightArrow },
-	{ ROUTE_L_ANALOG_UP,	ImGuiKey_G },
-	{ ROUTE_L_ANALOG_DOWN,	ImGuiKey_H },
-	{ ROUTE_L_ANALOG_LEFT,	ImGuiKey_D },
-	{ ROUTE_L_ANALOG_RIGHT,	ImGuiKey_T },
-	{ ROUTE_R_ANALOG_DOWN,	ImGuiKey_K },
-	{ ROUTE_R_ANALOG_UP,	ImGuiKey_I },
-	{ ROUTE_R_ANALOG_LEFT,	ImGuiKey_J },
-	{ ROUTE_R_ANALOG_RIGHT,	ImGuiKey_L },
+	{ ROUTE_L2,				ImGuiKey_Q },			// 0x00
+	{ ROUTE_R2,				ImGuiKey_W },			// 0x01
+	{ ROUTE_L1,				ImGuiKey_C },			// 0x02
+	{ ROUTE_R1,				ImGuiKey_R },			// 0x03
+	{ ROUTE_TRIANGLE,		ImGuiKey_Comma },		// 0x04
+	{ ROUTE_CIRCLE,			ImGuiKey_E },			// 0x05
+	{ ROUTE_CROSS,			ImGuiKey_A },			// 0x06
+	{ ROUTE_SQUARE,			ImGuiKey_O },			// 0x07
+	{ ROUTE_SELECT,			ImGuiKey_Backspace },	// 0x08
+	{ ROUTE_UP,				ImGuiKey_UpArrow },		// 0x09
+	{ ROUTE_LEFT,			ImGuiKey_LeftArrow },	// 0x0a
+	{ ROUTE_DOWN,			ImGuiKey_DownArrow },	// 0x0b
+	{ ROUTE_RIGHT,			ImGuiKey_RightArrow },	// 0x0c
+	{ ROUTE_L_ANALOG_UP,	ImGuiKey_G },			// 0x0d
+	{ ROUTE_L_ANALOG_DOWN,	ImGuiKey_H },			// 0x0e
+	{ ROUTE_L_ANALOG_LEFT,	ImGuiKey_D },			// 0x0f
+	{ ROUTE_L_ANALOG_RIGHT,	ImGuiKey_T },			// 0x10
+	{ ROUTE_R_ANALOG_DOWN,	ImGuiKey_K },			// 0x11
+	{ ROUTE_R_ANALOG_UP,	ImGuiKey_I },			// 0x12
+	{ ROUTE_R_ANALOG_LEFT,	ImGuiKey_J },			// 0x13
+	{ ROUTE_R_ANALOG_RIGHT,	ImGuiKey_L },			// 0x14
+	{ ROUTE_L3,				ImGuiKey_F },			// 0x15
+	{ ROUTE_R3,				ImGuiKey_S },			// 0x16
 };
 
 void DebugMenu::AddKeyboardMouseSupport()

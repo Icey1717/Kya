@@ -428,6 +428,9 @@ public:
 	void StateHeroFallBounce_2_2Init();
 	void StateHeroFallBounce_2_2Term();
 
+	void StateHeroCheatFlyInit();
+	void StateHeroCheatFly();
+
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
 	void SetBoomyFunc(int param_2);

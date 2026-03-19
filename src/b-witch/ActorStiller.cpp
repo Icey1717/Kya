@@ -169,13 +169,18 @@ CBehaviour* CActorStiller::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
-StateConfig CActorStiller::_gStateCfg_STI[5] =
+StateConfig CActorStiller::_gStateCfg_STI[0xa] =
 {
 	StateConfig(0x0, 0x300),
 	StateConfig(0x8, 0x4),
 	StateConfig(0x9, 0x4),
 	StateConfig(0x6, 0x4),
 	StateConfig(0x7, 0x4),
+	StateConfig(0xa, 0x100),
+	StateConfig(0xa, 0x100),
+	StateConfig(0x0, 0x100),
+	StateConfig(0x0, 0x101),
+	StateConfig(0x0, 0x4),
 };
 
 StateConfig* CActorStiller::GetStateCfg(int state)
@@ -186,7 +191,7 @@ StateConfig* CActorStiller::GetStateCfg(int state)
 		pStateConfig = CActor::GetStateCfg(state);
 	}
 	else {
-		assert((state - 5) < 5);
+		assert((state - 0xa) < 5);
 		pStateConfig = _gStateCfg_STI + state + -5;
 	}
 
@@ -242,11 +247,11 @@ int CActorStiller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			local_20.x = (float)uVar2;
 			local_20.y = (float)((ulong)uVar2 >> 0x20) + 0.5;
 			ActorComponent34Func_00397180(&this->addOnGenerator, &local_20);
-			(*(this->pVTable)->SetState)((CActor*)this, 0xe, -1);
+			SetState(0xe, -1);
 			return 1;
 		}
 
-		(*(this->pVTable)->SetState)((CActor*)this, 0xd, -1);
+		SetState(0xd, -1);
 			)
 		return 1;
 	}
@@ -275,51 +280,40 @@ int CActorStiller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 	}
 	else {
-		if (msg != 2) {
+		if (msg != MESSAGE_KICKED) {
 			iVar7 = CActor::InterpretMessage(pSender, msg, (GetPositionMsgParams*)pMsgParam);
 			return iVar7;
 		}
 
-		IMPLEMENTATION_GUARD(
-		iVar7 = this->actorState;
-		if (iVar7 == -1) {
-			uVar5 = 0;
-		}
-		else {
-			pSVar6 = (*(this->pVTable)->GetStateCfg)((CActor*)this, iVar7);
-			uVar5 = pSVar6->flags_0x4 & 1;
-		}
+		uVar5 = GetStateFlags(this->actorState) & 1;
+
 		bVar1 = uVar5 != 0;
 		if (bVar1) {
 			bVar1 = this->field_0x214 != 0;
 		}
+
 		if (!bVar1) {
-			iVar7 = this->actorState;
-			if (iVar7 == -1) {
-				uVar5 = 0;
-			}
-			else {
-				pSVar6 = (*(this->pVTable)->GetStateCfg)((CActor*)this, iVar7);
-				uVar5 = pSVar6->flags_0x4 & 0x100;
-			}
+			uVar5 = GetStateFlags(this->actorState) & 0x100;
 			bVar1 = uVar5 == 0;
 		}
 
-		/* WARNING: Load size is inaccurate */
-		if ((bVar1) && (*pMsgParam == 4)) {
+		_msg_hit_param* pHitMsgParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+		if ((bVar1) && (pHitMsgParam->projectileType == 4)) {
 			if ((this->field_0x1f8 & 1) == 0) {
-				CLifeBase::LifeDecrease(*(undefined4*)((int)pMsgParam + 0xc), (CLifeBase*)&this->lifeBase);
+				this->lifeBase.LifeDecrease(pHitMsgParam->damage);
 			}
-			fVar8 = CLifeBase::GetValue((CLifeBase*)&this->lifeBase);
-			if (0.0 < fVar8) {
-				(*(this->pVTable)->SetState)((CActor*)this, 9, -1);
-				fVar8 = CLifeBase::GetValueMax((CLifeBase*)&this->lifeBase);
-				CLifeBase::SetValue(fVar8, (CLifeBase*)&this->lifeBase);
+
+			fVar8 = this->lifeBase.GetValue();
+			if (0.0f < fVar8) {
+				SetState(STILLER_STAND_STATE_DEAD, -1);
+				this->lifeBase.SetValue(this->lifeBase.GetValueMax());
 				return 1;
 			}
-			(*(this->pVTable)->SetState)((CActor*)this, 0xd, -1);
+
+			SetState(0xd, -1);
 			return 1;
-		})
+		}
 	}
 
 	return 0;
@@ -395,24 +389,22 @@ void CActorStiller::BehaviourStillerStand_Manage()
 		}
 		break;
 	case STILLER_STAND_STATE_ATTACK:
-		IMPLEMENTATION_GUARD(
-		StateAttack();)
+		StateAttack();
 		break;
 	case 9:
-		IMPLEMENTATION_GUARD(
-		if (((this->field_0x1f8 & 1) == 0) || (bVar3 = CheckAttackArea(this), bVar3 == false)) {
+		if (((this->field_0x1f8 & 1) == 0) || (bVar3 = CheckAttackArea(), bVar3 == false)) {
 			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				if ((this->field_0x1f8 & 1) == 0) {
-					(*(this->pVTable)->SetState)((CActor*)this, 0xc, -1);
+					SetState(STILLER_STAND_STATE_WAKE, -1);
 				}
 				else {
-					(*(this->pVTable)->SetState)((CActor*)this, 7, -1);
+					SetState(7, -1);
 				}
 			}
 		}
 		else {
-			(*(this->pVTable)->SetState)((CActor*)this, STILLER_STAND_STATE_ATTACK, -1);
-		})
+			SetState(STILLER_STAND_STATE_ATTACK, -1);
+		}
 		break;
 	case 10:
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
@@ -429,25 +421,22 @@ void CActorStiller::BehaviourStillerStand_Manage()
 			SetState(6, -1);
 		}
 		break;
-	case 0xb:
-		IMPLEMENTATION_GUARD(
+	case STILLER_STAND_STATE_RESTORE:
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			newValue = CLifeBase::GetValueMax((CLifeBase*)&this->lifeBase);
-			CLifeBase::SetValue(newValue, (CLifeBase*)&this->lifeBase);
-			(*(this->pVTable)->SetState)((CActor*)this, 0xc, -1);
-		})
+			this->lifeBase.SetValue(this->lifeBase.GetValueMax());
+			SetState(STILLER_STAND_STATE_WAKE, -1);
+		}
 		break;
-	case 0xc:
-		IMPLEMENTATION_GUARD(
-		bVar3 = CheckDetectArea(this);
+	case STILLER_STAND_STATE_WAKE:
+		bVar3 = CheckDetectArea();
 		if (bVar3 == false) {
-			(*(this->pVTable)->SetState)((CActor*)this, 5, -1);
+			SetState(5, -1);
 		}
 		else {
 			if (this->field_0x1f4 < this->timeInAir) {
-				(*(this->pVTable)->SetState)((CActor*)this, 6, -1);
+				SetState(6, -1);
 			}
-		})
+		}
 	}
 	
 	return;
@@ -466,7 +455,7 @@ void CActorStiller::BehaviourStillerStand_TermState(int oldState)
 		}
 	}
 	else {
-		if (oldState == 0xc) {
+		if (oldState == STILLER_STAND_STATE_WAKE) {
 			for (int i = 0; i < this->field_0x20c->entryCount; i++) {
 				this->field_0x20c->aEntries[i].Switch(this);
 			}
@@ -474,6 +463,122 @@ void CActorStiller::BehaviourStillerStand_TermState(int oldState)
 			this->field_0x210->SwitchOn(this);
 		}
 	}
+	return;
+}
+
+void CActorStiller::StateAttack()
+{
+	S_ACTOR_STREAM_REF* pSVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	CActorHero* pReceiver;
+	bool bVar4;
+	CActor* pTarget;
+	edF32VECTOR4* peVar6;
+	edF32VECTOR4* peVar7;
+	CActor* pCVar8;
+	int iVar9;
+	int iVar10;
+	int iVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	edF32VECTOR4 eStack352;
+	edF32VECTOR4 local_150;
+	_msg_hit_param local_140;
+	edF32VECTOR4 eStack192;
+	edF32VECTOR4 local_b0;
+	_msg_hit_param local_a0;
+	edF32VECTOR4 local_20;
+	_msg_hit_param* local_8;
+	_msg_hit_param* local_4;
+
+	SV_GetBoneWorldPosition(this->field_0x1d0, &local_20);
+	(this->vision).location = local_20;
+	(this->vision).rotationQuat = this->rotationQuat;
+
+	pReceiver = CActorHero::_gThis;
+	if ((this->pTarget != (CActor*)0x0) && (pTarget = this->vision.ScanForTarget(CActorHero::_gThis, 1), pTarget != (CActor*)0x0)) {
+		local_a0.projectileType = 1;
+		local_a0.damage = this->field_0x1ec;
+		local_a0.field_0x30 = this->field_0x1e0;
+		edF32Vector4SubHard(&eStack192, &this->currentLocation, &pReceiver->currentLocation);
+		if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
+			eStack192.y = 0.0f;
+			edF32Vector4SafeNormalize1Hard(&local_b0, &eStack192);
+		}
+		else {
+			peVar6 = this->pathFollowReader.GetWayPoint(0);
+			peVar7 = this->pathFollowReader.GetWayPoint(1);
+			edF32Vector4SubHard(&local_b0, peVar6, peVar7);
+			local_b0.y = 0.0f;
+			edF32Vector4SafeNormalize1Hard(&local_b0, &local_b0);
+		}
+		local_a0.field_0x20 = local_b0;
+		DoMessage(pReceiver, MESSAGE_KICKED, &local_a0);
+	}
+
+	iVar11 = 0;
+	while (true) {
+		pSVar1 = this->field_0x1fc;
+		iVar9 = 0;
+		if (pSVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar9 = pSVar1->entryCount;
+		}
+
+		if (iVar9 <= iVar11) break;
+
+		pTarget = pSVar1->aEntries[iVar11].Get();
+		pCVar8 = this->vision.ScanForTarget(pTarget, 1);
+		if (pCVar8 != (CActor*)0x0) {
+			local_140.projectileType = 1;
+			local_140.damage = this->field_0x1ec;
+			local_140.field_0x30 = this->field_0x1e0;
+			edF32Vector4SubHard(&eStack352, &this->currentLocation, &pTarget->currentLocation);
+			if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
+				eStack352.y = 0.0f;
+				edF32Vector4SafeNormalize1Hard(&local_150, &eStack352);
+			}
+			else {
+				peVar6 = this->pathFollowReader.GetWayPoint(0);
+				peVar7 = this->pathFollowReader.GetWayPoint(1);
+				edF32Vector4SubHard(&local_150, peVar6, peVar7);
+				local_150.y = 0.0f;
+				edF32Vector4SafeNormalize1Hard(&local_150, &local_150);
+			}
+
+			local_140.field_0x20 = local_150;
+			DoMessage(pTarget, MESSAGE_KICKED, &local_140);
+		}
+
+		iVar11 = iVar11 + 1;
+	}
+
+	if (this->field_0x1f0 < 0.0f) {
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			bVar4 = CheckAttackArea();
+			if (bVar4 == false) {
+				SetState(7, -1);
+			}
+			else {
+				RestartCurAnim();
+				this->timeInAir = 0.0f;
+			}
+		}
+	}
+	else {
+		if (this->field_0x1f0 < this->timeInAir) {
+			bVar4 = CheckAttackArea();
+			if (bVar4 == false) {
+				SetState(7, -1);
+			}
+			else {
+				RestartCurAnim();
+				this->timeInAir = 0.0f;
+			}
+		}
+	}
+
 	return;
 }
 

@@ -803,7 +803,7 @@ bool CActorHeroPrivate::SetNextClimbState(int param_2, int param_3)
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pInput->pressedBitfield & 0x10;
+		uVar8 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (uVar8 == 0) {
@@ -1094,7 +1094,7 @@ void CActorHeroPrivate::StateHeroClimbStand(int param_2, int param_3)
 			uVar4 = 0;
 		}
 		else {
-			uVar4 = pInput->pressedBitfield & 0x10;
+			uVar4 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if ((uVar4 == 0) && (param_3 != 0)) {
@@ -1257,7 +1257,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 						uVar8 = 0;
 					}
 					else {
-						uVar8 = pCVar2->pressedBitfield & 0x10;
+						uVar8 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 					}
 
 					if (uVar8 == 0) {
@@ -2124,7 +2124,7 @@ void CActorHeroPrivate::StateHeroCeilingClimb(int param_2, int param_3, int para
 			uVar5 = 0;
 		}
 		else {
-			uVar5 = pInput->pressedBitfield & 0x10;
+			uVar5 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if (uVar5 == 0) {

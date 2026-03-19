@@ -1235,7 +1235,7 @@ void CBehaviourNativShopSell::State_Display()
 	}
 
 LAB_0036d528:
-	if (((pCVar1->pressedBitfield & 0x80000) != 0) && (pInventoryInfo->field_0x10 != 0)) {
+	if (((pCVar1->pressedBitfield & PAD_BITMASK_SELECT) != 0) && (pInventoryInfo->field_0x10 != 0)) {
 		if ((this->field_0xb0 == 0) || (this->field_0xb0 == 3)) {
 			this->field_0xb0 = 1;
 		}

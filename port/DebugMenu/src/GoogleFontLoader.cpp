@@ -5,6 +5,9 @@
 #include <imgui.h>
 #include <nlohmann/json.hpp>
 
+#include "DebugMenu.h"
+#include "DebugSetting.h"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,6 +15,33 @@
 #include <vector>
 
 namespace {
+
+// ---- Font settings (persisted via DebugSetting) --------------------------------
+
+struct FontOption {
+	const char* label;
+	const char* family;
+};
+
+static constexpr FontOption kFontOptions[] = {
+	{ "Roboto (clean, neutral)",       "Roboto"        },
+	{ "Inter (modern, readable)",      "Inter"         },
+	{ "Noto Sans (broad char support)","Noto Sans"     },
+	{ "JetBrains Mono (monospace)",    "JetBrains Mono"},
+	{ "Nunito (rounded, friendly)",    "Nunito"        },
+};
+static constexpr int kNumFontOptions = static_cast<int>(std::size(kFontOptions));
+
+static const char* kFontLabels[kNumFontOptions] = {
+	kFontOptions[0].label, kFontOptions[1].label, kFontOptions[2].label,
+	kFontOptions[3].label, kFontOptions[4].label,
+};
+
+static Debug::ComboSetting gFontFamily("Google Font Family", 0,
+	{kFontLabels[0], kFontLabels[1], kFontLabels[2], kFontLabels[3], kFontLabels[4]});
+static Debug::Setting<float> gFontSize("Google Font Size", 16.0f);
+
+// ---- HTTP helpers ---------------------------------------------------------------
 
 std::wstring ToWide(const std::string& s)
 {
@@ -31,7 +61,6 @@ std::string ToNarrow(const std::wstring& w)
 	return s;
 }
 
-// Performs an HTTP/HTTPS GET and returns the response body as a byte vector.
 std::vector<uint8_t> HttpGet(const std::wstring& url)
 {
 	URL_COMPONENTS urlComp = {};
@@ -93,55 +122,90 @@ std::vector<uint8_t> HttpGet(const std::wstring& url)
 	return data;
 }
 
+// ---- Debug menu -----------------------------------------------------------------
+
+void ShowFontMenu(bool* pOpen)
+{
+	if (!ImGui::Begin("Fonts", pOpen)) { ImGui::End(); return; }
+
+	ImGui::TextDisabled("Changes take effect on next restart.");
+	ImGui::Spacing();
+
+	gFontFamily.DrawImguiControl();
+	ImGui::SetItemTooltip("Select a Google Font to download and use for the debug UI.");
+
+	ImGui::SetNextItemWidth(120.0f);
+	gFontSize.DrawImguiControl();
+	ImGui::SetItemTooltip("Font size in pixels.");
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	// Show cache status for each font
+	ImGui::TextDisabled("Cache status:");
+	for (int i = 0; i < kNumFontOptions; i++) {
+		const std::string cacheFile = std::string("fonts/") + kFontOptions[i].family + "-regular.ttf";
+		const bool bCached = std::filesystem::exists(cacheFile);
+		if (bCached)
+			ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "  [cached] %s", kFontOptions[i].label);
+		else
+			ImGui::TextDisabled("  [not downloaded] %s", kFontOptions[i].label);
+	}
+
+	ImGui::End();
+}
+
+Debug::MenuRegisterer sFontMenuReg("Fonts", ShowFontMenu);
+
 } // anonymous namespace
+
+// ---- Public API -----------------------------------------------------------------
 
 bool GoogleFontLoader::LoadIntoImGui(const std::string& fontFamily,
                                      const std::string& variant,
                                      float fontSize)
 {
+	// Use persisted settings if the caller passed the defaults
+	const int familyIdx = gFontFamily.get();
+	const std::string resolvedFamily  = (familyIdx >= 0 && familyIdx < kNumFontOptions)
+	                                    ? kFontOptions[familyIdx].family : fontFamily;
+	const float resolvedSize = gFontSize.get();
+
 	std::filesystem::create_directories("fonts");
-	const std::string cacheFile = "fonts/" + fontFamily + "-" + variant + ".ttf";
+	const std::string cacheFile = "fonts/" + resolvedFamily + "-" + variant + ".ttf";
 
 	if (!std::filesystem::exists(cacheFile)) {
-		// Read API key from environment
 		char apiKeyBuf[256] = {};
 		if (GetEnvironmentVariableA("GOOGLE_FONTS_API_KEY", apiKeyBuf, sizeof(apiKeyBuf)) == 0) {
 			std::cerr << "GoogleFontLoader: GOOGLE_FONTS_API_KEY env var not set; "
-			             "font '" << fontFamily << "' will not be downloaded\n";
+			             "font '" << resolvedFamily << "' will not be downloaded\n";
 			return false;
 		}
 
-		// Query Google Fonts Developer API v1
 		const std::wstring apiUrl = L"https://www.googleapis.com/webfonts/v1/webfonts?key="
-			+ ToWide(apiKeyBuf) + L"&family=" + ToWide(fontFamily);
+			+ ToWide(apiKeyBuf) + L"&family=" + ToWide(resolvedFamily);
 
-		std::cout << "GoogleFontLoader: querying API for '" << fontFamily << "'...\n";
+		std::cout << "GoogleFontLoader: querying API for '" << resolvedFamily << "'...\n";
 		const auto apiResponse = HttpGet(apiUrl);
 		if (apiResponse.empty()) {
 			std::cerr << "GoogleFontLoader: empty response from Google Fonts API\n";
 			return false;
 		}
 
-		// Parse response JSON
 		const auto json = nlohmann::json::parse(
-			apiResponse.begin(), apiResponse.end(), nullptr, /*allow_exceptions=*/false);
-		if (json.is_discarded()) {
-			std::cerr << "GoogleFontLoader: failed to parse API JSON response\n";
-			return false;
-		}
-
-		if (!json.contains("items") || json["items"].empty()) {
-			std::cerr << "GoogleFontLoader: font family '" << fontFamily << "' not found\n";
+			apiResponse.begin(), apiResponse.end(), nullptr, false);
+		if (json.is_discarded() || !json.contains("items") || json["items"].empty()) {
+			std::cerr << "GoogleFontLoader: font family '" << resolvedFamily << "' not found\n";
 			return false;
 		}
 
 		const auto& files = json["items"][0]["files"];
 		if (!files.contains(variant)) {
 			std::cerr << "GoogleFontLoader: variant '" << variant
-			          << "' not found for family '" << fontFamily << "'\n";
+			          << "' not found for family '" << resolvedFamily << "'\n";
 			std::cerr << "GoogleFontLoader: available variants:";
-			for (auto& [k, v] : files.items())
-				std::cerr << " " << k;
+			for (auto& [k, v] : files.items()) std::cerr << " " << k;
 			std::cerr << "\n";
 			return false;
 		}
@@ -155,7 +219,6 @@ bool GoogleFontLoader::LoadIntoImGui(const std::string& fontFamily,
 			return false;
 		}
 
-		// Cache to disk
 		std::ofstream outFile(cacheFile, std::ios::binary);
 		if (!outFile) {
 			std::cerr << "GoogleFontLoader: failed to write cache file: " << cacheFile << "\n";
@@ -166,15 +229,15 @@ bool GoogleFontLoader::LoadIntoImGui(const std::string& fontFamily,
 		std::cout << "GoogleFontLoader: cached to " << cacheFile << "\n";
 	}
 
-	// Load into ImGui
 	ImGuiIO& io = ImGui::GetIO();
-	ImFont* pFont = io.Fonts->AddFontFromFileTTF(cacheFile.c_str(), fontSize);
+	ImFont* pFont = io.Fonts->AddFontFromFileTTF(cacheFile.c_str(), resolvedSize);
 	if (!pFont) {
 		std::cerr << "GoogleFontLoader: ImGui failed to load font from " << cacheFile << "\n";
 		return false;
 	}
 
-	std::cout << "GoogleFontLoader: loaded '" << fontFamily << "' (" << variant
-	          << ") at " << fontSize << "px\n";
+	std::cout << "GoogleFontLoader: loaded '" << resolvedFamily << "' (" << variant
+	          << ") at " << resolvedSize << "px\n";
 	return true;
 }
+

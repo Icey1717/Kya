@@ -2088,25 +2088,25 @@ uint CSimpleMenu::get_action()
 	inputState = 0;
 
 	if (this->screenState_0x1c == MENU_STATE_SELECT) {
-		if (((gPlayerInput.pressedBitfield & 0x100000) == 0) && ((gPlayerInput.pressedBitfield & 4) == 0)) {
-			if (((gPlayerInput.pressedBitfield & 0x200000) == 0) && ((gPlayerInput.pressedBitfield & 8) == 0)) {
-				if (((gPlayerInput.pressedBitfield & 0x400000) == 0) && ((gPlayerInput.pressedBitfield & 1) == 0)) {
-					if (((gPlayerInput.pressedBitfield & 0x800000) == 0) && ((gPlayerInput.pressedBitfield & 2) == 0)) {
+		if (((gPlayerInput.pressedBitfield & PAD_BITMASK_DPAD_UP) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_LEFT_ANALOG_UP) == 0)) {
+			if (((gPlayerInput.pressedBitfield & PAD_BITMASK_DPAD_DOWN) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_LEFT_ANALOG_DOWN) == 0)) {
+				if (((gPlayerInput.pressedBitfield & PAD_BITMASK_DPAD_LEFT) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_LEFT_ANALOG_LEFT) == 0)) {
+					if (((gPlayerInput.pressedBitfield & PAD_BITMASK_DPAD_RIGHT) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_LEFT_ANALOG_RIGHT) == 0)) {
 						inputState = MENU_INPUT_CONFIRM;
 
-						if (((((gPlayerInput.pressedBitfield & 0x1000000) == 0) &&
-							(inputState = MENU_INPUT_CANCEL, (gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) == 0)) &&
-							(inputState = 6, (gPlayerInput.pressedBitfield & 0x20) == 0)) &&
-							(inputState = 7, (gPlayerInput.pressedBitfield & 0x40) == 0)) {
+						if (((((gPlayerInput.pressedBitfield & PAD_BITMASK_11) == 0) &&
+							(inputState = MENU_INPUT_CANCEL, (gPlayerInput.pressedBitfield & PAD_BITMASK_13) == 0)) &&
+							(inputState = 6, (gPlayerInput.pressedBitfield & PAD_BITMASK_L2) == 0)) &&
+							(inputState = 7, (gPlayerInput.pressedBitfield & PAD_BITMASK_R2) == 0)) {
 							inputState = 0;
 						}
 					}
 					else {
-						inputState = 4;
+						inputState = MENU_INPUT_RIGHT;
 					}
 				}
 				else {
-					inputState = 3;
+					inputState = MENU_INPUT_LEFT;
 				}
 			}
 			else {

@@ -241,6 +241,9 @@ namespace Hero
 		case STATE_HERO_KICK_C:
 			return "StateHeroKickC";
 			break;
+		case STATE_HERO_CHEAT_FLY:
+			return "StateHeroCheatFly";
+			break;
 		case STATE_HERO_CLIMB_STAND_A:
 			return "StateHeroClimbStandA";
 			break;
