@@ -16,6 +16,9 @@ class CAddOnSubObjAton : public CAddOnSubObj
 {
 public:
 	CAddOnSubObjAton() {}
+	void Create(ByteCode* pByteCode);
+
+	uint field_0x18;
 };
 
 class CBehaviourAddOnAton : public CAddOn
@@ -31,6 +34,7 @@ public:
 
 	int nbAtonSubObjs;
 	CAddOnSubObjAton* aAtonSubObjs;
+	uint field_0x18;
 	int nbOtherSubObjs;
 	CAddOnSubObj* aOtherSubObjs;
 

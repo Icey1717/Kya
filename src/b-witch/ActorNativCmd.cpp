@@ -576,21 +576,7 @@ void CAddOnNativ::Create(ByteCode* pByteCode)
 		if (0 < this->nbSubObjs) {
 			do {
 				CAddOnSubObj* puVar9 = this->aSubObjs + iVar9;
-				puVar9->field_0x0 = pByteCode->GetU32();
-				puVar9->nbCinematics = pByteCode->GetS32();
-				if (0 < puVar9->nbCinematics) {
-					puVar9->aCinematicIds = new int[puVar9->nbCinematics];
-				}
-
-				iVar7 = 0;
-				if (0 < puVar9->nbCinematics) {
-					do {
-						puVar9->aCinematicIds[iVar7] = pByteCode->GetS32();
-						iVar7 = iVar7 + 1;
-					} while (iVar7 < puVar9->nbCinematics);
-				}
-
-				puVar9->lastPlayedCinematicId = -1;
+				puVar9->Create(pByteCode);
 				iVar9 = iVar9 + 1;
 			} while (iVar9 < this->nbSubObjs);
 		}

@@ -755,6 +755,7 @@ class CCinematic;
 class CAddOnSubObj
 {
 public:
+	void Create(ByteCode* pByteCode);
 	void SetCinematic(CCinematic* pCinematic);
 	int PickCinematic();
 

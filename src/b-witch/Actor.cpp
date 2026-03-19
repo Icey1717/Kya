@@ -5226,6 +5226,27 @@ CCinematic* CAddOn::GetCinematic()
 	return pCinematic;
 }
 
+void CAddOnSubObj::Create(ByteCode* pByteCode)
+{
+	this->field_0x0 = pByteCode->GetU32();
+	this->nbCinematics = pByteCode->GetS32();
+	if (0 < this->nbCinematics) {
+		this->aCinematicIds = new int[this->nbCinematics];
+	}
+
+	int curIndex = 0;
+	if (0 < this->nbCinematics) {
+		do {
+			this->aCinematicIds[curIndex] = pByteCode->GetS32();
+			curIndex = curIndex + 1;
+		} while (curIndex < this->nbCinematics);
+	}
+
+	this->lastPlayedCinematicId = -1;
+
+	return;
+}
+
 void CAddOnSubObj::SetCinematic(CCinematic* pCinematic)
 {
 	bool bVar1;
