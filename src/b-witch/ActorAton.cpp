@@ -3571,10 +3571,10 @@ bool CActorAton::AnalyseForRun()
 
 CBehaviourAddOnAton::CBehaviourAddOnAton()
 {
-	this->field_0x10 = 0;
-	this->field_0x14 = (int*)0x0;
-	this->field_0x1c = 0;
-	this->field_0x20 = (int*)0x0;
+	this->nbAtonSubObjs = 0;
+	this->aAtonSubObjs = (int*)0x0;
+	this->nbOtherSubObjs = 0;
+	this->aOtherSubObjs = (int*)0x0;
 }
 
 void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
@@ -3593,14 +3593,14 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 	uVar1 = pByteCode->GetU32();
 	//this->field_0x18 = uVar1;
 	uVar1 = pByteCode->GetS32();
-	this->field_0x1c = uVar1;
-	uVar1 = this->field_0x1c;
+	this->nbOtherSubObjs = uVar1;
+	uVar1 = this->nbOtherSubObjs;
 	if (uVar1 != 0) {
 		//piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0x18 + 0x10));
 		//piVar2 = __construct_new_array(piVar2, (ActorConstructorA*)&LAB_003e1f60, FUN_003e3a70, 0x18, uVar1);
 		//this->field_0x20 = piVar2;
 		iVar9 = 0;
-		if (0 < this->field_0x1c) {
+		if (0 < this->nbOtherSubObjs) {
 			iVar6 = 0;
 			do {
 				//puVar8 = (uint*)((int)this->field_0x20 + iVar6);
@@ -3625,18 +3625,18 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 				//puVar8[4] = 0xffffffff;
 				iVar9 = iVar9 + 1;
 				iVar6 = iVar6 + 0x18;
-			} while (iVar9 < this->field_0x1c);
+			} while (iVar9 < this->nbOtherSubObjs);
 		}
 	}
 	uVar1 = pByteCode->GetS32();
-	this->field_0x10 = uVar1;
-	uVar1 = this->field_0x10;
+	this->nbAtonSubObjs = uVar1;
+	uVar1 = this->nbAtonSubObjs;
 	if (uVar1 != 0) {
 		//piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0x1c + 0x10));
 		//piVar2 = __construct_new_array(piVar2, (ActorConstructorA*)&LAB_003e3450, FUN_0010df00, 0x1c, uVar1);
 		//this->field_0x14 = piVar2;
 		iVar9 = 0;
-		if (0 < (int)this->field_0x10) {
+		if (0 < (int)this->nbAtonSubObjs) {
 			iVar6 = 0;
 			do {
 				//puVar8 = (uint*)((int)this->field_0x14 + iVar6);
@@ -3663,7 +3663,7 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 				//puVar8[4] = 0xffffffff;
 				iVar9 = iVar9 + 1;
 				iVar6 = iVar6 + 0x1c;
-			} while (iVar9 < this->field_0x10);
+			} while (iVar9 < this->nbAtonSubObjs);
 		}
 	}
 
@@ -3686,7 +3686,142 @@ void CBehaviourAddOnAton::Init(CActor* pActor)
 
 void CBehaviourAddOnAton::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	CCinematic* pCinematic;
+	Timer* pTVar2;
+	int iVar3;
+	int iVar4;
+	CAddOnSubObj* pCurSubObj;
+	float fVar5;
+
+	pCurSubObj = this->pSubObj;
+	if (pCurSubObj == (CAddOnSubObj*)0x0) {
+		pCinematic = (CCinematic*)0x0;
+	}
+	else {
+		pCinematic = pCurSubObj->pCinematic;
+	}
+
+	if (pCinematic != (CCinematic*)0x0) {
+		if ((GameFlags & 0x4020) != 0) {
+			pCinematic = (CCinematic*)0x0;
+			if (pCurSubObj != (CAddOnSubObj*)0x0) {
+				pCinematic = pCurSubObj->pCinematic;
+			}
+			if (pCinematic == (CCinematic*)0x0) {
+			LAB_003e2e60:
+				bVar1 = false;
+			}
+			else {
+				pCinematic = (CCinematic*)0x0;
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pCinematic = pCurSubObj->pCinematic;
+				}
+
+				if ((pCinematic->state == CS_Stopped) || (bVar1 = true, this->field_0xc == 0))
+					goto LAB_003e2e60;
+			}
+
+			if (bVar1) {
+				pCinematic = (CCinematic*)0x0;
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pCinematic = pCurSubObj->pCinematic;
+				}
+				CCinematic::FUN_001c92b0(pCinematic);
+				pCurSubObj = this->pSubObj;
+				pCinematic = (CCinematic*)0x0;
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pCinematic = pCurSubObj->pCinematic;
+				}
+				bVar1 = CCinematic::Has_0x2d8(pCinematic);
+				if (bVar1 != false) {
+					pCurSubObj = this->pSubObj;
+					pCinematic = (CCinematic*)0x0;
+					if (pCurSubObj != (CAddOnSubObj*)0x0) {
+						pCinematic = pCurSubObj->pCinematic;
+					}
+					CCinematic::Remove_0x2d8(pCinematic);
+				}
+				(*(code*)(this->pVTable)->Reset)(this);
+			}
+		}
+		if (this->field_0xc != 0) {
+			pCurSubObj = this->pSubObj;
+			pCinematic = (CCinematic*)0x0;
+			if (pCurSubObj != (CAddOnSubObj*)0x0) {
+				pCinematic = pCurSubObj->pCinematic;
+			}
+			if (pCinematic->state == CS_Stopped) {
+				pCinematic = (CCinematic*)0x0;
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pCinematic = pCurSubObj->pCinematic;
+				}
+				if ((pCinematic->flags_0x8 & 0x80) == 0) {
+					this->field_0xc = 0;
+					pCurSubObj = this->pSubObj;
+					if (pCurSubObj != (CAddOnSubObj*)0x0) {
+						CAddOnSubObj::SetCinematic(pCurSubObj, (CCinematic*)0x0);
+					}
+					this->pSubObj = (CAddOnSubObj*)0x0;
+				}
+			}
+		}
+	}
+	pTVar2 = GetTimer();
+	this->field_0x28 = this->field_0x28 + pTVar2->cutsceneDeltaTime;
+	pCurSubObj = this->pSubObj;
+	pCinematic = (CCinematic*)0x0;
+	if (pCurSubObj != (CAddOnSubObj*)0x0) {
+		pCinematic = pCurSubObj->pCinematic;
+	}
+	if (pCinematic != (CCinematic*)0x0) {
+		pCinematic = (CCinematic*)0x0;
+		if (pCurSubObj != (CAddOnSubObj*)0x0) {
+			pCinematic = pCurSubObj->pCinematic;
+		}
+		if ((pCinematic->state != CS_Stopped) && (bVar1 = true, this->field_0xc != 0))
+			goto LAB_003e2fa0;
+	}
+	bVar1 = false;
+LAB_003e2fa0:
+	if (!bVar1) {
+		iVar4 = 0;
+		if (0 < this->nbOtherSubObjs) {
+			iVar3 = 0;
+			do {
+				pCurSubObj = (CAddOnSubObj*)((int)&this->aOtherSubObjs->field_0x0 + iVar3);
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pTVar2 = GetTimer();
+					fVar5 = pCurSubObj->field_0x14 + pTVar2->cutsceneDeltaTime;
+					pCurSubObj->field_0x14 = fVar5;
+					if ((1.0 <= fVar5) && (pCurSubObj->pCinematic != (CCinematic*)0x0)) {
+						CAddOnSubObj::SetCinematic(pCurSubObj, (CCinematic*)0x0);
+					}
+				}
+				iVar4 = iVar4 + 1;
+				iVar3 = iVar3 + 0x18;
+			} while (iVar4 < this->nbOtherSubObjs);
+		}
+		iVar4 = 0;
+		if (0 < this->nbAtonSubObjs) {
+			iVar3 = 0;
+			do {
+				pCurSubObj = (CAddOnSubObj*)((int)&(this->aAtonSubObjs->base).field_0x0 + iVar3);
+				if (pCurSubObj != (CAddOnSubObj*)0x0) {
+					pTVar2 = GetTimer();
+					fVar5 = pCurSubObj->field_0x14 + pTVar2->cutsceneDeltaTime;
+					pCurSubObj->field_0x14 = fVar5;
+					if ((1.0 <= fVar5) && (pCurSubObj->pCinematic != (CCinematic*)0x0)) {
+						CAddOnSubObj::SetCinematic(pCurSubObj, (CCinematic*)0x0);
+					}
+				}
+				iVar4 = iVar4 + 1;
+				iVar3 = iVar3 + 0x1c;
+			} while (iVar4 < this->nbAtonSubObjs);
+		}
+	}
+
+	return;
 }
 
 CAddOnSubObj* CBehaviourAddOnAton::GetSubObj(uint param_2, int pActor)

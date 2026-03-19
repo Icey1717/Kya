@@ -12,6 +12,12 @@
 struct edDList_material;
 class CActorAton;
 
+class CAddOnSubObjAton : public CAddOnSubObj
+{
+public:
+	CAddOnSubObjAton() {}
+};
+
 class CBehaviourAddOnAton : public CAddOn
 {
 public:
@@ -23,13 +29,10 @@ public:
 	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor);
 	virtual bool Func_0x24(uint param_2, CActor* pActor);
 
-	byte field_0xc;
-	byte field_0xd;
-
-	int field_0x10;
-	int* field_0x14;
-	int field_0x1c;
-	int* field_0x20;
+	int nbAtonSubObjs;
+	CAddOnSubObjAton* aAtonSubObjs;
+	int nbOtherSubObjs;
+	CAddOnSubObj* aOtherSubObjs;
 
 	float field_0x24;
 	float field_0x28;
