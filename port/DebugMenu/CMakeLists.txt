@@ -54,8 +54,7 @@ set(SOURCES
 	"src/DebugMaterial.cpp"
 	"src/DebugFrameBuffer.h"
 	"src/DebugFrameBuffer.cpp"
-	"src/DebugCheckpoint.h"
-	"src/DebugCheckpoint.cpp"
+
 	"src/DebugTexture.h"
 	"src/DebugTexture.cpp"
 	"src/DebugMesh.h"
@@ -86,6 +85,8 @@ set(SOURCES
 	"src/Actor/DebugActorWind.cpp"
 	"src/Actor/DebugActorJamGut.h"
 	"src/Actor/DebugActorJamGut.cpp"
+	"src/DebugWorldNames.h"
+	"src/DebugWorldNames.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"include/DebugRenderer.h"
 	"include/DebugMenu.h"

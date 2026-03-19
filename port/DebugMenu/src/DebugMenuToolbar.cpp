@@ -15,23 +15,6 @@
 #include "Actor.h"
 
 namespace Debug {
-
-	static void ShowSectorMenu(bool* bOpen) {
-		ImGui::Begin("Sector", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		ImGui::Text("Current Sector: %d", CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID);
-
-		for (int i = 0; i < 5; i++) {
-			char buttonText[256];
-			std::sprintf(buttonText, "Switch Sector %d", i);
-			if (ImGui::Button(buttonText)) {
-				CScene::ptable.g_SectorManager_00451670->SwitchToSector(i, true);
-			}
-		}
-
-		ImGui::End();
-	}
-
 	static void ShowLevelSchedulerMenu(bool* bOpen) {
 		ImGui::Begin("Level Scheduler", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("Boomy Level: %d", CLevelScheduler::GetBoomyLevel());
@@ -69,10 +52,10 @@ namespace Debug {
 		const double deltaTime = DebugMenu::GetDeltaTime();
 		const double fps = deltaTime > 0.0 ? (1.0 / deltaTime) : 0.0;
 
-		if (CLevelScheduler::gThis != nullptr && gToolbarLevelId == 0) {
+		if (CLevelScheduler::gThis != nullptr) {
 			gToolbarLevelId = CLevelScheduler::gThis->currentLevelID;
 		}
-		if (pSectorManager != nullptr && gToolbarSectorId == 0) {
+		if (pSectorManager != nullptr) {
 			gToolbarSectorId = pSectorManager->baseSector.currentSectorID;
 		}
 
@@ -123,6 +106,12 @@ namespace Debug {
 			ImGui::SameLine();
 			ImGui::Text("FPS %.1f | %s", fps, bPaused ? "Paused" : "Running");
 
+			ImGui::Separator();
+			ImGui::SameLine();
+
+			// Level and sector display
+			ImGui::Text("Level: 0x%x | Sector: 0x%x", gToolbarLevelId, gToolbarSectorId);
+
 			ImGui::EndMainMenuBar();
 		}
 	}
@@ -144,6 +133,5 @@ namespace Debug {
 
 namespace {
 	Debug::MenuRegisterer sDemoMenuReg("Demo", ImGui::ShowDemoWindow);
-	Debug::MenuRegisterer sSectorMenuReg("Sector", Debug::ShowSectorMenu, true);
 	Debug::MenuRegisterer sLevelSchedulerMenuReg("Level Scheduler", Debug::ShowLevelSchedulerMenu, true);
 }

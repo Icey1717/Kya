@@ -1,16 +1,20 @@
-﻿#include "DebugMenuWorld.h"
+#include "DebugMenuWorld.h"
 
 #include <profiling.h>
 #include <imgui.h>
 #include <map>
 #include <vector>
 
+#include "DebugWorldNames.h"
 #include "Actor.h"
 #include "ActorManager.h"
 #include "ActorCheckpointManager.h"
 #include "ActorWind.h"
 #include "ActorWolfen.h"
 #include "ActorJamGut.h"
+#include "LargeObject.h"
+#include "ActorHero.h"
+#include "ActorHero_Private.h"
 #include "SectorManager.h"
 #include "LevelScheduler.h"
 #include "Types.h"
@@ -74,22 +78,29 @@ namespace Debug {
 		return checkpointManagers;
 	}
 
+	static void FocusInspector() {
+		ImGui::SetWindowFocus(kInspectorWindowName);
+	}
+
 	static void SelectActor(CActor* pActor) {
 		gInspectorSelection = {};
 		gInspectorSelection.type = InspectorSelectionType::Actor;
 		gInspectorSelection.pActor = pActor;
+		FocusInspector();
 	}
 
 	static void SelectSector(int sectorIndex) {
 		gInspectorSelection = {};
 		gInspectorSelection.type = InspectorSelectionType::Sector;
 		gInspectorSelection.sectorIndex = sectorIndex;
+		FocusInspector();
 	}
 
 	static void SelectCheckpointManager(CActorCheckpointManager* pManager) {
 		gInspectorSelection = {};
 		gInspectorSelection.type = InspectorSelectionType::CheckpointManager;
 		gInspectorSelection.pCheckpointManager = pManager;
+		FocusInspector();
 	}
 
 	static void SelectCheckpoint(CActorCheckpointManager* pManager, int checkpointIndex) {
@@ -97,10 +108,19 @@ namespace Debug {
 		gInspectorSelection.type = InspectorSelectionType::Checkpoint;
 		gInspectorSelection.pCheckpointManager = pManager;
 		gInspectorSelection.checkpointIndex = checkpointIndex;
+		FocusInspector();
 	}
 
 	static void DrawVector4(const char* label, const edF32VECTOR4& value) {
 		ImGui::Text("%s: %.2f, %.2f, %.2f, %.2f", label, value.x, value.y, value.z, value.w);
+	}
+
+	static int GetCurrentLevelId()
+	{
+		if (CLevelScheduler::gThis != nullptr) {
+			return CLevelScheduler::gThis->currentLevelID;
+		}
+		return -1;
 	}
 
 	// ---- World panel tabs ----
@@ -205,71 +225,100 @@ namespace Debug {
 
 	static void DrawSectorsTab() {
 		auto* pSectorManager = CScene::ptable.g_SectorManager_00451670;
-		if (pSectorManager == nullptr) {
-			ImGui::TextDisabled("Sector manager unavailable.");
-			return;
-		}
 
-		if (ImGui::TreeNodeEx("Base Sector", ImGuiTreeNodeFlags_DefaultOpen)) {
-			const bool selected = gInspectorSelection.type == InspectorSelectionType::Sector &&
-				gInspectorSelection.sectorIndex == pSectorManager->baseSector.currentSectorID;
-			if (ImGui::Selectable("Current Sector", selected)) {
-				SelectSector(pSectorManager->baseSector.currentSectorID);
+		struct CheckpointRef {
+			CActorCheckpointManager* pManager;
+			int index;
+		};
+		std::map<int, std::vector<CheckpointRef>> checkpointsBySector;
+		for (auto* pManager : GatherCheckpointManagers()) {
+			for (int i = 0; i < pManager->checkpointCount; ++i) {
+				checkpointsBySector[pManager->aCheckpoints[i].sectorId].push_back({ pManager, i });
 			}
-			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNodeEx("Loaded Sectors", ImGuiTreeNodeFlags_DefaultOpen)) {
+		// Build a lookup of currently loaded sectors.
+		std::map<int, const CSector*> loadedSectors;
+		int currentSectorId = -1;
+		if (pSectorManager != nullptr) {
+			currentSectorId = pSectorManager->baseSector.currentSectorID;
+			loadedSectors[currentSectorId] = &pSectorManager->baseSector;
 			for (int i = 0; i < pSectorManager->nbSectors; ++i) {
-				const CSector& sector = pSectorManager->aSectors[i];
-				const bool selected = gInspectorSelection.type == InspectorSelectionType::Sector &&
-					gInspectorSelection.sectorIndex == sector.currentSectorID;
-				char sectorLabel[64] = {};
-				sprintf_s(sectorLabel, "Sector %d##%d", sector.currentSectorID, i);
-				if (ImGui::Selectable(sectorLabel, selected)) {
-					SelectSector(sector.currentSectorID);
+				const CSector& s = pSectorManager->aSectors[i];
+				loadedSectors[s.currentSectorID] = &s;
+			}
+		}
+
+		// Enumerate all sectors defined for this level via the level scheduler.
+		std::vector<int> allSectorIds;
+		if (CLevelScheduler::gThis != nullptr) {
+			const int levelId = CLevelScheduler::gThis->currentLevelID;
+			const S_LEVEL_INFO& levelInfo = CLevelScheduler::gThis->aLevelInfo[levelId];
+			for (int i = 0; i <= levelInfo.maxSectorId; ++i) {
+				if (levelInfo.aSectorSubObj[i].bankSize > 0) {
+					allSectorIds.push_back(i);
 				}
 			}
-			ImGui::TreePop();
 		}
-	}
 
-	static void DrawCheckpointsTab() {
-		auto checkpointManagers = GatherCheckpointManagers();
-		if (checkpointManagers.empty()) {
-			ImGui::TextDisabled("No checkpoint managers found.");
+		for (auto& [id, _] : loadedSectors) {
+			if (std::find(allSectorIds.begin(), allSectorIds.end(), id) == allSectorIds.end()) {
+				allSectorIds.push_back(id);
+			}
+		}
+
+		if (allSectorIds.empty()) {
+			ImGui::TextDisabled("No sector data available.");
 			return;
 		}
 
-		for (auto* pManager : checkpointManagers) {
-			ImGuiTreeNodeFlags managerFlags = ImGuiTreeNodeFlags_DefaultOpen;
-			if (gInspectorSelection.type == InspectorSelectionType::CheckpointManager &&
-				gInspectorSelection.pCheckpointManager == pManager) {
-				managerFlags |= ImGuiTreeNodeFlags_Selected;
+		for (int sectorId : allSectorIds) {
+			const bool selected = gInspectorSelection.type == InspectorSelectionType::Sector &&
+				gInspectorSelection.sectorIndex == sectorId;
+
+			auto cpit = checkpointsBySector.find(sectorId);
+			const bool hasCheckpoints = cpit != checkpointsBySector.end();
+			const bool isLoaded = loadedSectors.count(sectorId) > 0;
+			const bool isCurrent = (sectorId == currentSectorId);
+
+			ImGuiTreeNodeFlags sectorFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			if (!hasCheckpoints) sectorFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+			if (selected) sectorFlags |= ImGuiTreeNodeFlags_Selected;
+
+			const char* suffix = isCurrent ? " (current)" : (isLoaded ? " (loaded)" : " [inactive]");
+
+			std::string sectorName = WorldNames::GetSectorName(GetCurrentLevelId(), sectorId);
+
+			if (!isLoaded) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+			const bool open = sectorName.empty()
+				? ImGui::TreeNodeEx((void*)(intptr_t)sectorId, sectorFlags, "Sector %d%s", sectorId, suffix)
+				: ImGui::TreeNodeEx((void*)(intptr_t)sectorId, sectorFlags, "%s (Sector %d)%s", sectorName.c_str(), sectorId, suffix);
+			if (!isLoaded) ImGui::PopStyleColor();
+
+			if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+				SelectSector(sectorId);
 			}
 
-			const bool open = ImGui::TreeNodeEx((void*)pManager, managerFlags, "%s (%d)", pManager->name, pManager->checkpointCount);
-			if (ImGui::IsItemClicked()) {
-				SelectCheckpointManager(pManager);
-			}
-
-			if (!open) {
-				continue;
-			}
-
-			for (int checkpointIndex = 0; checkpointIndex < pManager->checkpointCount; ++checkpointIndex) {
-				const S_CHECKPOINT& checkpoint = pManager->aCheckpoints[checkpointIndex];
-				const bool selected = gInspectorSelection.type == InspectorSelectionType::Checkpoint &&
-					gInspectorSelection.pCheckpointManager == pManager &&
-					gInspectorSelection.checkpointIndex == checkpointIndex;
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | (selected ? ImGuiTreeNodeFlags_Selected : 0);
-				ImGui::TreeNodeEx((void*)(intptr_t)checkpointIndex, flags, "Checkpoint %d [sector %d]", checkpointIndex, checkpoint.sectorId);
-				if (ImGui::IsItemClicked()) {
-					SelectCheckpoint(pManager, checkpointIndex);
+			if (open && hasCheckpoints) {
+				for (const auto& ref : cpit->second) {
+					const S_CHECKPOINT* pCheckpoint = &ref.pManager->aCheckpoints[ref.index];
+					const bool cpSelected = gInspectorSelection.type == InspectorSelectionType::Checkpoint &&
+						gInspectorSelection.pCheckpointManager == ref.pManager &&
+						gInspectorSelection.checkpointIndex == ref.index;
+					ImGuiTreeNodeFlags cpFlags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | (cpSelected ? ImGuiTreeNodeFlags_Selected : 0);
+					std::string cpName = WorldNames::GetCheckpointName(GetCurrentLevelId(), ref.pManager->name, ref.index);
+					if (cpName.empty()) {
+						ImGui::TreeNodeEx((void*)pCheckpoint, cpFlags, "Checkpoint %d (%s)", ref.index, ref.pManager->name);
+					}
+					else {
+						ImGui::TreeNodeEx((void*)pCheckpoint, cpFlags, "%s (Checkpoint %d, %s)", cpName.c_str(), ref.index, ref.pManager->name);
+					}
+					if (ImGui::IsItemClicked()) {
+						SelectCheckpoint(ref.pManager, ref.index);
+					}
 				}
+				ImGui::TreePop();
 			}
-
-			ImGui::TreePop();
 		}
 	}
 
@@ -294,10 +343,6 @@ namespace Debug {
 			}
 			if (ImGui::BeginTabItem("Sectors")) {
 				DrawSectorsTab();
-				ImGui::EndTabItem();
-			}
-			if (ImGui::BeginTabItem("Checkpoints")) {
-				DrawCheckpointsTab();
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
@@ -397,10 +442,25 @@ namespace Debug {
 
 		if (pSelectedSector == nullptr) {
 			ImGui::TextDisabled("Sector %d is not currently loaded.", selectedSectorId);
-			return;
 		}
 
 		ImGui::Text("Sector %d", selectedSectorId);
+
+		{
+			const int levelId = GetCurrentLevelId();
+			std::string name = WorldNames::GetSectorName(levelId, selectedSectorId);
+			char nameBuf[128];
+			strncpy(nameBuf, name.c_str(), sizeof(nameBuf) - 1);
+			nameBuf[sizeof(nameBuf) - 1] = '\0';
+			if (ImGui::InputText("Name##SectorName", nameBuf, sizeof(nameBuf))) {
+				WorldNames::SetSectorName(levelId, selectedSectorId, nameBuf);
+			}
+		}
+
+		if (pSelectedSector == nullptr) {
+			return;
+		}
+
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Desired Sector ID: %d", pSelectedSector->desiredSectorID);
 			ImGui::Text("Current Sector ID: %d", pSelectedSector->currentSectorID);
@@ -448,6 +508,17 @@ namespace Debug {
 		S_CHECKPOINT& checkpoint = pManager->aCheckpoints[checkpointIndex];
 		ImGui::Text("%s / Checkpoint %d", pManager->name, checkpointIndex);
 
+		{
+			const int levelId = GetCurrentLevelId();
+			std::string name = WorldNames::GetCheckpointName(levelId, pManager->name, checkpointIndex);
+			char nameBuf[128];
+			strncpy(nameBuf, name.c_str(), sizeof(nameBuf) - 1);
+			nameBuf[sizeof(nameBuf) - 1] = '\0';
+			if (ImGui::InputText("Name##CheckpointName", nameBuf, sizeof(nameBuf))) {
+				WorldNames::SetCheckpointName(levelId, pManager->name, checkpointIndex, nameBuf);
+			}
+		}
+
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Sector ID: %d", checkpoint.sectorId);
 			ImGui::Text("Flags: 0x%08X", checkpoint.flags);
@@ -462,6 +533,28 @@ namespace Debug {
 
 		if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Manager Current Checkpoint: %d", pManager->currentCheckpointIndex);
+		}
+
+		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen)) {
+			const bool bCanActivate = CActorHero::_gThis != nullptr && CActorHero::_gThis->CanActivateCheckpoint(checkpoint.flags);
+
+			ImGui::BeginDisabled(!bCanActivate);
+			if (ImGui::Button("Activate")) {
+				pManager->ActivateCheckpoint(checkpointIndex);
+				CActorHeroPrivate* pHeroPrivate = reinterpret_cast<CActorHeroPrivate*>(CActorHero::_gThis);
+				edF32VECTOR4 pos = CActorHero::_gThis->currentLocation;
+				pos.y += 100;
+				pHeroPrivate->UpdatePosition(&pos, false);
+				pHeroPrivate->ProcessDeath();
+			}
+			ImGui::EndDisabled();
+
+			ImGui::SameLine();
+			if (ImGui::Button("Force Activate")) {
+				pManager->ActivateCheckpoint(checkpointIndex);
+				CActorHeroPrivate* pHeroPrivate = reinterpret_cast<CActorHeroPrivate*>(CActorHero::_gThis);
+				pHeroPrivate->ProcessDeath();
+			}
 		}
 	}
 
