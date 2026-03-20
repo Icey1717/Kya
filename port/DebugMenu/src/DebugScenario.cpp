@@ -38,7 +38,7 @@ namespace Debug
 			"SCN_LEVEL_LIFE_MAX",
 		};
 
-		Debug::Setting<bool> gApplySavedScenariacVariables("Apply Saved Scenariac Variables", true);
+		Debug::Setting<bool> gApplySavedScenariacVariables("Apply Saved Scenariac Variables", false);
 		std::array<Debug::Setting<int>, SCN_MAX> gScenarioVariables = {
 			Debug::Setting<int>(gScenarioVariableNames[0], 0),
 			Debug::Setting<int>(gScenarioVariableNames[1], 0),
