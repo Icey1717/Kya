@@ -66,4 +66,9 @@ public:
 	char field_0x558[16];
 };
 
+extern float FLOAT_00428e60;
+extern float FLOAT_00428e68;
+extern float FLOAT_00428e70;
+extern float FLOAT_00428e78;
+
 #endif // !FRONTEND_MAGIC_H

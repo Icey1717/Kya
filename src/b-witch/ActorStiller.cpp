@@ -682,7 +682,7 @@ bool CActorStiller::CheckAttackArea()
 
 void CBehaviourStiller::Create(ByteCode* pByteCode)
 {
-
+	return;
 }
 
 void CBehaviourStiller::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -704,7 +704,7 @@ int CBehaviourStiller::InterpretEvent(edCEventMessage* pEventMessage, undefined8
 
 void CBehaviourStillerStand::Create(ByteCode* pByteCode)
 {
-
+	return;
 }
 
 void CBehaviourStillerStand::Manage()

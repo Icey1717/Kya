@@ -633,6 +633,80 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 	ImGui::Separator();
 
+	if (ImGui::CollapsingHeader("Search Events by Actor Name")) {
+		static ImGuiTextFilter gActorSearchFilter;
+		gActorSearchFilter.Draw("Actor Name##actorsearch", -1.0f);
+		ImGui::SetItemTooltip("Case-insensitive substring search across all loaded event chunks.\nMatches collider actors and send-info target actors.");
+
+		if (gActorSearchFilter.IsActive()) {
+			ImGui::BeginChild("##actorsearchresults", ImVec2(0.0f, 200.0f), true);
+
+			bool bAnyResult = false;
+
+			for (int ci = 0; ci < (int)edEventNbChunks; ci++) {
+				auto* pChunk = pedEventChunks[ci];
+				if (!pChunk) continue;
+
+				for (int ei = 0; ei < (int)pChunk->nbEvents; ei++) {
+					auto* pEvent = LOAD_POINTER_CAST(ed_event*, pChunk->aEvents[ei]);
+					if (!pEvent) continue;
+
+					std::string matchSummary;
+					auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+
+					for (int c = 0; c < (int)pEvent->nbColliders; c++, pCollider++) {
+						auto* pActorRef = LOAD_POINTER_CAST(ed_event_actor_ref*, pCollider->pActorRef);
+						const char* colliderName = nullptr;
+						if (pActorRef) {
+							auto* pActor = LOAD_POINTER_CAST(CActor*, pActorRef->pActor);
+							if (pActor) colliderName = pActor->name;
+						}
+
+						if (colliderName && gActorSearchFilter.PassFilter(colliderName)) {
+							if (!matchSummary.empty()) matchSummary += ", ";
+							matchSummary += std::string("collider[") + std::to_string(c) + "]:" + colliderName;
+						}
+
+						for (int s = 0; s < 4; s++) {
+							auto* pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, pCollider->aSendInfo[s]);
+							if (!pSendInfo || pSendInfo->nbActorIndexes == 0) continue;
+
+							int* pIdx = reinterpret_cast<int*>(pSendInfo + 1);
+							for (int k = 0; k < pSendInfo->nbActorIndexes; k++, pIdx++) {
+								if (*pIdx == -1) continue;
+								CActor* pTarget = CScene::ptable.g_ActorManager_004516a4->aActors[*pIdx];
+								if (!pTarget || !pTarget->name) continue;
+								if (gActorSearchFilter.PassFilter(pTarget->name)) {
+									if (!matchSummary.empty()) matchSummary += ", ";
+									matchSummary += std::string("target:") + pTarget->name;
+								}
+							}
+						}
+					}
+
+					if (!matchSummary.empty()) {
+						bAnyResult = true;
+						std::stringstream ss;
+						ss << "Chunk " << ci << " | Event 0x" << std::hex << ei << std::dec << " | " << matchSummary;
+						ImGui::TextUnformatted(ss.str().c_str());
+						ImGui::SameLine();
+						if (ImGui::Button(("Select##sr_" + std::to_string(ci) + "_" + std::to_string(ei)).c_str())) {
+							gSelectedChunk = ci;
+							gSelectedEvent = ei;
+						}
+					}
+				}
+			}
+
+			if (!bAnyResult)
+				ImGui::TextDisabled("No matching events found.");
+
+			ImGui::EndChild();
+		}
+	}
+
+	ImGui::Separator();
+
 	gShowEventsOverlay.DrawImguiControl();
 
 	if (gShowEventsOverlay) {

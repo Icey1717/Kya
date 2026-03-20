@@ -4891,8 +4891,7 @@ void CActorWolfen::StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour)
 						}
 						else {
 							if ((int)this->combatMode_0xb7c < 1) {
-								IMPLEMENTATION_GUARD(
-								SetState(pBehaviour->field_0x78(), -1);)
+								SetState(pBehaviour->Func_0x78(), -1);
 							}
 							else {
 								SetState(pBehaviour->GetStateWolfenWeapon(), -1);

@@ -15,6 +15,7 @@ namespace Input {
 			pController->pPadD[i].bPressed = gInputFunctions.keyPressed(i);
 			pController->pPadD[i].bReleased = gInputFunctions.keyReleased(i);
 			pController->pPadD[i].analogValue = gInputFunctions.keyAnalog(i);
+			pController->pPadD[i].clickValue = gInputFunctions.keyAnalog(i);
 		}
 	}
 
