@@ -2008,14 +2008,14 @@ void CActorHeroPrivate::FxManageGlideTail()
 		if ((bVar1 != false) && (this->actorState == 0xf0)) {
 			textStyle.Reset();
 
-			fVar7 = edFIntervalLERP(GetTimer()->scaledTotalTime - this->field_0x1548, this->field_0x1410, this->field_0x1414, 255.0f, 0.0f);
+			fVar7 = edFIntervalLERP(GetTimer()->scaledTotalTime - this->currentGlideTime, this->maximumGlideTime, this->deathCheckGlideTime, 255.0f, 0.0f);
 			textStyle.rgbaColour = (int)fVar7 << 0x10 | 0xff000000U | (int)fVar7 << 8 | 0xff;
 			textStyle.SetShadow(0x100);
 			textStyle.alpha = 0xff;
 			textStyle.SetScale(2.0f, 2.0f);
 			pNewFont = edTextStyleSetCurrent(&textStyle);
 
-			if (this->field_0x1424 == 0) {
+			if (this->bCheckDynCollisions == 0) {
 				if (this->field_0x1420 != 0) {
 					edTextDraw(200.0f, 20.0f, "MAYDAY");
 				}
@@ -2035,8 +2035,8 @@ void CActorHeroPrivate::FxManageGlideTail()
 			this->fxTrailB.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);
 		}
 		else {
-			if (GetTimer()->scaledTotalTime - this->field_0x1548 < this->field_0x1410) {
-				fVar7 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->field_0x1548, 0.0f, this->field_0x1410);
+			if (GetTimer()->scaledTotalTime - this->currentGlideTime < this->maximumGlideTime) {
+				fVar7 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->currentGlideTime, 0.0f, this->maximumGlideTime);
 				fVar5 = fVar7 * 128.0f;
 				this->fxTrailA.field_0x28 = this->fxTrailA.field_0x24;
 				this->fxTrailA.field_0x24.r = 0x80;
@@ -2065,7 +2065,7 @@ void CActorHeroPrivate::FxManageGlideTail()
 				local_20 = edF32VECTOR4_004258b0;
 				local_30 = edF32VECTOR4_004258c0;
 
-				fVar8 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->field_0x1548, this->field_0x1410, this->field_0x1414);
+				fVar8 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->currentGlideTime, this->maximumGlideTime, this->deathCheckGlideTime);
 				fVar7 = 1.0f - fVar8;
 				fVar5 = local_30.x * fVar8 + local_20.x * fVar7;
 				fVar6 = local_30.y * fVar8 + local_20.y * fVar7;
@@ -2275,11 +2275,11 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 			bVar1 = false;
 		}
 		else {
-			if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
+			if (GetWindState()->nbActiveWind == GetWindState()->nbWindWaypoint) {
 				bVar1 = true;
 			}
 			else {
-				if (GetWindState()->field_0x4 == 0) {
+				if (GetWindState()->nbWindWaypoint == 0) {
 					bVar1 = false;
 				}
 				else {
@@ -2295,11 +2295,11 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 				bVar1 = false;
 			}
 			else {
-				if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
+				if (GetWindState()->nbActiveWind == GetWindState()->nbWindWaypoint) {
 					bVar1 = true;
 				}
 				else {
-					if (GetWindState()->field_0x4 == 0) {
+					if (GetWindState()->nbWindWaypoint == 0) {
 						bVar1 = false;
 					}
 					else {
@@ -2746,26 +2746,13 @@ void CActorHeroPrivate::Manage()
 					uVar6 = GetStateFlags(this->actorState);
 
 					if (uVar6 == 0) {
-						peVar13 = (edF32VECTOR4*)0x0;
-						if (GetWindState() != (CActorWindState*)0x0) {
-							peVar13 = &GetWindState()->field_0x40;
-						}
-
-						if (GetWindState() != (CActorWindState*)0x0) {
-							fVar14 = 0.0f;
-						}
-						else {
-							fVar14 = GetWindState()->field_0x38;
-						}
-
-						peVar12 = (CWayPoint*)0x0;
-						if (GetWindState() != (CActorWindState*)0x0) {
-							peVar12 = GetWindState()->pWayPoint;
-						}
+						peVar13 = GetWindImpulseVelocity();
+						fVar14 = GetWindImpulseSpeed();
+						peVar12 = GetWindWayPoint();
 
 						iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
 						if (iVar8 != -1) {
-							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x99, -1);
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_COL_WALL_DEAD_C, -1);
 						}
 					}
 				}
@@ -2785,8 +2772,10 @@ void CActorHeroPrivate::Manage()
 						pSVar9 = GetStateCfg(iVar8);
 						uVar6 = pSVar9->flags_0x4 & 1;
 					}
+
 					bVar4 = uVar6 != 0;
 				}
+
 				if ((!bVar4) && (this->field_0x1558 <= 0.0)) {
 					iVar8 = this->actorState;
 					if (iVar8 == -1) {
@@ -2800,25 +2789,9 @@ void CActorHeroPrivate::Manage()
 					if ((uVar6 == 0) && (iVar8 = CheckHitAndDeath(), iVar8 == 0)) {
 						uVar10 = GetBehaviourFlags(this->curBehaviourId);
 						if ((uVar10 & 0x40) == 0) {
-							CActorWindState* pWindState = GetWindState();
-							peVar13 = (edF32VECTOR4*)0x0;
-							if (pWindState != (CActorWindState*)0x0) {
-								peVar13 = &GetWindState()->field_0x40;
-							}
-
-							pWindState = GetWindState();
-							if (pWindState == (CActorWindState*)0x0) {
-								fVar14 = 0.0f;
-							}
-							else {
-								fVar14 = GetWindState()->field_0x38;
-							}
-
-							pWindState = GetWindState();
-							peVar12 = (CWayPoint*)0x0;
-							if (pWindState != (CActorWindState*)0x0) {
-								peVar12 = GetWindState()->pWayPoint;
-							}
+							peVar13 = GetWindImpulseVelocity();
+							fVar14 = GetWindImpulseSpeed();
+							peVar12 = GetWindWayPoint();
 
 							iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
 							if (iVar8 != -1) {
@@ -3821,24 +3794,19 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					fVar25 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 2);
 					this->dynamicExt.aImpulseVelocityMagnitudes[2] = fVar25;
 
-					if (GetWindState() == (CActorWindState*)0x0) {
-						fVar25 = 0.0f;
-					}
-					else {
-						fVar25 = GetWindState()->field_0x38;
-					}
+					fVar25 = GetWindImpulseSpeed();
 					if (fVar25 < 0.001f) {
 						fVar25 = pParam->field_0x10;
 						if (GetWindState() == (CActorWindState*)0x0) {
 							bVar9 = false;
 						}
 						else {
-							iVar13 = GetWindState()->field_0x0;
-							if (iVar13 == GetWindState()->field_0x4) {
+							iVar13 = GetWindState()->nbActiveWind;
+							if (iVar13 == GetWindState()->nbWindWaypoint) {
 								bVar9 = true;
 							}
 							else {
-								if (GetWindState()->field_0x4 == 0) {
+								if (GetWindState()->nbWindWaypoint == 0) {
 									bVar9 = false;
 								}
 								else {
@@ -4590,11 +4558,7 @@ int CActorHeroPrivate::StateEvaluate()
 
 	if ((this->bIsSettingUp == 0) && (this->prevBehaviourId != 1)) {
 		fVar10 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
-		peVar9 = (CWayPoint*)0x0;
-		if (GetWindState() != 0) {
-			peVar9 = GetWindState()->pWayPoint;
-		}
-
+		peVar9 = GetWindWayPoint();
 		iVar4 = GetPossibleWind(fVar10, &this->dynamicExt.aImpulseVelocities[2], peVar9);
 		if (iVar4 == -1) {
 			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
@@ -4983,7 +4947,7 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 						deadState = STATE_HERO_COL_WALL_DEAD;
 					}
 					else {
-						deadState = 0x9c;
+						deadState = STATE_HERO_COL_WALL_DEAD_B;
 					}
 				}
 				else {
@@ -4995,7 +4959,7 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 			}
 		}
 		else {
-			deadState = 0x99;
+			deadState = STATE_HERO_COL_WALL_DEAD_C;
 		}
 	}
 
@@ -5025,7 +4989,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->heroFlags = 0;
 	this->field_0x1020 = 1;
 	this->field_0x1420 = 0;
-	this->field_0x1424 = 0;
+	this->bCheckDynCollisions = 0;
 	this->field_0x1428 = 1;
 	this->field_0x142c = 1;
 	//*(undefined4*)&this->field_0x1024 = 0x3f800000;
@@ -5144,7 +5108,7 @@ void CActorHeroPrivate::ClearLocalData()
 	pTVar5 = GetTimer();
 	this->field_0x1540 = pTVar5->scaledTotalTime;
 	pTVar5 = GetTimer();
-	this->field_0x1548 = pTVar5->scaledTotalTime;
+	this->currentGlideTime = pTVar5->scaledTotalTime;
 	this->field_0x154c = 0.0f;
 	this->field_0x1554 = 0.0f;
 	this->field_0x1550 = 0.0f;
@@ -5510,10 +5474,13 @@ LAB_00341590:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_HURT_B:
-	case STATE_HERO_WIND_HURT:
+	case STATE_HERO_WIND_HURT_A:
+	case STATE_HERO_WIND_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
+	case STATE_HERO_COL_WALL_DEAD_C:
+	case STATE_HERO_COL_WALL_DEAD_B:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_A:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_B:
 	case STATE_HERO_TOBOGGAN_JUMP_3:
@@ -5792,7 +5759,8 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_HURT_B:
-	case STATE_HERO_WIND_HURT:
+	case STATE_HERO_WIND_HURT_A:
+	case STATE_HERO_WIND_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
@@ -5804,6 +5772,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_2_CROUCH:
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
+	case STATE_HERO_COL_WALL_DEAD_C:
 	case STATE_HERO_BASIC_TO_STAND:
 	case STATE_HERO_CEILING_CLIMB_A:
 	case STATE_HERO_CEILING_CLIMB_B:
@@ -6174,11 +6143,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 
 		if (uVar9 == 0) {
 			fVar11 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
-			pWayPoint = (CWayPoint*)0x0;
-
-			if (GetWindState() != (CActorWindState*)0x0) {
-				pWayPoint = GetWindState()->pWayPoint;
-			}
+			pWayPoint = GetWindWayPoint();
 
 			iVar5 = GetPossibleWind(fVar11, this->dynamicExt.aImpulseVelocities + 2, pWayPoint);
 			if (iVar5 != -1) {
@@ -6291,7 +6256,10 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_HURT_B:
 		StateHeroHit();
 		break;
-	case STATE_HERO_WIND_HURT:
+	case STATE_HERO_WIND_HURT_A:
+		StateHeroGlide(1, STATE_HERO_GLIDE_1);
+		break;
+	case STATE_HERO_WIND_HURT_B:
 		StateHeroGlide(1, STATE_HERO_GLIDE_3);
 		break;
 	case STATE_HERO_WIND_WALL_HURT:
@@ -6308,6 +6276,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_COL_WALL_DEAD:
 		StateHeroDead(-1.0f);
+		break;
+	case STATE_HERO_COL_WALL_DEAD_C:
+		StateHeroGlide(1, -1);
+		break;
+	case STATE_HERO_COL_WALL_DEAD_B:
+		StateHeroToboggan(0);
 		break;
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
@@ -7881,12 +7855,12 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 		bVar3 = false;
 	}
 	else {
-		iVar6 = GetWindState()->field_0x0;
-		if (iVar6 != GetWindState()->field_0x4) {
+		iVar6 = GetWindState()->nbActiveWind;
+		if (iVar6 != GetWindState()->nbWindWaypoint) {
 			bVar3 = true;
 		}
 		else {
-			if (GetWindState()->field_0x4 == 0) {
+			if (GetWindState()->nbWindWaypoint == 0) {
 				bVar3 = false;
 			}
 			else {
@@ -7901,11 +7875,11 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 	if (bVar3) {
 		bVar3 = false;
 		if (GetWindState() != (CActorWindState*)0x0) {
-			iVar6 = GetWindState()->field_0x0;
+			iVar6 = GetWindState()->nbActiveWind;
 			bVar3 = true;
-			if (iVar6 != GetWindState()->field_0x4) {
+			if (iVar6 != GetWindState()->nbWindWaypoint) {
 				bVar3 = false;
-				if ((GetWindState()->field_0x4 != 0) && (bVar3 = true, 0.17398384f <= fabs(local_20.y))) {
+				if ((GetWindState()->nbWindWaypoint != 0) && (bVar3 = true, 0.17398384f <= fabs(local_20.y))) {
 					bVar3 = false;
 				}
 			}
@@ -7965,14 +7939,7 @@ void CActorHeroPrivate::StateHeroFlyJumpInit()
 
 	this->field_0xf00 = this->currentLocation;
 
-	if (GetWindState() == (CActorWindState*)0x0) {
-		fVar2 = 0.0f;
-	}
-	else {
-		fVar2 = GetWindState()->field_0x38;
-	}
-
-	fVar2 = edFIntervalLERP(fVar2, 40.0f, 160.0f, 4.0f, 1.0f);
+	fVar2 = edFIntervalLERP(GetWindImpulseSpeed(), 40.0f, 160.0f, 4.0f, 1.0f);
 	this->scalarDynJump.BuildFromSpeedDist(18.0f, 0.0f, fVar2);
 
 	return;
@@ -8039,11 +8006,11 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 			bVar5 = false;
 		}
 		else {
-			if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
+			if (GetWindState()->nbActiveWind == GetWindState()->nbWindWaypoint) {
 				bVar5 = true;
 			}
 			else {
-				if (GetWindState()->field_0x4 == 0) {
+				if (GetWindState()->nbWindWaypoint == 0) {
 					bVar5 = false;
 				}
 				else {
@@ -8058,9 +8025,9 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 			bVar5 = false;
 			if (GetWindState() != (CActorWindState*)0x0) {
 				bVar5 = true;
-				if (GetWindState()->field_0x0 != GetWindState()->field_0x4) {
+				if (GetWindState()->nbActiveWind != GetWindState()->nbWindWaypoint) {
 					bVar5 = false;
-					if ((GetWindState()->field_0x4 != 0) && (bVar5 = true, 0.17398384f <= fabs(local_50.y))) {
+					if ((GetWindState()->nbWindWaypoint != 0) && (bVar5 = true, 0.17398384f <= fabs(local_50.y))) {
 						bVar5 = false;
 					}
 				}
@@ -14053,11 +14020,9 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		lVar2 = BreakActor(fVar3, 6.0f, 6.0f, this, pActor, 0, 1, 0);
-		if (lVar2 == 1) {
+		if (BreakActor(fVar3, 6.0f, 6.0f, pActor, 0, 1, 0) == 1) {
 			return false;
-		})
+		}
 	}
 
 	fVar5 = param_3->y;
@@ -14132,6 +14097,71 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 	return true;
 }
 
+int CActorHeroPrivate::BreakActor(float damage, float param_2, float param_3, CActor* pBreakActor, int param_6, int param_7, int* param_8)
+{
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	float fVar4;
+	_msg_hit_param hitParams;
+
+	iVar3 = 2;
+	iVar2 = 2;
+	bVar1 = pBreakActor->IsKindOfObject(2);
+	if (bVar1 != false) {
+		CActorMovable* pBreakActorMovable = static_cast<CActorMovable*>(pBreakActor);
+		iVar2 = iVar3;
+		if ((param_6 != 0) &&
+			(fVar4 = (pBreakActorMovable->dynamic).linearAcceleration * (pBreakActorMovable->dynamic).velocityDirectionEuler.y, 1.0f < fabsf(fVar4))) {
+			fVar4 = this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y - fVar4;
+			if (-param_2 < fVar4) {
+				return 1;
+			}
+
+			if (-param_3 < fVar4) {
+				iVar2 = 0;
+			}
+		}
+
+		if (param_7 != 0) {
+			fVar4 = (pBreakActorMovable->dynamic).horizontalLinearSpeed;
+			if (this->dynamic.horizontalVelocityDirectionEuler.x *
+				(pBreakActorMovable->dynamic).horizontalVelocityDirectionEuler.x +
+				this->dynamic.horizontalVelocityDirectionEuler.z *
+				(pBreakActorMovable->dynamic).horizontalVelocityDirectionEuler.z < 0.0f) {
+				fVar4 = fVar4 * -1.0f;
+			}
+
+			if (fabsf(this->dynamic.horizontalLinearSpeed - fVar4) < param_3) {
+				return 1;
+			}
+		}
+	}
+
+	hitParams.projectileType = 0xb;
+	hitParams.field_0x10 = 0.0f;
+	hitParams.field_0x20 = this->dynamic.velocityDirectionEuler;
+	hitParams.field_0x30 = this->dynamic.linearAcceleration;
+	hitParams.field_0x40.w = 1.0f;
+	hitParams.field_0x40.x = 0.0f;
+	hitParams.field_0x40.y = 0.0f;
+	hitParams.field_0x40.z = 0.0f;
+	hitParams.field_0x50 = 0;
+	hitParams.field_0x52 = 0;
+	hitParams.field_0x74 = 0;
+	hitParams.damage = damage;
+
+	DoMessage(pBreakActor, MESSAGE_KICKED, &hitParams);
+	if (param_8 != (int*)0x0) {
+		*param_8 = hitParams.field_0x74;
+	}
+
+	if (hitParams.field_0x74 != 0) {
+		iVar2 = 0;
+	}
+
+	return iVar2;
+}
 
 // Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::Landing()
@@ -14266,7 +14296,7 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	int iVar6;
 	CLifeInterface* pLifeInterface;
 	ulong uVar7;
-	float fVar8;
+	float verticalLiftFactor;
 	_msg_hit_param local_90;
 	edF32VECTOR4 local_10;
 
@@ -14340,18 +14370,12 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	edF32Vector4NormalizeHard(&local_10, &local_10);
 	uVar4 = TestState_IsFlying(0xffffffff);
 	if ((uVar4 != 0) && (uVar4 = TestState_IsInTheWind(0xffffffff), uVar4 != 0)) {
-		uVar5 = GetWindState();
-		if (uVar5 == (CActorWindState*)0x0) {
-			fVar8 = 0.0f;
-		}
-		else {
-			fVar8 = GetWindState()->field_0x1c;
-		}
+		verticalLiftFactor = GetWindVerticalLiftFactor();
 
-		if (fVar8 < -1.0f) {
+		if (verticalLiftFactor < -1.0f) {
 			pLifeInterface = GetLifeInterface();
-			fVar8 = pLifeInterface->GetValueMax();
-			iVar6 = (int)fVar8 / 0x32;
+			verticalLiftFactor = pLifeInterface->GetValueMax();
+			iVar6 = (int)verticalLiftFactor / 0x32;
 			if (5 < iVar6) {
 				iVar6 = 5;
 			}

@@ -489,10 +489,11 @@ void CActorCommander::EndFightIntruder(CActorFighter* pIntruder)
 
 void CActorCommander::AddTracked()
 {
-	this->count_0x1d0 = this->count_0x1d0 + -1;
+	this->count_0x1d0 = this->count_0x1d0 + 1;
 
-	if ((this->count_0x1d0 == 0) && ((this->flags & 2) != 0)) {
-		this->flags = this->flags & 0xfffffffc;
+	if ((this->flags & 2) == 0) {
+		this->flags = this->flags | 2;
+		this->flags = this->flags & 0xfffffffe;
 	}
 
 	return;
@@ -500,11 +501,10 @@ void CActorCommander::AddTracked()
 
 void CActorCommander::RemoveTracked()
 {
-	this->count_0x1d0 = this->count_0x1d0 + 1;
+	this->count_0x1d0 = this->count_0x1d0 + -1;
 
-	if ((this->flags & 2) == 0) {
-		this->flags = this->flags | 2;
-		this->flags = this->flags & 0xfffffffe;
+	if ((this->count_0x1d0 == 0) && ((this->flags & 2) != 0)) {
+		this->flags = this->flags & 0xfffffffc;
 	}
 
 	return;

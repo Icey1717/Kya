@@ -495,6 +495,7 @@ public:
 	void EndToboggan();
 	bool TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4* param_3, CActor* pActor);
 
+	int BreakActor(float damage, float param_2, float param_3, CActor* pBreakActor, int param_6, int param_7, int* param_8);
 	void Landing();
 
 	void AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4* pNormal);
@@ -679,7 +680,7 @@ public:
 	float field_0x1b9c;
 
 	int field_0x1020;
-	int field_0x1424;
+	int bCheckDynCollisions;
 	int field_0x1428;
 
 	int field_0x142c;
@@ -795,7 +796,7 @@ public:
 	float windRotationStrength;
 	float field_0x11fc;
 
-	float field_0x11ec;
+	float glideEffort;
 	float field_0x11e0;
 	float field_0x11e4;
 	float field_0x11e8;
@@ -811,8 +812,8 @@ public:
 
 	float field_0x13e4;
 
-	float field_0x1410;
-	float field_0x1414;
+	float maximumGlideTime;
+	float deathCheckGlideTime;
 	float field_0x1418;
 	float field_0x141c;
 

@@ -45,13 +45,16 @@
 #define STATE_HERO_HURT_A 0x8e
 #define STATE_HERO_HURT_B 0x8f
 
-#define STATE_HERO_WIND_HURT 0x92
+#define STATE_HERO_WIND_HURT_A 0x91
+#define STATE_HERO_WIND_HURT_B 0x92
 
 #define STATE_HERO_WIND_WALL_HURT 0x93
 #define STATE_HERO_WIND_SLIDE_HURT 0x94
 #define STATE_HERO_TOBOGGAN_JUMP_HURT 0x95
 #define STATE_HERO_COL_WALL 0x96
 #define STATE_HERO_COL_WALL_DEAD 0x97
+#define STATE_HERO_COL_WALL_DEAD_C 0x99
+#define STATE_HERO_COL_WALL_DEAD_B 0x9c
 
 #define STATE_HERO_FALL_DEATH 0xa1
 #define STATE_HERO_DROWN_DEATH 0xa2
@@ -368,7 +371,7 @@ public:
 
 	// Hero goes at least up to 0x1558 given CanActivateCheckpoint
 	float field_0x1544;
-	float field_0x1548;
+	float currentGlideTime;
 	float field_0x1550;
 	float field_0x1554;
 	float field_0xa80;

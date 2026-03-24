@@ -639,12 +639,12 @@ void CActorWolfen::Manage()
 			this->flags = this->flags & 0xffffffdf;
 			EvaluateDisplayState();
 			this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x10000;
-			this->pCommander->RemoveTracked();
+			this->pCommander->AddTracked();
 		}
 	}
 	else {
 		if ((this->combatFlags_0xb78 & 0x10000) != 0) {
-			this->pCommander->AddTracked();
+			this->pCommander->RemoveTracked();
 			this->combatFlags_0xb78 = this->combatFlags_0xb78 & 0xfffeffff;
 			if ((this->flags & 2) != 0) {
 				this->flags = this->flags & 0xfffffffc;
@@ -696,17 +696,19 @@ void CActorWolfen::CheckpointReset()
 void CActorWolfen::SectorChange(int oldSectorId, int newSectorId)
 {
 	if ((this->combatFlags_0xb78 & 0x10000) != 0) {
-		IMPLEMENTATION_GUARD(
-		FUN_00171a80(this->pCommander);
+		this->pCommander->RemoveTracked();
+
 		this->combatFlags_0xb78 = this->combatFlags_0xb78 & 0xfffeffff;
 		if ((this->flags & 2) != 0) {
 			this->flags = this->flags & 0xfffffffc;
 		}
+
 		if ((this->flags & 0x80) != 0) {
 			this->flags = this->flags & 0xffffff5f;
-			CActor::EvaluateDisplayState((CActor*)this);
+			EvaluateDisplayState();
 		}
-		(*(code*)(this->pVTable)->CheckpointReset)(this);)
+
+		CheckpointReset();
 	}
 
 	CActor::SectorChange(oldSectorId, newSectorId);
@@ -13751,7 +13753,7 @@ void CBehaviourSnipe::Init(CActor * pOwner)
 
 void CBehaviourSnipe::Term()
 {
-	IMPLEMENTATION_GUARD();
+	return;
 }
 
 void CBehaviourSnipe::Manage()
@@ -14350,7 +14352,12 @@ void CBehaviourEscape::Init(CActor * pOwner)
 
 void CBehaviourEscape::Term()
 {
-	IMPLEMENTATION_GUARD();
+	if (this->aPathFollowReaders != (CPathFollowReader*)0x0) {
+		delete[] this->aPathFollowReaders;
+		this->aPathFollowReaders = (CPathFollowReader*)0x0;
+	}
+
+	return;
 }
 
 void CBehaviourEscape::Manage()

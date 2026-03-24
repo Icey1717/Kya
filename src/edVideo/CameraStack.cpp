@@ -132,7 +132,7 @@ int CCameraStack::GetCurHeroState(void)
 		if (uVar1 != 0) {
 			pTVar2 = GetTimer();
 
-			if ((0.5f < pTVar2->scaledTotalTime - pHero->field_0x1548) && (pHero->field_0xa88 < -1.0f)) {
+			if ((0.5f < pTVar2->scaledTotalTime - pHero->currentGlideTime) && (pHero->field_0xa88 < -1.0f)) {
 				return 0x20;
 			}
 

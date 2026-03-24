@@ -199,8 +199,11 @@ namespace Hero
 		case STATE_HERO_ROLL_FALL:
 			return "StateHeroRollFall";
 			break;
-		case STATE_HERO_WIND_HURT:
-			return "StateHeroWindHurt";
+		case STATE_HERO_WIND_HURT_A:
+			return "StateHeroWindHurtA";
+			break;
+		case STATE_HERO_WIND_HURT_B:
+			return "StateHeroWindHurtB";
 			break;
 		case STATE_HERO_WIND_WALL_HURT:
 			return "StateHeroWindWallHurt";
@@ -231,6 +234,12 @@ namespace Hero
 			break;
 		case STATE_HERO_COL_WALL_DEAD:
 			return "StateHeroColWallDead";
+			break;
+		case STATE_HERO_COL_WALL_DEAD_C:
+			return "StateHeroColWallDeadC";
+			break;
+		case STATE_HERO_COL_WALL_DEAD_B:
+			return "StateHeroColWallDeadB";
 			break;
 		case STATE_HERO_KICK_A:
 			return "StateHeroKickA";

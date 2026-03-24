@@ -18,44 +18,44 @@ int INT_00448e08 = 0;
 void CActorWindState::AddWind(_wind_param_in* pParams)
 {
 	if (0.0f <= pParams->field_0x0) {
-		this->field_0xc = (pParams->field_0x0 + (float)this->field_0x0 * this->field_0xc) / (float)(this->field_0x0 + 1);
+		this->neutralAirSpeed = (pParams->field_0x0 + (float)this->nbActiveWind * this->neutralAirSpeed) / (float)(this->nbActiveWind + 1);
 	}
 
 	if (0.0f <= pParams->field_0x4) {
-		this->field_0x10 = (pParams->field_0x4 + (float)this->field_0x0 * this->field_0x10) / (float)(this->field_0x0 + 1);
+		this->windFriction = (pParams->field_0x4 + (float)this->nbActiveWind * this->windFriction) / (float)(this->nbActiveWind + 1);
 	}
 
 	if (0.0f <= pParams->field_0x10) {
-		this->field_0x14 = (pParams->field_0x10 + (float)this->field_0x0 * this->field_0x14) / (float)(this->field_0x0 + 1);
+		this->maxForwardSpeed = (pParams->field_0x10 + (float)this->nbActiveWind * this->maxForwardSpeed) / (float)(this->nbActiveWind + 1);
 	}
 
 	if (0.0f <= pParams->field_0x14) {
-		this->field_0x18 = (pParams->field_0x14 + (float)this->field_0x0 * this->field_0x18) / (float)(this->field_0x0 + 1);
+		this->maxBackwardSpeed = (pParams->field_0x14 + (float)this->nbActiveWind * this->maxBackwardSpeed) / (float)(this->nbActiveWind + 1);
 	}
 
 	if (pParams->field_0x8 != 0) {
-		this->field_0x4 = this->field_0x4 + 1;
+		this->nbWindWaypoint = this->nbWindWaypoint + 1;
 	}
 
 	if (pParams->field_0xc != 0) {
-		this->field_0x8 = this->field_0x8 + 1;
+		this->nbCylinder = this->nbCylinder + 1;
 	}
 
-	this->field_0x1c = (pParams->field_0x18 + (float)this->field_0x0 * this->field_0x1c) / (float)(this->field_0x0 + 1);
-	this->field_0x20 = (pParams->field_0x1c + (float)this->field_0x0 * this->field_0x20) / (float)(this->field_0x0 + 1);
-	this->field_0x24 = (pParams->field_0x20 + (float)this->field_0x0 * this->field_0x24) / (float)(this->field_0x0 + 1);
+	this->verticalLiftFactor = (pParams->field_0x18 + (float)this->nbActiveWind * this->verticalLiftFactor) / (float)(this->nbActiveWind + 1);
+	this->gravityScale = (pParams->field_0x1c + (float)this->nbActiveWind * this->gravityScale) / (float)(this->nbActiveWind + 1);
+	this->dragMultiplier = (pParams->field_0x20 + (float)this->nbActiveWind * this->dragMultiplier) / (float)(this->nbActiveWind + 1);
 
 	if (pParams->field_0x24 != 0) {
-		this->field_0x28 = this->field_0x28 + 1;
+		this->nbWindBoost = this->nbWindBoost + 1;
 	}
 
 	if (pParams->pWayPoint != (CWayPoint*)0x0) {
 		this->pWayPoint = pParams->pWayPoint;
-		this->field_0x30 = pParams->field_0x2c;
-		this->field_0x34 = pParams->field_0x30;
+		this->cannonLaunchSpeed = pParams->field_0x2c;
+		this->cannonArcSpeed = pParams->field_0x30;
 	}
 
-	this->field_0x0 = this->field_0x0 + 1;
+	this->nbActiveWind = this->nbActiveWind + 1;
 
 	return;
 }
@@ -64,7 +64,7 @@ void CActorWindState::SubWind(_wind_param_in* pParams)
 {
 	int iVar1;
 
-	iVar1 = this->field_0x0;
+	iVar1 = this->nbActiveWind;
 	if (iVar1 < 2) {
 		if (iVar1 == 1) {
 			Reset();
@@ -72,41 +72,41 @@ void CActorWindState::SubWind(_wind_param_in* pParams)
 	}
 	else {
 		if (0.0f <= pParams->field_0x0) {
-			this->field_0xc = ((float)iVar1 * this->field_0xc - pParams->field_0x0) / (float)(iVar1 + -1);
+			this->neutralAirSpeed = ((float)iVar1 * this->neutralAirSpeed - pParams->field_0x0) / (float)(iVar1 + -1);
 		}
 
 		if (0.0f <= pParams->field_0x4) {
-			this->field_0x10 = ((float)this->field_0x0 * this->field_0x10 - pParams->field_0x4) / (float)(this->field_0x0 + -1);
+			this->windFriction = ((float)this->nbActiveWind * this->windFriction - pParams->field_0x4) / (float)(this->nbActiveWind + -1);
 		}
 
 		if (pParams->field_0x8 != 0) {
-			this->field_0x4 = this->field_0x4 + -1;
+			this->nbWindWaypoint = this->nbWindWaypoint + -1;
 		}
 
 		if (pParams->field_0xc != 0) {
-			this->field_0x8 = this->field_0x8 + -1;
+			this->nbCylinder = this->nbCylinder + -1;
 		}
 
 		if (0.0f <= pParams->field_0x10) {
-			this->field_0x14 = ((float)this->field_0x0 * this->field_0x14 - pParams->field_0x10) / (float)(this->field_0x0 + -1);
+			this->maxForwardSpeed = ((float)this->nbActiveWind * this->maxForwardSpeed - pParams->field_0x10) / (float)(this->nbActiveWind + -1);
 		}
 
 		if (0.0f <= pParams->field_0x14) {
-			this->field_0x18 = ((float)this->field_0x0 * this->field_0x18 - pParams->field_0x14) / (float)(this->field_0x0 + -1);
+			this->maxBackwardSpeed = ((float)this->nbActiveWind * this->maxBackwardSpeed - pParams->field_0x14) / (float)(this->nbActiveWind + -1);
 		}
 
-		this->field_0x1c = ((float)this->field_0x0 * this->field_0x1c - pParams->field_0x18) / (float)(this->field_0x0 + -1);
-		this->field_0x20 = ((float)this->field_0x0 * this->field_0x20 - pParams->field_0x1c) / (float)(this->field_0x0 + -1);
-		this->field_0x24 = ((float)this->field_0x0 * this->field_0x24 - pParams->field_0x20) / (float)(this->field_0x0 + -1);
+		this->verticalLiftFactor = ((float)this->nbActiveWind * this->verticalLiftFactor - pParams->field_0x18) / (float)(this->nbActiveWind + -1);
+		this->gravityScale = ((float)this->nbActiveWind * this->gravityScale - pParams->field_0x1c) / (float)(this->nbActiveWind + -1);
+		this->dragMultiplier = ((float)this->nbActiveWind * this->dragMultiplier - pParams->field_0x20) / (float)(this->nbActiveWind + -1);
 
 		if (pParams->field_0x24 != 0) {
-			this->field_0x28 = this->field_0x28 + -1;
+			this->nbWindBoost = this->nbWindBoost + -1;
 		}
 
 		this->pWayPoint = (CWayPoint*)0x0;
-		this->field_0x30 = 0.0f;
-		this->field_0x34 = 0.0f;
-		this->field_0x0 = this->field_0x0 + -1;
+		this->cannonLaunchSpeed = 0.0f;
+		this->cannonArcSpeed = 0.0f;
+		this->nbActiveWind = this->nbActiveWind + -1;
 	}
 
 	return;
@@ -114,25 +114,28 @@ void CActorWindState::SubWind(_wind_param_in* pParams)
 
 void CActorWindState::Reset()
 {
-	this->field_0x0 = 0;
-	this->field_0x4 = 0;
-	this->field_0x8 = 0;
-	this->field_0xc = 0.0f;
-	this->field_0x10 = 4.0f;
-	this->field_0x14 = 0.0f;
-	this->field_0x18 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->field_0x20 = 1.0f;
-	this->field_0x24 = 1.0f;
-	this->field_0x28 = 0;
+	this->nbActiveWind = 0;
+	this->nbWindWaypoint = 0;
+	this->nbCylinder = 0;
+	this->neutralAirSpeed = 0.0f;
+	this->windFriction = 4.0f;
+	this->maxForwardSpeed = 0.0f;
+	this->maxBackwardSpeed = 0.0f;
+	this->verticalLiftFactor = 0.0f;
+	this->gravityScale = 1.0f;
+	this->dragMultiplier = 1.0f;
+	this->nbWindBoost = 0;
 	this->pWayPoint = (CWayPoint*)0x0;
-	this->field_0x30 = 0.0f;
-	this->field_0x34 = 0.0f;
-	this->field_0x40.x = 0.0f;
-	this->field_0x40.y = 0.0f;
-	this->field_0x40.z = 0.0f;
-	this->field_0x40.w = 0.0f;
-	this->field_0x38 = 0.0f;
+	this->cannonLaunchSpeed = 0.0f;
+	this->cannonArcSpeed = 0.0f;
+
+	this->windImpulseVelocity.x = 0.0f;
+	this->windImpulseVelocity.y = 0.0f;
+	this->windImpulseVelocity.z = 0.0f;
+	this->windImpulseVelocity.w = 0.0f;
+
+	this->windImpulseSpeed = 0.0f;
+
 	return;
 }
 
@@ -1100,8 +1103,8 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	CActorWindState* pCVar7 = GetWindState();
 	if (pCVar7 != (CActorWindState*)0x0) {
-		GetWindState()->field_0x40 = (this->dynamicExt).aImpulseVelocities[2];
-		GetWindState()->field_0x38 = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
+		GetWindState()->windImpulseVelocity = (this->dynamicExt).aImpulseVelocities[2];
+		GetWindState()->windImpulseSpeed = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
 	}
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
@@ -1449,8 +1452,8 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 void CActorAutonomous::ClearAllSumForceExt()
 {
 	if (GetWindState() != (CActorWindState*)0x0) {
-		GetWindState()->field_0x40 = (this->dynamicExt).aImpulseVelocities[2];
-		GetWindState()->field_0x38 = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
+		GetWindState()->windImpulseVelocity = (this->dynamicExt).aImpulseVelocities[2];
+		GetWindState()->windImpulseSpeed = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
 	}
 
 	(this->dynamicExt).aImpulseVelocities[0].x = 0.0f;
@@ -1852,6 +1855,166 @@ bool CActorAutonomous::SV_AUT_CanMoveTo(edF32VECTOR4* v0)
 	}
 
 	return bCanMoveTo;
+}
+
+float CActorAutonomous::GetWindNeutralAirSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->neutralAirSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindFriction()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->windFriction;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindMaxForwardSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->maxForwardSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindMaxBackwardSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->maxBackwardSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindVerticalLiftFactor()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->verticalLiftFactor;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindGravityScale()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->gravityScale;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindDragMultiplier()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->dragMultiplier;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindCannonLaunchSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->cannonLaunchSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindCannonArcSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->cannonArcSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+float CActorAutonomous::GetWindImpulseSpeed()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->windImpulseSpeed;
+	}
+	else {
+		return 0.0f;
+	}
+}
+
+int CActorAutonomous::GetWindNbActiveWind()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->nbActiveWind;
+	}
+	else {
+		return 0;
+	}
+}
+
+int CActorAutonomous::GetWindNbWindWaypoint()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->nbWindWaypoint;
+	}
+	else {
+		return 0;
+	}
+}
+
+int CActorAutonomous::GetWindNbCylinder()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->nbCylinder;
+	}
+	else {
+		return 0;
+	}
+}
+
+int CActorAutonomous::GetWindNbWindBoost()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->nbWindBoost;
+	}
+	else {
+		return 0;
+	}
+}
+
+CWayPoint* CActorAutonomous::GetWindWayPoint()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return GetWindState()->pWayPoint;
+	}
+	else {
+		return (CWayPoint*)0x0;
+	}
+}
+
+edF32VECTOR4* CActorAutonomous::GetWindImpulseVelocity()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		return &GetWindState()->windImpulseVelocity;
+	}
+	else {
+		return (edF32VECTOR4*)0x0;
+	}
 }
 
 // Should be in: D:/Projects/b-witch/ActorAutonomous.h

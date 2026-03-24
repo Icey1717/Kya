@@ -133,8 +133,8 @@ public:
 	int nbBonus;
 	float field_0xc;
 	CActInstance** aInstances;
-	int maxOrbs_0x2c;
-	undefined4 field_0x30;
+	int nbGeneratedBonus;
+	int nbGeneratedMoney;
 
 	CAddOnGenerator_SubObj subObj;
 };

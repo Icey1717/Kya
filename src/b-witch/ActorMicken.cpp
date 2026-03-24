@@ -349,7 +349,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 		else {
 			pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-			fVar11 = pCVar8->field_0x38;
+			fVar11 = pCVar8->windImpulseSpeed;
 		}
 		if (fVar11 < 0.001) {
 			fVar11 = *(float*)((int)pMsgParam + 0x10);
@@ -359,14 +359,14 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-				iVar9 = pCVar8->field_0x0;
+				iVar9 = pCVar8->nbActiveWind;
 				pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-				if (iVar9 == pCVar8->field_0x4) {
+				if (iVar9 == pCVar8->nbWindWaypoint) {
 					bVar4 = true;
 				}
 				else {
 					pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-					if (pCVar8->field_0x4 == 0) {
+					if (pCVar8->nbWindWaypoint == 0) {
 						bVar4 = false;
 					}
 					else {

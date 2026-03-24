@@ -30,25 +30,29 @@ struct _wind_param_in
 
 struct CActorWindState
 {
-	int field_0x0;
-	int field_0x4;
-	int field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-	int field_0x28;
+	int nbActiveWind;
+	int nbWindWaypoint;
+	int nbCylinder;
+
+	float neutralAirSpeed;
+	float windFriction;
+	float maxForwardSpeed;
+	float maxBackwardSpeed;
+
+	float verticalLiftFactor;
+	float gravityScale;
+	float dragMultiplier;
+	int nbWindBoost;
 	CWayPoint* pWayPoint;
-	float field_0x30;
-	float field_0x34;
+
+	float cannonLaunchSpeed;
+	float cannonArcSpeed;
 
 	// Potentially just for CActorHero
-	float field_0x38;
+	// Also per frame
+	float windImpulseSpeed;
 	float field_0x3c;
-	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 windImpulseVelocity;
 
 	void AddWind(_wind_param_in* pParams);
 	void SubWind(_wind_param_in* pParams);
@@ -184,6 +188,25 @@ public:
 	void SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_PathfindingEnd();
 	bool SV_AUT_CanMoveTo(edF32VECTOR4* v0);
+
+	// Assumed inline wind state functions.
+	float GetWindNeutralAirSpeed();
+	float GetWindFriction();
+	float GetWindMaxForwardSpeed();
+	float GetWindMaxBackwardSpeed();
+	float GetWindVerticalLiftFactor();
+	float GetWindGravityScale();
+	float GetWindDragMultiplier();
+	float GetWindCannonLaunchSpeed();
+	float GetWindCannonArcSpeed();
+	float GetWindImpulseSpeed();
+
+	int GetWindNbActiveWind();
+	int GetWindNbWindWaypoint();
+	int GetWindNbCylinder();
+	int GetWindNbWindBoost();
+	CWayPoint* GetWindWayPoint();
+	edF32VECTOR4* GetWindImpulseVelocity();
 
 	float field_0x2e4;
 

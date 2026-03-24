@@ -520,8 +520,8 @@ void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
 	this->field_0xc = (float)pByteCode->GetS32() * 0.01f;
 	this->subObj.Create(pByteCode);
 	this->aInstances = (CActInstance**)0x0;
-	this->maxOrbs_0x2c = 0;
-	this->field_0x30 = 0;
+	this->nbGeneratedBonus = 0;
+	this->nbGeneratedMoney = 0;
 
 	if (_gAddOn_sectors == (SectorAddOnData*)0x0) {
 		iVar4 = CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].maxSectorId + 1;
@@ -715,7 +715,7 @@ void CAddOnGenerator::Generate(edF32VECTOR4* pPosition)
 
 	ManageInstances();
 
-	pCVar4 = (CBnsInstance**)(this->aInstances + this->maxOrbs_0x2c + this->field_0x30);
+	pCVar4 = (CBnsInstance**)(this->aInstances + this->nbGeneratedBonus + this->nbGeneratedMoney);
 	pInstance = pCVar4;
 
 	if (this->nbBonus != 0) {
@@ -740,12 +740,12 @@ void CAddOnGenerator::Generate(edF32VECTOR4* pPosition)
 		fVar8 = floorf((1.0f - fVar8) * ((float)this->nbBonus - fVar6));
 
 		if (_gAddOn_pBonusBhv != (CBehaviour*)0x0) {
-			pInstance = _gAddOn_pBonusBhv->Generate(pPosition, &this->subObj, (int)fVar8 - this->maxOrbs_0x2c, pCVar4);
+			pInstance = _gAddOn_pBonusBhv->Generate(pPosition, &this->subObj, (int)fVar8 - this->nbGeneratedBonus, pCVar4);
 			int diff = (char*)pInstance - (char*)pCVar4;
 			if (diff < 0) {
 				diff = diff + 3;
 			}
-			this->maxOrbs_0x2c = this->maxOrbs_0x2c + (diff / sizeof(CBnsInstance*));
+			this->nbGeneratedBonus = this->nbGeneratedBonus + (diff / sizeof(CBnsInstance*));
 		}
 	}
 
@@ -766,14 +766,14 @@ void CAddOnGenerator::Generate(edF32VECTOR4* pPosition)
 			trap(7);
 		}
 
-		iVar2 = iVar2 - this->field_0x30;
+		iVar2 = iVar2 - this->nbGeneratedMoney;
 		if (_gAddOn_aMoney[this->moneyType].pBehaviour != (CBehaviourMoneyAddOn*)0x0) {
 			uVar3 = _gAddOn_aMoney[this->moneyType].pBehaviour->Generate(pPosition, &this->subObj, iVar2, (CMnyInstance**)pInstance);
 			iVar5 = (char*)uVar3 - (char*)pInstance;
 			if (iVar5 < 0) {
 				iVar5 = iVar5 + 3;
 			}
-			this->field_0x30 = this->field_0x30 + (iVar5 / sizeof(CActInstance*));
+			this->nbGeneratedMoney = this->nbGeneratedMoney + (iVar5 / sizeof(CActInstance*));
 		}
 
 		pLevelScheduler->Money_TakeFromMonster(iVar2 * (_gAddOn_aMoney[this->moneyType].pActor)->moneyValue);
@@ -799,7 +799,7 @@ void CAddOnGenerator::ManageInstances()
 	int moneyCount = 0;
 	int bonusCount = 0;
 
-	const int totalStored = this->maxOrbs_0x2c + this->field_0x30;
+	const int totalStored = this->nbGeneratedBonus + this->nbGeneratedMoney;
 	for (int i = 0; i < totalStored; ++i) {
 		CActInstance* pInstance = this->aInstances[i];
 
@@ -808,7 +808,7 @@ void CAddOnGenerator::ManageInstances()
 			++activeCount;
 
 			// Categorize instance type
-			const uint instanceFlags = *(uint*)(*(int*)pInstance + 4);
+			const uint instanceFlags = pInstance->flags;
 			if ((instanceFlags & 8) == 0) {
 				++moneyCount;
 			}
@@ -818,30 +818,15 @@ void CAddOnGenerator::ManageInstances()
 		}
 	}
 
-	// Second pass: copy filtered instances back to main buffer in blocks of 8
+	// Second pass: copy filtered instances back to the main array
 	if (activeCount > 0) {
-		int destOffset = 0;
-
-		// Process blocks of 8 instances
-		if (activeCount > 8) {
-			int blockCount = 0;
-			for (; blockCount < activeCount - 8; blockCount += 8) {
-				for (int j = 0; j < 8; ++j) {
-					this->aInstances[destOffset + j] = pFilteredBuffer[blockCount + j];
-				}
-				destOffset += 8;
-			}
-		}
-
-		// Process remaining instances
-		const int remaining = activeCount - (destOffset / sizeof(CActInstance*));
-		for (int i = 0; i < remaining; ++i) {
-			this->aInstances[destOffset + i] = pFilteredBuffer[destOffset / sizeof(CActInstance*) + i];
+		for (int i = 0; i < activeCount; ++i) {
+			this->aInstances[i] = pFilteredBuffer[i];
 		}
 	}
 
-	this->maxOrbs_0x2c = bonusCount;
-	this->field_0x30 = moneyCount;
+	this->nbGeneratedBonus = bonusCount;
+	this->nbGeneratedMoney = moneyCount;
 
 	gSP_Manager.ReleaseBuffer(pFilteredBuffer);
 }

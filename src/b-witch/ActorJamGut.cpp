@@ -589,7 +589,7 @@ int CActorJamGut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					}
 					else {
 						pCVar3 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-						fVar5 = pCVar3->field_0x38;
+						fVar5 = pCVar3->windImpulseSpeed;
 					}
 					if (fVar5 < 0.001) {
 						this->dynamicExt.field_0x6c = this->dynamicExt.field_0x6c * 0.25;
@@ -1493,12 +1493,12 @@ int CActorJamGut::ChooseStateWind(float param_1, edF32VECTOR4* param_3)
 				bVar2 = false;
 			}
 			else {
-				iVar1 = GetWindState()->field_0x0;
-				if (iVar1 == GetWindState()->field_0x4) {
+				iVar1 = GetWindState()->nbActiveWind;
+				if (iVar1 == GetWindState()->nbWindWaypoint) {
 					bVar2 = true;
 				}
 				else {
-					if (GetWindState()->field_0x4 == 0) {
+					if (GetWindState()->nbWindWaypoint == 0) {
 						bVar2 = false;
 					}
 					else {
@@ -1518,12 +1518,12 @@ int CActorJamGut::ChooseStateWind(float param_1, edF32VECTOR4* param_3)
 				bVar2 = false;
 			}
 			else {
-				iVar1 = GetWindState()->field_0x0;
-				if (iVar1 == GetWindState()->field_0x4) {
+				iVar1 = GetWindState()->nbActiveWind;
+				if (iVar1 == GetWindState()->nbWindWaypoint) {
 					bVar2 = true;
 				}
 				else {
-					if (GetWindState()->field_0x4 == 0) {
+					if (GetWindState()->nbWindWaypoint == 0) {
 						bVar2 = false;
 					}
 					else {

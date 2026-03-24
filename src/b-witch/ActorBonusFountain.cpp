@@ -244,9 +244,9 @@ int CBehaviourBonusFountainStand::InterpretMessage(CActor * pSender, int msg, vo
 		if (this->field_0x8 != 0) {
 			pBonusFountain = this->pOwner;
 
-			bVar1 = (pBonusFountain->addOnGenerator).maxOrbs_0x2c < (pBonusFountain->addOnGenerator).nbBonus;
+			bVar1 = (pBonusFountain->addOnGenerator).nbGeneratedBonus < (pBonusFountain->addOnGenerator).nbBonus;
 			if (!bVar1) {
-				bVar1 = (pBonusFountain->addOnGenerator).field_0x30 < (pBonusFountain->addOnGenerator).nbMoney;
+				bVar1 = (pBonusFountain->addOnGenerator).nbGeneratedMoney < (pBonusFountain->addOnGenerator).nbMoney;
 			}
 
 			if (bVar1) {
