@@ -1290,7 +1290,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 							}
 
 							if (bVar6) {
-								if ((0.0f <= param_2) || (((this->pCollisionData)->flags_0x4 & 2) == 0)) {
+								if ((0.0f <= param_2) || (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) {
 									bVar6 = SetNextClimbState(1, param_4);
 									if (bVar6 == false) {
 										if (param_4 == 0) {
@@ -1394,7 +1394,7 @@ void CActorHeroPrivate::StateHeroClimbJump()
 
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		Landing();
 
 		iVar3 = ChooseStateLanding(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
@@ -1633,7 +1633,7 @@ LAB_00139008:
 
 	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
 
-	if ((((this->pCollisionData)->flags_0x4 & 2) == 0) || (1.7f <= this->distanceToGround)) {
+	if ((((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) || (1.7f <= this->distanceToGround)) {
 		if (iVar7 == 0) {
 			if (param_1 == 0.0f) {
 				this->dynamic.speed = 0.0f;

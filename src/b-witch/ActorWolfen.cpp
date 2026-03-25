@@ -2988,7 +2988,7 @@ void CActorWolfen::BehaviourAvoid_Manage(CBehaviourAvoid* pBehaviour)
 	pWolfen = pBehaviour->pOwner;
 	iVar3 = -1;
 	if ((pWolfen->combatFlags_0xb78 & 0x20000) == 0) {
-		if (((pWolfen->pCollisionData)->flags_0x4 & 2) != 0) {
+		if (((pWolfen->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			pWolfen->combatFlags_0xb78 = pWolfen->combatFlags_0xb78 | 0x20000;
 		}
 	}
@@ -3119,7 +3119,7 @@ void CActorWolfen::BehaviourSnipe_Manage(CBehaviourSnipe* pBehaviour)
 	pBehaviour->CheckDetection_Intruder();
 	pBehaviour->SwitchBhvTest();
 
-	if (((((this->combatFlags_0xb78 & 0x10) != 0) && (pIntruder = this->pCommander->GetIntruder(), (pBehaviour->flags_0x4 & 2) != 0)) &&
+	if (((((this->combatFlags_0xb78 & 0x10) != 0) && (pIntruder = this->pCommander->GetIntruder(), (pBehaviour->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) &&
 		(bVar1 = SV_WLF_IsIntruderInVitalSphere(pIntruder), bVar1 != false)) &&
 		(bVar1 = this->pCommander->BeginFightIntruder(this, pIntruder),
 			bVar1 != false)) {
@@ -6461,7 +6461,7 @@ void CActorWolfen::StateExorcizeIdle(CBehaviourExorcism* pBehaviour)
 
 	this->flags = this->flags | 0x200000;
 
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+	if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		this->field_0x684 = 1;
 		this->hitFlags = 4;
 		this->field_0x6b0 = 0.0f;
@@ -8056,7 +8056,7 @@ void CActorWolfen::PostManageD(CBehaviourWolfen* pBehaviour)
 	int behaviourIdA = -1;
 
 	if ((pCVar1->combatFlags_0xb78 & 0x20000) == 0) {
-		if (((pCVar1->pCollisionData)->flags_0x4 & 2) != 0) {
+		if (((pCVar1->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			pCVar1->combatFlags_0xb78 = pCVar1->combatFlags_0xb78 | 0x20000;
 		}
 	}
@@ -8787,7 +8787,7 @@ int CBehaviourWolfen::FUN_001f0ab0()
 	pWolfen = this->pOwner;
 	iVar1 = -1;
 	if ((pWolfen->combatFlags_0xb78 & 0x20000) == 0) {
-		if ((pWolfen->pCollisionData->flags_0x4 & 2) != 0) {
+		if ((pWolfen->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			pWolfen->combatFlags_0xb78 = pWolfen->combatFlags_0xb78 | 0x20000;
 		}
 	}
@@ -9854,7 +9854,7 @@ LAB_001f96e0:
 	this->field_0x58 = pWolfen->fighterAnatomyZones.field_0x0.y + pWolfen->currentLocation.y;
 
 	iVar7 = -1;
-	if (((pWolfen->pCollisionData)->flags_0x4 & 2) != 0) {
+	if (((pWolfen->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		this->field_0x5c = this->field_0x58;
 	}
 

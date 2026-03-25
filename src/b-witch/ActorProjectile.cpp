@@ -511,7 +511,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					this->dynamic.rotationQuat = this->rotationQuat;
 					this->dynamic.speed = pSoccerMsgParam->speed;
 
-					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						SetState(PROJECTILE_STATE_FLYING, -1);
 					}
 					else {
@@ -1426,7 +1426,7 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 		if ((uVar3 & 0x2000) != 0) {
 			local_140 = gF32Vector4Zero;
 
-			bVar2 = (pCVar1->flags_0x4 & 2) != 0;
+			bVar2 = (pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0;
 			if (bVar2) {
 				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[1].field_0x10);
 			}
@@ -1464,7 +1464,7 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 			return;
 		}
 
-		if ((pCVar1->flags_0x4 & 2) != 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			if (6.0f < value) {
 				fVar4 = edFIntervalUnitDstLERP(value, 0.0f, 10.0f);
 				this->field_0x3f0 = -fVar4 * 0.5f;
@@ -1539,7 +1539,7 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 			this->rotationQuat = local_130;
 		}
 
-		if (((this->pCollisionData)->flags_0x4 & 2) != 0) {
+		if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			this->dynamic.speed = 0.0f;
 
 			if ((this->aProjectileSubObjs->flags & 4) == 0) {

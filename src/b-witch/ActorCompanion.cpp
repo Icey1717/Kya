@@ -1203,7 +1203,7 @@ void CBehaviourCompanion::Draw()
 		if (GetAlert(iVar1) != (CompanionAlert*)0x0) {
 			if ((GetAlert(iVar1)->flags_0x2 & 2) != 0) {
 				if (this->instanceIndex == 0) {
-					if ((GetAlert(iVar1)->flags_0x4 & 2) != 0) {
+					if ((GetAlert(iVar1)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 						pCVar4 = GetAlert(iVar1);
 
 						if (this->activeSubObjId < 0) {

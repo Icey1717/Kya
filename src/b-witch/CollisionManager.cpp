@@ -1877,7 +1877,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	local_e0.z = 0.0f;
 	local_e0.w = 0.0f;
 
-	bVar4 = (this->flags_0x4 & 2) == 0;
+	bVar4 = (this->flags_0x4 & COLLISION_GROUND_FLAG) == 0;
 	if (bVar4) {
 		bVar4 = 0.001f <= fabs(pTranslation->y);
 	}
@@ -2091,7 +2091,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 		}
 
 		if (0 < iVar14) {
-			if (((this->flags_0x0 & 0x20) != 0) && (iVar15 = 0, (this->flags_0x4 & 2) != 0)) {
+			if (((this->flags_0x0 & 0x20) != 0) && (iVar15 = 0, (this->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) {
 				for (; iVar15 < 2; iVar15 = iVar15 + 1) {
 					//COLLISION_LOG(LogLevel::Verbose, "0: {}", stack0xfffffdb0[iVar15][0].field_0x0.ToString());
 					//COLLISION_LOG(LogLevel::Verbose, "1: {}", stack0xfffffdb0[iVar15][1].field_0x0.ToString());

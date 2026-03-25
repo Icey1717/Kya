@@ -681,7 +681,9 @@ public:
 
 	int field_0x1020;
 	int bCheckDynCollisions;
-	int field_0x1428;
+
+	// As opposed to air cannon glide.
+	int bFreeGlide;
 
 	int field_0x142c;
 	bool field_0x1454;

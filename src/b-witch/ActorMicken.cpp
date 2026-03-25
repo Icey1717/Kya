@@ -295,7 +295,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 					this->dynamic.speed = pSoccerParams->speed;
 
-					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						SetBehaviour(MICKEN_BEHAVIOUR_EAT, 7, -1);
 					}
 					else {
@@ -623,7 +623,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-	if ((pCollisionRef->flags_0x4 & 2) == 0) {
+	if ((pCollisionRef->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.2f < this->timeInAir) {
 			this->SetState(7, -1);
 			return;
@@ -675,7 +675,7 @@ void CActorMicken::StateMickenRollOnGround(CBehaviourMickenKicked* pBehaviour, i
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.2 < this->timeInAir) {
 			SetBehaviour(MICKEN_BEHAVIOUR_EAT, 7, -1);
 			return;
@@ -719,7 +719,7 @@ void CActorMicken::StateMickenKickImpactFly(CBehaviourMicken* pBehaviour, int pa
 	pCVar1 = this->pCollisionData;
 	ManageDyn(4.0f, 0x41920, (CActorsTable*)0x0);
 
-	if (((pCVar1->flags_0x4 & 2) == 0) ||
+	if (((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) ||
 		(1.0f <= fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y))) {
 		if (param_3 != 0) {
 			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
@@ -759,7 +759,7 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 	local_110.nbEntries = 0;
 	ManageDyn(4.0f, 0x41920, &local_110);
 
-	if ((pCVar1->flags_0x4 & 2) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		if (param_3 == 0) {
 			if (fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) < 1.0f) {
 				for (iVar5 = 0; iVar5 < local_110.nbEntries; iVar5 = iVar5 + 1) {
@@ -811,7 +811,7 @@ void CActorMicken::StateMickenEat(CBehaviourMickenEat* pBehaviour)
 
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.2f < this->timeInAir) {
 			SetState(7, -1);
 			return;
@@ -864,7 +864,7 @@ void CActorMicken::StateMickenChew(CBehaviourMickenEat* pBehaviour)
 
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.2f < this->timeInAir) {
 			SetState(7, -1);
 			return;
@@ -985,7 +985,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		pCVar2 = this->pCollisionData;
 		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
-		if ((pCVar2->flags_0x4 & 2) == 0) break;
+		if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) break;
 
 		pCVar1 = this->pTiedActor;
 
@@ -1168,7 +1168,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		this->dynamicExt.normalizedTranslation.w = 0.0;
 		this->dynamicExt.field_0x6c = 0.0;
 		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x100a023b, (CActorsTable*)0x0);
-		if ((pCVar2->flags_0x4 & 2) == 0) {
+		if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.2 < this->timeInAir) {
 				this->SetState(7, -1);
 				break;
@@ -1512,7 +1512,7 @@ int CActorMicken::WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF3
 
 	if ((param_1 + ((this->pCollisionData)->pObbPrim->scale).z <= movParamsOut.moveVelocity) ||
 		(1.0f <= fabs(this->currentLocation.y - pPosition->y))) {
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.2f < this->timeInAir) {
 				SetState(7, -1);
 				return 0;

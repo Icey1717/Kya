@@ -2747,7 +2747,7 @@ int CActorFighter::GetFightBehaviour()
 
 void CActorFighter::_InterpretCollisions(int param_2)
 {
-	CCollision* pCVar1;
+	CCollision* pCol;
 	bool bVar2;
 	Timer* pTVar3;
 	int inAnimType;
@@ -2783,27 +2783,27 @@ void CActorFighter::_InterpretCollisions(int param_2)
 	edF32VECTOR4 local_10;
 	CAnimation* pAnim;
 
-	pCVar1 = this->pCollisionData;
+	pCol = this->pCollisionData;
 	local_10 = gF32Vector4Zero;
 
 	this->field_0x690 = local_10;
 
-	bVar2 = (pCVar1->flags_0x4 & 2) != 0;
+	bVar2 = (pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0;
 	if (bVar2) {
-		edF32Vector4AddHard(&local_10, &local_10, &pCVar1->aCollisionContact[1].location);
-		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCVar1->aCollisionContact[1].field_0x10);
+		edF32Vector4AddHard(&local_10, &local_10, &pCol->aCollisionContact[1].location);
+		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCol->aCollisionContact[1].field_0x10);
 	}
 
 	uVar6 = (uint)bVar2;
-	if ((pCVar1->flags_0x4 & 1) != 0) {
-		edF32Vector4AddHard(&local_10, &local_10, &pCVar1->aCollisionContact[0].location);
-		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCVar1->aCollisionContact[0].field_0x10);
+	if ((pCol->flags_0x4 & 1) != 0) {
+		edF32Vector4AddHard(&local_10, &local_10, &pCol->aCollisionContact[0].location);
+		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCol->aCollisionContact[0].field_0x10);
 		uVar6 = uVar6 + 1;
 	}
 
-	if ((pCVar1->flags_0x4 & 4) != 0) {
-		edF32Vector4AddHard(&local_10, &local_10, &pCVar1->aCollisionContact[2].location);
-		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCVar1->aCollisionContact[2].field_0x10);
+	if ((pCol->flags_0x4 & 4) != 0) {
+		edF32Vector4AddHard(&local_10, &local_10, &pCol->aCollisionContact[2].location);
+		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCol->aCollisionContact[2].field_0x10);
 		uVar6 = uVar6 + 1;
 	}
 
@@ -4913,7 +4913,7 @@ int CActorFighter::FUN_0030a6a0()
 	float fVar5;
 
 	iVar2 = -1;
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+	if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		fVar3 = this->field_0x478 + GetTimer()->cutsceneDeltaTime;
 		this->field_0x478 = fVar3;
 		if (0.15f < fVar3) {
@@ -6240,7 +6240,7 @@ void CBehaviourFighter::Manage()
 		break;
 	case 0xd:
 		pFighter->_ManageFighterDyn(0x19, 0x1002023b, (CActorsTable*)0x0);
-		if ((pFighter->pCollisionData->flags_0x4 & 2) == 0) {
+		if ((pFighter->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			pFighter->field_0x4fc = pFighter->dynamic.linearAcceleration * fabs(pFighter->dynamic.velocityDirectionEuler.y) / 8.0f;
 			if (1.0f < pFighter->field_0x4fc) {
 				pFighter->field_0x4fc = 1.0;

@@ -216,7 +216,7 @@ int CActorFruit::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					this->dynamic.rotationQuat = this->rotationQuat;
 					this->dynamic.speed = pSoccerParams->speed;
 
-					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						SetBehaviour(FRUIT_BEHAVIOUR_SQUASHED, 0x10, -1);
 					}
 					else {
@@ -424,7 +424,7 @@ void CActorFruit::BehaviourFruitSquashed_Manage(CBehaviourFruitSquashed* pBehavi
 
 		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-		if ((pCVar2->flags_0x4 & 2) == 0) {
+		if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.2f < this->timeInAir) {
 				SetState(0x10, -1);
 			}
@@ -507,7 +507,7 @@ void CActorFruit::FUN_001de2f0(float param_1, int nextState)
 	this->field_0x36c = edFIntervalUnitDstLERP(value, 10.0f, 0.0f);
 	ManageDyn(4.0f, 0x41920, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		if ((this->field_0x360 & 1) == 0) {
 			SetState(9, -1);
 			return;

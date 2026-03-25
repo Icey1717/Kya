@@ -2830,7 +2830,7 @@ void CActorAton::StateAtonPathJump_3_4()
 		}
 
 		pCVar2 = this->pCollisionData;
-		if ((pCVar2 != (CCollision*)0x0) && ((pCVar2->flags_0x4 & 2) != 0)) {
+		if ((pCVar2 != (CCollision*)0x0) && ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) {
 			this->dynamic.speed = 0.0f;
 			SetState(ATON_ESCAPE_STATE_PATH_JUMP_4_4, -1);
 		}
@@ -2840,7 +2840,7 @@ void CActorAton::StateAtonPathJump_3_4()
 			ManageDyn(4.0f, 9, (CActorsTable*)0x0);
 			pCVar2 = this->pCollisionData;
 
-			if ((pCVar2 == (CCollision*)0x0) || ((pCVar2->flags_0x4 & 2) == 0)) {
+			if ((pCVar2 == (CCollision*)0x0) || ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) {
 				bVar3 = this->vectorDyn.IsFinished();
 				if (bVar3 != false) {
 					bVar3 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.AtGoal((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).splinePointIndex,

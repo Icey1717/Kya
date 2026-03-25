@@ -1149,7 +1149,7 @@ bool gTrpDetectCallback(CActor* pActor, void* pParams)
 				pAVar4 = pActor->GetStateCfg(pActor->actorState);
 				uVar3 = pAVar4->flags_0x4 & 0x100;
 			}
-			if ((uVar3 != 0) || ((pActor->pCollisionData->flags_0x4 & 2) != 0)) {
+			if ((uVar3 != 0) || ((pActor->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) {
 				pOtherActor->GetBehaviour(2);
 				bVar1 = true;
 			}

@@ -247,7 +247,7 @@ void CBehaviourGravityAwareFall::Manage()
 	if (iVar1 == 9) {
 		pGravityAware->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		pCollision = pGravityAware->pCollisionData;
-		if ((pCollision == (CCollision*)0x0) || ((pCollision->flags_0x4 & 2) == 0)) {
+		if ((pCollision == (CCollision*)0x0) || ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) {
 			pGravityAware->field_0x350 = 0.0f;
 		}
 		else {

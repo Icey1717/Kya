@@ -7,6 +7,10 @@
 
 #define MATERIAL_TABLE_SIZE 0xc
 
+#define COLLISION_WALL_FLAG    0x1
+#define COLLISION_GROUND_FLAG  0x2
+#define COLLISION_CEILING_FLAG 0x4
+
 struct s_collision_contact
 {
 	edF32VECTOR4 location;

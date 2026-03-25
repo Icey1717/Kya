@@ -933,7 +933,7 @@ void CActorNativ::BehaviourExorcisme_Manage()
 				if (iVar1 == 0xe) {
 					ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-					if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) && (((this->pCollisionData)->flags_0x4 & 2) != 0)) {
+					if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) && (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) {
 						SetState(0xf, -1);
 					}
 				}

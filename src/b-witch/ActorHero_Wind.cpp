@@ -28,7 +28,7 @@ void CActorHeroPrivate::ComputeBlendingWeightsInHitGlide()
 	local_30.w = this->currentLocation.w;
 	local_30.y = this->currentLocation.y + (pCVar1->pObbPrim->position).y;
 
-	if ((pCVar1->flags_0x4 & 2) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		edF32Vector4SubHard(&eStack16, &pCVar1->aCollisionContact[1].field_0x10, &local_30);
 		edF32Vector4AddHard(&local_20, &local_20, &eStack16);
 	}
@@ -315,7 +315,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 		this->dynamic.rotationQuat = local_70;
 	}
 
-	if ((pCollision->flags_0x4 & 2) != 0) {
+	if ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 
 		fVar15 = GetWindNeutralAirSpeed();
 		if (0.0f < fVar15) {
@@ -338,7 +338,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 			}
 		}
 
-		if ((pCollision->flags_0x4 & 2) == 0) {
+		if ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (this->field_0x1184 < this->timeInAir) {
 				SetState(0xf5, 0xffffffff);
 				return;
@@ -478,7 +478,7 @@ void CActorHeroPrivate::StateHeroFlyInit()
 	this->field_0x1420 = 0;
 	this->bCheckDynCollisions = 0;
 	this->field_0xcb4.Init(0.0f, 800.0f);
-	this->field_0x1428 = 1;
+	this->bFreeGlide = 1;
 
 	IMPLEMENTATION_GUARD_LOG(
 		CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x13c0);
@@ -591,7 +591,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 	fVar26 = this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y;
 	fVar31 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
 	bVar6 = 0.001f < fVar31;
-	if (this->field_0x1428 == 0) {		
+	if (this->bFreeGlide == 0) {		
 		this->currentGlideTime = GetTimer()->scaledTotalTime;
 		this->dynamicExt.normalizedTranslation.x = 0.0f;
 		this->dynamicExt.normalizedTranslation.y = 0.0f;
@@ -616,7 +616,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 		}
 
 		bVar1 = pCol->flags_0x4;
-		if (((bVar1 & 2) == 0) && ((bVar1 & 4) == 0)) {
+		if (((bVar1 & COLLISION_GROUND_FLAG) == 0) && ((bVar1 & COLLISION_CEILING_FLAG) == 0)) {
 			dynamicFlags = TestState_IsInHit(0xffffffff);
 			if ((dynamicFlags == 0) || (bVar6)) {
 				pInput = this->pPlayerInput;
@@ -815,7 +815,7 @@ LAB_0014a028:
 		pCameraManager->pActiveCamera->SetAngleGamma(this->field_0xcb4.currentAlpha);
 	}
 
-	if (this->field_0x1428 == 0) {
+	if (this->bFreeGlide == 0) {
 		fVar27 = edFIntervalUnitDstLERP(this->scalarDynA.field_0x4, this->scalarDynA.duration, 0.0f);
 		this->field_0x11fc = fVar27;
 		
@@ -1012,7 +1012,7 @@ LAB_0014a028:
 			}
 		}
 
-		bVar5 = (pCol->flags_0x4 & 2) != 0;
+		bVar5 = (pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0;
 		if ((this->bCheckDynCollisions != 0) && (bVar8 = false, bVar5)) {
 			for (iVar20 = 0; iVar20 < dynCollisionsTable.nbEntries; iVar20 = iVar20 + 1) {
 				lVar24 = BreakActor(0, 5.0f, 10.0f, dynCollisionsTable.aEntries[iVar20], 1, 0, 0);
@@ -1198,7 +1198,7 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 	this->dynamicExt.normalizedTranslation.z = 0.0f;
 	this->dynamicExt.normalizedTranslation.w = 0.0f;
 	this->dynamicExt.field_0x6c = 0.0f;
-	this->field_0x1428 = 0;
+	this->bFreeGlide = 0;
 	this->field_0x11fc = 1.0f;
 
 	return;
@@ -1209,7 +1209,7 @@ void CActorHeroPrivate::StateHeroWindCanonTerm()
 {
 	RestoreVerticalOrientation();
 	ConvertSpeedPlayerToSpeedSumForceExt2D();
-	this->field_0x1428 = 1;
+	this->bFreeGlide = 1;
 	this->field_0x11fc = 0.0f;
 
 	return;
@@ -1345,7 +1345,7 @@ void CActorHeroPrivate::StateHeroCheatFly()
 
 	ManageDyn(4.0f, 0x40001, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 	LAB_0014b9f8:
 		this->time_0x1538 = GetTimer()->scaledTotalTime;
 	}

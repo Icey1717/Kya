@@ -755,7 +755,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	AUTONOMOUS_LOG(LogLevel::Verbose, "CActorAutonomous::ManageDyn other flags: 0x{:x}", uVar10);
 
 	// Gravity
-	if ((((uVar10 & 0x20) != 0) && ((pCollision->flags_0x4 & 2) == 0)) || ((uVar10 & 0x8000000) != 0)) {
+	if ((((uVar10 & 0x20) != 0) && ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) || ((uVar10 & 0x8000000) != 0)) {
 		edF32Vector4ScaleHard(this->dynamicExt.gravityScale, &eStack128, &CDynamicExt::gForceGravity);
 		peVar9 = this->dynamicExt.aImpulseVelocities;
 		edF32Vector4AddHard(peVar9, peVar9, &eStack128);
@@ -764,7 +764,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Gravity: {}", this->dynamicExt.aImpulseVelocities[0].ToString());
 
-	if (((uVar10 & 0x100) != 0) && ((pCollision->flags_0x4 & 2) == 0)) {
+	if (((uVar10 & 0x100) != 0) && ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) {
 		if ((uVar10 & 0x100000) == 0) {
 			fVar15 = this->dynamic.linearAcceleration;
 			fVar15 = GetTimer()->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
@@ -855,7 +855,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation post velocity: {} ", translation.ToString());
 
-	if ((pCollision->flags_0x4 & 2) != 0) {
+	if ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		if ((uVar10 & 0x1000) == 0) {
 			if (((uVar10 & 2) != 0) || ((uVar10 & 4) != 0)) {
 				if ((uVar10 & 0x20000) != 0) {
@@ -898,9 +898,9 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation post plane project A: {} | {}", translation.ToString(), pCollision->flags_0x4 & 2);
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation post plane project A: {} | {}", translation.ToString(), pCollision->flags_0x4 & COLLISION_GROUND_FLAG);
 
-	if ((pCollision->flags_0x4 & 1) != 0) {
+	if ((pCollision->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 		if ((uVar10 & 0x800) == 0) {
 			if ((uVar10 & 1) != 0) {
 				edProjectVectorOnPlane(0.0f, &translation, &translation, &local_50, 1);
@@ -916,9 +916,9 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation plane project B: {} | {}", translation.ToString(), pCollision->flags_0x4 & 1);
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation plane project B: {} | {}", translation.ToString(), pCollision->flags_0x4 & COLLISION_WALL_FLAG);
 
-	if ((pCollision->flags_0x4 & 4) != 0) {
+	if ((pCollision->flags_0x4 & COLLISION_CEILING_FLAG) != 0) {
 		if ((uVar10 & 0x2000) == 0) {
 			if ((uVar10 & 8) != 0) {
 				edProjectVectorOnPlane(0.0f, &translation, &translation, &local_70, 1);
@@ -934,7 +934,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation plane project C: {} | {} flags: {:x} touching ground: {}", translation.ToString(), pCollision->flags_0x4 & 4, uVar10, uVar10 & 0x40000);
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation plane project C: {} | {} flags: {:x} touching ground: {}", translation.ToString(), pCollision->flags_0x4 & COLLISION_CEILING_FLAG, uVar10, uVar10 & 0x40000);
 
 	uVar7 = pCollision->flags_0x0;
 
@@ -1000,7 +1000,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation delta time: {}", translation.ToString());
 
 	if ((uVar10 & 0x400) == 0) {
-		if ((((uVar10 & 0x80000) == 0) || ((pCollision->flags_0x4 & 2) == 0)) ||
+		if ((((uVar10 & 0x80000) == 0) || ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) ||
 			(GetTimer()->scaledTotalTime - this->dynamicExt.scaledTotalTime < 0.5f)) {
 
 			local_1e0.nbEntries = 0;
@@ -1041,7 +1041,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		pCollision->flags_0x0 = pCollision->flags_0x0 & 0xfffeffff;
 	}
 
-	if (((pCollision->flags_0x4 & 2) != 0) && (uVar7 = CCollisionManager::IsASlidingGround(&pCollision->aCollisionContact[1]), uVar7 == 0)) {
+	if (((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) != 0) && (uVar7 = CCollisionManager::IsASlidingGround(&pCollision->aCollisionContact[1]), uVar7 == 0)) {
 		if ((uVar10 & 0x200) == 0) {
 			if (((uVar10 & 0x1000000) != 0) && (0.99f < (pCollision->aCollisionContact[1]).location.y)) {
 				fVar15 = this->dynamicExt.normalizedTranslation.y * this->dynamicExt.field_0x6c;
@@ -1117,7 +1117,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	this->dynamic.field_0x4c = 0;
 
-	if ((pCollision->flags_0x4 & 2) == 0) {
+	if ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if ((uVar10 & 0x10) == 0) {
 			memset(&this->collisionContact, 0, sizeof(s_collision_contact));
 		}
@@ -1126,7 +1126,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		this->collisionContact = pCollision->aCollisionContact[1];
 	}
 
-	if (((uVar10 & 0x10000000) != 0) && ((pCollision->flags_0x4 & 2) != 0)) {
+	if (((uVar10 & 0x10000000) != 0) && ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) {
 		peVar9 = &pCollision->highestVertex;
 
 		if ((pCollision->flags_0x0 & 0x40000) == 0) {
@@ -1143,7 +1143,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	if ((((pCollision->flags_0x4 & 2) != 0) && ((pCollision->flags_0x0 & 4) == 0)) &&
+	if ((((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) != 0) && ((pCollision->flags_0x0 & 4) == 0)) &&
 		(uVar10 = CCollisionManager::IsASlidingGround(&pCollision->aCollisionContact[1]), uVar10 != 0)) {
 		this->dynamic.flags = this->dynamic.flags | 2;
 	}
@@ -1155,7 +1155,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	}
 
 	if ((this->pTiedActor != (CActor*)0x0) ||
-		(((uVar2 & 4) != 0 && ((pCollision->flags_0x4 & 2) == 0)))) {
+		(((uVar2 & 4) != 0 && ((pCollision->flags_0x4 & COLLISION_GROUND_FLAG) == 0)))) {
 		this->dynamic.flags = this->dynamic.flags | 4;
 	}
 
@@ -1423,7 +1423,7 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 	else {
 		edF32Vector4ScaleHard((this->dynamicExt).gravityScale, &slidingForce, &CDynamicExt::gForceGravity);
 
-		if ((pCVar1->flags_0x4 & 2) != 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			bVar2 = CCollisionManager::IsASlidingGround(pCVar1->aCollisionContact + 1);
 			if ((bVar2 == false) && (param_3 == 0)) {
 				slidingForce.x = 0.0f;
@@ -1526,7 +1526,7 @@ void CActorAutonomous::StateAutRollOnGround(float param_1, float param_2, float 
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (param_3 < this->timeInAir) {
 			SetState(param_6, -1);
 			return;

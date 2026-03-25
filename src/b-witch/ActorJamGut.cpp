@@ -834,7 +834,7 @@ void CActorJamGut::ManagePaths()
 	}
 
 	if ((iVar10 == 0) && (pHero = this->pRider, pHero != (CActorHero*)0x0)) {
-		if (((((pHero->GetStateFlags(pHero->actorState) & 0x100) != 0) && (pHero = this->pRider, ((pHero->pCollisionData)->flags_0x4 & 2) != 0)) &&
+		if (((((pHero->GetStateFlags(pHero->actorState) & 0x100) != 0) && (pHero = this->pRider, ((pHero->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) &&
 			(pHero->pTiedActor == (CActor*)0x0)) &&
 			(pPathActor = pHero->GetCollidingActor(), pPathActor == (CActor*)0x0)) {
 			CBehaviourJamGutRidden* pRidden = static_cast<CBehaviourJamGutRidden*>(GetBehaviour(this->curBehaviourId));
@@ -1739,7 +1739,7 @@ int CActorJamGut::ChooseStateHit(CActor* pSender, _msg_hit_param* param_3, edF32
 				}
 				else {
 					local_10.y = 0.2f;
-					if ((pCol->flags_0x4 & 2) == 0) {
+					if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						bVar3 = false;
 					}
 				}
@@ -2098,7 +2098,7 @@ void CActorJamGut::StateJamGutStand(float minTime, CBehaviourJamGutStand* pBehav
 			return;
 		}
 
-		if ((pCol->flags_0x4 & 2) == 0) {
+		if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (this->timeInAir <= 0.1f) {
 				return;
 			}
@@ -2160,7 +2160,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 	SV_UpdateValue(0.0f, 100.0f, &this->field_0x444);
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.1f < this->timeInAir) {
 			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 			return;
@@ -2375,7 +2375,7 @@ void CActorJamGut::StateJamGutWalk(CBehaviourJamGut* pBehaviour, int restState)
 	SetAnimSpeed(fVar7);
 	bVar3 = FUN_003763d0();
 	if (bVar3 == false) {
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.1 < this->timeInAir) {
 				SetState(0xf, -1);
 				return;
@@ -2568,7 +2568,7 @@ void CActorJamGut::StateJamGutRun(CBehaviourJamGut* pBehaviour, int nextState)
 	SetAnimSpeed(fVar7);
 	bVar1 = FUN_003763d0();
 	if (bVar1 == false) {
-		if ((pCol->flags_0x4 & 2) == 0) {
+		if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.1f < this->timeInAir) {
 				SetState(JAMGUT_RIDE_STATE_FALL, -1);
 				return;
@@ -2615,7 +2615,7 @@ void CActorJamGut::StateJamGutFall()
 	MoveInAir(this->field_0x480, this->field_0x444, this->field_0x488, 10.0f, 4.712389f);
 	ManageDyn(4.0f, 0x140129, (CActorsTable*)0x0);
 
-	if ((pCVar1->flags_0x4 & 2) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 		if (2.0f < this->dynamic.horizontalLinearSpeed) {
 			SetState(JAMGUT_RIDE_STATE_JUMP_AFTER_B, -1);
 		}
@@ -2646,7 +2646,7 @@ void CActorJamGut::StateJamGutHit()
 
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
 			if (pHero == (CActorHero*)0x0) {
 				SetState(0xf, -1);
@@ -2699,7 +2699,7 @@ void CActorJamGut::StateJamGutJumpBefore(CBehaviourJamGut*)
 		SetJumpCfg(0.1f, this->field_0x484 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
 	}
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.1f < this->timeInAir) {
 			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 			return;
@@ -2773,7 +2773,7 @@ void CActorJamGut::StateJamGutJump()
 		this->field_0x490 = 0.0f;
 	}
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x4f0 + (this->field_0x4c4).field_0x4 < this->timeInAir) {
 			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 		}
@@ -2813,7 +2813,7 @@ void CActorJamGut::StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextSt
 	SV_UpdateValue(this->field_0x484 * fVar6, 80.0f, &this->field_0x444);
 
 	bVar4 = UpdateFunc(200.0f);
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.1 < this->timeInAir) {
 			SetState(JAMGUT_RIDE_STATE_FALL, -1);
 			return;

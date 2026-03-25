@@ -2620,13 +2620,13 @@ void CActorHeroPrivate::Manage()
 	float fVar14;
 
 	if (this->pTiedActor == (CActor*)0x0) {
-		if (((this->pCollisionData)->flags_0x4 & 2) != 0) {
+		if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			this->flags = this->flags & 0xfff7ffff;
 		}
 	}
 	else {
 		if ((((this->flags & 0x20000) == 0) ||
-			(((this->pCollisionData)->flags_0x4 & 2) == 0)) ||
+			(((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) ||
 			(0.1 < this->distanceToGround)) {
 			this->flags = this->flags | 0x80000;
 		}
@@ -4561,7 +4561,7 @@ int CActorHeroPrivate::StateEvaluate()
 		peVar9 = GetWindWayPoint();
 		iVar4 = GetPossibleWind(fVar10, &this->dynamicExt.aImpulseVelocities[2], peVar9);
 		if (iVar4 == -1) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				bVar3 = InClimbZone(&this->currentLocation);
 				this->field_0x1454 = bVar3;
 				iVar4 = 0xa9;
@@ -4687,7 +4687,7 @@ int CActorHeroPrivate::ChooseStateFall(int param_2)
 {
 	int fallState;
 
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+	if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		fallState = STATE_HERO_FALL_A;
 
 		if (this->field_0x142c != 0) {
@@ -4717,7 +4717,7 @@ int CActorHeroPrivate::ChooseStateFall(int param_2)
 int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams, edF32VECTOR4* param_4, int param_5)
 {
 	int iVar1;
-	CCollision* pCVar2;
+	CCollision* pCol;
 	bool bVar3;
 	bool bVar4;
 	int iVar5;
@@ -4774,7 +4774,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 						iVar5 = 0x8f;
 					}
 					else {
-						pCVar2 = this->pCollisionData;
+						pCol = this->pCollisionData;
 						if (pHitBy != (CActor*)0x0) {
 							if ((iVar1 == 1) || (iVar1 == 2)) {
 								this->rotationQuat = pHitParams->field_0x20;
@@ -4817,7 +4817,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 							}
 							else {
 								local_30.y = 0.2f;
-								if ((pCVar2->flags_0x4 & 2) == 0) {
+								if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 									bVar4 = false;
 								}
 							}
@@ -4990,7 +4990,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->field_0x1020 = 1;
 	this->field_0x1420 = 0;
 	this->bCheckDynCollisions = 0;
-	this->field_0x1428 = 1;
+	this->bFreeGlide = 1;
 	this->field_0x142c = 1;
 	//*(undefined4*)&this->field_0x1024 = 0x3f800000;
 	this->field_0x1010 = 0;
@@ -6804,10 +6804,10 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 
 	iVar4 = DetectGripablePrecipice();
 	if (iVar4 == 0) {
-		if ((this->pCollisionData->flags_0x4 & 2) == 0) {
+		if ((this->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			fVar14 = this->field_0x1184;
 			if (fVar14 < this->timeInAir) {
-				if ((this->pCollisionData->flags_0x4 & 2) == 0) {
+				if ((this->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 					uVar12 = STATE_HERO_FALL_A;
 
 					if (this->field_0x142c != 0) {
@@ -7160,7 +7160,7 @@ void CActorHeroPrivate::StateHeroTobogganInit()
 // Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::StateHeroToboggan(int param_2)
 {
-	CCollision* pCVar1;
+	CCollision* pCol;
 	CAnimation* pCVar2;
 	CPlayerInput* pCVar3;
 	CFxHandle* pCVar4;
@@ -7191,16 +7191,16 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	edF32VECTOR3 local_10;
 	CActor* local_4;
 
-	pCVar1 = this->pCollisionData;
+	pCol = this->pCollisionData;
 	pCVar2 = this->pAnimationController;
 
 	IncreaseEffort(1.0f);
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		local_60 = this->collisionContact.location;
 	}
 	else {
-		local_60 = pCVar1->aCollisionContact[1].location;
+		local_60 = pCol->aCollisionContact[1].location;
 	}
 
 	fVar13 = edF32Vector4DotProductHard(&this->normalValue, &local_60);
@@ -7349,7 +7349,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 		}
 	}
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 * 1.5f < this->timeInAir) {
 			SetState(STATE_HERO_TOBOGGAN_JUMP_1, 0xffffffff);
 			return;
@@ -7359,7 +7359,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 		this->timeInAir = 0.0f;
 	}
 
-	if ((pCVar1->flags_0x4 & 1) != 0) {
+	if ((pCol->flags_0x4 & 1) != 0) {
 		local_4 = (CActor*)0x0;
 		local_c0 = auStack80.rowZ;
 
@@ -7369,9 +7369,9 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 
 		if ((bVar7 == false) || (fVar15 = this->field_0x1430, fVar13 = edF32Vector4DotProductHard(&local_c0, &eStack176), cosf(fVar15) < fVar13 + 1.0f)) {
 			fVar15 = this->field_0x1430;
-			fVar13 = edF32Vector4DotProductHard(&local_c0, &pCVar1->aCollisionContact->location);
+			fVar13 = edF32Vector4DotProductHard(&local_c0, &pCol->aCollisionContact->location);
 			if (cosf(fVar15) < fVar13 + 1.0f) goto LAB_00329a38;
-			bVar7 = TobogganBounceOnWall(&pCVar1->aCollisionContact->location, &this->normalValue, (CActor*)0x0);
+			bVar7 = TobogganBounceOnWall(&pCol->aCollisionContact->location, &this->normalValue, (CActor*)0x0);
 		}
 		else {
 			bVar7 = TobogganBounceOnWall(&eStack176, &this->normalValue, local_4);
@@ -7413,7 +7413,7 @@ LAB_00329a38:
 		}
 	}
 
-	if (((((pCVar1->flags_0x4 & 2) == 0) || (bVar7 = ColWithAToboggan(), bVar7 != false)) ||
+	if (((((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) || (bVar7 = ColWithAToboggan(), bVar7 != false)) ||
 		(uVar12 = ColWithLava(), uVar12 != 0)) ||
 		(uVar12 = ColWithCactus(), uVar12 != 0)) {
 		pTVar11 = GetTimer();
@@ -7632,7 +7632,7 @@ LAB_00328d38:
 
 	bVar4 = ColWithAToboggan();
 	if ((bVar4 == false) && ((bVar4 = ColWithLava(), bVar4 == false || (uVar6 = TestState_IsInHit(0xffffffff), uVar6 == 0)))) {
-		if ((((pCVar1->flags_0x4 & 2) == 0) || (bVar4 = ColWithAToboggan(), bVar4 != false)) || (bVar4 = ColWithLava(), bVar4 != false)) {
+		if ((((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) || (bVar4 = ColWithAToboggan(), bVar4 != false)) || (bVar4 = ColWithLava(), bVar4 != false)) {
 			iVar8 = ChooseStateFall(0);
 
 			if (iVar8 == STATE_HERO_GLIDE_1) {
@@ -7659,7 +7659,7 @@ LAB_00328d38:
 		}
 	}
 	else {
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if ((pCVar1->flags_0x4 & 1) == 0) {
 				this->collisionContact.location = pCVar1->aCollisionContact[2].location;
 				this->collisionContact.field_0x10 = pCVar1->aCollisionContact[2].field_0x10;
@@ -7913,7 +7913,7 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 				}
 			}
 
-			if ((pCVar1->flags_0x4 & 2) != 0) {
+			if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 				SetState(STATE_HERO_WIND_SLIDE, 0xffffffff);
 			}
 		}
@@ -8060,7 +8060,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 								}
 
 								if (bPressedJump != 0) {
-									if ((pCol->flags_0x4 & 2) != 0) {
+									if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 										local_70.x = this->currentLocation.x;
 										local_70.z = this->currentLocation.z;
 										local_70.y = this->currentLocation.y + 0.1f;
@@ -8508,10 +8508,10 @@ void CActorHeroPrivate::StateHeroRun()
 		return;
 	}
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		fVar13 = this->field_0x1184;
 		if (fVar13 < this->timeInAir) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				uVar11 = STATE_HERO_FALL_A;
 				if (this->field_0x142c != 0) {
 					if (this->distanceToGround < 10.3f) {
@@ -8748,9 +8748,9 @@ void CActorHeroPrivate::StateHeroRun_B()
 		return;
 	}
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				uVar6 = 0x7e;
 				if (this->field_0x142c != 0) {
 					if (this->distanceToGround < 10.3f) {
@@ -9089,7 +9089,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 			else {
 				bVar5 = DetectGripablePrecipice();
 				if (bVar5 == false) {
-					if ((pCVar1->flags_0x4 & 2) == 0) {
+					if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						if (this->field_0x1184 < this->timeInAir) {
 							uVar7 = ChooseStateFall(0);
 							SetState(uVar7, 0xffffffff);
@@ -9207,7 +9207,7 @@ void CActorHeroPrivate::StateHeroSlideInit(int param_2)
 	fVar6 = g_xVector.z;
 	fVar7 = g_xVector.x;
 
-	if (((pCVar1->flags_0x4 & 2) != 0) && (pCVar1->aCollisionContact[1].location.y < 0.999f)) {
+	if (((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) != 0) && (pCVar1->aCollisionContact[1].location.y < 0.999f)) {
 		fVar6 = pCVar1->aCollisionContact[1].location.z;
 		fVar7 = pCVar1->aCollisionContact[1].location.x;
 	}
@@ -9272,7 +9272,7 @@ void CActorHeroPrivate::StateHeroSlideInit(int param_2)
 
 void CActorHeroPrivate::StateHeroSlide(int param_2)
 {
-	CCollision* pCVar1;
+	CCollision* pCol;
 	CPlayerInput* pCVar2;
 	bool bVar3;
 	bool bVar4;
@@ -9290,7 +9290,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 	float local_8;
 	float local_4;
 
-	pCVar1 = this->pCollisionData;
+	pCol = this->pCollisionData;
 	pCVar2 = this->pPlayerInput;
 
 	if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -9302,11 +9302,11 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 		pCVar2->GetPadRelativeToNormal2D(&this->dynamic.velocityDirectionEuler, &local_4, &local_8, &local_c);
 	}
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		local_70 = this->collisionContact.location;
 	}
 	else {
-		local_70 = pCVar1->aCollisionContact[1].location;
+		local_70 = pCol->aCollisionContact[1].location;
 	}
 
 	UpdateNormal(4.0f, &this->normalValue, &local_70);
@@ -9394,7 +9394,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 			return;
 		}
 
-		if (((pCVar1->flags_0x4 & 1) != 0) || (iVar5 != 0)) {
+		if (((pCol->flags_0x4 & 1) != 0) || (iVar5 != 0)) {
 			SetState(STATE_HERO_STAND, 0xffffffff);
 			return;
 		}
@@ -9402,7 +9402,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 
 	bVar3 = DetectGripablePrecipice();
 	if (bVar3 == false) {
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (this->field_0x1184 < this->timeInAir) {
 				iVar5 = ChooseStateFall(0);
 				SetState(iVar5, 0xffffffff);
@@ -9604,9 +9604,9 @@ void CActorHeroPrivate::StateHeroUTurn()
 	if (this->bFacingControlDirection == 0) {
 		bVar3 = DetectGripablePrecipice();
 		if (bVar3 == false) {
-			if ((pCVar1->flags_0x4 & 2) == 0) {
+			if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				if (this->field_0x1184 < this->timeInAir) {
-					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						uVar4 = STATE_HERO_FALL_A;
 						if (this->field_0x142c != 0) {
 							if (this->distanceToGround < 10.3f) {
@@ -9718,9 +9718,9 @@ void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
 		}
 	}
 
-	if ((pCVar2->flags_0x4 & 2) == 0) {
+	if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				uVar6 = 0x7e;
 				if (this->field_0x142c != 0) {
 					if (this->distanceToGround < 10.3) {
@@ -9831,9 +9831,9 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 			}
 		}
 
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (this->field_0x1184 < this->timeInAir) {
-				if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 					uVar9 = 0x7e;
 					if (this->field_0x142c != 0) {
 						if (this->distanceToGround < 10.3f) {
@@ -10090,7 +10090,7 @@ void CActorHeroPrivate::StateHeroCrouchWalk()
 		}
 	}
 
-	if ((pCVar2->flags_0x4 & 2) == 0) {
+	if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
 			this->SetState(0x87, 0xffffffff);
 			return;
@@ -10225,7 +10225,7 @@ void CActorHeroPrivate::StateHeroRoll()
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCVar2->flags_0x4 & 2) == 0) {
+	if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
 			SetState(0x8d, 0xffffffff);
 			return;
@@ -10415,9 +10415,9 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCVar2->flags_0x4 & 2) == 0) {
+	if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				nextState = 0x7e;
 				if (this->field_0x142c != 0) {
 					if (this->distanceToGround < 10.3) {
@@ -10537,7 +10537,7 @@ void CActorHeroPrivate::StateHeroHit()
 
 	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (pCVar2->IsCurrentLayerAnimEndReached(0)) {
 			CLifeInterface* pLifeInterface = GetLifeInterface();
 			fVar9 = pLifeInterface->GetValue();
@@ -10557,7 +10557,7 @@ void CActorHeroPrivate::StateHeroHit()
 			}
 
 			if (!bVar5) {
-				if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 					uVar6 = 0x7e;
 
 					if (this->field_0x142c != 0) {
@@ -11180,7 +11180,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 			this->dynamic.velocityDirectionEuler.y)) ||
 		(this->field_0xf54->SV_GetBoneDefaultWorldPosition(this->mountBoneId, &eStack48),
 			eStack48.y <= this->currentLocation.y)) {
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			jumpPressed = CanGrip(param_2, &this->rotationQuat);
 			if (jumpPressed == 0) {
 				if (bCheckBounce != 0) {
@@ -11205,7 +11205,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 
 				if (0.7f < this->timeInAir) {
 					/* Land on uncertain ground */
-					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						uVar7 = STATE_HERO_FALL_A;
 
 						if (this->field_0x142c != 0) {
@@ -11418,9 +11418,9 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 				}
 
 				if ((0.9f <= fVar11) || (bVar7 = DetectGripablePrecipice(), bVar7 == false)) {
-					if ((pCVar1->flags_0x4 & 2) == 0) {
+					if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 						if (this->field_0x1184 < this->timeInAir) {
-							if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+							if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 								uVar10 = STATE_HERO_FALL_A;
 								if (this->field_0x142c != 0) {
 									if (this->distanceToGround < 10.3f) {
@@ -11604,7 +11604,7 @@ void CActorHeroPrivate::FUN_00138700()
 	}
 	else {
 		if (0.5f < this->timeInAir) {
-			if ((pCol->flags_0x4 & 2) == 0) {
+			if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				SetState(ChooseStateFall(0), 0xffffffff);
 			}
 			else {
@@ -11824,8 +11824,8 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 			AccomplishAction(0);
 		}
 		else {
-			if ((pCVar1->flags_0x4 & 2) == 0) {
-				if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
+				if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 					lVar6 = STATE_HERO_FALL_A;
 
 					if (this->field_0x142c != 0) {
@@ -11943,9 +11943,9 @@ void CActorHeroPrivate::StateHeroColWall()
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCVar2->flags_0x4 & 2) == 0) {
+	if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
-			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+			if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 				uVar5 = STATE_HERO_FALL_A;
 
 				if (this->field_0x142c != 0) {
@@ -12328,7 +12328,7 @@ void CActorHeroPrivate::StateHeroBasic(float param_1, float param_2, int nextSta
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((pCol->flags_0x4 & 2) == 0) {
+	if ((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (this->field_0x1184 < this->timeInAir) {
 			SetState(ChooseStateFall(0), 0xffffffff);
 			return;
@@ -13284,7 +13284,7 @@ int CActorHeroPrivate::SlideOnGround(float param_1, float param_2, float param_3
 	fVar5 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 	this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar5;
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		flags = flags | 0x120;
 	}
 	else {
@@ -13874,7 +13874,7 @@ void CActorHeroPrivate::SlideOnToboggan(float param_1, float param_2, float para
 
 	pCVar1 = this->pCollisionData;
 
-	if ((pCVar1->flags_0x4 & 2) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		fVar4 = edFIntervalLERP(this->collisionContact.location.y, 0.8658976f, 1.0f, param_2 , param_1 + (param_2 - this->field_0x10c4));
 		dynFlags = dynFlags | 0x21;
 	}
@@ -14288,7 +14288,7 @@ void CActorHeroPrivate::SetInvincible(float duration, int bAdd)
 // Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 bool CActorHeroPrivate::CheckHitAndDeath()
 {
-	CCollision* pCVar1;
+	CCollision* pCol;
 	bool bVar2;
 	StateConfig* pSVar3;
 	uint uVar4;
@@ -14323,11 +14323,11 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 		return false;
 	}
 
-	pCVar1 = this->pCollisionData;
+	pCol = this->pCollisionData;
 	bVar2 = ColWithCactus();
 	if (bVar2 != false) {
 		this->field_0x2e4 = 10.0f;
-		if (((pCVar1->flags_0x4 & 2) == 0) || ((pCVar1->flags_0x4 & 4) == 0)) {
+		if (((pCol->flags_0x4 & COLLISION_GROUND_FLAG) == 0) || ((pCol->flags_0x4 & 4) == 0)) {
 			this->SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0xa3, 0xffffffff);
 		}
 		else {
@@ -14341,30 +14341,30 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	local_10.z = 0.0f;
 	local_10.w = 0.0f;
 
-	uVar4 = pCVar1->aCollisionContact[1].materialFlags & 0xf;
+	uVar4 = pCol->aCollisionContact[1].materialFlags & 0xf;
 	if (uVar4 == 0) {
 		uVar4 = CScene::_pinstance->defaultMaterialIndex;
 	}
 
 	if (uVar4 == 3) {
-		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)(pCVar1->aCollisionContact + 1));
+		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)(pCol->aCollisionContact + 1));
 	}
-	uVar4 = pCVar1->aCollisionContact[0].materialFlags & 0xf;
+	uVar4 = pCol->aCollisionContact[0].materialFlags & 0xf;
 	if (uVar4 == 0) {
 		uVar4 = CScene::_pinstance->defaultMaterialIndex;
 	}
 
 	if (uVar4 == 3) {
-		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)pCVar1->aCollisionContact);
+		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)pCol->aCollisionContact);
 	}
 
-	uVar4 = pCVar1->aCollisionContact[2].materialFlags & 0xf;
+	uVar4 = pCol->aCollisionContact[2].materialFlags & 0xf;
 	if (uVar4 == 0) {
 		uVar4 = CScene::_pinstance->defaultMaterialIndex;
 	}
 
 	if (uVar4 == 3) {
-		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)(pCVar1->aCollisionContact + 2));
+		edF32Vector4AddHard(&local_10, &local_10, (edF32VECTOR4*)(pCol->aCollisionContact + 2));
 	}
 
 	edF32Vector4NormalizeHard(&local_10, &local_10);

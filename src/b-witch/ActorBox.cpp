@@ -417,7 +417,7 @@ void CActorBox::BehaviourBoxStand_Manage()
 
 	this->ntfSwitch.pStreamEventCamera->Manage(this);
 
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+	if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 
 		if ((GetStateFlags(this->actorState) & 0x800) == 0) {
 			SetState(10, -1);
@@ -629,7 +629,7 @@ void CActorBox::FUN_0036fb80()
 
 	fVar2 = (this->field_0x490).y - this->currentLocation.y;
 
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+	if (((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (2.0f < fVar2) {
 			local_10.z = this->rotationQuat.z;
 			local_10.w = this->rotationQuat.w;

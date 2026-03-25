@@ -255,7 +255,7 @@ void CBehaviourWeapon::Manage()
 		pWeapon->SetAlpha((byte)(int)(fVar5 * 127.0f));
 
 		pCVar3 = pWeapon->pCollisionData;
-		if (((pCVar3 != (CCollision*)0x0) && ((pCVar3->flags_0x4 & 2) != 0)) || (fVar5 == 0.0f)) {
+		if (((pCVar3 != (CCollision*)0x0) && ((pCVar3->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) || (fVar5 == 0.0f)) {
 			pWeapon->ToggleMeshAlpha();
 			pWeapon->SetState(8, -1);
 		}

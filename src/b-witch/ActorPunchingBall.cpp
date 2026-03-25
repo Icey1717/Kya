@@ -570,7 +570,7 @@ void CBehaviourPunchingBallStand::Manage()
 	switch (pPunchingBall->actorState) {
 	case 0x74:
 		pPunchingBall->ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
-		if (((pPunchingBall->pCollisionData)->flags_0x4 & 2) != 0) {
+		if (((pPunchingBall->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 			pPunchingBall->SetState(0x73, -1);
 		}
 		break;

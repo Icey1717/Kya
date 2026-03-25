@@ -4020,7 +4020,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 				local_a0.projectileType = 1;
 			}
 			else {
-				if ((this->pCollisionData != (CCollision*)0x0) && ((this->pCollisionData->flags_0x4 & 2) == 0)) {
+				if ((this->pCollisionData != (CCollision*)0x0) && ((this->pCollisionData->flags_0x4 & COLLISION_GROUND_FLAG) == 0)) {
 					return 1;
 				}
 
@@ -4181,7 +4181,7 @@ bool CActor::ColWithAToboggan()
 
 	pColData = this->pCollisionData;
 	bColWithAToboggan = false;
-	if ((pColData != (CCollision*)0x0) && (bColWithAToboggan = (pColData->flags_0x4 & 2) != 0, bColWithAToboggan)) {
+	if ((pColData != (CCollision*)0x0) && (bColWithAToboggan = (pColData->flags_0x4 & COLLISION_GROUND_FLAG) != 0, bColWithAToboggan)) {
 		uVar2 = pColData->aCollisionContact[1].materialFlags & 0xf;
 		if (uVar2 == 0) {
 			uVar2 = CScene::_pinstance->defaultMaterialIndex;
