@@ -747,7 +747,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	local_70 = (pCollision->aCollisionContact[2]).location;
 
 	bVar4 = false;
-	if (((pCollision->flags_0x4 & 1) != 0) && ((uVar10 & 0x10) != 0)) {
+	if (((pCollision->flags_0x4 & COLLISION_WALL_FLAG) != 0) && ((uVar10 & 0x10) != 0)) {
 		local_50.y = 0.0f;
 		edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
 	}
@@ -1073,7 +1073,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	if (((uVar10 & 0x2000000) != 0) && ((pCollision->flags_0x4 & 1) != 0)) {
+	if (((uVar10 & 0x2000000) != 0) && ((pCollision->flags_0x4 & COLLISION_WALL_FLAG) != 0)) {
 		edF32Vector4NormalizeHard(&eStack496, &local_30);
 
 		if (edF32Vector4DotProductHard(&pCollision->aCollisionContact[0].location, &eStack496) < -0.99f) {
@@ -1089,7 +1089,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 	}
 
-	if ((((uVar10 & 0x4000000) != 0) && ((pCollision->flags_0x4 & 4) != 0)) && ((pCollision->aCollisionContact[2].location).y < -0.99)) {
+	if ((((uVar10 & 0x4000000) != 0) && ((pCollision->flags_0x4 & COLLISION_CEILING_FLAG) != 0)) && ((pCollision->aCollisionContact[2].location).y < -0.99)) {
 		fVar15 = (this->dynamicExt).normalizedTranslation.y * (this->dynamicExt).field_0x6c;
 		(this->dynamicExt).field_0x6c = sqrtf((this->dynamicExt).field_0x6c * (this->dynamicExt).field_0x6c - fVar15 * fVar15);
 		(this->dynamicExt).normalizedTranslation.y = 0.0f;
@@ -1414,7 +1414,7 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 
 	pCVar1 = this->pCollisionData;
 
-	if ((pCVar1->flags_0x4 & 7) == 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_ALL_FLAG) == 0) {
 		pSlidingForce->x = 0.0f;
 		pSlidingForce->y = 0.0f;
 		pSlidingForce->z = 0.0f;

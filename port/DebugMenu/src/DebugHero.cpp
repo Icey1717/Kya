@@ -300,7 +300,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			ImGui::Text("Flags 4: %x", pActorHero->pCollisionData->flags_0x4);
 
 			if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
-				ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
+				ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & COLLISION_WALL_FLAG);
 			}
 
 			ImGui::Separator();

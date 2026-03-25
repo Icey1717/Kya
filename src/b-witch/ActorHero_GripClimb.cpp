@@ -245,7 +245,7 @@ bool CActorHeroPrivate::DetectClimbWall(int param_2, CActor** pOutActor, float* 
 
 	pCVar1 = this->pCollisionData;
 	bDetectClimbWall = false;
-	if (((pCVar1->flags_0x4 & 1) != 0) &&
+	if (((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) &&
 		(fabs(pCVar1->aCollisionContact[0].location.y) < cosf(this->field_0x14b8))) {
 		local_30.w = pCVar1->aCollisionContact[0].location.w;
 		local_30.x = 0.0f - pCVar1->aCollisionContact[0].location.x;
@@ -438,7 +438,7 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 		IMPLEMENTATION_GUARD(
 			pCVar1 = this->pCollisionData;
 		bVar2 = false;
-		if ((pCVar1->flags_0x4 & 1) != 0) {
+		if ((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 			if (edFCosinus[(int)(fabs(this->field_0x14c4 * 1303.797) + 0.5) & 0x1fff] <=
 				fabs(pCVar1->aCollisionContact[0].location.y)) {
 				bVar2 = false;
@@ -494,7 +494,7 @@ uint CActorHeroPrivate::CanGrip(int param_2, edF32VECTOR4* pRotation)
 	pCVar1 = this->pCollisionData;
 	uVar4 = 0;
 
-	if (((pCVar1->flags_0x4 & 1) != 0) && (fabs(pCVar1->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
+	if (((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) && (fabs(pCVar1->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
 		local_10.w = pCVar1->aCollisionContact[0].location.w;
 		local_10.x = 0.0f - pCVar1->aCollisionContact[0].location.x;
 		local_10.z = 0.0f - pCVar1->aCollisionContact[0].location.z;
@@ -638,7 +638,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 			if (fVar7 == 1e+30f) {
 				if (param_2 != 0) {
 					pCVar1 = this->pCollisionData;
-					if (((pCVar1->flags_0x4 & 1) != 0) && (fabs(pCVar1->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
+					if (((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) && (fabs(pCVar1->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
 						local_80.xyz = pCVar1->aCollisionContact[0].location.xyz;
 					}
 				}
@@ -1411,7 +1411,7 @@ void CActorHeroPrivate::StateHeroClimbJump()
 	pCol = this->pCollisionData;
 	uVar4 = 0;
 
-	if (((pCol->flags_0x4 & 1) == 0) ||
+	if (((pCol->flags_0x4 & COLLISION_WALL_FLAG) == 0) ||
 		(cosf(this->field_0x14b0) <= fabs(pCol->aCollisionContact[0].location.y))) {
 	LAB_00139bf8:
 		bVar2 = false;
@@ -1513,7 +1513,7 @@ void CActorHeroPrivate::StateHeroGrip(float param_1, int nextState, int param_4)
 	local_4 = 0.0f;
 
 	pCollision = this->pCollisionData;
-	if (((pCollision->flags_0x4 & 1) != 0) && (fabs(pCollision->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
+	if (((pCollision->flags_0x4 & COLLISION_WALL_FLAG) != 0) && (fabs(pCollision->aCollisionContact[0].location.y) < cosf(this->field_0x14b0))) {
 		local_30.w = pCollision->aCollisionContact[0].location.w;
 		local_30.x = 0.0f - pCollision->aCollisionContact[0].location.x;
 		local_30.z = 0.0f - pCollision->aCollisionContact[0].location.z;
@@ -1868,7 +1868,7 @@ void CActorHeroPrivate::StateHeroGripUp(float param_1, float param_2, int nextSt
 
 	SV_UpdateOrientation(this->field_0x1040, &local_30);
 
-	if ((param_5 != 0) || (((this->pCollisionData)->flags_0x4 & 1) != 0)) {
+	if ((param_5 != 0) || (((this->pCollisionData)->flags_0x4 & COLLISION_WALL_FLAG) != 0)) {
 		this->dynamicExt.normalizedTranslation.x = 0.0f;
 		this->dynamicExt.normalizedTranslation.y = 0.0f;
 		this->dynamicExt.normalizedTranslation.z = 0.0f;

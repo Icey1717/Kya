@@ -2795,13 +2795,13 @@ void CActorFighter::_InterpretCollisions(int param_2)
 	}
 
 	uVar6 = (uint)bVar2;
-	if ((pCol->flags_0x4 & 1) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 		edF32Vector4AddHard(&local_10, &local_10, &pCol->aCollisionContact[0].location);
 		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCol->aCollisionContact[0].field_0x10);
 		uVar6 = uVar6 + 1;
 	}
 
-	if ((pCol->flags_0x4 & 4) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_CEILING_FLAG) != 0) {
 		edF32Vector4AddHard(&local_10, &local_10, &pCol->aCollisionContact[2].location);
 		edF32Vector4AddHard(&this->field_0x690, &this->field_0x690, &pCol->aCollisionContact[2].field_0x10);
 		uVar6 = uVar6 + 1;

@@ -846,7 +846,6 @@ void CActor::Manage()
 	uint* puVar2;
 	bool bVar3;
 	CBehaviour* pBehaviour;
-	Timer* pTimeController;
 	ulong uVar4;
 	float fVar5;
 
@@ -891,8 +890,7 @@ void CActor::Manage()
 		}
 		else {
 			if ((this->flags & 0x400000) == 0) {
-				pTimeController = GetTimer();
-				fVar5 = pTimeController->cutsceneDeltaTime;
+				fVar5 = GetTimer()->cutsceneDeltaTime;
 			}
 			else {
 				fVar5 = 0.0f;
@@ -913,11 +911,9 @@ void CActor::Manage()
 	//}
 	)
 
-	pTimeController = Timer::GetTimer();
-	this->timeInAir = this->timeInAir + pTimeController->cutsceneDeltaTime;
+	this->timeInAir = this->timeInAir + Timer::GetTimer()->cutsceneDeltaTime;
 
-	pTimeController = Timer::GetTimer();
-	this->idleTimer = this->idleTimer + pTimeController->cutsceneDeltaTime;
+	this->idleTimer = this->idleTimer + Timer::GetTimer()->cutsceneDeltaTime;
 	return;
 }
 
@@ -4199,7 +4195,7 @@ bool CActor::ColWithCactus()
 
 	pCVar1 = this->pCollisionData;
 	bVar2 = false;
-	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & 7) != 0, bVar2)) {
+	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & COLLISION_ALL_FLAG) != 0, bVar2)) {
 		uVar3 = pCVar1->aCollisionContact[1].materialFlags & 0xf;
 		if (uVar3 == 0) {
 			uVar3 = CScene::_pinstance->defaultMaterialIndex;
@@ -4231,7 +4227,7 @@ bool CActor::ColWithLava()
 
 	pCVar1 = this->pCollisionData;
 	bVar2 = false;
-	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & 7) != 0, bVar2)) {
+	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & COLLISION_ALL_FLAG) != 0, bVar2)) {
 		uVar3 = pCVar1->aCollisionContact[1].materialFlags & 0xf;
 		if (uVar3 == 0) {
 			uVar3 = CScene::_pinstance->defaultMaterialIndex;

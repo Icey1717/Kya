@@ -583,7 +583,7 @@ void CFrontendLifeGauge::UpdateInternal()
 		}
 
 		iVar2 = pLife->GetPriority();
-		if ((iVar2 == 4) || (pLife->field_0x10 != 0)) {
+		if ((iVar2 == 4) || (pLife->field_0x10 != (CActor*)0x0)) {
 			if (this->field_0x3b4 != 4) {
 				ShowLifeAlways();
 				this->field_0x3b4 = 4;

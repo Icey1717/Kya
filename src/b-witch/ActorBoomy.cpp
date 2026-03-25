@@ -742,7 +742,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 		}
 	}
 
-	bCollideWithEnvironment = ((this->pCollisionData)->flags_0x4 & 7) != 0;
+	bCollideWithEnvironment = ((this->pCollisionData)->flags_0x4 & COLLISION_ALL_FLAG) != 0;
 
 	if (((bCollideWithEnvironment) && (actorsTable.nbEntries == 0)) && (bCanPassThrough == false)) {
 		_BSpline_InitWhenHit(bHitTarget == false);

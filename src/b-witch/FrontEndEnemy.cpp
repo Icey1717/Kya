@@ -980,13 +980,13 @@ void CFrontendEnemy::UpdateSpecial(CWidgetSlot* pSlot, int param_3)
 
 int CFrontendEnemy::FUN_001d94b0()
 {
-	int piVar1;
+	CActor* piVar1;
 	long lVar2;
 	int iVar3;
 
 	piVar1 = reinterpret_cast<CLifeInterface*>(this->pInterface)->field_0x10;
 	iVar3 = 0;
-	if (piVar1 != (int)0x0) {
+	if (piVar1 != (CActor*)0x0) {
 		IMPLEMENTATION_GUARD(
 		lVar2 = (**(code**)(*piVar1 + 0xc))(piVar1, 0x10);
 		if (lVar2 == 0) {

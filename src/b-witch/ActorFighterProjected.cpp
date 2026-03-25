@@ -34,7 +34,7 @@ void CActorFighter::_StateFighterHitFly()
 
 	this->field_0x8e4 = _SV_HIT_ProcessActorsCollisions(0.0f, &this->field_0x8f0, &this->field_0x900, &this->field_0x740, &local_110, &this->actorsExcludeTable, true, 6, 0);
 
-	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && (this->field_0x8e4 == 0)) {
+	if ((((this->pCollisionData)->flags_0x4 & COLLISION_ALL_FLAG) == 0) && (this->field_0x8e4 == 0)) {
 		this->field_0x750 = this->field_0x740;
 	}
 	else {
@@ -218,7 +218,7 @@ LAB_00306b50:
 
 	this->field_0x8e4 = _SV_HIT_ProcessActorsCollisions(0.0f, &this->field_0x8f0, &this->field_0x900, &this->field_0x740, &local_120, &this->actorsExcludeTable, 1, 6, 0);
 	if ((((this->pCollisionData)->flags_0x4 & COLLISION_GROUND_FLAG) == 0) || (this->field_0x7dc == 0.0f)) {
-		if (((((this->pCollisionData)->flags_0x4 & 7) == 0) && (this->field_0x8e4 == 0)) ||
+		if (((((this->pCollisionData)->flags_0x4 & COLLISION_ALL_FLAG) == 0) && (this->field_0x8e4 == 0)) ||
 			(this->timeInAir <= 0.15f)) {
 			this->field_0x750 = this->field_0x740;
 			if ((((this->hitFlags & 4U) == 0) && (15.0f < this->dynamicExt.field_0x6c)) &&

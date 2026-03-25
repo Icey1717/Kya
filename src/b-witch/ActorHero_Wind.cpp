@@ -33,12 +33,12 @@ void CActorHeroPrivate::ComputeBlendingWeightsInHitGlide()
 		edF32Vector4AddHard(&local_20, &local_20, &eStack16);
 	}
 
-	if ((pCVar1->flags_0x4 & 1) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 		edF32Vector4SubHard(&eStack16, &pCVar1->aCollisionContact[0].field_0x10, &local_30);
 		edF32Vector4AddHard(&local_20, &local_20, &eStack16);
 	}
 
-	if ((pCVar1->flags_0x4 & 4) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_CEILING_FLAG) != 0) {
 		edF32Vector4SubHard(&eStack16, &pCVar1->aCollisionContact[2].field_0x10, &local_30);
 		edF32Vector4AddHard(&local_20, &local_20, &eStack16);
 	}
@@ -414,7 +414,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 				}
 			}
 
-			if (((pCollision->flags_0x4 & 1) != 0) && (DetectStickableWalls(&local_40, &local_14, &local_18, &local_90), local_14 != 0)) {
+			if (((pCollision->flags_0x4 & COLLISION_WALL_FLAG) != 0) && (DetectStickableWalls(&local_40, &local_14, &local_18, &local_90), local_14 != 0)) {
 				if (local_18 == 0) {
 					this->dynamicExt.normalizedTranslation.x = 0.0f;
 					this->dynamicExt.normalizedTranslation.y = 0.0f;
@@ -1015,15 +1015,15 @@ LAB_0014a028:
 		bVar5 = (pCol->flags_0x4 & COLLISION_GROUND_FLAG) != 0;
 		if ((this->bCheckDynCollisions != 0) && (bVar8 = false, bVar5)) {
 			for (iVar20 = 0; iVar20 < dynCollisionsTable.nbEntries; iVar20 = iVar20 + 1) {
-				lVar24 = BreakActor(0, 5.0f, 10.0f, dynCollisionsTable.aEntries[iVar20], 1, 0, 0);
-				if (lVar24 == 1) {
+				const int breakResult = BreakActor(0, 5.0f, 10.0f, dynCollisionsTable.aEntries[iVar20], 1, 0, 0);
+				if (breakResult == 1) {
 					bVar5 = false;
 					fVar27 = this->dynamicExt.normalizedTranslation.y * this->dynamicExt.field_0x6c;
 					this->dynamicExt.field_0x6c = sqrtf(this->dynamicExt.field_0x6c * this->dynamicExt.field_0x6c - fVar27 * fVar27);
 					this->dynamicExt.normalizedTranslation.y = 0.0f;
 				}
 				else {
-					if (lVar24 == 0) {
+					if (breakResult == 0) {
 						bVar5 = false;
 						bVar8 = true;
 					}
@@ -1057,6 +1057,8 @@ LAB_0014a028:
 			}
 		}
 
+		// Determine if hero should enter a wind-canon stream:
+		// requires active waypoints, impulse speed > 2.0, and wind direction nearly horizontal (|Y| < ~10°)
 		if ((!bVar5) || (bVar6)) {
 			if (GetWindState() == (CActorWindState*)0x0) {
 				bVar5 = false;
@@ -1085,7 +1087,7 @@ LAB_0014a028:
 
 			if (bVar5) {
 				this->field_0x1020 = 1;
-				SetState(0xf5, 0xffffffff);
+				SetState(STATE_HERO_WIND_FLY, 0xffffffff);
 			}
 			else {
 				uVar22 = GetStateHeroFlags(this->prevActorState);
@@ -1105,7 +1107,7 @@ LAB_0014a028:
 							}
 						}
 						else {
-							SetState(0xf0, -1);
+							SetState(STATE_HERO_GLIDE_1, -1);
 						}
 					}
 				}
@@ -1369,7 +1371,7 @@ void CActorHeroPrivate::StateHeroCheatFly()
 		}
 	}
 
-	if ((pCol->flags_0x4 & 1) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 		pInput = this->pPlayerInput;
 		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 			fVar6 = 0.0f;

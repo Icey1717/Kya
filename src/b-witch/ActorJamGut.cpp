@@ -2764,7 +2764,7 @@ void CActorJamGut::StateJamGutJump()
 	MoveInAir(this->field_0x480, this->field_0x444, this->field_0x488, 10.0f, 4.712389f);
 	ManageDynAndKillActors(0x140129);
 
-	if ((pCol->flags_0x4 & 4) != 0) {
+	if ((pCol->flags_0x4 & COLLISION_CEILING_FLAG) != 0) {
 		this->dynamicExt.normalizedTranslation.x = 0.0f;
 		this->dynamicExt.normalizedTranslation.y = 0.0f;
 		this->dynamicExt.normalizedTranslation.z = 0.0f;
@@ -2999,7 +2999,7 @@ bool CActorJamGut::FUN_003763d0()
 	}
 	else {
 		pCol = this->pCollisionData;
-		if (((pCol->flags_0x4 & 1) != 0) && (fVar6 = edF32Vector4DotProductHard(&pCol->aCollisionContact[0].location, &this->rotationQuat), fVar6 < -0.5f)) {
+		if (((pCol->flags_0x4 & COLLISION_WALL_FLAG) != 0) && (fVar6 = edF32Vector4DotProductHard(&pCol->aCollisionContact[0].location, &this->rotationQuat), fVar6 < -0.5f)) {
 			fVar6 = this->field_0x460 + GetTimer()->cutsceneDeltaTime;
 			this->field_0x460 = fVar6;
 			if (0.05f < fVar6) {

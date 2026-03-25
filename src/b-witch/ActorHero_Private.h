@@ -412,7 +412,7 @@ public:
 	void StateHeroExorcise();
 	void StateHeroExorciseTerm(int nextState);
 
-	void StateHeroWindFly(int param_2);
+	void StateHeroWindFly(int bPlayerControlled);
 	void StateHeroFlyJumpInit();
 	void StateHeroFlyTerm();
 

@@ -191,7 +191,8 @@ CLifeInterface::CLifeInterface()
 	this->priority = 2;
 	this->currentValue = 1.0f;
 	this->valueMax = 1.0f;
-	this->field_0x10 = 0;
+	this->field_0x10 = (CActor*)0x0;
+
 	return;
 }
 

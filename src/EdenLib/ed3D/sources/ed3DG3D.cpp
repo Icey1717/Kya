@@ -356,33 +356,33 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 		// Walk back to chunk.
 		ed_Chunck* pChunck = (ed_Chunck*)(((char*)pHier) - sizeof(ed_Chunck));
 
-		if (pChunck->hash == 0x52454948) {
-			while (pChunck->hash == 0x52454948) {
-				ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pChunck + 1);
-
-				ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_POINTER(pHier->pLinkTransformData);
-
-				if (pNode != (ed_3d_hierarchy_node*)0x0) {
-					IMPLEMENTATION_GUARD(
-						peVar1 = (ed_g3d_hierarchy*)(peVar2[0x14].pObj + 1);
-					while (peVar1 != (ed_g3d_hierarchy*)0x0) {
-						if (peVar1 == pHier) {
-							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(peVar2 + 2), flag, 1, 2);
+		if (pChunck->hash == HASH_CODE_HIER) {
+			while (pChunck->hash == HASH_CODE_HIER) {
+				ed_Chunck* pHIER = LOAD_POINTER_CAST(ed_Chunck*, pHier->pLinkTransformData);
+				if (pHIER != (ed_Chunck*)0x0) {
+					ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pHIER + 1);
+					while (pNewHier != (ed_g3d_hierarchy*)0x0) {
+						if (pNewHier == pHier) {
+							ed3DG3DHierarchyNodeSetAndClrStripFlag(pNewHier, flag, 1, 4);
 							break;
 						}
-						if (peVar1->pLinkTransformData == (ed_3d_hierarchy_node*)0x0) {
-							peVar1 = (ed_g3d_hierarchy*)0x0;
+
+						if (LOAD_POINTER_CAST(ed_Chunck*, pNewHier->pLinkTransformData) == (ed_Chunck*)0x0) {
+							pNewHier = (ed_g3d_hierarchy*)0x0;
 						}
 						else {
-							peVar1 = (ed_g3d_hierarchy*)&(peVar1->pLinkTransformData->base).transformA.ba;
+							pNewHier = (ed_g3d_hierarchy*)(LOAD_POINTER_CAST(ed_Chunck*, pNewHier->pLinkTransformData) + 1);
 						}
-					})
+					}
 				}
+
 				pChunck = edChunckGetNext(pChunck, (char*)0x0);
 			}
-			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 2);
+
+			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 4);
 		}
 	}
+
 	return;
 }
 

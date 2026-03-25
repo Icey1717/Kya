@@ -1317,7 +1317,7 @@ void CActorProjectile::StateLiving(uint param_2, int param_3)
 		SV_AUT_WarnActors(this->aProjectileSubObjs->warnRadius, 0.0f, (CActor*)0x0);
 	}
 
-	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && ((this->aProjectileSubObjs->flags & 0x2000) == 0)) {
+	if ((((this->pCollisionData)->flags_0x4 & COLLISION_ALL_FLAG) == 0) && ((this->aProjectileSubObjs->flags & 0x2000) == 0)) {
 		if (0.2f < this->timeInAir) {
 			SetState(PROJECTILE_STATE_FLYING, -1);
 		}
@@ -1414,7 +1414,7 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 		this->rotationQuat = local_130;
 	}
 
-	if ((pCVar1->flags_0x4 & 7) != 0) {
+	if ((pCVar1->flags_0x4 & COLLISION_ALL_FLAG) != 0) {
 		uVar3 = this->aProjectileSubObjs->flags;
 		if ((uVar3 & 4) != 0) {
 			this->dynamic.speed = 0.0f;
@@ -1432,12 +1432,12 @@ void CActorProjectile::StateFlying(float param_1, uint dynFlags, int nextState, 
 			}
 
 			uVar3 = (uint)bVar2;
-			if ((pCVar1->flags_0x4 & 1) != 0) {
+			if ((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
 				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[0].field_0x10);
 				uVar3 = uVar3 + 1;
 			}
 
-			if ((pCVar1->flags_0x4 & 4) != 0) {
+			if ((pCVar1->flags_0x4 & COLLISION_CEILING_FLAG) != 0) {
 				edF32Vector4AddHard(&local_140, &local_140, &pCVar1->aCollisionContact[2].field_0x10);
 				uVar3 = uVar3 + 1;
 			}

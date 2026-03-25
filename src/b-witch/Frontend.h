@@ -79,7 +79,7 @@ public:
 	int priority;
 	float currentValue;
 	float valueMax;
-	int field_0x10;
+	CActor* field_0x10;
 
 	// CInterface
 	virtual bool Manage();
