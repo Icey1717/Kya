@@ -14,45 +14,20 @@ void CActorShip::Create(ByteCode* pByteCode)
 	int iVar4;
 	int* piVar5;
 	int iVar6;
-	CActor* pCVar7;
-	CActorHunter* pCVar8;
-	ed_zone_3d* peVar9;
 	uint uVar10;
 	int iVar11;
 	float fVar12;
-
+	
 	CActor::Create(pByteCode);
 
-	pSVar1 = static_cast<S_ACTOR_STREAM_REF*>(pByteCode)->currentSeekPos;
-	pByteCode->currentSeekPos = static_cast<char*>(pSVar1)->aEntries;
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * 4;
-	}
-	this->careBoyStreamRef = pSVar1;
+	this->careBoyStreamRef = S_ACTOR_STREAM_REF::Create(pByteCode);
+	
+	this->shipPathManager.Create(pByteCode);
 
-	iVar4 = pByteCode->GetS32();
-	(this->shipPathManager).nbInts = iVar4;
-	iVar4 = (this->shipPathManager).nbInts;
-	if (iVar4 != 0) {
-		piVar5 = static_cast<int*>(operator).new.array(static_cast<long>(iVar4 << 2));
-		(this->shipPathManager).aInts = piVar5;
-		iVar4 = 0;
-		if (0 < (this->shipPathManager).nbInts) {
-			iVar11 = 0;
-			do {
-				iVar6 = pByteCode->GetS32();
-				iVar4 = iVar4 + 1;
-				*static_cast<int*>((int)(this->shipPathManager).aInts + iVar11) = iVar6;
-				iVar11 = iVar11 + 4;
-			} while (iVar4 < (this->shipPathManager).nbInts);
-		}
-	}
-	pCVar7 = static_cast<CActor*>(pByteCode)->GetS32();
-	(this->field_0x180).pActor = pCVar7;
-	pCVar7 = static_cast<CActor*>(pByteCode)->GetS32();
-	(this->field_0x184).pActor = pCVar7;
-	pCVar8 = static_cast<CActorHunter*>(pByteCode)->GetS32();
-	this->hunterStreamRef = pCVar8;
+	this->field_0x180.index = pByteCode->GetS32();
+	this->field_0x184.index = pByteCode->GetS32();
+	this->hunterStreamRef.index = pByteCode->GetS32();
+
 	this->field_0x214 = pByteCode->GetF32();
 	this->field_0x210 = pByteCode->GetF32();
 	this->field_0x218 = pByteCode->GetF32();
@@ -64,35 +39,27 @@ void CActorShip::Create(ByteCode* pByteCode)
 	this->field_0x22c = pByteCode->GetF32();
 	this->field_0x25c = this->field_0x224 / this->field_0x21c;
 	this->field_0x260 = this->field_0x224 / this->field_0x220;
-	iVar4 = pByteCode->GetS32();
-	(this->shipPathManager).field_0x18 = iVar4;
+	(this->shipPathManager).field_0x18 = pByteCode->GetS32();
 	(this->shipPathManager).nb = 0;
 	(this->shipPathManager).field_0xc = 0;
-	iVar4 = pByteCode->GetS32();
-	this->field_0x234 = iVar4;
-	iVar4 = pByteCode->GetS32();
-	this->field_0x238 = iVar4;
-	peVar9 = static_cast<ed_zone_3d*>(pByteCode)->GetS32();
-	(this->field_0x1ac).pZone = peVar9;
+	this->field_0x234 = pByteCode->GetS32();
+	this->field_0x238 = pByteCode->GetS32();
+	this->field_0x1ac.index = pByteCode->GetS32();
+
 	this->field_0x18c[0] = pByteCode->GetU32();
 	this->field_0x18c[1] = pByteCode->GetU32();
 	this->field_0x18c[2] = pByteCode->GetU32();
 	this->field_0x18c[3] = pByteCode->GetU32();
+
 	this->field_0x19c = pByteCode->GetU32();
 	this->field_0x1a0 = pByteCode->GetU32();
 	this->field_0x1a4 = pByteCode->GetU32();
 	this->field_0x1a8 = pByteCode->GetU32();
+	
+	this->field_0x1b0.Create(this, pByteCode);
 
-	this->field_0x1b0.Create(static_cast<CActor*>(this), pByteCode);
-	pSVar2 = static_cast<S_NTF_TARGET_STREAM_REF*>(pByteCode)->currentSeekPos;
-	pByteCode->currentSeekPos = static_cast<char*>(pSVar2)->aEntries;
-	if (pSVar2->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar2->entryCount * 0x1c;
-	}
-	(this->field_0x23c).pTargetStreamRef = pSVar2;
-	pSVar3 = static_cast<S_STREAM_EVENT_CAMERA*>(pByteCode)->currentSeekPos;
-	pByteCode->currentSeekPos = static_cast<char*>(pSVar3 + 1);
-	(this->field_0x23c).pStreamEventCamera = pSVar3;
+	field_0x23c.Create(pByteCode);
+
 	return;
 }
 
@@ -184,4 +151,23 @@ void CBehaviourShipFLY::TermState(int oldState, int newState)
 int CBehaviourShipFLY::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
 {
 	return 0;
+}
+
+void ShipPathManager::Create(ByteCode* pByteCode)
+{
+	this->nbInts = pByteCode->GetS32();
+
+	int iVar4 = this->nbInts;
+	if (iVar4 != 0) {
+		this->aInts = new int[iVar4];
+		iVar4 = 0;
+		if (0 < this->nbInts) {
+			do {
+				this->aInts[iVar4] = pByteCode->GetS32();
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->nbInts);
+		}
+	}
+
+	return;
 }

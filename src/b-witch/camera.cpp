@@ -127,7 +127,7 @@ bool SpecificCondition::IsVerified()
 }
 
 
-CCamera::CCamera(ByteCode* pMemoryStream)
+CCamera::CCamera(ByteCode* pByteCode)
 	: CObject()
 {
 	int* piVar2;
@@ -140,19 +140,19 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	this->pNextCameraView_0xa4 = (CCamera*)0x0;
 	this->nbManagedByClusters = 0;
 	SetOtherTarget(0);
-	fVar6 = pMemoryStream->GetF32();
+	fVar6 = pByteCode->GetF32();
 	this->fov = fVar6;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
+	local_10.x = pByteCode->GetF32();
+	local_10.y = pByteCode->GetF32();
+	local_10.z = pByteCode->GetF32();
 	local_10.w = 1.0;
 	(this->transformationMatrix).da = local_10.x;
 	(this->transformationMatrix).db = local_10.y;
 	(this->transformationMatrix).dc = local_10.z;
 	(this->transformationMatrix).dd = 1.0f;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
+	local_10.x = pByteCode->GetF32();
+	local_10.y = pByteCode->GetF32();
+	local_10.z = pByteCode->GetF32();
 	local_10.w = 1.0;
 	(this->lookAt).x = local_10.x;
 	(this->lookAt).y = local_10.y;
@@ -164,9 +164,9 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->transformationMatrix).cb = local_10.y;
 	(this->transformationMatrix).cc = local_10.z;
 	(this->transformationMatrix).cd = local_10.w;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
+	local_10.x = pByteCode->GetF32();
+	local_10.y = pByteCode->GetF32();
+	local_10.z = pByteCode->GetF32();
 	local_10.w = 0.0;
 	(this->transformationMatrix).ba = local_10.x;
 	(this->transformationMatrix).bb = local_10.y;
@@ -178,17 +178,17 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->transformationMatrix).ab = local_10.y;
 	(this->transformationMatrix).ac = local_10.z;
 	(this->transformationMatrix).ad = 0.0f;
-	iVar3 = pMemoryStream->GetS32();
+	iVar3 = pByteCode->GetS32();
 	this->sectorId = iVar3;
-	iVar3 = pMemoryStream->GetS32();
+	iVar3 = pByteCode->GetS32();
 	this->field_0x8 = iVar3;
-	uVar4 = pMemoryStream->GetU32();
+	uVar4 = pByteCode->GetU32();
 	this->flags_0xc = uVar4 | 0x200000;
-	fVar6 = pMemoryStream->GetF32();
+	fVar6 = pByteCode->GetF32();
 	this->field_0x50.x = fVar6;
-	fVar6 = pMemoryStream->GetF32();
+	fVar6 = pByteCode->GetF32();
 	this->field_0x50.y = fVar6;
-	fVar6 = pMemoryStream->GetF32();
+	fVar6 = pByteCode->GetF32();
 	this->field_0x50.z = fVar6;
 	this->field_0x50.w = 0.0f;
 	if ((this->flags_0xc & 2) == 0) {
@@ -199,44 +199,29 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 		this->field_0x9c = 0.8f;
 	}
 	else {
-		this->field_0x80.index = pMemoryStream->GetS32();
+		this->field_0x80.index = pByteCode->GetS32();
 
-		S_ACTOR_STREAM_REF* pStream = (S_ACTOR_STREAM_REF*)pMemoryStream->currentSeekPos;
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + sizeof(int);
+		this->field_0x84 = S_ACTOR_STREAM_REF::Create(pByteCode);
+		this->field_0x88 = S_ACTOR_STREAM_REF::Create(pByteCode);
 
-		if (pStream->entryCount != 0) {
-			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (pStream->entryCount * 4);
-		}
-
-		this->field_0x84 = pStream;
-
-		pStream = (S_ACTOR_STREAM_REF*)pMemoryStream->currentSeekPos;
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + sizeof(int);
-
-		if (pStream->entryCount != 0) {
-			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (pStream->entryCount * 4);
-		}
-
-		this->field_0x88 = pStream;
-
-		fVar6 = pMemoryStream->GetF32();
+		fVar6 = pByteCode->GetF32();
 		this->field_0x8c = fVar6;
-		iVar3 = pMemoryStream->GetS32();
+		iVar3 = pByteCode->GetS32();
 		this->switchMode = (SWITCH_MODE)iVar3;
-		fVar6 = pMemoryStream->GetF32();
+		fVar6 = pByteCode->GetF32();
 		this->field_0x98 = fVar6;
-		iVar3 = pMemoryStream->GetS32();
+		iVar3 = pByteCode->GetS32();
 		this->field_0x94 = (SWITCH_MODE)iVar3;
-		fVar6 = pMemoryStream->GetF32();
+		fVar6 = pByteCode->GetF32();
 		this->field_0x9c = fVar6;
 		if (this->field_0x80.index == -1) {
 			this->flags_0xc = this->flags_0xc & 0xfffffffd;
 		}
 	}
-	piVar2 = (int*)pMemoryStream->currentSeekPos;
-	pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
+	piVar2 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 	if (*piVar2 != 0) {
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 0x10;
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 0x10;
 	}
 	(this->specCondition).pData = (int*)piVar2;
 	return;

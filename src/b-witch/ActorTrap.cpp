@@ -692,12 +692,7 @@ void CBehaviourTrapStand_ActorTrap::CreateForTrap(ByteCode* pByteCode)
 	int iVar3;
 	float fVar4;
 
-	S_ACTOR_STREAM_REF* pStream = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pStream + 1);
-	if (pStream->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (pStream->entryCount * sizeof(S_STREAM_REF<CActor>));
-	}
-	this->pActorStream = pStream;
+	this->pActorStream = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x14 = pByteCode->GetU32();
 	this->field_0x18 = pByteCode->GetU32();

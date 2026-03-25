@@ -35,19 +35,8 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 				puVar6->flags = pByteCode->GetU32();
 				puVar6->field_0x4.index = pByteCode->GetS32();
 
-				piVar2 = (int*)pByteCode->currentSeekPos;
-				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-				if (*piVar2 != 0) {
-					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
-				}
-
-				puVar6->pActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
-				piVar2 = (int*)pByteCode->currentSeekPos;
-				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-				if (*piVar2 != 0) {
-					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
-				}
-				puVar6->field_0x10 = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
+				puVar6->pActorStreamRef = S_ACTOR_STREAM_REF::Create(pByteCode);
+				puVar6->field_0x10 = S_ACTOR_STREAM_REF::Create(pByteCode);
 				puVar6->nbActors = 0;
 				puVar6->aActors = (CActor**)0x0;
 

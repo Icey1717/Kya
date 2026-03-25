@@ -60,12 +60,8 @@ void CActorWind::Create(ByteCode* pByteCode)
 	pGVar5 = CScene::ptable.g_AudioManager_00451698;
 	uVar6 = pByteCode->GetU32();
 	this->activationZone.index = pByteCode->GetS32();
-	piVar2 = (int*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-	if (*piVar2 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
-	}
-	this->pActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
+
+	this->pActorStreamRef = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->materialId = pByteCode->GetS32();
 	CActor::SV_InstallMaterialId(this->materialId);

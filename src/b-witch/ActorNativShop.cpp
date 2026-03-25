@@ -41,12 +41,7 @@ void CActorNativShop::Create(ByteCode* pByteCode)
 	this->field_0x164 = fVar5 * fVar5;
 	this->field_0x16c = pByteCode->GetString();
 
-	piVar1 = (int*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
-	if (*piVar1 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 4;
-	}
-	this->pActorStream = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar1);
+	this->pActorStream = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x170 = pByteCode->GetU32();
 	this->field_0x174 = pByteCode->GetU32();

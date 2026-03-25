@@ -19,26 +19,9 @@ void CActorAmortos::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	pAVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pAVar1->entryCount != 0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pAVar1->entryCount * sizeof(int);
-	}
-	this->pCheckpoint_0x184 = pAVar1;
-
-	pAVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pAVar1->entryCount != 0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pAVar1->entryCount * sizeof(int);
-	}
-	this->field_0x188 = pAVar1;
-
-	pAVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pAVar1->entryCount != 0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pAVar1->entryCount * sizeof(int);
-	}
-	this->field_0x18c = pAVar1;
+	this->pCheckpoint_0x184 = S_ACTOR_STREAM_REF::Create(pByteCode);
+	this->field_0x188 = S_ACTOR_STREAM_REF::Create(pByteCode);
+	this->field_0x18c = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x190.index = pByteCode->GetS32();
 

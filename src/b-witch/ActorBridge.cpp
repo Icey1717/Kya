@@ -489,12 +489,7 @@ void CActorBridge::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	pSVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(&pSVar1->aEntries);
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * sizeof(S_STREAM_REF<CActor>);
-	}
-	this->pActorStream = pSVar1;
+	this->pActorStream = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	pCVar2 = CScene::ptable.g_WayPointManager_0045169c;
 	iVar3 = pByteCode->GetS32();

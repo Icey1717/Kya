@@ -20,12 +20,7 @@ void CActorNativCmd::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	pSVar1 = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * 4;
-	}
-	this->aNativs = pSVar1;
+	this->aNativs = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x164 = pByteCode->GetS32();
 

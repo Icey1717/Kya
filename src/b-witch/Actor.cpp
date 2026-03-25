@@ -5578,3 +5578,14 @@ int CBehaviourInactive::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 	return bVar1;
 }
+
+S_ACTOR_STREAM_REF* S_ACTOR_STREAM_REF::Create(ByteCode* pByteCode)
+{
+	S_ACTOR_STREAM_REF* pRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pRef->aEntries);
+	if (pRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pRef->entryCount * sizeof(S_STREAM_REF<CActor>);
+	}
+
+	return pRef;
+}

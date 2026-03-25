@@ -15,15 +15,7 @@ CFireShot::CFireShot()
 
 void CFireShot::Create(ByteCode* pByteCode)
 {
-	S_ACTOR_STREAM_REF* pSVar1;
-
-	pSVar1 = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * sizeof(S_STREAM_REF<CActor>);
-	}
-
-	this->pActorStreamRef = pSVar1;
+	this->pActorStreamRef = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	return;
 }

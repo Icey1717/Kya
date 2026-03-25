@@ -1097,12 +1097,7 @@ void CBehaviourWeaponRpg::Create(ByteCode* pByteCode)
 {
 	CBehaviourWeaponBurst::Create(pByteCode);
 
-	S_ACTOR_STREAM_REF* pSVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)pSVar1->aEntries;
-	if (pSVar1->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * 4;
-	}
-	this->field_0x3c = pSVar1;
+	this->field_0x3c = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	return;
 }

@@ -14,12 +14,7 @@ void CActorBox::Create(ByteCode* pByteCode)
 
 	this->field_0x350 = pByteCode->GetS32();
 
-	S_ACTOR_STREAM_REF* pAVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pAVar1->entryCount != 0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pAVar1->entryCount * sizeof(int);
-	}
-	this->field_0x380 = pAVar1;
+	this->field_0x380 = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x354 = pByteCode->GetF32();
 	this->field_0x358 = pByteCode->GetF32();

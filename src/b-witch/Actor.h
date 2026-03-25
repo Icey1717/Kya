@@ -796,6 +796,8 @@ struct ActorAndWaypoint
 
 struct S_ACTOR_STREAM_REF
 {
+	static S_ACTOR_STREAM_REF* Create(ByteCode* pByteCode);
+
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
 };

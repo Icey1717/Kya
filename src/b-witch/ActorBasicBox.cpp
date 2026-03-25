@@ -25,12 +25,7 @@ void CActorBasicBox::Create(ByteCode* pByteCode)
 	this->field_0x160 = pByteCode->GetS32();
 	this->lifeBase.maxValue = (float)(int)(float)pByteCode->GetU32();
 	
-	S_ACTOR_STREAM_REF* pSeekActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos += sizeof(S_ACTOR_STREAM_REF);
-	if (pSeekActorStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (pSeekActorStreamRef->entryCount * sizeof(S_STREAM_REF<CActor>));
-	}
-	this->pActorStream = pSeekActorStreamRef;
+	this->pActorStream = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x170 = pByteCode->GetF32();
 	this->field_0x174 = pByteCode->GetF32();

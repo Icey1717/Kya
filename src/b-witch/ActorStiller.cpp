@@ -33,12 +33,7 @@ void CActorStiller::Create(ByteCode* pByteCode)
 
 	this->field_0x1f8 = pByteCode->GetU32();
 
-	S_ACTOR_STREAM_REF* pActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(pByteCode->currentSeekPos);
-	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
-	if (pActorStreamRef->entryCount != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pActorStreamRef->entryCount * 4;
-	}
-	this->field_0x1fc = pActorStreamRef;
+	this->field_0x1fc = S_ACTOR_STREAM_REF::Create(pByteCode);
 
 	this->field_0x200 = pByteCode->GetS32();
 
