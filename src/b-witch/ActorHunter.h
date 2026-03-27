@@ -7,6 +7,7 @@
 #define HUNTER_BEHAVIOUR_WATCH 3
 
 class CActorHunter;
+class CActorShip;
 
 class CBehaviourHunter : public CBehaviour
 {
@@ -42,13 +43,14 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void SetupCollisionMatrix();
+	void FUN_003ba4e0(float param_1);
 
 	float field_0x350;
 	uint field_0x354;
 	S_STREAM_REF<CActor> actorRef;
 	uint field_0x35c;
 	uint boneId;
-	CActor* field_0x364;
+	CActorShip* pActorShip;
 	CBehaviourHunterWatch behaviourWatch;
 	byte field_0x370;
 	float animLength;

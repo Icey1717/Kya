@@ -143,4 +143,28 @@ float edF32ATanHard(float value);
 
 float ComputeAccelDistance(float param_1, float param_2, float param_3);
 
+class CSP_Manager
+{
+public:
+	void* GetFreeBuffer(size_t size) {
+#ifdef PLATFORM_PS2
+		IMPLEMENTATION_GUARD();
+		return (void*)0x0;
+#else
+		return malloc(size);
+#endif
+	}
+
+	void ReleaseBuffer(void* ptr) {
+#ifdef PLATFORM_PS2
+		IMPLEMENTATION_GUARD();
+		return;
+#else
+		return free(ptr);
+#endif
+	}
+};
+
+extern CSP_Manager gSP_Manager;
+
 #endif // _MATH_OPS_H

@@ -45,6 +45,7 @@
 #define STATE_HERO_HURT_A 0x8e
 #define STATE_HERO_HURT_B 0x8f
 
+#define STATE_HERO_90 0x90
 #define STATE_HERO_WIND_HURT_A 0x91
 #define STATE_HERO_WIND_HURT_B 0x92
 

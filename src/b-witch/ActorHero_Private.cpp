@@ -1391,9 +1391,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_HURT_A, 0xffffffff);
 						}
 						else {
-							IMPLEMENTATION_GUARD(
-							uVar2 = ChooseStateDead(this, pHitParam->projectileType, 4, 1);
-							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, uVar2, 0xffffffff);)
+							SetBehaviour(HERO_BEHAVIOUR_DEFAULT, ChooseStateDead(pHitParam->projectileType, 4, 1), 0xffffffff);
 						}
 
 						return true;
@@ -3982,9 +3980,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 				else {
 					if (msg == 1) {
-						IMPLEMENTATION_GUARD(
-							pTVar15 = Timer::GetTimer();
-						return pTVar15->scaledTotalTime < this->field_0x155c ^ 1;)
+						return (Timer::GetTimer()->scaledTotalTime < this->field_0x155c) ^ 1;
 					}
 
 					if (msg == MESSAGE_RECEPTACLE_CHANGED) {
@@ -4735,7 +4731,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 
 	iVar1 = pHitParams->projectileType;
 	if (iVar1 == 5) {
-		iVar5 = 0x90;
+		iVar5 = STATE_HERO_90;
 	}
 	else {
 		uVar6 = TestState_IsFlying(0xffffffff);
@@ -5474,6 +5470,7 @@ LAB_00341590:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_HURT_B:
+	case STATE_HERO_90:
 	case STATE_HERO_WIND_HURT_A:
 	case STATE_HERO_WIND_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
@@ -5759,6 +5756,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_HURT_B:
+	case STATE_HERO_90:
 	case STATE_HERO_WIND_HURT_A:
 	case STATE_HERO_WIND_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
@@ -6255,6 +6253,39 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_HURT_B:
 		StateHeroHit();
+		break;
+	case STATE_HERO_90:
+		pCVar1 = this->pPlayerInput;
+		pCVar6 = (CPlayerInputSubObj*)0x0;
+		if (pCVar1 != (CPlayerInput*)0x0) {
+			pCVar6 = &pCVar1->field_0x1c;
+		}
+		if (pCVar6 == (CPlayerInputSubObj*)0x0) {
+		LAB_0033f240:
+			if (0.2f < GetTimer()->scaledTotalTime - this->time_0x153c) {
+				uVar6 = GetInputManager(1, 0);
+				if (uVar6 != (CPlayerInput*)0x0) {
+					CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &uVar6->field_0x1c, 0);
+				}
+			}
+		}
+		else {
+			pCVar6 = (CPlayerInputSubObj*)0x0;
+			if (pCVar1 != (CPlayerInput*)0x0) {
+				pCVar6 = &pCVar1->field_0x1c;
+			}
+
+			if (pCVar6->field_0x18 == 4) goto LAB_0033f240;
+
+			this->time_0x153c = GetTimer()->scaledTotalTime;
+		}
+
+		iVar5 = this->actorState;
+		StateHeroBasic(-1.0f, 1.0f, STATE_HERO_STAND);
+		if ((iVar5 != this->actorState) &&
+			(uVar6 = GetInputManager(1, 0), uVar6 != 0)) {
+			CPlayerInput::FUN_001b66f0(0.0f, 0.0f, 0.0f, 0.0f, &uVar6->field_0x1c, 0);
+		}
 		break;
 	case STATE_HERO_WIND_HURT_A:
 		StateHeroGlide(1, STATE_HERO_GLIDE_1);

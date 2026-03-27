@@ -295,6 +295,110 @@ namespace Renderer
 			bool bInRenderPass = false;
 			RenderPassKey currentRenderPassKey;
 		};
+		static void RecordPreviewPass(Renderer::CommandBufferList& commandBufferList)
+		{
+			if (!gPreviewEnabled || !gPreviewSetup || gSavedDraws.empty()) {
+				return;
+			}
+
+			const VkCommandBuffer& cmd = gPreviewCommandBuffers[GetCurrentFrame()];
+
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			vkBeginCommandBuffer(cmd, &beginInfo);
+
+			Renderer::Debug::BeginLabel(cmd, "Actor Preview");
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = gRenderPass[RenderPassKey::Empty].gRenderPass;
+			renderPassInfo.framebuffer = gPreviewFrameBuffer.framebuffer;
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gPreviewWidth), static_cast<uint32_t>(gPreviewHeight) };
+
+			std::array<VkClearValue, 2> clearColors;
+			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
+			clearColors[1] = { {0.0f, 0.0f} };
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColors.size());
+			renderPassInfo.pClearValues = clearColors.data();
+
+			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport{};
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = static_cast<float>(gPreviewWidth);
+			viewport.height = static_cast<float>(gPreviewHeight);
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+			const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gPreviewWidth), static_cast<uint32_t>(gPreviewHeight) } };
+			vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+			gNativeVertexBuffer.BindBuffers(cmd);
+
+			const Pipeline& pipeline = gRenderPass[RenderPassKey::Empty].GetPipeline();
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+			static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
+			assert(pvkCmdSetColorWriteEnableEXT);
+			static auto pvkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
+			assert(pvkCmdSetColorWriteMaskEXT);
+
+			const std::array<VkBool32, 1> colorWriteMasks = {
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+			};
+
+			const glm::mat4 previewProjXView = gPreviewProjMatrix * gPreviewViewMatrix;
+
+			int drawCommandIndex = 0;
+			for (auto& draw : gSavedDraws) {
+				if (!draw.pTexture || draw.instances.empty()) {
+					drawCommandIndex++;
+					continue;
+				}
+
+				SetColorDepthDynamicState(cmd, draw);
+
+				for (auto& instance : draw.instances) {
+					if (instance.indexCount == 0) {
+						continue;
+					}
+
+					SetBlendingDynamicState(draw.pTexture, instance.pMesh, cmd);
+
+					PerDrawData previewPerDrawData = instance.perDrawData;
+					previewPerDrawData.projXView = previewProjXView;
+					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
+
+					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;
+					pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+					pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+
+					const std::array<uint32_t, 5> dynamicOffsets = {
+						static_cast<uint32_t>(instance.modelMatrixIndex) * gModelBuffer.GetDynamicAlignment(),
+						static_cast<uint32_t>(instance.animationMatrixStart) * gAnimationBuffer.GetDynamicAlignment(),
+						static_cast<uint32_t>(instance.lightingDataIndex) * gLightingDynamicBuffer.GetDynamicAlignment(),
+						static_cast<uint32_t>(instance.animStDataIndex) * gAnimStBuffer.GetDynamicAlignment(),
+						static_cast<uint32_t>(drawCommandIndex) * gAlphaBuffer.GetDynamicAlignment(),
+					};
+
+					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, draw.pDescriptorSets, dynamicOffsets.size(), dynamicOffsets.data());
+					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+				}
+
+				drawCommandIndex++;
+			}
+
+			vkCmdEndRenderPass(cmd);
+			Renderer::Debug::EndLabel(cmd);
+			vkEndCommandBuffer(cmd);
+
+			commandBufferList.push_back(cmd);
+		}
+
 		static void RecordBeginCommandBuffer()
 		{
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
@@ -413,6 +517,9 @@ namespace Renderer
 				Draw draw;
 				while (draws.try_dequeue(draw)) {
 					UpdateInstanceDataForDraw(draw);
+					if (gPreviewSetup) {
+						gSavedDraws.push_back(draw);
+					}
 					RecordDrawCommands(draw);
 				}
 			}

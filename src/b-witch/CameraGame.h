@@ -260,28 +260,4 @@ struct CCameraGame : public CCameraExt
 	undefined field_0x4af;
 };
 
-class CSP_Manager
-{
-public:
-	void* GetFreeBuffer(size_t size) {
-#ifdef PLATFORM_PS2
-		IMPLEMENTATION_GUARD();
-		return (void*)0x0;
-#else
-		return malloc(size);
-#endif
-	}
-
-	void ReleaseBuffer(void* ptr) {
-#ifdef PLATFORM_PS2
-		IMPLEMENTATION_GUARD();
-		return;
-#else
-		return free(ptr);
-#endif
-	}
-};
-
-extern CSP_Manager gSP_Manager;
-
 #endif

@@ -17,6 +17,7 @@
 #include "ActorRune.h"
 #include "ActorJamGut.h"
 #include "ActorWind.h"
+#include "ActorShip.h"
 
 namespace Aton
 {
@@ -219,6 +220,9 @@ namespace Hero
 			break;
 		case STATE_HERO_HURT_B:
 			return "StateHeroHurtB";
+			break;
+		case STATE_HERO_90:
+			return "StateHero90";
 			break;
 		case STATE_HERO_FALL_DEATH:
 			return "StateHeroFallDeath";
@@ -1124,6 +1128,32 @@ namespace Wind
 	}
 }
 
+namespace Ship
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		return "Default";
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case SHIP_FLY_STATE_PHASE_1:
+			return "Fly Phase 1";
+		case SHIP_FLY_STATE_FLAME_THROWER:
+			return "Flame Thrower";
+		case SHIP_FLY_STATE_THROWING:
+			return "Throwing";
+		case SHIP_FLY_STATE_CLOSING:
+			return "Closing";
+		case SHIP_FLY_STATE_GOBING:
+			return "Gobing";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -1202,6 +1232,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return JamGut::GetStateName(pActor->actorState);
 	case WIND:
 		return Wind::GetStateName(pActor->actorState);
+	case SHIP:
+		return Ship::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

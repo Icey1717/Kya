@@ -123,29 +123,29 @@ struct _ed_particle
 	byte field_0x1;
 	byte field_0x2;
 	byte state;
-	byte field_0x4;
+	byte sizeByte;
 	byte field_0x5;
 	short field_0x6;
 
 	union 	{
 		struct
 		{
-			byte field_0x8;
-			byte field_0x9;
-			byte field_0xa;
-			byte field_0xb;
+			byte colorB;
+			byte colorG;
+			byte colorR;
+			byte colorA;
 		};
 
-		uint field_0x8_uint; // Used for bitwise operations
+		uint baseColor; // Used for bitwise operations
 	};
 	
-	byte field_0xc;
-	byte field_0xd;
-	byte field_0xe;
-	byte field_0xf;
+	byte alphaScale;
+	byte visible;
+	byte blueScale;
+	byte greenScale;
 	byte field_0x10;
 	byte field_0x11;
-	byte field_0x12;
+	byte redScale;
 	byte field_0x13;
 
 	float field_0x14;
@@ -155,7 +155,7 @@ struct _ed_particle
 	float yScale;
 	float field_0x28;
 	float field_0x2c;
-	float field_0x30;
+	float velocityStretch;
 	PackedType<edNODE*> pNode;
 	PackedType<_ed_particle_cube*> field_0x38;
 	uint seed;
@@ -190,7 +190,7 @@ struct _ed_particle_shaper_param
 	byte field_0x1;
 	byte field_0x2;
 	byte field_0x3;
-	byte field_0x4;
+	byte drawMode;
 	byte field_0x5;
 	byte field_0x6;
 	byte field_0x7;
@@ -210,46 +210,57 @@ struct _ed_particle_shaper_param
 	OffsetPointer<edDList_material*> field_0x44;
 	OffsetPointer<ulong*> field_0x48;
 
-	byte _pad_1_[0x24];
+	byte _pad_1a_[0x4];       // 0x4c-0x4f: unknown
+	_rgba field_0x50;          // 0x50: Mode 3 vertex color
+	float field_0x54;          // 0x54: Mode 3 UV1.x
+	float field_0x58;          // 0x58: Mode 3 UV1.y
+	float field_0x5c;          // 0x5c: Mode 3 UV2.x
+	float instanceIndex;       // 0x60: Mode 3 UV2.y / instance index
+	float field_0x64;          // 0x64: Mode 3 particle width
+	float field_0x68;          // 0x68: Mode 3 particle height
+	byte field_0x6c;           // 0x6c: Mode 2 patch positions enabled
+	byte _pad_1b_;             // 0x6d: unknown
+	byte field_0x6e;           // 0x6e: Mode 2 patch colors enabled
+	byte field_0x6f;           // 0x6f: Mode 2 patch scale enabled
 
 	float aspectRatio;
 
 	byte _pad_3_[0xc];
 	
-	ushort field_0x80;
-	short field_0x82;
-	short field_0x84;
-	short field_0x86;
+	ushort uvFlags;
+	short frameCount;
+	short frameColumns;
+	short frameRows;
 
-	float field_0x88;
-	float field_0x8c;
-	float field_0x90;
-	float field_0x94;
+	float uvScaleX;
+	float uvScaleY;
+	float baseAngle;
+	float angleRate;
 
-	int field_0x98;
+	int frameRate;
 
-	uint field_0x9c[8];
+	uint palette[8];
 
 	byte _pad_2_[0x4];
 
-	float field_0xc0;
+	float globalAlpha;
 
 	union 
 	{
 		struct
 		{
-			byte field_0xc4;
-			byte field_0xc5;
-			byte field_0xc6;
-			byte field_0xc7;
+			byte cornerColorR;
+			byte cornerColorG;
+			byte cornerColorB;
+			byte cornerColorA;
 		};
 
-		int field_0xc4_uint; // Used for bitwise operations
+		int cornerColor; // Used for bitwise operations
 	};
 
 	byte _pad_4_[0x8];
 
-	edF32MATRIX4 field_0xd0;
+	edF32MATRIX4 worldMatrix;
 	undefined4 field_0x110;
 	float field_0x114;
 	int field_0x118;
@@ -257,9 +268,9 @@ struct _ed_particle_shaper_param
 	uint field_0x120;
 	PackedType<DisplayList*> field_0x124[26];
 	byte field_0x18c;
-	byte field_0x18d;
+	byte sortFlags;
 	byte field_0x18e;
-	byte field_0x18f;
+	byte maxScreenCoverage;
 	undefined4 field_0x190;
 	OffsetPointer<void*> field_0x194;
 	PackedType<ed_3D_Scene*> field_0x198;
@@ -267,6 +278,19 @@ struct _ed_particle_shaper_param
 };
 
 static_assert(sizeof(_ed_particle_shaper_param) == 0x1a0, "Size of _ed_particle_shaper_param is not 0x1a0 bytes.");
+
+// Flags for _ed_particle_shaper_param::uvFlags
+#define PARTICLE_SHAPER_FLAG_UV_TRANSFORM  0x0001u  // UV/affine transform enabled
+#define PARTICLE_SHAPER_FLAG_HFLIP         0x0002u  // Horizontal flip (random per-particle from seed bit 6)
+#define PARTICLE_SHAPER_FLAG_VFLIP         0x0004u  // Vertical flip (random per-particle from seed bit 7)
+#define PARTICLE_SHAPER_FLAG_RANDOM_DIR    0x0008u  // Random rotation direction (from seed bit 5)
+#define PARTICLE_SHAPER_FLAG_FRAME_SEED    0x0010u  // Frame index randomised by seed
+#define PARTICLE_SHAPER_FLAG_SPRITE_SHEET  0x0020u  // Sprite sheet UV animation enabled
+#define PARTICLE_SHAPER_FLAG_FRAME_ANIM    0x0040u  // Sprite sheet frame animation
+#define PARTICLE_SHAPER_FLAG_AGE_FRAME     0x0080u  // Age-based frame animation
+#define PARTICLE_SHAPER_FLAG_SCALE_MASK    0x0300u  // Scale/stretch mode (2-bit field)
+#define PARTICLE_SHAPER_FLAG_RAND_ROT      0x0400u  // Per-particle random rotation base
+#define PARTICLE_SHAPER_FLAG_VELOCITY_ROT  0x0800u  // Velocity-aligned rotation mode
 
 struct GeneratorFunc
 {

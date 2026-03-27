@@ -669,39 +669,18 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 				(pDCA->aimInputDirection).x = 0.0f;
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				peVar2 = (pDCA->base).pMeshTransform;
-				uVar3 = *(undefined8*)&(peVar2->base).transformA;
-				local_40.ac = (peVar2->base).transformA.ac;
-				local_40.ad = (peVar2->base).transformA.ad;
-				local_40.ba = (peVar2->base).transformA.ba;
-				local_40.bb = (peVar2->base).transformA.bb;
-				local_40.bc = (peVar2->base).transformA.bc;
-				local_40.bd = (peVar2->base).transformA.bd;
-				local_40.ca = (peVar2->base).transformA.ca;
-				local_40.cb = (peVar2->base).transformA.cb;
-				local_40.cc = (peVar2->base).transformA.cc;
-				local_40.cd = (peVar2->base).transformA.cd;
-				local_40.da = (peVar2->base).transformA.da;
-				local_40.db = (peVar2->base).transformA.db;
-				local_40.dc = (peVar2->base).transformA.dc;
-				local_40.dd = (peVar2->base).transformA.dd;
-				local_40.aa = (float)uVar3;
-				local_40.ab = (float)((ulong)uVar3 >> 0x20);
-				peVar4 = CAnimation::GetCurBoneMatrix((pDCA->base).pAnimationController, pDCA->field_0x450);
-				edF32Matrix4MulF32Vector4Hard
-				(&local_60, (edF32MATRIX4*)(pDCA->base).pMeshTransform, (edF32VECTOR4*)&peVar4->da);
-				local_40.da = local_60.x;
-				local_40.db = local_60.y;
-				local_40.dc = local_60.z;
-				local_40.dd = local_60.w;
-				FUN_00265430((long)(int)&local_40);
+				peVar2 = pDCA->pMeshTransform;
+				local_40 = peVar2->base.transformA;
+				peVar4 = pDCA->pAnimationController->GetCurBoneMatrix(pDCA->field_0x450);
+				edF32Matrix4MulF32Vector4Hard(&local_60, &pDCA->pMeshTransform->base.transformA, &peVar4->rowT);
+				local_40.rowT = local_60;
+				edF32Matrix4InverseOrthoSoft(&local_40);
 				edF32Matrix4MulF32Vector4Hard(&local_50, &local_40, (edF32VECTOR4*)pMsgParam);
 				edF32Vector4NormalizeHard(&local_50, &local_50);
 				fVar5 = atan2f(-local_50.x, local_50.z);
 				(pDCA->aimInputDirection).y = -fVar5;
-				fVar5 = atan2f(local_50.y, SQRT(local_50.z * local_50.z + local_50.x * local_50.x));
-				(pDCA->aimInputDirection).x = fVar5;)
+				fVar5 = atan2f(local_50.y, sqrtf(local_50.z * local_50.z + local_50.x * local_50.x));
+				(pDCA->aimInputDirection).x = fVar5;
 			}
 
 			result = 1;

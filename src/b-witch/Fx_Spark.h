@@ -13,6 +13,18 @@ public:
 	void Init(int id);
 	void SetParameters(float param_1, float param_2, float param_3, float param_4, float param_5, undefined4 param_7);
 
+	void Reset() {
+		IMPLEMENTATION_GUARD_FX();
+	}
+
+	void Manage(edF32VECTOR4*, edF32VECTOR4*) {
+		IMPLEMENTATION_GUARD_FX();
+	}
+
+	void Draw(bool) {
+		IMPLEMENTATION_GUARD_FX();
+	}
+
 	edF32VECTOR3* pVector_0xc;
 	float* pFloat_0x10;
 

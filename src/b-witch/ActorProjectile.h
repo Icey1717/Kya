@@ -106,10 +106,12 @@ public:
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
 
+	void StateDying(uint dynFlags);
+
 	int field_0xc;
 	int materialId;
-
-	CFxSparkNoAlloc<3, 12>* aFxSparks;
+	CFixedTable<CActor*, 4> actorTable;
+	CFxSparkNoAlloc<3, 12>* aSparks;
 };
 
 class CBehaviourProjectileLavaBall : public CBehaviour

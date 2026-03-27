@@ -267,3 +267,17 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 			Renderer::Native::GetColorImageView(),
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
+
+static ImTextureID gActorPreviewTextureID = 0;
+
+ImTextureID DebugMenu::GetActorPreviewTextureID()
+{
+	if (gActorPreviewTextureID == 0) {
+		gActorPreviewTextureID = DebugRendererImgui::ToImTextureID(
+			ImGui_ImplVulkan_AddTexture(
+				Renderer::Native::GetPreviewSampler(),
+				Renderer::Native::GetPreviewColorImageView(),
+				VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL));
+	}
+	return gActorPreviewTextureID;
+}

@@ -389,6 +389,18 @@ namespace Renderer
 
 		static int gCurrentAnimMatrixIndex = 0;
 
+		// Actor preview: second-camera render into an offscreen framebuffer displayed in ImGui.
+		static bool gPreviewSetup = false;
+		static bool gPreviewEnabled = false;
+		static glm::mat4 gPreviewViewMatrix = glm::mat4(1.0f);
+		static glm::mat4 gPreviewProjMatrix = glm::mat4(1.0f);
+		static FrameBufferBase gPreviewFrameBuffer;
+		static VkSampler gPreviewFrameBufferSampler = VK_NULL_HANDLE;
+		static CommandBufferVector gPreviewCommandBuffers;
+		static std::vector<Draw> gSavedDraws;
+		static int gPreviewWidth = 512;
+		static int gPreviewHeight = 512;
+
 	} // Native
 } // Renderer
 

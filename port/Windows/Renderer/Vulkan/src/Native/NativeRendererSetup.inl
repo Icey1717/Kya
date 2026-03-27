@@ -281,6 +281,8 @@ namespace Renderer
 			DisplayList::Setup();
 
 			InitFade();
+
+			Renderer::Native::SetupPreview(512, 512);
 		}
 
 		void ResizeFrameBuffer(int width, int height)

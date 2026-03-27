@@ -24,6 +24,8 @@ namespace DebugMenu {
 	ImTextureID AddNativeFrameBuffer();
 	void RefreshNativeFrameBuffer(ImTextureID& existingTextureId);
 
+	ImTextureID GetActorPreviewTextureID();
+
 	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
 	Renderer::TextureData LoadTextureData(ed_g2d_material* pMaterial);
 }

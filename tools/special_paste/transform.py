@@ -58,11 +58,14 @@ def split_top_level_args(args_text: str) -> list[str]:
 def strip_base_chain_in(expr: str) -> str:
     """
     Strip base-class navigation chains:
-        (this->base).base.base.field  ->  this->field
-        (ptr->base).base.field        ->  ptr->field
+        (this->base).base.base.field        ->  this->field
+        (ptr->base).base.field              ->  ptr->field
+        (this->pOwner->base).base.x.y       ->  this->pOwner->x.y
+    The object before ->base may itself be a ->-chain.
+    The field after the base chain may include dotted sub-members (x.y).
     Iterates until no further reductions are possible.
     """
-    pattern = re.compile(r"\((\w+)->base\)(?:\.base)*\.(\w+)")
+    pattern = re.compile(r"\((\w+(?:->\w+)*)->base\)(?:\.base)*\.(\w+(?:\.\w+)*)")
     prev = None
     while prev != expr:
         prev = expr
@@ -239,6 +242,8 @@ def t_c_casts_to_static_cast(text: str) -> str:
     PRIMITIVES = {"int", "unsigned", "char", "short", "long", "float",
                   "double", "bool", "void", "uint", "ulong", "uchar", "ushort"}
 
+    NULL_EXPRS = re.compile(r"^(0x0+|0|NULL|nullptr)$")
+
     type_pat = r"(?:const\s+)?[\w:]+(?:\s*\*+)?"
     cast_re = re.compile(r"\((" + type_pat + r")\)")
 
@@ -260,9 +265,12 @@ def t_c_casts_to_static_cast(text: str) -> str:
                 if after < len(text) and text[after] == "(":
                     close = find_matching_paren(text, after)
                     if close != -1:
-                        expr = text[after : close + 1]
+                        expr = text[after + 1 : close]
+                        if NULL_EXPRS.match(expr.strip()):
+                            i = close + 1
+                            continue
                         result.append(text[pos:i])
-                        result.append(f"static_cast<{type_part}>{expr}")
+                        result.append(f"static_cast<{type_part}>({expr})")
                         pos = close + 1
                         i = pos
                         continue
@@ -270,6 +278,9 @@ def t_c_casts_to_static_cast(text: str) -> str:
                     word_m = re.match(r"[\w:]+", text[after:])
                     if word_m:
                         expr = word_m.group(0)
+                        if NULL_EXPRS.match(expr.strip()):
+                            i = after + word_m.end()
+                            continue
                         result.append(text[pos:i])
                         result.append(f"static_cast<{type_part}>({expr})")
                         pos = after + word_m.end()
@@ -386,6 +397,10 @@ def _run_tests() -> None:
         ("x = 0.0f;", "x = 0.0f;"),  # already suffixed, no change
         # base chain stripping
         ("(this->base).base.base.pAnim", "this->pAnim"),
+        # base chain with ptr chain before ->base and dotted sub-field after
+        ("(this->pOwner->base).base.dynamic.speed = 0.0;", "this->pOwner->dynamic.speed = 0.0f;"),
+        # base chain with deeper ptr chain
+        ("(this->pOwner->pChild->base).base.x", "this->pOwner->pChild->x"),
         # bytecode temp inlining — consecutive pairs
         (
             "fVar12 = pByteCode->GetF32();\nthis->field_0x214 = fVar12;\nfVar12 = pByteCode->GetF32();\nthis->field_0x210 = fVar12;",
@@ -499,6 +514,11 @@ def _run_tests() -> None:
         ("(CActor *)this", "static_cast<CActor *>(this)"),
         # C-style cast - parenthesised expr
         ("(int *)(ptr)", "static_cast<int *>(ptr)"),
+        # C-style null casts — must NOT be transformed
+        ("(CActorsTable *)0x0", "(CActorsTable *)0x0"),
+        ("(CActor *)0", "(CActor *)0"),
+        ("(void *)NULL", "(void *)NULL"),
+        ("(CActor *)nullptr", "(CActor *)nullptr"),
     ]
 
     failures = 0

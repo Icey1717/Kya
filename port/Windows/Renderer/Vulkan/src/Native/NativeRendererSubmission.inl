@@ -306,6 +306,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		commandBufferList.push_back(cmd);
 	}
 
+	RecordPreviewPass(commandBufferList);
+	gSavedDraws.clear();
+
 	gNativeVertexBuffer.Reset();
 	gAnimationMatrices.clear();
 
@@ -428,4 +431,57 @@ void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMod
 	if (clearMode != EClearMode::None) {
 		gRenderPassDirty = true;
 	}
+}
+
+void Renderer::Native::SetupPreview(int width, int height)
+{
+	gPreviewWidth = width;
+	gPreviewHeight = height;
+
+	gPreviewFrameBuffer.SetupBase({ width, height }, gRenderPass[RenderPassKey::Empty].gRenderPass, true);
+
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_NEAREST;
+	samplerInfo.minFilter = VK_FILTER_NEAREST;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.maxAnisotropy = 1.0f;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &gPreviewFrameBufferSampler);
+
+	Renderer::CreateCommandBuffers(gPreviewCommandBuffers);
+
+	SetObjectName(reinterpret_cast<uint64_t>(gPreviewFrameBufferSampler), VK_OBJECT_TYPE_SAMPLER, "Actor Preview Sampler");
+	SetObjectName(reinterpret_cast<uint64_t>(gPreviewFrameBuffer.framebuffer), VK_OBJECT_TYPE_FRAMEBUFFER, "Actor Preview Framebuffer");
+
+	gPreviewSetup = true;
+}
+
+void Renderer::Native::SetPreviewCamera(const float* viewMatrix, const float* projMatrix)
+{
+	gPreviewViewMatrix = glm::make_mat4(viewMatrix);
+	gPreviewProjMatrix = glm::make_mat4(projMatrix);
+	gPreviewEnabled = true;
+}
+
+void Renderer::Native::ClearPreviewCamera()
+{
+	gPreviewEnabled = false;
+}
+
+const VkSampler& Renderer::Native::GetPreviewSampler()
+{
+	return gPreviewFrameBufferSampler;
+}
+
+const VkImageView& Renderer::Native::GetPreviewColorImageView()
+{
+	return gPreviewFrameBuffer.colorImageView;
 }

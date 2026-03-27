@@ -10,6 +10,8 @@
 
 #include "renderer.h"
 
+#include <glm/glm.hpp>
+
 namespace Renderer
 {
 	struct SimpleTexture;
@@ -73,5 +75,12 @@ namespace Renderer
 		void ResizeFrameBuffer(int width, int height);
 		void ApplyPendingResizeIfNeeded();
 		VkExtent2D GetFrameBufferSize();
+
+		// Actor preview: second-camera offscreen render.
+		void SetupPreview(int width, int height);
+		void SetPreviewCamera(const float* viewMatrix, const float* projMatrix);
+		void ClearPreviewCamera();
+		const VkSampler& GetPreviewSampler();
+		const VkImageView& GetPreviewColorImageView();
 	}
 }

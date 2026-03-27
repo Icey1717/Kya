@@ -1,4 +1,5 @@
 #include "ActorHunter.h"
+#include "ActorShip.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include "EventManager.h"
@@ -116,7 +117,7 @@ int CActorHunter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 						fVar2 = GetLifeInterface()->GetValue();
 						if (fVar2 <= 0.0f) {
-							DoMessage(this->field_0x364, (ACTOR_MESSAGE)3, 0);
+							DoMessage(this->pActorShip, (ACTOR_MESSAGE)3, 0);
 						}
 					}
 				}
@@ -145,6 +146,20 @@ void CActorHunter::SetupCollisionMatrix()
 	pCollisionData->flags_0x0 &= 0xfffffff4;
 	SV_GetBoneWorldPosition(boneId, &matrix.rowT);
 	pCollisionData->CheckCollisions_UpdateCollisionMatrix(this, &matrix, (CActorsTable*)0x0, (CActor*)0x0, 1);
+
+	return;
+}
+
+void CActorHunter::FUN_003ba4e0(float param_1)
+{
+	float lifeValue;
+
+	LifeDecrease(param_1);
+
+	lifeValue = GetLifeInterface()->GetValue();
+	if (lifeValue <= 0.0f) {
+		DoMessage(this->pActorShip, (ACTOR_MESSAGE)3, 0);
+	}
 
 	return;
 }
@@ -208,7 +223,7 @@ void CBehaviourHunterWatch::Manage()
 
 			if (pHunter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 				pHunter->DoMessage(pHunter->actorRef.Get(), MESSAGE_ACTIVATE, 0);
-				pHunter->DoMessage(pHunter->field_0x364, MESSAGE_DEACTIVATE, 0);
+				pHunter->DoMessage(pHunter->pActorShip, MESSAGE_DEACTIVATE, 0);
 				pHunter->SetState(6, -1);
 			}
 		}
@@ -233,7 +248,7 @@ void CBehaviourHunterWatch::Manage()
 						pHunter->SetupCollisionMatrix();
 
 						pEventManager = CScene::ptable.g_EventManager_006f5080;
-						if ((pHunter->field_0x364 != static_cast<CActor*>(0x0)) && (pHunter->field_0x364[2].rotationQuat.z == 1.401298e-45f)) {
+						if ((pHunter->pActorShip != static_cast<CActorShip*>(0x0)) && (pHunter->pActorShip->field_0x308 == 1)) {
 							pZone = static_cast<ed_zone_3d*>(0x0);
 							pCVar4 = CActorHero::_gThis;
 							if (pHunter->field_0x354 != 0xffffffff) {
@@ -285,14 +300,14 @@ void CBehaviourHunterWatch::InitState(int newState)
 
 	pHunter = this->pOwner;
 	if (newState == 9) {
-		pHunter->DoMessage(pHunter->field_0x364, (ACTOR_MESSAGE)0x27, 0);
+		pHunter->DoMessage(pHunter->pActorShip, (ACTOR_MESSAGE)0x27, 0);
 	}
 	else {
 		if (newState == 10) {
 			pHunter->LifeDecrease(2.0f);
 			fVar3 = pHunter->GetLifeInterface()->GetValue();
 			if (fVar3 <= 0.0f) {
-				pHunter->DoMessage(pHunter->field_0x364, (ACTOR_MESSAGE)3, 0);
+				pHunter->DoMessage(pHunter->pActorShip, (ACTOR_MESSAGE)3, 0);
 			}
 		}
 		else {
@@ -302,7 +317,7 @@ void CBehaviourHunterWatch::InitState(int newState)
 			}
 			else {
 				if (newState == 7) {
-					pHunter->DoMessage(pHunter->field_0x364, MESSAGE_ACTIVATE, 0);
+					pHunter->DoMessage(pHunter->pActorShip, MESSAGE_ACTIVATE, 0);
 				}
 				else {
 					if (newState == 6) {

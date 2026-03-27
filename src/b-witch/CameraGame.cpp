@@ -539,8 +539,6 @@ ECameraType CCameraGame::GetMode()
 	return this->cameraType_0xd4;
 }
 
-CSP_Manager gSP_Manager;
-
 struct TargetCalc
 {
 	edF32VECTOR4 field_0x0;

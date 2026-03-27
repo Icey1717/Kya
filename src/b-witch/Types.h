@@ -924,6 +924,37 @@ public:
 
 		return pCVar2;
 	}
+
+	inline T Remove(T value)
+	{
+		int iVar1;
+		int iVar6;
+		T pCVar3;
+		T* ppCVar4;
+
+		iVar1 = this->nbEntries;
+		iVar6 = 0;
+		pCVar3 = (T)0x0;
+
+		while (iVar6 < iVar1 && this->aEntries[iVar6] != value) {
+			iVar6 = iVar6 + 1;
+		}
+
+		if (iVar6 < iVar1) {
+			ppCVar4 = this->aEntries + iVar6 + -1;
+			pCVar3 = ppCVar4[1];
+			if (iVar6 < iVar1 + -1) {
+				do {
+					iVar6 = iVar6 + 1;
+					ppCVar4[1] = ppCVar4[2];
+					ppCVar4 = ppCVar4 + 1;
+				} while (iVar6 < this->nbEntries + -1);
+			}
+			this->nbEntries = this->nbEntries + -1;
+		}
+
+		return pCVar3;
+	}
 };
 
 class CActor;

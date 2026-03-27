@@ -18,6 +18,8 @@ edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
 #define M_PIf 3.14159265f
 #define M_2PIf 6.283185f
 
+CSP_Manager gSP_Manager;
+
 float g_DefaultNearClip_0044851c = -0.001f;
 
 float edDistPointToPlane(edF32VECTOR4* pPlanePoint, edF32VECTOR4* pPlaneNormal, edF32VECTOR4* pPointPosition)

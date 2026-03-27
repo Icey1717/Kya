@@ -3528,6 +3528,7 @@ CBehaviour* CActor::BuildBehaviour(int behaviourType)
 			pCVar1 = (CBehaviour*)0x0;
 		}
 	}
+
 	return pCVar1;
 }
 
@@ -5588,4 +5589,13 @@ S_ACTOR_STREAM_REF* S_ACTOR_STREAM_REF::Create(ByteCode* pByteCode)
 	}
 
 	return pRef;
+}
+
+void S_ACTOR_STREAM_REF::Init()
+{
+	for (int i = 0; i < this->entryCount; i++) {
+		this->aEntries[i].Init();
+	}
+
+	return;
 }

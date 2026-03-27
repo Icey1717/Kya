@@ -951,7 +951,7 @@ void ed3DFlushTexReset(edLIST* pList)
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_LOG(
 			peVar2 = ed3DFlushMultiTexture(pMVar1, (edpkt_data*)gPKTMultiTex, 1, gVRAMBufferDMA);
 		if (peVar2 != (edpkt_data*)0x0) {
 			edDmaFlushCache();
@@ -9656,6 +9656,8 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 	if ((materialIndex != 0xffffffff) && (materialIndex != 0xffff)) {
 		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pHash, materialIndex);
 	}
+
+	assert(pMaterial);
 
 	pGifTag = ed3DDMAGetGifTag(type, flags, pMaterial);
 

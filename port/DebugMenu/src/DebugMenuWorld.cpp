@@ -4,6 +4,9 @@
 #include <imgui.h>
 #include <map>
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "DebugWorldNames.h"
 #include "Actor.h"
@@ -24,6 +27,11 @@
 #include "Actor/DebugActorWolfen.h"
 #include "Actor/DebugActorBehaviour.h"
 #include "Actor/DebugActorJamGut.h"
+#include "DebugRenderer.h"
+#include "Native/NativeRenderer.h"
+#include "Fx.h"
+#include "FxParticle.h"
+#include "edParticles/edParticles.h"
 
 namespace Debug {
 
@@ -47,6 +55,7 @@ namespace Debug {
 	static Debug::Setting<bool> gShowWorldPanel("Show World Panel", true);
 	static Debug::Setting<bool> gShowInspectorPanel("Show Inspector Panel", true);
 	static int gSectorFilter = -1;
+	static Debug::Setting<int> gActorInspectorMessageValue("Actor Inspector Message Value", 0);
 
 	static constexpr const char* kWorldWindowName = "World";
 	static constexpr const char* kInspectorWindowName = "Inspector";
@@ -322,6 +331,124 @@ namespace Debug {
 		}
 	}
 
+	static CFxParticleManager* GetParticleManager() {
+		auto* pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+		if (pFxManager == nullptr) {
+			return nullptr;
+		}
+		return static_cast<CFxParticleManager*>(pFxManager->aEffectCategory[FX_TYPE_PARTICLE]);
+	}
+
+	static void DrawParticlesTab() {
+		auto* pParticleManager = GetParticleManager();
+		if (pParticleManager == nullptr) {
+			ImGui::TextDisabled("Particle manager unavailable.");
+			return;
+		}
+
+		// Count active effects (those with an installed manager).
+		int nbActive = 0;
+		for (uint i = 0; i < pParticleManager->nbPool; ++i) {
+			if (pParticleManager->aFx[i].pManager != nullptr) {
+				++nbActive;
+			}
+		}
+
+		if (ImGui::TreeNodeEx("System", ImGuiTreeNodeFlags_DefaultOpen)) {
+			auto* pConfig = edParticlesGetConfig();
+			if (pConfig != nullptr) {
+				ImGui::BulletText("Particle pool: %d", pConfig->nbParticles);
+				ImGui::BulletText("Group pool:    %d", pConfig->nbGroups);
+				ImGui::BulletText("Generators:    %d", pConfig->nbGeneratorParams);
+				ImGui::BulletText("Effectors:     %d", pConfig->nbEffectorParams);
+				ImGui::BulletText("Selectors:     %d", pConfig->nbSelectorParams);
+				ImGui::BulletText("Shapers:       %d", pConfig->nbShaperParams);
+			}
+			ImGui::BulletText("FX pool slots: %u  (active: %d)", pParticleManager->nbPool, nbActive);
+			ImGui::TreePop();
+		}
+
+		ImGui::Separator();
+
+		for (uint i = 0; i < pParticleManager->nbPool; ++i) {
+			CFxNewParticle& fx = pParticleManager->aFx[i];
+			auto* pManager = fx.pManager;
+			if (pManager == nullptr) {
+				continue;
+			}
+
+			// Count alive particles for this effect instance.
+			int nbAlive = 0;
+			auto* pParticles = pManager->aParticles.pData.Get();
+			if (pParticles != nullptr) {
+				for (int p = 0; p < pManager->nbParticles; ++p) {
+					if (pParticles[p].state == PARTICLE_STATE_ALIVE) {
+						++nbAlive;
+					}
+				}
+			}
+
+			const bool bPaused = (fx.flags & FX_FLAG_PAUSED) != 0;
+			const bool bHidden = (fx.flags & FX_FLAG_HIDDEN) != 0;
+
+			if (ImGui::TreeNodeEx((void*)(uintptr_t)i, ImGuiTreeNodeFlags_None,
+				"Effect [%u]  %s%s(%d/%d particles, %d groups)",
+				i,
+				bPaused ? "[paused] " : "",
+				bHidden ? "[hidden] " : "",
+				nbAlive, pManager->nbParticles,
+				pManager->nbGroups))
+			{
+				ImGui::Text("Position: %.2f, %.2f, %.2f", fx.position.x, fx.position.y, fx.position.z);
+				ImGui::Text("Flags: 0x%08X", fx.flags);
+
+				if (ImGui::TreeNodeEx("Manager##mgr", ImGuiTreeNodeFlags_None)) {
+					ImGui::Text("Particles:  %d total / %d alive", pManager->nbParticles, nbAlive);
+					ImGui::Text("Groups:     %d / %d (total)", pManager->nbGroups, pManager->nbTotalGroups);
+					ImGui::Text("Generators: %d / %d (config)", pManager->nbGeneratorParams, pManager->nbConfigGeneratorParams);
+					ImGui::Text("Effectors:  %d / %d (config)", pManager->nbEffectorParams, pManager->nbConfigEffectorParams);
+					ImGui::Text("Selectors:  %d / %d (config)", pManager->nbSelectorParams, pManager->nbConfigSelectorParams);
+					ImGui::Text("Shapers:    %d / %d (config)", pManager->nbShaperParams, pManager->nbConfigShaperParams);
+					ImGui::TreePop();
+				}
+
+				if (pParticles != nullptr && ImGui::TreeNodeEx("Particles##parts", ImGuiTreeNodeFlags_None)) {
+					ImGui::BeginTable("##ptable", 5,
+						ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+						ImVec2(0, 200));
+					ImGui::TableSetupColumn("#");
+					ImGui::TableSetupColumn("State");
+					ImGui::TableSetupColumn("Age");
+					ImGui::TableSetupColumn("Lifetime");
+					ImGui::TableSetupColumn("RGBA");
+					ImGui::TableHeadersRow();
+
+					for (int p = 0; p < pManager->nbParticles; ++p) {
+						const _ed_particle& part = pParticles[p];
+						if (part.state == 0) {
+							continue;
+						}
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn(); ImGui::Text("%d", p);
+						ImGui::TableNextColumn();
+						const char* pStateName =
+							part.state == PARTICLE_STATE_ALIVE     ? "Alive"     :
+							part.state == PARTICLE_STATE_DEAD      ? "Dead"      :
+							part.state == PARTICLE_STATE_DESTROYED ? "Destroyed" : "?";
+						ImGui::TextUnformatted(pStateName);
+						ImGui::TableNextColumn(); ImGui::Text("%.2f", part.age);
+						ImGui::TableNextColumn(); ImGui::Text("%.2f", part.lifetime);
+						ImGui::TableNextColumn(); ImGui::Text("%3d %3d %3d %3d", part.colorR, part.colorG, part.colorB, part.colorA);
+					}
+					ImGui::EndTable();
+					ImGui::TreePop();
+				}
+
+				ImGui::TreePop();
+			}
+		}
+	}
+
 	void DrawWorldPanel() {
 		if (!gShowWorldPanel) {
 			return;
@@ -345,6 +472,10 @@ namespace Debug {
 				DrawSectorsTab();
 				ImGui::EndTabItem();
 			}
+			if (ImGui::BeginTabItem("Particles")) {
+				DrawParticlesTab();
+				ImGui::EndTabItem();
+			}
 			ImGui::EndTabBar();
 		}
 
@@ -357,10 +488,73 @@ namespace Debug {
 
 	// ---- Inspector panel ----
 
+	struct ActorMessageEntry {
+		const char* name;
+		ACTOR_MESSAGE message;
+	};
+
+	static const ActorMessageEntry kActorMessages[] = {
+		{ "MESSAGE_KICKED",                    MESSAGE_KICKED },
+		{ "MESSAGE_GET_VISUAL_DETECTION_POINT",MESSAGE_GET_VISUAL_DETECTION_POINT },
+		{ "MESSAGE_GET_RUN_SPEED",             MESSAGE_GET_RUN_SPEED },
+		{ "MESSAGE_TIED",                      MESSAGE_TIED },
+		{ "MESSAGE_TOGGLE",                    MESSAGE_TOGGLE },
+		{ "MESSAGE_ACTIVATE",                  MESSAGE_ACTIVATE },
+		{ "MESSAGE_DEACTIVATE",                MESSAGE_DEACTIVATE },
+		{ "MESSAGE_GET_ACTION",                MESSAGE_GET_ACTION },
+		{ "MESSAGE_TRAP_STRUGGLE",             MESSAGE_TRAP_STRUGGLE },
+		{ "MESSAGE_IN_WIND_AREA",              MESSAGE_IN_WIND_AREA },
+		{ "MESSAGE_ENTER_WIND",                MESSAGE_ENTER_WIND },
+		{ "MESSAGE_LEAVE_WIND",                MESSAGE_LEAVE_WIND },
+		{ "MESSAGE_FIGHT_ACTION_SUCCESS",      MESSAGE_FIGHT_ACTION_SUCCESS },
+		{ "MESSAGE_ENTER_TRAMPO",              MESSAGE_ENTER_TRAMPO },
+		{ "MESSAGE_IMPULSE",                   MESSAGE_IMPULSE },
+		{ "MESSAGE_ENTER_SHOP",                MESSAGE_ENTER_SHOP },
+		{ "MESSAGE_LEAVE_SHOP",                MESSAGE_LEAVE_SHOP },
+		{ "MESSAGE_DISABLE_INPUT",             MESSAGE_DISABLE_INPUT },
+		{ "MESSAGE_ENABLE_INPUT",              MESSAGE_ENABLE_INPUT },
+		{ "MESSAGE_SPAWN",                     MESSAGE_SPAWN },
+		{ "MESSAGE_MAGIC_DEACTIVATE",          MESSAGE_MAGIC_DEACTIVATE },
+		{ "MESSAGE_MAGIC_ACTIVATE",            MESSAGE_MAGIC_ACTIVATE },
+		{ "MESSAGE_TRAP_CAUGHT",               MESSAGE_TRAP_CAUGHT },
+		{ "MESSAGE_SOCCER_START",              MESSAGE_SOCCER_START },
+		{ "MESSAGE_REQUEST_CAMERA_TARGET",     MESSAGE_REQUEST_CAMERA_TARGET },
+		{ "MESSAGE_GET_BONE_ID",               MESSAGE_GET_BONE_ID },
+		{ "MESSAGE_NATIV_CMD",                 MESSAGE_NATIV_CMD },
+		{ "MESSAGE_BOOMY_CHANGED",             MESSAGE_BOOMY_CHANGED },
+		{ "MESSAGE_FIGHT_RING_CHANGED",        MESSAGE_FIGHT_RING_CHANGED },
+		{ "MESSAGE_RECEPTACLE_CHANGED",        MESSAGE_RECEPTACLE_CHANGED },
+		{ "MESSAGE_CINEMATIC_INSTALL",         MESSAGE_CINEMATIC_INSTALL },
+		{ "MESSAGE_NEW_MAP_GAINED",            MESSAGE_NEW_MAP_GAINED },
+		{ "MESSAGE_NEW_LIFE_GAUGE",            MESSAGE_NEW_LIFE_GAUGE },
+	};
+
+	static constexpr int kActorMessageCount = static_cast<int>(std::size(kActorMessages));
+
 	static void DrawActorInspector(CActor* pActor) {
 		if (pActor == nullptr) {
+			Renderer::Native::ClearPreviewCamera();
 			ImGui::TextDisabled("Actor selection is no longer valid.");
 			return;
+		}
+
+		// Set up preview camera pointing at the actor (takes effect next frame).
+		{
+			const glm::vec3 target = {
+				pActor->sphereCentre.x,
+				pActor->sphereCentre.y,
+				pActor->sphereCentre.z
+			};
+			float radius = pActor->otherSectionStart.boundingSphere.w;
+			if (radius < 0.5f) {
+				radius = 3.0f;
+			}
+			const glm::vec3 camPos = target + glm::vec3(0.0f, radius * 0.5f, radius * 2.5f);
+			const glm::mat4 view = glm::lookAt(camPos, target, glm::vec3(0.0f, 1.0f, 0.0f));
+			// Reverse-Z: native renderer uses VK_COMPARE_OP_GREATER + depth cleared to 0. Swap near/far.
+			glm::mat4 proj = glm::perspectiveZO(glm::radians(45.0f), 1.0f, radius * 30.0f, radius * 0.05f);
+			proj[1][1] *= -1.0f; // Vulkan NDC has Y-down; flip to correct orientation.
+			Renderer::Native::SetPreviewCamera(glm::value_ptr(view), glm::value_ptr(proj));
 		}
 
 		ImGui::Text("%s", pActor->name);
@@ -396,6 +590,54 @@ namespace Debug {
 			ImGui::Text("field_0x11: %u", pActor->field_0x11);
 			ImGui::Text("Macro Anim Table: 0x%p", pActor->pMacroAnimTable);
 			ImGui::Text("Hierarchy: 0x%p", pActor->pHier);
+		}
+
+		if (ImGui::CollapsingHeader("Preview")) {
+			ImGui::Image(DebugMenu::GetActorPreviewTextureID(), ImVec2(512.0f, 512.0f));
+		}
+
+		if (ImGui::CollapsingHeader("Messages")) {
+			int currentValue = static_cast<int>(gActorInspectorMessageValue);
+
+			// Named presets — selecting one writes the raw value.
+			int comboIndex = -1;
+			for (int i = 0; i < kActorMessageCount; ++i) {
+				if (static_cast<int>(kActorMessages[i].message) == currentValue) {
+					comboIndex = i;
+					break;
+				}
+			}
+			const char* pComboPreview = (comboIndex >= 0) ? kActorMessages[comboIndex].name : "(custom)";
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::BeginCombo("##MessageSelect", pComboPreview)) {
+				for (int i = 0; i < kActorMessageCount; ++i) {
+					const bool bSelected = (i == comboIndex);
+					if (ImGui::Selectable(kActorMessages[i].name, bSelected)) {
+						currentValue = static_cast<int>(kActorMessages[i].message);
+						gActorInspectorMessageValue = currentValue;
+					}
+					if (bSelected) {
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			// Raw hex input — allows any value not yet in the enum.
+			ImGui::SetNextItemWidth(80.0f);
+			if (ImGui::InputScalar("##MessageRaw", ImGuiDataType_S32, &currentValue, nullptr, nullptr, "%X", ImGuiInputTextFlags_CharsHexadecimal)) {
+				if (currentValue < 0) currentValue = 0;
+				gActorInspectorMessageValue = currentValue;
+			}
+			ImGui::SameLine();
+			ImGui::TextDisabled("(hex)");
+
+			CActor* pSender = (CActorHero::_gThis != nullptr) ? static_cast<CActor*>(CActorHero::_gThis) : pActor;
+			if (ImGui::Button("Send")) {
+				pSender->DoMessage(pActor, static_cast<ACTOR_MESSAGE>(currentValue), nullptr);
+			}
+			ImGui::SameLine();
+			ImGui::TextDisabled("sender: %s", pSender->name);
 		}
 
 		// Show wind-specific info if this is a wind actor

@@ -1,4 +1,5 @@
 #include "ActorProjectile.h"
+#include "ActorElectrolla.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include "TimeController.h"
@@ -899,15 +900,13 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 				}
 
 				if (iVar1 == PROJECTILE_STATE_DYING) {
-					IMPLEMENTATION_GUARD(
-					CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
+					pBehaviourStand->StateDying(uVar9);
 				}
 				else {
 					if (iVar1 == PROJECTILE_STATE_DIE) {
 						if (pBehaviourStand->field_0xc == 2) {
-							IMPLEMENTATION_GUARD(
 							SetState(PROJECTILE_STATE_DYING, -1);
-							CBehaviourProjectileStand::StateDying((long)(int)pBehaviourStand, uVar9);)
+							pBehaviourStand->StateDying(uVar9);
 						}
 						else {
 							StateDie(uVar9, pBehaviourStand->field_0xc, pBehaviourStand->behaviourId);
@@ -1056,10 +1055,8 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 		iVar3 = 0;
 		iVar2 = 0;
 		do {
-			IMPLEMENTATION_GUARD_LOG(
-			FUN_001d64b0((int)&pBehaviourStand->aFxSparks->field_0x0 + iVar2);
+			pBehaviourStand->aSparks[iVar3].Reset();
 			iVar3 = iVar3 + 1;
-			iVar2 = iVar2 + 0x390;)
 		} while (iVar3 < 4);
 	}
 	else {
@@ -2024,10 +2021,10 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 	this->materialId = pByteCode->GetS32();
 	if (this->field_0xc == 2) {
 		CActor::SV_InstallMaterialId(this->materialId);
-		this->aFxSparks = new CFxSparkNoAlloc<3, 12>[4];
+		this->aSparks = new CFxSparkNoAlloc<3, 12>[4];
 		iVar3 = 0;
 		do {
-			pAVar4 = this->aFxSparks + iVar3;
+			pAVar4 = this->aSparks + iVar3;
 
 			pAVar4->Create(3, 0xc, pAVar4->aVectorData, pAVar4->aFloatData, this->materialId);
 			pAVar4->field_0xe4 = pAVar4->aUnknown;
@@ -2036,7 +2033,7 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 		} while (iVar3 < 4);
 	}
 	else {
-		this->aFxSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
+		this->aSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
 	}
 
 	return;
@@ -2051,8 +2048,8 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 	if (this->field_0xc == 2) {
 		iVar2 = 0;
 		do {
-			this->aFxSparks[iVar2].Init(this->pOwner->sectorId);
-			this->aFxSparks[iVar2].field_0x90 = 0x80f09614;
+			this->aSparks[iVar2].Init(this->pOwner->sectorId);
+			this->aSparks[iVar2].field_0x90 = 0x80f09614;
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < 4);
 	}
@@ -2063,8 +2060,8 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 void CBehaviourProjectileStand::Term()
 {
 	if (this->field_0xc == 2) {
-		delete[] this->aFxSparks;
-		this->aFxSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
+		delete[] this->aSparks;
+		this->aSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
 	}
 
 	return;
@@ -2077,7 +2074,19 @@ void CBehaviourProjectileStand::Manage()
 
 void CBehaviourProjectileStand::Draw()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	int iVar3;
+
+	if (this->field_0xc == 2) {
+		iVar3 = 0;
+		iVar1 = this->pOwner->actorState;
+		do {
+			this->aSparks[iVar3].Draw(iVar1 == 0xe);
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < 4);
+	}
+
+	return;
 }
 
 void CBehaviourProjectileStand::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -2118,6 +2127,171 @@ void CBehaviourProjectileStand::InitState(int newState)
 void CBehaviourProjectileStand::TermState(int oldState, int newState)
 {
 	this->pOwner->BehaviourProjectileStand_TermState(oldState, newState, this);
+}
+
+void Criterion_Near(CActor* pActor, void* pParams)
+{
+	CActor* pCVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	_criterion_near_params* pNearParams = reinterpret_cast<_criterion_near_params*>(pParams);
+
+	pCVar1 = pNearParams->pActor;
+	if (((pCVar1 != pActor) && (pActor->typeID != 5)) &&
+		(fVar2 = (pActor->currentLocation).x - (pCVar1->currentLocation).x,
+			fVar3 = (pActor->currentLocation).y - (pCVar1->currentLocation).y,
+			fVar4 = (pActor->currentLocation).z - (pCVar1->currentLocation).z,
+			fVar2 = fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4, fVar2 <= pNearParams->field_0x10)) {
+		if (fVar2 < pNearParams->nearestDistance) {
+			pNearParams->nearestDistance = fVar2;
+		}
+
+		pNearParams->aDistances[pNearParams->pTable->nbEntries] = sqrtf(fVar2);
+		pNearParams->pTable->Add(pActor);
+	}
+
+	return;
+}
+
+void CBehaviourProjectileStand::StateDying(uint dynFlags)
+{
+	float fVar1;
+	float fVar2;
+	edF32VECTOR4* peVar3;
+	CActor* pCVar5;
+	StateConfig* pSVar6;
+	uint uVar7;
+	int iVar8;
+	int iVar9;
+	int iVar10;
+	float fVar11;
+	CActorsTable local_1c0;
+	edF32VECTOR4 local_b0;
+	edF32VECTOR4 local_a0;
+	_msg_hit_param msgHitParam;
+	CActorProjectile* pProjectile;
+
+	this->pOwner->dynamic.speed = 0.0f;
+	this->pOwner->ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+	pProjectile = this->pOwner;
+	if (pProjectile->timeInAir < pProjectile->field_0x570) {
+		peVar3 = pProjectile->GetBottomPosition();
+		local_b0 = *peVar3;
+		if ((this->pOwner->field_0x3f4 & 1) == 0) {
+			msgHitParam.projectileType = 5;
+			msgHitParam.damage = this->pOwner->aProjectileSubObjs->damage;
+			this->pOwner->field_0x3f4 = this->pOwner->field_0x3f4 | 1;
+			for (iVar10 = 0; iVar10 < 4; iVar10 = iVar10 + 1) {
+				this->aSparks[iVar10].Reset();
+			}
+		}
+		else {
+			msgHitParam.projectileType = 0;
+			msgHitParam.damage = this->pOwner->aProjectileSubObjs->field_0x28 * GetTimer()->cutsceneDeltaTime;
+		}
+
+		msgHitParam.flags = 0;
+		msgHitParam.field_0x30 = 0.0f;
+		local_1c0.nbEntries = 0;
+		GetActorsNearWithCriterion(this->pOwner->aProjectileSubObjs[0].hitRadius, this->pOwner, &local_1c0, Criterion_Near);
+
+		while (iVar10 = 0, local_1c0.nbEntries != 0) {
+			pCVar5 = local_1c0.PopCurrent();
+			iVar10 = this->actorTable.IsInList(pCVar5);
+			if (iVar10 == 0) {
+				if ((((this->actorTable).nbEntries < 4) &&
+					(iVar10 = this->pOwner->DoMessage(pCVar5, (ACTOR_MESSAGE)1, &msgHitParam),
+						iVar10 != 0)) &&
+					(iVar10 = this->pOwner->DoMessage(pCVar5, MESSAGE_KICKED, &msgHitParam),
+						iVar10 != 0)) {
+					this->actorTable.Add(pCVar5);
+				}
+			}
+			else {
+				if ((this->pOwner->aProjectileSubObjs[0].flags & 0x10000) == 0) {
+					this->pOwner->DoMessage(pCVar5, MESSAGE_KICKED, &msgHitParam);
+				}
+			}
+		}
+		for (; iVar10 < (this->actorTable).nbEntries; iVar10 = iVar10 + 1) {
+			pCVar5 = (this->actorTable).aEntries[iVar10];
+			uVar7 = 0;
+			if (pCVar5->actorState != -1) {
+				pSVar6 = (pCVar5)->GetStateCfg(pCVar5->actorState);
+				uVar7 = pSVar6->flags_0x4;
+			}
+
+			if (((uVar7 & 1) != 0) ||
+				(pProjectile = this->pOwner,
+					fVar11 = (pCVar5->currentLocation).x - pProjectile->currentLocation.x,
+					fVar1 = (pCVar5->currentLocation).y - pProjectile->currentLocation.y,
+					fVar2 = (pCVar5->currentLocation).z - pProjectile->currentLocation.z,
+					this->pOwner->aProjectileSubObjs->hitRadius * 2.0f *
+					this->pOwner->aProjectileSubObjs->hitRadius <
+					fVar11 * fVar11 + fVar1 * fVar1 + fVar2 * fVar2)) {
+				this->actorTable.Remove(pCVar5);
+			}
+		}
+
+		iVar10 = 0;
+		for (iVar8 = 0; iVar8 < (this->actorTable).nbEntries; iVar8 = iVar8 + 1) {
+			(this->actorTable).aEntries[iVar8]->SV_GetActorColCenter(&local_a0);
+			iVar9 = iVar10;
+			if (iVar10 < 4) {
+				iVar9 = iVar10 + 1;
+				this->aSparks[iVar10].Manage(&local_b0, &local_a0);
+			}
+			iVar10 = iVar9;
+		}
+
+		for (; iVar10 < 4; iVar10 = iVar10 + 1) {
+			fVar11 = this->pOwner->aProjectileSubObjs->hitRadius;
+			iVar8 = rand();
+			local_a0.y = local_b0.y;
+			local_a0.x = (local_b0.x + fVar11 * 2.0f * (static_cast<float>(iVar8) / 2.147484e+09f)) - fVar11;
+			iVar8 = rand();
+			local_a0.w = 1.0f;
+			local_a0.z = (local_b0.z + fVar11 * 2.0f * (static_cast<float>(iVar8) / 2.147484e+09f)) - fVar11;
+			this->aSparks[iVar10].Manage(&local_b0, &local_a0);
+		}
+	}
+	else {
+		(this->actorTable).nbEntries = 0;
+		for (iVar10 = 0; iVar10 < 4; iVar10 = iVar10 + 1) {
+			this->aSparks[iVar10].Reset();
+		}
+
+		pProjectile = this->pOwner;
+		if (pProjectile->curBehaviourId == this->behaviourId) {
+			pProjectile->flags = pProjectile->flags & 0xffffff7f;
+			pProjectile->flags = pProjectile->flags | 0x20;
+			pProjectile->EvaluateDisplayState();
+			iVar10 = pProjectile->curBehaviourId;
+			if (iVar10 == 10) {
+				pProjectile->SetState(6, -1);
+			}
+			else {
+				if (iVar10 == 4) {
+					pProjectile->ClearLocalData();
+					pProjectile->SetBehaviour(-1, -1, -1);
+					pProjectile->SetBehaviour(4, -1, -1);
+				}
+				else {
+					pProjectile->PreReset();
+					pProjectile->Reset();
+				}
+			}
+		}
+		else {
+			pProjectile->SetState(0x1e, -1);
+		}
+
+		Draw();
+	}
+
+	return;
 }
 
 void CBehaviourProjectileStraight::Create(ByteCode* pByteCode)

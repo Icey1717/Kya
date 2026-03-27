@@ -10,6 +10,7 @@
 #include "ActorAutonomous.h"
 #include "FrontEndBank.h"
 #include "LevelScheduler.h"
+#include "ActorWolfen.h"
 
 int gEnemySpritesInstalled = 0;
 
@@ -980,20 +981,21 @@ void CFrontendEnemy::UpdateSpecial(CWidgetSlot* pSlot, int param_3)
 
 int CFrontendEnemy::FUN_001d94b0()
 {
-	CActor* piVar1;
-	long lVar2;
+	CActor* pActor;
+	bool lVar2;
 	int iVar3;
 
-	piVar1 = reinterpret_cast<CLifeInterface*>(this->pInterface)->field_0x10;
+	pActor = reinterpret_cast<CLifeInterface*>(this->pInterface)->field_0x10;
 	iVar3 = 0;
-	if (piVar1 != (CActor*)0x0) {
-		IMPLEMENTATION_GUARD(
-		lVar2 = (**(code**)(*piVar1 + 0xc))(piVar1, 0x10);
-		if (lVar2 == 0) {
+	if (pActor != (CActor*)0x0) {
+
+		lVar2 = pActor->IsKindOfObject(0x10);
+		if (lVar2 == false) {
 			iVar3 = 6;
 		}
 		else {
-			switch (piVar1[0x2dd]) {
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pActor);
+			switch (pWolfen->field_0xb74) {
 			case 0:
 				break;
 			case 1:
@@ -1011,8 +1013,9 @@ int CFrontendEnemy::FUN_001d94b0()
 			case 5:
 				iVar3 = 5;
 			}
-		})
+		}
 	}
+
 	return iVar3;
 }
 

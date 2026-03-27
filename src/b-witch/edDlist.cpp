@@ -2434,6 +2434,10 @@ void edDListTexCoo2f(float s, float t)
 
 void edDListVertex4f(float x, float y, float z, float skip)
 {
+	assert(!std::isnan(x));
+	assert(!std::isnan(y));
+	assert(!std::isnan(z));
+
 	(gAddVertexFUNC)(x, y, z, skip);
 
 	return;
