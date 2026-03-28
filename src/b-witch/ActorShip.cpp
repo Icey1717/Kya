@@ -106,7 +106,7 @@ void CActorShip::Init()
 	CActorHunter* pActorHunter = static_cast<CActorHunter*>(this->hunterStreamRef.Get());
 	pActorHunter->pActorShip = this;
 
-	this->field_0x258 = this->vision.visionRange_0x34;
+	this->field_0x258 = this->vision.visionRange;
 	this->field_0x308 = 0;
 	this->field_0x305 = 0;
 
@@ -557,7 +557,7 @@ void CActorShip::BehaviourShipFLY_InitState(int newState)
 		}
 		break;
 	case SHIP_FLY_STATE_THROWING:
-		(this->vision).visionRange_0x34 = 1.0f;
+		(this->vision).visionRange = 1.0f;
 		if (((this->vision).flags & 0x40000000) == 0) {
 			(this->vision).flags = (this->vision).flags ^ 0x40000000;
 		}
@@ -707,7 +707,7 @@ void CActorShip::BehaviourShipFLY_Manage()
 	case SHIP_FLY_STATE_THROWING:
 		fVar20 = this->timeInAir;
 		if (fVar20 < this->field_0x210) {
-			(this->vision).visionRange_0x34 =
+			(this->vision).visionRange =
 				(this->field_0x258 - 1.0f) * (fVar20 / this->field_0x210) + 1.0f;
 		}
 
@@ -770,7 +770,7 @@ void CActorShip::BehaviourShipFLY_Manage()
 		}
 
 		if (this->field_0x214 < fVar20) {
-			(this->vision).visionRange_0x34 = 1.0f;
+			(this->vision).visionRange = 1.0f;
 			SetState(SHIP_FLY_STATE_CLOSING, -1);
 		}
 		break;
@@ -913,7 +913,7 @@ void CActorShip::ManageFlameThrower(int param_2)
 	CActor* pLocalActor;
 
 	pLocalActor = (CActor*)0x0;
-	if ((param_2 != 0) && (pLocalActor = this->vision.ScanForTarget(CActorHero::_gThis, 1), pLocalActor != (CActor*)0x0)) {
+	if ((param_2 != 0) && (pLocalActor = this->vision.ScanForTarget(CActorHero::_gThis, SCAN_MODE_AMORTISED), pLocalActor != (CActor*)0x0)) {
 		local_90.damage = this->field_0x230;
 		local_90.projectileType = 0;
 		local_90.flags = 0;
@@ -944,7 +944,7 @@ void CActorShip::ManageFlameThrower(int param_2)
 			}
 
 			if (((param_2 != 0) && (bVar2 == false)) &&
-				(pCVar3 = this->vision.ScanForTarget(pLocalActor, 1), pCVar3 != (CActor*)0x0)) {
+				(pCVar3 = this->vision.ScanForTarget(pLocalActor, SCAN_MODE_AMORTISED), pCVar3 != (CActor*)0x0)) {
 				(pLocalActor)->SetState(0xd, -1);
 			}
 		}

@@ -3,6 +3,9 @@
 
 #include "Types.h"
 
+#define SCAN_MODE_SYNCHRONOUS	0
+#define SCAN_MODE_AMORTISED		1
+
 struct ByteCode;
 
 class CVision 
@@ -34,14 +37,14 @@ public:
 	edF32VECTOR4 location;
 	edF32VECTOR4 rotationQuat;
 
-	float field_0x30;
-	float visionRange_0x34;
+	float halfAngle;
+	float visionRange;
 	float field_0x38;
 	float field_0x3c;
-	float field_0x40;
+	float apexOffset;
 	float field_0x44;
 	CActor* pActor_0x48;
-	int field_0x4c;
+	int amortisedScanFrameIndex;
 	uint field_0x50;
 	int field_0x54;
 	float field_0x58;

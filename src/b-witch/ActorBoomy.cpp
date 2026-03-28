@@ -102,7 +102,7 @@ void CActorBoomy::Create(ByteCode* pByteCode)
 	UpdateTypeInfo();
 
 	this->field_0x2c0 = this->aBoomyTypeInfo[this->curBoomyTypeId].field_0x4;
-	(this->vision).visionRange_0x34 = this->aBoomyTypeInfo[this->curBoomyTypeId].visionRange;
+	(this->vision).visionRange = this->aBoomyTypeInfo[this->curBoomyTypeId].visionRange;
 
 	this->pSpline = new CedMathTCBSpline(5, 0);
 
@@ -310,7 +310,7 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		SV_PatchMaterial(1, newHash, (ed_g2d_manager*)0x0);
 
 		this->curBoomyTypeId = (int)pMsgParam;
-		GetVision()->visionRange_0x34 = this->aBoomyTypeInfo[this->curBoomyTypeId].visionRange;
+		GetVision()->visionRange = this->aBoomyTypeInfo[this->curBoomyTypeId].visionRange;
 	}
 	else {
 		if (uVar4 == 6) {
@@ -1361,7 +1361,7 @@ void CActorBoomy::UpdateFromOwner(int param_2, edF32VECTOR4* pDirection)
 void CActorBoomy::GetActorsInVision(float maxDistance, CActorsTable* pTable)
 {
 	pTable->nbEntries = 0;
-	this->vision.ScanAccurate(maxDistance, pTable, 0);
+	this->vision.ScanAccurate(maxDistance, pTable, SCAN_MODE_SYNCHRONOUS);
 
 	return;
 }

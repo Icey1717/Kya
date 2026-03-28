@@ -1,6 +1,7 @@
 #include "DebugActorShip.h"
 #include "DebugActorBehaviour.h"
 #include "ActorShip.h"
+#include "ActorHero.h"
 #include "ActorDCA.h"
 #include "Components/DebugVision.h"
 #include "Native/NativeDebugShapes.h"
@@ -62,6 +63,20 @@ namespace Debug::Actor::Ship
 		}
 
 		DrawFlameThrowerShapes(pShip);
+
+		const float red = pShip->vision.ScanForTarget(CActorHero::_gThis, SCAN_MODE_AMORTISED) ? 1.0f : 0.2f;
+
+		// Draw some debug spheres at the hero's vision points.
+		const int numPoints = CActorHero::_gThis->GetNumVisualDetectionPoints();
+
+		for (int i = 0; i < numPoints; ++i) {
+			edF32VECTOR4 point;
+			CActorHero::_gThis->GetVisualDetectionPoint(&point, i);
+			Renderer::Native::DebugShapes::AddFilledSphere(
+				point.x, point.y, point.z,
+				0.1f,
+				red, 0.2f, 0.2f, 0.8f);
+		}
 
 		if (ImGui::CollapsingHeader("Ship State", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Text("Actor State:      %d  (%s)", pShip->actorState, Debug::Actor::State::GetActorStateName(pShip).c_str());

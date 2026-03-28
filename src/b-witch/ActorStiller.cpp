@@ -493,7 +493,7 @@ void CActorStiller::StateAttack()
 	(this->vision).rotationQuat = this->rotationQuat;
 
 	pReceiver = CActorHero::_gThis;
-	if ((this->pTarget != (CActor*)0x0) && (pTarget = this->vision.ScanForTarget(CActorHero::_gThis, 1), pTarget != (CActor*)0x0)) {
+	if ((this->pTarget != (CActor*)0x0) && (pTarget = this->vision.ScanForTarget(CActorHero::_gThis, SCAN_MODE_AMORTISED), pTarget != (CActor*)0x0)) {
 		local_a0.projectileType = 1;
 		local_a0.damage = this->field_0x1ec;
 		local_a0.field_0x30 = this->field_0x1e0;
@@ -524,7 +524,7 @@ void CActorStiller::StateAttack()
 		if (iVar9 <= iVar11) break;
 
 		pTarget = pSVar1->aEntries[iVar11].Get();
-		pCVar8 = this->vision.ScanForTarget(pTarget, 1);
+		pCVar8 = this->vision.ScanForTarget(pTarget, SCAN_MODE_AMORTISED);
 		if (pCVar8 != (CActor*)0x0) {
 			local_140.projectileType = 1;
 			local_140.damage = this->field_0x1ec;

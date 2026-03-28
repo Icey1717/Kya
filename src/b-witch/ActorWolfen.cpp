@@ -1270,7 +1270,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					GetVision()->rotationQuat = this->rotationQuat;
 				}
 
-				pCVar14 = GetVision()->ScanForTarget(pSender, 1);
+				pCVar14 = GetVision()->ScanForTarget(pSender, SCAN_MODE_AMORTISED);
 
 				if (pCVar14 == (CActor*)0x0) {
 					if (this->visionDetectionProps.field_0x0 <= sqrtf(edF32Vector4DotProductHard_I(&pSender->currentLocation, &this->currentLocation))) {
@@ -7279,7 +7279,7 @@ bool CActorWolfen::SV_WLF_IsIntruderInVision(CActor* pActor)
 			GetVision()->rotationQuat = this->rotationQuat;
 		}
 
-		bInVision = GetVision()->ScanForTarget(pActor, 1) != (CActor*)0x0;
+		bInVision = GetVision()->ScanForTarget(pActor, SCAN_MODE_AMORTISED) != (CActor*)0x0;
 	}
 
 	if (bInVision) {
@@ -7498,7 +7498,7 @@ void CActorWolfen::InternState_WolfenLocate()
 
 		IMPLEMENTATION_GUARD_LOG(); // IS this correct?
 		float cosValue = sinf(fabs(((fVar3 / fVar2) * 6.283185)));
-		fVar3 = edF32Between_0_2Pi(-cosValue * (3.141593 - GetVision()->field_0x30 * 2.0f * 57.29578f * 0.01745329f * 0.5f) + this->rotationEuler.y);
+		fVar3 = edF32Between_0_2Pi(-cosValue * (3.141593 - GetVision()->halfAngle * 2.0f * 57.29578f * 0.01745329f * 0.5f) + this->rotationEuler.y);
 		SetVectorFromAngleY(fVar3, &local_20);
 		GetVision()->location = local_10;
 		GetVision()->rotationQuat = local_20;

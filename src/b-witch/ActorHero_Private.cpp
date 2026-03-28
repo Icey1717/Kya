@@ -12767,7 +12767,7 @@ void CActorHeroPrivate::ManageBoomyState()
 				if (pCVar12 == (CActor*)0x0) {
 					pCVar3 = this->pActorBoomy;
 					pCVar13 = pCVar3->GetVision();
-					edF32Vector4ScaleHard(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
+					edF32Vector4ScaleHard(pCVar13->visionRange, &eStack48, &this->rotationQuat);
 					SV_GetBoneWorldPosition(this->field_0x157c, &eStack32);
 					edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
 					this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
@@ -12938,7 +12938,7 @@ void CActorHeroPrivate::ManageBoomyState()
 			if (pCVar12 == (CActor*)0x0) {
 				pCVar3 = this->pActorBoomy;
 				pCVar13 = pCVar3->GetVision();
-				edF32Vector4ScaleHard(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
+				edF32Vector4ScaleHard(pCVar13->visionRange, &eStack48, &this->rotationQuat);
 				SV_GetBoneWorldPosition(this->field_0x157c, &eStack32);
 				edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
 				this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);

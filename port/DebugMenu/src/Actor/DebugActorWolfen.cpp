@@ -76,7 +76,7 @@ namespace Debug::Actor::Wolfen
 		}
 
 		if (ImGui::CollapsingHeader("Perception", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Vision Range:         %.2f", pWolfenActor->vision.visionRange_0x34);
+			ImGui::Text("Vision Range:         %.2f", pWolfenActor->vision.visionRange);
 			ImGui::Text("Vision Flags:         0x%08X", pWolfenActor->vision.flags);
 			ImGui::Text("Detected Actor:       %s (%p)", ActorName(pWolfenActor->vision.pActor_0x48), pWolfenActor->vision.pActor_0x48);
 			ImGui::Separator();

@@ -246,7 +246,7 @@ namespace Renderer
 				glm::vec3 axisX, axisY, axisZ, center;
 				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
 
-				constexpr int   kSegs = 24;
+				constexpr int   kSegs = 48;
 				constexpr float kStep = 2.0f * 3.14159265358979323846f / kSegs;
 				const glm::vec4 color(r, g, b, a);
 
@@ -635,7 +635,8 @@ namespace Renderer
 			{
 				glm::vec3 axisX, axisY, axisZ, center;
 				DecomposeLocalToWorld(mat, axisX, axisY, axisZ, center);
-				constexpr int kSegs = 24;
+				constexpr int kSegs = 48;
+
 				constexpr float kStep = 2.0f * 3.14159265358979323846f / kSegs;
 				const glm::vec4 color(r, g, b, a);
 				const glm::vec3 apex = center + 0.5f * axisY;

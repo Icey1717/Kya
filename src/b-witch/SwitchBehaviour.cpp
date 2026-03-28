@@ -380,7 +380,7 @@ void CondSeeActorInArea::Manage(CActor* pOwner)
 		pVision->location = pWolfen->currentLocation;
 		pVision->location.y = pWolfen->currentLocation.y + pWolfen->field_0xcf0;
 		pVision->rotationQuat = pWolfen->rotationQuat;
-		pCVar3 = pVision->ScanForTarget(this->pActor.Get(), 1);
+		pCVar3 = pVision->ScanForTarget(this->pActor.Get(), SCAN_MODE_AMORTISED);
 		if (pCVar3 != (CActor*)0x0) {
 			this->field_0x4 = 1;
 		}

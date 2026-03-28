@@ -26,16 +26,16 @@ void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 	fVar4 = pByteCode->GetF32();
 	fVar5 = pByteCode->GetF32();
 	uVar1 = pByteCode->GetU32();
-	this->visionRange_0x34 = fVar2;
+	this->visionRange = fVar2;
 	this->field_0x38 = fVar4 * 0.5f;
 	this->field_0x3c = fVar5 * 0.5f;
 	fVar2 = fVar3 * 0.5f * 0.01745329f;
 	this->flags = 0;
-	this->field_0x30 = fVar2;
+	this->halfAngle = fVar2;
 	this->field_0x44 = cosf(fVar2); // edFCosinus[(int)(fabs(fVar2 * 1303.797) + 0.5) & 0x1fff];
 	this->field_0x3c = this->field_0x3c;
-	fVar2 = 1.570796f - this->field_0x30;
-	this->field_0x40 = this->field_0x3c * sinf(fVar2) / cosf(fVar2); // (edFCosinus[(int)(fabs((fVar2 - 1.570796) * 1303.797) + 0.5) & 0x1fff] / edFCosinus[(int)(fabs(fVar2 * 1303.797) + 0.5) & 0x1fff]);
+	fVar2 = 1.570796f - this->halfAngle;
+	this->apexOffset = this->field_0x3c * sinf(fVar2) / cosf(fVar2); // (edFCosinus[(int)(fabs((fVar2 - 1.570796) * 1303.797) + 0.5) & 0x1fff] / edFCosinus[(int)(fabs(fVar2 * 1303.797) + 0.5) & 0x1fff]);
 	this->pActor_0x48 = (CActor*)0x0;
 	//this->field_0x4c = 0;
 	//this->field_0x54 = 0;
@@ -126,7 +126,7 @@ void CVision::ScanFromClassID(int classId, CActorsTable* pTable, int mode)
 	scanSphere.x = (this->location).x;
 	scanSphere.y = (this->location).y;
 	scanSphere.z = (this->location).z;
-	scanSphere.w = this->field_0x40 + this->visionRange_0x34;
+	scanSphere.w = this->apexOffset + this->visionRange;
 
 	scanParams.pOwner = this->pOwner;
 	scanParams.classId = classId;
@@ -151,9 +151,9 @@ bool CVision::SV_PointIsInVision(edF32VECTOR4* v0)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	edF32Vector4ScaleHard(this->field_0x40, &local_10, &this->rotationQuat);
+	edF32Vector4ScaleHard(this->apexOffset, &local_10, &this->rotationQuat);
 	edF32Vector4SubHard(&local_10, &this->location, &local_10);
-	fVar3 = this->visionRange_0x34 + this->field_0x40;
+	fVar3 = this->visionRange + this->apexOffset;
 	fVar3 = fVar3 * fVar3;
 	if (fabs((this->rotationQuat).y) < 0.00125f) {
 		edF32Vector4SubHard(&local_20, v0, &local_10);
@@ -161,7 +161,7 @@ bool CVision::SV_PointIsInVision(edF32VECTOR4* v0)
 		if (fabs(local_20.y) <= this->field_0x38) {
 			fVar2 = local_20.z * local_20.z + local_20.x * local_20.x;
 			bVar1 = false;
-			if ((fVar2 <= fVar3) && (bVar1 = false, this->field_0x40 * this->field_0x40 <= fVar2)) {
+			if ((fVar2 <= fVar3) && (bVar1 = false, this->apexOffset * this->apexOffset <= fVar2)) {
 				local_40.x = (this->rotationQuat).x;
 				local_40.z = (this->rotationQuat).z;
 				local_40.w = (this->rotationQuat).w;
@@ -187,7 +187,7 @@ bool CVision::SV_PointIsInVision(edF32VECTOR4* v0)
 		edF32Vector4SubHard(&local_30, &local_50, &local_10);
 		fVar2 = local_30.z * local_30.z + local_30.x * local_30.x + local_30.y * local_30.y;
 		bVar1 = false;
-		if (((fVar2 <= fVar3) && (bVar1 = false, this->field_0x40 * this->field_0x40 <= fVar2)) &&
+		if (((fVar2 <= fVar3) && (bVar1 = false, this->apexOffset * this->apexOffset <= fVar2)) &&
 			(bVar1 = true, 1e-05f <= fabs((local_50.z - local_10.z) + (local_50.x - local_10.x) + (local_50.y - local_10.y))))
 		{
 			edF32Vector4NormalizeHard(&local_30, &local_30);
@@ -258,17 +258,17 @@ uint CVision::_ScanForTargetMultiPoint(CActor* pTargetActor, int mode)
 
 	fVar5 = Timer::GetTimer()->scaledTotalTime;
 
-	if (((Timer::GetTimer()->cutsceneDeltaTime + 0.001f < fVar5 - this->field_0x58) || (this->pActor_0x48 != pTargetActor)) || (mode == 0)) {
+	if (((Timer::GetTimer()->cutsceneDeltaTime + 0.001f < fVar5 - this->field_0x58) || (this->pActor_0x48 != pTargetActor)) || (mode == SCAN_MODE_SYNCHRONOUS)) {
 		this->pActor_0x48 = pTargetActor;
 		this->field_0x54 = 0;
 		this->field_0x50 = 0;
-		this->field_0x4c = 0;
+		this->amortisedScanFrameIndex = 0;
 	}
 
 	this->field_0x58 = fVar5;
 
 	nbVisualDetectionPoints = pTargetActor->GetNumVisualDetectionPoints();
-	if ((mode == 0) || (nbVisualDetectionPoints == 0)) {
+	if ((mode == SCAN_MODE_SYNCHRONOUS) || (nbVisualDetectionPoints == 0)) {
 		index = 0;
 		lVar4 = 0;
 		while ((index < nbVisualDetectionPoints && (lVar4 == 0))) {
@@ -282,20 +282,20 @@ uint CVision::_ScanForTargetMultiPoint(CActor* pTargetActor, int mode)
 		this->field_0x54 = 0;
 	}
 	else {
-		this->field_0x4c = this->field_0x4c + 1;
+		this->amortisedScanFrameIndex = this->amortisedScanFrameIndex + 1;
 		if (nbVisualDetectionPoints == 0) {
 			trap(7);
 		}
 
-		this->field_0x4c = this->field_0x4c % nbVisualDetectionPoints;
+		this->amortisedScanFrameIndex = this->amortisedScanFrameIndex % nbVisualDetectionPoints;
 
 		if (this->field_0x54 == 0) {
-			pTargetActor->GetVisualDetectionPoint(&eStack16, this->field_0x4c);
+			pTargetActor->GetVisualDetectionPoint(&eStack16, this->amortisedScanFrameIndex);
 			bVar1 = _PointIsDetected(&eStack16, pTargetActor);
 			this->field_0x54 = bVar1;
 		}
 
-		if (this->field_0x4c == 0) {
+		if (this->amortisedScanFrameIndex == 0) {
 			this->field_0x50 = this->field_0x54;
 			this->field_0x54 = 0;
 		}
@@ -338,7 +338,7 @@ void CVision::ScanAccurate(float maxDistance, CActorsTable* pTable, int param_4)
 	_ray_info_out local_10;
 
 	local_30.xyz = (this->location).xyz;
-	local_30.w = this->field_0x40 + this->visionRange_0x34;
+	local_30.w = this->apexOffset + this->visionRange;
 
 	local_20.pOwner = this->pOwner;
 	local_20.pVision = this;
@@ -381,7 +381,7 @@ void CVision::Scan(CActorsTable* pTable, int param_3)
 	edF32VECTOR4 local_10;
 
 	local_10.xyz = this->location.xyz;
-	local_10.w = this->field_0x40 + this->visionRange_0x34;
+	local_10.w = this->apexOffset + this->visionRange;
 
 	local_20.pOwner = this->pOwner;
 	local_20.pVision = this;
