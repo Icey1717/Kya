@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "MemoryStream.h"
 #include "CameraViewManager.h"
 
 #define FX_TYPE_COMPOSITE 0
@@ -12,6 +13,7 @@
 #define FX_TYPE_SOUND 4
 #define FX_TYPE_RANDOM 5
 #define FX_TYPE_LOD 6
+#define FX_TYPE_MAX 7
 
 #define FX_FLAG_PAUSED 0x4
 #define FX_FLAG_HIDDEN 0x8

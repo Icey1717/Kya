@@ -83,8 +83,14 @@ set(SOURCES
 	"src/Actor/DebugActorBehaviour.cpp"
 	"src/Actor/DebugActorWind.h"
 	"src/Actor/DebugActorWind.cpp"
+	"src/Actor/DebugActorShip.h"
+	"src/Actor/DebugActorShip.cpp"
 	"src/Actor/DebugActorJamGut.h"
 	"src/Actor/DebugActorJamGut.cpp"
+
+	"src/Components/DebugVision.h"
+	"src/Components/DebugVision.cpp"
+
 	"src/DebugWorldNames.h"
 	"src/DebugWorldNames.cpp"
 	"src/DebugRendererVulkan.cpp"

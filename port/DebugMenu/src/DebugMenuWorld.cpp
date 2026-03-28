@@ -15,6 +15,7 @@
 #include "ActorWind.h"
 #include "ActorWolfen.h"
 #include "ActorJamGut.h"
+#include "ActorShip.h"
 #include "LargeObject.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
@@ -27,6 +28,7 @@
 #include "Actor/DebugActorWolfen.h"
 #include "Actor/DebugActorBehaviour.h"
 #include "Actor/DebugActorJamGut.h"
+#include "Actor/DebugActorShip.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Fx.h"
@@ -331,120 +333,155 @@ namespace Debug {
 		}
 	}
 
-	static CFxParticleManager* GetParticleManager() {
-		auto* pFxManager = CScene::ptable.g_EffectsManager_004516b8;
-		if (pFxManager == nullptr) {
-			return nullptr;
-		}
-		return static_cast<CFxParticleManager*>(pFxManager->aEffectCategory[FX_TYPE_PARTICLE]);
-	}
+	static const char* gParticleCategoryNames[FX_TYPE_MAX] = {
+		"Composite",
+		"Path",
+		"Group",
+		"Particle",
+		"Sound",
+		"Random",
+		"LOD"
+	};
 
 	static void DrawParticlesTab() {
-		auto* pParticleManager = GetParticleManager();
-		if (pParticleManager == nullptr) {
+		auto* pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+		if (pFxManager == nullptr) {
 			ImGui::TextDisabled("Particle manager unavailable.");
 			return;
 		}
 
-		// Count active effects (those with an installed manager).
-		int nbActive = 0;
-		for (uint i = 0; i < pParticleManager->nbPool; ++i) {
-			if (pParticleManager->aFx[i].pManager != nullptr) {
-				++nbActive;
+		for (uint i = 0; i < FX_TYPE_MAX; ++i) {
+			if (pFxManager->aEffectCategory[i] != nullptr) {
+				ImGui::Text("Effect category %s: %d active / %d total", gParticleCategoryNames[i], pFxManager->effectCountByType[i], pFxManager->aEffectCategory[i]->GetNbPool());
 			}
 		}
 
-		if (ImGui::TreeNodeEx("System", ImGuiTreeNodeFlags_DefaultOpen)) {
-			auto* pConfig = edParticlesGetConfig();
-			if (pConfig != nullptr) {
-				ImGui::BulletText("Particle pool: %d", pConfig->nbParticles);
-				ImGui::BulletText("Group pool:    %d", pConfig->nbGroups);
-				ImGui::BulletText("Generators:    %d", pConfig->nbGeneratorParams);
-				ImGui::BulletText("Effectors:     %d", pConfig->nbEffectorParams);
-				ImGui::BulletText("Selectors:     %d", pConfig->nbSelectorParams);
-				ImGui::BulletText("Shapers:       %d", pConfig->nbShaperParams);
-			}
-			ImGui::BulletText("FX pool slots: %u  (active: %d)", pParticleManager->nbPool, nbActive);
-			ImGui::TreePop();
-		}
+		for (uint particleTypeIndex = 0; particleTypeIndex < FX_TYPE_MAX; ++particleTypeIndex) {
+			if (pFxManager->aEffectCategory[particleTypeIndex] != nullptr &&
+				ImGui::CollapsingHeader(gParticleCategoryNames[particleTypeIndex], ImGuiTreeNodeFlags_None)) {
+				ImGui::PushID(gParticleCategoryNames[particleTypeIndex]);
+				auto* pParticleManager = static_cast<CFxParticleManager*>(pFxManager->aEffectCategory[particleTypeIndex]);
 
-		ImGui::Separator();
+				if (pParticleManager == nullptr) {
+					ImGui::TextDisabled("Particle manager unavailable.");
+					ImGui::PopID();
+					continue;
+				}
 
-		for (uint i = 0; i < pParticleManager->nbPool; ++i) {
-			CFxNewParticle& fx = pParticleManager->aFx[i];
-			auto* pManager = fx.pManager;
-			if (pManager == nullptr) {
-				continue;
-			}
-
-			// Count alive particles for this effect instance.
-			int nbAlive = 0;
-			auto* pParticles = pManager->aParticles.pData.Get();
-			if (pParticles != nullptr) {
-				for (int p = 0; p < pManager->nbParticles; ++p) {
-					if (pParticles[p].state == PARTICLE_STATE_ALIVE) {
-						++nbAlive;
+				// Count active effects (those with an installed manager).
+				int nbActive = 0;
+				for (uint i = 0; i < pParticleManager->nbPool; ++i) {
+					if (pParticleManager->aFx[i].pManager != nullptr) {
+						++nbActive;
 					}
 				}
-			}
 
-			const bool bPaused = (fx.flags & FX_FLAG_PAUSED) != 0;
-			const bool bHidden = (fx.flags & FX_FLAG_HIDDEN) != 0;
-
-			if (ImGui::TreeNodeEx((void*)(uintptr_t)i, ImGuiTreeNodeFlags_None,
-				"Effect [%u]  %s%s(%d/%d particles, %d groups)",
-				i,
-				bPaused ? "[paused] " : "",
-				bHidden ? "[hidden] " : "",
-				nbAlive, pManager->nbParticles,
-				pManager->nbGroups))
-			{
-				ImGui::Text("Position: %.2f, %.2f, %.2f", fx.position.x, fx.position.y, fx.position.z);
-				ImGui::Text("Flags: 0x%08X", fx.flags);
-
-				if (ImGui::TreeNodeEx("Manager##mgr", ImGuiTreeNodeFlags_None)) {
-					ImGui::Text("Particles:  %d total / %d alive", pManager->nbParticles, nbAlive);
-					ImGui::Text("Groups:     %d / %d (total)", pManager->nbGroups, pManager->nbTotalGroups);
-					ImGui::Text("Generators: %d / %d (config)", pManager->nbGeneratorParams, pManager->nbConfigGeneratorParams);
-					ImGui::Text("Effectors:  %d / %d (config)", pManager->nbEffectorParams, pManager->nbConfigEffectorParams);
-					ImGui::Text("Selectors:  %d / %d (config)", pManager->nbSelectorParams, pManager->nbConfigSelectorParams);
-					ImGui::Text("Shapers:    %d / %d (config)", pManager->nbShaperParams, pManager->nbConfigShaperParams);
+				if (ImGui::TreeNodeEx("System", ImGuiTreeNodeFlags_DefaultOpen)) {
+					auto* pConfig = edParticlesGetConfig();
+					if (pConfig != nullptr) {
+						ImGui::BulletText("Particle pool: %d", pConfig->nbParticles);
+						ImGui::BulletText("Group pool:    %d", pConfig->nbGroups);
+						ImGui::BulletText("Generators:    %d", pConfig->nbGeneratorParams);
+						ImGui::BulletText("Effectors:     %d", pConfig->nbEffectorParams);
+						ImGui::BulletText("Selectors:     %d", pConfig->nbSelectorParams);
+						ImGui::BulletText("Shapers:       %d", pConfig->nbShaperParams);
+					}
+					ImGui::BulletText("FX pool slots: %u  (active: %d)", pParticleManager->nbPool, nbActive);
 					ImGui::TreePop();
 				}
 
-				if (pParticles != nullptr && ImGui::TreeNodeEx("Particles##parts", ImGuiTreeNodeFlags_None)) {
-					ImGui::BeginTable("##ptable", 5,
-						ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
-						ImVec2(0, 200));
-					ImGui::TableSetupColumn("#");
-					ImGui::TableSetupColumn("State");
-					ImGui::TableSetupColumn("Age");
-					ImGui::TableSetupColumn("Lifetime");
-					ImGui::TableSetupColumn("RGBA");
-					ImGui::TableHeadersRow();
+				ImGui::Separator();
 
-					for (int p = 0; p < pManager->nbParticles; ++p) {
-						const _ed_particle& part = pParticles[p];
-						if (part.state == 0) {
-							continue;
+				auto* pTail = pParticleManager->activeList.pTail;
+
+				int index = 0;
+
+				while (true) {
+					if (pTail == nullptr) {
+						break;
+					}
+
+					auto& fx = *pTail->aFx;
+					auto* pManager = fx.pManager;
+					if (pManager == nullptr) {
+						continue;
+					}
+
+					// Count alive particles for this effect instance.
+					int nbAlive = 0;
+					auto* pParticles = pManager->aParticles.pData.Get();
+					if (pParticles != nullptr) {
+						for (int p = 0; p < pManager->nbParticles; ++p) {
+							if (pParticles[p].state == PARTICLE_STATE_ALIVE) {
+								++nbAlive;
+							}
 						}
-						ImGui::TableNextRow();
-						ImGui::TableNextColumn(); ImGui::Text("%d", p);
-						ImGui::TableNextColumn();
-						const char* pStateName =
-							part.state == PARTICLE_STATE_ALIVE     ? "Alive"     :
-							part.state == PARTICLE_STATE_DEAD      ? "Dead"      :
-							part.state == PARTICLE_STATE_DESTROYED ? "Destroyed" : "?";
-						ImGui::TextUnformatted(pStateName);
-						ImGui::TableNextColumn(); ImGui::Text("%.2f", part.age);
-						ImGui::TableNextColumn(); ImGui::Text("%.2f", part.lifetime);
-						ImGui::TableNextColumn(); ImGui::Text("%3d %3d %3d %3d", part.colorR, part.colorG, part.colorB, part.colorA);
 					}
-					ImGui::EndTable();
-					ImGui::TreePop();
+
+					const bool bPaused = (fx.flags & FX_FLAG_PAUSED) != 0;
+					const bool bHidden = (fx.flags & FX_FLAG_HIDDEN) != 0;
+
+					if (ImGui::TreeNodeEx((void*)(uintptr_t)index, ImGuiTreeNodeFlags_None,
+						"Effect [%u]  %s%s(%d/%d particles, %d groups)",
+						index,
+						bPaused ? "[paused] " : "",
+						bHidden ? "[hidden] " : "",
+						nbAlive, pManager->nbParticles,
+						pManager->nbGroups))
+					{
+						ImGui::Text("Position: %.2f, %.2f, %.2f", fx.position.x, fx.position.y, fx.position.z);
+						ImGui::Text("Flags: 0x%08X", fx.flags);
+
+						if (ImGui::TreeNodeEx("Manager##mgr", ImGuiTreeNodeFlags_None)) {
+							ImGui::Text("Particles:  %d total / %d alive", pManager->nbParticles, nbAlive);
+							ImGui::Text("Groups:     %d / %d (total)", pManager->nbGroups, pManager->nbTotalGroups);
+							ImGui::Text("Generators: %d / %d (config)", pManager->nbGeneratorParams, pManager->nbConfigGeneratorParams);
+							ImGui::Text("Effectors:  %d / %d (config)", pManager->nbEffectorParams, pManager->nbConfigEffectorParams);
+							ImGui::Text("Selectors:  %d / %d (config)", pManager->nbSelectorParams, pManager->nbConfigSelectorParams);
+							ImGui::Text("Shapers:    %d / %d (config)", pManager->nbShaperParams, pManager->nbConfigShaperParams);
+							ImGui::TreePop();
+						}
+
+						if (pParticles != nullptr && ImGui::TreeNodeEx("Particles##parts", ImGuiTreeNodeFlags_None)) {
+							ImGui::BeginTable("##ptable", 5,
+								ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+								ImVec2(0, 200));
+							ImGui::TableSetupColumn("#");
+							ImGui::TableSetupColumn("State");
+							ImGui::TableSetupColumn("Age");
+							ImGui::TableSetupColumn("Lifetime");
+							ImGui::TableSetupColumn("RGBA");
+							ImGui::TableHeadersRow();
+
+							for (int p = 0; p < pManager->nbParticles; ++p) {
+								const _ed_particle& part = pParticles[p];
+								if (part.state == 0) {
+									continue;
+								}
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn(); ImGui::Text("%d", p);
+								ImGui::TableNextColumn();
+								const char* pStateName =
+									part.state == PARTICLE_STATE_ALIVE ? "Alive" :
+									part.state == PARTICLE_STATE_DEAD ? "Dead" :
+									part.state == PARTICLE_STATE_DESTROYED ? "Destroyed" : "?";
+								ImGui::TextUnformatted(pStateName);
+								ImGui::TableNextColumn(); ImGui::Text("%.2f", part.age);
+								ImGui::TableNextColumn(); ImGui::Text("%.2f", part.lifetime);
+								ImGui::TableNextColumn(); ImGui::Text("%3d %3d %3d %3d", part.colorR, part.colorG, part.colorB, part.colorA);
+							}
+							ImGui::EndTable();
+							ImGui::TreePop();
+						}
+
+						ImGui::TreePop();
+					}
+
+					pTail = pTail->pNext;
+					index++;
 				}
 
-				ImGui::TreePop();
+				ImGui::PopID();
 			}
 		}
 	}
@@ -659,6 +696,12 @@ namespace Debug {
 			CActorJamGut* pJamGutActor = static_cast<CActorJamGut*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::JamGut::ShowJamGutActorDetails(pJamGutActor);
+		}
+
+		if (pActor->typeID == SHIP) {
+			CActorShip* pShipActor = static_cast<CActorShip*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::Ship::ShowShipActorDetails(pShipActor);
 		}
 	}
 
