@@ -19,17 +19,61 @@ namespace Debug::Actor::Ship
 		return ss.str();
 	}
 
-	static void DrawFlameThrowerShapes(CActorShip* pShip)
+	static void DrawFlameThrowerShapes(CActorShip* pShip, bool bFilled)
 	{
 		// Vision cone — represents the ScanForTarget detection volume.
-		Debug::Components::Vision::DrawVisionShapes(&pShip->vision);
+		if (bFilled) {
+			Debug::Components::Vision::DrawVisionShapesFilled(&pShip->vision);
+		}
+		else {
+			Debug::Components::Vision::DrawVisionShapesWireframe(&pShip->vision);
+		}
 
-		// Kim touch sphere — the CheckForKimTouch(kimTouchRange) radius.
-		const edF32VECTOR4& pos = pShip->currentLocation;
-		Renderer::Native::DebugShapes::AddSphere(
-			pos.x, pos.y, pos.z,
-			pShip->kimTouchRange,
-			0.2f, 0.6f, 1.0f, 0.5f);
+		// Mirror CheckForKimTouch: iterate every active FX particle and draw a
+		// sphere at its world position.  Colour indicates whether that particle
+		// is currently within kimTouchRange of Kya (red = touching, orange = not).
+		const CFxArrayManager& mgr = pShip->fxArrayManager;
+		const edF32VECTOR4& kimPos = CActorHero::_gThis->currentLocation;
+		const float rangeSq = pShip->kimTouchRange * pShip->kimTouchRange;
+
+		int curNb = mgr.nb;
+		while (curNb != 0) {
+			--curNb;
+			const ACTIVE_PATHS_CONTAINER& container = mgr.aActivePathContainers[curNb];
+			int iVar9 = container.field_0x4;
+			while (iVar9 != 0) {
+				--iVar9;
+				const CFxHandle& handle = container.aActivePaths[iVar9];
+				if (!const_cast<CFxHandle&>(handle).IsValid()) {
+					continue;
+				}
+
+				const edF32VECTOR4& fxPos = handle.pFx->position;
+				const float dx = fxPos.x - kimPos.x;
+				const float dy = fxPos.y - kimPos.y;
+				const float dz = fxPos.z - kimPos.z;
+				const bool bTouching = (dx * dx + dy * dy + dz * dz) < rangeSq;
+
+				if (bFilled) {
+					Renderer::Native::DebugShapes::AddFilledSphere(
+						fxPos.x, fxPos.y, fxPos.z,
+						0.15f,
+						bTouching ? 1.0f : 1.0f,
+						bTouching ? 0.1f : 0.5f,
+						bTouching ? 0.1f : 0.1f,
+						0.8f);
+				}
+				else {
+					Renderer::Native::DebugShapes::AddSphere(
+						fxPos.x, fxPos.y, fxPos.z,
+						0.15f,
+						bTouching ? 1.0f : 1.0f,
+						bTouching ? 0.1f : 0.5f,
+						bTouching ? 0.1f : 0.1f,
+						0.8f);
+				}
+			}
+		}
 	}
 
 	static void ShowFxArrayManagerInfo(const CFxArrayManager& mgr)
@@ -62,7 +106,15 @@ namespace Debug::Actor::Ship
 			return;
 		}
 
-		DrawFlameThrowerShapes(pShip);
+		if (ImGui::Button("Proceed to thrower")) {
+			for (int i = 0; i < pShip->nbCareBoys; i++) {
+				pShip->DoMessage(pShip, MESSAGE_TRAP_CAUGHT, 0);
+			}
+		}
+
+		static bool shapesFilled = false;
+		ImGui::Checkbox("Flamethrower Shapes Filled", &shapesFilled);
+		DrawFlameThrowerShapes(pShip, shapesFilled);
 
 		const float red = pShip->vision.ScanForTarget(CActorHero::_gThis, SCAN_MODE_AMORTISED) ? 1.0f : 0.2f;
 

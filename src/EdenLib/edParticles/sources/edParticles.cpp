@@ -199,7 +199,7 @@ ed_part_system_config* edParticlesGetSystemConfig()
 	return &g_particle_system_config;
 }
 
-_ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scene* pScene, ed_g2d_manager* param_3, edDList_material** ppMaterials, ulong* pHashes, int materialIndex, ed_g3d_manager* p3dManager, bool param_8)
+_ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scene* pScene, ed_g2d_manager* pInManager, edDList_material** ppMaterials, ulong* pHashes, int materialIndex, ed_g3d_manager* p3dManager, bool param_8)
 {
 	edF32VECTOR4* peVar2;
 	undefined4 uVar3;
@@ -229,11 +229,11 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 	uint flags;
 	ulong hash;
 	int local_60;
-	ed_g2d_manager* local_34;
+	ed_g2d_manager* pNewManager;
 	int iStack4;
 
 	bVar6 = false;
-	local_34 = (ed_g2d_manager*)0x0;
+	pNewManager = (ed_g2d_manager*)0x0;
 
 	int offset = (pFileData->manager).aParticles.offset;
 	if (offset != 0x0) {
@@ -435,71 +435,71 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 				}
 			}
 			else {
-				if (param_3 == (ed_g2d_manager*)0x0) {
-					if (pShaperParam->field_0x40.offset != 0) {
-						pcVar13 = reinterpret_cast<char*>(pFileData) + pShaperParam->field_0x40.offset;
+				if (pInManager == (ed_g2d_manager*)0x0) {
+					if (pShaperParam->pG2dManager.offset != 0) {
+						pcVar13 = reinterpret_cast<char*>(pFileData) + pShaperParam->pG2dManager.offset;
 						if (bVar6) {
-							pShaperParam->field_0x40.pData = local_34;
+							pShaperParam->pG2dManager.pData = pNewManager;
 						}
 						else {
-							local_34 = ed3DInstallG2D(pcVar13, *(int*)(pcVar13 + 8), &iStack4, (ed_g2d_manager*)0x0, 1);
-							pShaperParam->field_0x40.pData = local_34;
+							pNewManager = ed3DInstallG2D(pcVar13, *(int*)(pcVar13 + 8), &iStack4, (ed_g2d_manager*)0x0, 1);
+							pShaperParam->pG2dManager.pData = pNewManager;
 							bVar6 = true;
 						}
 					}
 				}
 				else {
-					pShaperParam->field_0x40.pData = param_3;
+					pShaperParam->pG2dManager.pData = pInManager;
 				}
 
-				if (pShaperParam->field_0x48.offset == 0) {
+				if (pShaperParam->aHashCodes.offset == 0) {
 					edDebugPrintf("�>>>>>>>>>>>>>>>>>>>>>>>>>>>>> edPARTICLE_INSTALL, no material haschode found ! �");
 				}
 				
-				pShaperParam->field_0x48.pData = reinterpret_cast<ulong*>(reinterpret_cast<char*>(pFileData) + pShaperParam->field_0x48.offset);
+				pShaperParam->aHashCodes.pData = reinterpret_cast<ulong*>(reinterpret_cast<char*>(pFileData) + pShaperParam->aHashCodes.offset);
 
 				if (ppMaterials == (edDList_material**)0x0) {
 					iVar12 = 0;
 
 #ifdef PLATFORM_WIN
-					pShaperParam->field_0x44.pData = new edDList_material[pShaperParam->field_0xb];
+					pShaperParam->aDlistMaterials.pData = new edDList_material[pShaperParam->field_0xb];
 #else
-					pShaperParam->field_0x44.pData = reinterpret_cast<edDList_material*>(reinterpret_cast<char*>(pFileData) + pShaperParam->field_0x44.offset);
+					pShaperParam->aDlistMaterials.pData = reinterpret_cast<edDList_material*>(reinterpret_cast<char*>(pFileData) + pShaperParam->aDlistMaterials.offset);
 #endif
 					pShaperParam->field_0x18c = 0;
 
 					while (iVar12 < pShaperParam->field_0xb) {
-						pShaperParam->field_0x44.pData[iVar12].pManager = (ed_g2d_manager*)0x0;
-						hash = pShaperParam->field_0x48.pData[iVar12];
-						peVar8 = ed3DG2DGetMaterial(pShaperParam->field_0x40.pData, hash);
+						pShaperParam->aDlistMaterials.pData[iVar12].pManager = (ed_g2d_manager*)0x0;
+						hash = pShaperParam->aHashCodes.pData[iVar12];
+						peVar8 = ed3DG2DGetMaterial(pShaperParam->pG2dManager.pData, hash);
 						if (peVar8 == (ed_hash_code*)0x0) {
 							edDebugPrintf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> edPARTICLE_INSTALL, No material found for this particle effect !\n");
 							iVar12 = iVar12 + 1;
 						}
 						else {
-							edDListCreatMaterialFromHashCode(&pShaperParam->field_0x44.pData[iVar12], hash, pShaperParam->field_0x40.pData, 2);
+							edDListCreatMaterialFromHashCode(&pShaperParam->aDlistMaterials.pData[iVar12], hash, pShaperParam->pG2dManager.pData, 2);
 							iVar12 = iVar12 + 1;
 						}
 					}
 				}
 				else {
 #ifdef PLATFORM_WIN
-					pShaperParam->field_0x44.pData = new edDList_material[pShaperParam->field_0xb];
+					pShaperParam->aDlistMaterials.pData = new edDList_material[pShaperParam->field_0xb];
 #else
-					pShaperParam->field_0x44.pData = reinterpret_cast<edDList_material*>(reinterpret_cast<char*>(pFileData) + pShaperParam->field_0x44.offset);
+					pShaperParam->aDlistMaterials.pData = reinterpret_cast<edDList_material*>(reinterpret_cast<char*>(pFileData) + pShaperParam->aDlistMaterials.offset);
 #endif
 
 					for (iVar12 = 0; iVar12 < pShaperParam->field_0xb; iVar12 = iVar12 + 1) {
 						for (iVar24 = 0; iVar24 < materialIndex; iVar24 = iVar24 + 1) {
-							if (pShaperParam->field_0x48.pData[iVar12] == pHashes[iVar24]) {
-								pShaperParam->field_0x44.pData[iVar12] = *ppMaterials[iVar24];
+							if (pShaperParam->aHashCodes.pData[iVar12] == pHashes[iVar24]) {
+								pShaperParam->aDlistMaterials.pData[iVar12] = *ppMaterials[iVar24];
 								break;
 							}
 						}
 
 						if (iVar24 == materialIndex) {
 							edDebugPrintf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>  Material not found\n");
-							pShaperParam->field_0x44.pData[iVar12].pManager = (ed_g2d_manager*)0x0;
+							pShaperParam->aDlistMaterials.pData[iVar12].pManager = (ed_g2d_manager*)0x0;
 						}
 					}
 					
@@ -513,19 +513,19 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 			if (pShaperParam->drawMode != 3) {
 				pShaperParam->field_0x11c = 6;
 				pShaperParam->field_0x120 = (uint)pShaperParam->field_0xb << 1;
-				pShaperParam->field_0xc = 1;
+				pShaperParam->nbMaterials = 1;
 
 				local_60 = pShaperParam->field_0x120;
 				flags = 0x11;
 				if (pShaperParam->drawMode == 2) {
 					flags = 0x111;
 					local_60 = 2;
-					pShaperParam->field_0xc = (uint)pShaperParam->field_0xb;
+					pShaperParam->nbMaterials = (uint)pShaperParam->field_0xb;
 					pShaperParam->field_0x118 = 2;
 				}
 
 				iVar12 = 0;
-				while (iVar12 < pShaperParam->field_0xc) {
+				while (iVar12 < pShaperParam->nbMaterials) {
 					if (param_8 == false) {
 						nbMatrices = 0;
 						iVar24 = pShaperParam->field_0x11c * pCurGroup->field_0x10;
@@ -3081,53 +3081,37 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 
 				if (drawMode == 3) {
 					peVar18 = &pDrawData->worldMatrix;
-					edF32VECTOR4* pVecIter = frustumPlaneNormals;
-					iVar15 = 4;
-					do {
-						pVecIter->x = peVar18->aa;
-						pVecIter->y = peVar18->ab;
-						pVecIter->z = peVar18->ac;
-						pVecIter->w = peVar18->ad;
-						peVar18 = (edF32MATRIX4*)&peVar18->ba;
-						pVecIter++;
-						iVar15--;
-					} while (0 < iVar15);
-					fVar27 = 1.0 / (sqrtf(frustumPlaneNormals[0].x * frustumPlaneNormals[0].x + frustumPlaneNormals[0].y * frustumPlaneNormals[0].y +
-						frustumPlaneNormals[0].z * frustumPlaneNormals[0].z) + 0.0);
+					edF32MATRIX4* pVecIter = reinterpret_cast<edF32MATRIX4*>(frustumPlaneNormals);
+					*pVecIter = pDrawData->worldMatrix;
+					
+					fVar27 = 1.0f / (sqrtf(frustumPlaneNormals[0].x * frustumPlaneNormals[0].x + frustumPlaneNormals[0].y * frustumPlaneNormals[0].y +
+						frustumPlaneNormals[0].z * frustumPlaneNormals[0].z) + 0.0f);
 					frustumPlaneNormals[0].x = frustumPlaneNormals[0].x * fVar27;
 					frustumPlaneNormals[0].y = frustumPlaneNormals[0].y * fVar27;
 					frustumPlaneNormals[0].z = frustumPlaneNormals[0].z * fVar27;
-					frustumPlaneNormals[0].w = 0.0;
-					fVar27 = 1.0 / (sqrtf(frustumPlaneNormals[1].x * frustumPlaneNormals[1].x + frustumPlaneNormals[1].y * frustumPlaneNormals[1].y +
+					frustumPlaneNormals[0].w = 0.0f;
+					fVar27 = 1.0f / (sqrtf(frustumPlaneNormals[1].x * frustumPlaneNormals[1].x + frustumPlaneNormals[1].y * frustumPlaneNormals[1].y +
 						frustumPlaneNormals[1].z * frustumPlaneNormals[1].z) + 0.0);
 					frustumPlaneNormals[1].x = frustumPlaneNormals[1].x * fVar27;
 					frustumPlaneNormals[1].y = frustumPlaneNormals[1].y * fVar27;
 					frustumPlaneNormals[1].z = frustumPlaneNormals[1].z * fVar27;
-					frustumPlaneNormals[1].w = 0.0;
-					fVar27 = 1.0 / (sqrtf(frustumPlaneNormals[2].x * frustumPlaneNormals[2].x + frustumPlaneNormals[2].y * frustumPlaneNormals[2].y +
-						frustumPlaneNormals[2].z * frustumPlaneNormals[2].z) + 0.0);
+					frustumPlaneNormals[1].w = 0.0f;
+					fVar27 = 1.0f / (sqrtf(frustumPlaneNormals[2].x * frustumPlaneNormals[2].x + frustumPlaneNormals[2].y * frustumPlaneNormals[2].y +
+						frustumPlaneNormals[2].z * frustumPlaneNormals[2].z) + 0.0f);
 					frustumPlaneNormals[2].x = frustumPlaneNormals[2].x * fVar27;
 					frustumPlaneNormals[2].y = frustumPlaneNormals[2].y * fVar27;
 					frustumPlaneNormals[2].z = frustumPlaneNormals[2].z * fVar27;
-					frustumPlaneNormals[2].w = 0.0;
+					frustumPlaneNormals[2].w = 0.0f;
+
 					for (; startIndex < endIndex; startIndex = startIndex + 1) {
 						pNode = pCurParticle->pNode;
 						if ((pCurParticle->field_0x0 == 2) && (pCurParticle->state == 2)) {
 							ed3DHierarchyNodeClrFlag(pNode, 0x40);
 							peVar5 = (ed_g3d_hierarchy*)pNode->pData;
-							pVecIter = frustumPlaneNormals;
-							iVar15 = 8;
-							peVar19 = peVar5;
-							do {
-								iVar15--;
-								fVar27 = pVecIter->y;
-								(peVar19->transformA).aa = pVecIter->x;
-								pVecIter = (edF32VECTOR4*)&pVecIter->z;
-								(peVar19->transformA).ab = fVar27;
-								peVar19 = (ed_g3d_hierarchy*)&(peVar19->transformA).ac;
-							} while (0 < iVar15);
-							edF32Matrix4MulF32Vector4Hard(
-								(edF32VECTOR4*)&(peVar5->transformA).da, &pDrawData->worldMatrix, pCurRawVector);
+							pVecIter = reinterpret_cast<edF32MATRIX4*>(frustumPlaneNormals);
+							peVar5->transformA = *pVecIter;
+							
+							edF32Matrix4MulF32Vector4Hard(&(peVar5->transformA).rowT, &pDrawData->worldMatrix, pCurRawVector);
 							(peVar5->transformA).dd = 1.0f;
 							fVar27 = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->sizeByte * 0.5f;
 							(peVar5->transformA).aa *= fVar27;
@@ -3166,7 +3150,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 						sortCount = 0;
 						blendAlpha = (int)fVar27 & 0xff;
 						if ((pDrawData->sortFlags & 0x1f) != 0) {
-								ed3DSceneComputeCameraToScreenMatrix(pDrawData->field_0x198, &cameraToScreenMat);
+							ed3DSceneComputeCameraToScreenMatrix(pDrawData->field_0x198, &cameraToScreenMat);
 							edF32Matrix4MulF32Matrix4Hard(&eStack496, &pDrawData->field_0x198->pCamera->worldToCamera, &cameraToScreenMat);
 							if ((pDrawData->sortFlags & 3) != 0) {
 								pCurParticle = pParticle + startIndex;
@@ -3258,11 +3242,11 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 							}
 						}
 
-						if (pDrawData->field_0x44.pData->pManager == (ed_g2d_manager*)0x0) {
+						if (pDrawData->aDlistMaterials.pData->pManager == (ed_g2d_manager*)0x0) {
 							edDListUseMaterial((edDList_material*)0x0);
 						}
 						else {
-							edDListUseMaterial(pDrawData->field_0x44.pData);
+							edDListUseMaterial(pDrawData->aDlistMaterials.pData);
 						}
 
 						edDListBlendSet(1);
@@ -3498,11 +3482,13 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 					}
 					else {
 						if (drawMode == 2) {
-								iVar15 = 0;
+							iVar15 = 0;
+
 							if (pDrawData->field_0x118 == 0) {
 								if (pDrawData->field_0x124[0] != (DisplayList*)0x0) {
 									edDListSetCurrent(pDrawData->field_0x124[0]);
 								}
+
 								blendAlpha = pGroup->field_0x10;
 								edDListPatchableInfo(&positionBuf, &colorBuf, &stBuf, &sizeBuf, blendAlpha, 0);
 								pCurParticle = pParticle + startIndex;
@@ -3531,6 +3517,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 											puVar20[1] = (short)(int)(particleYScale * 4096.0);
 											prevYScale = particleYScale;
 										}
+
 										if (pDrawData->field_0x6e != 0) {
 											puVar17 = (uint*)((char*)colorBuf + startIndex * 0x10);
 											*puVar17 = pCurParticle->baseColor;
@@ -3538,6 +3525,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 											puVar17[2] = pCurParticle->baseColor;
 											puVar17[3] = pCurParticle->baseColor;
 										}
+
 										if (pDrawData->field_0x6c != 0) {
 											fVar28 = pCurRawVector->y;
 											fVar27 = pCurRawVector->z;
@@ -3547,23 +3535,29 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 											pPositionBuf[2] = fVar27;
 										}
 									}
+
 									pCurParticle = pCurParticle + 1;
 									pCurRawVector = pCurRawVector + 1;
 								}
+
 								edDListPatcheEnd(blendAlpha, 1);
+
 								if (pDrawData->field_0x124[0] != (DisplayList*)0x0) {
 									edDlistAddtoView(pDrawData->field_0x124[0]);
 								}
 							}
 							else {
-								iVar10 = pDrawData->field_0xc;
+								// Multi material.
+								iVar10 = pDrawData->nbMaterials;
 								for (; iVar15 < iVar10; iVar15 = iVar15 + 1) {
 									if (pDrawData->field_0x124[iVar15] != (DisplayList*)0x0) {
 										edDListSetCurrent(pDrawData->field_0x124[iVar15]);
 									}
+
 									edDListLoadMatrix(&pDrawData->worldMatrix);
-									edDListUseMaterial(pDrawData->field_0x44.pData + iVar15);
+									edDListUseMaterial(pDrawData->aDlistMaterials.pData + iVar15);
 									edDListBegin(0.0f, 0.0f, 0.0f, 0xb, pGroup->field_0x10);
+
 									for (iVar10 = 0; iVar10 < pGroup->field_0x10; iVar10 = iVar10 + 1) {
 										edDListColor4u8((pDrawData->field_0x50).r, (pDrawData->field_0x50).g, (pDrawData->field_0x50).b, (pDrawData->field_0x50).a);
 										edDListTexCoo2f(pDrawData->field_0x54, pDrawData->field_0x58);
@@ -3571,12 +3565,15 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 										edDListWidthHeight2f(pDrawData->field_0x64, pDrawData->field_0x68);
 										edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 									}
+
 									edDListEnd();
 									if (pDrawData->field_0x124[iVar15] != (DisplayList*)0x0) {
 										edDlistAddtoView(pDrawData->field_0x124[iVar15]);
 									}
-									iVar10 = pDrawData->field_0xc;
+
+									iVar10 = pDrawData->nbMaterials;
 								}
+
 								pDrawData->field_0x118 = pDrawData->field_0x118 + -1;
 							}
 						}
@@ -3675,14 +3672,14 @@ void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene)
 			else {
 				bVar1 = pShaperParam->field_0xb;
 				for (; iVar3 < (int)(uint)bVar1; iVar3 = iVar3 + 1) {
-					if ((pShaperParam->field_0x44.pData[iVar3].pManager != (ed_g2d_manager*)0x0) && (pShaperParam->field_0x18c == 0)) {
-						edDListTermMaterial(pShaperParam->field_0x44.pData + iVar3);
+					if ((pShaperParam->aDlistMaterials.pData[iVar3].pManager != (ed_g2d_manager*)0x0) && (pShaperParam->field_0x18c == 0)) {
+						edDListTermMaterial(pShaperParam->aDlistMaterials.pData + iVar3);
 					}
 
 					bVar1 = pShaperParam->field_0xb;
 				}
 
-				for (iVar3 = 0; iVar3 < pShaperParam->field_0xc; iVar3 = iVar3 + 1) {
+				for (iVar3 = 0; iVar3 < pShaperParam->nbMaterials; iVar3 = iVar3 + 1) {
 					if (pShaperParam->field_0x124[iVar3].Get() != 0) {
 						edDListDelete(pShaperParam->field_0x124[iVar3]);
 					}

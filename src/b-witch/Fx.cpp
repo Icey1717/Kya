@@ -353,7 +353,9 @@ void _SortDecreasing(T* pData, uint count)
 				psVar3 = pData + uVar5;
 				do {
 					if (psVar4->field_0x4 < psVar3->field_0x4) {
+						T tmp = *psVar4;
 						*psVar4 = *psVar3;
+						*psVar3 = tmp;
 					}
 
 					uVar5 = uVar5 + 1;

@@ -199,7 +199,7 @@ struct _ed_particle_shaper_param
 	byte field_0x9;
 	byte field_0xa;
 	byte field_0xb;
-	int field_0xc;
+	int nbMaterials;
 
 	byte _pad_10_[0x10];
 
@@ -207,9 +207,9 @@ struct _ed_particle_shaper_param
 
 	byte _pad_0_[0x14];
 
-	OffsetPointer<ed_g2d_manager*> field_0x40;
-	OffsetPointer<edDList_material*> field_0x44;
-	OffsetPointer<ulong*> field_0x48;
+	OffsetPointer<ed_g2d_manager*> pG2dManager;
+	OffsetPointer<edDList_material*> aDlistMaterials;
+	OffsetPointer<ulong*> aHashCodes;
 
 	byte _pad_1a_[0x4];       // 0x4c-0x4f: unknown
 	_rgba field_0x50;          // 0x50: Mode 3 vertex color

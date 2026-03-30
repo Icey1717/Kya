@@ -65,7 +65,7 @@ namespace Debug::Components::Vision
 		}
 	}
 
-	void DrawVisionShapes(CVision* pVision)
+	static void DrawVisionShapesImpl(CVision* pVision, bool bFilled, bool bWireframe)
 	{
 		if (!pVision || pVision->visionRange <= 0.01f || pVision->halfAngle <= 0.001f) {
 			return;
@@ -121,69 +121,73 @@ namespace Debug::Components::Vision
 
 			// Filled approximation: fan of OBB slices covering the arc, each a thin rectangular
 			// prism at the slice's mid-angle direction.  Drawn first so wireframe sits on top.
-			constexpr int kFillSlices = 8;
-			const float dTheta    = 2.0f * halfAngle / kFillSlices;
-			const float avgR      = (innerRadius + totalLen) * 0.5f;
-			const float halfDepth = range * 0.5f;
-			const float sliceHW   = avgR * sinf(dTheta * 0.5f);
+			if (bFilled) {
+				constexpr int kFillSlices = 8;
+				const float dTheta    = 2.0f * halfAngle / kFillSlices;
+				const float avgR      = (innerRadius + totalLen) * 0.5f;
+				const float halfDepth = range * 0.5f;
+				const float sliceHW   = avgR * sinf(dTheta * 0.5f);
 
-			for (int i = 0; i < kFillSlices; ++i) {
-				const float theta = -halfAngle + (i + 0.5f) * dTheta;
-				const float cosT  = cosf(theta), sinT = sinf(theta);
-				// Mid-direction of this slice in XZ.
-				const float mdx = dfx * cosT - dfz * sinT;
-				const float mdz = dfx * sinT + dfz * cosT;
-				// Perpendicular direction (rotate 90° CW in XZ).
-				const float pdx = -mdz, pdz = mdx;
-				const float scx = apexX + mdx * (innerRadius + halfDepth);
-				const float scz = apexZ + mdz * (innerRadius + halfDepth);
-				// mat4x4: axisX = perp, axisY = world-up, axisZ = mid-dir, rowT = centre.
-				float sliceMat[16] = {
-					pdx,  0.0f, pdz,  0.0f,
-					0.0f, 1.0f, 0.0f, 0.0f,
-					mdx,  0.0f, mdz,  0.0f,
-					scx,  apexY, scz, 1.0f,
+				for (int i = 0; i < kFillSlices; ++i) {
+					const float theta = -halfAngle + (i + 0.5f) * dTheta;
+					const float cosT  = cosf(theta), sinT = sinf(theta);
+					// Mid-direction of this slice in XZ.
+					const float mdx = dfx * cosT - dfz * sinT;
+					const float mdz = dfx * sinT + dfz * cosT;
+					// Perpendicular direction (rotate 90° CW in XZ).
+					const float pdx = -mdz, pdz = mdx;
+					const float scx = apexX + mdx * (innerRadius + halfDepth);
+					const float scz = apexZ + mdz * (innerRadius + halfDepth);
+					// mat4x4: axisX = perp, axisY = world-up, axisZ = mid-dir, rowT = centre.
+					float sliceMat[16] = {
+						pdx,  0.0f, pdz,  0.0f,
+						0.0f, 1.0f, 0.0f, 0.0f,
+						mdx,  0.0f, mdz,  0.0f,
+						scx,  apexY, scz, 1.0f,
+					};
+					Renderer::Native::DebugShapes::AddFilledOBB(sliceMat, sliceHW, halfHeight, halfDepth,
+						1.0f, 0.4f, 0.0f, 0.18f);
+				}
+			}
+
+			if (bWireframe) {
+				auto line = [](float x1, float y1, float z1, float x2, float y2, float z2) {
+					Renderer::Native::DebugShapes::AddLine(x1, y1, z1, x2, y2, z2, 1.0f, 0.6f, 0.0f, 0.9f);
 				};
-				Renderer::Native::DebugShapes::AddFilledOBB(sliceMat, sliceHW, halfHeight, halfDepth,
-					1.0f, 0.4f, 0.0f, 0.18f);
-			}
 
-			auto line = [](float x1, float y1, float z1, float x2, float y2, float z2) {
-				Renderer::Native::DebugShapes::AddLine(x1, y1, z1, x2, y2, z2, 1.0f, 0.6f, 0.0f, 0.9f);
-			};
+				// Vertical line at apex centre.
+				line(apexX, topY, apexZ, apexX, botY, apexZ);
 
-			// Vertical line at apex centre.
-			line(apexX, topY, apexZ, apexX, botY, apexZ);
+				// Lateral edges from apex to far corners (top and bottom faces).
+				line(apexX, topY, apexZ, flx, topY, flz);
+				line(apexX, topY, apexZ, frx, topY, frz);
+				line(apexX, botY, apexZ, flx, botY, flz);
+				line(apexX, botY, apexZ, frx, botY, frz);
 
-			// Lateral edges from apex to far corners (top and bottom faces).
-			line(apexX, topY, apexZ, flx, topY, flz);
-			line(apexX, topY, apexZ, frx, topY, frz);
-			line(apexX, botY, apexZ, flx, botY, flz);
-			line(apexX, botY, apexZ, frx, botY, frz);
+				// Vertical edges at the far corners.
+				line(flx, topY, flz, flx, botY, flz);
+				line(frx, topY, frz, frx, botY, frz);
 
-			// Vertical edges at the far corners.
-			line(flx, topY, flz, flx, botY, flz);
-			line(frx, topY, frz, frx, botY, frz);
+				// Inner-face boundary (minimum range), if significant.
+				if (innerRadius > 0.01f) {
+					line(ilx, topY, ilz, irx, topY, irz);
+					line(ilx, botY, ilz, irx, botY, irz);
+					line(ilx, topY, ilz, ilx, botY, ilz);
+					line(irx, topY, irz, irx, botY, irz);
+				}
 
-			// Inner-face boundary (minimum range), if significant.
-			if (innerRadius > 0.01f) {
-				line(ilx, topY, ilz, irx, topY, irz);
-				line(ilx, botY, ilz, irx, botY, irz);
-				line(ilx, topY, ilz, ilx, botY, ilz);
-				line(irx, topY, irz, irx, botY, irz);
-			}
-
-			// Arc along the far face in both the top and bottom planes.
-			constexpr int kArcSegs = 8;
-			float prevX = flx, prevZ = flz;
-			for (int i = 1; i <= kArcSegs; ++i) {
-				const float t     = static_cast<float>(i) / kArcSegs;
-				const float angle = halfAngle * (1.0f - 2.0f * t); // +halfAngle → -halfAngle
-				const float nx    = apexX + totalLen * (dfx * cosf(angle) - dfz * sinf(angle));
-				const float nz    = apexZ + totalLen * (dfx * sinf(angle) + dfz * cosf(angle));
-				line(prevX, topY, prevZ, nx, topY, nz);
-				line(prevX, botY, prevZ, nx, botY, nz);
-				prevX = nx; prevZ = nz;
+				// Arc along the far face in both the top and bottom planes.
+				constexpr int kArcSegs = 8;
+				float prevX = flx, prevZ = flz;
+				for (int i = 1; i <= kArcSegs; ++i) {
+					const float t     = static_cast<float>(i) / kArcSegs;
+					const float angle = halfAngle * (1.0f - 2.0f * t); // +halfAngle → -halfAngle
+					const float nx    = apexX + totalLen * (dfx * cosf(angle) - dfz * sinf(angle));
+					const float nz    = apexZ + totalLen * (dfx * sinf(angle) + dfz * cosf(angle));
+					line(prevX, topY, prevZ, nx, topY, nz);
+					line(prevX, botY, prevZ, nx, botY, nz);
+					prevX = nx; prevZ = nz;
+				}
 			}
 		}
 		else
@@ -219,8 +223,12 @@ namespace Debug::Components::Vision
 				cx,               cy,               cz,               1.0f,
 			};
 
-			Renderer::Native::DebugShapes::AddFilledCone(mat, 1.0f, 0.4f, 0.0f, 0.18f);
-			Renderer::Native::DebugShapes::AddCone(mat, 1.0f, 0.6f, 0.0f, 0.9f);
+			if (bFilled)    { Renderer::Native::DebugShapes::AddFilledCone(mat, 1.0f, 0.4f, 0.0f, 0.18f); }
+			if (bWireframe) { Renderer::Native::DebugShapes::AddCone(mat, 1.0f, 0.6f, 0.0f, 0.9f); }
 		}
 	}
+
+	void DrawVisionShapesFilled(CVision* pVision)    { DrawVisionShapesImpl(pVision, true,  false); }
+	void DrawVisionShapesWireframe(CVision* pVision) { DrawVisionShapesImpl(pVision, false, true);  }
+	void DrawVisionShapes(CVision* pVision)          { DrawVisionShapesImpl(pVision, true,  true);  }
 }

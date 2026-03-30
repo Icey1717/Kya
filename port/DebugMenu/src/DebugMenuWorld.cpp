@@ -1,4 +1,5 @@
 #include "DebugMenuWorld.h"
+#include "DebugMenuWorld.h"
 
 #include <profiling.h>
 #include <imgui.h>
@@ -31,9 +32,11 @@
 #include "Actor/DebugActorShip.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
+#include "Native/NativeDebugShapes.h"
 #include "Fx.h"
 #include "FxParticle.h"
 #include "edParticles/edParticles.h"
+#include "Texture.h"
 
 namespace Debug {
 
@@ -58,6 +61,8 @@ namespace Debug {
 	static Debug::Setting<bool> gShowInspectorPanel("Show Inspector Panel", true);
 	static int gSectorFilter = -1;
 	static Debug::Setting<int> gActorInspectorMessageValue("Actor Inspector Message Value", 0);
+	static Debug::Setting<int> gInspectorSelectionType("Inspector Selection Type", 0);
+	static Debug::Setting<int> gInspectorSelectionValue("Inspector Selection Value", 0);
 
 	static constexpr const char* kWorldWindowName = "World";
 	static constexpr const char* kInspectorWindowName = "Inspector";
@@ -97,6 +102,18 @@ namespace Debug {
 		gInspectorSelection = {};
 		gInspectorSelection.type = InspectorSelectionType::Actor;
 		gInspectorSelection.pActor = pActor;
+		gInspectorSelectionType = static_cast<int>(InspectorSelectionType::Actor);
+
+		auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+		if (pActorManager != nullptr) {
+			for (int i = 0; i < pActorManager->nbActors; ++i) {
+				if (pActorManager->aActors[i] == pActor) {
+					gInspectorSelectionValue = i;
+					break;
+				}
+			}
+		}
+
 		FocusInspector();
 	}
 
@@ -343,7 +360,48 @@ namespace Debug {
 		"LOD"
 	};
 
-	static void DrawParticlesTab() {
+	static void DrawParticleShaperInfo(_ed_particle_manager* pManager)
+	{
+		if (ImGui::TreeNodeEx("Shapers", ImGuiTreeNodeFlags_None)) {
+			for (int shaperIndex = 0; shaperIndex < pManager->nbShaperParams; ++shaperIndex) {
+				ImGui::PushID(shaperIndex);
+
+				auto* pShaper = pManager->aShaperParams.pData + shaperIndex;
+				if (pShaper != nullptr) {
+					for (int shaperMaterialIndex = 0; shaperMaterialIndex < pShaper->nbMaterials; ++shaperMaterialIndex) {
+						ImGui::PushID(shaperMaterialIndex);
+						auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
+						edDList_material* pMaterial = pShaper->aDlistMaterials.pData + shaperMaterialIndex;
+
+						auto* pRenderMaterial = textureLibrary.FindMaterial(pMaterial->pMaterial);
+
+						for (auto& layer : pRenderMaterial->layers) {
+							ImGui::PushID(&layer);
+							for (auto& texture : layer.textures) {
+								ImGui::PushID(&texture);
+								if (ImGui::Selectable(texture.pSimpleTexture->GetName().c_str(), false)) {
+									//texture.pSimpleTexture->DebugShow();
+								}
+
+								ImGui::PopID(); // texture
+							}
+
+							ImGui::PopID(); // layer
+						}
+
+						ImGui::PopID(); // shaper material
+					}
+
+					ImGui::PopID(); // shaper
+				}
+			}
+
+			ImGui::TreePop();
+		}
+	}
+
+	static void DrawParticlesTab()
+	{
 		auto* pFxManager = CScene::ptable.g_EffectsManager_004516b8;
 		if (pFxManager == nullptr) {
 			ImGui::TextDisabled("Particle manager unavailable.");
@@ -404,16 +462,23 @@ namespace Debug {
 					auto& fx = *pTail->aFx;
 					auto* pManager = fx.pManager;
 					if (pManager == nullptr) {
+						pTail = pTail->pNext;
 						continue;
 					}
 
-					// Count alive particles for this effect instance.
+					ImGui::PushID(&fx);
+
+					// Count alive and visible (render-path eligible) particles for this effect instance.
 					int nbAlive = 0;
+					int nbVisible = 0;
 					auto* pParticles = pManager->aParticles.pData.Get();
 					if (pParticles != nullptr) {
 						for (int p = 0; p < pManager->nbParticles; ++p) {
 							if (pParticles[p].state == PARTICLE_STATE_ALIVE) {
 								++nbAlive;
+							}
+							if (pParticles[p].visible) {
+								++nbVisible;
 							}
 						}
 					}
@@ -422,13 +487,18 @@ namespace Debug {
 					const bool bHidden = (fx.flags & FX_FLAG_HIDDEN) != 0;
 
 					if (ImGui::TreeNodeEx((void*)(uintptr_t)index, ImGuiTreeNodeFlags_None,
-						"Effect [%u]  %s%s(%d/%d particles, %d groups)",
+						"Effect [%u]  %s%s(%d/%d particles, %d visible, %d groups)",
 						index,
 						bPaused ? "[paused] " : "",
 						bHidden ? "[hidden] " : "",
 						nbAlive, pManager->nbParticles,
+						nbVisible,
 						pManager->nbGroups))
 					{
+						Renderer::Native::DebugShapes::AddSphere(fx.position.x, fx.position.y, fx.position.z, 0.5f, 1.0f, 0.5f, 0.0f, 1.0f);
+
+						DrawParticleShaperInfo(pManager);
+
 						ImGui::Text("Position: %.2f, %.2f, %.2f", fx.position.x, fx.position.y, fx.position.z);
 						ImGui::Text("Flags: 0x%08X", fx.flags);
 
@@ -443,11 +513,13 @@ namespace Debug {
 						}
 
 						if (pParticles != nullptr && ImGui::TreeNodeEx("Particles##parts", ImGuiTreeNodeFlags_None)) {
-							ImGui::BeginTable("##ptable", 5,
-								ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
-								ImVec2(0, 200));
+							ImGui::BeginTable("##ptable", 7,
+							ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+							ImVec2(0, 200));
 							ImGui::TableSetupColumn("#");
 							ImGui::TableSetupColumn("State");
+							ImGui::TableSetupColumn("Vis");
+							ImGui::TableSetupColumn("Size");
 							ImGui::TableSetupColumn("Age");
 							ImGui::TableSetupColumn("Lifetime");
 							ImGui::TableSetupColumn("RGBA");
@@ -466,6 +538,13 @@ namespace Debug {
 									part.state == PARTICLE_STATE_DEAD ? "Dead" :
 									part.state == PARTICLE_STATE_DESTROYED ? "Destroyed" : "?";
 								ImGui::TextUnformatted(pStateName);
+								ImGui::TableNextColumn();
+								if (part.visible) {
+									ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Y");
+								} else {
+									ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "N");
+								}
+								ImGui::TableNextColumn(); ImGui::Text("%u", (uint)part.sizeByte);
 								ImGui::TableNextColumn(); ImGui::Text("%.2f", part.age);
 								ImGui::TableNextColumn(); ImGui::Text("%.2f", part.lifetime);
 								ImGui::TableNextColumn(); ImGui::Text("%3d %3d %3d %3d", part.colorR, part.colorG, part.colorB, part.colorA);
@@ -479,6 +558,7 @@ namespace Debug {
 
 					pTail = pTail->pNext;
 					index++;
+					ImGui::PopID();
 				}
 
 				ImGui::PopID();
@@ -847,6 +927,20 @@ namespace Debug {
 		if (!gShowInspectorPanel) {
 			return;
 		}
+
+		static bool bLoaded = false;
+		
+		//if (!bLoaded) {
+		//	gInspectorSelection.type = static_cast<InspectorSelectionType>(gInspectorSelectionType.get());
+		//
+		//	if (gInspectorSelection.type == InspectorSelectionType::Actor) {
+		//		auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+		//		if (pActorManager != nullptr && pActorManager->aActors != nullptr) {
+		//			gInspectorSelection.pActor = pActorManager->aActors[gInspectorSelectionValue];
+		//			bLoaded = true;
+		//		}
+		//	}
+		//}
 
 		ZONE_SCOPED;
 

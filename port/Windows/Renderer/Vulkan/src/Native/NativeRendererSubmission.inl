@@ -71,6 +71,10 @@ namespace Renderer
 		{
 			gCachedPerDrawData.renderFlags = renderFlags;
 
+			if (pMesh->GetName() == DEBUG_MESH_NAME) {
+				pMesh->GetName();
+			}
+
 			if (!gCurrentDraw) {
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Creating new draw!");
 				CreateDraw();

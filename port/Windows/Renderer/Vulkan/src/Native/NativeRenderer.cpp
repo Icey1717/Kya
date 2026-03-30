@@ -25,7 +25,8 @@
 #include "profiling.h"
 
 //#define DEBUG_TEXTURE_NAME "Dupe (m: 0 l: 0)"
-#define DEBUG_TEXTURE_NAME "LINER_LAVA_TRAIL_TEXTURE.G2D (m: 0 l: 0)"
+#define DEBUG_TEXTURE_NAME "flam.g2d (m: 0 l: 0)"
+#define DEBUG_MESH_NAME "Sprite"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)

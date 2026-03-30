@@ -109,6 +109,8 @@ extern edSysHandler3D ed3DHandlers;
 Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap, int index);
 #endif
 
+edDlistConfiguration* edDListGetConfig(void);
+
 void edDListInit(void);
 
 void edDListLoadMatrix(edF32MATRIX4* m0);

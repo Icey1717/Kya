@@ -4,6 +4,11 @@
 #include "Types.h"
 #include "ed3D.h"
 
+struct edTextConfig
+{
+	int g_iMaxTextIconEntryCount_0044916c;
+};
+
 struct PagePacked {
 	char header[4];
 	undefined field_0x4;
@@ -27,6 +32,7 @@ struct PagePacked {
 	undefined field_0x16;
 };
 
+edTextConfig* edTextGetConfig(void);
 bool edTextInit(void);
 bool edTextInstallFont(struct edCTextFont* pFontData);
 void edTextDraw(float x, float y, char* text);

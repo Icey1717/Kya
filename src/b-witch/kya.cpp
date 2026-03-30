@@ -1444,26 +1444,25 @@ void MainInit(int argc,char **argv)
 
 	edDebugPrintf("---- Init edDebug \n");
 	edDebugInit();
-	//edDebugPrintf(s_----_Init_edCluster_0042b630);
+	edDebugPrintf("---- Init edCluster \n");
 	//edClusterConfig = edClusterGetConfig();
 	//edClusterConfig->field_0x0 = 6;
 	//edClusterInit();
 	//ProfileInit(0);
 	gCompatibilityHandlingPtr->edVideoInit(0);
 	edDebugPrintf("---- Init edDlist \n");
-	//edDListConfig_ = edDListGetConfig();
-	//edDListConfig_->field_0x0 = 0x14;
-	//edDListConfig_->field_0xc = edDListConfig_->field_0xc * 3;
-	//edDListConfig_->field_0x10 = 500;
+	edDlistConfiguration* edDListConfig_ = edDListGetConfig();
+	edDListConfig_->field_0x0 = 0x14;
+	edDListConfig_->commandCount = edDListConfig_->commandCount * 3;
+	edDListConfig_->bankMaterialCount = 500;
 	edDListInit();
 	edDebugPrintf("---- Init ed3D \n");
 	Init3D();
-	//edDebugPrintf(s_----_Init_edFile_0042b690);
+	edDebugPrintf("---- Init edFile \n");
 	Init_edFile();
-	//puVar2 = edTextGetConfig();
-	//puVar2->field_0x4 = 0x26;
+	edTextGetConfig()->g_iMaxTextIconEntryCount_0044916c = 0x26;
 	edTextInit();
-	//edDebugPrintf(s_----_Init_edMath_0042b6b0);
+	edDebugPrintf("---- Init edMath \n");
 	//edMathInit();
 	edDebugPrintf("---- Init edDev \n");
 	CPlayerInput::InitDev();
@@ -1497,14 +1496,13 @@ void MainInit(int argc,char **argv)
 	//	edSoundInit(0.8f);
 	//}
 	edEventInit();
-	/* Init_edBank */
 	edDebugPrintf("---- Init edBank \n");
 	edBankInit();
 	///* game_init */
-	//edDebugPrintf(s_--------_game_init_------------ - _0042b750);
-	//edDebugPrintf(s_--------------------------------_0042b780);
-	//Game_Init();
-	///* <BNK>0: CDEURO/menu/Messages.bnk */
+	edDebugPrintf("-------- game  init --------------\n");
+	edDebugPrintf("--------------------------------------------------------\n");
+	//ScreenShotInit();
+
 	edFileMount(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
 	SetLanguageID_00336b40();
 	InstallBootData();

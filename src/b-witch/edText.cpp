@@ -105,8 +105,6 @@ bool Install(edCTextFont* pFont)
 	return bInstallSuccess;
 }
 
-int g_iMaxTextIconEntryCount_0044916c = 0x26;
-
 // Should be in: D:/projects/EdenLib/edText/sources/edTextFont.cpp
 bool edTextInstallFont(edCTextFont* pFontData)
 {
@@ -119,6 +117,14 @@ bool edTextInstallFont(edCTextFont* pFontData)
 		bInstallSuccess = Install(pFontData);
 	}
 	return bInstallSuccess;
+}
+
+edTextConfig textConfig;
+
+// Should be in: D:/projects/EdenLib/edText/sources/edTextInit.cpp
+edTextConfig* edTextGetConfig(void)
+{
+	return &textConfig;
 }
 
 // Should be in: D:/projects/EdenLib/edText/sources/edTextInit.cpp
@@ -135,7 +141,7 @@ bool edTextInit(void)
 	}
 	else {
 		//edTextEdDebugInit();
-		edTextResources.Init(g_iMaxTextIconEntryCount_0044916c);
+		edTextResources.Init(textConfig.g_iMaxTextIconEntryCount_0044916c);
 	}
 	return true;
 	return uVar1;

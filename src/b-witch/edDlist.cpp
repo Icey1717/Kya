@@ -134,6 +134,11 @@ DisplayListCommand* gCurDListInfo3DPatchable;
 byte gCurPacketPatched[256];
 int gLastPacketPatched = -1;
 
+edDlistConfiguration* edDListGetConfig(void)
+{
+	return &edDlistConfig;
+}
+
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListSystem.c
 void edDListInitMemory(void)
 {
@@ -3604,6 +3609,9 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 		if ((gBankMaterial[counter].hash.number == 0) || (edDlistConfig.bankMaterialCount - 1U <= counter)) break;
 		counter = counter + 1;
 	}
+
+	// If this assert hits, it means you have more materials than the bank can hold. You need to increase bankMaterialCount in edDlistConfig.
+	assert(counter < edDlistConfig.bankMaterialCount);
 
 	pNewHashCode = gBankMaterial + counter;
 	pNewHashCode->hash = pHASH_MAT->hash;
