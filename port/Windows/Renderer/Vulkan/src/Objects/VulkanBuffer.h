@@ -29,8 +29,11 @@ inline size_t NextPowerOfTwo(size_t v)
 template<typename BufferType>
 struct DynamicUniformBuffer
 {
-	void Init(int instanceCount)
+	void Init(int instanceCount, uint32_t range = 1)
 	{
+		this->range = range;
+		this->instanceCount = instanceCount;
+
 		VkPhysicalDeviceProperties properties{};
 		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 
@@ -58,15 +61,26 @@ struct DynamicUniformBuffer
 	inline BufferType* GetBufferData() { return bufferData; }
 
 	inline BufferType* GetInstancePtr(int index) const {
+		assert((index + (range - 1)) < instanceCount);
 		return reinterpret_cast<BufferType*>(
 			reinterpret_cast<char*>(bufferData) + index * dynamicAlignment);
 	}
 
 	inline void SetInstanceData(int index, const BufferType& data) {
+		assert((index + (range - 1)) < instanceCount);
 		*GetInstancePtr(index) = data;
 	}
 
 	inline uint32_t GetDynamicAlignment() const { return static_cast<uint32_t>(dynamicAlignment); }
+
+	// For handing off to dynamicOffsets in vkCmdBindDescriptorSets.
+	uint32_t GetOffsetForIndex(const int index) const
+	{
+		assert((index + (range - 1)) < instanceCount);
+		return index * GetDynamicAlignment();
+	}
+
+	inline VkDeviceSize GetSize() const { return size; }
 
 	inline void Map(const int index) {
 		void* data;
@@ -89,6 +103,8 @@ private:
 	VkDeviceSize dynamicAlignment;
 	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
 	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
+	uint32_t range;
+	int instanceCount;
 };
 
 template<typename BufferType>

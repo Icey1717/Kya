@@ -261,11 +261,11 @@ namespace Renderer
 						SetColorDepthDynamicState(cmd, drawCommand);
 
 						std::array< uint32_t, 5> dynamicOffsets = {
-							instance.modelMatrixIndex * gModelBuffer.GetDynamicAlignment(),
-							instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment(),
-							instance.lightingDataIndex * gLightingDynamicBuffer.GetDynamicAlignment(),
-							instance.animStDataIndex* gAnimStBuffer.GetDynamicAlignment(),
-							drawCommandIndex * gAlphaBuffer.GetDynamicAlignment(),
+							gModelBuffer.GetOffsetForIndex(instance.modelMatrixIndex),
+							gAnimationBuffer.GetOffsetForIndex(instance.animationMatrixStart),
+							gLightingDynamicBuffer.GetOffsetForIndex(instance.lightingDataIndex),
+							gAnimStBuffer.GetOffsetForIndex(instance.animStDataIndex),
+							gAlphaBuffer.GetOffsetForIndex(drawCommandIndex)
 						};
 
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, drawCommand.pDescriptorSets, dynamicOffsets.size(), dynamicOffsets.data());

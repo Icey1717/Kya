@@ -257,14 +257,14 @@ namespace Renderer
 			gCommandPool = CreateCommandPool("Native Renderer Command Pool");
 			CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
 
-			gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4));
+			gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4)) - kAnimDescriptorMatrixRange;
 
 			gNativeVertexBuffer.Init(0x100000, 0x100000);
 			DebugShapes::Setup();
 			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
 
 			gModelBuffer.Init();
-			gAnimationBuffer.Init(gMaxAnimationMatrices);
+			gAnimationBuffer.Init(gMaxAnimationMatrices, kAnimDescriptorMatrixRange);
 
 			gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
 

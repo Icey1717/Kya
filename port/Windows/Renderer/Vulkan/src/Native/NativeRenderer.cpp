@@ -47,8 +47,10 @@ namespace Renderer
 		class DynamicBuffer
 		{
 		public:
-			void Init()
+			void Init(const uint32_t range = 1)
 			{
+				this->range = range;
+
 				Validate();
 
 				gUniformBuffer.Init(MaxInstances);
@@ -62,6 +64,17 @@ namespace Renderer
 			uint32_t GetDynamicAlignment() const
 			{
 				return gUniformBuffer.GetDynamicAlignment();
+			}
+
+			// For handing off to dynamicOffsets in vkCmdBindDescriptorSets.
+			uint32_t GetOffsetForIndex(const int index) const
+			{
+				return gUniformBuffer.GetOffsetForIndex(index);
+			}
+
+			VkDeviceSize GetSize() const
+			{
+				return gUniformBuffer.GetSize();
 			}
 
 			void Map(const int index)
@@ -123,7 +136,7 @@ namespace Renderer
 					return;
 				}
 
-				assert(currentInstanceIndex < MaxInstances);
+				assert((currentInstanceIndex + (range - 1)) < MaxInstances);
 
 				gUniformBuffer.SetInstanceData(currentInstanceIndex, data);
 				currentInstanceIndex++;
@@ -146,6 +159,8 @@ namespace Renderer
 			}
 
 			int currentInstanceIndex = 0;
+
+			uint32_t range = 0;
 
 			// GPU Side Dynamic Buffer
 			DynamicUniformBuffer<T> gUniformBuffer;
@@ -232,6 +247,10 @@ namespace Renderer
 
 		constexpr int gMaxLightingData = 200;
 		constexpr int gMaxAnimStData = 1000;
+
+		// Number of consecutive animation matrices accessible per draw via the descriptor range.
+		// Must match the range passed to gAnimationBuffer.GetDescBufferInfo().
+		constexpr int kAnimDescriptorMatrixRange = 27;
 
 		// Maximum number of meshes we can handle in a single frame.
 		constexpr int gMaxMeshes = 256;

@@ -88,6 +88,8 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index)
 {
 	ed_Chunck* pChunk;
 	ed_g2d_material* pMaterial;
+
+	// Chunk is EITHER a direct MAT chunck, or a HASH code object pointing to a MAT chunck.
 	pChunk = LOAD_POINTER_CAST(ed_Chunck*, pMBNK[index].pData);
 
 	pMaterial = (ed_g2d_material*)0x0;

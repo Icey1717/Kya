@@ -135,6 +135,7 @@ namespace Renderer
 		void PushAnimMatrix(float* pAnim)
 		{
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
+			assert(gAnimationMatrices.size() < static_cast<size_t>(gMaxAnimationMatrices));
 			gAnimationMatrices.push_back(glm::make_mat4(pAnim));
 		}
 
@@ -238,7 +239,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i, 27 * sizeof(glm::mat4));
+		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i, kAnimDescriptorMatrixRange * sizeof(glm::mat4));
 
 		const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(i);
 		const VkDescriptorBufferInfo vertexDynamicsDescBufferInfo = gLightingDynamicBuffer.GetDescBufferInfo(i);
