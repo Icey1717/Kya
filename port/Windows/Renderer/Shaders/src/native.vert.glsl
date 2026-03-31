@@ -4,12 +4,12 @@ float int12_to_float(int x) {
 	return float(x) * 0.000244140625;
 }
 
-layout(set = 0, binding = 2) uniform ModelBuffer {
-	mat4 modelMatrix;
+layout(set = 0, binding = 2) readonly buffer ModelBuffer {
+	mat4 modelMatrix[];
 } model;
 
-layout(set = 0, binding = 3) uniform AnimBuffer {
-	mat4 animMatrix[27];
+layout(set = 0, binding = 3) readonly buffer AnimBuffer {
+	mat4 animMatrix[];
 } anim;
 
 //push constants block
@@ -17,17 +17,30 @@ layout( push_constant ) uniform PerDrawData
 {
 	mat4 projXView;
 	uint renderFlags;
-    uint _pad[15];
+	uint alphaEnable;
+	int  alphaAtst;
+	int  alphaAref;
+	int  alphaAfail;
+	uint modelMatrixIndex;
+	uint animStDataIndex;
+	uint animMatrixStart;
+	uint lightingDataIndex;
+	uint _pad[7];
 } perDrawData;
 
-layout(set = 0, binding = 4) uniform LightingData {
+struct LightingDataBlock {
 	mat4 lightDirection;
 	mat4 lightColor;
 	vec4 lightAmbient;
-} lightingData;
+	vec4 flare;
+};
 
-layout(set = 0, binding = 5) uniform AnimStData {
-	vec4 animST;
+layout(set = 0, binding = 4) readonly buffer LightingData {
+	LightingDataBlock lightData[];
+} lightingBuf;
+
+layout(set = 0, binding = 5) readonly buffer AnimStData {
+	vec4 animST[];
 } animStData;
 
 layout(location = 0) in ivec2 inST;
@@ -56,21 +69,21 @@ void main() {
 		uint animIndex = animFlags - 0x3dc;
 		animIndex = animIndex / 4;
 
-		mat4 currentAnimMatrix = anim.animMatrix[animIndex];
+		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		fixedPos = currentAnimMatrix * fixedPos;
 
 		vec4 normal = currentAnimMatrix * inNormal;
 
-		normal = (lightingData.lightDirection[2] * normal.z) + (lightingData.lightDirection[1] * normal.y) + (lightingData.lightDirection[0] * normal.x);
+		normal = (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[0] * normal.x);
 
 		normal.x = max(normal.x, 0.0);
 		normal.y = max(normal.y, 0.0);
 		normal.z = max(normal.z, 0.0);
 		normal.w = max(normal.w, 0.0);
 
-		vec4 lightAmbientAdjusted = vec4(lightingData.lightAmbient.x, lightingData.lightAmbient.y, lightingData.lightAmbient.z, 0.0f);
+		vec4 lightAmbientAdjusted = vec4(lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.x, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.y, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.z, 0.0f);
 
-		normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingData.lightColor[3] * normal.w) + (lightingData.lightColor[2] * normal.z) + (lightingData.lightColor[1] * normal.y) + (lightingData.lightColor[0] * normal.x);
+		normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[3] * normal.w) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[0] * normal.x);
 
 		normal.x = min(normal.x, 255.0);
 		normal.y = min(normal.y, 255.0);
@@ -78,7 +91,7 @@ void main() {
 		normal.w = min(normal.w, 255.0);
 
 		vec4 color = vec4(inColor.x, inColor.y, inColor.z, inColor.w);
-		color = color * lightingData.lightAmbient.w;
+		color = color * lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.w;
 		
 		color = color * normal;
 
@@ -94,7 +107,7 @@ void main() {
 		fragColor.w = inColor.w / 255.0;
 	}
 
-	vec4 pos = perDrawData.projXView * model.modelMatrix * fixedPos;
+	vec4 pos = perDrawData.projXView * model.modelMatrix[perDrawData.modelMatrixIndex] * fixedPos;
 
 	// Do this in the projection matrix
 	//pos.y = -pos.y;
@@ -103,8 +116,8 @@ void main() {
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
 
 	if ((perDrawData.renderFlags & 0x200) != 0) {
-		outST.x += animStData.animST.x;
-		outST.y += animStData.animST.y;
+		outST.x += animStData.animST[perDrawData.animStDataIndex].x;
+		outST.y += animStData.animST[perDrawData.animStDataIndex].y;
 	}
 
 	fragTexCoord = vec4(outST, inQ);

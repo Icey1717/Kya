@@ -321,7 +321,7 @@ bool CCamera::Manage()
 	return returnVal;
 }
 
-bool CCamera::AlertCamera(int param_2, int param_3, CCamera* param_4)
+bool CCamera::AlertCamera(int param_2, void* pParams, CCamera* param_4)
 {
 	S_ACTOR_STREAM_REF* piVar1;
 	int iVar2;
@@ -370,7 +370,7 @@ bool CCamera::AlertCamera(int param_2, int param_3, CCamera* param_4)
 		else {
 			if (param_2 == 0) {
 				puVar3 = &this->flags_0xc;
-				if (param_3 == 0) {
+				if (pParams == (void*)0x0) {
 					*puVar3 = *puVar3 & 0xffefffff;
 				}
 				else {

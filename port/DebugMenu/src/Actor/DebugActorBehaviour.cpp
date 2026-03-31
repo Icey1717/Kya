@@ -356,6 +356,18 @@ namespace Hero
 		case STATE_HERO_GRIP_GRAB:
 			return "StateHeroGripGrab";
 			break;
+		case STATE_HERO_BOUNCE_HANG:
+			return "StateHeroBounceHang";
+			break;
+		case STATE_HERO_BOUNCE_HANG_2:
+			return "StateHeroBounceHang2";
+			break;
+		case STATE_HERO_BOUNCE_JUMP_1:
+			return "StateHeroBounceJump1";
+			break;
+		case STATE_HERO_BOUNCE_JUMP_2:
+			return "StateHeroBounceJump2";
+			break;
 		case STATE_HERO_BOUNCE_SOMERSAULT_1:
 			return "StateHeroBounceSomersault1";
 			break;

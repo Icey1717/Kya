@@ -59,7 +59,7 @@ void ActiveCamManager::SetActiveCam(CCamera* pCamera)
 	this->state.pCamera = pCamera;
 	/* WARNING: Could not recover jumptable at 0x003feb1c. Too many branches */
 	/* WARNING: Treating indirect jump as call */
-	pCamera->AlertCamera(2, 1, (CCamera*)0x0);
+	pCamera->AlertCamera(2, (void*)1, (CCamera*)0x0);
 	return;
 }
 
@@ -313,9 +313,9 @@ bool ActiveCamManager::FUN_003feb30()
 
 		if (1.0f <= this->aEntries[0].blendAlpha) {
 			pCVar1 = (this->state).pCamera;
-			pCVar1->AlertCamera(3, this->aEntries[0].switchMode, this->aEntries[0].pCamera);
+			pCVar1->AlertCamera(3, (void*)this->aEntries[0].switchMode, this->aEntries[0].pCamera);
 			pCVar1 = this->aEntries[0].pCamera;
-			pCVar1->AlertCamera(4, this->aEntries[0].switchMode, (this->state).pCamera);
+			pCVar1->AlertCamera(4, (void*)this->aEntries[0].switchMode, (this->state).pCamera);
 			(this->state).pCamera = this->aEntries[0].pCamera;
 			iVar16 = 1;
 			if (1 < this->activeIndex + 1) {
@@ -459,7 +459,7 @@ bool ActiveCamManager::SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_M
 					pCVar2 = this->aEntries[iVar4].pCamera;
 				}
 			}
-			pCVar2->AlertCamera(1, 1, pCamera);
+			pCVar2->AlertCamera(1, (void*)1, pCamera);
 			iVar4 = this->activeIndex;
 			pCVar2 = (CCamera*)0x0;
 			if (-2 < iVar4) {
@@ -470,7 +470,7 @@ bool ActiveCamManager::SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_M
 					pCVar2 = this->aEntries[iVar4].pCamera;
 				}
 			}
-			pCamera->AlertCamera(2, 1, pCVar2);
+			pCamera->AlertCamera(2, (void*)1, pCVar2);
 			bVar1 = false;
 			this->activeIndex = -1;
 			this->state.pCamera = pCamera;
@@ -511,7 +511,7 @@ bool ActiveCamManager::SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_M
 					}
 				}
 
-				pCVar2->AlertCamera(1, switchMode, pCamera);
+				pCVar2->AlertCamera(1, (void*)switchMode, pCamera);
 				iVar4 = 0;
 				bVar1 = false;
 				do {
@@ -545,7 +545,7 @@ bool ActiveCamManager::SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_M
 							pCVar2 = this->aEntries[iVar4].pCamera;
 						}
 					}
-					pCamera->AlertCamera(2, switchMode, pCVar2);
+					pCamera->AlertCamera(2, (void*)switchMode, pCVar2);
 				}
 
 				ActiveCamManagerEntry* pAVar3 = this->aEntries + this->activeIndex + 1;
@@ -1318,7 +1318,7 @@ void CCameraManager::Level_Reset()
 
 	if (this->pActiveCamera != (CCamera*)0x0) {
 		this->pActiveCamera->Reset();
-		this->pActiveCamera->AlertCamera(2, 1, (CCamera*)0x0);
+		this->pActiveCamera->AlertCamera(2, (void*)1, (CCamera*)0x0);
 	}
 
 	iVar4 = 0;
@@ -1342,7 +1342,7 @@ void CCameraManager::Level_CheckpointReset()
 			piVar1 = this->cameraStack.aCameras[iVar2].pCamera;
 			if (piVar1 != (CCamera*)0x0) {
 				piVar1->AlertCamera(0, 0, (CCamera*)0x0);
-				piVar1->AlertCamera(1, 1, (CCamera*)0x0);
+				piVar1->AlertCamera(1, (void*)1, (CCamera*)0x0);
 			}
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < (this->cameraStack).stackSize + 1);
@@ -2449,7 +2449,7 @@ void CCameraManager::SetEarthQuake(CAM_QUAKE* pCamQuake)
 	return;
 }
 
-bool CCameraManager::AlertCamera(int param_2, int param_3)
+bool CCameraManager::AlertCamera(int param_2, void* pParams)
 {
 	CCamera* pCamera;
 	bool bResult;
@@ -2458,7 +2458,7 @@ bool CCameraManager::AlertCamera(int param_2, int param_3)
 	bResult = false;
 
 	if (pCamera != (CCamera*)0x0) {
-		bResult = pCamera->AlertCamera(param_2, param_3, (CCamera*)0x0);
+		bResult = pCamera->AlertCamera(param_2, pParams, (CCamera*)0x0);
 	}
 
 	return bResult;

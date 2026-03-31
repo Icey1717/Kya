@@ -12,6 +12,21 @@
 #include "ed3D/ed3DG2D.h"
 #include "edDList/edDList.inl"
 
+CActorWind::~CActorWind()
+{
+	if (this->aFxWind != (CFxWind*)0x0) {
+		delete[] this->aFxWind;
+	}
+
+	if (this->aAppliedToActorFlags != (int*)0x0) {
+		delete[] this->aAppliedToActorFlags;
+	}
+
+	this->nbFxWind = 0;
+
+	return;
+}
+
 void CActorWind::Create(ByteCode* pByteCode)
 {
 	byte bVar1;
@@ -1444,6 +1459,54 @@ CFxWind::CFxWind()
 	this->field_0x390 = -1.0f;
 	//*(undefined4*)&this->field_0x398 = 0;
 	//*(undefined*)&this->field_0x39c = 0;
+}
+
+CFxWind::~CFxWind()
+{
+	MaterialManagerCombined* pMaterial = this->aCombinedMaterials;
+	if (this->field_0x180 != (ed_g2d_manager*)0x0) {
+		int iVar2 = 0;
+		WindAnimST* pWVar1 = gUseAnimST;
+		do {
+			if (pWVar1->field_0x0 != 0) {
+				ed3DUnInstallG2D(&pMaterial->manager);
+				edDListTermMaterial(&pMaterial->material);
+			}
+
+			iVar2 = iVar2 + 1;
+			pWVar1 = pWVar1 + 1;
+			pMaterial = pMaterial + 1;
+		} while (iVar2 < 5);
+
+		edMemFree(this->field_0x180);
+	}
+
+	CFxEmitterPool* pAlloc_01 = gpWIND_PartPool;
+	if (gpWIND_PartPool != (CFxEmitterPool*)0x0) {
+		int iVar2 = 0;
+		RayMem* pCVar3 = gpWIND_PartPool->field_0xd5c;
+		if (gpWIND_PartPool != (CFxEmitterPool*)0x0) {
+			do {
+				RAY_DEF* pAlloc = pCVar3->pRayDef;
+				if (pAlloc != (RAY_DEF*)0x0) {
+					delete pAlloc;
+				}
+				iVar2 = iVar2 + 1;
+				pCVar3 = pCVar3 + 1;
+			} while (iVar2 < 3);
+
+			delete gpWIND_PartPool;
+		}
+
+		gpWIND_PartPool = (CFxEmitterPool*)0x0;
+	}
+
+	void* pAlloc_00;
+	if ((pAlloc_00 = (this->windSolid).pAlphaData, pAlloc_00 != (void*)0x0)) {
+		edMemFree(pAlloc_00);
+	}
+
+	return;
 }
 
 bool CFxWind::IsKindOfObject(ulong kind)

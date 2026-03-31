@@ -15,6 +15,11 @@
 #define BOOMY_STATE_GOTO_LAUNCHER 0x8
 #define BOOMY_STATE_CONTROL 0xa
 
+#define BOOMY_LEVEL_NONE 0x0
+#define BOOMY_LEVEL_BRONZE 0x1
+#define BOOMY_LEVEL_SILVER 0x2
+#define BOOMY_LEVEL_GOLD 0x3
+
 class CActorBoomy;
 class CActorHero;
 class CedMathTCBSpline;

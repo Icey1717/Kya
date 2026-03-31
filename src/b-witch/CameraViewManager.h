@@ -5964,7 +5964,7 @@ public:
 
 	void SetEarthQuake(CAM_QUAKE* pCamQuake);
 
-	bool AlertCamera(int param_2, int param_3);
+	bool AlertCamera(int param_2, void* pParams);
 
 	bool InFrustum(float param_1, float param_2, edF32VECTOR4* pPosition);
 

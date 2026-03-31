@@ -355,6 +355,12 @@ public:
 	void StateHeroClimbJump();
 
 	void StateHeroGrip(float param_1, int nextState, int param_4);
+	void StateHeroBounceGrip(float param_1, int param_3);
+
+	void StateHeroBounceJump1Init();
+	void StateHeroBounceJump1();
+	void StateHeroBounceJump2();
+
 	void StateHeroGripAngle(int nextState, int param_3);
 	void StateHeroGripUp(float param_1, float param_2, int nextState, int param_5);
 	void StateHeroGripUpToJumpInit();
@@ -696,6 +702,7 @@ public:
 
 	float field_0x14a8;
 	float field_0x14f4;
+	edF32VECTOR4 field_0x1500;
 
 	// Run settings.
 	float field_0x1068;

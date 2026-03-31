@@ -67,7 +67,7 @@ void CCameraAim::Draw()
 	return;
 }
 
-bool CCameraAim::AlertCamera(int param_2, int param_3, CCamera* param_4)
+bool CCameraAim::AlertCamera(int param_2, void* pParams, CCamera* param_4)
 {
 	IMPLEMENTATION_GUARD();
 }

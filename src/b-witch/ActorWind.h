@@ -191,6 +191,7 @@ public:
 	static WindAnimST gUseAnimST[5];
 
 	CFxWind();
+	virtual ~CFxWind();
 
 	// CObject
 	virtual bool IsKindOfObject(ulong kind);
@@ -272,6 +273,8 @@ class CActorWind : public CActor
 {
 public:
 	// CActor
+	virtual ~CActorWind();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Term();

@@ -158,7 +158,7 @@ bool CCameraFixePerso::Manage()
 	return true;
 }
 
-bool CCameraFixePerso::AlertCamera(int alertType, int param_3, CCamera* param_4)
+bool CCameraFixePerso::AlertCamera(int alertType, void* pParams, CCamera* param_4)
 {
 	bool bVar1;
 
@@ -173,7 +173,7 @@ bool CCameraFixePerso::AlertCamera(int alertType, int param_3, CCamera* param_4)
 		}
 	}
 
-	bVar1 = CCamera::AlertCamera(alertType, param_3, param_4);
+	bVar1 = CCamera::AlertCamera(alertType, pParams, param_4);
 
 	return bVar1;
 }

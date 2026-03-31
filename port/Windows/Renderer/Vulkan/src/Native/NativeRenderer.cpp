@@ -61,22 +61,6 @@ namespace Renderer
 				return gUniformBuffer.GetDescBufferInfo(index);
 			}
 
-			uint32_t GetDynamicAlignment() const
-			{
-				return gUniformBuffer.GetDynamicAlignment();
-			}
-
-			// For handing off to dynamicOffsets in vkCmdBindDescriptorSets.
-			uint32_t GetOffsetForIndex(const int index) const
-			{
-				return gUniformBuffer.GetOffsetForIndex(index);
-			}
-
-			VkDeviceSize GetSize() const
-			{
-				return gUniformBuffer.GetSize();
-			}
-
 			void Map(const int index)
 			{
 				gUniformBuffer.Map(index);
@@ -166,6 +150,80 @@ namespace Renderer
 			DynamicUniformBuffer<T> gUniformBuffer;
 		};
 
+		// SSBO-backed per-frame buffer with the same deduplication logic as DynamicBuffer.
+		// Unlike DynamicBuffer, there is no dynamic-alignment padding; the GPU sees a plain array
+		// and the draw index is supplied via push constants.
+		template<typename T, int MaxInstances>
+		class StorageDynamicBuffer
+		{
+		public:
+			void Init()
+			{
+				gStorageBuffer.Init(MaxInstances);
+			}
+
+			VkDescriptorBufferInfo GetDescBufferInfo(const int frameIndex)
+			{
+				return gStorageBuffer.GetDescBufferInfo(frameIndex);
+			}
+
+			void Map(const int frameIndex)
+			{
+				gStorageBuffer.Map(frameIndex);
+			}
+
+			int GetInstanceIndex() const
+			{
+				assert(currentInstanceIndex > 0);
+				return currentInstanceIndex - 1;
+			}
+
+			int GetDebugIndex() const
+			{
+				return currentInstanceIndex;
+			}
+
+			bool MatchesLastInstance(const glm::vec4& data) const
+			{
+				if (currentInstanceIndex == 0) return false;
+				return glm::all(glm::equal(data, *gStorageBuffer.GetInstancePtr(currentInstanceIndex - 1)));
+			}
+
+			bool MatchesLastInstance(const glm::mat4& data) const
+			{
+				if (currentInstanceIndex == 0) return false;
+				const glm::mat4& last = *gStorageBuffer.GetInstancePtr(currentInstanceIndex - 1);
+				for (int i = 0; i < 4; ++i) {
+					if (!glm::all(glm::equal(data[i], last[i]))) return false;
+				}
+				return true;
+			}
+
+			template<typename InstanceDataType>
+			bool MatchesLastInstance(const InstanceDataType& data) const
+			{
+				if (currentInstanceIndex == 0) return false;
+				return data == *gStorageBuffer.GetInstancePtr(currentInstanceIndex - 1);
+			}
+
+			void AddInstanceData(const T& data)
+			{
+				if (MatchesLastInstance(data)) return;
+				assert(currentInstanceIndex < MaxInstances);
+				gStorageBuffer.SetInstanceData(currentInstanceIndex, data);
+				currentInstanceIndex++;
+			}
+
+			void Reset()
+			{
+				currentInstanceIndex = 0;
+			}
+
+		private:
+			int currentInstanceIndex = 0;
+			StorageBuffer<T> gStorageBuffer;
+		};
+
 		// Uniquely identifies a Vulkan render pass configuration.
 		// Used as the key into gRenderPass (a map of pre-built RenderStages). All valid combinations are
 		// created up-front at setup time, so a lookup always succeeds.
@@ -235,6 +293,14 @@ namespace Renderer
 		{
 			glm::mat4 projXView;
 			uint32_t renderFlags = 0;
+			VkBool32 alphaEnable = VK_FALSE;
+			int32_t  alphaAtst   = 0;
+			int32_t  alphaAref   = 0;
+			int32_t  alphaAfail  = 0;
+			uint32_t modelMatrixIndex  = 0;
+			uint32_t animStDataIndex   = 0;
+			uint32_t animMatrixStart   = 0;
+			uint32_t lightingDataIndex = 0;
 		};
 
 		struct FadeConstantBuffer
@@ -246,16 +312,9 @@ namespace Renderer
 		constexpr int gMaxInstances = 1000;
 
 		constexpr int gMaxLightingData = 200;
-		constexpr int gMaxAnimStData = 1000;
 
-		// Number of consecutive animation matrices accessible per draw via the descriptor range.
-		// Must match the range passed to gAnimationBuffer.GetDescBufferInfo().
-		constexpr int kAnimDescriptorMatrixRange = 27;
-
-		// Maximum number of meshes we can handle in a single frame.
-		constexpr int gMaxMeshes = 256;
-
-		static int gMaxAnimationMatrices = 0;
+		// Maximum number of animation matrices stored per frame across all animated actors.
+		constexpr int gMaxAnimationMatrices = 4096;
 
 		static VkSampler gFrameBufferSampler;
 
@@ -299,27 +358,10 @@ namespace Renderer
 		static VkCommandPool gCommandPool;
 		static CommandBufferVector gCommandBuffers;
 
-		static DynamicBuffer<glm::mat4, gMaxInstances> gModelBuffer;
+		static StorageDynamicBuffer<glm::mat4, gMaxInstances> gModelBuffer;
 
 		static UniformBuffer<FadeConstantBuffer> gFadeBuffer;
 		static bool bFadeActive = false;
-
-		struct AlphaDynamicBufferData
-		{
-			alignas(4) VkBool32 enable; // Use VkBool32 for proper alignment
-			alignas(4) int atst;
-			alignas(4) int aref;
-			alignas(4) int afail;
-
-			AlphaDynamicBufferData(const TextureRegisters& textureRegisters)
-				: enable(textureRegisters.test.ATE)
-				, atst(textureRegisters.test.ATST)
-				, aref(textureRegisters.test.AREF)
-				, afail(textureRegisters.test.AFAIL)
-			{ }
-		};
-
-		DynamicUniformBuffer<AlphaDynamicBufferData> gAlphaBuffer;
 
 		struct alignas(16) LightingDynamicBufferData
 		{
@@ -341,10 +383,8 @@ namespace Renderer
 			}
 		};
 
-		static_assert(alignof(LightingDynamicBufferData) >= 16, "Alignment must be at least 16");
-
-		DynamicBuffer<LightingDynamicBufferData, gMaxLightingData> gLightingDynamicBuffer;
-		DynamicBuffer<glm::vec4, gMaxInstances> gAnimStBuffer;
+		static StorageDynamicBuffer<LightingDynamicBufferData, gMaxLightingData> gLightingDynamicBuffer;
+		static StorageDynamicBuffer<glm::vec4, gMaxInstances> gAnimStBuffer;
 
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		static NativeVertexBuffer gNativeVertexBuffer;
@@ -352,7 +392,7 @@ namespace Renderer
 		// As each draw comes in this buffer is filled.
 		static NativeVertexBufferData gNativeVertexBufferDataDraw;
 
-		static DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
+		static StorageBuffer<glm::mat4> gAnimationBuffer;
 		static std::vector<glm::mat4> gAnimationMatrices;
 
 		RenderPassKey gCachedRenderPassKey;
@@ -380,13 +420,7 @@ namespace Renderer
 				int vertexStart = 0;
 				int animationMatrixStart = 0;
 
-				// Updated when the data is pushed to the native renderer.
-				int lightingDataIndex = 0;
-				int animStDataIndex = 0;
-
 				PerDrawData perDrawData;
-
-				int modelMatrixIndex = 0;
 			};
 
 			std::vector<Instance> instances;

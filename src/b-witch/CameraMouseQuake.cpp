@@ -461,13 +461,13 @@ bool CCameraMouseQuake::Manage()
 	return bVar2;
 }
 
-bool CCameraMouseQuake::AlertCamera(int alertType, int param_3, CCamera* param_4)
+bool CCameraMouseQuake::AlertCamera(int alertType, void* pParams, CCamera* param_4)
 {
 	if (alertType == 2) {
 		CCamera::_gpcam_man->KeepSameParam(this, 0x37);
 	}
 
-	CCamera::AlertCamera(alertType, param_3, param_4);
+	CCamera::AlertCamera(alertType, pParams, param_4);
 
 	return false;
 }

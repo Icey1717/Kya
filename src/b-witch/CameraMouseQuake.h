@@ -31,7 +31,7 @@ public:
 	virtual void Reset() {}
 	virtual bool Manage();
 	virtual void Draw() {}
-	virtual bool AlertCamera(int alertType, int param_3, CCamera* param_4);
+	virtual bool AlertCamera(int alertType, void* pParams, CCamera* param_4);
 };
 
 class CCameraMouseAroundPerso : public CCameraMouse {

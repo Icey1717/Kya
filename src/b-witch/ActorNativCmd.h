@@ -17,6 +17,8 @@ class CTalkParam
 {
 public:
 	void FUN_00392e30(edF32VECTOR4* param_2);
+	void FUN_00392be0(int param_2, edF32VECTOR4* param_3);
+	bool FUN_00392d90();
 	float FUN_00392ad0(int index);
 	int FUN_00392860(int index, int param_3);
 	int ChooseFinishOrder(int index);

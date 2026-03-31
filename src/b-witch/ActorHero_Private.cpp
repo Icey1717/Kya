@@ -2438,7 +2438,7 @@ void CActorHeroPrivate::CheckpointReset()
 		pCamMan->SetMainCamera(this->pMainCamera);
 		pCamera = this->pMainCamera;
 		pCamera->SetTarget(this);
-		pCamMan->AlertCamera(2, 1);
+		pCamMan->AlertCamera(2, (void*)1);
 
 		if (this->field_0xcbc == 0) {
 			if (this->field_0xcc0 == 0) {
@@ -5480,6 +5480,7 @@ LAB_00341590:
 	case STATE_HERO_COL_WALL_DEAD_B:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_A:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_B:
+	case STATE_HERO_BOUNCE_JUMP_2:
 	case STATE_HERO_TOBOGGAN_JUMP_3:
 	case STATE_HERO_WIND_WALL_MOVE_A:
 	case STATE_HERO_WIND_WALL_MOVE_B:
@@ -5556,6 +5557,13 @@ LAB_00341590:
 	case STATE_HERO_JUMP_2_3_GRIP:
 		StateHeroGripUpToJumpInit();
 		StateHeroJump_2_3Init();
+		break;
+	case STATE_HERO_BOUNCE_HANG:
+	case STATE_HERO_BOUNCE_HANG_2:
+		this->field_0x1455 = 0;
+		break;
+	case STATE_HERO_BOUNCE_JUMP_1:
+		StateHeroBounceJump1Init();
 		break;
 	case STATE_HERO_BOOMY_SNIPE_PREPARE:
 		StateHeroBoomySnipePrepare_Init();
@@ -5667,11 +5675,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	undefined4 local_1c0[32];
 	undefined4 local_140[32];
 	undefined4 local_c0[32];
-	undefined4 local_40[12];
-	undefined4* local_10;
-	undefined4* local_c;
-	undefined4* local_8;
-	undefined4 local_4;
+	_camera_alert_params local_40;
 
 	heroFlags = GetStateHeroFlags(newState);
 
@@ -5728,6 +5732,10 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_JUMP_GRIP_UNKOWN_A:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_B:
 	case STATE_HERO_GRIP_GRAB:
+	case STATE_HERO_BOUNCE_HANG:
+	case STATE_HERO_BOUNCE_HANG_2:
+	case STATE_HERO_BOUNCE_JUMP_1:
+	case STATE_HERO_BOUNCE_JUMP_2:
 	case STATE_HERO_BOUNCE_SOMERSAULT_1:
 	case STATE_HERO_BOUNCE_SOMERSAULT_2:
 	case STATE_HERO_TOBOGGAN_3:
@@ -5793,7 +5801,6 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		this->flags = this->flags | 0x800;
 		pCVar1 = this->pCollisionData;
 		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 2;
-		local_4 = 1;
 		DoMessage(this->field_0xf14, (ACTOR_MESSAGE)0x14, (void*)1);
 		this->field_0xf14 = (CActor*)0x0;
 		this->field_0x1610 = 0;
@@ -6085,10 +6092,9 @@ LAB_00340ec0:
 
 		uVar8 = TestState_BounceWalls(0xffffffff);
 		if ((uVar8 != 0) && (uVar8 = TestState_BounceWalls(heroFlags), uVar8 == 0)) {
-			IMPLEMENTATION_GUARD(
-			local_40[0] = 0;
+			local_40.field_0x0 = 0;
 			pCVar5 = this->pMainCamera;
-			pCVar5->AlertCamera(5, (int)local_40, (CCamera*)0x0);)
+			pCVar5->AlertCamera(5, &local_40, (CCamera*)0x0);
 		}
 
 		if (this->actorState == STATE_HERO_FALL_DEATH) {
@@ -6432,6 +6438,18 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		FUN_00138520();
 	case STATE_HERO_GRIP_GRAB:
 		StateHeroGrip(0.0f, STATE_HERO_GRIP_B, 0);
+		break;
+	case STATE_HERO_BOUNCE_HANG:
+		StateHeroBounceGrip(this->field_0x14bc, 1);
+		break;
+	case STATE_HERO_BOUNCE_HANG_2:
+		StateHeroBounceGrip(this->field_0x14c0, 0);
+		break;
+	case STATE_HERO_BOUNCE_JUMP_1:
+		StateHeroBounceJump1();
+		break;
+	case STATE_HERO_BOUNCE_JUMP_2:
+		StateHeroBounceJump2();
 		break;
 	case STATE_HERO_BOUNCE_SOMERSAULT_1:
 		StateHeroBounceSomersault1();
@@ -8169,7 +8187,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 							this->bounceLocation.z = this->field_0x13f0.z;
 							this->bounceLocation.w = 0.0f;
 							edF32Vector4SafeNormalize0Hard(peVar12, peVar12);
-							SetState(0xcb, 0xffffffff);
+							SetState(STATE_HERO_BOUNCE_HANG, 0xffffffff);
 						}
 					}
 					else {
@@ -11222,20 +11240,19 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 				if (bCheckBounce != 0) {
 					iVar6 = CanBounceAgainstWall();
 					if (iVar6 != 0) {
-						IMPLEMENTATION_GUARD(
-						edF32Vector4SubHard(&eStack64, &this->currentLocation,
-							&this->field_0xf00);
-						fVar8 = edF32Vector4DotProductHard(&eStack64, (edF32VECTOR4*)&this->field_0xa90);
-						if (fVar8 < -0.25) {
-							pCVar3 = *(CActor**)&this->pBounceOnActor;
+						edF32Vector4SubHard(&eStack64, &this->currentLocation, &this->field_0xf00);
+						fVar8 = edF32Vector4DotProductHard(&eStack64, &this->bounceLocation);
+						if (fVar8 < -0.25f) {
+							pCVar3 = this->pBounceOnActor;
 							if (pCVar3 != (CActor*)0x0) {
-								local_8 = 1;
-								CActor::DoMessage(this, pCVar3, 0x1f, 1);
-								*(undefined4*)&this->pBounceOnActor = 0;
+								DoMessage(pCVar3, (ACTOR_MESSAGE)0x1f, (MSG_PARAM)1);
+								this->pBounceOnActor = (CActor*)0x0;
 							}
-							SetState(0xcb, 0xffffffff);
+
+							SetState(STATE_HERO_BOUNCE_HANG, 0xffffffff);
+
 							return;
-						})
+						}
 					}
 				}
 
@@ -11571,12 +11588,12 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 			pCVar1 = this->pCollisionData;
 			fVar11 = this->runSpeed;
 			if ((this->dynamic.flags & 2) != 0) {
-				IMPLEMENTATION_GUARD(
 				fVar11 = CCollisionManager::GetWallNormalYLimit(pCVar1->aCollisionContact + 1);
 				fVar12 = CCollisionManager::GetGroundSpeedDecreaseNormalYLimit(pCVar1->aCollisionContact + 1);
-				fVar11 = edFIntervalLERP(pCVar1->aCollisionContact[1].location.y, fVar12, fVar11, 1.0, 0.3);
-				fVar11 = this->airHorizontalSpeed * fVar11;)
+				fVar11 = edFIntervalLERP(pCVar1->aCollisionContact[1].location.y, fVar12, fVar11, 1.0f, 0.3f);
+				fVar11 = this->airHorizontalSpeed * fVar11;
 			}
+
 			SetJumpCfg(0.1f, fVar11, this->field_0x1158, this->field_0x1150, this->field_0x1154, 1, (edF32VECTOR4*)0x0);
 			SetState(STATE_HERO_JUMP_1_1_RUN, 0xffffffff);
 		}

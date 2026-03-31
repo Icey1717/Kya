@@ -1,5 +1,6 @@
 #include "ActorHero_Private.h"
 #include "MathOps.h"
+#include "CameraGame.h"
 #include "CollisionManager.h"
 #include "TimeController.h"
 #include "InputManager.h"
@@ -423,57 +424,51 @@ void CActorHeroPrivate::UngripAllObjects()
 bool CActorHeroPrivate::CanBounceAgainstWall()
 {
 	CCollision* pCVar1;
-	bool bVar2;
+	bool bDetectedWall;
 	int iVar3;
-	long lVar4;
+	bool bDetectionCheck;
 	edF32VECTOR4* v0;
-	float local_20;
-	float local_1c;
-	float local_18;
-	float local_10;
-	float local_c;
-	float local_8;
+	S_DETECT_WALL_CFG local_20;
+	S_DETECT_WALL_CFG local_10;
 
 	if ((this->field_0x1455 == 0) && (iVar3 = EvolutionBounceCanJump(), iVar3 != 0)) {
-		IMPLEMENTATION_GUARD(
-			pCVar1 = this->pCollisionData;
-		bVar2 = false;
+		pCVar1 = this->pCollisionData;
+		bDetectedWall = false;
 		if ((pCVar1->flags_0x4 & COLLISION_WALL_FLAG) != 0) {
-			if (edFCosinus[(int)(fabs(this->field_0x14c4 * 1303.797) + 0.5) & 0x1fff] <=
-				fabs(pCVar1->aCollisionContact[0].location.y)) {
-				bVar2 = false;
+			if (cosf(this->field_0x14c4) <= fabs(pCVar1->aCollisionContact[0].location.y)) {
+				bDetectedWall = false;
 			}
 			else {
-				local_10 = 0.0;
-				local_c = ((this->pCollisionData)->pObbPrim->scale).z + 0.2;
-				local_8 = this->field_0x14c4;
-				local_20 = *(float*)&this->field_0x14c8;
-				local_1c = ((this->pCollisionData)->pObbPrim->scale).z + 0.2;
-				local_18 = this->field_0x14c4;
-				lVar4 = DetectWall(this, 3, 0x40000080, (float*)&this->rotationQuat,
-					&local_10, 0, 0, 0);
-				if ((lVar4 == 0) ||
-					(lVar4 = DetectWall(this, 3, 0x40000080, (float*)&this->rotationQuat,
-						&local_20, 0, 0, 0), lVar4 == 0)) {
-					bVar2 = false;
+				local_10.field_0x0 = 0.0f;
+				local_10.field_0x4 = ((this->pCollisionData)->pObbPrim->scale).z + 0.2f;
+				local_10.field_0x8 = this->field_0x14c4;
+
+				local_20.field_0x0 = this->field_0x14c8;
+				local_20.field_0x4 = ((this->pCollisionData)->pObbPrim->scale).z + 0.2f;
+				local_20.field_0x8 = this->field_0x14c4;
+
+				bDetectionCheck = DetectWall(3, 0x40000080, &this->rotationQuat, &local_10, 0, 0, 0);
+				if ((bDetectionCheck == false) ||
+					(bDetectionCheck = DetectWall(3, 0x40000080, &this->rotationQuat, &local_20, 0, 0, 0), bDetectionCheck == false)) {
+					bDetectedWall = false;
 				}
 				else {
 					v0 = &this->bounceLocation;
 					this->bounceLocation.x = pCVar1->aCollisionContact[0].location.x;
-					this->bounceLocation.y = 0.0;
+					this->bounceLocation.y = 0.0f;
 					this->bounceLocation.z = pCVar1->aCollisionContact[0].location.z;
-					this->bounceLocation.w = 0.0;
+					this->bounceLocation.w = 0.0f;
 					edF32Vector4NormalizeHard(v0, v0);
-					bVar2 = true;
+					bDetectedWall = true;
 				}
 			}
-		})
+		}
 	}
 	else {
-		bVar2 = false;
+		bDetectedWall = false;
 	}
 
-	return bVar2;
+	return bDetectedWall;
 }
 
 uint CActorHeroPrivate::CanGrip(int param_2, edF32VECTOR4* pRotation)
@@ -671,19 +666,42 @@ bool CActorHeroPrivate::DetectMultipleWallBounces()
 {
 	int iVar1;
 	edF32VECTOR4* v0;
-	undefined4 uVar2;
+	float fVar2;
 	float fVar3;
-	undefined4 uVar4;
-	undefined4 uVar5;
-	CCollisionRay CStack64;
+	float fVar4;
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
 	iVar1 = EvolutionBounceCanJump();
 	if (iVar1 != 0) {
-		IMPLEMENTATION_GUARD();
-	}
+		v0 = &this->bounceLocation;
+		if (this->bounceLocation.y != 0.0f) {
+			this->bounceLocation.y = 0.0f;
+			edF32Vector4NormalizeHard(v0, v0);
+		}
 
+		local_10.x = this->currentLocation.x;
+		local_10.z = this->currentLocation.z;
+		local_10.w = this->currentLocation.w;
+		local_10.y = this->currentLocation.y + this->field_0x14d0;
+
+		CCollisionRay CStack64 = CCollisionRay(this->field_0x14cc -this->pCollisionData->pObbPrim->scale.z + 0.1f, &local_10, &this->bounceLocation);
+		fVar2 = CStack64.Intersect(3, this, (CActor*)0x0, 0x40000080, &local_20, (_ray_info_out*)0x0);
+		if (((fVar2 != 1e+30f) &&
+			(fabsf(local_20.y) < cosf(this->field_0x14c4))) && (this->bounceLocation.x * local_20.x + this->bounceLocation.y * local_20.y +
+				this->bounceLocation.z * local_20.z <= 0.0f)) {
+			local_10.y = this->field_0x14d4 +
+				this->currentLocation.y;
+			fVar2 = CStack64.Intersect(3, this, (CActor*)0x0, 0x40000080, &local_20, (_ray_info_out*)0x0);
+			if (((fVar2 != 1e+30f) &&
+				(fabsf(local_20.y) < cosf(this->field_0x14c4))) &&
+				(this->bounceLocation.x * local_20.x + this->bounceLocation.y * local_20.y + this->bounceLocation.z * local_20.z <= 0.0f)) {
+				this->field_0x14f4 = fVar2 + this->pCollisionData->pObbPrim->scale.z;
+				this->field_0x1500 = this->currentLocation;
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -1761,6 +1779,257 @@ LAB_00139008:
 	return;
 }
 
+void CActorHeroPrivate::StateHeroBounceGrip(float param_1, int param_3)
+{
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	float fVar4;
+	edF32VECTOR4 local_10;
+	CPlayerInput* pInput;
+
+	local_10.w = this->bounceLocation.w;
+	local_10.x = 0.0f - this->bounceLocation.x;
+	local_10.y = 0.0f - this->bounceLocation.y;
+	local_10.z = 0.0f - this->bounceLocation.z;
+
+	this->SV_UpdateOrientation2D(this->field_0x1040, &local_10, 0);
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+	if (param_3 == 0) {
+	LAB_00138420:
+		if (param_3 == 0) {
+			pInput = this->pPlayerInput;
+			if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar4 = 1000000.0f;
+			}
+			else {
+				fVar4 = pInput->aButtons[INPUT_BUTTON_INDEX_CROSS].pressedDuration;
+			}
+
+			if (fVar4 < 0.1f) goto LAB_00138478;
+		}
+
+		if (param_1 <= this->timeInAir) {
+			this->field_0x14f4 = this->field_0x14cc;
+			SetState(ChooseStateFall(0), 0xffffffff);
+		}
+	}
+	else {
+		pInput = this->pPlayerInput;
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			uVar3 = 0;
+		}
+		else {
+			uVar3 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
+		}
+
+		if (uVar3 == 0) goto LAB_00138420;
+
+	LAB_00138478:
+		bVar1 = DetectMultipleWallBounces();
+		if (bVar1 == false) {
+			SetState(STATE_HERO_BOUNCE_SOMERSAULT_1, 0xffffffff);
+		}
+		else {
+			SetState(STATE_HERO_BOUNCE_JUMP_1, 0xffffffff);
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBounceJump1Init()
+{
+	float fVar1;
+	_camera_alert_params params;
+	CCamera* pCamera;
+
+	params.field_0x0 = 1;
+	params.field_0x20 = this->bounceLocation;
+	fVar1 = this->field_0x14f4 * 0.5f;
+	params.field_0x10 = params.field_0x20 * fVar1 + this->field_0x1500;
+	pCamera = this->pMainCamera;
+	pCamera->AlertCamera(5, &params, (CCamera*)0x0);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBounceJump1()
+{
+	bool bVar3;
+	uint uVar5;
+	edF32VECTOR4* peVar6;
+	float fVar7;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+	CPlayerInput* pInput;
+
+	IncreaseEffort(2.0f);
+
+	peVar6 = &this->bounceLocation;
+
+	if (peVar6->x * this->rotationQuat.x +
+		this->bounceLocation.y * this->rotationQuat.y
+		+ this->bounceLocation.z * this->rotationQuat.z < 0.0f) {
+		local_10.x = this->bounceLocation.z;
+		local_10.y = 0.0f;
+		local_10.z = -this->bounceLocation.x;
+		local_10.w = 0.0f;
+
+		SV_UpdateOrientation2D(39.26991f, &local_10, 0);
+	}
+	else {
+		SV_UpdateOrientation2D(39.26991f, peVar6, 0);
+	}
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		/* Jump button not pressed */
+		uVar5 = 0;
+	}
+	else {
+		/* Jump button pressed */
+		uVar5 = pInput->pressedBitfield & 0x10;
+	}
+
+	if (uVar5 != 0) {
+		this->field_0x1455 = 1;
+	}
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		this->rotationQuat = this->bounceLocation;
+
+		local_20.y = this->field_0x14d8 * 50.0f;
+		local_20.x = 0.0f;
+		local_20.z = 0.0f;
+		local_20.w = 0.0f;
+
+		edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack48, &local_20);
+		peVar6 = this->dynamicExt.aImpulseVelocities;
+		edF32Vector4AddHard(peVar6, peVar6, &eStack48);
+		fVar7 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+		this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar7;
+		fVar7 = this->field_0x14dc;
+		fVar7 = edFIntervalLERP(this->field_0x14f4, 1.0f, this->field_0x14cc, fVar7 * 0.25f, fVar7);
+		this->scalarDynJump.BuildFromSpeedDist(fVar7, this->field_0x14e0, this->field_0x14f4 - ((this->pCollisionData)->pObbPrim->scale).z);
+		this->dynamic.rotationQuat = this->bounceLocation;
+		SetState(STATE_HERO_BOUNCE_JUMP_2, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBounceJump2()
+{
+	bool bVar1;
+	uint uVar3;
+	int iVar4;
+	edF32VECTOR4* peVar5;
+	edF32VECTOR4 local_10;
+	CCollision* pCol;
+	CPlayerInput* pInput;
+
+	IncreaseEffort(1.0f);
+	CActor::SV_UpdateOrientation2D(this->field_0x1040, &this->bounceLocation, 0);
+	this->scalarDynJump.Integrate(GetTimer()->cutsceneDeltaTime);
+	this->dynamic.speed = this->scalarDynJump.field_0x20;
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		uVar3 = 0;
+	}
+	else {
+		uVar3 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
+	}
+
+	if ((uVar3 != 0) &&
+		(this->scalarDynJump.field_0xc * 0.75f < this->dynamic.speed)) {
+		this->field_0x1455 = 1;
+	}
+
+	bVar1 = CanBounceAgainstWall();
+	if (bVar1 != false) {
+		SetState(0xcc, 0xffffffff);
+		return;
+	}
+
+	peVar5 = &this->rotationQuat;
+	if (this->field_0x1420 != 0) {
+		iVar4 = 0;
+		goto LAB_00137580;
+	}
+
+	pCol = this->pCollisionData;
+	iVar4 = 0;
+	if (((pCol->flags_0x4 & 1) == 0) || (cosf(this->field_0x14b0) <= fabsf(pCol->aCollisionContact[0].location.y))) {
+	LAB_00137528:
+		bVar1 = false;
+	}
+	else {
+		local_10.w = pCol->aCollisionContact[0].location.w;
+		local_10.x = 0.0f - pCol->aCollisionContact[0].location.x;
+		local_10.z = 0.0f - pCol->aCollisionContact[0].location.z;
+		local_10.y = 0.0f;
+		edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+		bVar1 = true;
+		if (local_10.x * peVar5->x +
+			local_10.y * this->rotationQuat.y +
+			local_10.z * this->rotationQuat.z < 0.0f)
+			goto LAB_00137528;
+	}
+
+	if (bVar1) {
+		iVar4 = DetectGripEdge(1, &this->currentLocation, &local_10, (float*)0x0, (float*)0x0, &this->bounceLocation);
+	}
+
+	if (iVar4 == 0) {
+		iVar4 = DetectGripEdge(0, &this->currentLocation, peVar5, (float*)0x0, (float*)0x0, &this->bounceLocation);
+	}
+LAB_00137580:
+	if (iVar4 == 0) {
+		bVar1 = this->scalarDynJump.IsFinished();
+		if ((bVar1 != false) || (((((this->pCollisionData)->flags_0x4 & 1) != 0 && (this->field_0x1455 != 0)) || (0.44f < this->timeInAir)))) {
+			SetState(ChooseStateFall(1), 0xffffffff);
+		}
+	}
+	else {
+		if (this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y < -8.0f) {
+			SetState(0xbd, 0xffffffff);
+		}
+		else {
+			iVar4 = this->actorState;
+			if (((iVar4 == 0x79) || (iVar4 == 0x7c)) || (iVar4 == 199)) {
+				SetState(0xca, 0xffffffff);
+			}
+			else {
+				SetState(0xbc, 0xffffffff);
+			}
+		}
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroGripAngle(int nextState, int param_3)
 {
 	CCamera* pCVar1;
@@ -1803,7 +2072,7 @@ void CActorHeroPrivate::StateHeroGripAngle(int nextState, int param_3)
 	iVar3 = (CCameraManager*)CScene::GetManager(MO_Camera);
 	pCVar1 = this->pCameraViewBase_0x15b0;
 	if (iVar3->pActiveCamera == pCVar1) {
-		pCVar1->AlertCamera(2, 1, (CCamera*)0x0);
+		pCVar1->AlertCamera(2, (void*)1, (CCamera*)0x0);
 	}
 
 	if (((fVar6 <= 0.001f) || (0.5f <= this->timeInAir)) && (SetState(nextState, 0xffffffff), param_3 == 0)) {

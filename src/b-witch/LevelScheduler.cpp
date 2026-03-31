@@ -3840,7 +3840,7 @@ void CLevelScheduler::ManageLoadElevator(int elevatorId, int levelId, int param_
 		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
 		pCameraManager->Level_Reset();
 		pCameraManager->SetMainCamera(CActorHero::_gThis->pMainCamera);
-		pCameraManager->AlertCamera(2, 1);
+		pCameraManager->AlertCamera(2, (void*)1);
 	}
 
 	return;

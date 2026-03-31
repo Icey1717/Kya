@@ -217,7 +217,7 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	undefined4 local_c8;
 	undefined4 local_b0[8];
 	undefined4 local_90[8];
-	undefined4 local_70[8];
+	CActorNativMsgParam_0xe local_70;
 	edF32VECTOR4 eStack80;
 	CActorNativMsgParam_0xe local_40;
 	float local_3c;
@@ -354,87 +354,86 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 							if (iVar6 == 3) {
 								local_40.type = 3;
-								local_38 = -NAN;
+								local_40.field_0x8 = -1;
 								DoMessage(pSender, MESSAGE_NATIV_CMD, &local_40);
 								return 1;
 							}
 
 							if (iVar6 == 8) {
-								IMPLEMENTATION_GUARD(
-								local_40 = pMsgParams->field_0x0;
-								local_3c = pMsgParams->field_0x4;
-								local_38 = pMsgParams->field_0x8;
-								local_34 = pMsgParams->field_0xc;
-								local_30 = (pMsgParams->vectorFieldA).x;
-								local_2c = (pMsgParams->vectorFieldA).y;
-								local_28 = (edF32VECTOR4*)(pMsgParams->vectorFieldA).z;
+								CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
+								local_40 = *pParams;
 								pTalkParam = (CTalkParam*)0x0;
-								if ((int)local_38 < this->nbTalkParams) {
-									pTalkParam = this->aTalkParams + (int)local_38;
+								if (local_40.field_0x8 < this->nbTalkParams) {
+									pTalkParam = this->aTalkParams + local_40.field_0x8;
 								}
+
 								iVar6 = 0;
 								if (0 < pTalkParam->nbSubObj) {
-									iVar2 = 0;
 									do {
 										pCVar5 = (CActor*)0x0;
+
 										if (iVar6 < pTalkParam->nbSubObj) {
-											pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar2);
+											pCVar5 = pTalkParam->field_0x8[iVar6].pNativ;
 										}
+
 										if (pCVar5 == pSender) goto LAB_00395388;
+
 										iVar6 = iVar6 + 1;
-										iVar2 = iVar2 + 8;
 									} while (iVar6 < pTalkParam->nbSubObj);
 								}
 								iVar6 = -1;
+
 							LAB_00395388:
-								local_4 = local_70;
 								if (iVar6 == -1) {
-									local_70[0] = 2;
-									CActor::DoMessage((CActor*)this, pSender, 0x4e, (uint)local_4);
+									local_70.type = 2;
+									DoMessage(pSender, MESSAGE_NATIV_CMD, &local_70);
 								}
 								else {
-									FUN_00392be0((int)pTalkParam, iVar6, (float*)local_28);
-									iVar2 = FUN_00392d90((int)pTalkParam);
+									pTalkParam->FUN_00392be0(iVar6, local_40.field_0x18);
+									iVar2 = pTalkParam->FUN_00392d90();
 									if (iVar2 == 0) {
-										local_2c = FUN_00392ad0(pTalkParam, iVar6);
+										local_40.field_0x14 = pTalkParam->FUN_00392ad0(iVar6);
 										iVar2 = 0;
 										if (iVar6 < pTalkParam->nbSubObj) {
 											iVar2 = pTalkParam->field_0x8[iVar6].field_0x4;
 										}
-										local_40 = 5;
+
+										local_40.type = 5;
 										if (iVar2 == 6) {
-											local_40 = 0;
+											local_40.type = 0;
 										}
 										else {
 											if (iVar2 == 5) {
-												local_40 = 0xd;
+												local_40.type = 0xd;
 											}
 											else {
 												if (iVar2 == 4) {
-													local_40 = 9;
+													local_40.type = 9;
 												}
 												else {
 													if (iVar2 == 3) {
-														local_40 = 6;
+														local_40.type = 6;
 													}
 													else {
 														if (iVar2 != 2) {
-															local_40 = 0;
+															local_40.type = 0;
 														}
 													}
 												}
 											}
 										}
+
 										if (iVar6 < pTalkParam->nbSubObj) {
 											pReceiver = pTalkParam->field_0x8[iVar6].pNativ;
 										}
 										else {
 											pReceiver = (CActorNativ*)0x0;
 										}
-										local_10 = &local_40;
-										CActor::DoMessage((CActor*)this, (CActor*)pReceiver, 0x4e, (uint)local_10);
+
+										DoMessage(pReceiver, MESSAGE_NATIV_CMD, &local_10);
 									}
 									else {
+										IMPLEMENTATION_GUARD(
 										pTalkParam->FUN_00392e30(&eStack80);
 										local_28 = &eStack80;
 										iVar6 = 0;
@@ -524,9 +523,10 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 												iVar6 = iVar6 + 1;
 												iVar2 = iVar2 + 8;
 											} while (iVar6 < pTalkParam->nbSubObj);
-										}
+										})
 									}
-								})
+								}
+
 								return 1;
 							}
 						}
@@ -1839,6 +1839,102 @@ void CTalkParam::FUN_00392e30(edF32VECTOR4* param_2)
 	return;
 }
 
+void CTalkParam::FUN_00392be0(int param_2, edF32VECTOR4* param_3)
+{
+	float fVar1;
+	float fVar2;
+	CActorNativ* pCVar3;
+	int iVar4;
+	float fVar5;
+
+	if (-1 < param_2) {
+		if (param_2 < this->nbSubObj) {
+			pCVar3 = this->field_0x8[param_2].pNativ;
+		}
+		else {
+			pCVar3 = (CActorNativ*)0x0;
+		}
+
+		fVar5 = 0.5f;
+		if (param_2 != 1) {
+			fVar5 = 2.2f;
+		}
+
+		fVar1 = param_3->x - pCVar3->currentLocation.x;
+		fVar2 = param_3->z - pCVar3->currentLocation.z;
+		if (fVar5 < sqrtf(fVar1 * fVar1 + 0.0f + fVar2 * fVar2)) {
+			if (param_2 < this->nbSubObj) {
+				this->field_0x8[param_2].field_0x4 = 2;
+			}
+		}
+		else {
+			if (param_2 < this->nbSubObj) {
+				iVar4 = this->field_0x8[param_2].field_0x4;
+			}
+			else {
+				iVar4 = 0;
+			}
+
+			if (iVar4 != 1) {
+				if (iVar4 == 6) {
+					if (param_2 < this->nbSubObj) {
+						this->field_0x8[param_2].field_0x4 = 3;
+					}
+				}
+				else {
+					if ((((iVar4 != 4) && (iVar4 != 3)) && (iVar4 == 2)) && (param_2 < this->nbSubObj)) {
+						this->field_0x8[param_2].field_0x4 = 3;
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+bool CTalkParam::FUN_00392d90()
+{
+	bool bVar1;
+	CTalkParamSubObj* pCVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+
+	iVar3 = this->nbSubObj;
+	iVar5 = 0;
+	iVar4 = 0;
+	if (0 < iVar3) {
+		pCVar2 = this->field_0x8;
+		do {
+			if (pCVar2->field_0x4 == 3) {
+				iVar5 = iVar5 + 1;
+			}
+
+			iVar4 = iVar4 + 1;
+			pCVar2 = pCVar2 + 1;
+		} while (iVar4 < iVar3);
+	}
+
+	if (iVar5 == iVar3) {
+		iVar4 = 0;
+
+		if (0 < iVar3) {
+			do {
+				this->field_0x8[iVar4].field_0x4 = 4;
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->nbSubObj);
+		}
+
+		bVar1 = true;
+		this->field_0x1d = 1;
+	}
+	else {
+		bVar1 = false;
+	}
+
+	return bVar1;
+}
 
 float CTalkParam::FUN_00392ad0(int index)
 {

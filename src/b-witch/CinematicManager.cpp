@@ -5771,25 +5771,34 @@ float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 	float fVar6 = -1.0f;
 	float fVar7;
 
-	IMPLEMENTATION_GUARD_AUDIO();
-	return -1.0f;
-
 	uVar3 = this->soundInstanceId;
 	fVar6 = 0.0f;
 	fVar7 = Timer::GetTimer()->totalPlayTime;
 	if (uVar3 == 0) {
-		if ((fVar7 - this->floatFieldA < 5.0f) || (this->floatFieldA == 0.0f)) {
+		// Retry playing the audio if it hasn't been playing for more than 5 seconds, or if it hasn't been played at all.
+
+		// Temporary workaround, always try to replay for now
+		SetAudioTrack(audioTrackId);
+		IMPLEMENTATION_GUARD_AUDIO();
+		return -1.0f;
+		// end change
+
+		if (((fVar7 - this->floatFieldA) < 5.0f) || (this->floatFieldA == 0.0f)) {
 			SetAudioTrack(audioTrackId);
 		}
 		else {
 			if (this->field_0x8 == 0.0f) {
 				this->field_0x8 = fVar7 - Timer::GetTimer()->cutsceneDeltaTime;
 			}
-
+		
 			fVar6 = fVar7 - this->field_0x8;
 		}
 	}
 	else {
+		// REMOVE
+		IMPLEMENTATION_GUARD_AUDIO();
+		return -1.0f;
+
 		if (this->field_0x8 == 0.0f) {
 			if (this->field_0x39 != 0) {
 				if (uVar3 == 0) {

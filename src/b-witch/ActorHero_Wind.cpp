@@ -1246,7 +1246,7 @@ void CActorHeroPrivate::StateHeroCheatFlyInit()
 
 	this->field_0x1020 = 0;
 	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
-	pCameraManager->AlertCamera(2, 1);
+	pCameraManager->AlertCamera(2, (void*)1);
 	this->flags = this->flags | 0x80;
 	this->flags = this->flags & 0xffffffdf;
 

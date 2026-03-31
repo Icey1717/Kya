@@ -36,24 +36,12 @@ namespace Renderer
 				// Handle sampler creation failure
 			}
 		}
-		VkDeviceSize CheckBufferSizes()
+		void CheckBufferSizes()
 		{
 			VkPhysicalDeviceProperties properties{};
 			vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
-			const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
-
-			// Model
-			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxInstances));
-
-			// Lighting Data
-			assert(maxUboSize >= (sizeof(LightingDynamicBufferData) * gMaxLightingData));
-
-			// Anim ST
-			assert(maxUboSize >= (sizeof(glm::vec4) * gMaxAnimStData));
 
 			assert(properties.limits.maxPushConstantsSize >= sizeof(PerDrawData));
-
-			return maxUboSize;
 		}
 		static void InitFade()
 		{
@@ -110,14 +98,7 @@ namespace Renderer
 			auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 			auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-			// Vert
-			vertShader.reflectData.MarkUniformBufferDynamic(0, 2);
-			vertShader.reflectData.MarkUniformBufferDynamic(0, 3);
-			vertShader.reflectData.MarkUniformBufferDynamic(0, 4);
-			vertShader.reflectData.MarkUniformBufferDynamic(0, 5);
-
-			// Frag
-			fragShader.reflectData.MarkUniformBufferDynamic(0, 6);
+			// All per-draw data now lives in SSBOs or push constants — no dynamic UBO bindings remain.
 
 			pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
 			pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
@@ -239,7 +220,7 @@ namespace Renderer
 
 		void Setup()
 		{
-			const VkDeviceSize maxUboSize = CheckBufferSizes();
+			CheckBufferSizes();
 
 			RenderPassKey key;
 			key.clearMode = EClearMode::None;
@@ -257,18 +238,14 @@ namespace Renderer
 			gCommandPool = CreateCommandPool("Native Renderer Command Pool");
 			CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
 
-			gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4)) - kAnimDescriptorMatrixRange;
-
 			gNativeVertexBuffer.Init(0x100000, 0x100000);
 			DebugShapes::Setup();
 			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
 
 			gModelBuffer.Init();
-			gAnimationBuffer.Init(gMaxAnimationMatrices, kAnimDescriptorMatrixRange);
+			gAnimationBuffer.Init(gMaxAnimationMatrices);
 
 			gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
-
-			gAlphaBuffer.Init(gMaxInstances);
 
 			gLightingDynamicBuffer.Init();
 			gAnimStBuffer.Init();

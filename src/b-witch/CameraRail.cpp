@@ -245,11 +245,11 @@ bool CCameraRail::Manage()
 	return bVar1;
 }
 
-bool CCameraRail::AlertCamera(int alertType, int param_3, CCamera* param_4)
+bool CCameraRail::AlertCamera(int alertType, void* pParams, CCamera* param_4)
 {
 	bool bVar1;
 
-	bVar1 = CCamera::AlertCamera(alertType, param_3, param_4);
+	bVar1 = CCamera::AlertCamera(alertType, pParams, param_4);
 	if (alertType == 2) {
 		Alert();
 	}
@@ -456,7 +456,7 @@ bool CCameraRailSimple::Manage()
 	return bHandled;
 }
 
-bool CCameraRailSimple::AlertCamera(int alertType, int param_3, CCamera* param_4)
+bool CCameraRailSimple::AlertCamera(int alertType, void* pParams, CCamera* param_4)
 {
 	bool bVar1;
 
@@ -466,7 +466,7 @@ bool CCameraRailSimple::AlertCamera(int alertType, int param_3, CCamera* param_4
 		OnAlertCamera();
 	}
 
-	bVar1 = CCamera::AlertCamera(alertType, param_3, param_4);
+	bVar1 = CCamera::AlertCamera(alertType, pParams, param_4);
 	return bVar1;
 }
 

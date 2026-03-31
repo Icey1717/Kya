@@ -67,6 +67,7 @@ namespace Renderer
 				assert(internalBuffer.vertex.buff[i].STQ.Q == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.Q);
 			}
 		}
+
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
 		{
 			gCachedPerDrawData.renderFlags = renderFlags;
@@ -99,13 +100,14 @@ namespace Renderer
 			else {
 				auto& instance = gCurrentDraw->instances.emplace_back();
 				instance.animationMatrixStart = gCurrentAnimMatrixIndex;
-				instance.modelMatrixIndex = gModelBuffer.GetInstanceIndex();
 				instance.pMesh = pMesh;
 				instance.perDrawData = gCachedPerDrawData;
-				instance.lightingDataIndex = gLightingDynamicBuffer.GetInstanceIndex();
-				instance.animStDataIndex = gAnimStBuffer.GetInstanceIndex();
+				instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(gModelBuffer.GetInstanceIndex());
+				instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
+				instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(gLightingDynamicBuffer.GetInstanceIndex());
+				instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(gAnimStBuffer.GetInstanceIndex());
 
-				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.modelMatrixIndex, instance.animationMatrixStart);
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
 			}
 		}
 
@@ -239,21 +241,19 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i, kAnimDescriptorMatrixRange * sizeof(glm::mat4));
+		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i);
 
-		const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo vertexDynamicsDescBufferInfo = gLightingDynamicBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo lightingDescBufferInfo = gLightingDynamicBuffer.GetDescBufferInfo(i);
 		const VkDescriptorBufferInfo animStDescBufferInfo = gAnimStBuffer.GetDescBufferInfo(i);
 
 		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
 		DescriptorWriteList writeList;
-		writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-		writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-		writeList.EmplaceWrite({ 4, EBindingStage::Vertex, &vertexDynamicsDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-		writeList.EmplaceWrite({ 5, EBindingStage::Vertex, &animStDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+		writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
+		writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
+		writeList.EmplaceWrite({ 4, EBindingStage::Vertex, &lightingDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
+		writeList.EmplaceWrite({ 5, EBindingStage::Vertex, &animStDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
 
-		writeList.EmplaceWrite({ 6, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 		writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 		pTextureData->UpdateDescriptorSets(pipeline, writeList, i);

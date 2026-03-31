@@ -1868,6 +1868,11 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 					fVar8 = this->anmBinMetaAnimator.GetLayerAnimTime(iVar5, 0);
 					index = this->anmBinMetaAnimator.GetAnimEventTrackID(iVar5);
 					if (index != -1) {
+						if (index > 0x3000) {
+							Log::GetInstance().ForceFlush();
+							IMPLEMENTATION_GUARD_LOG();
+						}
+
 						assert(index < 0x3000);
 						CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(index);
 						pTrack->Play(fVar8 * 1000.0f, this->aTrackData[iVar5], 0, pActor);

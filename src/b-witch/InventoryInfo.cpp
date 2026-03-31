@@ -177,12 +177,12 @@ void CInventoryInfo::ObjectPurchased()
 		CLevelScheduler::ScenVar_Set(SCN_ABILITY_CLIMB, 1);
 		break;
 	case INVENTORY_ITEM_BASE_BOOMY:
-		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < 1) {
-			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (void*)1);
-			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (void*)1);
+		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < BOOMY_LEVEL_BRONZE) {
+			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_BRONZE);
+			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_BRONZE);
 		}
 
-		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, 1);
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_BRONZE);
 		break;
 	case INVENTORY_ITEM_WHITE_BRACELET:
 	case INVENTORY_ITEM_YELLOW_BRACELET:
@@ -205,6 +205,20 @@ void CInventoryInfo::ObjectPurchased()
 		break;
 	case INVENTORY_ITEM_TELESCOPE:
 		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BINOCULARS, 1);
+		break;
+	case INVENTORY_ITEM_SILVER_BOOMY:
+		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < BOOMY_LEVEL_SILVER) {
+			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_SILVER);
+			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_SILVER);
+			CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_SILVER);
+		}
+		break;
+	case INVENTORY_ITEM_GOLD_BOOMY:
+		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < BOOMY_LEVEL_GOLD) {
+			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_GOLD);
+			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_GOLD);
+			CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_GOLD);
+		}
 		break;
 	default:
 		IMPLEMENTATION_GUARD();

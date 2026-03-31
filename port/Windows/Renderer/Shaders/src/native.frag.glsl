@@ -9,13 +9,23 @@ layout(location = 0, index = 1) out vec4 outAlphaBlend;
 // Texture sampler
 layout(binding = 1) uniform sampler2D textureSampler;
 
-layout(binding = 6) uniform Test 
+layout(push_constant) uniform PerDrawData
 {
-	bool enable;
-	int atst;
-	int aref;
-	int afail;
-} test;
+	mat4 projXView;
+	uint renderFlags;
+
+	// ATST (alpha test) state
+	uint alphaEnable;
+	int  alphaAtst;
+	int  alphaAref;
+	int  alphaAfail;
+
+	uint modelMatrixIndex;
+	uint animStDataIndex;
+	uint animMatrixStart;
+	uint lightingDataIndex;
+	uint _pad[7];
+} perDrawData;
 
 #define ATST_NEVER 0
 #define ATST_ALWAYS 1
@@ -28,50 +38,50 @@ layout(binding = 6) uniform Test
 
 bool atst(vec4 outColor)
 {
-	if (test.enable) {
-		if (test.atst == ATST_GEQUAL) {
+	if (bool(perDrawData.alphaEnable)) {
+		if (perDrawData.alphaAtst == ATST_GEQUAL) {
 			int a = int(outColor.a * 255);
 
-			if (a < test.aref) {
+			if (a < perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_GREATER) {
+		else if (perDrawData.alphaAtst == ATST_GREATER) {
 			int a = int(outColor.a * 255);
 
-			if (a <= test.aref) {
+			if (a <= perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_EQUAL) {
+		else if (perDrawData.alphaAtst == ATST_EQUAL) {
 			int a = int(outColor.a * 255);
 
-			if (a != test.aref) {
+			if (a != perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_NOTEQUAL) {
+		else if (perDrawData.alphaAtst == ATST_NOTEQUAL) {
 			int a = int(outColor.a * 255);
 
-			if (a == test.aref) {
+			if (a == perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_LESS) {
+		else if (perDrawData.alphaAtst == ATST_LESS) {
 			int a = int(outColor.a * 255);
 
-			if (a >= test.aref) {
+			if (a >= perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_LEQUAL) {
+		else if (perDrawData.alphaAtst == ATST_LEQUAL) {
 			int a = int(outColor.a * 255);
 
-			if (a > test.aref) {
+			if (a > perDrawData.alphaAref) {
 				return false;
 			}
 		}
-		else if (test.atst == ATST_NEVER) {
+		else if (perDrawData.alphaAtst == ATST_NEVER) {
 			return false;
 		}
 	}
@@ -82,7 +92,7 @@ bool atst(vec4 outColor)
 void afail()
 {
 	// afail registers determine what we do when the alpha test fails
-	switch (test.afail) {
+	switch (perDrawData.alphaAfail) {
 		case 0: // AFAIL_KEEP
 			discard;
 

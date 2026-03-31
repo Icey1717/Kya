@@ -8,13 +8,20 @@ class CActorAutonomous;
 class CActorHeroPrivate;
 class CCamFigData;
 
+struct _camera_alert_params
+{
+	int field_0x0;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
+
 struct CCameraGame : public CCameraExt
 {
 	CCameraGame(ECameraType type, struct ByteCode* pMemoryStream);
 	virtual void Init();
 	virtual bool Manage();
 	virtual void Reset();
-	virtual bool AlertCamera(int param_2, int param_3, CCamera* param_4);
+	virtual bool AlertCamera(int param_2, void* pParams, CCamera* param_4);
 	virtual void SetMode(ECameraType type);
 	virtual ECameraType GetMode();
 
@@ -120,7 +127,7 @@ struct CCameraGame : public CCameraExt
 	undefined field_0x25f;
 	edF32VECTOR4 field_0x260;
 	edF32VECTOR4 field_0x270;
-	undefined4 field_0x280;
+	int field_0x280;
 	undefined field_0x284;
 	undefined field_0x285;
 	undefined field_0x286;

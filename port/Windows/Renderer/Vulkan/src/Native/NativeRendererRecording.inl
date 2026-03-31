@@ -71,17 +71,17 @@ namespace Renderer
 					textureRegisters.test.ATST = inverted_atst[textureRegisters.test.ATST];
 				}
 
-				gAlphaBuffer.SetInstanceData(drawCommandIndex, { textureRegisters });
-				drawCommandIndex++;
+				for (auto& instance : draw.instances) {
+					instance.perDrawData.alphaEnable = textureRegisters.test.ATE;
+					instance.perDrawData.alphaAtst   = textureRegisters.test.ATST;
+					instance.perDrawData.alphaAref   = textureRegisters.test.AREF;
+					instance.perDrawData.alphaAfail  = textureRegisters.test.AFAIL;
+				}
 			}
 
 			void Reset()
 			{
-				drawCommandIndex = 0;
 			}
-
-		private:
-			int drawCommandIndex = 0;
 		};
 
 		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
@@ -91,12 +91,11 @@ namespace Renderer
 		}
 
 		// Updates GPU side memory (Dynamic Uniform Buffers | Per Instance Data)
-		static void MapDynamicUniformBuffers()
+		static void MapStorageBuffers()
 		{
 			gModelBuffer.Map(GetCurrentFrame());
-			gAlphaBuffer.Map(GetCurrentFrame());
-			gLightingDynamicBuffer.Map(GetCurrentFrame());
 			gAnimStBuffer.Map(GetCurrentFrame());
+			gLightingDynamicBuffer.Map(GetCurrentFrame());
 
 			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
 				if (bForceAnimMatrixIdentity) {
@@ -251,7 +250,7 @@ namespace Renderer
 						
 						instance.perDrawData.projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
 
-						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
+						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 
 						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
 							primState = instance.pMesh->GetPrim().CMD;
@@ -260,15 +259,7 @@ namespace Renderer
 
 						SetColorDepthDynamicState(cmd, drawCommand);
 
-						std::array< uint32_t, 5> dynamicOffsets = {
-							gModelBuffer.GetOffsetForIndex(instance.modelMatrixIndex),
-							gAnimationBuffer.GetOffsetForIndex(instance.animationMatrixStart),
-							gLightingDynamicBuffer.GetOffsetForIndex(instance.lightingDataIndex),
-							gAnimStBuffer.GetOffsetForIndex(instance.animStDataIndex),
-							gAlphaBuffer.GetOffsetForIndex(drawCommandIndex)
-						};
-
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, drawCommand.pDescriptorSets, dynamicOffsets.size(), dynamicOffsets.data());
+						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, drawCommand.pDescriptorSets, 0, nullptr);
 
 						vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 
@@ -277,20 +268,16 @@ namespace Renderer
 						instanceIndex++;
 					}
 				}
-
-				drawCommandIndex++;
 			}
 
 			void Reset()
 			{
-				drawCommandIndex = 0;
 				instanceIndex = 0;
 				bInRenderPass = false;
 				currentRenderPassKey.Reset();
 			}
 
 		private:
-			int drawCommandIndex = 0;
 			int instanceIndex = 0;
 			bool bInRenderPass = false;
 			RenderPassKey currentRenderPassKey;
@@ -353,10 +340,8 @@ namespace Renderer
 
 			const glm::mat4 previewProjXView = gPreviewProjMatrix * gPreviewViewMatrix;
 
-			int drawCommandIndex = 0;
 			for (auto& draw : gSavedDraws) {
 				if (!draw.pTexture || draw.instances.empty()) {
-					drawCommandIndex++;
 					continue;
 				}
 
@@ -371,25 +356,15 @@ namespace Renderer
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
 					previewPerDrawData.projXView = previewProjXView;
-					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
+					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
 
 					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;
 					pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
 					pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 
-					const std::array<uint32_t, 5> dynamicOffsets = {
-						static_cast<uint32_t>(instance.modelMatrixIndex) * gModelBuffer.GetDynamicAlignment(),
-						static_cast<uint32_t>(instance.animationMatrixStart) * gAnimationBuffer.GetDynamicAlignment(),
-						static_cast<uint32_t>(instance.lightingDataIndex) * gLightingDynamicBuffer.GetDynamicAlignment(),
-						static_cast<uint32_t>(instance.animStDataIndex) * gAnimStBuffer.GetDynamicAlignment(),
-						static_cast<uint32_t>(drawCommandIndex) * gAlphaBuffer.GetDynamicAlignment(),
-					};
-
-					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, draw.pDescriptorSets, dynamicOffsets.size(), dynamicOffsets.data());
+										vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, draw.pDescriptorSets, 0, nullptr);
 					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 				}
-
-				drawCommandIndex++;
 			}
 
 			vkCmdEndRenderPass(cmd);
@@ -460,7 +435,7 @@ namespace Renderer
 		static void MapBuffers()
 		{
 			MapStaticUniformBuffer();
-			MapDynamicUniformBuffers();
+			MapStorageBuffers();
 
 			gNativeVertexBuffer.MapData();
 

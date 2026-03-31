@@ -34,7 +34,7 @@ public:
 	virtual ECameraType GetMode();
 	virtual void Init();
 	virtual bool Manage();
-	virtual bool AlertCamera(int alertType, int param_3, CCamera* param_4);
+	virtual bool AlertCamera(int alertType, void* pParams, CCamera* param_4);
 
 	void Alert();
 	void _UpdateTargetPosWithPlane();
@@ -56,7 +56,7 @@ public:
 
 	virtual ECameraType GetMode();
 	virtual bool Manage();
-	virtual bool AlertCamera(int alertType, int param_3, CCamera* param_4);
+	virtual bool AlertCamera(int alertType, void* pParams, CCamera* param_4);
 
 	void OnAlertCamera();
 

@@ -107,6 +107,68 @@ private:
 	int instanceCount;
 };
 
+// A densely-packed, per-frame GPU storage buffer (SSBO).
+// Unlike DynamicUniformBuffer, there is no alignment padding between elements —
+// data is stored as a plain array. The buffer is re-uploaded in full each frame
+// via Map(). Shaders access elements by an absolute index supplied via push constants.
+template<typename BufferType>
+struct StorageBuffer
+{
+	void Init(int capacity)
+	{
+		this->capacity = capacity;
+		const VkDeviceSize bufferSize = sizeof(BufferType) * capacity;
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			CreateBuffer(bufferSize,
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				buffers[i],
+				buffersMemory[i]);
+		}
+
+		bufferData = new BufferType[capacity];
+	}
+
+	inline void SetInstanceData(int index, const BufferType& data) {
+		assert(index >= 0 && index < capacity);
+		bufferData[index] = data;
+	}
+
+	inline BufferType* GetInstancePtr(int index) const {
+		assert(index >= 0 && index < capacity);
+		return &bufferData[index];
+	}
+
+	inline int GetCapacity() const { return capacity; }
+
+	inline void Map(const int frameIndex) {
+		const VkDeviceSize bufferSize = sizeof(BufferType) * capacity;
+		void* data;
+		vkMapMemory(GetDevice(), buffersMemory[frameIndex], 0, bufferSize, 0, &data);
+		memcpy(data, bufferData, bufferSize);
+		vkUnmapMemory(GetDevice(), buffersMemory[frameIndex]);
+	}
+
+	inline VkDescriptorBufferInfo GetDescBufferInfo(const int frameIndex) const {
+		VkDescriptorBufferInfo descBufferInfo{};
+		descBufferInfo.buffer = buffers[frameIndex];
+		descBufferInfo.offset = 0;
+		descBufferInfo.range = sizeof(BufferType) * capacity;
+		return descBufferInfo;
+	}
+
+	~StorageBuffer() {
+		delete[] bufferData;
+	}
+
+private:
+	BufferType* bufferData = nullptr;
+	int capacity = 0;
+	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
+	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
+};
+
 template<typename BufferType>
 struct UniformBuffer {
 	void Init() {
