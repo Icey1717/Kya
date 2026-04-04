@@ -83,15 +83,6 @@ PlatformHeader<CBehaviourSelectorNew>* gPlatform_00448e24;
 PlatformHeader<CBehaviourSelectorMaster>* gPlatform_00448e28;
 PlatformHeader<S_TILT_DATA>* gTiltDataAllocator;
 
-CActorMovingPlatform::CActorMovingPlatform()
-{
-	CActor();
-	this->field_0x1ec = (CinNamedObject30*)0x0;
-	this->field_0x1f0 = (CActor*)0x0;
-	this->field_0x1f4 = (CinNamedObject30*)0x0;
-	this->field_0x1f8 = (CActor*)0x0;
-}
-
 void CActorMovingPlatform::Create(ByteCode* pByteCode)
 {
 	char* pcVar1;
@@ -157,11 +148,8 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	pByteCode->currentSeekPos = pcVar1 + sizeof(CActorMovingPlatform_SubObj);
 	this->pProperties = reinterpret_cast<CActorMovingPlatform_SubObj*>(pcVar1);
 	this->movingPlatformFlags = 0;
-	this->field_0x1ec = (CinNamedObject30*)0x0;
-	this->field_0x1f0 = (CActor*)0x0;
-	this->field_0x1f4 = (CinNamedObject30*)0x0;
-	this->field_0x1f8 = (CActor*)0x0;
-
+	this->field_0x1ec.Reset();
+	this->field_0x1f4.Reset();
 	
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
@@ -730,43 +718,14 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 
 LAB_0015b1b0:
 	if ((this->pTiedActor != (CActor*)0x0) || (param_3 != 0)) {
-		bool bVar2;
-		CActor* pCVar1 = this->field_0x1f0;
-		if ((pCVar1 == (CActor*)0x0) ||
-			((this->field_0x1ec == (CinNamedObject30*)0x0 || (bVar2 = true, this->field_0x1ec != pCVar1->pCinData)))) {
-			bVar2 = false;
+		if (this->field_0x1ec.IsValid()) {
+			this->field_0x1ec.SetPosition(&this->currentLocation);
+			this->field_0x1ec.SetRotationEuler(&this->rotationEuler);
 		}
 
-		if (bVar2) {
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar1->pCinData)) {
-				pCVar1->currentLocation = this->currentLocation;
-			}
-
-			pCVar1 = this->field_0x1f0;
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = this->rotationEuler;
-			}
-		}
-
-		pCVar1 = this->field_0x1f8;
-		if (((pCVar1 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-			(bVar2 = true, this->field_0x1f4 != pCVar1->pCinData)) {
-			bVar2 = false;
-		}
-
-		if (bVar2) {
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar1->pCinData)) {
-				pCVar1->currentLocation = this->currentLocation;
-			}
-
-			pCVar1 = this->field_0x1f8;
-			if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = this->rotationEuler;
-			}
+		if (this->field_0x1f4.IsValid()) {
+			this->field_0x1f4.SetPosition(&this->currentLocation);
+			this->field_0x1f4.SetRotationEuler(&this->rotationEuler);
 		}
 	}
 
@@ -1065,55 +1024,23 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			this->field_0x1e8 = iVar10;
 			if ((int*)this->field_0x1e8 != (int*)0x0) {
 				CActorSound::SoundStart(this->pActorSound, this, 0, (int*)this->field_0x1e8, 1, 0, (float**)0x0);
-			}
-
-			uVar4 = *(uint*)&this->pProperties->field_0x20;
-			if (uVar4 != 0xffffffff) {
-				if (((this->field_0x1f8 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-					(this->field_0x1f4 != this->field_0x1f8->pCinData)) {
-					bVar2 = false;
-				}
-				else {
-					bVar2 = true;
-				}
-				if (!bVar2) {
-					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1f4, uVar4, 0xffffffffffffffff);
-				}
 			})
 
-			pCVar1 = this->field_0x1f0;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-				(bVar2 = true, this->field_0x1ec != pCVar1->pCinData)) {
-				bVar2 = false;
+			uVar4 = this->pProperties->field_0x20;
+			if (uVar4 != 0xffffffff) {
+				if (!this->field_0x1f4.IsValid()) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1f4, uVar4, FX_MATERIAL_SELECTOR_NONE);
+				}
 			}
 
-			if (((bVar2) && (pCVar1 != (CActor*)0x0)) &&
-				((this->field_0x1ec != (CinNamedObject30*)0x0 && (this->field_0x1ec == pCVar1->pCinData)))) {
-				pCVar1->Manage();
+			if (this->field_0x1ec.IsValid()) {
+				this->field_0x1ec.Stop();
 			}
 
-			pCVar1 = this->field_0x1f8;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-				(bVar2 = true, this->field_0x1f4 != pCVar1->pCinData)) {
-				bVar2 = false;
-			}
-
-			if (bVar2) {
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1f4 == pCVar1->pCinData)) {
-					pCVar1->currentLocation = this->currentLocation;
-				}
-				pCVar1 = this->field_0x1f8;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1f4 == pCVar1->pCinData)) {
-					pCVar1->rotationEuler = this->rotationEuler;
-				}
-				pCVar1 = this->field_0x1f8;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1f4 == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable(0);
-				}
+			if (this->field_0x1f4.IsValid()) {
+				this->field_0x1f4.SetPosition(&this->currentLocation);
+				this->field_0x1f4.SetRotationEuler(&this->rotationEuler);
+				this->field_0x1f4.Start();
 			}
 
 			TriggerSwitches(10);
@@ -1166,55 +1093,19 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 
 			uVar4 = this->pProperties->field_0x1c;
 			if (uVar4 != 0xffffffff) {
-				if (((this->field_0x1f0 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-					(this->field_0x1ec != this->field_0x1f0->pCinData)) {
-					bVar2 = false;
-				}
-				else {
-					bVar2 = true;
-				}
-
-				if (!bVar2) {
-					IMPLEMENTATION_GUARD_LOG(
-					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1ec, uVar4, 0xffffffffffffffff);)
+				if (!this->field_0x1ec.IsValid()) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1ec, uVar4, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pCVar1 = this->field_0x1f8;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-				(bVar2 = true, this->field_0x1f4 != pCVar1->pCinData)) {
-				bVar2 = false;
+			if (this->field_0x1f4.IsValid()) {
+				this->field_0x1f4.Stop();
 			}
 
-			if ((((bVar2) && (pCVar1 != (CActor*)0x0)) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar1->pCinData)) {
-				pCVar1->Manage();
-			}
-
-			pCVar1 = this->field_0x1f0;
-			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-				(bVar2 = true, this->field_0x1ec != pCVar1->pCinData)) {
-				bVar2 = false;
-			}
-
-			if (bVar2) {
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar1->pCinData)) {
-					pCVar1->currentLocation = this->currentLocation;
-				}
-
-				pCVar1 = this->field_0x1f0;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar1->pCinData)) {
-					pCVar1->rotationEuler = this->rotationEuler;
-				}
-
-				pCVar1 = this->field_0x1f0;
-				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable(0);
-				}
+			if (this->field_0x1ec.IsValid()) {
+				this->field_0x1ec.SetPosition(&this->currentLocation);
+				this->field_0x1ec.SetRotationEuler(&this->rotationEuler);
+				this->field_0x1ec.Start();
 			}
 
 			TriggerSwitches(9);
@@ -1394,40 +1285,14 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 	edF32Matrix4GetInverseOrthoHard(&this->field_0x200, &this->field_0x200);
 LAB_0015aa10:
 	if ((this->pTiedActor != (CActor*)0x0) || (local_80 != 0)) {
-		pCVar3 = this->field_0x1f0;
-		if ((pCVar3 == (CActor*)0x0) ||
-			((this->field_0x1ec == (CinNamedObject30*)0x0 || (bVar4 = true, this->field_0x1ec != pCVar3->pCinData)))) {
-			bVar4 = false;
-		}
-		if (bVar4) {
-			if (((pCVar3 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar3->pCinData)) {
-				pCVar3->currentLocation = this->currentLocation;
-			}
-
-			pCVar3 = this->field_0x1f0;
-			if (((pCVar3 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar3->pCinData)) {
-				pCVar3->rotationEuler = this->rotationEuler;
-			}
+		if (this->field_0x1ec.IsValid()) {
+			this->field_0x1ec.SetPosition(&this->currentLocation);
+			this->field_0x1ec.SetRotationEuler(&this->rotationEuler);
 		}
 
-		pCVar3 = this->field_0x1f8;
-		if (((pCVar3 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x1f4 != pCVar3->pCinData)) {
-			bVar4 = false;
-		}
-		if (bVar4) {
-			if (((pCVar3 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar3->pCinData)) {
-				pCVar3->currentLocation = this->currentLocation;
-			}
-
-			pCVar3 = this->field_0x1f8;
-			if (((pCVar3 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar3->pCinData)) {
-				pCVar3->rotationEuler = this->rotationEuler;
-			}
+		if (this->field_0x1f4.IsValid()) {
+			this->field_0x1f4.SetPosition(&this->currentLocation);
+			this->field_0x1f4.SetRotationEuler(&this->rotationEuler);
 		}
 	}
 
@@ -2118,84 +1983,33 @@ void CActorMovingPlatform::ChangeManageState(int state)
 	CActorMovable::ChangeManageState(state);
 
 	if (state == 0) {
-		pCVar2 = this->field_0x1f0;
-		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x1ec != pCVar2->pCinData)) {
-			bVar4 = false;
+		if (this->field_0x1ec.IsValid()) {
+			this->field_0x1ec.Kill();
+			this->field_0x1ec.Reset();
 		}
 
-		if (bVar4) {
-			if (((pCVar2 != (CActor*)0x0) && (pCVar3 = this->field_0x1ec, pCVar3 != (CinNamedObject30*)0x0)) &&
-				(pCVar3 == pCVar2->pCinData)) {
-				IMPLEMENTATION_GUARD(
-				(*pCVar2->pVTable->IsKindOfObject)(pCVar2, (int)pCVar3);)
-			}
-			this->field_0x1f0 = (CActor*)0x0;
-			this->field_0x1ec = (CinNamedObject30*)0x0;
+		this->field_0x1ec.Reset();
+
+		if (this->field_0x1f4.IsValid()) {
+			this->field_0x1f4.Kill();
+			this->field_0x1f4.Reset();
 		}
 
-		this->field_0x1ec = (CinNamedObject30*)0x0;
-		this->field_0x1f0 = (CActor*)0x0;
-
-		pCVar2 = this->field_0x1f8;
-		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->field_0x1f4 != pCVar2->pCinData)) {
-			bVar4 = false;
-		}
-
-		if (bVar4) {
-			if (((pCVar2 != (CActor*)0x0) && (pCVar3 = this->field_0x1f4, pCVar3 != (CinNamedObject30*)0x0)) &&
-				(pCVar3 == pCVar2->pCinData)) {
-				IMPLEMENTATION_GUARD(
-				(*pCVar2->pVTable->IsKindOfObject)(pCVar2, (int)pCVar3);)
-			}
-			this->field_0x1f8 = (CActor*)0x0;
-			this->field_0x1f4 = (CinNamedObject30*)0x0;
-		}
-
-		this->field_0x1f4 = (CinNamedObject30*)0x0;
-		this->field_0x1f8 = (CActor*)0x0;
+		this->field_0x1f4.Reset();
 	}
 	else {
 		if ((this->movingPlatformFlags & 0x10) != 0) {
 			uVar1 = this->pProperties->field_0x1c;
 			if (uVar1 != 0xffffffff) {
-				if (((this->field_0x1f0 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-					(this->field_0x1ec != this->field_0x1f0->pCinData)) {
-					bVar4 = false;
-				}
-				else {
-					bVar4 = true;
-				}
-				if (!bVar4) {
-					IMPLEMENTATION_GUARD_FX(
-					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1ec, uVar1, 0xffffffffffffffff);)
+				if (!this->field_0x1ec.IsValid()) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1ec, uVar1, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pCVar2 = this->field_0x1f0;
-			if (((pCVar2 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
-				(bVar4 = true, this->field_0x1ec != pCVar2->pCinData)) {
-				bVar4 = false;
-			}
-			if (bVar4) {
-				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar2->pCinData)) {
-					pCVar2->currentLocation = this->currentLocation;
-				}
-
-				pCVar2 = this->field_0x1f0;
-				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar2->pCinData)) {
-					pCVar2->rotationEuler = this->rotationEuler;
-				}
-
-				pCVar2 = this->field_0x1f0;
-				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-					(this->field_0x1ec == pCVar2->pCinData)) {
-					pCVar2->InitDlistPatchable(0);
-				}
+			if (this->field_0x1ec.IsValid()) {
+				this->field_0x1ec.SetPosition(&this->currentLocation);
+				this->field_0x1ec.SetRotationEuler(&this->rotationEuler);
+				this->field_0x1ec.Start();
 			}
 		}
 	}
@@ -2569,39 +2383,14 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 
 LAB_0015adf0:
 	if ((this->pTiedActor != (CActor*)0x0) || (param_3 != 0)) {
-		pCVar2 = this->field_0x1f0;
-		if ((pCVar2 == (CActor*)0x0) ||
-			((this->field_0x1ec == (CinNamedObject30*)0x0 || (bVar3 = true, this->field_0x1ec != pCVar2->pCinData)))) {
-			bVar3 = false;
-		}
-		if (bVar3) {
-			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar2->pCinData)) {
-				pCVar2->currentLocation = this->currentLocation;
-			}
-			pCVar2 = this->field_0x1f0;
-			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1ec == pCVar2->pCinData)) {
-				pCVar2->rotationEuler = this->rotationEuler;
-			}
+		if (this->field_0x1ec.IsValid()) {
+			this->field_0x1ec.SetPosition(&this->currentLocation);
+			this->field_0x1ec.SetRotationEuler(&this->rotationEuler);
 		}
 
-		pCVar2 = this->field_0x1f8;
-		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
-			(bVar3 = true, this->field_0x1f4 != pCVar2->pCinData)) {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
-			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar2->pCinData)) {
-				pCVar2->currentLocation = this->currentLocation;
-			}
-			pCVar2 = this->field_0x1f8;
-			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
-				(this->field_0x1f4 == pCVar2->pCinData)) {
-				pCVar2->rotationEuler = this->rotationEuler;
-			}
+		if (this->field_0x1f4.IsValid()) {
+			this->field_0x1f4.SetPosition(&this->currentLocation);
+			this->field_0x1f4.SetRotationEuler(&this->rotationEuler);
 		}
 	}
 
@@ -2774,12 +2563,6 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 	return;
 }
 
-CBehaviourPlatformStand::CBehaviourPlatformStand()
-{
-	this->pCinData = (CinNamedObject30*)0x0;
-	this->pTiedActor = (CActor*)0x0;
-}
-
 void CBehaviourPlatformStand::Create(ByteCode* pByteCode)
 {
 	int iVar1;
@@ -2790,8 +2573,7 @@ void CBehaviourPlatformStand::Create(ByteCode* pByteCode)
 	this->field_0x8 = iVar1;
 	iVar1 = pByteCode->GetS32();
 	this->field_0xc = iVar1;
-	this->pCinData = (CinNamedObject30*)0x0;
-	this->pTiedActor = (CActor*)0x0;
+	this->pCinData.Reset();
 	return;
 }
 
@@ -2817,26 +2599,9 @@ void CBehaviourPlatformStand::Manage()
 
 	pCVar1 = this->pOwner;
 	if (pCVar1->pTiedActor != (CActor*)0x0) {
-		CActor* pCVar2 = this->pTiedActor;
-
-		if (((pCVar2 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
-			(bVar3 = true, this->pCinData != pCVar2->pCinData)) {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
-			if (((pCVar2 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
-				(this->pCinData == pCVar2->pCinData)) {
-				pCVar2->currentLocation = pCVar1->currentLocation;
-			}
-
-			pCVar1 = this->pOwner;
-			pCVar2 = this->pTiedActor;
-
-			if (((pCVar2 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
-				(this->pCinData == pCVar2->pCinData)) {
-				pCVar2->rotationEuler = pCVar1->rotationEuler;
-			}
+		if (this->pCinData.IsValid()) {
+			this->pCinData.SetPosition(&pCVar1->currentLocation);
+			this->pCinData.SetRotationEuler(&pCVar1->rotationEuler);
 		}
 	}
 
@@ -2885,31 +2650,19 @@ void CBehaviourPlatformStand::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 
 void CBehaviourPlatformStand::ChangeManageState(int state)
 {
-	CActor* pCVar1;
+	CNewFx* pCVar1;
 	CActorMovingPlatform* pCVar2;
 	CinNamedObject30* pCVar3;
 	bool bVar4;
 
 	if (state == 0) {
-		pCVar1 = this->pTiedActor;
-		if (((pCVar1 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->pCinData != pCVar1->pCinData)) {
-			bVar4 = false;
+		if (this->pCinData.IsValid()) {
+			this->pCinData.Kill();
+			this->pCinData.Reset();
 		}
 
-		if (bVar4) {
-			if (((pCVar1 != (CActor*)0x0) && (pCVar3 = this->pCinData, pCVar3 != (CinNamedObject30*)0x0)) &&
-				(pCVar3 == pCVar1->pCinData)) {
-				IMPLEMENTATION_GUARD(
-				(*pCVar1->pVTable->IsKindOfObject)(pCVar1, (int)pCVar3);)
-			}
+		this->pCinData.Reset();
 
-			this->pTiedActor = (CActor*)0x0;
-			this->pCinData = (CinNamedObject30*)0x0;
-		}
-
-		this->pCinData = (CinNamedObject30*)0x0;
-		this->pTiedActor = (CActor*)0x0;
 		if (this->field_0x8 != 0) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			CActorSound::FUN_0032c600(this->pOwner->pActorSound, 0);)
@@ -2924,46 +2677,16 @@ void CBehaviourPlatformStand::ChangeManageState(int state)
 		}
 
 		if (this->field_0xc != 0xffffffff) {
-			if (((this->pTiedActor == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
-				(this->pCinData != this->pTiedActor->pCinData)) {
-				bVar4 = false;
-			}
-			else {
-				bVar4 = true;
-			}
-
-			if (!bVar4) {
-				IMPLEMENTATION_GUARD(
-				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &this->pCinData, this->field_0xc, 0xffffffffffffffff);)
+			if (!this->pCinData.IsValid()) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->pCinData, this->field_0xc, FX_MATERIAL_SELECTOR_NONE);
 			}
 		}
 
-		pCVar1 = this->pTiedActor;
-		if (((pCVar1 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
-			(bVar4 = true, this->pCinData != pCVar1->pCinData)) {
-			bVar4 = false;
-		}
-
-		if (bVar4) {
+		if (this->pCinData.IsValid()) {
 			pCVar2 = this->pOwner;
-			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
-				(this->pCinData == pCVar1->pCinData)) {
-				pCVar1->currentLocation = pCVar2->currentLocation;
-			}
-
-			pCVar2 = this->pOwner;
-			pCVar1 = this->pTiedActor;
-			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
-				(this->pCinData == pCVar1->pCinData)) {
-				pCVar1->rotationEuler = pCVar2->rotationEuler;
-			}
-
-			pCVar1 = this->pTiedActor;
-			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
-				(this->pCinData == pCVar1->pCinData)) {
-				pCVar1->InitDlistPatchable(0);
-			}
+			this->pCinData.SetPosition(&pCVar2->currentLocation);
+			this->pCinData.SetRotationEuler(&pCVar2->rotationEuler);
+			this->pCinData.Start();
 		}
 	}
 

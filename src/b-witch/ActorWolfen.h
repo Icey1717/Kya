@@ -445,6 +445,8 @@ public:
 	void DecreaseNbBonusReq();
 	void ClearStruct_001edb50();
 
+	void ExorcismCarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+
 	CActorWolfen* pOwner;
 
 	int behaviourId;
@@ -818,7 +820,7 @@ public:
 	// New virtual functions
 	virtual void ManageExit();
 	virtual void ManageCombatMusic(int state);
-	virtual void Func_0x64();
+	virtual void WolfenCarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 
 	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
 	void InputPunch(uint cmd);
@@ -997,7 +999,7 @@ public:
 	virtual bool IsMakingNoise();
 	virtual CVision* GetVision();
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	// CActorAutonomous
 	virtual CActorWindState* GetWindState();

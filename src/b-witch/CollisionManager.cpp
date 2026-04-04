@@ -571,7 +571,7 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 		}
 		else {
 			peVar2 = param_6 + iVar18;
-			peVar14->position = *peVar2;
+			peVar14->eulerAngles = *peVar2;
 		}
 
 		peVar2 = param_5 + iVar18;
@@ -655,7 +655,7 @@ void CCollision::AllocatePrims(int nbPrims, int primType, edF32VECTOR4* param_4,
 		}
 
 		peVar1 = this->pObbTree;
-		(peVar1->localMatrix).rowT = local_20 + local_30 * 0.5f;
+		(peVar1->localMatrix).rowT = (local_20 + local_30) * 0.5f;
 
 		peVar1 = this->pObbTree;
 		(peVar1->field_0xb0).x = (local_30.x - local_20.x) * 0.5f + 0.01f;

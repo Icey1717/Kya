@@ -273,9 +273,8 @@ void CActorWolfen::Init()
 
 	pCVar2 = this->pShadow;
 	if (pCVar2 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		(pCVar2->base).field_0x48 = (float)&DAT_3f4ccccd;
-		(this->pShadow)->field_0x50 = (float)&DAT_3f4ccccd;)
+		pCVar2->field_0x48 = 0.8f;
+		this->pShadow->field_0x50 = 0.8f;
 	}
 
 	if (gWolfenAnimMatrixData.aMatrices == (edF32MATRIX3*)0x0) {
@@ -1113,16 +1112,14 @@ bool CActorWolfen::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	CActorFighter::CarriedByActor(pActor, m0);
 
 	iVar1 = this->curBehaviourId;
-	if (iVar1 == 0xe) {
-		IMPLEMENTATION_GUARD(
-		pCVar3 = GetBehaviour(this->curBehaviourId);
-		FUN_001ee4e0((int)pCVar3, (long)(int)pActor, m0);)
+	if (iVar1 == WOLFEN_BEHAVIOUR_EXORCISM) {
+		CBehaviourExorcism* pExorcism = static_cast<CBehaviourExorcism*>(GetBehaviour(this->curBehaviourId));
+		pExorcism->ExorcismCarriedByActor(pActor, m0);
 	}
 	else {
-		if (iVar1 == 3) {
-			IMPLEMENTATION_GUARD(
-			pCVar3 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-			(*(code*)pCVar3->pVTable[1].field_0x0.Create)(pCVar3, (long)(int)pActor, m0);)
+		if (iVar1 == FIGHTER_BEHAVIOUR_DEFAULT) {
+			CBehaviourFighterWolfen* pFighterWolfen = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(this->curBehaviourId));
+			pFighterWolfen->WolfenCarriedByActor(pActor, m0);
 		}
 	}
 
@@ -1497,6 +1494,43 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 
 	return 1;
+}
+
+int CActorWolfen::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	bool bVar1;
+	CBehaviourExorcism* pExorcism;
+	int iVar2;
+
+	if (*param_5 != 1) {
+		iVar2 = InterpretEvent(pEventMessage, static_cast<uint>(param_3), param_4, param_5);
+		return iVar2;
+	}
+
+	if ((param_3 == 2) && ((this->flags & 0x800000) == 0)) {
+		if (param_5[1] == 3) {
+			LifeAnnihilate();
+
+			bVar1 = SetBehaviour(WOLFEN_BEHAVIOUR_UNKNOWN, -1, -1);
+			if (bVar1 == false) {
+				SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 99, -1);
+			}
+
+			return 1;
+		}
+
+		if (param_5[1] == 0) {
+			LifeAnnihilate();
+			iVar2 = this->curBehaviourId;
+			pExorcism = static_cast<CBehaviourExorcism*>(GetBehaviour(WOLFEN_BEHAVIOUR_EXORCISM));
+			pExorcism->behaviourId = iVar2;
+			SetBehaviour(WOLFEN_BEHAVIOUR_EXORCISM, 0x55, -1);
+
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 CActorWindState* CActorWolfen::GetWindState()
@@ -9415,15 +9449,13 @@ void CBehaviourTrackWeaponStand::InitState(int newState)
 	CActorWolfen* pWolfen;
 
 	if (newState == 0x97) {
-		IMPLEMENTATION_GUARD(
-		pWeapon = CActorFighter::GetWeapon((CActorFighter*)this->pOwner);
-		FUN_002d5860((int)pWeapon, 1);)
+		pWeapon = this->pOwner->GetWeapon();
+		pWeapon->FUN_002d5860(1);
 	}
 	else {
 		if (newState == 0x96) {
-			IMPLEMENTATION_GUARD(
-			pWeapon = CActorFighter::GetWeapon((CActorFighter*)this->pOwner);
-			FUN_002d5860((int)pWeapon, 0);)
+			pWeapon = this->pOwner->GetWeapon();
+			pWeapon->FUN_002d5860(0);
 		}
 		else {
 			if (newState == WOLFEN_STATE_AIM) {
@@ -9514,8 +9546,8 @@ int CBehaviourTrackWeaponStand::Func_0x70()
 
 int CBehaviourTrackWeaponStand::Func_0x74()
 {
-	if (this->pOwner->GetWeapon()->FUN_002d58a0() != 0) {
-		if (this->pOwner->GetWeapon()->FUN_002d5830() == 0) {
+	if (this->pOwner->GetWeapon()->FUN_002d58a0() != false) {
+		if (this->pOwner->GetWeapon()->FUN_002d5830() != false) {
 			(this->pOwner)->field_0xcf8 = WOLFEN_STATE_AIM;
 			return 0x96;
 		}
@@ -10169,9 +10201,13 @@ void CBehaviourFighterWolfen::ManageCombatMusic(int state)
 	return;
 }
 
-void CBehaviourFighterWolfen::Func_0x64()
+void CBehaviourFighterWolfen::WolfenCarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 {
-	IMPLEMENTATION_GUARD();
+	if (this->field_0x3c != 0) {
+		edF32Matrix4MulF32Vector4Hard(&this->holdPosition, m0, &this->holdPosition);
+	}
+
+	return;
 }
 
 void CBehaviourFighterWolfen::SetPositionToHold(float param_1, edF32VECTOR4* pPosition)
@@ -12973,6 +13009,28 @@ void CBehaviourExorcism::ClearStruct_001edb50()
 	return;
 }
 
+void CBehaviourExorcism::ExorcismCarriedByActor(CActor* pActor, edF32MATRIX4* m0)
+{
+	astruct_17* pSubObj;
+	uint uVar3;
+	StaticMeshComponentAdvancedEx* pCurStaticMesh;
+	edF32MATRIX4 newMatrix;
+
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x40, m0, &this->field_0x40);
+
+	pSubObj = this->aSubObjA;
+	if ((pSubObj != (astruct_17*)0x0) && (uVar3 = 0, pSubObj->field_0x10 == 1)) {
+		do {
+			pCurStaticMesh = pSubObj->field_0x0 + uVar3;
+			edF32Matrix4MulF32Matrix4Hard(&newMatrix, pCurStaticMesh->GetMatrix(), m0);
+			pCurStaticMesh->SetMatrix(&newMatrix);
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < 2);
+	}
+
+	return;
+}
+
 float EXORCISM_EFFECT_SPAWN_TIMES[5] = { 0.0f, 0.0f, 1.83f, 2.17f, 2.67f };
 float EXORCISM_STATE_TRANSITION_TIMES[4] = { 0.0f, 1.83f, 2.17f, 4.0f };
 
@@ -13992,15 +14050,14 @@ void CBehaviourSnipe::ProjectHaloOnScenery(edF32VECTOR4* pSource, edF32VECTOR4* 
 		this->field_0xbc = iVar7;
 	}
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	iVar5 = 0;
 	if (0 < iVar1) {
 		for (; iVar5 < iVar1; iVar5 = iVar5 + 1) {
 			iVar2 = (this->wolfenHaloAgent).nbShadow;
 			pCVar4 = (this->wolfenHaloAgent).aShadows + iVar2 + -1 + iVar5 * iVar2;
-			(**(code**)((pCVar4->base).pVTable + 0x14))(pCVar4, 0);
+			pCVar4->SetDisplayable(0);
 		}
-	})
+	}
 
 	do {
 		local_40.x = 0.0f;
@@ -14025,18 +14082,17 @@ void CBehaviourSnipe::ProjectHaloOnScenery(edF32VECTOR4* pSource, edF32VECTOR4* 
 			eStack208.y = eStack208.y + 0.05f;
 			this->wolfenHaloAgent.UpdateHaloPos(&eStack208, &eStack32, iVar6);
 
-			IMPLEMENTATION_GUARD_SHADOW(
 			fVar8 = edF32Vector4DotProductHard(&eStack32, &eStack48);
 			if (fVar8 < 0.0f) {
 				iVar5 = (this->wolfenHaloAgent).nbShadow;
 				pCVar4 = (this->wolfenHaloAgent).aShadows + iVar5 + -1 + iVar6 * iVar5;
-				(**(code**)((pCVar4->base).pVTable + 0x14))(pCVar4, 1);
+				pCVar4->SetDisplayable(1);
 			}
 			else {
 				iVar5 = (this->wolfenHaloAgent).nbShadow;
 				pCVar4 = (this->wolfenHaloAgent).aShadows + iVar5 + -1 + iVar6 * iVar5;
-				(**(code**)((pCVar4->base).pVTable + 0x14))(pCVar4, 0);
-			})
+				pCVar4->SetDisplayable(0);
+			}
 		}
 
 		iVar6 = (iVar6 + 1) % iVar1;
@@ -14063,13 +14119,12 @@ void CWolfenHaloAgent::Create()
 	
 	this->aShadows = new CShadow[count];
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	if ((this->shadowMaterialId != -1) && (iVar2 = 0, 0 < this->nbSpot * this->nbShadow)) {
 		do {
 			this->aShadows[iVar2].Create(this->shadowMaterialId);
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < this->nbSpot * this->nbShadow);
-	})
+	}
 
 	return;
 }
@@ -14078,14 +14133,13 @@ void CWolfenHaloAgent::Init(CActor* pOwner)
 {
 	int iVar2;
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	iVar2 = 0;
 	if (0 < this->nbSpot * this->nbShadow) {
 		do {
-			this->aShadows.Init(pOwner->sectorId);
+			this->aShadows[iVar2].Init(pOwner->sectorId);
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < this->nbSpot * this->nbShadow);
-	})
+	}
 
 	CActor::SV_InstallMaterialId(this->shadowMaterialId);
 
@@ -14096,14 +14150,13 @@ float DBG_HALO_SIZE = 0.75f;
 
 void CWolfenHaloAgent::Reset(edF32VECTOR4* pPosition, edF32VECTOR4* pAxis)
 {
-	int* piVar1;
+	CShadow* piVar1;
 	int iVar3;
 	CShadow* pShadow;
 	float fVar4;
 	float fVar5;
 	float fVar6;
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	iVar3 = 0;
 	if (0 < this->nbSpot * this->nbShadow) {
 		do {
@@ -14116,27 +14169,26 @@ void CWolfenHaloAgent::Reset(edF32VECTOR4* pPosition, edF32VECTOR4* pAxis)
 	iVar3 = 0;
 	if (0 < this->nbSpot * this->nbShadow) {
 		do {
-			piVar1 = (int*)((int)&(this->aShadows->base).pVTable + iVar2);
-			(**(code**)(*piVar1 + 0x14))(piVar1, 1);
+			piVar1 = this->aShadows + iVar3;
+			piVar1->SetDisplayable(1);
 			iVar3 = iVar3 + 1;
 		} while (iVar3 < this->nbSpot * this->nbShadow);
-	})
+	}
 
 	this->field_0x14 = 0.0f;
 	this->field_0xc = 0;
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	iVar3 = 0;
 	if (0 < this->nbSpot * this->nbShadow) {
 		do {
 			pShadow = this->aShadows + iVar3;
 			pShadow->SetIntensity((float)(iVar3 + 1) / (float)this->nbShadow);
 			iVar3 = iVar3 + 1;
-			pShadow->field_0x10 = *pPosition;
+			pShadow->position = *pPosition;
 			pShadow->field_0x20 = *pAxis;
-			pShadow->field_0x30 = this->field_0x1c;
+			pShadow->shadowColor = this->field_0x1c;
 		} while (iVar3 < this->nbSpot * this->nbShadow);
-	})
+	}
 
 	return;
 }
@@ -14146,15 +14198,14 @@ void CWolfenHaloAgent::SetVisible(bool bVisible)
 	CShadow* pShadow;
 	int iVar2;
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	iVar2 = 0;
 	if (0 < this->nbSpot * this->nbShadow) {
 		do {
 			pShadow = this->aShadows + iVar2;
-			(**(code**)((pShadow->base).pVTable + 0x14))(pShadow, bVisible);
+			pShadow->SetDisplayable(bVisible);
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < this->nbSpot * this->nbShadow);
-	})
+	}
 
 	return;
 }
@@ -14173,59 +14224,33 @@ void CWolfenHaloAgent::UpdateHaloPos(edF32VECTOR4* param_2, edF32VECTOR4* param_
 {
 	int iVar1;
 	CShadow* pCVar2;
-	int iVar3;
+	CShadow* iVar3;
 	int iVar4;
 	CShadow* pCVar5;
 	float fVar6;
 	float fVar7;
 	float fVar8;
 
-	IMPLEMENTATION_GUARD_SHADOW(
 	if (this->field_0xc == 0) {
 		iVar4 = 0;
 		if (0 < this->nbSpot * this->nbShadow + -1) {
 			iVar1 = 0;
 			do {
-				iVar3 = (int)&this->aShadows[1].base.pVTable + iVar1;
-				pCVar2 = (CShadow*)((int)&(this->aShadows->base).pVTable + iVar1);
-				CShadowShared::SetIntensity
-				((float)(iVar4 + 1) / (float)(this->nbSpot * this->nbShadow + -1), pCVar2);
+				iVar3 = this->aShadows + 1 + iVar4;
+				pCVar2 = this->aShadows + iVar4;
+				pCVar2->SetIntensity((float)(iVar4 + 1) / (float)(this->nbSpot * this->nbShadow + -1));
 				iVar4 = iVar4 + 1;
-				fVar8 = *(float*)(iVar3 + 0x14);
-				fVar6 = *(float*)(iVar3 + 0x18);
-				fVar7 = *(float*)(iVar3 + 0x1c);
-				(pCVar2->base).field_0x10.x = *(float*)(iVar3 + 0x10);
-				(pCVar2->base).field_0x10.y = fVar8;
-				(pCVar2->base).field_0x10.z = fVar6;
-				(pCVar2->base).field_0x10.w = fVar7;
-				fVar8 = *(float*)(iVar3 + 0x24);
-				fVar6 = *(float*)(iVar3 + 0x28);
-				fVar7 = *(float*)(iVar3 + 0x2c);
-				(pCVar2->base).field_0x20.x = *(float*)(iVar3 + 0x20);
-				(pCVar2->base).field_0x20.y = fVar8;
-				(pCVar2->base).field_0x20.z = fVar6;
-				(pCVar2->base).field_0x20.w = fVar7;
-				(pCVar2->base).field_0x30 = *(uint*)(iVar3 + 0x30);
-				iVar1 = iVar1 + 0x60;
+				pCVar2->position = iVar3->position;
+				pCVar2->field_0x20 = iVar3->field_0x20;
+				pCVar2->shadowColor = iVar3->shadowColor;
 			} while (iVar4 < this->nbSpot * this->nbShadow + -1);
 		}
+
 		pCVar2 = this->aShadows + this->nbShadow + -1 + (this->nbSpot + -1) * this->nbShadow;
-		CShadowShared::SetIntensity(1.0, pCVar2);
-		fVar8 = param_2->y;
-		fVar6 = param_2->z;
-		fVar7 = param_2->w;
-		(pCVar2->base).field_0x10.x = param_2->x;
-		(pCVar2->base).field_0x10.y = fVar8;
-		(pCVar2->base).field_0x10.z = fVar6;
-		(pCVar2->base).field_0x10.w = fVar7;
-		fVar8 = param_3->y;
-		fVar6 = param_3->z;
-		fVar7 = param_3->w;
-		(pCVar2->base).field_0x20.x = param_3->x;
-		(pCVar2->base).field_0x20.y = fVar8;
-		(pCVar2->base).field_0x20.z = fVar6;
-		(pCVar2->base).field_0x20.w = fVar7;
-		(pCVar2->base).field_0x30 = this->field_0x1c;
+		pCVar2->SetIntensity(1.0f);
+		pCVar2->position = *param_2;
+		pCVar2->field_0x20 = *param_3;
+		pCVar2->shadowColor = this->field_0x1c;
 	}
 	else {
 		iVar4 = 0;
@@ -14234,43 +14259,20 @@ void CWolfenHaloAgent::UpdateHaloPos(edF32VECTOR4* param_2, edF32VECTOR4* param_
 				iVar1 = param_4 * this->nbShadow;
 				pCVar2 = this->aShadows + iVar4 + iVar1;
 				pCVar5 = this->aShadows + iVar4 + 1 + iVar1;
-				CShadowShared::SetIntensity((float)(iVar4 + 1) / (float)this->nbShadow, pCVar2);
+				pCVar2->SetIntensity((float)(iVar4 + 1) / (float)this->nbShadow);
 				iVar4 = iVar4 + 1;
-				fVar8 = (pCVar5->base).field_0x10.y;
-				fVar6 = (pCVar5->base).field_0x10.z;
-				fVar7 = (pCVar5->base).field_0x10.w;
-				(pCVar2->base).field_0x10.x = (pCVar5->base).field_0x10.x;
-				(pCVar2->base).field_0x10.y = fVar8;
-				(pCVar2->base).field_0x10.z = fVar6;
-				(pCVar2->base).field_0x10.w = fVar7;
-				fVar8 = (pCVar5->base).field_0x20.y;
-				fVar6 = (pCVar5->base).field_0x20.z;
-				fVar7 = (pCVar5->base).field_0x20.w;
-				(pCVar2->base).field_0x20.x = (pCVar5->base).field_0x20.x;
-				(pCVar2->base).field_0x20.y = fVar8;
-				(pCVar2->base).field_0x20.z = fVar6;
-				(pCVar2->base).field_0x20.w = fVar7;
-				(pCVar2->base).field_0x30 = (pCVar5->base).field_0x30;
+				pCVar2->position = pCVar5->position;
+				pCVar2->field_0x20 = pCVar5->field_0x20;
+				pCVar2->shadowColor = pCVar5->shadowColor;
 			} while (iVar4 < this->nbShadow + -1);
 		}
+
 		pCVar2 = this->aShadows + this->nbShadow + -1 + param_4 * this->nbShadow;
-		CShadowShared::SetIntensity(1.0, pCVar2);
-		fVar8 = param_2->y;
-		fVar6 = param_2->z;
-		fVar7 = param_2->w;
-		(pCVar2->base).field_0x10.x = param_2->x;
-		(pCVar2->base).field_0x10.y = fVar8;
-		(pCVar2->base).field_0x10.z = fVar6;
-		(pCVar2->base).field_0x10.w = fVar7;
-		fVar8 = param_3->y;
-		fVar6 = param_3->z;
-		fVar7 = param_3->w;
-		(pCVar2->base).field_0x20.x = param_3->x;
-		(pCVar2->base).field_0x20.y = fVar8;
-		(pCVar2->base).field_0x20.z = fVar6;
-		(pCVar2->base).field_0x20.w = fVar7;
-		(pCVar2->base).field_0x30 = this->field_0x1c;
-	})
+		pCVar2->SetIntensity(1.0f);
+		pCVar2->position = *param_2;
+		pCVar2->field_0x20 = *param_3;
+		pCVar2->shadowColor = this->field_0x1c;
+	}
 
 	return;
 }

@@ -377,18 +377,18 @@ void CVision::Scan(CActorsTable* pTable, int param_3)
 	CActor* pCVar1;
 	CActor** pCVar2;
 	int iVar3;
-	ScanActorsParams local_20;
+	ScanActorsParams scanParams;
 	edF32VECTOR4 local_10;
 
 	local_10.xyz = this->location.xyz;
 	local_10.w = this->apexOffset + this->visionRange;
 
-	local_20.pOwner = this->pOwner;
-	local_20.pVision = this;
-	local_20.pTable = pTable;
-	local_20.mode = param_3;
+	scanParams.pOwner = this->pOwner;
+	scanParams.pVision = this;
+	scanParams.pTable = pTable;
+	scanParams.mode = param_3;
 
-	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_10, gClusterCallback_AllActorsInVision, &local_20);
+	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_10, gClusterCallback_AllActorsInVision, &scanParams);
 
 	if ((this->flags & 0x10) != 0) {
 		pTable->SortByClassPriority();

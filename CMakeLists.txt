@@ -89,6 +89,8 @@ set(main_src
 	"${src_root}/b-witch/kya.h"
 	"${src_root}/b-witch/Actor.cpp"
 	"${src_root}/b-witch/Actor.h"
+	"${src_root}/b-witch/ActorShadows.cpp"
+	"${src_root}/b-witch/ActorShadows.h"
 	"${src_root}/b-witch/ActorServices.cpp"
 	"${src_root}/b-witch/ActorServices.h"
 	"${src_root}/b-witch/ActorBonusServices.cpp"
@@ -281,7 +283,8 @@ set(main_src
 	"${src_root}/b-witch/Dynamic.h"
 	"${src_root}/b-witch/BehaviourInventory.cpp"
 	"${src_root}/b-witch/BehaviourInventory.h"
-
+	"${src_root}/b-witch/ActorPatternService.cpp"
+	"${src_root}/b-witch/ActorPatternService.h"
 	"${src_root}/b-witch/Fx.cpp"
 	"${src_root}/b-witch/Fx.h"
 	"${src_root}/b-witch/Fx_Tail.cpp"

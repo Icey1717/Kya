@@ -226,7 +226,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	this->SetupDefaultPosition();
 	this->SetupClippingInfo();
 	this->SetupLodInfo();
-	//CActor::SetupShadow(this, (GroundObject*)0x0);
+	SetupShadow((CShadow*)0x0);
 	this->SetupLighting();
 
 	this->flags = this->flags | 0x100000;

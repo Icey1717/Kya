@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorAutonomous.h"
+#include "ActorPatternService.h"
 #include "Fx_Spark.h"
 #include "Dynamic.h"
 #include "Fx.h"
@@ -25,59 +26,6 @@
 #define PROJECTILE_STATE_SOCCER 0xf
 #define PROJECTILE_STATE_AUT_KICKED 0x10
 #define PROJECTILE_STATE_AUT_ROLL_ON_GROUND 0x11
-
-class CPointPattern
-{
-public:
-	edF32VECTOR4 field_0x10;
-	undefined4 field_0x20;
-	byte field_0x24;
-	byte field_0x25;
-};
-
-class CPatternPart
-{
-public:
-	CPatternPart();
-
-	void Create(ByteCode* pByteCode);
-	void Init(float param_1, CActor* pOwner);
-	void Reset();
-	void FUN_003a7cc0(float param_2);
-
-	float field_0x0;
-	float field_0x4;
-	float field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-
-	int materialId;
-	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-	uint field_0x28;
-	edF32VECTOR4 field_0x30;
-	undefined4 field_0x40;
-	float field_0x48;
-	undefined4 field_0x4c;
-	undefined4 field_0x50;
-	int field_0x5c;
-
-	float instanceIndex;
-	float field_0x64;
-	float field_0x68;
-	float field_0x6c;
-
-	float field_0x70;
-	undefined4 field_0x74;
-	float field_0x78;
-
-	CActor* pOwner;
-
-	int nbPointPatterns;
-	CPointPattern* aPointPatterns;
-};
 
 class CActorProjectile;
 

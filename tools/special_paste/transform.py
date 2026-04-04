@@ -13,6 +13,7 @@ Transforms (in order applied):
 """
 
 import re
+import struct
 import sys
 
 
@@ -57,19 +58,26 @@ def split_top_level_args(args_text: str) -> list[str]:
 
 def strip_base_chain_in(expr: str) -> str:
     """
-    Strip base-class navigation chains:
-        (this->base).base.base.field        ->  this->field
-        (ptr->base).base.field              ->  ptr->field
-        (this->pOwner->base).base.x.y       ->  this->pOwner->x.y
-    The object before ->base may itself be a ->-chain.
-    The field after the base chain may include dotted sub-members (x.y).
-    Iterates until no further reductions are possible.
+    Strip base-class navigation chains of any form:
+        (this->base).field                        ->  this->field
+        (this->base).base.base.field              ->  this->field
+        (ptr->base).base.field                    ->  ptr->field
+        (this->pOwner->base).base.x.y             ->  this->pOwner->x.y
+        (ptr->character).characterBase.base.field ->  ptr->field
+
+    Two patterns are applied iteratively:
+      1. ->base inside the parens (with optional .base* outside)
+      2. ->anyField inside the parens with at least one .base. outside
     """
-    pattern = re.compile(r"\((\w+(?:->\w+)*)->base\)(?:\.base)*\.(\w+(?:\.\w+)*)")
+    # ->base inside parens, zero or more .base. outside
+    p1 = re.compile(r"\((\w+(?:->\w+)*)->base\)(?:\.base)*\.(\w+(?:\.\w+)*)")
+    # ->anyField inside parens, one or more named segments then .base. outside
+    p2 = re.compile(r"\((\w+(?:->\w+)*)->\w+\)(?:\.\w+)*\.base\.(\w+(?:\.\w+)*)")
     prev = None
     while prev != expr:
         prev = expr
-        expr = pattern.sub(r"\1->\2", expr)
+        expr = p1.sub(r"\1->\2", expr)
+        expr = p2.sub(r"\1->\2", expr)
     return expr
 
 
@@ -130,6 +138,12 @@ def t_vtable_calls(text: str) -> str:
                             bare = re.sub(r"^\s*\([\w\s*:]+\)\s*", "", this_arg).strip()
                             if bare == "this":
                                 result.append(f"{method}({rest_str})")
+                            elif re.match(r"^[\w][\w\->]*$", bare):
+                                # Cast stripped to a pointer expression — use it directly
+                                if rest_str:
+                                    result.append(f"{bare}->{method}({rest_str})")
+                                else:
+                                    result.append(f"{bare}->{method}()")
                             elif rest_str:
                                 result.append(f"({this_arg})->{method}({rest_str})")
                             else:
@@ -278,7 +292,7 @@ def t_c_casts_to_static_cast(text: str) -> str:
                     word_m = re.match(r"[\w:]+", text[after:])
                     if word_m:
                         expr = word_m.group(0)
-                        if NULL_EXPRS.match(expr.strip()):
+                        if NULL_EXPRS.match(expr.strip()) or expr.strip() == "this":
                             i = after + word_m.end()
                             continue
                         result.append(text[pos:i])
@@ -298,10 +312,11 @@ def t_float_literals(text: str) -> str:
     Append 'f' suffix to unqualified floating-point literals:
         0.0  ->  0.0f
         1.5e3  ->  1.5e3f
-    Skips literals already suffixed with f/F/l/L/d/D and hex literals.
+    Skips literals already suffixed, hex literals, and numbers that are
+    part of identifiers (e.g. auStack64.ba must not match as 64.).
     """
     return re.sub(
-        r"(?<![0-9a-fA-FxX_])(\d+\.\d*|\d*\.\d+)(?:[eE][+-]?\d+)?(?![fFlLdD\d])",
+        r"(?<![0-9a-zA-Z_])(\d+\.\d*|\d*\.\d+)(?:[eE][+-]?\d+)?(?!\w)",
         lambda m: m.group(0) + "f",
         text,
     )
@@ -369,12 +384,64 @@ def t_inline_bytecode_temps(text: str) -> str:
 
 
 
+def t_remove_this_param(text: str) -> str:
+    """
+    Remove the explicit `ClassName *this` first parameter from member function signatures:
+        void CShadow::SetDisplayable(CShadow *this, int displayable)
+          -> void CShadow::SetDisplayable(int displayable)
+
+    Only fires when the first parameter is exactly `Word *this` and the
+    function is a `ClassName::Method(...)` form.
+    """
+    # Match: anything Class::Method(Type *this) or Class::Method(Type *this, rest)
+    pattern = re.compile(
+        r"(\b\w+::\w+\()\s*\w+\s*\*\s*this\s*(?:,\s*)?(.*?)(\))",
+        re.DOTALL,
+    )
+    return pattern.sub(r"\1\2\3", text)
+
+
+
+def t_dat_float_literals(text: str) -> str:
+    """
+    Convert Ghidra DAT float references to real float literals:
+        (float)&DAT_bf000000  ->  -0.5f
+        (float)&DAT_3f800000  ->  1.0f
+
+    The 8 hex digits are the IEEE 754 big-endian representation of the float.
+    NaN and infinity are left unchanged.
+    """
+    def _replace(m: re.Match) -> str:
+        try:
+            value = struct.unpack(">f", bytes.fromhex(m.group(1)))[0]
+        except (ValueError, struct.error):
+            return m.group(0)
+        if value != value or value in (float("inf"), float("-inf")):
+            return m.group(0)
+        s = f"{value:.8g}"
+        if "." not in s and "e" not in s:
+            s += ".0"
+        return s + "f"
+
+    return re.sub(r"\(float\)&DAT_([0-9a-fA-F]{8})", _replace, text)
+
+
+def t_math_macros(text: str) -> str:
+    """Replace Ghidra all-caps math macros with their C runtime equivalents."""
+    text = re.sub(r"\bSQRT\b", "sqrtf", text)
+    text = re.sub(r"\bABS\b", "fabsf", text)
+    return text
+
+
 TRANSFORMS = [
     t_vtable_calls,
     t_free_to_member_calls,
     t_remove_base_chains,
     t_c_casts_to_static_cast,
+    t_dat_float_literals,
     t_float_literals,
+    t_math_macros,
+    t_remove_this_param,
     t_inline_bytecode_temps,
 ]
 
@@ -395,12 +462,24 @@ def _run_tests() -> None:
         ("x = 0.0;", "x = 0.0f;"),
         ("x = 1.5e3;", "x = 1.5e3f;"),
         ("x = 0.0f;", "x = 0.0f;"),  # already suffixed, no change
+        # number embedded in identifier must not be treated as float literal
+        ("auStack64.ba = (this->field_0x20).x;", "auStack64.ba = (this->field_0x20).x;"),
         # base chain stripping
         ("(this->base).base.base.pAnim", "this->pAnim"),
+        # ->base inside parens, field directly after (no .base. outside)
+        ("(this->base).field_0x38", "this->field_0x38"),
+        ("if (param_2 != (this->base).field_0x38) {", "if (param_2 != this->field_0x38) {"),
         # base chain with ptr chain before ->base and dotted sub-field after
         ("(this->pOwner->base).base.dynamic.speed = 0.0;", "this->pOwner->dynamic.speed = 0.0f;"),
         # base chain with deeper ptr chain
         ("(this->pOwner->pChild->base).base.x", "this->pOwner->pChild->x"),
+        # named base member (not literally ->base) with intermediate chain
+        (
+            "local_30.x = (pCVar1->character).characterBase.base.dynamic.horizontalVelocityDirectionEuler.x;",
+            "local_30.x = pCVar1->dynamic.horizontalVelocityDirectionEuler.x;",
+        ),
+        # named intermediate + multiple .base levels
+        ("(this->actor).actorBase.base.base.field", "this->field"),
         # bytecode temp inlining — consecutive pairs
         (
             "fVar12 = pByteCode->GetF32();\nthis->field_0x214 = fVar12;\nfVar12 = pByteCode->GetF32();\nthis->field_0x210 = fVar12;",
@@ -476,6 +555,35 @@ def _run_tests() -> None:
             "fVar12 = pByteCode->GetF32();\nthis->x = fVar12;\nfVar12 = pByteCode->GetF32();\nthis->y = fVar12;\nfVar12 = pByteCode->GetF32();\nthis->z = fVar12;",
             "this->x = pByteCode->GetF32();\nthis->y = pByteCode->GetF32();\nthis->z = pByteCode->GetF32();",
         ),
+        # remove explicit this param from member function signatures
+        (
+            "void CShadow::SetDisplayable(CShadow *this, int displayable)",
+            "void CShadow::SetDisplayable(int displayable)",
+        ),
+        # only param — leaves empty parens
+        (
+            "void CActor::Reset(CActor *this)",
+            "void CActor::Reset()",
+        ),
+        # non-member free function — should NOT change
+        (
+            "void SetDisplayable(CShadow *this, int displayable)",
+            "void SetDisplayable(CShadow *this, int displayable)",
+        ),
+        # DAT float literal decoding
+        ("(float)&DAT_bf000000", "-0.5f"),        # -0.5
+        ("(float)&DAT_3f800000", "1.0f"),          # 1.0
+        ("(float)&DAT_3f000000", "0.5f"),          # 0.5
+        ("(float)&DAT_00000000", "0.0f"),          # 0.0
+        ("(float)&DAT_40490fdb", "3.1415927f"),    # pi
+        ("x = (float)&DAT_bf000000;", "x = -0.5f;"),
+        # math macros
+        ("x = SQRT(val);", "x = sqrtf(val);"),
+        ("x = ABS(val);", "x = fabsf(val);"),
+        ("x = SQRT(ABS(val));", "x = sqrtf(fabsf(val));"),
+        # should not match lowercase or partial
+        ("x = sqrt(val);", "x = sqrt(val);"),
+        ("ABSOLUTELY = 1;", "ABSOLUTELY = 1;"),
         # ByteCode::Get* variants
         ("ByteCode::GetF32(pByteCode);", "pByteCode->GetF32();"),
         ("ByteCode::GetS32(pByteCode);", "pByteCode->GetS32();"),
@@ -510,8 +618,15 @@ def _run_tests() -> None:
             "(*((this->base).base.base.pVTable)->LifeDecrease)(2.0,(CActorAutonomous *)this);",
             "LifeDecrease(2.0f);",
         ),
-        # C-style cast - pointer
-        ("(CActor *)this", "static_cast<CActor *>(this)"),
+        # vtable call - cast of this->member as object arg
+        (
+            "(*((this->pOwner->base).base.pVTable)->SetState)((CActor *)this->pOwner,9,-1);",
+            "this->pOwner->SetState(9, -1);",
+        ),
+        # C-style cast of `this` alone — must NOT be transformed (never cast this)
+        ("(CActor *)this", "(CActor *)this"),
+        # C-style cast of non-this pointer — still transforms
+        ("(CActor *)pActor", "static_cast<CActor *>(pActor)"),
         # C-style cast - parenthesised expr
         ("(int *)(ptr)", "static_cast<int *>(ptr)"),
         # C-style null casts — must NOT be transformed

@@ -1092,7 +1092,9 @@ bool CActorHero::CanActivateCheckpoint(uint flags)
 		}
 		if (!bVar2) {
 			if ((flags & 0x40000000) == 0) {
-				return TestState_IsInCheatMode();
+				if (TestState_IsInCheatMode()) {
+					return true;
+				}
 			}
 
 			if ((flags & 1) != 0) {

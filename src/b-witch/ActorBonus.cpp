@@ -48,10 +48,9 @@ void CActorBonus::Init()
 
 	pCVar1 = this->pShadow;
 	if (pCVar1 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		(pCVar1->base).field_0x30 = 0x80808080;
-		((this->pShadow)->base).field_0x48 = 1.3f;
-		(this->pShadow)->field_0x50 = 1.3f;)
+		pCVar1->shadowColor.rgba = 0x80808080;
+		this->pShadow->field_0x48 = 1.3f;
+		this->pShadow->field_0x50 = 1.3f;
 	}
 
 	_gBNS_Lights.Init(0x40000000, 0x40800000, 0x41004, 0x10a010, 0);
@@ -305,11 +304,16 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 			pBnsInstance->SetVisible(this->flags & 0x100);
 
 			if (this->pShadow != (CShadow*)0x0) {
-				IMPLEMENTATION_GUARD_SHADOW(
-				(*(void(**)())(this->pShadow->pVTable + 0x14))();
+				uint uVar1 = pBnsInstance->flags;
+				int iVar3 = 0;
+				if (((uVar1 & 1) != 0) && ((uVar1 & 6) != 0)) {
+					iVar3 = 1;
+				}
+
+				this->pShadow->SetDisplayable(iVar3);
 				pShadow = this->pShadow;
-				pShadow->field_0x10.x = pBnsInstance->currentPosition.x;
-				pShadow->field_0x10.z = pBnsInstance->currentPosition.z;)
+				pShadow->position.x = pBnsInstance->currentPosition.x;
+				pShadow->position.z = pBnsInstance->currentPosition.z;
 			}
 		}
 
@@ -428,8 +432,7 @@ void CBehaviourBonusAlone::Init(CActor* pOwner)
 
 	pShadow = pBonus->pShadow;
 	if (pShadow != nullptr) {
-		IMPLEMENTATION_GUARD_SHADOW(
-		pShadow->field_0x48 = 1.3f;)
+		pShadow->field_0x48 = 1.3f;
 	}
 
 	this->bonusFlarePatchId = GameDListPatch_Register(pOwner, 0, 1);
@@ -483,10 +486,9 @@ void CBehaviourBonusAlone::Begin(CActor* pOwner, int newState, int newAnimationT
 			shadowVisible = 1;
 		}
 
-		IMPLEMENTATION_GUARD_SHADOW(
-		pShadow->SetVisible(shadowVisible);
-		pShadow->field_0x10.x = this->actInstance.currentPosition.x;
-		pShadow->field_0x10.z = this->actInstance.currentPosition.z;)
+		pShadow->SetDisplayable(shadowVisible);
+		pShadow->position.x = this->actInstance.currentPosition.x;
+		pShadow->position.z = this->actInstance.currentPosition.z;
 	}
 
 	this->field_0x1c4 = 1;
@@ -644,9 +646,8 @@ void CBehaviourBonusTurn::Manage()
 
 		pShadow = pBonus->pShadow;
 		if (pShadow != nullptr) {
-			IMPLEMENTATION_GUARD_SHADOW(
-				pShadow->field_0x10 = local_10;
-			CShadowShared::SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0, pShadow);)
+			pShadow->position = local_10;
+			pShadow->SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0);
 		}
 	}
 
@@ -669,8 +670,7 @@ void CBehaviourBonusTurn::Manage()
 	if ((this->actInstance.flags & 1) == 0) {
 		pShadow = this->pOwner->pShadow;
 		if (pShadow != nullptr) {
-			IMPLEMENTATION_GUARD_SHADOW(
-			pShadow->SetVisible(0);)
+			pShadow->SetDisplayable(0);
 		}
 
 		pBonus = this->pOwner;
@@ -696,11 +696,10 @@ void CBehaviourBonusTurn::Manage()
 				shadowVisible = 1;
 			}
 
-			IMPLEMENTATION_GUARD_SHADOW(
-			pShadow->SetVisible(shadowVisible);
-			pShadow->field_0x10.x = this->actInstance.currentPosition.x;
-			pShadow->field_0x10.z = this->actInstance.currentPosition.z;
-			CShadowShared::SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0, pShadow);)
+			pShadow->SetDisplayable(shadowVisible);
+			pShadow->position.x = this->actInstance.currentPosition.x;
+			pShadow->position.z = this->actInstance.currentPosition.z;
+			pShadow->SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0);
 		}
 
 		this->field_0x1d0 = this->field_0x1d4 + sinf(this->field_0x1d8) * 0.12f;
@@ -776,9 +775,8 @@ void CBehaviourBonusPath::Manage()
 
 			pShadow = pBonus->pShadow;
 			if (pShadow != nullptr) {
-				IMPLEMENTATION_GUARD_SHADOW(
-					pShadow->field_0x10 = local_10;
-				CShadowShared::SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0, pShadow);)
+				pShadow->position = local_10;
+				pShadow->SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0);
 			}
 		}
 
@@ -787,8 +785,7 @@ void CBehaviourBonusPath::Manage()
 		if ((this->actInstance.flags & 1) == 0) {
 			pShadow = this->pOwner->pShadow;
 			if (pShadow != nullptr) {
-				IMPLEMENTATION_GUARD_SHADOW(
-					pShadow->SetVisible(0);)
+				pShadow->SetDisplayable(0);
 			}
 
 			pBonus = this->pOwner;
@@ -814,11 +811,10 @@ void CBehaviourBonusPath::Manage()
 					shadowVisible = 1;
 				}
 
-				IMPLEMENTATION_GUARD_SHADOW(
-				pShadow->SetVisible(shadowVisible);
-				pShadow->field_0x10.x = this->actInstance.currentPosition.x;
-				pShadow->field_0x10.z = this->actInstance.currentPosition.z;
-				CShadowShared::SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0, pShadow);)
+				pShadow->SetDisplayable(shadowVisible);
+				pShadow->position.x = this->actInstance.currentPosition.x;
+				pShadow->position.z = this->actInstance.currentPosition.z;
+				pShadow->SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0);
 			}
 
 			this->pOwner->UpdatePosition(&this->actInstance.currentPosition, true);
@@ -933,32 +929,20 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 			curInstnanceIndex = 0;
 			if (0 < this->nbSharedShadows) {
 				do {
-					IMPLEMENTATION_GUARD_SHADOW(
-					CShadowShared::Init(pCVar8, ((this->pOwner)->base).base.objectId);
-					fVar14 = gF32Vector4UnitY.w;
-					fVar13 = gF32Vector4UnitY.z;
-					fVar12 = gF32Vector4UnitY.y;
-					(pCVar8->field_0x20).x = gF32Vector4UnitY.x;
-					(pCVar8->field_0x20).y = fVar12;
-					(pCVar8->field_0x20).z = fVar13;
-					(pCVar8->field_0x20).w = fVar14;
-					pCVar8->field_0x48 = 1.3;
-					pCVar8->field_0x30 = 0x80808080;
-					peVar10 = ((this->pathFollowRef).pPathFollow)->aSplinePoints;
+					pCVar8->Init(this->pOwner->sectorId);
+					pCVar8->field_0x20 = gF32Vector4UnitY;
+					pCVar8->field_0x48 = 1.3f;
+					pCVar8->shadowColor.rgba = 0x80808080;
+					peVar10 = ((this->pathFollowRef).Get())->aSplinePoints;
 					if (peVar10 == (edF32VECTOR4*)0x0) {
 						peVar10 = &gF32Vertex4Zero;
 					}
 					else {
 						peVar10 = peVar10 + curInstnanceIndex + 1;
 					}
+
 					curInstnanceIndex = curInstnanceIndex + 1;
-					fVar14 = peVar10->y;
-					fVar12 = peVar10->z;
-					fVar13 = peVar10->w;
-					(pCVar8->field_0x10).x = peVar10->x;
-					(pCVar8->field_0x10).y = fVar14;
-					(pCVar8->field_0x10).z = fVar12;
-					(pCVar8->field_0x10).w = fVar13;)
+					pCVar8->position = *peVar10;
 					pCVar8 = pCVar8 + 1;
 				} while (curInstnanceIndex < this->nbSharedShadows);
 			}
@@ -967,8 +951,7 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 
 	pCVar4 = this->pOwner->pShadow;
 	if (pCVar4 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD_SHADOW(
-		pCVar4->field_0x48 = 1.3f;)
+		pCVar4->field_0x48 = 1.3f;
 	}
 
 	this->pOwner->UpdateBoundingSphere(this->aBnsInstances, this->nbInstances);
@@ -1056,52 +1039,42 @@ void CBehaviourBonusFlock::Manage()
 			fVar13 = pBonus->distanceToGround;
 			pCVar2 = pBonus->pShadow;
 			if (pCVar2 != (CShadow*)0x0) {
-				IMPLEMENTATION_GUARD_SHADOW(
-				pCVar2->field_0x10.x = fVar5.x;
-				pCVar2->field_0x10.y = fVar5.y - fVar13;
-				pCVar2->field_0x10.z = fVar5.z;
-				pCVar2->field_0x10.w = fVar5.w;
+				pCVar2->position.x = fVar5.x;
+				pCVar2->position.y = fVar5.y - fVar13;
+				pCVar2->position.z = fVar5.z;
+				pCVar2->position.w = fVar5.w;
 				pBonus = this->pOwner;
-				CShadowShared::SetIntensity
-				(1.0f - pBonus->distanceToGround / pBonus->field_0xf0,
-					pBonus->pShadow);)
+				pBonus->pShadow->SetIntensity(1.0f - pBonus->distanceToGround / pBonus->field_0xf0);
 			}
 
 			iVar12 = 0;
 			if (0 < this->nbSharedShadows) {
-				IMPLEMENTATION_GUARD_SHADOW(
-				iVar7 = 0;
 				do {
-					iVar11 = (CShadowShared*)((int)&this->aShadowShared->pVTable + iVar7);
-					local_60 = (iVar11->field_0x10);
+					iVar11 = this->aShadowShared + iVar12;
+					local_60 = iVar11->position;
 					fVar13 = UpdateGroundDistanceAndShadow(&local_60);
 					iVar12 = iVar12 + 1;
-					local_30.y = local_30.y - (fVar13 - 0.3);
-					(iVar11->field_0x10).x = local_30.x;
-					(iVar11->field_0x10).y = local_30.y;
-					(iVar11->field_0x10).z = local_30.z;
-					(iVar11->field_0x10).w = local_30.w;
-					iVar7 = iVar7 + 0x50;
-				} while (iVar12 < this->nbSharedShadows);)
+					local_30.y = local_30.y - (fVar13 - 0.3f);
+					iVar11->position = local_30;
+				} while (iVar12 < this->nbSharedShadows);
 			}
 		}
 
 		pCVar2 = this->pOwner->pShadow;
 		if (pCVar2 != (CShadow*)0x0) {
-			IMPLEMENTATION_GUARD_SHADOW(
-			uVar3 = (this->aBnsInstances->base).flags;
+			uVar3 = this->aBnsInstances->flags;
 			uVar5 = 0;
 			if (((uVar3 & 1) != 0) && ((uVar3 & 6) != 0)) {
 				uVar5 = 1;
 			}
-			(**(code**)((pCVar2->base).pVTable + 0x14))(pCVar2, uVar5);)
+
+			pCVar2->SetDisplayable(uVar5);
 		}
 
 		pCVar8 = this->aBnsInstances;
 		if (((pCVar8->flags & 1) != 0) && (pCVar2 = this->pOwner->pShadow, pCVar2 != (CShadow*)0x0)) {
-			IMPLEMENTATION_GUARD_SHADOW(
-			(pCVar2->base).field_0x10.x = (pCVar8->base).currentPosition.x;
-			(pCVar2->base).field_0x10.z = (pCVar8->base).currentPosition.z;)
+			pCVar2->position.x = pCVar8->currentPosition.x;
+			pCVar2->position.z = pCVar8->currentPosition.z;
 		}
 	}
 
@@ -1135,28 +1108,24 @@ void CBehaviourBonusFlock::Manage()
 
 	iVar12 = 0;
 	if (0 < this->nbSharedShadows) {
-		IMPLEMENTATION_GUARD_SHADOW(
-		iVar10 = 0;
-		iVar7 = 0;
 		do {
-			iVar9 = (CBnsInstance*)((int)&this->aBnsInstances[1].base.pVTable + iVar10);
-			piVar10 = (CShadowShared*)((int)&this->aShadowShared->pVTable + iVar7);
-			if (((iVar9->base).flags & 1) != 0) {
-				(piVar10->field_0x10).x = (iVar9->base).currentPosition.x;
-				(piVar10->field_0x10).z = (iVar9->base).currentPosition.z;
+			iVar9 = this->aBnsInstances + iVar12 + 1; // CORRECT?
+			piVar10 = this->aShadowShared + iVar12;
+
+			if ((iVar9->flags & 1) != 0) {
+				(piVar10->position).x = (iVar9->currentPosition).x;
+				(piVar10->position).z = (iVar9->currentPosition).z;
 			}
 
-			uVar3 = (iVar9->base).flags;
+			uVar3 = (iVar9->flags);
 			uVar5 = 0;
 			if (((uVar3 & 1) != 0) && ((uVar3 & 6) != 0)) {
 				uVar5 = 1;
 			}
 
-			(**(code**)(piVar10->pVTable + 0x14))(piVar10, uVar5);
+			piVar10->SetDisplayable(uVar5);
 			iVar12 = iVar12 + 1;
-			iVar10 = iVar10 + 0xc0;
-			iVar7 = iVar7 + 0x50;
-		} while (iVar12 < this->nbSharedShadows);)
+		} while (iVar12 < this->nbSharedShadows);
 	}
 
 	if (this->field_0x38 == 0) {
@@ -1397,13 +1366,14 @@ void CBehaviourBonusFlock::Draw()
 			uVar16 = 0;
 			if (pNewPatch != (CGlobalDListPatch*)0x0) {
 				for (; uVar16 < this->nbSharedShadows; uVar16 = uVar16 + 1) {
-					IMPLEMENTATION_GUARD_SHADOW(
-					this->aShadowShared[uVar16].Draw(pNewPatch, uVar16 * 4);)
+					this->aShadowShared[uVar16].Draw(pNewPatch, uVar16 * 4);
 				}
+
 				GameDListPatch_EndCurrent(-1, 0);
 			}
 		}
 	}
+
 	return;
 }
 
@@ -1429,12 +1399,11 @@ void CBehaviourBonusFlock::Begin(CActor* pOwner, int newState, int newAnimationT
 
 	// Reset all shared shadows
 	for (int i = 0; i < this->nbSharedShadows; ++i) {
-		IMPLEMENTATION_GUARD_SHADOW(
 		CShadowShared* pShadow = this->aShadowShared + i;
-		pShadow->Reset();
-		CBnsInstance* pNextInstance = this->aBnsInstances + i + 1;
-		pShadow->field_0x10 = pNextInstance->field_0x30;
-		pShadow->field_0x18 = pNextInstance->field_0x38;)
+		pShadow->SetDisplayable(0);
+		CBnsInstance* pNextInstance = this->aBnsInstances + i + 1; // CORRECT?
+		pShadow->position.x = pNextInstance->currentPosition.x;
+		pShadow->position.z = pNextInstance->currentPosition.z;
 	}
 
 	this->field_0x20 = 1;
@@ -1485,13 +1454,12 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 		bSuccess = true;
 	}
 	else if ((this->nbSharedShadows != 0) && (patchId == this->field_0x2c)) {
-		IMPLEMENTATION_GUARD_SHADOW(
 		edDListLoadIdentity();
-		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->pShadow->field_0x54, 0);
+		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->pShadow->materialId, 0);
 		edDListUseMaterial(pMaterial);
 		edDListBegin(0.0f, 0.0f, 0.0f, 8, this->nbSharedShadows << 2);
 		for (int i = 0; i < this->nbSharedShadows; ++i) {
-			uint color = pShadowShared->field_0x30;
+			uint color = pShadowShared->shadowColor.rgba;
 			byte r = (byte)color;
 			byte g = (byte)(color >> 8);
 			byte b = (byte)(color >> 16);
@@ -1507,7 +1475,7 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 			++pShadowShared;
 		}
 
-		edDListEnd();)
+		edDListEnd();
 		bSuccess = true;
 	}
 

@@ -84,6 +84,14 @@ struct _msg_params_0x23
 	int field_0xc;
 };
 
+struct _msg_params_0x54
+{
+	int field_0x0;
+	byte field_0x4;
+	float field_0x8;
+	edF32VECTOR4* field_0xc;
+};
+
 enum ACTOR_MESSAGE
 {
 	MESSAGE_KICKED = 0x2,
@@ -287,7 +295,7 @@ struct BoneData;
 
 class CCollision;
 
-struct CShadow;
+class CShadow;
 struct ByteCode;
 struct StateConfig {
 	StateConfig() {}
@@ -654,6 +662,8 @@ public:
 
 	void UpdateBoundingSphere(CActInstance* pInstances, int nbInstances);
 
+	void SetupShadow(CShadow* pNewShadow);
+
 #ifdef DEBUG_FEATURES
 	// #Debug
 	char name[64];
@@ -798,6 +808,7 @@ struct S_ACTOR_STREAM_REF
 {
 	static S_ACTOR_STREAM_REF* Create(ByteCode* pByteCode);
 	void Init();
+	void Reset();
 
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
@@ -821,11 +832,6 @@ public:
 	float field_0x28;
 	float field_0x2c;
 	float field_0x30;
-};
-
-class CShadowShared
-{
-
 };
 
 #endif // _ACTOR_H

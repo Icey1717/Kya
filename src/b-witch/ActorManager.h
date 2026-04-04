@@ -3,11 +3,11 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "ActorShadows.h"
 
 class CActor;
 class CCluster;
 class CAnimation;
-class CShadow {};
 struct edAnmLayer;
 
 struct CClassInfo {

@@ -209,9 +209,7 @@ public:
 	float field_0x3f8;
 	float field_0x3fc;
 	int field_0x400;
-	undefined4 field_0x404;
-	undefined4 field_0x408;
-	undefined4 field_0x40c;
+	ed_zone_3d* field_0x404[3];
 	int field_0x410;
 	CBehaviourMickenEat behaviourMickenEat;
 	undefined field_0x418;

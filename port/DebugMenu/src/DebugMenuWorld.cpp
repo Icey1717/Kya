@@ -10,6 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "DebugWorldNames.h"
+#include "DebugCollision.h"
+#include "DebugCollisionDrawing.h"
 #include "Actor.h"
 #include "ActorManager.h"
 #include "ActorCheckpointManager.h"
@@ -61,6 +63,13 @@ namespace Debug {
 	static Debug::Setting<bool> gShowInspectorPanel("Show Inspector Panel", true);
 	static int gSectorFilter = -1;
 	static Debug::Setting<int> gActorInspectorMessageValue("Actor Inspector Message Value", 0);
+
+	// Visual detection points settings
+	static Debug::Setting<bool> gShowVisualDetectionPoints("Show Visual Detection Points", false);
+	static Debug::Setting<bool> gVisualDetectionPointsFilled("Visual Detection Points Filed", false);
+	static Debug::Setting <float> gVisualDetectionPointsSize("Visual Detection Points Size", 0.15f);
+	static Debug::Setting<std::array<float, 4>> gVisualDetectionPointsColor("Visual Detection Points Color", { 1.0f, 0.0f, 1.0f, 1.0f });
+
 	static Debug::Setting<int> gInspectorSelectionType("Inspector Selection Type", 0);
 	static Debug::Setting<int> gInspectorSelectionValue("Inspector Selection Value", 0);
 
@@ -707,6 +716,50 @@ namespace Debug {
 			ImGui::Text("field_0x11: %u", pActor->field_0x11);
 			ImGui::Text("Macro Anim Table: 0x%p", pActor->pMacroAnimTable);
 			ImGui::Text("Hierarchy: 0x%p", pActor->pHier);
+		}
+
+		if (ImGui::CollapsingHeader("Collision")) {
+			static bool bDrawCollision = false;
+
+			ImGui::Checkbox("Draw Collision", &bDrawCollision);
+
+			if (bDrawCollision) {
+				if (pActor->pCollisionData && pActor->pCollisionData->pObbTree) {
+					Collision::ObbDrawConfig config = Collision::BuildActorConfig();
+					config.bEnabled = true;
+					Collision::DrawObbNode(pActor->pCollisionData->pObbTree, config);
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Visual Detection Points")) {
+			gShowVisualDetectionPoints.DrawImguiControl();
+			gVisualDetectionPointsFilled.DrawImguiControl();
+			gVisualDetectionPointsSize.DrawImguiControl();
+			gVisualDetectionPointsColor.DrawImguiControl();
+
+			const int numPoints = pActor->GetNumVisualDetectionPoints();
+			ImGui::Text("Count: %d", numPoints);
+
+			if (gShowVisualDetectionPoints) {
+				for (int i = 0; i < numPoints; ++i) {
+					edF32VECTOR4 point;
+					pActor->GetVisualDetectionPoint(&point, i);
+
+					ImGui::Text("Point %d: %f, %f, %f", i, point.x, point.y, point.z);
+
+					if (gVisualDetectionPointsFilled) {
+						Renderer::Native::DebugShapes::AddFilledSphere(point.x, point.y, point.z, gVisualDetectionPointsSize,
+							gVisualDetectionPointsColor.get()[0], gVisualDetectionPointsColor.get()[1],
+							gVisualDetectionPointsColor.get()[0], gVisualDetectionPointsColor.get()[0]);
+					}
+					else {
+						Renderer::Native::DebugShapes::AddSphere(point.x, point.y, point.z, gVisualDetectionPointsSize,
+							gVisualDetectionPointsColor.get()[0], gVisualDetectionPointsColor.get()[1],
+							gVisualDetectionPointsColor.get()[0], gVisualDetectionPointsColor.get()[0]);
+					}
+				}
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Preview")) {

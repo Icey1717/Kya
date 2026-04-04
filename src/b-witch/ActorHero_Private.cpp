@@ -2654,33 +2654,28 @@ void CActorHeroPrivate::Manage()
 	ManageBoomyState();
 
 	if (0.0f <= this->field_0x1000) {
-		IMPLEMENTATION_GUARD(
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			CActor::SV_UpdateValue
-			(0.0, *(float*)&this->field_0x1008, this, this->field_0x1000 = -1.0f);
+			SV_UpdateValue(0.0f, this->field_0x1008, &this->field_0x1000);
 			pCVar1 = this->pAnimationController;
 			fVar14 = this->field_0x1000;
-			iVar8 = CAnimation::PhysicalLayerFromLayerId(pCVar1, 8);
-			peVar11 = (pCVar1->anmBinMetaAnimator).base.aAnimData + iVar8;
-			peVar11->field_0x0 = 3;
+			iVar8 = pCVar1->PhysicalLayerFromLayerId(8);
+			peVar11 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar8;
+			peVar11->blendOp = 3;
 			peVar11->field_0x4 = fVar14;
 			if ((this->field_0x1000 == 0.0f) && (this->field_0x1000 = -1.0f, this->field_0x1b94 == 0)) {
-				iVar8 = CAnimation::PhysicalLayerFromLayerId
-				(this->pAnimationController, 8);
-				edAnmBinMetaAnimator::SetAnimOnLayer
-				(this->pAnimationController, -1, iVar8, 0xffffffff);
+				iVar8 = this->pAnimationController->PhysicalLayerFromLayerId(8);
+				this->pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(-1, iVar8, 0xffffffff);
 			}
 		}
 		else {
-			CActor::SV_UpdateValue
-			(1.0, *(float*)&this->field_0x1004, this, this->field_0x1000 = -1.0f);
+			CActor::SV_UpdateValue(1.0f, this->field_0x1004, &this->field_0x1000);
 			pCVar1 = this->pAnimationController;
 			fVar14 = this->field_0x1000;
-			iVar8 = CAnimation::PhysicalLayerFromLayerId(pCVar1, 8);
-			peVar11 = (pCVar1->anmBinMetaAnimator).base.aAnimData + iVar8;
-			peVar11->field_0x0 = 3;
+			iVar8 = pCVar1->PhysicalLayerFromLayerId(8);
+			peVar11 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar8;
+			peVar11->blendOp = 3;
 			peVar11->field_0x4 = fVar14;
-		})
+		}
 	}
 
 	IMPLEMENTATION_GUARD_INVENTORY(

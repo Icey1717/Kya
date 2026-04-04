@@ -1445,6 +1445,26 @@ void GameDListPatch_HideVertex(int patchId, int index)
 	return;
 }
 
+void GameDListPatch_SetActive(int patchId, int bActive)
+{
+	int iVar1;
+
+	if (((CScene::ptable.g_GlobalDListManager_004516bc)->bCompletedLevelInit == 0) ||
+		((CScene::ptable.g_GlobalDListManager_004516bc)->activeSectorPatchId == -1)) {
+		iVar1 = -1;
+	}
+	else {
+		iVar1 = 1;
+	}
+
+	if ((iVar1 == 1) &&
+		(((CScene::ptable.g_GlobalDListManager_004516bc)->activeSectorPatchId == patchId >> 0x10 || (patchId >> 0x10 == 0)))) {
+		CScene::ptable.g_GlobalDListManager_004516bc->_AddCallFuncElement(patchId, 1, bActive);
+	}
+
+	return;
+}
+
 bool GuiDList_BeginCurrent(void)
 {
 	bool bVar1;

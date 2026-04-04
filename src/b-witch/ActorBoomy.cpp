@@ -1342,7 +1342,7 @@ void CActorBoomy::UpdateFromOwner(int param_2, edF32VECTOR4* pDirection)
 
 	local_20 = this->pHero->currentLocation;
 	local_50.field_0x0 = param_2;
-	iVar1 = DoMessage(this->pHero, (ACTOR_MESSAGE)7, &local_50);
+	iVar1 = DoMessage(this->pHero, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_50);
 	if (iVar1 != 0) {
 		edF32Vector4AddHard(&local_20, &local_20, &local_50.vectorFieldB);
 	}
@@ -1392,16 +1392,16 @@ void CActorBoomy::SetTarget(edF32VECTOR4* pPosition)
 
 CActor* CActorBoomy::GetBestActorInVision()
 {
-	CActorsTable local_110;
+	CActorsTable scannedActors;
 
-	local_110.nbEntries = 0;
-	this->vision.Scan(&local_110, 0);
+	scannedActors.nbEntries = 0;
+	this->vision.Scan(&scannedActors, SCAN_MODE_SYNCHRONOUS);
 
-	if (local_110.nbEntries == 0) {
-		local_110.aEntries[0] = (CActor*)0x0;
+	if (scannedActors.nbEntries == 0) {
+		scannedActors.aEntries[0] = (CActor*)0x0;
 	}
 
-	return local_110.aEntries[0];
+	return scannedActors.aEntries[0];
 }
 
 void CBehaviourBoomyLaunch::Manage()

@@ -104,6 +104,19 @@ struct CActorMovParamsIn : public CActorParamsIn {
 	float field_0x18;
 };
 
+struct CActorMovLevitateParamOut : public CActorParamsOut
+{
+	bool field_0x20;
+};
+
+struct CActorMovLevitateParamIn : public CActorParamsIn
+{
+	float speed;
+	float acceleration;
+	float field_0x1c;
+	float field_0x20;
+};
+
 struct SV_MOV_PATH_PARAM
 {
 	float acceleration;
@@ -144,6 +157,7 @@ public:
 	void SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4);
 	void SV_MOV_MoveTo_AvoidActor(CActorMovParamsOut* pMovParamsOut, CActorMovParamsIn* pMovParamsIn, edF32VECTOR4* pPosition, CActor* pAvoidActor);
 	void SV_MOV_MoveCloserTo(float param_1, edF32VECTOR4* param_3);
+	void SV_MOV_MoveInLevitation(CActorMovLevitateParamOut* pOutParams, CActorMovLevitateParamIn* pInParams, edF32VECTOR4* param_4);
 	float SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float param_2, float param_3);
 	void SV_MOV_AddSpeedVector(edF32VECTOR4* pSpeedVector);
 

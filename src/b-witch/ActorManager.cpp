@@ -225,12 +225,10 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 				}
 
 				if (pActor->subObjA->field_0x40 == 0) {
-					IMPLEMENTATION_GUARD_SHADOW(
-					pActor->SetupShadow((CShadow*)0x0);)
+					pActor->SetupShadow((CShadow*)0x0);
 				}
 				else {
-					IMPLEMENTATION_GUARD_SHADOW(
-					pActor->SetupShadow(&this->aShadows[this->initializedShadowCount]);)
+					pActor->SetupShadow(&this->aShadows[this->initializedShadowCount]);
 					this->initializedShadowCount++;
 				}
 			}

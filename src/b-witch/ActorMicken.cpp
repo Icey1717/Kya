@@ -74,9 +74,10 @@ void CActorMicken::Create(ByteCode* pByteCode)
 		this->dynamicExt.field_0x4 = 0.95f;
 	}
 
-	this->field_0x404 = 0;
-	this->field_0x408 = 0;
-	this->field_0x40c = 0;
+	this->field_0x404[0] = (ed_zone_3d*)0x0;
+	this->field_0x404[1] = (ed_zone_3d*)0x0;
+	this->field_0x404[2] = (ed_zone_3d*)0x0;
+
 	return;
 }
 
@@ -103,7 +104,6 @@ void CActorMicken::Init()
 
 	pCVar1 = this->pShadow;
 	if (pCVar1 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
 		fVar3 = this->scale.z;
 		fVar2 = this->scale.x;
 
@@ -112,7 +112,7 @@ void CActorMicken::Init()
 		}
 
 		pCVar1->field_0x48 = fVar2 * 0.75f;
-		pCVar1->field_0x50 = fVar2 * 0.75f;)
+		pCVar1->field_0x50 = fVar2 * 0.75f;
 	}
 
 	this->field_0xf0 = 3.0f;
@@ -625,7 +625,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 
 	if ((pCollisionRef->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 		if (0.2f < this->timeInAir) {
-			this->SetState(7, -1);
+			SetState(7, -1);
 			return;
 		}
 	}
@@ -634,7 +634,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 	}
 
 	if (((this->flags_0x3e8 & 0x10) == 0) && (bVar5 = pBehaviour->pathFollowReader.AtGoal((pBehaviour->pathFollowReader).splinePointIndex, (pBehaviour->pathFollowReader).field_0xc), bVar5 == false)) {
-		this->SetState(0x12, -1);
+		SetState(0x12, -1);
 		return;
 	}
 
@@ -656,7 +656,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 	nextState = MICKEN_EAT_STATE_STAND;
 LAB_0014f808:
 	if (nextState != this->actorState) {
-		this->SetState(nextState, -1);
+		SetState(nextState, -1);
 	}
 
 	return;
@@ -1002,12 +1002,12 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			if (this->field_0x3ec <= 0.3f) goto LAB_0014f970;
 		}
 
-		this->SetState(iVar7, -1);
+		SetState(iVar7, -1);
 		break;
 	case MICKEN_EAT_STATE_WALK_TO_FRUIT:
 		iVar7 = WalkToPos(0.3f, pBehaviour, &this->pNearestFruit->currentLocation, 0);
 		if (iVar7 != 0) {
-			this->SetState(MICKEN_EAT_STATE_EAT, -1);
+			SetState(MICKEN_EAT_STATE_EAT, -1);
 		}
 		break;
 	case MICKEN_EAT_STATE_EAT:
@@ -1019,7 +1019,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 	case 0xb:
 		iVar7 = WalkToPos(0.3f, pBehaviour, &this->field_0x370, 0);
 		if (iVar7 != 0) {
-			this->SetState(MICKEN_EAT_STATE_STAND, -1);
+			SetState(MICKEN_EAT_STATE_STAND, -1);
 		}
 		break;
 	case 0xc:
@@ -1037,31 +1037,32 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			this->dynamicExt.normalizedTranslation.w = 0.0f;
 			this->dynamicExt.field_0x6c = 0.0f;
 			this->dynamic.speed = 0.0f;
-			this->SetState(0xe, -1);
+			SetState(0xe, -1);
 		}
 		break;
 	case 0xd:
-		IMPLEMENTATION_GUARD(
-		this->base.dynamic.speed = 0.0;
-		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x129, (CActorsTable*)0x0);
+		this->dynamic.speed = 0.0f;
+		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState(this);
-			this->dynamicExt.normalizedTranslation.x = 0.0;
-			this->dynamicExt.normalizedTranslation.y = 0.0;
-			this->dynamicExt.normalizedTranslation.z = 0.0;
-			this->dynamicExt.normalizedTranslation.w = 0.0;
-			this->dynamicExt.field_0x6c = 0.0;
-			this->base.dynamic.speed = 0.0;
-			this->SetState(0xe, -1);
-		})
+			EvaluateDisplayState();
+			this->dynamicExt.normalizedTranslation.x = 0.0f;
+			this->dynamicExt.normalizedTranslation.y = 0.0f;
+			this->dynamicExt.normalizedTranslation.z = 0.0f;
+			this->dynamicExt.normalizedTranslation.w = 0.0f;
+			this->dynamicExt.field_0x6c = 0.0f;
+			this->dynamic.speed = 0.0f;
+
+			SetState(0xe, -1);
+		}
 		break;
 	case 0xe:
 		if (this->field_0x35c < this->timeInAir) {
 			if ((this->streamRefWayPoint).Get() == (CWayPoint*)0x0) {
 
-				this->SetState(3, -1);
+				SetState(3, -1);
 
 				this->flags = this->flags & 0xffffff7f;
 				this->flags = this->flags | 0x20;
@@ -1070,7 +1071,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 				this->flags = this->flags | 1;
 			}
 			else {
-				this->SetState(MICKEN_EAT_STATE_HOLE, -1);
+				SetState(MICKEN_EAT_STATE_HOLE, -1);
 				this->flags = this->flags & 0xfffffffc;
 				this->flags = this->flags & 0xffffff5f;
 				EvaluateDisplayState();
@@ -1089,13 +1090,13 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		IMPLEMENTATION_GUARD(
 		if (pCVar1 == (CActor*)0x0) {
 			(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x1002023b, (CActorsTable*)0x0);
-			this->SetState(MICKEN_EAT_STATE_STAND, -1);
+			SetState(MICKEN_EAT_STATE_STAND, -1);
 		}
 		else {
 			peVar6 = CActor::GetBottomPosition(pCVar1);
 			iVar7 = WalkToPos(0.3, this, (CBehaviourMicken*)pBehaviour, (float*)peVar6, 1);
 			if (iVar7 != 0) {
-				this->SetState(MICKEN_EAT_STATE_STAND, -1);
+				SetState(MICKEN_EAT_STATE_STAND, -1);
 			}
 		})
 		break;
@@ -1117,7 +1118,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			if (fVar10 < 0.17) {
 				CPathFollowReader::GetDelay(&pBehaviour->pathFollowReader);
 				if (0.0 < fVar10) {
-					this->SetState(0x13, -1);
+					SetState(0x13, -1);
 				}
 				else {
 					bVar5 = CPathFollowReader::AtGoal
@@ -1127,7 +1128,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 						CPathFollowReader::NextWayPoint(&pBehaviour->pathFollowReader);
 					}
 					else {
-						this->SetState(MICKEN_EAT_STATE_STAND, -1);
+						SetState(MICKEN_EAT_STATE_STAND, -1);
 					}
 				}
 			}
@@ -1151,10 +1152,10 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 				(pBehaviour->pathFollowReader).field_0xc);
 			if (bVar5 == false) {
 				CPathFollowReader::NextWayPoint(&pBehaviour->pathFollowReader);
-				this->SetState(0x12, -1);
+				SetState(0x12, -1);
 			}
 			else {
-				this->SetState(MICKEN_EAT_STATE_STAND, -1);
+				SetState(MICKEN_EAT_STATE_STAND, -1);
 			}
 		})
 		break;
@@ -1170,7 +1171,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x100a023b, (CActorsTable*)0x0);
 		if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) {
 			if (0.2 < this->timeInAir) {
-				this->SetState(7, -1);
+				SetState(7, -1);
 				break;
 			}
 		}
@@ -1179,7 +1180,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		}
 
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			this->SetState(MICKEN_EAT_STATE_STAND, -1);
+			SetState(MICKEN_EAT_STATE_STAND, -1);
 		})
 	}
 
@@ -1204,7 +1205,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			this->pNearestFruit = local_10.pOutActor;
 			if (this->pNearestFruit == (CActor*)0x0) {
 				if (pCVar1 != (CActor*)0x0) {
-					this->SetState(0xb, -1);
+					SetState(0xb, -1);
 				}
 			}
 			else {
@@ -1212,7 +1213,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 					fVar10 = (this->pNearestFruit->currentLocation).x - this->currentLocation.x;
 					fVar11 = (this->pNearestFruit->currentLocation).z - this->currentLocation.z;
 					this->field_0x3ec = sqrtf(fVar10 * fVar10 + 0.0f + fVar11 * fVar11);
-					this->SetState(MICKEN_EAT_STATE_WALK_TO_FRUIT, -1);
+					SetState(MICKEN_EAT_STATE_WALK_TO_FRUIT, -1);
 				}
 			}
 		}
@@ -1301,7 +1302,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 	}
 
 	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-		this->SetState(0x16, -1);
+		SetState(0x16, -1);
 	}
 
 	return;
@@ -1351,20 +1352,19 @@ void CActorMicken::BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviou
 		pEventManager = CScene::ptable.g_EventManager_006f5080;
 
 		if (((uVar2 == 0) && (this->field_0x410 != 0)) && (this->state_0x10 == 0)) {
-			IMPLEMENTATION_GUARD(
-			iVar3 = this->field_0x404;
-			pMicken = this;
-			while (iVar3 != 0) {
-				uVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, (ed_zone_3d*)pMicken->field_0x404,
-					&this->currentLocation, 0);
+			ed_zone_3d** ppZone = this->field_0x404;
+			while (*ppZone != (ed_zone_3d*)0x0) {
+				uVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, *ppZone, &this->currentLocation, 0);
 				if ((uVar2 & 1) != 0) {
 					bVar1 = true;
 					goto LAB_0014d1a8;
 				}
-				iVar3 = pMicken->field_0x408;
-				pMicken = (CActorMicken*)&(pMicken->base).base.base.objectId;
+
+				ppZone = ppZone + 1;
 			}
-			bVar1 = false;)
+
+			bVar1 = false;
+
 		LAB_0014d1a8:
 			if (bVar1) {
 				this->flags = this->flags & 0xfffffffc;

@@ -3094,7 +3094,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	}
 
 	// Check - Flare Compute
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_LOG();
 	pPkt[1].cmdA = ED_VIF1_SET_TAG_REF(0x4, STORE_POINTER(pDmaMatrix->pHierarchy->pMatrixPkt + 7) & 0xfffffffU); // | 0x30000004;
 	pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x03fb, 0x04, UNPACK_V4_32, 0); // 0x6c0403fb00000000;

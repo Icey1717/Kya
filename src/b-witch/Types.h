@@ -1024,6 +1024,7 @@ public:
 
 	int sectorId;
 
+	virtual ~CObject() = default;
 	virtual bool IsKindOfObject(ulong kind) { return false; }
 	virtual bool InitDlistPatchable(int) { return false; }
 };

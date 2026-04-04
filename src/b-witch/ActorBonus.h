@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorMovable.h"
+#include "ActorShadows.h"
 #include "ActorBonusServices.h"
 #include "Fx_Tail.h"
 #include "PathFollow.h"

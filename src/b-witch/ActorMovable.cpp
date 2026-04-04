@@ -1528,6 +1528,73 @@ void CActorMovable::SV_MOV_MoveCloserTo(float speed, edF32VECTOR4* param_3)
 	return;
 }
 
+void CActorMovable::SV_MOV_MoveInLevitation(CActorMovLevitateParamOut* pOutParams, CActorMovLevitateParamIn* pInParams, edF32VECTOR4* param_4)
+{
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 local_90;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 eStack96;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 local_10;
+
+	pOutParams->field_0x20 = false;
+
+	local_10.x = param_4->x;
+	local_10.z = param_4->z;
+	local_10.w = param_4->w;
+	local_10.y = this->currentLocation.y;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = pInParams->rotSpeed;
+	movParamsIn.acceleration = pInParams->acceleration;
+	movParamsIn.speed = pInParams->speed;
+	movParamsIn.flags = pInParams->flags & 0xfffffffb | 0x402;
+
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &local_10);
+
+	if ((pInParams->flags & 4) == 0) {
+		pOutParams->moveVelocity = movParamsOut.moveVelocity;
+	}
+	else {
+		edF32Vector4SubHard(&eStack96, param_4, &this->currentLocation);
+		fVar3 = edF32Vector4GetDistHard(&eStack96);
+		pOutParams->moveVelocity = fVar3;
+	}
+
+	if (this->distanceToGround < this->field_0xf0) {
+		local_70 = this->dynamic.rotationQuat;
+		fVar4 = (this->dynamic).speed;
+		fVar3 = pInParams->field_0x20 - this->distanceToGround;
+		fVar3 = fVar3 / GetTimer()->cutsceneDeltaTime;
+		if (pInParams->field_0x1c < fabsf(fVar3)) {
+			iVar2 = 1;
+			if (fVar3 <= 0.0f) {
+				iVar2 = -1;
+			}
+			fVar3 = static_cast<float>(iVar2) * pInParams->field_0x1c;
+		}
+
+		edF32Vector4ScaleHard(fVar3, &eStack128, &gF32Vector4UnitY);
+		edF32Vector4ScaleHard((this->dynamic).speed, &local_90, (edF32VECTOR4*)&this->dynamic);
+		edF32Vector4AddHard(&local_90, &local_90, &eStack128);
+		fVar3 = edF32Vector4SafeNormalize0Hard(&local_90, &local_90);
+		(this->dynamic).speed = fVar3;
+		if (0.001f < fVar3) {
+			this->dynamic.rotationQuat = local_90;
+		}
+
+		this->dynamic.speed = fVar4;
+		pOutParams->field_0x20 = true;
+	}
+
+	return;
+}
+
 float CActorMovable::SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float param_2, float param_3)
 {
 	float fVar1;
@@ -1563,11 +1630,9 @@ void CActorMovable::SV_MOV_AddSpeedVector(edF32VECTOR4* pSpeedVector)
 
 float CActorMovable::FUN_00120250(float param_1)
 {
-	Timer* pTVar1;
 	float fVar2;
 
-	pTVar1 = GetTimer();
-	fVar2 = (this->dynamic).linearAcceleration * pTVar1->cutsceneDeltaTime;
+	fVar2 = (this->dynamic).linearAcceleration * GetTimer()->cutsceneDeltaTime;
 	if (param_1 <= fVar2) {
 		param_1 = fVar2;
 	}

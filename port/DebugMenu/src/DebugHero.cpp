@@ -5,8 +5,10 @@
 #include <filesystem>
 
 #include "DebugHelpers.h"
+#include "Components/DebugVision.h"
 
 #include "ActorHero.h"
+#include "ActorBoomy.h"
 #include "ActorHero_Private.h"
 #include "CollisionManager.h"
 #include "InputManager.h"
@@ -228,8 +230,9 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 		ImGui::SameLine();
 
-		if (ImGui::Button("Enable Cheat Mode")) {
-			pActorHero->bCanUseCheats = 1;
+		static bool bCheatMode = false;
+		if (ImGui::Checkbox("Enable Cheat Mode", &bCheatMode)) {
+			pActorHero->bCanUseCheats = bCheatMode;
 		}
 
 		// Invincibility toggle
@@ -348,6 +351,19 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 		if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {
 			DebugHelpers::ImGui::TextVector4("Left Analog Stick", pActorHero->pPlayerInput->lAnalogStick);
+		}
+
+		if (ImGui::CollapsingHeader("Boomy Vision", ImGuiTreeNodeFlags_None)) {
+			Components::Vision::ShowVisionDetails(&pActorHero->pActorBoomy->vision);
+
+			static bool bFilled = true;
+			ImGui::Checkbox("Filled", &bFilled);
+
+			if (bFilled) {
+				Components::Vision::DrawVisionShapesFilled(&pActorHero->pActorBoomy->vision);
+			} else {
+				Components::Vision::DrawVisionShapesWireframe(&pActorHero->pActorBoomy->vision);
+			}
 		}
 	}
 

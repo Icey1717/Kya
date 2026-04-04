@@ -301,6 +301,7 @@ CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId);
 void GameDListPatch_EndCurrent(int nbVertex, int param_2);
 void GameDListPatch_HideSprite(int patchId, uint index);
 void GameDListPatch_HideVertex(int patchId, int index);
+void GameDListPatch_SetActive(int patchId, int bActive);
 
 bool GuiDList_BeginCurrent(void);
 void GuiDList_EndCurrent(void);

@@ -1,4 +1,5 @@
 #include "ActorWeapon.h"
+#include "ActorProjectile.h"
 #include "MemoryStream.h"
 #include "ActorWolfen.h"
 #include "FileManager3D.h"
@@ -71,7 +72,7 @@ CBehaviour* CActorWeapon::BuildBehaviour(int behaviourType)
 					pBehaviour = new CBehaviourWeaponPistol;
 				}
 				else {
-					if (behaviourType == 2) {
+					if (behaviourType == WEAPON_BEHAVIOUR_DEFAULT) {
 						pBehaviour = new CBehaviourWeapon;
 					}
 					else {
@@ -124,27 +125,28 @@ void CActorWeapon::UnlinkWeapon()
 
 void CActorWeapon::LinkWeapon(CActorWolfen* pWolfen, uint boneId)
 {
-	int iVar1;
+	int behaviourId;
 	CBehaviourWeapon* pWeaponBehaviour;
-	bool lVar2;
+	bool bCanLink;
 
 	LinkToActor(pWolfen, boneId, 0);
+
 	this->field_0x1d4 = 1;
 
-	iVar1 = this->curBehaviourId;
-	if ((iVar1 < 2) || (6 < iVar1)) {
-		lVar2 = false;
+	behaviourId = this->curBehaviourId;
+	if ((behaviourId < WEAPON_BEHAVIOUR_DEFAULT) || (WEAPON_BEHAVIOUR_RPG < behaviourId)) {
+		bCanLink = false;
 	}
 	else {
 		pWeaponBehaviour = static_cast<CBehaviourWeapon*>(GetBehaviour(this->curBehaviourId));
-		lVar2 = pWeaponBehaviour->Func_0x50();
+		bCanLink = pWeaponBehaviour->Func_0x50();
 	}
 
-	if (lVar2 == false) {
-		SetState(WEAPON_STATE_IDLE, -1);
+	if (bCanLink == false) {
+		SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 	}
 	else {
-		SetState(0xd, -1);
+		SetState(WEAPON_STATE_LINKED_IDLE, -1);
 	}
 
 	this->pOwningWolfen = pWolfen;
@@ -201,6 +203,15 @@ float CActorWeapon::FUN_002d5710()
 	return pBurst->field_0x8[pBurst->field_0x38].field_0xc;
 }
 
+void CActorWeapon::FUN_002d5860(int param_2)
+{
+	CBehaviourWeaponBurst* pBurst;
+
+	pBurst = static_cast<CBehaviourWeaponBurst*>(GetBehaviour(this->curBehaviourId));
+	pBurst->Func_0x70(param_2);
+
+	return;
+}
 
 float CActorWeapon::GetLaunchSpeed(int index)
 {
@@ -240,7 +251,7 @@ void CBehaviourWeapon::Manage()
 	switch (pWeapon->actorState) {
 	case 6:
 		if (pWeapon->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			pWeapon->SetState(WEAPON_STATE_IDLE, -1);
+			pWeapon->SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 		}
 		break;
 	case 7:
@@ -257,10 +268,10 @@ void CBehaviourWeapon::Manage()
 		pCVar3 = pWeapon->pCollisionData;
 		if (((pCVar3 != (CCollision*)0x0) && ((pCVar3->flags_0x4 & COLLISION_GROUND_FLAG) != 0)) || (fVar5 == 0.0f)) {
 			pWeapon->ToggleMeshAlpha();
-			pWeapon->SetState(8, -1);
+			pWeapon->SetState(WEAPON_STATE_WAITING_FOR_LINK, -1);
 		}
 		break;
-	case 8:
+	case WEAPON_STATE_WAITING_FOR_LINK:
 		pWeapon->ManageDyn(4.0f, 0x20, (CActorsTable*)0x0);
 		break;
 	case WEAPON_STATE_RELOAD:
@@ -286,7 +297,7 @@ void CBehaviourWeapon::Begin(CActor* pOwner, int newState, int newAnimationType)
 	}
 
 	if (newState == -1) {
-		this->pOwner->SetState(8, -1);
+		this->pOwner->SetState(WEAPON_STATE_WAITING_FOR_LINK, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -305,7 +316,7 @@ void CBehaviourWeapon::Begin(CActor* pOwner, int newState, int newAnimationType)
 
 void CBehaviourWeapon::InitState(int newState)
 {
-	if (newState == 8) {
+	if (newState == WEAPON_STATE_WAITING_FOR_LINK) {
 		this->pOwner->flags = this->pOwner->flags & 0xfffffffd;
 		this->pOwner->flags = this->pOwner->flags | 1;
 
@@ -325,7 +336,7 @@ void CBehaviourWeapon::InitState(int newState)
 
 void CBehaviourWeapon::TermState(int oldState, int newState)
 {
-	if (oldState == 8) {
+	if (oldState == WEAPON_STATE_WAITING_FOR_LINK) {
 		this->pOwner->flags = this->pOwner->flags & 0xfffffffc;
 		this->pOwner->flags = this->pOwner->flags & 0xffffff5f;
 
@@ -337,6 +348,16 @@ void CBehaviourWeapon::TermState(int oldState, int newState)
 		}
 	}
 
+	return;
+}
+
+void CBehaviourWeapon::Func_0x54()
+{
+	return;
+}
+
+void CBehaviourWeapon::Func_0x58()
+{
 	return;
 }
 
@@ -386,7 +407,7 @@ int CBehaviourWeaponBurst::GetBurstState()
 			iVar1 = 2;
 		}
 		else {
-			if (iVar1 == WEAPON_STATE_IDLE) {
+			if (iVar1 == WEAPON_STATE_UNLINKED_IDLE) {
 				iVar1 = 1;
 			}
 			else {
@@ -425,7 +446,7 @@ bool CBehaviourWeaponBurst::Func_0x68()
 	bool bReturn;
 
 	weaponState = this->pOwner->actorState;
-	if ((weaponState == 0xd) || (weaponState == 0xc)) {
+	if ((weaponState == WEAPON_STATE_LINKED_IDLE) || (weaponState == 0xc)) {
 		bReturn = true;
 	}
 	else {
@@ -433,6 +454,18 @@ bool CBehaviourWeaponBurst::Func_0x68()
 	}
 
 	return bReturn;
+}
+
+void CBehaviourWeaponBurst::Func_0x70(int param_2)
+{
+	if (param_2 == 0) {
+		this->pOwner->SetState(0xb, -1);
+	}
+	else {
+		this->pOwner->SetState(0xc, -1);
+	}
+
+	return;
 }
 
 bool CBehaviourWeaponBurst::Func_0x74()
@@ -450,21 +483,21 @@ void CBehaviourWeaponBurst::UpdateBurst()
 	this->field_0x8[this->field_0x38].field_0x14 = this->field_0x8[this->field_0x38].field_0x14 + GetTimer()->cutsceneDeltaTime;
 
 	switch (this->pOwner->actorState) {
-	case WEAPON_STATE_IDLE:
-	case 0xd:
+	case WEAPON_STATE_UNLINKED_IDLE:
+	case WEAPON_STATE_LINKED_IDLE:
 		this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
 		break;
 	case WEAPON_STATE_FIRE:
 		if (1.0f / this->field_0x8[this->field_0x38].field_0x0 <= this->field_0x8[this->field_0x38].field_0x14) {
 			if (this->field_0x8[this->field_0x38].field_0x10 < this->field_0x8[this->field_0x38].field_0x4) {
 				this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
-				this->pOwner->SetState(WEAPON_STATE_IDLE, -1);
+				this->pOwner->SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 			}
 			else {
 				if (this->field_0x8[this->field_0x38].field_0x8 == 0.0f) {
 					this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
 					this->field_0x8[this->field_0x38].field_0x10 = 0;
-					this->pOwner->SetState(WEAPON_STATE_IDLE, -1);
+					this->pOwner->SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 				}
 				else {
 					this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
@@ -477,19 +510,21 @@ void CBehaviourWeaponBurst::UpdateBurst()
 		if (this->field_0x8[this->field_0x38].field_0x8 <= this->field_0x8[this->field_0x38].field_0x14) {
 			this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
 			this->field_0x8[this->field_0x38].field_0x10 = 0;
-			this->pOwner->SetState(WEAPON_STATE_IDLE, -1);
+			this->pOwner->SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 		}
 		break;
 	case 0xb:
 		this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
+
 		if (Func_0x74() != 0) {
-			this->pOwner->SetState(WEAPON_STATE_IDLE, -1);
+			this->pOwner->SetState(WEAPON_STATE_UNLINKED_IDLE, -1);
 		}
 		break;
 	case 0xc:
 		this->field_0x8[this->field_0x38].field_0x14 = 0.0f;
+
 		if (Func_0x78() != 0) {
-			this->pOwner->SetState(0xd, -1);
+			this->pOwner->SetState(WEAPON_STATE_LINKED_IDLE, -1);
 		}
 	}
 	return;
@@ -1120,6 +1155,59 @@ void CBehaviourWeaponRpg::Begin(CActor* pOwner, int newState, int newAnimationTy
 	this->pOwner->field_0x1d0 = 4;
 
 	return;
+}
+
+bool CBehaviourWeaponRpg::Action(edF32VECTOR4* pPosition, CActor* pActor)
+{
+	CActorWeapon* pWeapon;
+	S_ACTOR_STREAM_REF* pStreamRef;
+	int* puVar1;
+	int iVar2;
+	int iVar3;
+	CActorProjectile* pProjectile;
+	edF32VECTOR4* v0;
+	edF32VECTOR4 eStack16;
+
+	pStreamRef = this->field_0x3c;
+	if (pStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
+		iVar2 = 0;
+	}
+	else {
+		iVar2 = pStreamRef->entryCount;
+	}
+
+	iVar3 = 0;
+	if (0 < iVar2) {
+		do {
+			pProjectile = static_cast<CActorProjectile*>(pStreamRef->aEntries[iVar3].Get());
+
+			if ((pProjectile != (CActorProjectile*)0x0) && (pProjectile->actorState == 6)) break;
+
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < iVar2);
+	}
+
+	if (iVar3 == iVar2) {
+		pProjectile = (CActorProjectile*)0x0;
+		pWeapon = this->pOwner;
+	}
+	else {
+		pWeapon = this->pOwner;
+	}
+
+	v0 = &pWeapon->currentLocation;
+
+	if (pProjectile != (CActorProjectile*)0x0) {
+		pProjectile->pCollisionData->Reset();
+		pProjectile->UpdatePosition(v0, true);
+		edF32Vector4SubHard(&eStack16, pPosition, v0);
+		edF32Vector4NormalizeHard(&eStack16, &eStack16);
+		pProjectile->Project(this->field_0x8[this->field_0x38].field_0xc, &eStack16, true, pActor);
+		this->field_0x8[this->field_0x38].field_0x10 = this->field_0x8[this->field_0x38].field_0x10 + 1;
+		this->pOwner->SetState(9, -1);
+	}
+
+	return pProjectile != (CActorProjectile*)0x0;
 }
 
 WeaponGlobal WeaponGlobal_0048dd60;

@@ -31,6 +31,7 @@ public:
 	int PTMF_Ext::CheckComboA(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageActorA(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageActorB(EVC_PHASE phase, undefined8 param_3, void* pData);
+	int ManageActorC(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageMsgReceived(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int DummyTempFunc(EVC_PHASE phase, undefined8 param_3, void* pData);
 
@@ -53,6 +54,13 @@ struct ManageMsgBParams
 {
 	S_STREAM_REF<CActor> actorRef;
 	int bActive;
+};
+
+struct ManageMsgCParams
+{
+	S_STREAM_REF<CActor> actorRefA;
+	S_STREAM_REF<CActor> actorRefB;
+	CActor* pActor;
 };
 
 class CActorEventGenerator;
@@ -179,6 +187,7 @@ public:
 	float field_0x308;
 
 	CActorFighter** field_0x538;
+	ManageMsgCParams field_0x544;
 	ManageMsgAParams field_0x550;
 	S_STREAM_REF<CActor> field_0x578;
 	ManageMsgBParams field_0x580;

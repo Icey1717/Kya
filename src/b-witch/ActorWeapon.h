@@ -5,13 +5,16 @@
 #include "ActorMovable.h"
 #include "Pause.h"
 
+#define WEAPON_BEHAVIOUR_DEFAULT 0x2
 #define WEAPON_BEHAVIOUR_PISTOL 0x3
 #define WEAPON_BEHAVIOUR_SNIPER 0x4
 #define WEAPON_BEHAVIOUR_RPG 0x6
 
-#define WEAPON_STATE_IDLE 0x5
+#define WEAPON_STATE_UNLINKED_IDLE 0x5
+#define WEAPON_STATE_WAITING_FOR_LINK 0x8
 #define WEAPON_STATE_FIRE 0x9
 #define WEAPON_STATE_RELOAD 0xa
+#define WEAPON_STATE_LINKED_IDLE 0xd
 
 class CActorWeapon;
 class CActorWolfen;
@@ -26,8 +29,8 @@ public:
 	virtual void TermState(int oldState, int newState);
 
 	virtual bool Func_0x50() { return false; }
-	virtual void Func_0x54() { IMPLEMENTATION_GUARD(); }
-	virtual void Func_0x58() { IMPLEMENTATION_GUARD(); }
+	virtual void Func_0x54();
+	virtual void Func_0x58();
 	virtual void Func_0x5c() { return; }
 
 	CActorWeapon* pOwner;
@@ -55,6 +58,7 @@ public:
 	virtual bool Action(edF32VECTOR4* pPosition, CActor* pActor);
 
 	virtual bool Func_0x68();
+	virtual void Func_0x70(int param_2);
 	virtual bool Func_0x74();
 	virtual bool Func_0x78();
 
@@ -96,6 +100,8 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
 	virtual bool Func_0x50() { return true; }
+
+	virtual bool Action(edF32VECTOR4* pPosition, CActor* pActor);
 
 	S_ACTOR_STREAM_REF* field_0x3c;
 };
@@ -205,6 +211,8 @@ public:
 	bool FUN_002d5830();
 
 	float FUN_002d5710();
+
+	void FUN_002d5860(int param_2);
 
 	float GetLaunchSpeed(int index);
 	int GetBurstState();

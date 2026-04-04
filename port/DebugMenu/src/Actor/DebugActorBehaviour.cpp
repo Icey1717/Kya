@@ -792,12 +792,16 @@ namespace Weapon
 	static const char* GetStateName(int state)
 	{
 		switch (state) {
-		case WEAPON_STATE_IDLE:
-			return "Idle";
+		case WEAPON_STATE_UNLINKED_IDLE:
+			return "Unlinked Idle";
+		case WEAPON_STATE_WAITING_FOR_LINK:
+			return "Waiting For Link";
 		case WEAPON_STATE_FIRE:
 			return "Fire";
 		case WEAPON_STATE_RELOAD:
 			return "Reload";
+		case WEAPON_STATE_LINKED_IDLE:
+			return "Linked Idle";
 		default:
 			return "Unknown";
 		}

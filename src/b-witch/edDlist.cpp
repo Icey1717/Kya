@@ -3782,6 +3782,50 @@ void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR
 }
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
+void edDListPatchVertex_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z)
+{
+	edVertex* pVertex = pVertexBuf + index;
+	pVertex->x = x;
+	pVertex->y = y;
+	pVertex->z = z;
+	if (gCurStripPatchable == (ed_3d_strip*)0x0) {
+		pVertex->uSkip = 0xc000;
+	}
+	else {
+		if (gCurDListInfo3DPatchable->primType != 3) {
+			pVertex->uSkip = 0xc000;
+		}
+		uint packetIndex = index / 0x46;
+		gCurPacketPatched[packetIndex] = gCurPacketPatched[packetIndex] + 1;
+		if (gLastPacketPatched < static_cast<int>(packetIndex)) {
+			gLastPacketPatched = packetIndex;
+		}
+	}
+}
+
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
+void edDListPatchVertexW_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z, float w)
+{
+	edVertex* pVertex = pVertexBuf + index;
+	pVertex->x = x;
+	pVertex->y = y;
+	pVertex->z = z;
+	if (gCurStripPatchable == (ed_3d_strip*)0x0) {
+		pVertex->fSkip = w;
+	}
+	else {
+		if (gCurDListInfo3DPatchable->primType != 3) {
+			pVertex->fSkip = w;
+		}
+		uint packetIndex = index / 0x46;
+		gCurPacketPatched[packetIndex] = gCurPacketPatched[packetIndex] + 1;
+		if (gLastPacketPatched < static_cast<int>(packetIndex)) {
+			gLastPacketPatched = packetIndex;
+		}
+	}
+}
+
+// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
 void edDListPatcheEnd(int nbVertex, int param_2)
 {
 	int iVar1;

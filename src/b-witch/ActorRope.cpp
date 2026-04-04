@@ -395,7 +395,7 @@ void CActorRope::BuildCollisionPrims()
 	CCollision::PatchObbTreeFlagsRecurse(pCollision->pObbTree, 4, -1, 0);
 	UpdatePosition( &this->currentLocation, true);
 
-	delete(pAlloc);
+	delete[] pAlloc;
 
 	return;
 }
@@ -586,7 +586,7 @@ void CActorRope::DrawTightened()
 				peVar2 = &gF32Vertex4Zero;
 			}
 			else {
-				peVar1 = peVar3 + iVar6;
+				peVar1 = peVar2 + iVar6;
 				peVar2 = peVar2 + iVar6 + 1;
 			}
 			fVar8 = DrawRopeSegment(fVar8, peVar1, peVar2, peVar3);

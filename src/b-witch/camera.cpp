@@ -5,6 +5,7 @@
 #include "CameraViewManager.h"
 #include "EventManager.h"
 #include "ActorManager.h"
+#include "ActorMovable.h"
 
 PACK(
 	struct S_STREAM_SIMPLE_ACT_COND {
@@ -58,31 +59,31 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 			bVar4 = uVar5 == 0;
 			break;
 		case 2:
-			IMPLEMENTATION_GUARD(
-				bVar3 = (*pAVar6->pVTable->checkFuncA)(pAVar6, 2);
+			bVar3 = pAVar6->IsKindOfObject(2);
 			if (bVar3 == false) {
 				bVar4 = true;
 			}
 			else {
-				bVar4 = this->field_0xc < pAVar6[1].data.anotherVector.y;
-			})
-				break;
+				CActorMovable* pActorMovable = static_cast<CActorMovable*>(pAVar6);
+				bVar4 = this->field_0xc < pActorMovable->dynamic.linearAcceleration;
+			}
+			break;
 		case 3:
-			IMPLEMENTATION_GUARD(
-				bVar3 = (*pAVar6->pVTable->checkFuncA)(pAVar6, 2);
+			bVar3 = pAVar6->IsKindOfObject(2);
 			if (bVar3 == false) {
 				bVar4 = true;
 			}
 			else {
-				bVar4 = pAVar6[1].data.anotherVector.y < this->field_0xc;
-			})
-				break;
+				CActorMovable* pActorMovable = static_cast<CActorMovable*>(pAVar6);
+				bVar4 = pActorMovable->dynamic.linearAcceleration < this->field_0xc;
+			}
+			break;
 		case 4:
-				bVar4 = (pAVar6->flags & 0x2000001) == 0;
-				break;
+			bVar4 = (pAVar6->flags & 0x2000001) == 0;
+			break;
 		case 5:
-				bVar4 = pAVar6->flags & 1;
-				break;
+			bVar4 = pAVar6->flags & 1;
+			break;
 		default:
 			bVar4 = true;
 		}

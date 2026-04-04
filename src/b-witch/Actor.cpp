@@ -422,8 +422,7 @@ void CActor::PreInit()
 	}
 	pGVar1 = this->pShadow;
 	if (pGVar1 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		CShadow::Init(pGVar1, this->field_0x0);)
+		pGVar1->Init(this->sectorId);
 	}
 	
 	this->flags = this->flags & 0xfffffffc;
@@ -1003,17 +1002,21 @@ void CActor::ChangeDisplayState(int state)
 	if (state == 0) {
 		pCVar1 = this->pShadow;
 		if (pCVar1 != (CShadow*)0x0) {
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*(int*)pCVar1 + 0x14))();)
+			pCVar1->SetDisplayable(0);
 		}
 		this->flags = this->flags & 0xfffffeff;
 	}
 	else {
 		pCVar1 = this->pShadow;
 		if (pCVar1 != (CShadow*)0x0) {
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*(int*)pCVar1 + 0x14))();)
+			bool bVar2 = (this->flags & 0x4400) != 0;
+			if ((bVar2) && (bVar2 = true, this->subObjA->cullingDistance < this->distanceToCamera)) {
+				bVar2 = false;
+			}
+
+			pCVar1->SetDisplayable(bVar2);
 		}
+
 		this->flags = this->flags | 0x100;
 	}
 
@@ -1648,9 +1651,9 @@ void CActor::ChangeVisibleState(int bVisible)
 		}
 		pCVar2 = this->pShadow;
 		if (pCVar2 != (CShadow*)0x0) {
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*(int*)pCVar2 + 0x14))(pCVar2, 0);)
+			pCVar2->SetDisplayable(0);
 		}
+
 		this->flags = this->flags & 0xffffbfff;
 	}
 	else {
@@ -1668,9 +1671,10 @@ void CActor::ChangeVisibleState(int bVisible)
 			if (bVar3 != false) {
 				bVar3 = (this->flags & 0x100) != 0;
 			}
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*(int*)pCVar2 + 0x14))(pCVar2, bVar3);)
+
+			pCVar2->SetDisplayable(bVar3);
 		}
+
 		this->flags = this->flags | 0x4000;
 	}
 	return;
@@ -2800,9 +2804,9 @@ void CActor::Draw()
 
 	pShadow = this->pShadow;
 	if (pShadow != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		pShadow->Draw(););
+		pShadow->Draw();
 	}
+
 	pBehaviour = GetBehaviour(this->curBehaviourId);
 	if (pBehaviour != (CBehaviour*)0x0) {
 		pBehaviour->Draw();
@@ -3025,7 +3029,31 @@ void CActor::UpdateBoundingSphere(CActInstance* pInstances, int nbInstances)
 	return;
 }
 
+void CActor::SetupShadow(CShadow* pNewShadow)
+{
+	int iVar1;
 
+	iVar1 = this->subObjA->field_0x40;
+	if (iVar1 != 2) {
+		if (iVar1 != 1) {
+			this->pShadow = (CShadow*)0x0;
+			goto LAB_001050b0;
+		}
+
+		this->flags = this->flags | 0x100000;
+	}
+
+	this->pShadow = pNewShadow;
+	this->pShadow->Create(this->subObjA->field_0x44);
+	LAB_001050b0:
+
+	if ((this->pCollisionData != (CCollision*)0x0) && (this->pShadow != (CShadow*)0x0)) {
+		this->pShadow->field_0x48 = (this->pCollisionData->pObbPrim->scale).x * 1.8f;
+		this->pShadow->field_0x50 = (this->pCollisionData->pObbPrim->scale).z * 1.8f;
+	}
+
+	return;
+}
 
 StateConfig CActor::gStateCfg_ACT[5] =
 {
@@ -3825,18 +3853,11 @@ void CActor::ComputeAltitude()
 
 		pShadow = this->pShadow;
 		if (pShadow != (CShadow*)0x0) {
-			IMPLEMENTATION_GUARD(
 			rayLocation.y = rayLocation.y - this->distanceToGround;
-			(pShadow->base).field_0x10.x = rayLocation.x;
-			(pShadow->base).field_0x10.y = rayLocation.y;
-			(pShadow->base).field_0x10.z = rayLocation.z;
-			(pShadow->base).field_0x10.w = rayLocation.w;
-			(pShadow->base).field_0x4c = this->rotationEuler.y;
-			CShadowShared::SetIntensity(1.0 - this->distanceToGround / this->field_0xec, pShadow);
-			(pShadow->base).field_0x20.x = local_20.x;
-			(pShadow->base).field_0x20.y = local_20.y;
-			(pShadow->base).field_0x20.z = local_20.z;
-			(pShadow->base).field_0x20.w = local_20.w;)
+			pShadow->position = rayLocation;
+			pShadow->field_0x4c = this->rotationEuler.y;
+			pShadow->SetIntensity(1.0 - this->distanceToGround / this->distanceToGround);
+			pShadow->field_0x20 = local_20;
 		}
 
 		fVar4 = this->distanceToGround;
@@ -4837,27 +4858,14 @@ void CActor::UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4)
 
 	pShad = this->pShadow;
 	if (pShad != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
 		pCVar1 = this->pCollisionData;
 		if ((pCVar1 == (CCollision*)0x0) || (peVar2 = &pCVar1->highestVertex, (pCVar1->flags_0x0 & 0x40000) == 0)) {
 			peVar2 = &this->currentLocation;
 		}
-		fVar5 = peVar2->y;
-		fVar3 = peVar2->z;
-		fVar4 = peVar2->w;
-		(pShad->base).field_0x10.x = peVar2->x;
-		(pShad->base).field_0x10.y = fVar5;
-		(pShad->base).field_0x10.z = fVar3;
-		(pShad->base).field_0x10.w = fVar4;
-		(pShad->base).field_0x4c = (this->rotationEuler).y;
-		CShadowShared::SetIntensity(1.0, pShad);
-		fVar5 = pLocation->y;
-		fVar3 = pLocation->z;
-		fVar4 = pLocation->w;
-		(pShad->base).field_0x20.x = pLocation->x;
-		(pShad->base).field_0x20.y = fVar5;
-		(pShad->base).field_0x20.z = fVar3;
-		(pShad->base).field_0x20.w = fVar4;)
+		pShad->position = *peVar2;
+		pShad->field_0x4c = (this->rotationEuler).y;
+		pShad->SetIntensity(1.0f);
+		pShad->field_0x20 = *pLocation;
 	}
 
 	this->flags = this->flags | 0x200000;
@@ -5595,6 +5603,15 @@ void S_ACTOR_STREAM_REF::Init()
 {
 	for (int i = 0; i < this->entryCount; i++) {
 		this->aEntries[i].Init();
+	}
+
+	return;
+}
+
+void S_ACTOR_STREAM_REF::Reset()
+{
+	for (int i = 0; i < this->entryCount; i++) {
+		this->aEntries[i].Reset();
 	}
 
 	return;

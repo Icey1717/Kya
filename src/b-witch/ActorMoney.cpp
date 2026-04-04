@@ -495,7 +495,7 @@ void CBehaviourMoneyFlock::SectorChange(int oldSectorId, int newSectorId)
 
 void CBehaviourMoneyFlock::Draw()
 {
-	IMPLEMENTATION_GUARD_SHADOW();
+	IMPLEMENTATION_GUARD_FX();
 }
 
 void CBehaviourMoneyFlock::Begin(CActor* pOwner, int newState, int newAnimationType)

@@ -25,6 +25,8 @@ namespace Debug {
 			std::array<float, 4> colUnknown;
 		};
 
+		ObbDrawConfig BuildActorConfig();
+
 		void DrawDebugShapes();
 		void DrawContents();
 		void ShowMenu(bool* bOpen);

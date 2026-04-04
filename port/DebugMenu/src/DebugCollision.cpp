@@ -56,7 +56,7 @@ namespace Debug {
 
 		static Setting<bool> gShowCollisionRays("Show Collision Rays", false);
 
-		static ObbDrawConfig BuildActorConfig()
+		ObbDrawConfig BuildActorConfig()
 		{
 			ObbDrawConfig cfg;
 			cfg.bEnabled        = gShowActorObbs;

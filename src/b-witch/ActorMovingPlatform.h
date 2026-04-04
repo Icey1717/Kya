@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorMovable.h"
 #include "CinematicManager.h"
+#include "Fx.h"
 #include "PathManager.h"
 
 #define MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY				0x2
@@ -61,7 +62,6 @@ public:
 class CBehaviourPlatformStand : public CBehaviourPlatform
 {
 public:
-	CBehaviourPlatformStand();
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
@@ -74,8 +74,7 @@ public:
 
 	int field_0x8;
 	int field_0xc;
-	CinNamedObject30* pCinData;
-	CActor* pTiedActor;
+	CFxHandle pCinData;
 };
 
 class CBehaviourTeleportRandom : public CBehaviourPlatform
@@ -332,8 +331,6 @@ class CActorMovingPlatform : public CActorMovable
 public:
 	static StateConfig gStateCfg_MPF[13];
 
-	CActorMovingPlatform();
-
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Reset();
@@ -386,10 +383,8 @@ public:
 
 	CActorMovingPlatform_SubObj* pProperties;
 
-	CinNamedObject30* field_0x1ec;
-	CActor* field_0x1f0;
-	CinNamedObject30* field_0x1f4;
-	CActor* field_0x1f8;
+	CFxHandle field_0x1ec;
+	CFxHandle field_0x1f4;
 
 	uint movingPlatformFlags;
 	edF32MATRIX4 field_0x200;

@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorMovable.h"
 #include "ActorBonusServices.h"
+#include "ActorShadows.h"
 #include "PathFollow.h"
 
 #define MONEY_BEHAVIOUR_FLOCK 0x2
