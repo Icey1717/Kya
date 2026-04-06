@@ -5425,6 +5425,7 @@ LAB_00341590:
 	case STATE_HERO_CLIMB_STAND_A:
 	case STATE_HERO_CLIMB_STAND_B:
 	case STATE_HERO_CLIMB_STAND_C:
+	case STATE_HERO_CLIMB_STAND_D:
 	case STATE_HERO_CLIMB_MOVE_A:
 	case STATE_HERO_CLIMB_MOVE_B:
 	case STATE_HERO_CLIMB_MOVE_C:
@@ -5476,6 +5477,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_A:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_B:
 	case STATE_HERO_BOUNCE_JUMP_2:
+	case STATE_HERO_DF:
 	case STATE_HERO_TOBOGGAN_JUMP_3:
 	case STATE_HERO_WIND_WALL_MOVE_A:
 	case STATE_HERO_WIND_WALL_MOVE_B:
@@ -5774,6 +5776,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_COL_WALL_DEAD_C:
+	case STATE_HERO_DF:
 	case STATE_HERO_BASIC_TO_STAND:
 	case STATE_HERO_CEILING_CLIMB_A:
 	case STATE_HERO_CEILING_CLIMB_B:
@@ -6475,6 +6478,10 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
 		_StateFighterReturnFromFightAction();
+		break;
+	case STATE_HERO_DF:
+		this->dynamic.speed = 0.0f;
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		break;
 	case STATE_HERO_JOKE:
 		StateHeroJoke();

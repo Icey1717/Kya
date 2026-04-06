@@ -18,6 +18,10 @@
 #define SWITCH_STATE_MAGIC_STATE_OFF_2_ON 0x6
 #define SWITCH_STATE_LEVER_STATE_OFF_2_ON 0x6
 
+#define SWITCH_STATE_TARGET_IDLE 0x5
+#define SWITCH_STATE_TARGET_ON 0x8
+#define SWITCH_STATE_TARGET_DRAIN 0x9
+
 #define SWITCH_STATE_WOLFEN_COUNTER_ON	0x8
 
 struct S_NTF_TARGET_STREAM_REF;
@@ -148,7 +152,7 @@ public:
 	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void ChangeManageState(int state) {}
 
-	float field_0x8;
+	float targetDisplacement;
 	S_OSCILLATION_CONFIG oscConfig;
 	S_OSCILLATING_VALUE oscValue;
 };

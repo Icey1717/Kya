@@ -19,6 +19,7 @@
 #include "ActorWolfen.h"
 #include "ActorJamGut.h"
 #include "ActorShip.h"
+#include "ActorSwitch.h"
 #include "LargeObject.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
@@ -32,6 +33,7 @@
 #include "Actor/DebugActorBehaviour.h"
 #include "Actor/DebugActorJamGut.h"
 #include "Actor/DebugActorShip.h"
+#include "Actor/DebugActorSwitch.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Native/NativeDebugShapes.h"
@@ -835,6 +837,12 @@ namespace Debug {
 			CActorShip* pShipActor = static_cast<CActorShip*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Ship::ShowShipActorDetails(pShipActor);
+		}
+
+		if (pActor->typeID == SWITCH) {
+			CActorSwitch* pSwitchActor = static_cast<CActorSwitch*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::Switch::ShowActorDetails(pSwitchActor);
 		}
 	}
 

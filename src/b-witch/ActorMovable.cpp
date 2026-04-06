@@ -19,16 +19,16 @@ float CDynamic::gMaxSpeed_Vert = 20.0f;
 void S_TILT_STREAM_DEF::Init()
 {
 	this->field_0x4 = this->field_0x4 * 0.01745329f;
-	this->oscConfig.field_0x0 = this->oscConfig.field_0x0 * 100.0f;
-	this->oscConfig.field_0x4 = this->oscConfig.field_0x4 * 100.0f;
+	this->oscConfig.springStrength = this->oscConfig.springStrength * 100.0f;
+	this->oscConfig.damping = this->oscConfig.damping * 100.0f;
 }
 
 
 // Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_PUSH_STREAM_DEF::Init()
 {
-	this->oscConfig.field_0x0 = this->oscConfig.field_0x0 * 100.0f;
-	this->oscConfig.field_0x4 = this->oscConfig.field_0x4 * 100.0f;
+	this->oscConfig.springStrength = this->oscConfig.springStrength * 100.0f;
+	this->oscConfig.damping = this->oscConfig.damping * 100.0f;
 }
 
 
@@ -48,11 +48,11 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	this->oscQuat.field_0x0 = gF32Vertex4Zero;
-	this->oscQuat.field_0x10 = gF32Vertex4Zero;
+	this->oscQuat.quat = gF32Vertex4Zero;
+	this->oscQuat.quatVelocity = gF32Vertex4Zero;
 
-	this->oscValue.field_0x0 = 0.0f;
-	this->oscValue.field_0x4 = 0.0f;
+	this->oscValue.value = 0.0f;
+	this->oscValue.velocity = 0.0f;
 	this->field_0x38 = 0.0f;
 	(this->field_0x0).x = 0.0f;
 	(this->field_0x0).y = 0.0f;
@@ -133,52 +133,51 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 // Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_TILT_DATA::Reset()
 {
-	this->oscQuat.field_0x0 = gF32Vertex4Zero;
-	this->oscQuat.field_0x10 = gF32Vertex4Zero;
+	this->oscQuat.quat = gF32Vertex4Zero;
+	this->oscQuat.quatVelocity = gF32Vertex4Zero;
 
-	(this->oscValue).field_0x0 = 0.0f;
-	(this->oscValue).field_0x4 = 0.0f;
+	(this->oscValue).value = 0.0f;
+	(this->oscValue).velocity = 0.0f;
 	return;
 }
 
-bool S_OSCILLATING_VALUE::Update(float param_1, float deltaTime, S_OSCILLATION_CONFIG* pConfig)
+bool S_OSCILLATING_VALUE::Update(float target, float deltaTime, S_OSCILLATION_CONFIG* pConfig)
 {
-	bool bVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
+	bool bReachedTarget;
+	float prevVelocity;
+	float dampingFactor;
+	float delta;
 
-	fVar4 = param_1 - this->field_0x0;
-	if (fabs(fVar4) < 1e-06f) {
-		fVar4 = 0.0f;
+	delta = target - this->value;
+	if (fabsf(delta) < 1e-06f) {
+		delta = 0.0f;
 	}
 
-	if ((0.1f < fabs(this->field_0x4)) || (0.001f < fabs(fVar4))) {
-		fVar2 = this->field_0x4;
-		fVar3 = deltaTime * fVar2 * -pConfig->field_0x4 * fVar2;
+	if ((0.1f < fabsf(this->velocity)) || (0.001f < fabsf(delta))) {
+		prevVelocity = this->velocity;
+		dampingFactor = deltaTime * prevVelocity * -pConfig->damping * prevVelocity;
 
-		if (fVar2 < 0.0f) {
-			fVar3 = -fVar3;
+		if (prevVelocity < 0.0f) {
+			dampingFactor = -dampingFactor;
 		}
 
-		bVar1 = false;
-		fVar4 = this->field_0x4 + deltaTime * (pConfig->field_0x0 * fVar4 + fVar3);
-		this->field_0x4 = fVar4;
-		this->field_0x0 = this->field_0x0 + fVar4 * deltaTime;
+		bReachedTarget = false;
+		this->velocity = this->velocity + deltaTime * (pConfig->springStrength * delta + dampingFactor);
+		this->value = this->value + this->velocity * deltaTime;
 	}
 	else {
-		this->field_0x4 = 0.0f;
-		bVar1 = true;
-		this->field_0x0 = param_1;
+		this->velocity = 0.0f;
+		bReachedTarget = true;
+		this->value = target;
 	}
 
-	return bVar1;
+	return bReachedTarget;
 }
 
 void S_PUSH_DATA::Init()
 {
-	(this->oscValue).field_0x0 = 0.0f;
-	(this->oscValue).field_0x4 = 0.0f;
+	(this->oscValue).value = 0.0f;
+	(this->oscValue).velocity = 0.0f;
 
 	return;
 }
@@ -186,8 +185,8 @@ void S_PUSH_DATA::Init()
 // Should be in: D:/Projects/b-witch/MiscFunctions.cpp
 void S_PUSH_DATA::Reset()
 {
-	(this->oscValue).field_0x0 = 0.0f;
-	(this->oscValue).field_0x4 = 0.0f;
+	(this->oscValue).value = 0.0f;
+	(this->oscValue).velocity = 0.0f;
 
 	return;
 }
@@ -1072,8 +1071,8 @@ bool CActorMovable::SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_P
 		if (fVar4 <= fVar3) {
 			fVar3 = fVar4;
 		}
-		if ((((pPushData->oscValue).field_0x0 != 0.0f) || (fVar3 != 0.0f)) ||
-			(bVar1 = false, (pPushData->oscValue).field_0x4 != 0.0f)) {
+		if ((((pPushData->oscValue).value != 0.0f) || (fVar3 != 0.0f)) ||
+			(bVar1 = false, (pPushData->oscValue).velocity != 0.0f)) {
 			pTVar2 = Timer::GetTimer();
 			pPushData->oscValue.Update(fVar3, pTVar2->cutsceneDeltaTime, &pPushStreamRef->oscConfig);
 			bVar1 = true;
@@ -1275,7 +1274,7 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 			}
 		}
 		if (pTiltStreamRef->field_0x0 == -1) {
-			if ((((pTiltData->oscQuat).field_0x0.w != 1.0f) || (local_20.w != 1.0f)) || (bVar2 = false, (pTiltData->oscQuat).field_0x10.w != 1.0f)) {
+			if ((((pTiltData->oscQuat).quat.w != 1.0f) || (local_20.w != 1.0f)) || (bVar2 = false, (pTiltData->oscQuat).quatVelocity.w != 1.0f)) {
 				if (1 < iVar4) {
 					_edQuatToAngAxis(&local_20, &local_4, &eStack16);
 					local_4 = edF32Between_Pi(local_4);
@@ -1299,7 +1298,7 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 			}
 		}
 		else {
-			if (((pTiltData->oscValue.field_0x0 != 1.0f) || (fVar6 != 0.0f)) || (bVar2 = false, pTiltData->oscValue.field_0x4 != 1.0f)) {
+			if (((pTiltData->oscValue.value != 1.0f) || (fVar6 != 0.0f)) || (bVar2 = false, pTiltData->oscValue.velocity != 1.0f)) {
 				IMPLEMENTATION_GUARD(
 				fVar5 = pTiltStreamRef->field_0x4;
 				if (fVar6 <= fVar5) {
@@ -1326,7 +1325,7 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 					}
 					fVar6 = (float)puVar4 * 3.140593f;
 				}
-				_edQuatFromAngAxis(fVar6, &(pTiltData->oscQuat).field_0x10, (edF32VECTOR3*)pTiltData);
+				_edQuatFromAngAxis(fVar6, &(pTiltData->oscQuat).quatVelocity, (edF32VECTOR3*)pTiltData);
 				bVar2 = true;)
 			}
 		}
@@ -1770,16 +1769,16 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 	edF32VECTOR3 local_10;
 	float puVar3;
 
-	edQuatInverse(&local_30, &this->field_0x0);
+	edQuatInverse(&local_30, &this->quat);
 	edQuatMul(&local_30, &local_30, param_4);
 
-	fVar5 = (this->field_0x10).x;
-	fVar6 = (this->field_0x10).y;
-	fVar2 = (this->field_0x10).z;
+	fVar5 = (this->quatVelocity).x;
+	fVar6 = (this->quatVelocity).y;
+	fVar2 = (this->quatVelocity).z;
 	fVar2 = sqrtf(fVar2 * fVar2 + fVar5 * fVar5 + fVar6 * fVar6);
 
 	if (1e-06f < fVar2) {
-		puVar7 = (this->field_0x10).w;
+		puVar7 = (this->quatVelocity).w;
 		if (1.0f < puVar7) {
 			puVar8 = 1.0f;
 		}
@@ -1794,9 +1793,9 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 		fVar2 = 1.0f / fVar2;
 		fVar5 = fVar5 * 2.0;
 
-		local_10.x = (this->field_0x10).x * fVar2;
-		local_10.y = (this->field_0x10).y * fVar2;
-		local_10.z = (this->field_0x10).z * fVar2;
+		local_10.x = (this->quatVelocity).x * fVar2;
+		local_10.y = (this->quatVelocity).y * fVar2;
+		local_10.z = (this->quatVelocity).z * fVar2;
 	}
 	else {
 		local_10.x = 0.0f;
@@ -1859,7 +1858,7 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 	}
 
 	if ((0.05f < fabs(fVar2)) || (0.01f < fabs(fVar3))) {
-		fVar5 = param_1 * pConfig->field_0x0 * fVar3;
+		fVar5 = param_1 * pConfig->springStrength * fVar3;
 
 		if (3.140593f < fabs(fVar5)) {
 			if (0.0f <= fVar5) {
@@ -1888,7 +1887,7 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			local_40.w = cosf(fVar5 * 0.5f);
 		}
 
-		fVar5 = param_1 * param_1 * fVar2 * -pConfig->field_0x4 * fVar2;
+		fVar5 = param_1 * param_1 * fVar2 * -pConfig->damping * fVar2;
 
 		if (fVar2 < 0.0f) {
 			fVar5 = -fVar5;
@@ -1923,20 +1922,20 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 		}
 
 		edQuatMul(&eStack96, &local_40, &local_50);
-		edQuatMul(&this->field_0x10, &this->field_0x10, &eStack96);
+		edQuatMul(&this->quatVelocity, &this->quatVelocity, &eStack96);
 
-		if ((this->field_0x10).w < 0.999999f) {
-			edQuatNormalize(&this->field_0x10, &this->field_0x10);
+		if ((this->quatVelocity).w < 0.999999f) {
+			edQuatNormalize(&this->quatVelocity, &this->quatVelocity);
 		}
 		else {
-			this->field_0x10 = gF32Vertex4Zero;
+			this->quatVelocity = gF32Vertex4Zero;
 		}
 
-		fVar2 = sqrtf((this->field_0x10).z * (this->field_0x10).z +
-			(this->field_0x10).x * (this->field_0x10).x + (this->field_0x10).y * (this->field_0x10).y);
+		fVar2 = sqrtf((this->quatVelocity).z * (this->quatVelocity).z +
+			(this->quatVelocity).x * (this->quatVelocity).x + (this->quatVelocity).y * (this->quatVelocity).y);
 
 		if (1e-06f < fVar2) {
-			puVar9 = (this->field_0x10).w;
+			puVar9 = (this->quatVelocity).w;
 
 			if (1.0f < puVar9) {
 				puVar10 = 1.0f;
@@ -1952,9 +1951,9 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			fVar2 = 1.0f / fVar2;
 			fVar5 = fVar5 * 2.0f;
 
-			local_10.x = (this->field_0x10).x * fVar2;
-			local_10.y = (this->field_0x10).y * fVar2;
-			local_10.z = (this->field_0x10).z * fVar2;
+			local_10.x = (this->quatVelocity).x * fVar2;
+			local_10.y = (this->quatVelocity).y * fVar2;
+			local_10.z = (this->quatVelocity).z * fVar2;
 		}
 		else {
 			local_10.x = 0.0f;
@@ -1977,21 +1976,21 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			local_70.w = cosf(fVar5 * param_1 * 0.5f);
 		}
 
-		edQuatMul(&this->field_0x0, &this->field_0x0, &local_70);
+		edQuatMul(&this->quat, &this->quat, &local_70);
 
-		if ((this->field_0x0).w < 0.999999) {
-			edQuatNormalize(&this->field_0x0, &this->field_0x0);
+		if ((this->quat).w < 0.999999) {
+			edQuatNormalize(&this->quat, &this->quat);
 		}
 		else {
-			this->field_0x0 = gF32Vertex4Zero;
+			this->quat = gF32Vertex4Zero;
 		}
 
 		bVar1 = false;
 	}
 	else {
 		bVar1 = true;
-		this->field_0x10 = gF32Vertex4Zero;
-		this->field_0x0 = *param_4;
+		this->quatVelocity = gF32Vertex4Zero;
+		this->quat = *param_4;
 	}
 
 	return bVar1;

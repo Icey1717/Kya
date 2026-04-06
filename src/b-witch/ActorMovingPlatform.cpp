@@ -666,7 +666,7 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 
 	if (bPush != false) {
 		param_3 = 1;
-		local_10.y = -(this->pTiltData->pushData).oscValue.field_0x0;
+		local_10.y = -(this->pTiltData->pushData).oscValue.value;
 	}
 
 	if (this->pTiltData == (S_TILT_DATA*)0x0) {
@@ -682,9 +682,9 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		}
 	}
 	else {
-		ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::Platform_UpdatePosition Tilt {} {}", this->name, this->pTiltData->oscQuat.field_0x0.ToString());
+		ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::Platform_UpdatePosition Tilt {} {}", this->name, this->pTiltData->oscQuat.quat.ToString());
 
-		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &eStack80);
+		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.quat, &eStack80);
 		edF32Matrix4FromEulerSoft(&eStack144, &this->pCinData->rotationEuler, "XYZ");
 		eStack144.rowT = *pPosition;
 		edF32Matrix4MulF32Matrix4Hard(&eStack144, &eStack80, &eStack144);
@@ -1155,7 +1155,7 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 
 	if (cVar5 != false) {
 		local_80 = 1;
-		local_30.y = -(this->pTiltData->pushData).oscValue.field_0x0;
+		local_30.y = -(this->pTiltData->pushData).oscValue.value;
 	}
 
 	if (param_7 != 0) {
@@ -1178,7 +1178,7 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 		}
 	}
 	else {
-		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &eStack112);
+		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.quat, &eStack112);
 		result = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);
 	}
 
@@ -2338,7 +2338,7 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 
 	if (cVar4 != false) {
 		param_3 = 1;
-		local_10.y = -(this->pTiltData->pushData).oscValue.field_0x0;
+		local_10.y = -(this->pTiltData->pushData).oscValue.value;
 	}
 
 	if (this->pTiltData == (S_TILT_DATA*)0x0) {
@@ -2355,7 +2355,7 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 		}
 	}
 	else {
-		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &local_50);
+		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.quat, &local_50);
 		edF32Matrix4MulF32Matrix4Hard(&local_50, &local_50, pMatrix);
 		SV_UpdateMatrix_Rel(&local_50, 1, 1, pActorTable, &local_10);
 	}

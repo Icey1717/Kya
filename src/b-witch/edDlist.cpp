@@ -51,6 +51,8 @@ int gEndColorNbInVertex = 0;
 ed_3d_strip* gCurStripPatchable = 0;
 ed_3d_sprite* gCurSpritePatchable = 0;
 
+edVertex* gpCurPatchVertBuf = 0;
+
 edVertex* gEndVertexBuf = NULL;
 
 int gNbMatrix;
@@ -3782,47 +3784,68 @@ void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR
 }
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
-void edDListPatchVertex_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z)
+void edDListPatchVertex_Inline(edVertex* pVertexBuf, edF32VECTOR3* pXyz, float* pSkip, uint index)
 {
 	edVertex* pVertex = pVertexBuf + index;
-	pVertex->x = x;
-	pVertex->y = y;
-	pVertex->z = z;
+	pVertex->x = pXyz->x;
+	pVertex->y = pXyz->y;
+	pVertex->z = pXyz->z;
+
 	if (gCurStripPatchable == (ed_3d_strip*)0x0) {
-		pVertex->uSkip = 0xc000;
+		pVertex->fSkip = *pSkip;
 	}
 	else {
 		if (gCurDListInfo3DPatchable->primType != 3) {
-			pVertex->uSkip = 0xc000;
+			pVertex->fSkip = *pSkip;
 		}
+
 		uint packetIndex = index / 0x46;
 		gCurPacketPatched[packetIndex] = gCurPacketPatched[packetIndex] + 1;
 		if (gLastPacketPatched < static_cast<int>(packetIndex)) {
 			gLastPacketPatched = packetIndex;
 		}
 	}
+
+	return;
 }
 
-// Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
-void edDListPatchVertexW_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z, float w)
+void edDListGetPatchableVertexBegin_Inline(edVertex* pVertex)
 {
-	edVertex* pVertex = pVertexBuf + index;
-	pVertex->x = x;
-	pVertex->y = y;
-	pVertex->z = z;
-	if (gCurStripPatchable == (ed_3d_strip*)0x0) {
-		pVertex->fSkip = w;
-	}
-	else {
-		if (gCurDListInfo3DPatchable->primType != 3) {
-			pVertex->fSkip = w;
-		}
-		uint packetIndex = index / 0x46;
-		gCurPacketPatched[packetIndex] = gCurPacketPatched[packetIndex] + 1;
-		if (gLastPacketPatched < static_cast<int>(packetIndex)) {
-			gLastPacketPatched = packetIndex;
-		}
-	}
+	gpCurPatchVertBuf = pVertex;
+
+	return;
+}
+
+void edDListGetPatchableVertex_Inline(uint index, float** ppXyz, float** ppSkip)
+{
+	*ppXyz = gpCurPatchVertBuf[index].vector.raw;
+	*ppSkip = &gpCurPatchVertBuf[index].fSkip;
+
+	return;
+}
+
+void edDListGetVertexFromDataPatch_Inline(float* pInXyz, float* pSkip, edF32VECTOR3* pOutXyz, float* pOutSkip)
+{
+	pOutXyz->x = pInXyz[0];
+	pOutXyz->y = pInXyz[1];
+	pOutXyz->z = pInXyz[2];
+	*pOutSkip = *pSkip;
+
+	return;
+}
+
+void edDListGetPatchableVertexReset_Inline(void)
+{
+	gpCurPatchVertBuf = (edVertex*)0x0;
+
+	return;
+}
+
+void edDListGetPatchableVertexEnd_Inline(void)
+{
+	gpCurPatchVertBuf = (edVertex*)0x0;
+
+	return;
 }
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c

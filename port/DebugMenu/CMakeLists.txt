@@ -15,6 +15,8 @@ set(SOURCES
 	"src/DebugCallstackPreviewer.cpp"
 	"src/DebugCamera.h"
 	"src/DebugCamera.cpp"
+	"src/FreeCamera.h"
+	"src/FreeCamera.cpp"
 	"src/DebugMeshViewer.h"
 	"src/DebugMeshViewer.cpp"
 	"src/DebugMemory.h"
@@ -85,6 +87,8 @@ set(SOURCES
 	"src/Actor/DebugActorWind.cpp"
 	"src/Actor/DebugActorShip.h"
 	"src/Actor/DebugActorShip.cpp"
+	"src/Actor/DebugActorSwitch.h"
+	"src/Actor/DebugActorSwitch.cpp"
 	"src/Actor/DebugActorJamGut.h"
 	"src/Actor/DebugActorJamGut.cpp"
 

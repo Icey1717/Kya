@@ -178,9 +178,13 @@ bool edDListPatchableShowProp(uint index, uchar bActive);
 
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
 // Writes xyz + forces skip (0xc000) on a patchable vertex, tracking packet patching state for strips.
-void edDListPatchVertex_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z);
-// Writes xyzw on a patchable vertex, tracking packet patching state for strips.
-void edDListPatchVertexW_Inline(edVertex* pVertexBuf, uint index, float x, float y, float z, float w);
+void edDListPatchVertex_Inline(edVertex* pVertexBuf, edF32VECTOR3* pXyz, float* pSkip, uint index);
+
+void edDListGetPatchableVertexBegin_Inline(edVertex* pVertex);
+void edDListGetPatchableVertex_Inline(uint index, float** ppXyz, float** ppSkip);
+void edDListGetVertexFromDataPatch_Inline(float* pInXyz, float* pSkip, edF32VECTOR3* pOutXYZ, float* pOutSkip);
+void edDListGetPatchableVertexReset_Inline(void);
+void edDListGetPatchableVertexEnd_Inline(void);
 
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();

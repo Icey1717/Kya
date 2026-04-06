@@ -267,6 +267,7 @@ edSYS_CONFIG* edSysGetConfig(void);
 
 #ifdef PLATFORM_WIN
 #include "log.h"
+#include <charconv>
 #include <sstream>
 #include <iomanip>
 #endif
@@ -438,9 +439,17 @@ union
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-		char cachedString[128];
-		sprintf_s(cachedString, 128, "(%.2f, %.2f, %.2f, %.2f)", x, y, z, w);
-		return cachedString;
+		char buff[64];
+		char* ptr = buff;
+		const float vals[4] = { x, y, z, w };
+		*ptr++ = '(';
+		for (int i = 0; i < 4; ++i) {
+			auto [end, ec] = std::to_chars(ptr, buff + sizeof(buff), vals[i], std::chars_format::fixed, 2);
+			ptr = end;
+			if (i < 3) { *ptr++ = ','; *ptr++ = ' '; }
+		}
+		*ptr++ = ')';
+		return std::string(buff, ptr);
 	}
 #endif
 };
@@ -625,15 +634,14 @@ union alignas(16)
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-#ifdef USE_STRING_STREAMS
-		std::stringstream ss;
-		ss << "\n" << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
-		return ss.str();
-#else
-	char buff[512];
-	sprintf_s(buff, 512, "%s\n%s\n%s\n%s", rowX.ToString().c_str(), rowY.ToString().c_str(), rowZ.ToString().c_str(), rowT.ToString().c_str());
-	return buff;
-#endif
+		char buff[512];
+		sprintf_s(buff, sizeof(buff),
+			"(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)",
+			aa, ab, ac, ad,
+			ba, bb, bc, bd,
+			ca, cb, cc, cd,
+			da, db, dc, dd);
+		return buff;
 	}
 #endif
 };

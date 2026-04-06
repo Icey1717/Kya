@@ -750,48 +750,30 @@ void CGlobalDListManager::_ExecuteCallFunc()
 					}
 					else {
 						if (callType == CALL_ELEMENT_HIDE_VERTEX) {
-							IMPLEMENTATION_GUARD(
-							uVar2 = *(ushort*)pCallFuncElement;
+							uVar2 = *(ushort*)&pCallFuncElement->patchId;
 							if (pGlobalPatch->bEnabled != 0) {
 								pGlobalPatch->field_0x18 = 1;
 								edDListSetCurrent(pGlobalPatch->pDisplayListInternal);
-								pGlobalPatch->pCurrentPatch = (pGlobalPatch->aPatches + (uVar2 - 8))[8];
+								pGlobalPatch->pCurrentPatch = pGlobalPatch->aPatches[uVar2];
 								pPatch = pGlobalPatch->pCurrentPatch;
-								pcVar4 = (pGlobalPatch->aPatches + (uVar2 - 8))[8];
-								pDVar6 = edDListPatchableInfo
-								((long)(pPatch + 0x10), (long)(pPatch + 0x14), (long)(pPatch + 0x18),
-									(long)(pPatch + 0x1c), *(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
-								*(DisplayListCommand**)(pPatch + 0x20) = pDVar6;
+								pcVar4 = pGlobalPatch->aPatches[uVar2];
+								pDVar6 = edDListPatchableInfo(&pPatch->pVertex, &pPatch->pRgba, &pPatch->pSt, &pPatch->pUv, pcVar4->nbMatrices + pcVar4->nbInstances, (uint)uVar2);
+								pPatch->pDisplayListCommand = pDVar6;
 								pGlobalPatch->activeState = 1;
 							}
-							curPatchId = *(uint*)&pCurCallFuncElement->field_0x2c;
-							iVar14 = curPatchId * 0x10;
-							puVar11 = (undefined4*)(*(int*)(pGlobalPatch->pCurrentPatch + 0x10) + iVar14);
-							uVar19 = puVar11[1];
-							uVar20 = puVar11[2];
-							pPatch = *(int*)(pGlobalPatch->pCurrentPatch + 0x10);
-							if (gCurStripPatchable == 0) {
-								puVar12 = (undefined4*)(pPatch + iVar14);
-								*puVar12 = *puVar11;
-								puVar12[1] = uVar19;
-								puVar12[2] = uVar20;
-								puVar12[3] = 0xc000;
-							}
-							else {
-								puVar12 = (undefined4*)(pPatch + iVar14);
-								*puVar12 = *puVar11;
-								puVar12[1] = uVar19;
-								puVar12[2] = uVar20;
-								if (gCurDListInfo3DPatchable->field_0x4c != 3) {
-									puVar12[3] = 0xc000;
-								}
-								curPatchId = curPatchId / 0x46;
-								BYTE_ARRAY_0048d3a0[curPatchId] = BYTE_ARRAY_0048d3a0[curPatchId] + 1;
-								if ((int)DAT_00448a84 < (int)curPatchId) {
-									DAT_00448a84 = curPatchId;
-								}
-							}
-							DAT_0044970c = 0;
+
+							curPatchId = pCurCallFuncElement->bActive;
+							edDListGetPatchableVertexBegin_Inline(pGlobalPatch->pCurrentPatch->pVertex);
+							float* pXyz;
+							float* pSkip;
+							edDListGetPatchableVertex_Inline(curPatchId, &pXyz, &pSkip);
+							edF32VECTOR3 xyz;
+							float skip;
+							edDListGetVertexFromDataPatch_Inline(pXyz, pSkip, &xyz, &skip);
+							edDListGetPatchableVertexEnd_Inline();
+							edDListPatchVertex_Inline(pGlobalPatch->pCurrentPatch->pVertex, &xyz, &skip, curPatchId);
+
+							edDListGetPatchableVertexReset_Inline();
 							edDListPatcheEnd(-1, 0);
 
 							if (pGlobalPatch->bEnabled != 0) {
@@ -799,7 +781,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 							}
 
 							pGlobalPatch->activeState = 0;
-							pGlobalPatch->pCurrentPatch = 0;)
+							pGlobalPatch->pCurrentPatch = 0;
 						}
 						else {
 							if (callType == 0) {
@@ -1166,7 +1148,7 @@ void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 										gLastPacketPatched = uVar15;
 									}
 								}
-								DAT_0044970c = 0;)
+								edDListGetPatchableVertexEnd_Inline();)
 							}
 							else {
 								if (bVar1 == 0xc) {
@@ -1250,7 +1232,8 @@ void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 													gLastPacketPatched = uVar15;
 												}
 											}
-											DAT_0044970c = 0;)
+
+											edDListGetPatchableVertexEnd_Inline();)
 										}
 									}
 								}

@@ -1164,6 +1164,8 @@ int CBehaviourEventGen::ManageMessage(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* p
 int CBehaviourEventGen::ManageSlowDown(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* pData)
 {
 	uint uVar1;
+	float fVar3;
+	float fVar4;
 
 	ByteCode* pByteCode = reinterpret_cast<ByteCode*>(pData);
 
@@ -1188,12 +1190,44 @@ int CBehaviourEventGen::ManageSlowDown(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* 
 		GetTimer()->timeScale = 1.0f;
 		break;
 	case EVG_PHASE_MANAGE:
-		IMPLEMENTATION_GUARD();
+		if ((pPMTF->flagB & 1) != 0) {
+			pPMTF->flagB = pPMTF->flagB | 2;
+			pPMTF->flagB = pPMTF->flagB | 4;
+		}
 		break;
 	case EVG_PHASE_DRAW:
-		IMPLEMENTATION_GUARD();
+		if ((pPMTF->flagB & 2) != 0) {
+			fVar4 = this->slowDownfield_0x38 + GetTimer()->lastFrameTime;
+			this->slowDownfield_0x38 = fVar4;
+			if (fVar4 < this->slowDownfield_0x2c) {
+				this->field_0x3c = (this->slowDownfield_0x28 - 1.0f) * (this->slowDownfield_0x38 / this->slowDownfield_0x2c) + 1.0f;
+				GetTimer()->timeScale = this->field_0x3c;
+			}
+			else {
+				fVar3 = this->slowDownfield_0x2c + this->slowDownfield_0x30;
+				if (fVar4 < fVar3) {
+					fVar4 = this->slowDownfield_0x28;
+					GetTimer()->timeScale = fVar4;
+				}
+				else {
+					if (this->slowDownfield_0x34 + fVar3 <= fVar4) {
+						GetTimer()->timeScale = 1.0f;
+						pPMTF->flagB = pPMTF->flagB & 0xfffd;
+						return 0;
+					}
+
+					this->field_0x3c = this->slowDownfield_0x28 +
+						(cosf((((this->slowDownfield_0x38 - this->slowDownfield_0x2c) -
+							this->slowDownfield_0x30) / this->slowDownfield_0x34) * 3.141593f +
+						3.141593f) * 0.5f + 0.5f) * (1.0f - this->slowDownfield_0x28);
+					GetTimer()->timeScale = this->field_0x3c;
+				}
+			}
+		}
+
 		break;
 	}
+
 	return 0;
 }
 

@@ -239,25 +239,18 @@ void edVideoWaitVsync(byte param_1)
 	do {
 	} while (VideoManager.bWaitingForVSync != 0);
 #else
-	static const double targetFrameTime = 1.0 / 60.0;  // Target frame time for 60 fps (in seconds)
+	static const auto kFrameDuration = std::chrono::duration<long long, std::ratio<1, 60>>{1};
+	static auto sDeadline = std::chrono::steady_clock::now() + kFrameDuration;
 
-	// Calculate frame time
-	static auto frameStart = std::chrono::steady_clock::now();
+	// Sleep for most of the frame budget so the CPU can do useful work elsewhere,
+	// then busy-spin only for the final 0.5 ms to hit the deadline precisely.
+	// The previous implementation busy-spun the entire frame, which wasted ~20%
+	// of frame time calling QueryPerformanceCounter in a tight loop.
+	const auto sleepUntil = sDeadline - std::chrono::microseconds(500);
+	std::this_thread::sleep_until(sleepUntil);
+	while (std::chrono::steady_clock::now() < sDeadline) {}
 
-	while (true)
-	{
-		auto frameEnd = std::chrono::steady_clock::now();
-		auto frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(frameEnd - frameStart).count();
-
-		if (frameTime >= targetFrameTime)
-		{
-			frameStart = frameEnd;
-			break;
-		}
-	}
-
-	frameStart = std::chrono::steady_clock::now();
-	return;
+	sDeadline += kFrameDuration;
 #endif
 }
 

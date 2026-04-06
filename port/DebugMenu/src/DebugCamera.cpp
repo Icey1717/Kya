@@ -20,6 +20,7 @@
 #include "CameraFixePerso.h"
 #include "ActorHero.h"
 #include "Actor/DebugActor.h"
+#include "FreeCamera.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -48,7 +49,8 @@ namespace Debug::Camera {
 		{ CT_Camera_6, "Camera 6" },
 		{ CT_RailSimple, "Rail Simple" },
 		{ CT_Rail, "Rail" },
-		{ CT_DCA, "DCA" }
+		{ CT_DCA, "DCA" },
+		{ CT_FreeCamera, "Free Camera" }
 	};
 
 	Debug::Setting<bool> gShowStackWindow = { "Show Camera Stack", false };
@@ -259,6 +261,117 @@ namespace Debug::Camera {
 	static CCameraFixePerso* pDebugCamera = nullptr;
 	static CActor* pOverrideTarget = nullptr;
 
+	// ----------------------------------------------------------------
+	// Free camera
+	// ----------------------------------------------------------------
+
+	static CFreeCamera* pFreeCamera = nullptr;
+	static float gSavedTimeScale = 1.f;
+	static bool  gFreezingTime = false;
+
+	static GLFWscrollfun    gPreviousScrollCallback = nullptr;
+
+	static void ActivateFreeCamera()
+	{
+		if (pFreeCamera) {
+			return;
+		}
+
+		auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
+
+		pFreeCamera = new CFreeCamera();
+		if (pActiveCamera) {
+			pFreeCamera->SetPositionFromCamera(pActiveCamera);
+		}
+
+		CCameraManager::_gThis->PushCamera(pFreeCamera, 0);
+
+		GLFWwindow* window = GetGLFWWindow();
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		// Raw mouse motion causes GLFW to register for WM_INPUT. KyaWndProc
+		// intercepts WM_INPUT directly (calling CFreeCamera::AccumulateRawDelta)
+		// and eats the message so it never reaches ImGui or GLFW, eliminating
+		// the GetPropA/GetPropW overhead on every mouse event.
+		if (glfwRawMouseMotionSupported())
+			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+		gPreviousScrollCallback = glfwSetScrollCallback(window, CFreeCamera::ScrollCallback);
+	}
+
+	static void DeactivateFreeCamera()
+	{
+		if (!pFreeCamera) {
+			return;
+		}
+
+		// Restore time scale if we froze it.
+		if (gFreezingTime) {
+			GetTimer()->timeScale = gSavedTimeScale;
+			gFreezingTime = false;
+		}
+
+		CCameraManager::_gThis->PopCamera(pFreeCamera);
+		delete pFreeCamera;
+		pFreeCamera = nullptr;
+
+		// Restore cursor and scroll callback.
+		GLFWwindow* window = GetGLFWWindow();
+		if (glfwRawMouseMotionSupported())
+			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetScrollCallback(window, gPreviousScrollCallback);
+		gPreviousScrollCallback = nullptr;
+
+		// Make sure the existing bActive state is cleared so the old
+		// "Debug Camera" checkbox doesn't think the cursor is still locked.
+		bActive = false;
+	}
+
+	static void ShowFreeCameraPanel()
+	{
+		bool bOpen = true;
+		ImGui::Begin("Free Camera", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::TextDisabled("WASD = move  |  E/Q = up/down  |  Shift = fast");
+		ImGui::TextDisabled("Mouse = look  |  Scroll = speed  |  ESC = exit");
+		ImGui::Separator();
+
+		ImGui::SliderFloat("Speed",       &pFreeCamera->speed,       0.5f,  5000.f, "%.1f", ImGuiSliderFlags_Logarithmic);
+		ImGui::SliderFloat("Sensitivity", &pFreeCamera->sensitivity, 0.0001f, 0.01f, "%.4f", ImGuiSliderFlags_Logarithmic);
+
+		ImGui::Separator();
+
+		// Freeze-time toggle
+		if (ImGui::Checkbox("Freeze Time", &gFreezingTime)) {
+			if (gFreezingTime) {
+				gSavedTimeScale = GetTimer()->timeScale;
+				GetTimer()->timeScale = 0.f;
+			}
+			else {
+				GetTimer()->timeScale = gSavedTimeScale;
+			}
+		}
+
+		ImGui::Separator();
+
+		// Live position readout
+		const edF32VECTOR4& pos = pFreeCamera->transformationMatrix.rowT;
+		ImGui::Text("Pos: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
+
+		// Snap back to the game's active camera on request
+		if (ImGui::Button("Reset to Game Camera")) {
+			auto* pActive = CCameraManager::_gThis->pActiveCamera;
+			if (pActive && pActive != pFreeCamera) {
+				pFreeCamera->SetPositionFromCamera(pActive);
+			}
+		}
+
+		ImGui::End();
+
+		if (!bOpen) {
+			DeactivateFreeCamera();
+		}
+	}
+
 	static void ShowPushedCameraWindow()
 	{
 		bool bOpen = true;
@@ -381,22 +494,49 @@ void Debug::Camera::ShowCamera()
 
 	gShowStackWindow.DrawImguiControl();
 
-	if (ImGui::Button("Toggle Camera Hack")) {
-		ToggleCameraHack();
-
-		if (bShouldEnableMouseLock) {
-			SetActive(true, CameraHackCallback);
-			bShouldEnableMouseLock = false;
+	// Free camera toggle
+	{
+		const bool bFreeCamActive = pFreeCamera != nullptr;
+		if (bFreeCamActive) {
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.2f, 1.f));
 		}
-		else {
-			bShouldEnableMouseLock = true;
+		if (ImGui::Button(bFreeCamActive ? "Deactivate Free Camera" : "Free Camera")) {
+			if (bFreeCamActive) {
+				DeactivateFreeCamera();
+			}
+			else {
+				ActivateFreeCamera();
+			}
+		}
+		if (bFreeCamActive) {
+			ImGui::PopStyleColor();
+		}
+		ImGui::SameLine();
+		ImGui::TextDisabled("(?)");
+		if (ImGui::IsItemHovered()) {
+			ImGui::SetTooltip("WASD move  E/Q up-down  Shift boost\nMouse look  Scroll speed  ESC exit");
 		}
 	}
+
+	ImGui::Separator();
+
+	//if (ImGui::Button("Toggle Camera Hack")) {
+	//	ToggleCameraHack();
+	//
+	//	if (bShouldEnableMouseLock) {
+	//		SetActive(true, CameraHackCallback);
+	//		bShouldEnableMouseLock = false;
+	//	}
+	//	else {
+	//		bShouldEnableMouseLock = true;
+	//	}
+	//}
 
 	if (glfwGetKey(GetGLFWWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		gMouseDeltaX = 0.0f;
 		gMouseDeltaY = 0.0f;
-		SetActive(false, nullptr);
+		//SetActive(false, nullptr);
+		DeactivateFreeCamera();
 	}
 
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
@@ -474,5 +614,9 @@ void Debug::Camera::ShowCamera()
 
 	if (gShowStackWindow) {
 		ShowStackWindow();
+	}
+
+	if (pFreeCamera) {
+		ShowFreeCameraPanel();
 	}
 }

@@ -705,7 +705,7 @@ bool CActorHeroPrivate::DetectMultipleWallBounces()
 	return false;
 }
 
-void CActorHeroPrivate::GetClimbVector(edF32VECTOR4* pOutVector, edF32VECTOR4* pInVector)
+void CActorHeroPrivate::GetClimbVector(edF32VECTOR4* pClimbVector, edF32VECTOR4* pInVector)
 {
 	float fVar6 = this->field_0x1470.x;
 	float fVar7 = this->field_0x1470.y;
@@ -719,38 +719,40 @@ void CActorHeroPrivate::GetClimbVector(edF32VECTOR4* pOutVector, edF32VECTOR4* p
 	fVar6 = -pInVector->z;
 	float fVar2 = pInVector->y;
 	float fVar1 = pInVector->x;
-	pOutVector->x = (fVar8 * fVar11 - fVar10 * fVar5) * fVar2 + fVar9 * fVar1 + this->field_0x1470.x * fVar6;
-	pOutVector->y = (fVar5 * fVar9 - fVar11 * fVar7) * fVar2 + fVar10 * fVar1 + this->field_0x1470.y * fVar6;
-	pOutVector->z = (fVar7 * fVar10 - fVar9 * fVar8) * fVar2 + fVar11 * fVar1 + this->field_0x1470.z * fVar6;
-	pOutVector->w = in_vf0x * fVar2 + in_vf0x * fVar1 + this->field_0x1470.w * fVar6;
+	pClimbVector->x = (fVar8 * fVar11 - fVar10 * fVar5) * fVar2 + fVar9 * fVar1 + this->field_0x1470.x * fVar6;
+	pClimbVector->y = (fVar5 * fVar9 - fVar11 * fVar7) * fVar2 + fVar10 * fVar1 + this->field_0x1470.y * fVar6;
+	pClimbVector->z = (fVar7 * fVar10 - fVar9 * fVar8) * fVar2 + fVar11 * fVar1 + this->field_0x1470.z * fVar6;
+	pClimbVector->w = in_vf0x * fVar2 + in_vf0x * fVar1 + this->field_0x1470.w * fVar6;
 }
 
 bool CActorHeroPrivate::CheckClimbZone(edF32VECTOR4* pInVector)
 {
-	edF32VECTOR4 local_c0;
-	GetClimbVector(&local_c0, pInVector);
+	edF32VECTOR4 climbVector;
+	GetClimbVector(&climbVector, pInVector);
+	climbVector = climbVector + this->currentLocation;
 
-	int iVar7 = 0;
-	int iVar8 = 0;
+	int climbZoneIndex = 0;
+	int nbClimbZones = 0;
 	while (true) {
 		S_ZONE_STREAM_REF* pSVar3 = this->pClimbZoneStreamRef;
 		if (pSVar3 == (S_ZONE_STREAM_REF*)0x0) {
-			iVar8 = 0;
+			nbClimbZones = 0;
 		}
 		else {
-			iVar8 = pSVar3->entryCount;
+			nbClimbZones = pSVar3->entryCount;
 		}
 
-		if (iVar8 <= iVar7) {
+		if (nbClimbZones <= climbZoneIndex) {
 			return false;
 		}
 
-		uint uVar9;
-		ed_zone_3d* peVar2 = (this->pClimbZoneStreamRef)->aEntries[iVar7].Get();
-		if ((peVar2 != (ed_zone_3d*)0x0) && (uVar9 = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, peVar2, &local_c0, 0), (uVar9 & 1) != 0))
+		uint eventResult;
+		ed_zone_3d* pZone = (this->pClimbZoneStreamRef)->aEntries[climbZoneIndex].Get();
+		if ((pZone != (ed_zone_3d*)0x0) && 
+			(eventResult = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, pZone, &climbVector, 0), (eventResult & 1) != 0))
 			break;
 
-		iVar7 = iVar7 + 1;
+		climbZoneIndex = climbZoneIndex + 1;
 	}
 
 	return true;
@@ -1253,7 +1255,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 
 	if (bVar4) {
 		if ((param_2 <= 0.0) ||
-			(iVar9 = CActorHeroPrivate::DetectGripEdge(1, &this->currentLocation, &this->rotationQuat, (float*)0x0 , (float*)0x0, &this->bounceLocation), iVar9 == 0)) {
+			(iVar9 = DetectGripEdge(1, &this->currentLocation, &this->rotationQuat, (float*)0x0 , (float*)0x0, &this->bounceLocation), iVar9 == 0)) {
 			fVar13 = 0.0f;
 
 			if ((param_2 <= 0.0f) || (iVar9 = DetectClimbCeiling(&this->currentLocation, (CActor**)0x0), iVar9 == 0)) {

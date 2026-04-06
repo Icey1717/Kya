@@ -356,11 +356,11 @@ void CActorSwitch::StateSwitchLeverOff2On(CBehaviourSwitchLever* pBehaviour)
 	edF32Vector4SafeNormalize1Hard(&eStack160, &eStack160);
 	fVar1 = GetAngleXFromVector(&local_50);
 	fVar1 = edF32Between_2Pi(fVar1 + 1.570796f);
-	edQuatFromAngAxis(fVar1, &pBehaviour->field_0x20.field_0x0, &eStack160);
+	edQuatFromAngAxis(fVar1, &pBehaviour->field_0x20.quat, &eStack160);
 	edF32Matrix4FromEulerSoft(&eStack224, &(this->pCinData)->rotationEuler, "XYZ");
 	edQuatFromMatrix4(&eStack240, &eStack224);
-	edQuatMul(&pBehaviour->field_0x20.field_0x0, &eStack240, &pBehaviour->field_0x20.field_0x0);
-	edQuatToMatrix4Hard(&pBehaviour->field_0x20.field_0x0, &eStack304);
+	edQuatMul(&pBehaviour->field_0x20.quat, &eStack240, &pBehaviour->field_0x20.quat);
+	edQuatToMatrix4Hard(&pBehaviour->field_0x20.quat, &eStack304);
 	eStack304.rowT = this->baseLocation;
 	SV_UpdateMatrix_Rel(&eStack304, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
@@ -936,9 +936,9 @@ void CBehaviourSwitchMagic::DisplayOpenFxModel(int bOpen)
 
 void CBehaviourSwitchTarget::Create(ByteCode* pByteCode)
 {
-	this->field_0x8 = pByteCode->GetF32();
-	this->oscConfig.field_0x0 = pByteCode->GetF32();
-	this->oscConfig.field_0x4 = pByteCode->GetF32();
+	this->targetDisplacement = pByteCode->GetF32();
+	this->oscConfig.springStrength = pByteCode->GetF32();
+	this->oscConfig.damping = pByteCode->GetF32();
 
 	return;
 }
@@ -950,8 +950,8 @@ void CBehaviourSwitchTarget::Init(CActor* pOwner)
 
 	this->pOwner = static_cast<CActorSwitch*>(pOwner);
 
-	this->oscConfig.field_0x0 = this->oscConfig.field_0x0 * 100.0f;
-	this->oscConfig.field_0x4 = this->oscConfig.field_0x4 * 100.0f;
+	this->oscConfig.springStrength = this->oscConfig.springStrength * 100.0f;
+	this->oscConfig.damping = this->oscConfig.damping * 100.0f;
 
 	pCVar1 = this->pOwner->pCollisionData;
 	if (pCVar1 != (CCollision*)0x0) {
@@ -966,46 +966,48 @@ void CBehaviourSwitchTarget::Init(CActor* pOwner)
 void CBehaviourSwitchTarget::Manage()
 {
 	CActorSwitch* pSwitch;
-	bool bVar1;
-	Timer* pTVar3;
+	bool bReachedTarget;
 	float fVar5;
 	float puVar2;
-	float fVar6;
-	edF32VECTOR4 sStack48;
-	edF32VECTOR4 sStack32;
-	edF32VECTOR4 local_10;
-	int AVar1;
-	undefined8 uVar2;
+	edF32VECTOR4 positionDisplacement;
+	edF32VECTOR4 baseLocation;
+	int switchState;
 
 	pSwitch = this->pOwner;
+
 	pSwitch->targetSwitch.pStreamEventCamera->Manage(pSwitch);
-	AVar1 = pSwitch->actorState;
-	if (AVar1 == 9) {
-		bVar1 = oscValue.Update(0.0f, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
-		SetVectorFromAngles(&sStack48, &(pSwitch->pCinData)->rotationEuler);
-		edF32Vector4ScaleHard(this->oscValue.field_0x0, &sStack48, &sStack48);
-		edF32Vector4AddHard(&sStack48, &pSwitch->baseLocation, &sStack48);
-		pSwitch->SV_UpdatePosition_Rel(&sStack48, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-		if (bVar1 != false) {
-			pSwitch->SetState(5, -1);
+
+	switchState = pSwitch->actorState;
+	if (switchState == SWITCH_STATE_TARGET_DRAIN) {
+		bReachedTarget = oscValue.Update(0.0f, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
+
+		SetVectorFromAngles(&positionDisplacement, &(pSwitch->pCinData)->rotationEuler);
+		edF32Vector4ScaleHard(this->oscValue.value, &positionDisplacement, &positionDisplacement);
+		edF32Vector4AddHard(&positionDisplacement, &pSwitch->baseLocation, &positionDisplacement);
+		pSwitch->SV_UpdatePosition_Rel(&positionDisplacement, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		if (bReachedTarget != false) {
+			pSwitch->SetState(SWITCH_STATE_TARGET_IDLE, -1);
 		}
 	}
 	else {
-		if (AVar1 == 8) {
-			fVar6 = this->field_0x8;
-			oscValue.Update(fVar6, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
-			SetVectorFromAngles(&sStack32, &(pSwitch->pCinData)->rotationEuler);
-			edF32Vector4ScaleHard(this->oscValue.field_0x0, &sStack32, &sStack32);
-			edF32Vector4AddHard(&sStack32, &pSwitch->baseLocation, &sStack32);
-			pSwitch->SV_UpdatePosition_Rel(&sStack32, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-			if (fabs(this->field_0x8) <= fabs(this->oscValue.field_0x0)) {
-				if (0.0f <= this->field_0x8) {
+		if (switchState == SWITCH_STATE_TARGET_ON) {
+			oscValue.Update(this->targetDisplacement, Timer::GetTimer()->cutsceneDeltaTime, &this->oscConfig);
+
+			SetVectorFromAngles(&positionDisplacement, &(pSwitch->pCinData)->rotationEuler);
+			edF32Vector4ScaleHard(this->oscValue.value, &positionDisplacement, &positionDisplacement);
+			edF32Vector4AddHard(&positionDisplacement, &pSwitch->baseLocation, &positionDisplacement);
+			pSwitch->SV_UpdatePosition_Rel(&positionDisplacement, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+			if (fabsf(this->targetDisplacement) <= fabsf(this->oscValue.value)) {
+				if (0.0f <= this->targetDisplacement) {
 					puVar2 = 1.0f;
 				}
 				else {
 					puVar2 = -1.0f;
 				}
-				if (0.0f <= this->oscValue.field_0x0) {
+
+				if (0.0f <= this->oscValue.value) {
 					fVar5 = 1.0f;
 				}
 				else {
@@ -1013,14 +1015,14 @@ void CBehaviourSwitchTarget::Manage()
 				}
 
 				if (fVar5 == puVar2) {
-					pSwitch->SetState(9, -1);
+					pSwitch->SetState(SWITCH_STATE_TARGET_DRAIN, -1);
 				}
 			}
 		}
 		else {
-			if ((AVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
-				local_10 = pSwitch->baseLocation;
-				pSwitch->SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+			if ((switchState == SWITCH_STATE_TARGET_IDLE) && (pSwitch->pTiedActor != (CActor*)0x0)) {
+				baseLocation = pSwitch->baseLocation;
+				pSwitch->SV_UpdatePosition_Rel(&baseLocation, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 			}
 		}
 	}
@@ -1030,11 +1032,11 @@ void CBehaviourSwitchTarget::Manage()
 
 void CBehaviourSwitchTarget::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	this->oscValue.field_0x0 = 0.0f;
-	this->oscValue.field_0x4 = 0;
+	this->oscValue.value = 0.0f;
+	this->oscValue.velocity = 0;
 
 	if (newState == -1) {
-		this->pOwner->SetState(5, -1);
+		this->pOwner->SetState(SWITCH_STATE_TARGET_IDLE, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -1045,39 +1047,39 @@ void CBehaviourSwitchTarget::Begin(CActor* pOwner, int newState, int newAnimatio
 
 int CBehaviourSwitchTarget::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	CActorSwitch* pCVar1;
-	bool bVar2;
+	CActorSwitch* pSwitch;
+	bool bResult;
 	int iVar3;
 	float fVar4;
-	CActorSwitch* pActor;
-	CActorSwitch* pAVar1;
 
 	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 
 	if ((msg == MESSAGE_KICKED) && (pHitParam->projectileType == HIT_TYPE_BOOMY)) {
-		pCVar1 = this->pOwner;
-		pCVar1->SetState(8, -1);
-		pActor = this->pOwner;
+		pSwitch = this->pOwner;
+		pSwitch->SetState(SWITCH_STATE_TARGET_ON, -1);
 
-		/* Will fill bar. */
-		pActor->targetSwitch.Switch(pActor);
+		pSwitch = this->pOwner;
+		pSwitch->targetSwitch.Switch(pSwitch);
 
-		pAVar1 = this->pOwner;
-		pAVar1->targetSwitch.PostSwitch(pAVar1);
+		pSwitch = this->pOwner;
+		pSwitch->targetSwitch.PostSwitch(pSwitch);
+
 		fVar4 = edF32Vector4DotProductHard(&pHitParam->field_0x20, &this->pOwner->rotationQuat);
+
 		if (fVar4 < 0.0f) {
-			this->field_0x8 = -fabs(this->field_0x8);
+			this->targetDisplacement = -fabsf(this->targetDisplacement);
 		}
 		else {
-			this->field_0x8 = fabs(this->field_0x8);
+			this->targetDisplacement = fabsf(this->targetDisplacement);
 		}
-		bVar2 = true;
+
+		bResult = true;
 	}
 	else {
-		bVar2 = false;
+		bResult = false;
 	}
 
-	return bVar2;
+	return bResult;
 }
 
 void CBehaviourSwitchTarget::SaveContext(S_SAVE_CLASS_SWITCH* pData)
@@ -1129,13 +1131,13 @@ void CBehaviourSwitchLever::Manage()
 	if (iVar1 == 9) {
 		edF32Matrix4FromEulerSoft(&eStack96, &(pSwitch->pCinData)->rotationEuler, "XYZ");
 		edQuatFromMatrix4(&eStack112, &eStack96);
-		local_10.field_0x0 = 10.0f;
-		local_10.field_0x4 = 60.0f;
+		local_10.springStrength = 10.0f;
+		local_10.damping = 60.0f;
 		pTVar4 = Timer::GetTimer();
 		this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_10, &eStack112);
 		pTVar4 = Timer::GetTimer();
 		bVar3 = this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_10, &eStack112);
-		edQuatToMatrix4Hard(&this->field_0x20.field_0x0, &eStack240);
+		edQuatToMatrix4Hard(&this->field_0x20.quat, &eStack240);
 		eStack240.rowT = pSwitch->baseLocation;
 		pSwitch->SV_UpdateMatrix_Rel(&eStack240, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
@@ -1145,13 +1147,13 @@ void CBehaviourSwitchLever::Manage()
 	}
 	else {
 		if (iVar1 == 7) {
-			local_8.field_0x0 = 10.0f;
-			local_8.field_0x4 = 60.0f;
+			local_8.springStrength = 10.0f;
+			local_8.damping = 60.0f;
 			pTVar4 = Timer::GetTimer();
 			this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_8, &this->field_0x10);
 			pTVar4 = Timer::GetTimer();
 			this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_8, &this->field_0x10);
-			edQuatToMatrix4Hard(&this->field_0x20.field_0x0, &eStack176);
+			edQuatToMatrix4Hard(&this->field_0x20.quat, &eStack176);
 			eStack176.rowT = pSwitch->baseLocation;
 			pSwitch->SV_UpdateMatrix_Rel(&eStack176, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
@@ -1187,10 +1189,10 @@ void CBehaviourSwitchLever::Begin(CActor* pOwner, int newState, int newAnimation
 	}
 
 	edF32Matrix4FromEulerSoft(&rotation, &this->pOwner->rotationEuler.xyz, "XYZ");
-	edQuatFromMatrix4(&this->field_0x20.field_0x0, &rotation);
+	edQuatFromMatrix4(&this->field_0x20.quat, &rotation);
 
-	this->field_0x20.field_0x0 = gF32Vertex4Zero;
-	this->field_0x20.field_0x10 = gF32Vertex4Zero;
+	this->field_0x20.quat = gF32Vertex4Zero;
+	this->field_0x20.quatVelocity = gF32Vertex4Zero;
 	this->field_0x10 = gF32Vertex4Zero;
 
 	this->pActor = (CActor*)0x0;

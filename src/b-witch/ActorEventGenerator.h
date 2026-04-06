@@ -126,6 +126,7 @@ public:
 	float slowDownfield_0x30;
 	float slowDownfield_0x34;
 	float slowDownfield_0x38;
+	float field_0x3c;
 
 	CAM_QUAKE field_0x40;
 

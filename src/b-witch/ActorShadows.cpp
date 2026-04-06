@@ -262,13 +262,22 @@ void CShadowShared::Draw(CGlobalDListPatch* pPatch, uint index)
 	edVertex* pVertex = pPatch->pCurrentPatch->pVertex;
 
 	if (((this->field_0x3c <= 0.0f) || (this->displayable == 0)) || (this->field_0x38 == 0)) {
-		edVertex* pSrc = pVertex + index + 2;
-		edDListPatchVertex_Inline(pVertex, index + 2, pSrc->x, pSrc->y, pSrc->z);
+		edDListGetPatchableVertexBegin_Inline(pVertex);
+		float* pXyz;
+		float* pSkip;
+		edDListGetPatchableVertex_Inline(index + 2, &pXyz, &pSkip);
+		edF32VECTOR3 xyz;
+		float skip;
+		edDListGetVertexFromDataPatch_Inline(pXyz, pSkip, &xyz, &skip);
 
-		pSrc = pVertex + index + 3;
-		edDListPatchVertex_Inline(pVertex, index + 3, pSrc->x, pSrc->y, pSrc->z);
+		edDListPatchVertex_Inline(pVertex, &xyz, &skip, index + 2);
 
-		//DAT_0044970c = 0;
+		edDListGetPatchableVertex_Inline(index + 3, &pXyz, &pSkip);
+		edDListGetVertexFromDataPatch_Inline(pXyz, pSkip, &xyz, &skip);
+
+		edDListPatchVertex_Inline(pVertex, &xyz, &skip, index + 3);
+
+		edDListGetPatchableVertexReset_Inline();
 	}
 	else {
 		bVar1 = Compute(&eStack144);
@@ -277,29 +286,32 @@ void CShadowShared::Draw(CGlobalDListPatch* pPatch, uint index)
 		local_a0.y = 0.01f;
 		local_a0.z = -0.5f;
 		local_a0.w = 1.0f;
+
+		float* pSkip = &local_a0.w;
+
 		edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack144, &local_a0);
-		edDListPatchVertex_Inline(pVertex, index, local_a0.x, local_a0.y, local_a0.z);
+		edDListPatchVertex_Inline(pVertex, &local_a0.xyz, pSkip, index);
 
 		local_a0.x = -0.5f;
 		local_a0.y = 0.01f;
 		local_a0.z = 0.5f;
 		local_a0.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack144, &local_a0);
-		edDListPatchVertex_Inline(pVertex, index + 1, local_a0.x, local_a0.y, local_a0.z);
+		edDListPatchVertex_Inline(pVertex, &local_a0.xyz, pSkip, index + 1);
 
 		local_a0.x = 0.5f;
 		local_a0.y = 0.01f;
 		local_a0.z = -0.5f;
 		local_a0.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack144, &local_a0);
-		edDListPatchVertexW_Inline(pVertex, index + 2, local_a0.x, local_a0.y, local_a0.z, local_a0.w);
+		edDListPatchVertex_Inline(pVertex, &local_a0.xyz, pSkip, index + 2);
 
 		local_a0.x = 0.5f;
 		local_a0.y = 0.01f;
 		local_a0.z = 0.5f;
 		local_a0.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_a0, &eStack144, &local_a0);
-		edDListPatchVertexW_Inline(pVertex, index + 3, local_a0.x, local_a0.y, local_a0.z, local_a0.w);
+		edDListPatchVertex_Inline(pVertex, &local_a0.xyz, pSkip, index + 3);
 
 		uVar6 = index;
 		if (0x47 < index) {

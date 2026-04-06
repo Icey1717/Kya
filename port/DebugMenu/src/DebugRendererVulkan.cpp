@@ -25,6 +25,71 @@
 #include "DebugMeshViewerVulkan.h"
 #include "Native/NativeRenderer.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <windowsx.h>
+
+#include "FreeCamera.h"
+
+// Installed at the top of the WndProc chain (after ImGui installs its own).
+// Intercepts WM_NCHITTEST for client-area cursor positions and returns HTCLIENT
+// immediately, preventing DefWindowProcW from triggering the uxtheme non-client
+// cascade (CThemeWnd::NcHitTest / NcGetWindowDPI) that otherwise fires on every
+// mouse message and consumes ~25% of frame time.
+static WNDPROC gPrevKyaWndProc = nullptr;
+
+static LRESULT CALLBACK KyaWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	// Fast path for WM_NCHITTEST: return HTCLIENT immediately for client-area cursor
+	// positions. Without this, DefWindowProcW triggers the uxtheme non-client cascade
+	// (CThemeWnd::NcHitTest, NcGetWindowDPI) on every mouse message.
+	if (msg == WM_NCHITTEST)
+	{
+		POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		MapWindowPoints(hWnd, nullptr, reinterpret_cast<LPPOINT>(&rc), 2);
+		if (PtInRect(&rc, pt))
+			return HTCLIENT;
+	}
+
+	// When the free camera is active, GLFW_CURSOR_DISABLED is set and GLFW uses
+	// WM_INPUT (raw mouse) for delta — it ignores WM_MOUSEMOVE entirely. ImGui
+	// doesn't need WM_MOUSEMOVE or WM_SETCURSOR either when the cursor is hidden.
+	// Eating them here prevents the pointless KyaWndProc→ImGui(GetPropA×2)→
+	// GLFW(GetPropW) dispatch chain from running on every mouse message.
+	if (CFreeCamera::IsActive())
+	{
+		switch (msg)
+		{
+		case WM_INPUT:
+		{
+			// Extract the raw mouse delta directly and feed it to the camera,
+			// then eat the message. This bypasses ImGui's GetPropA×2 and GLFW's
+			// GetPropW entirely — they add no value for WM_INPUT.
+			RAWINPUT ri;
+			UINT size = sizeof(ri);
+			if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER)) != (UINT)-1
+				&& ri.header.dwType == RIM_TYPEMOUSE
+				&& (ri.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) == 0)
+			{
+				CFreeCamera::AccumulateRawDelta((int)ri.data.mouse.lLastX, (int)ri.data.mouse.lLastY);
+			}
+			return 0;
+		}
+		case WM_MOUSEMOVE:
+		case WM_NCMOUSEMOVE:
+			return 0;
+		case WM_SETCURSOR:
+			return TRUE;   // cursor is hidden; suppress DefWindowProcW from resetting it
+		}
+	}
+
+	return CallWindowProcW(gPrevKyaWndProc, hWnd, msg, wParam, lParam);
+}
+#endif
+
 bool bOther = false;
 
 namespace DebugRendererImgui {
@@ -135,6 +200,15 @@ namespace DebugRendererImgui {
 		initInfo.CheckVkResultFn = nullptr;
 		ImGui_ImplVulkan_Init(&initInfo);
 		ImGui_ImplGlfw_InitForVulkan(GetGLFWWindow(), true);
+
+#ifdef _WIN32
+		{
+			// ImGui has just installed its WndProc hook via SetWindowLongPtrW.
+			// We install ours on top so we're first in the chain.
+			HWND hwnd = (HWND)ImGui::GetMainViewport()->PlatformHandleRaw;
+			gPrevKyaWndProc = (WNDPROC)::SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)KyaWndProc);
+		}
+#endif
 
 		Renderer::CreateCommandBuffers(gCommandBuffers);
 	}

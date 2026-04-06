@@ -42,9 +42,10 @@ public:
 };
 
 
-struct S_OSCILLATION_CONFIG {
-	float field_0x0;
-	float field_0x4;
+struct S_OSCILLATION_CONFIG
+{
+	float springStrength;
+	float damping;
 };
 
 struct S_TILT_STREAM_DEF {
@@ -63,10 +64,10 @@ struct S_PUSH_STREAM_DEF {
 };
 
 struct S_OSCILLATING_VALUE {
-	float field_0x0;
-	float field_0x4;
+	float value;
+	float velocity;
 
-	bool Update(float param_1, float deltaTime, S_OSCILLATION_CONFIG* pConfig);
+	bool Update(float target, float deltaTime, S_OSCILLATION_CONFIG* pConfig);
 };
 
 struct S_PUSH_DATA {
@@ -77,8 +78,8 @@ struct S_PUSH_DATA {
 };
 
 struct S_OSCILLATING_QUAT {
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 quat;
+	edF32VECTOR4 quatVelocity;
 
 	bool Update(float param_1, S_OSCILLATION_CONFIG* pConfig, edF32VECTOR4* param_4);
 };
