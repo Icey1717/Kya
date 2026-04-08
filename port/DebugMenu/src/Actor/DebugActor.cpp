@@ -14,6 +14,7 @@
 #include "ActorHero.h"
 #include "ActorWind.h"
 #include "MathOps.h"
+#include "Native/NativeDebugShapes.h"
 
 namespace Debug {
 	namespace Actor {
@@ -193,8 +194,17 @@ namespace Debug {
 				}
 
 				const ImVec2 gameWinPos = FrameBuffer::GetGameWindowPosition();
-				ImGui::GetForegroundDrawList()->AddText(
-					ImVec2(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y), IM_COL32_WHITE, buff.c_str());
+				const ImVec2 absPos(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y);
+
+				// Draw a dot at the exact projected world position
+				ImGui::GetForegroundDrawList()->AddCircleFilled(absPos, 3.0f, IM_COL32_WHITE);
+
+				// Center text horizontally and place it above the projected point
+				const ImVec2 textSize = ImGui::CalcTextSize(buff.c_str());
+				const ImVec2 textPos(absPos.x - textSize.x * 0.5f, absPos.y - textSize.y - 4.0f);
+				ImGui::GetForegroundDrawList()->AddText(textPos, IM_COL32_WHITE, buff.c_str());
+
+				Renderer::Native::DebugShapes::AddFilledSphere(worldPos.x, worldPos.y, worldPos.z, 0.1f, 1.0f, 0.5f, 0.2f, 1.0f);
 			}
 		}
 	}

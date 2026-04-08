@@ -41,11 +41,16 @@ void Debug::FrameBuffer::ShowNativeFrameBuffer(bool* bOpen) {
 	}
 	else {
 		auto windowSize = SetupGameFramebuffer();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoNav);
 		ImGui::Image(gFrameBuffer, windowSize);
 	}
 
 	ImGui::End();
+
+	if (!Debug::Rendering::GetEnableEmulatedRendering()) {
+		ImGui::PopStyleVar();
+	}
 }
 
 int gRenderFramebufferIndex = 0;
