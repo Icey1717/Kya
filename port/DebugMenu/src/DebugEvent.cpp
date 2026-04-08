@@ -6,7 +6,7 @@
 #include "LargeObject.h"
 #include "DebugSetting.h"
 #include "DebugProjection.h"
-#include "DebugFrameBuffer.h"
+#include "DebugMenuLayout.h"
 #include "DebugHelpers.h"
 #include "Actor.h"
 #include "ActorManager.h"
@@ -889,9 +889,16 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		// Remove the title bar and window border and make the window transparent
 		ImGui::Begin("Event Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar);
 
-		// Overlay this window on top of the game window
-		ImGui::SetWindowPos(FrameBuffer::GetGameWindowPosition(), ImGuiCond_Always);
-		ImGui::SetWindowSize(FrameBuffer::GetGameWindowSize(), ImGuiCond_Always);
+		const ImVec2 gameViewportPos = Debug::GetGameViewportImagePosition();
+		const ImVec2 gameViewportSize = Debug::GetGameViewportImageSize();
+		if (gameViewportSize.x <= 0.0f || gameViewportSize.y <= 0.0f) {
+			ImGui::End();
+			return;
+		}
+
+		// Overlay this window on top of the actual rendered game image.
+		ImGui::SetWindowPos(gameViewportPos, ImGuiCond_Always);
+		ImGui::SetWindowSize(gameViewportSize, ImGuiCond_Always);
 
 		if (gShowAllZones) {
 			for (int i = 0; i < edEventGetChunkNbEvents(gSelectedChunk); i++) {
@@ -1172,13 +1179,11 @@ void Debug::Event::DrawEventShapes()
 
 			edF32VECTOR4 worldPos{ cx, cy, cz, 1.0f };
 			ImVec2 screenPos;
-			if (Debug::Projection::WorldToScreen(worldPos, screenPos)) {
+			if (Debug::Projection::WorldToScreenAbsolute(worldPos, screenPos)) {
 				char label[32];
 				snprintf(label, sizeof(label), "Event 0x%x", i);
 				const ImU32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.0f));
-				const ImVec2 gameWinPos = FrameBuffer::GetGameWindowPosition();
-				ImGui::GetForegroundDrawList()->AddText(
-					ImVec2(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y), col, label);
+				ImGui::GetForegroundDrawList()->AddText(screenPos, col, label);
 			}
 		}
 

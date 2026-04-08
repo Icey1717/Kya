@@ -20,6 +20,7 @@ namespace Debug {
 
 	static bool gResetDockLayout = false;
 	static bool gDockLayoutInitialized = false;
+	static ImVec2 gLastGameViewportImagePosition = ImVec2(0, 0);
 	static ImVec2 gLastGameViewportImageSize = ImVec2(0, 0);
 
 	ImGuiID GetRightDockId() { return gRightDockId; }
@@ -99,6 +100,8 @@ namespace Debug {
 
 		const ImVec2 available = ImGui::GetContentRegionAvail();
 		if (available.x <= 0.0f || available.y <= 0.0f) {
+			gLastGameViewportImagePosition = ImVec2(0, 0);
+			gLastGameViewportImageSize = ImVec2(0, 0);
 			return;
 		}
 
@@ -110,13 +113,15 @@ namespace Debug {
 			imageSize.y = imageSize.x / kGameAspectRatio;
 		}
 
+		const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+		const ImVec2 centeredScreenPos(
+			cursorScreenPos.x + (available.x - imageSize.x) * 0.5f,
+			cursorScreenPos.y + (available.y - imageSize.y) * 0.5f);
+
+		gLastGameViewportImagePosition = centeredScreenPos;
 		gLastGameViewportImageSize = imageSize;
 
-		const ImVec2 cursorPos = ImGui::GetCursorPos();
-		const ImVec2 centeredCursor(
-			cursorPos.x + (available.x - imageSize.x) * 0.5f,
-			cursorPos.y + (available.y - imageSize.y) * 0.5f);
-		ImGui::SetCursorPos(centeredCursor);
+		ImGui::SetCursorScreenPos(centeredScreenPos);
 		ImGui::Image(gFrameBuffer, imageSize);
 	}
 
@@ -157,6 +162,10 @@ namespace Debug {
 
 			menu.Show();
 		}
+	}
+
+	ImVec2 GetGameViewportImagePosition() {
+		return gLastGameViewportImagePosition;
 	}
 
 	ImVec2 GetGameViewportImageSize() {

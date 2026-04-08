@@ -642,10 +642,19 @@ public:
 	uint flags_0x4;
 	uint flags_0x8;
 	int baseB;
-	byte field_0x10;
-	byte field_0x11;
-	byte field_0x12;
-	byte field_0x13;
+	union
+	{
+		struct
+		{
+			byte field_0x10;
+			byte field_0x11;
+			byte field_0x12;
+			byte field_0x13;
+		};
+
+		uint allFlags;
+	};
+
 	char* fileName;
 
 	// Number of cinematic actors spawned for the cutscene.

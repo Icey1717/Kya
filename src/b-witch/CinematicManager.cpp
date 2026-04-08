@@ -49,6 +49,8 @@ CCinematicManager* g_CinematicManager_0048efc;
 
 #define CUTSCENE_MAX_LOAD_TIME 15.0f
 
+#define CINEMATIC_FLAG_SAVE_CONTEXT 0x40
+
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
 struct CinematicOption {
@@ -567,7 +569,7 @@ void CCinematic::InitInternalData()
 {
 	this->baseB = -1;
 	this->flags_0x4 = 0;
-	*(undefined4*)&this->field_0x10 = 0;
+	this->allFlags = 0;
 	this->aActorCinematic = (CActorCinematic*)0x0;
 	this->nbCinematicActors = 0;
 	this->ppActorCinematics = (CActorCinematic**)0x0;
@@ -759,7 +761,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 
 	this->baseB = pByteCode->GetS32();
 
-	*(uint*)&this->field_0x10 = pByteCode->GetU32();
+	this->allFlags = pByteCode->GetU32();
 	this->flags_0x4 = pByteCode->GetU32();
 
 	this->field_0x30 = pByteCode->GetF32();
@@ -4947,9 +4949,10 @@ void CCinematicManager::Level_SaveContext()
 	ppCinematic = this->ppCinematicObjB_A;
 	nbCutscenes = 0;
 	for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
-		if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
+		if (((*ppCinematic)->flags_0x4 & CINEMATIC_FLAG_SAVE_CONTEXT) != 0) {
 			nbCutscenes = nbCutscenes + 1;
 		}
+
 		ppCinematic = ppCinematic + 1;
 	}
 
@@ -4960,8 +4963,8 @@ void CCinematicManager::Level_SaveContext()
 		SaveDataChunk_BLCI::CutsceneData* pData = reinterpret_cast<SaveDataChunk_BLCI::CutsceneData*>(pBLCI + 1);
 		ppCinematic = this->ppCinematicObjB_A;
 		for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
-			if (((*ppCinematic)->flags_0x4 & 0x40) != 0) {
-				pData->bitFlags = *reinterpret_cast<uint*>(&(*ppCinematic)->field_0x10);
+			if (((*ppCinematic)->flags_0x4 & CINEMATIC_FLAG_SAVE_CONTEXT) != 0) {
+				pData->bitFlags = (*ppCinematic)->allFlags;
 				pCinematic = *ppCinematic;
 				pData->flags = 0;
 				pData->totalCutsceneDelta = pCinematic->totalCutsceneDelta;
@@ -4987,6 +4990,7 @@ void CCinematicManager::Level_SaveContext()
 
 				pData = pData + 1;
 			}
+
 			ppCinematic = ppCinematic + 1;
 		}
 
@@ -5021,7 +5025,7 @@ void CCinematicManager::Level_LoadContext()
 				if (0 < this->numCutscenes_0x8) {
 					ppCinematic = this->ppCinematicObjB_A;
 					do {
-						if (pData->bitFlags == *(uint*)&(*ppCinematic)->field_0x10) {
+						if (pData->bitFlags == (*ppCinematic)->allFlags) {
 							pCVar2 = this->ppCinematicObjB_A[iVar4];
 							goto LAB_001c51a8;
 						}

@@ -9,7 +9,7 @@
 #include "ActorManager.h"
 #include "Actor.h"
 #include "LargeObject.h"
-#include "DebugFrameBuffer.h"
+#include "DebugMenuLayout.h"
 #include "DebugActorWind.h"
 #include "ActorHero.h"
 #include "ActorWind.h"
@@ -21,6 +21,8 @@ namespace Debug {
 		static Setting<bool> gShowActorNamesOverlay("Show Actor Names Overlay", true);
 		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
 		static Setting<float> gActorInfoDistance("Actor Info Distance", 500.0f);
+
+		static bool bShowSpheresInOverlay = false;
 
 		// Helper functions for ImVec2 operations
 		static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
@@ -181,7 +183,7 @@ namespace Debug {
 			}
 
 			ImVec2 screenPos;
-			if (Projection::WorldToScreen(worldPos, screenPos)) {
+			if (Projection::WorldToScreenAbsolute(worldPos, screenPos)) {
 				std::string buff;
 
 				for (auto& [setting, func] : gOverlaySettings) {
@@ -193,8 +195,7 @@ namespace Debug {
 					buff += "\n";
 				}
 
-				const ImVec2 gameWinPos = FrameBuffer::GetGameWindowPosition();
-				const ImVec2 absPos(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y);
+				const ImVec2 absPos(screenPos.x, screenPos.y);
 
 				// Draw a dot at the exact projected world position
 				ImGui::GetForegroundDrawList()->AddCircleFilled(absPos, 3.0f, IM_COL32_WHITE);
@@ -204,7 +205,9 @@ namespace Debug {
 				const ImVec2 textPos(absPos.x - textSize.x * 0.5f, absPos.y - textSize.y - 4.0f);
 				ImGui::GetForegroundDrawList()->AddText(textPos, IM_COL32_WHITE, buff.c_str());
 
-				Renderer::Native::DebugShapes::AddFilledSphere(worldPos.x, worldPos.y, worldPos.z, 0.1f, 1.0f, 0.5f, 0.2f, 1.0f);
+				if (bShowSpheresInOverlay) {
+					Renderer::Native::DebugShapes::AddFilledSphere(worldPos.x, worldPos.y, worldPos.z, 0.1f, 1.0f, 0.5f, 0.2f, 1.0f);
+				}
 			}
 		}
 	}

@@ -14,5 +14,6 @@ namespace Debug {
 	void DrawFullscreenGameViewportWindow();
 	void DrawLegacyMenus();
 
+	ImVec2 GetGameViewportImagePosition();
 	ImVec2 GetGameViewportImageSize();
 }
