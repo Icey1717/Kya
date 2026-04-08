@@ -183,6 +183,8 @@ const std::vector<uint16_t> indices = {
 	0, 3, 2, 2, 1, 0
 };
 
+static int windowPosX, windowPosY, windowWidth, windowHeight;
+
 class ImageRendererApp {
 public:
 
@@ -286,14 +288,58 @@ private:
 
 	VulkanColorImage* currentImage;
 
+	static void ToggleFullscreen(GLFWwindow* window)
+	{
+		static bool fullscreen = false;
+
+		if (!fullscreen)
+		{
+			// Save current windowed position/size
+			glfwGetWindowPos(window, &windowPosX, &windowPosY);
+			glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+			GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+			glfwSetWindowMonitor(window,
+				monitor,
+				0, 0,
+				mode->width,
+				mode->height,
+				mode->refreshRate);
+
+			fullscreen = true;
+		}
+		else
+		{
+			glfwSetWindowMonitor(window,
+				NULL,
+				windowPosX,
+				windowPosY,
+				WIDTH,
+				HEIGHT,
+				0);
+
+			fullscreen = false;
+		}
+	}
+
 	void initWindow() {
 		glfwInit();
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+		windowWidth = WIDTH;
+		windowHeight = HEIGHT;
+
+		window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", nullptr, nullptr);
 		glfwSetWindowUserPointer(window, this);
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+		
+		windowPosX = 0;
+		windowPosY = 0;
+
+		glfwMaximizeWindow(window);
 	}
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {

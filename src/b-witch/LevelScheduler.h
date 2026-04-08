@@ -333,14 +333,14 @@ struct GameInfo
 
 struct NativShopLevelSubObjSubObj
 {
-	undefined4 field_0x0;
-	undefined4 field_0x4;
+	int purchaseId;
+	int moneyCost;
 	undefined8 field_0x8;
 };
 
 struct NativShopLevelSubObj
 {
-	int field_0x0;
+	uint episodeThresholdLink;
 	int currentLevelId;
 	undefined4 field_0x8;
 

@@ -245,6 +245,9 @@ namespace Hero
 		case STATE_HERO_COL_WALL_DEAD_B:
 			return "StateHeroColWallDeadB";
 			break;
+		case STATE_HERO_GRIND_DEATH_A:
+			return "StateHeroGrindDeathA";
+			break;
 		case STATE_HERO_KICK_A:
 			return "StateHeroKickA";
 			break;

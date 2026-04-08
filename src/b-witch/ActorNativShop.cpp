@@ -43,7 +43,7 @@ void CActorNativShop::Create(ByteCode* pByteCode)
 
 	this->pActorStream = S_ACTOR_STREAM_REF::Create(pByteCode);
 
-	this->field_0x170 = pByteCode->GetU32();
+	this->episodeThresholdLink = pByteCode->GetU32();
 	this->field_0x174 = pByteCode->GetU32();
 	this->actorRef.index = pByteCode->GetS32();
 	this->field_0x17c = 0;
@@ -258,7 +258,8 @@ void CBehaviourNativShopSell::Create(ByteCode* pByteCode)
 	this->field_0xc0 = -1;
 
 	this->field_0x98 = 1;
-	this->field_0x9c = 0;
+	this->bLocked = 0;
+
 	return;
 }
 
@@ -744,7 +745,7 @@ LAB_0036e618:
 void CBehaviourNativShopSell::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	CActor* pReceiver;
-	uint uVar1;
+	uint curEpisodeId;
 	NativShopSubObj* pCVar2;
 	NativShopSubObj* pCVar3;
 	int iVar4;
@@ -760,9 +761,9 @@ void CBehaviourNativShopSell::Begin(CActor* pOwner, int newState, int newAnimati
 		this->pOwner->SetState(newState, newAnimationType);
 	}
 
-	uVar1 = CLevelScheduler::ScenVar_Get(6);
-	if (uVar1 < this->pOwner->field_0x170) {
-		this->field_0x9c = 1;
+	curEpisodeId = CLevelScheduler::ScenVar_Get(SCN_GAME_CURRENT_EPISODE);
+	if (curEpisodeId < this->pOwner->episodeThresholdLink) {
+		this->bLocked = 1;
 	}
 
 	iVar4 = 0;
@@ -888,7 +889,7 @@ int CBehaviourNativShopSell::InterpretMessage(CActor* pSender, int msg, void* pM
 	float fVar2;
 	int iVar3;
 
-	if (this->field_0x9c == 0) {
+	if (this->bLocked == 0) {
 		if (msg == 0x15) {
 			this->pOwner->SetState(5, -1);
 			iVar3 = 1;
@@ -1034,7 +1035,7 @@ void CBehaviourNativShopSell::UpdateValidity()
 		pCVar7 = pCVar7 + 1;
 	} while (iVar9 < 5);
 
-	if ((this->field_0x9c == 0) && (iVar9 = 0, bVar3)) {
+	if ((this->bLocked == 0) && (iVar9 = 0, bVar3)) {
 		while (true) {
 			pShop = this->pOwner;
 

@@ -271,28 +271,28 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	this->movingPlatformFlags = this->movingPlatformFlags | 1;
 
 LAB_0015d240:
-	CBehaviour* pCVar10 = CActor::GetBehaviour(7);
+	CBehaviour* pCVar10 = GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_STAND);
 	CBehaviourPlatformStand* pStand;
 	if ((pCVar10 != (CBehaviour*)0x0) &&
-		(pStand = (CBehaviourPlatformStand*)CActor::GetBehaviour(7), pStand->field_0x8 != -1)) {
+		(pStand = (CBehaviourPlatformStand*)GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_STAND), pStand->field_0x8 != -1)) {
 		this->movingPlatformFlags = this->movingPlatformFlags | 1;
 	}
 
 	IMPLEMENTATION_GUARD_AUDIO(
-	CBehaviour* pCVar10 = CActor::GetBehaviour(3);
+	CBehaviour* pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB);
 	CBehaviourPlatformSlab* pSlab;
 	if ((pCVar10 != (CBehaviour*)0x0) &&
-		(pSlab = CActor::GetBehaviour(3), pSlab->field_0x20.Get()-> != (CBehaviourVtable*)0xffffffff)) {
+		(pSlab = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB), pSlab->field_0x20.Get()-> != (CBehaviourVtable*)0xffffffff)) {
 		this->movingPlatformFlags = this->movingPlatformFlags | 2;
 	})
 
 	IMPLEMENTATION_GUARD_AUDIO(
-	CBehaviour* pCVar10 = CActor::GetBehaviour(8);
-	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(9), pCVar10 != (CBehaviour*)0x0)
+	CBehaviour* pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
+	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW), pCVar10 != (CBehaviour*)0x0)
 		) {
-		pCVar10 = CActor::GetBehaviour(8);
+		pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
 		if (pCVar10 == (CBehaviour*)0x0) {
-			pCVar10 = CActor::GetBehaviour(9);
+			pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW);
 		}
 		if (pCVar10[5].pVTable != (CBehaviourVtable*)0xffffffff) {
 			this->movingPlatformFlags = this->movingPlatformFlags | 2;
@@ -821,7 +821,7 @@ StateConfig* CActorMovingPlatform::GetStateCfg(int state)
 	return pAVar1;
 }
 
-void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, int param_5)
+void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSegment, int prevSegment)
 {
 	CActor* pCVar1;
 	bool bVar2;
@@ -882,22 +882,22 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			bVar2 = true;
 		}
 
-		IMPLEMENTATION_GUARD(
 		pCameraView = pCameraManager->GetScenaricCamera(this->pProperties->field_0x28);
 
-		(*((pCameraView->objBase).pVTable)->field_0x34)(pCameraView, this);
+		pCameraView->SetOtherTarget(this);
+
 		if (bVar2) {
 			if (((this->movingPlatformFlags & 0x80) == 0) &&
-				(bVar2 = CCameraManager::PushCamera(pCameraManager, pCameraView, 0), bVar2 != false)) {
+				(bVar2 = pCameraManager->PushCamera(pCameraView, 0), bVar2 != false)) {
 				this->movingPlatformFlags = this->movingPlatformFlags | 0x80;
 			}
 		}
 		else {
 			if ((this->movingPlatformFlags & 0x80) != 0) {
-				CCameraManager::PopCamera(pCameraManager, pCameraView);
+				pCameraManager->PopCamera(pCameraView);
 				this->movingPlatformFlags = this->movingPlatformFlags & 0xffffff7f;
 			}
-		})
+		}
 	}
 
 	if ((uint)((this->movingPlatformFlags & 0x10) != 0) == param_3) {
@@ -919,8 +919,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				iVar7 = 0;
 				if (0 < iVar9) {
 					do {
-						if (piVar6[1] <= param_4) {
-							if (((param_4 <= piVar6[2]) && (piVar6[1] <= param_5)) && (param_5 <= piVar6[2])) {
+						if (piVar6[1] <= currentSegment) {
+							if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
 								iVar10 = piVar6[3];
 								break;
 							}
@@ -956,8 +956,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				iVar7 = 0;
 				if (0 < iVar9) {
 					do {
-						if (piVar6[1] <= param_4) {
-							if (((param_4 <= piVar6[2]) && (piVar6[1] <= param_5)) && (param_5 <= piVar6[2])) {
+						if (piVar6[1] <= currentSegment) {
+							if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
 								iVar10 = piVar6[3];
 								break;
 							}
@@ -1010,8 +1010,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			if (0 < iVar9) {
 				piVar6 = this->field_0x1e0;
 				do {
-					if (piVar6[1] <= param_4) {
-						if (((param_4 <= piVar6[2]) && (piVar6[1] <= param_5)) && (param_5 <= piVar6[2])) {
+					if (piVar6[1] <= currentSegment) {
+						if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
 							iVar10 = piVar6[3];
 							break;
 						}
@@ -1075,8 +1075,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			if (0 < iVar9) {
 				piVar6 = this->field_0x1dc;
 				do {
-					if (piVar6[1] <= param_4) {
-						if (((param_4 <= piVar6[2]) && (piVar6[1] <= param_5)) && (param_5 <= piVar6[2])) {
+					if (piVar6[1] <= currentSegment) {
+						if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
 							iVar10 = piVar6[3];
 							break;
 						}
@@ -1174,39 +1174,39 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 			param_4 = 0;
 		}
 		else {
-			result = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, (edF32MATRIX4*)0x0, &local_30, &pathReaderPosInfo);
+			result = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->pathPosition, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, (edF32MATRIX4*)0x0, &local_30, &pathReaderPosInfo);
 		}
 	}
 	else {
 		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.quat, &eStack112);
-		result = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);
+		result = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->pathPosition, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);
 	}
 
 	sVar6 = -1;
 	sVar7 = sVar6;
 
 	if (param_4 != 0) {
-		sVar7 = pathReaderPosInfo.field_0x4;
+		sVar7 = pathReaderPosInfo.currentSegment;
 
-		if (0.0f < pathReaderPosInfo.field_0x8) {
-			sVar7 = pathReaderPosInfo.field_0x0;
+		if (0.0f < pathReaderPosInfo.segmentFraction) {
+			sVar7 = pathReaderPosInfo.prevSegment;
 
 			if (result == 2) {
-				if ((pathReaderPosInfo.field_0x8 <= 0.999f) && (sVar7 = pathReaderPosInfo.field_0x4, 0.001f <= pathReaderPosInfo.field_0x8)) {
+				if ((pathReaderPosInfo.segmentFraction <= 0.999f) && (sVar7 = pathReaderPosInfo.currentSegment, 0.001f <= pathReaderPosInfo.segmentFraction)) {
 					sVar7 = sVar6;
 				}
 			}
 			else {
-				if ((pPathFollowerAbs->pActor3C_0x0 == (CPathFollow*)0x0) || (pPathFollowerAbs->pActor3C_0x0->splinePointCount != 2)) {
-					sVar7 = pathReaderPosInfo.field_0x4;
+				if ((pPathFollowerAbs->pPathFollow == (CPathFollow*)0x0) || (pPathFollowerAbs->pPathFollow->splinePointCount != 2)) {
+					sVar7 = pathReaderPosInfo.currentSegment;
 
-					if ((pTrajPos->field_0x6 != pathReaderPosInfo.field_0x4) &&
-						(sVar7 = sVar6, pTrajPos->field_0x4 == pathReaderPosInfo.field_0x0)) {
-						sVar7 = pathReaderPosInfo.field_0x0;
+					if ((pTrajPos->prevSegment != pathReaderPosInfo.currentSegment) &&
+						(sVar7 = sVar6, pTrajPos->currentSegment == pathReaderPosInfo.prevSegment)) {
+						sVar7 = pathReaderPosInfo.prevSegment;
 					}
 				}
 				else {
-					if ((pathReaderPosInfo.field_0x8 <= 0.9f) && (sVar7 = pathReaderPosInfo.field_0x4, 0.1f <= pathReaderPosInfo.field_0x8)) {
+					if ((pathReaderPosInfo.segmentFraction <= 0.9f) && (sVar7 = pathReaderPosInfo.currentSegment, 0.1f <= pathReaderPosInfo.segmentFraction)) {
 						sVar7 = sVar6;
 					}
 				}
@@ -1215,14 +1215,14 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 
 		param_4 = 0;
 
-		if ((sVar7 != -1) && (pTrajPos->field_0x8 != sVar7)) {
+		if ((sVar7 != -1) && (pTrajPos->lastEventSegment != sVar7)) {
 			param_4 = 1;
 		}
 	}
 
-	pTrajPos->field_0x4 = pathReaderPosInfo.field_0x4;
-	pTrajPos->field_0x6 = pathReaderPosInfo.field_0x0;
-	pTrajPos->field_0x8 = sVar7;
+	pTrajPos->currentSegment = pathReaderPosInfo.currentSegment;
+	pTrajPos->prevSegment = pathReaderPosInfo.prevSegment;
+	pTrajPos->lastEventSegment = sVar7;
 
 	if (param_4 != 0) {
 		iVar8 = 0;
@@ -1321,7 +1321,7 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 	GetTimer();
 	bVar4 = false;
 
-	if ((pBehaviour->pathFollowReaderAbs).pActor3C_0x0 != (CPathFollow*)0x0) {
+	if ((pBehaviour->pathFollowReaderAbs).pPathFollow != (CPathFollow*)0x0) {
 		bBarDepleted = false;
 		bVar3 = false;
 		bVar4 = true;
@@ -1331,9 +1331,9 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 			bBarDepleted = true;
 		}
 
-		if (((this->pProperties->flags_0x24 & 0x20) != 0) && ((pBehaviour->pathFollowReaderAbs).field_0xc <= fmodf(currentFillAmount, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4))) {
-			fVar12 = fmodf((pBehaviour->currentFillAmount_0x38).field_0x0, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4);
-			fVar11 = (pBehaviour->pathFollowReaderAbs).field_0xc;
+		if (((this->pProperties->flags_0x24 & 0x20) != 0) && ((pBehaviour->pathFollowReaderAbs).midPoint <= fmodf(currentFillAmount, (pBehaviour->pathFollowReaderAbs).field_0x4))) {
+			fVar12 = fmodf((pBehaviour->trajPos).pathPosition, (pBehaviour->pathFollowReaderAbs).field_0x4);
+			fVar11 = (pBehaviour->pathFollowReaderAbs).midPoint;
 			if (fVar12 < fVar11) {
 				bBarDepleted = true;
 				bVar3 = true;
@@ -1341,13 +1341,12 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 			}
 		}
 
-		(pBehaviour->currentFillAmount_0x38).field_0x0 = currentFillAmount;
+		(pBehaviour->trajPos).pathPosition = currentFillAmount;
 
-		int trajResult = Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 1, 1, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		int trajResult = Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 1, 1, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
 		if (bBarDepleted) {
-			/* Reached zero bar filled. Transition back to inactive state. */
-			SetState(6, -1);
+			SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 
 			TriggerSwitches(0);
 
@@ -1367,17 +1366,16 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 
 					if ((uVar2 & 0x200) == 0) {
 						if ((uVar2 & 0x30) != 0) {
-							(pBehaviour->currentFillAmount_0x38).field_0x0 = pBehaviour->field_0x28;
+							(pBehaviour->trajPos).pathPosition = pBehaviour->segmentStartTime;
 						}
 
-						SetState(6, -1);
+						SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 
 						bBarDepleted = true;
 					}
 					else {
-						/* Transition to open state. */
-						(pBehaviour->currentFillAmount_0x38).field_0x0 = (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4;
-						SetState(7, -1);
+						(pBehaviour->trajPos).pathPosition = (pBehaviour->pathFollowReaderAbs).field_0x4;
+						SetState(MOVING_PLATFORM_STATE_TRANSITION_A, -1);
 					}
 
 					TriggerSwitches(2);
@@ -1409,22 +1407,20 @@ void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajecto
 		if (msg == 0x10) {
 			if ((this->pProperties->flags_0x24 & 0x200) == 0) {
 				if (((GetStateFlags(this->actorState) & 0x100) != 0) && ((this->pProperties->flags_0x24 & 8) != 0)) {
-					SetState(6, -1);
+					SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 
 					TriggerSwitches(0);
 				}
 			}
 			else {
-				/* Transition to the drain state. */
-				SetState(8, -1);
+				SetState(MOVING_PLATFORM_STATE_AT_ENDPOINT, -1);
 			}
 		}
 		else {
 			if (msg == 0xf) {
 				if ((GetStateFlags(this->actorState) & 0x100) == 0) {
-					/* Transition this to the fill state. */
-					SetState(5, -1);
-					pBehaviour->goalAmount_0x30 = (pBehaviour->field_0x28 + GetTimer()->scaledTotalTime) - (pBehaviour->currentFillAmount_0x38).field_0x0;
+					SetState(MOVING_PLATFORM_STATE_STAND, -1);
+					pBehaviour->targetScaledTime = (pBehaviour->segmentStartTime + GetTimer()->scaledTotalTime) - (pBehaviour->trajPos).pathPosition;
 				}
 			}
 		}
@@ -1435,61 +1431,47 @@ void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajecto
 
 void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajectory* pBehaviour)
 {
-	int* piVar1;
-	uint uVar2;
-	bool bVar3;
-	int iVar4;
-	Timer* pTVar5;
-	int iVar6;
-	uint uVar7;
-	int iVar8;
-	int iVar9;
 	float currentFillAmount;
-	int local_4;
+	bool local_4;
 
-	local_4 = 0;
+	local_4 = false;
 	currentFillAmount = BehaviourTrajectory_ComputeTime(pBehaviour);
 
 	switch (this->actorState) {
-	case 5:
-		bVar3 = StateTrajectory(currentFillAmount, pBehaviour, false);
-		local_4 = (int)bVar3;
+	case MOVING_PLATFORM_STATE_STAND:
+		local_4 = StateTrajectory(currentFillAmount, pBehaviour, false);
 		break;
-	case 6:
-		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	case MOVING_PLATFORM_STATE_MOVING:
+		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 		break;
-	case 7:
-		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	case MOVING_PLATFORM_STATE_TRANSITION_A:
+		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 		break;
-	case 8:
-		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	case MOVING_PLATFORM_STATE_AT_ENDPOINT:
+		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		if (pBehaviour->field_0x2c <= this->timeInAir) {
-			pTVar5 = GetTimer();
-			SetState(9, -1);
-			iVar9 = 0;
-
+		if (pBehaviour->loopDelay <= this->timeInAir) {
+			SetState(MOVING_PLATFORM_STATE_WAITING, -1);
 			TriggerSwitches(3);
 
-			pBehaviour->goalAmount_0x30 = (pBehaviour->currentFillAmount_0x38).field_0x0 + pBehaviour->field_0x28 + pTVar5->scaledTotalTime;
+			pBehaviour->targetScaledTime = (pBehaviour->trajPos).pathPosition + pBehaviour->segmentStartTime + GetTimer()->scaledTotalTime;
 		}
 		break;
-	case 9:
-		bVar3 = StateTrajectory(currentFillAmount, pBehaviour, true);
-		local_4 = (int)bVar3;
+	case MOVING_PLATFORM_STATE_WAITING:
+		local_4 = StateTrajectory(currentFillAmount, pBehaviour, true);
 		break;
-	case 10:
-		bVar3 = StateTrajectory(currentFillAmount, pBehaviour, false);
+	case MOVING_PLATFORM_STATE_TRANSITION_B:
+		local_4 = StateTrajectory(currentFillAmount, pBehaviour, false);
 
-		local_4 = (int)bVar3;
-		if (currentFillAmount == pBehaviour->field_0x34) {
-			SetState(6, -1);
+		if (currentFillAmount == pBehaviour->pathLength) {
+			SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 			TriggerSwitches(0);
-			local_4 = 0;
+			local_4 = false;
 		}
 	}
 
-	GenericManage(1, local_4, (int)(pBehaviour->currentFillAmount_0x38).field_0x4, (int)(pBehaviour->currentFillAmount_0x38).field_0x6);
+	GenericManage(1, local_4, (int)(pBehaviour->trajPos).currentSegment, (int)(pBehaviour->trajPos).prevSegment);
+
 	return;
 }
 
@@ -1501,54 +1483,54 @@ float CActorMovingPlatform::BehaviourTrajectory_ComputeTime(CBehaviourPlatformTr
 	int state;
 
 	state = this->actorState;
-	fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0;
-	if (state == 10) {
-		bVar1 = pBehaviour->field_0x34 < fVar3;
+	fVar3 = (pBehaviour->trajPos).pathPosition;
+	if (state == MOVING_PLATFORM_STATE_TRANSITION_B) {
+		bVar1 = pBehaviour->pathLength < fVar3;
 		if ((this->pProperties->flags_0x24 & 1) == 0) {
 			if (bVar1) {
-				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 - GetTimer()->cutsceneDeltaTime;
+				fVar4 = (pBehaviour->trajPos).pathPosition - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				fVar4 = (pBehaviour->currentFillAmount_0x38).field_0x0 + GetTimer()->cutsceneDeltaTime;
+				fVar4 = (pBehaviour->trajPos).pathPosition + GetTimer()->cutsceneDeltaTime;
 			}
 		}
 		else {
 			if (bVar1) {
-				fVar4 = pBehaviour->goalAmount_0x30 - GetTimer()->scaledTotalTime;
+				fVar4 = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
 			}
 			else {
-				fVar4 = GetTimer()->scaledTotalTime - pBehaviour->goalAmount_0x30;
+				fVar4 = GetTimer()->scaledTotalTime - pBehaviour->targetScaledTime;
 			}
 		}
 		if (bVar1) {
-			fVar3 = pBehaviour->field_0x34;
+			fVar3 = pBehaviour->pathLength;
 			if (fVar3 < fVar4) {
 				fVar3 = fVar4;
 			}
 		}
 		else {
-			fVar3 = pBehaviour->field_0x34;
+			fVar3 = pBehaviour->pathLength;
 			if (fVar4 < fVar3) {
 				fVar3 = fVar4;
 			}
 		}
 	}
 	else {
-		if (state == 9) {
+		if (state == MOVING_PLATFORM_STATE_WAITING) {
 			if ((this->pProperties->flags_0x24 & 1) == 0) {
-				fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 - GetTimer()->cutsceneDeltaTime;
+				fVar3 = (pBehaviour->trajPos).pathPosition - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				fVar3 = pBehaviour->goalAmount_0x30 - GetTimer()->scaledTotalTime;
+				fVar3 = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
 			}
 		}
 		else {
-			if (state == 5) {
+			if (state == MOVING_PLATFORM_STATE_STAND) {
 				if ((this->pProperties->flags_0x24 & 1) == 0) {
-					fVar3 = (pBehaviour->currentFillAmount_0x38).field_0x0 + GetTimer()->cutsceneDeltaTime;
+					fVar3 = (pBehaviour->trajPos).pathPosition + GetTimer()->cutsceneDeltaTime;
 				}
 				else {
-					fVar3 = (pBehaviour->field_0x28 + GetTimer()->scaledTotalTime) - pBehaviour->goalAmount_0x30;
+					fVar3 = (pBehaviour->segmentStartTime + GetTimer()->scaledTotalTime) - pBehaviour->targetScaledTime;
 				}
 			}
 		}
@@ -1569,7 +1551,7 @@ void CActorMovingPlatform::SaveContext(void* pData, uint mode, uint maxSize)
 		pSaveData->flags = pSaveData->flags | 1;
 	}
 
-	if (this->curBehaviourId == 6) {
+	if (this->curBehaviourId == MOVING_PLATFORM_BEHAVIOUR_DESTROYED) {
 		pSaveData->flags = pSaveData->flags | 2;
 	}
 
@@ -1654,20 +1636,20 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 
 	ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::BehaviourSlab_Manage: state: {}", iVar6);
 
-	if (iVar6 == 0xe) {
+	if (iVar6 == MOVING_PLATFORM_STATE_IDLE_TRIGGERED) {
 		bVar1 = Slab_MoveAndDetectCarriedObject(pBehaviour, 0);
 
 		if (bVar1 == false) {
 			if (pBehaviour->field_0x1c <= pBehaviour->field_0x28) {
-				SetState(0xf, -1);
+				SetState(MOVING_PLATFORM_STATE_SLAB_OFF_TO_ON, -1);
 			}
 		}
 		else {
-			SetState(0xc, -1);
+			SetState(MOVING_PLATFORM_STATE_AT_WAYPOINT, -1);
 		}
 	}
 	else {
-		if (iVar6 == 0xf) {
+		if (iVar6 == MOVING_PLATFORM_STATE_SLAB_OFF_TO_ON) {
 			pTVar2 = GetTimer();
 
 			fVar7 = pBehaviour->field_0x24 - pBehaviour->field_0x14 * pTVar2->cutsceneDeltaTime;
@@ -1684,17 +1666,17 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 						pBehaviour->switchOnOff.pTargetStreamRef->SwitchOff(this);
 					}
 
-					SetState(0xb, -1);
+					SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 				}
 			}
 			else {
-				SetState(0xc, -1);
+				SetState(MOVING_PLATFORM_STATE_AT_WAYPOINT, -1);
 			}
 
 			iVar5 = 1;
 		}
 		else {
-			if (iVar6 == 0xd) {
+			if (iVar6 == MOVING_PLATFORM_STATE_TRAJ_TO_A) {
 				bVar1 = Slab_MoveAndDetectCarriedObject(pBehaviour, 0);
 
 				if (bVar1 == false) {
@@ -1702,17 +1684,17 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 						pBehaviour->switchOnOff.pTargetStreamRef->SwitchOff(this);
 					}
 
-					SetState(0xe, -1);
+					SetState(MOVING_PLATFORM_STATE_IDLE_TRIGGERED, -1);
 				}
 			}
 			else {
-				if (iVar6 == 0xc) {
+				if (iVar6 == MOVING_PLATFORM_STATE_AT_WAYPOINT) {
 					StateSwitchSlabOff2On(pBehaviour);
 					iVar5 = 1;
 				}
 				else {
-					if ((iVar6 == 0xb) && (bVar1 = Slab_MoveAndDetectCarriedObject(pBehaviour, 0), bVar1 != false)) {
-						SetState(0xc, -1);
+					if ((iVar6 == MOVING_PLATFORM_STATE_TRAJ_TO_B) && (bVar1 = Slab_MoveAndDetectCarriedObject(pBehaviour, 0), bVar1 != false)) {
+						SetState(MOVING_PLATFORM_STATE_AT_WAYPOINT, -1);
 					}
 				}
 			}
@@ -1745,7 +1727,7 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 
 	bVar2 = Slab_MoveAndDetectCarriedObject(pBehaviour, 1);
 	if (bVar2 == false) {
-		SetState(0xe, -1);
+		SetState(MOVING_PLATFORM_STATE_IDLE_TRIGGERED, -1);
 	}
 	else {
 		if (bVar1) {
@@ -1759,7 +1741,7 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 
 			pBehaviour->switchOnOff.SwitchOn(this);
 
-			SetState(0xd, -1);
+			SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 
 			if ((this->pProperties->flags_0x24 & 0x40000) != 0) {
 				DoMessage(this, (ACTOR_MESSAGE)0x36, (MSG_PARAM)0);
@@ -2015,15 +1997,15 @@ void CActorMovingPlatform::ChangeManageState(int state)
 	}
 
 	switch (this->curBehaviourId) {
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7: 
-	case 8:
-	case 9:
-	case 10:
+	case MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY:
+	case MOVING_PLATFORM_BEHAVIOUR_SLAB:
+	case MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_SLAVE:
+	case MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_MASTER:
+	case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
+	case MOVING_PLATFORM_BEHAVIOUR_STAND:
+	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
+	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+	case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
 		pCVar5 = reinterpret_cast<CBehaviourPlatform*>(GetBehaviour(this->curBehaviourId));
 		if (pCVar5 != (CBehaviour*)0x0) {
 			pCVar5->ChangeManageState(state);
@@ -2091,7 +2073,7 @@ void CActorMovingPlatform::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4*
 		pBehaviour = (CBehaviourPlatformTrajectory*)GetBehaviour(this->curBehaviourId);
 
 		fVar2 = BehaviourTrajectory_ComputeTime(pBehaviour);
-		if ((fVar2 == (pBehaviour->currentFillAmount_0x38).field_0x0) || ((pBehaviour->pathFollowReaderAbs).pActor3C_0x0 == (CPathFollow*)0x0)) {
+		if ((fVar2 == (pBehaviour->trajPos).pathPosition) || ((pBehaviour->pathFollowReaderAbs).pPathFollow == (CPathFollow*)0x0)) {
 			CActor::FillThisFrameExpectedDifferentialMatrix(pMatrix);
 		}
 		else {
@@ -2099,11 +2081,11 @@ void CActorMovingPlatform::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4*
 				edF32Matrix4FromEulerSoft(&local_50, &(this->pCinData)->rotationEuler, "XYZ");
 				local_90 = local_50;
 				pBehaviour->pathFollowReaderAbs.ComputePosition(fVar2, &local_50.rowT, (edF32VECTOR4*)0x0, &SStack16);
-				pBehaviour->pathFollowReaderAbs.ComputePosition((pBehaviour->currentFillAmount_0x38).field_0x0, &local_90.rowT, (edF32VECTOR4*)0x0, &SStack16);
+				pBehaviour->pathFollowReaderAbs.ComputePosition((pBehaviour->trajPos).pathPosition, &local_90.rowT, (edF32VECTOR4*)0x0, &SStack16);
 			}
 			else {
 				pBehaviour->pathFollowReaderAbs.ComputeMatrix(fVar2, &local_50, (edF32VECTOR4*)0x0, &SStack16);
-				pBehaviour->pathFollowReaderAbs.ComputeMatrix((pBehaviour->currentFillAmount_0x38).field_0x0, &local_90, (edF32VECTOR4*)0x0, &SStack16);
+				pBehaviour->pathFollowReaderAbs.ComputeMatrix((pBehaviour->trajPos).pathPosition, &local_90, (edF32VECTOR4*)0x0, &SStack16);
 			}
 
 			if (local_90.cc + local_90.aa + local_90.bb == 3.0) {
@@ -2265,7 +2247,7 @@ LAB_00153528:
 	}
 
 	iVar8 = this->actorState;
-	if (iVar8 == 0xd) {
+	if (iVar8 == MOVING_PLATFORM_STATE_TRAJ_TO_A) {
 		pTVar2 = GetTimer();
 		fVar11 = pBehaviour->field_0x24;
 		fVar9 = pBehaviour->field_0x10;
@@ -2287,7 +2269,7 @@ LAB_00153528:
 		}
 	}
 	else {
-		if (iVar8 == 0xb) {
+		if (iVar8 == MOVING_PLATFORM_STATE_TRAJ_TO_B) {
 			pTVar2 = GetTimer();
 			fVar10 = pBehaviour->field_0x24;
 			fVar9 = fVar10 - pBehaviour->field_0xc * pTVar2->cutsceneDeltaTime;
@@ -2424,7 +2406,7 @@ bool CActorMovingPlatform::StateWeighingMaster(CBehaviourWeighingMachineMaster* 
 		fVar4 = pMovable->GetCumulatedWeight();
 	}
 
-	fVar6 = pBehaviour->trajPos.field_0x0;
+	fVar6 = pBehaviour->trajPos.pathPosition;
 
 	fVar5 = GetCumulatedWeight();
 	puVar7 = (fVar4 - fVar5) / pBehaviour->field_0x40;
@@ -2437,37 +2419,37 @@ bool CActorMovingPlatform::StateWeighingMaster(CBehaviourWeighingMachineMaster* 
 		}
 	}
 
-	fVar4 = pBehaviour->trajPos.field_0x0;
+	fVar4 = pBehaviour->trajPos.pathPosition;
 	fVar5 = pTVar2->cutsceneDeltaTime / pBehaviour->field_0x44;
 	if (fabs(puVar7 - fVar4) < fVar5) {
-		pBehaviour->trajPos.field_0x0 = puVar7;
+		pBehaviour->trajPos.pathPosition = puVar7;
 	}
 	else {
 		if (fVar4 < puVar7) {
-			pBehaviour->trajPos.field_0x0 = fVar4 + fVar5;
+			pBehaviour->trajPos.pathPosition = fVar4 + fVar5;
 		}
 		else {
-			pBehaviour->trajPos.field_0x0 = fVar4 - fVar5;
+			pBehaviour->trajPos.pathPosition = fVar4 - fVar5;
 		}
 	}
 
 	local_4 = &local_10;
-	local_10 = -pBehaviour->trajPos.field_0x0;
+	local_10 = -pBehaviour->trajPos.pathPosition;
 	local_c = 0;
 	DoMessage(pRefActor, (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
 
-	fVar4 = pBehaviour->trajPos.field_0x0;
+	fVar4 = pBehaviour->trajPos.pathPosition;
 
 	pBehaviour->analogSwitch.NotifyAnalog(fVar6, fVar4, this);
 
-	fVar4 = pBehaviour->trajPos.field_0x0;
-	pBehaviour->trajPos.field_0x0 = pBehaviour->trajPos.field_0x0 + 1.0f;
+	fVar4 = pBehaviour->trajPos.pathPosition;
+	pBehaviour->trajPos.pathPosition = pBehaviour->trajPos.pathPosition + 1.0f;
 
 	const bool bVar4 = fVar4 != fVar6;
 
 	Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, bVar4, 1, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-	pBehaviour->trajPos.field_0x0 = pBehaviour->trajPos.field_0x0 - 1.0f;
+	pBehaviour->trajPos.pathPosition = pBehaviour->trajPos.pathPosition - 1.0f;
 	return bVar4;
 }
 
@@ -2533,7 +2515,7 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 		do {
 			S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[curEntryIndex];
 
-			if (pEntry->field_0x4 == conditionType) {
+			if (pEntry->field_0x0 == conditionType) {
 				pEntry->streamTarget.Switch(this);
 				pEntry->streamTarget.PostSwitch(this);
 				pEntry->streamCameraEvent.SwitchOn(this);
@@ -2701,15 +2683,13 @@ CBehaviourPlatformTrajectory::CBehaviourPlatformTrajectory()
 
 void CBehaviourPlatformTrajectory::Create(ByteCode* pByteCode)
 {
-	float fVar1;
-
 	ACTOR_LOG(LogLevel::Info, "CBehaviourPlatformTrajectory::Create");
 
 	this->pathFollowReaderAbs.Create(pByteCode);
-	fVar1 = pByteCode->GetF32();
-	this->field_0x28 = fVar1;
-	fVar1 = pByteCode->GetF32();
-	this->field_0x2c = fVar1;
+	this->segmentStartTime = pByteCode->GetF32();
+	this->loopDelay = pByteCode->GetF32();
+
+	ACTOR_LOG(LogLevel::Info, "CBehaviourPlatformTrajectory::Create {} {}", this->pathFollowReaderAbs.field_0x4, this->pathFollowReaderAbs.totalTraversalTime);
 }
 
 void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -2721,31 +2701,31 @@ void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAn
 
 	this->pOwner = reinterpret_cast<CActorMovingPlatform*>(pOwner);
 
-	this->field_0x34 = 0.0f;
-	this->currentFillAmount_0x38.field_0x0 = this->field_0x28;
+	this->pathLength = 0.0f;
+	this->trajPos.pathPosition = this->segmentStartTime;
 
-	this->currentFillAmount_0x38.field_0x4 = 0;
-	this->currentFillAmount_0x38.field_0x6 = 0;
-	this->currentFillAmount_0x38.field_0x8 = -1;
+	this->trajPos.currentSegment = 0;
+	this->trajPos.prevSegment = 0;
+	this->trajPos.lastEventSegment = -1;
 
 	if (newState == -1) {
 		pAVar1 = this->pOwner;
 
 		if ((pAVar1->pProperties->flags_0x24 & 4) == 0) {
-			pAVar1->SetState(5, -1);
-			this->goalAmount_0x30 = pTVar1->scaledTotalTime;
+			pAVar1->SetState(MOVING_PLATFORM_STATE_STAND, -1);
+			this->targetScaledTime = pTVar1->scaledTotalTime;
 		}
 		else {
-			pAVar1->SetState(6, -1);
-			this->goalAmount_0x30 = 0.0f;
+			pAVar1->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
+			this->targetScaledTime = 0.0f;
 		}
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
 	}
 
-	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, & this->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-	this->currentFillAmount_0x38.field_0x8 = this->currentFillAmount_0x38.field_0x4;
+	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, & this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	this->trajPos.lastEventSegment = this->trajPos.currentSegment;
 }
 
 void CBehaviourPlatformTrajectory::End(int newBehaviourId)
@@ -2775,15 +2755,15 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 
 	if (msg == 0x68) {
 		IMPLEMENTATION_GUARD(
-		pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+		pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 		if (pCVar1 != (CPathFollow*)0x0) {
 			CPathFollowReaderAbsolute::ComputeSegment
-			((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, &local_10, &local_14, &local_18);
+			((this->trajPos).pathPosition, &this->pathFollowReaderAbs, &local_10, &local_14, &local_18);
 			if (local_18 < 0.5) {
 				local_10 = local_14;
 			}
 			local_10 = local_10 + -1;
-			if (local_10 < pCVar1->field_0x14) {
+			if (local_10 < pCVar1->nbLeadInPoints) {
 				if ((pCVar1->type == 0) || (pCVar1->mode == 1)) {
 					if (local_10 < 0) {
 						local_10 = 0;
@@ -2793,21 +2773,21 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 					local_10 = pCVar1->splinePointCount + -1;
 				}
 			}
-			pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+			pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 			if (((local_10 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_10)) {
 				local_10 = 0;
 			}
 			CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-			((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, local_10, &this->field_0x34,
-				(float*)&this->currentFillAmount_0x38);
-			this->pOwner->SetState(10, -1);
+			((this->trajPos).pathPosition, &this->pathFollowReaderAbs, local_10, &this->pathLength,
+				(float*)&this->trajPos);
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
 			pTVar3 = GetTimer();
-			fVar4 = (this->currentFillAmount_0x38).field_0x0;
-			if (fVar4 <= this->field_0x34) {
-				this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+			fVar4 = (this->trajPos).pathPosition;
+			if (fVar4 <= this->pathLength) {
+				this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
 			}
 			else {
-				this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+				this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
 			}
 		}
 		bProcessed = 1;)
@@ -2815,10 +2795,10 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 	else {
 		if (msg == 0x67) {
 			IMPLEMENTATION_GUARD(
-			pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+			pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 			if (pCVar1 != (CPathFollow*)0x0) {
 				CPathFollowReaderAbsolute::ComputeSegment
-				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, &local_4, &local_8, &local_c);
+				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, &local_4, &local_8, &local_c);
 				if (local_c < 0.5) {
 					local_4 = local_8;
 				}
@@ -2828,24 +2808,24 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 						local_4 = pCVar1->splinePointCount + -1;
 					}
 					else {
-						local_4 = pCVar1->field_0x14;
+						local_4 = pCVar1->nbLeadInPoints;
 					}
 				}
-				pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+				pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 				if (((local_4 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_4)) {
 					local_4 = 0;
 				}
 				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, local_4, &this->field_0x34,
-					(float*)&this->currentFillAmount_0x38);
-				this->pOwner->SetState(10, -1);
+				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, local_4, &this->pathLength,
+					(float*)&this->trajPos);
+				this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
 				pTVar3 = GetTimer();
-				fVar4 = (this->currentFillAmount_0x38).field_0x0;
-				if (fVar4 <= this->field_0x34) {
-					this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+				fVar4 = (this->trajPos).pathPosition;
+				if (fVar4 <= this->pathLength) {
+					this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
 				}
 				else {
-					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+					this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
 				}
 			}
 			bProcessed = 1;)
@@ -2853,21 +2833,21 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 		else {
 			if (msg == 0x3b) {
 				IMPLEMENTATION_GUARD(
-				pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+				pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 				if ((((int)pMsgParam < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= (int)pMsgParam)) {
 					pMsgParam = (void*)0x0;
 				}
 				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, (int)pMsgParam, &this->field_0x34,
-					(float*)&this->currentFillAmount_0x38);
-				this->pOwner->SetState(10, -1);
+				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, (int)pMsgParam, &this->pathLength,
+					(float*)&this->trajPos);
+				this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
 				pTVar3 = GetTimer();
-				fVar4 = (this->currentFillAmount_0x38).field_0x0;
-				if (fVar4 <= this->field_0x34) {
-					this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+				fVar4 = (this->trajPos).pathPosition;
+				if (fVar4 <= this->pathLength) {
+					this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
 				}
 				else {
-					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+					this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
 				}
 				bProcessed = 1;)
 			}
@@ -2897,31 +2877,31 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 
 void CBehaviourPlatformTrajectory::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	pData->field_0x1c = (this->currentFillAmount_0x38).field_0x0;
-	pData->field_0x14 = (this->currentFillAmount_0x38).field_0x4;
-	pData->field_0x16 = (this->currentFillAmount_0x38).field_0x6;
-	pData->field_0x18 = (this->currentFillAmount_0x38).field_0x8;
+	pData->field_0x1c = (this->trajPos).pathPosition;
+	pData->field_0x14 = (this->trajPos).currentSegment;
+	pData->field_0x16 = (this->trajPos).prevSegment;
+	pData->field_0x18 = (this->trajPos).lastEventSegment;
 	pData->field_0x20 = 0.0f;
 
 	switch (this->pOwner->actorState) {
-	case 5:
-		pData->field_0x20 = this->goalAmount_0x30 - GetTimer()->scaledTotalTime;
+	case MOVING_PLATFORM_STATE_STAND:
+		pData->field_0x20 = this->targetScaledTime - GetTimer()->scaledTotalTime;
 		break;
-	case 6:
+	case MOVING_PLATFORM_STATE_MOVING:
 		pData->flags = pData->flags | 4;
 		break;
-	case 7:
-		pData->field_0x20 = this->goalAmount_0x30 - GetTimer()->scaledTotalTime;
+	case MOVING_PLATFORM_STATE_TRANSITION_A:
+		pData->field_0x20 = this->targetScaledTime - GetTimer()->scaledTotalTime;
 		pData->flags = pData->flags | 0x10;
 		break;
-	case 8:
-	case 9:
+	case MOVING_PLATFORM_STATE_AT_ENDPOINT:
+	case MOVING_PLATFORM_STATE_WAITING:
 		pData->flags = pData->flags | 4;
 		pData->field_0x1c = 0.0f;
 		break;
-	case 10:
+	case MOVING_PLATFORM_STATE_TRANSITION_B:
 		pData->flags = pData->flags | 4;
-		pData->field_0x1c = this->field_0x34;
+		pData->field_0x1c = this->pathLength;
 	}
 
 	return;
@@ -2929,26 +2909,26 @@ void CBehaviourPlatformTrajectory::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pDa
 
 void CBehaviourPlatformTrajectory::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	(this->currentFillAmount_0x38).field_0x0 = pData->field_0x1c;
-	(this->currentFillAmount_0x38).field_0x4 = pData->field_0x14;
-	(this->currentFillAmount_0x38).field_0x6 = pData->field_0x16;
-	(this->currentFillAmount_0x38).field_0x8 = pData->field_0x18;
+	(this->trajPos).pathPosition = pData->field_0x1c;
+	(this->trajPos).currentSegment = pData->field_0x14;
+	(this->trajPos).prevSegment = pData->field_0x16;
+	(this->trajPos).lastEventSegment = pData->field_0x18;
 
-	this->goalAmount_0x30 = pData->field_0x20 + GetTimer()->scaledTotalTime;
+	this->targetScaledTime = pData->field_0x20 + GetTimer()->scaledTotalTime;
 
 	if ((pData->flags & 4) == 0) {
 		if ((pData->flags & 0x10) == 0) {
-			this->pOwner->SetState(5, -1);
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_STAND, -1);
 		}
 		else {
-			this->pOwner->SetState(7, -1);
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_A, -1);
 		}
 	}
 	else {
-		this->pOwner->SetState(6, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 	}
 
-	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, &this->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, &this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
 	return;
 }
@@ -2961,401 +2941,8 @@ void CBehaviourPlatformTrajectory::Manage()
 void CBehaviourPlatformTrajectory::ManageFrozen()
 {
 	if ((GameFlags & 0x20) == 0) {
-		this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, &this->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-		this->pOwner->GenericManage(1, 0, (this->currentFillAmount_0x38).field_0x4, (this->currentFillAmount_0x38).field_0x6);
-	}
-
-	return;
-}
-
-float dot_quat(edF32VECTOR4* a, edF32VECTOR4* b)
-{
-	return a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
-}
-
-void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow* pPathFollow, int type, int mode, int timing, int param_8)
-{
-	int count;
-	bool bVar1;
-	float* pfVar2;
-	edF32VECTOR4* peVar3;
-	edF32VECTOR4* peVar4;
-	int iVar5;
-	int iVar6;
-	int iVar7;
-	int iVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	edF32MATRIX4 eStack80;
-	edF32VECTOR4 local_10;
-
-	if (pPathFollow != (CPathFollow*)0x0) {
-		this->pActor3C_0x0 = pPathFollow;
-		this->barFullAmount_0x4 = param_1;
-		this->field_0x8 = param_2;
-
-		iVar7 = 1;
-		count = this->pActor3C_0x0->splinePointCount;
-		iVar8 = this->pActor3C_0x0->field_0x14;
-		bVar1 = true;
-
-		if ((timing != 3) && (timing != 5)) {
-			bVar1 = false;
-		}
-		if ((!bVar1) && (param_8 == 0)) {
-			iVar7 = 0;
-		}
-
-		this->field_0x1c = iVar7;
-
-		if (this->pActor3C_0x0->splinePointCount == 1) {
-			this->type = 0;
-			this->mode = 0;
-		}
-		else {
-			this->type = type;
-			this->mode = mode;
-		}
-
-		if (timing != 4) {
-			if (iVar8 == 0) {
-				this->field_0x8 = 0.0f;
-			}
-			if (count + -1 == iVar8) {
-				this->barFullAmount_0x4 = 0.0f;
-			}
-		}
-
-		pfVar2 = NewPool_edF32(count);
-		this->field_0x10 = pfVar2;
-
-		if (pPathFollow->aSplineRotationsEuler != (edF32VECTOR4*)0x0) {
-			pPathFollow->aSplineRotationsQuat = pPathFollow->aSplineRotationsEuler;
-
-			for (iVar7 = 0; iVar7 < pPathFollow->splinePointCount; iVar7 = iVar7 + 1) {
-				// Convert the points from euler to quat.
-				edF32Matrix4FromEulerSoft(&eStack80, &pPathFollow->aSplineRotationsEuler[iVar7].xyz, "XYZ");
-				edQuatFromMatrix4(&pPathFollow->aSplineRotationsEuler[iVar7], &eStack80);
-			}
-
-			pPathFollow->aSplineRotationsEuler = (edF32VECTOR4*)0x0;
-		}
-
-		switch (timing) {
-		case 0:
-		case 4:
-			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				if (this->pActor3C_0x0->aSplinePoints == (edF32VECTOR4*)0x0) {
-					peVar4 = &gF32Vertex4Zero;
-				}
-				else {
-					if (count == 0) {
-						trap(7);
-					}
-					peVar4 = this->pActor3C_0x0->aSplinePoints + (iVar7 + 1) % count;
-				}
-
-				peVar3 = this->pActor3C_0x0->aSplinePoints;
-
-				if (peVar3 == (edF32VECTOR4*)0x0) {
-					peVar3 = &gF32Vertex4Zero;
-				}
-				else {
-					peVar3 = peVar3 + iVar7;
-				}
-
-				local_10 = *peVar3 - *peVar4;
-
-				fVar10 = edF32Vector4GetDistHard(&local_10);
-				this->field_0x10[iVar7] = fVar10;
-			}
-			break;
-		case 1:
-			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				edF32VECTOR4* pSplineRotationsQuat = this->pActor3C_0x0->aSplineRotationsQuat;
-
-				if (pSplineRotationsQuat == 0) {
-					peVar4 = &CPathFollow::gPathDefQuat;
-				}
-				else {
-					peVar4 = &pSplineRotationsQuat[iVar7];
-				}
-
-				if (this->pActor3C_0x0->aSplineRotationsQuat == 0) {
-					peVar3 = &CPathFollow::gPathDefQuat;
-				}
-				else {
-					if (count == 0) {
-						trap(7);
-					}
-					peVar3 = &this->pActor3C_0x0->aSplineRotationsQuat[((iVar7 + 1) % count)];
-				}
-
-				fVar9 = dot_quat(peVar4, peVar3);
-				fVar10 = 1.0f;
-				if (fabs(fVar9) <= 1.0f) {
-					fVar10 = fabs(fVar9);
-				}
-
-				fVar10 = acosf(fVar10);
-				this->field_0x10[iVar7] = fabs(fVar10);
-			}
-			break;
-		default:
-			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				this->field_0x10[iVar7] = 1.0f;
-			}
-			break;
-		case 3:
-			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar10 = 0.0f;
-				}
-				else {
-					fVar10 = pFloatData[iVar7];
-				}
-
-				this->field_0x10[iVar7] = fVar10;
-			}
-			break;
-		case 5:
-			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				if (this->pActor3C_0x0->aSplinePoints == (edF32VECTOR4*)0x0) {
-					peVar4 = &gF32Vertex4Zero;
-				}
-				else {
-					if (count == 0) {
-						trap(7);
-					}
-
-					peVar4 = this->pActor3C_0x0->aSplinePoints + (iVar7 + 1) % count;
-				}
-
-				peVar3 = this->pActor3C_0x0->aSplinePoints;
-				if (peVar3 == (edF32VECTOR4*)0x0) {
-					peVar3 = &gF32Vertex4Zero;
-				}
-				else {
-					peVar3 = peVar3 + iVar7;
-				}
-				local_10 = *peVar3 - *peVar4;
-
-				float* pDelays = this->pActor3C_0x0->aDelays;
-				if (pDelays == 0) {
-					fVar10 = 0.0;
-				}
-				else {
-					fVar10 = pDelays[iVar7];
-				}
-
-				fVar9 = 0.0f;
-				if (0.0f < fVar10) {
-					pDelays = this->pActor3C_0x0->aDelays;
-					if (pDelays != 0) {
-						fVar9 = pDelays[iVar7];
-					}
-
-					fVar10 = edF32Vector4GetDistHard(&local_10);
-					this->field_0x10[iVar7] = fVar10 / fVar9;
-				}
-				else {
-					this->field_0x10[iVar7] = 0.0f;
-				}
-			}
-		}
-
-		
-		fVar10 = 0.0f;
-		for (iVar7 = 0; iVar7 < iVar8; iVar7 = iVar7 + 1) {
-			fVar10 = fVar10 + this->field_0x10[iVar7];
-		}
-
-		fVar9 = 0.0f;
-		for (iVar7 = iVar8; iVar7 < count; iVar7 = iVar7 + 1) {
-			fVar9 = fVar9 + this->field_0x10[iVar7];
-		}
-
-		iVar7 = 0;
-		if (fVar9 + fVar10 < 0.001f) {
-			for (; iVar7 < count; iVar7 = iVar7 + 1) {
-				this->field_0x10[iVar7] = 1.0f;
-			}
-
-			fVar10 = (float)iVar8;
-			fVar9 = (float)(count - iVar8);
-		}
-
-		fVar13 = 0.0f;
-		fVar14 = 0.0f;
-
-		if (this->field_0x1c == 0) {
-			for (iVar7 = 0; iVar5 = iVar8, iVar7 < iVar8; iVar7 = iVar7 + 1) {
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar11 = 0.0f;
-				}
-				else {
-					fVar11 = pFloatData[iVar7];
-				}
-
-				fVar13 = fVar13 + fVar11;
-			}
-
-			for (; iVar5 < count; iVar5 = iVar5 + 1) {
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar11 = 0.0f;
-				}
-				else {
-					fVar11 = pFloatData[iVar5];
-				}
-
-				fVar14 = fVar14 + fVar11;
-			}
-		}
-
-		if ((this->type == 0) || (this->type != 1)) {
-			if (this->mode != 1) {
-				fVar11 = 0.0;
-				fVar12 = this->field_0x10[count - 1];
-				this->field_0x10[count - 1] = 0.0;
-				fVar9 = fVar9 - fVar12;
-				if (this->field_0x1c == 0) {
-					float* pFloatData = this->pActor3C_0x0->aDelays;
-
-					if (pFloatData != (float*)0x0) {
-						fVar11 = pFloatData[count - 1];
-					}
-
-					fVar14 = fVar14 - fVar11;
-				}
-			}
-		}
-		else {
-			fVar9 = (fVar9 - this->field_0x10[count + -1]) * 2.0f;
-
-			if (this->field_0x1c == 0) {
-	
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar11 = 0.0f;
-				}
-				else {
-					fVar11 = pFloatData[iVar8];
-				}
-
-				pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar12 = 0.0f;
-				}
-				else {
-					fVar12 = pFloatData[count - 1];
-				}
-
-				fVar14 = (fVar14 * 2.0f - fVar11) - fVar12;
-			}
-		}
-
-		if (timing != 4) {
-			if (this->field_0x8 == 0.0f) {
-				this->field_0x8 = fVar10 + fVar13;
-			}
-
-			if (this->barFullAmount_0x4 == 0.0f) {
-				this->barFullAmount_0x4 = fVar9 + fVar14;
-			}
-
-			fVar11 = this->field_0x8 - fVar13;
-			fVar12 = this->barFullAmount_0x4 - fVar14;
-		}
-		else {
-			fVar11 = fVar10 / this->field_0x8;
-			fVar12 = fVar9 / this->barFullAmount_0x4;
-
-			this->field_0x8 = fVar11 + fVar13;
-			this->barFullAmount_0x4 = fVar12 + fVar14;
-		}
-
-		fVar13 = 1.0f;
-		if (fVar10 != 0.0f) {
-			fVar13 = fVar10;
-		}
-		fVar10 = 1.0f;
-		if (fVar9 != 0.0f) {
-			fVar10 = fVar9;
-		}
-
-		iVar5 = 0;
-		iVar7 = count;
-		if (this->field_0x1c == 0) {		
-			for (; iVar6 = iVar8, iVar5 < iVar8; iVar5 = iVar5 + 1) {
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar9 = 0.0f;
-				}
-				else {
-					fVar9 = pFloatData[iVar5];
-				}
-
-				this->field_0x10[iVar5] = (fVar11 * this->field_0x10[iVar5]) / fVar13 + fVar9;
-			}
-
-			for (; iVar6 < count; iVar6 = iVar6 + 1) {
-				float* pFloatData = this->pActor3C_0x0->aDelays;
-
-				if (pFloatData == (float*)0x0) {
-					fVar9 = 0.0f;
-				}
-				else {
-					fVar9 = pFloatData[iVar6];
-				}
-
-				this->field_0x10[iVar6] = (fVar12 * this->field_0x10[iVar6]) / fVar10 + fVar9;
-			}
-		}
-		else {
-			for (iVar5 = 0; iVar6 = iVar8, iVar5 < iVar8; iVar5 = iVar5 + 1) {
-				this->field_0x10[iVar5] = (fVar11 * this->field_0x10[iVar5]) / fVar13;
-			}
-
-			for (; iVar6 < count; iVar6 = iVar6 + 1) {
-				this->field_0x10[iVar6] = (fVar12 * this->field_0x10[iVar6]) / fVar10;
-			}
-		}
-
-		do {
-			iVar7 = iVar7 + -1;
-			if (iVar7 < iVar8) break;
-		} while (this->field_0x10[iVar7] == 0.0f);
-
-		if (iVar8 <= iVar7) {
-			this->field_0x10[iVar7] = this->field_0x10[iVar7] + 0.0001f;
-		}
-
-		this->field_0xc = 0.0f;
-
-		for (; iVar8 < count + -1; iVar8 = iVar8 + 1) {
-			this->field_0xc = this->field_0xc + this->field_0x10[iVar8];
-		}
-	}
-	return;
-}
-
-void CPathFollowReaderAbsolute::Create(float param_1, CPathFollow* pPathFollow, int type)
-{
-	if (pPathFollow != (CPathFollow*)0x0) {
-		Create(param_1, param_1, pPathFollow, pPathFollow->mode, pPathFollow->type, 4, type);
+		this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, &this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		this->pOwner->GenericManage(1, 0, (this->trajPos).currentSegment, (this->trajPos).prevSegment);
 	}
 
 	return;
@@ -3410,7 +2997,7 @@ void CBehaviourPlatformSlab::Begin(CActor* pOwner, int newState, int newAnimatio
 	switchOnOff.Reset(pOwner);
 
 	if (newState == -1) {
-		this->pOwner->SetState(0xb, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -3429,7 +3016,7 @@ void CBehaviourPlatformSlab::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	switchOnOff.SaveContext(&pData->switchCamera);
 
 	int iVar3 = this->pOwner->actorState;
-	if ((iVar3 == 0xf) || (iVar3 == 0xd)) {
+	if ((iVar3 == MOVING_PLATFORM_STATE_SLAB_OFF_TO_ON) || (iVar3 == MOVING_PLATFORM_STATE_TRAJ_TO_A)) {
 		pData->flags = pData->flags | 8;
 	}
 
@@ -3444,7 +3031,7 @@ void CBehaviourPlatformSlab::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 
 	if ((pData->flags & 8) != 0) {
 		this->field_0x24 = this->field_0x18;
-		this->pOwner->SetState(0xd, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 		this->pOwner->Slab_MoveAndDetectCarriedObject(this, 1);
 	}
 
@@ -3508,8 +3095,8 @@ void CBehaviourPlatformDestroyed::Manage()
 
 	pMovingPlatform = this->pOwner;
 
-	if (pMovingPlatform->actorState == 0x11) {
-		(this->trajPos).field_0x0 = (this->trajPos).field_0x0 + Timer::GetTimer()->cutsceneDeltaTime;
+	if (pMovingPlatform->actorState == MOVING_PLATFORM_STATE_DESTROYED) {
+		(this->trajPos).pathPosition = (this->trajPos).pathPosition + Timer::GetTimer()->cutsceneDeltaTime;
 
 		iVar7 = pMovingPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 1, &this->trajPos, (CActorsTable*)0x0, &this->field_0x50);
 		if ((iVar7 == 2) && ((pMovingPlatform->pProperties->flags_0x24 & 0x2000) != 0)) {
@@ -3564,7 +3151,7 @@ void CBehaviourPlatformDestroyed::Manage()
 	}
 
 LAB_00156de0:
-	this->pOwner->GenericManage(0, 0, (this->trajPos).field_0x4, (this->trajPos).field_0x6);
+	this->pOwner->GenericManage(0, 0, (this->trajPos).currentSegment, (this->trajPos).prevSegment);
 
 	return;
 }
@@ -3572,7 +3159,7 @@ LAB_00156de0:
 void CBehaviourPlatformDestroyed::ManageFrozen()
 {
 	if ((GameFlags & 0x20) == 0) {
-		this->pOwner->GenericManage(0, 0, (this->trajPos).field_0x4, (this->trajPos).field_0x6);
+		this->pOwner->GenericManage(0, 0, (this->trajPos).currentSegment, (this->trajPos).prevSegment);
 	}
 
 	return;
@@ -3594,7 +3181,7 @@ void CBehaviourPlatformDestroyed::Begin(CActor* pOwner, int newState, int newAni
 	float local_4;
 
 	if (newState == -1) {
-		this->pOwner->SetState(0x11, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_DESTROYED, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -3605,10 +3192,10 @@ void CBehaviourPlatformDestroyed::Begin(CActor* pOwner, int newState, int newAni
 		pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;
 	}
 
-	(this->trajPos).field_0x0 = 0.0f;
-	(this->trajPos).field_0x4 = 0;
-	(this->trajPos).field_0x6 = 0;
-	(this->trajPos).field_0x8 = -1;
+	(this->trajPos).pathPosition = 0.0f;
+	(this->trajPos).currentSegment = 0;
+	(this->trajPos).prevSegment = 0;
+	(this->trajPos).lastEventSegment = -1;
 
 	if (this->altModelId != -1) {
 		this->pOwner->SV_RestoreOrgModel(&this->alternateModel);
@@ -3622,7 +3209,7 @@ void CBehaviourPlatformDestroyed::Begin(CActor* pOwner, int newState, int newAni
 		this->pOwner->SetLocalBoundingSphere(local_4 * 10.0f, &local_20);
 	}
 
-	pCVar3 = (this->pathFollowReaderAbs).pActor3C_0x0;
+	pCVar3 = (this->pathFollowReaderAbs).pPathFollow;
 	if ((pCVar3 == (CPathFollow*)0x0) || ((this->pOwner->pProperties->flags_0x24 & 0x100000) == 0)) {
 		this->field_0x50 = gF32Vector4Zero;
 	}
@@ -3713,13 +3300,13 @@ void CBehaviourWeighingMachine::ManageFrozen()
 
 	if ((GameFlags & 0x20) == 0) {
 		pPlatform = this->pOwner;
-		(this->trajPos).field_0x0 = (this->trajPos).field_0x0 + 1.0f;
+		(this->trajPos).pathPosition = (this->trajPos).pathPosition + 1.0f;
 
 		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, &this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		(this->trajPos).field_0x0 = (this->trajPos).field_0x0 - 1.0f;
+		(this->trajPos).pathPosition = (this->trajPos).pathPosition - 1.0f;
 
-		this->pOwner->GenericManage(1, 0, (this->trajPos).field_0x4, (this->trajPos).field_0x6);
+		this->pOwner->GenericManage(1, 0, (this->trajPos).currentSegment, (this->trajPos).prevSegment);
 	}
 	return;
 }
@@ -3727,21 +3314,21 @@ void CBehaviourWeighingMachine::ManageFrozen()
 void CBehaviourWeighingMachine::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	if (newState == -1) {
-		if ((this->pathFollowReaderAbs).pActor3C_0x0 == (CPathFollow*)0x0) {
-			this->pOwner->SetState(6, -1);
+		if ((this->pathFollowReaderAbs).pPathFollow == (CPathFollow*)0x0) {
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 		}
 		else {
-			this->pOwner->SetState(0x10, -1);
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
 		}
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
 	}
 
-	(this->trajPos).field_0x0 = 0.0f;
-	(this->trajPos).field_0x4 = 0;
-	(this->trajPos).field_0x6 = 0;
-	(this->trajPos).field_0x8 = -1;
+	(this->trajPos).pathPosition = 0.0f;
+	(this->trajPos).currentSegment = 0;
+	(this->trajPos).prevSegment = 0;
+	(this->trajPos).lastEventSegment = -1;
 }
 
 void CBehaviourWeighingMachine::End(int newBehaviourId)
@@ -3811,22 +3398,22 @@ void CBehaviourWeighingMachineMaster::Manage()
 	state = pPlatform->actorState;
 
 	uVar1 = false;
-	if (state == 6) {
+	if (state == MOVING_PLATFORM_STATE_MOVING) {
 		pTrajPos = &this->trajPos;
 
-		this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+		this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 
 		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+		pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 	}
 	else {
-		if (state == 0x10) {
+		if (state == MOVING_PLATFORM_STATE_SLAB_ON_SLAVE_ACTIVE) {
 			uVar1 = pPlatform->StateWeighingMaster(this);
 		}
 	}
 
-	pPlatform->GenericManage(1, uVar1, this->trajPos.field_0x4, this->trajPos.field_0x6);
+	pPlatform->GenericManage(1, uVar1, this->trajPos.currentSegment, this->trajPos.prevSegment);
 	return;
 }
 
@@ -3839,13 +3426,13 @@ void CBehaviourWeighingMachineMaster::Begin(CActor* pOwner, int newState, int ne
 	CActorMovingPlatform* pPlatform;
 
 	if (newState == -1) {
-		if (this->pathFollowReaderAbs.pActor3C_0x0 == (CPathFollow*)0x0) {
+		if (this->pathFollowReaderAbs.pPathFollow == (CPathFollow*)0x0) {
 			pPlatform = this->pOwner;
-			pPlatform->SetState(6, -1);
+			pPlatform->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 		}
 		else {
 			pPlatform = this->pOwner;
-			pPlatform->SetState(0x10, -1);
+			pPlatform->SetState(MOVING_PLATFORM_STATE_SLAB_ON_SLAVE_ACTIVE, -1);
 		}
 	}
 	else {
@@ -3853,22 +3440,22 @@ void CBehaviourWeighingMachineMaster::Begin(CActor* pOwner, int newState, int ne
 		pPlatform->SetState(newState, newAnimationType);
 	}
 
-	this->trajPos.field_0x0 = 0.0f;
-	this->trajPos.field_0x4 = 0;
-	this->trajPos.field_0x6 = 0;
-	this->trajPos.field_0x8 = -1;
+	this->trajPos.pathPosition = 0.0f;
+	this->trajPos.currentSegment = 0;
+	this->trajPos.prevSegment = 0;
+	this->trajPos.lastEventSegment = -1;
 
 	this->analogSwitch.Reset(pOwner);
 
 	pTrajPos = &this->trajPos;
 	pPlatform = this->pOwner;
-	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 
 	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 
-	this->trajPos.field_0x8 = this->trajPos.field_0x4;
+	this->trajPos.lastEventSegment = this->trajPos.currentSegment;
 	return;
 }
 
@@ -3879,10 +3466,10 @@ void CBehaviourWeighingMachineMaster::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* 
 
 	uVar4 = 1;
 
-	pData->field_0x1c = (this->trajPos).field_0x0;
-	pData->field_0x14 = (this->trajPos).field_0x4;
-	pData->field_0x16 = (this->trajPos).field_0x6;
-	pData->field_0x18 = (this->trajPos).field_0x8;
+	pData->field_0x1c = (this->trajPos).pathPosition;
+	pData->field_0x14 = (this->trajPos).currentSegment;
+	pData->field_0x16 = (this->trajPos).prevSegment;
+	pData->field_0x18 = (this->trajPos).lastEventSegment;
 
 	this->analogSwitch.SaveContext(&pData->switchCamera);
 }
@@ -3896,18 +3483,18 @@ void CBehaviourWeighingMachineMaster::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* 
 	S_TRAJ_POS* pTrajPos;
 	CActorMovingPlatform* pPlatform;
 
-	this->trajPos.field_0x0 = pData->field_0x1c;
-	this->trajPos.field_0x4 = pData->field_0x14;
-	this->trajPos.field_0x6 = pData->field_0x16;
-	this->trajPos.field_0x8 = pData->field_0x18;
+	this->trajPos.pathPosition = pData->field_0x1c;
+	this->trajPos.currentSegment = pData->field_0x14;
+	this->trajPos.prevSegment = pData->field_0x16;
+	this->trajPos.lastEventSegment = pData->field_0x18;
 
 	this->analogSwitch.LoadContext(&pData->switchCamera);
 	
 	pTrajPos = &this->trajPos;
 	pPlatform = this->pOwner;
-	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 
 	return;
 }
@@ -3943,24 +3530,24 @@ void CBehaviourWeighingMachineSlave::Manage()
 	actorState = pPlatform->actorState;
 	uVar2 = 0;
 
-	if (actorState == 6) {
+	if (actorState == MOVING_PLATFORM_STATE_MOVING) {
 		pTrajPos = &this->trajPos;
-		this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+		this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-		pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+		pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 	}
 	else {
-		if (actorState == 0x10) {
-			uVar2 = (uint)(this->field_0x34 != this->trajPos.field_0x0);
-			this->trajPos.field_0x0 = this->field_0x34;
+		if (actorState == MOVING_PLATFORM_STATE_SLAB_ON_SLAVE_ACTIVE) {
+			uVar2 = (uint)(this->field_0x34 != this->trajPos.pathPosition);
+			this->trajPos.pathPosition = this->field_0x34;
 			pTrajPos = &this->trajPos;
-			this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+			this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 			pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, uVar2, 1, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-			pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+			pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 		}
 	}
 
-	pPlatform->GenericManage(1, uVar2, this->trajPos.field_0x4, this->trajPos.field_0x6);
+	pPlatform->GenericManage(1, uVar2, this->trajPos.currentSegment, this->trajPos.prevSegment);
 	return; 
 }
 
@@ -3970,13 +3557,13 @@ void CBehaviourWeighingMachineSlave::Begin(CActor* pOwner, int newState, int new
 	CActorMovingPlatform* pPlatform;
 
 	if (newState == -1) {
-		if (this->pathFollowReaderAbs.pActor3C_0x0 == (CPathFollow*)0x0) {
+		if (this->pathFollowReaderAbs.pPathFollow == (CPathFollow*)0x0) {
 			pPlatform = this->pOwner;
-			pPlatform->SetState(6, -1);
+			pPlatform->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 		}
 		else {
 			pPlatform = this->pOwner;
-			pPlatform->SetState(0x10, -1);
+			pPlatform->SetState(MOVING_PLATFORM_STATE_SLAB_ON_SLAVE_ACTIVE, -1);
 		}
 	}
 	else {
@@ -3984,20 +3571,20 @@ void CBehaviourWeighingMachineSlave::Begin(CActor* pOwner, int newState, int new
 		pPlatform->SetState(newState, newAnimationType);
 	}
 
-	this->trajPos.field_0x0 = 0.0f;
-	this->trajPos.field_0x4 = 0;
-	this->trajPos.field_0x6 = 0;
-	this->trajPos.field_0x8 = -1;
+	this->trajPos.pathPosition = 0.0f;
+	this->trajPos.currentSegment = 0;
+	this->trajPos.prevSegment = 0;
+	this->trajPos.lastEventSegment = -1;
 
 	pTrajPos = &this->trajPos;
 	pPlatform = this->pOwner;
-	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 
 	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 
-	this->trajPos.field_0x8 = this->trajPos.field_0x4;
+	this->trajPos.lastEventSegment = this->trajPos.currentSegment;
 	return;
 }
 
@@ -4012,10 +3599,10 @@ int CBehaviourWeighingMachineSlave::InterpretMessage(CActor* pSender, int msg, v
 
 void CBehaviourWeighingMachineSlave::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	pData->field_0x1c = this->trajPos.field_0x0;
-	pData->field_0x14 = this->trajPos.field_0x4;
-	pData->field_0x16 = this->trajPos.field_0x6;
-	pData->field_0x18 = this->trajPos.field_0x8;
+	pData->field_0x1c = this->trajPos.pathPosition;
+	pData->field_0x14 = this->trajPos.currentSegment;
+	pData->field_0x16 = this->trajPos.prevSegment;
+	pData->field_0x18 = this->trajPos.lastEventSegment;
 
 	return;
 }
@@ -4025,16 +3612,16 @@ void CBehaviourWeighingMachineSlave::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* p
 	S_TRAJ_POS* pTrajPos;
 	CActorMovingPlatform* pPlatform;
 
-	this->trajPos.field_0x0 = pData->field_0x1c;
-	this->trajPos.field_0x4 = pData->field_0x14;
-	this->trajPos.field_0x6 = pData->field_0x16;
-	this->trajPos.field_0x8 = pData->field_0x18;
+	this->trajPos.pathPosition = pData->field_0x1c;
+	this->trajPos.currentSegment = pData->field_0x14;
+	this->trajPos.prevSegment = pData->field_0x16;
+	this->trajPos.lastEventSegment = pData->field_0x18;
 
 	pTrajPos = &this->trajPos;
 	pPlatform = this->pOwner;
-	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+	this->trajPos.pathPosition = this->trajPos.pathPosition + 1.0f;
 	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	pTrajPos->pathPosition = pTrajPos->pathPosition - 1.0f;
 
 	return;
 }
@@ -4072,7 +3659,7 @@ void CBehaviourSelector::InitState(int state)
 	CActorMovingPlatform* pActor;
 
 	IMPLEMENTATION_GUARD_AUDIO(
-	if ((state == 0xd) && (pSound = (this->streamRefSound).pSound, pSound != (CSound*)0x0)) {
+	if ((state == MOVING_PLATFORM_STATE_TRAJ_TO_A) && (pSound = (this->streamRefSound).pSound, pSound != (CSound*)0x0)) {
 		pActor = this->pOwner;
 		CActorSound::SoundStart
 		(pActor->pActorSound, (CActor*)pActor, (uint)((pActor->movingPlatformFlags & 1) != 0), pSound, 1, 0,
@@ -4092,12 +3679,12 @@ int CBehaviourSelector::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 	uVar3 = 0;
 	if (msg == 0x10) {
-		this->pOwner->SetState(0xb, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 		uVar3 = 1;
 	}
 	else {
 		if (msg == 0xf) {
-			this->pOwner->SetState(0xd, -1);
+			this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 			uVar3 = 1;
 		}
 		else {
@@ -4140,7 +3727,7 @@ int CBehaviourSelector::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 void CBehaviourSelector::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 {
-	if (this->pOwner->actorState == 0xd) {
+	if (this->pOwner->actorState == MOVING_PLATFORM_STATE_TRAJ_TO_A) {
 		pData->flags = pData->flags | 8;
 	}
 
@@ -4153,11 +3740,11 @@ void CBehaviourSelector::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	CActorMovingPlatform* pMovingPlatform;
 
 	if ((pData->flags & 8) == 0) {
-		this->pOwner->SetState(0xb, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 		this->field_0x24 = 0.0f;
 	}
 	else {
-		this->pOwner->SetState(0xd, -1);
+		this->pOwner->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 		this->field_0x24 = this->field_0x10;
 	}
 
@@ -4279,7 +3866,7 @@ void CBehaviourSelectorMaster::Begin(CActor* pOwner, int newState, int newAnimat
 
 	if (newState == -1) {
 		pCVar1 = this->pOwner;
-		pCVar1->SetState(0xd, -1);
+		pCVar1->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 	}
 	else {
 		pCVar1 = this->pOwner;
@@ -4300,7 +3887,7 @@ void CBehaviourSelectorMaster::SaveContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 	int iVar3;
 	uint uVar4;
 
-	if (this->pOwner->actorState == 0xd) {
+	if (this->pOwner->actorState == MOVING_PLATFORM_STATE_TRAJ_TO_A) {
 		pData->flags = pData->flags | 8;
 	}
 
@@ -4321,12 +3908,12 @@ void CBehaviourSelectorMaster::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 
 	if ((pData->flags & 8) == 0) {
 		pMovingPlatform = this->pOwner;
-		pMovingPlatform->SetState(0xb, -1);
+		pMovingPlatform->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 		this->field_0x24 = 0.0f;
 	}
 	else {
 		pMovingPlatform = this->pOwner;
-		pMovingPlatform->SetState(0xd, -1);
+		pMovingPlatform->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_A, -1);
 		this->field_0x24 = this->field_0x10;
 	}
 
@@ -4409,7 +3996,7 @@ void CBehaviourSelectorNew::Manage()
 	pPlatform = this->pOwner;
 
 	actorState = pPlatform->actorState;
-	if (actorState == 0xd) {
+	if (actorState == MOVING_PLATFORM_STATE_TRAJ_TO_A) {
 		pTVar2 = GetTimer();
 		fVar5 = this->field_0x24;
 		fVar3 = this->field_0x10;
@@ -4432,7 +4019,7 @@ void CBehaviourSelectorNew::Manage()
 		}
 	}
 	else {
-		if (actorState == 0xb) {
+		if (actorState == MOVING_PLATFORM_STATE_TRAJ_TO_B) {
 			pTVar2 = GetTimer();
 			fVar4 = this->field_0x24;
 			fVar3 = fVar4 - this->field_0xc * pTVar2->cutsceneDeltaTime;
@@ -4474,7 +4061,7 @@ void CBehaviourSelectorNew::Begin(CActor* pOwner, int newState, int newAnimation
 
 	if (newState == -1) {
 		pPlatform = this->pOwner;
-		pPlatform->SetState(0xb, -1);
+		pPlatform->SetState(MOVING_PLATFORM_STATE_TRAJ_TO_B, -1);
 	}
 	else {
 		pPlatform = this->pOwner;
@@ -4549,7 +4136,7 @@ void CBehaviourTeleportRandom::LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData)
 		this->activeSplinePoint = 0;
 	}
 
-	this->pOwner->SetState(6, -1);
+	this->pOwner->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 
 	if (this->pPathFollow != (CPathFollow*)0x0) {
 		this->pPathFollow->ComputeMatrix(&pathMatrix, this->activeSplinePoint);

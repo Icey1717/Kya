@@ -615,12 +615,12 @@ int S_STREAM_NTF_TARGET_ONOFF::SwitchOff(CActor* pActor)
 	if (bVar2) {
 		this->flags = this->flags | 0x40000000;
 		if (this->field_0x14 != 0) {
-			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, *(uint*)&this->field_0x18);
+			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, this->field_0x18);
 			if (pActor == (CActor*)0x0) {
 				pActor = LOAD_POINTER_CAST(CActor*, this->pRef);
 			}
 			if (pActor != (CActor*)0x0) {
-				iVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, &this->field_0x18);
+				iVar3 = pActor->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)this->field_0x18);
 			}
 		}
 	}
@@ -2093,6 +2093,7 @@ void CCinematic::Manage()
 
 	this->flags_0x8 = this->flags_0x8 & 0xfffffffb;
 	this->flags_0x8 = this->flags_0x8 & 0xffffdfff;
+
 	return;
 }
 
@@ -4892,23 +4893,25 @@ void CCinematicManagerB::Level_PreReset()
 
 void CCinematicManagerB::Level_PreCheckpointReset()
 {
-	CCinematicManager* pCutsceneManager;
+	CCinematicManager* pCinematicManager;
 	CCinematic** ppCinematic;
 	CCinematic* pCinematic;
 	int i;
 
-	pCutsceneManager = g_CinematicManager_0048efc;
-	pCutsceneManager->field_0x34 = 0;
-	pCutsceneManager->pSubtitleText = (char*)0x0;
-	pCutsceneManager->field_0x40 = 0.0f;
-	pCutsceneManager->fadeDuration = 0.0f;
-	ppCinematic = pCutsceneManager->ppCinematicObjB_A;
+	pCinematicManager = g_CinematicManager_0048efc;
+	pCinematicManager->field_0x34 = 0;
+	pCinematicManager->pSubtitleText = (char*)0x0;
+	pCinematicManager->field_0x40 = 0.0f;
+	pCinematicManager->fadeDuration = 0.0f;
+	ppCinematic = pCinematicManager->ppCinematicObjB_A;
 
-	for (i = pCutsceneManager->numCutscenes_0x8; i != 0; i = i + -1) {
+	for (i = pCinematicManager->numCutscenes_0x8; i != 0; i = i + -1) {
 		pCinematic = *ppCinematic;
-		if ((pCinematic->flags_0x4 & 20) == 0)
+		if ((pCinematic->flags_0x4 & 20) != 0) {
 			pCinematic->PreReset();
-			ppCinematic = ppCinematic + 1;
+		}
+
+		ppCinematic = ppCinematic + 1;
 	}
 
 	return;

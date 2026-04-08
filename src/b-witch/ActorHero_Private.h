@@ -160,6 +160,8 @@ public:
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
+	virtual void UpdateAnimEffects();
+
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void SetState(int newState, int animType);
 
@@ -430,6 +432,9 @@ public:
 	void StateHeroWindCanonTerm();
 
 	void StateHeroBasic(float param_1, float param_2, int nextState);
+
+	void StateHeroGrindDeathInit();
+	void StateHeroGrindDeathTerm();
 
 	void StateHeroFallBounce_2_2Init();
 	void StateHeroFallBounce_2_2Term();

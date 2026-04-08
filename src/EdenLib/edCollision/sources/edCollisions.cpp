@@ -3870,9 +3870,9 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 			for (peVar8 = peVar2; peVar8 < peVar2 + iVar3; peVar8 = peVar8 + 1) {
 #ifdef PLATFORM_WIN
 				edF32TRIANGLE4_Stack stackTriangle = peVar8;
-				local_80.pTriangle = &stackTriangle;
+				local_a0.pTriangle = &stackTriangle;
 #else
-				local_80.pTriangle = peVar8;
+				local_a0.pTriangle = peVar8;
 #endif
 				edColIntersectBoxTriangle4(&eStack96, &local_a0, 1);
 				eStack96.normal.x = 0.0f - eStack96.normal.x;

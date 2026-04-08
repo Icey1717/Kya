@@ -222,6 +222,10 @@ namespace Renderer
 		{
 			CheckBufferSizes();
 
+			gvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
+			gvkCmdSetColorWriteMaskEXT   = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
+			assert(gvkCmdSetColorWriteEnableEXT && gvkCmdSetColorWriteMaskEXT);
+
 			RenderPassKey key;
 			key.clearMode = EClearMode::None;
 
@@ -244,8 +248,6 @@ namespace Renderer
 
 			gModelBuffer.Init();
 			gAnimationBuffer.Init(gMaxAnimationMatrices);
-
-			gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
 
 			gLightingDynamicBuffer.Init();
 			gAnimStBuffer.Init();

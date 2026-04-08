@@ -556,31 +556,31 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	if (0 < this->nbNativShopSubObjs) {
 		do {
 			if (param_2 != false) {
-				puVar8->field_0x0 = -1;
+				puVar8->episodeThresholdLink = 0xffffffff;
 				puVar8->currentLevelId = 0x10;
 				puVar8->field_0x8 = 0;
 
 				puVar8->currentLocation = gF32Vertex4Zero;
 				puVar8->rotationQuat = gF32Vector4UnitZ;
 
-				puVar8->aSubObjs[0].field_0x0 = 0x20;
-				puVar8->aSubObjs[0].field_0x4 = 0;
+				puVar8->aSubObjs[0].purchaseId = 0x20;
+				puVar8->aSubObjs[0].moneyCost = 0;
 				puVar8->aSubObjs[0].field_0x8 = 0;
 
-				puVar8->aSubObjs[1].field_0x0 = 0x20;
-				puVar8->aSubObjs[1].field_0x4 = 0;
+				puVar8->aSubObjs[1].purchaseId = 0x20;
+				puVar8->aSubObjs[1].moneyCost = 0;
 				puVar8->aSubObjs[1].field_0x8 = 0;
 
-				puVar8->aSubObjs[2].field_0x0 = 0x20;
-				puVar8->aSubObjs[2].field_0x4 = 0;
+				puVar8->aSubObjs[2].purchaseId = 0x20;
+				puVar8->aSubObjs[2].moneyCost = 0;
 				puVar8->aSubObjs[2].field_0x8 = 0;
 
-				puVar8->aSubObjs[3].field_0x0 = 0x20;
-				puVar8->aSubObjs[3].field_0x4 = 0;
+				puVar8->aSubObjs[3].purchaseId = 0x20;
+				puVar8->aSubObjs[3].moneyCost = 0;
 				puVar8->aSubObjs[3].field_0x8 = 0;
 
-				puVar8->aSubObjs[4].field_0x0 = 0x20;
-				puVar8->aSubObjs[4].field_0x4 = 0;
+				puVar8->aSubObjs[4].purchaseId = 0x20;
+				puVar8->aSubObjs[4].moneyCost = 0;
 				puVar8->aSubObjs[4].field_0x8 = 0;
 			}
 			iVar9 = iVar9 + 1;
@@ -1821,7 +1821,7 @@ struct LoadLoopObject_50SaveData
 
 struct NativShopLevelSubObjSaveData
 {
-	int field_0x0;
+	uint episodeThresholdLink;
 	int currentLevelId;
 	int field_0x8;
 	edF32VECTOR3 currentLocation;
@@ -1857,7 +1857,7 @@ void CLevelScheduler::SaveGame_SaveGameObj()
 	iVar4 = 0;
 	if (0 < this->nbNativShopSubObjs) {
 		do {
-			pShopSave->field_0x0 = pShopSubObj->field_0x0;
+			pShopSave->episodeThresholdLink = pShopSubObj->episodeThresholdLink;
 			pShopSave->currentLevelId = pShopSubObj->currentLevelId;
 			pShopSave->field_0x8 = pShopSubObj->field_0x8;
 			pShopSave->currentLocation = (pShopSubObj->currentLocation).xyz;
@@ -1998,7 +1998,7 @@ void CLevelScheduler::LoadGame_LoadGameObj()
 		if (0 < this->nbNativShopSubObjs) {
 			do {
 				iVar2 = iVar2 + 1;
-				pNVar3->field_0x0 = pNVar4->field_0x0;
+				pNVar3->episodeThresholdLink = pNVar4->episodeThresholdLink;
 				pNVar3->currentLevelId = pNVar4->currentLevelId;
 				pNVar3->field_0x8 = pNVar4->field_0x8;
 
@@ -2008,20 +2008,20 @@ void CLevelScheduler::LoadGame_LoadGameObj()
 				(pNVar3->rotationQuat).xyz = pNVar4->rotationQuat;
 				(pNVar3->rotationQuat).w = 0.0f;
 
-				pNVar3->aSubObjs[0].field_0x0 = pNVar4->aSubObjs[0].field_0x0;
-				pNVar3->aSubObjs[0].field_0x4 = pNVar4->aSubObjs[0].field_0x4;
+				pNVar3->aSubObjs[0].purchaseId = pNVar4->aSubObjs[0].purchaseId;
+				pNVar3->aSubObjs[0].moneyCost = pNVar4->aSubObjs[0].moneyCost;
 				pNVar3->aSubObjs[0].field_0x8 = pNVar4->aSubObjs[0].field_0x8;
-				pNVar3->aSubObjs[1].field_0x0 = pNVar4->aSubObjs[1].field_0x0;
-				pNVar3->aSubObjs[1].field_0x4 = pNVar4->aSubObjs[1].field_0x4;
+				pNVar3->aSubObjs[1].purchaseId = pNVar4->aSubObjs[1].purchaseId;
+				pNVar3->aSubObjs[1].moneyCost = pNVar4->aSubObjs[1].moneyCost;
 				pNVar3->aSubObjs[1].field_0x8 = pNVar4->aSubObjs[1].field_0x8;
-				pNVar3->aSubObjs[2].field_0x0 = pNVar4->aSubObjs[2].field_0x0;
-				pNVar3->aSubObjs[2].field_0x4 = pNVar4->aSubObjs[2].field_0x4;
+				pNVar3->aSubObjs[2].purchaseId = pNVar4->aSubObjs[2].purchaseId;
+				pNVar3->aSubObjs[2].moneyCost = pNVar4->aSubObjs[2].moneyCost;
 				pNVar3->aSubObjs[2].field_0x8 = pNVar4->aSubObjs[2].field_0x8;
-				pNVar3->aSubObjs[3].field_0x0 = pNVar4->aSubObjs[3].field_0x0;
-				pNVar3->aSubObjs[3].field_0x4 = pNVar4->aSubObjs[3].field_0x4;
+				pNVar3->aSubObjs[3].purchaseId = pNVar4->aSubObjs[3].purchaseId;
+				pNVar3->aSubObjs[3].moneyCost = pNVar4->aSubObjs[3].moneyCost;
 				pNVar3->aSubObjs[3].field_0x8 = pNVar4->aSubObjs[3].field_0x8;
-				pNVar3->aSubObjs[4].field_0x0 = pNVar4->aSubObjs[4].field_0x0;
-				pNVar3->aSubObjs[4].field_0x4 = pNVar4->aSubObjs[4].field_0x4;
+				pNVar3->aSubObjs[4].purchaseId = pNVar4->aSubObjs[4].purchaseId;
+				pNVar3->aSubObjs[4].moneyCost = pNVar4->aSubObjs[4].moneyCost;
 				pNVar1 = pNVar4->aSubObjs;
 				pNVar4 = pNVar4 + 1;
 				pNVar3->aSubObjs[4].field_0x8 = pNVar1[4].field_0x8;
@@ -2326,13 +2326,13 @@ void NativShopLevelSubObj::FUN_002d8d10(CActorNativShop* pNativ)
 	do {
 		pInventoryInfo = pNativ->GetInventoryInfoForPurchase(currentIndex);
 		if (pInventoryInfo == (CInventoryInfo*)0x0) {
-			this->aSubObjs[currentIndex].field_0x0 = 0x20;
-			this->aSubObjs[currentIndex].field_0x4 = 0;
+			this->aSubObjs[currentIndex].purchaseId = 0x20;
+			this->aSubObjs[currentIndex].moneyCost = 0;
 			this->aSubObjs[currentIndex].field_0x8 = 0;
 		}
 		else {
-			this->aSubObjs[currentIndex].field_0x0 = pInventoryInfo->purchaseId;
-			this->aSubObjs[currentIndex].field_0x4 = pInventoryInfo->moneyCost;
+			this->aSubObjs[currentIndex].purchaseId = pInventoryInfo->purchaseId;
+			this->aSubObjs[currentIndex].moneyCost = pInventoryInfo->moneyCost;
 			this->aSubObjs[currentIndex].field_0x8 = pInventoryInfo->field_0x8;
 		}
 
@@ -3419,7 +3419,7 @@ void CLevelScheduler::Level_PostInit()
 			do {
 				pThis = gThis;
 				pNativ = static_cast<CActorNativShop*>(*pActor);
-				pSubObj->field_0x0 = pNativ->field_0x170;
+				pSubObj->episodeThresholdLink = pNativ->episodeThresholdLink;
 				pSubObj->currentLevelId = pThis->currentLevelID;
 				pSubObj->currentLocation = pNativ->currentLocation;
 				pSubObj->rotationQuat = pNativ->rotationQuat;

@@ -379,7 +379,7 @@ struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 	int messageId;
 	uint messageFlags;
 	int field_0x14;
-	undefined4 field_0x18;
+	uint field_0x18;
 };
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);

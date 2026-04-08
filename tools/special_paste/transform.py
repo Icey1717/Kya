@@ -59,25 +59,29 @@ def split_top_level_args(args_text: str) -> list[str]:
 def strip_base_chain_in(expr: str) -> str:
     """
     Strip base-class navigation chains of any form:
-        (this->base).field                        ->  this->field
-        (this->base).base.base.field              ->  this->field
-        (ptr->base).base.field                    ->  ptr->field
-        (this->pOwner->base).base.x.y             ->  this->pOwner->x.y
-        (ptr->character).characterBase.base.field ->  ptr->field
+        (this->base).field                               ->  this->field
+        (this->base).base.base.field                     ->  this->field
+        (ptr->base).base.field                           ->  ptr->field
+        (this->pOwner->base).base.x.y                    ->  this->pOwner->x.y
+        (ptr->character).characterBase.base.field        ->  ptr->field
+        this->character.characterBase.base.base.field    ->  this->field
 
-    Two patterns are applied iteratively:
-      1. ->base inside the parens (with optional .base* outside)
-      2. ->anyField inside the parens with at least one .base. outside
+    Three patterns applied iteratively:
+      1. (X->base).base*.field     — ->base in parens
+      2. (X->Y).Z*.base.field      — ->any in parens, .base. outside
+      3. X->A.B.base.base.field    — no parens, dot chain with .base. before field
     """
-    # ->base inside parens, zero or more .base. outside
     p1 = re.compile(r"\((\w+(?:->\w+)*)->base\)(?:\.base)*\.(\w+(?:\.\w+)*)")
-    # ->anyField inside parens, one or more named segments then .base. outside
     p2 = re.compile(r"\((\w+(?:->\w+)*)->\w+\)(?:\.\w+)*\.base\.(\w+(?:\.\w+)*)")
+    # After paren-stripping, may leave e.g. this->word.word.base.base.field
+    p3 = re.compile(r"(->\w+(?:\.\w+)*)(?:\.base)+\.(\w+(?:\.\w+)*)")
     prev = None
     while prev != expr:
         prev = expr
         expr = p1.sub(r"\1->\2", expr)
         expr = p2.sub(r"\1->\2", expr)
+        # p3: strip intermediate dot chain + .base(s) before field, keep ->field
+        expr = p3.sub(lambda m: "->" + m.group(2), expr)
     return expr
 
 
@@ -478,8 +482,11 @@ def _run_tests() -> None:
             "local_30.x = (pCVar1->character).characterBase.base.dynamic.horizontalVelocityDirectionEuler.x;",
             "local_30.x = pCVar1->dynamic.horizontalVelocityDirectionEuler.x;",
         ),
-        # named intermediate + multiple .base levels
-        ("(this->actor).actorBase.base.base.field", "this->field"),
+        # base chain — paren->base then named intermediate then .base.base.field
+        (
+            "pCol = (this->base).character.characterBase.base.base.pCollisionData;",
+            "pCol = this->pCollisionData;",
+        ),
         # bytecode temp inlining — consecutive pairs
         (
             "fVar12 = pByteCode->GetF32();\nthis->field_0x214 = fVar12;\nfVar12 = pByteCode->GetF32();\nthis->field_0x210 = fVar12;",

@@ -16,43 +16,6 @@ namespace Debug::Actor::JamGut
 		return ss.str();
 	}
 
-	static void ShowPathFollowReaderAbsoluteInfo(const CPathFollowReaderAbsolute& reader)
-	{
-		ImGui::Text("Path Follow: %p", reader.pActor3C_0x0);
-		ImGui::Text("Bar Full Amount: %.2f", reader.barFullAmount_0x4);
-		ImGui::Text("Field 0x8: %.2f", reader.field_0x8);
-		ImGui::Text("Field 0xc: %.2f", reader.field_0xc);
-		ImGui::Text("Field 0x10: %p", reader.field_0x10);
-		ImGui::Text("Type: %d  Mode: %d  Field 0x1c: %d", reader.type, reader.mode, reader.field_0x1c);
-	}
-
-	static void ShowPathPlaneInfo(const CPathPlane& plane, bool bIsActive)
-	{
-		if (ImGui::TreeNodeEx("Path Plane", ImGuiTreeNodeFlags_None)) {
-			ImGui::Text("Reader Path Follow: %p", plane.pathFollowReader.pPathFollow);
-			ImGui::Text("Reader Spline Point Index: %d", plane.pathFollowReader.splinePointIndex);
-			ImGui::Text("Reader Field 0x8: %d  Field 0xc: %d", plane.pathFollowReader.field_0x8, plane.pathFollowReader.field_0xc);
-
-			ImGui::Separator();
-			if (bIsActive) {
-				ImGui::Text("Out Data (JamGut pos on path, live):");
-			} else {
-				ImGui::TextDisabled("Out Data (stale - not active path):");
-			}
-			ImGui::Text("  Index: %d", plane.outData.field_0x0);
-			ImGui::Text("  Dist to Current Plane: %.2f", plane.outData.field_0x4);
-			ImGui::Text("  Dist to Next Plane: %.2f", plane.outData.field_0x8);
-
-			ImGui::Text("Plane Data Array: %p", plane.aPlaneData);
-			ImGui::TreePop();
-		}
-	}
-
-	static void DrawPathSplineLines(const CPathFollowReaderAbsolute& reader, bool bIsActive)
-	{
-		Debug::Path::DrawPathFollowReaderAbsolute(reader, bIsActive);
-	}
-
 	static void ShowPathInfo(S_JMG_PATH& path, int index, int activePathIndex)
 	{
 		const bool bIsActive = (index == activePathIndex);
@@ -61,17 +24,17 @@ namespace Debug::Actor::JamGut
 			: "Path #" + std::to_string(index);
 
 		if (ImGui::TreeNodeEx(label.c_str(), bIsActive ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None)) {
-			DrawPathSplineLines(path.pathFollowReader, bIsActive);
+			Path::DrawPathFollowReaderAbsolute(path.pathFollowReader, bIsActive);
 			ImGui::Text("Zone Ref: %p", path.zoneRef.Get());
 			ImGui::Text("Actor Ref: %p", path.actorRef.Get());
 			ImGui::Text("Field 0x28: %.2f", path.field_0x28);
 			ImGui::Text("Field 0x2c: %.2f", path.field_0x2c);
 			ImGui::Text("Field 0x30: %.2f", path.field_0x30);
 
-			ShowPathPlaneInfo(path.pathPlane, bIsActive);
+			Path::ShowPathPlaneInfo(path.pathPlane, bIsActive);
 
 			if (ImGui::TreeNodeEx("Path Follow Reader", ImGuiTreeNodeFlags_None)) {
-				ShowPathFollowReaderAbsoluteInfo(path.pathFollowReader);
+				Path::ShowPathFollowReaderAbsoluteInfo(path.pathFollowReader);
 				ImGui::TreePop();
 			}
 

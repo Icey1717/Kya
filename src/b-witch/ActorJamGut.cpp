@@ -608,7 +608,6 @@ int CActorJamGut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				if (msg == 0x14) {
-					IMPLEMENTATION_GUARD(
 					if ((this->flags & 0x800000) == 0) {
 						result = 0;
 					}
@@ -616,7 +615,7 @@ int CActorJamGut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						this->pRider = (CActorHero*)pSender;
 						result = 1;
 						this->field_0x35c = 1;
-					})
+					}
 				}
 				else {
 					result = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
@@ -911,14 +910,14 @@ void CActorJamGut::ManagePaths()
 								peVar12 = 0x0;
 							}
 
-							pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-							pathreaderPosInfo.field_0x4 = peVar12;
-							if (pathreaderPosInfo.field_0x0 == -1) {
-								pathreaderPosInfo.field_0x4 = peVar12 - 1;
-								pathreaderPosInfo.field_0x0 = peVar12;
+							pathreaderPosInfo.prevSegment = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+							pathreaderPosInfo.currentSegment = peVar12;
+							if (pathreaderPosInfo.prevSegment == -1) {
+								pathreaderPosInfo.currentSegment = peVar12 - 1;
+								pathreaderPosInfo.prevSegment = peVar12;
 							}
 
-							pathreaderPosInfo.field_0x8 = local_4;
+							pathreaderPosInfo.segmentFraction = local_4;
 							fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
 							this->pathTimeOnSegment = fVar13;
 						}
@@ -947,7 +946,7 @@ void CActorJamGut::ManagePaths()
 						pCurPath->pathFollowReader.ComputePosition(this->pathTimeOnSegment, &eStack48, (edF32VECTOR4*)0x0, (S_PATHREADER_POS_INFO*)0x0);
 						this->pathTimeOnSegment = this->pathTimeOnSegment + GetTimer()->cutsceneDeltaTime;
 
-						fVar13 = (pCurPath->pathFollowReader).barFullAmount_0x4;
+						fVar13 = (pCurPath->pathFollowReader).field_0x4;
 						if (fVar13 < this->pathTimeOnSegment) {
 							fVar13 = fmodf(this->pathTimeOnSegment, fVar13);
 							this->pathTimeOnSegment = fVar13;
@@ -965,21 +964,21 @@ void CActorJamGut::ManagePaths()
 							peVar12 = 0;
 						}
 
-						pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-						pathreaderPosInfo.field_0x4 = peVar12;
-						if (pathreaderPosInfo.field_0x0 == -1) {
-							pathreaderPosInfo.field_0x4 = peVar12 - 1;
-							pathreaderPosInfo.field_0x0 = peVar12;
+						pathreaderPosInfo.prevSegment = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+						pathreaderPosInfo.currentSegment = peVar12;
+						if (pathreaderPosInfo.prevSegment == -1) {
+							pathreaderPosInfo.currentSegment = peVar12 - 1;
+							pathreaderPosInfo.prevSegment = peVar12;
 						}
 
-						pathreaderPosInfo.field_0x8 = local_8;
+						pathreaderPosInfo.segmentFraction = local_8;
 						if (1.0f < local_8) {
-							pathreaderPosInfo.field_0x8 = 1.0f;
+							pathreaderPosInfo.segmentFraction = 1.0f;
 						}
 
 						fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
 						JAMGUT_LOG(LogLevel::Verbose, "CActorJamGut::ManagePaths: tracked actor pathTimeOnSegment={:.4f} seg={} nextSeg={} t={:.4f}",
-							fVar13, pathreaderPosInfo.field_0x4, pathreaderPosInfo.field_0x0, pathreaderPosInfo.field_0x8);
+							fVar13, pathreaderPosInfo.currentSegment, pathreaderPosInfo.prevSegment, pathreaderPosInfo.segmentFraction);
 						this->pathTimeOnSegment = fVar13;
 					}
 
@@ -990,22 +989,22 @@ void CActorJamGut::ManagePaths()
 						peVar12 = 0;
 					}
 
-					pathreaderPosInfo.field_0x0 = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
-					pathreaderPosInfo.field_0x4 = peVar12;
-					if (pathreaderPosInfo.field_0x0 == -1) {
-						pathreaderPosInfo.field_0x4 = peVar12 - 1;
-						pathreaderPosInfo.field_0x0 = peVar12;
+					pathreaderPosInfo.prevSegment = pPathPlane->pathFollowReader.GetNextPlace(peVar12, 1);
+					pathreaderPosInfo.currentSegment = peVar12;
+					if (pathreaderPosInfo.prevSegment == -1) {
+						pathreaderPosInfo.currentSegment = peVar12 - 1;
+						pathreaderPosInfo.prevSegment = peVar12;
 					}
 
-					pathreaderPosInfo.field_0x8 = local_4;
+					pathreaderPosInfo.segmentFraction = local_4;
 					if (1.0f < local_4) {
-						pathreaderPosInfo.field_0x8 = 1.0f;
+						pathreaderPosInfo.segmentFraction = 1.0f;
 					}
 
 					fVar13 = pCurPath->pathFollowReader.GetTimeOnSegment(&pathreaderPosInfo);
-					pCVar1 = (pCurPath->pathFollowReader).pActor3C_0x0;
+					pCVar1 = (pCurPath->pathFollowReader).pPathFollow;
 					if (((pCVar1->mode == 0) && (pCVar1->type == 0)) &&
-						(fabs(fVar13 - (pCurPath->pathFollowReader).barFullAmount_0x4) < 0.1f)) {
+						(fabs(fVar13 - (pCurPath->pathFollowReader).field_0x4) < 0.1f)) {
 						pHero = this->pRider;
 						iVar10 = 0;
 						if ((pHero != (CActorHero*)0x0) && (iVar10 = 0, pHero->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
@@ -1052,7 +1051,7 @@ void CActorJamGut::ManagePaths()
 					edF32Vector4SubHard(&local_50, &eStack64, &this->currentLocation);
 					local_50.y = 0.0f;
 					edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
-					fVar16 = (pCurPath->pathFollowReader).barFullAmount_0x4;
+					fVar16 = (pCurPath->pathFollowReader).field_0x4;
 					fVar14 = this->pathTimeOnSegment;
 					fVar15 = fVar16 * 0.25f;
 					if ((fVar15 <= fVar14) || (fVar13 <= fVar16 - fVar15)) {

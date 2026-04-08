@@ -47,6 +47,8 @@ public:
 
 	S_STREAM_REF<CPathFollow> pathFollow;
 
+	int field_0xc;
+
 	int nbMoneyInstances;
 	int nbSharedShadows;
 	int field_0x18;

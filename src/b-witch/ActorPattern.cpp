@@ -129,7 +129,7 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	edF32VECTOR4* pfVar1;
 	CLifeInterface* pCVar2;
-	CBehaviour* pCVar3;
+	CBehaviourPatternAlone* pCVar3;
 	int iVar4;
 	float fVar5;
 	float fVar6;
@@ -169,21 +169,18 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						}
 						else {
 							if (this->curBehaviourId == PATTERN_BEHAVIOUR_ALONE) {
-								IMPLEMENTATION_GUARD(
-								pCVar3 = GetBehaviour(this->curBehaviourId);
-								fVar5 = this->field_0x37c[1].vector_0x120.x;
-								if ((fVar5 != 0.0f) &&
-									(fVar7 = *static_cast<float*>((int)fVar5 + 0x30) - this->currentLocation.x
-										, fVar8 = *static_cast<float*>((int)fVar5 + 0x34) -
-										this->currentLocation.y,
-										fVar5 = *static_cast<float*>((int)fVar5 + 0x38) - this->currentLocation.z,
-										fVar6 = CActorMovable::FUN_00120250
-										(static_cast<float>(pCVar3)[0x24].pVTable, (CActorMovable*)this),
-										SQRT(fVar7 * fVar7 + fVar8 * fVar8 + fVar5 * fVar5) <= fVar6)) {
+								pCVar3 = static_cast<CBehaviourPatternAlone*>(GetBehaviour(this->curBehaviourId));
+								CActorHero* pCVar1 = this->field_0x37c->field_0x280;
+								if ((pCVar1 != (CActorHero*)0x0) &&
+									(fVar7 = pCVar1->currentLocation.x - this->currentLocation.x
+										, fVar8 = pCVar1->currentLocation.y - this->currentLocation.y,
+										fVar5 = pCVar1->currentLocation.z - this->currentLocation.z,
+										fVar6 = FUN_00120250(pCVar3->field_0x90),
+										sqrtf(fVar7 * fVar7 + fVar8 * fVar8 + fVar5 * fVar5) <= fVar6)) {
 									SetState(PATTERN_STATE_ALONE_FIRE_FIRST, -1);
 
 									return 1;
-								})
+								}
 							}
 
 							SetState(PATTERN_STATE_ALONE_CHASE, -1);

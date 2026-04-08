@@ -85,7 +85,7 @@ void CFxPath::ManageAll(uint count, CFx* aFx)
 						CPathFollowReaderAbsolute::ComputePosition
 						((pFx->vector_0x60).w + (pEVar4->field_0x48).z, &pEVar4->pActor44_20, (edF32VECTOR4*)pEVar4,
 							(edF32VECTOR4*)0x0, &SStack16);
-						*(float*)&pEVar4->field_0x20 = SStack16.field_0x8;
+						*(float*)&pEVar4->field_0x20 = SStack16.segmentFraction;
 						if ((pEVar4->field_0x58 & 8) == 0) {
 							fVar7 = (float)pEVar4->field_0x24;
 							fVar10 = *(float*)&pEVar4->field_0x4;

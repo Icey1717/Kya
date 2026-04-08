@@ -3328,6 +3328,37 @@ int CAnimation::GetAnimType_00242330(int animIndex)
 	return this->anmBinMetaAnimator.aAnimData[animIndex].animPlayState;
 }
 
+int CAnimation::GetPhysicalAnimIndex(int index)
+{
+	if (index < 0) {
+		return -1;
+	}
+
+	int* pKeyData = this->anmBinMetaAnimator.pAnimKeyEntryData;
+	int* pEntry = (int*)((char*)pKeyData + pKeyData[index]);
+	if (pEntry == (int*)0x0) {
+		return -1;
+	}
+
+	// pEntry[0] = event track ID; pEntry+1 is the parser data blob (same layout as edAnmStateParser::pData)
+	int* pData = pEntry + 1;
+
+	// pData[0] is the byte size of the offset array; the last entry holds the offset to pHdrA
+	// (matches the BuildDesc computation: pHdrA = (char*)pData + pData[(pData[0]>>2) - 1])
+	int lastIndex = (pData[0] >> 2) - 1;
+	edANM_HDR* pHdrA = (edANM_HDR*)((char*)pData + pData[lastIndex]);
+	if (pHdrA == (edANM_HDR*)0x0) {
+		return -1;
+	}
+
+	// field_0x4 == 0 means this HDR directly stores a physical animation index in keyIndex_0x8
+	if (pHdrA->field_0x4.asKey != 0) {
+		return -1;
+	}
+
+	return pHdrA->keyIndex_0x8.asKey;
+}
+
 bool CAnimation::SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices)
 {
 	bool bSuccess;

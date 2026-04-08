@@ -27,70 +27,32 @@ namespace Renderer
 			gNativeVertexBuffer.MergeData(vertexBufferData);
 		}
 
-		static void MergeIndexData()
+		static void UpdateInstanceData(Draw& draw)
 		{
-			assert(gCurrentDraw->instances.size() > 0);
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "MergeIndexData Merging instance: {}", gCurrentDraw->instances.size() - 1);
+			SimpleTexture* pTexture = draw.pTexture;
 
-			Draw::Instance& instance = gCurrentDraw->instances.back();
-			instance.indexCount += gNativeVertexBufferDataDraw.GetIndexTail();
-
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "MergeIndexData Merging instance: {} indexCount: {} indexStart: {} vertexStart: {}",
-				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
-
-			// Copy into the real buffer.
-			gNativeVertexBuffer.MergeData(gNativeVertexBufferDataDraw);
-			gNativeVertexBufferDataDraw.ResetAfterDraw();
-		}
-
-		class InstanceDataUpdate
-		{
-		public:
-			void UpdateInstanceData(Draw& draw)
-			{
-				SimpleTexture* pTexture = draw.pTexture;
-
-				if (!pTexture) {
-					return;
-				}
-
-				TextureRegisters textureRegisters = pTexture->GetTextureRegisters();
-
-				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
-
-				if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
-					pTexture->GetName();
-				}
-
-				if (pTexture->GetTextureRegisters().test.ATST == ATST_NEVER) {
-					pTexture->GetName();
-				}
-
-				if (draw.bIsAfailZOnly) {
-					static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
-					textureRegisters.test.ATST = inverted_atst[textureRegisters.test.ATST];
-				}
-
-				for (auto& instance : draw.instances) {
-					instance.perDrawData.alphaEnable = textureRegisters.test.ATE;
-					instance.perDrawData.alphaAtst   = textureRegisters.test.ATST;
-					instance.perDrawData.alphaAref   = textureRegisters.test.AREF;
-					instance.perDrawData.alphaAfail  = textureRegisters.test.AFAIL;
-				}
+			if (!pTexture) {
+				return;
 			}
 
-			void Reset()
-			{
+			TextureRegisters textureRegisters = pTexture->GetTextureRegisters();
+
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
+
+			if (draw.bIsAfailZOnly) {
+				static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
+				textureRegisters.test.ATST = inverted_atst[textureRegisters.test.ATST];
 			}
-		};
 
-		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
-		static void MapStaticUniformBuffer()
-		{
-
+			for (auto& instance : draw.instances) {
+				instance.perDrawData.alphaEnable = textureRegisters.test.ATE;
+				instance.perDrawData.alphaAtst   = textureRegisters.test.ATST;
+				instance.perDrawData.alphaAref   = textureRegisters.test.AREF;
+				instance.perDrawData.alphaAfail  = textureRegisters.test.AFAIL;
+			}
 		}
 
-		// Updates GPU side memory (Dynamic Uniform Buffers | Per Instance Data)
+		// Updates GPU side memory (Dynamic Storage Buffers | Per Instance Data)
 		static void MapStorageBuffers()
 		{
 			gModelBuffer.Map(GetCurrentFrame());
@@ -152,6 +114,10 @@ namespace Renderer
 
 		static void RecordEndRenderPass()
 		{
+			if (!gHasActiveRenderPass) {
+				return;
+			}
+
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 			vkCmdEndRenderPass(cmd);
 
@@ -181,9 +147,7 @@ namespace Renderer
 			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
 
 			// Color.
-			static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
-			assert(pvkCmdSetColorWriteEnableEXT);
-			pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+			gvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
 
 			std::array<VkBool32, 1> colorWriteMasks = {
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
@@ -196,9 +160,7 @@ namespace Renderer
 				};
 			}
 
-			static auto pvkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
-			assert(pvkCmdSetColorWriteMaskEXT);
-			pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+			gvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 		}
 
 		class DrawCommandRecorder
@@ -329,11 +291,6 @@ namespace Renderer
 			const Pipeline& pipeline = gRenderPass[RenderPassKey::Empty].GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-			static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
-			assert(pvkCmdSetColorWriteEnableEXT);
-			static auto pvkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
-			assert(pvkCmdSetColorWriteMaskEXT);
-
 			const std::array<VkBool32, 1> colorWriteMasks = {
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
 			};
@@ -359,8 +316,8 @@ namespace Renderer
 					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
 
 					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;
-					pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
-					pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+					gvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+					gvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 
 										vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, draw.pDescriptorSets, 0, nullptr);
 					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
@@ -400,11 +357,15 @@ namespace Renderer
 
 			gNativeVertexBuffer.BindBuffers(cmd);
 
-			// Explicitly clear the framebuffer attachments
+			// Transition to TRANSFER_DST_OPTIMAL, clear both attachments, then transition to
+			// READ_ONLY_OPTIMAL. This guarantees a clean framebuffer at the start of every frame
+			// regardless of which EClearMode the first native render pass uses.
+			// Render passes with LOAD_OP_CLEAR (EClearMode::ColorDepth / Depth / Color) use
+			// initialLayout = UNDEFINED and will re-clear on their own; this pre-clear is the
+			// safety net for frames where the first pass is EClearMode::None (LOAD_OP_LOAD).
 			VkClearColorValue clearColor = { {0.0f, 0.0f, 0.0f, 1.0f} };
 			VkClearDepthStencilValue depthStencil = { 0.0f, 0 };
 
-			// Color attachment subresource range
 			VkImageSubresourceRange colorRange{};
 			colorRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			colorRange.baseMipLevel = 0;
@@ -412,7 +373,6 @@ namespace Renderer
 			colorRange.baseArrayLayer = 0;
 			colorRange.layerCount = 1;
 
-			// Depth attachment subresource range
 			VkImageSubresourceRange depthRange{};
 			depthRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			depthRange.baseMipLevel = 0;
@@ -426,7 +386,6 @@ namespace Renderer
 			vkCmdClearColorImage(cmd, gFrameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &colorRange);
 			vkCmdClearDepthStencilImage(cmd, gFrameBuffer.depthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depthStencil, 1, &depthRange);
 
-			// Transition to read optimal for rendering
 			VulkanImage::TransitionImageLayout(gFrameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, colorRange.aspectMask, cmd);
 			VulkanImage::TransitionImageLayout(gFrameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, depthRange.aspectMask, cmd);
 		}
@@ -434,7 +393,6 @@ namespace Renderer
 		// Copy all our data to the GPU.
 		static void MapBuffers()
 		{
-			MapStaticUniformBuffer();
 			MapStorageBuffers();
 
 			gNativeVertexBuffer.MapData();
@@ -479,7 +437,7 @@ namespace Renderer
 					FillIndexData(instance);
 				}
 
-				drawInstanceDataUpdate.UpdateInstanceData(draw);
+				UpdateInstanceData(draw);
 			}
 
 			void RecordDrawCommands(Draw& draw)
@@ -552,7 +510,6 @@ namespace Renderer
 
 			void Reset()
 			{
-				drawInstanceDataUpdate.Reset();
 				drawCommandRecorder.Reset();
 
 				bRecordedCommands = false;
@@ -573,7 +530,6 @@ namespace Renderer
 
 			std::thread thread;
 			moodycamel::ReaderWriterQueue<Draw> draws;
-			InstanceDataUpdate drawInstanceDataUpdate;
 			DrawCommandRecorder drawCommandRecorder;
 			std::atomic<bool> bShouldStop = false;
 			std::atomic<bool> bRecordedCommands = false;

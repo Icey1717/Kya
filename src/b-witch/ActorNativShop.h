@@ -81,7 +81,7 @@ public:
 
 	int selectedPurchaseItemIndex;
 	int field_0x98;
-	undefined4 field_0x9c;
+	int bLocked;
 
 	CPathFollowReader pathFollowReader;
 
@@ -131,7 +131,7 @@ public:
 
 	char* field_0x16c;
 
-	uint field_0x170;
+	uint episodeThresholdLink;
 	uint field_0x174;
 	S_STREAM_REF<CActor> actorRef;
 	undefined4 field_0x17c;

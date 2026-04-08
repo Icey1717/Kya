@@ -1,13 +1,14 @@
 #include "PathFollow.h"
 #include "PathManager.h"
 #include "MathOps.h"
+#include "PoolAllocators.h"
 
 edF32VECTOR4 CPathFollow::gPathDefQuat = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 CPathFollow::CPathFollow()
 {
 	this->splinePointCount = 0;
-	this->field_0x14 = 0;
+	this->nbLeadInPoints = 0;
 	this->aSplinePoints = (edF32VECTOR4*)0x0;
 	this->aSplineRotationsEuler = (edF32VECTOR4*)0x0;
 	this->aSplineRotationsQuat = (edF32VECTOR4*)0;
@@ -31,7 +32,7 @@ void CPathFollow::Create(ByteCode* pByteCode)
 	pByteCode->GetS32();
 
 	this->splinePointCount = pByteCode->GetS32();
-	this->field_0x14 = 0;
+	this->nbLeadInPoints = 0;
 
 	if ((flags & 1) != 0) {
 		pcVar1 = pByteCode->currentSeekPos;
@@ -68,15 +69,14 @@ void CPathFollow::Create(ByteCode* pByteCode)
 
 		iVar3 = 0;
 		if (0 < (int)this->splinePointCount) {
-			iVar4 = 0;
 			do {
-				this->field_0x18 = this->field_0x18 | *(uint*)(this->field_0x30 + iVar4);
-				if ((*(uint*)(this->field_0x30 + iVar4) & 1) != 0) {
-					this->field_0x14 = iVar3;
+				this->field_0x18 = this->field_0x18 | this->field_0x30[iVar3];
+				if ((this->field_0x30[iVar3] & 1) != 0) {
+					this->nbLeadInPoints = iVar3;
 				}
+
 				iVar3 = iVar3 + 1;
-				iVar4 = iVar4 + 4;
-			} while (iVar3 < (int)this->splinePointCount);
+			} while (iVar3 < this->splinePointCount);
 		}
 	}
 
@@ -148,8 +148,13 @@ void CPathFollow::ComputeMatrix(edF32MATRIX4* pMatrix, int param_3)
 
 CPathFollowReaderAbsolute::CPathFollowReaderAbsolute()
 {
-	this->pActor3C_0x0 = (CPathFollow*)0x0;
-	this->field_0x10 = (float*)0x0;
+	this->pPathFollow = (CPathFollow*)0x0;
+	this->aSegmentDurations = (float*)0x0;
+}
+
+float dot_quat(edF32VECTOR4* a, edF32VECTOR4* b)
+{
+	return a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
 }
 
 void CPathFollowReaderAbsolute::Create(ByteCode* pByteCode)
@@ -181,7 +186,395 @@ void CPathFollowReaderAbsolute::Create(ByteCode* pByteCode)
 	return;
 }
 
-int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* param_4, float* param_5)
+void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow* pPathFollow, int type, int mode, int timing, int param_8)
+{
+	int count;
+	bool bVar1;
+	float* pfVar2;
+	edF32VECTOR4* peVar3;
+	edF32VECTOR4* peVar4;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
+
+	if (pPathFollow != (CPathFollow*)0x0) {
+		this->pPathFollow = pPathFollow;
+		this->field_0x4 = param_1;
+		this->totalTraversalTime = param_2;
+
+		iVar7 = 1;
+		count = this->pPathFollow->splinePointCount;
+		iVar8 = this->pPathFollow->nbLeadInPoints;
+		bVar1 = true;
+
+		if ((timing != 3) && (timing != 5)) {
+			bVar1 = false;
+		}
+		if ((!bVar1) && (param_8 == 0)) {
+			iVar7 = 0;
+		}
+
+		this->field_0x1c = iVar7;
+
+		if (this->pPathFollow->splinePointCount == 1) {
+			this->type = 0;
+			this->mode = 0;
+		}
+		else {
+			this->type = type;
+			this->mode = mode;
+		}
+
+		if (timing != 4) {
+			if (iVar8 == 0) {
+				this->totalTraversalTime = 0.0f;
+			}
+			if (count + -1 == iVar8) {
+				this->field_0x4 = 0.0f;
+			}
+		}
+
+		pfVar2 = NewPool_edF32(count);
+		this->aSegmentDurations = pfVar2;
+
+		if (pPathFollow->aSplineRotationsEuler != (edF32VECTOR4*)0x0) {
+			pPathFollow->aSplineRotationsQuat = pPathFollow->aSplineRotationsEuler;
+
+			for (iVar7 = 0; iVar7 < pPathFollow->splinePointCount; iVar7 = iVar7 + 1) {
+				// Convert the points from euler to quat.
+				edF32Matrix4FromEulerSoft(&eStack80, &pPathFollow->aSplineRotationsEuler[iVar7].xyz, "XYZ");
+				edQuatFromMatrix4(&pPathFollow->aSplineRotationsEuler[iVar7], &eStack80);
+			}
+
+			pPathFollow->aSplineRotationsEuler = (edF32VECTOR4*)0x0;
+		}
+
+		switch (timing) {
+		case 0:
+		case 4:
+			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
+				if (this->pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+					peVar4 = &gF32Vertex4Zero;
+				}
+				else {
+					if (count == 0) {
+						trap(7);
+					}
+					peVar4 = this->pPathFollow->aSplinePoints + (iVar7 + 1) % count;
+				}
+
+				peVar3 = this->pPathFollow->aSplinePoints;
+
+				if (peVar3 == (edF32VECTOR4*)0x0) {
+					peVar3 = &gF32Vertex4Zero;
+				}
+				else {
+					peVar3 = peVar3 + iVar7;
+				}
+
+				local_10 = *peVar3 - *peVar4;
+
+				fVar10 = edF32Vector4GetDistHard(&local_10);
+				this->aSegmentDurations[iVar7] = fVar10;
+			}
+			break;
+		case 1:
+			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
+				edF32VECTOR4* pSplineRotationsQuat = this->pPathFollow->aSplineRotationsQuat;
+
+				if (pSplineRotationsQuat == 0) {
+					peVar4 = &CPathFollow::gPathDefQuat;
+				}
+				else {
+					peVar4 = &pSplineRotationsQuat[iVar7];
+				}
+
+				if (this->pPathFollow->aSplineRotationsQuat == 0) {
+					peVar3 = &CPathFollow::gPathDefQuat;
+				}
+				else {
+					if (count == 0) {
+						trap(7);
+					}
+					peVar3 = &this->pPathFollow->aSplineRotationsQuat[((iVar7 + 1) % count)];
+				}
+
+				fVar9 = dot_quat(peVar4, peVar3);
+				fVar10 = 1.0f;
+				if (fabs(fVar9) <= 1.0f) {
+					fVar10 = fabs(fVar9);
+				}
+
+				fVar10 = acosf(fVar10);
+				this->aSegmentDurations[iVar7] = fabs(fVar10);
+			}
+			break;
+		default:
+			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
+				this->aSegmentDurations[iVar7] = 1.0f;
+			}
+			break;
+		case 3:
+			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar10 = 0.0f;
+				}
+				else {
+					fVar10 = pFloatData[iVar7];
+				}
+
+				this->aSegmentDurations[iVar7] = fVar10;
+			}
+			break;
+		case 5:
+			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
+				if (this->pPathFollow->aSplinePoints == (edF32VECTOR4*)0x0) {
+					peVar4 = &gF32Vertex4Zero;
+				}
+				else {
+					if (count == 0) {
+						trap(7);
+					}
+
+					peVar4 = this->pPathFollow->aSplinePoints + (iVar7 + 1) % count;
+				}
+
+				peVar3 = this->pPathFollow->aSplinePoints;
+				if (peVar3 == (edF32VECTOR4*)0x0) {
+					peVar3 = &gF32Vertex4Zero;
+				}
+				else {
+					peVar3 = peVar3 + iVar7;
+				}
+				local_10 = *peVar3 - *peVar4;
+
+				float* pDelays = this->pPathFollow->aDelays;
+				if (pDelays == 0) {
+					fVar10 = 0.0;
+				}
+				else {
+					fVar10 = pDelays[iVar7];
+				}
+
+				fVar9 = 0.0f;
+				if (0.0f < fVar10) {
+					pDelays = this->pPathFollow->aDelays;
+					if (pDelays != 0) {
+						fVar9 = pDelays[iVar7];
+					}
+
+					fVar10 = edF32Vector4GetDistHard(&local_10);
+					this->aSegmentDurations[iVar7] = fVar10 / fVar9;
+				}
+				else {
+					this->aSegmentDurations[iVar7] = 0.0f;
+				}
+			}
+		}
+
+
+		fVar10 = 0.0f;
+		for (iVar7 = 0; iVar7 < iVar8; iVar7 = iVar7 + 1) {
+			fVar10 = fVar10 + this->aSegmentDurations[iVar7];
+		}
+
+		fVar9 = 0.0f;
+		for (iVar7 = iVar8; iVar7 < count; iVar7 = iVar7 + 1) {
+			fVar9 = fVar9 + this->aSegmentDurations[iVar7];
+		}
+
+		iVar7 = 0;
+		if (fVar9 + fVar10 < 0.001f) {
+			for (; iVar7 < count; iVar7 = iVar7 + 1) {
+				this->aSegmentDurations[iVar7] = 1.0f;
+			}
+
+			fVar10 = (float)iVar8;
+			fVar9 = (float)(count - iVar8);
+		}
+
+		fVar13 = 0.0f;
+		fVar14 = 0.0f;
+
+		if (this->field_0x1c == 0) {
+			for (iVar7 = 0; iVar5 = iVar8, iVar7 < iVar8; iVar7 = iVar7 + 1) {
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar11 = 0.0f;
+				}
+				else {
+					fVar11 = pFloatData[iVar7];
+				}
+
+				fVar13 = fVar13 + fVar11;
+			}
+
+			for (; iVar5 < count; iVar5 = iVar5 + 1) {
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar11 = 0.0f;
+				}
+				else {
+					fVar11 = pFloatData[iVar5];
+				}
+
+				fVar14 = fVar14 + fVar11;
+			}
+		}
+
+		if ((this->type == 0) || (this->type != 1)) {
+			if (this->mode != 1) {
+				fVar11 = 0.0;
+				fVar12 = this->aSegmentDurations[count - 1];
+				this->aSegmentDurations[count - 1] = 0.0;
+				fVar9 = fVar9 - fVar12;
+				if (this->field_0x1c == 0) {
+					float* pFloatData = this->pPathFollow->aDelays;
+
+					if (pFloatData != (float*)0x0) {
+						fVar11 = pFloatData[count - 1];
+					}
+
+					fVar14 = fVar14 - fVar11;
+				}
+			}
+		}
+		else {
+			fVar9 = (fVar9 - this->aSegmentDurations[count + -1]) * 2.0f;
+
+			if (this->field_0x1c == 0) {
+
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar11 = 0.0f;
+				}
+				else {
+					fVar11 = pFloatData[iVar8];
+				}
+
+				pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar12 = 0.0f;
+				}
+				else {
+					fVar12 = pFloatData[count - 1];
+				}
+
+				fVar14 = (fVar14 * 2.0f - fVar11) - fVar12;
+			}
+		}
+
+		if (timing != 4) {
+			if (this->totalTraversalTime == 0.0f) {
+				this->totalTraversalTime = fVar10 + fVar13;
+			}
+
+			if (this->field_0x4 == 0.0f) {
+				this->field_0x4 = fVar9 + fVar14;
+			}
+
+			fVar11 = this->totalTraversalTime - fVar13;
+			fVar12 = this->field_0x4 - fVar14;
+		}
+		else {
+			fVar11 = fVar10 / this->totalTraversalTime;
+			fVar12 = fVar9 / this->field_0x4;
+
+			this->totalTraversalTime = fVar11 + fVar13;
+			this->field_0x4 = fVar12 + fVar14;
+		}
+
+		fVar13 = 1.0f;
+		if (fVar10 != 0.0f) {
+			fVar13 = fVar10;
+		}
+		fVar10 = 1.0f;
+		if (fVar9 != 0.0f) {
+			fVar10 = fVar9;
+		}
+
+		iVar5 = 0;
+		iVar7 = count;
+		if (this->field_0x1c == 0) {
+			for (; iVar6 = iVar8, iVar5 < iVar8; iVar5 = iVar5 + 1) {
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar9 = 0.0f;
+				}
+				else {
+					fVar9 = pFloatData[iVar5];
+				}
+
+				this->aSegmentDurations[iVar5] = (fVar11 * this->aSegmentDurations[iVar5]) / fVar13 + fVar9;
+			}
+
+			for (; iVar6 < count; iVar6 = iVar6 + 1) {
+				float* pFloatData = this->pPathFollow->aDelays;
+
+				if (pFloatData == (float*)0x0) {
+					fVar9 = 0.0f;
+				}
+				else {
+					fVar9 = pFloatData[iVar6];
+				}
+
+				this->aSegmentDurations[iVar6] = (fVar12 * this->aSegmentDurations[iVar6]) / fVar10 + fVar9;
+			}
+		}
+		else {
+			for (iVar5 = 0; iVar6 = iVar8, iVar5 < iVar8; iVar5 = iVar5 + 1) {
+				this->aSegmentDurations[iVar5] = (fVar11 * this->aSegmentDurations[iVar5]) / fVar13;
+			}
+
+			for (; iVar6 < count; iVar6 = iVar6 + 1) {
+				this->aSegmentDurations[iVar6] = (fVar12 * this->aSegmentDurations[iVar6]) / fVar10;
+			}
+		}
+
+		do {
+			iVar7 = iVar7 + -1;
+			if (iVar7 < iVar8) break;
+		} while (this->aSegmentDurations[iVar7] == 0.0f);
+
+		if (iVar8 <= iVar7) {
+			this->aSegmentDurations[iVar7] = this->aSegmentDurations[iVar7] + 0.0001f;
+		}
+
+		this->midPoint = 0.0f;
+
+		for (; iVar8 < count + -1; iVar8 = iVar8 + 1) {
+			this->midPoint = this->midPoint + this->aSegmentDurations[iVar8];
+		}
+	}
+	return;
+}
+
+void CPathFollowReaderAbsolute::Create(float param_1, CPathFollow* pPathFollow, int type)
+{
+	if (pPathFollow != (CPathFollow*)0x0) {
+		Create(param_1, param_1, pPathFollow, pPathFollow->mode, pPathFollow->type, 4, type);
+	}
+
+	return;
+}
+
+int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* param_4, float* param_5)
 {
 	int iVar1;
 	float* pfVar2;
@@ -190,85 +583,84 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 	int iVar5;
 	int iVar6;
 	float fVar7;
-	float fVar8;
+	float totalTime;
 	float fVar9;
-	float fVar10;
+	float loopPeriod;
 
-	if (param_1 < 0.0f) {
-		param_1 = 0.0f;
+	if (curTime < 0.0f) {
+		curTime = 0.0f;
 	}
 
-	fVar8 = this->field_0x8;
-	fVar10 = 0.0f;
-	iVar5 = this->pActor3C_0x0->splinePointCount;
-	iVar1 = this->pActor3C_0x0->field_0x14;
+	totalTime = this->totalTraversalTime;
+	loopPeriod = 0.0f;
+	iVar5 = this->pPathFollow->splinePointCount;
+	iVar1 = this->pPathFollow->nbLeadInPoints;
 	iVar6 = 0;
 
-	if ((fVar8 == 0.0f) || (fVar8 <= param_1)) {
-		param_1 = param_1 - fVar8;
-		fVar10 = this->barFullAmount_0x4;
-		if (fVar10 == 0.0f) {
-			param_1 = -0.0001f;
+	if ((totalTime == 0.0f) || (totalTime <= curTime)) {
+		curTime = curTime - totalTime;
+
+		loopPeriod = this->field_0x4;
+		if (loopPeriod == 0.0f) {
+			curTime = -0.0001f;
 		}
 		else {
-			iVar4 = this->mode;
+			if ((this->mode == 0) || ((this->mode != 2 && (this->mode != 1)))) {
+				loopPeriod = loopPeriod - 0.0001f;
 
-			if ((iVar4 == 0) || ((iVar4 != 2 && (iVar4 != 1)))) {
-				fVar10 = fVar10 - 0.0001f;
-
-				if ((fVar10 < param_1) && (iVar6 = 2, param_1 = fVar10, fVar10 < 0.0f)) {
-					param_1 = 0.0f;
+				if ((loopPeriod < curTime) && (iVar6 = 2, curTime = loopPeriod, loopPeriod < 0.0f)) {
+					curTime = 0.0f;
 				}
 			}
 			else {
-				param_1 = fmodf(param_1, fVar10);
+				curTime = fmodf(curTime, loopPeriod);
 			}
 		}
 
-		if ((this->type != 1) || (fVar8 = this->field_0xc, param_1 < fVar8)) {
-			fVar10 = 0.0f;
+		if ((this->type != 1) || (totalTime = this->midPoint, curTime < totalTime)) {
+			loopPeriod = 0.0f;
 			iVar4 = iVar1;
 
-			if (0.0f <= param_1) {
-				pfVar2 = this->field_0x10 + iVar1;
+			if (0.0f <= curTime) {
+				pfVar2 = this->aSegmentDurations + iVar1;
 
 				do {
 					iVar4 = iVar4 + 1;
-					fVar10 = fVar10 + *pfVar2;
+					loopPeriod = loopPeriod + *pfVar2;
 					pfVar2 = pfVar2 + 1;
-				} while (fVar10 <= param_1);
+				} while (loopPeriod <= curTime);
 			}
 
 			iVar3 = iVar4 + -1;
-			fVar8 = fVar10 - this->field_0x10[iVar3];
+			totalTime = loopPeriod - this->aSegmentDurations[iVar3];
 
 			if (iVar5 == iVar4) {
 				iVar4 = iVar1;
 			}
 		}
 		else {
-			if (param_1 == fVar8) {
+			if (curTime == totalTime) {
 				iVar3 = iVar5 + -1;
 				iVar4 = iVar5 + -2;
-				fVar10 = fVar8 + this->field_0x10[iVar4];
+				loopPeriod = totalTime + this->aSegmentDurations[iVar4];
 			}
 			else {
 				iVar4 = iVar5 + -1;
-				fVar10 = fVar8;
+				loopPeriod = totalTime;
 
 				if (this->field_0x1c == 0) {
-					if (fVar8 < param_1) {
+					if (totalTime < curTime) {
 						iVar5 = iVar4 * 4;
-						for (; fVar10 = fVar8, fVar8 < param_1; fVar8 = fVar8 + fVar10 + (this->field_0x10[iVar4] - fVar7)) {
-							pfVar2 = this->pActor3C_0x0->aDelays;
+						for (; loopPeriod = totalTime, totalTime < curTime; totalTime = totalTime + loopPeriod + (this->aSegmentDurations[iVar4] - fVar7)) {
+							pfVar2 = this->pPathFollow->aDelays;
 							if (pfVar2 == (float*)0x0) {
-								fVar10 = 0.0f;
+								loopPeriod = 0.0f;
 							}
 							else {
-								fVar10 = pfVar2[iVar4];
+								loopPeriod = pfVar2[iVar4];
 							}
 
-							pfVar2 = this->pActor3C_0x0->aDelays;
+							pfVar2 = this->pPathFollow->aDelays;
 							iVar5 = iVar5 + -4;
 							iVar4 = iVar4 + -1;
 
@@ -281,7 +673,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 						}
 					}
 
-					pfVar2 = this->pActor3C_0x0->aDelays;
+					pfVar2 = this->pPathFollow->aDelays;
 					iVar3 = iVar4 + 1;
 
 					if (pfVar2 == (float*)0x0) {
@@ -292,46 +684,46 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 					}
 
 					if (pfVar2 == (float*)0x0) {
-						fVar8 = 0.0f;
+						totalTime = 0.0f;
 					}
 					else {
-						fVar8 = pfVar2[iVar3];
+						totalTime = pfVar2[iVar3];
 					}
 
-					fVar8 = ((fVar10 - this->field_0x10[iVar4]) + fVar7) - fVar8;
+					totalTime = ((loopPeriod - this->aSegmentDurations[iVar4]) + fVar7) - totalTime;
 				}
 				else {
-					if (fVar8 < param_1) {
-						pfVar2 = this->field_0x10 + iVar4;
+					if (totalTime < curTime) {
+						pfVar2 = this->aSegmentDurations + iVar4;
 
 						do {
 							pfVar2 = pfVar2 + -1;
 							iVar4 = iVar4 + -1;
-							fVar8 = fVar8 + *pfVar2;
-							fVar10 = fVar8;
-						} while (fVar8 < param_1);
+							totalTime = totalTime + *pfVar2;
+							loopPeriod = totalTime;
+						} while (totalTime < curTime);
 					}
 
 					iVar3 = iVar4 + 1;
-					fVar8 = fVar10 - this->field_0x10[iVar4];
+					totalTime = loopPeriod - this->aSegmentDurations[iVar4];
 				}
 			}
 		}
 	}
 	else {
 		iVar4 = 0;
-		if (0.0f <= param_1) {
-			pfVar2 = this->field_0x10;
+		if (0.0f <= curTime) {
+			pfVar2 = this->aSegmentDurations;
 
 			do {
 				iVar4 = iVar4 + 1;
-				fVar10 = fVar10 + *pfVar2;
+				loopPeriod = loopPeriod + *pfVar2;
 				pfVar2 = pfVar2 + 1;
-			} while (fVar10 <= param_1);
+			} while (loopPeriod <= curTime);
 		}
 
 		iVar3 = iVar4 + -1;
-		fVar8 = fVar10 - this->field_0x10[iVar3];
+		totalTime = loopPeriod - this->aSegmentDurations[iVar3];
 
 		if (iVar5 == iVar4) {
 			iVar4 = 0;
@@ -339,7 +731,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 	}
 
 	if (this->field_0x1c == 0) {
-		pfVar2 = this->pActor3C_0x0->aDelays;
+		pfVar2 = this->pPathFollow->aDelays;
 
 		if (pfVar2 == (float*)0x0) {
 			fVar7 = 0.0f;
@@ -352,14 +744,14 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 		fVar7 = 0.0f;
 	}
 
-	fVar9 = (param_1 - fVar8) - fVar7;
+	fVar9 = (curTime - totalTime) - fVar7;
 
 	if (fVar9 < 0.0f) {
 		fVar9 = 0.0f;
 		iVar6 = 1;
 	}
 
-	fVar7 = (fVar10 - fVar8) - fVar7;
+	fVar7 = (loopPeriod - totalTime) - fVar7;
 
 	if (0.0f < fVar7) {
 		fVar9 = fVar9 / fVar7;
@@ -389,13 +781,13 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 	int local_8;
 	float local_4;
 
-	if (this->pActor3C_0x0 == (CPathFollow*)0x0) {
+	if (this->pPathFollow == (CPathFollow*)0x0) {
 		iVar1 = 2;
 	}
 	else {
 		iVar1 = ComputeSegment(param_1, &local_8, &local_c, &local_4);
 
-		peVar3 = this->pActor3C_0x0->aSplinePoints;
+		peVar3 = this->pPathFollow->aSplinePoints;
 		if (peVar3 == (edF32VECTOR4*)0x0) {
 			peVar3 = &gF32Vertex4Zero;
 		}
@@ -403,7 +795,7 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 			peVar3 = peVar3 + local_8;
 		}
 
-		peVar2 = this->pActor3C_0x0->aSplinePoints;
+		peVar2 = this->pPathFollow->aSplinePoints;
 		if (peVar2 == (edF32VECTOR4*)0x0) {
 			peVar2 = &gF32Vertex4Zero;
 		}
@@ -439,9 +831,9 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 				ComputeTangent(local_4, param_4, local_8, local_c);)
 		}
 		if (pPathReaderPosInfo != (S_PATHREADER_POS_INFO*)0x0) {
-			pPathReaderPosInfo->field_0x0 = local_8;
-			pPathReaderPosInfo->field_0x4 = local_c;
-			pPathReaderPosInfo->field_0x8 = local_4;
+			pPathReaderPosInfo->prevSegment = local_8;
+			pPathReaderPosInfo->currentSegment = local_c;
+			pPathReaderPosInfo->segmentFraction = local_4;
 		}
 	}
 	return iVar1;
@@ -463,13 +855,13 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 	int pointA;
 	float local_4;
 
-	if (this->pActor3C_0x0 == (CPathFollow*)0x0) {
+	if (this->pPathFollow == (CPathFollow*)0x0) {
 		iVar1 = 2;
 	}
 	else {
 		iVar1 = ComputeSegment(param_1, &pointA, &pointB, &local_4);
 
-		pPointA = this->pActor3C_0x0->aSplineRotationsQuat;
+		pPointA = this->pPathFollow->aSplineRotationsQuat;
 		if (pPointA == (edF32VECTOR4*)0x0) {
 			pPointA = &CPathFollow::gPathDefQuat;
 		}
@@ -477,7 +869,7 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 			pPointA = pPointA + pointB;
 		}
 
-		pPointB = this->pActor3C_0x0->aSplineRotationsQuat;
+		pPointB = this->pPathFollow->aSplineRotationsQuat;
 		if (pPointB == (edF32VECTOR4*)0x0) {
 			pPointB = &CPathFollow::gPathDefQuat;
 		}
@@ -488,7 +880,7 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 		edQuatShortestSLERPAccurate(local_4, &eStack32, pPointA, pPointB);
 		edQuatToMatrix4Hard(&eStack32, pMatrix);
 
-		pPointA = this->pActor3C_0x0->aSplinePoints;
+		pPointA = this->pPathFollow->aSplinePoints;
 		if (pPointA == (edF32VECTOR4*)0x0) {
 			pPointA = &gF32Vertex4Zero;
 		}
@@ -496,7 +888,7 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 			pPointA = pPointA + pointA;
 		}
 
-		pPointB = this->pActor3C_0x0->aSplinePoints;
+		pPointB = this->pPathFollow->aSplinePoints;
 		if (pPointB == (edF32VECTOR4*)0x0) {
 			pPointB = &gF32Vertex4Zero;
 		}
@@ -514,9 +906,9 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 		}
 
 		if (param_5 != (S_PATHREADER_POS_INFO*)0x0) {
-			param_5->field_0x0 = pointA;
-			param_5->field_0x4 = pointB;
-			param_5->field_0x8 = local_4;
+			param_5->prevSegment = pointA;
+			param_5->currentSegment = pointB;
+			param_5->segmentFraction = local_4;
 		}
 	}
 
@@ -536,7 +928,7 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 	float fVar9;
 	edF32VECTOR4 local_10;
 
-	pPointA = this->pActor3C_0x0->aSplinePoints;
+	pPointA = this->pPathFollow->aSplinePoints;
 	if (pPointA == (edF32VECTOR4*)0x0) {
 		pPointA = &gF32Vertex4Zero;
 	}
@@ -544,7 +936,7 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 		pPointA = pPointA + pointB;
 	}
 
-	pPointB = this->pActor3C_0x0->aSplinePoints;
+	pPointB = this->pPathFollow->aSplinePoints;
 	if (pPointB == (edF32VECTOR4*)0x0) {
 		pPointB = &gF32Vertex4Zero;
 	}
@@ -556,12 +948,12 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 	edF32Vector4SafeNormalize1Hard(param_3, param_3);
 
 	if (param_1 < 0.1f) {
-		iVar1 = this->pActor3C_0x0->splinePointCount;
+		iVar1 = this->pPathFollow->splinePointCount;
 		if (iVar1 == 0) {
 			trap(7);
 		}
 
-		pPointA = this->pActor3C_0x0->aSplinePoints;
+		pPointA = this->pPathFollow->aSplinePoints;
 		if (pPointA == (edF32VECTOR4*)0x0) {
 			pPointA = &gF32Vertex4Zero;
 		}
@@ -569,7 +961,7 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 			pPointA = pPointA + ((pointB * 2 - pointA) + iVar1) % iVar1;
 		}
 
-		pPointB = this->pActor3C_0x0->aSplinePoints;
+		pPointB = this->pPathFollow->aSplinePoints;
 		if (pPointB == (edF32VECTOR4*)0x0) {
 			pPointB = &gF32Vertex4Zero;
 		}
@@ -585,12 +977,12 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 	}
 	else {
 		if (0.9f < param_1) {
-			iVar1 = this->pActor3C_0x0->splinePointCount;
+			iVar1 = this->pPathFollow->splinePointCount;
 			if (iVar1 == 0) {
 				trap(7);
 			}
 
-			pPointA = this->pActor3C_0x0->aSplinePoints;
+			pPointA = this->pPathFollow->aSplinePoints;
 			if (pPointA == (edF32VECTOR4*)0x0) {
 				pPointA = &gF32Vertex4Zero;
 			}
@@ -598,7 +990,7 @@ void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* para
 				pPointA = pPointA + pointA;
 			}
 
-			pPointB = this->pActor3C_0x0->aSplinePoints;
+			pPointB = this->pPathFollow->aSplinePoints;
 			if (pPointB == (edF32VECTOR4*)0x0) {
 				pPointB = &gF32Vertex4Zero;
 			}
@@ -625,13 +1017,13 @@ float CPathFollowReaderAbsolute::GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInf
 	float fVar4;
 	float fVar5;
 
-	iVar1 = pPosInfo->field_0x4;
+	iVar1 = pPosInfo->currentSegment;
 	fVar5 = 0.0f;
 	iVar3 = 0;
 
 	if (0 < iVar1) {
 		if (8 < iVar1) {
-			pfVar2 = this->field_0x10;
+			pfVar2 = this->aSegmentDurations;
 			do {
 				iVar3 = iVar3 + 8;
 				fVar5 = fVar5 + *pfVar2 + pfVar2[1] + pfVar2[2] + pfVar2[3] + pfVar2[4] + pfVar2[5] +
@@ -641,17 +1033,17 @@ float CPathFollowReaderAbsolute::GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInf
 		}
 
 		if (iVar3 < iVar1) {
-			pfVar2 = this->field_0x10 + iVar3;
+			pfVar2 = this->aSegmentDurations + iVar3;
 			do {
 				iVar3 = iVar3 + 1;
 				fVar5 = fVar5 + *pfVar2;
 				pfVar2 = pfVar2 + 1;
-			} while (iVar3 < pPosInfo->field_0x4);
+			} while (iVar3 < pPosInfo->currentSegment);
 		}
 	}
 
 	if (this->field_0x1c == 0) {
-		pfVar2 = this->pActor3C_0x0->aDelays;
+		pfVar2 = this->pPathFollow->aDelays;
 		if (pfVar2 == (float*)0x0) {
 			fVar4 = 0.0f;
 		}
@@ -659,10 +1051,10 @@ float CPathFollowReaderAbsolute::GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInf
 			fVar4 = pfVar2[iVar3];
 		}
 
-		fVar4 = pPosInfo->field_0x8 * (this->field_0x10[iVar3] - fVar4);
+		fVar4 = pPosInfo->segmentFraction * (this->aSegmentDurations[iVar3] - fVar4);
 	}
 	else {
-		fVar4 = pPosInfo->field_0x8 * this->field_0x10[iVar3];
+		fVar4 = pPosInfo->segmentFraction * this->aSegmentDurations[iVar3];
 	}
 
 	return fVar5 + fVar4;
@@ -691,7 +1083,7 @@ int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 		iVar4 = -1;
 	}
 	else {
-		if (((param_2 == pCVar1->field_0x14) && ((param_3 == 0 && (this->splinePointIndex < this->field_0x8)))) ||
+		if (((param_2 == pCVar1->nbLeadInPoints) && ((param_3 == 0 && (this->splinePointIndex < this->field_0x8)))) ||
 			((param_2 == pCVar1->splinePointCount + -1 && (param_3 != 0)))) {
 			if (uVar2 == 1) {
 				if ((param_3 == 0) && (pCVar1->type != 1)) {
@@ -702,7 +1094,7 @@ int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 			}
 
 			if ((uVar2 == 0) && (pCVar1->type == 1)) {
-				iVar3 = pCVar1->field_0x14;
+				iVar3 = pCVar1->nbLeadInPoints;
 				fVar5 = fmodf((float)((param_2 + pCVar1->splinePointCount + -1) - iVar3), (float)(((pCVar1->splinePointCount + -1) - iVar3) * 2));
 				param_2 = ((int)fVar5 - iVar4) + iVar3;
 			}

@@ -119,14 +119,14 @@ LAB_001c2930:
 		else {
 			if ((uVar3 == 2) || (uVar3 == 1)) {
 				if (iVar5 == 0) {
-					if (((pFollow->mode == 0) && (this->splinePointIndex == pFollow->field_0x14)) &&
-						(pFollow->field_0x14 < this->field_0x8)) {
+					if (((pFollow->mode == 0) && (this->splinePointIndex == pFollow->nbLeadInPoints)) &&
+						(pFollow->nbLeadInPoints < this->field_0x8)) {
 						this->splinePointIndex = iVar7;
 					}
 				}
 				else {
 					if ((pFollow->mode == 0) && (this->splinePointIndex + 1 == iVar7)) {
-						this->splinePointIndex = pFollow->field_0x14 + -1;
+						this->splinePointIndex = pFollow->nbLeadInPoints + -1;
 					}
 				}
 			}
@@ -240,7 +240,7 @@ int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 		iVar4 = -1;
 	}
 	else {
-		if (((param_2 == pCVar1->field_0x14) && ((param_3 != 0 && (this->splinePointIndex < this->field_0x8)))) ||
+		if (((param_2 == pCVar1->nbLeadInPoints) && ((param_3 != 0 && (this->splinePointIndex < this->field_0x8)))) ||
 			((param_2 == pCVar1->splinePointCount + -1 && (param_3 == 0)))) {
 			if (uVar2 == 1) {
 				if ((param_3 != 0) && (pCVar1->type != 1)) {
@@ -250,7 +250,7 @@ int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 			}
 
 			if ((uVar2 == 0) && (pCVar1->type == 1)) {
-				iVar3 = pCVar1->field_0x14;
+				iVar3 = pCVar1->nbLeadInPoints;
 				fVar5 = fmodf((float)((param_2 + pCVar1->splinePointCount + -1) - iVar3), (float)(((pCVar1->splinePointCount + -1) - iVar3) * 2));
 				param_2 = ((int)fVar5 - iVar4) + iVar3;
 			}
@@ -5003,7 +5003,7 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 	edF32VECTOR4 local_20;
 	S_PATHREADER_POS_INFO SStack16;
 
-	if (pPathFollowReaderAbs->pActor3C_0x0 == (CPathFollow*)0x0) {
+	if (pPathFollowReaderAbs->pPathFollow == (CPathFollow*)0x0) {
 		iVar4 = 2;
 		if (pMatrix == (edF32MATRIX4*)0x0) {
 			local_20 = this->baseLocation;
@@ -5017,9 +5017,9 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 		}
 
 		if (pPathReaderPosInfo != (S_PATHREADER_POS_INFO*)0x0) {
-			pPathReaderPosInfo->field_0x0 = 0;
-			pPathReaderPosInfo->field_0x4 = 0;
-			pPathReaderPosInfo->field_0x8 = 0.0f;
+			pPathReaderPosInfo->prevSegment = 0;
+			pPathReaderPosInfo->currentSegment = 0;
+			pPathReaderPosInfo->segmentFraction = 0.0f;
 		}
 	}
 	else {
@@ -5053,15 +5053,15 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 
 		if (pCVar1 != (CCollision*)0x0) {
 	
-			iVar2 = pPathFollowReaderAbs->pActor3C_0x0->field_0x30;
+			iVar2 = pPathFollowReaderAbs->pPathFollow->field_0x30;
 			if (iVar2 == (uint*)0x0) {
 				uVar5 = 0;
 			}
 			else {
-				uVar5 = iVar2[pPathReaderPosInfo->field_0x4];
+				uVar5 = iVar2[pPathReaderPosInfo->currentSegment];
 			}
 
-			uVar3 = pPathFollowReaderAbs->pActor3C_0x0->field_0x18;
+			uVar3 = pPathFollowReaderAbs->pPathFollow->field_0x18;
 
 			if ((uVar3 & 2) != 0) {
 				if ((uVar5 & 2) == 0) {

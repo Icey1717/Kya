@@ -19,7 +19,9 @@
 #include "ActorWolfen.h"
 #include "ActorJamGut.h"
 #include "ActorShip.h"
+#include "ActorNativShop.h"
 #include "ActorSwitch.h"
+#include "ActorMovingPlatform.h"
 #include "LargeObject.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
@@ -33,7 +35,9 @@
 #include "Actor/DebugActorBehaviour.h"
 #include "Actor/DebugActorJamGut.h"
 #include "Actor/DebugActorShip.h"
+#include "Actor/DebugActorNativShop.h"
 #include "Actor/DebugActorSwitch.h"
+#include "Actor/DebugActorMovingPlatform.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Native/NativeDebugShapes.h"
@@ -839,10 +843,22 @@ namespace Debug {
 			Debug::Actor::Ship::ShowShipActorDetails(pShipActor);
 		}
 
+		if (pActor->typeID == NATIV_SHOP) {
+			CActorNativShop* pNativShopActor = static_cast<CActorNativShop*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::NativShop::ShowNativShopActorDetails(pNativShopActor);
+		}
+
 		if (pActor->typeID == SWITCH) {
 			CActorSwitch* pSwitchActor = static_cast<CActorSwitch*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Switch::ShowActorDetails(pSwitchActor);
+		}
+
+		if (pActor->typeID == MOVING_PLATFORM) {
+			CActorMovingPlatform* pPlatformActor = static_cast<CActorMovingPlatform*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::MovingPlatform::ShowActorDetails(pPlatformActor);
 		}
 	}
 

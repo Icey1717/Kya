@@ -350,7 +350,7 @@ void CActorAraignos::BehaviourDefault_Manage()
 	undefined4* local_4;
 	CAnimation* pAnimation;
 
-	if ((this->pathFollowAbsolute).pActor3C_0x0 == (CPathFollow*)0x0) {
+	if ((this->pathFollowAbsolute).pPathFollow == (CPathFollow*)0x0) {
 		local_f0.field_0x80 = this->baseLocation;
 		SV_UpdatePosition_Rel(&local_f0.field_0x80, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 	}

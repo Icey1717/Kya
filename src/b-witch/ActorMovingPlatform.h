@@ -16,6 +16,21 @@
 #define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER			0x8
 #define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW				0x9
 #define MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM			0xa
+#define MOVING_PLATFORM_BEHAVIOUR_COUNT						0xb
+
+#define MOVING_PLATFORM_STATE_STAND 0x5
+#define MOVING_PLATFORM_STATE_MOVING 0x6
+#define MOVING_PLATFORM_STATE_TRANSITION_A 0x7
+#define MOVING_PLATFORM_STATE_AT_ENDPOINT 0x8
+#define MOVING_PLATFORM_STATE_WAITING 0x9
+#define MOVING_PLATFORM_STATE_TRANSITION_B 0xa
+#define MOVING_PLATFORM_STATE_TRAJ_TO_B 0xb
+#define MOVING_PLATFORM_STATE_AT_WAYPOINT 0xc
+#define MOVING_PLATFORM_STATE_TRAJ_TO_A 0xd
+#define MOVING_PLATFORM_STATE_IDLE_TRIGGERED 0xe
+#define MOVING_PLATFORM_STATE_SLAB_OFF_TO_ON 0xf
+#define MOVING_PLATFORM_STATE_SLAB_ON_SLAVE_ACTIVE 0x10
+#define MOVING_PLATFORM_STATE_DESTROYED 0x11
 
 #define MOVING_PLATFORM_FLAG_CAN_BE_DESTROYED				0x10000
 
@@ -23,10 +38,11 @@ class CActorMovingPlatform;
 
 struct S_TRAJ_POS
 {
-	float field_0x0;
-	short field_0x4;
-	short field_0x6;
-	short field_0x8;
+	// Current scalar position along the trajectory, in the range [0, 1]
+	float pathPosition;
+	short currentSegment;
+	short prevSegment;
+	short lastEventSegment;
 };
 
 struct S_STREAM_MPF_NO_FRICTION_ZONE
@@ -108,12 +124,12 @@ public:
 
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 
-	float field_0x28;
-	float field_0x2c;
+	float segmentStartTime;
+	float loopDelay;
 
-	float goalAmount_0x30;
-	float field_0x34;
-	S_TRAJ_POS currentFillAmount_0x38;
+	float targetScaledTime;
+	float pathLength;
+	S_TRAJ_POS trajPos;
 };
 
 class CSound;
@@ -366,7 +382,7 @@ public:
 	void BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehaviour);
 	void BehaviourSelectorMaster_Manage(CBehaviourSelectorMaster* pBehaviour);
 
-	void GenericManage(int param_2, int param_3, int param_4, int param_5);
+	void GenericManage(int param_2, int param_3, int currentSegment, int prevSegment);
 
 	void StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour);
 	bool StateWeighingMaster(CBehaviourWeighingMachineMaster* pBehaviour);

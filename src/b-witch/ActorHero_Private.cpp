@@ -70,16 +70,17 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//	puVar2 = puVar2 + 3;
 	//} while (puVar2 != (undefined4*)&this->field_0x18b0)
 
-	//this->field_0x1994 = 0.0;
-	//(this->field_0x1998).x = 0.0;
-	//(this->field_0x1998).y = 0.2;
-	//(this->field_0x1998).z = 0.2;
-	//(this->field_0x1998).w = 2.0;
-	//this->field_0x19a8 = 0.5;
-	//*(undefined4*)&this->field_0x19ac = 0x40400000;
-	//*(undefined*)&this->pAnimKeyData_0x19b4 = 0;
-	//this->pAnimKeyData_0x19b8 = (edAnmAnim*)0x0;
-	//*(undefined4*)&this->field_0x19b8 = 0;
+	this->field_0x1994 = 0.0f;
+	this->field_0x1998 = 0.0f;
+	this->field_0x199c = 0.2f;
+	this->field_0x19a0 = 0.2f;
+	this->field_0x19a4 = 2.0f;
+	this->field_0x19a8 = 0.5f;
+	this->field_0x19ac = 3.0f;
+	this->field_0x19b0 = 0;
+
+	this->pAnimKeyData_0x19b4 = (edANM_HDR*)0x0;
+	this->field_0x19b8 = (edANM_HDR*)0x0;
 	this->boomyTargetTable.nbEntries = 0x0;	
 
 	//*(undefined4*)&this->field_0x1c60 = 0;
@@ -486,11 +487,13 @@ void CActorHeroPrivate::Init()
 	//		pSVar13 = pSVar13 + 2;
 	//	} while (iVar12 < (int)this->field_0xe3c);
 	//}
-	//iVar12 = (int)this->pShadow;
-	//if (iVar12 != 0) {
-	//	*(undefined4*)(iVar12 + 0x48) = 0x3ecccccd;
-	//	*(undefined4*)((int)this->pShadow + 0x50) = 0x3ecccccd;
-	//}
+
+	CShadow* pCVar2 = this->pShadow;
+	if (pCVar2 != (CShadow*)0x0) {
+		pCVar2->field_0x48 = 0.4f;
+		pCVar2->field_0x50 = 0.4f;
+	}
+
 	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
 	this->pMainCamera = pCameraManager->GetDefGameCamera(CT_Main);
 
@@ -539,27 +542,27 @@ void CActorHeroPrivate::Init()
 
 	InitBoomy();
 
-	//pAnimationController = this->pAnimationController;
-	//ppeVar3 = ((pAnimationController->anmBinMetaAnimator).base.aAnimData)->pAnimManagerKeyData;
-	//peVar11 = (edAnmAnim*)0x0;
-	//iVar12 = CActor::GetIdMacroAnim(this, 0x18d);
-	//iVar12 = CAnimation::OnLoadFunc_0017f830(pAnimationController, (long)iVar12);
-	//if (iVar12 != -1) {
-	//	peVar11 = (edAnmAnim*)ppeVar3[iVar12];
-	//}
-	//this->pAnimKeyData_0x19b8 = peVar11;
-	//*(undefined4*)&this->field_0x19b8 = 0;
-	//*(undefined*)((int)&this->pAnimKeyData_0x19b4 + 1) = 1;
-	//*(undefined*)((int)&this->pAnimKeyData_0x19b4 + 1) = 1;
-	//this->field_0x1998.z = 0.2;
-	//this->field_0x19a8 = this->field_0x19a8;
-	//this->field_0x1998.w = 0.4;
-	//*(undefined4*)&this->field_0x19ac = 0x40000000;
-	//this->field_0x1998.y = 0.0;
+	pAnimationController = this->pAnimationController;
+	edANM_HDR** ppeVar3 = ((pAnimationController->anmBinMetaAnimator).aAnimData)->pAnimManagerKeyData;
+	edANM_HDR* peVar11 = (edANM_HDR*)0x0;
+	int iVar12 = GetIdMacroAnim(0x18d);
+	iVar12 = pAnimationController->GetPhysicalAnimIndex(iVar12);
+	if (iVar12 != -1) {
+		peVar11 = ppeVar3[iVar12];
+	}
+	this->pAnimKeyData_0x19b4 = peVar11;
+	this->field_0x19b8 = (edANM_HDR*)0x0;
+	this->field_0x19b1 = 1;
+	this->field_0x19b1 = 1;
+	this->field_0x19a0 = 0.2f;
+	this->field_0x19a8 = this->field_0x19a8;
+	this->field_0x19a4 = 0.4f;
+	this->field_0x19ac = 2.0f;
+	this->field_0x199c = 0.0f;
 	uVar1 = ((pAnimationController->anmSkeleton).pTag)->boneCount;
 	this->field_0xff0 = new edF32MATRIX3[uVar1];
 	pAnimationController->SetBoneMatrixData(this->field_0xff0, uVar1);
-	//FUN_003cb7b0();
+	//FUN_003cb7b0(); // STUB
 	//LevelScheduleManager::Game_LoadInventory(LevelScheduleManager::gThis, &this->field_0xadc);
 
 	_InitHeroFight();
@@ -2865,6 +2868,92 @@ CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
+void CActorHeroPrivate::UpdateAnimEffects()
+{
+	byte bVar1;
+	edANM_HDR* peVar2;
+	int iVar4;
+	uint uVar5;
+	float fVar6;
+	float ratio;
+	float ratio_00;
+	float fVar7;
+
+	iVar4 = this->currentAnimType;
+	if ((iVar4 == 0) || (iVar4 == 0xf2)) {
+		if ((this->pAnimKeyData_0x19b4 != (edANM_HDR*)0x0) &&
+			(bVar1 = this->field_0x19b1, bVar1 != 0)) {
+			fVar6 = this->field_0x1998;
+			ratio_00 = 0.0f;
+			ratio = 0.0f;
+			if (0.0f < fVar6) {
+				fVar7 = this->field_0x1994;
+				if (fVar7 < fVar6) {
+					this->field_0x1994 = fVar7 + Timer::GetTimer()->cutsceneDeltaTime;
+					if (this->field_0x19b8 == (edANM_HDR*)0x0) {
+						ratio = fVar7 / this->field_0x1998;
+					}
+					else {
+						if (this->field_0x19b0 == 0) {
+							ratio = fVar7 / this->field_0x1998;
+							ratio_00 = ratio + ratio * this->field_0x199c;
+						}
+						else {
+							ratio_00 = fVar7 / this->field_0x1998;
+							ratio = ratio_00 + ratio_00 * this->field_0x199c;
+						}
+					}
+				}
+				else {
+					if (bVar1 == 0) {
+						this->field_0x1998 = -1.0f;
+					}
+					else {
+						fVar6 = this->field_0x19ac;
+						iVar4 = rand();
+						this->field_0x1998 =
+							-(this->field_0x19a8 + fVar6 * (static_cast<float>(iVar4) / 2.147484e+09f));
+					}
+				}
+			}
+			else {
+				if ((((bVar1 != 0) &&
+					(fVar6 = fVar6 + Timer::GetTimer()->cutsceneDeltaTime, this->field_0x1998 = fVar6,
+						0.0f <= fVar6)) &&
+					(this->field_0x1998 = 0.0f, this->pAnimKeyData_0x19b4 != (edANM_HDR*)0x0))
+					&& (this->field_0x1998 <= 0.0f)) {
+					fVar7 = this->field_0x19a4;
+					iVar4 = rand();
+					fVar6 = this->field_0x19a0;
+					if (this->field_0x19b8 != (edANM_HDR*)0x0) {
+						uVar5 = rand();
+						this->field_0x19b0 = (uVar5 & 2) == 2;
+					}
+					this->field_0x1994 = 0.0f;
+					this->field_0x1998 = fVar6 + fVar7 * (static_cast<float>(iVar4) / 2.147484e+09f);
+				}
+			}
+
+			peVar2 = this->pAnimKeyData_0x19b4;
+			if (peVar2 != (edANM_HDR*)0x0) {
+				TheAnimStage.SetAnim(peVar2);
+				TheAnimStage.SetTimeAsRatio(ratio);
+				TheAnimStage.AnimToWRTS();
+			}
+			peVar2 = this->field_0x19b8;
+			if (peVar2 != (edANM_HDR*)0x0) {
+				TheAnimStage.SetAnim(peVar2);
+				TheAnimStage.SetTimeAsRatio(ratio_00);
+				TheAnimStage.AnimToWRTS();
+			}
+		}
+	}
+
+	CActor::UpdateAnimEffects();
+
+	return;
+}
+
 bool CActorHeroPrivate::SetBehaviour(int behaviourId, int newState, int animationType)
 {
 	bool bSuccess;
@@ -2944,48 +3033,65 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 	return;
 }
 
+struct CinLeaveJamgutParams
+{
+	float distance;
+	CActor* pCaller;
+	CActor* pFound;
+};
+
+void FindJamGut(CActor* pActor, void* pData)
+{
+	float fVar1;
+	float fVar2;
+
+	CinLeaveJamgutParams* pParams = reinterpret_cast<CinLeaveJamgutParams*>(pData);
+
+	if ((pActor->typeID == JAMGUT) &&
+		(fVar2 = (pParams->pCaller->currentLocation).x - (pActor->currentLocation).x,
+			fVar1 = (pParams->pCaller->currentLocation).z - (pActor->currentLocation).z,
+			fVar2 = fVar2 * fVar2 + fVar1 * fVar1, fVar2 < pParams->distance)) {
+		pParams->pFound = pActor;
+		pParams->distance = fVar2;
+	}
+	return;
+}
+
 void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 {
-	CBehaviour* pCVar1;
+	CBehaviourHeroRideJamGut* pCVar1;
 	undefined8 uVar2;
 	CActor* pOtherActor;
 	edF32VECTOR4 local_30;
-	undefined4 local_18;
-	CActorHeroPrivate* local_14;
-	CActor* local_10;
-	undefined4 local_8;
-	undefined4 local_4;
+	CinLeaveJamgutParams callbackParams;
 
 	pOtherActor = (CActor*)0x0;
-	if (behaviourId == 8) {
-		IMPLEMENTATION_GUARD(
-		GetBehaviour(8);
+	if (behaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+		GetBehaviour(HERO_BEHAVIOUR_RIDE_JAMGUT);
 		CLevelScheduler::ScenVar_Get(SCN_ABILITY_JAMGUT_RIDE);
-		local_18 = 0x42c80000;
-		local_10 = (CActor*)0x0;
-		local_30.x = (float)this->pCollisionData;
-		local_30.y = *(float*)&this->currentLocation;
-		local_30.z = *(float*)((int)&this->currentLocation + 4);
-		local_30.w = 10.0;
-		local_14 = this;
-		KyaVectorFunc(&(CScene::ptable.g_ActorManager_004516a4)->cluster, &local_30, &LAB_0033d920, &local_18);
-		pOtherActor = local_10;
-		local_4 = 0;
-		uVar2 = CActor::DoMessage(this, local_10, MESSAGE_GET_BONE_ID, (GetPositionMsgParams*)0x0);
-		*(int*)&this->field_0x15a0 = (int)uVar2;
-		local_8 = 0;
-		CActor::DoMessage(this, pOtherActor, 0x14, (GetPositionMsgParams*)0x0);)
+		callbackParams.distance = 100.0f;
+		callbackParams.pFound = (CActor*)0x0;
+		local_30.x = this->currentLocation.x;
+		local_30.y = this->currentLocation.y;
+		local_30.z = this->currentLocation.z;
+		local_30.w = 10.0f;
+		callbackParams.pCaller = this;
+		CScene::ptable.g_ActorManager_004516a4->cluster.ApplyCallbackToActorsIntersectingSphere(&local_30, &FindJamGut, &callbackParams);
+		this->mountBoneId = DoMessage(callbackParams.pFound, MESSAGE_GET_BONE_ID, (GetPositionMsgParams*)0x0);
+		DoMessage(callbackParams.pFound, MESSAGE_TRAP_STRUGGLE, (GetPositionMsgParams*)0x0);
 	}
+
 	CActor::CinematicMode_Leave(behaviourId);
-	if (behaviourId == 8) {
-		IMPLEMENTATION_GUARD(
-		pCVar1 = GetBehaviour((int)this->aComponents);
-		(*(code*)pCVar1->pVTable[1].Init)(pCVar1, pOtherActor, *(undefined4*)&this->field_0x15a0, 7, STATE_HERO_GET_OFF_MOUNT);
-		(*((this->pVTable)->actorBase).SetState)(this, 0x11e, -1);)
+
+	if (behaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
+		pCVar1 = static_cast<CBehaviourHeroRideJamGut*>(GetBehaviour(this->curBehaviourId));
+		pCVar1->InitMount(static_cast<CActorJamGut*>(callbackParams.pFound), this->mountBoneId, 7, STATE_HERO_GET_OFF_MOUNT);
+		SetState(0x11e, -1);
 	}
-	IMPLEMENTATION_GUARD_LOG(
+
 	this->field_0x19b1 = 1;
-	this->field_0xffc = 0.0f;)
+	this->effort = 0.0f;
+
 	return;
 }
 
@@ -5539,6 +5645,9 @@ LAB_00341590:
 	case STATE_HERO_COL_WALL_DEAD:
 		StateHeroDeadInit();
 		break;
+	case STATE_HERO_GRIND_DEATH_A:
+		StateHeroGrindDeathInit();
+		break;
 	case STATE_HERO_DEAD_A3:
 		this->flags = this->flags | 0x10000000;
 		break;
@@ -5818,6 +5927,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_COL_WALL_DEAD:
 		RestoreCollisionSphere(0.0f);
+		break;
+	case STATE_HERO_GRIND_DEATH_A:
+		StateHeroGrindDeathTerm();
 		break;
 	case STATE_HERO_DEAD_A3:
 		this->flags = this->flags & 0xefffffff;
@@ -6317,6 +6429,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_COL_WALL_DEAD_B:
 		StateHeroToboggan(0);
+		break;
+	case STATE_HERO_GRIND_DEATH_A:
+		StateHeroDead(2.0f);
 		break;
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
@@ -12408,6 +12523,26 @@ void CActorHeroPrivate::StateHeroBasic(float param_1, float param_2, int nextSta
 
 LAB_003489d0:
 	SetState(nextState, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroGrindDeathInit()
+{
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 & 0xfffffffc;
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroGrindDeathTerm()
+{
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 | 3;
 
 	return;
 }

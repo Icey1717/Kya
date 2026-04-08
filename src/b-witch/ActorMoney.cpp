@@ -1,6 +1,7 @@
 #include "ActorMoney.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include "DlistManager.h"
 #include "FileManager3D.h"
 #include "CameraViewManager.h"
 #include "TimeController.h"
@@ -238,13 +239,9 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 	this->aMoneyInstances = new CMnyInstance[this->nbMoneyInstances];
 
 	if ((this->pOwner->pShadow != (CShadow*)0x0) && ((this->pathFollow).Get() != (CPathFollow*)0x0)) {
-		IMPLEMENTATION_GUARD(
 		this->nbSharedShadows = this->nbMoneyInstances + -1;
 		uVar2 = this->nbSharedShadows;
-		piVar5 = (int*)operator.new.array((long)(int)(uVar2 * 0x50 + 0x10));
-		pCVar7 = (CShadowShared*)
-			__construct_new_array(piVar5, CShadowShared::CShadowShared, CShadowShared::~CShadowShared, 0x50, uVar2);
-		this->aSharedShadows = pCVar7;)
+		this->aSharedShadows = new CShadowShared[uVar2];
 	}
 
 	if (this->nbMoneyInstances == 1) {
@@ -284,54 +281,39 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 		}
 
 		if (this->nbSharedShadows != 0) {
-			IMPLEMENTATION_GUARD(
 			pCVar7 = this->aSharedShadows;
 			iVar4 = 0;
 			if (0 < this->nbSharedShadows) {
 				do {
-					CShadowShared::Init(pCVar7, this->pOwner->sectorId);
-					fVar13 = gF32Vector4UnitY.w;
-					fVar12 = gF32Vector4UnitY.z;
-					fVar11 = gF32Vector4UnitY.y;
-					(pCVar7->field_0x20).x = gF32Vector4UnitY.x;
-					(pCVar7->field_0x20).y = fVar11;
-					(pCVar7->field_0x20).z = fVar12;
-					(pCVar7->field_0x20).w = fVar13;
-					pCVar7->field_0x48 = 0.35;
-					pCVar7->field_0x30 = 0x80457766;
-					peVar9 = ((this->pathFollow).pPathFollow)->aSplinePoints;
+					pCVar7->Init(this->pOwner->sectorId);
+					pCVar7->field_0x20 = gF32Vector4UnitY;
+					pCVar7->field_0x48 = 0.35f;
+					pCVar7->shadowColor = 0x80457766;
+					peVar9 = ((this->pathFollow).Get())->aSplinePoints;
 					if (peVar9 == (edF32VECTOR4*)0x0) {
 						peVar9 = &gF32Vertex4Zero;
 					}
 					else {
 						peVar9 = peVar9 + iVar4 + 1;
 					}
+
 					iVar4 = iVar4 + 1;
-					fVar13 = peVar9->y;
-					fVar11 = peVar9->z;
-					fVar12 = peVar9->w;
-					(pCVar7->field_0x10).x = peVar9->x;
-					(pCVar7->field_0x10).y = fVar13;
-					(pCVar7->field_0x10).z = fVar11;
-					(pCVar7->field_0x10).w = fVar12;
+					pCVar7->position = *peVar9;
 					pCVar7 = pCVar7 + 1;
 				} while (iVar4 < this->nbSharedShadows);
-			})
+			}
 		}
 	}
 
 	pCVar3 = this->pOwner->pShadow;
 	if (pCVar3 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		(pCVar3->base).field_0x48 = 0.35;);
+		pCVar3->field_0x48 = 0.35;
 	}
 
 	this->pOwner->UpdateBoundingSphere(this->aMoneyInstances, this->nbMoneyInstances);
 
 	if (this->aSharedShadows != (CShadowShared*)0x0) {
-		IMPLEMENTATION_GUARD(
-		iVar4 = pOwner->GameDListPatch_Register(this->nbSharedShadows << 2, 0);
-		this->field_0xc = iVar4;)
+		this->field_0xc = GameDListPatch_Register(pOwner, this->nbSharedShadows << 2, 0);
 	}
 
 	return;
@@ -521,9 +503,50 @@ void CBehaviourMoneyFlock::Begin(CActor* pOwner, int newState, int newAnimationT
 	return;
 }
 
-bool CBehaviourMoneyFlock::InitDlistPatchable(int)
+bool CBehaviourMoneyFlock::InitDlistPatchable(int patchId)
 {
-	IMPLEMENTATION_GUARD();
+	_rgba _Var1;
+	bool bVar2;
+	edDList_material* pMaterialInfo;
+	int iVar3;
+	CShadowShared* pCVar4;
+	byte local_4;
+	byte bStack3;
+	byte bStack2;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pCVar4 = this->aSharedShadows;
+	if ((this->nbSharedShadows == 0) || (patchId != this->field_0xc)) {
+		bVar2 = false;
+	}
+	else {
+		edDListLoadIdentity();
+		pMaterialInfo = pFileManager->GetMaterialFromId((this->pOwner->pShadow)->materialId, 0);
+		edDListUseMaterial(pMaterialInfo);
+		edDListBegin(0.0f, 0.0f, 0.0f, 8, this->nbSharedShadows << 2);
+		iVar3 = 0;
+		if (0 < this->nbSharedShadows) {
+			do {
+				edDListColor4u8(pCVar4->shadowColor.r, pCVar4->shadowColor.g, pCVar4->shadowColor.b, 0);
+				edDListTexCoo2f(0.0f, 0.0f);
+				edDListVertex4f(-0.5f, 0.01f, -0.5f, 0.0f);
+				edDListTexCoo2f(0.0f, 1.0f);
+				edDListVertex4f(-0.5f, 0.01f, 0.5f, 0.0f);
+				edDListTexCoo2f(1.0f, 0.0f);
+				edDListVertex4f(0.5f, 0.01f, -0.5f, 0.0f);
+				edDListTexCoo2f(1.0f, 1.0f);
+				edDListVertex4f(0.5f, 0.01f, 0.5f, 0.0f);
+				iVar3 = iVar3 + 1;
+				pCVar4 = pCVar4 + 1;
+			} while (iVar3 < this->nbSharedShadows);
+		}
+
+		edDListEnd();
+		bVar2 = true;
+	}
+
+	return bVar2;
 }
 
 // Should be in: D:/Projects/b-witch/ActorMoney.h

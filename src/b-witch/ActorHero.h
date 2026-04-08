@@ -56,6 +56,7 @@
 #define STATE_HERO_COL_WALL_DEAD 0x97
 #define STATE_HERO_COL_WALL_DEAD_C 0x99
 #define STATE_HERO_COL_WALL_DEAD_B 0x9c
+#define STATE_HERO_GRIND_DEATH_A 0x9e
 
 #define STATE_HERO_FALL_DEATH 0xa1
 #define STATE_HERO_DROWN_DEATH 0xa2
@@ -413,6 +414,20 @@ public:
 	int braceletLevel;
 	uint field_0x1874;
 	uint field_0x1878;
+
+	float field_0x1994;
+	float field_0x1998;
+	float field_0x199c;
+
+	float field_0x19a0;
+	float field_0x19a4;
+	float field_0x19a8;
+	float field_0x19ac;
+
+	byte field_0x19b0;
+	byte field_0x19b1;
+	edANM_HDR* pAnimKeyData_0x19b4;
+	edANM_HDR* field_0x19b8;
 
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];

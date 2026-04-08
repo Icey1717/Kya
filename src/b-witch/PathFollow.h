@@ -22,7 +22,7 @@ public:
 	uint type;
 	uint pathType;
 	int splinePointCount;
-	int field_0x14;
+	int nbLeadInPoints;
 	uint field_0x18;
 	edF32VECTOR4* aSplinePoints;
 	edF32VECTOR4* aSplineRotationsEuler;
@@ -36,9 +36,9 @@ public:
 
 struct S_PATHREADER_POS_INFO
 {
-	int field_0x0;
-	int field_0x4;
-	float field_0x8;
+	int prevSegment;
+	int currentSegment;
+	float segmentFraction;
 };
 
 class CPathFollowReaderAbsolute
@@ -56,11 +56,14 @@ public:
 
 	float GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInfo);
 
-	CPathFollow* pActor3C_0x0;
-	float barFullAmount_0x4;
-	float field_0x8;
-	float field_0xc;
-	float* field_0x10;
+	CPathFollow* pPathFollow;
+
+	float field_0x4;
+
+	// Time it will take for the Actor to follow the entire path.
+	float totalTraversalTime;
+	float midPoint;
+	float* aSegmentDurations;
 
 	int field_0x1c;
 	int type;

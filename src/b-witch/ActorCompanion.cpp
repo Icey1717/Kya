@@ -1396,12 +1396,11 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	}
 	else {
 		if (msg == 0x7b) {
-			IMPLEMENTATION_GUARD(
-			pCVar7 = this->aSubObjs + pMsgParam;
+			pCVar7 = this->aSubObjs + (int)pMsgParam;
 			bVar4 = false;
 			if (((pCVar7->flags_0x4 & 4) != 0) &&
-				(((pCVar7->flags_0x2 & 0x40) == 0 || (bVar4 = false, (((pCVar7->pActor).pActor)->flags & 0x2000001) == 0)))) {
-				uVar6 = CScenaricCondition::IsVerified(&pCVar7->field_0x64);
+				(((pCVar7->flags_0x2 & 0x40) == 0 || (bVar4 = false, (((pCVar7->pActor).Get())->flags & 0x2000001) == 0)))) {
+				uVar6 = pCVar7->field_0x64.IsVerified();
 				if (uVar6 == 0) {
 					bVar4 = false;
 				}
@@ -1409,31 +1408,35 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					bVar4 = true;
 				}
 			}
+
 			if (bVar4) {
 				this->field_0x1c = 0;
-				this->displayTime = 0.0;
-				this->field_0x10 = pMsgParam;
+				this->displayTime = 0.0f;
+				this->field_0x10 = (int)pMsgParam;
 				this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].field_0x5c;
+
 				pCVar8 = this->aSubObjs + this->field_0x10;
 				if ((((pCVar8->flags_0x2 & 0x100) == 0) && ((pCVar8->flags_0x0 & 2) != 0)) && ((pCVar8->flags_0x4 & 1) == 0)) {
 					FUN_001e56b0(1);
 				}
+
 				iVar5 = this->pOwner->actorState;
 				if ((iVar5 == 0xb) || (iVar5 == 0xe)) {
 					pCVar3 = this->pOwner->pActorHero;
-					local_10.x = (pCVar3->character).characterBase.base.base.currentLocation.x;
-					local_10.z = (pCVar3->character).characterBase.base.base.currentLocation.z;
-					local_10.w = (pCVar3->character).characterBase.base.base.currentLocation.w;
-					local_10.y = (pCVar3->character).characterBase.base.base.currentLocation.y + 15.0;
-					CActor::UpdatePosition((CActor*)this->pOwner, &local_10, true);
+					local_10.x = pCVar3->currentLocation.x;
+					local_10.z = pCVar3->currentLocation.z;
+					local_10.w = pCVar3->currentLocation.w;
+					local_10.y = pCVar3->currentLocation.y + 15.0f;
+					this->pOwner->UpdatePosition(&local_10, true);
 				}
+
 				this->field_0x54 = 0;
 				iVar5 = 1;
 				this->aSubObjs[this->field_0x10].flags_0x4 = this->aSubObjs[this->field_0x10].flags_0x4 | 0x10;
 			}
 			else {
 				iVar5 = 0;
-			})
+			}
 		}
 		else {
 			if (msg == 0x5c) {

@@ -206,6 +206,7 @@ public:
 	bool FUN_0017f730();
 	int GetAnimType_00242330(int animIndex);
 
+	int GetPhysicalAnimIndex(int index);
 	bool SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices);
 
 	bool IsCurrentLayerAnimEndReached(uint layerIndex);

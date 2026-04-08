@@ -43,116 +43,8 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
-		template<typename T, int MaxInstances>
-		class DynamicBuffer
-		{
-		public:
-			void Init(const uint32_t range = 1)
-			{
-				this->range = range;
-
-				Validate();
-
-				gUniformBuffer.Init(MaxInstances);
-			}
-
-			VkDescriptorBufferInfo GetDescBufferInfo(const int index)
-			{
-				return gUniformBuffer.GetDescBufferInfo(index);
-			}
-
-			void Map(const int index)
-			{
-				gUniformBuffer.Map(index);
-			}
-
-			int GetInstanceIndex() const
-			{
-				assert(currentInstanceIndex > 0);
-				return currentInstanceIndex - 1;
-			}
-
-			int GetDebugIndex() const
-			{
-				return currentInstanceIndex;
-			}
-
-			template<typename InstanceDataType>
-			bool MatchesLastInstance(const InstanceDataType& data) const
-			{
-				if (currentInstanceIndex == 0) {
-					return false;
-				}
-
-				return data == *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
-			}
-
-			bool MatchesLastInstance(const glm::vec4& data) const
-			{
-				if (currentInstanceIndex == 0) {
-					return false;
-				}
-
-				const glm::vec4& lastData = *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
-				return glm::all(glm::equal(data, lastData));
-			}
-
-			bool MatchesLastInstance(const glm::mat4& data) const
-			{
-				if (currentInstanceIndex == 0) {
-					return false;
-				}
-
-				const glm::mat4& lastData = *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1);
-				for (int i = 0; i < 4; ++i) {
-					if (!glm::all(glm::equal(data[i], lastData[i]))) {
-						return false;
-					}
-				}
-
-				return true;
-			}
-
-			void AddInstanceData(const T& data)
-			{
-				// Re-use the current instance index if it matches the data.
-				if (MatchesLastInstance(data)) {
-					return;
-				}
-
-				assert((currentInstanceIndex + (range - 1)) < MaxInstances);
-
-				gUniformBuffer.SetInstanceData(currentInstanceIndex, data);
-				currentInstanceIndex++;
-				return;
-			}
-
-			void Reset()
-			{
-				currentInstanceIndex = 0;
-			}
-
-		private:
-			void Validate()
-			{
-				VkPhysicalDeviceProperties properties{};
-				vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
-				const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
-
-				assert(properties.limits.maxUniformBufferRange >= (sizeof(T) * MaxInstances));
-			}
-
-			int currentInstanceIndex = 0;
-
-			uint32_t range = 0;
-
-			// GPU Side Dynamic Buffer
-			DynamicUniformBuffer<T> gUniformBuffer;
-		};
-
-		// SSBO-backed per-frame buffer with the same deduplication logic as DynamicBuffer.
-		// Unlike DynamicBuffer, there is no dynamic-alignment padding; the GPU sees a plain array
-		// and the draw index is supplied via push constants.
+		// SSBO-backed per-frame buffer. The GPU sees a plain array; the draw index is
+		// supplied via push constants. Consecutive identical entries are deduplicated.
 		template<typename T, int MaxInstances>
 		class StorageDynamicBuffer
 		{
@@ -237,19 +129,7 @@ namespace Renderer
 			// Packs all key fields into a single uint32 suitable for hashing and equality comparisons.
 			uint32_t GetKey() const
 			{
-				union
-				{
-					uint32_t key = 0;
-
-					struct
-					{
-						uint32_t clearMode : 2; // maps directly to EClearMode (None=0, Depth=1, ColorDepth=2, Color=3)
-					};
-				} key;
-
-				key.clearMode = static_cast<uint32_t>(clearMode);
-
-				return key.key;
+				return static_cast<uint32_t>(clearMode);
 			}
 
 			bool operator==(const RenderPassKey& other) const {
@@ -324,7 +204,7 @@ namespace Renderer
 		{
 			VkRenderPass gRenderPass = VK_NULL_HANDLE;
 
-			PipelineMap gPipelines;
+			Pipeline gPipeline;
 			Renderer::Pipeline gDebugLinePipeline;
 
 			void CreatePipeline()
@@ -334,18 +214,12 @@ namespace Renderer
 				key.options.bWireframe = false;
 				key.options.topology = topologyTriangleList;
 				PipelineCreateInfo<PipelineKey> createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
-				Renderer::Native::CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
+				Renderer::Native::CreatePipeline(createInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
 			}
 
 			const Pipeline& GetPipeline() const
 			{
-				PipelineKey pipelineKey;
-				pipelineKey.options.bWireframe = false;
-				pipelineKey.options.bGlsl = true;
-				pipelineKey.options.topology = topologyTriangleList;
-
-				assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
-				return gPipelines.at(pipelineKey.key);
+				return gPipeline;
 			}
 
 			const Pipeline& GetDebugLinePipeline() const
@@ -389,9 +263,6 @@ namespace Renderer
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		static NativeVertexBuffer gNativeVertexBuffer;
 
-		// As each draw comes in this buffer is filled.
-		static NativeVertexBufferData gNativeVertexBufferDataDraw;
-
 		static StorageBuffer<glm::mat4> gAnimationBuffer;
 		static std::vector<glm::mat4> gAnimationMatrices;
 
@@ -399,7 +270,10 @@ namespace Renderer
 		bool gRenderPassDirty = true;
 		RenderPassKey gActiveRenderPassKey;
 		bool gHasActiveRenderPass = false;
-		bool gHasSubmittedDebugLineDraw = false;
+
+		// Vulkan extension function pointers loaded once at setup.
+		static PFN_vkCmdSetColorWriteEnableEXT  gvkCmdSetColorWriteEnableEXT  = nullptr;
+		static PFN_vkCmdSetColorWriteMaskEXT    gvkCmdSetColorWriteMaskEXT    = nullptr;
 
 		RenderPassKey RenderPassKey::Empty = RenderPassKey{ EClearMode::ColorDepth };
 

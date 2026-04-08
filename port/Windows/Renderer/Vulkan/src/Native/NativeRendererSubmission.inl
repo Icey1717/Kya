@@ -2,70 +2,12 @@ namespace Renderer
 {
 	namespace Native
 	{
-		static bool CanMergeMesh()
-		{
-			if (!gCurrentDraw) {
-				return false;
-			}
-
-			if (gCurrentDraw->instances.empty()) {
-				return false;
-			}
-
-			auto& instance = gCurrentDraw->instances.back();
-
-			if (instance.animationMatrixStart != gAnimationMatrices.size()) {
-				return false;
-			}
-
-			return true;
-		}
-
 		static void CreateDraw()
 		{
 			gCurrentDraw = Draw{};
 			gCurrentDraw->renderPassKey = gCachedRenderPassKey;
 			gCurrentDraw->bRenderPassDirty = gRenderPassDirty;
 			gRenderPassDirty = false;
-		}
-		static void SanityCheck(SimpleMesh* pMesh)
-		{
-			auto& internalBuffer = pMesh->GetVertexBufferData();
-
-			assert(internalBuffer.GetIndexTail() == gNativeVertexBufferDataDraw.GetIndexTail());
-			assert(internalBuffer.GetVertexTail() == gNativeVertexBufferDataDraw.GetVertexTail());
-
-			for (int i = 0; i < internalBuffer.GetIndexTail(); i++) {
-				assert(internalBuffer.index.buff[i] == gNativeVertexBufferDataDraw.index.buff[i]);
-			}
-
-			for (int i = 0; i < internalBuffer.GetVertexTail(); i++) {
-				{
-					const auto& vtx = internalBuffer.vertex.buff[i];
-					NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Preprocess vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {}) ({}, {}, {})\n",
-						i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
-						vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
-				}
-
-				{
-					const auto& vtx = gNativeVertexBufferDataDraw.vertex.buff[i];
-					NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Live vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})({}, {}, {})\n",
-						i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
-						vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
-				}
-
-				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[0] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[0]);
-				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[1] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[1]);
-				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[2] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[2]);
-
-				assert(internalBuffer.vertex.buff[i].normal.fNormal[0] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[0]);
-				assert(internalBuffer.vertex.buff[i].normal.fNormal[1] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[1]);
-				assert(internalBuffer.vertex.buff[i].normal.fNormal[2] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[2]);
-
-				assert(internalBuffer.vertex.buff[i].STQ.ST[0] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[0]);
-				assert(internalBuffer.vertex.buff[i].STQ.ST[1] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[1]);
-				assert(internalBuffer.vertex.buff[i].STQ.Q == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.Q);
-			}
 		}
 
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
@@ -83,32 +25,16 @@ namespace Renderer
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
-			constexpr bool bSanityCheck = false;
+			auto& instance = gCurrentDraw->instances.emplace_back();
+			instance.animationMatrixStart = gCurrentAnimMatrixIndex;
+			instance.pMesh = pMesh;
+			instance.perDrawData = gCachedPerDrawData;
+			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(gModelBuffer.GetInstanceIndex());
+			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
+			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(gLightingDynamicBuffer.GetInstanceIndex());
+			instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(gAnimStBuffer.GetInstanceIndex());
 
-			if (bSanityCheck) {
-				FLUSH_LOG();
-
-				SanityCheck(pMesh);
-			}
-
-			constexpr bool bMergingEnabeld = false;
-
-			if (bMergingEnabeld && CanMergeMesh()) {
-				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh: merging");
-				MergeIndexData();
-			}
-			else {
-				auto& instance = gCurrentDraw->instances.emplace_back();
-				instance.animationMatrixStart = gCurrentAnimMatrixIndex;
-				instance.pMesh = pMesh;
-				instance.perDrawData = gCachedPerDrawData;
-				instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(gModelBuffer.GetInstanceIndex());
-				instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
-				instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(gLightingDynamicBuffer.GetInstanceIndex());
-				instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(gAnimStBuffer.GetInstanceIndex());
-
-				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
-			}
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
 		}
 
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj)
@@ -327,7 +253,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
-	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {} indices: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex(), gNativeVertexBufferDataDraw.GetIndexTail());
+	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
 	if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 		pTexture->GetName();

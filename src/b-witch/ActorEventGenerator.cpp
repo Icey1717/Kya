@@ -1067,7 +1067,8 @@ int CBehaviourEventGen::ManageCamera(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* pD
 			break;
 		}
 		case EVG_PHASE_DRAW:
-			IMPLEMENTATION_GUARD();
+			pPMTF->flagB = pPMTF->flagB & 0xfffd;
+			return 0;
 			break;
 	}
 	return 0;
