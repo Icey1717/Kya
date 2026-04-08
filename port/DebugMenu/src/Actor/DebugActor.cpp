@@ -4,13 +4,12 @@
 #include <imgui.h>
 
 #include "DebugProjection.h"
-
+#include "DebugActorBehaviour.h"
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor.h"
 #include "LargeObject.h"
 #include "DebugFrameBuffer.h"
-#include "DebugActorBehaviour.h"
 #include "DebugActorWind.h"
 #include "ActorHero.h"
 #include "ActorWind.h"
@@ -193,8 +192,9 @@ namespace Debug {
 					buff += "\n";
 				}
 
-				ImGui::SetCursorPos(screenPos);
-				ImGui::Text("%s", buff.c_str());
+				const ImVec2 gameWinPos = FrameBuffer::GetGameWindowPosition();
+				ImGui::GetForegroundDrawList()->AddText(
+					ImVec2(screenPos.x + gameWinPos.x, screenPos.y + gameWinPos.y), IM_COL32_WHITE, buff.c_str());
 			}
 		}
 	}
@@ -243,13 +243,6 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 	ImGui::End();
 
 	if (gShowActorNamesOverlay) {
-		// Remove the title bar and window border and make the window transparent
-		ImGui::Begin("Actor Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar);
-
-		// Overlay this window on top of the game window
-		ImGui::SetWindowPos(FrameBuffer::GetGameWindowPosition(), ImGuiCond_Always);
-		ImGui::SetWindowSize(FrameBuffer::GetGameWindowSize(), ImGuiCond_Always);
-
 		if (specificActorFilter[0] != '\0') {
 			auto ShowActorOverlayIfMatches = [](CActor* pActor) {
 				std::string actorNameLower = pActor->name;
@@ -268,8 +261,6 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		else {
 			ForEachActor(ShowActorOverlay);
 		}
-
-		ImGui::End();
 	}
 }
 

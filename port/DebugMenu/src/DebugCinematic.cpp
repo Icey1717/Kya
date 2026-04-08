@@ -2,6 +2,9 @@
 #include "DebugCinematic.h"
 
 #include <imgui.h>
+#include <algorithm>
+#include <numeric>
+#include <unordered_map>
 
 #include "CinematicManager.h"
 #include "DebugSetting.h"
@@ -10,15 +13,34 @@
 
 namespace Debug::Cinematic
 {
-	static bool GetCutsceneName(void* pData, int index, const char** ppOut) {
-		auto* options = static_cast<std::vector<std::string>*>(pData);
-		*ppOut = ((*options)[index]).c_str();
-		return true;
+	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
+
+	static const char* GetStateName(ECinematicState state) {
+		switch (state) {
+		case CS_Playing:     return "Playing";
+		case CS_Interpolate: return "Interpolate";
+		case CS_Stopped:     return "Stopped";
+		default:             return "Unknown";
+		}
 	}
 
-	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
-	static Debug::Setting<float> gCustomCutsceneTime = { "Custom Cutscene Time", 0.0f };
-	static Debug::Setting<std::string> gCutsceneFilter = { "Cutscene Filter", "" };
+	static ImVec4 GetStateColor(ECinematicState state) {
+		switch (state) {
+		case CS_Playing:     return ImVec4(0.2f, 0.85f, 0.2f, 1.0f);
+		case CS_Interpolate: return ImVec4(0.9f, 0.85f, 0.1f, 1.0f);
+		case CS_Stopped:     return ImVec4(0.55f, 0.55f, 0.55f, 1.0f);
+		default:             return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
+	struct CinematicStepState {
+		bool bEnabled = false;
+		float baseTime = 0.0f;
+		float stepOffset = 0.0f;
+	};
+
+	static std::unordered_map<CCinematic*, CinematicStepState> sStepStates;
+	static std::unordered_map<CCinematic*, ECinematicState> sPrevStates;
 
 	static void ShowDetails(CCinematic* pCinematic)
 	{
@@ -40,160 +62,142 @@ namespace Debug::Cinematic
 			ImGui::Text("Zone Flags: 0x%x", pZone->flags);
 		}
 
-		ImGui::Text("Trigger Actor: %s", (pCinematic->triggerActorRef.index >= 0 && pCinematic->triggerActorRef.Get()) ? pCinematic->triggerActorRef.Get()->name : "None");
+		ImGui::Text("Trigger: %s",
+			(pCinematic->triggerActorRef.index >= 0 && pCinematic->triggerActorRef.Get())
+			? pCinematic->triggerActorRef.Get()->name : "None");
 
-		if (pCinematic->cineBankLoadStage_0x2b4 == 4 && pCinematic->cinFileData.pCinTag && pCinematic->state != CS_Stopped) {
-			// Play/Pause button
-			if (pCinematic->state != CS_Stopped)
-			{
-				if (ImGui::Button("Pause"))
-				{
-					pCinematic->state = CS_Stopped;
-				}
-			}
-			else
-			{
-				if (ImGui::Button("Play"))
-				{
-					pCinematic->state = CS_Playing;
-				}
-			}
-
+		if (pCinematic->cineBankLoadStage_0x2b4 == 4 && pCinematic->cinFileData.pCinTag) {
 			auto& currentTime = pCinematic->totalCutsceneDelta;
-			auto& totalTime = ((pCinematic->cinFileData).pCinTag)->totalPlayTime;
+			float totalTime = pCinematic->cinFileData.pCinTag->totalPlayTime;
 
-			// Jump to beginning button
-			if (ImGui::Button("Jump to Beginning"))
-			{
-				currentTime = 0.0f;
-				// Seek to the beginning of the video here
+			bool bPlaying = (pCinematic->state == CS_Playing);
+			if (ImGui::Button(bPlaying ? "Pause" : "Play")) {
+				pCinematic->state = bPlaying ? CS_Stopped : CS_Playing;
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("|<")) { currentTime = 0.0f; }
+			ImGui::SameLine();
+			if (ImGui::Button(">|")) { currentTime = totalTime; }
 
-			// Jump to end button
-			if (ImGui::Button("Jump to End") || ImGui::IsKeyPressed(ImGuiKey_F9))
-			{
-				currentTime = totalTime;
-				// Seek to the end of the video here
-			}
+			ImGui::SetNextItemWidth(-1.0f);
+			ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime, "%.2fs");
 
-			// Current time and total time labels
-			ImGui::Text("Time: %.2f / %.2f", currentTime, totalTime);
+			auto& stepState = sStepStates[pCinematic];
+			bool bWasEnabled = stepState.bEnabled;
+			ImGui::Checkbox("Frame Step", &stepState.bEnabled);
 
-			// Seek bar for video playback
-			ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime);
-
-			static bool bCutsceneStepEnabled = false;
-			ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
-
-			if (bCutsceneStepEnabled) {
-				gCustomCutsceneTime.DrawImguiControl();
-				static float cutsceneStepTime = 0.0f;
-				pCinematic->totalCutsceneDelta = gCustomCutsceneTime + cutsceneStepTime;
-
-				pCinematic->totalCutsceneDelta = std::clamp(pCinematic->totalCutsceneDelta, 0.0f, totalTime - 1.0f);
-
-				if (ImGui::Button("Set to current")) {
-					gCustomCutsceneTime = gCustomCutsceneTime + cutsceneStepTime;
-					cutsceneStepTime = 0.0f;
+			if (stepState.bEnabled) {
+				if (!bWasEnabled) {
+					stepState.baseTime = currentTime;
+					stepState.stepOffset = 0.0f;
 				}
 
-				if (ImGui::Button("<<")) {
-					auto pTimer = Timer::GetTimer();
-					cutsceneStepTime -= pTimer->cutsceneDeltaTime;
+				pCinematic->totalCutsceneDelta = std::clamp(stepState.baseTime + stepState.stepOffset, 0.0f, totalTime - 1.0f);
+
+				if (ImGui::Button("<<")) { stepState.stepOffset -= Timer::GetTimer()->cutsceneDeltaTime; }
+				ImGui::SameLine();
+				if (ImGui::Button(">>")) { stepState.stepOffset += Timer::GetTimer()->cutsceneDeltaTime; }
+				ImGui::SameLine();
+				if (ImGui::Button("Commit")) {
+					stepState.baseTime += stepState.stepOffset;
+					stepState.stepOffset = 0.0f;
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(">>")) {
-					auto pTimer = Timer::GetTimer();
-					cutsceneStepTime += pTimer->cutsceneDeltaTime;
-				}
-
+				ImGui::TextDisabled("offset: %+.3fs", stepState.stepOffset);
+			} else {
+				stepState.baseTime = currentTime;
+				stepState.stepOffset = 0.0f;
 			}
-		}
-		else {
-			// Jump to end button
-			if (ImGui::Button("Start"))
-			{
+		} else {
+			bool bBankReady = (pCinematic->cineBankLoadStage_0x2b4 == 4);
+			ImGui::BeginDisabled(!bBankReady);
+			if (ImGui::Button("Start")) {
 				pCinematic->Start();
-				// Seek to the end of the video here
+			}
+			ImGui::EndDisabled();
+			if (!bBankReady) {
+				ImGui::SameLine();
+				ImGui::TextDisabled("(loading, stage %d)", pCinematic->cineBankLoadStage_0x2b4);
 			}
 		}
 	}
 
 	void ShowMenu(bool* bOpen) {
-		// Create a new ImGui window
-		ImGui::Begin("Video Player Controls", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Cinematics", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
-		if (ImGui::CollapsingHeader("Persistent Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-			gSkipCutscenes.DrawImguiControl();
-		}
+		gSkipCutscenes.DrawImguiControl();
 
 		auto* pCinematicManager = g_CinematicManager_0048efc;
 
-		if (ImGui::CollapsingHeader("Selector", ImGuiTreeNodeFlags_DefaultOpen)) {
-			static int selectedCutsceneId = 0;
-			static bool bSelectedFirstPlaying = false;
+		if (pCinematicManager->activeCinematicCount == 0) {
+			ImGui::TextDisabled("No active cinematics.");
+			ImGui::End();
+			return;
+		}
 
-			if (pCinematicManager->activeCinematicCount > 0) {
-				if (selectedCutsceneId > pCinematicManager->activeCinematicCount) {
-					selectedCutsceneId = 0;
+		ImGui::Separator();
+
+		static char sFilterBuf[128] = {};
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputTextWithHint("##filter", "Filter by filename...", sFilterBuf, sizeof(sFilterBuf));
+		ImGui::Spacing();
+
+		// Sort indices so Playing comes first, then Interpolate, then Stopped.
+		auto StatePriority = [](ECinematicState s) {
+			switch (s) {
+			case CS_Playing:     return 0;
+			case CS_Interpolate: return 1;
+			default:             return 2;
+			}
+		};
+		std::vector<int> sortedIndices(pCinematicManager->activeCinematicCount);
+		std::iota(sortedIndices.begin(), sortedIndices.end(), 0);
+		std::stable_sort(sortedIndices.begin(), sortedIndices.end(), [&](int a, int b) {
+			return StatePriority(pCinematicManager->ppCinematicObjB_B[a]->state)
+			     < StatePriority(pCinematicManager->ppCinematicObjB_B[b]->state);
+		});
+
+		for (int i : sortedIndices) {
+			auto* pCinematic = pCinematicManager->ppCinematicObjB_B[i];
+
+			if (sFilterBuf[0] != '\0') {
+				bool bMatch = false;
+				for (const char* h = pCinematic->fileName; *h; h++) {
+					const char* n = sFilterBuf;
+					const char* hh = h;
+					while (*n && tolower((unsigned char)*hh) == tolower((unsigned char)*n)) { hh++; n++; }
+					if (!*n) { bMatch = true; break; }
 				}
+				if (!bMatch) continue;
+			}
 
-				std::vector<std::string> options;
+			// Auto-expand the header when this cinematic transitions to Playing.
+			ECinematicState prevState = sPrevStates[pCinematic];
+			if (prevState != CS_Playing && pCinematic->state == CS_Playing) {
+				ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+			}
+			sPrevStates[pCinematic] = pCinematic->state;
 
-				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
-					options.emplace_back(std::to_string(i));
-				}
+			char headerLabel[512];
+			sprintf(headerLabel, "[%s] %d - %s###cine_%d", GetStateName(pCinematic->state), i, pCinematic->fileName, i);
 
-				// Create the dropdown box
-				if (ImGui::Combo("Select an Option", &selectedCutsceneId, GetCutsceneName, &options, pCinematicManager->activeCinematicCount, -1))
-				{
-					// Handle the selected option change here
-					// The selected option index will be stored in 'selectedOption'
-					// You can perform actions based on the selected option.
-				}
+			ImGui::PushStyleColor(ImGuiCol_Text, GetStateColor(pCinematic->state));
+			bool bExpanded = ImGui::CollapsingHeader(headerLabel);
+			ImGui::PopStyleColor();
 
-				if (!bSelectedFirstPlaying) {
-					for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
-						if (pCinematicManager->ppCinematicObjB_B[i]->state == CS_Playing) {
-							selectedCutsceneId = i;
-							bSelectedFirstPlaying = true;
-						}
-					}
-				}
+			if (bExpanded) {
+				ImGui::PushID(i);
+				ImGui::Indent();
+				ShowDetails(pCinematic);
+				ImGui::Unindent();
+				ImGui::PopID();
+			}
 
-				//ShowDetails(pCinematicManager->ppCinematicObjB_B[selectedCutsceneId]);
+			if (gSkipCutscenes && pCinematic->state == CS_Playing && pCinematic->cinFileData.pCinTag) {
+				pCinematic->totalCutsceneDelta = pCinematic->cinFileData.pCinTag->totalPlayTime;
 			}
 		}
 
-		if (ImGui::CollapsingHeader("All Active", ImGuiTreeNodeFlags_DefaultOpen)) {
-			gCutsceneFilter.DrawImguiControl();
-
-			if (pCinematicManager->activeCinematicCount > 0) {
-				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
-					// Filter cutscenes based on the filter string
-					std::string filter = gCutsceneFilter;
-
-					if (!filter.empty() && !strstr(pCinematicManager->ppCinematicObjB_B[i]->fileName, filter.c_str())) {
-						continue; // Skip this cutscene if it doesn't match the filter
-					}
-
-					auto* pCinematic = pCinematicManager->ppCinematicObjB_B[i];
-					char buffer[512];
-					sprintf(buffer, "%d - %s", i, pCinematic->fileName);
-					if (ImGui::CollapsingHeader(buffer) || pCinematic->state == CS_Playing) {
-						ShowDetails(pCinematic);
-					}
-
-					if (gSkipCutscenes) {
-						if (pCinematic->state == CS_Playing) {
-							pCinematic->totalCutsceneDelta = ((pCinematic->cinFileData).pCinTag)->totalPlayTime;
-						}
-					}
-				}
-			}
-		}
-
-		// End the ImGui window
 		ImGui::End();
 	}
 }
