@@ -93,6 +93,8 @@ public:
 	uint ReadLayer(uint index);
 	void WriteLayer(uint index, uint value);
 
+	void FUN_00352d90(edF32MATRIX4* param_2);
+
 	int* aSubObjs[2];
 
 	uint nbColumns;

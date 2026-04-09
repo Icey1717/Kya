@@ -1477,7 +1477,7 @@ void CPauseManager::Level_Draw()
 		if (0 < nbCinematics) {
 			do {
 				pCurCinematic = g_CinematicManager_0048efc->GetCinematic(index);
-				if ((pCurCinematic->state != CS_Stopped) && ((pCurCinematic->flags_0x4 & 8) != 0)) {
+				if ((pCurCinematic->state != CS_Stopped) && ((pCurCinematic->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 					pActiveCinematic = pCurCinematic;
 				}
 

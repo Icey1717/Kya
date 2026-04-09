@@ -27,39 +27,6 @@ void GuiDList_EndCurrent(void)
 	return;
 }
 
-uint GameDListPatch_Register(CObject* pObject, int nbMatrices, int nbInstances)
-{
-	CGlobalDListPatch* pSectorPatch;
-	int nbPatches;
-	CGlobalDListManager* pCVar3;
-	S_GLOBAL_DLIST_PATCH* pNewPatch;
-	int sectorId;
-
-	pCVar3 = CScene::ptable.g_GlobalDListManager_004516bc;
-	sectorId = pObject->sectorId;
-	if (sectorId == -1) {
-		sectorId = 0;
-	}
-
-	pSectorPatch = (CScene::ptable.g_GlobalDListManager_004516bc)->ppGlobalDlist[sectorId].pDlistPatch;
-
-	pNewPatch = NewPool_S_EYES_BRIGHT_SHADOW(1);
-	pSectorPatch->aPatches[pSectorPatch->nbTotalPatches] = pNewPatch;
-	pNewPatch->field_0x0 = 0;
-	pNewPatch->pOwner = pObject;
-	pNewPatch->nbMatrices = nbMatrices;
-	pNewPatch->nbInstances = nbInstances;
-
-	nbPatches = pSectorPatch->nbTotalPatches;
-	pSectorPatch->nbTotalPatches = nbPatches + 1;
-	pCVar3->ppGlobalDlist[sectorId].nbMatrices = pCVar3->ppGlobalDlist[sectorId].nbMatrices + nbMatrices;
-	pCVar3->ppGlobalDlist[sectorId].nbInstances = pCVar3->ppGlobalDlist[sectorId].nbInstances + nbInstances;
-	pCVar3->ppGlobalDlist[sectorId].nbRegisteredPatches = pCVar3->ppGlobalDlist[sectorId].nbRegisteredPatches + 1;
-
-	// Store patch ID and index in one unsigned integer to return.
-	return sectorId * 0x10000 + nbPatches;
-}
-
 // Should be in: D:/Projects/b-witch/DlistManager.cpp
 CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId)
 {

@@ -192,7 +192,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 			ed3DSetMeshTransformFlag_002abd80(this->pMeshNode, 0xffff);
 
 			CCinematic* pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
-			if ((pCinematic->flags_0x4 & 0x400000) == 0) {
+			if ((pCinematic->flags_0x4 & CINEMATIC_FLAG_MESH_TRANSFORM_OPTION) == 0) {
 				ed3DSetMeshTransformFlag_002abff0(this->pMeshNode, 0);
 			}
 			else {

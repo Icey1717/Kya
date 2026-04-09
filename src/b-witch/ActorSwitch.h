@@ -129,6 +129,8 @@ public:
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
 
+	void Display_Digit(int param_2, float param_3, float param_4, float param_5, float param_6);
+
 	ParticleInfo* field_0x8;
 	S_STREAM_REF<ed_zone_3d> streamRefZone;
 	S_STREAM_REF<CActor> streamRefActor;

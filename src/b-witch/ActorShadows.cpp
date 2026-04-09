@@ -14,7 +14,7 @@ CShadowShared::CShadowShared()
 	this->displayable = 1;
 	this->field_0x38 = 1;
 	this->field_0x3c = 1.0f;
-	this->field_0x40 = 1.0f;
+	this->globalIntensity = 1.0f;
 	this->field_0x44 = 1.0f;
 	this->field_0x48 = 0.25f;
 	this->field_0x4c = 0.0f;
@@ -49,7 +49,7 @@ byte CShadowShared::Compute(edF32MATRIX4 * param_2)
 
 	v0 = &auStack64.rowZ;
 	auStack64.rowY = this->field_0x20;
-	local_80.bb = this->field_0x44 + (1.0f - this->field_0x44) * this->field_0x3c * this->field_0x40;
+	local_80.bb = this->field_0x44 + (1.0f - this->field_0x44) * this->field_0x3c * this->globalIntensity;
 	SetVectorFromAngleY(this->field_0x4c, v0);
 	edF32Vector4CrossProductHard(&auStack64.rowX, &auStack64.rowY, v0);
 	edF32Vector4NormalizeHard(&auStack64.rowX, &auStack64.rowX);
@@ -62,7 +62,7 @@ byte CShadowShared::Compute(edF32MATRIX4 * param_2)
 	auStack64.rowT = this->position;
 	edF32Matrix4CopyHard(param_2, &auStack64);
 
-	return (byte)((float)(this->shadowColor).a) * this->field_0x3c * this->field_0x40;
+	return (byte)((float)(this->shadowColor).a) * this->field_0x3c * this->globalIntensity;
 }
 
 bool CShadow::IsKindOfObject(ulong kind)
@@ -128,7 +128,7 @@ byte CShadow::Compute(edF32MATRIX4* param_2)
 	v0 = &auStack64.rowZ;
 	local_80.bb = this->field_0x44;
 	auStack64.rowY = this->field_0x20;
-	local_80.bb = local_80.bb + (1.0f - local_80.bb) * this->field_0x3c * this->field_0x40;
+	local_80.bb = local_80.bb + (1.0f - local_80.bb) * this->field_0x3c * this->globalIntensity;
 
 	SetVectorFromAngleY(this->field_0x4c, v0);
 	v1 = &auStack64.rowY;
@@ -149,7 +149,7 @@ byte CShadow::Compute(edF32MATRIX4* param_2)
 	auStack64.rowT = this->position;
 	edF32Matrix4CopyHard(param_2, &auStack64);
 
-	return (byte)((float)(this->shadowColor).a) * this->field_0x3c * this->field_0x40;
+	return (byte)((float)(this->shadowColor).a) * this->field_0x3c * this->globalIntensity;
 }
 
 void CShadow::SetDisplayableAlt(int param_2)
@@ -425,6 +425,23 @@ void CShadowShared::SetIntensity(float newIntensity)
 	}
 
 	this->field_0x3c = fVar1;
+
+	return;
+}
+
+void CShadowShared::SetGlobalIntensity(float newGlobalIntensity)
+{
+	float fVar1;
+
+	if (newGlobalIntensity < 0.0) {
+		newGlobalIntensity = 0.0;
+	}
+	fVar1 = 1.0;
+	if (newGlobalIntensity <= 1.0) {
+		fVar1 = newGlobalIntensity;
+	}
+
+	this->globalIntensity = fVar1;
 
 	return;
 }

@@ -19,6 +19,7 @@ public:
 	void Init(int sectorId);
 	void Draw(CGlobalDListPatch* pPatch, uint index);
 	void SetIntensity(float newIntensity);
+	void SetGlobalIntensity(float newGlobalIntensity);
 
 	edF32VECTOR4 position;
 	edF32VECTOR4 field_0x20;
@@ -26,7 +27,7 @@ public:
 	int displayable;
 	int field_0x38;
 	float field_0x3c;
-	float field_0x40;
+	float globalIntensity;
 	float field_0x44;
 	float field_0x48;
 	float field_0x4c;

@@ -8,6 +8,7 @@
 #include "MathOps.h"
 #include "EventManager.h"
 #include "ActorProjectile.h"
+#include "DlistManager.h"
 #include "FrontEndDisp.h"
 #include "InputManager.h"
 #include "CollisionRay.h"
@@ -660,7 +661,21 @@ void CActorWolfen::Manage()
 
 void CActorWolfen::Draw()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	CActorFighter* pCVar1;
+	uint uVar2;
+
+	CActorAutonomous::Draw();
+	uVar2 = 0;
+	//pCVar1 = this;
+	if (this->field_0x630 != 0) {
+		do {
+			IMPLEMENTATION_GUARD_LOG(
+			FUN_00400bf0((long)(int)pCVar1->field_0x610);)
+			uVar2 = uVar2 + 1;
+			//pCVar1 = (CActorFighter*)&(pCVar1->characterBase).base.base.flags;
+		} while (uVar2 < this->field_0x630);
+	}
+	return;
 }
 
 void CActorWolfen::Reset()
@@ -3208,6 +3223,173 @@ void CActorWolfen::BehaviourSnipe_Manage(CBehaviourSnipe* pBehaviour)
 	}
 	else {
 		pBehaviour->switchBehaviour.Execute(this);
+	}
+
+	return;
+}
+
+float rayWidth = 0.04f;
+float spike_length = 2.0f;
+float segment_length_max = 2.0f;
+
+int DBG_NB_SUBDIV = 3;
+
+_rgba DBG_COL_SRC = { 0x40, 0x10, 0x10, 0x40 };
+_rgba DBG_COL_DST = { 0x40, 0x10, 0x10, 0x40 };
+
+void _SubDrawRay(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
+{
+	float x;
+	float y;
+	uint uVar1;
+	int iVar2;
+	float z;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+	float s;
+	edF32MATRIX4 eStack128;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	_rgba local_4;
+
+	edF32Vector4SubHard(&eStack64, param_3, param_2);
+	z = edF32Vector4NormalizeHard(&eStack64, &eStack64);
+	iVar3 = 0;
+	if ((spike_length * 2.0f < z) &&
+		(iVar3 = static_cast<int>((z - spike_length * 2.0f) / segment_length_max + 0.5f), iVar3 == 0)) {
+		iVar3 = 1;
+	}
+
+	edF32Matrix4BuildFromVectorUnitSoft(&eStack128, &eStack64);
+	eStack128.da = param_2->x;
+	eStack128.db = param_2->y;
+	eStack128.dc = param_2->z;
+	eStack128.dd = param_2->w;
+	edDListLoadMatrix(&eStack128);
+	local_30.w = 1.0f;
+	local_30.y = 0.0f;
+	local_30.z = 0.0f;
+	local_30.x = param_1;
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, DBG_NB_SUBDIV * (iVar3 * 2 + 4));
+	for (uVar1 = 1; y = local_30.y, x = local_30.x, uVar1 <= DBG_NB_SUBDIV; uVar1 = uVar1 + 1) {
+		if (static_cast<int>(uVar1) < 0) {
+			fVar4 = static_cast<float>(uVar1 >> 1 | uVar1 & 1);
+			fVar4 = fVar4 + fVar4;
+		}
+		else {
+			fVar4 = static_cast<float>(uVar1);
+		}
+		if (static_cast<int>(DBG_NB_SUBDIV) < 0) {
+			fVar5 = static_cast<float>(DBG_NB_SUBDIV >> 1 | DBG_NB_SUBDIV & 1);
+			fVar5 = fVar5 + fVar5;
+		}
+		else {
+			fVar5 = static_cast<float>(DBG_NB_SUBDIV);
+		}
+		fVar5 = (fVar4 * 6.283185f) / fVar5;
+		local_30.x = param_1 * cosf(fVar5);
+		local_30.y = param_1 * cosf(fVar5 - 1.570796f);
+		edDListColor4u8(DBG_COL_SRC.r, DBG_COL_SRC.g, DBG_COL_SRC.b, DBG_COL_SRC.a);
+		edDListTexCoo2f(0.0f, 0.5f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 49152.0f);
+		local_4.LerpRGBA(0.5f, DBG_COL_SRC.rgba, DBG_COL_DST.rgba);
+		edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
+		fVar4 = 0.5f;
+		if (spike_length / z <= 0.5f) {
+			fVar4 = spike_length / z;
+		}
+		edDListTexCoo2f(fVar4, 0.0f);
+		edDListVertex4f(x, y, z * fVar4, 49152.0f);
+		edDListTexCoo2f(fVar4, 1.0f);
+		edDListVertex4f(local_30.x, local_30.y, z * fVar4, 0.0f);
+		if (iVar3 < 1) {
+			fVar5 = 0.0f;
+		}
+		else {
+			fVar5 = ((z - spike_length * 2.0f) / z) / static_cast<float>(iVar3);
+		}
+		for (iVar2 = 1; iVar2 <= iVar3; iVar2 = iVar2 + 1) {
+			s = fVar4 + fVar5 * static_cast<float>(iVar2);
+			edDListTexCoo2f(s, 0.0f);
+			edDListVertex4f(x, y, z * s, 0.0f);
+			edDListTexCoo2f(s, 1.0f);
+			edDListVertex4f(local_30.x, local_30.y, z * s, 0.0f);
+		}
+
+		edDListColor4u8(DBG_COL_DST.r, DBG_COL_DST.g, DBG_COL_DST.b, DBG_COL_DST.a);
+		edDListTexCoo2f(1.0f, 0.5f);
+		edDListVertex4f(0.0f, 0.0f, z, 0.0f);
+	}
+
+	edDListEnd();
+
+	return;
+}
+
+void CActorWolfen::BehaviourSnipe_Draw(CBehaviourSnipe* pBehaviour)
+{
+	int iVar1;
+	int iVar2;
+	bool bVar3;
+	uint uVar4;
+	edDList_material* pMaterialInfo;
+	edF32VECTOR4* v1;
+	int iVar5;
+	CWolfenHaloAgent* pWolfenHaloAgent;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	iVar1 = (pBehaviour->wolfenHaloAgent).nbSpot;
+	pWolfenHaloAgent = &pBehaviour->wolfenHaloAgent;
+	uVar4 = GetStateWolfenFlags(this->actorState);
+	if ((uVar4 & 0x40) == 0) {
+		iVar5 = 0;
+		if (0 < iVar1) {
+			do {
+				iVar2 = (pBehaviour->wolfenHaloAgent).nbShadow;
+				pWolfenHaloAgent->aShadows[iVar2 + -1 + iVar5 * iVar2].SetDisplayable(0);
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < iVar1);
+		}
+	}
+	else {
+		pWolfenHaloAgent->Draw();
+
+		bVar3 = GameDList_BeginCurrent();
+		if (bVar3 != false) {
+			iVar5 = iVar1 + -1;
+			if ((pBehaviour->wolfenHaloAgent).field_0xc != 0) {
+				iVar5 = 0;
+			}
+			do {
+				iVar2 = (pBehaviour->wolfenHaloAgent).nbShadow;
+				if (pWolfenHaloAgent->aShadows[iVar2 + -1 + iVar5 * iVar2].displayable != 0) {
+					v1 = &pWolfenHaloAgent->aShadows[iVar2 + -1 + iVar5 * iVar2].position;
+					edF32Vector4AddHard(&eStack32, &this->currentLocation,
+						&(this->pCollisionData)->pObbPrim->
+						position);
+					edF32Vector4SubHard(&eStack16, v1, &eStack32);
+					edF32Vector4NormalizeHard(&eStack16, &eStack16);
+					edF32Vector4SubHard(&eStack48, v1, &eStack16);
+					edF32Vector4ScaleHard(2.0f, &eStack16, &eStack16);
+					edF32Vector4AddHard(&eStack64, &eStack32, &eStack16);
+					pMaterialInfo = pFileManager->GetMaterialFromId(pBehaviour->field_0xac, 0);
+					edDListUseMaterial(pMaterialInfo);
+					_SubDrawRay(rayWidth, &eStack48, &eStack64);
+				}
+				iVar5 = (iVar5 + 1) % iVar1;
+				if (iVar1 == 0) {
+					trap(7);
+				}
+			} while (iVar5 != 0);
+			GameDList_EndCurrent();
+		}
 	}
 
 	return;
@@ -6177,8 +6359,8 @@ void CActorWolfen::StateTrackWeaponFire(CBehaviourTrackWeaponSnipe* pBehaviour)
 	return;
 }
 
-float FLOAT_00448af8 = 0.8f;
-float FLOAT_00448afc = 3.0f;
+float SCAN_SPEED = 0.8f;
+float SCAN_MAGNITUDE = 3.0f;
 
 void CActorWolfen::StateTrackWeaponSnipe_Lost(CBehaviourTrackWeaponSnipe* pBehaviour)
 {
@@ -6204,9 +6386,9 @@ void CActorWolfen::StateTrackWeaponSnipe_Lost(CBehaviourTrackWeaponSnipe* pBehav
 	CBehaviourSnipe* pBehaviourSnipe;
 
 	lVar5 = -1;
-	t = FLOAT_00448afc * sinf(FLOAT_00448af8 * this->timeInAir);
-	fVar7 = FLOAT_00448afc * 0.5f;
-	fVar6 = sinf(FLOAT_00448af8 * this->timeInAir * 2.0f);
+	t = SCAN_MAGNITUDE * sinf(SCAN_SPEED * this->timeInAir);
+	fVar7 = SCAN_MAGNITUDE * 0.5f;
+	fVar6 = sinf(SCAN_SPEED * this->timeInAir * 2.0f);
 
 	edF32Vector4SubHard(&local_10, &this->pCommander->targetPosition, &this->currentLocation);
 	local_10.y = 0.0f;
@@ -13823,11 +14005,13 @@ void CBehaviourSnipe::Manage()
 
 void CBehaviourSnipe::Draw()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourSnipe_Draw(this);
+
+	return;
 }
 
-uint UINT_00448ad8 = 0x801010F0;
-uint UINT_00448adc = 0x801010F0;
+uint DBG_COLOR_REST = 0x801010F0;
+uint DBG_COLOR_ALARM = 0x801010F0;
 
 void CBehaviourSnipe::Begin(CActor * pOwner, int newState, int newAnimationType)
 {
@@ -13873,7 +14057,7 @@ void CBehaviourSnipe::Begin(CActor * pOwner, int newState, int newAnimationType)
 	if (this->pOwner->prevBehaviourId == -1) {
 		pCVar2 = (this->field_0x90).Get();
 		this->field_0x80 = pCVar2->currentLocation;
-		(this->wolfenHaloAgent).field_0x1c = UINT_00448ad8;
+		(this->wolfenHaloAgent).field_0x1c = DBG_COLOR_REST;
 		this->wolfenHaloAgent.Reset(&this->field_0x90.Get()->currentLocation, &gF32Vector4UnitY);
 	}
 
@@ -14101,7 +14285,7 @@ void CBehaviourSnipe::ProjectHaloOnScenery(edF32VECTOR4* pSource, edF32VECTOR4* 
 		}
 	} while (iVar6 != iVar7);
 
-	local_4.LerpRGBA(this->field_0xec, UINT_00448adc, UINT_00448ad8);
+	local_4.LerpRGBA(this->field_0xec, DBG_COLOR_ALARM, DBG_COLOR_REST);
 	(this->wolfenHaloAgent).field_0x1c = local_4.rgba;
 
 	this->wolfenHaloAgent.RotateSpot();
@@ -14285,6 +14469,21 @@ void CWolfenHaloAgent::RotateSpot()
 	if (fVar2 != 0.0f) {
 		fVar2 = edF32Between_0_2Pi(this->field_0x14 + fVar2 * Timer::GetTimer()->cutsceneDeltaTime);
 		this->field_0x14 = fVar2;
+	}
+
+	return;
+}
+
+void CWolfenHaloAgent::Draw()
+{
+	int iVar1;
+
+	iVar1 = 0;
+	if (0 < this->nbSpot * this->nbShadow) {
+		do {
+			this->aShadows[iVar1].Draw();
+			iVar1 = iVar1 + 1;
+		} while (iVar1 < this->nbSpot * this->nbShadow);
 	}
 
 	return;
@@ -14489,7 +14688,9 @@ void CBehaviourTrackWeaponSnipe::Manage()
 
 void CBehaviourTrackWeaponSnipe::Draw()
 {
-	IMPLEMENTATION_GUARD();
+	this->pBehaviourSnipe->Draw();
+
+	return;
 }
 
 void CBehaviourTrackWeaponSnipe::Begin(CActor * pOwner, int newState, int newAnimationType)

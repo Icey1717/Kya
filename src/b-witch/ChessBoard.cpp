@@ -561,6 +561,14 @@ void CChessBoard::WriteLayer(uint index, uint value)
 	} while (currentIndex < 2);
 }
 
+void CChessBoard::FUN_00352d90(edF32MATRIX4* param_2)
+{
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x230, param_2, &this->field_0x230);
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x240, param_2, &this->field_0x240);
+
+	return;
+}
+
 void CChessBoard::InvalidateByZone(int zoneId)
 {
 	CEventManager* pEventManager;

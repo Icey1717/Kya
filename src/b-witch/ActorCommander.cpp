@@ -190,8 +190,7 @@ void CActorCommander::Manage()
 		if (iVar1 != 0) {
 			edF32Vector4SubHard(&eStack112, &this->currentLocation, &local_20);
 			edF32Matrix4TranslateHard(&eStack96, &gF32Matrix4Unit, &eStack112);
-			IMPLEMENTATION_GUARD_LOG(
-			FUN_00352d90((int)&(this->squad).chessboard, &eStack96);)
+			(this->squad).chessboard.FUN_00352d90(&eStack96);
 		}
 	}
 

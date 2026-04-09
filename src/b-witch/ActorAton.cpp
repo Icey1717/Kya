@@ -1459,11 +1459,10 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	uVar1 = this->field_0x354;
 	if (this->trailMaterialId != -1) {
 		if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
-			IMPLEMENTATION_GUARD_LOG(
-			this->fxTailA.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);)
+			this->fxTailA.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);
 		}
 		else {
-			IMPLEMENTATION_GUARD_LOG(
+			IMPLEMENTATION_GUARD_FX(
 			SV_GetBoneWorldPosition(uVar12, &eStack256);
 			SV_GetBoneWorldPosition(uVar1, &eStack272);
 			fVar23 = this->dynamic.linearAcceleration;
@@ -1511,12 +1510,11 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	uVar1 = this->field_0x35c;
 	if (this->trailMaterialId != -1) {
 		if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
-			IMPLEMENTATION_GUARD_LOG(
-			CFxTail::Manage(&this->fxTailB, (undefined4*)&gF32Vertex4Zero, (undefined4*)&gF32Vertex4Zero, 1);)
+				this->fxTailB.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);
 		}
 
 		else {
-			IMPLEMENTATION_GUARD_LOG(
+			IMPLEMENTATION_GUARD_FX(
 			CActor::SV_GetBoneWorldPosition(this, uVar12, &eStack288);
 			CActor::SV_GetBoneWorldPosition(this, uVar1, &eStack304);
 			fVar23 = this->dynamic.linearAcceleration;

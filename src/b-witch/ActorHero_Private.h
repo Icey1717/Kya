@@ -38,6 +38,18 @@ public:
 	uint field_0x44;
 };
 
+class StaticMeshComponentHeroEx : public StaticMeshComponent
+{
+public:
+	void Init(float param_1, float param_2, ed_3D_Scene* param_4, ed_g3d_manager* param_5, char* szString);
+
+	float field_0x60;
+	float bounds[4];
+	ed_3d_hierarchy_setup hierarchySetup;
+	ed_3D_Light_Config lightConfig;
+	edF32VECTOR4 lightAmbient;
+};
+
 enum EBoomyThrowState
 {
 	BTS_None,
@@ -121,6 +133,16 @@ public:
 	virtual void SetInitialState();
 
 	CActorHeroPrivate* pHero;
+};
+
+class CBehaviourHeroUnknown : public CBehaviourHero
+{
+public:
+	CFxHandleExt fxHandleA;
+	StaticMeshComponentHeroEx staticMeshA;
+	CFxHandleExt fxHandleB;
+	CFxHandleExt fxHandleC;
+	StaticMeshComponentHeroEx staticMeshB;
 };
 
 class CBehaviourHeroDefault : public CBehaviourHero
@@ -269,6 +291,8 @@ public:
 	void BehaviourHeroRideJamGut_InitState(int newState, CBehaviourHeroRideJamGut* pBehaviour);
 	void BehaviourHeroRideJamGut_TermState(int oldState, int newState);
 	void BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut* pBehaviour);
+
+	void FxTobogganInit();
 
 	void StateHeroStandInit(int bCheckEffort);
 	void StateHeroStandTerm();
@@ -580,8 +604,11 @@ public:
 
 	float field_0x102c;
 
-	CFxHandle* field_0x10fc;
-	int* field_0x1100;
+	CFxHandleExt* pTobogganFxA;
+	StaticMeshComponentHeroEx* pTobogganStaticMeshA;
+	CFxHandleExt* pTobogganFxB;
+	CFxHandleExt* pTobogganFxC;
+	StaticMeshComponentHeroEx* pTobogganStaticMeshB;
 
 	CActor* pBoomyTarget;
 	edF32VECTOR4 boomyTargetPosition;
@@ -612,11 +639,9 @@ public:
 	int field_0x1c38;
 	undefined4 field_0x1c3c;
 
-	CBehaviour behaviour_0x1c50;
-	CBehaviour behaviour_0x1e10;
-	CBehaviour behaviour_0x1fd0;
-
 	int field_0x12e0;
+
+	undefined4 field_0x1118;
 
 	undefined4 field_0x1a50;
 	float field_0x1a58;
@@ -637,6 +662,7 @@ public:
 
 	float field_0x1048;
 
+	CFxHandleExt field_0x13c0;
 	edF32VECTOR4 field_0x13f0;
 	edF32VECTOR4 field_0x1400;
 	edF32VECTOR4 bounceLocation;
@@ -862,6 +888,10 @@ public:
 
 	CActorsTable boomyTargetTable;
 	edF32VECTOR4 vector_0x1be0;
+
+	CBehaviourHeroUnknown behaviour_0x1c50;
+	CBehaviourHeroUnknown behaviour_0x1e10;
+	CBehaviourHeroUnknown behaviour_0x1fd0;
 };
 
 class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut

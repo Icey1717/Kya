@@ -480,14 +480,10 @@ void CActorHeroPrivate::StateHeroFlyInit()
 	this->field_0xcb4.Init(0.0f, 800.0f);
 	this->bFreeGlide = 1;
 
-	IMPLEMENTATION_GUARD_LOG(
-		CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x13c0);
-	piVar1 = (int*)this->field_0x13c4;
-	if (((piVar1 != (int*)0x0) && (iVar2 = *(int*)&this->field_0x13c0, iVar2 != 0)) && (iVar2 == piVar1[6])) {
-		(**(code**)(*piVar1 + 0x10))(0, 0);
-	})
+	SV_FX_Start(&this->field_0x13c0);
+	this->field_0x13c0.Start();
 
-		return;
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorHero_Wind.cpp
@@ -496,28 +492,17 @@ void CActorHeroPrivate::StateHeroFlyTerm()
 	CFxHandle* pCVar1;
 	int iVar2;
 	bool bVar3;
-	Timer* pTVar4;
 	CCamera* pCVar5;
 	CCameraManager* pCameraManager;
 
-	IMPLEMENTATION_GUARD_LOG(
-		pCVar1 = this->field_0x13c4;
-	if (((pCVar1 == (CFxHandle*)0x0) || (iVar2 = this->field_0x13c0, iVar2 == 0)) ||
-		(bVar3 = true, iVar2 != pCVar1[2].id)) {
-		bVar3 = false;
+	if (this->field_0x13c0.IsValid()) {
+		this->field_0x13c0.Kill();
+		this->field_0x13c0.Reset();
 	}
-	if (bVar3) {
-		if (((pCVar1 != (CFxHandle*)0x0) && (iVar2 = this->field_0x13c0, iVar2 != 0)) &&
-			(iVar2 == pCVar1[2].id)) {
-			(**(code**)(pCVar1->id + 0xc))();
-		}
-		this->field_0x13c4 = (CFxHandle*)0x0;
-		this->field_0x13c0 = 0;
-	}
-	this->field_0x13cc = 0;)
 
-		pTVar4 = GetTimer();
-	this->currentGlideTime = pTVar4->scaledTotalTime;
+	this->field_0x13cc = 0.0f;
+
+	this->currentGlideTime = GetTimer()->scaledTotalTime;
 	this->field_0x1420 = 0;
 	this->bCheckDynCollisions = 0;
 	RestoreCollisionSphere(0.1f);

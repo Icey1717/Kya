@@ -1,6 +1,7 @@
 #include "ActorSwitch.h"
 #include "MemoryStream.h"
 #include "CinematicManager.h"
+#include "DlistManager.h"
 #include "CollisionManager.h"
 #include "MathOps.h"
 #include "FileManager3D.h"
@@ -1740,9 +1741,89 @@ void CBehaviourSwitchWolfenCounter::Manage()
 	return;
 }
 
+void CBehaviourSwitchWolfenCounter::Display_Digit(int param_2, float param_3, float param_4, float param_5, float param_6)
+{
+	float y;
+	float x;
+	float fVar1;
+	float x_00;
+
+	fVar1 = param_6 * 0.5f;
+	edDListUseMaterial(this->field_0x8->materialInfoArray_0x8 + param_2);
+	edDListBlendSet(1);
+	edDListBlendFunc_002ca830();
+	edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
+	edDListTexCoo2f(0.0f, 1.0f);
+	y = param_4 - fVar1;
+	x_00 = param_3 - param_5 * 0.5f;
+	edDListVertex4f(x_00, y, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	x = param_3 + param_5 * 0.5f;
+	edDListVertex4f(x, y, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 0.0f);
+	fVar1 = param_4 + fVar1;
+	edDListVertex4f(x_00, fVar1, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(x, fVar1, 0.0f, 0.0f);
+	edDListEnd();
+
+	return;
+}
+
 void CBehaviourSwitchWolfenCounter::Draw()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	edF32VECTOR4 eStack144;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 auStack64;
+	CActor* pAct;
+	CActorSwitch* pSwitch;
+
+	bVar1 = GameDList_BeginCurrent();
+	if (bVar1 != false) {
+		edDListBlendSet(0);
+		pAct = (this->streamRefActor).Get();
+		if (pAct == (CActor*)0x0) {
+			edDListLoadMatrix(&this->matrix);
+		}
+		else {
+			pAct->SV_ComputeDiffMatrixFromInit(&auStack64);
+			edF32Matrix4MulF32Matrix4Hard(&auStack64, &this->matrix, &auStack64);
+			edF32Matrix4FromEulerSoft(&eStack128, &(this->pOwner->pCinData)->rotationEuler, "XYZ");
+			pSwitch = this->pOwner;
+			eStack128.rowT = pSwitch->baseLocation;
+			edF32Matrix4GetInverseOrthoHard(&eStack128, &eStack128);
+			edF32Matrix4MulF32Vector4Hard(&eStack144, &eStack128, (edF32VECTOR4*)&auStack64.da);
+			this->pOwner->SetLocalBoundingSphere(((this->pOwner->subObjA)->boundingSphere).w, &eStack144);
+			edDListLoadMatrix(&auStack64);
+		}
+
+		if (this->field_0x8 != (ParticleInfo*)0x0) {
+			iVar4 = this->field_0x14;
+			if (iVar4 < 1) {
+				iVar2 = 0;
+				iVar3 = 0;
+				iVar4 = 0;
+			}
+			else {
+				iVar2 = iVar4 / 100;
+				iVar3 = (iVar4 % 100) / 10;
+				iVar4 = (iVar4 % 100) % 10;
+			}
+
+			Display_Digit(iVar2, -0.495f, 0.0f, 0.33f, 1.0f);
+			Display_Digit(iVar3, -0.165f, 0.0f, 0.33f, 1.0f);
+			Display_Digit(iVar4, 0.165f, 0.0f, 0.33f, 1.0f);
+		}
+
+		GameDList_EndCurrent();
+	}
+
+	return;
 }
 
 edF32VECTOR4 edF32VECTOR4_0040e700 = { 1.0f, 1.0f, 1.0f, 1.0f };

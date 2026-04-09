@@ -482,6 +482,7 @@ public:
 	virtual bool IsLockable();
 	virtual bool IsProjectionAim();
 	virtual bool CanPassThrough();
+	virtual uint Func_0x98();
 	virtual bool Can_0x9c();
 
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);

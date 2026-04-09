@@ -394,8 +394,8 @@ void CActorAmortos::BehaviourAmortosStand_TermState()
 		v2 = GetBottomPosition();
 		edF32Vector4AddHard(&eStack16, &pCVar1->highestVertex, v2);
 		edF32Vector4ScaleHard(0.5f, &eStack16, &eStack16);
-		IMPLEMENTATION_GUARD_LOG(
-		ActorComponent34Func_00397180(&this->addOnGenerator, &eStack16);)
+		this->addOnGenerator.Generate(&eStack16);
+
 		iVar7 = 0;
 		while (true) {
 			pSVar2 = this->pCheckpoint_0x184;

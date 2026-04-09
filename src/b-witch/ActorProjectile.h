@@ -232,6 +232,8 @@ public:
 	CActor* field_0x40c;
 
 	undefined4 field_0x540;
+	edF32VECTOR4 field_0x550;
+	edF32VECTOR4 field_0x560;
 	float field_0x570;
 	undefined4 field_0x5a8;
 };

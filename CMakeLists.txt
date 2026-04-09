@@ -202,6 +202,8 @@ set(main_src
 	"${src_root}/b-witch/CameraFixePerso.h"
 	"${src_root}/b-witch/CameraFixe.cpp"
 	"${src_root}/b-witch/CameraFixe.h"
+	"${src_root}/b-witch/CameraShadow.cpp"
+	"${src_root}/b-witch/CameraShadow.h"
 	"${src_root}/b-witch/CameraRail.cpp"
 	"${src_root}/b-witch/CameraRail.h"
 	"${src_root}/b-witch/CameraBoomy.cpp"

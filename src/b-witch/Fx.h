@@ -102,7 +102,7 @@ public:
 	virtual void NotifySonIsDead(CNewFx* pSon, int);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
 	virtual void UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition);
-	virtual void SetTimeScaler() { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler(float) { IMPLEMENTATION_GUARD(); }
 
 	void Manage();
 
@@ -213,6 +213,15 @@ public:
 	{
 		if (IsValid()) {
 			pFx->SpatializeOnActor(mode, pActor, boneId);
+		}
+
+		return;
+	}
+
+	inline void UpdateSpatializeActor(uint newFlags, edF32VECTOR4* pNewPosition)
+	{
+		if (IsValid()) {
+			pFx->UpdateSpatializeActor(newFlags, pNewPosition);
 		}
 
 		return;

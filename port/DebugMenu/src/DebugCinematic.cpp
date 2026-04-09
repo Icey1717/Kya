@@ -47,13 +47,152 @@ namespace Debug::Cinematic
 		int cinematicIndex = -1;
 		const char* pFileName = "<unnamed>";
 		ECinematicState state = CS_Stopped;
-		uint bitFlags = 0;
+		uint uniqueIdentifier = 0;
 		uint saveFlags = 0;
 		float totalCutsceneDelta = 0.0f;
 	};
 
 	static std::unordered_map<CCinematic*, CinematicStepState> sStepStates;
 	static std::unordered_map<CCinematic*, ECinematicState> sPrevStates;
+
+	struct CinematicFlagName {
+		uint mask;
+		const char* pName;
+	};
+
+	static constexpr CinematicFlagName kCinematicFlagNames[] = {
+		{ CINEMATIC_FLAG_ONE_SHOT_GATED, "CINEMATIC_FLAG_ONE_SHOT_GATED" },
+		{ CINEMATIC_FLAG_ALLOW_SKIP_INPUT, "CINEMATIC_FLAG_ALLOW_SKIP_INPUT" },
+		{ CINEMATIC_FLAG_SKIP_NEEDS_0x1400, "CINEMATIC_FLAG_SKIP_NEEDS_0x1400" },
+		{ CINEMATIC_FLAG_LOOPING_LOADING, "CINEMATIC_FLAG_LOOPING_LOADING" },
+		{ CINEMATIC_FLAG_HERO_MSG_82_83, "CINEMATIC_FLAG_HERO_MSG_82_83" },
+		{ CINEMATIC_FLAG_PRERESET_ON_CHECKPOINT, "CINEMATIC_FLAG_PRERESET_ON_CHECKPOINT" },
+		{ CINEMATIC_FLAG_SAVE_CONTEXT, "CINEMATIC_FLAG_SAVE_CONTEXT" },
+		{ CINEMATIC_FLAG_APPLY_END_ON_STOP, "CINEMATIC_FLAG_APPLY_END_ON_STOP" },
+		{ CINEMATIC_FLAG_KEEP_TIME_ON_START, "CINEMATIC_FLAG_KEEP_TIME_ON_START" },
+		{ CINEMATIC_FLAG_CUTSCENE_BANDS, "CINEMATIC_FLAG_CUTSCENE_BANDS" },
+		{ CINEMATIC_FLAG_HIDE_FRONTEND, "CINEMATIC_FLAG_HIDE_FRONTEND" },
+		{ CINEMATIC_FLAG_AUTO_TRY_START, "CINEMATIC_FLAG_AUTO_TRY_START" },
+		{ CINEMATIC_FLAG_FORCE_INTERPOLATE, "CINEMATIC_FLAG_FORCE_INTERPOLATE" },
+		{ CINEMATIC_FLAG_RELATIVE_TRANSFORM, "CINEMATIC_FLAG_RELATIVE_TRANSFORM" },
+		{ CINEMATIC_FLAG_ALT_ACTOR_INIT_MODE, "CINEMATIC_FLAG_ALT_ACTOR_INIT_MODE" },
+		{ CINEMATIC_FLAG_REMAP_ACTORREFB_HASH, "CINEMATIC_FLAG_REMAP_ACTORREFB_HASH" },
+		{ CINEMATIC_FLAG_SET_HERO_0x400000, "CINEMATIC_FLAG_SET_HERO_0x400000" },
+		{ CINEMATIC_FLAG_IGNORE_BASE_SECTOR, "CINEMATIC_FLAG_IGNORE_BASE_SECTOR" },
+		{ CINEMATIC_FLAG_AUDIO_MODE_A, "CINEMATIC_FLAG_AUDIO_MODE_A" },
+		{ CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR, "CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR" },
+		{ CINEMATIC_FLAG_AUDIO_MODE_B, "CINEMATIC_FLAG_AUDIO_MODE_B" },
+		{ CINEMATIC_FLAG_MESH_TRANSFORM_OPTION, "CINEMATIC_FLAG_MESH_TRANSFORM_OPTION" },
+		{ CINEMATIC_FLAG_FORCE_ACTOR_0x200000, "CINEMATIC_FLAG_FORCE_ACTOR_0x200000" },
+		{ CINEMATIC_FLAG_START_PAUSED_TIME, "CINEMATIC_FLAG_START_PAUSED_TIME" },
+		{ CINEMATIC_FLAG_PRELOAD_BANK, "CINEMATIC_FLAG_PRELOAD_BANK" },
+		{ CINEMATIC_FLAG_IGNORE_ZONE_C_GATE, "CINEMATIC_FLAG_IGNORE_ZONE_C_GATE" },
+		{ CINEMATIC_FLAG_LOCALIZED_CINE_PATH, "CINEMATIC_FLAG_LOCALIZED_CINE_PATH" },
+		{ CINEMATIC_FLAG_KEEP_0x20_ON_RESET, "CINEMATIC_FLAG_KEEP_0x20_ON_RESET" },
+		{ CINEMATIC_FLAG_GAMESTATE_80, "CINEMATIC_FLAG_GAMESTATE_80" },
+	};
+
+	static constexpr uint kKnownCinematicFlagsMask =
+		CINEMATIC_FLAG_ONE_SHOT_GATED |
+		CINEMATIC_FLAG_ALLOW_SKIP_INPUT |
+		CINEMATIC_FLAG_SKIP_NEEDS_0x1400 |
+		CINEMATIC_FLAG_LOOPING_LOADING |
+		CINEMATIC_FLAG_HERO_MSG_82_83 |
+		CINEMATIC_FLAG_PRERESET_ON_CHECKPOINT |
+		CINEMATIC_FLAG_SAVE_CONTEXT |
+		CINEMATIC_FLAG_APPLY_END_ON_STOP |
+		CINEMATIC_FLAG_KEEP_TIME_ON_START |
+		CINEMATIC_FLAG_CUTSCENE_BANDS |
+		CINEMATIC_FLAG_HIDE_FRONTEND |
+		CINEMATIC_FLAG_AUTO_TRY_START |
+		CINEMATIC_FLAG_FORCE_INTERPOLATE |
+		CINEMATIC_FLAG_RELATIVE_TRANSFORM |
+		CINEMATIC_FLAG_ALT_ACTOR_INIT_MODE |
+		CINEMATIC_FLAG_REMAP_ACTORREFB_HASH |
+		CINEMATIC_FLAG_SET_HERO_0x400000 |
+		CINEMATIC_FLAG_IGNORE_BASE_SECTOR |
+		CINEMATIC_FLAG_AUDIO_MODE_A |
+		CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR |
+		CINEMATIC_FLAG_AUDIO_MODE_B |
+		CINEMATIC_FLAG_MESH_TRANSFORM_OPTION |
+		CINEMATIC_FLAG_FORCE_ACTOR_0x200000 |
+		CINEMATIC_FLAG_START_PAUSED_TIME |
+		CINEMATIC_FLAG_PRELOAD_BANK |
+		CINEMATIC_FLAG_IGNORE_ZONE_C_GATE |
+		CINEMATIC_FLAG_LOCALIZED_CINE_PATH |
+		CINEMATIC_FLAG_KEEP_0x20_ON_RESET |
+		CINEMATIC_FLAG_GAMESTATE_80;
+
+	static constexpr CinematicFlagName kCinematicRuntimeFlagNames[] = {
+		{ CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK, "CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK" },
+		{ CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE, "CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE" },
+		{ CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME, "CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME" },
+		{ CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED, "CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED" },
+		{ CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED, "CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED" },
+		{ CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED, "CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED" },
+		{ CINEMATIC_RUNTIME_FLAG_TIME_PAUSED, "CINEMATIC_RUNTIME_FLAG_TIME_PAUSED" },
+		{ CINEMATIC_FLAG_ACTIVE, "CINEMATIC_FLAG_ACTIVE" },
+		{ CINEMATIC_RUNTIME_FLAG_PENDING_STOP, "CINEMATIC_RUNTIME_FLAG_PENDING_STOP" },
+		{ CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH, "CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH" },
+		{ CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED, "CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED" },
+		{ CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER, "CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER" },
+		{ CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10, "CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10" },
+		{ CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER, "CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER" },
+	};
+
+	static constexpr uint kKnownCinematicRuntimeFlagsMask =
+		CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK |
+		CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE |
+		CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME |
+		CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED |
+		CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED |
+		CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED |
+		CINEMATIC_RUNTIME_FLAG_TIME_PAUSED |
+		CINEMATIC_FLAG_ACTIVE |
+		CINEMATIC_RUNTIME_FLAG_PENDING_STOP |
+		CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH |
+		CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED |
+		CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER |
+		CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10 |
+		CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER;
+
+	static void ShowNamedFlags(uint flags) {
+		ImGui::Text("flags_0x4: 0x%08X", flags);
+		if (flags == 0) {
+			ImGui::TextDisabled("No flags set.");
+			return;
+		}
+
+		for (const CinematicFlagName& flag : kCinematicFlagNames) {
+			if ((flags & flag.mask) != 0) {
+				ImGui::BulletText("%s", flag.pName);
+			}
+		}
+
+		const uint unknownFlags = flags & ~kKnownCinematicFlagsMask;
+		if (unknownFlags != 0) {
+			ImGui::BulletText("UNKNOWN_FLAGS_0x%08X", unknownFlags);
+		}
+	}
+
+	static void ShowNamedRuntimeFlags(uint flags) {
+		ImGui::Text("flags_0x8: 0x%08X", flags);
+		if (flags == 0) {
+			ImGui::TextDisabled("No runtime flags set.");
+			return;
+		}
+
+		for (const CinematicFlagName& flag : kCinematicRuntimeFlagNames) {
+			if ((flags & flag.mask) != 0) {
+				ImGui::BulletText("%s", flag.pName);
+			}
+		}
+
+		const uint unknownFlags = flags & ~kKnownCinematicRuntimeFlagsMask;
+		if (unknownFlags != 0) {
+			ImGui::BulletText("UNKNOWN_RUNTIME_FLAGS_0x%08X", unknownFlags);
+		}
+	}
 
 	static uint BuildSaveContextFlags(const CCinematic* pCinematic) {
 		uint flags = 0;
@@ -95,7 +234,7 @@ namespace Debug::Cinematic
 		int saveIndex = 0;
 		for (int i = 0; i < pCinematicManager->numCutscenes_0x8; i++) {
 			CCinematic* pCinematic = pCinematicManager->ppCinematicObjB_A[i];
-			if ((pCinematic == nullptr) || ((pCinematic->flags_0x4 & 0x40) == 0)) {
+			if ((pCinematic == nullptr) || ((pCinematic->flags_0x4 & CINEMATIC_FLAG_SAVE_CONTEXT) == 0)) {
 				continue;
 			}
 
@@ -104,7 +243,7 @@ namespace Debug::Cinematic
 			entry.cinematicIndex = i;
 			entry.pFileName = (pCinematic->fileName != nullptr) ? pCinematic->fileName : "<unnamed>";
 			entry.state = pCinematic->state;
-			entry.bitFlags = *reinterpret_cast<const uint*>(&pCinematic->field_0x10);
+			entry.uniqueIdentifier = pCinematic->uniqueIdentifier;
 			entry.saveFlags = BuildSaveContextFlags(pCinematic);
 			entry.totalCutsceneDelta = pCinematic->totalCutsceneDelta;
 			entries.push_back(entry);
@@ -112,7 +251,7 @@ namespace Debug::Cinematic
 
 		ImGui::Text("BLCI entries: %d / %d cutscenes", static_cast<int>(entries.size()), pCinematicManager->numCutscenes_0x8);
 		ImGui::TextDisabled("Matches CCinematicManager::Level_SaveContext serialization.");
-		ImGui::TextDisabled("Included when (flags_0x4 & 0x40) != 0.");
+		ImGui::TextDisabled("Included when CINEMATIC_FLAG_SAVE_CONTEXT is set.");
 		ImGui::Separator();
 
 		if (entries.empty()) {
@@ -133,7 +272,7 @@ namespace Debug::Cinematic
 			ImGui::TableSetupColumn("Cutscene #", ImGuiTableColumnFlags_WidthFixed, 80.0f);
 			ImGui::TableSetupColumn("File", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("State", ImGuiTableColumnFlags_WidthFixed, 90.0f);
-			ImGui::TableSetupColumn("field_0x10", ImGuiTableColumnFlags_WidthFixed, 95.0f);
+			ImGui::TableSetupColumn("Unique Identifier", ImGuiTableColumnFlags_WidthFixed, 95.0f);
 			ImGui::TableSetupColumn("Save Flags", ImGuiTableColumnFlags_WidthFixed, 85.0f);
 			ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 80.0f);
 			ImGui::TableSetupColumn("state!=stopped", ImGuiTableColumnFlags_WidthFixed, 120.0f);
@@ -155,7 +294,7 @@ namespace Debug::Cinematic
 				ImGui::TableSetColumnIndex(3);
 				ImGui::TextColored(GetStateColor(entry.state), "%s", GetStateName(entry.state));
 				ImGui::TableSetColumnIndex(4);
-				ImGui::Text("0x%08X", entry.bitFlags);
+				ImGui::Text("0x%08X", entry.uniqueIdentifier);
 				ImGui::TableSetColumnIndex(5);
 				ImGui::Text("0x%02X", entry.saveFlags);
 				ImGui::TableSetColumnIndex(6);
@@ -180,6 +319,10 @@ namespace Debug::Cinematic
 
 	static void ShowDetails(CCinematic* pCinematic)
 	{
+		ShowNamedFlags(pCinematic->flags_0x4);
+		ShowNamedRuntimeFlags(pCinematic->flags_0x8);
+		ImGui::Spacing();
+
 		if (pCinematic->zoneRefA.index >= 0 && pCinematic->zoneRefA.Get() && ImGui::CollapsingHeader("Zone A")) {
 			ed_zone_3d* pZone = pCinematic->zoneRefA.Get();
 			ImGui::Text("Bounding Sphere: %s", pZone->boundSphere.ToString().c_str());
@@ -254,6 +397,31 @@ namespace Debug::Cinematic
 			if (!bBankReady) {
 				ImGui::SameLine();
 				ImGui::TextDisabled("(loading, stage %d)", pCinematic->cineBankLoadStage_0x2b4);
+
+				const bool bLockedOneShot = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
+				if (bLockedOneShot) {
+					ImGui::SameLine();
+					ImGui::TextDisabled("(one-shot gated)");
+					if (ImGui::Button("Clear one shot flag")) {
+						pCinematic->flags_0x8 &= ~CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED;
+					}
+				}
+				else {
+					const bool bLockedCondition = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED) != 0;
+					if (bLockedCondition) {
+						ImGui::SameLine();
+						ImGui::TextDisabled("(condition blocked)");
+						if (ImGui::Button("Clear condition blocked flag")) {
+							pCinematic->flags_0x4 &= ~CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR;
+							pCinematic->flags_0x8 &= ~CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;
+						}
+					}
+					else {
+						if (ImGui::Button("Load")) {
+							pCinematic->Load(1);
+						}
+					}
+				}
 			}
 		}
 	}

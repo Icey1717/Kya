@@ -1,4 +1,5 @@
 #include "Actor.h"
+#include "DlistManager.h"
 #include "EventManager.h"
 #include "SectorManager.h"
 #include "CinematicManager.h"
@@ -465,9 +466,7 @@ void CActor::PreInit()
 	this->dlistPatchId = -1;
 	
 	if (uVar5 + uVar4 != 0) {
-		IMPLEMENTATION_GUARD_LOG(
-		iVar3 = GameDListPatch_Register(this, uVar5, uVar4);)
-		this->dlistPatchId = iVar3;
+		this->dlistPatchId = GameDListPatch_Register(this, uVar5, uVar4);
 	}
 	
 	return;
@@ -630,6 +629,11 @@ void CActor::FUN_00115ea0(uint param_2)
 		}
 	}
 	return;
+}
+
+uint CActor::Func_0x98()
+{
+	return this->actorFieldS & 0x100;
 }
 
 bool CActor::Can_0x9c()
@@ -980,7 +984,7 @@ void CActor::ChangeManageState(int state)
 		}
 
 		if (uVar5 != 0) {
-			IMPLEMENTATION_GUARD_LOG(
+			IMPLEMENTATION_GUARD_AUDIO(
 			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_AudioManager_00451698);)
 		}
 	}
@@ -1079,12 +1083,12 @@ void CActor::SetState(int newState, int animType)
 
 		if (((curStateFlags & 0x80) == 0) || ((newStateFlags & 0x80) != 0)) {
 			if (((curStateFlags & 0x80) == 0) && ((newStateFlags & 0x80) != 0)) {
-				IMPLEMENTATION_GUARD_LOG(
+				IMPLEMENTATION_GUARD_AUDIO(
 				StateTransitionSoundFunc_001844a0((int)pGVar2);)
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
+			IMPLEMENTATION_GUARD_AUDIO(
 			StateTransitionSoundFunc_00184470((int)pGVar2);)
 		}
 

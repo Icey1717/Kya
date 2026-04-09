@@ -21,7 +21,8 @@ public:
 	int mousePortId;
 };
 
-class CCameraMouseQuake : public CCameraMouse {
+class CCameraMouseQuake : public CCameraMouse
+{
 public:
 	CCameraMouseQuake();
 

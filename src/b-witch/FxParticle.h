@@ -18,7 +18,7 @@ public:
 	virtual void Stop(float param_1);
 	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();
-	virtual void SetTimeScaler() { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler(float) { IMPLEMENTATION_GUARD(); }
 
 	void Manage();
 	void Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector);

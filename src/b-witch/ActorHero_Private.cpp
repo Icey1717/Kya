@@ -7,6 +7,7 @@
 #include "InputManager.h"
 #include "ActorBoomy.h"
 #include "WayPoint.h"
+#include "Fx.h"
 
 #include <string.h>
 #include <math.h>
@@ -81,70 +82,8 @@ CActorHeroPrivate::CActorHeroPrivate()
 
 	this->pAnimKeyData_0x19b4 = (edANM_HDR*)0x0;
 	this->field_0x19b8 = (edANM_HDR*)0x0;
-	this->boomyTargetTable.nbEntries = 0x0;	
+	this->boomyTargetTable.nbEntries = 0x0;
 
-	//*(undefined4*)&this->field_0x1c60 = 0;
-	//*(undefined4*)&this->field_0x1c64 = 0;
-	//(this->cameraPan_0x1c70).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x1c70).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x1c70).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x1c70).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x1c70).meshIndex = -1;
-	//(this->cameraPan_0x1c70).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x1c70).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
-	//*(undefined4*)&this->field_0x1d30 = 0;
-	//*(undefined4*)&this->field_0x1d34 = 0;
-	//*(undefined4*)&this->field_0x1d3c = 0;
-	//*(undefined4*)&this->field_0x1d40 = 0;
-	//(this->cameraPan_0x1d50).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x1d50).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x1d50).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x1d50).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x1d50).meshIndex = -1;
-	//(this->cameraPan_0x1d50).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x1d50).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
-	
-	//*(undefined4*)&this->field_0x1e20 = 0;
-	//*(undefined4*)&this->field_0x1e24 = 0;
-	//(this->cameraPan_0x1e30).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x1e30).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x1e30).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x1e30).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x1e30).meshIndex = -1;
-	//(this->cameraPan_0x1e30).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x1e30).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
-	//*(undefined4*)&this->field_0x1ef0 = 0;
-	//*(undefined4*)&this->field_0x1ef4 = 0;
-	//*(undefined4*)&this->field_0x1efc = 0;
-	//*(undefined4*)&this->field_0x1f00 = 0;
-	//(this->cameraPan_0x1f10).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x1f10).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x1f10).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x1f10).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x1f10).meshIndex = -1;
-	//(this->cameraPan_0x1f10).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x1f10).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
-	
-	//*(undefined4*)&this->field_0x1fe0 = 0;
-	//*(undefined4*)&this->field_0x1fe4 = 0;
-	//(this->cameraPan_0x1ff0).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x1ff0).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x1ff0).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x1ff0).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x1ff0).meshIndex = -1;
-	//(this->cameraPan_0x1ff0).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x1ff0).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
-	//*(undefined4*)&this->field_0x20b0 = 0;
-	//*(undefined4*)&this->field_0x20b4 = 0;
-	//*(undefined4*)&this->field_0x20bc = 0;
-	//*(undefined4*)&this->field_0x20c0 = 0;
-	//(this->cameraPan_0x20d0).textureIndex = (int)&StaticMeshComponent::VTable_0043a7a0;
-	//(this->cameraPan_0x20d0).pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	//*(undefined4*)&(this->cameraPan_0x20d0).field_0x58 = 0;
-	//*(undefined4*)&(this->cameraPan_0x20d0).field_0xc = 0xffffffff;
-	//(this->cameraPan_0x20d0).meshIndex = -1;
-	//(this->cameraPan_0x20d0).textureIndex = (int)&StaticMeshComponent::VTable_0043a6f0;
-	//(this->cameraPan_0x20d0).textureIndex = (int)&StaticMeshComponent::VTable_0043a6d0;
 	return;
 }
 
@@ -322,8 +261,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 		this->fxTrailB.Create(1.0f, 0x10, 4, this->field_0x12e0);
 	}
 
-	iVar11 = pByteCode->GetS32();
-	//*(int*)&this->field_0x13c8 = iVar11;
+	this->field_0x13c0.type = pByteCode->GetS32();
 	fVar13 = pByteCode->GetF32();
 	this->jokeWarnRadius = fVar13;
 	this->bCanUseCheats = 0;
@@ -1147,7 +1085,8 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	IMPLEMENTATION_GUARD_LOG(APlayer::Func_00133b10(this);)
+	IMPLEMENTATION_GUARD_LOG(
+	FUN_00133b10();)
 
 	pCVar1 = this->pPlayerInput;
 	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -2705,7 +2644,7 @@ void CActorHeroPrivate::Manage()
 
 	uVar6 = TestState_IsOnAToboggan(0xffffffff);
 	if (uVar6 != 0) {
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_FX(
 		FxManageToboggan(this);)
 	}
 
@@ -3125,19 +3064,8 @@ bool CActorHeroPrivate::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	*(undefined4*)&this->field_0x1464 = 0;)
 	edF32Vector4NormalizeHard(peVar3, peVar3);
 	pCVar1 = this->pActorBoomy;
-	IMPLEMENTATION_GUARD_LOG(
-	pfVar5 = (float*)&pCVar1->field_0x610;
-	if (pCVar1 != (CActorBoomy*)0x0) {
-		iVar4 = 8;
-		do {
-			iVar4 = iVar4 + -1;
-			fVar2 = m0->ab;
-			*pfVar5 = m0->aa;
-			m0 = (edF32MATRIX4*)&m0->ac;
-			pfVar5[1] = fVar2;
-			pfVar5 = pfVar5 + 2;
-		} while (0 < iVar4);
-	})
+	pCVar1->field_0x610 = *m0;
+
 	return true;
 }
 
@@ -5316,21 +5244,20 @@ void CActorHeroPrivate::ClearLocalData()
 	this->heroActionParams.field_0x10.y = 0.0f;
 	this->heroActionParams.field_0x10.z = 0.0f;
 	this->heroActionParams.field_0x10.w = 0.0f;
-	//iVar8 = 0;
 
 	this->field_0x1a40 = 0;
 	this->field_0x1a44 = 0;
 
 	this->flags = this->flags & 0xfff7ffff;
-	this->field_0x10fc = (CFxHandle*)0x0;
-	this->field_0x1100 = (int*)0x0;
-	//*(undefined4*)&this->field_0x110c = 0;
-	//*(undefined4*)&this->field_0x1110 = 0;
-	//*(undefined4*)&this->field_0x1114 = 0;
+	this->pTobogganFxA = (CFxHandleExt*)0x0;
+	this->pTobogganStaticMeshA = (StaticMeshComponentHeroEx*)0x0;
+	this->pTobogganFxB = (CFxHandleExt*)0x0;
+	this->pTobogganFxC = (CFxHandleExt*)0x0;
+	this->pTobogganStaticMeshB = (StaticMeshComponentHeroEx*)0x0;
 	this->field_0x13cc = 0.0f;
 	this->bUnknownBool = 1;
-	//this->field_0x1c38 = -NAN;
-	//this->stateMachine_0x1c40.pVTable = (CBehaviourVtable*)0x0;
+	this->field_0x1c38 = -1;
+	this->field_0x1c3c = 0;
 	this->field_0xe44 = 0x0;
 	
 	for (int i = 0; i < 0x10; i++) {
@@ -5340,6 +5267,7 @@ void CActorHeroPrivate::ClearLocalData()
 	}
 
 	this->effort = 0.0f;
+
 	return;
 }
 
@@ -5454,8 +5382,7 @@ void CActorHeroPrivate::BehaviourHero_InitState(int newState)
 	uVar6 = TestState_IsOnAToboggan(this->heroFlags);
 	if ((uVar6 == 0) && (uVar6 = TestState_IsOnAToboggan(0xffffffff), uVar6 != 0)) {
 		BeginToboggan();
-		IMPLEMENTATION_GUARD_LOG(
-		FxTobogganInit(this);)
+		FxTobogganInit();
 	}
 
 	uVar6 = TestState_IsOnAToboggan(this->heroFlags);
@@ -5473,24 +5400,12 @@ void CActorHeroPrivate::BehaviourHero_InitState(int newState)
 
 	uVar6 = TestState_IsOnAToboggan(0xffffffff);
 	if (uVar6 != 0) {
-		iVar1 = this->actorState;
-		if (iVar1 == -1) {
-			uVar6 = 0;
-		}
-		else {
-			pAVar7 = GetStateCfg(iVar1);
-			uVar6 = pAVar7->flags_0x4 & 0x100;
-		}
-		if (uVar6 != 0) {
-			IMPLEMENTATION_GUARD_LOG(
-			CFxHandle::SV_FX_Start(this->field_0x10fc);
-			piVar3 = *(int**)&this->field_0x10fc;
-			piVar4 = (int*)piVar3[1];
-			if (((piVar4 != (int*)0x0) && (iVar1 = *piVar3, iVar1 != 0)) && (iVar1 == piVar4[6])) {
-				(**(code**)(*piVar4 + 0x10))(0, 0);
-			})
+		if ((GetStateFlags(this->actorState) & 0x100) != 0) {
+			SV_FX_Start(this->pTobogganFxA);
+			this->pTobogganFxA->Start();
 		}
 	}
+
 LAB_00341590:
 	uVar6 = TestState_IsFlying(this->heroFlags);
 	if (((uVar6 == 0) ||
@@ -6143,20 +6058,14 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 				if (uVar8 != 0) goto LAB_00340ec0;
 			}
 
-			IMPLEMENTATION_GUARD_LOG(
-			pCVar3 = this->field_0x10fc;
-			piVar4 = (int*)pCVar3->pFx;
-			if (((piVar4 != (int*)0x0) && (pCVar3->id != 0)) && (pCVar3->id == piVar4[6])) {
-				(**(code**)(*piVar4 + 0xc))();
-			}
-			pCVar3->pFx = (undefined*)0x0;
-			pCVar3->id = 0;)
+			this->pTobogganFxA->Kill();
+			this->pTobogganFxA->Reset();
 		}
 	}
 LAB_00340ec0:
 	uVar8 = TestState_IsOnAToboggan(0xffffffff);
 	if ((uVar8 != 0) && (uVar8 = TestState_IsOnAToboggan(heroFlags), uVar8 == 0)) {
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_FX(
 		FxTobogganTerm();)
 		EndToboggan();
 	}
@@ -6862,6 +6771,26 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	return;
 }
 
+void CActorHeroPrivate::FxTobogganInit()
+{
+	StaticMeshComponentHeroEx* this_00;
+	bool bVar1;
+
+	this_00 = this->pTobogganStaticMeshA;
+	bVar1 = this_00->textureIndex != -1;
+	if (bVar1) {
+		bVar1 = this_00->meshIndex != -1;
+	}
+
+	if (bVar1) {
+		this_00->Init(0.0f, 0.0f, (ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (char*)0x0);
+		this->field_0x1104 = 0.0f;
+		this->field_0x1108 = 0.0f;
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroStandInit(int bCheckEffort)
 {
@@ -7501,12 +7430,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	fVar15 = edFIntervalLERP(this->field_0xa80, 0.0f, this->field_0x10c4, 0.8f,	1.2f);
 
 	// Effect
-	IMPLEMENTATION_GUARD_LOG(
-	pCVar4 = this->field_0x10fc;
-	piVar5 = (int*)pCVar4->pFx;
-	if ((piVar5 != (int*)0x0) && (pCVar4->id != 0)) {
-		(**(code**)(*piVar5 + 0x40))(fVar13 * fVar15);
-	})
+	this->pTobogganFxA->pFx->SetTimeScaler(fVar13 * fVar15);
 
 	if (param_2 != 0) {
 		if (pCVar2->IsCurrentLayerAnimEndReached(0)) {
@@ -13936,7 +13860,7 @@ void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt2D()
 // Should be in: D:/Projects/b-witch/ActorHero_Slide.cpp
 void CActorHeroPrivate::BeginToboggan()
 {
-	CFxHandle* pCVar1;
+	CFxHandleExt* pCVar1;
 	int* piVar2;
 	int iVar3;
 	//StaticMeshComponent* pSVar4;
@@ -13945,8 +13869,8 @@ void CActorHeroPrivate::BeginToboggan()
 	CBehaviour* pCVar7;
 	CCameraManager* iVar7;
 
-	this->field_0x10fc = (CFxHandle*)0x0;
-	this->field_0x1100 = (int*)0x0;
+	this->pTobogganFxA = (CFxHandleExt*)0x0;
+	this->pTobogganStaticMeshA = (StaticMeshComponentHeroEx*)0x0;
 
 	pCVar7 = CActor::GetBehaviour(0xb);
 
@@ -13954,73 +13878,61 @@ void CActorHeroPrivate::BeginToboggan()
 		EvolutionTobogganUnknown();
 	}
 	else {
-		IMPLEMENTATION_GUARD_LOG(
-		this->field_0x10fc = &this->field_0x1fe0;
-		this->field_0x1100 = &this->cameraPan_0x1ff0.textureIndex;
-		this->field_0x110c = &this->field_0x20b0;
-		this->field_0x1110 = &this->field_0x20bc;
-		this->field_0x1114 = &this->cameraPan_0x20d0.textureIndex;)
+		this->pTobogganFxA = &this->behaviour_0x1fd0.fxHandleA;
+		this->pTobogganStaticMeshA = &this->behaviour_0x1fd0.staticMeshA;
+		this->pTobogganFxB = &this->behaviour_0x1fd0.fxHandleB;
+		this->pTobogganFxC = &this->behaviour_0x1fd0.fxHandleC;
+		this->pTobogganStaticMeshB = &this->behaviour_0x1fd0.staticMeshB;
 	}
 
 	bVar6 = EvolutionTobogganUnknown();
 
-	if ((bVar6 == false) || (this->field_0x10fc == (CFxHandle*)0x0)) {
+	if ((bVar6 == false) || (this->pTobogganFxA == (CFxHandleExt*)0x0)) {
 		pCVar7 = CActor::GetBehaviour(10);
 
 		if (pCVar7 == (CBehaviour*)0x0) {
 			EvolutionTobogganCanJump();
 		}
 		else {
-			IMPLEMENTATION_GUARD_LOG(
-			this->field_0x10fc = &this->field_0x1e20;
-			this->field_0x1100 = &this->cameraPan_0x1e30.textureIndex;
-			this->field_0x110c = &this->field_0x1ef0;
-			this->field_0x1110 = &this->field_0x1efc;
-			this->field_0x1114 = &this->cameraPan_0x1f10.textureIndex;)
+			this->pTobogganFxA = &this->behaviour_0x1e10.fxHandleA;
+			this->pTobogganStaticMeshA = &this->behaviour_0x1e10.staticMeshA;
+			this->pTobogganFxB = &this->behaviour_0x1e10.fxHandleB;
+			this->pTobogganFxC = &this->behaviour_0x1e10.fxHandleC;
+			this->pTobogganStaticMeshB = &this->behaviour_0x1e10.staticMeshB;
 		}
 
 		bVar6 = EvolutionTobogganCanJump();
 
-		if (((bVar6 == false) || (this->field_0x10fc == (CFxHandle*)0x0)) &&
+		if (((bVar6 == false) || (this->pTobogganFxA == (CFxHandleExt*)0x0)) &&
 			(pCVar7 = CActor::GetBehaviour(9), pCVar7 != (CBehaviour*)0x0)) {
-			IMPLEMENTATION_GUARD_LOG(
-			this->field_0x10fc = &this->field_0x1c60;
-			this->field_0x1100 = &this->cameraPan_0x1c70.textureIndex;
-			this->field_0x110c = &this->field_0x1d30;
-			this->field_0x1110 = &this->field_0x1d3c;
-			this->field_0x1114 = &this->cameraPan_0x1d50.textureIndex;
-			this->field_0x110c = (CFxHandle*)0x0;
-			this->field_0x1110 = (CFxHandle*)0x0;
-			this->field_0x1114 = 0;)
+			this->pTobogganFxA = &this->behaviour_0x1c50.fxHandleA;
+			this->pTobogganStaticMeshA = &this->behaviour_0x1c50.staticMeshA;
+			this->pTobogganFxB = &this->behaviour_0x1c50.fxHandleB;
+			this->pTobogganFxC = &this->behaviour_0x1c50.fxHandleC;
+			this->pTobogganStaticMeshB = &this->behaviour_0x1c50.staticMeshB;
+			this->pTobogganFxB = (CFxHandleExt*)0x0;
+			this->pTobogganFxC = (CFxHandleExt*)0x0;
+			this->pTobogganStaticMeshB = (StaticMeshComponentHeroEx*)0x0;
 		}
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	pCVar1 = this->field_0x110c;
-	if (pCVar1 != (CFxHandle*)0x0) {
-		CFxHandle::SV_FX_Start(pCVar1);
-		pCVar1 = this->field_0x110c;
-		piVar2 = (int*)pCVar1->pFx;
-		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->id, iVar3 != 0)) && (iVar3 == piVar2[6])) {
-			(**(code**)(*piVar2 + 0x10))(0, 0);
-		}
+	pCVar1 = this->pTobogganFxB;
+	if (pCVar1 != (CFxHandleExt*)0x0) {
+		SV_FX_Start(pCVar1);
+		this->pTobogganFxB->Start();
 	}
 
-	pCVar1 = this->field_0x1110;
-	if (pCVar1 != (CFxHandle*)0x0) {
-		CFxHandle::SV_FX_Start(pCVar1);
-		pCVar1 = this->field_0x1110;
-		piVar2 = (int*)pCVar1->pFx;
-		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->id, iVar3 != 0)) && (iVar3 == piVar2[6])) {
-			(**(code**)(*piVar2 + 0x10))(0, 0);
-		}
+	pCVar1 = this->pTobogganFxC;
+	if (pCVar1 != (CFxHandleExt*)0x0) {
+		SV_FX_Start(pCVar1);
+		this->pTobogganFxC->Start();
 	}
 
-	pSVar4 = (StaticMeshComponent*)this->field_0x1114;
-	if (pSVar4 != (StaticMeshComponent*)0x0) {
-		FUN_00114bc0(0.0, 0.0, pSVar4, (ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (char*)0x0);
-		*(undefined4*)&this->field_0x1118 = 0;
-	})
+	StaticMeshComponentHeroEx* this_00 = this->pTobogganStaticMeshB;
+	if (this_00 != (StaticMeshComponentHeroEx*)0x0) {
+		this_00->Init(0.0f, 0.0f, (ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (char*)0x0);
+		this->field_0x1118 = 0;
+	}
 
 	ConvertSpeedPlayerToSpeedSumForceExt();
 
@@ -14139,31 +14051,20 @@ void CActorHeroPrivate::EndToboggan()
 	//StaticMeshComponent* pSVar3;
 	CCameraManager* pCameraManager;
 
-	IMPLEMENTATION_GUARD_LOG(
-	pCVar1 = this->field_0x110c;
-	if (pCVar1 != (CFxHandle*)0x0) {
-		piVar2 = (int*)pCVar1->pFx;
-		if (((piVar2 != (int*)0x0) && (pCVar1->id != 0)) && (pCVar1->id == piVar2[6])) {
-			(**(code**)(*piVar2 + 0xc))();
-		}
-		pCVar1->pFx = (undefined*)0x0;
-		pCVar1->id = 0;
+	if (pTobogganFxB->IsValid()) {
+		pTobogganFxB->Kill();
+		pTobogganFxB->Reset();
 	}
 
-	pCVar1 = this->field_0x1110;
-	if (pCVar1 != (CFxHandle*)0x0) {
-		piVar2 = (int*)pCVar1->pFx;
-		if (((piVar2 != (int*)0x0) && (pCVar1->id != 0)) && (pCVar1->id == piVar2[6])) {
-			(**(code**)(*piVar2 + 0xc))();
-		}
-		pCVar1->pFx = (undefined*)0x0;
-		pCVar1->id = 0;
+	if (pTobogganFxC->IsValid()) {
+		pTobogganFxC->Kill();
+		pTobogganFxC->Reset();
 	}
 
-	pSVar3 = (StaticMeshComponent*)this->field_0x1114;
-	if (pSVar3 != (StaticMeshComponent*)0x0) {
-		StaticMeshComponent::Unload_00114e80(pSVar3, (ed_3D_Scene*)0x0);
-	})
+	StaticMeshComponentHeroEx* this_00 = this->pTobogganStaticMeshB;
+	if (this_00 != (StaticMeshComponentHeroEx*)0x0) {
+		this_00->Term((ed_3D_Scene*)0x0);
+	}
 
 	this->flags = this->flags & 0xffffefff;
 	RestoreCollisionSphere(0.2f);
@@ -17315,6 +17216,39 @@ void PlayerSubStruct_64::FUN_004012f0(float param_1, uint param_3, int materialI
 	if (this->pMaterial == (edDList_material*)0x0) {
 		this->pMaterial = pFileManager->GetMaterialFromId(CScene::_pinstance->defaultTextureIndex_0x28, 0);
 	}
+
+	return;
+}
+
+void StaticMeshComponentHeroEx::Init(float param_1, float param_2, ed_3D_Scene* param_4, ed_g3d_manager* param_5, char* szString)
+{
+	StaticMeshComponent::Init(param_4, param_5, (ed_3d_hierarchy_setup*)0x0, szString);
+
+	memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
+
+	if (param_1 != 0.0f) {
+		(this->hierarchySetup).pBoundingSphere = (edF32VECTOR4*)this->bounds;
+		this->bounds[0] = 0.0f;
+		this->bounds[1] = 0.0f;
+		this->bounds[2] = 0.0f;
+		this->bounds[3] = param_1;
+	}
+
+	if (param_2 != 0.0f) {
+		(this->hierarchySetup).clipping_0x0 = &this->field_0x60;
+		this->field_0x60 = param_2;
+	}
+
+	ed3DHierarchySetSetup((ed_3d_hierarchy*)this->pMeshTransformData, &this->hierarchySetup);
+	(this->hierarchySetup).pLightData = &this->lightConfig;
+	(this->lightConfig).pLightAmbient = &this->lightAmbient;
+	(this->lightConfig).pLightColorMatrix = (edF32MATRIX4*)0x0;
+	(this->lightConfig).pLightDirections = (edF32MATRIX4*)0x0;
+	ed3DHierarchySetSetup((ed_3d_hierarchy*)this->pMeshTransformData, &this->hierarchySetup);
+	(this->lightAmbient).x = 255.0f;
+	(this->lightAmbient).y = 255.0f;
+	(this->lightAmbient).z = 255.0f;
+	(this->lightAmbient).w = 0.0f;
 
 	return;
 }

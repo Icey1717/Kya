@@ -54,10 +54,6 @@ class CActorPunchingBall : public CActorFighter {
 public:
 	static StateConfig _gStateCfg_PBA[6];
 
-	CActorPunchingBall(){
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
 	// CActor
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

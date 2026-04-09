@@ -3427,11 +3427,8 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 					this->field_0x1b0 = this->field_0x1b0 & 0xfffffffe;
 				}
 
-				IMPLEMENTATION_GUARD_LOG(
-				pAVar2 = (Actor*)GetTarget();
-				ActorFunc_00115680(pAVar2);
-				pAVar2 = (Actor*)GetTarget();
-				ActorFunc_00115650(pAVar2, 0);)
+				GetTarget()->ToggleMeshAlpha();
+				GetTarget()->SetBFCulling(0);
 
 				if ((this->cameraConfig.flags & 4) == 0) {
 					*puVar3 = *puVar3 & 0xfffffffb;

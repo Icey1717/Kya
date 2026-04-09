@@ -161,10 +161,6 @@ public:
 	static CActorEventGenerator* gGlobalEvG;
 	static CActorEventGenerator* gActiveEvG;
 
-	CActorEventGenerator() {
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Reset();

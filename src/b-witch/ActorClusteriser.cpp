@@ -218,14 +218,13 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 									pActor->flags = pActor->flags | 0x18;
 									pActor->EvaluateManageState();
 								}
-								IMPLEMENTATION_GUARD_LOG(
-								(*(code*)pActor->pVTable->field_0xd4)(pActor, pZoneCluster->field_0x8);)
+
+								pActor->Func_0xd4(pZoneCluster->field_0x8.Get());
 							}
 							if ((pZoneCluster->flags & 0x20) != 0) {
 								pActor->flags = pActor->flags | 0x200;
 								pActor->EvaluateDisplayState();
-								IMPLEMENTATION_GUARD_LOG(
-								(*(code*)pActor->pVTable->field_0xd8)(pActor, pZoneCluster->field_0x8);)
+								pActor->Func_0xd8(pZoneCluster->field_0x8.Get());
 							}
 						}
 

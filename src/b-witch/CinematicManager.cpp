@@ -49,8 +49,6 @@ CCinematicManager* g_CinematicManager_0048efc;
 
 #define CUTSCENE_MAX_LOAD_TIME 15.0f
 
-#define CINEMATIC_FLAG_SAVE_CONTEXT 0x40
-
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
 struct CinematicOption {
@@ -205,7 +203,7 @@ void CCinematicManager::LevelLoading_End()
 			pCinematic->Stop();
 		}
 
-		pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xfffffffb;
+		pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME;
 		pCinematic->pActor = (CActor*)0x0;
 
 		GlobalDList_AddToView();
@@ -235,7 +233,7 @@ bool CCinematicManager::LevelLoading_Manage()
 		this->pCinematic->Manage();
 
 		bVar1 = false;
-		if ((this->pCinematic->flags_0x4 & 8) == 0) {
+		if ((this->pCinematic->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) == 0) {
 			bVar1 = this->pCinematic->state != CS_Stopped;
 		}
 	}
@@ -306,9 +304,12 @@ void CCinematicManager::Level_AddAll(ByteCode* pByteCode)
 				iVar1 = iVar1 + 1;
 			} while (iVar4 < this->numCutscenes_0x8);
 		}
+
 		Level_SectorChange(-1, -1);
 	}
+
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
+
 	return;
 }
 
@@ -339,41 +340,44 @@ void CCinematicManager::Level_Manage()
 
 void CCinematicManager::Level_SectorChange(int param_2, int param_3)
 {
-	CCinematic* pCVar1;
+	CCinematic* pCinematic;
 	bool bVar2;
-	CCinematic** ppCVar3;
+	CCinematic** ppCinematic;
 	int iVar4;
 
 	iVar4 = this->numCutscenes_0x8;
-	ppCVar3 = this->ppCinematicObjB_A;
+	ppCinematic = this->ppCinematicObjB_A;
 	this->activeCinematicCount = 0;
 	for (; iVar4 != 0; iVar4 = iVar4 + -1) {
-		pCVar1 = *ppCVar3;
+		pCinematic = *ppCinematic;
 		bVar2 = false;
-		if ((pCVar1->baseB == param_3) || (pCVar1->baseB == -1)) {
+		if ((pCinematic->baseB == param_3) || (pCinematic->baseB == -1)) {
 			bVar2 = true;
 		}
 		else {
-			if (((param_3 != -1) && (this->pCinematic != pCVar1)) && (pCVar1->cineBankLoadStage_0x2b4 == 4)) {
-				bVar2 = pCVar1->state != CS_Stopped;
+			if (((param_3 != -1) && (this->pCinematic != pCinematic)) && (pCinematic->cineBankLoadStage_0x2b4 == 4)) {
+				bVar2 = pCinematic->state != CS_Stopped;
 				if ((bVar2) && (bVar2)) {
-					pCVar1->flags_0x8 = pCVar1->flags_0x8 & 0xffffff7f;
-					pCVar1->flags_0x8 = pCVar1->flags_0x8 | 0x100;
+					pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+					pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 				}
 				bVar2 = true;
 			}
 		}
 		if (bVar2) {
-			this->ppCinematicObjB_B[this->activeCinematicCount] = pCVar1;
+			this->ppCinematicObjB_B[this->activeCinematicCount] = pCinematic;
 			this->activeCinematicCount = this->activeCinematicCount + 1;
 		}
-		ppCVar3 = ppCVar3 + 1;
+
+		ppCinematic = ppCinematic + 1;
 	}
-	if (((param_2 == -1) && (pCVar1 = this->pCinematic, pCVar1 != (CCinematic*)0x0)) &&
-		((bVar2 = pCVar1->state != CS_Stopped, bVar2 && (((pCVar1->flags_0x4 & 8) != 0 && (bVar2)))))) {
-		pCVar1->flags_0x8 = pCVar1->flags_0x8 & 0xffffff7f;
-		pCVar1->flags_0x8 = pCVar1->flags_0x8 | 0x100;
+
+	if (((param_2 == -1) && (pCinematic = this->pCinematic, pCinematic != (CCinematic*)0x0)) &&
+		((bVar2 = pCinematic->state != CS_Stopped, bVar2 && (((pCinematic->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0 && (bVar2)))))) {
+		pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+		pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 	}
+
 	return;
 }
 
@@ -381,37 +385,36 @@ void CCinematicManager::Level_SectorChange(int param_2, int param_3)
 void CCinematicManager::WillLoadCinematic()
 {
 	bool bVar1;
-	S_NTF_SWITCH* pSwitchList;
 	int iVar3;
 	int iVar4;
-	CCinematic** pCVar6;
+	CCinematic** ppCinematic;
 	int cutsceneID;
 	CCinematic* pCinematic;
 
-	pCVar6 = this->ppCinematicObjB_A;
+	ppCinematic = this->ppCinematicObjB_A;
 	/* This int field is (2) for the openining cutscene */
 	for (cutsceneID = this->numCutscenes_0x8; cutsceneID != 0; cutsceneID = cutsceneID + -1) {
-		pCinematic = *pCVar6;
-		if ((pCinematic->flags_0x4 & 0x800) != 0) {
-			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+		pCinematic = *ppCinematic;
+		if ((pCinematic->flags_0x4 & CINEMATIC_FLAG_AUTO_TRY_START) != 0) {
+			bVar1 = (pCinematic->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 
 			if (bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 			}
 
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 			}
 
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 			}
 
 			if ((bVar1) && ((pCinematic->baseB == -1 || (pCinematic->baseB == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
 				pCinematic->pActor = (CActor*)0x0;
 
-				if ((pCinematic->flags_0x8 & 0x800) == 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					if (pCinematic->switchListA.IsValid()) {
 						pCinematic->switchListA.Switch((CActor*)0x0);
 						pCinematic->switchListA.PostSwitch((CActor*)0x0);
@@ -422,7 +425,7 @@ void CCinematicManager::WillLoadCinematic()
 			}
 		}
 
-		pCVar6 = pCVar6 + 1;
+		ppCinematic = ppCinematic + 1;
 	}
 
 	return;
@@ -448,11 +451,11 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 	}
 	if (pCinematic != (CCinematic*)0x0) {
 		if (messageId == 3) {
-			pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x20;
+			pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED;
 			bVar1 = pCinematic->state != CS_Stopped;
 			if ((bVar1) && (bVar1)) {
-				pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xffffff7f;
-				pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x100;
+				pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+				pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 			}
 		}
 		else {
@@ -466,7 +469,7 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 				}
 
 				pCinematic->totalCutsceneDelta = fVar2 / 1000.0f;
-				if ((pCinematic->flags_0x8 & 1) != 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) != 0) {
 					fVar2 = pCinematic->totalCutsceneDelta;
 					bVar1 = (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId != 0;
 					if ((bVar1) && (bVar1 = true, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0f)) {
@@ -483,20 +486,20 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 			}
 			else {
 				if (messageId == 0x38) {
-					if ((pCinematic->flags_0x8 & 0x40) == 0) {
-						pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x40;
+					if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) == 0) {
+						pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 					}
 					else {
-						pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xffffffbf;
+						pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 					}
 				}
 				else {
 					if (messageId == 0x37) {
-						pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xffffffbf;
+						pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 					}
 					else {
 						if (messageId == 0x36) {
-							pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x40;
+							pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 						}
 						else {
 							if (messageId == 0x3c) {
@@ -507,8 +510,8 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 									bVar1 = pCinematic->state != CS_Stopped;
 									if (bVar1) {
 										if (bVar1) {
-											pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xffffff7f;
-											pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x100;
+											pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+											pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 										}
 									}
 									else {
@@ -519,8 +522,8 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 									if (messageId == 0x10) {
 										bVar1 = pCinematic->state != CS_Stopped;
 										if ((bVar1) && (bVar1)) {
-											pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xffffff7f;
-											pCinematic->flags_0x8 = pCinematic->flags_0x8 | 0x100;
+											pCinematic->flags_0x8 = pCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+											pCinematic->flags_0x8 = pCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 										}
 									}
 									else {
@@ -554,7 +557,7 @@ void CCinematicManager::Level_Draw()
 			for (int i = 0; i < this->activeCinematicCount; i++) {
 				pCinematic = this->ppCinematicObjB_B[i];
 				pCinematic->Draw();
-				if ((pCinematic->state != CS_Stopped) && ((pCinematic->flags_0x4 & 0x200) != 0)) {
+				if ((pCinematic->state != CS_Stopped) && ((pCinematic->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) != 0)) {
 					iVar3 = 1;
 				}
 			}
@@ -569,7 +572,7 @@ void CCinematic::InitInternalData()
 {
 	this->baseB = -1;
 	this->flags_0x4 = 0;
-	this->allFlags = 0;
+	this->uniqueIdentifier = 0;
 	this->aActorCinematic = (CActorCinematic*)0x0;
 	this->nbCinematicActors = 0;
 	this->ppActorCinematics = (CActorCinematic**)0x0;
@@ -640,7 +643,7 @@ void CCinematic::SetupInternalData()
 	void* pvVar7;
 	int nbTotalRefs;
 
-	if ((this->baseB == 0) || ((this->flags_0x4 & 0x40000) != 0)) {
+	if ((this->baseB == 0) || ((this->flags_0x4 & CINEMATIC_FLAG_IGNORE_BASE_SECTOR) != 0)) {
 		this->baseB = -1;
 	}
 
@@ -761,7 +764,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 
 	this->baseB = pByteCode->GetS32();
 
-	this->allFlags = pByteCode->GetU32();
+	this->uniqueIdentifier = pByteCode->GetU32();
 	this->flags_0x4 = pByteCode->GetU32();
 
 	this->field_0x30 = pByteCode->GetF32();
@@ -808,7 +811,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->cond_0x248.Create(pByteCode);
 	uVar11 = this->cond_0x248.IsVerified();
 	if (uVar11 == 0) {
-		this->flags_0x8 = this->flags_0x8 | 8;
+		this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;
 	}
 
 	if (2.16f <= CScene::_pinstance->field_0x1c) {
@@ -849,7 +852,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->switchListB.Create(pByteCode);
 
 	if (this->field_0x4c == 0) {
-		this->flags_0x8 = this->flags_0x8 | 8;
+		this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;
 	}
 
 	SetupInternalData();
@@ -949,20 +952,20 @@ void CCinematic::Init()
 		iVar6 = *this->field_0x25c;
 	}
 	if (iVar6 != 0) {
-		this->flags_0x4 = this->flags_0x4 | 2;
+		this->flags_0x4 = this->flags_0x4 | CINEMATIC_FLAG_ALLOW_SKIP_INPUT;
 	}
-	uVar4 = 0x27f4;
-	if ((this->flags_0x4 & 0x10000000) != 0) {
-		uVar4 = 0x27d4;
+	uVar4 = CINEMATIC_RUNTIME_RESET_FLAGS;
+	if ((this->flags_0x4 & CINEMATIC_FLAG_KEEP_0x20_ON_RESET) != 0) {
+		uVar4 = CINEMATIC_RUNTIME_RESET_FLAGS_KEEP_NOTIFY;
 	}
 	this->flags_0x8 = this->flags_0x8 & ~uVar4;
 	this->count_0x2d8 = 0;
 	this->cineBankLoadStage_0x2b4 = 0;
 	this->state = CS_Stopped;
 	this->time_0x88 = GetTimer()->scaledTotalTime;
-	if ((this->flags_0x8 & 0x10) != 0) {
+	if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED) != 0) {
 		IMPLEMENTATION_GUARD(this->cinFileData.Shutdown());
-		this->flags_0x8 = this->flags_0x8 & 0xffffffef;
+		this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED;
 	}
 	this->count_0x224 = 0;
 	this->count_0x22c = 0;
@@ -985,7 +988,7 @@ void CCinematic::Init()
 		} while (iVar6 < this->nbInstalledParticles);
 	}
 
-	if ((this->flags_0x4 & 0x2000000) != 0) {
+	if ((this->flags_0x4 & CINEMATIC_FLAG_PRELOAD_BANK) != 0) {
 		this->count_0x2d8 = this->count_0x2d8 + 1;
 		this->Load(1);
 	}
@@ -1024,22 +1027,22 @@ void CCinematic::Start()
 
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Start");
 
-	this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
+	this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
 
 	if (this->state == CS_Stopped) {
-		bShouldPlay = (this->flags_0x4 & 1) != 0;
+		bShouldPlay = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 
 		if (bShouldPlay) {
-			bShouldPlay = (this->flags_0x8 & 0x400) != 0;
+			bShouldPlay = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 		}
 
 		if (!bShouldPlay) {
-			bShouldPlay = (this->flags_0x8 & 0x28) != 0;
+			bShouldPlay = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 		}
 
 		bShouldPlay = (bool)(bShouldPlay ^ 1);
 		if (!bShouldPlay) {
-			bShouldPlay = (this->flags_0x8 & 0x800) != 0;
+			bShouldPlay = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 		}
 
 		if (bShouldPlay) {
@@ -1050,7 +1053,7 @@ void CCinematic::Start()
 			pCinematicManager = g_CinematicManager_0048efc;
 			if (this->cineBankLoadStage_0x2b4 == 4) {
 				if (this->zoneRefA.pObj != 0) {
-					this->flags_0x8 = this->flags_0x8 | 0x200;
+					this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH;
 				}
 
 				pCinematicManager->pCurCinematic = this;
@@ -1075,7 +1078,7 @@ void CCinematic::Start()
 					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(audioTrackId);
 				}
 
-				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+				if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 					edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 				}
 
@@ -1091,7 +1094,7 @@ void CCinematic::Start()
 
 				local_70 = gF32Matrix4Unit;
 
-				if ((this->flags_0x4 & 0x2000) != 0) {
+				if ((this->flags_0x4 & CINEMATIC_FLAG_RELATIVE_TRANSFORM) != 0) {
 					CActor* pActorRef = (this->actorRefB).Get();
 					if (pActorRef != (CActor*)0x0) {
 						edF32Matrix4FromEulerSoft(&local_70, &pActorRef->pCinData->rotationEuler, "XYZ");
@@ -1130,41 +1133,41 @@ void CCinematic::Start()
 
 				pAVar5 = CActorHero::_gThis;
 				if (CActorHero::_gThis != (CActorHero*)0x0) {
-					if ((this->flags_0x4 & 0x10) != 0) {
+					if ((this->flags_0x4 & CINEMATIC_FLAG_HERO_MSG_82_83) != 0) {
 						local_c = 0;
 						CActorHero::_gThis->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)0x82, (MSG_PARAM)0x0);
 					}
-					if ((this->flags_0x4 & 0x10000) != 0) {
+					if ((this->flags_0x4 & CINEMATIC_FLAG_SET_HERO_0x400000) != 0) {
 						pAVar5->flags = pAVar5->flags | 0x400000;
 					}
 				}
 
-				if ((this->flags_0x4 & 0x400) != 0) {
+				if ((this->flags_0x4 & CINEMATIC_FLAG_HIDE_FRONTEND) != 0) {
 					CScene::ptable.g_FrontendManager_00451680->SetActive(false);
 					GameFlags = GameFlags | GAME_CUTSCENE_100;
 				}
 
-				if ((this->flags_0x4 & 0x20000200) != 0) {
+				if ((this->flags_0x4 & CINEMATIC_FLAG_GAME_CUTSCENE_80_MASK) != 0) {
 					GameFlags = GameFlags | GAME_CUTSCENE_80;
 				}
 
 				uVar3 = this->flags_0x4;
-				if ((uVar3 & 0x280000) != 0) {
+				if ((uVar3 & CINEMATIC_FLAG_AUDIO_MODE_MASK) != 0) {
 					IMPLEMENTATION_GUARD_AUDIO(
-					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698, uVar3 & 0x80000, uVar3 & 0x200000);)
+					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_A, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_B);)
 				}
 
-				if ((this->flags_0x4 & 0x100) == 0) {
+				if ((this->flags_0x4 & CINEMATIC_FLAG_KEEP_TIME_ON_START) == 0) {
 					this->totalCutsceneDelta = 0.0;
 				}
 
-				if ((this->flags_0x4 & 0x1000000) != 0) {
-					this->flags_0x8 = this->flags_0x8 | 0x40;
+				if ((this->flags_0x4 & CINEMATIC_FLAG_START_PAUSED_TIME) != 0) {
+					this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 				}
 
 				bShouldPlay = false;
 
-				if ((this->flags_0x8 & 0x800) == 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					int configCount = this->cineActorConfigCount;
 					int currentConfigIndex = 0;
 					if (0 < configCount) {
@@ -1193,7 +1196,7 @@ void CCinematic::Start()
 						} while (currentConfigIndex < configCount);
 					}
 
-					if ((this->flags_0x4 & 0x1000) != 0) {
+					if ((this->flags_0x4 & CINEMATIC_FLAG_FORCE_INTERPOLATE) != 0) {
 						bShouldPlay = true;
 					}
 				}
@@ -1206,23 +1209,23 @@ void CCinematic::Start()
 					this->state = CS_Playing;
 					this->time_0x88 = GetTimer()->scaledTotalTime;
 					this->cinFileData.Initialize();
-					this->flags_0x8 = this->flags_0x8 | 0x10;
+					this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED;
 				}
 
-				if ((this->flags_0x8 & 2) != 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE) != 0) {
 					this->cinematicLoadObject.BWCinCam_Obj.Activate();
 					this->cinFileData.Timeslice(0.0f, &FStack224);
 					CCameraManager::_gThis->PushCamera(pCinematicManager->pCinematicCamera, 1);
 				}
 
-				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+				if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 					edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 				}
 
 				pCinematicManager->pCurCinematic = (CCinematic*)0x0;
 
-				if ((this->flags_0x4 & 2) == 0) {
-					this->flags_0x8 = this->flags_0x8 | 0x1400;
+				if ((this->flags_0x4 & CINEMATIC_FLAG_ALLOW_SKIP_INPUT) == 0) {
+					this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAGS_SKIP_CONTEXT_MASK;
 				}
 
 				if (this->pActor != (CActor*)0x0) {
@@ -1238,14 +1241,14 @@ void CCinematic::Start()
 
 				pCinematicManager->startTime = GetTimer()->totalTime;
 
-				if ((this->flags_0x8 & 0x800) == 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					if (this->switchListA.IsValid()) {
 						this->switchListA.Switch((CActor*)0x0);
 						this->switchListA.PostSwitch((CActor*)0x0);
 					}
 				}
 
-				if ((this->flags_0x8 & 0x800) == 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					this->condArray_0x244.Perform();
 
 					if (this->switchListB.IsValid()) {
@@ -1261,7 +1264,7 @@ void CCinematic::Start()
 					}
 				}
 
-				this->flags_0x8 = this->flags_0x8 & 0xfffff7ff;
+				this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER;
 			}
 		}
 	}
@@ -1320,23 +1323,23 @@ void CCinematic::Load(int mode)
 			size = this->field_0x54;
 		}
 
-		bVar2 = (this->flags_0x4 & 1) != 0;
+		bVar2 = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 		if (bVar2) {
-			bVar2 = (this->flags_0x8 & 0x400) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 		}
 
 		if (!bVar2) {
-			bVar2 = (this->flags_0x8 & 0x28) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 		}
 
 		bVar2 = (bool)(bVar2 ^ 1);
 		if (!bVar2) {
-			bVar2 = (this->flags_0x8 & 0x800) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 		}
 
 		if (((bVar2) && (bVar2 = StaticEdFileBase_004497f0.Check(), bVar2 != false)) &&
 			(uVar3 = edMemGetMemoryAvailable(TO_HEAP(H_MAIN)), size + 0x2800 < uVar3)) {
-			if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+			if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 				edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 			}
 
@@ -1346,7 +1349,7 @@ void CCinematic::Load(int mode)
 
 			CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Loading bank...");
 
-			if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+			if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 				edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 			}
 
@@ -1378,6 +1381,7 @@ void _gCinSoundCallback(bool bSuccess, void* pObj)
 	if (bSuccess != false) {
 		((CCinematic*)pObj)->InstallSounds();
 	}
+
 	return;
 }
 
@@ -1409,15 +1413,18 @@ bool CCinematic::LoadInternal(long mode)
 	edStrCat(acStack1024, g_languageSuffixPtr[iVar4]);
 	/* \\Cine\\ */
 	edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, "\\Cine\\", acStack1024, NULL);
+
 	bVar3 = true;
-	if (((gVideoConfig.omode != 2) && ((this->flags_0x4 & 0x8000000) != 0)) &&
+	if (((gVideoConfig.omode != 2) && ((this->flags_0x4 & CINEMATIC_FLAG_LOCALIZED_CINE_PATH) != 0)) &&
 		(pDebugBank = edFileOpen(acStack512, 9), pDebugBank != (edFILEH*)0x0)) {
 		edFileClose(pDebugBank);
 		bVar3 = false;
 	}
+
 	if (bVar3) {
 		edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, "\\Cine\\", this->pBankName_0x50, NULL);
 	}
+
 	memset(&local_420, 0, sizeof(edCBankInstall));
 	local_420.filePath = acStack512;
 	local_420.fileFunc = _gCinSoundCallback;
@@ -1453,7 +1460,7 @@ void CCinematic::Install()
 {
 	this->cinFileCount = this->pCineBankEntry->get_element_count();
 
-	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 
@@ -1468,14 +1475,14 @@ void CCinematic::Install()
 		}
 	}
 
-	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 
 	this->matrix_0x120 = gF32Matrix4Unit;
 
 	if (this->defaultAudioTrackId != -1) {
-		this->flags_0x8 = this->flags_0x8 | 1;
+		this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK;
 	}
 
 	this->cineBankLoadStage_0x2b4 = 4;
@@ -1576,7 +1583,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 			if (type2 == 0) {
 				/* Background sound drops in here
 				   This second check is probably for if the sound file contains voice audio */
-				if ((gVideoConfig.omode != 2) && ((this->flags_0x4 & 0x8000000) != 0)) {
+				if ((gVideoConfig.omode != 2) && ((this->flags_0x4 & CINEMATIC_FLAG_LOCALIZED_CINE_PATH) != 0)) {
 					iVar4 = edStrLength(fileName);
 					pcVar5 = fileName + iVar4;
 					do {
@@ -2025,16 +2032,16 @@ void CCinematic::Manage()
 		}
 	
 		if ((pTriggerActor == (CActorHero*)0x0) || (edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pTriggerActor->currentLocation, 0) == 2)) {
-			this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
+			this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH;
 			bVar1 = this->state != CS_Stopped;
 
-			if ((bVar1) && (((this->flags_0x4 & 8) != 0 && (bVar1)))) {
-				this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
-				this->flags_0x8 = this->flags_0x8 | 0x100;
+			if ((bVar1) && (((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0 && (bVar1)))) {
+				this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+				this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 			}
 		}
 		else {
-			if ((((this->flags_0x8 & 0x200) == 0) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) == 0)) {
+			if ((((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH) == 0) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ACTIVE) == 0)) {
 				TryTriggerCutscene((CActor*)0x0, 0);
 			}
 		}
@@ -2093,8 +2100,8 @@ void CCinematic::Manage()
 		}
 	}
 
-	this->flags_0x8 = this->flags_0x8 & 0xfffffffb;
-	this->flags_0x8 = this->flags_0x8 & 0xffffdfff;
+	this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME;
+	this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER;
 
 	return;
 }
@@ -2119,10 +2126,10 @@ void CCinematic::ManageState_Playing()
 	someGlobal->pCurCinematic = (CCinematic*)0x0;
 	if (bVar2 == false) {
 		/* Cutscene has ended */
-		if ((this->flags_0x4 & 8) == 0) {
+		if ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) == 0) {
 			if (this->state != CS_Stopped) {
-				this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
-				this->flags_0x8 = this->flags_0x8 | 0x100;
+				this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+				this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 			}
 		}
 		else {
@@ -2150,7 +2157,7 @@ void CCinematic::ManageState_Playing()
 			}
 			else {
 				this->totalCutsceneDelta = this->field_0x30 + (this->totalCutsceneDelta - this->cinFileData.pCinTag->totalPlayTime);
-				if ((this->flags_0x8 & 1) != 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) != 0) {
 					bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId != 0;
 					fVar9 = this->totalCutsceneDelta;
 					if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0f)) {
@@ -2168,8 +2175,8 @@ void CCinematic::ManageState_Playing()
 	}
 	else {
 		/* Cutscene is still playing */
-		if (((((this->flags_0x4 & 2) != 0) || ((this->flags_0x8 & 0x800) != 0)) &&
-			(((this->flags_0x8 & 0x1400) != 0 || ((this->flags_0x4 & 4) == 0)))) &&
+		if (((((this->flags_0x4 & CINEMATIC_FLAG_ALLOW_SKIP_INPUT) != 0) || ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0)) &&
+			(((this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_SKIP_CONTEXT_MASK) != 0 || ((this->flags_0x4 & CINEMATIC_FLAG_SKIP_NEEDS_0x1400) == 0)))) &&
 			(((GameFlags & 0x1c) == 0 && ((gPlayerInput.pressedBitfield & 0x1000000) != 0)))) {
 			IMPLEMENTATION_GUARD(
 			/* The tunnel cutscene doesn't ever go in here */
@@ -2185,13 +2192,13 @@ void CCinematic::ManageState_Playing()
 			}
 			if ((iVar4 <= iVar7) || (*(float*)&((this->cinFileData).pCinTag)->field_0x4 <= (float)piVar1[iVar7 + 1])) {
 				if (this->state != CS_Stopped) {
-					this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
-					this->flags_0x8 = this->flags_0x8 | 0x100;
+					this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+					this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 				}
 			}
 			else {
 				this->totalCutsceneDelta = (float)piVar1[iVar7 + 1];
-				if ((this->flags_0x8 & 1) != 0) {
+				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) != 0) {
 					fVar9 = this->totalCutsceneDelta;
 					bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId != 0;
 					if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
@@ -2213,8 +2220,7 @@ void CCinematic::Stop()
 {
 	bool bVar1;
 	CActorHero* pActor;
-	CCinematicManager* pCVar2;
-	Timer* pTVar3;
+	CCinematicManager* pCinematicManager;
 	int iVar4;
 	int* piVar5;
 	int iVar6;
@@ -2224,8 +2230,8 @@ void CCinematic::Stop()
 	undefined4 local_8;
 	CCinematic** local_4;
 
-	this->flags_0x8 = this->flags_0x8 | 0x1400;
-	this->flags_0x8 = this->flags_0x8 & 0xfffffe7f;
+	this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAGS_SKIP_CONTEXT_MASK;
+	this->flags_0x8 = this->flags_0x8 & ~(CINEMATIC_RUNTIME_FLAG_PENDING_STOP | CINEMATIC_RUNTIME_FLAG_ACTIVE);
 
 	if (this->state != CS_Stopped) {
 		if (this->pActor != (CActor*)0x0) {
@@ -2235,25 +2241,24 @@ void CCinematic::Stop()
 			this->pActor->ReceiveMessage((CActor*)0x0, (ACTOR_MESSAGE)0x7c, local_4);
 		}
 
-		pCVar2 = g_CinematicManager_0048efc;
+		pCinematicManager = g_CinematicManager_0048efc;
 		g_CinematicManager_0048efc->pCurCinematic = this;
-		this->flags_0x8 = this->flags_0x8 | 4;
+		this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME;
 		currentPlayTime = ((this->cinFileData).pCinTag)->totalPlayTime;
 
-		if ((this->totalCutsceneDelta < currentPlayTime) && ((this->flags_0x4 & 0x80) != 0)) {
+		if ((this->totalCutsceneDelta < currentPlayTime) && ((this->flags_0x4 & CINEMATIC_FLAG_APPLY_END_ON_STOP) != 0)) {
 			this->TimeSlice(currentPlayTime);
 		}
 
-		if ((this->flags_0x8 & 2) != 0) {
-			CCameraManager::_gThis->PopCamera(pCVar2->pCinematicCamera);
+		if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE) != 0) {
+			CCameraManager::_gThis->PopCamera(pCinematicManager->pCinematicCamera);
 		}
 
 		this->state = CS_Stopped;
-		pTVar3 = GetTimer();
-		this->time_0x88 = pTVar3->scaledTotalTime;
-		if ((this->flags_0x8 & 0x10) != 0) {
+		this->time_0x88 = GetTimer()->scaledTotalTime;
+		if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED) != 0) {
 			this->cinFileData.Shutdown();
-			this->flags_0x8 = this->flags_0x8 & 0xffffffef;
+			this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED;
 		}
 
 		if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
@@ -2264,27 +2269,27 @@ void CCinematic::Stop()
 			ed3DScenePopCluster(CScene::_scene_handleA, this->pMeshInfo);
 		}
 
-		if ((this->flags_0x4 & 0x280000) != 0) {
+		if ((this->flags_0x4 & CINEMATIC_FLAG_AUDIO_MODE_MASK) != 0) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			FUN_00182da0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698);)
 		}
 
-		if ((this->flags_0x4 & 0x20000200) != 0) {
+		if ((this->flags_0x4 & CINEMATIC_FLAG_GAME_CUTSCENE_80_MASK) != 0) {
 			GameFlags = GameFlags & ~GAME_CUTSCENE_80;
 		}
 
-		if ((this->flags_0x4 & 0x400) != 0) {
+		if ((this->flags_0x4 & CINEMATIC_FLAG_HIDE_FRONTEND) != 0) {
 			GameFlags = GameFlags & ~GAME_CUTSCENE_100;
 			CScene::ptable.g_FrontendManager_00451680->SetActive(true);
 		}
 
 		pActor = CActorHero::_gThis;
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
-			if ((this->flags_0x4 & 0x10000) != 0) {
+			if ((this->flags_0x4 & CINEMATIC_FLAG_SET_HERO_0x400000) != 0) {
 				CActorHero::_gThis->flags = CActorHero::_gThis->flags & 0xffbfffff;
 			}
 
-			if ((this->flags_0x4 & 0x10) != 0) {
+			if ((this->flags_0x4 & CINEMATIC_FLAG_HERO_MSG_82_83) != 0) {
 				local_8 = 0;
 				pActor->DoMessage(pActor, (ACTOR_MESSAGE)0x83, (MSG_PARAM)0x0);
 			}
@@ -2331,8 +2336,8 @@ void CCinematic::Stop()
 
 		UninstallResources();
 
-		pCVar2->pCurCinematic = (CCinematic*)0x0;
-		if ((this->flags_0x8 & 0x800) == 0) {
+		pCinematicManager->pCurCinematic = (CCinematic*)0x0;
+		if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 			this->condArray_0x244.Perform();
 
 			if (this->switchListB.IsValid()) {
@@ -2348,7 +2353,7 @@ void CCinematic::Stop()
 			}
 		}
 
-		this->flags_0x8 = this->flags_0x8 & 0xfffff7ff;
+		this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER;
 	}
 
 	return;
@@ -2410,7 +2415,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	this->cinFileData.Timeslice(currentPlayTime, &local_30);
 
 	pCVar4 = CCameraManager::_gThis;
-	if (((this->flags_0x8 & 2) != 0) && ((CCameraManager::_gThis->flags & 0x4000000) == 0)) {
+	if (((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE) != 0) && ((CCameraManager::_gThis->flags & 0x4000000) == 0)) {
 		CCameraManager::_gThis->ApplyActiveCamera();
 		pCVar4->BuildDisplayMatrix();
 	}
@@ -2427,7 +2432,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 			pCinematicActor->ChangeManageState(1);
 		}
 		pCinematicActor->EvaluateDisplayState();
-		if ((((this->flags_0x4 & 0x800000) != 0) || ((pCinematicActor->flags & 0x4000) == 0)) ||
+		if ((((this->flags_0x4 & CINEMATIC_FLAG_FORCE_ACTOR_0x200000) != 0) || ((pCinematicActor->flags & 0x4000) == 0)) ||
 			(pCinematicActor->pHier == (ed_g3d_hierarchy*)0x0)) {
 			pCinematicActor->flags = pCinematicActor->flags | 0x200000;
 		}
@@ -2574,7 +2579,7 @@ void CCinematic::IncrementCutsceneDelta()
 	float deltaTime;
 
 	/* This is true for cutscenes */
-	if ((this->flags_0x8 & 0x40) == 0) {
+	if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) == 0) {
 		timeController = Timer::GetTimer();
 		/* Returns 0.2 for cutscenes */
 		deltaTime = timeController->cutsceneDeltaTime;
@@ -2584,7 +2589,7 @@ void CCinematic::IncrementCutsceneDelta()
 	}
 
 	/* This is true for cutscenes */
-	if ((this->flags_0x8 & 1) == 0) {
+	if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) == 0) {
 		/* Increment float by 0.2 in cutscene manager  */
 		deltaTime = this->totalCutsceneDelta + deltaTime;
 		this->totalCutsceneDelta = deltaTime;
@@ -2682,7 +2687,7 @@ void CCinematic::InstallSounds()
 	int offset;
 	edBANK_ENTRY_INFO bankEntry;
 
-	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 	BWBankManagerGetFileNames(this->pCineBankEntry, 3, 1, &this->soundCount_0x2b8, &this->playingSounds_0x2c0, &this->field_0x2c4);
@@ -2741,7 +2746,7 @@ void CCinematic::InstallSounds()
 		//	}
 		//}
 	}
-	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 	return;
@@ -2754,7 +2759,7 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 
 	CUTSCENE_LOG(LogLevel::Info, "CCinematic::GetActorByHashcode Looking for: {}", hashCode);
 
-	if (((((this->flags_0x4 & 0x8000) != 0) && (this->actorRefB.Get() != (CActor*)0x0)) && (this->pActor != (CActor*)0x0)) &&
+	if (((((this->flags_0x4 & CINEMATIC_FLAG_REMAP_ACTORREFB_HASH) != 0) && (this->actorRefB.Get() != (CActor*)0x0)) && (this->pActor != (CActor*)0x0)) &&
 		(hashCode == actorRefB.Get()->subObjA->hashCode)) {
 		hashCode = this->pActor->subObjA->hashCode;
 	}
@@ -2863,19 +2868,19 @@ bool CCinematic::CanBePlayed()
 {
 	bool bVar1;
 
-	bVar1 = (this->flags_0x4 & 1) != 0;
+	bVar1 = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 
 	if (bVar1) {
-		bVar1 = (this->flags_0x8 & 0x400) != 0;
+		bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 	}
 
 	if (!bVar1) {
-		bVar1 = (this->flags_0x8 & 0x28) != 0;
+		bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 	}
 
 	bVar1 = (bool)(bVar1 ^ 1);
 	if (!bVar1) {
-		bVar1 = (this->flags_0x8 & 0x800) != 0;
+		bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 	}
 
 	return bVar1;
@@ -3072,28 +3077,28 @@ void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 	int iVar4;
 
 	if ((this->state == CS_Stopped) &&
-		((g_CinematicManager_0048efc->pCinematic == (CCinematic*)0x0 || ((this->flags_0x4 & 0x200) == 0)))) {
+		((g_CinematicManager_0048efc->pCinematic == (CCinematic*)0x0 || ((this->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) == 0)))) {
 		if (param_3 != 0) {
-			this->flags_0x8 = this->flags_0x8 | 0x800;
+			this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER;
 		}
 
-		bVar1 = (this->flags_0x4 & 1) != 0;
+		bVar1 = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 		if (bVar1) {
-			bVar1 = (this->flags_0x8 & 0x400) != 0;
+			bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 		}
 
 		if (!bVar1) {
-			bVar1 = (this->flags_0x8 & 0x28) != 0;
+			bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 		}
 
 		bool bShouldTrigger = (bool)(bVar1 ^ 1);
 		if (!bShouldTrigger) {
-			bShouldTrigger = (this->flags_0x8 & 0x800) != 0;
+			bShouldTrigger = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 		}
 
 		if (bShouldTrigger) {
 			this->pActor = pActor;
-			this->flags_0x8 = this->flags_0x8 | CINEMATIC_FLAG_ACTIVE;
+			this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_ACTIVE;
 
 			if (this->cineBankLoadStage_0x2b4 != 4) {
 				Load(1);
@@ -3104,7 +3109,7 @@ void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 				bVar1 = this->cineBankLoadStage_0x2b4 != 4;
 			}
 
-			if (((bVar1) || (this->cineBankLoadStage_0x2b4 == 4)) && ((this->flags_0x8 & 0x800) == 0)) {
+			if (((bVar1) || (this->cineBankLoadStage_0x2b4 == 4)) && ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0)) {
 				if (this->switchListA.IsValid()) {
 					this->switchListA.Switch((CActor*)0x0);
 					this->switchListA.PostSwitch((CActor*)0x0);
@@ -3231,7 +3236,7 @@ void CCinematic::Flush(bool param_2)
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
 		pCVar1->pCurCinematic = (CCinematic*)0x0;
-		this->flags_0x8 = this->flags_0x8 & 0xffffdfff;
+		this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER;
 	}
 	return;
 }
@@ -3271,9 +3276,9 @@ void CCinematic::PreReset()
 		Stop();
 	}
 
-	uVar4 = 0x27f4;
-	if ((this->flags_0x4 & 0x10000000) != 0) {
-		uVar4 = 0x27d4;
+	uVar4 = CINEMATIC_RUNTIME_RESET_FLAGS;
+	if ((this->flags_0x4 & CINEMATIC_FLAG_KEEP_0x20_ON_RESET) != 0) {
+		uVar4 = CINEMATIC_RUNTIME_RESET_FLAGS_KEEP_NOTIFY;
 	}
 
 	this->flags_0x8 = this->flags_0x8 & ~uVar4;
@@ -3288,13 +3293,13 @@ void CCinematic::PreReset()
 		this->switchListB.Reset((CActor*)0x0);
 	}
 
-	if (((this->flags_0x4 & 0x800) != 0) &&
+	if (((this->flags_0x4 & CINEMATIC_FLAG_AUTO_TRY_START) != 0) &&
 		((this->baseB == -1 ||
 			(this->baseB == CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].sectorStartIndex)))) {
 		TryTriggerCutscene((CActor*)0x0, 0);
 	}
 
-	if ((this->flags_0x4 & 0x2000000) != 0) {
+	if ((this->flags_0x4 & CINEMATIC_FLAG_PRELOAD_BANK) != 0) {
 		Load(0);
 	}
 
@@ -3575,23 +3580,23 @@ void CCinematic::ConditionallyStartCinematic(bool bShouldStartCinematic)
 	ed_zone_3d* pZone;
 	bool bVar2;
 
-	if ((this->state == CS_Stopped) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) != 0)) {
+	if ((this->state == CS_Stopped) && ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ACTIVE) != 0)) {
 		Start();
 	}
 
 	if ((bShouldStartCinematic != false) && (this->state == CS_Stopped)) {
-		bVar2 = (this->flags_0x4 & 1) != 0;
+		bVar2 = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 		if (bVar2) {
-			bVar2 = (this->flags_0x8 & 0x400) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 		}
 
 		if (!bVar2) {
-			bVar2 = (this->flags_0x8 & 0x28) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 		}
 
 		bVar2 = (bool)(bVar2 ^ 1);
 		if (!bVar2) {
-			bVar2 = (this->flags_0x8 & 0x800) != 0;
+			bVar2 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 		}
 
 		if (bVar2) {
@@ -3618,7 +3623,7 @@ void CCinematic::ConditionallyStartCinematic(bool bShouldStartCinematic)
 			if (this->cineBankLoadStage_0x2b4 == 4) {
 				bool bInZone = true;
 
-				if ((this->flags_0x4 & 0x4000000) == 0) {
+				if ((this->flags_0x4 & CINEMATIC_FLAG_IGNORE_ZONE_C_GATE) == 0) {
 					pZone = (this->zoneRefC).Get();
 					bInZone = false;
 
@@ -3665,7 +3670,7 @@ void CCinematic::FUN_001caeb0()
 
 	this->pActor = (CActor*)0x0;
 	this->defaultAudioTrackId = -1;
-	this->flags_0x4 = this->flags_0x4 & 0xffefffff;
+	this->flags_0x4 = this->flags_0x4 & ~CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR;
 
 	return;
 }
@@ -3673,8 +3678,8 @@ void CCinematic::FUN_001caeb0()
 void CCinematic::FUN_001c92b0()
 {
 	if (this->state != CS_Stopped) {
-		this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
-		this->flags_0x8 = this->flags_0x8 | 0x100;
+		this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+		this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 	}
 	return;
 }
@@ -3747,21 +3752,21 @@ void CCinematic::Level_ClearAll()
 	int iVar2;
 	ulong uVar3;
 
-	if (((this->flags_0x4 & 0x100000) != 0) && (this->field_0x4c != 0)) {
+	if (((this->flags_0x4 & CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR) != 0) && (this->field_0x4c != 0)) {
 		uVar3 = this->cond_0x248.IsVerified();
 		if (uVar3 == 0) {
-			this->flags_0x8 = this->flags_0x8 | 8;
+			this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;
 		}
 		else {
-			this->flags_0x8 = this->flags_0x8 & 0xfffffff7;
+			this->flags_0x8 = this->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;
 		}
 	}
 
-	if ((this->state != CS_Stopped) && ((this->flags_0x8 & 0x100) != 0)) {
+	if ((this->state != CS_Stopped) && ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_PENDING_STOP) != 0)) {
 		Stop();
 	}
 
-	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) == 0)) {
+	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ACTIVE) == 0)) {
 		pZone = (this->zoneRefB).Get();
 		bVar1 = false;
 
@@ -3771,29 +3776,29 @@ void CCinematic::Level_ClearAll()
 		};
 
 		if ((bVar1) || (0 < this->count_0x2d8)) {
-			bVar1 = (this->flags_0x4 & 1) != 0;
+			bVar1 = (this->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 			if (bVar1) {
-				bVar1 = (this->flags_0x8 & 0x400) != 0;
+				bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 			}
 
 			if (!bVar1) {
-				bVar1 = (this->flags_0x8 & 0x28) != 0;
+				bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 			}
 
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
-				bVar1 = (this->flags_0x8 & 0x800) != 0;
+				bVar1 = (this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 			}
 
 			if (bVar1) {
 				return;
 			}
 		}
-		if ((this->flags_0x8 & 4) == 0) {
+		if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME) == 0) {
 			Flush(false);
 		}
 		else {
-			this->flags_0x8 = this->flags_0x8 | 0x2000;
+			this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER;
 		}
 	}
 
@@ -3933,13 +3938,13 @@ bool CBWitchCin::ReleaseResource(byte, bool, void*)
 bool CBWitchCin::GetCamera(edCinCamInterface** pCinCamInterface, const edCinCamInterface::CAMERA_CREATIONtag*)
 {
 	*pCinCamInterface = &this->BWCinCam_Obj;
-	g_CinematicManager_0048efc->pCurCinematic->flags_0x8 = g_CinematicManager_0048efc->pCurCinematic->flags_0x8 | 2;
+	g_CinematicManager_0048efc->pCurCinematic->flags_0x8 = g_CinematicManager_0048efc->pCurCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE;
 	return true;
 }
 
 bool CBWitchCin::ReleaseCamera(edCinCamInterface*)
 {
-	g_CinematicManager_0048efc->pCurCinematic->flags_0x8 = g_CinematicManager_0048efc->pCurCinematic->flags_0x8 | 2;
+	g_CinematicManager_0048efc->pCurCinematic->flags_0x8 = g_CinematicManager_0048efc->pCurCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE;
 	return true;
 }
 
@@ -3992,7 +3997,7 @@ bool CBWCinCam::Activate()
 
 	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
 	pCVar2 = g_CinematicManager_0048efc->pCinematicCamera;
-	if (((pCVar1->flags_0x4 & 0x800) == 0) && ((pCVar1->flags_0x8 & 0x800) == 0)) {
+	if (((pCVar1->flags_0x4 & CINEMATIC_FLAG_AUTO_TRY_START) == 0) && ((pCVar1->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0)) {
 		iVar3 = pCVar1->field_0x64;
 		fVar5 = pCVar1->field_0x68;
 		SVar4 = pCVar1->field_0x5c;
@@ -4025,7 +4030,7 @@ bool CBWCinCam::Initialize(bool param_2, uint* flags)
 
 bool CBWCinCam::SetFov(float fov)
 {
-	if (((g_CinematicManager_0048efc->pCurCinematic->flags_0x4 & 0x200) != 0) &&
+	if (((g_CinematicManager_0048efc->pCurCinematic->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) != 0) &&
 		(CCameraManager::_gThis->aspectRatio == 1.777778f)) {
 		fov = fov * 0.75f;
 	}
@@ -4128,7 +4133,7 @@ bool CBWCinActor::Initialize()
 
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 
-	if ((pCinematic->flags_0x4 & 0x4000) == 0) {
+	if ((pCinematic->flags_0x4 & CINEMATIC_FLAG_ALT_ACTOR_INIT_MODE) == 0) {
 		this->field_0x8 = 2;
 	}
 	else {
@@ -4826,7 +4831,7 @@ void CCinematicManagerB::Level_Manage()
 		for (int i = 0; i < g_CinematicManager_0048efc->activeCinematicCount; i++) {
 			pCinematic = g_CinematicManager_0048efc->ppCinematicObjB_B[i];
 			pCinematic->Level_ClearAll();
-			if ((pCinematic->flags_0x8 & 0x2000) != 0) {
+			if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER) != 0) {
 				bVar3 = false;
 			}
 		}
@@ -4854,7 +4859,7 @@ void CCinematicManagerB::Level_ManagePaused()
 
 				IMPLEMENTATION_GUARD(
 					pCinematic->Level_ClearAll();)
-					if ((pCinematic->flags_0x8 & 0x2000) != 0) {
+					if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER) != 0) {
 						bVar3 = false;
 					}
 			}
@@ -4909,7 +4914,7 @@ void CCinematicManagerB::Level_PreCheckpointReset()
 
 	for (i = pCinematicManager->numCutscenes_0x8; i != 0; i = i + -1) {
 		pCinematic = *ppCinematic;
-		if ((pCinematic->flags_0x4 & 20) != 0) {
+		if ((pCinematic->flags_0x4 & CINEMATIC_FLAG_PRERESET_ON_CHECKPOINT) != 0) {
 			pCinematic->PreReset();
 		}
 
@@ -4930,7 +4935,7 @@ struct SaveDataChunk_BLCI
 
 	struct CutsceneData
 	{
-		uint bitFlags;
+		uint uniqueIdentifier;
 		uint flags;
 		float totalCutsceneDelta;
 	} data[];
@@ -4940,7 +4945,7 @@ void CCinematicManager::Level_SaveContext()
 {
 	SaveDataChunk_BLCI* pBLCI;
 	CCinematic** ppCinematic;
-	int iVar2;
+	int currentCinematicIndex;
 	int nbCutscenes;
 	CCinematic* pCinematic;
 	CLevelScheduler* pLevelScheduler;
@@ -4948,7 +4953,7 @@ void CCinematicManager::Level_SaveContext()
 	pLevelScheduler = CLevelScheduler::gThis;
 	ppCinematic = this->ppCinematicObjB_A;
 	nbCutscenes = 0;
-	for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
+	for (currentCinematicIndex = this->numCutscenes_0x8; currentCinematicIndex != 0; currentCinematicIndex = currentCinematicIndex + -1) {
 		if (((*ppCinematic)->flags_0x4 & CINEMATIC_FLAG_SAVE_CONTEXT) != 0) {
 			nbCutscenes = nbCutscenes + 1;
 		}
@@ -4962,13 +4967,13 @@ void CCinematicManager::Level_SaveContext()
 
 		SaveDataChunk_BLCI::CutsceneData* pData = reinterpret_cast<SaveDataChunk_BLCI::CutsceneData*>(pBLCI + 1);
 		ppCinematic = this->ppCinematicObjB_A;
-		for (iVar2 = this->numCutscenes_0x8; iVar2 != 0; iVar2 = iVar2 + -1) {
+		for (currentCinematicIndex = this->numCutscenes_0x8; currentCinematicIndex != 0; currentCinematicIndex = currentCinematicIndex + -1) {
 			if (((*ppCinematic)->flags_0x4 & CINEMATIC_FLAG_SAVE_CONTEXT) != 0) {
-				pData->bitFlags = (*ppCinematic)->allFlags;
+				pData->uniqueIdentifier = (*ppCinematic)->uniqueIdentifier;
 				pCinematic = *ppCinematic;
 				pData->flags = 0;
 				pData->totalCutsceneDelta = pCinematic->totalCutsceneDelta;
-				if ((pCinematic->flags_0x8 & 0x400) != 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0) {
 					pData->flags = pData->flags | 2;
 				}
 
@@ -4976,15 +4981,15 @@ void CCinematicManager::Level_SaveContext()
 					pData->flags = pData->flags | 1;
 				}
 
-				if ((pCinematic->flags_0x8 & 0x20) != 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED) != 0) {
 					pData->flags = pData->flags | 4;
 				}
 
-				if ((pCinematic->flags_0x8 & 0x40) != 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) != 0) {
 					pData->flags = pData->flags | 8;
 				}
 
-				if ((pCinematic->flags_0x8 & 0x1000) != 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10) != 0) {
 					pData->flags = pData->flags | 0x10;
 				}
 
@@ -5004,11 +5009,10 @@ void CCinematicManager::Level_LoadContext()
 {
 	bool bVar1;
 	SaveDataChunk_BLCI* pBLCI;
-	CCinematic* pCVar2;
-	int iVar3;
+	CCinematic* pFoundCinematic;
+	int curCutsceneIndex;
 	SaveDataChunk_BLCI::CutsceneData* pData;
 	CCinematic** ppCinematic;
-	int iVar4;
 	int nbCutscenes;
 	CLevelScheduler* pLevel;
 
@@ -5018,55 +5022,56 @@ void CCinematicManager::Level_LoadContext()
 		nbCutscenes = pBLCI->nbCutscenes;
 		pData = pBLCI->data;
 
-		iVar3 = 0;
+		curCutsceneIndex = 0;
 		if (0 < nbCutscenes) {
 			do {
-				iVar4 = 0;
+				int subCutsceneIndex = 0;
 				if (0 < this->numCutscenes_0x8) {
 					ppCinematic = this->ppCinematicObjB_A;
 					do {
-						if (pData->bitFlags == (*ppCinematic)->allFlags) {
-							pCVar2 = this->ppCinematicObjB_A[iVar4];
+						if (pData->uniqueIdentifier == (*ppCinematic)->uniqueIdentifier) {
+							pFoundCinematic = this->ppCinematicObjB_A[subCutsceneIndex];
 							goto LAB_001c51a8;
 						}
-						iVar4 = iVar4 + 1;
+
+						subCutsceneIndex = subCutsceneIndex + 1;
 						ppCinematic = ppCinematic + 1;
-					} while (iVar4 < this->numCutscenes_0x8);
+					} while (subCutsceneIndex < this->numCutscenes_0x8);
 				}
 
-				pCVar2 = (CCinematic*)0x0;
+				pFoundCinematic = (CCinematic*)0x0;
 			LAB_001c51a8:
-				if (pCVar2 != (CCinematic*)0x0) {
-					pCVar2->totalCutsceneDelta = pData->totalCutsceneDelta;
+				if (pFoundCinematic != (CCinematic*)0x0) {
+					pFoundCinematic->totalCutsceneDelta = pData->totalCutsceneDelta;
 
 					if ((pData->flags & 2) != 0) {
-						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x400;
+						pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED;
 					}
 
 					if ((pData->flags & 8) != 0) {
-						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x40;
+						pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
 					}
 
 					if ((pData->flags & 4) != 0) {
-						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x20;
-						bVar1 = pCVar2->state != CS_Stopped;
+						pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED;
+						bVar1 = pFoundCinematic->state != CS_Stopped;
 						if ((bVar1) && (bVar1)) {
-							pCVar2->flags_0x8 = pCVar2->flags_0x8 & 0xffffff7f;
-							pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x100;
+							pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_ACTIVE;
+							pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_PENDING_STOP;
 						}
 					}
 
 					if ((pData->flags & 0x10) == 0) {
-						pCVar2->flags_0x8 = pCVar2->flags_0x8 & 0xffffefff;
+						pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10;
 					}
 					else {
-						pCVar2->flags_0x8 = pCVar2->flags_0x8 | 0x1000;
+						pFoundCinematic->flags_0x8 = pFoundCinematic->flags_0x8 | CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10;
 					}
 				}
 
-				iVar3 = iVar3 + 1;
+				curCutsceneIndex = curCutsceneIndex + 1;
 				pData = pData + 1;
-			} while (iVar3 < nbCutscenes);
+			} while (curCutsceneIndex < nbCutscenes);
 		}
 
 		pLevel->SaveGame_CloseChunk();
@@ -5083,7 +5088,7 @@ void CCinematicManager::LevelLoading_Draw()
 		this->pCinematic->Draw();
 
 		iVar1 = 0;
-		if ((this->pCinematic->state != CS_Stopped) && ((this->pCinematic->flags_0x4 & 0x200) != 0)) {
+		if ((this->pCinematic->state != CS_Stopped) && ((this->pCinematic->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) != 0)) {
 			iVar1 = 1;
 		}
 
@@ -5106,7 +5111,7 @@ bool CCinematicManager::IsCutsceneActive()
 		ppCVar1 = this->ppCinematicObjB_B;
 		bCutsecenActive = false;
 		do {
-			if (((*ppCVar1)->state != CS_Stopped) && (((*ppCVar1)->flags_0x4 & 0x200) != 0)) {
+			if (((*ppCVar1)->state != CS_Stopped) && (((*ppCVar1)->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) != 0)) {
 				bCutsecenActive = true;
 			}
 
@@ -5179,23 +5184,23 @@ bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
 
 	if (pCinematic != (CCinematic*)0x0) {
 		if (pCinematic->state == CS_Stopped) {
-			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+			bVar1 = (pCinematic->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 			if (bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 			}
 
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 			}
 
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 			}
 
 			if (bVar1) {
 				pCinematic->pActor = param_3;
-				if ((pCinematic->flags_0x8 & 0x800) == 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					if (pCinematic->switchListA.IsValid()) {
 						pCinematic->switchListA.Switch((CActor*)0x0);
 						pCinematic->switchListA.PostSwitch((CActor*)0x0);
@@ -5233,23 +5238,23 @@ bool CCinematicManager::RunSectorLoadingCinematic(int cutsceneID, CActor* pActor
 
 	if (pCinematic != (CCinematic*)0x0) {
 		if (pCinematic->state == CS_Stopped) {
-			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+			bVar1 = (pCinematic->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 			if (bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 			}
 
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 			}
 
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
-				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
+				bVar1 = (pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 			}
 
 			if (bVar1) {
 				pCinematic->pActor = pActor;
-				if ((pCinematic->flags_0x8 & 0x800) == 0) {
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					if (pCinematic->switchListA.IsValid()) {
 						pCinematic->switchListA.Switch((CActor*)0x0);
 						pCinematic->switchListA.PostSwitch((CActor*)0x0);
@@ -5291,7 +5296,7 @@ bool CCinematicManager::ResetSector(int index, CActor* pHero)
 	}
 
 	if (pCVar2 != (CCinematic*)0x0) {
-		pCVar2->flags_0x4 = pCVar2->flags_0x4 | 0xd0200;
+		pCVar2->flags_0x4 = pCVar2->flags_0x4 | CINEMATIC_RESET_SECTOR_FLAGS;
 		pCVar2->field_0x58 = 0.0f;
 		pCVar2->field_0x5c = SWITCH_MODE_B;
 		pCVar2->field_0x60 = 0.0f;
@@ -5308,23 +5313,23 @@ bool CCinematicManager::ResetSector(int index, CActor* pHero)
 
 	if (pCVar2 != (CCinematic*)0x0) {
 		if (pCVar2->state == CS_Stopped) {
-			bVar1 = (pCVar2->flags_0x4 & 1) != 0;
+			bVar1 = (pCVar2->flags_0x4 & CINEMATIC_FLAG_ONE_SHOT_GATED) != 0;
 			if (bVar1) {
-				bVar1 = (pCVar2->flags_0x8 & 0x400) != 0;
+				bVar1 = (pCVar2->flags_0x8 & CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED) != 0;
 			}
 
 			if (!bVar1) {
-				bVar1 = (pCVar2->flags_0x8 & 0x28) != 0;
+				bVar1 = (pCVar2->flags_0x8 & CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS) != 0;
 			}
 
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
-				bVar1 = (pCVar2->flags_0x8 & 0x800) != 0;
+				bVar1 = (pCVar2->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) != 0;
 			}
 
 			if (bVar1) {
 				pCVar2->pActor = (CActor*)pHero;
-				if ((pCVar2->flags_0x8 & 0x800) == 0) {
+				if ((pCVar2->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
 					bVar1 = false;
 
 					if (pCVar2->switchListA.IsValid()) {
@@ -5356,7 +5361,7 @@ bool CCinematicManager::FUN_001c5c60()
 	if (0 < this->activeCinematicCount) {
 		ppCVar2 = this->ppCinematicObjB_B;
 		do {
-			if (((*ppCVar2)->state != CS_Stopped) && (((*ppCVar2)->flags_0x4 & 0x200) != 0)) {
+			if (((*ppCVar2)->state != CS_Stopped) && (((*ppCVar2)->flags_0x4 & CINEMATIC_FLAG_CUTSCENE_BANDS) != 0)) {
 				bVar1 = true;
 			}
 			iVar3 = iVar3 + 1;
@@ -5668,7 +5673,7 @@ void CCinematicManager::Level_Term()
 					this_00->Stop();
 				}
 
-				this_00->flags_0x8 = this_00->flags_0x8 & 0xfffffffb;
+				this_00->flags_0x8 = this_00->flags_0x8 & ~CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME;
 				this_00->pActor = (CActor*)0x0;
 			}
 

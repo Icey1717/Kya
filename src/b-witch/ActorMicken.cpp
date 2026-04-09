@@ -1281,7 +1281,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 			this->field_0x360 = 0;
 		}
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_FX(
 		CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x360);
 
 		piVar1 = (int*)this->field_0x364;

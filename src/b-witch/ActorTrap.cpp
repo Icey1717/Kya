@@ -663,7 +663,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			}
 
 			if (uVar11 != 0) {
-				IMPLEMENTATION_GUARD_LOG(
+				IMPLEMENTATION_GUARD_FX(
 					CParticlesManager::GetDynamicFx
 					(CScene::ptable.g_EffectsManager_004516b8, (undefined4*)&this->field_0x6c, this->field_0x20,
 						0xffffffffffffffff);)
@@ -946,7 +946,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		pTrap->flags = pTrap->flags | 0x20;
 		pTrap->EvaluateDisplayState();
 		if ((this->field_0x24 != 0xffffffff) && (this->pOwner->prevActorState == TRAP_STATE_IDLE)) {
-			IMPLEMENTATION_GUARD_LOG(
+			IMPLEMENTATION_GUARD_FX(
 			CParticlesManager::GetDynamicFx(CScene::ptable.g_EffectsManager_004516b8, (undefined4*)(this + 1), this->field_0x24, 0xffffffffffffffff);)
 
 			pTrap = this->pOwner;

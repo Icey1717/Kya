@@ -719,17 +719,19 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	(this->field_0x600).z = 0.4f;
 	(this->field_0x600).w = 0.0f;
 
-	//uVar2 = 0;
-	//ppuVar6 = &PTR_ParticleVTable_0048f900;
-	//do {
-	//	if (((uint)ppuVar6[0xb] & 1) == 0) {
-	//		FUN_00401470((int)ppuVar6, 4);
-	//	}
-	//	uVar2 = uVar2 + 1;
-	//	ppuVar6 = ppuVar6 + 0x12;
-	//} while (uVar2 < 4);
-	//FUN_00407690(&this->field_0x550, this->field_0x52c);
-	//FUN_00407690(&this->field_0x55c, this->field_0x52c);
+	IMPLEMENTATION_GUARD_LOG(
+	uVar2 = 0;
+	ppuVar6 = &PTR_ParticleVTable_0048f900;
+	do {
+		if (((uint)ppuVar6[0xb] & 1) == 0) {
+			FUN_00401470((int)ppuVar6, 4);
+		}
+		uVar2 = uVar2 + 1;
+		ppuVar6 = ppuVar6 + 0x12;
+	} while (uVar2 < 4);
+	FUN_00407690(&this->field_0x550, this->field_0x52c);
+	FUN_00407690(&this->field_0x55c, this->field_0x52c);)
+
 	_CreateBlowsDB(pByteCode);
 	_CreateGrabsDB(pByteCode);
 	_CreateCombosDB(pByteCode);

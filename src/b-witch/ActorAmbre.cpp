@@ -241,8 +241,20 @@ void CActorAmbre::Term()
 
 void CActorAmbre::Draw()
 {
-	// Draw sparks.
-	IMPLEMENTATION_GUARD_LOG();
+	CFxSpark* pSpark;
+	int iVar2;
+
+	CActor::Draw();
+
+	iVar2 = 0;
+	pSpark = this->aFxSparks;
+	do {
+		pSpark->Draw(this->actorState == 5);
+		iVar2 = iVar2 + 1;
+		pSpark = pSpark + 1;
+	} while (iVar2 < 3);
+
+	return;
 }
 
 CBehaviour* CActorAmbre::BuildBehaviour(int behaviourType)

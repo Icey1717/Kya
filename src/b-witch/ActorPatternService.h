@@ -30,6 +30,7 @@ public:
 	float FUN_003a6320(int param_2, int param_3);
 	float FUN_003a5e10(undefined8 param_2, int param_3, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6);
 
+	void FireContinue(CActor* pActor, edF32VECTOR4* param_3);
 	void FireContinue(CActor* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void FireContinueWithoutAddPoint(CActor* param_2, edF32VECTOR4* param_3);
 

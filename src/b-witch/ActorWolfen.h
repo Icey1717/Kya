@@ -560,6 +560,8 @@ public:
 	void UpdateHaloPos(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
 	void RotateSpot();
 
+	void Draw();
+
 	CShadow* aShadows;
 
 	int nbSpot;
@@ -1059,6 +1061,7 @@ public:
 	void BehaviourDCA_Manage(CBehaviourDCA* pBehaviour);
 	void BehaviourAvoid_Manage(CBehaviourAvoid* pBehaviour);
 	void BehaviourSnipe_Manage(CBehaviourSnipe* pBehaviour);
+	void BehaviourSnipe_Draw(CBehaviourSnipe* pBehaviour);
 	void BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);

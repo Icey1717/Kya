@@ -17,6 +17,7 @@
 #include "CameraCinematic.h"
 #include "CameraMouseQuake.h"
 #include "CameraGame.h"
+#include "CameraShadow.h"
 #include "CameraFixePerso.h"
 #include "CinematicManager.h"
 #include "ActorManager.h"
@@ -847,25 +848,154 @@ void CCameraManager::KeepSameParam(CCamera* pNewCamera, uint flag)
 	return;
 }
 
-void CCameraManager::Func_001947e0()
+struct CamFloatTable
 {
-	undefined4 uVar1;
-	ECameraType EVar2;
-	//Actor* pActor;
+	int nbEntries;
+	float aEntries[64];
+};
+
+struct CameraCallback_AAA
+{
+	CCameraManager* pCameraManager;
+	CActor* pActor;
+	float distance;
+	CActorsTable table;
+	CamFloatTable field_0x110;
+} CameraCallback_AAA_00449ee0;
+
+void FUN_00198530(float param_1, CamFloatTable* param_2)
+{
+	if (param_2->nbEntries < 0x40) {
+		param_2->aEntries[param_2->nbEntries] = param_1;
+		param_2->nbEntries = param_2->nbEntries + 1;
+	}
+	return;
+}
+
+bool FUN_001944b0(CActor* pActor, void* pParams)
+{
+	CCollision* pCVar1;
+	CCameraManager* pCVar2;
 	long lVar3;
-	int iVar4;
-	undefined4* puVar5;
-	undefined4* puVar6;
-	CCameraManager** ppCVar7;
-	int local_230;
-	undefined4 local_22c[67];
-	int local_120[68];
+	float fVar4;
+	float puVar5;
+	float puVar6;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
-	if ((this->pActiveCamera != (CCamera*)0x0) &&
-		(lVar3 = (long)this->pActiveCamera->GetTarget(), lVar3 != 0)) {
-		IMPLEMENTATION_GUARD_LOG(); // Check ghidra for function.
+	CameraCallback_AAA* param_2 = static_cast<CameraCallback_AAA*>(pParams);
+
+	if (((CActorFactory::gClassProperties[pActor->typeID].field_0x4 & 0x4000) != 0) || (lVar3 = pActor->Func_0x98(), lVar3 != 0)) {
+		pCVar1 = pActor->pCollisionData;
+		if (pCVar1 == (CCollision*)0x0) {
+			local_10.x = (pActor->sphereCentre).x;
+			local_10.y = (pActor->sphereCentre).y;
+			local_10.z = (pActor->sphereCentre).z;
+			local_10.w = 1.0f;
+			eStack32.y = (pActor->sphereCentre).w;
+		}
+		else {
+			edF32Vector4SubHard(&eStack32, &pCVar1->lowestVertex, &pCVar1->highestVertex);
+			edF32Vector4ScaleHard(0.5f, &eStack32, &eStack32);
+			edF32Vector4AddHard(&local_10, &pCVar1->highestVertex, &eStack32);
+		}
+
+		pCVar2 = param_2->pCameraManager;
+		edF32Matrix4MulF32Vector4Hard(&local_30, &pCVar2->worldToCamera_0x3d0, &local_10);
+		fVar4 = pCVar2->distance_0xa30;
+		if (fVar4 <= -local_30.z) {
+			puVar5 = -1.0f;
+		}
+		else {
+			fVar4 = edFIntervalLERP(-local_30.z, -3.0f, fVar4, 0.80000001f, 0.32f);
+			puVar6 = (sqrtf(local_30.y * local_30.y + local_30.x * local_30.x) - eStack32.y) / fVar4;
+			if (puVar6 < 0.0f) {
+				puVar6 = 0.0f;
+			}
+
+			puVar5 = -1.0f;
+			if (puVar6 <= 1.0f) {
+				puVar5 = puVar6;
+			}
+		}
+
+		if (puVar5 != -1.0f) {
+			param_2->table.Add(pActor);
+			FUN_00198530(puVar5 * 96.0f + 32.0f, &param_2->field_0x110);
+		}
 	}
+
+	return false;
+}
+
+void CCameraManager::Func_001947e0()
+{
+	bool bVar1;
+	CActor* pCVar2;
+	ECameraType EVar3;
+	int iVar4;
+	CActor** ppCVar5;
+	CActor** ppCVar6;
+	CameraCallback_AAA* pCVar7;
+	CActorsTable local_230;
+	CActorsTable local_120;
+	edF32VECTOR4 local_10;
+	CCamera* pCamera;
+
+	pCamera = this->pActiveCamera;
+	if ((pCamera != (CCamera*)0x0) &&
+		(pCVar2 = pCamera->GetTarget(), pCVar2 != (CActor*)0x0)) {
+		local_120.nbEntries = 0;
+		local_230.nbEntries = 0;
+		CameraCallback_AAA_00449ee0.pCameraManager = this;
+		CameraCallback_AAA_00449ee0.pActor = this->pActiveCamera->GetTarget();
+		CameraCallback_AAA_00449ee0.distance = this->distance_0xa30;
+		ppCVar6 = CameraCallback_AAA_00449ee0.table.aEntries;
+		ppCVar5 = local_230.aEntries;
+		iVar4 = 0x20;
+		local_10.w = this->distance_0xa30;
+		local_10.x = ((CameraCallback_AAA_00449ee0.pActor)->sphereCentre).x;
+		local_10.y = ((CameraCallback_AAA_00449ee0.pActor)->sphereCentre).y;
+		local_10.z = ((CameraCallback_AAA_00449ee0.pActor)->sphereCentre).z;
+		local_230.nbEntries = CameraCallback_AAA_00449ee0.table.nbEntries;
+		do {
+			iVar4 = iVar4 + -1;
+			pCVar2 = ppCVar6[1];
+			*ppCVar5 = *ppCVar6;
+			ppCVar6 = ppCVar6 + 2;
+			ppCVar5[1] = pCVar2;
+			ppCVar5 = ppCVar5 + 2;
+		} while (0 < iVar4);
+		CameraCallback_AAA_00449ee0.table.nbEntries = 0;
+		CameraCallback_AAA_00449ee0.field_0x110.nbEntries = 0;
+		EVar3 = this->pActiveCamera->GetMode();
+		if (EVar3 != CT_Cinematic) {
+			(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_120, &local_10, FUN_001944b0, &CameraCallback_AAA_00449ee0);
+		}
+
+		while (local_230.nbEntries != 0) {
+			pCVar2 = local_230.PopCurrent();
+			bVar1 = CameraCallback_AAA_00449ee0.table.IsInList(pCVar2);
+			if (bVar1 == false) {
+				pCVar2->ToggleMeshAlpha();
+				pCVar2->SetBFCulling(0);
+			}
+		}
+
+		iVar4 = 0;
+		if (0 < CameraCallback_AAA_00449ee0.table.nbEntries) {
+			CActor** pActor = CameraCallback_AAA_00449ee0.table.aEntries;
+			do {
+				(*pActor)->SetAlpha((byte)(int)pCVar7->field_0x110.aEntries[iVar4]);
+				(*pActor)->SetBFCulling(1);
+				iVar4 = iVar4 + 1;
+				pActor = pActor + 1;
+			} while (iVar4 < CameraCallback_AAA_00449ee0.table.nbEntries);
+		}
+	}
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/CameraManager.cpp
@@ -1020,10 +1150,7 @@ void CCameraManager::BuildDisplayMatrix()
 	edF32MATRIX4* peVar6;
 	edF32MATRIX4* peVar7;
 
-	if (((this->pActiveCamera->flags_0xc & 0x20000) == 0) ||
-		((this->flags & 0x4000000) != 0)) {
-		IMPLEMENTATION_GUARD_LOG();
-		// Check this is correct.
+	if (((this->pActiveCamera->flags_0xc & 0x20000) == 0) || ((this->flags & 0x4000000) != 0)) {
 		edF32VECTOR4 oldT = (this->transformationMatrix).rowT;
 		edF32Matrix4FromEulerSoft(&this->transformationMatrix, &this->angle_0xa08, "ZXY");
 		(this->transformationMatrix).rowT = oldT;
@@ -1829,100 +1956,6 @@ void CameraSet3DPos(edFCamera* pCamera)
 	return;
 }
 
-CCameraShadow::CCameraShadow(ByteCode* pByteCode)
-{
-	int iVar1;
-
-	this->field_0x16cc = 0;
-	this->field_0x16c4 = 0;
-	iVar1 = GameDListPatch_Register(this, 0x2ee, 0);
-	this->patchRegister = iVar1;
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/CameraShadow.cpp
-bool CCameraShadow::InitDlistPatchable(int)
-{
-	CGlobalDListManager* pDlistmanager;
-	int curVtxIndex;
-
-	edDListLoadIdentity();
-	edDListUseMaterial((edDList_material*)0x0);
-	edDListSetProperty(4, this->sceneFlags);
-	edDListBegin(0.0f, 0.0f, 0.0f, 3, 0x2ee);
-	edDListColor4u8(0, 0, 0, 0x7f);
-	curVtxIndex = 0;
-	do {
-		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
-		curVtxIndex = curVtxIndex + 1;
-	} while (curVtxIndex < 0xfa);
-
-	edDListEnd();
-	edDListSetProperty(4, 0);
-
-	pDlistmanager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
-	pDlistmanager->SetActive(this->patchRegister, 1);
-
-	return true;
-}
-
-// Should be in: D:/Projects/b-witch/CameraShadow.cpp
-void CCameraShadow::Init()
-{
-	CCameraExt::Init();
-	//(*(code*)((this->cameraExt).camera.objBase.pVTable)->field_0x30)(this, 0);
-	*(undefined*)&this->field_0xd0 = 0;
-	SetDistance(40.0f);
-	SetAngleGamma(1.5708f);
-	this->field_0x16e4 = 0.5735765f;
-	this->field_0x16e0 = 0.8191521f;
-	*(undefined*)&this->field_0x1700 = 0;
-	return;
-}
-
-ECameraType CCameraShadow::GetMode()
-{
-	EDFCAMERA_LOG(LogLevel::Info, "CCamera::GetMode Found CT_ShadowSun: 0x{:x}", (int)CT_ShadowSun);
-	return CT_ShadowSun;
-}
-
-// Should be in: D:/Projects/b-witch/CameraShadow.cpp
-bool CCameraShadow::Manage()
-{
-	int iVar1;
-	CActorManager* pCVar2;
-	CLightManager* pLVar3;
-	bool bVar4;
-	int iVar5;
-	CActor* pActor;
-	int iVar6;
-	long lVar7;
-	edF32MATRIX4* m0;
-	long lVar8;
-	int* piVar9;
-	float fVar10;
-	edF32MATRIX4 eStack400;
-	edF32VECTOR4 local_150;
-	edF32VECTOR4 local_140;
-	edF32VECTOR4 eStack304;
-	edF32VECTOR4 local_120;
-	int local_110;
-	int local_10c[67];
-
-	lVar8 = (long)(int)this;
-	bVar4 = CCamera::Manage();
-	pLVar3 = CScene::ptable.g_LightManager_004516b0;
-	if (bVar4 == false) {
-		IMPLEMENTATION_GUARD_SHADOW();
-	}
-	else {
-		bVar4 = false;
-	}
-	return bVar4;
-}
-
 bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 {
 	SWITCH_MODE switchMode;
@@ -2191,7 +2224,7 @@ void CCameraManager::Func_00194a10(CActorsTable* pTable)
 				pCVar9 = (CCinematic*)0x0;
 			}
 			if (((pCVar9 != (CCinematic*)0x0) && (pCVar9->state != CS_Stopped)) &&
-				(iVar11 = 0, (pCVar9->flags_0x4 & 0x400000) != 0)) {
+				(iVar11 = 0, (pCVar9->flags_0x4 & CINEMATIC_FLAG_MESH_TRANSFORM_OPTION) != 0)) {
 				for (; iVar11 < pCVar9->nbCinematicActors; iVar11 = iVar11 + 1) {
 					if (iVar11 < pCVar9->nbCinematicActors) {
 						pNewEntry = pCVar9->aActorCinematic + iVar11;

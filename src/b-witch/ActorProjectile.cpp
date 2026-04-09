@@ -2,8 +2,12 @@
 #include "ActorElectrolla.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include "DlistManager.h"
 #include "TimeController.h"
 #include "LightManager.h"
+#include "LargeObject.h"
+#include "FileManager3D.h"
+#include "Fx.h"
 #include "ActorManager.h"
 #include "ActorFactory.h"
 #include "CollisionRay.h"
@@ -79,7 +83,51 @@ void CActorProjectile::Init()
 
 void CActorProjectile::Draw()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	int iVar1;
+	byte r;
+	bool bVar2;
+	StateConfig* pSVar3;
+	edDList_material* pMaterialInfo;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+	edF32MATRIX4 eStack64;
+
+	CActorAutonomous::Draw();
+
+	if (((((GetStateFlags(this->actorState) & 0x800) != 0) && ((this->aProjectileSubObjs->flags & 0x40) != 0)) &&
+		(fVar5 = this->timeToExplode, fVar5 < 10.0f)) && (0.0f < fVar5)) {
+		fVar6 = fVar5 - static_cast<float>((int)fVar5 & 0xff);
+		bVar2 = GameDList_BeginCurrent();
+		if (bVar2 != false) {
+			edF32Matrix4CopyHard(&eStack64, &(CScene::ptable.g_CameraManager_0045167c)->transMatrix_0x390);
+			eStack64.da = this->currentLocation.x;
+			eStack64.dc = this->currentLocation.z;
+			eStack64.dd = this->currentLocation.w;
+			eStack64.db = this->currentLocation.y + this->sphereCentre.w * (3.5f - fVar6);
+			edDListLoadMatrix(&eStack64);
+			pMaterialInfo = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->aProjectileSubObjs->materialId, static_cast<int>(fVar5) & 0xff);
+			edDListUseMaterial(pMaterialInfo);
+			edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+			fVar5 = (1.0f - fVar6) * 0.4f;
+			r = (byte)static_cast<int>(fVar6 * 255.0f);
+			edDListColor4u8(r, r, r, r);
+			edDListTexCoo2f(0.0f, 0.0f);
+			fVar6 = -fVar5;
+			edDListVertex4f(fVar6, fVar5, 0.0f, 0.0f);
+			edDListTexCoo2f(1.0f, 0.0f);
+			edDListVertex4f(fVar5, fVar5, 0.0f, 0.0f);
+			edDListTexCoo2f(0.0f, 1.0f);
+			edDListVertex4f(fVar6, fVar6, 0.0f, 0.0f);
+			edDListTexCoo2f(1.0f, 1.0f);
+			edDListVertex4f(fVar5, fVar6, 0.0f, 0.0f);
+			edDListEnd();
+		}
+
+		GameDList_EndCurrent();
+	}
+
+	return;
 }
 
 void CActorProjectile::ComputeLighting()
@@ -713,12 +761,12 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 	if ((this->aProjectileSubObjs->flags & 0x100000) != 0) {
 		uVar6 = GetStateFlags(this->actorState) & 0x800;
 
-		IMPLEMENTATION_GUARD_LOG(
 		if (uVar6 != 0) {
-			CPatternPart::FireContinue(&this->patternPart, CActorHero::_gThis, &g_xVector);
+			this->patternPart.FireContinue(CActorHero::_gThis, &g_xVector);
 		}
-		CPatternPart::UpdatePatternPartLife(&this->patternPart);
-		CPatternPart::Draw(&this->patternPart);)
+
+		this->patternPart.UpdatePatternPartLife();
+		this->patternPart.Draw();
 	}
 
 	pCVar2 = this->pCollisionData;
@@ -880,29 +928,16 @@ LAB_00208f00:
 void CActorProjectile::BehaviourProjectileStand_InitState(int newState, CBehaviourProjectileStand* pBehaviourStand)
 {
 	bool bVar1;
-	int local_8;
-	int* local_4;
 
 	if (newState == PROJECTILE_STATE_DYING) {
 		if (this->aProjectileSubObjs->field_0x30 != -1) {
-			IMPLEMENTATION_GUARD_LOG(
-			local_8 = 0;
-			local_4 = (int*)0x0;
-			CParticlesManager::GetDynamicFx
-			(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->aProjectileSubObjs->field_0x30, 0xffffffffffffffff);
+			CFxHandle local_8;
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&local_8, this->aProjectileSubObjs->field_0x30, FX_MATERIAL_SELECTOR_NONE);
 
-			if (((local_4 == (int*)0x0) || (local_8 == 0)) || (bVar1 = true, local_8 != local_4[6])) {
-				bVar1 = false;
+			if (local_8.IsValid()) {
+				local_8.UpdateSpatializeActor(3, &this->currentLocation);
+				local_8.Start();
 			}
-
-			if (bVar1) {
-				if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-					(**(code**)(*local_4 + 0x3c))(local_4, 3, &this->currentLocation);
-				}
-				if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-					(**(code**)(*local_4 + 0x10))(0, 0);
-				}
-			})
 		}
 	}
 	else {
@@ -1481,10 +1516,6 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 	float fVar10;
 	CActorsTable local_130;
 	edF32VECTOR4 local_20;
-	int local_10;
-	int* local_c;
-	int local_8;
-	int* local_4;
 
 	ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
 
@@ -1497,52 +1528,26 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 
 		if (this->field_0x540 == 0) {
 			if ((this->aProjectileSubObjs->field_0x30 != -1) && (this->field_0x5a8 == 0)) {
-				IMPLEMENTATION_GUARD_LOG(
-				local_10 = 0;
-				local_c = (int*)0x0;
-				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_10, this->aProjectileSubObjs->field_0x30, 0xffffffffffffffff);
-				if ((local_c == (int*)0x0) || ((local_10 == 0 || (bVar2 = true, local_10 != local_c[6])))) {
-					bVar2 = false;
-				}
-				if (bVar2) {
-					if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
-						(**(code**)(*local_c + 0x3c))();
-					}
-					if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
-						(**(code**)(*local_c + 0x10))(0, 0);
-					}
+				CFxHandle local_10;
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&local_10, this->aProjectileSubObjs->field_0x30, FX_MATERIAL_SELECTOR_NONE);
+				if (local_10.IsValid()) {
+					local_10.UpdateSpatializeActor(3, &this->currentLocation);
+					local_10.Start();
 					this->field_0x5a8 = 1;
-				})
+				}
 			}
 		}
 		else {
 			if ((this->aProjectileSubObjs->field_0x34 != -1) && (this->field_0x5a8 == 0)) {
-				IMPLEMENTATION_GUARD_LOG(
-				local_8 = 0;
-				local_4 = (int*)0x0;
-				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->aProjectileSubObjs->field_0x34,
-					0xffffffffffffffff);
-				if ((local_4 == (int*)0x0) || ((local_8 == 0 || (bVar2 = true, local_8 != local_4[6])))) {
-					bVar2 = false;
-				}
-				if (bVar2) {
-					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-						local_4[0x14] = *(int*)&this->field_0x560;
-						local_4[0x15] = *(int*)&this->field_0x564;
-						local_4[0x16] = *(int*)&this->field_0x568;
-						local_4[0x17] = *(int*)&this->field_0x56c;
-					}
-					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-						(**(code**)(*local_4 + 0x3c))();
-					}
-					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-						(**(code**)(*local_4 + 0x10))(0, 0);
-					}
+				CFxHandle local_8;
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&local_8, this->aProjectileSubObjs->field_0x34, FX_MATERIAL_SELECTOR_NONE);
+				if (local_8.IsValid()) {
+					local_8.SetRotationEuler(&this->field_0x560);
+					local_8.UpdateSpatializeActor(3, &this->field_0x550);
+					local_8.Start();
 					this->field_0x540 = 0;
 					this->field_0x5a8 = 1;
-				})
+				}
 			}
 		}
 

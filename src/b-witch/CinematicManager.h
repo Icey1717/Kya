@@ -24,7 +24,61 @@ struct CActor;
 
 #define CINEMATIC_LOAD_STATE_COMPLETE 4
 
-#define CINEMATIC_FLAG_ACTIVE 0x80
+#define CINEMATIC_FLAG_ONE_SHOT_GATED				0x00000001 // One-shot mode enabled; replay is controlled by runtime lock state.
+#define CINEMATIC_FLAG_ALLOW_SKIP_INPUT				0x00000002 // Allow input-driven skip while playing.
+#define CINEMATIC_FLAG_SKIP_NEEDS_0x1400			0x00000004 // Skip path additionally requires runtime skip-context bits.
+#define CINEMATIC_FLAG_LOOPING_LOADING				0x00000008 // Loop/reload mode for the cinematic stream.
+#define CINEMATIC_FLAG_HERO_MSG_82_83				0x00000010 // Send hero messages 0x82 (start) / 0x83 (stop).
+#define CINEMATIC_FLAG_PRERESET_ON_CHECKPOINT		0x00000020 // Set in some cinematics, and checked in Level_PreReset/Level_SetupInternalData to conditionally preserve runtime notify-triggered state.
+#define CINEMATIC_FLAG_SAVE_CONTEXT					0x00000040 // Include this cinematic in Level_SaveContext (BLCI).
+#define CINEMATIC_FLAG_APPLY_END_ON_STOP			0x00000080 // Apply end state via final timeslice when stopped early.
+#define CINEMATIC_FLAG_KEEP_TIME_ON_START			0x00000100 // Preserve totalCutsceneDelta on Start().
+#define CINEMATIC_FLAG_CUTSCENE_BANDS				0x00000200 // Marks a blocking cutscene / band state.
+#define CINEMATIC_FLAG_HIDE_FRONTEND				0x00000400 // Disable frontend UI during playback.
+#define CINEMATIC_FLAG_AUTO_TRY_START				0x00000800 // Auto-attempt start from manager-side checks.
+#define CINEMATIC_FLAG_FORCE_INTERPOLATE			0x00001000 // Force entry through CS_Interpolate.
+#define CINEMATIC_FLAG_RELATIVE_TRANSFORM			0x00002000 // Build cinematic transform relative to actor refs.
+#define CINEMATIC_FLAG_ALT_ACTOR_INIT_MODE			0x00004000 // Use alternate actor initialization path.
+#define CINEMATIC_FLAG_REMAP_ACTORREFB_HASH			0x00008000 // Remap actorRefB hash from current actor context.
+#define CINEMATIC_FLAG_SET_HERO_0x400000			0x00010000 // Apply hero actor flag 0x400000 while active.
+#define CINEMATIC_FLAG_IGNORE_BASE_SECTOR			0x00040000 // Bypass base-sector filtering.
+#define CINEMATIC_FLAG_AUDIO_MODE_A					0x00080000 // Audio handling mode A during playback.
+#define CINEMATIC_FLAG_AUDIO_MODE_B					0x00200000 // Audio handling mode B during playback.
+#define CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR	0x00100000 // Re-run cond_0x248 in Level_ClearAll().
+#define CINEMATIC_FLAG_MESH_TRANSFORM_OPTION		0x00400000 // Enable special cinematic mesh-transform behavior.
+#define CINEMATIC_FLAG_FORCE_ACTOR_0x200000			0x00800000 // Force actor update path (legacy 0x200000 behavior).
+#define CINEMATIC_FLAG_START_PAUSED_TIME			0x01000000 // Start with timeline paused.
+#define CINEMATIC_FLAG_PRELOAD_BANK					0x02000000 // Preload/load bank data before triggering.
+#define CINEMATIC_FLAG_IGNORE_ZONE_C_GATE			0x04000000 // Ignore zone C gate when deciding to start.
+#define CINEMATIC_FLAG_LOCALIZED_CINE_PATH			0x08000000 // Use localized cinematic path selection.
+#define CINEMATIC_FLAG_KEEP_0x20_ON_RESET			0x10000000 // Keep runtime notify bit during PreReset/Setup resets.
+#define CINEMATIC_FLAG_GAMESTATE_80					0x20000000 // Contributes to GAME_CUTSCENE_80 mask.
+
+#define CINEMATIC_FLAG_AUDIO_MODE_MASK				(CINEMATIC_FLAG_AUDIO_MODE_A | CINEMATIC_FLAG_AUDIO_MODE_B) // Composite audio mode bits.
+#define CINEMATIC_FLAG_GAME_CUTSCENE_80_MASK		(CINEMATIC_FLAG_CUTSCENE_BANDS | CINEMATIC_FLAG_GAMESTATE_80) // Bits that set GAME_CUTSCENE_80.
+#define CINEMATIC_RESET_SECTOR_FLAGS				(CINEMATIC_FLAG_CUTSCENE_BANDS | CINEMATIC_FLAG_SET_HERO_0x400000 | CINEMATIC_FLAG_IGNORE_BASE_SECTOR | CINEMATIC_FLAG_AUDIO_MODE_A) // Flags restored on sector/reset path.
+
+#define CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK			0x00000001 // Runtime: cinematic has an audio track handle.
+#define CINEMATIC_RUNTIME_FLAG_HAS_CAMERA_INTERFACE		0x00000002 // Runtime: cinematic requested camera interface.
+#define CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME	0x00000004 // Runtime: Stop() executed this frame.
+#define CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED		0x00000008 // Runtime: condition gate currently blocks trigger.
+#define CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED		0x00000010 // Runtime: cinFileData.Initialize() has run.
+#define CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED			0x00000020 // Runtime: set by NotifyCinematic trigger message.
+#define CINEMATIC_RUNTIME_FLAG_TIME_PAUSED				0x00000040 // Runtime: timeline pause toggle.
+#define CINEMATIC_RUNTIME_FLAG_ACTIVE					0x00000080 // Runtime: active/pending trigger latch.
+#define CINEMATIC_RUNTIME_FLAG_PENDING_STOP				0x00000100 // Runtime: stop requested, to be processed.
+#define CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH		0x00000200 // Runtime: zone trigger latch while actor remains inside.
+#define CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED			0x00000400 // Runtime: one-shot lock bit (persisted in save context).
+#define CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER			0x00000800 // Runtime: forced trigger path.
+#define CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10		0x00001000 // Runtime: save-context extra bit 0x10.
+#define CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER			0x00002000 // Runtime: defer restart during clear-all pass.
+
+#define CINEMATIC_RUNTIME_FLAGS_START_BLOCKERS		(CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED | CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED) // Runtime blockers for normal one-shot starts.
+#define CINEMATIC_RUNTIME_FLAGS_SKIP_CONTEXT_MASK	(CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED | CINEMATIC_RUNTIME_FLAG_SAVE_CONTEXT_0x10) // Runtime skip-context gate bits.
+#define CINEMATIC_RUNTIME_RESET_FLAGS				(CINEMATIC_RUNTIME_FLAG_STOP_CALLED_THIS_FRAME | CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED | CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED | CINEMATIC_RUNTIME_FLAG_TIME_PAUSED | CINEMATIC_RUNTIME_FLAG_PENDING_STOP | CINEMATIC_RUNTIME_FLAG_ZONE_TRIGGER_LATCH | CINEMATIC_RUNTIME_FLAG_ONE_SHOT_LOCKED | CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER) // Runtime bits cleared by reset/pre-reset.
+#define CINEMATIC_RUNTIME_RESET_FLAGS_KEEP_NOTIFY	(CINEMATIC_RUNTIME_RESET_FLAGS & ~CINEMATIC_RUNTIME_FLAG_NOTIFY_TRIGGERED) // Same as above, but preserve notify-triggered.
+
+#define CINEMATIC_FLAG_ACTIVE CINEMATIC_RUNTIME_FLAG_ACTIVE // Backward-compatible alias for runtime active bit.
 
 #define CINEMATIC_MESSAGE_RECEPTACLE_CHANGED 0x11
 
@@ -642,18 +696,7 @@ public:
 	uint flags_0x4;
 	uint flags_0x8;
 	int baseB;
-	union
-	{
-		struct
-		{
-			byte field_0x10;
-			byte field_0x11;
-			byte field_0x12;
-			byte field_0x13;
-		};
-
-		uint allFlags;
-	};
+	uint uniqueIdentifier;
 
 	char* fileName;
 
