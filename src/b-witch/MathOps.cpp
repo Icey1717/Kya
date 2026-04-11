@@ -1546,6 +1546,55 @@ void edF32Matrix4TransposeHard(edF32MATRIX4* m0)
 	return;
 }
 
+void edF32Matrix4MulF32Matrix4Soft(edF32MATRIX4* param_1, edF32MATRIX4* param_2, edF32MATRIX4* param_3)
+{
+	int iVar1;
+	edF32MATRIX4* peVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32MATRIX4 local_40;
+
+	peVar3 = param_3;
+	local_40 = *peVar3;
+
+	fVar4 = param_2->ac;
+	fVar6 = param_2->aa;
+	fVar7 = param_2->ab;
+	fVar5 = param_2->ad;
+	param_1->aa = fVar5 * peVar3->da + fVar4 * peVar3->ca + fVar7 * peVar3->ba + fVar6 * peVar3->aa;
+	param_1->ab = fVar5 * peVar3->db + fVar4 * peVar3->cb + fVar7 * peVar3->bb + fVar6 * peVar3->ab;
+	param_1->ac = fVar5 * peVar3->dc + fVar4 * peVar3->cc + fVar7 * peVar3->bc + fVar6 * peVar3->ac;
+	param_1->ad = fVar5 * peVar3->dd + fVar4 * peVar3->cd + fVar7 * peVar3->bd + fVar6 * peVar3->ad;
+	fVar4 = param_2->bc;
+	fVar6 = param_2->ba;
+	fVar7 = param_2->bb;
+	fVar5 = param_2->bd;
+	param_1->ba = fVar5 * peVar3->da + fVar4 * peVar3->ca + fVar7 * peVar3->ba + fVar6 * peVar3->aa;
+	param_1->bb = fVar5 * peVar3->db + fVar4 * peVar3->cb + fVar7 * peVar3->bb + fVar6 * peVar3->ab;
+	param_1->bc = fVar5 * peVar3->dc + fVar4 * peVar3->cc + fVar7 * peVar3->bc + fVar6 * peVar3->ac;
+	param_1->bd = fVar5 * peVar3->dd + fVar4 * peVar3->cd + fVar7 * peVar3->bd + fVar6 * peVar3->ad;
+	fVar4 = param_2->cc;
+	fVar6 = param_2->ca;
+	fVar7 = param_2->cb;
+	fVar5 = param_2->cd;
+	param_1->ca = fVar5 * peVar3->da + fVar4 * peVar3->ca + fVar7 * peVar3->ba + fVar6 * peVar3->aa;
+	param_1->cb = fVar5 * peVar3->db + fVar4 * peVar3->cb + fVar7 * peVar3->bb + fVar6 * peVar3->ab;
+	param_1->cc = fVar5 * peVar3->dc + fVar4 * peVar3->cc + fVar7 * peVar3->bc + fVar6 * peVar3->ac;
+	param_1->cd = fVar5 * peVar3->dd + fVar4 * peVar3->cd + fVar7 * peVar3->bd + fVar6 * peVar3->ad;
+	fVar4 = param_2->dc;
+	fVar6 = param_2->da;
+	fVar7 = param_2->db;
+	fVar5 = param_2->dd;
+	param_1->da = fVar5 * peVar3->da + fVar4 * peVar3->ca + fVar7 * peVar3->ba + fVar6 * peVar3->aa;
+	param_1->db = fVar5 * peVar3->db + fVar4 * peVar3->cb + fVar7 * peVar3->bb + fVar6 * peVar3->ab;
+	param_1->dc = fVar5 * peVar3->dc + fVar4 * peVar3->cc + fVar7 * peVar3->bc + fVar6 * peVar3->ac;
+	param_1->dd = fVar5 * peVar3->dd + fVar4 * peVar3->cd + fVar7 * peVar3->bd + fVar6 * peVar3->ad;
+
+	return;
+}
+
 void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
 {
 	float fVar1;

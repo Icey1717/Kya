@@ -109,7 +109,8 @@ public:
 	edF32VECTOR4 field_0xb0;
 };
 
-class CCameraExt : public CCamera {
+class CCameraExt : public CCamera
+{
 public:
 	CCameraExt(struct ByteCode* pMemoryStream);
 	CCameraExt();

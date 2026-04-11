@@ -1060,6 +1060,124 @@ float CPathFollowReaderAbsolute::GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInf
 	return fVar5 + fVar4;
 }
 
+
+void CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint(float param_1, int param_3, float* param_4, float* param_5)
+{
+	float* pfVar1;
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	fVar7 = 0.0f;
+	for (iVar2 = 0; iVar2 < param_3; iVar2 = iVar2 + 1) {
+		fVar7 = fVar7 + this->aSegmentDurations[iVar2];
+	}
+	if (((param_3 < this->pPathFollow->nbLeadInPoints) || (fVar3 = this->totalTraversalTime, param_1 <= fVar3)) || (this->mode == 0)) {
+		fVar3 = this->totalTraversalTime;
+		if (fVar3 < param_1) {
+			if (this->mode == 0) {
+				fVar3 = this->field_0x4 + fVar3;
+				if (param_1 <= fVar3) {
+					fVar3 = param_1;
+				}
+				param_1 = (this->totalTraversalTime + fVar3) - this->totalTraversalTime;
+			}
+			else {
+				fVar3 = fmodf(param_1 - fVar3, this->field_0x4);
+				param_1 = this->totalTraversalTime + fVar3;
+			}
+		}
+	}
+	else {
+		fVar7 = fVar7 - fVar3;
+		fVar8 = this->field_0x4 * 0.5f;
+		fVar3 = fmodf(param_1 - fVar3, this->field_0x4);
+		fVar6 = fVar7 - fVar3;
+		if (0.0f <= fVar6) {
+			if (fVar8 < fVar6) {
+				fVar6 = fVar6 - this->field_0x4;
+			}
+		}
+		else {
+			if (fVar6 < -fVar8) {
+				fVar6 = fVar6 + this->field_0x4;
+			}
+		}
+		if (this->type == 1) {
+			for (; iVar2 < this->pPathFollow->splinePointCount + -1; iVar2 = iVar2 + 1) {
+				fVar7 = fVar7 + this->aSegmentDurations[iVar2];
+			}
+			if (this->field_0x1c == 0) {
+				while (param_3 < iVar2) {
+					pfVar1 = this->pPathFollow->aDelays;
+					if (pfVar1 == (float*)0x0) {
+						fVar4 = 0.0f;
+					}
+					else {
+						fVar4 = pfVar1[iVar2];
+					}
+					pfVar1 = this->pPathFollow->aDelays;
+					iVar2 = iVar2 + -1;
+					if (pfVar1 == (float*)0x0) {
+						fVar5 = 0.0f;
+					}
+					else {
+						fVar5 = pfVar1[iVar2];
+					}
+					fVar7 = fVar7 + fVar4 + (this->aSegmentDurations[iVar2] - fVar5);
+				}
+			}
+			else {
+				while (param_3 < iVar2) {
+					iVar2 = iVar2 + -1;
+					fVar7 = fVar7 + this->aSegmentDurations[iVar2];
+				}
+			}
+			fVar7 = fVar7 - fVar3;
+			if (0.0f <= fVar7) {
+				if (fVar8 < fVar7) {
+					fVar7 = fVar7 - this->field_0x4;
+				}
+			}
+			else {
+				if (fVar7 < -fVar8) {
+					fVar7 = fVar7 + this->field_0x4;
+				}
+			}
+			param_1 = fVar3 + this->totalTraversalTime;
+			if (param_1 < this->totalTraversalTime) {
+				param_1 = param_1 + this->field_0x4;
+			}
+			if ((fabsf(fVar6) <= fabsf(fVar7)) || (this->mode == 0)) {
+				fVar7 = param_1 + fVar6;
+			}
+			else {
+				fVar7 = param_1 + fVar7;
+			}
+		}
+		else {
+			param_1 = fVar3 + this->totalTraversalTime;
+			if (param_1 < this->totalTraversalTime) {
+				param_1 = param_1 + this->field_0x4;
+			}
+			fVar7 = param_1 + fVar6;
+		}
+		if (fVar7 < 0.0f) {
+			fVar7 = fVar7 + this->field_0x4;
+			param_1 = param_1 + this->field_0x4;
+		}
+	}
+
+	*param_4 = fVar7;
+	*param_5 = param_1;
+
+	return;
+}
+
 int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 {
 	CPathFollow* pCVar1;

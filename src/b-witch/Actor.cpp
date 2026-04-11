@@ -3860,13 +3860,12 @@ void CActor::ComputeAltitude()
 			rayLocation.y = rayLocation.y - this->distanceToGround;
 			pShadow->position = rayLocation;
 			pShadow->field_0x4c = this->rotationEuler.y;
-			pShadow->SetIntensity(1.0 - this->distanceToGround / this->distanceToGround);
+			pShadow->SetIntensity(1.0 - this->distanceToGround / this->field_0xf0);
 			pShadow->field_0x20 = local_20;
 		}
 
-		fVar4 = this->distanceToGround;
-		if (fVar4 < this->field_0xf0) {
-			this->distanceToGround = fVar4 - 0.3f;
+		if (this->distanceToGround < this->field_0xf0) {
+			this->distanceToGround = this->distanceToGround - 0.3f;
 			ACTOR_LOG(LogLevel::VeryVerbose, "CActor::ComputeAltitude {} adjust after distance: {}", this->name, this->distanceToGround);
 		}
 	}

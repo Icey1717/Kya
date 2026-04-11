@@ -7712,7 +7712,6 @@ void CActorWolfen::InternState_WolfenLocate()
 		fVar3 = fVar2;
 		pAnimationController->anmBinMetaAnimator.GetAnimType_00242330(0);
 
-		IMPLEMENTATION_GUARD_LOG(); // IS this correct?
 		float cosValue = sinf(fabs(((fVar3 / fVar2) * 6.283185)));
 		fVar3 = edF32Between_0_2Pi(-cosValue * (3.141593 - GetVision()->halfAngle * 2.0f * 57.29578f * 0.01745329f * 0.5f) + this->rotationEuler.y);
 		SetVectorFromAngleY(fVar3, &local_20);
@@ -8765,13 +8764,15 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			local_9c = pCVar1->currentLocation.y + pCVar1->field_0xcf0;
 			CActor::SV_GetActorColCenter(pSender, &local_b0);
 			if (((local_a0 - local_b0.x) * (local_a0 - local_b0.x) + (local_98 - local_b0.z) * (local_98 - local_b0.z) <
-				*(float*)&pCVar1->field_0xc84) && (fabs(local_9c - local_b0.y) < *(float*)&pCVar1->field_0xc88)) {
+				pCVar1->hearingDetectionProps).rangeSquared) && (fabs(local_9c - local_b0.y) < (pCVar1->hearingDetectionProps).maxHeightDifference) {
 				bVar2 = true;
 			}
 		}
+
 		if ((!bVar2) && (uVar6 = FUN_00173550((long)(int)this->pOwner, (long)(int)pSender), uVar6 == 0)) {
 			return 0;
 		}
+
 		this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 | 0x4000;
 		*(CActor**)&this->pOwner->field_0xd0c = pSender;)
 		return 1;

@@ -138,6 +138,8 @@ public:
 class CBehaviourHeroUnknown : public CBehaviourHero
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+
 	CFxHandleExt fxHandleA;
 	StaticMeshComponentHeroEx staticMeshA;
 	CFxHandleExt fxHandleB;
@@ -293,6 +295,8 @@ public:
 	void BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut* pBehaviour);
 
 	void FxTobogganInit();
+	void FxManageToboggan();
+	void FxTobogganTerm();
 
 	void StateHeroStandInit(int bCheckEffort);
 	void StateHeroStandTerm();
@@ -312,9 +316,9 @@ public:
 	void StateHeroTrampolineJump_1_2Term();
 	void StateHeroTrampolineJump_1_2(float param_1);
 
-	void StateHeroInternalView_Init(bool param_2) { IMPLEMENTATION_GUARD(); }
-	void StateHeroInternalView(int param_2, int, int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroInternalView_Term(int param_2) { IMPLEMENTATION_GUARD(); }
+	void StateHeroInternalView_Init(bool param_2);
+	void StateHeroInternalView(int param_2, int, int);
+	void StateHeroInternalView_Term(int newState);
 
 	void StateHeroGetOnMountInit();
 	void StateHeroGetOnMount();
@@ -394,21 +398,21 @@ public:
 	void StateHeroBounceSomersault1();
 	void StateHeroBounceSomersault2();
 
-	void StateHeroBoomySnipePrepare_Init() { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipePrepare(int, int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipePrepare_Term(bool) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeStand_Init() { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeStand(int, int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeStand_Term(bool) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeLaunch_Init() { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeLaunch(int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeLaunch_Term(int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeBack2Stand_Init() { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeBack2Stand(int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeBack2Stand_Term(bool) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeAfterLaunch_Init() { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeAfterLaunch(int, int) { IMPLEMENTATION_GUARD(); }
-	void StateHeroBoomySnipeAfterLaunch_Term(bool) { IMPLEMENTATION_GUARD(); }
+	void StateHeroBoomySnipePrepare_Init();
+	void StateHeroBoomySnipePrepare(int, int);
+	void StateHeroBoomySnipePrepare_Term(bool);
+	void StateHeroBoomySnipeStand_Init();
+	void StateHeroBoomySnipeStand(int, int);
+	void StateHeroBoomySnipeStand_Term(bool);
+	void StateHeroBoomySnipeLaunch_Init();
+	void StateHeroBoomySnipeLaunch(int);
+	void StateHeroBoomySnipeLaunch_Term(int);
+	void StateHeroBoomySnipeBack2Stand_Init();
+	void StateHeroBoomySnipeBack2Stand(int);
+	void StateHeroBoomySnipeBack2Stand_Term(bool);
+	void StateHeroBoomySnipeAfterLaunch_Init();
+	void StateHeroBoomySnipeAfterLaunch(int, int);
+	void StateHeroBoomySnipeAfterLaunch_Term(bool);
 
 	void StateHeroBoomyPrepareFightBlowInit();
 	void StateBoomyExecuteFightBlowInit();
@@ -641,7 +645,7 @@ public:
 
 	int field_0x12e0;
 
-	undefined4 field_0x1118;
+	float field_0x1118;
 
 	undefined4 field_0x1a50;
 	float field_0x1a58;

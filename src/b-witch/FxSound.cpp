@@ -113,6 +113,19 @@ int CFxNewSound::GetType()
 	return FX_TYPE_SOUND;
 }
 
+void CFxNewSound::SetTimeScaler(float)
+{
+	CSound* pSound;
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	pSound = (this->soundInstance).pSoundStruct;
+	if (pSound != (CSound*)0x0) {
+		CSound::SetFrequency(param_1, pSound, (this->soundInstance).soundId);
+	})
+
+	return;
+}
+
 void CFxNewSound::Instanciate(CFxSoundScenaricData* pData, FX_MATERIAL_SELECTOR selector)
 {
 	this->field_0x84 = pData;

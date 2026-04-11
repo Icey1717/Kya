@@ -181,6 +181,11 @@ bool CMoneyInterface::Manage()
 	return bVar1 == false;
 }
 
+void CMoneyInterface::SetValue(float value)
+{
+	return;
+}
+
 float CMoneyInterface::GetValue()
 {
 	return (float)CLevelScheduler::_gGameNfo.nbMoney;
@@ -252,4 +257,59 @@ float CLifeInterface::GetPriority()
 float CLifeInterface::GetPercent()
 {
 	return GetValue() / this->valueMax;
+}
+
+OtherInterface::OtherInterface()
+{
+	this->field_0x4 = 0;
+	this->field_0x8 = 0;
+
+	return;
+}
+
+bool OtherInterface::Activate(int bActive)
+{
+	if (bActive == 0) {
+		this->field_0x4 = 0;
+	}
+	else {
+		this->field_0x4 = 1;
+	}
+
+	return 1;
+}
+
+bool OtherInterface::CanActivate()
+{
+	return this->field_0x4 == 0;
+}
+
+bool OtherInterface::IsActive()
+{
+	return this->field_0x4;
+}
+
+bool OtherInterface::Manage()
+{
+	return CScene::_pinstance->IsFadeTermActive() == false;
+}
+
+void OtherInterface::Draw()
+{
+	return;
+}
+
+void OtherInterface::Reset()
+{
+	return;
+}
+
+void OtherInterface::SetValue(float value)
+{
+	return;
+}
+
+float OtherInterface::GetValue()
+{
+	return 0.0f;
 }

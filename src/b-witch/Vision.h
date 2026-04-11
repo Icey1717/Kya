@@ -13,6 +13,7 @@ class CVision
 public:
 	CVision();
 	void Create(CActor* pOwner, ByteCode* pByteCode);
+	void Init(float param_1, float range, float param_3, float param_4);
 	void Reset();
 	void Draw() {}
 
@@ -29,6 +30,7 @@ public:
 	void Scan(CActorsTable* pTable, int param_3);
 
 	CActor* _GetBestActorInFrontOf(CActorsTable* pTable);
+	CActor* SV_GetBestActorInFrontOf(int mode);
 
 	uint flags;
 

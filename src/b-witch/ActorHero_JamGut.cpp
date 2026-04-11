@@ -699,7 +699,7 @@ void CActorHeroPrivate::BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut*
 	if ((iVar8 < 0x11e) || (0x12f < iVar8)) {
 		iVar8 = this->actorState;
 		if (iVar8 == STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH) {
-			StateHeroBoomySnipeAfterLaunch(0x131, 0);
+			StateHeroBoomySnipeAfterLaunch(STATE_HERO_MOUNT_STAND_ON_2, 0);
 		}
 		else {
 			if (iVar8 == STATE_HERO_BOOMY_SNIPE_BACK_2_STAND) {
@@ -711,15 +711,15 @@ void CActorHeroPrivate::BehaviourHeroRideJamGut_Manage(CBehaviourHeroRideJamGut*
 				}
 				else {
 					if (iVar8 == STATE_HERO_BOOMY_SNIPE_STAND) {
-						StateHeroBoomySnipeStand(0x131, 0);
+						StateHeroBoomySnipeStand(STATE_HERO_MOUNT_STAND_ON_2, 0);
 					}
 					else {
 						if (iVar8 == STATE_HERO_BOOMY_SNIPE_PREPARE) {
-							StateHeroBoomySnipePrepare(0x131, 0);
+							StateHeroBoomySnipePrepare(STATE_HERO_MOUNT_STAND_ON_2, 0);
 						}
 						else {
 							if (iVar8 == 0x11a) {
-								StateHeroInternalView(0x131, 0, 0);
+								StateHeroInternalView(STATE_HERO_MOUNT_STAND_ON_2, 0, 0);
 							}
 							else {
 								if ((iVar8 == STATE_HERO_MOUNT_STAND_ON_3) || (iVar8 == STATE_HERO_MOUNT_STAND_ON_2)) {

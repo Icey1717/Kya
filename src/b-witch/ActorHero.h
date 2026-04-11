@@ -198,6 +198,7 @@
 #define STATE_HERO_CAUGHT_TRAP_2 0x118
 
 #define STATE_HERO_LOOK_INTERNAL 0x11a
+#define STATE_HERO_LOOK_INTERNAL_B 0x11b
 
 #define STATE_HERO_GET_ON_MOUNT 0x11c
 #define STATE_HERO_GET_OFF_MOUNT 0x11d
@@ -399,6 +400,7 @@ public:
 	CInventoryInterface inventory;
 	CMagicInterface magicInterface;
 	CMoneyInterface moneyInterface;
+	OtherInterface otherInterface;
 
 	CCamera* pMainCamera;
 	CCamera* pCameraViewBase_0x15b0;
@@ -407,6 +409,8 @@ public:
 	CCamera* pFightCamera;
 
 	CCamera* pDeathCamera;
+	CCamera* field_0x15bc;
+	undefined4 field_0x15c0;
 
 	CCamera* pJamgutCamera_0x15b8;
 	CCamera* pIntViewCamera_0x15bc;

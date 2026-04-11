@@ -67,8 +67,27 @@ public:
 	virtual bool Manage();
 	virtual void Draw() {}
 	virtual void Reset() {}
-	virtual void SetValue(float value) {}
+	virtual void SetValue(float value);
 	virtual float GetValue();
+};
+
+class OtherInterface : public CInterface
+{
+public:
+	OtherInterface();
+
+	virtual bool Activate(int bActive);
+	virtual bool CanActivate();
+	virtual bool IsActive();
+	virtual bool Manage();
+
+	virtual void Draw();
+	virtual void Reset();
+	virtual void SetValue(float value);
+	virtual float GetValue();
+
+	undefined4 field_0x4;
+	undefined4 field_0x8;
 };
 
 class CLifeInterface : public CInterface

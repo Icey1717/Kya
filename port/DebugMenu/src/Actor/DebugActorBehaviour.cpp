@@ -377,6 +377,21 @@ namespace Hero
 		case STATE_HERO_BOUNCE_SOMERSAULT_2:
 			return "StateHeroBounceSomersault2";
 			break;
+		case STATE_HERO_BOOMY_SNIPE_PREPARE:
+			return "StateHeroBoomySnipePrepare";
+			break;
+		case STATE_HERO_BOOMY_SNIPE_STAND:
+			return "StateHeroBoomySnipeStand";
+			break;
+		case STATE_HERO_BOOMY_SNIPE_LAUNCH:
+			return "StateHeroBoomySnipeLaunch";
+			break;
+		case STATE_HERO_BOOMY_SNIPE_BACK_2_STAND:
+			return "StateHeroBoomySnipeBack2Stand";
+			break;
+		case STATE_HERO_BOOMY_SNIPE_AFTER_LAUNCH:
+			return "StateHeroBoomySnipeAfterLaunch";
+			break;
 		case STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW:
 			return "StateHeroBoomyPrepareFightBlow";
 			break;
@@ -523,6 +538,12 @@ namespace Hero
 			break;
 		case STATE_HERO_CAUGHT_TRAP_2:
 			return "StateHeroCaughtTrap2";
+			break;
+		case STATE_HERO_LOOK_INTERNAL:
+			return "StateHeroLookInternal";
+			break;
+		case STATE_HERO_LOOK_INTERNAL_B:
+			return "StateHeroLookInternalB";
 			break;
 		case STATE_HERO_GET_ON_MOUNT:
 			return "StateHeroGetOnMount";

@@ -476,11 +476,13 @@ int CBehaviourGravityAwareBell::InterpretMessage(CActor* pSender, int msg, void*
 	}
 	else {
 		if (msg == 0x10) {
+			pGravityAware = this->pOwner;
 			pGravityAware->SetState(8, -1);
 			iVar1 = 1;
 		}
 		else {
 			if (msg == 0xf) {
+				pGravityAware = this->pOwner;
 				pGravityAware->SetState(7, -1);
 				iVar1 = 1;
 			}

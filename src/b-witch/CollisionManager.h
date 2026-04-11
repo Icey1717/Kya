@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 #include "edCollision/edCollisions.h"
+#include "edCollision/OBBTree.h"
 
 #define MATERIAL_TABLE_SIZE 0xc
 

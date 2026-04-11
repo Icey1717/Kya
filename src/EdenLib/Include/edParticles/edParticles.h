@@ -293,6 +293,9 @@ static_assert(sizeof(_ed_particle_shaper_param) == 0x1a0, "Size of _ed_particle_
 #define PARTICLE_SHAPER_FLAG_RAND_ROT      0x0400u  // Per-particle random rotation base
 #define PARTICLE_SHAPER_FLAG_VELOCITY_ROT  0x0800u  // Velocity-aligned rotation mode
 
+// pos func typedef 
+typedef void (*PosFuncType)(edF32VECTOR4* pOut);
+
 struct GeneratorFunc
 {
 	int pPosFunc;

@@ -18,6 +18,7 @@
 #include "CameraMouseQuake.h"
 #include "CameraGame.h"
 #include "CameraShadow.h"
+#include "CameraIntView.h"
 #include "CameraFixePerso.h"
 #include "CinematicManager.h"
 #include "ActorManager.h"
@@ -1622,12 +1623,7 @@ CCamera* CCameraManager::AddCamera(ECameraType type, ByteCode* pByteCode, char* 
 		newObjectPtr = new CCameraAim();
 		break;
 	case CT_IntView:
-		IMPLEMENTATION_GUARD(
-		pvVar7 = operator.new(0x110);
-		newObjectPtr = (long)(int)pvVar7;
-		if (newObjectPtr != 0) {
-			newObjectPtr = IntViewConstructor ? (newObjectPtr);
-		})
+		newObjectPtr = new CCameraIntView();
 		break;
 	case CT_ShadowSun:
 		newObjectPtr = new CCameraShadow(pByteCode);

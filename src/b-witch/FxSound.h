@@ -20,7 +20,7 @@ public:
 	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();
 	virtual void Func_0x30(float param_1) { IMPLEMENTATION_GUARD(); }
-	virtual void SetTimeScaler(float) { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler(float);
 
 	void Manage() { IMPLEMENTATION_GUARD(); }
 

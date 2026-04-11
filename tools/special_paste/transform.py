@@ -62,24 +62,30 @@ def strip_base_chain_in(expr: str) -> str:
         (this->base).field                               ->  this->field
         (this->base).base.base.field                     ->  this->field
         (ptr->base).base.field                           ->  ptr->field
+        (this->staticMeshA).base.textureIndex            ->  this->staticMeshA.textureIndex
         (this->pOwner->base).base.x.y                    ->  this->pOwner->x.y
         (ptr->character).characterBase.base.field        ->  ptr->field
         this->character.characterBase.base.base.field    ->  this->field
 
-    Three patterns applied iteratively:
-      1. (X->base).base*.field     — ->base in parens
-      2. (X->Y).Z*.base.field      — ->any in parens, .base. outside
-      3. X->A.B.base.base.field    — no parens, dot chain with .base. before field
+    Four patterns applied iteratively:
+      1. (X->base).base*.field       — ->base in parens
+      2. (X->Y).base+.field          — preserve Y, remove .base chain
+      3. (X->Y).Z+.base.field        — drop Y/Z chain (decomp inheritance artifact)
+      4. X->A.B.base.base.field      — no parens, dot chain with .base. before field
     """
     p1 = re.compile(r"\((\w+(?:->\w+)*)->base\)(?:\.base)*\.(\w+(?:\.\w+)*)")
-    p2 = re.compile(r"\((\w+(?:->\w+)*)->\w+\)(?:\.\w+)*\.base\.(\w+(?:\.\w+)*)")
+    # Keep direct member when only .base segments follow the closing paren.
+    p2_keep = re.compile(r"\((\w+(?:->\w+)*)->(\w+)\)(?:\.base)+\.(\w+(?:\.\w+)*)")
+    # Collapse named inheritance chains before .base (must have >=1 segment before .base).
+    p2_drop = re.compile(r"\((\w+(?:->\w+)*)->\w+\)(?:\.\w+)+\.base\.(\w+(?:\.\w+)*)")
     # After paren-stripping, may leave e.g. this->word.word.base.base.field
     p3 = re.compile(r"(->\w+(?:\.\w+)*)(?:\.base)+\.(\w+(?:\.\w+)*)")
     prev = None
     while prev != expr:
         prev = expr
         expr = p1.sub(r"\1->\2", expr)
-        expr = p2.sub(r"\1->\2", expr)
+        expr = p2_keep.sub(r"\1->\2.\3", expr)
+        expr = p2_drop.sub(r"\1->\2", expr)
         # p3: strip intermediate dot chain + .base(s) before field, keep ->field
         expr = p3.sub(lambda m: "->" + m.group(2), expr)
     return expr
@@ -101,13 +107,14 @@ def _is_object_arg(arg: str) -> bool:
 def t_vtable_calls(text: str) -> str:
     """
     (*pVTableExpr->Method)(maybeScalars..., thisArg, rest...)
+    (*pVTableExpr.Method)(maybeScalars..., thisArg, rest...)
         ->  (thisArg)->Method(maybeScalars..., rest...)
 
     Scans arguments left-to-right and picks the first one that looks like an
     object/pointer (not a numeric literal) as the this-pointer. Any arguments
     before it are moved to after the method name.
     """
-    vtable_inner_re = re.compile(r"^\*(.*)->(\w+)$")
+    vtable_inner_re = re.compile(r"^\*(.*)(?:->|\.)(\w+)$")
     result: list[str] = []
     pos = 0
     i = 0
@@ -127,11 +134,25 @@ def t_vtable_calls(text: str) -> str:
 
                         result.append(text[pos:i])
                         if args:
-                            # Find first object/pointer arg — skip leading scalars
+                            # Prefer an explicit this/this->... argument when present.
+                            stripped_args = [
+                                re.sub(r"^\s*\([\w\s*:]+\)\s*", "", a).strip()
+                                for a in args
+                            ]
                             this_idx = next(
-                                (i for i, a in enumerate(args) if _is_object_arg(a)),
-                                0,
+                                (
+                                    idx
+                                    for idx, bare_arg in enumerate(stripped_args)
+                                    if bare_arg == "this" or bare_arg.startswith("this->")
+                                ),
+                                -1,
                             )
+                            if this_idx == -1:
+                                # Fallback: first non-scalar argument.
+                                this_idx = next(
+                                    (idx for idx, a in enumerate(args) if _is_object_arg(a)),
+                                    0,
+                                )
                             this_arg = args[this_idx]
                             leading = args[:this_idx]
                             trailing = args[this_idx + 1:]
@@ -248,6 +269,45 @@ def t_remove_base_chains(text: str) -> str:
     return strip_base_chain_in(text)
 
 
+def t_collapse_anim_end_reached_block(text: str) -> str:
+    """
+    Collapse the common decompiler-expanded "is current anim layer ended?" block
+    into a direct call:
+
+      if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+
+    Variable names may differ (stack temps), but the control-flow shape and
+    compared fields remain the same.
+    """
+    pattern = re.compile(
+        r"""
+        (?P<indent>[ \t]*)
+        (?P<ctrl>\w+)\s*=\s*
+        (?:this->pAnimationController|\(this->base\)\.character\.characterBase\.base\.base\.pAnimationController)
+        \s*;\s*(?P<nl>\r?\n)
+        (?P=indent)(?P<anim>\w+)\s*=\s*
+        (?:\((?P=ctrl)->anmBinMetaAnimator\)\.base\.aAnimData|(?P=ctrl)->anmBinMetaAnimator\.aAnimData)
+        \s*;\s*(?P=nl)
+        (?P=indent)(?P<flag>\w+)\s*=\s*false\s*;\s*(?P=nl)
+        (?P=indent)if\s*\(\s*\((?P=anim)->currentAnimDesc\)\.animType\s*==\s*(?P=ctrl)->currentAnimType\s*\)\s*\{\s*(?P=nl)
+        (?P=indent)[ \t]+if\s*\(\s*(?P=anim)->animPlayState\s*==\s*0\s*\)\s*\{\s*(?P=nl)
+        (?P=indent)[ \t]+(?P=flag)\s*=\s*false\s*;\s*(?P=nl)
+        (?P=indent)[ \t]+\}\s*(?P=nl)
+        (?P=indent)[ \t]+else\s*\{\s*(?P=nl)
+        (?P=indent)[ \t]+(?P=flag)\s*=\s*\(\s*(?P=anim)->field_0xcc\s*&\s*2\s*\)\s*!=\s*0\s*;\s*(?P=nl)
+        (?P=indent)[ \t]+\}\s*(?P=nl)
+        (?P=indent)\}\s*(?P=nl)
+        (?P=indent)if\s*\(\s*(?P=flag)\s*\)\s*\{
+        """,
+        re.VERBOSE,
+    )
+
+    def _replace(m: re.Match) -> str:
+        return f"{m.group('indent')}if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {{"
+
+    return pattern.sub(_replace, text)
+
+
 def t_c_casts_to_static_cast(text: str) -> str:
     """
     Convert C-style casts to static_cast:
@@ -295,13 +355,21 @@ def t_c_casts_to_static_cast(text: str) -> str:
                 else:
                     word_m = re.match(r"[\w:]+", text[after:])
                     if word_m:
+                        expr_end = after + word_m.end()
                         expr = word_m.group(0)
+                        # Handle cast followed by function call target:
+                        # (Type *)Class::Func(args) -> static_cast<Type *>(Class::Func(args))
+                        if expr_end < len(text) and text[expr_end] == "(":
+                            call_close = find_matching_paren(text, expr_end)
+                            if call_close != -1:
+                                expr = text[after : call_close + 1]
+                                expr_end = call_close + 1
                         if NULL_EXPRS.match(expr.strip()) or expr.strip() == "this":
-                            i = after + word_m.end()
+                            i = expr_end
                             continue
                         result.append(text[pos:i])
                         result.append(f"static_cast<{type_part}>({expr})")
-                        pos = after + word_m.end()
+                        pos = expr_end
                         i = pos
                         continue
 
@@ -441,6 +509,7 @@ TRANSFORMS = [
     t_vtable_calls,
     t_free_to_member_calls,
     t_remove_base_chains,
+    t_collapse_anim_end_reached_block,
     t_c_casts_to_static_cast,
     t_dat_float_literals,
     t_float_literals,
@@ -473,6 +542,11 @@ def _run_tests() -> None:
         # ->base inside parens, field directly after (no .base. outside)
         ("(this->base).field_0x38", "this->field_0x38"),
         ("if (param_2 != (this->base).field_0x38) {", "if (param_2 != this->field_0x38) {"),
+        # preserve direct member when only .base chain follows it
+        (
+            "(this->staticMeshA).base.textureIndex = iVar2;",
+            "this->staticMeshA.textureIndex = iVar2;",
+        ),
         # base chain with ptr chain before ->base and dotted sub-field after
         ("(this->pOwner->base).base.dynamic.speed = 0.0;", "this->pOwner->dynamic.speed = 0.0f;"),
         # base chain with deeper ptr chain
@@ -486,6 +560,16 @@ def _run_tests() -> None:
         (
             "pCol = (this->base).character.characterBase.base.base.pCollisionData;",
             "pCol = this->pCollisionData;",
+        ),
+        # collapse expanded "anim end reached" block to direct helper
+        (
+            "  pCVar1 = (this->base).character.characterBase.base.base.pAnimationController;\n  peVar2 = (pCVar1->anmBinMetaAnimator).base.aAnimData;\n  bVar3 = false;\n  if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType) {\n    if (peVar2->animPlayState == 0) {\n      bVar3 = false;\n    }\n    else {\n      bVar3 = (peVar2->field_0xcc & 2) != 0;\n    }\n  }\n  if (bVar3) {",
+            "  if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {",
+        ),
+        # same block shape with different temp variable names
+        (
+            "animCtrl = this->pAnimationController;\nanimData = animCtrl->anmBinMetaAnimator.aAnimData;\nisAnimEnd = false;\nif ((animData->currentAnimDesc).animType == animCtrl->currentAnimType) {\n  if (animData->animPlayState == 0) {\n    isAnimEnd = false;\n  }\n  else {\n    isAnimEnd = (animData->field_0xcc & 2) != 0;\n  }\n}\nif (isAnimEnd) {",
+            "if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {",
         ),
         # bytecode temp inlining — consecutive pairs
         (
@@ -630,10 +714,25 @@ def _run_tests() -> None:
             "(*((this->pOwner->base).base.pVTable)->SetState)((CActor *)this->pOwner,9,-1);",
             "this->pOwner->SetState(9, -1);",
         ),
+        # vtable call - scalar-like temp before casted this (prefer this arg)
+        (
+            "(*((this->extendedBase).base.camera.objBase.pVTable)->SetAngleAlpha)(fVar7,(CCamera *)this);",
+            "SetAngleAlpha(fVar7);",
+        ),
+        # vtable call - method selected with dot on vtable base
+        (
+            "bVar8 = (*(((pSVar2->base).pVTable)->base).HasMesh)((StaticMeshComponentAdvanced *)pSVar2);",
+            "bVar8 = pSVar2->HasMesh();",
+        ),
         # C-style cast of `this` alone — must NOT be transformed (never cast this)
         ("(CActor *)this", "(CActor *)this"),
         # C-style cast of non-this pointer — still transforms
         ("(CActor *)pActor", "static_cast<CActor *>(pActor)"),
+        # C-style cast of function-call result
+        (
+            "pCameraManager = (CCameraManager *)CScene::GetManager(MO_Camera);",
+            "pCameraManager = static_cast<CCameraManager *>(CScene::GetManager(MO_Camera));",
+        ),
         # C-style cast - parenthesised expr
         ("(int *)(ptr)", "static_cast<int *>(ptr)"),
         # C-style null casts — must NOT be transformed

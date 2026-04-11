@@ -1,6 +1,7 @@
 #pragma once
 
 #include "edCollision/edCollisions.h"
+#include "edCollision/OBBTree.h"
 #include "Native/NativeDebugShapes.h"
 #include "port/pointer_conv.h"
 #include "DebugCollisionPrimitives.h"

@@ -17,7 +17,63 @@
 #define COL_TYPE_PRIM_OBJ 0xe
 #define COL_TYPE_CAPSULE 0x13
 
-struct edColRAY_OBB_IN {
+struct edObbTREE_DYN;
+
+PACK(
+struct edF32TRIANGLE4
+{
+	union {
+		struct {
+			strd_ptr(edF32Vector*) p1;
+			strd_ptr(edF32Vector*) p2;
+			strd_ptr(edF32Vector*) p3;
+		};
+
+		int points[3];
+	};
+
+	uint flags;
+});
+
+static_assert(sizeof(edF32TRIANGLE4) == 0x10);
+
+
+#ifdef PLATFORM_WIN
+struct edF32TRIANGLE4_Stack
+{
+	union {
+		struct {
+			edF32VECTOR4* p1;
+			edF32VECTOR4* p2;
+			edF32VECTOR4* p3;
+		};
+
+		edF32VECTOR4* points[3];
+	};
+
+	uint flags;
+
+	edF32TRIANGLE4_Stack() {
+		p1 = nullptr;
+		p2 = nullptr;
+		p3 = nullptr;
+		flags = 0;
+	}
+
+	// Conversion constructor from edF32TRIANGLE4*
+	edF32TRIANGLE4_Stack(edF32TRIANGLE4* other) {
+		p1 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p1);
+		p2 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p2);
+		p3 = LOAD_POINTER_CAST(edF32VECTOR4*, other->p3);
+		flags = other->flags;
+	}
+};
+#else
+typedef edF32TRIANGLE4 edF32TRIANGLE4_Stack;
+#endif
+
+struct edColRAY_OBB_IN
+{
 	edF32VECTOR4* pLocation;
 	edF32VECTOR4* pLeadVector;
 	float lengthA;
@@ -80,29 +136,82 @@ struct edColINFO_OBBTREE_OBBTREE
 	char* field_0xc;
 };
 
-PACK(
-struct edObbBOX
+struct edCol_INFO_OBB_TRIS_BOX
 {
-	edF32MATRIX4 transform;
+	edF32TRIANGLE4* pTris;
+	edF32VECTOR4* pVector;
+	int field_0x8;
+	int field_0xc;
+	int field_0x10;
+};
 
-	float width;
-	float height;
-	float depth;
+struct edColARRAY_PRIM_TRI4
+{
+	edColOBJECT* pColObj;
+	int aCount;
+	int aType;
+	int primSize;
+	void* aData;
+	edColOBJECT* pOtherColObj;
+	int bCount;
+	void* bData;
+};
 
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-});
+struct edColARRAY_PRIM_PRIM
+{
+	edColOBJECT* pColObj;
+	int aCount;
+	int aType;
+	int primSize;
+	void* aData;
+	edColOBJECT* pOtherColObj;
+	int bCount;
+	int bType;
+	int bPrimSize;
+	void* bData;
+};
+
+struct edColARRAY_PRIM_QUAD4
+{
+	edColOBJECT* pColObj;
+	int aCount;
+	int aType;
+	int primSize;
+	void* aData;
+	edColOBJECT* pOtherColObj;
+	int bCount;
+	void* bData;
+};
+
+struct edColARRAY_TRI4_PRIM
+{
+	edColOBJECT* pOtherColObj;
+	uint bCount;
+	int bType;
+	int bSize;
+	void* bData;
+	edColOBJECT* pColObj;
+	int bCount2;
+	void* aData;
+};
+
+struct edColRAY_TRIANGLE4_IN
+{
+	edF32VECTOR4* pRayOrigin;
+	edF32VECTOR4* pRayDirection;
+	edF32TRIANGLE4_Stack* pTriangle;
+};
 
 
-struct edColPRIM_RAY_UNIT_BOX_UNIT_IN {
+struct edColPRIM_RAY_UNIT_BOX_UNIT_IN
+{
 	edF32VECTOR4* field_0x0;
 	edF32VECTOR4* field_0x4;
 };
 
 PACK(
-struct edColPRIM_SPHERE {
+struct edColPRIM_SPHERE
+{
 	edF32MATRIX4 localToWorld;
 	edF32MATRIX4 worldTransform;
 	uint flags_0x80;	
@@ -114,7 +223,7 @@ struct edColPRIM_SPHERE {
 static_assert(sizeof(edColPRIM_SPHERE) == 0x90);
 
 PACK(
-	struct edColPRIM_BOX 
+struct edColPRIM_BOX 
 {
 	edF32MATRIX4 localToWorld;
 	edF32MATRIX4 worldTransform;
@@ -177,28 +286,6 @@ struct edColPRIM_OBJECT
 
 static_assert(sizeof(edColINFO) == 0x50);
 static_assert(sizeof(edColPRIM_OBJECT) == 0x150);
-
-PACK(
-	struct edObbTREE
-{
-	edObbBOX bbox;
-	undefined field_0x50;
-	byte type;
-	byte count_0x52;
-	undefined field_0x53;
-	strd_ptr(edObbTREE*) field_0x54[7];
-});
-
-static_assert(sizeof(edObbTREE) == 0x70);
-
-PACK(
-struct edObbTREE_DYN : public edObbTREE
-{
-	edF32MATRIX4 localMatrix;
-	edF32VECTOR4 field_0xb0;
-});
-
-static_assert(sizeof(edObbTREE_DYN) == 0xc0);
 
 PACK(
 	struct edColG3D_OBB_TREE_DYN
@@ -269,24 +356,6 @@ struct edColG3D_OBB_TREE {
 	undefined field_0x43;
 	strd_ptr(edObbTREE_DYN*) pObbTree;
 });
-
-PACK(
-struct edF32TRIANGLE4
-{
-	union {
-		struct {
-			strd_ptr(edF32Vector*) p1;
-			strd_ptr(edF32Vector*) p2;
-			strd_ptr(edF32Vector*) p3;
-		};
-
-		int points[3];
-	};
-
-	uint flags;
-});
-
-static_assert(sizeof(edF32TRIANGLE4) == 0x10);
 
 PACK(
 struct StaticCollisionEntry {
@@ -362,6 +431,12 @@ struct IntersectResTestSub
 	ushort type;
 	ushort count;
 	void* pData;
+};
+
+struct edColPRIM_RAY_UNIT_SPHERE_UNIT_IN
+{
+	edF32VECTOR4* field_0x0;
+	edF32VECTOR4* field_0x4;
 };
 
 struct IntersectResTestA
@@ -492,13 +567,17 @@ struct edColINFO_OUT
 
 void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj);
 edColG3D_OBB_TREE* edColLoadStatic(char* pFileBuffer, uint length, uint bConvertTriangles);
-uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObbTREE_DYN* pObbTreeA, edObbTREE_DYN* pObbTreeB);
-
-float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN* pObbTree, edColRAY_OBB_IN* pRay);
 
 void edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_BOX_UNIT_IN* pParams);
 
 void edColGetNormalInWorldFromLocal(edF32VECTOR4* param_1, edF32MATRIX4* param_2, edF32VECTOR4* param_3);
+
+uint edColArrayObjectPrimsPenatratingArrayPrims(edColARRAY_PRIM_PRIM* pParams);
+uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams);
+uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams);
+uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParams);
+void edColIntersectRayUnitSphereUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_SPHERE_UNIT_IN* pParams);
+bool edColIntersectRayTriangle4(float* pOutDistance, edColRAY_TRIANGLE4_IN* pRayTriangleIn);
 
 edColConfig* edColGetConfig(void);
 void edColInit(void);
@@ -511,5 +590,14 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj);
 void edColFreeTemporaryMemory();
 
 extern GlobalCollisionData gColData;
+extern edColConfig gColConfig;
+
+extern uint prof_obb_col;
+extern uint prof_prim_col;
+extern uint prof_fast_col;
+
+extern int _gColSizeOfPrims[21];
+
+extern float FLOAT_004485a4;
 
 #endif //_ED_COLLISIONS_H

@@ -2754,14 +2754,13 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 	int local_4;
 
 	if (msg == 0x68) {
-		IMPLEMENTATION_GUARD(
 		pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 		if (pCVar1 != (CPathFollow*)0x0) {
-			CPathFollowReaderAbsolute::ComputeSegment
-			((this->trajPos).pathPosition, &this->pathFollowReaderAbs, &local_10, &local_14, &local_18);
-			if (local_18 < 0.5) {
+			this->pathFollowReaderAbs.ComputeSegment((this->trajPos).pathPosition, &local_10, &local_14, &local_18);
+			if (local_18 < 0.5f) {
 				local_10 = local_14;
 			}
+
 			local_10 = local_10 + -1;
 			if (local_10 < pCVar1->nbLeadInPoints) {
 				if ((pCVar1->type == 0) || (pCVar1->mode == 1)) {
@@ -2773,35 +2772,34 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 					local_10 = pCVar1->splinePointCount + -1;
 				}
 			}
+
 			pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 			if (((local_10 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_10)) {
 				local_10 = 0;
 			}
-			CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-			((this->trajPos).pathPosition, &this->pathFollowReaderAbs, local_10, &this->pathLength,
-				(float*)&this->trajPos);
+
+			this->pathFollowReaderAbs.GetClosestTimeToReachWaypoint((this->trajPos).pathPosition, local_10, &this->pathLength, &this->trajPos.pathPosition);
 			this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
-			pTVar3 = GetTimer();
 			fVar4 = (this->trajPos).pathPosition;
 			if (fVar4 <= this->pathLength) {
-				this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
+				this->targetScaledTime = (this->segmentStartTime + GetTimer()->scaledTotalTime) - fVar4;
 			}
 			else {
-				this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
+				this->targetScaledTime = fVar4 + this->segmentStartTime + GetTimer()->scaledTotalTime;
 			}
 		}
-		bProcessed = 1;)
+
+		bProcessed = 1;
 	}
 	else {
 		if (msg == 0x67) {
-			IMPLEMENTATION_GUARD(
 			pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 			if (pCVar1 != (CPathFollow*)0x0) {
-				CPathFollowReaderAbsolute::ComputeSegment
-				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, &local_4, &local_8, &local_c);
-				if (local_c < 0.5) {
+				this->pathFollowReaderAbs.ComputeSegment((this->trajPos).pathPosition, &local_4, &local_8, &local_c);
+				if (local_c < 0.5f) {
 					local_4 = local_8;
 				}
+
 				local_4 = local_4 + 1;
 				if (pCVar1->splinePointCount <= local_4) {
 					if ((pCVar1->type == 0) || (pCVar1->mode == 1)) {
@@ -2811,24 +2809,24 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 						local_4 = pCVar1->nbLeadInPoints;
 					}
 				}
+
 				pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 				if (((local_4 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_4)) {
 					local_4 = 0;
 				}
-				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, local_4, &this->pathLength,
-					(float*)&this->trajPos);
+
+				this->pathFollowReaderAbs.GetClosestTimeToReachWaypoint((this->trajPos).pathPosition, local_4, &this->pathLength, &this->trajPos.pathPosition);
 				this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
-				pTVar3 = GetTimer();
 				fVar4 = (this->trajPos).pathPosition;
 				if (fVar4 <= this->pathLength) {
-					this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
+					this->targetScaledTime = (this->segmentStartTime + GetTimer()->scaledTotalTime) - fVar4;
 				}
 				else {
-					this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
+					this->targetScaledTime = fVar4 + this->segmentStartTime + GetTimer()->scaledTotalTime;
 				}
 			}
-			bProcessed = 1;)
+
+			bProcessed = 1;
 		}
 		else {
 			if (msg == 0x3b) {

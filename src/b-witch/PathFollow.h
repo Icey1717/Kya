@@ -55,6 +55,7 @@ public:
 	void ComputeTangent(float param_1, edF32VECTOR4* param_3, int pointA, int pointB);
 
 	float GetTimeOnSegment(S_PATHREADER_POS_INFO* pPosInfo);
+	void GetClosestTimeToReachWaypoint(float param_1, int param_3, float* param_4, float* param_5);
 
 	CPathFollow* pPathFollow;
 

@@ -882,10 +882,11 @@ int CBehaviourRopeStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		uVar6 = pRope->GetStateFlags(pRope->actorState) & 0x100;
 
 		if ((uVar6 != 0) && ((pRope->ropeFlags & 1) == 0)) {
+			IMPLEMENTATION_GUARD_AUDIO(
 			pCVar2 = (pRope->soundStreamRef).Get();
 			if (pCVar2 != (CSound*)0x0) {
 				pRope->pActorSound->SoundStart(pRope, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
-			}
+			})
 
 			pCVar3 = pRope->pCollisionData;
 			if (pCVar3 != (CCollision*)0x0) {

@@ -46,6 +46,29 @@ void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 	return;
 }
 
+void CVision::Init(float param_1, float range, float param_3, float param_4)
+
+{
+	float fVar1;
+
+	this->visionRange = range;
+	this->field_0x38 = param_3 * 0.5f;
+	fVar1 = param_1 * 0.5f * 0.01745329f;
+	this->field_0x3c = param_4 * 0.5f;
+	this->flags = 0;
+	this->halfAngle = fVar1;
+	this->field_0x44 = cosf(fVar1);
+	this->field_0x3c = this->field_0x3c;
+	fVar1 = 1.570796f - this->halfAngle;
+	this->apexOffset = this->field_0x3c * (sinf(fVar1) / cosf(fVar1));
+	this->pActor_0x48 = (CActor*)0x0;
+	//this->field_0x4c = 0;
+	//this->field_0x54 = 0;
+	//this->field_0x50 = 0;
+	this->field_0x58 = 0.0f;
+
+	return;
+}
 
 void CVision::Reset()
 {
@@ -481,4 +504,85 @@ CActor* CVision::_GetBestActorInFrontOf(CActorsTable* pTable)
 	}
 
 	return pAVar4;
+}
+
+CActor* CVision::SV_GetBestActorInFrontOf(int mode)
+{
+	CActor* pCVar1;
+	CActor* pCVar2;
+	CActor** pCVar3;
+	int iVar4;
+	CActor* pCVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	edF32VECTOR4 local_160;
+	edF32VECTOR4 local_150;
+	ScanActorsParams local_140;
+	edF32VECTOR4 local_130;
+	CActorsTable local_120;
+	edF32VECTOR4 eStack16;
+
+	local_140.pTable = &local_120;
+	pCVar5 = (CActor*)0x0;
+	local_120.nbEntries = 0;
+	fVar8 = 0.0f;
+
+	local_130.x = (this->location).x;
+	local_130.y = (this->location).y;
+	local_130.z = (this->location).z;
+	local_130.w = this->apexOffset + this->visionRange;
+
+	local_140.pOwner = this->pOwner;
+	local_140.pVision = this;
+	local_140.mode = mode;
+	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_130, gClusterCallback_AllActorsInVision, &local_140);
+	if ((this->flags & 0x10) != 0) {
+		local_120.SortByClassPriority();
+	}
+	if ((this->flags & 0x20) != 0) {
+		iVar4 = 0;
+		pCVar2 = _GetBestActorInFrontOf(&local_120);
+		if (pCVar2 != (CActor*)0x0) {
+			for (pCVar3 = local_120.aEntries; (iVar4 < local_120.nbEntries && (pCVar2 != *pCVar3)); pCVar3 = pCVar3 + 1) {
+				iVar4 = iVar4 + 1;
+			}
+
+			local_120.Swap(0, iVar4);
+		}
+	}
+	if (local_120.nbEntries != 0) {
+		local_150 = (local_120.aEntries[0]->currentLocation);
+		local_120.aEntries[0]->SV_GetActorTargetPos(local_120.aEntries[0], &local_150);
+		edF32Vector4SubHard(&eStack16, &local_150, &this->location);
+		fVar6 = edF32Vector4NormalizeHard(&eStack16, &eStack16);
+		if (fVar6 <= this->visionRange) {
+			fVar8 = edF32Vector4DotProductHard(&eStack16, &this->rotationQuat);
+			pCVar5 = local_120.aEntries[0];
+		}
+
+		iVar4 = 0;
+		if (0 < local_120.nbEntries) {
+			CActor** pActor = local_120.aEntries;
+			do {
+				pCVar2 = *pActor;
+				local_160 = pCVar2->currentLocation;
+				pCVar2->SV_GetActorTargetPos(pCVar2, &local_160);
+				edF32Vector4SubHard(&eStack16, &local_160, &this->location);
+				fVar7 = edF32Vector4NormalizeHard(&eStack16, &eStack16);
+				fVar6 = fVar8;
+				pCVar1 = pCVar5;
+				if ((fVar7 <= this->visionRange) && (fVar6 = edF32Vector4DotProductHard(&eStack16, &this->rotationQuat), pCVar1 = pCVar2, fVar6 <= fVar8)) {
+					fVar6 = fVar8;
+					pCVar1 = pCVar5;
+				}
+				pCVar5 = pCVar1;
+				iVar4 = iVar4 + 1;
+				pActor = pActor + 1;
+				fVar8 = fVar6;
+			} while (iVar4 < local_120.nbEntries);
+		}
+	}
+
+	return pCVar5;
 }
