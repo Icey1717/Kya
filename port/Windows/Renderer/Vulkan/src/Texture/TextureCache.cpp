@@ -24,8 +24,8 @@ static const int* rowOffset[8] = {
 	rowOffset32,
 };
 
-//#define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY("TextureCache", LogLevel::Info, fmt, ##__VA_ARGS__);
-#define LOG_TEXCACHE(fmt, ...)
+#define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY("TextureCache", LogLevel::Info, fmt, ##__VA_ARGS__);
+//#define LOG_TEXCACHE(fmt, ...)
 
 void Renderer::ImageData::Log(const char* prefix) const
 {
@@ -1084,8 +1084,8 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 	auto pBuffer = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
 
 	pRenderer = new PS2::GSSimpleTexture();
-	pRenderer->width = pBuffer->Width();
-	pRenderer->height = pBuffer->Height();
+	pRenderer->width = bitmap.canvasWidth;
+	pRenderer->height = bitmap.canvasHeight;
 	pRenderer->imageData = bitmap;
 	pRenderer->CreateResources(false);
 	pRenderer->AssignUploadBuffer(std::move(pBuffer));
@@ -1119,6 +1119,24 @@ void PS2::GSSimpleTexture::AssignUploadBuffer(TextureUpload::UploadBufferPtr&& b
 
 void PS2::GSSimpleTexture::UploadDataFromBuffer()
 {
+	if (pUploadBuffer->Height() != this->height || pUploadBuffer->Width() != this->width) {
+		LOG_TEXCACHE("Upload buffer dimensions ({}, {}) do not match texture dimensions ({}, {}). Adjusting buffer for upload.", pUploadBuffer->Width(), pUploadBuffer->Height(), this->width, this->height);
+
+		// The upload process uploaded more data than the texture size, so we need to adjust the buffer.
+		std::vector<uint8_t> adjustedBuffer(static_cast<size_t>(this->width) * this->height * 4); // 4 bytes per pixel for RGBA8
+
+		// Copy the relevant portion of the upload buffer to the adjusted buffer, row by row.
+		for (uint32_t y = 0; y < this->height; y++) {
+			const uint8_t* srcRow = pUploadBuffer->Get() + (y * pUploadBuffer->Width() * 4); // Source row in the original buffer
+			uint8_t* dstRow = adjustedBuffer.data() + (y * this->width * 4); // Destination row in the adjusted buffer
+			memcpy(dstRow, srcRow, this->width * 4); // Copy only the width of the texture
+		}
+
+		UploadData(static_cast<int>(adjustedBuffer.size()), adjustedBuffer.data());
+
+		return;
+	}
+
 	UploadData(static_cast<int>(pUploadBuffer->Size()), pUploadBuffer->Get());
 }
 

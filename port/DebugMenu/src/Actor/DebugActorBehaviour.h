@@ -12,3 +12,9 @@ namespace Debug::Actor::State
 {
 	std::string GetActorStateName(CActor* pActor);
 }
+
+namespace Wolfen
+{
+	const char* GetBehaviourName(int curBehaviourId);
+	const char* GetStateName(int state);
+}

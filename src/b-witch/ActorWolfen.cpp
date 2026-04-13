@@ -1285,7 +1285,8 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				pCVar14 = GetVision()->ScanForTarget(pSender, SCAN_MODE_AMORTISED);
 
 				if (pCVar14 == (CActor*)0x0) {
-					if (this->visionDetectionProps.field_0x0 <= sqrtf(edF32Vector4DotProductHard_I(&pSender->currentLocation, &this->currentLocation))) {
+					edF32VECTOR4 diff = pSender->currentLocation - this->currentLocation;
+					if (this->visionDetectionProps.field_0x0 <= edF32Vector4GetDistHard(&diff)) {
 						if (!IsAlive(pSender)) {
 							return 1;
 						}
@@ -4395,7 +4396,11 @@ void CActorWolfen::StateWolfenComeBack(CBehaviourWolfen* pBehaviour)
 
 	pComeBackPosition = pBehaviour->GetComeBackPosition();
 
-	if (sqrtf(edF32Vector4DotProductHard_I(pComeBackPosition, &this->currentLocation)) < 0.5f) goto LAB_0017ae10;
+	fVar6 = pComeBackPosition->x - this->currentLocation.x;
+	fVar7 = pComeBackPosition->y - this->currentLocation.y;
+	fVar8 = pComeBackPosition->z - this->currentLocation.z;
+
+	if (sqrtf(fVar6 * fVar6 + fVar7 * fVar7 + fVar8 * fVar8) < 0.5f) goto LAB_0017ae10;
 
 	actorMovParamsIn.flags = actorMovParamsIn.flags | 0x150;
 	if (this->currentAnimType == 7) {
@@ -4457,7 +4462,8 @@ LAB_0017ae10:
 				if (nextState == -1) {
 					pComeBackPosition = pBehaviour->GetComeBackPosition();
 
-					if (0.5f <= sqrtf(edF32Vector4DotProductHard_I(pComeBackPosition, &this->currentLocation))) {
+					edF32VECTOR4 diff = *pComeBackPosition - this->currentLocation;
+					if (0.5f <= edF32Vector4GetDistHard(&diff)) {
 						if ((this->pTargetActor_0xc80 != (CActorFighter*)0x0) &&
 							(nextState = pBehaviour->TestState_001f09b0(), nextState != -1)) {
 							SetState(nextState, -1);

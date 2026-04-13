@@ -778,8 +778,6 @@ else()
 	target_sources(Kya PRIVATE debug/PackedType.natvis)
 endif()
 
-set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
-
 option(SKIP_MOVIES "Skip into cinematics" OFF)
 option(LOAD_FOREVER "Holds on the loading screen forever" OFF)
 
@@ -797,3 +795,5 @@ if (NOT PS2)
 	add_subdirectory("port/Windows/Host")
 	add_subdirectory("port/Test")
 endif()
+
+set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya_Win )

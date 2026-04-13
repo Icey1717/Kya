@@ -354,7 +354,8 @@ bool CActorProjectile::IsLockable()
 				}
 			}
 
-			fVar2 = edF32Vector4DotProductHard_I(&CActorHero::_gThis->currentLocation, &this->currentLocation);
+			edF32VECTOR4 diff = CActorHero::_gThis->currentLocation - this->currentLocation;
+			fVar2 = edF32Vector4GetDistHard(&diff);
 			if ((11.56f < fVar2) || ((this->aProjectileSubObjs->flags & 0x2000) != 0)) {
 				return true;
 			}

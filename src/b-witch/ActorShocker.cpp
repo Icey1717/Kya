@@ -1,6 +1,32 @@
 #include "ActorShocker.h"
 #include "MemoryStream.h"
 
+CActorShocker::~CActorShocker()
+{
+	//this->base = &_vt;
+	//if ((edNODE*)this->field_0x780 != (edNODE*)0x0) {
+	//	ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, (edNODE*)this->field_0x780);
+	//}
+	//this->field_0x780 = 0;
+	this->addOnGenerator.Term();
+	//if (this != (CActorShocker*)0xfffff810) {
+	//	this->field_0x7f0 = (CBehaviourVtable*)&CBehaviourShockerFireWave::_vt;
+	//	Particle::Free_003a0940((long)&this->field_0x800, -1);
+	//	if ((this != (CActorShocker*)0xfffff810) && (this->field_0x7f0 = (CBehaviourVtable*)&CBehaviourShocker::_vt, this != (CActorShocker*)0xfffff810)) {
+	//		this->field_0x7f0 = &CBehaviour::_vt;
+	//	}
+	//}
+	//if ((long)(int)&this->field_0x480 != 0) {
+	//	this->field_0x480 = &CFxSparkNoAlloc<2, 12>::_vt;
+	//	CFxSpark::~CFxSpark((long)(int)&this->field_0x480, 0);
+	//}
+	//if (lVar1 != 0) {
+	//	this->base = (CActorVTable*)&CActorAutonomous::_vt;
+	//	CLifeInterface::~CLifeInterface((long)(int)&this->lifeInterface, 0xffffffffffffffff);
+	//	CActorMovable::~CActorMovable(lVar1, 0);
+	//}
+}
+
 void CActorShocker::Create(ByteCode* pByteCode)
 {
 	int* piVar1;

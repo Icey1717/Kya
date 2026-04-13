@@ -10,7 +10,6 @@
 #include "edText.h"
 #include "edMem.h"
 #include "EdenLib/edSys/sources/EdSystem.h"
-#include "Kya.h"
 
 #include "renderer.h"
 
@@ -222,7 +221,7 @@ TEST(MatrixTest, TransposeHard) {
 		13.0f, 14.0f, 15.0f, 16.0f };
 
 	edF32MATRIX4 transposed;
-	edF32Matrix4GetTransposeHard(&matrix, &transposed);
+	edF32Matrix4GetTransposeHard(&transposed, &matrix);
 
 	EXPECT_EQ(transposed.aa, 1.0f);
 	EXPECT_EQ(transposed.ab, 5.0f);
@@ -250,6 +249,5 @@ TEST(VU1, Run) {
 int main(int argc, char* argv[]) {
 	::testing::InitGoogleTest(&argc, argv);
 	Renderer::SetHeadless(true);
-	MainInit(argc, argv);
 	return RUN_ALL_TESTS();
 }

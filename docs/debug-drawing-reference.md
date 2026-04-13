@@ -93,12 +93,12 @@ Path::DrawPathFollowReaderAbsolute(pTraj->pathFollowReaderAbs, true);
 
 ### 3. Wolfen come-back target debug
 
-`DebugActorWolfen.cpp` now exposes two toggles:
+`DebugActorWolfen.cpp` now exposes behaviour-specific sections for Wolfen comeback logic, plus two draw toggles:
 
 - `Draw Come Back Position` — draws the current behaviour's come-back target as a sphere.
 - `Draw Come Back Link` — draws a line from the Wolfen's current location to that target.
 
-This is useful for verifying patrol/return behaviour, especially when switching between watchdog, track, guard-area, and DCA behaviour variants.
+Each loaded comeback-capable behaviour has its own section with position/angle/state details. This is useful for verifying patrol/return behaviour when switching between watchdog, track, guard-area, and DCA variants.
 
 ---
 

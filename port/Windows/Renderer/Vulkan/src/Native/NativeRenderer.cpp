@@ -25,7 +25,7 @@
 #include "profiling.h"
 
 //#define DEBUG_TEXTURE_NAME "Dupe (m: 0 l: 0)"
-#define DEBUG_TEXTURE_NAME "flam.g2d (m: 0 l: 0)"
+#define DEBUG_TEXTURE_NAME "BOUCHON_Scene01_for_ilot_11_06.g2d (m: 0 l: 0)"
 #define DEBUG_MESH_NAME "Sprite"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)

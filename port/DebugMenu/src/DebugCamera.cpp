@@ -268,8 +268,59 @@ namespace Debug::Camera {
 	static CFreeCamera* pFreeCamera = nullptr;
 	static float gSavedTimeScale = 1.f;
 	static bool  gFreezingTime = false;
+	static bool  gFreeCameraInputEnabled = true;
 
 	static GLFWscrollfun    gPreviousScrollCallback = nullptr;
+	static bool             gFreeCameraOwnsScrollCallback = false;
+
+	static constexpr ImGuiKey gToggleFreeCameraHotkey = ImGuiKey_F8;
+	static constexpr ImGuiKey gToggleFreeCameraInputHotkey = ImGuiKey_F9;
+
+	static void SetFreeCameraInputCapture(bool bEnable)
+	{
+		GLFWwindow* window = GetGLFWWindow();
+
+		if (bEnable) {
+			if (gFreeCameraOwnsScrollCallback) {
+				return;
+			}
+
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			// Raw mouse motion causes GLFW to register for WM_INPUT. KyaWndProc
+			// intercepts WM_INPUT directly (calling CFreeCamera::AccumulateRawDelta)
+			// and eats the message so it never reaches ImGui or GLFW, eliminating
+			// the GetPropA/GetPropW overhead on every mouse event.
+			if (glfwRawMouseMotionSupported()) {
+				glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+			}
+
+			gPreviousScrollCallback = glfwSetScrollCallback(window, CFreeCamera::ScrollCallback);
+			gFreeCameraOwnsScrollCallback = true;
+			return;
+		}
+
+		if (glfwRawMouseMotionSupported()) {
+			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+		}
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+		if (gFreeCameraOwnsScrollCallback) {
+			glfwSetScrollCallback(window, gPreviousScrollCallback);
+			gFreeCameraOwnsScrollCallback = false;
+		}
+	}
+
+	static void SetFreeCameraInputEnabled(bool bEnable)
+	{
+		if (!pFreeCamera || gFreeCameraInputEnabled == bEnable) {
+			return;
+		}
+
+		gFreeCameraInputEnabled = bEnable;
+		pFreeCamera->SetInputEnabled(bEnable);
+		SetFreeCameraInputCapture(bEnable);
+	}
 
 	static void ActivateFreeCamera()
 	{
@@ -285,16 +336,9 @@ namespace Debug::Camera {
 		}
 
 		CCameraManager::_gThis->PushCamera(pFreeCamera, 0);
-
-		GLFWwindow* window = GetGLFWWindow();
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		// Raw mouse motion causes GLFW to register for WM_INPUT. KyaWndProc
-		// intercepts WM_INPUT directly (calling CFreeCamera::AccumulateRawDelta)
-		// and eats the message so it never reaches ImGui or GLFW, eliminating
-		// the GetPropA/GetPropW overhead on every mouse event.
-		if (glfwRawMouseMotionSupported())
-			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-		gPreviousScrollCallback = glfwSetScrollCallback(window, CFreeCamera::ScrollCallback);
+		gFreeCameraInputEnabled = true;
+		pFreeCamera->SetInputEnabled(true);
+		SetFreeCameraInputCapture(true);
 	}
 
 	static void DeactivateFreeCamera()
@@ -309,22 +353,44 @@ namespace Debug::Camera {
 			gFreezingTime = false;
 		}
 
+		SetFreeCameraInputCapture(false);
 		CCameraManager::_gThis->PopCamera(pFreeCamera);
 		delete pFreeCamera;
 		pFreeCamera = nullptr;
-
-		// Restore cursor and scroll callback.
-		GLFWwindow* window = GetGLFWWindow();
-		if (glfwRawMouseMotionSupported())
-			glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		glfwSetScrollCallback(window, gPreviousScrollCallback);
+		gFreeCameraInputEnabled = true;
 		gPreviousScrollCallback = nullptr;
+		gFreeCameraOwnsScrollCallback = false;
 
 		// Make sure the existing bActive state is cleared so the old
 		// "Debug Camera" checkbox doesn't think the cursor is still locked.
 		bActive = false;
 	}
+
+	static void HandleFreeCameraHotkeys()
+	{
+		if (ImGui::IsKeyPressed(gToggleFreeCameraHotkey, false)) {
+			if (pFreeCamera) {
+				DeactivateFreeCamera();
+			}
+			else {
+				ActivateFreeCamera();
+			}
+		}
+
+		if (!pFreeCamera) {
+			return;
+		}
+
+		if (ImGui::IsKeyPressed(gToggleFreeCameraInputHotkey, false)) {
+			SetFreeCameraInputEnabled(!gFreeCameraInputEnabled);
+		}
+
+		if (gFreeCameraInputEnabled && ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+			DeactivateFreeCamera();
+		}
+	}
+
+	static Debug::UpdateRegisterer gFreeCameraHotkeyRegisterer(HandleFreeCameraHotkeys);
 
 	static void ShowFreeCameraPanel()
 	{
@@ -333,10 +399,19 @@ namespace Debug::Camera {
 
 		ImGui::TextDisabled("WASD = move  |  E/Q = up/down  |  Shift = fast");
 		ImGui::TextDisabled("Mouse = look  |  Scroll = speed  |  ESC = exit");
+		ImGui::TextDisabled("F8 = toggle camera  |  F9 = toggle controls");
 		ImGui::Separator();
 
 		ImGui::SliderFloat("Speed",       &pFreeCamera->speed,       0.5f,  5000.f, "%.1f", ImGuiSliderFlags_Logarithmic);
 		ImGui::SliderFloat("Sensitivity", &pFreeCamera->sensitivity, 0.0001f, 0.01f, "%.4f", ImGuiSliderFlags_Logarithmic);
+
+		bool bInputEnabled = gFreeCameraInputEnabled;
+		if (ImGui::Checkbox("Enable Camera Controls", &bInputEnabled)) {
+			SetFreeCameraInputEnabled(bInputEnabled);
+		}
+		if (!gFreeCameraInputEnabled) {
+			ImGui::TextDisabled("Camera stays on stack; mouse is unlocked for ImGui.");
+		}
 
 		ImGui::Separator();
 
@@ -511,10 +586,19 @@ void Debug::Camera::ShowCamera()
 		if (bFreeCamActive) {
 			ImGui::PopStyleColor();
 		}
+
+		if (bFreeCamActive) {
+			ImGui::SameLine();
+			bool bInputEnabled = gFreeCameraInputEnabled;
+			if (ImGui::Checkbox("Enable Controls", &bInputEnabled)) {
+				SetFreeCameraInputEnabled(bInputEnabled);
+			}
+		}
+
 		ImGui::SameLine();
 		ImGui::TextDisabled("(?)");
 		if (ImGui::IsItemHovered()) {
-			ImGui::SetTooltip("WASD move  E/Q up-down  Shift boost\nMouse look  Scroll speed  ESC exit");
+			ImGui::SetTooltip("WASD move  E/Q up-down  Shift boost\nMouse look  Scroll speed  ESC exit\nF8 toggle free camera  F9 toggle controls");
 		}
 	}
 
@@ -531,13 +615,6 @@ void Debug::Camera::ShowCamera()
 	//		bShouldEnableMouseLock = true;
 	//	}
 	//}
-
-	if (glfwGetKey(GetGLFWWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		gMouseDeltaX = 0.0f;
-		gMouseDeltaY = 0.0f;
-		//SetActive(false, nullptr);
-		DeactivateFreeCamera();
-	}
 
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
 

@@ -30,6 +30,8 @@ namespace Debug {
 	static int gStepFramesPending = 0;
 	static float gResumeTimeScale = 1.0f;
 
+	static float gMinisculeTimeScale = 0.00001f;
+
 	bool GetShowCameraWindow() { return gShowCameraWindow; }
 
 	void UpdateSingleStepState() {
@@ -40,7 +42,7 @@ namespace Debug {
 		--gStepFramesPending;
 		if (gStepFramesPending == 0) {
 			if (auto* pTimer = GetTimer(); pTimer != nullptr) {
-				pTimer->timeScale = 0.0f;
+				pTimer->timeScale = gMinisculeTimeScale;
 			}
 		}
 	}
@@ -61,7 +63,7 @@ namespace Debug {
 
 		if (ImGui::BeginMainMenuBar()) {
 			ZONE_SCOPED_NAME("MenuBar");
-			const bool bPaused = pTimer != nullptr && pTimer->timeScale == 0.0f;
+			bool bPaused = pTimer != nullptr && pTimer->timeScale <= gMinisculeTimeScale;
 
 			bool bWorld = Debug::GetShowWorldPanel();
 			bool bInspector = Debug::GetShowInspectorPanel();
@@ -99,6 +101,56 @@ namespace Debug {
 				}
 
 				ImGui::EndMenu();
+			}
+
+			ImGui::SameLine();
+			ImGui::Separator();
+			ImGui::SameLine();
+
+			if (pTimer != nullptr) {
+				// Keep the most recent non-zero value so resume restores the previous simulation speed.
+				if (!bPaused && pTimer->timeScale > gMinisculeTimeScale) {
+					gResumeTimeScale = pTimer->timeScale;
+				}
+
+				if (ImGui::SmallButton(bPaused ? "Unpause" : "Pause")) {
+					if (bPaused) {
+						if (gResumeTimeScale <= gMinisculeTimeScale) {
+							gResumeTimeScale = 1.0f;
+						}
+						pTimer->timeScale = gResumeTimeScale;
+					}
+					else {
+						if (pTimer->timeScale > gMinisculeTimeScale) {
+							gResumeTimeScale = pTimer->timeScale;
+						}
+						pTimer->timeScale = gMinisculeTimeScale;
+					}
+					bPaused = pTimer->timeScale <= gMinisculeTimeScale;
+				}
+
+				ImGui::SameLine();
+				float toolbarTimeScale = bPaused ? gResumeTimeScale : pTimer->timeScale;
+				ImGui::SetNextItemWidth(155.0f);
+				if (ImGui::InputFloat("Time Scale##Toolbar", &toolbarTimeScale, 0.05f, 0.25f, "%.3f")) {
+					if (toolbarTimeScale < gMinisculeTimeScale) {
+						toolbarTimeScale = gMinisculeTimeScale;
+					}
+
+					if (bPaused) {
+						gResumeTimeScale = toolbarTimeScale;
+					}
+					else {
+						pTimer->timeScale = toolbarTimeScale;
+						if (toolbarTimeScale > gMinisculeTimeScale) {
+							gResumeTimeScale = toolbarTimeScale;
+						}
+						bPaused = pTimer->timeScale <= gMinisculeTimeScale;
+					}
+				}
+			}
+			else {
+				ImGui::TextDisabled("Timer unavailable");
 			}
 
 			ImGui::SameLine();

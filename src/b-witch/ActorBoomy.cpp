@@ -1,4 +1,5 @@
 #include "ActorBoomy.h"
+#include "ActorShadows.h"
 #include "MemoryStream.h"
 #include "CameraGame.h"
 #include "edMathTCBSpline.h"
@@ -130,8 +131,7 @@ void CActorBoomy::Init()
 
 	pCVar1 = this->pShadow;
 	if (pCVar1 != (CShadow*)0x0) {
-		IMPLEMENTATION_GUARD(
-		this->particleID_0x3d8 = pCVar1->field_0x54;)
+		this->particleID_0x3d8 = pCVar1->materialId;
 	}
 
 	this->speedDyn.Init(0.0f, 12.0f);
@@ -314,15 +314,15 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 	else {
 		if (uVar4 == 6) {
-			IMPLEMENTATION_GUARD(
-			(this->base).dynamic.speed = 0.0;
+			this->dynamic.speed = 0.0f;
 			if (this->field_0x2c4 == 2) {
 				SetState(0xb, -1);
 			}
 			else {
 				SetState(9, -1);
 			}
-			return 1;)
+
+			return 1;
 		}
 
 		if (uVar4 == MESSAGE_GET_RUN_SPEED) {
@@ -349,11 +349,10 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			
 				pCVar1 = this->pShadow;
 				if (pCVar1 != (CShadow*)0x0) {
-					IMPLEMENTATION_GUARD(
-					CShadow::SetMaterialId(pCVar1, this->particleID_0x3dc);
-					((this->pShadow)->base).field_0x30 = 0x5060a0a0;
-					((this->pShadow)->base).field_0x48 = 0.75;
-					(this->pShadow)->field_0x50 = 0.75;)
+					pCVar1->SetMaterialId(this->particleID_0x3dc);
+					this->pShadow->shadowColor = 0x5060a0a0;
+					this->pShadow->field_0x48 = 0.75;
+					this->pShadow->field_0x50 = 0.75;
 				}
 
 				IMPLEMENTATION_GUARD_FX(
@@ -367,11 +366,10 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 				pCVar1 = this->pShadow;
 				if (pCVar1 != (CShadow*)0x0) {
-					IMPLEMENTATION_GUARD(
-					CShadow::SetMaterialId(pCVar1, this->particleID_0x3d8);
-					((this->pShadow)->base).field_0x30 = 0x50808080;
-					((this->pShadow)->base).field_0x48 = 0.3;
-					(this->pShadow)->field_0x50 = 0.3;)
+					pCVar1->SetMaterialId(this->particleID_0x3d8);
+					this->pShadow->shadowColor = 0x50808080;
+					this->pShadow->field_0x48 = 0.3f;
+					this->pShadow->field_0x50 = 0.3f;
 				}
 
 				IMPLEMENTATION_GUARD_FX(

@@ -388,12 +388,13 @@ namespace Debug::Cinematic
 				stepState.stepOffset = 0.0f;
 			}
 		} else {
-			bool bBankReady = (pCinematic->cineBankLoadStage_0x2b4 == 4);
+			const bool bBankReady = (pCinematic->cineBankLoadStage_0x2b4 == 4);
 			ImGui::BeginDisabled(!bBankReady);
 			if (ImGui::Button("Start")) {
 				pCinematic->Start();
 			}
 			ImGui::EndDisabled();
+
 			if (!bBankReady) {
 				ImGui::SameLine();
 				ImGui::TextDisabled("(loading, stage %d)", pCinematic->cineBankLoadStage_0x2b4);

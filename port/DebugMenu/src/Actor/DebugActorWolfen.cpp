@@ -1,5 +1,6 @@
 #include "DebugActorWolfen.h"
 #include "ActorWolfen.h"
+#include "DebugActorBehaviour.h"
 #include "Native/NativeDebugShapes.h"
 #include <imgui.h>
 #include <string>
@@ -21,54 +22,75 @@ namespace Debug::Actor::Wolfen
 		return pActor ? pActor->name : "(null)";
 	}
 
+	static const int gComeBackBehaviourIds[] = {
+		WOLFEN_BEHAVIOUR_WATCH_DOG,
+		WOLFEN_BEHAVIOUR_GUARD_AREA,
+		WOLFEN_BEHAVIOUR_SLEEP,
+		WOLFEN_BEHAVIOUR_ESCAPE,
+		WOLFEN_BEHAVIOUR_TRACK,
+		WOLFEN_BEHAVIOUR_TRACK_STAND,
+		WOLFEN_BEHAVIOUR_TRACK_WEAPON,
+		WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND,
+		WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE,
+		WOLFEN_BEHAVIOUR_SNIPE,
+		WOLFEN_BEHAVIOUR_LOST,
+		WOLFEN_BEHAVIOUR_WOLFEN_DCA,
+		WOLFEN_BEHAVIOUR_AVOID
+	};
+
 	static bool IsComeBackBehaviour(int behaviourId)
 	{
-		switch (behaviourId) {
-		case WOLFEN_BEHAVIOUR_WATCH_DOG:
-		case WOLFEN_BEHAVIOUR_GUARD_AREA:
-		case WOLFEN_BEHAVIOUR_SLEEP:
-		case WOLFEN_BEHAVIOUR_ESCAPE:
-		case WOLFEN_BEHAVIOUR_TRACK:
-		case WOLFEN_BEHAVIOUR_TRACK_STAND:
-		case WOLFEN_BEHAVIOUR_TRACK_WEAPON:
-		case WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND:
-		case WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE:
-		case WOLFEN_BEHAVIOUR_SNIPE:
-		case WOLFEN_BEHAVIOUR_LOST:
-		case WOLFEN_BEHAVIOUR_WOLFEN_DCA:
-		case WOLFEN_BEHAVIOUR_AVOID:
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	static CBehaviourWolfen* GetCurrentWolfenBehaviour(CActorWolfen* pWolfenActor)
-	{
-		if (!pWolfenActor || !IsComeBackBehaviour(pWolfenActor->curBehaviourId)) {
-			return nullptr;
+		for (int id : gComeBackBehaviourIds) {
+			if (id == behaviourId) {
+				return true;
+			}
 		}
 
-		return static_cast<CBehaviourWolfen*>(pWolfenActor->GetBehaviour(pWolfenActor->curBehaviourId));
+		return false;
 	}
 
-	static bool TryGetComeBackPosition(CActorWolfen* pWolfenActor, CBehaviourWolfen* pBehaviour, edF32VECTOR4* pOutComeBackPosition)
+	static bool HasValidComeBackPositionSource(int behaviourId, CBehaviourWolfen* pBehaviour)
 	{
-		if (!pWolfenActor || !pBehaviour || !pOutComeBackPosition) {
+		if (!pBehaviour) {
 			return false;
 		}
 
-		if (pWolfenActor->curBehaviourId == WOLFEN_BEHAVIOUR_GUARD_AREA) {
+		if (behaviourId == WOLFEN_BEHAVIOUR_GUARD_AREA) {
 			CBehaviourGuardArea* pGuardArea = static_cast<CBehaviourGuardArea*>(pBehaviour);
 			if (pGuardArea->pathFollowReader.pPathFollow == nullptr) {
 				return false;
 			}
 		}
-		else if (pWolfenActor->curBehaviourId == WOLFEN_BEHAVIOUR_WOLFEN_DCA) {
+		else if (behaviourId == WOLFEN_BEHAVIOUR_WOLFEN_DCA) {
 			CBehaviourDCA* pDCA = static_cast<CBehaviourDCA*>(pBehaviour);
 			if (pDCA->actorRef.Get() == nullptr) {
 				return false;
 			}
+		}
+
+		return true;
+	}
+
+	static bool HasValidComeBackAnglesSource(int behaviourId, CBehaviourWolfen* pBehaviour)
+	{
+		if (!pBehaviour) {
+			return false;
+		}
+
+		if (behaviourId == WOLFEN_BEHAVIOUR_WOLFEN_DCA) {
+			CBehaviourDCA* pDCA = static_cast<CBehaviourDCA*>(pBehaviour);
+			if (pDCA->actorRef.Get() == nullptr) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	static bool TryGetComeBackPosition(int behaviourId, CBehaviourWolfen* pBehaviour, edF32VECTOR4* pOutComeBackPosition)
+	{
+		if (!pOutComeBackPosition || !HasValidComeBackPositionSource(behaviourId, pBehaviour)) {
+			return false;
 		}
 
 		edF32VECTOR4* pComeBackPosition = pBehaviour->GetComeBackPosition();
@@ -78,6 +100,91 @@ namespace Debug::Actor::Wolfen
 
 		*pOutComeBackPosition = *pComeBackPosition;
 		return true;
+	}
+
+	static bool TryGetComeBackAngles(int behaviourId, CBehaviourWolfen* pBehaviour, edF32VECTOR4* pOutComeBackAngles)
+	{
+		if (!pOutComeBackAngles || !HasValidComeBackAnglesSource(behaviourId, pBehaviour)) {
+			return false;
+		}
+
+		edF32VECTOR4* pComeBackAngles = pBehaviour->GetComeBackAngles();
+		if (!pComeBackAngles) {
+			return false;
+		}
+
+		*pOutComeBackAngles = *pComeBackAngles;
+		return true;
+	}
+
+	static void ShowComeBackBehaviourDetails(
+		CActorWolfen* pWolfenActor,
+		int behaviourId,
+		CBehaviourWolfen* pBehaviour,
+		bool bDrawComeBackPosition,
+		bool bDrawComeBackLink)
+	{
+		if (!pWolfenActor || !pBehaviour) {
+			ImGui::Text("(null)");
+			return;
+		}
+
+		const bool bCurrentBehaviour = (pWolfenActor->curBehaviourId == behaviourId);
+		edF32VECTOR4 comeBackPosition;
+		edF32VECTOR4 comeBackAngles;
+
+		ImGui::Text("Behaviour Ptr:      %p", pBehaviour);
+		ImGui::Text("Is Current:         %s", bCurrentBehaviour ? "yes" : "no");
+		ImGui::Text("In Come Back State: %s",
+			(pWolfenActor->actorState == WOLFEN_STATE_COME_BACK || pWolfenActor->actorState == WOLFEN_STATE_TRACK_COME_BACK) ? "yes" : "no");
+
+		if (!TryGetComeBackPosition(behaviourId, pBehaviour, &comeBackPosition)) {
+			ImGui::TextDisabled("Come back position is unavailable (missing behaviour data).");
+		}
+		else {
+			const float dx = comeBackPosition.x - pWolfenActor->currentLocation.x;
+			const float dy = comeBackPosition.y - pWolfenActor->currentLocation.y;
+			const float dz = comeBackPosition.z - pWolfenActor->currentLocation.z;
+			const float dist2D = sqrtf(dx * dx + dz * dz);
+			const float dist3D = sqrtf(dx * dx + dy * dy + dz * dz);
+
+			ImGui::Text("Come Back Position: (%.2f, %.2f, %.2f)", comeBackPosition.x, comeBackPosition.y, comeBackPosition.z);
+			ImGui::Text("Come Back Delta:    (%.2f, %.2f, %.2f)", dx, dy, dz);
+			ImGui::Text("Distance To Target: %.2f (2D: %.2f)", dist3D, dist2D);
+
+			if (bCurrentBehaviour && bDrawComeBackPosition) {
+				Renderer::Native::DebugShapes::AddSphere(
+					comeBackPosition.x, comeBackPosition.y, comeBackPosition.z,
+					0.3f,
+					0.15f, 1.0f, 0.35f, 1.0f);
+			}
+
+			if (bCurrentBehaviour && bDrawComeBackLink) {
+				Renderer::Native::DebugShapes::AddLine(
+					pWolfenActor->currentLocation.x, pWolfenActor->currentLocation.y, pWolfenActor->currentLocation.z,
+					comeBackPosition.x, comeBackPosition.y, comeBackPosition.z,
+					0.15f, 1.0f, 0.35f, 0.95f);
+			}
+		}
+
+		if (!TryGetComeBackAngles(behaviourId, pBehaviour, &comeBackAngles)) {
+			ImGui::TextDisabled("Come back angles unavailable.");
+		}
+		else {
+			ImGui::Text("Come Back Angles:   (%.2f, %.2f, %.2f)", comeBackAngles.x, comeBackAngles.y, comeBackAngles.z);
+		}
+
+		if (behaviourId == WOLFEN_BEHAVIOUR_ESCAPE) {
+			ImGui::TextDisabled("Escape behaviour state helpers are not implemented.");
+		}
+		else if (HasValidComeBackPositionSource(behaviourId, pBehaviour)) {
+			ImGui::Text("Come Back State Id: %s (%d)", ::Wolfen::GetStateName(pBehaviour->GetStateWolfenComeBack()), pBehaviour->GetStateWolfenComeBack());
+			ImGui::Text("Track Behaviour Id: %s (%d)", ::Wolfen::GetBehaviourName(pBehaviour->GetTrackBehaviour()), pBehaviour->GetTrackBehaviour());
+		}
+
+		if (!bCurrentBehaviour) {
+			ImGui::TextDisabled("Shape drawing only applies when this is the current behaviour.");
+		}
 	}
 
 	void ShowWolfenActorDetails(CActorWolfen* pWolfenActor)
@@ -162,40 +269,46 @@ namespace Debug::Actor::Wolfen
 			ImGui::Text("Run Speed Scale:   %.2f", pWolfenActor->runSpeedScale);
 		}
 
-		if (ImGui::CollapsingHeader("Debug Draw", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::CollapsingHeader("Behaviour Sections", ImGuiTreeNodeFlags_DefaultOpen)) {
 			static bool bDrawComeBackPosition = true;
 			static bool bDrawComeBackLink = true;
 
 			ImGui::Checkbox("Draw Come Back Position", &bDrawComeBackPosition);
 			ImGui::Checkbox("Draw Come Back Link", &bDrawComeBackLink);
+			ImGui::Separator();
 
-			CBehaviourWolfen* pBehaviour = GetCurrentWolfenBehaviour(pWolfenActor);
-			edF32VECTOR4 comeBackPosition;
+			bool bAnySection = false;
 
-			if (!TryGetComeBackPosition(pWolfenActor, pBehaviour, &comeBackPosition)) {
-				if (pBehaviour == nullptr) {
-					ImGui::TextDisabled("Come back position is not available for behaviour %d.", pWolfenActor->curBehaviourId);
+			for (int behaviourId : gComeBackBehaviourIds) {
+				CBehaviourWolfen* pBehaviour = static_cast<CBehaviourWolfen*>(pWolfenActor->GetBehaviour(behaviourId));
+				if (!pBehaviour) {
+					continue;
 				}
-				else {
-					ImGui::TextDisabled("Come back position is unavailable (missing behaviour data).");
+
+				bAnySection = true;
+
+				std::string header = std::string(::Wolfen::GetBehaviourName(behaviourId)) + " (" + std::to_string(behaviourId) + ")";
+				if (behaviourId == pWolfenActor->curBehaviourId) {
+					header += " [Current]";
+				}
+				header += "##WolfenBehaviour";
+				header += std::to_string(behaviourId);
+
+				ImGuiTreeNodeFlags flags = 0;
+				if (behaviourId == pWolfenActor->curBehaviourId) {
+					flags |= ImGuiTreeNodeFlags_DefaultOpen;
+				}
+
+				if (ImGui::CollapsingHeader(header.c_str(), flags)) {
+					ShowComeBackBehaviourDetails(pWolfenActor, behaviourId, pBehaviour, bDrawComeBackPosition, bDrawComeBackLink);
 				}
 			}
-			else {
-				ImGui::Text("Come Back Position: (%.2f, %.2f, %.2f)", comeBackPosition.x, comeBackPosition.y, comeBackPosition.z);
 
-				if (bDrawComeBackPosition) {
-					Renderer::Native::DebugShapes::AddSphere(
-						comeBackPosition.x, comeBackPosition.y, comeBackPosition.z,
-						0.3f,
-						0.15f, 1.0f, 0.35f, 1.0f);
-				}
-
-				if (bDrawComeBackLink) {
-					Renderer::Native::DebugShapes::AddLine(
-						pWolfenActor->currentLocation.x, pWolfenActor->currentLocation.y, pWolfenActor->currentLocation.z,
-						comeBackPosition.x, comeBackPosition.y, comeBackPosition.z,
-						0.15f, 1.0f, 0.35f, 0.95f);
-				}
+			if (!bAnySection) {
+				ImGui::TextDisabled("No wolfen behaviour components are loaded.");
+			}
+			else if (!IsComeBackBehaviour(pWolfenActor->curBehaviourId)) {
+				ImGui::TextDisabled("Current behaviour %d does not use wolfen come-back data.", pWolfenActor->curBehaviourId);
 			}
 		}
 	}

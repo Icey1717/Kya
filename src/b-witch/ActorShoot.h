@@ -12,6 +12,8 @@ public:
 		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
+	~CActorShoot();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 

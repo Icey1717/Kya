@@ -22,6 +22,7 @@ public:
 
 	// Snap position and yaw/pitch from another camera (call before pushing to stack).
 	void SetPositionFromCamera(CCamera* pFrom);
+	void SetInputEnabled(bool bEnabled);
 
 	// GLFW scroll callback (speed control). Mouse delta is fed via AccumulateRawDelta
 	// from KyaWndProc, bypassing the GLFW/ImGui dispatch chain entirely.
@@ -35,6 +36,7 @@ public:
 	float sensitivity = 0.002f;
 
 	static bool IsActive() { return sActive != nullptr; }
+	static bool IsCapturingInput() { return sActive != nullptr && sActive->bInputEnabled; }
 
 private:
 	float yaw   = 0.f;
@@ -45,6 +47,7 @@ private:
 
 	// Wall-clock time for delta, independent of game timeScale.
 	long long lastFrameNs = 0;
+	bool bInputEnabled = true;
 
 	static CFreeCamera* sActive;
 };

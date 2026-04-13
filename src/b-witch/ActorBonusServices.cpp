@@ -22,6 +22,13 @@ int CAddOnGenerator::_gAddOn_NbMaxBonusInSector = 0;
 CActorBonus* CAddOnGenerator::_gAddOn_pBonusAct = (CActorBonus*)0x0;
 CBehaviourBonusAddOn* CAddOnGenerator::_gAddOn_pBonusBhv = (CBehaviourBonusAddOn*)0x0;
 
+#ifdef PLATFORM_WIN
+#include <vector>
+static std::vector< CAddOnGenerator*> _gAddOnGeneratorInstances;
+static int _gAddOn_NbRemainingMinusTermed = 0;
+static bool _gDoneTerm = false;
+#endif
+
 
 CActInstance::CActInstance()
 {
@@ -543,6 +550,15 @@ void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
 
 	_gAddOn_NbTotalAddOn = _gAddOn_NbTotalAddOn + 1;
 
+#ifdef PLATFORM_WIN
+	if (_gDoneTerm) {
+		assert(_gAddOnGeneratorInstances.size() == 0);
+		_gDoneTerm = false;
+	}
+	_gAddOnGeneratorInstances.push_back(this);
+	this->pOwningActorDebug = pActor;
+#endif
+
 	_gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel = _gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel + this->nbMoney;
 	_gAddOn_NbTotalBonusInLevel = _gAddOn_NbTotalBonusInLevel + this->nbBonus;
 
@@ -678,6 +694,14 @@ void CAddOnGenerator::Term()
 
 	_gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel = _gAddOn_aMoney[this->moneyType]._gAddOn_NbTotalMoneyInLevel - this->nbMoney;
 	_gAddOn_NbTotalBonusInLevel = _gAddOn_NbTotalBonusInLevel - this->nbBonus;
+
+#ifdef PLATFORM_WIN
+	_gAddOnGeneratorInstances.erase(std::remove(_gAddOnGeneratorInstances.begin(), _gAddOnGeneratorInstances.end(), this), _gAddOnGeneratorInstances.end());
+	_gAddOn_NbRemainingMinusTermed = _gAddOn_NbRemainingMinusTermed + 1;
+	_gDoneTerm = true;
+#endif
+
+	// Are we the last generator to die? If so, we can free the global arrays and reset the global variables.
 	if (_gAddOn_aMoney[0]._gAddOn_NbTotalMoneyInLevel + _gAddOn_aMoney[1]._gAddOn_NbTotalMoneyInLevel + _gAddOn_aMoney[2]._gAddOn_NbTotalMoneyInLevel + _gAddOn_NbTotalBonusInLevel == 0) {
 		_gAddOn_bComputeDone = 0;
 		_gAddOn_aMoney[0].field_0x4 = 0;

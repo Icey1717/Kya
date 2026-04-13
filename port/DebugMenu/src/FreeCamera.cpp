@@ -98,6 +98,12 @@ bool CFreeCamera::Manage()
 	const float dt = std::min(static_cast<float>(nowNs - lastFrameNs) * 1e-9f, 0.1f);
 	lastFrameNs = nowNs;
 
+	if (!bInputEnabled) {
+		mouseDeltaX = 0.f;
+		mouseDeltaY = 0.f;
+		return true;
+	}
+
 	// --- Mouse look ---
 	yaw   -= mouseDeltaX * sensitivity;
 	pitch += mouseDeltaY * sensitivity;
@@ -168,13 +174,23 @@ void CFreeCamera::SetPositionFromCamera(CCamera* pFrom)
 	SetAngleGamma(0.f);
 }
 
+void CFreeCamera::SetInputEnabled(bool bEnabled)
+{
+	bInputEnabled = bEnabled;
+
+	if (!bInputEnabled) {
+		mouseDeltaX = 0.f;
+		mouseDeltaY = 0.f;
+	}
+}
+
 // ----------------------------------------------------------------
 // Static callbacks / direct input feeds
 // ----------------------------------------------------------------
 
 void CFreeCamera::AccumulateRawDelta(int dx, int dy)
 {
-	if (!sActive)
+	if (!sActive || !sActive->bInputEnabled)
 		return;
 	// Called directly from KyaWndProc for each WM_INPUT packet (can be multiple
 	// per frame on high-polling-rate mice). Manage() drains these each tick.
@@ -184,7 +200,7 @@ void CFreeCamera::AccumulateRawDelta(int dx, int dy)
 
 void CFreeCamera::ScrollCallback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
 {
-	if (!sActive) {
+	if (!sActive || !sActive->bInputEnabled) {
 		return;
 	}
 

@@ -54,12 +54,12 @@ static LRESULT CALLBACK KyaWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 			return HTCLIENT;
 	}
 
-	// When the free camera is active, GLFW_CURSOR_DISABLED is set and GLFW uses
+	// When free camera controls are enabled, GLFW_CURSOR_DISABLED is set and GLFW uses
 	// WM_INPUT (raw mouse) for delta — it ignores WM_MOUSEMOVE entirely. ImGui
 	// doesn't need WM_MOUSEMOVE or WM_SETCURSOR either when the cursor is hidden.
 	// Eating them here prevents the pointless KyaWndProc→ImGui(GetPropA×2)→
 	// GLFW(GetPropW) dispatch chain from running on every mouse message.
-	if (CFreeCamera::IsActive())
+	if (CFreeCamera::IsCapturingInput())
 	{
 		switch (msg)
 		{

@@ -137,6 +137,10 @@ public:
 	int nbGeneratedMoney;
 
 	CAddOnGenerator_SubObj subObj;
+
+#ifdef PLATFORM_WIN
+	CActor* pOwningActorDebug;
+#endif
 };
 
 #endif // _ACTOR_BONUS_SERVICES_H

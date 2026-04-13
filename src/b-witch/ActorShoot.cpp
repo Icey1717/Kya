@@ -1,6 +1,33 @@
 #include "ActorShoot.h"
 #include "MemoryStream.h"
 
+CActorShoot::~CActorShoot()
+{
+	//(this->base).base.base.pVTable = (CActorFighterVTable*)&_vt;
+	//lVar1 = (**(code**)(*(int*)&this->field_0x360 + 0x14))();
+	//if (lVar1 != 0) {
+	//	StaticMeshComponent::Term((StaticMeshComponent*)&this->field_0x360, CScene::_scene_handleA);
+	//}
+	this->addOnGenerator.Term();
+	//if (this != (CActorShoot*)0xfffff810) {
+	//	*(CBehaviourVtable**)&this->field_0x7f0 = &CBehaviourShootFireWave::_vt;
+	//	CConicalWaveShoot::~CConicalWaveShoot((long)(int)&this->conicalWaveShoot, 0xffffffffffffffff);
+	//	if ((this != (CActorShoot*)0xfffff810) && (*(CBehaviourVtable**)&this->field_0x7f0 = &CBehaviourShoot::_vt, this != (CActorShoot*)0xfffff810)) {
+	//		*(CBehaviourVtable**)&this->field_0x7f0 = &CBehaviour::_vt;
+	//	}
+	//}
+	//if (((this != (CActorShoot*)0xfffffad0) && (*(CBehaviourVtable**)&this->field_0x530 = &CBehaviourShootFire::_vt, this != (CActorShoot*)0xfffffad0)) &&
+	//	(*(CBehaviourVtable**)&this->field_0x530 = &CBehaviourShoot::_vt, this != (CActorShoot*)0xfffffad0)) {
+	//	*(CBehaviourVtable**)&this->field_0x530 = &CBehaviour::_vt;
+	//}
+	//StaticMeshComponent::~StaticMeshComponent((StaticMeshComponent*)&this->field_0x360, -1);
+	//if (lVar2 != 0) {
+	//	(this->base).base.base.pVTable = (CActorFighterVTable*)&CActorAutonomous::_vt;
+	//	CLifeInterface::~CLifeInterface((long)(int)&(this->base).lifeInterface, 0xffffffffffffffff);
+	//	CActorMovable::~CActorMovable(lVar2, 0);
+	//}
+}
+
 void CActorShoot::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
