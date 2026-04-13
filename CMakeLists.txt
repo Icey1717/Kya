@@ -18,6 +18,8 @@ if(NOT DEFINED ENABLE_MEMORY_PROFILING)
 	set(ENABLE_MEMORY_PROFILING OFF CACHE BOOL "Enable memory profiling")
 endif()
 
+option(ENABLE_STRICT_FLOAT_CONVERSION_ERRORS "Treat implicit float conversions as build errors" ON)
+
 #if either performance or memory profiling is enabled
 if(ENABLE_PERFORMANCE_PROFILING OR ENABLE_MEMORY_PROFILING)
 	# add global define for TRACY_ENABLE
@@ -753,7 +755,18 @@ else()
 	target_compile_features(Kya PUBLIC cxx_std_17)
 	target_compile_definitions(Kya PUBLIC "PLATFORM_WIN")
 
-	target_compile_options(Kya PUBLIC "-Wno-c++11-narrowing" "-w")
+	if (ENABLE_STRICT_FLOAT_CONVERSION_ERRORS)
+		if (MSVC)
+			target_compile_options(Kya PUBLIC /we4244 /we4305)
+		else()
+			target_compile_options(Kya PUBLIC
+				"-Wno-everything"
+				"-Wimplicit-float-conversion"
+				"-Werror=implicit-float-conversion")
+		endif()
+	else()
+		target_compile_options(Kya PUBLIC "-Wno-c++11-narrowing" "-w")
+	endif()
 
 	target_include_directories(Kya PUBLIC 
 		"${src_root}" "${src_root}/b-witch"
