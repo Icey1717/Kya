@@ -14861,7 +14861,7 @@ bool CActorHeroPrivate::GetSomethingInFrontOf_001473e0()
 
 	CCollisionRay CStack64 = CCollisionRay(1.4f, &local_20, &g_xVector);
 	float fVar8 = CStack64.Intersect(RAY_FLAG_ACTOR_SCENERY, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
-	return fVar8 == 1e+30;
+	return fVar8 == 1e+30f;
 }
 
 int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)

@@ -416,7 +416,7 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 				CStack128.ChangeLeadVector(&local_50);
 				fVar1 = CStack128.Intersect(3, (CActor*)this, (CActor*)0x0, 0x7fffffff, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 
-				if (fVar1 == 1e+30) {
+				if (fVar1 == 1e+30f) {
 					this->field_0x7e4 = this->field_0x7e4 + 1;
 				}
 				else {

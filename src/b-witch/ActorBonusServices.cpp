@@ -406,7 +406,7 @@ void CActInstance::FUN_00397ba0()
 		local_50.y = this->currentPosition.y - 0.2f;
 
 		CCollisionRay CStack112 = CCollisionRay(fVar5, &local_50, &local_20);
-		if (CStack112.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &eStack64, (_ray_info_out*)0x0) == 1e+30) {
+		if (CStack112.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &eStack64, (_ray_info_out*)0x0) == 1e+30f) {
 			edF32Vector4ScaleHard(fVar5, &local_20, &local_20);
 		}
 		else {

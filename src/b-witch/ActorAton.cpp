@@ -145,7 +145,7 @@ void CActorAton::CheckpointReset()
 	ClearLocalData();
 
 	fVar4 = this->field_0x1c0.x;
-	if (fVar4 == 1e+30) {
+	if (fVar4 == 1e+30f) {
 		iVar1 = this->pathPlaneArray.GetNbPathPlane();
 		if (iVar1 != 0) {
 			this->waypointLocation = *this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();

@@ -18,6 +18,7 @@
 #include "ActorWind.h"
 #include "ActorWolfen.h"
 #include "ActorJamGut.h"
+#include "ActorBonusFountain.h"
 #include "ActorShip.h"
 #include "ActorNativShop.h"
 #include "ActorSwitch.h"
@@ -34,6 +35,7 @@
 #include "Actor/DebugActorWolfen.h"
 #include "Actor/DebugActorBehaviour.h"
 #include "Actor/DebugActorJamGut.h"
+#include "Actor/DebugActorBonusFountain.h"
 #include "Actor/DebugActorShip.h"
 #include "Actor/DebugActorNativShop.h"
 #include "Actor/DebugActorSwitch.h"
@@ -835,6 +837,12 @@ namespace Debug {
 			CActorJamGut* pJamGutActor = static_cast<CActorJamGut*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::JamGut::ShowJamGutActorDetails(pJamGutActor);
+		}
+
+		if (pActor->typeID == BONUS_FOUNTAIN) {
+			CActorBonusFountain* pBonusFountainActor = static_cast<CActorBonusFountain*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::BonusFountain::ShowBonusFountainActorDetails(pBonusFountainActor);
 		}
 
 		if (pActor->typeID == SHIP) {

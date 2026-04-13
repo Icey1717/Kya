@@ -214,6 +214,11 @@ namespace Debug::Cinematic
 		return flags;
 	}
 
+	static bool HasInitializedCinData(const CCinematic* pCinematic) {
+		return ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CIN_DATA_INITIALIZED) != 0) &&
+			(pCinematic->cinFileData.pCinTag != nullptr);
+	}
+
 	static void ShowSaveContextWindow(bool* bOpen, CCinematicManager* pCinematicManager)
 	{
 		ImGui::SetNextWindowSize(ImVec2(1100.0f, 420.0f), ImGuiCond_FirstUseEver);
@@ -345,7 +350,7 @@ namespace Debug::Cinematic
 			(pCinematic->triggerActorRef.index >= 0 && pCinematic->triggerActorRef.Get())
 			? pCinematic->triggerActorRef.Get()->name : "None");
 
-		if (pCinematic->cineBankLoadStage_0x2b4 == 4 && pCinematic->cinFileData.pCinTag) {
+		if (HasInitializedCinData(pCinematic)) {
 			auto& currentTime = pCinematic->totalCutsceneDelta;
 			float totalTime = pCinematic->cinFileData.pCinTag->totalPlayTime;
 
@@ -418,8 +423,9 @@ namespace Debug::Cinematic
 						}
 					}
 					else {
-						if (ImGui::Button("Load")) {
+						if (ImGui::Button("Load + Play")) {
 							pCinematic->Load(1);
+							pCinematic->Start();
 						}
 					}
 				}
@@ -502,7 +508,7 @@ namespace Debug::Cinematic
 					ImGui::PopID();
 				}
 
-				if (gSkipCutscenes && pCinematic->state == CS_Playing && pCinematic->cinFileData.pCinTag) {
+				if (gSkipCutscenes && pCinematic->state == CS_Playing && HasInitializedCinData(pCinematic)) {
 					pCinematic->totalCutsceneDelta = pCinematic->cinFileData.pCinTag->totalPlayTime;
 				}
 			}

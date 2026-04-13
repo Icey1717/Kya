@@ -100,6 +100,19 @@ Path::DrawPathFollowReaderAbsolute(pTraj->pathFollowReaderAbs, true);
 
 Each loaded comeback-capable behaviour has its own section with position/angle/state details. This is useful for verifying patrol/return behaviour when switching between watchdog, track, guard-area, and DCA variants.
 
+### 4. Bonus fountain instance link debug
+
+`DebugActorBonusFountain.cpp` exposes a `Draw Bonus Instance Links` toggle that iterates `CActorBonusFountain::addOnGenerator.aInstances`, filters active bonus instances (`flags & 8`), and queues:
+
+```cpp
+Renderer::Native::DebugShapes::AddLine(
+    fountainPos.x, fountainPos.y, fountainPos.z,
+    instancePos.x, instancePos.y, instancePos.z,
+    0.2f, 0.9f, 1.0f, 0.95f);
+```
+
+This draws world-space links from the bonus fountain actor to each active spawned `CBnsInstance` so spawn/dispersion behavior is easy to inspect.
+
 ---
 
 ## Recommended pattern for adding new on-screen debug info

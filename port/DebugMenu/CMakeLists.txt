@@ -95,6 +95,8 @@ set(SOURCES
 	"src/Actor/DebugActorMovingPlatform.cpp"
 	"src/Actor/DebugActorJamGut.h"
 	"src/Actor/DebugActorJamGut.cpp"
+	"src/Actor/DebugActorBonusFountain.h"
+	"src/Actor/DebugActorBonusFountain.cpp"
 
 	"src/Components/DebugVision.h"
 	"src/Components/DebugVision.cpp"

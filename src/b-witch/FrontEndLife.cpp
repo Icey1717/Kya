@@ -597,7 +597,7 @@ void CFrontendLifeGauge::UpdateInternal()
 		}
 
 		fVar6 = this->valueMax;
-		fVar5 = pLife->GetValue();
+		fVar5 = pLife->GetValueMax();
 		if (((fVar6 != fVar5) && (fVar6 != -1.0f)) && (this->field_0x378 == 0)) {
 			this->field_0x378 = 1;
 			this->valueMax = pLife->GetValueMax();
