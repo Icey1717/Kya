@@ -982,10 +982,10 @@ void CLightSun::Manage()
 		fVar3 = (this->colorModel).ambientColor.x;
 		fVar4 = (this->colorModel).ambientColor.y;
 		fVar5 = (this->colorModel).ambientColor.z;
-		pfVar2->x = pfVar2->x + (this->baseShape).direction.w * -1.0;
-		pfVar2->y = pfVar2->y + fVar3 * -1.0;
-		pfVar2->z = pfVar2->z + fVar4 * -1.0;
-		pfVar2->w = pfVar2->w + fVar5 * -1.0;
+	pfVar2->x = pfVar2->x + (this->baseShape).direction.w * -1.0f;
+	pfVar2->y = pfVar2->y + fVar3 * -1.0f;
+	pfVar2->z = pfVar2->z + fVar4 * -1.0f;
+	pfVar2->w = pfVar2->w + fVar5 * -1.0f;
 		pfVar3 = &((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightColorMatrix->vector[iVar2];
 		fVar3 = (this->colorModel).field_0x20.x;
 		fVar4 = (this->colorModel).field_0x20.y;
@@ -1995,7 +1995,7 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 		else {
 			fVar9 = (1.0f - (pBVar6->direction.x * pBaseShapeB->direction.x +
 				pBVar6->direction.y * pBaseShapeB->direction.y +
-				pBVar6->direction.z * pBaseShapeB->direction.z)) / 2.0;
+	pBVar6->direction.z * pBaseShapeB->direction.z)) / 2.0f;
 		}
 	}
 	else {

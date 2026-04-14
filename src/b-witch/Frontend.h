@@ -111,7 +111,7 @@ public:
 	void SetValueMax(float max);
 
 	void SetPriority(int newPriority);
-	float GetPriority();
+	int GetPriority();
 
 	float GetPercent();
 };

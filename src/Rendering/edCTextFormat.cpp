@@ -690,14 +690,14 @@ void edCTextFormat::GetRect()
 	fVar16 = 0.0f;
 	uVar7 = flags_0x28 & 3;
 	if ((uVar7 != 0) && (fVar16 = 0.0f - field_0x8, uVar7 == 2)) {
-		fVar16 = fVar16 * 0.5;
+			fVar16 = fVar16 * 0.5f;
 	}
 	offsetX_0x0 = fVar16;
 	field_0xc = fVar14;
 	fVar14 = 0.0f;
 	uVar7 = flags_0x28 & 0xc;
 	if ((uVar7 != 0) && (fVar14 = 0.0f - field_0xc, uVar7 == 8)) {
-		fVar14 = fVar14 * 0.5;
+			fVar14 = fVar14 * 0.5f;
 	}
 	offsetY_0x4 = fVar14;
 	return;

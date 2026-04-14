@@ -123,13 +123,13 @@ namespace Debug::Components::Vision
 			// prism at the slice's mid-angle direction.  Drawn first so wireframe sits on top.
 			if (bFilled) {
 				constexpr int kFillSlices = 8;
-				const float dTheta    = 2.0f * halfAngle / kFillSlices;
+				const float dTheta    = 2.0f * halfAngle / (float)kFillSlices;
 				const float avgR      = (innerRadius + totalLen) * 0.5f;
 				const float halfDepth = range * 0.5f;
 				const float sliceHW   = avgR * sinf(dTheta * 0.5f);
 
 				for (int i = 0; i < kFillSlices; ++i) {
-					const float theta = -halfAngle + (i + 0.5f) * dTheta;
+					const float theta = -halfAngle + ((float)i + 0.5f) * dTheta;
 					const float cosT  = cosf(theta), sinT = sinf(theta);
 					// Mid-direction of this slice in XZ.
 					const float mdx = dfx * cosT - dfz * sinT;

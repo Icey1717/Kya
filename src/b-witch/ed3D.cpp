@@ -821,7 +821,7 @@ void ed3DPrimlistMatrixBufferReset(void)
 	DmaMatrixBufferCurrent = DmaMatrixBuffer + 1;
 	DmaMatrixBuffer->pObjToWorld = &gF32Matrix4Unit;
 	DmaMatrixDefault->pHierarchy = &ed_3d_hierarchy_0048cad0;
-	DmaMatrixDefault->normalScale = 1.0;
+	DmaMatrixDefault->normalScale = 1.0f;
 	(DmaMatrixDefault)->pNext = (edNODE*)DmaMatrixDefault;
 	(DmaMatrixDefault)->pPrev = (edNODE*)DmaMatrixDefault;
 	(DmaMatrixDefault)->pData = gNodeDmaStrip;
@@ -2019,7 +2019,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToScreen->cc = fVar4 * (projectionScaleFactorB * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - projectionScaleFactorA * fVar1);
 	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * projectionScaleFactorA - fVar1 * nearClip * projectionScaleFactorB);
 
-	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * 1.0f, finalHorizontalHalfFOV * 1.0f, negHalfFOV * 1.0f, baseHorizontalHalfFOV * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * 1.0f, finalHorizontalHalfFOV * 1.0f, negHalfFOV * 1.0f, baseHorizontalHalfFOV * 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToCulling, &projectionMatrix, &screenMatrix);
 	fVar2 = nearClip * 1.0f;
@@ -4386,7 +4386,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				}
 				else {
 					if ((uVar26 != uVar12) && (piVar21 = (int*)0x0, uVar26 == uVar7)) {
-						fVar11 = 1.0;
+	fVar11 = 1.0f;
 						local_30 = piVar14 + (uVar7 - 2) * fullMeshSectionCount * 4 + 4;
 						piVar21 = piVar14 + uVar12 * fullMeshSectionCount * 4 + 4;
 					}
@@ -5008,12 +5008,12 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 						}
 					}
 					else {
-						local_10.z = zPos$1247;
+						local_10.z = static_cast<float>(zPos$1247);
 					}
 				}
 				else {
 					local_10.x = 2048.0f;
-					local_10.z = zPos$1247;
+					local_10.z = static_cast<float>(zPos$1247);
 					local_10.y = local_10.x;
 				}
 
@@ -7438,7 +7438,7 @@ bool ed3DCheckSpherePacket(ed_3d_strip* param_1)
 			gBoundSphereCenter->x = (pfVar8->field_0x0).x;
 			pVVar4->y = fVar13;
 			pVVar4->z = fVar14;
-			gBoundSphereCenter->w = 1.0;
+	gBoundSphereCenter->w = 1.0f;
 			pVVar4 = gBoundSphereCenter;
 			pMVar2 = gRender_info_SPR->pMeshTransformMatrix;
 			fVar21 = gBoundSphereCenter->x;
@@ -8190,7 +8190,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 						local_240.x = local_230.x;
 						local_240.y = local_230.y;
 						local_240.z = local_230.z;
-						local_240.w = 1.0;
+	local_240.w = 1.0f;
 						edF32Vector4SubHard(&local_250, &local_240, &gRenderCamera->position);
 						edF32Vector4SquareHard(&local_250, &local_250);
 						uVar9 = uVar9 | uVar19;
@@ -8212,7 +8212,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 					(&local_1e0)[uVar14 * 0x10] = (int*)piVar8;
 					(&local_1dc)[uVar14 * 0x10] = (int)reinterpret_cast<char*>(piVar8) + piVar8->size;
 					local_1d8[uVar14 * 0x20] = 1;
-					local_260.w = 1.0;
+	local_260.w = 1.0f;
 					local_230.x = local_260.x;
 					local_230.y = local_260.y;
 					local_230.z = local_260.z;
@@ -8306,7 +8306,7 @@ bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 			octree.field_0x30 = 1.0f;
 			octree.boundingSphereTestResult = 2;
 			location.x = location.x + location.y + location.z;
-			octree.field_0x2c = sqrtf(location.x) * 0.5;
+	octree.field_0x2c = sqrtf(location.x) * 0.5f;
 			octree.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
 			octree.pCDQU_End = reinterpret_cast<char*>(octree.pCDQU) + octree.pCDQU->size;
 			ed3DRenderCluster(&octree);
@@ -9958,7 +9958,7 @@ LAB_002b0d68:
 		gBoundSphereCenter->x = pSphere->x;
 		peVar3->y = fVar6;
 		peVar3->z = fVar7;
-		gBoundSphereCenter->w = 1.0;
+	gBoundSphereCenter->w = 1.0f;
 		peVar3 = gBoundSphereCenter;
 		peVar2 = gRender_info_SPR->pMeshTransformMatrix;
 		fVar14 = gBoundSphereCenter->x;
@@ -10020,7 +10020,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
 
-	std::string aoeuoaeu = "v‰I_RAY_";
+	std::string aoeuoaeu = "vï¿½I_RAY_";
 	std::string oeuthoeu = pHierarchy->hash.name;
 	if (aoeuoaeu == oeuthoeu) {
 		ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
@@ -12369,7 +12369,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 	ED3D_LOG(LogLevel::Info, "ed3DHierarchyAddNode {}", pSourceHierarchy->hash.ToString());
 
-	std::string aoeuoaeu = "v‰I_RAY_";
+	std::string aoeuoaeu = "vï¿½I_RAY_";
 	std::string oeuthoeu = pSourceHierarchy->hash.name;
 	if (aoeuoaeu == oeuthoeu)
 	{

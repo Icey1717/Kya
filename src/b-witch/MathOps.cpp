@@ -1027,7 +1027,7 @@ void edF32Vector3LERPSoft(float alpha, edF32VECTOR3* outWorldLocation, edF32VECT
 	else {
 		/* If the keyframes are different, find somewhere midway through based on current keyframe play
 		   time */
-		remainingKeyframePlayTime = 1.0 - alpha;
+	remainingKeyframePlayTime = 1.0f - alpha;
 		outWorldLocation->x = targetLocation->x * alpha + currentLocation->x * remainingKeyframePlayTime;
 		outWorldLocation->y = targetLocation->y * alpha + currentLocation->y * remainingKeyframePlayTime;
 		outWorldLocation->z = targetLocation->z * alpha + currentLocation->z * remainingKeyframePlayTime;
@@ -2312,7 +2312,7 @@ float edF32Between_2Pi(float param_1)
 {
 	float fVar1;
 
-	fVar1 = fmodf(param_1, 6.283185);
+	fVar1 = fmodf(param_1, 6.283185f);
 	return fVar1;
 }
 

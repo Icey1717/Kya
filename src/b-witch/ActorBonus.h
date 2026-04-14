@@ -106,7 +106,7 @@ public:
 
 	float field_0x1d0;
 	float field_0x1d4;
-	undefined4 field_0x1d8;
+	float field_0x1d8;
 	uint field_0x1dc;
 };
 

@@ -65,7 +65,7 @@ void CCameraFixePerso::Init()
 }
 
 static float FLOAT_00448614 = 0.01f;
-static float FLOAT_00448618 = 0.05;
+static float FLOAT_00448618 = 0.05f;
 static float FLOAT_0044861c = 3.0f;
 static float FLOAT_00448620 = 0.4f;
 

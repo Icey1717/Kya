@@ -73,7 +73,7 @@ void CActorExplosiveDistributor::Create(ByteCode* pByteCode)
 				}
 			}
 
-			pCurProjectile->ejectForce = pByteCode->GetF32() * 1.414213;
+	pCurProjectile->ejectForce = pByteCode->GetF32() * 1.414213f;
 			if (pCurProjectile->ejectForce < 100.0f) {
 				sprintf(acStack1024, "eject force too low for proj. %d\n", this->nbProjectiles - uVar6);
 				pCurProjectile->ejectForce = 100.0f;

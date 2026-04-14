@@ -763,6 +763,9 @@ else()
 				"-Wno-everything"
 				"-Wimplicit-float-conversion"
 				"-Werror=implicit-float-conversion")
+
+			set_source_files_properties("${src_root}/port/vu1_emu.cpp" PROPERTIES
+				COMPILE_OPTIONS "-Wno-implicit-float-conversion;-Wno-implicit-int-float-conversion")
 		endif()
 	else()
 		target_compile_options(Kya PUBLIC "-Wno-c++11-narrowing" "-w")

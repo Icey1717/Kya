@@ -307,7 +307,7 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 
 	pCVar3 = this->pOwner->pShadow;
 	if (pCVar3 != (CShadow*)0x0) {
-		pCVar3->field_0x48 = 0.35;
+		pCVar3->field_0x48 = 0.35f;
 	}
 
 	this->pOwner->UpdateBoundingSphere(this->aMoneyInstances, this->nbMoneyInstances);

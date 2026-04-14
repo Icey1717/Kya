@@ -423,7 +423,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	int iVar8;
 	float fVar9;
 	undefined4 unaff_f20;
-	undefined4 uVar10;
+	float uVar10;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 

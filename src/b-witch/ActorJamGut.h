@@ -261,7 +261,7 @@ public:
 	float field_0x488;
 	float field_0x48c;
 	float field_0x490;
-	float field_0x494;
+	int field_0x494;
 
 	float field_0x4a0;
 	float field_0x4a4;

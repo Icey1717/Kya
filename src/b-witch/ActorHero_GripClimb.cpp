@@ -557,7 +557,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 
 	iVar4 = 0;
 
-	fVar5 = ((this->pCollisionData)->pObbPrim->scale).z + 0.1;
+	fVar5 = ((this->pCollisionData)->pObbPrim->scale).z + 0.1f;
 
 	local_20.x = param_4->x * fVar5 + param_3->x;
 	local_20.y = param_3->y + 1.75f;
@@ -1019,7 +1019,7 @@ bool CActorHeroPrivate::SetNextClimbState(int param_2, int param_3)
 			else {
 				if (0.6 < fVar11) {
 					this->field_0x1455 = 0;
-					SetJumpCfg(0.1, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 0, (edF32VECTOR4*)0x0);
+					SetJumpCfg(0.1f, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 0, (edF32VECTOR4*)0x0);
 					SetState(0x79, 0xffffffff);
 				}
 				else {
@@ -2369,9 +2369,9 @@ void CActorHeroPrivate::StateHeroCeilingClimb(int param_2, int param_3, int para
 	iVar7 = DetectClimbCeiling(&this->currentLocation, (CActor**)0x0);
 	if (iVar7 == 0) {
 		local_50.w = this->dynamic.rotationQuat.w;
-		local_50.x = 0.0 - this->dynamic.rotationQuat.x;
-		local_50.y = 0.0 - this->dynamic.rotationQuat.y;
-		local_50.z = 0.0 - this->dynamic.rotationQuat.z;
+		local_50.x = 0.0f - this->dynamic.rotationQuat.x;
+		local_50.y = 0.0f - this->dynamic.rotationQuat.y;
+		local_50.z = 0.0f - this->dynamic.rotationQuat.z;
 		edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
 		fVar8 = -this->pCollisionData->pObbPrim->scale.z;
 		local_40.x = local_50.x * fVar8 + this->currentLocation.x;

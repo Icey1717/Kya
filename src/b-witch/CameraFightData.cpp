@@ -98,7 +98,7 @@ void CCamFigData::Create(ByteCode* pByteCode)
 	this->field_0x20 = 0.2f;
 	this->field_0x24 = 0.25f;
 
-	fVar6 = local_40[11] * 3.0;
+	fVar6 = local_40[11] * 3.0f;
 	this->vertexDynExtA.Init(0, &gF32Vertex4Zero);
 	this->vertexDynExtE.Init(0, &gF32Vertex4Zero);
 	this->vertexDynExtD.Init(0, &gF32Vertex4Zero);

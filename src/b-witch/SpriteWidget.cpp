@@ -111,7 +111,7 @@ void CSprite::Draw(float ratio, float x1, float y1, float param_4, uint drawFlag
 		}
 	}
 	else {
-		y1 = y1 - fVar4 / 2.0;
+		y1 = y1 - fVar4 / 2.0f;
 		fVar3 = y1 + fVar4;
 	}
 
@@ -126,7 +126,7 @@ void CSprite::Draw(float ratio, float x1, float y1, float param_4, uint drawFlag
 		}
 	}
 	else {
-		fVar4 = param_4 - fVar2 / 2.0;
+		fVar4 = param_4 - fVar2 / 2.0f;
 		fVar2 = fVar4 + fVar2;
 	}
 

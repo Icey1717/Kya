@@ -890,7 +890,7 @@ float CActorMovable::SV_MOV_ManageMovOnPath(CPathFollowReader* pPathFollowReader
 			pMovPathParams->field_0x14 = local_40.x * (this->dynamic).rotationQuat.z - (this->dynamic).rotationQuat.x * local_40.z;
 		}
 		else {
-			if (pMovPathParams->field_0x10 == 0.0f) {
+			if (pMovPathParams->field_0x10 == 0) {
 				edF32Vector4NormalizeHard(&local_40, &local_40);
 				(this->dynamic).rotationQuat = local_40;
 			}
@@ -1791,7 +1791,7 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 
 		fVar5 = acosf(puVar8);
 		fVar2 = 1.0f / fVar2;
-		fVar5 = fVar5 * 2.0;
+		fVar5 = fVar5 * 2.0f;
 
 		local_10.x = (this->quatVelocity).x * fVar2;
 		local_10.y = (this->quatVelocity).y * fVar2;
@@ -1820,7 +1820,7 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 
 		fVar6 = acosf((float)puVar3);
 		fVar2 = 1.0f / fVar2;
-		fVar6 = fVar6 * 2.0;
+		fVar6 = fVar6 * 2.0f;
 		local_20.x = local_30.x * fVar2;
 		local_20.y = local_30.y * fVar2;
 		local_20.z = local_30.z * fVar2;

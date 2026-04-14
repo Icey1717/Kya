@@ -1075,7 +1075,7 @@ void CFrontendEnemy::DrawSpecial()
 			this->spriteGauge.field_0x5c.scale.x = fVar10;
 			this->spriteGauge.field_0x5c.scale.y = fVar11;
 			this->spriteGauge.bValid = false;
-			this->spriteGauge.field_0x5c.position.x = fVar2 * 1.0;
+		this->spriteGauge.field_0x5c.position.x = fVar2 * 1.0f;
 			this->spriteGauge.field_0x5c.position.y = fVar3;
 		}
 

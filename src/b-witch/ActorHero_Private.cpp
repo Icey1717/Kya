@@ -1349,7 +1349,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 					local_30.y = this->currentLocation.y + 0.2f;
 					local_30.z = this->currentLocation.z;
 					local_30.w = 1.0f;
-					CStack80 = CCollisionRay(1.4, &local_30, &g_xVector);
+					CStack80 = CCollisionRay(1.4f, &local_30, &g_xVector);
 					fVar9 = CStack80.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 					if (fVar9 != 1e+30f) goto LAB_0013ee80;
 				}
@@ -9433,7 +9433,7 @@ void CActorHeroPrivate::StateHeroJoke()
 void CActorHeroPrivate::StateHeroSlideSlipInit()
 {
 	ConvertSpeedSumForceExtToSpeedPlayer2D();
-	this->slideSlipIntensity = this->dynamic.speed / 0.2;
+	this->slideSlipIntensity = this->dynamic.speed / 0.2f;
 }
 
 void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB)
@@ -10733,7 +10733,7 @@ void CActorHeroPrivate::StateHeroRoll()
 					}
 
 					if (fVar8 < 0.2f) {
-						SetJumpCfg(0.1, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 1, (edF32VECTOR4*)0x0);
+						SetJumpCfg(0.1f, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 1, (edF32VECTOR4*)0x0);
 						SetState(STATE_HERO_JUMP_1_1_RUN, 0xffffffff);
 						return;
 					}
@@ -10922,7 +10922,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 
 		if (fVar8 == 0.0f) {
 			local_10.x = this->currentLocation.x;
-			local_10.y = this->currentLocation.y + 0.2;
+			local_10.y = this->currentLocation.y + 0.2f;
 			local_10.z = this->currentLocation.z;
 			local_10.w = 1.0;
 			CCollisionRay CStack48 = CCollisionRay(1.4f, &local_10, &g_xVector);
@@ -11341,7 +11341,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 			if ((this->dynamic.flags & 2) != 0) {
 				fVar9 = CCollisionManager::GetWallNormalYLimit(pCVar3->aCollisionContact + 1);
 				fVar8 = CCollisionManager::GetGroundSpeedDecreaseNormalYLimit(pCVar3->aCollisionContact + 1);
-				fVar9 = edFIntervalLERP(pCVar3->aCollisionContact[1].location.y, fVar8, fVar9, 1.0, 0.3);
+	fVar9 = edFIntervalLERP(pCVar3->aCollisionContact[1].location.y, fVar8, fVar9, 1.0f, 0.3f);
 				fVar9 = this->airHorizontalSpeed * fVar9;
 			}
 
@@ -13388,7 +13388,7 @@ void CActorHeroPrivate::ManageBoomyState()
 				edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
 				this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
 				this->pActorBoomy->SetTarget(&eStack32);
-				(this->pActorBoomy)->field_0x1dc = 0.1;
+				(this->pActorBoomy)->field_0x1dc = 0.1f;
 			}
 			else {
 				this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
@@ -14538,7 +14538,7 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 	if ((this->field_0x10c0 + this->field_0x10c4) * 0.5f < this->field_0xa80) {
 		uVar2 = GetInputManager(1, 0);
 		if (uVar2 != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0, 0.0, 0.2, 0.0, &uVar2->field_0x40, 0);
+			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &uVar2->field_0x40, 0);
 		}
 
 		SetState(STATE_HERO_TOBOGGAN_CRASH, 0xffffffff);
@@ -14546,7 +14546,7 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 	else {
 		uVar3 = GetInputManager(1, 0);
 		if (uVar3 != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0, 0.0, 0.1, 0.0, &uVar3->field_0x40, 0);
+			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &uVar3->field_0x40, 0);
 		}
 
 		SetState(STATE_HERO_TOBOGGAN_JUMP_2, 0xffffffff);
@@ -14838,11 +14838,13 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 				iVar6 = 5;
 			}
 
-			local_90.damage = (float)iVar6 * 2.0;
+			local_90.damage = (float)iVar6 * 2.0f;
 			goto LAB_0013e9f0;
 		}
 	}
+
 	local_90.damage = 2.0f;
+
 LAB_0013e9f0:
 	local_90.flags = 1;
 	local_90.projectileType = 0;
@@ -16222,7 +16224,7 @@ void CActorHeroPrivate::ProcessDeath()
 				if (0.0f < fVar7 - this->field_0x2e4) {
 					iVar4 = CLevelScheduler::ScenVar_Get(4);
 					if (iVar4 == 0) {
-						GetLifeInterface()->SetValue(CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE));
+						GetLifeInterface()->SetValue(static_cast<float>(CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE)));
 						fVar7 = GetLifeInterface()->GetValue();
 						fVar8 = this->magicInterface.GetValue();
 						fVar9 = this->moneyInterface.GetValue();
@@ -16253,8 +16255,7 @@ void CActorHeroPrivate::ProcessDeath()
 					this->field_0x2e4 = 0.0f;
 					FUN_00325c40(20.0f, 0);
 
-					iVar4 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
-					GetLifeInterface()->SetValue(iVar4);
+					GetLifeInterface()->SetValue(static_cast<float>(CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE)));
 					fVar7 = GetLifeInterface()->GetValue();
 					fVar8 = this->magicInterface.GetValue();
 					fVar9 = this->moneyInterface.GetValue();

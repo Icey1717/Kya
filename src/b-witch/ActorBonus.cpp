@@ -1320,7 +1320,7 @@ void CBehaviourBonusFlock::Draw()
 					iVar6 = pCurInstance->instanceIndex;
 					iVar12 = iVar6 * 4;
 					uint* pSt = pNewPatch->pCurrentPatch->pSt;
-					local_14 = (float)(iVar19 >> 3) * 0.5;
+					local_14 = (float)(iVar19 >> 3) * 0.5f;
 					puVar15 = (undefined2*)(pSt + (iVar12 + 0));
 					puVar14 = (undefined2*)(pSt + (iVar12 + 1));
 					puVar11 = (undefined2*)(pSt + (iVar12 + 3));

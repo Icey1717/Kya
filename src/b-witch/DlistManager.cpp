@@ -39,7 +39,7 @@ void FUN_00290620(float param_1, int param_2, char* param_3, long param_4, char*
 		}
 		else {
 			if (param_1 < FLOAT_00448510) {
-				for (; param_1 < 1.0; param_1 = param_1 * 10.0) {
+					for (; param_1 < 1.0f; param_1 = param_1 * 10.0f) {
 					iVar1 = iVar1 + -1;
 				}
 			}
@@ -61,7 +61,7 @@ void FUN_00290620(float param_1, int param_2, char* param_3, long param_4, char*
 	}
 	fVar6 = 1.0;
 	for (iVar3 = 0; iVar3 < param_2; iVar3 = iVar3 + 1) {
-		fVar6 = fVar6 * 10.0;
+		fVar6 = fVar6 * 10.0f;
 	}
 	if (2.147484e+09f < fVar7 * fVar6) {
 		sprintf(param_3, "%s", "ERROR");

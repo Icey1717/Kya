@@ -1851,13 +1851,13 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 		this->field_0x8 = fVar2;
 		pMemoryStream->GetF32();
 		pMemoryStream->GetF32();
-		this->field_0xc = 0.1;
+	this->field_0xc = 0.1f;
 		fVar2 = pMemoryStream->GetF32();
-		this->field_0x10 = fVar2 * 0.01745329;
+	this->field_0x10 = fVar2 * 0.01745329f;
 		pMemoryStream->GetF32();
-		this->field_0x14 = 0.0;
+	this->field_0x14 = 0.0f;
 		fVar2 = pMemoryStream->GetF32();
-		this->field_0x18 = fVar2 * 0.01745329;
+	this->field_0x18 = fVar2 * 0.01745329f;
 		fVar2 = pMemoryStream->GetF32();
 		this->field_0x1c = fVar2;
 		fVar2 = pMemoryStream->GetF32();
@@ -1866,15 +1866,15 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 		pMemoryStream->GetF32();
 	}
 	else {
-		this->field_0x0 = 0.5;
-		this->field_0x4 = 0.0;
-		this->field_0x8 = 4.0;
-		this->field_0xc = 0.1;
-		this->field_0x10 = 0.0;
-		this->field_0x14 = 0.0;
-		this->field_0x18 = 3.141593;
-		this->field_0x1c = 0.0;
-		this->field_0x20 = 8.0;
+	this->field_0x0 = 0.5f;
+	this->field_0x4 = 0.0f;
+	this->field_0x8 = 4.0f;
+	this->field_0xc = 0.1f;
+	this->field_0x10 = 0.0f;
+	this->field_0x14 = 0.0f;
+	this->field_0x18 = 3.141593f;
+	this->field_0x1c = 0.0f;
+	this->field_0x20 = 8.0f;
 	}
 	return uVar1 == 1;
 }

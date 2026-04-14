@@ -458,7 +458,7 @@ void CFrontendMagicGauge::DrawMagic_BonusFlare()
 		edDListTexCoo2f(0.0f, 0.0f);
 		edDListTexCoo2f(1.0f, 1.0f);
 		edDListWidthHeight2f(0.15f, 0.15f);
-		edDListColor4u8(0x80, 0x80, 0x80, static_cast<uint8_t>((rand() / 2147483648.0f) * 96.0f + 64.0f));
+		edDListColor4u8(0x80, 0x80, 0x80, static_cast<uint8_t>((static_cast<float>(rand()) / 2147483648.0f) * 96.0f + 64.0f));
 		edDListVertex4f(cosValue1, cosValue2, 0.0f, 0.0f);
 		edDListEnd();
 

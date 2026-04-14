@@ -3860,7 +3860,7 @@ void CActor::ComputeAltitude()
 			rayLocation.y = rayLocation.y - this->distanceToGround;
 			pShadow->position = rayLocation;
 			pShadow->field_0x4c = this->rotationEuler.y;
-			pShadow->SetIntensity(1.0 - this->distanceToGround / this->field_0xf0);
+						pShadow->SetIntensity(1.0f - this->distanceToGround / this->field_0xf0);
 			pShadow->field_0x20 = local_20;
 		}
 

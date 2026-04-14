@@ -400,10 +400,10 @@ void CCameraGame::Init()
 	else {
 		this->field_0x2dc = 0.0f;
 		if ((this->cameraConfig.flags & 0x8000) != 0) {
-			this->field_0x2dc = this->field_0x2dc + 50.0;
+	this->field_0x2dc = this->field_0x2dc + 50.0f;
 		}
 		if ((this->cameraConfig.flags & 0x10000) != 0) {
-			this->field_0x2dc = this->field_0x2dc + 100.0;
+	this->field_0x2dc = this->field_0x2dc + 100.0f;
 		}
 	}
 
@@ -640,7 +640,7 @@ LAB_002c2a30:
 						fVar7 = fVar8;
 					}
 
-					CStack96 = CCollisionRay(fVar7, this->field_0x204, fVar6 + 0.8, &this->gameLookAt, &eStack64);
+	CStack96 = CCollisionRay(fVar7, this->field_0x204, fVar6 + 0.8f, &this->gameLookAt, &eStack64);
 					edF32Vector4ScaleHard(-1.0f, &eStack64, &eStack64);
 					pCVar1 = GetTarget();
 					fVar8 = CStack96.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
@@ -655,7 +655,7 @@ LAB_002c2a30:
 				else {
 					this->field_0x1b0 = this->field_0x1b0 | 0x80;
 					this->field_0x1b0 = this->field_0x1b0 & 0xfffffeff;
-					this->cameraConfig.field_0x90 = fVar5 * 1.745329 * 1.0f;
+	this->cameraConfig.field_0x90 = fVar5 * 1.745329f * 1.0f;
 					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 					this->field_0x1b0 = this->field_0x1b0 | 8;
 				}
@@ -694,7 +694,7 @@ LAB_002c2a30:
 			else {
 				this->field_0x1b0 = this->field_0x1b0 | 0x100;
 				this->field_0x1b0 = this->field_0x1b0 & 0xffffff7f;
-				this->cameraConfig.field_0x90 = fVar8 * 1.745329 * -1.0f;
+	this->cameraConfig.field_0x90 = fVar8 * 1.745329f * -1.0f;
 				this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 				this->field_0x1b0 = this->field_0x1b0 | 0x10;
 			}
@@ -767,8 +767,8 @@ LAB_002c2a30:
 					fVar6 = fVar8;
 				}
 
-				fVar8 = edF32Between_0_2Pi(this->field_0x204 + -0.1963495);
-				CStack144 = CCollisionRay(fVar6, fVar8, fVar7 + 0.8, &this->gameLookAt, &eStack112);
+	fVar8 = edF32Between_0_2Pi(this->field_0x204 + -0.1963495f);
+	CStack144 = CCollisionRay(fVar6, fVar8, fVar7 + 0.8f, &this->gameLookAt, &eStack112);
 				edF32Vector4ScaleHard(-1.0f, &eStack112, &eStack112);
 				pCVar1 = GetTarget();
 				fVar8 = CStack144.Intersect(this->cameraRayFlags, pCVar1, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
@@ -890,7 +890,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		}
 		else {
 			fVar9 = (v1->field_0x0).y;
-			(v1->field_0x0).y = fVar9 + (((this->field_0x1c0).y - fVar8) - fVar9) * 0.1;
+	(v1->field_0x0).y = fVar9 + (((this->field_0x1c0).y - fVar8) - fVar9) * 0.1f;
 			this->field_0x1e4 = pCVar2->distanceToGround;
 		}
 	}
@@ -1372,7 +1372,7 @@ bool CCameraGame::AlertCamera(int alertType, void* pParams, CCamera* pOtherCamer
 	this->actorsTable.nbEntries = 0;
 
 	if ((this->cameraConfig.flags & 0x20000) != 0) {
-		this->cameraConfig.field_0x58.z = (this->subObj_12).field_0x20 + peVar11->x + 1.0;
+	this->cameraConfig.field_0x58.z = (this->subObj_12).field_0x20 + peVar11->x + 1.0f;
 	}
 
 	this->angleBeta_0x1e8 = GetAngleYFromVector(&GetTarget()->rotationQuat);
@@ -2051,13 +2051,13 @@ void CCameraGame::CameraFunc_002c5b50()
 		*puVar4 = *puVar4 | 0x10000;
 		fVar7 = this->cameraConfig.field_0xbc;
 		fVar5 = edF32Between_Pi(this->targetPitch + 0.1963495f);
-		fVar6 = -1.570796;
+	fVar6 = -1.570796f;
 
 		if (-1.570796 <= fVar5) {
 			fVar6 = fVar5;
 		}
 
-		fVar5 = 1.570796;
+	fVar5 = 1.570796f;
 		if (fVar6 <= 1.570796) {
 			fVar5 = fVar6;
 		}
@@ -2129,7 +2129,7 @@ void CCameraGame::CameraFunc_002c5b50()
 				if (((uVar1 & 0x1000) != 0) && ((uVar1 & 0x800) == 0)) {
 					this->field_0x1b0 = this->field_0x1b0 | 0x80;
 					this->field_0x1b0 = this->field_0x1b0 & 0xfffffeff;
-					this->cameraConfig.field_0x90 = fVar5 * 1.0;
+	this->cameraConfig.field_0x90 = fVar5 * 1.0f;
 					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 				}
 
@@ -2137,7 +2137,7 @@ void CCameraGame::CameraFunc_002c5b50()
 					fVar6 = this->cameraConfig.field_0x34;
 					this->field_0x1b0 = this->field_0x1b0 | 0x100;
 					this->field_0x1b0 = this->field_0x1b0 & 0xffffff7f;
-					this->cameraConfig.field_0x90 = fVar6 * -1.0;
+	this->cameraConfig.field_0x90 = fVar6 * -1.0f;
 					this->cameraConfig.field_0x94 = this->cameraConfig.field_0x38.x;
 				}
 			}
@@ -2440,7 +2440,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						local_30.x = this->transformationMatrix.da;
 						local_30.z = this->transformationMatrix.dc;
 						local_30.w = this->transformationMatrix.dd;
-						local_30.y = this->transformationMatrix.db - 0.8;
+												local_30.y = this->transformationMatrix.db - 0.8f;
 						/* The below functions usually return the large float, and so the code never runs in the if
 						   check below
 						   Suspect that these are here for cinematic shots (getting shot from a cannon) */

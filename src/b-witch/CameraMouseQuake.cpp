@@ -381,7 +381,7 @@ bool CCameraMouseQuake::Manage()
 			}
 
 			if (bVar2) {
-				edF32Vector4ScaleHard(fVar8 * 6.0, &local_30, &this->transformationMatrix.rowX);
+				edF32Vector4ScaleHard(fVar8 * 6.0f, &local_30, &this->transformationMatrix.rowX);
 				edF32Vector4AddHard(&local_20, &local_20, &local_30);
 			}
 

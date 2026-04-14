@@ -609,7 +609,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 
 	pCollisionRef = this->pCollisionData;
 
-	bVar5 = PlayWaitingAnimation(0x40800000, ((float)rand() / 2.147484e+09) * 0.4f + 0.8f, this->field_0x400, -1, 1);
+	bVar5 = PlayWaitingAnimation(0x40800000, ((float)rand() / 2.147484e+09f) * 0.4f + 0.8f, this->field_0x400, -1, 1);
 	if ((bVar5 != false) && (this->field_0x400 = this->field_0x400 + 1, this->field_0x400 == 0x13)) {
 		this->field_0x400 = 0x11;
 	}

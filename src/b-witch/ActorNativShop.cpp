@@ -552,8 +552,8 @@ void CBehaviourNativShopSell::Draw()
 			gSHO_Cursor1OffsetX = cosf(gSHO_Cursor1OffsetXTime) * 0.05f + 1.05f;
 			gSHO_Cursor1OffsetXTime = edF32Between_2Pi(gSHO_Cursor1OffsetXTime + GetTimer()->cutsceneDeltaTime * 9.424778f);
 		}
-		Display_Cursor(-0.25, gCursorColorA);
-		Display_Cursor(-0.05, gCursorColorB);
+	Display_Cursor(-0.25f, gCursorColorA);
+	Display_Cursor(-0.05f, gCursorColorB);
 		GameDList_EndCurrent();
 	}
 
@@ -812,7 +812,7 @@ void CBehaviourNativShopSell::InitState(int newState)
 
 	if (newState == 9) {
 		this->field_0xac = CLevelScheduler::_gGameNfo.nbMoney;
-		this->field_0xa8 = this->field_0xac;
+		this->field_0xa8 = static_cast<float>(this->field_0xac);
 	}
 	else {
 		if (newState == NATIV_SHOP_STATE_DISPLAY) {

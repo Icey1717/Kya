@@ -1693,13 +1693,13 @@ void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CAc
 					}
 				}
 				if (this->field_0x340 == 2) {
-					local_10.x = -this->vector_0x2f0 + this->field_0x2e8 * 0.25;
-					local_10.z = this->field_0x2e8 + this->vector_0x2f0 * 0.25;
+					local_10.x = -this->vector_0x2f0 + this->field_0x2e8 * 0.25f;
+					local_10.z = this->field_0x2e8 + this->vector_0x2f0 * 0.25f;
 				}
 				else {
 					if (this->field_0x340 == 1) {
-						local_10.x = this->vector_0x2f0 + this->field_0x2e8 * 0.25;
-						local_10.z = -this->field_0x2e8 + this->vector_0x2f0 * 0.25;
+						local_10.x = this->vector_0x2f0 + this->field_0x2e8 * 0.25f;
+						local_10.z = -this->field_0x2e8 + this->vector_0x2f0 * 0.25f;
 					}
 				}
 
@@ -1798,7 +1798,7 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 					fVar4 = fVar5;
 				}
 				uVar1 = pParamsOut->flags;
-				fVar4 = (fVar3 * 0.5) / fVar4;
+				fVar4 = (fVar3 * 0.5f) / fVar4;
 				if ((uVar1 & 0x40) == 0) {
 					if ((uVar1 & 0x80) != 0) {
 						fVar3 = fVar4 * pParamsOut->rotSpeed + 0.001f;
@@ -1809,7 +1809,7 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 					}
 				}
 				else {
-					pParamsOut->rotSpeed = pParamsOut->speed / fVar4 + 0.001;
+					pParamsOut->rotSpeed = pParamsOut->speed / fVar4 + 0.001f;
 					pParamsOut->flags = pParamsOut->flags | 2;
 				}
 			}

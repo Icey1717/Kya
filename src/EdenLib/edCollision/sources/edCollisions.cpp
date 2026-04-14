@@ -654,12 +654,12 @@ uint edColIntersectRaySphereUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_SPHER
 	peVar2 = pPrimRaySphereIn->pRayOrigin;
 	peVar3 = pPrimRaySphereIn->pRayOrigin;
 	peVar4 = pPrimRaySphereIn->pRayOrigin;
-	fVar9 = (peVar1->x * peVar2->x + peVar1->y * peVar2->y + peVar1->z * peVar2->z) * 2.0;
-	fVar6 = fVar9 * fVar9 - fVar8 * 4.0 * ((peVar3->x * peVar4->x + peVar3->y * peVar4->y + peVar3->z * peVar4->z) - 1.0);
+	fVar9 = (peVar1->x * peVar2->x + peVar1->y * peVar2->y + peVar1->z * peVar2->z) * 2.0f;
+	fVar6 = fVar9 * fVar9 - fVar8 * 4.0f * ((peVar3->x * peVar4->x + peVar3->y * peVar4->y + peVar3->z * peVar4->z) - 1.0f);
 	uVar5 = 0xffffffff;
 	if (0.0 <= fVar6) {
 		fVar6 = sqrtf(fVar6);
-		fVar7 = 1.0 / (fVar8 * 2.0);
+	fVar7 = 1.0f / (fVar8 * 2.0f);
 		fVar8 = fVar7 * (-fVar9 + fVar6);
 		fVar7 = fVar7 * (-fVar9 - fVar6);
 		uVar5 = (uint)(0.0 <= fVar7);
@@ -671,7 +671,7 @@ uint edColIntersectRaySphereUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_SPHER
 		else {
 			if ((0.0 <= fVar7) && (fVar7 <= 1.0)) {
 				uVar5 = 0xffffffff;
-				fVar8 = (fVar8 + fVar7) * 0.5;
+	fVar8 = (fVar8 + fVar7) * 0.5f;
 			}
 		}
 		if (0.0 <= fVar8) {
@@ -685,7 +685,7 @@ uint edColIntersectRaySphereUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_SPHER
 			fVar12 = peVar1->y;
 			fVar13 = peVar1->z;
 			fVar14 = peVar1->w;
-			pColInfoOut->penetrationDepth = fVar8 - 1.0;
+	pColInfoOut->penetrationDepth = fVar8 - 1.0f;
 			(pColInfoOut->intersectionPoint).x = fVar6 * fVar8 + fVar11;
 			(pColInfoOut->intersectionPoint).y = fVar9 * fVar8 + fVar12;
 			(pColInfoOut->intersectionPoint).z = fVar7 * fVar8 + fVar13;

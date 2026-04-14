@@ -151,8 +151,8 @@ public:
 
 	int field_0x64;
 
-	undefined4 field_0x68;
-	undefined4 field_0x6c;
+	float field_0x68;
+	float field_0x6c;
 
 	float field_0x70;
 	float field_0x74;
@@ -671,7 +671,7 @@ public:
 
 	s_fighter_action field_0x450;
 
-	undefined4 field_0x474;
+	float field_0x474;
 	float field_0x47c;
 	int standAnim;
 

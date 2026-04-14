@@ -2902,7 +2902,7 @@ void CActorFighter::_InterpretCollisions(int param_2)
 
 			fVar9 = acosf(puVar8);
 
-			static float FLOAT_00448b08 = 15.707964;
+	static float FLOAT_00448b08 = 15.707964f;
 
 			this->field_0x7b4 = fVar9 / fVar11;
 			if (FLOAT_00448b08 < this->field_0x7b4) {
@@ -7422,8 +7422,8 @@ void StaticMeshComponentAdvanced::ResetInternal(int textureIndex, int meshIndex)
 	this->Reset();
 
 	if ((gVideoConfig.isNTSC == 0) && (peVar1 = GetTextureAnimSpeedNormalExtruder(), peVar1 != (edF32VECTOR4*)0x0)) {
-		peVar1->x = peVar1->x * 0.8333333;
-		peVar1->y = peVar1->y * 0.8333333;
+		peVar1->x = peVar1->x * 0.8333333f;
+		peVar1->y = peVar1->y * 0.8333333f;
 	}
 
 	this->instanceIndex = 0;

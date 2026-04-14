@@ -1385,7 +1385,7 @@ int CActorJamGut::AccomplishHit(CActorAutonomous* pActor, CActor* pSender, _msg_
 	if (((pActor != (CActor*)0x0) && (this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime)) && (pActor->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pPlayerInput = GetInputManager(0, 0);
 		if (pPlayerInput != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0, 0.0, 0.1, 0.0, &pPlayerInput->field_0x1c, 0);
+	CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &pPlayerInput->field_0x1c, 0);
 		}
 
 		pActor->LifeDecrease(pParams->damage);
@@ -2196,7 +2196,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 					}
 
 					fVar11 = acosf(puVar13);
-					fVar11 = fVar11 / 3.141593;
+	fVar11 = fVar11 / 3.141593f;
 					fVar12 = edFIntervalUnitSrcLERP(fVar11, 0.9f, 0.03f);
 					if (this->rotationQuat.x * (this->field_0x390).z -
 						(this->field_0x390).x * this->rotationQuat.z < 0.0f) {
@@ -2205,7 +2205,7 @@ void CActorJamGut::StateJamGutRideStand(CBehaviourJamGutRidden* pBehaviour, int 
 
 					UpdatePercentLeftRight(fVar11, fVar12);
 
-					bVar4 = CActor::SV_UpdateOrientation2D(12.56637, &this->field_0x390, 0);
+	bVar4 = CActor::SV_UpdateOrientation2D(12.56637f, &this->field_0x390, 0);
 					this->field_0x3a0 = (int)bVar4;
 
 					if (this->field_0x3a0 == 0) {
@@ -2842,10 +2842,10 @@ void CActorJamGut::StateJamGutJumpAfter(CBehaviourJamGut* pBehaviour, int nextSt
 	}
 	else {
 		if (bVar4 == false) {
-			SetJumpCfg(0.1, this->field_0x484, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
+	SetJumpCfg(0.1f, this->field_0x484, this->field_0x4a8, this->field_0x4a0, this->field_0x4a4, 1, (edF32VECTOR4*)0x0);
 		}
 		else {
-			SetJumpCfg(0.1, this->field_0x484 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
+	SetJumpCfg(0.1f, this->field_0x484 * 0.5f, this->field_0x4a8 * 0.1f, this->field_0x4a0 * 0.1f, this->field_0x4a4 * 0.1f, 1, (edF32VECTOR4*)0x0);
 		}
 
 		SetState(JAMGUT_RIDE_STATE_JUMP, -1);

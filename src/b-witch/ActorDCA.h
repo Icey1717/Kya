@@ -130,7 +130,7 @@ public:
 	byte field_0x45a;
 	byte field_0x45b;
 
-	undefined4 field_0x45c;
+	float field_0x45c;
 
 	float field_0x460;
 	float field_0x464;

@@ -1078,7 +1078,7 @@ void CActorNativCmd::ManageNativWithKim()
 
 	iVar7 = 0;
 	iVar6 = -1;
-	fVar11 = 3.402823e+38;
+	fVar11 = 3.402823e+38f;
 
 	do {
 		if (this->aNativs == (S_ACTOR_STREAM_REF*)0x0) {

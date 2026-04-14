@@ -366,14 +366,15 @@ void CBehaviourWeaponBurst::Create(ByteCode* pByteCode)
 	this->field_0x38 = 0;
 
 	this->field_0x8[0].field_0xc = pByteCode->GetF32();
-	this->field_0x8[0].field_0x0 = pByteCode->GetS32();
-	this->field_0x8[0].field_0x4 = pByteCode->GetF32();
+	this->field_0x8[0].field_0x4 = pByteCode->GetS32();
+	this->field_0x8[0].field_0x0 = pByteCode->GetF32();
 	this->field_0x8[0].field_0x8 = pByteCode->GetF32();
 
 	this->field_0x8[1].field_0xc = pByteCode->GetF32();
-	this->field_0x8[1].field_0x0 = pByteCode->GetS32();
-	this->field_0x8[1].field_0x4 = pByteCode->GetF32();
+	this->field_0x8[1].field_0x4 = pByteCode->GetS32();
+	this->field_0x8[1].field_0x0 = pByteCode->GetF32();
 	this->field_0x8[1].field_0x8 = pByteCode->GetF32();
+
 	return;
 }
 
@@ -970,8 +971,8 @@ void CSniperBullet::FUN_002d3be0(float param_1)
 	this->field_0xc4 = param_1;
 
 	const float sign = (rand2 & 0x10000) ? -1.0f : 1.0f;
-	const float polarAngle = (rand0 * (M_PI / 4.0f)) / 32767.0f + (3.0f * M_PI / 4.0f); // [3π/4, π]
-	const float azimuthAngle = (rand1 * (2.0f * M_PI)) / 32767.0f + M_PI;                  // [π, 3π]
+	const float polarAngle = (static_cast<float>(rand0) * (M_PI / 4.0f)) / 32767.0f + (3.0f * M_PI / 4.0f); // [3π/4, π]
+	const float azimuthAngle = (static_cast<float>(rand1) * (2.0f * M_PI)) / 32767.0f + M_PI;                  // [π, 3π]
 
 	for (int i = 0; i < 0xc; i++)
 	{

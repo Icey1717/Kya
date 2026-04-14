@@ -145,7 +145,7 @@ public:
 	int field_0x360;
 
 	int field_0x368;
-	undefined4 field_0x36c;
+	float field_0x36c;
 
 	CBehaviourCompanion behaviourCompanion;
 };

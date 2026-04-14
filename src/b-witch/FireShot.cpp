@@ -129,7 +129,7 @@ bool CFireShot::Project(float velocity, edF32VECTOR4* pPosition, edF32VECTOR4* p
 	edF32VECTOR4 direction;
 	S_SHOT_DATA* pSStack4;
 
-	pProjectile = static_cast<CActorProjectile*>(_ComputeNewShotNoRelease(0.1, pPosition, pDirection, &pSStack4, pFiringActor, false));
+		pProjectile = static_cast<CActorProjectile*>(_ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pSStack4, pFiringActor, false));
 	if (pProjectile != (CActorProjectile*)0x0) {
 		edF32Vector4NormalizeHard(&direction, pDirection);
 		pProjectile->Project(velocity, &direction, true, pFiringActor);

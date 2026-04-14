@@ -103,8 +103,8 @@ public:
 	float field_0x364;
 	float field_0x360;
 	float field_0x368;
-	float field_0x36c;
-	float field_0x370;
+	int field_0x36c;
+	int field_0x370;
 
 	uint boneId;
 

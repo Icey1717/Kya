@@ -936,7 +936,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 					pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 					uVar6 = pGeneratorParam->field_0x21c & 3;
 					pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-					fVar16 = (float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) | 0x3f800000) - 1.0;
+	fVar16 = (float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) | 0x3f800000) - 1.0f;
 					fStack252 = edF32VECTOR4_0041ed10.y;
 					fStack244 = edF32VECTOR4_0041ed10.w;
 					local_100 = FLOAT_ARRAY_ARRAY_00431990[INT_ARRAY_ARRAY_004319b0[uVar6][0]][0];
@@ -1296,7 +1296,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 				local_1b0 = GenRandomCentered01(pGeneratorParam) - 0.5f;
 				local_1ac = GenRandomCentered01(pGeneratorParam) - 0.5f;
 				local_1a4 = 0;
-				local_1a8 = GenRandom01(pGeneratorParam) - 0.5;
+	local_1a8 = GenRandom01(pGeneratorParam) - 0.5f;
 				local_1c0.x = param_3->y * local_1a8 - local_1ac * param_3->z;
 				local_1c0.y = param_3->z * local_1b0 - local_1a8 * param_3->x;
 				local_1c0.z = param_3->x * local_1ac - local_1b0 * param_3->y;
@@ -1717,7 +1717,7 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 							fVar13 = logf(1.0f - (GenRandomCentered01(pGeneratorParam) - 1.0f));
 							fVar17 = sqrtf(fVar13 * -2.0f);
 							fVar13 = cosf(M_2_PI * fVar16);
-							fVar16 = FLOAT_00448580 * fVar17 * fVar13 + 0.5;
+	fVar16 = FLOAT_00448580 * fVar17 * fVar13 + 0.5f;
 							fVar13 = 1.0f;
 							if (fVar16 < 0.0f) {
 								fVar13 = 0.0f;
@@ -3190,7 +3190,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 					frustumPlaneNormals[0].z = frustumPlaneNormals[0].z * fVar27;
 					frustumPlaneNormals[0].w = 0.0f;
 					fVar27 = 1.0f / (sqrtf(frustumPlaneNormals[1].x * frustumPlaneNormals[1].x + frustumPlaneNormals[1].y * frustumPlaneNormals[1].y +
-						frustumPlaneNormals[1].z * frustumPlaneNormals[1].z) + 0.0);
+	frustumPlaneNormals[1].z * frustumPlaneNormals[1].z) + 0.0f);
 					frustumPlaneNormals[1].x = frustumPlaneNormals[1].x * fVar27;
 					frustumPlaneNormals[1].y = frustumPlaneNormals[1].y * fVar27;
 					frustumPlaneNormals[1].z = frustumPlaneNormals[1].z * fVar27;
@@ -3243,7 +3243,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 						uvFlags = pDrawData->uvFlags;
 						fVar27 = pDrawData->globalAlpha * 255.0f;
 						if (2.147484e+09 <= fVar27) {
-							fVar27 = fVar27 - 2.147484e+09;
+	fVar27 = fVar27 - 2.147484e+09f;
 						}
 
 						sortCount = 0;
@@ -3289,8 +3289,8 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 									if (pCurParticle->visible != 0) {
 										if (fVar27 < (float)(uint)drawMode) {
 											edF32Matrix4MulF32Vector4Hard(&eStack512, &eStack496, pCurRawVector);
-											eStack512.w = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->sizeByte * 0.5 *
-												fabsf(1.0 / eStack512.w) * fabsf(cameraToScreenMat.aa);
+	eStack512.w = gParticleSizeScale * pCurParticle->yScale * (float)(uint)pCurParticle->sizeByte * 0.5f *
+	fabsf(1.0f / eStack512.w) * fabsf(cameraToScreenMat.aa);
 											if (max_size$1966 < eStack512.w) {
 												eStack512.w = max_size$1966;
 											}

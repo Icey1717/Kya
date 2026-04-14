@@ -5648,7 +5648,7 @@ void CActorWolfen::StateGuardAreaWP_Wait(CBehaviourGuardArea* pBehaviour)
 	if (iVar3 != -1) {
 		iVar3 = rand();
 		iVar4 = rand();
-		PlayWaitingAnimation(((float)iVar4 / 2.147484e+09) * 10.0f + 5.0f, puVar8 + (1.5 - puVar8) * ((float)iVar3 / 2.147484e+09), iVar5, -1, 1);
+		PlayWaitingAnimation(((float)iVar4 / 2.147484e+09f) * 10.0f + 5.0f, puVar8 + (1.5f - puVar8) * ((float)iVar3 / 2.147484e+09f), iVar5, -1, 1);
 	}
 
 	iVar5 = pBehaviour->TestState_001f09b0();
@@ -7718,8 +7718,8 @@ void CActorWolfen::InternState_WolfenLocate()
 		fVar3 = fVar2;
 		pAnimationController->anmBinMetaAnimator.GetAnimType_00242330(0);
 
-		float cosValue = sinf(fabs(((fVar3 / fVar2) * 6.283185)));
-		fVar3 = edF32Between_0_2Pi(-cosValue * (3.141593 - GetVision()->halfAngle * 2.0f * 57.29578f * 0.01745329f * 0.5f) + this->rotationEuler.y);
+		float cosValue = sinf(fabs(((fVar3 / fVar2) * 6.283185f)));
+		fVar3 = edF32Between_0_2Pi(-cosValue * (3.141593f - GetVision()->halfAngle * 2.0f * 57.29578f * 0.01745329f * 0.5f) + this->rotationEuler.y);
 		SetVectorFromAngleY(fVar3, &local_20);
 		GetVision()->location = local_10;
 		GetVision()->rotationQuat = local_20;
@@ -13668,7 +13668,7 @@ float CBehaviourAvoid::GetDangerWay2D(edF32VECTOR4* pDirection)
 	pWolfen = this->pOwner;
 	pTarget = pWolfen->pTargetActor_0xc80;
 	if (pTarget == (CActorFighter*)0x0) {
-		fVar3 = 1e+30;
+		fVar3 = 1e+30f;
 	}
 	else {
 		edF32Vector4SubHard(&targetDelta, &pTarget->currentLocation, &pWolfen->currentLocation);

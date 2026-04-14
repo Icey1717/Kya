@@ -288,7 +288,7 @@ void DrawContents()
 	ImGui::Text("State: %s", stateStr);
 	ImGui::Text("Recorded frames: %d  (%.1f s at 60 fps)",
 		gRecording.frameCount,
-		gRecording.frameCount / 60.0f);
+		(float)gRecording.frameCount / 60.0f);
 
 	if (gState == State::Recording || gState == State::Replaying) {
 		ImGui::Text("Frame: %d / %d", gCurrentFrame, gRecording.frameCount);

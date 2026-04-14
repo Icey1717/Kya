@@ -282,9 +282,9 @@ CScene::CScene()
 	pCVar15->field_0x12c = pCVar15->projectionScaleFactorB * 800;
 	pCVar15->field_0x128 = 1;
 	(pCVar15->pShadowConfig).field_0x0 = 0;
-	(pCVar15->pShadowConfig).field_0x4 = 90.0;
-	(pCVar15->pShadowConfig).field_0x8 = -0.01;
-	(pCVar15->pShadowConfig).field_0xc = -150.0;
+	(pCVar15->pShadowConfig).field_0x4 = 90.0f;
+	(pCVar15->pShadowConfig).field_0x8 = -0.01f;
+	(pCVar15->pShadowConfig).field_0xc = -150.0f;
 	(pCVar15->pShadowConfig).field_0x22 = 0x32;
 	pVVar12 = VideoGetDisplaybuffer();
 	pVVar13 = VideoGetZbuffer();
@@ -1150,9 +1150,9 @@ void CScene::LoadFunc_001b87b0()
 		pCVar1->field_0x12c = pCVar1->projectionScaleFactorB * 800;
 		pCVar1->field_0x128 = 1;
 		(pCVar1->pShadowConfig).field_0x0 = 0;
-		(pCVar1->pShadowConfig).field_0x4 = 90.0;
-		(pCVar1->pShadowConfig).field_0x8 = -0.01;
-		(pCVar1->pShadowConfig).field_0xc = -150.0;
+	(pCVar1->pShadowConfig).field_0x4 = 90.0f;
+	(pCVar1->pShadowConfig).field_0x8 = -0.01f;
+	(pCVar1->pShadowConfig).field_0xc = -150.0f;
 		(pCVar1->pShadowConfig).field_0x22 = 0x32;
 		(pCVar1->pShadowConfig).field_0x23 = 0;
 		(pCVar1->pShadowConfig).field_0x24 = 0;

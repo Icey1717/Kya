@@ -12,11 +12,11 @@ s_chess_board_pattern _patternWork;
 float CoordinateToFloat(int coordinate)
 {
 	if (coordinate < 0) {
-		float fVar8 = (coordinate >> 1 | coordinate & 1);
+		float fVar8 = static_cast<float>((coordinate >> 1 | coordinate & 1));
 		return fVar8 + fVar8;
 	}
 	else {
-		return coordinate;
+		return static_cast<float>(coordinate);
 	}
 }
 

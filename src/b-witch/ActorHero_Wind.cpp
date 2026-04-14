@@ -772,11 +772,11 @@ LAB_0014a028:
 		fVar28 = cosf(this->timeInAir * 4.0f - 1.570796f);
 
 		if (fVar27 < 5.0) {
-			fVar27 = edFIntervalLERP(fVar27, 0.0, 5.0, 0.2, 0.1);
+			fVar27 = edFIntervalLERP(fVar27, 0.0f, 5.0f, 0.2f, 0.1f);
 			fVar28 = fVar28 * fVar27;
 		}
 		else {
-			fVar27 = edFIntervalLERP(fVar27, 5.0, 27.0, 0.1, 0.02);
+			fVar27 = edFIntervalLERP(fVar27, 5.0f, 27.0f, 0.1f, 0.02f);
 			fVar28 = fVar28 * fVar27;
 		}
 

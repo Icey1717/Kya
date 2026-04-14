@@ -249,7 +249,7 @@ void CLifeInterface::SetPriority(int newPriority)
 	return;
 }
 
-float CLifeInterface::GetPriority()
+int CLifeInterface::GetPriority()
 {
 	return this->priority;
 }

@@ -942,7 +942,7 @@ public:
 	float field_0x34;
 	char* pSubtitleText;
 	int subtitleHorizontalAlignment;
-	undefined4 field_0x40;
+	float field_0x40;
 	undefined4 field_0x44;
 	undefined field_0x48;
 	undefined field_0x49;

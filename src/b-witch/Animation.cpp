@@ -1068,7 +1068,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 						iVar8 = dataCount - 1;
 						fVar13 = (float)uVar5;
 						fVar12 = 0.0;
-						fVar11 = 65535.0 - fVar13;
+						fVar11 = 65535.0f - fVar13;
 						iVar3 = 0;
 						if (0.0 < fVar11) {
 							fVar12 = ((float)uVar10 - fVar13) / fVar11;
@@ -1102,7 +1102,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				local_60.x = (float)(int)transShortBufferB[0] * 3.051851e-05f;
 				local_60.y = (float)(int)transShortBufferB[1] * 3.051851e-05f;
 				local_60.z = (float)((int)((uint)transShortBufferB[2] & 0xfffffffe)) * 3.051851e-05f;
-				local_60.w = sqrtf(1.0 - (local_60.z * local_60.z + local_60.x * local_60.x + local_60.y * local_60.y));
+	local_60.w = sqrtf(1.0f - (local_60.z * local_60.z + local_60.x * local_60.x + local_60.y * local_60.y));
 				if ((transShortBufferB[2] & 1U) != 0) {
 					local_60.w = -local_60.w;
 				}
@@ -1174,7 +1174,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 		}
 		pfVar7 = &pDataStream->field_0x4;
 		if (pDataStream->field_0x4 <= time) {
-			time = pDataStream->field_0x4 - 1e-06;
+			time = pDataStream->field_0x4 - 1e-06f;
 		}
 		dataCount = (uint)pDataStream->flags;
 		if (dataCount == 1) {
@@ -1399,7 +1399,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				else {
 					ushort* pTrack = (ushort*)pfVar2;
 					fVar12 = *pfVar2;
-					fVar11 = pfVar2[1] / 65535.0;
+					fVar11 = pfVar2[1] / 65535.0f;
 					pAnimMatrix->ca = fVar12 + fVar11 * (float)(uint)pTrack[0];
 					pAnimMatrix->cb = fVar12 + fVar11 * (float)(uint)pTrack[1];
 					pAnimMatrix->cc = fVar12 + fVar11 * (float)(uint)pTrack[2];
@@ -1506,9 +1506,9 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 			else {
 				if ((pDataStream->field_0x2 & 6) == 2) {
 					rowCTransformA = (short*)((char*)pfVar2 + iVar8 * 6);
-					local_30.x = (float)(int)rowCTransformA[0] * 6.103888e-05;
-					local_30.y = (float)(int)rowCTransformA[1] * 6.103888e-05;
-					local_30.z = (float)(int)rowCTransformA[2] * 6.103888e-05;
+					local_30.x = (float)(int)rowCTransformA[0] * 6.103888e-05f;
+					local_30.y = (float)(int)rowCTransformA[1] * 6.103888e-05f;
+					local_30.z = (float)(int)rowCTransformA[2] * 6.103888e-05f;
 				}
 				else {
 					rowCTransformB = (ushort*)(iVar8 * 6 + (char*)pfVar2);

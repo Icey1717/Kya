@@ -1108,7 +1108,7 @@ void CLevelScheduler::Levels_UpdateDataFromSavedGame()
 	LoadGame_LoadGameObj();
 	
 	SaveDataChunk_BSHD* pBSHD = reinterpret_cast<SaveDataChunk_BSHD*>(SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) + 1);
-	this->gameTime = pBSHD->gameTime;
+	this->gameTime = static_cast<float>(pBSHD->gameTime);
 	SaveGame_CloseChunk();
 
 	return;
