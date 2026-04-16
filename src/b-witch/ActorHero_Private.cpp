@@ -3930,31 +3930,31 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						return 0;
 				}
 				if (msg == 3) {
-					IMPLEMENTATION_GUARD(
-						pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+					fVar25 = GetLifeInterface()->GetValue();
+					bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 					if (!bVar9) {
 						bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 					}
 
-					if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
-						(this->field_0x1558 <= 0.0)) {
+					if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
 						if ((this->flags & 0x800000) == 0) {
-							this->field_0x2e4 = 10.0;
-							*(CActor**)&this->field_0x1028 = pSender;
-							iVar13 = ChooseStateDead(this, 0, (int)pMsgParam, 0);
-							if (iVar13 == -1) {
-								(*(this->pVTable)->SetBehaviour)(this, 7, STATE_HERO_COL_WALL_DEAD, -1);
+							this->field_0x2e4 = 10.0f;
+							this->field_0x1028 = pSender;
+							const int deadState = ChooseStateDead(0, (int)pMsgParam, 0);
+							if (deadState == -1) {
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, STATE_HERO_COL_WALL_DEAD, -1);
 							}
 							else {
-								(*(this->pVTable)->SetBehaviour)(this, 7, iVar13, -1);
+								SetBehaviour(HERO_BEHAVIOUR_DEFAULT, deadState, -1);
 							}
+
 							return 1;
 						}
+
 						return 0;
-					})
-						return 0;
+					}
+
+					return 0;
 				}
 				if (msg == 2) {
 					fVar25 = GetLifeInterface()->GetValue();
@@ -4938,7 +4938,7 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 		}
 		else {
 			deadState = 0x9f;
-			if (((dieType != 2) && (deadState = 0xa0, dieType != 3)) && (deadState = -1, hitType == 5)) {
+			if (((dieType != 2) && (deadState = STATE_HERO_EAT_DEATH, dieType != 3)) && (deadState = -1, hitType == 5)) {
 				deadState = 0x98;
 			}
 		}
@@ -5557,6 +5557,7 @@ LAB_00341590:
 		StateHeroDeadInit();
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
+	case STATE_HERO_EAT_DEATH:
 		StateHeroGrindDeathInit();
 		break;
 	case STATE_HERO_DEAD_A3:
@@ -5841,6 +5842,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		RestoreCollisionSphere(0.0f);
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
+	case STATE_HERO_EAT_DEATH:
 		StateHeroGrindDeathTerm();
 		break;
 	case STATE_HERO_DEAD_A3:
@@ -6341,6 +6343,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
 		StateHeroDead(2.0f);
+		break;
+	case STATE_HERO_EAT_DEATH:
+		StateHeroEatDeath(2.0f);
 		break;
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
@@ -12388,6 +12393,27 @@ LAB_0013e430:
 	return;
 }
 
+void CActorHeroPrivate::StateHeroEatDeath(float time)
+{
+	CActor* pReceiver;
+	int boneIndex;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+
+	pReceiver = this->field_0x1028;
+	local_20 = pReceiver->rotationQuat;
+	boneIndex = DoMessage(pReceiver, MESSAGE_GET_BONE_ID, (MSG_PARAM)8);
+	this->field_0x1028->SV_GetBoneWorldPosition(boneIndex, &eStack48);
+	this->rotationQuat = local_20;
+
+	UpdatePosition(&eStack48, true);
+	if (time < this->timeInAir) {
+		ProcessDeath();
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorHero_Std.cpp
 void CActorHeroPrivate::StateHeroColWall()
 {
@@ -14140,10 +14166,10 @@ void CActorHeroPrivate::ChangeCollisionSphereForToboggan(float param_2)
 	local_10.y = 0.5f;
 	local_10.z = 0.5f;
 
-	local_20.x = this->field_0x28c.x;
-	local_20.z = this->field_0x28c.z;
+	local_20.x = this->collisionSphereStoredPosition.x;
+	local_20.z = this->collisionSphereStoredPosition.z;
 	local_20.w = 1.0f;
-	local_20.y = this->field_0x28c.y * 0.6f;
+	local_20.y = this->collisionSphereStoredPosition.y * 0.6f;
 
 	ChangeCollisionSphere(param_2, &local_10, &local_20);
 	return;

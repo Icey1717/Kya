@@ -58,6 +58,7 @@
 #define STATE_HERO_COL_WALL_DEAD_B 0x9c
 #define STATE_HERO_GRIND_DEATH_A 0x9e
 
+#define STATE_HERO_EAT_DEATH 0xa0
 #define STATE_HERO_FALL_DEATH 0xa1
 #define STATE_HERO_DROWN_DEATH 0xa2
 #define STATE_HERO_DEAD_A3 0xa3
@@ -390,6 +391,7 @@ public:
 	int field_0x1420;
 
 	int field_0x1018;
+	CActor* field_0x1028;
 
 	float field_0x1558;
 
@@ -482,6 +484,7 @@ public:
 	uint TestState_WindWall(uint inFlags);
 	uint TestState_AllowInternalView(uint inFlags);
 
+	uint FUN_00132f00(uint param_2);
 	bool FUN_0014cb60(edF32VECTOR4* v0);
 	bool FUN_0031c9e0();
 	CActor* GetTalkingToActor();

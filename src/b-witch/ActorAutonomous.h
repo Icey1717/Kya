@@ -139,9 +139,9 @@ public:
 	virtual CActorWindState* GetWindState();
 
 	virtual void StoreCollisionSphere();
-	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	virtual void ChangeCollisionSphere(float transitionTime, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
-	virtual void RestoreCollisionSphere(float param_2);
+	virtual void RestoreCollisionSphere(float transitionTime);
 
 	virtual void SetLookingAtOn(float param_1);
 	virtual void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);
@@ -216,14 +216,14 @@ public:
 
 	s_collision_contact collisionContact;
 
-	edF32VECTOR3 field_0x280;
-	edF32VECTOR3 field_0x28c;
-	edF32VECTOR3 field_0x298;
-	edF32VECTOR3 field_0x2a4;
-	edF32VECTOR3 field_0x2b0;
-	edF32VECTOR3 field_0x2bc;
+	edF32VECTOR3 collisionSphereStoredScale;
+	edF32VECTOR3 collisionSphereStoredPosition;
+	edF32VECTOR3 collisionSphereTargetScale;
+	edF32VECTOR3 collisionSphereTargetPosition;
+	edF32VECTOR3 collisionSphereScaleVelocity;
+	edF32VECTOR3 collisionSpherePositionVelocity;
 
-	float field_0x2c8;
+	float collisionSphereTransitionEndTime;
 	undefined4 bCollisionSphereDirty;
 
 	float field_0x2e8;

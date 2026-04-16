@@ -248,6 +248,9 @@ namespace Hero
 		case STATE_HERO_GRIND_DEATH_A:
 			return "StateHeroGrindDeathA";
 			break;
+		case STATE_HERO_EAT_DEATH:
+			return "StateHeroEatDeath";
+			break;
 		case STATE_HERO_KICK_A:
 			return "StateHeroKickA";
 			break;

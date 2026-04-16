@@ -66,6 +66,8 @@ class CActorPattern : public CActorAutonomous
 public:
 	static StateConfig _gStateCfg_PAT[15];
 
+	~CActorPattern();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Reset();
@@ -116,7 +118,7 @@ public:
 	edF32VECTOR4 field_0x450;
 	CFxHandle field_0x460;
 	CFxHandle field_0x468;
-	CAddOnGenerator field_0x470;
+	CAddOnGenerator addOnGenerator;
 
 	CBehaviourPatternAlone behaviourAlone;
 

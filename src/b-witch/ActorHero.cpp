@@ -1665,6 +1665,21 @@ uint CActorHero::TestState_AllowInternalView(uint inFlags)
 	return uVar3;
 }
 
+uint CActorHero::FUN_00132f00(uint param_2)
+{
+	int iVar1;
+
+	if (param_2 == 0xffffffff) {
+		iVar1 = this->actorState;
+		param_2 = 0;
+		if ((iVar1 != -1) && (param_2 = 0, 0x71 < iVar1)) {
+			param_2 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return param_2 & 0x240;
+}
+
 bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
 {
 	ed_zone_3d* pZone;

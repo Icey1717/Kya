@@ -424,6 +424,7 @@ public:
 
 	void StateHeroDeadInit();
 	void StateHeroDead(float time);
+	void StateHeroEatDeath(float time);
 
 	void StateHeroColWall();
 

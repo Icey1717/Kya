@@ -13,6 +13,35 @@ CVision::CVision()
 
 }
 
+void CVision::Create(_vision_param* pParams)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	this->flags = pParams->field_0x10;
+	fVar2 = pParams->field_0xc;
+	fVar3 = pParams->field_0x8;
+	fVar1 = pParams->field_0x0 * 0.5f * 0.01745329f;
+	this->visionRange = pParams->field_0x4;
+	this->field_0x38 = fVar3 * 0.5f;
+	this->field_0x3c = fVar2 * 0.5f;
+	this->flags = 0;
+	this->halfAngle = fVar1;
+	this->field_0x44 = cosf(fVar1);
+	this->field_0x3c = this->field_0x3c;
+	fVar1 = 1.570796f - this->halfAngle;
+	this->apexOffset = this->field_0x3c * (sinf(fVar1) / cosf(fVar1));
+	this->pActor_0x48 = (CActor*)0x0;
+	//this->field_0x4c = 0;
+	this->field_0x54 = 0;
+	this->field_0x50 = 0;
+	this->field_0x58 = 0.0f;
+	this->pOwner = pParams->pActor_0x14;
+
+	return;
+}
+
 void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 {
 	uint uVar1;
@@ -223,6 +252,58 @@ bool CVision::SV_PointIsInVision(edF32VECTOR4* v0)
 	}
 
 	return bVar1;
+}
+
+struct NearestClassActorInVisionParams
+{
+	ACTOR_CLASS typeId;
+	CActor* pOwner;
+	CVision* pVision;
+	CActor* pOutActor;
+	float radius;
+	int scanMode;
+};
+
+void gClusterCallback_NearestClassActorInVision(CActor* pActor, void* pParams)
+{
+	CActor* pCVar1;
+	edF32VECTOR4 local_10;
+	CVision* pVision;
+
+	NearestClassActorInVisionParams* pNearestClassActorParams = reinterpret_cast<NearestClassActorInVisionParams*>(pParams);
+
+	if ((pActor != pNearestClassActorParams->pOwner) && (pNearestClassActorParams->typeId == pActor->typeID)) {
+		pVision = pNearestClassActorParams->pVision;
+		edF32Vector4SubHard(&local_10, &pActor->currentLocation, &pVision->location);
+		edF32Vector4SquareHard(&local_10, &local_10);
+		local_10.z = local_10.z + local_10.x + local_10.y;
+		if ((local_10.z < pNearestClassActorParams->radius) && (pCVar1 = pVision->ScanForTarget(pActor, pNearestClassActorParams->scanMode), pCVar1 != (CActor*)0x0)) {
+			pNearestClassActorParams->pOutActor = pActor;
+			pNearestClassActorParams->radius = local_10.z;
+		}
+	}
+
+	return;
+}
+
+CActor* CVision::SV_GetNearestActor(ACTOR_CLASS typeId, int scanMode)
+{
+	NearestClassActorInVisionParams local_30;
+	edF32VECTOR4 local_10;
+
+	local_10.x = (this->location).x;
+	local_10.y = (this->location).y;
+	local_10.z = (this->location).z;
+	local_10.w = this->apexOffset + this->visionRange;
+	local_30.pOwner = this->pOwner;
+	local_30.radius = local_10.w * local_10.w;
+	local_30.pOutActor = (CActor*)0x0;
+	local_30.typeId = typeId;
+	local_30.pVision = this;
+	local_30.scanMode = scanMode;
+	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_10, gClusterCallback_NearestClassActorInVision, &local_30);
+
+	return local_30.pOutActor;
 }
 
 bool CVision::_PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor)

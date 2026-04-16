@@ -5,6 +5,13 @@
 #include "MemoryStream.h"
 #include "MathOps.h"
 
+CActorPattern::~CActorPattern()
+{
+	this->addOnGenerator.Term();
+
+	return;
+}
+
 void CActorPattern::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
@@ -23,7 +30,7 @@ void CActorPattern::Create(ByteCode* pByteCode)
 	this->field_0x370 = pByteCode->GetS32();
 
 	this->boneId = pByteCode->GetU32();
-	this->field_0x470.Create(this, pByteCode);
+	this->addOnGenerator.Create(this, pByteCode);
 
 	return;
 }
@@ -36,7 +43,7 @@ void CActorPattern::Init()
 
 	ClearLocalData();
 	
-	this->field_0x470.Init(0);
+	this->addOnGenerator.Init(0);
 
 	if (GetBehaviour(PATTERN_BEHAVIOUR_ALONE) != (CBehaviour*)0x0) {
 		pBehaviourAlone = static_cast<CBehaviourPatternAlone*>(GetBehaviour(PATTERN_BEHAVIOUR_ALONE));
@@ -427,7 +434,7 @@ void CActorPattern::BehaviourPatternAlone_InitState(int newState)
 				v2 = this->GetBottomPosition();
 				edF32Vector4AddHard(&eStack48, &pCol->highestVertex, v2);
 				edF32Vector4ScaleHard(0.5f, &eStack48, &eStack48);
-				this->field_0x470.Generate(&eStack48);
+				this->addOnGenerator.Generate(&eStack48);
 			}
 		}
 	}
@@ -589,7 +596,7 @@ void CActorPattern::BehaviourPatternMultiple_InitState(int newState)
 			v2 = this->GetBottomPosition();
 			edF32Vector4AddHard(&eStack48, &pCol->highestVertex, v2);
 			edF32Vector4ScaleHard(0.5f, &eStack48, &eStack48);
-			this->field_0x470.Generate(&eStack48);
+			this->addOnGenerator.Generate(&eStack48);
 		}
 	}
 

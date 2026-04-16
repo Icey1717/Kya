@@ -8,10 +8,21 @@
 
 struct ByteCode;
 
+struct _vision_param
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	int field_0x10;
+	CActor* pActor_0x14;
+};
+
 class CVision 
 {
 public:
 	CVision();
+	void Create(_vision_param* pParams);
 	void Create(CActor* pOwner, ByteCode* pByteCode);
 	void Init(float param_1, float range, float param_3, float param_4);
 	void Reset();
@@ -22,6 +33,7 @@ public:
 	void ScanFromClassID(int classId, CActorsTable* pTable, int mode);
 
 	bool SV_PointIsInVision(edF32VECTOR4* v0);
+	CActor* SV_GetNearestActor(ACTOR_CLASS typeId, int scanMode);
 
 	bool _PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor);
 	uint _ScanForTargetMultiPoint(CActor* pTargetActor, int mode);

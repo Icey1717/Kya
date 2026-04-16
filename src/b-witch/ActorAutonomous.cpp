@@ -216,7 +216,7 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 		pCVar3->Reset();
 	}
 	this->bCollisionSphereDirty = 0;
-	this->field_0x2c8 = 0.0f;
+	this->collisionSphereTransitionEndTime = 0.0f;
 	if (this->pCollisionData != (CCollision*)0x0) {
 		StoreCollisionSphere();
 	}
@@ -1179,105 +1179,104 @@ void CActorAutonomous::StoreCollisionSphere()
 
 	pObbPrim = this->pCollisionData->pObbPrim;
 
-	this->field_0x280 = pObbPrim->scale.xyz;
-	this->field_0x28c = pObbPrim->position.xyz;
+	this->collisionSphereStoredScale = pObbPrim->scale.xyz;
+	this->collisionSphereStoredPosition = pObbPrim->position.xyz;
+
 	return;
 }
 
-void CActorAutonomous::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
+void CActorAutonomous::ChangeCollisionSphere(float transitionTime, edF32VECTOR4* pTargetScale, edF32VECTOR4* pTargetPosition)
 {
-	edColPRIM_OBJECT* peVar1;
-	Timer* pTVar2;
-	float fVar3;
-	float fVar4;
+	edColPRIM_OBJECT* pObbPrim;
+	float invTransitionTime;
 	edF32VECTOR4 local_10;
 	CCollision* pCollision;
 
 	pCollision = this->pCollisionData;
 	if (pCollision != (CCollision*)0x0) {
-		peVar1 = pCollision->pObbPrim;
-		if (param_1 == 0.0) {
-			peVar1->scale = *param_3;
-			peVar1->position = *param_4;
+		pObbPrim = pCollision->pObbPrim;
+		if (transitionTime == 0.0f) {
+			pObbPrim->scale = *pTargetScale;
+			pObbPrim->position = *pTargetPosition;
 			this->bCollisionSphereDirty = 0;
 		}
 		else {
-			pTVar2 = GetTimer();
-			this->field_0x298 = param_3->xyz;
-			this->field_0x2a4 = param_4->xyz;
-			edF32Vector4SubHard(&local_10, param_3, &peVar1->scale);
-			fVar3 = 1.0f / param_1;
-			edF32Vector4ScaleHard(fVar3, &local_10, &local_10);
-			this->field_0x2b0 = local_10.xyz;
+			this->collisionSphereTargetScale = pTargetScale->xyz;
+			this->collisionSphereTargetPosition = pTargetPosition->xyz;
 
-			edF32Vector4SubHard(&local_10, param_4, &peVar1->position);
-			edF32Vector4ScaleHard(fVar3, &local_10, &local_10);
+			edF32Vector4SubHard(&local_10, pTargetScale, &pObbPrim->scale);
+			invTransitionTime = 1.0f / transitionTime;
+			edF32Vector4ScaleHard(invTransitionTime, &local_10, &local_10);
+			this->collisionSphereScaleVelocity = local_10.xyz;
 
-			this->field_0x2bc = local_10.xyz;
-			this->field_0x2c8 = param_1 + pTVar2->scaledTotalTime;
+			edF32Vector4SubHard(&local_10, pTargetPosition, &pObbPrim->position);
+			edF32Vector4ScaleHard(invTransitionTime, &local_10, &local_10);
+
+			this->collisionSpherePositionVelocity = local_10.xyz;
+			this->collisionSphereTransitionEndTime = transitionTime + GetTimer()->scaledTotalTime;
 			this->bCollisionSphereDirty = 1;
 		}
+
 		pCollision->InvalidatePrims();
 	}
+
 	return;
 }
 
 void CActorAutonomous::UpdateCollisionSphere()
 {
 	CCollision* pCol;
-	edColPRIM_OBJECT* peVar1;
-	Timer* pTVar2;
+	edColPRIM_OBJECT* pObbPrim;
 	float fVar3;
 	float fVar4;
 	edF32VECTOR4 local_10;
 
 	pCol = this->pCollisionData;
-	peVar1 = pCol->pObbPrim;
-	pTVar2 = GetTimer();
+	pObbPrim = pCol->pObbPrim;
 
-	if (this->field_0x2c8 < pTVar2->scaledTotalTime) {
-		peVar1->scale.xyz = this->field_0x298;
-		(peVar1->scale).w = 0.0f;
+	if (this->collisionSphereTransitionEndTime < GetTimer()->scaledTotalTime) {
+		pObbPrim->scale.xyz = this->collisionSphereTargetScale;
+		(pObbPrim->scale).w = 0.0f;
 
-		(peVar1->position).xyz = this->field_0x2a4;
-		(peVar1->position).w = 1.0f;
+		(pObbPrim->position).xyz = this->collisionSphereTargetPosition;
+		(pObbPrim->position).w = 1.0f;
 		this->bCollisionSphereDirty = 0;
 	}
 	else {
-		pTVar2 = GetTimer();
-		local_10.w = pTVar2->cutsceneDeltaTime;
+		local_10.w = GetTimer()->cutsceneDeltaTime;
 
-		local_10.x = (this->field_0x2b0).x * local_10.w;
-		local_10.y = (this->field_0x2b0).y * local_10.w;
-		local_10.z = (this->field_0x2b0).z * local_10.w;
+		local_10.x = (this->collisionSphereScaleVelocity).x * local_10.w;
+		local_10.y = (this->collisionSphereScaleVelocity).y * local_10.w;
+		local_10.z = (this->collisionSphereScaleVelocity).z * local_10.w;
 
 		local_10.w = local_10.w * 0.0f;
-		edF32Vector4AddHard(&peVar1->scale, &peVar1->scale, &local_10);
+		edF32Vector4AddHard(&pObbPrim->scale, &pObbPrim->scale, &local_10);
 
-		local_10.w = pTVar2->cutsceneDeltaTime;
-		local_10.x = (this->field_0x2bc).x * local_10.w;
-		local_10.y = (this->field_0x2bc).y * local_10.w;
-		local_10.z = (this->field_0x2bc).z * local_10.w;
+		local_10.w = GetTimer()->cutsceneDeltaTime;
+		local_10.x = (this->collisionSpherePositionVelocity).x * local_10.w;
+		local_10.y = (this->collisionSpherePositionVelocity).y * local_10.w;
+		local_10.z = (this->collisionSpherePositionVelocity).z * local_10.w;
 		local_10.w = local_10.w * 0.0f;
 
-		edF32Vector4AddHard(&peVar1->position, &peVar1->position, &local_10);
+		edF32Vector4AddHard(&pObbPrim->position, &pObbPrim->position, &local_10);
 	}
 
 	pCol->InvalidatePrims();
 }
 
-void CActorAutonomous::RestoreCollisionSphere(float param_2)
+void CActorAutonomous::RestoreCollisionSphere(float transitionTime)
 {
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	local_10.xyz = this->field_0x280;
+	local_10.xyz = this->collisionSphereStoredScale;
 	local_10.w = 0.0f;
 
-	local_20.xyz = this->field_0x28c;
+	local_20.xyz = this->collisionSphereStoredPosition;
 	local_20.w = 1.0f;
 
-	ChangeCollisionSphere(param_2, &local_10, &local_20);
+	ChangeCollisionSphere(transitionTime, &local_10, &local_20);
+
 	return;
 }
 
