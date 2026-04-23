@@ -87,7 +87,7 @@ public:
 	CBehaviourTeleporterDefault behaviourTeleporterDefault;
 
 	ulong hash;
-	int field_0x168;
+	int subsectorMaterialId;
 	uint field_0x16c;
 
 	S_NTF_SWITCH_ONOFF field_0x170;

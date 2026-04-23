@@ -11,6 +11,7 @@
 
 #define WOOF_STATE_IDLE 0x6
 #define WOOF_STATE_YAP 0x7
+#define WOOF_STATE_WAIT_JUMP 0x9
 #define WOOF_STATE_WAY_POINT 0x12
 #define WOOF_STATE_CHASE 0x13
 #define WOOF_STATE_CHASE_INTRUDER_LOST 0x14
@@ -21,6 +22,10 @@
 #define WOOF_STATE_ATTACK_HERO_2_4 0x1e
 #define WOOF_STATE_ATTACK_HERO_3_4 0x1f
 #define WOOF_STATE_ATTACK_HERO_4_4 0x20
+#define WOOF_STATE_JUMP_1_4 0x22
+#define WOOF_STATE_JUMP_2_4 0x23
+#define WOOF_STATE_JUMP_3_4 0x24
+#define WOOF_STATE_JUMP_4_4 0x25
 
 class CActorWoof;
 class CActorHero;
@@ -106,13 +111,16 @@ public:
 	void BehaviourWoofVerticalJump_TermState(int oldState);
 
 	void StateWoofYap();
+	void StateWoofWaitJump();
 	void StateWoofComeBack();
+	void StateWoofPath();
 	void StateWoofSlide();
 	void StateWoofFall();
 	void StateWoofChase();
 	void StateWoofChaseIntruderLost();
 	void StateWoofAttackHero_2_4();
 	void StateWoofAttackHero_3_4();
+	void StateWoofJump_2_4();
 
 	CBehaviourWoofGuard behaviourWoofGuard;
 	CBehaviourWoofVerticalJump behaviourWoofVerticalJump;
@@ -148,7 +156,7 @@ public:
 
 	edF32VECTOR4 field_0x540;
 	float lastGroundY; // Last known good Y position on the ground, used to detect falling.
-	undefined4 field_0x554;
+	uint field_0x554;
 	undefined4 field_0x558;
 	undefined4 field_0x55c;
 	uint field_0x560;

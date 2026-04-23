@@ -240,15 +240,9 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 
 		SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		pFx = (pBehaviour->field_0x1c).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x1c).id, iVar4 == 0)) ||
-			(bVar3 = true, iVar4 != pFx->id)) {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
-			pBehaviour->field_0x1c.SetPosition(&this->currentLocation);
-			pBehaviour->field_0x1c.SetRotationEuler(&this->rotationEuler);
+		if (pBehaviour->idleGlowFx.IsValid()) {
+			pBehaviour->idleGlowFx.SetPosition(&this->currentLocation);
+			pBehaviour->idleGlowFx.SetRotationEuler(&this->rotationEuler);
 		}
 
 		if (pBehaviour->pHierarchy != (edNODE*)0x0) {
@@ -256,15 +250,9 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			peVar5->transformA = this->pMeshTransform->base.transformA;
 		}
 
-		pFx = (pBehaviour->field_0x34).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x34).id, iVar4 == 0)) ||
-			(bVar3 = true, iVar4 != pFx->id)) {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
-			pBehaviour->field_0x34.SetPosition(&this->currentLocation);
-			pBehaviour->field_0x34.SetRotationEuler(&this->rotationEuler);
+		if (pBehaviour->activatedFx.IsValid()) {
+			pBehaviour->activatedFx.SetPosition(&this->currentLocation);
+			pBehaviour->activatedFx.SetRotationEuler(&this->rotationEuler);
 		}
 
 		if (pBehaviour->pOpenModelNode != (edNODE*)0x0) {
@@ -272,32 +260,18 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			peVar6->transformA = this->pMeshTransform->base.transformA;
 		}
 
-		pFx = (pBehaviour->field_0x50).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) ||
-			(bVar3 = true, iVar4 != pFx->id)) {
-			bVar3 = false;
-		}
-
-		if (bVar3) {
+		if (pBehaviour->proximityFx.IsValid()) {
 			local_20.x = this->currentLocation.x;
 			local_20.z = this->currentLocation.z;
 			local_20.w = this->currentLocation.w;
 			local_20.y = this->currentLocation.y + pBehaviour->field_0x14;
 
-			pBehaviour->field_0x50.SetPosition(&local_20);
-			pBehaviour->field_0x50.SetRotationEuler(&this->rotationEuler);
+			pBehaviour->proximityFx.SetPosition(&local_20);
+			pBehaviour->proximityFx.SetRotationEuler(&this->rotationEuler);
 		}
 	}
 
-	pFx = (pBehaviour->field_0x50).pFx;
-	if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) || (iVar4 != pFx->id)) {
-		bVar3 = false;
-	}
-	else {
-		bVar3 = true;
-	}
-
-	if (bVar3) {
+	if (pBehaviour->proximityFx.IsValid()) {
 		local_30.x = this->currentLocation.x;
 		local_30.z = this->currentLocation.z;
 		local_30.w = this->currentLocation.w;
@@ -315,9 +289,8 @@ void CActorSwitch::BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour
 			}
 		}
 
-		pFx = (pBehaviour->field_0x50).pFx;
-		if (((pFx != (CNewFx*)0x0) && (iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0)) && (iVar4 == pFx->id)) {
-			pFx->Func_0x30(fVar9);
+		if (pBehaviour->proximityFx.IsValid()) {
+			pBehaviour->proximityFx.Func_0x30(fVar9);
 		}
 	}
 
@@ -395,28 +368,28 @@ void CActorSwitch::StateSwitchMagicOff2On(CBehaviourSwitchMagic* pBehaviour)
 		this->targetSwitch.Switch(this);
 		this->targetSwitch.PostSwitch(this);
 
-		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&pBehaviour->field_0x34, pBehaviour->field_0x30, FX_MATERIAL_SELECTOR_NONE);
-		pFx = pBehaviour->field_0x34.pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x34).id, iVar4 == 0)) ||
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&pBehaviour->activatedFx, pBehaviour->field_0x30, FX_MATERIAL_SELECTOR_NONE);
+		pFx = pBehaviour->activatedFx.pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->activatedFx).id, iVar4 == 0)) ||
 			(bVar2 = true, iVar4 != pFx->id)) {
 			bVar2 = false;
 		}
 
 		if (bVar2) {
-			pBehaviour->field_0x34.SetPosition(&this->currentLocation);
-			pBehaviour->field_0x34.SetRotationEuler(&this->rotationEuler);
-			pBehaviour->field_0x34.Start();
+			pBehaviour->activatedFx.SetPosition(&this->currentLocation);
+			pBehaviour->activatedFx.SetRotationEuler(&this->rotationEuler);
+			pBehaviour->activatedFx.Start();
 		}
 
 		pBehaviour->DisplayOpenFxModel(1);
 
-		pFx = (pBehaviour->field_0x50).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->field_0x50).id, iVar4 == 0)) ||
+		pFx = (pBehaviour->proximityFx).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar4 = (pBehaviour->proximityFx).id, iVar4 == 0)) ||
 			(bVar2 = true, iVar4 != pFx->id)) {
 			bVar2 = false;
 		}
 
-		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((iVar4 = (pBehaviour->field_0x50).id, iVar4 != 0 && (iVar4 == pFx->id)))) {
+		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((iVar4 = (pBehaviour->proximityFx).id, iVar4 != 0 && (iVar4 == pFx->id)))) {
 			pFx->Stop(-1.0f);
 		}
 	}
@@ -457,14 +430,14 @@ void CActorSwitch::StateSwitchMagic0x8(CBehaviourSwitchMagic* pBehaviour)
 		}
 	}
 	else {
-		pFx = (pBehaviour->field_0x1c).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar2 = (pBehaviour->field_0x1c).id, iVar2 == 0)) ||
+		pFx = (pBehaviour->idleGlowFx).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar2 = (pBehaviour->idleGlowFx).id, iVar2 == 0)) ||
 			(bVar4 = true, iVar2 != pFx->id)) {
 			bVar4 = false;
 		}
 
 		if (((bVar4) && (pFx != (CNewFx*)0x0)) &&
-			((iVar2 = (pBehaviour->field_0x1c).id, iVar2 != 0 && (iVar2 == pFx->id)))) {
+			((iVar2 = (pBehaviour->idleGlowFx).id, iVar2 != 0 && (iVar2 == pFx->id)))) {
 			pFx->Stop(-1.0f);
 		}
 
@@ -632,12 +605,9 @@ void CBehaviourSwitchMagic::Begin(CActor* pOwner, int newState, int newAnimation
 	local_10.y = this->field_0x14;
 	this->pOwner->SetLocalBoundingSphere(fabs(this->field_0x14 * 2.0f), &local_10);
 
-	this->field_0x1c.id = 0;
-	this->field_0x1c.pFx = (CNewFx*)0x0;
-	this->field_0x34.id = 0;
-	this->field_0x34.pFx = (CNewFx*)0x0;
-	this->field_0x50.id = 0;
-	this->field_0x50.pFx = (CNewFx*)0x0;
+	this->idleGlowFx.Reset();
+	this->activatedFx.Reset();
+	this->proximityFx.Reset();
 
 	if (newState == -1) {
 		this->pOwner->SetState(5, -1);
@@ -740,102 +710,53 @@ void CBehaviourSwitchMagic::LoadContext(S_SAVE_CLASS_SWITCH* pData)
 
 void CBehaviourSwitchMagic::ChangeManageState(int state)
 {
-	bool bVar1;
 	ed_g3d_manager* pG3D;
 	edNODE* peVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	int iVar6;
 	ed_g3d_hierarchy* peVar7;
 	ed_3d_hierarchy_node* peVar8;
-	float fVar9;
-	CNewFx* pFx;
 	CActorSwitch* pSwitch;
 
 	if (state == 0) {
-		pFx = (this->field_0x1c).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
-			bVar1 = false;
+		if (this->idleGlowFx.IsValid()) {
+			this->idleGlowFx.Kill();
+			this->idleGlowFx.Reset();
 		}
 
-		if (bVar1) {
-			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x1c).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-				pFx->Kill();
-			}
+		this->idleGlowFx.Reset();
 
-			(this->field_0x1c).pFx = (CNewFx*)0x0;
-			(this->field_0x1c).id = 0;
-		}
-
-		(this->field_0x1c).id = 0;
-		(this->field_0x1c).pFx = (CNewFx*)0x0;
 		if (this->pHierarchy != (edNODE*)0x0) {
 			ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pHierarchy);
 			this->pHierarchy = (edNODE*)0x0;
 		}
 
-		pFx = (this->field_0x34).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x34).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
-			bVar1 = false;
+		if (this->activatedFx.IsValid()) {
+			this->activatedFx.Kill();
+			this->activatedFx.Reset();
 		}
 
-		if (bVar1) {
-			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x34).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-				pFx->Kill();
-			}
-
-			(this->field_0x34).pFx = (CNewFx*)0x0;
-			(this->field_0x34).id = 0;
-		}
-
-		(this->field_0x34).id = 0;
-		(this->field_0x34).pFx = (CNewFx*)0x0;
+		this->activatedFx.Reset();
 
 		DisplayOpenFxModel(0);
 
-		pFx = (this->field_0x50).pFx;
-		if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
-			bVar1 = false;
+		if (this->proximityFx.IsValid()) {
+			this->proximityFx.Kill();
+			this->proximityFx.Reset();
 		}
 
-		if (bVar1) {
-			if (((pFx != (CNewFx*)0x0) && (iVar6 = (this->field_0x50).id, iVar6 != 0)) && (iVar6 == pFx->id)) {
-				pFx->Kill();
-			}
-
-			(this->field_0x50).pFx = (CNewFx*)0x0;
-			(this->field_0x50).id = 0;
-		}
-
-		(this->field_0x50).id = 0;
-		(this->field_0x50).pFx = (CNewFx*)0x0;
+		this->proximityFx.Reset();
 	}
 	else {
 		if (this->field_0xc < this->field_0x8) {
 			if (this->field_0x18 != 0xffffffff) {
-				pFx = (this->field_0x1c).pFx;
-				if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (iVar6 != pFx->id)) {
-					bVar1 = false;
-				}
-				else {
-					bVar1 = true;
-				}
-
-				if (!bVar1) {
-					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x1c, this->field_0x18, FX_MATERIAL_SELECTOR_NONE);
+				if (!this->idleGlowFx.IsValid()) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->idleGlowFx, this->field_0x18, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pFx = (this->field_0x1c).pFx;
-			if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x1c).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
-				bVar1 = false;
-			}
-
-			if (bVar1) {
-				this->field_0x1c.SetPosition(&this->pOwner->currentLocation);
-				this->field_0x1c.SetRotationEuler(&this->pOwner->rotationEuler);
-				this->field_0x1c.Start();
+			if (this->idleGlowFx.IsValid()) {
+				this->idleGlowFx.SetPosition(&this->pOwner->currentLocation);
+				this->idleGlowFx.SetRotationEuler(&this->pOwner->rotationEuler);
+				this->idleGlowFx.Start();
 			}
 
 			if (((this->pHierarchy == (edNODE*)0x0) && (this->field_0x24 != -1)) && (this->field_0x28 != -1)) {
@@ -849,36 +770,18 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 			}
 
 			if (this->field_0x4c != 0xffffffff) {
-				pFx = (this->field_0x50).pFx;
-				if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (iVar6 != pFx->id)) {
-					bVar1 = false;
-				}
-				else {
-					bVar1 = true;
-				}
-
-				if (!bVar1) {
-					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x50, this->field_0x4c, FX_MATERIAL_SELECTOR_NONE);
+				if (!this->proximityFx.IsValid()) {
+					CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->proximityFx, this->field_0x4c, FX_MATERIAL_SELECTOR_NONE);
 				}
 			}
 
-			pFx = (this->field_0x50).pFx;
-			if (((pFx == (CNewFx*)0x0) || (iVar6 = (this->field_0x50).id, iVar6 == 0)) || (bVar1 = true, iVar6 != pFx->id)) {
-				bVar1 = false;
-			}
-
-			if (bVar1) {
+			if (this->proximityFx.IsValid()) {
 				pSwitch = this->pOwner;
-				fVar3 = pSwitch->currentLocation.y;
-				fVar4 = pSwitch->currentLocation.z;
-				fVar5 = pSwitch->currentLocation.w;
-				fVar9 = this->field_0x14;
+				edF32VECTOR4 newPos = { pSwitch->currentLocation.x, pSwitch->currentLocation.y + this->field_0x14, pSwitch->currentLocation.z, pSwitch->currentLocation.w };
 
-				edF32VECTOR4 newPos = { pSwitch->currentLocation.x, fVar3 + fVar9, fVar4, fVar5 };
-
-				this->field_0x50.SetPosition(&newPos);
-				this->field_0x50.SetRotationEuler(&pSwitch->rotationEuler);
-				this->field_0x50.Start();
+				this->proximityFx.SetPosition(&newPos);
+				this->proximityFx.SetRotationEuler(&pSwitch->rotationEuler);
+				this->proximityFx.Start();
 			}
 		}
 	}
@@ -1618,10 +1521,138 @@ void CBehaviourSwitchSequence::Begin(CActor* pOwner, int newState, int newAnimat
 	return;
 }
 
+void CBehaviourSwitchSequence::SetNewBitfield(int param_2)
+{
+	int* piVar1;
+	CActorSwitch* pCVar2;
+	S_NTF_TARGET_STREAM_REF* pSVar3;
+	int iVar4;
+	int iVar5;
+
+	piVar1 = this->field_0x10;
+	if (piVar1 == (int*)0x0) {
+		iVar5 = 0;
+	}
+	else {
+		iVar5 = *piVar1;
+	}
+
+	iVar4 = this->field_0x14;
+	if (iVar4 == iVar5) {
+		param_2 = this->field_0x18;
+	}
+	else {
+		if (param_2 == piVar1[iVar4 + 1]) {
+			this->field_0x14 = iVar4 + 1;
+
+			if (this->field_0x10 == (int*)0x0) {
+				iVar5 = 0;
+			}
+			else {
+				iVar5 = *this->field_0x10;
+			}
+
+			if (this->field_0x14 == iVar5) {
+				pCVar2 = this->pOwner;
+				pCVar2->SetState(8, -1);
+				pCVar2 = this->pOwner;
+				pCVar2->targetSwitch.Switch(pCVar2);
+			}
+		}
+		else {
+			if ((this->field_0x8 & 1) == 0) {
+				param_2 = this->field_0x18;
+			}
+			else {
+				this->field_0x14 = 0;
+				param_2 = this->field_0xc;
+			}
+		}
+	}
+
+	this->field_0x18 = param_2;
+
+	return;
+}
+
 int CBehaviourSwitchSequence::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
-	return 0;
+	int result;
+	int iVar2;
+	CActorSwitch* pSwitch;
+
+	if (msg == 0xe) {
+		if (this->field_0x10 == (int*)0x0) {
+			result = 0;
+		}
+		else {
+			result = *this->field_0x10;
+		}
+
+		if ((this->field_0x14 == result) && ((this->field_0x8 & 2) != 0)) {
+			pSwitch = this->pOwner;
+			pSwitch->SetState(5, -1);
+			pSwitch = this->pOwner;
+			pSwitch->targetSwitch.PostSwitch(pSwitch);
+
+			this->field_0x14 = 0;
+			this->field_0x18 = this->field_0xc;
+		}
+
+		SetNewBitfield(this->field_0x18 ^ 1 << (reinterpret_cast<uint>(pMsgParam) & 0x1f));
+		result = 1;
+	}
+	else {
+		if (msg == 0x10) {
+			if (this->field_0x10 == (int*)0x0) {
+				result = 0;
+			}
+			else {
+				result = *this->field_0x10;
+			}
+
+			if ((this->field_0x14 == result) && ((this->field_0x8 & 2) != 0)) {
+				pSwitch = this->pOwner;
+				pSwitch->SetState(5, -1);
+				pSwitch = this->pOwner;
+				pSwitch->targetSwitch.PostSwitch(pSwitch);
+
+				this->field_0x14 = 0;
+				this->field_0x18 = this->field_0xc;
+			}
+
+			SetNewBitfield(this->field_0x18 & ~(1 << (reinterpret_cast<uint>(pMsgParam) & 0x1f)));
+			result = 1;
+		}
+		else {
+			if (msg == 0xf) {
+				if (this->field_0x10 == (int*)0x0) {
+					result = 0;
+				}
+				else {
+					result = *this->field_0x10;
+				}
+
+				if ((this->field_0x14 == result) && ((this->field_0x8 & 2) != 0)) {
+					pSwitch = this->pOwner;
+					pSwitch->SetState(5, -1);
+					pSwitch = this->pOwner;
+					pSwitch->targetSwitch.PostSwitch(pSwitch);
+
+					this->field_0x14 = 0;
+					this->field_0x18 = this->field_0xc;
+				}
+
+				SetNewBitfield(this->field_0x18 | 1 << (reinterpret_cast<uint>(pMsgParam) & 0x1f));
+				result = 1;
+			}
+			else {
+				result = 0;
+			}
+		}
+	}
+
+	return result;
 }
 
 void CBehaviourSwitchSequence::SaveContext(S_SAVE_CLASS_SWITCH* pData)

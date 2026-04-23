@@ -48,6 +48,7 @@
 #define WOLFEN_STATE_AVOID_ESCAPE 0x8b
 #define WOLFEN_STATE_GUARD_WALK_TO 0x8c
 #define WOLFEN_STATE_GUARD_STOP 0x8d
+#define WOLFEN_STATE_GUARD_ORIENT_WP 0x8e
 #define WOLFEN_STATE_GUARD_WAIT 0x8f
 #define WOLFEN_STATE_RELOAD 0x91
 #define WOLFEN_STATE_SNIPER_SCAN 0x93
@@ -125,7 +126,7 @@ union f4data
 struct CActorWolfenKnowledge_0x14
 {
 	s_fighter_combo* field_0x0;
-	f4data* field_0x4;
+	f4data* aF4data;
 	uint field_0x8;
 	uint field_0xc;
 	uint field_0x10;
@@ -147,13 +148,13 @@ public:
 	CActorWolfenKnowledge_0x14* aSubObjs;
 	int field_0x4;
 	uint nbSubObjs;
-	int field_0xc;
+	int nbF4Data;
 	int memMode;
 	uint field_0x14;
 	uint field_0x18;
 	int field_0x1c;
 	CActorWolfenKnowledge_0x14* field_0x20;
-	f4data* field_0x24;
+	f4data* aF4data;
 	s_fighter_combo* field_0x28;
 	byte field_0x2c;
 };
@@ -1103,6 +1104,7 @@ public:
 	void StateWolfenBreakObject();
 
 	void StateGuardAreaWP_Wait(CBehaviourGuardArea* pBehaviour);
+	void StateGuardAreaWP_OrientWP(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWalkTo(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaGuard();

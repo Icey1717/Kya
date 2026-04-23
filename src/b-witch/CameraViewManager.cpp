@@ -938,7 +938,6 @@ void CCameraManager::Func_001947e0()
 	int iVar4;
 	CActor** ppCVar5;
 	CActor** ppCVar6;
-	CameraCallback_AAA* pCVar7;
 	CActorsTable local_230;
 	CActorsTable local_120;
 	edF32VECTOR4 local_10;
@@ -988,7 +987,7 @@ void CCameraManager::Func_001947e0()
 		if (0 < CameraCallback_AAA_00449ee0.table.nbEntries) {
 			CActor** pActor = CameraCallback_AAA_00449ee0.table.aEntries;
 			do {
-				(*pActor)->SetAlpha((byte)(int)pCVar7->field_0x110.aEntries[iVar4]);
+				(*pActor)->SetAlpha((byte)(int)CameraCallback_AAA_00449ee0.field_0x110.aEntries[iVar4]);
 				(*pActor)->SetBFCulling(1);
 				iVar4 = iVar4 + 1;
 				pActor = pActor + 1;

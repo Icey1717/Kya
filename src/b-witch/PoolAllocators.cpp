@@ -13,6 +13,9 @@ PoolAllocator* g_S_EYES_BRIGHT_SHADOW_allocator;
 PoolAllocator* g_edF32MATRIX4_allocator;
 PoolAllocator* g_CBehaviourCinematic_allocator;
 PoolAllocator* g_U32_allocator;
+#ifdef PLATFORM_WIN
+PoolAllocator* g_Pointer_allocator;
+#endif
 PoolAllocator* g_edDLIST_MATERIAL_allocator;
 
 S_GLOBAL_DLIST_PATCH* NewPool_S_EYES_BRIGHT_SHADOW(int count)
@@ -304,6 +307,62 @@ ushort* NewPool_edU16(int count)
 
 void** NewPool_Pointer(int count)
 {
+#ifdef PLATFORM_WIN
+	int iVar1;
+	bool bVar2;
+	void** ppvVar3;
+	PoolAllocator* pPVar4;
+	PoolAllocator* pPVar5;
+	void* pvVar6;
+	void** peVar7;
+	int iVar8;
+
+	bVar2 = true;
+	if ((g_Pointer_allocator != (PoolAllocator*)0x0) &&
+		(g_Pointer_allocator->free + count <= g_Pointer_allocator->size)) {
+		bVar2 = false;
+	}
+
+	pPVar5 = g_Pointer_allocator;
+
+	if (bVar2) {
+		if (count < 0x21) {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_Pointer_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = 0x20;
+				pPVar5->pValue = new void* [pPVar5->size];
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+		else {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_Pointer_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = count;
+				pPVar5->pValue = new void* [pPVar5->size];
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+	}
+
+	g_Pointer_allocator = pPVar5;
+	iVar1 = g_Pointer_allocator->free;
+	iVar8 = iVar1 + count;
+
+	if (g_Pointer_allocator->size < iVar8) {
+		peVar7 = (void**)0x0;
+	}
+	else {
+		ppvVar3 = &g_Pointer_allocator->pValue;
+		g_Pointer_allocator->free = iVar8;
+		peVar7 = (void**)((char*)*ppvVar3 + iVar1 * sizeof(void*));
+	}
+
+	return peVar7;
+#else
 	int iVar1;
 	bool bVar2;
 	void** ppvVar3;
@@ -358,6 +417,7 @@ void** NewPool_Pointer(int count)
 	}
 
 	return peVar7;
+#endif
 }
 
 edDList_material* NewPool_edDLIST_MATERIAL(int count)
@@ -457,6 +517,27 @@ void FreeAllAllocators()
 			pPVar5 = pPVar2;
 		}
 	}
+
+#ifdef PLATFORM_WIN
+	if (g_Pointer_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_Pointer_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_Pointer_allocator;
+		while (g_Pointer_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					void** pOriginalPtr = (void**)pPVar5->pValue;
+					delete[] pOriginalPtr;
+				}
+
+				delete pPVar5;
+			}
+
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
+#endif
 
 	if (g_edF32MATRIX4_allocator != (PoolAllocator*)0x0) {
 		bool bVar1 = g_edF32MATRIX4_allocator != (PoolAllocator*)0x0;

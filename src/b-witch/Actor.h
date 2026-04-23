@@ -333,10 +333,15 @@ struct CActorParamsIn
 #define HIT_TYPE_BOOMY 0x4
 #define HIT_TYPE_AMORTOS 0xa
 
+#define HIT_VARIANT_BOOMY_MELEE 0x1
+#define HIT_VARIANT_BOOMY_DEFAULT 0x2
+#define HIT_VARIANT_BOOMY_SNIPE 0x3
+#define HIT_VARIANT_BOOMY_CONTROL 0x4
+
 struct _msg_hit_param
 {
 	int projectileType;
-	int field_0x4;
+	int hitVariant;
 	uint flags;
 	float damage;
 	float field_0x10;

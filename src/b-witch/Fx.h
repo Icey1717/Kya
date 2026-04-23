@@ -227,6 +227,14 @@ public:
 		return;
 	}
 
+	inline void Func_0x30(float param_1)
+	{
+		if (IsValid()) {
+			pFx->Func_0x30(param_1);
+		}
+		return;
+	}
+
 	int id;
 	CNewFx* pFx;
 };

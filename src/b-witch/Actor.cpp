@@ -1373,6 +1373,8 @@ int CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgPar
 	int bHandled;
 	CBehaviour* pBehaviour;
 
+	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveMessage {} msg: 0x{:x} (cur bhvr: 0x{:x})", this->name, (int)msg, this->curBehaviourId);
+
 	pBehaviour = GetBehaviour(this->curBehaviourId);
 	if (pBehaviour == (CBehaviour*)0x0) {
 		bHandled = 0;
@@ -5000,14 +5002,14 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 	CCollision* pCVar1;
 	uint* iVar2;
 	uint uVar3;
-	int iVar4;
+	int result;
 	uint uVar5;
 	edF32MATRIX4 auStack96;
 	edF32VECTOR4 local_20;
 	S_PATHREADER_POS_INFO SStack16;
 
 	if (pPathFollowReaderAbs->pPathFollow == (CPathFollow*)0x0) {
-		iVar4 = 2;
+		result = 2;
 		if (pMatrix == (edF32MATRIX4*)0x0) {
 			local_20 = this->baseLocation;
 			SV_UpdatePosition_Rel(&local_20, 0, param_5, pActorsTable, param_8);
@@ -5032,18 +5034,18 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 
 		if (param_4 == 0) {
 			if (pMatrix == (edF32MATRIX4*)0x0) {
-				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &local_20, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
+				result = pPathFollowReaderAbs->ComputePosition(param_1, &local_20, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
 				SV_UpdatePosition_Rel(&local_20, 1, param_5, pActorsTable, param_8);
 			}
 			else {
 				edF32Matrix4FromEulerSoft(&auStack96, &this->pCinData->rotationEuler, "XYZ");
-				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &auStack96.rowT, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
+				result = pPathFollowReaderAbs->ComputePosition(param_1, &auStack96.rowT, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
 				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
 				SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
 			}
 		}
 		else {
-			iVar4 = pPathFollowReaderAbs->ComputeMatrix(param_1, &auStack96, 0, pPathReaderPosInfo);
+			result = pPathFollowReaderAbs->ComputeMatrix(param_1, &auStack96, 0, pPathReaderPosInfo);
 
 			if (pMatrix != (edF32MATRIX4*)0x0) {
 				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
@@ -5086,7 +5088,7 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 		}
 	}
 
-	return iVar4;
+	return result;
 }
 
 bool CActor::UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4)

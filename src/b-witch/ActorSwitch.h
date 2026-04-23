@@ -99,18 +99,18 @@ public:
 	float field_0x10;
 	float field_0x14;
 	int field_0x18;
-	CFxHandle field_0x1c;
+	CFxHandle idleGlowFx;
 	int field_0x24;
 	int field_0x28;
 	edNODE* pHierarchy;
 	int field_0x30;
-	CFxHandle field_0x34;
+	CFxHandle activatedFx;
 	int openMeshId;
 	int openTextureId;
 	edNODE* pOpenModelNode;
 	CFxDigits fxDigits;
 	int field_0x4c;
-	CFxHandle field_0x50;
+	CFxHandle proximityFx;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 };
 
@@ -195,6 +195,8 @@ public:
 
 	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData);
 	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData);
+
+	void SetNewBitfield(int param_2);
 
 	uint field_0x8;
 	uint field_0xc;

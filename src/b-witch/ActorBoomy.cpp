@@ -213,7 +213,7 @@ void CActorBoomy::Draw()
 		IMPLEMENTATION_GUARD_FX(
 		this->fxLightEmitterB.Draw(0xffffffff, 0, 0);
 
-		if (this->field_0x2c4 == 2) {
+		if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 			this->fxLightEmitterA.Draw(0xffffffff, 0, 0);
 		})
 	}
@@ -315,7 +315,7 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	else {
 		if (uVar4 == 6) {
 			this->dynamic.speed = 0.0f;
-			if (this->field_0x2c4 == 2) {
+			if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 				SetState(0xb, -1);
 			}
 			else {
@@ -342,9 +342,9 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			this->flags = this->flags | 0x400;
 
 			this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags | 4;
-			this->field_0x2c4 = (byte)pMsgParam;
+			this->launchMode = (byte)pMsgParam;
 
-			if (this->field_0x2c4 == 2) {
+			if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 				this->field_0xf0 = 5.0f;
 			
 				pCVar1 = this->pShadow;
@@ -421,7 +421,7 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 	int iVar3;
 
 	IMPLEMENTATION_GUARD_FX(
-	if (this->field_0x2c4 == 2) {
+	if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 		CFxLightEmitter::ChangeColors(&this->fxLightEmitterB, 0x80808080);
 	})
 
@@ -625,7 +625,7 @@ void CActorBoomy::StateBoomyGetTarget()
 	this->fxTail.SetPatchActive(1);
 	(this->speedDyn).currentAlpha = (this->pSpline->aPoints->position).y;
 	this->field_0x1d4 = DBG_TAIL_MIN_DIST <= this->distanceToTarget;
-	if (this->field_0x2c4 == 2) {
+	if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 		IMPLEMENTATION_GUARD_AUDIO(
 		CActorSound::SoundStart
 		(this->field_0x2b4, (CActor*)this, 0, (this->field_0x2bc).pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
@@ -661,7 +661,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 	float fVar12;
 	GetPositionMsgParams local_230;
 	CActorsTable actorsTable;
-	_msg_hit_param uStack240;
+	_msg_hit_param msgHitParams;
 	edF32VECTOR4 aSplinePositions[6];
 
 	actorsTable.nbEntries = 0;
@@ -675,64 +675,64 @@ void CActorBoomy::StateBoomyGotoTarget()
 		if ((bVar1 & 7) == 0) {
 			local_230.field_0x0 = 0;
 			local_230.vectorFieldA = this->currentLocation;
-			uStack240.field_0x40 = this->currentLocation;
-			iVar6 = DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_GET_VISUAL_DETECTION_POINT, &uStack240);
+			msgHitParams.field_0x40 = this->currentLocation;
+			iVar6 = DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_GET_VISUAL_DETECTION_POINT, &msgHitParams);
 			if (iVar6 != 0) {
-				edF32Vector4AddHard(&uStack240.field_0x40, &this->targetPosition, &local_230.vectorFieldB);
+				edF32Vector4AddHard(&msgHitParams.field_0x40, &this->targetPosition, &local_230.vectorFieldB);
 			}
 		}
 		else {
 			if ((bVar1 & 1) == 0) {
 				if ((bVar1 & 2) == 0) {
 					if ((bVar1 & 4) != 0) {
-						uStack240.field_0x40 = pCVar3->aCollisionContact[2].field_0x10;
+						msgHitParams.field_0x40 = pCVar3->aCollisionContact[2].field_0x10;
 					}
 				}
 				else {
-					uStack240.field_0x40 = pCVar3->aCollisionContact[1].field_0x10;
+					msgHitParams.field_0x40 = pCVar3->aCollisionContact[1].field_0x10;
 				}
 			}
 			else {
-				uStack240.field_0x40 = pCVar3->aCollisionContact[0].field_0x10;
+				msgHitParams.field_0x40 = pCVar3->aCollisionContact[0].field_0x10;
 			}
 		}
 
-		uStack240.projectileType = HIT_TYPE_BOOMY;
-		uStack240.field_0x4 = 2;
-		if (this->field_0x2c4 == 2) {
-			uStack240.field_0x4 = 4;
+		msgHitParams.projectileType = HIT_TYPE_BOOMY;
+		msgHitParams.hitVariant = HIT_VARIANT_BOOMY_DEFAULT;
+		if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
+			msgHitParams.hitVariant = HIT_VARIANT_BOOMY_CONTROL;
 		}
 		else {
-			if (this->field_0x2c4 == 1) {
-				uStack240.field_0x4 = 3;
+			if (this->launchMode == BOOMY_LAUNCH_SNIPE) {
+				msgHitParams.hitVariant = HIT_VARIANT_BOOMY_SNIPE;
 			}
 		}
 
-		bVar1 = this->field_0x2c4;
-		if (bVar1 == 2) {
-			uStack240.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+		bVar1 = this->launchMode;
+		if (bVar1 == BOOMY_LAUNCH_CONTROL) {
+			msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 		}
 		else {
-			if (bVar1 == 1) {
-				uStack240.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+			if (bVar1 == BOOMY_LAUNCH_SNIPE) {
+				msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 			}
 			else {
-				if (bVar1 == 0) {
-					uStack240.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+				if (bVar1 == BOOMY_LAUNCH_STANDARD) {
+					msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 				}
 				else {
-					uStack240.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+					msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 				}
 			}
 		}
 
-		uStack240.field_0x30 = this->field_0x2c0 * 0.25f;
-		uStack240.field_0x20 = this->field_0x210;
-		edF32Vector4NormalizeHard(&uStack240.field_0x20, &uStack240.field_0x20);
-		DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_KICKED, &uStack240);
+		msgHitParams.field_0x30 = this->field_0x2c0 * 0.25f;
+		msgHitParams.field_0x20 = this->field_0x210;
+		edF32Vector4NormalizeHard(&msgHitParams.field_0x20, &msgHitParams.field_0x20);
+		DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_KICKED, &msgHitParams);
 		bCanPassThrough = this->hitActorsTable.aEntries[0]->CanPassThrough();
 		if (bCanPassThrough == false) {
-			UpdatePosition(&uStack240.field_0x40, true);
+			UpdatePosition(&msgHitParams.field_0x40, true);
 		}
 		else {
 			(this->hitActorsTable).nbEntries = 0;
@@ -756,7 +756,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 	}
 	else {
 		if (((this->distanceToTarget <= 0.3f) || (0.5f <= this->field_0x1e8)) || (actorsTable.nbEntries != 0)) {
-			if (((bCollideWithEnvironment) || (actorsTable.nbEntries != 0)) || ((this->pTargetActor != (CActor*)0x0 && ((this->field_0x2c4 != 1 && (this->distanceToTarget <= 0.3f)))))) {
+			if (((bCollideWithEnvironment) || (actorsTable.nbEntries != 0)) || ((this->pTargetActor != (CActor*)0x0 && ((this->launchMode != BOOMY_LAUNCH_SNIPE && (this->distanceToTarget <= 0.3f)))))) {
 				_BSpline_InitWhenHit(true);
 
 				if (this->distanceToTarget <= 8.0f) {
@@ -808,7 +808,7 @@ void CActorBoomy::StateBoomyGotoLauncher()
 	float fVar7;
 	GetPositionMsgParams local_2b0;
 	CActorsTable actorsTable;
-	_msg_hit_param local_f0;
+	_msg_hit_param msgHitParams;
 	edF32VECTOR4 aSplinePositions[6];
 
 	actorsTable.nbEntries = 0;
@@ -831,37 +831,37 @@ void CActorBoomy::StateBoomyGotoLauncher()
 	GotoTarget(&actorsTable, aSplinePositions, 6, 0);
 
 	if (actorsTable.nbEntries != 0) {
-		local_f0.field_0x4 = 2;
-		local_f0.projectileType = 4;
-		if (this->field_0x2c4 == 2) {
-			local_f0.field_0x4 = 4;
+		msgHitParams.hitVariant = HIT_VARIANT_BOOMY_DEFAULT;
+		msgHitParams.projectileType = HIT_TYPE_BOOMY;
+		if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
+			msgHitParams.hitVariant = HIT_VARIANT_BOOMY_CONTROL;
 		}
 		else {
-			if (this->field_0x2c4 == 1) {
-				local_f0.field_0x4 = 3;
+			if (this->launchMode == BOOMY_LAUNCH_SNIPE) {
+				msgHitParams.hitVariant = HIT_VARIANT_BOOMY_SNIPE;
 			}
 		}
 
-		bVar1 = this->field_0x2c4;
-		if (bVar1 == 2) {
-			local_f0.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+		bVar1 = this->launchMode;
+		if (bVar1 == BOOMY_LAUNCH_CONTROL) {
+			msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 		}
 		else {
-			if (bVar1 == 1) {
-				local_f0.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+			if (bVar1 == BOOMY_LAUNCH_SNIPE) {
+				msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 			}
 			else {
-				if (bVar1 == 0) {
-					local_f0.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+				if (bVar1 == BOOMY_LAUNCH_STANDARD) {
+					msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 				}
 				else {
-					local_f0.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+					msgHitParams.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
 				}
 			}
 		}
 
-		local_f0.field_0x30 = this->field_0x2c0 * 0.25f;
-		edF32Vector4NormalizeHard(&local_f0.field_0x20, &this->field_0x210);
+		msgHitParams.field_0x30 = this->field_0x2c0 * 0.25f;
+		edF32Vector4NormalizeHard(&msgHitParams.field_0x20, &this->field_0x210);
 
 		pCVar2 = this->pCollisionData;
 		bVar1 = pCVar2->flags_0x4;
@@ -869,22 +869,22 @@ void CActorBoomy::StateBoomyGotoLauncher()
 			if ((bVar1 & 1) == 0) {
 				if ((bVar1 & 2) == 0) {
 					if ((bVar1 & 4) != 0) {
-						local_f0.field_0x40 = pCVar2->aCollisionContact[2].field_0x10;
+						msgHitParams.field_0x40 = pCVar2->aCollisionContact[2].field_0x10;
 					}
 				}
 				else {
-					local_f0.field_0x40 = pCVar2->aCollisionContact[1].field_0x10;
+					msgHitParams.field_0x40 = pCVar2->aCollisionContact[1].field_0x10;
 				}
 			}
 			else {
-				local_f0.field_0x40 = pCVar2->aCollisionContact[0].field_0x10;
+				msgHitParams.field_0x40 = pCVar2->aCollisionContact[0].field_0x10;
 			}
 		}
 
 		while (actorsTable.nbEntries != 0) {
 			pCVar4 = actorsTable.PopCurrent();
 			if (pCVar4 != this->pHero) {
-				DoMessage(pCVar4, MESSAGE_KICKED, &local_f0);
+				DoMessage(pCVar4, MESSAGE_KICKED, &msgHitParams);
 			}
 		}
 	}

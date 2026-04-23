@@ -309,7 +309,7 @@ uint SearchForSection_002e3bf0(undefined* param_1, uint param_2, int param_3)
 	return param_2;
 }
 
-void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4)
+void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int subsectorMaterialId)
 {
 	undefined* puVar1;
 	int iVar2;
@@ -340,7 +340,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 			}
 
 			this->level_0x5b50 = currentLevelID;
-			this->level_0x5b54 = param_4;
+			this->level_0x5b54 = subsectorMaterialId;
 		}
 	}
 	else {
@@ -3523,7 +3523,7 @@ void CLevelScheduler::Level_Run(undefined8 param_2, int levelID, int elevatorID,
 	return;
 }
 
-void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
+void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int subsectorMaterialId)
 {
 	int iVar1;
 	bool cVar2;
@@ -3537,7 +3537,7 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 				levelId = 6;
 			}
 
-			Level_FillRunInfo(levelId, elevatorId, param_6);
+			Level_FillRunInfo(levelId, elevatorId, subsectorMaterialId);
 
 			this->outroCutsceneId = cutsceneId;
 			CScene::_pinstance->SetFadeStateTerm(false);
@@ -3554,18 +3554,18 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 				cVar2 = false;
 				if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 					if (cutsceneId != -1) {
-						cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, param_6);
+						cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, subsectorMaterialId);
 					}
 				}
 				else {
-					cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, param_6);
+					cVar2 = g_CinematicManager_0048efc->RunSectorLoadingCinematic(cutsceneId, pActor, elevatorId, subsectorMaterialId);
 					pSectorManager->SwitchToSector(iVar1, cVar2);
 				}
 
 				if (cVar2 == false) {
 					this->currentElevatorID = elevatorId;
 					this->level_0x5b50 = this->currentLevelID;
-					this->level_0x5b54 = param_6;
+					this->level_0x5b54 = subsectorMaterialId;
 				}
 			}
 		}
@@ -3599,26 +3599,24 @@ void CLevelScheduler::Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_S
 
 void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 {
-	int iVar1;
 	S_SUBSECTOR_INFO* pWolfenSubSectorInfo;
-	int iVar3;
-	bool bVar4;
-	CActorTeleporter* this_00;
-	edDList_material* peVar5;
+	int curNumFreedWolfen;
+	CActorTeleporter* pTeleporter;
+	edDList_material* pMaterial;
 	S_LEVEL_INFO* pLevelInfo;
-	int iVar6;
-	int iVar8;
-	CActor* piVar9;
-	int iVar9;
+	int currentIndex;
+	CActor* pWolfen;
+	int levelInfoExorcisedWolfen;
 	S_SUBSECTOR_INFO* pSubSectorInfo;
 	CActorsTable teleportersTable;
 	CActorManager* pActorManager;
 
 	pActorManager = CScene::ptable.g_ActorManager_004516a4;
-	iVar3 = _gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue;
-	iVar8 = 0;
+
+	curNumFreedWolfen = _gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue;
+	currentIndex = 0;
 	pLevelInfo = this->aLevelInfo + this->currentLevelID;
-	iVar9 = pLevelInfo->nbExorcisedWolfen;
+	levelInfoExorcisedWolfen = pLevelInfo->nbExorcisedWolfen;
 	pSubSectorInfo = pLevelInfo->aSubSectorInfo;
 	pLevelInfo->nbExorcisedWolfen = 0;
 	do {
@@ -3631,62 +3629,63 @@ void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 		}
 
 		if ((pSubSectorInfo->teleporterActorHashCode != -1) &&
-			(this_00 = (CActorTeleporter*)pActorManager->GetActorByHashcode(pSubSectorInfo->teleporterActorHashCode), this_00 != (CActorTeleporter*)0x0)) {
-			iVar6 = this_00->field_0x168;
+			(pTeleporter = static_cast<CActorTeleporter*>(pActorManager->GetActorByHashcode(pSubSectorInfo->teleporterActorHashCode)), pTeleporter != (CActorTeleporter*)0x0)) {
+			int iVar6 = pTeleporter->subsectorMaterialId;
 			if (iVar6 < 0) {
 				iVar6 = 0;
 			}
 
-			pSubSectorInfo->field_0x20 = this_00->GetMySubSectorMaterial(this->currentLevelID, iVar6);
-			if (this_00->bOpen != 0) {
+			pSubSectorInfo->field_0x20 = pTeleporter->GetMySubSectorMaterial(this->currentLevelID, iVar6);
+			if (pTeleporter->bOpen != 0) {
 				pSubSectorInfo->flags = pSubSectorInfo->flags | 1;
 			}
 		}
 
-		iVar8 = iVar8 + 1;
+		currentIndex = currentIndex + 1;
 		pSubSectorInfo = pSubSectorInfo + 1;
-	} while (iVar8 < 0xc);
+	} while (currentIndex < 0xc);
 
-	iVar8 = 0;
+	currentIndex = 0;
 	if (0 < pActorManager->nbActors) {
 		do {
-			if (iVar8 == -1) {
-				piVar9 = (CActorWolfen*)0x0;
+			if (currentIndex == -1) {
+				pWolfen = (CActorWolfen*)0x0;
 			}
 			else {
-				piVar9 = CScene::ptable.g_ActorManager_004516a4->aActors[iVar8];
+				pWolfen = CScene::ptable.g_ActorManager_004516a4->aActors[currentIndex];
 			}
-			bVar4 = piVar9->IsKindOfObject(OBJ_TYPE_WOLFEN);
-			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(piVar9);
-			if ((bVar4 != false) && (pWolfen->exorcisedState == 2)) {
-				iVar1 = pWolfen->startSectorId;
+
+			const bool bIsWolfen= pWolfen->IsKindOfObject(OBJ_TYPE_WOLFEN);
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pWolfen);
+			if ((bIsWolfen != false) && (pWolfen->exorcisedState == 2)) {
+				const int startSectorId = pWolfen->startSectorId;
 				pWolfenSubSectorInfo = pLevelInfo->aSubSectorInfo;
-				if (-1 < iVar1) {
-					pWolfenSubSectorInfo = pWolfenSubSectorInfo + iVar1;
+				if (-1 < startSectorId) {
+					pWolfenSubSectorInfo = pWolfenSubSectorInfo + startSectorId;
 				}
 
 				pWolfenSubSectorInfo->nbExorcisedWolfen = pWolfenSubSectorInfo->nbExorcisedWolfen + 1;
 
-				if (0 < iVar1) {
+				if (0 < startSectorId) {
 					pLevelInfo->nbExorcisedWolfen = pLevelInfo->nbExorcisedWolfen + 1;
 				}
 			}
 
-			iVar8 = iVar8 + 1;
-		} while (iVar8 < pActorManager->nbActors);
+			currentIndex = currentIndex + 1;
+		} while (currentIndex < pActorManager->nbActors);
 	}
 
-	_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue = (iVar3 - iVar9) + pLevelInfo->nbExorcisedWolfen;
+	_gScenVarInfo[SCN_GAME_NUM_FREED_WOLFENS].currentValue = (curNumFreedWolfen - levelInfoExorcisedWolfen) + pLevelInfo->nbExorcisedWolfen;
 
 	teleportersTable.nbEntries = 0;
 	pActorManager->GetActorsByClassID(TELEPORTER, &teleportersTable);
-	iVar9 = 0;
+	levelInfoExorcisedWolfen = 0;
 	if (0 < teleportersTable.nbEntries) {
 		do {
-			CActorTeleporter* pTeleporter = static_cast<CActorTeleporter*>(teleportersTable.aEntries[iVar9]);
+			CActorTeleporter* pTeleporter = static_cast<CActorTeleporter*>(teleportersTable.aEntries[levelInfoExorcisedWolfen]);
 			pTeleporter->NotifyLevelTeleporterChanged();
-			iVar9 = iVar9 + 1;
-		} while (iVar9 < teleportersTable.nbEntries);
+			levelInfoExorcisedWolfen = levelInfoExorcisedWolfen + 1;
+		} while (levelInfoExorcisedWolfen < teleportersTable.nbEntries);
 	}
 
 	return;

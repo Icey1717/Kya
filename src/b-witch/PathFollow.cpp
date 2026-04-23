@@ -154,6 +154,13 @@ CPathFollowReaderAbsolute::CPathFollowReaderAbsolute()
 
 float dot_quat(edF32VECTOR4* a, edF32VECTOR4* b)
 {
+	if (a->x == b->x && a->y == b->y && a->z == b->z && a->w == b->w) {
+		// The dot product of two identical quaternions is 1, but due to floating point precision, it might be slightly less than 1. So we return a value that is very close to 1.
+		// On PS2 this returns 0.99999994, which is the closest representable float to 1 that is less than 1.
+		const uint almostOne = 0x3F7FFFFE;
+		return *reinterpret_cast<const float*>(&almostOne);
+	}
+
 	return a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
 }
 
@@ -310,12 +317,12 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 
 				fVar9 = dot_quat(peVar4, peVar3);
 				fVar10 = 1.0f;
-				if (fabs(fVar9) <= 1.0f) {
-					fVar10 = fabs(fVar9);
+				if (fabsf(fVar9) <= 1.0f) {
+					fVar10 = fabsf(fVar9);
 				}
 
 				fVar10 = acosf(fVar10);
-				this->aSegmentDurations[iVar7] = fabs(fVar10);
+				this->aSegmentDurations[iVar7] = fabsf(fVar10);
 			}
 			break;
 		default:
@@ -581,7 +588,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* 
 	int iVar3;
 	int iVar4;
 	int iVar5;
-	int iVar6;
+	int result;
 	float fVar7;
 	float totalTime;
 	float fVar9;
@@ -595,7 +602,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* 
 	loopPeriod = 0.0f;
 	iVar5 = this->pPathFollow->splinePointCount;
 	iVar1 = this->pPathFollow->nbLeadInPoints;
-	iVar6 = 0;
+	result = 0;
 
 	if ((totalTime == 0.0f) || (totalTime <= curTime)) {
 		curTime = curTime - totalTime;
@@ -608,7 +615,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* 
 			if ((this->mode == 0) || ((this->mode != 2 && (this->mode != 1)))) {
 				loopPeriod = loopPeriod - 0.0001f;
 
-				if ((loopPeriod < curTime) && (iVar6 = 2, curTime = loopPeriod, loopPeriod < 0.0f)) {
+				if ((loopPeriod < curTime) && (result = 2, curTime = loopPeriod, loopPeriod < 0.0f)) {
 					curTime = 0.0f;
 				}
 			}
@@ -748,7 +755,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* 
 
 	if (fVar9 < 0.0f) {
 		fVar9 = 0.0f;
-		iVar6 = 1;
+		result = 1;
 	}
 
 	fVar7 = (loopPeriod - totalTime) - fVar7;
@@ -763,7 +770,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float curTime, int* param_3, int* 
 	*param_3 = iVar4;
 	*param_4 = iVar3;
 	*param_5 = fVar9;
-	return iVar6;
+	return result;
 }
 
 int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo)

@@ -245,10 +245,7 @@ struct S_SUBSECTOR_INFO
 	int field_0xc;
 	uint field_0x10;
 	int nbMaxExorcisedWolfen;
-	undefined nbExorcisedWolfen;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
+	int nbExorcisedWolfen;
 	uint flags;
 	edDList_material* field_0x20;
 	undefined field_0x24;
@@ -422,7 +419,7 @@ public:
 	static void OnSceneVarSet();
 
 	void Level_Run(undefined8 param_2, int levelID, int elevatorID, int param_5, int param_6, bool bFadeOut);
-	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
+	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int subsectorMaterialId);
 	void Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_SUBSECTOR_INFO* pSubSectorInfo);
 	void Level_UpdateCurLiveLevelInfo();
 	void Level_TeleporterChanged();

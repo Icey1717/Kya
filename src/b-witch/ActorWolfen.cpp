@@ -2799,9 +2799,8 @@ void CActorWolfen::BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour)
 																	StateGuardAreaWP_Wait(pBehaviour);
 																}
 																else {
-																	if (iVar11 == 0x8e) {
-																		IMPLEMENTATION_GUARD(
-																		StateGuardAreaWP_OrientWP(this, (int)pBehaviour);)
+																	if (iVar11 == WOLFEN_STATE_GUARD_ORIENT_WP) {
+																		StateGuardAreaWP_OrientWP(pBehaviour);
 																	}
 																	else {
 																		if (iVar11 == WOLFEN_STATE_GUARD_STOP) {
@@ -5677,6 +5676,110 @@ void CActorWolfen::StateGuardAreaWP_Wait(CBehaviourGuardArea* pBehaviour)
 	return;
 }
 
+void CActorWolfen::StateGuardAreaWP_OrientWP(CBehaviourGuardArea* pBehaviour)
+{
+	bool bVar1;
+	edF32VECTOR4* pWayPointAngles;
+	CPathFinderClient* pClient;
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 eStack160;
+	edF32VECTOR4 local_90;
+	edF32MATRIX4 wayPointAnglesMatrix;
+	edF32MATRIX4 diffMatrix;
+
+	if (this->pTiedActor != (CActor*)0x0) {
+		pWayPointAngles = pBehaviour->pathFollowReader.GetWayPointAngles();
+		edF32Matrix4FromEulerSoft(&wayPointAnglesMatrix, &pWayPointAngles->xyz, "XYZ");
+		local_90 = wayPointAnglesMatrix.rowZ;
+		this->pTiedActor->SV_ComputeDiffMatrixFromInit(&diffMatrix);
+		edF32Matrix4MulF32Vector4Hard(&pBehaviour->field_0xa0, &diffMatrix, &local_90);
+	}
+
+	fVar3 = GetAngleYFromVector(&pBehaviour->field_0xa0);
+	fVar3 = edF32GetAnglesDelta(fVar3, this->rotationEuler.y);
+	if (fVar3 <= 0.0f) {
+		fVar3 = -fVar3;
+	}
+
+	if (fVar3 <= 0.001f) {
+		SetState(0x8f, -1);
+		goto LAB_00177e18;
+	}
+
+	movParamsOut.flags = 0;
+
+	movParamsIn.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	movParamsIn.rotSpeed = static_cast<float>(GetWalkRotSpeed());
+	movParamsIn.flags = movParamsIn.flags | 2;
+	movParamsIn.acceleration = GetWalkAcceleration();
+	movParamsIn.speed = 0.0f;
+	movParamsIn.pRotation = &pBehaviour->field_0xa0;
+	movParamsIn.flags = movParamsIn.flags | 0x400;
+	edF32Vector4AddHard(&eStack160, &this->currentLocation, movParamsIn.pRotation);
+	if ((this->combatFlags_0xb78 & 0x400) == 0) {
+	LAB_00177d90:
+		bVar1 = false;
+	}
+	else {
+		pClient = GetPathfinderClientAlt();
+		if (pClient->id != -1) {
+			pClient = GetPathfinderClientAlt();
+			bVar1 = pClient->IsValidPosition(&this->currentLocation);
+
+			if (bVar1 == false) goto LAB_00177d90;
+		}
+
+		bVar1 = true;
+	}
+
+	if (bVar1) {
+		if ((this->combatFlags_0xb78 & 0x80000) == 0) {
+			this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x80000;
+		}
+
+		this->pathOriginPosition = this->currentLocation;
+	}
+
+	SV_AUT_MoveTo(&movParamsOut, &movParamsIn, &eStack160);
+
+LAB_00177e18:
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	iVar2 = pBehaviour->TestState_001f09b0();
+	if (iVar2 == -1) {
+		iVar2 = pBehaviour->TestState_001f0a70();
+		if (iVar2 == -1) {
+			iVar2 = pBehaviour->TestState_001f0a90();
+			if (iVar2 == -1) {
+				iVar2 = pBehaviour->TestState_001f0a30();
+				if (iVar2 != -1) {
+					SetState(iVar2, -1);
+				}
+			}
+			else {
+				SetState(iVar2, -1);
+			}
+		}
+		else {
+			SetState(iVar2, -1);
+		}
+	}
+	else {
+		SetState(iVar2, -1);
+	}
+
+	return;
+}
+
 void CActorWolfen::StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour)
 {
 	edF32VECTOR4* v0;
@@ -5700,7 +5803,7 @@ void CActorWolfen::StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour)
 			v0 = pBehaviour->pathFollowReader.GetWayPointAngles();
 			edF32Matrix4FromEulerSoft(&eStack80, &v0->xyz, "XYZ");
 			pBehaviour->field_0xa0 = eStack80.rowZ;
-			SetState(0x8e, -1);
+			SetState(WOLFEN_STATE_GUARD_ORIENT_WP, -1);
 		}
 	}
 	else {
@@ -11893,10 +11996,10 @@ void CActorWolfenKnowledge::Init(int memMode, uint param_3, uint param_4, uint n
 
 	this->memMode = memMode;
 	this->nbSubObjs = nbObjs;
-	this->field_0xc = param_6;
+	this->nbF4Data = param_6;
 	this->field_0x14 = param_3;
 	this->field_0x18 = param_4 + param_3;
-	iVar1 = this->field_0xc;
+	iVar1 = this->nbF4Data;
 	iVar3 = this->nbSubObjs * sizeof(CActorWolfenKnowledge_0x14);
 	this->aSubObjs = reinterpret_cast<CActorWolfenKnowledge_0x14*>(edMemAlloc(TO_HEAP(H_MAIN), iVar3));
 	memset(this->aSubObjs, 0, iVar3);
@@ -11904,7 +12007,7 @@ void CActorWolfenKnowledge::Init(int memMode, uint param_3, uint param_4, uint n
 	uVar4 = 0;
 	if (this->nbSubObjs != 0) {
 		do {
-			this->aSubObjs[uVar4].field_0x4 = reinterpret_cast<f4data*>(edMemAlloc(TO_HEAP(H_MAIN), iVar1 * sizeof(f4data)));
+			this->aSubObjs[uVar4].aF4data = reinterpret_cast<f4data*>(edMemAlloc(TO_HEAP(H_MAIN), iVar1 * sizeof(f4data)));
 			uVar4 = uVar4 + 1;
 		} while (uVar4 < this->nbSubObjs);
 	}
@@ -11922,7 +12025,7 @@ void CActorWolfenKnowledge::Reset()
 	uVar2 = 0;
 	if (this->nbSubObjs != 0) {
 		do {
-			memset(this->aSubObjs[uVar2].field_0x4, 0xff, this->field_0xc * sizeof(f4data));
+			memset(this->aSubObjs[uVar2].aF4data, 0xff, this->nbF4Data * sizeof(f4data));
 			this->aSubObjs[uVar2].field_0x8 = 0;
 			this->aSubObjs[uVar2].field_0x0 = (s_fighter_combo*)0x0;
 			this->aSubObjs[uVar2].field_0xc = 0;
@@ -11933,7 +12036,7 @@ void CActorWolfenKnowledge::Reset()
 
 	this->field_0x4 = 0;
 	this->field_0x20 = (CActorWolfenKnowledge_0x14*)0x0;
-	this->field_0x24 = (f4data*)0;
+	this->aF4data = (f4data*)0;
 	this->field_0x28 = (s_fighter_combo*)0x0;
 	this->field_0x2c = 0;
 	this->field_0x1c = 0;
@@ -11950,7 +12053,7 @@ void CActorWolfenKnowledge::Term()
 		uVar1 = 0;
 		if (this->nbSubObjs != 0) {
 			do {
-				edMemFree(this->aSubObjs[uVar1].field_0x4);
+				edMemFree(this->aSubObjs[uVar1].aF4data);
 				uVar1 = uVar1 + 1;
 			} while (uVar1 < this->nbSubObjs);
 		}
@@ -11983,7 +12086,7 @@ int CActorWolfenKnowledge::BeginMemory(s_fighter_combo* pFighterCombo)
 		psVar1 = this->field_0x20;
 		if (psVar1 != (CActorWolfenKnowledge_0x14*)0x0) {
 			psVar1->field_0x10 = psVar1->field_0x10 + 1;
-			this->field_0x24 = this->field_0x20->field_0x4;
+			this->aF4data = this->field_0x20->aF4data;
 			this->field_0x28 = pFighterCombo;
 			this->field_0x2c = 1;
 			this->field_0x1c = 2;
@@ -12005,7 +12108,7 @@ int CActorWolfenKnowledge::BeginMemory(s_fighter_combo* pFighterCombo)
 				} while (uVar4 < this->nbSubObjs);
 			}
 
-			this->field_0x24 = this->field_0x20->field_0x4;
+			this->aF4data = this->field_0x20->aF4data;
 			this->field_0x28 = pFighterCombo;
 			this->field_0x2c = 1;
 			this->field_0x1c = 1;
@@ -12014,7 +12117,7 @@ int CActorWolfenKnowledge::BeginMemory(s_fighter_combo* pFighterCombo)
 		}
 	}
 
-	this->field_0x24 = (f4data*)0x0;
+	this->aF4data = (f4data*)0x0;
 	this->field_0x28 = (s_fighter_combo*)0x0;
 	this->field_0x2c = 0;
 	this->field_0x1c = 0;
@@ -12051,8 +12154,8 @@ int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
 			}
 		}
 
-		pvVar3 = this->field_0x24;
-		piVar7 = this->field_0x20->field_0x4 + (pvVar3->field_0x1byte + uVar8);
+		pvVar3 = this->aF4data;
+		piVar7 = this->field_0x20->aF4data + (pvVar3->field_0x1byte + uVar8);
 		if (piVar7->field_0x0uint == 0xffffffff) {
 			uVar5 = 0;
 			s_fighter_blow* pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData);
@@ -12065,14 +12168,14 @@ int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
 			}
 
 			pvVar3->field_0x0ushort = pvVar3->field_0x0ushort & uVar5;
-			this->field_0x24 = piVar7;
-			this->field_0x24->field_0x0byte = pFighterCombo->nbBranches;
-			this->field_0x24->field_0x1byte = this->field_0x20->field_0x8;
-			this->field_0x20->field_0x8 = this->field_0x20->field_0x8 + this->field_0x24->field_0x0byte;
+			this->aF4data = piVar7;
+			this->aF4data->field_0x0byte = pFighterCombo->nbBranches;
+			this->aF4data->field_0x1byte = this->field_0x20->field_0x8;
+			this->field_0x20->field_0x8 = this->field_0x20->field_0x8 + this->aF4data->field_0x0byte;
 			this->field_0x1c = 1;
 		}
 		else {
-			this->field_0x24 = piVar7;
+			this->aF4data = piVar7;
 		}
 
 		this->field_0x28 = pFighterCombo;
@@ -12090,7 +12193,7 @@ void CActorWolfenKnowledge::EndMemory()
 
 	this->field_0x1c = 0;
 	this->field_0x20 = (CActorWolfenKnowledge_0x14*)0x0;
-	this->field_0x24 = 0;
+	this->aF4data = 0;
 	this->field_0x28 = (s_fighter_combo*)0x0;
 
 	if ((this->memMode != 1) && (uVar3 = 0, this->nbSubObjs != 0)) {
@@ -12100,7 +12203,7 @@ void CActorWolfenKnowledge::EndMemory()
 				piVar1->field_0x0 = 0;
 				piVar1->field_0xc = 0;
 				piVar1->field_0x10 = 0;
-				memset(piVar1->field_0x4, 0xff, this->field_0xc * sizeof(void*));
+				memset(piVar1->aF4data, 0xff, this->nbF4Data * sizeof(f4data));
 				piVar1->field_0x8 = 0;
 			}
 			uVar3 = uVar3 + 1;
@@ -12151,7 +12254,7 @@ CActorWolfenKnowledge_0x14* CActorWolfenKnowledge::_AddComboRoot(s_fighter_combo
 			pCVar6->field_0x0 = (s_fighter_combo*)0x0;
 			this->aSubObjs[uVar5].field_0xc = 0;
 			this->aSubObjs[uVar5].field_0x10 = 0;
-			memset(this->aSubObjs[uVar5].field_0x4, 0xff, this->field_0xc * sizeof(void*));
+			memset(this->aSubObjs[uVar5].aF4data, 0xff, this->nbF4Data * sizeof(f4data));
 			this->aSubObjs[uVar5].field_0x8 = 0;
 		}
 	}
@@ -12164,8 +12267,8 @@ CActorWolfenKnowledge_0x14* CActorWolfenKnowledge::_AddComboRoot(s_fighter_combo
 		pCVar6->field_0xc = 0;
 		pCVar6->field_0x10 = 0;
 		pCVar6->field_0x8 = pFighterCombo->nbBranches + 1;
-		pCVar6->field_0x4->field_0x1byte = 1;
-		pCVar6->field_0x4->field_0x0byte = pFighterCombo->nbBranches;
+		pCVar6->aF4data->field_0x1byte = 1;
+		pCVar6->aF4data->field_0x0byte = pFighterCombo->nbBranches;
 	}
 
 	return pCVar6;

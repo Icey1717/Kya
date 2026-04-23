@@ -217,7 +217,7 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	float fVar6;
 	undefined4 uVar7;
 	undefined4 uVar8;
-	_msg_hit_param* local_64;
+	_msg_hit_param* pMsgHitParam;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 eStack80;
 	edF32VECTOR4 local_40;
@@ -225,7 +225,6 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 eStack16;
 
-	local_64 = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 	if (msg == 3) {
 		fVar6 = GetLifeInterface()->GetValue();
 		if (fVar6 <= 0.0f) {
@@ -237,14 +236,16 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 	}
 	else {
-		if (msg == 0xd) {
+		if (msg == MESSAGE_TIED) {
+			_msg_tied_params* pTiedParams = reinterpret_cast<_msg_tied_params*>(pMsgParam);
+
 			fVar6 = GetLifeInterface()->GetValue();
 			if (fVar6 <= 0.0f) {
 				iVar4 = 0;
 			}
 			else {
-				if (local_64->field_0x4 == 0) {
-					this->field_0x4a0 = *reinterpret_cast<edF32VECTOR4*>(pMsgParam);
+				if (pTiedParams->bTied == 0) {
+					this->field_0x4a0 = *pTiedParams->pPosition;
 					(this->field_0x4a0).y = (this->field_0x4a0).y - this->field_0x3e0;
 					UpdatePosition(&this->field_0x4a0, true);
 					SetState(7, -1);
@@ -252,6 +253,7 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				else {
 					SetState(10, -1);
 				}
+
 				iVar4 = 1;
 			}
 		}
@@ -269,15 +271,16 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				if (msg == MESSAGE_KICKED) {
+					pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 					fVar6 = GetLifeInterface()->GetValue();
 					if (fVar6 <= 0.0f) {
 						iVar4 = 0;
 					}
 					else {
-						switch (local_64->projectileType) {
+						switch (pMsgHitParam->projectileType) {
 						case HIT_TYPE_BOOMY:
 							if ((this->field_0x364 & 2) != 0) {
-								ApplyHit(&local_64);
+								ApplyHit(&pMsgHitParam);
 								return 1;
 							}
 							break;
@@ -285,11 +288,11 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							IMPLEMENTATION_GUARD(
 							if (((this->field_0x364 & 0x40) != 0) && (this->actorState != 10)) {
 								(*(this->pVTable)->LifeDecrease)
-									(local_64->damage, (CActorAutonomous*)this);
+									(pMsgHitParam->damage, (CActorAutonomous*)this);
 								pCVar2 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
 								fVar6 = (*pCVar2->pVtable->GetValue)((CInterface*)pCVar2);
 								if (fVar6 <= 0.0) {
-									peVar3 = &local_64->field_0x40;
+									peVar3 = &pMsgHitParam->field_0x40;
 									if ((this->field_0x364 & 1) != 0) {
 										if ((this->flags & 0x1000) != 0) {
 											SetVectorFromAngles(&this->rotationQuat,
@@ -316,11 +319,11 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 									return 1;
 								}
 								iVar4 = FUN_00370c50((int)this, (edF32VECTOR4*)&this->field_0x4b0,
-									&local_64->field_0x40, 0);
+									&pMsgHitParam->field_0x40, 0);
 								if (iVar4 != 0) {
 									CVibrationDyn::UpdateAllFactors
-									(local_64->field_0x30, &this->vibrationDyn,
-										(edF32VECTOR4*)&this->field_0x4b0, &local_64->field_0x40);
+									(pMsgHitParam->field_0x30, &this->vibrationDyn,
+										(edF32VECTOR4*)&this->field_0x4b0, &pMsgHitParam->field_0x40);
 									(*(this->pVTable)->SetState)((CActor*)this, 8, -1);
 									return 1;
 								}
@@ -328,7 +331,7 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							break;)
 						case 8:
 							if (((this->field_0x364 & 4) != 0) && (this->actorState != 10)) {
-								peVar3 = &local_64->field_0x40;
+								peVar3 = &pMsgHitParam->field_0x40;
 								if ((this->field_0x364 & 1) != 0) {
 									if ((this->flags & 0x1000) != 0) {
 										SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
@@ -353,13 +356,13 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							break;
 						case 9:
 							if ((this->field_0x364 & 8) != 0) {
-								ApplyHit(&local_64);
+								ApplyHit(&pMsgHitParam);
 								return 1;
 							}
 							break;
 						case 10:
-							if (((this->field_0x364 & 0x10) != 0) && (0.0f < local_64->damage)) {
-								peVar3 = &local_64->field_0x20;
+							if (((this->field_0x364 & 0x10) != 0) && (0.0f < pMsgHitParam->damage)) {
+								peVar3 = &pMsgHitParam->field_0x20;
 								if ((this->field_0x364 & 1) != 0) {
 									if ((this->flags & 0x1000) != 0) {
 										SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
@@ -382,8 +385,8 @@ int CActorBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						case 0xb:
 							if ((this->field_0x364 & 0x20) != 0) {
 								fVar6 = GetLifeInterface()->GetValueMax();
-								local_64->damage = fVar6;
-								ApplyHit(&local_64);
+								pMsgHitParam->damage = fVar6;
+								ApplyHit(&pMsgHitParam);
 								return 1;
 							}
 						}

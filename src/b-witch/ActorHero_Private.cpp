@@ -12186,33 +12186,33 @@ void CActorHeroPrivate::StateBoomyExecuteFightBlow()
 	edF32MATRIX4* peVar8;
 	ed_3d_hierarchy_node* peVar9;
 	CActor** pCVar10;
-	_msg_hit_param local_d0;
+	_msg_hit_param msgHitParam;
 	edF32MATRIX4 local_50;
 	_msg_hit_param* local_4;
 
 	_ManageFighterDyn(this->pBlow->blowStageExecute.flags, 0x40323, (CActorsTable*)0x0);
 
 	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-		local_d0.projectileType = 4;
-		local_d0.field_0x4 = 1;
+		msgHitParam.projectileType = HIT_TYPE_BOOMY;
+		msgHitParam.hitVariant = HIT_VARIANT_BOOMY_MELEE;
 		iVar7 = 8;
-		local_d0.flags = (uint)(byte)this->pBlow->field_0x4.field_0x2ushort;
-		local_d0.field_0x10 = this->pBlow->field_0x10;
-		local_d0.field_0x30 = this->pBlow->field_0x18;
-		local_d0.field_0x70 = this->pBlow->field_0x1c;
-		local_d0.damage = this->pBlow->damage;
-		local_d0.field_0x50 = 1;
+		msgHitParam.flags = (uint)(byte)this->pBlow->field_0x4.field_0x2ushort;
+		msgHitParam.field_0x10 = this->pBlow->field_0x10;
+		msgHitParam.field_0x30 = this->pBlow->field_0x18;
+		msgHitParam.field_0x70 = this->pBlow->field_0x1c;
+		msgHitParam.damage = this->pBlow->damage;
+		msgHitParam.field_0x50 = 1;
 
 		local_50 = this->pMeshTransform->base.transformA;
 		local_50.rowT = gF32Vertex4Zero;
 
-		edF32Matrix4MulF32Vector4Hard(&local_d0.field_0x20, &local_50, &this->pBlow->field_0x20);
-		edF32Matrix4MulF32Vector4Hard(&local_d0.field_0x60, &local_50, &this->pBlow->field_0x30);
+		edF32Matrix4MulF32Vector4Hard(&msgHitParam.field_0x20, &local_50, &this->pBlow->field_0x20);
+		edF32Matrix4MulF32Vector4Hard(&msgHitParam.field_0x60, &local_50, &this->pBlow->field_0x30);
 
 		iVar7 = 0;
 		pCVar10 = this->boomyTargetTable.aEntries;
 
-		p_Var6 = &local_d0;
+		p_Var6 = &msgHitParam;
 		if (0 < this->boomyTargetTable.nbEntries) {
 			for (; local_4 = p_Var6, iVar7 < this->boomyTargetTable.nbEntries; iVar7 = iVar7 + 1) {
 				DoMessage(*pCVar10, MESSAGE_KICKED, local_4);

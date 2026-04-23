@@ -9923,9 +9923,9 @@ void ed3DRenderObject(ed_hash_code* pLOD, ed_hash_code* pMBNK)
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject mesh: {} -> MBNK: {}", pLOD->hash.ToString(), pMBNK->hash.ToString());
 
 	// HACK
-	//if (pObjHash->hash.number == 0x2e442e4f2e4c) {
-	//	
-	//}
+	if (pLOD->hash.number == 0xa2a2a198c7fac1e2) {
+		ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject mesh: {} -> MBNK: {}", pLOD->hash.ToString(), pMBNK->hash.ToString());
+	}
 	//else {
 	//	return;
 	//}
@@ -10020,13 +10020,15 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
 
+	// HACK
 	std::string aoeuoaeu = "v�I_RAY_";
 	std::string oeuthoeu = pHierarchy->hash.name;
 	if (aoeuoaeu == oeuthoeu) {
 		ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
 	}
 
-	ulong hashA = 0x5f5941525f498976;
+	// HACK
+	ulong hashA = 0x00002e442e4f2e4c;
 	ulong hashB = pHierarchy->hash.number;
 
 	if (hashA == hashB) {

@@ -59,11 +59,11 @@ namespace Debug::Actor::Switch
 		ImGui::Separator();
 		ImGui::TextDisabled("FX Handles");
 		ImGui::Text("Idle Glow:  %p  id=%-4d  bank=%d  (field_0x1c / 0x18)",
-			pMagic->field_0x1c.pFx, pMagic->field_0x1c.id, pMagic->field_0x18);
+			pMagic->idleGlowFx.pFx, pMagic->idleGlowFx.id, pMagic->field_0x18);
 		ImGui::Text("Activated:  %p  id=%-4d  bank=%d  (field_0x34 / 0x30)",
-			pMagic->field_0x34.pFx, pMagic->field_0x34.id, pMagic->field_0x30);
+			pMagic->activatedFx.pFx, pMagic->activatedFx.id, pMagic->field_0x30);
 		ImGui::Text("Proximity:  %p  id=%-4d  bank=%d  (field_0x50 / 0x4c)",
-			pMagic->field_0x50.pFx, pMagic->field_0x50.id, pMagic->field_0x4c);
+			pMagic->proximityFx.pFx, pMagic->proximityFx.id, pMagic->field_0x4c);
 
 		ImGui::Separator();
 		ImGui::TextDisabled("Scene Nodes");

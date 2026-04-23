@@ -32,7 +32,7 @@ void CActorTeleporter::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 
-	this->field_0x168 = pByteCode->GetS32();
+	this->subsectorMaterialId = pByteCode->GetS32();
 	this->hash = pByteCode->GetU64();
 	this->field_0x16c = pByteCode->GetU32();
 
@@ -609,7 +609,7 @@ void CActorTeleporter::StateTeleporterActive()
 				this->pOwner->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->FUN_00184580();)
 
 				this->condOpArray.Perform();
-				CLevelScheduler::gThis->Level_Teleport(this, levelId, iVar8, cutsceneId, this->field_0x168);
+				CLevelScheduler::gThis->Level_Teleport(this, levelId, iVar8, cutsceneId, this->subsectorMaterialId);
 			}
 		}
 	}
@@ -752,7 +752,7 @@ int CActorTeleporter::FUN_002ee670()
 		iVar3 = 0;
 	}
 	else {
-		ObjectNaming::SetNextObjectName("Cin G2D");
+		ObjectNaming::SetNextObjectName("Cin G2D (%s)", pCinematic->fileName);
 		ed3DInstallG2D(bankEntryInfo.fileBufferStart, bankEntryInfo.size, &iStack4, &this->g2dManager, 1);
 		iVar3 = ed3DG2DGetG2DNbMaterials(&this->g2dManager);
 		this->nbMaterials = iVar3;

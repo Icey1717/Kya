@@ -985,8 +985,7 @@ void CActorWoof::BehaviourWoofGuard_Manage()
 		StateWoofComeBack();
 		break;
 	case WOOF_STATE_PATH:
-		IMPLEMENTATION_GUARD(
-		StateWoofPath(this);)
+		StateWoofPath();
 		break;
 	case WOOF_STATE_SLIDE:
 		StateWoofSlide();
@@ -1145,7 +1144,7 @@ void CActorWoof::BehaviourWoofGuard_Manage()
 			SetState(WOOF_STATE_COME_BACK, -1);
 		}
 		break;
-	case 0x24:
+	case WOOF_STATE_JUMP_3_4:
 		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 		if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
 			if (5.0f < this->lastGroundY - this->currentLocation.y) {
@@ -1153,15 +1152,15 @@ void CActorWoof::BehaviourWoofGuard_Manage()
 			}
 		}
 		else {
-			SetState(0x25, -1);
+			SetState(WOOF_STATE_JUMP_4_4, -1);
 		}
 		break;
-	case 0x25:
+	case WOOF_STATE_JUMP_4_4:
 		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			if ((uint)this->field_0x554 < 3) {
-				SetBehaviour(4, 9, -1);
+			if (this->field_0x554 < 3) {
+				SetBehaviour(WOOF_BEHAVIOUR_VERTICAL_JUMP, WOOF_STATE_WAIT_JUMP, -1);
 			}
 			else {
 				SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_YAP, -1);
@@ -1202,7 +1201,7 @@ void CActorWoof::BehaviourWoofGuard_Manage()
 		}
 
 		this->lastGroundY = this->currentLocation.y;
-		SetState(0x24, -1);
+		SetState(WOOF_STATE_JUMP_3_4, -1);
 		break;
 	case 0x27:
 		bVar6 = this->field_0x5a0.IsFinished();
@@ -1303,11 +1302,11 @@ void CActorWoof::BehaviourWoofGuard_TermState(int oldState)
 		(this->field_0x430->pCollisionData)->actorFieldA = (CActor*)0x0;
 	}
 	else {
-		if (oldState == 0x25) {
+		if (oldState == WOOF_STATE_JUMP_4_4) {
 			this->pAnimationController->UnRegisterBone(this->field_0x424);
 		}
 		else {
-			if (oldState == 0x24) {
+			if (oldState == WOOF_STATE_JUMP_3_4) {
 				(this->pCollisionData)->actorFieldA = (CActor*)0x0;
 				(this->field_0x430->pCollisionData)->actorFieldA = (CActor*)0x0;
 				RestoreCollisionSphere(0.2f);
@@ -1390,7 +1389,7 @@ void CActorWoof::BehaviourWoofVerticalJump_InitState(int newState)
 	edF32VECTOR4 local_30;
 	_vision_param visionParam;
 
-	if (newState == 0x23) {
+	if (newState == WOOF_STATE_JUMP_2_4) {
 		(this->pCollisionData)->actorFieldA = this->field_0x430;
 		(this->field_0x430->pCollisionData)->actorFieldA = static_cast<CActor*>(this);
 		local_30.y = 0.8f;
@@ -1404,7 +1403,7 @@ void CActorWoof::BehaviourWoofVerticalJump_InitState(int newState)
 		this->ChangeCollisionSphere(0.0f, &local_40, &local_30);
 	}
 	else {
-		if (newState == 0x22) {
+		if (newState == WOOF_STATE_JUMP_1_4) {
 			visionParam.field_0x4 = 0.55f;
 			visionParam.field_0x0 = 10.0f;
 			visionParam.field_0x8 = 0.6f;
@@ -1416,7 +1415,7 @@ void CActorWoof::BehaviourWoofVerticalJump_InitState(int newState)
 			this->pAnimationController->RegisterBone(this->field_0x424);
 		}
 		else {
-			if (newState == 9) {
+			if (newState == WOOF_STATE_WAIT_JUMP) {
 				pPathFinderClient = this->GetPathfinderClient();
 				pPathFinderClient->Init();
 				pPathFinderClient->ChangePathfindingId(this, this->field_0x41c, &this->currentLocation);
@@ -1430,25 +1429,78 @@ void CActorWoof::BehaviourWoofVerticalJump_InitState(int newState)
 
 void CActorWoof::BehaviourWoofVerticalJump_Manage()
 {
-	IMPLEMENTATION_GUARD();
+	CActorWoof* this_00;
+	int iVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+
+	iVar1 = this->actorState;
+	if (iVar1 == WOOF_STATE_JUMP_4_4) {
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			if (this->field_0x554 < 3) {
+				SetBehaviour(WOOF_BEHAVIOUR_VERTICAL_JUMP, WOOF_STATE_WAIT_JUMP, -1);
+			}
+			else {
+				SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_YAP, -1);
+			}
+		}
+	}
+	else {
+		if (iVar1 == WOOF_STATE_JUMP_3_4) {
+			ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
+			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				if (5.0f < this->lastGroundY - this->currentLocation.y) {
+					SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_FALL, -1);
+				}
+			}
+			else {
+				SetState(WOOF_STATE_JUMP_4_4, -1);
+			}
+		}
+		else {
+			if (iVar1 == WOOF_STATE_JUMP_2_4) {
+				StateWoofJump_2_4();
+			}
+			else {
+				if (iVar1 == WOOF_STATE_JUMP_1_4) {
+					ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+					if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+						SetState(WOOF_STATE_JUMP_2_4, -1);
+					}
+				}
+				else {
+					if (iVar1 == WOOF_STATE_WAIT_JUMP) {
+						StateWoofWaitJump();
+					}
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 void CActorWoof::BehaviourWoofVerticalJump_TermState(int oldState)
 {
 	CActorWoof* pWoof;
 
-	if (oldState == 0x25) {
+	if (oldState == WOOF_STATE_JUMP_4_4) {
 		this->pAnimationController->UnRegisterBone(this->field_0x424);
 	}
 	else {
-		if (oldState == 0x24) {
+		if (oldState == WOOF_STATE_JUMP_3_4) {
 			(this->pCollisionData)->actorFieldA = (CActor*)0x0;
 			(this->field_0x430->pCollisionData)->actorFieldA = (CActor*)0x0;
-			this->RestoreCollisionSphere(0.2f);
+			RestoreCollisionSphere(0.2f);
 		}
 		else {
-			if (oldState == 9) {
-				this->SV_AUT_PathfindingEnd();
+			if (oldState == WOOF_STATE_WAIT_JUMP) {
+				SV_AUT_PathfindingEnd();
 			}
 		}
 	}
@@ -1513,6 +1565,145 @@ void CActorWoof::StateWoofYap()
 					this->SetState(8, -1);
 				}
 			}
+		}
+	}
+
+	return;
+}
+
+void CActorWoof::StateWoofWaitJump()
+{
+	CActorMovable* pCVar1;
+	float fVar2;
+	bool bVar3;
+	CPathFinderClient* pPathFinderClient;
+	CVision* pVision;
+	CActor* pCVar4;
+	uint uVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->field_0x430;
+	local_10.x = pCVar1->currentLocation.x - this->currentLocation.x;
+	local_10.z = pCVar1->currentLocation.z - this->currentLocation.z;
+	local_10.w = pCVar1->currentLocation.w - this->currentLocation.w;
+	local_10.y = 0.0f;
+
+	edF32Vector4NormalizeHard(&local_10, &local_10);
+	SV_UpdateOrientation(4.0f, &local_10);
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+	fVar8 = this->field_0x430->currentLocation.y - this->currentLocation.y;
+	pPathFinderClient = GetPathfinderClient();
+	if (pPathFinderClient->id == -1) {
+		pVision = GetVision();
+		pCVar4 = pVision->SV_GetNearestActor(this->field_0x430->typeID, 1);
+		if (pCVar4 != (CActor*)0x0) {
+			SetBehaviour(WOOF_BEHAVIOUR_GUARD, 8, -1);
+			return;
+		}
+	}
+	else {
+		pPathFinderClient = GetPathfinderClient();
+		bVar3 = pPathFinderClient->IsValidPosition(&this->currentLocation);
+		if (bVar3 == false) {
+			SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_CHASE_INTRUDER_LOST, -1);
+			return;
+		}
+
+		this->field_0x430->SV_GetGroundPosition(&local_20);
+		pPathFinderClient = GetPathfinderClient();
+		bVar3 = pPathFinderClient->HasPathTo(this, &local_20);
+		if ((bVar3 != false) &&
+			(local_20.x = local_20.x - this->currentLocation.x, local_20.z = local_20.z - this->currentLocation.z,
+				1.0f <= sqrtf(local_20.x * local_20.x + 0.0f + local_20.z * local_20.z))) {
+			SetBehaviour(WOOF_BEHAVIOUR_GUARD, 8, -1);
+			return;
+		}
+	}
+
+	if (CActorHero::_gThis == (CActorHero*)this->field_0x430) {
+		uVar5 = CActorHero::_gThis->FUN_00132f00(0xffffffff);
+		if (uVar5 != 0) {
+			bVar3 = true;
+			goto LAB_003329c8;
+		}
+	}
+	else {
+		if ((this->field_0x430->pCollisionData->flags_0x4 & 2) == 0) {
+			bVar3 = true;
+			goto LAB_003329c8;
+		}
+	}
+	bVar3 = false;
+LAB_003329c8:
+	if (bVar3) {
+		fVar7 = this->field_0x430->currentLocation.x - this->currentLocation.x;
+		fVar2 = this->field_0x430->currentLocation.z - this->currentLocation.z;
+		if ((sqrtf(fVar7 * fVar7 + 0.0f + fVar2 * fVar2) <= 0.5f) && (fVar8 < 5.0f)) {
+			if (3 < this->field_0x554) {
+				this->field_0x554 = 0;
+			}
+
+			uVar5 = this->field_0x554;
+			if (static_cast<int>(uVar5) < 0) {
+				fVar7 = static_cast<float>(uVar5 >> 1 | uVar5 & 1);
+				fVar7 = fVar7 + fVar7;
+			}
+			else {
+				fVar7 = static_cast<float>(uVar5);
+			}
+
+			fVar7 = (fVar7 / 3.0f) * 0.5f;
+			this->field_0x554 = this->field_0x554 + 1;
+			if (1.5f < fVar8) {
+				fVar8 = fVar7 + 1.5f;
+			}
+
+			this->field_0x5a0.BuildFromSpeedDist(fVar7 * 8.666667f + 13.0f, 5.0f, fVar8);
+
+			local_30.w = this->field_0x430->rotationQuat.w;
+			local_30.x = this->field_0x430->rotationQuat.x + 0.3f;
+			local_30.y = this->field_0x430->rotationQuat.y;
+			local_30.z = this->field_0x430->rotationQuat.z + 0.3f;
+
+			edF32Vector4NormalizeHard(&local_30, &local_30);
+
+			this->rotationQuat = local_30;
+			SetState(WOOF_STATE_JUMP_1_4, -1);
+
+			return;
+		}
+
+		pPathFinderClient = GetPathfinderClient();
+		if (pPathFinderClient->id == -1) {
+			fVar8 = this->field_0x430->currentLocation.x - this->currentLocation.x;
+			fVar7 = this->field_0x430->currentLocation.z - this->currentLocation.z;
+			if (0.5f < sqrtf(fVar8 * fVar8 + 0.0f + fVar7 * fVar7)) {
+				SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_CHASE_INTRUDER_LOST, -1);
+				return;
+			}
+		}
+		else {
+			fVar8 = (this->field_0x570).x - this->currentLocation.x;
+			fVar7 = (this->field_0x570).z - this->currentLocation.z;
+			if (0.5f < sqrtf(fVar8 * fVar8 + 0.0f + fVar7 * fVar7)) {
+				SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_CHASE_INTRUDER_LOST, -1);
+				return;
+			}
+		}
+	}
+
+	iVar6 = CheckArea();
+	if (iVar6 == 2) {
+		SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_COME_BACK, -1);
+	}
+	else {
+		if (1.0f < this->timeInAir) {
+			SetBehaviour(WOOF_BEHAVIOUR_GUARD, WOOF_STATE_YAP, -1);
 		}
 	}
 
@@ -1623,6 +1814,60 @@ void CActorWoof::StateWoofComeBack()
 			}
 			else {
 				SetState(0x11, -1);
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorWoof::StateWoofPath()
+{
+	bool bAtGoal;
+	edF32VECTOR4* pWayPoint;
+	int checkAreaRes;
+	float fVar1;
+	edF32VECTOR4 wayPointPos;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = 4.0f;
+	movParamsIn.speed = this->field_0x394;
+	movParamsIn.acceleration = 10.0f;
+	movParamsIn.flags = 0x412;
+
+	pWayPoint = this->pathFollowReader.GetWayPoint();
+	wayPointPos = *pWayPoint;
+	SV_AUT_MoveTo(&movParamsOut, &movParamsIn, &wayPointPos);
+	if ((this->field_0x410 & 4) == 0) {
+		ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+	}
+	else {
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	}
+
+	checkAreaRes = CheckArea();
+	if (checkAreaRes == 1) {
+		SetState(8, -1);
+	}
+	else {
+		fVar1 = FUN_00120250(0.5f);
+		if (movParamsOut.moveVelocity < fVar1) {
+			fVar1 = this->pathFollowReader.GetDelay();
+			if (0.0f < fVar1) {
+				SetState(10, -1);
+			}
+			else {
+				bAtGoal = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
+				if (bAtGoal == false) {
+					this->pathFollowReader.NextWayPoint();
+				}
+				else {
+					SetState(WOOF_STATE_IDLE, -1);
+				}
 			}
 		}
 	}
@@ -2187,6 +2432,47 @@ LAB_00330510:
 	return;
 }
 
+void CActorWoof::StateWoofJump_2_4()
+{
+	bool bVar1;
+	edF32VECTOR4 local_10;
+
+	bVar1 = this->field_0x5a0.IsFinished();
+	if (bVar1 == false) {
+		this->field_0x5a0.Integrate(GetTimer()->cutsceneDeltaTime);
+		this->dynamicExt.instanceIndex.y = (this->field_0x5a0).field_0x20;
+		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
+	}
+	else {
+		this->lastGroundY = this->currentLocation.y;
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+
+		SetState(WOOF_STATE_JUMP_3_4, -1);
+	}
+
+	ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
+	local_10.x = 0.01f;
+	local_10.y = 1.0f;
+	local_10.z = 0.01f;
+	local_10.w = 0.0f;
+
+	edF32Vector4NormalizeHard(&local_10, &local_10);
+	bVar1 = DetectWithVision(&this->field_0x430->currentLocation, &local_10, true);
+	if (bVar1 != false) {
+		SetBehaviour(WOOF_BEHAVIOUR_GUARD, 0x26, -1);
+	}
+
+	return;
+}
+
+
+
 void CBehaviourWoof::Create(ByteCode* pByteCode)
 {
 	return;
@@ -2379,7 +2665,7 @@ void CBehaviourWoofVerticalJump::Begin(CActor * pOwner, int newState, int newAni
 	this->pOwner = static_cast<CActorWoof*>(pOwner);
 	if (newState == -1) {
 		pWoof = this->pOwner;
-		pWoof->SetState(9, -1);
+		pWoof->SetState(WOOF_STATE_WAIT_JUMP, -1);
 	}
 	else {
 		pWoof = this->pOwner;

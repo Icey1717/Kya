@@ -611,6 +611,13 @@ namespace Debug
 								ImGui::SameLine();
 								ImGui::TextColored(DebugHelpers::sValidColor, "(In Use)");
 							}
+
+							for (int j = 0; j < edDlistConfig.bankMaterialCount; j++) {
+								if (gBankMaterial[j].hash.number == pHashCode->hash.number) {
+									ImGui::SameLine();
+									ImGui::TextColored(DebugHelpers::sValidColor, "gBankMaterial ID: 0x%x", j);
+								}
+							}
 						}
 					}
 				}

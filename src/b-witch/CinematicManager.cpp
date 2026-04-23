@@ -1229,10 +1229,10 @@ void CCinematic::Start()
 				}
 
 				if (this->pActor != (CActor*)0x0) {
-					local_14 = 2;
-					local_10 = &local_18;
-					local_18 = this;
-					this->pActor->ReceiveMessage((CActor*)0x0, (ACTOR_MESSAGE)0x7c, local_10);
+					_msg_cinematic_install_param msgCinematicInstallParam;
+					msgCinematicInstallParam.action = 2;
+					msgCinematicInstallParam.pCinematic = this;
+					this->pActor->ReceiveMessage((CActor*)0x0, MESSAGE_CINEMATIC_INSTALL, &msgCinematicInstallParam);
 				}
 			}
 			else {
@@ -2235,10 +2235,10 @@ void CCinematic::Stop()
 
 	if (this->state != CS_Stopped) {
 		if (this->pActor != (CActor*)0x0) {
-			local_c = 3;
-			local_4 = &local_10;
-			local_10 = this;
-			this->pActor->ReceiveMessage((CActor*)0x0, (ACTOR_MESSAGE)0x7c, local_4);
+			_msg_cinematic_install_param msgCinematicInstallParam;
+			msgCinematicInstallParam.action = 3;
+			msgCinematicInstallParam.pCinematic = this;
+			this->pActor->ReceiveMessage((CActor*)0x0, MESSAGE_CINEMATIC_INSTALL, &msgCinematicInstallParam);
 		}
 
 		pCinematicManager = g_CinematicManager_0048efc;
@@ -3184,10 +3184,10 @@ void CCinematic::Flush(bool param_2)
 		lVar2 = 0;
 	}
 	else {
-		local_c = 1;
-		local_4 = &local_10;
-		local_10 = this;
-		lVar2 = this->pActor->ReceiveMessage(0, (ACTOR_MESSAGE)0x7c, local_4);
+		_msg_cinematic_install_param msgCinematicInstallParam;
+		msgCinematicInstallParam.action = 1;
+		msgCinematicInstallParam.pCinematic = this;
+		lVar2 = this->pActor->ReceiveMessage(0, MESSAGE_CINEMATIC_INSTALL, &msgCinematicInstallParam);
 	}
 	pCVar1 = g_CinematicManager_0048efc;
 	if ((lVar2 == 0) || (param_2 != false)) {

@@ -201,6 +201,28 @@ void CFxNewComposite::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 	return;
 }
 
+void CFxNewComposite::UpdateSpatializeActor(uint newFlags, edF32VECTOR4* pNewPosition)
+{
+	uint nbMax;
+	CFxHandle* pHandle;
+
+	CNewFx::UpdateSpatializeActor(newFlags, pNewPosition);
+	nbMax = this->nbComponentParticles;
+	pHandle = this->aFxHandles;
+	if (nbMax != 0) {
+		do {
+			nbMax = nbMax - 1;
+			if (pHandle->IsValid()) {
+				pHandle->UpdateSpatializeActor(newFlags, pNewPosition);
+			}
+			
+			pHandle = pHandle + 1;
+		} while (nbMax != 0);
+	}
+
+	return;
+}
+
 void CFxNewComposite::Manage()
 {
 	CNewFx* pCVar1;

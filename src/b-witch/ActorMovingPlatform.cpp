@@ -1477,65 +1477,69 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 
 float CActorMovingPlatform::BehaviourTrajectory_ComputeTime(CBehaviourPlatformTrajectory* pBehaviour)
 {
-	bool bVar1;
-	float fVar3;
-	float fVar4;
+	float result;
+	float newValue;
 	int state;
 
 	state = this->actorState;
-	fVar3 = (pBehaviour->trajPos).pathPosition;
+	result = pBehaviour->trajPos.pathPosition;
+
 	if (state == MOVING_PLATFORM_STATE_TRANSITION_B) {
-		bVar1 = pBehaviour->pathLength < fVar3;
+		const bool bFinished = pBehaviour->pathLength < pBehaviour->trajPos.pathPosition;
+
 		if ((this->pProperties->flags_0x24 & 1) == 0) {
-			if (bVar1) {
-				fVar4 = (pBehaviour->trajPos).pathPosition - GetTimer()->cutsceneDeltaTime;
+			if (bFinished) {
+				newValue = pBehaviour->trajPos.pathPosition - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				fVar4 = (pBehaviour->trajPos).pathPosition + GetTimer()->cutsceneDeltaTime;
+				newValue = pBehaviour->trajPos.pathPosition + GetTimer()->cutsceneDeltaTime;
 			}
 		}
 		else {
-			if (bVar1) {
-				fVar4 = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
+			if (bFinished) {
+				newValue = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
 			}
 			else {
-				fVar4 = GetTimer()->scaledTotalTime - pBehaviour->targetScaledTime;
+				newValue = GetTimer()->scaledTotalTime - pBehaviour->targetScaledTime;
 			}
 		}
-		if (bVar1) {
-			fVar3 = pBehaviour->pathLength;
-			if (fVar3 < fVar4) {
-				fVar3 = fVar4;
+
+		// Clamp the new value to the path length, depending on the direction of movement.
+		if (bFinished) {
+			result = pBehaviour->pathLength;
+			if (pBehaviour->pathLength < newValue) {
+				result = newValue;
 			}
 		}
 		else {
-			fVar3 = pBehaviour->pathLength;
-			if (fVar4 < fVar3) {
-				fVar3 = fVar4;
+			result = pBehaviour->pathLength;
+			if (newValue < pBehaviour->pathLength) {
+				result = newValue;
 			}
 		}
 	}
 	else {
 		if (state == MOVING_PLATFORM_STATE_WAITING) {
 			if ((this->pProperties->flags_0x24 & 1) == 0) {
-				fVar3 = (pBehaviour->trajPos).pathPosition - GetTimer()->cutsceneDeltaTime;
+				result = pBehaviour->trajPos.pathPosition - GetTimer()->cutsceneDeltaTime;
 			}
 			else {
-				fVar3 = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
+				result = pBehaviour->targetScaledTime - GetTimer()->scaledTotalTime;
 			}
 		}
 		else {
 			if (state == MOVING_PLATFORM_STATE_STAND) {
 				if ((this->pProperties->flags_0x24 & 1) == 0) {
-					fVar3 = (pBehaviour->trajPos).pathPosition + GetTimer()->cutsceneDeltaTime;
+					result = pBehaviour->trajPos.pathPosition + GetTimer()->cutsceneDeltaTime;
 				}
 				else {
-					fVar3 = (pBehaviour->segmentStartTime + GetTimer()->scaledTotalTime) - pBehaviour->targetScaledTime;
+					result = (pBehaviour->segmentStartTime + GetTimer()->scaledTotalTime) - pBehaviour->targetScaledTime;
 				}
 			}
 		}
 	}
-	return fVar3;
+
+	return result;
 }
 
 void CActorMovingPlatform::SaveContext(void* pData, uint mode, uint maxSize)
@@ -1758,7 +1762,7 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	CSound* pCVar3;
 	int iVar4;
 	uint uVar5;
-	int iVar6;
+	int hitVariant;
 	int iVar7;
 	int iVar8;
 	uint uVar9;
@@ -1770,12 +1774,12 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 		uVar5 = 1;
 	}
 	else {
-		if (msg == 2) {
+		if (msg == MESSAGE_KICKED) {
 			_msg_hit_param* pHitMessageParams = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 			switch (pHitMessageParams->projectileType) {
-			case 4:
-				iVar6 = pHitMessageParams->field_0x4;
-				if (iVar6 == 4) {
+			case HIT_TYPE_BOOMY:
+				hitVariant = pHitMessageParams->hitVariant;
+				if (hitVariant == HIT_VARIANT_BOOMY_CONTROL) {
 					uVar10 = 0;
 
 					if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
@@ -1788,7 +1792,7 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 					pHitMessageParams->field_0x74 = uVar10;
 				}
 				else {
-					if ((iVar6 == 3) || (iVar6 == 1)) {
+					if ((hitVariant == HIT_VARIANT_BOOMY_SNIPE) || (hitVariant == HIT_VARIANT_BOOMY_MELEE)) {
 						uVar10 = 0;
 						if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
 							SetBehaviour(MOVING_PLATFORM_BEHAVIOUR_DESTROYED, -1, -1);
@@ -1800,7 +1804,7 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 						pHitMessageParams->field_0x74 = uVar10;
 					}
 					else {
-						if (iVar6 == 2) {
+						if (hitVariant == HIT_VARIANT_BOOMY_DEFAULT) {
 							uVar10 = 0;
 							if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
 								SetBehaviour(MOVING_PLATFORM_BEHAVIOUR_DESTROYED, -1, -1);
@@ -2510,12 +2514,15 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 		nbEntries = this->pCameraStream->entryCount;
 	}
 
+	ACTOR_LOG(LogLevel::Info, "CActorMovingPlatform::TriggerSwitches {} (0x{:x}) nbEntries: {}", this->name, conditionType, nbEntries);
+
 	int curEntryIndex = 0;
 	if (0 < nbEntries) {
 		do {
 			S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[curEntryIndex];
 
 			if (pEntry->field_0x0 == conditionType) {
+				ACTOR_LOG(LogLevel::Info, "CActorMovingPlatform::TriggerSwitches - Triggering entry {} for condition 0x{:x}", curEntryIndex, conditionType);
 				pEntry->streamTarget.Switch(this);
 				pEntry->streamTarget.PostSwitch(this);
 				pEntry->streamCameraEvent.SwitchOn(this);
@@ -2830,24 +2837,23 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 		}
 		else {
 			if (msg == 0x3b) {
-				IMPLEMENTATION_GUARD(
 				pCVar1 = (this->pathFollowReaderAbs).pPathFollow;
 				if ((((int)pMsgParam < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= (int)pMsgParam)) {
 					pMsgParam = (void*)0x0;
 				}
-				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
-				((this->trajPos).pathPosition, &this->pathFollowReaderAbs, (int)pMsgParam, &this->pathLength,
-					(float*)&this->trajPos);
+
+				this->pathFollowReaderAbs.GetClosestTimeToReachWaypoint((this->trajPos).pathPosition, (int)pMsgParam, &this->pathLength, &this->trajPos.pathPosition);
 				this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
-				pTVar3 = GetTimer();
+
 				fVar4 = (this->trajPos).pathPosition;
 				if (fVar4 <= this->pathLength) {
-					this->targetScaledTime = (this->segmentStartTime + pTVar3->scaledTotalTime) - fVar4;
+					this->targetScaledTime = (this->segmentStartTime + GetTimer()->scaledTotalTime) - fVar4;
 				}
 				else {
-					this->targetScaledTime = fVar4 + this->segmentStartTime + pTVar3->scaledTotalTime;
+					this->targetScaledTime = fVar4 + this->segmentStartTime + GetTimer()->scaledTotalTime;
 				}
-				bProcessed = 1;)
+
+				bProcessed = 1;
 			}
 			else {
 				if (msg == MESSAGE_TIED) {

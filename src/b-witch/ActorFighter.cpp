@@ -6140,17 +6140,16 @@ LAB_0030a390:
 	}
 
 	if (fVar19 != 0.0f) {
-		IMPLEMENTATION_GUARD(
-		if ((((((ulong)this->validCommandMask[1] << 0x3a) >> 0x3e & 2) != 0) && ((this->pInputAnalyser->flags & 4) != 0)) &&
-			(((local_4 & 0xf) != 0 && (((uVar16 = local_4 & 0xf, uVar16 != 2 && (uVar16 != 1)) && (5 < uVar16)))))) {
-			local_4 = local_4 & 0xffffcfff | 0x2000;
+		if ((((((ulong)this->validCommandMask.flags[1] << 0x3a) >> 0x3e & 2) != 0) && ((this->pInputAnalyser->flags & 4) != 0)) &&
+			(((local_4.all & 0xf) != 0 && (((uVar16 = local_4.all & 0xf, uVar16 != 2 && (uVar16 != 1)) && (5 < uVar16)))))) {
+			local_4.all = local_4.all & 0xffffcfff | 0x2000;
 			this->pInputAnalyser->flags = this->pInputAnalyser->flags & 0xfffffffb;
 		}
 
-		if (((((ulong)local_4.field_0x1 << 0x3a) >> 0x3e == 0) && ((((ulong)this->validCommandMask[1] << 0x3a) >> 0x3e & 1) != 0)
+		if (((((ulong)local_4.field_0x1 << 0x3a) >> 0x3e == 0) && ((((ulong)this->validCommandMask.flags[1] << 0x3a) >> 0x3e & 1) != 0)
 			) && ((this->pInputAnalyser->flags & 2) != 0)) {
-			local_4 = local_4 & 0xffffcfff | 0x1000;
-		})
+			local_4.all = local_4.all & 0xffffcfff | 0x1000;
+		}
 	}
 
 	if ((((local_4.all & 0xf00) != 0) && (psVar8 = this->pInputAnalyser->pComboA, psVar8 != (s_fighter_combo*)0x0)) &&

@@ -25,6 +25,10 @@ class CActorHero;
 class CedMathTCBSpline;
 class CCameraGame;
 
+#define BOOMY_LAUNCH_STANDARD	0
+#define BOOMY_LAUNCH_SNIPE		1
+#define BOOMY_LAUNCH_CONTROL	2
+
 class CBehaviourBoomyLaunch : public CBehaviour
 {
 public:
@@ -34,7 +38,8 @@ public:
 	CActorBoomy* pOwner;
 };
 
-struct BoomySubObj_0x1c {
+struct BoomySubObj_0x1c
+{
 	uint flags;
 	float field_0x4;
 	float visionRange;
@@ -125,7 +130,7 @@ public:
 	S_STREAM_REF<CSound> field_0x2b8;
 	S_STREAM_REF<CSound> field_0x2bc;
 	float field_0x2c0;
-	byte field_0x2c4;
+	byte launchMode;
 	CActorsTable hitActorsTable;
 
 	uint field_0x3cc;
