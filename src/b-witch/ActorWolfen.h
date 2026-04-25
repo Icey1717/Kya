@@ -32,6 +32,11 @@
 
 // <ACTOR_NAME>_STATE_<BEHAVIOUR_NAME>_<STATE_NAME>
 
+#define WOLFEN_STATE_ESCAPE_STAND 0x0
+#define WOLFEN_STATE_ESCAPE_JUMP_CLIMB 0xa
+#define WOLFEN_STATE_ESCAPE_JUMP_RECEPT 0xc
+#define WOLFEN_STATE_ESCAPE_JUMP_FALL 0xd
+
 #define WOLFEN_STATE_WATCH_DOG_GUARD 0x72
 #define WOLFEN_STATE_TRACK_CHASE 0x73
 #define WOLFEN_STATE_BREAK_OBJECT 0x74
@@ -45,6 +50,7 @@
 #define WOLFEN_STATE_EXORCISE_END 0x7d
 #define WOLFEN_STATE_EXORCISE_AWAKE 0x7e
 #define WOLFEN_STATE_EXORCISE_LIVING_DEAD 0x7f
+#define WOLFEN_STATE_ESCAPE_RUN 0x8a
 #define WOLFEN_STATE_AVOID_ESCAPE 0x8b
 #define WOLFEN_STATE_GUARD_WALK_TO 0x8c
 #define WOLFEN_STATE_GUARD_STOP 0x8d
@@ -535,8 +541,8 @@ public:
 	float field_0x98;
 	float field_0x9c;
 	int field_0xa0;
-	undefined4 field_0xa4;
-	undefined4 field_0xa8;
+	int currentPathFollowIndex;
+	float pathDelay;
 };
 
 class CBehaviourWolfenWeapon : public CBehaviourWolfen
@@ -1064,6 +1070,7 @@ public:
 	void BehaviourSnipe_Manage(CBehaviourSnipe* pBehaviour);
 	void BehaviourSnipe_Draw(CBehaviourSnipe* pBehaviour);
 	void BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* pBehaviour);
+	void BehaviourEscape_Manage(CBehaviourEscape* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -1108,6 +1115,13 @@ public:
 	void StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWalkTo(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaGuard();
+
+	void StateEscapeJumpRecept();
+	void StateEscapeJumpFall(CBehaviourEscape* pBehaviour);
+	void StateEscapeJumpClimb(CBehaviourEscape* pBehaviour);
+	void StateEscapeRun(CBehaviourEscape* pBehaviour);
+	void StateEscapeWait(CBehaviourEscape* pBehaviour);
+	void StateEscapeStand();
 
 	void State_00174dc0(CBehaviourDCA* pBehaviour);
 	void State_00174f20(CBehaviourDCA* pBehaviour);
@@ -1180,6 +1194,8 @@ public:
 
 	bool CheckLost();
 
+	void EscapeManageMove(float param_1, float param_2, CBehaviourEscape* pBehavivour);
+
 	void CheckValidPatterns(CRndChooser<CFightIA::WFIGS_Chain>* pRndChooser);
 	void GetComboMatchValues(int index, float* param_3, float* param_4, float* param_5, float* param_6);
 	bool CanPerformWeaponCommand();
@@ -1193,6 +1209,7 @@ public:
 	void DisableFightAction();
 	bool ForceFightAction(int index, bool param_3);
 
+	void FUN_00175ad0();
 	bool FUN_00173de0(CActorFighter* pAdversary);
 	bool CanBeExorcised();
 

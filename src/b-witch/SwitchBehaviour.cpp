@@ -237,10 +237,9 @@ int CondMessage::InterpretMessage(CActor* pOwner, CActor* pSender, int msg, void
 {
 	bool bVar1;
 
-	bVar1 = pMsgParam == (void*)pOwner->flags;
+	bVar1 = msg == this->field_0x8;
 	if (bVar1) {
-		IMPLEMENTATION_GUARD(
-		*(undefined*)&pOwner->sectorId = 1;)
+		this->field_0x4 = 1;
 	}
 
 	return bVar1;

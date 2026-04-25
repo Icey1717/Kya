@@ -3568,6 +3568,117 @@ void CActorWolfen::BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* 
 	return;
 }
 
+void CActorWolfen::BehaviourEscape_Manage(CBehaviourEscape* pBehaviour)
+{
+	CActorFighter* pCVar1;
+	bool bVar2;
+	uint uVar3;
+	CLifeInterface* pCVar4;
+	int iVar5;
+	int iVar6;
+	undefined4 uVar7;
+	float fVar8;
+	CActorWolfen* pWolfen;
+
+	iVar5 = this->actorState;
+	if (iVar5 == WOLFEN_STATE_BOMB_SHOOT) {
+		StateWolfenBombShoot();
+	}
+	else {
+		if (iVar5 == WOLFEN_STATE_BOMB_ORIENT_TO) {
+			StateWolfenBombOrientTo(pBehaviour);
+		}
+		else {
+			if (iVar5 == WOLFEN_STATE_BOMB_WALK_TO) {
+				StateWolfenBombWalkTo(pBehaviour);
+			}
+			else {
+				if (iVar5 == WOLFEN_STATE_BOMB_STAND) {
+					StateWolfenBombStand();
+				}
+				else {
+					if (iVar5 == WOLFEN_STATE_BOMB_FLIP) {
+						StateWolfenBombFlip();
+					}
+					else {
+						if (iVar5 == WOLFEN_STATE_ESCAPE_JUMP_RECEPT) {
+							StateEscapeJumpRecept();
+						}
+						else {
+							if (iVar5 == WOLFEN_STATE_ESCAPE_JUMP_FALL) {
+								StateEscapeJumpFall(pBehaviour);
+							}
+							else {
+								if (iVar5 == WOLFEN_STATE_ESCAPE_JUMP_CLIMB) {
+									StateEscapeJumpClimb(pBehaviour);
+								}
+								else {
+									if (iVar5 == WOLFEN_STATE_INSULT_END) {
+										StateWolfenInsultEnd(pBehaviour);
+									}
+									else {
+										if (iVar5 == WOLFEN_STATE_INSULT_RECEIVE) {
+											StateWolfenInsultReceive(pBehaviour);
+										}
+										else {
+											if (iVar5 == WOLFEN_STATE_INSULT_STAND) {
+												StateWolfenInsultStand();
+											}
+											else {
+												if (iVar5 == WOLFEN_STATE_INSULT) {
+													StateWolfenInsult(pBehaviour);
+												}
+												else {
+													if (iVar5 == WOLFEN_STATE_LOCATE) {
+														StateWolfenLocate(pBehaviour);
+													}
+													else {
+														if (iVar5 == 0x9b) {
+															StateWolfen_00179db0(pBehaviour);
+														}
+														else {
+															if (iVar5 == WOLFEN_STATE_SURPRISE) {
+																StateWolfenSurprise(pBehaviour);
+															}
+															else {
+																if (iVar5 == WOLFEN_STATE_ESCAPE_RUN) {
+																	StateEscapeRun(pBehaviour);
+																}
+																else {
+																	if (iVar5 == WOLFEN_STATE_WATCH_DOG_GUARD) {
+																		StateEscapeWait(pBehaviour);
+																	}
+																	else {
+																		if (iVar5 == WOLFEN_STATE_ESCAPE_STAND) {
+																			StateEscapeStand();
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	PostManageA();
+
+	PostManageB(pBehaviour);
+
+	PostManageC(pBehaviour);
+
+	PostManageD(pBehaviour);
+}
+
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour)
 {
@@ -5955,6 +6066,132 @@ void CActorWolfen::StateGuardAreaGuard()
 	return;
 }
 
+void CActorWolfen::StateEscapeJumpRecept()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorWolfen::StateEscapeJumpFall(CBehaviourEscape * pBehaviour)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorWolfen::StateEscapeJumpClimb(CBehaviourEscape * pBehaviour)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorWolfen::StateEscapeRun(CBehaviourEscape * pBehaviour)
+{
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	edF32VECTOR4* v1;
+	edF32VECTOR4* v2;
+	CPathFollowReader* pPathFollow;
+	float fVar4;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+	CActorFighter* pTarget;
+
+	pTarget = this->pTargetActor_0xc80;
+	if ((pBehaviour->field_0x88 & 2) != 0) {
+		v2 = &this->currentLocation;
+		pPathFollow = pBehaviour->aPathFollowReaders + pBehaviour->currentPathFollowIndex;
+		v1 = pPathFollow->GetWayPoint();
+		edF32Vector4SubHard(&eStack16, v1, v2);
+		edF32Vector4SubHard(&eStack32, &pTarget->currentLocation, v2);
+		fVar4 = edF32Vector4DotProductHard(&eStack16, &eStack32);
+		if (0.6f < fVar4) {
+			pPathFollow->field_0xc = pPathFollow->field_0xc ^ 1;
+			bVar3 = pPathFollow->AtGoal(pPathFollow->splinePointIndex, pPathFollow->field_0xc);
+			if (bVar3 == false) {
+				pPathFollow->NextWayPoint();
+			}
+			else {
+				pPathFollow->field_0xc = pPathFollow->field_0xc ^ 1;
+			}
+		}
+	}
+
+	if ((pBehaviour->field_0x88 & 1) != 0) {
+		if (pTarget == (CActorFighter*)0x0) {
+			SetState(WOLFEN_STATE_ESCAPE_STAND, -1);
+		}
+		else {
+			fVar4 = pTarget->currentLocation.x - this->currentLocation.x;
+			fVar1 = pTarget->currentLocation.y - this->currentLocation.y;
+			fVar2 = pTarget->currentLocation.z - this->currentLocation.z;
+			if (pBehaviour->field_0x8c < sqrtf(fVar4 * fVar4 + fVar1 * fVar1 + fVar2 * fVar2)) {
+				SetState(WOLFEN_STATE_WATCH_DOG_GUARD, -1);
+
+				fVar4 = pBehaviour->aPathFollowReaders[pBehaviour->currentPathFollowIndex].GetDelay();
+				if (fVar4 == 0.0f) {
+					fVar4 = pBehaviour->field_0x9c;
+				}
+				else {
+					fVar4 = pBehaviour->aPathFollowReaders[pBehaviour->currentPathFollowIndex].GetDelay();
+				}
+
+				pBehaviour->pathDelay = fVar4;
+			}
+		}
+	}
+
+	EscapeManageMove(pBehaviour->pathDelay, pBehaviour->field_0x94, pBehaviour);
+
+	return;
+}
+
+void CActorWolfen::StateEscapeWait(CBehaviourEscape * pBehaviour)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	CActorFighter* pTarget;
+
+	EscapeManageMove(0.0f, pBehaviour->field_0x98, pBehaviour);
+
+	if ((pBehaviour->field_0x88 & 1) == 0) {
+		pBehaviour->pathDelay = pBehaviour->field_0x9c;
+		SetState(0x8a, -1);
+	}
+	else {
+		pTarget = this->pTargetActor_0xc80;
+		if ((pTarget != (CActorFighter*)0x0) &&
+			(fVar3 = pTarget->currentLocation.x - this->currentLocation.x,
+				fVar1 = pTarget->currentLocation.y - this->currentLocation.y,
+				fVar2 = pTarget->currentLocation.z - this->currentLocation.z,
+				sqrtf(fVar3 * fVar3 + fVar1 * fVar1 + fVar2 * fVar2) <= pBehaviour->field_0x90)) {
+			SetState(WOLFEN_STATE_ESCAPE_RUN, -1);
+			fVar3 = pBehaviour->aPathFollowReaders[pBehaviour->currentPathFollowIndex].GetDelay();
+			if (fVar3 == 0.0f) {
+				fVar3 = pBehaviour->field_0x9c;
+			}
+			else {
+				fVar3 = pBehaviour->aPathFollowReaders[pBehaviour->currentPathFollowIndex].GetDelay();
+			}
+
+			pBehaviour->pathDelay = fVar3;
+		}
+	}
+
+	return;
+}
+
+void CActorWolfen::StateEscapeStand()
+{
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->pTargetActor_0xc80 != (CActorFighter*)0x0) {
+		SetState(WOLFEN_STATE_WATCH_DOG_GUARD, -1);
+	}
+
+	return;
+}
+
 void CActorWolfen::State_00174dc0(CBehaviourDCA* pBehaviour)
 {
 	edF32VECTOR4* pComeBackPosition;
@@ -7864,6 +8101,92 @@ bool CActorWolfen::CheckLost()
 	return false;
 }
 
+void CActorWolfen::EscapeManageMove(float param_1, float param_2, CBehaviourEscape* pBehavivour)
+{
+	bool bVar1;
+	edF32VECTOR4* pWayPoint;
+	CPathFinderClient* pPathFinder;
+	CPathFollowReader* pPathFollow;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	movParamsIn.flags = 0x450;
+	movParamsIn.rotSpeed = GetRunRotSpeed();
+	movParamsIn.flags = movParamsIn.flags | 0x402;
+	movParamsIn.speed = param_1;
+	movParamsIn.acceleration = param_2;
+
+	pWayPoint = pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].GetWayPoint();
+	if ((this->combatFlags_0xb78 & 0x400) == 0) {
+	LAB_001760a0:
+		bVar1 = false;
+	}
+	else {
+		pPathFinder = GetPathfinderClientAlt();
+		if (pPathFinder->id != -1) {
+			pPathFinder = GetPathfinderClientAlt();
+			bVar1 = pPathFinder->IsValidPosition(&this->currentLocation);
+			if (bVar1 == false) goto LAB_001760a0;
+		}
+
+		bVar1 = true;
+	}
+
+	if (bVar1) {
+		if ((this->combatFlags_0xb78 & 0x80000) == 0) {
+			this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x80000;
+		}
+
+		this->pathOriginPosition = this->currentLocation;
+	}
+
+	SV_AUT_MoveTo(&movParamsOut, &movParamsIn, pWayPoint);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	pWayPoint = pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].GetWayPoint();
+	fVar2 = pWayPoint->x - this->currentLocation.x;
+	fVar3 = pWayPoint->y - this->currentLocation.y;
+	fVar4 = pWayPoint->z - this->currentLocation.z;
+	if (sqrtf(fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4) < 0.5f) {
+		pPathFollow = pBehavivour->aPathFollowReaders + pBehavivour->currentPathFollowIndex;
+		bVar1 = pPathFollow->AtGoal(pPathFollow->splinePointIndex, pPathFollow->field_0xc);
+		if (bVar1 == false) {
+			pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].NextWayPoint();
+			if ((pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].pPathFollow)->pathType == 2) {
+				SetState(10, -1);
+			}
+		}
+		else {
+			if (pBehavivour->currentPathFollowIndex == pBehavivour->nbPathFollowReaders + -1) {
+				pBehavivour->FinishBehaviour(pBehavivour->field_0xa0);
+			}
+			else {
+				pBehavivour->currentPathFollowIndex = pBehavivour->currentPathFollowIndex + 1;
+				pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].Reset();
+			}
+		}
+
+		fVar2 = pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].GetDelay();
+		if (fVar2 == 0.0f) {
+			fVar2 = pBehavivour->field_0x9c;
+		}
+		else {
+			fVar2 = pBehavivour->aPathFollowReaders[pBehavivour->currentPathFollowIndex].GetDelay();
+		}
+
+		pBehavivour->pathDelay = fVar2;
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CActorWolfen::CheckValidPatterns(CRndChooser<CFightIA::WFIGS_Chain>* pRndChooser)
 {
@@ -8246,6 +8569,13 @@ bool CActorWolfen::ForceFightAction(int index, bool param_3)
 		bSuccess = true;
 	}
 	return bSuccess;
+}
+
+void CActorWolfen::FUN_00175ad0()
+{
+	this->fightFlags = this->fightFlags | 2;
+
+	return;
 }
 
 bool CActorWolfen::FUN_00173de0(CActorFighter* pAdversary)
@@ -14634,7 +14964,7 @@ void CBehaviourEscape::Create(ByteCode* pByteCode)
 	this->field_0x8c = pByteCode->GetF32();
 	this->field_0x94 = pByteCode->GetF32();
 	this->field_0x98 = pByteCode->GetF32();
-	this->field_0xa8 = 0;
+	this->pathDelay = 0.0f;
 	this->field_0xa0 = pByteCode->GetS32();
 
 	this->switchBehaviour.Create(pByteCode);
@@ -14673,7 +15003,9 @@ void CBehaviourEscape::Term()
 
 void CBehaviourEscape::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourEscape_Manage(this);
+
+	return;
 }
 
 void CBehaviourEscape::Begin(CActor * pOwner, int newState, int newAnimationType)
@@ -14693,9 +15025,9 @@ void CBehaviourEscape::Begin(CActor * pOwner, int newState, int newAnimationType
 		} while (iVar2 < this->nbPathFollowReaders);
 	}
 
-	this->field_0xa4 = 0;
+	this->currentPathFollowIndex = 0;
 	if (this->aPathFollowReaders[0].GetDelay() != 0.0f) {
-		this->field_0xa8 = this->aPathFollowReaders[0].GetDelay();
+		this->pathDelay = this->aPathFollowReaders[0].GetDelay();
 	}
 
 	if (newState == -1) {
@@ -14735,25 +15067,40 @@ void CBehaviourEscape::InitState(int newState)
 
 void CBehaviourEscape::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	if (oldState == WOLFEN_STATE_ESCAPE_JUMP_FALL) {
+		this->pOwner->fightFlags = this->pOwner->fightFlags | 2;
+	}
+	else {
+		if (oldState == WOLFEN_STATE_ESCAPE_JUMP_CLIMB) {
+			this->pOwner->FUN_00175ad0();
+		}
+	}
+
+	CBehaviourWolfen::TermState(oldState, newState);
+
+	return;
 }
 
 int CBehaviourEscape::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
-	return 0;
+	int result;
+
+	result = this->switchBehaviour.InterpretMessage(this->pOwner, pSender, msg, pMsgParam);
+	if (result == 0) {
+		result = CBehaviourWolfen::InterpretMessage(pSender, msg, static_cast<_msg_hit_param*>(pMsgParam));
+	}
+
+	return result;
 }
 
 int CBehaviourEscape::GetTrackBehaviour()
 {
-	IMPLEMENTATION_GUARD();
-	return 0;
+	return 0xf;
 }
 
 int CBehaviourEscape::GetStateWolfenComeBack()
 {
-	IMPLEMENTATION_GUARD();
-	return 0;
+	return GetStateWolfenGuard();
 }
 
 void CBehaviourTrackWeaponSnipe::Create(ByteCode* pByteCode)

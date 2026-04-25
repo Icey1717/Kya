@@ -189,9 +189,9 @@ namespace Renderer
 		};
 
 		// Maximum number of instances we can draw in a single frame. (Meshes are split into instances for rendering)
-		constexpr int gMaxInstances = 1000;
+		constexpr int gMaxInstances = 1024;
 
-		constexpr int gMaxLightingData = 200;
+		constexpr int gMaxLightingData = 512;
 
 		// Maximum number of animation matrices stored per frame across all animated actors.
 		constexpr int gMaxAnimationMatrices = 4096;
