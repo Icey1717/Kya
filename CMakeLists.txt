@@ -511,6 +511,7 @@ set (actor_src
 	"${src_root}/b-witch/ActorFighterProjected.cpp"
 	"${src_root}/b-witch/ActorFighter.cpp"
 	"${src_root}/b-witch/ActorFighter.h"
+	"${src_root}/b-witch/ActorFighterRide.cpp"
 	"${src_root}/b-witch/ActorGravityAware.cpp"
 	"${src_root}/b-witch/ActorGravityAware.h"
 	"${src_root}/b-witch/ActorSwitch.cpp"

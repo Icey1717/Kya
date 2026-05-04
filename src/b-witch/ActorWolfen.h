@@ -897,7 +897,9 @@ public:
 class CBehaviourWolfenFighterRidden : public CBehaviourFighterRidden
 {
 public:
-
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void ManageCombatMusic(int state);
 };
 
 class CBehaviourWolfenFighterSlave : public CBehaviourFighterSlave

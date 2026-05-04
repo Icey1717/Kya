@@ -227,6 +227,40 @@ bool CFrontendMagicGauge::UpdateGauge(float time)
 	return false;
 }
 
+void CFrontendMagicGauge::UpdateEventDirty(float time)
+{
+	float fVar1;
+
+	switch (this->state_0x2fc) {
+	case 0:
+		this->state_0x2fc = 2;
+		break;
+	case 1:
+		this->state_0x2fc = 2;
+		break;
+	case 3:
+		MoveToNext(&this->field_0x2c8);
+		this->state_0x2fc = 2;
+		break;
+	case 4:
+		MoveToNext(&this->field_0x2c8);
+		this->state_0x2fc = 2;
+		this->bVisible = 1;
+		break;
+	case 5:
+		fVar1 = CFrontend::GetTime();
+		this->prevTime = fVar1;
+		this->state_0x2fc = 7;
+		break;
+	case 6:
+		fVar1 = CFrontend::GetTime();
+		this->prevTime = fVar1;
+		this->state_0x2fc = 7;
+	}
+
+	return;
+}
+
 void CFrontendMagicGauge::CheckEvents(float time)
 {
 	CMagicInterface* pMagicInterface;
@@ -275,7 +309,7 @@ void CFrontendMagicGauge::CheckEvents(float time)
 		if ((float)this->maxMagicValueA != magicValue) {
 			isStateActive = (this->state_0x2fc == 2) || (this->state_0x2fc == 7);
 			if (!isStateActive) {
-				UpdatePos_StateWait(time);
+				UpdateEventDirty(time);
 
 				this->bDisplayDirty = 1;
 				this->maxMagicValueB = this->maxMagicValueA;

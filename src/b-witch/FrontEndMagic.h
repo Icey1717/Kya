@@ -28,6 +28,8 @@ public:
 	// CFrontendMagicGauge
 	virtual void CheckEvents(float time);
 
+	void UpdateEventDirty(float time);
+
 	void Magic_SetDisplay(unsigned char bNewVisible);
 
 	void ClearLocalData();

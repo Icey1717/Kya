@@ -527,49 +527,51 @@ void edAnmMacroAnimator::Animate()
 
 void edAnmMacroAnimator::UpdateAnimParams()
 {
-	edANM_HDR* peVar1;
-	int iVar2;
-	float* pfVar3;
-	int* piVar4;
-	int iVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
+	edANM_HDR* pAnmHdr;
+	int keyCount;
+	float* pBlendWeights;
+	int* pAnimIndices;
+	int remainingIndex;
+	float animStartTime;
+	float blendWeight;
+	float sumBlendWeights;
 
 	if (((this->currentAnimDataFlags & 4) != 0) && (this->pFunction != 0x0)) {
 		this->pFunction(this, this->pActor, this->animationType);
 	}
 
-	if (((this->currentAnimDataFlags & 0x80000000) == 0) && (peVar1 = this->pAnimKeyTableEntry, peVar1->field_0x4.asKey == 1)) {
-		iVar2 = peVar1->keyIndex_0x8.asKey;
-		fVar8 = 0.0f;
+	if (((this->currentAnimDataFlags & 0x80000000) == 0) && (pAnmHdr = this->pAnimKeyTableEntry, pAnmHdr->field_0x4.asKey == 1)) {
+		keyCount = pAnmHdr->keyIndex_0x8.asKey;
+		sumBlendWeights = 0.0f;
 		this->keyDuration_0x18 = 0.0f;
-		iVar5 = iVar2 + -1;
+		remainingIndex = keyCount + -1;
 		this->keyStartTime_0x14 = 0.0f;
-		if (-1 < iVar5) {
-			piVar4 = (int*)((char*)peVar1 + iVar5 * 4 + 0xc);
-			pfVar3 = (float*)((char*)peVar1 + iVar5 * 4 + iVar2 * 4 + 0xc);
+		if (-1 < remainingIndex) {
+			pAnimIndices = (int*)((char*)pAnmHdr + remainingIndex * 4 + 0xc);
+			pBlendWeights = (float*)((char*)pAnmHdr + remainingIndex * 4 + keyCount * 4 + 0xc);
+
 			do {
-				peVar1 = this->pKeyDataArray[*piVar4];
+				pAnmHdr = this->pKeyDataArray[*pAnimIndices];
 				if ((this->currentAnimDataFlags & 1) == 0) {
-					fVar6 = peVar1->keyIndex_0x8.asTime;
+					animStartTime = pAnmHdr->keyIndex_0x8.asTime;
 				}
 				else {
-					fVar6 = peVar1->field_0x4.asTime;
+					animStartTime = pAnmHdr->field_0x4.asTime;
 				}
-				fVar7 = *pfVar3;
-				iVar5 = iVar5 + -1;
-				piVar4 = piVar4 + -1;
-				pfVar3 = pfVar3 + -1;
-				this->keyStartTime_0x14 = this->keyStartTime_0x14 + fVar6 * fVar7;
-				fVar8 = fVar8 + fVar7;
-				this->keyDuration_0x18 = this->keyDuration_0x18 + fVar7 * (peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime);
-			} while (-1 < iVar5);
+
+				blendWeight = *pBlendWeights;
+				remainingIndex = remainingIndex + -1;
+				pAnimIndices = pAnimIndices + -1;
+				pBlendWeights = pBlendWeights + -1;
+				this->keyStartTime_0x14 = this->keyStartTime_0x14 + animStartTime * blendWeight;
+				sumBlendWeights = sumBlendWeights + blendWeight;
+				this->keyDuration_0x18 = this->keyDuration_0x18 + blendWeight * (pAnmHdr->field_0x4.asTime - pAnmHdr->keyIndex_0x8.asTime);
+			} while (-1 < remainingIndex);
 		}
 
-		if (0.0f < fVar8) {
-			this->keyStartTime_0x14 = this->keyStartTime_0x14 / fVar8;
-			this->keyDuration_0x18 = this->keyDuration_0x18 / fVar8;
+		if (0.0f < sumBlendWeights) {
+			this->keyStartTime_0x14 = this->keyStartTime_0x14 / sumBlendWeights;
+			this->keyDuration_0x18 = this->keyDuration_0x18 / sumBlendWeights;
 		}
 
 		if (this->keyStartTime_0x14 < 0.0f) {
@@ -582,6 +584,7 @@ void edAnmMacroAnimator::UpdateAnimParams()
 
 		this->field_0x8 = 0;
 	}
+
 	return;
 }
 

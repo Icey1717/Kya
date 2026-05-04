@@ -17,6 +17,19 @@
 #define FIGHTER_DEFAULT_STATE_IDLE 0x6
 #define FIGHTER_DEFAULT_STATE_RUN 0x9
 
+#define FIGHTER_JUMP_FALL_TO_FLIP 0xe
+#define FIGHTER_JUMP_FLIP_IMPULSE 0xf
+#define FIGHTER_JUMP_FLIP_PREPARE_FALL 0x10
+#define FIGHTER_JUMP_FLIP_FALL 0x11
+#define FIGHTER_JUMP_FLIP_PREPARE_JUMP 0x12
+#define FIGHTER_JUMP_FLIP_JUMP 0x13
+#define FIGHTER_FLIP_ON_ME 0x14
+#define FIGHTER_FLIP_OFF_ME_A 0x15
+#define FIGHTER_FLIP_OFF_ME_B 0x16
+#define FIGHTER_RIDE 0x20
+#define FIGHTER_RIDDEN_RUN 0x24
+#define FIGHTER_RIDDEN_EJECT 0x28
+
 #define FIGHTER_HIT_STEP_BACK 0x4f
 
 #define FIGHTER_PROJECTED_HIT_FLY 0x55
@@ -28,6 +41,11 @@
 #define FIGHTER_BLOW_BEGIN 0x65
 #define FIGHTER_EXECUTE_BLOW 0x66
 #define FIGHTER_BLOW_END 0x67
+
+#define FIGHTER_EXECUTE_FLAGS_STD 0x800
+#define FIGHTER_EXECUTE_FLAGS_FLIP 0x2000
+#define FIGHTER_EXECUTE_FLAGS_RIDE 0x4000
+#define FIGHTER_EXECUTE_FLAGS_HOLD 0x8000
 
 struct s_fighter_anatomy_zones
 {
@@ -490,6 +508,14 @@ public:
 	virtual void _EndFighterHold();
 	virtual void _Proj_GetPossibleExit();
 
+	void _BeginFighterFlip();
+	void _Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	void _EndFighterFlip();
+
+	void _BeginFighterRide();
+	void _Execute_Ride(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	void _EndFighterRide(int newState);
+
 	void ClearLocalData();
 
 	//void _ExecuteCommand(s_fighter_action* pAction, s_fighter_action_param* pParam);
@@ -506,17 +532,47 @@ public:
 	void _InterpretCollisions(int param_2);
 	void _InterpretSlides();
 
+	void BehaviourFighterRidden_InitState(int newState);
+	void BehaviourFighterRidden_Manage();
+	void BehaviourFighterRidden_TermState(int oldState);
+
 	void _StateFighterHitWakingUpInit();
 	void _StateFighterHitFall(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, int bProcessCollisions);
 	void _StateFighterHitFly();
 	void _StateFighterHitFlyToSlide();
 	void _StateFighterHitSlide();
 
+	void _StateFighterRiddenRun();
+
+	void _StateFighterJumpFallToFlip();
+	void _StateFighterFlipImpulse();
+
 	void _StateFighterHitStepBackInit(int animationId, int param_3);
 	void _StateFighterHitStepBack(int nextState, int animationId, int param_4);
 
 	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
 	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
+
+	void _StateFighterFlipPrepareFallInit();
+	void _StateFighterFlipPrepareFall();
+
+	void _StateFighterFlipFallInit();
+	void _StateFighterFlipFall();
+
+	void _StateFighterRiddenEjectInit();
+
+	void _StateFighterFlipPrepareJump();
+
+	void _StateFighterFlipJumpInit();
+	void _StateFighterFlipJump();
+
+	void _StateFighterFlipOnMeInit();
+	void _StateFighterFlipOnMe();
+
+	void _StateFighterFlipOffMe();
+	void _StateFighterFlipOffMeTerm(int newState);
+
+	void _StateFighterRide();
 
 	void _StateFighterPrepareFightAction(int nextState);
 	void _StateFighterReturnFromFightAction();
@@ -688,7 +744,10 @@ public:
 	float field_0x4f8;
 	float field_0x4fc;
 
+	float field_0x500;
+
 	float field_0x504;
+	float field_0x508;
 	float field_0x50c;
 	float field_0x510;
 	float field_0x514;
@@ -796,6 +855,15 @@ public:
 	uint nbCombos;
 	uint nbComboRoots;
 	s_fighter_combo* aCombos;
+
+	undefined4 field_0xa50;
+	float field_0xa5c;
+	undefined4 field_0xa58;
+	undefined4 field_0xa54;
+	float field_0xa60;
+	float field_0xa70;
+	float field_0xa74;
+	short field_0xa78;
 };
 
 class CBehaviourFighter : public CBehaviour
@@ -828,7 +896,23 @@ class CBehaviourFighterSlave : public CBehaviourFighter
 
 class CBehaviourFighterRidden : public CBehaviourFighter
 {
+public:
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	virtual bool Execute(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	virtual void _ManageHit(bool bPlayImpact);
+	virtual void _ManageExit();
+
+	float field_0xc;
+	float field_0x10[2];
+	uint field_0x18;
 };
 
 class CBehaviourFighterProjected : public CBehaviourFighter

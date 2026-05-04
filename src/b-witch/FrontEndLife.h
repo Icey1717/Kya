@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "FrontEndWidget.h"
 
+#define STATE_NEW_LIFE_GAUGE_SHOW 0x7
+
 class CDualSprite
 {
 public:
@@ -37,7 +39,7 @@ public:
 	void UpdateInterface();
 
 	// New Function from suspected inline
-	void UpdateField0x380();
+	void UpdateNumExtraGauges();
 
 	void UpdateInternal();
 

@@ -59,8 +59,8 @@ public:
 	CPathFollowReader pathFollowReader;
 	S_TRAP_STREAM_REF* field_0x48;
 	float field_0x4c;
-	uint field_0x50;
-	undefined4 escapeAttempts;
+	uint nbReqEscapeAttempts;
+	uint nbEscapeAttempts;
 	undefined field_0x58;
 	undefined field_0x59;
 	undefined field_0x5a;

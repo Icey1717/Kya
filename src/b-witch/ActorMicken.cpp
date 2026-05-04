@@ -391,7 +391,6 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 
 	if (msg == 2) {
-		IMPLEMENTATION_GUARD(
 		if (this->field_0x3d4 == -1) {
 			iVar9 = this->actorState;
 			if (iVar9 == -1) {
@@ -401,59 +400,55 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				pSVar6 = this->GetStateCfg(iVar9);
 				uVar5 = pSVar6->flags_0x4;
 			}
+
 			if ((uVar5 & 1) == 0) goto LAB_00151118;
 		}
-		/* WARNING: Load size is inaccurate */
-		iVar9 = *pMsgParam;
+
+		_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+		iVar9 = pHitParam->projectileType;
 		if ((iVar9 == 8) || (iVar9 == 7)) {
-			edF32Vector4NormalizeHard(&local_20, (edF32VECTOR4*)((int)pMsgParam + 0x20));
+			edF32Vector4NormalizeHard(&local_20, &pHitParam->field_0x20);
 			local_30.y = local_20.y;
 			local_30.z = local_20.z;
 			local_30.w = local_20.w;
-			local_20.y = 0.0;
+			local_20.y = 0.0f;
 			fVar11 = edF32Vector4NormalizeHard(&local_20, &local_20);
-			if (0.001 < fVar11) {
-				this->rotationQuat.x = local_20.x;
-				this->rotationQuat.y = local_20.y;
-				this->rotationQuat.z = local_20.z;
-				this->rotationQuat.w = local_20.w;
-				if (local_30.y < 0.5) {
-					edF32Vector4ScaleHard(edFCosinus[683], &local_30, &local_20);
-					local_30.y = 0.5;
+			if (0.001f < fVar11) {
+				this->rotationQuat = local_20;
+				if (local_30.y < 0.5f) {
+					edF32Vector4ScaleHard(0.8658976f, &local_30, &local_20);
+					local_30.y = 0.5f;
 				}
 			}
-			pTVar7 = GetTimer();
-			edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x30) / pTVar7->cutsceneDeltaTime, &local_30, &local_30);
-			pTVar7 = GetTimer();
-			edF32Vector4ScaleHard(0.02 / pTVar7->cutsceneDeltaTime, &eStack96, &local_30);
+
+			edF32Vector4ScaleHard(pHitParam->field_0x30 / GetTimer()->cutsceneDeltaTime, &local_30, &local_30);
+			edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack96, &local_30);
 			peVar10 = this->dynamicExt.aImpulseVelocities;
 			edF32Vector4AddHard(peVar10, peVar10, &eStack96);
-			fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
-			this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar11;
-			(*(this->pVTable)->SetBehaviour)(this, this->field_0x3d4, 0x17, -1);
+			this->dynamicExt.aImpulseVelocityMagnitudes[0] = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+			SetBehaviour(this->field_0x3d4, 0x17, -1);
+
 			return 1;
 		}
 
-		if (iVar9 == 10) {
-			IMPLEMENTATION_GUARD(
-			edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x30), &local_10, (edF32VECTOR4*)((int)pMsgParam + 0x20));
-			pTVar7 = GetTimer();
-			edF32Vector4ScaleHard(0.02 / pTVar7->cutsceneDeltaTime, &eStack80, &local_10);
+		if (iVar9 == HIT_TYPE_AMORTOS) {
+			edF32Vector4ScaleHard(pHitParam->field_0x30, &local_10, &pHitParam->field_0x20);
+			edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack80, &local_10);
 			peVar10 = this->dynamicExt.aImpulseVelocities;
 			edF32Vector4AddHard(peVar10, peVar10, &eStack80);
 			fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 			this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar11;
-			local_10.y = 0.0;
+			local_10.y = 0.0f;
 			fVar11 = edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
-			if (0.001 < fVar11) {
-				this->rotationQuat.x = local_10.x;
-				this->rotationQuat.y = local_10.y;
-				this->rotationQuat.z = local_10.z;
-				this->rotationQuat.w = local_10.w;
+			if (0.001f < fVar11) {
+				this->rotationQuat = local_10;
 			}
-			(*(this->pVTable)->SetBehaviour)(this, this->field_0x3d4, 0x17, -1);)
+
+			SetBehaviour(this->field_0x3d4, 0x17, -1);
+
 			return 1;
-		})
+		}
 	}
 	else {
 		if (msg == 0x22) {
@@ -543,20 +538,20 @@ int CActorMicken::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 	uint uVar1;
 	StateConfig* pSVar2;
 	uint uVar3;
-	int iVar4;
+	int result;
 
 	uVar1 = param_5[1];
 	if (*param_5 == EVENT_PRIM_KILL) {
 		if (param_3 == 2) {
-			IMPLEMENTATION_GUARD(
-			iVar4 = this->actorState;
-			if (iVar4 == -1) {
+			result = this->actorState;
+			if (result == -1) {
 				uVar3 = 0;
 			}
 			else {
-				pSVar2 = this->GetStateCfg(iVar4);
+				pSVar2 = this->GetStateCfg(result);
 				uVar3 = pSVar2->flags_0x4 & 1;
 			}
+
 			if (uVar3 == 0) {
 				if (uVar1 == 0) {
 					SetBehaviour(MICKEN_BEHAVIOUR_EAT, 0xc, -1);
@@ -564,15 +559,16 @@ int CActorMicken::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 				else {
 					SetBehaviour(MICKEN_BEHAVIOUR_EAT, 0xd, -1);
 				}
-			})
+			}
 		}
-		iVar4 = 1;
+
+		result = 1;
 	}
 	else {
-		iVar4 = CActor::InterpretEvent(pEventMessage, param_3, param_4, param_5);
+		result = CActor::InterpretEvent(pEventMessage, param_3, param_4, param_5);
 	}
 
-	return iVar4;
+	return result;
 }
 
 void CActorMicken::StoreCollisionSphere()
@@ -958,7 +954,7 @@ void gActorMicken_GetNearestFruit(CActor* pActor, void* pParams)
 
 void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 {
-	CActor* pCVar1;
+	CActor* pTied;
 	CCollision* pCVar2;
 	CAnimation* pCVar3;
 	edAnmLayer* peVar4;
@@ -976,7 +972,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 	CActorMicken* local_c;
 	CActor* local_8;
 
-	pCVar1 = this->pTiedActor;
+	pTied = this->pTiedActor;
 	switch (this->actorState) {
 	case MICKEN_EAT_STATE_STAND:
 		StateMickenStand(pBehaviour);
@@ -987,15 +983,15 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 
 		if ((pCVar2->flags_0x4 & COLLISION_GROUND_FLAG) == 0) break;
 
-		pCVar1 = this->pTiedActor;
+		pTied = this->pTiedActor;
 
-		if (pCVar1 == (CActor*)0x0) {
+		if (pTied == (CActor*)0x0) {
 		LAB_0014f970:
 			iVar7 = MICKEN_EAT_STATE_STAND;
 		}
 		else {
-			fVar10 = (pCVar1->currentLocation).x - this->currentLocation.x;
-			fVar11 = (pCVar1->currentLocation).z - this->currentLocation.z;
+			fVar10 = (pTied->currentLocation).x - this->currentLocation.x;
+			fVar11 = (pTied->currentLocation).z - this->currentLocation.z;
 			this->field_0x3ec = sqrtf(fVar10 * fVar10 + 0.0f + fVar11 * fVar11);
 			iVar7 = 0x11;
 
@@ -1087,26 +1083,23 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		StateMickenRollInTheWind(this);)
 		break;
 	case 0x11:
-		IMPLEMENTATION_GUARD(
-		if (pCVar1 == (CActor*)0x0) {
-			(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x1002023b, (CActorsTable*)0x0);
+		if (pTied == (CActor*)0x0) {
+			ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 			SetState(MICKEN_EAT_STATE_STAND, -1);
 		}
 		else {
-			peVar6 = CActor::GetBottomPosition(pCVar1);
-			iVar7 = WalkToPos(0.3, this, (CBehaviourMicken*)pBehaviour, (float*)peVar6, 1);
-			if (iVar7 != 0) {
+			if (WalkToPos(0.3f, pBehaviour, pTied->GetBottomPosition(), 1) != 0) {
 				SetState(MICKEN_EAT_STATE_STAND, -1);
 			}
-		})
+		}
 		break;
 	case 0x12:
 		IMPLEMENTATION_GUARD(
-		if (pCVar1 == (CActor*)0x0) {
+		if (pTied == (CActor*)0x0) {
 			peVar6 = CPathFollowReader::GetWayPoint(&pBehaviour->pathFollowReader);
 		}
 		else {
-			CActor::SV_ComputeDiffMatrixFromInit(pCVar1, &eStack96);
+			CActor::SV_ComputeDiffMatrixFromInit(pTied, &eStack96);
 			peVar6 = CPathFollowReader::GetWayPoint(&pBehaviour->pathFollowReader);
 			edF32Matrix4MulF32Vector4Hard(&eStack32, &eStack96, peVar6);
 			peVar6 = &eStack32;
@@ -1194,7 +1187,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 
 		if ((uVar9 & 0x4000) != 0) {
 			local_70.w = pBehaviour->field_0x8;
-			pCVar1 = this->pNearestFruit;
+			pTied = this->pNearestFruit;
 
 			MickenParams local_10;
 			local_10.distance = local_70.w * local_70.w;
@@ -1204,7 +1197,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_70, gActorMicken_GetNearestFruit, &local_10);
 			this->pNearestFruit = local_10.pOutActor;
 			if (this->pNearestFruit == (CActor*)0x0) {
-				if (pCVar1 != (CActor*)0x0) {
+				if (pTied != (CActor*)0x0) {
 					SetState(0xb, -1);
 				}
 			}

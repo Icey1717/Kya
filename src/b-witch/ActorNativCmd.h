@@ -107,6 +107,8 @@ public:
 
 	edF32VECTOR4* FUN_00393230(CActor* pActor);
 
+	void FUN_00394eb0(int* param_2);
+
 	S_ACTOR_STREAM_REF* aNativs;
 
 	int field_0x164;
@@ -115,6 +117,7 @@ public:
 	CTalkParam* aTalkParams;
 
 	int field_0x1d0;
+	CActor* field_0x1d4;
 
 	CAddOnNativ addOnA;
 	CAddOnNativ addOnB;

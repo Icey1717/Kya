@@ -433,6 +433,7 @@ void CScalarDyn::BuildFromDistTime(float dist, float time)
 	this->field_0x10 = 0.0f;
 	fVar1 = dist / (time * time);
 	this->field_0x14 = fVar1;
+	assert(std::isfinite(this->field_0x14));
 	this->field_0x24 = fVar1;
 	this->flags = 0;
 	this->field_0x4 = 0.0f;
@@ -455,6 +456,7 @@ void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float distance
 		this->field_0x18 = 0.0f;
 		this->flags = 1;
 		this->field_0x20 = param_2;
+		assert(!std::isnan(this->field_0x20));
 		this->field_0x1c = 0.0f;
 		this->field_0x24 = 0.0f;
 	}
@@ -462,7 +464,9 @@ void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float distance
 		this->field_0xc = param_1;
 		this->field_0x10 = 0.0f;
 		this->field_0x14 = (param_2 * param_2 - param_1 * param_1) / (distance * 2.0f);
+		assert(std::isfinite(this->field_0x14));
 		this->field_0x20 = param_1;
+		assert(!std::isnan(this->field_0x20));
 		this->field_0x24 = this->field_0x14;
 		this->flags = 0;
 		this->field_0x4 = 0.0f;
@@ -484,7 +488,9 @@ void CScalarDyn::BuildFromSpeedDistTime(float param_1, float param_2, float dist
 	this->field_0xc = param_1;
 	this->field_0x10 = fVar1;
 	this->field_0x14 = (distance * 2.0f * (fVar2 / time) - param_1 * 2.0f * fVar2) - (time / 3.0f) * fVar1;
+	assert(std::isfinite(this->field_0x14));
 	this->field_0x20 = param_1;
+	assert(!std::isnan(this->field_0x20));
 	this->field_0x24 = this->field_0x14;
 	this->flags = 0;
 	this->field_0x4 = 0.0f;
@@ -517,15 +523,18 @@ bool CScalarDyn::IsFinished()
 	return (this->flags & 1) != 0;
 }
 
-void CScalarDyn::Integrate(float param_1, float param_2)
+float CScalarDyn::Integrate(float param_1, float param_2)
 {
 	float fVar1;
 	float fVar2;
 
-	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
+	if ((param_2 == 0.0f) || (param_1 == 0.0f)) {
+		fVar1 = this->field_0x1c;
+	}
+	else {
 		if (this->flags == 0) {
 			fVar1 = this->field_0x4 + param_1;
-			if ((this->duration <= fVar1) || (fabs(fVar1 - this->duration) < 1e-06f)) {
+			if ((this->duration <= fVar1) || (fabsf(fVar1 - this->duration) < 1e-06f)) {
 				fVar1 = this->duration;
 				this->flags = 2;
 			}
@@ -544,18 +553,20 @@ void CScalarDyn::Integrate(float param_1, float param_2)
 
 		this->field_0x18 = this->field_0x18 + this->field_0x1c;
 		this->field_0x4 = this->field_0x4 + param_1;
-		fVar1 = this->field_0x1c / param_2;
+		fVar1 = this->field_0x1c / param_1;
 		this->field_0x20 = fVar1;
-		this->field_0x24 = fVar1 / param_2;
+		assert(!std::isnan(this->field_0x20));
+		this->field_0x24 = fVar1 / param_1;
+		fVar1 = this->field_0x1c;
 	}
 
-	return;
+	return fVar1;
 }
 
 // Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
-void CScalarDyn::Integrate(float param_1)
+float CScalarDyn::Integrate(float param_1)
 {
-	Integrate(param_1, param_1);
+	return Integrate(param_1, param_1);
 }
 
 // Should be in: D:/Projects/b-witch/ActorAutonomousServices.cpp
@@ -575,9 +586,12 @@ bool CScalarDyn::OnLastValidSample()
 
 void CScalarDyn::BuildFromSpeedTime(float param_1, float param_2, float param_3)
 {
+	assert(!std::isnan(param_1));
+
 	this->field_0xc = param_1;
 	this->field_0x10 = 0.0f;
 	this->field_0x14 = (param_2 - param_1) / param_3;
+	assert(std::isfinite(this->field_0x14));
 	this->field_0x20 = param_1;
 	this->field_0x24 = this->field_0x14;
 	this->flags = 0;

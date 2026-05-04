@@ -75,8 +75,8 @@ public:
 	void BuildFromDistTimeNoAccel(float dist, float time);
 	void Reset();
 	bool IsFinished();
-	void Integrate(float param_1);
-	void Integrate(float param_1, float param_2);
+	float Integrate(float param_1);
+	float Integrate(float param_1, float param_2);
 	float GetInstantSpeed();
 	bool OnLastValidSample();
 	void Stop();

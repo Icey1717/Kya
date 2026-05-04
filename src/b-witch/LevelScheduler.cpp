@@ -587,8 +587,10 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 			puVar8 = puVar8 + 1;
 		} while (iVar9 < this->nbNativShopSubObjs);
 	}
+
 	//pMVar4 = (MapManager*)CScene::GetManager(MO_Map);
 	//MapManager::SetupFunc_003f8150(pMVar4);
+
 	return;
 }
 
@@ -3596,7 +3598,6 @@ void CLevelScheduler::Level_GetSubSectorInfo(int levelIndex, int elevatorId, S_S
 	return;
 }
 
-
 void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 {
 	S_SUBSECTOR_INFO* pWolfenSubSectorInfo;
@@ -3605,7 +3606,7 @@ void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 	edDList_material* pMaterial;
 	S_LEVEL_INFO* pLevelInfo;
 	int currentIndex;
-	CActor* pWolfen;
+	CActor* pActor;
 	int levelInfoExorcisedWolfen;
 	S_SUBSECTOR_INFO* pSubSectorInfo;
 	CActorsTable teleportersTable;
@@ -3649,14 +3650,14 @@ void CLevelScheduler::Level_UpdateCurLiveLevelInfo()
 	if (0 < pActorManager->nbActors) {
 		do {
 			if (currentIndex == -1) {
-				pWolfen = (CActorWolfen*)0x0;
+				pActor = (CActorWolfen*)0x0;
 			}
 			else {
-				pWolfen = CScene::ptable.g_ActorManager_004516a4->aActors[currentIndex];
+				pActor = CScene::ptable.g_ActorManager_004516a4->aActors[currentIndex];
 			}
 
-			const bool bIsWolfen= pWolfen->IsKindOfObject(OBJ_TYPE_WOLFEN);
-			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pWolfen);
+			const bool bIsWolfen = pActor->IsKindOfObject(OBJ_TYPE_WOLFEN);
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pActor);
 			if ((bIsWolfen != false) && (pWolfen->exorcisedState == 2)) {
 				const int startSectorId = pWolfen->startSectorId;
 				pWolfenSubSectorInfo = pLevelInfo->aSubSectorInfo;

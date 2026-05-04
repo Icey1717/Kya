@@ -2301,15 +2301,15 @@ float keyStartTime_0x14;
 
 float edAnmMetaAnimator::GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int lengthMode)
 {
-	edAnmLayer* peVar1;
+	edAnmLayer* pLayer;
 	uint flags;
-	edAnmMacroAnimator eStack48;
+	edAnmMacroAnimator anmMacroAnimator;
 
-	eStack48.animationType = pOutDesc->animType;
-	peVar1 = this->aAnimData + pOutDesc->field_0x0;
-	eStack48.pActor = peVar1->pActor;
-	eStack48.pFunction = peVar1->pFunction_0xc0;
-	eStack48.pKeyDataArray = peVar1->pAnimManagerKeyData;
+	anmMacroAnimator.animationType = pOutDesc->animType;
+	pLayer = this->aAnimData + pOutDesc->field_0x0;
+	anmMacroAnimator.pActor = pLayer->pActor;
+	anmMacroAnimator.pFunction = pLayer->pFunction_0xc0;
+	anmMacroAnimator.pKeyDataArray = pLayer->pAnimManagerKeyData;
 	flags = pOutDesc->pHdrA->count_0x0;
 
 	if (lengthMode != 0) {
@@ -2321,11 +2321,12 @@ float edAnmMetaAnimator::GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int le
 				flags = flags & 0xfffffffe;
 			}
 		}
+
 		flags = flags | 0x40000000;
 	}
 
-	eStack48.Initialize(0.0f, pOutDesc->pHdrA, false, flags);
-	return eStack48.keyStartTime_0x14;
+	anmMacroAnimator.Initialize(0.0f, pOutDesc->pHdrA, false, flags);
+	return anmMacroAnimator.keyStartTime_0x14;
 }
 
 void edAnmLayer::Reset()
@@ -3149,15 +3150,15 @@ void CAnimation::RemoveDisabledBone(uint boneId)
 
 float CAnimation::GetAnimLength(int param_2, int lengthMode)
 {
-	int* piVar1;
+	int* pAnimKeyEntryData;
 	float fVar2;
-	edAnmStateDesc eStack32;
-	edAnmStateParser local_4;
+	edAnmStateDesc anmStateDesc;
+	edAnmStateParser anmStateParser;
 
-	piVar1 = (this->anmBinMetaAnimator).pAnimKeyEntryData;
-	local_4 = (int*)(reinterpret_cast<char*>(piVar1) + piVar1[param_2] + 4);
-	local_4.BuildDesc(&eStack32, -1, -1);
-	fVar2 = this->anmBinMetaAnimator.GetAnimStateDescLength(&eStack32, lengthMode);
+	pAnimKeyEntryData = (this->anmBinMetaAnimator).pAnimKeyEntryData;
+	anmStateParser = (int*)(reinterpret_cast<char*>(pAnimKeyEntryData) + pAnimKeyEntryData[param_2] + 4);
+	anmStateParser.BuildDesc(&anmStateDesc, -1, -1);
+	fVar2 = this->anmBinMetaAnimator.GetAnimStateDescLength(&anmStateDesc, lengthMode);
 	return fVar2;
 }
 

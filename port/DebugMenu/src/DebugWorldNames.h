@@ -2,12 +2,19 @@
 
 #include <string>
 
-// Human-readable names for sectors and checkpoints, persisted in world_names.json.
+// Human-readable names for levels, sectors and checkpoints, persisted in world_names.json.
 // Names are keyed by level ID so the same sector/checkpoint index in different
 // levels can carry different labels.
 
 namespace Debug {
 namespace WorldNames {
+
+	// Returns the human-readable name for a level, or "" if not assigned.
+	std::string GetLevelName(int levelId);
+
+	// Assigns a human-readable name to a level and saves the file.
+	// Pass an empty string to clear the name.
+	void SetLevelName(int levelId, const std::string& name);
 
 	// Returns the human-readable name for a sector, or "" if not assigned.
 	std::string GetSectorName(int levelId, int sectorId);

@@ -879,7 +879,26 @@ void S_STREAM_REF<CActor>::Init()
 template<>
 void S_STREAM_REF<CSound>::Init()
 {
-	IMPLEMENTATION_GUARD_AUDIO();
+	int pCVar1;
+	CSound* pCVar2 = (CSound*)0x0; // Can remove when audio is implemented.
+
+	pCVar1 = this->index;
+	if (pCVar1 == -1) {
+		pCVar2 = (CSound*)0x0;
+	}
+	else {
+		IMPLEMENTATION_GUARD_AUDIO(
+		if (pCVar1 < (CSound*)(CScene::ptable.g_AudioManager_00451698)->field_0x4) {
+			pCVar2 = (CSound*)((CScene::ptable.g_AudioManager_00451698)->aSoundSamplesA + (int)pCVar1);
+		}
+		else {
+			pCVar2 = (CSound*)((CScene::ptable.g_AudioManager_00451698)->aSoundSamplesB + (int)((int)pCVar1 - (int)(CSound*)(CScene::ptable.g_AudioManager_00451698)->field_0x4));
+		})
+	}
+
+	this->pObj = STORE_POINTER(pCVar2);
+
+	return;
 }
 
 template<>

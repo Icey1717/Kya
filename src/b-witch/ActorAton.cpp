@@ -1131,7 +1131,7 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 		EvaluateDisplayState();
 	}
 	else {
-		if (newState == 0x32) {
+		if (newState == MESSAGE_TRAP_RELEASE) {
 			this->dynamic.speed = 0.0f;
 			this->dynamicExt.normalizedTranslation.x = 0.0f;
 			this->dynamicExt.normalizedTranslation.y = 0.0f;

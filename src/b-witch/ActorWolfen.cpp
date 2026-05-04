@@ -1329,12 +1329,12 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 
 		if ((msg == 0x66) || (msg == 0x27)) {
-			IMPLEMENTATION_GUARD(
 			if ((this->field_0xb74 != 0) && (this->field_0xb74 != 1)) {
 				return 0;
 			}
-			iVar15 = CActorFighter::InterpretMessage((CActorFighter*)this, pSender, msg, pMsgParam);
-			return iVar15;)
+
+			iVar15 = CActorFighter::InterpretMessage(pSender, msg, pMsgParam);
+			return iVar15;
 		}
 
 		if (msg == 0x86) {
@@ -10716,21 +10716,21 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 	}
 	else {
 		if (msg == 0x27) {
-			IMPLEMENTATION_GUARD(
-			uVar5 = this->pOwner->field_0xb74;
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			uVar5 = pWolfen->field_0xb74;
 			if ((uVar5 == 0) || (uVar5 == 1)) {
 				iVar6 = 1;
 			}
 			else {
-				lVar7 = (*(code*)(this->pOwner->pVTable)->Func_0x1ac)();
-				if (lVar7 != 0) {
+				if (pWolfen->Func_0x1ac() != 0) {
 					ValidateCommand();
-					InitCommand(this, this->pOwner->field_0xb64[6].field_0x0, 6);
+					InitCommand(pWolfen->field_0xb64[6].field_0x0);
 					this->field_0x68 = 1;
 					this->currentCommandId = 6;
 				}
+
 				iVar6 = 0;
-			})
+			}
 		}
 		else {
 			if (msg == MESSAGE_KICKED) {
@@ -15366,4 +15366,54 @@ bool CBehaviourTrackWeaponSnipe::NewFunc(CActorCommander* pCommander)
 CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* CBehaviourTrackWeaponSnipe::GetNotificationTargetArray()
 {
 	return &this->notificationTargetArray;
+}
+
+void CBehaviourWolfenFighterRidden::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorWolfen* this_00;
+	CActorFighter* pCVar1;
+	CFrontendDisplay* pCVar2;
+	CLifeInterface* pCVar3;
+	float fVar4;
+
+	CBehaviourFighterRidden::Begin(pOwner, newState, newAnimationType);
+
+	this_00 = (CActorWolfen*)this->pOwner;
+	if (this_00->combatMode_0xb7c < 2) {
+		this_00->SetCombatMode(ECM_InCombat);
+	}
+
+	pCVar1 = this->pOwner;
+	pCVar3 = pCVar1->GetLifeInterfaceOther();
+	fVar4 = pCVar3->GetValue();
+	pCVar2 = CScene::ptable.g_FrontendManager_00451680;
+	if (0.0f < fVar4) {
+		pCVar1 = this->pOwner;
+		pCVar3 = pCVar1->GetLifeInterfaceOther();
+		pCVar2->DeclareInterface(FRONTEND_INTERFACE_ENEMY_LIST, pCVar3);
+	}
+
+	CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
+
+	return;
+}
+
+void CBehaviourWolfenFighterRidden::End(int newBehaviourId)
+{
+	CBehaviourFighterRidden::End(newBehaviourId);
+	CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
+
+	return;
+}
+
+void CBehaviourWolfenFighterRidden::ManageCombatMusic(int state)
+{
+	IMPLEMENTATION_GUARD_AUDIO(
+	if (state == 0) {
+		CAudioManager::StopCombatMusic(CScene::ptable.g_AudioManager_00451698);
+	}
+	else {
+		CAudioManager::PlayCombatMusic(CScene::ptable.g_AudioManager_00451698);
+	})
+	return;
 }

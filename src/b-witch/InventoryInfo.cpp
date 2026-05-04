@@ -220,6 +220,22 @@ void CInventoryInfo::ObjectPurchased()
 			CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_GOLD);
 		}
 		break;
+	case INVENTORY_ITEM_LIFE_BAR:
+	{
+		int newMax = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
+		newMax = newMax + CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
+		if (CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX) < newMax) {
+			newMax = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_MAX);
+		}
+
+		pLifeInterface = CActorHero::_gThis->GetLifeInterfaceOther();
+		CLevelScheduler::ScenVar_Set(SCN_LEVEL_LIFE_GAUGE, newMax);
+		pLifeInterface->SetValueMax((float)newMax);
+		iVar3 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
+		fVar5 = pLifeInterface->GetValue();
+		pLifeInterface->SetValue(fVar5 + (float)iVar3);
+	}
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 		return;

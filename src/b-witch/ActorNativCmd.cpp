@@ -202,7 +202,7 @@ void CActorNativCmd::ChangeManageState(int state)
 
 int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	char cVar1;
+	bool cVar1;
 	int iVar2;
 	int uVar3;
 	int iVar3;
@@ -212,88 +212,73 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	CTalkParam* pTalkParam;
 	int iVar6;
 	long lVar7;
-	undefined4 local_f0[8];
-	undefined4 local_d0[2];
-	undefined4 local_c8;
-	undefined4 local_b0[8];
-	undefined4 local_90[8];
+	CActorNativMsgParam_0xe local_f0;
+	CActorNativMsgParam_0xe local_d0;
+	CActorNativMsgParam_0xe local_b0;
+	CActorNativMsgParam_0xe local_90;
 	CActorNativMsgParam_0xe local_70;
 	edF32VECTOR4 eStack80;
 	CActorNativMsgParam_0xe local_40;
-	float local_3c;
-	float local_38;
-	float local_34;
-	float local_30;
-	float local_2c;
-	edF32VECTOR4* local_28;
-	undefined4* local_24;
-	undefined4* local_20;
-	undefined4* local_1c;
-	undefined4* local_18;
-	int* local_14;
-	int* local_10;
-	int* local_c;
-	int* local_8;
-	undefined4* local_4;
 
-	if (msg == 0x4e) {
+	if (msg == MESSAGE_NATIV_CMD) {
 		uVar3 = 0;
-		if (pSender->typeID == 10) {
+		if (pSender->typeID == NATIV) {
 			CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 			iVar6 = pParams->type;
 			if (iVar6 == 7) {
-				IMPLEMENTATION_GUARD(
-				local_40 = pMsgParams->field_0x0;
-				local_3c = pMsgParams->field_0x4;
-				local_38 = pMsgParams->field_0x8;
-				local_34 = pMsgParams->field_0xc;
-				local_30 = (pMsgParams->vectorFieldA).x;
-				local_2c = (pMsgParams->vectorFieldA).y;
-				local_28 = (edF32VECTOR4*)(pMsgParams->vectorFieldA).z;
+				local_40.type = pParams->type;
+				local_40.field_0x4 = pParams->field_0x4;
+				local_40.field_0x8 = pParams->field_0x8;
+				local_40.field_0xc = pParams->field_0xc;
+				local_40.field_0x10 = pParams->field_0x10;
+				local_40.field_0x14 = pParams->field_0x14;
+				local_40.field_0x18 = pParams->field_0x18;
+
 				pTalkParam = (CTalkParam*)0x0;
-				if ((int)local_38 < this->nbTalkParams) {
-					pTalkParam = this->aTalkParams + (int)local_38;
+				if (local_40.field_0x8 < this->nbTalkParams) {
+					pTalkParam = this->aTalkParams + local_40.field_0x8;
 				}
+
 				iVar6 = pTalkParam->nbSubObj;
 				iVar2 = 0;
 				if (0 < iVar6) {
-					iVar4 = 0;
 					do {
 						pCVar5 = (CActor*)0x0;
 						if (iVar2 < iVar6) {
-							pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar4);
+							pCVar5 = pTalkParam->field_0x8[iVar2].pNativ;
 						}
+
 						if (pCVar5 == pSender) goto LAB_003958b8;
+
 						iVar2 = iVar2 + 1;
-						iVar4 = iVar4 + 8;
 					} while (iVar2 < pTalkParam->nbSubObj);
 				}
+
 				iVar2 = -1;
 			LAB_003958b8:
 				if (iVar2 == -1) {
-					local_f0[0] = 2;
-					local_24 = local_f0;
-					CActor::DoMessage((CActor*)this, pSender, 0x4e, (uint)local_24);
+					local_f0.type = 2;
+					DoMessage(pSender, MESSAGE_NATIV_CMD, &local_f0);
 				}
 				else {
 					lVar7 = 0;
 					if (0 < iVar6) {
-						iVar6 = 0;
 						do {
 							pCVar5 = (CActor*)0x0;
 							if (lVar7 < pTalkParam->nbSubObj) {
-								pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar6);
+								pCVar5 = pTalkParam->field_0x8[lVar7].pNativ;
 							}
-							local_d0[0] = CTalkParam::ChooseFinishOrder(pTalkParam, lVar7);
-							local_c8 = 0xffffffff;
+
+							local_d0.type = pTalkParam->ChooseFinishOrder(lVar7);
+							local_d0.field_0x8 = -1;
 							if (pCVar5 != (CActor*)0x0) {
-								local_20 = local_d0;
-								CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)local_d0);
+								DoMessage(pCVar5, MESSAGE_NATIV_CMD, &local_d0);
 							}
-							lVar7 = (long)((int)lVar7 + 1);
-							iVar6 = iVar6 + 8;
+
+							lVar7 = lVar7 + 1;
 						} while (lVar7 < pTalkParam->nbSubObj);
 					}
+
 					pTalkParam->field_0x10 = 0;
 					pTalkParam->field_0x1c = 0;
 					pTalkParam->totalTime = 0.0f;
@@ -304,39 +289,33 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						iVar2 = 0;
 						do {
 							iVar6 = iVar6 + 1;
-							*(undefined4*)((int)&pTalkParam->field_0x8->pNativ + iVar2) = 0;
-							*(undefined4*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2) = 1;
-							iVar2 = iVar2 + 8;
+							pTalkParam->field_0x8[iVar2].pNativ = (CActorNativ*)0x0;
+							pTalkParam->field_0x8[iVar2].field_0x4 = 1;
+							iVar2 = iVar2 + 1;
 						} while (iVar6 < pTalkParam->nbSubObj);
 					}
-				})
+				}
 			}
 			else {
 				if (iVar6 == 0x11) {
-					IMPLEMENTATION_GUARD(
-					local_b0[0] = 0x11;
-					if (*(CActor**)&this->field_0x1d4 != (CActor*)0x0) {
-						local_1c = local_b0;
-						CActor::DoMessage((CActor*)this, *(CActor**)&this->field_0x1d4, 0x4e, (uint)local_1c);
-					})
+					local_b0.type = 0x11;
+					if (this->field_0x1d4 != (CActor*)0x0) {
+						DoMessage(this->field_0x1d4, MESSAGE_NATIV_CMD, &local_b0);
+					}
 				}
 				else {
 					if (iVar6 == 0x12) {
-						IMPLEMENTATION_GUARD(
-						*(undefined4*)&this->field_0x1d4 = 0;
-						if (pMsgParams->field_0x8 != -NAN) {
-							local_18 = local_90;
-							local_90[0] = 0x12;
-							CActor::DoMessage((CActor*)this, this->aNativs->aEntries[(int)pMsgParams->field_0x8].pActor, 0x4e,
-								(uint)local_18);
-							pMsgParams->field_0x8 = -NAN;
-						})
+						this->field_0x1d4 = (CActor*)0x0;
+						if (pParams->field_0x8 != -1) {
+							local_90.type = 0x12;
+							DoMessage(this->aNativs->aEntries[pParams->field_0x8].Get(), MESSAGE_NATIV_CMD, &local_90);
+							pParams->field_0x8 = -1;
+						}
 					}
 					else {
 						if (iVar6 == 0x10) {
-							IMPLEMENTATION_GUARD(
-							*(CActor**)&this->field_0x1d4 = pSender;
-							FUN_00394eb0((long)(int)this, (int*)&pMsgParams->field_0x8);)
+							this->field_0x1d4 = pSender;
+							FUN_00394eb0(&pParams->field_0x8);
 						}
 						else {
 							if (iVar6 == 9) {
@@ -349,7 +328,7 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 									cVar1 = this->addOnA.Func_0x20(pParams->field_0x10, pSender, 0);
 								}
 
-								return (int)cVar1 & 0xff;
+								return cVar1;
 							}
 
 							if (iVar6 == 3) {
@@ -430,100 +409,102 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 											pReceiver = (CActorNativ*)0x0;
 										}
 
-										DoMessage(pReceiver, MESSAGE_NATIV_CMD, &local_10);
+										DoMessage(pReceiver, MESSAGE_NATIV_CMD, &local_40);
 									}
 									else {
-										IMPLEMENTATION_GUARD(
 										pTalkParam->FUN_00392e30(&eStack80);
-										local_28 = &eStack80;
+										local_40.field_0x18 = &eStack80;
 										iVar6 = 0;
 										if (0 < pTalkParam->nbSubObj) {
-											iVar2 = 0;
 											do {
-												local_2c = FUN_00392ad0(pTalkParam, iVar6);
+												local_40.field_0x14 = pTalkParam->FUN_00392ad0(iVar6);
 												iVar4 = pTalkParam->nbSubObj;
 												pCVar5 = (CActor*)0x0;
 												if (iVar6 < iVar4) {
-													pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar2);
+													pCVar5 = pTalkParam->field_0x8[iVar6].pNativ;
 												}
+
 												if (pCVar5 == pSender) {
 													iVar3 = 0;
 													if (iVar6 < iVar4) {
-														iVar3 = *(int*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2);
+														iVar3 = pTalkParam->field_0x8[iVar6].field_0x4;
 													}
-													local_40 = 5;
+
+													local_40.type = 5;
 													if (iVar3 == 6) {
-														local_40 = 0;
+														local_40.type = 0;
 													}
 													else {
 														if (iVar3 == 5) {
-															local_40 = 0xd;
+															local_40.type = 0xd;
 														}
 														else {
 															if (iVar3 == 4) {
-																local_40 = 9;
+																local_40.type = 9;
 															}
 															else {
 																if (iVar3 == 3) {
-																	local_40 = 6;
+																	local_40.type = 6;
 																}
 																else {
 																	if (iVar3 != 2) {
-																		local_40 = 0;
+																		local_40.type = 0;
 																	}
 																}
 															}
 														}
 													}
-													local_34 = (float)FUN_00392860((int)pTalkParam, iVar6, 1);
+
+													local_40.field_0xc = pTalkParam->FUN_00392860(iVar6, 1);
 													pCVar5 = (CActor*)0x0;
 													if (iVar6 < pTalkParam->nbSubObj) {
-														pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar2);
+														pCVar5 = pTalkParam->field_0x8[iVar6].pNativ;
 													}
-													local_c = &local_40;
-													CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)&local_40);
+
+													DoMessage(pCVar5, MESSAGE_NATIV_CMD, &local_40);
 												}
 												else {
 													iVar3 = 0;
 													if (iVar6 < iVar4) {
-														iVar3 = *(int*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2);
+														iVar3 = pTalkParam->field_0x8[iVar6].field_0x4;
 													}
-													local_40 = 5;
+													local_40.type = 5;
 													if (iVar3 == 6) {
-														local_40 = 0;
+														local_40.type = 0;
 													}
 													else {
 														if (iVar3 == 5) {
-															local_40 = 0xd;
+															local_40.type = 0xd;
 														}
 														else {
 															if (iVar3 == 4) {
-																local_40 = 9;
+																local_40.type = 9;
 															}
 															else {
 																if (iVar3 == 3) {
-																	local_40 = 6;
+																	local_40.type = 6;
 																}
 																else {
 																	if (iVar3 != 2) {
-																		local_40 = 0;
+																		local_40.type = 0;
 																	}
 																}
 															}
 														}
 													}
-													local_34 = (float)FUN_00392860((int)pTalkParam, iVar6, 0);
+
+													local_40.field_0xc = pTalkParam->FUN_00392860(iVar6, 0);
 													pCVar5 = (CActor*)0x0;
 													if (iVar6 < pTalkParam->nbSubObj) {
-														pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->pNativ + iVar2);
+														pCVar5 = pTalkParam->field_0x8[iVar6].pNativ;
 													}
-													local_8 = &local_40;
-													CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)&local_40);
+				
+													DoMessage(pCVar5, MESSAGE_NATIV_CMD, &local_40);
 												}
+
 												iVar6 = iVar6 + 1;
-												iVar2 = iVar2 + 8;
 											} while (iVar6 < pTalkParam->nbSubObj);
-										})
+										}
 									}
 								}
 
@@ -1776,6 +1757,64 @@ edF32VECTOR4* CActorNativCmd::FUN_00393230(CActor* pActor)
 		peVar7 = &pCVar12->currentLocation;
 	}
 	return peVar7;
+}
+
+void CActorNativCmd::FUN_00394eb0(int* param_2)
+{
+	CActor* pActor;
+	CActorNativ* pNativ;
+	float fVar1;
+	float fVar2;
+	CActorHero* pCVar3;
+	CBehaviour* pCVar4;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	float fVar8;
+	float fVar9;
+	CActorNativMsgParam_0xe local_30;
+
+	pCVar3 = CActorHero::_gThis;
+	fVar8 = 3.402823e+38f;
+	iVar7 = 0;
+	iVar6 = -1;
+	while (true) {
+		if (this->aNativs == (S_ACTOR_STREAM_REF*)0x0) {
+			iVar5 = 0;
+		}
+		else {
+			iVar5 = this->aNativs->entryCount;
+		}
+
+		if (iVar5 <= iVar7) break;
+
+		pActor = this->aNativs->aEntries[iVar7].Get();
+		fVar9 = pCVar3->currentLocation.x - (pActor->currentLocation).x;
+		fVar1 = pCVar3->currentLocation.y - (pActor->currentLocation).y;
+		fVar2 = pCVar3->currentLocation.z - (pActor->currentLocation).z;
+		fVar9 = sqrtf(fVar9 * fVar9 + fVar1 * fVar1 + fVar2 * fVar2);
+		if ((((pActor->flags & 4) != 0) && (fVar9 < fVar8)) && (pCVar4 = pActor->GetBehaviour(9), pCVar4 != (CBehaviour*)0x0)) {
+			fVar8 = fVar9;
+			iVar6 = iVar7;
+		}
+
+		iVar7 = iVar7 + 1;
+	}
+
+	if ((iVar6 != -1) && (iVar7 = *param_2, iVar7 != iVar6)) {
+		if (iVar7 != -1) {
+			local_30.type = 0x12;
+			DoMessage(this->aNativs->aEntries[iVar7].Get(), MESSAGE_NATIV_CMD, &local_30);
+		}
+
+		*param_2 = iVar6;
+		pNativ = (CActorNativ*)this->aNativs->aEntries[*param_2].Get();
+		FUN_00394d00(pNativ);
+		local_30.type = 0x10;
+		DoMessage(pNativ, MESSAGE_NATIV_CMD, &local_30);
+	}
+
+	return;
 }
 
 void CTalkParam::FUN_00392e30(edF32VECTOR4* param_2)

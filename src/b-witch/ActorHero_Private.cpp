@@ -1676,9 +1676,9 @@ bool CActorHeroPrivate::ManageActions()
 	long lVar9;
 	ulong uVar10;
 	CActorsTable* pActorTable;
-	float fVar12;
+	float interfaceValueMax;
 	float fVar13;
-	float valueMax;
+	float scnVarValueMax;
 	CActorsTable local_220;
 	CActorsTable local_110;
 	undefined4 local_4;
@@ -1686,15 +1686,15 @@ bool CActorHeroPrivate::ManageActions()
 	pLifeInterface = GetLifeInterfaceOther();
 	pLifeInterface->field_0x10 = (CActor*)0x0;
 
-	if (((GetStateFlags(this->actorState) & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
-		valueMax = (float)(CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_GAUGE) * CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE));
-		fVar12 = this->magicInterface.GetValueMax();
+	if (((GetStateFlags(this->actorState) & 1) == 0) && (this->inventory.IsActive() == 0)) {
+		scnVarValueMax = (float)(CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_GAUGE) * CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE));
+		interfaceValueMax = this->magicInterface.GetValueMax();
 
-		if (valueMax != fVar12) {
-			iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
-			if ((float)iVar5 < valueMax) {
+		if (scnVarValueMax != interfaceValueMax) {
+			// Probably got a new rune.
+			if ((float)CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX) < scnVarValueMax) {
 				iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
-				valueMax = (float)iVar5;
+				scnVarValueMax = (float)iVar5;
 				iVar5 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_MAX);
 				iVar6 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_UPDATE);
 
@@ -1705,12 +1705,10 @@ bool CActorHeroPrivate::ManageActions()
 				CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_GAUGE, iVar5 / iVar6);
 			}
 
-			this->magicInterface.SetValueMax(valueMax);
+			this->magicInterface.SetValueMax(scnVarValueMax);
 
-			fVar12 = this->magicInterface.GetValue();
-			fVar13 = this->magicInterface.GetValueMax();
-			if (fVar13 < fVar12) {
-				this->magicInterface.SetValue(valueMax);
+			if (this->magicInterface.GetValueMax() < this->magicInterface.GetValue()) {
+				this->magicInterface.SetValue(scnVarValueMax);
 			}
 		}
 
@@ -1806,13 +1804,13 @@ bool CActorHeroPrivate::ManageActions()
 					pInput = this->pPlayerInput;
 
 					if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-						fVar12 = 0.0f;
+						interfaceValueMax = 0.0f;
 					}
 					else {
-						fVar12 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
+						interfaceValueMax = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 					}
 
-					if (fVar12 == 0.0f) {
+					if (interfaceValueMax == 0.0f) {
 						this->field_0x1a00 = 0;
 					}
 				}
@@ -1866,13 +1864,13 @@ bool CActorHeroPrivate::ManageActions()
 				if (this->heroActionParams.actionId == 2) {
 					pInput = this->pPlayerInput;
 					if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-						fVar12 = 0.0f;
+						interfaceValueMax = 0.0f;
 					}
 					else {
-						fVar12 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
+						interfaceValueMax = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 					}
 
-					if ((((fVar12 != 0.0f) && (uVar7 = TestState_001328a0(0xffffffff), uVar7 == 0)) &&
+					if ((((interfaceValueMax != 0.0f) && (uVar7 = TestState_001328a0(0xffffffff), uVar7 == 0)) &&
 						(uVar7 = TestState_AllowAction(0xffffffff), uVar7 != 0)) && (this->field_0x1574 == 0)) {
 						bVar2 = true;
 						this->heroActionParams.activeActionId = this->heroActionParams.actionId;
@@ -4233,6 +4231,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					}
 				}
 			}
+
 			goto LAB_00344ed0;
 		}
 
@@ -16495,7 +16494,7 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 					else {
 						CActor::SV_Blend4AnimationsWith2Ratios(-leftRightRatio, forwardBackRatio, &macroBlendN, 4, 3, 7, 6);
 						pValue->field_0xc_array[5] = 0.0f;
-						pValue->field_0xc_array[6] = 0.0f;
+						pValue->field_0xc_array[8] = 0.0f;
 					}
 					pValue->field_0xc_array[0] = 0.0f;
 					pValue->field_0xc_array[1] = 0.0f;
@@ -16709,9 +16708,9 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 			}
 		}
 	}
+
 	return;
 }
-
 
 void CBehaviourHeroDefault::Manage()
 {
@@ -16980,15 +16979,17 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						return 1;)
 					}
 
-					if (msg == 0x32) {
+					if (msg == MESSAGE_TRAP_RELEASE) {
 						if (pMsgParam != (void*)0x0) {
 							pCollisionRef = this->pHero->pCollisionData;
 							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 0x81000;
 						}
+
 						pHeroRef = this->pHero;
 						pHeroRef->flags = pHeroRef->flags | 0x80;
 						pHeroRef->flags = pHeroRef->flags & 0xffffffdf;
 						pHeroRef->EvaluateDisplayState();
+
 						return 1;
 					}
 

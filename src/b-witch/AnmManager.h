@@ -22,7 +22,7 @@ struct AnimKeySomething {
 			float field_0x24;
 			float field_0x28;
 		};
-		float field_0xc_array[8];
+		float field_0xc_array[9];
 	};
 };
 

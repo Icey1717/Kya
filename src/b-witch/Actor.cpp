@@ -1534,12 +1534,12 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						this->flags = this->flags | 1;
 					}
 					else {
-						if (msg == 0x32) {
+						if (msg == MESSAGE_TRAP_RELEASE) {
 							pCVar2 = this->pCollisionData;
 							if ((pCVar2 != (CCollision*)0x0) && (pMsgParam != (void*)0x0)) {
-								IMPLEMENTATION_GUARD(
-								pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;)
+								pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
 							}
+
 							this->flags = this->flags | 0x80;
 							this->flags = this->flags & 0xffffffdf;
 							EvaluateDisplayState();

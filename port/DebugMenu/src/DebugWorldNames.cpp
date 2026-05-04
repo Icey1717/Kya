@@ -8,14 +8,15 @@ namespace Debug {
 namespace WorldNames {
 
 	/*
-	* Let's you name a sector or checkpoint for easier identification in the debug menu. 
+	* Let's you name a level, sector or checkpoint for easier identification in the debug menu. 
 	* Names are stored in a JSON file in the same directory as the executable, so they are on a 
 	* per machine basis and not shared between users.
 	*/
 
 	static constexpr const char* kNamesFile = "world_names.json";
 
-	// In-memory store: json["levelId"]["sectors"]["sectorId"] = "Name"
+	// In-memory store: json["levelId"]["level"] = "Name"
+	//                  json["levelId"]["sectors"]["sectorId"] = "Name"
 	//                  json["levelId"]["checkpoints"]["managerName/index"] = "Name"
 	static nlohmann::json gNames;
 	static bool gLoaded = false;
@@ -53,6 +54,33 @@ namespace WorldNames {
 	static std::string CheckpointKey(const char* managerName, int checkpointIndex)
 	{
 		return std::string(managerName ? managerName : "") + "/" + std::to_string(checkpointIndex);
+	}
+
+	std::string GetLevelName(int levelId)
+	{
+		EnsureLoaded();
+		const std::string levelKey = LevelKey(levelId);
+		if (gNames.contains(levelKey) &&
+			gNames[levelKey].contains("level"))
+		{
+			return gNames[levelKey]["level"].get<std::string>();
+		}
+		return {};
+	}
+
+	void SetLevelName(int levelId, const std::string& name)
+	{
+		EnsureLoaded();
+		const std::string levelKey = LevelKey(levelId);
+		if (name.empty()) {
+			if (gNames.contains(levelKey)) {
+				gNames[levelKey].erase("level");
+			}
+		}
+		else {
+			gNames[levelKey]["level"] = name;
+		}
+		Save();
 	}
 
 	std::string GetSectorName(int levelId, int sectorId)
