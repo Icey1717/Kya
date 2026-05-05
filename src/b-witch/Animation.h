@@ -131,7 +131,7 @@ struct edAnmLayer
 	int blendOp;
 	float field_0x4;
 	int animPlayState;
-	undefined4 field_0xc;
+	int field_0xc;
 	AnimDesc currentAnimDesc;
 	AnimDesc nextAnimDesc;
 	int field_0xb8;

@@ -3042,8 +3042,8 @@ void CActorWolfen::BehaviourAvoid_Manage(CBehaviourAvoid* pBehaviour)
 		}
 	}
 	else {
-		if (((uint)pWolfen->fightFlags & 2) != 0) {
-			iVar3 = pWolfen->FUN_0030a6a0();
+		if (((uint)pWolfen->fightFlags & FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK) != 0) {
+			iVar3 = pWolfen->GetProjectedBehaviour();
 		}
 	}
 
@@ -5654,7 +5654,7 @@ void CActorWolfen::StateWolfenBreakObject()
 	this->dynamic.speed = 0.0f;
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 
-	if ((this->pBoxInWay != (CActor*)0x0) && ((((this->pAnimationController)->anmBinMetaAnimator).aAnimData)->animPlayState == 1)) {
+	if ((this->pBoxInWay != (CActor*)0x0) && ((((this->pAnimationController)->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING)) {
 		fVar5 = this->timeInAir;
 		if (((fVar5 - Timer::GetTimer()->cutsceneDeltaTime) / this->field_0xd18 < timeToHit) &&
 			(timeToHit <= fVar5 / this->field_0xd18)) {
@@ -8053,7 +8053,7 @@ void CActorWolfen::InternState_WolfenLocate()
 
 	pAnimationController = this->pAnimationController;
 
-	if (((pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+	if (((pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		fVar2 = pAnimationController->anmBinMetaAnimator.GetLayerAnimTime(0, 0);
 		fVar3 = fVar2;
 		pAnimationController->anmBinMetaAnimator.GetAnimType_00242330(0);
@@ -8571,9 +8571,9 @@ bool CActorWolfen::ForceFightAction(int index, bool param_3)
 	return bSuccess;
 }
 
-void CActorWolfen::FUN_00175ad0()
+void CActorWolfen::SetProjectedFallbackFlag()
 {
-	this->fightFlags = this->fightFlags | 2;
+	this->fightFlags = this->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 
 	return;
 }
@@ -8715,8 +8715,8 @@ void CActorWolfen::PostManageD(CBehaviourWolfen* pBehaviour)
 		}
 	}
 	else {
-		if ((pCVar1->fightFlags & 2) != 0) {
-			behaviourIdA = pCVar1->FUN_0030a6a0();
+		if ((pCVar1->fightFlags & FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK) != 0) {
+			behaviourIdA = pCVar1->GetProjectedBehaviour();
 		}
 	}
 
@@ -9448,8 +9448,8 @@ int CBehaviourWolfen::FUN_001f0ab0()
 		}
 	}
 	else {
-		if ((pWolfen->fightFlags & 2) != 0) {
-			iVar1 = pWolfen->FUN_0030a6a0();
+		if ((pWolfen->fightFlags & FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK) != 0) {
+			iVar1 = pWolfen->GetProjectedBehaviour();
 		}
 	}
 
@@ -10653,7 +10653,7 @@ void CBehaviourFighterWolfen::InitState(int newState)
 		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
 		pWolfen->PlayAnim(pWolfen->standAnim);
 		pWolfen->field_0xd00 = (((float)rand() / 2.147484e+09f) * 0.6f + 0.0f);
-		pWolfen->fightFlags = pWolfen->fightFlags | 1;
+		pWolfen->fightFlags = pWolfen->fightFlags | FIGHT_FLAG_ACTION_LOCKED;
 	}
 	else {
 		if (newState == 6) {
@@ -10682,7 +10682,7 @@ void CBehaviourFighterWolfen::TermState(int oldState, int newState)
 	if (oldState == 0xad) {
 		pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
 		pCVar1->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
-		pCVar1->fightFlags = pCVar1->fightFlags & 0xfffffffe;
+		pCVar1->fightFlags = pCVar1->fightFlags & ~FIGHT_FLAG_ACTION_LOCKED;
 		pCVar1->SetLookingAtOn();
 	}
 	else {
@@ -11537,7 +11537,7 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 							fStack72 = (this->holdPosition).z - pCVar3->currentLocation.z;
 							fStack68 = (this->holdPosition).w - pCVar3->currentLocation.w;
 							local_4c = 0;
-							if (((this->field_0x50 < sqrtf(local_50 * local_50 + 0.0f + fStack72 * fStack72)) && (this->field_0x3c != 0)) && ((this->pOwner->fightFlags & 1) == 0)) {
+							if (((this->field_0x50 < sqrtf(local_50 * local_50 + 0.0f + fStack72 * fStack72)) && (this->field_0x3c != 0)) && ((this->pOwner->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)) {
 								movParamsOutA.flags = 0;
 								movParamsInA.pRotation = (edF32VECTOR4*)0x0;
 								movParamsInA.speed = 0.0f;
@@ -11719,7 +11719,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 											((this->pOwner->field_0x44d & 0xf) == 0)) {
 											bVar8 = true;
 										}
-										if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+										if ((bVar8) && ((this->pOwner->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)) {
 											bVar6 = true;
 										}
 										if (bVar6) {
@@ -11747,7 +11747,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 														((this->pOwner->field_0x44d & 0xf) == 0)) {
 														bVar8 = true;
 													}
-													if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+													if ((bVar8) && ((this->pOwner->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)) {
 														bVar6 = true;
 													}
 													if (bVar6) {
@@ -11763,7 +11763,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 														((this->pOwner->field_0x44d & 0xf) == 0)) {
 														bVar8 = true;
 													}
-													if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+													if ((bVar8) && ((this->pOwner->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)) {
 														bVar6 = true;
 													}
 													if (bVar6) {
@@ -13800,7 +13800,7 @@ void CBehaviourDCA::InitState(int newState)
 	else {
 		if (newState == 0x89) {
 			pWolfen = this->pOwner;
-			pWolfen->fightFlags = pWolfen->fightFlags & 0xfffffffd;
+			pWolfen->fightFlags = pWolfen->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 		}
 		else {
 			if (newState == 0x86) {
@@ -13813,7 +13813,7 @@ void CBehaviourDCA::InitState(int newState)
 				this->pOwner->pCollisionData->actorFieldA = (this->actorRef).Get();
 
 				pWolfen = this->pOwner;
-				pWolfen->fightFlags = pWolfen->fightFlags & 0xfffffffd;
+				pWolfen->fightFlags = pWolfen->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 			}
 			else {
 				if (newState == 0x87) {
@@ -13843,13 +13843,13 @@ void CBehaviourDCA::TermState(int oldState, int newState)
 
 	if (oldState == 0x86) {
 		pWolfen = this->pOwner;
-		pWolfen->fightFlags = pWolfen->fightFlags | 2;
+		pWolfen->fightFlags = pWolfen->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 		this->pOwner->pCollisionData->actorFieldA = (CActor*)0x0;
 	}
 	else {
 		if (oldState == 0x89) {
 			pWolfen = this->pOwner;
-			pWolfen->fightFlags = pWolfen->fightFlags | 2;
+			pWolfen->fightFlags = pWolfen->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 		}
 		else {
 			CBehaviourWolfen::TermState(oldState, newState);
@@ -15051,7 +15051,7 @@ void CBehaviourEscape::InitState(int newState)
 
 	if (newState == 0xd) {
 		pWolfen = this->pOwner;
-		pWolfen->fightFlags = pWolfen->fightFlags & 0xfffffffd;
+		pWolfen->fightFlags = pWolfen->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 	}
 	else {
 		if (newState == 10) {
@@ -15068,11 +15068,11 @@ void CBehaviourEscape::InitState(int newState)
 void CBehaviourEscape::TermState(int oldState, int newState)
 {
 	if (oldState == WOLFEN_STATE_ESCAPE_JUMP_FALL) {
-		this->pOwner->fightFlags = this->pOwner->fightFlags | 2;
+		this->pOwner->fightFlags = this->pOwner->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 	}
 	else {
 		if (oldState == WOLFEN_STATE_ESCAPE_JUMP_CLIMB) {
-			this->pOwner->FUN_00175ad0();
+			this->pOwner->SetProjectedFallbackFlag();
 		}
 	}
 

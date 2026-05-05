@@ -1687,7 +1687,7 @@ void CActorNativ::StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviou
 
 	if (bVar4) {
 		if (this->bHasObject == 0) {
-			if ((this->pAnimationController->anmBinMetaAnimator.aAnimData)->animPlayState == 1) {
+			if ((this->pAnimationController->anmBinMetaAnimator.aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 				SetHasObject(true);
 			}
 		}
@@ -2498,7 +2498,7 @@ void CActorNativ::State_0x22(CBehaviourNativAkasa* pBehaviour)
 				pBehaviour->FUN_003f1810(3, 0, 0);
 			}
 			else {
-				if (((pHero->fightFlags & 0x40) == 0) &&
+				if (((pHero->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) == 0) &&
 					(((pHero->pFighterCombo)->field_0x4.field_0x0ushort & 0x100U) == 0)) {
 					pBehaviour->SetBehaviourState(0x23);
 				}
@@ -2530,7 +2530,7 @@ void CActorNativ::State_0x23(CBehaviourNativAkasa* pBehaviour)
 				pBehaviour->SetBehaviourState(NATIVE_STATE_SELLER_INPUT_FAILED);
 			}
 			else {
-				if ((pHero->fightFlags & 0x40) != 0) {
+				if ((pHero->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0) {
 					pBehaviour->SetBehaviourState(NATIVE_STATE_SELLER_INPUT_SUCCEEDED);
 				}
 			}
@@ -4120,7 +4120,7 @@ void CBehaviourNativAkasa::ManageComboTutorial()
 		break;
 	}
 
-	if (((this->field_0x16a4 == 0) && (this->field_0x16ac == 2)) && ((((CActorHero::_gThis->fightFlags & 0x40) != 0 ||
+	if (((this->field_0x16a4 == 0) && (this->field_0x16ac == 2)) && ((((CActorHero::_gThis->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0 ||
 			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == 0x6f || (iVar6 == 0x34)) || (iVar6 == NATIVE_STATE_SELLER_INPUT_FAILED)) || ((iVar6 == 10 &&
 				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
 		pNativ = this->pOwner;
@@ -4259,7 +4259,7 @@ void CBehaviourNativAkasa::FUN_003ebd90()
 		SetBehaviourState(0x28);
 	}
 
-	if (((pHero->fightFlags & 0x40) != 0) && (lVar2 = this->addOn.Func_0x20(unaff_s1, (CActor*)0x0, 0), lVar2 != 0)) {
+	if (((pHero->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0) && (lVar2 = this->addOn.Func_0x20(unaff_s1, (CActor*)0x0, 0), lVar2 != 0)) {
 		this->initialAnimId = 0x20;
 	}
 	return;

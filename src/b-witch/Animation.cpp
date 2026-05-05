@@ -2191,7 +2191,7 @@ void edAnmBinMetaAnimator::SetLayerAnimTime(float time, int index, byte param_4)
 		iVar1 = 0;
 		if (0 < this->layerCount) {
 			do {
-				if (peVar2->animPlayState == 1) {
+				if (peVar2->animPlayState == STATE_ANIM_PLAYING) {
 					edAnmStage::ComputeAnimParams(time, (peVar2->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, param_4 != 0,
 						(uint)(((peVar2->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 
@@ -2206,7 +2206,7 @@ void edAnmBinMetaAnimator::SetLayerAnimTime(float time, int index, byte param_4)
 	}
 	else {
 		peVar2 = this->aAnimData + index;
-		if (peVar2->animPlayState == 1) {
+		if (peVar2->animPlayState == STATE_ANIM_PLAYING) {
 			edAnmStage::ComputeAnimParams(time, (peVar2->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_20, param_4 != 0,
 				(uint)(((peVar2->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 
@@ -2250,7 +2250,7 @@ void edAnmBinMetaAnimator::SetAnimOnLayer(int mode, int layerIndex, int param_4)
 
 	pLayer = this->aAnimData + layerIndex;
 	if (mode == -1) {
-		pLayer->animPlayState = 0;
+		pLayer->animPlayState = STATE_ANIM_NONE;
 		(pLayer->nextAnimDesc).animType = -1;
 		(pLayer->currentAnimDesc).animType = -1;
 	}
@@ -2269,7 +2269,7 @@ bool edAnmBinMetaAnimator::IsLayerAnimEndReached(int layerIndex)
 	bool bEndReached;
 
 	bEndReached = false;
-	if (this->aAnimData[layerIndex].animPlayState != 0) {
+	if (this->aAnimData[layerIndex].animPlayState != STATE_ANIM_NONE) {
 		bEndReached = (this->aAnimData[layerIndex].field_0xcc & 2) != 0;
 	}
 
@@ -2480,7 +2480,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	switch (this->nextAnimDesc.animMode) {
 	default:
-		IMPLEMENTATION_GUARD(this->currentAnimDesc.state.AnimateIT(0.0f));
+		this->currentAnimDesc.state.AnimateIT(0.0f);
 		break;
 	case -6:
 		TheAnimStage.PreviousPostureToWRTS(1.0f);
@@ -2822,6 +2822,7 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 
 	if (bShouldInitialize) {
 		this->nextAnimDesc.animMode = -6;
+
 		iVar3 = this->nextAnimDesc.animMode;
 		if (iVar3 < 0) {
 			if (iVar3 == -4) {
@@ -2837,7 +2838,7 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 			fVar5 = (float)this->field_0xb8 / 1000.0f;
 		}
 
-		this->currentAnimDesc.state.Initialize(fVar5, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
+		this->nextAnimDesc.state.Initialize(fVar5, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
 		this->animPlayState = STATE_ANIM_MORPHING;
 		this->nextAnimDesc.morphDuration = 0.0f;
 	}
@@ -3272,7 +3273,7 @@ void CAnimation::PauseChange(int bIsPaused)
 	int index_00;
 	uint uVar1;
 
-	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		index_00 = 0;
 		for (uVar1 = this->count_0x2c; uVar1 != 0; uVar1 = uVar1 >> 1) {
 			if ((uVar1 & 1) != 0) {
@@ -3302,7 +3303,7 @@ bool CAnimation::FUN_0017f730()
 	int index;
 	uint uVar2;
 
-	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		index = 0;
 
 		for (uVar2 = this->count_0x2c; uVar2 != 0; uVar2 = uVar2 >> 1) {

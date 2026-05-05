@@ -428,6 +428,16 @@ struct s_fighter_collision_desc
 	float field_0x30;
 };
 
+#define FIGHT_FLAG_ACTION_LOCKED					(1 << 0)
+#define FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK			(1 << 1)
+#define FIGHT_FLAG_MOVE_BLEND_MIRRORED				(1 << 2)
+#define FIGHT_FLAG_FLIP_TO_JUMP 					(1 << 3)
+#define FIGHT_FLAG_USE_GENERIC_DEATH_ANIM			(1 << 4)
+#define FIGHT_FLAG_STAGGER_CHECK_COMPLETE			(1 << 5)
+#define FIGHT_FLAG_ATTACK_CONNECTED					(1 << 6)
+#define FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED	(1 << 7)
+#define FIGHT_FLAG_IN_WIND_AREA						(1 << 9)
+
 class CActorFighter : public CActorAutonomous
 {
 public:
@@ -628,7 +638,7 @@ public:
 	bool FUN_0031b790(int state);
 	uint FUN_0031b4d0(int state);
 	bool FUN_0031ac10(float param_1, s_fighter_blow* pBlow);
-	int FUN_0030a6a0();
+	int GetProjectedBehaviour();
 	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
 	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
 	bool FUN_001740a0();

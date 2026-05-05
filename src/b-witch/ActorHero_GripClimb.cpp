@@ -1282,7 +1282,7 @@ void CActorHeroPrivate::StateHeroClimbMove(float param_1, float param_2, int par
 
 					if (uVar8 == 0) {
 						peVar3 = (pAnimationController->anmBinMetaAnimator).aAnimData;
-						if (peVar3->animPlayState == 1) {
+						if (peVar3->animPlayState == STATE_ANIM_PLAYING) {
 							if (param_5 == 0) {
 								if (param_6 == 0) {
 									if ((peVar3->currentAnimDesc).animType ==

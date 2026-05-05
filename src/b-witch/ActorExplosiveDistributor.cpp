@@ -253,7 +253,7 @@ void CBehaviourExplosiveDistributor::Manage()
 		else {
 			pAnimationController->anmBinMetaAnimator.GetAnimType_00242330(0);
 
-			if (((pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+			if (((pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 				fVar4 = pAnimationController->anmBinMetaAnimator.GetLayerAnimTime(0, 1);
 			}
 			else {

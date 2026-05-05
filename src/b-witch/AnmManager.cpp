@@ -358,6 +358,22 @@ void edAnmMacroAnimator::AnimateDT(float time)
 	return;
 }
 
+void edAnmMacroAnimator::AnimateIT(float time)
+{
+	float fVar1;
+
+	fVar1 = 0.0f;
+	if (0.0f < this->keyStartTime_0x14) {
+		fVar1 = time / this->keyStartTime_0x14;
+	}
+
+	this->time_0xc = fVar1;
+	this->time_0x10 = time;
+	Animate();
+
+	return;
+}
+
 void edAnmMacroAnimator::Animate()
 {
 	uint uVar1;

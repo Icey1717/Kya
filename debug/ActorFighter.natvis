@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="CActorFighter">
+    <Expand>
+      <Item Name="fightFlags (hex)">fightFlags,x</Item>
+      <Item Name="[ACTION_LOCKED]" Condition="(fightFlags &amp; 0x00000001) != 0">true</Item>
+      <Item Name="[ALLOW_PROJECTED_FALLBACK]" Condition="(fightFlags &amp; 0x00000002) != 0">true</Item>
+      <Item Name="[MOVE_BLEND_MIRRORED]" Condition="(fightFlags &amp; 0x00000004) != 0">true</Item>
+      <Item Name="[FLIP_TO_JUMP]" Condition="(fightFlags &amp; 0x00000008) != 0">true</Item>
+      <Item Name="[USE_GENERIC_DEATH_ANIM]" Condition="(fightFlags &amp; 0x00000010) != 0">true</Item>
+      <Item Name="[STAGGER_CHECK_COMPLETE]" Condition="(fightFlags &amp; 0x00000020) != 0">true</Item>
+      <Item Name="[ATTACK_CONNECTED]" Condition="(fightFlags &amp; 0x00000040) != 0">true</Item>
+      <Item Name="[EXTRA_HIT_TRACE_BONE_REGISTERED]" Condition="(fightFlags &amp; 0x00000080) != 0">true</Item>
+      <Item Name="[IN_WIND_AREA]" Condition="(fightFlags &amp; 0x00000200) != 0">true</Item>
+    </Expand>
+  </Type>
+</AutoVisualizer>

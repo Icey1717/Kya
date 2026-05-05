@@ -396,7 +396,7 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	if ((this->fightFlags & 0x20) == 0) {
+	if ((this->fightFlags & FIGHT_FLAG_STAGGER_CHECK_COMPLETE) == 0) {
 		if (this->field_0x7e4 < 8) {
 			edF32Matrix4RotateYHard(_pStagger_check[this->field_0x7e4], &eStack64, &gF32Matrix4Unit);
 			edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &this->field_0x7f0);
@@ -420,7 +420,7 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 					this->field_0x7e4 = this->field_0x7e4 + 1;
 				}
 				else {
-					this->fightFlags = this->fightFlags | 0x20;
+					this->fightFlags = this->fightFlags | FIGHT_FLAG_STAGGER_CHECK_COMPLETE;
 				}
 			}
 			else {
@@ -428,16 +428,17 @@ void CActorFighter::_StateFighterHitStaggerCheck()
 			}
 		}
 		else {
-			this->fightFlags = this->fightFlags | 0x20;
+			this->fightFlags = this->fightFlags | FIGHT_FLAG_STAGGER_CHECK_COMPLETE;
 			this->field_0x7e4 = 0;
 		}
 	}
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
-	if ((this->fightFlags & 0x20) != 0) {
+	if ((this->fightFlags & FIGHT_FLAG_STAGGER_CHECK_COMPLETE) != 0) {
 		SetState(0x5b, -1);
 	}
+
 	return;
 }
 
@@ -638,7 +639,7 @@ void CBehaviourFighterProjected::Manage()
 			fVar7 = pFighter->GetLifeInterface()->GetValue();
 			if (fVar7 <= 0.0f) {
 				iVar3 = 0x7f;
-				if ((pFighter->fightFlags & 0x10) == 0) {
+				if ((pFighter->fightFlags & FIGHT_FLAG_USE_GENERIC_DEATH_ANIM) == 0) {
 					iVar3 = pFighter->_SV_ANM_GetTwoSidedAnim(0x75, (int)pFighter->field_0x7dc);
 				}
 				else {
@@ -684,7 +685,7 @@ void CBehaviourFighterProjected::Manage()
 			fVar7 = pFighter->GetLifeInterface()->GetValue();
 			if (fVar7 <= 0.0f) {
 				iVar3 = 0x7f;
-				if ((pFighter->fightFlags & 0x10) == 0) {
+				if ((pFighter->fightFlags & FIGHT_FLAG_USE_GENERIC_DEATH_ANIM) == 0) {
 					iVar3 = pFighter->_SV_ANM_GetTwoSidedAnim(0x75, (int)pFighter->field_0x7dc);
 				}
 				else {
@@ -869,11 +870,8 @@ void CBehaviourFighterProjected::InitState(int newState)
 		pFighter->field_0x7e0 = 0;
 		pCVar2 = pFighter->pCollisionData;
 
-		IMPLEMENTATION_GUARD_FX(
-			CActorFighter::PlayOrientedFx
-			((CActor*)pFighter, (undefined4*)&pCVar2->aCollisionContact[1].field_0x10,
-				(edF32VECTOR4*)(pCVar2->aCollisionContact + 1), pFighter->field_0x53c, (int*)0x0);)
-			break;
+		pFighter->PlayOrientedFx(&pCVar2->aCollisionContact[1].field_0x10, &pCVar2->aCollisionContact[1].location, pFighter->field_0x53c, (CFxHandle*)0x0);
+		break;
 	case 0x58:
 		pFighter = this->pOwner;
 		pFighter->dynamic.speed = 0.0f;
@@ -889,7 +887,7 @@ void CBehaviourFighterProjected::InitState(int newState)
 		break;
 	case FIGHTER_PROJECTED_HIT_STAGGER_CHECK:
 		pFighter = this->pOwner;
-		pFighter->fightFlags = pFighter->fightFlags & 0xffffffdf;
+		pFighter->fightFlags = pFighter->fightFlags & ~FIGHT_FLAG_STAGGER_CHECK_COMPLETE;
 		pFighter->field_0x7e4 = 0;
 		pFighter->field_0x7dc = pFighter->field_0x800;
 		SetVectorFromAngleY(pFighter->rotationEuler.y, &pFighter->field_0x7f0);

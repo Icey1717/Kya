@@ -681,10 +681,10 @@ void CActorFighter::Create(ByteCode* pByteCode)
 
 	uVar4 = pByteCode->GetU32();
 	if (uVar4 == 0) {
-		this->fightFlags = (this->fightFlags & 0xffffffef);
+		this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_USE_GENERIC_DEATH_ANIM);
 	}
 	else {
-		this->fightFlags = (this->fightFlags | 0x10);
+		this->fightFlags = (this->fightFlags | FIGHT_FLAG_USE_GENERIC_DEATH_ANIM);
 	}
 
 	this->field_0x50c = pByteCode->GetF32();
@@ -1591,14 +1591,14 @@ void CActorFighter::_Std_GetPossibleExit()
 	int iVar3;
 
 	if ((GetStateFlags(this->actorState) & 0x100000) != 0) {
-		if ((Func_0x1a8() == 0) && ((this->fightFlags & 1) == 0)) {
+		if ((Func_0x1a8() == 0) && ((this->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)) {
 			pCVar2 = reinterpret_cast<CBehaviourFighter*>(GetBehaviour(this->curBehaviourId));
 			SetBehaviour(pCVar2->behaviourId, -1, -1);
 		}
 		else {
 			if ((this->actorState - 0x17U < 5) || (AcquireAdversary(), this->pAdversary != (CActorFighter*)0x0)) {
-				if ((this->fightFlags & 2) != 0) {
-					iVar3 = FUN_0030a6a0();
+				if ((this->fightFlags & FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK) != 0) {
+					iVar3 = GetProjectedBehaviour();
 					if (iVar3 != -1) {
 						SetBehaviour(iVar3, -1, -1);
 					}
@@ -1727,7 +1727,7 @@ void CActorFighter::_BeginFighterFlip()
 	pCVar1 = this->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffefff;
 	(this->pCollisionData)->actorFieldA = this->pAdversary;
-	this->fightFlags = this->fightFlags & 0xfffffff7;
+	this->fightFlags = this->fightFlags & ~FIGHT_FLAG_FLIP_TO_JUMP;
 
 	if ((this->flags & 0x1000) != 0) {
 		Compute2DOrientationFromAngles();
@@ -1740,7 +1740,7 @@ void CActorFighter::_BeginFighterFlip()
 void CActorFighter::_Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam)
 {
 	if ((static_cast<ulong>(pAction->field_0x0) << 0x38) >> 0x3c == 4) {
-		this->fightFlags = this->fightFlags | 8;
+		this->fightFlags = this->fightFlags | FIGHT_FLAG_FLIP_TO_JUMP;
 	}
 
 	if ((pAction->field_0x1 & 0xf) == 1) {
@@ -2118,9 +2118,9 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 							if (newAnim == 0x15) {
 								char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 								AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
-
+								assert(pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey == 8);
 								peVar1 = pAnimator->pAnimKeyTableEntry;
-								if ((this->fightFlags & 4) == 0) {
+								if ((this->fightFlags & FIGHT_FLAG_MOVE_BLEND_MIRRORED) == 0) {
 									fVar6 = this->field_0x4e0.x;
 									if (0.0f <= fVar6) {
 										pValue->field_0x1c = fVar6;
@@ -2198,14 +2198,14 @@ void CActorFighter::ClearLocalData()
 	float fVar2;
 	float fVar3;
 
-	this->fightFlags = (this->fightFlags | 2);
-	this->fightFlags = (this->fightFlags | 4);
-	this->fightFlags = (this->fightFlags & 0xfffffffe);
-	this->fightFlags = (this->fightFlags & 0xffffffdf);
-	this->fightFlags = (this->fightFlags & 0xffffffbf);
-	this->fightFlags = (this->fightFlags & 0xffffff7f);
+	this->fightFlags = (this->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK);
+	this->fightFlags = (this->fightFlags | FIGHT_FLAG_MOVE_BLEND_MIRRORED);
+	this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_ACTION_LOCKED);
+	this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_STAGGER_CHECK_COMPLETE);
+	this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_ATTACK_CONNECTED);
+	this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED);
 	this->fightFlags = (this->fightFlags & 0xfffffeff);
-	this->fightFlags = (this->fightFlags & 0xfffffdff);
+	this->fightFlags = (this->fightFlags & ~FIGHT_FLAG_IN_WIND_AREA);
 	this->fightFlags = (this->fightFlags & 0xfffffbff);
 	this->fightFlags = (this->fightFlags & 0xffffefff);
 	this->fightFlags = (this->fightFlags & 0xffffdfff);
@@ -2291,12 +2291,12 @@ void CActorFighter::ClearLocalData()
 bool CActorFighter::Execute(s_fighter_action* pAction, s_fighter_action_param* pParams)
 {
 	int iVar1;
-	bool bVar2;
+	bool bSuccess;
 	StateConfig* pSVar3;
 	uint uVar4;
 	s_fighter_action local_4;
 
-	if ((this->fightFlags & 1) == 0) {
+	if ((this->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0) {
 		_ValidateCommand(pAction, &local_4);
 
 		iVar1 = this->actorState;
@@ -2322,12 +2322,13 @@ bool CActorFighter::Execute(s_fighter_action* pAction, s_fighter_action_param* p
 				}
 			}
 		}
-		bVar2 = local_4.all != 0x0;
+		bSuccess = local_4.all != 0x0;
 	}
 	else {
-		bVar2 = false;
+		bSuccess = false;
 	}
-	return bVar2;
+
+	return bSuccess;
 }
 
 void CActorFighter::RunInternal(float param_1, edF32VECTOR4* pRotation)
@@ -2759,7 +2760,7 @@ void CActorFighter::SetInitialState()
 {
 	if ((0.4f < this->distanceToGround) || ((this->fightFlags & 0x4000) != 0)) {
 		if (this->pAdversary != (CActorFighter*)0x0) {
-			this->fightFlags = this->fightFlags & 0xfffffffd;
+			this->fightFlags = this->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 			this->field_0x478 = 0.0f;
 			this->field_0x4f0 = this->pAdversary->currentLocation.y;
 		}
@@ -3149,7 +3150,7 @@ void CActorFighter::_StateFighterJumpFallToFlip()
 		}
 
 		if (this->currentLocation.y < this->field_0x4f0) {
-			this->fightFlags = this->fightFlags | 2;
+			this->fightFlags = this->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 		}
 
 		if (this->pAdversary != (CActorFighter*)0x0) {
@@ -3214,7 +3215,7 @@ void CActorFighter::_StateFighterFlipImpulse()
 
 	ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
 
-	if (((this->pAnimationController->anmBinMetaAnimator.aAnimData)->animPlayState == 1) && ((this->fightFlags & 8) != 0)) {
+	if (((this->pAnimationController->anmBinMetaAnimator.aAnimData)->animPlayState == STATE_ANIM_PLAYING) && ((this->fightFlags & FIGHT_FLAG_FLIP_TO_JUMP) != 0)) {
 		SetState(FIGHTER_JUMP_FLIP_PREPARE_JUMP, -1);
 	}
 	else {
@@ -3379,7 +3380,7 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 	pCVar1 = this->pAnimationController;
 
 	if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
-		if ((this->fightFlags & 0x40) != 0) {
+		if ((this->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0) {
 			_Std_OnFightActionSuccess();
 		}
 
@@ -3452,8 +3453,8 @@ void CActorFighter::_StateFighterFlipPrepareJump()
 	ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
 
 	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-		SetState(0x13, -1);
-		this->pAdversary->SetState(0x15, -1);
+		SetState(FIGHTER_JUMP_FLIP_JUMP, -1);
+		this->pAdversary->SetState(FIGHTER_FLIP_OFF_ME_A, -1);
 	}
 
 	return;
@@ -3466,7 +3467,7 @@ void CActorFighter::_StateFighterFlipJumpInit()
 	float time;
 	CAnimation* pAnim;
 
-	pSVar1 = GetStateCfg(0x13);
+	pSVar1 = GetStateCfg(FIGHTER_JUMP_FLIP_JUMP);
 	pAnim = this->pAnimationController;
 	iVar2 = GetIdMacroAnim(pSVar1->animId);
 	if (iVar2 < 0) {
@@ -3477,7 +3478,7 @@ void CActorFighter::_StateFighterFlipJumpInit()
 	}
 
 	this->scalarDynJump.BuildFromSpeedDistTime(14.0f, 0.0f, 1.2f, time * 0.6666667f * 0.8f);
-	this->scalarDynJump.BuildFromSpeedDistTime(0.0f, 0.0f, 1.333333f, time);
+	this->scalarDynA.BuildFromSpeedDistTime(0.0f, 0.0f, 1.333333f, time);
 	this->scalarDynB.Reset();
 	this->field_0x3f4 = 1.0f;
 	this->field_0x36c = this->field_0x36c & 0xfffffffe;
@@ -3706,8 +3707,8 @@ void CActorFighter::_StateFighterRide()
 {
 	float fVar1;
 
-	if (((this->fightFlags & 1) != 0) && (this->field_0x474 < this->timeInAir)) {
-		this->fightFlags = this->fightFlags & 0xfffffffe;
+	if (((this->fightFlags & FIGHT_FLAG_ACTION_LOCKED) != 0) && (this->field_0x474 < this->timeInAir)) {
+		this->fightFlags &= ~FIGHT_FLAG_ACTION_LOCKED;
 		this->field_0x474 = 0.0f;
 	}
 
@@ -3783,7 +3784,7 @@ void CActorFighter::_StateFighter_0xaInit()
 	pCVar1 = this->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffffcf;
 	this->field_0x4f0 = this->currentLocation.y;
-	this->fightFlags = this->fightFlags & 0xfffffffd;
+	this->fightFlags = this->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 
 	bVar3 = this->field_0x44c & 0xf;
 	if ((((this->field_0x44c & 0xf) == 0) || (bVar3 == 2)) || (bVar3 == 1)) {
@@ -3826,7 +3827,7 @@ void CActorFighter::_StateFighter_0xbInit(float dist)
 	pCVar1 = this->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffffcf;
 	this->field_0x4f0 = this->currentLocation.y;
-	this->fightFlags = this->fightFlags & 0xfffffffd;
+	this->fightFlags = this->fightFlags & ~FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 
 	bVar3 = this->field_0x44c & 0xf;
 	if ((((this->field_0x44c & 0xf) == 0) || (bVar3 == 2)) || (bVar3 == 1)) {
@@ -4434,7 +4435,7 @@ void CActorFighter::_SV_HIT_FightCollisionsBegin()
 
 	if ((this->pBlow->field_0x4.field_0x0byte & 8U) == 0) {
 		this->pAnimationController->RegisterBone(0x53538f8b);
-		this->fightFlags = this->fightFlags | 0x80;
+		this->fightFlags = this->fightFlags | FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED;
 	}
 
 	curColIndex = 0;
@@ -4589,9 +4590,9 @@ void CActorFighter::_SV_HIT_FightCollisionsEnd()
 	uint uVar2;
 
 	psVar1 = this->aFightCollisions;
-	if ((this->fightFlags & 0x80) != 0) {
+	if ((this->fightFlags & FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED) != 0) {
 		this->pAnimationController->UnRegisterBone(0x53538f8b);
-		this->fightFlags = this->fightFlags & 0xffffff7f;
+		this->fightFlags = this->fightFlags & ~FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED;
 	}
 
 	uVar2 = 0;
@@ -4662,11 +4663,11 @@ void CActorFighter::_SV_HIT_FightCollisionProcessHit(CActor* pHitActor, s_fighte
 			CActorFighter* pFighter = static_cast<CActorFighter*>(pHitActor);
 			uVar3 = pFighter->FUN_0031b4d0(pFighter->actorState);
 			if (uVar3 == 0) {
-				this->fightFlags = this->fightFlags | 0x40;
+				this->fightFlags = this->fightFlags | FIGHT_FLAG_ATTACK_CONNECTED;
 			}
 		}
 		else {
-			this->fightFlags = this->fightFlags | 0x40;
+			this->fightFlags = this->fightFlags | FIGHT_FLAG_ATTACK_CONNECTED;
 		}
 
 		iVar1 = (this->actorsExcludeTable).nbEntries;
@@ -5377,7 +5378,7 @@ bool CActorFighter::FUN_0031ac10(float param_1, s_fighter_blow* pBlow)
 	return iVar13 != 0;
 }
 
-int CActorFighter::FUN_0030a6a0()
+int CActorFighter::GetProjectedBehaviour()
 {
 	int iVar2;
 	float fVar3;
@@ -5389,7 +5390,7 @@ int CActorFighter::FUN_0030a6a0()
 		fVar3 = this->field_0x478 + GetTimer()->cutsceneDeltaTime;
 		this->field_0x478 = fVar3;
 		if (0.15f < fVar3) {
-			iVar2 = 4;
+			iVar2 = FIGHTER_BEHAVIOUR_PROJECTED;
 			this->field_0x6a0 = this->dynamic.velocityDirectionEuler;
 			this->field_0x6b0 = this->dynamic.linearAcceleration;
 			this->field_0x684 = 1;
@@ -6717,7 +6718,7 @@ void CBehaviourFighter::Manage()
 			}
 
 			if (pFighter->currentLocation.y < pFighter->field_0x4f0) {
-				pFighter->fightFlags = pFighter->fightFlags | 2;
+				pFighter->fightFlags = pFighter->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 			}
 		}
 		else {
@@ -6740,10 +6741,10 @@ void CBehaviourFighter::Manage()
 		if (pFighter->field_0x474 <= pFighter->timeInAir) {
 			pFighter->AcquireAdversary();
 			uVar14 = 0xc;
-			if ((pFighter->fightFlags & 1) != 0) {
+			if ((pFighter->fightFlags & ~FIGHT_FLAG_ACTION_LOCKED) != 0) {
 				pFighter->SetLookingAtOn();
 				pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
-				pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+				pFighter->fightFlags = pFighter->fightFlags & ~FIGHT_FLAG_ACTION_LOCKED;
 			}
 		}
 
@@ -6872,7 +6873,7 @@ void CBehaviourFighter::End(int newBehaviourId)
 	this->pOwner->SetLookingAtOff();
 
 	this->pOwner->field_0x44cuint = 0;
-	this->pOwner->fightFlags = this->pOwner->fightFlags & 0xfffffffe;
+	this->pOwner->fightFlags = this->pOwner->fightFlags & ~FIGHT_FLAG_ACTION_LOCKED;
 
 	if ((this->pOwner->IsFightRelated(newBehaviourId) == false) && (pInputAnalyser = this->pOwner->pInputAnalyser, pInputAnalyser != (CInputAnalyser*)0x0)) {
 		*pInputAnalyser = CInputAnalyser();
@@ -7031,7 +7032,7 @@ void CBehaviourFighter::InitState(int newState)
 	case FIGHTER_DEFAULT_STATE_IDLE:
 		pFighter = this->pOwner;
 		pFighter->actorsExcludeTable.nbEntries = 0;
-		pFighter->fightFlags = pFighter->fightFlags | 3;
+		pFighter->fightFlags = pFighter->fightFlags | (FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK | FIGHT_FLAG_ACTION_LOCKED);
 		pFighter->field_0x44cuint = 0;
 		pFighter->dynamic.speed = 0.0f;
 		break;
@@ -7040,10 +7041,10 @@ void CBehaviourFighter::InitState(int newState)
 
 		bVar13 = pFighter->field_0x44c & 0xf;
 		if (((bVar13 == 2) || (bVar13 == 1)) || (bVar13 < 6)) {
-			pFighter->fightFlags = pFighter->fightFlags & 0xfffffffb;
+			pFighter->fightFlags = pFighter->fightFlags & ~FIGHT_FLAG_MOVE_BLEND_MIRRORED;
 		}
 		else {
-			pFighter->fightFlags = pFighter->fightFlags | 4;
+			pFighter->fightFlags = pFighter->fightFlags | FIGHT_FLAG_MOVE_BLEND_MIRRORED;
 		}
 
 		pFighter->field_0x4e0 = gF32Vector4Zero;
@@ -7091,7 +7092,7 @@ void CBehaviourFighter::InitState(int newState)
 
 		pFighter->_SV_HIT_FightCollisionsBegin();
 
-		pFighter->fightFlags = pFighter->fightFlags & 0xffffffbf;
+		pFighter->fightFlags = pFighter->fightFlags & ~FIGHT_FLAG_ATTACK_CONNECTED;
 
 		const float dynSpeed = pFighter->_StateFighterFightActionDynInit(&pFighter->pBlow->blowStageBegin);
 		pFighter->FUN_0031ac10(dynSpeed, pFighter->pBlow);
@@ -7161,7 +7162,7 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_JUMP_FALL_TO_FLIP:
 		pFighter = this->pOwner;
 		if ((pFighter->GetStateFlags(newState) & 0x100) != 0) {
-			pFighter->fightFlags = pFighter->fightFlags | 2;
+			pFighter->fightFlags = pFighter->fightFlags | FIGHT_FLAG_ALLOW_PROJECTED_FALLBACK;
 		}
 		break;
 	case FIGHTER_FLIP_OFF_ME_A:
@@ -7464,7 +7465,7 @@ bool CBehaviourFighter::Execute(s_fighter_action* param_2, s_fighter_action_para
 	CActorFighter* pFighter;
 
 	pFighter = this->pOwner;
-	if ((pFighter->fightFlags & 1) == 0) {
+	if ((pFighter->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0) {
 		pFighter->_ValidateCommand(param_2, &local_4);
 
 		uVar4 = pFighter->GetStateFlags(pFighter->actorState) & 0xff800;

@@ -119,7 +119,7 @@ int CBehaviourFighterRidden::InterpretMessage(CActor* pSender, int msg, void* pM
 
 	if (msg == MESSAGE_IN_WIND_AREA) {
 		result = 1;
-		this->pOwner->fightFlags = this->pOwner->fightFlags | 0x200;
+		this->pOwner->fightFlags = this->pOwner->fightFlags | FIGHT_FLAG_IN_WIND_AREA;
 	}
 	else {
 		if (msg == MESSAGE_KICKED) {
@@ -595,7 +595,7 @@ void CActorFighter::_Ride_GetPossibleExit()
 
 	if ((GetStateFlags(this->actorState) & 0x100000) != 0) {
 		pCVar3 = this->field_0x354;
-		if (((pCVar3->fightFlags & 0x200) != 0) || ((bVar1 = (pCVar3->pCollisionData)->flags_0x4, (bVar1 & 2) == 0 && (0.3f < pCVar3->timeInAir)))) {
+		if (((pCVar3->fightFlags & FIGHT_FLAG_IN_WIND_AREA) != 0) || ((bVar1 = (pCVar3->pCollisionData)->flags_0x4, (bVar1 & 2) == 0 && (0.3f < pCVar3->timeInAir)))) {
 			local_90.projectileType = 7;
 			local_90.flags = 1;
 			local_90.field_0x50 = 1;

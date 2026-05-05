@@ -348,7 +348,7 @@ void CActorDCA::BehaviourDefault_InitState(int state)
 			else {
 				if (state == 5) {
 					pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 1);
-					(pAnimationController->anmBinMetaAnimator).aAnimData[layerIndex].animPlayState = 0;
+					(pAnimationController->anmBinMetaAnimator).aAnimData[layerIndex].animPlayState = STATE_ANIM_NONE;
 				}
 			}
 		}

@@ -792,7 +792,7 @@ else()
 		target_compile_definitions(Kya PUBLIC "ENABLE_MEMORY_PROFILING")
 	endif()
 
-	target_sources(Kya PRIVATE debug/PackedType.natvis)
+	target_sources(Kya PRIVATE debug/PackedType.natvis debug/ActorFighter.natvis)
 endif()
 
 option(SKIP_MOVIES "Skip into cinematics" OFF)

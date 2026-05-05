@@ -787,7 +787,7 @@ void CActorNoseMonster::ManageOrientation()
 			}
 			else {
 				fVar8 = edF32GetAnglesDelta(this->field_0x664, this->field_0x66c);
-				if (((this->pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+				if (((this->pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 					fVar9 = this->pAnimationController->anmBinMetaAnimator.GetLayerAnimTime(0, 1);
 				}
 				else {

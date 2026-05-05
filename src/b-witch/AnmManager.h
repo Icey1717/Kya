@@ -67,6 +67,7 @@ struct edAnmMacroAnimator {
 
 	void Initialize(float param_1, edANM_HDR* pHdr, bool param_4, uint param_5);
 	void AnimateDT(float time);
+	void AnimateIT(float time);
 	void Animate();
 	void UpdateAnimParams();
 };

@@ -4582,7 +4582,7 @@ void CActor::FUN_00119cf0(CActor* pActor)
 	float local_10[4];
 
 	pCVar1 = this->pAnimationController;
-	if (((pActor->pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+	if (((pActor->pAnimationController->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		fVar3 = pActor->pAnimationController->anmBinMetaAnimator.GetLayerAnimTime(0, 1);
 		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
 	}
@@ -4591,7 +4591,7 @@ void CActor::FUN_00119cf0(CActor* pActor)
 		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
 	}
 
-	if (peVar2->animPlayState == 1) {
+	if (peVar2->animPlayState == STATE_ANIM_PLAYING) {
 		edAnmStage::ComputeAnimParams(fVar3, (peVar2->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, true, (uint)(((peVar2->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 		(peVar2->currentAnimDesc).state.time_0x10 = local_10[0];
 		(peVar2->currentAnimDesc).state.time_0xc = local_10[1];

@@ -2151,7 +2151,7 @@ bool CActorHeroPrivate::IsLayerAnimFinished(uint layerId)
 	int iVar1;
 
 	iVar1 = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
-	return (this->pAnimationController->anmBinMetaAnimator.aAnimData[iVar1].animPlayState == 0);
+	return (this->pAnimationController->anmBinMetaAnimator.aAnimData[iVar1].animPlayState == STATE_ANIM_NONE);
 }
 
 bool CActorHeroPrivate::IsLayerAnimEndReached(uint layerId)
@@ -11367,7 +11367,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 			}
 
 			pCVar2 = this->pAnimationController;
-			if (((pCVar2->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+			if (((pCVar2->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 				fVar9 = pCVar2->anmBinMetaAnimator.GetLayerAnimTime(0, 1);
 			}
 			else {
@@ -13539,7 +13539,7 @@ void CActorHeroPrivate::ManageBoomyState()
 			local_110 = local_148;
 			CActor::DoMessage((CActor*)this, local_c0.pActor, 2, (uint)local_10);
 			CFighterExcludedTable::Add((float)&DAT_bf800000, &this->actorsExcludeTable, local_c0.pActor);
-			this->fightFlags = this->fightFlags | 0x40;
+			this->fightFlags = this->fightFlags | FIGHT_FLAG_ATTACK_CONNECTED;
 		}
 		psVar4 = this->pBlow;
 		if ((psVar4->nbSubObjs != 0) && (this->field_0x1b84 != 0.0)) {
@@ -16540,16 +16540,16 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 					edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
 					char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 					fVar6 = this->field_0x10f0;
-					AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4) + 0xc;
+					AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
 					if (fVar6 < 0.0f) {
 						CActor::SV_Blend4AnimationsWith2Ratios(-fVar6, this->field_0x10f4, &macroBlendN, 2, 0, 3, 1);
-						pValue->field_0x10 = 0.0f;
-						pValue->field_0x14 = 0.0f;
+						pValue->field_0x1c = 0.0f;
+						pValue->field_0x20 = 0.0f;
 					}
 					else {
 						CActor::SV_Blend4AnimationsWith2Ratios(fVar6, this->field_0x10f4, &macroBlendN, 2, 4, 3, 5);
-						pValue->field_0x0 = 0;
-						pValue->field_0x4 = 0;
+						pValue->field_0xc = 0.0f;
+						pValue->field_0x10 = 0.0f;
 					}
 				}
 				else {
@@ -17471,7 +17471,7 @@ void CFightLock_SE::_Heuristic_Danger()
 					(pCVar4 = pWolfen->pCommander->GetTeamElt(pActor), dangerRating = 0.5f, pCVar4->field_0x14 == 0)) {
 					dangerRating = 0.75f;
 					lVar7 = pActor->IsInHitState();
-					if ((lVar7 == 0) && ((1.0f <= pActor->field_0x6c8 && ((pActor->fightFlags & 1) == 0)))) {
+					if ((lVar7 == 0) && ((1.0f <= pActor->field_0x6c8 && ((pActor->fightFlags & FIGHT_FLAG_ACTION_LOCKED) == 0)))) {
 						if (this->aAdversaries[uVar9].field_0x14 < 0.75f) {
 							this->aAdversaries[uVar9].field_0x18 = this->aAdversaries[uVar9].field_0x18 & 0xfffffffe;
 						}

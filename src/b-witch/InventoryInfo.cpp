@@ -203,6 +203,9 @@ void CInventoryInfo::ObjectPurchased()
 	case INVENTORY_ITEM_BASIC_BOARD:
 		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 1);
 		break;
+	case INVENTORY_ITEM_MAGIC_BOARD:
+		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 2);
+		break;
 	case INVENTORY_ITEM_TELESCOPE:
 		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BINOCULARS, 1);
 		break;

@@ -1053,7 +1053,7 @@ void CActorCommander::_UpdateCamera()
 		CActorHero* pCVar1 = CActorHero::_gThis;
 		if ((((CActorHero::_gThis != (CActorHero*)0x0) && (pCurAdversary = CActorHero::_gThis->pAdversary, pCurAdversary != (CActorFighter*)0x0)) &&
 			(pCurAdversary != this->field_0x9f0)) && ((bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false &&
-				((pCVar1->fightFlags & 0x40) != 0)))) {
+				((pCVar1->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0)))) {
 			pCurAdversary = pCVar1->pAdversary;
 			fVar16 = pCurAdversary->GetLifeInterface()->GetValue();
 			if ((fVar16 <= 0.0f) && (((pBlow = pCVar1->pBlow, pBlow != (s_fighter_blow*)0x0 && ((pBlow->field_0x4.field_0x2byte & 1) != 0)) ||

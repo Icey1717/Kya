@@ -1211,7 +1211,7 @@ public:
 	void DisableFightAction();
 	bool ForceFightAction(int index, bool param_3);
 
-	void FUN_00175ad0();
+	void SetProjectedFallbackFlag();
 	bool FUN_00173de0(CActorFighter* pAdversary);
 	bool CanBeExorcised();
 
