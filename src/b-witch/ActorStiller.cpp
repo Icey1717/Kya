@@ -264,7 +264,7 @@ int CActorStiller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 
 		if (bVar1) {
-			GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			_msg_params_get_position* pGetPosMsgParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 			if (this->field_0x1d4 != 0) {
 				SV_GetBoneWorldPosition(this->field_0x1d4, &eStack16);
 				edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, &eStack16, &this->currentLocation);
@@ -276,7 +276,7 @@ int CActorStiller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 	else {
 		if (msg != MESSAGE_KICKED) {
-			iVar7 = CActor::InterpretMessage(pSender, msg, (GetPositionMsgParams*)pMsgParam);
+			iVar7 = CActor::InterpretMessage(pSender, msg, (_msg_params_get_position*)pMsgParam);
 			return iVar7;
 		}
 

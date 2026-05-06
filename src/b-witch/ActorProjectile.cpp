@@ -354,9 +354,10 @@ bool CActorProjectile::IsLockable()
 				}
 			}
 
-			edF32VECTOR4 diff = CActorHero::_gThis->currentLocation - this->currentLocation;
-			fVar2 = edF32Vector4GetDistHard(&diff);
-			if ((11.56f < fVar2) || ((this->aProjectileSubObjs->flags & 0x2000) != 0)) {
+			float x = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+			float y = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+			float z = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+			if ((11.56f < (x * x + y * y + z * z)) || ((this->aProjectileSubObjs->flags & 0x2000) != 0)) {
 				return true;
 			}
 		}

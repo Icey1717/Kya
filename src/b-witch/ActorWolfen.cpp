@@ -1363,7 +1363,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					return 1;
 				}
 				if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
-					GetPositionMsgParams* pGetPosMsgParam = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+					_msg_params_get_position* pGetPosMsgParam = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 					/* WARNING: Load size is inaccurate */
 					if ((pGetPosMsgParam->field_0x0 == 1) || (pGetPosMsgParam->field_0x0 == 0)) {
 						peVar2 = (this->pCollisionData)->pObbPrim;
@@ -9222,7 +9222,7 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			return 0;
 		}
 
-		GetPositionMsgParams* pMsgParamPos = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		_msg_params_get_position* pMsgParamPos = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 
 		/* WARNING: Load size is inaccurate */
 		if ((pMsgParamPos->field_0x0 != 1) && (pMsgParamPos->field_0x0 != 0)) {
@@ -10708,7 +10708,7 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 		uVar5 = this->pOwner->field_0xb74;
 		if ((uVar5 == 0) || (uVar5 == 1)) {
 			iVar6 = CBehaviourFighter::InterpretMessage
-			((CBehaviourFighter*)this, pSender, 0x66, (GetPositionMsgParams*)pMsgParam);
+			((CBehaviourFighter*)this, pSender, 0x66, (_msg_params_get_position*)pMsgParam);
 		}
 		else {
 			iVar6 = 0;

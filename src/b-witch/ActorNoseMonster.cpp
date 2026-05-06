@@ -1360,7 +1360,7 @@ int CBehaviourNoseMonsterAttack::InterpretMessage(CActor* pSender, int msg, void
 	}
 	else {
 		if (msg == 7) {
-			GetPositionMsgParams* pGetPositionParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			_msg_params_get_position* pGetPositionParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 			if (((pGetPositionParams->field_0x0 == 0) || (pGetPositionParams->field_0x0 == 1)) &&
 				(pNoseMonster = this->pOwner, 0.5f < pNoseMonster->field_0x688)) {
 				pHero = CActorHero::_gThis;

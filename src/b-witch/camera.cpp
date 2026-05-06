@@ -758,7 +758,7 @@ void CCameraExt::ComputeTargetOffset(edF32VECTOR4* v0)
 	CActor* this_00;
 	CActor* pOutActor;
 	edF32VECTOR4 local_50;
-	GetPositionMsgParams auStack64;
+	_msg_params_get_position auStack64;
 
 	cVar2 = false;
 	if ((this->flags_0xc & 1) != 0) {

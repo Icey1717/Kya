@@ -4716,7 +4716,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 						pActor = (CActor*)CActorHero::_gThis;
 					}
 
-					pActor->DoMessage(CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (GetPositionMsgParams*)0x0);
+					pActor->DoMessage(CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (_msg_params_get_position*)0x0);
 				}
 			}
 		}

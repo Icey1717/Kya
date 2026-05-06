@@ -314,17 +314,17 @@ int CBehaviourExplosiveDistributor::InterpretMessage(CActor* pSender, int msg, v
 	edF32VECTOR4 local_10;
 
 	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
-		GetPositionMsgParams* pGetPosMsgParam = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		_msg_params_get_position* pGetPosMsgParam = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 		if (((pGetPosMsgParam->field_0x0 == 1) || (pGetPosMsgParam->field_0x0 == 0)) && (pCVar3 = this->pOwner->pAnimationController, pCVar3 != (CAnimation*)0x0)) {
 			pCVar3->GetDefaultBoneMatrix(0x48535550, &auStack256);
 			edF32Matrix4MulF32Matrix4Hard(&auStack256, &auStack256, &this->pOwner->pMeshTransform->base.transformA);
-			edF32Vector4SubHard(&auStack256.rowZ, &auStack256.rowZ, &this->pOwner->currentLocation);
+			edF32Vector4SubHard(&auStack256.rowT, &auStack256.rowT, &this->pOwner->currentLocation);
 			pGetPosMsgParam->vectorFieldB = auStack256.rowT;
 		}
 	}
 	else {
-		if (((msg != 0xf) && (msg != 0xe)) && (msg != 0x14)) {
-			if (msg != 2) {
+		if (((msg != MESSAGE_ACTIVATE) && (msg != MESSAGE_TOGGLE)) && (msg != MESSAGE_TRAP_STRUGGLE)) {
+			if (msg != MESSAGE_KICKED) {
 				if (msg != MESSAGE_GET_ACTION) {
 					return 0;
 				}

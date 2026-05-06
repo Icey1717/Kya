@@ -552,8 +552,8 @@ void CActorBoomy::StateBoomyGetTarget()
 	float fVar5;
 	float fVar6;
 	float fVar7;
-	GetPositionMsgParams local_80;
-	GetPositionMsgParams local_50;
+	_msg_params_get_position local_80;
+	_msg_params_get_position local_50;
 	edF32VECTOR4 local_20;
 
 	UpdateTypeInfo();
@@ -659,7 +659,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 	float fVar10;
 	float fVar11;
 	float fVar12;
-	GetPositionMsgParams local_230;
+	_msg_params_get_position local_230;
 	CActorsTable actorsTable;
 	_msg_hit_param msgHitParams;
 	edF32VECTOR4 aSplinePositions[6];
@@ -768,7 +768,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 				this->pTargetActor = this->pHero;
 				CalculateTrajectory(1);
 				pCVar2 = this->pHero;
-				GetPositionMsgParams local_260;
+				_msg_params_get_position local_260;
 				local_260.field_0x0 = 2;
 				local_260.vectorFieldA = this->currentLocation;
 				iVar6 = DoMessage(pCVar2, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_260);
@@ -806,7 +806,7 @@ void CActorBoomy::StateBoomyGotoLauncher()
 	float fVar5;
 	float fVar6;
 	float fVar7;
-	GetPositionMsgParams local_2b0;
+	_msg_params_get_position local_2b0;
 	CActorsTable actorsTable;
 	_msg_hit_param msgHitParams;
 	edF32VECTOR4 aSplinePositions[6];
@@ -1227,8 +1227,8 @@ void CActorBoomy::_BSpline_InitWhenHit(bool bNotTarget)
 	float fVar7;
 	float fVar8;
 	float fVar9;
-	GetPositionMsgParams local_a0;
-	GetPositionMsgParams local_60;
+	_msg_params_get_position local_a0;
+	_msg_params_get_position local_60;
 	edF32VECTOR4 hitPointNormal;
 	edF32VECTOR4 hitPointPosition;
 	int local_10;
@@ -1335,7 +1335,7 @@ void CActorBoomy::UpdateFromOwner(int param_2, edF32VECTOR4* pDirection)
 	float fVar2;
 	float fVar3;
 	float fVar4;
-	GetPositionMsgParams local_50;
+	_msg_params_get_position local_50;
 	edF32VECTOR4 local_20;
 
 	local_20 = this->pHero->currentLocation;

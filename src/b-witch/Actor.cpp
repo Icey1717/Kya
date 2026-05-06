@@ -1596,7 +1596,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 												}
 												else {
 													if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
-														GetPositionMsgParams* pResolvedMsg = static_cast<GetPositionMsgParams*>(pMsgParam);
+														_msg_params_get_position* pResolvedMsg = static_cast<_msg_params_get_position*>(pMsgParam);
 														iVar1 = pResolvedMsg->field_0x0;
 														if (iVar1 == 5) {
 															if (((this->pMeshTransform != (ed_3d_hierarchy_node*)0x0) &&
@@ -1709,7 +1709,7 @@ void CActor::SetupClippingInfo()
 void CActor::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
 {
 	edColPRIM_OBJECT* peVar1;
-	GetPositionMsgParams local_40;
+	_msg_params_get_position local_40;
 	float fVar3;
 
 	if (IsLockable() == 0) {
@@ -1772,7 +1772,7 @@ bool CActor::InitDlistPatchable(int param_2)
 void CActor::SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0)
 {
 	int iVar1;
-	GetPositionMsgParams local_40;
+	_msg_params_get_position local_40;
 
 	local_40.field_0x0 = 1;
 
@@ -3724,7 +3724,7 @@ int CActor::GetIdMacroAnim(int inAnimType)
 void CActor::SV_GetActorTargetPos(CActor* pOtherActor, edF32VECTOR4* pTargetPos)
 {
 	int iVar1;
-	GetPositionMsgParams local_50;
+	_msg_params_get_position local_50;
 	edF32VECTOR4 eStack32;
 
 	local_50.field_0x0 = 0;

@@ -933,7 +933,7 @@ int CBehaviourRopeStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			}
 		}
 		else {
-			GetPositionMsgParams* pGetPosMsgParam = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			_msg_params_get_position* pGetPosMsgParam = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 			if ((msg == MESSAGE_GET_VISUAL_DETECTION_POINT) && ((pGetPosMsgParam->field_0x0 == 1 || (pGetPosMsgParam->field_0x0 == 0)))) {
 				pRope = this->pOwner;
 				if (pRope->pTiedActor == (CActor*)0x0) {

@@ -46,7 +46,7 @@ int CActorAddOnPurchase::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	iVar1 = this->inventoryInfo.ProcessMessage(this, msg, pMsgParam);
 
 	if (iVar1 == 0) {
-		iVar1 = CActor::InterpretMessage(pSender, msg, (GetPositionMsgParams*)pMsgParam);
+		iVar1 = CActor::InterpretMessage(pSender, msg, pMsgParam);
 	}
 	else {
 		iVar1 = 1;

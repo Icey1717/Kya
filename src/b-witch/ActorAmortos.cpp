@@ -230,7 +230,7 @@ int CActorAmortos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	edF32VECTOR4 local_10;
 
 	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
-		GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		_msg_params_get_position* pGetPosMsgParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 		edF32Vector4ScaleHard(2.0f, &local_10, &this->pMeshTransform->base.transformA.rowY);
 		iVar1 = 1;
 		pGetPosMsgParams->vectorFieldB = local_10;

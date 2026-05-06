@@ -96,7 +96,7 @@ int CBehaviourHeroRideJamGut::InterpretMessage(CActor* pSender, int msg, void* p
 			pPosition->y = pPosition->y + this->field_0xac;
 		}
 		else {
-			GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			_msg_params_get_position* pGetPosMsgParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 				if ((msg == 7) && (pGetPosMsgParams->field_0x0 == 5)) {
 					if (this->field_0x7c == 0) {
 						pGetPosMsgParams->vectorFieldB.x = 0.0f;

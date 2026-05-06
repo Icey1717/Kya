@@ -380,6 +380,7 @@ CBehaviour* CActorFighter::BuildBehaviour(int behaviourType)
 			}
 		}
 	}
+
 	return pNewBehaviour;
 }
 
@@ -7355,7 +7356,7 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	uVar5 = this->pOwner->GetStateFlags(this->pOwner->actorState);
 
 	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
-		GetPositionMsgParams* pPositionParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		_msg_params_get_position* pPositionParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 		if (pPositionParams->field_0x0 == 5) {
 			if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800) == FIGHTER_EXECUTE_FLAGS_RIDE) {
 				edF32Vector4ScaleHard(2.0f, &pPositionParams->vectorFieldB, &(this->pOwner->field_0x354->fighterAnatomyZones).field_0x10);

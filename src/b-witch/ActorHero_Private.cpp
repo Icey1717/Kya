@@ -3010,8 +3010,8 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 		local_30.w = 10.0f;
 		callbackParams.pCaller = this;
 		CScene::ptable.g_ActorManager_004516a4->cluster.ApplyCallbackToActorsIntersectingSphere(&local_30, &FindJamGut, &callbackParams);
-		this->mountBoneId = DoMessage(callbackParams.pFound, MESSAGE_GET_BONE_ID, (GetPositionMsgParams*)0x0);
-		DoMessage(callbackParams.pFound, MESSAGE_TRAP_STRUGGLE, (GetPositionMsgParams*)0x0);
+		this->mountBoneId = DoMessage(callbackParams.pFound, MESSAGE_GET_BONE_ID, (_msg_params_get_position*)0x0);
+		DoMessage(callbackParams.pFound, MESSAGE_TRAP_STRUGGLE, (_msg_params_get_position*)0x0);
 	}
 
 	CActor::CinematicMode_Leave(behaviourId);
@@ -4145,7 +4145,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								}
 								if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 									/* WARNING: Load size is inaccurate */
-									GetPositionMsgParams* pBoneMessage = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+									_msg_params_get_position* pBoneMessage = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 									iVar13 = pBoneMessage->field_0x0;
 									if (iVar13 == 5) {
 										peVar1 = this->pMeshTransform;
@@ -13169,7 +13169,7 @@ void CActorHeroPrivate::ManageBoomyState()
 	s_fighter_collision_desc local_c0;
 	edF32VECTOR4 eStack128;
 	edF32VECTOR4 local_70;
-	GetPositionMsgParams local_60;
+	_msg_params_get_position local_60;
 	edF32VECTOR4 eStack48;
 	edF32VECTOR4 eStack32;
 	undefined4* local_10;
@@ -16855,33 +16855,30 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 			iVar7 = 1;
 		}
 		else {
-			if (msg == 0x4b) {
-				IMPLEMENTATION_GUARD(
+			if (msg == MESSAGE_BOOST) {
+				_msg_params_boost* pBoostParams = reinterpret_cast<_msg_params_boost*>(pMsgParam);
 				uVar6 = this->pHero->TestState_IsOnAToboggan(0xffffffff);
 
 				if ((uVar6 == 0) || (iVar7 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_MAGIC_BOARD), iVar7 < 2)) {
 					iVar7 = 0;
 				}
 				else {
-					pTimer = GetTimer();
-					edF32Vector4ScaleHard
-					(*(float*)((int)pMsgParam + 0x10) / pTimer->cutsceneDeltaTime, &eStack96, (edF32VECTOR4*)pMsgParam);
+					edF32Vector4ScaleHard(pBoostParams->field_0x10 / GetTimer()->cutsceneDeltaTime, &eStack96, &pBoostParams->field_0x0);
 					pHeroRef = this->pHero;
-					pTimer = GetTimer();
-					edF32Vector4ScaleHard(0.02 / pTimer->cutsceneDeltaTime, &eStack112, &eStack96);
+					edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack112, &eStack96);
 					v0 = pHeroRef->dynamicExt.aImpulseVelocities;
 					edF32Vector4AddHard(v0, v0, &eStack112);
 					fVar11 = edF32Vector4GetDistHard(pHeroRef->dynamicExt.aImpulseVelocities);
 					pHeroRef->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar11;
 					pHeroRef = this->pHero;
-					fVar11 = *(float*)((int)pMsgParam + 0x10) + pHeroRef->field_0xa80;
+					fVar11 = pBoostParams->field_0x10 + pHeroRef->field_0xa80;
 					if (pHeroRef->field_0x10cc < fVar11) {
 						pHeroRef->field_0x10cc = fVar11;
 						pHeroRef = this->pHero;
 						fVar11 = pHeroRef->field_0x10cc;
 						pfVar10 = &pHeroRef->field_0x10cc;
-						if (65.0 < fVar11) {
-							*pfVar10 = 65.0;
+						if (65.0f < fVar11) {
+							*pfVar10 = 65.0f;
 						}
 						else {
 							fVar12 = pHeroRef->field_0x10c0;
@@ -16890,9 +16887,10 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 							}
 						}
 					}
+
 					iVar7 = 1;
-					(this->pHero->base).field_0x10d4 = *(float*)((int)pMsgParam + 0x14);
-				})
+					this->pHero->field_0x10d4 = pBoostParams->field_0x14;
+				}
 			}
 			else {
 				if (msg == 0x33) {

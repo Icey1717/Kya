@@ -821,7 +821,7 @@ int CBehaviourFruitSquashed::InterpretMessage(CActor* pSender, int msg, void* pM
 			}
 		}
 		else {
-			GetPositionMsgParams* pGetPointParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			_msg_params_get_position* pGetPointParams = reinterpret_cast<_msg_params_get_position*>(pMsgParam);
 			if ((msg == MESSAGE_GET_VISUAL_DETECTION_POINT) && (pGetPointParams->field_0x0 == 0)) {
 				(pGetPointParams->vectorFieldB).x = 0.0f;
 				(pGetPointParams->vectorFieldB).y = 0.1f;

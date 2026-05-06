@@ -92,6 +92,13 @@ struct _msg_params_0x54
 	edF32VECTOR4* field_0xc;
 };
 
+struct _msg_params_boost
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+	float field_0x14;
+};
+
 enum ACTOR_MESSAGE
 {
 	MESSAGE_KICKED = 0x2,
@@ -120,6 +127,7 @@ enum ACTOR_MESSAGE
 	MESSAGE_TRAP_RELEASE = 0x32,
 	MESSAGE_SOCCER_START = 0x35,
 	MESSAGE_REQUEST_CAMERA_TARGET = 0x49,
+	MESSAGE_BOOST = 0x4b,
 	MESSAGE_GET_BONE_ID = 0x4d,
 	MESSAGE_NATIV_CMD = 0x4e,
 	MESSAGE_BOOMY_CHANGED = 0x62,
@@ -424,7 +432,7 @@ public:
 	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
 };
 
-struct GetPositionMsgParams
+struct _msg_params_get_position
 {
 	int field_0x0;
 	edF32VECTOR4 vectorFieldA;
