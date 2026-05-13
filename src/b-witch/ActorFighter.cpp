@@ -11,6 +11,7 @@
 #include "LargeObject.h"
 #include "CameraViewManager.h"
 #include "ActorWeapon.h"
+#include "DlistManager.h"
 #include "ed3D/ed3DG2D.h"
 
 #define FIGHTER_LOG(level, format, ...) MY_LOG_CATEGORY("Fighter", level, format, ##__VA_ARGS__)
@@ -244,23 +245,25 @@ void CActorFighter::Init()
 	return;
 }
 
+PlayerSubStruct_64 PlayerSubStruct_64_ARRAY_0048f900[4];
+
 void CActorFighter::Term()
 {
-	undefined** ppuVar1;
+	PlayerSubStruct_64* ppuVar1;
 	uint uVar2;
 
 	CActorAutonomous::Term();
 
-	IMPLEMENTATION_GUARD_LOG(
 	uVar2 = 0;
-	ppuVar1 = &PTR_ParticleVTable_0048f900;
+	ppuVar1 = PlayerSubStruct_64_ARRAY_0048f900;
 	do {
-		if (((uint)ppuVar1[0xb] & 1) != 0) {
-			FUN_004013c0((int)ppuVar1);
+		if ((ppuVar1->flags & 1) != 0) {
+			ppuVar1->Term();
 		}
+
 		uVar2 = uVar2 + 1;
-		ppuVar1 = ppuVar1 + 0x12;
-	} while (uVar2 < 4);)
+		ppuVar1 = ppuVar1 + 1;
+	} while (uVar2 < 4);
 
 	_DeleteCombosDB();
 	_DeleteGrabsDB();
@@ -333,6 +336,23 @@ void CActorFighter::Manage()
 		this->field_0x450.all = 0;
 	}
 
+	return;
+}
+
+void CActorFighter::Draw()
+{
+	CActorFighter* pCVar1;
+	uint uVar2;
+
+	CActorAutonomous::Draw();
+
+	uVar2 = 0;
+	if (this->field_0x630 != 0) {
+		do {
+			this->field_0x610[uVar2].pPlayerSubStruct->Draw();
+			uVar2 = uVar2 + 1;
+		} while (uVar2 < this->field_0x630);
+	}
 	return;
 }
 
@@ -460,7 +480,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	undefined4* puVar3;
 	uint uVar4;
 	int iVar5;
-	undefined** ppuVar6;
+	PlayerSubStruct_64* pCurSubStruct;
 	float fVar7;
 	float fVar8;
 	float fVar9;
@@ -720,18 +740,19 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	(this->field_0x600).z = 0.4f;
 	(this->field_0x600).w = 0.0f;
 
-	IMPLEMENTATION_GUARD_LOG(
 	uVar2 = 0;
-	ppuVar6 = &PTR_ParticleVTable_0048f900;
+	pCurSubStruct = PlayerSubStruct_64_ARRAY_0048f900;
 	do {
-		if (((uint)ppuVar6[0xb] & 1) == 0) {
-			FUN_00401470((int)ppuVar6, 4);
+		if ((pCurSubStruct->flags & 1) == 0) {
+			pCurSubStruct->Init(4);
 		}
+
 		uVar2 = uVar2 + 1;
-		ppuVar6 = ppuVar6 + 0x12;
+		pCurSubStruct = pCurSubStruct + 1;
 	} while (uVar2 < 4);
-	FUN_00407690(&this->field_0x550, this->field_0x52c);
-	FUN_00407690(&this->field_0x55c, this->field_0x52c);)
+
+	this->field_0x550[0].Init(this->field_0x52c);
+	this->field_0x550[1].Init(this->field_0x52c);
 
 	_CreateBlowsDB(pByteCode);
 	_CreateGrabsDB(pByteCode);
@@ -1065,6 +1086,11 @@ bool CActorFighter::Func_0x1ac()
 bool CActorFighter::Func_0x1b0(CActor* pOther)
 {
 	return true;
+}
+
+bool CActorFighter::Func_0x1b4(int state)
+{
+	return state - 0x65U < 3;
 }
 
 bool CActorFighter::Func_0x1c0(s_fighter_combo* pCombo)
@@ -5099,19 +5125,18 @@ void CActorFighter::FUN_0031a7c0(int inState)
 	edNODE* pNode;
 	long lVar1;
 	int iVar2;
-	CActorFighter* pCVar3;
+	SubStructBlow* pCVar3;
 	byte alpha;
-	uint* puVar4;
+	SubStructBlow* puVar4;
 	uint uVar5;
-	CActorFighter* pCVar6;
+	SubStructBlow* pCVar6;
 	uint* piVar7;
 	uint uVar8;
 	float fVar9;
 	edF32MATRIX4 eStack176;
 	edF32VECTOR4 eStack112;
 	edF32MATRIX4 eStack96;
-	edF32VECTOR4 eStack32;
-	edF32VECTOR4 eStack16;
+	edF32VECTOR4 eStack32[2];
 
 	if (this->actorState - 0x1cU < 4) {
 		edF32Matrix4TranslateHard(&eStack176, &gF32Matrix4Unit, &this->field_0x600);
@@ -5135,44 +5160,40 @@ void CActorFighter::FUN_0031a7c0(int inState)
 
 	uVar8 = 0;
 	if (this->field_0x630 != 0) {
-		IMPLEMENTATION_GUARD(
-		pCVar6 = this;
+		pCVar6 = this->field_0x610;
 		do {
-			CActor::SV_GetBoneWorldPosition
-			((CActor*)(*(CActor**)&pCVar6->field_0x614)->pVTable, (int)(*(CActor**)&pCVar6->field_0x614)->objectId
-				, &eStack32);
-			CActor::SV_GetBoneWorldPosition
-			(*(CActor**)(*(int*)&pCVar6->field_0x614 + 8), *(int*)(*(int*)&pCVar6->field_0x614 + 0xc), &eStack16);
-			FUN_00400f10(0, *(int*)&pCVar6->field_0x610, (float*)&eStack32, 0);
-			if ((*(uint*)(*(int*)&pCVar6->field_0x610 + 0x2c) & 2) == 0) {
-				CAnimation::UnRegisterBone
-				(*(CAnimation**)(**(int**)&pCVar6->field_0x614 + 0x28), (*(int**)&pCVar6->field_0x614)[1]);
-				CAnimation::UnRegisterBone
-				(*(CAnimation**)(*(int*)(*(int*)&pCVar6->field_0x614 + 8) + 0x28),
-					*(uint*)(*(int*)&pCVar6->field_0x614 + 0xc));
+			s_fighter_blow_sub_obj* pBlowSubObj = pCVar6->pBlowSubObj;
+			pBlowSubObj->boneRefA.pActor->SV_GetBoneWorldPosition(pBlowSubObj->boneRefA.boneId, &eStack32[0]);
+			pBlowSubObj->boneRefB.pActor->SV_GetBoneWorldPosition(pBlowSubObj->boneRefB.boneId, &eStack32[1]);
+			pCVar6->pPlayerSubStruct->UpdateTrailFromEndpoints(0.0f, eStack32, 0);
+
+			if ((pCVar6->pPlayerSubStruct->flags & 2) == 0) {
+				pBlowSubObj->boneRefA.pActor->pAnimationController->UnRegisterBone(pBlowSubObj->boneRefA.boneId);
+				pBlowSubObj->boneRefB.pActor->pAnimationController->UnRegisterBone(pBlowSubObj->boneRefB.boneId);
 				uVar5 = uVar8 + 1;
-				if (uVar5 < (uint)this->field_0x630) {
-					puVar4 = &this->flags + uVar8 * 2;
+				if (uVar5 < this->field_0x630) {
+					puVar4 = this->field_0x610 + uVar8;
 					do {
 						iVar2 = uVar5 - 1;
 						uVar5 = uVar5 + 1;
-						pCVar3 = (CActorFighter*)((int)this + iVar2 * 8);
-						*(uint*)&pCVar3->field_0x610 = puVar4[0x184];
-						*(uint*)&pCVar3->field_0x614 = puVar4[0x185];
-						puVar4 = puVar4 + 2;
-					} while (uVar5 < (uint)this->field_0x630);
+						pCVar3 = this->field_0x610 + iVar2;
+						*pCVar3 = *puVar4;
+						puVar4 = puVar4 + 1;
+					} while (uVar5 < this->field_0x630);
 				}
+
 				this->field_0x630 = this->field_0x630 + -1;
 			}
 			else {
-				lVar1 = (*(code*)(this->pVTable)->field_0x1b4)(this, inState);
-				if ((lVar1 == 0) && (((*(PlayerSubStruct_64**)&pCVar6->field_0x610)->field_0x2c & 0x10) == 0)) {
-					FUN_004012a0(0.25, *(PlayerSubStruct_64**)&pCVar6->field_0x610);
+				lVar1 = Func_0x1b4(inState);
+				if ((lVar1 == 0) && ((pCVar6->pPlayerSubStruct->flags & 0x10) == 0)) {
+					pCVar6->pPlayerSubStruct->FUN_004012a0(0.25f);
 				}
 			}
+
 			uVar8 = uVar8 + 1;
-			pCVar6 = (CActorFighter*)&(pCVar6->characterBase).base.base.flags;
-		} while (uVar8 < this->field_0x630);)
+			pCVar6 = pCVar6 + 1;
+		} while (uVar8 < this->field_0x630);
 	}
 
 	iVar2 = this->actorState;
@@ -5182,17 +5203,14 @@ void CActorFighter::FUN_0031a7c0(int inState)
 		uVar8 = 0;
 
 		piVar7 = gBoneIds_004343a0;
-		//pCVar6 = this;
 		do {
 			SV_GetBoneWorldPosition(*piVar7, &eStack112);
 			edF32Matrix4RotateYHard(fVar9, &eStack96, &gF32Matrix4Unit);
 			edF32Matrix4TranslateHard(&eStack96, &eStack96, &eStack112);
 
-			IMPLEMENTATION_GUARD_FX(
-			FUN_001a0600((long)(int)pCVar6->field_0x550, (long)(int)&eStack96, (long)(int)pCVar6->field_0x550);)
+			SV_FX_001a0600(&this->field_0x550[uVar8], &eStack96, &this->field_0x550[uVar8]);
 			uVar8 = uVar8 + 1;
 			piVar7 = piVar7 + 1;
-			//pCVar6 = (CActorFighter*)&(pCVar6->characterBase).base.base.actorFieldS;
 		} while (uVar8 < 2);
 	}
 
@@ -5201,39 +5219,40 @@ void CActorFighter::FUN_0031a7c0(int inState)
 
 void CActorFighter::FUN_0031aad0(float animLength, s_fighter_blow* pBlow)
 {
-	int* piVar1;
+	s_fighter_blow_sub_obj* piVar1;
 	bool bVar2;
-	int* piVar3;
-	CActorFighter* pCVar4;
+	s_fighter_blow_sub_obj* piVar3;
+	SubStructBlow* pCVar4;
 	uint uVar5;
 	int iVar6;
 	uint uVar7;
 
 	if ((this->field_0x630 != 0) && (uVar7 = 0, pBlow->nbSubObjs != 0)) {
-		IMPLEMENTATION_GUARD(
 		iVar6 = 0;
 		do {
 			uVar5 = 0;
 			bVar2 = false;
-			pCVar4 = this;
+			pCVar4 = this->field_0x610;
 			while ((uVar5 < this->field_0x630 && (!bVar2))) {
-				piVar1 = *(int**)&pCVar4->field_0x614;
-				piVar3 = (int*)((int)&(pBlow->field_0x48->boneRefA).pActor + iVar6);
-				if ((*piVar1 == *piVar3) && (((piVar1[1] == piVar3[1] && (piVar1[2] == piVar3[2])) && (piVar1[3] == piVar3[3])))
-					) {
+				piVar1 = pCVar4->pBlowSubObj;
+				piVar3 = pBlow->field_0x48 + uVar7;
+				if ((piVar1->boneRefA.pActor == piVar3->boneRefA.pActor) && (piVar1->boneRefA.boneId == piVar3->boneRefA.boneId) &&
+					(piVar1->boneRefB.pActor == piVar3->boneRefB.pActor) && (piVar1->boneRefB.boneId == piVar3->boneRefB.boneId) &&
+					(piVar1->field_0x14uint == piVar3->field_0x14uint) && (piVar1->materialId == piVar3->materialId)) {
 					bVar2 = true;
 				}
 				else {
-					pCVar4 = (CActorFighter*)&(pCVar4->characterBase).base.base.flags;
+					pCVar4 = pCVar4 + 1;
 					uVar5 = uVar5 + 1;
 				}
 			}
+
 			if (bVar2) {
-				FUN_004012a0(animLength, *(PlayerSubStruct_64**)((int)(this->actorsExcludeTable).aEntries + uVar5 * 8 + -0x2c));
+				pCVar4->pPlayerSubStruct->FUN_004012a0(animLength);
 			}
+
 			uVar7 = uVar7 + 1;
-			iVar6 = iVar6 + 0x24;
-		} while (uVar7 < pBlow->nbSubObjs);)
+		} while (uVar7 < pBlow->nbSubObjs);
 	}
 
 	return;
@@ -5292,16 +5311,16 @@ uint CActorFighter::FUN_0031b4d0(int state)
 bool CActorFighter::FUN_0031ac10(float param_1, s_fighter_blow* pBlow)
 {
 	uint uVar1;
-	int* piVar2;
+	s_fighter_blow_sub_obj* piVar2;
 	//CActorFighterVTable* pCVar3;
 	bool bVar4;
 	bool bVar5;
 	int iVar6;
-	undefined** ppuVar7;
+	PlayerSubStruct_64* pPVar5;
 	//CActorFighterVTable** ppCVar8;
 	uint uVar9;
-	CActorFighter* pCVar10;
-	int* piVar11;
+	SubStructBlow* pCVar10;
+	s_fighter_blow_sub_obj* piVar11;
 	uint uVar12;
 	int iVar13;
 	int iVar14;
@@ -5309,62 +5328,58 @@ bool CActorFighter::FUN_0031ac10(float param_1, s_fighter_blow* pBlow)
 	iVar13 = 0;
 	uVar12 = 0;
 	if (pBlow->nbSubObjs != 0) {
-		IMPLEMENTATION_GUARD(
 		iVar14 = 0;
 		do {
 			uVar1 = this->field_0x630;
 			uVar9 = 0;
 			bVar5 = false;
-			pCVar10 = this;
+			pCVar10 = this->field_0x610;
 			while ((uVar9 < uVar1 && (!bVar5))) {
-				piVar2 = *(int**)&pCVar10->field_0x614;
-				piVar11 = (int*)((int)&(pBlow->field_0x48->boneRefA).pActor + iVar14);
-				if ((*piVar2 != *piVar11) ||
-					((((piVar2[1] != piVar11[1] || (piVar2[2] != piVar11[2])) || (piVar2[3] != piVar11[3])) ||
-						((piVar2[5] != piVar11[5] || (bVar4 = true, piVar2[4] != piVar11[4])))))) {
+				piVar2 = pCVar10->pBlowSubObj;
+				piVar11 = pBlow->field_0x48 + uVar12;
+				if ((piVar2->boneRefA.pActor != piVar11->boneRefA.pActor) ||
+					((((piVar2->boneRefA.boneId != piVar11->boneRefA.boneId || (piVar2->boneRefB.pActor != piVar11->boneRefB.pActor)) || (piVar2->boneRefB.boneId != piVar11->boneRefB.boneId)) ||
+						((piVar2->field_0x14uint != piVar11->field_0x14uint || (bVar4 = true, piVar2->materialId != piVar11->materialId)))))) {
 					bVar4 = false;
 				}
+
 				if (bVar4) {
 					bVar5 = true;
 				}
 				else {
-					pCVar10 = (CActorFighter*)&(pCVar10->characterBase).base.base.flags;
+					pCVar10 = pCVar10 + 1;
 					uVar9 = uVar9 + 1;
 				}
 			}
+
 			if (bVar5) {
-				iVar6 = (int)&(pBlow->field_0x48->boneRefA).pActor + iVar14;
-				FUN_00401230(param_1, *(undefined4*)(iVar6 + 0x1c),
-					*(int*)((int)(this->actorsExcludeTable).aEntries + uVar9 * 8 + -0x2c),
-					*(undefined4*)(iVar6 + 0x20));
+				s_fighter_blow_sub_obj* pBlowSubObj = pBlow->field_0x48 + uVar12;
+				this->field_0x610[uVar9].pPlayerSubStruct->FUN_00401230(param_1, pBlowSubObj->field_0x1c, pBlowSubObj->field_0x20);
 				iVar13 = iVar13 + 1;
 			}
 			else {
 				if (uVar1 < 4) {
 					uVar9 = 0;
 					bVar5 = false;
-					ppuVar7 = &PTR_ParticleVTable_0048f900;
+					pPVar5 = PlayerSubStruct_64_ARRAY_0048f900;
 					while ((uVar9 < 4 && (!bVar5))) {
-						if (((uint)ppuVar7[0xb] & 2) == 0) {
+						if ((pPVar5->flags & 2) == 0) {
 							bVar5 = true;
 						}
 						else {
-							ppuVar7 = ppuVar7 + 0x12;
+							pPVar5 = pPVar5 + 1;
 							uVar9 = uVar9 + 1;
 						}
 					}
+
 					if (bVar5) {
-						ppCVar8 = &this->pVTable + uVar1 * 2;
-						ppCVar8[0x185] = (CActorFighterVTable*)((int)&(pBlow->field_0x48->boneRefA).pActor + iVar14);
-						ppCVar8[0x184] = (CActorFighterVTable*)(&PTR_ParticleVTable_0048f900 + uVar9 * 0x12);
-						FUN_00401460(ppCVar8[0x185]->Init, (int)ppCVar8[0x184], ppCVar8[0x185]->Term);
-						pCVar3 = ppCVar8[0x185];
-						FUN_004012f0(param_1, (int)ppCVar8[0x184], (uint)pCVar3->field_0x18, (int)pCVar3->InitDlistPatchable,
-							pCVar3->Create);
-						CAnimation::RegisterBone(*(CAnimation**)(ppCVar8[0x185]->actorBase + 0x28), (uint)ppCVar8[0x185]->field_0x4)
-							;
-						CAnimation::RegisterBone(*(CAnimation**)(ppCVar8[0x185]->free + 0x28), (uint)ppCVar8[0x185]->IsKindOfObject)
-							;
+						SubStructBlow* pSubStructBlow = this->field_0x610 + uVar1;
+						pSubStructBlow->pBlowSubObj = pBlow->field_0x48 + uVar12;
+						pSubStructBlow->pPlayerSubStruct = PlayerSubStruct_64_ARRAY_0048f900 + uVar9;
+						pSubStructBlow->pPlayerSubStruct->FUN_00401460(pSubStructBlow->pBlowSubObj->field_0x1c, pSubStructBlow->pBlowSubObj->field_0x20);
+						pSubStructBlow->pPlayerSubStruct->FUN_004012f0(param_1, pSubStructBlow->pBlowSubObj->field_0x18, pSubStructBlow->pBlowSubObj->materialId, pSubStructBlow->pBlowSubObj->field_0x14uint);
+						pSubStructBlow->pBlowSubObj->boneRefA.pActor->pAnimationController->RegisterBone(pSubStructBlow->pBlowSubObj->boneRefA.boneId);
+						pSubStructBlow->pBlowSubObj->boneRefB.pActor->pAnimationController->RegisterBone(pSubStructBlow->pBlowSubObj->boneRefB.boneId);
 						iVar13 = iVar13 + 1;
 						this->field_0x630 = this->field_0x630 + 1;
 					}
@@ -5373,7 +5388,7 @@ bool CActorFighter::FUN_0031ac10(float param_1, s_fighter_blow* pBlow)
 
 			uVar12 = uVar12 + 1;
 			iVar14 = iVar14 + 0x24;
-		} while (uVar12 < pBlow->nbSubObjs);)
+		} while (uVar12 < pBlow->nbSubObjs);
 	}
 
 	return iVar13 != 0;
@@ -8316,4 +8331,570 @@ void CFighterExcludedTable::Add(float maxDuration, CActor* pActor)
 	}
 
 	return;
+}
+
+PlayerSubStruct_64::PlayerSubStruct_64()
+{
+	this->field_0x4 = 0xffffffff;
+	this->pSamples[0] = (edF32VECTOR4*)0x0;
+	this->pSplineCoefficients[0] = (edF32VECTOR4*)0x0;
+
+	this->pSamples[1] = (edF32VECTOR4*)0x0;
+	this->pSplineCoefficients[1] = (edF32VECTOR4*)0x0;
+
+	this->field_0x14 = 0;
+	this->nbSamples = 0;
+	this->flags = 0;
+
+	return;
+}
+
+void PlayerSubStruct_64::Init(uint param_2)
+{
+	uint uVar3;
+
+	this->nbSamples = param_2;
+
+	// Clamp nbSamples to [2, 8]
+	if (this->nbSamples < 9) {
+		if (this->nbSamples < 2) {
+			this->nbSamples = 2;
+		}
+	}
+	else {
+		this->nbSamples = 8;
+	}
+
+	uVar3 = 0;
+	do {
+		this->pSamples[uVar3] = new edF32VECTOR4[this->nbSamples];
+		this->pSplineCoefficients[uVar3] = new edF32VECTOR4[(this->nbSamples - 1) * 3];
+		uVar3 = uVar3 + 1;
+	} while (uVar3 < 2);
+
+	this->flags = this->flags | 1;
+
+	return;
+}
+
+void PlayerSubStruct_64::Term()
+{
+	uint uVar2;
+
+	if ((this->flags & 1) != 0) {
+		uVar2 = 0;
+		do {
+			if (this->pSamples[uVar2] != (edF32VECTOR4*)0x0) {
+				delete(this->pSamples[uVar2]);
+				this->pSamples[uVar2] = (edF32VECTOR4*)0x0;
+			}
+
+			if (this->pSplineCoefficients[uVar2] != (edF32VECTOR4*)0x0) {
+				delete(this->pSplineCoefficients[uVar2]);
+				this->pSplineCoefficients[uVar2] = (edF32VECTOR4*)0x0;
+			}
+
+			uVar2 = uVar2 + 1;
+		} while (uVar2 < 2);
+
+		this->flags = this->flags & 0xfffffffe;
+	}
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_00401460(float param_1, int param_3)
+{
+	this->field_0x24 = param_1;
+	this->field_0x28 = param_3;
+	this->field_0x20 = 0.0f;
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_004012f0(float param_1, uint param_3, int materialId, uint param_5)
+{
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	this->flags = this->flags & 0xffffff8f;
+	this->flags = this->flags | 10;
+	this->flags = this->flags | param_3 & 0x60;
+	this->field_0x14 = 0;
+	this->field_0x20 = 0.0f;
+	this->field_0x30 = param_1;
+	this->field_0x34 = 0;
+	this->field_0x3c = 1.0f / this->field_0x30;
+	this->field_0x38 = 0.0f;
+	this->field_0x44 = param_5;
+
+	this->pMaterial = pFileManager->GetMaterialFromId(materialId, 0);
+	if (this->pMaterial == (edDList_material*)0x0) {
+		this->pMaterial = pFileManager->GetMaterialFromId(CScene::_pinstance->defaultTextureIndex_0x28, 0);
+	}
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_00401230(float param_1, float param_2, int param_4)
+{
+	if ((this->flags & 2) != 0) {
+		this->field_0x24 = param_2;
+		this->field_0x28 = param_4;
+		this->field_0x30 = param_1;
+		this->field_0x34 = 0;
+		this->field_0x3c = (1.0f - this->field_0x38) / this->field_0x30;
+		this->flags = this->flags & 0xffffffef;
+		this->flags = this->flags | 8;
+	}
+
+	return;
+}
+
+void PlayerSubStruct_64::FUN_004012a0(float param_1)
+{
+	this->flags = this->flags & 0xfffffff7;
+	this->flags = this->flags | 0x10;
+	this->field_0x30 = param_1;
+	this->field_0x34 = 0.0f;
+	this->field_0x3c = -this->field_0x38 / this->field_0x30;
+	return;
+}
+
+void PlayerSubStruct_64::UpdateTrailFromEndpoints(float param_1, edF32VECTOR4* pEndPoints, int bForce)
+{
+	bool bVar1;
+	uint uVar3;
+	edF32VECTOR4* peVar4;
+	edF32VECTOR4** pPVar5;
+	uint uVar6;
+	int iVar7;
+	uint uVar8;
+	edF32VECTOR4* peVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+
+	if ((this->flags & 2) != 0) {
+		iVar7 = 0;
+		if (this->field_0x24 == 0.0f) {
+			this->field_0x20 = param_1;
+			iVar7 = bForce;
+		}
+		else {
+			if (this->field_0x24 < GetTimer()->scaledTotalTime - this->field_0x20) {
+				this->field_0x20 = GetTimer()->scaledTotalTime;
+				iVar7 = 1;
+			}
+		}
+
+		if (iVar7 == 1) {
+			uVar8 = 0;
+			pPVar5 = this->pSamples;
+			peVar4 = pEndPoints;
+			if (this->field_0x14 == 0) {
+				do {
+					uVar3 = this->nbSamples;
+					peVar9 = *pPVar5;
+					uVar6 = 0;
+					if (uVar3 != 0) {
+						do {
+							uVar6 = uVar6 + 1;
+							*peVar9 = *peVar4;
+							uVar3 = this->nbSamples;
+							peVar9 = peVar9 + 1;
+						} while (uVar6 < uVar3);
+					}
+					uVar8 = uVar8 + 1;
+					pPVar5 = pPVar5 + 1;
+					peVar4 = peVar4 + 1;
+				} while (uVar8 < 2);
+
+				this->field_0x14 = uVar3;
+				this->flags = this->flags | 4;
+			}
+			else {
+				uVar8 = 0;
+				bVar1 = false;
+				while ((uVar8 < 2 && (!bVar1))) {
+					peVar9 = *pPVar5;
+					if ((peVar9->x != peVar4->x) || ((peVar9->y != peVar4->y || (peVar9->z != peVar4->z)))) {
+						bVar1 = true;
+					}
+
+					pPVar5 = pPVar5 + 1;
+					peVar4 = peVar4 + 1;
+					uVar8 = uVar8 + 1;
+				}
+
+				uVar8 = 0;
+				pPVar5 = this->pSamples;
+				if (bVar1) {
+					do {
+						iVar7 = this->nbSamples - 2;
+						if (-1 < iVar7) {
+							peVar4 = *pPVar5 + iVar7;
+							do {
+								iVar7 = iVar7 + -1;
+								peVar4[1] = *peVar4;
+								peVar4 = peVar4 + -1;
+							} while (-1 < iVar7);
+						}
+
+						uVar8 = uVar8 + 1;
+						pPVar5 = pPVar5 + 1;
+					} while (uVar8 < 2);
+				}
+			}
+		}
+
+		peVar4 = this->pSamples[0];
+		*peVar4 = pEndPoints[0];
+		peVar4 = this->pSamples[1];
+		*peVar4 = pEndPoints[1];
+
+		BuildSplineCoefficients();
+
+		fVar10 = this->field_0x34 + GetTimer()->cutsceneDeltaTime;
+		this->field_0x34 = fVar10;
+		if (this->field_0x30 <= fVar10) {
+			if ((this->flags & 0x10) != 0) {
+				this->flags = this->flags & 0xfffffff9;
+			}
+			this->flags = this->flags & 0xffffffe7;
+		}
+		else {
+			fVar10 = this->field_0x38 + this->field_0x3c * GetTimer()->cutsceneDeltaTime;
+
+			this->field_0x38 = fVar10;
+			if (1.0f < fVar10) {
+				this->field_0x38 = 1.0f;
+			}
+			else {
+				if (fVar10 < 0.0f) {
+					this->field_0x38 = 0.0f;
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+float FLOAT_ARRAY_0049cb68[10];
+edF32VECTOR4 edF32VECTOR4_ARRAY_0049cb90[8];
+edF32VECTOR4 edF32VECTOR4_ARRAY_0049cc10[32];
+
+void PlayerSubStruct_64::BuildSplineCoefficients()
+{
+	int iVar1;
+	float* pfVar2;
+	edF32VECTOR4* peVar3;
+	uint uVar4;
+	uint uVar5;
+	edF32VECTOR4* peVar7;
+	edF32VECTOR4* v0;
+	edF32VECTOR4* v2;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4* local_10;
+
+	uVar4 = 1;
+	FLOAT_ARRAY_0049cb68[2] = 0.5f;
+	iVar1 = this->field_0x14;
+	if (1 < iVar1 - 1U) {
+		pfVar2 = FLOAT_ARRAY_0049cb68 + 3;
+		do {
+			uVar4 = uVar4 + 1;
+			*pfVar2 = 1.0f / (4.0f - pfVar2[-1]);
+			iVar1 = this->field_0x14;
+			pfVar2 = pfVar2 + 1;
+		} while (uVar4 < iVar1 - 1U);
+	}
+
+	uVar4 = 0;
+	FLOAT_ARRAY_0049cb68[iVar1 + 1] = 1.0f / (2.0f - FLOAT_ARRAY_0049cb68[iVar1]);
+
+	do {
+		v2 = this->pSamples[uVar4];
+		local_10 = this->pSplineCoefficients[uVar4];
+		edF32Vector4SubHard(edF32VECTOR4_ARRAY_0049cb90, v2 + 1, v2);
+		edF32Vector4ScaleHard(FLOAT_ARRAY_0049cb68[2] * 3.0f, edF32VECTOR4_ARRAY_0049cb90, edF32VECTOR4_ARRAY_0049cb90);
+		iVar1 = this->field_0x14;
+		uVar5 = 1;
+		if (1 < iVar1 - 1U) {
+			peVar7 = edF32VECTOR4_ARRAY_0049cb90 + 1;
+			pfVar2 = FLOAT_ARRAY_0049cb68 + 3;
+			peVar3 = peVar7;
+			do {
+				edF32Vector4SubHard(peVar7, v2 + uVar5 + 1, v2 + (uVar5 - 1));
+				edF32Vector4ScaleHard(3.0f, peVar7, peVar3);
+				edF32Vector4SubHard(peVar7, peVar3, edF32VECTOR4_ARRAY_0049cb90 + uVar5 - 1);
+				edF32Vector4ScaleHard(*pfVar2, peVar7, peVar3);
+				iVar1 = this->field_0x14;
+				uVar5 = uVar5 + 1;
+				peVar7 = peVar7 + 1;
+				peVar3 = peVar3 + 1;
+				pfVar2 = pfVar2 + 1;
+			} while (uVar5 < iVar1 - 1U);
+		}
+
+		edF32Vector4SubHard(edF32VECTOR4_ARRAY_0049cb90 + iVar1 + -1, v2 + iVar1 + -1, v2 + iVar1 + -2);
+		edF32Vector4ScaleHard(3.0f, edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1, edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1);
+		edF32Vector4SubHard(edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1, edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1, edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -2);
+		edF32Vector4ScaleHard(FLOAT_ARRAY_0049cb68[this->field_0x14 + 1], edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1, edF32VECTOR4_ARRAY_0049cb90 + this->field_0x14 + -1);
+		iVar1 = this->field_0x14 + -1;
+
+		edF32VECTOR4_ARRAY_0049cc10[iVar1] = edF32VECTOR4_ARRAY_0049cb90[iVar1];
+		iVar1 = this->field_0x14 + -2;
+		if (-1 < iVar1) {
+			v0 = edF32VECTOR4_ARRAY_0049cc10 + iVar1;
+			peVar7 = edF32VECTOR4_ARRAY_0049cb90 + iVar1;
+			pfVar2 = FLOAT_ARRAY_0049cb68 + this->field_0x14;
+			peVar3 = v0;
+			do {
+				edF32Vector4ScaleHard(*pfVar2, v0, edF32VECTOR4_ARRAY_0049cc10 + 1 + iVar1);
+				edF32Vector4SubHard(v0, peVar7, peVar3);
+				iVar1 = iVar1 + -1;
+				pfVar2 = pfVar2 + -1;
+				v0 = v0 + -1;
+				peVar3 = peVar3 + -1;
+				peVar7 = peVar7 + -1;
+			} while (-1 < iVar1);
+		}
+
+		uVar5 = 0;
+		if (this->field_0x14 != 1) {
+			peVar3 = edF32VECTOR4_ARRAY_0049cc10;
+			do {
+				fVar8 = v2[1].x;
+				uVar5 = uVar5 + 1;
+				fVar11 = v2->x;
+				fVar9 = peVar3->x;
+				fVar10 = peVar3[1].x;
+				local_10->x = fVar11;
+				local_10->y = fVar9;
+				local_10->z = ((fVar8 - fVar11) * 3.0f - fVar9 * 2.0f) - fVar10;
+				local_10->w = fVar10 + fVar9 + (fVar11 - fVar8) * 2.0f;
+				fVar8 = v2[1].y;
+				fVar11 = v2->y;
+				fVar9 = peVar3->y;
+				fVar10 = peVar3[1].y;
+				local_10[1].x = fVar11;
+				local_10[1].y = fVar9;
+				local_10[1].z = ((fVar8 - fVar11) * 3.0f - fVar9 * 2.0f) - fVar10;
+				local_10[1].w = fVar10 + fVar9 + (fVar11 - fVar8) * 2.0f;
+				fVar8 = v2[1].z;
+				fVar11 = v2->z;
+				fVar9 = peVar3->z;
+				fVar10 = peVar3[1].z;
+				v2 = v2 + 1;
+				local_10[2].x = fVar11;
+				local_10[2].y = fVar9;
+				local_10[2].z = ((fVar8 - fVar11) * 3.0f - fVar9 * 2.0f) - fVar10;
+				local_10[2].w = fVar10 + fVar9 + (fVar11 - fVar8) * 2.0f;
+				local_10 = local_10 + 3;
+				peVar3 = peVar3 + 1;
+			} while (uVar5 < this->field_0x14 - 1);
+		}
+
+		uVar4 = uVar4 + 1;
+	} while (uVar4 < 2);
+
+	return;
+}
+
+void PlayerSubStruct_64::Draw()
+{
+	bool bVar1;
+	uint nbVertex;
+	byte bVar2;
+	edF32VECTOR4* peVar3;
+	float* pfVar4;
+	uint uVar5;
+	uint uVar6;
+	edF32VECTOR4* peVar7;
+	byte bVar8;
+	float fVar9;
+	float fVar10;
+
+	if (((this->flags & 2) != 0) && ((this->flags & 4) != 0)) {
+		peVar7 = edF32VECTOR4_ARRAY_0049cc10;
+		nbVertex = GetNbVertex(edF32VECTOR4_ARRAY_0049cc10);
+		bVar1 = GameDList_BeginCurrent();
+		if (bVar1 != false) {
+			edDListLoadIdentity();
+			edDListUseMaterial(this->pMaterial);
+			edDListBlendSet(1);
+			edDListBegin(0.0f, 0.0f, 0.0f, 4, nbVertex);
+			uVar6 = 0;
+			if ((this->flags & 0x20) == 0) {
+				fVar9 = this->field_0x38 * static_cast<float>(this->field_0x44.a);
+				if (fVar9 < 2.147484e+09f) {
+					bVar8 = (byte)static_cast<int>(fVar9);
+					bVar2 = (this->field_0x44).r;
+				}
+				else {
+					bVar8 = (byte)static_cast<int>(fVar9 - 2.147484e+09f);
+					bVar2 = (this->field_0x44).r;
+				}
+
+				edDListColor4u8(bVar2, (this->field_0x44).g, (this->field_0x44).b, bVar8);
+			}
+
+			if ((this->flags & 0x40) == 0) {
+				edDListTexCoo2f(0.0f, 0.0f);
+			}
+
+			while (uVar6 < nbVertex) {
+				uVar5 = 0;
+				pfVar4 = &edF32VECTOR4_ARRAY_0049cb90[nbVertex + 6].w;
+				peVar3 = peVar7;
+				do {
+					fVar9 = *pfVar4;
+					if ((this->flags & 0x20) != 0) {
+						fVar10 = peVar3->w / fVar9;
+						fVar10 = (1.0f - fVar10 * fVar10) * this->field_0x38 * static_cast<float>(this->field_0x44.a);
+						if (fVar10 < 2.147484e+09f) {
+							bVar8 = (byte)static_cast<int>(fVar10);
+							bVar2 = (this->field_0x44).r;
+						}
+						else {
+							bVar8 = (byte)static_cast<int>(fVar10 - 2.147484e+09f);
+							bVar2 = (this->field_0x44).r;
+						}
+
+						edDListColor4u8(bVar2, (this->field_0x44).g, (this->field_0x44).b, bVar8);
+					}
+
+					if ((this->flags & 0x40) != 0) {
+						if (static_cast<int>(uVar5) < 0) {
+							fVar10 = static_cast<float>(uVar5 >> 1 | uVar5 & 1);
+							fVar10 = fVar10 + fVar10;
+						}
+						else {
+							fVar10 = static_cast<float>(uVar5);
+						}
+
+						edDListTexCoo2f(fVar10, peVar3->w / fVar9);
+					}
+
+					edDListVertex4f(peVar3->x, peVar3->y, peVar3->z, 0.0f);
+
+					uVar5 = uVar5 + 1;
+					uVar6 = uVar6 + 1;
+					pfVar4 = pfVar4 + 4;
+					peVar3 = peVar3 + 1;
+				} while (uVar5 < 2);
+				peVar7 = peVar7 + 2;
+			}
+
+			edDListEnd();
+			GameDList_EndCurrent();
+		}
+	}
+
+	return;
+}
+
+int PlayerSubStruct_64::GetNbVertex(edF32VECTOR4* pData)
+{
+	uint uVar1;
+	bool bVar2;
+	edF32VECTOR4* peVar3;
+	uint uVar5;
+	edF32VECTOR4* peVar6;
+	uint uVar7;
+	edF32VECTOR4* v2;
+	edF32VECTOR4* v1;
+	int iVar8;
+	uint uVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	edF32VECTOR4* local_30;
+	edF32VECTOR4** local_20;
+	edF32VECTOR4 eStack16;
+
+	uVar9 = 0;
+	iVar8 = 0;
+	local_30 = pData;
+	local_20 = this->pSplineCoefficients;
+	do {
+		fVar14 = 1.0f;
+		fVar12 = 0.0f;
+		v2 = (edF32VECTOR4*)0x0;
+		uVar7 = 0;
+		bVar2 = false;
+		peVar6 = *local_20;
+		fVar13 = 0.0f;
+		v1 = local_30;
+		while ((uVar7 < this->field_0x14 - 1 && (!bVar2))) {
+			uVar5 = 1;
+			peVar3 = v1;
+			if (uVar7 == 0) {
+				uVar5 = 0;
+			}
+			else {
+				if (uVar7 == this->field_0x14 - 2) {
+					if (this->field_0x24 == 0.0f) {
+						fVar14 = 1.0f - this->field_0x20;
+					}
+					else {
+						fVar14 = 1.0f - (GetTimer()->scaledTotalTime - this->field_0x20) / this->field_0x24;
+					}
+				}
+			}
+			while ((v1 = peVar3, uVar1 = this->field_0x28, uVar5 <= uVar1 && (!bVar2))) {
+				if ((int)uVar5 < 0) {
+					fVar10 = (float)(uVar5 >> 1 | uVar5 & 1);
+					fVar10 = fVar10 + fVar10;
+				}
+				else {
+					fVar10 = (float)uVar5;
+				}
+				if ((int)uVar1 < 0) {
+					fVar11 = (float)(uVar1 >> 1 | uVar1 & 1);
+					fVar11 = fVar11 + fVar11;
+				}
+				else {
+					fVar11 = (float)uVar1;
+				}
+				fVar10 = fVar10 / fVar11;
+				if (fVar14 < fVar10) {
+					bVar2 = true;
+					fVar10 = fVar14;
+				}
+
+				v1->x = peVar6->x + fVar10 * (peVar6->y + fVar10 * (peVar6->z + peVar6->w * fVar10));
+				v1->y = peVar6[1].x + fVar10 * (peVar6[1].y + fVar10 * (peVar6[1].z + peVar6[1].w * fVar10));
+				v1->z = peVar6[2].x + fVar10 * (peVar6[2].y + fVar10 * (peVar6[2].z + peVar6[2].w * fVar10));
+				v1->w = 0.0f;
+				if (v2 != (edF32VECTOR4*)0x0) {
+					edF32Vector4SubHard(&eStack16, v1, v2);
+					fVar13 = edF32Vector4GetDistHard(&eStack16);
+				}
+
+				fVar12 = fVar12 + fVar13;
+				uVar5 = uVar5 + 1;
+				iVar8 = iVar8 + 1;
+				v1->w = fVar12;
+				peVar3 = v1 + 2;
+				v2 = v1;
+			}
+
+			peVar6 = peVar6 + 3;
+			uVar7 = uVar7 + 1;
+		}
+
+		uVar9 = uVar9 + 1;
+		local_20 = local_20 + 1;
+		local_30 = local_30 + 1;
+	} while (uVar9 < 2);
+
+	return iVar8;
 }

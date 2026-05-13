@@ -661,20 +661,8 @@ void CActorWolfen::Manage()
 
 void CActorWolfen::Draw()
 {
-	CActorFighter* pCVar1;
-	uint uVar2;
+	CActorFighter::Draw();
 
-	CActorAutonomous::Draw();
-	uVar2 = 0;
-	//pCVar1 = this;
-	if (this->field_0x630 != 0) {
-		do {
-			IMPLEMENTATION_GUARD_LOG(
-			FUN_00400bf0((long)(int)pCVar1->field_0x610);)
-			uVar2 = uVar2 + 1;
-			//pCVar1 = (CActorFighter*)&(pCVar1->characterBase).base.base.flags;
-		} while (uVar2 < this->field_0x630);
-	}
 	return;
 }
 
@@ -1889,7 +1877,7 @@ void CActorWolfen::AnimEvaluate_0xa2(uint layerId)
 	index = pAnim->PhysicalLayerFromLayerId(layerId);
 	peVar2 = (pAnim->anmBinMetaAnimator).aAnimData + index;
 
-	peVar2->field_0x4 = this->field_0xd24; // This can be read before it is initialized... Might be worth fixing
+	peVar2->blendWeight = this->field_0xd24; // This can be read before it is initialized... Might be worth fixing
 
 	if (0.0f < this->field_0xd24) {
 		pAnim->anmBinMetaAnimator.SetLayerTimeWarper(this->field_0xd24, index);
@@ -9059,7 +9047,7 @@ LAB_001f1738:
 		mode = this->pOwner->GetIdMacroAnim(0xa2);
 		bVar2 = pCVar1->IsLayerActive(8);
 		if ((bVar2 != false) && (mode != -1)) {
-			pCVar1->anmBinMetaAnimator.SetLayerBlendingOp(iVar6, 3);
+			pCVar1->anmBinMetaAnimator.SetLayerBlendingOp(iVar6, ANM_BLEND_OP_WEIGHTED);
 			pCVar1->anmBinMetaAnimator.SetAnimOnLayer(mode, iVar6, 0xa2);
 			pCVar4 = this->pOwner;
 			pCVar4->field_0xd24 = 0.0f;

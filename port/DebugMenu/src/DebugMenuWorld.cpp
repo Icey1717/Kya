@@ -23,6 +23,7 @@
 #include "ActorNativShop.h"
 #include "ActorSwitch.h"
 #include "ActorMovingPlatform.h"
+#include "ActorDCA.h"
 #include "LargeObject.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
@@ -40,6 +41,7 @@
 #include "Actor/DebugActorNativShop.h"
 #include "Actor/DebugActorSwitch.h"
 #include "Actor/DebugActorMovingPlatform.h"
+#include "Actor/DebugActorDCA.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Native/NativeDebugShapes.h"
@@ -867,6 +869,12 @@ namespace Debug {
 			CActorMovingPlatform* pPlatformActor = static_cast<CActorMovingPlatform*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::MovingPlatform::ShowActorDetails(pPlatformActor);
+		}
+
+		if (pActor->typeID == DCA) {
+			CActorDCA* pDCAActor = static_cast<CActorDCA*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::DCA::ShowActorDetails(pDCAActor);
 		}
 	}
 

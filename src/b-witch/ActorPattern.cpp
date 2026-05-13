@@ -470,8 +470,8 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 			pAnim->anmBinMetaAnimator.SetAnimOnLayer(-1, layerIndex, 0xffffffff);
 		}
 		else {
-			pAnim->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 0);
-			(pAnim->anmBinMetaAnimator).aAnimData[layerIndex].field_0x4 = 0.5f;
+			pAnim->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_NONE);
+			(pAnim->anmBinMetaAnimator).aAnimData[layerIndex].blendWeight = 0.5f;
 			iVar8 = GetIdMacroAnim(0xc);
 			pAnim->anmBinMetaAnimator.SetAnimOnLayer(iVar8, layerIndex, 0xffffffff);
 		}

@@ -12,32 +12,6 @@
 #define ACTION_MOUNT 0xd
 #define ACTION_SPEAK 0xf
 
-class PlayerSubStruct_64 : public CObject
-{
-public:
-	PlayerSubStruct_64();
-
-	void Init(uint param_2);
-	void FUN_00401460(float param_1, int param_3);
-	void FUN_004012f0(float param_1, uint param_3, int materialId, uint param_5);
-
-	undefined4 field_0x4;
-	undefined* field_0x8[2];
-	int field_0x10;
-	undefined4 field_0x14;
-	undefined* field_0x18[2];
-	float field_0x20;
-	float field_0x24;
-	int field_0x28;
-	uint flags;
-	float field_0x30;
-	undefined4 field_0x34;
-	float field_0x38;
-	float field_0x3c;
-	edDList_material* pMaterial;
-	uint field_0x44;
-};
-
 class StaticMeshComponentHeroEx : public StaticMeshComponent
 {
 public:
@@ -174,7 +148,9 @@ public:
 	// CActor
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void Term();
 	virtual void Manage();
+	virtual void Draw();
 
 	virtual void PreCheckpointReset();
 	virtual void CheckpointReset();
@@ -473,7 +449,7 @@ public:
 
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
-	void SetBoomyFunc(int param_2);
+	void SetBoomyState(int param_2);
 	void IncreaseEffort(float param_1);
 
 	void ManageBoomyStateInit();
@@ -572,6 +548,9 @@ public:
 	void WhatsInVision(CActorsTable* pTable, edF32VECTOR4* pDirection);
 
 	bool FUN_00133fb0();
+
+	void FUN_00327010();
+	void FUN_00347480();
 
 	uint FUN_00132c60(uint state);
 
@@ -719,7 +698,7 @@ public:
 
 	uint boomyState_0x1b70;
 
-	float field_0x1b9c;
+	float targetBoomyLayerOverlayWeight;
 
 	int field_0x1020;
 	int bCheckDynCollisions;
@@ -886,10 +865,10 @@ public:
 	int field_0x1b64;
 	undefined4 field_0x1b68;
 
-	int field_0x1b94;
-	float field_0x1b98;
+	int bBoomyLayerOverlayActive;
+	float currentBoomyLayerOverlayWeight;
 
-	float field_0x1ba0;
+	float boomyOverlaySpeed;
 
 	CActorsTable boomyTargetTable;
 	edF32VECTOR4 vector_0x1be0;

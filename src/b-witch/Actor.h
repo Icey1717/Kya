@@ -649,7 +649,7 @@ public:
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void FUN_00119cf0(CActor* pActor);
 	void SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosition);
-	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
+	void SV_GetBoneWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6);
 	void SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0);
 	bool SV_UpdateOrientation(float param_1, edF32VECTOR4* pOrientation);

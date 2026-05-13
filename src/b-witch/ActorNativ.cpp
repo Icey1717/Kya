@@ -147,8 +147,8 @@ void CActorNativ::Init()
 			else {
 				iVar2 = pAnimationController->PhysicalLayerFromLayerId(2);
 				peVar4 = (pAnimationController->anmBinMetaAnimator).aAnimData + iVar2;
-				peVar4->blendOp = 3;
-				peVar4->field_0x4 = 0.0f;
+				peVar4->blendOp = ANM_BLEND_OP_WEIGHTED;
+				peVar4->blendWeight = 0.0f;
 			}
 		}
 

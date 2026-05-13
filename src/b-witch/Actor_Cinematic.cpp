@@ -365,8 +365,8 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 			else {
 				physLayer = pAnimationController->PhysicalLayerFromLayerId(2);
 				pAVar1 = pAnimationController->anmBinMetaAnimator.aAnimData + physLayer;
-				pAVar1[physLayer].blendOp = 3;
-				pAVar1[physLayer].field_0x4 = 0.0f;
+				pAVar1[physLayer].blendOp = ANM_BLEND_OP_WEIGHTED;
+				pAVar1[physLayer].blendWeight = 0.0f;
 			}
 		}
 	}

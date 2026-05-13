@@ -1641,21 +1641,20 @@ float CActorMovable::FUN_00120250(float param_1)
 
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 {
-	Timer* pTVar1;
 	float fVar2;
 	edF32VECTOR4 eStack16;
 
-	pTVar1 = GetTimer();
 	edF32Vector4SubHard(&eStack16, &this->currentLocation, delta);
 	fVar2 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).velocityDirectionEuler, &eStack16);
 	(this->dynamic).linearAcceleration = fVar2;
-	(this->dynamic).linearAcceleration = (this->dynamic).linearAcceleration / pTVar1->cutsceneDeltaTime;
+	(this->dynamic).linearAcceleration = (this->dynamic).linearAcceleration / GetTimer()->cutsceneDeltaTime;
 
 	eStack16.y = 0.0f;
 
 	fVar2 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack16);
 	(this->dynamic).horizontalLinearSpeed = fVar2;
-	(this->dynamic).horizontalLinearSpeed = (this->dynamic).horizontalLinearSpeed / pTVar1->cutsceneDeltaTime;
+	(this->dynamic).horizontalLinearSpeed = (this->dynamic).horizontalLinearSpeed / GetTimer()->cutsceneDeltaTime;
+
 	return;
 }
 

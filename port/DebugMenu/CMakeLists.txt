@@ -1,4 +1,4 @@
-﻿set(TargetName "DebugMenu")
+set(TargetName "DebugMenu")
 
 project(${TargetName})
 
@@ -93,6 +93,8 @@ set(SOURCES
 	"src/Actor/DebugActorSwitch.cpp"
 	"src/Actor/DebugActorMovingPlatform.h"
 	"src/Actor/DebugActorMovingPlatform.cpp"
+	"src/Actor/DebugActorDCA.h"
+	"src/Actor/DebugActorDCA.cpp"
 	"src/Actor/DebugActorJamGut.h"
 	"src/Actor/DebugActorJamGut.cpp"
 	"src/Actor/DebugActorBonusFountain.h"

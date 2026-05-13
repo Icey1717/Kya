@@ -1,6 +1,7 @@
 #include "ActorMovingPlatform.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include "DlistManager.h"
 #include "CollisionManager.h"
 #include "ActorCheckpointManager.h"
 #include "CameraViewManager.h"
@@ -1715,14 +1716,12 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	//CSound* pSound;
 	bool bVar1;
 	bool bVar2;
-	Timer* pTVar3;
 	S_TARGET_ON_OFF_STREAM_REF* pSVar4;
 	int iVar5;
 	int iVar6;
 	float fVar7;
 
-	pTVar3 = GetTimer();
-	pBehaviour->field_0x24 = pBehaviour->field_0x24 + pBehaviour->field_0x14 * pTVar3->cutsceneDeltaTime;
+	pBehaviour->field_0x24 = pBehaviour->field_0x24 + pBehaviour->field_0x14 * GetTimer()->cutsceneDeltaTime;
 	fVar7 = pBehaviour->field_0x18;
 	bVar1 = fVar7 <= pBehaviour->field_0x24;
 	if (bVar1) {
@@ -1752,6 +1751,7 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 			}
 		}
 	}
+
 	return;
 }
 
@@ -1920,9 +1920,9 @@ int CActorMovingPlatform::InterpretEvent(edCEventMessage* pEventMessage, undefin
 
 	if ((pEventData[0] == 1) && (param_3 == 2)) {
 		if (pEventData[1] == 0) {
-			IMPLEMENTATION_GUARD(
-			Die(this, 1);)
+			Die(1);
 		}
+
 		iVar1 = 1;
 	}
 	else {
@@ -3652,9 +3652,74 @@ void CBehaviourSelector::Create(ByteCode* pByteCode)
 	return;
 }
 
+edF32VECTOR2 edF32VECTOR2_ARRAY_00429bd0[12] = {
+	{ -0.33f,  0.39f },
+	{ -0.45f,  0.14f },
+	{ -0.45f, -0.14f },
+	{ -0.35f, -0.44f },
+	{ -0.16f, -0.49f },
+	{  0.16f, -0.49f },
+	{  0.35f, -0.44f },
+	{  0.45f, -0.15f },
+	{  0.45f,  0.15f },
+	{  0.33f,  0.39f },
+	{  0.16f,  0.44f },
+	{ -0.16f,  0.44f },
+};
+
+edF32VECTOR2 edF32VECTOR2_ARRAY_00429c30[12] = {
+	{  0.4f, -0.2f },
+	{  0.3f, -0.1f },
+	{  0.2f,  0.0f },
+	{  0.0f,  0.1f },
+	{ -0.1f,  0.2f },
+	{ -0.2f,  0.4f },
+	{ -0.3f,  0.4f },
+	{ -0.3f,  0.3f },
+	{ -0.2f,  0.2f },
+	{ -0.1f,  0.1f },
+	{  0.0f,  0.4f },
+	{  2.0f,  0.4f },
+};
+
 void CBehaviourSelector::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	float fVar4;
+
+	if (((this->pOwner->actorState == 0xd) && (this->pParticleInfo != (ParticleInfo*)0x0)) && (bVar1 = GameDList_BeginCurrent(), bVar1 != false)) {
+		fVar4 = this->field_0x20 - 0.003f;
+		this->field_0x20 = fVar4;
+
+		if (fVar4 < 0.0f) {
+			this->field_0x20 = fVar4 + 1.0f;
+		}
+
+		edDListLoadMatrix((edF32MATRIX4*)this->pOwner->pMeshTransform);
+		edDListUseMaterial(this->pParticleInfo->materialInfoArray_0x8);
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, 0x1a);
+		iVar3 = 0;
+		do {
+			iVar2 = iVar3;
+			if (iVar3 == 0xc) {
+				iVar2 = 0;
+			}
+			edDListColor4u8(0x80, 0x80, 0x80, 0);
+			edDListTexCoo2f(static_cast<float>(iVar3) / 3.0f, this->field_0x20 + 1.0f + edF32VECTOR2_ARRAY_00429c30[iVar2].x);
+			edDListVertex4f(edF32VECTOR2_ARRAY_00429bd0[iVar2].x * 1.25f, 0.80000001f, edF32VECTOR2_ARRAY_00429bd0[iVar2].y * 1.25f, 0.0f);
+			edDListColor4u8(0x80, 0x80, 0x80, 0x80);
+			edDListTexCoo2f(static_cast<float>(iVar3) / 3.0f, this->field_0x20 + edF32VECTOR2_ARRAY_00429c30[iVar2].y);
+			edDListVertex4f(edF32VECTOR2_ARRAY_00429bd0[iVar2].x, 0.0f, edF32VECTOR2_ARRAY_00429bd0[iVar2].y, 0.0f);
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < 0xd);
+
+		edDListEnd();
+		GameDList_EndCurrent();
+	}
+
+	return;
 }
 
 void CBehaviourSelector::InitState(int state)

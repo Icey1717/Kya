@@ -125,10 +125,10 @@ public:
 	uint field_0x454;
 
 	byte bIsFiring;
-	byte field_0x459;
+	byte bCharging;
 
-	byte field_0x45a;
-	byte field_0x45b;
+	byte bMoveSoundActive;
+	byte bSquareReleased;
 
 	float field_0x45c;
 
@@ -138,7 +138,7 @@ public:
 	CVectorDyn vectorDyn;
 
 	float field_0x4f0;
-	byte field_0x4f8;
+	byte bCameraPushed;
 	CActorSound* field_0x4fc;
 
 	S_STREAM_REF<CSound> field_0x500;

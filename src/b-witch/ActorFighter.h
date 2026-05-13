@@ -438,6 +438,39 @@ struct s_fighter_collision_desc
 #define FIGHT_FLAG_EXTRA_HIT_TRACE_BONE_REGISTERED	(1 << 7)
 #define FIGHT_FLAG_IN_WIND_AREA						(1 << 9)
 
+class PlayerSubStruct_64 : public CObject
+{
+public:
+	PlayerSubStruct_64();
+
+	void Init(uint param_2);
+	void Term();
+	void FUN_00401460(float param_1, int param_3);
+	void FUN_004012f0(float param_1, uint param_3, int materialId, uint param_5);
+	void FUN_00401230(float param_1, float param_2, int param_4);
+	void FUN_004012a0(float param_1);
+	void UpdateTrailFromEndpoints(float param_1, edF32VECTOR4* pEndPoints, int bForce);
+	void BuildSplineCoefficients();
+	void Draw();
+	int GetNbVertex(edF32VECTOR4* pData);
+
+	undefined4 field_0x4;
+	edF32VECTOR4* pSamples[2];
+	int nbSamples;
+	uint field_0x14;
+	edF32VECTOR4* pSplineCoefficients[2];
+	float field_0x20;
+	float field_0x24;
+	int field_0x28;
+	uint flags;
+	float field_0x30;
+	float field_0x34;
+	float field_0x38;
+	float field_0x3c;
+	edDList_material* pMaterial;
+	_rgba field_0x44;
+};
+
 class CActorFighter : public CActorAutonomous
 {
 public:
@@ -458,6 +491,7 @@ public:
 	virtual void Term();
 
 	virtual void Manage();
+	virtual void Draw();
 
 	virtual void Reset();
 
@@ -503,6 +537,7 @@ public:
 	virtual bool Func_0x1a8();
 	virtual bool Func_0x1ac();
 	virtual bool Func_0x1b0(CActor* pOther);
+	virtual bool Func_0x1b4(int state);
 	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
 	virtual void _Execute_Std(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	virtual void _Std_GetPossibleHit(bool bPlayImpact);
@@ -777,11 +812,21 @@ public:
 	uint field_0x548;
 	uint field_0x54c;
 
+	CFxHandleExt field_0x550[2];
+
 	StaticMeshComponentAdvanced staticMeshComponentAdvanced;
 	// Maybe part of above
 	uint field_0x5f0;
 
 	edF32VECTOR4 field_0x600;
+
+	struct SubStructBlow
+	{
+		PlayerSubStruct_64* pPlayerSubStruct;
+		s_fighter_blow_sub_obj* pBlowSubObj;
+	};
+
+	SubStructBlow field_0x610[4];
 
 	CActor* field_0x634;
 

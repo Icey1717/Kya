@@ -159,21 +159,6 @@ struct S_GLOBAL_DLIST_PATCH
 	DisplayListCommand* field_0x20;
 };
 
-void GlobalDList_Init(void);
-bool GuiDList_BeginCurrent(void);
-void GlobalDList_AddToView(void);
-void GuiDList_EndCurrent(void);
-
-bool Frontend2DDList_BeginCurrent(void);
-void FrontendDList_EndCurrent(void);
-
-bool GameDList_BeginCurrent(void);
-void GameDList_EndCurrent(void);
-
-uint GameDListPatch_Register(CObject* pObject, int param_2, int nbInstances);
-CGlobalDListPatch* GameDListPatch_BeginCurrent(int patchId);
-void GameDListPatch_EndCurrent(int nbVertex, int param_2);
-
 extern DisplayList* gCurDListHandle;
 extern void* gCurDListBuf;
 extern void* gCurDListBufEnd;

@@ -96,7 +96,7 @@ void CActorDCA::Init()
 	this->projectAimDirection = gF32Vertex4Zero;
 	this->aimDirection = gF32Vertex4Zero.xyz;
 
-	this->field_0x459 = 0;
+	this->bCharging = 0;
 
 	this->fireShot.Reset();
 	(this->fireShot).field_0x290 = 1;
@@ -131,7 +131,7 @@ void CActorDCA::Reset()
 	this->projectAimDirection = gF32Vertex4Zero;
 	this->aimDirection = gF32Vertex4Zero.xyz;
 
-	this->field_0x459 = 0;
+	this->bCharging = 0;
 	this->fireShot.Reset();
 	(this->fireShot).field_0x290 = 1;
 
@@ -321,11 +321,10 @@ void CActorDCA::BehaviourDefault_InitState(int state)
 	int iVar2;
 
 	pAnimationController = this->pAnimationController;
-	if ((pAnimationController != (CAnimation*)0x0) &&
-		(bVar1 = pAnimationController->IsLayerActive(2), bVar1 != false)) {
+	if ((pAnimationController != (CAnimation*)0x0) && (bVar1 = pAnimationController->IsLayerActive(2), bVar1 != false)) {
 		layerIndex = pAnimationController->PhysicalLayerFromLayerId(2);
 		if (state == 6) {
-			pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 1);
+			pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_REPLACE);
 			iVar2 = GetIdMacroAnim(8);
 			pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(iVar2, layerIndex, 0xffffffff);
 
@@ -336,9 +335,8 @@ void CActorDCA::BehaviourDefault_InitState(int state)
 		}
 		else {
 			if (state == 7) {
-				pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 1);
-				iVar2 = GetIdMacroAnim(8);
-				pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(iVar2, layerIndex, 0xffffffff);
+				pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_REPLACE);
+				pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(GetIdMacroAnim(8), layerIndex, 0xffffffff);
 
 				IMPLEMENTATION_GUARD_AUDIO(
 				CActorSound::SoundStart
@@ -347,7 +345,7 @@ void CActorDCA::BehaviourDefault_InitState(int state)
 			}
 			else {
 				if (state == 5) {
-					pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 1);
+					pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_REPLACE);
 					(pAnimationController->anmBinMetaAnimator).aAnimData[layerIndex].animPlayState = STATE_ANIM_NONE;
 				}
 			}
@@ -481,17 +479,17 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 		delta = GetTimer()->cutsceneDeltaTime;
 
 		if ((0.001f < fabs(lx)) || (0.001f < fabs(ly))) {
-			if (this->field_0x45a == 0) {
+			if (this->bMoveSoundActive == 0) {
 				IMPLEMENTATION_GUARD_AUDIO(
 				CActorSound::SoundStart(this->field_0x4fc, 3, this->field_0x50c.pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
-				this->field_0x45a = 1;
+				this->bMoveSoundActive = 1;
 			}
 		}
 		else {
-			if (this->field_0x45a != 0) {
+			if (this->bMoveSoundActive != 0) {
 				IMPLEMENTATION_GUARD_AUDIO(
 				CActorSound::FadeTo(0.0f, -2.0f, 0.1f, this->field_0x4fc, 3);)
-				this->field_0x45a = 0;
+				this->bMoveSoundActive = 0;
 			}
 		}
 
@@ -553,22 +551,22 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 		pCVar1 = this->pCamera;
 		pCVar1->lookAt = local_60.rowT;
 		pCameraManager = CCameraManager::_gThis;
-		if (this->field_0x4f8 == 0) {
+		if (this->bCameraPushed == 0) {
 			this->pCamera->fov = pParams->fov;
 			this->pCamera->SetOtherTarget(this->pTiedActor);
 			pCameraManager->PushCamera(this->pCamera, 1);
-			this->field_0x4f8 = 1;
+			this->bCameraPushed = 1;
 		}
 		else {
-			if (this->field_0x45b == 0) {
+			if (this->bSquareReleased == 0) {
 				if (pPlayerInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue == 0.0f) {
-					this->field_0x45b = 1;
+					this->bSquareReleased = 1;
 				}
 			}
 			else {
 				if (pPlayerInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue == 0.0f) {
-					if ((this->field_0x459 != 0) && (this->actorState != 6)) {
-						this->field_0x459 = 0;
+					if ((this->bCharging != 0) && (this->actorState != 6)) {
+						this->bCharging = 0;
 						lx = GetTimer()->scaledTotalTime - this->field_0x460;
 						this->field_0x460 = lx;
 						lx = pParams->field_0x0 + lx * pParams->field_0x8;
@@ -579,14 +577,14 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 						}
 
 						this->bIsFiring = 1;
-						this->field_0x460 = 0.0;
+						this->field_0x460 = 0.0f;
 						IMPLEMENTATION_GUARD_AUDIO(
 						CActorSound::FadeTo(1.0f, 1.0f, 0.0f, this->field_0x4fc, 0);)
 					}
 				}
 				else {
-					if (this->field_0x459 == 0) {
-						this->field_0x459 = 1;
+					if (this->bCharging == 0) {
+						this->bCharging = 1;
 						if (this->field_0x460 == 0.0f) {
 							this->field_0x460 = GetTimer()->scaledTotalTime;
 						}
@@ -639,7 +637,7 @@ void CActorDCA::CBhvDefault::InitState(int newState)
 void CActorDCA::CBhvDefault::TermState(int oldState, int newState)
 {
 	if ((oldState == 5) && (newState == -1)) {
-		this->pOwner->field_0x45b = 0;
+		this->pOwner->bSquareReleased = 0;
 	}
 
 	return;
@@ -769,9 +767,9 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 {
 	CActorDCA* pDCA;
 	CActor* pActor;
-	CAnimation* pAnimationController;
+	CAnimation* pAnim;
 	bool bControlledByHero;
-	int mode;
+	int macroAnimId;
 	int layerIndex;
 
 	this->pOwner = static_cast<CActorDCA*>(pOwner);
@@ -787,7 +785,7 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 		}
 
 		if (bControlledByHero) {
-			pDCA->field_0x4f8 = 0;
+			pDCA->bCameraPushed = 0;
 
 			IMPLEMENTATION_GUARD_AUDIO(
 			CActorSound::SoundStart
@@ -797,7 +795,7 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 
 		pDCA->bIsFiring = 0;
 		pDCA->field_0x460 = 0.0f;
-		pDCA->field_0x45a = 0;
+		pDCA->bMoveSoundActive = 0;
 
 		pDCA->SetState(5, -1);
 	}
@@ -805,17 +803,14 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 		this->pOwner->SetState(newState, newAnimationType);
 	}
 
-	bool bIsLayerActive;
-
 	pDCA = this->pOwner;
-	pAnimationController = pDCA->pAnimationController;
-	if (((pAnimationController != (CAnimation*)0x0) &&
-		(bIsLayerActive = pAnimationController->IsLayerActive(8), bIsLayerActive != false)) &&
-		(mode = pDCA->GetIdMacroAnim(9), mode != -1)) {
-		layerIndex = pAnimationController->PhysicalLayerFromLayerId(8);
-		pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, 3);
-		(pAnimationController->anmBinMetaAnimator).aAnimData[layerIndex].field_0x4 = 1.0f;
-		pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(mode, layerIndex, 9);
+	pAnim = pDCA->pAnimationController;
+
+	if (((pAnim != (CAnimation*)0x0) && (pAnim->IsLayerActive(8) != false)) && (macroAnimId = pDCA->GetIdMacroAnim(9), macroAnimId != -1)) {
+		layerIndex = pAnim->PhysicalLayerFromLayerId(8);
+		pAnim->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_WEIGHTED);
+		(pAnim->anmBinMetaAnimator).aAnimData[layerIndex].blendWeight = 1.0f;
+		pAnim->anmBinMetaAnimator.SetAnimOnLayer(macroAnimId, layerIndex, 9);
 	}
 
 	return;
@@ -846,7 +841,7 @@ void CActorDCA::CBhvControlled::End(int newBehaviourId)
 	}
 
 	if (bControlledByHero) {
-		if (pCVar1->field_0x4f8 != 0) {
+		if (pCVar1->bCameraPushed != 0) {
 			CCameraManager::_gThis->PopCamera(pCVar1->pCamera);
 		}
 
@@ -965,7 +960,7 @@ int CActorDCA::CBhvControlled::InterpretMessage(CActor* pSender, int msg, void* 
 		else {
 			if (msg == 0x14) {
 				if (pMsgParam != (void*)0x0) {
-					this->pOwner->field_0x459 = 0;
+					this->pOwner->bCharging = 0;
 					pDCA = this->pOwner;
 					pDCA->SetBehaviour(DCA_BEHAVIOUR_DEFAULT, -1, -1);
 					pDCA->pControlledByActor = (CActor*)0x0;

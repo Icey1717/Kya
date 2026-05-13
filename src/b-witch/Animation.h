@@ -12,6 +12,14 @@
 #define STATE_ANIM_PLAYING	1
 #define STATE_ANIM_MORPHING	2
 
+enum BLENDINGOP
+{
+	ANM_BLEND_OP_NONE = 0,
+	ANM_BLEND_OP_REPLACE = 1,
+	ANM_BLEND_OP_HALF = 2,
+	ANM_BLEND_OP_WEIGHTED = 3
+};
+
 struct edAnmAnim;
 
 struct edAnmStage
@@ -128,8 +136,8 @@ struct edAnmLayer
 	bool MorphingStartDT();
 
 	void SetAnim(edAnmStateDesc* pDesc);
-	int blendOp;
-	float field_0x4;
+	BLENDINGOP blendOp;
+	float blendWeight;
 	int animPlayState;
 	int field_0xc;
 	AnimDesc currentAnimDesc;
@@ -168,7 +176,7 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator
 	int GetAnimType_00242330(int animIndex);
 	int GetAnimEventTrackID(int index);
 	void SetLayerAnimTime(float time, int index, byte param_4);
-	void SetLayerBlendingOp(int layerIndex, int op);
+	void SetLayerBlendingOp(int layerIndex, BLENDINGOP op);
 	void SetAnimOnLayer(int mode, int layerIndex, int param_4);
 	bool IsLayerAnimEndReached(int layerIndex);
 };

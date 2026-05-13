@@ -265,7 +265,7 @@ void edAnmStage::SetSingleToDestWRTS(edF32MATRIX4* pMatrix)
 
 	for (; peVar12 < (peVar4 + boneCount); peVar12 = peVar12 + 1) {
 		if (pMatrix->da != -1.0f) {
-			*pMatrix = *peVar12;
+			*peVar12 = *pMatrix;
 		}
 		pMatrix = pMatrix + 1;
 	}
@@ -406,10 +406,12 @@ void edAnmStage::BlendToDestWRTS(float alpha, edF32MATRIX4* pSrc, edF32MATRIX4* 
 			pMatrixBuffer->cd = fVar9 * alpha + fVar6 * fVar2;
 			pMatrixBuffer->da = 1.0f;
 		}
+
 		pSrc = pSrc + 1;
 		pDst = pDst + 1;
 		pMatrixBuffer = pMatrixBuffer + 1;
 	}
+
 	return;
 }
 
@@ -2218,7 +2220,7 @@ void edAnmBinMetaAnimator::SetLayerAnimTime(float time, int index, byte param_4)
 	return;
 }
 
-void edAnmBinMetaAnimator::SetLayerBlendingOp(int layerIndex, int op)
+void edAnmBinMetaAnimator::SetLayerBlendingOp(int layerIndex, BLENDINGOP op)
 {
 	int iVar1;
 	edAnmLayer* pLayer;
@@ -2242,22 +2244,21 @@ void edAnmBinMetaAnimator::SetLayerBlendingOp(int layerIndex, int op)
 	return;
 }
 
-void edAnmBinMetaAnimator::SetAnimOnLayer(int mode, int layerIndex, int param_4)
+void edAnmBinMetaAnimator::SetAnimOnLayer(int macroAnimId, int layerIndex, int param_4)
 {
 	edAnmLayer* pLayer;
 	edAnmStateDesc anmStateDesc;
 	edAnmStateParser anmStateParser;
 
 	pLayer = this->aAnimData + layerIndex;
-	if (mode == -1) {
+	if (macroAnimId == -1) {
 		pLayer->animPlayState = STATE_ANIM_NONE;
 		(pLayer->nextAnimDesc).animType = -1;
 		(pLayer->currentAnimDesc).animType = -1;
 	}
 	else {
-		int* piVar1 = this->pAnimKeyEntryData;
-		anmStateParser = (int*)(reinterpret_cast<char*>(piVar1) + piVar1[mode] + 4);
-		anmStateParser.BuildDesc(&anmStateDesc, mode, param_4);
+		anmStateParser = (int*)(reinterpret_cast<char*>(this->pAnimKeyEntryData) + this->pAnimKeyEntryData[macroAnimId] + 4);
+		anmStateParser.BuildDesc(&anmStateDesc, macroAnimId, param_4);
 		pLayer->SetAnim(&anmStateDesc);
 	}
 
@@ -2331,7 +2332,7 @@ float edAnmMetaAnimator::GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int le
 
 void edAnmLayer::Reset()
 {
-	this->blendOp = 0;
+	this->blendOp = ANM_BLEND_OP_NONE;
 	this->animPlayState = STATE_ANIM_NONE;
 	this->pFunction_0xc0 = 0x0;
 	this->nextAnimDesc.animType = -1;
@@ -2553,19 +2554,20 @@ bool edAnmLayer::MorphingDT(float playTime)
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer_00);
 
-	if (this->blendOp != 0) {
+	if (this->blendOp != ANM_BLEND_OP_NONE) {
 		TheAnimStage.SetDestinationWRTS(unaff_s4_lo, 0);
+
 		iVar1 = this->blendOp;
-		if (iVar1 == 1) {
+		if (iVar1 == ANM_BLEND_OP_REPLACE) {
 			TheAnimStage.SetSingleToDestWRTS(unaff_s3_lo->matrices);
 		}
 		else {
-			if (iVar1 == 2) {
-				TheAnimStage.BlendWithDestWRTS(0.5, unaff_s3_lo->matrices);
+			if (iVar1 == ANM_BLEND_OP_HALF) {
+				TheAnimStage.BlendWithDestWRTS(0.5f, unaff_s3_lo->matrices);
 			}
 			else {
-				if (iVar1 == 3) {
-					TheAnimStage.BlendWithDestWRTS(this->field_0x4, unaff_s3_lo->matrices);
+				if (iVar1 == ANM_BLEND_OP_WEIGHTED) {
+					TheAnimStage.BlendWithDestWRTS(this->blendWeight, unaff_s3_lo->matrices);
 				}
 			}
 		}
@@ -2636,20 +2638,19 @@ bool edAnmLayer::PlayingDT(float playTime)
 			}
 		}
 
-		if (this->blendOp != 0) {
+		if (this->blendOp != ANM_BLEND_OP_NONE) {
 			TheAnimStage.SetDestinationWRTS(unaff_s1_lo, 0);
 			iVar1 = this->blendOp;
-			if (iVar1 == 1) {
+			if (iVar1 == ANM_BLEND_OP_REPLACE) {
 				TheAnimStage.SetSingleToDestWRTS(pMatrixBuffer->matrices);
 			}
 			else {
-				if (iVar1 == 2) {
-					IMPLEMENTATION_GUARD(
-					TheAnimStage.BlendWithDestWRTS(0.5, (edF32MATRIX4*)pMatrixBuffer);)
+				if (iVar1 == ANM_BLEND_OP_HALF) {
+					TheAnimStage.BlendWithDestWRTS(0.5f, pMatrixBuffer->matrices);
 				}
 				else {
-					if (iVar1 == 3) {
-						TheAnimStage.BlendWithDestWRTS(this->field_0x4, pMatrixBuffer->matrices);
+					if (iVar1 == ANM_BLEND_OP_WEIGHTED) {
+						TheAnimStage.BlendWithDestWRTS(this->blendWeight, pMatrixBuffer->matrices);
 					}
 				}
 			}

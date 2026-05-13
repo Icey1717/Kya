@@ -102,7 +102,78 @@ void SV_FX_UpdateEffectorPosition(CFxHandle* pFxHandle, char* szName, edF32VECTO
 	return;
 }
 
+void SV_FX_001a0600(CFxHandleExt* param_1, edF32MATRIX4* param_2, CFxHandle* param_3)
+{
+	_ed_particle_manager* p_Var1;
+	long fxType;
+	uint uVar2;
+	bool bVar3;
+	CNewFx* pCVar4;
+	float fVar5;
+	int iVar6;
+	CFxHandleExt* pCVar7;
+	_ed_particle_generator_param* p_Var8;
+	CFxNewParticle* pCVar3;
 
+	if (param_3 != (CFxHandleExt*)0x0) {
+		if (param_3->IsValid()) {
+			uVar2 = param_3->id & 0x7fffffff;
+			if (((pCVar4 == (CNewFx*)0x0) || (uVar2 == 0)) || (uVar2 != pCVar4->id)) {
+				pCVar4 = (CNewFx*)0x0;
+			}
+
+			fxType = pCVar4->GetType();
+			if (fxType == FX_TYPE_SOUND) {
+				if (param_2 != (edF32MATRIX4*)0x0) {
+					param_3->SetPosition(&param_2->rowT);
+				}
+			}
+			else {
+				if (fxType == FX_TYPE_PARTICLE) {
+					pCVar3 = static_cast<CFxNewParticle*>(param_3->pFx);
+					uVar2 = param_3->id & 0x7fffffff;
+					if (((pCVar3 == (CFxNewParticle*)0x0) || (uVar2 == 0)) || (uVar2 != pCVar3->id)) {
+						pCVar3 = (CFxNewParticle*)0x0;
+					}
+
+					if (param_2 == (edF32MATRIX4*)0x0) {
+						pCVar3->field_0x84 = pCVar3->field_0x84 & 0xfffffffd;
+					}
+					else {
+						p_Var1 = pCVar3->pManager;
+						if (p_Var1 != (_ed_particle_manager*)0x0) {
+							p_Var8 = p_Var1->aGeneratorParams.pData;
+							for (iVar6 = p_Var1->nbGeneratorParams; iVar6 != 0; iVar6 = iVar6 + -1) {
+								edF32Matrix4MulF32Matrix4Hard(&p_Var8->field_0x40, &p_Var8->field_0x80, param_2);
+								p_Var8 = p_Var8 + 1;
+							}
+
+							pCVar3->field_0x84 = pCVar3->field_0x84 | 2;
+						}
+					}
+				}
+				else {
+					if (fxType == FX_TYPE_COMPOSITE) {
+						CFxNewComposite* pFxComposite = static_cast<CFxNewComposite*>(param_3->pFx);
+						uVar2 = param_3->id & 0x7fffffff;
+						if (((pFxComposite == (CFxNewComposite*)0x0) || (uVar2 == 0)) || (uVar2 != pFxComposite->id)) {
+							pFxComposite = (CFxNewComposite*)0x0;
+						}
+						
+						CFxHandle* pCurHandle = pFxComposite->aFxHandles;
+
+						for (uVar2 = pFxComposite->nbComponentParticles; uVar2 != 0; uVar2 = uVar2 - 1) {
+							SV_FX_001a0600(param_1, param_2, pCurHandle);
+							pCurHandle = pCurHandle + 1;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
 
 CFxManager::CFxManager()
 {

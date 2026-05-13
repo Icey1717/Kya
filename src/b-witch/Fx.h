@@ -650,5 +650,6 @@ public:
 
 void SV_FX_Start(CFxHandleExt* pFxHandle);
 void SV_FX_UpdateEffectorPosition(CFxHandle* pFxHandle, char* szName, edF32VECTOR4* pPosition);
+void SV_FX_001a0600(CFxHandleExt* param_1, edF32MATRIX4* param_2, CFxHandle* param_3);
 
 #endif // FX_MANAGER_H

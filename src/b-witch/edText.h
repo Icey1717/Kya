@@ -35,6 +35,6 @@ struct PagePacked {
 edTextConfig* edTextGetConfig(void);
 bool edTextInit(void);
 bool edTextInstallFont(struct edCTextFont* pFontData);
-void edTextDraw(float x, float y, char* text);
+void edTextDraw(float x, float y, char* text, ...);
 
 #endif //_EDTEXT_H

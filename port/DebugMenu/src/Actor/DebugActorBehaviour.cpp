@@ -12,6 +12,7 @@
 #include "ActorMoney.h"
 #include "ActorBridge.h"
 #include "ActorProjectile.h"
+#include "ActorDCA.h"
 #include "ActorSwitch.h"
 #include "ActorMicken.h"
 #include "ActorRune.h"
@@ -1174,6 +1175,39 @@ namespace Wind
 	}
 }
 
+namespace DCAActor
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case DCA_BEHAVIOUR_DEFAULT:
+			return "Default";
+		case DCA_BEHAVIOUR_CONTROLLED:
+			return "Controlled";
+		case DCA_BEHAVIOUR_AI_CONTROLLED:
+			return "AI Controlled";
+		case DCA_BEHAVIOUR_TRAJECTORY:
+			return "Trajectory";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case 5:
+			return "Idle";
+		case 6:
+			return "Recovery";
+		case 7:
+			return "Firing";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 namespace Ship
 {
 	static const char* GetBehaviourName(int curBehaviourId)
@@ -1238,6 +1272,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Projectile::GetBehaviourName(behaviourId);
 	case SWITCH:
 		return Switch::GetBehaviourName(behaviourId);
+	case DCA:
+		return DCAActor::GetBehaviourName(behaviourId);
 	case MICKEN:
 		return Micken::GetBehaviourName(behaviourId);
 	case BRIDGE:
@@ -1278,6 +1314,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return JamGut::GetStateName(pActor->actorState);
 	case WIND:
 		return Wind::GetStateName(pActor->actorState);
+	case DCA:
+		return DCAActor::GetStateName(pActor->actorState);
 	case SHIP:
 		return Ship::GetStateName(pActor->actorState);
 	default:

@@ -4611,7 +4611,7 @@ void CActor::SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosit
 	return;
 }
 
-void CActor::SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition)
+void CActor::SV_GetBoneWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition)
 {
 	edF32MATRIX4* peVar1;
 	peVar1 = this->pAnimationController->GetCurBoneMatrix(boneIndex);

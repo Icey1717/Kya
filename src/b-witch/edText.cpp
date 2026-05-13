@@ -147,14 +147,18 @@ bool edTextInit(void)
 	return uVar1;
 }
 
-void edTextDraw(float x, float y, char* text)
+void edTextDraw(float x, float y, char* text, ...)
 {
 	bool bVar1;
 	uint uVar2;
 	Rectangle window;
 	edCTextFormat auStack5504;
+	va_list args;
 
-	bVar1 = auStack5504.FormatString(text);
+	va_start(args, text);
+	bVar1 = auStack5504.FormatString(text, args);
+	va_end(args);
+
 	if (bVar1 != false) {
 		auStack5504.GetRect();
 		uVar2 = auStack5504.fontData_0x850->GetDebug();
