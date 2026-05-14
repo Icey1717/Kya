@@ -763,8 +763,7 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 	float fVar8;
 	edF32VECTOR4 eStack64;
 	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
-	edF32VECTOR4 local_10;
+	edF32VECTOR4 local_20[2];
 	CActor* pActor;
 
 	iVar1 = (CScene::ptable.g_SectorManager_00451670)->count_0x368;
@@ -790,15 +789,15 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 		}
 	}
 
-	local_20.z = 1e+20f;
-	local_20.y = 1e+20f;
-	local_20.x = 1e+20f;
-	local_20.w = 1.0f;
+	local_20[0].z = 1e+20f;
+	local_20[0].y = 1e+20f;
+	local_20[0].x = 1e+20f;
+	local_20[0].w = 1.0f;
 
-	local_10.z = -1e+20f;
-	local_10.y = -1e+20f;
-	local_10.x = -1e+20f;
-	local_10.w = 1.0f;
+	local_20[1].z = -1e+20f;
+	local_20[1].y = -1e+20f;
+	local_20[1].x = -1e+20f;
+	local_20[1].w = 1.0f;
 
 	iVar4 = 0;
 	if (0 < this->nbActors) {
@@ -816,7 +815,7 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 			}
 
 			iVar7 = 0;
-			peVar3 = &local_20;
+			peVar3 = local_20;
 			do {
 				fVar8 = peVar6->x;
 				if (((peVar2->br).x < fVar8) && ((peVar2->br).x = fVar8, peVar3[1].x < fVar8)) {
@@ -841,19 +840,19 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 
 	local_30 = edF32VECTOR4_0040e1a0;
 
-	edF32Vector4SubHard(&eStack64, &local_10, &local_20);
-	edF32Vector4AddHard(&local_10, &local_20, &local_10);
-	edF32Vector4ScaleHard(0.5, &local_10, &local_10);
-	edF32Vector4AddHard(&local_20, &eStack64, &local_30);
+	edF32Vector4SubHard(&eStack64, &local_20[1], &local_20[0]);
+	edF32Vector4AddHard(&local_20[1], &local_20[0], &local_20[1]);
+	edF32Vector4ScaleHard(0.5f, &local_20[1], &local_20[1]);
+	edF32Vector4AddHard(&local_20[0], &eStack64, &local_30);
 
 	peVar2 = this->aSectorBoundingBoxes;
 	iVar4 = 0;
 	if (-1 < iVar1) {
 		do {
 			if ((peVar2->br).x < (peVar2->tl).x) {
-				peVar2->tl = local_20;
+				peVar2->tl = local_20[0];
 
-				peVar2->br = local_10;
+				peVar2->br = local_20[1];
 			}
 			else {
 				edF32Vector4SubHard(&eStack64, &peVar2->br, &peVar2->tl);
@@ -867,8 +866,9 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 	}
 	peVar2 = this->aSectorBoundingBoxes;
 
-	peVar2->tl = local_20;
-	peVar2->br = local_10;
+	peVar2->tl = local_20[0];
+	peVar2->br = local_20[1];
+
 	return;
 }
 

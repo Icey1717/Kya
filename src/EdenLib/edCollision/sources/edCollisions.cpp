@@ -3005,16 +3005,7 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 	edF32TRIANGLE4_Stack local_2c0;
 	edF32VECTOR4 local_2b0;
 	edF32VECTOR4 local_2a0;
-	edF32VECTOR4 local_290;
-	float local_280;
-	float fStack636;
-	float fStack632;
-	float local_270;
-	float fStack620;
-	float fStack616;
-	float local_250;
-	float fStack588;
-	float fStack584;
+	edF32VECTOR4 local_290[8];
 	edF32VECTOR4 local_210[8];
 	edF32VECTOR4 aeStack400[8];
 	edF32VECTOR4 aeStack272[8];
@@ -3035,7 +3026,7 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 		edF32Matrix4MulF32Vector4Hard(aeStack272 + iVar5, &eStack80, _gcube_tri_normal + iVar5);
 		edF32Matrix4MulF32Vector4Hard(aeStack400 + iVar5, &eStack144, _gcube_tri_normal + iVar5);
 		edF32Matrix4MulF32Vector4Hard(local_210 + iVar5, &bPrim->localToWorld, _gcube_tri_normal + iVar5);
-		edF32Matrix4MulF32Vector4Hard(&local_290 + iVar5, &aPrim->localToWorld, _gcube_tri_normal + iVar5);
+		edF32Matrix4MulF32Vector4Hard(local_290 + iVar5, &aPrim->localToWorld, _gcube_tri_normal + iVar5);
 	}
 
 	for (iVar5 = 0; iVar5 < 8; iVar5 = iVar5 + 1) {
@@ -3062,15 +3053,15 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 					edF32Matrix4MulF32Vector4Hard(&pColInfoOut->field_0x0, &aPrim->localToWorld, _gcube_face_normal);
 					edF32Vector4NormalizeHard(&pColInfoOut->field_0x0, &pColInfoOut->field_0x0);
 					unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x + local_210[iVar5].y * (pColInfoOut->field_0x0).y +
-						local_210[iVar5].z * (pColInfoOut->field_0x0).z) - (local_290.x * (pColInfoOut->field_0x0).x + local_290.y * (pColInfoOut->field_0x0).y +
-							local_290.z * (pColInfoOut->field_0x0).z);
+						local_210[iVar5].z * (pColInfoOut->field_0x0).z) - (local_290[0].x * (pColInfoOut->field_0x0).x + local_290[0].y * (pColInfoOut->field_0x0).y +
+							local_290[0].z * (pColInfoOut->field_0x0).z);
 				}
 				else {
 					edF32Matrix4MulF32Vector4Hard(&pColInfoOut->field_0x0, &aPrim->localToWorld, _gcube_face_normal + 2);
 					edF32Vector4NormalizeHard(&pColInfoOut->field_0x0, &pColInfoOut->field_0x0);
 					unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x + local_210[iVar5].y * (pColInfoOut->field_0x0).y +
-						local_210[iVar5].z * (pColInfoOut->field_0x0).z) - (local_250 * (pColInfoOut->field_0x0).x + fStack588 * (pColInfoOut->field_0x0).y +
-							fStack584 * (pColInfoOut->field_0x0).z);
+						local_210[iVar5].z * (pColInfoOut->field_0x0).z) - (local_290[4].x * (pColInfoOut->field_0x0).x + local_290[4].y * (pColInfoOut->field_0x0).y +
+							local_290[4].z * (pColInfoOut->field_0x0).z);
 				}
 			}
 			else {
@@ -3080,16 +3071,16 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 						edF32Vector4NormalizeHard(&pColInfoOut->field_0x0, &pColInfoOut->field_0x0);
 						unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x + local_210[iVar5].y * (pColInfoOut->field_0x0).y
 							+ local_210[iVar5].z * (pColInfoOut->field_0x0).z) -
-							(local_290.x * (pColInfoOut->field_0x0).x + local_290.y * (pColInfoOut->field_0x0).y +
-								local_290.z * (pColInfoOut->field_0x0).z);
+							(local_290[0].x * (pColInfoOut->field_0x0).x + local_290[0].y * (pColInfoOut->field_0x0).y +
+								local_290[0].z * (pColInfoOut->field_0x0).z);
 					}
 					else {
 						edF32Matrix4MulF32Vector4Hard(&pColInfoOut->field_0x0, &aPrim->localToWorld, _gcube_face_normal + 5);
 						edF32Vector4NormalizeHard(&pColInfoOut->field_0x0, &pColInfoOut->field_0x0);
 						unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x + local_210[iVar5].y * (pColInfoOut->field_0x0).y
 							+ local_210[iVar5].z * (pColInfoOut->field_0x0).z) -
-							(local_270 * (pColInfoOut->field_0x0).x + fStack620 * (pColInfoOut->field_0x0).y +
-								fStack616 * (pColInfoOut->field_0x0).z);
+							(local_290[2].x * (pColInfoOut->field_0x0).x + local_290[2].y * (pColInfoOut->field_0x0).y +
+								local_290[2].z * (pColInfoOut->field_0x0).z);
 					}
 				}
 				else {
@@ -3100,8 +3091,8 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 							unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x +
 								local_210[iVar5].y * (pColInfoOut->field_0x0).y +
 								local_210[iVar5].z * (pColInfoOut->field_0x0).z) -
-								(local_270 * (pColInfoOut->field_0x0).x + fStack620 * (pColInfoOut->field_0x0).y +
-									fStack616 * (pColInfoOut->field_0x0).z);
+								(local_290[2].x * (pColInfoOut->field_0x0).x + local_290[2].y * (pColInfoOut->field_0x0).y +
+									local_290[2].z * (pColInfoOut->field_0x0).z);
 						}
 						else {
 							edF32Matrix4MulF32Vector4Hard(&pColInfoOut->field_0x0, &aPrim->localToWorld, _gcube_face_normal + 3);
@@ -3109,8 +3100,8 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 							unaff_f20 = (local_210[iVar5].x * (pColInfoOut->field_0x0).x +
 								local_210[iVar5].y * (pColInfoOut->field_0x0).y +
 								local_210[iVar5].z * (pColInfoOut->field_0x0).z) -
-								(local_280 * (pColInfoOut->field_0x0).x + fStack636 * (pColInfoOut->field_0x0).y +
-									fStack632 * (pColInfoOut->field_0x0).z);
+								(local_290[1].x * (pColInfoOut->field_0x0).x + local_290[1].y * (pColInfoOut->field_0x0).y +
+									local_290[1].z * (pColInfoOut->field_0x0).z);
 						}
 					}
 				}

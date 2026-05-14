@@ -264,7 +264,7 @@ public:
 	{
 	}
 
-	~CFxPoolManagerFather()
+	virtual ~CFxPoolManagerFather()
 	{
 		edMemFree(pPoolHeap);
 

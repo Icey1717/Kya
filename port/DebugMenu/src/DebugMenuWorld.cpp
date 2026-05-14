@@ -83,6 +83,9 @@ namespace Debug {
 	static Debug::Setting<int> gInspectorSelectionType("Inspector Selection Type", 0);
 	static Debug::Setting<int> gInspectorSelectionValue("Inspector Selection Value", 0);
 
+	static bool gShowTiedActorChainWindow = false;
+	static CActor* gTiedActorChainRoot = nullptr;
+
 	static constexpr const char* kWorldWindowName = "World";
 	static constexpr const char* kInspectorWindowName = "Inspector";
 
@@ -719,6 +722,17 @@ namespace Debug {
 			ImGui::Text("Flags: 0x%08X", pActor->flags);
 			ImGui::Text("Actor FieldS: 0x%08X", pActor->actorFieldS);
 			ImGui::Text("Mesh Node: 0x%p", pActor->pMeshNode);
+
+			ImGui::Spacing();
+			if (pActor->pTiedActor != nullptr) {
+				ImGui::Text("Tied Actor: %s", pActor->pTiedActor->name);
+			} else {
+				ImGui::TextDisabled("Tied Actor: (none)");
+			}
+			if (ImGui::Button("Show Tied Actor Chain")) {
+				gShowTiedActorChainWindow = true;
+				gTiedActorChainRoot = pActor;
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -876,6 +890,89 @@ namespace Debug {
 			ImGui::Separator();
 			Debug::Actor::DCA::ShowActorDetails(pDCAActor);
 		}
+	}
+
+	static void DrawTiedActorTreeNode(CActor* pNode, CActorManager* pActorManager) {
+		ImGui::PushID(pNode);
+
+		const bool bIsSelected = gInspectorSelection.type == InspectorSelectionType::Actor && gInspectorSelection.pActor == pNode;
+
+		// Collect children: actors in the manager whose pTiedActor == pNode
+		int childCount = 0;
+		for (int i = 0; i < pActorManager->nbActors; ++i) {
+			CActor* pCandidate = pActorManager->aActors[i];
+			if (pCandidate != nullptr && pCandidate->pTiedActor == pNode) {
+				++childCount;
+			}
+		}
+
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+		if (childCount == 0) {
+			flags |= ImGuiTreeNodeFlags_Leaf;
+		}
+		if (bIsSelected) {
+			flags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		char label[192];
+		snprintf(label, sizeof(label), "%s  (%s)", pNode->name, Debug::Actor::GetActorTypeString(pNode->typeID));
+
+		const bool bOpen = ImGui::TreeNodeEx(label, flags);
+
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+			SelectActor(pNode);
+		}
+
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			ImGui::Text("Position: (%.2f, %.2f, %.2f)", pNode->currentLocation.x, pNode->currentLocation.y, pNode->currentLocation.z);
+			ImGui::Text("Type: %s", Debug::Actor::GetActorTypeString(pNode->typeID));
+			ImGui::Text("Actor Manager Index: %d", pNode->actorManagerIndex);
+			ImGui::Text("Tied to: %s", pNode->pTiedActor ? pNode->pTiedActor->name : "(none)");
+			ImGui::EndTooltip();
+		}
+
+		if (bOpen) {
+			for (int i = 0; i < pActorManager->nbActors; ++i) {
+				CActor* pCandidate = pActorManager->aActors[i];
+				if (pCandidate != nullptr && pCandidate->pTiedActor == pNode) {
+					DrawTiedActorTreeNode(pCandidate, pActorManager);
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::PopID();
+	}
+
+	static void DrawTiedActorChainWindow() {
+		if (!gShowTiedActorChainWindow) {
+			return;
+		}
+
+		bool bOpen = gShowTiedActorChainWindow;
+		ImGui::SetNextWindowSize(ImVec2(480.0f, 400.0f), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Tied Actor Chain", &bOpen)) {
+			auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+			if (gTiedActorChainRoot == nullptr || pActorManager == nullptr) {
+				ImGui::TextDisabled("No actor selected.");
+			} else {
+				// Walk up to the true root (topmost ancestor with no pTiedActor)
+				CActor* pRoot = gTiedActorChainRoot;
+				while (pRoot->pTiedActor != nullptr) {
+					pRoot = pRoot->pTiedActor;
+				}
+
+				ImGui::TextDisabled("Selected: %s", gTiedActorChainRoot->name);
+				ImGui::TextDisabled("Tree root: %s", pRoot->name);
+				ImGui::Separator();
+
+				DrawTiedActorTreeNode(pRoot, pActorManager);
+			}
+		}
+		ImGui::End();
+
+		gShowTiedActorChainWindow = bOpen;
 	}
 
 	static void DrawSectorInspector(int selectedSectorId) {
@@ -1066,6 +1163,8 @@ namespace Debug {
 		if (!bOpen) {
 			gShowInspectorPanel = false;
 		}
+
+		DrawTiedActorChainWindow();
 	}
 
 } // namespace Debug

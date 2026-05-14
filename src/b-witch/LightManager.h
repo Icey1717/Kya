@@ -34,6 +34,7 @@ struct LightingContext {
 class CLight {
 public:
 	CLight();
+	virtual ~CLight() = default;
 
 	virtual void Init();
 	virtual void Manage() { return; }

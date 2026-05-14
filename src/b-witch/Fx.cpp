@@ -281,7 +281,7 @@ void CFxManager::Level_Term()
 	}
 
 	if (this->aFx != (CFx**)0x0) {
-		delete(this->aFx);
+		delete[] this->aFx;
 		this->aFx = (CFx**)0x0;
 	}
 

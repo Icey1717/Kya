@@ -593,13 +593,16 @@ void edAnmStage::ToonWRTSToGlobalMatrices(uchar mode)
 				pVecA->z = fVar37 + fVar39 + fVar41 + fVar42;
 				pVecA->w = fVar2 + fVar3 + fVar4 + fVar5;
 
-				fVar22 = pVecB->x;
-				fVar38 = pVecB->y;
-				fVar40 = pVecB->z;
-				fVar14 = pVecB->w;
-
 				pVecA = pVecA + 1;
 				pVecB = pVecB + 1;
+
+				if (iVar7 != 0) {
+					// This check isn't exact, should re-visit but it works for now.
+					fVar22 = pVecB->x;
+					fVar38 = pVecB->y;
+					fVar40 = pVecB->z;
+					fVar14 = pVecB->w;
+				}
 			} while (iVar7 != 0);
 		}
 
