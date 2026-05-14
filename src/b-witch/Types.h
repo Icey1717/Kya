@@ -757,6 +757,44 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #define RESOLVE_FONT_SUB_DATA(a) a
 #endif
 
+// Workaround for Clang 22 MSVC-ABI regression (llvm/llvm-project#183621):
+// delete[] on polymorphic types dispatches through the vtable's vector-deleting
+// destructor slot, which Clang aliases to the scalar-deleting destructor. The
+// scalar form calls operator delete(this) instead of operator delete[](base),
+// causing a bad-free at the array cookie offset (+16 bytes on x64).
+//
+// These helpers bypass the vtable entirely: raw memory + placement new for
+// construction, explicit dtor loop + operator delete[] for destruction.
+// On PS2 (Itanium ABI, no regression), falls back to normal new[]/delete[].
+//
+// Usage: replace  new T[n]      with  NEW_ARRAY_POLYMORPHIC(T, n)
+//        replace  delete[] ptr  with  DELETE_ARRAY_POLYMORPHIC(T, ptr, n)
+// Note: the count must be preserved by the caller since no cookie is stored.
+#ifdef PLATFORM_WIN
+
+template<typename T>
+inline T* NewArrayPolymorphic(int count) {
+	T* arr = static_cast<T*>(::operator new[](sizeof(T) * static_cast<size_t>(count)));
+	for (int i = 0; i < count; ++i) new(&arr[i]) T();
+	return arr;
+}
+
+template<typename T>
+inline void DeleteArrayPolymorphic(T* ptr, int count) {
+	for (int i = count - 1; i >= 0; --i) ptr[i].~T();
+	::operator delete[](static_cast<void*>(ptr));
+}
+
+#define NEW_ARRAY_POLYMORPHIC(T, n)         NewArrayPolymorphic<T>(n)
+#define DELETE_ARRAY_POLYMORPHIC(T, ptr, n) DeleteArrayPolymorphic<T>(ptr, n)
+
+#else
+
+#define NEW_ARRAY_POLYMORPHIC(T, n)         (new T[n])
+#define DELETE_ARRAY_POLYMORPHIC(T, ptr, n) (delete[] (ptr))
+
+#endif
+
 #define UNPACK_S32 0x60
 #define UNPACK_S16 0x61
 #define UNPACK_S8 0x62

@@ -651,7 +651,7 @@ void CCinematic::SetupInternalData()
 		this->aActorCinematic = (CActorCinematic*)0x0;
 	}
 	else {
-		this->aActorCinematic = new CActorCinematic[this->nbTotalCinematicActors];
+		this->aActorCinematic = NEW_ARRAY_POLYMORPHIC(CActorCinematic, this->nbTotalCinematicActors);
 	}
 
 	nbTotalRefs = this->nbTotalLevelActors + this->nbTotalCinematicActors;
@@ -3045,7 +3045,7 @@ CCinematic::~CCinematic()
 void CCinematic::FUN_001cbe40()
 {
 	if (this->aActorCinematic != (CActorCinematic*)0x0) {
-		delete[] this->aActorCinematic;
+		DELETE_ARRAY_POLYMORPHIC(CActorCinematic, this->aActorCinematic, this->nbTotalCinematicActors);
 		this->aActorCinematic = (CActorCinematic*)0x0;
 		this->nbCinematicActors = 0;
 	}
