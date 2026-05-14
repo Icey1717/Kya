@@ -54,6 +54,14 @@ To begin working with the decompiled code:
 
    Select *x64 Debug* as the configuration, and *Kya_Debug.exe* as the target.
 
+   To enable AddressSanitizer in a CMake build, configure with:
+
+   ```bash
+   cmake --preset x64-debug -DENABLE_ADDRESS_SANITIZER=ON
+   ```
+
+   The Windows ASan runtime DLL is copied next to the generated executable automatically.
+
 4. **Run and Test**
 
 ---

@@ -40,7 +40,8 @@ CActorCinematic::CActorCinematic()
 	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
 	//(this->behaviourCinematic).field_0x140 = -1;
 	(this->behaviourCinematic).field_0x144.macroAnimId = -1;
-	this->animationController = CAnimation();
+
+	return;
 }
 
 ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)

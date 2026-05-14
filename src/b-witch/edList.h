@@ -72,7 +72,7 @@ bool edListAddNode(edLIST* pList, void* pNode);
 void edListApplyFunc(edLIST* pList, edListApply* pFunc);
 
 #ifdef EDITOR_BUILD
-void edListSetName(edLIST* pList, char* name);
+void edListSetName(edLIST* pList, const char* name);
 #endif
 
 #endif // EDLIST_H

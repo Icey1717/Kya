@@ -887,6 +887,9 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 		edQuatShortestSLERPAccurate(local_4, &eStack32, pPointA, pPointB);
 		edQuatToMatrix4Hard(&eStack32, pMatrix);
 
+		// Temporary rotation probe to make path-followed objects visibly spin.
+		//edF32Matrix4RotateZHard(edF32Between_2Pi(param_1 * M_2_PI), pMatrix, pMatrix);
+
 		pPointA = this->pPathFollow->aSplinePoints;
 		if (pPointA == (edF32VECTOR4*)0x0) {
 			pPointA = &gF32Vertex4Zero;

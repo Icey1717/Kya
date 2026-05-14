@@ -544,7 +544,7 @@ void CActorWolfen::Term()
 	CActorFighter::Term();
 
 	if (this->field_0xb64 != (WolfenComboData*)0x0) {
-		delete this->field_0xb64;
+		delete[] this->field_0xb64;
 		this->field_0xb64 = (WolfenComboData*)0x0;
 	}
 
@@ -9888,7 +9888,7 @@ void CBehaviourTrackWeaponStand::Term()
 	if (pTVar1 != (TrackSubObj*)0x0) {
 		if (pTVar1 != (TrackSubObj*)0x0) {
 			IMPLEMENTATION_GUARD_LOG(); // Diff from expected code.
-			delete this->aSubObjs;
+			delete[] this->aSubObjs;
 		}
 
 		this->aSubObjs = (TrackSubObj*)0x0;

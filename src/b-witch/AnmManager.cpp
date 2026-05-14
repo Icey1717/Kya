@@ -169,10 +169,10 @@ void CAnimationManager::Game_Init()
 void CAnimationManager::Game_Term()
 {
 	if (this->pBufferB_0x8 != (edF32MATRIX4*)0x0) {
-		delete this->pBufferB_0x8;
+		delete[] this->pBufferB_0x8;
 	}
 	if (this->aAnimMatrixData != (BoneData*)0x0) {
-		delete this->aAnimMatrixData;
+		delete[] this->aAnimMatrixData;
 	}
 	return;
 }
@@ -201,7 +201,7 @@ void CAnimationManager::Level_ClearAll()
 	} while (0 < iVar1);
 
 	if (this->pAnimKeyTable != (edANM_HDR**)0x0) {
-		delete this->pAnimKeyTable;
+		delete[] this->pAnimKeyTable;
 	}
 
 	this->pAnimKeyEntryData = (char*)0x0;

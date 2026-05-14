@@ -731,6 +731,7 @@ LAB_0015b1b0:
 	}
 
 	ManageNoFrictionZones(0);
+
 	return;
 }
 
@@ -2577,24 +2578,24 @@ void CBehaviourPlatformStand::Init(CActor* pOwner)
 
 void CBehaviourPlatformStand::Manage()
 {
-	CActorMovingPlatform* pCVar1;
-	bool bVar3;
-	edF32VECTOR4 local_10;
+	CActorMovingPlatform* pMovingPlatform;
+	edF32VECTOR4 position;
 
-	pCVar1 = this->pOwner;
-	local_10 = pCVar1->baseLocation;
+	pMovingPlatform = this->pOwner;
+	position = pMovingPlatform->baseLocation;
 
-	this->pOwner->Platform_UpdatePosition(&local_10, 0, 0);
+	this->pOwner->Platform_UpdatePosition(&position, 0, (CActorsTable*)0x0);
 
-	pCVar1 = this->pOwner;
-	if (pCVar1->pTiedActor != (CActor*)0x0) {
+	pMovingPlatform = this->pOwner;
+	if (pMovingPlatform->pTiedActor != (CActor*)0x0) {
 		if (this->pCinData.IsValid()) {
-			this->pCinData.SetPosition(&pCVar1->currentLocation);
-			this->pCinData.SetRotationEuler(&pCVar1->rotationEuler);
+			this->pCinData.SetPosition(&pMovingPlatform->currentLocation);
+			this->pCinData.SetRotationEuler(&pMovingPlatform->rotationEuler);
 		}
 	}
 
 	this->pOwner->GenericManage(1, 0, -1, -1);
+
 	return;
 }
 
@@ -2701,10 +2702,7 @@ void CBehaviourPlatformTrajectory::Create(ByteCode* pByteCode)
 
 void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	Timer* pTVar1;
-	CActorMovingPlatform* pAVar1;
-
-	pTVar1 = GetTimer();
+	CActorMovingPlatform* pMovingPlatform;
 
 	this->pOwner = reinterpret_cast<CActorMovingPlatform*>(pOwner);
 
@@ -2716,14 +2714,14 @@ void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAn
 	this->trajPos.lastEventSegment = -1;
 
 	if (newState == -1) {
-		pAVar1 = this->pOwner;
+		pMovingPlatform = this->pOwner;
 
-		if ((pAVar1->pProperties->flags_0x24 & 4) == 0) {
-			pAVar1->SetState(MOVING_PLATFORM_STATE_STAND, -1);
-			this->targetScaledTime = pTVar1->scaledTotalTime;
+		if ((pMovingPlatform->pProperties->flags_0x24 & 4) == 0) {
+			pMovingPlatform->SetState(MOVING_PLATFORM_STATE_STAND, -1);
+			this->targetScaledTime = GetTimer()->scaledTotalTime;
 		}
 		else {
-			pAVar1->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
+			pMovingPlatform->SetState(MOVING_PLATFORM_STATE_MOVING, -1);
 			this->targetScaledTime = 0.0f;
 		}
 	}
@@ -2733,6 +2731,8 @@ void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAn
 
 	this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, & this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 	this->trajPos.lastEventSegment = this->trajPos.currentSegment;
+
+	return;
 }
 
 void CBehaviourPlatformTrajectory::End(int newBehaviourId)
@@ -2751,7 +2751,6 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 {
 	CPathFollow* pCVar1;
 	int bProcessed;
-	Timer* pTVar3;
 	float fVar4;
 	float local_18;
 	int local_14;
@@ -2876,6 +2875,7 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 			}
 		}
 	}
+
 	return bProcessed;
 }
 

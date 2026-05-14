@@ -1190,7 +1190,7 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 		local_20 = gF32Vertex4Zero;
 
 		if (pCVar7 != (S_TIED_ACTOR_ENTRY*)0x0) {
-			edF32Matrix4FromEulerSoft(&local_60, (edF32VECTOR3*)&this->rotationEuler, "XYZ");
+			edF32Matrix4FromEulerSoft(&local_60, &this->rotationEuler.xyz, "XYZ");
 			local_60.rowT = this->currentLocation;
 
 			edF32Matrix4GetInverseOrthoHard(&local_60, &local_60);

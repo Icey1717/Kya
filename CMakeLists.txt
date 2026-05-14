@@ -18,6 +18,8 @@ if(NOT DEFINED ENABLE_MEMORY_PROFILING)
 	set(ENABLE_MEMORY_PROFILING OFF CACHE BOOL "Enable memory profiling")
 endif()
 
+option(ENABLE_ADDRESS_SANITIZER "Enable AddressSanitizer on supported Windows Clang builds" OFF)
+
 option(ENABLE_STRICT_FLOAT_CONVERSION_ERRORS "Treat implicit float conversions as build errors" ON)
 
 #if either performance or memory profiling is enabled
@@ -42,6 +44,10 @@ else()
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang")
 
+if (ENABLE_ADDRESS_SANITIZER)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
 
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_EXTENSIONS YES)
@@ -64,9 +70,37 @@ if (PS2)
 	message("PS2 Build")
 	set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
+	if (ENABLE_ADDRESS_SANITIZER)
+		message(FATAL_ERROR "ENABLE_ADDRESS_SANITIZER is only supported for Windows builds.")
+	endif()
+
 	set(PLATFORM_BINARY_FOLDER "PS2")
 else()
 	message("Win Build")
+
+	if (ENABLE_ADDRESS_SANITIZER)
+		if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			message(FATAL_ERROR "ENABLE_ADDRESS_SANITIZER currently requires the Windows Clang toolchain.")
+		endif()
+
+		execute_process(
+			COMMAND ${CMAKE_CXX_COMPILER} --print-runtime-dir
+			OUTPUT_VARIABLE CLANG_RUNTIME_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		get_filename_component(CLANG_RESOURCE_DIR "${CLANG_RUNTIME_DIR}" DIRECTORY)
+		set(KYA_ASAN_RUNTIME_DLL "${CLANG_RESOURCE_DIR}/windows/clang_rt.asan_dynamic-x86_64.dll")
+		if (NOT EXISTS "${KYA_ASAN_RUNTIME_DLL}")
+			set(KYA_ASAN_RUNTIME_DLL "${CLANG_RUNTIME_DIR}/clang_rt.asan_dynamic-x86_64.dll")
+		endif()
+		if (NOT EXISTS "${KYA_ASAN_RUNTIME_DLL}")
+			message(FATAL_ERROR "Could not find AddressSanitizer runtime DLL at ${KYA_ASAN_RUNTIME_DLL}")
+		endif()
+
+		message(STATUS "Enabling AddressSanitizer")
+		add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+		add_link_options(-fsanitize=address)
+	endif()
 
 	if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		message(STATUS "Enabling edit and continue")

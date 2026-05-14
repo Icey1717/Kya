@@ -238,9 +238,10 @@ void edListApplyFunc(edLIST* pList, edListApply* pFunc)
 }
 
 #ifdef EDITOR_BUILD
-void edListSetName(edLIST* pList, char* name)
+void edListSetName(edLIST* pList, const char* name)
 {
 	ED_LIST_LOG(LogLevel::Info, "Set list name: %p => %s", (void*)pList, name);
-	memcpy(pList->name, name, sizeof(pList->name));
+	strncpy(pList->name, name, sizeof(pList->name) - 1);
+	pList->name[sizeof(pList->name) - 1] = '\0';
 }
 #endif

@@ -1220,7 +1220,7 @@ void CCollisionManager::Level_ClearAll()
 	}
 
 	if (this->pBankCollisionData != (BankCollision_14*)0x0) {
-		delete this->pBankCollisionData;
+		delete[] this->pBankCollisionData;
 	}
 
 	if (this->pCollisionDataArray != (CCollision*)0x0) {
@@ -1617,12 +1617,15 @@ void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRI
 				if (((bVar7) && (pCVar6 = pCVar1->pTiedActor, pCVar6 != (CActor*)0x0)) && (pCVar6 != pActor)) {
 					for (; pCVar5 = pActor, pCVar6->pTiedActor != (CActor*)0x0; pCVar6 = pCVar6->pTiedActor) {
 					}
+
 					for (; pCVar5->pTiedActor != (CActor*)0x0; pCVar5 = pCVar5->pTiedActor) {
 					}
+
 					if (pCVar6 == pCVar5) {
 						bVar7 = false;
 					}
 				}
+
 				if (bVar7) {
 					pCVar1->CarriedByActor(pActor, &local_40);
 				}
@@ -2828,6 +2831,7 @@ void CCollision::CheckCollisions_MoveActor(CActor* pActor, edF32MATRIX4* m0, CAc
 		CheckCollisions_UpdateCollisionMatrix(pActor, m0, pActorsTable, pOtherActor, param_6);
 		pActor->UpdatePosition(m0, 0);
 	}
+
 	return;
 }
 

@@ -3051,7 +3051,7 @@ void CCinematic::FUN_001cbe40()
 	}
 
 	if (this->ppActorCinematics != (CActorCinematic**)0x0) {
-		delete(this->ppActorCinematics);
+		delete[] this->ppActorCinematics;
 		this->ppActorCinematics = (CActorCinematic**)0x0;
 		this->nbActorRefs = 0;
 	}
@@ -3071,12 +3071,12 @@ void CCinematic::FUN_001cbe40()
 	//}
 	
 	if (this->buffer_0x2e4 != (ParticleInstance*)0x0) {
-		delete(this->buffer_0x2e4);
+		delete[] this->buffer_0x2e4;
 		this->buffer_0x2e4 = (ParticleInstance*)0x0;
 	}
 
 	if (this->particleSectionStart != (ParticleEntry*)0x0) {
-		delete(this->particleSectionStart);
+		delete[] this->particleSectionStart;
 		this->particleSectionStart = (ParticleEntry*)0x0;
 	}
 
@@ -3227,7 +3227,7 @@ void CCinematic::Flush(bool param_2)
 		}
 
 		if (this->fileInfoStart != (CinFileContainer*)0x0) {
-			delete this->fileInfoStart;
+			delete[] this->fileInfoStart;
 			this->fileInfoStart = (CinFileContainer*)0x0;
 			this->cinFileCount = 0;
 		}
@@ -5627,8 +5627,8 @@ void CCinematicManager::Level_ClearAll()
 			} while (iVar3 < this->numCutscenes_0x8);
 		}
 
-		delete this->ppCinematicObjB_A;
-		delete this->ppCinematicObjB_B;
+		delete[] this->ppCinematicObjB_A;
+		delete[] this->ppCinematicObjB_B;
 	}
 
 	this->ppCinematicObjB_A = (CCinematic**)0x0;

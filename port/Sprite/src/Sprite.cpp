@@ -252,7 +252,7 @@ namespace Renderer::Kya::Sprite
 
 				vtx.XYZFlags = pVertex[index];
 
-				const uint primReg = firstGifTag.tag.PRIM;
+				const uint64_t primReg = firstGifTag.tag.PRIM;
 				const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 				const uint skip = vtx.XYZFlags.flags & 0x8000;

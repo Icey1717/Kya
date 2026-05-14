@@ -2940,22 +2940,22 @@ void VU1Emu::EndFrame()
 
 void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 {
-	const edpkt_data* const pHeader = reinterpret_cast<edpkt_data*>(pCode);
-
-	unsigned char* pBlockStart = pCode + sizeof(edpkt_data);
-
-	unsigned char* pDst = gVu1Code;
-
-	while (pBlockStart < (pCode + size)) {
-		memcpy(pDst, pBlockStart, vu1BlockSize);
-
-		pDst += vu1BlockSize;
-
-		pBlockStart += 0x8;
-		pBlockStart += vu1BlockSize;
-	}
-
-	pcsx2_VU::ResetVUMemory();
+	//const edpkt_data* const pHeader = reinterpret_cast<edpkt_data*>(pCode);
+	//
+	//unsigned char* pBlockStart = pCode + sizeof(edpkt_data);
+	//
+	//unsigned char* pDst = gVu1Code;
+	//
+	//while (pBlockStart < (pCode + size)) {
+	//	memcpy(pDst, pBlockStart, vu1BlockSize);
+	//
+	//	pDst += vu1BlockSize;
+	//
+	//	pBlockStart += 0x8;
+	//	pBlockStart += vu1BlockSize;
+	//}
+	//
+	//pcsx2_VU::ResetVUMemory();
 }
 
 static void LogUpdate(const VU1Emu::WriteTag* const pTag) {

@@ -10943,13 +10943,13 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 {
 	ed_hash_code* pTVar1;
 	uint uVar2;
-	undefined* puVar3;
+	byte* puVar3;
 	bool bVar4;
 	undefined4* puVar5;
 	ulong* puVar6;
 	undefined8 uVar7;
 	int puVar8;
-	undefined* puVar9;
+	byte* pZeroBuf;
 	edpkt_data* pStripBuf;
 	uint uVar11;
 	ed_g2d_layer* pLayer;
@@ -10964,7 +10964,7 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	uint local_20;
 	uint local_1c;
 	int local_18;
-	undefined local_10[8];
+	uint local_10[4];
 	uint local_8;
 	uint local_4;
 	ed_Chunck* pLAY;
@@ -10972,16 +10972,18 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	puVar8 = 0x10;
 	pTexture = (ed_g2d_texture*)0x0;
 	peVar12 = (ed_g2d_bitmap*)0x0;
-	puVar9 = local_10;
-	puVar3 = puVar9;
-	while (pStripBuf = g_pStrippBufLastPos, puVar3 != (undefined*)0x0) {
-		*puVar9 = 0;
-		puVar9 = puVar9 + 1;
+	pZeroBuf = (byte*)local_10;
+	puVar3 = (byte*)pZeroBuf;
+	while (pStripBuf = g_pStrippBufLastPos, puVar3 != (byte*)0x0) {
+		*pZeroBuf = 0;
+		pZeroBuf = pZeroBuf + 1;
 		puVar8 = puVar8 + -1;
-		puVar3 = (undefined*)puVar8;
+		puVar3 = (byte*)puVar8;
 	}
+
 	for (; ((uint)pStripBuf & 0xf) != 0; pStripBuf = pStripBuf + 1) {
 	}
+
 	pBuffer->pCommandBufferTexture = STORE_POINTER(pStripBuf);
 	pBuffer->commandBufferTextureSize = 0;
 	uVar13 = 0;
