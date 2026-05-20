@@ -41,8 +41,6 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (PS2)
 else()
-set(CMAKE_C_COMPILER "clang")
-set(CMAKE_CXX_COMPILER "clang")
 
 if (ENABLE_ADDRESS_SANITIZER)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
@@ -107,6 +105,20 @@ else()
 		set(CMAKE_CXX_FLAGS_DEBUG "/ZI")
 		set(CMAKE_SHARED_LINKER_FLAGS "/SAFESEH:NO")
 		set(CMAKE_EXE_LINKER_FLAGS "/SAFESEH:NO")
+	endif()
+
+	if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		# Emit full debug info so variables are not reported as "optimized away"
+		# even at -O0. This overrides Clang's default of limiting debug info for
+		# types it considers unnecessary to fully describe.
+		# -fno-omit-frame-pointer: keeps the frame pointer register so the debugger
+		# can locate 'this' and other locals on the stack at all call sites.
+		# -fno-inline: prevents inlining in debug builds which can hide 'this'.
+		add_compile_options(
+			$<$<CONFIG:Debug>:-fno-limit-debug-info>
+			$<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+			$<$<CONFIG:Debug>:-fno-inline>
+		)
 	endif()
 
 	enable_testing()

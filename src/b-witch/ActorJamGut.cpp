@@ -1850,8 +1850,7 @@ void CActorJamGut::BehaviourJamGutStand_Manage(CBehaviourJamGutStand* pBehaviour
 		StateJamGutFall();
 		break;
 	case 0x11:
-		IMPLEMENTATION_GUARD(
-		StateJamGutHit();)
+		StateJamGutHit();
 		break;
 	case 0x12:
 		IMPLEMENTATION_GUARD(

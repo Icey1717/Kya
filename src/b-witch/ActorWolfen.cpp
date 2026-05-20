@@ -113,12 +113,14 @@ bool CActorWolfen::IsKindOfObject(ulong kind)
 	return (kind & 0x1f) != 0;
 }
 
-WolfenCollisionSphere CActorWolfen::_pDefCollisions[4] =
+WolfenCollisionSphere CActorWolfen::_pDefCollisions[6] =
 {
 	{ { 0.4f, 0.8f, 0.4f, 0.0f }, { 0.0f, 0.8f, 0.0f, 1.0f } },
 	{ { 0.5f, 1.0f, 0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
 	{ { 0.6f, 1.0f, 0.6f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
 	{ { 0.6f, 1.0f, 0.6f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+	{ { 0.9f, 1.5f, 0.9f, 0.0f }, { 0.0f, 1.5f, 0.0f, 1.0f } },
+	{ { 0.4f, 0.9f, 0.4f, 0.0f }, { 0.0f, 0.9f, 0.0f, 1.0f } },
 };
 
 void CActorWolfen::Create(ByteCode* pByteCode)
@@ -136,7 +138,7 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	CActorFighter::Create(pByteCode);
 	this->field_0xb74 = pByteCode->GetU32();
 
-	assert(this->field_0xb74 < 4); // Need to ensure that there is valid table entries below for higher values.
+	assert(this->field_0xb74 < 6); // Need to ensure that there is valid table entries below for higher values.
 	ChangeCollisionSphere(0.0f, &_pDefCollisions[this->field_0xb74].field_0x0, &_pDefCollisions[this->field_0xb74].field_0x10);
 	StoreCollisionSphere();
 

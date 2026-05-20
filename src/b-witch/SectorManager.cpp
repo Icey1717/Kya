@@ -1551,10 +1551,10 @@ void CSectorHierarchy::SetHiddenOn()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			pSVar1->flags_0x20 = pSVar1->flags_0x20 | 0x40000000;)
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 | 0x40000000;
 		}
 	}
+
 	return;
 }
 
@@ -1571,10 +1571,10 @@ void CSectorHierarchy::SetHiddenOff()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			pSVar1->flags_0x20 = pSVar1->flags_0x20 & 0xbfffffff;)
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 & ~0x40000000;
 		}
 	}
+
 	return;
 }
 

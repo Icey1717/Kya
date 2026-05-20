@@ -4059,7 +4059,8 @@ void CActorFighter::_LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode)
 	pBlow->blowStageEnd.field_0x10.w = 0.0f;
 	pBlow->blowStageEnd.flags = pByteCode->GetU32();
 
-	pBlow->field_0xd0 = (void*)0x0;
+	pBlow->field_0xd0 = (FighterOnHitFunc)0x0;
+
 	return;
 }
 
@@ -7224,17 +7225,15 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 		}
 
 		if (bVar6) {
-			void* pcVar1 = pFighter->pBlow->field_0xd0;
-			if (pcVar1 != (void*)0x0) {
-				IMPLEMENTATION_GUARD(
-				(*pcVar1)(pFighter, 0);)
+			FighterOnHitFunc pcVar1 = pFighter->pBlow->field_0xd0;
+			if (pcVar1 != (FighterOnHitFunc)0x0) {
+				(*pcVar1)(pFighter, 0);
 			}
 		}
 		else {
-			void* pcVar1 = pFighter->pBlow->field_0xd0;
-			if (pcVar1 != (void*)0x0) {
-				IMPLEMENTATION_GUARD(
-				(*pcVar1)(pFighter, 3);)
+			FighterOnHitFunc pcVar1 = pFighter->pBlow->field_0xd0;
+			if (pcVar1 != (FighterOnHitFunc)0x0) {
+				(*pcVar1)(pFighter, 3);
 			}
 
 			pFighter->_SV_HIT_FightCollisionsEnd();

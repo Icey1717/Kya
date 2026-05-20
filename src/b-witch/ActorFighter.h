@@ -214,6 +214,10 @@ struct _s_fighter_blow_stage
 	edF32VECTOR4 field_0x10;
 };
 
+class CActorFighter;
+
+typedef void (*FighterOnHitFunc)(CActorFighter*, int);
+
 struct s_fighter_blow : public s_fighter_move
 {
 	float field_0x8;
@@ -242,7 +246,7 @@ struct s_fighter_blow : public s_fighter_move
 	_s_fighter_blow_stage blowStageBegin;
 	_s_fighter_blow_stage blowStageExecute;
 	_s_fighter_blow_stage blowStageEnd;
-	void* field_0xd0;
+	FighterOnHitFunc field_0xd0;
 	undefined field_0xd4;
 	undefined field_0xd5;
 	undefined field_0xd6;

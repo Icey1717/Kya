@@ -184,6 +184,7 @@ namespace Debug {
 
 			ImVec2 screenPos;
 			if (Projection::WorldToScreenAbsolute(worldPos, screenPos)) {
+				const bool bActorIsActive = (pActor->flags & 4) != 0;
 				std::string buff;
 
 				for (auto& [setting, func] : gOverlaySettings) {
@@ -203,7 +204,8 @@ namespace Debug {
 				// Center text horizontally and place it above the projected point
 				const ImVec2 textSize = ImGui::CalcTextSize(buff.c_str());
 				const ImVec2 textPos(absPos.x - textSize.x * 0.5f, absPos.y - textSize.y - 4.0f);
-				ImGui::GetForegroundDrawList()->AddText(textPos, IM_COL32_WHITE, buff.c_str());
+				const ImU32 textColor = (!gOnlyActiveActors && !bActorIsActive) ? IM_COL32(255, 64, 64, 255) : IM_COL32_WHITE;
+				ImGui::GetForegroundDrawList()->AddText(textPos, textColor, buff.c_str());
 
 				if (bShowSpheresInOverlay) {
 					Renderer::Native::DebugShapes::AddFilledSphere(worldPos.x, worldPos.y, worldPos.z, 0.1f, 1.0f, 0.5f, 0.2f, 1.0f);

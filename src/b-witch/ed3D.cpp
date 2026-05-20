@@ -9919,16 +9919,15 @@ void ed3DRenderObject(ed_hash_code* pLOD, ed_hash_code* pMBNK)
 	float in_vf9w;
 	ed_g3d_object* pMeshOBJ;
 
-	ED3D_LOG(LogLevel::Verbose, "----------------------------------------------------------------------------------------------------------");
-	ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject mesh: {} -> MBNK: {}", pLOD->hash.ToString(), pMBNK->hash.ToString());
-
-	// HACK
-	if (pLOD->hash.number == 0xa2a2a198c7fac1e2) {
+	if (pMBNK != (ed_hash_code*)0x10) { // Possible to have NULL texture here, have to guard against this for logging.
+		ED3D_LOG(LogLevel::Verbose, "----------------------------------------------------------------------------------------------------------");
 		ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject mesh: {} -> MBNK: {}", pLOD->hash.ToString(), pMBNK->hash.ToString());
+
+		// HACK
+		if (pLOD->hash.number == 0xa2a2a198c7fac1e2) {
+			ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject mesh: {} -> MBNK: {}", pLOD->hash.ToString(), pMBNK->hash.ToString());
+		}
 	}
-	//else {
-	//	return;
-	//}
 
 	ed_Chunck* pOBJ = LOAD_POINTER_CAST(ed_Chunck*, pLOD->pData);
 	pMeshOBJ = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
@@ -10028,7 +10027,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 	}
 
 	// HACK
-	ulong hashA = 0x00002e442e4f2e4c;
+	ulong hashA = 0x9fae8aa090c0c506;
 	ulong hashB = pHierarchy->hash.number;
 
 	if (hashA == hashB) {
@@ -12117,6 +12116,8 @@ int ed3DPrepareHierarchy(ed_g3d_hierarchy* pHierarchy, ed_g2d_manager* pTextureI
 
 	ED3D_LOG(LogLevel::Info, "ed3DPrepareHierarchy {}", pHierarchy->hash.ToString());
 
+	//assert(pHierarchy->pTextureInfo);
+
 	if ((pHierarchy->flags_0x9e & 4) == 0) {
 		pTVar5 = pHierarchy + 1;
 
@@ -12380,7 +12381,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 		ED3D_LOG(LogLevel::Verbose, "ed3DHierarchyAddNode {}", pSourceHierarchy->hash.ToString());
 	}
 
-	ulong hashA = 0x5f5941525f498976;
+	ulong hashA = 0x9fae8aa090c0c506;
 	ulong hashB = pSourceHierarchy->hash.number;
 
 	if (hashA == hashB) {
@@ -12423,6 +12424,8 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pNewHierarchyNode->base).pLinkTransformData = (ed_3d_hierarchy*)LOAD_POINTER(pSourceHierarchy->pLinkTransformData);
 	(pNewHierarchyNode->base).field_0x94 = (undefined*)LOAD_POINTER(pSourceHierarchy->field_0x94);
 	(pNewHierarchyNode->base).pTextureInfo = (ed_Chunck*)LOAD_POINTER(pSourceHierarchy->pTextureInfo);
+
+	//assert((pNewHierarchyNode->base).pTextureInfo);
 
 	ED3D_LOG(LogLevel::Info, "ed3DHierarchyAddNode Resolved texture hash code {:x} -> {:x}", (uintptr_t)pNewHierarchyNode, (uintptr_t)(pNewHierarchyNode->base).pTextureInfo);
 

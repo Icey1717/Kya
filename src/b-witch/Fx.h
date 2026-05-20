@@ -244,6 +244,8 @@ class CFxHandleExt : public CFxHandle
 public:
 	void Create(ByteCode* pByteCode);
 	void Init(uint newType);
+	void InitPositionRotation(edF32VECTOR4* pPosition, edF32VECTOR4* pRotation);
+	void InitSpatialized(CActor* pActor, uint boneId);
 
 	uint type;
 };

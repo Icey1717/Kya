@@ -84,6 +84,7 @@ struct S_STREAM_EVENT_CAMERA;
 
 struct EnemyComponent80
 {
+	virtual void SetObjCounts(int countA, int countB) {}
 	void* pEnemy_0x60;
 };
 
@@ -981,7 +982,7 @@ class CActorWolfen : public CActorFighter
 {
 public:
 	static WolfenConfig _gStateCfg_WLF[68];
-	static WolfenCollisionSphere _pDefCollisions[4];
+	static WolfenCollisionSphere _pDefCollisions[6];
 	static int _waitStandAnimArray[8];
 	static int _waitDefendAnimArray[4];
 

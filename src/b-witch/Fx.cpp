@@ -117,6 +117,7 @@ void SV_FX_001a0600(CFxHandleExt* param_1, edF32MATRIX4* param_2, CFxHandle* par
 
 	if (param_3 != (CFxHandleExt*)0x0) {
 		if (param_3->IsValid()) {
+			pCVar4 = param_3->pFx;
 			uVar2 = param_3->id & 0x7fffffff;
 			if (((pCVar4 == (CNewFx*)0x0) || (uVar2 == 0)) || (uVar2 != pCVar4->id)) {
 				pCVar4 = (CNewFx*)0x0;
@@ -1258,6 +1259,42 @@ void CFxHandleExt::Init(uint newType)
 	pFx = this->pFx;
 	if (((pFx != (CNewFx*)0x0) && (this->id != 0)) && (this->id == pFx->id)) {
 		pFx->Stop(-1.0f);
+	}
+
+	return;
+}
+
+void CFxHandleExt::InitPositionRotation(edF32VECTOR4* pPosition, edF32VECTOR4* pRotation)
+{
+	if (this->type != 0xffffffff) {
+		if (!IsValid()) {
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(this, this->type, FX_MATERIAL_SELECTOR_NONE);
+			if (IsValid()) {
+				if (pRotation != (edF32VECTOR4*)0x0) {
+					SetRotationEuler(pRotation);
+				}
+				if (pPosition != (edF32VECTOR4*)0x0) {
+					SetPosition(pPosition);
+				}
+
+				Start();
+			}
+		}
+	}
+
+	return;
+}
+
+void CFxHandleExt::InitSpatialized(CActor* pActor, uint boneId)
+{
+	if (this->type != 0xffffffff) {
+		if (!IsValid()) {
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(this, this->type, FX_MATERIAL_SELECTOR_NONE);
+			if (IsValid()) {
+				SpatializeOnActor(2, pActor, boneId);
+				Start();
+			}
+		}
 	}
 
 	return;
