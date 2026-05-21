@@ -115,7 +115,7 @@ public:
 
 	void RegisterTiedActor(CActor* pActorTo, CActor* pActor, int carryMethod);
 	void UnregisterTiedActor(CActor* pActor);
-	CActor* FindTiedActor(CActor* pActor);
+	S_TIED_ACTOR_ENTRY* FindTiedActor(CActor* pActor);
 	float GetSubjectiveCarriedWeight();
 	float GetCarriedWeight();
 

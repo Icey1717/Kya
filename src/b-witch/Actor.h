@@ -517,7 +517,7 @@ public:
 
 	virtual bool IsMakingNoise();
 
-	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix);
 
 	virtual void Func_0xd4(ed_zone_3d* pZone) {}
 	virtual void Func_0xd8(ed_zone_3d* pZone) {}

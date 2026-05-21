@@ -3938,14 +3938,13 @@ int CActor::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, i
 	return *param_5 == 0;
 }
 
-void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
+void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix)
 {
 	CActor* pCurrentTiedActor;
 	CCollision* pCVar2;
 	CCollision* pCVar3;
 	bool bVar4;
 	uint uVar5;
-	Timer* pTVar6;
 
 	ACTOR_LOG(LogLevel::Info, "CActor::TieToActor {} -> {}", this->name, pTieActor ? pTieActor->name : "None");
 
@@ -3984,9 +3983,8 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 				this->flags = this->flags & 0xfffdffff;
 				bVar4 = this->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 				if (bVar4 != false) {
-					pTVar6 = GetTimer();
 					CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(this);
-					(pAutonomous->dynamicExt).scaledTotalTime = pTVar6->scaledTotalTime;
+					(pAutonomous->dynamicExt).scaledTotalTime = GetTimer()->scaledTotalTime;
 				}
 			}
 
@@ -4008,6 +4006,7 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 			}
 		}
 	}
+
 	return;
 }
 
@@ -4652,15 +4651,13 @@ void CActor::SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int par
 // Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0)
 {
-	S_CARRY_ACTOR_ENTRY* peVar1;
-	float fVar2;
-	int iVar3;
+	S_CARRY_ACTOR_ENTRY* pEntry;
 	edF32MATRIX4* peVar4;
 	edF32MATRIX4 eStack128;
 	edF32MATRIX4 eStack64;
 
 	if ((this->pCollisionData == (CCollision*)0x0) ||
-		(peVar1 = this->pCollisionData->pCarryActorEntry, peVar4 = &peVar1->m1, peVar1 == (S_CARRY_ACTOR_ENTRY*)0x0)) {
+		(pEntry = this->pCollisionData->pCarryActorEntry, peVar4 = &pEntry->m1, pEntry == (S_CARRY_ACTOR_ENTRY*)0x0)) {
 		edF32Matrix4FromEulerSoft(&eStack64, &this->pCinData->rotationEuler, "XYZ");
 		eStack64.rowT = this->baseLocation;
 
@@ -4932,7 +4929,7 @@ void CActor::SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0)
 	CActor* pCVar1;
 	S_CARRY_ACTOR_ENTRY* pSVar2;
 	uint uVar3;
-	CActor* pCVar4;
+	S_TIED_ACTOR_ENTRY* pCVar4;
 	int iVar5;
 	edF32MATRIX4* peVar6;
 	edF32MATRIX4* peVar7;
@@ -4961,7 +4958,7 @@ void CActor::SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0)
 		local_40 = *peVar7;
 	}
 
-	uVar3 = pCVar4->actorFieldS;
+	uVar3 = pCVar4->carryMethod;
 	if (uVar3 != 0) {
 		if (uVar3 == 3) {
 			local_60 = m0->rowT;

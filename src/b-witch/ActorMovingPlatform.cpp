@@ -354,7 +354,7 @@ void CActorMovingPlatform::Init()
 		this->pTiltData->pushData.Init();
 	}
 
-	this->field_0x200 = gF32Matrix4Unit;
+	this->inverseInitDiffMatrix = gF32Matrix4Unit;
 
 	{
 		S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = this->pActorStream->aEntries;
@@ -714,8 +714,8 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		if ((iVar2 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015b1b0;
 	}
 
-	SV_ComputeDiffMatrixFromInit(&this->field_0x200);
-	edF32Matrix4GetInverseOrthoHard(&this->field_0x200, &this->field_0x200);
+	SV_ComputeDiffMatrixFromInit(&this->inverseInitDiffMatrix);
+	edF32Matrix4GetInverseOrthoHard(&this->inverseInitDiffMatrix, &this->inverseInitDiffMatrix);
 
 LAB_0015b1b0:
 	if ((this->pTiedActor != (CActor*)0x0) || (param_3 != 0)) {
@@ -737,57 +737,54 @@ LAB_0015b1b0:
 
 void CActorMovingPlatform::ForceCarriedStuff()
 {
-	int iVar1;
-	int iVar2;
-	S_STREAM_MPF_NO_FRICTION_ZONE* pSVar3;
-	int iVar4;
-	int iVar5;
-	CActor* piVar1;
+	int nbEntries;
+	S_STREAM_MPF_NO_FRICTION_ZONE* pNoFrictionZone;
+	int curIndex;
 
 	if (this->pActorStream == (S_BRIDGE_ACTOR_STREAM*)0x0) {
-		iVar2 = 0;
+		nbEntries = 0;
 	}
 	else {
-		iVar2 = this->pActorStream->entryCount;
+		nbEntries = this->pActorStream->entryCount;
 	}
 
-	iVar5 = 0;
-	if (0 < iVar2) {
-		iVar4 = 0;
+	curIndex = 0;
+	if (0 < nbEntries) {
 		do {
-			S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = &this->pActorStream->aEntries[iVar5];
+			S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = &this->pActorStream->aEntries[curIndex];
 			if (pEntry->actorRef.Get() != (CActor*)0x0) {
-				pEntry->actorRef.Get()->TieToActor(this, pEntry->carryMethod, 1, &this->field_0x200);
+				pEntry->actorRef.Get()->TieToActor(this, pEntry->carryMethod, 1, &this->inverseInitDiffMatrix);
 			}
-			iVar5 = iVar5 + 1;
-		} while (iVar5 < iVar2);
+
+			curIndex = curIndex + 1;
+		} while (curIndex < nbEntries);
 	}
 
-	iVar2 = 0;
+	nbEntries = 0;
 	if (this->pZoneStream != (S_ZONE_STREAM_REF*)0x0) {
-		iVar2 = this->pZoneStream->entryCount;
+		nbEntries = this->pZoneStream->entryCount;
 	}
 
-	iVar5 = 0;
-	if (0 < iVar2) {
-		iVar4 = 0;
+	curIndex = 0;
+	if (0 < nbEntries) {
 		do {
-			S_STREAM_REF<ed_zone_3d>* pEntry = &this->pZoneStream->aEntries[iVar5];
+			S_STREAM_REF<ed_zone_3d>* pEntry = &this->pZoneStream->aEntries[curIndex];
 			if (pEntry->Get() != 0) {
-				pEntry->Get()->pMatrix = STORE_POINTER(&this->field_0x200);
+				pEntry->Get()->pMatrix = STORE_POINTER(&this->inverseInitDiffMatrix);
 			}
-			iVar5 = iVar5 + 1;
-		} while (iVar5 < iVar2);
+
+			curIndex = curIndex + 1;
+		} while (curIndex < nbEntries);
 	}
 
-	pSVar3 = this->aNoFrictionZones;
-	iVar2 = 0;
+	pNoFrictionZone = this->aNoFrictionZones;
+	curIndex = 0;
 	if (0 < (int)this->noFrictionZoneCount) {
 		do {
-			iVar2 = iVar2 + 1;
-			((pSVar3->zoneRef).Get())->pMatrix = STORE_POINTER(&this->field_0x200);
-			pSVar3 = pSVar3 + 1;
-		} while (iVar2 < (int)this->noFrictionZoneCount);
+			curIndex = curIndex + 1;
+			((pNoFrictionZone->zoneRef).Get())->pMatrix = STORE_POINTER(&this->inverseInitDiffMatrix);
+			pNoFrictionZone = pNoFrictionZone + 1;
+		} while (curIndex < (int)this->noFrictionZoneCount);
 	}
 
 	return;
@@ -1283,8 +1280,8 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 		if ((iVar8 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015aa10;
 	}
 
-	SV_ComputeDiffMatrixFromInit(&this->field_0x200);
-	edF32Matrix4GetInverseOrthoHard(&this->field_0x200, &this->field_0x200);
+	SV_ComputeDiffMatrixFromInit(&this->inverseInitDiffMatrix);
+	edF32Matrix4GetInverseOrthoHard(&this->inverseInitDiffMatrix, &this->inverseInitDiffMatrix);
 LAB_0015aa10:
 	if ((this->pTiedActor != (CActor*)0x0) || (local_80 != 0)) {
 		if (this->field_0x1ec.IsValid()) {
@@ -1901,7 +1898,7 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 					S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = this->pActorStream->aEntries + iVar7;
 					pCVar1 = pEntry->actorRef.Get();
 					if (pSender == pCVar1) {
-						pCVar1->TieToActor(this, pEntry->carryMethod, 1, &this->field_0x200);
+						pCVar1->TieToActor(this, pEntry->carryMethod, 1, &this->inverseInitDiffMatrix);
 					}
 
 					iVar7 = iVar7 + 1;
@@ -2365,8 +2362,8 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 		if ((iVar5 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015adf0;
 	}
 
-	SV_ComputeDiffMatrixFromInit(&this->field_0x200);
-	edF32Matrix4GetInverseOrthoHard(&this->field_0x200, &this->field_0x200);
+	SV_ComputeDiffMatrixFromInit(&this->inverseInitDiffMatrix);
+	edF32Matrix4GetInverseOrthoHard(&this->inverseInitDiffMatrix, &this->inverseInitDiffMatrix);
 
 LAB_0015adf0:
 	if ((this->pTiedActor != (CActor*)0x0) || (param_3 != 0)) {

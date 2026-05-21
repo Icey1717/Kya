@@ -588,10 +588,10 @@ void CActorWind::ChangeVisibleState(int state)
 	return;
 }
 
-void CActorWind::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
+void CActorWind::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix)
 {
-	CActor::TieToActor(pTieActor, carryMethod, param_4, param_5);
-	this->field_0x1e8 = param_5;
+	CActor::TieToActor(pTieActor, carryMethod, param_4, pTieReferenceMatrix);
+	this->field_0x1e8 = pTieReferenceMatrix;
 
 	return;
 }

@@ -1557,9 +1557,9 @@ void CCollision::UpdateMatrix(edF32MATRIX4* param_2)
 }
 
 
-void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRIX4* m0, CActor* param_5)
+void CCollision::TranslateList(CActor* pActor, CActorsTable* pActorsTable, edF32MATRIX4* m0, CActor* param_5)
 {
-	CActor* pCVar1;
+	CActor* pCurEntry;
 	float fVar2;
 	float fVar3;
 	float fVar4;
@@ -1567,7 +1567,7 @@ void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRI
 	CActor* pCVar6;
 	bool bVar7;
 	int iVar8;
-	int iVar9;
+	int nbEntries;
 	edF32MATRIX4 local_a0;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 local_50;
@@ -1599,22 +1599,22 @@ void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRI
 
 		edF32Matrix4MulF32Matrix4Hard(&local_40, &local_a0, m0);
 
-		iVar9 = param_3->nbEntries;
+		nbEntries = pActorsTable->nbEntries;
 
-		while (0 < iVar9) {
-			iVar8 = iVar9 + -1;
-			pCVar1 = param_3->aEntries[iVar9 + -1];
-			iVar9 = iVar8;
+		while (0 < nbEntries) {
+			iVar8 = nbEntries + -1;
+			pCurEntry = pActorsTable->aEntries[nbEntries + -1];
+			nbEntries = iVar8;
 
-			if ((param_5 != pCVar1) && (pCVar1->flags = pCVar1->flags | 0x40000, (CActorFactory::gClassProperties[pCVar1->typeID].flags & 0x40) != 0))
+			if ((param_5 != pCurEntry) && (pCurEntry->flags = pCurEntry->flags | 0x40000, (CActorFactory::gClassProperties[pCurEntry->typeID].flags & 0x40) != 0))
 			{
 				bVar7 = true;
-				if ((pActor != pCVar1->pTiedActor) &&
-					((pCVar1->pCollisionData != (CCollision*)0x0 && ((pCVar1->pCollisionData->flags_0x0 & 0x80) != 0)))) {
+				if ((pActor != pCurEntry->pTiedActor) &&
+					((pCurEntry->pCollisionData != (CCollision*)0x0 && ((pCurEntry->pCollisionData->flags_0x0 & 0x80) != 0)))) {
 					bVar7 = false;
 				}
 
-				if (((bVar7) && (pCVar6 = pCVar1->pTiedActor, pCVar6 != (CActor*)0x0)) && (pCVar6 != pActor)) {
+				if (((bVar7) && (pCVar6 = pCurEntry->pTiedActor, pCVar6 != (CActor*)0x0)) && (pCVar6 != pActor)) {
 					for (; pCVar5 = pActor, pCVar6->pTiedActor != (CActor*)0x0; pCVar6 = pCVar6->pTiedActor) {
 					}
 
@@ -1627,7 +1627,7 @@ void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRI
 				}
 
 				if (bVar7) {
-					pCVar1->CarriedByActor(pActor, &local_40);
+					pCurEntry->CarriedByActor(pActor, &local_40);
 				}
 			}
 		}
@@ -2749,7 +2749,7 @@ void CCollision::UnregisterTiedActor(CActor* pActor)
 }
 
 // Should be in: D:/Projects/b-witch/CollisionsServices.cpp
-CActor* CCollision::FindTiedActor(CActor* pActor)
+S_TIED_ACTOR_ENTRY* CCollision::FindTiedActor(CActor* pActor)
 {
 	S_TIED_ACTOR_ENTRY* pEntry;
 
@@ -2757,7 +2757,8 @@ CActor* CCollision::FindTiedActor(CActor* pActor)
 		(pEntry != (S_TIED_ACTOR_ENTRY*)0x0 && (pActor != pEntry->pActor)); pEntry = pEntry->pPrev)
 	{
 	}
-	return pEntry->pActor;
+
+	return pEntry;
 }
 
 float CCollision::GetSubjectiveCarriedWeight()

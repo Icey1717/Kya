@@ -882,7 +882,7 @@ int CActorFighter::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM 
 	return result;
 }
 
-void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
+void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix)
 {
 	int iVar1;
 	CActor* pCVar2;
@@ -894,18 +894,18 @@ void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, 
 		if ((stateFlags & 0xff800) == FIGHTER_EXECUTE_FLAGS_HOLD) {
 			pCVar2 = this->field_0x354;
 			if (pCVar2 != (CActor*)0x0) {
-				pCVar2->TieToActor(pTieActor, carryMethod, param_4, param_5);
+				pCVar2->TieToActor(pTieActor, carryMethod, param_4, pTieReferenceMatrix);
 			}
 		}
 		else {
 			if (((stateFlags & 0xff800) == FIGHTER_EXECUTE_FLAGS_STD) &&
 				((iVar1 = this->actorState, iVar1 - 0x14U < 2 || (iVar1 == FIGHTER_FLIP_OFF_ME_B)))) {
-				pAdversary->TieToActor(pTieActor, carryMethod, param_4, param_5);
+				pAdversary->TieToActor(pTieActor, carryMethod, param_4, pTieReferenceMatrix);
 			}
 		}
 	}
 
-	CActor::TieToActor(pTieActor, carryMethod, param_4, param_5);
+	CActor::TieToActor(pTieActor, carryMethod, param_4, pTieReferenceMatrix);
 
 	return;
 }

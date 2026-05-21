@@ -403,7 +403,7 @@ public:
 	CFxHandle field_0x1f4;
 
 	uint movingPlatformFlags;
-	edF32MATRIX4 field_0x200;
+	edF32MATRIX4 inverseInitDiffMatrix;
 
 	S_BRIDGE_ACTOR_STREAM* pActorStream;
 	S_ZONE_STREAM_REF* pZoneStream;

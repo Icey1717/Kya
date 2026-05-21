@@ -288,7 +288,7 @@ public:
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeVisibleState(int state);
-	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void BehaviourWind_Manage();

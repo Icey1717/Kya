@@ -511,7 +511,7 @@ public:
 
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 
-	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* pTieReferenceMatrix);
 
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	// End Interface
