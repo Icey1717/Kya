@@ -16,6 +16,7 @@
 #include "ed3D.h"
 
 #ifdef PLATFORM_WIN
+#include "port/pointer_conv.h"
 #include "port.h"
 #include "renderer.h"
 #include "profiling.h"
@@ -843,6 +844,10 @@ void CScene::Level_Term(void)
 		curIndex = curIndex + 1;
 		ppManager = ppManager - 1;
 	} while (curIndex < 0x18);
+
+#ifdef PLATFORM_WIN
+	POINTERCONV_RESET_TRANSIENT();
+#endif
 
 	FreeAllAllocators();
 

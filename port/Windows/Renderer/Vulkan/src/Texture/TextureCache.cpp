@@ -27,6 +27,8 @@ static const int* rowOffset[8] = {
 #define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY("TextureCache", LogLevel::Info, fmt, ##__VA_ARGS__);
 //#define LOG_TEXCACHE(fmt, ...)
 
+constexpr int gTextureAlignment = 32;
+
 void Renderer::ImageData::Log(const char* prefix) const
 {
 	LOG_TEXCACHE("{} bpp: {}, w: {}, h: {}, maxMipLevel: {}", prefix, bpp, canvasWidth, canvasHeight, maxMipLevel);
@@ -1082,6 +1084,22 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 
 	bitmap.Log("Uploading texture TEX - ");
 	auto pBuffer = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
+
+	pRenderer = new PS2::GSSimpleTexture();
+	pRenderer->width = bitmap.canvasWidth;
+	pRenderer->height = bitmap.canvasHeight;
+	pRenderer->imageData = bitmap;
+	pRenderer->CreateResources(false);
+	pRenderer->AssignUploadBuffer(std::move(pBuffer));
+	pRenderer->UploadDataFromBuffer();
+}
+
+void Renderer::SimpleTexture::CreateRenderer(const Renderer::ImageData& bitmap)
+{
+	TextureUpload::UploadBufferPtr pBuffer = std::make_unique<TextureUpload::UploadBuffer>(bitmap.canvasWidth * bitmap.canvasHeight * 4, gTextureAlignment, bitmap.canvasWidth, bitmap.canvasHeight);
+
+	// Copy from bitmap.pImage to the upload buffer.
+	memcpy(pBuffer->Get(), bitmap.pImage, static_cast<size_t>(bitmap.canvasWidth * bitmap.canvasHeight * 4)); // Assuming 4 bytes per pixel for RGBA8
 
 	pRenderer = new PS2::GSSimpleTexture();
 	pRenderer->width = bitmap.canvasWidth;

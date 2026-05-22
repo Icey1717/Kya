@@ -1,6 +1,8 @@
 #include "Sprite.h"
 #include "ed3D.h"
+#include "ed3D/ed3DG2D.h"
 #include "renderer.h"
+#include "Texture.h"
 #include <memory>
 #include <array>
 
@@ -9,6 +11,7 @@
 
 namespace Renderer::Kya::Sprite
 {
+	// Circular pool of simple meshes to avoid having to allocate a new one for every sprite. The pool is large enough to hold all sprites in a scene, but can be reset when needed.
 	class SpritePool
 	{
 	public:
@@ -296,6 +299,24 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 					auto* pSimpleMesh = gSpritePool.GetSimpleMesh();
 					pSimpleMesh->GetVertexBufferData().ResetAfterDraw();
 					ProcessVertices(pSprite, pSimpleMesh);
+
+					auto* pMaterial = ed3DG2DGetG2DMaterialFromIndex(gBankMaterial, pSprite->materialIndex);
+					
+					std::string newName = "Sprite - Material Index: " + std::to_string(pSprite->materialIndex);
+
+					if (pMaterial) {
+						if (const Renderer::Kya::G2D::Material* pLibTexture = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterial)) {
+							for (auto& layer : pLibTexture->layers) {
+								for (auto& texture : layer.textures) {
+									if (texture.pSimpleTexture) {
+										newName += " Texture: " + texture.pSimpleTexture->GetName();
+									}
+								}
+							}
+						}
+					}
+
+					pSimpleMesh->SetName(newName);
 
 					uint execCode = ExtractExecCodeFromVifList(pSprite);
 

@@ -63,6 +63,7 @@ namespace Renderer
 		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList);
 
 		void BindTexture(SimpleTexture* pTexture);
+		void BindUntextured();
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags);
 
 		const VkSampler& GetSampler();

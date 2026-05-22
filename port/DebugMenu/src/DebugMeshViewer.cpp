@@ -154,6 +154,10 @@ namespace DebugMeshViewer {
 			}
 		}
 
+		if (!pStripMaterial) {
+			return nullptr;
+		}
+
 		const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pStripMaterial);
 		const Renderer::Kya::G3D::Strip* pMeshStrip = Renderer::Kya::GetMeshLibrary().FindStrip(pStrip);
 

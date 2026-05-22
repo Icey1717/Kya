@@ -43,6 +43,8 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
+		static SimpleTexture* gWhiteTexture = nullptr;
+
 		// SSBO-backed per-frame buffer. The GPU sees a plain array; the draw index is
 		// supplied via push constants. Consecutive identical entries are deduplicated.
 		template<typename T, int MaxInstances>

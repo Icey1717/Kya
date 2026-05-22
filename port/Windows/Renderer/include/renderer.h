@@ -194,6 +194,7 @@ namespace Renderer
 	struct RendererObject {
 		RendererObject(std::string inName) : name(inName) {}
 		const std::string& GetName() const { return name; }
+		void SetName(const std::string& inName) { name = inName; }
 
 	private:
 		std::string name;
@@ -218,6 +219,7 @@ namespace Renderer
 		{}
 
 		void CreateRenderer(const CombinedImageData& inImageData);
+		void CreateRenderer(const Renderer::ImageData& bitmap);
 		PS2::GSSimpleTexture* GetRenderer() const { return pRenderer; };
 
 		int GetLayerIndex() const { return details.layerIndex; }
@@ -511,6 +513,7 @@ namespace Renderer
 	void BindTexture(SimpleTexture* pNewTexture);
 	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags);
 	void BindNull();
+	void BindUntextured();
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 	void PushModelMatrix(float* pModel);

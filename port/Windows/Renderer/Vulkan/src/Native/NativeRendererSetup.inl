@@ -213,9 +213,25 @@ namespace Renderer
 
 			SetObjectName(reinterpret_cast<uint64_t>(pipeline.pipeline), VK_OBJECT_TYPE_PIPELINE, name);
 		}
+
 		Renderer::FrameBufferBase& GetFrameBuffer()
 		{
 			return gFrameBuffer;
+		}
+
+		void InitWhiteTexture()
+		{
+			gWhiteTexture = new SimpleTexture("White Texture", { 0, 0, 1, 1 }, TextureRegisters{});
+
+
+			const int width = 16;
+			const int height = 16;
+
+			std::vector<uint32_t> whitePixels(width * height, 0xFFFFFFFF);
+
+			Renderer::ImageData whiteBitmap{ .pImage = whitePixels.data(), .canvasWidth = width, .canvasHeight = height, .bpp = 32, .maxMipLevel = 0 };
+
+			gWhiteTexture->CreateRenderer(whiteBitmap);
 		}
 
 		void Setup()
@@ -262,6 +278,8 @@ namespace Renderer
 			InitFade();
 
 			Renderer::Native::SetupPreview(512, 512);
+
+			InitWhiteTexture();
 		}
 
 		void ResizeFrameBuffer(int width, int height)

@@ -142,6 +142,18 @@ namespace Debug
 				ed_Chunck* pMBNK = pManager->MBNA + 1;
 				ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
 
+				if (ImGui::CollapsingHeader("LOD - MBNK", ImGuiTreeNodeFlags_None)) {
+					const int nbMBNK = pMBNK->size / sizeof(ed_hash_code);
+
+					ImGui::Text("Num Hashes: %d", nbMBNK);
+
+					ImGui::Spacing();
+
+					for (int i = 0; i < nbMBNK; i++) {
+						ImGui::Text("- %s", pMaterialBank[i].hash.ToString().c_str());
+					}
+				}
+
 				ed_hash_code* pHash = LOAD_POINTER_CAST(ed_hash_code*, pLod->pObj);
 				ImGui::Text("Hash: %s", pHash->hash.ToString().c_str());
 

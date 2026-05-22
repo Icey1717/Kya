@@ -37,6 +37,96 @@ TEST(AddTest, PositiveNumbers) {
 	EXPECT_EQ(result, expected);
 }
 
+#ifdef PLATFORM_WIN
+class PointerConvTest : public ::testing::Test {
+protected:
+	void SetUp() override
+	{
+		PointerConv::ResetAll();
+	}
+
+	void TearDown() override
+	{
+		PointerConv::ResetAll();
+	}
+};
+
+TEST_F(PointerConvTest, NullPointerRoundTripUsesZeroHandle)
+{
+	EXPECT_EQ(STORE_POINTER(nullptr), 0);
+	EXPECT_TRUE(PointerConv::ResolvePointer(0).has_value());
+	EXPECT_EQ(LOAD_POINTER(0), nullptr);
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 0);
+}
+
+TEST_F(PointerConvTest, PersistentHandlesDeduplicateAndReferenceCount)
+{
+	int value = 123;
+	int handleA = STORE_POINTER(&value);
+	int handleB = STORE_POINTER(&value);
+
+	EXPECT_EQ(handleA, handleB);
+	EXPECT_EQ(LOAD_POINTER(handleA), &value);
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 1);
+
+	RELEASE_POINTER(handleA);
+	EXPECT_EQ(LOAD_POINTER(handleB), &value);
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 1);
+
+	RELEASE_POINTER(handleB);
+	EXPECT_FALSE(PointerConv::ResolvePointer(handleA).has_value());
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 0);
+}
+
+TEST_F(PointerConvTest, ReleasedSlotsReuseIndexWithNewGeneration)
+{
+	int valueA = 1;
+	int valueB = 2;
+	int handleA = STORE_POINTER(&valueA);
+	EXPECT_EQ(PointerConv::GetCapacity(), 1);
+
+	RELEASE_POINTER(handleA);
+	EXPECT_FALSE(PointerConv::ResolvePointer(handleA).has_value());
+
+	int handleB = STORE_POINTER(&valueB);
+	EXPECT_NE(handleA, handleB);
+	EXPECT_EQ(PointerConv::GetCapacity(), 1);
+	EXPECT_EQ(LOAD_POINTER(handleB), &valueB);
+}
+
+TEST_F(PointerConvTest, TransientHandlesResetSeparately)
+{
+	int persistentValue = 10;
+	int transientValue = 20;
+	int persistentHandle = STORE_POINTER(&persistentValue);
+	int transientHandle = STORE_TRANSIENT_POINTER(&transientValue);
+
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 2);
+
+	POINTERCONV_RESET_TRANSIENT();
+
+	EXPECT_EQ(LOAD_POINTER(persistentHandle), &persistentValue);
+	EXPECT_FALSE(PointerConv::ResolvePointer(transientHandle).has_value());
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 1);
+}
+
+TEST_F(PointerConvTest, ResetAllClearsAllHandles)
+{
+	int valueA = 1;
+	int valueB = 2;
+	STORE_POINTER(&valueA);
+	STORE_TRANSIENT_POINTER(&valueB);
+
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 2);
+	EXPECT_GE(PointerConv::GetCapacity(), PointerConv::GetLiveHandleCount());
+
+	POINTERCONV_RESET_ALL();
+
+	EXPECT_EQ(PointerConv::GetLiveHandleCount(), 0);
+	EXPECT_EQ(PointerConv::GetCapacity(), 0);
+}
+#endif
+
 // Function to dump vector contents to a file
 void DumpVectorToFile(const std::vector<uint8_t>& data, const std::string& filename) {
 	std::string filepath = std::string(TEST_DATA_DIRECTORY) + filename;

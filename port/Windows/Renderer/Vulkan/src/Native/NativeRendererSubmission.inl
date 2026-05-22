@@ -296,6 +296,11 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 	NATIVE_LOG(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
 }
 
+void Renderer::Native::BindUntextured()
+{
+	Renderer::Native::BindTexture(gWhiteTexture);
+}
+
 const VkSampler& Renderer::Native::GetSampler()
 {
 	return gFrameBufferSampler;
@@ -345,6 +350,11 @@ void Renderer::PushAnimST(float* pAnimST)
 void Renderer::BindNull()
 {
 	Native::gCurrentDraw.reset();
+}
+
+void Renderer::BindUntextured()
+{
+	Native::BindUntextured();
 }
 
 void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)

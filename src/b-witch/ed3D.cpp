@@ -5150,13 +5150,13 @@ edpkt_data* ed3DFlushStripOptionFlag(edpkt_data* pPkt, int param_2)
 }
 
 
-edpkt_data* ed3DDMAGetGIFTagFan(uint flags, ed_g2d_material* pMaterrial)
+edpkt_data* ed3DDMAGetGIFTagFan(uint flags, ed_g2d_material* pMaterial)
 {
 	edpkt_data* pGifTag;
 
 	if ((flags & 0x4000) == 0) {
 		if ((flags & 0x8000) == 0) {
-			if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+			if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
 				if ((flags & 0x800) == 0) {
 					pGifTag = &g_stGifTAG_FAN_Gouraud_NoFog;
 				}
@@ -5169,7 +5169,7 @@ edpkt_data* ed3DDMAGetGIFTagFan(uint flags, ed_g2d_material* pMaterrial)
 			}
 		}
 		else {
-			if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+			if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
 				pGifTag = g_stGifTAG_Gouraud_NoFog_LINE;
 			}
 			else {
@@ -5178,7 +5178,7 @@ edpkt_data* ed3DDMAGetGIFTagFan(uint flags, ed_g2d_material* pMaterrial)
 		}
 	}
 	else {
-		if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+		if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
 			pGifTag = g_stGifTAG_Flat_NoFog_POINT;
 		}
 		else {
@@ -6220,7 +6220,32 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 			Renderer::Kya::GetTextureLibrary().BindFromDmaMaterial(pMaterial);
 		}
 		else {
-			Renderer::BindNull();
+			if (pMaterial->pMaterial == &gDefault_Material_Gouraud) {
+				// Just bind a white texture, original game just ignores the texture in the shader.
+				Renderer::BindUntextured();
+			}
+			else if (pMaterial->pMaterial == &gDefault_Material_Gouraud_Cluster) {
+				// Just bind a white texture, original game just ignores the texture in the shader.
+				Renderer::BindUntextured();
+			}
+			else if (pMaterial->pMaterial == &gDefault_Material_Flat) {
+				IMPLEMENTATION_GUARD();
+			}
+			else if (pMaterial->pMaterial == &gDefault_Material_Flat_Cluster) {
+				IMPLEMENTATION_GUARD();
+			}
+			else if (pMaterial->pMaterial == &gMaterial_Render_Zbuffer_Only) {
+				IMPLEMENTATION_GUARD();
+			}
+			else if (pMaterial->pMaterial == &gMaterial_Render_Zbuffer_Only_Cluster) {
+				IMPLEMENTATION_GUARD();
+			}
+			else if (pMaterial->pMaterial == nullptr) {
+				Renderer::BindNull();
+			}
+			else {
+				Renderer::BindNull();
+			}
 		}
 #endif
 
@@ -6432,9 +6457,14 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 		}
 		else {
 			if (peVar1->commandBufferTextureSize == 2) {
+				// Used for simple materials like the default gouraud shader (gDefault_Material_Gouraud).
 				peVar4->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				peVar4->asU32[2] = 0;
 				peVar4->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
+
+#ifdef PLATFORM_WIN
+				//ProcessTextureCommands(LOAD_POINTER_CAST(edpkt_data*, peVar1->pCommandBufferTexture), peVar1->commandBufferTextureSize);
+#endif
 		
 				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				peVar4[1].asU32[2] = SCE_VIF1_SET_FLUSH(0);
@@ -6461,7 +6491,7 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 				peVar4->asU32[2] = SCE_VIF1_SET_NOP(0);
 				peVar4->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
 
-				edpkt_data* pFlippedPkt = (edpkt_data*)LOAD_POINTER(peVar1->pCommandBufferTexture) +
+				edpkt_data* pFlippedPkt = LOAD_POINTER_CAST(edpkt_data* ,peVar1->pCommandBufferTexture) +
 					(gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->nbLayers);
 #ifdef PLATFORM_WIN
 				ProcessTextureCommands(pFlippedPkt, peVar1->commandBufferTextureSize);
@@ -11764,39 +11794,40 @@ void ed3DPrepareG3DManageStruct(ed_g3d_manager* pManager, char* pFileBufferA, in
 	return;
 }
 
-char* edHashCodeGet(Hash_8 hash, int* texHashPtr, int hashCount, uint triedHashes, uint totalHashes)
+ed_hash_code* edHashCodeGet(Hash_8 hash, ed_hash_code* pHashes, int hashCount, uint triedHashes, uint totalHashes)
 {
 	uint uVar1;
-	ulong* puVar2;
+	ed_hash_code* pFoundHashCode;
 
-	puVar2 = (ulong*)(texHashPtr + hashCount * 4);
-	if (*puVar2 < hash.number) {
+	pFoundHashCode = pHashes + hashCount;
+	if (pFoundHashCode->hash.number < hash.number) {
 		uVar1 = (uint)(totalHashes - hashCount) >> 1;
 		if (uVar1 == 0) {
 			uVar1 = 1;
 		}
 		if (hashCount == totalHashes) {
-			puVar2 = (ulong*)0x0;
+			pFoundHashCode = (ed_hash_code*)0x0;
 		}
 		else {
-			puVar2 = (ulong*)edHashCodeGet(hash, texHashPtr, hashCount + uVar1, hashCount + 1, totalHashes);
+			pFoundHashCode = edHashCodeGet(hash, pHashes, hashCount + uVar1, hashCount + 1, totalHashes);
 		}
 	}
 	else {
-		if (hash.number < *puVar2) {
+		if (hash.number < pFoundHashCode->hash.number) {
 			uVar1 = (uint)(hashCount - triedHashes) >> 1;
 			if (uVar1 == 0) {
 				uVar1 = 1;
 			}
 			if (hashCount == triedHashes) {
-				puVar2 = (ulong*)0x0;
+				pFoundHashCode = (ed_hash_code*)0x0;
 			}
 			else {
-				puVar2 = (ulong*)edHashCodeGet(hash, texHashPtr, hashCount - uVar1, triedHashes, hashCount + -1);
+				pFoundHashCode = edHashCodeGet(hash, pHashes, hashCount - uVar1, triedHashes, hashCount + -1);
 			}
 		}
 	}
-	return (char*)puVar2;
+
+	return pFoundHashCode;
 }
 
 ed_hash_code* edHashcodeGet(Hash_8 hash, ed_Chunck* pChunck)
@@ -11805,7 +11836,7 @@ ed_hash_code* edHashcodeGet(Hash_8 hash, ed_Chunck* pChunck)
 
 	/* If the first value in the texture obj buffer is HASH or MBNK */
 	if ((pChunck->hash == HASH_CODE_HASH) || (pChunck->hash == HASH_CODE_MBNK)) {
-		pcVar1 = (ed_hash_code*)edHashCodeGet(hash, (int*)(pChunck + 1), pChunck->nextChunckOffset - 0x10U >> 5, 0,
+		pcVar1 = edHashCodeGet(hash, (ed_hash_code*)(pChunck + 1), pChunck->nextChunckOffset - 0x10U >> 5, 0,
 			pChunck->nextChunckOffset - 0x10U >> 4);
 	}
 	else {
@@ -11846,7 +11877,7 @@ void ed3DPrepareMaterialBank(ed_Chunck* pMBNA, ed_g2d_manager* pTextureInfo)
 	int mbnaSize;
 	ed_Chunck* pChunk;
 	ushort materialCount;
-	ed_hash_code* pcVar4;
+	ed_hash_code* pFoundHashCode;
 	ed_Chunck* pMBNK;
 
 	mbnaSize = pMBNA->size;
@@ -11869,10 +11900,10 @@ void ed3DPrepareMaterialBank(ed_Chunck* pMBNA, ed_g2d_manager* pTextureInfo)
 
 				ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Trying to find texture {}: {}", ((pChunk->size - 0x10U) >> 4) - materialCount, pMaterialHash->hash.ToString());
 
-				pcVar4 = edHashcodeGet(pMaterialHash->hash, pTextureInfo->pMATA_HASH);
-				if (pcVar4 != (ed_hash_code*)0x0) {
-					ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Found texture: {}", pcVar4->hash.ToString());
-					pMaterialHash->pData = STORE_POINTER(pcVar4);
+				pFoundHashCode = edHashcodeGet(pMaterialHash->hash, pTextureInfo->pMATA_HASH);
+				if (pFoundHashCode != (ed_hash_code*)0x0) {
+					ED3D_LOG(LogLevel::Info, "ed3DPrepareMaterialBank Found texture: {}", pFoundHashCode->hash.ToString());
+					pMaterialHash->pData = STORE_POINTER(pFoundHashCode);
 				}
 
 				materialCount = materialCount - 1;
@@ -14275,7 +14306,7 @@ void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash
 	return;
 }
 
-void ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt)
+void ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, edF32MATRIX4* pMatrix, ed_hash_code* pMBNK, edpkt_data* pPkt)
 {
 	edF32MATRIX4 eStack64;
 
@@ -14295,7 +14326,7 @@ void ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, edF32MATRIX4* pMatrix, ed_h
 	gRender_info_SPR->pPkt = pPkt;
 	gRender_info_SPR->pMeshTransformData = (ed_3d_hierarchy*)0x0;
 
-	_ed3DLinkSpriteToViewport(pSprite, pHash);
+	_ed3DLinkSpriteToViewport(pSprite, pMBNK);
 
 	return;
 }

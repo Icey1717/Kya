@@ -147,6 +147,16 @@ void ConditionedOperationArray::Create(ByteCode* pByteCode)
 				pByteCode->currentSeekPos = pByteCode->currentSeekPos + iVar3 * sizeof(S_STREAM_SIMPLE_OPERATION);
 			}
 
+#ifdef PLATFORM_WIN
+			// Verify
+			for (int i = 0; i < pOpHeader->opCount; i++) {
+				auto* pOp = pOpHeader->aOps + i;
+				if (pOp->opType == 4) {
+					assert(pOp->value != 0);
+				}
+			}
+#endif
+
 			COND_HEADER* pCondHeader = (COND_HEADER*)pByteCode->currentSeekPos;
 			pByteCode->currentSeekPos = (char*)(pCondHeader + 1);
 			iVar3 = pCondHeader->condCount;
@@ -242,7 +252,7 @@ void ConditionedOperationArray::Perform()
 				}
 
 				uVar3 = uVar3 + 1;
-				pOpHeader = (OP_HEADER*)(pOpHeader->aOps + pOpHeader->opCount);
+				pOpHeader = (OP_HEADER*)(pCondHeader->aConds + pCondHeader->condCount);
 			} while (uVar3 < this->pHeader->cndOpCount);
 		}
 	}
