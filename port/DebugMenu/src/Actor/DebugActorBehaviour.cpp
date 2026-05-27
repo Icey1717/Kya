@@ -53,22 +53,80 @@ namespace Fighter
 
 	static const char* GetDefaultStateName(int state)
 	{
+		static char buff[256];
+
 		switch (state) {
 		case FIGHTER_DEFAULT_STATE_IDLE:
 			return "Idle";
+		case FIGHTER_DEFAULT_STATE_RUN:
+			return "Run";
+		case FIGHTER_JUMP_FALL_TO_FLIP:
+			return "JumpFallToFlip";
+		case FIGHTER_JUMP_FLIP_IMPULSE:
+			return "JumpFlipImpulse";
+		case FIGHTER_JUMP_FLIP_PREPARE_FALL:
+			return "JumpFlipPrepareFall";
+		case FIGHTER_JUMP_FLIP_FALL:
+			return "JumpFlipFall";
+		case FIGHTER_JUMP_FLIP_PREPARE_JUMP:
+			return "JumpFlipPrepareJump";
+		case FIGHTER_JUMP_FLIP_JUMP:
+			return "JumpFlipJump";
+		case FIGHTER_FLIP_ON_ME:
+			return "FlipOnMe";
+		case FIGHTER_FLIP_OFF_ME_A:
+			return "FlipOffMeA";
+		case FIGHTER_FLIP_OFF_ME_B:
+			return "FlipOffMeB";
+		case FIGHTER_RIDE:
+			return "Ride";
+		case FIGHTER_RIDDEN_RUN:
+			return "RiddenRun";
+		case FIGHTER_RIDDEN_EJECT:
+			return "RiddenEject";
+		case FIGHTER_HOLD_STAND:
+			return "HoldStand";
+		case FIGHTER_HOLD_RUN:
+			return "HoldRun";
+		case FIGHTER_HOLD_PUSH_PREPARE:
+			return "HoldPushPrepare";
+		case FIGHTER_HOLD_THROW:
+			return "HoldThrow";
+		case FIGHTER_HIT_STEP_BACK:
+			return "HitStepBack";
+		case FIGHTER_HIT_PUSHED:
+			return "HitPushed";
+		case FIGHTER_PROJECTED_HIT_FLY:
+			return "ProjectedHitFly";
+		case FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE:
+			return "ProjectedHitFlyToSlide";
+		case FIGHTER_PROJECTED_HIT_SLIDE:
+			return "ProjectedHitSlide";
+		case FIGHTER_PROJECTED_HIT_WAKING_UP:
+			return "ProjectedHitWakingUp";
+		case FIGHTER_PROJECTED_HIT_STAGGER_CHECK:
+			return "ProjectedHitStaggerCheck";
+		case FIGHTER_BLOW_BEGIN:
+			return "BlowBegin";
+		case FIGHTER_EXECUTE_BLOW:
+			return "ExecuteBlow";
+		case FIGHTER_BLOW_END:
+			return "BlowEnd";
+		case FIGHTER_GRAB_BEGIN:
+			return "GrabBegin";
+		case FIGHTER_EXECUTE_GRAB:
+			return "ExecuteGrab";
+		case FIGHTER_GRAB_END:
+			return "GrabEnd";
 		default:
-			return "Unknown";
+			sprintf_s(buff, "Unknown (0x%X)", state);
+			return buff;
 		}
 	}
 
 	static const char* GetStateName(int curBehaviourId, int state)
 	{
-		switch (curBehaviourId) {
-		case FIGHTER_BEHAVIOUR_DEFAULT:
-			return GetDefaultStateName(state);
-		default:
-			return "Unknown";
-		}
+		return GetDefaultStateName(state);
 	}
 }
 
@@ -1295,6 +1353,7 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 	case ACTOR_HERO_PRIVATE:
 		return Hero::GetStateName(pActor->curBehaviourId, pActor->actorState);
 	case WOLFEN:
+		INHERITS_FROM_FIGHTER_STATE(pActor->curBehaviourId, pActor->actorState);
 		return Wolfen::GetStateName(pActor->actorState);
 	case WEAPON:
 		return Weapon::GetStateName(pActor->actorState);

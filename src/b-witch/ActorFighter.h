@@ -30,7 +30,14 @@
 #define FIGHTER_RIDDEN_RUN 0x24
 #define FIGHTER_RIDDEN_EJECT 0x28
 
+#define FIGHTER_HOLD_STAND 0x29
+#define FIGHTER_HOLD_RUN 0x2a
+#define FIGHTER_HOLD_PUSH_PREPARE 0x34
+#define FIGHTER_HOLD_THROW 0x35
+
 #define FIGHTER_HIT_STEP_BACK 0x4f
+
+#define FIGHTER_HIT_PUSHED 0x50
 
 #define FIGHTER_PROJECTED_HIT_FLY 0x55
 #define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
@@ -41,6 +48,10 @@
 #define FIGHTER_BLOW_BEGIN 0x65
 #define FIGHTER_EXECUTE_BLOW 0x66
 #define FIGHTER_BLOW_END 0x67
+
+#define FIGHTER_GRAB_BEGIN 0x68
+#define FIGHTER_EXECUTE_GRAB 0x69
+#define FIGHTER_GRAB_END 0x6a
 
 #define FIGHTER_EXECUTE_FLAGS_STD 0x800
 #define FIGHTER_EXECUTE_FLAGS_FLIP 0x2000
@@ -381,16 +392,16 @@ struct s_fighter_action
 	{
 		struct
 		{
-			byte field_0x0;
-			byte field_0x1;
+			byte moveByte;
+			byte actionByte;
 			byte field_0x2;
 			byte field_0x3;
 		};
 
 		struct
 		{
-			ushort field_0x0_2;
-			ushort field_0x2_2;
+			ushort commandLo;
+			ushort commandHi;
 		};
 
 		uint all;
@@ -475,6 +486,64 @@ public:
 	_rgba field_0x44;
 };
 
+struct S_FIGHTER_SLAVE_GROUND_SAMPLE
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+};
+
+class CSlaveGroundSampler
+{
+public:
+	void GetGroundDesc(float param_1, float param_2, S_FIGHTER_SLAVE_GROUND_SAMPLE* param_4, edF32VECTOR4* param_5);
+	uint field_0x0;
+	int field_0x4;
+	float field_0x8;
+	edF32VECTOR4 field_0x10;
+	float field_0x20;
+	edF32VECTOR4 field_0x30;
+	float field_0x40;
+	edF32VECTOR4 field_0x50;
+	float field_0x60;
+};
+
+struct s_fighter_slave_traj_out
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+	float field_0x14;
+	char _pad[8];
+};
+
+struct s_fighter_slave_traj_in
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	float field_0x24;
+	float field_0x28;
+	float field_0x2c;
+	float field_0x30;
+	float field_0x34;
+};
+
+class CSlaveTrajectory
+{
+public:
+	void SetConfig(s_fighter_slave_traj_in* pConfig);
+	void SetConfigAdjust(s_fighter_slave_traj_in* param_2, float* param_3, float* param_4);
+	s_fighter_slave_traj_out* Compute(float param_1, float param_2);
+
+	s_fighter_slave_traj_in config;
+	s_fighter_slave_traj_out output;
+};
+
 class CActorFighter : public CActorAutonomous
 {
 public:
@@ -534,7 +603,7 @@ public:
 	virtual int Func_0x18c();
 	virtual bool Func_0x190(CActor* pOther);
 	virtual void Func_0x194(float param_1);
-	virtual void UpdateFightCommand();
+	virtual int UpdateFightCommand();
 	virtual bool Func_0x19c();
 	virtual bool Func_0x1a0();
 	virtual bool Func_0x1a4();
@@ -543,6 +612,8 @@ public:
 	virtual bool Func_0x1b0(CActor* pOther);
 	virtual bool Func_0x1b4(int state);
 	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
+	virtual int InterpretSlaveMessage(int msg, void* pParams);
+	virtual int NotifyMaster(int msg, void* pParams);
 	virtual void _Execute_Std(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	virtual void _Std_GetPossibleHit(bool bPlayImpact);
 	virtual void _Std_GetPossibleExit();
@@ -557,6 +628,8 @@ public:
 	virtual void _EndFighterHold();
 	virtual void _Proj_GetPossibleExit();
 
+	edF32VECTOR4* GetAdversaryHeldPos();
+
 	void _BeginFighterFlip();
 	void _Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	void _EndFighterFlip();
@@ -564,6 +637,10 @@ public:
 	void _BeginFighterRide();
 	void _Execute_Ride(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	void _EndFighterRide(int newState);
+
+	void _SetAbsoluteSpeedOnGround(float param_1, edF32VECTOR4* param_3);
+
+	void _Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam);
 
 	void ClearLocalData();
 
@@ -599,6 +676,9 @@ public:
 	void _StateFighterHitStepBackInit(int animationId, int param_3);
 	void _StateFighterHitStepBack(int nextState, int animationId, int param_4);
 
+	void _StateFighterHitPushedInit();
+	void _StateFighterHitPushed();
+
 	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
 	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
 
@@ -621,6 +701,20 @@ public:
 	void _StateFighterFlipOffMe();
 	void _StateFighterFlipOffMeTerm(int newState);
 
+	void _StateFighterHoldStandInit();
+	void _StateFighterHoldStand();
+
+	void _StateFighterHoldRunInit();
+	void _StateFighterHoldRun();
+
+	void _StateFighterHoldPushPrepareInit();
+	void _StateFighterHoldPushPrepareTerm();
+
+	void _StateFighterHoldThrowInit();
+
+	void _StateFighterHoldFollowStd(int nextState);
+	void StateFighterHoldStd(int nextState, int nextAnim);
+
 	void _StateFighterRide();
 
 	void _StateFighterPrepareFightAction(int nextState);
@@ -629,6 +723,8 @@ public:
 	void _StateFighterHitStaggerCheck();
 
 	void _StateFighterHitStaggerFallInit(float param_1);
+
+	void _StateFighterMasterSaidDownRotate();
 
 	void _StateFighter_0xaInit();
 
@@ -844,7 +940,7 @@ public:
 	edF32VECTOR4 field_0x6a0;
 	float field_0x6b0;
 	float hitDamage;
-	int hitFlags;
+	uint hitFlags;
 	float field_0x6bc;
 	float field_0x6c0;
 	float field_0x6c4;
@@ -900,6 +996,10 @@ public:
 	edF32VECTOR4 field_0x8f0;
 	edF32VECTOR4 field_0x900;
 
+	CSlaveTrajectory field_0x920;
+	CSlaveTrajectory field_0x980;
+	CSlaveGroundSampler slaveGroundSampler;
+
 	S_STREAM_REF<CActor> pWeaponActor;
 
 	uint nbBlows;
@@ -917,8 +1017,8 @@ public:
 
 	undefined4 field_0xa50;
 	float field_0xa5c;
-	undefined4 field_0xa58;
-	undefined4 field_0xa54;
+	float field_0xa58;
+	float field_0xa54;
 	float field_0xa60;
 	float field_0xa70;
 	float field_0xa74;
@@ -950,7 +1050,23 @@ public:
 
 class CBehaviourFighterSlave : public CBehaviourFighter
 {
+public:
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	// 
+	virtual bool Execute(s_fighter_action* pAction, s_fighter_action_param* pParam);
+
+	// 
+	virtual void ManageByMaster(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	virtual void ManageExitByMaster();
+	virtual bool ExecuteByMaster(s_fighter_action* pAction, s_fighter_action_param* pParam);
 };
 
 class CBehaviourFighterRidden : public CBehaviourFighter

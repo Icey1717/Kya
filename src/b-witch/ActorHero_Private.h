@@ -201,7 +201,7 @@ public:
 	virtual edF32VECTOR4* GetAdversaryPos();
 	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
-	virtual void UpdateFightCommand();
+	virtual int UpdateFightCommand();
 	virtual bool Func_0x1a4();
 	virtual bool Func_0x1a8();
 	virtual bool Func_0x1b0(CActor* pOther);

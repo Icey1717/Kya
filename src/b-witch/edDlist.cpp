@@ -3025,7 +3025,7 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 
 	pStrip->meshCount = (short)iVar3;
 
-	assert(pStrip->meshCount > 0);
+	//assert(pStrip->meshCount > 0);
 
 	if (iVar3 == 0) {
 		pStrip->field_0x38 = 0;

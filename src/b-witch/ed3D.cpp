@@ -3040,6 +3040,12 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			pPkt->cmdB = 0;
 			pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
 			pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0006, 0x1c, UNPACK_V4_32, 0);
+
+#ifdef PLATFORM_WIN
+			// Note the matrix packet start address.
+			auto* pMatrixPacketStart = pPkt + 1;
+#endif
+
 			pPKTMatrixCur = ed3DPKTCopyMatrixPacket(pPkt + 1, pDmaMatrix, bVar11);
 			*g_pCurFlareMtx = (edF32MATRIX4*)((char*)(pPkt + 1) + 0xa0);
 			
@@ -3057,6 +3063,13 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 
 				pPKTMatrixCur = pPKTMatrixCur + 5;
 			}
+
+
+#ifdef PLATFORM_WIN
+			// Process the matrix packet.
+			Renderer::Native::PushMatrixPacket(reinterpret_cast<Renderer::Native::MatrixPacket*>(pMatrixPacketStart));
+#endif
+
 			return pPKTMatrixCur;
 		}
 

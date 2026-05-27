@@ -43,7 +43,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//} while (piVar1 != (int*)&(this->character).field_0x568);
 	//CPathFinderClient::CPathFinderClient((long)(int)&(this->character).field_0x570);
 	//*(undefined4*)&(this->character).actorsExcludeTable.field_0x0 = 0;
-	//CSlaveGroundSampler::CSlaveGroundSampler((long)&this->field_0x9e0);
+
 	//this->pVTable = &CActorHero::_vt;
 	//CInventoryInterface::CInventoryInterface((long)&this->field_0xadc);
 	//FUN_00324320((long)&this->field_0xcd0);
@@ -15793,10 +15793,11 @@ void CActorHeroPrivate::Func_0x194(float param_1)
 }
 
 // Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
-void CActorHeroPrivate::UpdateFightCommand()
+int CActorHeroPrivate::UpdateFightCommand()
 {
-	UpdateFightCommandInternal(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
-	return;
+	int iVar1 = this->field_0x18dc != 0 ^ 1;
+	UpdateFightCommandInternal(this->pPlayerInput, iVar1);
+	return iVar1;
 }
 
 bool CActorHeroPrivate::Func_0x1a4()

@@ -2074,6 +2074,37 @@ float edF32Vector4DotProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
 }
 
+float edFIntervalDotDstLERP(float param_1, float param_2, float param_3)
+{
+	float puVar1;
+
+	if (param_2 < param_3) {
+		if (param_1 <= param_2) {
+			return -1.0f;
+		}
+		if (param_3 <= param_1) {
+			return 1.0f;
+		}
+	}
+	else {
+		if (param_2 <= param_1) {
+			return -1.0f;
+		}
+		if (param_1 <= param_3) {
+			return 1.0f;
+		}
+	}
+
+	if (param_3 == param_2) {
+		puVar1 = 1.0f;
+	}
+	else {
+		puVar1 = ((param_1 - param_2) * 2.0f) / (param_3 - param_2) - 1.0f;
+	}
+
+	return puVar1;
+}
+
 float edFIntervalUnitSrcLERP(float start, float end, float alpha)
 {
 	float fVar1;

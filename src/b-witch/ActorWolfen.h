@@ -82,10 +82,23 @@
 
 struct S_STREAM_EVENT_CAMERA;
 
+struct StaticEnemy90
+{
+
+};
+
 struct EnemyComponent80
 {
 	virtual void SetObjCounts(int countA, int countB) {}
+	virtual void SetupObjects() {}
+	StaticEnemy90* field_0x0;
+	void* field_0x4;
 	void* pEnemy_0x60;
+
+	void FUN_003c2910() {}
+	void FUN_003c28a0() {}
+	void FUN_003c2aa0() {}
+	void FUN_003c2a30() {}
 };
 
 class CActorWolfen;
@@ -906,7 +919,12 @@ public:
 class CBehaviourWolfenFighterSlave : public CBehaviourFighterSlave
 {
 public:
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void SetInitialState(int newState);
 
+	uint field_0xc;
 };
 
 class CBehaviourWolfenFighterProjected : public CBehaviourFighterProjected

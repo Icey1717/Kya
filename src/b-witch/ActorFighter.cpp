@@ -833,7 +833,7 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 		}
 		else {
-			if ((msg == 0x66) || (msg == 0x65)) {
+			if ((msg == MESSAGE_CAUGHT) || (msg == 0x65)) {
 				if (((GetStateFlags(this->actorState) & 0x2000000) == 0) &&
 					(bVar1 = IsFightRelated(this->curBehaviourId), bVar1 == false)) {
 					SetFightBehaviour();
@@ -1035,6 +1035,20 @@ edF32VECTOR4* CActorFighter::GetAdversaryPos()
 	return pAdversaryPosition;
 }
 
+edF32VECTOR4* CActorFighter::GetAdversaryHeldPos()
+{
+	edF32VECTOR4* pHeldPos;
+
+	if (this->field_0x354 == (CActorFighter*)0x0) {
+		pHeldPos = &this->currentLocation;
+	}
+	else {
+		this->field_0x354->_ComputeLogicalPos(&this->currentLocation);
+		pHeldPos = &this->field_0x354->logicalPosition;
+	}
+	return pHeldPos;
+}
+
 int CActorFighter::Func_0x18c()
 {
 	return 1;
@@ -1098,10 +1112,31 @@ bool CActorFighter::Func_0x1c0(s_fighter_combo* pCombo)
 	return true;
 }
 
-// Should be in: D:/Projects/b-witch/ActorFighter.h
-void CActorFighter::UpdateFightCommand()
+int CActorFighter::InterpretSlaveMessage(int msg, void* pParams)
 {
-	return;
+	switch (msg) {
+	case 0:
+		SetState(0x37, -1);
+		break;
+	case 0xb:
+		SetState(6, this->standAnim);
+		break;
+	default:
+		IMPLEMENTATION_GUARD();
+	}
+
+	return 0;
+}
+
+int CActorFighter::NotifyMaster(int msg, void* pParams)
+{
+	return this->field_0x354->InterpretSlaveMessage(msg, pParams);
+}
+
+// Should be in: D:/Projects/b-witch/ActorFighter.h
+int CActorFighter::UpdateFightCommand()
+{
+	return 0;
 }
 
 bool CActorFighter::Func_0x19c()
@@ -1191,7 +1226,7 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 	s_fighter_action local_4;
 	CAnimation* pAnim;
 
-	bVar1 = pAction->field_0x1;
+	bVar1 = pAction->actionByte;
 	uVar11 = ((ulong)bVar1 << 0x3a) >> 0x3e;
 	if (uVar11 == 2) {
 		if ((GetStateFlags(this->actorState) & 0x100) != 0) {
@@ -1258,13 +1293,12 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 				}
 				else {
 					if ((uVar11 == 10) || (uVar11 == 2)) {
-						IMPLEMENTATION_GUARD(
-						this->pBlow = pParam->field_0x4;
-						this->field_0x474 = *(float*)(this->pBlow + 0xc);
-						(*(this->pVTable)->SetState)
-							((CActor*)this, 0x68, *(int*)(this->pBlow + 0x70));
-						return;)
+						this->pBlow = reinterpret_cast<s_fighter_blow*>(pParam->pData);
+						this->field_0x474 = pBlow->field_0xc;
+						SetState(FIGHTER_GRAB_BEGIN, pBlow->blowStageBegin.animId);
+						return;
 					}
+
 					if ((uVar11 == 9) || (uVar11 == 1)) {
 						uVar12 = this->actorState - 0x65;
 						bVar3 = false;
@@ -1292,12 +1326,12 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 				}
 			}
 
-			bVar1 = pAction->field_0x0;
+			bVar1 = pAction->moveByte;
 			if (((ulong)bVar1 & 0xf) == 0xc) {
 				if (((ulong)bVar1 << 0x38) >> 0x3c == 2) {
 					this->field_0x36c = this->field_0x36c | 1;
 					_BuildCommandFromAbsoluteVector(pParam->field_0x0, &local_4, &eStack128);
-					this->field_0x44c = this->field_0x44c & 0xf0 | local_4.field_0x0 & 0xf;
+					this->field_0x44c = this->field_0x44c & 0xf0 | local_4.moveByte & 0xf;
 				}
 				else {
 					this->field_0x36c = this->field_0x36c & 0xfffffffe;
@@ -1325,12 +1359,12 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 			}
 			else {
 				if (((bVar1 & 0xf) != 0) &&
-					(this->field_0x36c = this->field_0x36c | 1, ((ulong)pAction->field_0x0 << 0x38) >> 0x3c != 2)) {
+					(this->field_0x36c = this->field_0x36c | 1, ((ulong)pAction->moveByte << 0x38) >> 0x3c != 2)) {
 					this->scalarDynA.BuildFromSpeedTime(this->field_0x4cc, this->field_0x4cc, GetTimer()->cutsceneDeltaTime);
 				}
 			}
 
-			uVar11 = ((ulong)pAction->field_0x0 << 0x38) >> 0x3c;
+			uVar11 = ((ulong)pAction->moveByte << 0x38) >> 0x3c;
 			if (uVar11 != 8) {
 				if (uVar11 == 4) {
 					this->scalarDynJump.BuildFromSpeedDistTime(this->field_0x4f8, 0.0f, this->field_0x4f4, 0.22f);
@@ -1340,7 +1374,7 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 				}
 				else {
 					if (uVar11 == 2) {
-						if ((pAction->field_0x1 & 0xf) == 0) {
+						if ((pAction->actionByte & 0xf) == 0) {
 							IMPLEMENTATION_GUARD(
 							iVar8 = _SV_ANM_GetMultiWaysAnim2D(this, (s_fighter_multiways_anim*)&this->field_0x484, this->field_0x44c & 0xf);
 							fVar13 = _GetFighterAnimationLength(iVar8);
@@ -1504,7 +1538,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 					edF32Vector4NormalizeHard(&local_40, &local_40);
 					_BuildCommandFromAbsoluteVector(&local_40, &local_8, &eStack80);
 
-					this->field_0x44c = this->field_0x44c & 0xf0 | local_8.field_0x0 & 0xf;
+					this->field_0x44c = this->field_0x44c & 0xf0 | local_8.moveByte & 0xf;
 					this->field_0x36c = this->field_0x36c & 0xfffffffe;
 
 					static float FLOAT_00448b28 = 2.0f;
@@ -1649,7 +1683,31 @@ void CActorFighter::_Std_OnFightActionSuccess()
 
 CActorFighter* CActorFighter::_Std_GetCaughtAdversary()
 {
-	IMPLEMENTATION_GUARD();
+	CActorFighter* pColFighter;
+	bool bVar2;
+	uint nbCol;
+	s_fighter_collision_desc* pDescIt;
+	CActorFighter* pCaughtAdversary;
+	uint curIndex;
+	s_fighter_collision_desc aFighterCollisionDescs[2];
+
+	curIndex = 0;
+	pCaughtAdversary = (CActorFighter*)0x0;
+	nbCol = _SV_HIT_FightCollisionsGet(aFighterCollisionDescs, 2, 8);
+	pDescIt = aFighterCollisionDescs;
+
+	while ((curIndex < nbCol && (pCaughtAdversary == (CActorFighter*)0x0))) {
+		pColFighter = static_cast<CActorFighter*>(pDescIt->pActor);
+		bVar2 = Func_0x190(pColFighter);
+		if (bVar2 != false) {
+			pCaughtAdversary = pColFighter;
+		}
+
+		pDescIt = pDescIt + 1;
+		curIndex = curIndex + 1;
+	}
+
+	return pCaughtAdversary;
 }
 
 void CActorFighter::_StateFighterRun(CActorsTable* pTable)
@@ -1766,11 +1824,11 @@ void CActorFighter::_BeginFighterFlip()
 
 void CActorFighter::_Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam)
 {
-	if ((static_cast<ulong>(pAction->field_0x0) << 0x38) >> 0x3c == 4) {
+	if ((static_cast<ulong>(pAction->moveByte) << 0x38) >> 0x3c == 4) {
 		this->fightFlags = this->fightFlags | FIGHT_FLAG_FLIP_TO_JUMP;
 	}
 
-	if ((pAction->field_0x1 & 0xf) == 1) {
+	if ((pAction->actionByte & 0xf) == 1) {
 		this->pBlow = static_cast<s_fighter_blow*>(pParam->pData);
 		this->field_0x474 = this->pBlow->field_0xc;
 		SetState(0x65, (this->pBlow->blowStageBegin).animId);
@@ -1826,14 +1884,14 @@ void CActorFighter::_Execute_Ride(s_fighter_action* pAction, s_fighter_action_pa
 	_msg_hit_param* local_8;
 	s_fighter_action local_4;
 
-	local_4.all = (pAction->field_0x0 & 0xffffff0f);
+	local_4.all = (pAction->moveByte & 0xffffff0f);
 	local_18.field_0x0 = pParam->field_0x0;
 	local_18.field_0x4 = 0;
 	pBehaviour = static_cast<CBehaviourFighter*>(this->field_0x354->GetBehaviour(this->field_0x354->curBehaviourId));
 	pBehaviour->Conditional_Execute(&local_4, &local_18);
-	uVar1 = (static_cast<ulong>(pAction->field_0x0) << 0x38) >> 0x3c;
+	uVar1 = (static_cast<ulong>(pAction->moveByte) << 0x38) >> 0x3c;
 	if ((uVar1 == 8) || (uVar1 != 4)) {
-		if ((pAction->field_0x1 & 0xf) == 1) {
+		if ((pAction->actionByte & 0xf) == 1) {
 			local_120.projectileType = 7;
 			local_120.flags = 0;
 			local_c = &local_120;
@@ -1908,15 +1966,122 @@ void CActorFighter::_EndFighterRide(int newState)
 	return;
 }
 
+void CActorFighter::_SetAbsoluteSpeedOnGround(float param_1, edF32VECTOR4* param_3)
+{
+	edF32VECTOR4* peVar1;
+	edF32VECTOR4* peVar2;
+	edF32VECTOR4* peVar3;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 auStack80;
+	edF32VECTOR3 eStack16;
+
+	local_60 = {};
+
+	if ((this->flags & 0x1000) == 0) {
+		GetAnglesFromVector(&eStack16, &this->rotationQuat);
+		edF32Matrix4FromEulerSoft(&auStack80, &eStack16, "XYZ");
+	}
+	else {
+		edF32Matrix4FromEulerSoft(&auStack80, &this->rotationEuler.xyz, "XYZ");
+	}
+
+	local_60.z = edF32Vector4DotProductHard(param_3, &auStack80.rowY);
+	local_60.x = edF32Vector4DotProductHard(param_3, &auStack80.rowX);
+	_SetRelativeSpeedOnGround(param_1, &local_60);
+
+	return;
+}
+
+void CActorFighter::_Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam)
+{
+	byte bVar2;
+	ulong uVar3;
+	edF32VECTOR4 local_10;
+
+	if ((pAction->moveByte & 0xf) == 0xc) {
+		this->field_0x36c = this->field_0x36c & 0xfffffffe;
+		local_10.x = pParam->field_0x0->x;
+		local_10.y = 0.0f;
+		local_10.z = pParam->field_0x0->z;
+		local_10.w = 0.0f;
+		edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+		edF32Vector4ScaleHard(this->field_0x4cc, &local_10, &local_10);
+		_SetAbsoluteSpeedOnGround(GetTimer()->cutsceneDeltaTime, &local_10);
+	}
+	else {
+		if ((pAction->moveByte & 0xf) != 0) {
+			this->field_0x36c = this->field_0x36c | 1;
+			this->scalarDynA.BuildFromSpeedTime(this->field_0x4cc, this->field_0x4cc, GetTimer()->cutsceneDeltaTime);
+		}
+	}
+
+	uVar3 = (static_cast<ulong>(pAction->moveByte) << 0x38) >> 0x3c;
+	if ((uVar3 != 4) && (uVar3 == 1)) {
+		SetState(FIGHTER_HOLD_RUN, -1);
+	}
+
+	bVar2 = pAction->actionByte & 0xf;
+	if (((bVar2 == 4) || (bVar2 == 2)) || (bVar2 == 1)) {
+		SetState(FIGHTER_HOLD_PUSH_PREPARE, -1);
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorFighterSlave.cpp
 void CActorFighter::_BeginFighterHold()
 {
-	IMPLEMENTATION_GUARD();
+	this->field_0x354 = this->pAdversary;
+	SetAdversary(this->field_0x354);
+
+	this->field_0x354->SetBehaviour(FIGHTER_BEHAVIOUR_SLAVE, -1, -1);
+	this->pAdversary = (CActorFighter*)0x0;
+	this->fightFlags = this->fightFlags & 0xfffff8ff;
+	if (this->field_0x518 != 0) {
+		this->pAnimationController->RegisterBone(this->field_0x518);
+	}
+
+	SetLookingAtOff();
+	EnableFightCamera();
+
+	return;
 }
 
 void CActorFighter::_EndFighterHold()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	CBehaviourFighterSlave* pCVar2;
+	CActorFighter* pFighter;
+
+	pFighter = this->field_0x354;
+	if (pFighter != (CActorFighter*)0x0) {
+		if (pFighter->curBehaviourId == 6) {
+			iVar1 = pFighter->actorState;
+			if ((iVar1 == 0x40) || (iVar1 == 0x3f)) {
+				pFighter->fightFlags = static_cast<uint>((uint)pFighter->fightFlags | 0x4000);
+				this->field_0x354->SetBehaviour(FIGHTER_BEHAVIOUR_DEFAULT, -1, -1);
+			}
+			else {
+				pCVar2 = static_cast<CBehaviourFighterSlave*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+				this->field_0x354->SetBehaviour(pCVar2->behaviourId, -1, -1);
+			}
+		}
+
+		this->pAdversary = this->field_0x354;
+		this->field_0x354 = (CActorFighter*)0x0;
+		EnableFightCamera();
+	}
+
+	this->fightFlags = this->fightFlags & 0xfffffbff;
+	this->field_0xa5c = 0.0f;
+
+	if (this->field_0x518 != 0) {
+		this->pAnimationController->UnRegisterBone(this->field_0x518);
+	}
+
+	SetLookingAtOn();
+
+	return;
 }
 
 void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
@@ -1977,21 +2142,22 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 		}
 		else {
 			if ((newAnim == 0x4d) || (newAnim == 0x38)) {
-				IMPLEMENTATION_GUARD(
+				char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+				AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
 				peVar1 = pAnimator->pAnimKeyTableEntry;
-				if (peVar1->keyIndex_0x8 == 4) {
-					peVar1[2].field_0x4 = (int)this->field_0x4e4;
-					pValue->field_0x18 = (int)this->field_0x4e8;
-					fVar6 = this->field_0x4e0;
-					if (0.0 <= fVar6) {
-						pValue->field_0x14 = (int)fVar6;
-						pValue->field_0x10 = 0;
+				if (peVar1->keyIndex_0x8.asKey == 4) {
+					pValue->field_0xc = this->field_0x4e0.y;
+					pValue->field_0x18 = this->field_0x4e0.z;
+					fVar6 = this->field_0x4e0.x;
+					if (0.0f <= fVar6) {
+						pValue->field_0x14 = fVar6;
+						pValue->field_0x10 = 0.0f;
 					}
 					else {
-						pValue->field_0x10 = (int)-fVar6;
-						pValue->field_0x14 = 0;
+						pValue->field_0x10 = -fVar6;
+						pValue->field_0x14 = 0.0f;
 					}
-				})
+				}
 			}
 			else {
 				if (((newAnim == 0x27) || (newAnim == 0x18)) || (newAnim == 0x16)) {
@@ -2294,8 +2460,8 @@ void CActorFighter::ClearLocalData()
 	this->nbFightCollisions = 0;
 	this->field_0xa50 = 0;
 	this->field_0xa5c = 0.0f;
-	this->field_0xa58 = 0;
-	this->field_0xa54 = 0;
+	this->field_0xa58 = 0.0f;
+	this->field_0xa54 = 0.0f;
 	this->field_0xa60 = 1.0f;
 	this->field_0xa70 = 0.1f;
 	this->field_0xa74 = 0.1f;
@@ -3274,7 +3440,7 @@ void CActorFighter::_StateFighterHitStepBackInit(int animationId, int param_3)
 	local_30.y = 0.0f;
 	edF32Vector4NormalizeHard(&local_30, &local_30);
 	_BuildCommandFromAbsoluteVector(&local_30, &local_4, &eStack32);
-	this->field_0x44c = this->field_0x44c & 0xf0 | local_4.field_0x0 & 0xf;
+	this->field_0x44c = this->field_0x44c & 0xf0 | local_4.moveByte & 0xf;
 	this->field_0x36c = this->field_0x36c & 0xfffffffe;
 	edF32Vector4ScaleHard(this->field_0x6b0 * 0.040625f, &local_30, &eStack32);
 	edF32Vector4ScaleHard(this->field_0x6b0, &local_40, &eStack32);
@@ -3326,6 +3492,101 @@ void CActorFighter::_StateFighterHitStepBack(int nextState, int animationId, int
 
 			SetState(nextState, animationId);
 		}
+	}
+
+	return;
+}
+
+void CActorFighter::_StateFighterHitPushedInit()
+{
+	float fVar11;
+	edF32VECTOR4 eStack80;
+	s_fighter_action local_8;
+
+	this->rotationQuat = this->field_0x6a0;
+	StateConfig* pSVar9 = this->GetStateCfg(this->actorState);
+	int iVar7 = this->GetIdMacroAnim(pSVar9->animId);
+	if (iVar7 < 0) {
+		fVar11 = 0.0f;
+	}
+	else {
+		fVar11 = this->pAnimationController->GetAnimLength(iVar7, 1);
+	}
+
+	this->_BuildCommandFromAbsoluteVector(&this->rotationQuat, &local_8, &eStack80);
+	this->field_0x44c = this->field_0x44c & 0xf0 | local_8.moveByte & 0xf;
+	this->field_0x36c = this->field_0x36c & 0xfffffffe;
+	edF32Vector4ScaleHard(this->field_0x6b0, &eStack80, &eStack80);
+	this->scalarDynA.BuildFromSpeedDistTime(14.5f, 0.0f, fabsf(eStack80.z), fVar11);
+	this->scalarDynB.Reset();
+	this->scalarDynJump.Reset();
+
+	return;
+}
+
+void CActorFighter::_StateFighterHitPushed()
+{
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_130;
+	edF32VECTOR4 local_120;
+	CActorsTable local_110;
+	CCollision* pCol;
+
+	local_110.nbEntries = 0;
+	iVar3 = 0;
+	local_120 = gF32Vector4Zero;
+	fVar4 = this->timeInAir;
+	fVar5 = (this->scalarDynA).duration;
+
+	_ManageFighterDyn(0x19, 0x1002023b, &local_110);
+
+	if (local_110.nbEntries != 0) {
+		local_130.x = this->dynamic.rotationQuat.x;
+		local_130.y = 0.3f;
+		local_130.z = this->dynamic.rotationQuat.z;
+		local_130.w = 0.0f;
+
+		edF32Vector4NormalizeHard(&local_130, &local_130);
+		if (fVar4 / fVar5 < 0.55f) {
+			edF32Vector4ScaleHard(9.0f, &local_130, &local_130);
+		}
+		else {
+			edF32Vector4ScaleHard(0.1f, &local_130, &local_130);
+		}
+		iVar2 = _SV_HIT_ProcessActorsCollisions(0.0f, (edF32VECTOR4*)0x0, (edF32VECTOR4*)0x0, &local_130, &local_110, (CFighterExcludedTable*)0x0, true, 6, 0);
+		if (iVar2 != 0) {
+			edF32Vector4SubHard(&local_120, &local_120, (edF32VECTOR4*)&this->dynamic);
+			iVar3 = 1;
+		}
+	}
+
+	pCol = this->pCollisionData;
+	if ((pCol->flags_0x4 & 1) != 0) {
+		edF32Vector4AddHard(&local_120, &local_120, &pCol->aCollisionContact->location);
+		if (iVar3 != 0) {
+			edF32Vector4NormalizeHard(&local_120, &local_120);
+		}
+
+		iVar3 = iVar3 + 1;
+	}
+
+	if (iVar3 == 0) {
+		bVar1 = this->scalarDynA.IsFinished();
+		if ((bVar1 != false) && (bVar1 = this->scalarDynB.IsFinished(), bVar1 != false)) {
+			this->field_0x36c = this->field_0x36c | 1;
+			SetState(0x51, -1);
+		}
+	}
+	else {
+		local_120.y = 0.5f;
+		edF32Vector4NormalizeHard(&this->field_0x6a0, &local_120);
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x690, (edF32MATRIX4*)this->pMeshTransform, &(this->fighterAnatomyZones).field_0x10);
+		this->field_0x6b0 = 3.0f;
+		SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x56, -1);
 	}
 
 	return;
@@ -3754,6 +4015,362 @@ void CActorFighter::_StateFighterFlipOffMeTerm(int newState)
 		this->field_0x474 = 0.5f;
 		this->pAnimationController->UnRegisterBone(0x4146416f);
 		(this->pCollisionData)->actorFieldA = (CActor*)0x0;
+	}
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldStandInit()
+{
+	this->scalarDynA.Reset();
+	this->scalarDynB.Reset();
+	this->scalarDynJump.Reset();
+
+	if (this->field_0x474 == 0.0f) {
+		this->fightFlags = this->fightFlags & 0xfffffffe;
+	}
+	else {
+		this->fightFlags = this->fightFlags | 1;
+	}
+
+	this->dynamic.speed = 0.0f;
+	SetAdversary((CActorFighter*)0x0);
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldStand()
+{
+	edF32VECTOR4* v2;
+	CBehaviourFighterSlave* pBehaviourFighterSlave;
+	float fVar2;
+	float fVar3;
+	float puVar4;
+	float puVar5;
+	float fVar6;
+	edF32VECTOR4 local_20;
+	s_fighter_action_param local_10;
+	s_fighter_action local_4;
+	CActorFighter* pFighter;
+
+	if (this->field_0x474 <= this->timeInAir) {
+		this->fightFlags = this->fightFlags & 0xfffffffe;
+		this->field_0x474 = 0.0f;
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+	}
+
+	if ((this->fightFlags & 0x400) == 0) {
+		edF32Vector4ScaleHard(this->field_0x50c, &local_20, &this->rotationQuat);
+		edF32Vector4AddHard(&local_20, &local_20, &this->currentLocation);
+		v2 = GetAdversaryHeldPos();
+		edF32Vector4SubHard(&local_20, &local_20, v2);
+		edF32Vector4ScaleHard(1.0f / GetTimer()->cutsceneDeltaTime, &local_20, &local_20);
+	}
+	else {
+		local_20 = gF32Vector4Zero;
+	}
+
+	local_4.actionByte = local_4.actionByte & 0xf0;
+	local_10.field_0x0 = &local_20;
+	local_4.moveByte = 0;
+	pBehaviourFighterSlave = static_cast<CBehaviourFighterSlave*>(this->field_0x354->GetBehaviour(this->field_0x354->curBehaviourId));
+	pBehaviourFighterSlave->ManageByMaster(&local_4, &local_10);
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	fVar2 = this->field_0x354->currentLocation.y - this->currentLocation.y;
+	this->field_0x354->field_0xa50 = fVar2;
+	this->field_0xa50 = fVar2;
+
+	fVar2 = (this->field_0x4e0).x;
+	if (fabsf(fVar2) <= 0.1f) {
+		(this->field_0x4e0).x = 0.0f;
+	}
+	else {
+		if (0.0f <= fVar2) {
+			puVar4 = 1.0f;
+		}
+		else {
+			puVar4 = -1.0f;
+		}
+		(this->field_0x4e0).x = (this->field_0x4e0).x - puVar4 * 0.1f;
+	}
+
+	fVar2 = (this->field_0x4e0).z;
+	if (fabsf(fVar2) <= 0.1f) {
+		(this->field_0x4e0).z = 0.0f;
+	}
+	else {
+		if (0.0f <= fVar2) {
+			puVar5 = 1.0f;
+		}
+		else {
+			puVar5 = -1.0f;
+		}
+		(this->field_0x4e0).z = (this->field_0x4e0).z - static_cast<float>(puVar5) * 0.1f;
+	}
+
+	(this->field_0x4e0).y = 1.0f - (fabsf((this->field_0x4e0).x) + fabsf((this->field_0x4e0).z));
+	fVar2 = (this->field_0x4e0).y;
+	if (1.0f < fVar2) {
+		(this->field_0x4e0).y = 1.0f;
+	}
+	else {
+		if (fVar2 < 0.0f) {
+			(this->field_0x4e0).y = 0.0f;
+		}
+	}
+
+	pFighter = this->field_0x354;
+	pFighter->field_0x4e0 = this->field_0x4e0;
+
+	pBehaviourFighterSlave->ManageExitByMaster();
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldRunInit()
+{
+	this->scalarDynJump.Reset();
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldRun()
+{
+	int iVar1;
+	StateConfig* pSVar3;
+	CBehaviourFighterSlave* pCVar4;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float puVar10;
+	float puVar9;
+	float puVar8;
+	edF32VECTOR4 local_c0;
+	edF32VECTOR4 local_b0;
+	edF32VECTOR4 local_a0;
+	edF32VECTOR4 eStack144;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 eStack80;
+	s_fighter_action_param local_10;
+	s_fighter_action local_4;
+	CActorFighter* pFighter;
+
+	pFighter = this->field_0x354;
+	local_60 = pFighter->currentLocation;
+	edF32Matrix4RotateYHard(this->field_0xa5c * GetTimer()->cutsceneDeltaTime, &eStack80, &gF32Matrix4Unit);
+	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack80, &this->rotationQuat);
+	edF32Vector4SubHard(&eStack128, &local_70, &this->rotationQuat);
+
+	pFighter = this->field_0x354;
+	fVar4 = pFighter->currentLocation.x - this->currentLocation.x;
+	fVar5 = pFighter->currentLocation.y - this->currentLocation.y;
+	fVar6 = pFighter->currentLocation.z - this->currentLocation.z;
+	edF32Vector4ScaleHard(sqrtf(fVar4 * fVar4 + fVar5 * fVar5 + fVar6 * fVar6) / GetTimer()->cutsceneDeltaTime, &eStack128, &eStack128);
+	this->scalarDynA.Integrate(GetTimer()->cutsceneDeltaTime);
+
+	edF32Vector4ScaleHard((this->scalarDynA).field_0x20, &local_70, &local_70);
+	edF32Vector4AddHard(&local_70, &local_70, &eStack128);
+	iVar1 = this->currentAnimType;
+	pSVar3 = GetStateCfg(this->actorState);
+	if (iVar1 == pSVar3->animId) {
+		local_4.moveByte = 3;
+	}
+	else {
+		if (0.0f <= this->field_0xa5c) {
+			local_4.moveByte = 2;
+		}
+		else {
+			local_4.moveByte = 1;
+		}
+	}
+
+	local_10.field_0x0 = &local_70;
+	local_4.moveByte = local_4.moveByte | 0x10;
+	local_4.actionByte = local_4.actionByte & 0xf0;
+
+	pCVar4 = static_cast<CBehaviourFighterSlave*>(this->field_0x354->GetBehaviour(this->field_0x354->curBehaviourId));
+	pCVar4->ManageByMaster(&local_4, &local_10);
+	edF32Vector4SubHard(&local_a0, &this->field_0x354->currentLocation, &local_60);
+	edF32Vector4ScaleHard(1.0f / GetTimer()->cutsceneDeltaTime, &local_a0, &local_a0);
+	edF32Vector4SubHard(&eStack144, &local_a0, &local_70);
+	eStack144.y = 0.0f;
+	edF32Vector4SubHard(&local_a0, &this->field_0x354->currentLocation, &this->currentLocation);
+	fVar5 = edF32Vector4NormalizeHard(&local_a0, &local_a0);
+	fVar4 = this->field_0x50c;
+	local_b0.x = local_a0.x;
+	local_b0.z = local_a0.z;
+	local_b0.w = local_a0.w;
+	local_b0.y = 0.0f;
+
+	fVar6 = edF32Vector4NormalizeHard(&local_b0, &local_b0);
+	if (fVar6 != 0.0f) {
+		this->rotationQuat = local_b0;
+	}
+
+	local_c0.y = 0.0f;
+	local_c0.w = 0.0f;
+	local_c0.z = -local_a0.x;
+	local_c0.x = local_a0.z;
+	fVar6 = edF32Vector4DotProductHard(&eStack144, &local_c0);
+	edF32Vector4ScaleHard(fVar6, &eStack144, &local_c0);
+	edF32Vector4ScaleHard((fVar5 - fVar4) / GetTimer()->cutsceneDeltaTime, &local_70, &local_a0);
+	edF32Vector4AddHard(&local_70, &local_70, &eStack144);
+	fVar4 = edF32Vector4SafeNormalize0Hard(&local_70, &local_70);
+	this->dynamic.speed = fVar4;
+	this->dynamic.rotationQuat = local_70;
+	(this->pCollisionData)->actorFieldA = this->field_0x354;
+
+	ManageDyn(4.0f, 0x1006023b, (CActorsTable*)0x0);
+
+	(this->pCollisionData)->actorFieldA = (CActor*)0x0;
+	fVar4 = this->field_0x354->currentLocation.y - this->currentLocation.y;
+	this->field_0x354->field_0xa50 = fVar4;
+	this->field_0xa50 = fVar4;
+	(this->field_0x4d0).x = 0.0f;
+	(this->field_0x4d0).z = 0.0f;
+	if (0.1f < this->dynamic.speed) {
+		(this->field_0x4d0).z = 1.0f;
+	}
+	else {
+		if (0.1f < fabsf(this->field_0xa5c)) {
+			if (0.0f <= this->field_0xa5c) {
+				puVar10 = 1.0f;
+			}
+			else {
+				puVar10 = -1.0f;
+			}
+			(this->field_0x4d0).x = puVar10;
+		}
+	}
+
+	fVar4 = (this->field_0x4d0).x - (this->field_0x4e0).x;
+	fVar5 = (this->field_0x4d0).z - (this->field_0x4e0).z;
+	if (fabsf(fVar4) <= 0.1f) {
+		(this->field_0x4e0).x = (this->field_0x4d0).x;
+	}
+	else {
+		if (0.0f <= fVar4) {
+			puVar9 = 1.0f;
+		}
+		else {
+			puVar9 = -1.0f;
+		}
+		(this->field_0x4e0).x = (this->field_0x4e0).x + puVar9 * 0.1f;
+	}
+
+	if (fabsf(fVar5) <= 0.1f) {
+		(this->field_0x4e0).z = (this->field_0x4d0).z;
+	}
+	else {
+		if (0.0f <= fVar5) {
+			puVar8 = 1.0f;
+		}
+		else {
+			puVar8 = -1.0f;
+		}
+		(this->field_0x4e0).z = (this->field_0x4e0).z + puVar8 * 0.1f;
+	}
+
+	(this->field_0x4e0).y = 1.0f - (fabsf((this->field_0x4e0).x) + fabsf((this->field_0x4e0).z));
+	fVar4 = (this->field_0x4e0).y;
+	if (1.0f < fVar4) {
+		(this->field_0x4e0).y = 1.0f;
+	}
+	else {
+		if (fVar4 < 0.0f) {
+			(this->field_0x4e0).y = 0.0f;
+		}
+	}
+
+	pFighter = this->field_0x354;
+	pFighter->field_0x4e0 = this->field_0x4e0;
+
+	pCVar4->ManageExitByMaster();
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldPushPrepareInit()
+{
+	this->scalarDynA.Reset();
+	this->scalarDynB.Reset();
+	this->scalarDynJump.Reset();
+	this->dynamic.speed = 0.0f;
+	this->field_0x354->SetState(0x47, -1);
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldPushPrepareTerm()
+{
+	_msg_hit_param msgHitParam;
+
+	msgHitParam.projectileType = 8;
+	msgHitParam.field_0x20 = this->rotationQuat;
+	msgHitParam.field_0x30 = this->field_0x514;
+	msgHitParam.flags = 0;
+	DoMessage(this->field_0x354, MESSAGE_KICKED, &msgHitParam);
+	this->pAdversary = this->field_0x354;
+	this->field_0x354 = (CActorFighter*)0x0;
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldThrowInit()
+{
+	StateConfig* pSVar1;
+	int iVar2;
+	float time;
+
+	pSVar1 = GetStateCfg(0x36);
+	iVar2 = GetIdMacroAnim(pSVar1->animId);
+	if (iVar2 < 0) {
+		time = 0.0f;
+	}
+	else {
+		time = this->pAnimationController->GetAnimLength(iVar2, 1);
+	}
+
+	this->scalarDynA.BuildFromSpeedDistTime(8.7f, 0.87f, 1.570796f, time);
+	this->scalarDynB.Reset();
+	this->scalarDynJump.Reset();
+	this->dynamic.speed = 0.0f;
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+	return;
+}
+
+void CActorFighter::_StateFighterHoldFollowStd(int nextState)
+{
+	CBehaviourFighterSlave* pBehaviourFighterSlave;
+	s_fighter_action fighterAction;
+
+	fighterAction.all = 0x0;
+	pBehaviourFighterSlave = static_cast<CBehaviourFighterSlave*>(this->field_0x354->GetBehaviour(this->field_0x354->curBehaviourId));
+	pBehaviourFighterSlave->ManageByMaster(&fighterAction, (s_fighter_action_param*)0x0);
+	(this->pCollisionData)->actorFieldA = this->field_0x354;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	(this->pCollisionData)->actorFieldA = (CActor*)0x0;
+
+	pBehaviourFighterSlave->ManageExitByMaster();
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(nextState, -1);
+	}
+
+	return;
+}
+
+void CActorFighter::StateFighterHoldStd(int nextState, int nextAnim)
+{
+	_ManageFighterDyn(0, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(nextState, nextAnim);
 	}
 
 	return;
@@ -5678,51 +6295,61 @@ float CActorFighter::_GetFighterAnimationLength(int animId)
 	}
 }
 
-uint FUN_00337d20(edF32VECTOR4* pDir)
+#define FIGHTER_STICK_FLAG_FORWARD (1 << 0)
+#define FIGHTER_STICK_FLAG_RIGHT   (1 << 1)
+#define FIGHTER_STICK_FLAG_BACK    (1 << 2)
+#define FIGHTER_STICK_FLAG_LEFT    (1 << 3)
+
+uint EvaluateStickDirections(edF32VECTOR4* pDir)
 {
 	bool bVar1;
 	uint result;
-	float fVar3;
-	edF32VECTOR4 eStack16;
+	float deltaAngleY;
+	edF32VECTOR4 normalizedDir;
+
+	// Detects the direction of the stick (either forward or backward) then applies the left and right flags based on the angle of the stick. 
+	// The stick is considered forward if it's within 60 degrees of the forward direction, and backward if it's within 60 degrees of the backward direction. 
+	// The right flag is applied if the stick is between 30 and 150 degrees to the right, and the left flag is applied if it's between 30 and 150 degrees to the left.
 
 	result = 0;
 
-	if (0.35f <= edF32Vector4SafeNormalize0Hard(&eStack16, pDir)) {
-		fVar3 = edF32Between_Pi(GetAngleYFromVector(&eStack16));
+	if (0.35f <= edF32Vector4SafeNormalize0Hard(&normalizedDir, pDir)) {
+		deltaAngleY = edF32Between_Pi(GetAngleYFromVector(&normalizedDir));
 		bVar1 = false;
-		if ((0.0f <= fabs(fVar3)) && (bVar1 = false, fabs(fVar3) <= 1.047198f)) {
-			bVar1 = true;
-		}
-		if (bVar1) {
-			result = 1;
-		}
-		else {
-			bVar1 = false;
-			if ((2.094395f <= fabs(fVar3)) && (bVar1 = false, fabs(fVar3) <= 3.141593f)) {
-				bVar1 = true;
-			}
-
-			if (bVar1) {
-				result = 4;
-			}
-		}
-
-		bVar1 = false;
-		if ((0.5235988f <= fVar3) && (bVar1 = false, fVar3 <= 2.617994f)) {
+		if ((0.0f <= fabs(deltaAngleY)) && (bVar1 = false, fabs(deltaAngleY) <= 1.047198f)) {
 			bVar1 = true;
 		}
 
 		if (bVar1) {
-			result = result | 2;
+			result = FIGHTER_STICK_FLAG_FORWARD;
 		}
 		else {
 			bVar1 = false;
-			if ((-2.617994f <= fVar3) && (bVar1 = false, fVar3 <= -0.5235988f)) {
+			if ((2.094395f <= fabs(deltaAngleY)) && (bVar1 = false, fabs(deltaAngleY) <= 3.141593f)) {
 				bVar1 = true;
 			}
 
 			if (bVar1) {
-				result = result | 8;
+				result = FIGHTER_STICK_FLAG_BACK;
+			}
+		}
+
+		bVar1 = false;
+		if ((0.5235988f <= deltaAngleY) && (bVar1 = false, deltaAngleY <= 2.617994f)) {
+			bVar1 = true;
+		}
+
+		if (bVar1) {
+			result = result | FIGHTER_STICK_FLAG_RIGHT;
+		}
+		else {
+			bVar1 = false;
+			if ((-2.617994f <= deltaAngleY) && (bVar1 = false, deltaAngleY <= -0.5235988f)) {
+				bVar1 = true;
+			}
+
+			if (bVar1) {
+				result = result | FIGHTER_STICK_FLAG_LEFT;
 			}
 		}
 	}
@@ -6141,6 +6768,11 @@ s_fighter_combo* CActorFighter::_FindBestCombo(s_input_pattern* pPattern, uint f
 	return pFighterCombo;
 }
 
+#define FIGHTER_STATEFLAG_ALLOW_MOVE_DIR_LO      0x200000
+#define FIGHTER_STATEFLAG_ALLOW_MOVE_MODE_HI     0x400000
+#define FIGHTER_STATEFLAG_ALLOW_ACTION_KIND_LO   0x800000
+#define FIGHTER_STATEFLAG_ALLOW_ACTION_TRIGGER_HI 0x1000000
+
 bool CActorFighter::_ValidateCommand(s_fighter_action* pActionA, s_fighter_action* pActionB)
 {
 	int iVar1;
@@ -6150,36 +6782,36 @@ bool CActorFighter::_ValidateCommand(s_fighter_action* pActionA, s_fighter_actio
 	pActionB->all = pActionA->all & this->validCommandMask.all;
 
 	if ((this->actorState == FIGHTER_BLOW_BEGIN) && (this->pBlow->field_0x50 * this->pBlow->field_0x8 <= this->timeInAir)) {
-		pActionB->field_0x1 = pActionB->field_0x1 & 0xcf;
+		pActionB->actionByte = pActionB->actionByte & 0xcf;
 	}
 
 	uVar3 = GetStateFlags(this->actorState);
-	if ((uVar3 & 0x200000) == 0) {
-		pActionB->field_0x0 = pActionB->field_0x0 & 0xf0;
+	if ((uVar3 & FIGHTER_STATEFLAG_ALLOW_MOVE_DIR_LO) == 0) {
+		pActionB->moveByte = pActionB->moveByte & 0xf0;
 	}
 	else {
-		this->field_0x44c = this->field_0x44c & 0xf0 | pActionB->field_0x0 & 0xf;
+		this->field_0x44c = this->field_0x44c & 0xf0 | pActionB->moveByte & 0xf;
 	}
 
-	if ((uVar3 & 0x400000) == 0) {
-		pActionB->field_0x0 = pActionB->field_0x0 & 0xf;
+	if ((uVar3 & FIGHTER_STATEFLAG_ALLOW_MOVE_MODE_HI) == 0) {
+		pActionB->moveByte = pActionB->moveByte & 0xf;
 	}
 	else {
-		this->field_0x44c = this->field_0x44c & 0xf | (byte)((uint)(((ulong)pActionB->field_0x0 << 0x38) >> 0x3c) << 4);
+		this->field_0x44c = this->field_0x44c & 0xf | (byte)((uint)(((ulong)pActionB->moveByte << 0x38) >> 0x3c) << 4);
 	}
 
-	if ((uVar3 & 0x800000) == 0) {
-		pActionB->field_0x1 = pActionB->field_0x1 & 0xf0;
+	if ((uVar3 & FIGHTER_STATEFLAG_ALLOW_ACTION_KIND_LO) == 0) {
+		pActionB->actionByte = pActionB->actionByte & 0xf0;
 	}
 	else {
-		this->field_0x44d = this->field_0x44d & 0xf0 | pActionB->field_0x1 & 0xf;
+		this->field_0x44d = this->field_0x44d & 0xf0 | pActionB->actionByte & 0xf;
 	}
 
-	if ((uVar3 & 0x1000000) == 0) {
-		pActionB->field_0x1 = pActionB->field_0x1 & 0xcf;
+	if ((uVar3 & FIGHTER_STATEFLAG_ALLOW_ACTION_TRIGGER_HI) == 0) {
+		pActionB->actionByte = pActionB->actionByte & 0xcf;
 	}
 	else {
-		this->field_0x44d = this->field_0x44d & 0xcf | (byte)((uint)(((ulong)pActionB->field_0x1 << 0x3a) >> 0x3e) << 4);
+		this->field_0x44d = this->field_0x44d & 0xcf | (byte)((uint)(((ulong)pActionB->actionByte << 0x3a) >> 0x3e) << 4);
 	}
 
 	return pActionB->all != 0x0;
@@ -6243,18 +6875,18 @@ void CActorFighter::_BuildCommandFromAbsoluteVector(edF32VECTOR4* param_2, s_fig
 
 	if (0.5f <= fabs(param_4->x)) {
 		if (0.0f < param_4->x) {
-			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 2 & 0xf;
+			pFighterAction->moveByte = pFighterAction->moveByte & 0xf0 | (pFighterAction->moveByte & 0xf) + 2 & 0xf;
 		}
 		else {
-			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 1 & 0xf;
+			pFighterAction->moveByte = pFighterAction->moveByte & 0xf0 | (pFighterAction->moveByte & 0xf) + 1 & 0xf;
 		}
 	}
 	if (0.5f <= fabs(param_4->z)) {
 		if (0.0f < param_4->z) {
-			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 3 & 0xf;
+			pFighterAction->moveByte = pFighterAction->moveByte & 0xf0 | (pFighterAction->moveByte & 0xf) + 3 & 0xf;
 		}
 		else {
-			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 6 & 0xf;
+			pFighterAction->moveByte = pFighterAction->moveByte & 0xf0 | (pFighterAction->moveByte & 0xf) + 6 & 0xf;
 		}
 	}
 
@@ -6361,18 +6993,18 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 	ulong uVar12;
 	long lVar13;
 	s_fighter_action_param* psVar14;
-	uint uVar15;
-	uint uVar16;
+	uint l2Pressed;
+	uint l2Released;
 	s_fighter_combo* psVar17;
-	uint uVar18;
-	float fVar19;
-	float fVar20;
-	uint local_b0;
+	uint crossPressed;
+	float r2Click;
+	float l2Click;
+	uint r2Released;
 	edF32VECTOR4 eStack144;
 	edF32VECTOR4 eStack128;
 	edF32MATRIX4 eStack112;
 	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
+	edF32VECTOR4 padStickLeftVector;
 	s_fighter_action_param fighterActionParam;
 	s_fighter_action local_4;
 
@@ -6381,24 +7013,24 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 	}
 
 	if ((pPlayerInput == (CPlayerInput*)0x0) || (param_3 == 0)) {
-		local_b0 = 0;
-		local_20.x = 0.0f;
-		fVar19 = 0.0f;
-		uVar18 = 0;
-		uVar16 = 0;
-		local_20.z = 0.0f;
-		uVar15 = 0;
-		fVar20 = 0.0f;
+		r2Released = 0;
+		padStickLeftVector.x = 0.0f;
+		r2Click = 0.0f;
+		crossPressed = 0;
+		l2Released = 0;
+		padStickLeftVector.z = 0.0f;
+		l2Pressed = 0;
+		l2Click = 0.0f;
 	}
 	else {
-		local_20.z = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].y;
-		local_20.x = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].x;
-		fVar20 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
-		fVar19 = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_R2].clickValue;
-		uVar16 = pPlayerInput->releasedBitfield & PAD_BITMASK_L2;
-		local_b0 = pPlayerInput->releasedBitfield & PAD_BITMASK_R2;
-		uVar15 = pPlayerInput->pressedBitfield & PAD_BITMASK_L2;
-		uVar18 = pPlayerInput->pressedBitfield & PAD_BITMASK_CROSS;
+		padStickLeftVector.z = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].y;
+		padStickLeftVector.x = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].x;
+		l2Click = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_L2].clickValue;
+		r2Click = pPlayerInput->aButtons[INPUT_BUTTON_INDEX_R2].clickValue;
+		l2Released = pPlayerInput->releasedBitfield & PAD_BITMASK_L2;
+		r2Released = pPlayerInput->releasedBitfield & PAD_BITMASK_R2;
+		l2Pressed = pPlayerInput->pressedBitfield & PAD_BITMASK_L2;
+		crossPressed = pPlayerInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	fighterActionParam.pData = (void*)0x0;
@@ -6408,63 +7040,65 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 
 	local_4.all = 0;
 	iVar9 = 2;
-	if ((local_20.z != 0.0f) || (fVar3 = local_30.x, local_20.y = local_30.y, fVar4 = local_30.z, local_20.w = local_30.w, local_20.x != 0.0f)) {
-		local_20.y = 0.0f;
-		local_20.w = 0.0f;
+	if ((padStickLeftVector.z != 0.0f) || (fVar3 = local_30.x, padStickLeftVector.y = local_30.y, fVar4 = local_30.z, padStickLeftVector.w = local_30.w, padStickLeftVector.x != 0.0f)) {
+		padStickLeftVector.y = 0.0f;
+		padStickLeftVector.w = 0.0f;
 		edF32Matrix4GetTransposeHard(&eStack112, &(CScene::ptable.g_CameraManager_0045167c)->transMatrix_0x390);
-		edF32Matrix4MulF32Vector4Hard(&local_20, &eStack112, &local_20);
-		local_30.z = local_20.z * -1.0f;
-		local_30.x = local_20.x;
-		local_30.y = local_20.y;
-		local_30.w = local_20.w;
-		local_20.z = local_30.z;
+		edF32Matrix4MulF32Vector4Hard(&padStickLeftVector, &eStack112, &padStickLeftVector);
+
+		local_30.z = padStickLeftVector.z * -1.0f;
+		local_30.x = padStickLeftVector.x;
+		local_30.y = padStickLeftVector.y;
+		local_30.w = padStickLeftVector.w;
+
+		padStickLeftVector.z = local_30.z;
 		edF32Matrix4SetIdentityHard(&eStack112);
 		edF32Matrix4RotateYHard(this->adversaryAngleDiff, &eStack112, &eStack112);
 		edF32Matrix4TransposeHard(&eStack112);
-		edF32Matrix4MulF32Vector4Hard(&local_20, &eStack112, &local_20);
-		uVar12 = FUN_00337d20(&local_20);
-		if ((uVar12 & 2) == 0) {
-			if ((uVar12 & 8) != 0) {
-				local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.field_0x0 & 0xf0 | (local_4.field_0x0 & 0xf) + 1 & 0xf);
+		edF32Matrix4MulF32Vector4Hard(&padStickLeftVector, &eStack112, &padStickLeftVector);
+		const uint stickDirBitfield = EvaluateStickDirections(&padStickLeftVector);
+		if ((stickDirBitfield & FIGHTER_STICK_FLAG_RIGHT) == 0) {
+			if ((stickDirBitfield & FIGHTER_STICK_FLAG_LEFT) != 0) {
+				local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.moveByte & 0xf0 | (local_4.moveByte & 0xf) + 1 & 0xf);
 			}
 		}
 		else {
-			local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.field_0x0 & 0xf0 | (local_4.field_0x0 & 0xf) + 2 & 0xf);
+			local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.moveByte & 0xf0 | (local_4.moveByte & 0xf) + 2 & 0xf);
 		}
 
-		if ((uVar12 & 1) == 0) {
-			if ((uVar12 & 4) != 0) {
-				local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.field_0x0 & 0xf0 | (local_4.field_0x0 & 0xf) + 6 & 0xf);
+		if ((stickDirBitfield & FIGHTER_STICK_FLAG_FORWARD) == 0) {
+			if ((stickDirBitfield & FIGHTER_STICK_FLAG_BACK) != 0) {
+				local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.moveByte & 0xf0 | (local_4.moveByte & 0xf) + 6 & 0xf);
 			}
 		}
 		else {
-			local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.field_0x0 & 0xf0 | (local_4.field_0x0 & 0xf) + 3 & 0xf);
+			local_4.all = local_4.all & 0xffffff00 | (uint)(local_4.moveByte & 0xf0 | (local_4.moveByte & 0xf) + 3 & 0xf);
 		}
 
-		fVar3 = local_20.x;
-		fVar4 = local_20.z;
+		fVar3 = padStickLeftVector.x;
+		fVar4 = padStickLeftVector.z;
 		if ((local_4.all & 0xf) != 0) {
-			if (((fVar20 == 0.0f) || ((this->pInputAnalyser->flags & 1) == 0)) || (Func_0x1ac() == 0)) {
+			if (((l2Click == 0.0f) || ((this->pInputAnalyser->flags & 1) == 0)) || (Func_0x1ac() == 0)) {
 				local_4.all = local_4.all & 0xffffff0f | 0x10;
-				fVar3 = local_20.x;
-				fVar4 = local_20.z;
+				fVar3 = padStickLeftVector.x;
+				fVar4 = padStickLeftVector.z;
 			}
 			else {
 				local_4.all = local_4.all & 0xffffff0f | 0x20;
 				this->pInputAnalyser->flags = this->pInputAnalyser->flags & 0xfffffffe;
-				fVar3 = local_20.x;
-				fVar4 = local_20.z;
+				fVar3 = padStickLeftVector.x;
+				fVar4 = padStickLeftVector.z;
 			}
 		}
 	}
 
-	local_20.z = fVar4;
-	local_20.x = fVar3;
-	if (uVar16 != 0) {
+	padStickLeftVector.z = fVar4;
+	padStickLeftVector.x = fVar3;
+	if (l2Released != 0) {
 		this->pInputAnalyser->flags = this->pInputAnalyser->flags | 1;
 	}
 
-	if (uVar18 != 0) {
+	if (crossPressed != 0) {
 		local_4.all = local_4.all & 0xffffff0f | 0x40;
 	}
 
@@ -6472,7 +7106,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 
 	if (Func_0x1a0() == 0) {
 		SetVectorFromAngleY(this->adversaryAngleDiff, &eStack144);
-		iVar9 = this->pInputAnalyser->Cumulate(pPlayerInput, &eStack144, &local_20);
+		iVar9 = this->pInputAnalyser->Cumulate(pPlayerInput, &eStack144, &padStickLeftVector);
 		if (iVar9 != 0) {
 			uVar12 = (((ulong)this->pInputAnalyser->patternA.field_0x2ushort) << 0x34) >> 0x38;
 			if ((uVar12 & 3) == 0) {
@@ -6501,7 +7135,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 
 	psVar8 = this->pFighterCombo;
 	if ((psVar8 == (s_fighter_combo*)0x0) || ((psVar8->field_0x4.field_0x0ushort & 0x100U) == 0)) {
-		iVar7 = this->pInputAnalyser->Cumulate(pPlayerInput, &eStack128, &local_20);
+		iVar7 = this->pInputAnalyser->Cumulate(pPlayerInput, &eStack128, &padStickLeftVector);
 		if (iVar7 != 0) {
 			if (this->pFighterCombo == (s_fighter_combo*)0x0) {
 				_UpdateComboSituation();
@@ -6522,17 +7156,17 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		iVar7 = this->actorState;
 		if (((iVar7 == 0x6b) || (iVar7 == FIGHTER_EXECUTE_BLOW)) || (iVar7 == FIGHTER_BLOW_BEGIN)) {
 			psVar17 = (s_fighter_combo*)psVar8->aBranches;
-			uVar16 = psVar8->nbBranches;
+			l2Released = psVar8->nbBranches;
 			this->pInputAnalyser->pComboB = (s_fighter_combo*)0x0;
-			uVar12 = CInputAnalyser::FUN_003381b0(this->pInputAnalyser, pPlayerInput, &eStack128, &local_20);
+			uVar12 = CInputAnalyser::FUN_003381b0(this->pInputAnalyser, pPlayerInput, &eStack128, &padStickLeftVector);
 			if ((uVar12 & 0xff) == 0) {
-				while ((uVar16 != 0 && (this->pInputAnalyser->pComboB == (s_fighter_combo*)0x0))) {
+				while ((l2Released != 0 && (this->pInputAnalyser->pComboB == (s_fighter_combo*)0x0))) {
 					if (((*(s_fighter_combo**)psVar17)->field_0x4 & 0x100U) == 0) {
 						this->pInputAnalyser->pComboB = *(s_fighter_combo**)psVar17;
 					}
 					else {
 						psVar17 = (s_fighter_combo*)((int)psVar17 + 4);
-						uVar16 = uVar16 - 1;
+						l2Released = l2Released - 1;
 					}
 				}
 				if ((this->pFighterCombo->field_0x4 & 0x200U) == 0) {
@@ -6541,10 +7175,10 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 				}
 			}
 			else {
-				while ((uVar16 != 0 && (this->pInputAnalyser->pComboB == (s_fighter_combo*)0x0))) {
+				while ((l2Released != 0 && (this->pInputAnalyser->pComboB == (s_fighter_combo*)0x0))) {
 					if (((*(s_fighter_combo**)psVar17)->field_0x4 & 0x100U) == 0) {
 						psVar17 = (s_fighter_combo*)((int)psVar17 + 4);
-						uVar16 = uVar16 - 1;
+						l2Released = l2Released - 1;
 					}
 					else {
 						this->pInputAnalyser->pComboB = *(s_fighter_combo**)psVar17;
@@ -6571,10 +7205,10 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 				else {
 					if (((iVar7 != 0x6c) && (iVar7 != 0x6f)) && (iVar7 != FIGHTER_BLOW_END)) goto LAB_0030a1f0;
 					if (this->pFighterCombo != (s_fighter_combo*)0x0) {
-						fVar20 = _GetFighterAnimationLength(this->currentAnimType);
+						l2Click = _GetFighterAnimationLength(this->currentAnimType);
 
-						if ((fVar20 * this->pFighterCombo->field_0x8 <= this->timeInAir) ||
-							(pTVar10 = GetTimer(), fVar20 - this->timeInAir <= pTVar10->cutsceneDeltaTime))
+						if ((l2Click * this->pFighterCombo->field_0x8 <= this->timeInAir) ||
+							(pTVar10 = GetTimer(), l2Click - this->timeInAir <= pTVar10->cutsceneDeltaTime))
 						{
 							iVar9 = 0;
 						}
@@ -6593,17 +7227,17 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 			s_fighter_blow* pCurrentBlow = LOAD_POINTER_CAST(s_fighter_blow*, psVar8->actionHash.pData);
 			s_fighter_blow* pBaseCatch = FindBlowByName("BASE_CATCH");
 			if (pCurrentBlow == pBaseCatch) {
-				local_4.field_0x1 = local_4.field_0x1 & 0xf0 | local_4.field_0x1 & 0xf | 2, local_4.field_0x0;
-				local_4.all = local_4.all & 0xffff0000 | (uint)local_4.field_0x0_2;
+				local_4.actionByte = local_4.actionByte & 0xf0 | local_4.actionByte & 0xf | 2, local_4.moveByte;
+				local_4.all = local_4.all & 0xffff0000 | (uint)local_4.commandLo;
 			}
 			else {
 				if ((psVar8->field_0x4.field_0x0ushort & 0x400U) == 0) {
-					local_4.field_0x1 = local_4.field_0x1 & 0xf0 | local_4.field_0x1 & 0xf | 1, local_4.field_0x0;
-					local_4.all = local_4.all & 0xffff0000 | (uint)local_4.field_0x0_2;
+					local_4.actionByte = local_4.actionByte & 0xf0 | local_4.actionByte & 0xf | 1, local_4.moveByte;
+					local_4.all = local_4.all & 0xffff0000 | (uint)local_4.commandLo;
 				}
 				else {
-					local_4.field_0x1 = local_4.field_0x1 & 0xf0 | local_4.field_0x1 & 0xf | 4, local_4.field_0x0;
-					local_4.all = local_4.all & 0xffff0000 | (uint)local_4.field_0x0_2;
+					local_4.actionByte = local_4.actionByte & 0xf0 | local_4.actionByte & 0xf | 4, local_4.moveByte;
+					local_4.all = local_4.all & 0xffff0000 | (uint)local_4.commandLo;
 				}
 			}
 
@@ -6621,19 +7255,19 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		}
 	}
 LAB_0030a390:
-	if (local_b0 != 0) {
+	if (r2Released != 0) {
 		this->pInputAnalyser->flags = this->pInputAnalyser->flags | 2;
 		this->pInputAnalyser->flags = this->pInputAnalyser->flags | 4;
 	}
 
-	if (fVar19 != 0.0f) {
+	if (r2Click != 0.0f) {
 		if ((((((ulong)this->validCommandMask.flags[1] << 0x3a) >> 0x3e & 2) != 0) && ((this->pInputAnalyser->flags & 4) != 0)) &&
-			(((local_4.all & 0xf) != 0 && (((uVar16 = local_4.all & 0xf, uVar16 != 2 && (uVar16 != 1)) && (5 < uVar16)))))) {
+			(((local_4.all & 0xf) != 0 && (((l2Released = local_4.all & 0xf, l2Released != 2 && (l2Released != 1)) && (5 < l2Released)))))) {
 			local_4.all = local_4.all & 0xffffcfff | 0x2000;
 			this->pInputAnalyser->flags = this->pInputAnalyser->flags & 0xfffffffb;
 		}
 
-		if (((((ulong)local_4.field_0x1 << 0x3a) >> 0x3e == 0) && ((((ulong)this->validCommandMask.flags[1] << 0x3a) >> 0x3e & 1) != 0)
+		if (((((ulong)local_4.actionByte << 0x3a) >> 0x3e == 0) && ((((ulong)this->validCommandMask.flags[1] << 0x3a) >> 0x3e & 1) != 0)
 			) && ((this->pInputAnalyser->flags & 2) != 0)) {
 			local_4.all = local_4.all & 0xffffcfff | 0x1000;
 		}
@@ -6646,20 +7280,19 @@ LAB_0030a390:
 		this->pInputAnalyser->flags = this->pInputAnalyser->flags & 0xfffffffb;
 	}
 
-	if (((ulong)local_4.field_0x1 << 0x3a) >> 0x3e != 0) {
-		IMPLEMENTATION_GUARD(
-		uVar12 = ((ulong)local_4.field_0x0 << 0x38) >> 0x3c;
+	if (((ulong)local_4.actionByte << 0x3a) >> 0x3e != 0) {
+		uVar12 = ((ulong)local_4.moveByte << 0x38) >> 0x3c;
 		if (((uVar12 != 0) && (uVar12 != 1)) &&
-			(bVar5 = FUN_0031b5d0(this, this->actorState), bVar5 != false)) {
-			local_4 = local_4 & 0xffffcfff;
-		})
+			(bVar5 = FUN_0031b5d0(this->actorState), bVar5 != false)) {
+			local_4.all = local_4.all & 0xffffcfff;
+		}
 	}
 
-	if ((((ulong)local_4.field_0x0 << 0x38) >> 0x3c == 0) && (uVar15 != 0)) {
+	if ((((ulong)local_4.moveByte << 0x38) >> 0x3c == 0) && (l2Pressed != 0)) {
 		local_4.all = local_4.all & 0xffffff0f | 0x80;
 	}
 
-	if ((((ulong)local_4.field_0x0 << 0x38) >> 0x3c != 2) && ((local_4.field_0x0 & 0xf) != 0)) {
+	if ((((ulong)local_4.moveByte << 0x38) >> 0x3c != 2) && ((local_4.moveByte & 0xf) != 0)) {
 		local_4.all = local_4.all & 0xfffffff0 | 0xc;
 	}
 
@@ -6786,8 +7419,23 @@ void CBehaviourFighter::Manage()
 	case FIGHTER_RIDE:
 		this->pOwner->_StateFighterRide();
 		break;
+	case FIGHTER_HOLD_STAND:
+		this->pOwner->_StateFighterHoldStand();
+		break;
+	case FIGHTER_HOLD_RUN:
+		this->pOwner->_StateFighterHoldRun();
+		break;
+	case FIGHTER_HOLD_PUSH_PREPARE:
+		this->pOwner->_StateFighterHoldFollowStd(0x35);
+		break;
+	case FIGHTER_HOLD_THROW:
+		this->pOwner->StateFighterHoldStd(FIGHTER_DEFAULT_STATE_IDLE, iVar9);
+		break;
 	case FIGHTER_HIT_STEP_BACK:
-		this->pOwner->_StateFighterHitStepBack(6, iVar9, 1);
+		this->pOwner->_StateFighterHitStepBack(FIGHTER_DEFAULT_STATE_IDLE, iVar9, 1);
+		break;
+	case FIGHTER_HIT_PUSHED:
+		this->pOwner->_StateFighterHitPushed();
 		break;
 	case FIGHTER_BLOW_BEGIN:
 		this->pOwner->_ManageFighterDyn((this->pOwner->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
@@ -6813,6 +7461,50 @@ void CBehaviourFighter::Manage()
 			pFighter->scalarDynJump.Reset();
 
 			CBehaviourFighter* pBehaviourFighter = reinterpret_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+			pBehaviourFighter->SetInitialState();
+		}
+	}
+	break;
+	case FIGHTER_GRAB_BEGIN:
+	{
+		pFighter->_ManageFighterDyn((pFighter->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(FIGHTER_EXECUTE_GRAB, (pFighter->pBlow->blowStageExecute).animId);
+		}
+	}
+	break;
+	case FIGHTER_EXECUTE_GRAB:
+	{
+		pFighter->_ManageFighterDyn((pFighter->pBlow->blowStageExecute).flags, 0x40323, (CActorsTable*)0x0);
+		CActorFighter* pCaughtAdversary = pFighter->_Std_GetCaughtAdversary();
+		if (pCaughtAdversary != (CActorFighter*)0x0) {
+			int msgResult = pFighter->DoMessage(pCaughtAdversary, MESSAGE_CAUGHT, 0);
+			if (msgResult != 0) {
+				pFighter->pAdversary = pCaughtAdversary;
+				pFighter->SetState(FIGHTER_HOLD_STAND, -1);
+			}
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			FighterOnHitFunc pcVar6 = pFighter->pBlow->field_0xd0;
+			if (pcVar6 != (FighterOnHitFunc)0x0) {
+				pcVar6(pFighter, 1);
+			}
+
+			pFighter->field_0x6cc = pFighter->field_0x6c8;
+			pFighter->SetState(FIGHTER_GRAB_END, (pFighter->pBlow->blowStageEnd).animId);
+		}
+	}
+	break;
+	case FIGHTER_GRAB_END:
+	{
+		pFighter->_ManageFighterDyn((pFighter->pBlow->blowStageEnd).flags, 0x40323, (CActorsTable*)0x0);
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			CBehaviourFighter* pBehaviourFighter = static_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+			pFighter->scalarDynA.Reset();
+			pFighter->scalarDynB.Reset();
+			pFighter->scalarDynJump.Reset();
 			pBehaviourFighter->SetInitialState();
 		}
 	}
@@ -7078,6 +7770,18 @@ void CBehaviourFighter::InitState(int newState)
 	case FIGHTER_JUMP_FLIP_JUMP:
 		this->pOwner->_StateFighterFlipJumpInit();
 		break;
+	case FIGHTER_HOLD_STAND:
+		this->pOwner->_StateFighterHoldStandInit();
+		break;
+	case FIGHTER_HOLD_RUN:
+		this->pOwner->_StateFighterHoldRunInit();
+		break;
+	case FIGHTER_HOLD_PUSH_PREPARE:
+		this->pOwner->_StateFighterHoldPushPrepareInit();
+		break;
+	case FIGHTER_HOLD_THROW:
+		this->pOwner->_StateFighterHoldThrowInit();
+		break;
 	case FIGHTER_HIT_STEP_BACK:
 	{
 		pFighter = this->pOwner;
@@ -7094,6 +7798,9 @@ void CBehaviourFighter::InitState(int newState)
 		const int animationId = pFighter->_SV_ANM_GetMultiWaysAnim3D(pFighter->field_0x6d0 + uVar8, &pFighter->field_0x6a0, (edF32VECTOR4*)0x0);
 		pFighter->_StateFighterHitStepBackInit(animationId, 1);
 	}
+	break;
+	case FIGHTER_HIT_PUSHED:
+		this->pOwner->_StateFighterHitPushedInit();
 		break;
 	case FIGHTER_BLOW_BEGIN:
 	case 0x68:
@@ -7174,6 +7881,10 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_JUMP_FLIP_JUMP:
 	case FIGHTER_FLIP_ON_ME:
 	case FIGHTER_RIDE:
+	case FIGHTER_HOLD_STAND:
+	case FIGHTER_HOLD_RUN:
+	case FIGHTER_HOLD_THROW:
+	case FIGHTER_HIT_PUSHED:
 		break;
 	case 0xd:
 	case FIGHTER_JUMP_FALL_TO_FLIP:
@@ -7185,6 +7896,9 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_FLIP_OFF_ME_A:
 	case FIGHTER_FLIP_OFF_ME_B:
 		this->pOwner->_StateFighterFlipOffMeTerm(newState);
+		break;
+	case FIGHTER_HOLD_PUSH_PREPARE:
+		this->pOwner->_StateFighterHoldPushPrepareTerm();
 		break;
 	case FIGHTER_BLOW_BEGIN:
 	case 0x68:
@@ -7304,8 +8018,7 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	else {
 		if (uVar13 == FIGHTER_EXECUTE_FLAGS_HOLD) {
 			if ((this->pOwner->GetStateFlags(newState) & 0xff800) != FIGHTER_EXECUTE_FLAGS_HOLD) {
-				IMPLEMENTATION_GUARD(
-					_EndFighterHold(newState);)
+				this->pOwner->_EndFighterHold();
 			}
 		}
 		else {
@@ -7388,7 +8101,7 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 		}
 		else {
-			if (msg == 0x66) {
+			if (msg == MESSAGE_CAUGHT) {
 				pCVar4 = this->pOwner->GetBehaviour(6);
 				if (pCVar4 != (CBehaviour*)0x0) {
 					return 1;
@@ -7485,8 +8198,7 @@ bool CBehaviourFighter::Execute(s_fighter_action* param_2, s_fighter_action_para
 
 		uVar4 = pFighter->GetStateFlags(pFighter->actorState) & 0xff800;
 		if (uVar4 == FIGHTER_EXECUTE_FLAGS_HOLD) {
-			IMPLEMENTATION_GUARD(
-				pFighter->_Execute_Hold(&local_4, param_3);)
+			pFighter->_Execute_Hold(&local_4, param_3);
 		}
 		else {
 			if (uVar4 == FIGHTER_EXECUTE_FLAGS_RIDE) {
@@ -7575,10 +8287,10 @@ bool CBehaviourFighter::Conditional_Execute(s_fighter_action* pAction, s_fighter
 
 	bVar4 = Execute(pAction, pActionParam);
 	if (bVar4 != false) {
-		if (((ulong)(pAction->field_0x0 & this->pOwner->field_0x44c) << 0x38) >> 0x3c == 0) {
+		if (((ulong)(pAction->moveByte & this->pOwner->field_0x44c) << 0x38) >> 0x3c == 0) {
 			bVar1 = this->pOwner->field_0x44d;
-			if (((pAction->field_0x1 & 0xf & bVar1 & 0xf) != 0) ||
-				(bVar3 = false, ((ulong)(pAction->field_0x1 & bVar1) << 0x3a) >> 0x3e != 0)) goto LAB_00313210;
+			if (((pAction->actionByte & 0xf & bVar1 & 0xf) != 0) ||
+				(bVar3 = false, ((ulong)(pAction->actionByte & bVar1) << 0x3a) >> 0x3e != 0)) goto LAB_00313210;
 		}
 		else {
 		LAB_00313210:
@@ -7641,7 +8353,7 @@ void CInputAnalyser::_CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDi
 		local_10.w = pDir->w;
 	}
 
-	dirFlags = FUN_00337d20(&local_10);
+	dirFlags = EvaluateStickDirections(&local_10);
 	if (dirFlags == this->lastStickDirFlags) {
 		if (_max_dir_time <= GetTimer()->scaledTotalTime - _last_dir_time) {
 			this->patternB.field_0x0uint = this->patternB.field_0x0uint & 0xfff00000 | (uint)((ulong)((ulong)(int)this->lastStickDirFlags << 0x2c) >> 0x2c);
@@ -8896,4 +9608,1403 @@ int PlayerSubStruct_64::GetNbVertex(edF32VECTOR4* pData)
 	} while (uVar9 < 2);
 
 	return iVar8;
+}
+
+void pCallbackSlaveKick(CActorFighter* pFighter, int param_2)
+
+{
+	CBehaviourFighter* pBehaviourFighter;
+	s_fighter_action_param local_10;
+	s_fighter_action local_4;
+
+	if ((param_2 == 1) && ((pFighter->fightFlags & 0x40) != 0)) {
+		IMPLEMENTATION_GUARD(
+		local_4 = (s_fighter_action)0x100;
+		local_10.field_0x4 = CActorFighter::FindBlowByName(pFighter, s_SLAVE_KICK_SALTO_004342f0);
+		local_10.field_0x0 = (edF32VECTOR4*)0x0;
+		if (local_10.field_0x4 != (s_fighter_blow*)0x0) {
+			pBehaviourFighter = static_cast<CBehaviourFighter*>(pFighter)->GetBehaviour(pFighter->curBehaviourId);
+			Conditional_Execute(&local_4, &local_10);
+		})
+	}
+
+	return;
+}
+
+void CBehaviourFighterSlave::Init(CActor* pOwner)
+{
+	s_fighter_blow* pSlaveKick;
+
+	pSlaveKick = static_cast<CActorFighter*>(pOwner)->FindBlowByName("SLAVE_KICK");
+	if (pSlaveKick != (s_fighter_blow*)0x0) {
+		pSlaveKick->field_0xd0 = pCallbackSlaveKick;
+	}
+
+	return;
+}
+
+void CBehaviourFighterSlave::Term()
+{
+	return;
+}
+
+void CBehaviourFighterSlave::Manage()
+{
+	return;
+}
+
+void CBehaviourFighterSlave::Begin(CActor * pOwner, int newState, int newAnimationType)
+{
+	CActorFighter* pFighter;
+	CInputAnalyser* this_00;
+	float fVar2;
+	float fVar3;
+	CLifeInterface* this_01;
+	float fVar4;
+	s_fighter_slave_traj_in local_40;
+
+	this->pOwner = static_cast<CActorFighter*>(pOwner);
+	pFighter = this->pOwner;
+	pFighter->field_0x354 = pFighter->pAdversary;
+	(this->pOwner)->pAdversary = (CActorFighter*)0x0;
+	pFighter = this->pOwner;
+	(pFighter->pCollisionData)->actorFieldA = pFighter->field_0x354;
+	(this->pOwner)->field_0x474 = 0.0f;
+	fVar3 = gF32Vector4Zero.w;
+	fVar2 = gF32Vector4Zero.z;
+	fVar4 = gF32Vector4Zero.y;
+	pFighter = this->pOwner;
+	(pFighter->field_0x4e0).x = gF32Vector4Zero.x;
+	(pFighter->field_0x4e0).y = fVar4;
+	(pFighter->field_0x4e0).z = fVar2;
+	(pFighter->field_0x4e0).w = fVar3;
+	this->pOwner->field_0xa78 = 3;
+	this->pOwner->scalarDynA.Reset();
+	this->pOwner->scalarDynB.Reset();
+	this->pOwner->scalarDynJump.Reset();
+	pFighter = this->pOwner;
+	pFighter->fightFlags = pFighter->fightFlags & 0xfffff8ff;
+	(this->pOwner)->field_0x860 = 0;
+	(this->pOwner)->field_0x864 = (s_fighter_blow*)0x0;
+	this->pOwner->SetFighterCombo((s_fighter_combo*)0x0);
+
+	this_00 = (this->pOwner)->pInputAnalyser;
+	if (this_00 != (CInputAnalyser*)0x0) {
+		*this_00 = CInputAnalyser();
+	}
+
+	if (newState == -1) {
+		pFighter = this->pOwner;
+		pFighter->SetState(0x3b, -1);
+	}
+	else {
+		pFighter = this->pOwner;
+		pFighter->SetState(newState, newAnimationType);
+	}
+
+	this->behaviourId = this->pOwner->prevBehaviourId;
+	pFighter = this->pOwner;
+	pFighter->fightFlags = pFighter->fightFlags | 0x8000;
+	pFighter->fightFlags = pFighter->fightFlags & 0xfffeffff;
+	this->pOwner->SetLookingAtOff();
+
+	fVar4 = edF32Vector4GetDistHard(&((this->pOwner)->fighterAnatomyZones).field_0x10);
+	local_40.field_0x0 = -3.590392f;
+	local_40.field_0x4 = 3.590392f;
+	local_40.field_0x8 = 9.189158f;
+	local_40.field_0xc = 11.30973f;
+	local_40.field_0x10 = 0.0f;
+	local_40.field_0x14 = 1.795196f;
+	local_40.field_0x18 = fVar4 + 0.65f;
+	local_40.field_0x1c = fVar4 + 0.25f;
+	local_40.field_0x20 = 0.0f;
+	local_40.field_0x24 = 0.3f;
+	local_40.field_0x28 = 1.570796f;
+	local_40.field_0x2c = 1.570796f;
+	local_40.field_0x34 = 0.5235988f;
+	local_40.field_0x30 = 0.0f;
+	this->pOwner->field_0x920.SetConfig(&local_40);
+
+	local_40.field_0x0 = -3.590392f;
+	local_40.field_0x4 = 3.590392f;
+	local_40.field_0x8 = 11.30973f;
+	local_40.field_0xc = 14.13717f;
+	local_40.field_0x20 = 0.3f;
+	local_40.field_0x24 = 0.69999999f;
+	local_40.field_0x28 = 1.570796f;
+	local_40.field_0x2c = 1.308997f;
+	this->pOwner->field_0x980.SetConfig(&local_40);
+
+	this->pOwner->slaveGroundSampler.field_0x4 = 0x18;
+	this->pOwner->slaveGroundSampler.field_0x8 = 4.0f;
+
+	(this->pOwner)->field_0xa5c = 0.0f;
+	(this->pOwner)->field_0xa58 = 0.0f;
+	(this->pOwner)->field_0xa54 = 0;
+	(this->pOwner)->field_0xa60 = 1.0f;
+
+	pFighter = this->pOwner;
+	this_01 = pFighter->GetLifeInterfaceOther();
+	this_01->SetPriority(4);
+
+	return;
+}
+
+void CBehaviourFighterSlave::End(int newBehaviourId)
+{
+	CActorFighter* pFighter;
+	bool bVar2;
+	CLifeInterface* pCVar3;
+	float fVar4;
+
+	pFighter = this->pOwner;
+	bVar2 = pFighter->IsFightRelated(newBehaviourId);
+	if (bVar2 == false) {
+		pFighter = this->pOwner;
+		pCVar3 = pFighter->GetLifeInterface();
+		fVar4 = pCVar3->GetValue();
+		if (fVar4 <= 0.0f) {
+			pFighter = this->pOwner;
+			pFighter->NotifyMaster(0, 0);
+		}
+		else {
+			pFighter = this->pOwner;
+			pFighter->NotifyMaster(0xb, 0);
+		}
+	}
+
+	this->pOwner->pCollisionData->actorFieldA = (CActor*)0x0;
+	pFighter = this->pOwner;
+	pFighter->fightFlags = pFighter->fightFlags & 0xffff7fff;
+	pFighter->fightFlags = pFighter->fightFlags | 0x10000;
+	pFighter = this->pOwner;
+	pFighter->SetAdversary(pFighter->field_0x354);
+	(this->pOwner)->field_0x354 = (CActorFighter*)0x0;
+	pFighter = this->pOwner;
+	pFighter->flags = pFighter->flags & 0xffdfffff;
+	this->pOwner->ComputeAltitude();
+
+	return;
+}
+
+void CBehaviourFighterSlave::InitState(int newState)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	CCollision* pCol;
+	CActorFighter* pFighter;
+
+	pFighter = this->pOwner;
+	if (newState == -1) {
+		uVar3 = 0;
+	}
+	else {
+		pSVar2 = pFighter->GetStateCfg(newState);
+		uVar3 = pSVar2->flags_0x4;
+	}
+	if ((uVar3 & 0xff800) == 0x40000) {
+		pFighter = this->pOwner;
+
+		if ((pFighter->GetStateFlags(pFighter->prevActorState) & 0xff800) != 0x40000) {
+			pFighter = this->pOwner;
+			pFighter->NotifyMaster(10, 0);
+			pFighter->LinkToActor(pFighter->field_0x354, 0x6b6e694c, 1);
+		}
+	}
+	else {
+		if ((uVar3 & 0xff800) == 0x20000) {
+			pFighter = this->pOwner;
+
+			if ((pFighter->GetStateFlags(pFighter->prevActorState) & 0xff800) != 0x20000) {
+				pFighter = this->pOwner;
+				pFighter->field_0x354->pAnimationController->RegisterBone(0x6b6e694c);
+				pFighter->SetLocalBoundingSphere(pFighter->field_0x3f8 * 1.5f, &(pFighter->subObjA)->boundingSphere);
+			}
+		}
+	}
+
+	pFighter = this->pOwner;
+	iVar1 = pFighter->actorState;
+	if ((iVar1 == 0x4e) || (iVar1 == 0x4b)) {
+		IMPLEMENTATION_GUARD(
+		pFighter->_StateFighterReturnFromFightActionInit();)
+	}
+	else {
+		if ((iVar1 == 0x4d) || (iVar1 == 0x4a)) {
+			IMPLEMENTATION_GUARD(
+			pFighter->_StateFighterExecuteFightActionInit();)
+		}
+		else {
+			if ((iVar1 == 0x4c) || (iVar1 == 0x49)) {
+				IMPLEMENTATION_GUARD(
+				pFighter->_StateFighterPrepareFightActionInit();)
+			}
+			else {
+				if ((iVar1 == 0x43) || (iVar1 == 0x48)) {
+					pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(5.0f, 0);
+				}
+				else {
+					if (iVar1 == 0x47) {
+						pFighter->scalarDynA.Reset();
+						pFighter->scalarDynB.Reset();
+						pFighter->scalarDynJump.Reset();
+						pFighter->dynamic.speed = 0.0f;
+					}
+					else {
+						if (iVar1 == 0x44) {
+							pFighter->dynamic.speed = 0.0f;
+							pFighter->field_0xa78 = 0;
+						}
+						else {
+							if (iVar1 == 0x3e) {
+								pFighter->dynamic.speed = 0.0f;
+								pFighter->fightFlags = pFighter->fightFlags & 0xfffff7ff;
+								pFighter->field_0xa78 = 2;
+								pFighter->NotifyMaster(7, 0);
+							}
+							else {
+								if (iVar1 == 0x3d) {
+									if ((pFighter->flags & 0x1000) == 0) {
+										GetAnglesFromVector((edF32VECTOR3*)&pFighter->rotationEuler, &pFighter->rotationQuat);
+										pFighter->flags = pFighter->flags | 0x1000;
+									}
+									pCol = pFighter->pCollisionData;
+									pCol->flags_0x0 = pCol->flags_0x0 | 0x800;
+									pCol = pFighter->pCollisionData;
+									pCol->flags_0x0 = pCol->flags_0x0 & 0xffffefd7;
+									(pFighter->field_0x4e0).z = 0.0f;
+									(pFighter->field_0x4e0).y = 0.0f;
+									(pFighter->field_0x4e0).x = 0.0f;
+									(pFighter->field_0x4e0).w = 1.0f;
+								}
+								else {
+									if (iVar1 == 0x3b) {
+										if (pFighter->field_0x474 == 0.0f) {
+											pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+										}
+										else {
+											pFighter->fightFlags = pFighter->fightFlags | 1;
+										}
+
+										pFighter->field_0x44cuint = 0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourFighterSlave::TermState(int oldState, int newState)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	float fVar5;
+	float fVar6;
+	CAnimation* pAnim;
+	CCollision* pCol;
+	CActorFighter* pFighter;
+
+	pFighter = this->pOwner;
+	iVar1 = pFighter->actorState;
+	if ((iVar1 == 0x4e) || (iVar1 == 0x4b)) {
+		IMPLEMENTATION_GUARD(
+		pFighter->_StateFighterReturnFromFightActionTerm(newState);)
+	}
+	else {
+		if ((iVar1 == 0x4d) || (iVar1 == 0x4a)) {
+			IMPLEMENTATION_GUARD(
+			pFighter->_StateFighterExecuteFightActionTerm(newState);)
+		}
+		else {
+			if ((iVar1 == 0x4c) || (iVar1 == 0x49)) {
+				IMPLEMENTATION_GUARD(
+				pFighter->_StateFighterPrepareFightActionTerm(newState);)
+			}
+			else {
+				if ((iVar1 == 0x43) || (iVar1 == 0x48)) {
+					pFighter->field_0x474 = 0.3f;
+					if (newState == -1) {
+						pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+					}
+					else {
+						pAnim = pFighter->pAnimationController;
+						pSVar2 = pFighter->GetStateCfg(newState);
+						iVar1 = pFighter->GetIdMacroAnim(pSVar2->animId);
+						if (iVar1 < 0) {
+							fVar5 = 0.0f;
+						}
+						else {
+							fVar5 = pAnim->GetAnimLength(iVar1, 1);
+							fVar6 = pAnim->GetAnimLength(iVar1, 2);
+							fVar5 = fVar5 - fVar6;
+						}
+
+						pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(fVar5 / pFighter->field_0x474, 0);
+					}
+				}
+				else {
+					if (iVar1 == 0x45) {
+						pFighter->NotifyMaster(6, 0);
+					}
+					else {
+						if (iVar1 == 0x3d) {
+							pCol = pFighter->pCollisionData;
+							pCol->flags_0x0 = pCol->flags_0x0 & 0xfffff7ff;
+							pCol = pFighter->pCollisionData;
+							pCol->flags_0x0 = pCol->flags_0x0 | 0x1028;
+						}
+						else {
+							if (iVar1 == 0x3b) {
+								pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+								pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	pFighter = this->pOwner;
+
+	if ((this->pOwner->GetStateFlags(oldState) & 0xff800) == 0x40000) {
+		pFighter = this->pOwner;
+
+		if ((this->pOwner->GetStateFlags(newState) & 0xff800) != 0x40000) {
+			this->pOwner->UnlinkFromActor();
+		}
+	}
+	else {
+		if ((uVar3 & 0xff800) == 0x20000) {
+			pFighter = this->pOwner;
+
+			if ((this->pOwner->GetStateFlags(newState) & 0xff800) != 0x20000) {
+				pFighter = this->pOwner;
+				pFighter->field_0x354->pAnimationController->UnRegisterBone(0x6b6e694c);
+				pFighter->SetLocalBoundingSphere(pFighter->field_0x3f8, &(pFighter->subObjA)->boundingSphere);
+			}
+		}
+	}
+
+	uVar3 = this->pOwner->FUN_0031b4d0(oldState);
+	if (((uVar3 & 2) != 0) && (uVar3 = this->pOwner->FUN_0031b4d0(newState), (uVar3 & 2) == 0)) {
+		(this->pOwner)->field_0xa78 = 3;
+	}
+
+	return;
+}
+
+int CBehaviourFighterSlave::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+{
+	bool bVar1;
+	uint uVar2;
+	StateConfig* pSVar3;
+	int iVar4;
+	long lVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32VECTOR4 local_90;
+	s_fighter_anatomy_zones sStack128;
+	CActor* local_50[4];
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	int local_20;
+	undefined4 local_8;
+	CActor** local_4;
+	CCollision* pCol;
+	CActorFighter* pFighter;
+
+	bVar1 = true;
+	if ((msg == 0x16) || (msg == 0x17)) {
+		local_8 = 0;
+		pFighter = this->pOwner;
+		pFighter->NotifyMaster(2, 0);
+		return 0;
+	}
+
+	if (msg != MESSAGE_KICKED) {
+		return 0;
+	}
+
+	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+	iVar6 = pHitParam->projectileType;
+	if (iVar6 != 7) {
+		if (iVar6 != 9) {
+			if (iVar6 != 8) {
+				return 1;
+			}
+
+			pFighter = this->pOwner;
+			if (static_cast<CActorFighter*>(pSender) != pFighter->field_0x354) {
+				return 1;
+			}
+
+			pFighter->field_0x6a0 = pHitParam->field_0x20;
+			(this->pOwner)->field_0x6b0 = pHitParam->field_0x30;
+			pFighter = this->pOwner;
+			pFighter->SetBehaviour(FIGHTER_BEHAVIOUR_DEFAULT, 0x50, -1);
+
+			return 1;
+		}
+
+		bVar1 = false;
+	}
+
+	pFighter = this->pOwner;
+	if (static_cast<CActorFighter*>(pSender) == pFighter->field_0x354) {
+		pFighter->hitFlags = pHitParam->flags;
+		(this->pOwner)->hitDamage = pHitParam->damage * 2.0f;
+
+		pFighter = this->pOwner;
+		pFighter->field_0x690 = pHitParam->field_0x40;
+
+		pFighter = this->pOwner;
+		pFighter->field_0x6a0 = pHitParam->field_0x20;
+
+		(this->pOwner)->field_0x6b0 = pHitParam->field_0x30;
+		(this->pOwner)->field_0x684 = pHitParam->field_0x50;
+		(this->pOwner)->field_0x686 = pHitParam->field_0x52;
+
+		pFighter = this->pOwner;
+		if ((pFighter->field_0x684 & 1U) != 0) {
+			pFighter->field_0x7a0 = pHitParam->field_0x60;
+			(this->pOwner)->field_0x7b4 = pHitParam->field_0x70;
+		}
+
+		pFighter = this->pOwner;
+		bVar1 = pFighter->actorsExcludeTable.IsInList(pFighter->field_0x354);
+		if (bVar1 == false) {
+			pFighter = this->pOwner;
+			pFighter->actorsExcludeTable.Add(1.0f, pFighter->field_0x354);
+		}
+
+		pFighter = this->pOwner;
+		pFighter->SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, -1, -1);
+		return 1;
+	}
+
+	if (pFighter->field_0xa78 != 3) {
+		edF32Vector4ScaleHard(1.5f, (edF32VECTOR4*)&sStack128, (edF32VECTOR4*)&pFighter->fighterAnatomyZones);
+		sStack128.field_0x20 = 1.0f;
+		sStack128.field_0x24 = 0.999f;
+		pCol = this->pOwner->pCollisionData;
+		local_90.x = (pCol->transformMatrix).da;
+		local_90.y = (pCol->transformMatrix).db;
+		local_90.z = (pCol->transformMatrix).dc;
+		local_90.w = (pCol->transformMatrix).dd;
+		uVar2 = this->pOwner->_SV_HIT_GetHitZoneFromImpact(&sStack128, &pHitParam->field_0x40, &local_90);
+		pFighter = this->pOwner;
+		if (pFighter->field_0xa78 == (uVar2 & 0xffff)) {
+			pSender->DoMessage(pFighter->field_0x354, MESSAGE_KICKED, pHitParam);
+			return 1;
+		}
+	}
+
+	pFighter->LifeDecrease(pHitParam->damage);
+
+	local_40 = pHitParam->field_0x20;
+	local_30 = pHitParam->field_0x40;
+
+	pFighter = this->pOwner;
+	iVar6 = pFighter->actorState;
+	local_50[0] = pSender;
+	if (iVar6 == -1) {
+		uVar2 = 0;
+	}
+	else {
+		pSVar3 = pFighter->GetStateCfg(iVar6);
+		uVar2 = pSVar3->flags_0x4;
+	}
+
+	iVar6 = 0x43;
+	if ((uVar2 & 0xff800) == 0x20000) {
+		uVar2 = 1;
+	}
+	else {
+		pFighter = this->pOwner;
+		iVar6 = 0x48;
+		uVar2 = pFighter->_SV_HIT_GetHitZoneFromImpact(&pFighter->fighterAnatomyZones, &local_30, &pFighter->currentLocation);
+	}
+	pFighter = this->pOwner;
+	iVar4 = pFighter->_SV_ANM_GetMultiWaysAnim3D(pFighter->field_0x6d0 + uVar2 + 6, &local_40, (edF32VECTOR4*)0x0);
+	pFighter = this->pOwner;
+	local_20 = pFighter->_SV_ANM_GetMultiWaysAnim3D(pFighter->field_0x6d0 + uVar2 + 3, &local_40, (edF32VECTOR4*)0x0);
+	if (bVar1) {
+		this->pOwner->PlayImpactFx(&local_30, &local_40, static_cast<uint>((pHitParam->flags & 1) != 0), false);
+	}
+
+	local_4 = local_50;
+	pFighter = this->pOwner;
+	if (pFighter->NotifyMaster(1, local_4) != 0) {
+		pFighter = this->pOwner;
+		pFighter->SetState(iVar6, iVar4);
+	}
+
+	return 1;
+}
+
+bool CBehaviourFighterSlave::Execute(s_fighter_action* pAction, s_fighter_action_param* pParam)
+{
+	uint uVar1;
+	s_fighter_blow* psVar2;
+	s_fighter_blow* psVar3;
+	ulong uVar4;
+	bool bVar5;
+	s_fighter_action local_4;
+	CActorFighter* pFighter;
+
+	pFighter = this->pOwner;
+	uVar1 = pFighter->fightFlags;
+	bVar5 = false;
+	if (((uVar1 & 0x400) == 0) && ((uVar1 & 1) == 0)) {
+		pFighter->_ValidateCommand(pAction, &local_4);
+		uVar4 = (static_cast<ulong>(local_4.moveByte) << 0x38) >> 0x3c;
+		if (uVar4 == 4) {
+			pFighter = this->pOwner;
+			pFighter->NotifyMaster(7, (void*)0x0);
+			pFighter = this->pOwner;
+			pFighter->SetState(0x3e, -1);
+			bVar5 = true;
+			(this->pOwner)->field_0x474 = 0.0f;
+		}
+		else {
+			if ((uVar4 == 8) || (uVar4 == 2)) {
+				pFighter = this->pOwner;
+				pFighter->NotifyMaster(5, (void*)0x0);
+				pFighter = this->pOwner;
+				pFighter->SetState(0x44, -1);
+				bVar5 = true;
+				(this->pOwner)->field_0x474 = 0.0f;
+			}
+		}
+
+		if (((local_4.actionByte & 0xf) == 2) || ((local_4.actionByte & 0xf) == 1)) {
+			pFighter = this->pOwner;
+			if (pFighter->actorState == 0x4a) {
+				psVar3 = static_cast<s_fighter_blow*>(pParam->pData);
+				psVar2 = pFighter->FindBlowByName("SLAVE_KICK_SALTO");
+				if (psVar3 == psVar2) {
+					(this->pOwner)->field_0x864 = psVar3;
+					(this->pOwner)->field_0x860 = 1;
+				}
+			}
+			else {
+				psVar3 = pFighter->FindBlowByName("SLAVE_KICK");
+				if (psVar3 != (s_fighter_blow*)0x0) {
+					(this->pOwner)->pBlow = psVar3;
+					pFighter = this->pOwner;
+					pFighter->field_0x474 = pFighter->pBlow->field_0xc;
+					pFighter = this->pOwner;
+					pFighter->NotifyMaster(9, (void*)0x0);
+					pFighter = this->pOwner;
+					IMPLEMENTATION_GUARD(
+					pFighter->SetState(0x49, (int)*static_cast<undefined**>((int)(((CBehaviourStand*)&pFighter->pBlow)->pVTable + 1) + 0x24));)
+					bVar5 = true;
+				}
+			}
+		}
+	}
+
+	return bVar5;
+}
+
+void CActorFighter::_StateFighterMasterSaidDownRotate()
+{
+	bool bVar1;
+	s_fighter_slave_traj_out* peVar2;
+	int iVar4;
+	CLifeInterface* pLife;
+	ushort uVar5;
+	ushort uVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float puVar14;
+	float puVar11;
+	float puVar12;
+	float fVar10;
+	float puVar13;
+	float fVar11;
+	edF32VECTOR4 local_290;
+	CActorsTable local_280;
+	edF32VECTOR4 eStack368;
+	edF32MATRIX4 eStack352;
+	edF32MATRIX4 auStack288;
+	edF32VECTOR4 local_e0;
+	edF32MATRIX4 auStack208;
+	edF32VECTOR4 eStack144;
+	S_FIGHTER_SLAVE_GROUND_SAMPLE local_80;
+	s_fighter_slave_traj_out local_60;
+	s_fighter_slave_traj_in local_40;
+	CActorFighter* pFighter;
+
+	local_280.nbEntries = 0;
+
+	fVar11 = fabsf(this->field_0xa5c);
+	if (fVar11 < 11.30973f) {
+		fVar7 = this->field_0xa58 + this->field_0xa5c * GetTimer()->cutsceneDeltaTime;
+		this->field_0xa58 = fVar7;
+		fVar7 = edF32Between_2Pi(fVar7);
+		this->field_0xa58 = fVar7;
+		if (fVar7 * this->field_0xa5c < 0.0f) {
+			if (0.0f < this->field_0xa60) {
+				this->field_0xa60 = -1.0f;
+				memcpy(&local_40, &this->field_0x920.config, sizeof(s_fighter_slave_traj_in));
+				local_40.field_0x0 = local_40.field_0x0 / 2.0f;
+				local_40.field_0x4 = local_40.field_0x4 / 2.0f;
+				this->field_0x920.SetConfigAdjust(&local_40, &this->field_0xa58, (float*)0x0);
+			}
+		}
+		else {
+			if (this->field_0xa60 < 0.0f) {
+				this->field_0xa60 = 1.0f;
+				memcpy(&local_40, &this->field_0x920.config, sizeof(s_fighter_slave_traj_in));
+				local_40.field_0x0 = local_40.field_0x0 * 2.0f;
+				local_40.field_0x4 = local_40.field_0x4 * 2.0f;
+				this->field_0x920.SetConfigAdjust(&local_40, &this->field_0xa58, (float*)0x0);
+			}
+		}
+
+		fVar7 = (this->field_0x920).config.field_0x4;
+		if (fVar7 < this->field_0xa58) {
+			this->field_0xa58 = fVar7;
+		}
+		else {
+			fVar7 = (this->field_0x920).config.field_0x0;
+			if (this->field_0xa58 < fVar7) {
+				this->field_0xa58 = fVar7;
+			}
+		}
+
+		peVar2 = this->field_0x920.Compute(-this->field_0xa58, fVar11);
+		memcpy(&local_60, peVar2, 0x20);
+	}
+	else {
+		puVar13 = 0.0f;
+		if (this->field_0xa58 != 0.0f) {
+			if (0.0f < this->field_0xa58) {
+				puVar13 = 1.0f;
+			}
+			else {
+				puVar13 = -1.0f;
+			}
+		}
+
+		iVar4 = 1;
+		if (this->field_0xa58 <= 0.0f) {
+			iVar4 = -1;
+		}
+
+		if (puVar13 == static_cast<float>(iVar4)) {
+			this->field_0xa58 = this->field_0xa58 + ((-puVar13 * 0.5235988f) / 0.25f) * GetTimer()->cutsceneDeltaTime;
+		}
+		else {
+			this->field_0xa58 = 0.0f;
+		}
+
+		peVar2 = this->field_0x920.Compute(-this->field_0xa58, fVar11);
+		memcpy(&local_60, peVar2, 0x20);
+	}
+
+	edF32Vector4AddHard(&local_e0, &this->currentLocation, &this->fighterAnatomyZones.field_0x0);
+	local_e0.w = 1.0f;
+	edF32Vector4SubHard(&eStack368, &local_e0, &this->field_0x354->currentLocation);
+	fVar7 = edF32Vector4SafeNormalize0Hard(&eStack368, &eStack368);
+	fVar8 = GetAngleYFromVector(&eStack368);
+	fVar8 = edF32Between_0_2Pi(fVar8);
+	this->slaveGroundSampler.GetGroundDesc(fVar8, fVar7 * 0.7692308f, &local_80, &this->field_0x354->currentLocation);
+	if (local_60.field_0x0.y < local_80.field_0x10) {
+		bVar1 = true;
+		this->fightFlags = this->fightFlags & 0xfffffeff;
+		local_60.field_0x0.y = local_80.field_0x10;
+	}
+	else {
+		if ((local_60.field_0x0.y != 0.0f) || (0.0f <= local_80.field_0x10)) {
+			bVar1 = false;
+			this->fightFlags = this->fightFlags & 0xfffffeff;
+			local_80.field_0x0 = gF32Vector4UnitY;
+		}
+		else {
+			if (fabsf(eStack368.y) + ((this->pCollisionData)->pObbPrim->scale).z / local_80.field_0x0.y < fabsf(local_80.field_0x10)) {
+				bVar1 = true;
+				if ((this->fightFlags & 0x100) == 0) {
+					this->dynamicExt.instanceIndex.y = 0.0f;
+					this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
+					this->fightFlags = this->fightFlags | 0x100;
+				}
+			}
+			else {
+				bVar1 = true;
+				this->fightFlags = this->fightFlags & 0xfffffeff;
+				local_60.field_0x0.y = local_80.field_0x10;
+			}
+		}
+	}
+
+	fVar7 = GetAngleYFromVector(&this->field_0x354->rotationQuat);
+	edF32Matrix4RotateYHard(fVar7, &auStack288, &gF32Matrix4Unit);
+	fVar7 = local_60.field_0x0.y;
+	fVar10 = this->field_0x354->currentLocation.y;
+	local_60.field_0x0.y = 0.0f;
+	fVar9 = ((this->pCollisionData)->pObbPrim->scale).z / local_80.field_0x0.y;
+	if ((this->fightFlags & 0x100) == 0) {
+		this->dynamicExt.instanceIndex.y = (((fVar7 + fVar10) - local_e0.y) + fVar9) / GetTimer()->cutsceneDeltaTime;
+		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
+	}
+
+	edF32Matrix4MulF32Vector4Hard(&local_60.field_0x0, &auStack288, &local_60.field_0x0);
+	edF32Vector4AddHard(&local_60.field_0x0, &local_60.field_0x0, &this->field_0x354->currentLocation);
+	edF32Vector4SubHard(&local_60.field_0x0, &local_60.field_0x0, &local_e0);
+	local_60.field_0x0.y = 0.0f;
+	fVar7 = edF32Vector4SafeNormalize0Hard(&local_60.field_0x0, &local_60.field_0x0);
+	this->dynamic.speed = fVar7 / GetTimer()->cutsceneDeltaTime;
+	this->dynamic.rotationQuat = local_60.field_0x0;
+	edF32Matrix4RotateYHard(fVar8, &auStack288, &gF32Matrix4Unit);
+	fVar8 = GetTimer()->cutsceneDeltaTime * 6.283185f;
+	fVar7 = local_60.field_0x10 - this->field_0xa54;
+	if (fVar8 < fabsf(fVar7)) {
+		if (0.0f <= fVar7) {
+			puVar14 = 1.0f;
+		}
+		else {
+			puVar14 = -1.0f;
+		}
+
+		this->field_0xa54 = this->field_0xa54 + fVar8 * puVar14;
+	}
+	else {
+		this->field_0xa54 = local_60.field_0x10;
+	}
+
+	edF32Matrix4FromAngAxisSoft(-this->field_0xa54, &eStack352, &auStack288.rowX);
+	edF32Matrix4MulF32Matrix4Hard(&auStack208, &auStack288, &eStack352);
+	edF32Matrix4FromAngAxisSoft(-local_60.field_0x14, &eStack352, &auStack288.rowY);
+	edF32Matrix4MulF32Matrix4Hard(&auStack208, &auStack208, &eStack352);
+
+	if (bVar1) {
+		edF32Vector4GetNegHard(&local_80.field_0x0, &local_80.field_0x0);
+		edF32Vector4CrossProductHard(&eStack144, &auStack208.rowZ, &local_80.field_0x0);
+		edF32Vector4SafeNormalize0Hard(&eStack144, &eStack144);
+		puVar11 = edF32Vector4DotProductHard(&auStack208.rowZ, &local_80.field_0x0);
+		if (1.0f < puVar11) {
+			puVar12 = 1.0f;
+		}
+		else {
+			puVar12 = -1.0f;
+			if (-1.0f <= puVar11) {
+				puVar12 = puVar11;
+			}
+		}
+
+		fVar7 = acosf(puVar12);
+		fVar7 = edF32Between_2Pi(fVar7);
+		edF32Matrix4FromAngAxisSoft(-fVar7, &eStack352, &eStack144);
+		edF32Matrix4MulF32Matrix4Hard(&auStack208, &auStack208, &eStack352);
+	}
+
+	_SV_DYN_SetRotationAroundMassCenter(&auStack208);
+	ManageDyn(4.0f, 0x40020, &local_280);
+
+	if (this->dynamic.speed != 0.0f) {
+		if (fVar11 < 11.30973f) {
+			local_290 = this->dynamic.rotationQuat;
+			uVar6 = 2;
+			uVar5 = 3;
+		}
+		else {
+			local_290.x = this->dynamic.rotationQuat.x;
+			local_290.y = this->dynamic.rotationQuat.y + 0.5f;
+			local_290.z = this->dynamic.rotationQuat.z;
+			local_290.w = 0.0f;
+			edF32Vector4NormalizeHard(&local_290, &local_290);
+			edF32Vector4ScaleHard(fVar11, &local_290, &local_290);
+			uVar6 = 0xe;
+			uVar5 = 1;
+		}
+
+		iVar4 = _SV_HIT_ProcessActorsCollisions(0.0f, &this->field_0x8f0, (edF32VECTOR4*)0x0, &local_290, &local_280, &this->actorsExcludeTable, true, uVar6, uVar5);
+		if (iVar4 != 0) {
+			pLife = GetLifeInterface();
+			fVar11 = pLife->GetValueMax();
+			LifeDecrease(fVar11 / 4.0f);
+		}
+	}
+
+	static float FLOAT_00448b20 = 0.05f;
+
+	if (this->field_0xa5c == 0.0f) {
+		fVar11 = (this->field_0x4e0).w;
+		if (1.0f - fVar11 <= FLOAT_00448b20) {
+			(this->field_0x4e0).w = 1.0f;
+		}
+		else {
+			(this->field_0x4e0).w = fVar11 + FLOAT_00448b20;
+		}
+	}
+	else {
+		fVar11 = (this->field_0x4e0).w;
+		if (fVar11 <= FLOAT_00448b20) {
+			(this->field_0x4e0).w = 0.0f;
+		}
+		else {
+			(this->field_0x4e0).w = fVar11 - FLOAT_00448b20;
+		}
+	}
+
+	(this->field_0x4e0).x = fabsf(this->field_0xa5c) / 14.13717f;
+	fVar11 = (this->field_0x4e0).x;
+	if (1.0f < fVar11) {
+		(this->field_0x4e0).x = 1.0f;
+	}
+	else {
+		if (fVar11 < 0.0f) {
+			(this->field_0x4e0).x = 0.0f;
+		}
+	}
+
+	fVar11 = (this->field_0x4e0).x;
+	if (0.5f <= fVar11) {
+		fVar11 = (fVar11 - 0.5f) * 2.0f;
+		(this->field_0x4e0).z = fVar11;
+		(this->field_0x4e0).y = 1.0f - fVar11;
+		(this->field_0x4e0).x = 0.0f;
+	}
+	else {
+		(this->field_0x4e0).y = fVar11 * 2.0f;
+		(this->field_0x4e0).x = 1.0f - fVar11 * 2.0f;
+		(this->field_0x4e0).z = 0.0f;
+	}
+
+	(this->field_0x4e0).x = (this->field_0x4e0).x * (1.0f - (this->field_0x4e0).w);
+	(this->field_0x4e0).y = (this->field_0x4e0).y * (1.0f - (this->field_0x4e0).w);
+	(this->field_0x4e0).z = (this->field_0x4e0).z * (1.0f - (this->field_0x4e0).w);
+	pFighter = this->field_0x354;
+	pFighter->field_0x4e0 = this->field_0x4e0;
+
+	return;
+}
+
+void CBehaviourFighterSlave::ManageByMaster(s_fighter_action* pAction, s_fighter_action_param* pParam)
+{
+	CActorFighter* pCVar1;
+	ed_3d_hierarchy_node* peVar2;
+	bool bVar5;
+	byte cVar6;
+	edF32MATRIX4* peVar7;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_1a0;
+	edF32MATRIX4 auStack400;
+	edF32MATRIX4 auStack336;
+	edF32MATRIX4 auStack272;
+	edF32MATRIX4 auStack208;
+	edF32MATRIX4 auStack144;
+	edF32MATRIX4 auStack80;
+	CActorFighter* pFighter;
+
+	cVar6 = this->pOwner->UpdateFightCommand();
+	if (cVar6 == 0) {
+		ExecuteByMaster(pAction, pParam);
+	}
+
+	pFighter = this->pOwner;
+	switch (pFighter->actorState) {
+	case 0x3b:
+		if ((pFighter->fightFlags & 1) == 0) {
+			fVar9 = edFIntervalUnitSrcLERP(fabsf((pFighter->field_0x4e0).x), 1.0f, (pFighter->field_0x4e0).w);
+			pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(fVar9, 0);
+		}
+		else {
+			if (pFighter->field_0x474 <= pFighter->timeInAir) {
+				pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+				pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+			}
+		}
+
+		pCVar1 = pFighter->field_0x354;
+		pFighter->rotationQuat = pCVar1->rotationQuat;
+		pFighter->ManageDyn(4.0f, 0x4022b, (CActorsTable*)0x0);
+		break;
+	case 0x3c:
+		pCVar1 = pFighter->field_0x354;
+		pFighter->rotationQuat = pCVar1->rotationQuat;
+		pFighter->ManageDyn(4.0f, 0x4022b, (CActorsTable*)0x0);
+
+		if (11.30973f <= fabsf(pFighter->field_0x354->field_0xa5c)) {
+			pFighter->NotifyMaster(3, (void*)0x0);
+			pFighter->fightFlags = pFighter->fightFlags | 0x400;
+		}
+		fVar9 = edFIntervalUnitSrcLERP(fabsf((pFighter->field_0x4e0).x), 1.0f, 1.25f);
+		(pFighter->field_0x4e0).w = fVar9;
+		break;
+	case 0x3d:
+		pFighter->_StateFighterMasterSaidDownRotate();
+		break;
+	case 0x3e:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack80, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack80.rowT, false);
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x3f, -1);
+		}
+		break;
+	case 0x3f:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack144, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack144.rowT, false);
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x40, -1);
+		}
+		break;
+	case 0x40:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack208, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack208.rowT, false);
+		}
+		if (pFighter->field_0xa70 < pFighter->timeInAir) {
+			pFighter->SetState(0x41, -1);
+			pFighter->NotifyMaster(8, (void*)0x0);
+		}
+		break;
+	case 0x41:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack272, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack272.rowT, false);
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x42, -1);
+		}
+		break;
+	case 0x42:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack336, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack336.rowT, false);
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x3b, -1);
+		}
+		break;
+	case 0x43:
+		if ((pFighter->fightFlags & 0x800) == 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 0x800;
+			pFighter->UpdatePosition(&pFighter->currentLocation, true);
+		}
+		else {
+			peVar2 = pFighter->field_0x354->pMeshTransform;
+			peVar7 = pFighter->field_0x354->pAnimationController->GetCurBoneMatrix(0x6b6e694c);
+			edF32Matrix4MulF32Matrix4Hard(&auStack400, peVar7, &peVar2->base.transformA);
+			pFighter->UpdatePosition(&auStack400.rowT, false);
+		}
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x3b, -1);
+		}
+		break;
+	case 0x44:
+		pFighter->ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x45, -1);
+		}
+		break;
+	case 0x45:
+		pFighter->ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+		if (pFighter->field_0xa74 < pFighter->timeInAir) {
+			pFighter->SetState(0x46, -1);
+		}
+		break;
+	case 0x46:
+		pFighter->ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x3b, -1);
+		}
+		break;
+	case 0x47:
+		pCVar1 = pFighter->field_0x354;
+		pFighter->rotationQuat = pCVar1->rotationQuat;
+		pFighter->ManageDyn(4.0f, 0x4022b, (CActorsTable*)0x0);
+		break;
+	case 0x48:
+		pCVar1 = pFighter->field_0x354;
+		pFighter->rotationQuat = pCVar1->rotationQuat;
+		pFighter->ManageDyn(4.0f, 0x4022b, (CActorsTable*)0x0);
+		break;
+	case 0x49:
+		pFighter->_StateFighterPrepareFightAction(0x4a);
+		break;
+	case 0x4a:
+		pFighter->_StateFighterExecuteBlow(0x4b, 0x4c, 0);
+		break;
+	case 0x4b:
+		pFighter->_StateFighterReturnFromFightAction();
+		break;
+	case 0x4c:
+		pFighter->_StateFighterPrepareFightAction(0x4d);
+		break;
+	case 0x4d:
+		pFighter->_StateFighterExecuteBlow(0x4e, -1, 0);
+		break;
+	case 0x4e:
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			edF32Vector4SubHard(&local_1a0, &pFighter->currentLocation, &pFighter->field_0x740);
+			edF32Vector4ScaleHard(1.0f / GetTimer()->cutsceneDeltaTime, &local_1a0, &local_1a0);
+			pFighter->dynamicExt.instanceIndex.x = local_1a0.x;
+			pFighter->dynamicExt.instanceIndex.y = local_1a0.y;
+			pFighter->dynamicExt.instanceIndex.z = local_1a0.z;
+			pFighter->dynamic.field_0x4c = pFighter->dynamic.field_0x4c | 0x1c000;
+			pFighter->NotifyMaster(0xb, (void*)0x0);
+			pFighter->SetBehaviour(3, -1, -1);
+		}
+
+		pFighter->field_0x740 = pFighter->currentLocation;
+		pFighter->_StateFighterReturnFromFightAction();
+	}
+
+	return;
+}
+
+void CBehaviourFighterSlave::ManageExitByMaster()
+{
+	bool bVar1;
+	CLifeInterface* pCVar2;
+	float fVar3;
+	edF32VECTOR4* local_4;
+	CCollision* pCol;
+	CActorFighter* pFighter;
+
+	pFighter = this->pOwner;
+	if (pFighter->field_0x354 != (CActorFighter*)0x0) {
+		pCol = pFighter->pCollisionData;
+		bVar1 = (pCol->flags_0x4 & 1) != 0;
+		if (bVar1) {
+			local_4 = &pCol->aCollisionContact->location;
+		}
+
+		pCVar2 = pFighter->GetLifeInterface();
+		fVar3 = pCVar2->GetValue();
+		if (fVar3 <= 0.0f) {
+			local_4 = &(this->pOwner)->field_0x8f0;
+		}
+
+		if (fVar3 <= 0.0f || bVar1) {
+			pFighter = this->pOwner;
+			pFighter->NotifyMaster(4, local_4);
+		}
+	}
+
+	return;
+}
+
+bool CBehaviourFighterSlave::ExecuteByMaster(s_fighter_action* pAction, s_fighter_action_param* pParam)
+{
+	byte bVar1;
+	ulong uVar2;
+	bool bSuccess;
+	float fVar3;
+	edF32VECTOR4 local_10;
+	CActorFighter* pFighter;
+
+	bSuccess = true;
+	local_10 = gF32Vector4UnitZ;
+	if (pParam == (s_fighter_action_param*)0x0) {
+		bSuccess = false;
+	}
+	else {
+		pFighter = this->pOwner;
+		if ((pFighter->fightFlags & 0x400) == 0) {
+			local_10.x = pParam->field_0x0->x;
+			local_10.y = 0.0f;
+			local_10.z = pParam->field_0x0->z;
+			local_10.w = 0.0f;
+
+			fVar3 = edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+			this->pOwner->dynamic.speed = fVar3;
+			pFighter = this->pOwner;
+			pFighter->dynamic.rotationQuat = local_10;
+			uVar2 = (static_cast<ulong>(pAction->moveByte) << 0x38) >> 0x3c;
+			if (uVar2 == 1) {
+				pFighter = this->pOwner;
+				pFighter->SetState(0x3c, -1);
+			}
+			else {
+				if (uVar2 != 2) {
+					if ((uVar2 == 4) || (uVar2 == 8)) {
+						bSuccess = false;
+					}
+					else {
+						pFighter = this->pOwner;
+						pFighter->SetState(0x3b, -1);
+					}
+				}
+			}
+
+			if ((pAction->actionByte & 0xf) != 0) {
+				bSuccess = false;
+			}
+		}
+		else {
+			pFighter->field_0x36c = pFighter->field_0x36c | 1;
+			bVar1 = pAction->moveByte & 0xf;
+			if (bVar1 == 1) {
+				(this->pOwner)->field_0xa5c = -pParam->field_0x0->x;
+			}
+			else {
+				if (bVar1 == 2) {
+					(this->pOwner)->field_0xa5c = pParam->field_0x0->x;
+				}
+				else {
+					if ((pAction->moveByte & 0xf) == 0) {
+						(this->pOwner)->field_0xa5c = 0.0f;
+					}
+				}
+			}
+
+			pFighter = this->pOwner;
+			pFighter->SetState(0x3d, -1);
+		}
+	}
+
+	return bSuccess;
+}
+
+void CSlaveTrajectory::SetConfig(s_fighter_slave_traj_in* pConfig)
+{
+	memcpy(&this->config, pConfig, sizeof(s_fighter_slave_traj_in));
+
+	return;
+}
+
+void CSlaveTrajectory::SetConfigAdjust(s_fighter_slave_traj_in* param_2, float* param_3, float* param_4)
+{
+	float fVar1;
+
+	if (param_3 != (float*)0x0) {
+		fVar1 = edFIntervalLERP(*param_3, (this->config).field_0x0, (this->config).field_0x4, param_2->field_0x0, param_2->field_0x4);
+		*param_3 = fVar1;
+	}
+
+	if (param_4 != (float*)0x0) {
+		fVar1 = edFIntervalLERP(*param_4, (this->config).field_0x8, (this->config).field_0xc, param_2->field_0x8, param_2->field_0xc);
+		*param_4 = fVar1;
+	}
+
+	memcpy(&this->config, param_2, sizeof(s_fighter_slave_traj_in));
+
+	return;
+}
+
+s_fighter_slave_traj_out* CSlaveTrajectory::Compute(float param_1, float param_2)
+{
+	float fVar1;
+	float fVar2;
+	float t;
+	float puVar3;
+	float puVar4;
+
+	fVar1 = edFIntervalDotDstLERP(param_1, (this->config).field_0x0, (this->config).field_0x4);
+
+	if (fVar1 < 0.0f) {
+		puVar3 = -1.0f;
+		fVar1 = -fVar1;
+	}
+	else {
+		puVar3 = 1.0f;
+	}
+
+	fVar2 = edFIntervalUnitSrcLERP(fVar1, (this->config).field_0x10, (this->config).field_0x14);
+	t = edFIntervalUnitSrcLERP(fVar1, (this->config).field_0x18, (this->config).field_0x1c);
+	(this->output).field_0x0.x = puVar3 * cosf(fVar2 - 1.570796f);
+	(this->output).field_0x0.y = 0.0f;
+	(this->output).field_0x0.z = cosf(fVar2);
+	(this->output).field_0x0.w = 0.0f;
+	edF32Vector4ScaleHard(t, &this->output.field_0x0, &this->output.field_0x0);
+	fVar1 = edFIntervalUnitSrcLERP(fVar1 * fVar1, (this->config).field_0x30, (this->config).field_0x34);
+	(this->output).field_0x14 = puVar3 * fVar1;
+
+	fVar1 = edFIntervalUnitDstLERP(param_2, (this->config).field_0x8, (this->config).field_0xc);
+	if (fVar1 < 0.0f) {
+		puVar4 = -1.0f;
+	}
+	else {
+		puVar4 = 1.0f;
+	}
+
+	fVar2 = edFIntervalUnitSrcLERP(fabsf(fVar1), (this->config).field_0x20, (this->config).field_0x24);
+	(this->output).field_0x0.y = puVar4 * fVar2;
+	fVar1 = edFIntervalUnitSrcLERP(fabsf(fVar1), (this->config).field_0x28, (this->config).field_0x2c);
+	(this->output).field_0x10 = puVar4 * fVar1;
+
+	return &this->output;
+}
+
+edF32VECTOR4 edF32VECTOR4_004257b0 = { 0.0f, -1.0f, 0.0f, 0.0f };
+
+void CSlaveGroundSampler::GetGroundDesc(float param_1, float param_2, S_FIGHTER_SLAVE_GROUND_SAMPLE* param_4, edF32VECTOR4* param_5)
+{
+	uint uVar1;
+	float fVar2;
+	uint uVar3;
+	float fVar4;
+	float fVar5;
+	float puVar6;
+	float puVar7;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	uVar3 = this->field_0x4;
+	if (static_cast<int>(uVar3) < 0) {
+		fVar2 = static_cast<float>(uVar3 >> 1 | uVar3 & 1);
+		fVar2 = fVar2 + fVar2;
+	}
+	else {
+		fVar2 = static_cast<float>(uVar3);
+	}
+
+	fVar2 = 6.283185f / fVar2;
+
+	uVar3 = static_cast<uint>(param_1 / fVar2);
+	if (static_cast<int>(uVar3) < 0) {
+		fVar4 = static_cast<float>(uVar3 >> 1 | uVar3 & 1);
+		fVar4 = fVar4 + fVar4;
+	}
+	else {
+		fVar4 = static_cast<float>(uVar3);
+	}
+
+	if (param_1 / fVar2 < fVar4) {
+		uVar3 = uVar3 - 1;
+	}
+
+	if (static_cast<int>(uVar3) < 0) {
+		fVar4 = static_cast<float>(uVar3 >> 1 | uVar3 & 1);
+		fVar4 = fVar4 + fVar4;
+	}
+	else {
+		fVar4 = static_cast<float>(uVar3);
+	}
+
+	uVar1 = uVar3 + 1;
+	fVar4 = fVar4 * fVar2;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar5 = static_cast<float>(uVar1 >> 1 | uVar1 & 1);
+		fVar5 = fVar5 + fVar5;
+	}
+	else {
+		fVar5 = static_cast<float>(uVar1);
+	}
+
+	fVar5 = fVar5 * fVar2;
+	if (this->field_0x0 != uVar3) {
+		local_60 = edF32VECTOR4_004257b0;
+		this->field_0x0 = uVar3;
+		local_50.x = param_2 * cosf(fVar4 - 1.570796f);
+		local_50.y = 0.0f;
+		local_50.w = 0.0f;
+		local_50.z = param_2 * cosf(fVar4);
+		edF32Vector4AddHard(&local_50, &local_50, param_5);
+		local_50.y = local_50.y + this->field_0x8 / 2.0f;
+		CCollisionRay CStack128 = CCollisionRay(this->field_0x8, &local_50, &local_60);
+		fVar2 = CStack128.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &this->field_0x10, (_ray_info_out*)0x0);
+		this->field_0x20 = fVar2;
+		if (fVar2 == 1e+30f) {
+			this->field_0x20 = -this->field_0x8 / 2.0f;
+			this->field_0x10 = gF32Vector4UnitY;
+		}
+		else {
+			this->field_0x20 = (local_50.y - fVar2) - param_5->y;
+		}
+
+		local_50.y = 0.0f;
+		local_50.x = param_2 * cosf(fVar5 - 1.570796f);
+		local_50.z = param_2 * cosf(fVar5);
+		local_50.w = 0.0f;
+
+		edF32Vector4AddHard(&local_50, &local_50, param_5);
+		local_50.y = local_50.y + this->field_0x8 / 2.0f;
+		CStack128.ChangeOrigin(&local_50);
+		fVar2 = CStack128.Intersect(3, (CActor*)0x0, (CActor*)0x0, 0x40000008, &this->field_0x30, (_ray_info_out*)0x0);
+		this->field_0x40 = fVar2;
+		if (fVar2 == 1e+30f) {
+			this->field_0x40 = this->field_0x20;
+			this->field_0x30 = this->field_0x10;
+		}
+		else {
+			this->field_0x40 = (local_50.y - fVar2) - param_5->y;
+		}
+
+		edF32Vector4CrossProductHard(&this->field_0x50, &this->field_0x10, &this->field_0x30);
+		edF32Vector4SafeNormalize0Hard(&this->field_0x50, &this->field_0x50);
+		puVar6 = edF32Vector4DotProductHard(&this->field_0x10, &this->field_0x30);
+		if (1.0f < puVar6) {
+			puVar7 = 1.0f;
+		}
+		else {
+			puVar7 = -1.0f;
+			if (-1.0f <= puVar6) {
+				puVar7 = puVar6;
+			}
+		}
+
+		fVar2 = acosf(puVar7);
+		fVar2 = edF32Between_0_2Pi(fVar2);
+		this->field_0x60 = fVar2;
+	}
+
+	fVar2 = edFIntervalUnitDstLERP(param_1, fVar4, fVar5);
+	fVar4 = this->field_0x20;
+	param_4->field_0x10 = fVar4 + fVar2 * (this->field_0x40 - fVar4);
+	edF32Matrix4FromAngAxisSoft(-this->field_0x60 * fVar2, &eStack64, &this->field_0x50);
+	edF32Matrix4MulF32Vector4Hard(&param_4->field_0x0, &eStack64, &this->field_0x10);
+
+	return;
 }

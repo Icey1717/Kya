@@ -39,15 +39,22 @@ public:
 
 class CBehaviourPunchingBallSlave : public CBehaviourFighterSlave
 {
-
+public:
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 class CBehaviourPunchingBallRidden : public CBehaviourFighterRidden
 {
+public:
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void _ManageExit();
 };
 
 class CBehaviourPunchingBallDefault : public CBehaviourFighter
 {
+	virtual void Manage();
 };
 
 class CActorPunchingBall : public CActorFighter {

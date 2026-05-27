@@ -107,6 +107,7 @@ float edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 float edF32Vector4GetDistHard(edF32VECTOR4* v0);
 float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 float edF32Vector4DotProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+float edFIntervalDotDstLERP(float param_1, float param_2, float param_3);
 float edFIntervalUnitSrcLERP(float start, float end, float alpha);
 bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int optionFlag);
 bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int mode);

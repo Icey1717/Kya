@@ -657,3 +657,61 @@ int CBehaviourPunchingBallStand::InterpretMessage(CActor* pSender, int msg, void
 {
 	return 0;
 }
+
+void CBehaviourPunchingBallSlave::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourPunchingBallSlave::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+int CBehaviourPunchingBallSlave::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+    return 0;
+}
+
+int CBehaviourPunchingBallRidden::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+	return 0;
+}
+
+void CBehaviourPunchingBallRidden::_ManageExit()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourPunchingBallDefault::Manage()
+{
+	int iVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	CActorPunchingBall* pCVar1;
+
+	pCVar1 = (CActorPunchingBall*)this->pOwner;
+	iVar1 = pCVar1->actorState;
+	if ((iVar1 == 0x16) || (iVar1 == 0x15)) {
+		pCVar1->FUN_0031a7c0(pCVar1->actorState);
+		this->pOwner->UpdateFightCommand();
+		this->pOwner->dynamic.speed = 0.0f;
+		this->pOwner->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		pCVar1 = (CActorPunchingBall*)this->pOwner;
+
+		if (pCVar1->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pCVar1->DoMessage(pCVar1->field_0xa98.Get(), (ACTOR_MESSAGE)0x7a, (void*)4);
+			this->pOwner->SetBehaviour(PUNCHING_BALL_BEHAVIOUR_STAND, 0x75, -1);
+		}
+
+		_ManageExit();
+	}
+	else {
+		Manage();
+	}
+
+	return;
+}
