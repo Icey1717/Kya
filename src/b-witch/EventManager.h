@@ -177,10 +177,22 @@ typedef uint e_ed_event_prim3d_type;
 #define EVENT_PRIM_KILL_FALL  0 // Fall to death
 #define EVENT_PRIM_KILL_DROWN 1 // Drown
 
+struct MapInitParams
+{
+	union {
+		ulong wide;
+		int field_0x0[2];
+	};
+	float field_0x8;
+};
+
+typedef void (*MapInitFunc)(edCEventMessage*, int);
+
 void edEventInit(void);
 uint edEventAddChunk(void* pFileData, uint mode);
 uint edEventGetChunkNbEvents(int chunkIndex);
 ed_zone_3d* edEventGetChunkZone(uint chunkId, uint zoneId);
+void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** param_4, uint param_5, uint param_6, MapInitFunc pFunc, int param_8);
 int _edEventComputeZeroVolumeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* param_3, edF32VECTOR4* param_4, uint* param_5);
 int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* pLocation, uint mode);
 int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode);

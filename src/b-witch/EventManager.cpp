@@ -500,6 +500,16 @@ void edEventClearMessageQueue(void)
 	return;
 }
 
+int edEventGetEventQueueNbInUse(void)
+{
+	return EventQueue_00448fbc.inUseCount;
+}
+
+edCEventMessage* edEventGetQueueMessage(int index)
+{
+	return EventQueue_00448fbc.aEntries + index;
+}
+
 void _edEventSendMessages(bool param_1)
 {
 	uint uVar1;
@@ -1156,4 +1166,133 @@ uint edEventAddChunk(void* pFileData, uint mode)
 ed_zone_3d* edEventGetChunkZone(uint chunkId, uint zoneId)
 {
 	return pedEventChunks[chunkId]->aZones + zoneId;
+}
+
+void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** param_4, uint param_5, uint param_6, MapInitFunc pFunc, int param_8)
+{
+	ed_event_chunk* pEventChunk;
+	ed_event* peVar1;
+	EventSendInfo* pEVar2;
+	bool bVar3;
+	bool bVar4;
+	edCEventMessage* peVar5;
+	int iVar6;
+	EventSendInfo* pEVar7;
+	MapInitParams** ppMVar8;
+	uint uVar9;
+	uint uVar10;
+	uint uVar11;
+	uint colliderId;
+	_ed_event_collider_test* pEventCollider;
+	uint uVar12;
+	int* ppEVar13;
+	uint local_40;
+	int* local_30;
+
+	local_40 = 0;
+	pEventChunk = pedEventChunks[param_1];
+	local_30 = pEventChunk->aEvents;
+	if (pEventChunk->nbEvents != 0) {
+		do {
+			uVar12 = 0;
+			peVar1 = LOAD_POINTER_CAST(ed_event*, *local_30);
+			pEventCollider = reinterpret_cast<_ed_event_collider_test*>(peVar1 + 1);
+			if (peVar1->nbColliders != 0) {
+				do {
+					bVar3 = false;
+					bVar4 = false;
+					if (param_2 == -1) {
+						bVar3 = true;
+					}
+					else {
+						if (param_2 == -2) {
+							bVar3 = true;
+							bVar4 = true;
+						}
+						else {
+							if (LOAD_POINTER_CAST(ed_event_actor_ref*, pEventCollider->pActorRef) == pEventChunk->aActorRefs + param_2) {
+								bVar3 = true;
+							}
+						}
+					}
+
+					colliderId = 0;
+					if (bVar3) {
+						ppEVar13 = pEventCollider->aSendInfo;
+						do {
+							pEVar2 = LOAD_POINTER_CAST(EventSendInfo*, *ppEVar13);
+							if ((pEVar2 != (EventSendInfo*)0x0) && (bVar3 = false, (param_3 & 1 << (colliderId & 0x1f)) != 0)) {
+								if (param_5 == 0) {
+									bVar3 = true;
+								}
+								else {
+									uVar11 = 0;
+									ppMVar8 = param_4;
+									if (param_5 != 0) {
+										do {
+											uVar10 = 0;
+											uVar9 = 0;
+											if (param_6 != 0) {
+												iVar6 = 0;
+												pEVar7 = pEVar2;
+												do {
+													IMPLEMENTATION_GUARD(
+													if (uVar9 < static_cast<uint>(pEVar2)->field_0x0) {
+														if (pEVar7->nbActorIndexes == *static_cast<int*>((int)(*ppMVar8)->field_0x0 + iVar6)) {
+															uVar10 = uVar10 + 1;
+														}
+													}
+													else {
+														uVar10 = uVar10 + 1;
+													})
+													uVar9 = uVar9 + 1;
+													iVar6 = iVar6 + 4;
+													pEVar7 = (EventSendInfo*)&pEVar7->nbActorIndexes;
+												} while (uVar9 < param_6);
+											}
+
+											if (uVar10 == param_6) {
+												bVar3 = true;
+											}
+
+											uVar11 = uVar11 + 1;
+											ppMVar8 = ppMVar8 + 1;
+										} while (uVar11 < param_5);
+									}
+								}
+
+								if (bVar3) {
+									_edEventAddMessage(pEventChunk, colliderId, pEventCollider);
+									if (param_8 != 0) {
+										peVar5 = edEventGetQueueMessage(0);
+										pFunc(peVar5, 1);
+										edEventClearMessageQueue();
+									}
+									if (bVar4) {
+										uVar12 = peVar1->nbColliders;
+										colliderId = 4;
+									}
+								}
+							}
+							colliderId = colliderId + 1;
+							ppEVar13 = ppEVar13 + 1;
+						} while (colliderId < 4);
+					}
+					uVar12 = uVar12 + 1;
+					pEventCollider = pEventCollider + 1;
+				} while (uVar12 < peVar1->nbColliders);
+			}
+
+			local_40 = local_40 + 1;
+			local_30 = local_30 + 1;
+		} while (local_40 < pEventChunk->nbEvents);
+	}
+
+	iVar6 = edEventGetEventQueueNbInUse();
+	if ((param_8 == 0) && (iVar6 != 0)) {
+		peVar5 = edEventGetQueueMessage(0);
+		pFunc(peVar5, iVar6);
+	}
+
+	return;
 }

@@ -20,6 +20,7 @@
 #include "ed3D.h"
 #include "FileManager3D.h"
 #include "edStr.h"
+#include "MapManager.h"
 #include "CinematicManager.h"
 #include "ScenaricCondition.h"
 #include "WayPoint.h"
@@ -3878,4 +3879,237 @@ void* CChunk::DeleteSubChunk(CChunk* pChunk)
 
 	this->offset = pRootChunkEnd + -(pDeleteChunkEnd - reinterpret_cast<char*>(pChunk)) - reinterpret_cast<char*>(this + 1);
 	return pRepvVar1;
+}
+
+int MapFunc_002d8dc0(LoadLoopObject_50* param_1)
+{
+	bool bVar1;
+	bool bVar2;
+	CLevelScheduler* pLevelScheduler;
+	bool bVar3;
+	CChunk* pCVar4;
+	uint uVar5;
+	NativShopLevelSubObjSubObj* pNVar6;
+	uint uVar7;
+	CChunk* pCVar8;
+	CChunk* pCVar9;
+	CChunk* pCVar10;
+	CChunk* pCVar11;
+	CChunk* pCVar12;
+	int uVar13;
+	ulong uVar14;
+	int iVar15;
+	CChunkDesc* pCVar16;
+	NativShopLevelSubObj* pNVar17;
+	int iVar18;
+	NativShopLevelSubObj* pNVar19;
+	ulong uVar20;
+	CChunk* local_30;
+	int local_20;
+	int local_10;
+
+	pLevelScheduler = CLevelScheduler::gThis;
+	uVar5 = param_1->levelId;
+
+	if (CLevelScheduler::gThis->currentLevelID != uVar5) {
+		pCVar4 = CLevelScheduler::gThis->pSaveData_0x48->FindNextSubChunk(CLevelScheduler::gThis->pSaveData_0x48 + 1, 0x56454c42);
+		pCVar12 = (CChunk*)0x0;
+
+		while ((pCVar4 != (CChunk*)0x0 && (pCVar12 == (CChunk*)0x0))) {
+			pCVar8 = pCVar4->FindNextSubChunk(pCVar4 + 1, 0x44484c42);
+			if (uVar5 == pCVar8[1].field_0x0) {
+				pCVar12 = pCVar4;
+			}
+
+			CChunk* pEnd = pCVar4 + 1;
+
+			pCVar4 = pLevelScheduler->pSaveData_0x48->FindNextSubChunk(reinterpret_cast<CChunk*>(reinterpret_cast<char*>(pEnd) + pCVar4->offset), 0x56454c42);
+		}
+
+		if (pCVar12 == (CChunk*)0x0) {
+			bVar1 = false;
+			goto LAB_002d8e98;
+		}
+	}
+
+	bVar1 = true;
+
+LAB_002d8e98:
+	if (bVar1) {
+		uVar5 = param_1->field_0x24;
+
+		if (((uVar5 == 0x20) || ((pLevelScheduler->field_0x5b30 & 1 << (uVar5 & 0x1f)) == 0)) || (uVar5 = CInventoryInfo::IsObjectPurchased(uVar5), uVar5 != 0)) {
+			iVar15 = param_1->field_0x28;
+			uVar5 = CLevelScheduler::GetMedallionLevel();
+			if (static_cast<int>(uVar5) < iVar15) {
+				uVar13 = 1;
+			}
+			else {
+				uVar13 = 5;
+			}
+		}
+		else {
+			pNVar19 = pLevelScheduler->aNativShopSubObjs;
+			iVar15 = 0;
+			if (0 < pLevelScheduler->nbNativShopSubObjs) {
+				do {
+					iVar18 = 0;
+					pNVar17 = pNVar19;
+					do {
+						if (pNVar17->aSubObjs[0].purchaseId == param_1->field_0x24) {
+							pNVar6 = pNVar19->aSubObjs + iVar18;
+							goto LAB_002d8f38;
+						}
+
+						iVar18 = iVar18 + 1;
+						pNVar17 = (NativShopLevelSubObj*)&pNVar17->currentLocation;
+					} while (iVar18 < 5);
+
+					pNVar6 = (NativShopLevelSubObjSubObj*)0x0;
+				LAB_002d8f38:
+
+					if (pNVar6 != (NativShopLevelSubObjSubObj*)0x0) goto LAB_002d8f60;
+
+					iVar15 = iVar15 + 1;
+					pNVar19 = pNVar19 + 1;
+				} while (iVar15 < pLevelScheduler->nbNativShopSubObjs);
+			}
+
+			pNVar19 = (NativShopLevelSubObj*)0x0;
+
+		LAB_002d8f60:
+			if (pNVar19 != (NativShopLevelSubObj*)0x0) {
+				iVar15 = pNVar19->episodeThresholdLink;
+				if ((iVar15 < 0) || (CLevelScheduler::_gGameNfo.nbEpisodes <= iVar15)) {
+					iVar15 = CLevelScheduler::_gGameNfo.nbEpisodes + -1;
+				}
+
+				if (_gScenVarInfo[0].currentValue < g_EpisodeDataArray_0048eb0[iVar15].minWolfen) {
+					local_10 = 0;
+					local_20 = 0;
+					do {
+						uVar5 = INT_ARRAY_0048ed60[local_20];
+						uVar7 = 0x62;
+						if (uVar5 == pLevelScheduler->currentLevelID) {
+							uVar7 = CScene::ptable.g_MapManager_0045168c->FUN_003f9040();
+						}
+						else {
+							local_30 = (CChunk*)0x0;
+							pCVar4 = pLevelScheduler->pSaveData_0x48->FindNextSubChunk(pLevelScheduler->pSaveData_0x48 + 1, 0x56454c42);
+							pCVar12 = (CChunk*)0x0;
+							while ((pCVar4 != (CChunk*)0x0 && (pCVar12 == (CChunk*)0x0))) {
+								pCVar8 = pCVar4->FindNextSubChunk(pCVar4 + 1, 0x44484c42);
+								if (uVar5 == pCVar8[1].field_0x0) {
+									pCVar12 = pCVar4;
+								}
+
+								pCVar4 = pLevelScheduler->pSaveData_0x48->FindNextSubChunk(reinterpret_cast<CChunk*>(reinterpret_cast<char*>(pCVar4 + 1) + pCVar4->offset), 0x56454c42);
+							}
+							if (pCVar12 == (CChunk*)0x0) {
+							LAB_002d9308:
+								bVar1 = false;
+							}
+							else {
+								for (pCVar16 = _gGameChunks; (uVar5 = pCVar16->hash, pCVar12->hash != uVar5 && (uVar5 != 0)); pCVar16 = pCVar16 + 1) {
+								}
+								if (uVar5 == 0) {
+									pCVar16 = (CChunkDesc*)0x0;
+								}
+								bVar1 = true;
+								if (pCVar16 != (CChunkDesc*)0x0) {
+									bVar1 = pCVar16->size >> 0x10 == pCVar12->size >> 0x10;
+								}
+								if ((bVar1) && (pCVar4 = pCVar12, pCVar12->field_0x0 == 0x16660666)) {
+									char* pEndChunk = reinterpret_cast<char*>(pCVar12 + 1);
+									while ((pCVar8 = pCVar4 + 1, pCVar8 < reinterpret_cast<CChunk*>(pEndChunk + pCVar12->offset) && (bVar1))) {
+										for (pCVar16 = _gGameChunks; (uVar5 = pCVar16->hash, pCVar4[1].hash != uVar5 && (uVar5 != 0)); pCVar16 = pCVar16 + 1) {
+										}
+										if (uVar5 == 0) {
+											pCVar16 = (CChunkDesc*)0x0;
+										}
+										bVar2 = true;
+										if (pCVar16 != (CChunkDesc*)0x0) {
+											bVar2 = pCVar16->size >> 0x10 == pCVar4[1].size >> 0x10;
+										}
+										if ((bVar2) && (pCVar11 = pCVar4 + 2, pCVar8->field_0x0 == 0x16660666)) {
+											while ((pCVar11 < static_cast<CChunk*>((int)&pCVar8[1].field_0x0 + pCVar4[1].offset) && (bVar2))) {
+												pCVar9 = CLevelScheduler::GetChunkDesc(pCVar11->hash);
+												uVar20 = 1;
+												if (pCVar9 != (CChunk*)0x0) {
+													uVar20 = FUN_002d94f0(static_cast<int>(pCVar11), pCVar9->size);
+												}
+												if ((uVar20 != 0) && (uVar14 = FUN_002d94d0(static_cast<int*>(pCVar11)), uVar14 != 0)) {
+													pCVar9 = static_cast<CChunk*>(FUN_002d94c0((int)pCVar11));
+													while ((pCVar10 = static_cast<CChunk*>(FUN_002d94a0((int)pCVar11)), pCVar9 < pCVar10 && (uVar20 != 0))) {
+														bVar3 = IsACompatibleChunkRecurse(pCVar9);
+														if (bVar3 == false) {
+															uVar20 = 0;
+														}
+														pCVar9 = static_cast<CChunk*>(FUN_002d94b0((int)pCVar9));
+													}
+												}
+												if (uVar20 == 0) {
+													bVar2 = false;
+												}
+												pCVar11 = static_cast<CChunk*>(FUN_002d94a0((int)pCVar11));
+											}
+										}
+										if (!bVar2) {
+											bVar1 = false;
+										}
+										pCVar4 = static_cast<CChunk*>((int)&pCVar8->field_0x0 + pCVar4[1].offset);
+									}
+								}
+								if (!bVar1) goto LAB_002d9308;
+								bVar1 = true;
+								pLevelScheduler->curChunkIndex = pLevelScheduler->curChunkIndex + 1;
+								pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex] = pCVar12;
+							}
+
+							if (bVar1) {
+								pCVar12 = pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex]->FindNextSubChunk(pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex] + 1, 0x504d4c42);
+								if (pCVar12 != (CChunk*)0x0) {
+									pLevelScheduler->curChunkIndex = pLevelScheduler->curChunkIndex + 1;
+									pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex] = pCVar12;
+									local_30 = pCVar12 + 1;
+									pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex] = (CChunk*)0x0;
+									pLevelScheduler->curChunkIndex = pLevelScheduler->curChunkIndex + -1;
+								}
+								pLevelScheduler->aSaveGameChunks[pLevelScheduler->curChunkIndex] = (CChunk*)0x0;
+								pLevelScheduler->curChunkIndex = pLevelScheduler->curChunkIndex + -1;
+							}
+
+							if (local_30 != (CChunk*)0x0) {
+								uVar7 = local_30[3].field_0x0;
+							}
+						}
+
+						bVar1 = true;
+						if ((uVar7 != 0x62) && (_gScenVarInfo[uVar7].currentValue != 2)) {
+							bVar1 = false;
+						}
+
+						if (!bVar1) {
+							local_10 = local_10 + 1;
+						}
+
+						local_20 = local_20 + 1;
+						if (0xf < local_20) {
+							if (local_10 != 0) {
+								return 2;
+							}
+							return 3;
+						}
+					} while (true);
+				}
+			}
+
+			uVar13 = 4;
+		}
+	}
+	else {
+		uVar13 = 0;
+	}
+
+	return uVar13;
 }

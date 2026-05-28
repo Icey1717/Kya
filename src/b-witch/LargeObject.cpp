@@ -561,7 +561,7 @@ void CScene::Level_Init()
 	edColFreeTemporaryMemory();
 	CLevelScheduler::gThis->Level_PostInit();
 	g_CinematicManager_0048efc->WillLoadCinematic();
-	//FUN_003f95f0((CMapManager*)Scene::ptable[11]);
+	ptable.g_MapManager_0045168c->Level_PostInit();
 	if (this->fogClipSettingStackSize != -1) {
 		pSVar1 = this->aFogClipStack[this->fogClipSettingStackSize].pStreamDef;
 		this->clipValue_0xe8 = pSVar1->clipValue_0x0;

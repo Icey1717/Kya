@@ -76,6 +76,8 @@ public:
 
 	bool LevelHasTeleporters();
 	int FUN_002ee670();
+	bool FUN_002edba0();
+	int FUN_002edaa0();
 
 	edDList_material* GetMySubSectorMaterial(int levelId, int nbAreas);
 	void DetectDisabledDestinations(int param_2);

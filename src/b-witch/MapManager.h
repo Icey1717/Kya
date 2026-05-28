@@ -5,9 +5,55 @@
 #include "LargeObject.h"
 #include "edBank/edBankBuffer.h"
 
+class CLevelMap
+{
+public:
+	void Level_PostInit();
+
+	edDList_material* pMaterials;
+
+	int field_0x0;
+	int field_0x4;
+
+	undefined4 field_0x78;
+	undefined4 field_0x7c;
+
+	float field_0xd8;
+	undefined4 field_0xdc;
+
+	undefined4 field_0xe0;
+	undefined4 field_0xe4;
+};
+
+class CWorldMap
+{
+public:
+	void Level_PostInit();
+
+	int currentLevelId;
+};
+
 struct CMapManager : public CObjectManager
 {
+	virtual void Game_Init();
+	virtual void Game_Term();
+
+	virtual void Level_Init();
+	virtual void Level_Term();
+	virtual void Level_ClearAll();
+
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw();
+
+	virtual void Level_SaveContext();
+	virtual void Level_LoadContext();
+
 	void OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream);
+
+	void Level_PostInit();
+
+	void Func_003f8d80();
 
 #ifdef PLATFORM_WIN
 	virtual char* ProfileGetName() { return "Map"; }
@@ -18,9 +64,9 @@ struct CMapManager : public CObjectManager
 	float field_0xc;
 	int* field_0x10;
 	undefined4 field_0x14;
-	int field_0x18;
-	struct LargeObject_3a0_1f0* pSubObj_0x1c;
-	struct LargeObject_3a0_194* pSubObj_0x20;
+	S_STREAM_REF<ed_zone_3d> field_0x18;
+	CLevelMap* pLevelMap;
+	CWorldMap* pWorldMap;
 	undefined4 field_0x24;
 	undefined4 field_0x28;
 	undefined4 field_0x2c;
@@ -36,7 +82,7 @@ struct CMapManager : public CObjectManager
 	undefined4 field_0x54;
 	undefined4 field_0x58;
 	float field_0x5c;
-	undefined4 instanceIndex;
+	undefined4 field_0x60;
 	undefined4 field_0x64;
 	undefined4 field_0x68;
 	undefined4 field_0x6c;
@@ -660,7 +706,7 @@ struct CMapManager : public CObjectManager
 	undefined4 field_0x378;
 	undefined4 field_0x37c;
 	undefined4 field_0x380;
-	undefined4 field_0x384;
+	float field_0x384;
 	float field_0x388;
 	undefined4 field_0x38c;
 	undefined4 field_0x390;

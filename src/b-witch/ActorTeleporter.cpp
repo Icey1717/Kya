@@ -789,6 +789,48 @@ int CActorTeleporter::FUN_002ee670()
 	return iVar3;
 }
 
+bool CActorTeleporter::FUN_002edba0()
+{
+	bool bVar1;
+
+	bVar1 = this->cinematicId == -1;
+	if (bVar1) {
+		bVar1 = this->field_0x190 == (ParticleInfo*)0x0;
+	}
+
+	return bVar1;
+}
+
+int CActorTeleporter::FUN_002edaa0()
+{
+	S_DESTINATION_LIST* pSVar1;
+	int iVar2;
+	bool bVar3;
+	int iVar5;
+
+	pSVar1 = this->pDestinationList;
+	iVar5 = 0;
+	while (true) {
+		if (pSVar1 == (S_DESTINATION_LIST*)0x0) {
+			bVar3 = iVar5 < 0;
+		}
+		else {
+			bVar3 = iVar5 < pSVar1->nbEntries;
+		}
+
+		if (!bVar3) break;
+
+		iVar2 = pSVar1->aEntries[iVar5].levelId;
+		if (iVar2 != 0x10) {
+			return iVar2;
+		}
+
+		iVar5 = iVar5 + 1;
+	}
+
+	return 0x10;
+}
+
 edDList_material* CActorTeleporter::GetMySubSectorMaterial(int levelId, int nbAreas)
 {
 	int* piVar1;

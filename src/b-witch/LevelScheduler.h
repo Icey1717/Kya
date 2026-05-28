@@ -583,6 +583,8 @@ public:
 bool edSoundAreAllSoundDataLoaded();
 bool edMusicAreAllMusicDataLoaded();
 
+int MapFunc_002d8dc0(LoadLoopObject_50* param_1);
+
 extern ulong gMedallionHashCodes[9];
 extern ulong gFightHashCodes[8];
 
