@@ -551,7 +551,7 @@ void CActorHeroPrivate::Term()
 	pCVar1->DeclareInterface(FRONTEND_INTERFACE_MENU_INVENTORY, 0);
 	pCVar1->DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, 0);
 
-	FUN_00327010();
+	TermInputAnalyzers();
 
 	CActorFighter::Term();
 
@@ -14713,6 +14713,11 @@ uint CFightLock_SE::_Rule_DistMin(CFightLock_SE* pLock, uint prevValue)
 	return 0;
 }
 
+CHero_InputRotationAnalyser_Data CHero_InputRotationAnalyser_Data_ARRAY_004257e0[2] = {
+	{ 5.5f, 3.402823E38f, 1.0471976f, 0.25f, 5.5f, 8.0f },
+	{ 5.5f, 3.402823E38f, 1.0471976f, 1.0f,  8.0f, 14.0f },
+};
+
 // Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::_InitHeroFight()
 {
@@ -14720,66 +14725,33 @@ void CActorHeroPrivate::_InitHeroFight()
 	undefined* puVar2;
 	uint* puVar3;
 	int iVar4;
-	undefined4* __src;
+	CHero_InputRotationAnalyser_Data* __src;
 	uint uVar5;
 	float fVar6;
 	float fVar7;
-	undefined4 local_30;
-	undefined4 uStack44;
-	undefined4 uStack40;
-	undefined4 uStack36;
-	undefined4 local_20;
-	undefined4 uStack28;
-	undefined4 uStack24;
-	undefined4 uStack20;
-	undefined4 local_10;
-	undefined4 uStack12;
-	undefined4 uStack8;
-	undefined4 uStack4;
+	CHero_InputRotationAnalyser_Data local_30[2];
 
-	//local_30 = (undefined4)_DAT_004257e0;
-	//uStack44 = (undefined4)((ulong)_DAT_004257e0 >> 0x20);
-	//uStack40 = DAT_004257e8;
-	//uStack36 = DAT_004257ec;
-	//local_20 = DAT_004257f0;
-	//uStack28 = DAT_004257f4;
-	//uStack24 = DAT_004257f8;
-	//uStack20 = DAT_004257fc;
-	//local_10 = DAT_00425800;
-	//uStack12 = DAT_00425804;
-	//uStack8 = DAT_00425808;
-	//uStack4 = DAT_0042580c;
-	//if (gVideoConfig.isNTSC == 1) {
-	//	fVar7 = 0.02;
-	//	iVar4 = *(int*)&this->field_0xcd0;
-	//}
-	//else {
-	//	fVar7 = 0.01666667;
-	//	iVar4 = *(int*)&this->field_0xcd0;
-	//}
-	//if (iVar4 == 0) {
-	//	fVar6 = 0.5 / fVar7;
-	//	this->field_0xcd4 = EncodeFloat(fVar6);
-	//	pvVar1 = edMemAlloc(H_MAIN, *(int*)&this->field_0xcd4 << 2);
-	//	*(void**)&this->field_0xcd0 = pvVar1;
-	//	(**(code**)(*(int*)&this->field_0xcf0 + 0x10))();
-	//}
-	//if (this->field_0xd00 == (undefined*)0x0) {
-	//	this->field_0xd04 = 2;
-	//	puVar2 = (undefined*)edMemAlloc(H_MAIN, this->field_0xd04 * 0x18);
-	//	this->field_0xd00 = puVar2;
-	//	(**(code**)(*(int*)&this->field_0xcf0 + 0x10))();
-	//}
-	//(**(code**)(*(int*)&this->field_0x1600 + 8))(0x3daaaaab, fVar7);
-	//uVar5 = 0;
-	//__src = &local_30;
-	//iVar4 = 0;
-	//do {
-	//	memcpy(this->field_0xd00 + iVar4, __src, 0x18);
-	//	uVar5 = uVar5 + 1;
-	//	__src = __src + 6;
-	//	iVar4 = iVar4 + 0x18;
-	//} while (uVar5 < 2);
+	local_30[0] = CHero_InputRotationAnalyser_Data_ARRAY_004257e0[0];
+	local_30[1] = CHero_InputRotationAnalyser_Data_ARRAY_004257e0[1];
+
+	if (gVideoConfig.isNTSC == 1) {
+		fVar7 = 0.02f;
+	}
+	else {
+		fVar7 = 0.01666667f;
+	}
+
+	this->inputRotationAnalyser.Init(0.5f, fVar7);
+	this->inputAngleAnalyser.Init(0.08333334f, fVar7);
+
+	uVar5 = 0;
+	__src = local_30;
+	iVar4 = 0;
+	do {
+		memcpy(&this->inputRotationAnalyser.field_0x30[uVar5], &__src[iVar4], sizeof(CHero_InputRotationAnalyser_Data));
+		uVar5 = uVar5 + 1;
+	} while (uVar5 < 2);
+
 	this->fightLock.pOwner = this;
 	this->fightLock.bUseOcclusion = 1;
 	this->fightLock.nbPotentialAdversaries = 0;
@@ -14812,8 +14784,10 @@ void CActorHeroPrivate::_InitHeroFight()
 	//}
 	//this->field_0x187c = 0;
 	//this->field_0x1618 = (CActorFighter*)0x0;
-	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
-	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);
+
+	this->inputRotationAnalyser.Reset();
+	this->inputAngleAnalyser.Reset();
+
 	return;
 }
 
@@ -14823,8 +14797,8 @@ void CActorHeroPrivate::_ResetHeroFight()
 	this->field_0x187c = 0;
 	this->field_0x1618 = (CActorFighter*)0x0;
 
-	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
-	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);
+	this->inputRotationAnalyser.Reset();
+	this->inputAngleAnalyser.Reset();
 
 	return;
 }
@@ -15068,11 +15042,10 @@ bool CActorHeroPrivate::FUN_00133fb0()
 	return bVar1;
 }
 
-void CActorHeroPrivate::FUN_00327010()
+void CActorHeroPrivate::TermInputAnalyzers()
 {
-	IMPLEMENTATION_GUARD_LOG(
-	(**(code**)(*(int*)&(this->base).field_0xcf0 + 0xc))(&(this->base).field_0xcd0);
-	(**(code**)((this->base).field_0x15e0.pVTable + 0xc))(&(this->base).field_0x15e0);)
+	this->inputRotationAnalyser.Term();
+	this->inputAngleAnalyser.Term();
 
 	return;
 }
@@ -15857,6 +15830,260 @@ void CActorHeroPrivate::_Proj_GetPossibleExit()
 {
 	if (((GetStateFlags(this->actorState) & 0x100000) != 0) && (2.0f < this->timeInAir)) {
 		SetState(0x61, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::_Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam)
+{
+	int iVar1;
+	undefined8 uVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	uint uVar6;
+	int* piVar7;
+	uint uVar8;
+	float puVar14;
+	float puVar10;
+	float puVar9;
+	float fVar9;
+	float fVar10;
+	float puVar11;
+	float puVar13;
+	float puVar12;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_b0;
+	_msg_hit_param msgHitParam;
+	edF32VECTOR4 local_20;
+	_msg_hit_param* local_4;
+
+	local_20 = gF32Vector4Zero;
+
+	if ((GetStateFlags(this->actorState) & 0x200000) != 0) {
+		if ((GetStateFlags(this->actorState) & 0x400000) != 0) {
+			if (this->actorState == FIGHTER_HOLD_STAND) {
+				inputRotationAnalyser.Reset();
+				inputAngleAnalyser.Reset();
+			}
+
+			if ((pAction->moveByte & 0xf) == 0xc) {
+				this->field_0x36c = this->field_0x36c & 0xfffffffe;
+				local_20.x = pParam->field_0x0->x;
+				local_20.y = 0.0f;
+				local_20.z = pParam->field_0x0->z;
+				local_20.w = 0.0f;
+				fVar9 = edF32Vector4SafeNormalize0Hard(&local_20, &local_20);
+				fVar12 = GetAngleYFromVector(&local_20);
+				fVar12 = edF32Between_0_2Pi(fVar12);
+				fVar11 = GetAngleYFromVector(&this->rotationQuat);
+				fVar11 = edF32Between_0_2Pi(fVar11);
+				fVar11 = edF32Between_Pi(fVar12 - fVar11);
+				inputAngleAnalyser.AddSample(fVar11);
+				uVar6 = this->inputAngleAnalyser.field_0xc;
+				fVar12 = 0.0f;
+				for (uVar8 = 0; uVar8 < uVar6; uVar8 = uVar8 + 1) {
+					fVar12 = fVar12 + this->inputAngleAnalyser.field_0x0[uVar8];
+				}
+
+				if (static_cast<int>(uVar6) < 0) {
+					fVar10 = static_cast<float>(uVar6 >> 1 | uVar6 & 1);
+					fVar10 = fVar10 + fVar10;
+				}
+				else {
+					fVar10 = static_cast<float>(uVar6);
+				}
+
+				if (fVar12 / fVar10 < fVar11 - 0.1963495f) {
+					bVar3 = false;
+				}
+				else {
+					if (fVar11 + 0.1963495f < fVar12 / fVar10) {
+						bVar3 = false;
+					}
+					else {
+						bVar3 = true;
+					}
+				}
+
+				if ((!bVar3) && (fVar12 = this->field_0xa5c, fVar12 != 0.0f)) {
+					if (0.0f <= fVar12) {
+						puVar14 = 1.0f;
+					}
+					else {
+						puVar14 = -1.0f;
+					}
+					if (0.0f <= fVar11) {
+						puVar11 = 1.0f;
+					}
+					else {
+						puVar11 = -1.0f;
+					}
+					if (puVar11 != puVar14) {
+						if (0.0f <= fVar11) {
+							puVar10 = 1.0f;
+						}
+						else {
+							puVar10 = -1.0f;
+						}
+						fVar11 = fVar11 - puVar10 * 6.283185f;
+					}
+				}
+
+				if ((this->fightFlags & 0x400) == 0) {
+					if (fabsf(fVar11) < 0.7853982f) {
+						bVar3 = this->scalarDynForward.IsFinished();
+						if ((bVar3 != false) && (this->scalarDynForward.duration == 0.0f)) {
+							this->scalarDynForward.BuildFromSpeedTime(0.0f, this->field_0x4cc, 0.25f);
+						}
+
+						this->field_0x44c = this->field_0x44c & 0xf0 | 3;
+					}
+					else {
+						this->field_0x44c = this->field_0x44c & 0xf0;
+						this->scalarDynForward.Reset();
+					}
+
+					fVar11 = fVar11 / GetTimer()->cutsceneDeltaTime;
+					this->field_0xa5c = fVar11;
+					if (5.5f < fVar11) {
+						this->field_0xa5c = 5.5f;
+					}
+					else {
+						if (fVar11 < -5.5f) {
+							this->field_0xa5c = -5.5f;
+						}
+					}
+				}
+				else {
+					if (fVar9 == 0.0f) {
+						this->field_0xa5c = 0.0f;
+					}
+					else {
+						fVar12 = this->field_0xa5c;
+						fVar9 = GetTimer()->cutsceneDeltaTime * 12.0f;
+
+						if (fVar12 == 0.0f) {
+							if (0.0f <= fVar11) {
+								puVar13 = 1.0f;
+							}
+							else {
+								puVar13 = -1.0f;
+							}
+
+							this->field_0xa5c = fVar9 * puVar13;
+						}
+						else {
+							if (5.5f - fabsf(fVar12) <= fVar9) {
+								if (0.0f <= fVar12) {
+									puVar9 = 1.0f;
+								}
+								else {
+									puVar9 = -1.0f;
+								}
+								this->field_0xa5c = puVar9 * 5.5f;
+							}
+							else {
+								if (0.0f <= fVar12) {
+									puVar12 = 1.0f;
+								}
+								else {
+									puVar12 = -1.0f;
+								}
+
+								this->field_0xa5c = this->field_0xa5c + fVar9 * puVar12;
+							}
+						}
+					}
+					this->field_0x44c = this->field_0x44c & 0xf0;
+					this->scalarDynForward.Reset();
+				}
+			}
+			else {
+				if ((pAction->moveByte & 0xf) == 0) {
+					this->scalarDynForward.Reset();
+					this->field_0xa5c = 0.0f;
+				}
+			}
+
+			fVar12 = GetTimer()->cutsceneDeltaTime;
+			fVar12 = this->inputRotationAnalyser.FUN_00323b20(GetTimer()->cutsceneDeltaTime, fVar12 * 2.0f, &local_20);
+			uVar6 = this->inputRotationAnalyser.field_0x38;
+			if (static_cast<int>(uVar6) < 0) {
+				fVar11 = static_cast<float>(uVar6 >> 1 | uVar6 & 1);
+				fVar11 = fVar11 + fVar11;
+			}
+			else {
+				fVar11 = static_cast<float>(uVar6);
+			}
+
+			uVar6 = this->inputRotationAnalyser.field_0x34 - 1;
+			if (static_cast<int>(uVar6) < 0) {
+				fVar9 = static_cast<float>(uVar6 >> 1 | uVar6 & 1);
+				fVar9 = fVar9 + fVar9;
+			}
+			else {
+				fVar9 = static_cast<float>(uVar6);
+			}
+
+			if ((fVar11 / fVar9 != 0.0f) && (this->scalarDynForward.field_0x20 == 0.0f)) {
+				this->field_0xa5c = fVar12;
+			}
+
+			if (((this->field_0x44c & 0xf) != 0) || (1.0f <= fabsf(this->field_0xa5c))) {
+				if ((this->fightFlags & 0x400) == 0) {
+					SetState(0x2a, -1);
+				}
+				else {
+					SetState(0x2b, -1);
+				}
+			}
+			else {
+				if ((this->fightFlags & 0x400) == 0) {
+					SetState(0x29, -1);
+				}
+				else {
+					SetState(0x2b, -1);
+				}
+			}
+		}
+	}
+
+	if ((pAction->actionByte & 0xf) != 0) {
+		if ((this->fightFlags & 0x400) == 0) {
+			SetState(0x34, 0xffffffff);
+		}
+		else {
+			local_b0 = this->rotationQuat;
+			fVar12 = fabsf(this->field_0xa5c) / 14.13717f;
+			IMPLEMENTATION_GUARD(
+			piVar7 = _SV_HIT_SelectAimedActor(2.356194f, 0x41200000, &this->currentLocation, &local_b0);
+			if (piVar7 != (int*)0x0) {
+				edF32Vector4SubHard(&local_b0, static_cast<edF32VECTOR4*>(piVar7 + 0xc), &this->currentLocation);
+				edF32Vector4NormalizeHard(&local_b0, &local_b0);
+			})
+
+			msgHitParam.projectileType = 7;
+			msgHitParam.flags = 1;
+			msgHitParam.field_0x50 = 1;
+			local_4 = &msgHitParam;
+			msgHitParam.field_0x30 = fVar12 * 12.0f;
+
+			msgHitParam.field_0x20.x = local_b0.x;
+			msgHitParam.field_0x20.z = local_b0.z;
+			msgHitParam.field_0x20.w = local_b0.w;
+			msgHitParam.field_0x20.y = local_b0.y + fVar12 * 0.5f;
+
+			msgHitParam.field_0x60 = gF32Vector4UnitY;
+			msgHitParam.field_0x70 = 0.0f;
+			msgHitParam.damage = 0.0f;
+			msgHitParam.field_0x10 = 0.0f;
+			DoMessage(this->field_0x354, MESSAGE_KICKED, local_4);
+			this->field_0x354 = (CActorFighter*)0x0;
+			EnableFightCamera(1);
+			SetState(0x36, 0xffffffff);
+		}
 	}
 
 	return;
@@ -16995,4 +17222,375 @@ void CBehaviourHeroUnknown::Create(ByteCode* pByteCode)
 	this->staticMeshB.Reset();
 
 	return;
+}
+
+CHero_InputAngleAnalyser::CHero_InputAngleAnalyser()
+{
+	this->field_0x0 = (float*)0x0;
+	this->field_0x4 = 0;
+	this->nbSamples = 0;
+	this->field_0xc = 0;
+	this->field_0x10 = gF32Vector4UnitZ;
+
+	return;
+}
+
+void CHero_InputAngleAnalyser::Init(float param_1, float param_2)
+{
+	float* pfVar1;
+	float fVar2;
+
+	if (this->field_0x0 == (float*)0x0) {
+		fVar2 = param_1 / param_2;
+		this->field_0x4 = EncodeFloat(fVar2);
+
+		pfVar1 = static_cast<float*>(edMemAlloc(TO_HEAP(H_MAIN), this->field_0x4 * sizeof(float)));
+		this->field_0x0 = pfVar1;
+
+		Reset();
+	}
+
+	return;
+}
+
+void CHero_InputAngleAnalyser::Term()
+{
+	if (this->field_0x0 != (float*)0x0) {
+		edMemFree(this->field_0x0);
+		this->field_0x0 = (float*)0x0;
+		this->field_0x4 = 0;
+	}
+
+	return;
+}
+
+void CHero_InputAngleAnalyser::Reset()
+{
+	this->nbSamples = 0;
+	this->field_0xc = 0;
+	this->field_0x10 = gF32Vector4UnitZ;
+
+	return;
+}
+
+void CHero_InputAngleAnalyser::AddSample(edF32VECTOR4* param_2)
+{
+	int iVar1;
+	float fVar2;
+	float puVar3;
+	float puVar4;
+
+	fVar2 = edF32Vector4DotProductHard(&this->field_0x10, &this->field_0x10);
+	if ((fVar2 == 0.0f) || (fVar2 = edF32Vector4DotProductHard(param_2, param_2), fVar2 == 0.0f)) {
+		fVar2 = 0.0f;
+	}
+	else {
+		puVar3 = edF32Vector4DotProductHard(&this->field_0x10, param_2);
+		if (1.0f < puVar3) {
+			puVar4 = 1.0f;
+		}
+		else {
+			puVar4 = -1.0f;
+			if (-1.0f <= puVar3) {
+				puVar4 = puVar3;
+			}
+		}
+
+		fVar2 = acosf(puVar4);
+		fVar2 = edF32Between_0_2Pi(fVar2);
+		iVar1 = -1;
+		if (0.0f < (this->field_0x10).z * param_2->x - (this->field_0x10).x * param_2->z) {
+			iVar1 = 1;
+		}
+
+		fVar2 = fVar2 * static_cast<float>(iVar1);
+	}
+
+	AddSample(fVar2);
+
+	return;
+}
+
+void CHero_InputAngleAnalyser::AddSample(float param_1)
+{
+	int iVar1;
+
+	iVar1 = this->nbSamples;
+	this->nbSamples = iVar1 + 1;
+	this->field_0x0[iVar1] = param_1;
+
+	if (this->field_0x4 <= this->nbSamples) {
+		this->nbSamples = 0;
+	}
+
+	if (this->field_0xc < this->field_0x4) {
+		this->field_0xc = this->field_0xc + 1;
+	}
+
+	return;
+}
+
+CHero_InputRotationAnalyser::CHero_InputRotationAnalyser()
+{
+	this->field_0x0 = (float*)0x0;
+	this->field_0x4 = 0;
+	this->nbSamples = 0;
+	this->field_0xc = 0;
+	this->field_0x10 = gF32Vector4UnitZ;
+
+	this->field_0x30 = (CHero_InputRotationAnalyser_Data*)0x0;
+	this->field_0x34 = 0;
+	this->field_0x38 = 0;
+	this->field_0x3c = 0.0f;
+	this->field_0x40 = 1.0f;
+
+	return;
+}
+
+void CHero_InputRotationAnalyser::Init(float param_1, float param_2)
+{
+	float* pAnalyzerData = this->field_0x0;
+
+	if (pAnalyzerData == (float*)0x0) {
+		float fVar6 = param_1 / param_2;
+		this->field_0x4 = EncodeFloat(fVar6);
+		this->field_0x0 = static_cast<float*>(edMemAlloc(TO_HEAP(H_MAIN), this->field_0x4 * sizeof(float)));
+		this->Reset();
+	}
+
+	if (this->field_0x30 == (CHero_InputRotationAnalyser_Data*)0x0) {
+		this->field_0x34 = 2;
+		this->field_0x30 = static_cast<CHero_InputRotationAnalyser_Data*>(edMemAlloc(TO_HEAP(H_MAIN), this->field_0x34 * sizeof(CHero_InputRotationAnalyser_Data)));
+		Reset();
+	}
+
+	return;
+}
+
+void CHero_InputRotationAnalyser::Term()
+{
+	float* pAlloc;
+
+	pAlloc = this->field_0x0;
+	if (pAlloc != (float*)0x0) {
+		edMemFree(pAlloc);
+
+		this->field_0x0 = (float*)0x0;
+		this->field_0x4 = 0;
+	}
+
+	if (this->field_0x30 != (CHero_InputRotationAnalyser_Data*)0x0) {
+		edMemFree(this->field_0x30);
+
+		this->field_0x30 = (CHero_InputRotationAnalyser_Data*)0x0;
+		this->field_0x34 = 0;
+	}
+
+	return;
+}
+
+void CHero_InputRotationAnalyser::Reset()
+{
+	CHero_InputAngleAnalyser::Reset();
+
+	this->field_0x38 = 0;
+	this->field_0x3c = 0.0f;
+	this->field_0x40 = 1.0f;
+
+	return;
+}
+
+void CHero_InputRotationAnalyser::AddSample(edF32VECTOR4* param_2)
+{
+	float fVar1;
+	int iVar2;
+	edF32VECTOR4* v0;
+	uint uVar3;
+	float fVar4;
+	float puVar5;
+	float puVar6;
+	float fVar7;
+	float fVar8;
+
+	if (this->field_0xc == 0) {
+		uVar3 = this->nbSamples;
+		this->nbSamples = uVar3 + 1;
+		this->field_0x0[uVar3] = 0.0f;
+
+		if (this->field_0x4 <= this->nbSamples) {
+			this->nbSamples = 0;
+		}
+
+		uVar3 = this->field_0xc;
+		if (uVar3 < this->field_0x4) {
+			this->field_0xc = uVar3 + 1;
+		}
+	}
+	else {
+		v0 = &this->field_0x10;
+		fVar4 = edF32Vector4DotProductHard(v0, v0);
+		if ((fVar4 == 0.0f) || (fVar4 = edF32Vector4DotProductHard(param_2, param_2), fVar4 == 0.0f)) {
+			fVar4 = 0.0f;
+		}
+		else {
+			puVar5 = edF32Vector4DotProductHard(&this->field_0x10, param_2);
+			if (1.0f < puVar5) {
+				puVar6 = 1.0f;
+			}
+			else {
+				puVar6 = -1.0f;
+				if (-1.0f <= puVar5) {
+					puVar6 = puVar5;
+				}
+			}
+
+			fVar4 = acosf(static_cast<float>(puVar6));
+			fVar4 = edF32Between_0_2Pi(fVar4);
+			iVar2 = 1;
+			if (this->field_0x10.z * param_2->x - this->field_0x10.x * param_2->z <= 0.0f) {
+				iVar2 = -1;
+			}
+
+			fVar4 = fVar4 * static_cast<float>(iVar2);
+		}
+
+		iVar2 = 1;
+		if (fVar4 <= 0.0f) {
+			iVar2 = -1;
+		}
+
+		if (this->field_0x40 == static_cast<float>(iVar2)) {
+			uVar3 = this->nbSamples;
+			this->nbSamples = uVar3 + 1;
+			this->field_0x0[uVar3] = fVar4;
+			if (this->field_0x4 <= this->nbSamples) {
+				this->nbSamples = 0;
+			}
+			uVar3 = this->field_0xc;
+			if (uVar3 < this->field_0x4) {
+				this->field_0xc = uVar3 + 1;
+			}
+		}
+		else {
+			fVar7 = 0.0f;
+			fVar8 = 0.0f;
+			for (uVar3 = 0; uVar3 < this->field_0x34; uVar3 = uVar3 + 1) {
+				fVar8 = fVar8 + this->field_0x30[uVar3].field_0xc;
+			}
+			for (uVar3 = 0; uVar3 < this->field_0x38; uVar3 = uVar3 + 1) {
+				fVar7 = fVar7 + this->field_0x30[uVar3].field_0xc;
+			}
+			if (((fVar7 + this->field_0x3c) / fVar8 != 0.0f) || (fabsf(fVar4) <= 0.02f)) {
+				uVar3 = this->nbSamples;
+				this->nbSamples = uVar3 + 1;
+				this->field_0x0[uVar3] = 0.0f;
+				if (this->field_0x4 <= this->nbSamples) {
+					this->nbSamples = 0;
+				}
+				uVar3 = this->field_0xc;
+				if (uVar3 < this->field_0x4) {
+					this->field_0xc = uVar3 + 1;
+				}
+			}
+			else {
+				iVar2 = 1;
+				if (fVar4 <= 0.0f) {
+					iVar2 = -1;
+				}
+				this->field_0x40 = static_cast<float>(iVar2);
+				this->nbSamples = 0;
+				this->field_0xc = 0;
+				this->field_0x10 = gF32Vector4UnitZ;
+				uVar3 = this->nbSamples;
+				this->nbSamples = uVar3 + 1;
+				this->field_0x0[uVar3] = fVar4;
+
+				if (this->field_0x4 <= this->nbSamples) {
+					this->nbSamples = 0;
+				}
+
+				uVar3 = this->field_0xc;
+				if (uVar3 < this->field_0x4) {
+					this->field_0xc = uVar3 + 1;
+				}
+			}
+		}
+	}
+
+	this->field_0x10 = *param_2;
+
+	return;
+}
+
+float CHero_InputRotationAnalyser::FUN_00323b20(float param_1, float param_2, edF32VECTOR4* param_4)
+{
+	uint uVar1;
+	bool bVar2;
+	CHero_InputRotationAnalyser_Data* pCVar3;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+
+	AddSample(param_4);
+
+	uVar1 = this->field_0xc;
+	fVar5 = 0.0f;
+	for (uVar4 = 0; uVar4 < uVar1; uVar4 = uVar4 + 1) {
+		fVar5 = fVar5 + this->field_0x0[uVar4];
+	}
+	if (static_cast<int>(uVar1) < 0) {
+		fVar6 = static_cast<float>(uVar1 >> 1 | uVar1 & 1);
+		fVar6 = fVar6 + fVar6;
+	}
+	else {
+		fVar6 = static_cast<float>(uVar1);
+	}
+
+	fVar5 = fabsf((fVar5 / fVar6) / param_1);
+	pCVar3 = this->field_0x30 + this->field_0x38;
+	bVar2 = false;
+	if ((pCVar3->field_0x0 - pCVar3->field_0x8 < fVar5) && (bVar2 = false, fVar5 < pCVar3->field_0x4 + pCVar3->field_0x8)) {
+		bVar2 = true;
+	}
+
+	if (bVar2) {
+		bVar2 = false;
+		if ((pCVar3->field_0x0 <= fVar5) && (bVar2 = false, fVar5 <= pCVar3->field_0x4)) {
+			bVar2 = true;
+		}
+		if (bVar2) {
+			this->field_0x3c = this->field_0x3c + param_1;
+		}
+	}
+	else {
+		this->field_0x3c = this->field_0x3c - param_2;
+	}
+
+	fVar5 = this->field_0x3c;
+	fVar6 = pCVar3->field_0xc;
+	if (fVar6 < fVar5) {
+		if (this->field_0x38 < this->field_0x34 - 1) {
+			this->field_0x3c = fVar5 - fVar6;
+			this->field_0x38 = this->field_0x38 + 1;
+			pCVar3 = this->field_0x30 + this->field_0x38;
+		}
+		else {
+			this->field_0x3c = fVar6;
+		}
+	}
+	else {
+		if (fVar5 < 0.0f) {
+			if (this->field_0x38 == 0) {
+				this->field_0x3c = 0.0f;
+			}
+			else {
+				this->field_0x38 = this->field_0x38 - 1;
+				pCVar3 = this->field_0x30 + this->field_0x38;
+				this->field_0x3c = pCVar3->field_0xc;
+			}
+		}
+	}
+
+	fVar5 = edFIntervalLERP(this->field_0x3c, 0.0f, pCVar3->field_0xc, pCVar3->field_0x10, pCVar3->field_0x14);
+	return this->field_0x40 * fVar5;
 }

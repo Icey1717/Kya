@@ -31,8 +31,108 @@ namespace Debug {
 
 		static constexpr float kNormalLineLength = 0.5f;
 		static constexpr float kContactSphereRadius = 0.05f;
+		static constexpr byte kFighterMoveDirMask = 0x0f;
+		static constexpr byte kFighterMoveModeMask = 0xf0;
+		static constexpr byte kFighterActionKindMask = 0x0f;
+		static constexpr byte kFighterActionTriggerMask = 0x30;
 
 		constexpr int nbCheckpointMaxActors = 0x600;
+
+		const char* GetFighterMoveDirectionName(byte moveDirection)
+		{
+			switch (moveDirection) {
+			case 0x0:
+				return "None";
+			case 0x1:
+				return "Left";
+			case 0x2:
+				return "Right";
+			case 0x3:
+				return "Forward";
+			case 0x4:
+				return "Forward-Left";
+			case 0x5:
+				return "Forward-Right";
+			case 0x6:
+				return "Back";
+			case 0x7:
+				return "Back-Left";
+			case 0x8:
+				return "Back-Right";
+			case 0xc:
+				return "Vector";
+			default:
+				return "Unknown";
+			}
+		}
+
+		const char* GetFighterMoveModeName(byte moveMode)
+		{
+			switch (moveMode) {
+			case 0x0:
+				return "None";
+			case 0x1:
+				return "Run";
+			case 0x2:
+				return "Alt Run";
+			case 0x4:
+				return "Cross";
+			case 0x8:
+				return "L2 Press";
+			default:
+				return "Unknown";
+			}
+		}
+
+		const char* GetFighterActionKindName(byte actionKind)
+		{
+			switch (actionKind) {
+			case 0x0:
+				return "None";
+			case 0x1:
+				return "Blow";
+			case 0x2:
+				return "Base Catch";
+			case 0x4:
+				return "Special Blow";
+			default:
+				return "Unknown";
+			}
+		}
+
+		const char* GetFighterActionTriggerName(byte triggerBits)
+		{
+			switch (triggerBits) {
+			case 0x00:
+				return "None";
+			case 0x10:
+				return "Trigger A";
+			case 0x20:
+				return "Trigger B";
+			case 0x30:
+				return "Trigger A+B";
+			default:
+				return "Unknown";
+			}
+		}
+
+		void DrawFighterActionBreakdown(const char* label, byte moveByte, byte actionByte, uint rawValue)
+		{
+			const byte moveDirection = moveByte & kFighterMoveDirMask;
+			const byte moveMode = (moveByte & kFighterMoveModeMask) >> 4;
+			const byte actionKind = actionByte & kFighterActionKindMask;
+			const byte actionTrigger = actionByte & kFighterActionTriggerMask;
+
+			ImGui::Text("%s: 0x%08X", label, rawValue);
+			ImGui::Indent();
+			ImGui::Text("Move Byte: 0x%02X", moveByte);
+			ImGui::Text("  Direction: 0x%X (%s)", moveDirection, GetFighterMoveDirectionName(moveDirection));
+			ImGui::Text("  Mode: 0x%X (%s)", moveMode, GetFighterMoveModeName(moveMode));
+			ImGui::Text("Action Byte: 0x%02X", actionByte);
+			ImGui::Text("  Kind: 0x%X (%s)", actionKind, GetFighterActionKindName(actionKind));
+			ImGui::Text("  Trigger: 0x%02X (%s)", actionTrigger, GetFighterActionTriggerName(actionTrigger));
+			ImGui::Unindent();
+		}
 
 		void DrawCollisionContacts()
 		{
@@ -353,6 +453,33 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			DebugHelpers::ImGui::TextVector4("Left Analog Stick", pActorHero->pPlayerInput->lAnalogStick);
 		}
 
+		ImGui::SetNextItemOpen(false, ImGuiCond_Once);
+		if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_None)) {
+			DrawFighterActionBreakdown("Current Fighter Action", pActorHero->field_0x44c, pActorHero->field_0x44d, pActorHero->field_0x44cuint);
+			ImGui::Text("field_0x44e: 0x%02X", pActorHero->field_0x44e);
+			ImGui::Text("field_0x44f: 0x%02X", pActorHero->field_0x44f);
+			ImGui::Separator();
+
+			DrawFighterActionBreakdown("Buffered Fighter Action", pActorHero->field_0x450.moveByte, pActorHero->field_0x450.actionByte, pActorHero->field_0x450.all);
+			//if (pActorHero->field_0x454.field_0x0 != nullptr) {
+			//	DebugHelpers::ImGui::TextVector4("Buffered Action Vector", *pActorHero->field_0x454.field_0x0);
+			//}
+			//ImGui::Text("Buffered Action Data: %p", pActorHero->field_0x454.pData);
+			ImGui::Text("Buffered Action Timeout: %.3f", pActorHero->field_0x45c);
+			ImGui::Separator();
+
+			ImGui::Text("Valid Command Mask: 0x%08X", pActorHero->validCommandMask.all);
+			if (pActorHero->pInputAnalyser != nullptr) {
+				ImGui::Text("Input Analyser Flags: 0x%08X", pActorHero->pInputAnalyser->flags);
+				ImGui::Text("Last Stick Dir Flags: 0x%08X", pActorHero->pInputAnalyser->lastStickDirFlags);
+				ImGui::Text("Pattern A: 0x%08X (%u inputs)", pActorHero->pInputAnalyser->patternA.field_0x0uint, pActorHero->pInputAnalyser->patternA.nbInputs);
+				ImGui::Text("Pattern B: 0x%08X (%u inputs)", pActorHero->pInputAnalyser->patternB.field_0x0uint, pActorHero->pInputAnalyser->patternB.nbInputs);
+			}
+			else {
+				ImGui::TextUnformatted("Input analyser not present.");
+			}
+		}
+
 		if (ImGui::CollapsingHeader("Boomy Vision", ImGuiTreeNodeFlags_None)) {
 			Components::Vision::ShowVisionDetails(&pActorHero->pActorBoomy->vision);
 
@@ -374,4 +501,3 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 namespace Debug {
     MenuRegisterer sDebugHeroMenuReg("Hero", Debug::Hero::ShowMenu, true);
 }
-

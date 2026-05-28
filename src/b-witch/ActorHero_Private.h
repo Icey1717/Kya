@@ -140,6 +140,53 @@ struct S_DETECT_WALL_CFG
 	float field_0x8;
 };
 
+struct CHero_InputRotationAnalyser_Data
+{
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+};
+
+class CHero_InputAngleAnalyser
+{
+public:
+	CHero_InputAngleAnalyser();
+
+	virtual void Init(float param_1, float param_2);
+	virtual void Term();
+	virtual void Reset();
+	virtual void AddSample(edF32VECTOR4* param_2);
+	virtual void AddSample(float param_1);
+
+	float* field_0x0;
+	uint field_0x4;
+	uint nbSamples;
+	uint field_0xc;
+	edF32VECTOR4 field_0x10;
+};
+
+class CHero_InputRotationAnalyser : public CHero_InputAngleAnalyser
+{
+public:
+	CHero_InputRotationAnalyser();
+
+	virtual void Init(float param_1, float param_2);
+	virtual void Term();
+	virtual void Reset();
+	virtual void AddSample(edF32VECTOR4* param_2);
+
+	float FUN_00323b20(float param_1, float param_2, edF32VECTOR4* param_4);
+
+	CHero_InputRotationAnalyser_Data* field_0x30;
+	uint field_0x34;
+	uint field_0x38;
+	float field_0x3c;
+	float field_0x40;
+};
+
 class CActorHeroPrivate : public CActorHero 
 {
 public:
@@ -207,6 +254,7 @@ public:
 	virtual bool Func_0x1b0(CActor* pOther);
 	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
 	virtual void _Proj_GetPossibleExit();
+	virtual void _Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam);
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAttack();
@@ -549,7 +597,7 @@ public:
 
 	bool FUN_00133fb0();
 
-	void FUN_00327010();
+	void TermInputAnalyzers();
 	void FUN_00347480();
 
 	uint FUN_00132c60(uint state);
@@ -559,6 +607,9 @@ public:
 	CBehaviourHeroDefault behaviourHeroDefault;
 
 	int field_0xe44;
+
+	CHero_InputRotationAnalyser inputRotationAnalyser;
+	CHero_InputAngleAnalyser inputAngleAnalyser;
 
 	SPEED_DYN field_0xcb4;
 

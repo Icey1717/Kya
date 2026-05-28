@@ -32,6 +32,7 @@
 
 #define FIGHTER_HOLD_STAND 0x29
 #define FIGHTER_HOLD_RUN 0x2a
+#define FIGHTER_HOLD_ROTATE 0x2b
 #define FIGHTER_HOLD_PUSH_PREPARE 0x34
 #define FIGHTER_HOLD_THROW 0x35
 
@@ -622,6 +623,7 @@ public:
 	virtual void _StateFighterRun(CActorsTable* pTable);
 	virtual void _Ride_GetPossibleHit(bool bPlayImpact);
 	virtual void _Ride_GetPossibleExit();
+	virtual void _Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	virtual void _Hold_GetPossibleHit(bool bPlayImpact);
 	virtual void _Hold_GetPossibleExit();
 	virtual void _BeginFighterHold();
@@ -639,8 +641,6 @@ public:
 	void _EndFighterRide(int newState);
 
 	void _SetAbsoluteSpeedOnGround(float param_1, edF32VECTOR4* param_3);
-
-	void _Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam);
 
 	void ClearLocalData();
 
@@ -706,6 +706,9 @@ public:
 
 	void _StateFighterHoldRunInit();
 	void _StateFighterHoldRun();
+
+	void _StateFighterHoldRotateInit();
+	void _StateFighterHoldRotate();
 
 	void _StateFighterHoldPushPrepareInit();
 	void _StateFighterHoldPushPrepareTerm();
@@ -823,8 +826,8 @@ public:
 
 	s_fighter_anatomy_zones fighterAnatomyZones;
 
-	CScalarDyn scalarDynA;
-	CScalarDyn scalarDynB;
+	CScalarDyn scalarDynForward;
+	CScalarDyn scalarDynLateral;
 	CScalarDyn scalarDynJump;
 
 	float field_0x3f4;

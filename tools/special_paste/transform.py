@@ -505,11 +505,111 @@ def t_math_macros(text: str) -> str:
     return text
 
 
+def t_collapse_vector_assignment(text: str) -> str:
+    """
+    Collapse successive x/y/z/w (or x/y/z) component assignments into one vector assignment.
+
+        base.vec.x = rhs.x;
+        base.vec.y = rhs.y;
+        base.vec.z = rhs.z;
+        base.vec.w = rhs.w;
+    ->  base.vec = rhs;
+    """
+    lines = text.split("\n")
+    result = []
+    i = 0
+    while i < len(lines):
+        matched = False
+        for components, count in [("xyzw", 4), ("xyz", 3)]:
+            if i + count > len(lines):
+                continue
+            m0 = re.match(
+                r"^(\s*)(.+?)\." + components[0] + r"\s*=\s*(.+?)\." + components[0] + r"\s*;\s*$",
+                lines[i],
+            )
+            if not m0:
+                continue
+            indent, lhs_base, rhs_base = m0.group(1), m0.group(2), m0.group(3)
+            ok = True
+            for j, c in enumerate(components[1:], 1):
+                mj = re.match(
+                    r"^"
+                    + re.escape(indent)
+                    + re.escape(lhs_base)
+                    + r"\."
+                    + c
+                    + r"\s*=\s*"
+                    + re.escape(rhs_base)
+                    + r"\."
+                    + c
+                    + r"\s*;\s*$",
+                    lines[i + j],
+                )
+                if not mj:
+                    ok = False
+                    break
+            if ok:
+                result.append(f"{indent}{lhs_base} = {rhs_base};")
+                i += count
+                matched = True
+                break
+        if not matched:
+            result.append(lines[i])
+            i += 1
+    return "\n".join(result)
+
+
+def t_remove_timer_vars(text: str) -> str:
+    """
+    Remove Timer variable declarations and assignments, replacing usages with GetTimer().
+
+    For each variable declared as Timer (or Timer*):
+      - Remove the declaration line:  Timer *pTVar1;  or  Timer tVar;
+      - Remove any assignment lines:  pTVar1 = ...;
+      - Replace remaining uses of that variable with GetTimer()
+    """
+    lines = text.split("\n")
+
+    # Find all Timer variable names from declaration lines.
+    decl_re = re.compile(r"^\s*Timer\s*\*?\s*(\w+)\s*;")
+    timer_vars: set[str] = set()
+    for line in lines:
+        m = decl_re.match(line)
+        if m:
+            timer_vars.add(m.group(1))
+
+    if not timer_vars:
+        return text
+
+    result = []
+    for line in lines:
+        # Drop declaration lines
+        if decl_re.match(line):
+            continue
+
+        # Drop pure assignment lines: <indent>varName = ...;
+        assign_re = re.compile(
+            r"^\s*(?:" + "|".join(re.escape(v) for v in timer_vars) + r")\s*=.*;\s*$"
+        )
+        if assign_re.match(line):
+            continue
+
+        # Replace remaining references with GetTimer()
+        for var in timer_vars:
+            line = re.sub(r"\b" + re.escape(var) + r"\b", "GetTimer()", line)
+
+        result.append(line)
+
+    return "\n".join(result)
+
+
 TRANSFORMS = [
+    t_collapse_vector_assignment,
     t_vtable_calls,
     t_free_to_member_calls,
     t_remove_base_chains,
     t_collapse_anim_end_reached_block,
+    t_remove_timer_vars,
     t_c_casts_to_static_cast,
     t_dat_float_literals,
     t_float_literals,
@@ -740,6 +840,61 @@ def _run_tests() -> None:
         ("(CActor *)0", "(CActor *)0"),
         ("(void *)NULL", "(void *)NULL"),
         ("(CActor *)nullptr", "(CActor *)nullptr"),
+        # vector component collapse — vec4
+        (
+            "    (this->base).base.dynamic.rotationQuat.x = local_20.x;\n    (this->base).base.dynamic.rotationQuat.y = local_20.y;\n    (this->base).base.dynamic.rotationQuat.z = local_20.z;\n    (this->base).base.dynamic.rotationQuat.w = local_20.w;",
+            "    this->dynamic.rotationQuat = local_20;",
+        ),
+        # vector component collapse — vec3
+        (
+            "this->pos.x = src.x;\nthis->pos.y = src.y;\nthis->pos.z = src.z;",
+            "this->pos = src;",
+        ),
+        # vector component collapse — incomplete (only xyz present, not w), vec3 still collapses
+        (
+            "this->vel.x = v.x;\nthis->vel.y = v.y;\nthis->vel.z = v.z;\nthis->vel.w = v.w;",
+            "this->vel = v;",
+        ),
+        # vector component collapse — different LHS bases, no collapse
+        (
+            "this->a.x = src.x;\nthis->b.y = src.y;\nthis->a.z = src.z;",
+            "this->a.x = src.x;\nthis->b.y = src.y;\nthis->a.z = src.z;",
+        ),
+        # vector component collapse — different RHS bases, no collapse
+        (
+            "this->pos.x = a.x;\nthis->pos.y = b.y;\nthis->pos.z = a.z;",
+            "this->pos.x = a.x;\nthis->pos.y = b.y;\nthis->pos.z = a.z;",
+        ),
+        # Timer var removal — declaration removed, usage replaced
+        (
+            "Timer *pTVar1;\npTVar1 = GetSomeTimer();\nfoo(pTVar1->elapsed);",
+            "foo(GetTimer()->elapsed);",
+        ),
+        # Timer var — declaration only line removed
+        (
+            "Timer *pTVar1;\nbar();",
+            "bar();",
+        ),
+        # Timer var — pointer decl and value decl both handled
+        (
+            "Timer tVar;\ntVar = *GetSomeTimer();\nreturn tVar.elapsed;",
+            "return GetTimer().elapsed;",
+        ),
+        # Timer var — multiple Timer vars
+        (
+            "Timer *pTVar1;\nTimer *pTVar2;\npTVar1 = a;\npTVar2 = b;\nuse(pTVar1, pTVar2);",
+            "use(GetTimer(), GetTimer());",
+        ),
+        # Timer var — no-pointer decl with arrow access after replacement
+        (
+            "Timer pTVar1;\npTVar1 = GetTimer();\nfvar6 = pTVar1->currentTime;",
+            "fvar6 = GetTimer()->currentTime;",
+        ),
+        # non-Timer type must not be affected
+        (
+            "TimerEx *pTVar1;\npTVar1 = x;\nfoo(pTVar1);",
+            "TimerEx *pTVar1;\npTVar1 = x;\nfoo(pTVar1);",
+        ),
     ]
 
     failures = 0
@@ -762,4 +917,5 @@ if __name__ == "__main__":
         _run_tests()
     else:
         input_text = sys.stdin.read()
+        input_text = input_text.lstrip("\ufeff")  # strip UTF-8 BOM if present
         sys.stdout.write(transform(input_text))

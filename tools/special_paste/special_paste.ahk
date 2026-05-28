@@ -19,19 +19,25 @@
     tempIn  := A_Temp "\kya_paste_in.txt"
     tempOut := A_Temp "\kya_paste_out.txt"
 
+    tempErr  := A_Temp "\kya_paste_err.txt"
+
     try {
-        f := FileOpen(tempIn, "w", "UTF-8")
+        f := FileOpen(tempIn, "w", "UTF-8-RAW")
         f.Write(text)
         f.Close()
 
         scriptDir := A_ScriptDir
-        RunWait('cmd.exe /c python.exe "' scriptDir '\transform.py" < "' tempIn '" > "' tempOut '"',, "Hide")
+        RunWait('cmd.exe /c python.exe -X utf8 "' scriptDir '\transform.py" < "' tempIn '" > "' tempOut '" 2> "' tempErr '"',, "Hide")
+
+        errText := FileRead(tempErr, "UTF-8")
+        if (errText != "") {
+            MsgBox "Python error:`n" errText, "Special Paste", "Icon!"
+            return
+        }
 
         result := FileRead(tempOut, "UTF-8")
-        if (result != "") {
-            A_Clipboard := result
-            ClipWait(2)
-        }
+        A_Clipboard := result
+        ClipWait(2)
         Send "^v"
         TrayTip "Transformed!", "Special Paste OK", "Mute"
     } catch Error as e {

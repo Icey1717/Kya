@@ -35,7 +35,7 @@ void CBehaviourFighterRidden::Begin(CActor* pOwner, int newState, int newAnimati
 	pCVar4 = this->pOwner;
 	pCVar4->fightFlags = pCVar4->fightFlags | 0x8000;
 	pCVar4->fightFlags = pCVar4->fightFlags & 0xfffeffff;
-	this->pOwner->scalarDynA.Reset();
+	this->pOwner->scalarDynForward.Reset();
 	this->pOwner->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 
 	if (newState == -1) {
@@ -197,7 +197,7 @@ bool CBehaviourFighterRidden::Execute(s_fighter_action* pAction, s_fighter_actio
 
 		if (static_cast<float>(iVar3) != this->pOwner->field_0x500) {
 			this->pOwner->field_0x500 = static_cast<float>(iVar3);
-			this->pOwner->scalarDynA.BuildFromSpeedTime(1.570796f, 6.283185f, 0.75f);
+			this->pOwner->scalarDynForward.BuildFromSpeedTime(1.570796f, 6.283185f, 0.75f);
 		}
 
 		puVar6 = edF32Vector4DotProductHard(&local_30, &local_20);
@@ -216,7 +216,7 @@ bool CBehaviourFighterRidden::Execute(s_fighter_action* pAction, s_fighter_actio
 	}
 	else {
 		if ((local_4.all & 0xf) == 0) {
-			this->pOwner->scalarDynA.Reset();
+			this->pOwner->scalarDynForward.Reset();
 			this->pOwner->field_0x500 = 0.0f;
 		}
 	}
@@ -451,7 +451,7 @@ void CActorFighter::_StateFighterRiddenRun()
 	_msg_hit_param* local_4;
 
 	local_110.nbEntries = 0;
-	fVar9 = this->scalarDynA.Integrate(GetTimer()->cutsceneDeltaTime);
+	fVar9 = this->scalarDynForward.Integrate(GetTimer()->cutsceneDeltaTime);
 	fVar8 = fabs(this->field_0x7b0); // Note: This is uninitialized in original code.
 	if (fVar9 <= fVar8) {
 		fVar8 = fVar9;

@@ -801,13 +801,13 @@ LAB_0014a028:
 	}
 
 	if (this->bFreeGlide == 0) {
-		fVar27 = edFIntervalUnitDstLERP(this->scalarDynA.field_0x4, this->scalarDynA.duration, 0.0f);
+		fVar27 = edFIntervalUnitDstLERP(this->scalarDynForward.field_0x4, this->scalarDynForward.duration, 0.0f);
 		this->field_0x11fc = fVar27;
 		
 		this->scalarDynJump.Integrate(GetTimer()->cutsceneDeltaTime);		
-		this->scalarDynA.Integrate(GetTimer()->cutsceneDeltaTime);
+		this->scalarDynForward.Integrate(GetTimer()->cutsceneDeltaTime);
 
-		fVar27 = this->scalarDynA.GetInstantSpeed();
+		fVar27 = this->scalarDynForward.GetInstantSpeed();
 		edF32Vector4ScaleHard(fVar27, &local_180, &this->field_0x1400);
 		local_180.y = this->scalarDynJump.field_0x20;
 		fVar27 = edF32Vector4NormalizeHard(&local_180, &local_180);
@@ -1136,7 +1136,7 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
-	this->scalarDynA.Reset();
+	this->scalarDynForward.Reset();
 	this->scalarDynJump.Reset();
 
 	if (GetWindState() == (CActorWindState*)0x0) {
@@ -1172,14 +1172,14 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 	}
 
 	fVar9 = GetWindCannonArcSpeed();
-	this->scalarDynA.BuildFromSpeedDist(fVar5, fVar9, fVar4);
+	this->scalarDynForward.BuildFromSpeedDist(fVar5, fVar9, fVar4);
 
 	fVar4 = 1.0f;
 	if (0.0f < fVar7) {
 		fVar4 = fVar7;
 	}
 
-	this->scalarDynJump.BuildFromSpeedDistTime(fVar8, 0.0f, fVar4, this->scalarDynA.duration);
+	this->scalarDynJump.BuildFromSpeedDistTime(fVar8, 0.0f, fVar4, this->scalarDynForward.duration);
 	this->dynamicExt.normalizedTranslation.x = 0.0f;
 	this->dynamicExt.normalizedTranslation.y = 0.0f;
 	this->dynamicExt.normalizedTranslation.z = 0.0f;

@@ -746,8 +746,8 @@ void CBehaviourFighterProjected::Begin(CActor* pOwner, int newState, int newAnim
 	pCol = this->pOwner->pCollisionData;
 	pCol->flags_0x0 = pCol->flags_0x0 | 0x10800;
 
-	this->pOwner->scalarDynA.Reset();
-	this->pOwner->scalarDynB.Reset();
+	this->pOwner->scalarDynForward.Reset();
+	this->pOwner->scalarDynLateral.Reset();
 	this->pOwner->scalarDynJump.Reset();
 
 	_ComputeDynamics();
