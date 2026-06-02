@@ -241,6 +241,22 @@ void CActorRune::BehaviourDefault_Manage()
 	return;
 }
 
+bool CActorRune::HasBeenCollected()
+{
+	bool bVar1;
+	int iVar2;
+
+	iVar2 = CLevelScheduler::ScenVar_Get(this->scenVarId);
+	bVar1 = iVar2 == 2;
+
+	if (!bVar1) {
+		iVar2 = CLevelScheduler::ScenVar_Get(0x39);
+		bVar1 = iVar2 != 0;
+	}
+
+	return bVar1;
+}
+
 void CBehaviourRune::Manage()
 {
 	this->pOwner->BehaviourDefault_Manage();

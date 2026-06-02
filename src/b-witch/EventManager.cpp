@@ -1172,7 +1172,7 @@ void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** pa
 {
 	ed_event_chunk* pEventChunk;
 	ed_event* peVar1;
-	EventSendInfo* pEVar2;
+	EventSendInfo* pSendInfo;
 	bool bVar3;
 	bool bVar4;
 	edCEventMessage* peVar5;
@@ -1220,8 +1220,8 @@ void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** pa
 					if (bVar3) {
 						ppEVar13 = pEventCollider->aSendInfo;
 						do {
-							pEVar2 = LOAD_POINTER_CAST(EventSendInfo*, *ppEVar13);
-							if ((pEVar2 != (EventSendInfo*)0x0) && (bVar3 = false, (param_3 & 1 << (colliderId & 0x1f)) != 0)) {
+							pSendInfo = LOAD_POINTER_CAST(EventSendInfo*, *ppEVar13);
+							if ((pSendInfo != (EventSendInfo*)0x0) && (bVar3 = false, (param_3 & 1 << (colliderId & 0x1f)) != 0)) {
 								if (param_5 == 0) {
 									bVar3 = true;
 								}
@@ -1232,22 +1232,21 @@ void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** pa
 										do {
 											uVar10 = 0;
 											uVar9 = 0;
+
 											if (param_6 != 0) {
-												iVar6 = 0;
-												pEVar7 = pEVar2;
+												int* pCurrentActorIndex = reinterpret_cast<int*>(pSendInfo + 1);
 												do {
-													IMPLEMENTATION_GUARD(
-													if (uVar9 < static_cast<uint>(pEVar2)->field_0x0) {
-														if (pEVar7->nbActorIndexes == *static_cast<int*>((int)(*ppMVar8)->field_0x0 + iVar6)) {
+													if (uVar9 < static_cast<uint>(pSendInfo->field_0x0)) {
+														if (*pCurrentActorIndex == (*ppMVar8)->field_0x0[uVar9]) {
 															uVar10 = uVar10 + 1;
 														}
 													}
 													else {
 														uVar10 = uVar10 + 1;
-													})
+													}
+
 													uVar9 = uVar9 + 1;
-													iVar6 = iVar6 + 4;
-													pEVar7 = (EventSendInfo*)&pEVar7->nbActorIndexes;
+													pCurrentActorIndex = pCurrentActorIndex + 1;
 												} while (uVar9 < param_6);
 											}
 
@@ -1268,6 +1267,7 @@ void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** pa
 										pFunc(peVar5, 1);
 										edEventClearMessageQueue();
 									}
+
 									if (bVar4) {
 										uVar12 = peVar1->nbColliders;
 										colliderId = 4;
@@ -1278,6 +1278,7 @@ void edEvent_00259c50(int param_1, int param_2, uint param_3, MapInitParams** pa
 							ppEVar13 = ppEVar13 + 1;
 						} while (colliderId < 4);
 					}
+
 					uVar12 = uVar12 + 1;
 					pEventCollider = pEventCollider + 1;
 				} while (uVar12 < peVar1->nbColliders);

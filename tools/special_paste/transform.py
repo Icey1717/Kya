@@ -104,6 +104,39 @@ def _is_object_arg(arg: str) -> bool:
     return True
 
 
+def _strip_leading_cast(arg: str) -> str:
+    """Strip one leading C-style cast from an argument when present."""
+    return re.sub(r"^\s*\([\w\s*:]+\)\s*", "", arg).strip()
+
+
+def _strip_wrapping_parens(expr: str) -> str:
+    """Strip redundant parens that wrap the full expression."""
+    expr = expr.strip()
+    while expr.startswith("(") and expr.endswith(")"):
+        close = find_matching_paren(expr, 0)
+        if close != len(expr) - 1:
+            break
+        expr = expr[1:-1].strip()
+    return expr
+
+
+def _extract_address_of_object_expr(arg: str) -> str | None:
+    """
+    Return the object expression from `&obj` / `&(expr)` when it is suitable for
+    dot-call rewriting, otherwise None.
+    """
+    arg = strip_base_chain_in(arg.strip())
+    if not arg.startswith("&"):
+        return None
+
+    expr = _strip_wrapping_parens(arg[1:])
+    if not re.match(r"^(?:this|[A-Za-z_]\w*)(?:->\w+|\.\w+)*$", expr):
+        return None
+    if expr.startswith("DAT_"):
+        return None
+    return expr
+
+
 def t_vtable_calls(text: str) -> str:
     """
     (*pVTableExpr->Method)(maybeScalars..., thisArg, rest...)
@@ -191,6 +224,12 @@ _KNOWN_FIRST_ARG_IS_OBJECT: set[str] = {
     "ByteCode",
 }
 
+# Classes where `Class::Method(..., &obj, ...)` should be rewritten to
+# `obj.Method(...)` because the address-of argument is the moved target object.
+_KNOWN_ADDRESS_OF_OBJECT_ARG_CLASSES: set[str] = {
+    "edCTextStyle",
+}
+
 
 def t_free_to_member_calls(text: str) -> str:
     """
@@ -219,12 +258,44 @@ def t_free_to_member_calls(text: str) -> str:
 
         args_text = text[call_start + 1 : call_end]
         args = split_top_level_args(args_text)
+        class_name = m.group(1)
         fn_name = m.group(2)
 
         if args:
+            stripped_args = [_strip_leading_cast(strip_base_chain_in(a)) for a in args]
+
+            this_idx = next(
+                (idx for idx, bare_arg in enumerate(stripped_args) if bare_arg == "this"),
+                -1,
+            )
+            if this_idx != -1:
+                rest_str = ", ".join(args[:this_idx] + args[this_idx + 1 :])
+                result.append(f"{fn_name}({rest_str})")
+                pos = call_end + 1
+                continue
+
+            if class_name in _KNOWN_ADDRESS_OF_OBJECT_ARG_CLASSES:
+                object_idx = next(
+                    (
+                        idx
+                        for idx, arg in enumerate(args)
+                        if _extract_address_of_object_expr(arg) is not None
+                    ),
+                    -1,
+                )
+                if object_idx != -1:
+                    object_expr = _extract_address_of_object_expr(args[object_idx])
+                    rest_str = ", ".join(args[:object_idx] + args[object_idx + 1 :])
+                    if rest_str:
+                        result.append(f"{object_expr}.{fn_name}({rest_str})")
+                    else:
+                        result.append(f"{object_expr}.{fn_name}()")
+                    pos = call_end + 1
+                    continue
+
             first_arg = args[0].strip()
             stripped = strip_base_chain_in(first_arg)
-            bare = re.sub(r"^\s*\([\w\s*:]+\)\s*", "", stripped).strip()
+            bare = _strip_leading_cast(stripped)
             rest_str = ", ".join(args[1:])
 
             if bare == "this":
@@ -240,7 +311,7 @@ def t_free_to_member_calls(text: str) -> str:
                     result.append(f"{bare}->{fn_name}()")
                 pos = call_end + 1
                 continue
-            elif re.match(r"^\w+$", first_arg) and m.group(1) in _KNOWN_FIRST_ARG_IS_OBJECT:
+            elif re.match(r"^\w+$", first_arg) and class_name in _KNOWN_FIRST_ARG_IS_OBJECT:
                 # Known class where first arg is always the object, no cast needed
                 if rest_str:
                     result.append(f"{first_arg}->{fn_name}({rest_str})")
@@ -779,6 +850,14 @@ def _run_tests() -> None:
         ("ByteCode::GetF32(pByteCode);", "pByteCode->GetF32();"),
         ("ByteCode::GetS32(pByteCode);", "pByteCode->GetS32();"),
         ("ByteCode::GetU32(pByteCode);", "pByteCode->GetU32();"),
+        # known address-of object arg — first arg
+        ("edCTextStyle::Reset(&textStyle);", "textStyle.Reset();"),
+        ("edCTextStyle::SetShadow(&textStyle,0x100);", "textStyle.SetShadow(0x100);"),
+        # known address-of object arg — trailing arg
+        (
+            "edCTextStyle::SetScale((float)&DAT_3f333333,(float)&DAT_3f333333,&textStyle);",
+            "textStyle.SetScale(0.69999999f, 0.69999999f);",
+        ),
         # free-function with cast of non-this pointer
         (
             "CActor::DoMessage((CActor *)pHunter,pHunter->field_0x364,0x27,0);",

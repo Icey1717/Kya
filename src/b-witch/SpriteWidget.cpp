@@ -73,9 +73,63 @@ void CSprite::Draw(bool bUpdateMaterial)
 	return;
 }
 
-void CSprite::Draw(float param_2, float param_3, float param_4, uint drawFlags)
+void CSprite::Draw(float param_1, float param_2, float param_3, uint drawFlags)
 {
-	IMPLEMENTATION_GUARD();
+	ushort uVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+
+	if ((drawFlags & 0x4000) == 0) {
+		uVar1 = this->iWidth;
+	}
+	else {
+		uVar1 = this->iHeight;
+	}
+
+	fVar3 = param_1 * static_cast<float>(uVar1);
+	if ((drawFlags & 0x4000) == 0) {
+		uVar1 = this->iHeight;
+	}
+	else {
+		uVar1 = this->iWidth;
+	}
+
+	fVar2 = param_1 * static_cast<float>(uVar1);
+	if ((drawFlags & 2) == 0) {
+		if ((drawFlags & 4) == 0) {
+			fVar3 = param_2 + fVar3;
+			fVar4 = param_2;
+		}
+		else {
+			fVar4 = param_2 - fVar3;
+			fVar3 = param_2;
+		}
+	}
+	else {
+		fVar4 = param_2 - fVar3 / 2.0f;
+		fVar3 = fVar4 + fVar3;
+	}
+
+	if ((drawFlags & 0x10) == 0) {
+		if ((drawFlags & 0x20) == 0) {
+			fVar2 = param_3 + fVar2;
+			fVar5 = param_3;
+		}
+		else {
+			fVar5 = param_3 - fVar2;
+			fVar2 = param_3;
+		}
+	}
+	else {
+		fVar5 = param_3 - fVar2 / 2.0f;
+		fVar2 = fVar5 + fVar2;
+	}
+
+	DrawXYXY(drawFlags, param_1, fVar4, fVar5, fVar3, fVar2);
+
+	return;
 }
 
 void CSprite::Draw(float ratio, float x1, float y1, float param_4, uint drawFlags)

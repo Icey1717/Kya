@@ -179,11 +179,7 @@ typedef uint e_ed_event_prim3d_type;
 
 struct MapInitParams
 {
-	union {
-		ulong wide;
-		int field_0x0[2];
-	};
-	float field_0x8;
+	int field_0x0[3];
 };
 
 typedef void (*MapInitFunc)(edCEventMessage*, int);

@@ -703,7 +703,7 @@ void edCTextFormat::GetRect()
 	return;
 }
 
-bool edCTextFormat::FormatString(char* pText, va_list param_3)
+bool edCTextFormat::FormatStringV(char* pText, va_list param_3)
 {
 	byte bVar1;
 	int numberFormatBase;
@@ -801,6 +801,7 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 							} while (uVar17 < uVar40);
 						}
 					}
+
 					uVar17 = 0;
 					if (local_370 != 0) {
 						pFormatSpecA = aFormatSpecs;
@@ -812,6 +813,7 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 							pFormatSpecA = pFormatSpecA + 1;
 						} while (uVar17 < local_370);
 					}
+
 					uVar17 = 0;
 					if (uVar40 != 0) {
 						paVar37 = local_90;
@@ -841,9 +843,9 @@ bool edCTextFormat::FormatString(char* pText, va_list param_3)
 								case 5:
 								case 7:
 								case 8:
-									IMPLEMENTATION_GUARD(
-									pdVar39 = param_3 + 1;
-									*pCurFormatValueB = *(char**)param_3;)
+									// Pointer type
+									char* pOther = va_arg(param_3, char*);
+									*pCurFormatValueB = pOther;
 								}
 							}
 							uVar17 = uVar17 + 1;
@@ -1324,7 +1326,7 @@ bool edCTextFormat::FormatString(char* pText, ...)
 	}
 
 	va_start(args, pText);
-	bVar4 = FormatString(pText, args);
+	bVar4 = FormatStringV(pText, args);
 	va_end(args);
 	if (bVar4 != false) {
 		GetRect();

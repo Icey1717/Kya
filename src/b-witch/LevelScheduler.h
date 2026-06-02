@@ -86,16 +86,13 @@ struct LoadLoopObject_50
 	int field_0x0;
 	undefined4 field_0x4;
 	ulong messageKey;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
+	edF32VECTOR4 field_0x10;
 	int levelId;
 	undefined4 field_0x24;
 	undefined4 field_0x28;
 	undefined4 field_0x2c;
 	edF32VECTOR4 field_0x30;
-	undefined8 field_0x40;
+	ulong field_0x40;
 	undefined field_0x48;
 	undefined field_0x49;
 	undefined field_0x4a;
@@ -292,6 +289,7 @@ struct S_LVLNFO_LANGUAGE_V7_V9
 static_assert(sizeof(S_LVLNFO_LANGUAGE_V7_V9) == 0x1c);
 
 class CActor;
+class SaveDataChunk_BLMP;
 
 struct EpStruct_8
 {
@@ -347,6 +345,7 @@ struct NativShopLevelSubObj
 	NativShopLevelSubObjSubObj aSubObjs[5];
 	
 	void FUN_002d8d10(CActorNativShop* pNativ);
+	bool FUN_002d8cb0();
 };
 
 class CLevelScheduler : public CObjectManager
@@ -397,7 +396,7 @@ public:
 	CChunk* SaveGame_GetLevelChunk(int levelId);
 	void SaveGame_LoadLevelState(int levelId);
 
-	bool IsACompatibleChunkRecurse(CChunk* pChunk);
+	static bool IsACompatibleChunkRecurse(CChunk* pChunk);
 
 	static int SaveGame_GetMaxBufferSize();
 
@@ -436,7 +435,7 @@ public:
 	bool Money_TakeFromMonster(int amount);
 	bool Money_TakeFromScenery(int amount);
 
-	CChunkDesc* GetChunkDesc(uint hash);
+	static CChunkDesc* GetChunkDesc(uint hash);
 
 	void* SaveGame_BeginChunk(uint hash);
 	void SaveGame_EndChunk(void* pDataEnd);
@@ -457,6 +456,16 @@ public:
 	void SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size);
 
 	void Level_WolfenChanged();
+
+	static int MapFunc_002d8dc0(LoadLoopObject_50* param_1);
+	SaveDataChunk_BLMP* LoadMapSaveChunk(int levelId);
+	NativShopLevelSubObj* FUN_002d9510(int purchaseId);
+	LoadLoopObject_50* FUN_002d9f30(int param_2);
+
+	bool IsRuneCollectedInLevel(int levelId);
+	uint IsMapCollectedInLevel(int levelId);
+	bool OpenLevelChunk(int levelId);
+	void CloseLevelChunk();
 
 public:
 
@@ -583,12 +592,11 @@ public:
 bool edSoundAreAllSoundDataLoaded();
 bool edMusicAreAllMusicDataLoaded();
 
-int MapFunc_002d8dc0(LoadLoopObject_50* param_1);
-
 extern ulong gMedallionHashCodes[9];
 extern ulong gFightHashCodes[8];
 
 extern int INT_ARRAY_0048ed60[16];
+extern int INT_ARRAY_0048eda0[16];
 
 #ifdef PLATFORM_WIN
 using QueuedTaskList = std::vector<std::future<void>>;

@@ -37,6 +37,8 @@ public:
 
 	void BehaviourDefault_Manage();
 
+	bool HasBeenCollected();
+
 	float triggerDistance;
 	int cinematicId;
 	int scenVarId;

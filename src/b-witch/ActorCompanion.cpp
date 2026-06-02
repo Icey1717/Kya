@@ -1202,7 +1202,7 @@ void CBehaviourCompanion::Draw()
 
 		if (GetAlert(iVar1) != (CompanionAlert*)0x0) {
 			if ((GetAlert(iVar1)->flags_0x2 & 2) != 0) {
-				if (this->instanceIndex == 0) {
+				if (this->field_0x60 == 0) {
 					if ((GetAlert(iVar1)->flags_0x4 & COLLISION_GROUND_FLAG) != 0) {
 						pCVar4 = GetAlert(iVar1);
 
@@ -1226,7 +1226,7 @@ void CBehaviourCompanion::Draw()
 					}
 				}
 				else {
-					if (this->instanceIndex == 1) {
+					if (this->field_0x60 == 1) {
 						x = this->field_0x1c + GetTimer()->cutsceneDeltaTime;
 						this->field_0x1c = x;
 
@@ -1249,7 +1249,7 @@ void CBehaviourCompanion::Draw()
 						if (x < 0.0f) {
 							this->displayTime = 0.0f;
 							this->field_0x1c = 0.0f;
-							this->instanceIndex = 0;
+							this->field_0x60 = 0;
 							GetAlert(this->field_0x18)->flags_0x4 = GetAlert(this->field_0x18)->flags_0x4 & 0xffdf;
 						}
 						x = -0.15f;
@@ -1360,7 +1360,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 		} while (iVar4 < this->nbSubObjs);
 	}
 
-	this->instanceIndex = 0;
+	this->field_0x60 = 0;
 	this->field_0x64 = 0;
 	this->field_0x5c = 0;
 	this->field_0x58 = 0;
@@ -1534,7 +1534,7 @@ void CBehaviourCompanion::FUN_001e50a0()
 	if (this->field_0x64 == 0) {
 		this->field_0x1c = 0;
 		this->displayTime = 0.0f;
-		this->instanceIndex = 0;
+		this->field_0x60 = 0;
 
 		if (this->field_0x18 < 0) {
 			pCVar7 = (CompanionAlert*)0x0;
@@ -1630,8 +1630,8 @@ void CBehaviourCompanion::FUN_001e50a0()
 		}
 
 		pCVar7->flags_0x4 = pCVar7->flags_0x4 | 2;
-		if (this->instanceIndex == 0) {
-			this->instanceIndex = 1;
+		if (this->field_0x60 == 0) {
+			this->field_0x60 = 1;
 			if (this->field_0x18 < 0) {
 				pCVar7 = (CompanionAlert*)0x0;
 			}
@@ -1672,7 +1672,7 @@ void CBehaviourCompanion::FUN_001e50a0()
 	}
 
 	if (bVar4) {
-		this->instanceIndex = 2;
+		this->field_0x60 = 2;
 		if (this->field_0x18 < 0) {
 			pCVar7 = (CompanionAlert*)0x0;
 		}
@@ -1717,7 +1717,7 @@ LAB_001e5488:
 		}
 
 		if (pCVar7->field_0x50 < fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) {
-			this->instanceIndex = 2;
+			this->field_0x60 = 2;
 			if (this->field_0x18 < 0) {
 				pCVar7 = (CompanionAlert*)0x0;
 			}
@@ -1797,7 +1797,7 @@ void CBehaviourCompanion::FUN_001e58e0()
 	this->field_0x10 = -1;
 	this->field_0x1c = 0;
 	this->displayTime = 0.0f;
-	this->instanceIndex = 0;
+	this->field_0x60 = 0;
 	this->aSubObjs[this->activeSubObjId].flags_0x4 = this->aSubObjs[this->activeSubObjId].flags_0x4 & 0xffdf;
 	pHero = this->pOwner->pActorHero;
 	this->field_0x30 = pHero->currentLocation;
@@ -2045,6 +2045,62 @@ void CBehaviourCompanion::FUN_001e56b0(int param_2)
 	}
 
 	return;
+}
+
+bool CBehaviourCompanion::FUN_001e6d60()
+{
+	int iVar1;
+	CompanionAlert* pCVar2;
+	CompanionAlert* pCVar3;
+
+	if (this->field_0x64 != 0) {
+		iVar1 = this->field_0x18;
+		pCVar2 = (CompanionAlert*)0x0;
+
+		if (-1 < iVar1) {
+			pCVar2 = this->aSubObjs + iVar1;
+		}
+
+		if (pCVar2 != (CompanionAlert*)0x0) {
+			pCVar2 = (CompanionAlert*)0x0;
+			if (-1 < iVar1) {
+				pCVar2 = this->aSubObjs + iVar1;
+			}
+
+			if ((pCVar2->flags_0x2 & 2) != 0) {
+				if (this->field_0x60 != 0) {
+					return true;
+				}
+
+				pCVar2 = (CompanionAlert*)0x0;
+				if (-1 < iVar1) {
+					pCVar2 = this->aSubObjs + iVar1;
+				}
+
+				if ((pCVar2->flags_0x4 & 2) != 0) {
+					if (iVar1 < 0) {
+						pCVar2 = (CompanionAlert*)0x0;
+					}
+					else {
+						pCVar2 = this->aSubObjs + iVar1;
+					}
+
+					if (this->activeSubObjId < 0) {
+						pCVar3 = (CompanionAlert*)0x0;
+					}
+					else {
+						pCVar3 = this->aSubObjs + this->activeSubObjId;
+					}
+
+					if (pCVar3 == pCVar2) {
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 _rgba _rgba_0042ca50 = { 0x55, 0x55, 0x00, 0x80 };

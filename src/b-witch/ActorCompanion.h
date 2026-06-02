@@ -79,6 +79,7 @@ public:
 	void FUN_001e58e0();
 	void FUN_001e9660(edF32VECTOR4* param_2);
 	void FUN_001e56b0(int param_2);
+	bool FUN_001e6d60();
 
 	void _Display_BGText(float param_1, float param_2, float param_3);
 	void _Display_Text(float param_1, float param_2, float param_3);
@@ -106,7 +107,7 @@ public:
 	undefined4 field_0x54;
 	undefined4 field_0x58;
 	undefined4 field_0x5c;
-	undefined4 instanceIndex;
+	undefined4 field_0x60;
 	undefined4 field_0x64;
 
 	undefined4 field_0x68;

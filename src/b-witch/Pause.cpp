@@ -13,6 +13,9 @@
 #include "LocalizationManager.h"
 #include "edDlist.h"
 #include "CameraViewManager.h"
+#include "MapManager.h"
+#include "EdFileBase.h"
+#include "edBank/edBankFile.h"
 #include "MathOps.h"
 #include <math.h>
 
@@ -3017,9 +3020,100 @@ void HelpLeave()
 	IMPLEMENTATION_GUARD();
 }
 
+edCBankCallback edCBankCallback_004279c0[1] = {-1, -1, 0x0, 0, 0, 0, 0, 0};
+
+void OnMapFileLoaded(bool param_1, void* param_2)
+{
+	if (param_1 != false) {
+		CScene::ptable.g_MapManager_0045168c->OnFileLoaded();
+	}
+
+	return;
+}
+
 void MapEnter()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	uint uVar4;
+	uint uVar5;
+	edCBankBufferEntry* pBankBufferEntry;
+	edCBankInstall mapBankFilePath;
+	CMapManager* pMapManager;
+
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
+	if ((CScene::ptable.g_MapManager_0045168c)->field_0x4 != -1) {
+		iVar2 = edMemGetMemoryAvailable(TO_HEAP(H_MAIN));
+		if ((iVar2 < 0xd2c00) || (bVar1 = StaticEdFileBase_004497f0.Check(), bVar1 == false)) {
+			IMPLEMENTATION_GUARD(
+			g_CinematicManager_0048efc->FUN_001c5de0();)
+		}
+
+		iVar2 = edMemGetMemoryAvailable(TO_HEAP(H_MAIN));
+		if ((0xd2bff < iVar2) && (bVar1 = StaticEdFileBase_004497f0.Check(), bVar1 != false)) {
+			ProfileDraw(0);
+
+			GameFlags = GameFlags | 0x10;
+
+			CScene::_pinstance->Level_PauseChange(1);
+			CScene::_pinstance->SetGlobalPaused_001b8c30(1);
+
+			pMapManager->field_0x380 = 1;
+			if (pMapManager->field_0x37c != 0.0f) {
+				uVar3 = FUN_003f6910(&pMapManager->field_0x358);
+				uVar4 = FUN_003f6910(&pMapManager->field_0x358);
+				uVar5 = FUN_003f6910(&pMapManager->field_0x338);
+				uVar4 = uVar4 ^ uVar5;
+				if (((uVar4 & 0x40) == 0) && (pMapManager->field_0x358.field_0x0 == pMapManager->field_0x338.field_0x0)) {
+					if ((pMapManager->field_0x358.hash != pMapManager->field_0x338.hash) || ((uVar4 & 1) != 0)) {
+						uVar4 = uVar4 | 0x3f;
+					}
+				}
+				else {
+					uVar4 = uVar4 | 0x7f;
+				}
+
+				if ((uVar3 & uVar4) == 0) {
+					pMapManager->field_0x37c = GetTimer()->totalTime - 2.0f;
+				}
+				else {
+					pMapManager->field_0x37c = GetTimer()->totalTime;
+				}
+			}
+
+			CScene::ptable.g_FrontendManager_00451680->SetActive(false);
+			edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+			memset(&mapBankFilePath, 0, sizeof(edCBankInstall));
+			pMapManager->mapBank.initialize(0xb400, 1, &mapBankFilePath);
+			pMapManager->mapBank.bank_buffer_setcb(edCBankCallback_004279c0);
+			mapBankFilePath.pObjectReference = pMapManager;
+			mapBankFilePath.filePath = "CDEURO/Frontend/maps.bnk";
+			mapBankFilePath.fileFunc = OnMapFileLoaded;
+			pBankBufferEntry = pMapManager->mapBank.get_free_entry();
+			pMapManager->pBankBufferEntry = pBankBufferEntry;
+			mapBankFilePath.fileFlagA = 0;
+			bVar1 = pMapManager->pBankBufferEntry->load(&mapBankFilePath);
+			if (bVar1 == false) {
+				pMapManager->pBankBufferEntry = (edCBankBufferEntry*)0x0;
+			}
+
+			edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
+
+			pMapManager->pLevelMap->LoadMapBank(CLevelScheduler::gThis->currentLevelID);
+			pMapManager->field_0x24 = 1;
+			bVar1 = pMapManager->field_0x380 != 0;
+			if ((!bVar1) && (bVar1 = true, pMapManager->field_0x37c == 0.0f)) {
+				bVar1 = false;
+			}
+
+			if (bVar1) {
+				pMapManager->field_0x384 = GetTimer()->totalTime;
+			}
+		}
+	}
+
+	return;
 }
 
 void MapLeave()

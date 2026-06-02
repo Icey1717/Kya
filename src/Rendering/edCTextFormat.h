@@ -69,15 +69,16 @@ struct astruct_10
 	int field_0x1c;
 };
 
-struct edCTextFormat
+class edCTextFormat
 {
+public:
 	void DisplayWindow(float x, float y, Rectangle* pRect);
 	void Display(float x, float y);
 	void DisplayDebugInfos(float x, float y);
 	void DrawString(float x, float y, bool bFlag);
 	void SendTextRenderCommands_0028b0e0(struct DrawText16* pTextRenderCommands);
 	void GetRect();
-	bool FormatString(char* pText, va_list param_3);
+	bool FormatStringV(char* pText, va_list param_3);
 	bool FormatString(char* pText, ...);
 
 	edCTextFormat();

@@ -282,6 +282,8 @@ void HelpLeave();
 void MapEnter();
 void MapLeave();
 
+void ClearDisplay(void);
+
 void CallPauseChange(int param_1);
 
 void MemCardLoad0(int slotIndex);
