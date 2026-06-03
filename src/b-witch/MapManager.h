@@ -41,7 +41,7 @@ struct SaveDataChunk_BLMP
 	MapPosition aPositions[];
 };
 
-struct SubAstruct
+struct S_2DVERTEX
 {
 	union {
 		struct {
@@ -51,13 +51,23 @@ struct SubAstruct
 	};
 };
 
-struct astruct_21
+struct S_2DRECT
 {
-	SubAstruct field_0x0[4];
+	S_2DVERTEX aVertices[4];
 };
 
-struct LoadLoopObject_50;
+struct ObjectiveEntry;
 struct NativShopLevelSubObj;
+
+PACK(struct LevelMapFileData
+{
+	char _padding0[0x8];
+	int field_0x8;
+	int field_0xc;
+	int field_0x10;
+	int field_0x14;
+	int aTileIndices[];
+};)
 
 class CLevelMap
 {
@@ -69,18 +79,19 @@ public:
 	void SetupMatrices();
 	void Update();
 	void ManagePad();
-	void FUN_003bafa0();
-	MapPosition* FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, MapPosition* pMarkerBuffer, long param_5);
-	void FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3);
-	void FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3);
-	void FUN_003bde70(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, uint param_6);
-	MapPosition* FUN_003bb990(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDataSizes* param_4, MapPosition* param_5);
-	void FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4, undefined3 param_5);
-	void FUN_003be250(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, uint param_7);
-	void FUN_003be570(float param_1, float param_2, edF32VECTOR4* param_4, uint param_5);
-	NativShopLevelSubObj* FUN_003bc1e0();
-	void FUN_003bcdf0(MapPosition* pMapPosition, int param_3);
-	void FUN_003bbe50(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDataSizes* pMapSize, MapPosition* pMapPosition);
+	void UpdateViewportBounds();
+	MapPosition* FindMarkerForLevel(int inLevelId, MapDataSizes* pMapSizes, MapPosition* pMarkerBuffer, long param_5);
+	void DrawMapTilesAndMarkers(ObjectiveEntry* pObjectiveEntry, int param_3);
+	void DrawMapOverlays(ObjectiveEntry* pObjectiveEntry, int param_3);
+	void DrawWorldMarkerIcon(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, uint param_6);
+	MapPosition* DrawCollectedMarkers(ObjectiveEntry* pObjectiveEntry, int param_3, MapDataSizes* param_4, MapPosition* param_5);
+	void DrawPulsingMarkerHighlight(float param_1, float param_2, edF32VECTOR4* param_4, undefined3 param_5);
+	void DrawOrientedMarkerIcon(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, uint param_7);
+	void DrawOffscreenMarkerArrow(float param_1, float param_2, edF32VECTOR4* param_4, uint param_5);
+	NativShopLevelSubObj* DrawAndSelectNearestShopMarker();
+	void DrawMarkerLabels(MapPosition* pMapPosition, int param_3);
+	void DrawObjectiveTargetMarkers(ObjectiveEntry* pObjectiveEntry, int param_3, MapDataSizes* pMapSize, MapPosition* pMapPosition);
+	void DrawLegend(float param_1, float param_2);
 
 	int field_0x0;
 	int levelId;
@@ -92,7 +103,7 @@ public:
 	ed_g2d_manager field_0x44;
 
 	int field_0x78;
-	char* field_0x7c;
+	LevelMapFileData* field_0x7c;
 
 	edF32VECTOR4 field_0x80;
 	edF32VECTOR4 field_0x90;
@@ -111,11 +122,11 @@ public:
 	undefined4 field_0xdc;
 
 	undefined4 field_0xe0;
-	undefined4 field_0xe4;
+	float field_0xe4;
 
 	edF32MATRIX4 field_0xf0;
 	edF32MATRIX4 field_0x130;
-	edF32MATRIX4 field_0x170;
+	edF32MATRIX4 scrollMatrix;
 	edF32MATRIX4 field_0x1b0;
 };
 
@@ -130,12 +141,14 @@ public:
 
 class edCTextFormat;
 
-struct astruct_20
+class CObjectivesPanel
 {
-	float FUN_003f69b0();
-	void FUN_003f67c0(float param_2, float param_3, float param_4, edCTextFormat* pTextFormat, uint color);
-	void FUN_003f6480(float param_1, float param_2, char* pText, int param_5, uint color, uint param_7, int param_8);
-	void FUN_003f5da0(float param_1, float param_2, uint param_4, int param_5);
+public:
+	float GetPanelHeight();
+	void DrawTextRevealUnderline(float param_2, float param_3, float param_4, edCTextFormat* pTextFormat, uint color);
+	void DrawObjectiveTextLine(float param_1, float param_2, char* pText, int param_5, uint color, uint param_7, int param_8);
+	void DrawObjectiveDetails(float param_1, float param_2, uint param_4, int param_5);
+	uint GetObjectiveLineMask();
 
 	int field_0x0;
 	int field_0x4;
@@ -169,27 +182,28 @@ struct CMapManager : public CObjectManager
 	void OnFileLoaded();
 
 	void Func_003f8d80();
-	void FUN_003f8a00();
-	float FUN_003f6ce0(float param_1, int param_3);
-	void FUN_003f6e10(float param_1);
-	bool FUN_003f7a40(int param_2, MapDataSizes* param_3, MapPosition* param_4, int param_5);
+	void DrawMapPromptHint();
+	float ComputeMapSlideFactor(float param_1, int param_3);
+	void DrawObjectivePanel(float param_1);
+	bool LoadMarkerPositionsForLevel(int param_2, MapDataSizes* param_3, MapPosition* param_4, int param_5);
 	void GetMarkerPositions(MapDataSizes* param_2, MapPosition* param_3);
-	bool FUN_003f6ae0(int levelId, int markerType, int param_4);
-	int FUN_003f87b0(SubAstruct* param_2, SubAstruct* param_3, int nbCount, uint index);
-	void DrawSprite(edDList_material* pMaterial, astruct_21* param_3, uint color);
-	void FUN_003f85c0(edDList_material* pMaterial, astruct_21* param_3, uint color);
+	bool HasRouteToLevel(int levelId, int markerType, int param_4);
+	int ClipPoly(S_2DVERTEX* param_2, S_2DVERTEX* param_3, int nbCount, uint index);
+	void DrawSprite(edDList_material* pMaterial, S_2DRECT* pRect, uint color);
+	void DrawClippedSprite(edDList_material* pMaterial, S_2DRECT* pRect, uint color);
 	int FUN_003f9040();
 	edDList_material* GetDlistMaterial(int index);
+	void DrawButtons(char* pText);
 
 #ifdef PLATFORM_WIN
 	virtual char* ProfileGetName() { return "Map"; }
 #endif
 
 	int field_0x4;
-	undefined4 field_0x8;
+	uint field_0x8;
 	float field_0xc;
 	int* field_0x10;
-	undefined4 field_0x14;
+	int field_0x14;
 	S_STREAM_REF<ed_zone_3d> field_0x18;
 	CLevelMap* pLevelMap;
 	CWorldMap* pWorldMap;
@@ -203,45 +217,24 @@ struct CMapManager : public CObjectManager
 	edDList_material field_0xf0[15];
 	ed_g2d_manager field_0x1e0;
 	edDList_material field_0x210[15];
-	undefined4 field_0x300;
-	undefined field_0x304;
-	undefined field_0x305;
-	undefined field_0x306;
-	undefined field_0x307;
-	undefined field_0x308;
-	undefined field_0x309;
-	undefined field_0x30a;
-	undefined field_0x30b;
-	undefined field_0x30c;
-	undefined field_0x30d;
-	undefined field_0x30e;
-	undefined field_0x30f;
+	int field_0x300;
+
 	edF32VECTOR4 field_0x310;
 	edF32VECTOR4 field_0x320;
 	float field_0x330;
 	int field_0x334;
 
-	astruct_20 field_0x338;
-	astruct_20 field_0x358;
+	CObjectivesPanel field_0x338;
+	CObjectivesPanel field_0x358;
 	float field_0x378;
 
 	float field_0x37c;
 	int field_0x380;
 	float field_0x384;
 	float field_0x388;
-	undefined4 field_0x38c;
-	undefined4 field_0x390;
-	undefined4 field_0x394;
-	undefined field_0x398;
-	undefined field_0x399;
-	undefined field_0x39a;
-	undefined field_0x39b;
-	undefined field_0x39c;
-	undefined field_0x39d;
-	undefined field_0x39e;
-	undefined field_0x39f;
+	int field_0x38c;
+	int field_0x390;
+	int field_0x394;
 };
-
-uint FUN_003f6910(astruct_20* param_1);
 
 #endif // _MAP_MANAGER_H

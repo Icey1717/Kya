@@ -41,9 +41,9 @@ public:
 	float verticalSize;
 	float shadowShiftX;
 	float shadowShiftY;
-	int rgbaColour;
+	uint rgbaColour;
 	int alpha;
-	int altColour;
+	uint altColour;
 };
 
 edCTextStyle* edTextStyleGetCurrent();

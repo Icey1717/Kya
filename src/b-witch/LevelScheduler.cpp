@@ -496,7 +496,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	//MapManager* pMVar4;
 	ScenarioVariable* pSVar5;
 	int iVar6;
-	LoadLoopObject_50* pLVar7;
+	ObjectiveEntry* pLVar7;
 	NativShopLevelSubObj* puVar8;
 	int iVar9;
 	S_LEVEL_INFO* pLevelInfo;
@@ -804,7 +804,7 @@ void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V
 	float fVar2;
 	ulong uVar3;
 	int iVar4;
-	LoadLoopObject_50* pLVar6;
+	ObjectiveEntry* pLVar6;
 	float fVar5;
 	float fVar6;
 
@@ -1847,7 +1847,7 @@ void CLevelScheduler::SaveGame_SaveGameObj()
 	int iVar4;
 	NativShopLevelSubObj* pShopSubObj;
 	NativShopLevelSubObjSaveData* pShopSave;
-	LoadLoopObject_50* pLL50;
+	ObjectiveEntry* pLL50;
 	SaveDataChunk_BOBJ* pObjSave;
 
 	pObjSave = reinterpret_cast<SaveDataChunk_BOBJ*>(SaveGame_BeginChunk(SAVEGAME_CHUNK_BOBJ));
@@ -1981,7 +1981,7 @@ void CLevelScheduler::LoadGame_LoadGameObj()
 	NativShopLevelSubObj* pNVar3;
 	NativShopLevelSubObjSaveData* pNVar4;
 	int iVar5;
-	LoadLoopObject_50* pLVar6;
+	ObjectiveEntry* pLVar6;
 	LoadLoopObject_50SaveData* pLVar7;
 	float fVar8;
 	float fVar9;
@@ -2046,10 +2046,10 @@ void CLevelScheduler::LoadGame_LoadGameObj()
 						pLVar6 = pLVar6 + 1;
 					} while (iVar5 < this->objCount_0x4218);
 				}
-				pLVar6 = (LoadLoopObject_50*)0x0;
+				pLVar6 = (ObjectiveEntry*)0x0;
 
 			LAB_002da248:
-				if (pLVar6 != (LoadLoopObject_50*)0x0) {
+				if (pLVar6 != (ObjectiveEntry*)0x0) {
 					pLVar6->field_0x24 = pLVar7->field_0x4;
 					pLVar6->field_0x28 = pLVar7->field_0x8;
 					pLVar6->field_0x2c = pLVar7->field_0xc;
@@ -2964,7 +2964,7 @@ void CLevelScheduler::Level_Init()
 	ulong uVar5;
 	int iVar6;
 	int* piVar7;
-	LoadLoopObject_50* pLVar8;
+	ObjectiveEntry* pLVar8;
 	uint uVar9;
 	int* piVar10;
 	float afStack144[16];
@@ -3952,9 +3952,9 @@ NativShopLevelSubObj* CLevelScheduler::FUN_002d9510(int purchaseId)
 	return (NativShopLevelSubObj*)0x0;
 }
 
-LoadLoopObject_50* CLevelScheduler::FUN_002d9f30(int param_2)
+ObjectiveEntry* CLevelScheduler::FUN_002d9f30(int param_2)
 {
-	LoadLoopObject_50* pLVar1;
+	ObjectiveEntry* pLVar1;
 	int iVar2;
 
 	pLVar1 = this->field_0x4220;
@@ -3969,7 +3969,7 @@ LoadLoopObject_50* CLevelScheduler::FUN_002d9f30(int param_2)
 		} while (iVar2 < this->objCount_0x4218);
 	}
 
-	return (LoadLoopObject_50*)0x0;
+	return (ObjectiveEntry*)0x0;
 }
 
 bool CLevelScheduler::IsRuneCollectedInLevel(int levelId)
@@ -4052,7 +4052,7 @@ void CLevelScheduler::CloseLevelChunk()
 	return;
 }
 
-int CLevelScheduler::MapFunc_002d8dc0(LoadLoopObject_50* param_1)
+int CLevelScheduler::MapFunc_002d8dc0(ObjectiveEntry* param_1)
 {
 	bool bVar1;
 	CLevelScheduler* pLevelScheduler;

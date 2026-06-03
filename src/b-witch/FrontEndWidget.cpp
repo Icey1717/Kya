@@ -324,7 +324,7 @@ void CFrontendAction::Reset()
 void CFrontendAction::Init()
 {
 	this->textStyle.SetFont(BootDataFont, false);
-	(this->textStyle).rgbaColour = -1;
+	(this->textStyle).rgbaColour = 0xffffffff;
 	this->textStyle.SetShadow(0x100);
 	this->textStyle.SetShadowShift(0x40000000, 0x40000000);
 	this->textStyle.SetHorizontalAlignment(2);

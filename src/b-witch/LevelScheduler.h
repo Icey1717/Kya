@@ -81,7 +81,7 @@ struct SaveDataChunk_BSHD
 
 static_assert(sizeof(SaveDataChunk_BSHD) == 0x14);	
 
-struct LoadLoopObject_50
+struct ObjectiveEntry
 {
 	int field_0x0;
 	undefined4 field_0x4;
@@ -457,10 +457,10 @@ public:
 
 	void Level_WolfenChanged();
 
-	static int MapFunc_002d8dc0(LoadLoopObject_50* param_1);
+	static int MapFunc_002d8dc0(ObjectiveEntry* param_1);
 	SaveDataChunk_BLMP* LoadMapSaveChunk(int levelId);
 	NativShopLevelSubObj* FUN_002d9510(int purchaseId);
-	LoadLoopObject_50* FUN_002d9f30(int param_2);
+	ObjectiveEntry* FUN_002d9f30(int param_2);
 
 	bool IsRuneCollectedInLevel(int levelId);
 	uint IsMapCollectedInLevel(int levelId);
@@ -548,7 +548,7 @@ public:
 	undefined field_0x421d;
 	undefined field_0x421e;
 	undefined field_0x421f;
-	struct LoadLoopObject_50 field_0x4220[64];
+	struct ObjectiveEntry field_0x4220[64];
 	int nbNativShopSubObjs;
 	undefined field_0x5624;
 	undefined field_0x5625;

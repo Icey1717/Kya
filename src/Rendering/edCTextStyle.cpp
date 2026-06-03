@@ -175,8 +175,8 @@ void edCTextStyle::Reset()
 	this->verticalSize = 0.0f;
 	this->shadowShiftX = 2.0f;
 	this->shadowShiftY = 2.0f;
-	this->rgbaColour = -1;
-	this->altColour = -1;
+	this->rgbaColour = 0xffffffff;
+	this->altColour = 0xffffffff;
 	this->alpha = 0xff;
 	return;
 }

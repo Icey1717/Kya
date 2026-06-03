@@ -672,7 +672,7 @@ void CBehaviourNativShopSell::Draw()
 
 	textStyle.SetHorizontalSize(FLOAT_00435ca8* (float)gVideoConfig.screenWidth);
 	textStyle.SetVerticalSize(FLOAT_00435cac * (float)gVideoConfig.screenHeight);
-	textStyle.rgbaColour = -0xff01;
+	textStyle.rgbaColour = 0xffff00ff;
 	Display_Mts(-this->field_0xa4 + FLOAT_00435ca0, FLOAT_00435ca4, &textStyle, this->field_0xac);
 
 	peVar6 = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 5);
@@ -714,13 +714,13 @@ void CBehaviourNativShopSell::Draw()
 		textStyle.SetHorizontalSize(FLOAT_00435c88 * (float)gVideoConfig.screenWidth);
 		textStyle.SetVerticalSize(FLOAT_00435c8c * (float)gVideoConfig.screenHeight);
 		textStyle.SetHorizontalAlignment(2);
-		textStyle.rgbaColour = -0xff01;
+		textStyle.rgbaColour = 0xffff00ff;
 		pcVar7 = gMessageManager.get_message(pCVar4->field_0x8);
 		Display_Text(this->field_0xa4 + FLOAT_00435c80, FLOAT_00435c84, &textStyle, pcVar7);
 		textStyle.SetHorizontalAlignment(0);
 		textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.34f);
 		textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.09375f);
-		textStyle.rgbaColour = -0xff01;
+		textStyle.rgbaColour = 0xffff00ff;
 		pcVar7 = pLanguageManager->GetHelpString(0x45425e151218051b);
 		Display_Text(this->field_0xa4 + 0.05f, 0.89f, &textStyle, pcVar7);
 
@@ -1578,7 +1578,7 @@ void CBehaviourNativShopSell::Display_BubbleText(edCTextStyle* pStyle)
 		pStyle->SetVerticalSize(FLOAT_00435c8c * (float)gVideoConfig.screenHeight);
 		pStyle->SetHorizontalAlignment(2);
 		pStyle->SetVerticalAlignment(0);
-		pStyle->rgbaColour = -0xff01;
+		pStyle->rgbaColour = 0xffff00ff;
 		edCTextFormat auStack5408;
 		local_8.x = (float)gVideoConfig.screenWidth * (local_8.x * 0.5f + 0.5f + 0.05f);
 		local_8.y = (float)gVideoConfig.screenHeight * (-local_8.y * 0.5f + 0.5f + 0.0025f);

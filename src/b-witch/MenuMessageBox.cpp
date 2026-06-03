@@ -54,7 +54,7 @@ byte MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	fVar12 = ((float)gVideoConfig.screenWidth * 2.0f) / 2.5f;
 	textStyleD.Reset();
 	textStyleD.SetShadow(0x100);
-	textStyleD.rgbaColour = -1;
+	textStyleD.rgbaColour = 0xffffffff;
 	textStyleD.alpha = 0xff;
 	textStyleD.SetScale(1.0f, 1.0f);
 	textStyleD.SetFont(BootDataFont, false);

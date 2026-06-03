@@ -2694,7 +2694,7 @@ void CActorHeroPrivate::Draw()
 		if (bVar1 != false) {
 			eStack192.Reset();
 			pNewFont = edTextStyleSetCurrent(&eStack192);
-			eStack192.rgbaColour = -1;
+			eStack192.rgbaColour = 0xffffffff;
 			eStack192.SetShadow(0x100);
 			eStack192.SetShadowShift(2.0f, 2.0f);
 			IMPLEMENTATION_GUARD(
@@ -15068,10 +15068,10 @@ void CActorHeroPrivate::FUN_00347480()
 			fVar4 = static_cast<float>(gVideoConfig.screenWidth);
 			eStack192.SetFont(BootDataFont, false);
 			if (this->field_0xd30 == 1) {
-				eStack192.rgbaColour = -1;
+				eStack192.rgbaColour = 0xffffffff;
 			}
 			else {
-				eStack192.rgbaColour = -0x2d002e;
+				eStack192.rgbaColour = 0xffd2ffd2;
 			}
 
 			eStack192.SetShadow(0x100);

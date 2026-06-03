@@ -3061,9 +3061,9 @@ void MapEnter()
 
 			pMapManager->field_0x380 = 1;
 			if (pMapManager->field_0x37c != 0.0f) {
-				uVar3 = FUN_003f6910(&pMapManager->field_0x358);
-				uVar4 = FUN_003f6910(&pMapManager->field_0x358);
-				uVar5 = FUN_003f6910(&pMapManager->field_0x338);
+				uVar3 = pMapManager->field_0x358.GetObjectiveLineMask();
+				uVar4 = pMapManager->field_0x358.GetObjectiveLineMask();
+				uVar5 = pMapManager->field_0x338.GetObjectiveLineMask();
 				uVar4 = uVar4 ^ uVar5;
 				if (((uVar4 & 0x40) == 0) && (pMapManager->field_0x358.field_0x0 == pMapManager->field_0x338.field_0x0)) {
 					if ((pMapManager->field_0x358.hash != pMapManager->field_0x338.hash) || ((uVar4 & 1) != 0)) {

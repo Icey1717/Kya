@@ -95,7 +95,7 @@ void CFrontendEnemyCount::Init()
 	this->sprite.Install(&MenuBitmaps[1].materialInfo);
 
 	this->textStyle.SetFont(BootDataFont, false);
-	this->textStyle.rgbaColour = -1;
+	this->textStyle.rgbaColour = 0xffffffff;
 	this->textStyle.SetShadow(0x100);
 	this->textStyle.SetShadowShift(2.0f, 2.0f);
 	this->textStyle.SetHorizontalAlignment(2);

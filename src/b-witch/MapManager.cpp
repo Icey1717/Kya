@@ -16,6 +16,7 @@
 #include "TimeController.h"
 #include "BootData.h"
 #include "edStr.h"
+#include "edText.h"
 #include "DlistManager.h"
 #include "edBank/edBankFile.h"
 #include "ed3D/ed3DG3D.h"
@@ -27,12 +28,9 @@ void CMapManager::OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream)
 	uint uVar3;
 	float fVar4;
 
-	iVar2 = pMemoryStream->GetS32();
-	this->field_0x4 = iVar2;
-	uVar3 = pMemoryStream->GetU32();
-	this->field_0x8 = uVar3;
-	fVar4 = pMemoryStream->GetF32();
-	this->field_0xc = (fVar4 * 3.141593f) / 180.0f;
+	this->field_0x4 = pMemoryStream->GetS32();
+	this->field_0x8 = pMemoryStream->GetU32();
+	this->field_0xc = (pMemoryStream->GetF32() * 3.141593f) / 180.0f;
 	piVar1 = (int*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
@@ -40,10 +38,8 @@ void CMapManager::OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream)
 	}
 
 	this->field_0x10 = piVar1;
-	iVar2 = pMemoryStream->GetS32();
-	this->field_0x14 = iVar2;
-	iVar2 = pMemoryStream->GetS32();
-	this->field_0x18.index = iVar2;
+	this->field_0x14 = pMemoryStream->GetS32();
+	this->field_0x18.index = pMemoryStream->GetS32();
 	if (this->field_0x18.index == -1) {
 		this->field_0x394 = 1;
 	}
@@ -272,9 +268,9 @@ void CMapManager::Func_003f8d80()
 	int iVar6;
 	NativShopLevelSubObjSubObj* pNVar7;
 	ulong uVar8;
-	LoadLoopObject_50* pLVar9;
-	LoadLoopObject_50* pLVar10;
-	LoadLoopObject_50* pLVar11;
+	ObjectiveEntry* pLVar9;
+	ObjectiveEntry* pLVar10;
+	ObjectiveEntry* pLVar11;
 	CLevelScheduler* pLevelScheduler;
 
 	pLevelScheduler = CLevelScheduler::gThis;
@@ -282,7 +278,7 @@ void CMapManager::Func_003f8d80()
 	iVar6 = this->field_0x338.field_0x0;
 	pLVar11 = CLevelScheduler::gThis->field_0x4220;
 	pLVar10 = pLVar11 + CLevelScheduler::gThis->objCount_0x4218;
-	pLVar9 = (LoadLoopObject_50*)0x0;
+	pLVar9 = (ObjectiveEntry*)0x0;
 	for (; pLVar11 < pLVar10; pLVar11 = pLVar11 + 1) {
 		if (((pLVar11->field_0x4 == 0) && (pLVar11->messageKey != 0)) && (iVar1 = CLevelScheduler::ScenVar_Get(pLVar11->field_0x0), iVar1 == 1)) {
 			iVar2 = CLevelScheduler::MapFunc_002d8dc0(pLVar11);
@@ -290,7 +286,7 @@ void CMapManager::Func_003f8d80()
 		}
 	}
 
-	if (pLVar9 == (LoadLoopObject_50*)0x0) {
+	if (pLVar9 == (ObjectiveEntry*)0x0) {
 		iVar1 = 0x62;
 	}
 	else {
@@ -330,7 +326,7 @@ void CMapManager::Func_003f8d80()
 	this->field_0x338.field_0x10 = 0x10;
 	this->field_0x338.field_0x14 = 0;
 	this->field_0x338.hash_2 = 0;
-	if (pLVar9 != (LoadLoopObject_50*)0x0) {
+	if (pLVar9 != (ObjectiveEntry*)0x0) {
 		iVar2 = 0;
 		if (this->field_0x338.field_0x4 == 2) {
 			iVar1 = 0;
@@ -369,7 +365,7 @@ void CMapManager::Func_003f8d80()
 	return;
 }
 
-void CMapManager::FUN_003f8a00()
+void CMapManager::DrawMapPromptHint()
 {
 	bool bVar1;
 	uint uVar3;
@@ -457,7 +453,7 @@ void CMapManager::FUN_003f8a00()
 	return;
 }
 
-float CMapManager::FUN_003f6ce0(float param_1, int param_3)
+float CMapManager::ComputeMapSlideFactor(float param_1, int param_3)
 {
 	float fVar1;
 
@@ -490,7 +486,7 @@ edF32VECTOR4 edF32VECTOR4_00427a90 = { 0.0f, 0.0f, 1.0f, 1.0f };
 edF32VECTOR4 edF32VECTOR4_00427aa0 = { 0.0f, 0.0f, 0.2f, 1.0f };
 edF32VECTOR4 edF32VECTOR4_00427ab0 = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-void CMapManager::FUN_003f6e10(float param_1)
+void CMapManager::DrawObjectivePanel(float param_1)
 {
 	float t;
 	float t_00;
@@ -573,8 +569,8 @@ void CMapManager::FUN_003f6e10(float param_1)
 				else {
 					fVar5 = ((fVar5 - 2.0f) * 0.5f) / 3.5f + 0.5f;
 				}
-				uVar2 = FUN_003f6910(&this->field_0x358);
-				uVar3 = FUN_003f6910(&this->field_0x338);
+				uVar2 = this->field_0x358.GetObjectiveLineMask();
+				uVar3 = this->field_0x338.GetObjectiveLineMask();
 				uVar2 = uVar2 ^ uVar3;
 				if (((uVar2 & 0x40) == 0) && ((this->field_0x358).field_0x0 == (this->field_0x338).field_0x0)) {
 					if (((this->field_0x358).hash != (this->field_0x338).hash) || ((uVar2 & 1) != 0)) {
@@ -587,16 +583,16 @@ void CMapManager::FUN_003f6e10(float param_1)
 			}
 
 			if (fVar5 < 0.5f) {
-				this->field_0x358.FUN_003f5da0(this->field_0x378 * (param_1 - 1.0f), (0.5f - fVar5) * 2.0f, uVar2, 0);
+				this->field_0x358.DrawObjectiveDetails(this->field_0x378 * (param_1 - 1.0f), (0.5f - fVar5) * 2.0f, uVar2, 0);
 			}
 			else {
-				this->field_0x338.FUN_003f5da0(this->field_0x378 * (param_1 - 1.0f), (fVar5 - 0.5f) * 2.0f, uVar2, 1);
+				this->field_0x338.DrawObjectiveDetails(this->field_0x378 * (param_1 - 1.0f), (fVar5 - 0.5f) * 2.0f, uVar2, 1);
 			}
 		}
 		eStack272.Reset();
 		eStack272.SetShadow(0x100);
 		eStack272.alpha = 0xff;
-		eStack272.rgbaColour = -0x49440301;
+		eStack272.rgbaColour = 0xb6bbfcff;
 		eStack272.SetVerticalAlignment(8);
 		eStack272.SetHorizontalAlignment(0);
 		eStack272.SetFont(BootDataFont, false);
@@ -649,7 +645,7 @@ void CMapManager::FUN_003f6e10(float param_1)
 	return;
 }
 
-bool CMapManager::FUN_003f7a40(int levelId, MapDataSizes* pMarkerCounts, MapPosition* pMarkerBuffer, int param_5)
+bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarkerCounts, MapPosition* pMarkerBuffer, int param_5)
 {
 	int iVar1;
 	byte bVar2;
@@ -942,7 +938,7 @@ void CMapManager::GetMarkerPositions(MapDataSizes* pMarkerCounts, MapPosition* p
 	return;
 }
 
-bool CMapManager::FUN_003f6ae0(int levelId, int markerType, int param_4)
+bool CMapManager::HasRouteToLevel(int levelId, int markerType, int param_4)
 {
 	int iVar1;
 	int iVar2;
@@ -1024,15 +1020,15 @@ bool CMapManager::FUN_003f6ae0(int levelId, int markerType, int param_4)
 	return false;
 }
 
-int CMapManager::FUN_003f87b0(SubAstruct* param_2, SubAstruct* param_3, int nbCount, uint index)
+int CMapManager::ClipPoly(S_2DVERTEX* param_2, S_2DVERTEX* param_3, int nbCount, uint index)
 {
 	bool bVar1;
 	int* piVar2;
-	SubAstruct* pSVar3;
-	SubAstruct* pSVar4;
+	S_2DVERTEX* pSVar3;
+	S_2DVERTEX* pSVar4;
 	int* piVar5;
-	SubAstruct* pSVar6;
-	SubAstruct* pSVar7;
+	S_2DVERTEX* pSVar6;
+	S_2DVERTEX* pSVar7;
 	uint uVar8;
 	int* piVar9;
 	float* pfVar10;
@@ -1142,60 +1138,64 @@ int CMapManager::FUN_003f87b0(SubAstruct* param_2, SubAstruct* param_3, int nbCo
 
 	int diff = ((char*)pSVar4 - (char*)param_2);
 	if (diff < 0) {
-		pSVar4 = (SubAstruct*)((int)&pSVar4->t1 + 3);
+		pSVar4 = (S_2DVERTEX*)((int)&pSVar4->t1 + 3);
 	}
 
-	return diff / sizeof(SubAstruct);
+	return diff / sizeof(S_2DVERTEX);
 }
 
-void CMapManager::DrawSprite(edDList_material* pMaterial, astruct_21* param_3, uint color)
+void CMapManager::DrawSprite(edDList_material* pMaterial, S_2DRECT* pRect, uint color)
 {
-	byte local_4;
-	byte bStack3;
-	byte bStack2;
-	byte bStack1;
+	byte r;
+	byte g;
+	byte b;
+	byte a;
 
 	edDListUseMaterial(pMaterial);
 	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
-	bStack3 = (byte)(color >> 8);
-	bStack2 = (byte)(color >> 0x10);
-	bStack1 = (byte)(color >> 0x18);
-	local_4 = (byte)color;
-	edDListColor4u8(local_4, bStack3, bStack2, bStack1);
+
+	g = (byte)(color >> 8);
+	b = (byte)(color >> 0x10);
+	a = (byte)(color >> 0x18);
+	r = (byte)color;
+	edDListColor4u8(r, g, b, a);
+
 	edDListLoadIdentity();
-	edDListTexCoo2f(param_3->field_0x0[0].s1, param_3->field_0x0[0].t1);
-	edDListVertex4f(param_3->field_0x0[0].x1, param_3->field_0x0[0].y1, 0.0f, 0.0f);
-	edDListTexCoo2f(param_3->field_0x0[1].s1, param_3->field_0x0[1].t1);
-	edDListVertex4f(param_3->field_0x0[1].x1, param_3->field_0x0[1].y1, 0.0f, 0.0f);
-	edDListTexCoo2f(param_3->field_0x0[3].s1, param_3->field_0x0[3].t1);
-	edDListVertex4f(param_3->field_0x0[3].x1, param_3->field_0x0[3].y1, 0.0f, 0.0f);
-	edDListTexCoo2f(param_3->field_0x0[2].s1, param_3->field_0x0[2].t1);
-	edDListVertex4f(param_3->field_0x0[2].x1, param_3->field_0x0[2].y1, 0.0f, 0.0f);
+	edDListTexCoo2f(pRect->aVertices[0].s1, pRect->aVertices[0].t1);
+	edDListVertex4f(pRect->aVertices[0].x1, pRect->aVertices[0].y1, 0.0f, 0.0f);
+	edDListTexCoo2f(pRect->aVertices[1].s1, pRect->aVertices[1].t1);
+	edDListVertex4f(pRect->aVertices[1].x1, pRect->aVertices[1].y1, 0.0f, 0.0f);
+	edDListTexCoo2f(pRect->aVertices[3].s1, pRect->aVertices[3].t1);
+	edDListVertex4f(pRect->aVertices[3].x1, pRect->aVertices[3].y1, 0.0f, 0.0f);
+	edDListTexCoo2f(pRect->aVertices[2].s1, pRect->aVertices[2].t1);
+	edDListVertex4f(pRect->aVertices[2].x1, pRect->aVertices[2].y1, 0.0f, 0.0f);
 	edDListEnd();
 
 	return;
 }
 
-void CMapManager::FUN_003f85c0(edDList_material* pMaterial, astruct_21* param_3, uint color)
+void CMapManager::DrawClippedSprite(edDList_material* pMaterial, S_2DRECT* pRect, uint color)
 {
-	int iVar1;
-	SubAstruct* pSVar2;
-	SubAstruct local_190[12];
-	SubAstruct aSStack208[12];
-	_rgba local_4;
+	int nbVertices;
+	S_2DVERTEX* pVertexIt;
+	S_2DVERTEX outVerticesB[12];
+	S_2DVERTEX outVerticesA[12];
+	_rgba rgbColor;
 
-	local_4 = color;
-	iVar1 = FUN_003f87b0(aSStack208, param_3->field_0x0, 4, 0);
-	iVar1 = FUN_003f87b0(local_190, aSStack208, iVar1, 1);
-	if (iVar1 != 0) {
+	rgbColor = color;
+
+	nbVertices = ClipPoly(outVerticesA, pRect->aVertices, 4, 0);
+	nbVertices = ClipPoly(outVerticesB, outVerticesA, nbVertices, 1);
+
+	if (nbVertices != 0) {
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 5, iVar1);
-		edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
+		edDListBegin(0.0f, 0.0f, 0.0f, 5, nbVertices);
+		edDListColor4u8(rgbColor.r, rgbColor.g, rgbColor.b, rgbColor.a);
 		edDListLoadIdentity();
 
-		for (pSVar2 = local_190; pSVar2 < local_190 + iVar1; pSVar2 = pSVar2 + 1) {
-			edDListTexCoo2f(pSVar2->s1, pSVar2->t1);
-			edDListVertex4f(pSVar2->x1, pSVar2->y1, 0.0f, 0.0f);
+		for (pVertexIt = outVerticesB; pVertexIt < outVerticesB + nbVertices; pVertexIt = pVertexIt + 1) {
+			edDListTexCoo2f(pVertexIt->s1, pVertexIt->t1);
+			edDListVertex4f(pVertexIt->x1, pVertexIt->y1, 0.0f, 0.0f);
 		}
 
 		edDListEnd();
@@ -1226,6 +1226,84 @@ edDList_material* CMapManager::GetDlistMaterial(int index)
 	}
 
 	return peVar1;
+}
+
+edF32VECTOR4 edF32VECTOR4_004279f0 = { 0.0f, 0.0f, 0.2f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00427a00 = { 0.0f, 0.0f, 0.8f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00427a10 = { 0.0f, 0.0f, 0.8f, 1.0f };
+edF32VECTOR4 edF32VECTOR4_00427a20 = { 0.0f, 0.0f, 0.2f, 1.0f };
+
+void CMapManager::DrawButtons(char* pText)
+{
+	edCTextStyle* pNewFont;
+	char* pcVar1;
+	edCTextStyle textStyle;
+	float local_50;
+	float local_4c;
+	float local_48;
+	float local_44;
+	float local_40;
+	float local_3c;
+	float local_38;
+	float local_34;
+	float local_30;
+	float local_2c;
+	float local_28;
+	float local_24;
+	float local_20;
+	float local_1c;
+	float local_18;
+	float local_14;
+	_rgba local_4;
+
+	local_50 = edF32VECTOR4_004279f0.x;
+	local_48 = edF32VECTOR4_004279f0.z;
+	local_44 = edF32VECTOR4_004279f0.w;
+	local_38 = edF32VECTOR4_00427a00.z;
+	local_34 = edF32VECTOR4_00427a00.w;
+	local_28 = edF32VECTOR4_00427a10.z;
+	local_24 = edF32VECTOR4_00427a10.w;
+	local_20 = edF32VECTOR4_00427a20.x;
+	local_18 = edF32VECTOR4_00427a20.z;
+	local_14 = edF32VECTOR4_00427a20.w;
+	local_4 = 0x80808080;
+	local_4c = (static_cast<float>(gVideoConfig.screenHeight) * 463.0f) / 512.0f;
+	local_2c = (static_cast<float>(gVideoConfig.screenHeight) * 502.0f) / 512.0f;
+	local_40 = static_cast<float>(gVideoConfig.screenWidth);
+	local_3c = local_4c;
+	local_30 = local_40;
+	local_1c = local_2c;
+	edDListUseMaterial(&MenuBitmaps[8].materialInfo);
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
+	edDListLoadIdentity();
+	edDListTexCoo2f(local_48, local_44);
+	edDListVertex4f(local_50, local_4c, 0.0f, 0.0f);
+	edDListTexCoo2f(local_38, local_34);
+	edDListVertex4f(local_40, local_3c, 0.0f, 0.0f);
+	edDListTexCoo2f(local_18, local_14);
+	edDListVertex4f(local_20, local_1c, 0.0f, 0.0f);
+	edDListTexCoo2f(local_28, local_24);
+	edDListVertex4f(local_30, local_2c, 0.0f, 0.0f);
+	edDListEnd();
+	textStyle.Reset();
+	textStyle.SetShadow(0x100);
+	textStyle.alpha = 0xff;
+	textStyle.rgbaColour = 0xb6bbfcff;
+	textStyle.SetVerticalAlignment(8);
+	textStyle.SetFont(BootDataFont, false);
+	textStyle.SetScale(0.80000001f, 0.80000001f);
+	pNewFont = edTextStyleSetCurrent(&textStyle);
+	textStyle.SetHorizontalAlignment(0);
+	edTextDraw(25.0f, ((static_cast<float>(gVideoConfig.screenHeight) * 463.0f) / 512.0f + (static_cast<float>(gVideoConfig.screenHeight) * 502.0f) / 512.0f) / 2.0f, pText);
+	textStyle.SetHorizontalAlignment(1);
+	edCTextFormat textFormat;
+	pcVar1 = gMessageManager.get_message(0x1203111c03454c50);
+	textFormat.FormatString("%[BLINK]k%[MAP]b%[RESET]K %s", pcVar1);
+	textFormat.Display(static_cast<float>(gVideoConfig.screenWidth) - 25.0f, ((static_cast<float>(gVideoConfig.screenHeight) * 463.0f) / 512.0f + (static_cast<float>(gVideoConfig.screenHeight) * 502.0f) / 512.0f) / 2.0f);
+	edTextStyleSetCurrent(pNewFont);
+
+	return;
 }
 
 void CMapManager::Game_Init()
@@ -1348,7 +1426,7 @@ void CMapManager::Level_ClearAll()
 	return;
 }
 
-float astruct_20::FUN_003f69b0()
+float CObjectivesPanel::GetPanelHeight()
 {
 	bool bVar1;
 	float fVar2;
@@ -1387,7 +1465,7 @@ float astruct_20::FUN_003f69b0()
 	return fVar2;
 }
 
-void astruct_20::FUN_003f67c0(float param_2, float param_3, float param_4, edCTextFormat* pTextFormat, uint color)
+void CObjectivesPanel::DrawTextRevealUnderline(float param_2, float param_3, float param_4, edCTextFormat* pTextFormat, uint color)
 {
 	float x;
 	float x_00;
@@ -1418,7 +1496,7 @@ void astruct_20::FUN_003f67c0(float param_2, float param_3, float param_4, edCTe
 	return;
 }
 
-void astruct_20::FUN_003f6480(float param_1, float param_2, char* pText, int param_5, uint color, uint param_7, int param_8)
+void CObjectivesPanel::DrawObjectiveTextLine(float param_1, float param_2, char* pText, int param_5, uint color, uint param_7, int param_8)
 {
 	edCTextStyle* pTextStyle;
 	uint uVar2;
@@ -1489,17 +1567,17 @@ void astruct_20::FUN_003f6480(float param_1, float param_2, char* pText, int par
 			fVar6 = cosf((1.0f - param_2) * 1.570796f * 2.0f - 1.570796f);
 		}
 
-		FUN_003f67c0(fVar5, param_1, fVar6, &textFormat, local_4.rgba);
+		DrawTextRevealUnderline(fVar5, param_1, fVar6, &textFormat, local_4.rgba);
 	}
 
 	return;
 }
 
-void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int param_5)
+void CObjectivesPanel::DrawObjectiveDetails(float param_1, float param_2, uint param_4, int param_5)
 {
 	int iVar1;
 	int iVar2;
-	LoadLoopObject_50* pLoadLoopObjj;
+	ObjectiveEntry* pLoadLoopObjj;
 	edCTextStyle* pNewFont;
 	char* pcVar3;
 	char* pcVar4;
@@ -1510,12 +1588,12 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 	CLevelScheduler* pLevelScheduler;
 
 	pLevelScheduler = CLevelScheduler::gThis;
-	pLoadLoopObjj = (LoadLoopObject_50*)0x0;
+	pLoadLoopObjj = (ObjectiveEntry*)0x0;
 	if (this->field_0x0 != 0x62) {
 		pLoadLoopObjj = CLevelScheduler::gThis->FUN_002d9f30(this->field_0x0);
 	}
 
-	if (pLoadLoopObjj != (LoadLoopObject_50*)0x0) {
+	if (pLoadLoopObjj != (ObjectiveEntry*)0x0) {
 		textStyle.Reset();
 		textStyle.SetShadow(0x100);
 		textStyle.SetVerticalAlignment(8);
@@ -1526,7 +1604,7 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 		fVar6 = (static_cast<float>(gVideoConfig.screenHeight) * 20.0f) / 512.0f;
 		fVar6 = param_1 + fVar6 / 4.0f + (static_cast<float>(gVideoConfig.screenHeight) * 30.0f) / 512.0f + fVar6;
 		pcVar3 = gMessageManager.get_message(pLoadLoopObjj->messageKey);
-		FUN_003f6480(fVar6, param_2, pcVar3, 1, 0x7f7f7f7f, param_4 & 0x40, param_5);
+		DrawObjectiveTextLine(fVar6, param_2, pcVar3, 1, 0x7f7f7f7f, param_4 & 0x40, param_5);
 		fVar6 = fVar6 + (static_cast<float>(gVideoConfig.screenHeight) * 20.0f) / 512.0f;
 		switch (this->field_0x4) {
 		case 0:
@@ -1534,15 +1612,15 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 			pcVar3 = gMessageManager.get_message(0x44544b46584e454e);
 			pcVar4 = gMessageManager.get_message(pLevelScheduler->aLevelInfo[iVar2].titleMsgHash);
 			sprintf(acStack1216, pcVar3, pcVar4);
-			FUN_003f6480(fVar6, param_2, acStack1216, 0, 0x7f7f7f7f, param_4 & 1, param_5);
+			DrawObjectiveTextLine(fVar6, param_2, acStack1216, 0, 0x7f7f7f7f, param_4 & 1, param_5);
 			break;
 		case 1:
 			pcVar3 = gMessageManager.get_message(0x424f140a1d18100d);
-			FUN_003f6480(fVar6, param_2, pcVar3, 0, 0x7f613021, param_4 & 2, param_5);
+			DrawObjectiveTextLine(fVar6, param_2, pcVar3, 0, 0x7f613021, param_4 & 2, param_5);
 			fVar5 = static_cast<float>(gVideoConfig.screenHeight);
 			if (this->hash != 0) {
 				pcVar3 = gMessageManager.get_message(this->hash);
-				FUN_003f6480(fVar6 + (fVar5 * 20.0f) / 512.0f, param_2, pcVar3, 0, 0x7f7f7f7f, param_4 & 0x20, param_5);
+				DrawObjectiveTextLine(fVar6 + (fVar5 * 20.0f) / 512.0f, param_2, pcVar3, 0, 0x7f7f7f7f, param_4 & 0x20, param_5);
 			}
 			break;
 		case 2:
@@ -1558,7 +1636,7 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 					sprintf(acStack1216, pcVar3, iVar2);
 				}
 
-				FUN_003f6480(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 4, param_5);
+				DrawObjectiveTextLine(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 4, param_5);
 			}
 			else {
 				iVar1 = this->field_0x14;
@@ -1573,7 +1651,7 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 					sprintf(acStack1216, pcVar3, pcVar4, iVar1);
 				}
 
-				FUN_003f6480(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 4, param_5);
+				DrawObjectiveTextLine(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 4, param_5);
 			}
 			fVar6 = fVar6 + (static_cast<float>(gVideoConfig.screenHeight) * 20.0f) / 512.0f;
 		case 3:
@@ -1587,7 +1665,7 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 					pcVar3 = gMessageManager.get_message(0x42435a4b49454155);
 					sprintf(acStack1216, pcVar3, iVar2);
 				}
-				FUN_003f6480(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 8, param_5);
+				DrawObjectiveTextLine(fVar6, param_2, acStack1216, 0, 0x7f112e7c, param_4 & 8, param_5);
 				fVar6 = fVar6 + (static_cast<float>(gVideoConfig.screenHeight) * 20.0f) / 512.0f;
 			}
 		case 4:
@@ -1598,12 +1676,12 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 
 			pcVar4 = gMessageManager.get_message(0x585d504e5246101a);
 			sprintf(acStack1216, pcVar4, pcVar3);
-			FUN_003f6480(fVar6, param_2, acStack1216, 0, 0x7f2f777f, param_4 & 0x10, param_5);
+			DrawObjectiveTextLine(fVar6, param_2, acStack1216, 0, 0x7f2f777f, param_4 & 0x10, param_5);
 			fVar6 = fVar6 + (static_cast<float>(gVideoConfig.screenHeight) * 20.0f) / 512.0f;
 		default:
 			if (this->hash != 0) {
 				pcVar3 = gMessageManager.get_message(this->hash);
-				FUN_003f6480(fVar6, param_2, pcVar3, 0, 0x7f7f7f7f, param_4 & 0x20, param_5);
+				DrawObjectiveTextLine(fVar6, param_2, pcVar3, 0, 0x7f7f7f7f, param_4 & 0x20, param_5);
 			}
 		}
 
@@ -1611,6 +1689,42 @@ void astruct_20::FUN_003f5da0(float param_1, float param_2, uint param_4, int pa
 	}
 
 	return;
+}
+
+uint CObjectivesPanel::GetObjectiveLineMask()
+{
+	bool bVar1;
+	uint uVar2;
+
+	uVar2 = 0;
+	if (this->field_0x0 != 0x62) {
+		uVar2 = 0x40;
+		bVar1 = false;
+
+		switch (this->field_0x4) {
+		case 0:
+			uVar2 = 0x41;
+			break;
+		case 1:
+			uVar2 = 0x42;
+			bVar1 = true;
+			break;
+		case 2:
+			uVar2 = 0x44;
+		case 3:
+			uVar2 = uVar2 | 8;
+		case 4:
+			uVar2 = uVar2 | 0x10;
+		default:
+			bVar1 = true;
+		}
+
+		if ((bVar1) && (this->hash != 0)) {
+			uVar2 = uVar2 | 0x20;
+		}
+	}
+
+	return uVar2;
 }
 
 void CMapManager::Level_Manage()
@@ -1661,9 +1775,9 @@ void CMapManager::Level_Manage()
 				fVar8 = ((fVar8 - 2.0f) * 0.5f) / 3.5f + 0.5f;
 			}
 
-			uVar4 = FUN_003f6910(&this->field_0x338);
-			uVar5 = FUN_003f6910(&this->field_0x358);
-			uVar6 = FUN_003f6910(&this->field_0x338);
+			uVar4 = this->field_0x338.GetObjectiveLineMask();
+			uVar5 = this->field_0x358.GetObjectiveLineMask();
+			uVar6 = this->field_0x338.GetObjectiveLineMask();
 			uVar5 = uVar5 ^ uVar6;
 			if (((uVar5 & 0x40) == 0) && (this->field_0x358.field_0x0 == this->field_0x338.field_0x0)) {
 				if ((this->field_0x358.hash != this->field_0x338.hash) || ((uVar5 & 1) != 0)) {
@@ -1684,10 +1798,10 @@ void CMapManager::Level_Manage()
 			}
 		}
 
-		fVar7 = this->field_0x338.FUN_003f69b0();
+		fVar7 = this->field_0x338.GetPanelHeight();
 		this->field_0x378 = fVar7;
 		if (fVar8 < 1.0f) {
-			fVar9 = this->field_0x358.FUN_003f69b0();
+			fVar9 = this->field_0x358.GetPanelHeight();
 			if (fVar8 < 0.4f) {
 				this->field_0x378 = fVar9;
 			}
@@ -1742,7 +1856,7 @@ void CMapManager::Level_ManagePaused()
 void CMapManager::Level_Draw()
 {
 	if ((GameFlags & 0x10) == 0) {
-		FUN_003f8a00();
+		DrawMapPromptHint();
 	}
 	else {
 		if (this->field_0x24 == 0) {
@@ -1837,34 +1951,227 @@ edF32VECTOR2 edF32VECTOR2_00426978 = { 1.0f, 0.0f };
 edF32VECTOR2 edF32VECTOR2_00426988 = { 1.0f, 1.0f };
 edF32VECTOR2 edF32VECTOR2_00426998 = { 0.0f, 1.0f };
 
+struct MapKeyEntry
+{
+	ulong key;
+	int materialId;
+};
+
+MapKeyEntry MapKeyEntry_ARRAY_00437480[8] =
+{
+	{ 0x4D41505F4B594100, 0x0 },
+	{ 0x1F141E1A4F424A5F, 0x6 },
+	{ 0x1D0E020B11174C45, 0x4 },
+	{ 0x080F505F574F4C46, 0x3 },
+	{ 0x091E111C140A011F, 0x5 },
+	{ 0x1D1319120E10135F, 0xd },
+	{ 0x0841505F41424F56, 0x2 },
+	{ 0x1A41505F42454C4F, 0x1 }
+};
+
+edF32VECTOR4 edF32VECTOR4_00426a30 = { 0.0f, 0.0f, 0.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426a40 = { 0.0f, 0.0f, 0.0f, 0.8f };
+edF32VECTOR4 edF32VECTOR4_00426a50 = { 0.0f, 0.0f, 1.0f, 0.8f };
+edF32VECTOR4 edF32VECTOR4_00426a60 = { 0.0f, 0.0f, 1.0f, 0.0f };
+
+edF32VECTOR4 edF32VECTOR4_00426a70 = { 0.0f, 0.0f, 0.0f, 0.2f };
+edF32VECTOR4 edF32VECTOR4_00426a80 = { 0.0f, 0.0f, 1.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426a90 = { 0.0f, 0.0f, 1.0f, 1.0f };
+edF32VECTOR4 edF32VECTOR4_00426aa0 = { 0.0f, 0.0f, 0.2f, 1.0f };
+
+
+void CLevelMap::DrawLegend(float param_1, float param_2)
+{
+	CMapManager* pMapManager;
+	edCTextStyle* pNewFont;
+	char* pcVar1;
+	edDList_material* pDlistMaterial;
+	MapKeyEntry* plVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float y;
+	float fVar6;
+	float x;
+	float fVar7;
+	float s;
+	float x_00;
+	S_2DRECT local_1690;
+	float local_1650;
+	float local_164c;
+	float local_1648;
+	float local_1644;
+	float local_1640;
+	float local_163c;
+	float local_1638;
+	float local_1634;
+	float local_1630;
+	float local_162c;
+	float local_1628;
+	float local_1624;
+	float local_1620;
+	float local_161c;
+	float local_1618;
+	float local_1614;
+	S_2DRECT local_100;
+	edCTextStyle textStyle;
+
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
+	fVar6 = (CScene::ptable.g_MapManager_0045168c)->field_0x378;
+	fVar7 = fVar6 * (param_2 - 1.0f);
+	fVar3 = static_cast<float>(gVideoConfig.screenWidth) - param_1 * 168.0f;
+	textStyle.Reset();
+	textStyle.SetShadow(0x100);
+	textStyle.alpha = 0xff;
+	textStyle.SetVerticalAlignment(8);
+	textStyle.SetFont(BootDataFont, false);
+	pNewFont = edTextStyleSetCurrent(&textStyle);
+	if (0.0f < param_1) {
+		local_100.aVertices[0].x1 = fVar3 - 16.0f;
+		local_100.aVertices[0].s1 = edF32VECTOR4_00426a30.z;
+		local_100.aVertices[0].t1 = edF32VECTOR4_00426a30.w;
+		local_100.aVertices[1].s1 = edF32VECTOR4_00426a40.z;
+		local_100.aVertices[1].t1 = edF32VECTOR4_00426a40.w;
+		fVar4 = fVar6 + fVar7;
+		local_100.aVertices[2].s1 = edF32VECTOR4_00426a50.z;
+		local_100.aVertices[2].t1 = edF32VECTOR4_00426a50.w;
+		local_100.aVertices[3].s1 = edF32VECTOR4_00426a60.z;
+		local_100.aVertices[3].t1 = edF32VECTOR4_00426a60.w;
+		local_100.aVertices[1].x1 = static_cast<float>(gVideoConfig.screenWidth);
+		local_100.aVertices[2].y1 = (static_cast<float>(gVideoConfig.screenHeight) * 472.0f) / 512.0f;
+		local_100.aVertices[0].y1 = fVar4;
+		local_100.aVertices[1].y1 = fVar4;
+		local_100.aVertices[2].x1 = local_100.aVertices[1].x1;
+		local_100.aVertices[3].x1 = local_100.aVertices[0].x1;
+		local_100.aVertices[3].y1 = local_100.aVertices[2].y1;
+		pMapManager->DrawClippedSprite(&MenuBitmaps[8].materialInfo, &local_100, 0x80808080);
+		textStyle.SetHorizontalAlignment(0);
+		textStyle.SetScale(0.69999999f, 0.69999999f);
+		textStyle.field_0x8c = -9.0f;
+		textStyle.rgbaColour = 0xffffffff;
+		plVar2 = MapKeyEntry_ARRAY_00437480;
+		fVar4 = (static_cast<float>(gVideoConfig.screenHeight) * 58.0f) / 512.0f + fVar4;
+		fVar3 = fVar3 + 16.0f;
+		fVar5 = fVar3 + 28.0f;
+		do {
+			pMapManager = CScene::ptable.g_MapManager_0045168c;
+			local_1690.aVertices[1].x1 = (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f * 28.0f;
+			local_1690.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+			local_1690.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+			local_1690.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+			local_1690.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+			local_1690.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+			local_1690.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+			local_1690.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+			local_1690.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+			local_1690.aVertices[0].x1 = fVar3 - local_1690.aVertices[1].x1;
+			local_1690.aVertices[1].x1 = fVar3 + local_1690.aVertices[1].x1;
+			local_1690.aVertices[0].y1 = fVar4 - 14.0f;
+			local_1690.aVertices[2].y1 = fVar4 + 14.0f;
+			local_1690.aVertices[1].y1 = local_1690.aVertices[0].y1;
+			local_1690.aVertices[2].x1 = local_1690.aVertices[1].x1;
+			local_1690.aVertices[3].x1 = local_1690.aVertices[0].x1;
+			local_1690.aVertices[3].y1 = local_1690.aVertices[2].y1;
+			if ((((local_1690.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_1690.aVertices[1].x1)) ||
+				(local_1690.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_1690.aVertices[2].y1)) {
+				pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(plVar2->materialId);
+				pMapManager->DrawClippedSprite(pDlistMaterial, &local_1690, 0x80808080);
+			}
+			else {
+				pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(plVar2->materialId);
+				pMapManager->DrawSprite(pDlistMaterial, &local_1690, 0x80808080);
+			}
+
+			pcVar1 = gMessageManager.get_message(plVar2->key);
+			edTextDraw(fVar5, fVar4 - 2.0f, pcVar1);
+			plVar2 = plVar2 + 1;
+			fVar4 = fVar4 + (static_cast<float>(gVideoConfig.screenHeight) * 32.0f) / 512.0f;
+		} while (plVar2 < MapKeyEntry_ARRAY_00437480 + 8);
+	}
+
+	y = (static_cast<float>(gVideoConfig.screenHeight) * 30.0f) / 512.0f + ((fVar6 + fVar7) - (1.0f - param_1) * fVar6 * param_2);
+	textStyle.SetHorizontalAlignment(1);
+	textStyle.SetScale(0.80000001f, 0.80000001f);
+	textStyle.rgbaColour = 0xb6bbfcff;
+	edCTextFormat textFormat;
+	pcVar1 = gMessageManager.get_message(0x305505f4c454745);
+	textFormat.FormatString("%[VALDSAFE]b   %s", pcVar1);
+	local_164c = y - 18.0f;
+	local_1648 = edF32VECTOR4_00426a70.z;
+	local_1644 = edF32VECTOR4_00426a70.w;
+	local_1638 = edF32VECTOR4_00426a80.z;
+	local_1634 = edF32VECTOR4_00426a80.w;
+	local_162c = y + 15.0f;
+	local_1628 = edF32VECTOR4_00426a90.z;
+	local_1624 = edF32VECTOR4_00426a90.w;
+	local_1618 = edF32VECTOR4_00426aa0.z;
+	local_1614 = edF32VECTOR4_00426aa0.w;
+	local_1650 = static_cast<float>(gVideoConfig.screenWidth);
+	local_1640 = ((local_1650 - 25.0f) - textFormat.field_0x8 * 0.8f) - 24.0f;
+	local_163c = local_164c;
+	local_1630 = local_1640;
+	local_1620 = local_1650;
+	local_161c = local_162c;
+	pDlistMaterial = pMapManager->GetDlistMaterial(0xb);
+	edDListUseMaterial(pDlistMaterial);
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 6);
+	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
+	edDListLoadIdentity();
+	edDListTexCoo2f(local_1648, local_1644);
+	edDListVertex4f(local_1650, local_164c, 0.0f, 0.0f);
+	edDListTexCoo2f(local_1618, local_1614);
+	edDListVertex4f(local_1620, local_161c, 0.0f, 0.0f);
+	fVar6 = local_1634;
+	fVar5 = local_1638;
+	edDListTexCoo2f(local_1638 - 0.2f, local_1634);
+	fVar3 = local_163c;
+	x_00 = local_1640;
+	edDListVertex4f(local_1640 + 24.0f, local_163c, 0.0f, 0.0f);
+	fVar4 = local_1624;
+	s = local_1628;
+	edDListTexCoo2f(local_1628 - 0.2f, local_1624);
+	fVar7 = local_162c;
+	x = local_1630;
+	edDListVertex4f(local_1630 + 24.0f, local_162c, 0.0f, 0.0f);
+	edDListTexCoo2f(fVar5, fVar6);
+	edDListVertex4f(x_00, fVar3, 0.0f, 0.0f);
+	edDListTexCoo2f(s, fVar4);
+	edDListVertex4f(x, fVar7, 0.0f, 0.0f);
+	edDListEnd();
+	textFormat.Display(static_cast<float>(gVideoConfig.screenWidth) - 25.0f, y);
+
+	edTextStyleSetCurrent(pNewFont);
+
+	return;
+}
+
 void CLevelMap::Draw()
 {
 	int iVar1;
-	CMapManager* pCVar2;
-	CMapManager* this_00;
+	CMapManager* pMapManager;
 	bool bVar3;
-	LoadLoopObject_50* pLVar4;
+	ObjectiveEntry* pLVar4;
 	edDList_material* peVar5;
 	char* pcVar7;
 	char* pcVar8;
 	uint uVar9;
 	float fVar11;
 	float fVar12;
-	astruct_21 local_300;
-	astruct_21 local_2c0;
-	astruct_21 local_280;
-	astruct_21 local_240;
+	S_2DRECT local_300;
+	S_2DRECT local_2c0;
+	S_2DRECT local_280;
+	S_2DRECT local_240;
 	char acStack512[512];
 
-	pCVar2 = CScene::ptable.g_MapManager_0045168c;
-	uVar9 = static_cast<uint>(this->field_0x7c != (char*)0x0);
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
+	uVar9 = static_cast<uint>(this->field_0x7c != (LevelMapFileData*)0x0);
 	if (uVar9 != 0) {
 		uVar9 = static_cast<uint>(this->pMaterials != (edDList_material*)0x0);
 	}
 
 	if ((uVar9 | (CScene::ptable.g_MapManager_0045168c)->field_0x300) != 0) {
 		iVar1 = ((CScene::ptable.g_MapManager_0045168c)->field_0x338).field_0x0;
-		pLVar4 = (LoadLoopObject_50*)0x0;
+		pLVar4 = (ObjectiveEntry*)0x0;
 		if (iVar1 != 0x62) {
 			pLVar4 = CLevelScheduler::gThis->FUN_002d9f30(iVar1);
 		}
@@ -1874,139 +2181,139 @@ void CLevelMap::Draw()
 		bVar3 = GuiDList_BeginCurrent();
 		if (bVar3 != false) {
 			if (uVar9 != 0) {
-				FUN_003bd3b0(pLVar4, (pCVar2->field_0x338).field_0x4);
+				DrawMapTilesAndMarkers(pLVar4, (pMapManager->field_0x338).field_0x4);
 			}
 
-			this_00 = CScene::ptable.g_MapManager_0045168c;
-			if (pCVar2->field_0x300 != 0) {
-				local_240.field_0x0[1].x1 = (this->field_0x80).x;
-				local_240.field_0x0[2].y1 = (this->field_0x80).y;
+			pMapManager = CScene::ptable.g_MapManager_0045168c;
+			if (pMapManager->field_0x300 != 0) {
+				local_240.aVertices[1].x1 = (this->field_0x80).x;
+				local_240.aVertices[2].y1 = (this->field_0x80).y;
 				fVar11 = (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f * 32.0f;
-				local_240.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-				local_240.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-				local_240.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-				local_240.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-				local_240.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-				local_240.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-				local_240.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-				local_240.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-				local_240.field_0x0[0].x1 = local_240.field_0x0[1].x1 - fVar11;
-				local_240.field_0x0[1].x1 = local_240.field_0x0[1].x1 + fVar11;
-				local_240.field_0x0[0].y1 = local_240.field_0x0[2].y1 - 16.0f;
-				local_240.field_0x0[2].y1 = local_240.field_0x0[2].y1 + 16.0f;
-				local_240.field_0x0[1].y1 = local_240.field_0x0[0].y1;
-				local_240.field_0x0[2].x1 = local_240.field_0x0[1].x1;
-				local_240.field_0x0[3].x1 = local_240.field_0x0[0].x1;
-				local_240.field_0x0[3].y1 = local_240.field_0x0[2].y1;
-				if ((((local_240.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_240.field_0x0[1].x1)) ||
-					(local_240.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_240.field_0x0[2].y1)) {
+				local_240.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+				local_240.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+				local_240.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+				local_240.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+				local_240.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+				local_240.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+				local_240.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+				local_240.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+				local_240.aVertices[0].x1 = local_240.aVertices[1].x1 - fVar11;
+				local_240.aVertices[1].x1 = local_240.aVertices[1].x1 + fVar11;
+				local_240.aVertices[0].y1 = local_240.aVertices[2].y1 - 16.0f;
+				local_240.aVertices[2].y1 = local_240.aVertices[2].y1 + 16.0f;
+				local_240.aVertices[1].y1 = local_240.aVertices[0].y1;
+				local_240.aVertices[2].x1 = local_240.aVertices[1].x1;
+				local_240.aVertices[3].x1 = local_240.aVertices[0].x1;
+				local_240.aVertices[3].y1 = local_240.aVertices[2].y1;
+				if ((((local_240.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_240.aVertices[1].x1)) ||
+					(local_240.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_240.aVertices[2].y1)) {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					CScene::ptable.g_MapManager_0045168c->FUN_003f85c0(peVar5, &local_240, 0x80808080);
+					CScene::ptable.g_MapManager_0045168c->DrawClippedSprite(peVar5, &local_240, 0x80808080);
 				}
 				else {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
 					CScene::ptable.g_MapManager_0045168c->DrawSprite(peVar5, &local_240, 0x80808080);
 				}
-				pCVar2 = CScene::ptable.g_MapManager_0045168c;
-				local_280.field_0x0[2].y1 = (this->field_0x80).y;
-				local_280.field_0x0[1].x1 = (this->field_0x90).x;
+				pMapManager = CScene::ptable.g_MapManager_0045168c;
+				local_280.aVertices[2].y1 = (this->field_0x80).y;
+				local_280.aVertices[1].x1 = (this->field_0x90).x;
 				fVar11 = (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f * -32.0f;
-				local_280.field_0x0[0].y1 = local_280.field_0x0[2].y1 - 16.0f;
-				local_280.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-				local_280.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-				local_280.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-				local_280.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-				local_280.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-				local_280.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-				local_280.field_0x0[0].x1 = local_280.field_0x0[1].x1 - fVar11;
-				local_280.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-				local_280.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-				local_280.field_0x0[2].y1 = local_280.field_0x0[2].y1 + 16.0f;
-				local_280.field_0x0[1].x1 = local_280.field_0x0[1].x1 + fVar11;
-				local_280.field_0x0[1].y1 = local_280.field_0x0[0].y1;
-				local_280.field_0x0[2].x1 = local_280.field_0x0[1].x1;
-				local_280.field_0x0[3].x1 = local_280.field_0x0[0].x1;
-				local_280.field_0x0[3].y1 = local_280.field_0x0[2].y1;
-				if (((local_280.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_280.field_0x0[1].x1)) ||
-					((local_280.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_280.field_0x0[2].y1)))) {
+				local_280.aVertices[0].y1 = local_280.aVertices[2].y1 - 16.0f;
+				local_280.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+				local_280.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+				local_280.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+				local_280.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+				local_280.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+				local_280.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+				local_280.aVertices[0].x1 = local_280.aVertices[1].x1 - fVar11;
+				local_280.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+				local_280.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+				local_280.aVertices[2].y1 = local_280.aVertices[2].y1 + 16.0f;
+				local_280.aVertices[1].x1 = local_280.aVertices[1].x1 + fVar11;
+				local_280.aVertices[1].y1 = local_280.aVertices[0].y1;
+				local_280.aVertices[2].x1 = local_280.aVertices[1].x1;
+				local_280.aVertices[3].x1 = local_280.aVertices[0].x1;
+				local_280.aVertices[3].y1 = local_280.aVertices[2].y1;
+				if (((local_280.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_280.aVertices[1].x1)) ||
+					((local_280.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_280.aVertices[2].y1)))) {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					pCVar2->FUN_003f85c0(peVar5, &local_280, 0x80808080);
+					pMapManager->DrawClippedSprite(peVar5, &local_280, 0x80808080);
 				}
 				else {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
 					CScene::ptable.g_MapManager_0045168c->DrawSprite(peVar5, &local_280, 0x80808080);
 				}
-				pCVar2 = CScene::ptable.g_MapManager_0045168c;
-				local_2c0.field_0x0[1].x1 = (this->field_0x90).x;
-				local_2c0.field_0x0[2].y1 = (this->field_0x90).y;
+				pMapManager = CScene::ptable.g_MapManager_0045168c;
+				local_2c0.aVertices[1].x1 = (this->field_0x90).x;
+				local_2c0.aVertices[2].y1 = (this->field_0x90).y;
 				fVar11 = (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f * -32.0f;
-				local_2c0.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-				local_2c0.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-				local_2c0.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-				local_2c0.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-				local_2c0.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-				local_2c0.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-				local_2c0.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-				local_2c0.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-				local_2c0.field_0x0[0].x1 = local_2c0.field_0x0[1].x1 - fVar11;
-				local_2c0.field_0x0[1].x1 = local_2c0.field_0x0[1].x1 + fVar11;
-				local_2c0.field_0x0[0].y1 = local_2c0.field_0x0[2].y1 - -16.0f;
-				local_2c0.field_0x0[2].y1 = local_2c0.field_0x0[2].y1 + -16.0f;
-				local_2c0.field_0x0[1].y1 = local_2c0.field_0x0[0].y1;
-				local_2c0.field_0x0[2].x1 = local_2c0.field_0x0[1].x1;
-				local_2c0.field_0x0[3].x1 = local_2c0.field_0x0[0].x1;
-				local_2c0.field_0x0[3].y1 = local_2c0.field_0x0[2].y1;
-				if (((local_2c0.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_2c0.field_0x0[1].x1)) ||
-					((local_2c0.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_2c0.field_0x0[2].y1)))) {
+				local_2c0.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+				local_2c0.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+				local_2c0.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+				local_2c0.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+				local_2c0.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+				local_2c0.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+				local_2c0.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+				local_2c0.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+				local_2c0.aVertices[0].x1 = local_2c0.aVertices[1].x1 - fVar11;
+				local_2c0.aVertices[1].x1 = local_2c0.aVertices[1].x1 + fVar11;
+				local_2c0.aVertices[0].y1 = local_2c0.aVertices[2].y1 - -16.0f;
+				local_2c0.aVertices[2].y1 = local_2c0.aVertices[2].y1 + -16.0f;
+				local_2c0.aVertices[1].y1 = local_2c0.aVertices[0].y1;
+				local_2c0.aVertices[2].x1 = local_2c0.aVertices[1].x1;
+				local_2c0.aVertices[3].x1 = local_2c0.aVertices[0].x1;
+				local_2c0.aVertices[3].y1 = local_2c0.aVertices[2].y1;
+				if (((local_2c0.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_2c0.aVertices[1].x1)) ||
+					((local_2c0.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_2c0.aVertices[2].y1)))) {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					pCVar2->FUN_003f85c0(peVar5, &local_2c0, 0x80808080);
+					pMapManager->DrawClippedSprite(peVar5, &local_2c0, 0x80808080);
 				}
 				else {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					pCVar2->DrawSprite(peVar5, &local_2c0, 0x80808080);
+					pMapManager->DrawSprite(peVar5, &local_2c0, 0x80808080);
 				}
-				pCVar2 = CScene::ptable.g_MapManager_0045168c;
-				local_300.field_0x0[2].y1 = (this->field_0x90).y;
-				local_300.field_0x0[1].x1 = (this->field_0x80).x;
+				pMapManager = CScene::ptable.g_MapManager_0045168c;
+				local_300.aVertices[2].y1 = (this->field_0x90).y;
+				local_300.aVertices[1].x1 = (this->field_0x80).x;
 				fVar11 = (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f * 32.0f;
-				local_300.field_0x0[0].y1 = local_300.field_0x0[2].y1 - -16.0f;
-				local_300.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-				local_300.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-				local_300.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-				local_300.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-				local_300.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-				local_300.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-				local_300.field_0x0[0].x1 = local_300.field_0x0[1].x1 - fVar11;
-				local_300.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-				local_300.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-				local_300.field_0x0[2].y1 = local_300.field_0x0[2].y1 + -16.0f;
-				local_300.field_0x0[1].x1 = local_300.field_0x0[1].x1 + fVar11;
-				local_300.field_0x0[1].y1 = local_300.field_0x0[0].y1;
-				local_300.field_0x0[2].x1 = local_300.field_0x0[1].x1;
-				local_300.field_0x0[3].x1 = local_300.field_0x0[0].x1;
-				local_300.field_0x0[3].y1 = local_300.field_0x0[2].y1;
-				if ((((local_300.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_300.field_0x0[1].x1)) ||
-					(local_300.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_300.field_0x0[2].y1)) {
+				local_300.aVertices[0].y1 = local_300.aVertices[2].y1 - -16.0f;
+				local_300.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+				local_300.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+				local_300.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+				local_300.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+				local_300.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+				local_300.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+				local_300.aVertices[0].x1 = local_300.aVertices[1].x1 - fVar11;
+				local_300.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+				local_300.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+				local_300.aVertices[2].y1 = local_300.aVertices[2].y1 + -16.0f;
+				local_300.aVertices[1].x1 = local_300.aVertices[1].x1 + fVar11;
+				local_300.aVertices[1].y1 = local_300.aVertices[0].y1;
+				local_300.aVertices[2].x1 = local_300.aVertices[1].x1;
+				local_300.aVertices[3].x1 = local_300.aVertices[0].x1;
+				local_300.aVertices[3].y1 = local_300.aVertices[2].y1;
+				if ((((local_300.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_300.aVertices[1].x1)) ||
+					(local_300.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_300.aVertices[2].y1)) {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					pCVar2->FUN_003f85c0(peVar5, &local_300, 0x80808080);
+					pMapManager->DrawClippedSprite(peVar5, &local_300, 0x80808080);
 				}
 				else {
 					peVar5 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(10);
-					pCVar2->DrawSprite(peVar5, &local_300, 0x80808080);
+					pMapManager->DrawSprite(peVar5, &local_300, 0x80808080);
 				}
 				fVar11 = GetTimer()->totalTime;
-				uVar9 = static_cast<uint>(this_00->field_0x380 != 0);
-				if ((uVar9 == 0) && (uVar9 = 1, this_00->field_0x37c == 0.0f)) {
+				uVar9 = static_cast<uint>(pMapManager->field_0x380 != 0);
+				if ((uVar9 == 0) && (uVar9 = 1, pMapManager->field_0x37c == 0.0f)) {
 					uVar9 = 0;
 				}
-				fVar12 = this_00->FUN_003f6ce0((fVar11 - this_00->field_0x384) / 0.5f, uVar9);
-				this_00->FUN_003f6e10(fVar12);
-				//fVar11 = this_00->FUN_003f6ce0((fVar11 - this->field_0xd8) / 0.5f, this->field_0xd4);
-				//FUN_003ba860(fVar11, fVar12);
-				//pcVar7 = gMessageManager.get_message(0x120c1f090d454c50);
-				//pcVar8 = gMessageManager.get_message(0x5f474c100a04000f);
-				//sprintf(acStack512, "%%[UDLR]b %s   %%[VALID]b %s", pcVar7, pcVar8);
-				//FUN_003f7470(lVar10, acStack512);
+				fVar12 = pMapManager->ComputeMapSlideFactor((fVar11 - pMapManager->field_0x384) / 0.5f, uVar9);
+				pMapManager->DrawObjectivePanel(fVar12);
+				fVar11 = pMapManager->ComputeMapSlideFactor((fVar11 - this->field_0xd8) / 0.5f, this->field_0xd4);
+				DrawLegend(fVar11, fVar12);
+				pcVar7 = gMessageManager.get_message(0x120c1f090d454c50);
+				pcVar8 = gMessageManager.get_message(0x5f474c100a04000f);
+				sprintf(acStack512, "%%[UDLR]b %s   %%[VALID]b %s", pcVar7, pcVar8);
+				pMapManager->DrawButtons(acStack512);
 			}
 
 			GuiDList_EndCurrent();
@@ -2015,10 +2322,10 @@ void CLevelMap::Draw()
 
 	if ((gPlayerInput.pressedBitfield & 0x1000000) != 0) {
 		(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
-		pCVar2 = CScene::ptable.g_MapManager_0045168c;
+		pMapManager = CScene::ptable.g_MapManager_0045168c;
 		IMPLEMENTATION_GUARD(
 		CScene::ptable.g_MapManager_0045168c->FUN_003f8560();
-		pCVar2->WorldMap_Enter(this->field_0x0);)
+		pMapManager->WorldMap_Enter(this->field_0x0);)
 	}
 
 	if ((gPlayerInput.pressedBitfield & 0x4000000) != 0) {
@@ -2148,7 +2455,7 @@ void CLevelMap::InstallMapBank()
 
 			uVar3 = local_20.type << 0x10 | local_20.stype;
 			if (uVar3 == 0) {
-				this->field_0x7c = local_20.fileBufferStart;
+				this->field_0x7c = reinterpret_cast<LevelMapFileData*>(local_20.fileBufferStart);
 			}
 			else {
 				if (uVar3 == 0x50001) {
@@ -2176,7 +2483,7 @@ void CLevelMap::InstallMapBank()
 		this->field_0xd8 = GetTimer()->totalTime;
 	}
 
-	FUN_003bafa0();
+	UpdateViewportBounds();
 	SetupMatrices();
 
 	bVar1 = (CScene::ptable.g_MapManager_0045168c)->field_0x38c != 0;
@@ -2201,19 +2508,19 @@ void CLevelMap::SetupMatrices()
 {
 	edF32VECTOR4* peVar1;
 	CLevelScheduler* pLevelScheduler;
-	CMapManager* this_01;
+	CMapManager* pMapManager;
 	CChunk* pCVar2;
-	LoadLoopObject_50* pLVar3;
+	ObjectiveEntry* pLVar3;
 	MapPosition* pMVar4;
 	MapSaveChunk* pCVar5;
 	int iVar6;
-	LoadLoopObject_50* pLVar7;
+	ObjectiveEntry* pLVar7;
 	MapPosition* pMVar8;
 	NativShopLevelSubObj* pNVar9;
 	edF32VECTOR4* peVar10;
 	edF32VECTOR4* peVar11;
 	int iVar12;
-	int iVar13;
+	int currentLevelID;
 	edF32MATRIX4* peVar14;
 	edF32MATRIX4* peVar15;
 	uint uVar16;
@@ -2249,11 +2556,11 @@ void CLevelMap::SetupMatrices()
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	this_01 = CScene::ptable.g_MapManager_0045168c;
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
 	pLevelScheduler = CLevelScheduler::gThis;
-	iVar13 = CLevelScheduler::gThis->currentLevelID;
+	currentLevelID = CLevelScheduler::gThis->currentLevelID;
 	pCVar5 = &(CScene::ptable.g_MapManager_0045168c)->field_0x58;
-	if (this->field_0x0 == iVar13) {
+	if (this->field_0x0 == currentLevelID) {
 		pCVar5 = &(CScene::ptable.g_MapManager_0045168c)->field_0x2c;
 	}
 	else {
@@ -2274,9 +2581,9 @@ void CLevelMap::SetupMatrices()
 	local_10.xyz = pCVar5->field_0x0;
 	local_10.w = 1.0f;
 	local_20.xyz = pCVar5->field_0xc;
-	local_10.w = 1.0f;
+	local_20.w = 1.0f;
 	local_30.xyz = pCVar5->field_0x18;
-	local_20.w = 0.0f;
+	local_30.w = 0.0f;
 
 	edF32Vector4SubHard(&eStack64, &local_20, &local_10);
 	edF32Vector4NormalizeHard(&eStack64, &eStack64);
@@ -2296,8 +2603,8 @@ void CLevelMap::SetupMatrices()
 	(this->field_0xb0).y = 0.5f;
 	(this->field_0xb0).z = 0.0f;
 	(this->field_0xb0).w = 1.0f;
-	if (this->field_0x0 == iVar13) {
-		this->field_0xc0 = this_01->field_0xc;
+	if (this->field_0x0 == currentLevelID) {
+		this->field_0xc0 = pMapManager->field_0xc;
 	}
 	else {
 		SaveDataChunk_BLMP* pSaveDataChunk_BLMP = pLevelScheduler->LoadMapSaveChunk(this->field_0x0);
@@ -2310,46 +2617,46 @@ void CLevelMap::SetupMatrices()
 	}
 
 	this->field_0xc4 = 1.0f;
-	this->field_0x170 = gF32Matrix4Unit;
+	this->scrollMatrix = gF32Matrix4Unit;
 	
 	fVar18 = (this->field_0xb0).y;
 	fVar19 = (this->field_0xb0).z;
 	fVar20 = (this->field_0xb0).w;
-	(this->field_0x170).da = 0.0f - (this->field_0xb0).x;
-	(this->field_0x170).db = 0.0f - fVar18;
-	(this->field_0x170).dc = 0.0f - fVar19;
-	(this->field_0x170).dd = fVar20;
+	(this->scrollMatrix).da = 0.0f - (this->field_0xb0).x;
+	(this->scrollMatrix).db = 0.0f - fVar18;
+	(this->scrollMatrix).dc = 0.0f - fVar19;
+	(this->scrollMatrix).dd = fVar20;
 	local_930.x = this->field_0xc4;
 	local_930.y = this->field_0xc4;
 	local_930.z = 1.0f;
 	local_930.w = 1.0f;
-	edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_930);
+	edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_930);
 	edF32Matrix4RotateZHard(this->field_0xc0, &eStack2416, &gF32Matrix4Unit);
-	edF32Matrix4MulF32Matrix4Hard(&this->field_0x170, &this->field_0x170, &eStack2416);
+	edF32Matrix4MulF32Matrix4Hard(&this->scrollMatrix, &this->scrollMatrix, &eStack2416);
 	local_980.z = edF32VECTOR4_004268d0.z;
 	local_980.w = edF32VECTOR4_004268d0.w;
 	local_980.x = static_cast<float>(gVideoConfig.screenWidth) / (CScene::ptable.g_CameraManager_0045167c)->aspectRatio;
 	local_980.y = static_cast<float>(gVideoConfig.screenHeight);
-	edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_980);
-	peVar11 = (edF32VECTOR4*)&(this->field_0x170).da;
+	edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_980);
+	peVar11 = &(this->scrollMatrix).rowT;
 	edF32Vector4AddHard(peVar11, peVar11, &this->field_0xa0);
-	edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->field_0x170);
+	edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->scrollMatrix);
 	uVar16 = 0;
-	if ((this->field_0x0 == iVar13) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+	if ((this->field_0x0 == currentLevelID) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 		local_b0[0] = (MapPosition*)&CActorHero::_gThis->currentLocation;
 		uVar16 = 1;
 	}
 
-	iVar13 = (this_01->field_0x338).field_0x0;
-	pLVar3 = (LoadLoopObject_50*)0x0;
-	if (iVar13 != 0x62) {
-		pLVar3 = pLevelScheduler->FUN_002d9f30(iVar13);
+	currentLevelID = (pMapManager->field_0x338).field_0x0;
+	pLVar3 = (ObjectiveEntry*)0x0;
+	if (currentLevelID != 0x62) {
+		pLVar3 = pLevelScheduler->FUN_002d9f30(currentLevelID);
 	}
 
-	this_01->FUN_003f7a40(this->field_0x0, &local_c0, aMStack2240, 0x80);
+	pMapManager->LoadMarkerPositionsForLevel(this->field_0x0, &local_c0, aMStack2240, 0x80);
 	pMVar8 = aMStack2240 + local_c0.field_0x0 + local_c0.nbTeleporters + local_c0.nbWolfen;
 	uVar17 = uVar16;
-	if ((pLVar3 != (LoadLoopObject_50*)0x0) && (uVar16 < 0x10)) {
+	if ((pLVar3 != (ObjectiveEntry*)0x0) && (uVar16 < 0x10)) {
 		if (this->field_0x0 == pLVar3->levelId) {
 			if (pLVar3->field_0x40 == 0) {
 				local_b0[uVar16] = (MapPosition*)&pLVar3->field_0x10;
@@ -2361,16 +2668,16 @@ void CLevelMap::SetupMatrices()
 			}
 		}
 		else {
-			pMVar4 = FUN_003bd1f0(pLVar3->levelId, &local_c0, aMStack2240, 1);
+			pMVar4 = FindMarkerForLevel(pLVar3->levelId, &local_c0, aMStack2240, 1);
 			if (pMVar4 != (MapPosition*)0x0) {
 				uVar17 = uVar16 + 1;
 				local_b0[uVar16] = pMVar4;
 			}
 		}
 	}
-	iVar13 = 0;
-	if ((this_01->field_0x338).field_0x4 == 1) {
-		for (; iVar13 < local_c0.nbRunes; iVar13 = iVar13 + 1) {
+	currentLevelID = 0;
+	if ((pMapManager->field_0x338).field_0x4 == 1) {
+		for (; currentLevelID < local_c0.nbRunes; currentLevelID = currentLevelID + 1) {
 			if (static_cast<int>(uVar17) < 0x10) {
 				local_b0[uVar17] = pMVar8;
 				uVar17 = uVar17 + 1;
@@ -2379,11 +2686,11 @@ void CLevelMap::SetupMatrices()
 			pMVar8 = pMVar8 + 1;
 		}
 
-		for (iVar13 = 0; iVar13 < 0x10; iVar13 = iVar13 + 1) {
+		for (currentLevelID = 0; currentLevelID < 0x10; currentLevelID = currentLevelID + 1) {
 			SaveDataChunk_BLMP* pSaveDataChunk_BLMP;
-			if (((iVar13 != this->field_0x0) && (pSaveDataChunk_BLMP = pLevelScheduler->LoadMapSaveChunk(iVar13), pSaveDataChunk_BLMP != (SaveDataChunk_BLMP*)0x0)) && (0 < pSaveDataChunk_BLMP->mapDataSizes.nbRunes)) {
+			if (((currentLevelID != this->field_0x0) && (pSaveDataChunk_BLMP = pLevelScheduler->LoadMapSaveChunk(currentLevelID), pSaveDataChunk_BLMP != (SaveDataChunk_BLMP*)0x0)) && (0 < pSaveDataChunk_BLMP->mapDataSizes.nbRunes)) {
 				IMPLEMENTATION_GUARD(
-				pMVar8 = FUN_003bd1f0(iVar13, &local_c0, aMStack2240, 0);
+				pMVar8 = FindMarkerForLevel(currentLevelID, &local_c0, aMStack2240, 0);
 				if ((pMVar8 != (MapPosition*)0x0) && (static_cast<int>(uVar17) < 0x10)) {
 					local_b0[uVar17] = pMVar8;
 					uVar17 = uVar17 + 1;
@@ -2392,20 +2699,20 @@ void CLevelMap::SetupMatrices()
 		}
 	}
 
-	iVar13 = 0;
-	if ((this_01->field_0x338).field_0x4 == 2) {
-		for (; iVar13 < 0x10; iVar13 = iVar13 + 1) {
+	currentLevelID = 0;
+	if ((pMapManager->field_0x338).field_0x4 == 2) {
+		for (; currentLevelID < 0x10; currentLevelID = currentLevelID + 1) {
 			IMPLEMENTATION_GUARD(
-			if (((static_cast<int>(uVar17) < 0x10) && (iVar12 = pLevelScheduler->IsMapCollectedInLevel(iVar13), iVar12 != 0x62)) && (iVar6 = CLevelScheduler::ScenVar_Get(iVar12), iVar6 != 2)) {
-				if (iVar13 == this->field_0x0) {
+			if (((static_cast<int>(uVar17) < 0x10) && (iVar12 = pLevelScheduler->IsMapCollectedInLevel(currentLevelID), iVar12 != 0x62)) && (iVar6 = CLevelScheduler::ScenVar_Get(iVar12), iVar6 != 2)) {
+				if (currentLevelID == this->field_0x0) {
 					pLVar7 = pLevelScheduler->FUN_002d9f30(iVar12);
-					if (pLVar7 != (LoadLoopObject_50*)0x0) {
+					if (pLVar7 != (ObjectiveEntry*)0x0) {
 						local_b0[uVar17] = (MapPosition*)&pLVar7->field_0x10;
 						uVar17 = uVar17 + 1;
 					}
 				}
 				else {
-					pMVar8 = FUN_003bd1f0(iVar13, &local_c0, aMStack2240, 0);
+					pMVar8 = FindMarkerForLevel(currentLevelID, &local_c0, aMStack2240, 0);
 					if (pMVar8 != (MapPosition*)0x0) {
 						local_b0[uVar17] = pMVar8;
 						uVar17 = uVar17 + 1;
@@ -2416,7 +2723,7 @@ void CLevelMap::SetupMatrices()
 	}
 
 	uVar16 = uVar17;
-	if ((((pLVar3 != (LoadLoopObject_50*)0x0) && ((this_01->field_0x338).field_0x4 == 4)) && (pNVar9 = pLevelScheduler->FUN_002d9510(pLVar3->field_0x24), pNVar9 != (NativShopLevelSubObj*)0x0))
+	if ((((pLVar3 != (ObjectiveEntry*)0x0) && ((pMapManager->field_0x338).field_0x4 == 4)) && (pNVar9 = pLevelScheduler->FUN_002d9510(pLVar3->field_0x24), pNVar9 != (NativShopLevelSubObj*)0x0))
 		&& ((pNVar9->currentLevelId == this->field_0x0 && (static_cast<int>(uVar17) < 0x10)))) {
 		uVar16 = uVar17 + 1;
 		local_b0[uVar17] = (MapPosition*)&pNVar9->currentLocation;
@@ -2424,8 +2731,8 @@ void CLevelMap::SetupMatrices()
 
 	if (uVar16 != 0) {
 		local_8d0 = gF32Vector4Zero;
-		for (iVar13 = 0; iVar13 < static_cast<int>(uVar16); iVar13 = iVar13 + 1) {
-			local_8d0.xyz = local_8d0.xyz + local_b0[iVar13]->position;
+		for (currentLevelID = 0; currentLevelID < static_cast<int>(uVar16); currentLevelID = currentLevelID + 1) {
+			local_8d0.xyz = local_8d0.xyz + local_b0[currentLevelID]->position;
 		}
 
 		edF32Vector4ScaleHard(1.0f / static_cast<float>(uVar16), &local_8d0, &local_8d0);
@@ -2441,9 +2748,9 @@ void CLevelMap::SetupMatrices()
 	// Clear
 	local_8e0 = {};
 
-	local_8e0.x = 1.0f / (float)*reinterpret_cast<int*>(this->field_0x7c + 0x10);
-	local_8e0.y = 1.0f / (float)*reinterpret_cast<int*>(this->field_0x7c + 0x14);
-	edF32Matrix4MulF32Vector4Hard(&local_8e0, &this->field_0x170, &local_8e0);
+	local_8e0.x = 1.0f / (float)this->field_0x7c->field_0x10;
+	local_8e0.y = 1.0f / (float)this->field_0x7c->field_0x14;
+	edF32Matrix4MulF32Vector4Hard(&local_8e0, &this->scrollMatrix, &local_8e0);
 	fVar18 = edF32Vector4GetDistHard(&local_8e0);
 	this->field_0xc8 = 0.80000001f;
 	this->field_0xcc = 1.414214f / fVar18;
@@ -2451,7 +2758,7 @@ void CLevelMap::SetupMatrices()
 		this->field_0xcc = this->field_0xc8;
 	}
 
-	this->field_0x170 = gF32Matrix4Unit;
+	this->scrollMatrix = gF32Matrix4Unit;
 
 	this->field_0xcc = this->field_0xcc * 1.5f;
 	this->field_0xc4 = this->field_0xc8;
@@ -2459,29 +2766,29 @@ void CLevelMap::SetupMatrices()
 	fVar18 = (this->field_0xb0).y;
 	fVar19 = (this->field_0xb0).z;
 	fVar20 = (this->field_0xb0).w;
-	(this->field_0x170).da = 0.0f - (this->field_0xb0).x;
-	(this->field_0x170).db = 0.0f - fVar18;
-	(this->field_0x170).dc = 0.0f - fVar19;
-	(this->field_0x170).dd = fVar20;
+	(this->scrollMatrix).da = 0.0f - (this->field_0xb0).x;
+	(this->scrollMatrix).db = 0.0f - fVar18;
+	(this->scrollMatrix).dc = 0.0f - fVar19;
+	(this->scrollMatrix).dd = fVar20;
 
 	local_990.x = this->field_0xc4;
 	local_990.y = this->field_0xc4;
 	local_990.z = 1.0f;
 	local_990.w = 1.0f;
 
-	edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_990);
+	edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_990);
 	edF32Matrix4RotateZHard(this->field_0xc0, &eStack2512, &gF32Matrix4Unit);
-	edF32Matrix4MulF32Matrix4Hard(&this->field_0x170, &this->field_0x170, &eStack2512);
+	edF32Matrix4MulF32Matrix4Hard(&this->scrollMatrix, &this->scrollMatrix, &eStack2512);
 
 	local_9e0.z = edF32VECTOR4_004268d0.z;
 	local_9e0.w = edF32VECTOR4_004268d0.w;
 	local_9e0.x = static_cast<float>(gVideoConfig.screenWidth) / (CScene::ptable.g_CameraManager_0045167c)->aspectRatio;
 	local_9e0.y = static_cast<float>(gVideoConfig.screenHeight);
 
-	edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_9e0);
-	peVar11 = (edF32VECTOR4*)&(this->field_0x170).da;
+	edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_9e0);
+	peVar11 = (edF32VECTOR4*)&(this->scrollMatrix).da;
 	edF32Vector4AddHard(peVar11, peVar11, &this->field_0xa0);
-	edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->field_0x170);
+	edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->scrollMatrix);
 
 	if (uVar16 != 0) {
 		local_910.xyz = local_b0[0]->position;
@@ -2494,7 +2801,7 @@ void CLevelMap::SetupMatrices()
 			edF32Matrix4MulF32Vector4Hard(&local_9f0, &this->field_0x130, &local_910);
 			local_9f0.x = (local_9f0.x - 0.5f) / (local_9f0.z - -1.0f) + 0.5f;
 			local_9f0.y = (local_9f0.y - 0.5f) / (local_9f0.z - -1.0f) + 0.5f;
-			edF32Matrix4MulF32Vector4Hard(&local_8f0, &this->field_0x170, &local_9f0);
+			edF32Matrix4MulF32Vector4Hard(&local_8f0, &this->scrollMatrix, &local_9f0);
 		}
 
 		local_900 = local_8f0.x;
@@ -2502,8 +2809,8 @@ void CLevelMap::SetupMatrices()
 		fStack2296 = local_8f0.z;
 		fStack2292 = local_8f0.w;
 
-		for (iVar13 = 1; iVar13 < static_cast<int>(uVar16); iVar13 = iVar13 + 1) {
-			pMVar8 = local_b0[iVar13];
+		for (currentLevelID = 1; currentLevelID < static_cast<int>(uVar16); currentLevelID = currentLevelID + 1) {
+			pMVar8 = local_b0[currentLevelID];
 			local_910.xyz = pMVar8->position;
 			local_910.w = 1.0f;
 
@@ -2514,7 +2821,7 @@ void CLevelMap::SetupMatrices()
 				edF32Matrix4MulF32Vector4Hard(&local_a00, &this->field_0x130, &local_910);
 				local_a00.x = (local_a00.x - 0.5f) / (local_a00.z - -1.0f) + 0.5f;
 				local_a00.y = (local_a00.y - 0.5f) / (local_a00.z - -1.0f) + 0.5f;
-				edF32Matrix4MulF32Vector4Hard(&local_920, &this->field_0x170, &local_a00);
+				edF32Matrix4MulF32Vector4Hard(&local_920, &this->scrollMatrix, &local_a00);
 			}
 
 			if (local_920.x < local_8f0.x) {
@@ -2581,7 +2888,7 @@ void CLevelMap::Update()
 		this->field_0xd8 = GetTimer()->totalTime;
 	}
 
-	FUN_003bafa0();
+	UpdateViewportBounds();
 
 	return;
 }
@@ -2604,7 +2911,7 @@ void CLevelMap::ManagePad()
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	if ((this->field_0x7c != (char*)0x0) && (this->pMaterials != (edDList_material*)0x0)) {
+	if ((this->field_0x7c != (LevelMapFileData*)0x0) && (this->pMaterials != (edDList_material*)0x0)) {
 		fVar6 = GetTimer()->lastFrameTime;
 		fVar7 = gPlayerInput.aAnalogSticks[0].x;
 		if (fabsf(gPlayerInput.aAnalogSticks[0].x) < 0.2f) {
@@ -2703,36 +3010,36 @@ void CLevelMap::ManagePad()
 			}
 		}
 
-		this->field_0x170 = gF32Matrix4Unit;
+		this->scrollMatrix = gF32Matrix4Unit;
 
 		fVar7 = (this->field_0xb0).y;
 		fVar6 = (this->field_0xb0).z;
 		fVar5 = (this->field_0xb0).w;
-		(this->field_0x170).da = 0.0f - (this->field_0xb0).x;
-		(this->field_0x170).db = 0.0f - fVar7;
-		(this->field_0x170).dc = 0.0f - fVar6;
-		(this->field_0x170).dd = fVar5;
+		(this->scrollMatrix).da = 0.0f - (this->field_0xb0).x;
+		(this->scrollMatrix).db = 0.0f - fVar7;
+		(this->scrollMatrix).dc = 0.0f - fVar6;
+		(this->scrollMatrix).dd = fVar5;
 		local_30.x = this->field_0xc4;
 		local_30.y = this->field_0xc4;
 		local_30.z = 1.0f;
 		local_30.w = 1.0f;
-		edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_30);
+		edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_30);
 		edF32Matrix4RotateZHard(this->field_0xc0, &eStack112, &gF32Matrix4Unit);
-		edF32Matrix4MulF32Matrix4Hard(&this->field_0x170, &this->field_0x170, &eStack112);
+		edF32Matrix4MulF32Matrix4Hard(&this->scrollMatrix, &this->scrollMatrix, &eStack112);
 		local_80.z = edF32VECTOR4_004268d0.z;
 		local_80.w = edF32VECTOR4_004268d0.w;
 		local_80.x = static_cast<float>(gVideoConfig.screenWidth) / (CScene::ptable.g_CameraManager_0045167c)->aspectRatio;
 		local_80.y = static_cast<float>(gVideoConfig.screenHeight);
-		edF32Matrix4ScaleHard(&this->field_0x170, &this->field_0x170, &local_80);
-		v0 = &(this->field_0x170).rowT;
+		edF32Matrix4ScaleHard(&this->scrollMatrix, &this->scrollMatrix, &local_80);
+		v0 = &(this->scrollMatrix).rowT;
 		edF32Vector4AddHard(v0, v0, &this->field_0xa0);
-		edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->field_0x170);
+		edF32Matrix4MulF32Matrix4Hard(&this->field_0x1b0, &this->field_0x130, &this->scrollMatrix);
 	}
 
 	return;
 }
 
-void CLevelMap::FUN_003bafa0()
+void CLevelMap::UpdateViewportBounds()
 {
 	bool bVar1;
 	uint uVar3;
@@ -2760,7 +3067,7 @@ void CLevelMap::FUN_003bafa0()
 		uVar3 = static_cast<uint>(pMapManager->field_0x37c != 0.0f);
 	}
 
-	fVar5 = pMapManager->FUN_003f6ce0(fVar5, uVar3);
+	fVar5 = pMapManager->ComputeMapSlideFactor(fVar5, uVar3);
 	if (this->field_0xd4 == 0) {
 		fVar6 = (fVar6 - this->field_0xd8) / 0.6f;
 	}
@@ -2768,8 +3075,14 @@ void CLevelMap::FUN_003bafa0()
 		fVar6 = (fVar6 - this->field_0xd8) / 0.3333333f;
 	}
 
-	fVar6 = pMapManager->FUN_003f6ce0(fVar6, this->field_0xd4);
+	fVar6 = pMapManager->ComputeMapSlideFactor(fVar6, this->field_0xd4);
 	fVar4 = pMapManager->field_0x378;
+
+#ifdef PLATFORM_WIN
+	this->field_0x80 = {};
+	this->field_0x90 = {};
+#endif
+
 	(this->field_0x80).x = 24.0f;
 	(this->field_0x80).y = (static_cast<float>(gVideoConfig.screenHeight) * 6.0f) / 512.0f + (static_cast<float>(gVideoConfig.screenHeight) * 30.0f) / 512.0f + fVar5 * fVar4;
 	(this->field_0x90).x = (static_cast<float>(gVideoConfig.screenWidth) - fVar6 * 168.0f) - 24.0f;
@@ -2786,7 +3099,7 @@ void CLevelMap::FUN_003bafa0()
 	return;
 }
 
-MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, MapPosition* pMarkerBuffer, long param_5)
+MapPosition* CLevelMap::FindMarkerForLevel(int inLevelId, MapDataSizes* pMapSizes, MapPosition* pMarkerBuffer, long param_5)
 {
 	bool bVar1;
 	MapPosition* pMVar2;
@@ -2802,7 +3115,7 @@ MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, Map
 	pMVar5 = pMVar2;
 
 	while ((iVar3 < pMapSizes->nbTeleporters && (pMVar4 == (MapPosition*)0x0))) {
-		bVar1 = pMapManager->FUN_003f6ae0(inLevelId, pMVar5->field_0xc, 0);
+		bVar1 = pMapManager->HasRouteToLevel(inLevelId, pMVar5->field_0xc, 0);
 		if (bVar1 != false) {
 			pMVar4 = pMVar5;
 		}
@@ -2813,7 +3126,7 @@ MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, Map
 	iVar3 = 0;
 	pMVar5 = pMarkerBuffer;
 	while ((iVar3 < pMapSizes->field_0x0 && (pMVar4 == (MapPosition*)0x0))) {
-		bVar1 = pMapManager->FUN_003f6ae0(inLevelId, pMVar5->field_0xc, 0);
+		bVar1 = pMapManager->HasRouteToLevel(inLevelId, pMVar5->field_0xc, 0);
 		if (bVar1 != false) {
 			pMVar4 = pMVar5;
 		}
@@ -2825,7 +3138,7 @@ MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, Map
 	if (param_5 != 0) {
 		iVar3 = 0;
 		while ((iVar3 < pMapSizes->nbTeleporters && (pMVar4 == (MapPosition*)0x0))) {
-			bVar1 = pMapManager->FUN_003f6ae0(inLevelId, pMVar2->field_0xc, 1);
+			bVar1 = pMapManager->HasRouteToLevel(inLevelId, pMVar2->field_0xc, 1);
 			if (bVar1 != false) {
 				pMVar4 = pMVar2;
 			}
@@ -2835,7 +3148,7 @@ MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, Map
 
 		iVar3 = 0;
 		while ((iVar3 < pMapSizes->field_0x0 && (pMVar4 == (MapPosition*)0x0))) {
-			bVar1 = pMapManager->FUN_003f6ae0(inLevelId, pMarkerBuffer->field_0xc, 1);
+			bVar1 = pMapManager->HasRouteToLevel(inLevelId, pMarkerBuffer->field_0xc, 1);
 			if (bVar1 != false) {
 				pMVar4 = pMarkerBuffer;
 			}
@@ -2849,9 +3162,9 @@ MapPosition* CLevelMap::FUN_003bd1f0(int inLevelId, MapDataSizes* pMapSizes, Map
 
 edF32VECTOR4 edF32VECTOR4_004269a0 = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-void CLevelMap::FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3)
+void CLevelMap::DrawMapTilesAndMarkers(ObjectiveEntry* pObjectiveEntry, int param_3)
 {
-	int iVar1;
+	int mapSpriteIndex;
 	bool bVar2;
 	bool bVar3;
 	bool bVar4;
@@ -2859,12 +3172,12 @@ void CLevelMap::FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3)
 	edF32VECTOR4* peVar6;
 	edF32VECTOR4* peVar7;
 	uint uVar8;
-	int iVar9;
-	int* piVar10;
-	int iVar11;
-	float local_110;
-	float local_10c;
-	astruct_21 local_100;
+	int xIndex;
+	int* pMapSpriteIndexIt;
+	int yIndex;
+	float x;
+	float y;
+	S_2DRECT rect;
 	edF32VECTOR4 local_c0;
 	edF32VECTOR4 local_b0;
 	edF32VECTOR4 local_a0;
@@ -2879,8 +3192,8 @@ void CLevelMap::FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3)
 	edF32VECTOR4 local_10;
 	CMapManager* pMapManager;
 
-	local_c0.x = 1.0f / (float)*reinterpret_cast<int*>(this->field_0x7c + 8);
-	local_c0.y = 1.0f / (float)*reinterpret_cast<int*>(this->field_0x7c + 0xc);
+	local_c0.x = 1.0f / (float)this->field_0x7c->field_0x8;
+	local_c0.y = 1.0f / (float)this->field_0x7c->field_0xc;
 
 	local_10 = {};
 	local_20 = {};
@@ -2892,9 +3205,9 @@ void CLevelMap::FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3)
 	local_30.x = local_c0.x * 0.5f;
 	local_30.y = local_c0.y * 0.5f;
 
-	edF32Matrix4MulF32Vector4Hard(&local_10, &this->field_0x170, &local_10);
-	edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x170, &local_20);
-	edF32Matrix4MulF32Vector4Hard(&local_30, &this->field_0x170, &local_30);
+	edF32Matrix4MulF32Vector4Hard(&local_10, &this->scrollMatrix, &local_10);
+	edF32Matrix4MulF32Vector4Hard(&local_20, &this->scrollMatrix, &local_20);
+	edF32Matrix4MulF32Vector4Hard(&local_30, &this->scrollMatrix, &local_30);
 
 	local_50 = gF32Vector4Zero;
 
@@ -2950,74 +3263,81 @@ void CLevelMap::FUN_003bd3b0(LoadLoopObject_50* param_2, int param_3)
 	edF32Vector4SubHard(&local_a0, peVar6, &local_40);
 	edF32Vector4SubHard(&local_b0, peVar7, &local_50);
 	edDListLoadIdentity();
-	local_c0 = edF32VECTOR4_004269a0;
+
+	local_c0.z = edF32VECTOR4_004269a0.z;
+	local_c0.w = edF32VECTOR4_004269a0.w;
 	local_c0.x = local_c0.x * 0.5f;
 	local_c0.y = local_c0.y * 0.5f;
-	edF32Matrix4MulF32Vector4Hard(&local_c0, &this->field_0x170, &local_c0);
-	local_100.field_0x0[0].s1 = 0.0f;
-	local_100.field_0x0[0].t1 = 0.0f;
-	local_100.field_0x0[1].s1 = 1.0f;
-	local_100.field_0x0[1].t1 = 0.0f;
-	local_100.field_0x0[2].s1 = 1.0f;
-	local_100.field_0x0[2].t1 = 1.0f;
-	local_100.field_0x0[3].t1 = 1.0f;
-	local_100.field_0x0[3].s1 = 0.0f;
-	for (iVar11 = 0; iVar11 < *reinterpret_cast<int*>(this->field_0x7c + 0xc); iVar11 = iVar11 + 1) {
-		local_110 = local_c0.x;
-		local_10c = local_c0.y;
-		piVar10 = reinterpret_cast<int*>(this->field_0x7c + iVar11 * *(int*)(this->field_0x7c + 8) * 4 + 0x18);
-		for (iVar9 = 0; iVar9 < *reinterpret_cast<int*>(this->field_0x7c + 8); iVar9 = iVar9 + 1) {
-			iVar1 = *piVar10;
-			if ((((iVar1 != -1) && (local_110 <= local_90.x)) && (local_80.x <= local_110)) && ((local_10c <= local_90.y && (local_80.y <= local_10c)))) {
+	edF32Matrix4MulF32Vector4Hard(&local_c0, &this->scrollMatrix, &local_c0);
+
+	rect.aVertices[0].s1 = 0.0f;
+	rect.aVertices[0].t1 = 0.0f;
+	rect.aVertices[1].s1 = 1.0f;
+	rect.aVertices[1].t1 = 0.0f;
+	rect.aVertices[2].s1 = 1.0f;
+	rect.aVertices[2].t1 = 1.0f;
+	rect.aVertices[3].t1 = 1.0f;
+	rect.aVertices[3].s1 = 0.0f;
+
+	// Tiles:
+	for (yIndex = 0; yIndex < this->field_0x7c->field_0xc; yIndex = yIndex + 1) {
+		x = local_c0.x;
+		y = local_c0.y;
+
+		pMapSpriteIndexIt = this->field_0x7c->aTileIndices + yIndex * this->field_0x7c->field_0x8;
+
+		for (xIndex = 0; xIndex < this->field_0x7c->field_0x8; xIndex = xIndex + 1) {
+			mapSpriteIndex = *pMapSpriteIndexIt;
+			if ((((mapSpriteIndex != -1) && (x <= local_90.x)) && (local_80.x <= x)) && ((y <= local_90.y && (local_80.y <= y)))) {
 				bVar4 = false;
 				bVar3 = false;
 				bVar2 = false;
 
-				local_100.field_0x0[0].x1 = local_110 - local_30.x;
-				local_100.field_0x0[0].y1 = local_10c - local_30.y;
-				local_100.field_0x0[1].x1 = local_100.field_0x0[0].x1 + local_10.x;
-				local_100.field_0x0[1].y1 = local_100.field_0x0[0].y1 + local_10.y;
-				local_100.field_0x0[2].x1 = local_20.x + local_100.field_0x0[1].x1;
-				local_100.field_0x0[3].x1 = local_100.field_0x0[0].x1 + local_20.x;
-				local_100.field_0x0[2].y1 = local_20.y + local_100.field_0x0[1].y1;
-				local_100.field_0x0[3].y1 = local_100.field_0x0[0].y1 + local_20.y;
+				rect.aVertices[0].x1 = x - local_30.x;
+				rect.aVertices[0].y1 = y - local_30.y;
+				rect.aVertices[1].x1 = rect.aVertices[0].x1 + local_10.x;
+				rect.aVertices[1].y1 = rect.aVertices[0].y1 + local_10.y;
+				rect.aVertices[2].x1 = local_20.x + rect.aVertices[1].x1;
+				rect.aVertices[3].x1 = rect.aVertices[0].x1 + local_20.x;
+				rect.aVertices[2].y1 = local_20.y + rect.aVertices[1].y1;
+				rect.aVertices[3].y1 = rect.aVertices[0].y1 + local_20.y;
 
-				if ((local_110 <= local_b0.x) && (local_a0.x <= local_110)) {
+				if ((x <= local_b0.x) && (local_a0.x <= x)) {
 					bVar2 = true;
 				}
 
-				if ((bVar2) && (local_10c <= local_b0.y)) {
+				if ((bVar2) && (y <= local_b0.y)) {
 					bVar3 = true;
 				}
 
-				if ((bVar3) && (local_a0.y <= local_10c)) {
+				if ((bVar3) && (local_a0.y <= y)) {
 					bVar4 = true;
 				}
 
 				if (bVar4) {
-					pMapManager->DrawSprite(this->pMaterials + iVar1, &local_100, 0x80808080);
+					pMapManager->DrawSprite(this->pMaterials + mapSpriteIndex, &rect, 0x80808080);
 				}
 				else {
-					pMapManager->FUN_003f85c0(this->pMaterials + iVar1, &local_100, 0x80808080);
+					pMapManager->DrawClippedSprite(this->pMaterials + mapSpriteIndex, &rect, 0x80808080);
 				}
 			}
 
-			local_110 = local_110 + local_10.x;
-			local_10c = local_10c + local_10.y;
-			piVar10 = piVar10 + 1;
+			x = x + local_10.x;
+			y = y + local_10.y;
+			pMapSpriteIndexIt = pMapSpriteIndexIt + 1;
 		}
 
 		local_c0 = local_c0 + local_20;
 	}
 
-	FUN_003bb210(param_2, param_3);
+	DrawMapOverlays(pObjectiveEntry, param_3);
 
 	return;
 }
 
-void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
+void CLevelMap::DrawMapOverlays(ObjectiveEntry* pObjectiveEntry, int param_3)
 {
-	CActorHero* pCVar1;
+	CActorHero* pHero;
 	CLevelScheduler* pCVar2;
 	CMapManager* pCVar3;
 	uint color;
@@ -3027,12 +3347,12 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 	edDList_material* peVar8;
 	int iVar9;
 	int iVar10;
-	LoadLoopObject_50* pLVar11;
-	LoadLoopObject_50* pLVar12;
+	ObjectiveEntry* pLVar11;
+	ObjectiveEntry* pLVar12;
 	undefined uVar13;
 	float fVar14;
 	float fVar15;
-	astruct_21 local_990;
+	S_2DRECT local_990;
 	edF32VECTOR4 local_950;
 	edF32VECTOR4 local_940;
 	edF32VECTOR4 local_930;
@@ -3044,24 +3364,24 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 
 	pCVar3 = CScene::ptable.g_MapManager_0045168c;
 	pCVar2 = CLevelScheduler::gThis;
-	pCVar1 = CActorHero::_gThis;
+	pHero = CActorHero::_gThis;
 	iVar9 = CLevelScheduler::gThis->currentLevelID;
 
 	edDListLoadIdentity();
 
-	pNVar5 = FUN_003bc1e0();
+	pNVar5 = DrawAndSelectNearestShopMarker();
 	if (this->field_0x0 == iVar9) {
 		local_110.nbEntries = 0;
 		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(JAMGUT, &local_110);
 		for (iVar10 = 0; iVar10 < local_110.nbEntries; iVar10 = iVar10 + 1) {
-			FUN_003bde70(25.0f, 25.0f, 7, &local_110.aEntries[iVar10]->currentLocation, 0x80808080);
+			DrawWorldMarkerIcon(25.0f, 25.0f, 7, &local_110.aEntries[iVar10]->currentLocation, 0x80808080);
 		}
 	}
 
 	pMVar6 = (MapPosition*)0x0;
-	bVar4 = pCVar3->FUN_003f7a40(this->field_0x0, &MStack288, aMStack2336, 0x80);
+	bVar4 = pCVar3->LoadMarkerPositionsForLevel(this->field_0x0, &MStack288, aMStack2336, 0x80);
 	if (bVar4 != false) {
-		pMVar6 = FUN_003bb990(pLoadLoopObj, param_3, &MStack288, aMStack2336);
+		pMVar6 = DrawCollectedMarkers(pObjectiveEntry, param_3, &MStack288, aMStack2336);
 	}
 
 	if (pNVar5 != (NativShopLevelSubObj*)0x0) {
@@ -3072,7 +3392,7 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 			edF32Matrix4MulF32Vector4Hard(&local_950, &this->field_0x130, &pNVar5->currentLocation);
 			local_950.x = (local_950.x - 0.5f) / (local_950.z - -1.0f) + 0.5f;
 			local_950.y = (local_950.y - 0.5f) / (local_950.z - -1.0f) + 0.5f;
-			edF32Matrix4MulF32Vector4Hard(&local_940, &this->field_0x170, &local_950);
+			edF32Matrix4MulF32Vector4Hard(&local_940, &this->scrollMatrix, &local_950);
 		}
 
 		fVar15 = fmodf(GetTimer()->totalTime, 0.9f);
@@ -3098,29 +3418,29 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 		local_8 = 0x7e5d5b | (uint)uVar13 << 0x18;
 
 		color = local_8;
-		local_990.field_0x0[2].y1 = ((fVar15 * 2.0f - fVar15 * fVar15 * fVar15) * 0.3f + 1.7f) * 25.0f;
-		local_990.field_0x0[1].x1 = local_990.field_0x0[2].y1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-		local_990.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-		local_990.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-		local_990.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-		local_990.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-		local_990.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-		local_990.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-		local_990.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-		local_990.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-		local_990.field_0x0[2].y1 = local_990.field_0x0[2].y1 * 0.5f;
-		local_990.field_0x0[0].x1 = local_940.x - local_990.field_0x0[1].x1;
-		local_990.field_0x0[1].x1 = local_940.x + local_990.field_0x0[1].x1;
-		local_990.field_0x0[0].y1 = local_940.y - local_990.field_0x0[2].y1;
-		local_990.field_0x0[2].y1 = local_940.y + local_990.field_0x0[2].y1;
-		local_990.field_0x0[1].y1 = local_990.field_0x0[0].y1;
-		local_990.field_0x0[2].x1 = local_990.field_0x0[1].x1;
-		local_990.field_0x0[3].x1 = local_990.field_0x0[0].x1;
-		local_990.field_0x0[3].y1 = local_990.field_0x0[2].y1;
-		if ((((local_990.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_990.field_0x0[1].x1)) ||
-			(local_990.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_990.field_0x0[2].y1)) {
+		local_990.aVertices[2].y1 = ((fVar15 * 2.0f - fVar15 * fVar15 * fVar15) * 0.3f + 1.7f) * 25.0f;
+		local_990.aVertices[1].x1 = local_990.aVertices[2].y1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+		local_990.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+		local_990.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+		local_990.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+		local_990.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+		local_990.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+		local_990.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+		local_990.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+		local_990.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+		local_990.aVertices[2].y1 = local_990.aVertices[2].y1 * 0.5f;
+		local_990.aVertices[0].x1 = local_940.x - local_990.aVertices[1].x1;
+		local_990.aVertices[1].x1 = local_940.x + local_990.aVertices[1].x1;
+		local_990.aVertices[0].y1 = local_940.y - local_990.aVertices[2].y1;
+		local_990.aVertices[2].y1 = local_940.y + local_990.aVertices[2].y1;
+		local_990.aVertices[1].y1 = local_990.aVertices[0].y1;
+		local_990.aVertices[2].x1 = local_990.aVertices[1].x1;
+		local_990.aVertices[3].x1 = local_990.aVertices[0].x1;
+		local_990.aVertices[3].y1 = local_990.aVertices[2].y1;
+		if ((((local_990.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_990.aVertices[1].x1)) ||
+			(local_990.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_990.aVertices[2].y1)) {
 			peVar8 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(0xe);
-			pCVar3->FUN_003f85c0(peVar8, &local_990, color);
+			pCVar3->DrawClippedSprite(peVar8, &local_990, color);
 		}
 		else {
 			peVar8 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(0xe);
@@ -3128,7 +3448,7 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 		}
 	}
 
-	if ((this->field_0x0 == iVar9) && (pCVar1 != (CActorHero*)0x0)) {
+	if ((this->field_0x0 == iVar9) && (pHero != (CActorHero*)0x0)) {
 		local_4 = 0x80808080;
 		fVar15 = (cosf(GetTimer()->totalTime * 6.283185f - 1.570796f)) * 0.5f;
 		fVar14 = fVar15 * 128.0f;
@@ -3139,7 +3459,7 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 			local_4 = local_4 & 0xffffff | static_cast<int>(fVar14 - 2.147484e+09f) << 0x18;
 		}
 
-		FUN_003be250(37.5f, 37.5f, 0, &pCVar1->currentLocation, &pCVar1->rotationQuat, local_4);
+		DrawOrientedMarkerIcon(37.5f, 37.5f, 0, &pHero->currentLocation, &pHero->rotationQuat, local_4);
 
 		fVar14 = (1.0f - fVar15) * 128.0f;
 		if (fVar14 < 2.147484e+09f) {
@@ -3149,8 +3469,8 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 			local_4 = local_4 & 0xffffff | static_cast<int>(fVar14 - 2.147484e+09f) << 0x18;
 		}
 
-		FUN_003be250(37.5f, 37.5f, 0xc, &pCVar1->currentLocation, &pCVar1->rotationQuat, local_4);
-		FUN_003be570(25.0f, 25.0f, &pCVar1->currentLocation, 0x1d2378);
+		DrawOrientedMarkerIcon(37.5f, 37.5f, 0xc, &pHero->currentLocation, &pHero->rotationQuat, local_4);
+		DrawOffscreenMarkerArrow(25.0f, 25.0f, &pHero->currentLocation, 0x1d2378);
 	}
 
 	pLVar11 = pCVar2->field_0x4220;
@@ -3158,38 +3478,38 @@ void CLevelMap::FUN_003bb210(LoadLoopObject_50* pLoadLoopObj, int param_3)
 	for (; pLVar11 < pLVar12; pLVar11 = pLVar11 + 1) {
 		iVar9 = CLevelScheduler::ScenVar_Get(pLVar11->field_0x0);
 		if (((iVar9 == 1) && (this->field_0x0 == pLVar11->levelId)) && (pLVar11->field_0x4 == 1)) {
-			FUN_003bd960(12.5f, 12.5f, &pLVar11->field_0x10, 0x606060);
+			DrawPulsingMarkerHighlight(12.5f, 12.5f, &pLVar11->field_0x10, 0x606060);
 		}
 	}
 
 	if (pMVar6 != (MapPosition*)0x0) {
 		local_930.xyz = pMVar6->position;
 		local_930.w = 1.0f;
-		FUN_003bd960(25.0f, 25.0f, &local_930, 0x7f7f7f);
-		FUN_003be570(25.0f, 25.0f, &local_930, 0x7f7f7f);
+		DrawPulsingMarkerHighlight(25.0f, 25.0f, &local_930, 0x7f7f7f);
+		DrawOffscreenMarkerArrow(25.0f, 25.0f, &local_930, 0x7f7f7f);
 	}
 
-	if (pLoadLoopObj != (LoadLoopObject_50*)0x0) {
-		FUN_003bbe50(pLoadLoopObj, param_3, &MStack288, aMStack2336);
+	if (pObjectiveEntry != (ObjectiveEntry*)0x0) {
+		DrawObjectiveTargetMarkers(pObjectiveEntry, param_3, &MStack288, aMStack2336);
 	}
 
 	if (pNVar5 != (NativShopLevelSubObj*)0x0) {
 		IMPLEMENTATION_GUARD(
-		FUN_003bc770(pNVar5, pLoadLoopObj, param_3);)
+		FUN_003bc770(pNVar5, pObjectiveEntry, param_3);)
 	}
 
 	return;
 }
 
-void CLevelMap::FUN_003bde70(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, uint param_6)
+void CLevelMap::DrawWorldMarkerIcon(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, uint param_6)
 {
 	CMapManager* pCVar1;
 	uint color;
 	edDList_material* peVar2;
 	int index;
 	float fVar3;
-	astruct_21 local_b0;
-	astruct_21 local_70;
+	S_2DRECT local_b0;
+	S_2DRECT local_70;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 local_20;
 	uint local_4;
@@ -3201,31 +3521,31 @@ void CLevelMap::FUN_003bde70(float param_1, float param_2, int param_4, edF32VEC
 		edF32Matrix4MulF32Vector4Hard(&local_30, &this->field_0x130, param_5);
 		local_30.x = (local_30.x - 0.5f) / (local_30.z - -1.0f) + 0.5f;
 		local_30.y = (local_30.y - 0.5f) / (local_30.z - -1.0f) + 0.5f;
-		edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x170, &local_30);
+		edF32Matrix4MulF32Vector4Hard(&local_20, &this->scrollMatrix, &local_30);
 	}
 
 	pCVar1 = CScene::ptable.g_MapManager_0045168c;
-	local_70.field_0x0[0].y1 = local_20.y - param_2 * 0.5f;
-	local_70.field_0x0[2].y1 = local_20.y + param_2 * 0.5f;
-	local_70.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-	local_70.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-	local_70.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-	local_70.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-	local_70.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-	local_70.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-	local_70.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-	local_70.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-	local_70.field_0x0[1].x1 = param_1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-	local_70.field_0x0[0].x1 = local_20.x - local_70.field_0x0[1].x1;
-	local_70.field_0x0[1].x1 = local_20.x + local_70.field_0x0[1].x1;
-	local_70.field_0x0[1].y1 = local_70.field_0x0[0].y1;
-	local_70.field_0x0[2].x1 = local_70.field_0x0[1].x1;
-	local_70.field_0x0[3].x1 = local_70.field_0x0[0].x1;
-	local_70.field_0x0[3].y1 = local_70.field_0x0[2].y1;
-	if ((((local_70.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.field_0x0[1].x1)) ||
-		(local_70.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.field_0x0[2].y1)) {
+	local_70.aVertices[0].y1 = local_20.y - param_2 * 0.5f;
+	local_70.aVertices[2].y1 = local_20.y + param_2 * 0.5f;
+	local_70.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+	local_70.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+	local_70.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+	local_70.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+	local_70.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+	local_70.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+	local_70.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+	local_70.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+	local_70.aVertices[1].x1 = param_1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+	local_70.aVertices[0].x1 = local_20.x - local_70.aVertices[1].x1;
+	local_70.aVertices[1].x1 = local_20.x + local_70.aVertices[1].x1;
+	local_70.aVertices[1].y1 = local_70.aVertices[0].y1;
+	local_70.aVertices[2].x1 = local_70.aVertices[1].x1;
+	local_70.aVertices[3].x1 = local_70.aVertices[0].x1;
+	local_70.aVertices[3].y1 = local_70.aVertices[2].y1;
+	if ((((local_70.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.aVertices[1].x1)) ||
+		(local_70.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.aVertices[2].y1)) {
 		peVar2 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(param_4);
-		pCVar1->FUN_003f85c0(peVar2, &local_70, param_6);
+		pCVar1->DrawClippedSprite(peVar2, &local_70, param_6);
 	}
 	else {
 		peVar2 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(param_4);
@@ -3248,28 +3568,28 @@ void CLevelMap::FUN_003bde70(float param_1, float param_2, int param_4, edF32VEC
 		}
 
 		if (index != 0xf) {
-			local_b0.field_0x0[0].y1 = local_20.y - param_2 * 0.5f;
-			local_b0.field_0x0[2].y1 = local_20.y + param_2 * 0.5f;
-			local_b0.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-			local_b0.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-			local_b0.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-			local_b0.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-			local_b0.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-			local_b0.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-			local_b0.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-			local_b0.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-			local_b0.field_0x0[1].x1 = param_1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-			local_b0.field_0x0[0].x1 = local_20.x - local_b0.field_0x0[1].x1;
-			local_b0.field_0x0[1].x1 = local_20.x + local_b0.field_0x0[1].x1;
-			local_b0.field_0x0[1].y1 = local_b0.field_0x0[0].y1;
-			local_b0.field_0x0[2].x1 = local_b0.field_0x0[1].x1;
-			local_b0.field_0x0[3].x1 = local_b0.field_0x0[0].x1;
-			local_b0.field_0x0[3].y1 = local_b0.field_0x0[2].y1;
+			local_b0.aVertices[0].y1 = local_20.y - param_2 * 0.5f;
+			local_b0.aVertices[2].y1 = local_20.y + param_2 * 0.5f;
+			local_b0.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+			local_b0.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+			local_b0.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+			local_b0.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+			local_b0.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+			local_b0.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+			local_b0.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+			local_b0.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+			local_b0.aVertices[1].x1 = param_1 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+			local_b0.aVertices[0].x1 = local_20.x - local_b0.aVertices[1].x1;
+			local_b0.aVertices[1].x1 = local_20.x + local_b0.aVertices[1].x1;
+			local_b0.aVertices[1].y1 = local_b0.aVertices[0].y1;
+			local_b0.aVertices[2].x1 = local_b0.aVertices[1].x1;
+			local_b0.aVertices[3].x1 = local_b0.aVertices[0].x1;
+			local_b0.aVertices[3].y1 = local_b0.aVertices[2].y1;
 
-			if (((local_b0.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.field_0x0[1].x1)) ||
-				((local_b0.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.field_0x0[2].y1)))) {
+			if (((local_b0.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.aVertices[1].x1)) ||
+				((local_b0.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.aVertices[2].y1)))) {
 				peVar2 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(index);
-				pCVar1->FUN_003f85c0(peVar2, &local_b0, color);
+				pCVar1->DrawClippedSprite(peVar2, &local_b0, color);
 			}
 			else {
 				peVar2 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(index);
@@ -3281,15 +3601,15 @@ void CLevelMap::FUN_003bde70(float param_1, float param_2, int param_4, edF32VEC
 	return;
 }
 
-MapPosition* CLevelMap::FUN_003bb990(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDataSizes* param_4, MapPosition* param_5)
+MapPosition* CLevelMap::DrawCollectedMarkers(ObjectiveEntry* pObjectiveEntry, int param_3, MapDataSizes* param_4, MapPosition* param_5)
 {
 	float fVar1;
 	CActorHero* pCVar2;
 	MapPosition* pMVar3;
 	int iVar5;
-	MapPosition* pMVar6;
-	MapPosition* pMVar7;
-	MapPosition* pMVar8;
+	MapPosition* pTeleporterBuffer;
+	MapPosition* pRuneBuffer;
+	MapPosition* pWolfenBuffer;
 	float fVar9;
 	float fVar10;
 	float fVar11;
@@ -3298,20 +3618,20 @@ MapPosition* CLevelMap::FUN_003bb990(LoadLoopObject_50* pLoadLoopObj, int param_
 
 	pCVar2 = CActorHero::_gThis;
 	pMVar3 = (MapPosition*)0x0;
-	pMVar6 = param_5 + param_4->field_0x0;
-	pMVar8 = pMVar6 + param_4->nbTeleporters;
-	pMVar7 = pMVar8 + param_4->nbWolfen;
-	if ((pLoadLoopObj != (LoadLoopObject_50*)0x0) && (pLoadLoopObj->levelId != this->field_0x0)) {
-		pMVar3 = FUN_003bd1f0(pLoadLoopObj->levelId, param_4, param_5, 1);
+	pTeleporterBuffer = param_5 + param_4->field_0x0;
+	pWolfenBuffer = pTeleporterBuffer + param_4->nbTeleporters;
+	pRuneBuffer = pWolfenBuffer + param_4->nbWolfen;
+	if ((pObjectiveEntry != (ObjectiveEntry*)0x0) && (pObjectiveEntry->levelId != this->field_0x0)) {
+		pMVar3 = FindMarkerForLevel(pObjectiveEntry->levelId, param_4, param_5, 1);
 	}
 
-	fVar9 = GetTimer()->totalTime - (float)this->field_0xe4;
-	if ((((float)this->field_0xe4 == 0.0f) || (100.0f < fVar9)) || (pCVar2 == (CActorHero*)0x0)) {
+	fVar9 = GetTimer()->totalTime - this->field_0xe4;
+	if (((this->field_0xe4 == 0.0f) || (100.0f < fVar9)) || (pCVar2 == (CActorHero*)0x0)) {
 		for (iVar5 = 0; iVar5 < param_4->nbWolfen; iVar5 = iVar5 + 1) {
-			local_20.xyz = pMVar8->position;
+			local_20.xyz = pWolfenBuffer->position;
 			local_20.w = 1.0f;
-			FUN_003bde70(25.0f, 25.0f, 3, &local_20, 0x80808080);
-			pMVar8 = pMVar8 + 1;
+			DrawWorldMarkerIcon(25.0f, 25.0f, 3, &local_20, 0x80808080);
+			pWolfenBuffer = pWolfenBuffer + 1;
 		}
 	}
 	else {
@@ -3319,7 +3639,7 @@ MapPosition* CLevelMap::FUN_003bb990(LoadLoopObject_50* pLoadLoopObj, int param_
 		fVar11 = fVar9 * fVar9 * 4.0f - 4.0f;
 		fVar9 = fVar11 * fVar9 * 7.0f;
 		for (iVar5 = 0; iVar5 < param_4->nbWolfen; iVar5 = iVar5 + 1) {
-			local_20.xyz = pMVar8->position;
+			local_20.xyz = pWolfenBuffer->position;
 			local_20.w = 1.0f;
 			fVar10 = local_20.x - pCVar2->currentLocation.x;
 			fVar1 = local_20.z - pCVar2->currentLocation.z;
@@ -3341,48 +3661,48 @@ MapPosition* CLevelMap::FUN_003bb990(LoadLoopObject_50* pLoadLoopObj, int param_
 				}
 			}
 
-			FUN_003bde70(25.0f, 25.0f, 3, &local_20, local_4);
-			pMVar8 = pMVar8 + 1;
+			DrawWorldMarkerIcon(25.0f, 25.0f, 3, &local_20, local_4);
+			pWolfenBuffer = pWolfenBuffer + 1;
 		}
 	}
 
 	for (iVar5 = 0; iVar5 < param_4->nbTeleporters; iVar5 = iVar5 + 1) {
-		local_20.xyz = pMVar6->position;
+		local_20.xyz = pTeleporterBuffer->position;
 		local_20.w = 1.0f;
-		FUN_003bde70(25.0f, 25.0f, 4, &local_20, 0x80808080);
-		pMVar6 = pMVar6 + 1;
+		DrawWorldMarkerIcon(25.0f, 25.0f, 4, &local_20, 0x80808080);
+		pTeleporterBuffer = pTeleporterBuffer + 1;
 	}
 
 	iVar5 = CLevelScheduler::ScenVar_Get(0xf);
 	if (iVar5 != 0) {
 		for (iVar5 = 0; iVar5 < param_4->nbRunes; iVar5 = iVar5 + 1) {
-			local_20.xyz = pMVar7->position;
+			local_20.xyz = pRuneBuffer->position;
 			local_20.w = 1.0f;
-			FUN_003bde70(25.0f, 25.0f, 6, &local_20, 0x80808080);
+			DrawWorldMarkerIcon(25.0f, 25.0f, 6, &local_20, 0x80808080);
 
 			if (param_3 == 1) {
-				FUN_003bd960(25.0f, 25.0f, &local_20, 0x613021);
-				FUN_003be570(25.0f, 25.0f, &local_20, 0x613021);
+				DrawPulsingMarkerHighlight(25.0f, 25.0f, &local_20, 0x613021);
+				DrawOffscreenMarkerArrow(25.0f, 25.0f, &local_20, 0x613021);
 			}
 
-			pMVar7 = pMVar7 + 1;
+			pRuneBuffer = pRuneBuffer + 1;
 		}
 	}
 
-	pMVar8 = param_5;
+	pWolfenBuffer = param_5;
 	for (iVar5 = 0; iVar5 < param_4->field_0x0; iVar5 = iVar5 + 1) {
-		local_20.xyz = pMVar8->position;
+		local_20.xyz = pWolfenBuffer->position;
 		local_20.w = 1.0f;
-		FUN_003bde70(25.0f, 25.0f, 5, &local_20, 0x80808080);
-		pMVar8 = pMVar8 + 1;
+		DrawWorldMarkerIcon(25.0f, 25.0f, 5, &local_20, 0x80808080);
+		pWolfenBuffer = pWolfenBuffer + 1;
 	}
 
-	FUN_003bcdf0(param_5, param_4->field_0x0);
+	DrawMarkerLabels(param_5, param_4->field_0x0);
 
 	return pMVar3;
 }
 
-void CLevelMap::FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4, undefined3 param_5)
+void CLevelMap::DrawPulsingMarkerHighlight(float param_1, float param_2, edF32VECTOR4* param_4, undefined3 param_5)
 {
 	CMapManager* pCVar1;
 	uint uVar2;
@@ -3392,8 +3712,8 @@ void CLevelMap::FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4
 	float fVar6;
 	float fVar7;
 	float fVar8;
-	astruct_21 local_b0;
-	astruct_21 local_70;
+	S_2DRECT local_b0;
+	S_2DRECT local_70;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 local_20;
 	uint local_8;
@@ -3406,7 +3726,7 @@ void CLevelMap::FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4
 		edF32Matrix4MulF32Vector4Hard(&local_30, &this->field_0x130, param_4);
 		local_30.x = (local_30.x - 0.5f) / (local_30.z - -1.0f) + 0.5f;
 		local_30.y = (local_30.y - 0.5f) / (local_30.z - -1.0f) + 0.5f;
-		edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x170, &local_30);
+		edF32Matrix4MulF32Vector4Hard(&local_20, &this->scrollMatrix, &local_30);
 	}
 
 	fVar7 = fmodf(GetTimer()->totalTime, 0.9f);
@@ -3429,29 +3749,29 @@ void CLevelMap::FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4
 	local_4 = param_5 & 0xffffff | (uint)uVar5 << 0x18;
 
 	uVar2 = local_4;
-	local_70.field_0x0[2].y1 = param_2 * fVar8 * 0.5f;
-	local_70.field_0x0[0].x1 = param_1 * fVar8 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-	local_70.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-	local_70.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-	local_70.field_0x0[1].x1 = local_20.x + local_70.field_0x0[0].x1;
-	local_70.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-	local_70.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-	local_70.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-	local_70.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-	local_70.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-	local_70.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-	local_70.field_0x0[0].x1 = local_20.x - local_70.field_0x0[0].x1;
-	local_70.field_0x0[0].y1 = local_20.y - local_70.field_0x0[2].y1;
-	local_70.field_0x0[2].y1 = local_20.y + local_70.field_0x0[2].y1;
-	local_70.field_0x0[1].y1 = local_70.field_0x0[0].y1;
-	local_70.field_0x0[2].x1 = local_70.field_0x0[1].x1;
-	local_70.field_0x0[3].x1 = local_70.field_0x0[0].x1;
-	local_70.field_0x0[3].y1 = local_70.field_0x0[2].y1;
+	local_70.aVertices[2].y1 = param_2 * fVar8 * 0.5f;
+	local_70.aVertices[0].x1 = param_1 * fVar8 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+	local_70.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+	local_70.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+	local_70.aVertices[1].x1 = local_20.x + local_70.aVertices[0].x1;
+	local_70.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+	local_70.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+	local_70.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+	local_70.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+	local_70.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+	local_70.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+	local_70.aVertices[0].x1 = local_20.x - local_70.aVertices[0].x1;
+	local_70.aVertices[0].y1 = local_20.y - local_70.aVertices[2].y1;
+	local_70.aVertices[2].y1 = local_20.y + local_70.aVertices[2].y1;
+	local_70.aVertices[1].y1 = local_70.aVertices[0].y1;
+	local_70.aVertices[2].x1 = local_70.aVertices[1].x1;
+	local_70.aVertices[3].x1 = local_70.aVertices[0].x1;
+	local_70.aVertices[3].y1 = local_70.aVertices[2].y1;
 
-	if ((((local_70.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.field_0x0[1].x1)) ||
-		(local_70.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.field_0x0[2].y1)) {
+	if ((((local_70.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.aVertices[1].x1)) ||
+		(local_70.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.aVertices[2].y1)) {
 		peVar4 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(0xd);
-		pCVar1->FUN_003f85c0(peVar4, &local_70, uVar2);
+		pCVar1->DrawClippedSprite(peVar4, &local_70, uVar2);
 	}
 	else {
 		peVar4 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(0xd);
@@ -3476,30 +3796,30 @@ void CLevelMap::FUN_003bd960(float param_1, float param_2, edF32VECTOR4* param_4
 		if (index != 0xf) {
 			fVar6 = param_1 * fVar8 * 0.5f;
 			fVar7 = param_2 * fVar8 * 0.5f;
-			local_b0.field_0x0[2].y1 = fVar7 * 0.5f;
+			local_b0.aVertices[2].y1 = fVar7 * 0.5f;
 			local_20.y = local_20.y - fVar7 * 0.5f;
-			local_b0.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-			local_b0.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-			local_b0.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-			local_b0.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-			local_b0.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-			local_b0.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-			local_b0.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-			local_b0.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-			local_b0.field_0x0[0].x1 = fVar6 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+			local_b0.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+			local_b0.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+			local_b0.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+			local_b0.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+			local_b0.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+			local_b0.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+			local_b0.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+			local_b0.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+			local_b0.aVertices[0].x1 = fVar6 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
 			local_20.x = local_20.x + fVar6 * 0.5f;
-			local_b0.field_0x0[1].x1 = local_20.x + local_b0.field_0x0[0].x1;
-			local_b0.field_0x0[0].x1 = local_20.x - local_b0.field_0x0[0].x1;
-			local_b0.field_0x0[0].y1 = local_20.y - local_b0.field_0x0[2].y1;
-			local_b0.field_0x0[2].y1 = local_20.y + local_b0.field_0x0[2].y1;
-			local_b0.field_0x0[1].y1 = local_b0.field_0x0[0].y1;
-			local_b0.field_0x0[2].x1 = local_b0.field_0x0[1].x1;
-			local_b0.field_0x0[3].x1 = local_b0.field_0x0[0].x1;
-			local_b0.field_0x0[3].y1 = local_b0.field_0x0[2].y1;
-			if (((local_b0.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.field_0x0[1].x1)) ||
-				((local_b0.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.field_0x0[2].y1)))) {
+			local_b0.aVertices[1].x1 = local_20.x + local_b0.aVertices[0].x1;
+			local_b0.aVertices[0].x1 = local_20.x - local_b0.aVertices[0].x1;
+			local_b0.aVertices[0].y1 = local_20.y - local_b0.aVertices[2].y1;
+			local_b0.aVertices[2].y1 = local_20.y + local_b0.aVertices[2].y1;
+			local_b0.aVertices[1].y1 = local_b0.aVertices[0].y1;
+			local_b0.aVertices[2].x1 = local_b0.aVertices[1].x1;
+			local_b0.aVertices[3].x1 = local_b0.aVertices[0].x1;
+			local_b0.aVertices[3].y1 = local_b0.aVertices[2].y1;
+			if (((local_b0.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.aVertices[1].x1)) ||
+				((local_b0.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.aVertices[2].y1)))) {
 				peVar4 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(index);
-				pCVar1->FUN_003f85c0(peVar4, &local_b0, uVar2);
+				pCVar1->DrawClippedSprite(peVar4, &local_b0, uVar2);
 			}
 			else {
 				peVar4 = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(index);
@@ -3516,7 +3836,7 @@ edF32VECTOR2 edF32VECTOR2_004268f8 = { 1.0f, 0.0f };
 edF32VECTOR2 edF32VECTOR2_00426908 = { 1.0f, 1.0f };
 edF32VECTOR2 edF32VECTOR2_00426918 = { 0.0f, 1.0f };
 
-void CLevelMap::FUN_003be570(float param_1, float param_2, edF32VECTOR4* param_4, uint param_5)
+void CLevelMap::DrawOffscreenMarkerArrow(float param_1, float param_2, edF32VECTOR4* param_4, uint param_5)
 {
 	bool bVar1;
 	bool bVar2;
@@ -3530,7 +3850,7 @@ void CLevelMap::FUN_003be570(float param_1, float param_2, edF32VECTOR4* param_4
 	float fVar10;
 	float fVar11;
 	edF32VECTOR4 local_e0;
-	astruct_21 local_d0;
+	S_2DRECT local_d0;
 	float local_90;
 	float local_8c;
 	float fStack136;
@@ -3563,7 +3883,7 @@ void CLevelMap::FUN_003be570(float param_1, float param_2, edF32VECTOR4* param_4
 		edF32Matrix4MulF32Vector4Hard(&local_e0, &this->field_0x130, param_4);
 		local_e0.x = (local_e0.x - 0.5f) / (local_e0.z - -1.0f) + 0.5f;
 		local_e0.y = (local_e0.y - 0.5f) / (local_e0.z - -1.0f) + 0.5f;
-		edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x170, &local_e0);
+		edF32Matrix4MulF32Vector4Hard(&local_20, &this->scrollMatrix, &local_e0);
 	}
 	bVar3 = true;
 	bVar2 = true;
@@ -3613,40 +3933,40 @@ void CLevelMap::FUN_003be570(float param_1, float param_2, edF32VECTOR4* param_4
 		fStack68 = fStack68 * fVar10;
 		local_40.x = local_40.x * fVar11 * (CScene::ptable.g_MapManager_0045168c)->field_0x388;
 		local_50 = fVar9 * fVar10 * (CScene::ptable.g_MapManager_0045168c)->field_0x388;
-		local_d0.field_0x0[0].x1 = (local_30.x - local_40.x) - local_50;
-		local_d0.field_0x0[0].y1 = (local_30.y - local_40.y) - local_4c;
+		local_d0.aVertices[0].x1 = (local_30.x - local_40.x) - local_50;
+		local_d0.aVertices[0].y1 = (local_30.y - local_40.y) - local_4c;
 		fStack136 = (local_30.z - local_40.z) - fStack72;
 		fStack132 = (local_30.w - local_40.w) - fStack68;
-		local_d0.field_0x0[1].x1 = (local_30.x + local_40.x) - local_50;
-		local_d0.field_0x0[1].y1 = (local_30.y + local_40.y) - local_4c;
+		local_d0.aVertices[1].x1 = (local_30.x + local_40.x) - local_50;
+		local_d0.aVertices[1].y1 = (local_30.y + local_40.y) - local_4c;
 		fStack120 = (local_30.z + local_40.z) - fStack72;
 		fStack116 = (local_30.w + local_40.w) - fStack68;
-		local_d0.field_0x0[2].x1 = local_30.x + local_40.x + local_50;
-		local_d0.field_0x0[2].y1 = local_30.y + local_40.y + local_4c;
+		local_d0.aVertices[2].x1 = local_30.x + local_40.x + local_50;
+		local_d0.aVertices[2].y1 = local_30.y + local_40.y + local_4c;
 		fStack104 = local_30.z + local_40.z + fStack72;
 		fStack100 = local_30.w + local_40.w + fStack68;
-		local_d0.field_0x0[3].x1 = (local_30.x - local_40.x) + local_50;
-		local_d0.field_0x0[3].y1 = (local_30.y - local_40.y) + local_4c;
+		local_d0.aVertices[3].x1 = (local_30.x - local_40.x) + local_50;
+		local_d0.aVertices[3].y1 = (local_30.y - local_40.y) + local_4c;
 		fStack88 = (local_30.z - local_40.z) + fStack72;
 		fStack84 = (local_30.w - local_40.w) + fStack68;
 
-		local_d0.field_0x0[0].s1 = edF32VECTOR2_004268e8.x;
-		local_d0.field_0x0[0].t1 = edF32VECTOR2_004268e8.y;
-		local_d0.field_0x0[1].s1 = edF32VECTOR2_004268f8.x;
-		local_d0.field_0x0[1].t1 = edF32VECTOR2_004268f8.y;
-		local_d0.field_0x0[2].s1 = edF32VECTOR2_00426908.x;
-		local_d0.field_0x0[2].t1 = edF32VECTOR2_00426908.y;
-		local_d0.field_0x0[3].s1 = edF32VECTOR2_00426918.x;
-		local_d0.field_0x0[3].t1 = edF32VECTOR2_00426918.y;
+		local_d0.aVertices[0].s1 = edF32VECTOR2_004268e8.x;
+		local_d0.aVertices[0].t1 = edF32VECTOR2_004268e8.y;
+		local_d0.aVertices[1].s1 = edF32VECTOR2_004268f8.x;
+		local_d0.aVertices[1].t1 = edF32VECTOR2_004268f8.y;
+		local_d0.aVertices[2].s1 = edF32VECTOR2_00426908.x;
+		local_d0.aVertices[2].t1 = edF32VECTOR2_00426908.y;
+		local_d0.aVertices[3].s1 = edF32VECTOR2_00426918.x;
+		local_d0.aVertices[3].t1 = edF32VECTOR2_00426918.y;
 
-		local_90 = local_d0.field_0x0[0].x1;
-		local_8c = local_d0.field_0x0[0].y1;
-		local_80 = local_d0.field_0x0[1].x1;
-		local_7c = local_d0.field_0x0[1].y1;
-		local_70 = local_d0.field_0x0[2].x1;
-		local_6c = local_d0.field_0x0[2].y1;
-		local_60 = local_d0.field_0x0[3].x1;
-		local_5c = local_d0.field_0x0[3].y1;
+		local_90 = local_d0.aVertices[0].x1;
+		local_8c = local_d0.aVertices[0].y1;
+		local_80 = local_d0.aVertices[1].x1;
+		local_7c = local_d0.aVertices[1].y1;
+		local_70 = local_d0.aVertices[2].x1;
+		local_6c = local_d0.aVertices[2].y1;
+		local_60 = local_d0.aVertices[3].x1;
+		local_5c = local_d0.aVertices[3].y1;
 		fVar9 = GetTimer()->totalTime * 256.0f;
 		if (fVar9 < 2.147484e+09f) {
 			uVar8 = static_cast<uint>(fVar9);
@@ -3672,7 +3992,7 @@ edF32VECTOR2 edF32VECTOR2_00426938 = { 0.0f, 0.0f };
 edF32VECTOR2 edF32VECTOR2_00426948 = { 1.0f, 0.0f };
 edF32VECTOR2 edF32VECTOR2_00426958 = { 1.0f, 1.0f };
 
-void CLevelMap::FUN_003be250(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, uint param_7)
+void CLevelMap::DrawOrientedMarkerIcon(float param_1, float param_2, int param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, uint param_7)
 {
 	float* pfVar1;
 	float* pfVar2;
@@ -3682,7 +4002,7 @@ void CLevelMap::FUN_003be250(float param_1, float param_2, int param_4, edF32VEC
 	float fVar5;
 	float fVar6;
 	edF32VECTOR4 local_c0;
-	astruct_21 local_b0;
+	S_2DRECT local_b0;
 	float local_70;
 	float local_6c;
 	float fStack104;
@@ -3714,7 +4034,7 @@ void CLevelMap::FUN_003be250(float param_1, float param_2, int param_4, edF32VEC
 		edF32Matrix4MulF32Vector4Hard(&local_c0, &this->field_0x130, param_5);
 		local_c0.x = (local_c0.x - 0.5f) / (local_c0.z - -1.0f) + 0.5f;
 		local_c0.y = (local_c0.y - 0.5f) / (local_c0.z - -1.0f) + 0.5f;
-		edF32Matrix4MulF32Vector4Hard(&local_10, &this->field_0x170, &local_c0);
+		edF32Matrix4MulF32Vector4Hard(&local_10, &this->scrollMatrix, &local_c0);
 	}
 	edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x1b0, param_6);
 	local_20.z = 0.0f;
@@ -3732,45 +4052,45 @@ void CLevelMap::FUN_003be250(float param_1, float param_2, int param_4, edF32VEC
 	fStack36 = fStack36 * fVar5;
 	local_20.x = local_20.x * fVar6 * (CScene::ptable.g_MapManager_0045168c)->field_0x388;
 	local_30 = fVar4 * fVar5 * (CScene::ptable.g_MapManager_0045168c)->field_0x388;
-	local_b0.field_0x0[0].x1 = (local_10.x - local_20.x) - local_30;
-	local_b0.field_0x0[0].y1 = (local_10.y - local_20.y) - local_2c;
+	local_b0.aVertices[0].x1 = (local_10.x - local_20.x) - local_30;
+	local_b0.aVertices[0].y1 = (local_10.y - local_20.y) - local_2c;
 	fStack104 = (local_10.z - local_20.z) - fStack40;
 	fStack100 = (local_10.w - local_20.w) - fStack36;
-	local_b0.field_0x0[1].x1 = (local_10.x + local_20.x) - local_30;
-	local_b0.field_0x0[1].y1 = (local_10.y + local_20.y) - local_2c;
+	local_b0.aVertices[1].x1 = (local_10.x + local_20.x) - local_30;
+	local_b0.aVertices[1].y1 = (local_10.y + local_20.y) - local_2c;
 	fStack88 = (local_10.z + local_20.z) - fStack40;
 	fStack84 = (local_10.w + local_20.w) - fStack36;
-	local_b0.field_0x0[2].x1 = local_10.x + local_20.x + local_30;
-	local_b0.field_0x0[2].y1 = local_10.y + local_20.y + local_2c;
+	local_b0.aVertices[2].x1 = local_10.x + local_20.x + local_30;
+	local_b0.aVertices[2].y1 = local_10.y + local_20.y + local_2c;
 	fStack72 = local_10.z + local_20.z + fStack40;
 	fStack68 = local_10.w + local_20.w + fStack36;
-	local_b0.field_0x0[3].x1 = (local_10.x - local_20.x) + local_30;
-	local_b0.field_0x0[3].y1 = (local_10.y - local_20.y) + local_2c;
+	local_b0.aVertices[3].x1 = (local_10.x - local_20.x) + local_30;
+	local_b0.aVertices[3].y1 = (local_10.y - local_20.y) + local_2c;
 	fStack56 = (local_10.z - local_20.z) + fStack40;
 	fStack52 = (local_10.w - local_20.w) + fStack36;
-	local_b0.field_0x0[0].s1 = edF32VECTOR2_00426928.x;
-	local_b0.field_0x0[0].t1 = edF32VECTOR2_00426928.y;
-	local_b0.field_0x0[1].s1 = edF32VECTOR2_00426938.x;
-	local_b0.field_0x0[1].t1 = edF32VECTOR2_00426938.y;
-	local_b0.field_0x0[2].s1 = edF32VECTOR2_00426948.x;
-	local_b0.field_0x0[2].t1 = edF32VECTOR2_00426948.y;
-	local_b0.field_0x0[3].s1 = edF32VECTOR2_00426958.x;
-	local_b0.field_0x0[3].t1 = edF32VECTOR2_00426958.y;
-	local_70 = local_b0.field_0x0[0].x1;
-	local_6c = local_b0.field_0x0[0].y1;
-	local_60 = local_b0.field_0x0[1].x1;
-	local_5c = local_b0.field_0x0[1].y1;
-	local_50 = local_b0.field_0x0[2].x1;
-	local_4c = local_b0.field_0x0[2].y1;
-	local_40 = local_b0.field_0x0[3].x1;
-	local_3c = local_b0.field_0x0[3].y1;
+	local_b0.aVertices[0].s1 = edF32VECTOR2_00426928.x;
+	local_b0.aVertices[0].t1 = edF32VECTOR2_00426928.y;
+	local_b0.aVertices[1].s1 = edF32VECTOR2_00426938.x;
+	local_b0.aVertices[1].t1 = edF32VECTOR2_00426938.y;
+	local_b0.aVertices[2].s1 = edF32VECTOR2_00426948.x;
+	local_b0.aVertices[2].t1 = edF32VECTOR2_00426948.y;
+	local_b0.aVertices[3].s1 = edF32VECTOR2_00426958.x;
+	local_b0.aVertices[3].t1 = edF32VECTOR2_00426958.y;
+	local_70 = local_b0.aVertices[0].x1;
+	local_6c = local_b0.aVertices[0].y1;
+	local_60 = local_b0.aVertices[1].x1;
+	local_5c = local_b0.aVertices[1].y1;
+	local_50 = local_b0.aVertices[2].x1;
+	local_4c = local_b0.aVertices[2].y1;
+	local_40 = local_b0.aVertices[3].x1;
+	local_3c = local_b0.aVertices[3].y1;
 	pMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(param_4);
-	pMapManager->FUN_003f85c0(pMaterial, &local_b0, param_7);
+	pMapManager->DrawClippedSprite(pMaterial, &local_b0, param_7);
 
 	return;
 }
 
-NativShopLevelSubObj* CLevelMap::FUN_003bc1e0()
+NativShopLevelSubObj* CLevelMap::DrawAndSelectNearestShopMarker()
 {
 	int iVar1;
 	bool bVar2;
@@ -3784,8 +4104,8 @@ NativShopLevelSubObj* CLevelMap::FUN_003bc1e0()
 	float fVar8;
 	float fVar9;
 	float fVar10;
-	astruct_21 local_b0;
-	astruct_21 local_70;
+	S_2DRECT local_b0;
+	S_2DRECT local_70;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
@@ -3815,32 +4135,32 @@ NativShopLevelSubObj* CLevelMap::FUN_003bc1e0()
 					edF32Matrix4MulF32Vector4Hard(&local_30, &this->field_0x130, &this_00->currentLocation);
 					local_30.x = (local_30.x - 0.5f) / (local_30.z - -1.0f) + 0.5f;
 					local_30.y = (local_30.y - 0.5f) / (local_30.z - -1.0f) + 0.5f;
-					edF32Matrix4MulF32Vector4Hard(&local_10, &this->field_0x170, &local_30);
+					edF32Matrix4MulF32Vector4Hard(&local_10, &this->scrollMatrix, &local_30);
 				}
 
 				pMapManager = CScene::ptable.g_MapManager_0045168c;
 				fVar10 = this->field_0xc4 * 25.0f;
-				local_70.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-				local_70.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-				local_70.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-				local_70.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-				local_70.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-				local_70.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-				local_70.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-				local_70.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
-				local_70.field_0x0[3].x1 = fVar10 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-				local_70.field_0x0[0].y1 = local_10.y - fVar10 * 0.5f;
-				local_70.field_0x0[2].y1 = local_10.y + fVar10 * 0.5f;
-				local_70.field_0x0[0].x1 = local_10.x - local_70.field_0x0[3].x1;
-				local_70.field_0x0[1].x1 = local_10.x + local_70.field_0x0[3].x1;
-				local_70.field_0x0[2].x1 = local_10.x + local_70.field_0x0[3].x1;
-				local_70.field_0x0[3].x1 = local_10.x - local_70.field_0x0[3].x1;
-				local_70.field_0x0[1].y1 = local_70.field_0x0[0].y1;
-				local_70.field_0x0[3].y1 = local_70.field_0x0[2].y1;
-				if ((((local_70.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.field_0x0[1].x1)) ||
-					(local_70.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.field_0x0[2].y1)) {
+				local_70.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+				local_70.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+				local_70.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+				local_70.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+				local_70.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+				local_70.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+				local_70.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+				local_70.aVertices[3].t1 = edF32VECTOR2_00426998.y;
+				local_70.aVertices[3].x1 = fVar10 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
+				local_70.aVertices[0].y1 = local_10.y - fVar10 * 0.5f;
+				local_70.aVertices[2].y1 = local_10.y + fVar10 * 0.5f;
+				local_70.aVertices[0].x1 = local_10.x - local_70.aVertices[3].x1;
+				local_70.aVertices[1].x1 = local_10.x + local_70.aVertices[3].x1;
+				local_70.aVertices[2].x1 = local_10.x + local_70.aVertices[3].x1;
+				local_70.aVertices[3].x1 = local_10.x - local_70.aVertices[3].x1;
+				local_70.aVertices[1].y1 = local_70.aVertices[0].y1;
+				local_70.aVertices[3].y1 = local_70.aVertices[2].y1;
+				if ((((local_70.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_70.aVertices[1].x1)) ||
+					(local_70.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y)) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_70.aVertices[2].y1)) {
 					pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(iVar4);
-					CScene::ptable.g_MapManager_0045168c->FUN_003f85c0(pDlistMaterial, &local_70, 0x80808080);
+					CScene::ptable.g_MapManager_0045168c->DrawClippedSprite(pDlistMaterial, &local_70, 0x80808080);
 				}
 				else {
 					pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(iVar4);
@@ -3864,29 +4184,29 @@ NativShopLevelSubObj* CLevelMap::FUN_003bc1e0()
 
 					if (iVar4 != 0xf) {
 						fVar8 = fVar10 * 0.5f;
-						local_b0.field_0x0[0].s1 = edF32VECTOR2_00426968.x;
-						local_b0.field_0x0[0].t1 = edF32VECTOR2_00426968.y;
-						local_b0.field_0x0[1].s1 = edF32VECTOR2_00426978.x;
-						local_b0.field_0x0[1].t1 = edF32VECTOR2_00426978.y;
-						local_b0.field_0x0[2].s1 = edF32VECTOR2_00426988.x;
-						local_b0.field_0x0[2].t1 = edF32VECTOR2_00426988.y;
-						local_b0.field_0x0[3].s1 = edF32VECTOR2_00426998.x;
-						local_b0.field_0x0[3].t1 = edF32VECTOR2_00426998.y;
+						local_b0.aVertices[0].s1 = edF32VECTOR2_00426968.x;
+						local_b0.aVertices[0].t1 = edF32VECTOR2_00426968.y;
+						local_b0.aVertices[1].s1 = edF32VECTOR2_00426978.x;
+						local_b0.aVertices[1].t1 = edF32VECTOR2_00426978.y;
+						local_b0.aVertices[2].s1 = edF32VECTOR2_00426988.x;
+						local_b0.aVertices[2].t1 = edF32VECTOR2_00426988.y;
+						local_b0.aVertices[3].s1 = edF32VECTOR2_00426998.x;
+						local_b0.aVertices[3].t1 = edF32VECTOR2_00426998.y;
 						fVar7 = fVar8 * (CScene::ptable.g_MapManager_0045168c)->field_0x388 * 0.5f;
-						local_b0.field_0x0[2].y1 = fVar8 * 0.5f + (local_10.y - fVar10 * 0.4f);
-						local_b0.field_0x0[1].x1 = (local_10.x + fVar10 * 0.4f) - fVar8 * 0.5f;
-						local_b0.field_0x0[0].x1 = local_b0.field_0x0[1].x1 - fVar7;
-						local_b0.field_0x0[1].x1 = local_b0.field_0x0[1].x1 + fVar7;
-						local_b0.field_0x0[0].y1 = local_b0.field_0x0[2].y1 - fVar8 * 0.5f;
-						local_b0.field_0x0[2].y1 = local_b0.field_0x0[2].y1 + fVar8 * 0.5f;
-						local_b0.field_0x0[1].y1 = local_b0.field_0x0[0].y1;
-						local_b0.field_0x0[2].x1 = local_b0.field_0x0[1].x1;
-						local_b0.field_0x0[3].x1 = local_b0.field_0x0[0].x1;
-						local_b0.field_0x0[3].y1 = local_b0.field_0x0[2].y1;
-						if (((local_b0.field_0x0[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.field_0x0[1].x1)) ||
-							((local_b0.field_0x0[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.field_0x0[2].y1)))) {
+						local_b0.aVertices[2].y1 = fVar8 * 0.5f + (local_10.y - fVar10 * 0.4f);
+						local_b0.aVertices[1].x1 = (local_10.x + fVar10 * 0.4f) - fVar8 * 0.5f;
+						local_b0.aVertices[0].x1 = local_b0.aVertices[1].x1 - fVar7;
+						local_b0.aVertices[1].x1 = local_b0.aVertices[1].x1 + fVar7;
+						local_b0.aVertices[0].y1 = local_b0.aVertices[2].y1 - fVar8 * 0.5f;
+						local_b0.aVertices[2].y1 = local_b0.aVertices[2].y1 + fVar8 * 0.5f;
+						local_b0.aVertices[1].y1 = local_b0.aVertices[0].y1;
+						local_b0.aVertices[2].x1 = local_b0.aVertices[1].x1;
+						local_b0.aVertices[3].x1 = local_b0.aVertices[0].x1;
+						local_b0.aVertices[3].y1 = local_b0.aVertices[2].y1;
+						if (((local_b0.aVertices[0].x1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).x) || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).x < local_b0.aVertices[1].x1)) ||
+							((local_b0.aVertices[0].y1 < ((CScene::ptable.g_MapManager_0045168c)->field_0x310).y || (((CScene::ptable.g_MapManager_0045168c)->field_0x320).y < local_b0.aVertices[2].y1)))) {
 							pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(iVar4);
-							pMapManager->FUN_003f85c0(pDlistMaterial, &local_b0, 0x80808080);
+							pMapManager->DrawClippedSprite(pDlistMaterial, &local_b0, 0x80808080);
 						}
 						else {
 							pDlistMaterial = CScene::ptable.g_MapManager_0045168c->GetDlistMaterial(iVar4);
@@ -3923,7 +4243,7 @@ edF32VECTOR4 edF32VECTOR4_004269c0 = { 0.0f, 0.0f, 0.0f, 0.0f };
 edF32VECTOR4 edF32VECTOR4_004269d0 = { 0.0f, 0.0f, 1.0f, 0.0f };
 edF32VECTOR4 edF32VECTOR4_004269e0 = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
+void CLevelMap::DrawMarkerLabels(MapPosition* pMapPosition, int param_3)
 {
 	int iVar1;
 	edCTextStyle* pTextStyle;
@@ -3935,7 +4255,7 @@ void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
 	float fVar5;
 	float fVar6;
 	edF32VECTOR4 local_1630;
-	astruct_21 local_1620;
+	S_2DRECT local_1620;
 	edF32VECTOR4 local_d0;
 	CLevelScheduler* pLevelScheduler;
 	CMapManager* pMapManager;
@@ -3946,7 +4266,7 @@ void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
 	textStyle.Reset();
 	textStyle.SetShadow(0x100);
 	textStyle.alpha = 0xff;
-	textStyle.rgbaColour = -0x2f1f0001;
+	textStyle.rgbaColour = 0xd0e0ffff;
 	textStyle.SetHorizontalAlignment(0);
 	textStyle.SetVerticalAlignment(8);
 	textStyle.SetFont(BootDataFont, false);
@@ -3966,7 +4286,7 @@ void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
 				v1 = &local_1630;
 				local_1630.x = (local_1630.x - 0.5f) / (local_1630.z - -1.0f) + 0.5f;
 				local_1630.y = (local_1630.y - 0.5f) / (local_1630.z - -1.0f) + 0.5f;
-				edF32Matrix4MulF32Vector4Hard(&local_d0, &this->field_0x170, v1);
+				edF32Matrix4MulF32Vector4Hard(&local_d0, &this->scrollMatrix, v1);
 			}
 
 			local_d0.x = local_d0.x + 20.0f;
@@ -3980,23 +4300,23 @@ void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
 				fVar4 = (textFormat.offsetY_0x4 + textFormat.field_0xc) * 0.7f;
 				if ((((0.0f <= local_d0.x + fVar3) && (fVar6 = local_d0.x + textFormat.offsetX_0x0 * 0.7f, fVar6 - 16.0f <= static_cast<float>(gVideoConfig.screenWidth))) && (0.0f <= local_d0.y + fVar4)) &&
 					(local_d0.y + fVar5 <= static_cast<float>(gVideoConfig.screenHeight))) {
-					local_1620.field_0x0[0].x1 = fVar6 - 12.0f;
-					local_1620.field_0x0[0].s1 = edF32VECTOR4_004269b0.z;
-					local_1620.field_0x0[0].t1 = edF32VECTOR4_004269b0.w;
-					local_1620.field_0x0[1].s1 = edF32VECTOR4_004269c0.z;
-					local_1620.field_0x0[1].t1 = edF32VECTOR4_004269c0.w;
-					local_1620.field_0x0[2].s1 = edF32VECTOR4_004269d0.z;
-					local_1620.field_0x0[2].t1 = edF32VECTOR4_004269d0.w;
-					local_1620.field_0x0[3].s1 = edF32VECTOR4_004269e0.z;
-					local_1620.field_0x0[3].t1 = edF32VECTOR4_004269e0.w;
-					local_1620.field_0x0[0].y1 = (local_d0.y + fVar5) - 1.0f;
-					local_1620.field_0x0[1].x1 = local_d0.x + fVar3 + 12.0f;
-					local_1620.field_0x0[1].y1 = (local_d0.y + fVar5) - 1.0f;
-					local_1620.field_0x0[2].x1 = local_d0.x + fVar3 + 12.0f;
-					local_1620.field_0x0[2].y1 = local_d0.y + fVar4 + 1.0f;
-					local_1620.field_0x0[3].x1 = (local_d0.x + textFormat.offsetX_0x0 * 0.7f) - 12.0f;
-					local_1620.field_0x0[3].y1 = local_d0.y + fVar4 + 1.0f;
-					pMapManager->FUN_003f85c0(&MenuBitmaps[8].materialInfo, &local_1620, 0x80808080);
+					local_1620.aVertices[0].x1 = fVar6 - 12.0f;
+					local_1620.aVertices[0].s1 = edF32VECTOR4_004269b0.z;
+					local_1620.aVertices[0].t1 = edF32VECTOR4_004269b0.w;
+					local_1620.aVertices[1].s1 = edF32VECTOR4_004269c0.z;
+					local_1620.aVertices[1].t1 = edF32VECTOR4_004269c0.w;
+					local_1620.aVertices[2].s1 = edF32VECTOR4_004269d0.z;
+					local_1620.aVertices[2].t1 = edF32VECTOR4_004269d0.w;
+					local_1620.aVertices[3].s1 = edF32VECTOR4_004269e0.z;
+					local_1620.aVertices[3].t1 = edF32VECTOR4_004269e0.w;
+					local_1620.aVertices[0].y1 = (local_d0.y + fVar5) - 1.0f;
+					local_1620.aVertices[1].x1 = local_d0.x + fVar3 + 12.0f;
+					local_1620.aVertices[1].y1 = (local_d0.y + fVar5) - 1.0f;
+					local_1620.aVertices[2].x1 = local_d0.x + fVar3 + 12.0f;
+					local_1620.aVertices[2].y1 = local_d0.y + fVar4 + 1.0f;
+					local_1620.aVertices[3].x1 = (local_d0.x + textFormat.offsetX_0x0 * 0.7f) - 12.0f;
+					local_1620.aVertices[3].y1 = local_d0.y + fVar4 + 1.0f;
+					pMapManager->DrawClippedSprite(&MenuBitmaps[8].materialInfo, &local_1620, 0x80808080);
 					textFormat.Display(local_d0.x, local_d0.y);
 				}
 			}
@@ -4011,11 +4331,11 @@ void CLevelMap::FUN_003bcdf0(MapPosition* pMapPosition, int param_3)
 	return;
 }
 
-void CLevelMap::FUN_003bbe50(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDataSizes* pMapSize, MapPosition* pMapPosition)
+void CLevelMap::DrawObjectiveTargetMarkers(ObjectiveEntry* pObjectiveEntry, int param_3, MapDataSizes* pMapSize, MapPosition* pMapPosition)
 {
 	int iVar1;
 	int iVar2;
-	LoadLoopObject_50* pLVar3;
+	ObjectiveEntry* pLVar3;
 	MapPosition* pMVar4;
 	NativShopLevelSubObj* pNVar5;
 	int iVar6;
@@ -4029,11 +4349,11 @@ void CLevelMap::FUN_003bbe50(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDa
 		iVar6 = 0;
 		do {
 			if (((iVar6 != this->field_0x0) && (iVar1 = pLevelScheduler->IsRuneCollectedInLevel(iVar6), iVar1 == 0)) &&
-				(pMVar4 = FUN_003bd1f0(iVar6, pMapSize, pMapPosition, 0), pMVar4 != (MapPosition*)0x0)) {
+				(pMVar4 = FindMarkerForLevel(iVar6, pMapSize, pMapPosition, 0), pMVar4 != (MapPosition*)0x0)) {
 				local_10.xyz = pMVar4->position;
 				local_10.w = 1.0f;
-				FUN_003bd960(25.0f, 25.0f, &local_10, 0x7f613021);
-				FUN_003be570(25.0f, 25.0f, &local_10, 0x7f613021);
+				DrawPulsingMarkerHighlight(25.0f, 25.0f, &local_10, 0x7f613021);
+				DrawOffscreenMarkerArrow(25.0f, 25.0f, &local_10, 0x7f613021);
 			}
 
 			iVar6 = iVar6 + 1;
@@ -4046,19 +4366,19 @@ void CLevelMap::FUN_003bbe50(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDa
 			if ((iVar1 != 0x62) && (iVar2 = CLevelScheduler::ScenVar_Get(iVar1), iVar2 != 2)) {
 				if (iVar6 == this->field_0x0) {
 					pLVar3 = pLevelScheduler->FUN_002d9f30(iVar1);
-					if (pLVar3 != (LoadLoopObject_50*)0x0) {
-						FUN_003bd960(25.0f, 25.0f, &pLVar3->field_0x10, 0x7f112e7c);
-						FUN_003be570(25.0f, 25.0f, &pLVar3->field_0x10, 0x7f112e7c);
+					if (pLVar3 != (ObjectiveEntry*)0x0) {
+						DrawPulsingMarkerHighlight(25.0f, 25.0f, &pLVar3->field_0x10, 0x7f112e7c);
+						DrawOffscreenMarkerArrow(25.0f, 25.0f, &pLVar3->field_0x10, 0x7f112e7c);
 					}
 				}
 				else {
-					pMVar4 = FUN_003bd1f0(iVar6, pMapSize, pMapPosition, 0);
+					pMVar4 = FindMarkerForLevel(iVar6, pMapSize, pMapPosition, 0);
 					if (pMVar4 != (MapPosition*)0x0) {
 						local_20.xyz = pMVar4->position;
 						local_20.w = 1.0f;
 
-						FUN_003bd960(25.0f, 25.0f, &local_20, 0x7f112e7c);
-						FUN_003be570(25.0f, 25.0f, &local_20, 0x7f112e7c);
+						DrawPulsingMarkerHighlight(25.0f, 25.0f, &local_20, 0x7f112e7c);
+						DrawOffscreenMarkerArrow(25.0f, 25.0f, &local_20, 0x7f112e7c);
 					}
 				}
 			}
@@ -4067,20 +4387,20 @@ void CLevelMap::FUN_003bbe50(LoadLoopObject_50* pLoadLoopObj, int param_3, MapDa
 		} while (iVar6 < 0x10);
 	case 3:
 	case 4:
-		pNVar5 = pLevelScheduler->FUN_002d9510(pLoadLoopObj->field_0x24);
+		pNVar5 = pLevelScheduler->FUN_002d9510(pObjectiveEntry->field_0x24);
 		if ((pNVar5 != (NativShopLevelSubObj*)0x0) && (pNVar5->currentLevelId == this->field_0x0)) {
-			FUN_003bd960(25.0f, 25.0f, &pNVar5->currentLocation, 0x7f2f777f);
-			FUN_003be570(25.0f, 25.0f, &pNVar5->currentLocation, 0x7f2f777f);
+			DrawPulsingMarkerHighlight(25.0f, 25.0f, &pNVar5->currentLocation, 0x7f2f777f);
+			DrawOffscreenMarkerArrow(25.0f, 25.0f, &pNVar5->currentLocation, 0x7f2f777f);
 		}
 	}
-	if ((pLoadLoopObj != (LoadLoopObject_50*)0x0) && (this->field_0x0 == pLoadLoopObj->levelId)) {
-		if (pLoadLoopObj->field_0x40 == 0) {
-			FUN_003bd960(25.0f, 25.0f, &pLoadLoopObj->field_0x10, 0x7f7f7f7f);
-			FUN_003be570(25.0f, 25.0f, &pLoadLoopObj->field_0x10, 0x7f7f7f7f);
+	if ((pObjectiveEntry != (ObjectiveEntry*)0x0) && (this->field_0x0 == pObjectiveEntry->levelId)) {
+		if (pObjectiveEntry->field_0x40 == 0) {
+			DrawPulsingMarkerHighlight(25.0f, 25.0f, &pObjectiveEntry->field_0x10, 0x7f7f7f7f);
+			DrawOffscreenMarkerArrow(25.0f, 25.0f, &pObjectiveEntry->field_0x10, 0x7f7f7f7f);
 		}
 		else {
-			FUN_003bd960(25.0f, 25.0f, &pLoadLoopObj->field_0x30, 0x7f7f7f7f);
-			FUN_003be570(25.0f, 25.0f, &pLoadLoopObj->field_0x30, 0x7f7f7f7f);
+			DrawPulsingMarkerHighlight(25.0f, 25.0f, &pObjectiveEntry->field_0x30, 0x7f7f7f7f);
+			DrawOffscreenMarkerArrow(25.0f, 25.0f, &pObjectiveEntry->field_0x30, 0x7f7f7f7f);
 		}
 	}
 
@@ -4097,37 +4417,4 @@ void CWorldMap::Level_PostInit()
 void CWorldMap::Draw()
 {
 	IMPLEMENTATION_GUARD();
-}
-
-uint FUN_003f6910(astruct_20* param_1)
-{
-	bool bVar1;
-	uint uVar2;
-
-	uVar2 = 0;
-	if (param_1->field_0x0 != 0x62) {
-		uVar2 = 0x40;
-		bVar1 = false;
-		switch (param_1->field_0x4) {
-		case 0:
-			uVar2 = 0x41;
-			break;
-		case 1:
-			uVar2 = 0x42;
-			bVar1 = true;
-			break;
-		case 2:
-			uVar2 = 0x44;
-		case 3:
-			uVar2 = uVar2 | 8;
-		case 4:
-			uVar2 = uVar2 | 0x10;
-		default:
-			bVar1 = true;
-		}
-		if ((bVar1) && (param_1->hash != 0)) {
-			uVar2 = uVar2 | 0x20;
-		}
-	}
-	return uVar2;
 }

@@ -5660,7 +5660,7 @@ void CBehaviourNativAkasa::DrawBraceletSelectText()
 	textStyle.SetFont(BootDataFont, false);
 	textStyle.SetHorizontalAlignment(2);
 	textStyle.SetVerticalAlignment(8);
-	textStyle.rgbaColour = -1;
+	textStyle.rgbaColour = 0xffffffff;
 
 	textStyle.SetShadow(0x100);
 	textStyle.SetScale(0.75f, 0.75f);
