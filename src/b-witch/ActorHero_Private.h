@@ -359,6 +359,13 @@ public:
 	void StateHeroRun();
 	void StateHeroRun_B();
 
+
+	void StateHeroBoomyControlBefore();
+	void StateHeroBoomyControlBeforeTerm(int newState);
+
+	void StateHeroBoomyControl();
+	void StateHeroBoomyControlTerm();
+
 	void StateHeroJoke();
 
 	void StateHeroSlideSlipInit();
@@ -611,7 +618,10 @@ public:
 	CHero_InputRotationAnalyser inputRotationAnalyser;
 	CHero_InputAngleAnalyser inputAngleAnalyser;
 
+	SPEED_DYN field_0xc9c;
+	SPEED_DYN field_0xca4;
 	SPEED_DYN field_0xcb4;
+	SPEED_DYN field_0xcac;
 
 	edF32MATRIX3* field_0xff0;
 

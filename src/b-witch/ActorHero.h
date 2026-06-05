@@ -126,6 +126,10 @@
 #define STATE_HERO_BOOMY_PREPARE_FIGHT_BLOW 0xdc
 #define STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW 0xdd
 #define STATE_HERO_BOOMY_RETURN_FIGHT_BLOW 0xde
+
+#define STATE_HERO_BOOMY_CONTROL_BEFORE 0xda
+#define STATE_HERO_BOOMY_CONTROL 0xdb
+
 #define STATE_HERO_DF 0xdf
 
 #define STATE_HERO_JOKE 0xe0
@@ -286,6 +290,12 @@ struct _evt_checkpoint_param
 	int flags;
 };
 
+struct _boomy_zone_pair
+{
+	S_STREAM_REF<ed_zone_3d> zoneA;
+	int field_0x4;
+};
+
 class CBehaviourRideJamGut : public CBehaviour
 {
 public:
@@ -392,6 +402,8 @@ public:
 	edF32VECTOR3 field_0xe90;
 	int levelDataField1C_0xe9c;
 	int field_0xea0;
+
+	_boomy_zone_pair* field_0xe40;
 
 	// Hero goes at least up to 0x1558 given CanActivateCheckpoint
 	float field_0x1544;

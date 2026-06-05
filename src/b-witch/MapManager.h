@@ -78,6 +78,7 @@ public:
 	void InstallMapBank();
 	void SetupMatrices();
 	void Update();
+	void Close();
 	void ManagePad();
 	void UpdateViewportBounds();
 	MapPosition* FindMarkerForLevel(int inLevelId, MapDataSizes* pMapSizes, MapPosition* pMarkerBuffer, long param_5);
@@ -91,6 +92,7 @@ public:
 	NativShopLevelSubObj* DrawAndSelectNearestShopMarker();
 	void DrawMarkerLabels(MapPosition* pMapPosition, int param_3);
 	void DrawObjectiveTargetMarkers(ObjectiveEntry* pObjectiveEntry, int param_3, MapDataSizes* pMapSize, MapPosition* pMapPosition);
+	void DrawSelectedShop(NativShopLevelSubObj* pShopSubObj, ObjectiveEntry* pObjective, int param_4);
 	void DrawLegend(float param_1, float param_2);
 
 	int field_0x0;
@@ -180,6 +182,7 @@ struct CMapManager : public CObjectManager
 	void Level_PostInit();
 
 	void OnFileLoaded();
+	void Close();
 
 	void Func_003f8d80();
 	void DrawMapPromptHint();
@@ -232,7 +235,7 @@ struct CMapManager : public CObjectManager
 	int field_0x380;
 	float field_0x384;
 	float field_0x388;
-	int field_0x38c;
+	int bHasWolfenMap;
 	int field_0x390;
 	int field_0x394;
 };

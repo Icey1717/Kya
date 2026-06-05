@@ -9,8 +9,10 @@
 #include "ActorWolfen.h"
 #include "ActorManager.h"
 #include "InputManager.h"
+#include "edVideo/VideoD.h"
 #include "EventManager.h"
 #include "FrontendDisp.h"
+#include "FrontendMoney.h"
 #include "LevelScheduler.h"
 #include "TranslatedTextData.h"
 #include "TimeController.h"
@@ -20,6 +22,7 @@
 #include "DlistManager.h"
 #include "edBank/edBankFile.h"
 #include "ed3D/ed3DG3D.h"
+#include "Rendering/edCTextFont.h"
 
 void CMapManager::OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream)
 {
@@ -255,6 +258,33 @@ void CMapManager::OnFileLoaded()
 	}
 
 	this->field_0x300 = 1;
+
+	return;
+}
+
+void CMapManager::Close()
+{
+	bool bVar1;
+	edDList_material* pCVar2;
+	uint uVar3;
+
+	this->field_0x300 = 0;
+	if ((this->pBankBufferEntry != (edCBankBufferEntry*)0x0) && (bVar1 = this->pBankBufferEntry->is_loaded(), bVar1 == false)) {
+		this->pBankBufferEntry->wait();
+	}
+
+	edDListTermMaterial(this->field_0x210);
+	ed3DUnInstallG2D(&this->field_0x1e0);
+
+	uVar3 = 0;
+	pCVar2 = this->field_0xf0;
+	do {
+		edDListTermMaterial(pCVar2);
+		uVar3 = uVar3 + 1;
+		pCVar2 = pCVar2 + 1;
+	} while (uVar3 < 0xf);
+
+	ed3DUnInstallG2D(&this->field_0xc0);
 
 	return;
 }
@@ -895,7 +925,7 @@ void CMapManager::GetMarkerPositions(MapDataSizes* pMarkerCounts, MapPosition* p
 	}
 
 	// Wolfen.
-	if ((this->field_0x38c != 0) && (iVar6 = 0, 0 < pActorManager->nbActors)) {
+	if ((this->bHasWolfenMap != 0) && (iVar6 = 0, 0 < pActorManager->nbActors)) {
 		do {
 			piVar8 = (CActor*)0x0;
 			if (iVar6 != -1) {
@@ -1364,7 +1394,7 @@ void CMapManager::Game_Init()
 	this->pLevelMap = new CLevelMap;
 	this->pWorldMap = new CWorldMap;
 	this->field_0x390 = 0;
-	this->field_0x38c = 0;
+	this->bHasWolfenMap = 0;
 	this->field_0x388 = 1.0f;
 
 	return;
@@ -1394,7 +1424,7 @@ void CMapManager::Level_Init()
 		iVar2 = CLevelScheduler::ScenVar_Get(this->field_0x14);
 	}
 
-	this->field_0x38c = static_cast<uint>(iVar2 == 2);
+	this->bHasWolfenMap = static_cast<uint>(iVar2 == 2);
 	this->field_0x390 = 0;
 
 	return;
@@ -1741,7 +1771,7 @@ void CMapManager::Level_Manage()
 
 	Func_003f8d80();
 
-	if (this->field_0x38c == 0) {
+	if (this->bHasWolfenMap == 0) {
 		if ((((this->field_0x394 == 0) && (pZone = (this->field_0x18).Get(), pZone != (ed_zone_3d*)0x0)) && (CActorHero::_gThis != (CActorHero*)0x0)) &&
 			(uVar1 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0), (uVar1 & 1) != 0)) {
 			this->field_0x394 = 1;
@@ -1754,8 +1784,8 @@ void CMapManager::Level_Manage()
 			iVar2 = CLevelScheduler::ScenVar_Get(this->field_0x14);
 		}
 
-		this->field_0x38c = static_cast<uint>(iVar2 == 2);
-		if (this->field_0x38c != 0) {
+		this->bHasWolfenMap = static_cast<uint>(iVar2 == 2);
+		if (this->bHasWolfenMap != 0) {
 			this->field_0x390 = 1;
 		}
 	}
@@ -1827,7 +1857,7 @@ void CMapManager::Level_Manage()
 			}
 		}
 		else {
-			if (((1.0f <= (fVar9 - this->field_0x384) / 0.5f) && (this->field_0x37c == 0.0f)) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_17) != 0)) {
+			if (((1.0f <= (fVar9 - this->field_0x384) / 0.5f) && (this->field_0x37c == 0.0f)) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_SQUARE_ALT) != 0)) {
 				(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 2, 0);
 				this->field_0x380 = this->field_0x380 ^ 1;
 				this->field_0x384 = fVar9;
@@ -2320,7 +2350,7 @@ void CLevelMap::Draw()
 		}
 	}
 
-	if ((gPlayerInput.pressedBitfield & 0x1000000) != 0) {
+	if ((gPlayerInput.pressedBitfield & PAD_BITMASK_CROSS_ALT) != 0) {
 		(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
 		pMapManager = CScene::ptable.g_MapManager_0045168c;
 		IMPLEMENTATION_GUARD(
@@ -2328,7 +2358,7 @@ void CLevelMap::Draw()
 		pMapManager->WorldMap_Enter(this->field_0x0);)
 	}
 
-	if ((gPlayerInput.pressedBitfield & 0x4000000) != 0) {
+	if ((gPlayerInput.pressedBitfield & PAD_BITMASK_13) != 0) {
 		(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
 		MapLeave();
 	}
@@ -2486,7 +2516,7 @@ void CLevelMap::InstallMapBank()
 	UpdateViewportBounds();
 	SetupMatrices();
 
-	bVar1 = (CScene::ptable.g_MapManager_0045168c)->field_0x38c != 0;
+	bVar1 = (CScene::ptable.g_MapManager_0045168c)->bHasWolfenMap != 0;
 	if (bVar1) {
 		bVar1 = (CScene::ptable.g_MapManager_0045168c)->field_0x390 != 0;
 	}
@@ -2893,6 +2923,46 @@ void CLevelMap::Update()
 	return;
 }
 
+void CLevelMap::Close()
+{
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+
+	if ((this->pBankBufferEntry != (edCBankBufferEntry*)0x0) && (bVar1 = this->pBankBufferEntry->is_loaded(), bVar1 == false)) {
+		this->pBankBufferEntry->wait();
+	}
+
+	if (this->pMaterials != (edDList_material*)0x0) {
+		uVar3 = 0;
+		if (this->field_0x78 != 0) {
+			do {
+				edDListTermMaterial(&this->pMaterials[uVar3]);
+				uVar3 = uVar3 + 1;
+			} while (uVar3 < this->field_0x78);
+		}
+
+		this->field_0x78 = 0;
+		delete(this->pMaterials);
+		this->pMaterials = (edDList_material*)0x0;
+		ed3DUnInstallG2D(&this->field_0x44);
+	}
+
+	GlobalDList_AddToView();
+#ifdef PLATFORM_PS2
+	edVideoFlip();
+#endif
+
+	if (this->pBankBufferEntry != (edCBankBufferEntry*)0x0) {
+		this->pBankBufferEntry->close();
+		this->pBankBufferEntry = (edCBankBufferEntry*)0x0;
+	}
+
+	this->bankBuffer.terminate();
+
+	return;
+}
+
 void CLevelMap::ManagePad()
 {
 	int iVar2;
@@ -2947,11 +3017,11 @@ void CLevelMap::ManagePad()
 			this->field_0xe0 = 1;
 		}
 
-		if ((this->field_0xdc != 0) && (gPlayerInput.aButtons[29].clickValue != 0.0f)) {
+		if ((this->field_0xdc != 0) && (gPlayerInput.aButtons[INPUT_BUTTON_INDEX_1E].clickValue != 0.0f)) {
 			this->field_0xc0 = this->field_0xc0 - fVar6 * 3.141593f * 0.5f;
 		}
 
-		if ((this->field_0xe0 != 0) && (gPlayerInput.aButtons[30].clickValue != 0.0f)) {
+		if ((this->field_0xe0 != 0) && (gPlayerInput.aButtons[INPUT_BUTTON_INDEX_SQUARE_ALT].clickValue != 0.0f)) {
 			this->field_0xc0 = this->field_0xc0 + fVar6 * 3.141593f * 0.5f;
 		}
 
@@ -2980,7 +3050,7 @@ void CLevelMap::ManagePad()
 		edF32Vector4AddHard(&this->field_0xb0, &this->field_0xb0, &local_10);
 		edF32Vector4AddHard(&this->field_0xb0, &this->field_0xb0, &local_20);
 
-		if (((this->field_0x0 == CLevelScheduler::gThis->currentLevelID) && (CActorHero::_gThis != (CActorHero*)0x0)) && ((gPlayerInput.pressedBitfield & 0x10000000) != 0)) {
+		if (((this->field_0x0 == CLevelScheduler::gThis->currentLevelID) && (CActorHero::_gThis != (CActorHero*)0x0)) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_R1_ALT) != 0)) {
 			(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
 			edF32Matrix4MulF32Vector4Hard(&this->field_0xb0, &this->field_0x130, &CActorHero::_gThis->currentLocation);
 
@@ -3494,8 +3564,7 @@ void CLevelMap::DrawMapOverlays(ObjectiveEntry* pObjectiveEntry, int param_3)
 	}
 
 	if (pNVar5 != (NativShopLevelSubObj*)0x0) {
-		IMPLEMENTATION_GUARD(
-		FUN_003bc770(pNVar5, pObjectiveEntry, param_3);)
+		DrawSelectedShop(pNVar5, pObjectiveEntry, param_3);
 	}
 
 	return;
@@ -4403,6 +4472,183 @@ void CLevelMap::DrawObjectiveTargetMarkers(ObjectiveEntry* pObjectiveEntry, int 
 			DrawOffscreenMarkerArrow(25.0f, 25.0f, &pObjectiveEntry->field_0x30, 0x7f7f7f7f);
 		}
 	}
+
+	return;
+}
+
+edF32VECTOR4 edF32VECTOR4_004269f0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+edF32VECTOR4 edF32VECTOR4_00426a00 = { 0.0f, 0.0f, 0.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426a10 = { 0.0f, 0.0f, 1.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426a20 = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+void CLevelMap::DrawSelectedShop(NativShopLevelSubObj* pShopSubObj, ObjectiveEntry* pObjective, int param_4)
+{
+	int iVar1;
+	bool bVar2;
+	bool bVar3;
+	Episode* pEVar4;
+	edCTextStyle* pNewFont;
+	char* pcVar5;
+	char* format;
+	char* uVar6;
+	long lVar7;
+	int iVar8;
+	NativShopLevelSubObjSubObj* pNVar9;
+	CSprite* pCVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_1a40;
+	S_2DRECT local_1a30;
+	char local_4e0[1024];
+	edCTextStyle eStack224;
+	edF32VECTOR4 local_20;
+	undefined4 local_4;
+	CLevelScheduler* pLevelScheduler;
+	CMapManager* pMapManager;
+
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
+	pLevelScheduler = CLevelScheduler::gThis;
+	bVar3 = pShopSubObj->FUN_002d8cb0();
+	pEVar4 = pLevelScheduler->GetEpisode(pShopSubObj->episodeThresholdLink);
+	if (this->field_0xd0 == 0) {
+		edF32Matrix4MulF32Vector4Hard(&local_20, &this->field_0x1b0, &pShopSubObj->currentLocation);
+	}
+	else {
+		edF32Matrix4MulF32Vector4Hard(&local_1a40, &this->field_0x130, &pShopSubObj->currentLocation);
+		local_1a40.x = (local_1a40.x - 0.5f) / (local_1a40.z - -1.0f) + 0.5f;
+		local_1a40.y = (local_1a40.y - 0.5f) / (local_1a40.z - -1.0f) + 0.5f;
+		edF32Matrix4MulF32Vector4Hard(&local_20, &this->scrollMatrix, &local_1a40);
+	}
+
+	bVar2 = false;
+	if (((param_4 == 4) || (param_4 == 3)) || (param_4 == 2)) {
+		bVar2 = true;
+	}
+
+	eStack224.Reset();
+	eStack224.SetShadow(0x100);
+	eStack224.rgbaColour = 0xd0e0ffff;
+	eStack224.alpha = 0xff;
+	eStack224.SetHorizontalAlignment(0);
+	eStack224.SetVerticalAlignment(0);
+	uVar6 = (char*)0x0;
+	eStack224.SetFont(BootDataFont, false);
+	eStack224.SetScale(0.80000001f, 0.80000001f);
+	pNewFont = edTextStyleSetCurrent(&eStack224);
+
+	pcVar5 = uVar6;
+	local_4e0[0] = '\0';
+	if ((bVar3 == false) || (iVar8 = 0, pNVar9 = pShopSubObj->aSubObjs, pShopSubObj->field_0x8 == 0)) {
+		if (bVar3 == false) {
+			iVar8 = CLevelScheduler::ScenVar_Get(0);
+			lVar7 = static_cast<long>(pEVar4->minWolfen - iVar8);
+			if (lVar7 == 1) {
+				format = gMessageManager.get_message(0x474b4a0c0b031f0c);
+				sprintf(local_4e0, format);
+			}
+			else {
+				pcVar5 = gMessageManager.get_message(0x8050f0c0b031f53);
+				sprintf(local_4e0, pcVar5);
+				pcVar5 = reinterpret_cast<char*>(lVar7);
+			}
+		}
+		else {
+			pcVar5 = gMessageManager.get_message(0x1e091f0f4e45575f);
+			sprintf(local_4e0, "%%[BLINK]k%s%%[RESET]K", pcVar5);
+		}
+	}
+	else {
+		do {
+			if (pNVar9->purchaseId != 0x20) {
+				if (local_4e0[0] != '\0') {
+					strcat(local_4e0, "\n");
+				}
+				pcVar5 = gMessageManager.get_message(pNVar9->field_0x8);
+				strcat(local_4e0, pcVar5);
+			}
+
+			pcVar5 = uVar6;
+			iVar8 = iVar8 + 1;
+			pNVar9 = pNVar9 + 1;
+		} while (iVar8 < 5);
+	}
+
+	if (local_4e0[0] != '\0') {
+		edCTextFormat local_19f0;
+		local_19f0.FormatString(local_4e0, pcVar5);
+		fVar12 = local_19f0.offsetX_0x0 * 0.8f;
+		fVar11 = (local_19f0.offsetX_0x0 + local_19f0.field_0x8) * 0.8f;
+		if ((bVar3 != false) && (pShopSubObj->field_0x8 != 0)) {
+			fVar12 = fVar12 - 23.0f;
+			fVar11 = fVar11 + 23.0f;
+		}
+		local_1a30.aVertices[0].s1 = edF32VECTOR4_004269f0.z;
+		local_1a30.aVertices[0].t1 = edF32VECTOR4_004269f0.w;
+		local_20.x = local_20.x - (fVar11 - fVar12) * 0.5f;
+		local_1a30.aVertices[1].s1 = edF32VECTOR4_00426a00.z;
+		local_1a30.aVertices[1].t1 = edF32VECTOR4_00426a00.w;
+		local_1a30.aVertices[2].s1 = edF32VECTOR4_00426a10.z;
+		local_1a30.aVertices[2].t1 = edF32VECTOR4_00426a10.w;
+		local_1a30.aVertices[3].s1 = edF32VECTOR4_00426a20.z;
+		local_1a30.aVertices[3].t1 = edF32VECTOR4_00426a20.w;
+		local_20.y = local_20.y + 32.0f;
+		fVar11 = local_20.x + (fVar11 - fVar12);
+		local_1a30.aVertices[0].x1 = local_20.x - 16.0f;
+		local_1a30.aVertices[1].x1 = fVar11 + 20.0f;
+		local_1a30.aVertices[2].y1 = local_20.y + ((local_19f0.offsetY_0x4 + local_19f0.field_0xc) * 0.8f - local_19f0.offsetY_0x4 * 0.8f) + 2.0f;
+		local_1a30.aVertices[0].y1 = local_20.y - 2.0f;
+		local_1a30.aVertices[1].y1 = local_1a30.aVertices[0].y1;
+		local_1a30.aVertices[2].x1 = local_1a30.aVertices[1].x1;
+		local_1a30.aVertices[3].x1 = local_1a30.aVertices[0].x1;
+		local_1a30.aVertices[3].y1 = local_1a30.aVertices[2].y1;
+
+		pMapManager->DrawClippedSprite(&MenuBitmaps[8].materialInfo, &local_1a30, 0x80808080);
+		if ((bVar3 == false) || (pShopSubObj->field_0x8 == 0)) {
+			local_19f0.Display(local_20.x, local_20.y);
+		}
+		else {
+			iVar8 = 0;
+			eStack224.field_0x8c = (float)(uint)BootDataFont->field_0x16 * 0.8f + eStack224.field_0x8c;
+			fVar12 = local_20.y;
+			pNVar9 = pShopSubObj->aSubObjs;
+			do {
+				iVar1 = pNVar9->purchaseId;
+				if (iVar1 != 0x20) {
+					if ((bVar2) && (iVar1 == pObjective->field_0x24)) {
+						local_4 = 0x7f2f777f;
+						eStack224.rgbaColour = 0xfeee5efe;
+					}
+					else {
+						eStack224.rgbaColour = 0xd0e0ffff;
+					}
+
+					pcVar5 = gMessageManager.get_message(pNVar9->field_0x8);
+					edTextDraw(local_20.x, fVar12, pcVar5);
+					fVar12 = fVar12 + eStack224.field_0x8c;
+				}
+
+				iVar8 = iVar8 + 1;
+				pNVar9 = pNVar9 + 1;
+			} while (iVar8 < 5);
+
+			eStack224.SetHorizontalAlignment(1);
+			iVar8 = 0;
+			eStack224.rgbaColour = 0xd0e0ffff;
+			pCVar10 = &(CScene::ptable.g_FrontendManager_00451680)->pMoney->sprite;
+			do {
+				if (pShopSubObj->aSubObjs[iVar8].purchaseId != 0x20) {
+					edTextDraw(fVar11 - 16.0f, local_20.y, "%d", pShopSubObj->aSubObjs[iVar8].moneyCost);
+					pCVar10->Draw(0.5f, fVar11 - 8.0f, local_20.y + 10.0f, 0x12);
+					local_20.y = local_20.y + eStack224.field_0x8c;
+				}
+
+				iVar8 = iVar8 + 1;
+			} while (iVar8 < 5);
+		}
+
+	}
+
+	edTextStyleSetCurrent(pNewFont);
 
 	return;
 }

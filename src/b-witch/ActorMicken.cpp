@@ -4,6 +4,7 @@
 #include "TimeController.h"
 #include "edCollision/edCollisions.h"
 #include "ActorHero.h"
+#include "ActorWind.h"
 #include "ActorManager.h"
 #include "ActorFactory.h"
 #include "MathOps.h"
@@ -337,53 +338,50 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 
 	if (msg == MESSAGE_IN_WIND_AREA) {
-		IMPLEMENTATION_GUARD(
-		edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x10), &eStack64, (edF32VECTOR4*)pMsgParam);
+		NotifyWindParam* pWindParam = reinterpret_cast<NotifyWindParam*>(pMsgParam);
+		edF32Vector4ScaleHard(pWindParam->field_0x10, &eStack64, &pWindParam->field_0x0);
 		peVar10 = this->dynamicExt.aImpulseVelocities + 2;
 		edF32Vector4AddHard(peVar10, peVar10, &eStack64);
 		fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 2);
 		this->dynamicExt.aImpulseVelocityMagnitudes[2] = fVar11;
-		pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-		if (pCVar8 == (CActorWindState*)0x0) {
-			fVar11 = 0.0;
+		if (GetWindState() == (CActorWindState*)0x0) {
+			fVar11 = 0.0f;
 		}
 		else {
-			pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-			fVar11 = pCVar8->windImpulseSpeed;
+			fVar11 = GetWindState()->windImpulseSpeed;
 		}
-		if (fVar11 < 0.001) {
-			fVar11 = *(float*)((int)pMsgParam + 0x10);
-			pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-			if (pCVar8 == (CActorWindState*)0x0) {
+
+		if (fVar11 < 0.001f) {
+			fVar11 = pWindParam->field_0x10;
+			if (GetWindState() == (CActorWindState*)0x0) {
 				bVar4 = false;
 			}
 			else {
-				pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-				iVar9 = pCVar8->nbActiveWind;
-				pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-				if (iVar9 == pCVar8->nbWindWaypoint) {
+				iVar9 = GetWindState()->nbActiveWind;
+				if (iVar9 == GetWindState()->nbWindWaypoint) {
 					bVar4 = true;
 				}
 				else {
-					pCVar8 = (*(this->pVTable)->GetWindState)((CActorAutonomous*)this);
-					if (pCVar8->nbWindWaypoint == 0) {
+					if (GetWindState()->nbWindWaypoint == 0) {
 						bVar4 = false;
 					}
 					else {
 						bVar4 = true;
-						if (0.17398384f <= fabs(*(float*)((int)pMsgParam + 4))) {
+						if (0.17398384f <= fabs(pWindParam->field_0x0.y)) {
 							bVar4 = false;
 						}
 					}
 				}
 			}
-			if ((!bVar4) || (bVar4 = true, fVar11 <= 2.0)) {
+
+			if ((!bVar4) || (bVar4 = true, fVar11 <= 2.0f)) {
 				bVar4 = false;
 			}
+
 			if (!bVar4) {
-				this->base.dynamic.speed = this->base.dynamic.speed * 0.4;
+				this->dynamic.speed = this->dynamic.speed * 0.4f;
 			}
-		})
+		}
 
 		SetBehaviour(MICKEN_BEHAVIOUR_EAT, MICKEN_EAT_STATE_ROLL_IN_THE_WIND, -1);
 
@@ -1079,8 +1077,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		StateMickenHole();
 		break;
 	case MICKEN_EAT_STATE_ROLL_IN_THE_WIND:
-		IMPLEMENTATION_GUARD(
-		StateMickenRollInTheWind(this);)
+		StateMickenRollInTheWind();
 		break;
 	case 0x11:
 		if (pTied == (CActor*)0x0) {
@@ -1595,6 +1592,214 @@ void CActorMicken::StateMickenHole()
 	else {
 		SetState(6, -1);
 	}
+
+	return;
+}
+
+void CActorMicken::StateMickenRollInTheWind()
+{
+	bool bVar1;
+	CActorWindState* pCVar2;
+	edF32VECTOR4* peVar3;
+	int newState;
+	uint dynFlags;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+	CCollision* pCol;
+	CActor* pTied;
+
+	dynFlags = 0x2832;
+	pCol = this->pCollisionData;
+	local_10 = this->dynamicExt.aImpulseVelocities[2];
+	fVar7 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
+	edF32Vector4SafeNormalize1Hard(&local_20, this->dynamicExt.aImpulseVelocities + 2);
+	this->dynamic.speed = 0.0f;
+
+	if (GetWindState() == (CActorWindState*)0x0) {
+		bVar1 = false;
+	}
+	else {
+		newState = GetWindState()->nbActiveWind;
+		if (newState == GetWindState()->nbWindWaypoint) {
+			bVar1 = true;
+		}
+		else {
+			if (GetWindState()->nbWindWaypoint == 0) {
+				bVar1 = false;
+			}
+			else {
+				bVar1 = true;
+				if (0.17398384f <= fabsf(local_10.y)) {
+					bVar1 = false;
+				}
+			}
+		}
+	}
+
+	if ((!bVar1) || (bVar1 = true, fVar7 <= 2.0f)) {
+		bVar1 = false;
+	}
+
+	if (bVar1) {
+		local_30.y = 0.0f;
+		local_30.x = local_20.x;
+		local_30.z = local_20.z;
+		local_30.w = local_20.w;
+		edF32Vector4SafeNormalize1Hard(&local_30, &local_30);
+		fVar6 = edFIntervalLERP(fVar7, 5.0f, 60.0f, 5.0f, 40.0f);
+		SV_UpdateOrientation2D(fVar6, &local_30, 0);
+
+		if ((pCol->flags_0x4 & 2) != 0) {
+			if (GetWindState() == (CActorWindState*)0x0) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = GetWindState()->neutralAirSpeed;
+			}
+
+			if (0.0f < fVar6) {
+				if (GetWindState() == (CActorWindState*)0x0) {
+					fVar6 = 0.0f;
+				}
+				else {
+					fVar6 = GetWindState()->neutralAirSpeed;
+				}
+
+				ComputeFrictionForceWithSpeedMax(fVar6, &eStack64, 1);
+				peVar3 = this->dynamicExt.aImpulseVelocities + 1;
+				edF32Vector4AddHard(peVar3, peVar3, &eStack64);
+				fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 1);
+				this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar6;
+			}
+		}
+
+		if ((pCol->flags_0x4 & 2) == 0) {
+			dynFlags = 0x2932;
+		}
+	}
+	else {
+		if (GetWindState() == (CActorWindState*)0x0) {
+			bVar1 = false;
+		}
+		else {
+			newState = GetWindState()->nbActiveWind;
+			if (newState == GetWindState()->nbWindWaypoint) {
+				bVar1 = true;
+			}
+			else {
+				if (GetWindState()->nbWindWaypoint == 0) {
+					bVar1 = false;
+				}
+				else {
+					bVar1 = true;
+					if (0.17398384f <= fabsf(local_10.y)) {
+						bVar1 = false;
+					}
+				}
+			}
+		}
+
+		if (bVar1) {
+			if ((pCol->flags_0x4 & 2) == 0) {
+				dynFlags = 0x2932;
+			}
+			else {
+				ComputeFrictionForce(50.0f, &eStack80, 0);
+				peVar3 = this->dynamicExt.aImpulseVelocities + 1;
+				edF32Vector4AddHard(peVar3, peVar3, &eStack80);
+				fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 1);
+				this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar6;
+			}
+		}
+		else {
+			dynFlags = 0x2820;
+
+			if ((pCol->flags_0x4 & 2) == 0) {
+				dynFlags = 0x2920;
+			}
+		}
+	}
+
+	ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+
+	bVar1 = false;
+	if (GetWindState() != (CActorWindState*)0x0) {
+		newState = GetWindState()->nbActiveWind;
+		bVar1 = true;
+		if (newState != GetWindState()->nbWindWaypoint) {
+			bVar1 = false;
+			if ((GetWindState()->nbWindWaypoint != 0) && (bVar1 = true, 0.17398384f <= fabsf(local_10.y))) {
+				bVar1 = false;
+			}
+		}
+	}
+	if (!bVar1) {
+		if ((0.001f < fVar7) || (this->timeInAir <= 0.2f)) {
+			this->timeInAir = 0.0f;
+			return;
+		}
+		if ((pCol->flags_0x4 & 2) == 0) {
+			SetState(7, -1);
+			return;
+		}
+		if (this->pTiedActor != (CActor*)0x0) {
+			pTied = this->pTiedActor;
+			fVar7 = (pTied->currentLocation).x - this->currentLocation.x;
+			fVar6 = (pTied->currentLocation).z - this->currentLocation.z;
+			this->field_0x3ec = sqrtf(fVar7 * fVar7 + 0.0f + fVar6 * fVar6);
+			newState = 0x11;
+			if (0.3f < this->field_0x3ec) goto LAB_0014eb60;
+		}
+
+		newState = MICKEN_EAT_STATE_STAND;
+
+	LAB_0014eb60:
+		SetState(newState, -1);
+		return;
+	}
+
+	bVar1 = false;
+	if (GetWindState() != (CActorWindState*)0x0) {
+		newState = GetWindState()->nbActiveWind;
+		bVar1 = true;
+		if (newState != GetWindState()->nbWindWaypoint) {
+			bVar1 = false;
+			if ((GetWindState()->nbWindWaypoint != 0) && (bVar1 = true, 0.17398384f <= fabsf(local_10.y))) {
+				bVar1 = false;
+			}
+		}
+	}
+
+	if ((!bVar1) || (bVar1 = true, fVar7 <= 2.0f)) {
+		bVar1 = false;
+	}
+
+	if (bVar1) {
+		return;
+	}
+
+	if (2.0f <= this->dynamic.linearAcceleration) {
+		return;
+	}
+
+	if (this->pTiedActor != (CActor*)0x0) {
+		pTied = this->pTiedActor;
+		fVar7 = (pTied->currentLocation).x - this->currentLocation.x;
+		fVar6 = (pTied->currentLocation).z - this->currentLocation.z;
+		this->field_0x3ec = sqrtf(fVar7 * fVar7 + 0.0f + fVar6 * fVar6);
+		newState = 0x11;
+
+		if (0.3f < this->field_0x3ec) goto LAB_0014ed88;
+	}
+
+	newState = MICKEN_EAT_STATE_STAND;
+LAB_0014ed88:
+	SetState(newState, -1);
 
 	return;
 }

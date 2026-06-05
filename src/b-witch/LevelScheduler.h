@@ -466,6 +466,7 @@ public:
 	uint IsMapCollectedInLevel(int levelId);
 	bool OpenLevelChunk(int levelId);
 	void CloseLevelChunk();
+	Episode* GetEpisode(int index);
 
 public:
 

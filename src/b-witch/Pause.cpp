@@ -2097,7 +2097,7 @@ uint CSimpleMenu::get_action()
 					if (((gPlayerInput.pressedBitfield & PAD_BITMASK_DPAD_RIGHT) == 0) && ((gPlayerInput.pressedBitfield & PAD_BITMASK_LEFT_ANALOG_RIGHT) == 0)) {
 						inputState = MENU_INPUT_CONFIRM;
 
-						if (((((gPlayerInput.pressedBitfield & PAD_BITMASK_11) == 0) &&
+						if (((((gPlayerInput.pressedBitfield & PAD_BITMASK_CROSS_ALT) == 0) &&
 							(inputState = MENU_INPUT_CANCEL, (gPlayerInput.pressedBitfield & PAD_BITMASK_13) == 0)) &&
 							(inputState = 6, (gPlayerInput.pressedBitfield & PAD_BITMASK_L2) == 0)) &&
 							(inputState = 7, (gPlayerInput.pressedBitfield & PAD_BITMASK_R2) == 0)) {
@@ -3118,5 +3118,52 @@ void MapEnter()
 
 void MapLeave()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	CMapManager* pMapManager;
+
+	pMapManager = CScene::ptable.g_MapManager_0045168c;
+	if ((CScene::ptable.g_MapManager_0045168c)->field_0x24 == 0) {
+		(CScene::ptable.g_MapManager_0045168c)->field_0x28 = 0;
+		IMPLEMENTATION_GUARD(
+		pMapManager->pWorldMap->FUN_003d2ef0();
+		edViewportSetClearMask((CScene::ptable.g_FrontendManager_00451680)->pViewport, 0xffffffff);)
+	}
+	else {
+		if (CLevelScheduler::gThis->currentLevelID == (CScene::ptable.g_MapManager_0045168c)->pLevelMap->field_0x0) {
+			(CScene::ptable.g_MapManager_0045168c)->field_0x390 = 0;
+		}
+
+		pMapManager->field_0x24 = 0;
+		pMapManager->pLevelMap->Close();
+	}
+
+	CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+	pMapManager->Close();
+	GlobalDList_AddToView();
+
+#ifdef PLATFORM_PS2
+	edVideoFlip();
+#endif
+	if (pMapManager->pBankBufferEntry != (edCBankBufferEntry*)0x0) {
+		pMapManager->pBankBufferEntry->close();
+		pMapManager->pBankBufferEntry = (edCBankBufferEntry*)0x0;
+	}
+
+	pMapManager->mapBank.terminate();
+	if (pMapManager->field_0x37c != 0.0f) {
+		pMapManager->field_0x37c = 0.0f;
+		(pMapManager->field_0x358).field_0x0 = (pMapManager->field_0x338).field_0x0;
+		(pMapManager->field_0x358).field_0x4 = (pMapManager->field_0x338).field_0x4;
+		(pMapManager->field_0x358).hash = (pMapManager->field_0x338).hash;
+		(pMapManager->field_0x358).field_0x10 = (pMapManager->field_0x338).field_0x10;
+		(pMapManager->field_0x358).field_0x14 = (pMapManager->field_0x338).field_0x14;
+		(pMapManager->field_0x358).hash_2 = (pMapManager->field_0x338).hash_2;
+	}
+
+	CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+	CScene::_pinstance->Level_PauseChange(0);
+	GameFlags = GameFlags & 0xffffffef;
+
+	ProfileDraw(1);
+
+	return;
 }

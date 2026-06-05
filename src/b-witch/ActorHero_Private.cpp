@@ -221,25 +221,22 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 		this->field_0xe3c = 0;
 	}
 
-	//*(undefined4*)&this->field_0xe40 = 0;
+	this->field_0xe40 = (_boomy_zone_pair*)0x0;
 	piVar5 = this->field_0xe3c;
 	if (piVar5 != 0x0) {
-		//piVar7 = (int*)operator.new.array((long)((int)piVar5 * 8 + 0x10));
-		//piVar5 = __construct_new_array(piVar7, (ActorConstructorA*)&LAB_0034c670, FUN_0034b610, 8, (uint)piVar5);
-		//*(int**)&this->field_0xe40 = piVar5;
-		//piVar5 = *(int**)&this->field_0xe40;
+		this->field_0xe40 = new _boomy_zone_pair[piVar5];
+		_boomy_zone_pair* pBoomyZonePairIt = this->field_0xe40;
 		iVar11 = 0;
 		if (0 < this->field_0xe3c) {
 			do {
-				iVar10 = pByteCode->GetS32();
-				//*piVar5 = iVar10;
-				iVar10 = pByteCode->GetS32();
-				//piVar5[1] = iVar10;
+				pBoomyZonePairIt->zoneA.index = pByteCode->GetS32();
+				pBoomyZonePairIt->field_0x4 = pByteCode->GetS32();
 				iVar11 = iVar11 + 1;
-				piVar5 = piVar5 + 2;
+				pBoomyZonePairIt = pBoomyZonePairIt + 1;
 			} while (iVar11 < this->field_0xe3c);
 		}
 	}
+
 	if (2.24f <= CScene::_pinstance->field_0x1c) {
 		S_ZONE_STREAM_REF* pZoneStreamRef = (S_ZONE_STREAM_REF*)pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
@@ -414,15 +411,15 @@ void CActorHeroPrivate::Init()
 		}
 	}
 
-	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0xe40;
-	//iVar12 = 0;
-	//if (0 < (int)this->field_0xe3c) {
-	//	do {
-	//		S_STREAM_REF<ed_zone_3d>::Init(pSVar13);
-	//		iVar12 = iVar12 + 1;
-	//		pSVar13 = pSVar13 + 2;
-	//	} while (iVar12 < (int)this->field_0xe3c);
-	//}
+	_boomy_zone_pair* pBoomyZonePairIt = this->field_0xe40;
+	int iVar12 = 0;
+	if (0 < this->field_0xe3c) {
+		do {
+			pBoomyZonePairIt->zoneA.Init();
+			iVar12 = iVar12 + 1;
+			pBoomyZonePairIt = pBoomyZonePairIt + 1;
+		} while (iVar12 < this->field_0xe3c);
+	}
 
 	CShadow* pCVar2 = this->pShadow;
 	if (pCVar2 != (CShadow*)0x0) {
@@ -480,7 +477,7 @@ void CActorHeroPrivate::Init()
 	pAnimationController = this->pAnimationController;
 	edANM_HDR** ppeVar3 = ((pAnimationController->anmBinMetaAnimator).aAnimData)->pAnimManagerKeyData;
 	edANM_HDR* peVar11 = (edANM_HDR*)0x0;
-	int iVar12 = GetIdMacroAnim(0x18d);
+	iVar12 = GetIdMacroAnim(0x18d);
 	iVar12 = pAnimationController->GetPhysicalAnimIndex(iVar12);
 	if (iVar12 != -1) {
 		peVar11 = ppeVar3[iVar12];
@@ -1320,7 +1317,7 @@ bool CActorHeroPrivate::AccomplishAttack()
 			if (boomyState == 5) {
 				this->field_0xe44 = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
 				this->boomyBlowStage = 0;
-				SetState(0xda, 0xffffffff);
+				SetState(STATE_HERO_BOOMY_CONTROL_BEFORE, 0xffffffff);
 			}
 			else {
 				if (boomyState == 3) {
@@ -5412,6 +5409,8 @@ LAB_00341590:
 	case STATE_HERO_WIND_FLY:
 	case STATE_HERO_SHOP:
 	case STATE_HERO_BASIC_TO_STAND:
+	case STATE_HERO_BOOMY_CONTROL_BEFORE:
+	case STATE_HERO_BOOMY_CONTROL:
 	case STATE_HERO_LEVER_2_2:
 	case STATE_HERO_EXORCISE:
 	case STATE_HERO_CEILING_CLIMB_A:
@@ -5785,6 +5784,12 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_BOOMY_EXECUTE_FIGHT_BLOW:
 	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
 		StateBoomyTerm();
+		break;
+	case STATE_HERO_BOOMY_CONTROL_BEFORE:
+		StateHeroBoomyControlBeforeTerm(newState);
+		break;
+	case STATE_HERO_BOOMY_CONTROL:
+		StateHeroBoomyControlTerm();
 		break;
 	case STATE_HERO_SLIDE_A:
 		StateHeroSlideTerm(0);
@@ -6410,6 +6415,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
 		_StateFighterReturnFromFightAction();
+		break;
+	case STATE_HERO_BOOMY_CONTROL_BEFORE:
+		StateHeroBoomyControlBefore();
+		break;
+	case STATE_HERO_BOOMY_CONTROL:
+		StateHeroBoomyControl();
 		break;
 	case STATE_HERO_DF:
 		this->dynamic.speed = 0.0f;
@@ -9248,6 +9259,243 @@ void CActorHeroPrivate::StateHeroRun_B()
 	return;
 }
 
+void CActorHeroPrivate::StateHeroBoomyControlBefore()
+{
+	CCameraGame* pCamera;
+	CCamera* pCVar1;
+	CCameraManager* pCameraManager;
+	float fVar2;
+	edF32VECTOR4 eStack32;
+	CActorBoomy* pBoomy;
+	CPlayerInput* pInput;
+
+	pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+	pCamera = (this->pActorBoomy)->pCamera;
+	SetBoomyState(10);
+	this->field_0x1b78 = 4;
+	this->dynamic.speed = 0.0f;
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	this->pAnimationController->AddDisabledBone(this->animKey_0x1584);
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar2 = 0.0f;
+	}
+	else {
+		fVar2 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
+	}
+
+	if (fVar2 == 0.0f) {
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+	else {
+		if (0.02f <= this->timeInAir) {
+			pCVar1 = this->pMainCamera;
+			pCamera->transformationMatrix.rowT = (pCVar1->transformationMatrix).rowT;
+			fVar2 = this->rotationEuler.y;
+			pBoomy = this->pActorBoomy;
+			pBoomy->rotationEuler.x = 0.0f;
+			pBoomy->rotationEuler.y = fVar2;
+			pBoomy->rotationEuler.z = 0.0f;
+			this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
+			edF32Vector4AddHard(&eStack32, &this->currentLocation, &this->rotationQuat);
+			this->pActorBoomy->SetTarget(&eStack32);
+			DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)4, (void*)2);
+
+			(this->pActorBoomy)->field_0x658.Init(0.0f, 9.0f);
+			this->field_0xc9c.Init(0.0f, 9.983283f);
+			this->field_0xca4.Init(0.0f, 3.141593f);
+			this->field_0xcb4.Init(0.0f, 2.094395f);
+			this->field_0xcac.Init(0.0f, 1.570796f);
+			pCameraManager->PushCamera(pCamera, 1);
+			SetState(STATE_HERO_BOOMY_CONTROL, 0xffffffff);
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBoomyControlBeforeTerm(int newState)
+{
+	if (newState != STATE_HERO_BOOMY_CONTROL) {
+		this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
+		SetBoomyState(0);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBoomyControl()
+{
+	int iVar1;
+	bool bVar2;
+	uint uVar4;
+	undefined4 uVar5;
+	int iVar6;
+	_boomy_zone_pair* pZone;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float target;
+	float fVar11;
+	float fVar12;
+	float target_00;
+	CActorBoomy* pBoomy;
+	CCameraGame* pCameraGame;
+	CPlayerInput* pInput;
+
+	pBoomy = this->pActorBoomy;
+	pInput = this->pPlayerInput;
+	pCameraGame = pBoomy->pCamera;
+
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar11 = 0.0f;
+	}
+	else {
+		fVar11 = pInput->aAnalogSticks[0].x;
+	}
+
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar9 = 0.0f;
+	}
+	else {
+		fVar9 = pInput->aAnalogSticks[0].y;
+	}
+
+	target_00 = 9.0f;
+	iVar1 = pBoomy->actorState;
+	fVar12 = 0.0f;
+	bVar2 = true;
+	fVar7 = 1.0f;
+	fVar10 = 0.0f;
+	fVar8 = 0.0f;
+	target = 0.0f;
+
+	if ((iVar1 != 5) && (iVar1 != 9)) {
+		bVar2 = false;
+	}
+
+	if (!bVar2) {
+		target_00 = 0.0f;
+	}
+
+	uVar5 = 1;
+	if (fVar11 < 0.0f) {
+		fVar12 = edFIntervalLERP(fVar11, 0.0f, -1.0f, 0.0f, -2.443461f);
+		fVar8 = edFIntervalLERP(fVar11, 0.0f, -1.0f, 0.0f, -0.4363323f);
+		fVar10 = edFIntervalLERP(fVar11, 0.0f, -1.0f, 0.0f, -0.4363323f);
+		target = edFIntervalLERP(fVar11, 0.0f, -1.0f, 0.0f, 0.7853982f);
+		uVar5 = 0;
+	}
+	else {
+		if (0.0f < fVar11) {
+			fVar12 = edFIntervalLERP(fVar11, 0.0f, 1.0f, 0.0f, 2.443461f);
+			fVar8 = edFIntervalLERP(fVar11, 0.0f, 1.0f, 0.0f, 0.4363323f);
+			fVar10 = edFIntervalLERP(fVar11, 0.0f, 1.0f, 0.0f, 0.4363323f);
+			target = edFIntervalLERP(fVar11, 0.0f, 1.0f, 0.0f, -0.7853982f);
+			uVar5 = 0;
+		}
+	}
+
+	if (fVar9 < 0.0f) {
+		target_00 = edFIntervalLERP(fVar9, 0.0f, -1.0f, 9.0f, 2.0f);
+		fVar7 = edFIntervalLERP(fVar9, 0.0f, -1.0f, 1.0f, 1.4f);
+		uVar5 = 0;
+	}
+	else {
+		if (0.0f < fVar9) {
+			target_00 = edFIntervalLERP(fVar9, 0.0f, 1.0f, 9.0f, 18.0f);
+			fVar7 = edFIntervalLERP(fVar9, 0.0f, 1.0f, 1.0f, 0.6f);
+			uVar5 = 0;
+		}
+	}
+
+	this->field_0xc9c.field_0x4 = 9.983283f;
+	this->field_0xcac.field_0x4 = 1.570796f;
+
+	pBoomy = this->pActorBoomy;
+	if (pBoomy->field_0x650 == 0) {
+		pBoomy->field_0x654 = uVar5;
+		(this->pActorBoomy)->field_0x658.UpdateLerp(target_00);
+		pBoomy = this->pActorBoomy;
+		pBoomy->field_0x2c0 = (pBoomy->field_0x658).currentAlpha;
+		this->field_0xc9c.Update(fVar12 * fVar7);
+		fVar11 = -this->field_0xc9c.currentAlpha;
+		pBoomy = this->pActorBoomy;
+		fVar11 = edF32Between_0_2Pi(pBoomy->rotationEuler.y + fVar11 * GetTimer()->cutsceneDeltaTime);
+		pBoomy->rotationEuler.y = fVar11;
+		this->field_0xca4.Update(fVar8 * fVar7);
+		((this->pActorBoomy)->fxTail).field_0x50.z = this->field_0xca4.currentAlpha;
+		this->field_0xcac.UpdateLerp(target);
+		this->field_0xcb4.UpdateLerp(fVar10 * fVar7);
+		pCameraGame->SetAngleGamma(this->field_0xcb4.currentAlpha);
+	}
+
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->timeInAir < 30.0f) {
+		pInput = this->pPlayerInput;
+		if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar11 = 0.0f;
+		}
+		else {
+			fVar11 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
+		}
+
+		if (fVar11 != 0.0f) {
+			iVar1 = this->field_0xe3c;
+			pZone = this->field_0xe40;
+			iVar6 = 0;
+			if (0 < iVar1) {
+				do {
+					if (this->field_0xe44 == pZone->field_0x4) {
+						uVar4 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone->zoneA.Get(), &this->pActorBoomy->currentLocation, 0);
+						bVar2 = true;
+
+						if ((uVar4 & 1) == 0) {
+							bVar2 = false;
+						}
+
+						goto LAB_00136650;
+					}
+
+					iVar6 = iVar6 + 1;
+					pZone = pZone + 1;
+				} while (iVar6 < iVar1);
+			}
+
+			bVar2 = true;
+
+		LAB_00136650:
+			if (bVar2) {
+				return;
+			}
+		}
+	}
+
+	SetState(STATE_HERO_STAND, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBoomyControlTerm()
+{
+	CCameraManager* pCameraManager;
+	CActorBoomy* pBoomy;
+
+	pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+	this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
+	DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)6, (MSG_PARAM)0);
+	pBoomy = this->pActorBoomy;
+	pBoomy->field_0x2c0 = pBoomy->aBoomyTypeInfo[pBoomy->curBoomyTypeId].field_0x4;
+	pCameraManager->PopCamera(this->pActorBoomy->pCamera);
+	SetBoomyState(0);
+
+	return;
+}
 
 void CActorHeroPrivate::StateHeroJoke()
 {

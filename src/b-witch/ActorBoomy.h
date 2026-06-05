@@ -77,6 +77,8 @@ public:
 	void StateBoomyGetTarget();
 	void StateBoomyGotoTarget();
 	void StateBoomyGotoLauncher();
+	void StateBoomyControl();
+	void StateBoomyControlHit();
 
 	bool GotoTarget(CActorsTable* pTable, edF32VECTOR4* param_3, int param_4, int param_5);
 
@@ -92,6 +94,8 @@ public:
 	void SetTarget(edF32VECTOR4* pPosition);
 
 	CActor* GetBestActorInVision();
+
+	void FUN_0012d8f0(CActor* pActor);
 
 	float field_0x1dc;
 
@@ -152,12 +156,13 @@ public:
 	edF32MATRIX4 field_0x610;
 
 	undefined4 field_0x650;
-	undefined4 field_0x654;
+	int field_0x654;
 
 	float field_0x740;
 	float field_0x744;
 
-	SPEED_DYN speedDyn;	
+	SPEED_DYN field_0x658;
+	SPEED_DYN speedDyn;
 };
 
 #endif //ACTOR_BOOMY_H

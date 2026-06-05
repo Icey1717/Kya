@@ -2295,19 +2295,18 @@ bool CCollision::CheckCollisions_RayIntersect(CActor* pActor, edF32VECTOR4* v0, 
 	float fVar2;
 	float fVar3;
 	bool bVar4;
-	int iVar5;
-	uint* puVar6;
-	uint uVar7;
-	bool bVar8;
+	int intersectType;
+	uint materialId;
+	bool bIntersection;
 	float fVar9;
 	float fVar10;
 	float fVar11;
 	float fVar12;
 	edF32VECTOR4 local_50;
 	edF32VECTOR4 local_20;
-	_ray_info_out local_10;
+	_ray_info_out rayInfoOut;
 
-	bVar8 = false;
+	bIntersection = false;
 	this->flags_0x4 = this->flags_0x4 & 0xf8;
 
 	fVar9 = v1->x * v1->x + v1->y * v1->y + v1->z * v1->z;
@@ -2316,39 +2315,39 @@ bool CCollision::CheckCollisions_RayIntersect(CActor* pActor, edF32VECTOR4* v0, 
 		fVar9 = sqrtf(fVar9);
 		local_20.w = 1.0f / fVar9;
 		local_20 = *v1 * local_20.w;
-		CCollisionRay CStack64 = CCollisionRay(fVar9 + 0.02f, v0, &local_20);
-		uVar7 = 0;
+		CCollisionRay collisionRay = CCollisionRay(fVar9 + 0.02f, v0, &local_20);
+		uint rayFlags = 0;
 		if ((this->flags_0x0 & 2) != 0) {
-			uVar7 = 2;
+			rayFlags = RAY_FLAG_ACTOR;
 		}
 
 		if ((this->flags_0x0 & 1) != 0) {
-			uVar7 = uVar7 | 1;
+			rayFlags = rayFlags | RAY_FLAG_SCENERY;
 		}
 
-		fVar9 = CStack64.Intersect(uVar7, pActor, this->actorFieldA, 0x7fffffff, &local_50, &local_10);
+		fVar9 = collisionRay.Intersect(rayFlags, pActor, this->actorFieldA, 0x7fffffff, &local_50, &rayInfoOut);
 		if (fVar9 != 1e+30f) {
-			if (((local_10.pActor_0x0 != (CActor*)0x0) && (pTable != (CActorsTable*)0x0)) && (bVar4 = pTable->IsInList(local_10.pActor_0x0), bVar4 == false)) {
-				pTable->Add(local_10.pActor_0x0);
+			if (((rayInfoOut.pActor_0x0 != (CActor*)0x0) && (pTable != (CActorsTable*)0x0)) && (bVar4 = pTable->IsInList(rayInfoOut.pActor_0x0), bVar4 == false)) {
+				pTable->Add(rayInfoOut.pActor_0x0);
 			}
 
-			uVar7 = local_10.hitMaterialFlags & 0xf;
-			if (uVar7 == 0) {
-				uVar7 = CScene::_pinstance->defaultMaterialIndex;
+			materialId = rayInfoOut.hitMaterialFlags & 0xf;
+			if (materialId == 0) {
+				materialId = CScene::_pinstance->defaultMaterialIndex;
 			}
 
-			if (local_50.y < CCollisionManager::_material_table[uVar7].field_0x8) {
-				if (-CCollisionManager::_material_table[uVar7].field_0x8 < local_50.y) {
-					iVar5 = 0;
+			if (local_50.y < CCollisionManager::_material_table[materialId].field_0x8) {
+				if (-CCollisionManager::_material_table[materialId].field_0x8 < local_50.y) {
+					intersectType = 0;
 					this->flags_0x4 = this->flags_0x4 | 1;
 				}
 				else {
-					iVar5 = 2;
+					intersectType = 2;
 					this->flags_0x4 = this->flags_0x4 | 4;
 				}
 			}
 			else {
-				iVar5 = 1;
+				intersectType = 1;
 				this->flags_0x4 = this->flags_0x4 | 2;
 			}
 
@@ -2356,22 +2355,23 @@ bool CCollision::CheckCollisions_RayIntersect(CActor* pActor, edF32VECTOR4* v0, 
 			fVar2 = local_20.y * fVar9 + v0->y + local_50.y * 0.02f;
 			fVar3 = local_20.z * fVar9 + v0->z + local_50.z * 0.02f;
 			fVar9 = local_20.w * fVar9 + v0->w + local_50.w * 0.02f;
+
 			if (param_6 != 0) {
-				if (local_10.pActor_0x0 == (CActor*)0x0) {
-					this->aCollisionContact[iVar5].nbCollisionsA = 0;
-					this->aCollisionContact[iVar5].nbCollisionsB = 1;
+				if (rayInfoOut.pActor_0x0 == (CActor*)0x0) {
+					this->aCollisionContact[intersectType].nbCollisionsA = 0;
+					this->aCollisionContact[intersectType].nbCollisionsB = 1;
 				}
 				else {
-					this->aCollisionContact[iVar5].nbCollisionsA = 1;
-					this->aCollisionContact[iVar5].nbCollisionsB = 0;
+					this->aCollisionContact[intersectType].nbCollisionsA = 1;
+					this->aCollisionContact[intersectType].nbCollisionsB = 0;
 				}
 
-				this->aCollisionContact[iVar5].location = local_50;
-				this->aCollisionContact[iVar5].field_0x10.x = fVar1;
-				this->aCollisionContact[iVar5].field_0x10.y = fVar2;
-				this->aCollisionContact[iVar5].field_0x10.z = fVar3;
-				this->aCollisionContact[iVar5].field_0x10.w = fVar9;
-				this->aCollisionContact[iVar5].materialFlags = local_10.hitMaterialFlags;
+				this->aCollisionContact[intersectType].location = local_50;
+				this->aCollisionContact[intersectType].field_0x10.x = fVar1;
+				this->aCollisionContact[intersectType].field_0x10.y = fVar2;
+				this->aCollisionContact[intersectType].field_0x10.z = fVar3;
+				this->aCollisionContact[intersectType].field_0x10.w = fVar9;
+				this->aCollisionContact[intersectType].materialFlags = rayInfoOut.hitMaterialFlags;
 			}
 
 			if ((this->flags_0x0 & 8) != 0) {
@@ -2379,12 +2379,13 @@ bool CCollision::CheckCollisions_RayIntersect(CActor* pActor, edF32VECTOR4* v0, 
 				v1->y = fVar2 - v0->y;
 				v1->z = fVar3 - v0->z;
 				v1->w = fVar9 - v0->w;
-				bVar8 = true;
+
+				bIntersection = true;
 			}
 		}
 	}
 
-	return bVar8;
+	return bIntersection;
 }
 
 

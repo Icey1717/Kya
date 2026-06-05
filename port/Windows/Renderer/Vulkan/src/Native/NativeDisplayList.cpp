@@ -1,5 +1,6 @@
 #include "NativeDisplayList.h"
 
+#include <cstddef>
 #include <stdexcept>
 
 #include "displaylist.h"
@@ -43,6 +44,22 @@ namespace Renderer::Native::DisplayList
 		assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
 		return gPipelines[pipelineKey.key];
 	}
+
+	struct DisplayListFragmentState
+	{
+		uint32_t blendMode = 0;
+		uint32_t alphaEnable = VK_FALSE;
+		int32_t alphaAtst = 0;
+		int32_t alphaAref = 0;
+		int32_t alphaAfail = 0;
+	};
+
+	static_assert(sizeof(DisplayListFragmentState) == 20);
+	static_assert(offsetof(DisplayListFragmentState, blendMode) == 0);
+	static_assert(offsetof(DisplayListFragmentState, alphaEnable) == 4);
+	static_assert(offsetof(DisplayListFragmentState, alphaAtst) == 8);
+	static_assert(offsetof(DisplayListFragmentState, alphaAref) == 12);
+	static_assert(offsetof(DisplayListFragmentState, alphaAfail) == 16);
 
 	static PS2::FrameVertexBuffers<Renderer::DisplayListVertex, uint16_t> gVertexBuffers;
 
@@ -354,7 +371,7 @@ namespace Renderer::Native::DisplayList
 		VkPhysicalDeviceProperties properties{};
 		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 
-		assert(properties.limits.maxPushConstantsSize >= sizeof(BlendingState));
+		assert(properties.limits.maxPushConstantsSize >= sizeof(DisplayListFragmentState));
 	}
 
 	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture)
@@ -401,15 +418,22 @@ namespace Renderer::Native::DisplayList
 				{
 					return gBoundTexture ? Native::SetBlendingDynamicState(gBoundTexture, true, cmd) : Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
 				}();
+			const GIFReg::GSTest testState = PS2::GetGSState().TEST;
+			const DisplayListFragmentState fragmentState{
+				.blendMode = blendState.hwBlendMode,
+				.alphaEnable = testState.ATE,
+				.alphaAtst = static_cast<int32_t>(testState.ATST),
+				.alphaAref = static_cast<int32_t>(testState.AREF),
+				.alphaAfail = static_cast<int32_t>(testState.AFAIL),
+			};
 
 			auto& pipeline = *gBoundPipeline;
 
 			if (gBoundTexture) {
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			}
-			else {
-				vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(BlendingState), &blendState);
-			}
+
+			vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragmentState), &fragmentState);
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}

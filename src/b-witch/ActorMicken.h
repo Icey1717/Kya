@@ -102,6 +102,7 @@ public:
 
 	int WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF32VECTOR4* pPosition, int param_5);
 	void StateMickenHole();
+	void StateMickenRollInTheWind();
 
 
 	S_STREAM_REF<CWayPoint> streamRefWayPoint;

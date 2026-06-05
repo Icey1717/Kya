@@ -463,7 +463,13 @@ namespace Hero
 		case STATE_HERO_BOOMY_RETURN_FIGHT_BLOW:
 			return "StateHeroBoomyReturnFightBlow";
 			break;
-			case STATE_HERO_DF:
+		case STATE_HERO_BOOMY_CONTROL_BEFORE:
+			return "StateHeroBoomyControlBefore";
+			break;
+		case STATE_HERO_BOOMY_CONTROL:
+			return "StateHeroBoomyControl";
+			break;
+		case STATE_HERO_DF:
 			return "StateHeroDF";
 			break;
 		case STATE_HERO_TOBOGGAN_3:

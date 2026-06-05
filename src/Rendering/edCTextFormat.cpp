@@ -825,9 +825,7 @@ bool edCTextFormat::FormatStringV(char* pText, va_list param_3)
 								case 0:
 								case 1:
 								case 2:
-									IMPLEMENTATION_GUARD(
-									pdVar39 = param_3 + 1;
-									*pCurFormatValueB = *(char**)param_3;)
+									*pCurFormatValueB = (char*)va_arg(param_3, int);
 									break;
 								case 3:
 									*pCurFormatValueB = (char*)va_arg(param_3, uint);
@@ -956,13 +954,12 @@ bool edCTextFormat::FormatStringV(char* pText, va_list param_3)
 								}
 								else {
 									if (iVar11 == 2) {
-										IMPLEMENTATION_GUARD(
 										curFormatValue = *pCurFormatValueA;
 										local_3b0 = (int)curFormatValue < 0;
 										if ((bool)local_3b0) {
 											curFormatValue = (char*)-(int)curFormatValue;
 										}
-										unaff_s5_lo = 0;)
+										unaff_s5_lo = 0;
 									}
 									else {
 										if (iVar11 == 3) {

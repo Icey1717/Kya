@@ -458,12 +458,10 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 		}
 		break;
 	case BOOMY_STATE_CONTROL:
-		IMPLEMENTATION_GUARD(
-		StateBoomyControl(this);)
+		StateBoomyControl();
 		break;
 	case 0xb:
-		IMPLEMENTATION_GUARD(
-		FUN_0012ceb0(this);)
+		StateBoomyControlHit();
 	}
 
 	return;
@@ -915,6 +913,307 @@ void CActorBoomy::StateBoomyGotoLauncher()
 			SetState(9, -1);
 		}
 	}
+
+	return;
+}
+
+void CActorBoomy::FUN_0012d8f0(CActor* pActor)
+{
+	bool bVar1;
+	int iVar2;
+	float fVar4;
+	float t0;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	_msg_params_get_position local_40;
+
+	bVar1 = false;
+	if (pActor == (CActor*)0x0) {
+		local_50 = this->currentLocation;
+	}
+	else {
+		local_40.field_0x0 = 0;
+		local_40.vectorFieldA = this->currentLocation;
+		iVar2 = DoMessage(pActor, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_40);
+		if (iVar2 != 0) {
+			edF32Vector4AddHard(&local_50, &pActor->currentLocation, &local_40.vectorFieldB);
+			bVar1 = true;
+		}
+	}
+
+	if (!bVar1) {
+		local_50.y = (this->pSpline->aPoints->position).y;
+	}
+
+	local_60 = this->currentLocation;
+	local_60.y = this->speedDyn.UpdateLerp(local_50.y);
+
+	UpdatePosition(&local_60, true);
+
+	if ((pActor != (CActor*)0x0) && (edF32Vector4SubHard(&eStack112, &local_50, &this->currentLocation), this->field_0x654 != 0)) {
+		t0 = this->rotationEuler.y;
+		fVar4 = GetAngleYFromVector(&eStack112);
+		fVar4 = edF32Between_0_2Pi(fVar4);
+		fVar4 = edF32GetAnglesDelta(t0, fVar4);
+		fVar4 = edF32Between_0_2Pi(this->rotationEuler.y + fVar4 * GetTimer()->cutsceneDeltaTime * 4.0f);
+		this->rotationEuler.y = fVar4;
+	}
+
+	return;
+}
+
+extern float FLOAT_00448a04;
+
+void CActorBoomy::StateBoomyControl()
+{
+	byte bVar1;
+	bool bVar2;
+	bool bVar3;
+	bool bVar4;
+	CActor* pBestTarget;
+	uint uVar5;
+	long lVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32MATRIX4 eStack496;
+	edF32VECTOR4 local_1b0;
+	edF32VECTOR4 local_1a0;
+	_msg_hit_param msgHitParam;
+	CActorsTable actorsTable;
+	_msg_hit_param* local_4;
+	CCollision* pCol;
+	ed_3d_hierarchy_node* pNode;
+
+	actorsTable.nbEntries = 0;
+
+	(this->vision).location = this->currentLocation;
+	(this->vision).rotationQuat = this->rotationQuat;
+
+	pBestTarget = this->vision.SV_GetBestActorInFrontOf(0);
+	bVar2 = this->hitActorsTable.IsInList(pBestTarget);
+	if (bVar2 != false) {
+		pBestTarget = (CActor*)0x0;
+	}
+
+	if (this->field_0x650 == 0) {
+		FUN_0012d8f0(pBestTarget);
+	}
+
+	fVar8 = (this->fxTail).field_0x50.z;
+	fVar7 = this->rotationEuler.y;
+	this->rotationEuler.x = 0.0f;
+	this->rotationEuler.y = fVar7;
+	this->rotationEuler.z = fVar8;
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+
+	fVar7 = edFIntervalLERP(this->field_0x2c0, 2.0f, 18.0f, 3.141593f, 1.963495f);
+	if (this->field_0x650 == 0) {
+		SetVectorFromAngleY(this->rotationEuler.y, &local_1a0);
+		this->dynamic.rotationQuat = local_1a0;
+		this->dynamic.speed = this->field_0x2c0;
+
+		ManageDyn(4.0f, 0, &actorsTable);
+
+		bVar2 = false;
+		lVar6 = 0;
+		bVar3 = actorsTable.IsInList(this->pHero);
+
+		while (actorsTable.nbEntries != 0) {
+			pBestTarget = actorsTable.PopCurrent();
+			if (pBestTarget != this->pHero) {
+				this->pTargetActor = pBestTarget;
+			}
+
+			bVar4 = this->hitActorsTable.IsInList(pBestTarget);
+			if ((bVar4 == false) && (pBestTarget->typeID != 0x19)) {
+				msgHitParam.field_0x40 = this->currentLocation;
+				pCol = this->pCollisionData;
+				bVar1 = pCol->flags_0x4;
+				if ((bVar1 & 7) != 0) {
+					if ((bVar1 & 1) == 0) {
+						if ((bVar1 & 2) == 0) {
+							if ((bVar1 & 4) != 0) {
+								msgHitParam.field_0x40 = pCol->aCollisionContact[2].field_0x10;
+							}
+						}
+						else {
+							msgHitParam.field_0x40 = pCol->aCollisionContact[1].field_0x10;
+						}
+					}
+					else {
+						msgHitParam.field_0x40 = pCol->aCollisionContact[0].field_0x10;
+					}
+				}
+
+				msgHitParam.projectileType = 4;
+				msgHitParam.hitVariant = 2;
+
+				if (this->launchMode == 2) {
+					msgHitParam.hitVariant = 4;
+				}
+				else {
+					if (this->launchMode == 1) {
+						msgHitParam.hitVariant = 3;
+					}
+				}
+
+				bVar1 = this->launchMode;
+				if (bVar1 == 2) {
+					msgHitParam.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+				}
+				else {
+					if (bVar1 == 1) {
+						msgHitParam.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+					}
+					else {
+						if (bVar1 == 0) {
+							msgHitParam.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+						}
+						else {
+							msgHitParam.damage = (float)this->aBoomyTypeInfo[this->curBoomyTypeId].hitDamage;
+						}
+					}
+				}
+
+				local_4 = &msgHitParam;
+				msgHitParam.field_0x30 = this->field_0x2c0;
+				msgHitParam.field_0x20 = this->dynamic.rotationQuat;
+				DoMessage(pBestTarget, MESSAGE_KICKED, local_4);
+				this->hitActorsTable.Add(pBestTarget);
+				if (lVar6 == 0) {
+					lVar6 = pBestTarget->CanPassThrough();
+				}
+			}
+
+			if (lVar6 == 0) {
+				bVar2 = true;
+			}
+		}
+
+		if (lVar6 == 0) {
+			pCol = this->pCollisionData;
+			if ((pCol->flags_0x4 & 1) != 0) {
+				fVar8 = edF32Vector4DotProductHard(&pCol->aCollisionContact->location, &this->dynamic.rotationQuat);
+				UpdatePosition(&pCol->aCollisionContact[0].field_0x10, true);
+				if ((0.0f <= fVar8) || (fVar8 <= cosf(fVar7))) {
+					this->timeInAir = 0.0f;
+					this->field_0x650 = 1;
+				}
+				else {
+					edReflectVectorOnPlane(1.0f, &local_1b0, &this->dynamic.rotationQuat, &pCol->aCollisionContact->location, 1);
+					this->dynamic.rotationQuat = local_1b0;
+					(this->field_0x658).currentAlpha = (this->field_0x658).currentAlpha * 0.8f;
+					fVar7 = GetAngleYFromVector(&local_1b0);
+					this->rotationEuler.y = fVar7;
+				}
+			}
+
+			if ((bVar2) && (bVar3 != false)) {
+				SetState(0xb, -1);
+			}
+
+			if ((!bVar2) && ((bVar1 = (this->pCollisionData)->flags_0x4, (bVar1 & 2) != 0 || ((bVar1 & 4) != 0)))) {
+				SetState(0xb, -1);
+			}
+		}
+
+		bVar2 = false;
+		if (((this->staticMeshComponent).textureIndex != -1) && ((this->staticMeshComponent).meshIndex != -1)) {
+			bVar2 = true;
+		}
+
+		if (bVar2) {
+			edF32Matrix4FromEulerSoft(&eStack496, &this->rotationEuler.xyz, "ZXY");
+			eStack496.rowT = this->currentLocation;
+			pNode = (this->staticMeshComponent).pMeshTransformData;
+			if (pNode != (ed_3d_hierarchy_node*)0x0) {
+				edF32Matrix4CopyHard(&pNode->base.transformA, &eStack496);
+			}
+			this->staticMeshComponent.SetHidden((ed_3D_Scene*)0x0);
+			FLOAT_00448a04 = 0.12f;
+		}
+	}
+	else {
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
+		this->dynamic.speed = 0.0f;
+		ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+		bVar2 = false;
+
+		if (((this->staticMeshComponent).textureIndex != -1) && ((this->staticMeshComponent).meshIndex != -1)) {
+			bVar2 = true;
+		}
+
+		if (bVar2) {
+			(&this->staticMeshComponent)->SetVisible((ed_3D_Scene*)0x0);
+		}
+
+		if (0.8f <= this->timeInAir) {
+			SetState(0xb, -1);
+		}
+	}
+
+	fVar7 = this->rotationEuler.y;
+	(this->fxLightEmitterA).field_0x40 = this->rotationEuler.x + 1.570796f;
+	(this->fxLightEmitterA).field_0x44 = fVar7 + 3.141593f;
+
+	uVar5 = 0;
+	if (this->field_0x650 == 0) {
+		uVar5 = 0xffffffff;
+	}
+
+	this->fxLightEmitterA.Manage(&this->currentLocation, uVar5);
+	fVar7 = this->rotationEuler.y;
+	(this->fxLightEmitterB).field_0x40 = this->rotationEuler.x + 1.570796f;
+	(this->fxLightEmitterB).field_0x44 = fVar7 + 3.141593f;
+	uVar5 = 0;
+	if (this->field_0x650 == 0) {
+		uVar5 = 0xffffffff;
+	}
+
+	this->fxLightEmitterB.Manage(&this->currentLocation, uVar5);
+
+	return;
+}
+
+void CActorBoomy::StateBoomyControlHit()
+{
+	bool bVar1;
+	_msg_hit_param msgHitParam;
+
+	this->dynamic.speed = this->field_0x2c0;
+	this->field_0x650 = 0;
+
+	bVar1 = (this->staticMeshComponent).textureIndex != -1;
+	if (bVar1) {
+		bVar1 = (this->staticMeshComponent).meshIndex != -1;
+	}
+
+	if (bVar1) {
+		(&this->staticMeshComponent)->SetVisible((ed_3D_Scene*)0x0);
+	}
+
+	DoMessage(this->pHero, (ACTOR_MESSAGE)6, (MSG_PARAM)4);
+
+	this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffe;
+	this->dynamic.speed = 0.0f;
+
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+	EvaluateDisplayState();
+	this->flags = this->flags | 0x400;
+
+	this->field_0x2b4->SoundStop(0);
+
+	if ((this->aBoomyTypeInfo[0].flags & 0x10) != 0) {
+		msgHitParam.projectileType = this->aBoomyTypeInfo[0].hitProjectileType;
+		msgHitParam.damage = (float)this->aBoomyTypeInfo[0].hitDamage;
+		DoMessage(this->pHero, MESSAGE_KICKED, &msgHitParam);
+		this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xffffffef;
+	}
+
+	SetState(9, -1);
 
 	return;
 }

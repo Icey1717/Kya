@@ -156,7 +156,7 @@ void edTextDraw(float x, float y, char* text, ...)
 	va_list args;
 
 	va_start(args, text);
-	bVar1 = auStack5504.FormatString(text, args);
+	bVar1 = auStack5504.FormatStringV(text, args);
 	va_end(args);
 
 	if (bVar1 != false) {

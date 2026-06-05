@@ -4052,6 +4052,15 @@ void CLevelScheduler::CloseLevelChunk()
 	return;
 }
 
+Episode* CLevelScheduler::GetEpisode(int index)
+{
+	if ((index < 0) || (_gGameNfo.nbEpisodes <= index)) {
+		index = _gGameNfo.nbEpisodes + -1;
+	}
+
+	return g_EpisodeDataArray_0048eb0 + index;
+}
+
 int CLevelScheduler::MapFunc_002d8dc0(ObjectiveEntry* param_1)
 {
 	bool bVar1;
