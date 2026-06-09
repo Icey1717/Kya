@@ -575,7 +575,19 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 int CActorProjectile::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
 {
-	IMPLEMENTATION_GUARD();
+	int result;
+
+	if (*param_5 == 1) {
+		if (this->actorState != 6) {
+			SetState(0xd, -1);
+		}
+		result = 1;
+	}
+	else {
+		result = CActor::InterpretEvent(pEventMessage, param_3, param_4, param_5);
+	}
+
+	return result;
 }
 
 void CActorProjectile::ClearLocalData()
@@ -1022,6 +1034,165 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 	return;
 }
 
+void CActorProjectile::BehaviourProjectileStraight_InitState(int newState, CBehaviourProjectileStraight* pBehaviourStraight)
+{
+	CCollision* pCol;
+
+	if (newState == 0xd) {
+		this->field_0x354.Stop();
+		this->field_0x35c.Stop();
+	
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		pCol = this->pCollisionData;
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xffffefff;
+	}
+	else {
+		if (newState == 9) {
+			(this->pCollisionData)->actorFieldA = this->pFiringActor;
+			this->pFiringActor->pCollisionData->actorFieldA = this;
+		}
+		else {
+			if (newState == 6) {
+				this->field_0x3f4 = 0;
+				this->dynamic.speed = 0.0f;
+				this->dynamicExt.normalizedTranslation.x = 0.0f;
+				this->dynamicExt.normalizedTranslation.y = 0.0f;
+				this->dynamicExt.normalizedTranslation.z = 0.0f;
+				this->dynamicExt.normalizedTranslation.w = 0.0f;
+				this->dynamicExt.field_0x6c = 0.0f;
+				pCol = this->pCollisionData;
+				pCol->flags_0x0 = pCol->flags_0x0 & 0xffffefff;
+				pCol = this->pCollisionData;
+				pCol->flags_0x0 = pCol->flags_0x0 & 0xfff7ffff;
+				this->flags = this->flags & 0xffffff7f;
+				this->flags = this->flags | 0x20;
+
+				EvaluateDisplayState();
+			}
+			else {
+				pBehaviourStraight->pOwner->BehaviourProjectile_InitState(newState);
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorProjectile::BehaviourProjectileStraight_Manage(CBehaviourProjectileStraight* pBehaviour)
+{
+	int iVar1;
+	undefined8 uVar2;
+	bool bVar3;
+	uint uVar4;
+	StateConfig* pSVar5;
+	uint uVar7;
+	float fVar8;
+	CActorsTable actorsTable;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+	CCollision* pCol;
+
+	if ((this->aProjectileSubObjs->flags & 0x100000) != 0) {
+		if ((GetStateFlags(this->actorState) & 0x800) != 0) {
+			if ((this->aProjectileSubObjs->flags & 0x80000) == 0) {
+				this->patternPart.FireContinue(CActorHero::_gThis, &gF32Vector4UnitY);
+			}
+			else {
+				local_10 = this->currentLocation;
+
+				fVar8 = this->distanceToGround;
+				if (fVar8 < this->field_0xf0) {
+					local_10.y = local_10.y - static_cast<float>((int)fVar8 * (uint)(0.0f < fVar8));
+					this->patternPart.FireContinue(CActorHero::_gThis, &gF32Vector4UnitY, &local_10);
+				}
+			}
+		}
+
+		this->patternPart.UpdatePatternPartLife();
+		this->patternPart.Draw();
+	}
+
+	pCol = this->pCollisionData;
+	uVar7 = 0x1002023b;
+	pCol->flags_0x0 = pCol->flags_0x0 | 1;
+
+	if ((GetStateFlags(this->actorState) & 0x1000) != 0) {
+		uVar7 = 0x41920;
+	}
+
+	if ((this->aProjectileSubObjs->flags & 0x2000) != 0) {
+		uVar7 = uVar7 & 0xfffbe7ff;
+	}
+
+	uVar4 = this->aProjectileSubObjs->flags;
+	if (((uVar4 & 0x200) != 0) && ((uVar4 & 0x800000) == 0)) {
+		uVar7 = uVar7 & 0xffffffdf;
+	}
+
+	if ((this->aProjectileSubObjs->flags & 0x400) != 0) {
+		uVar7 = uVar7 & 0xfffffeff;
+	}
+
+	iVar1 = this->actorState;
+	if (iVar1 == 0x1e) {
+		SetBehaviour(pBehaviour->behaviourId, -1, -1);
+	}
+	else {
+		if (iVar1 == 0xd) {
+			StateDie(0, pBehaviour->field_0xc, pBehaviour->behaviourId);
+		}
+		else {
+			if (iVar1 == 9) {
+				StateProjectileFlyingStraight(pBehaviour);
+			}
+			else {
+				if ((iVar1 != 6) && (iVar1 == 0xc)) {
+					StateLiving(uVar7, pBehaviour->field_0xc);
+				}
+			}
+		}
+	}
+
+	if (((GetStateFlags(this->actorState) & 0x800) != 0) && (this->curBehaviourId == 4)) {
+		bVar3 = false;
+
+		if (0.0f < this->aProjectileSubObjs->timeToExplode) {
+			fVar8 = this->timeToExplode - GetTimer()->cutsceneDeltaTime;
+			this->timeToExplode = fVar8;
+
+			if (fVar8 <= 0.0f) {
+				bVar3 = true;
+			}
+		}
+
+		if (!bVar3) {
+			bVar3 = false;
+			if (0.0f < this->aProjectileSubObjs->explosionRange) {
+				actorsTable.nbEntries = 0;
+				local_20 = this->currentLocation;
+				local_20.w = this->aProjectileSubObjs->explosionRange;
+				(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&actorsTable, &local_20, Projectile_CriterionExploder, this);
+				if (0 < actorsTable.nbEntries) {
+					bVar3 = true;
+				}
+			}
+
+			if (!bVar3) {
+				return;
+			}
+		}
+
+		SetState(0xd, -1);
+	}
+
+	return;
+}
+
 void CActorProjectile::AppearToDie()
 {
 	this->flags = this->flags & 0xffffff5f;
@@ -1185,6 +1356,54 @@ void CActorProjectile::ProjectDirected(float velocity, edF32VECTOR4* pSource, ed
 	if (bShowFx != false) {
 		this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
 		ShowFx();
+	}
+
+	return;
+}
+
+void CActorProjectile::ProjectToGoStraight(edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor)
+{
+	uint scenaricDataIndex;
+	CNewFx* pCVar1;
+	int iVar2;
+	bool bVar3;
+	CBehaviour* pBehaviour;
+	CBehaviourProjectileStraight* pProjectileBehaviour;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	pBehaviour = GetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT);
+	if (pBehaviour != (CBehaviour*)0x0) {
+		pProjectileBehaviour = static_cast<CBehaviourProjectileStraight*>(GetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT));
+		pProjectileBehaviour->field_0x20 = *pDirection;
+
+		this->pFiringActor = pFiringActor;
+
+		SetBehaviour(PROJECTILE_BEHAVIOUR_STRAIGHT, 9, -1);
+
+		this->flags = this->flags & 0xffffff5f;
+		EvaluateDisplayState();
+		this->flags = this->flags & 0xfffffffc;
+
+		if (bShowFx != false) {
+			this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
+			scenaricDataIndex = this->aProjectileSubObjs->field_0x3c;
+			if (scenaricDataIndex != 0xffffffff) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x354, scenaricDataIndex, FX_MATERIAL_SELECTOR_NONE);
+
+				if (this->field_0x354.IsValid()) {
+					if (this->pAnimationController == (CAnimation*)0x0) {
+						this->field_0x354.SpatializeOnActor(0xe, this, 0);
+					}
+					else {
+						this->field_0x354.SpatializeOnActor(0xe, this, 0x686365d2);
+					}
+
+					this->field_0x354.Start();
+				}
+			}
+		}
 	}
 
 	return;
@@ -1820,6 +2039,201 @@ void CActorProjectile::StopAllFx()
 	return;
 }
 
+void CActorProjectile::StateProjectileFlyingStraight(CBehaviourProjectileStraight* pBehaviour)
+{
+	byte bVar1;
+	CNewFx* pCVar2;
+	int iVar3;
+	bool bVar4;
+	CActor* pHitActor;
+	uint uVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32VECTOR4 local_1a0;
+	edF32VECTOR4 eStack400;
+	edF32VECTOR4 local_180;
+	edF32VECTOR4 local_170;
+	edF32VECTOR4 local_160;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	CActorsTable actorsTable;
+	CCollision* pCol;
+
+	actorsTable.nbEntries = 0;
+	pCol = this->pCollisionData;
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = 0.0f;
+	movParamsIn.acceleration = pBehaviour->acceleration;
+	movParamsIn.speed = pBehaviour->speed;
+	movParamsIn.flags = 0x402;
+
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &pBehaviour->field_0x20);
+
+	if ((this->aProjectileSubObjs->flags & 0x20) != 0) {
+		edF32Vector4NormalizeHard(&local_160, &this->dynamic.velocityDirectionEuler);
+		this->rotationQuat = local_160;
+
+		if ((this->field_0x354.IsValid()) && (0.0f < this->dynamic.linearAcceleration)) {
+			edF32Vector4ScaleHard(pBehaviour->field_0x18, &local_170, &this->dynamic.velocityDirectionEuler);
+			edF32Vector4AddHard(&local_170, &local_170, &this->currentLocation);
+
+			if (this->field_0x354.IsValid()) {
+				this->field_0x354.SetPosition(&local_170);
+			}
+			else {
+				if (this->field_0x35c.IsValid()) {
+					this->field_0x35c.SetPosition(&local_170);
+				}
+			}
+		}
+	}
+
+	if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
+		ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+	}
+	else {
+		ManageDyn(4.0f, 0, &actorsTable);
+	}
+
+	fVar9 = 0.4f;
+	fVar7 = this->dynamic.linearAcceleration * GetTimer()->cutsceneDeltaTime;
+	if (0.4f <= fVar7) {
+		fVar9 = fVar7;
+	}
+	if (movParamsOut.moveVelocity < fVar9) {
+		this->dynamic.speed = 0.0f;
+		SetState(0xd, -1);
+	}
+	else {
+		if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
+		LAB_00206858:
+			if ((pCol->flags_0x4 & 7) != 0) {
+				uVar6 = this->aProjectileSubObjs->flags;
+				if ((uVar6 & 4) == 0) {
+					if ((uVar6 & 0x2000) == 0) {
+						if ((pCol->flags_0x4 & 2) != 0) {
+							fVar9 = fabsf(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
+							if (6.0f < fVar9) {
+								fVar7 = edFIntervalUnitDstLERP(fVar9, 0.0f, 10.0f);
+								this->field_0x3f0 = -fVar7 * 0.5f;
+							}
+							else {
+								PlayAnim(0);
+							}
+
+							if (fVar9 < 1.0f) {
+								this->field_0x3f0 = 0.0f;
+								this->dynamic.speed = 0.0f;
+								if ((this->aProjectileSubObjs->flags & 1) == 0) {
+									SetState(0xc, -1);
+								}
+								else {
+									SetState(0xd, -1);
+								}
+							}
+						}
+					}
+					else {
+						local_1a0 = gF32Vector4Zero;
+						bVar4 = (pCol->flags_0x4 & 2) != 0;
+						if (bVar4) {
+							edF32Vector4AddHard(&local_1a0, &local_1a0, &pCol->aCollisionContact[1].field_0x10);
+						}
+
+						uVar6 = static_cast<uint>(bVar4);
+						if ((pCol->flags_0x4 & 1) != 0) {
+							edF32Vector4AddHard(&local_1a0, &local_1a0, &pCol->aCollisionContact[0].field_0x10);
+							uVar6 = uVar6 + 1;
+						}
+
+						if ((pCol->flags_0x4 & 4) != 0) {
+							edF32Vector4AddHard(&local_1a0, &local_1a0, &pCol->aCollisionContact[2].field_0x10);
+							uVar6 = uVar6 + 1;
+						}
+
+						if (uVar6 != 0) {
+							edF32Vector4ScaleHard(1.0f / static_cast<float>(uVar6), &local_1a0, &local_1a0);
+						}
+
+						this->dynamic.speed = 0.0f;
+						UpdatePosition(&local_1a0, true);
+						SetState(0xc, -1);
+					}
+				}
+				else {
+					this->dynamic.speed = 0.0f;
+					SetState(0xd, -1);
+				}
+			}
+		}
+		else {
+			do {
+				do {
+					if (actorsTable.nbEntries == 0) goto LAB_00206858;
+
+					pHitActor = actorsTable.PopCurrent();
+				} while (pHitActor == this->pFiringActor);
+
+				uVar6 = this->aProjectileSubObjs->flags;
+				if ((uVar6 & 0x4000) != 0) {
+					local_180 = this->currentLocation;
+					local_180.w = 3.402823e+38f;
+
+					if (pHitActor->typeID == 0x1c) {
+						if ((this->aProjectileSubObjs->flags & 0x40000) != 0) {
+							pHitActor->SetState(0xd, -1);
+						}
+					}
+					else {
+						HitActor(&local_180, pHitActor, pBehaviour->field_0xc, 0);
+						this->dynamic.speed = 0.0f;
+						uVar6 = this->aProjectileSubObjs->flags;
+						if ((uVar6 & 0x2000) != 0) {
+							this->aProjectileSubObjs->flags = uVar6 | 0x800000;
+						}
+					}
+
+					edF32Vector4SubHard(&eStack400, &pHitActor->currentLocation, &this->currentLocation);
+					eStack400.y = 0.0f;
+					GetAnglesFromVector(&this->field_0x560.xyz, &eStack400);
+					this->field_0x540 = 1;
+					pCol = this->pCollisionData;
+					bVar1 = pCol->flags_0x4;
+					if ((bVar1 & 2) == 0) {
+						if ((bVar1 & 1) == 0) {
+							if ((bVar1 & 4) == 0) {
+								this->field_0x550 = this->currentLocation;
+								edF32Vector4ScaleHard(0.5f, &eStack400, &eStack400);
+								edF32Vector4AddHard(&this->field_0x550, &this->field_0x550, &eStack400);
+							}
+							else {
+								this->field_0x550 = pCol->aCollisionContact[2].field_0x10;
+							}
+						}
+						else {
+							this->field_0x550 = pCol->aCollisionContact[0].field_0x10;
+						}
+					}
+					else {
+						this->field_0x550 = pCol->aCollisionContact[1].field_0x10;
+					}
+
+					this->dynamic.speed = 0.0f;
+					SetState(0xd, -1);
+					return;
+				}
+
+			} while ((uVar6 & 0x800) == 0);
+			this->dynamic.speed = 0.0f;
+			SetState(0xd, -1);
+		}
+	}
+
+	return;
+}
+
 void CBehaviourProjectile::Create(ByteCode* pByteCode)
 {
 	this->behaviourId = pByteCode->GetS32();
@@ -2182,8 +2596,8 @@ void CBehaviourProjectileStraight::Create(ByteCode* pByteCode)
 {
 	this->behaviourId = pByteCode->GetS32();
 	this->field_0xc = pByteCode->GetS32();
-	this->field_0x10 = pByteCode->GetF32();
-	this->field_0x14 = pByteCode->GetF32();
+	this->speed = pByteCode->GetF32();
+	this->acceleration = pByteCode->GetF32();
 	this->field_0x18 = pByteCode->GetF32();
 	return;
 }
@@ -2193,7 +2607,7 @@ void CBehaviourProjectileStraight::Init(CActor* pOwner)
 	this->pOwner = reinterpret_cast<CActorProjectile*>(pOwner);
 
 	if ((this->pOwner->aProjectileSubObjs->flags & 0x100000) != 0) {
-		this->pOwner->patternPart.FUN_003a7cc0(this->field_0x10);
+		this->pOwner->patternPart.FUN_003a7cc0(this->speed);
 	}
 
 	return;
@@ -2201,22 +2615,100 @@ void CBehaviourProjectileStraight::Init(CActor* pOwner)
 
 void CBehaviourProjectileStraight::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourProjectileStraight_Manage(this);
+
+	return;
 }
 
 void CBehaviourProjectileStraight::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	CActorProjectile* pProjectile;
+
+	if (newState == -1) {
+		pProjectile = this->pOwner;
+		if ((pProjectile->prevBehaviourId == 9) || (pProjectile->aProjectileSubObjs->timeToExplode == 0.0f)) {
+			pProjectile->SetState(0xc, -1);
+		}
+		else {
+			pProjectile->SetState(6, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	this->pOwner = static_cast<CActorProjectile*>(pOwner);
+
+	if (newState == -1) {
+		this->pOwner->SetState(6, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
 }
 
 void CBehaviourProjectileStraight::InitState(int newState)
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourProjectileStraight_InitState(newState, this);
+
+	return;
 }
 
 void CBehaviourProjectileStraight::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	CAnimation* pAnim;
+	CCollision* pCol;
+	CActor* pFiringActor;
+	CActorProjectile* pProjectile;
+
+	pProjectile = this->pOwner;
+	if (oldState == 9) {
+		(pProjectile->pCollisionData)->actorFieldA = (CActor*)0x0;
+		pFiringActor = pProjectile->pFiringActor;
+		if (pFiringActor != (CActor*)0x0) {
+			pFiringActor->pCollisionData->actorFieldA = (CActor*)0x0;
+		}
+	}
+	else {
+		if (oldState == 6) {
+			pProjectile = this->pOwner;
+			pCol = pProjectile->pCollisionData;
+			pCol->flags_0x0 = pCol->flags_0x0 | 0x1000;
+			pCol = pProjectile->pCollisionData;
+			pCol->flags_0x0 = pCol->flags_0x0 | 0x80000;
+			pProjectile->timeToExplode = pProjectile->aProjectileSubObjs->timeToExplode;
+			pProjectile->flags = pProjectile->flags & 0xfffffffc;
+			pProjectile->flags = pProjectile->flags & 0xffffff5f;
+			pProjectile->EvaluateDisplayState();
+		}
+		else {
+			pProjectile = this->pOwner;
+
+			if (oldState == 0xd) {
+				pAnim = pProjectile->pAnimationController;
+				if (pAnim != (CAnimation*)0x0) {
+					pAnim->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+				}
+				pProjectile->field_0x5a8 = 0;
+			}
+			else {
+				if (oldState == 6) {
+					pCol = pProjectile->pCollisionData;
+					pCol->flags_0x0 = pCol->flags_0x0 | 0x1000;
+					pCol = pProjectile->pCollisionData;
+					pCol->flags_0x0 = pCol->flags_0x0 | 0x80000;
+					pProjectile->timeToExplode = pProjectile->aProjectileSubObjs->timeToExplode;
+					pProjectile->flags = pProjectile->flags & 0xfffffffc;
+					pProjectile->flags = pProjectile->flags & 0xffffff5f;
+					pProjectile->EvaluateDisplayState();
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 void CBehaviourProjectileExcuse::Create(ByteCode* pByteCode)

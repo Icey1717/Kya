@@ -63,6 +63,13 @@ struct S_PUSH_STREAM_DEF {
 	void Init();
 };
 
+struct S_TILT_CONFIG
+{
+	float field_0x0;
+	S_TILT_STREAM_DEF tiltStreamDef;
+	S_PUSH_STREAM_DEF pushStreamDef;
+};
+
 struct S_OSCILLATING_VALUE {
 	float value;
 	float velocity;

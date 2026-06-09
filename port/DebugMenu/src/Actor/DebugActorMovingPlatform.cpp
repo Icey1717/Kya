@@ -248,7 +248,7 @@ namespace Debug::Actor::MovingPlatform
 				ImGui::Text("  Ice Surface:  %s  (bit 22 / 0x400000)", (p->flags_0x24 & 0x400000) ? "yes" : "no");
 				ImGui::Text("  No Shadow:    %s  (bit 14 / 0x4000)", (p->flags_0x24 & 0x4000) ? "yes" : "no");
 				ImGui::Text("field_0x28:     %d  (camera scenar idx)", p->field_0x28);
-				ImGui::Text("field_0x2c:     %.4f  (tilt scale)", p->field_0x2c);
+				ImGui::Text("field_0x2c:     %.4f  (tilt scale)", p->tiltConfig.field_0x0);
 			}
 		}
 

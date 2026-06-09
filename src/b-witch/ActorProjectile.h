@@ -79,9 +79,10 @@ public:
 
 	int field_0xc;
 
-	float field_0x10;
-	float field_0x14;
+	float speed;
+	float acceleration;
 	float field_0x18;
+	edF32VECTOR4 field_0x20;
 };
 
 class CBehaviourProjectileExcuse : public CBehaviourProjectile
@@ -179,6 +180,9 @@ public:
 	void BehaviourProjectileStand_InitState(int newState, CBehaviourProjectileStand* pBehaviourStand);
 	void BehaviourProjectileStand_TermState(int oldState, int newState, CBehaviourProjectileStand* pBehaviourStand);
 
+	void BehaviourProjectileStraight_InitState(int newState, CBehaviourProjectileStraight* pBehaviourStraight);
+	void BehaviourProjectileStraight_Manage(CBehaviourProjectileStraight* pBehaviour);
+
 	void AppearToDie();
 	void GoToSleep();
 	void Die();
@@ -188,6 +192,7 @@ public:
 	void Project(edF32VECTOR4* pDestination, bool bShowFx, CActor* pFiringActor);
 	void Project(float velocity, edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor);
 	void ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, bool bShowFx, CActor* pFiringActor);
+	void ProjectToGoStraight(edF32VECTOR4* pDirection, bool bShowFx, CActor* pFiringActor);
 
 	void StateLiving(uint param_2, int param_3);
 	void StateFlying(float param_1, uint dynFlags, int nextState, int param_5);
@@ -201,6 +206,8 @@ public:
 	// New
 	void ShowFx();
 	void StopAllFx();
+
+	void StateProjectileFlyingStraight(CBehaviourProjectileStraight* pBehaviour);
 
 	CBehaviourProjectileStand behaviourProjectileStand;
 

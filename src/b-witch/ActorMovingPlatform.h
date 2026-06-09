@@ -307,9 +307,7 @@ struct CActorMovingPlatform_SubObj
 	uint field_0x20;
 	uint flags_0x24;
 	int field_0x28;
-	float field_0x2c;
-	S_TILT_STREAM_DEF tiltStreamDef;
-	S_PUSH_STREAM_DEF pushStreamDef;
+	S_TILT_CONFIG tiltConfig;
 });
 
 static_assert(sizeof(CActorMovingPlatform_SubObj) == 0x4c);

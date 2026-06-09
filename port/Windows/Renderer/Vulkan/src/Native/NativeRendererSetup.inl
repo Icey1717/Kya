@@ -91,6 +91,132 @@ namespace Renderer
 			DebugShapes::CreatePipeline(stage.gRenderPass, stage.gDebugLinePipeline, debugLineName.c_str());
 		}
 
+		static uint16_t GetBlendPipelineVariantKey(const ResolvedBlendState& blendState)
+		{
+			return static_cast<uint16_t>(blendState.blendIndex | (blendState.colorBlendAttachment.blendEnable ? 0x100 : 0));
+		}
+
+		static VkPipeline CreateBlendPipeline(const RenderStage& stage, const ResolvedBlendState& blendState, const VkRenderPass& renderPass, const char* name)
+		{
+			const auto& createInfo = stage.gCreateInfo;
+			const auto& pipeline = stage.gPipeline;
+
+			auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
+			auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+			VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
+
+			VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+			auto& bindingDescription = vertShader.reflectData.bindingDescription;
+			const auto& attributeDescriptions = vertShader.reflectData.GetAttributes();
+
+			bindingDescription.stride = sizeof(GSVertexUnprocessed);
+
+			vertexInputInfo.vertexBindingDescriptionCount = 1;
+			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+			vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+			vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+			VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+			inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+			VkPipelineViewportStateCreateInfo viewportState{};
+			viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			viewportState.viewportCount = 1;
+			viewportState.scissorCount = 1;
+
+			VkPipelineRasterizationStateCreateInfo rasterizer{};
+			rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+			rasterizer.depthClampEnable = VK_FALSE;
+			rasterizer.rasterizerDiscardEnable = VK_FALSE;
+			rasterizer.polygonMode = createInfo.key.options.bWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+			rasterizer.lineWidth = 1.0f;
+			rasterizer.cullMode = VK_CULL_MODE_NONE;
+			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			rasterizer.depthBiasEnable = VK_FALSE;
+
+			VkPipelineMultisampleStateCreateInfo multisampling{};
+			multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+			multisampling.sampleShadingEnable = VK_FALSE;
+			multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+			VkPipelineColorBlendAttachmentState colorBlendAttachment = blendState.colorBlendAttachment;
+
+			VkPipelineColorBlendStateCreateInfo colorBlending{};
+			colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+			colorBlending.logicOpEnable = VK_FALSE;
+			colorBlending.logicOp = VK_LOGIC_OP_COPY;
+			colorBlending.attachmentCount = 1;
+			colorBlending.pAttachments = &colorBlendAttachment;
+			colorBlending.blendConstants[0] = 0.0f;
+			colorBlending.blendConstants[1] = 0.0f;
+			colorBlending.blendConstants[2] = 0.0f;
+			colorBlending.blendConstants[3] = 0.0f;
+
+			std::vector<VkDynamicState> dynamicStates = {
+				VK_DYNAMIC_STATE_VIEWPORT,
+				VK_DYNAMIC_STATE_SCISSOR,
+				VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+				VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
+				VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
+			};
+			VkPipelineDynamicStateCreateInfo dynamicState{};
+			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+			dynamicState.pDynamicStates = dynamicStates.data();
+
+			VkPipelineDepthStencilStateCreateInfo depthState{};
+			depthState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			depthState.depthTestEnable = VK_TRUE;
+			depthState.depthWriteEnable = VK_TRUE;
+			depthState.depthCompareOp = VK_COMPARE_OP_GREATER;
+
+			VkGraphicsPipelineCreateInfo pipelineInfo{};
+			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+			pipelineInfo.stageCount = 2;
+			pipelineInfo.pStages = shaderStages;
+			pipelineInfo.pVertexInputState = &vertexInputInfo;
+			pipelineInfo.pInputAssemblyState = &inputAssembly;
+			pipelineInfo.pViewportState = &viewportState;
+			pipelineInfo.pRasterizationState = &rasterizer;
+			pipelineInfo.pMultisampleState = &multisampling;
+			pipelineInfo.pColorBlendState = &colorBlending;
+			pipelineInfo.pDepthStencilState = &depthState;
+			pipelineInfo.pDynamicState = &dynamicState;
+			pipelineInfo.layout = pipeline.layout;
+			pipelineInfo.renderPass = renderPass;
+			pipelineInfo.subpass = 0;
+			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+			VkPipeline blendPipeline = VK_NULL_HANDLE;
+			if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &blendPipeline) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create graphics pipeline!");
+			}
+
+			SetObjectName(reinterpret_cast<uint64_t>(blendPipeline), VK_OBJECT_TYPE_PIPELINE, name);
+			return blendPipeline;
+		}
+
+		static VkPipeline GetBlendPipeline(const RenderPassKey& key, const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled)
+		{
+			RenderStage& stage = gRenderPass[key];
+			const ResolvedBlendState blendState = ResolveBlendState(alpha, bAlphaBlendEnabled);
+			const uint16_t blendKey = GetBlendPipelineVariantKey(blendState);
+
+			const auto it = stage.gBlendPipelines.find(blendKey);
+			if (it != stage.gBlendPipelines.end()) {
+				return it->second;
+			}
+
+			std::string pipelineName = stage.gPipeline.debugName + " Blend " + std::to_string(blendKey);
+			VkPipeline blendPipeline = CreateBlendPipeline(stage, blendState, stage.gRenderPass, pipelineName.c_str());
+			stage.gBlendPipelines.emplace(blendKey, blendPipeline);
+			return blendPipeline;
+		}
 		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
 		{
 			pipeline.debugName = name;
@@ -173,8 +299,6 @@ namespace Renderer
 			std::vector<VkDynamicState> dynamicStates = {
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
-				VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
-				VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT,
 				VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
 				VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
 				VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,

@@ -342,15 +342,15 @@ void CActorMovingPlatform::Init()
 	CActor* pCVar16;
 
 	this->movingPlatformFlags = this->movingPlatformFlags & 0xffffff0f;
-	this->pProperties->tiltStreamDef.Init();
-	this->pProperties->pushStreamDef.Init();
+	this->pProperties->tiltConfig.tiltStreamDef.Init();
+	this->pProperties->tiltConfig.pushStreamDef.Init();
 
-	if (((this->pProperties->tiltStreamDef).field_0x4 == 0.0f) && (this->pProperties->pushStreamDef.field_0x0 == 0.0f)) {
+	if (((this->pProperties->tiltConfig.tiltStreamDef).field_0x4 == 0.0f) && (this->pProperties->tiltConfig.pushStreamDef.field_0x0 == 0.0f)) {
 		this->pTiltData = (S_TILT_DATA*)0x0;
 	}
 	else {
 		this->pTiltData = PlatformHeader<S_TILT_DATA>::Get(&gTiltDataAllocator);
-		this->pTiltData->Init(this->pProperties->field_0x2c, this, &this->pProperties->tiltStreamDef);
+		this->pTiltData->Init(this->pProperties->tiltConfig.field_0x0, this, &this->pProperties->tiltConfig.tiltStreamDef);
 		this->pTiltData->pushData.Init();
 	}
 
@@ -662,7 +662,7 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		bPush = false;
 	}
 	else {
-		bPush = SV_MOV_UpdatePush(this->pProperties->field_0x2c, &this->pTiltData->pushData, &this->pProperties->pushStreamDef);
+		bPush = SV_MOV_UpdatePush(this->pProperties->tiltConfig.field_0x0, &this->pTiltData->pushData, &this->pProperties->tiltConfig.pushStreamDef);
 	}
 
 	if (bPush != false) {
@@ -674,7 +674,7 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		bTilt = false;
 	}
 	else {
-		bTilt = SV_MOV_UpdateTilt(this->pProperties->field_0x2c, this->pTiltData, &this->pProperties->tiltStreamDef);
+		bTilt = SV_MOV_UpdateTilt(this->pProperties->tiltConfig.field_0x0, this->pTiltData, &this->pProperties->tiltConfig.tiltStreamDef);
 	}
 
 	if (bTilt == false) {
@@ -1147,7 +1147,7 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 		cVar5 = false;
 	}
 	else {
-		cVar5 = CActorMovable::SV_MOV_UpdatePush(this->pProperties->field_0x2c, &this->pTiltData->pushData, &this->pProperties->pushStreamDef);
+		cVar5 = CActorMovable::SV_MOV_UpdatePush(this->pProperties->tiltConfig.field_0x0, &this->pTiltData->pushData, &this->pProperties->tiltConfig.pushStreamDef);
 	}
 
 	local_80 = param_3;
@@ -1165,7 +1165,7 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 		cVar5 = false;
 	}
 	else {
-		cVar5 = CActorMovable::SV_MOV_UpdateTilt(this->pProperties->field_0x2c, this->pTiltData, &this->pProperties->tiltStreamDef);
+		cVar5 = CActorMovable::SV_MOV_UpdateTilt(this->pProperties->tiltConfig.field_0x0, this->pTiltData, &this->pProperties->tiltConfig.tiltStreamDef);
 	}
 
 	if (cVar5 == false) {
@@ -2317,7 +2317,7 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 		cVar4 = false;
 	}
 	else {
-		cVar4 = SV_MOV_UpdatePush(this->pProperties->field_0x2c, &this->pTiltData->pushData, &this->pProperties->pushStreamDef);
+		cVar4 = SV_MOV_UpdatePush(this->pProperties->tiltConfig.field_0x0, &this->pTiltData->pushData, &this->pProperties->tiltConfig.pushStreamDef);
 	}
 
 	if (cVar4 != false) {
@@ -2329,7 +2329,7 @@ void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int para
 		cVar4 = false;
 	}
 	else {
-		cVar4 = SV_MOV_UpdateTilt(this->pProperties->field_0x2c, this->pTiltData, &this->pProperties->tiltStreamDef);
+		cVar4 = SV_MOV_UpdateTilt(this->pProperties->tiltConfig.field_0x0, this->pTiltData, &this->pProperties->tiltConfig.tiltStreamDef);
 	}
 
 	if (cVar4 == false) {

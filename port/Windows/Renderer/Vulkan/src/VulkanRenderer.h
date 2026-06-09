@@ -48,4 +48,5 @@ VkInstance GetInstance();
 uint32_t GetGraphicsQueueFamily();
 
 VkAllocationCallbacks* GetAllocator();
+void SetAllocationTrackingEnabled(bool enabled);
 uint32_t GetAllocationCount(VkSystemAllocationScope scope);

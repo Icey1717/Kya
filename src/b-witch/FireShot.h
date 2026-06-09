@@ -32,6 +32,7 @@ public:
 	CActorProjectile* _ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7);
 
 	bool FireNewShot(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor);
+	bool FireNewShotStraight(edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor);
 
 	void KillAllProjectiles();
 

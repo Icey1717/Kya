@@ -7,6 +7,16 @@
 
 #include "edMem.h"
 #include "VulkanRenderer.h"
+#include "DebugSetting.h"
+
+namespace {
+	Debug::Setting<bool> gTrackVulkanAllocations("Track Vulkan Allocations", true);
+}
+
+void DebugMenu::ApplyStartupSettings()
+{
+	SetAllocationTrackingEnabled(gTrackVulkanAllocations.get());
+}
 
 // Helper to visualize allocator blocks in ImGui
 // Helper to visualize allocator blocks in ImGui
@@ -175,6 +185,12 @@ void Debug::Memory::ShowMenu(bool* bOpen)
 	ImGui_ShowAllocatorBlocks();
 
 	if (ImGui::CollapsingHeader("Vulkan")) {
+		bool bTrackVulkanAllocations = gTrackVulkanAllocations.get();
+		if (ImGui::Checkbox("Track Vulkan Allocations", &bTrackVulkanAllocations)) {
+			gTrackVulkanAllocations = bTrackVulkanAllocations;
+			SetAllocationTrackingEnabled(bTrackVulkanAllocations);
+		}
+
 		ImGui::Text("Allocations:");
 		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_COMMAND: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
 		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_OBJECT: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_OBJECT));
@@ -189,4 +205,3 @@ void Debug::Memory::ShowMenu(bool* bOpen)
 namespace Debug {
     MenuRegisterer sDebugMemoryMenuReg("Memory", Debug::Memory::ShowMenu);
 }
-

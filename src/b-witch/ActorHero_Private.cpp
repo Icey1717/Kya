@@ -3153,13 +3153,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		return 0;
 	}
 	if (msg == 0x81) {
-		IMPLEMENTATION_GUARD(
-		*(undefined4*)&this->field_0x142c = 1;)
+		this->field_0x142c = 1;
 		return 1;
 	}
 	if (msg == 0x80) {
-		IMPLEMENTATION_GUARD(
-		*(undefined4*)&this->field_0x142c = 0;)
+		this->field_0x142c = 0;
 		return 1;
 	}
 
@@ -4869,11 +4867,11 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 					}
 				}
 				else {
-					deadState = 0x9b;
+					deadState = STATE_HERO_COL_WALL_DEAD_E;
 				}
 			}
 			else {
-				deadState = 0x9a;
+				deadState = STATE_HERO_COL_WALL_DEAD_D;
 			}
 		}
 		else {
@@ -5387,6 +5385,8 @@ LAB_00341590:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 	case STATE_HERO_COL_WALL_DEAD_C:
+	case STATE_HERO_COL_WALL_DEAD_D:
+	case STATE_HERO_COL_WALL_DEAD_E:
 	case STATE_HERO_COL_WALL_DEAD_B:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_A:
 	case STATE_HERO_JUMP_GRIP_UNKOWN_B:
@@ -5698,6 +5698,8 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_COL_WALL_DEAD_C:
+	case STATE_HERO_COL_WALL_DEAD_D:
+	case STATE_HERO_COL_WALL_DEAD_E:
 	case STATE_HERO_DF:
 	case STATE_HERO_BASIC_TO_STAND:
 	case STATE_HERO_CEILING_CLIMB_A:
@@ -6247,6 +6249,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_COL_WALL_DEAD_B:
 		StateHeroToboggan(0);
+		break;
+	case STATE_HERO_COL_WALL_DEAD_D:
+		StateHeroWindWallMove(0.0f, 0.0f, 0, 0);
+		break;
+	case STATE_HERO_COL_WALL_DEAD_E:
+		StateHeroWindSlide(-1);
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
 		StateHeroDead(2.0f);

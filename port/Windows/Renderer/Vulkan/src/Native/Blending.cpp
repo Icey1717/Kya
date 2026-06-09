@@ -155,6 +155,48 @@ namespace Renderer
 	} // Native
 } // Renderer
 
+Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled)
+{
+	ResolvedBlendState blendState{};
+	blendState.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	blendState.colorBlendAttachment.blendEnable = bAlphaBlendEnabled ? VK_TRUE : VK_FALSE;
+	blendState.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendState.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blendState.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	blendState.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendState.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blendState.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	if (!bAlphaBlendEnabled) {
+		return blendState;
+	}
+
+	blendState.blendIndex = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
+	const HWBlend blend = GetBlend(blendState.blendIndex);
+
+	static constexpr std::array<VkBlendFactor, 16> vk_blend_factors = { {
+		VK_BLEND_FACTOR_SRC_COLOR, VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR, VK_BLEND_FACTOR_DST_COLOR, VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+		VK_BLEND_FACTOR_SRC1_COLOR, VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		VK_BLEND_FACTOR_DST_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_FACTOR_SRC1_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA,
+		VK_BLEND_FACTOR_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO
+	} };
+	static constexpr std::array<VkBlendOp, 3> vk_blend_ops = { {
+			VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT
+	} };
+
+	blendState.colorBlendAttachment.srcColorBlendFactor = vk_blend_factors[blend.src];
+	blendState.colorBlendAttachment.dstColorBlendFactor = vk_blend_factors[blend.dst];
+	blendState.colorBlendAttachment.colorBlendOp = vk_blend_ops[blend.op];
+
+	if (blend.flags & BLEND_HW_CLR1)
+	{
+		blendState.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+		blendState.hwBlendMode = 0x1;
+	}
+
+	return blendState;
+}
+
 Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
 	BlendingState blendState{};
@@ -165,37 +207,19 @@ Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const 
 	static auto pvkCmdSetColorBlendEquationEXT = (PFN_vkCmdSetColorBlendEquationEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEquationEXT");
 	assert(pvkCmdSetColorBlendEquationEXT);
 
-	VkBool32 bEnableAlphaVk = bAlphaBlendEnabled ? VK_TRUE : VK_FALSE;
+	const ResolvedBlendState resolvedBlendState = ResolveBlendState(alpha, bAlphaBlendEnabled);
+
+	VkBool32 bEnableAlphaVk = resolvedBlendState.colorBlendAttachment.blendEnable;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);
 
 	if (bAlphaBlendEnabled) {
-		uint8_t blend_index = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
-		const HWBlend blend = GetBlend(blend_index);
-
-		static constexpr std::array<VkBlendFactor, 16> vk_blend_factors = { {
-			VK_BLEND_FACTOR_SRC_COLOR, VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR, VK_BLEND_FACTOR_DST_COLOR, VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
-			VK_BLEND_FACTOR_SRC1_COLOR, VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR, VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			VK_BLEND_FACTOR_DST_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_FACTOR_SRC1_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA,
-			VK_BLEND_FACTOR_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO
-		} };
-		static constexpr std::array<VkBlendOp, 3> vk_blend_ops = { {
-				VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT
-		} };
-
 		VkColorBlendEquationEXT colorBlendEquation;
-		colorBlendEquation.srcColorBlendFactor = vk_blend_factors[blend.src];
-		colorBlendEquation.dstColorBlendFactor = vk_blend_factors[blend.dst];
-		colorBlendEquation.colorBlendOp = vk_blend_ops[blend.op];
-
-		if (blend.flags & BLEND_HW_CLR1)
-		{
-			colorBlendEquation.dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
-			blendState.hwBlendMode = 0x1;
-		}
-
-		colorBlendEquation.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendEquation.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendEquation.alphaBlendOp = VK_BLEND_OP_ADD;
+		colorBlendEquation.srcColorBlendFactor = resolvedBlendState.colorBlendAttachment.srcColorBlendFactor;
+		colorBlendEquation.dstColorBlendFactor = resolvedBlendState.colorBlendAttachment.dstColorBlendFactor;
+		colorBlendEquation.colorBlendOp = resolvedBlendState.colorBlendAttachment.colorBlendOp;
+		colorBlendEquation.srcAlphaBlendFactor = resolvedBlendState.colorBlendAttachment.srcAlphaBlendFactor;
+		colorBlendEquation.dstAlphaBlendFactor = resolvedBlendState.colorBlendAttachment.dstAlphaBlendFactor;
+		colorBlendEquation.alphaBlendOp = resolvedBlendState.colorBlendAttachment.alphaBlendOp;
 
 		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
 	}
@@ -205,6 +229,7 @@ Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const 
 		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
 	}
 
+	blendState.hwBlendMode = resolvedBlendState.hwBlendMode;
 	return blendState;
 }
 

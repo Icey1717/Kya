@@ -58,6 +58,7 @@ namespace Debug
 
 namespace DebugMenu
 {
+	void ApplyStartupSettings();
 	void BuildImguiCommands();
 	double GetDeltaTime();
 	void Init();

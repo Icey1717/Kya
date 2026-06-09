@@ -21,7 +21,6 @@ namespace Renderer::Native::DisplayList
 	static SimpleTexture* gBoundTexture = nullptr;
 
 	static VkRenderPass gRenderPass;
-	static PipelineMap gPipelines;
 
 	struct DisplayListPipelineKey
 	{
@@ -36,13 +35,35 @@ namespace Renderer::Native::DisplayList
 		};
 	};
 
-	static Pipeline& GetPipeline() {
+	struct DisplayListPipelineState
+	{
+		Renderer::Pipeline pipeline;
+		PipelineCreateInfo<DisplayListPipelineKey> createInfo;
+		std::unordered_map<uint8_t, VkPipeline> blendPipelines;
+	};
+
+	static std::unordered_map<size_t, DisplayListPipelineState> gPipelines;
+
+	static DisplayListPipelineKey GetPipelineKey()
+	{
 		DisplayListPipelineKey pipelineKey;
 		pipelineKey.options.bBoundTexture = gBoundTexture != nullptr;
 		pipelineKey.options.topology = (PS2::GetGSState().PRIM.PRIM == 6) ? topologyLineList : topologyTriangleList;
 
+		return pipelineKey;
+	}
+
+	static DisplayListPipelineState& GetPipelineState()
+	{
+		const DisplayListPipelineKey pipelineKey = GetPipelineKey();
+
 		assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
 		return gPipelines[pipelineKey.key];
+	}
+
+	static const GIFReg::GSAlpha& GetBlendAlpha()
+	{
+		return gBoundTexture ? gBoundTexture->GetTextureRegisters().alpha : PS2::GetGSState().ALPHA;
 	}
 
 	struct DisplayListFragmentState
@@ -202,29 +223,16 @@ namespace Renderer::Native::DisplayList
 		SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
 	}
 
-	static void CreatePipeline(const PipelineCreateInfo<DisplayListPipelineKey>& createInfo, const VkRenderPass& renderPass, const char* name)
+	static VkPipeline CreateBlendPipeline(DisplayListPipelineState& pipelineState, const Renderer::Native::ResolvedBlendState& blendState, const VkRenderPass& renderPass, const char* name)
 	{
-		Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
+		Renderer::Pipeline& pipeline = pipelineState.pipeline;
+		const auto& createInfo = pipelineState.createInfo;
 
 		const bool bHasGeometryShader = !createInfo.geomShaderFilename.empty();
 
 		auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 		auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
 		auto geomShader = Shader::ReflectedModule(createInfo.geomShaderFilename, VK_SHADER_STAGE_GEOMETRY_BIT);
-
-		pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
-		pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
-
-		if (bHasGeometryShader) {
-			pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
-		}
-
-		pipeline.CreateDescriptorSetLayouts();
-
-		pipeline.CreateLayout();
-
-		pipeline.CreateDescriptorPool();
-		pipeline.CreateDescriptorSets();
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 
@@ -283,14 +291,7 @@ namespace Renderer::Native::DisplayList
 		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment = blendState.colorBlendAttachment;
 
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -306,8 +307,6 @@ namespace Renderer::Native::DisplayList
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR,
-			VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
-			VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT,
 		};
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -337,11 +336,68 @@ namespace Renderer::Native::DisplayList
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &pipeline.pipeline) != VK_SUCCESS) {
+		VkPipeline blendPipeline = VK_NULL_HANDLE;
+		if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &blendPipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 
-		SetObjectName(reinterpret_cast<uint64_t>(pipeline.pipeline), VK_OBJECT_TYPE_PIPELINE, name);
+		SetObjectName(reinterpret_cast<uint64_t>(blendPipeline), VK_OBJECT_TYPE_PIPELINE, name);
+		return blendPipeline;
+	}
+
+	static void CreatePipeline(const PipelineCreateInfo<DisplayListPipelineKey>& createInfo)
+	{
+		DisplayListPipelineState& pipelineState = gPipelines[createInfo.key.key];
+		pipelineState.createInfo = createInfo;
+
+		Renderer::Pipeline& pipeline = pipelineState.pipeline;
+
+		const bool bHasGeometryShader = !createInfo.geomShaderFilename.empty();
+
+		auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
+		auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto geomShader = Shader::ReflectedModule(createInfo.geomShaderFilename, VK_SHADER_STAGE_GEOMETRY_BIT);
+
+		pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
+		pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
+
+		if (bHasGeometryShader) {
+			pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
+		}
+
+		pipeline.CreateDescriptorSetLayouts();
+		pipeline.CreateLayout();
+		pipeline.CreateDescriptorPool();
+		pipeline.CreateDescriptorSets();
+	}
+
+	static VkPipeline GetBlendPipeline()
+	{
+		DisplayListPipelineState& pipelineState = GetPipelineState();
+		const Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
+
+		auto it = pipelineState.blendPipelines.find(blendState.blendIndex);
+		if (it != pipelineState.blendPipelines.end()) {
+			return it->second;
+		}
+
+		std::string pipelineName;
+		switch (pipelineState.createInfo.key.options.topology) {
+		case topologyLineList:
+			pipelineName = "Native Display List LineList";
+			break;
+
+		case topologyTriangleList:
+		default:
+			pipelineName = pipelineState.createInfo.key.options.bBoundTexture ? "Native Display List TriList" : "Native Display List TriList No Tex";
+			break;
+		}
+		pipelineName += " Blend ";
+		pipelineName += std::to_string(blendState.blendIndex);
+
+		VkPipeline blendPipeline = CreateBlendPipeline(pipelineState, blendState, gRenderPass, pipelineName.c_str());
+		pipelineState.blendPipelines.emplace(blendState.blendIndex, blendPipeline);
+		return blendPipeline;
 	}
 
 	static void CreatePipelines()
@@ -350,19 +406,16 @@ namespace Renderer::Native::DisplayList
 		key.options.topology = topologyTriangleList;
 		{
 			key.options.bBoundTexture = true;
-			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key};
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List TriList");
+			CreatePipeline({ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key });
 		}
 		{
 			key.options.bBoundTexture = false;
-			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylistnotex.frag.spv", "", key };
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List TriList No Tex");
+			CreatePipeline({ "shaders/displaylist.vert.spv" , "shaders/displaylistnotex.frag.spv", "", key });
 		}
 		{
 			key.options.bBoundTexture = true;
 			key.options.topology = topologyLineList;
-			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List LineList");
+			CreatePipeline({ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key });
 		}
 	}
 
@@ -374,13 +427,11 @@ namespace Renderer::Native::DisplayList
 		assert(properties.limits.maxPushConstantsSize >= sizeof(DisplayListFragmentState));
 	}
 
-	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture)
+	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture, const Renderer::Pipeline& pipeline)
 	{
 		if (!pTexture) {
 			return;
 		}
-
-		auto& pipeline = GetPipeline();
 
 		if (pTexture->GetRenderer()->HasDescriptorSets(pipeline)) {
 			return;
@@ -414,10 +465,7 @@ namespace Renderer::Native::DisplayList
 		if (indexCount > 0) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
-			BlendingState blendState = [&cmd]()
-				{
-					return gBoundTexture ? Native::SetBlendingDynamicState(gBoundTexture, true, cmd) : Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
-				}();
+			const Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
 			const GIFReg::GSTest testState = PS2::GetGSState().TEST;
 			const DisplayListFragmentState fragmentState{
 				.blendMode = blendState.hwBlendMode,
@@ -427,9 +475,13 @@ namespace Renderer::Native::DisplayList
 				.alphaAfail = static_cast<int32_t>(testState.AFAIL),
 			};
 
+			gBoundPipeline = &GetPipelineState().pipeline;
 			auto& pipeline = *gBoundPipeline;
 
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline());
+
 			if (gBoundTexture) {
+				InitializeDescriptorsSets(gBoundTexture, pipeline);
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			}
 
@@ -482,11 +534,12 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	gVertexBuffers.GetDrawBufferData().vertex.head = gVertexBuffers.GetDrawBufferData().vertex.tail = gVertexBuffers.GetDrawBufferData().vertex.next;
 
 	// Need to do this after we have updated prim.
-	InitializeDescriptorsSets(gBoundTexture);
+	if (gBoundTexture) {
+		auto& pipeline = GetPipelineState().pipeline;
+		InitializeDescriptorsSets(gBoundTexture, pipeline);
+	}
 
-	gBoundPipeline = &GetPipeline();
-
-	vkCmdBindPipeline(GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, gBoundPipeline->pipeline);
+	gBoundPipeline = nullptr;
 }
 
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)
@@ -556,6 +609,11 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	}
 	
 	gBoundTexture = pNewTexture;
+
+	if (gBoundTexture) {
+		auto& pipeline = GetPipelineState().pipeline;
+		InitializeDescriptorsSets(gBoundTexture, pipeline);
+	}
 
 	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture ? gBoundTexture->GetName().c_str() : "No Texture Binding");
 

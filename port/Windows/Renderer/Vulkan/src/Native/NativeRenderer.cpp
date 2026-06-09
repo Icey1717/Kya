@@ -206,8 +206,10 @@ namespace Renderer
 		{
 			VkRenderPass gRenderPass = VK_NULL_HANDLE;
 
+			PipelineCreateInfo<PipelineKey> gCreateInfo;
 			Pipeline gPipeline;
 			Renderer::Pipeline gDebugLinePipeline;
+			std::unordered_map<uint16_t, VkPipeline> gBlendPipelines;
 
 			void CreatePipeline()
 			{
@@ -215,8 +217,9 @@ namespace Renderer
 				key.options.bGlsl = true;
 				key.options.bWireframe = false;
 				key.options.topology = topologyTriangleList;
-				PipelineCreateInfo<PipelineKey> createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
-				Renderer::Native::CreatePipeline(createInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
+				gCreateInfo = { "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
+				Renderer::Native::CreatePipeline(gCreateInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
+				gBlendPipelines.emplace(0, gPipeline.pipeline);
 			}
 
 			const Pipeline& GetPipeline() const
@@ -330,6 +333,8 @@ namespace Renderer
 		static std::vector<Draw> gSavedDraws;
 		static int gPreviewWidth = 512;
 		static int gPreviewHeight = 512;
+
+		static VkPipeline GetBlendPipeline(const RenderPassKey& key, const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled);
 
 	} // Native
 } // Renderer

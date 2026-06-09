@@ -19,6 +19,7 @@ void signal_handler(int signal)
 int main(int argc, char** argv) {
 	std::signal(SIGINT, signal_handler);
 
+	DebugMenu::ApplyStartupSettings();
 	Renderer::Setup();
 	DebugMenu::SetupRenderer();
 	Renderer::Native::Setup();

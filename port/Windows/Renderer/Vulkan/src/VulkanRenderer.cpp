@@ -13,6 +13,7 @@
 #include <array>
 #include <optional>
 #include <set>
+#include <mutex>
 
 #include "Objects/VulkanBuffer.h"
 #include "Objects/VulkanImage.h"
@@ -1121,26 +1122,62 @@ namespace Renderer
 {
 	// Global variable to track allocation count
 	static std::array<std::vector<void*>, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE + 1> gAllocations;
+	static std::mutex gAllocationMutex;
+	static bool gAllocationTrackingEnabled = true;
+
+	namespace
+	{
+		void RemoveTrackedAllocation_NoLock(void* pMemory)
+		{
+			if (!pMemory) {
+				return;
+			}
+
+			for (auto& alloc : gAllocations) {
+				auto it = std::find(alloc.begin(), alloc.end(), pMemory);
+				if (it != alloc.end()) {
+					alloc.erase(it);
+					return;
+				}
+			}
+		}
+	}
 
 	void* Alloc(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
 		// You can replace this with your custom memory allocator
 		void* pNew = _aligned_malloc(size, alignment);
-		gAllocations[allocationScope].push_back(pNew);
+		if (pNew) {
+			std::lock_guard<std::mutex> lock(gAllocationMutex);
+			if (!gAllocationTrackingEnabled) {
+				return pNew;
+			}
+
+			gAllocations[allocationScope].push_back(pNew);
+		}
 		return pNew;
 	}
 
 	void* ReAlloc(void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
 		// You can replace this with your custom memory reallocator
-		return _aligned_realloc(pOriginal, size, alignment);
+		void* pNew = _aligned_realloc(pOriginal, size, alignment);
+
+		std::lock_guard<std::mutex> lock(gAllocationMutex);
+		if (gAllocationTrackingEnabled) {
+			RemoveTrackedAllocation_NoLock(pOriginal);
+			if (pNew) {
+				gAllocations[allocationScope].push_back(pNew);
+			}
+		}
+
+		return pNew;
 	}
 
 	void Free(void* pUserData, void* pMemory) {
 		if (pMemory) {
-			for (auto& alloc : gAllocations) {
-				auto it = std::find(alloc.begin(), alloc.end(), pMemory);
-				if (it != alloc.end()) {
-					alloc.erase(it);
-					break;
+			{
+				std::lock_guard<std::mutex> lock(gAllocationMutex);
+				if (gAllocationTrackingEnabled) {
+					RemoveTrackedAllocation_NoLock(pMemory);
 				}
 			}
 
@@ -1330,8 +1367,25 @@ VkAllocationCallbacks* GetAllocator()
 	return gAllocator;
 }
 
+void SetAllocationTrackingEnabled(bool enabled)
+{
+	std::lock_guard<std::mutex> lock(Renderer::gAllocationMutex);
+	Renderer::gAllocationTrackingEnabled = enabled;
+
+	if (!enabled) {
+		for (auto& alloc : Renderer::gAllocations) {
+			alloc.clear();
+		}
+	}
+}
+
 uint32_t GetAllocationCount(VkSystemAllocationScope scope)
 {
+	std::lock_guard<std::mutex> lock(Renderer::gAllocationMutex);
+	if (!Renderer::gAllocationTrackingEnabled) {
+		return 0;
+	}
+
 	return Renderer::gAllocations[scope].size();
 }
 

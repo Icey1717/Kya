@@ -140,7 +140,32 @@ void CActorDCA::Reset()
 
 void CActorDCA::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	(this->aimInputDirection).x = 0.0f;
+	(this->aimInputDirection).y = 0.0f;
+	(this->aimInputDirection).z = 0.0f;
+
+	(this->aimDirection).x = 0.0f;
+	(this->aimDirection).y = 0.0f;
+	(this->aimDirection).z = 0.0f;
+
+	this->pControlledByActor = (CActor*)0x0;
+	this->field_0x460 = 0.0f;
+	this->field_0x45c = 0.0f;
+
+	this->projectAimLocation = gF32Vertex4Zero;
+	this->projectAimDirection = gF32Vertex4Zero;
+	this->aimDirection = gF32Vertex4Zero.xyz;
+	this->bCharging = 0;
+	this->fireShot.Reset();
+	(this->fireShot).field_0x290 = 1;
+
+	CActor::CheckpointReset();
+
+	return;
 }
 
 CBehaviour* CActorDCA::BuildBehaviour(int behaviourType)

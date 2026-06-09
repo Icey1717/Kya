@@ -64,7 +64,7 @@ void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj)
 	(pPrimObj->localToWorld).da = (pPrimObj->position).x;
 	(pPrimObj->localToWorld).db = (pPrimObj->position).y;
 	(pPrimObj->localToWorld).dc = (pPrimObj->position).z;
-	(pPrimObj->localToWorld).dd = 1.0;
+	(pPrimObj->localToWorld).dd = 1.0f;
 
 	(pPrimObj->worldTransform).aa = (fVar7 * fVar3) / pfVar1->x;
 	(pPrimObj->worldTransform).ab = (fVar6 * fVar4 * fVar7 + -fVar2 * fVar8) / pPrimObj->scale.y;
@@ -81,12 +81,12 @@ void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj)
 	(pPrimObj->worldTransform).da = 0.0f;
 	(pPrimObj->worldTransform).db = 0.0f;
 	(pPrimObj->worldTransform).dc = 0.0f;
-	(pPrimObj->worldTransform).dd = 1.0;
+	(pPrimObj->worldTransform).dd = 1.0f;
 
 	local_10.x = -(pPrimObj->position).x;
 	local_10.y = -(pPrimObj->position).y;
 	local_10.z = -(pPrimObj->position).z;
-	local_10.w = 1.0;
+	local_10.w = 1.0f;
 	edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj->worldTransform, &local_10);
 	(pPrimObj->worldTransform).rowT = local_10;
 	return;

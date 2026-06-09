@@ -773,7 +773,9 @@ bool edObbRayPlaneClip(float param_1, float param_2, float* param_3, float* para
 	return bVar1;
 }
 
-
+// This is not a boolean “intersection happened” result.
+// It returns a common outside-plane mask. So 0 means not trivially rejected, and nonzero means both
+// endpoints are outside the same OBB slab plane.
 uint CheckRayObbTreeIntersection(edObbTREE_DYN* pObbTree, edF32VECTOR4* pStart, edF32VECTOR4* pEnd)
 {
 	float projectedTranslationX;
@@ -926,11 +928,11 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	endLocation.xyz = (pDirection->xyz * fVar12) + pLocation->xyz;
 	endLocation.w = 1.0f;
 	local_360[0] = pObbTree;
-	uVar6 = CheckRayObbTreeIntersection(pObbTree, pRay->pLocation, &endLocation);
+	uint outsidePlaneMask = CheckRayObbTreeIntersection(pObbTree, pRay->pLocation, &endLocation);
 
-	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
+	COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", outsidePlaneMask);
 
-	if (uVar6 == 0) {
+	if (outsidePlaneMask == 0) {
 		bVar5 = false;
 		do {
 			iVar11 = 0;
@@ -945,10 +947,10 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 					COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim count {}", peVar4->count_0x52);
 
 					for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-						uVar6 = CheckRayObbTreeIntersection(LOAD_POINTER_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
+						uint outsidePlaneMask = CheckRayObbTreeIntersection(LOAD_POINTER_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
 						COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
 
-						if (uVar6 == 0) {
+						if (outsidePlaneMask == 0) {
 							uVar6 = uVar8 != 0 ^ 1;
 							if (local_18[uVar6] < 100) {
 								local_360[uVar6 * 100 + local_18[uVar6]] = LOAD_POINTER_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]);
@@ -1130,42 +1132,21 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 									pDirection = pRay->pLeadVector;
 									pLocation = pRay->pLocation;
-									float fVar31 = pLocation->x;
-									float fVar32 = pLocation->y;
-									float fVar33 = pLocation->z;
-									float fVar34 = pLocation->w;
-									float fVar35 = pDirection->x;
-									float fVar36 = pDirection->y;
-									float fVar37 = pDirection->z;
-									float fVar38 = pDirection->w;
-									fVar15 = (pPrim->worldTransform).aa;
-									fVar16 = (pPrim->worldTransform).ab;
-									fVar17 = (pPrim->worldTransform).ac;
-									fVar18 = (pPrim->worldTransform).ad;
-									fVar19 = (pPrim->worldTransform).ba;
-									fVar20 = (pPrim->worldTransform).bb;
-									fVar21 = (pPrim->worldTransform).bc;
-									fVar22 = (pPrim->worldTransform).bd;
-									fVar23 = (pPrim->worldTransform).ca;
-									fVar24 = (pPrim->worldTransform).cb;
-									fVar25 = (pPrim->worldTransform).cc;
-									fVar26 = (pPrim->worldTransform).cd;
-									fVar27 = (pPrim->worldTransform).da;
-									float fVar28 = (pPrim->worldTransform).db;
-									float fVar29 = (pPrim->worldTransform).dc;
-									float fVar30 = (pPrim->worldTransform).dd;
 
-									local_4a0.x = fVar15 * fVar31 + fVar19 * fVar32 + fVar23 * fVar33 + fVar27 * fVar34;
-									local_4a0.y = fVar16 * fVar31 + fVar20 * fVar32 + fVar24 * fVar33 + fVar28 * fVar34;
-									local_4a0.z = fVar17 * fVar31 + fVar21 * fVar32 + fVar25 * fVar33 + fVar29 * fVar34;
-									local_4a0.w = fVar18 * fVar31 + fVar22 * fVar32 + fVar26 * fVar33 + fVar30 * fVar34;
+									edF32VECTOR4 rayLocation = *pLocation;
+									edF32VECTOR4 rayDirection = *pDirection;
+
+									local_4a0.x = pPrim->worldTransform.aa * rayLocation.x + pPrim->worldTransform.ba * rayLocation.y + pPrim->worldTransform.ca * rayLocation.z + pPrim->worldTransform.da * rayLocation.w;
+									local_4a0.y = pPrim->worldTransform.ab * rayLocation.x + pPrim->worldTransform.bb * rayLocation.y + pPrim->worldTransform.cb * rayLocation.z + pPrim->worldTransform.db * rayLocation.w;
+									local_4a0.z = pPrim->worldTransform.ac * rayLocation.x + pPrim->worldTransform.bc * rayLocation.y + pPrim->worldTransform.cc * rayLocation.z + pPrim->worldTransform.dc * rayLocation.w;
+									local_4a0.w = pPrim->worldTransform.ad * rayLocation.x + pPrim->worldTransform.bd * rayLocation.y + pPrim->worldTransform.cd * rayLocation.z + pPrim->worldTransform.dd * rayLocation.w;
 
 									edF32VECTOR4 local_4b0;
 
-									local_4b0.x = fVar15 * fVar35 + fVar19 * fVar36 + fVar23 * fVar37 + fVar27 * fVar38;
-									local_4b0.y = fVar16 * fVar35 + fVar20 * fVar36 + fVar24 * fVar37 + fVar28 * fVar38;
-									local_4b0.z = fVar17 * fVar35 + fVar21 * fVar36 + fVar25 * fVar37 + fVar29 * fVar38;
-									local_4b0.w = fVar18 * fVar35 + fVar22 * fVar36 + fVar26 * fVar37 + fVar30 * fVar38;
+									local_4b0.x = pPrim->worldTransform.aa * rayDirection.x + pPrim->worldTransform.ba * rayDirection.y + pPrim->worldTransform.ca * rayDirection.z + pPrim->worldTransform.da * rayDirection.w;
+									local_4b0.y = pPrim->worldTransform.ab * rayDirection.x + pPrim->worldTransform.bb * rayDirection.y + pPrim->worldTransform.cb * rayDirection.z + pPrim->worldTransform.db * rayDirection.w;
+									local_4b0.z = pPrim->worldTransform.ac * rayDirection.x + pPrim->worldTransform.bc * rayDirection.y + pPrim->worldTransform.cc * rayDirection.z + pPrim->worldTransform.dc * rayDirection.w;
+									local_4b0.w = pPrim->worldTransform.ad * rayDirection.x + pPrim->worldTransform.bd * rayDirection.y + pPrim->worldTransform.cd * rayDirection.z + pPrim->worldTransform.dd * rayDirection.w;
 
 									edColPRIM_RAY_UNIT_SPHERE_UNIT_IN local_28;
 									local_28.field_0x4 = &local_4b0;

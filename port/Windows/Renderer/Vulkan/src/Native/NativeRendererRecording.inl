@@ -216,7 +216,7 @@ namespace Renderer
 
 						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
 							primState = instance.pMesh->GetPrim().CMD;
-							SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
+							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(currentRenderPassKey, pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
 						}
 
 						SetColorDepthDynamicState(cmd, drawCommand);
@@ -309,7 +309,7 @@ namespace Renderer
 						continue;
 					}
 
-					SetBlendingDynamicState(draw.pTexture, instance.pMesh, cmd);
+					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, draw.pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
 					previewPerDrawData.projXView = previewProjXView;

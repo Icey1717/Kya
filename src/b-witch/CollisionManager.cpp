@@ -1511,7 +1511,10 @@ void CCollision::UpdateMatrix(edF32MATRIX4* param_2)
 		
 		this->transformMatrix.rowT = param_2->rowT;
 
-		local_40.rowT = param_2->rowT;
+		local_40.dd = param_2->dd;
+		local_40.da = 0.0f - param_2->da;
+		local_40.db = 0.0f - param_2->db;
+		local_40.dc = 0.0f - param_2->dc;
 		
 		if ((this->flags_0x4 & 0x10) == 0) {
 			SetObbTreeMatrixNoRotationRecurse(this->pObbTree, &this->transformMatrix, &local_40);

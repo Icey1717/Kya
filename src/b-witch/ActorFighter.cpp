@@ -5260,12 +5260,13 @@ uint CActorFighter::_SV_HIT_FightCollisionsGet(s_fighter_collision_desc* aCollis
 	uint uVar2;
 	s_fighter_collision_desc* pCollisionDesc;
 	s_fighter_fight_collision* pCollision;
-	int iVar4;
 	edF32VECTOR4 eStack16;
 
 	uVar2 = 0;
 	nbCollisions = 0;
 	pCollision = this->aFightCollisions;
+
+	// Prev - Current
 	while ((uVar2 < this->nbFightCollisions && (nbCollisions < param_3))) {
 		bVar1 = _SV_HIT_FightCollisionCheckIntersect(aCollisionDescs + nbCollisions, &pCollision->prevBonePosition, &pCollision->curBonePosition, kindMask);
 		if (bVar1 == false) {
@@ -5285,53 +5286,49 @@ uint CActorFighter::_SV_HIT_FightCollisionsGet(s_fighter_collision_desc* aCollis
 		uVar2 = uVar2 + 1;
 	}
 
+	// Current - Current + 1
 	if ((this->pBlow->field_0x4.field_0x0byte & 0x10U) != 0) {
 		uVar2 = 0;
-		iVar4 = 0;
 		pCollisionDesc = aCollisionDescs + nbCollisions;
 		pCollision = this->aFightCollisions;
 		while ((uVar2 < this->nbFightCollisions - 1 && (nbCollisions < param_3))) {
-			IMPLEMENTATION_GUARD(
-			bVar1 = _SV_HIT_FightCollisionCheckIntersect(this, pCollisionDesc, &pCollision->curBonePosition, &this->aFightCollisions[1].curBonePosition + iVar4, kindMask);)
+			bVar1 = _SV_HIT_FightCollisionCheckIntersect(pCollisionDesc, &pCollision->curBonePosition, &pCollision[1].curBonePosition, kindMask);
 			if (bVar1 != false) {
 				pCollisionDesc = pCollisionDesc + 1;
 				nbCollisions = nbCollisions + 1;
 			}
 
-			iVar4 = iVar4 + 0x30;
 			pCollision = pCollision + 1;
 			uVar2 = uVar2 + 1;
 		}
 	}
 
+	// Current - Prev + 1
 	if ((this->pBlow->field_0x4.field_0x0byte & 0x20U) != 0) {
 		uVar2 = 0;
-		iVar4 = 0;
 		pCollisionDesc = aCollisionDescs + nbCollisions;
 		pCollision = this->aFightCollisions;
 		while ((uVar2 < this->nbFightCollisions - 1 && (nbCollisions < param_3))) {
-			IMPLEMENTATION_GUARD(
-			bVar1 = _SV_HIT_FightCollisionCheckIntersect(this, pCollisionDesc, &pCollision->curBonePosition, &this->aFightCollisions[1].prevBonePosition + iVar4, kindMask);)
+			bVar1 = _SV_HIT_FightCollisionCheckIntersect(pCollisionDesc, &pCollision->curBonePosition, &pCollision[1].prevBonePosition, kindMask);
 			if (bVar1 != false) {
 				pCollisionDesc = pCollisionDesc + 1;
 				nbCollisions = nbCollisions + 1;
 			}
-			iVar4 = iVar4 + 0x30;
+
 			pCollision = pCollision + 1;
 			uVar2 = uVar2 + 1;
 		}
+
+		// Prev - Current + 1
 		uVar2 = 0;
-		iVar4 = 0;
 		pCollisionDesc = aCollisionDescs + nbCollisions;
 		pCollision = this->aFightCollisions;
 		while ((uVar2 < this->nbFightCollisions - 1 && (nbCollisions < param_3))) {
-			IMPLEMENTATION_GUARD(
-			bVar1 = _SV_HIT_FightCollisionCheckIntersect(this, pCollisionDesc, &pCollision->prevBonePosition, &this->aFightCollisions[1].curBonePosition + iVar4, kindMask);)
+			bVar1 = _SV_HIT_FightCollisionCheckIntersect(pCollisionDesc, &pCollision->prevBonePosition, &pCollision[1].curBonePosition, kindMask);
 			if (bVar1 != false) {
 				pCollisionDesc = pCollisionDesc + 1;
 				nbCollisions = nbCollisions + 1;
 			}
-			iVar4 = iVar4 + 0x30;
 			pCollision = pCollision + 1;
 			uVar2 = uVar2 + 1;
 		}
@@ -7528,6 +7525,22 @@ void CBehaviourFighter::Manage()
 	case FIGHTER_FLIP_OFF_ME_B:
 		this->pOwner->_StateFighterFlipOffMe();
 		break;
+	case FIGHTER_STATE_19:
+		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		if (((pFighter->pCollisionData)->flags_0x4 & 2) == 0) {
+			pFighter->field_0x4fc = (pFighter->dynamic.linearAcceleration * fabsf(pFighter->dynamic.velocityDirectionEuler.y)) / 8.0f;
+			if (1.0f < pFighter->field_0x4fc) {
+				pFighter->field_0x4fc = 1.0f;
+			}
+
+			if (pFighter->currentLocation.y < pFighter->field_0x4f0) {
+				pFighter->fightFlags = pFighter->fightFlags | 2;
+			}
+		}
+		else {
+			pFighter->SetState(0x1a, -1);
+		}
+		break;
 	case FIGHTER_RIDE:
 		this->pOwner->_StateFighterRide();
 		break;
@@ -7845,6 +7858,7 @@ void CBehaviourFighter::InitState(int newState)
 	case FIGHTER_JUMP_FLIP_PREPARE_JUMP:
 	case FIGHTER_FLIP_OFF_ME_A:
 	case FIGHTER_FLIP_OFF_ME_B:
+	case FIGHTER_STATE_19:
 	case FIGHTER_RIDE:
 		// Nothing
 		break;
@@ -8016,6 +8030,13 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_FLIP_OFF_ME_B:
 		this->pOwner->_StateFighterFlipOffMeTerm(newState);
 		break;
+	case FIGHTER_STATE_19:
+	{
+		pFighter = this->pOwner;
+		if ((pFighter->GetStateFlags(newState) & 0x100) != 0) {
+			pFighter->fightFlags = pFighter->fightFlags | 2;
+		}
+	}
 	case FIGHTER_HOLD_PUSH_PREPARE:
 		this->pOwner->_StateFighterHoldPushPrepareTerm();
 		break;

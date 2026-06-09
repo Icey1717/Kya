@@ -305,6 +305,21 @@ bool CFireShot::FireNewShot(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4
 	return bSuccess;
 }
 
+bool CFireShot::FireNewShotStraight(edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor)
+{
+	CActorProjectile* pProjectile;
+	S_SHOT_DATA* pSStack4;
+
+	pProjectile = _ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pSStack4, pActor, false);
+	if (pProjectile != (CActorProjectile*)0x0) {
+		pProjectile->ProjectToGoStraight(pDirection, true, pActor);
+	}
+
+	return pProjectile != (CActorProjectile*)0x0;
+}
+
+
+
 void CFireShot::KillAllProjectiles()
 {
 	uint uVar1;
