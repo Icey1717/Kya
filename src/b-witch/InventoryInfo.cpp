@@ -6,6 +6,8 @@
 #include "ActorAutonomous.h"
 #include "LevelScheduler.h"
 #include "ActorHero.h"
+#include "FrontendDisp.h"
+#include "FrontEndInventory.h"
 
 int CInventoryInfo::ProcessMessage(CActor* pSender, int msg, void* pMsgParams)
 {
@@ -162,12 +164,10 @@ void CInventoryInfo::Create(ByteCode* pByteCode)
 
 void CInventoryInfo::ObjectPurchased()
 {
-	CActorBoomy* pCVar1;
-	uint uVar2;
-	int iVar3;
-	int iVar4;
+	uint newFightAbilityFlags;
+	int levelLifeUpdate;
 	CLifeInterface* pLifeInterface;
-	float fVar5;
+	float prevHealth;
 
 	switch (this->purchaseId) {
 	case INVENTORY_ITEM_BOUNCE:
@@ -184,31 +184,6 @@ void CInventoryInfo::ObjectPurchased()
 
 		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_BRONZE);
 		break;
-	case INVENTORY_ITEM_WHITE_BRACELET:
-	case INVENTORY_ITEM_YELLOW_BRACELET:
-	case INVENTORY_ITEM_GREEN_BRACELET:
-	case INVENTORY_ITEM_BLUE_BRACELET:
-	case INVENTORY_ITEM_BROWN_BRACELET:
-	case INVENTORY_ITEM_BLACK_BRACELET:
-	case INVENTORY_ITEM_SILVER_BRACELET:
-	case INVENTORY_ITEM_GOLD_BRACELET:
-		uVar2 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
-		uVar2 = uVar2 | 1 << (this->purchaseId - 5U & 0x1f);
-		CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, uVar2);
-		this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_FIGHT_RING_CHANGED, (void*)uVar2);
-		break;
-	case INVENTORY_ITEM_JAMGUT_WHISTLE:
-		CLevelScheduler::ScenVar_Set(SCN_ABILITY_JAMGUT_RIDE, 1);
-		break;
-	case INVENTORY_ITEM_BASIC_BOARD:
-		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 1);
-		break;
-	case INVENTORY_ITEM_MAGIC_BOARD:
-		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 2);
-		break;
-	case INVENTORY_ITEM_TELESCOPE:
-		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BINOCULARS, 1);
-		break;
 	case INVENTORY_ITEM_SILVER_BOOMY:
 		if (CLevelScheduler::ScenVar_Get(SCN_ABILITY_BOOMY_TYPE) < BOOMY_LEVEL_SILVER) {
 			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)BOOMY_LEVEL_SILVER);
@@ -223,6 +198,28 @@ void CInventoryInfo::ObjectPurchased()
 			CLevelScheduler::ScenVar_Set(SCN_ABILITY_BOOMY_TYPE, BOOMY_LEVEL_GOLD);
 		}
 		break;
+	case INVENTORY_ITEM_WHITE_BRACELET:
+	case INVENTORY_ITEM_YELLOW_BRACELET:
+	case INVENTORY_ITEM_GREEN_BRACELET:
+	case INVENTORY_ITEM_BLUE_BRACELET:
+	case INVENTORY_ITEM_BROWN_BRACELET:
+	case INVENTORY_ITEM_BLACK_BRACELET:
+	case INVENTORY_ITEM_SILVER_BRACELET:
+	case INVENTORY_ITEM_GOLD_BRACELET:
+		newFightAbilityFlags = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
+		newFightAbilityFlags = newFightAbilityFlags | 1 << (this->purchaseId - 5U & 0x1f);
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_FIGHT, newFightAbilityFlags);
+		this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_FIGHT_RING_CHANGED, (void*)newFightAbilityFlags);
+		break;
+	case INVENTORY_ITEM_UNUSED_EXORCISM: // Unused item, never purchasable
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_MAGIC_EXORCISM, 1);
+		break;
+	case INVENTORY_ITEM_UNUSED_REGENERATE: // Unused item, never purchasable
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_MAGIC_REGENERATE, 1);
+		break;
+	case INVENTORY_ITEM_JAMGUT_WHISTLE:
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_JAMGUT_RIDE, 1);
+		break;
 	case INVENTORY_ITEM_LIFE_BAR:
 	{
 		int newMax = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
@@ -234,14 +231,23 @@ void CInventoryInfo::ObjectPurchased()
 		pLifeInterface = CActorHero::_gThis->GetLifeInterfaceOther();
 		CLevelScheduler::ScenVar_Set(SCN_LEVEL_LIFE_GAUGE, newMax);
 		pLifeInterface->SetValueMax((float)newMax);
-		iVar3 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
-		fVar5 = pLifeInterface->GetValue();
-		pLifeInterface->SetValue(fVar5 + (float)iVar3);
+		levelLifeUpdate = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_UPDATE);
+		prevHealth = pLifeInterface->GetValue();
+		pLifeInterface->SetValue(prevHealth + (float)levelLifeUpdate);
 	}
+	break;
+	case INVENTORY_ITEM_BASIC_BOARD:
+		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 1);
+		break;
+	case INVENTORY_ITEM_MAGIC_BOARD:
+		CLevelScheduler::ScenVar_Set(SCN_LEVEL_MAGIC_BOARD, 2);
+		break;
+	case INVENTORY_ITEM_TELESCOPE:
+		CLevelScheduler::ScenVar_Set(SCN_ABILITY_BINOCULARS, 1);
 		break;
 	default:
-		IMPLEMENTATION_GUARD();
-		return;
+		CActorHero::_gThis->inventory.Cmd_AddItem(this->purchaseId, this->field_0x2c, 1);
+		break;
 	}
 }
 
@@ -327,4 +333,28 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 	}
 
 	return uVar2;
+}
+
+bool CInventoryInfo::PrepareTransit(int param_2, edF32VECTOR4* pPosition, CActor* pActor)
+{
+	CFrontendDisplay* pFrontendDisplay;
+	CFrontendInventory* pFrontendInventory;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	pFrontendDisplay = static_cast<CFrontendDisplay*>(CScene::GetManager(MO_Frontend));
+	pFrontendInventory = pFrontendDisplay->pInventory;
+	if (param_2 == 0) {
+		pHero->inventory.Cmd_AddItem(this->purchaseId, this->field_0x2c, 1);
+		this->pOwner->DoMessage(this->pOwner, (ACTOR_MESSAGE)0x5f, (void*)1);
+	}
+
+	pFrontendInventory->FUN_003c9b00(this->pOwner, param_2, pPosition, pActor);
+
+	if (param_2 == 1) {
+		this->pOwner->DoMessage(this->pOwner, (ACTOR_MESSAGE)0x5f, (void*)3);
+		pHero->inventory.Cmd_RemoveItem(this->purchaseId, 1);
+	}
+
+	return true;
 }

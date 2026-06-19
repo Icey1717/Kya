@@ -300,7 +300,7 @@ void CBehaviourHunterWatch::InitState(int newState)
 
 	pHunter = this->pOwner;
 	if (newState == 9) {
-		pHunter->DoMessage(pHunter->pActorShip, (ACTOR_MESSAGE)0x27, 0);
+		pHunter->DoMessage(pHunter->pActorShip, MESSAGE_JUMP_ON, 0);
 	}
 	else {
 		if (newState == 10) {

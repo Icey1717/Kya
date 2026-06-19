@@ -21,6 +21,9 @@
 #define INVENTORY_ITEM_SILVER_BRACELET 0xb
 #define INVENTORY_ITEM_GOLD_BRACELET 0xc
 
+#define INVENTORY_ITEM_UNUSED_EXORCISM 0xd
+#define INVENTORY_ITEM_UNUSED_REGENERATE 0xe
+
 #define INVENTORY_ITEM_JAMGUT_WHISTLE 0xf
 
 #define INVENTORY_ITEM_LIFE_BAR 0x10
@@ -45,6 +48,8 @@ public:
 
 	void ObjectPurchased();
 	static uint IsObjectPurchased(int objId);
+
+	bool PrepareTransit(int param_2, edF32VECTOR4* pPosition, CActor* pActor);
 
 	int field_0x0;
 	CActor* pOwner;

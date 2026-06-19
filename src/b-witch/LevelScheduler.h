@@ -294,7 +294,7 @@ class SaveDataChunk_BLMP;
 struct EpStruct_8
 {
 	int itemId;
-	int field_0x4;
+	int nbItems;
 };
 
 struct EpStruct_80

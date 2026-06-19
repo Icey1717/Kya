@@ -53,6 +53,7 @@ public:
 enum MANAGER_TYPE {
 	MO_Camera = 0x7,
 	MO_Frontend = 0x8,
+	MO_Actor = 0x11,
 	MO_GlobalDListManager = 0x17
 };
 

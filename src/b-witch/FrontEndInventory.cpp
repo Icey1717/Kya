@@ -11,7 +11,7 @@ edF32VECTOR2 INV_SCALE{ 0.05f, 0.05f };
 
 CFrontendInventory::CFrontendInventory()
 {
-	this->animatedInstance3d.pNode = (edNODE*)0x0;
+	this->avatar.animatedInstance3d.pNode = (edNODE*)0x0;
 	this->popupTime = 0.15f;
 	this->field_0x50 = 0.15f;
 
@@ -92,5 +92,11 @@ bool CFrontendInventory::ComputeGameScreenCoordinate(edF32VECTOR2* pOutCoordinat
 	pOutCoordinate->y = (pCameraPosition.y / (pCameraPosition.z * fov)) * 0.5f + 0.5f;
 	*pOutDepth = -pCameraPosition.z * (fov / pCameraManager->pFrontendCamera_0x4e4->fov);
 
+	return true;
+}
+
+bool CFrontendInventory::FUN_003c9b00(CActor* pInventoryOwner, int param_3, edF32VECTOR4* param_4, CActor* param_5)
+{
+	IMPLEMENTATION_GUARD();
 	return true;
 }

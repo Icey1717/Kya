@@ -92,6 +92,17 @@ struct _msg_params_0x54
 	edF32VECTOR4* field_0xc;
 };
 
+struct _msg_params_0x65
+{
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+	float field_0x20;
+	uint field_0x24;
+	float field_0x28;
+	float field_0x2c;
+	struct s_fighter_blow_bone_ref* field_0x30;
+};
+
 struct _msg_params_boost
 {
 	edF32VECTOR4 field_0x0;
@@ -120,6 +131,7 @@ enum ACTOR_MESSAGE
 	MESSAGE_LEAVE_SHOP = 0x24,
 	MESSAGE_DISABLE_INPUT = 0x25,
 	MESSAGE_ENABLE_INPUT = 0x26,
+	MESSAGE_JUMP_ON = 0x27,
 	MESSAGE_SPAWN = 0x2c,
 	MESSAGE_MAGIC_DEACTIVATE = 0x2f,
 	MESSAGE_MAGIC_ACTIVATE = 0x30,

@@ -970,6 +970,7 @@ void CActorCommander::_UpdateCamera()
 	CLifeInterface* pCVar8;
 	int iVar9;
 	s_fighter_blow* pBlow;
+	s_fighter_grab* pGrab;
 	CActorFighter* pFocus;
 	CCamFigData* pFigData;
 	uint uVar12;
@@ -1057,7 +1058,7 @@ void CActorCommander::_UpdateCamera()
 			pCurAdversary = pCVar1->pAdversary;
 			fVar16 = pCurAdversary->GetLifeInterface()->GetValue();
 			if ((fVar16 <= 0.0f) && (((pBlow = pCVar1->pBlow, pBlow != (s_fighter_blow*)0x0 && ((pBlow->field_0x4.field_0x2byte & 1) != 0)) ||
-					((pBlow = pCVar1->field_0x840, pBlow != (s_fighter_blow*)0x0 && (assert(false), (pBlow->field_0x30).z == 2)))))) {
+					((pGrab = pCVar1->pExecutingGrab, pGrab != (s_fighter_grab*)0x0 && (pGrab->field_0x38 == 2)))))) {
 				fVar16 = GetAngleYFromVector(&CActorHero::_gThis->rotationQuat);
 				fVar17 = edF32GetAnglesDelta(pFightCamera->GetAngleBeta(), fVar16 - 0.7853982f);
 				fVar16 = edF32GetAnglesDelta(pFightCamera->GetAngleBeta(), fVar16 + 0.7853982f);

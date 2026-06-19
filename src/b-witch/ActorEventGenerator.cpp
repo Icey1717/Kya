@@ -38,10 +38,9 @@ int PTMF_Ext::CheckComboA(EVC_PHASE phase, undefined8 param_3, void* pData)
 							}
 						}
 						else {
-							IMPLEMENTATION_GUARD(
-							if (((pHero->field_0x840)->field_0x30).z == 2.802597e-45) {
+							if ((pHero->pExecutingGrab)->field_0x38 == 2) {
 								bVar3 = true;
-							})
+							}
 						}
 					}
 

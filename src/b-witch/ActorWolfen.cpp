@@ -1333,12 +1333,12 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 
 		if (msg == 0x86) {
-			IMPLEMENTATION_GUARD(
 			if ((this->exorcisedState != 2) && (this->exorcisedState != 0)) {
-				(*(code*)(this->pVTable)->LifeAnnihilate)();
-				SetBehaviour(0xe, WOLFEN_STATE_EXORCISE_LIVING_DEAD, -1);
+				LifeAnnihilate();
+				SetBehaviour(WOLFEN_BEHAVIOUR_EXORCISM, WOLFEN_STATE_EXORCISE_LIVING_DEAD, -1);
 			}
-			return 1;)
+
+			return 1;
 		}
 
 		if (msg != MESSAGE_KICKED) {
@@ -1680,7 +1680,20 @@ bool CActorWolfen::Func_0x19c()
 
 bool CActorWolfen::Func_0x1ac()
 {
-	IMPLEMENTATION_GUARD();
+	s_fighter_blow* psVar1;
+	bool bVar2;
+	CActorFighter* pFighter;
+
+	if (((((ulong)this->validCommandMask.flags[0] << 0x38) >> 0x3c & 2) == 0) ||
+		((((pFighter = this->pAdversary, pFighter != (CActorFighter*)0x0 && (psVar1 = pFighter->pBlow, psVar1 != (s_fighter_blow*)0x0)) && ((this->fightFlags & 1) != 0)) &&
+			(psVar1->field_0x50 <= this->field_0x474)))) {
+		bVar2 = false;
+	}
+	else {
+		bVar2 = true;
+	}
+
+	return bVar2;
 }
 
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
@@ -10724,7 +10737,7 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 		}
 	}
 	else {
-		if (msg == 0x27) {
+		if (msg == MESSAGE_JUMP_ON) {
 			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(this->pOwner);
 			uVar5 = pWolfen->field_0xb74;
 			if ((uVar5 == 0) || (uVar5 == 1)) {
@@ -10942,6 +10955,20 @@ bool CBehaviourFighterWolfen::InputToFar()
 	}
 
 	return false;
+}
+
+uint CBehaviourFighterWolfen::FUN_001fad80(int commandId)
+{
+	uint uVar1;
+
+	if (commandId == -1) {
+		uVar1 = 0;
+	}
+	else {
+		uVar1 = static_cast<CActorWolfen*>(this->pOwner)->field_0xb64[commandId].field_0x0;
+	}
+
+	return uVar1;
 }
 
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
@@ -11300,8 +11327,7 @@ void CBehaviourFighterWolfen::InitCommand(uint commandId)
 					else {
 						if ((((commandId != 0x8000) && (commandId != 0x2000)) && (commandId != 0x1000)) && (commandId != 0x800)) {
 							if (commandId == 0x400) {
-								IMPLEMENTATION_GUARD(
-								FUN_001fa910();)
+								GrabCommand();
 								FlushInput();
 							}
 							else {
@@ -11632,6 +11658,11 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 	}
 
 	return;
+}
+
+bool CBehaviourFighterWolfen::FUN_001f7a80(uint commandId)
+{
+	return (commandId & 0x1f80f) != 0;
 }
 
 bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
@@ -12202,7 +12233,44 @@ s_fighter_combo* CBehaviourFighterWolfen::PickCombo_Attack(CFightContext* pFight
 	return psVar11;
 }
 
+void CBehaviourFighterWolfen::GrabCommand()
+{
+	byte bVar1;
+	CActorFighter* pCVar2;
+	s_fighter_grab* psVar3;
+	s_fighter_grab* psVar4;
+	CLifeInterface* pCVar5;
+	s_fighter_grab* psVar6;
+	float fVar7;
 
+	psVar3 = this->pOwner->FindGrabByName("GRAB_FRONT");
+	if ((psVar3 == (s_fighter_grab*)0x0) || (((edF32VECTOR4*)&this->pOwner->pAdversary)->x == 0.0f)) {
+		this->pActiveCombo = (s_fighter_combo*)0x0;
+		this->pActiveBlow = (s_fighter_blow*)0x0;
+		this->field_0x70 = 0;
+	}
+	else {
+		psVar4 = this->pOwner->FindGrabByName("GRAB_FATALITY");
+		psVar6 = psVar3;
+		if (psVar4 != (s_fighter_grab*)0x0) {
+			pCVar2 = this->pOwner->pAdversary;
+			pCVar5 = pCVar2->GetLifeInterface();
+			fVar7 = pCVar5->GetValue();
+			psVar6 = psVar4;
+			if (psVar4->field_0x3c < fVar7) {
+				psVar6 = psVar3;
+			}
+		}
+
+		bVar1 = (this->field_0x74).actionByte;
+		(this->field_0x74).actionByte = bVar1 & 0xf0 | bVar1 & 0xf | 4;
+		this->pActiveCombo = (s_fighter_combo*)0x0;
+		this->pActiveBlow = reinterpret_cast<s_fighter_blow*>(psVar6);
+		this->field_0x70 = 1;
+	}
+
+	return;
+}
 
 void CBehaviourFighterWolfen::FunReset()
 {

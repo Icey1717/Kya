@@ -1179,7 +1179,7 @@ void CLevelScheduler::Episode_LoadFromIniFile(void)
 		bVar2 = true;
 		while (bVar2) {
 			episodesPtr->aSubObj[local_c].itemId = -1;
-			episodesPtr->aSubObj[local_c].field_0x4 = 0;
+			episodesPtr->aSubObj[local_c].nbItems = 0;
 			local_c = local_c + 1;
 			bVar2 = local_c < 0x10;
 		}
@@ -1465,7 +1465,7 @@ void CLevelScheduler::Game_SaveInventory(CInventoryInterface* pInventory)
 		while (bVar1) {
 			pSlot = pInventory->aSlots[epIndex] + slotIndex;
 			pEpisode->aSubObj[slotIndex].itemId = pSlot->itemId;
-			pEpisode->aSubObj[slotIndex].field_0x4 = pSlot->field_0x4;
+			pEpisode->aSubObj[slotIndex].nbItems = pSlot->nbItems;
 			slotIndex = slotIndex + 1;
 			bVar1 = slotIndex < 0x10;
 		}
@@ -1493,8 +1493,7 @@ void CLevelScheduler::Game_LoadInventory(CInventoryInterface* pInventory)
 		do {
 			const int ItemId = pEpisode->aSubObj[slotIndex].itemId;
 			if (ItemId != -1) {
-				IMPLEMENTATION_GUARD(
-					pInventory->Cmd_AddItem(ItemId, pEpisode->aSubObj[slotIndex].field_0x4, 0);)
+				pInventory->Cmd_AddItem(ItemId, pEpisode->aSubObj[slotIndex].nbItems, 0);
 			}
 
 			slotIndex = slotIndex + 1;
@@ -1962,7 +1961,7 @@ void CLevelScheduler::LoadGame_LoadGameInfo()
 			for (int i = 0; i < 2; i = i + 1) {
 				for (int j = 0; j < 0x10; j = j + 1) {
 					_gGameNfo.aEpisodes[i].aSubObj[j].itemId = -1;
-					_gGameNfo.aEpisodes[i].aSubObj[j].field_0x4 = 0;
+					_gGameNfo.aEpisodes[i].aSubObj[j].nbItems = 0;
 				}
 			}
 		}

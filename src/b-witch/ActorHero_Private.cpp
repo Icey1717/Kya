@@ -1373,9 +1373,9 @@ bool CActorHeroPrivate::AccomplishAttack()
 							}
 							else {
 								boomyState = this->actorState;
-								if ((((boomyState == 0xdc) || (boomyState == 0xdd)) && (this->field_0x860 == 0)) && (curBoomyBlowStage < 3)) {
-									this->field_0x864 = this->aBoomyBlows[curBoomyBlowStage];
-									this->field_0x860 = 1;
+								if ((((boomyState == 0xdc) || (boomyState == 0xdd)) && (this->nextActionType == NEXT_ACTION_TYPE_NONE)) && (curBoomyBlowStage < 3)) {
+									this->pNextAction.pBlow = this->aBoomyBlows[curBoomyBlowStage];
+									this->nextActionType = NEXT_ACTION_TYPE_BLOW;
 									this->boomyBlowStage = this->boomyBlowStage + 1;
 								}
 							}
@@ -12386,12 +12386,12 @@ void CActorHeroPrivate::StateBoomyExecuteFightBlow()
 			(*pcVar4)(this, 1);)
 		}
 
-		if (this->field_0x860 == 0) {
+		if (this->nextActionType == NEXT_ACTION_TYPE_NONE) {
 			SetState(0xde, (this->pBlow->blowStageEnd).animId);
 		}
 		else {
-			this->field_0x860 = 0;
-			this->pBlow = this->field_0x864;
+			this->nextActionType = NEXT_ACTION_TYPE_NONE;
+			this->pBlow = this->pNextAction.pBlow;
 			this->field_0x474 = this->pBlow->field_0xc;
 			SetState(0xdc, (this->pBlow->blowStageBegin).animId);
 		}

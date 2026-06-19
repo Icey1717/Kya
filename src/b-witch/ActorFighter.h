@@ -27,7 +27,9 @@
 #define FIGHTER_FLIP_OFF_ME_A 0x15
 #define FIGHTER_FLIP_OFF_ME_B 0x16
 #define FIGHTER_STATE_19 0x19
+#define FIGHTER_STATE_RIDE_BLOW 0x21
 #define FIGHTER_RIDE 0x20
+#define FIGHTER_STATE_RIDE_EXIT 0x23
 #define FIGHTER_RIDDEN_RUN 0x24
 #define FIGHTER_RIDDEN_EJECT 0x28
 
@@ -35,11 +37,15 @@
 #define FIGHTER_HOLD_RUN 0x2a
 #define FIGHTER_HOLD_ROTATE 0x2b
 #define FIGHTER_HOLD_PUSH_PREPARE 0x34
-#define FIGHTER_HOLD_THROW 0x35
+#define FIGHTER_HOLD_THROW_PREPARE 0x35
+#define FIGHTER_HOLD_THROW 0x36
+#define FIGHTER_STATE_HOLD_ESCAPE 0x37
+#define FIGHTER_STATE_HOLD_HIT 0x38
 
 #define FIGHTER_HIT_STEP_BACK 0x4f
 
 #define FIGHTER_HIT_PUSHED 0x50
+#define FIGHTER_HIT_STEP_BACK_B 0x52
 
 #define FIGHTER_PROJECTED_HIT_FLY 0x55
 #define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
@@ -284,10 +290,7 @@ struct s_fighter_grab : public s_fighter_move
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	undefined4 field_0x2c;
+	edF32VECTOR4 field_0x20;
 	float field_0x30;
 	float field_0x34;
 	uint field_0x38;
@@ -298,7 +301,7 @@ struct s_fighter_grab : public s_fighter_move
 	undefined4 field_0x4c;
 	edF32VECTOR3 field_0x50;
 	undefined4 field_0x5c;
-	float instanceIndex;
+	float field_0x60;
 	float field_0x64;
 	uint field_0x68;
 	undefined field_0x6c;
@@ -321,46 +324,11 @@ struct s_fighter_grab : public s_fighter_move
 	undefined field_0x7d;
 	undefined field_0x7e;
 	undefined field_0x7f;
-	int field_0x80;
-	float field_0x84;
-	float field_0x88;
-	uint field_0x8c;
-	float field_0x90;
-	float field_0x94;
-	float field_0x98;
-	undefined4 field_0x9c;
-	int angleRotY;
-	float field_0xa4;
-	float field_0xa8;
-	uint field_0xac;
-	float field_0xb0;
-	float field_0xb4;
-	float field_0xb8;
-	undefined4 field_0xbc;
-	int field_0xc0;
-	float field_0xc4;
-	float field_0xc8;
-	uint field_0xcc;
-	float field_0xd0;
-	float field_0xd4;
-	float field_0xd8;
-	undefined4 field_0xdc;
-	int field_0xe0;
-	float field_0xe4;
-	float field_0xe8;
-	uint field_0xec;
-	float field_0xf0;
-	float field_0xf4;
-	float field_0xf8;
-	undefined4 field_0xfc;
-	int field_0x100;
-	float field_0x104;
-	float field_0x108;
-	uint field_0x10c;
-	float field_0x110;
-	float field_0x114;
-	float field_0x118;
-	undefined4 field_0x11c;
+	_s_fighter_blow_stage field_0x80;
+	_s_fighter_blow_stage field_0xa0;
+	_s_fighter_blow_stage field_0xc0;
+	_s_fighter_blow_stage field_0xe0;
+	_s_fighter_blow_stage field_0x100;
 };
 
 struct s_fighter_grab_react
@@ -546,6 +514,10 @@ public:
 	s_fighter_slave_traj_out output;
 };
 
+#define NEXT_ACTION_TYPE_NONE 0
+#define NEXT_ACTION_TYPE_BLOW 1
+#define NEXT_ACTION_TYPE_GRAB 2
+
 class CActorFighter : public CActorAutonomous
 {
 public:
@@ -598,6 +570,7 @@ public:
 	virtual void ProcessDeath() {}
 	virtual bool IsFightRelated(int behaviourId);
 	virtual bool IsInHitState();
+	virtual void Func_0x170();
 	virtual bool IsAlive();
 	virtual void EnableFightCamera() {}
 	virtual void AcquireAdversary();
@@ -632,6 +605,8 @@ public:
 	virtual void _Proj_GetPossibleExit();
 
 	edF32VECTOR4* GetAdversaryHeldPos();
+
+	bool FUN_0031cdb0();
 
 	void _BeginFighterFlip();
 	void _Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam);
@@ -674,6 +649,8 @@ public:
 	void _StateFighterJumpFallToFlip();
 	void _StateFighterFlipImpulse();
 
+	void StateFighterHoldThrow();
+
 	void _StateFighterHitStepBackInit(int animationId, int param_3);
 	void _StateFighterHitStepBack(int nextState, int animationId, int param_4);
 
@@ -715,11 +692,13 @@ public:
 	void _StateFighterHoldPushPrepareTerm();
 
 	void _StateFighterHoldThrowInit();
+	void _StateFighterHoldThrowTerm();
 
 	void _StateFighterHoldFollowStd(int nextState);
 	void StateFighterHoldStd(int nextState, int nextAnim);
 
 	void _StateFighterRide();
+	void _StateFighterRideBlow();
 
 	void _StateFighterPrepareFightAction(int nextState);
 	void _StateFighterReturnFromFightAction();
@@ -734,6 +713,10 @@ public:
 
 	void _StateFighter_0xbInit(float param_1);
 	void _StateFighter_0xb();
+
+	void _StateFighterExecuteGrab();
+
+	void FUN_00312370();
 
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
@@ -764,9 +747,11 @@ public:
 
 	CActorWeapon* GetWeapon();
 
+	s_fighter_grab* FindGrabByName(char* szName);
 	s_fighter_combo* FindComboByName(char* szName);
 	void SetFighterCombo(s_fighter_combo* pCombo);
 	s_fighter_blow* FindBlowByName(char* szName);
+	s_fighter_grab_react* FindGrabReactByHash(uint hash);
 
 	void SetStandAnim(int newStandAnim);
 
@@ -781,6 +766,8 @@ public:
 	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
 	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
 	bool FUN_001740a0();
+	void FUN_00312130(edF32VECTOR4* param_2, float* param_3, float* param_4, _msg_params_0x65* param_5);
+	void FUN_00311f80(_msg_params_0x65* pParams, CActorFighter* param_3);
 	void UpdateScale_0030ac50(edF32VECTOR3* param_2);
 
 	void PlayOrientedFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, uint hitZone, CFxHandle* pOutHandle);
@@ -983,10 +970,19 @@ public:
 
 	s_fighter_blow* pBlow;
 	s_fighter_blow* field_0x834;
-	s_fighter_blow* field_0x840;
+	s_fighter_grab* pExecutingGrab;
+	s_fighter_grab_react* field_0x84c;
 
-	undefined4 field_0x860;
-	s_fighter_blow* field_0x864;
+	s_fighter_blow_bone_ref* field_0x854;
+	float field_0x85c;
+
+	uint nextActionType;
+	union
+	{
+		s_fighter_blow* pBlow;
+		s_fighter_grab* pGrab;
+	} pNextAction;
+
 	uint comboFlags;
 
 	s_fighter_combo* pFighterCombo;

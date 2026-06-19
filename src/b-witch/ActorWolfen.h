@@ -848,6 +848,7 @@ public:
 	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
 	void InputPunch(uint cmd);
 	bool InputToFar();
+	uint FUN_001fad80(int commandId);
 	void FlushInput();
 	void UpdateFightContext(CFightContext* pFightContext);
 	void ManageWFigState(uint commandId);
@@ -855,10 +856,12 @@ public:
 
 	void InitCommand(uint commandId);
 	void ExecuteCommand(uint param_2, uint param_3);
+	bool FUN_001f7a80(uint commandId);
 	bool IsCommandFinished(uint param_2);
 	void ValidateCommand();
 	void PickCommand();
 	s_fighter_combo* PickCombo_Attack(CFightContext* pFightContext, bool param_3, bool param_4, bool param_5, bool param_6);
+	void GrabCommand();
 
 	void FunReset();
 

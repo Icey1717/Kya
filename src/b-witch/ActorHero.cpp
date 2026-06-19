@@ -1738,7 +1738,7 @@ bool CActorHero::FUN_0031c9e0()
 		bVar2 = false;
 
 		if (pCombo != (s_fighter_combo*)0x0) {
-			if ((this->field_0x860 & 0x400) == 0) {
+			if ((this->nextActionType & 0x400) == 0) {
 				iVar5 = this->actorState;
 				if ((iVar5 == 0x65) || (iVar5 == 0x66)) {
 					return true;

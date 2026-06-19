@@ -922,16 +922,21 @@ void CBehaviourFighterProjected::InitState(int newState)
 		pFighter->dynamicExt.normalizedTranslation.w = 0.0f;
 		pFighter->dynamicExt.field_0x6c = 0.0f;
 		break;
+	case 0x63:
+		pFighter = this->pOwner;
+		pFighter->dynamic.speed = 0.0f;
+		pCVar2 = pFighter->pCollisionData;
+		pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;
+		pFighter->flags = pFighter->flags & 0xffffff7f;
+		pFighter->flags = pFighter->flags | 0x20;
+		pFighter->EvaluateDisplayState();
+		pFighter->Func_0x170();
+		break;
 	case 0x64:
 		this->pOwner->_InterpretCollisions(1);
 		break;
-	case 0x5c:
-		// Nothing
-		break;
-	default:
-		IMPLEMENTATION_GUARD();
-		break;
 	}
+
 	return;
 }
 
