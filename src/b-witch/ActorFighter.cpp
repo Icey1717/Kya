@@ -9434,6 +9434,22 @@ bool StaticMeshComponentAdvanced::HasMesh()
 	return bVar1;
 }
 
+void StaticMeshComponentAdvanced::SetMatrix(edF32MATRIX4* pMatrix)
+{
+	ed_3d_hierarchy_node* peVar1;
+
+	peVar1 = this->pMeshTransformData;
+	if (peVar1 != (ed_3d_hierarchy_node*)0x0) {
+		if (pMatrix == (edF32MATRIX4*)0x0) {
+			pMatrix = &gF32Matrix4Unit;
+		}
+
+		peVar1->base.transformA = *pMatrix;
+	}
+
+	return;
+}
+
 void StaticMeshComponentAdvanced::Func_0x28(float param_1, float param_2)
 {
 	edNODE* pNode;

@@ -167,10 +167,7 @@ public:
 		return nullptr;
 	}
 
-	virtual void SetMatrix(edF32MATRIX4* pMatrix)
-	{
-		IMPLEMENTATION_GUARD();
-	}
+	virtual void SetMatrix(edF32MATRIX4* pMatrix);
 
 	virtual void Func_0x28(float, float);
 	virtual void Func_0x2c(float param_1);
