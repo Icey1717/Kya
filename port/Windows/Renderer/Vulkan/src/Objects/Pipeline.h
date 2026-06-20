@@ -67,9 +67,9 @@ namespace Renderer {
 	{
 		using PushConstantList = std::vector<VkPushConstantRange>;
 
-		VkPipeline pipeline;
-		VkPipelineLayout layout;
-		VkDescriptorPool descriptorPool;
+		VkPipeline pipeline = VK_NULL_HANDLE;
+		VkPipelineLayout layout = VK_NULL_HANDLE;
+		VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> descriptorSets;
 		LayoutVector descriptorSetLayouts;
 		// Set - Descriptor Binding
@@ -86,6 +86,7 @@ namespace Renderer {
 
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
+		void Destroy();
 	};
 
 	struct DescriptorWrite
@@ -117,8 +118,12 @@ namespace PS2 {
 	using PipelineMap = std::unordered_map<PipelineKey, Renderer::Pipeline, PipelineKeyHash>;
 
 	inline bool operator==(const PipelineKey& lhs, const PipelineKey& rhs) {
-		PipelineKeyHash hasher;
-		return hasher(lhs) == hasher(rhs);
+		return lhs.shaderDefinitions.gsDef == rhs.shaderDefinitions.gsDef &&
+			lhs.shaderDefinitions.psDef == rhs.shaderDefinitions.psDef &&
+			lhs.shaderDefinitions.vsDef == rhs.shaderDefinitions.vsDef &&
+			lhs.topology == rhs.topology &&
+			lhs.stride == rhs.stride &&
+			lhs.pipelineSelector == rhs.pipelineSelector;
 	}
 
 	void CreateDefaultRenderPass();

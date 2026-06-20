@@ -2104,9 +2104,9 @@ void PS2::BeginFrame()
 void PS2::Cleanup()
 {
 	for (auto& pipeline : PS2::GetPipelines()) {
-		vkDestroyPipeline(GetDevice(), pipeline.second.pipeline, GetAllocator());
-		vkDestroyPipelineLayout(GetDevice(), pipeline.second.layout, GetAllocator());
+		pipeline.second.Destroy();
 	}
+	PS2::GetPipelines().clear();
 	
 	//vkDestroyRenderPass(GetDevice(), PS2_Internal::renderPassPs2, nullptr);
 }

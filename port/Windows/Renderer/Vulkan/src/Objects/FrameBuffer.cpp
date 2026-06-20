@@ -79,15 +79,6 @@ static void CreateRenderPass(VkRenderPass& renderPass, bool bIsClear) {
 	depthDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	depthDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-	VkSubpassDependency selfDependency{};
-	selfDependency.srcSubpass = 0;
-	selfDependency.dstSubpass = 0;
-	selfDependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	selfDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	selfDependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	selfDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	selfDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
 	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
 	VkSubpassDescription subpasses[] = { colorSubpass };
 	VkSubpassDependency dependencies[] = { colorDependency, depthDependency };
@@ -266,7 +257,9 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &finalPipeline.pipeline);
+	if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &finalPipeline.pipeline) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create final pass graphics pipeline");
+	}
 
 	finalPipeline.CreateDescriptorPool();
 	finalPipeline.CreateDescriptorSets();

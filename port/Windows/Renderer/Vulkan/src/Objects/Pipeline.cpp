@@ -287,6 +287,10 @@ const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 
 void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData) {
 	for (auto& layout : reflectData.GetLayouts()) {
+		if (layout.setNumber != 0) {
+			throw std::runtime_error("only descriptor set 0 is currently supported");
+		}
+
 		descriptorSetLayoutBindings[layout.setNumber][bindingStage] = layout.bindings;
 	}
 
@@ -297,7 +301,7 @@ void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const Ref
 
 void Renderer::Pipeline::CreateDescriptorSetLayouts()
 {
-	descriptorSetLayouts.resize(descriptorSetLayoutBindings.size());
+	descriptorSetLayouts.resize(descriptorSetLayoutBindings.empty() ? 0 : 1);
 
 	for (auto& layoutSet : descriptorSetLayoutBindings) {
 		const int layoutSetIndex = layoutSet.first;
@@ -335,6 +339,32 @@ void Renderer::Pipeline::CreateDescriptorSetLayouts()
 			SetObjectName(reinterpret_cast<uint64_t>(descriptorSetLayouts[layoutSetIndex]), VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
 				"Pipeline Descriptor Set Layout (set index: %d binding count: %d, [vtx: %d geom: %d frag: %d])", layoutSetIndex, createInfo.bindingCount, vtxCount, geomCount, fragCount);
 		}
+	}
+}
+
+void Renderer::Pipeline::Destroy()
+{
+	if (descriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(GetDevice(), descriptorPool, GetAllocator());
+		descriptorPool = VK_NULL_HANDLE;
+		descriptorSets.clear();
+	}
+
+	for (VkDescriptorSetLayout descriptorSetLayout : descriptorSetLayouts) {
+		if (descriptorSetLayout != VK_NULL_HANDLE) {
+			vkDestroyDescriptorSetLayout(GetDevice(), descriptorSetLayout, GetAllocator());
+		}
+	}
+	descriptorSetLayouts.clear();
+
+	if (pipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(GetDevice(), pipeline, GetAllocator());
+		pipeline = VK_NULL_HANDLE;
+	}
+
+	if (layout != VK_NULL_HANDLE) {
+		vkDestroyPipelineLayout(GetDevice(), layout, GetAllocator());
+		layout = VK_NULL_HANDLE;
 	}
 }
 

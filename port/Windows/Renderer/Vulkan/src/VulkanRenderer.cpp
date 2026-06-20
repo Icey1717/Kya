@@ -264,7 +264,7 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
-	VkRenderPass renderPass;
+	VkRenderPass renderPass = VK_NULL_HANDLE;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
@@ -366,13 +366,27 @@ private:
 			}
 		}
 
-		// Create renderFinishedSemaphores per swapchain image
+		createRenderFinishedSemaphores();
+	}
+
+	void createRenderFinishedSemaphores() {
+		VkSemaphoreCreateInfo semaphoreInfo{};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
 		renderFinishedSemaphores.resize(swapChainImages.size());
 		for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
 			if (vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &renderFinishedSemaphores[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create renderFinished semaphore for swapchain image!");
 			}
 		}
+	}
+
+	void destroyRenderFinishedSemaphores() {
+		for (VkSemaphore semaphore : renderFinishedSemaphores) {
+			vkDestroySemaphore(device, semaphore, GetAllocator());
+		}
+
+		renderFinishedSemaphores.clear();
 	}
 
 	void initVulkan() {
@@ -403,6 +417,10 @@ private:
 	}
 
 	void cleanup() {
+		if (device != VK_NULL_HANDLE) {
+			vkDeviceWaitIdle(device);
+		}
+
 		cleanupSwapChain();
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -414,7 +432,10 @@ private:
 
 		vkDestroyPipeline(device, graphicsPipeline, GetAllocator());
 		vkDestroyPipelineLayout(device, pipelineLayout, GetAllocator());
-		vkDestroyRenderPass(device, renderPass, GetAllocator());
+		if (renderPass != VK_NULL_HANDLE) {
+			vkDestroyRenderPass(device, renderPass, GetAllocator());
+			renderPass = VK_NULL_HANDLE;
+		}
 
 		vkDestroyBuffer(device, indexBuffer, GetAllocator());
 		vkFreeMemory(device, indexBufferMemory, GetAllocator());
@@ -422,10 +443,7 @@ private:
 		vkDestroyBuffer(device, vertexBuffer, GetAllocator());
 		vkFreeMemory(device, vertexBufferMemory, GetAllocator());
 
-		// Destroy renderFinished semaphores per swapchain image
-		for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], GetAllocator());
-		}
+		destroyRenderFinishedSemaphores();
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], GetAllocator());
@@ -459,10 +477,17 @@ private:
 		vkDeviceWaitIdle(device);
 
 		cleanupSwapChain();
+		destroyRenderFinishedSemaphores();
+		if (renderPass != VK_NULL_HANDLE) {
+			vkDestroyRenderPass(device, renderPass, GetAllocator());
+			renderPass = VK_NULL_HANDLE;
+		}
 
 		createSwapChain();
 		createImageViews();
+		createGlobalRenderPass();
 		createFramebuffers();
+		createRenderFinishedSemaphores();
 	}
 
 	void createInstance() {
@@ -806,8 +831,10 @@ public:
 public:
 	uint32_t presentImageIndex = 0;
 	Renderer::RenderDelegate renderDelegate;
+	bool frameReady = false;
 
 	void waitUntilReady() {
+		frameReady = false;
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 		if (glfwWindowShouldClose(window)) {
@@ -819,9 +846,6 @@ public:
 		// Wait for the GPU to finish work on this frame
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-		// Reset the fence for this frame
-		vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -832,12 +856,17 @@ public:
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
+		frameReady = true;
 		return;
 	}
 
 	void present() 
 	{
 		ZONE_SCOPED;
+
+		if (!frameReady) {
+			return;
+		}
 
 		Renderer::CommandBufferList commandBufferList;
 
@@ -866,7 +895,13 @@ public:
 			// Use the renderFinished semaphore for the current swapchain image
 			submitInfo.pSignalSemaphores = &renderFinishedSemaphores[presentImageIndex];
 
-			vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+			if (vkResetFences(device, 1, &inFlightFences[currentFrame]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to reset in-flight fence!");
+			}
+
+			if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to submit draw command buffer!");
+			}
 		}
 
 		{
@@ -892,6 +927,8 @@ public:
 				throw std::runtime_error("failed to present swap chain image!");
 			}
 		}
+
+		frameReady = false;
 	}
 
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {

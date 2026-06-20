@@ -33,7 +33,7 @@ namespace Renderer
 
 			VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, GetAllocator(), &gFrameBufferSampler);
 			if (result != VK_SUCCESS) {
-				// Handle sampler creation failure
+				throw std::runtime_error("failed to create native framebuffer sampler");
 			}
 		}
 		void CheckBufferSizes()

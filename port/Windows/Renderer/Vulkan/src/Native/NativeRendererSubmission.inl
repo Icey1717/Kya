@@ -395,7 +395,9 @@ void Renderer::Native::SetupPreview(int width, int height)
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &gPreviewFrameBufferSampler);
+	if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &gPreviewFrameBufferSampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create preview framebuffer sampler");
+	}
 
 	Renderer::CreateCommandBuffers(gPreviewCommandBuffers);
 

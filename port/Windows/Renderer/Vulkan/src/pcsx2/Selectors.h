@@ -466,8 +466,8 @@ struct alignas(8) PipelineSelector
 	GSHWDrawConfig::ColorMaskSelector cms;
 	u8 pad;
 
-	__fi bool operator==(const PipelineSelector& p) const { return memcmp(this, &p, sizeof(PipelineSelector)); }
-	__fi bool operator!=(const PipelineSelector& p) const { return !memcmp(this, &p, sizeof(PipelineSelector)); }
+	__fi bool operator==(const PipelineSelector& p) const { return memcmp(this, &p, sizeof(PipelineSelector)) == 0; }
+	__fi bool operator!=(const PipelineSelector& p) const { return !(*this == p); }
 
 	__fi PipelineSelector() { std::memset(this, 0, sizeof(*this)); }
 
