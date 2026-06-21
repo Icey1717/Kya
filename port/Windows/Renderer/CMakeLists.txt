@@ -22,8 +22,6 @@ set (SOURCES
 	"Vulkan/src/VulkanReflect.cpp"
 	"Vulkan/src/VulkanPS2.h"
 	"Vulkan/src/VulkanPS2.cpp"
-	"Vulkan/src/VulkanHardwarePS2.h"
-	"Vulkan/src/VulkanHardwarePS2.cpp"
 
 	"Vulkan/src/Objects/VulkanImage.cpp"
 	"Vulkan/src/Objects/VulkanImage.h"

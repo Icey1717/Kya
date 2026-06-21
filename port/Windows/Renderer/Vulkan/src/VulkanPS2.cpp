@@ -86,10 +86,6 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	SimpleTexture* gBoundTexturePS2 = nullptr;
-
-	InUseTextureList gInUseTextures;
-
 	void ResetVertIndexBuffers()
 	{
 		PS2_Internal::gVertexBuffers.GetDrawBufferData().Reset();
@@ -1824,267 +1820,28 @@ namespace PipelineDebug
 void Renderer::BindTexture(SimpleTexture* pNewTexture)
 {
 	assert(pNewTexture);
-	gBoundTexturePS2 = pNewTexture;
 	Native::BindTexture(pNewTexture);
 }
 
-const Renderer::InUseTextureList& Renderer::GetInUseTextures() {
-	return gInUseTextures;
+const Renderer::InUseTextureList& Renderer::GetInUseTextures()
+{
+	static const InUseTextureList empty;
+	return empty;
 }
 
 void Renderer::Draw() {
-	Draw(GetDefaultDrawBuffer(), gBoundTexturePS2, PS2::GetGSState());
 }
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
-	Draw(drawBuffer, gBoundTexturePS2, PS2::GetGSState(), true);
+	Draw(drawBuffer, nullptr, PS2::GetGSState(), true);
 }
-
-//#define DISABLE_DRAW
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTexture, PS2::GSState& state, bool bHardware) 
 {
-	const int tail = drawBuffer.GetIndexTail();
-
-	return;
-
-	// HACK
-	//if (tail != 2610 && tail != 132) {
-	//	drawBuffer.ResetAfterDraw();
-	//	return;
-	//}
-
-#ifdef DISABLE_DRAW
-	{
-		drawBuffer.ResetAfterDraw();
-		state.bTexSet = false;
-		return;
-	}
-#endif
-
-	if (tail == 0) {
-		return;
-	}
-
-	VULKAN_LOG(LogLevel::Verbose, "Draw: {0}(0x{0:x})", tail);
-
-	g_GSSelector.ResetStates();
-	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();
-
-	const bool unscale_pt_ln = false;
-
-	VkPrimitiveTopology topology;
-
-	switch (GetPrimClass(state.PRIM.PRIM))
-	{
-	case GS_POINT_CLASS:
-		if (unscale_pt_ln)
-		{
-			g_GSSelector.point = 1;
-			//gs_cb.PointSize = GSVector2(16.0f * sx, 16.0f * sy);
-		}
-
-		topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-		break;
-	case GS_LINE_CLASS:
-		if (unscale_pt_ln)
-		{
-			g_GSSelector.line = 1;
-			//gs_cb.PointSize = GSVector2(16.0f * sx, 16.0f * sy);
-		}
-
-		topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-
-		break;
-	case GS_SPRITE_CLASS:
-		topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-		break;
-	case GS_TRIANGLE_CLASS:
-
-		topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-		break;
-	default:
-		__assume(0);
-	}
-
-	g_GSSelector.iip = state.PRIM.IIP;
-	auto primclass = GetPrimClass(state.PRIM.PRIM);
-	g_GSSelector.prim = primclass;
-
-	LogTex("Lookup", state.TEX);
-	gInUseTextures.push_back(pBoundTexture);
-
-	PS2::GSSimpleTexture* pTextureData = pBoundTexture->GetRenderer();
-
-	// Blend
-	int blend_alpha_min = 0, blend_alpha_max = 255;
-	bool DATE_PRIMID = false;
-	bool DATE_BARRIER = false;
-
-	if (state.FRAME.FBMSK == 0) {
-		PS2::m_conf.colormask = GSHWDrawConfig::ColorMaskSelector(0xf);
-	}
-	else {
-		PS2::m_conf.colormask = GSHWDrawConfig::ColorMaskSelector(0);
-	}
-
-	bool blending_alpha_pass = false;
-	if ((!state.IsOpaque() || state.ALPHA.IsBlack()) /* && rt */ && (PS2::m_conf.colormask.wrgba & 0x7))
-	{
-		if (PS2_Internal::bUseComplexBlending) {
-			PS2::EmulateBlending_Complex(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass, state);
-		}
-		else {
-			PS2::EmulateBlending_Simple(primclass, state);
-		}
-	}
-	else
-	{
-		PS2::m_conf.blend = {}; // No blending please
-		PS2::m_conf.ps.no_color1 = true;
-	}
-
-	PS2::EmulateAtst(1, state);
-
-	PS2::PSSamplerSelector samplerSelector;
-
-	if (state.bTexSet) {
-		samplerSelector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height);
-	}
-	else {
-		PS2::m_conf.ps.tfx = 4;
-	}
-
-	pTextureData->UpdateSamplerSelector(samplerSelector);
-
-	if (state.PRIM.FGE)	{
-		PS2::m_conf.ps.fog = 1;
-
-		//GSVector4 fc = GSVector4::rgba32(m_env.FOGCOL.u32[0]);
-#if _M_SSE >= 0x401
-		// Blend AREF to avoid to load a random value for alpha (dirty cache)
-		ps_cb.FogColor_AREF = fc.blend32<8>(ps_cb.FogColor_AREF);
-#else
-		//ps_cb.FogColor_AREF = fc;
-#endif
-	}
-
-	PS2::m_conf.vs.tme = state.PRIM.TME;
-	PS2::m_conf.vs.hdw = bHardware;
-	PS2::m_conf.vs.fst = state.PRIM.FST;
-
-	const std::string GS_CONFIG_NAME = 
-		  std::string("-DGS_PRIM=") + std::to_string(g_GSSelector.prim) + " "
-		+ std::string("-DGS_POINT=") + std::to_string(g_GSSelector.point) + " "
-		+ std::string("-DGS_LINE=") + std::to_string(g_GSSelector.line) + " "
-		+ std::string("-DGS_IIP=") + std::to_string(g_GSSelector.iip);
-
-	const std::string PS_CONFIG_NAME = 
-		  std::string("-DPS_ATST=") + std::to_string(PS2::m_conf.ps.atst) + " "
-		+ std::string("-DPS_FOG=") + std::to_string(PS2::m_conf.ps.fog) + " "
-		+ std::string("-DPS_COLCLIP=") + std::to_string(PS2::m_conf.ps.colclip) + " "
-		+ std::string("-DPS_BLEND_A=") + std::to_string(PS2::m_conf.ps.blend_a) + " "
-		+ std::string("-DPS_BLEND_B=") + std::to_string(PS2::m_conf.ps.blend_b) + " "
-		+ std::string("-DPS_BLEND_C=") + std::to_string(PS2::m_conf.ps.blend_c) + " "
-		+ std::string("-DPS_BLEND_D=") + std::to_string(PS2::m_conf.ps.blend_d) + " "
-		+ std::string("-DPS_TFX=") + std::to_string(PS2::m_conf.ps.tfx);
-
-	const std::string VS_CONFIG_NAME = 
-		  std::string("-DVS_TME=") + std::to_string(PS2::m_conf.vs.tme) + " "
-		+ std::string("-DVS_HDW=") + std::to_string(PS2::m_conf.vs.hdw) + " "
-		+ std::string("-DVS_FST=") + std::to_string(PS2::m_conf.vs.fst);
-
-	//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);
-
-	const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)topology]};
-
-	PS2::UpdateHWPipelineSelector(PS2::m_conf, PS2::m_pipelineSelector);
-
-	const int stride = bHardware ? sizeof(Renderer::GSVertexUnprocessed) : sizeof(Renderer::GSVertex);
-
-	const PS2::PipelineKey key = { {GS_CONFIG_NAME, PS_CONFIG_NAME, VS_CONFIG_NAME}, topology, stride, PS2::m_pipelineSelector, debugData };
-	
-	auto& pipeline = PS2::GetPipeline(key);
-
-	{
-		if (!hwState.bActivePass || hwState.FBP != state.FRAME.FBP) {
-
-			if (hwState.bActivePass) {
-				vkCmdEndRenderPass(GetCurrentCommandBuffer());
-			}
-
-			PS2::FrameBuffer& frameBuffer = PS2::FrameBuffer::Get(state.FRAME.FBP);
-
-			hwState.FBP = state.FRAME.FBP;
-			hwState.bActivePass = true;
-
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = frameBuffer.renderPass;
-			renderPassInfo.framebuffer = frameBuffer.framebuffer;
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { (unsigned int)GetRTSize().x, (unsigned int)GetRTSize().y };
-
-			VkClearValue clearColors[] = { {{0.0f, 0.0f, 0.0f, 1.0f}}, {{0.0f, 0.0f, 0.0f, 1.0f}} };
-			renderPassInfo.clearValueCount = 2;
-			renderPassInfo.pClearValues = clearColors;
-
-			vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-			float m_hack_topleft_offset = (false) ? -0.01f : 0.0f;
-			VkViewport viewport{};
-			viewport.x = m_hack_topleft_offset;
-			viewport.y = m_hack_topleft_offset;
-			viewport.width = (float)GetRTSize().x;
-			viewport.height = (float)GetRTSize().y;
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-			vkCmdSetViewport(GetCurrentCommandBuffer(), 0, 1, &viewport);
-		}
-
-		{
-			const float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
-			const float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
-			const float ox = state.XY.X;
-			const float oy = state.XY.Y;
-			const float ox2 = -1.0f / GetRTSize().x;
-			const float oy2 = -1.0f / GetRTSize().y;
-
-			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
-			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
-
-			PS2_Internal::gVertexConstBuffer.Map(GetCurrentFrame());
-			PS2_Internal::gPixelConstBuffer.Map(GetCurrentFrame());
-		}
-
-
-		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
-
-		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-		if (bHardware) {
-			PS2::Hardware::gVertexBuffers.MapAndBindData(GetCurrentCommandBuffer());
-		}
-		else {
-			PS2_Internal::gVertexBuffers.MapAndBindData(GetCurrentCommandBuffer());
-		}
-
-		{
-			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.GetBufferData() = PS2_Internal::gVertexConstBuffer.GetBufferData();
-			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.GetBufferData() = PS2_Internal::gPixelConstBuffer.GetBufferData();
-			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.Map(GetCurrentFrame());
-			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.Map(GetCurrentFrame());
-		}
-
-		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
-
-		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(tail), 1, 0, 0, 0);
-
-	}
-
-	drawBuffer.ResetAfterDraw();
-	state.bTexSet = false;
+	(void)drawBuffer;
+	(void)pBoundTexture;
+	(void)state;
+	(void)bHardware;
 }
 
 void PS2::Setup()
@@ -2102,8 +1859,6 @@ void PS2::BeginFrame()
 {
 	PS2_Internal::gVertexBuffers.Reset();
 	PS2::Hardware::gVertexBuffers.Reset();
-
-	Renderer::gInUseTextures.clear();
 }
 
 void PS2::Cleanup()

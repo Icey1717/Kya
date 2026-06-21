@@ -27,7 +27,6 @@
 #include "Objects/VulkanCommands.h"
 #include "Objects/FrameBuffer.h"
 #include "log.h"
-#include "VulkanHardwarePS2.h"
 #include "Native/NativeRenderer.h"
 #include "Texture/TextureUpdate.h"
 #include "Texture/TextureUpscale.h"
