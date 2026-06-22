@@ -155,6 +155,7 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 		finalImage       = final.image;
 		finalImageMemory = final.memory;
 		finalImageView   = final.view;
+		final.Release();
 	}
 
 	const Renderer::AttachmentInfo colorInfo{
@@ -335,6 +336,7 @@ void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& ren
 		colorImage     = color.image;
 		imageMemory    = color.memory;
 		colorImageView = color.view;
+		color.Release();
 	}
 
 	if (bDepthAttachment)
@@ -343,6 +345,7 @@ void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& ren
 		depthImage       = depth.image;
 		depthImageMemory = depth.memory;
 		depthImageView   = depth.view;
+		depth.Release();
 	}
 
 	std::vector<VkImageView> imageAttachments = { colorImageView };

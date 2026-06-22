@@ -37,15 +37,13 @@ namespace Renderer
 			static std::array<DebugLineVertex, gMaxDebugLineVertexCount> gDebugLineVertices;
 			static uint32_t gDebugLineVertexCount = 0;
 
-			static VkBuffer gDebugLineVertexBuffer = VK_NULL_HANDLE;
-			static VkDeviceMemory gDebugLineVertexBufferMemory = VK_NULL_HANDLE;
+			static VulkanBuffer gDebugLineVertexBuffer;
 
 			constexpr uint32_t gMaxDebugTriVertexCount = 65536 * 16;
 			static std::array<DebugLineVertex, gMaxDebugTriVertexCount> gDebugTriVertices;
 			static uint32_t gDebugTriVertexCount = 0;
 
-			static VkBuffer gDebugTriVertexBuffer = VK_NULL_HANDLE;
-			static VkDeviceMemory gDebugTriVertexBufferMemory = VK_NULL_HANDLE;
+			static VulkanBuffer gDebugTriVertexBuffer;
 
 			static Renderer::Pipeline gDebugFilledPipeline;
 
@@ -87,9 +85,9 @@ namespace Renderer
 
 				void* pData = nullptr;
 				const VkDeviceSize dataSize = sizeof(DebugLineVertex) * gDebugLineVertexCount;
-				vkMapMemory(GetDevice(), gDebugLineVertexBufferMemory, 0, dataSize, 0, &pData);
+				vkMapMemory(GetDevice(), gDebugLineVertexBuffer.Memory(), 0, dataSize, 0, &pData);
 				memcpy(pData, gDebugLineVertices.data(), static_cast<size_t>(dataSize));
-				vkUnmapMemory(GetDevice(), gDebugLineVertexBufferMemory);
+				vkUnmapMemory(GetDevice(), gDebugLineVertexBuffer.Memory());
 			}
 
 			static void UploadTriVertices()
@@ -100,34 +98,37 @@ namespace Renderer
 
 				void* pData = nullptr;
 				const VkDeviceSize dataSize = sizeof(DebugLineVertex) * gDebugTriVertexCount;
-				vkMapMemory(GetDevice(), gDebugTriVertexBufferMemory, 0, dataSize, 0, &pData);
+				vkMapMemory(GetDevice(), gDebugTriVertexBuffer.Memory(), 0, dataSize, 0, &pData);
 				memcpy(pData, gDebugTriVertices.data(), static_cast<size_t>(dataSize));
-				vkUnmapMemory(GetDevice(), gDebugTriVertexBufferMemory);
+				vkUnmapMemory(GetDevice(), gDebugTriVertexBuffer.Memory());
 			}
 
 			void Setup()
 			{
 				const VkDeviceSize bufferSize = sizeof(DebugLineVertex) * gMaxDebugLineVertexCount;
 
-				CreateBuffer(bufferSize,
+				gDebugLineVertexBuffer.Create(bufferSize,
 					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					gDebugLineVertexBuffer,
-					gDebugLineVertexBufferMemory);
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-				SetObjectName(reinterpret_cast<uint64_t>(gDebugLineVertexBuffer), VK_OBJECT_TYPE_BUFFER, "Native Debug Line Vertex Buffer");
-				SetObjectName(reinterpret_cast<uint64_t>(gDebugLineVertexBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Native Debug Line Vertex Buffer Memory");
+				SetObjectName(reinterpret_cast<uint64_t>(gDebugLineVertexBuffer.Get()), VK_OBJECT_TYPE_BUFFER, "Native Debug Line Vertex Buffer");
+				SetObjectName(reinterpret_cast<uint64_t>(gDebugLineVertexBuffer.Memory()), VK_OBJECT_TYPE_DEVICE_MEMORY, "Native Debug Line Vertex Buffer Memory");
 
 				const VkDeviceSize triBufferSize = sizeof(DebugLineVertex) * gMaxDebugTriVertexCount;
 
-				CreateBuffer(triBufferSize,
+				gDebugTriVertexBuffer.Create(triBufferSize,
 					VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					gDebugTriVertexBuffer,
-					gDebugTriVertexBufferMemory);
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-				SetObjectName(reinterpret_cast<uint64_t>(gDebugTriVertexBuffer), VK_OBJECT_TYPE_BUFFER, "Native Debug Triangle Vertex Buffer");
-				SetObjectName(reinterpret_cast<uint64_t>(gDebugTriVertexBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Native Debug Triangle Vertex Buffer Memory");
+				SetObjectName(reinterpret_cast<uint64_t>(gDebugTriVertexBuffer.Get()), VK_OBJECT_TYPE_BUFFER, "Native Debug Triangle Vertex Buffer");
+				SetObjectName(reinterpret_cast<uint64_t>(gDebugTriVertexBuffer.Memory()), VK_OBJECT_TYPE_DEVICE_MEMORY, "Native Debug Triangle Vertex Buffer Memory");
+			}
+
+			void Cleanup()
+			{
+				gDebugLineVertexBuffer.Reset();
+				gDebugTriVertexBuffer.Reset();
+				gSavedDepth.Destroy();
 			}
 
 			void ResetFrame()
@@ -688,8 +689,9 @@ namespace Renderer
 				pushConstantData.projXView = gInitialProjMatrix * gInitialViewMatrix;
 				vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(DebugLinePushConstant), &pushConstantData);
 
+				const VkBuffer vertexBuffer = gDebugLineVertexBuffer.Get();
 				const VkDeviceSize offsets[] = { 0 };
-				vkCmdBindVertexBuffers(cmd, 0, 1, &gDebugLineVertexBuffer, offsets);
+				vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer, offsets);
 				vkCmdDraw(cmd, gDebugLineVertexCount, 1, 0, 0);
 
 				Renderer::Debug::EndLabel(cmd);
@@ -825,8 +827,9 @@ namespace Renderer
 					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gDebugPipeline.pipeline);
 					vkCmdPushConstants(cmd, gDebugPipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(DebugLinePushConstant), &pushConstantData);
 
+					const VkBuffer vertexBuffer = gDebugLineVertexBuffer.Get();
 					const VkDeviceSize offsets[] = { 0 };
-					vkCmdBindVertexBuffers(cmd, 0, 1, &gDebugLineVertexBuffer, offsets);
+					vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer, offsets);
 					vkCmdDraw(cmd, gDebugLineVertexCount, 1, 0, 0);
 				}
 
@@ -836,8 +839,9 @@ namespace Renderer
 					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gDebugFilledPipeline.pipeline);
 					vkCmdPushConstants(cmd, gDebugFilledPipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(DebugLinePushConstant), &pushConstantData);
 
+					const VkBuffer triVertexBuffer = gDebugTriVertexBuffer.Get();
 					const VkDeviceSize triOffsets[] = { 0 };
-					vkCmdBindVertexBuffers(cmd, 0, 1, &gDebugTriVertexBuffer, triOffsets);
+					vkCmdBindVertexBuffers(cmd, 0, 1, &triVertexBuffer, triOffsets);
 					vkCmdDraw(cmd, gDebugTriVertexCount, 1, 0, 0);
 				}
 

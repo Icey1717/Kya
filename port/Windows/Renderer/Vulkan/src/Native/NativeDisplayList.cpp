@@ -636,6 +636,11 @@ void Renderer::Native::DisplayList::Setup()
 	gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }
 
+void Renderer::Native::DisplayList::Cleanup()
+{
+	gVertexBuffers.DestroyResources();
+}
+
 VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer(bool bEndCommandBuffer /*= true*/)
 {
 	if (!gRecordingCommandBuffer) {

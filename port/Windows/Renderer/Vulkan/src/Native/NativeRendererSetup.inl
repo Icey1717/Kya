@@ -406,6 +406,19 @@ namespace Renderer
 			InitWhiteTexture();
 		}
 
+		void Cleanup()
+		{
+			gModelBuffer.DestroyResources();
+			gAnimationBuffer.DestroyResources();
+			gLightingDynamicBuffer.DestroyResources();
+			gAnimStBuffer.DestroyResources();
+			gFadeBuffer.DestroyResources();
+			gNativeVertexBuffer.DestroyResources();
+
+			DebugShapes::Cleanup();
+			DisplayList::Cleanup();
+		}
+
 		void ResizeFrameBuffer(int width, int height)
 		{
 			if (width == gWidth && height == gHeight)

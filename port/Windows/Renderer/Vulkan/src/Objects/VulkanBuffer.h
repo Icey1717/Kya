@@ -3,6 +3,32 @@
 #include "VulkanIncludes.h"
 #include <array>
 
+class VulkanBuffer
+{
+public:
+	VulkanBuffer() = default;
+	VulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+	~VulkanBuffer();
+
+	VulkanBuffer(const VulkanBuffer&) = delete;
+	VulkanBuffer& operator=(const VulkanBuffer&) = delete;
+
+	VulkanBuffer(VulkanBuffer&& other) noexcept;
+	VulkanBuffer& operator=(VulkanBuffer&& other) noexcept;
+
+	void Create(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+	void Reset();
+
+	const VkBuffer& Get() const { return buffer; }
+	const VkDeviceMemory& Memory() const { return memory; }
+
+private:
+	VkDevice device = VK_NULL_HANDLE;
+	VkAllocationCallbacks* allocator = nullptr;
+	VkBuffer buffer = VK_NULL_HANDLE;
+	VkDeviceMemory memory = VK_NULL_HANDLE;
+};
+
 void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 void CopyBufferImmediate(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 void CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -29,6 +55,8 @@ inline size_t NextPowerOfTwo(size_t v)
 template<typename BufferType>
 struct DynamicUniformBuffer
 {
+	DynamicUniformBuffer() = default;
+
 	void Init(int instanceCount, uint32_t range = 1)
 	{
 		this->range = range;
@@ -45,18 +73,29 @@ struct DynamicUniformBuffer
 		size = dynamicAlignment * instanceCount;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			CreateBuffer(size,
+			buffers[i].Create(size,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				buffers[i],
-				buffersMemory[i]);
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		bufferData = reinterpret_cast<BufferType*>(_aligned_malloc(size, dynamicAlignment));
 		assert(bufferData != nullptr);
 	}
 
-	inline const VkBuffer& GetBuffer(const int index) { return buffers[index]; }
+	~DynamicUniformBuffer() {
+		_aligned_free(bufferData);
+	}
+
+	DynamicUniformBuffer(const DynamicUniformBuffer&) = delete;
+	DynamicUniformBuffer& operator=(const DynamicUniformBuffer&) = delete;
+
+	inline const VkBuffer& GetBuffer(const int index) { return buffers[index].Get(); }
+
+	void DestroyResources() {
+		for (auto& buffer : buffers) {
+			buffer.Reset();
+		}
+	}
 
 	inline BufferType* GetBufferData() { return bufferData; }
 
@@ -84,27 +123,26 @@ struct DynamicUniformBuffer
 
 	inline void Map(const int index) {
 		void* data;
-		vkMapMemory(GetDevice(), buffersMemory[index], 0, size, 0, &data);
+		vkMapMemory(GetDevice(), buffers[index].Memory(), 0, size, 0, &data);
 		memcpy(data, bufferData, size);
-		vkUnmapMemory(GetDevice(), buffersMemory[index]);
+		vkUnmapMemory(GetDevice(), buffers[index].Memory());
 	}
 
 	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index, const int range = 0) const {
 		VkDescriptorBufferInfo descBufferInfo{};
-		descBufferInfo.buffer = buffers[index];
+		descBufferInfo.buffer = buffers[index].Get();
 		descBufferInfo.offset = 0;
 		descBufferInfo.range = range == 0 ? dynamicAlignment : range;
 		return descBufferInfo;
 	}
 
 private:
-	BufferType* bufferData;
-	VkDeviceSize size;
-	VkDeviceSize dynamicAlignment;
-	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
-	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
-	uint32_t range;
-	int instanceCount;
+	BufferType* bufferData = nullptr;
+	VkDeviceSize size = 0;
+	VkDeviceSize dynamicAlignment = 0;
+	std::array<VulkanBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
+	uint32_t range = 0;
+	int instanceCount = 0;
 };
 
 // A densely-packed, per-frame GPU storage buffer (SSBO).
@@ -114,17 +152,17 @@ private:
 template<typename BufferType>
 struct StorageBuffer
 {
+	StorageBuffer() = default;
+
 	void Init(int capacity)
 	{
 		this->capacity = capacity;
 		const VkDeviceSize bufferSize = sizeof(BufferType) * capacity;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			CreateBuffer(bufferSize,
+			buffers[i].Create(bufferSize,
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				buffers[i],
-				buffersMemory[i]);
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		bufferData = new BufferType[capacity];
@@ -145,14 +183,14 @@ struct StorageBuffer
 	inline void Map(const int frameIndex) {
 		const VkDeviceSize bufferSize = sizeof(BufferType) * capacity;
 		void* data;
-		vkMapMemory(GetDevice(), buffersMemory[frameIndex], 0, bufferSize, 0, &data);
+		vkMapMemory(GetDevice(), buffers[frameIndex].Memory(), 0, bufferSize, 0, &data);
 		memcpy(data, bufferData, bufferSize);
-		vkUnmapMemory(GetDevice(), buffersMemory[frameIndex]);
+		vkUnmapMemory(GetDevice(), buffers[frameIndex].Memory());
 	}
 
 	inline VkDescriptorBufferInfo GetDescBufferInfo(const int frameIndex) const {
 		VkDescriptorBufferInfo descBufferInfo{};
-		descBufferInfo.buffer = buffers[frameIndex];
+		descBufferInfo.buffer = buffers[frameIndex].Get();
 		descBufferInfo.offset = 0;
 		descBufferInfo.range = sizeof(BufferType) * capacity;
 		return descBufferInfo;
@@ -162,40 +200,58 @@ struct StorageBuffer
 		delete[] bufferData;
 	}
 
+	StorageBuffer(const StorageBuffer&) = delete;
+	StorageBuffer& operator=(const StorageBuffer&) = delete;
+
+	void DestroyResources() {
+		for (auto& buffer : buffers) {
+			buffer.Reset();
+		}
+	}
+
 private:
 	BufferType* bufferData = nullptr;
 	int capacity = 0;
-	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
-	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
+	std::array<VulkanBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
 };
 
 template<typename BufferType>
 struct UniformBuffer {
+	UniformBuffer() = default;
+
 	void Init() {
 		const VkDeviceSize dataSize = sizeof(BufferType);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			CreateBuffer(dataSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				buffers[i],
-				buffersMemory[i]);
+			buffers[i].Create(dataSize,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 	}
 
-	inline const VkBuffer& GetBuffer(const int index) { return buffers[index]; }
+	UniformBuffer(const UniformBuffer&) = delete;
+	UniformBuffer& operator=(const UniformBuffer&) = delete;
+
+	void DestroyResources() {
+		for (auto& buffer : buffers) {
+			buffer.Reset();
+		}
+	}
+
+	inline const VkBuffer& GetBuffer(const int index) { return buffers[index].Get(); }
 
 	inline BufferType& GetBufferData() { return bufferData; }
 
 	inline void Map(const int index) {
 		void* data;
-		vkMapMemory(GetDevice(), buffersMemory[index], 0, sizeof(BufferType), 0, &data);
+		vkMapMemory(GetDevice(), buffers[index].Memory(), 0, sizeof(BufferType), 0, &data);
 		memcpy(data, &bufferData, sizeof(BufferType));
-		vkUnmapMemory(GetDevice(), buffersMemory[index]);
+		vkUnmapMemory(GetDevice(), buffers[index].Memory());
 	}
 
 	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index) const {
 		VkDescriptorBufferInfo descBufferInfo{};
-		descBufferInfo.buffer = buffers[index];
+		descBufferInfo.buffer = buffers[index].Get();
 		descBufferInfo.offset = 0;
 		descBufferInfo.range = sizeof(BufferType);
 		return descBufferInfo;
@@ -203,6 +259,5 @@ struct UniformBuffer {
 
 private:
 	BufferType bufferData;
-	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
-	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
+	std::array<VulkanBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
 };

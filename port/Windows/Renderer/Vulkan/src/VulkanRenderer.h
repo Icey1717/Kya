@@ -23,10 +23,33 @@ namespace Renderer
 
 	using CommandBufferVector = std::vector<VkCommandBuffer>;
 
+	struct VulkanContext
+	{
+		VkInstance instance = VK_NULL_HANDLE;
+		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+		VkDevice device = VK_NULL_HANDLE;
+		VkQueue graphicsQueue = VK_NULL_HANDLE;
+		VkQueue presentQueue = VK_NULL_HANDLE;
+		uint32_t graphicsQueueFamily = 0;
+		VkCommandPool commandPool = VK_NULL_HANDLE;
+		VkAllocationCallbacks* allocator = nullptr;
+	};
+
+	struct SwapchainContext
+	{
+		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+		VkFormat imageFormat = VK_FORMAT_UNDEFINED;
+		VkExtent2D extent = {};
+		std::vector<VkImage>* images = nullptr;
+	};
+
 	void CreateCommandBuffers(CommandBufferVector& commandBuffers, const char* name = nullptr);
 	void CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers, const char* name = nullptr);
 
 	VkCommandPool CreateCommandPool(const char* name = nullptr);
+
+	const VulkanContext& GetVulkanContext();
+	const SwapchainContext& GetSwapchainContext();
 }
 
 VkDevice GetDevice();

@@ -8,7 +8,17 @@ struct OwnedImage
 	VkDeviceMemory memory = VK_NULL_HANDLE;
 	VkImageView    view   = VK_NULL_HANDLE;
 
+	OwnedImage() = default;
+	~OwnedImage();
+
+	OwnedImage(const OwnedImage&) = delete;
+	OwnedImage& operator=(const OwnedImage&) = delete;
+
+	OwnedImage(OwnedImage&& other) noexcept;
+	OwnedImage& operator=(OwnedImage&& other) noexcept;
+
 	void Destroy();
+	void Release();
 };
 
 class VulkanImage {

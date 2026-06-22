@@ -113,6 +113,11 @@ namespace Renderer
 				currentInstanceIndex = 0;
 			}
 
+			void DestroyResources()
+			{
+				gStorageBuffer.DestroyResources();
+			}
+
 		private:
 			int currentInstanceIndex = 0;
 			StorageBuffer<T> gStorageBuffer;

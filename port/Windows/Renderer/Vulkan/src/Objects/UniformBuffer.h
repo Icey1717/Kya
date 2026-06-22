@@ -49,10 +49,8 @@ namespace PS2 {
 
 	template<typename VertexType, typename IndexType>
 	class VertexBuffer {
-		VkBuffer vertexBuffer;
-		VkDeviceMemory vertexBufferMemory;
-		VkBuffer indexBuffer;
-		VkDeviceMemory indexBufferMemory;
+		VulkanBuffer vertexBuffer;
+		VulkanBuffer indexBuffer;
 
 		int vertexHead;
 		int vertexMax;
@@ -68,21 +66,21 @@ namespace PS2 {
 		{
 			if (vertexCount > 0) {
 				VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMemory);
+				vertexBuffer.Create(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			}
 
 			if (indexCount > 0) {
 				VkDeviceSize bufferSize = sizeof(IndexType) * indexCount;
-				CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBuffer, indexBufferMemory);
+				indexBuffer.Create(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			}
 		}
 
 		const VkBuffer& GetVertexBuffer() const {
-			return vertexBuffer;
+			return vertexBuffer.Get();
 		}
 
 		const VkBuffer& GetIndexBuffer() const {
-			return indexBuffer;
+			return indexBuffer.Get();
 		}
 
 		int GetVertexBufferMax() const {
@@ -102,9 +100,9 @@ namespace PS2 {
 			VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
 			const VkDeviceSize bufferOffset = vertexHead * sizeof(VertexType);
 			void* data;
-			vkMapMemory(GetDevice(), vertexBufferMemory, bufferOffset, bufferSize, 0, &data);
+			vkMapMemory(GetDevice(), vertexBuffer.Memory(), bufferOffset, bufferSize, 0, &data);
 			memcpy(data, buff, (size_t)bufferSize);
-			vkUnmapMemory(GetDevice(), vertexBufferMemory);
+			vkUnmapMemory(GetDevice(), vertexBuffer.Memory());
 
 			vertexHead += vertexCount;
 			return bufferOffset;
@@ -119,9 +117,9 @@ namespace PS2 {
 			VkDeviceSize bufferSize = sizeof(IndexType) * indexCount;
 			const VkDeviceSize bufferOffset = indexHead * sizeof(IndexType);
 			void* data;
-			vkMapMemory(GetDevice(), indexBufferMemory, bufferOffset, bufferSize, 0, &data);
+			vkMapMemory(GetDevice(), indexBuffer.Memory(), bufferOffset, bufferSize, 0, &data);
 			memcpy(data, buff, (size_t)bufferSize);
-			vkUnmapMemory(GetDevice(), indexBufferMemory);
+			vkUnmapMemory(GetDevice(), indexBuffer.Memory());
 
 			indexHead += indexCount;
 			return bufferOffset;
@@ -130,6 +128,11 @@ namespace PS2 {
 		void Reset() {
 			vertexHead = 0;
 			indexHead = 0;
+		}
+
+		void DestroyResources() {
+			vertexBuffer.Reset();
+			indexBuffer.Reset();
 		}
 	};
 
@@ -208,6 +211,13 @@ namespace PS2 {
 
 		void Reset() {
 			buffers[GetCurrentFrame()].Reset();
+		}
+
+		void DestroyResources() {
+			for (auto& buffer : buffers) {
+				buffer.DestroyResources();
+			}
+			buffers.clear();
 		}
 
 		void MergeData(const DrawBufferData<VertexType, IndexType>& newDrawBufferData) {

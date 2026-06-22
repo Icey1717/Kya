@@ -242,37 +242,51 @@ public:
 	const VkQueue& GetGraphicsQueue() { return graphicsQueue; }
 	const VkCommandPool& GetCommandPool() { return commandPool; }
 	const VkExtent2D& GetSwapchainExtent() { return swapChainExtent; }
+	const Renderer::VulkanContext& GetVulkanContext() const { return context; }
+	const Renderer::SwapchainContext& GetSwapchainContext() const { return swapchainContext; }
+	void SetAllocator(VkAllocationCallbacks* allocator) { context.allocator = allocator; }
 
 private:
-	GLFWwindow* window;
+	void RefreshSwapchainContext()
+	{
+		swapchainContext.swapchain = swapChain;
+		swapchainContext.imageFormat = swapChainImageFormat;
+		swapchainContext.extent = swapChainExtent;
+		swapchainContext.images = &swapChainImages;
+	}
 
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkSurfaceKHR surface;
+	GLFWwindow* window = nullptr;
+
+	Renderer::VulkanContext context;
+	Renderer::SwapchainContext swapchainContext;
+
+	VkInstance instance = VK_NULL_HANDLE;
+	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkDevice device;
+	VkDevice device = VK_NULL_HANDLE;
 
-	VkQueue graphicsQueue;
-	VkQueue presentQueue;
+	VkQueue graphicsQueue = VK_NULL_HANDLE;
+	VkQueue presentQueue = VK_NULL_HANDLE;
 
-	VkSwapchainKHR swapChain;
+	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
 	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
+	VkFormat swapChainImageFormat = VK_FORMAT_UNDEFINED;
+	VkExtent2D swapChainExtent = {};
 	std::vector<VkImageView> swapChainImageViews;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass renderPass = VK_NULL_HANDLE;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
+	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+	VkPipeline graphicsPipeline = VK_NULL_HANDLE;
 
-	VkCommandPool commandPool;
+	VkCommandPool commandPool = VK_NULL_HANDLE;
 
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
+	VkBuffer vertexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+	VkBuffer indexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -401,6 +415,7 @@ private:
 		createFramebuffers();
 		createSyncObjects();
 		commandPool = Renderer::CreateCommandPool("Image Renderer Command Pool");
+		context.commandPool = commandPool;
 	}
 
 	void cleanupSwapChain() {
@@ -428,6 +443,7 @@ private:
 		}
 
 		PS2::Cleanup();
+		Renderer::Native::Cleanup();
 
 		vkDestroyPipeline(device, graphicsPipeline, GetAllocator());
 		vkDestroyPipelineLayout(device, pipelineLayout, GetAllocator());
@@ -487,6 +503,7 @@ private:
 		createGlobalRenderPass();
 		createFramebuffers();
 		createRenderFinishedSemaphores();
+		RefreshSwapchainContext();
 	}
 
 	void createInstance() {
@@ -527,6 +544,8 @@ private:
 		if (vkCreateInstance(&createInfo, GetAllocator(), &instance) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create instance!");
 		}
+
+		context.instance = instance;
 	}
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
@@ -575,6 +594,8 @@ private:
 		if (physicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable GPU!");
 		}
+
+		context.physicalDevice = physicalDevice;
 	}
 
 	void createLogicalDevice() {
@@ -684,6 +705,11 @@ private:
 
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+
+		context.device = device;
+		context.graphicsQueue = graphicsQueue;
+		context.presentQueue = presentQueue;
+		context.graphicsQueueFamily = indices.graphicsFamily.value();
 	}
 
 	void createSwapChain() {
@@ -736,6 +762,7 @@ private:
 
 		swapChainImageFormat = surfaceFormat.format;
 		swapChainExtent = extent;
+		RefreshSwapchainContext();
 	}
 
 	void createImageViews() {
@@ -1154,6 +1181,16 @@ ImageRendererApp app;
 
 static VkAllocationCallbacks* gAllocator = nullptr;
 
+const Renderer::VulkanContext& Renderer::GetVulkanContext()
+{
+	return app.GetVulkanContext();
+}
+
+const Renderer::SwapchainContext& Renderer::GetSwapchainContext()
+{
+	return app.GetSwapchainContext();
+}
+
 namespace Renderer
 {
 	// Global variable to track allocation count
@@ -1228,6 +1265,7 @@ namespace Renderer
 		gAllocator->pfnAllocation = Alloc;
 		gAllocator->pfnReallocation = ReAlloc;
 		gAllocator->pfnFree = Free;
+		app.SetAllocator(gAllocator);
 
 		if (!gHeadless) {
 			app.setup();
@@ -1264,21 +1302,25 @@ namespace Renderer
 
 VkDevice GetDevice()
 {
-	return app.GetDevice();
+	return Renderer::GetVulkanContext().device;
 }
 
 VkFormat GetSwapchainImageFormat()
 {
-	return app.GetSwapchainImageFormat();
+	return Renderer::GetSwapchainContext().imageFormat;
 }
 
 std::vector<VkImage>& GetSwapchainImages() {
-	return app.GetSwapchainImages();
+	if (!Renderer::GetSwapchainContext().images) {
+		return app.GetSwapchainImages();
+	}
+
+	return *Renderer::GetSwapchainContext().images;
 }
 
 VkPhysicalDevice GetPhysicalDevice()
 {
-	return app.GetPhysicalDevice();
+	return Renderer::GetVulkanContext().physicalDevice;
 }
 
 const VkCommandBuffer& GetCurrentCommandBuffer()
@@ -1302,17 +1344,17 @@ const VkBuffer& GetUniformBuffer(int index)
 
 const VkQueue& GetGraphicsQueue()
 {
-	return app.GetGraphicsQueue();
+	return Renderer::GetVulkanContext().graphicsQueue;
 }
 
 const VkCommandPool& GetCommandPool()
 {
-	return app.GetCommandPool();
+	return Renderer::GetVulkanContext().commandPool;
 }
 
 const VkExtent2D& GetSwapchainExtent()
 {
-	return app.GetSwapchainExtent();
+	return Renderer::GetSwapchainContext().extent;
 }
 
 void SetObjectName(const uint64_t objHandle, const VkObjectType objType, const char* format, ...)
@@ -1390,17 +1432,17 @@ GLFWwindow* GetGLFWWindow()
 
 VkInstance GetInstance()
 {
-	return app.GetInstance();
+	return Renderer::GetVulkanContext().instance;
 }
 
 uint32_t GetGraphicsQueueFamily()
 {
-	return app.GetGraphicsQueueFamily();
+	return Renderer::GetVulkanContext().graphicsQueueFamily;
 }
 
 VkAllocationCallbacks* GetAllocator()
 {
-	return gAllocator;
+	return Renderer::GetVulkanContext().allocator;
 }
 
 void SetAllocationTrackingEnabled(bool enabled)
@@ -1429,12 +1471,10 @@ VkCommandPool Renderer::CreateCommandPool(const char* name /*= nullptr*/)
 {
 	VkCommandPool commandPool = VK_NULL_HANDLE;
 
-	QueueFamilyIndices queueFamilyIndices = app.findQueueFamilies(GetPhysicalDevice());
-
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.queueFamilyIndex = GetGraphicsQueueFamily();
 
 	if (vkCreateCommandPool(GetDevice(), &poolInfo, GetAllocator(), &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");

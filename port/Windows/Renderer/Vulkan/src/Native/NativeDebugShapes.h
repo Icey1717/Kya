@@ -13,6 +13,7 @@ namespace Renderer
 		namespace DebugShapes
 		{
 			void Setup();
+			void Cleanup();
 			void ResetFrame();
 
 			void SetInitialViewProjection(const glm::mat4& viewMatrix, const glm::mat4& projMatrix);

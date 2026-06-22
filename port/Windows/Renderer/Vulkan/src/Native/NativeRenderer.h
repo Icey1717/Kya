@@ -76,6 +76,7 @@ namespace Renderer
 		void ResizeFrameBuffer(int width, int height);
 		void ApplyPendingResizeIfNeeded();
 		VkExtent2D GetFrameBufferSize();
+		void Cleanup();
 
 		// Actor preview: second-camera offscreen render.
 		void SetupPreview(int width, int height);

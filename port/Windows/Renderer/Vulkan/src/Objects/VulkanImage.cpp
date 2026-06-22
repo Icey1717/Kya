@@ -4,6 +4,7 @@
 #include "VulkanRenderer.h"
 
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -137,22 +138,19 @@ void VulkanImage::UpdateImage(char* pixelData)
 		throw std::runtime_error("failed to load texture image!");
 	}
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	VulkanBuffer stagingBuffer(imageSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
-	vkMapMemory(GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+	vkMapMemory(GetDevice(), stagingBuffer.Memory(), 0, imageSize, 0, &data);
 	memcpy(data, pixelBuffer.data(), static_cast<size_t>(imageSize));
-	vkUnmapMemory(GetDevice(), stagingBufferMemory);
+	vkUnmapMemory(GetDevice(), stagingBuffer.Memory());
 
 	TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
-	CopyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	CopyBufferToImage(stagingBuffer.Get(), textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
 	TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
-
-	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
-	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
 }
 
 void VulkanImage::CreateTextureImage(char* pixelData) {
@@ -290,11 +288,53 @@ void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageL
 // OwnedImage
 // ---------------------------------------------------------------------------
 
+OwnedImage::~OwnedImage()
+{
+	Destroy();
+}
+
+OwnedImage::OwnedImage(OwnedImage&& other) noexcept
+	: image(std::exchange(other.image, VK_NULL_HANDLE))
+	, memory(std::exchange(other.memory, VK_NULL_HANDLE))
+	, view(std::exchange(other.view, VK_NULL_HANDLE))
+{
+}
+
+OwnedImage& OwnedImage::operator=(OwnedImage&& other) noexcept
+{
+	if (this != &other) {
+		Destroy();
+		image = std::exchange(other.image, VK_NULL_HANDLE);
+		memory = std::exchange(other.memory, VK_NULL_HANDLE);
+		view = std::exchange(other.view, VK_NULL_HANDLE);
+	}
+
+	return *this;
+}
+
 void OwnedImage::Destroy()
 {
-	vkDestroyImageView(GetDevice(), view,   GetAllocator()); view   = VK_NULL_HANDLE;
-	vkDestroyImage    (GetDevice(), image,  GetAllocator()); image  = VK_NULL_HANDLE;
-	vkFreeMemory      (GetDevice(), memory, GetAllocator()); memory = VK_NULL_HANDLE;
+	if (view != VK_NULL_HANDLE) {
+		vkDestroyImageView(GetDevice(), view, GetAllocator());
+		view = VK_NULL_HANDLE;
+	}
+
+	if (image != VK_NULL_HANDLE) {
+		vkDestroyImage(GetDevice(), image, GetAllocator());
+		image = VK_NULL_HANDLE;
+	}
+
+	if (memory != VK_NULL_HANDLE) {
+		vkFreeMemory(GetDevice(), memory, GetAllocator());
+		memory = VK_NULL_HANDLE;
+	}
+}
+
+void OwnedImage::Release()
+{
+	image = VK_NULL_HANDLE;
+	memory = VK_NULL_HANDLE;
+	view = VK_NULL_HANDLE;
 }
 
 // ---------------------------------------------------------------------------

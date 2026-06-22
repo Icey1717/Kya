@@ -488,6 +488,11 @@ void PS2::BeginFrame()
 
 void PS2::Cleanup()
 {
+	PS2_Internal::gVertexBuffers.DestroyResources();
+	PS2::Hardware::gVertexBuffers.DestroyResources();
+	PS2_Internal::gVertexConstBuffer.DestroyResources();
+	PS2_Internal::gPixelConstBuffer.DestroyResources();
+
 	for (auto& pipeline : PS2::GetPipelines()) {
 		pipeline.second.Destroy();
 	}

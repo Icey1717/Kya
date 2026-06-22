@@ -1160,23 +1160,19 @@ void PS2::GSSimpleTexture::UploadDataFromBuffer()
 
 void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
 {
-	VkBuffer stagingBuffer = VK_NULL_HANDLE;
-	VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
-
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	VulkanBuffer stagingBuffer(bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
-	vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(GetDevice(), stagingBuffer.Memory(), 0, bufferSize, 0, &data);
 	memcpy(data, readBuffer, static_cast<size_t>(bufferSize));
-	vkUnmapMemory(GetDevice(), stagingBufferMemory);
+	vkUnmapMemory(GetDevice(), stagingBuffer.Memory());
 
 	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
-	VulkanImage::CopyBufferToImage(stagingBuffer, image, width, height);
+	VulkanImage::CopyBufferToImage(stagingBuffer.Get(), image, width, height);
 	
 	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
-
-	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
-	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
 }
 
 void PS2::GSSimpleTexture::DestroyImageResources()
