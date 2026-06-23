@@ -43,7 +43,12 @@ set (SOURCES
 	"Vulkan/src/Objects/UniformBuffer.cpp"
 
 	"Vulkan/src/Native/NativeRenderer.h"
+	"Vulkan/src/Native/NativeRendererInternal.h"
 	"Vulkan/src/Native/NativeRenderer.cpp"
+	"Vulkan/src/Native/NativeRendererRecording.cpp"
+	"Vulkan/src/Native/NativeRendererSetup.cpp"
+	"Vulkan/src/Native/NativeRendererSubmission.cpp"
+	"Vulkan/src/Native/NativePreviewRenderer.cpp"
 	"Vulkan/src/Native/Blending.h"
 	"Vulkan/src/Native/Blending.cpp"
 	"Vulkan/src/Native/PostProcessing.h"

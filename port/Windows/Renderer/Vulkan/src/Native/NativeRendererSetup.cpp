@@ -1,3 +1,14 @@
+#include "NativeRendererInternal.h"
+
+#include "Blending.h"
+#include "NativeDebugShapes.h"
+#include "NativeDisplayList.h"
+#include "Objects/VulkanRenderPass.h"
+#include "PostProcessing.h"
+#include "VulkanRenderer.h"
+
+#include <stdexcept>
+
 namespace Renderer
 {
 	namespace Native
@@ -9,7 +20,7 @@ namespace Renderer
 
 		static void CreateFramebuffer()
 		{
-			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass[RenderPassKey::Empty].gRenderPass, true);
+			GetNativeRendererState().frameBuffer.SetupBase({ gWidth, gHeight }, GetNativeRendererState().renderPass[RenderPassKey::Empty].gRenderPass, true);
 		}
 		static void CreateFramebufferSampler()
 		{
@@ -31,7 +42,7 @@ namespace Renderer
 			samplerCreateInfo.minLod = 0.0f;
 			samplerCreateInfo.maxLod = 0.0f;
 
-			VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, GetAllocator(), &gFrameBufferSampler);
+			VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, GetAllocator(), &GetNativeRendererState().frameBufferSampler);
 			if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to create native framebuffer sampler");
 			}
@@ -45,10 +56,10 @@ namespace Renderer
 		}
 		static void InitFade()
 		{
-			gFadeBuffer.Init();
+			GetNativeRendererState().fadeBuffer.Init();
 
 			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				const VkDescriptorBufferInfo vertexDescBufferInfo = gFadeBuffer.GetDescBufferInfo(i);
+				const VkDescriptorBufferInfo vertexDescBufferInfo = GetNativeRendererState().fadeBuffer.GetDescBufferInfo(i);
 
 				DescriptorWriteList writeList;
 				writeList.EmplaceWrite({ 1, EBindingStage::Fragment, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
@@ -57,7 +68,7 @@ namespace Renderer
 		}
 		void CreateRenderStage(const RenderPassKey& key, const char* name)
 		{
-			RenderStage& stage = gRenderPass[key];
+			RenderStage& stage = GetNativeRendererState().renderPass[key];
 
 			const bool bClearColor = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Depth);
 			const bool bClearDepth = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Color);
@@ -201,9 +212,9 @@ namespace Renderer
 			return blendPipeline;
 		}
 
-		static VkPipeline GetBlendPipeline(const RenderPassKey& key, const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled)
+		VkPipeline GetBlendPipeline(const RenderPassKey& key, const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled)
 		{
-			RenderStage& stage = gRenderPass[key];
+			RenderStage& stage = GetNativeRendererState().renderPass[key];
 			const ResolvedBlendState blendState = ResolveBlendState(alpha, bAlphaBlendEnabled);
 			const uint16_t blendKey = GetBlendPipelineVariantKey(blendState);
 
@@ -340,12 +351,12 @@ namespace Renderer
 
 		Renderer::FrameBufferBase& GetFrameBuffer()
 		{
-			return gFrameBuffer;
+			return GetNativeRendererState().frameBuffer;
 		}
 
 		void InitWhiteTexture()
 		{
-			gWhiteTexture = new SimpleTexture("White Texture", { 0, 0, 1, 1 }, TextureRegisters{});
+			GetNativeRendererState().whiteTexture = new SimpleTexture("White Texture", { 0, 0, 1, 1 }, TextureRegisters{});
 
 
 			const int width = 16;
@@ -355,16 +366,16 @@ namespace Renderer
 
 			Renderer::ImageData whiteBitmap{ .pImage = whitePixels.data(), .canvasWidth = width, .canvasHeight = height, .bpp = 32, .maxMipLevel = 0 };
 
-			gWhiteTexture->CreateRenderer(whiteBitmap);
+			GetNativeRendererState().whiteTexture->CreateRenderer(whiteBitmap);
 		}
 
 		void Setup()
 		{
 			CheckBufferSizes();
 
-			gvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
-			gvkCmdSetColorWriteMaskEXT   = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
-			assert(gvkCmdSetColorWriteEnableEXT && gvkCmdSetColorWriteMaskEXT);
+			GetNativeRendererState().vkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
+			GetNativeRendererState().vkCmdSetColorWriteMaskEXT   = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
+			assert(GetNativeRendererState().vkCmdSetColorWriteEnableEXT && GetNativeRendererState().vkCmdSetColorWriteMaskEXT);
 
 			RenderPassKey key;
 			key.clearMode = EClearMode::None;
@@ -379,22 +390,22 @@ namespace Renderer
 
 			CreateFramebuffer();
 			CreateFramebufferSampler();
-			gCommandPool = CreateCommandPool("Native Renderer Command Pool");
-			CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
+			GetNativeRendererState().commandPool = CreateCommandPool("Native Renderer Command Pool");
+			CreateCommandBuffers(GetNativeRendererState().commandPool, GetNativeRendererState().commandBuffers, "Native Renderer Command Buffer");
 
-			gNativeVertexBuffer.Init(0x100000, 0x100000);
+			GetNativeRendererState().nativeVertexBuffer.Init(0x100000, 0x100000);
 			DebugShapes::Setup();
-			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
+			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 
-			gModelBuffer.Init();
-			gAnimationBuffer.Init(gMaxAnimationMatrices);
+			GetNativeRendererState().modelBuffer.Init();
+			GetNativeRendererState().animationBuffer.Init(gMaxAnimationMatrices);
 
-			gLightingDynamicBuffer.Init();
-			gAnimStBuffer.Init();
+			GetNativeRendererState().lightingDynamicBuffer.Init();
+			GetNativeRendererState().animStBuffer.Init();
 
 			GetRenderDelegate() += Render;
 
-			gRenderThread = std::make_unique<RenderThread>();
+			GetNativeRendererState().renderThread = CreateRenderThread();
 
 			PostProcessing::Setup();
 			DisplayList::Setup();
@@ -408,15 +419,16 @@ namespace Renderer
 
 		void Cleanup()
 		{
-			gModelBuffer.DestroyResources();
-			gAnimationBuffer.DestroyResources();
-			gLightingDynamicBuffer.DestroyResources();
-			gAnimStBuffer.DestroyResources();
-			gFadeBuffer.DestroyResources();
-			gNativeVertexBuffer.DestroyResources();
+			GetNativeRendererState().modelBuffer.DestroyResources();
+			GetNativeRendererState().animationBuffer.DestroyResources();
+			GetNativeRendererState().lightingDynamicBuffer.DestroyResources();
+			GetNativeRendererState().animStBuffer.DestroyResources();
+			GetNativeRendererState().fadeBuffer.DestroyResources();
+			GetNativeRendererState().nativeVertexBuffer.DestroyResources();
 
 			DebugShapes::Cleanup();
 			DisplayList::Cleanup();
+			DestroyRenderThread(GetNativeRendererState().renderThread);
 		}
 
 		void ResizeFrameBuffer(int width, int height)
@@ -430,7 +442,7 @@ namespace Renderer
 			gPendingResizeHeight = height;
 		}
 
-		static void ApplyPendingResizeInternal()
+		void ApplyPendingResizeInternal()
 		{
 			if (gPendingResizeWidth == 0 && gPendingResizeHeight == 0)
 			{
@@ -446,21 +458,21 @@ namespace Renderer
 
 			DebugShapes::DestroyDedicatedPass();
 
-			vkDestroyFramebuffer(GetDevice(), gFrameBuffer.framebuffer, GetAllocator());
-			vkDestroyImageView(GetDevice(), gFrameBuffer.colorImageView, GetAllocator());
-			vkDestroyImage(GetDevice(), gFrameBuffer.colorImage, GetAllocator());
-			vkFreeMemory(GetDevice(), gFrameBuffer.imageMemory, GetAllocator());
-			vkDestroyImageView(GetDevice(), gFrameBuffer.depthImageView, GetAllocator());
-			vkDestroyImage(GetDevice(), gFrameBuffer.depthImage, GetAllocator());
-			vkFreeMemory(GetDevice(), gFrameBuffer.depthImageMemory, GetAllocator());
-			vkDestroySampler(GetDevice(), gFrameBuffer.sampler, GetAllocator());
+			vkDestroyFramebuffer(GetDevice(), GetNativeRendererState().frameBuffer.framebuffer, GetAllocator());
+			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.colorImageView, GetAllocator());
+			vkDestroyImage(GetDevice(), GetNativeRendererState().frameBuffer.colorImage, GetAllocator());
+			vkFreeMemory(GetDevice(), GetNativeRendererState().frameBuffer.imageMemory, GetAllocator());
+			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.depthImageView, GetAllocator());
+			vkDestroyImage(GetDevice(), GetNativeRendererState().frameBuffer.depthImage, GetAllocator());
+			vkFreeMemory(GetDevice(), GetNativeRendererState().frameBuffer.depthImageMemory, GetAllocator());
+			vkDestroySampler(GetDevice(), GetNativeRendererState().frameBuffer.sampler, GetAllocator());
 
 			gWidth = width;
 			gHeight = height;
 
 			CreateFramebuffer();
 
-			DebugShapes::SetupDedicatedPass(gFrameBuffer.colorImageView, gWidth, gHeight);
+			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 
 			PostProcessing::Resize();
 		}

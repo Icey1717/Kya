@@ -1,38 +1,49 @@
+#include "NativeRendererInternal.h"
+
+#include "NativeDebugShapes.h"
+#include "NativeDisplayList.h"
+#include "PostProcessing.h"
+#include "ScopedTimer.h"
+#include "VulkanRenderer.h"
+#include "profiling.h"
+
+#include "glm/gtc/type_ptr.inl"
+
 namespace Renderer
 {
 	namespace Native
 	{
 		static void CreateDraw()
 		{
-			gCurrentDraw = Draw{};
-			gCurrentDraw->renderPassKey = gCachedRenderPassKey;
-			gCurrentDraw->bRenderPassDirty = gRenderPassDirty;
-			gRenderPassDirty = false;
+			GetNativeRendererState().currentDraw = Draw{};
+			GetNativeRendererState().currentDraw->renderPassKey = GetNativeRendererState().cachedRenderPassKey;
+			GetNativeRendererState().currentDraw->bRenderPassDirty = GetNativeRendererState().renderPassDirty;
+			GetNativeRendererState().renderPassDirty = false;
 		}
 
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
 		{
-			gCachedPerDrawData.renderFlags = renderFlags;
+			GetNativeRendererState().cachedPerDrawData.renderFlags = renderFlags;
 
 			if (pMesh->GetName() == DEBUG_MESH_NAME) {
 				pMesh->GetName();
 			}
 
-			if (!gCurrentDraw) {
+			if (!GetNativeRendererState().currentDraw) {
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Creating new draw!");
 				CreateDraw();
 			}
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
-			auto& instance = gCurrentDraw->instances.emplace_back();
-			instance.animationMatrixStart = gCurrentAnimMatrixIndex;
+			auto& instance = GetNativeRendererState().currentDraw->instances.emplace_back();
+			instance.animationMatrixStart = GetNativeRendererState().currentAnimMatrixIndex;
 			instance.pMesh = pMesh;
-			instance.perDrawData = gCachedPerDrawData;
-			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(gModelBuffer.GetInstanceIndex());
+			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
+			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
 			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
-			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(gLightingDynamicBuffer.GetInstanceIndex());
-			instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(gAnimStBuffer.GetInstanceIndex());
+			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(GetNativeRendererState().lightingDynamicBuffer.GetInstanceIndex());
+			instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(GetNativeRendererState().animStBuffer.GetInstanceIndex());
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
 		}
@@ -43,11 +54,11 @@ namespace Renderer
 
 			// copy into model.
 			if (pProj) {
-				gCachedProjMatrix = glm::make_mat4(pProj);
+				GetNativeRendererState().cachedProjMatrix = glm::make_mat4(pProj);
 			}
 
 			if (pView) {
-				gCachedViewMatrix = glm::make_mat4(pView);
+				GetNativeRendererState().cachedViewMatrix = glm::make_mat4(pView);
 			}
 
 			PushModelMatrix(pModel);
@@ -55,26 +66,26 @@ namespace Renderer
 
 		void PushModelMatrix(float* pModel)
 		{
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushModelMatrix: {}", gModelBuffer.GetDebugIndex());
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushModelMatrix: {}", GetNativeRendererState().modelBuffer.GetDebugIndex());
 			const glm::mat4 modelMatrix = glm::make_mat4(pModel);
-			gModelBuffer.AddInstanceData(modelMatrix);
+			GetNativeRendererState().modelBuffer.AddInstanceData(modelMatrix);
 		}
 
 		void PushAnimMatrix(float* pAnim)
 		{
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
-			assert(gAnimationMatrices.size() < static_cast<size_t>(gMaxAnimationMatrices));
-			gAnimationMatrices.push_back(glm::make_mat4(pAnim));
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimMatrix: {}", GetNativeRendererState().animationMatrices.size());
+			assert(GetNativeRendererState().animationMatrices.size() < static_cast<size_t>(gMaxAnimationMatrices));
+			GetNativeRendererState().animationMatrices.push_back(glm::make_mat4(pAnim));
 		}
 
 		void StartAnimMatrix()
 		{
-			gCurrentAnimMatrixIndex = gAnimationMatrices.size();
+			GetNativeRendererState().currentAnimMatrixIndex = GetNativeRendererState().animationMatrices.size();
 		}
 
 		void SetAnimStInstanceData(const glm::vec4& data)
 		{
-			gAnimStBuffer.AddInstanceData(data);
+			GetNativeRendererState().animStBuffer.AddInstanceData(data);
 		}
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt)
@@ -91,7 +102,7 @@ namespace Renderer
 				data.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 				data.flare = glm::vec4(pPkt->flare[0], pPkt->flare[1], pPkt->flare[2], pPkt->flare[3]);
 
-				gLightingDynamicBuffer.AddInstanceData(data);
+				GetNativeRendererState().lightingDynamicBuffer.AddInstanceData(data);
 			}
 
 			SetAnimStInstanceData(glm::make_vec4(pPkt->animStNormalExtruder));
@@ -113,7 +124,7 @@ namespace Renderer
 
 		void PushAnimST(float* pAnimST)
 		{
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimST: {}", gAnimStBuffer.GetDebugIndex());
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimST: {}", GetNativeRendererState().animStBuffer.GetDebugIndex());
 			assert(pAnimST);
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushAnimST: {} {} {} {}", pAnimST[0], pAnimST[1], pAnimST[2], pAnimST[3]);
 
@@ -124,7 +135,7 @@ namespace Renderer
 
 void Renderer::Native::OnVideoFlip()
 {
-	gRenderThread->SignalEndCommands();
+	SignalRenderThreadEndCommands(GetNativeRendererState().renderThread);
 }
 
 void Renderer::Native::ApplyPendingResizeIfNeeded()
@@ -147,7 +158,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
-	const Pipeline& pipeline = gRenderPass[gCachedRenderPassKey].GetPipeline();
+	const Pipeline& pipeline = GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline();
 
 	if (pTextureData->HasDescriptorSets(pipeline)) {
 		// Already have descriptor sets, no need to initialize them.
@@ -166,11 +177,11 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 	imageInfo.sampler = sampler;
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo modelDescBufferInfo = GetNativeRendererState().modelBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo animDescBufferInfo = GetNativeRendererState().animationBuffer.GetDescBufferInfo(i);
 
-		const VkDescriptorBufferInfo lightingDescBufferInfo = gLightingDynamicBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animStDescBufferInfo = gAnimStBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo lightingDescBufferInfo = GetNativeRendererState().lightingDynamicBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo animStDescBufferInfo = GetNativeRendererState().animStBuffer.GetDescBufferInfo(i);
 
 		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
@@ -193,25 +204,25 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		ZONE_SCOPED_NAME("Render Thread Wait");
 
 		{
-			ScopedTimer waitForRenderThread(gRenderWaitTime);
-			gRenderThread->MainThreadEndCommands();
+			ScopedTimer waitForRenderThread(GetNativeRendererState().renderWaitTime);
+			MainThreadEndCommands(GetNativeRendererState().renderThread);
 		}
 
-		if (!gRenderThread->GetHasRecordedCommands()) {
+		if (!GetRenderThreadHasRecordedCommands(GetNativeRendererState().renderThread)) {
 			RecordBeginCommandBuffer();
 			RecordBeginRenderPass(RenderPassKey::Empty);
 			RecordEndCommandBuffer();
 		}
 
-		gRenderThread->Reset();
+		ResetRenderThread(GetNativeRendererState().renderThread);
 	}
 
-	ScopedTimer timer(gRenderTime);
+	ScopedTimer timer(GetNativeRendererState().renderTime);
 
 	std::array<VkCommandBuffer, 2> cmdBuffers;
 
 	{
-		const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+		const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 		Renderer::Debug::EndLabel(cmd);
 		vkEndCommandBuffer(cmd);
@@ -223,9 +234,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		const VkCommandBuffer& cmd = DisplayList::FinalizeCommandBuffer(false);
 		PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::AlphaFix);
 
-		if (bFadeActive) {
+		if (GetNativeRendererState().fadeActive) {
 			PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::Fade); // Currently these effects don't chain, so fade also does alpha fix
-			bFadeActive = false;
+			GetNativeRendererState().fadeActive = false;
 		}
 
 		vkEndCommandBuffer(cmd);
@@ -237,15 +248,19 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		commandBufferList.push_back(cmd);
 	}
 
-	RecordPreviewPass(commandBufferList);
-	gSavedDraws.clear();
+	GetNativeRendererState().preview.RecordPass(commandBufferList,
+		GetNativeRendererState().renderPass,
+		GetNativeRendererState().nativeVertexBuffer,
+		GetNativeRendererState().vkCmdSetColorWriteEnableEXT,
+		GetNativeRendererState().vkCmdSetColorWriteMaskEXT);
+	GetNativeRendererState().preview.ClearSavedDraws();
 
-	gNativeVertexBuffer.Reset();
-	gAnimationMatrices.clear();
+	GetNativeRendererState().nativeVertexBuffer.Reset();
+	GetNativeRendererState().animationMatrices.clear();
 
-	gModelBuffer.Reset();
-	gLightingDynamicBuffer.Reset();
-	gAnimStBuffer.Reset();
+	GetNativeRendererState().modelBuffer.Reset();
+	GetNativeRendererState().lightingDynamicBuffer.Reset();
+	GetNativeRendererState().animStBuffer.Reset();
 	DebugShapes::ResetFrame();
 
 	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");
@@ -261,36 +276,36 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 	InitializeDescriptorsSets(pTexture);
 
-	if (gCurrentDraw) {
-		gCurrentDraw->pTexture = pTexture;
+	if (GetNativeRendererState().currentDraw) {
+		GetNativeRendererState().currentDraw->pTexture = pTexture;
 
-		gCurrentDraw->pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(gRenderPass[gCachedRenderPassKey].GetPipeline()).GetSet(GetCurrentFrame());
+		GetNativeRendererState().currentDraw->pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline()).GetSet(GetCurrentFrame());
 
-		gCurrentDraw->projMatrix = gCachedProjMatrix;
-		gCurrentDraw->viewMatrix = gCachedViewMatrix;
+		GetNativeRendererState().currentDraw->projMatrix = GetNativeRendererState().cachedProjMatrix;
+		GetNativeRendererState().currentDraw->viewMatrix = GetNativeRendererState().cachedViewMatrix;
 
 		int instanceIndex = 0;
-		for (auto& instance : gCurrentDraw->instances) {
+		for (auto& instance : GetNativeRendererState().currentDraw->instances) {
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
 		}
 
-		gCurrentDraw->bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
+		GetNativeRendererState().currentDraw->bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 
-		if (!gRenderThread->GetHasRecordedCommands()) {
-			gInitialViewMatrix = gCachedViewMatrix;
-			gInitialProjMatrix = gCachedProjMatrix;
-			DebugShapes::SetInitialViewProjection(gCachedViewMatrix, gCachedProjMatrix);
+		if (!GetRenderThreadHasRecordedCommands(GetNativeRendererState().renderThread)) {
+			GetNativeRendererState().initialViewMatrix = GetNativeRendererState().cachedViewMatrix;
+			GetNativeRendererState().initialProjMatrix = GetNativeRendererState().cachedProjMatrix;
+			DebugShapes::SetInitialViewProjection(GetNativeRendererState().cachedViewMatrix, GetNativeRendererState().cachedProjMatrix);
 		}
 
-		gRenderThread->AddDraw(*gCurrentDraw);
+		AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
 
 		// If the texture is expecting to do a Z only draw, need to duplicate it.
 		if (pTexture->GetTextureRegisters().test.AFAIL == AFAIL_ZB_ONLY && pTexture->GetTextureRegisters().test.ATST == ATST_NEVER) {
-			gCurrentDraw->bIsAfailZOnly = true;
-			gRenderThread->AddDraw(*gCurrentDraw);
+			GetNativeRendererState().currentDraw->bIsAfailZOnly = true;
+			AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
 		}
 
-		gCurrentDraw.reset();
+		GetNativeRendererState().currentDraw.reset();
 	}
 
 	NATIVE_LOG(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
@@ -298,12 +313,12 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 void Renderer::Native::BindUntextured()
 {
-	Renderer::Native::BindTexture(gWhiteTexture);
+	Renderer::Native::BindTexture(GetNativeRendererState().whiteTexture);
 }
 
 const VkSampler& Renderer::Native::GetSampler()
 {
-	return gFrameBufferSampler;
+	return GetNativeRendererState().frameBufferSampler;
 }
 
 const VkImageView& Renderer::Native::GetColorImageView()
@@ -311,120 +326,20 @@ const VkImageView& Renderer::Native::GetColorImageView()
 	return PostProcessing::GetColorImageView();
 }
 
-bool& Renderer::GetForceAnimMatrixIdentity()
-{
-	return Native::bForceAnimMatrixIdentity;
-}
-
-void Renderer::RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags)
-{
-	assert(pNewMesh);
-	Native::RenderMesh(pNewMesh, renderFlags);
-}
-
-void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj)
-{
-	Native::PushGlobalMatrices(pModel, pView, pProj);
-}
-
-void Renderer::PushModelMatrix(float* pModel)
-{
-	Native::PushModelMatrix(pModel);
-}
-
-void Renderer::StartAnimMatrix()
-{
-	Native::StartAnimMatrix();
-}
-
-void Renderer::PushAnimMatrix(float* pAnim)
-{
-	Native::PushAnimMatrix(pAnim);
-}
-
-void Renderer::PushAnimST(float* pAnimST)
-{
-	Native::PushAnimST(pAnimST);
-}
-
-void Renderer::BindNull()
-{
-	Native::gCurrentDraw.reset();
-}
-
-void Renderer::BindUntextured()
-{
-	Native::BindUntextured();
-}
-
 void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 {
-	bFadeActive = true;
+	GetNativeRendererState().fadeActive = true;
 
-	gFadeBuffer.GetBufferData().fadeColor = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 127.0f);
-	gFadeBuffer.Map(GetCurrentFrame());
+	GetNativeRendererState().fadeBuffer.GetBufferData().fadeColor = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 127.0f);
+	GetNativeRendererState().fadeBuffer.Map(GetCurrentFrame());
 }
 
 void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMode)
 {
-	gCachedRenderPassKey.clearMode = clearMode;
+	GetNativeRendererState().cachedRenderPassKey.clearMode = clearMode;
 
 	if (clearMode != EClearMode::None) {
-		gRenderPassDirty = true;
+		GetNativeRendererState().renderPassDirty = true;
 	}
 }
 
-void Renderer::Native::SetupPreview(int width, int height)
-{
-	gPreviewWidth = width;
-	gPreviewHeight = height;
-
-	gPreviewFrameBuffer.SetupBase({ width, height }, gRenderPass[RenderPassKey::Empty].gRenderPass, true);
-
-	VkSamplerCreateInfo samplerInfo{};
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_NEAREST;
-	samplerInfo.minFilter = VK_FILTER_NEAREST;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.anisotropyEnable = VK_FALSE;
-	samplerInfo.maxAnisotropy = 1.0f;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &gPreviewFrameBufferSampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create preview framebuffer sampler");
-	}
-
-	Renderer::CreateCommandBuffers(gPreviewCommandBuffers);
-
-	SetObjectName(reinterpret_cast<uint64_t>(gPreviewFrameBufferSampler), VK_OBJECT_TYPE_SAMPLER, "Actor Preview Sampler");
-	SetObjectName(reinterpret_cast<uint64_t>(gPreviewFrameBuffer.framebuffer), VK_OBJECT_TYPE_FRAMEBUFFER, "Actor Preview Framebuffer");
-
-	gPreviewSetup = true;
-}
-
-void Renderer::Native::SetPreviewCamera(const float* viewMatrix, const float* projMatrix)
-{
-	gPreviewViewMatrix = glm::make_mat4(viewMatrix);
-	gPreviewProjMatrix = glm::make_mat4(projMatrix);
-	gPreviewEnabled = true;
-}
-
-void Renderer::Native::ClearPreviewCamera()
-{
-	gPreviewEnabled = false;
-}
-
-const VkSampler& Renderer::Native::GetPreviewSampler()
-{
-	return gPreviewFrameBufferSampler;
-}
-
-const VkImageView& Renderer::Native::GetPreviewColorImageView()
-{
-	return gPreviewFrameBuffer.colorImageView;
-}

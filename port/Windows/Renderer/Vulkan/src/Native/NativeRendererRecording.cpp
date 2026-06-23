@@ -1,15 +1,31 @@
+#include "NativeRendererInternal.h"
+
+#include "NativeDebug.h"
+#include "NativeDebugShapes.h"
+#include "Objects/VulkanImage.h"
+#include "profiling.h"
+
+#include <readerwriterqueue.h>
+#include <windows.h>
+
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 namespace Renderer
 {
 	namespace Native
 	{
 		double GetRenderTime()
 		{
-			return gRenderTime;
+			return GetNativeRendererState().renderTime;
 		}
 
 		double GetRenderWaitTime()
 		{
-			return gRenderWaitTime;
+			return GetNativeRendererState().renderWaitTime;
 		}
 
 		static void FillIndexData(Draw::Instance& instance)
@@ -17,14 +33,14 @@ namespace Renderer
 			auto& vertexBufferData = instance.pMesh->GetVertexBufferData();
 
 			instance.indexCount = vertexBufferData.GetIndexTail();
-			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
-			instance.vertexStart = gNativeVertexBuffer.GetDrawBufferData().GetVertexTail();
+			instance.indexStart = GetNativeRendererState().nativeVertexBuffer.GetDrawBufferData().GetIndexTail();
+			instance.vertexStart = GetNativeRendererState().nativeVertexBuffer.GetDrawBufferData().GetVertexTail();
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filled indexCount: {} indexStart: {} vertexStart: {}",
 				instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
-			gNativeVertexBuffer.MergeData(vertexBufferData);
+			GetNativeRendererState().nativeVertexBuffer.MergeData(vertexBufferData);
 		}
 
 		static void UpdateInstanceData(Draw& draw)
@@ -55,19 +71,19 @@ namespace Renderer
 		// Updates GPU side memory (Dynamic Storage Buffers | Per Instance Data)
 		static void MapStorageBuffers()
 		{
-			gModelBuffer.Map(GetCurrentFrame());
-			gAnimStBuffer.Map(GetCurrentFrame());
-			gLightingDynamicBuffer.Map(GetCurrentFrame());
+			GetNativeRendererState().modelBuffer.Map(GetCurrentFrame());
+			GetNativeRendererState().animStBuffer.Map(GetCurrentFrame());
+			GetNativeRendererState().lightingDynamicBuffer.Map(GetCurrentFrame());
 
-			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
-				if (bForceAnimMatrixIdentity) {
-					gAnimationMatrices[i] = glm::mat4(1.0f);
+			for (int i = 0; i < GetNativeRendererState().animationMatrices.size() ; i++) {
+				if (GetNativeRendererState().forceAnimMatrixIdentity) {
+					GetNativeRendererState().animationMatrices[i] = glm::mat4(1.0f);
 				}
 
-				gAnimationBuffer.SetInstanceData(i, gAnimationMatrices[i]);
+				GetNativeRendererState().animationBuffer.SetInstanceData(i, GetNativeRendererState().animationMatrices[i]);
 			}
 
-			gAnimationBuffer.Map(GetCurrentFrame());
+			GetNativeRendererState().animationBuffer.Map(GetCurrentFrame());
 		}
 
 		static const char* GetClearModeName(EClearMode clearMode)
@@ -82,16 +98,16 @@ namespace Renderer
 			}
 		}
 
-		static void RecordBeginRenderPass(const RenderPassKey& key)
+		void RecordBeginRenderPass(const RenderPassKey& key)
 		{
-			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
-			const RenderStage& stage = gRenderPass[key];
+			const RenderStage& stage = GetNativeRendererState().renderPass[key];
 
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = stage.gRenderPass;
-			renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
+			renderPassInfo.framebuffer = GetNativeRendererState().frameBuffer.framebuffer;
 			renderPassInfo.renderArea.offset = { 0, 0 };
 			renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
 
@@ -108,28 +124,28 @@ namespace Renderer
 			const auto& pipeline = stage.GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-			gActiveRenderPassKey = key;
-			gHasActiveRenderPass = true;
+			GetNativeRendererState().activeRenderPassKey = key;
+			GetNativeRendererState().hasActiveRenderPass = true;
 		}
 
-		static void RecordEndRenderPass()
+		void RecordEndRenderPass()
 		{
-			if (!gHasActiveRenderPass) {
+			if (!GetNativeRendererState().hasActiveRenderPass) {
 				return;
 			}
 
-			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 			vkCmdEndRenderPass(cmd);
 
 			// Save depth from the first render pass before any subsequent pass can clear it.
-			DebugShapes::SaveDepth(cmd, gFrameBuffer.depthImage);
+			DebugShapes::SaveDepth(cmd, GetNativeRendererState().frameBuffer.depthImage);
 
 			Renderer::Debug::EndLabel(cmd);
-			gActiveRenderPassKey.Reset();
-			gHasActiveRenderPass = false;
+			GetNativeRendererState().activeRenderPassKey.Reset();
+			GetNativeRendererState().hasActiveRenderPass = false;
 		}
 
-		static void SetColorDepthDynamicState(const VkCommandBuffer& cmd, Draw& drawCommand)
+		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, Draw& drawCommand)
 		{
 			VkBool32 colorWriteEnable = VK_TRUE;
 			VkBool32 depthWriteEnable = drawCommand.pTexture->GetTextureRegisters().test.AFAIL != AFAIL_FB_ONLY ? VK_TRUE : VK_FALSE;
@@ -147,7 +163,7 @@ namespace Renderer
 			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
 
 			// Color.
-			gvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+			GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
 
 			std::array<VkBool32, 1> colorWriteMasks = {
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
@@ -160,7 +176,7 @@ namespace Renderer
 				};
 			}
 
-			gvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+			GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 		}
 
 		class DrawCommandRecorder
@@ -170,7 +186,7 @@ namespace Renderer
 			{
 				if (!bInRenderPass || drawCommand.bRenderPassDirty) {
 					if (bInRenderPass) {
-						const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+						const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 						Debug::Reset(cmd);
 						RecordEndRenderPass();
 					}
@@ -187,9 +203,9 @@ namespace Renderer
 				if (pTexture && !drawCommand.instances.empty()) {
 					NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand {}", pTexture->GetName());
 
-					const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+					const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
-					const Pipeline& pipeline = gRenderPass[currentRenderPassKey].GetPipeline();
+					const Pipeline& pipeline = GetNativeRendererState().renderPass[currentRenderPassKey].GetPipeline();
 
 					Debug::UpdateLabel(pTexture, cmd);
 
@@ -244,96 +260,9 @@ namespace Renderer
 			bool bInRenderPass = false;
 			RenderPassKey currentRenderPassKey;
 		};
-		static void RecordPreviewPass(Renderer::CommandBufferList& commandBufferList)
+		void RecordBeginCommandBuffer()
 		{
-			if (!gPreviewEnabled || !gPreviewSetup || gSavedDraws.empty()) {
-				return;
-			}
-
-			const VkCommandBuffer& cmd = gPreviewCommandBuffers[GetCurrentFrame()];
-
-			VkCommandBufferBeginInfo beginInfo{};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-			vkBeginCommandBuffer(cmd, &beginInfo);
-
-			Renderer::Debug::BeginLabel(cmd, "Actor Preview");
-
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = gRenderPass[RenderPassKey::Empty].gRenderPass;
-			renderPassInfo.framebuffer = gPreviewFrameBuffer.framebuffer;
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gPreviewWidth), static_cast<uint32_t>(gPreviewHeight) };
-
-			std::array<VkClearValue, 2> clearColors;
-			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
-			clearColors[1] = { {0.0f, 0.0f} };
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColors.size());
-			renderPassInfo.pClearValues = clearColors.data();
-
-			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport{};
-			viewport.x = 0.0f;
-			viewport.y = 0.0f;
-			viewport.width = static_cast<float>(gPreviewWidth);
-			viewport.height = static_cast<float>(gPreviewHeight);
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-			vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-			const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gPreviewWidth), static_cast<uint32_t>(gPreviewHeight) } };
-			vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-			gNativeVertexBuffer.BindBuffers(cmd);
-
-			const Pipeline& pipeline = gRenderPass[RenderPassKey::Empty].GetPipeline();
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-			const std::array<VkBool32, 1> colorWriteMasks = {
-				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-			};
-
-			const glm::mat4 previewProjXView = gPreviewProjMatrix * gPreviewViewMatrix;
-
-			for (auto& draw : gSavedDraws) {
-				if (!draw.pTexture || draw.instances.empty()) {
-					continue;
-				}
-
-				SetColorDepthDynamicState(cmd, draw);
-
-				for (auto& instance : draw.instances) {
-					if (instance.indexCount == 0) {
-						continue;
-					}
-
-					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, draw.pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
-
-					PerDrawData previewPerDrawData = instance.perDrawData;
-					previewPerDrawData.projXView = previewProjXView;
-					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
-
-					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;
-					gvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
-					gvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
-
-										vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, draw.pDescriptorSets, 0, nullptr);
-					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
-				}
-			}
-
-			vkCmdEndRenderPass(cmd);
-			Renderer::Debug::EndLabel(cmd);
-			vkEndCommandBuffer(cmd);
-
-			commandBufferList.push_back(cmd);
-		}
-
-		static void RecordBeginCommandBuffer()
-		{
-			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			VkCommandBufferBeginInfo beginInfo{};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -355,7 +284,7 @@ namespace Renderer
 			const VkRect2D scissor = { {0, 0}, { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) } };
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-			gNativeVertexBuffer.BindBuffers(cmd);
+			GetNativeRendererState().nativeVertexBuffer.BindBuffers(cmd);
 
 			// Transition to TRANSFER_DST_OPTIMAL, clear both attachments, then transition to
 			// READ_ONLY_OPTIMAL. This guarantees a clean framebuffer at the start of every frame
@@ -380,14 +309,14 @@ namespace Renderer
 			depthRange.baseArrayLayer = 0;
 			depthRange.layerCount = 1;
 
-			VulkanImage::TransitionImageLayout(gFrameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, colorRange.aspectMask, cmd);
-			VulkanImage::TransitionImageLayout(gFrameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, depthRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(GetNativeRendererState().frameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, colorRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(GetNativeRendererState().frameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, depthRange.aspectMask, cmd);
 
-			vkCmdClearColorImage(cmd, gFrameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &colorRange);
-			vkCmdClearDepthStencilImage(cmd, gFrameBuffer.depthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depthStencil, 1, &depthRange);
+			vkCmdClearColorImage(cmd, GetNativeRendererState().frameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &colorRange);
+			vkCmdClearDepthStencilImage(cmd, GetNativeRendererState().frameBuffer.depthImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depthStencil, 1, &depthRange);
 
-			VulkanImage::TransitionImageLayout(gFrameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, colorRange.aspectMask, cmd);
-			VulkanImage::TransitionImageLayout(gFrameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, depthRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(GetNativeRendererState().frameBuffer.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, colorRange.aspectMask, cmd);
+			VulkanImage::TransitionImageLayout(GetNativeRendererState().frameBuffer.depthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, depthRange.aspectMask, cmd);
 		}
 
 		// Copy all our data to the GPU.
@@ -395,15 +324,15 @@ namespace Renderer
 		{
 			MapStorageBuffers();
 
-			gNativeVertexBuffer.MapData();
+			GetNativeRendererState().nativeVertexBuffer.MapData();
 
 			// Reset the index and vertex heads for the next frame.
-			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
+			GetNativeRendererState().nativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
 		}
 
-		static void RecordEndCommandBuffer()
+		void RecordEndCommandBuffer()
 		{
-			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			Debug::Reset(cmd);
 			RecordEndRenderPass();
@@ -450,8 +379,8 @@ namespace Renderer
 				Draw draw;
 				while (draws.try_dequeue(draw)) {
 					UpdateInstanceDataForDraw(draw);
-					if (gPreviewSetup) {
-						gSavedDraws.push_back(draw);
+					if (GetNativeRendererState().preview.IsSetup()) {
+						GetNativeRendererState().preview.SaveDraw(draw);
 					}
 					RecordDrawCommands(draw);
 				}
@@ -557,11 +486,50 @@ namespace Renderer
 			} timer;
 		};
 
-		std::unique_ptr<RenderThread> gRenderThread;
-
 		double GetRenderThreadTime()
 		{
-			return gRenderThread->GetRenderThreadTime();
+			return GetNativeRendererState().renderThread->GetRenderThreadTime();
+		}
+
+		RenderThread* CreateRenderThread()
+		{
+			return new RenderThread();
+		}
+
+		void DestroyRenderThread(RenderThread*& renderThread)
+		{
+			delete renderThread;
+			renderThread = nullptr;
+		}
+
+		void AddRenderThreadDraw(RenderThread* renderThread, const Draw& draw)
+		{
+			renderThread->AddDraw(draw);
+		}
+
+		bool GetRenderThreadHasRecordedCommands(RenderThread* renderThread)
+		{
+			return renderThread->GetHasRecordedCommands();
+		}
+
+		void ResetRenderThread(RenderThread* renderThread)
+		{
+			renderThread->Reset();
+		}
+
+		void MainThreadEndCommands(RenderThread* renderThread)
+		{
+			renderThread->MainThreadEndCommands();
+		}
+
+		void SignalRenderThreadEndCommands(RenderThread* renderThread)
+		{
+			renderThread->SignalEndCommands();
+		}
+
+		double GetRenderThreadDuration(RenderThread* renderThread)
+		{
+			return renderThread->GetRenderThreadTime();
 		}
 	} // Native
 } // Renderer

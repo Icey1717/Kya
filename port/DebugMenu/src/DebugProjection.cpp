@@ -8,15 +8,6 @@
 #include "MathOps.h"
 #include "Native/NativeRenderer.h"
 
-namespace Renderer
-{
-	namespace Native
-	{
-		extern glm::mat4 gInitialViewMatrix;
-		extern glm::mat4 gInitialProjMatrix;
-	}
-}
-
 namespace {
 	bool WorldToFramebufferScreen(const edF32VECTOR4& worldPos, ImVec2& frameBufferPos)
 	{
@@ -25,7 +16,7 @@ namespace {
 			return false;
 		}
 
-		const glm::mat4 viewProjMatrix = Renderer::Native::gInitialProjMatrix * Renderer::Native::gInitialViewMatrix;
+		const glm::mat4 viewProjMatrix = Renderer::Native::GetInitialProjMatrix() * Renderer::Native::GetInitialViewMatrix();
 
 		// Step 1: Multiply the world position by the view-projection matrix to get clip space coordinates.
 		glm::vec4 clipSpacePos = viewProjMatrix * glm::vec4(worldPos.x, worldPos.y, worldPos.z, 1.0f);

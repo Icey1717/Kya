@@ -776,7 +776,7 @@ namespace PS2_Internal {
 
 		if (y2 > 0)
 		{
-			assert(false);
+			throw std::runtime_error("partial top texture column uploads are not implemented");
 			//int h2 = std::min(h, csy - y2);
 			//
 			//for (int x = l; x < r; x += bsx)
@@ -866,7 +866,7 @@ namespace PS2_Internal {
 
 		if (h >= 1)
 		{
-			assert(false);
+			throw std::runtime_error("partial bottom texture column uploads are not implemented");
 			//for (int x = l; x < r; x += bsx)
 			//{
 			//	uint8* dst = NULL;
@@ -1052,9 +1052,7 @@ VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
 		samplerInfo.maxLod = FLT_MAX;
 
 		VkSampler sampler;
-		if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}
+		CheckVk(vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler), "vkCreateSampler");
 
 		gSamplerCache[selector.key] = sampler;
 	}
@@ -1165,7 +1163,7 @@ void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
-	vkMapMemory(GetDevice(), stagingBuffer.Memory(), 0, bufferSize, 0, &data);
+	CheckVk(vkMapMemory(GetDevice(), stagingBuffer.Memory(), 0, bufferSize, 0, &data), "vkMapMemory");
 	memcpy(data, readBuffer, static_cast<size_t>(bufferSize));
 	vkUnmapMemory(GetDevice(), stagingBuffer.Memory());
 
@@ -1274,9 +1272,7 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 	descriptorSets.layoutBindingMap = pipeline.descriptorSetLayoutBindings;
 
 	descriptorSets.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
+	CheckVk(vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()), "vkAllocateDescriptorSets");
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		SetObjectName(reinterpret_cast<uint64_t>(descriptorSets.descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "GSTexImage descriptor set %d", i);

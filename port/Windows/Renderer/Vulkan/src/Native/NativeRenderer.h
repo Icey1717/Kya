@@ -77,6 +77,8 @@ namespace Renderer
 		void ApplyPendingResizeIfNeeded();
 		VkExtent2D GetFrameBufferSize();
 		void Cleanup();
+		const glm::mat4& GetInitialViewMatrix();
+		const glm::mat4& GetInitialProjMatrix();
 
 		// Actor preview: second-camera offscreen render.
 		void SetupPreview(int width, int height);
