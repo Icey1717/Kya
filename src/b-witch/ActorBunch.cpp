@@ -1,6 +1,7 @@
 #include "ActorBunch.h"
 #include "MemoryStream.h"
 #include "ActorManager.h"
+#include "ActorMovingPlatform.h"
 #include "EventManager.h"
 #include "TimeController.h"
 #include "MathOps.h"
@@ -184,13 +185,13 @@ void CActorBunch::Reset()
 	pBehaviour = GetBehaviour(BUNCH_BEHAVIOUR_REPEL);
 	if (pBehaviour != (CBehaviour*)0x0) {
 		CBehaviourBunch* pBehaviourBunch = static_cast<CBehaviourBunch*>(GetBehaviour(BUNCH_BEHAVIOUR_REPEL));
-		pBehaviourBunch->Reset();
+		pBehaviourBunch->Reset(this);
 	}
 
 	pBehaviour = GetBehaviour(BUNCH_BEHAVIOUR_FENCE);
 	if (pBehaviour != (CBehaviour*)0x0) {
 		CBehaviourBunch* pBehaviourBunch = static_cast<CBehaviourBunch*>(GetBehaviour(BUNCH_BEHAVIOUR_FENCE));
-		pBehaviourBunch->Reset();
+		pBehaviourBunch->Reset(this);
 	}
 
 	return;
@@ -1310,7 +1311,7 @@ void CBehaviourBunch::ManageExit()
 	return;
 }
 
-void CBehaviourBunch::Reset()
+void CBehaviourBunch::Reset(CActor* pOwner)
 {
 	return;
 }
@@ -1794,7 +1795,7 @@ void CBehaviourBunchRepel::ManageExit()
 	return;
 }
 
-void CBehaviourBunchRepel::Reset()
+void CBehaviourBunchRepel::Reset(CActor* pOwner)
 {
 	uint uVar2;
 
@@ -1812,4 +1813,777 @@ void CBehaviourBunchRepel::Reset()
 int CBehaviourBunchRepel::GetSpecialState()
 {
 	return 0xb7;
+}
+
+void CBehaviourBunchFence::Create(ByteCode* pByteCode)
+{
+	CNewFx* pCVar1;
+	bool bVar2;
+	CActor* pCVar3;
+	CWayPoint* pCVar4;
+	uint uVar5;
+	int* piVar6;
+	S_STREAM_REF<CWayPoint>* pSVar7;
+	int iVar8;
+	astruct_21* paVar9;
+	uint uVar10;
+	s_bhv_bunch_fence* psVar11;
+	uint uVar12;
+	int iVar13;
+	uint uVar14;
+
+	bVar2 = false;
+	uVar12 = 0;
+
+	this->pOwner = (CActorBunch*)0x0;
+	this->field_0xc.index = pByteCode->GetS32();
+	this->wayPointStreamRef.index = pByteCode->GetS32();
+
+	this->nbWayPoints = pByteCode->GetU32();
+	uVar5 = this->nbWayPoints;
+	if (uVar5 != 0) {
+		this->aWayPoints = new S_STREAM_REF<CWayPoint>[uVar5];
+		uVar5 = 0;
+		if (this->nbWayPoints != 0) {
+			do {
+				pSVar7 = this->aWayPoints;
+				pSVar7[uVar5].index = pByteCode->GetS32();
+				uVar5 = uVar5 + 1;
+			} while (uVar5 < this->nbWayPoints);
+		}
+	}
+
+	this->nbFences = pByteCode->GetU32();
+	this->field_0x60 = 0;
+	this->aFences = new astruct_21[this->nbFences];
+	paVar9 = this->aFences;
+	uVar5 = 0;
+	if (this->nbFences != 0) {
+		do {
+			paVar9->field_0x0 = pByteCode->GetU32();
+			paVar9->field_0x4 = pByteCode->GetU32();
+			paVar9->field_0xc = pByteCode->GetU32();
+			uVar10 = paVar9->field_0xc;
+			paVar9->field_0x8 = new s_bhv_bunch_fence[uVar10];
+			uVar10 = paVar9->field_0xc;
+			uVar14 = 0;
+			if (uVar10 != 0) {
+				iVar13 = 0;
+				do {
+					psVar11 = paVar9->field_0x8;
+					psVar11[uVar14].field_0x0.index = pByteCode->GetS32();
+					iVar8 = pByteCode->GetS32();
+					psVar11[uVar14].field_0x4 = iVar8;
+					uVar14 = uVar14 + 1;
+					uVar10 = paVar9->field_0xc;
+					iVar13 = iVar13 + 8;
+				} while (uVar14 < uVar10);
+			}
+
+			if ((paVar9->field_0x0 == 1) && (bVar2 = true, uVar12 < uVar10)) {
+				uVar12 = uVar10;
+			}
+
+			uVar5 = uVar5 + 1;
+			paVar9 = paVar9 + 1;
+		} while (uVar5 < this->nbFences);
+	}
+
+	if (bVar2) {
+		this->field_0x68 = new int[uVar12];
+	}
+	else {
+		this->field_0x68 = (int*)0x0;
+	}
+
+	this->field_0xf0.Create(pByteCode);
+	this->field_0x70.Create(pByteCode);
+
+	uVar5 = 0;
+	do {
+		this->field_0x170[uVar5].type = pByteCode->GetU32();
+		this->field_0x170[uVar5].Stop();
+		uVar5 = uVar5 + 1;
+	} while (uVar5 < 4);
+
+	return;
+}
+
+void CBehaviourBunchFence::Init(CActor * pOwner)
+{
+	uint uVar1;
+	int iVar2;
+	uint uVar3;
+	astruct_21* pvVar4;
+
+	this->pOwner = (CActorBunch*)0x0;
+
+	this->field_0xc.Init();
+	this->wayPointStreamRef.Init();
+
+	uVar1 = 0;
+	if (this->nbWayPoints != 0) {
+		do {
+			this->aWayPoints[uVar1].Init();
+			uVar1 = uVar1 + 1;
+		} while (uVar1 < this->nbWayPoints);
+	}
+
+	pvVar4 = this->aFences;
+	uVar1 = 0;
+	if (this->nbFences != 0) {
+		do {
+			uVar3 = 0;
+
+			if (pvVar4->field_0xc != 0) {
+				do {
+					pvVar4->field_0x8[uVar3].field_0x0.Init();
+					uVar3 = uVar3 + 1;
+				} while (uVar3 < pvVar4->field_0xc);
+			}
+
+			uVar1 = uVar1 + 1;
+			pvVar4 = pvVar4 + 1;
+		} while (uVar1 < this->nbFences);
+	}
+
+	Reset(pOwner);
+
+	this->pOwner = static_cast<CActorBunch*>(pOwner);
+
+	return;
+}
+
+void CBehaviourBunchFence::Term()
+{
+	s_bhv_bunch_fence* pSectorArray;
+	int iVar1;
+	uint uVar2;
+
+	this->field_0xf0.Func_0x2c(0.0f);
+	this->field_0x70.Func_0x2c(0.0f);
+
+	if (this->aFences != (astruct_21*)0x0) {
+		uVar2 = 0;
+		if (this->nbFences != 0) {
+			do {
+				pSectorArray = this->aFences[uVar2].field_0x8;
+				if (pSectorArray != (s_bhv_bunch_fence*)0x0) {
+					delete[] pSectorArray;
+					this->aFences[uVar2].field_0x8 = (s_bhv_bunch_fence*)0x0;
+				}
+
+				uVar2 = uVar2 + 1;
+			} while (uVar2 < this->nbFences);
+		}
+
+		delete(this->aFences);
+		this->aFences = (astruct_21*)0x0;
+	}
+
+	if (this->field_0x68 != (int*)0x0) {
+		delete(this->field_0x68);
+		this->field_0x68 = (int*)0x0;
+	}
+
+	if (this->aWayPoints != (S_STREAM_REF<CWayPoint> *)0x0) {
+		delete[] this->aWayPoints;
+		this->aWayPoints = (S_STREAM_REF<CWayPoint> *)0x0;
+	}
+
+	return;
+}
+
+edF32VECTOR4 edF32VECTOR4_00426cf0 = { 0.0f, 0.15f, 0.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426d00 = { 0.0f, 1.0f, 0.0f, 1.0f };
+
+void CBehaviourBunchFence::Manage()
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	CActorFighter* pCVar3;
+	bool bVar4;
+	CBehaviourBunchFence* pBehaviourBunchFence;
+	CCinematic* pCinematic;
+	int iVar6;
+	edF32MATRIX4* m2;
+	undefined* puVar8;
+	undefined* puVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 eStack288;
+	edF32VECTOR4 local_110;
+	edF32MATRIX4 eStack256;
+	edF32VECTOR4 eStack192;
+	edF32VECTOR4 local_b0;
+	edF32MATRIX4 eStack160;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+	CActorBunch* pBunch;
+
+	pBunch = this->pOwner;
+	iVar6 = pBunch->actorState;
+	if (iVar6 == 0xbd) {
+		pBunch->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		if (pBunch->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pBunch->SetState(0xba, -1);
+		}
+	}
+	else {
+		if (iVar6 == 0xbc) {
+			pBunch->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+			if (pBunch->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+				pBunch->SetState(0xbd, -1);
+			}
+		}
+		else {
+			if (iVar6 == 0xbb) {
+				pBehaviourBunchFence = static_cast<CBehaviourBunchFence*>(pBunch->GetBehaviour(pBunch->curBehaviourId));
+				pBunch->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+				pCinematic = g_CinematicManager_0048efc->GetCinematic(pBehaviourBunchFence->aFences[pBehaviourBunchFence->field_0x60].field_0x8[pBehaviourBunchFence->field_0x64].field_0x4);
+				if ((pCinematic == (CCinematic*)0x0) || ((pCinematic->state == CS_Stopped && ((pCinematic->flags_0x8 & 0x80) == 0)))) {
+					bVar4 = true;
+				}
+				else {
+					bVar4 = false;
+				}
+
+				if (bVar4) {
+					pBunch->SetState(0xbc, -1);
+				}
+			}
+			else {
+				if (iVar6 == 0xba) {
+					pBunch->SV_UpdateOrientationToPosition2D(3.141593f, &pBunch->pAdversary->currentLocation);
+					pBunch->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+				}
+				else {
+					CBehaviourBunch::Manage();
+				}
+			}
+		}
+	}
+
+	CActorMovingPlatform* pMovingPlatform = static_cast<CActorMovingPlatform*>(this->field_0xc.Get());
+	pMovingPlatform->Platform_UpdateMatrix(&this->field_0x10, 1, (CActorsTable*)0x0);
+
+	ManageExit();
+
+	local_50 = edF32VECTOR4_00426cf0;
+	bVar4 = (&this->field_0xf0)->HasMesh();
+	if (bVar4 != false) {
+		fVar11 = edF32Between_2Pi(GetTimer()->scaledTotalTime * 25.13274f);
+		local_60.y = edF32VECTOR4_00426d00.y;
+		local_60.w = edF32VECTOR4_00426d00.w;
+		local_60.x = cosf(fVar11 - 1.570796f) * 0.1f + 1.0f;
+		local_60.z = local_60.x;
+		edF32Matrix4ScaleHard(&eStack64, &gF32Matrix4Unit, &local_60);
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &this->pOwner->pMeshTransform->base.transformA);
+		edF32Matrix4TranslateHard(&eStack64, &eStack64, &local_50);
+		this->field_0xf0.SetMatrix(&eStack64);
+		this->field_0xf0.Func_0x30((edF32MATRIX4*)0x0, GetTimer()->cutsceneDeltaTime);
+	}
+
+	bVar4 = this->field_0x70.HasMesh();
+	if (bVar4 != false) {
+		edF32Matrix4RotateYHard(GetTimer()->cutsceneDeltaTime * 1.047198f, &eStack64, &gF32Matrix4Unit);
+		m2 = this->field_0x70.GetMatrix();
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, m2);
+		(&this->field_0x70)->SetMatrix(&eStack64);
+		this->field_0x70.Func_0x30((edF32MATRIX4*)0x0, GetTimer()->cutsceneDeltaTime);
+	}
+
+	iVar6 = this->pOwner->actorState;
+	bVar4 = true;
+	if ((iVar6 != BUNCH_STATE_JUMP_CENTRE_PREPARE_A) && (4 < iVar6 - BUNCH_STATE_JUMP_CENTRE_PREPARE_B)) {
+		bVar4 = false;
+	}
+
+	if (!bVar4) {
+		pBunch = this->pOwner;
+		if ((pBunch->field_0x1060).field_0x4 == 0) {
+			pBunch->field_0x1060.InitState(pBunch, &pBunch->currentLocation, 0);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourBunchFence::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorBunch* pBunch;
+
+	this->pOwner = static_cast<CActorBunch*>(pOwner);
+	pBunch = this->pOwner;
+	pBunch->flags = pBunch->flags | 0x400;
+
+	FUN_003da010();
+
+	if (newState == -1) {
+		pBunch = this->pOwner;
+		pBunch->SetState(0xbe, -1);
+	}
+	else {
+		pBunch = this->pOwner;
+		pBunch->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourBunchFence::End(int newBehaviourId)
+{
+	CActorBunch* pBunch;
+
+	pBunch = this->pOwner;
+	pBunch->flags = pBunch->flags & 0xfffffbff;
+	if ((uint)this->field_0x60 < this->nbFences - 1) {
+		this->field_0x60 = this->field_0x60 + 1;
+	}
+
+	if (1 < newBehaviourId - BUNCH_BEHAVIOUR_REPEL) {
+		this->pOwner->field_0x1060.Term(0.5f);
+	}
+
+	return;
+}
+
+edF32VECTOR4 edF32VECTOR4_00426d10 = { 0.0f, 2.0f, 0.0f, 0.0f };
+
+void CBehaviourBunchFence::InitState(int newState)
+{
+	CActorBunch* pActor;
+	CBehaviourBunchFence* pBehaviourBunchFence;
+	CCinematic* pCVar1;
+	CBehaviour* pCVar2;
+	float* pfVar3;
+	StateConfig* pSVar4;
+	int iVar5;
+	float fVar6;
+	undefined* puVar7;
+	undefined* puVar8;
+	float fVar9;
+	float fVar10;
+	edF32VECTOR4 eStack144;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	undefined4 local_8;
+	undefined4 local_4;
+	CActorBunch* pBunch;
+
+	if (newState == 0xbc) {
+		this->pOwner->DoMessage(this->aFences[this->field_0x60].field_0x8[this->field_0x64].field_0x0.Get(), (ACTOR_MESSAGE)0x5c, 0);
+		this->pOwner->DoMessage(this->aFences[this->field_0x60].field_0x8[this->field_0x64].field_0x0.Get(), MESSAGE_ACTIVATE, 0);
+	}
+	else {
+		if (newState == 0xbb) {
+			pBunch = this->pOwner;
+			pBehaviourBunchFence = static_cast<CBehaviourBunchFence*>(pBunch->GetBehaviour(pBunch->curBehaviourId));
+			pCVar1 = g_CinematicManager_0048efc->GetCinematic(pBehaviourBunchFence->aFences[pBehaviourBunchFence->field_0x60].field_0x8[pBehaviourBunchFence->field_0x64].field_0x4);
+			if (pCVar1 != (CCinematic*)0x0) {
+				pActor = pBehaviourBunchFence->pOwner;
+				pCVar1 = g_CinematicManager_0048efc->GetCinematic(pBehaviourBunchFence->aFences[pBehaviourBunchFence->field_0x60].field_0x8[pBehaviourBunchFence->field_0x64].field_0x4);
+				pCVar1->TryTriggerCutscene(pActor, 0);
+			}
+
+			pBehaviourBunchFence->FUN_003da0e0(&local_20);
+			pBunch->rotationQuat = local_20;
+			local_30 = edF32VECTOR4_00426d10;
+			pBunch = pBehaviourBunchFence->pOwner;
+			GetAnglesFromVector((edF32VECTOR3*)&pBunch->rotationEuler, &pBunch->rotationQuat);
+			edF32Matrix4FromEulerSoft(&pBehaviourBunchFence->field_0x10, &pBehaviourBunchFence->pOwner->rotationEuler.xyz, "XYZ");
+			edF32Matrix4TranslateHard(&pBehaviourBunchFence->field_0x10, &pBehaviourBunchFence->field_0x10, &pBehaviourBunchFence->pOwner->currentLocation);
+			edF32Matrix4TranslateHard(&pBehaviourBunchFence->field_0x10, &pBehaviourBunchFence->field_0x10, &local_30);
+		}
+		else {
+			CBehaviourBunch::InitState(newState);
+		}
+	}
+
+	FUN_003da8c0(newState);
+
+	return;
+}
+
+void CBehaviourBunchFence::TermState(int oldState, int newState)
+{
+	CBehaviourBunch::TermState(oldState, newState);
+	if (oldState == 0xbc) {
+		this->field_0x170[2].Stop();
+		this->field_0x170[3].Stop();
+	}
+	else {
+		if (oldState == 0xbb) {
+			this->field_0x170[0].Stop();
+			this->field_0x170[1].Stop();
+
+			this->field_0xf0.Func_0x2c(0.5f);
+			this->field_0x70.Func_0x2c(0.5f);
+		}
+	}
+
+	return;
+}
+
+int CBehaviourBunchFence::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	bool bVar1;
+	int iVar2;
+	CActorBunch* pBunch;
+
+	if (msg == 2) {
+		iVar2 = 1;
+	}
+	else {
+		if (msg == 0x67) {
+			iVar2 = this->pOwner->actorState;
+			bVar1 = iVar2 == BUNCH_STATE_JUMP_CENTRE_PREPARE_A;
+			if (!bVar1) {
+				bVar1 = iVar2 - BUNCH_STATE_JUMP_CENTRE_PREPARE_B < 5;
+			}
+
+			if (!bVar1) {
+				FUN_003d9d80();
+
+				pBunch = this->pOwner;
+				pBunch->SetState(0xbb, 0xffffffff);
+			}
+
+			iVar2 = 1;
+		}
+		else {
+			iVar2 = 0;
+		}
+	}
+
+	return iVar2;
+}
+
+void CBehaviourBunchFence::ManageExit()
+{
+	int iVar1;
+	bool bVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	uint uVar5;
+	CActorBunch* pBunch;
+
+	pBunch = this->pOwner;
+
+	if ((pBunch->GetStateFlags(pBunch->actorState) & 0x100000) == 0) {
+		return;
+	}
+
+	pBunch = this->pOwner;
+	iVar1 = pBunch->field_0xfd4;
+	if (iVar1 == -1) {
+		return;
+	}
+
+	if (iVar1 == pBunch->curBehaviourId) {
+		return;
+	}
+
+	this->field_0x170[0].Stop();
+	this->field_0x170[1].Stop();
+	this->field_0x170[2].Stop();
+	this->field_0x170[3].Stop();
+	this->field_0xf0.Func_0x2c(0.5f);
+	this->field_0x70.Func_0x2c(0.5f);
+
+	bVar2 = this->field_0x70.HasMesh();
+	if (bVar2 == false) {
+		bVar3 = this->field_0xf0.HasMesh();
+		bVar2 = false;
+
+		if (bVar3 == false) goto LAB_003dab90;
+	}
+	bVar2 = true;
+LAB_003dab90:
+	if (!bVar2) {
+		pBunch = this->pOwner;
+
+		if ((pBunch->GetStateFlags(pBunch->actorState) & 0x100000) != 0) {
+			pBunch = this->pOwner;
+			iVar1 = pBunch->field_0xfd4;
+			if (((iVar1 != -1) && (iVar1 != pBunch->curBehaviourId)) && (iVar1 != -1)) {
+				if (iVar1 == 3) {
+					pBunch->SetFightBehaviour();
+				}
+				else {
+					pBunch->SetBehaviour(iVar1, -1, -1);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourBunchFence::Reset(CActor* pOwner)
+{
+	this->field_0x64 = 0;
+	this->field_0x60 = 0;
+
+	CActor* pActor = this->field_0xc.Get();
+
+	pActor->flags |= 0x2;
+	pActor->flags &= ~0x1;
+	pActor->flags &= ~0x80;
+	pActor->flags |= 0x20;
+
+	pActor->EvaluateDisplayState();
+
+	pActor->pCollisionData->flags_0x0 &= ~0x81000;
+	pActor->pCollisionData->actorFieldA = pOwner;
+	pOwner->pCollisionData->actorFieldA = pActor;
+
+	if (this->pOwner == pOwner) {
+		ProcessActorTree(pOwner, static_cast<CActorMovingPlatform*>(pActor));
+	}
+}
+
+int CBehaviourBunchFence::GetSpecialState()
+{
+	return 0xbb;
+}
+
+int CBehaviourBunchFence::FUN_003d9d80()
+{
+	int iVar1;
+	ulong uVar2;
+	int* puVar3;
+	uint uVar3;
+	astruct_21* paVar4;
+
+	paVar4 = this->aFences + this->field_0x60;
+
+	iVar1 = paVar4->field_0x0;
+	if (iVar1 == 2) {
+		uVar3 = this->field_0x6c;
+		if (uVar3 < paVar4->field_0xc) {
+			uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar2;
+			iVar1 = uVar3 * (static_cast<uint>(uVar2 >> 0x10) & 0x7fff);
+			if (iVar1 < 0) {
+				iVar1 = iVar1 + 0x7fff;
+			}
+
+			this->field_0x64 = iVar1 >> 0xf;
+			this->field_0x6c = this->field_0x6c + 1;
+		}
+		else {
+			if ((paVar4->field_0x4 == 1) && (paVar4->field_0xc != 0)) {
+				FUN_003da010();
+			}
+		}
+	}
+	else {
+		if (iVar1 == 1) {
+			iVar1 = this->field_0x6c;
+			if (iVar1 == 0) {
+				if ((paVar4->field_0x4 == 1) && (paVar4->field_0xc != 0)) {
+					FUN_003da010();
+				}
+			}
+			else {
+				uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+				CScene::_pinstance->field_0x38 = uVar2;
+				iVar1 = iVar1 * (static_cast<uint>(uVar2 >> 0x10) & 0x7fff);
+				if (iVar1 < 0) {
+					iVar1 = iVar1 + 0x7fff;
+				}
+
+				uVar3 = iVar1 >> 0xf;
+				iVar1 = uVar3 * 4;
+				this->field_0x64 = this->field_0x68[uVar3];
+				this->field_0x6c = this->field_0x6c + -1;
+				if (uVar3 < this->aFences[this->field_0x60].field_0xc - 1) {
+					do {
+						uVar3 = uVar3 + 1;
+						puVar3 = this->field_0x68 + uVar3;
+						*puVar3 = puVar3[1];
+						iVar1 = iVar1 + 4;
+					} while (uVar3 < this->aFences[this->field_0x60].field_0xc - 1);
+				}
+			}
+		}
+		else {
+			if (iVar1 == 0) {
+				this->field_0x64 = this->field_0x64 + 1;
+
+				uVar3 = this->aFences[this->field_0x60].field_0xc;
+				if (uVar3 <= this->field_0x64) {
+					if (this->aFences[this->field_0x60].field_0x4 == 1) {
+						FUN_003da010();
+					}
+					else {
+						this->field_0x64 = uVar3 - 1;
+					}
+				}
+			}
+		}
+	}
+
+	return this->field_0x64;
+}
+
+void CBehaviourBunchFence::FUN_003da010()
+{
+	int iVar1;
+	uint uVar2;
+
+	iVar1 = this->aFences[this->field_0x60].field_0x0;
+	if (iVar1 == 2) {
+		this->field_0x6c = 0;
+		FUN_003d9d80();
+	}
+	else {
+		if (iVar1 == 1) {
+			this->field_0x6c = this->aFences[this->field_0x60].field_0xc;
+			uVar2 = 0;
+			if (this->aFences[this->field_0x60].field_0xc != 0) {
+				do {
+					this->field_0x68[uVar2] = uVar2;
+					uVar2 = uVar2 + 1;
+				} while (uVar2 < this->aFences[this->field_0x60].field_0xc);
+			}
+
+			FUN_003d9d80();
+		}
+		else {
+			if (iVar1 == 0) {
+				this->field_0x64 = 0;
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourBunchFence::FUN_003da0e0(edF32VECTOR4* pOutRotation)
+{
+	int iVar1;
+	uint uVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float puVar9;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+	CWayPoint* pWayPoint;
+	CActorBunch* pBunch;
+
+	puVar9 = -1.0f;
+	pBunch = this->pOwner;
+	fVar5 = pBunch->rotationQuat.y;
+	fVar3 = pBunch->rotationQuat.z;
+	fVar4 = pBunch->rotationQuat.w;
+	*pOutRotation = pBunch->rotationQuat;
+	pBunch = this->pOwner;
+	edF32Vector4SubHard(&eStack32, &pBunch->pAdversary->currentLocation, &pBunch->currentLocation);
+	edF32Vector4SafeNormalize0Hard(&eStack32, &eStack32);
+
+	uVar2 = 0;
+	if (this->nbWayPoints != 0) {
+		do {
+			pWayPoint = this->aWayPoints[uVar2].Get();
+			local_30.xyz = pWayPoint->location;
+			local_30.w = 1.0f;
+			edF32Vector4SubHard(&local_10, &local_30, &this->pOwner->currentLocation);
+			edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+			fVar3 = edF32Vector4DotProductHard(&local_10, &eStack32);
+			if (puVar9 < fVar3) {
+				*pOutRotation = local_10;
+				puVar9 = fVar3;
+			}
+
+			uVar2 = uVar2 + 1;
+		} while (uVar2 < this->nbWayPoints);
+	}
+
+	return;
+}
+
+edF32VECTOR4 edF32VECTOR4_00426cd0 = { 0.0f, 0.15f, 0.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_00426ce0 = { 0.0f, 8.75f, 0.0f, 0.0f };
+
+void CBehaviourBunchFence::FUN_003da8c0(int newState)
+{
+	bool bVar1;
+	bool bVar2;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+	CActorBunch* pBunch;
+
+	bVar1 = false;
+
+	local_50 = edF32VECTOR4_00426cd0;
+	local_60 = edF32VECTOR4_00426ce0;
+
+	if (newState == 0xbb) {
+		bVar2 = this->field_0xf0.HasMesh();
+		if ((bVar2 == false) || (bVar2 = this->field_0x70.HasMesh(), bVar2 == false)) {
+			bVar1 = true;
+		}
+
+		pBunch = this->pOwner;
+		if ((pBunch->flags & 0x1000) == 0) {
+			GetAnglesFromVector(&pBunch->rotationEuler.xyz, &pBunch->rotationQuat);
+		}
+
+		edF32Vector4AddHard(&eStack112, &this->pOwner->currentLocation, &local_60);
+		this->field_0x170[0].InitPositionRotation(&eStack112, &this->pOwner->rotationEuler);
+		this->field_0x170[1].InitPositionRotation(&eStack112, &this->pOwner->rotationEuler);
+		this->field_0x170[2].InitSpatialized(this->pOwner, 0x1a448164);
+		this->field_0x170[3].InitSpatialized(this->pOwner, 0x1a448161);
+	}
+	else {
+		if (newState == 0xba) {
+			bVar1 = true;
+		}
+	}
+
+	if (bVar1) {
+		edF32Matrix4TranslateHard(&eStack64, &this->pOwner->pMeshTransform->base.transformA, &local_50);
+
+		this->field_0xf0.Func_0x28(0.5f, 0);
+		this->field_0x70.Func_0x28(0.5f, 0);
+		this->field_0xf0.SetMatrix(&eStack64);
+		this->field_0x70.SetMatrix(&eStack64);
+	}
+	return;
+}
+
+void CBehaviourBunchFence::ProcessActorTree(CActor* pOwner, CActorMovingPlatform* pPlatform)
+{
+	if (pPlatform->typeID != MOVING_PLATFORM) {
+		return;
+	}
+
+	S_BRIDGE_ACTOR_STREAM* pStream = pPlatform->pActorStream;
+	int entryCount = pStream == NULL ? 0 : pStream->entryCount;
+
+	for (int i = entryCount - 1; i >= 0; i--) {
+		CActorMovingPlatform* pChild = static_cast<CActorMovingPlatform*>(pStream->aEntries[i].actorRef.Get());
+
+		if (pChild->typeID == MOVING_PLATFORM) {
+			ProcessActorTree(pOwner, pChild);
+		}
+	}
+
+	pPlatform->UpdatePosition(&pPlatform->baseLocation, true);
+	pOwner->DoMessage(pPlatform, (ACTOR_MESSAGE)0x5d, 0);
 }

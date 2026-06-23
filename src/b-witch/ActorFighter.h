@@ -161,12 +161,7 @@ public:
 	virtual void SetVisible(ed_3D_Scene* pScene);
 	virtual bool HasMesh();
 
-	virtual edF32MATRIX4* GetMatrix()
-	{
-		IMPLEMENTATION_GUARD();
-		return nullptr;
-	}
-
+	virtual edF32MATRIX4* GetMatrix();
 	virtual void SetMatrix(edF32MATRIX4* pMatrix);
 
 	virtual void Func_0x28(float, float);

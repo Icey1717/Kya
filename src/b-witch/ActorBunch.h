@@ -5,6 +5,7 @@
 #include "ActorWolfen.h"
 
 class CActorBunch;
+class CActorMovingPlatform;
 
 #define BUNCH_BEHAVIOUR_REPEL 0x1a
 #define BUNCH_BEHAVIOUR_FENCE 0x1b
@@ -65,7 +66,7 @@ public:
 	virtual void TermState(int oldState, int newState);
 
 	virtual void ManageExit();
-	virtual void Reset();
+	virtual void Reset(CActor* pOwner);
 	virtual int GetSpecialState();
 	virtual CWayPoint* GetWayPoint();
 
@@ -87,8 +88,9 @@ public:
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	// CBehaviourBunch
 	virtual void ManageExit();
-	virtual void Reset();
+	virtual void Reset(CActor* pOwner);
 	virtual int GetSpecialState();
 
 	CShockWaveBunch* field_0xc;
@@ -101,10 +103,62 @@ public:
 	edF32VECTOR4 field_0x30;
 };
 
+struct s_bhv_bunch_fence
+{
+	S_STREAM_REF<CActor> field_0x0;
+	int field_0x4;
+};
+
+struct astruct_21
+{
+	int field_0x0;
+	int field_0x4;
+	s_bhv_bunch_fence* field_0x8;
+	int field_0xc;
+};
+
 class CBehaviourBunchFence : public CBehaviourBunch
 {
 public:
-	virtual void Reset() { IMPLEMENTATION_GUARD_LOG(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	// CBehaviourBunch
+	virtual void ManageExit();
+	virtual void Reset(CActor* pOwner);
+	virtual int GetSpecialState();
+
+	int FUN_003d9d80();
+	void FUN_003da010();
+	void FUN_003da0e0(edF32VECTOR4* pOutRotation);
+	void FUN_003da8c0(int newState);
+	void ProcessActorTree(CActor* pOwner, CActorMovingPlatform* pPlatform);
+
+	S_STREAM_REF<CActor> field_0xc;
+	edF32MATRIX4 field_0x10;
+
+	int nbWayPoints;
+	S_STREAM_REF<CWayPoint>* aWayPoints;
+
+	int nbFences;
+	astruct_21* aFences;
+
+	int field_0x60;
+	int field_0x64;
+	int* field_0x68;
+	uint field_0x6c;
+
+	StaticMeshComponentAdvanced field_0x70;
+	StaticMeshComponentAdvanced field_0xf0;
+
+	CFxHandleExt field_0x170[4];
 };
 
 class CBehaviourBunchFighterProjected : public CBehaviourWolfenFighterProjected
