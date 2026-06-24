@@ -20,6 +20,7 @@
 #include "ActorJamGut.h"
 #include "ActorBonusFountain.h"
 #include "ActorShip.h"
+#include "ActorFogManager.h"
 #include "ActorNativShop.h"
 #include "ActorSwitch.h"
 #include "ActorMovingPlatform.h"
@@ -38,6 +39,7 @@
 #include "Actor/DebugActorJamGut.h"
 #include "Actor/DebugActorBonusFountain.h"
 #include "Actor/DebugActorShip.h"
+#include "Actor/DebugActorFogManager.h"
 #include "Actor/DebugActorNativShop.h"
 #include "Actor/DebugActorSwitch.h"
 #include "Actor/DebugActorMovingPlatform.h"
@@ -865,6 +867,12 @@ namespace Debug {
 			CActorShip* pShipActor = static_cast<CActorShip*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Ship::ShowShipActorDetails(pShipActor);
+		}
+
+		if (pActor->typeID == FOG_MANAGER) {
+			CActorFogManager* pFogManagerActor = static_cast<CActorFogManager*>(pActor);
+			ImGui::Separator();
+			Debug::Actor::FogManager::ShowActorDetails(pFogManagerActor);
 		}
 
 		if (pActor->typeID == NATIV_SHOP) {

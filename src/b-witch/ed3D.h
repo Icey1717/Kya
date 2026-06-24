@@ -757,6 +757,9 @@ ed_Chunck* edChunckGetNext(ed_Chunck* pCurChunck, char* pBuffEnd);
 void ed3DObjectSetStripShadowReceive(ed_hash_code* pLodHash, ushort param_2, uint param_3);
 void ed3DObjectSetStripShadowCast(ed_hash_code* pLodHash, ushort flag, uint bApply);
 
+edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_g3d_hierarchy* pHier);
+edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_3d_hierarchy* pHier);
+
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif

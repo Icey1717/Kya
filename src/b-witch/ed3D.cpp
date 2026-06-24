@@ -7857,6 +7857,29 @@ edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_g3d_hierarchy* pHier)
 	return pOutSphere;
 }
 
+// THIS SHOULDN'T EXIST, ed_3d_hierarchy is being used in place of ed_g3d_hierarchy!
+edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_3d_hierarchy* pHier)
+{
+	ed_hash_code* pLodHash;
+	edF32VECTOR4* pOutSphere;
+	int lodIndex;
+	ed3DLod* pLod;
+
+	pLod = reinterpret_cast<ed3DLod*>(pHier + 1);
+	for (lodIndex = 0; (pLodHash = LOAD_POINTER_CAST(ed_hash_code*, pLod->pObj), pLodHash == (ed_hash_code*)0x0 && (lodIndex < pHier->lodCount)); lodIndex = lodIndex + 1) {
+		pLod = pLod + 1;
+	}
+
+	pOutSphere = (edF32VECTOR4*)0x0;
+	if (pLodHash != (ed_hash_code*)0x0) {
+		ed_Chunck* pOBJ = LOAD_POINTER_CAST(ed_Chunck*, pLodHash->pData);
+		ed_g3d_object* pObjInternal = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
+		pOutSphere = &pObjInternal->boundingSphere;
+	}
+
+	return pOutSphere;
+}
+
 edF32VECTOR4 center$1208 = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 ed3DLod* ed3DClusterChooseGoodLOD(ed_g3d_hierarchy* pHier, edF32VECTOR4* pSphere)
