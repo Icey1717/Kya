@@ -77,8 +77,8 @@ namespace Debug::Actor::Switch
 	{
 		if (!pWC) { ImGui::Text("(null)"); return; }
 
-		ImGui::Text("Required ScenVar:  %d  (field_0x14)", pWC->field_0x14);
-		ImGui::Text("Trigger Radius:    %.2f  (field_0x18)", pWC->field_0x18);
+		ImGui::Text("Required Wolfen:  %d", pWC->requiredWolfen);
+		ImGui::Text("Trigger Radius:    %.2f", pWC->triggerRadius);
 		ImGui::Text("Zone Ref:          idx=%d  ptr=%p", pWC->streamRefZone.index, pWC->streamRefZone.Get());
 		ImGui::Text("Actor Ref:         idx=%d  ptr=%p", pWC->streamRefActor.index, pWC->streamRefActor.Get());
 	}

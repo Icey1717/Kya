@@ -80,7 +80,7 @@ PlatformHeader<CBehaviourPlatformTrajectory>* gPlatform_00448e14;
 PlatformHeader<CBehaviourPlatformSlab>* gPlatform_00448e18;
 PlatformHeader<CBehaviourPlatformDestroyed>* gPlatform_00448e1c;
 PlatformHeader<CBehaviourPlatformStand>* gPlatform_00448e20;
-PlatformHeader<CBehaviourSelectorNew>* gPlatform_00448e24;
+PlatformHeader<CBehaviourSelectorSlave>* gPlatform_00448e24;
 PlatformHeader<CBehaviourSelectorMaster>* gPlatform_00448e28;
 PlatformHeader<S_TILT_DATA>* gTiltDataAllocator;
 
@@ -289,11 +289,11 @@ LAB_0015d240:
 
 	IMPLEMENTATION_GUARD_AUDIO(
 	CBehaviour* pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
-	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW), pCVar10 != (CBehaviour*)0x0)
+	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE), pCVar10 != (CBehaviour*)0x0)
 		) {
 		pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
 		if (pCVar10 == (CBehaviour*)0x0) {
-			pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW);
+			pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE);
 		}
 		if (pCVar10[5].pVTable != (CBehaviourVtable*)0xffffffff) {
 			this->movingPlatformFlags = this->movingPlatformFlags | 2;
@@ -466,9 +466,9 @@ CBehaviour* CActorMovingPlatform::BuildBehaviour(int behaviourType)
 			pBehaviour = PlatformHeader<CBehaviourSelectorMaster>::Get(&gPlatform_00448e28);
 		}
 		break;
-		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
 		{
-			pBehaviour = PlatformHeader<CBehaviourSelectorNew>::Get(&gPlatform_00448e24);
+			pBehaviour = PlatformHeader<CBehaviourSelectorSlave>::Get(&gPlatform_00448e24);
 		}
 		break;
 		case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
@@ -491,8 +491,8 @@ void CActorMovingPlatform::TermBehaviour(int behaviourId, CBehaviour* pBehaviour
 		PlatformHeader<CBehaviourSelectorMaster>::Release(&gPlatform_00448e28);
 	}
 	else {
-		if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW) {
-			PlatformHeader<CBehaviourSelectorNew>::Release(&gPlatform_00448e24);
+		if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE) {
+			PlatformHeader<CBehaviourSelectorSlave>::Release(&gPlatform_00448e24);
 		}
 		else {
 			if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_STAND) {
@@ -1570,7 +1570,7 @@ void CActorMovingPlatform::SaveContext(void* pData, uint mode, uint maxSize)
 	case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
 	case MOVING_PLATFORM_BEHAVIOUR_STAND:
 	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
-	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
 	case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
 		pCVar1 = GetBehaviour(this->curBehaviourId);
 		if (pCVar1 != (CBehaviour*)0x0) {
@@ -1612,7 +1612,7 @@ void CActorMovingPlatform::LoadContext(void* pData, uint mode, uint maxSize)
 			case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
 			case MOVING_PLATFORM_BEHAVIOUR_STAND:
 			case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
-			case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+			case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
 			case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
 				pBehaviourMovingPlatform = static_cast<CBehaviourPlatform*>(GetBehaviour(bhvrId));
 				if (pBehaviourMovingPlatform != (CBehaviour*)0x0) {
@@ -2006,7 +2006,7 @@ void CActorMovingPlatform::ChangeManageState(int state)
 	case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
 	case MOVING_PLATFORM_BEHAVIOUR_STAND:
 	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
-	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
+	case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
 	case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
 		pCVar5 = reinterpret_cast<CBehaviourPlatform*>(GetBehaviour(this->curBehaviourId));
 		if (pCVar5 != (CBehaviour*)0x0) {
@@ -4013,7 +4013,7 @@ LAB_00154070:
 	return;
 }
 
-void CBehaviourSelectorNew::Create(ByteCode* pByteCode)
+void CBehaviourSelectorSlave::Create(ByteCode* pByteCode)
 {
 	int iVar1;
 	ParticleInfo* pPVar2;
@@ -4035,7 +4035,7 @@ void CBehaviourSelectorNew::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourSelectorNew::Init(CActor* pOwner)
+void CBehaviourSelectorSlave::Init(CActor* pOwner)
 {
 	this->pOwner = static_cast<CActorMovingPlatform*>(pOwner);
 
@@ -4046,7 +4046,7 @@ void CBehaviourSelectorNew::Init(CActor* pOwner)
 	return;
 }
 
-void CBehaviourSelectorNew::Manage()
+void CBehaviourSelectorSlave::Manage()
 {
 	int actorState;
 	Timer* pTVar2;
@@ -4111,7 +4111,7 @@ void CBehaviourSelectorNew::Manage()
 	return;
 }
 
-void CBehaviourSelectorNew::Begin(CActor* pOwner, int newState, int newAnimationType)
+void CBehaviourSelectorSlave::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	ed_g2d_manager* pTexture;
 	edF32VECTOR4 eStack16;

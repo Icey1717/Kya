@@ -125,14 +125,14 @@ namespace Debug::Actor::MovingPlatform
 		ImGui::Text("Flags (0x18):   %d", pMaster->field_0x18);
 	}
 
-	static void ShowSelectorNewBehaviour(CBehaviourSelectorNew* pNew)
+	static void ShowSelectorSlaveBehaviour(CBehaviourSelectorSlave* pSlave)
 	{
-		if (!pNew) { ImGui::Text("(null)"); return; }
+		if (!pSlave) { ImGui::Text("(null)"); return; }
 
-		ImGui::Text("Speed (0x8):   %.4f", pNew->field_0x8);
-		ImGui::Text("field_0xc:     %.4f", pNew->field_0xc);
-		ImGui::Text("field_0x10:    %.4f", pNew->field_0x10);
-		ImGui::Text("Flags (0x18):  %d", pNew->field_0x18);
+		ImGui::Text("Speed (0x8):   %.4f", pSlave->field_0x8);
+		ImGui::Text("field_0xc:     %.4f", pSlave->field_0xc);
+		ImGui::Text("field_0x10:    %.4f", pSlave->field_0x10);
+		ImGui::Text("Flags (0x18):  %d", pSlave->field_0x18);
 	}
 
 	static void ShowTeleportRandomBehaviour(CBehaviourTeleportRandom* pTele)
@@ -170,8 +170,8 @@ namespace Debug::Actor::MovingPlatform
 		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
 			ShowSelectorMasterBehaviour(static_cast<CBehaviourSelectorMaster*>(pPlatform->GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER)));
 			break;
-		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
-			ShowSelectorNewBehaviour(static_cast<CBehaviourSelectorNew*>(pPlatform->GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW)));
+		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
+			ShowSelectorSlaveBehaviour(static_cast<CBehaviourSelectorSlave*>(pPlatform->GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE)));
 			break;
 		case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
 			ShowTeleportRandomBehaviour(static_cast<CBehaviourTeleportRandom*>(pPlatform->GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM)));

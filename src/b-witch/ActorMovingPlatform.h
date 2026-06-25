@@ -14,7 +14,7 @@
 #define MOVING_PLATFORM_BEHAVIOUR_DESTROYED					0x6
 #define MOVING_PLATFORM_BEHAVIOUR_STAND						0x7
 #define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER			0x8
-#define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW				0x9
+#define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE			0x9
 #define MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM			0xa
 #define MOVING_PLATFORM_BEHAVIOUR_COUNT						0xb
 
@@ -270,7 +270,7 @@ public:
 	int actorEntryIndex;
 };
 
-class CBehaviourSelectorNew : public CBehaviourSelector
+class CBehaviourSelectorSlave : public CBehaviourSelector
 {
 public:
 	virtual void Create(ByteCode* pByteCode);

@@ -751,8 +751,8 @@ namespace MovingPlatform
 			return "Stand";
 		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER:
 			return "Selector Master";
-		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW:
-			return "Selector New";
+		case MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE:
+			return "Selector Slave";
 		default:
 			return "Unknown";
 		}

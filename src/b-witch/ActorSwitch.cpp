@@ -1706,8 +1706,8 @@ LAB_00167e60:
 
 void CBehaviourSwitchWolfenCounter::Create(ByteCode* pByteCode)
 {
-	this->field_0x14 = pByteCode->GetS32();
-	this->field_0x18 = pByteCode->GetF32();
+	this->requiredWolfen = pByteCode->GetS32();
+	this->triggerRadius = pByteCode->GetF32();
 	this->streamRefZone.index = pByteCode->GetS32();
 	this->streamRefActor.index = pByteCode->GetS32();
 	const int materialId = pByteCode->GetS32();
@@ -1744,20 +1744,20 @@ void CBehaviourSwitchWolfenCounter::Manage()
 	float fVar2;
 	float fVar3;
 	undefined8 uVar4;
-	int iVar5;
+	int switchState;
 	edF32VECTOR4 local_10;
 	CActorSwitch* pSwitch;
 
 	pSwitch = this->pOwner;
 	(pSwitch->targetSwitch).pStreamEventCamera->Manage(pSwitch);
 
-	iVar5 = pSwitch->actorState;
-	if ((((iVar5 != 8) && (iVar5 == 5)) &&
-		(iVar5 = CLevelScheduler::ScenVar_Get(0), this->field_0x14 <= iVar5)) &&
+	switchState = pSwitch->actorState;
+	if ((((switchState != 8) && (switchState == 5)) &&
+		(switchState = CLevelScheduler::ScenVar_Get(SCN_GAME_NUM_FREED_WOLFENS), this->requiredWolfen <= switchState)) &&
 		(fVar1 = CActorHero::_gThis->currentLocation.x - pSwitch->currentLocation.x,
 			fVar2 = CActorHero::_gThis->currentLocation.y - pSwitch->currentLocation.y,
 			fVar3 = CActorHero::_gThis->currentLocation.z - pSwitch->currentLocation.z,
-			fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 <= this->field_0x18 * this->field_0x18)) {
+			fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 <= this->triggerRadius * this->triggerRadius)) {
 		pSwitch->SetState(8, -1);
 
 		pSwitch->targetSwitch.Switch(pSwitch);
@@ -1834,7 +1834,7 @@ void CBehaviourSwitchWolfenCounter::Draw()
 		}
 
 		if (this->field_0x8 != (ParticleInfo*)0x0) {
-			iVar4 = this->field_0x14;
+			iVar4 = this->requiredWolfen;
 			if (iVar4 < 1) {
 				iVar2 = 0;
 				iVar3 = 0;

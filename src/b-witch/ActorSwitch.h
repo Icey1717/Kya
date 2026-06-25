@@ -134,8 +134,8 @@ public:
 	ParticleInfo* field_0x8;
 	S_STREAM_REF<ed_zone_3d> streamRefZone;
 	S_STREAM_REF<CActor> streamRefActor;
-	int field_0x14;
-	float field_0x18;
+	int requiredWolfen;
+	float triggerRadius;
 
 	edF32MATRIX4 matrix;
 };

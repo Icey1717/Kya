@@ -87,6 +87,8 @@ set(SOURCES
 	"src/Actor/DebugActorWind.cpp"
 	"src/Actor/DebugActorShip.h"
 	"src/Actor/DebugActorShip.cpp"
+	"src/Actor/DebugActorTeleporter.h"
+	"src/Actor/DebugActorTeleporter.cpp"
 	"src/Actor/DebugActorFogManager.h"
 	"src/Actor/DebugActorFogManager.cpp"
 	"src/Actor/DebugActorNativShop.h"
