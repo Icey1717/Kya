@@ -1070,6 +1070,8 @@ public:
 	virtual bool AcquireAdversary(CActorFighter* pTarget);
 	virtual void SetRunSpeed(float param_1);
 
+	virtual bool AcquireAdversaryB(CActorFighter* pTarget);
+
 	bool IsCurrentPositionValid();
 
 	void SetCombatMode(EEnemyCombatMode newCombatMode);
@@ -1110,6 +1112,7 @@ public:
 	void StateTrackGoToPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackFindPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackSupporter();
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfenTrackComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);

@@ -2644,7 +2644,6 @@ edpkt_data* ed3DHierachyCheckForGlobalAlphaSetPKT_(edpkt_data* pPkt, ed_g2d_laye
 
 	bVar1 = gpCurHierarchy->GlobalAlhaON;
 	if ((bVar1 < 0x80) && (pLayer != (ed_g2d_layer*)0x0)) {
-
 		uVar6 = pLayer->flags_0x0 & 0xfc;
 		if ((pLayer->flags_0x4 & 8) == 0) {
 			if (uVar6 == 0) {
@@ -3561,6 +3560,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
+			ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
+
+			Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
 			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 			// This is all we need to do on windows, return here to save some processing time.
 			return;
@@ -3690,6 +3692,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
+			ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
+
+			Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
 			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 			return; // This return is probably not correct, we should continue and do another draw?
 #endif
@@ -3799,6 +3804,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 		pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
+		ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
+
+		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
 		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 		return; // This return is probably not correct, we should continue and do another draw?
 #endif
@@ -4012,6 +4020,7 @@ void ed3DFlushStrip(edNODE* pNode)
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
+		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
 		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 		// This is all we need to do on windows, return here to save some processing time.
 		return;
@@ -4253,6 +4262,7 @@ void ed3DFlushStrip(edNODE* pNode)
 		pPktBufferB = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
+		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
 		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 		// This is all we need to do on windows, return here to save some processing time.
 		return;

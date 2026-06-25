@@ -1,6 +1,7 @@
 #include "ActorBunch.h"
 #include "MemoryStream.h"
 #include "ActorManager.h"
+#include "ActorHero.h"
 #include "ActorMovingPlatform.h"
 #include "EventManager.h"
 #include "TimeController.h"
@@ -329,10 +330,21 @@ int CActorBunch::Func_0x18c()
 	return iVar1;
 }
 
-bool CActorBunch::AquareAdversaryB(CActor* param_2)
+bool CActorBunch::AcquireAdversaryB(CActorFighter* pTarget)
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	bool bVar1;
+	CLifeInterface* pCVar2;
+	float fVar3;
+
+	if (pTarget == CActorHero::_gThis) {
+		pCVar2 = pTarget->GetLifeInterface();
+		fVar3 = pCVar2->GetValue();
+		if ((0.0f < fVar3) && (bVar1 = FUN_00173de0(static_cast<CActorFighter*>(pTarget)), bVar1 != true)) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void CActorBunch::FUN_003ded20(bool bPlayImpact)

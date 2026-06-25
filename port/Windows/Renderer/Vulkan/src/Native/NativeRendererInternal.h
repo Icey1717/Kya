@@ -151,6 +151,7 @@ namespace Renderer
 			uint32_t animStDataIndex = 0;
 			uint32_t animMatrixStart = 0;
 			uint32_t lightingDataIndex = 0;
+			uint32_t globalAlpha = 0x80;
 		};
 
 		struct FadeConstantBuffer
@@ -222,6 +223,7 @@ namespace Renderer
 				int vertexStart = 0;
 				int animationMatrixStart = 0;
 
+				GIFReg::GSAlpha gsAlpha = {};
 				PerDrawData perDrawData;
 			};
 

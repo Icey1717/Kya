@@ -47,6 +47,12 @@ void Renderer::RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags)
 	Native::RenderMesh(pNewMesh, renderFlags);
 }
 
+
+void Renderer::SetGlobalAlpha(uint32_t alpha)
+{
+	Native::GetNativeRendererState().cachedPerDrawData.globalAlpha = alpha;
+}
+
 void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj)
 {
 	Native::PushGlobalMatrices(pModel, pView, pProj);

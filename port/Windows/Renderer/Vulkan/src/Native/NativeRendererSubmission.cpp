@@ -39,11 +39,15 @@ namespace Renderer
 			auto& instance = GetNativeRendererState().currentDraw->instances.emplace_back();
 			instance.animationMatrixStart = GetNativeRendererState().currentAnimMatrixIndex;
 			instance.pMesh = pMesh;
+			instance.gsAlpha = PS2::GetGSState().ALPHA;
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
 			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
 			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
 			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(GetNativeRendererState().lightingDynamicBuffer.GetInstanceIndex());
 			instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(GetNativeRendererState().animStBuffer.GetInstanceIndex());
+			if ((renderFlags & 0x20) == 0) {
+				instance.perDrawData.globalAlpha = 0x80;
+			}
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
 		}

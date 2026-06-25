@@ -212,6 +212,8 @@ namespace Renderer
 					PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 					std::optional<uint> primState;
+					std::optional<bool> alphaBlendState;
+					std::optional<uint64_t> effectiveAlphaState;
 
 					if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 						pTexture->GetName();
@@ -229,10 +231,17 @@ namespace Renderer
 						instance.perDrawData.projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
 
 						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
+						GIFReg::GSAlpha effectiveAlpha = pTexture->GetTextureRegisters().alpha;
+						if ((instance.perDrawData.renderFlags & 0x20) != 0) {
+							effectiveAlpha = instance.gsAlpha;
+						}
 
-						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
+						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
+						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD || !alphaBlendState.has_value() || alphaBlendState.value() != bAlphaBlendEnabled || !effectiveAlphaState.has_value() || effectiveAlphaState.value() != effectiveAlpha.CMD) {
 							primState = instance.pMesh->GetPrim().CMD;
-							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(currentRenderPassKey, pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
+							alphaBlendState = bAlphaBlendEnabled;
+							effectiveAlphaState = effectiveAlpha.CMD;
+							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(currentRenderPassKey, effectiveAlpha, bAlphaBlendEnabled));
 						}
 
 						SetColorDepthDynamicState(cmd, drawCommand);

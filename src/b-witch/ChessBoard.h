@@ -94,6 +94,9 @@ public:
 	void WriteLayer(uint index, uint value);
 
 	void FUN_00352d90(edF32MATRIX4* param_2);
+	void FUN_00353a90(s_chess_board_coord* param_2, edF32VECTOR4* param_3);
+	s_chess_board_coord* FUN_00353250(s_chess_board_coord* param_2, s_chess_board_coord* param_3);
+	void FUN_00353900(edF32VECTOR4* param_2, s_chess_board_coord* param_3);
 
 	int* aSubObjs[2];
 

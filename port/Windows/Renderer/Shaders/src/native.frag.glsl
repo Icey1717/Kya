@@ -24,7 +24,8 @@ layout(push_constant) uniform PerDrawData
 	uint animStDataIndex;
 	uint animMatrixStart;
 	uint lightingDataIndex;
-	uint _pad[7];
+	uint globalAlpha;
+	uint _pad[6];
 } perDrawData;
 
 #define ATST_NEVER 0
@@ -123,5 +124,9 @@ void main()
 
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
+	//if ((perDrawData.renderFlags & 0x20) != 0) {
+	if (perDrawData.globalAlpha < 0x80) {
+		alpha_blend = vec4(min(float(perDrawData.globalAlpha), 128.0) / 128.0);
+	}
 	outAlphaBlend = alpha_blend;
 }

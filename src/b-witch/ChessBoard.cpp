@@ -569,6 +569,180 @@ void CChessBoard::FUN_00352d90(edF32MATRIX4* param_2)
 	return;
 }
 
+void CChessBoard::FUN_00353a90(s_chess_board_coord* param_2, edF32VECTOR4* param_3)
+{
+	uint uVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 eStack80;
+	edF32MATRIX4 auStack64;
+
+	edF32Vector4SubHard(&auStack64.rowT, &gF32Vector4Zero, &this->field_0x230);
+	edF32Matrix4TranslateHard(&auStack64, &gF32Matrix4Unit, &auStack64.rowT);
+	fVar2 = GetAngleYFromVector(&this->field_0x240);
+	edF32Matrix4RotateYHard(-fVar2, &auStack64, &auStack64);
+	edF32Matrix4MulF32Vector4Hard(&eStack80, &auStack64, param_3);
+	eStack80.y = 0.0f;
+	eStack80.w = 0.0f;
+	fVar2 = GetAngleYFromVector(&eStack80);
+	fVar2 = edF32Between_0_2Pi(fVar2);
+
+	uVar1 = this->nbRows;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar3 = CoordinateToFloat(uVar1);
+		fVar3 = fVar3 + fVar3;
+	}
+	else {
+		fVar3 = static_cast<float>(uVar1);
+	}
+
+	fVar3 = (fVar2 / 6.283185f) * fVar3;
+	if (fVar3 < 2.147484e+09f) {
+		param_2->field_0x4 = (int)fVar3;
+	}
+	else {
+		param_2->field_0x4 = FloatToCoordinate(fVar3);
+	}
+
+	fVar2 = edF32Vector4GetDistHard(&eStack80);
+	uVar1 = this->nbColumns;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar3 = CoordinateToFloat(uVar1);
+		fVar3 = fVar3 + fVar3;
+	}
+	else {
+		fVar3 = static_cast<float>(uVar1);
+	}
+
+	fVar3 = fVar3 * (fVar2 / this->field_0x214);
+	if (fVar3 < 2.147484e+09f) {
+		param_2->field_0x0 = (int)fVar3;
+	}
+	else {
+		param_2->field_0x0 = FloatToCoordinate(fVar3);
+	}
+
+	return;
+}
+
+s_chess_board_coord* CChessBoard::FUN_00353250(s_chess_board_coord* param_2, s_chess_board_coord* param_3)
+{
+	bool bVar1;
+	uint uVar2;
+	uint in_v1_lo;
+	int iVar3;
+	uint uVar4;
+	int** pCVar5;
+	uint uVar6;
+	uint uVar7;
+
+	bVar1 = false;
+	uVar4 = 0;
+	iVar3 = 0;
+
+	while ((!bVar1 && (uVar6 = this->nbRows, uVar4 < uVar6 - 1))) {
+		uVar2 = static_cast<int>(param_2->field_0x4 + iVar3) % static_cast<int>(uVar6);
+		if (uVar6 == 0) {
+			trap(7);
+		}
+
+		if (static_cast<int>(uVar6) <= static_cast<int>(uVar2)) {
+			uVar2 = uVar2 - uVar6;
+		}
+
+		if (static_cast<int>(uVar2) < 0) {
+			uVar2 = uVar2 + uVar6;
+		}
+
+		uVar7 = 0xffffffff;
+		uVar6 = 0;
+		pCVar5 = this->aSubObjs;
+		do {
+			if ((this->readLayerMask & 1 << (uVar6 & 0x1f)) != 0) {
+				uVar7 = uVar7 & pCVar5[0][param_2->field_0x0];
+			}
+			uVar6 = uVar6 + 1;
+			pCVar5 = pCVar5 + 1;
+		} while (uVar6 < 2);
+
+		if ((uVar7 >> (uVar2 & 0x1f) & 1) == 0) {
+			if (iVar3 < 1) {
+				iVar3 = 1 - iVar3;
+			}
+			else {
+				iVar3 = -iVar3;
+			}
+
+			uVar4 = uVar4 + 1;
+		}
+		else {
+			bVar1 = true;
+			in_v1_lo = uVar2;
+		}
+	}
+
+	if (bVar1) {
+		param_3->field_0x0 = param_2->field_0x0;
+		param_3->field_0x4 = in_v1_lo;
+	}
+	else {
+		param_3 = (s_chess_board_coord*)0x0;
+	}
+
+	return param_3;
+}
+
+void CChessBoard::FUN_00353900(edF32VECTOR4* param_2, s_chess_board_coord* param_3)
+{
+	uint uVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	uVar1 = param_3->field_0x4;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar2 = CoordinateToFloat(uVar1);
+		fVar2 = fVar2 + fVar2;
+	}
+	else {
+		fVar2 = static_cast<float>(uVar1);
+	}
+
+	uVar1 = this->nbRows;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar3 = CoordinateToFloat(uVar1);
+		fVar3 = fVar3 + fVar3;
+	}
+	else {
+		fVar3 = static_cast<float>(uVar1);
+	}
+
+	SetVectorFromAngleY(((fVar2 + 0.5f) / fVar3) * 6.283185f, param_2);
+
+	uVar1 = param_3->field_0x0;
+	if (static_cast<int>(uVar1) < 0) {
+		fVar2 = CoordinateToFloat(uVar1);
+		fVar2 = fVar2 + fVar2;
+	}
+	else {
+		fVar2 = static_cast<float>(uVar1);
+	}
+
+	edF32Vector4ScaleHard((fVar2 + 0.5f) * this->field_0x21c, param_2, param_2);
+
+	local_50.xyz = (this->field_0x230).xyz;
+	local_50.w = 0.0f;
+
+	fVar2 = GetAngleYFromVector(&this->field_0x240);
+	edF32Matrix4RotateYHard(fVar2, &eStack64, &gF32Matrix4Unit);
+	edF32Matrix4TranslateHard(&eStack64, &eStack64, &local_50);
+	param_2->w = 1.0f;
+	edF32Matrix4MulF32Vector4Hard(param_2, &eStack64, param_2);
+
+	return;
+}
+
 void CChessBoard::InvalidateByZone(int zoneId)
 {
 	CEventManager* pEventManager;

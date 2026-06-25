@@ -505,6 +505,8 @@ namespace Renderer
 
 	void SetAlpha(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint8_t fix);
 
+	void SetGlobalAlpha(uint32_t alpha);
+
 	void SetTEX(GIFReg::GSTex tex);
 	void SetTest(GIFReg::GSTest test);
 	void SetClamp(GIFReg::GSClamp clamp);
