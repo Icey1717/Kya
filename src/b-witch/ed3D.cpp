@@ -3475,6 +3475,72 @@ ed3DFXConfig* ed3DGetFxConfigFromFlag(uint param_1)
 	return ged3DFXConfig + uVar2;
 }
 
+#ifdef PLATFORM_WIN
+static ed_g2d_layer* ed3DGetMultiTextureLayerForGlobalAlpha(uint layerIndex)
+{
+	if (layerIndex == 0) {
+		return gCurLayer;
+	}
+
+	if (*g_pCurFlareMaterial == (ed_g2d_material*)0x0) {
+		return (ed_g2d_layer*)0x0;
+	}
+
+	return ed3DG2DMaterialGetLayer(*g_pCurFlareMaterial, layerIndex);
+}
+
+static void ed3DApplyMultiTextureLayerRenderFlags(edNODE* pNode, ed_g2d_material* pMaterial, uint layerIndex)
+{
+	if (layerIndex == 0) {
+		pNode->header.typeField.flags = pNode->header.typeField.flags & 0xffbf;
+		return;
+	}
+
+	ed_g2d_layer* pLayer = ed3DG2DMaterialGetLayer(pMaterial, layerIndex);
+	if (pLayer == (ed_g2d_layer*)0x0) {
+		return;
+	}
+
+	bool bFxIsTrue = ed3DFXIsTrue(pLayer);
+	if (bFxIsTrue != false) {
+		if ((ed3DGetFxConfigFromFlag(pLayer->flags_0x0)->field_0x8 & 1) == 0) {
+			pNode->header.typeField.flags = pNode->header.typeField.flags & 0xffbf;
+		}
+		else {
+			pNode->header.typeField.flags = pNode->header.typeField.flags | 0x40;
+		}
+	}
+
+	if ((pLayer->flags_0x0 & 0x2000) == 0) {
+		pNode->header.typeField.flags = pNode->header.typeField.flags & 0xffbf;
+	}
+	else {
+		pNode->header.typeField.flags = pNode->header.typeField.flags | 0x40;
+	}
+}
+
+static void ed3DRenderMultiTextureNodeWindows(edpkt_data* pCurPkt, edNODE* pNode, ed_g2d_material* pMaterial, ulong mode, bool bApplyLayerRenderFlags)
+{
+	// The PS2 path emits one pass per material layer. Each pass binds that layer's texture state
+	// and references that layer's ST stream, so the native path must not replay layer 0 UVs for all layers.
+	for (uint layerIndex = 0; layerIndex < mode; layerIndex = layerIndex + 1) {
+		if (bApplyLayerRenderFlags) {
+			ed3DApplyMultiTextureLayerRenderFlags(pNode, pMaterial, layerIndex);
+		}
+
+		if (gGlobalAlhaON != 0x80) {
+			ed_g2d_layer* pLayer = ed3DGetMultiTextureLayerForGlobalAlpha(layerIndex);
+			ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, pLayer);
+		}
+
+		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode, layerIndex);
+		Renderer::Kya::GetTextureLibrary().BindMaterialLayer(pMaterial, layerIndex);
+	}
+}
+
+#endif // PLATFORM_WIN
+
 void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 {
 	bool bVar1;
@@ -3560,10 +3626,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
-			ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
-
-			Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
-			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
+			ed3DRenderMultiTextureNodeWindows(pCurPkt, pNode, pMaterial, mode, false);
 			// This is all we need to do on windows, return here to save some processing time.
 			return;
 #endif
@@ -3588,6 +3651,8 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 					gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 				}
 
+				// pSTBuf is a per-layer ST table. This path sends geometry/VIF data only for layer 0,
+				// but sends an ST buffer reference for every layer at a fixed 0x50-byte mesh-section stride.
 				local_90 = piVar5;
 				for (uVar25 = 0; uVar25 != mode; uVar25 = uVar25 + 1) {
 					uVar28 = *local_90 + curStripIndex * 0x50;
@@ -3692,11 +3757,8 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
-			ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
-
-			Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
-			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-			return; // This return is probably not correct, we should continue and do another draw?
+		ed3DRenderMultiTextureNodeWindows(pCurPkt, pNode, pMaterial, mode, true);
+		return;
 #endif
 			while (uVar25 < mode) {
 				// Continue on with the remaining textures.
@@ -3804,11 +3866,8 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 		pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
-		ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, gCurLayer);
-
-		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
-		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-		return; // This return is probably not correct, we should continue and do another draw?
+		ed3DRenderMultiTextureNodeWindows(pCurPkt, pNode, pMaterial, mode, true);
+		return;
 #endif
 
 #ifdef PLATFORM_WIN
