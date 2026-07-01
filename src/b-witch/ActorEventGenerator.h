@@ -33,6 +33,7 @@ public:
 	int ManageActorB(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageActorC(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int ManageMsgReceived(EVC_PHASE phase, undefined8 param_3, void* pData);
+	int FUN_00391040(EVC_PHASE phase, undefined8 param_3, void* pData);
 	int DummyTempFunc(EVC_PHASE phase, undefined8 param_3, void* pData);
 
 	uint field_0x0;
@@ -184,6 +185,7 @@ public:
 	float field_0x308;
 
 	CActorFighter** field_0x538;
+	CActorFighter** field_0x53c;
 	ManageMsgCParams field_0x544;
 	ManageMsgAParams field_0x550;
 	S_STREAM_REF<CActor> field_0x578;

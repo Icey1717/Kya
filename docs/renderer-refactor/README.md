@@ -13,3 +13,7 @@ fix path.
 - [05 Native Renderer Global State](05-native-renderer-global-state.md) [ ]
 - [06 CMake And Module Boundaries](06-cmake-and-module-boundaries.md) [ ]
 - [07 Native Frame Resources](07-native-frame-resources.md) [ ]
+- [08 Native Draw Granularity](08-native-draw-granularity.md) [ ]
+- [09 Native Redundant State Binds](09-native-redundant-state-binds.md) [ ]
+- [10 RenderDoc Python Capture Analysis](10-renderdoc-python-capture-analysis.md) [ ]
+

@@ -9,6 +9,7 @@
 #include "ActorCheckpointManager.h"
 #include "CollisionRay.h"
 #include "ActorAutonomous.h"
+#include "WayPoint.h"
 
 int INT_00448e04 = 0;
 
@@ -65,20 +66,18 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 			pMVar6 = (CWayPoint*)0x0;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-				pMVar6 = (CScene::ptable.g_CWayPointManager_0045169c)->field_0x4 + pStreamDef->field_0x0;)
+			pMVar6 = CScene::ptable.g_WayPointManager_0045169c->aWaypoints + pStreamDef->field_0x0;
 		}
 
 		if (pMVar6 != (CWayPoint*)0x0) {
-			IMPLEMENTATION_GUARD(
-				edF32Matrix4FromEulerSoft(&eStack64, &pActor->pCinData->rotationEuler, "XYZ");
+			edF32Matrix4FromEulerSoft(&eStack64, &pActor->pCinData->rotationEuler, "XYZ");
 			eStack64.rowT = pActor->baseLocation;
 			edF32Matrix4GetInverseOrthoHard(&eStack64, &eStack64);
-			local_50.xyz = pMVar6->field_0x0;
+			local_50.xyz = pMVar6->location;
 			local_50.w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&this->field_0x0, &eStack64, &local_50);
 			this->field_0x0.w = 0.0f;
-			edF32Vector4SafeNormalize1Hard(&this->field_0x0, &this->field_0x0);)
+			edF32Vector4SafeNormalize1Hard(&this->field_0x0, &this->field_0x0);
 		}
 
 		if (pActor->pCollisionData == (CCollision*)0x0) {
@@ -1123,7 +1122,6 @@ float _edQuatToAngAxis(edF32VECTOR4* param_1, float* param_2, edF32VECTOR3* para
 }
 
 void _edQuatFromAngAxis(float t0, edF32VECTOR4* v0, edF32VECTOR3* v1)
-
 {
 	float fVar1;
 	float fVar2;
@@ -1149,8 +1147,27 @@ void _edQuatFromAngAxis(float t0, edF32VECTOR4* v0, edF32VECTOR3* v1)
 		fVar3 = cosf(t0 * 0.5f);
 		v0->w = fVar3;
 	}
+
 	return;
 }
+
+float GetDistFromRay(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 local_10;
+
+	fVar3 = v0->x - v1->x;
+	fVar1 = v0->y - v1->y;
+	fVar2 = v0->z - v1->z;
+	local_10.x = fVar1 * v2->z - v2->y * fVar2;
+	local_10.y = fVar2 * v2->x - v2->z * fVar3;
+	local_10.z = fVar3 * v2->y - v2->x * fVar1;
+
+	return edF32Vector4GetDistHard(&local_10);
+}
+
 
 bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_TILT_STREAM_DEF* pTiltStreamRef)
 {
@@ -1237,7 +1254,6 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 						edF32Vector4SafeNormalize1Hard(&pTiltData->field_0x0, &pTiltData->field_0x0);
 					}
 					else {
-						IMPLEMENTATION_GUARD(
 						fVar5 = GetDistFromRay(&local_80, &gF32Vertex4Zero, &pTiltData->field_0x0);
 
 						fVar8 = (pTiltData->field_0x0).x;
@@ -1251,7 +1267,7 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 
 						if (0.0f < local_90 * local_70.x + fStack140 * local_70.y + fStack136 * local_70.z) {
 							fVar5 = -fVar5;
-						})
+						}
 					}
 
 					fVar8 = pTiltStreamRef->field_0x4;
@@ -1299,37 +1315,39 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 		}
 		else {
 			if (((pTiltData->oscValue.value != 1.0f) || (fVar6 != 0.0f)) || (bVar2 = false, pTiltData->oscValue.velocity != 1.0f)) {
-				IMPLEMENTATION_GUARD(
 				fVar5 = pTiltStreamRef->field_0x4;
 				if (fVar6 <= fVar5) {
 					fVar5 = fVar6;
 				}
 				pTVar3 = Timer::GetTimer();
-				S_OSCILLATING_VALUE::Update
-				(fVar5, pTVar3->cutsceneDeltaTime, (S_OSCILLATING_VALUE*)&pTiltData->field_0x30,
-					&pTiltStreamRef->oscConfig);
-				fVar6 = (float)pTiltData->field_0x30;
+				pTiltData->oscValue.Update(fVar5, pTVar3->cutsceneDeltaTime, &pTiltStreamRef->oscConfig);
+				fVar6 = pTiltData->oscValue.value;
 				if (3.140593f < fabs(fVar6)) {
 					puVar5 = 1.0f;
 					if (fVar6 < 0.0f) {
 						puVar5 = -1.0f;
 					}
+
 					fVar6 = puVar5 * 3.140593f;
 				}
-				_edQuatFromAngAxis(fVar6, (edF32VECTOR4*)&pTiltData->oscQuat, (edF32VECTOR3*)pTiltData);
-				fVar6 = pTiltData->field_0x34;
+
+				_edQuatFromAngAxis(fVar6, &pTiltData->oscQuat.quat, &pTiltData->field_0x0.xyz);
+				fVar6 = pTiltData->oscValue.velocity;
 				if (3.140593f < fabs(fVar6)) {
 					puVar4 = 1.0f;
 					if (fVar6 < 0.0f) {
 						puVar4 = -1.0f;
 					}
-					fVar6 = (float)puVar4 * 3.140593f;
+
+					fVar6 = puVar4 * 3.140593f;
 				}
-				_edQuatFromAngAxis(fVar6, &(pTiltData->oscQuat).quatVelocity, (edF32VECTOR3*)pTiltData);
-				bVar2 = true;)
+
+				_edQuatFromAngAxis(fVar6, &(pTiltData->oscQuat).quatVelocity, &pTiltData->field_0x0.xyz);
+				bVar2 = true;
 			}
 		}
 	}
+
 	return bVar2;
 }
 

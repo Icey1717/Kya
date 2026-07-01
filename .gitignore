@@ -12,3 +12,9 @@ __pycache__
 upscaling/
 profiler/
 fonts/
+
+# Local renamer runtime state
+/tools/local_renamer/evaluation/runs/
+/tools/local_renamer/node_modules/
+/tools/local_renamer/dist/
+/tools/local_renamer/dist-web/

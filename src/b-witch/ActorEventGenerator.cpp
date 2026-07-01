@@ -208,6 +208,44 @@ int PTMF_Ext::ManageMsgReceived(EVC_PHASE phase, undefined8 param_3, void* pData
 	return 0;
 }
 
+int PTMF_Ext::FUN_00391040(EVC_PHASE phase, undefined8 param_3, void* pData)
+{
+	CActorFighter** pMVar1;
+	CActorFighter* pCVar2;
+	s_fighter_combo* psVar3;
+	undefined4 uVar4;
+	int pCVar5;
+	float fVar6;
+
+	pMVar1 = reinterpret_cast<CActorFighter**>(this->pData);
+	if (phase == EVC_PHASE_7) {
+		pCVar5 = (int)*pMVar1;
+	}
+	else {
+		if (phase == EVC_PHASE_RESET) {
+			*pMVar1 = (CActorFighter*)0x0;
+		}
+		else {
+			if (phase == EVC_PHASE_MANAGE) {
+				pCVar2 = CActorHero::_gThis->pAdversary;
+				psVar3 = CActorHero::_gThis->pFighterCombo;
+				if (pCVar2 != (CActorFighter*)0x0) {
+					fVar6 = pCVar2->GetLifeInterface()->GetValue();
+					if ((((fVar6 <= 0.0f) && (psVar3 != (s_fighter_combo*)0x0)) && ((psVar3->field_0x4.field_0x0ushort & 0x400U) == 0)) && ((psVar3->nbBranches == 0 && ((*pMVar1) != pCVar2))))
+					{
+						*pMVar1 = pCVar2;
+						return 2;
+					}
+				}
+			}
+		}
+
+		pCVar5 = 0x0;
+	}
+
+	return pCVar5;
+}
+
 int PTMF_Ext::DummyTempFunc(EVC_PHASE phase, undefined8 param_3, void* pData)
 {
 	IMPLEMENTATION_GUARD();
@@ -313,6 +351,7 @@ static PTMF_Ext::PTMF_TYPE ManageActorB = &PTMF_Ext::ManageActorB;
 static PTMF_Ext::PTMF_TYPE ManageActorA = &PTMF_Ext::ManageActorA;
 static PTMF_Ext::PTMF_TYPE ManageActorC = &PTMF_Ext::ManageActorC;
 static PTMF_Ext::PTMF_TYPE ManageMsgReceived = &PTMF_Ext::ManageMsgReceived;
+static PTMF_Ext::PTMF_TYPE EventGenerator_12_004265c8 = &PTMF_Ext::FUN_00391040;
 static PTMF_Ext::PTMF_TYPE DummyTempFunc = &PTMF_Ext::DummyTempFunc;
 
 void CActorEventGenerator::Create(ByteCode* pByteCode)
@@ -349,7 +388,7 @@ void CActorEventGenerator::Create(ByteCode* pByteCode)
 
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265a8, &this->field_0x530);
 	Register12(&CheckComboA, &this->field_0x538);
-	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265c8, &this->field_0x53c);
+	Register12(&EventGenerator_12_004265c8, &this->field_0x53c);
 	Register12(&DummyTempFunc, 0x0); //&EventGenerator_12_004265d8, &this->field_0x540);
 	Register12(&ManageActorC, &this->field_0x544);
 	Register12(&ManageMsgReceived, &this->field_0x550);
