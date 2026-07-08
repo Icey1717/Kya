@@ -439,7 +439,7 @@ union
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-		char buff[64];
+		char buff[128];
 		char* ptr = buff;
 		const float vals[4] = { x, y, z, w };
 		*ptr++ = '(';

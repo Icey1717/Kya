@@ -9,8 +9,19 @@
 #define IMPLEMENTATION_GUARD_BOOMY(x)
 #define IMPLEMENTATION_GUARD_INVENTORY(x)
 
+#define ACTION_EXPLOSIVE_DISTRIBUTOR 0x8
 #define ACTION_MOUNT 0xd
 #define ACTION_SPEAK 0xf
+
+struct HeroActionParams
+{
+	int actionId;
+	int activeActionId;
+	CActor* pActor;
+	undefined4 field_0xc;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
 
 class StaticMeshComponentHeroEx : public StaticMeshComponent
 {
@@ -468,6 +479,8 @@ public:
 	void StateHeroLever_2_2();
 	void StateHeroLever_2_2Term();
 
+	void StateHeroPushButton();
+
 	void StateHeroDCAInit();
 	void StateHeroDCA();
 	void StateHeroDCATerm();
@@ -610,6 +623,8 @@ public:
 	uint FUN_00132c60(uint state);
 
 	void GripObject(CActor* pOtherActor);
+
+	void _AccomplishFightAction(HeroActionParams* pHeroActionParams);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -854,15 +869,7 @@ public:
 
 	uint bounceBoneId;
 
-	struct HeroActionParams
-	{
-		int actionId;
-		int activeActionId;
-		CActor* pActor;
-		undefined4 field_0xc;
-		edF32VECTOR4 field_0x10;
-		edF32VECTOR4 field_0x20;
-	} heroActionParams;
+	HeroActionParams heroActionParams;
 
 	int field_0x1a40;
 	int field_0x1a44;

@@ -14,7 +14,11 @@ class CActorFighter;
 class CActorWolfen;
 class CActorCommander;
 
-class ACommanderComponent_10 {};
+struct ACommanderComponent_10
+{
+	int field_0x4;
+	int field_0xc;
+};
 
 struct S_TARGET_ON_OFF_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -79,6 +83,9 @@ public:
 	virtual void _UpdateSequence();
 	virtual void _UpdatePattern();
 
+	bool UpdateKilled();
+	void UpdateAttack();
+
 	void ClearLocalData();
 
 	bool BeginFightIntruder(CActor* pInstigator, CActor* pIntruder);
@@ -128,10 +135,14 @@ public:
 	CCamFigData camFigData;
 
 	CTeamElt* aTeamElt;
-	ACommanderComponent_10* aComponent_0x170;
+
+	int field_0x160;
+	int field_0x164;
 
 	int field_0x168;
 	int count_0x16c;
+
+	ACommanderComponent_10* aComponent_0x170;
 
 	CActor* field_0x174;
 

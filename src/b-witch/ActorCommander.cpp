@@ -1392,9 +1392,8 @@ void CActorCommander::_UpdateSequence()
 			}
 			else {
 				if ((uVar2 & 6) != 0) {
-					IMPLEMENTATION_GUARD(
 					UpdateKilled();
-					UpdateAttack();)
+					UpdateAttack();
 				}
 
 				if (((this->flags_0x18c & 8) == 0) || ((~this->flags_0x18c & 6) == 6)) {
@@ -1416,6 +1415,100 @@ void CActorCommander::_UpdatePattern()
 	if (this->field_0x6d0 != 0) {
 		this->squad.SynchronizePattern((CChessBoardPawnsRefTable*)0x0);
 	}
+	return;
+}
+
+bool CActorCommander::UpdateKilled()
+{
+	bool bVar1;
+	CTeamElt* iVar3;
+	int iVar5;
+	float fVar6;
+
+	this->field_0x160 = 0;
+	this->field_0x164 = 0;
+	iVar5 = 0;
+	if (0 < this->aComponent_0x170[this->count_0x16c + -1].field_0xc) {
+		do {
+			iVar3 = this->aTeamElt + iVar5;
+			fVar6 = iVar3->pEnemyActor->GetLifeInterface()->GetValue();
+			if (fVar6 <= 0.0f) {
+				this->field_0x164 = this->field_0x164 + 1;
+				this->field_0x160 = this->field_0x160 + 1;
+			}
+			else {
+				bVar1 = (this->squad).eltTable.IsInList(iVar3);
+				CActorWolfen* pWolfen = static_cast<CActorWolfen*>(iVar3->pEnemyActor);
+				if ((bVar1 != false) || (pWolfen->IsFreeToFight() == false)) {
+					this->field_0x160 = this->field_0x160 + 1;
+				}
+			}
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < this->aComponent_0x170[this->count_0x16c + -1].field_0xc);
+	}
+
+	this->field_0x168 = 0;
+
+	while ((this->aComponent_0x170[this->field_0x168].field_0x4 <= this->field_0x164 && (this->field_0x168 < this->count_0x16c))) {
+		this->field_0x168 = this->field_0x168 + 1;
+	}
+
+	this->field_0x168 = this->field_0x168 + -1;
+
+	return true;
+}
+
+void CActorCommander::UpdateAttack()
+{
+	int iVar1;
+	int iVar2;
+	bool bVar3;
+	CTeamElt* pCVar4;
+	int iVar6;
+	int iVar7;
+	undefined4 local_60[3];
+	CActorHero* local_54;
+	CFixedTable<CTeamElt*, 16> local_50;
+	undefined4* local_4;
+
+	if (this->field_0x160 < this->aComponent_0x170[this->field_0x168].field_0xc) {
+		local_50.nbEntries = 0;
+		iVar6 = 0;
+		iVar7 = this->field_0x160;
+		iVar1 = this->aComponent_0x170[this->field_0x168].field_0xc;
+
+		while ((iVar2 = local_50.nbEntries, iVar6 < this->nbTeams && (local_50.nbEntries < iVar1 - iVar7))) {
+			pCVar4 = this->aTeamElt + iVar6;
+			bVar3 = (this->squad).eltTable.IsInList(pCVar4);
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pCVar4->pEnemyActor);
+			if ((bVar3 == false) && (bVar3 = pWolfen->IsFreeToFight(), bVar3 != false)) {
+				local_50.Add(pCVar4);
+			}
+
+			iVar6 = iVar6 + 1;
+		}
+		iVar7 = 0;
+		if (0 < local_50.nbEntries) {
+			do {
+				pCVar4 = local_50.PopCurrent();
+				if (pCVar4 != (CTeamElt*)0x0) {
+					local_60[0] = 5;
+
+					local_54 = static_cast<CActorHero*>(this->actorRef.Get());
+					if (local_54 == (CActorHero*)0x0) {
+						local_54 = CActorHero::_gThis;
+					}
+
+					local_4 = local_60;
+					DoMessage(pCVar4->pEnemyActor, (ACTOR_MESSAGE)0x1a, local_4);
+					this->field_0x160 = this->field_0x160 + 1;
+				}
+
+				iVar7 = iVar7 + 1;
+			} while (iVar7 < iVar2);
+		}
+	}
+
 	return;
 }
 

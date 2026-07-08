@@ -110,12 +110,6 @@ InventorySlot* CInventoryInterface::GetFreeSlot(int headerSlot)
 	return pSlot;
 }
 
-struct _msg_5e_param
-{
-	int field_0x0;
-	int field_0x4;
-};
-
 bool Criterion_FindTransitItem(CActor* pActor, CActor* param_2)
 {
 	_msg_5e_param local_30;

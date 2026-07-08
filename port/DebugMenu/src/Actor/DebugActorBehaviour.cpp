@@ -241,6 +241,9 @@ namespace Hero
 		case STATE_HERO_CROUCH_WALK_A:
 			return "StateHeroCrouchWalkA";
 			break;
+		case STATE_HERO_CROUCH_FALL:
+			return "StateHeroCrouchFall";
+			break;
 		case STATE_HERO_CROUCH_B:
 			return "StateHeroCrouchB";
 			break;
@@ -558,6 +561,9 @@ namespace Hero
 			break;
 		case STATE_HERO_LEVER_2_2:
 			return "StateHeroLever2_2";
+			break;
+		case STATE_HERO_PUSH_BUTTON:
+			return "StateHeroPushButton";
 			break;
 		case STATE_HERO_DCA_A:
 			return "StateHeroDCA_A";

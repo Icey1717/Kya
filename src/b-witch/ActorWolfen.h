@@ -1115,6 +1115,7 @@ public:
 	void StateTrackSupporter();
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfenTrackComeBack(CBehaviourWolfen* pBehaviour);
+	void StateWolfen_00175460(CBehaviourDCA* pBehaviour);
 	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);
 	void StateWolfenSurprise(CBehaviourWolfen* pBehaviour);
 	void StateWolfenLocate(CBehaviourWolfen* pBehaviour);
@@ -1155,6 +1156,8 @@ public:
 	void State_001750a0(CBehaviourDCA* pBehaviour);
 	void State_00174cb0(CBehaviourDCA* pBehaviour);
 	void StateDCAStand(CBehaviourDCA* pBehaviour);
+	void StateWolfen_00175390(CBehaviourDCA* pBehaviour);
+	void StateWolfen_00175230(CBehaviourDCA* pBehaviour);
 	void StateDCADefend(CBehaviourDCA* pBehaviour);
 
 	void StateSnipeComeBack(CBehaviourSnipe* pBehaviour);
@@ -1242,6 +1245,8 @@ public:
 
 	bool IsExorcizable(CActorHero* pHero);
 	int GetExorciseAnim();
+
+	bool IsFreeToFight();
 
 	bool IsSnipeOccludedByScenery(float param_1, CActorFighter* pTarget);
 

@@ -1212,6 +1212,7 @@ void CActor::CinematicMode_Enter(bool bSetState)
 		this->flags = this->flags & 0xffffff5f;
 		this->EvaluateDisplayState();
 	}
+
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	pActorConfig = pCinematic->GetActorConfig(this);
 	if (pActorConfig != (CCineActorConfig*)0x0) {
@@ -1227,10 +1228,10 @@ void CActor::CinematicMode_Enter(bool bSetState)
 		}
 
 		if (((pActorConfig->flags & 0x100) != 0) && (this->pTiedActor != (CActor*)0x0)) {
-			IMPLEMENTATION_GUARD(
-			(*(code*)this->pVTable->field_0xd0)(this, 0, 0, 1, 0);)
+			TieToActor((CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
 		}
 	}
+
 	return;
 }
 

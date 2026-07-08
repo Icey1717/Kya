@@ -110,6 +110,12 @@ struct _msg_params_boost
 	float field_0x14;
 };
 
+struct _msg_5e_param
+{
+	int field_0x0;
+	int field_0x4;
+};
+
 enum ACTOR_MESSAGE
 {
 	MESSAGE_KICKED = 0x2,

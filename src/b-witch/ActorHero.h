@@ -35,6 +35,7 @@
 
 #define STATE_HERO_CROUCH_A 0x85
 #define STATE_HERO_CROUCH_WALK_A 0x86
+#define STATE_HERO_CROUCH_FALL 0x87
 #define STATE_HERO_CROUCH_B 0x88
 #define STATE_HERO_JUMP_TO_CROUCH 0x89
 #define STATE_HERO_ROLL 0x8a
@@ -179,6 +180,7 @@
 #define STATE_HERO_LEVER_1_2 0x103
 #define STATE_HERO_LEVER_2_2 0x104
 
+#define STATE_HERO_PUSH_BUTTON 0x105
 #define STATE_HERO_DCA_A 0x106
 
 #define STATE_HERO_REGENERATE 0x107
@@ -355,6 +357,9 @@ public:
 	edF32VECTOR4 field_0xeb0;
 	edF32VECTOR4 field_0xec0;
 	int field_0xed0;
+
+	edF32VECTOR4 field_0xf30;
+	edF32VECTOR4 field_0xf40;
 
 	S_ZONE_STREAM_REF* pClimbZoneStreamRef;
 

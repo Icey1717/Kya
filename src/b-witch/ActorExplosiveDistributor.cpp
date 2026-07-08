@@ -350,7 +350,7 @@ int CBehaviourExplosiveDistributor::InterpretMessage(CActor* pSender, int msg, v
 
 				this->pOwner->pAnimationController->GetDefaultBoneMatrix(0x48535550, &auStack96);
 				edF32Matrix4MulF32Matrix4Hard(&auStack96, &auStack96, &this->pOwner->pMeshTransform->base.transformA);
-				edF32Vector4SubHard(&local_10, &auStack96.rowZ, &pSender->currentLocation);
+				edF32Vector4SubHard(&local_10, &auStack96.rowT, &pSender->currentLocation);
 				local_10.y = 0.0f;
 				if (this->pOwner->field_0x160 < local_10.z * local_10.z + local_10.x * local_10.x) {
 					return 0;

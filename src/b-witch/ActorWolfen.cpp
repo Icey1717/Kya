@@ -3031,8 +3031,7 @@ void CActorWolfen::BehaviourDCA_Manage(CBehaviourDCA* pBehaviour)
 												}
 												else {
 													if (iVar6 == 0x77) {
-														IMPLEMENTATION_GUARD(
-														FUN_00175460(pBehaviour);)
+														StateWolfen_00175460(pBehaviour);
 													}
 													else {
 														if (iVar6 == 0x9b) {
@@ -3056,13 +3055,11 @@ void CActorWolfen::BehaviourDCA_Manage(CBehaviourDCA* pBehaviour)
 																		}
 																		else {
 																			if (iVar6 == 0x86) {
-																				IMPLEMENTATION_GUARD(
-																				FUN_00175230(pBehaviour);)
+																				StateWolfen_00175230(pBehaviour);
 																			}
 																			else {
 																				if (iVar6 == 0x85) {
-																					IMPLEMENTATION_GUARD(
-																					FUN_00175390(pBehaviour);)
+																					StateWolfen_00175390(pBehaviour);
 																				}
 																				else {
 																					if (iVar6 == 0x84) {
@@ -4872,6 +4869,94 @@ void CActorWolfen::StateWolfenTrackComeBack(CBehaviourWolfen* pBehaviour)
 	return;
 }
 
+void CActorWolfen::StateWolfen_00175460(CBehaviourDCA* pBehaviour)
+{
+	bool bValid;
+	edF32VECTOR4* pComeBackPosition;
+	CPathFinderClient* pPathFinderClient;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	CActorsTable actorsTable;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+	movParamsIn.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	if ((this->currentAnimType == 7) && (this->combatMode_0xb7c == ECM_InCombat)) {
+		PlayAnim(6);
+	}
+
+	movParamsIn.flags = movParamsIn.flags | 0x50;
+
+	if (this->currentAnimType == 7) {
+		movParamsIn.rotSpeed = static_cast<float>(GetWalkRotSpeed());
+		movParamsIn.flags = movParamsIn.flags | 2;
+		movParamsIn.acceleration = static_cast<float>(GetWalkAcceleration());
+		movParamsIn.speed = static_cast<float>(GetWalkSpeed());
+	}
+	else {
+		movParamsIn.rotSpeed = static_cast<float>(GetRunRotSpeed());
+		movParamsIn.flags = movParamsIn.flags | 2;
+		movParamsIn.acceleration = static_cast<float>(GetRunAcceleration());
+		movParamsIn.speed = static_cast<float>(GetRunSpeed());
+	}
+
+	movParamsIn.flags = movParamsIn.flags | 0x400;
+
+	pComeBackPosition = pBehaviour->GetComeBackPosition();
+	if ((this->combatFlags_0xb78 & 0x400) == 0) {
+	LAB_00175610:
+		bValid = false;
+	}
+	else {
+		pPathFinderClient = GetPathfinderClientAlt();
+		if (pPathFinderClient->id != -1) {
+			pPathFinderClient = GetPathfinderClientAlt();
+			bValid = pPathFinderClient->IsValidPosition(&this->currentLocation);
+
+			if (bValid == false) goto LAB_00175610;
+		}
+
+		bValid = true;
+	}
+
+	if (bValid) {
+		if ((this->combatFlags_0xb78 & 0x80000) == 0) {
+			this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x80000;
+		}
+
+		this->pathOriginPosition = this->currentLocation;
+	}
+
+	SV_AUT_MoveTo(&movParamsOut, &movParamsIn, pComeBackPosition);
+	actorsTable.nbEntries = 0;
+	ManageDyn(4.0f, 0x1002023b, &actorsTable);
+	iVar3 = SV_WLF_CheckBoxOnWay(&actorsTable);
+	if (iVar3 == -1) {
+		if ((int)this->combatMode_0xb7c < 1) {
+			pComeBackPosition = pBehaviour->GetComeBackPosition();
+			fVar4 = pComeBackPosition->x - this->currentLocation.x;
+			fVar5 = pComeBackPosition->y - this->currentLocation.y;
+			fVar6 = pComeBackPosition->z - this->currentLocation.z;
+			if (sqrtf(fVar4 * fVar4 + fVar5 * fVar5 + fVar6 * fVar6) < 0.5f) {
+				SetState(0x85, -1);
+			}
+		}
+		else {
+			SetState(0xb1, -1);
+		}
+	}
+	else {
+		SetState(iVar3, -1);
+	}
+
+	return;
+}
+
 void CActorWolfen::StateWolfen_00179db0(CBehaviourWolfen* pBehaviour)
 {
 	CAnimation* pCVar1;
@@ -6524,6 +6609,63 @@ void CActorWolfen::StateDCAStand(CBehaviourDCA* pBehaviour)
 	if (iVar1 != 0) {
 		SetState(0x83, -1);
 	}
+
+	return;
+}
+
+void CActorWolfen::StateWolfen_00175390(CBehaviourDCA* pBehaviour)
+{
+	bool bVar1;
+	float fVar2;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	pBehaviour->GetPosition(&eStack16);
+	fVar2 = GetWalkRotSpeed();
+	edF32Vector4SubHard(&eStack32, &eStack16, &this->currentLocation);
+	edF32Vector4NormalizeHard(&eStack32, &eStack32);
+	bVar1 = SV_WLF_UpdateOrientation2D(fVar2, &eStack32, 0);
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (bVar1 == true) {
+		SetState(0x86, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateWolfen_00175230(CBehaviourDCA* pBehaviour)
+{
+	CAnimation* pCVar1;
+	bool bVar3;
+	int iVar4;
+	float fVar5;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(0x87, -1);
+	}
+	else {
+		local_10 = gF32Vertex4Zero;
+		pCVar1 = this->pAnimationController;
+		iVar4 = GetIdMacroAnim(this->currentAnimType);
+		if (iVar4 < 0) {
+			fVar5 = 0.0f;
+		}
+		else {
+			fVar5 = pCVar1->GetAnimLength(iVar4, 1);
+		}
+
+		pBehaviour->GetPosition(&eStack32);
+		edF32Vector3LERPSoft(this->timeInAir / fVar5, &local_10.xyz, &pBehaviour->field_0x90.xyz, &eStack32.xyz);
+		UpdatePosition(&local_10, true);
+	}
+
+	this->dynamic.speed = 0.0f;
+	ManageDyn(4.0f, 0x53, (CActorsTable*)0x0);
 
 	return;
 }
@@ -8835,6 +8977,22 @@ bool CActorWolfen::IsExorcizable(CActorHero* pHero)
 int CActorWolfen::GetExorciseAnim()
 {
 	return CActorFighter::_SV_ANM_GetTwoSidedAnim(0x85, (int)this->field_0x7dc);
+}
+
+bool CActorWolfen::IsFreeToFight()
+{
+	int iVar1;
+	bool bVar2;
+	bool bFreeToFight;
+
+	bFreeToFight = false;
+	iVar1 = this->curBehaviourId;
+	bVar2 = IsFightRelated(iVar1);
+	if ((((bVar2 == false) && (iVar1 != WOLFEN_BEHAVIOUR_EXORCISM)) && (iVar1 != WOLFEN_BEHAVIOUR_WOLFEN_DCA)) && ((int)this->combatMode_0xb7c < 2)) {
+		bFreeToFight = true;
+	}
+
+	return bFreeToFight;
 }
 
 bool CActorWolfen::IsSnipeOccludedByScenery(float param_1, CActorFighter* pTarget)

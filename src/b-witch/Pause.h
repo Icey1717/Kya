@@ -11,6 +11,7 @@
 #include "edDlist.h"
 #include "Settings.h"
 #include "SpriteWidget.h"
+#include "Animation.h"
 
 #define MENU_STATE_APPEAR 0
 #define MENU_STATE_SELECT 1
@@ -32,6 +33,7 @@ public:
 	void SetDraw(bool bHide, ed_3D_Scene* pScene);
 	void ComputeObjectMatrix();
 	void ClearLocalData();
+	void ManageAnimation(float time);
 
 	edNODE* pNode;
 
@@ -43,7 +45,16 @@ public:
 class CInstance3DAnimated : public CInstance3D
 {
 public:
+	void SetAnimationDatas(edANM_HDR** ppHdr);
+	void SetAnimation(int macroAnimId, uint flags);
 
+	edAnmLayer layer;
+	edANM_HDR** ppHdr;
+	edANM_SKELETON* field_0x4c;
+	int field_0x12c;
+	int field_0x130;
+
+	edAnmMetaAnimator anmMetaAnimator;
 };
 
 typedef enum EPauseMenu

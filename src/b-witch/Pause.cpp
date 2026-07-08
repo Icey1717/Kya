@@ -100,6 +100,11 @@ void CInstance3D::ClearLocalData()
 	return;
 }
 
+void CInstance3D::ManageAnimation(float time)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 CPauseManager::CPauseManager()
 {
 	pSimpleMenu = (CSimpleMenu*)0x0;
@@ -3164,6 +3169,54 @@ void MapLeave()
 	GameFlags = GameFlags & 0xffffffef;
 
 	ProfileDraw(1);
+
+	return;
+}
+
+void CInstance3DAnimated::SetAnimationDatas(edANM_HDR** ppHdr)
+{
+	ed_Chunck* pSKEL;
+
+	this->field_0x130 = 0;
+
+	this->ppHdr = ppHdr;
+	if (ppHdr != (edANM_HDR**)0x0) {
+		(this->anmMetaAnimator).aAnimData = &this->layer;
+		this->anmMetaAnimator.SetLayerProperties(1);
+		this->anmMetaAnimator.SetLayerResourceArray(-1, ppHdr);
+		this->anmMetaAnimator.aAnimData->Reset();
+		this->field_0x130 = 1;
+	}
+
+	pSKEL = ed3DHierarchyNodeGetSkeletonChunck(this->pNode, false);
+	this->field_0x4c = reinterpret_cast<edANM_SKELETON*>(pSKEL + 1);
+	this->field_0x12c = -1;
+
+	return;
+}
+
+void CInstance3DAnimated::SetAnimation(int macroAnimId, uint flags)
+{
+	edANM_HDR* pHdr;
+	float local_10;
+	float local_c;
+	edAnmLayer* pLayer;
+
+	if (this->field_0x12c != macroAnimId) {
+		if (macroAnimId == -1) {
+			(this->anmMetaAnimator).aAnimData->Reset();
+		}
+		else {
+			pLayer = (this->anmMetaAnimator).aAnimData;
+			pHdr = this->ppHdr[macroAnimId];
+			pLayer->animPlayState = 0;
+			pLayer->SetRawAnim(pHdr, flags & 0xff, 0xfffffffe);
+			edAnmStage::ComputeAnimParams(0.0f, (pLayer->currentAnimDesc).state.keyStartTime_0x14, 0.0f, &local_10, false, static_cast<uint>(((pLayer->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+			(pLayer->currentAnimDesc).state.time_0x10 = local_10;
+			(pLayer->currentAnimDesc).state.time_0xc = local_c;
+			this->field_0x12c = macroAnimId;
+		}
+	}
 
 	return;
 }

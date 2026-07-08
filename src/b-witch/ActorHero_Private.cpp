@@ -578,7 +578,7 @@ void CActorHeroPrivate::Term()
 
 struct HeroActionCallbackData
 {
-	CActorHeroPrivate::HeroActionParams* pActionParams;
+	HeroActionParams* pActionParams;
 	CActor* pActor;
 	float field_0x8;
 };
@@ -586,7 +586,7 @@ struct HeroActionCallbackData
 void gHeroActionCallback(CActor* pActor, void* pParams)
 {
 	CCollision* pCVar1;
-	CActorHeroPrivate::HeroActionParams* pHVar2;
+	HeroActionParams* pHVar2;
 	int newActionId;
 	float fVar4;
 	edF32VECTOR4 eStack32;
@@ -1507,24 +1507,11 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 			SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x113, 0xffffffff);
 		}
 		break;
-	case 8:
-		IMPLEMENTATION_GUARD(
-		fVar5 = this->heroActionParams.field_0x10.y;
-		fVar3 = this->heroActionParams.field_0x10.z;
-		fVar4 = this->heroActionParams.field_0x10.w;
-		this->field_0xf30.x = this->heroActionParams.field_0x10.x;
-		this->field_0xf30.y = fVar5;
-		this->field_0xf30.z = fVar3;
-		this->field_0xf30.w = fVar4;
-		fVar5 = this->heroActionParams.field_0x20.y;
-		fVar3 = this->heroActionParams.field_0x20.z;
-		fVar4 = this->heroActionParams.field_0x20.w;
-		this->this->field_0xf40.x = this->heroActionParams.field_0x20.x;
-		this->field_0xf40.y = fVar5;
-		this->field_0xf40.z = fVar3;
-		this->field_0xf40.w = fVar4;
-		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
-		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x105, 0xffffffff);)
+	case ACTION_EXPLOSIVE_DISTRIBUTOR:
+		this->field_0xf30 = this->heroActionParams.field_0x10;
+		this->field_0xf40 = this->heroActionParams.field_0x20;
+		DoMessage(this->heroActionParams.pActor, MESSAGE_TRAP_STRUGGLE, 0);
+		SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x105, 0xffffffff);
 		break;
 	case 9:
 	case 0xc:
@@ -5331,6 +5318,7 @@ LAB_00341590:
 	case STATE_HERO_FALL_B:
 	case STATE_HERO_FALL_BOUNCE:
 	case STATE_HERO_FALL_BOUNCE_1_2:
+	case STATE_HERO_CROUCH_FALL:
 	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_DROWN_DEATH:
@@ -5412,6 +5400,7 @@ LAB_00341590:
 	case STATE_HERO_BOOMY_CONTROL_BEFORE:
 	case STATE_HERO_BOOMY_CONTROL:
 	case STATE_HERO_LEVER_2_2:
+	case STATE_HERO_PUSH_BUTTON:
 	case STATE_HERO_EXORCISE:
 	case STATE_HERO_CEILING_CLIMB_A:
 	case STATE_HERO_CEILING_CLIMB_B:
@@ -5615,6 +5604,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_FALL_B:
 	case STATE_HERO_FALL_BOUNCE:
 	case STATE_HERO_FALL_BOUNCE_1_2:
+	case STATE_HERO_CROUCH_FALL:
 	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_DROWN_DEATH:
@@ -5702,6 +5692,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_COL_WALL_DEAD_E:
 	case STATE_HERO_DF:
 	case STATE_HERO_BASIC_TO_STAND:
+	case STATE_HERO_PUSH_BUTTON:
 	case STATE_HERO_CEILING_CLIMB_A:
 	case STATE_HERO_CEILING_CLIMB_B:
 	case STATE_HERO_CEILING_CLIMB_C:
@@ -6166,6 +6157,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_CROUCH_WALK_A:
 		StateHeroCrouchWalk();
 		break;
+	case STATE_HERO_CROUCH_FALL:
+		StateHeroFall(this->airRotationRate, 1);
+		break;
 	case STATE_HERO_CROUCH_B:
 		StateHeroCrouch(STATE_HERO_ROLL);
 		break;
@@ -6539,6 +6533,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_LEVER_2_2:
 		StateHeroLever_2_2();
 		break;
+	case STATE_HERO_PUSH_BUTTON:
+		StateHeroPushButton();
+		break;
 	case STATE_HERO_DCA_A:
 		StateHeroDCA();
 		break;
@@ -6677,8 +6674,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		if (uVar9 != 0) {
 			if (this->field_0x187c != 0) {
 				SetFightBehaviour();
-				IMPLEMENTATION_GUARD(
-				_AccomplishFightAction(&this->heroActionParams);)
+				_AccomplishFightAction(&this->heroActionParams);
 			}
 			
 			AcquireAdversary();
@@ -12715,6 +12711,36 @@ void CActorHeroPrivate::StateHeroLever_2_2Term()
 	return;
 }
 
+void CActorHeroPrivate::StateHeroPushButton()
+{
+	bool bVar3;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	SV_UpdateOrientationToPosition2D(this->field_0x1040, &this->field_0xf30);
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 3.0f;
+	movParamsIn.field_0x18 = 0.1f;
+	movParamsIn.flags = 0x1001;
+
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &this->field_0xf30);
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroDCAInit()
 {
 	this->field_0x1a54 = 1;
@@ -15363,6 +15389,21 @@ uint CActorHeroPrivate::FUN_00132c60(uint state)
 	}
 
 	return state & 0x4000;
+}
+
+void CActorHeroPrivate::_AccomplishFightAction(HeroActionParams* pHeroActionParams)
+{
+	s_fighter_action_param actionParam;
+	s_fighter_action action;
+
+	if (pHeroActionParams->activeActionId == 10) {
+		SetAdversary(static_cast<CActorFighter*>(pHeroActionParams->pActor));
+		action.all = 0x200;
+		actionParam.pData = FindBlowByName("BASE_CATCH");
+		Execute(&action, &actionParam);
+	}
+
+	return;
 }
 
 void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActorMovable* pSoccerActor)

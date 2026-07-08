@@ -17,7 +17,8 @@ public:
 	edF32VECTOR2 scale;
 };
 
-class CSprite {
+class CSprite
+{
 public:
 	CSprite();
 
