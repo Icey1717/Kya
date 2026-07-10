@@ -386,6 +386,10 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 		break;
 	case FRONTEND_INTERFACE_FREED_WOLFEN:
 		this->pFreedWolfun->SetInterface(pInterface);
+		break;
+	case FRONTEND_INTERFACE_MENU_INVENTORY:
+		this->pInventory->SetInterface(pInterface);
+		break;
 	default:
 		//IMPLEMENTATION_GUARD();
 		break;

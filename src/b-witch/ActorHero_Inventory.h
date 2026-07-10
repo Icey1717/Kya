@@ -60,6 +60,7 @@ public:
 
 	bool FindByType(FE_Position* pPosition, int itemId);
 	bool HasChanged();
+	void SetActivePosition(FE_Position* param_2);
 };
 
 #endif // ACTOR_HERO_INVENTORY_H

@@ -2504,8 +2504,7 @@ void CActorHeroPrivate::Manage()
 		}
 	}
 
-	IMPLEMENTATION_GUARD_INVENTORY(
-	ManageInventory(this);)
+	ManageInventory();
 
 	if (this->field_0x1554 != 0.0f) {
 		pTVar5 = GetTimer();
@@ -3244,45 +3243,44 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 
 	if (msg == 0x5e) {
-		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+		fVar25 = this->GetLifeInterface()->GetValue();
+		bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 		if (!bVar9) {
 			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
 
-		if ((bVar9) || (0.0 < this->field_0x1558)) {
+		if ((bVar9) || (0.0f < this->field_0x1558)) {
 			return 0;
 		}
 
+		_msg_5e_param* pParam = reinterpret_cast<_msg_5e_param*>(pMsgParam);
+
 		/* WARNING: Load size is inaccurate */
-		if (*pMsgParam == 2) {
-			edF32Vector4AddHard((edF32VECTOR4*)((int)pMsgParam + 0x10),
+		if (pParam->field_0x0 == 2) {
+			edF32Vector4AddHard(&pParam->field_0x10,
 				&this->currentLocation,
 				&this->rotationQuat);
-			*(float*)((int)pMsgParam + 0x14) = *(float*)((int)pMsgParam + 0x14) + 0.15;
-			uVar6 = *(undefined8*)&this->currentLocation;
+			pParam->field_0x10.y = pParam->field_0x10.y + 0.15f;
 			local_b0.z = this->currentLocation.z;
 			local_b0.w = this->currentLocation.w;
-			local_b0.x = (float)uVar6;
-			fVar25 = (float)((ulong)uVar6 >> 0x20) + 0.7;
+			local_b0.x = this->currentLocation.x;
+			fVar25 = this->currentLocation.y + 0.7f;
 			local_b0.y = fVar25;
-			edF32Vector4SubHard(&eStack160, (edF32VECTOR4*)((int)pMsgParam + 0x10), &local_b0);
+			edF32Vector4SubHard(&eStack160, &pParam->field_0x10, &local_b0);
 			fVar25 = edF32Vector4NormalizeHard(&eStack160, &eStack160);
-			CCollisionRay::CCollisionRay(fVar25, &CStack208, &local_b0, &eStack160);
-			fVar25 = CCollisionRay::Intersect
-			(&CStack208, 3, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			CCollisionRay CStack208 = CCollisionRay(fVar25, &local_b0, &eStack160);
+			fVar25 = CStack208.Intersect(3, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar25 != 1e+30f) {
-				fVar25 = fVar25 - 0.2;
-				if (fVar25 < 0.0) {
-					fVar25 = 0.0;
+				fVar25 = fVar25 - 0.2f;
+				if (fVar25 < 0.0f) {
+					fVar25 = 0.0f;
 				}
 				edF32Vector4ScaleHard(fVar25, &eStack160, &eStack160);
-				edF32Vector4AddHard((edF32VECTOR4*)((int)pMsgParam + 0x10), &local_b0, &eStack160);
+				edF32Vector4AddHard(&pParam->field_0x10, &local_b0, &eStack160);
 			}
+
 			return 1;
-		})
+		}
 	}
 	else {
 		if (msg == 0x58) {
@@ -15389,6 +15387,136 @@ uint CActorHeroPrivate::FUN_00132c60(uint state)
 	}
 
 	return state & 0x4000;
+}
+
+uint CActorHeroPrivate::FUN_00132790(uint param_2)
+{
+	int iVar1;
+	CCamFigData* pCVar2;
+
+	pCVar2 = (CCamFigData*)0x0;
+	if (CCameraGame::_b_use_fig_data != 0) {
+		pCVar2 = CCameraGame::_pfig_data;
+	}
+
+	if (pCVar2 != (CCamFigData*)0x0) {
+		pCVar2 = (CCamFigData*)0x0;
+		if (CCameraGame::_b_use_fig_data != 0) {
+			pCVar2 = CCameraGame::_pfig_data;
+		}
+
+		if (pCVar2->field_0x2a0 != 0) {
+			return 0;
+		}
+	}
+
+	if (param_2 == 0xffffffff) {
+		iVar1 = this->actorState;
+		param_2 = 0;
+
+		if ((iVar1 != -1) && (param_2 = 0, 0x71 < iVar1)) {
+			param_2 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return param_2 & 0x800000;
+}
+
+
+bool CActorHeroPrivate::FUN_0033da30(uint param_2)
+{
+	bool bVar1;
+	uint uVar2;
+
+	uVar2 = TestState_001328a0(param_2);
+	bVar1 = uVar2 != 0;
+	if (!bVar1) {
+		bVar1 = this->pSoccerActor != (CActorMovable*)0x0;
+	}
+
+	return bVar1;
+}
+
+void CActorHeroPrivate::ManageInventory()
+{
+	CPlayerInput* pCVar1;
+	bool bVar2;
+	bool bVar3;
+	uint uVar4;
+	long lVar5;
+	float fVar6;
+
+	uVar4 = FUN_00132790(0xffffffff);
+	if (uVar4 != 0) {
+		bVar3 = FUN_0033da30(0xffffffff);
+		bVar2 = true;
+
+		if (bVar3 == false) goto LAB_003cb628;
+	}
+
+	bVar2 = false;
+LAB_003cb628:
+	lVar5 = this->inventory.IsActive();
+	if (lVar5 == 0) {
+		if (bVar2) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = pCVar1->aButtons[INPUT_BUTTON_INDEX_R2].clickValue;
+			}
+
+			if (fVar6 != 0.0f) {
+				this->inventory.Activate(1);
+			}
+		}
+	}
+	else {
+		if (bVar2) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = pCVar1->aButtons[INPUT_BUTTON_INDEX_R2].clickValue;
+			}
+
+			if (fVar6 == 0.0f) {
+				this->inventory.Cmd_Apply();
+				this->inventory.Activate(0);
+			}
+			else {
+				if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+					uVar4 = 0;
+				}
+				else {
+					uVar4 = pCVar1->pressedBitfield & PAD_BITMASK_SQUARE;
+				}
+
+				if (uVar4 != 0) {
+					this->inventory.Cmd_NextItem(0);
+				}
+				pCVar1 = this->pPlayerInput;
+				if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+					uVar4 = 0;
+				}
+				else {
+					uVar4 = pCVar1->pressedBitfield & PAD_BITMASK_CIRCLE;
+				}
+
+				if (uVar4 != 0) {
+					this->inventory.Cmd_NextItem(1);
+				}
+			}
+		}
+		else {
+			this->inventory.Cmd_Abort();
+			this->inventory.Activate(0);
+		}
+	}
+
+	return;
 }
 
 void CActorHeroPrivate::_AccomplishFightAction(HeroActionParams* pHeroActionParams)

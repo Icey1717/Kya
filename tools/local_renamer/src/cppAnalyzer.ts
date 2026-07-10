@@ -6,9 +6,13 @@ import type { Declaration, FunctionRecord } from "./types.js";
 const parser = new Parser();
 parser.setLanguage(Cpp);
 
+function parseCpp(source: string) {
+  // The native binding rejects callback strings longer than 32,767 characters.
+  return parser.parse((offset) => source.slice(offset, offset + 16_384));
+}
 export function identifierOccurrences(source: string, name: string): Array<{ startIndex: number; endIndex: number }> {
   const occurrences: Array<{ startIndex: number; endIndex: number }> = [];
-  const tree = parser.parse(source);
+  const tree = parseCpp(source);
   walk(tree.rootNode, (node) => {
     if (node.type === "identifier" && source.slice(node.startIndex, node.endIndex) === name) {
       occurrences.push({ startIndex: node.startIndex, endIndex: node.endIndex });
@@ -284,7 +288,7 @@ function containsUnsafeParseError(node: SyntaxNode, source: string): boolean {
 }
 
 export function analyzeCppSource(relativePath: string, source: string): FunctionRecord[] {
-  const tree = parser.parse(source);
+  const tree = parseCpp(source);
   const functions: FunctionRecord[] = [];
   walk(tree.rootNode, (node) => {
     if (node.type !== "function_definition") return;

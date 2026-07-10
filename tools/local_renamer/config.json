@@ -1,0 +1,8 @@
+{
+  "runModelIds": [
+    "google/gemma-4-31b-it",
+    "meta-llama/llama-4-maverick",
+    "google/gemini-2.5-flash-lite"
+  ],
+  "runTimeoutMs": 120000
+}

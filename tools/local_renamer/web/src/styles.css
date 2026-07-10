@@ -72,3 +72,16 @@ th { color: #607068; font-size: .75rem; text-transform: uppercase; letter-spacin
   .model-section-heading { display: grid; align-items: start; }
   .model-section-heading .actions { justify-content: flex-start; }
 }
+
+.mode-switch { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding-top: 12px; background: #edf1ec; }
+.mode-switch button { border-radius: 6px; }
+.mode-switch button.active { border-color: #244d3d; background: #244d3d; color: #fff; }
+.answer.choice { width: 100%; grid-template-columns: 1fr auto; text-align: left; }
+.answer.choice span { display: grid; gap: 4px; }
+.answer.choice small { text-align: right; }
+@media (max-width: 650px) {
+  .mode-switch { width: min(100% - 20px, 1120px); }
+  .answer.choice { grid-template-columns: 1fr; }
+  .answer.choice small { text-align: left; }
+}
+.warning { color: #8a5a12; font-weight: 650; }

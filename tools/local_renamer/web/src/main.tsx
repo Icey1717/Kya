@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { createRoot } from "react-dom/client";
 import "./styles.css";
+import { ApplicationMode } from "./application";
 
 type Model = {
   id: string;
@@ -489,7 +490,7 @@ function Results({ run, refresh }: { run: Run; refresh: () => Promise<void> }) {
   );
 }
 
-function App() {
+function EvaluationApp() {
   const [run, setRun] = useState<Run | null>(null);
   const [restoringRun, setRestoringRun] = useState(true);
   const [error, setError] = useState("");
@@ -591,6 +592,25 @@ function App() {
         </>
       )}
     </main>
+  );
+}
+
+function App() {
+  const [mode, setMode] = useState<"evaluate" | "run">(() => {
+    return window.localStorage.getItem("kya-local-renamer.mode") === "run" ? "run" : "evaluate";
+  });
+  function selectMode(next: "evaluate" | "run") {
+    window.localStorage.setItem("kya-local-renamer.mode", next);
+    setMode(next);
+  }
+  return (
+    <>
+      <nav className="mode-switch" aria-label="Tool mode">
+        <button className={mode === "evaluate" ? "active" : ""} onClick={() => selectMode("evaluate")}>Evaluate models</button>
+        <button className={mode === "run" ? "active" : ""} onClick={() => selectMode("run")}>Run renamer</button>
+      </nav>
+      {mode === "evaluate" ? <EvaluationApp /> : <ApplicationMode />}
+    </>
   );
 }
 

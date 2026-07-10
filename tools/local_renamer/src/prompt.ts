@@ -17,7 +17,7 @@ export function buildPrompt(fn: FunctionRecord): string {
     "Include exactly one suggestions entry per declaration. Do not return a keyed map or a top-level array.",
     "confidence is required and must be a JSON number from 0 through 1.",
     "Use the exact declaration_id and old_name. To keep a name, repeat old_name as suggested_name.",
-    "Changed names must be valid lower-camel-case C++ identifiers with no underscores, adjacent uppercase letters, or trailing digits.",
+    "Changed names must be valid lower-camel-case C++ identifiers with no underscores.",
     "Pointer names start with p followed by uppercase. Non-pointer Boolean names start with b followed by uppercase.",
     "Do not rename parameters, members, globals, macros, types, labels, or anything outside the inventory.",
     "Do not include rationale, commentary, or fields other than those shown in the required shape.",

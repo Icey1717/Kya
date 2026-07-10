@@ -71,26 +71,28 @@ int CInventoryInfo::ProcessMessage(CActor* pSender, int msg, void* pMsgParams)
 	}
 	else {
 		if (msg == 0x5e) {
-			IMPLEMENTATION_GUARD(
-			/* WARNING: Load size is inaccurate */
-			iVar1 = *pMsgParams;
+			_msg_5e_param* pParams = static_cast<_msg_5e_param*>(pMsgParams);
+			iVar1 = pParams->field_0x0;
 			if (iVar1 == 1) {
 				return 1;
 			}
+
 			if (iVar1 == 2) {
+				IMPLEMENTATION_GUARD(
 				fVar4 = (pSender->currentLocation).y;
 				fVar2 = (pSender->currentLocation).z;
 				fVar3 = (pSender->currentLocation).w;
 				*(float*)((int)pMsgParams + 0x10) = (pSender->currentLocation).x;
 				*(float*)((int)pMsgParams + 0x14) = fVar4;
 				*(float*)((int)pMsgParams + 0x18) = fVar2;
-				*(float*)((int)pMsgParams + 0x1c) = fVar3;
+				*(float*)((int)pMsgParams + 0x1c) = fVar3;)
 				return 1;
 			}
+
 			if (iVar1 == 0) {
-				*(int*)((int)pMsgParams + 4) = this->field_0x0;
+				pParams->field_0x4 = this->field_0x0;
 				return 1;
-			})
+			}
 		}
 		else {
 			if (msg == 0x53) {
@@ -349,7 +351,7 @@ bool CInventoryInfo::PrepareTransit(int param_2, edF32VECTOR4* pPosition, CActor
 		this->pOwner->DoMessage(this->pOwner, (ACTOR_MESSAGE)0x5f, (void*)1);
 	}
 
-	pFrontendInventory->FUN_003c9b00(this->pOwner, param_2, pPosition, pActor);
+	pFrontendInventory->PrepareTransit(this->pOwner, param_2, pPosition, pActor);
 
 	if (param_2 == 1) {
 		this->pOwner->DoMessage(this->pOwner, (ACTOR_MESSAGE)0x5f, (void*)3);

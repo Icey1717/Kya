@@ -3,7 +3,18 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, { type NextFunction, type Request, type Response } from "express";
+import {
+  ApplicationEngine,
+  ApplicationStore,
+  applyApplicationFunction,
+  applyApplicationRun,
+  createApplicationRun,
+  publicApplicationItems,
+  publicApplicationRun,
+  submitApplicationChoice
+} from "./application.js";
 import { applyRateLimitStatus, fetchSelectableModels, isPaidModel, validateModelSelection } from "./catalog.js";
+import { runModeConfig } from "./config.js";
 import { EvaluationEngine } from "./evaluator.js";
 import { probeModelsAvailability } from "./modelAvailability.js";
 import { rankRun, withCostSummaries } from "./ranking.js";
@@ -17,8 +28,10 @@ const defaultRepositoryRoot = path.resolve(here, "../../..");
 const repositoryRoot = path.resolve(process.env.LOCAL_RENAMER_REPOSITORY_ROOT ?? defaultRepositoryRoot);
 const runsRoot = path.resolve(here, "../evaluation/runs");
 const store = new RunStore(runsRoot);
+const applicationStore = new ApplicationStore(path.resolve(here, "../application/runs"));
 const apiKey = process.env.OPENROUTER_API_KEY ?? "";
 const engine = new EvaluationEngine(store, apiKey);
+const applicationEngine = new ApplicationEngine(applicationStore, apiKey);
 const app = express();
 
 app.use(express.json({ limit: "2mb" }));
@@ -109,6 +122,66 @@ app.get("/api/models", async (_request, response) => {
   })) });
 });
 
+app.get("/api/application/config", (_request, response) => {
+  response.json({ modelIds: runModeConfig.modelIds, timeoutMs: runModeConfig.timeoutMs });
+});
+
+app.post("/api/application/runs", async (request, response) => {
+  const files = (request.body as { files?: unknown })?.files;
+  if (!Array.isArray(files) || !files.every((file) => typeof file === "string")) {
+    throw new Error("files must be an array of repository-relative paths.");
+  }
+  const catalog = await fetchSelectableModels();
+  const byId = new Map(catalog.map((model) => [model.id, model]));
+  const models = runModeConfig.modelIds.map((modelId) => {
+    const model = byId.get(modelId);
+    if (!model) throw new Error(`Configured run model is not available in the OpenRouter catalog: ${modelId}`);
+    return model;
+  });
+  const run = await createApplicationRun({ repositoryRoot, relativePaths: files, models, timeoutMs: runModeConfig.timeoutMs });
+  await applicationStore.save(run);
+  response.status(201).json(publicApplicationRun(run, false));
+});
+
+app.get("/api/application/runs/:runId", async (request, response) => {
+  const run = await applicationStore.load(request.params.runId);
+  response.json(publicApplicationRun(run, applicationEngine.isActive(run.runId)));
+});
+
+app.post("/api/application/runs/:runId/start", async (request, response) => {
+  if (!apiKey) {
+    response.status(503).json({ error: "OPENROUTER_API_KEY is not configured in the backend." });
+    return;
+  }
+  const run = await applicationStore.load(request.params.runId);
+  if (run.status !== "ready" && !(run.status === "running" && !applicationEngine.isActive(run.runId))) throw new Error(`Cannot start a ${run.status} application run.`);
+  void applicationEngine.start(run.runId).catch((error) => console.error(`Application run ${run.runId} failed:`, error));
+  response.status(202).json({ status: "running" });
+});
+
+app.get("/api/application/runs/:runId/review", async (request, response) => {
+  response.json({ items: publicApplicationItems(await applicationStore.load(request.params.runId)) });
+});
+
+app.post("/api/application/runs/:runId/review/:itemKey", async (request, response) => {
+  const run = await applicationStore.load(request.params.runId);
+  const choice = submitApplicationChoice(run, request.params.itemKey, request.body ?? {});
+  await applicationStore.save(run);
+  response.status(201).json({ choice });
+});
+
+app.post("/api/application/runs/:runId/functions/:functionId/apply", async (request, response) => {
+  const run = await applicationStore.load(request.params.runId);
+  await applyApplicationFunction(run, request.params.functionId);
+  await applicationStore.save(run);
+  response.json(publicApplicationRun(run, false));
+});
+app.post("/api/application/runs/:runId/apply", async (request, response) => {
+  const run = await applicationStore.load(request.params.runId);
+  await applyApplicationRun(run);
+  await applicationStore.save(run);
+  response.json(publicApplicationRun(run, false));
+});
 app.post("/api/models/test", async (request, response) => {
   if (!apiKey) {
     response.status(503).json({ error: "OPENROUTER_API_KEY is not configured in the backend." });

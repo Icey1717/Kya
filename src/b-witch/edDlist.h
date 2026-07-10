@@ -148,6 +148,8 @@ void edDListPatchableReset(DisplayList* pList, uint param_2, uint param_3, uint 
 
 void edDListLoadIdentity(void);
 
+void edDListTranslatev(edF32VECTOR4* v0);
+
 void edDlistSetUseUV(int newUseUV);
 
 void edDListChangeMatrix(DisplayList* pDisplayList, uint nbMatrices, edF32MATRIX4* aMatrices);

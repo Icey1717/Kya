@@ -2421,6 +2421,14 @@ void edF32Vector2LERP(edF32VECTOR2* pDst, edF32VECTOR2* pA, edF32VECTOR2* pB, fl
 	return;
 }
 
+void edF32Vector2Mul(edF32VECTOR2* v0, edF32VECTOR2* v1, float f0)
+{
+	v0->x = v1->x * f0;
+	v0->y = v1->y * f0;
+
+	return;
+}
+
 void edF32Vector2Mul(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
 {
 	v0->x = v1->x * v2->x;

@@ -100,11 +100,6 @@ void CInstance3D::ClearLocalData()
 	return;
 }
 
-void CInstance3D::ManageAnimation(float time)
-{
-	IMPLEMENTATION_GUARD();
-}
-
 CPauseManager::CPauseManager()
 {
 	pSimpleMenu = (CSimpleMenu*)0x0;
@@ -3217,6 +3212,57 @@ void CInstance3DAnimated::SetAnimation(int macroAnimId, uint flags)
 			this->field_0x12c = macroAnimId;
 		}
 	}
+
+	return;
+}
+
+void CInstance3DAnimated::ManageAnimation(float time)
+{
+	ushort uVar1;
+	int iVar2;
+	edANM_SKELETON* pSkeleton;
+	edF32MATRIX4* peVar3;
+	edANM_WRTS* pMatrixBuffer;
+	edF32MATRIX4* m0;
+	ed_3d_hierarchy* pHier;
+
+	if (this->field_0x130 == 0) {
+		TheAnimStage.SetActor(edAnmSkeleton::TheNullOne.pTag);
+		pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
+		TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
+		TheAnimStage.pFrameMatrixData = (edF32MATRIX4*)0x0;
+		this->anmMetaAnimator.AnimateDT(time);
+		TheAnimStage.ToonWRTSToGlobalMatrices(true);
+		pHier = reinterpret_cast<ed_3d_hierarchy*>((this->pNode)->pData);
+		pHier->pAnimMatrix = (edF32MATRIX4*)0x0;
+		pHier->pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+	}
+	else {
+		iVar2 = this->field_0x12c;
+		pSkeleton = this->field_0x4c;
+		TheAnimStage.SetActor(pSkeleton);
+		peVar3 = TheAnimManager.GetMatrixBuffer(pSkeleton->boneCount);
+		pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
+		TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
+		TheAnimStage.pFrameMatrixData = peVar3;
+		if (iVar2 == -1) {
+			uVar1 = pSkeleton->boneCount;
+			for (m0 = peVar3; m0 < peVar3 + uVar1; m0 = m0 + 1) {
+				edF32Matrix4SetIdentityHard(m0);
+			}
+		}
+		else {
+			this->anmMetaAnimator.AnimateDT(time);
+		}
+
+		TheAnimStage.ToonWRTSToGlobalMatrices(true);
+
+		pHier = reinterpret_cast<ed_3d_hierarchy*>((this->pNode)->pData);
+		pHier->pAnimMatrix = peVar3;
+		pHier->pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+	}
+
+	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 
 	return;
 }

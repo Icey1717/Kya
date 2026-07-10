@@ -5,6 +5,7 @@
 #include "FrontEndWidget.h"
 #include "Pause.h"
 #include "SpriteWidget.h"
+#include "ActorHero_Inventory.h"
 
 class CCamera;
 
@@ -21,6 +22,9 @@ public:
 class CSprite3D : public CSprite
 {
 public:
+	virtual void ClearLocalData();
+	virtual void Validate();
+	virtual void DrawSprite();
 
 	float field_0xc0;
 	float field_0xc4;
@@ -33,7 +37,7 @@ struct _FE_INV_ENTRY
 
 struct FE_INV_COLUMN
 {
-	undefined4 field_0x0;
+	int field_0x0;
 	undefined4 field_0x4;
 	_FE_INV_ENTRY aEntries[4];
 	CFE_Avatar aNodes[4];
@@ -61,7 +65,7 @@ public:
 
 	bool ComputeGameScreenCoordinate(edF32VECTOR2* pOutCoordinate, edF32VECTOR4* pPosition, float* pOutDepth, CCamera* pCamera);
 
-	bool FUN_003c9b00(CActor* pInventoryOwner, int param_3, edF32VECTOR4* param_4, CActor* param_5);
+	bool PrepareTransit(CActor* pInventoryOwner, int param_3, edF32VECTOR4* param_4, CActor* param_5);
 	void FUN_003ca620();
 	void ManageTransit();
 	void Column_DisplayText(int index);
@@ -84,7 +88,7 @@ public:
 	CActor* field_0x149c;
 
 	edF32VECTOR4 field_0x14a0;
-
+	FE_Position field_0x14b0;
 	CActor* field_0x14b8;
 
 	edNODE* pNode;

@@ -53,6 +53,12 @@ describe("C++ analysis", () => {
     expect(functions[3].exclusionReason).toBe("ambiguous_binding");
   });
 
+  it("handles source files larger than the Tree-sitter binding string limit", () => {
+    const largeSource = `// ${"x".repeat(33_000)}\nint large() { int iVar1 = 1; return iVar1; }`;
+    const [fn] = analyzeCppSource("large.cpp", largeSource);
+    expect(fn.qualifiedName).toBe("large");
+    expect(fn.declarations.map((declaration) => declaration.oldName)).toEqual(["iVar1"]);
+  });
   it("includes loop and condition declarations", () => {
     const [fn] = analyzeCppSource(
       "loops.cpp",

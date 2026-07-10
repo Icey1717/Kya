@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Declaration } from "../src/types.js";
-import { parseStrictJsonResponse, validateAndNormalizeResponse, validateChangedName } from "../src/validation.js";
+import { parseStrictJsonResponse, validateAndNormalizeResponse, validateChangedName, validateNameWarnings } from "../src/validation.js";
 
 const declarations: Declaration[] = [
   {
@@ -91,10 +91,17 @@ describe("strict response validation", () => {
     expect(validateChangedName("hasTarget", declarations[1])).toContain(
       "Boolean names must start with b followed by uppercase"
     );
-    expect(validateChangedName("pHTTPActor2", declarations[0]).length).toBeGreaterThan(0);
+    expect(validateChangedName("pHTTPActor2", declarations[0])).toEqual([]);
+    expect(validateNameWarnings("pHTTPActor2")).toEqual(expect.arrayContaining(["contains adjacent uppercase letters", "ends in a digit"]));
+    expect(validateChangedName("pG3DManager", declarations[0])).toEqual([]);
+    expect(validateNameWarnings("pG3DManager")).toContain("contains adjacent uppercase letters");
     expect(validateChangedName("class", { isPointer: false, isBoolean: false })).toContain("is a C++ keyword");
   });
 
+  it("accepts warning-only names in model responses", () => {
+    const result = validateAndNormalizeResponse(response([{ suggested_name: "pG3DManager" }]), declarations, []);
+    expect(result.suggestions[0].warnings).toContain("contains adjacent uppercase letters");
+  });
   it("rejects collisions and grandfathers only unchanged shadowing", () => {
     expect(() => validateAndNormalizeResponse(response([{ suggested_name: "pParameter" }]), declarations, ["pParameter"]))
       .toThrow(/collision/i);

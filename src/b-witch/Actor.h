@@ -114,6 +114,7 @@ struct _msg_5e_param
 {
 	int field_0x0;
 	int field_0x4;
+	edF32VECTOR4 field_0x10;
 };
 
 enum ACTOR_MESSAGE

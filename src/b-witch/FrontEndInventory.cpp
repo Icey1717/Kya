@@ -71,91 +71,91 @@ void CFrontendInventory::Reset()
 
 void CFrontendInventory::Init()
 {
-	char* pcVar1;
+	char* pResource;
 	_FE_INV_ENTRY* pInvEntry;
 	FE_INV_COLUMN* pInvColumn;
-	int iVar4;
-	int iVar5;
+	int entryIndex;
+	int columnIndex;
 	CFrontendBank* pFrontendBank;
 
 	CWidget::Init();
 
 	pFrontendBank = CScene::ptable.g_FrontEndBank_00451674;
-	iVar5 = 0;
+	columnIndex = 0;
 	pInvColumn = this->aInvColumns;
-	CSprite3D* pSprite = this->aSprites3d;
+	CSprite3D* pSprite3d = this->aSprites3d;
 	do {
-		pcVar1 = pFrontendBank->GetResource(MenuElementsBitmapNames[4], (edBANK_ENTRY_INFO*)0x0); // inv_select_01_p0
-		pSprite->Install(pcVar1);
-		pSprite->field_0xc4 = 12.5f;
+		pResource = pFrontendBank->GetResource(MenuElementsBitmapNames[4], (edBANK_ENTRY_INFO*)0x0); // inv_select_01_p0
+		pSprite3d->Install(pResource);
+		pSprite3d->field_0xc4 = 12.5f;
 		pInvColumn->field_0x870.SetFont(BootDataFont, false);
 		pInvColumn->field_0x870.rgbaColour = 0xffffffff;
 		pInvColumn->field_0x870.SetShadow(0x100);
 		pInvColumn->field_0x870.SetShadowShift(2.0f, 2.0f);
 		pInvColumn->field_0x870.SetHorizontalAlignment(1);
 		pInvColumn->field_0x870.SetVerticalAlignment(4);
-		iVar4 = 0;
+		entryIndex = 0;
 		pInvEntry = pInvColumn->aEntries;
 		do {
-			pcVar1 = pFrontendBank->GetResource(MenuElementsBitmapNames[3], (edBANK_ENTRY_INFO*)0x0); // inv_case_01_p0
-			pInvEntry->sprite.Install(pcVar1);
-			iVar4 = iVar4 + 1;
+			pResource = pFrontendBank->GetResource(MenuElementsBitmapNames[3], (edBANK_ENTRY_INFO*)0x0); // inv_case_01_p0
+			pInvEntry->sprite.Install(pResource);
+			entryIndex = entryIndex + 1;
 			pInvEntry->sprite.field_0xc4 = 13.0f;
 			pInvEntry = pInvEntry + 1;
-		} while (iVar4 < 4);
+		} while (entryIndex < 4);
 
-		iVar5 = iVar5 + 1;
-		pSprite = pSprite + 1;
+		columnIndex = columnIndex + 1;
+		pSprite3d = pSprite3d + 1;
 		pInvColumn = pInvColumn + 1;
-	} while (iVar5 < 2);
+	} while (columnIndex < 2);
 
 	return;
 }
 
 void CFrontendInventory::Term()
 {
-	edNODE* peVar1;
+	edNODE* pNodeToRemove;
 	_FE_INV_ENTRY* pEntry;
-	int iVar4;
-	int iVar5;
+	int entryIndex;
+	int columnIndex;
 	CSprite3D* pCurSprite;
 
 	SetInterface((CInterface*)0x0);
 
-	peVar1 = this->pNode;
-	if (peVar1 != (edNODE*)0x0) {
-		ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, peVar1);
+	pNodeToRemove = this->pNode;
+	if (pNodeToRemove != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNodeToRemove);
 		this->pNode = (edNODE*)0x0;
 		(this->avatar).field_0x0 = (CActor*)0x0;
 	}
 
-	iVar5 = 0;
+	columnIndex = 0;
 	pCurSprite = this->aSprites3d;
 	FE_INV_COLUMN* pInvColumn = this->aInvColumns;
 	do {
 		pCurSprite->Remove();
 		pEntry = pInvColumn->aEntries;
-		CFE_Avatar* pNode = pInvColumn->aNodes;
-		iVar4 = 0;
+		CFE_Avatar* pAvatarNode = pInvColumn->aNodes;
+		entryIndex = 0;
 		do {
 			pEntry->sprite.Remove();
 
-			peVar1 = pNode->instance3d.pNode;
-			if (peVar1 != (edNODE*)0x0) {
-				ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, peVar1);
-				pNode->instance3d.pNode = (edNODE*)0x0;
-				pNode->field_0x0 = (CActor*)0x0;
+			pNodeToRemove = pAvatarNode->instance3d.pNode;
+			if (pNodeToRemove != (edNODE*)0x0) {
+				ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNodeToRemove);
+				pAvatarNode->instance3d.pNode = (edNODE*)0x0;
+				pAvatarNode->field_0x0 = (CActor*)0x0;
 			}
 
-			iVar4 = iVar4 + 1;
+			entryIndex = entryIndex + 1;
 			pEntry = pEntry + 1;
-			pNode = pNode + 1;
-		} while (iVar4 < 4);
+			pAvatarNode = pAvatarNode + 1;
+		} while (entryIndex < 4);
 
-		iVar5 = iVar5 + 1;
+		columnIndex = columnIndex + 1;
 		pCurSprite = pCurSprite + 1;
 		pInvColumn = pInvColumn + 1;
-	} while (iVar5 < 2);
+	} while (columnIndex < 2);
 
 	return;
 }
@@ -163,72 +163,72 @@ void CFrontendInventory::Term()
 void CFrontendInventory::UpdatePos_StateWait(float time)
 {
 	FE_INV_COLUMN* pInvColumn;
-	int iVar2;
+	int nodeIndex;
 	CFE_Avatar* pNode;
-	int iVar4;
-	float fVar5;
+	int columnIndex;
+	float currentTime;
 
 	this->slotAlpha = 1.0f;
-	iVar4 = this->field_0x4c;
-	if (iVar4 == 2) {
-		iVar4 = 0;
+	columnIndex = this->field_0x4c;
+	if (columnIndex == 2) {
+		columnIndex = 0;
 		pInvColumn = this->aInvColumns;
 		do {
 			pNode = pInvColumn->aNodes;
 			if (this->pInterface != (CMagicInterface*)0x0) {
-				iVar2 = 0;
+				nodeIndex = 0;
 				do {
 					if ((pNode->instance3d.pNode != (edNODE*)0x0) && (pNode->field_0x4 != 0)) {
 						pNode->instance3d.SetDraw(false, CFrontend::_scene_handle);
 						pNode->field_0x4 = 0;
 					}
-					iVar2 = iVar2 + 1;
+					nodeIndex = nodeIndex + 1;
 					pNode = pNode + 1;
 
-				} while (iVar2 < 4);
+				} while (nodeIndex < 4);
 			}
 
-			iVar4 = iVar4 + 1;
+			columnIndex = columnIndex + 1;
 			pInvColumn = pInvColumn + 1;
-		} while (iVar4 < 2);
+		} while (columnIndex < 2);
 		this->field_0x4c = 3;
 		this->bVisible = 0;
 	}
 	else {
-		if (iVar4 != 5) {
-			if (iVar4 == 4) {
-				iVar4 = 0;
+		if (columnIndex != 5) {
+			if (columnIndex == 4) {
+				columnIndex = 0;
 				pInvColumn = this->aInvColumns;
 				do {
 					pNode = pInvColumn->aNodes;
 					if (this->pInterface != (CMagicInterface*)0x0) {
-						iVar2 = 0;
+						nodeIndex = 0;
 						do {
 							if ((pNode->instance3d.pNode != (edNODE*)0x0) && (pNode->field_0x4 == 0)) {
 								pNode->instance3d.SetDraw(true, CFrontend::_scene_handle);
 								pNode->field_0x4 = 1;
 							}
-							iVar2 = iVar2 + 1;
+							nodeIndex = nodeIndex + 1;
 							pNode = pNode + 1;
-						} while (iVar2 < 4);
+						} while (nodeIndex < 4);
 					}
 
-					iVar4 = iVar4 + 1;
+					columnIndex = columnIndex + 1;
 					pInvColumn = pInvColumn + 1;
-				} while (iVar4 < 2);
+				} while (columnIndex < 2);
 
-				fVar5 = CFrontend::GetTime();
-				if (this->field_0x50 < fVar5 - this->prevTime) {
+				currentTime = CFrontend::GetTime();
+				if (this->field_0x50 < currentTime - this->prevTime) {
 					this->field_0x4c = 2;
 					MoveToNext(&this->slotOff);
 				}
 			}
 			else {
-				if (iVar4 == 1) {
+				if (columnIndex == 1) {
 					this->field_0x4c = 5;
 				}
 				else {
-					if (iVar4 == 0) {
+					if (columnIndex == 0) {
 						this->field_0x4c = 4;
 					}
 				}
@@ -242,10 +242,10 @@ void CFrontendInventory::UpdatePos_StateWait(float time)
 bool CFrontendInventory::UpdateDisp(float time)
 {
 	int activeItemIndex;
-	bool bVar2;
+	bool bSuccess;
 	CInventoryInterface* pInventoryInterface;
 
-	bVar2 = false;
+	bSuccess = false;
 	if ((this->bDisplayDirty != 0) && (pInventoryInterface = static_cast<CInventoryInterface*>(GetInterface()), pInventoryInterface != (CInventoryInterface*)0x0)) {
 		pInventoryInterface = (CInventoryInterface*)this->pInterface;
 		activeItemIndex = pInventoryInterface->aHeaderInfo[0].activeItemIndex;
@@ -264,10 +264,10 @@ bool CFrontendInventory::UpdateDisp(float time)
 
 		this->aInvColumns[1].field_0x0 = activeItemIndex;
 		this->bDisplayDirty = 0;
-		bVar2 = true;
+		bSuccess = true;
 	}
 
-	return bVar2;
+	return bSuccess;
 }
 
 void CFrontendInventory::Update(float time)
@@ -286,101 +286,101 @@ edF32VECTOR2 vSelection_Scale = { 0.04f, 0.03125f };
 
 void CFrontendInventory::Draw()
 {
-	bool bVar1;
-	edCTextStyle* pNewFont;
-	int iVar2;
-	edF32VECTOR2* v1;
-	CSprite3D* pCVar3;
-	FE_INV_COLUMN* pCVar4;
+	bool bIsDrawing;
+	edCTextStyle* pPreviousStyle;
+	int columnIndex;
+	edF32VECTOR2* pWidgetScale;
+	CSprite3D* pCurrentSprite;
+	FE_INV_COLUMN* pCurrentColumn;
 	CFE_Avatar* pInvNode;
 	edCTextStyle textStyle;
-	edF32VECTOR2 local_10;
-	edF32VECTOR2 local_8;
+	edF32VECTOR2 selectionPosition;
+	edF32VECTOR2 textPosition;
 
 	ManageTransit();
 
 	if (((this->bVisible == 0) || (this->field_0x4c == 3)) || ((GameFlags & 0x3c) != 0)) {
 		pInvNode = this->aInvColumns[0].aNodes;
 		if (this->pInterface != (CInterface*)0x0) {
-			iVar2 = 0;
+			columnIndex = 0;
 			do {
 				if ((pInvNode->instance3d.pNode != (edNODE*)0x0) && (pInvNode->field_0x4 != 0)) {
 					pInvNode->instance3d.SetDraw(false, CFrontend::_scene_handle);
 					pInvNode->field_0x4 = 0;
 				}
-				iVar2 = iVar2 + 1;
+				columnIndex = columnIndex + 1;
 				pInvNode = pInvNode + 1;
-			} while (iVar2 < 4);
+			} while (columnIndex < 4);
 		}
 
 		pInvNode = this->aInvColumns[1].aNodes;
 		if (this->pInterface != (CInterface*)0x0) {
-			iVar2 = 0;
+			columnIndex = 0;
 			do {
 				if ((pInvNode->instance3d.pNode != (edNODE*)0x0) && (pInvNode->field_0x4 != 0)) {
 					pInvNode->instance3d.SetDraw(false, CFrontend::_scene_handle);
 					pInvNode->field_0x4 = 0;
 				}
-				iVar2 = iVar2 + 1;
+				columnIndex = columnIndex + 1;
 				pInvNode = pInvNode + 1;
-			} while (iVar2 < 4);
+			} while (columnIndex < 4);
 		}
 	}
 	else {
-		bVar1 = GuiDList_BeginCurrent();
-		if (bVar1 != false) {
+		bIsDrawing = GuiDList_BeginCurrent();
+		if (bIsDrawing != false) {
 			textStyle.Reset();
 			textStyle.SetFont(BootDataFont, false);
 			textStyle.SetHorizontalAlignment(2);
 			textStyle.SetVerticalAlignment(8);
-			pNewFont = edTextStyleSetCurrent(&textStyle);
+			pPreviousStyle = edTextStyleSetCurrent(&textStyle);
 			edCTextFormat textFormat;
-			edF32Vector2Add(&local_8, &this->widgetSlotA.position, &LeftOffset$10739);
+			edF32Vector2Add(&textPosition, &this->widgetSlotA.position, &LeftOffset$10739);
 			textFormat.FormatString("%[ACTION]b");
-			textFormat.Display(local_8.x * static_cast<float>(gVideoConfig.screenWidth), local_8.y * static_cast<float>(gVideoConfig.screenHeight));
-			edF32Vector2Add(&local_8, &this->widgetSlotA.position, &RightOffset$10740);
+			textFormat.Display(textPosition.x * static_cast<float>(gVideoConfig.screenWidth), textPosition.y * static_cast<float>(gVideoConfig.screenHeight));
+			edF32Vector2Add(&textPosition, &this->widgetSlotA.position, &RightOffset$10740);
 			textFormat.FormatString("%[CATCH]b");
-			textFormat.Display(local_8.x * static_cast<float>(gVideoConfig.screenWidth), local_8.y * static_cast<float>(gVideoConfig.screenHeight));
-			edTextStyleSetCurrent(pNewFont);
+			textFormat.Display(textPosition.x * static_cast<float>(gVideoConfig.screenWidth), textPosition.y * static_cast<float>(gVideoConfig.screenHeight));
+			edTextStyleSetCurrent(pPreviousStyle);
 
-			iVar2 = 0;
+			columnIndex = 0;
 			do {
-				Column_DisplayText(iVar2);
-				iVar2 = iVar2 + 1;
-			} while (iVar2 < 2);
+				Column_DisplayText(columnIndex);
+				columnIndex = columnIndex + 1;
+			} while (columnIndex < 2);
 
 			GuiDList_EndCurrent();
 		}
 
-		bVar1 = Frontend2DDList_BeginCurrent();
-		v1 = &this->widgetSlotA.scale;
-		if (bVar1 != false) {
-			edF32Vector2Add(&this->aInvColumns[0].field_0x930, v1, &vCells_Offset);
+		bIsDrawing = Frontend2DDList_BeginCurrent();
+		pWidgetScale = &this->widgetSlotA.scale;
+		if (bIsDrawing != false) {
+			edF32Vector2Add(&this->aInvColumns[0].field_0x930, pWidgetScale, &vCells_Offset);
 			this->aInvColumns[0].field_0x930.x = -this->aInvColumns[0].field_0x930.x;
-			edF32Vector2Add(&this->aInvColumns[1].field_0x930, v1, &vCells_Offset);
-			pCVar3 = this->aSprites3d;
-			pCVar4 = this->aInvColumns;
-			for (iVar2 = 0; iVar2 < 2; iVar2 = iVar2 + 1) {
-				Column_Display(iVar2);
+			edF32Vector2Add(&this->aInvColumns[1].field_0x930, pWidgetScale, &vCells_Offset);
+			pCurrentSprite = this->aSprites3d;
+			pCurrentColumn = this->aInvColumns;
+			for (columnIndex = 0; columnIndex < 2; columnIndex = columnIndex + 1) {
+				Column_Display(columnIndex);
 
-				edF32Vector2Add(&local_10, &this->widgetSlotA.position, &pCVar4->field_0x930);
-				edF32Vector2Add(&local_10, &local_10, &vSelection_Offset);
-				pCVar3->bValid = false;
-				if (iVar2 == 0) {
-					pCVar3->flags = pCVar3->flags | 0x1000;
+				edF32Vector2Add(&selectionPosition, &this->widgetSlotA.position, &pCurrentColumn->field_0x930);
+				edF32Vector2Add(&selectionPosition, &selectionPosition, &vSelection_Offset);
+				pCurrentSprite->bValid = false;
+				if (columnIndex == 0) {
+					pCurrentSprite->flags = pCurrentSprite->flags | 0x1000;
 				}
 				else {
-					pCVar3->flags = pCVar3->flags & 0xffffefff;
+					pCurrentSprite->flags = pCurrentSprite->flags & 0xffffefff;
 				}
-				pCVar3->bValid = false;
-				pCVar3->field_0x5c.scale.x = vSelection_Scale.x;
-				pCVar3->field_0x5c.scale.y = vSelection_Scale.y;
-				pCVar3->bValid = false;
-				pCVar3->field_0x5c.position.x = local_10.x;
-				pCVar3->field_0x5c.position.y = local_10.y;
-				pCVar3->Draw(true);
-				pCVar4 = pCVar4 + 1;
-				pCVar3 = pCVar3 + 1;
+				pCurrentSprite->bValid = false;
+				pCurrentSprite->field_0x5c.scale.x = vSelection_Scale.x;
+				pCurrentSprite->field_0x5c.scale.y = vSelection_Scale.y;
+				pCurrentSprite->bValid = false;
+				pCurrentSprite->field_0x5c.position.x = selectionPosition.x;
+				pCurrentSprite->field_0x5c.position.y = selectionPosition.y;
+				pCurrentSprite->Draw(true);
+				pCurrentColumn = pCurrentColumn + 1;
+				pCurrentSprite = pCurrentSprite + 1;
 			}
 
 			FrontendDList_EndCurrent();
@@ -425,14 +425,14 @@ void CFrontendInventory::Level_Init()
 void CFrontendInventory::Level_Term()
 {
 	edNODE* pNode;
-	int iVar1;
-	int iVar2;
+	int nodeIndex;
+	int columnIndex;
 	FE_INV_COLUMN* pInvColumn;
 
-	iVar2 = 0;
+	columnIndex = 0;
 	pInvColumn = this->aInvColumns;
 	do {
-		iVar1 = 0;
+		nodeIndex = 0;
 		CFE_Avatar* pInvNode = pInvColumn->aNodes;
 		do {
 			pNode = pInvNode->instance3d.pNode;
@@ -442,13 +442,13 @@ void CFrontendInventory::Level_Term()
 				pInvNode->field_0x0 = (CActor*)0x0;
 			}
 
-			iVar1 = iVar1 + 1;
+			nodeIndex = nodeIndex + 1;
 			pInvNode = pInvNode + 1;
-		} while (iVar1 < 4);
+		} while (nodeIndex < 4);
 
-		iVar2 = iVar2 + 1;
+		columnIndex = columnIndex + 1;
 		pInvColumn = pInvColumn + 1;
-	} while (iVar2 < 2);
+	} while (columnIndex < 2);
 
 	return;
 }
@@ -459,32 +459,129 @@ bool CFrontendInventory::ComputeGameScreenCoordinate(edF32VECTOR2* pOutCoordinat
 	float fov;
 
 	// Position in camera space.
-	edF32VECTOR4 pCameraPosition;
+	edF32VECTOR4 cameraPosition;
 
 	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
 	if (pCamera == (CCamera*)0x0) {
 		fov = pCameraManager->fov_0xa34;
-		edF32Matrix4MulF32Vector4Hard(&pCameraPosition, &pCameraManager->worldToCamera_0x3d0, pPosition);
+		edF32Matrix4MulF32Vector4Hard(&cameraPosition, &pCameraManager->worldToCamera_0x3d0, pPosition);
 	}
 	else {
 		edF32MATRIX4 flippedTransform;
 		fov = pCamera->fov;
 		edF32Matrix4FlipXZAxes(&flippedTransform, &pCamera->transformationMatrix);
 		edF32Matrix4GetInverseOrthoHard(&flippedTransform, &flippedTransform);
-		edF32Matrix4MulF32Vector4Hard(&pCameraPosition, &flippedTransform, pPosition);
+		edF32Matrix4MulF32Vector4Hard(&cameraPosition, &flippedTransform, pPosition);
 	}
 
-	pOutCoordinate->x = (-pCameraPosition.x / (pCameraPosition.z * fov)) * 0.5f + 0.5f;
-	pOutCoordinate->y = (pCameraPosition.y / (pCameraPosition.z * fov)) * 0.5f + 0.5f;
-	*pOutDepth = -pCameraPosition.z * (fov / pCameraManager->pFrontendCamera_0x4e4->fov);
+	pOutCoordinate->x = (-cameraPosition.x / (cameraPosition.z * fov)) * 0.5f + 0.5f;
+	pOutCoordinate->y = (cameraPosition.y / (cameraPosition.z * fov)) * 0.5f + 0.5f;
+	*pOutDepth = -cameraPosition.z * (fov / pCameraManager->pFrontendCamera_0x4e4->fov);
 
 	return true;
 }
 
-bool CFrontendInventory::FUN_003c9b00(CActor* pInventoryOwner, int param_3, edF32VECTOR4* param_4, CActor* param_5)
+bool CFrontendInventory::PrepareTransit(CActor* pInventoryOwner, int param_3, edF32VECTOR4* param_4, CActor* param_5)
 {
-	IMPLEMENTATION_GUARD();
-	return true;
+	int columnStartSlot;
+	edNODE* pNode;
+	bool bSuccess;
+	CCameraManager* pCameraManager;
+	CInventoryInfo* pInventoryInfo;
+	int iVar5;
+	int* piVar6;
+	float fovScale;
+	float fov;
+	edF32VECTOR4 cameraSpacePos;
+	_msg_5e_param msgParam;
+	edF32VECTOR4 worldPos;
+	FE_Position activePos;
+	edF32VECTOR2 screenPos;
+	undefined4 local_10;
+	edF32VECTOR4* pWorldPos;
+	undefined4 local_8;
+	_msg_5e_param* pMsgParam;
+	CFrontendDisplay* pFrontendDisplay;
+
+	pFrontendDisplay = CScene::ptable.g_FrontendManager_00451680;
+	if (param_5 == (CActor*)0x0) {
+		worldPos.x = param_4->x;
+		worldPos.y = param_4->y;
+		worldPos.z = param_4->z;
+		worldPos.w = param_4->w;
+	}
+	else {
+		pMsgParam = &msgParam;
+		msgParam.field_0x0 = 2;
+		pInventoryOwner->DoMessage(param_5, (ACTOR_MESSAGE)0x5e, pMsgParam);
+		worldPos = msgParam.field_0x10;
+	}
+
+	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+	fov = pCameraManager->fov_0xa34;
+	edF32Matrix4MulF32Vector4Hard(&cameraSpacePos, &pCameraManager->worldToCamera_0x3d0, &worldPos);
+	fovScale = cameraSpacePos.z * fov;
+	screenPos.x = (-cameraSpacePos.x / fovScale) * 0.5f + 0.5f;
+	screenPos.y = (cameraSpacePos.y / fovScale) * 0.5f + 0.5f;
+	bSuccess = pFrontendDisplay->ComputeSceneCoordinate(-cameraSpacePos.z * (fov / pCameraManager->pFrontendCamera_0x4e4->fov), &this->field_0x14a0, &screenPos);
+	if (bSuccess == false) {
+		bSuccess = false;
+	}
+	else {
+		pInventoryInfo = pInventoryOwner->GetInventoryInfo();
+		bSuccess = static_cast<CInventoryInterface*>(this->pInterface)->FindByType(&this->field_0x14b0, pInventoryInfo->purchaseId);
+		if (bSuccess == false) {
+			bSuccess = false;
+		}
+		else {
+			int itemSlot = (this->field_0x14b0).itemSlot;
+			FE_INV_COLUMN* pInvColumn = this->aInvColumns + (this->field_0x14b0).headerSlot;
+			columnStartSlot = pInvColumn->field_0x0;
+			if ((itemSlot < columnStartSlot) || (columnStartSlot + 3 < itemSlot)) {
+				activePos.headerSlot = (this->field_0x14b0).headerSlot;
+				itemSlot = (this->field_0x14b0).itemSlot;
+				if (itemSlot < pInvColumn->field_0x0) {
+					activePos.itemSlot = pInvColumn->field_0x0 - itemSlot;
+				}
+				else {
+					activePos.itemSlot = itemSlot + -3;
+				}
+
+				static_cast<CInventoryInterface*>(this->pInterface)->SetActivePosition(&activePos);
+				pInvColumn->field_0x0 = activePos.itemSlot;
+			}
+
+			(this->field_0x14b0).itemSlot = (this->field_0x14b0).itemSlot - pInvColumn->field_0x0;
+
+			pNode = this->pNode;
+			if (pNode != (edNODE*)0x0) {
+				if (pNode != (edNODE*)0x0) {
+					ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNode);
+					this->pNode = (edNODE*)0x0;
+					(this->avatar).field_0x0 = (CActor*)0x0;
+				}
+
+				if (this->field_0x1494 == 0) {
+					this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)2);
+				}
+				else {
+					pWorldPos = &worldPos;
+					this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x53, pWorldPos);
+					this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)4);
+				}
+			}
+
+			this->field_0x1490 = 1;
+			this->field_0x1494 = param_3;
+			this->field_0x1498 = 0.0f;
+			this->field_0x149c = pInventoryOwner;
+			this->field_0x14b8 = param_5;
+			this->avatar.Create(pInventoryOwner);
+			bSuccess = true;
+		}
+	}
+
+	return bSuccess;
 }
 
 void CFrontendInventory::FUN_003ca620()
@@ -592,43 +689,43 @@ void CFrontendInventory::ManageTransit()
 {
 	edNODE* pNode;
 	CFrontendDisplay* pFrontendDisplay;
-	bool bVar1;
-	CCameraManager* iVar2;
-	CFrontendInventory* iVar3;
-	float fVar3;
-	float t;
-	float fVar4;
-	edF32VECTOR4 local_80;
-	_msg_5e_param local_70;
-	edF32VECTOR4 local_50;
-	edF32VECTOR4 eStack64;
-	edF32VECTOR4 local_30;
-	edF32VECTOR2 local_18;
+	bool bIsCoordinateValid;
+	CCameraManager* pCameraManager;
+	FE_INV_COLUMN* pInvColumn;
+	float projectedZ;
+	float interpolationT;
+	float fov;
+	edF32VECTOR4 cameraSpacePos;
+	_msg_5e_param msgParam;
+	edF32VECTOR4 worldPos;
+	edF32VECTOR4 targetPos;
+	edF32VECTOR4 currentPos;
+	edF32VECTOR2 screenPos;
 	undefined4 local_10;
-	edF32VECTOR4* local_c;
+	edF32VECTOR4* pWorldPos;
 	undefined4 local_8;
-	_msg_5e_param* local_4;
+	_msg_5e_param* pMsgParam;
 
 	pFrontendDisplay = CScene::ptable.g_FrontendManager_00451680;
 	if (this->field_0x1490 != 0) {
-		t = this->field_0x1498 / 0.3f;
+		interpolationT = this->field_0x1498 / 0.3f;
 		if (this->field_0x14b8 != (CActor*)0x0) {
-			local_4 = &local_70;
-			local_70.field_0x0 = 2;
-			this->field_0x149c->DoMessage(this->field_0x14b8, (ACTOR_MESSAGE)0x5e, local_4);
-			iVar2 = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
-			fVar4 = iVar2->fov_0xa34;
-			edF32Matrix4MulF32Vector4Hard(&local_80, &iVar2->worldToCamera_0x3d0, &local_50);
-			fVar3 = local_80.z * fVar4;
-			local_18.x = (-local_80.x / fVar3) * 0.5f + 0.5f;
-			local_18.y = (local_80.y / fVar3) * 0.5f + 0.5f;
+			pMsgParam = &msgParam;
+			msgParam.field_0x0 = 2;
+			this->field_0x149c->DoMessage(this->field_0x14b8, (ACTOR_MESSAGE)0x5e, pMsgParam);
+			pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+			fov = pCameraManager->fov_0xa34;
+			edF32Matrix4MulF32Vector4Hard(&cameraSpacePos, &pCameraManager->worldToCamera_0x3d0, &worldPos);
+			projectedZ = cameraSpacePos.z * fov;
+			screenPos.x = (-cameraSpacePos.x / projectedZ) * 0.5f + 0.5f;
+			screenPos.y = (cameraSpacePos.y / projectedZ) * 0.5f + 0.5f;
 
-			bVar1 = pFrontendDisplay->ComputeSceneCoordinate(-local_80.z * (fVar4 / iVar2->pFrontendCamera_0x4e4->fov), &this->field_0x14a0, &local_18);
-			if (bVar1 == false) {
+			bIsCoordinateValid = pFrontendDisplay->ComputeSceneCoordinate(-cameraSpacePos.z * (fov / pCameraManager->pFrontendCamera_0x4e4->fov), &this->field_0x14a0, &screenPos);
+			if (bIsCoordinateValid == false) {
 				return;
 			}
 		}
-		if (1.0f <= t) {
+		if (1.0f <= interpolationT) {
 			pNode = this->avatar.instance3d.pNode;
 			if (pNode != (edNODE*)0x0) {
 				ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNode);
@@ -640,8 +737,8 @@ void CFrontendInventory::ManageTransit()
 				this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)2);
 			}
 			else {
-				local_c = &local_50;
-				this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x53, local_c);
+				pWorldPos = &worldPos;
+				this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x53, pWorldPos);
 				this->field_0x149c->DoMessage(this->field_0x149c, (ACTOR_MESSAGE)0x5f, (MSG_PARAM)4);
 			}
 
@@ -649,26 +746,25 @@ void CFrontendInventory::ManageTransit()
 		}
 		else {
 			if (this->field_0x1494 == 1) {
-				t = 1.0f - t;
+				interpolationT = 1.0f - interpolationT;
 			}
 
-			IMPLEMENTATION_GUARD(
-			iVar3 = static_cast<CFrontendInventory*>((int)this->aSprites3d + (this->field_0x14b0).headerSlot * 0x940 + -0x74);
-			edF32Vector2Add(&local_18, (edF32VECTOR2*)&this->slotOn, &iVar3->aInvColumns[0].field_0x930);
-			edF32Vector2Add(&local_18, &local_18, &iVar3->aInvColumns[0].field_0x938);
-			local_18.y = local_18.y + static_cast<float>((this->field_0x14b0).itemSlot + 1) * iVar3->aInvColumns[0].field_0x930.y;
-			pFrontendDisplay->ComputeSceneCoordinate(12.0f, &eStack64, &local_18);
-			edF32Vector4LERPHard(t, &local_30, (edF32VECTOR4*)&this->field_0x14a0, &eStack64);
-			local_30.w = 1.0f;
+			pInvColumn = this->aInvColumns + (this->field_0x14b0).headerSlot;
+			edF32Vector2Add(&screenPos, &this->slotOn.position, &pInvColumn->field_0x930);
+			edF32Vector2Add(&screenPos, &screenPos, &pInvColumn->field_0x938);
+			screenPos.y = screenPos.y + static_cast<float>((this->field_0x14b0).itemSlot + 1) * pInvColumn->field_0x930.y;
+			pFrontendDisplay->ComputeSceneCoordinate(12.0f, &targetPos, &screenPos);
+			edF32Vector4LERPHard(interpolationT, &currentPos, &this->field_0x14a0, &targetPos);
+			currentPos.w = 1.0f;
 
 			if (this->avatar.instance3d.pNode != (edNODE*)0x0) {
-				this->avatar.instance3d.position = local_30;
+				this->avatar.instance3d.position = currentPos;
 				this->avatar.instance3d.position.w = 1.0f;
 				(this->avatar).instance3d.ComputeObjectMatrix();
 				if (this->avatar.field_0x0->pAnimationController != (CAnimation*)0x0) {
 					(this->avatar).instance3d.ManageAnimation(GetTimer()->lastFrameTime);
 				}
-			})
+			}
 
 			this->field_0x1498 = this->field_0x1498 + GetTimer()->cutsceneDeltaTime;
 		}
@@ -679,34 +775,34 @@ void CFrontendInventory::ManageTransit()
 
 void CFrontendInventory::Column_DisplayText(int index)
 {
-	int iVar1;
-	FE_INV_COLUMN* iVar2;
+	int nbUsedSlots;
+	FE_INV_COLUMN* pColumn;
 	edCTextStyle* pTextStyle;
-	int iVar3;
-	edF32VECTOR2 local_8;
+	int slotIndex;
+	edF32VECTOR2 textPosition;
 
-	iVar2 = this->aInvColumns + index;
-	local_8.x = this->widgetSlotA.scale.x * 0.8f;
-	local_8.y = this->widgetSlotA.scale.y * 1.3f;
-	edF32Vector2Add(&local_8, &local_8, &iVar2->field_0x930);
-	edF32Vector2Add(&local_8, &local_8, &this->widgetSlotA.position);
-	pTextStyle = edTextStyleSetCurrent(&iVar2->field_0x870);
-	iVar3 = 0;
-	if (0 < iVar2->field_0x4) {
+	pColumn = this->aInvColumns + index;
+	textPosition.x = this->widgetSlotA.scale.x * 0.8f;
+	textPosition.y = this->widgetSlotA.scale.y * 1.3f;
+	edF32Vector2Add(&textPosition, &textPosition, &pColumn->field_0x930);
+	edF32Vector2Add(&textPosition, &textPosition, &this->widgetSlotA.position);
+	pTextStyle = edTextStyleSetCurrent(&pColumn->field_0x870);
+	slotIndex = 0;
+	if (0 < pColumn->field_0x4) {
 		do {
-			iVar1 = static_cast<CInventoryInterface*>(this->pInterface)->aHeaderInfo[index].nbUsedSlots;
-			if (iVar1 == 0) {
+			nbUsedSlots = static_cast<CInventoryInterface*>(this->pInterface)->aHeaderInfo[index].nbUsedSlots;
+			if (nbUsedSlots == 0) {
 				trap(7);
 			}
-			if (1 < static_cast<CInventoryInterface*>(this->pInterface)->aSlots[index][(iVar2->field_0x0 + iVar3) % iVar1].nbItems) {
+			if (1 < static_cast<CInventoryInterface*>(this->pInterface)->aSlots[index][(pColumn->field_0x0 + slotIndex) % nbUsedSlots].nbItems) {
 				edCTextFormat textFormat;
 				textFormat.FormatString("x%d");
-				textFormat.Display(local_8.x * static_cast<float>(gVideoConfig.screenWidth), local_8.y * static_cast<float>(gVideoConfig.screenHeight));
+				textFormat.Display(textPosition.x * static_cast<float>(gVideoConfig.screenWidth), textPosition.y * static_cast<float>(gVideoConfig.screenHeight));
 			}
 
-			iVar3 = iVar3 + 1;
-			local_8.y = local_8.y + iVar2->field_0x930.y;
-		} while (iVar3 < iVar2->field_0x4);
+			slotIndex = slotIndex + 1;
+			textPosition.y = textPosition.y + pColumn->field_0x930.y;
+		} while (slotIndex < pColumn->field_0x4);
 	}
 
 	edTextStyleSetCurrent(pTextStyle);
@@ -746,23 +842,22 @@ void CFrontendInventory::Column_Display(int index)
 	pInvNode = pInvColumn->aNodes;
 	do {
 		if (pInvNode->instance3d.pNode != (edNODE*)0x0) {
-			IMPLEMENTATION_GUARD(
-			iVar9 = static_cast<int>(pFVar10)->aEntries + iVar14 + -8;
 			local_20 = index;
-			if (*static_cast<int*>(iVar9 + 0x340) != 0) {
+			if (pInvNode->instance3d.pNode != (edNODE*)0x0) {
 				iVar5 = 0;
 				do {
-					pCVar1 = this->pInterface[index * 3 + 5].pVTable;
-					local_1c = (pFVar10->field_0x0 + iVar5) % static_cast<int>(pCVar1);
-					if (pCVar1 == (CInterfaceVTable*)0x0) {
+					int nbUsedSlots = static_cast<CInventoryInterface*>(this->pInterface)->aHeaderInfo[index].nbUsedSlots;
+					local_1c = (pInvColumn->field_0x0 + iVar9) % nbUsedSlots;
+					if (nbUsedSlots == 0) {
 						trap(7);
 					}
-					pCVar1 = this->pInterface[local_20 * 0x30 + local_1c * 3 + 10].pVTable;
-					iVar3 = (**static_cast<code**>(**(int**)(iVar9 + 0x330) + 0xe8))();
-					if (*static_cast<CInterfaceVTable**>(iVar3 + 0x20) == pCVar1) goto LAB_003ca278;
+					CActor* pActor = pInvNode->field_0x0;
+					int itemId = static_cast<CInventoryInterface*>(this->pInterface)->aSlots[local_20][local_1c].itemId;
+					CInventoryInfo* pInvInfo = pActor->GetInventoryInfo();
+					if (pInvInfo->purchaseId == itemId) goto LAB_003ca278;
 					iVar5 = iVar5 + 1;
 				} while (iVar5 < 4);
-			})
+			}
 
 			iVar5 = -1;
 		LAB_003ca278:
@@ -788,7 +883,7 @@ void CFrontendInventory::Column_Display(int index)
 		local_18.headerSlot = index;
 		do {
 			int nbUsedSlots = static_cast<CInventoryInterface*>(this->pInterface)->aHeaderInfo[index].nbUsedSlots;
-			local_18.itemSlot = (pFVar10->field_0x0 + iVar12) % nbUsedSlots;
+			local_18.itemSlot = (pInvColumn->field_0x0 + iVar12) % nbUsedSlots;
 			if (nbUsedSlots == 0x0) {
 				trap(7);
 			}
@@ -865,10 +960,10 @@ void CFrontendInventory::Column_Display(int index)
 void CFE_Avatar::Create(CActor* pActor)
 {
 	CinNamedObject30* pCVar1;
-	CAnimation* this_00;
+	CAnimation* pAnim;
 	ed_g3d_manager* pG3D;
-	edNODE* peVar2;
-	int iVar3;
+	edNODE* pNode;
+	int macroAnimId;
 
 	this->field_0x0 = pActor;
 	this->field_0x4 = 1;
@@ -880,18 +975,120 @@ void CFE_Avatar::Create(CActor* pActor)
 		pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(pCVar1->meshIndex, pCVar1->textureIndex);
 	}
 
-	peVar2 = ed3DHierarchyAddToScene(CFrontend::_scene_handle, pG3D, (char*)0x0);
-	(this->instance3d).pNode = peVar2;
+	pNode = ed3DHierarchyAddToScene(CFrontend::_scene_handle, pG3D, (char*)0x0);
+	(this->instance3d).pNode = pNode;
 
-	reinterpret_cast<ed_g3d_hierarchy*>(this->instance3d.pNode->pData)->pTextureInfo = STORE_POINTER((pActor->p3DHierNode->base).pTextureInfo);
+	reinterpret_cast<ed_3d_hierarchy*>(this->instance3d.pNode->pData)->pTextureInfo = (pActor->p3DHierNode->base).pTextureInfo;
 
 	this->instance3d.ClearLocalData();
 	if (pActor->pAnimationController != (CAnimation*)0x0) {
 		this->instance3d.SetAnimationDatas(CScene::ptable.g_AnimManager_00451668->pAnimKeyTable);
-		this_00 = pActor->pAnimationController;
-		iVar3 = pActor->GetIdMacroAnim(5);
-		iVar3 = this_00->GetPhysicalAnimIndex(iVar3);
-		this->instance3d.SetAnimation(iVar3, 1);
+		pAnim = pActor->pAnimationController;
+		macroAnimId = pActor->GetIdMacroAnim(5);
+		macroAnimId = pAnim->GetPhysicalAnimIndex(macroAnimId);
+		this->instance3d.SetAnimation(macroAnimId, 1);
 	}
+	return;
+}
+
+void CSprite3D::ClearLocalData()
+{
+	CSprite::ClearLocalData();
+
+	this->field_0xc0 = 0.0f;
+	this->field_0xc4 = 10.0f;
+
+	return;
+}
+
+edF32VECTOR2 edF32VECTOR2_00448ce8 = { -1.0f, -1.0f };
+edF32VECTOR2 edF32VECTOR2_00448cf0 = { 1.0f, 1.0f };
+
+void CSprite3D::Validate()
+{
+	CSprite* pParentSprite;
+	edF32VECTOR2* pCurrentCoords;
+	edF32VECTOR2* pEffectiveScale;
+	edF32VECTOR2 worldPosition;
+	edF32VECTOR2 combinedScale;
+	edF32VECTOR2 bottomRightOffset;
+	edF32VECTOR2 topLeftOffset;
+
+	topLeftOffset = edF32VECTOR2_00448ce8;
+	bottomRightOffset = edF32VECTOR2_00448cf0;
+
+	pParentSprite = this->pParent;
+	if (pParentSprite == (CSprite*)0x0) {
+		pEffectiveScale = &this->field_0x5c.scale;
+	}
+	else {
+		edF32Vector2Mul(&combinedScale, &(pParentSprite->field_0x5c).scale, &this->field_0x5c.scale);
+		edF32Vector2Mul(&worldPosition, &((this->pParent)->field_0x5c).scale, &this->field_0x5c.position);
+		edF32Vector2Add(&worldPosition, &(this->pParent)->field_0x5c.position, &worldPosition);
+		pEffectiveScale = &combinedScale;
+	}
+
+	edF32Vector2Mul(&this->screenCoordsTL, &topLeftOffset, pEffectiveScale);
+	pCurrentCoords = &this->screenCoordsTL;
+	edF32Vector2Mul(pCurrentCoords, pCurrentCoords, this->field_0xc4);
+	edF32Vector2Mul(&this->screenCoordsBR, &bottomRightOffset, pEffectiveScale);
+	pEffectiveScale = &this->screenCoordsBR;
+	edF32Vector2Mul(pEffectiveScale, pEffectiveScale, this->field_0xc4);
+	this->bValid = true;
+
+	return;
+}
+
+void CSprite3D::DrawSprite()
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 eStack96;
+	edF32MATRIX4 local_50;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	local_50 = gF32Matrix4Unit;
+
+	bVar1 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(this->field_0xc4, &eStack96, &this->field_0x5c.position);
+	if (bVar1 != false) {
+		local_8 = this->texCoordA.x;
+		local_4 = this->texCoordA.y;
+		fVar2 = this->texCoordB.x;
+		fVar3 = this->texCoordB.y;
+		local_c = fVar3;
+
+		if ((this->flags & 0x2000) != 0) {
+			local_c = local_4;
+			local_4 = fVar3;
+		}
+
+		local_10 = fVar2;
+		if ((this->flags & 0x1000) != 0) {
+			local_10 = local_8;
+			local_8 = fVar2;
+		}
+
+		edDListLoadMatrix(&local_50);
+		if (this->field_0xc0 != 0.0f) {
+			edDListRotateZ(this->field_0xc0);
+		}
+
+		edDListTranslatev(&eStack96);
+		edDListBegin(1.0f, 1.0f, 1.0f, 8, 4);
+		edDListTexCoo2f(local_8, local_4);
+		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, 0.0f);
+		edDListTexCoo2f(local_10, local_4);
+		edDListVertex4f(this->screenCoordsBR.x, this->screenCoordsTL.y, 0.0f, 0.0f);
+		edDListTexCoo2f(local_8, local_c);
+		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsBR.y, 0.0f, 0.0f);
+		edDListTexCoo2f(local_10, local_c);
+		edDListVertex4f(this->screenCoordsBR.x, this->screenCoordsBR.y, 0.0f, 0.0f);
+		edDListEnd();
+	}
+
 	return;
 }

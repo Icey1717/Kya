@@ -432,3 +432,11 @@ bool CInventoryInterface::HasChanged()
 
 	return bChanged;
 }
+
+void CInventoryInterface::SetActivePosition(FE_Position* param_2)
+{
+	this->aHeaderInfo[param_2->headerSlot].activeItemIndex = param_2->itemSlot;
+	return;
+}
+
+

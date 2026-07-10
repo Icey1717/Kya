@@ -1,6 +1,6 @@
 # Kya Local Renamer Evaluator
 
-Local, read-only web application for comparing free and curated paid OpenRouter models on local-variable naming decisions in this repository's decompiled C++.
+Local web application for evaluating OpenRouter models on local-variable naming decisions, then running the retained models against selected decompiled C++ files with reviewer-approved edits.
 
 The evaluator never writes selected source files. It freezes file hashes, filters definition-only locals from the inventory and prompt copy, sends one function at a time, validates every declaration response, presents successful anonymous choices for locked human review, penalizes request failures only for the affected model, and preserves measured rankings separately from the retained-model selection.
 
@@ -37,6 +37,8 @@ Optional backend configuration:
 - `LOCAL_RENAMER_REPOSITORY_ROOT`: repository root; defaults to this repository.
 - `LOCAL_RENAMER_PORT`: Express port; defaults to `4310`.
 
+Run-mode model IDs and timeout are checked into `config.json`. The current retained set is `google/gemma-4-31b-it`, `meta-llama/llama-4-maverick`, and `google/gemini-2.5-flash-lite`.
+
 ## Workflow
 
 1. Load the live OpenRouter catalog. Models that passed the previous availability test are restored from the local cache. Free and curated paid models have separate re-test buttons so paid probes are always explicit. Select at least two verified model IDs; failed and untested models remain disabled.
@@ -49,6 +51,11 @@ Optional backend configuration:
 
 Runs are stored beneath `evaluation/runs/<run-id>/` and ignored by Git. They contain source text, prompts, raw model responses, hidden model mappings, and review decisions; treat this directory and exported bundles as repository-sensitive data.
 
+## Run mode
+
+Use **Run renamer** to enter one or more repository-relative source paths. The configured retained models generate validated suggestions for every eligible local declaration. Review each declaration by selecting a model suggestion or entering a valid replacement name. Once every declaration in a function has a choice, apply that function before continuing.
+
+Run mode freezes SHA-256 hashes before model requests. It verifies every selected file still matches before writing any file, checks function-wide name collisions, replaces only analyzer-recorded identifier occurrences, and writes each changed file through a temporary file and rename. Application runs are stored beneath `application/runs/` and ignored by Git.
 ## Request behavior
 
 - Temperature is fixed at `0`.

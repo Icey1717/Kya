@@ -109,6 +109,7 @@ short* gEndSTBuf = NULL;
 short* gEndWHBuf = NULL;
 edVertex* gCurVertexBuf = NULL;
 edVertex* gStartVertexBuf = NULL;
+static short gCurWH[2];
 
 int gCurFlashMaterial = 0;
 edDList_material* gCurMaterial = NULL;
@@ -1923,7 +1924,121 @@ void edDListVertex4f_3D_LINE(float x, float y, float z, float fSkip)
 
 void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	edF32VECTOR4 local_10;
+	_rgba* pRgba;
+	short* pSpr;
+	short* pSt;
+	edVertex* pVtx;
+
+	pSpr = gCurSTBuf;
+	pRgba = gCurColorBuf;
+	pSt = gCurWHBuf;
+	pVtx = gCurVertexBuf;
+	if (gCurPrimType == 0xc) {
+		local_10.w = 1.0f;
+		local_10.x = x;
+		local_10.y = y;
+		local_10.z = z;
+		IMPLEMENTATION_GUARD(
+		iVar1 = edDListAddFlareReject(&local_10, (float*)0x0);)
+		if (iVar1 == 0) {
+			gCurColorNbInVertex = 0;
+			gCurSTNbInVertex = 0;
+			return;
+		}
+	}
+
+	if ((gCurPrimType != 7) || (gNbAddedVertex == 0)) {
+		pSt[0] = gCurWH[0];
+		pSt[1] = gCurWH[1];
+		if (gMaxSTNbInVertex == 4) {
+			pSpr[0] = (short)static_cast<int>(gCurST_SPR[0]);
+			pSpr[1] = (short)static_cast<int>(gCurST_SPR[1]);
+			pSpr[2] = (short)static_cast<int>(gCurST_SPR[4]);
+			pSpr[3] = (short)static_cast<int>(gCurST_SPR[5]);
+			pSpr[4] = (short)static_cast<int>(gCurST_SPR[2]);
+			pSpr[5] = (short)static_cast<int>(gCurST_SPR[3]);
+			pSpr[6] = (short)static_cast<int>(gCurST_SPR[6]);
+			pSpr[7] = (short)static_cast<int>(gCurST_SPR[7]);
+		}
+		else {
+			pSpr[0] = (short)static_cast<int>(gCurST_SPR[0]);
+			pSpr[1] = (short)static_cast<int>(gCurST_SPR[1]);
+			pSpr[2] = (short)static_cast<int>(gCurST_SPR[0]);
+			pSpr[3] = (short)static_cast<int>(gCurST_SPR[3]);
+			pSpr[4] = (short)static_cast<int>(gCurST_SPR[2]);
+			pSpr[5] = (short)static_cast<int>(gCurST_SPR[1]);
+			pSpr[6] = (short)static_cast<int>(gCurST_SPR[2]);
+			pSpr[7] = (short)static_cast<int>(gCurST_SPR[3]);
+		}
+
+		gCurSTBuf = pSpr + 8;
+		gCurWHBuf = pSt + 2;
+	}
+
+	if (gCurPrimType != 7) {
+		if (((gCurPrimType == 0xb) || (gCurPrimType == 0xc)) && (1 < gCurColorNbInVertex)) {
+			pRgba[0].r = gCurColor_SPR[0].r;
+			pRgba[0].g = gCurColor_SPR[0].g;
+			pRgba[0].b = gCurColor_SPR[0].b;
+			pRgba[0].a = gCurColor_SPR[0].a;
+			pRgba[1].r = gCurColor_SPR[1].r;
+			pRgba[1].g = gCurColor_SPR[1].g;
+			pRgba[1].b = gCurColor_SPR[1].b;
+			pRgba[1].a = gCurColor_SPR[1].a;
+			pRgba[2].r = gCurColor_SPR[2].r;
+			pRgba[2].g = gCurColor_SPR[2].g;
+			pRgba[2].b = gCurColor_SPR[2].b;
+			pRgba[2].a = gCurColor_SPR[2].a;
+			pRgba[3].r = gCurColor_SPR[3].r;
+			pRgba[3].g = gCurColor_SPR[3].g;
+			pRgba[3].b = gCurColor_SPR[3].b;
+			pRgba[3].a = gCurColor_SPR[3].a;
+		}
+		else {
+			pRgba[0].r = gCurColor_SPR->r;
+			pRgba[0].g = gCurColor_SPR->g;
+			pRgba[0].b = gCurColor_SPR->b;
+			pRgba[0].a = gCurColor_SPR->a;
+			pRgba[1].r = gCurColor_SPR->r;
+			pRgba[1].g = gCurColor_SPR->g;
+			pRgba[1].b = gCurColor_SPR->b;
+			pRgba[1].a = gCurColor_SPR->a;
+			pRgba[2].r = gCurColor_SPR->r;
+			pRgba[2].g = gCurColor_SPR->g;
+			pRgba[2].b = gCurColor_SPR->b;
+			pRgba[2].a = gCurColor_SPR->a;
+			pRgba[3].r = gCurColor_SPR->r;
+			pRgba[3].g = gCurColor_SPR->g;
+			pRgba[3].b = gCurColor_SPR->b;
+			pRgba[3].a = gCurColor_SPR->a;
+		}
+		gCurColorBuf = pRgba + 4;
+	}
+
+	gNbAddedVertex = gNbAddedVertex + 1;
+	pVtx->x = x;
+	pVtx->y = y;
+	pVtx->z = z;
+	pVtx->fSkip = fSkip;
+	gNbDMAVertex = gNbDMAVertex + 4;
+	gNbAddedVertex = gNbAddedVertex + 3;
+	if (gNbDMAVertex == 0x48) {
+		gCurWHBuf[0] = 0;
+		gCurWHBuf[1] = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+		gCurWHBuf[0] = 0;
+		gCurWHBuf[1] = 0;
+		gNbDMAVertex = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+	}
+
+	gCurVertexBuf = pVtx + 4;
+	gCurColorNbInVertex = 0;
+	gCurSTNbInVertex = 0;
+
+	return;
 }
 
 void edDListVertex4f_3D_SpriteQUICK(float x, float y, float z, float fSkip)
@@ -1990,8 +2105,6 @@ void edDListVertex4f_3D_LINE_LOOP(float x, float y, float z, float fSkip)
 {
 	IMPLEMENTATION_GUARD();
 }
-
-static short gCurWH[2];
 
 void edDListVertex4f_3D_Sprite_FLARE(float x, float y, float z, float fSkip)
 {
@@ -3240,6 +3353,14 @@ void edDListLoadIdentity(void)
 void edDlistSetUseUV(int newUseUV)
 {
 	edDlistUseUV = newUseUV;
+
+	return;
+}
+
+void edDListTranslatev(edF32VECTOR4* v0)
+{
+	v0->w = 1.0f;
+	edF32Matrix4TranslateHard(gCurMatrix + gNbMatrix, gCurMatrix + gNbMatrix, v0);
 
 	return;
 }

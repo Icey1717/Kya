@@ -40,8 +40,6 @@ export function validateChangedName(name: string, declaration: Pick<Declaration,
   if (cppKeywords.has(name)) errors.push("is a C++ keyword");
   if (!/^[a-z]/.test(name)) errors.push("must use lower camel case");
   if (name.includes("_")) errors.push("must not contain underscores");
-  if (/[A-Z]{2}/.test(name)) errors.push("must not contain adjacent uppercase letters");
-  if (/\d$/.test(name)) errors.push("must not end in a digit");
   if (declaration.isPointer && !/^p[A-Z]/.test(name)) errors.push("pointer names must start with p followed by uppercase");
   if (!declaration.isPointer && declaration.isBoolean && !/^b[A-Z]/.test(name)) {
     errors.push("Boolean names must start with b followed by uppercase");
@@ -49,6 +47,12 @@ export function validateChangedName(name: string, declaration: Pick<Declaration,
   return errors;
 }
 
+export function validateNameWarnings(name: string): string[] {
+  const warnings: string[] = [];
+  if (/[A-Z]{2}/.test(name)) warnings.push("contains adjacent uppercase letters");
+  if (/\d$/.test(name)) warnings.push("ends in a digit");
+  return warnings;
+}
 export function validateAndNormalizeResponse(
   raw: string,
   declarations: Declaration[],
@@ -73,7 +77,7 @@ export function validateAndNormalizeResponse(
 
   const inventory = new Map(declarations.map((declaration) => [declaration.id, declaration]));
   const seen = new Set<string>();
-  const normalizedById = new Map<string, Suggestion & { decision: string; keep: boolean }>();
+  const normalizedById = new Map<string, Suggestion & { decision: string; keep: boolean; warnings: string[] }>();
 
   for (const suggestion of suggestions) {
     const declaration = inventory.get(suggestion.declaration_id);
@@ -91,7 +95,8 @@ export function validateAndNormalizeResponse(
     normalizedById.set(suggestion.declaration_id, {
       ...suggestion,
       decision: keep ? "keep" : suggestion.suggested_name,
-      keep
+      keep,
+      warnings: keep ? [] : validateNameWarnings(suggestion.suggested_name)
     });
   }
 

@@ -6,9 +6,6 @@
 #include "ActorHero.h"
 #include "Fx_Tail.h"
 
-#define IMPLEMENTATION_GUARD_BOOMY(x)
-#define IMPLEMENTATION_GUARD_INVENTORY(x)
-
 #define ACTION_EXPLOSIVE_DISTRIBUTOR 0x8
 #define ACTION_MOUNT 0xd
 #define ACTION_SPEAK 0xf
@@ -621,6 +618,10 @@ public:
 	void FUN_00347480();
 
 	uint FUN_00132c60(uint state);
+
+	uint FUN_00132790(uint param_2);
+	bool FUN_0033da30(uint param_2);
+	void ManageInventory();
 
 	void GripObject(CActor* pOtherActor);
 

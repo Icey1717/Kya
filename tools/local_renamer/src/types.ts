@@ -78,6 +78,7 @@ export interface Suggestion {
 export interface NormalizedSuggestion extends Suggestion {
   decision: string;
   keep: boolean;
+  warnings?: string[];
 }
 
 export interface NormalizedResponse {

@@ -30,10 +30,10 @@ class CInstance3D
 {
 public:
 	CInstance3D();
+
 	void SetDraw(bool bHide, ed_3D_Scene* pScene);
 	void ComputeObjectMatrix();
 	void ClearLocalData();
-	void ManageAnimation(float time);
 
 	edNODE* pNode;
 
@@ -47,6 +47,7 @@ class CInstance3DAnimated : public CInstance3D
 public:
 	void SetAnimationDatas(edANM_HDR** ppHdr);
 	void SetAnimation(int macroAnimId, uint flags);
+	void ManageAnimation(float time);
 
 	edAnmLayer layer;
 	edANM_HDR** ppHdr;
