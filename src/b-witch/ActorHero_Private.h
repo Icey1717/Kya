@@ -503,6 +503,10 @@ public:
 
 	void StateHeroBasic(float param_1, float param_2, int nextState);
 
+	void StateHeroDeadCrashInit();
+	void StateHeroDeadCrash(float param_1);
+	void StateHeroDeadCrashTerm();
+
 	void StateHeroGrindDeathInit();
 	void StateHeroGrindDeathTerm();
 
@@ -673,6 +677,8 @@ public:
 
 	CActor* pBoomyTarget;
 	edF32VECTOR4 boomyTargetPosition;
+
+	edF32VECTOR4 field_0x1440;
 
 	int bUnknownBool;
 

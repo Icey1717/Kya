@@ -495,7 +495,7 @@ void CActorHeroPrivate::Init()
 	this->field_0xff0 = new edF32MATRIX3[uVar1];
 	pAnimationController->SetBoneMatrixData(this->field_0xff0, uVar1);
 	//FUN_003cb7b0(); // STUB
-	//LevelScheduleManager::Game_LoadInventory(LevelScheduleManager::gThis, &this->field_0xadc);
+	CLevelScheduler::gThis->Game_LoadInventory(&this->inventory);
 
 	_InitHeroFight();
 
@@ -5443,6 +5443,9 @@ LAB_00341590:
 	case STATE_HERO_COL_WALL_DEAD:
 		StateHeroDeadInit();
 		break;
+	case STATE_HERO_DEAD_CRASH:
+		StateHeroDeadCrashInit();
+		break;
 	case STATE_HERO_GRIND_DEATH_A:
 	case STATE_HERO_EAT_DEATH:
 		StateHeroGrindDeathInit();
@@ -5731,6 +5734,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_COL_WALL_DEAD:
 		RestoreCollisionSphere(0.0f);
+		break;
+	case STATE_HERO_DEAD_CRASH:
+		StateHeroDeadCrashTerm();
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
 	case STATE_HERO_EAT_DEATH:
@@ -6247,6 +6253,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_COL_WALL_DEAD_E:
 		StateHeroWindSlide(-1);
+		break;
+	case STATE_HERO_DEAD_CRASH:
+		StateHeroDeadCrash(2.0f);
 		break;
 	case STATE_HERO_GRIND_DEATH_A:
 		StateHeroDead(2.0f);
@@ -13023,6 +13032,64 @@ void CActorHeroPrivate::StateHeroBasic(float param_1, float param_2, int nextSta
 
 LAB_003489d0:
 	SetState(nextState, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDeadCrashInit()
+{
+	edF32VECTOR4* peVar1;
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	this->field_0x1440 = gF32Vector4UnitY;
+	peVar1 = &this->field_0x1440;
+	if ((pCol->flags_0x4 & 1) == 0) {
+		if ((pCol->flags_0x4 & 2) != 0) {
+			*peVar1 = pCol->aCollisionContact[1].location;
+		}
+	}
+	else {
+		*peVar1 = pCol->aCollisionContact[0].location;
+	}
+
+	this->flags = this->flags | 0x1000;
+	ChangeCollisionSphereForToboggan(0.2f);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDeadCrash(float param_1)
+{
+	edF32MATRIX4 eStack80;
+	edF32VECTOR3 local_10;
+
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+	this->dynamic.speed = 0.0f;
+
+	BuildMatrixFromNormalAndSpeed(&eStack80, &this->field_0x1440, &this->rotationQuat);
+	edF32Matrix4ToEulerSoft(&eStack80, &local_10, "XYZ");
+	this->rotationEuler.xyz = local_10;
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+	AdjustLocalMatrixFromNormal(0.0f, &this->field_0x1440);
+	if (param_1 < this->timeInAir) {
+		ProcessDeath();
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroDeadCrashTerm()
+{
+	this->flags = this->flags & 0xffffefff;
+
+	RestoreCollisionSphere(0.0f);
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+	RestoreVerticalOrientation();
 
 	return;
 }

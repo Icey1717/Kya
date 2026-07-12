@@ -120,13 +120,13 @@ struct _ed_particle_meshe_param
 
 struct _ed_particle
 {
-	byte field_0x0;
+	byte allocationState;
 	byte field_0x1;
 	byte field_0x2;
 	byte state;
 	byte sizeByte;
 	byte field_0x5;
-	short field_0x6;
+	short poolIndex;
 
 	union 	{
 		struct
@@ -147,15 +147,15 @@ struct _ed_particle
 	byte field_0x10;
 	byte field_0x11;
 	byte redScale;
-	byte field_0x13;
+	byte effectorContainment;
 
-	float field_0x14;
-	float field_0x18;
+	float mass;
+	float inverseMass;
 	float age;
 	float lifetime;
 	float yScale;
 	float field_0x28;
-	float field_0x2c;
+	float dragScale;
 	float velocityStretch;
 	PackedType<edNODE*> pNode;
 	PackedType<_ed_particle_cube*> field_0x38;
@@ -468,66 +468,70 @@ struct _ed_particle_generator_param
 
 static_assert(sizeof(_ed_particle_generator_param) == 0x230, "Size of _ed_particle_generator_param is not 0x230 bytes.");
 
+#define SPATIAL_PARTITION_MODE_NONE 0
+#define SPATIAL_PARTITION_MODE_CUBE 2
+#define SPATIAL_PARTITION_MODE_MESH 3
+
 struct _ed_particle_group
 {
-	byte field_0x0;
+	byte bInitialized;
 	byte field_0x1;
-	byte field_0x2;
+	byte bEnabled;
 	byte field_0x3;
-	byte field_0x4;
+	byte spatialPartitionMode;
 	byte field_0x5;
 
-	short field_0x6;
+	short nextParticleIndex; // Ring buffer index for the next particle to be generated
 
-	byte field_0x8;
-	byte field_0x9;
+	byte particleGroupFlags;
+	byte hasParticleSimulation;
 
 	byte _pad_0_[0x6];
 
-	int field_0x10;
-	int field_0x14;
+	int particleCapacity;
+	int nbAvailableParticles;
 
 	OffsetPointer<_ed_particle*> pParticle;
 
-	int field_0x1c;
+	int nbActiveGenerators;
 	int nbGeneratorParams;
 
 	OffsetPointer<OffsetPointer<_ed_particle_generator_param*>*> aGeneratorParams;
-	int field_0x28;
+	int nbActiveEffectors;
 	int nbEffectorParams;
 	OffsetPointer<OffsetPointer<_ed_particle_effector_param*>*> aEffectorParams;
-	int field_0x34;
+	int nbActiveSelectors;
 	int nbSelectorParams;
 	OffsetPointer<OffsetPointer<_ed_particle_selector_param*>*> aSelectorParams;
-	int field_0x40;
+	int nbActiveShapers;
 	int nbShaperParams;
 	OffsetPointer<OffsetPointer<_ed_particle_shaper_param*>*> aShaperParams;
-	float field_0x4c;
+	float timeScale;
 
 	float deltaTime;
 	undefined4 field_0x54;
-	float field_0x58;
-	int field_0x5c;
+	float boundingSphereRadius;
+	int nbLiveParticles;
 
-	edF32VECTOR4 instanceIndex;
+	edF32VECTOR4 groupAcceleration;
 
-	PackedType<void*> field_0x70;
-	PackedType<_ed_particle_meshe_param*> field_0x74;
+	PackedType<void*> pCurrentParam; // temporarily generator/effector/selector/shaper
+	PackedType<_ed_particle_meshe_param*> pMesheParams;
 
 	undefined4 field_0x78;
 	undefined4 field_0x7c;
 
-	int field_0x80;
+	int randomSeed;
 
-	edF32VECTOR3 field_0x84;
+	edF32VECTOR3 boundingSphereCenter;
 };
 
 static_assert(sizeof(_ed_particle_group) == 0x90, "Size of _ed_particle_group is not 0x90 bytes.");
 
 struct _ed_particle_vectors
 {
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 acceleration;
+	edF32VECTOR4 velocity;
 };
 
 struct _ed_particle_manager

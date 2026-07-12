@@ -52,6 +52,15 @@ describe("application run mutation", () => {
     submitApplicationChoice(run, run.items[0].key, { decision: "iVar1" });
     expect(run.items[0].choice?.decision).toBe("iVar1");
   });
+  it("skips a completed function when every reviewed name stays unchanged", async () => {
+    const { file, run } = await fixture("int test() { int iVar1 = 1; return iVar1; }\n");
+    submitApplicationChoice(run, run.items[0].key, { decision: "iVar1" });
+
+    expect(run.items[0].appliedAt).toBeDefined();
+    expect(run.status).toBe("applied");
+    expect(await readFile(file, "utf8")).toBe("int test() { int iVar1 = 1; return iVar1; }\n");
+  });
+
   it("maps a model keep decision to the declaration's existing name", async () => {
     const { run } = await fixture("int test() { int iVar1 = 1; return iVar1; }\n");
     const request = Object.values(run.requests)[0];

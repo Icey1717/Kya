@@ -2125,7 +2125,6 @@ void CFxWind::_Compute_Matrix(edF32MATRIX4* pCameraMatrix)
 	float fVar6;
 	float fVar7;
 	float fVar8;
-	float in_vf0x;
 	float fVar9;
 	float fVar10;
 	float fVar11;

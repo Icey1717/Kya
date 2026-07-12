@@ -774,7 +774,6 @@ bool CActorHeroPrivate::SetNextClimbState(int param_2, int param_3)
 	float fVar11;
 	float fVar12;
 	float fVar13;
-	float in_vf0x;
 	float fVar14;
 	float fVar15;
 	edF32VECTOR4 eStack304;

@@ -2103,8 +2103,7 @@ void CCinematic::Manage()
 		}
 		else {
 			if (this->state == CS_Interpolate) {
-				IMPLEMENTATION_GUARD(
-				ManageState_InterpolateBegin(this);)
+				ManageState_InterpolateBegin();
 			}
 		}
 
@@ -2232,6 +2231,61 @@ void CCinematic::ManageState_Playing()
 			})
 		}
 	}
+	return;
+}
+
+void CCinematic::ManageState_InterpolateBegin()
+{
+	int iVar1;
+	CActor* pCVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	bool bVar6;
+	edF32MATRIX4* peVar7;
+	int iVar9;
+	CCameraManager* pCameraManager;
+	CCinematicManager* pCinematicManager;
+
+	pCinematicManager = g_CinematicManager_0048efc;
+	bVar6 = true;
+	g_CinematicManager_0048efc->pCurCinematic = this;
+	pCameraManager = CCameraManager::_gThis;
+	iVar1 = this->cineActorConfigCount;
+	peVar7 = &CCameraManager::_gThis->transformationMatrix;
+	for (iVar9 = 0; iVar9 < iVar1; iVar9 = iVar9 + 1) {
+		pCVar2 = this->aCineActorConfig[iVar9].pActor.Get();
+		fVar3 = (pCVar2->sphereCentre).x - peVar7->da;
+		fVar4 = (pCVar2->sphereCentre).y - (pCameraManager->transformationMatrix).db;
+		fVar5 = (pCVar2->sphereCentre).z - (pCameraManager->transformationMatrix).dc;
+		pCVar2->distanceToCamera = sqrtf(fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5) - (pCVar2->sphereCentre).w;
+		pCVar2->Manage();
+		if ((pCVar2 != (CActor*)0x0) && (pCVar2->actorState == 1)) {
+			bVar6 = false;
+		}
+	}
+
+	if ((this->flags_0x8 & 2) != 0) {
+		if ((pCameraManager->flags & 0x4000000) == 0) {
+			pCameraManager->ApplyActiveCamera();
+			pCameraManager->BuildDisplayMatrix();
+		}
+		else {
+			if ((this->flags_0x4 & 0x1000) != 0) {
+				bVar6 = false;
+			}
+		}
+	}
+
+	if ((bVar6) || (10.0f < GetTimer()->scaledTotalTime - this->time_0x88)) {
+		this->state = CS_Playing;
+		this->time_0x88 = GetTimer()->scaledTotalTime;
+		this->cinFileData.Initialize();
+		this->flags_0x8 = this->flags_0x8 | 0x10;
+	}
+
+	pCinematicManager->pCurCinematic = (CCinematic*)0x0;
+
 	return;
 }
 

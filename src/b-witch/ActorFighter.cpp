@@ -4851,6 +4851,46 @@ void CActorFighter::FUN_00312370()
 	return;
 }
 
+void CActorFighter::FUN_00318db0()
+{
+	edF32VECTOR4* v1;
+	uint uVar2;
+	float fVar3;
+	edF32VECTOR4 eStack16;
+
+	uVar2 = 0;
+	if (this->field_0x474 <= this->timeInAir) {
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		this->fightFlags = this->fightFlags & 0xfffffffe;
+		this->field_0x474 = 0.0f;
+		if (this->field_0x6bc <= 0.0f) {
+			SetState(6, this->standAnim);
+		}
+		else {
+			this->field_0x6bc = this->field_0x6bc - GetTimer()->cutsceneDeltaTime;
+		}
+	}
+
+	if ((this->fightFlags & 0x2000) != 0) {
+		v1 = GetAdversaryPos();
+		edF32Vector4SubHard(&eStack16, v1, &this->currentLocation);
+		eStack16.y = 0.0f;
+		edF32Vector4SafeNormalize0Hard(&eStack16, &eStack16);
+		fVar3 = edF32Vector4DotProductHard(&eStack16, &this->rotationQuat);
+
+		if (0.999f < fVar3) {
+			this->fightFlags = this->fightFlags & 0xffffcfff;
+		}
+		else {
+			uVar2 = 4;
+		}
+	}
+
+	_ManageFighterDyn(uVar2 | 0x3b, 0x1002023b, (CActorsTable*)0x0);
+
+	return;
+}
+
 uint CreateHashFromName(char* szInput)
 {
 	union
@@ -7867,6 +7907,9 @@ void CBehaviourFighter::Manage()
 	case FIGHTER_FLIP_OFF_ME_B:
 		this->pOwner->_StateFighterFlipOffMe();
 		break;
+	case 0x17:
+		this->pOwner->FUN_00318db0();
+		break;
 	case FIGHTER_STATE_19:
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		if (((pFighter->pCollisionData)->flags_0x4 & 2) == 0) {
@@ -8325,7 +8368,19 @@ void CBehaviourFighter::InitState(int newState)
 		this->pOwner->_StateFighterFlipOnMeInit();
 		break;
 	case 0x17:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		if (pFighter->field_0x474 == 0.0f) {
+			pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+		}
+		else {
+			pFighter->fightFlags = pFighter->fightFlags | 1;
+		}
+		pFighter->fightFlags = pFighter->fightFlags | 2;
+		if ((pFighter->fightFlags & 0x2000) != 0) {
+			pFighter->field_0x4a0 = pFighter->currentLocation;
+			pFighter->field_0x4b0 = pFighter->pAdversary->currentLocation;
+			pFighter->fightFlags = pFighter->fightFlags | 0x1000;
+		}
 		break;
 	case 0x18:
 		IMPLEMENTATION_GUARD();

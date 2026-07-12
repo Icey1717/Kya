@@ -373,9 +373,8 @@ void CActorBrazul::Reset()
 	pCVar2 = GetBehaviour(0x1a);
 	if (pCVar2 != (CBehaviour*)0x0) {
 		pCVar1 = static_cast<CBehaviourBrazulA*>(GetBehaviour(0x1a));
-		IMPLEMENTATION_GUARD(
-		*(undefined4*)&pCVar1->field_0x14 = 0;
-		*(undefined4*)&pCVar1->field_0x10 = 0;)
+		pCVar1->field_0x14 = 0;
+		pCVar1->field_0x10 = 0;
 	}
 
 	return;
@@ -967,50 +966,717 @@ LAB_003e53e8:
 	return;
 }
 
+void astruct_19::FUN_003e56f0(float param_1, float param_2, CActor* param_4)
+{
+	CActor* pCVar1;
+	CShadow* pCVar2;
+
+	if (this->field_0x4 == 0) {
+		this->field_0x30 = param_4;
+		if (param_1 == -1.0f) {
+			this->field_0x34 = 4.0f;
+		}
+		else {
+			this->field_0x34 = param_1;
+		}
+
+		if (param_2 == -1.0f) {
+			this->field_0x38 = 1.0f;
+		}
+		else {
+			this->field_0x38 = param_2;
+		}
+
+		pCVar1 = this->field_0x30;
+		this->field_0x10 = pCVar1->currentLocation;
+		pCVar2 = this->field_0x30->pShadow;
+		this->field_0x20 = pCVar2->field_0x20;
+		if (this->field_0x4 == 0) {
+			this->field_0x3d0.InitPositionRotation(&this->field_0x10, &gF32Vertex4Zero);
+		}
+
+		this->field_0x4 = 1;
+	}
+
+	return;
+}
+
 void CBehaviourBrazulA::Create(ByteCode* pByteCode)
 {
-	IMPLEMENTATION_GUARD();
+	uint uVar1;
+	void* pvVar2;
+	ulong uVar3;
+	int iVar4;
+	ulong uVar5;
+
+	uVar5 = 0;
+	this->nbSubObjs = pByteCode->GetU32();
+	this->field_0x10 = 0;
+	this->aSubObjs = new CBehaviourBrazulA_SubObj[this->nbSubObjs];
+	uVar1 = 0;
+	if (this->nbSubObjs != 0) {
+		iVar4 = 0;
+		do {
+			uVar3 = CreateSubObj(this->aSubObjs + uVar1, pByteCode);
+			if (uVar5 < uVar3) {
+				uVar5 = uVar3;
+			}
+
+			uVar1 = uVar1 + 1;
+			iVar4 = iVar4 + 0x1c;
+		} while (uVar1 < this->nbSubObjs);
+	}
+
+	if (uVar5 == 0) {
+		this->field_0x1c = (int*)0x0;
+	}
+	else {
+		this->field_0x1c = new int[uVar5];
+	}
+
+	return;
 }
 
 void CBehaviourBrazulA::Init(CActor * pOwner)
 {
-	IMPLEMENTATION_GUARD();
+	uint uVar2;
+	uint uVar3;
+	CBehaviourBrazulA_SubObj* pCVar4;
+
+	pCVar4 = this->aSubObjs;
+	uVar3 = 0;
+	if (this->nbSubObjs != 0) {
+		do {
+			uVar2 = 0;
+			if (pCVar4->nbPathFollowReaders != 0) {
+				do {
+					pCVar4->aPathFollowReaders[uVar2].Init();
+					uVar2 = uVar2 + 1;
+				} while (uVar2 < pCVar4->nbPathFollowReaders);
+			}
+			uVar3 = uVar3 + 1;
+			pCVar4 = pCVar4 + 1;
+		} while (uVar3 < this->nbSubObjs);
+	}
+
+	this->field_0x14 = 0;
+	this->field_0x10 = 0;
+
+	return;
 }
 
 void CBehaviourBrazulA::Term()
 {
-	IMPLEMENTATION_GUARD();
+	uint uVar1;
+
+	if (this->aSubObjs != (CBehaviourBrazulA_SubObj*)0x0) {
+		uVar1 = 0;
+		if (this->nbSubObjs != 0) {
+			do {
+				delete[] this->aSubObjs[uVar1].aPathFollowReaders;
+				uVar1 = uVar1 + 1;
+			} while (uVar1 < this->nbSubObjs);
+		}
+
+		delete(this->aSubObjs);
+	}
+
+	if (this->field_0x1c != (int*)0x0) {
+		delete(this->field_0x1c);
+	}
+
+	return;
 }
 
 void CBehaviourBrazulA::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	CNewFx* pCVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	undefined4 uVar5;
+	StateConfig* pSVar7;
+	int iVar8;
+	uint uVar9;
+	float fVar10;
+	CActorBrazul* pBrazul;
+	CActorFighter* pFighter;
+
+	pBrazul = this->pOwner;
+
+	if ((pBrazul->GetStateFlags(pBrazul->actorState) & 0x8000000) != 0) {
+		uVar5 = FUN_003e6cd0();
+		this->field_0x18 = uVar5;
+	}
+
+	pBrazul = this->pOwner;
+	switch (pBrazul->actorState) {
+	case 0xb6:
+		pFighter = pBrazul->pTargetActor_0xc80;
+		if (pFighter != (CActorFighter*)0x0) {
+			pBrazul->SV_UpdateOrientationToPosition2D(6.283185f, &pFighter->currentLocation);
+		}
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+		break;
+	case 0xb7:
+		pBrazul->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		if (pBrazul->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pBrazul->SetState(0xb8, -1);
+		}
+		break;
+	case 0xb8:
+		pBrazul->scalarDynJump.Integrate(GetTimer()->cutsceneDeltaTime);
+		pBrazul->dynamic.speed = pBrazul->scalarDynJump.field_0x20;
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+		bVar4 = pBrazul->scalarDynJump.IsFinished();
+		if (bVar4 != false) {
+			pBrazul->SetState(0xb6, -1);
+		}
+		break;
+	case 0xb9:
+		pFighter = pBrazul->pTargetActor_0xc80;
+		if (pFighter != (CActorFighter*)0x0) {
+			pBrazul->SV_UpdateOrientationToPosition2D(6.283185f, &pFighter->currentLocation);
+		}
+		pBrazul->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		if (((pBrazul->pCollisionData)->flags_0x4 & 2) != 0) {
+			pBrazul->SetState(0xba, -1);
+		}
+		break;
+	case 0xba:
+		pBrazul->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		if (pBrazul->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			if (pBrazul->pAdversary == (CActorFighter*)0x0) {
+				pBrazul->SetBehaviour((pBrazul->subObjA)->defaultBehaviourId, -1, -1);
+			}
+			else {
+				pBrazul->SetFightBehaviour();
+			}
+		}
+		break;
+	case 0xbb:
+		pFighter = pBrazul->pTargetActor_0xc80;
+		if (pFighter != (CActorFighter*)0x0) {
+			pBrazul->SV_UpdateOrientationToPosition2D(6.283185f, &pFighter->currentLocation);
+		}
+
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+		if (pBrazul->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			if (pBrazul->field_0x2ff8 == 0.0f) {
+				pBrazul->SetState(0xbd, -1);
+			}
+			else {
+				pBrazul->SetState(0xbc, -1);
+			}
+		}
+		break;
+	case 0xbc:
+		pFighter = pBrazul->pTargetActor_0xc80;
+		if (pFighter != (CActorFighter*)0x0) {
+			pBrazul->SV_UpdateOrientationToPosition2D(6.283185f, &pFighter->currentLocation);
+		}
+
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+		fVar10 = pBrazul->timeInAir / pBrazul->field_0x2ff8;
+		pBrazul->field_0x2ffc = fVar10;
+		if (1.0f < fVar10) {
+			pBrazul->field_0x2ffc = 1.0f;
+		}
+
+		if (0.75f < pBrazul->field_0x2ffc) {
+			pCVar1 = (pBrazul->field_0x300c).pFx;
+			if (((pCVar1 == (CNewFx*)0x0) || (iVar8 = (pBrazul->field_0x300c).id, iVar8 == 0)) || (iVar8 != pCVar1->id)) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = true;
+			}
+
+			if (!bVar4) {
+				pBrazul->field_0x3000.Stop();
+				pBrazul->field_0x300c.InitSpatialized(pBrazul, 0x6b6e696c);
+			}
+		}
+
+		if (pBrazul->field_0x2ff8 <= pBrazul->timeInAir) {
+			pBrazul->SetState(0xbd, -1);
+		}
+		break;
+	case 0xbd:
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+		if (pBrazul->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pBrazul->SetState(0xb6, -1);
+		}
+		break;
+	case 0xbe:
+		pBrazul->ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+		if (pBrazul->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pBrazul->SetState(0xb6, -1);
+		}
+	}
+	pBrazul = this->pOwner;
+	if (pBrazul->curBehaviourId == 0x1a) {
+		iVar8 = pBrazul->actorState;
+		if (iVar8 == -1) {
+			uVar9 = 0;
+		}
+		else {
+			pSVar7 = pBrazul->GetStateCfg(iVar8);
+			uVar9 = pSVar7->flags_0x4;
+		}
+		if (((uVar9 & 0x100000) != 0) && (((*(int*)&this->field_0x18 == 0 && (iVar8 = FUN_003e6f20(), iVar8 == -1)) || (this->pOwner->pTargetActor_0xc80 == (CActorFighter*)0x0)))) {
+			this->pOwner->SetState(0xb9, 0xffffffff);
+		}
+	}
+	return;
 }
 
-void CBehaviourBrazulA::Begin(CActor * pOwner, int newState, int newAnimationType)
+void CBehaviourBrazulA::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner = static_cast<CActorBrazul*>(pOwner);
+	this->field_0x24 = 0;
+
+	FUN_003e71f0();
+
+	if (newState == -1) {
+		this->pOwner->SetState(0xb7, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
 }
 
 void CBehaviourBrazulA::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	if (this->field_0x10 < this->nbSubObjs - 1) {
+		this->field_0x10 = this->field_0x10 + 1;
+	}
+
+	return;
 }
 
 void CBehaviourBrazulA::InitState(int newState)
 {
-	IMPLEMENTATION_GUARD();
+	float* pfVar1;
+	CActorFighter* pCVar2;
+	edF32VECTOR4* v1;
+	StateConfig* pSVar3;
+	int iVar4;
+	CPathFollowReader* pCVar5;
+	astruct_19* paVar6;
+	CActorBrazul* pCVar7;
+	uint uVar8;
+	float fVar9;
+	float fVar10;
+	edF32VECTOR4 local_10;
+
+	pCVar7 = this->pOwner;
+	iVar4 = pCVar7->actorState;
+	if (iVar4 == 0xbb) {
+		pCVar5 = this->aSubObjs[this->field_0x10].aPathFollowReaders + this->field_0x14;
+		pfVar1 = pCVar5->pPathFollow->field_0x34;
+		if (pfVar1 == (float*)0x0) {
+			fVar9 = 0.0f;
+		}
+		else {
+			fVar9 = pfVar1[pCVar5->splinePointIndex];
+		}
+		pCVar7->field_0x2ff8 = fVar9;
+		fVar10 = pCVar7->field_0x2ff0 + pCVar7->field_0x2ff4;
+		if (pCVar7->field_0x2ff8 < fVar10) {
+			pCVar7->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(pCVar7->field_0x2ff0 / (fVar9 - pCVar7->field_0x2ff4), 0);
+			pCVar7->field_0x2ff8 = 0.0f;
+		}
+		else {
+			pCVar7->field_0x2ff8 = pCVar7->field_0x2ff8 - fVar10;
+		}
+
+		pCVar7 = this->pOwner;
+		pCVar2 = pCVar7->pTargetActor_0xc80;
+		paVar6 = (astruct_19*)0x0;
+		if (pCVar2 != (CActorFighter*)0x0) {
+			uVar8 = 0;
+			while ((uVar8 < 8 && (paVar6 == (astruct_19*)0x0))) {
+				if (pCVar7->field_0x1070[0].field_0x4 == 0) {
+					paVar6 = pCVar7->field_0x1070;
+				}
+				else {
+					pCVar7 = (CActorBrazul*)&pCVar7->scalarDynJump.field_0x24;
+					uVar8 = uVar8 + 1;
+				}
+			}
+			if (paVar6 != (astruct_19*)0x0) {
+				paVar6->FUN_003e56f0(this->aSubObjs[this->field_0x10].field_0x8, fVar9, pCVar2);
+			}
+		}
+	}
+	else {
+		if (iVar4 == 0xb9) {
+			uVar8 = 0;
+			do {
+				pCVar7->field_0x1070->Reset(1.0f);
+				uVar8 = uVar8 + 1;
+				pCVar7 = (CActorBrazul*)&pCVar7->scalarDynJump.field_0x24;
+			} while (uVar8 < 8);
+		}
+		else {
+			if (iVar4 == 0xbc) {
+				pCVar7->field_0x2ffc = 0;
+				pCVar7->field_0x3000.InitSpatialized(pCVar7, 0x6b6e696c);
+			}
+			else {
+				if (iVar4 == 0xb8) {
+					v1 = this->aSubObjs[this->field_0x10].aPathFollowReaders[this->field_0x14].GetWayPoint();
+					pCVar7 = this->pOwner;
+					edF32Vector4SubHard(&local_10, v1, &pCVar7->currentLocation);
+					fVar9 = edF32Vector4NormalizeHard(&local_10, &local_10);
+					pSVar3 = pCVar7->GetStateCfg(pCVar7->actorState);
+					iVar4 = pCVar7->GetIdMacroAnim(pSVar3->animId);
+					if (iVar4 < 0) {
+						fVar10 = 0.0f;
+					}
+					else {
+						fVar10 = pCVar7->pAnimationController->GetAnimLength(iVar4, 1);
+					}
+
+					pCVar7->scalarDynJump.BuildFromSpeedDistTime(20.0f, 0.0f, fVar9, fVar10);
+					pCVar7->dynamic.rotationQuat = local_10;
+				}
+				else {
+					if (iVar4 == 0xb7) {
+						pCVar7->dynamic.speed = 0.0f;
+					}
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 void CBehaviourBrazulA::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	CActorBrazul* pBrazul;
+
+	pBrazul = this->pOwner;
+	iVar1 = pBrazul->actorState;
+	if (iVar1 == 0xbc) {
+		pBrazul->field_0x3000.Stop();
+		pBrazul->field_0x300c.Stop();
+	}
+	else {
+		if (iVar1 == 0xbb) {
+			pBrazul->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		}
+		else {
+			if (iVar1 == 0xb8) {
+				pBrazul->dynamic.speed = 0.0f;
+			}
+			else {
+				if ((iVar1 == 0xba) || (iVar1 == 0xb9)) {
+					pBrazul->dynamic.speed = 0.0f;
+				}
+			}
+		}
+	}
+
+	return;
 }
 
-int CBehaviourBrazulA::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+int CBehaviourBrazulA::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	CActorBrazul* pCVar4;
+	_msg_hit_param msgHitParam;
+
+	_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+	
+	if ((msg == MESSAGE_KICKED) && (pMsgHitParam->projectileType == 4)) {
+		pCVar4 = this->pOwner;
+		iVar1 = pCVar4->actorState;
+		uVar3 = 0;
+		if (iVar1 != -1) {
+			pSVar2 = pCVar4->GetStateCfg(iVar1);
+			uVar3 = pSVar2->flags_0x4;
+		}
+		if ((uVar3 & 0x2000000) == 0) {
+			this->field_0x24 = this->field_0x24 + 1;
+			if ((uint)this->field_0x24 < this->aSubObjs[this->field_0x10].field_0x4) {
+				this->pOwner->SetState(0xbe, 0xffffffff);
+			}
+			else {
+				msgHitParam.field_0x60.z = this->pOwner->rotationQuat.x;
+				msgHitParam.projectileType = 7;
+				msgHitParam.flags = 0x85;
+				msgHitParam.field_0x50 = 1;
+				msgHitParam.field_0x60.y = 0.0f;
+				msgHitParam.field_0x60.w = 0.0f;
+				msgHitParam.field_0x20.z = -this->pOwner->rotationQuat.z;
+				msgHitParam.field_0x20.x = -msgHitParam.field_0x60.z;
+				msgHitParam.field_0x20.y = 1.0f;
+				msgHitParam.field_0x20.w = 0.0f;
+				msgHitParam.field_0x60.x = msgHitParam.field_0x20.z;
+				edF32Vector4NormalizeHard(&msgHitParam.field_0x20, &msgHitParam.field_0x20);
+				msgHitParam.damage = 0.0f;
+				msgHitParam.field_0x30 = 4.0f;
+				msgHitParam.field_0x10 = 0.0f;
+				msgHitParam.field_0x70 = 2.0f;
+				this->pOwner->pTargetActor_0xc80->DoMessage(this->pOwner, MESSAGE_KICKED, &msgHitParam);
+				uVar3 = 0;
+				do {
+					this->pOwner->field_0x1070[uVar3].Reset(0.5f);
+					uVar3 = uVar3 + 1;
+				} while (uVar3 < 8);
+			}
+
+			return 1;
+		}
+	}
+
 	return 0;
+}
+
+uint CBehaviourBrazulA::CreateSubObj(CBehaviourBrazulA_SubObj* pSubObj, ByteCode* pByteCode)
+{
+	uint uVar2;
+	int* pBase;
+	uint uVar3;
+	float fVar4;
+
+	pSubObj->field_0x0 = pByteCode->GetS32();
+	pSubObj->field_0x4 = pByteCode->GetU32();
+	pSubObj->field_0x8 = pByteCode->GetF32();
+	pSubObj->field_0xc = pByteCode->GetU32();
+	pSubObj->field_0x10 = pByteCode->GetU32();
+	pSubObj->nbPathFollowReaders = pByteCode->GetU32();
+
+	uVar2 = pSubObj->nbPathFollowReaders;
+	if (uVar2 != 0) {
+		pSubObj->aPathFollowReaders = new CPathFollowReader[uVar2];
+		uVar2 = pSubObj->nbPathFollowReaders;
+		uVar3 = 0;
+		if (uVar2 != 0) {
+			do {
+				pSubObj->aPathFollowReaders[uVar3].Create(pByteCode);
+				uVar2 = pSubObj->nbPathFollowReaders;
+				uVar3 = uVar3 + 1;
+			} while (uVar3 < uVar2);
+		}
+	}
+
+	if (pSubObj->field_0xc != 1) {
+		uVar2 = 0;
+	}
+
+	return uVar2;
+}
+
+int CBehaviourBrazulA::FUN_003e6cd0()
+{
+	int iVar1;
+	CActorBrazul* pCVar2;
+	float* pfVar3;
+	bool bVar4;
+	int iVar5;
+	edF32VECTOR4* peVar7;
+	CPathFollowReader* pPathFollowReader;
+	float fVar8;
+	edF32VECTOR4 eStack80;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+	pPathFollowReader = this->aSubObjs[this->field_0x10].aPathFollowReaders + this->field_0x14;
+	movParamsIn.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	iVar1 = pPathFollowReader->splinePointIndex;
+	iVar5 = pPathFollowReader->GetPrevPlace(iVar1, pPathFollowReader->field_0xc);
+	if (iVar5 == -1) {
+		peVar7 = pPathFollowReader->GetWayPoint();
+		edF32Vector4SubHard(&eStack80, peVar7, &this->pOwner->currentLocation);
+		fVar8 = GetTimer()->cutsceneDeltaTime;
+		movParamsIn.speed = edF32Vector4GetDistHard(&eStack80);
+		movParamsIn.speed = movParamsIn.speed / fVar8;
+	}
+	else {
+		fVar8 = pPathFollowReader->GetDelay();
+		if (fVar8 == 0.0f) {
+			movParamsIn.speed = pPathFollowReader->FUN_001c2b50(iVar5, iVar1);
+		}
+		else {
+			fVar8 = pPathFollowReader->FUN_001c2b50(iVar5, iVar1);
+			movParamsIn.speed = pPathFollowReader->GetDelay();
+			movParamsIn.speed = fVar8 / movParamsIn.speed;
+		}
+	}
+
+	movParamsIn.flags = movParamsIn.flags & 0xfffffbff | 0x25;
+	pCVar2 = this->pOwner;
+	peVar7 = pPathFollowReader->GetWayPoint();
+	pCVar2->SV_MOV_MoveTo(&movParamsOut, &movParamsIn, peVar7);
+	if (movParamsOut.moveVelocity < 0.05f) {
+		pCVar2 = this->pOwner;
+		if (2 < pCVar2->actorState - 0xbbU) {
+			pfVar3 = pPathFollowReader->pPathFollow->field_0x34;
+			if (pfVar3 == (float*)0x0) {
+				fVar8 = 0.0f;
+			}
+			else {
+				fVar8 = pfVar3[iVar1];
+			}
+
+			if (fVar8 != 0.0f) {
+				pCVar2->SetState(0xbb, 0xffffffff);
+			}
+		}
+
+		bVar4 = pPathFollowReader->AtGoal(pPathFollowReader->splinePointIndex, pPathFollowReader->field_0xc);
+		if (bVar4 != false) {
+			return 0;
+		}
+
+		pPathFollowReader->NextWayPoint();
+	}
+
+	return 1;
+}
+
+int CBehaviourBrazulA::FUN_003e6f20()
+{
+	int iVar1;
+	ulong uVar2;
+	int* puVar3;
+	CBehaviourBrazulA_SubObj* pCVar4;
+	uint uVar5;
+
+	pCVar4 = this->aSubObjs + this->field_0x10;
+	iVar1 = pCVar4->field_0xc;
+
+	if (iVar1 == 2) {
+		uVar5 = this->field_0x20;
+		if (uVar5 < pCVar4->nbPathFollowReaders) {
+			uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar2;
+			iVar1 = uVar5 * (static_cast<uint>(uVar2 >> 0x10) & 0x7fff);
+			if (iVar1 < 0) {
+				iVar1 = iVar1 + 0x7fff;
+			}
+
+			this->field_0x14 = iVar1 >> 0xf;
+			this->field_0x20 = this->field_0x20 + 1;
+		}
+		else {
+			if (pCVar4->field_0x10 == 1) {
+				FUN_003e71f0();
+			}
+			else {
+				this->field_0x14 = -1;
+			}
+		}
+	}
+	else {
+		if (iVar1 == 1) {
+			iVar1 = this->field_0x20;
+			if (iVar1 == 0) {
+				if (pCVar4->field_0x10 == 1) {
+					FUN_003e71f0();
+				}
+				else {
+					this->field_0x14 = -1;
+				}
+			}
+			else {
+				uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+				CScene::_pinstance->field_0x38 = uVar2;
+
+				iVar1 = iVar1 * (static_cast<uint>(uVar2 >> 0x10) & 0x7fff);
+				if (iVar1 < 0) {
+					iVar1 = iVar1 + 0x7fff;
+				}
+
+				uVar5 = iVar1 >> 0xf;
+	
+				this->field_0x14 = this->field_0x1c[uVar5];
+				this->field_0x20 = this->field_0x20 + -1;
+				if (uVar5 < this->field_0x20) {
+					do {
+						puVar3 = this->field_0x1c + uVar5;
+						uVar5 = uVar5 + 1;
+						*puVar3 = puVar3[1];
+					} while (uVar5 < this->field_0x20);
+				}
+			}
+		}
+		else {
+			if (iVar1 == 0) {
+				this->field_0x14 = this->field_0x14 + 1;
+				if (this->aSubObjs[this->field_0x10].nbPathFollowReaders <= (uint)this->field_0x14) {
+					if (this->aSubObjs[this->field_0x10].field_0x10 == 1) {
+						FUN_003e71f0();
+					}
+					else {
+						this->field_0x14 = -1;
+					}
+				}
+			}
+		}
+	}
+
+	if (this->field_0x14 != -1) {
+		this->aSubObjs[this->field_0x10].aPathFollowReaders[this->field_0x14].Reset();
+	}
+
+	return this->field_0x14;
+}
+
+void CBehaviourBrazulA::FUN_003e71f0()
+{
+	int iVar1;
+	uint uVar2;
+
+	iVar1 = this->aSubObjs[this->field_0x10].field_0xc;
+	if (iVar1 == 2) {
+		this->field_0x20 = 0;
+		FUN_003e6f20();
+	}
+	else {
+		if (iVar1 == 1) {
+			this->field_0x20 = this->aSubObjs[this->field_0x10].nbPathFollowReaders;
+			uVar2 = 0;
+			if (this->field_0x20 != 0) {
+				iVar1 = 0;
+				do {
+					this->field_0x1c[uVar2] = uVar2;
+					uVar2 = uVar2 + 1;
+					iVar1 = iVar1 + 4;
+				} while (uVar2 < this->field_0x20);
+			}
+
+			FUN_003e6f20();
+		}
+		else {
+			if (iVar1 == 0) {
+				this->field_0x14 = 0;
+			}
+		}
+	}
+
+	this->aSubObjs[this->field_0x10].aPathFollowReaders[this->field_0x14].Reset();
+	this->field_0x18 = 1;
+
+	return;
 }
 
 void CBehaviourBrazulB::Create(ByteCode* pByteCode)

@@ -30,7 +30,7 @@ public:
 	char* field_0x28;
 	float* aDelays;
 	uint* field_0x30;
-	char* field_0x34;
+	float* field_0x34;
 	char* field_0x38;
 };
 
@@ -90,6 +90,7 @@ public:
 
 	int GetNextPlace(int param_2, int param_3);
 	void SetToClosestSplinePoint(edF32VECTOR4* pLocation);
+	float FUN_001c2b50(int param_2, int param_3);
 
 	union {
 		int index;

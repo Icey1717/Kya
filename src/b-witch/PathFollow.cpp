@@ -82,8 +82,8 @@ void CPathFollow::Create(ByteCode* pByteCode)
 
 	if ((flags & 0x20) != 0) {
 		pcVar1 = pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * 4;
-		this->field_0x34 = pcVar1;
+		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * sizeof(float);
+		this->field_0x34 = reinterpret_cast<float*>(pcVar1);
 	}
 
 	if ((flags & 0x40) != 0) {
@@ -1279,6 +1279,68 @@ void CPathFollowReader::SetToClosestSplinePoint(edF32VECTOR4* pLocation)
 	this->field_0x8 = iVar2;
 
 	return;
+}
+
+float CPathFollowReader::FUN_001c2b50(int param_2, int param_3)
+{
+	int iVar1;
+	edF32VECTOR4* peVar2;
+	edF32VECTOR4* peVar3;
+	int unaff_s0_lo;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+
+	peVar2 = this->pPathFollow->aSplinePoints;
+	if (peVar2 == (edF32VECTOR4*)0x0) {
+		peVar2 = &gF32Vertex4Zero;
+	}
+	else {
+		peVar2 = peVar2 + param_3;
+	}
+
+	local_20 = *peVar2;
+	fVar5 = 0.0f;
+
+	if (param_2 < param_3) {
+		unaff_s0_lo = 1;
+	}
+
+	if (param_3 < param_2) {
+		unaff_s0_lo = 0;
+	}
+
+	if (param_2 == param_3) {
+		fVar5 = 0.0f;
+	}
+	else {
+		while (param_2 != param_3) {
+			iVar1 = GetNextPlace(param_2, unaff_s0_lo);
+			peVar2 = this->pPathFollow->aSplinePoints;
+			if (peVar2 == (edF32VECTOR4*)0x0) {
+				peVar2 = &gF32Vertex4Zero;
+			}
+			else {
+				peVar2 = peVar2 + param_2;
+			}
+
+			peVar3 = this->pPathFollow->aSplinePoints;
+			if (peVar3 == (edF32VECTOR4*)0x0) {
+				peVar3 = &gF32Vertex4Zero;
+			}
+			else {
+				peVar3 = peVar3 + iVar1;
+			}
+
+			edF32Vector4SubHard(&eStack48, peVar2, peVar3);
+			fVar4 = edF32Vector4GetDistHard(&eStack48);
+			fVar5 = fVar5 + fabsf(fVar4);
+			param_2 = iVar1;
+		}
+	}
+
+	return fVar5;
 }
 
 void CPathPlaneArray::Init()

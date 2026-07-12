@@ -553,11 +553,11 @@ bool CFrontendInventory::PrepareTransit(CActor* pInventoryOwner, int param_3, ed
 
 			(this->field_0x14b0).itemSlot = (this->field_0x14b0).itemSlot - pInvColumn->field_0x0;
 
-			pNode = this->pNode;
+			pNode = this->avatar.instance3d.pNode;
 			if (pNode != (edNODE*)0x0) {
 				if (pNode != (edNODE*)0x0) {
 					ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNode);
-					this->pNode = (edNODE*)0x0;
+					this->avatar.instance3d.pNode = (edNODE*)0x0;
 					(this->avatar).field_0x0 = (CActor*)0x0;
 				}
 
@@ -713,6 +713,7 @@ void CFrontendInventory::ManageTransit()
 			pMsgParam = &msgParam;
 			msgParam.field_0x0 = 2;
 			this->field_0x149c->DoMessage(this->field_0x14b8, (ACTOR_MESSAGE)0x5e, pMsgParam);
+			worldPos = msgParam.field_0x10;
 			pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
 			fov = pCameraManager->fov_0xa34;
 			edF32Matrix4MulF32Vector4Hard(&cameraSpacePos, &pCameraManager->worldToCamera_0x3d0, &worldPos);
@@ -796,7 +797,7 @@ void CFrontendInventory::Column_DisplayText(int index)
 			}
 			if (1 < static_cast<CInventoryInterface*>(this->pInterface)->aSlots[index][(pColumn->field_0x0 + slotIndex) % nbUsedSlots].nbItems) {
 				edCTextFormat textFormat;
-				textFormat.FormatString("x%d");
+				textFormat.FormatString("x%d", static_cast<CInventoryInterface*>(this->pInterface)->aSlots[index][(pColumn->field_0x0 + slotIndex) % nbUsedSlots].nbItems);
 				textFormat.Display(textPosition.x * static_cast<float>(gVideoConfig.screenWidth), textPosition.y * static_cast<float>(gVideoConfig.screenHeight));
 			}
 
@@ -847,7 +848,7 @@ void CFrontendInventory::Column_Display(int index)
 				iVar5 = 0;
 				do {
 					int nbUsedSlots = static_cast<CInventoryInterface*>(this->pInterface)->aHeaderInfo[index].nbUsedSlots;
-					local_1c = (pInvColumn->field_0x0 + iVar9) % nbUsedSlots;
+					local_1c = (pInvColumn->field_0x0 + iVar5) % nbUsedSlots;
 					if (nbUsedSlots == 0) {
 						trap(7);
 					}
@@ -938,7 +939,7 @@ void CFrontendInventory::Column_Display(int index)
 				}
 
 				if ((iVar9 != -1) && (bVar2 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(12.0f, &local_30, &eStack16), bVar2 != false)) {
-					iVar13 = pInvColumn->aNodes;
+					iVar13 = pInvColumn->aNodes + iVar9;
 					if (iVar13->instance3d.pNode != (edNODE*)0x0) {
 						iVar13->instance3d.position = local_30;
 						iVar13->instance3d.ComputeObjectMatrix();

@@ -297,9 +297,9 @@ void CFxNewParticle::Manage()
 				if (0 < iVar6) {
 					p_Var4 = this->pManager->aGroups.pData;
 					do {
-						bVar2 = p_Var4->field_0x14 != 0;
+						bVar2 = p_Var4->nbAvailableParticles != 0;
 						if (!bVar2) {
-							bVar2 = p_Var4->field_0x5c != 0;
+							bVar2 = p_Var4->nbLiveParticles != 0;
 						}
 
 						if (!(bool)(bVar2 ^ 1)) break;

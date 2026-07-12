@@ -246,6 +246,8 @@ export class ApplicationEngine {
 
 export function publicApplicationRun(run: ApplicationRun, active: boolean): object {
   const requests = Object.values(run.requests);
+  const appliedItems = run.items.filter((item) => item.appliedAt);
+  const pendingItems = run.items.filter((item) => !item.appliedAt);
   return {
     runId: run.runId,
     status: run.status,
@@ -254,13 +256,24 @@ export function publicApplicationRun(run: ApplicationRun, active: boolean): obje
     modelIds: run.modelIds,
     files: run.files.map((file) => ({ relativePath: file.relativePath, functionCount: file.functions.length, eligibleFunctionCount: file.functions.filter((fn) => !fn.exclusionReason).length })),
     requestStats: { pending: requests.filter((request) => request.status === "pending").length, success: requests.filter((request) => request.status === "success").length, failed: requests.filter((request) => request.status === "failed").length },
-    reviewCount: run.items.filter((item) => !item.appliedAt).length,
-    submittedChoiceCount: run.items.filter((item) => !item.appliedAt && item.choice).length,
-    readyFunctions: [...new Map(
-      run.items
-        .filter((item) => !item.appliedAt)
-        .map((item) => [item.functionId, { functionId: item.functionId, functionName: item.functionName }])
-    ).values()].filter((functionInfo) => run.items.filter((item) => item.functionId === functionInfo.functionId && !item.appliedAt).every((item) => item.choice))
+    reviewCount: pendingItems.length,
+    submittedChoiceCount: pendingItems.filter((item) => item.choice).length,
+    totalItemCount: run.items.length,
+    appliedItemCount: appliedItems.length,
+    selectedItemCount: run.items.filter((item) => item.choice).length,
+    readyFunctions: [...new Map(pendingItems.map((item) => [item.functionId, item.functionName])).entries()]
+      .filter(([functionId]) => pendingItems.filter((item) => item.functionId === functionId).every((item) => item.choice))
+      .map(([functionId, functionName]) => {
+        const items = pendingItems.filter((item) => item.functionId === functionId);
+        const changedItems = items.filter((item) => item.choice?.decision !== item.oldName);
+        return {
+          functionId,
+          functionName,
+          declarationCount: items.length,
+          changedDeclarationCount: changedItems.length,
+          occurrenceCount: changedItems.reduce((sum, item) => sum + (findDeclaration(run, item).occurrences?.length ?? 0), 0)
+        };
+      })
   };
 }
 
@@ -331,6 +344,12 @@ export function submitApplicationChoice(run: ApplicationRun, itemKeyValue: strin
   } catch (error) {
     item.choice = previousChoice;
     throw error;
+  }
+  const functionItems = run.items.filter((candidate) => candidate.functionId === item.functionId && !candidate.appliedAt);
+  if (functionItems.length > 0 && functionItems.every((candidate) => candidate.choice?.decision === candidate.oldName)) {
+    const appliedAt = new Date().toISOString();
+    for (const candidate of functionItems) candidate.appliedAt = appliedAt;
+    if (run.items.every((candidate) => candidate.appliedAt)) run.status = "applied";
   }
   return choice;
 }

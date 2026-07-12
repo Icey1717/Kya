@@ -710,6 +710,8 @@ public:
 
 	void FUN_00312370();
 
+	void FUN_00318db0();
+
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
 

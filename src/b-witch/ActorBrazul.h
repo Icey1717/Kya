@@ -6,7 +6,7 @@
 
 class CActorBrazul;
 
-struct EnemyComponent80Ext : public EnemyComponent80
+struct EnemyComponent80Ext : public EnemyComponent80_00447ec0
 {
 	virtual void SetupObjects(CActor* pOwner) {}
 	virtual void Term() {}
@@ -22,10 +22,13 @@ struct astruct_19
 	void Reset(float param_1);
 	void Draw();
 
+	void FUN_003e56f0(float param_1, float param_2, CActor* param_4);
+
 	CActorBrazul* pOwner;
 	int field_0x4;
 
 	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
 
 	CActor* field_0x30;
 	float field_0x34;
@@ -41,6 +44,18 @@ struct astruct_19
 	CFxHandleExt field_0x3dc;
 };
 
+struct CBehaviourBrazulA_SubObj
+{
+	int field_0x0;
+	uint field_0x4;
+	float field_0x8;
+	uint field_0xc;
+	uint field_0x10;
+	CPathFollowReader* aPathFollowReaders;
+	uint nbPathFollowReaders;
+
+};
+
 class CBehaviourBrazulA : public CBehaviour
 {
 public:
@@ -53,6 +68,21 @@ public:
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	uint CreateSubObj(CBehaviourBrazulA_SubObj* pSubObj, ByteCode* pByteCode);
+	int FUN_003e6cd0();
+	int FUN_003e6f20();
+	void FUN_003e71f0();
+
+	CActorBrazul* pOwner;
+	uint nbSubObjs;
+	uint field_0x10;
+	int field_0x14;
+	int field_0x18;
+	CBehaviourBrazulA_SubObj* aSubObjs;
+	int* field_0x1c;
+	uint field_0x20;
+	undefined4 field_0x24;
 };
 
 class CBehaviourBrazulB : public CBehaviour

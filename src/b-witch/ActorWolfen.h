@@ -82,29 +82,45 @@
 
 struct S_STREAM_EVENT_CAMERA;
 
+class CActorWolfen;
+class CActorCommander;
+class CActorProjectile;
+class CActorHero;
+
 struct StaticEnemy90
 {
 
 };
 
-struct EnemyComponent80
+// Named for their VTable ptrs
+struct EnemyComponent80_00447ec0
 {
 	virtual void SetObjCounts(int countA, int countB) {}
-	virtual void SetupObjects() {}
-	StaticEnemy90* field_0x0;
-	void* field_0x4;
-	void* pEnemy_0x60;
+	virtual void SetupObjects(CActor* CActorWolfen) {}
+	virtual void Term() {}
 
 	void FUN_003c2910() {}
 	void FUN_003c28a0() {}
 	void FUN_003c2aa0() {}
 	void FUN_003c2a30() {}
+	void FUN_003c1400() {}
+	void FUN_003c2b20() {}
+
+	StaticEnemy90* field_0x0;
+	void* field_0x4;
+	CActorWolfen* pEnemy_0x60;
 };
 
-class CActorWolfen;
-class CActorCommander;
-class CActorProjectile;
-class CActorHero;
+struct EnemyComponent80_004460b0 : public EnemyComponent80_00447ec0
+{
+	virtual void SetupObjects(CActor* CActorWolfen) {}
+};
+
+struct EnemyComponent80_00446100 : public EnemyComponent80_00447ec0
+{
+	virtual void SetupObjects(CActor* CActorWolfen) {}
+	virtual void Func_0x30() {}
+};
 
 struct RndData
 {
@@ -1360,7 +1376,7 @@ public:
 
 	EEnemyCombatMode combatMode_0xb7c;
 
-	EnemyComponent80* pEnemyComponent80_0xd34 = nullptr; // delete init
+	EnemyComponent80_00447ec0* pEnemyComponent80_0xd34 = nullptr; // delete init
 
 	CVision vision;
 

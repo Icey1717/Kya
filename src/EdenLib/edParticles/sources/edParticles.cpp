@@ -8,6 +8,14 @@
 
 #define PARTICLE_LOG(level, format, ...) MY_LOG_CATEGORY("Particle", level, format, ##__VA_ARGS__)
 
+#define VECTOR_NAN_SAFETY_CHECK(vec) \
+	if (std::isnan(vec.x) || std::isnan(vec.y) || std::isnan(vec.z) || std::isnan(vec.w)) { \
+		assert(false && "Vector contains NaN values"); \
+	}\
+	if (std::isinf(vec.x) || std::isinf(vec.y) || std::isinf(vec.z) || std::isinf(vec.w)) { \
+		assert(false && "Vector contains Inf values"); \
+	}
+
 uint gPartProfIdShapers = 0;
 uint gPartProfIdEffectors = 0;
 uint gPartProfIdSelectors = 0;
@@ -218,7 +226,7 @@ void edPartInit()
 
 	pCurParticle = p_current_particle_manager->aParticles.pData;
 	for (curIndex = 0; curIndex < p_current_particle_manager->nbParticles; curIndex = curIndex + 1) {
-		pCurParticle->field_0x6 = (short)curIndex;
+		pCurParticle->poolIndex = (short)curIndex;
 		pCurParticle = pCurParticle + 1;
 	}
 
@@ -366,8 +374,8 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 
 	_ed_particle* pCurParticle = (pFileData->manager).aParticles.pData;
 	for (iVar17 = 0; iVar17 < (pFileData->manager).nbParticles; iVar17 = iVar17 + 1) {
-		pCurParticle->field_0x6 = (short)iVar17;
-		pCurParticle->field_0x0 = 1;
+		pCurParticle->poolIndex = (short)iVar17;
+		pCurParticle->allocationState = 1;
 		pCurParticle->visible = 1;
 		pCurParticle = pCurParticle + 1;
 	}
@@ -420,8 +428,8 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 			return &pFileData->manager;
 		}
 
-		pCurGroup->field_0x0 = 1;
-		pCurGroup->field_0x2 = 1;
+		pCurGroup->bInitialized = 1;
+		pCurGroup->bEnabled = 1;
 		if (pCurGroup->aGeneratorParams.offset != 0x0) {
 			pCurGroup->aGeneratorParams.pData = reinterpret_cast<OffsetPointer<_ed_particle_generator_param*>*>(reinterpret_cast<char*>(pFileData) + pCurGroup->aGeneratorParams.offset);
 		}
@@ -439,12 +447,12 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 		}
 
 		pCurGroup->pParticle.pData = (pFileData->manager).aParticles.pData + pCurGroup->pParticle.offset;
-		pCurGroup->field_0x6 = pCurGroup->pParticle.pData->field_0x6;
+		pCurGroup->nextParticleIndex = pCurGroup->pParticle.pData->poolIndex;
 
 		for (iVar22 = 0; iVar15 = 0, iVar22 < pCurGroup->nbGeneratorParams; iVar22 = iVar22 + 1) {
 			pCurGroup->aGeneratorParams.pData[iVar22].pData = (pFileData->manager).aGeneratorParams.pData + pCurGroup->aGeneratorParams.pData[iVar22].offset;
 
-			iVar15 = pCurGroup->field_0x80;
+			iVar15 = pCurGroup->randomSeed;
 			if (iVar15 == 0) {
 				iVar15 = rand();
 			}
@@ -510,7 +518,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 			if (pShaperParam->drawMode == 3) {
 				pShaperParam->field_0x194.pData = reinterpret_cast<void*>(reinterpret_cast<char*>(pFileData) + pShaperParam->field_0x194.offset);
 				if (p3dManager != (ed_g3d_manager*)0x0) {
-					iVar12 = pCurGroup->field_0x10;
+					iVar12 = pCurGroup->particleCapacity;
 					_ed_particle* pParticle = pCurGroup->pParticle.pData;
 					for (iVar24 = 0; iVar24 < iVar12; iVar24 = iVar24 + 1) {
 						pParticle->pNode = ed3DHierarchyAddToScene(pScene, p3dManager, (char*)0x0);
@@ -612,7 +620,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 				while (iVar12 < pShaperParam->nbMaterials) {
 					if (param_8 == false) {
 						nbMatrices = 0;
-						iVar24 = pShaperParam->field_0x11c * pCurGroup->field_0x10;
+						iVar24 = pShaperParam->field_0x11c * pCurGroup->particleCapacity;
 						if (pShaperParam->drawMode != 1) {
 							nbMatrices = iVar24 * 4;
 							iVar24 = 0;
@@ -1498,33 +1506,33 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 		}
 
 		pGeneratorParam->field_0x140 = pGeneratorParam->field_0x140 + fVar10;
-		lVar9 = (long)pGroup->field_0x6;
+		lVar9 = (long)pGroup->nextParticleIndex;
 		iVar11 = 0;
 		for (local_40 = param_6; local_40 < param_7; local_40 = local_40 + 1) {
-			if (pGroup->field_0x14 == 0) {
-				if ((pGeneratorParam->field_0x4 == 1) || ((pGroup->field_0x8 & 4) != 0)) break;
+			if (pGroup->nbAvailableParticles == 0) {
+				if ((pGeneratorParam->field_0x4 == 1) || ((pGroup->particleGroupFlags & 4) != 0)) break;
 				iVar8 = (int)lVar9;
 				pParticleIt = pParticle + iVar8;
 				pParticleVectorIt = pParticleVector + iVar8;
 				pVectorIt = param_5 + iVar8;
-				sVar2 = pGroup->pParticle.pData->field_0x6;
+				sVar2 = pGroup->pParticle.pData->poolIndex;
 				lVar9 = (long)(iVar8 + 1);
 
-				if ((long)((int)sVar2 + pGroup->field_0x10) <= (long)(iVar8 + 1)) {
+				if ((long)((int)sVar2 + pGroup->particleCapacity) <= (long)(iVar8 + 1)) {
 					lVar9 = (long)sVar2;
 				}
 
-				pGroup->field_0x6 = (short)lVar9;
-				if ((pParticleIt->field_0x0 == 2) &&
+				pGroup->nextParticleIndex = (short)lVar9;
+				if ((pParticleIt->allocationState == 2) &&
 					(((bVar1 = pParticleIt->state, bVar1 == 5 || (bVar1 == 1)) || (bVar1 == 2)))) {
-					pGroup->field_0x5c = pGroup->field_0x5c + -1;
+					pGroup->nbLiveParticles = pGroup->nbLiveParticles + -1;
 				}
 
-				pParticleIt->field_0x0 = 1;
-				pGroup->field_0x14 = pGroup->field_0x14 + 1;
+				pParticleIt->allocationState = 1;
+				pGroup->nbAvailableParticles = pGroup->nbAvailableParticles + 1;
 			}
 
-			if (pParticleIt->field_0x0 == 1) {
+			if (pParticleIt->allocationState == 1) {
 				if (iVar11 == 0) {
 					if (pGeneratorParam->shape != 6) {
 						iVar11 = (int)(pGeneratorParam->field_0x148 * pGeneratorParam->field_0x14c);
@@ -1594,17 +1602,17 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 						}
 					}
 
-					if ((pGroup->field_0x74 != (_ed_particle_meshe_param*)0x0) && (pGroup->field_0x4 == 3)) {
-						pGeneratorParam->field_0x168 = pGroup->field_0x74->field_0x8;
-						pGeneratorParam->field_0x16c = pGroup->field_0x74->field_0xc;
+					if ((pGroup->pMesheParams != (_ed_particle_meshe_param*)0x0) && (pGroup->spatialPartitionMode == SPATIAL_PARTITION_MODE_MESH)) {
+						pGeneratorParam->field_0x168 = pGroup->pMesheParams->field_0x8;
+						pGeneratorParam->field_0x16c = pGroup->pMesheParams->field_0xc;
 					}
 
-					edPartGenNewPosAndSpeed(pGeneratorParam, pVectorIt, &pParticleVectorIt->field_0x10);
+					edPartGenNewPosAndSpeed(pGeneratorParam, pVectorIt, &pParticleVectorIt->velocity);
 
-					(pParticleVectorIt->field_0x0).x = 0.0f;
-					(pParticleVectorIt->field_0x0).y = 0.0f;
-					(pParticleVectorIt->field_0x0).z = 0.0f;
-					(pParticleVectorIt->field_0x0).w = 0.0f;
+					(pParticleVectorIt->acceleration).x = 0.0f;
+					(pParticleVectorIt->acceleration).y = 0.0f;
+					(pParticleVectorIt->acceleration).z = 0.0f;
+					(pParticleVectorIt->acceleration).w = 0.0f;
 
 					uVar6 = rand();
 					fVar12 = (float)(uint)pGeneratorParam->speedFunc.field_0xc + (float)(uint)pGeneratorParam->posFunc.field_0xc * FLOAT_0044858c * (float)(uVar6 & 0xffff);
@@ -1682,10 +1690,10 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 						pParticleIt->sizeByte = (byte)(int)(fVar12 - 2.147484e+09);
 					}
 					uVar6 = rand();
-					pParticleIt->field_0x2c = pGeneratorParam->speedFunc.field_0x30 + pGeneratorParam->posFunc.field_0x30 * FLOAT_0044858c * (float)(uVar6 & 0xffff);
-					pParticleIt->field_0x2c = pParticleIt->field_0x2c * pParticleIt->yScale * pParticleIt->yScale;
+					pParticleIt->dragScale = pGeneratorParam->speedFunc.field_0x30 + pGeneratorParam->posFunc.field_0x30 * FLOAT_0044858c * (float)(uVar6 & 0xffff);
+					pParticleIt->dragScale = pParticleIt->dragScale * pParticleIt->yScale * pParticleIt->yScale;
 					uVar6 = rand();
-					pParticleIt->field_0x14 = pGeneratorParam->speedFunc.field_0x18 + pGeneratorParam->posFunc.field_0x18 * FLOAT_0044858c * (float)(uVar6 & 0xffff);
+					pParticleIt->mass = pGeneratorParam->speedFunc.field_0x18 + pGeneratorParam->posFunc.field_0x18 * FLOAT_0044858c * (float)(uVar6 & 0xffff);
 					uVar6 = rand();
 					fVar12 = (float)(uint)pGeneratorParam->speedFunc.field_0x9 + (float)(uint)pGeneratorParam->posFunc.field_0x9 * FLOAT_0044858c * (float)(uVar6 & 0xffff);
 					if (fVar12 < 2.147484e+09) {
@@ -1696,13 +1704,13 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 					}
 
 #ifdef PLATFORM_WIN
-					if (pParticleIt->field_0x14 == 0.0f) {
+					if (pParticleIt->mass == 0.0f) {
 						// HACK - PS2 seems to handle the division by 0 differently, so we set it to a very small value to avoid it
-						pParticleIt->field_0x14 = 0.00000001f;
+						pParticleIt->mass = 0.00000001f;
 					}
 #endif
 
-					pParticleIt->field_0x18 = 1.0f / pParticleIt->field_0x14;
+					pParticleIt->inverseMass = 1.0f / pParticleIt->mass;
 					bVar1 = pGeneratorParam->field_0xd;
 					fVar12 = pGeneratorParam->field_0x180;
 					fVar14 = pGeneratorParam->field_0x184;
@@ -1754,20 +1762,20 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 
 					pParticleIt->age = fVar10;
 					pParticleIt->state = 5;
-					p_Var4 = pGroup->field_0x74;
-					if (((p_Var4 != (_ed_particle_meshe_param*)0x0) && (pGroup->field_0x4 == 2)) && (lVar7 = edPartCubeNumber(p_Var4->field_0x1c, pVectorIt), -1 < lVar7)) {
+					p_Var4 = pGroup->pMesheParams;
+					if (((p_Var4 != (_ed_particle_meshe_param*)0x0) && (pGroup->spatialPartitionMode == SPATIAL_PARTITION_MODE_CUBE)) && (lVar7 = edPartCubeNumber(p_Var4->field_0x1c, pVectorIt), -1 < lVar7)) {
 						p_Var5 = p_Var4->field_0x1c;
 						pParticleIt->field_0x38 = p_Var5 + (int)lVar7 * 4;
 						edParticleAddInCube(p_Var5 + (int)lVar7 * 4, pParticleIt);
 					}
 
-					if ((pGroup->field_0x74 != (_ed_particle_meshe_param*)0x0) && (pGroup->field_0x4 == 3)) {
-						edPartMesheParticleAdd(pGroup->field_0x74, pParticleIt);
+					if ((pGroup->pMesheParams != (_ed_particle_meshe_param*)0x0) && (pGroup->spatialPartitionMode == SPATIAL_PARTITION_MODE_MESH)) {
+						edPartMesheParticleAdd(pGroup->pMesheParams, pParticleIt);
 					}
 
-					pParticleIt->field_0x0 = 2;
-					if (pGroup->field_0x14 != 0) {
-						pGroup->field_0x14 = pGroup->field_0x14 + -1;
+					pParticleIt->allocationState = 2;
+					if (pGroup->nbAvailableParticles != 0) {
+						pGroup->nbAvailableParticles = pGroup->nbAvailableParticles + -1;
 					}
 				}
 			}
@@ -1820,7 +1828,6 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	edF32VECTOR4** ppeVar28;
 	float fVar29;
 	float unaff_f20;
-	float in_vf0x;
 	float fVar30;
 	float fVar31;
 	float fVar32;
@@ -1856,8 +1863,8 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	float fStack8;
 	float local_4;
 
-	iVar17 = pGroup->field_0x10;
-	iVar9 = pGroup->pParticle.pData->field_0x6;
+	iVar17 = pGroup->particleCapacity;
+	iVar9 = pGroup->pParticle.pData->poolIndex;
 	pGroup->field_0x54 = 0;
 	local_bb0 = iVar9 + iVar17;
 	pGroup->deltaTime = time;
@@ -1866,13 +1873,13 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 		edProfileBegin(gPartProfIdGenerators);
 	}
 
-	pGroup->field_0x70 = (_ed_particle_generator_param*)0x0;
+	pGroup->pCurrentParam = (_ed_particle_generator_param*)0x0;
 	p_Var19 = pGroup->aGeneratorParams.pData;
-	for (iVar12 = 0; iVar12 < pGroup->field_0x1c; iVar12 = iVar12 + 1) {
+	for (iVar12 = 0; iVar12 < pGroup->nbActiveGenerators; iVar12 = iVar12 + 1) {
 		pParam = p_Var19->pData;
 		lVar18 = (long)(int)pParam;
 		if ((pParam != (_ed_particle_generator_param*)0x0) && (pParam->field_0x2 != 0)) {
-			pGroup->field_0x70 = pParam;
+			pGroup->pCurrentParam = pParam;
 			if (1 < pParam->field_0x8) {
 				IMPLEMENTATION_GUARD(
 					edPartGeneratorMoveAttached(pParam, (edF32VECTOR4*)in_a1);)
@@ -1909,18 +1916,18 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	pVectorIt = p_current_particle_manager->aVectors.pData + iVar9;
 
 	for (iVar17 = iVar9; iVar17 < local_bb0; iVar17 = iVar17 + 1) {
-		if ((pParticleIt->field_0x0 == 2) && ((pParticleIt->state == 2 || (pParticleIt->state == 1)))) {
+		if ((pParticleIt->allocationState == 2) && ((pParticleIt->state == 2 || (pParticleIt->state == 1)))) {
 			aParticles[local_bc0] = pParticleIt;
 			aVectors[local_bc0] = pVectorIt;
 			aParticleVectors[local_bc0] = pParticleVectorIt;
 
 			fVar31 = pParticleIt->age;
 			if (fVar30 < fVar31) {
-				pGroup->field_0x6 = (short)iVar17;
+				pGroup->nextParticleIndex = (short)iVar17;
 				fVar30 = fVar31;
 			}
 
-			pParticleVectorIt->field_0x0 = gF32Vector4Zero;
+			pParticleVectorIt->acceleration = gF32Vector4Zero;
 			local_bc0 = local_bc0 + 1;
 		}
 		pParticleIt = pParticleIt + 1;
@@ -1929,30 +1936,24 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	}
 
 	if (local_bc0 != 0) {
-		if ((pGroup->field_0x9 != 0) && (((FLOAT_00448590 < fabs((pGroup->instanceIndex).x) || (FLOAT_00448590 < fabs((pGroup->instanceIndex).y))) ||
-			(FLOAT_00448590 < fabs((pGroup->instanceIndex).z))))) {
+		if ((pGroup->hasParticleSimulation != 0) && (((FLOAT_00448590 < fabs((pGroup->groupAcceleration).x) || (FLOAT_00448590 < fabs((pGroup->groupAcceleration).y))) ||
+			(FLOAT_00448590 < fabs((pGroup->groupAcceleration).z))))) {
 			pp_Var27 = aParticleVectors;
-			fVar30 = (pGroup->instanceIndex).x;
-			fVar31 = (pGroup->instanceIndex).y;
-			fVar32 = (pGroup->instanceIndex).z;
-			fVar34 = (pGroup->instanceIndex).w;
 
 			do {
 				pParticleVectorIt = *pp_Var27;
 				pp_Var27 = pp_Var27 + 1;
-				(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + fVar30;
-				(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + fVar31;
-				(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + fVar32;
-				(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + fVar34;
+				pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + pGroup->groupAcceleration;
+				VECTOR_NAN_SAFETY_CHECK(pParticleVectorIt->acceleration);
 			} while (pp_Var27 < aParticleVectors + local_bc0);
 		}
 
-		pGroup->field_0x70 = (_ed_particle_generator_param*)0x0;
+		pGroup->pCurrentParam = (_ed_particle_generator_param*)0x0;
 		local_b90 = 0;
 		local_b80 = pGroup->aEffectorParams.pData;
 		for (; local_b90 < pGroup->nbEffectorParams; local_b90 = local_b90 + 1) {
 			_ed_particle_effector_param* pEffectorParam = local_b80->pData;
-			pGroup->field_0x70 = pEffectorParam;
+			pGroup->pCurrentParam = pEffectorParam;
 			if (pEffectorParam->field_0x2 != 0) {
 				if (pEffectorParam->field_0x224 == 0) {
 					bVar1 = pEffectorParam->field_0x225;
@@ -1995,10 +1996,10 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 							}
 
 							if (bVar8) {
-								pParticleIt->field_0x13 = 1;
+								pParticleIt->effectorContainment = 1;
 							}
 							else {
-								pParticleIt->field_0x13 = 2;
+								pParticleIt->effectorContainment = 2;
 							}
 							ppeVar28 = ppeVar28 + 1;
 							pVectorIt = pVectorIt + 1;
@@ -2033,10 +2034,10 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 								pVectorIt->z = fVar31 * fVar40 + fVar33 * fVar41 + fVar35 * fVar42 + fVar38 * fVar43;
 								pVectorIt->w = fVar32 * fVar40 + fVar29 * fVar41 + fVar36 * fVar42 + fVar39 * fVar43;
 								if (0.5 <= pVectorIt->z * pVectorIt->z + pVectorIt->x * pVectorIt->x + pVectorIt->y * pVectorIt->y) {
-									pParticleIt->field_0x13 = 2;
+									pParticleIt->effectorContainment = 2;
 								}
 								else {
-									pParticleIt->field_0x13 = 1;
+									pParticleIt->effectorContainment = 1;
 								}
 								ppeVar28 = ppeVar28 + 1;
 								pVectorIt = pVectorIt + 1;
@@ -2081,10 +2082,10 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 									}
 
 									if (bVar6) {
-										pParticleIt->field_0x13 = 1;
+										pParticleIt->effectorContainment = 1;
 									}
 									else {
-										pParticleIt->field_0x13 = 2;
+										pParticleIt->effectorContainment = 2;
 									}
 
 									ppeVar28 = ppeVar28 + 1;
@@ -2099,7 +2100,7 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 					pVectorIt = local_660;
 					for (pp_Var20 = aParticles; pp_Var20 < aParticles + local_bc0; pp_Var20 = pp_Var20 + 1) {
 						peVar24 = *ppeVar28;
-						(*pp_Var20)->field_0x13 = 0;
+						(*pp_Var20)->effectorContainment = 0;
 						ppeVar28 = ppeVar28 + 1;
 						*pVectorIt = *peVar24;
 						pVectorIt = pVectorIt + 1;
@@ -2209,7 +2210,7 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 					IMPLEMENTATION_GUARD(
 						for (pp_Var27 = aParticleVectors; pp_Var27 < aParticleVectors + local_bc0; pp_Var27 = pp_Var27 + 1) {
 							pParticleVectorIt = *pp_Var27;
-							pParticleVectorIt->field_0x0 = pParticleVectorIt->field_0x0 + pEffectorParam->field_0x170;
+							pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + pEffectorParam->field_0x170;
 						})
 				}
 
@@ -2218,17 +2219,19 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 					for (pp_Var20 = aParticles; pp_Var20 < aParticles + local_bc0; pp_Var20 = pp_Var20 + 1) {
 						pParticleVectorIt = *pp_Var27;
 
-						local_10 = (pParticleVectorIt->field_0x10).x - pEffectorParam->field_0x150.x;
-						fStack12 = (pParticleVectorIt->field_0x10).y - pEffectorParam->field_0x150.y;
-						fStack8 = (pParticleVectorIt->field_0x10).z - pEffectorParam->field_0x150.z;
-						local_4 = (pParticleVectorIt->field_0x10).w - pEffectorParam->field_0x150.w;
+						local_10 = (pParticleVectorIt->velocity).x - pEffectorParam->field_0x150.x;
+						fStack12 = (pParticleVectorIt->velocity).y - pEffectorParam->field_0x150.y;
+						fStack8 = (pParticleVectorIt->velocity).z - pEffectorParam->field_0x150.z;
+						local_4 = (pParticleVectorIt->velocity).w - pEffectorParam->field_0x150.w;
 
-						unaff_f20 = -(pEffectorParam->field_0x140 + (*pp_Var20)->field_0x2c * (*pp_Var20)->yScale);
+						unaff_f20 = -(pEffectorParam->field_0x140 + (*pp_Var20)->dragScale * (*pp_Var20)->yScale);
 
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_10 * unaff_f20;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + fStack12 * unaff_f20;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + fStack8 * unaff_f20;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + local_4 * unaff_f20;
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_10 * unaff_f20;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + fStack12 * unaff_f20;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + fStack8 * unaff_f20;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_4 * unaff_f20;
+
+						//VECTOR_NAN_SAFETY_CHECK(pParticleVectorIt->acceleration);
 
 						pp_Var27 = pp_Var27 + 1;
 					}
@@ -2257,11 +2260,11 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 						edF32Vector4SubHard(&local_b30, &local_b20, pVectorIt);
 						fVar30 = edF32Vector4SafeNormalize0Hard(&local_b30, &local_b30);
 						edF32Vector4SafeNormalize0Hard(&local_b40, &local_b40);
-						fVar31 = (pEffectorParam->field_0x194 * pParticleIt->field_0x14) / (fVar30 * fVar30 + pEffectorParam->field_0x19c);
-						pParticleVectorIt->field_0x0 = pParticleVectorIt->field_0x0 + local_b30 * fVar31;
-						unaff_f20 = (pEffectorParam->field_0x190 * pParticleIt->field_0x14) / (fVar30 * fVar30 + pEffectorParam->field_0x198);
+						fVar31 = (pEffectorParam->field_0x194 * pParticleIt->mass) / (fVar30 * fVar30 + pEffectorParam->field_0x19c);
+						pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + local_b30 * fVar31;
+						unaff_f20 = (pEffectorParam->field_0x190 * pParticleIt->mass) / (fVar30 * fVar30 + pEffectorParam->field_0x198);
 
-						pParticleVectorIt->field_0x0 = pParticleVectorIt->field_0x0 + local_b40 * unaff_f20;
+						pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + local_b40 * unaff_f20;
 						pp_Var27 = pp_Var27 + 1;
 						pVectorIt = pVectorIt + 1;
 					}
@@ -2318,18 +2321,18 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 						edF32Vector4SubHard(&local_b30, &local_b20, pVectorIt);
 						fVar30 = edF32Vector4SafeNormalize0Hard(&local_b30, &local_b30);
 						edF32Vector4SafeNormalize0Hard(&local_b40, &local_b40);
-						fVar31 = (*(float*)&pEffectorParam->field_0x194 * *(float*)&pParticleIt->field_0x14) /
-							(fVar30 * fVar30 + *(float*)&pEffectorParam->field_0x19c);
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_b30.x * fVar31;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + local_b30.y * fVar31;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + local_b30.z * fVar31;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + local_b30.w * fVar31;
-						unaff_f20 = ((float)pEffectorParam->pPosFunc * *(float*)&pParticleIt->field_0x14) /
-							(fVar30 * fVar30 + *(float*)&pEffectorParam->field_0x198);
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_b40.x * unaff_f20;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + local_b40.y * unaff_f20;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + local_b40.z * unaff_f20;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + local_b40.w * unaff_f20;
+						fVar31 = (pEffectorParam->field_0x194 * pParticleIt->mass) /
+							(fVar30 * fVar30 + pEffectorParam->field_0x19c);
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_b30.x * fVar31;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + local_b30.y * fVar31;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + local_b30.z * fVar31;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_b30.w * fVar31;
+						unaff_f20 = ((float)pEffectorParam->pPosFunc * *(float*)&pParticleIt->mass) /
+							(fVar30 * fVar30 + pEffectorParam->field_0x198);
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_b40.x * unaff_f20;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + local_b40.y * unaff_f20;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + local_b40.z * unaff_f20;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_b40.w * unaff_f20;
 						pp_Var27 = pp_Var27 + 1;
 						pVectorIt = pVectorIt + 1;
 					})
@@ -2367,23 +2370,23 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 						local_b30.w = local_b20.w - pVectorIt->w;
 						fVar31 = edF32Vector4SafeNormalize0Hard(&local_b30, &local_b30);
 						edF32Vector4SafeNormalize0Hard(&local_b40, &local_b40);
-						fVar30 = (pParticleVectorIt->field_0x10).x * local_b40.x + (pParticleVectorIt->field_0x10).y * local_b40.y +
-							(pParticleVectorIt->field_0x10).z * local_b40.z;
+						fVar30 = (pParticleVectorIt->velocity).x * local_b40.x + (pParticleVectorIt->velocity).y * local_b40.y +
+							(pParticleVectorIt->velocity).z * local_b40.z;
 						unaff_f20 = (fVar30 * fVar30 * *(float*)&pEffectorParam->field_0x1a8) / fVar31;
 						edF32Vector4ScaleHard(*(float*)&pEffectorParam->field_0x1a0, &local_b40, &local_b40);
-						local_10 = (pParticleVectorIt->field_0x10).x - local_b40.x;
-						fStack12 = (pParticleVectorIt->field_0x10).y - local_b40.y;
-						fStack8 = (pParticleVectorIt->field_0x10).z - local_b40.z;
-						local_4 = (pParticleVectorIt->field_0x10).w - local_b40.w;
-						fVar30 = -(*(float*)&pEffectorParam->field_0x1a4 + *(float*)&pParticleIt->field_0x2c * pParticleIt->yScale);
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_10 * fVar30;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + fStack12 * fVar30;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + fStack8 * fVar30;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + local_4 * fVar30;
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_b30.x * unaff_f20;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + local_b30.y * unaff_f20;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + local_b30.z * unaff_f20;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + local_b30.w * unaff_f20;
+						local_10 = (pParticleVectorIt->velocity).x - local_b40.x;
+						fStack12 = (pParticleVectorIt->velocity).y - local_b40.y;
+						fStack8 = (pParticleVectorIt->velocity).z - local_b40.z;
+						local_4 = (pParticleVectorIt->velocity).w - local_b40.w;
+						fVar30 = -(*(float*)&pEffectorParam->field_0x1a4 + *(float*)&pParticleIt->dragScale * pParticleIt->yScale);
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_10 * fVar30;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + fStack12 * fVar30;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + fStack8 * fVar30;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_4 * fVar30;
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_b30.x * unaff_f20;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + local_b30.y * unaff_f20;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + local_b30.z * unaff_f20;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_b30.w * unaff_f20;
 						pp_Var27 = pp_Var27 + 1;
 						pVectorIt = pVectorIt + 1;
 					})
@@ -2392,16 +2395,15 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 				if ((pEffectorParam->field_0x226 & 8) != 0) {
 					for (pp_Var27 = aParticleVectors; pp_Var27 < aParticleVectors + local_bc0; pp_Var27 = pp_Var27 + 1) {
 						pParticleVectorIt = *pp_Var27;
-						fVar30 = (pParticleVectorIt->field_0x10).x;
-						fVar31 = (pParticleVectorIt->field_0x10).y;
-						fVar32 = (pParticleVectorIt->field_0x10).z;
-						local_20 = fVar31 * pEffectorParam->field_0x160.z - pEffectorParam->field_0x160.y * fVar32;
-						fStack28 = fVar32 * pEffectorParam->field_0x160.x - pEffectorParam->field_0x160.z * fVar30;
-						fStack24 = fVar30 * pEffectorParam->field_0x160.y - pEffectorParam->field_0x160.x * fVar31;
-						(pParticleVectorIt->field_0x0).x = (pParticleVectorIt->field_0x0).x + local_20;
-						(pParticleVectorIt->field_0x0).y = (pParticleVectorIt->field_0x0).y + fStack28;
-						(pParticleVectorIt->field_0x0).z = (pParticleVectorIt->field_0x0).z + fStack24;
-						(pParticleVectorIt->field_0x0).w = (pParticleVectorIt->field_0x0).w + in_vf0x;
+						local_20 = (pParticleVectorIt->velocity).y * pEffectorParam->field_0x160.z - pEffectorParam->field_0x160.y * (pParticleVectorIt->velocity).z;
+						fStack28 = (pParticleVectorIt->velocity).z * pEffectorParam->field_0x160.x - pEffectorParam->field_0x160.z * (pParticleVectorIt->velocity).x;
+						fStack24 = (pParticleVectorIt->velocity).x * pEffectorParam->field_0x160.y - pEffectorParam->field_0x160.x * (pParticleVectorIt->velocity).y;
+						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_20;
+						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + fStack28;
+						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + fStack24;
+						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + in_vf0x;
+
+						VECTOR_NAN_SAFETY_CHECK(pParticleVectorIt->acceleration);
 					}
 				}
 
@@ -2416,7 +2418,7 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 			local_b80 = local_b80 + 1;
 		}
 
-		if (pGroup->field_0x9 != 0) {
+		if (pGroup->hasParticleSimulation != 0) {
 			pp_Var27 = aParticleVectors;
 			ppeVar28 = aVectors;
 			for (pp_Var20 = aParticles; pp_Var20 < aParticles + local_bc0; pp_Var20 = pp_Var20 + 1) {
@@ -2424,27 +2426,12 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 				pParticleVectorIt = *pp_Var27;
 				pVectorIt = *ppeVar28;
 				fVar30 = time * pParticleIt->velocityStretch;
-				fVar31 = (pParticleVectorIt->field_0x10).y;
-				fVar32 = (pParticleVectorIt->field_0x10).z;
-				fVar34 = (pParticleVectorIt->field_0x10).w;
-				pVectorIt->x = pVectorIt->x + (pParticleVectorIt->field_0x10).x * fVar30;
-				pVectorIt->y = pVectorIt->y + fVar31 * fVar30;
-				pVectorIt->z = pVectorIt->z + fVar32 * fVar30;
-				pVectorIt->w = pVectorIt->w + fVar34 * fVar30;
-				fVar30 = time * pParticleIt->field_0x18;
-				fVar31 = (pParticleVectorIt->field_0x0).y;
-				fVar32 = (pParticleVectorIt->field_0x0).z;
-				fVar34 = (pParticleVectorIt->field_0x0).w;
-				(pParticleVectorIt->field_0x10).x = (pParticleVectorIt->field_0x10).x + (pParticleVectorIt->field_0x0).x * fVar30;
-				(pParticleVectorIt->field_0x10).y = (pParticleVectorIt->field_0x10).y + fVar31 * fVar30;
-				(pParticleVectorIt->field_0x10).z = (pParticleVectorIt->field_0x10).z + fVar32 * fVar30;
-				(pParticleVectorIt->field_0x10).w = (pParticleVectorIt->field_0x10).w + fVar34 * fVar30;
+				*pVectorIt = *pVectorIt + pParticleVectorIt->velocity * fVar30;
+				fVar30 = time * pParticleIt->inverseMass;
+				pParticleVectorIt->velocity = pParticleVectorIt->velocity + pParticleVectorIt->acceleration * fVar30;
 
 				// verify
-				assert(!std::isnan(pParticleVectorIt->field_0x10.x));
-				assert(!std::isnan(pParticleVectorIt->field_0x10.y));
-				assert(!std::isnan(pParticleVectorIt->field_0x10.z));
-				assert(!std::isnan(pParticleVectorIt->field_0x10.w));
+				//VECTOR_NAN_SAFETY_CHECK(pParticleVectorIt->velocity);
 
 				pp_Var27 = pp_Var27 + 1;
 				ppeVar28 = ppeVar28 + 1;
@@ -2457,23 +2444,23 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 	pVectorIt = p_current_particle_manager->aVectors.pData + iVar9;
 
 	for (iVar17 = iVar9; iVar17 < local_bb0; iVar17 = iVar17 + 1) {
-		pParticleIt->field_0x13 = 1;
+		pParticleIt->effectorContainment = 1;
 
-		if (pParticleIt->field_0x0 == 2) {
+		if (pParticleIt->allocationState == 2) {
 			bVar1 = pParticleIt->state;
 			if (bVar1 == PARTICLE_STATE_DEAD) {
-				if ((pGroup->field_0x8 & 4) == 0) {
-					pParticleIt->field_0x0 = 1;
-					pGroup->field_0x14 = pGroup->field_0x14 + 1;
+				if ((pGroup->particleGroupFlags & 4) == 0) {
+					pParticleIt->allocationState = 1;
+					pGroup->nbAvailableParticles = pGroup->nbAvailableParticles + 1;
 				}
 
-				pGroup->field_0x5c = pGroup->field_0x5c + -1;
+				pGroup->nbLiveParticles = pGroup->nbLiveParticles + -1;
 				pParticleIt->state = PARTICLE_STATE_DESTROYED;
 			}
 			else {
 				if (bVar1 == PARTICLE_STATE_ALIVE) {
 					pParticleIt->age = pParticleIt->age + pGroup->deltaTime;
-					if ((pParticleIt->lifetime < pParticleIt->age) || (((pGroup->field_0x8 & 2) != 0 && (pParticleIt->field_0x13 == 0)))) {
+					if ((pParticleIt->lifetime < pParticleIt->age) || (((pGroup->particleGroupFlags & 2) != 0 && (pParticleIt->effectorContainment == 0)))) {
 						pParticleIt->state = PARTICLE_STATE_DEAD;
 					}
 
@@ -2512,9 +2499,9 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 					else {
 						if (bVar1 == 5) {
 							fVar30 = pParticleIt->age;
-							*pVectorIt = *pVectorIt + pParticleVectorIt->field_0x10 * fVar30;
+							*pVectorIt = *pVectorIt + pParticleVectorIt->velocity * fVar30;
 							pParticleIt->state = 1;
-							pGroup->field_0x5c = pGroup->field_0x5c + 1;
+							pGroup->nbLiveParticles = pGroup->nbLiveParticles + 1;
 						}
 					}
 				}
@@ -2526,8 +2513,8 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 		pVectorIt = pVectorIt + 1;
 	}
 
-	pGroup->field_0x84 = local_b50.xyz;
-	pGroup->field_0x58 = local_b50.w;
+	pGroup->boundingSphereCenter = local_b50.xyz;
+	pGroup->boundingSphereRadius = local_b50.w;
 
 	if (g_particle_system_config.bProfile != 0) {
 		edProfileEnd(gPartProfIdEffectors);
@@ -2537,13 +2524,13 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 		edProfileBegin(gPartProfIdSelectors);
 	}
 
-	pGroup->field_0x70 = (_ed_particle_generator_param*)0x0;
+	pGroup->pCurrentParam = (_ed_particle_generator_param*)0x0;
 	p_Var21 = pGroup->aSelectorParams.pData;
 	for (iVar17 = 0; iVar17 < pGroup->nbSelectorParams; iVar17 = iVar17 + 1) {
 		IMPLEMENTATION_GUARD(
 			pPVar3 = *(_ed_particle_shaper_param**)p_Var21;
 		if (pPVar3->field_0x2 != 0) {
-			pGroup->field_0x70 = pPVar3;
+			pGroup->pCurrentParam = pPVar3;
 			if (*(byte*)&pPVar3->field_0x8 == 2) {
 				p_Var19 = *(_ed_particle_generator_param**)&pPVar3->field_0x14;
 				for (iVar12 = *(int*)&pPVar3->field_0x10; iVar12 != 0; iVar12 = iVar12 + -1) {
@@ -2617,12 +2604,12 @@ void edParticlesUpdate(float time)
 
 	pGroup = p_current_particle_manager->aGroups.pData;
 	for (iVar1 = 0; iVar1 < p_current_particle_manager->nbGroups; iVar1 = iVar1 + 1) {
-		if ((pGroup->field_0x0 != 0) && (pGroup->field_0x2 != 0)) {
+		if ((pGroup->bInitialized != 0) && (pGroup->bEnabled != 0)) {
 			if (0.0f <= time) {
-				edParticleGroupUpdate(time * pGroup->field_0x4c, pGroup);
+				edParticleGroupUpdate(time * pGroup->timeScale, pGroup);
 			}
 			else {
-				edParticleGroupUpdate(p_current_particle_manager->field_0x4 * pGroup->field_0x4c, pGroup);
+				edParticleGroupUpdate(p_current_particle_manager->field_0x4 * pGroup->timeScale, pGroup);
 			}
 		}
 
@@ -2788,8 +2775,8 @@ inline void TransformUVs(const Vec2 local[4], const AffineQuad2D& affine, edF32V
 
 inline void ParticleA(AffineQuad2D& quad, _ed_particle_vectors* pCurVector, _ed_particle* pCurParticle, edF32VECTOR4& local_220, edF32VECTOR4& local_230, float fVar28, _ed_particle_shaper_param* pDrawData)
 {
-	float floatA = (pCurVector->field_0x10.x * local_230.x + pCurVector->field_0x10.y * local_230.y + pCurVector->field_0x10.z * local_230.z) * pCurParticle->velocityStretch;
-	float floatB = (pCurVector->field_0x10.x * local_220.x + pCurVector->field_0x10.y * local_220.y + pCurVector->field_0x10.z * local_220.z) * pCurParticle->velocityStretch;
+	float floatA = (pCurVector->velocity.x * local_230.x + pCurVector->velocity.y * local_230.y + pCurVector->velocity.z * local_230.z) * pCurParticle->velocityStretch;
+	float floatB = (pCurVector->velocity.x * local_220.x + pCurVector->velocity.y * local_220.y + pCurVector->velocity.z * local_220.z) * pCurParticle->velocityStretch;
 	float fVar30 = sqrtf(floatA * floatA + floatB * floatB);
 	float fVar29 = g_TinyFloat_00448548;
 
@@ -3023,9 +3010,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 	_rgba* colorBuf = nullptr;
 	edVertex* positionBuf = nullptr;
 
-	PARTICLE_LOG(LogLevel::Info, "edPartDrawShaper: startIndex: 0x{:x} endIndex: 0x{:x} pGroup->field_0x58: {}", startIndex, endIndex, pGroup->field_0x58);
+	PARTICLE_LOG(LogLevel::Info, "edPartDrawShaper: startIndex: 0x{:x} endIndex: 0x{:x} pGroup->boundingSphereRadius: {}", startIndex, endIndex, pGroup->boundingSphereRadius);
 
-	if (pGroup->field_0x58 != -1.0f) {
+	if (pGroup->boundingSphereRadius != -1.0f) {
 		pCamera = pDrawData->field_0x198->pCamera;
 		edF32Matrix4MulF32Matrix4Hard(&particleToCameraMatrix, &pDrawData->worldMatrix, &pCamera->worldToCamera);
 		nbParticlesToDraw = 0;
@@ -3070,9 +3057,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 			fVar27 = pDrawData->aspectRatio;
 		}
 
-		const edF32VECTOR3 point = pGroup->field_0x84;
+		const edF32VECTOR3 point = pGroup->boundingSphereCenter;
 
-		fVar30 = pGroup->field_0x58 * fVar27;
+		fVar30 = pGroup->boundingSphereRadius * fVar27;
 		fVar28 = particleToCameraMatrix.ac * point.x + particleToCameraMatrix.bc * point.y + particleToCameraMatrix.cc * point.z + particleToCameraMatrix.dc * 1.0f;
 		iVar15 = 2;
 
@@ -3204,7 +3191,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 
 					for (; startIndex < endIndex; startIndex = startIndex + 1) {
 						pNode = pCurParticle->pNode;
-						if ((pCurParticle->field_0x0 == 2) && (pCurParticle->state == 2)) {
+						if ((pCurParticle->allocationState == 2) && (pCurParticle->state == 2)) {
 							ed3DHierarchyNodeClrFlag(pNode, 0x40);
 							peVar5 = (ed_g3d_hierarchy*)pNode->pData;
 							pVecIter = reinterpret_cast<edF32MATRIX4*>(frustumPlaneNormals);
@@ -3588,7 +3575,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 									edDListSetCurrent(pDrawData->field_0x124[0]);
 								}
 
-								blendAlpha = pGroup->field_0x10;
+								blendAlpha = pGroup->particleCapacity;
 								edDListPatchableInfo(&positionBuf, &colorBuf, &stBuf, &sizeBuf, blendAlpha, 0);
 								pCurParticle = pParticle + startIndex;
 								pCurRawVector = pRawVectors + startIndex;
@@ -3655,9 +3642,9 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 
 									edDListLoadMatrix(&pDrawData->worldMatrix);
 									edDListUseMaterial(pDrawData->aDlistMaterials.pData + iVar15);
-									edDListBegin(0.0f, 0.0f, 0.0f, 0xb, pGroup->field_0x10);
+									edDListBegin(0.0f, 0.0f, 0.0f, 0xb, pGroup->particleCapacity);
 
-									for (iVar10 = 0; iVar10 < pGroup->field_0x10; iVar10 = iVar10 + 1) {
+									for (iVar10 = 0; iVar10 < pGroup->particleCapacity; iVar10 = iVar10 + 1) {
 										edDListColor4u8((pDrawData->field_0x50).r, (pDrawData->field_0x50).g, (pDrawData->field_0x50).b, (pDrawData->field_0x50).a);
 										edDListTexCoo2f(pDrawData->field_0x54, pDrawData->field_0x58);
 										edDListTexCoo2f(pDrawData->field_0x5c, pDrawData->instanceIndex);
@@ -3703,18 +3690,18 @@ void edParticlesDraw(_ed_particle_manager* pManager, float time)
 
 	pGroup = p_current_particle_manager->aGroups.pData;
 	for (iVar7 = 0; iVar7 < p_current_particle_manager->nbGroups; iVar7 = iVar7 + 1) {
-		if (pGroup->field_0x0 != 0) {
-			int nbInGroup = pGroup->field_0x10;
-			short groupStart = pGroup->pParticle.pData->field_0x6;
+		if (pGroup->bInitialized != 0) {
+			int nbInGroup = pGroup->particleCapacity;
+			short groupStart = pGroup->pParticle.pData->poolIndex;
 
 			PARTICLE_LOG(LogLevel::Info, "edParticlesDraw Drawing group 0x{:x} with 0x{:x} particles", iVar7, nbInGroup);
 
-			pGroup->field_0x70 = (_ed_particle_generator_param*)0x0;
+			pGroup->pCurrentParam = (_ed_particle_generator_param*)0x0;
 			ppPVar6 = pGroup->aShaperParams.pData;
-			for (iVar5 = 0; iVar5 < pGroup->field_0x40; iVar5 = iVar5 + 1) {
+			for (iVar5 = 0; iVar5 < pGroup->nbActiveShapers; iVar5 = iVar5 + 1) {
 				pDrawData = ppPVar6->pData;
 				if ((pDrawData != (_ed_particle_shaper_param*)0x0) && (pDrawData->field_0x2 != 0)) {
-					pGroup->field_0x70 = pDrawData;
+					pGroup->pCurrentParam = pDrawData;
 					edPartDrawShaper(time, pGroup, pDrawData, p_current_particle_manager->aParticles.pData,
 						p_current_particle_manager->aParticleVectors.pData, p_current_particle_manager->aVectors.pData,
 						(int)groupStart, groupStart + nbInGroup);
@@ -3756,7 +3743,7 @@ void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene)
 
 			if (pShaperParam->drawMode == 3) {
 				pParticle = pGroup->pParticle.pData;
-				iVar3 = pGroup->field_0x10;
+				iVar3 = pGroup->particleCapacity;
 				for (iVar2 = 0; iVar2 < iVar3; iVar2 = iVar2 + 1) {
 					if (pParticle->pNode != (edNODE*)0x0) {
 						ed3DHierarchyRemoveFromScene(pScene, pParticle->pNode);
@@ -3858,13 +3845,13 @@ void edPartSetRespawning(_ed_particle_manager* pManager, int bRespawning)
 
 	if (bRespawning == 0) {
 		for (iVar2 = 0; iVar2 < iVar1; iVar2 = iVar2 + 1) {
-			p_Var3->field_0x8 = p_Var3->field_0x8 | 4;
+			p_Var3->particleGroupFlags = p_Var3->particleGroupFlags | 4;
 			p_Var3 = p_Var3 + 1;
 		}
 	}
 	else {
 		for (iVar2 = 0; iVar2 < iVar1; iVar2 = iVar2 + 1) {
-			p_Var3->field_0x8 = p_Var3->field_0x8 & 0xfb;
+			p_Var3->particleGroupFlags = p_Var3->particleGroupFlags & 0xfb;
 			p_Var3 = p_Var3 + 1;
 		}
 	}
@@ -3891,10 +3878,10 @@ void edPart_0027cd80(int param_1)
 
 	pCurGroup = p_current_particle_manager->aGroups.pData;
 	for (iVar1 = 0; iVar1 < p_current_particle_manager->nbGroups; iVar1 = iVar1 + 1) {
-		pCurGroup->field_0x14 = pCurGroup->field_0x10;
-		pCurGroup->field_0x5c = 0;
+		pCurGroup->nbAvailableParticles = pCurGroup->particleCapacity;
+		pCurGroup->nbLiveParticles = 0;
 		if (pCurGroup->pParticle.pData != (_ed_particle*)0x0) {
-			pCurGroup->field_0x6 = pCurGroup->pParticle.pData->field_0x6;
+			pCurGroup->nextParticleIndex = pCurGroup->pParticle.pData->poolIndex;
 		}
 		pCurGroup = pCurGroup + 1;
 	}
@@ -3907,7 +3894,7 @@ void edPart_0027cd80(int param_1)
 
 	pCurParticle = p_current_particle_manager->aParticles.pData;
 	for (iVar1 = 0; iVar1 < p_current_particle_manager->nbParticles; iVar1 = iVar1 + 1) {
-		pCurParticle->field_0x0 = 1;
+		pCurParticle->allocationState = 1;
 		pCurParticle = pCurParticle + 1;
 	}
 

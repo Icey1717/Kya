@@ -165,7 +165,13 @@ app.get("/api/application/runs/:runId/review", async (request, response) => {
 
 app.post("/api/application/runs/:runId/review/:itemKey", async (request, response) => {
   const run = await applicationStore.load(request.params.runId);
+  const item = run.items.find((candidate) => candidate.key === request.params.itemKey);
+  if (!item) throw new Error("Unknown application declaration.");
   const choice = submitApplicationChoice(run, request.params.itemKey, request.body ?? {});
+  const functionItems = run.items.filter((candidate) => candidate.functionId === item.functionId && !candidate.appliedAt);
+  if (functionItems.length > 0 && functionItems.every((candidate) => candidate.choice)) {
+    await applyApplicationFunction(run, item.functionId);
+  }
   await applicationStore.save(run);
   response.status(201).json({ choice });
 });

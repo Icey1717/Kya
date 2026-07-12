@@ -483,41 +483,41 @@ void CActorShip::ClearLocalData()
 
 void CActorShip::SetShipAnimations(int state)
 {
-	int inAnimType;
+	int animType;
 
 	switch (state) {
 	case 7:
 		this->hunterStreamRef.Get()->LinkToActor(this, this->field_0x19c, 0);
-		inAnimType = 0xc;
+		animType = 0xc;
 		this->field_0x30c = 7;
 		break;
 	case 8:
 		this->field_0x30c = 8;
-		inAnimType = 0xd;
+		animType = 0xd;
 		break;
 	case 9:
 		this->hunterStreamRef.Get()->UnlinkFromActor();
-		inAnimType = 0xe;
+		animType = 0xe;
 		this->field_0x30c = 9;
 		break;
 	case 10:
 		this->field_0x30c = 10;
-		inAnimType = 0xf;
+		animType = 0xf;
 		break;
 	case 0xb:
 		this->field_0x30c = 0xb;
-		inAnimType = 0x10;
+		animType = 0x10;
 		break;
 	case 0xc:
 		this->field_0x30c = 0xc;
-		inAnimType = 0x11;
+		animType = 0x11;
 		break;
 	default:
 		this->field_0x30c = 8;
-		inAnimType = 0xd;
+		animType = 0xd;
 	}
 
-	this->hunterStreamRef.Get()->PlayAnim(inAnimType);
+	this->hunterStreamRef.Get()->PlayAnim(animType);
 	PlayAnim(this->field_0x30c);
 
 	return;
@@ -530,7 +530,7 @@ void CActorShip::BehaviourShipFLY_InitState(int newState)
 	float fVar3;
 	float fVar4;
 	float unaff_f20;
-	edF32VECTOR4 local_30;
+	edF32VECTOR4 boneWorldPos;
 	undefined4 local_14;
 	undefined4 local_10;
 	undefined4 local_c;
@@ -563,9 +563,9 @@ void CActorShip::BehaviourShipFLY_InitState(int newState)
 		}
 
 		pFxManager->GetDynamicFx(&this->field_0x264, this->field_0x234, FX_MATERIAL_SELECTOR_NONE);
-		SV_GetBoneWorldPosition(this->field_0x1a0, &local_30);
+		SV_GetBoneWorldPosition(this->field_0x1a0, &boneWorldPos);
 
-		this->field_0x264.SetPosition(&local_30);
+		this->field_0x264.SetPosition(&boneWorldPos);
 		this->field_0x264.SetRotationEuler(&this->rotationEuler);
 		this->field_0x264.Start();
 
@@ -902,49 +902,49 @@ void CActorShip::BehaviourShipFLY_Manage()
 
 void CActorShip::ManageFlameThrower(int param_2)
 {
-	bool bVar2;
-	CActor* pCVar3;
-	long lVar4;
-	int iVar6;
-	_msg_hit_param local_110;
-	_msg_hit_param local_90;
-	CActorDCA* pDCA;
+	bool bIsFireShotTouching;
+	CActor* pScannedTarget;
+	long kimTouchResult;
+	int entryIndex;
+	_msg_hit_param kimHitParams;
+	_msg_hit_param scanHitParams;
+	CActorDCA* pDca;
 	S_ACTOR_STREAM_REF* pFireShotActorStream;
 	CActor* pLocalActor;
 
 	pLocalActor = (CActor*)0x0;
 	if ((param_2 != 0) && (pLocalActor = this->vision.ScanForTarget(CActorHero::_gThis, SCAN_MODE_AMORTISED), pLocalActor != (CActor*)0x0)) {
-		local_90.damage = this->field_0x230;
-		local_90.projectileType = 0;
-		local_90.flags = 0;
-		DoMessage(CActorHero::_gThis, MESSAGE_KICKED, &local_90);
+		scanHitParams.damage = this->field_0x230;
+		scanHitParams.projectileType = 0;
+		scanHitParams.flags = 0;
+		DoMessage(CActorHero::_gThis, MESSAGE_KICKED, &scanHitParams);
 	}
 
-	if ((pLocalActor == (CActor*)0x0) && (lVar4 = this->fxArrayManager.CheckForKimTouch(this->kimTouchRange), lVar4 != 0)) {
-		local_110.damage = this->field_0x22c;
-		local_110.projectileType = 0;
-		local_110.flags = 0;
-		DoMessage(CActorHero::_gThis, MESSAGE_KICKED, &local_110);
+	if ((pLocalActor == (CActor*)0x0) && (kimTouchResult = this->fxArrayManager.CheckForKimTouch(this->kimTouchRange), kimTouchResult != 0)) {
+		kimHitParams.damage = this->field_0x22c;
+		kimHitParams.projectileType = 0;
+		kimHitParams.flags = 0;
+		DoMessage(CActorHero::_gThis, MESSAGE_KICKED, &kimHitParams);
 	}
 
-	pDCA = static_cast<CActorDCA*>(this->airCannonStreamRef.Get());
-	pFireShotActorStream = (pDCA->fireShot).pActorStreamRef;
-	iVar6 = 0;
+	pDca = static_cast<CActorDCA*>(this->airCannonStreamRef.Get());
+	pFireShotActorStream = (pDca->fireShot).pActorStreamRef;
+	entryIndex = 0;
 	if (pFireShotActorStream != (S_ACTOR_STREAM_REF*)0x0) {
-		iVar6 = pFireShotActorStream->entryCount;
+		entryIndex = pFireShotActorStream->entryCount;
 	}
 
-	while (iVar6 != 0) {
-		iVar6 = iVar6 + -1;
-		pLocalActor = pFireShotActorStream->aEntries[iVar6].Get();
+	while (entryIndex != 0) {
+		entryIndex = entryIndex + -1;
+		pLocalActor = pFireShotActorStream->aEntries[entryIndex].Get();
 		if ((pLocalActor->actorState != SHIP_FLY_STATE_FLAME_THROWER) && (pLocalActor->actorState != 0xe)) {
-			bVar2 = this->fxArrayManager.CheckForFireShotTouch(pLocalActor);
-			if (bVar2 != false) {
+			bIsFireShotTouching = this->fxArrayManager.CheckForFireShotTouch(pLocalActor);
+			if (bIsFireShotTouching != false) {
 				(pLocalActor)->SetState(0xd, -1);
 			}
 
-			if (((param_2 != 0) && (bVar2 == false)) &&
-				(pCVar3 = this->vision.ScanForTarget(pLocalActor, SCAN_MODE_AMORTISED), pCVar3 != (CActor*)0x0)) {
+			if (((param_2 != 0) && (bIsFireShotTouching == false)) &&
+				(pScannedTarget = this->vision.ScanForTarget(pLocalActor, SCAN_MODE_AMORTISED), pScannedTarget != (CActor*)0x0)) {
 				(pLocalActor)->SetState(0xd, -1);
 			}
 		}
@@ -1063,15 +1063,15 @@ void CFxArrayManager::Create(ByteCode* pByteCode)
 {
 	this->nbInts = pByteCode->GetS32();
 
-	int iVar4 = this->nbInts;
-	if (iVar4 != 0) {
-		this->aInts = new int[iVar4];
-		iVar4 = 0;
+	int index = this->nbInts;
+	if (index != 0) {
+		this->aInts = new int[index];
+		index = 0;
 		if (0 < this->nbInts) {
 			do {
-				this->aInts[iVar4] = pByteCode->GetS32();
-				iVar4 = iVar4 + 1;
-			} while (iVar4 < this->nbInts);
+				this->aInts[index] = pByteCode->GetS32();
+				index = index + 1;
+			} while (index < this->nbInts);
 		}
 	}
 
@@ -1080,98 +1080,98 @@ void CFxArrayManager::Create(ByteCode* pByteCode)
 
 bool CFxArrayManager::CheckForKimTouch(float param_1)
 {
-	int uVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	bool bVar5;
+	int fxId;
+	float diffX;
+	float diffY;
+	float diffZ;
+	bool bIsTouched;
 	CFxHandle* pCurHandle;
-	edF32VECTOR4* pfVar7;
-	int iVar8;
-	int iVar9;
+	edF32VECTOR4* pPosition;
+	int pathIndex;
+	int iActivePathIndex;
 	int curNb;
 
 	curNb = this->nb;
-	bVar5 = false;
+	bIsTouched = false;
 
 	if (curNb != 0) {
-		while ((curNb != 0 && (!bVar5))) {
+		while ((curNb != 0 && (!bIsTouched))) {
 			curNb = curNb + -1;
-			iVar9 = this->aActivePathContainers[curNb].field_0x4;
+			iActivePathIndex = this->aActivePathContainers[curNb].field_0x4;
 
-			while ((iVar9 != 0 && (!bVar5))) {
-				iVar8 = iVar9 + -1;
-				pCurHandle = this->aActivePathContainers[curNb].aActivePaths + iVar9 + -1;
+			while ((iActivePathIndex != 0 && (!bIsTouched))) {
+				pathIndex = iActivePathIndex + -1;
+				pCurHandle = this->aActivePathContainers[curNb].aActivePaths + iActivePathIndex + -1;
 				CNewFx* pFx = pCurHandle->pFx;
 				if ((pFx == (CNewFx*)0x0) ||
-					((uVar1 = pCurHandle->id, uVar1 == 0 || (uVar1 != pFx->id)))) {
-					pfVar7 = (edF32VECTOR4*)0x0;
+					((fxId = pCurHandle->id, fxId == 0 || (fxId != pFx->id)))) {
+					pPosition = (edF32VECTOR4*)0x0;
 				}
 				else {
-					pfVar7 = &pFx->position;
+					pPosition = &pFx->position;
 				}
 
-				iVar9 = iVar8;
+				iActivePathIndex = pathIndex;
 
-				if ((pfVar7 != (edF32VECTOR4*)0x0) &&
-					(fVar2 = pfVar7->x - CActorHero::_gThis->currentLocation.x,
-						fVar3 = pfVar7->y - CActorHero::_gThis->currentLocation.y,
-						fVar4 = pfVar7->z - CActorHero::_gThis->currentLocation.z,
-						fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4 < param_1 * param_1)) {
-					bVar5 = true;
+				if ((pPosition != (edF32VECTOR4*)0x0) &&
+					(diffX = pPosition->x - CActorHero::_gThis->currentLocation.x,
+						diffY = pPosition->y - CActorHero::_gThis->currentLocation.y,
+						diffZ = pPosition->z - CActorHero::_gThis->currentLocation.z,
+						diffX * diffX + diffY * diffY + diffZ * diffZ < param_1 * param_1)) {
+					bIsTouched = true;
 				}
 			}
 		}
 	}
 
-	return bVar5;
+	return bIsTouched;
 }
 
 bool CFxArrayManager::CheckForFireShotTouch(CActor* pActor)
 {
-	int uVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	bool bVar5;
+	int fxId;
+	float diffX;
+	float diffY;
+	float diffZ;
+	bool bIsTouching;
 	CFxHandle* pCurHandle;
-	edF32VECTOR4* pfVar7;
-	int iVar8;
-	int iVar9;
-	int curNb;
+	edF32VECTOR4* pPosition;
+	int currentPathIndexMinusOne;
+	int currentPathIndex;
+	int currentCount;
 
-	curNb = this->nb;
-	bVar5 = false;
+	currentCount = this->nb;
+	bIsTouching = false;
 
-	if (curNb != 0) {
-		while ((curNb != 0 && (!bVar5))) {
-			curNb = curNb + -1;
-			iVar9 = this->aActivePathContainers[curNb].field_0x4;
+	if (currentCount != 0) {
+		while ((currentCount != 0 && (!bIsTouching))) {
+			currentCount = currentCount + -1;
+			currentPathIndex = this->aActivePathContainers[currentCount].field_0x4;
 
-			while ((iVar9 != 0 && (!bVar5))) {
-				iVar8 = iVar9 + -1;
-				pCurHandle = this->aActivePathContainers[curNb].aActivePaths + iVar9 + -1;
+			while ((currentPathIndex != 0 && (!bIsTouching))) {
+				currentPathIndexMinusOne = currentPathIndex + -1;
+				pCurHandle = this->aActivePathContainers[currentCount].aActivePaths + currentPathIndex + -1;
 				CNewFx* pFx = pCurHandle->pFx;
 				if ((pFx == (CNewFx*)0x0) ||
-					((uVar1 = pCurHandle->id, uVar1 == 0 || (uVar1 != pFx->id)))) {
-					pfVar7 = (edF32VECTOR4*)0x0;
+					((fxId = pCurHandle->id, fxId == 0 || (fxId != pFx->id)))) {
+					pPosition = (edF32VECTOR4*)0x0;
 				}
 				else {
-					pfVar7 = &pFx->position;
+					pPosition = &pFx->position;
 				}
 
-				iVar9 = iVar8;
+				currentPathIndex = currentPathIndexMinusOne;
 
-				if ((pfVar7 != (edF32VECTOR4*)0x0) &&
-					(fVar2 = pfVar7->x - pActor->currentLocation.x,
-						fVar3 = pfVar7->y - pActor->currentLocation.y,
-						fVar4 = pfVar7->z - pActor->currentLocation.z,
-						fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4 < 0.25f)) {
-					bVar5 = true;
+				if ((pPosition != (edF32VECTOR4*)0x0) &&
+					(diffX = pPosition->x - pActor->currentLocation.x,
+						diffY = pPosition->y - pActor->currentLocation.y,
+						diffZ = pPosition->z - pActor->currentLocation.z,
+						diffX * diffX + diffY * diffY + diffZ * diffZ < 0.25f)) {
+					bIsTouching = true;
 				}
 			}
 		}
 	}
 
-	return bVar5;
+	return bIsTouching;
 }

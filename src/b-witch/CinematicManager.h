@@ -676,6 +676,7 @@ public:
 
 	void Manage();
 	void ManageState_Playing();
+	void ManageState_InterpolateBegin();
 
 	bool TimeSlice(float currentPlayTime);
 	void IncrementCutsceneDelta();

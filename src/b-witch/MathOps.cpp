@@ -1487,7 +1487,6 @@ void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR
 void F32MatrixBuildFromF32VectorAndF32Matrix(edF32MATRIX4* m0, edF32VECTOR4* v1, edF32MATRIX4* m1)
 {
 	edF32VECTOR4* peVar1;
-	float in_vf0x = 0.0f;
 	float fVar1;
 	float fVar2;
 	float fVar3;
