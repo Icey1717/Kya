@@ -250,7 +250,12 @@ void edVideoWaitVsync(byte param_1)
 	std::this_thread::sleep_until(sleepUntil);
 	while (std::chrono::steady_clock::now() < sDeadline) {}
 
-	sDeadline += kFrameDuration;
+	// A debugger break (or any long frame) can leave the deadline far in the
+	// past. Skip the missed frame slots instead of running uncapped until the
+	// limiter catches up.
+	const auto now = std::chrono::steady_clock::now();
+	const auto missedFrames = (now - sDeadline) / kFrameDuration + 1;
+	sDeadline += missedFrames * kFrameDuration;
 #endif
 }
 

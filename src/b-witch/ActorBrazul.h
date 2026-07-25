@@ -148,6 +148,8 @@ public:
 	void FUN_003e62d0(float param_1);
 	void FUN_003e5f40(float param_1);
 	void FUN_003e87e0(int nextState, int param_3);
+	void FUN_003e5f80(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6);
+	void FUN_003e62f0(float param_1, float param_2, float param_3, float param_4, float param_5, float param_6);
 
 	float field_0xfc0;
 	float field_0xfc4;
@@ -174,10 +176,23 @@ public:
 	CFxHandleExt field_0x30ac[6];
 
 	StaticMeshComponentAdvanced field_0x3100;
+
+	float field_0x3180;
+	float field_0x3184;
+	float field_0x3188;
+	float field_0x318c;
+	float field_0x3190;
+	edF32MATRIX4 field_0x31a0;
+	edF32VECTOR4 field_0x31d0;
+
 	StaticMeshComponentAdvanced field_0x31e0;
 
 	CFxHandleExt field_0x3260;
 	CFxHandleExt field_0x326c;
+
+	edF32VECTOR4 field_0x3280;
+	float field_0x3290;
+	float field_0x3294;
 };
 
 #endif //ACTOR_BRAZUL_H

@@ -7,7 +7,7 @@
 
 void CActorFogManager::Create(ByteCode* pByteCode)
 {
-	uint count;
+	uint fogCount;
 	int curIndex;
 	CFogHierarchy* pHier;
 	float fVar4;
@@ -15,9 +15,9 @@ void CActorFogManager::Create(ByteCode* pByteCode)
 	CActor::Create(pByteCode);
 
 	this->fogHierarchiesArray.nbFogHierarchies = pByteCode->GetS32();
-	count = this->fogHierarchiesArray.nbFogHierarchies;
+	fogCount = this->fogHierarchiesArray.nbFogHierarchies;
 
-	if (count != 0) {
+	if (fogCount != 0) {
 		this->fogHierarchiesArray.aFogHierarchies = new CFogHierarchy[this->fogHierarchiesArray.nbFogHierarchies];
 		curIndex = 0;
 		if (0 < this->fogHierarchiesArray.nbFogHierarchies) {
@@ -194,11 +194,11 @@ void CBehaviourFogManagerZones::End(int newBehaviourId)
 void CStreamFogZoneArray::Manage()
 {
 	ed_zone_3d* pZone;
-	bool bVar1;
-	CActorHero* pCVar2;
-	int iVar3;
+	bool bIsInsideZone;
+	CActorHero* pCameraTargetHero;
+	int zoneResult;
 	CStreamFogZone* pFogZone;
-	int curIndex;
+	int remainingZones;
 	CCameraManager* pCameraManager;
 	CEventManager* pEventManager;
 	CActorHero* pHero;
@@ -207,38 +207,38 @@ void CStreamFogZoneArray::Manage()
 	pCameraManager = CScene::ptable.g_CameraManager_0045167c;
 
 	pHero = CActorHero::_gThis;
-	pCVar2 = static_cast<CActorHero*>((CScene::ptable.g_CameraManager_0045167c)->pActiveCamera->GetTarget());
-	if ((pHero != (CActorHero*)0x0) && (pHero == pCVar2)) {
-		pCVar2 = (CActorHero*)0x0;
+	pCameraTargetHero = static_cast<CActorHero*>((CScene::ptable.g_CameraManager_0045167c)->pActiveCamera->GetTarget());
+	if ((pHero != (CActorHero*)0x0) && (pHero == pCameraTargetHero)) {
+		pCameraTargetHero = (CActorHero*)0x0;
 	}
 
-	curIndex = this->pInternal->nbFogZones;
+	remainingZones = this->pInternal->nbFogZones;
 	pFogZone = this->pInternal->aFogZones;
 
-	if (curIndex != 0) {
+	if (remainingZones != 0) {
 		do {
 			pZone = (pFogZone->zoneRef).Get();
-			bVar1 = false;
+			bIsInsideZone = false;
 			if (pZone != (ed_zone_3d*)0x0) {
 				if ((pFogZone->flags & 1) != 0) {
 					if (pHero != (CActorHero*)0x0) {
-						iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pHero->currentLocation, 0);
-						bVar1 = iVar3 != 2;
+						zoneResult = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pHero->currentLocation, 0);
+						bIsInsideZone = zoneResult != 2;
 					}
 
-					if (pCVar2 != (CActorHero*)0x0) {
-						iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pCVar2->currentLocation, 0);
-						bVar1 = static_cast<bool>(bVar1 | iVar3 != 2);
+					if (pCameraTargetHero != (CActorHero*)0x0) {
+						zoneResult = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pCameraTargetHero->currentLocation, 0);
+						bIsInsideZone = static_cast<bool>(bIsInsideZone | zoneResult != 2);
 					}
 				}
 
 				if ((pFogZone->flags & 2) != 0) {
-					iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, (edF32VECTOR4*)&(pCameraManager->transformationMatrix).da, 0);
-					bVar1 = static_cast<bool>(bVar1 | iVar3 != 2);
+					zoneResult = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, (edF32VECTOR4*)&(pCameraManager->transformationMatrix).da, 0);
+					bIsInsideZone = static_cast<bool>(bIsInsideZone | zoneResult != 2);
 				}
 			}
 
-			if (bVar1) {
+			if (bIsInsideZone) {
 				if ((pFogZone->flags & 2) == 0) {
 					CScene::_pinstance->PushFogAndClippingSettings(pFogZone->field_0x18, &pFogZone->fogDef);
 					pFogZone->flags = pFogZone->flags | 2;
@@ -251,9 +251,9 @@ void CStreamFogZoneArray::Manage()
 				}
 			}
 
-			curIndex = curIndex + -1;
+			remainingZones = remainingZones + -1;
 			pFogZone = pFogZone + 1;
-		} while (curIndex != 0);
+		} while (remainingZones != 0);
 	}
 
 	return;
@@ -275,47 +275,47 @@ void CFogHierarchiesArray::Manage()
 	CCameraManager* pCameraManager;
 	byte alpha;
 	CFogHierarchy* pFogHier;
-	int iVar5;
-	float fVar6;
-	float fVar7;
-	edF32VECTOR4 local_10;
+	int index;
+	float minDistance;
+	float distance;
+	edF32VECTOR4 relativePosition;
 
 	pCameraManager = CScene::ptable.g_CameraManager_0045167c;
 
-	for (iVar5 = 0; iVar5 < this->nbFogHierarchies; iVar5 = iVar5 + 1) {
-		pFogHier = this->aFogHierarchies + iVar5;
+	for (index = 0; index < this->nbFogHierarchies; index = index + 1) {
+		pFogHier = this->aFogHierarchies + index;
 		pNode = pFogHier->pNode;
 
 		if (pNode != (edNODE*)0x0) {
 			pHier = reinterpret_cast<ed_3d_hierarchy*>(pNode->pData);
-			edF32VECTOR4* peVar4 = ed3DGetHierarchyFirstLODSphere(pHier);
-			if (peVar4 == (edF32VECTOR4*)0x0) {
-				local_10 = (pHier->transformA).rowT;
+			edF32VECTOR4* pLodSphere = ed3DGetHierarchyFirstLODSphere(pHier);
+			if (pLodSphere == (edF32VECTOR4*)0x0) {
+				relativePosition = (pHier->transformA).rowT;
 			}
 			else {
-				local_10.x = peVar4->x;
-				local_10.y = peVar4->y;
-				local_10.z = peVar4->z;
-				local_10.w = 1.0f;
+				relativePosition.x = pLodSphere->x;
+				relativePosition.y = pLodSphere->y;
+				relativePosition.z = pLodSphere->z;
+				relativePosition.w = 1.0f;
 
-				edF32Matrix4MulF32Vector4Hard(&local_10, &pHier->transformA, &local_10);
+				edF32Matrix4MulF32Vector4Hard(&relativePosition, &pHier->transformA, &relativePosition);
 			}
 
-			local_10 = local_10 - (CScene::ptable.g_CameraManager_0045167c)->transformationMatrix.rowT;
+			relativePosition = relativePosition - (CScene::ptable.g_CameraManager_0045167c)->transformationMatrix.rowT;
 
-			fVar7 = edF32Vector4GetDistHard(&local_10);
+			distance = edF32Vector4GetDistHard(&relativePosition);
 			alpha = 0x80;
-			if (fVar7 < pFogHier->field_0x24) {
-				fVar6 = pFogHier->field_0x20;
+			if (distance < pFogHier->field_0x24) {
+				minDistance = pFogHier->field_0x20;
 				alpha = 0;
 
-				if (fVar6 < fVar7) {
-					fVar7 = ((fVar7 - fVar6) * 128.0f) / (pFogHier->field_0x24 - fVar6);
-					if (fVar7 < 2.147484e+09f) {
-						alpha = (byte)static_cast<int>(fVar7);
+				if (minDistance < distance) {
+					distance = ((distance - minDistance) * 128.0f) / (pFogHier->field_0x24 - minDistance);
+					if (distance < 2.147484e+09f) {
+						alpha = (byte)static_cast<int>(distance);
 					}
 					else {
-						alpha = (byte)static_cast<int>(fVar7 - 2.147484e+09f);
+						alpha = (byte)static_cast<int>(distance - 2.147484e+09f);
 					}
 				}
 			}

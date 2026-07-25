@@ -33,59 +33,59 @@ bool BnkInstallTrack(char* pFileData, int length)
 
 void CEventTrack::Add(ByteCode* pByteCode)
 {
-	bool bVar1;
-	uint uVar2;
-	uint uVar3;
-	ushort uVar4;
+	bool bIsLooping;
+	uint uTempValue;
+	uint uValue;
+	ushort eventIndex;
 	int iVar5;
-	s_track_event* pEvent;
-	float fVar6;
+	s_track_event* pTrackEvent;
+	float eventValue;
 
-	uVar2 = pByteCode->GetU32();
-	this->eventCount = (ushort)uVar2;
-	pEvent = (s_track_event*)pByteCode->GetPosition();
-	this->pTrackEvent = pEvent;
-	pEvent = this->pTrackEvent;
-	uVar4 = 0;
+	uTempValue = pByteCode->GetU32();
+	this->eventCount = (ushort)uTempValue;
+	pTrackEvent = (s_track_event*)pByteCode->GetPosition();
+	this->pTrackEvent = pTrackEvent;
+	pTrackEvent = this->pTrackEvent;
+	eventIndex = 0;
 	if (this->eventCount != 0) {
 		do {
-			fVar6 = pByteCode->GetF32();
-			pEvent->field_0x0 = fVar6;
-			uVar2 = pByteCode->GetU32();
-			uVar3 = pByteCode->GetU32();
-			pEvent->field_0x8 = uVar3;
-			uVar3 = pByteCode->GetU32();
-			pEvent->type = uVar3;
-			if (pEvent->type == 0x39) {
-				uVar3 = pByteCode->GetU32();
-				pEvent->field_0x10 = uVar3;
-				if (uVar2 == 4) {
-					uVar2 = pByteCode->GetU32();
-					pEvent->field_0x14 = uVar2;
+			eventValue = pByteCode->GetF32();
+			pTrackEvent->field_0x0 = eventValue;
+			uTempValue = pByteCode->GetU32();
+			uValue = pByteCode->GetU32();
+			pTrackEvent->field_0x8 = uValue;
+			uValue = pByteCode->GetU32();
+			pTrackEvent->type = uValue;
+			if (pTrackEvent->type == 0x39) {
+				uValue = pByteCode->GetU32();
+				pTrackEvent->field_0x10 = uValue;
+				if (uTempValue == 4) {
+					uTempValue = pByteCode->GetU32();
+					pTrackEvent->field_0x14 = uTempValue;
 				}
 				else {
-					pEvent->field_0x14 = 0;
+					pTrackEvent->field_0x14 = 0;
 				}
 			}
 			else {
-				iVar5 = uVar2 - 3;
-				if (uVar2 != 2) {
+				iVar5 = uTempValue - 3;
+				if (uTempValue != 2) {
 					do {
 						pByteCode->GetU32();
-						bVar1 = iVar5 != 0;
+						bIsLooping = iVar5 != 0;
 						iVar5 = iVar5 + -1;
-					} while (bVar1);
+					} while (bIsLooping);
 				}
 			}
 			iVar5 = 2;
 			do {
 				pByteCode->GetU32();
-				bVar1 = iVar5 != 0;
+				bIsLooping = iVar5 != 0;
 				iVar5 = iVar5 + -1;
-			} while (bVar1);
-			uVar4 = uVar4 + 1;
-			pEvent = pEvent + 1;
-		} while (uVar4 < this->eventCount);
+			} while (bIsLooping);
+			eventIndex = eventIndex + 1;
+			pTrackEvent = pTrackEvent + 1;
+		} while (eventIndex < this->eventCount);
 	}
 	return;
 }
@@ -208,30 +208,30 @@ void CTrackManager::Level_ClearAll()
 
 bool CEventTrack::FUN_0019f140()
 {
-	bool bVar1;
-	s_track_event* psVar2;
-	uint uVar3;
+	bool bIsValid;
+	s_track_event* pCurrentEvent;
+	uint eventIndex;
 
-	psVar2 = this->pTrackEvent;
-	uVar3 = (uint)this->eventCount;
+	pCurrentEvent = this->pTrackEvent;
+	eventIndex = (uint)this->eventCount;
 
 	if (this->eventCount != 0) {
 		do {
-			uVar3 = uVar3 - 1;
-			if (((psVar2->field_0x1c == 0x0) || (psVar2->field_0x18 == 0)) ||
-				(psVar2->field_0x18 != LOAD_POINTER_CAST(int*, psVar2->field_0x1c)[6])) {
-				bVar1 = false;
+			eventIndex = eventIndex - 1;
+			if (((pCurrentEvent->field_0x1c == 0x0) || (pCurrentEvent->field_0x18 == 0)) ||
+				(pCurrentEvent->field_0x18 != LOAD_POINTER_CAST(int*, pCurrentEvent->field_0x1c)[6])) {
+				bIsValid = false;
 			}
 			else {
-				bVar1 = true;
+				bIsValid = true;
 			}
 
-			if (bVar1) {
+			if (bIsValid) {
 				return true;
 			}
 
-			psVar2 = psVar2 + 1;
-		} while (uVar3 != 0);
+			pCurrentEvent = pCurrentEvent + 1;
+		} while (eventIndex != 0);
 	}
 
 	return false;
@@ -275,13 +275,13 @@ void CEventTrack::Stop()
 
 CEventTrack* CTrackManager::GetTrack(int index)
 {
-	CEventTrack* pTrack;
+	CEventTrack* pEventTrack;
 
-	pTrack = (CEventTrack*)0x0;
+	pEventTrack = (CEventTrack*)0x0;
 	if (index != -1) {
-		pTrack = (CEventTrack*)(this->aTracks + index);
+		pEventTrack = (CEventTrack*)(this->aTracks + index);
 	}
-	return pTrack;
+	return pEventTrack;
 }
 
 void CEventTrack::Play(float param_1, float param_2, undefined8 param_4, CActor* pActor)

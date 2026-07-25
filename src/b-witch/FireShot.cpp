@@ -32,92 +32,92 @@ void CFireShot::Init()
 // Should be in: D:/Projects/b-witch/FireShot.cpp
 void CFireShot::Reset()
 {
-	bool bVar1;
-	int iVar2;
-	int iVar3;
+	bool bHasMoreEntries;
+	int entryCount;
+	int entryIndex;
 	CActorProjectile* pProj;
 
 	this->field_0x298 = 0;
 	this->field_0x29c = 0;
 
 	if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
-		iVar2 = 0;
+		entryCount = 0;
 	}
 	else {
-		iVar2 = this->pActorStreamRef->entryCount;
+		entryCount = this->pActorStreamRef->entryCount;
 	}
 
-	iVar3 = iVar2 + -1;
+	entryIndex = entryCount + -1;
 
-	if (iVar2 != 0) {
-		iVar2 = iVar3 * 4;
+	if (entryCount != 0) {
+		entryCount = entryIndex * 4;
 		do {
-			pProj = reinterpret_cast<CActorProjectile*>(this->pActorStreamRef->aEntries[iVar3].Get());
+			pProj = reinterpret_cast<CActorProjectile*>(this->pActorStreamRef->aEntries[entryIndex].Get());
 			if (pProj != (CActorProjectile*)0x0) {
 				pProj->GoToSleep();
 			}
-			iVar2 = iVar2 + -4;
-			bVar1 = iVar3 != 0;
-			iVar3 = iVar3 + -1;
-		} while (bVar1);
+			entryCount = entryCount + -4;
+			bHasMoreEntries = entryIndex != 0;
+			entryIndex = entryIndex + -1;
+		} while (bHasMoreEntries);
 	}
 	return;
 }
 
 void CFireShot::ManageShots()
 {
-	bool bVar1;
-	Timer* pTVar2;
-	int iVar3;
-	int iVar4;
-	uint uVar5;
-	uint uVar6;
-	S_SHOT_DATA* pSVar7;
-	float fVar7;
+	bool bShouldDie;
+	Timer* pTimer;
+	int entryCount;
+	int offset;
+	uint shotMask;
+	uint index;
+	S_SHOT_DATA* pShotData;
+	float remainingTime;
 
-	pSVar7 = this->aShots;
-	uVar6 = 0;
-	uVar5 = this->field_0x298;
-	iVar4 = 0;
+	pShotData = this->aShots;
+	index = 0;
+	shotMask = this->field_0x298;
+	offset = 0;
 	while (true) {
 		if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
-			iVar3 = 0;
+			entryCount = 0;
 		}
 		else {
-			iVar3 = this->pActorStreamRef->entryCount;
+			entryCount = this->pActorStreamRef->entryCount;
 		}
 
-		if (iVar3 <= (int)uVar6) break;
+		if (entryCount <= (int)index) break;
 
-		if ((uVar5 & 1) != 0) {
-			pTVar2 = Timer::GetTimer();
-			pSVar7->field_0x18 = pSVar7->field_0x18 + pTVar2->cutsceneDeltaTime;
-			bVar1 = false;
+		if ((shotMask & 1) != 0) {
+			pTimer = Timer::GetTimer();
+			pShotData->field_0x18 = pShotData->field_0x18 + pTimer->cutsceneDeltaTime;
+			bShouldDie = false;
 
-			if (this->pActorStreamRef->aEntries[uVar6].Get()->actorState == 6) {
-				this->field_0x298 = this->field_0x298 & ~(1 << (uVar6 & 0x1f));
+			if (this->pActorStreamRef->aEntries[index].Get()->actorState == 6) {
+				this->field_0x298 = this->field_0x298 & ~(1 << (index & 0x1f));
 			}
 			else {
-				if (0.0f < pSVar7->timeToExplode) {
-					pTVar2 = Timer::GetTimer();
-					fVar7 = pSVar7->timeToExplode - pTVar2->cutsceneDeltaTime;
-					pSVar7->timeToExplode = fVar7;
+				if (0.0f < pShotData->timeToExplode) {
+					pTimer = Timer::GetTimer();
+					remainingTime = pShotData->timeToExplode - pTimer->cutsceneDeltaTime;
+					pShotData->timeToExplode = remainingTime;
 
-					if ((fVar7 <= 0.0f) && (this->pActorStreamRef->aEntries[uVar6].Get()->actorState != 0xe)) {
-						bVar1 = true;
+					if ((remainingTime <= 0.0f) && (this->pActorStreamRef->aEntries[index].Get()->actorState != 0xe)) {
+						bShouldDie = true;
 					}
 				}
 
-				if (bVar1) {
-					reinterpret_cast<CActorProjectile*>(this->pActorStreamRef->aEntries[uVar6].Get())->Die();
+				if (bShouldDie) {
+					reinterpret_cast<CActorProjectile*>(this->pActorStreamRef->aEntries[index].Get())->Die();
 				}
 			}
 		}
 
-		uVar5 = uVar5 >> 1;
-		iVar4 = iVar4 + 4;
-		uVar6 = uVar6 + 1;
-		pSVar7 = pSVar7 + 1;
+		shotMask = shotMask >> 1;
+		offset = offset + 4;
+		index = index + 1;
+		pShotData = pShotData + 1;
 	}
 
 	return;
@@ -127,9 +127,9 @@ bool CFireShot::Project(float velocity, edF32VECTOR4* pPosition, edF32VECTOR4* p
 {
 	CActorProjectile* pProjectile;
 	edF32VECTOR4 direction;
-	S_SHOT_DATA* pSStack4;
+	S_SHOT_DATA* pShotData;
 
-		pProjectile = static_cast<CActorProjectile*>(_ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pSStack4, pFiringActor, false));
+		pProjectile = static_cast<CActorProjectile*>(_ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pShotData, pFiringActor, false));
 	if (pProjectile != (CActorProjectile*)0x0) {
 		edF32Vector4NormalizeHard(&direction, pDirection);
 		pProjectile->Project(velocity, &direction, true, pFiringActor);
@@ -156,96 +156,96 @@ bool CFireShot::ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECT
 
 uint CFireShot::GetProjectileIndex(edF32VECTOR4* pLocation, bool param_3)
 {
-	S_ACTOR_STREAM_REF* pSVar1;
-	bool bVar2;
-	uint uVar3;
-	uint uVar4;
-	int iVar5;
-	int iVar6;
-	float fVar7;
-	float fVar8;
-	edF32VECTOR4 eStack16;
+	S_ACTOR_STREAM_REF* pActorStream;
+	bool bIsLooping;
+	uint entryCount;
+	uint usedEntries;
+	int iEntryIndex;
+	int iEntryCount;
+	float distance;
+	float maxDistance;
+	edF32VECTOR4 locationDiff;
 	uint puVar3;
 
 	if (this->field_0x290 == 0) {
-		pSVar1 = this->pActorStreamRef;
-		uVar3 = 0;
+		pActorStream = this->pActorStreamRef;
+		entryCount = 0;
 
-		if (pSVar1 != (S_ACTOR_STREAM_REF*)0x0) {
-			uVar3 = pSVar1->entryCount;
+		if (pActorStream != (S_ACTOR_STREAM_REF*)0x0) {
+			entryCount = pActorStream->entryCount;
 		}
 
-		uVar4 = this->field_0x298;
+		usedEntries = this->field_0x298;
 
-		if (uVar4 != (1 << (uVar3 & 0x1f)) - 1U) {
-			uVar3 = 0;
+		if (usedEntries != (1 << (entryCount & 0x1f)) - 1U) {
+			entryCount = 0;
 			while (true) {
-				if (pSVar1 == (S_ACTOR_STREAM_REF*)0x0) {
-					bVar2 = (int)uVar3 < 0;
+				if (pActorStream == (S_ACTOR_STREAM_REF*)0x0) {
+					bIsLooping = (int)entryCount < 0;
 				}
 				else {
-					bVar2 = (int)uVar3 < pSVar1->entryCount;
+					bIsLooping = (int)entryCount < pActorStream->entryCount;
 				}
 
-				if ((!bVar2) || ((uVar4 & 1) == 0)) break;
+				if ((!bIsLooping) || ((usedEntries & 1) == 0)) break;
 
-				uVar4 = uVar4 >> 1;
-				uVar3 = uVar3 + 1;
+				usedEntries = usedEntries >> 1;
+				entryCount = entryCount + 1;
 			}
 
-			this->field_0x298 = this->field_0x298 | 1 << (uVar3 & 0x1f);
-			return uVar3;
+			this->field_0x298 = this->field_0x298 | 1 << (entryCount & 0x1f);
+			return entryCount;
 		}
 
 		if (param_3 != false) {
-			iVar6 = 0;
-			if (pSVar1 != (S_ACTOR_STREAM_REF*)0x0) {
-				iVar6 = pSVar1->entryCount;
+			iEntryCount = 0;
+			if (pActorStream != (S_ACTOR_STREAM_REF*)0x0) {
+				iEntryCount = pActorStream->entryCount;
 			}
 
-			iVar5 = iVar6 + -1;
+			iEntryIndex = iEntryCount + -1;
 
-			if (iVar6 != 0) {
-				iVar6 = iVar5 * 4;
-				fVar8 = 0.0;
+			if (iEntryCount != 0) {
+				iEntryCount = iEntryIndex * 4;
+				maxDistance = 0.0;
 				do {
-					edF32Vector4SubHard(&eStack16, &this->pActorStreamRef->aEntries[iVar5].Get()->currentLocation, pLocation);
+					edF32Vector4SubHard(&locationDiff, &this->pActorStreamRef->aEntries[iEntryIndex].Get()->currentLocation, pLocation);
 
-					fVar7 = edF32Vector4GetLengthSoft(&eStack16);
-					if (fVar7 < fVar8) {
-						fVar7 = fVar8;
+					distance = edF32Vector4GetLengthSoft(&locationDiff);
+					if (distance < maxDistance) {
+						distance = maxDistance;
 					}
 
-					iVar6 = iVar6 + -4;
-					bVar2 = iVar5 != 0;
-					iVar5 = iVar5 + -1;
-					fVar8 = fVar7;
-				} while (bVar2);
+					iEntryCount = iEntryCount + -4;
+					bIsLooping = iEntryIndex != 0;
+					iEntryIndex = iEntryIndex + -1;
+					maxDistance = distance;
+				} while (bIsLooping);
 			}
 		}
 	}
 	else {
-		uVar3 = 1 << (this->field_0x29c & 0x1f);
+		entryCount = 1 << (this->field_0x29c & 0x1f);
 
-		if ((this->field_0x298 & uVar3) == 0) {
-			this->field_0x298 = this->field_0x298 | uVar3;
+		if ((this->field_0x298 & entryCount) == 0) {
+			this->field_0x298 = this->field_0x298 | entryCount;
 
-			uVar3 = this->field_0x29c;
-			this->field_0x29c = uVar3 + 1;
+			entryCount = this->field_0x29c;
+			this->field_0x29c = entryCount + 1;
 
 			if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
-				iVar6 = 0;
+				iEntryCount = 0;
 			}
 			else {
-				iVar6 = this->pActorStreamRef->entryCount;
+				iEntryCount = this->pActorStreamRef->entryCount;
 			}
 
-			if (iVar6 == 0) {
+			if (iEntryCount == 0) {
 				trap(7);
 			}
 
-			this->field_0x29c = (int)this->field_0x29c % iVar6;
-			return uVar3;
+			this->field_0x29c = (int)this->field_0x29c % iEntryCount;
+			return entryCount;
 		}
 	}
 
@@ -290,15 +290,15 @@ bool CFireShot::FireNewShot(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4
 {
 	bool bSuccess;
 	CActorProjectile* pProjectile;
-	S_SHOT_DATA* local_4;
+	S_SHOT_DATA* pShotData;
 
-	pProjectile = _ComputeNewShotNoRelease(param_1, pPosition, pDirection, &local_4, pActor, true);
+	pProjectile = _ComputeNewShotNoRelease(param_1, pPosition, pDirection, &pShotData, pActor, true);
 
 	if ((pProjectile == (CActorProjectile*)0x0) || (pActor == (CActor*)0x0)) {
 		bSuccess = false;
 	}
 	else {
-		pProjectile->Project(param_1 / Timer::GetTimer()->cutsceneDeltaTime, &local_4->field_0x0, true, pActor);
+		pProjectile->Project(param_1 / Timer::GetTimer()->cutsceneDeltaTime, &pShotData->field_0x0, true, pActor);
 		bSuccess = true;
 	}
 
@@ -308,9 +308,9 @@ bool CFireShot::FireNewShot(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4
 bool CFireShot::FireNewShotStraight(edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor)
 {
 	CActorProjectile* pProjectile;
-	S_SHOT_DATA* pSStack4;
+	S_SHOT_DATA* pShotData;
 
-	pProjectile = _ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pSStack4, pActor, false);
+	pProjectile = _ComputeNewShotNoRelease(0.1f, pPosition, pDirection, &pShotData, pActor, false);
 	if (pProjectile != (CActorProjectile*)0x0) {
 		pProjectile->ProjectToGoStraight(pDirection, true, pActor);
 	}
@@ -322,7 +322,7 @@ bool CFireShot::FireNewShotStraight(edF32VECTOR4* pPosition, edF32VECTOR4* pDire
 
 void CFireShot::KillAllProjectiles()
 {
-	uint uVar1;
+	uint projectileBitmask;
 	int curProjectileIndex;
 
 	if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
@@ -332,13 +332,13 @@ void CFireShot::KillAllProjectiles()
 		curProjectileIndex = this->pActorStreamRef->entryCount;
 	}
 
-	uVar1 = 1;
+	projectileBitmask = 1;
 	while (curProjectileIndex != 0) {
-		if ((this->field_0x298 & uVar1) != 0) {
+		if ((this->field_0x298 & projectileBitmask) != 0) {
 			static_cast<CActorProjectile*>(this->pActorStreamRef->aEntries[curProjectileIndex + -1].Get())->Die();
 		}
 
-		uVar1 = uVar1 << 1;
+		projectileBitmask = projectileBitmask << 1;
 		curProjectileIndex = curProjectileIndex + -1;
 	}
 

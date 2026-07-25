@@ -3685,7 +3685,7 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 {
 	CAnimation* pCVar1;
 	edAnmLayer* peVar2;
-	void* pcVar3;
+	FighterOnHitFunc pcVar3;
 	bool bVar4;
 	uint uVar5;
 	uint uVar6;
@@ -3713,9 +3713,8 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 		}
 
 		pcVar3 = this->pBlow->field_0xd0;
-		if (pcVar3 != (void*)0x0) {
-			IMPLEMENTATION_GUARD(
-			(*pcVar3)(this, 1);)
+		if (pcVar3 != (FighterOnHitFunc)0x0) {
+			(*pcVar3)(this, 1);
 		}
 
 		if (this->nextActionType == NEXT_ACTION_TYPE_GRAB) {
@@ -8648,20 +8647,21 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 		pFighter = this->pOwner;
 		pFighter->_SV_HIT_FightCollisionsEnd();
 
-		void* pcVar1 = pFighter->pBlow->field_0xd0;
-		if (pcVar1 != (void*)0x0) {
-			IMPLEMENTATION_GUARD(
+		FighterOnHitFunc pcVar1 = pFighter->pBlow->field_0xd0;
+		if (pcVar1 != (FighterOnHitFunc)0x0) {
 			bVar5 = true;
-			bVar4 = false;
+			bool bVar4 = false;
 			if ((newState - 0x49U < 0x20) && ((1 << (newState - 0x49U & 0x1f) & 0xf000003fU) != 0)) {
 				bVar4 = true;
 			}
+
 			if ((!bVar4) && (6 < newState - 0x69U)) {
 				bVar5 = false;
 			}
+
 			if (!bVar5) {
 				(*pcVar1)(pFighter, 3);
-			})
+			}
 		}
 
 		pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);

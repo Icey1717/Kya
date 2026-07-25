@@ -58,14 +58,50 @@ void CActorBrazul::Create(ByteCode* pByteCode)
 	return;
 }
 
+float FLOAT_00448d5c = 1.0f;
+float FLOAT_00448d60 = 8.0f;
+float FLOAT_00448d64 = 1.5707964f;
+edF32VECTOR4 edF32VECTOR4_00427980 = { 0.3f, 0.0f, 1.3f, 0.0f };
+
 void DirectRayOnHit(CActorFighter* pFighter, int param_2)
 {
-	IMPLEMENTATION_GUARD();
+	if ((param_2 == 3) || (param_2 == 1)) {
+		static_cast<CActorBrazul*>(pFighter)->FUN_003e5f40(0.0f);
+	}
+	else {
+		if (param_2 == 0) {
+			static_cast<CActorBrazul*>(pFighter)->FUN_003e5f80(0.0f, FLOAT_00448d5c, FLOAT_00448d60, FLOAT_00448d64, &edF32VECTOR4_00427980);
+		}
+	}
+
+	return;
 }
 
 void TornadoRayOnHit(CActorFighter* pFighter, int param_2)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	s_fighter_blow* psVar2;
+	float fVar3;
+
+	if (param_2 == 1) {
+		static_cast<CActorBrazul*>(pFighter)->FUN_003e62d0(0.0f);
+	}
+	else {
+		if (param_2 == 0) {
+			iVar1 = pFighter->GetIdMacroAnim(((pFighter->pBlow)->blowStageExecute).animId);
+			if (iVar1 < 0) {
+				fVar3 = 0.0f;
+			}
+			else {
+				fVar3 = pFighter->pAnimationController->GetAnimLength(iVar1, 1);
+			}
+
+			psVar2 = pFighter->pBlow;
+			static_cast<CActorBrazul*>(pFighter)->FUN_003e62f0(0.0f, fVar3 / (psVar2->blowStageExecute).field_0x4, 1.0f, 5.0f, 1.0f, 0.3f);
+		}
+	}
+
+	return;
 }
 
 void CActorBrazul::Init()
@@ -151,16 +187,14 @@ void CActorBrazul::Init()
 	return;
 }
 
-uint UINT_ARRAY_00437ca0[28] = {
+uint UINT_ARRAY_00437ca0[16] = {
 	0xD3DBDAB7,     0x65A1A5A9,     0x65A2A5A9,     0x65A3A5A9,
 	0xA9D802E7,     0xA9D803E7,     0xA9D804E7,     0xA9D805E7,
 	0xA9D806E7,     0xA9D807E7,     0xA9D802E7,     0xA9D803E7,
 	0xA9D804E7,     0xA9D805E7,     0xA9D806E7,     0xA9D807E7,
-	0x5A5958,     0x0,     0x0,     0x0,
-	0xA9D802E7, 0xA9D803E7, 0xA9D804E7, 0xA9D805E7, 0xA9D806E7, 0xA9D807E7, 0x0, 0x0
 };
 
-uint* UINT_ARRAY_00437cf0 = UINT_ARRAY_00437ca0 + 20;
+uint UINT_ARRAY_00437cf0[8] = { 0xA9D802E7, 0xA9D803E7, 0xA9D804E7, 0xA9D805E7, 0xA9D806E7, 0xA9D807E7, 0x0, 0x0 };
 
 void CActorBrazul::Term()
 {
@@ -596,10 +630,10 @@ void CActorBrazul::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uin
 	edANM_HDR* peVar1;
 
 	if (newAnim == 0xec) {
-		IMPLEMENTATION_GUARD(
-		peVar1 = pAnimator->pAnimKeyTableEntry;
-		(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = this->field_0x2ffc;
-		(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = (int)(1.0 - (float)this->field_0x2ffc);)
+		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
+		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+		pValue->field_0x10 = this->field_0x2ffc;
+		pValue->field_0x1c = (1.0f - (float)this->field_0x2ffc);
 	}
 	else {
 		CActorWolfen::AnimEvaluate(layerId, pAnimator, newAnim);
@@ -698,6 +732,57 @@ int CActorBrazul::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
 	return result;
 }
 
+struct astruct_23
+{
+	CActor* field_0x0;
+
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
+
+bool FUN_003e6410(CActor* pActor, void* pParams)
+{
+	bool bVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	float fVar4;
+	float fVar5;
+
+	astruct_23* pAVar1 = reinterpret_cast<astruct_23*>(pParams);
+
+	if (pActor != pAVar1->field_0x0) {
+		bVar1 = true;
+
+		if ((pActor->GetStateFlags(pActor->actorState) & 1) != 1) {
+			fVar4 = (pAVar1->field_0x10).x - (pActor->currentLocation).x;
+			fVar5 = (pAVar1->field_0x10).z - (pActor->currentLocation).z;
+			fVar5 = fVar4 * fVar4 + fVar5 * fVar5;
+			fVar4 = fabsf((pActor->currentLocation).y - (pAVar1->field_0x10).y);
+			if (fVar5 < (pAVar1->field_0x20).x) {
+				bVar1 = false;
+			}
+			else {
+				if ((pAVar1->field_0x20).y < fVar5) {
+					bVar1 = false;
+				}
+			}
+
+			if (bVar1) {
+				bVar1 = false;
+				if ((0.0f <= fVar4) && (bVar1 = false, fVar4 <= (pAVar1->field_0x20).z)) {
+					bVar1 = true;
+				}
+
+				if (bVar1) {
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 void CActorBrazul::FUN_003e60c0()
 {
 	CActorManager* pCVar1;
@@ -708,21 +793,48 @@ void CActorBrazul::FUN_003e60c0()
 	float fVar5;
 	edF32VECTOR4 local_1a0;
 	edF32MATRIX4 eStack400;
-	CFixedTable<CActor, 64> local_150;
-	CActorBrazul* local_40[4];
-	float local_30;
-	float local_2c;
-	float local_28;
-	float local_24;
-	float local_20;
-	float local_1c;
-	undefined4 local_18;
+	CActorsTable local_150;
+	astruct_23 local_40;
 	edF32VECTOR4 local_10;
 
 	bVar2 = this->field_0x3100.HasMesh();
 	if (bVar2 != false) {
-		IMPLEMENTATION_GUARD();
+		fVar4 = this->field_0x3180 - GetTimer()->cutsceneDeltaTime;
+		this->field_0x3180 = fVar4;
+		pCVar1 = CScene::ptable.g_ActorManager_004516a4;
+		if (0.0f < fVar4) {
+			local_150.nbEntries = 0;
+			this->field_0x3184 = this->field_0x3184 + this->field_0x3188 * GetTimer()->cutsceneDeltaTime;
+			local_10.xyz = this->field_0x31d0.xyz;
+			local_10.w = sqrtf(this->field_0x3184 * this->field_0x3184 + this->field_0x318c * this->field_0x318c);
+			local_40.field_0x10 = this->field_0x31d0;
+			fVar4 = this->field_0x3184 - this->field_0x3190;
+			fVar5 = this->field_0x3184 - this->field_0x3190;
+			local_40.field_0x20.x = (float)((int)fVar4 * (uint)(0.0 < fVar4)) * (float)((int)fVar5 * (uint)(0.0 < fVar5));
+			local_40.field_0x20.y = this->field_0x3184 * this->field_0x3184;
+			local_40.field_0x20.z = this->field_0x318c;
+			local_40.field_0x0 = this;
+
+			pCVar1->cluster.GetActorsIntersectingSphereWithCriterion(&local_150, &local_10, FUN_003e6410, &local_40);
+			while (local_150.nbEntries != 0) {
+				pHitActor = local_150.PopCurrent();
+				_SV_HIT_FightCollisionProcessHit(pHitActor, this->pBlow, &pHitActor->currentLocation, 0);
+			}
+			local_1a0.x = this->field_0x3184 / 9.0f;
+			local_1a0.w = 1.0f;
+			local_1a0.y = local_1a0.x;
+			local_1a0.z = local_1a0.x;
+			edF32Matrix4ScaleHard(&eStack400, &gF32Matrix4Unit, &local_1a0);
+			edF32Matrix4MulF32Matrix4Hard(&eStack400, &eStack400, (edF32MATRIX4*)&this->field_0x31a0);
+			pTVar3 = GetTimer();
+			this->field_0x3100.Func_0x30(&eStack400, GetTimer()->cutsceneDeltaTime);
+		}
+		else {
+			this->field_0x3100.Func_0x2c(0.0f);
+		}
 	}
+
+	return;
 }
 
 void CActorBrazul::FUN_003e59e0()
@@ -730,25 +842,108 @@ void CActorBrazul::FUN_003e59e0()
 	CActorFighter* pCVar1;
 	CNewFx* pCVar2;
 	bool bVar3;
-	int iVar4;
-	Timer* pTVar5;
+	edF32MATRIX4* peVar4;
+	int iVar6;
 	edF32VECTOR4* v2;
 	float puVar6;
-	float fVar6;
 	float fVar7;
+	float fVar8;
 	CCollisionRay CStack208;
 	edF32VECTOR4 local_b0;
 	edF32VECTOR4 local_a0;
 	edF32MATRIX4 eStack144;
-	undefined auStack80[52];
-	float local_1c;
-	float local_18;
-	float local_14;
+	edF32MATRIX4 auStack80;
 	_ray_info_out local_10;
 
 	bVar3 = this->field_0x31e0.HasMesh();
 	if (bVar3 != false) {
-		IMPLEMENTATION_GUARD();
+		pCVar1 = this->pAdversary;
+
+		local_a0.x = pCVar1->currentLocation.x;
+		local_a0.z = pCVar1->currentLocation.z;
+		local_a0.w = pCVar1->currentLocation.w;
+		local_a0.y = pCVar1->currentLocation.y + 0.3f;
+
+		peVar4 = this->field_0x31e0.GetMatrix();
+		edF32Vector4SubHard(&local_a0, &local_a0, &peVar4->rowT);
+		edF32Vector4SafeNormalize0Hard(&local_a0, &local_a0);
+		fVar7 = atan2f((this->field_0x3280).x, (this->field_0x3280).z);
+		fVar7 = edF32Between_0_2Pi(fVar7);
+		fVar8 = atan2f(local_a0.x, local_a0.z);
+		fVar8 = edF32Between_0_2Pi(fVar8);
+		fVar8 = edF32Between_Pi(fVar8 - fVar7);
+		fVar8 = fVar8 / GetTimer()->cutsceneDeltaTime;
+		if (this->field_0x3294 < fabsf(fVar8)) {
+			if (0.0f <= fVar8) {
+				puVar6 = 1.0f;
+			}
+			else {
+				puVar6 = -1.0f;
+			}
+
+			fVar7 = edF32Between_2Pi(fVar7 + this->field_0x3294 * puVar6 * GetTimer()->cutsceneDeltaTime);
+			SetVectorFromAngleY(fVar7, &this->field_0x3280);
+			(this->field_0x3280).y = local_a0.y;
+		}
+		else {
+			(this->field_0x3280) = local_a0;
+		}
+
+		edF32Vector4ScaleHard(this->field_0x3290 * GetTimer()->cutsceneDeltaTime, &local_a0, &this->field_0x3280);
+
+		if (this->field_0x326c.IsValid()) {
+			local_b0.x = local_a0.x;
+			local_b0.z = local_a0.z;
+			local_b0.w = local_a0.w;
+			local_b0.y = 0.0f;
+
+			pCVar2 = (this->field_0x326c).pFx;
+			if (((pCVar2 == (CNewFx*)0x0) || (iVar6 = (this->field_0x326c).id, iVar6 == 0)) || (v2 = &pCVar2->position, iVar6 != pCVar2->id)) {
+				v2 = (edF32VECTOR4*)0x0;
+			}
+
+			edF32Vector4AddHard(&local_b0, &local_b0, v2);
+
+			this->field_0x326c.SetPosition(&local_b0);
+		}
+		GetAnglesFromVector(&local_b0.xyz, &this->field_0x3280);
+		edF32Matrix4FromEulerSoft(&auStack80, &local_b0.xyz, "XYZ");
+		peVar4 = this->field_0x31e0.GetMatrix();
+		edF32Vector4AddHard(&local_a0, &local_a0, &peVar4->rowT);
+		edF32Matrix4TranslateHard(&auStack80, &auStack80, &local_a0);
+
+		if (this->field_0x3260.IsValid()) {
+			this->field_0x3260.SetPosition(&auStack80.rowT);
+		}
+
+		iVar6 = GetIdMacroAnim(this->currentAnimType);
+		fVar7 = this->timeInAir;
+		if (iVar6 < 0) {
+			fVar8 = 0.0f;
+		}
+		else {
+			fVar8 = this->pAnimationController->GetAnimLength(iVar6, 1);
+		}
+
+		local_b0.x = cosf((fVar7 * 3.141593f) / fVar8 - 1.570796f);
+		local_b0.w = 1.0f;
+		local_b0.y = local_b0.x;
+		local_b0.z = local_b0.x;
+		edF32Matrix4ScaleHard(&eStack144, &gF32Matrix4Unit, &local_b0);
+		edF32Matrix4MulF32Matrix4Hard(&auStack80, &eStack144, &auStack80);
+		peVar4 = this->field_0x31e0.GetMatrix();
+		local_a0 = peVar4->rowT;
+		this->field_0x31e0.Func_0x30(&auStack80, GetTimer()->cutsceneDeltaTime);
+		edF32Vector4SubHard(&local_b0, &auStack80.rowT, &local_a0);
+		fVar7 = edF32Vector4SafeNormalize0Hard(&local_b0, &local_b0);
+		CCollisionRay CStack208 = CCollisionRay(fVar7, &local_a0, &local_b0);
+		fVar7 = CStack208.IntersectActors(this, (CActor*)0x0, 0x7fffffff, (edF32VECTOR4*)0x0, &local_10);
+		if (fVar7 != 1e+30f) {
+			_SV_HIT_FightCollisionProcessHit(local_10.pActor_0x0, this->pBlow, &(local_10.pActor_0x0)->currentLocation, 0);
+			this->field_0x31e0.Func_0x2c(0.0f);
+			this->field_0x3260.Stop();
+			this->field_0x326c.Stop();
+		}
 	}
 
 	return;
@@ -766,6 +961,69 @@ void CActorBrazul::FUN_003e5f40(float param_1)
 	this->field_0x31e0.Func_0x2c(param_1);
 	this->field_0x3260.Reset();
 	this->field_0x326c.Reset();
+
+	return;
+}
+
+void CActorBrazul::FUN_003e5f80(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 auStack64;
+
+	this->field_0x3280 = this->rotationQuat;
+	this->field_0x3290 = param_3;
+	this->field_0x3294 = param_4;
+
+	local_50.x = param_6->x;
+	local_50.z = param_6->z;
+	local_50.w = param_6->w;
+	local_50.y = param_6->y + param_2;
+
+	edF32Matrix4TranslateHard(&auStack64, &gF32Matrix4Unit, &local_50);
+	edF32Matrix4MulF32Matrix4Hard(&auStack64, &auStack64, &this->pMeshTransform->base.transformA);
+	this->field_0x31e0.Func_0x28(param_1, 0.0f);
+	this->field_0x31e0.SetMatrix(&auStack64);
+	this->field_0x3260.InitPositionRotation(&auStack64.rowT, &gF32Vector4Zero);
+	edF32Matrix4TranslateHard(&auStack64, &gF32Matrix4Unit, param_6);
+	edF32Matrix4MulF32Matrix4Hard(&auStack64, &auStack64, &this->pMeshTransform->base.transformA);
+	this->field_0x3260.InitPositionRotation(&auStack64.rowT, &gF32Vector4Zero);
+
+	return;
+}
+
+void CActorBrazul::FUN_003e62f0(float param_1, float param_2, float param_3, float param_4, float param_5, float param_6)
+{
+	int iVar1;
+	edF32VECTOR4* peVar2;
+	float fVar4;
+	float fVar5;
+	CAnimation* pAnim;
+
+	iVar1 = GetIdMacroAnim(((this->pBlow)->blowStageExecute).animId);
+	this->field_0x3180 = param_2;
+	this->field_0x3184 = param_3;
+	this->field_0x3188 = param_4;
+	this->field_0x318c = param_6;
+	this->field_0x3190 = param_5;
+	edF32Matrix4CopyHard(&this->field_0x31a0, &this->pMeshTransform->base.transformA);
+	this->field_0x3100.Func_0x28(param_1, 0.0f);
+	peVar2 = this->field_0x3100.GetTextureAnimSpeedNormalExtruder();
+	pAnim = this->pAnimationController;
+	fVar5 = GetTimer()->cutsceneDeltaTime;
+	if (iVar1 < 0) {
+		fVar4 = 0.0f;
+	}
+	else {
+		fVar4 = pAnim->GetAnimLength(iVar1, 1);
+	}
+
+	peVar2->x = (1.0f / fVar4) * fVar5;
+	peVar2->y = 0.0f;
+	peVar2->z = 0.0f;
+	peVar2->w = 0.0f;
 
 	return;
 }
@@ -1299,20 +1557,21 @@ void CBehaviourBrazulA::InitState(int newState)
 			pCVar7->field_0x2ff8 = pCVar7->field_0x2ff8 - fVar10;
 		}
 
-		pCVar7 = this->pOwner;
+		astruct_19* pData = this->pOwner->field_0x1070;
 		pCVar2 = pCVar7->pTargetActor_0xc80;
 		paVar6 = (astruct_19*)0x0;
 		if (pCVar2 != (CActorFighter*)0x0) {
 			uVar8 = 0;
 			while ((uVar8 < 8 && (paVar6 == (astruct_19*)0x0))) {
-				if (pCVar7->field_0x1070[0].field_0x4 == 0) {
-					paVar6 = pCVar7->field_0x1070;
+				if (pData->field_0x4 == 0) {
+					paVar6 = pData;
 				}
 				else {
-					pCVar7 = (CActorBrazul*)&pCVar7->scalarDynJump.field_0x24;
+					pData = pData + 1;
 					uVar8 = uVar8 + 1;
 				}
 			}
+
 			if (paVar6 != (astruct_19*)0x0) {
 				paVar6->FUN_003e56f0(this->aSubObjs[this->field_0x10].field_0x8, fVar9, pCVar2);
 			}

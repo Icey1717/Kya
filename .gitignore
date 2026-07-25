@@ -8,6 +8,8 @@ ps2/ezmpegstr
 .idea/
 cmake-build-debug/
 .github
+.codex
+.gradle
 __pycache__
 upscaling/
 profiler/
@@ -18,3 +20,6 @@ fonts/
 /tools/local_renamer/node_modules/
 /tools/local_renamer/dist/
 /tools/local_renamer/dist-web/
+
+# ghidra module
+/tools/ghidra-module/totala/dist/

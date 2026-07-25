@@ -300,6 +300,8 @@ void CallPauseChange(int param_1);
 
 void MemCardLoad0(int slotIndex);
 
+void UpdateForFreedWolfen(int nbFreedWolfen);
+
 extern CSettings gSettings;
 
 class CSimpleMenuPause : public CSimpleMenu

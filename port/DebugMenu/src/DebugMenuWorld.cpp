@@ -846,7 +846,7 @@ namespace Debug {
 		}
 
 		// Show wolfen-specific info if this is a wolfen actor
-		if (pActor->typeID == WOLFEN) {
+		if (pActor->typeID == WOLFEN || pActor->typeID == BRAZUL || pActor->typeID == BUNCH) {
 			CActorWolfen* pWolfenActor = static_cast<CActorWolfen*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::Wolfen::ShowWolfenActorDetails(pWolfenActor);
