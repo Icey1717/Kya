@@ -1,0 +1,4 @@
+#ifndef ED3_D_HIERARCHY_C
+#define ED3_D_HIERARCHY_C
+
+#endif // ED3_D_HIERARCHY_C

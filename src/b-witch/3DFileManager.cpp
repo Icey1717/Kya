@@ -1,0 +1,4 @@
+#ifndef 3_D_FILE_MANAGER_CPP
+#define 3_D_FILE_MANAGER_CPP
+
+#endif // 3_D_FILE_MANAGER_CPP

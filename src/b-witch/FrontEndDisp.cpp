@@ -1,5 +1,6 @@
 #include "FrontendDisp.h"
 #include "edBank/edBankBuffer.h"
+#include "edSound/edSoundPlay.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "Pause.h"
@@ -120,6 +121,8 @@ CFrontendEnemyCount gFrontendEnemyCount;
 CFrontendEnemyList gFrontendEnemyList;
 CFrontendInventory gFrontendInventory;
 
+CFrontendSamplePlayer gFrontendSamplePlayer;
+
 CFrontendDisplay::CFrontendDisplay()
 {
 	this->bHideHUD = 0;
@@ -131,7 +134,7 @@ CFrontendDisplay::CFrontendDisplay()
 	this->pInventory = &gFrontendInventory;
 	//this->pMenuObj_0x74 = (undefined*)&PTR_DAT_004544c0;
 	this->pFrontendEnemyList = &gFrontendEnemyList;
-	//this->field_0x78 = (char*)&FLOAT_00456220;
+	this->pFrontendSamplePlayer = &gFrontendSamplePlayer;
 }
 
 void CFrontendDisplay::Game_Init()
@@ -148,11 +151,11 @@ void CFrontendDisplay::Game_Init()
 	CSprite* pTexture;
 	int iVar5;
 	char** wolfenFileName;
-	CFrontendSamplePlayer* pSamplePlayer;
+	ed_sound_sample* pSample;
 	Bank frontendBank;
 	CameraObjParams local_8;
 
-	pSamplePlayer = this->pFrontendSamplePlayer;
+	pSample = this->pFrontendSamplePlayer->aSamples;
 	frontendBank.Init(1, 0x6000);
 	/* Init the frontend IOP Bnk */
 	uVar4 = 0;
@@ -161,11 +164,10 @@ void CFrontendDisplay::Game_Init()
 	fileToLoad = g_FrontendSoundFiles_0040ec90;
 	do {
 		soundFileBuffer = frontendBank.GetResource(*fileToLoad, (edBANK_ENTRY_INFO*)0x0);
-		IMPLEMENTATION_GUARD_AUDIO(
-			edSoundSampleLoad(soundFileBuffer, (ed_sound_sample*)(pSamplePlayer + 4), 0);)
-			iVar5 = iVar5 + 1;
+		edSoundSampleLoadWait(soundFileBuffer, pSample, 0);
+		iVar5 = iVar5 + 1;
 		fileToLoad = fileToLoad + 1;
-		pSamplePlayer = pSamplePlayer + 0x18;
+		pSample = pSample + 1;
 	} while (iVar5 < 5);
 	frontendBank.BankUnload();
 	frontendBank.Term();

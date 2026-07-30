@@ -1,0 +1,4 @@
+#ifndef ANIM_EFFECTS_CPP
+#define ANIM_EFFECTS_CPP
+
+#endif // ANIM_EFFECTS_CPP

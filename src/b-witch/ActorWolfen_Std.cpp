@@ -1,0 +1,4 @@
+#ifndef ACTOR_WOLFEN_STD_CPP
+#define ACTOR_WOLFEN_STD_CPP
+
+#endif // ACTOR_WOLFEN_STD_CPP

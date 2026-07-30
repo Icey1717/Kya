@@ -1,0 +1,4 @@
+#ifndef ED_COL_TRIANGLES_CPP
+#define ED_COL_TRIANGLES_CPP
+
+#endif // ED_COL_TRIANGLES_CPP

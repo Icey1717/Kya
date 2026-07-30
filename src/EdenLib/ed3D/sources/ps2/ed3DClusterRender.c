@@ -1,0 +1,4 @@
+#ifndef ED3_D_CLUSTER_RENDER_C
+#define ED3_D_CLUSTER_RENDER_C
+
+#endif // ED3_D_CLUSTER_RENDER_C

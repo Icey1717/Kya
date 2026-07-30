@@ -1,0 +1,4 @@
+#ifndef ED3_D_RENDER_LIST_C
+#define ED3_D_RENDER_LIST_C
+
+#endif // ED3_D_RENDER_LIST_C

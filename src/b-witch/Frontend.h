@@ -4,10 +4,17 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+#include "edSound/edSoundPlay.h"
+
 class CFrontendSamplePlayer
 {
 public:
+	CFrontendSamplePlayer();
+
 	long PlaySample(float, int, int);
+
+	float field_0x0;
+	ed_sound_sample aSamples[5];
 };
 
 class CInterface

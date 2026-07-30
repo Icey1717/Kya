@@ -1,0 +1,4 @@
+#ifndef ED_MEM_ALLOC_WORK_CPP
+#define ED_MEM_ALLOC_WORK_CPP
+
+#endif // ED_MEM_ALLOC_WORK_CPP

@@ -1,0 +1,4 @@
+#ifndef CAMERA_STACK_CPP
+#define CAMERA_STACK_CPP
+
+#endif // CAMERA_STACK_CPP

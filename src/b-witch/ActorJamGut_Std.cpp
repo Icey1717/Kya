@@ -1,0 +1,4 @@
+#ifndef ACTOR_JAM_GUT_STD_CPP
+#define ACTOR_JAM_GUT_STD_CPP
+
+#endif // ACTOR_JAM_GUT_STD_CPP

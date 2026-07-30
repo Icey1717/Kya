@@ -1,0 +1,4 @@
+#ifndef ACTOR_WIND_FX_CPP
+#define ACTOR_WIND_FX_CPP
+
+#endif // ACTOR_WIND_FX_CPP

@@ -1,0 +1,4 @@
+#ifndef ED_EVENT_MESSAGE_CPP
+#define ED_EVENT_MESSAGE_CPP
+
+#endif // ED_EVENT_MESSAGE_CPP

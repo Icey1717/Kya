@@ -1,0 +1,4 @@
+#ifndef ACTOR_WOLFEN_FIGHT_H
+#define ACTOR_WOLFEN_FIGHT_H
+
+#endif // ACTOR_WOLFEN_FIGHT_H

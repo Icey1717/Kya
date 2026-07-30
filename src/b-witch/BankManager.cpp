@@ -1,0 +1,4 @@
+#ifndef BANK_MANAGER_CPP
+#define BANK_MANAGER_CPP
+
+#endif // BANK_MANAGER_CPP

@@ -1,0 +1,4 @@
+#ifndef CRITERIONS_CPP
+#define CRITERIONS_CPP
+
+#endif // CRITERIONS_CPP

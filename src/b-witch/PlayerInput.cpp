@@ -1,0 +1,4 @@
+#ifndef PLAYER_INPUT_CPP
+#define PLAYER_INPUT_CPP
+
+#endif // PLAYER_INPUT_CPP

@@ -1,0 +1,4 @@
+#ifndef ED3_D_FLUSH_MATRIX_C
+#define ED3_D_FLUSH_MATRIX_C
+
+#endif // ED3_D_FLUSH_MATRIX_C

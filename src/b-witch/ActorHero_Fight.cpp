@@ -1,0 +1,4 @@
+#ifndef ACTOR_HERO_FIGHT_CPP
+#define ACTOR_HERO_FIGHT_CPP
+
+#endif // ACTOR_HERO_FIGHT_CPP

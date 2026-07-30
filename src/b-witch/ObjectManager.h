@@ -1,0 +1,4 @@
+#ifndef OBJECT_MANAGER_H
+#define OBJECT_MANAGER_H
+
+#endif // OBJECT_MANAGER_H

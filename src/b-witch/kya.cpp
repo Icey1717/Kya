@@ -50,6 +50,7 @@ extern "C" {
 #include "Types.h"
 #include "edPacket.h"
 #include "EdenLib/edSys/sources/EdSystem.h"
+#include "edSys/ps2/edSysRPC.h"
 #include "LargeObject.h"
 #include "TimeController.h"
 #include "LevelScheduler.h"
@@ -787,7 +788,9 @@ void _edSystemInitSpecific(void)
 	else {
 		edPsx2ModuleLoad(pIopPaths->modulesCount, (edPsx2Module*)pIopPaths->pModulesName);
 	}
-	//IOPSetupFunc_00292cc0();
+
+	_edSysInitRPC();
+
 	//uVar2 = GetTotalIOPMemory_00292b80();
 	//uVar3 = GetLargestIOPMemory_00292c70();
 	/* IOP available memory :\nTotal : %010d\nLargest : %010d\n */

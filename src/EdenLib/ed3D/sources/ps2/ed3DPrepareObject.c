@@ -1,0 +1,4 @@
+#ifndef ED3_D_PREPARE_OBJECT_C
+#define ED3_D_PREPARE_OBJECT_C
+
+#endif // ED3_D_PREPARE_OBJECT_C

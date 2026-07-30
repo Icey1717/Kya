@@ -1,0 +1,4 @@
+#ifndef ACTOR_HERO_JAMGUT_H
+#define ACTOR_HERO_JAMGUT_H
+
+#endif // ACTOR_HERO_JAMGUT_H

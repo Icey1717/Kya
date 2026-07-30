@@ -1,0 +1,4 @@
+#ifndef ED_D_LIST_PATCHABLE_C
+#define ED_D_LIST_PATCHABLE_C
+
+#endif // ED_D_LIST_PATCHABLE_C

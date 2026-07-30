@@ -1,0 +1,4 @@
+#ifndef ED3_D_PREPARE_SPRITE_C
+#define ED3_D_PREPARE_SPRITE_C
+
+#endif // ED3_D_PREPARE_SPRITE_C

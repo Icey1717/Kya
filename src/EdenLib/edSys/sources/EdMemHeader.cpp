@@ -1,0 +1,4 @@
+#ifndef ED_MEM_HEADER_CPP
+#define ED_MEM_HEADER_CPP
+
+#endif // ED_MEM_HEADER_CPP

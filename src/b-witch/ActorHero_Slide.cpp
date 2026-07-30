@@ -1,0 +1,4 @@
+#ifndef ACTOR_HERO_SLIDE_CPP
+#define ACTOR_HERO_SLIDE_CPP
+
+#endif // ACTOR_HERO_SLIDE_CPP

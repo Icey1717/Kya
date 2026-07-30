@@ -1,0 +1,4 @@
+#ifndef MISC_FUNCTIONS_CPP
+#define MISC_FUNCTIONS_CPP
+
+#endif // MISC_FUNCTIONS_CPP

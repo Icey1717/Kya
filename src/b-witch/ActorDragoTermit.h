@@ -1,0 +1,4 @@
+#ifndef ACTOR_DRAGO_TERMIT_H
+#define ACTOR_DRAGO_TERMIT_H
+
+#endif // ACTOR_DRAGO_TERMIT_H

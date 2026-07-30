@@ -1,0 +1,4 @@
+#ifndef ED_EVENT_DATA_CPP
+#define ED_EVENT_DATA_CPP
+
+#endif // ED_EVENT_DATA_CPP

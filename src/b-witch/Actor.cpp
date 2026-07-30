@@ -834,12 +834,14 @@ void CActor::Init()
 {
 	uint* puVar1;
 
-	///* While this pointer is invalid */
-	//for (puVar1 = (uint*)this->field_0x144; puVar1 != (uint*)0x0; puVar1 = (uint*)puVar1[0xe]) {
-	//	CActorSound::Init(puVar1);
-	//}
+	IMPLEMENTATION_GUARD_AUDIO(
+	for (puVar1 = (uint*)this->field_0x144; puVar1 != (uint*)0x0; puVar1 = (uint*)puVar1[0xe]) {
+		CActorSound::Init(puVar1);
+	}
+	)
 
 	this->SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
+
 	return;
 }
 
@@ -905,13 +907,13 @@ void CActor::Manage()
 	ComputeAltitude();
 
 	IMPLEMENTATION_GUARD_AUDIO(
-	//puVar2 = (uint*)this->field_0x144;
-	//if (puVar2 != (uint*)0x0) {
-	//	(*(code*)this->pVTable->field_0x5c)(this);
-	//	for (; puVar2 != (uint*)0x0; puVar2 = (uint*)puVar2[0xe]) {
-	//		CActorSound::Manage(puVar2, this);
-	//	}
-	//}
+	puVar2 = (uint*)this->field_0x144;
+	if (puVar2 != (uint*)0x0) {
+		(*(code*)this->pVTable->field_0x5c)(this);
+		for (; puVar2 != (uint*)0x0; puVar2 = (uint*)puVar2[0xe]) {
+			CActorSound::Manage(puVar2, this);
+		}
+	}
 	)
 
 	this->timeInAir = this->timeInAir + Timer::GetTimer()->cutsceneDeltaTime;

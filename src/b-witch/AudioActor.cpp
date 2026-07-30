@@ -1,0 +1,4 @@
+#ifndef AUDIO_ACTOR_CPP
+#define AUDIO_ACTOR_CPP
+
+#endif // AUDIO_ACTOR_CPP

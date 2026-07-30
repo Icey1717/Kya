@@ -1,0 +1,4 @@
+#ifndef ROUTER_DEBUG_CPP
+#define ROUTER_DEBUG_CPP
+
+#endif // ROUTER_DEBUG_CPP

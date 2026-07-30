@@ -39,3 +39,29 @@ uint edSoundInstanceStop(uint instanceId)
 	IMPLEMENTATION_GUARD_AUDIO();
 	return 0;
 }
+
+int _NbLoadedSamples = 0;
+
+int edSoundSampleLoad(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags)
+{
+	int transferIndex;
+
+	_NbLoadedSamples = _NbLoadedSamples + 1;
+	transferIndex = _edSoundSampleLoad((SoundFileData*)pSoundFile, pSoundSample, flags);
+	return transferIndex;
+}
+
+void edSoundWaitAllSoundDataLoaded()
+{
+	_edSoundWaitAllSoundDataLoaded();
+
+	return;
+}
+
+void edSoundSampleLoadWait(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags)
+{
+	edSoundSampleLoad(pSoundFile, pSoundSample, flags);
+	edSoundWaitAllSoundDataLoaded();
+
+	return;
+}

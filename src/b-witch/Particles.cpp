@@ -1,0 +1,4 @@
+#ifndef PARTICLES_CPP
+#define PARTICLES_CPP
+
+#endif // PARTICLES_CPP

@@ -1,0 +1,4 @@
+#ifndef ED_PARTICLE_COMMON_H
+#define ED_PARTICLE_COMMON_H
+
+#endif // ED_PARTICLE_COMMON_H

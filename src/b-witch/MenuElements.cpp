@@ -1,0 +1,4 @@
+#ifndef MENU_ELEMENTS_CPP
+#define MENU_ELEMENTS_CPP
+
+#endif // MENU_ELEMENTS_CPP

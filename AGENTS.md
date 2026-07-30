@@ -31,6 +31,7 @@ This repository is an ongoing Windows-focused decompilation and PC port of *Kya:
 - Use the pointer conversion macros (`STORE_POINTER`, `LOAD_POINTER`, related helpers) for serialized PS2 pointer fields.
 - Do not replace custom PS2 math/data-layout types with GLM in decompiled code.
 - Keep Tracy macros such as `ZONE_SCOPED`, `FRAME_MARK`, `TRACK_ALLOC`, and `TRACK_FREE`.
+- When assigning recovered names, use PascalCase for functions and camelCase for all other symbols.
 - Prefer `rg`/`rg --files` for searching.
 - Use `apply_patch` for manual edits.
 

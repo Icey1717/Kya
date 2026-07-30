@@ -1,0 +1,4 @@
+#ifndef ED3_D_DISPLAY_ENV_C
+#define ED3_D_DISPLAY_ENV_C
+
+#endif // ED3_D_DISPLAY_ENV_C

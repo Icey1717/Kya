@@ -238,8 +238,8 @@ struct ED_PSX2_MODULES_INIT {
 	char* pModulesName;
 };
 
-struct edSYS_CONFIG {
-
+struct edSYS_CONFIG
+{
 	int argc;
 	char** argv;
 	int headerCount;
@@ -256,6 +256,7 @@ struct edSYS_CONFIG {
 	EFileLoadMode version;
 	char* field_0x20;
 	ED_PSX2_MODULES_INIT* pIopPaths;
+	int enableProfiling;
 };
 
 class CMusicManager;
@@ -734,15 +735,15 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #define PLAY_INTRO_VIDEO 0
 
-#define IMPLEMENTATION_GUARD_FX(x)
-#define IMPLEMENTATION_GUARD_EMOTION(x)
+#define IMPLEMENTATION_GUARD_FX(x) assert(false); 
+#define IMPLEMENTATION_GUARD_EMOTION(x) assert(false); 
 #define IMPLEMENTATION_GUARD_PS2(x)
-#define IMPLEMENTATION_GUARD_AUDIO(x)
-#define IMPLEMENTATION_GUARD_ACTOR(x)
-#define IMPLEMENTATION_GUARD_LIGHT(x)
-#define IMPLEMENTATION_GUARD_UI(x)
-#define IMPLEMENTATION_GUARD_SHADOW(x)
-#define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
+#define IMPLEMENTATION_GUARD_AUDIO(x) assert(false); 
+#define IMPLEMENTATION_GUARD_ACTOR(x) assert(false); 
+#define IMPLEMENTATION_GUARD_LIGHT(x) assert(false); 
+#define IMPLEMENTATION_GUARD_UI(x) assert(false); 
+#define IMPLEMENTATION_GUARD_SHADOW(x) assert(false); 
+#define IMPLEMENTATION_GUARD_LOG(x) assert(false); 
 
 #ifdef PLATFORM_WIN
 #include <assert.h>

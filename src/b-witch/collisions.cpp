@@ -1,0 +1,4 @@
+#ifndef COLLISIONS_CPP
+#define COLLISIONS_CPP
+
+#endif // COLLISIONS_CPP

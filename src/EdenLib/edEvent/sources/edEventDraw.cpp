@@ -1,0 +1,4 @@
+#ifndef ED_EVENT_DRAW_CPP
+#define ED_EVENT_DRAW_CPP
+
+#endif // ED_EVENT_DRAW_CPP

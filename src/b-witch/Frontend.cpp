@@ -40,6 +40,17 @@ bool CFrontend::ComputeSceneCoordinate(float z, edF32VECTOR4* pWorldPosition, ed
 	return bSuccess;
 }
 
+CFrontendSamplePlayer::CFrontendSamplePlayer()
+{
+	this->field_0x0 = 1.0f;
+
+	for (int i = 0; i < 5; i++) {
+		this->aSamples[i].flags = 0;
+	}
+
+	return;
+}
+
 long CFrontendSamplePlayer::PlaySample(float, int, int)
 {
 	IMPLEMENTATION_GUARD_AUDIO();

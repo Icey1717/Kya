@@ -1,0 +1,4 @@
+#ifndef ACTOR_CLOUD_CPP
+#define ACTOR_CLOUD_CPP
+
+#endif // ACTOR_CLOUD_CPP

@@ -500,6 +500,11 @@ set(main_src
 	"${src_root}/EdenLib/edSound/sources/ps2/_edSoundPlay.cpp"
 	"${src_root}/EdenLib/Include/edSound/ps2/_edSoundPlay.h"
 
+	"${src_root}/EdenLib/edSys/sources/ps2/_edSysRPC.cpp"
+	"${src_root}/EdenLib/edSys/sources/ps2/_edSysDataTransfer.cpp"
+	"${src_root}/EdenLib/Include/edSys/ps2/edSysRPC.h"
+	"${src_root}/EdenLib/Include/edSys/ps2/edSysDataTransfer.h"
+
     "${src_root}/EdenLib/Include/ed3D/ed3DSceneManager.h"
     "${src_root}/EdenLib/ed3D/sources/ed3DSceneManager.cpp"
 	"${src_root}/EdenLib/Include/ed3D/ed3DG3D.h"

@@ -1,0 +1,4 @@
+#ifndef ED3_D_OPTION_FLAG_C
+#define ED3_D_OPTION_FLAG_C
+
+#endif // ED3_D_OPTION_FLAG_C

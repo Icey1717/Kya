@@ -1,0 +1,4 @@
+#ifndef ED3_D_SCENE_MANAGER_C
+#define ED3_D_SCENE_MANAGER_C
+
+#endif // ED3_D_SCENE_MANAGER_C

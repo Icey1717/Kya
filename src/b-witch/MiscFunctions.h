@@ -1,0 +1,4 @@
+#ifndef MISC_FUNCTIONS_H
+#define MISC_FUNCTIONS_H
+
+#endif // MISC_FUNCTIONS_H

@@ -1,0 +1,4 @@
+#ifndef ACTOR_HERO_FX_CPP
+#define ACTOR_HERO_FX_CPP
+
+#endif // ACTOR_HERO_FX_CPP

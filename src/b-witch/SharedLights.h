@@ -1,0 +1,4 @@
+#ifndef SHARED_LIGHTS_H
+#define SHARED_LIGHTS_H
+
+#endif // SHARED_LIGHTS_H

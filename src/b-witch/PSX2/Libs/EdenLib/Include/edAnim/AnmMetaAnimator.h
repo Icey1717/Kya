@@ -1,0 +1,4 @@
+#ifndef ANM_META_ANIMATOR_H
+#define ANM_META_ANIMATOR_H
+
+#endif // ANM_META_ANIMATOR_H

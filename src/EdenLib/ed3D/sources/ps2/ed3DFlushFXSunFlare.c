@@ -1,0 +1,4 @@
+#ifndef ED3_D_FLUSH_FX_SUN_FLARE_C
+#define ED3_D_FLUSH_FX_SUN_FLARE_C
+
+#endif // ED3_D_FLUSH_FX_SUN_FLARE_C

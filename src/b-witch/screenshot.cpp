@@ -1,0 +1,4 @@
+#ifndef SCREENSHOT_CPP
+#define SCREENSHOT_CPP
+
+#endif // SCREENSHOT_CPP

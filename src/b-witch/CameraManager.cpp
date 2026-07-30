@@ -1,0 +1,4 @@
+#ifndef CAMERA_MANAGER_CPP
+#define CAMERA_MANAGER_CPP
+
+#endif // CAMERA_MANAGER_CPP

@@ -339,18 +339,6 @@ enum ECinematicState {
 	CS_Playing
 };
 
-struct ed_sound_sample {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	uint field_0x4;
-	uint flags;
-	uint field_0xc;
-	undefined* field_0x10;
-	undefined* field_0x14;
-};
-
 struct CCineActorConfig {
 	CCineActorConfig();
 	S_STREAM_REF<CActor> pActor;

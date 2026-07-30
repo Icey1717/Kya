@@ -1,0 +1,4 @@
+#ifndef PRIORITY_QUEUE_CPP
+#define PRIORITY_QUEUE_CPP
+
+#endif // PRIORITY_QUEUE_CPP
