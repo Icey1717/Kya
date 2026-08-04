@@ -135,6 +135,7 @@ class MessageManager {
 public:
 	void remove_entry(CMessageFile* pToRemove);
 	char* get_message(ulong key);
+	void reload();
 	CMessageFile* pMessage;
 };
 

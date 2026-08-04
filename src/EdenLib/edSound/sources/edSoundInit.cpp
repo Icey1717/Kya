@@ -1,1 +1,149 @@
 #include "edSound/edSoundInit.h"
+#include "edSound/edSoundPlay.h"
+#include "EdenLib/edSys/sources/EdHandlers.h"
+#include "edMem.h"
+#include "edVideo/VideoD.h"
+#include "MathOps.h"
+
+edSoundConfig soundConfig;
+
+edSoundConfig* edSoundGetConfig(void)
+{
+	return &soundConfig;
+}
+
+uint edSoundVoicesNumberGet(void)
+{
+	return 0x30;
+}
+
+ed_sound_instance* pedSoundInstances;
+ed_sound_instance_finished* pedSoundFinishedInstances;
+int edSoundNbFinishedInstances;
+int edSoundMaxInstances;
+
+void _edSoundInitInstances()
+{
+
+}
+
+void edSoundInitInstances(int nbInstances)
+{
+	uint uVar1;
+	ed_sound_instance* peVar2;
+
+	pedSoundInstances = static_cast<ed_sound_instance*>(edMemAlloc(TO_HEAP(H_MAIN), nbInstances * sizeof(ed_sound_instance)));
+	pedSoundFinishedInstances = static_cast<ed_sound_instance_finished*>(edMemAlloc(TO_HEAP(H_MAIN), nbInstances * sizeof(ed_sound_instance_finished)));
+	_edSoundInitInstances();
+	edSoundNbFinishedInstances = 0;
+	uVar1 = 0;
+	peVar2 = pedSoundInstances;
+	edSoundMaxInstances = nbInstances;
+
+	if (nbInstances != 0) {
+		do {
+			peVar2->soundInstanceID = 0xffff;
+			peVar2->lowerPrioritySoundInstance = (ed_sound_instance*)0x0;
+			uVar1 = uVar1 + 1;
+			peVar2->higherPrioritySoundInstance = (ed_sound_instance*)0x0;
+			peVar2 = peVar2 + 1;
+		} while (uVar1 < edSoundMaxInstances);
+	}
+
+	return;
+}
+
+struct ED_SOUND_3D_DATA
+{
+	edF32VECTOR3 field_0x0;
+	edF32VECTOR3 field_0xc;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	byte field_0x24;
+};
+
+ED_SOUND_3D_DATA edSound3DDataDefault;
+
+void _edSoundAcousticInit(void)
+{}
+
+void edSoundAcousticInit(void)
+{
+	float local_10;
+	float fStack12;
+
+	edSound3DDataDefault.field_0x0 = gF32Vector3Zero;
+	edSound3DDataDefault.field_0xc = gF32Vector3Zero;
+	edSound3DDataDefault.field_0x1c = 1.0f;
+	edSound3DDataDefault.field_0x18 = -1.0f;
+	_edSoundAcousticInit();
+
+	return;
+}
+
+void edSoundFlushHandler(int, int, char*)
+{
+	if (edSoundGlobalParams.field_0x58 != 0) {
+		edSoundFlush();
+	}
+
+	return;
+}
+
+ed_sound_instance** pedSoundInstancesToDelete;
+int edSoundInstancesToDeleteNb;
+
+void edSoundInit(void)
+{
+	int iVar1;
+	uint uVar2;
+
+	edDebugPrintf("edSound v1.2\ncompiled on Oct  3 2003 at 15:00:14");
+	edDebugPrintf("edSound sync number [EE] : %d\n", 0);
+
+	edSoundInitInstances(soundConfig.nbMaxInstances);
+
+	IMPLEMENTATION_GUARD_PS2(
+	edSoundInstanceCom = edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances << 3);
+	uVar2 = 0;
+	if (soundConfig.nbMaxInstances != 0) {
+		iVar1 = 0;
+		do {
+			uVar2 = uVar2 + 1;
+			*(undefined4*)((int)edSoundInstanceCom + iVar1) = 0;
+			*(undefined4*)((int)edSoundInstanceCom + iVar1 + 4) = 0;
+			iVar1 = iVar1 + 8;
+		} while (uVar2 < (uint)soundConfig.nbMaxInstances);
+	})
+
+	pedSoundInstancesToDelete = (ed_sound_instance**)edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances * sizeof(ed_sound_instance*));
+	edSoundInstancesToDeleteNb = 0;
+
+#ifdef PLATFORM_PS2
+	_edSoundInit(soundConfig.nbMaxInstances);
+#endif
+	edSoundAcousticInit();
+	edSoundGlobalParams.field_0x20 = 0;
+	edSoundGlobalParams.field_0x6c = 0;
+	edSoundGlobalParams.g_DesiredFrameTime_00483824 = 0.02f;
+	edSoundGlobalParams.outputMode = STEREO;
+	edSoundGlobalParams.field_0x70 = (undefined*)0x0;
+	edSoundGlobalParams.field_0x5c = 343.5f;
+	edSoundGlobalParams.field_0x64 = 1.0f;
+	edSoundGlobalParams.field_0x60 = 1.0f;
+	edSoundGlobalParams.field_0x68 = 1.0f;
+	edSoundGlobalParams.volume = 1.0f;
+	edSoundGlobalParams.field_0x58 = soundConfig.field_0x8;
+	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 7, edSoundFlushHandler, 1, 1);
+	edSoundFlush();
+
+	return;
+}
+
+void edSoundInitFunc(float param_1)
+{
+	edSoundGlobalParams.field_0x60 = param_1;
+	edSoundGlobalParams.field_0x64 = param_1 * param_1;
+	return;
+}

@@ -4,6 +4,7 @@
 #include "sys/types.h"
 
 #include "kya.h"
+#include "Audio.h"
 
 #if defined(PLATFORM_PS2)
 #include <libsdr.h>
@@ -81,6 +82,8 @@ extern "C" {
 #include "edBank/edBank.h"
 #include "edFile/ps2/_edFileFilerCDVD.h"
 #include "edFile/edFilePath.h"
+#include "edMusic/edMusic.h"
+#include "edSound/edSoundInit.h"
 
 template<class T>
 T* CreateNew()
@@ -1469,35 +1472,39 @@ void MainInit(int argc,char **argv)
 	//edMathInit();
 	edDebugPrintf("---- Init edDev \n");
 	CPlayerInput::InitDev();
-	///* Should we init sound and music? */
-	//if (DAT_00448ef0 == 0) {
-	//	edDebugPrintf(s_----_Init_edMusic_0042b6f0); 6f0);
-	//	musicConfig = edMusicGetConfig();
-	//	uVar2 = edSoundVoicesNumberGet();
-	//	if (uVar2 < 0x30) {
-	//		musicConfig->field_0x0 = uVar2 >> 1;
-	//	}
-	//	else {
-	//		musicConfig->field_0x0 = 0x18;
-	//	}
-	//	musicConfig->field_0x4 = 10;
-	//	musicConfig->field_0x8 = 0xf;
-	//	musicConfig->field_0xc = 5;
-	//	edMusic::Init();
-	//	edDebugPrintf(s_----_Init_Sound_0042b710); 0);
-	//	soundConfig = edSoundGetConfig();
-	//	soundConfig->field_0xc = musicConfig->field_0x0;
-	//	soundConfig->field_0x10 = uVar2 - 1;
-	//	soundConfig->field_0x0 = 0x80;
-	//	if (gVideoConfig.omode == SCE_GS_PAL) {
-	//		soundConfig->field_0x14 = 0x32;
-	//	}
-	//	else {
-	//		soundConfig->field_0x14 = 0x3c;
-	//	}
-	//	edMusicInit();
-	//	edSoundInit(0.8f);
-	//}
+
+	/* Should we init sound and music? */
+	if (NoAudio == 0) {
+		edDebugPrintf("---- Init edMusic \n");
+		ed_music_config* musicConfig = edMusicGetConfig();
+		uint nbVoices = edSoundVoicesNumberGet();
+		if (nbVoices < 0x30) {
+			musicConfig->nbVoices = nbVoices >> 1;
+		}
+		else {
+			musicConfig->nbVoices = 0x18;
+		}
+		musicConfig->nbStreams = 10;
+		musicConfig->nbSongs = 0xf;
+		musicConfig->nbBanks = 5;
+		edMusicInit();
+
+		edDebugPrintf("---- Init Sound \n");
+		edSoundConfig* soundConfig = edSoundGetConfig();
+		soundConfig->nbVoices = musicConfig->nbVoices;
+		soundConfig->field_0x10 = nbVoices - 1;
+		soundConfig->nbMaxInstances = 0x80;
+		if (gVideoConfig.omode == SCE_GS_PAL) {
+			soundConfig->field_0x14 = 0x32;
+		}
+		else {
+			soundConfig->field_0x14 = 0x3c;
+		}
+
+		edSoundInit();
+		edSoundInitFunc(0.8f);
+	}
+
 	edEventInit();
 	edDebugPrintf("---- Init edBank \n");
 	edBankInit();

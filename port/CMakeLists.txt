@@ -12,6 +12,7 @@ add_subdirectory("Log")
 add_subdirectory("Job")
 add_subdirectory("Hash")
 add_subdirectory("Archive")
+add_subdirectory("Audio")
 
 add_subdirectory("ext/pss/pss")
 
@@ -49,6 +50,6 @@ add_library(Port ${SOURCES})
 
 target_include_directories(Port PUBLIC "include")
 
-target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture Mesh Sprite)
+target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture Mesh Sprite Audio)
 
 add_subdirectory(DebugMenu)

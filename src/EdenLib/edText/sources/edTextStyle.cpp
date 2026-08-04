@@ -1,0 +1,4 @@
+#ifndef ED_TEXT_STYLE_CPP
+#define ED_TEXT_STYLE_CPP
+
+#endif // ED_TEXT_STYLE_CPP

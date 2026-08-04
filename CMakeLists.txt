@@ -359,6 +359,8 @@ set(main_src
 	"${src_root}/b-witch/FxComposite.h"
 	"${src_root}/b-witch/FxRandom.cpp"
 	"${src_root}/b-witch/FxRandom.h"
+	"${src_root}/b-witch/Audio.cpp"
+	"${src_root}/b-witch/Audio.h"
 
 	"${src_root}/edC/edCFiler_BNK.cpp"
 	"${src_root}/edC/edCFiler_BNK.h"
@@ -472,6 +474,12 @@ set(main_src
 	"${src_root}/EdenLib/edSys/sources/EdHandlers.h"
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.cpp"
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.h"
+
+	"${src_root}/EdenLib/edMusic/sources/ps2/_edMusicInit.cpp"
+	"${src_root}/EdenLib/edMusic/sources/edMusicInit.cpp"
+	"${src_root}/EdenLib/edMusic/sources/edMusicMain.cpp"
+	"${src_root}/EdenLib/edMusic/sources/edMusicPlay.cpp"
+	"${src_root}/EdenLib/Include/edMusic/edMusic.h"
 
 	"${src_root}/EdenLib/edParticles/sources/edParticleShaper.cpp"
 	"${src_root}/EdenLib/edParticles/sources/edParticleSelector.cpp"

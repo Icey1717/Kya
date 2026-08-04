@@ -6,6 +6,7 @@
 #include "CinematicManager.h"
 #include "WayPoint.h"
 #include "MathOps.h"
+#include "Audio.h"
 #include "EventManager.h"
 #include "ActorProjectile.h"
 #include "DlistManager.h"

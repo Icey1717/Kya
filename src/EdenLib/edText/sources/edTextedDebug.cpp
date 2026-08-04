@@ -1,0 +1,4 @@
+#ifndef ED_TEXTED_DEBUG_CPP
+#define ED_TEXTED_DEBUG_CPP
+
+#endif // ED_TEXTED_DEBUG_CPP

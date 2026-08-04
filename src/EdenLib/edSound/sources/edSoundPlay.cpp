@@ -65,3 +65,32 @@ void edSoundSampleLoadWait(char* pSoundFile, ed_sound_sample* pSoundSample, ulon
 
 	return;
 }
+
+edCSoundGlobalParams edSoundGlobalParams;
+
+void edSoundSetMasterVolume(float newVolume)
+{
+	//int iVar1;
+
+	//iVar1 = (int)edComBuffer + (int)*edComBuffer;
+	edSoundGlobalParams.volume = newVolume;
+
+	IMPLEMENTATION_GUARD_PS2(
+	*(undefined4*)(iVar1 + 4) = 2;
+	DAT_0044915c = (float*)(iVar1 + 8);
+	*DAT_0044915c = newVolume;
+	*edComBuffer = (float*)((int)DAT_0044915c - (int)edComBuffer);)
+
+	return;
+}
+
+AUDIO_MODE edSoundOutputModeGet(void)
+{
+	return edSoundGlobalParams.outputMode;
+}
+
+void edSoundOutputModeSet(AUDIO_MODE newMode)
+{
+	edSoundGlobalParams.outputMode = newMode;
+	return;
+}

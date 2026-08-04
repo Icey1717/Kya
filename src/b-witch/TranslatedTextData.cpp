@@ -340,3 +340,19 @@ char* MessageManager::get_message(ulong key)
 	}
 	return g_szTextNotFound_00434bf0;
 }
+
+void MessageManager::reload()
+{
+	CMessageFile* pMessageFile;
+
+	for (pMessageFile = this->pMessage; pMessageFile != (CMessageFile*)0x0; pMessageFile = pMessageFile->pNext) {
+		if (pMessageFile->pBankAccessObj == (edCBankBufferEntry*)0x0) {
+			pMessageFile->select_language((char*)0x0, AUTO);
+		}
+		else {
+			pMessageFile->select_language(pMessageFile->pBankAccessObj, (char*)0x0, AUTO);
+		}
+	}
+
+	return;
+}

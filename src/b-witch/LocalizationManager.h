@@ -5,7 +5,8 @@
 #include "LargeObject.h"
 #include "TranslatedTextData.h"
 
-class CLanguageManager : public CObjectManager {
+class CLanguageManager : public CObjectManager
+{
 
 public:
 	CLanguageManager();
@@ -48,6 +49,7 @@ public:
 	char* GetHelpString(ulong key);
 	char* GetActionString(int index);
 	char* GetOtherActionString(int index);
+	void ApplyLanguage();
 
 	CMessageFile trcText;
 	CMessageFile levelText;

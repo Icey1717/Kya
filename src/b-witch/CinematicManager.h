@@ -927,7 +927,7 @@ public:
 	int field_0x24;
 	CCinematic* field_0x28;
 	float startTime;
-	uint bInitialized;
+	uint bUseSubtitles;
 	float field_0x34;
 	char* pSubtitleText;
 	int subtitleHorizontalAlignment;

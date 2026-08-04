@@ -12,6 +12,7 @@
 #include "Native/NativeRenderer.h"
 #include "TimeController.h"
 #include "Actor.h"
+#include "Audio.h"
 
 namespace Debug {
 

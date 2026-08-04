@@ -11,7 +11,10 @@
 #define ARAIGNOS_STATE_DEFAULT 5
 #define ARAIGNOS_STATE_DIE 6
 
-class CActorAraignos : public CActorMovable {
+class CSoundSample;
+
+class CActorAraignos : public CActorMovable
+{
 public:
 	class CBhvDefault : public CBehaviour
 	{

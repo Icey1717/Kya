@@ -109,6 +109,56 @@ LAB_0028d978:
 	return peVar5 != (edCTextResource*)0x0;
 }
 
+bool edCTextResourcePool::TextRemove(char* name)
+{
+	char cVar1;
+	char* pcVar2;
+	int iVar3;
+	edCTextResource* peVar4;
+	edCTextResource* peVar5;
+	ulong uVar6;
+
+	iVar3 = 0;
+	cVar1 = *name;
+	uVar6 = 0;
+	pcVar2 = name + 1;
+	do {
+		if (cVar1 == '\0') {
+		LAB_0028d628:
+			peVar5 = this->pEntries;
+			iVar3 = 0;
+			if (0 < this->currentEntries) {
+				do {
+					if ((peVar5->key == uVar6) && (peVar5->index == 1)) {
+						this->currentEntries = this->currentEntries + -1;
+						if (iVar3 != this->currentEntries) {
+							peVar5 = this->pEntries + this->currentEntries;
+							peVar4 = this->pEntries + iVar3;
+							peVar4->key = peVar5->key;
+							peVar4->pMessageData = peVar5->pMessageData;
+							peVar4->index = peVar5->index;
+						}
+						return true;
+					}
+					iVar3 = iVar3 + 1;
+					peVar5 = peVar5 + 1;
+				} while (iVar3 < this->currentEntries);
+			}
+			return false;
+		}
+
+		iVar3 = iVar3 + 1;
+		uVar6 = uVar6 * 0x100 + static_cast<long>(cVar1);
+		if (8 < iVar3) {
+			uVar6 = 0;
+			goto LAB_0028d628;
+		}
+
+		cVar1 = *pcVar2;
+		pcVar2 = pcVar2 + 1;
+	} while (true);
+}
+
 bool edCTextResourcePool::BitmapAdd(char* label, edTextBitmap* pBitmap)
 {
 	int characterCount;

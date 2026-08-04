@@ -1,0 +1,4 @@
+#ifndef DEBUG_PROFILE_CPP
+#define DEBUG_PROFILE_CPP
+
+#endif // DEBUG_PROFILE_CPP

@@ -1,0 +1,4 @@
+#ifndef DRAWPROFILE_CPP
+#define DRAWPROFILE_CPP
+
+#endif // DRAWPROFILE_CPP

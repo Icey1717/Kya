@@ -98,7 +98,7 @@ void CHelpManager::Game_Term()
 
 void CHelpManager::Level_Init()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_HELP();
 	return;
 }
 

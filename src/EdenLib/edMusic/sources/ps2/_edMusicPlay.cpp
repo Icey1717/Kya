@@ -1,0 +1,4 @@
+#ifndef ED_MUSIC_PLAY_CPP
+#define ED_MUSIC_PLAY_CPP
+
+#endif // ED_MUSIC_PLAY_CPP

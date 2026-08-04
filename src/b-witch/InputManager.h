@@ -143,6 +143,7 @@ public:
 	void ComputeForce3D(edF32VECTOR4* pOutForce);
 
 	void FUN_001b6e20(float param_1, float param_2);
+	void SetVibrationEnabled(int param_2);
 
 	static void Reset();
 

@@ -140,7 +140,7 @@ CCinematicManager::CCinematicManager()
 void CCinematicManager::Game_Init()
 {
 	BWCinActor::InitCinMsgs();
-	this->bInitialized = 1;
+	this->bUseSubtitles = 1;
 	return;
 }
 
@@ -5549,7 +5549,7 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 				}
 			}
 
-			if (((this->pSubtitleText != (char*)0x0) && (this->field_0x44 == 0)) && (this->bInitialized != 0)) {
+			if (((this->pSubtitleText != (char*)0x0) && (this->field_0x44 == 0)) && (this->bUseSubtitles != 0)) {
 				fVar14 = (float)gVideoConfig.screenWidth - 40.0f;
 				local_15f0.width = fVar14 - 40.0f;
 				textStyle.SetShadow(0x100);

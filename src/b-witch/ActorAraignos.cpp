@@ -4,6 +4,7 @@
 #include "CollisionManager.h"
 #include "TimeController.h"
 #include "MathOps.h"
+#include "Audio.h"
 
 void CActorAraignos::Create(ByteCode* pByteCode)
 {

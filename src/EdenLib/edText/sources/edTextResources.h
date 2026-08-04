@@ -21,6 +21,7 @@ public:
 
 	bool CallbackAdd(char* name, edResourceFunc pFunc);
 	bool TextAdd(char* key, char* value);
+	bool TextRemove(char* name);
 	bool BitmapAdd(char* label, edTextBitmap* param_3);
 	edTextBitmap* GetResourcePtr(ulong key, int index);
 

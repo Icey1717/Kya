@@ -153,6 +153,14 @@ enum EFileLoadMode {
 	New_Name_3 = 3
 };
 
+enum AUDIO_MODE
+{
+	MONO,
+	STEREO,
+	SURROUND
+};
+
+
 enum ACTOR_CLASS {
 	ACTOR = 0x0,
 	CINEMATIC = 0x1,
@@ -696,13 +704,6 @@ enum LANGUAGE
 	AUTO
 };
 
-enum AUDIO_MODE
-{
-	MONO,
-	STEREO,
-	SURROUND
-};
-
 // Overload the * operator as a non-member function
 inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 {
@@ -744,6 +745,7 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #define IMPLEMENTATION_GUARD_UI(x) assert(false); 
 #define IMPLEMENTATION_GUARD_SHADOW(x) assert(false); 
 #define IMPLEMENTATION_GUARD_LOG(x) assert(false); 
+#define IMPLEMENTATION_GUARD_HELP(x)
 
 #ifdef PLATFORM_WIN
 #include <assert.h>

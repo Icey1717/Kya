@@ -17,6 +17,8 @@
 #include "EdFileBase.h"
 #include "edBank/edBankFile.h"
 #include "MathOps.h"
+#include "Audio.h"
+#include "edSound/edSoundPlay.h"
 #include <math.h>
 
 #include "edFile/edFile.h"
@@ -405,24 +407,16 @@ void CSettings::StoreGlobalSettings()
 	cAudioManagerInstance = CScene::ptable.g_AudioManager_00451698;
 	cCameraManagerInstance = CScene::ptable.g_CameraManager_0045167c;
 	cCinematicManagerInstance = g_CinematicManager_0048efc;
-	IMPLEMENTATION_GUARD_AUDIO(
-		volume = (CScene::ptable.g_AudioManager_00451698)->field_0xbc * 12.0;
-		if (volume < 2.147484e+09f) {
-			this->musicVolume = (int)volume;
-		}
-		else {
-			this->musicVolume = (int)(volume - 2.147484e+09f) | 0x80000000;
-		}
-		volume = cAudioManagerInstance->field_0xc0 * 12.0;
-		if (volume < 2.147484e+09f) {
-			this->sfxVolume = (int)volume;
-		}
-		else {
-			this->sfxVolume = (int)(volume - 2.147484e+09f) | 0x80000000;
-		}
-		audioMode = edSoundOutputModeGet();
-		this->audioMode = audioMode;
-	)
+
+	volume = (CScene::ptable.g_AudioManager_00451698)->musicVolume * 12.0f;
+	this->musicVolume = EncodeFloat(volume);
+
+	volume = cAudioManagerInstance->sfxVolume * 12.0f;
+	this->sfxVolume = EncodeFloat(volume);
+
+	audioMode = edSoundOutputModeGet();
+	this->audioMode = audioMode;
+
 	this->setOffsetX = gVideoConfig.offsetX;
 	this->setOffsetY = gVideoConfig.offsetY;
 	if (cCameraManagerInstance->aspectRatio == 1.777778) {
@@ -431,7 +425,7 @@ void CSettings::StoreGlobalSettings()
 	else {
 		this->bWidescreen = 0;
 	}
-	this->bEnableSubtitles = bool(cCinematicManagerInstance->bInitialized);
+	this->bEnableSubtitles = bool(cCinematicManagerInstance->bUseSubtitles);
 	LVar5 = CMessageFile::get_default_language();
 	this->languageID = LVar5;
 	this->bEnableVibration = (bool)gPlayerInput.bEnableVibration;

@@ -2,8 +2,10 @@
 #define SETTINGS_H
 
 #include "Types.h"
+#include "edSound/edSoundPlay.h"
 
-class CSettings {
+class CSettings
+{
 public:
 	//undefined fields seem to be unused (previously used? The May 12 prototype did have some extra settings)
 	static int GetMaxSaveBufferSize();

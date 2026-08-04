@@ -19,6 +19,7 @@
 #include "../../../src/b-witch/MathOps.h"
 #include "../../Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/src/TextureUpload.h"
 #include "../../../src/port/pointer_conv.h"
+#include "edSysTransferService.h"
 
 // The function to be tested
 int Add(int a, int b) {
@@ -38,8 +39,52 @@ TEST(AddTest, PositiveNumbers) {
 }
 
 #ifdef PLATFORM_WIN
-class PointerConvTest : public ::testing::Test {
-protected:
+TEST(AudioTransferService, OwnsDataAndReturnsSoundHandle)
+{
+	Audio::Reset();
+	std::uint8_t source[] = {1, 2, 3, 4};
+	std::uint32_t result = 0;
+	const auto index = Audio::Submit(source, sizeof(source), 0x40, Audio::TransferFlags::HighMem, 1, 2, 3, &result, 4, 0, nullptr);
+	source[0] = 9;
+	EXPECT_EQ(Audio::PumpThrough(index), index);
+	Audio::LoadedDataInfo data;
+	ASSERT_TRUE(Audio::LookupLoadedData(result, data));
+	EXPECT_EQ(data.size, sizeof(source));
+	EXPECT_EQ(data.data[0], 1);
+	EXPECT_EQ(data.alignment, 0x40u);
+	EXPECT_EQ(data.flags, Audio::TransferFlags::HighMem);
+	EXPECT_TRUE(Audio::ReleaseLoadedData(result));
+}
+TEST(AudioTransferService, CompletesFifo)
+{
+	Audio::Reset();
+	std::uint8_t source = 7;
+	const auto first = Audio::Submit(&source, 1, 1, Audio::TransferFlags::None, 0, 0, 0, nullptr, 0, 0, nullptr);
+	const auto second = Audio::Submit(&source, 1, 1, Audio::TransferFlags::None, 0, 0, 0, nullptr, 0, 0, nullptr);
+	EXPECT_EQ(Audio::PumpThrough(second), second);
+	EXPECT_EQ(first + 1, second);
+}
+TEST(AudioTransferService, ZeroSizeDoesNotQueue)
+{
+	Audio::Reset();
+	EXPECT_EQ(Audio::Submit(nullptr, 0, 0, Audio::TransferFlags::None, 0, 0, 0, nullptr, 0, 0, nullptr), 0u);
+	EXPECT_EQ(Audio::PumpAll(), 0u);
+}
+TEST(AudioTransferService, ResetReleasesData)
+{
+	Audio::Reset();
+	std::uint8_t source = 1;
+	std::uint32_t result = 0;
+	Audio::Submit(&source, 1, 1, Audio::TransferFlags::None, 1, 2, 3, &result, 4, 0, nullptr);
+	Audio::PumpAll();
+	Audio::Reset();
+	Audio::LoadedDataInfo data;
+	EXPECT_FALSE(Audio::LookupLoadedData(result, data));
+	EXPECT_EQ(Audio::PumpAll(), 0u);
+}
+class PointerConvTest : public ::testing::Test
+{
+  protected:
 	void SetUp() override
 	{
 		PointerConv::ResetAll();

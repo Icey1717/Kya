@@ -161,3 +161,15 @@ char* CLanguageManager::GetOtherActionString(int index)
 {
 	return this->userInterfaceText.get_message(ULONG_ARRAY_00434970[index], 0);
 }
+
+void CLanguageManager::ApplyLanguage()
+{
+	char* value;
+
+	edTextResources.TextRemove(sz_GAMENAME_004349a8);
+	gMessageManager.reload();
+	value = this->userInterfaceText.get_message(0x2414d455f4e414d, 0);
+	edTextResources.TextAdd(sz_GAMENAME_004349a8, value);
+	return;
+}
+

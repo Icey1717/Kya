@@ -59,24 +59,6 @@ enum MANAGER_TYPE {
 
 struct CEventManager;
 
-class CSoundSample {
-
-};
-
-class CAudioManager
-{
-public:
-	CSoundSample* GetSound(uint id)
-	{
-		return nullptr;
-	}
-
-	void PlayCombatMusic();
-	void StopCombatMusic();
-
-	float field_0xcc;
-};
-
 union ManagerContainer {
 	struct {
 		struct CLevelScheduler* g_LevelScheduleManager_00451660;

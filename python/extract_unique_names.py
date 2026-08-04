@@ -29,10 +29,10 @@ def create_missing_files() -> list[Path]:
                 continue
 
             source_path = line.rsplit(" -> ", 1)[1].strip()
-            if not source_path.startswith(PROJECT_PREFIX):
+            if not source_path.casefold().startswith(PROJECT_PREFIX.casefold()):
                 continue
 
-            relative_path = source_path.removeprefix(PROJECT_PREFIX).replace(chr(92), "/")
+            relative_path = source_path[len(PROJECT_PREFIX):].replace(chr(92), "/")
             destination = SOURCE_ROOT / relative_path
             if not destination.is_file():
                 missing_files.add(destination)

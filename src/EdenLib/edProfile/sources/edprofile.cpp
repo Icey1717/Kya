@@ -1,0 +1,4 @@
+#ifndef EDPROFILE_CPP
+#define EDPROFILE_CPP
+
+#endif // EDPROFILE_CPP

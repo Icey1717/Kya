@@ -832,6 +832,34 @@ void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 	return;
 }
 
+void CPlayerInput::SetVibrationEnabled(int param_2)
+{
+	if (param_2 == 0) {
+		(this->field_0x1c).field_0x0 = 0.0f;
+		(this->field_0x1c).field_0x4 = 0.0f;
+		(this->field_0x1c).field_0x8 = 0.0f;
+		(this->field_0x1c).field_0xc = 0.0f;
+		(this->field_0x1c).field_0x10 = 0.0f;
+		(this->field_0x1c).field_0x14 = 0.0f;
+		(this->field_0x1c).field_0x18 = 4;
+		(this->field_0x1c).field_0x20 = 0;
+		(this->field_0x40).field_0x0 = 0.0f;
+		(this->field_0x40).field_0x4 = 0.0f;
+		(this->field_0x40).field_0x8 = 0.0f;
+		(this->field_0x40).field_0xc = 0.0f;
+		(this->field_0x40).field_0x10 = 0.0f;
+		(this->field_0x40).field_0x14 = 0.0f;
+		(this->field_0x40).field_0x18 = 4;
+		(this->field_0x40).field_0x20 = 0;
+		FUN_001b6e20(0.0f, 0.0f);
+	}
+
+	this->bEnableVibration = param_2;
+
+	return;
+}
+
+
 void CPlayerInput::Reset()
 {
 	gPlayerInput.field_0x1c.field_0x0 = 0.0f;

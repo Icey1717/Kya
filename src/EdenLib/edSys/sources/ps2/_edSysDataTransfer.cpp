@@ -1,4 +1,7 @@
 #include "edSys/ps2/edSysDataTransfer.h"
+#ifdef PLATFORM_WIN
+#include "edSysTransferService.h"
+#endif
 
 int _edSoundLastTransferIndex;
 int _edSysTransferIndex;
@@ -8,6 +11,9 @@ void _edSysTransferInit(void)
 {
 	_edSysTransferIndex = 0;
 	_edSysCompletedTransferIndex = 0;
+#ifdef PLATFORM_WIN
+	Audio::Initialize();
+#endif
 
 	IMPLEMENTATION_GUARD_PS2(
 	DIntr();
@@ -20,8 +26,11 @@ void _edSysTransferInit(void)
 void _edSysWaitUntilTransferFinished(uint param_1)
 {
 	if ((_edSysTransferIndex != 0) && (param_1 != 0)) {
-		do {
-		} while (_edSysCompletedTransferIndex < param_1);
+#ifdef PLATFORM_WIN
+		_edSysCompletedTransferIndex = static_cast<int>(Audio::PumpThrough(param_1));
+#else
+		do { } while (_edSysCompletedTransferIndex < param_1);
+#endif
 	}
 
 	return;
@@ -33,7 +42,6 @@ void _edSysWaitUntilAllTransfersFinished(void)
 
 	_edSysTransferIndex = 0;
 	_edSysCompletedTransferIndex = 0;
-
 	return;
 }
 
@@ -89,6 +97,7 @@ uint _edSysTransferData(void* pSource, uint size, uint alignment, EdSysTransferF
 		newTransferIndex = 0;
 	}
 	else {
+#ifdef PLATFORM_PS2
 		_edSysTransferIndex = _edSysTransferIndex + 1;
 		IMPLEMENTATION_GUARD_PS2(
 		//edCRPCClient<1, 1163090259>::WaitRPCCompletion(_pedSysRPCClient);
@@ -106,6 +115,11 @@ uint _edSysTransferData(void* pSource, uint size, uint alignment, EdSysTransferF
 		_edSysTransferNode.setupFlags = setupFlags;
 		//edCRPCClient<1, 1163090259>::CallRPCNoWait(_pedSysRPCClient, 0, 0, &_edSysTransferNode, 0x40, 0, 0, 0, (uint*)0x0);
 		)
+#else
+		_edSysTransferIndex = static_cast<int>(Audio::Submit(pSource, size, alignment,
+			static_cast<Audio::TransferFlags>(setupFlags), setupCallbackIdent, transferCallbackIdent,
+			endCallbackIdent, pCallbackParams, returnNbBytes, userData, pCallback));
+#endif
 		newTransferIndex = _edSysTransferIndex;
 	}
 
