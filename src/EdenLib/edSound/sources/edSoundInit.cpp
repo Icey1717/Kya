@@ -1,5 +1,6 @@
 #include "edSound/edSoundInit.h"
 #include "edSound/edSoundPlay.h"
+#include "edSound/edSoundInstance.h"
 #include "EdenLib/edSys/sources/EdHandlers.h"
 #include "edMem.h"
 #include "edVideo/VideoD.h"
@@ -15,42 +16,6 @@ edSoundConfig* edSoundGetConfig(void)
 uint edSoundVoicesNumberGet(void)
 {
 	return 0x30;
-}
-
-ed_sound_instance* pedSoundInstances;
-ed_sound_instance_finished* pedSoundFinishedInstances;
-int edSoundNbFinishedInstances;
-int edSoundMaxInstances;
-
-void _edSoundInitInstances()
-{
-
-}
-
-void edSoundInitInstances(int nbInstances)
-{
-	uint uVar1;
-	ed_sound_instance* peVar2;
-
-	pedSoundInstances = static_cast<ed_sound_instance*>(edMemAlloc(TO_HEAP(H_MAIN), nbInstances * sizeof(ed_sound_instance)));
-	pedSoundFinishedInstances = static_cast<ed_sound_instance_finished*>(edMemAlloc(TO_HEAP(H_MAIN), nbInstances * sizeof(ed_sound_instance_finished)));
-	_edSoundInitInstances();
-	edSoundNbFinishedInstances = 0;
-	uVar1 = 0;
-	peVar2 = pedSoundInstances;
-	edSoundMaxInstances = nbInstances;
-
-	if (nbInstances != 0) {
-		do {
-			peVar2->soundInstanceID = 0xffff;
-			peVar2->lowerPrioritySoundInstance = (ed_sound_instance*)0x0;
-			uVar1 = uVar1 + 1;
-			peVar2->higherPrioritySoundInstance = (ed_sound_instance*)0x0;
-			peVar2 = peVar2 + 1;
-		} while (uVar1 < edSoundMaxInstances);
-	}
-
-	return;
 }
 
 struct ED_SOUND_3D_DATA
