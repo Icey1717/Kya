@@ -1,4 +1,5 @@
 #include "edSound/edSoundPlay.h"
+#include "edSound/edSoundInstance.h"
 #include "edSys/ps2/edSysDataTransfer.h"
 
 #define READ_BE_UINT32(pValue) \
@@ -6,6 +7,8 @@
 		((uint)((const byte*)(pValue))[1] << 16) | \
 		((uint)((const byte*)(pValue))[2] << 8) | \
 		((uint)((const byte*)(pValue))[3]))
+
+void _edSoundStreamFreeDynamicData(ed_sound_instance* pInstance);
 
 int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath,
 	ulong param_4, undefined8 param_5, undefined8 param_6)
@@ -35,7 +38,7 @@ void _edSoundWaitAllSoundDataLoaded(void)
 	return;
 }
 
-int _edSoundLoadToSoundRamNoWait(void* pAdpcm, uint dataSize, int param_3, ed_sound_sample* pSample, edSysTransferFunc* pFunc)
+int _edSoundLoadToSoundRamNoWait(void* pAdpcm, uint dataSize, int param_3, void* pSample, edSysTransferFunc* pFunc)
 {
 	EdSysTransferFlags setupFlags;
 
@@ -151,3 +154,138 @@ int _edSoundSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSample, u
 	return transferIndex;
 }
 
+void _edSoundEndFlush(uint nbFlush)
+{
+#ifdef PLATFORM_PS2
+	SoundFlush_0x8* pSVar1;
+
+	*_pedSoundInstanceCommandsCount = _edSoundInstanceCommandsCount;
+	gSoundFlushCurrent_0044915c->pToDelete = (ed_sound_instance*)0x0;
+	gSoundFlushCurrent_0044915c = (SoundFlush_0x8*)&gSoundFlushCurrent_0044915c->field_0x4;
+	pSVar1 = (SoundFlush_0x8*)((int)gSoundFlushCurrent_0044915c - (int)edComBuffer);
+	if (((uint)pSVar1 & 0xfffffff0) != 0) {
+		pSVar1 = (SoundFlush_0x8*)((uint)(pSVar1 + 2) & 0xfffffff0);
+	}
+	*edComBuffer = pSVar1;
+	CallRpcAndApplyCommands_00289c10(nbFlush, (long)(int)pSVar1);
+	edComCurrentBufferIndex = 1 - edComCurrentBufferIndex;
+	edComBuffer = (SoundFlush_0x8**)(&edComDoubleBuffers)[edComCurrentBufferIndex];
+	*edComBuffer = (SoundFlush_0x8*)0x0;
+#else
+	// Windows submits the typed list to its audio thread and swaps frame buffers.
+	// HINT: only copied command data may cross this thread boundary.
+#endif
+
+	return;
+}
+
+uint _edSoundAllocatedVoices[2];
+
+void _edSoundStreamFreeDynamicData(ed_sound_instance* pInstance)
+{
+	pInstance->pSoundStream->pDynamicData = (void*)0x0;
+
+	return;
+}
+
+void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
+{
+	if ((pInstance->flags & 0x400) != 0) {
+		uint voiceCount = EdSoundVoiceCountFromFlags(pInstance->flags);
+
+		assert(voiceCount <= 2); // Matches size of voiceIndices array.
+		for (uint voiceIndexIndex = 0; voiceIndexIndex < voiceCount; voiceIndexIndex++) {
+			EdSoundVoiceSetFree(pInstance->voiceIndices[voiceIndexIndex]);
+		}
+
+		pedSoundInstancesToDelete[edSoundInstancesToDeleteNb] = pInstance->soundInstanceId;
+		edSoundInstancesToDeleteNb = edSoundInstancesToDeleteNb + 1;
+	}
+
+	if ((pInstance->flags & 0x10) != 0) {
+		_edSoundStreamFreeDynamicData(pInstance);
+	}
+
+	uint soundInstanceId = pInstance->soundInstanceId;
+	edSoundInstanceCom[soundInstanceId & 0xffff].flags = 0;
+	edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = 0;
+	pInstance->soundInstanceId = 0xffff;
+
+	return;
+}
+
+uint _edSoundVoiceGetFirstFreeFromPointer(uint* param_1, _ed_sound_bit_array_handle* pSoundBitArrayHandle)
+{
+	uint uVar1;
+	uint uVar2;
+
+	uVar2 = *param_1;
+	while (uVar2 == 0xffffffff) {
+		pSoundBitArrayHandle->voiceIndex = pSoundBitArrayHandle->voiceIndex + 1;
+		param_1 = param_1 + 1;
+		if (pSoundBitArrayHandle->voiceIndex == 2) {
+			return 0xffffffff;
+		}
+		uVar2 = *param_1;
+	}
+
+	pSoundBitArrayHandle->field_0x4 = 0;
+	uVar2 = *param_1;
+	uVar1 = pSoundBitArrayHandle->voiceIndex << 5;
+	do {
+		if ((uVar2 & 1) == 0) {
+			pSoundBitArrayHandle->field_0x8 = 1;
+			return uVar1;
+		}
+
+		uVar1 = uVar1 + 1;
+		uVar2 = uVar2 >> 1;
+		pSoundBitArrayHandle->field_0x4 = pSoundBitArrayHandle->field_0x4 + 1;
+	} while (uVar1 < 0x30);
+	return 0xffffffff;
+}
+
+uint _edSoundVoiceGetFirstFree(_ed_sound_bit_array_handle* pSoundBitArrayHandle)
+{
+	uint firstFreeId;
+
+	pSoundBitArrayHandle->voiceIndex = 0;
+	firstFreeId = _edSoundVoiceGetFirstFreeFromPointer(_edSoundAllocatedVoices, pSoundBitArrayHandle);
+	return firstFreeId;
+}
+
+uint _edSoundMemFree(void* pMem)
+{
+	uint uVar1;
+
+	IMPLEMENTATION_GUARD_PS2(
+	*_pedSoundRPCSendBufferUncached = pMem;
+	uVar1 = _edSysCallRPC(3, 0, 1, (long)(int)_pedSoundRPCSendBufferUncached, 4, 0, 0, 0, (uint*)0x0, _pedSoundRPCClient->field_0x4, &_pedSoundRPCClient->field_0xc, &_pedSoundRPCClient->field_0x8);
+	)
+	return uVar1;
+}
+
+int _edSoundSampleFree(ed_sound_sample* pSoundSample)
+{
+	int iVar1;
+
+	if ((pSoundSample->flags & 2) == 0) {
+		iVar1 = _edSoundMemFree((void*)pSoundSample->soundRamAddress);
+	}
+	else {
+		IMPLEMENTATION_GUARD_PS2(
+		iVar1 = sceSifFreeSysMemory((void*)pSoundSample->soundRamAddress);)
+	}
+	return iVar1;
+}
+
+bool _edSoundAreAllSoundDataLoaded(uint lastIndex)
+{
+	bool bVar1;
+
+	bVar1 = true;
+	if ((_edSysTransferIndex != 0) && ((lastIndex == 0 || (bVar1 = false, lastIndex <= _edSysCompletedTransferIndex)))) {
+		bVar1 = true;
+	}
+	return bVar1;
+}

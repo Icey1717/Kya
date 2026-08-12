@@ -11,7 +11,7 @@ struct ed_music_config
 	uint nbBanks;
 };
 
-typedef int ED_SOUND_REVERB_TYPE;
+typedef void (*edMusicEndOfSongCallback)(uint);
 
 struct edCMusicStatus
 {
@@ -19,7 +19,7 @@ struct edCMusicStatus
 	uint masterVolume;
 	uint masterTempo;
 	undefined4 field_0xc;
-	void* endOfSongCallback;
+	edMusicEndOfSongCallback endOfSongCallback;
 	undefined field_0x14;
 	undefined field_0x15;
 	undefined field_0x16;
@@ -41,23 +41,14 @@ struct edCMusicStatus
 
 struct ed_music_song
 {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
+	void* field_0x0;
 	uint flags;
 };
 
 struct _ed_music_bank
 {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
+	void* field_0x0;
+	void* field_0x4;
 	uint flags;
 };
 
@@ -71,85 +62,13 @@ struct ed_music_stream
 	undefined4 field_0x14;
 	uint volume;
 	uint tempo;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
+	uint targetVolume;
+	uint targetTempo;
 	int aChannelVolumes[16];
-	undefined field_0x68;
-	undefined field_0x69;
-	undefined field_0x6a;
-	undefined field_0x6b;
-	undefined field_0x6c;
-	undefined field_0x6d;
-	undefined field_0x6e;
-	undefined field_0x6f;
-	undefined field_0x70;
-	undefined field_0x71;
-	undefined field_0x72;
-	undefined field_0x73;
-	undefined field_0x74;
-	undefined field_0x75;
-	undefined field_0x76;
-	undefined field_0x77;
-	undefined field_0x78;
-	undefined field_0x79;
-	undefined field_0x7a;
-	undefined field_0x7b;
-	undefined field_0x7c;
-	undefined field_0x7d;
-	undefined field_0x7e;
-	undefined field_0x7f;
-	undefined field_0x80;
-	undefined field_0x81;
-	undefined field_0x82;
-	undefined field_0x83;
-	undefined field_0x84;
-	undefined field_0x85;
-	undefined field_0x86;
-	undefined field_0x87;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
-	undefined field_0x8c;
-	undefined field_0x8d;
-	undefined field_0x8e;
-	undefined field_0x8f;
-	undefined field_0x90;
-	undefined field_0x91;
-	undefined field_0x92;
-	undefined field_0x93;
-	undefined field_0x94;
-	undefined field_0x95;
-	undefined field_0x96;
-	undefined field_0x97;
-	undefined field_0x98;
-	undefined field_0x99;
-	undefined field_0x9a;
-	undefined field_0x9b;
-	undefined field_0x9c;
-	undefined field_0x9d;
-	undefined field_0x9e;
-	undefined field_0x9f;
-	undefined field_0xa0;
-	undefined field_0xa1;
-	undefined field_0xa2;
-	undefined field_0xa3;
-	undefined field_0xa4;
-	undefined field_0xa5;
-	undefined field_0xa6;
-	undefined field_0xa7;
-	uint field_0xa8;
-	undefined field_0xac;
-	undefined field_0xad;
-	undefined field_0xae;
-	undefined field_0xaf;
-	float field_0xb0;
+	int aTargetChannelVolumes[16];
+	uint fadeFlags;
+	float volumeTempoFadeTime;
+	float channelFadeTime;
 	undefined field_0xb4;
 	undefined field_0xb5;
 	undefined field_0xb6;
@@ -170,7 +89,35 @@ void edMusicSetMasterVolume(uint newVolume);
 void _edMusicSetOutputMode(AUDIO_MODE newMode);
 
 void edMusicSetMasterTempo(uint newTempo);
+void edMusicSetOutputMode(AUDIO_MODE newMode);
+
+void edMusicSetEndOfSongCallback(edMusicEndOfSongCallback pCallback);
+
+uint edMusicFlush(void);
+
+void edMusicSetReverb(float param_1, float param_2, float param_3, float param_4, ED_SOUND_REVERB_TYPE param_5);
+
+void edMusicStopAllSongs(void);
+
+uint edMusicBankInstallNoWait(void* pAdpcm, void* pFileData, uint dataSize, uint size);
+void _edMusicBankInstallNoWait(_ed_music_bank* pBank, void* param_2, void* pAdpcm, uint size, uint dataSize);
+
+void _edMusicSongRemove(ed_music_song* pSong);
+void edMusicSongRemove(int songIndex);
+
+void _edMusicBankRemove(_ed_music_bank* pMusicBank);
+void edMusicBankRemove(int bankIndex);
+
+bool _edMusicAreAllMusicDataLoaded(void);
+bool edMusicAreAllMusicDataLoaded();
+
+void edMusicStreamChannelFade(float fadeTime, int musicStreamIndex, int channel, uint otherVolume, int volume);
 
 extern edCMusicStatus edMusicStatus;
+extern ed_music_stream* pedMusicStreams;
+
+extern ed_music_stream* pedMusicStreams;
+extern ed_music_song* _pedMusicSongs;
+extern _ed_music_bank* _pedMusicBanks;
 
 #endif // ED_MUSIC_H

@@ -30,6 +30,7 @@
 #include "Actor_Cinematic.h"
 #include "ActorManager.h"
 #include "ActorHero.h"
+#include "Audio.h"
 #include "Actor.h"
 #include "EventManager.h"
 #include "DlistManager.h"
@@ -41,6 +42,7 @@
 #include "TranslatedTextData.h"
 #include "EdFileBase.h"
 #include "edParticles/edParticles.h"
+#include "edMusic/edMusic.h"
 
 #include "ed3D/ed3DG2D.h"
 #include "ed3D/ed3DG3D.h"
@@ -2800,24 +2802,25 @@ void CCinematic::InstallSounds()
 				inFileIndex = inFileIndex + 1;
 			} while (inFileIndex < elementCount);
 		}
-		//bSuccess = CanAllocate_00184640(Scene::ptable.g_GlobalSoundPtr_00451698, size, 0x1400);
-		//if (bSuccess == false) {
-		//	*(undefined4*)this->sound_0x2bc = 0;
-		//}
-		//else {
-		//	size = 0;
-		//	if (elementCount != 0) {
-		//		offset = 0;
-		//		do {
-		//			bSuccess = edCBankBufferEntry::get_info(this->pCineBankEntry, size, &bankEntry, (char*)0x0);
-		//			if ((bSuccess != false) && ((bankEntry.type << 0x10 | bankEntry.stype) == 0x30001)) {
-		//				edSoundSampleLoad(bankEntry.fileBufferStart, (ed_sound_sample*)(&this->sound_0x2bc->field_0x0 + offset), 1);
-		//				offset = offset + 0x18;
-		//			}
-		//			size = size + 1;
-		//		} while (size < elementCount);
-		//	}
-		//}
+
+		bSuccess = CScene::ptable.g_AudioManager_00451698->EnsureSoundMemoryAvailable(size, 0x1400);
+		if (bSuccess == false) {
+			this->sound_0x2bc->soundRamAddress = 0;
+		}
+		else {
+			size = 0;
+			if (elementCount != 0) {
+				offset = 0;
+				do {
+					bSuccess = this->pCineBankEntry->get_info(size, &bankEntry, (char*)0x0);
+					if ((bSuccess != false) && ((bankEntry.type << 0x10 | bankEntry.stype) == 0x30001)) {
+						edSoundSampleLoad(bankEntry.fileBufferStart, this->sound_0x2bc + offset, 1);
+						offset =offset + 1;
+					}
+					size = size + 1;
+				} while (size < elementCount);
+			}
+		}
 	}
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & CINEMATIC_FLAG_LOOPING_LOADING) != 0)) {
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);

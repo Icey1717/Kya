@@ -5,6 +5,7 @@
 #include "LargeObject.h"
 #include "MemoryStream.h"
 #include "CameraViewManager.h"
+#include "List.h"
 
 #define FX_TYPE_COMPOSITE 0
 #define FX_TYPE_PATH 1
@@ -35,21 +36,6 @@ enum FX_MATERIAL_SELECTOR
 	FX_MATERIAL_SELECTOR_GRASS = 5,
 	FX_MATERIAL_SELECTOR_MAX = 6,
 	FX_MATERIAL_SELECTOR_NONE = 0xFFFFFFFF
-};
-
-template <typename FxType>
-class CDoubleLinkedNode
-{
-public:
-	CDoubleLinkedNode()
-	{
-		this->pNext = (CDoubleLinkedNode<FxType>*)0x0;
-		this->pPrev = (CDoubleLinkedNode<FxType>*)0x0;
-	}
-
-	FxType* aFx;
-	CDoubleLinkedNode<FxType>* pNext;
-	CDoubleLinkedNode<FxType>* pPrev;
 };
 
 class CFx
@@ -287,76 +273,6 @@ public:
 	void* pPoolHeap;
 };
 
-template<typename FxType>
-class CDoubleLinkedList
-{
-public:
-	CDoubleLinkedList()
-		: pHead((CDoubleLinkedNode<FxType>*)0x0)
-		, pTail((CDoubleLinkedNode<FxType>*)0x0)
-	{
-
-	}
-
-	CDoubleLinkedNode<FxType>* RemoveHead()
-	{
-		CDoubleLinkedNode<FxType>* pHead;
-
-		pHead = this->pHead;
-
-		if (pHead != (CDoubleLinkedNode<FxType>*)0x0) {
-			if (pHead->pPrev == (CDoubleLinkedNode<FxType>*)0x0) {
-				this->pTail = (CDoubleLinkedNode<FxType>*)0x0;
-			}
-			else {
-				pHead->pPrev->pNext = (CDoubleLinkedNode<FxType>*)0x0;
-			}
-
-			this->pHead = this->pHead->pPrev;
-		}
-
-		return pHead;
-	}
-
-	CDoubleLinkedNode<FxType>* RemoveNode(CDoubleLinkedNode<FxType>* pNode)
-	{
-		if (pNode->pNext == (CDoubleLinkedNode<FxType>*)0x0) {
-			this->pHead = pNode->pPrev;
-		}
-		else {
-			pNode->pNext->pPrev = pNode->pPrev;
-		}
-
-		if (pNode->pPrev == (CDoubleLinkedNode<FxType> *)0x0) {
-			this->pTail = pNode->pNext;
-		}
-		else {
-			pNode->pPrev->pNext = pNode->pNext;
-		}
-
-		return pNode;
-	}
-
-	void InsertAfterQueue(CDoubleLinkedNode<FxType>* pNode)
-	{
-		pNode->pNext = this->pTail;
-		pNode->pPrev = (CDoubleLinkedNode<FxType> *)0x0;
-
-		if (this->pTail == (CDoubleLinkedNode<FxType> *)0x0) {
-			this->pHead = pNode;
-		}
-		else {
-			this->pTail->pPrev = pNode;
-		}
-
-		this->pTail = pNode;
-
-		return;
-	}
-
-	CDoubleLinkedNode<FxType>* pHead;
-	CDoubleLinkedNode<FxType>* pTail;
-};
 
 template<typename FxType, typename ScenaricDataType>
 class CFxPoolManager : public CFxPoolManagerFather
@@ -365,7 +281,7 @@ public:
 	CFxPoolManager()
 	{
 		this->nbPool = 0;
-		this->aNodes = (CDoubleLinkedNode<FxType>*)0x0;
+		this->aNodes = (CDoubleLinkedNode<FxType*>*)0x0;
 		this->aFx = (FxType*)0x0;
 		this->nbScenaricData = 0;
 		this->aScenaricData = 0;
@@ -386,10 +302,10 @@ public:
 			this->aScenaricData[i].Term();
 		}
 
-		CDoubleLinkedNode<FxType>* pHead = (this->activeList).pHead;
-		while (pHead != (CDoubleLinkedNode<FxType> *)0x0) {
-			CDoubleLinkedNode<FxType>* pPrev = pHead->pPrev;
-			pHead->aFx->Kill();
+		CDoubleLinkedNode<FxType*>* pHead = (this->activeList).pHead;
+		while (pHead != (CDoubleLinkedNode<FxType*> *)0x0) {
+			CDoubleLinkedNode<FxType*>* pPrev = pHead->pPrev;
+			pHead->node->Kill();
 			pHead = pPrev;
 		}
 
@@ -397,7 +313,7 @@ public:
 			delete[] this->aFx;
 		}
 
-		if (this->aNodes != (CDoubleLinkedNode<FxType>*)0x0) {
+		if (this->aNodes != (CDoubleLinkedNode<FxType*>*)0x0) {
 			delete[] this->aNodes;
 		}
 
@@ -418,12 +334,12 @@ public:
 		uint uVar1;
 		bool bVar2;
 		FxType** ppCVar3;
-		CDoubleLinkedNode<FxType>* pCVar1;
+		CDoubleLinkedNode<FxType*>* pCVar1;
 
 		pCVar1 = (this->activeList).pHead;
 
-		while (pCVar1 != (CDoubleLinkedNode<FxType>*)0x0) {
-			ppCVar3 = &pCVar1->aFx;
+		while (pCVar1 != (CDoubleLinkedNode<FxType*>*)0x0) {
+			ppCVar3 = &pCVar1->node;
 			pCVar1 = pCVar1->pPrev;
 			uVar1 = (*ppCVar3)->flags;
 			bVar2 = false;
@@ -444,16 +360,16 @@ public:
 	{
 		FxType* pCVar1;
 		bool bVar2;
-		CDoubleLinkedNode<FxType>* pCVar3;
+		CDoubleLinkedNode<FxType*>* pCVar3;
 		float fVar4;
 		edF32VECTOR4 local_60;
 		edF32VECTOR4 local_50;
 		edF32MATRIX4 eStack64;
 
 		pCVar3 = (this->activeList).pHead;
-		if (pCVar3 != (CDoubleLinkedNode<FxType> *)0x0) {
+		if (pCVar3 != (CDoubleLinkedNode<FxType*> *)0x0) {
 			do {
-				pCVar1 = pCVar3->aFx;
+				pCVar1 = pCVar3->node;
 				bVar2 = false;
 				if (((pCVar1->flags & 2) != 0) && ((pCVar1->flags & 8) == 0)) {
 					bVar2 = true;
@@ -476,7 +392,7 @@ public:
 				}
 
 				pCVar3 = pCVar3->pPrev;
-			} while (pCVar3 != (CDoubleLinkedNode<FxType>*)0x0);
+			} while (pCVar3 != (CDoubleLinkedNode<FxType*>*)0x0);
 		}
 
 		return;
@@ -488,20 +404,20 @@ public:
 
 		if (this->nbPool != 0) {
 			this->aFx = new FxType[this->nbPool];
-			this->aNodes = new CDoubleLinkedNode<FxType>[this->nbPool];
+			this->aNodes = new CDoubleLinkedNode<FxType*>[this->nbPool];
 
-			CDoubleLinkedNode<FxType>* pCurNode = this->aNodes;
+			CDoubleLinkedNode<FxType*>* pCurNode = this->aNodes;
 			FxType* pCurFx = this->aFx;
 
 			uint i = this->nbPool;
 
 			while (i != 0) {
 				i = i - 1;
-				pCurNode->aFx = pCurFx;
+				pCurNode->node = pCurFx;
 				pCurNode->pNext = this->freeList.pTail;
-				pCurNode->pPrev = (CDoubleLinkedNode<FxType>*)0x0;
+				pCurNode->pPrev = (CDoubleLinkedNode<FxType*>*)0x0;
 
-				if (this->freeList.pTail == (CDoubleLinkedNode<FxType>*)0x0) {
+				if (this->freeList.pTail == (CDoubleLinkedNode<FxType*>*)0x0) {
 					this->freeList.pHead = pCurNode;
 				}
 				else {
@@ -533,7 +449,7 @@ public:
 	virtual void Remove(CNewFx* pFx)
 	{
 		FxType* pCVar1;
-		CDoubleLinkedNode<FxType>* pNodes;
+		CDoubleLinkedNode<FxType*>* pNodes;
 
 		pCVar1 = this->aFx;
 		pNodes = this->aNodes;
@@ -553,20 +469,20 @@ public:
 
 	virtual FxType* _InstanciateFx()
 	{
-		CDoubleLinkedNode<FxType>* pTail;
-		CDoubleLinkedNode<FxType>* pPrevHead;
+		CDoubleLinkedNode<FxType*>* pTail;
+		CDoubleLinkedNode<FxType*>* pPrevHead;
 		FxType* pNewFx;
 
 		pPrevHead = this->freeList.RemoveHead();
 
-		if (pPrevHead == (CDoubleLinkedNode<FxType> *)0x0) {
+		if (pPrevHead == (CDoubleLinkedNode<FxType*> *)0x0) {
 			pNewFx = (FxType*)0x0;
 		}
 		else {
 			pPrevHead->pNext = (this->activeList).pTail;
-			pPrevHead->pPrev = (CDoubleLinkedNode<FxType> *)0x0;
+			pPrevHead->pPrev = (CDoubleLinkedNode<FxType*> *)0x0;
 			pTail = (this->activeList).pTail;
-			if (pTail == (CDoubleLinkedNode<FxType> *)0x0) {
+			if (pTail == (CDoubleLinkedNode<FxType*> *)0x0) {
 				(this->activeList).pHead = pPrevHead;
 			}
 			else {
@@ -575,18 +491,18 @@ public:
 
 			(this->activeList).pTail = pPrevHead;
 
-			pNewFx = pPrevHead->aFx;
+			pNewFx = pPrevHead->node;
 			pNewFx->flags = 0;
 		}
 
 		return pNewFx;
 	}
 
-	CDoubleLinkedList<FxType> freeList;
-	CDoubleLinkedList<FxType> activeList;
+	CDoubleLinkedList<FxType*> freeList;
+	CDoubleLinkedList<FxType*> activeList;
 
 	uint nbPool;
-	CDoubleLinkedNode<FxType>* aNodes;
+	CDoubleLinkedNode<FxType*>* aNodes;
 	FxType* aFx;
 
 	uint nbScenaricData;

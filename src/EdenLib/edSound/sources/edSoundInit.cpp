@@ -56,12 +56,8 @@ void edSoundFlushHandler(int, int, char*)
 	return;
 }
 
-ed_sound_instance** pedSoundInstancesToDelete;
-int edSoundInstancesToDeleteNb;
-
 void edSoundInit(void)
 {
-	int iVar1;
 	uint uVar2;
 
 	edDebugPrintf("edSound v1.2\ncompiled on Oct  3 2003 at 15:00:14");
@@ -69,20 +65,17 @@ void edSoundInit(void)
 
 	edSoundInitInstances(soundConfig.nbMaxInstances);
 
-	IMPLEMENTATION_GUARD_PS2(
-	edSoundInstanceCom = edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances << 3);
+	edSoundInstanceCom = (edSoundInstanceComType*)edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances * sizeof(edSoundInstanceComType));
 	uVar2 = 0;
 	if (soundConfig.nbMaxInstances != 0) {
-		iVar1 = 0;
 		do {
+			edSoundInstanceCom[uVar2].flags = 0;
+			edSoundInstanceCom[uVar2].soundInstanceId = 0;
 			uVar2 = uVar2 + 1;
-			*(undefined4*)((int)edSoundInstanceCom + iVar1) = 0;
-			*(undefined4*)((int)edSoundInstanceCom + iVar1 + 4) = 0;
-			iVar1 = iVar1 + 8;
-		} while (uVar2 < (uint)soundConfig.nbMaxInstances);
-	})
+		} while (uVar2 < soundConfig.nbMaxInstances);
+	}
 
-	pedSoundInstancesToDelete = (ed_sound_instance**)edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances * sizeof(ed_sound_instance*));
+	pedSoundInstancesToDelete = (uint*)edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances * sizeof(uint));
 	edSoundInstancesToDeleteNb = 0;
 
 #ifdef PLATFORM_PS2
@@ -93,7 +86,7 @@ void edSoundInit(void)
 	edSoundGlobalParams.field_0x6c = 0;
 	edSoundGlobalParams.g_DesiredFrameTime_00483824 = 0.02f;
 	edSoundGlobalParams.outputMode = STEREO;
-	edSoundGlobalParams.field_0x70 = (undefined*)0x0;
+	edSoundGlobalParams.finishedInstancesCallback = (edSoundFinishedInstancesCallback)0x0;
 	edSoundGlobalParams.field_0x5c = 343.5f;
 	edSoundGlobalParams.field_0x64 = 1.0f;
 	edSoundGlobalParams.field_0x60 = 1.0f;

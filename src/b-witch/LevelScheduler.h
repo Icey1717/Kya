@@ -590,9 +590,6 @@ public:
 	undefined field_0x5bdf;
 };
 
-bool edSoundAreAllSoundDataLoaded();
-bool edMusicAreAllMusicDataLoaded();
-
 extern ulong gMedallionHashCodes[9];
 extern ulong gFightHashCodes[8];
 

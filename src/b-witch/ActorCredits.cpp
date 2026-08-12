@@ -329,7 +329,7 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	ulong uVar1;
 	char* pcVar2;
-	int** ppiVar3;
+	int musicHandle;
 	int iVar4;
 	int iVar5;
 
@@ -361,8 +361,8 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 			IMPLEMENTATION_GUARD_AUDIO(
 			if (this->field_0x190 != (CMusic*)0x0) {
-				ppiVar3 = CMusicManager::Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, static_cast<CMusicManager*>(CScene::ptable.g_AudioManager_00451698)->field_0x38, this->field_0x190, static_cast<int*>(0x19));
-				this->musicHandle = static_cast<int>(ppiVar3);
+				musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->field_0x190, 0x19);
+				this->musicHandle = musicHandle;
 			})
 			iVar4 = 1;
 		}
@@ -379,8 +379,8 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 					IMPLEMENTATION_GUARD_AUDIO(
 					if (this->field_0x190 != (CMusic*)0x0) {
-						ppiVar3 = CMusicManager::Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, static_cast<CMusicManager*>(CScene::ptable.g_AudioManager_00451698)->field_0x38, this->field_0x190, static_cast<int*>(0x19));
-						this->musicHandle = static_cast<int>(ppiVar3);
+						musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->field_0x190, 0x19);
+						this->musicHandle = musicHandle;
 					})
 				}
 				else {

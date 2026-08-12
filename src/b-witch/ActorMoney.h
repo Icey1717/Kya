@@ -6,6 +6,7 @@
 #include "ActorBonusServices.h"
 #include "ActorShadows.h"
 #include "PathFollow.h"
+#include "Audio.h"
 
 #define MONEY_BEHAVIOUR_FLOCK 0x2
 #define MONEY_BEHAVIOUR_ADD_ON 0x3

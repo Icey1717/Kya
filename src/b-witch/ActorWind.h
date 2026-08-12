@@ -32,8 +32,8 @@
 
 class CActorWind;
 class CWayPoint;
-class CSoundWind;
 class CFxWind;
+class CSoundWind;
 
 class CFxWindHandle
 {

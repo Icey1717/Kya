@@ -2,6 +2,7 @@
 #include "IniFile.h"
 #include "edMem.h"
 #include "edBank/edBankFile.h"
+#include "edMusic/edMusic.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -2419,7 +2420,10 @@ bool BnkInstallSceneCfg(char* pFileData, int size)
 
 bool BnkInstallSoundCfg(char* pFileData, int param_2)
 {
-	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnSoundLoaded_00180ef0\n");
+	ByteCode BStack16;
+	BStack16.Init(pFileData);
+	CScene::ptable.g_AudioManager_00451698->Level_AddAll(&BStack16);
+	BStack16.Term();
 	return false;
 }
 
@@ -2597,22 +2601,19 @@ bool BnkInstallSample(char* pFileData, int length)
 
 bool BnkInstallBank(char* pFileData, int length)
 {
-	CAudioManager* pGVar1;
+	CAudioManager* pAudioManager;
 
-	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
-
-	IMPLEMENTATION_GUARD_AUDIO(
-
-	pGVar1 = CScene::ptable.g_AudioManager_00451698;
-	if (DAT_00448ef0 == 0) {
-		*(char**)(*(int*)&(CScene::ptable.g_AudioManager_00451698)->instanceIndex +
-			(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8) = pFileData;
-		*(int*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->instanceIndex + 4) = length;
+	pAudioManager = CScene::ptable.g_AudioManager_00451698;
+	if (NoAudio == 0) {
+		(CScene::ptable.g_AudioManager_00451698)->field_0x60[(CScene::ptable.g_AudioManager_00451698)->nbLoadedSamples].pAdpcm = pFileData;
+		pAudioManager->field_0x60[pAudioManager->nbLoadedSamples].size = length;
 	}
-	pGVar1->field_0xc = pGVar1->field_0xc + 1;
-	if (pGVar1->field_0xc == pGVar1->field_0x48) {
-		pGVar1->field_0xc = 0;
-	})
+
+	pAudioManager->nbLoadedSamples = pAudioManager->nbLoadedSamples + 1;
+	if (pAudioManager->nbLoadedSamples == pAudioManager->nbBanks) {
+		pAudioManager->nbLoadedSamples = 0;
+	}
+
 	return false;
 }
 
@@ -2624,26 +2625,30 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
 
-	IMPLEMENTATION_GUARD_AUDIO(
+	uint uVar1;
+	CAudioManager* pAudioManager;
 
-	pGVar1 = CScene::ptable.g_AudioManager_00451698;
-	if (DAT_00448ef0 == 0) {
-		puVar2 = (undefined4*)
-			(*(int*)&(CScene::ptable.g_AudioManager_00451698)->instanceIndex +
-				(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8);
-		uVar3 = FUN_00267e20(*puVar2, pFileData, (long)(int)puVar2[1], (long)length);
-		*(uint*)(pGVar1->field_0x50 + pGVar1->field_0xc * 4) = uVar3;
-		*(undefined4*)&pGVar1->field_0xb8 = *(undefined4*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->instanceIndex + 4);
-		if ((*(uint*)&pGVar1->field_0xb8 & 0x3f) != 0) {
-			*(uint*)&pGVar1->field_0xb8 = (*(uint*)&pGVar1->field_0xb8 & 0xffffffc0) + 0x40;
+	pAudioManager = CScene::ptable.g_AudioManager_00451698;
+
+	if (NoAudio == 0) {
+		uVar1 = edMusicBankInstallNoWait((CScene::ptable.g_AudioManager_00451698)->field_0x60[(CScene::ptable.g_AudioManager_00451698)->nbLoadedSamples].pAdpcm, pFileData,
+			(CScene::ptable.g_AudioManager_00451698)->field_0x60[(CScene::ptable.g_AudioManager_00451698)->nbLoadedSamples].size, length);
+
+		pAudioManager->aBankIndexes[pAudioManager->nbLoadedSamples] = uVar1;
+		pAudioManager->field_0xb8 = (CScene::ptable.g_AudioManager_00451698)->field_0x60[(CScene::ptable.g_AudioManager_00451698)->nbLoadedSamples].size;
+		if ((pAudioManager->field_0xb8 & 0x3fU) != 0) {
+			pAudioManager->field_0xb8 = (pAudioManager->field_0xb8 & 0xffffffc0U) + 0x40;
 		}
-		pGVar1->field_0xb4 = pGVar1->field_0xb4 + *(int*)&pGVar1->field_0xb8;
+
+		pAudioManager->field_0xb4 = pAudioManager->field_0xb4 + pAudioManager->field_0xb8;
 	}
-	pGVar1->field_0xc = pGVar1->field_0xc + 1;
-	if (pGVar1->field_0xc == pGVar1->field_0x48) {
-		pGVar1->field_0xc = 0;
-		edMemFree(*(void**)&pGVar1->instanceIndex);
-	})
+
+	pAudioManager->nbLoadedSamples = pAudioManager->nbLoadedSamples + 1;
+	if (pAudioManager->nbLoadedSamples == pAudioManager->nbBanks) {
+		pAudioManager->nbLoadedSamples = 0;
+		edMemFree(pAudioManager->field_0x60);
+	}
+
 	return false;
 }
 
@@ -2745,77 +2750,13 @@ edCBankCallback TableBankCallback[24] = {
 	{ 0xFFFFFFFF,				0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
 
-void WillLoadFileFromBank(struct CAudioManager* param_1, edCBankBufferEntry* pBankBuffer)
-{
-	bool bVar1;
-	uint uVar2;
-	int iVar3;
-	undefined* puVar4;
-	char* pcVar5;
-	int iVar6;
-	int iVar7;
-	uint uVar8;
-	edBANK_ENTRY_INFO local_220;
-	char acStack512[512];
-
-	uVar2 = pBankBuffer->get_element_count();
-	iVar6 = 0;
-	iVar7 = 0;
-	uVar8 = 0;
-	if (uVar2 != 0) {
-		do {
-			bVar1 = pBankBuffer->get_info(uVar8, &local_220, acStack512);
-			if (bVar1 == false) break;
-			if ((local_220.type << 0x10 | local_220.stype) == 0x30001) {
-				iVar3 = edStrLength(acStack512);
-				iVar7 = iVar7 + 1;
-				iVar6 = iVar6 + iVar3 + 1;
-			}
-			uVar8 = uVar8 + 1;
-		} while (uVar8 < uVar2);
-	}
-	//if (iVar7 == 0) {
-	//	param_1->field_0x18 = (undefined*)0x0;
-	//}
-	//else {
-	//	puVar4 = (undefined*)edMemAlloc(H_MAIN, iVar7 << 2);
-	//	param_1->field_0x18 = puVar4;
-	//}
-	//if (iVar6 == 0) {
-	//	param_1->pString_0x1c = (char*)0x0;
-	//}
-	//else {
-	//	pcVar5 = (char*)edMemAlloc(H_MAIN, iVar6);
-	//	param_1->pString_0x1c = pcVar5;
-	//}
-	//pcVar5 = param_1->pString_0x1c;
-	//if ((pcVar5 != (char*)0x0) && (uVar8 = 0, uVar2 != 0)) {
-	//	iVar6 = 0;
-	//	do {
-	//		bVar1 = GetFileDataForIndex(pBankBuffer, uVar8, &local_220, acStack512);
-	//		if (bVar1 == false) {
-	//			return;
-	//		}
-	//		if ((local_220.unknownA << 0x10 | local_220.unknownB) == 0x30001) {
-	//			edStrCopy(pcVar5, acStack512);
-	//			*(char**)(param_1->field_0x18 + iVar6) = pcVar5;
-	//			iVar6 = iVar6 + 4;
-	//			iVar7 = edStrLength(pcVar5);
-	//			pcVar5 = pcVar5 + iVar7 + 1;
-	//		}
-	//		uVar8 = uVar8 + 1;
-	//	} while (uVar8 < uVar2);
-	//}
-	return;
-}
-
 void WillLoadFilefromBank(bool param_1, void* pObj)
 {
 	CLevelScheduler* pLVar1;
 
 	pLVar1 = CLevelScheduler::gThis;
 	if (param_1 != false) {
-		WillLoadFileFromBank(CScene::ptable.g_AudioManager_00451698, CLevelScheduler::gThis->pIOPBankBufferEntry);
+		CScene::ptable.g_AudioManager_00451698->WillLoadFileFromBank(CLevelScheduler::gThis->pIOPBankBufferEntry);
 		pLVar1->loadStage_0x5b48 = 1;
 	}
 	return;
@@ -2863,35 +2804,6 @@ void CLevelScheduler::LevelLoading_Begin()
 	pIOPBankBufferEntry->load(&bankContainer);
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 }
-
-uint _edSysTransferIndex = 0;
-uint _edSoundLastTransferIndex = 0;
-uint _edMusicLastTransferIndex = 0;
-uint _edSysCompletedTransferIndex = 0;
-
-bool _edSoundAreAllSoundDataLoaded(uint lastIndex)
-{
-	bool bVar1;
-
-	bVar1 = true;
-	if ((_edSysTransferIndex != 0) && ((lastIndex == 0 || (bVar1 = false, lastIndex <= _edSysCompletedTransferIndex)))) {
-		bVar1 = true;
-	}
-	return bVar1;
-}
-
-// Should be in: D:/Projects/EdenLib/edSound/sources/edSoundPlay.cpp
-bool edSoundAreAllSoundDataLoaded()
-{
-	return _edSoundAreAllSoundDataLoaded(_edSoundLastTransferIndex);
-}
-
-// Should be in: D:/projects/EdenLib/edMusic/sources/edMusicPlay.cpp
-bool edMusicAreAllMusicDataLoaded()
-{
-	return _edSoundAreAllSoundDataLoaded(_edMusicLastTransferIndex);
-}
-
 
 bool CLevelScheduler::LevelLoading_Manage()
 {

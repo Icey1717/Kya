@@ -16,7 +16,8 @@ typedef void(*LoadBankFileFunc)(bool, void*);
 
 #define FILE_DATA_TAG_SIZE 0x8
 
-struct edCBankInstall {
+struct edCBankInstall
+{
 	char* filePath;
 	int fileFlagA;
 	void* pObjectReference;
@@ -25,7 +26,8 @@ struct edCBankInstall {
 	int fileFlagE;
 };
 
-struct edBANK_ENTRY_INFO {
+struct edBANK_ENTRY_INFO
+{
 	uint type;
 	uint stype;
 	uint size;
@@ -33,7 +35,8 @@ struct edBANK_ENTRY_INFO {
 	char* fileBufferStart;
 };
 
-class edCBankBufferEntry {
+class edCBankBufferEntry
+{
 public:
 	void wait();
 	bool is_loaded();

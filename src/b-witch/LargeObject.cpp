@@ -45,6 +45,7 @@
 #include "PoolAllocators.h"
 #include "FrontEndBank.h"
 #include "ActorFactory.h"
+#include "Audio.h"
 #include "ed3D/ed3DSceneManager.h"
 
 #define SCENE_STATE_NONE 0x0
@@ -162,7 +163,7 @@ CScene::CScene()
 	C3DFileManager* p3DFileManager;
 	//Manager_100* pMVar4;
 	//Manager_208* pMVar5;
-	//CAudioManager* inAllocatedMemory;
+	CAudioManager* inAllocatedMemory;
 	//Manager_C* pMVar6;
 	//Manager_10* pMVar7;
 	//ActorManager* pActorManager;
@@ -245,11 +246,7 @@ CScene::CScene()
 	//	pMVar5 = (Manager_208*)uVar17;
 	//}
 	//g_Manager208_00451694 = pMVar5;
-	//inAllocatedMemory = (CAudioManager*)Allocate(0x2e8);
-	//if (inAllocatedMemory != (CAudioManager*)0x0) {
-	//	inAllocatedMemory = (CAudioManager*)GlobalSoundConstructor(inAllocatedMemory);
-	//}
-	//g_GlobalSoundPtr_00451698 = inAllocatedMemory;
+	CScene::ptable.g_AudioManager_00451698 = new CAudioManager();
 	CScene::ptable.g_WayPointManager_0045169c = new CWayPointManager;
 	CScene::ptable.g_PathManager_004516a0 = new CPathManager;
 	CScene::ptable.g_ActorManager_004516a4 = new CActorManager;

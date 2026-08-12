@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorMovable.h"
 #include "Pause.h"
+#include "Audio.h"
 
 #define WEAPON_BEHAVIOUR_DEFAULT 0x2
 #define WEAPON_BEHAVIOUR_PISTOL 0x3

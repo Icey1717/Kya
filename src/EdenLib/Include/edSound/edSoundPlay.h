@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+struct edsound_listener;
+
 struct ed_sound_sample
 {
 	uint soundRamAddress;
@@ -18,6 +20,7 @@ struct _ed_sound_stream
 	int streamBufferId;
 	int streamFileId;
 	void* pMem;
+	void* pDynamicData;
 };
 
 struct VAGp {
@@ -43,7 +46,7 @@ struct SoundFileData {
 
 struct GlobalSound_FileData
 {
-
+	char field_0x10[64];
 };
 
 typedef void (*edSoundFinishedInstancesCallback)(struct ed_sound_instance_finished*, uint);
@@ -80,25 +83,17 @@ struct edCSoundGlobalParams
 	undefined field_0x1e;
 	undefined field_0x1f;
 	undefined4 field_0x20;
-	float field_0x24;
-	float field_0x28;
-	float field_0x2c;
-	float field_0x30;
-	float field_0x34;
-	float field_0x38;
-	float field_0x3c;
-	float field_0x40;
-	float field_0x44;
-	undefined4 field_0x48;
-	undefined4 field_0x4c;
-	undefined4 field_0x50;
+	edF32VECTOR3 field_0x24;
+	edF32VECTOR3 field_0x30;
+	edF32VECTOR3 field_0x3c;
+	edF32VECTOR3 field_0x48;
 	AUDIO_MODE outputMode;
 	undefined4 field_0x58;
 	float field_0x5c;
 	float field_0x60;
 	float field_0x64;
 	float field_0x68;
-	undefined4 field_0x6c;
+	void* field_0x6c;
 	edSoundFinishedInstancesCallback finishedInstancesCallback;
 	float g_DesiredFrameTime_00483824;
 	undefined field_0x78;
@@ -111,6 +106,26 @@ struct edCSoundGlobalParams
 	undefined field_0x7f;
 };
 
+struct edCSoundParam
+{
+	uint nbVoices;
+	uint field_0x4;
+};
+
+
+struct _ed_sound_bit_array_handle
+{
+	int voiceIndex;
+	int field_0x4;
+	int field_0x8;
+};
+
+struct ed_sound_voice_position
+{
+	undefined4 field_0x0;
+	int position;
+};
+
 int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath, ulong param_4, undefined8 param_5, undefined8 param_6);
 void _edSoundStreamTerm(_ed_sound_stream* pSoundStream);
 
@@ -120,24 +135,68 @@ void edSoundStreamFree(_ed_sound_stream* pSoundStream);
 
 void edSoundFlush();
 
+void edSoundTerminateAllInstances(void);
+
 uint edSoundInstanceStop(uint instanceId);
 
 int _edSoundSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSample, ulong flags);
+int edSoundSampleLoad(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags);
 
 void _edSoundWaitAllSoundDataLoaded(void);
 void edSoundWaitAllSoundDataLoaded(void);
 
-void edSoundSampleLoadWait(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags);
 
-void edSoundSetMasterVolume(float newVolume);
-void edMusicSetMasterVolume(uint newVolume);
-void edMusicSetMasterTempo(uint newTempo);
+extern uint _edSoundAllocatedVoices[2];
+void _edSoundInstanceSetFree(struct ed_sound_instance* pInstance);
+
+// Inline new helpers for voice count, no equivalent function in ghidra
+inline uint EdSoundVoiceCountFromFlags(uint flags)
+{
+	return (flags & 0x28) != 0 ? 2 : 1;
+}
+
+inline void EdSoundVoiceSetAllocated(uint voiceIndex)
+{
+	_edSoundAllocatedVoices[voiceIndex >> 5] |= 1u << (voiceIndex & 0x1f);
+}
+
+inline void EdSoundVoiceSetFree(uint voiceIndex)
+{
+	_edSoundAllocatedVoices[voiceIndex >> 5] &= ~(1u << (voiceIndex & 0x1f));
+}
+
+void edSoundSampleLoadWait(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags);
 
 AUDIO_MODE edSoundOutputModeGet(void);
 void edSoundOutputModeSet(AUDIO_MODE newMode);
+void _edSoundEndFlush(uint nbFlush);
 
-void edMusicSetOutputMode(AUDIO_MODE newMode);
+void edSoundSetMasterVolume(float newVolume);
+
+int _edSoundSetVoiceRange(uint nbVoices, uint param_2);
+
+uint _edSoundVoiceGetFirstFree(_ed_sound_bit_array_handle* pSoundBitArrayHandle);
+uint _edSoundVoiceGetFirstFreeFromPointer(uint* param_1, _ed_sound_bit_array_handle* pSoundBitArrayHandle);
+
+void edSoundSetFinishedInstancesCallback(edSoundFinishedInstancesCallback pCallback);
+
+void edSoundPrepareReverbTypes(uint nbTypes, ED_SOUND_REVERB_TYPE* aTypes);
+
+int _edSoundSampleFree(ed_sound_sample* pSoundSample);
+int edSoundSampleFree(ed_sound_sample* pSoundSample);
+
+uint _edSoundMemFree(void* pMem);
+
+bool edSoundAreAllSoundDataLoaded();
+
+void edSoundSetListener(edsound_listener* pListener);
+
+// SOUND_
+int SOUND_SetMaxStreamLimit(uint nbStreams);
 
 extern edCSoundGlobalParams edSoundGlobalParams;
+extern edCSoundParam edSoundParam;
+extern ed_sound_voice_position* pedSoundVoicePosition;
+extern edsound_listener edSoundListenerDefault;
 
 #endif // ED_SOUND_PLAY_H

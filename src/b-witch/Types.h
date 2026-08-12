@@ -50,6 +50,7 @@ typedef unsigned long    uint7;
 typedef unsigned int    u_int;
 #endif
 
+typedef int ED_SOUND_REVERB_TYPE;
 
 typedef enum SWITCH_MODE {
 	SWITCH_MODE_A = 0,
@@ -266,8 +267,6 @@ struct edSYS_CONFIG
 	ED_PSX2_MODULES_INIT* pIopPaths;
 	int enableProfiling;
 };
-
-class CMusicManager;
 
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 edSYS_CONFIG* edSysGetConfig(void);
@@ -829,8 +828,6 @@ inline void DeleteArrayPolymorphic(T* ptr, int count) {
 #define ACTOR_NUM_CLASSES 0x57
 
 #include "port/pointer_conv.h"
-
-class CSound {};
 
 template<typename T>
 struct S_STREAM_REF {

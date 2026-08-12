@@ -5,7 +5,7 @@
 
 struct edSoundConfig
 {
-	int nbMaxInstances;
+	uint nbMaxInstances;
 	uint nbVoices;
 	undefined4 field_0x8;
 	uint field_0x10;
@@ -16,5 +16,7 @@ edSoundConfig* edSoundGetConfig(void);
 uint edSoundVoicesNumberGet(void);
 void edSoundInit(void);
 void edSoundInitFunc(float param_1);
+
+extern edSoundConfig soundConfig;
 
 #endif // ED_SOUND_INIT_H

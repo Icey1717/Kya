@@ -2578,6 +2578,53 @@ float edF32ATanHard(float value)
 	return edF32ATanSoft(value);
 }
 
+float edF32Vector3NormalizeSoft(edF32VECTOR3* v0, edF32VECTOR3* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = v1->x;
+	fVar1 = sqrtf(v1->z * v1->z + fVar3 * fVar3 + v1->y * v1->y);
+	fVar2 = 1.0f / fVar1;
+	v0->x = fVar3 * fVar2;
+	v0->y = v1->y * fVar2;
+	v0->z = v1->z * fVar2;
+
+	return fVar1;
+}
+
+void edF32Vector3CrossProductSoft(edF32VECTOR3* v0, edF32VECTOR3* v1, edF32VECTOR3* v2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar5 = v1->x;
+	fVar1 = v1->y;
+	fVar3 = v1->z;
+	fVar6 = v2->x;
+	fVar2 = v2->y;
+	fVar4 = v2->z;
+	v0->x = fVar1 * fVar4 - fVar3 * fVar2;
+	v0->y = fVar3 * fVar6 - fVar5 * fVar4;
+	v0->z = fVar5 * fVar2 - fVar1 * fVar6;
+	return;
+}
+
+float edF32Vector3GetLengthSoft(edF32VECTOR3* v0)
+{
+	return sqrtf(v0->z * v0->z + v0->x * v0->x + v0->y * v0->y);
+}
+
+float edF32Vector3DotProductSoft(edF32VECTOR3* v0, edF32VECTOR3* v1)
+{
+	return v0->z * v1->z + v0->x * v1->x + v0->y * v1->y;
+}
+
 float ComputeAccelDistance(float param_1, float param_2, float param_3)
 {
 	return ((param_2 + param_1) / 2.0f) * ((param_2 - param_1) / param_3);

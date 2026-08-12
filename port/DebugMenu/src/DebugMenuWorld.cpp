@@ -485,7 +485,7 @@ namespace Debug {
 						break;
 					}
 
-					auto& fx = *pTail->aFx;
+					auto& fx = *pTail->node;
 					auto* pManager = fx.pManager;
 					if (pManager == nullptr) {
 						pTail = pTail->pNext;

@@ -7,6 +7,7 @@
 #include "ActorBonusServices.h"
 #include "Fx_Tail.h"
 #include "PathFollow.h"
+#include "Audio.h"
 
 #define BONUS_BEHAVIOUR_TURN 0x3
 #define BONUS_BEHAVIOUR_PATH 0x4

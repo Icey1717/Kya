@@ -25,7 +25,7 @@ void _edMusicInitStream(ed_music_stream* pMusicStream, uint index)
 	}
 
 	pMusicStream->field_0xc0 = 0;
-	pMusicStream->field_0xa8 = 0;
+	pMusicStream->fadeFlags = 0;
 
 	return;
 }
@@ -59,7 +59,7 @@ void edMusicInit(void)
 	edDebugPrintf("edMusicInit\n");
 	edMusicStatus.outputMode = MONO;
 	edMusicStatus.masterTempo = 0x100;
-	edMusicStatus.endOfSongCallback = (undefined*)0x0;
+	edMusicStatus.endOfSongCallback = (edMusicEndOfSongCallback)0x0;
 	edMusicStatus.field_0xc = 0;
 	edMusicStatus.field_0x18 = edMusicConfig.nbVoices;
 	edMusicStatus.nbStreams = edMusicConfig.nbStreams;

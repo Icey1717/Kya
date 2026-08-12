@@ -334,7 +334,7 @@ void CBehaviourNativShopSell::Manage()
 	CCameraManager* pCVar3;
 	CInventoryInfo* pCVar4;
 	int iVar5;
-	int** ppiVar6;
+	CMusicManager* pMusicManager;
 	float fVar7;
 
 	pCVar3 = CScene::ptable.g_CameraManager_0045167c;
@@ -374,19 +374,17 @@ void CBehaviourNativShopSell::Manage()
 
 	IMPLEMENTATION_GUARD_AUDIO(
 	pZone = (this->streamRefZone).Get();
-	ppiVar6 = (int**)(CScene::ptable.g_AudioManager_00451698)->field_0x38;
+	pMusicManager = CScene::ptable.g_AudioManager_00451698->field_0x38;
 	if (pZone != (ed_zone_3d*)0x0) {
 		iVar5 = edEventComputeZoneAgainstVertex
 		((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone,
 			&(CActorHero::_gThis->character).characterBase.base.base.currentLocation, 0);
 		if ((iVar5 == 1) && (this->field_0xc0 == -1)) {
-			ppiVar6 = FUN_00187170((int*)this->field_0xc4, (int*)&DAT_3f800000, (int)this->field_0xc8, (int*)0x0, ppiVar6,
-				(int*)this->field_0xb8, (int*)0x19);
-			this->field_0xc0 = (int)ppiVar6;
+			this->field_0xc0 = pMusicManager->Start(this->field_0xc4, 1.0f, this->field_0xc8, 0.0f, this->field_0xb8, 0x19);
 		}
 		else {
 			if ((iVar5 == 2) && (this->field_0xc0 != -1)) {
-				MusicStop(this->field_0xcc, 0, (int)ppiVar6, this->field_0xc0);
+				pMusicManager->Stop(this->field_0xcc, 0, this->field_0xc0);
 				this->field_0xc0 = -1;
 			}
 		}

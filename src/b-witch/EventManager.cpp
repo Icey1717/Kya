@@ -126,11 +126,6 @@ void edEventAllocateMessageQueue(int queueSize)
 	return;
 }
 
-float edF32Vector3DotProductSoft(edF32VECTOR3* param_1, edF32VECTOR3* param_2)
-{
-	return param_1->z * param_2->z + param_1->x * param_2->x + param_1->y * param_2->y;
-}
-
 int _edEventZoneAgainstVertexValidatedResult[3] = { 1, 2, 1 };
 
 int _edEventComputePrimAgainstVertex(uint prim, edF32MATRIX4* pMatrix, edF32VECTOR4* pVertex)

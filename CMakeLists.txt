@@ -475,6 +475,8 @@ set(main_src
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.cpp"
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.h"
 
+	"${src_root}/EdenLib/edMusic/sources/ps2/_edMusicData.cpp"
+	"${src_root}/EdenLib/edMusic/sources/ps2/_edMusicPlay.cpp"
 	"${src_root}/EdenLib/edMusic/sources/ps2/_edMusicInit.cpp"
 	"${src_root}/EdenLib/edMusic/sources/edMusicInit.cpp"
 	"${src_root}/EdenLib/edMusic/sources/edMusicMain.cpp"
@@ -491,6 +493,7 @@ set(main_src
 	"${src_root}/EdenLib/edParticles/sources/edParticle.cpp"
 	"${src_root}/EdenLib/Include/edParticles/edParticles.h"
 
+	"${src_root}/EdenLib/edSound/sources/ps2/multistream/ee/sound.cpp"
 	"${src_root}/EdenLib/edSound/sources/edSoundAcoustic3D.cpp"
 	"${src_root}/EdenLib/Include/edSound/edSoundAcoustic3D.h"
 	"${src_root}/EdenLib/edSound/sources/edSoundInit.cpp"

@@ -144,6 +144,11 @@ void edF32Vector4SubHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 float edF32ACosHard(float value);
 float edF32ATanHard(float value);
 
+float edF32Vector3NormalizeSoft(edF32VECTOR3* v0, edF32VECTOR3* v1);
+void edF32Vector3CrossProductSoft(edF32VECTOR3* v0, edF32VECTOR3* v1, edF32VECTOR3* v2);
+float edF32Vector3GetLengthSoft(edF32VECTOR3* v0);
+float edF32Vector3DotProductSoft(edF32VECTOR3* v0, edF32VECTOR3* v1);
+
 float ComputeAccelDistance(float param_1, float param_2, float param_3);
 
 class CSP_Manager

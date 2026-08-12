@@ -3713,7 +3713,7 @@ void CBehaviourJamGutRidden::Begin(CActor* pOwner, int newState, int newAnimatio
 	int iVar1;
 	CMusicManager* pMusicManager;
 	bool bVar2;
-	int** ppiVar3;
+	int musicHandle;
 	edF32VECTOR4 colSphereB;
 	edF32VECTOR4 colSphereA;
 	CActorJamGut* pJamGut;
@@ -3754,14 +3754,11 @@ void CBehaviourJamGutRidden::Begin(CActor* pOwner, int newState, int newAnimatio
 
 	if (this->field_0x10 != (CMusic*)0x0) {
 		IMPLEMENTATION_GUARD_AUDIO(
-		pMusicManager = (CMusicManager*)(CScene::ptable.g_AudioManager_00451698)->field_0x38;
-		bVar2 = CMusicManager::FUN_00186bf0(pMusicManager, (long)this->field_0xc, (int)this->field_0x10);
-		if ((bVar2 == false) ||
-			(bVar2 = CMusicManager::FUN_00186b90(pMusicManager, (long)this->field_0xc), bVar2 == false)) {
-			ppiVar3 = CMusicManager::Start
-			(this->field_0x14, 1.0, this->field_0x18, 0.0, pMusicManager, this->field_0x10,
-				(int*)0x19);
-			this->field_0xc = (int)ppiVar3;
+		pMusicManager = CScene::ptable.g_AudioManager_00451698->field_0x38;
+		bVar2 = pMusicManager->IsMusic(this->field_0xc, this->field_0x10);
+		if (!bVar2 || !pMusicManager->IsActive(this->field_0xc)) {
+			musicHandle = pMusicManager->Start(this->field_0x14, 1.0f, this->field_0x18, 0.0f, this->field_0x10, 0x19);
+			this->field_0xc = musicHandle;
 		}
 		else {
 			pMusicManager->CancelStop(this->field_0x18, this->field_0xc);
@@ -3803,7 +3800,7 @@ void CBehaviourJamGutRidden::End(int newBehaviourId)
 
 	if (this->field_0x10 != (CMusic*)0x0) {
 		IMPLEMENTATION_GUARD_AUDIO(
-		(CScene::ptable.g_AudioManager_00451698)->field_0x38->MusicStop(this->field_0x1c, 0, this->field_0xc);
+		(CScene::ptable.g_AudioManager_00451698)->field_0x38->Stop(this->field_0x1c, 0, this->field_0xc);
 		this->field_0xc = -1;)
 	}
 

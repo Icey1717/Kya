@@ -7,6 +7,7 @@
 #include "Animation.h"
 #include "EdenLib/edAnim/AnmSkeleton.h"
 #include "port/pointer_conv.h"
+#include "Audio.h"
 
 #include <assert.h>
 
