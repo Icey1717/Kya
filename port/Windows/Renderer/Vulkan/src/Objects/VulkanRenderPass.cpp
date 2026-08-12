@@ -54,7 +54,7 @@ namespace Renderer
 			attachmentDescs.push_back(desc);
 
 			depthRef.attachment = static_cast<uint32_t>(colorAttachments.size());
-			depthRef.layout     = (info.finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+			depthRef.layout     = info.readOnlyDepth || info.finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
 				: VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}

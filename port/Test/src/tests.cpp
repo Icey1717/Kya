@@ -39,6 +39,20 @@ TEST(AddTest, PositiveNumbers) {
 }
 
 #ifdef PLATFORM_WIN
+TEST(NativeShadowSettings, NormalizesExtentAndSampleBudget)
+{
+	Renderer::Native::ShadowPassSettings settings{};
+	settings.width = 0;
+	settings.height = 0;
+	settings.blurSamples = 100;
+	settings.blurRadius = 7;
+	const auto normalized = Renderer::Native::NormalizeShadowPassSettings(settings);
+	EXPECT_EQ(normalized.width, 1u);
+	EXPECT_EQ(normalized.height, 1u);
+	EXPECT_EQ(normalized.blurSamples, 32u);
+	EXPECT_EQ(normalized.blurRadius, 7u);
+}
+
 TEST(AudioTransferService, OwnsDataAndReturnsSoundHandle)
 {
 	Audio::Reset();

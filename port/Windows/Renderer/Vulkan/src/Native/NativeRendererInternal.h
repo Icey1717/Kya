@@ -110,7 +110,8 @@ namespace Renderer
 
 			uint32_t GetKey() const
 			{
-				return static_cast<uint32_t>(clearMode);
+				return static_cast<uint32_t>(clearMode) |
+					(static_cast<uint32_t>(kind) << 8);
 			}
 
 			bool operator==(const RenderPassKey& other) const
@@ -126,9 +127,11 @@ namespace Renderer
 			void Reset()
 			{
 				clearMode = EClearMode::None;
+				kind = ERenderPassKind::Main;
 			}
 
 			EClearMode clearMode = EClearMode::None;
+			ERenderPassKind kind = ERenderPassKind::Main;
 		};
 
 		struct RenderPassKeyHash
@@ -152,6 +155,7 @@ namespace Renderer
 			uint32_t animMatrixStart = 0;
 			uint32_t lightingDataIndex = 0;
 			uint32_t globalAlpha = 0x80;
+			uint32_t shadowProjectionIndex = 0;
 		};
 
 		struct FadeConstantBuffer
@@ -165,6 +169,7 @@ namespace Renderer
 
 		struct RenderStage
 		{
+			ERenderPassKind kind = ERenderPassKind::Main;
 			VkRenderPass gRenderPass = VK_NULL_HANDLE;
 
 			PipelineCreateInfo<PipelineKey> gCreateInfo;
@@ -287,6 +292,7 @@ namespace Renderer
 
 			StorageDynamicBuffer<LightingDynamicBufferData, gMaxLightingData> lightingDynamicBuffer;
 			StorageDynamicBuffer<glm::vec4, gMaxInstances> animStBuffer;
+			StorageDynamicBuffer<glm::mat4, gMaxInstances> shadowProjectionBuffer;
 			NativeVertexBuffer nativeVertexBuffer;
 
 			StorageBuffer<glm::mat4> animationBuffer;
@@ -308,6 +314,7 @@ namespace Renderer
 			glm::mat4 initialProjMatrix = glm::mat4(1.0f);
 
 			PerDrawData cachedPerDrawData;
+			uint32_t shadowAlpha = 0x30;
 			int currentAnimMatrixIndex = 0;
 
 			NativePreviewRenderer preview;
@@ -331,6 +338,10 @@ namespace Renderer
 		void StartAnimMatrix();
 		void PushAnimMatrix(float* pAnim);
 		void PushAnimST(float* pAnimST);
+		void AddRenderThreadShadowBegin(RenderThread* renderThread, const ShadowPassSettings& settings);
+		void AddRenderThreadShadowBlur(RenderThread* renderThread);
+		void AddRenderThreadShadowReceiver(RenderThread* renderThread, const ShadowReceiverViewport& viewport);
+		void AddRenderThreadShadowEnd(RenderThread* renderThread);
 
 		RenderThread* CreateRenderThread();
 		void DestroyRenderThread(RenderThread*& renderThread);

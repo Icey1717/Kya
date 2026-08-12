@@ -342,6 +342,26 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
+	ImTextureID DebugMenu::GetNativeShadowBuffer(bool blurred)
+	{
+		static VkImageView cachedViews[2] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
+		static ImTextureID textureIds[2] = { 0, 0 };
+		const int index = blurred ? 1 : 0;
+		const VkImageView imageView = blurred
+			? Renderer::Native::GetShadowBlurImageView()
+			: Renderer::Native::GetShadowMaskImageView();
+		if (imageView == VK_NULL_HANDLE) return 0;
+		if (cachedViews[index] != imageView) {
+			if (textureIds[index] != 0) {
+				ImGui_ImplVulkan_RemoveTexture((VkDescriptorSet)(uintptr_t)textureIds[index]);
+			}
+			cachedViews[index] = imageView;
+			textureIds[index] = DebugRendererImgui::ToImTextureID(ImGui_ImplVulkan_AddTexture(
+				Renderer::Native::GetShadowSampler(), imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+		}
+		return textureIds[index];
+	}
+
 static ImTextureID gActorPreviewTextureID = 0;
 
 ImTextureID DebugMenu::GetActorPreviewTextureID()

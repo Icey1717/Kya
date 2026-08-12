@@ -82,6 +82,14 @@ namespace Renderer
 			GetNativeRendererState().animationMatrices.push_back(glm::make_mat4(pAnim));
 		}
 
+		void PushShadowProjectionMatrix(const float* matrix)
+		{
+			assert(matrix);
+			GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::make_mat4(matrix));
+			GetNativeRendererState().cachedPerDrawData.shadowProjectionIndex =
+				static_cast<uint32_t>(GetNativeRendererState().shadowProjectionBuffer.GetInstanceIndex());
+		}
+
 		void StartAnimMatrix()
 		{
 			GetNativeRendererState().currentAnimMatrixIndex = GetNativeRendererState().animationMatrices.size();
@@ -265,6 +273,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	GetNativeRendererState().modelBuffer.Reset();
 	GetNativeRendererState().lightingDynamicBuffer.Reset();
 	GetNativeRendererState().animStBuffer.Reset();
+	GetNativeRendererState().shadowProjectionBuffer.Reset();
+	GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::mat4(1.0f));
+	GetNativeRendererState().cachedPerDrawData.shadowProjectionIndex = 0;
 	DebugShapes::ResetFrame();
 
 	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");
@@ -340,10 +351,68 @@ void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 
 void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMode)
 {
+	if (GetNativeRendererState().cachedRenderPassKey.kind != ERenderPassKind::Main) {
+		return;
+	}
+
 	GetNativeRendererState().cachedRenderPassKey.clearMode = clearMode;
 
 	if (clearMode != EClearMode::None) {
 		GetNativeRendererState().renderPassDirty = true;
 	}
+}
+
+void Renderer::Native::BeginShadowMask(const ShadowPassSettings& settings)
+{
+	if (GetNativeRendererState().currentDraw) {
+		NATIVE_LOG(LogLevel::Warning, "Discarding incomplete draw at shadow-mask boundary");
+		GetNativeRendererState().currentDraw.reset();
+	}
+	GetNativeRendererState().shadowAlpha = settings.alpha;
+	AddRenderThreadShadowBegin(GetNativeRendererState().renderThread, settings);
+	GetNativeRendererState().cachedRenderPassKey.kind = ERenderPassKind::ShadowMask;
+	GetNativeRendererState().cachedRenderPassKey.clearMode = EClearMode::ColorDepth;
+	GetNativeRendererState().renderPassDirty = true;
+}
+
+void Renderer::Native::BlurShadowMask()
+{
+	AddRenderThreadShadowBlur(GetNativeRendererState().renderThread);
+}
+
+void Renderer::Native::BeginShadowReceiver(const ShadowReceiverViewport& viewport)
+{
+	AddRenderThreadShadowReceiver(GetNativeRendererState().renderThread, viewport);
+	GetNativeRendererState().cachedRenderPassKey.kind = ERenderPassKind::ShadowReceiver;
+	GetNativeRendererState().cachedRenderPassKey.clearMode = EClearMode::None;
+	GetNativeRendererState().renderPassDirty = true;
+}
+
+void Renderer::Native::EndShadowPass()
+{
+	if (GetNativeRendererState().currentDraw) {
+		NATIVE_LOG(LogLevel::Warning, "Discarding incomplete draw at shadow-pass boundary");
+		GetNativeRendererState().currentDraw.reset();
+	}
+	AddRenderThreadShadowEnd(GetNativeRendererState().renderThread);
+	GetNativeRendererState().cachedRenderPassKey.kind = ERenderPassKind::Main;
+	GetNativeRendererState().cachedRenderPassKey.clearMode = EClearMode::None;
+	GetNativeRendererState().renderPassDirty = true;
+}
+
+void Renderer::Native::BindShadowReceiver()
+{
+	if (!GetNativeRendererState().currentDraw) return;
+	Draw& draw = *GetNativeRendererState().currentDraw;
+	draw.pTexture = GetNativeRendererState().whiteTexture;
+	draw.pDescriptorSets = nullptr;
+	draw.projMatrix = GetNativeRendererState().cachedProjMatrix;
+	draw.viewMatrix = GetNativeRendererState().cachedViewMatrix;
+	draw.bIsZMask = true;
+	for (auto& instance : draw.instances) {
+		instance.perDrawData.globalAlpha = GetNativeRendererState().shadowAlpha;
+	}
+	AddRenderThreadDraw(GetNativeRendererState().renderThread, draw);
+	GetNativeRendererState().currentDraw.reset();
 }
 

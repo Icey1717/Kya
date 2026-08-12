@@ -26,7 +26,8 @@ layout( push_constant ) uniform PerDrawData
 	uint animMatrixStart;
 	uint lightingDataIndex;
 	uint globalAlpha;
-	uint _pad[6];
+	uint shadowProjectionIndex;
+	uint _pad[5];
 } perDrawData;
 
 struct LightingDataBlock {

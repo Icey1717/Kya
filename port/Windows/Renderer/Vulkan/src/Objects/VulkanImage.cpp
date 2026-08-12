@@ -343,6 +343,11 @@ void OwnedImage::Release()
 
 OwnedImage VulkanImage::CreateColor(uint32_t width, uint32_t height, VkImageUsageFlags extraUsage)
 {
+	return CreateColor(width, height, GetSwapchainImageFormat(), extraUsage);
+}
+
+OwnedImage VulkanImage::CreateColor(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags extraUsage)
+{
 	constexpr VkImageUsageFlags kBaseUsage =
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT     |
@@ -350,7 +355,6 @@ OwnedImage VulkanImage::CreateColor(uint32_t width, uint32_t height, VkImageUsag
 		VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	OwnedImage out;
-	const VkFormat format = GetSwapchainImageFormat();
 	CreateImage(width, height, format, VK_IMAGE_TILING_OPTIMAL,
 		kBaseUsage | extraUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		out.image, out.memory);

@@ -48,7 +48,6 @@ public:
 
 struct CSoundStream : public CSoundSample
 {
-	CSoundSample sample;
 	undefined4 field_0x8c;
 };
 

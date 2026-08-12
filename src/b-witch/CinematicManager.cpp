@@ -5864,6 +5864,7 @@ float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 	fVar7 = Timer::GetTimer()->totalPlayTime;
 	if (uVar3 == 0) {
 		// Retry playing the audio if it hasn't been playing for more than 5 seconds, or if it hasn't been played at all.
+
 		if (((fVar7 - this->floatFieldA) < 5.0f) || (this->floatFieldA == 0.0f)) {
 			SetAudioTrack(audioTrackId);
 		}

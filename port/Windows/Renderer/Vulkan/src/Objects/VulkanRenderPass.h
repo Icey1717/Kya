@@ -13,13 +13,12 @@ namespace Renderer
 		VkImageLayout       initialLayout;
 		VkImageLayout       finalLayout;
 		VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		bool                readOnlyDepth = false;
 	};
 
 	// Creates a single-subpass 2D render pass.
 	// Color attachments are bound at indices 0..n-1; depth (if present) at index n.
-	// The depth subpass layout is derived from finalLayout:
-	//   DEPTH_STENCIL_READ_ONLY_OPTIMAL → read-only depth test, no writes.
-	//   anything else                   → DEPTH_STENCIL_ATTACHMENT_OPTIMAL.
+	// Set AttachmentInfo::readOnlyDepth when a depth attachment must be tested but not written.
 	VkRenderPass CreateRenderPass2D(
 		std::span<const AttachmentInfo>      colorAttachments,
 		std::optional<AttachmentInfo>        depthAttachment,

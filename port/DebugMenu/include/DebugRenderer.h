@@ -23,6 +23,7 @@ namespace DebugMenu {
 
 	ImTextureID AddNativeFrameBuffer();
 	void RefreshNativeFrameBuffer(ImTextureID& existingTextureId);
+	ImTextureID GetNativeShadowBuffer(bool blurred);
 
 	ImTextureID GetActorPreviewTextureID();
 

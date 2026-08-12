@@ -8,6 +8,7 @@ namespace Debug {
 		void ShowMenu(bool* bOpen);
 		void ShowFramebuffers(bool* bOpen);
 		void ShowNativeFrameBuffer(bool* bOpen);
+		void ShowNativeShadowBuffers(bool* bOpen);
 		void ShowGame();
 
 		ImVec2 GetGameWindowPosition();

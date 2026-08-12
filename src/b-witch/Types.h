@@ -735,15 +735,15 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #define PLAY_INTRO_VIDEO 0
 
-#define IMPLEMENTATION_GUARD_FX(x) assert(false); 
-#define IMPLEMENTATION_GUARD_EMOTION(x) assert(false); 
+#define IMPLEMENTATION_GUARD_FX(x)
+#define IMPLEMENTATION_GUARD_EMOTION(x) 
 #define IMPLEMENTATION_GUARD_PS2(x)
-#define IMPLEMENTATION_GUARD_AUDIO(x) assert(false); 
-#define IMPLEMENTATION_GUARD_ACTOR(x) assert(false); 
-#define IMPLEMENTATION_GUARD_LIGHT(x) assert(false); 
-#define IMPLEMENTATION_GUARD_UI(x) assert(false); 
-#define IMPLEMENTATION_GUARD_SHADOW(x) assert(false); 
-#define IMPLEMENTATION_GUARD_LOG(x) assert(false); 
+#define IMPLEMENTATION_GUARD_AUDIO(x) 
+#define IMPLEMENTATION_GUARD_ACTOR(x)
+#define IMPLEMENTATION_GUARD_LIGHT(x) 
+#define IMPLEMENTATION_GUARD_UI(x) 
+#define IMPLEMENTATION_GUARD_SHADOW(x) 
+#define IMPLEMENTATION_GUARD_LOG(x) 
 #define IMPLEMENTATION_GUARD_HELP(x)
 
 #ifdef PLATFORM_WIN

@@ -29,8 +29,26 @@ namespace Renderer
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			gCreateInfo = { "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
-			Renderer::Native::CreatePipeline(gCreateInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
+			GraphicsPipelineState state{};
+			const char* name = "Native Renderer GLSL";
+			if (kind == ERenderPassKind::ShadowMask) {
+				gCreateInfo = { "shaders/shadow_mask.vert.spv", "shaders/shadow_mask.frag.spv", "", key };
+				name = "Native Shadow Mask Pipeline";
+			}
+			else if (kind == ERenderPassKind::ShadowReceiver) {
+				gCreateInfo = { "shaders/shadow_receiver.vert.spv", "shaders/shadow_receiver.frag.spv", "", key };
+				state.depthWriteEnable = false;
+				state.blendEnable = true;
+				state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+				state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+				state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+				state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+				name = "Native Shadow Receiver Pipeline";
+			}
+			else {
+				gCreateInfo = { "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
+			}
+			Renderer::Native::CreatePipeline(gCreateInfo, gRenderPass, gPipeline, name, state);
 			gBlendPipelines.emplace(0, gPipeline.pipeline);
 		}
 	}

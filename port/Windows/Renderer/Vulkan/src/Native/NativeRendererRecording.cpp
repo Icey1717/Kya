@@ -2,6 +2,7 @@
 
 #include "NativeDebug.h"
 #include "NativeDebugShapes.h"
+#include "NativeShadow.h"
 #include "Objects/VulkanImage.h"
 #include "profiling.h"
 
@@ -74,6 +75,7 @@ namespace Renderer
 			GetNativeRendererState().modelBuffer.Map(GetCurrentFrame());
 			GetNativeRendererState().animStBuffer.Map(GetCurrentFrame());
 			GetNativeRendererState().lightingDynamicBuffer.Map(GetCurrentFrame());
+			GetNativeRendererState().shadowProjectionBuffer.Map(GetCurrentFrame());
 
 			for (int i = 0; i < GetNativeRendererState().animationMatrices.size() ; i++) {
 				if (GetNativeRendererState().forceAnimMatrixIdentity) {
@@ -98,6 +100,17 @@ namespace Renderer
 			}
 		}
 
+		static const char* GetRenderPassKindName(ERenderPassKind kind)
+		{
+			switch (kind)
+			{
+			case ERenderPassKind::Main: return "Main";
+			case ERenderPassKind::ShadowMask: return "ShadowMask";
+			case ERenderPassKind::ShadowReceiver: return "ShadowReceiver";
+			default: return "Unknown";
+			}
+		}
+
 		void RecordBeginRenderPass(const RenderPassKey& key)
 		{
 			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
@@ -107,9 +120,9 @@ namespace Renderer
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = stage.gRenderPass;
-			renderPassInfo.framebuffer = GetNativeRendererState().frameBuffer.framebuffer;
+			renderPassInfo.framebuffer = Shadow::GetFramebuffer(key.kind);
 			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { static_cast<uint32_t>(gWidth), static_cast<uint32_t>(gHeight) };
+			renderPassInfo.renderArea.extent = Shadow::GetExtent(key.kind);
 
 			std::array<VkClearValue, 2> clearColors;
 			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
@@ -117,9 +130,21 @@ namespace Renderer
 			renderPassInfo.clearValueCount = clearColors.size();
 			renderPassInfo.pClearValues = clearColors.data();
 
-			Renderer::Debug::BeginLabel(cmd, "Render Pass [clear: %s]", GetClearModeName(key.clearMode));
+			Renderer::Debug::BeginLabel(cmd, "Render Pass [%s, clear: %s]", GetRenderPassKindName(key.kind), GetClearModeName(key.clearMode));
 
 			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport{};
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = static_cast<float>(renderPassInfo.renderArea.extent.width);
+			viewport.height = static_cast<float>(renderPassInfo.renderArea.extent.height);
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(cmd, 0, 1, &viewport);
+			VkRect2D scissor = { { 0, 0 }, renderPassInfo.renderArea.extent };
+			if (key.kind == ERenderPassKind::ShadowReceiver) scissor = Shadow::GetReceiverScissor();
+			vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 			const auto& pipeline = stage.GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -138,7 +163,9 @@ namespace Renderer
 			vkCmdEndRenderPass(cmd);
 
 			// Save depth from the first render pass before any subsequent pass can clear it.
-			DebugShapes::SaveDepth(cmd, GetNativeRendererState().frameBuffer.depthImage);
+			if (GetNativeRendererState().activeRenderPassKey.kind == ERenderPassKind::Main) {
+				DebugShapes::SaveDepth(cmd, GetNativeRendererState().frameBuffer.depthImage);
+			}
 
 			Renderer::Debug::EndLabel(cmd);
 			GetNativeRendererState().activeRenderPassKey.Reset();
@@ -182,6 +209,14 @@ namespace Renderer
 		class DrawCommandRecorder
 		{
 		public:
+			void BeginPass(const RenderPassKey& key)
+			{
+				EndActivePass();
+				currentRenderPassKey = key;
+				RecordBeginRenderPass(currentRenderPassKey);
+				bInRenderPass = true;
+			}
+
 			void RecordDrawCommand(Draw& drawCommand)
 			{
 				if (!bInRenderPass || drawCommand.bRenderPassDirty) {
@@ -206,6 +241,8 @@ namespace Renderer
 					const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 					const Pipeline& pipeline = GetNativeRendererState().renderPass[currentRenderPassKey].GetPipeline();
+					const bool bShadowReceiver = currentRenderPassKey.kind == ERenderPassKind::ShadowReceiver;
+					const bool bShadowMask = currentRenderPassKey.kind == ERenderPassKind::ShadowMask;
 
 					Debug::UpdateLabel(pTexture, cmd);
 
@@ -237,16 +274,33 @@ namespace Renderer
 						}
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
-						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD || !alphaBlendState.has_value() || alphaBlendState.value() != bAlphaBlendEnabled || !effectiveAlphaState.has_value() || effectiveAlphaState.value() != effectiveAlpha.CMD) {
+						if (bShadowReceiver || bShadowMask) {
+							if (!primState.has_value()) {
+								vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+								primState = instance.pMesh->GetPrim().CMD;
+							}
+						}
+						else if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD || !alphaBlendState.has_value() || alphaBlendState.value() != bAlphaBlendEnabled || !effectiveAlphaState.has_value() || effectiveAlphaState.value() != effectiveAlpha.CMD) {
 							primState = instance.pMesh->GetPrim().CMD;
 							alphaBlendState = bAlphaBlendEnabled;
 							effectiveAlphaState = effectiveAlpha.CMD;
 							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(currentRenderPassKey, effectiveAlpha, bAlphaBlendEnabled));
 						}
 
-						SetColorDepthDynamicState(cmd, drawCommand);
+						if (bShadowReceiver) {
+							vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
+							VkBool32 colorWriteEnable = VK_TRUE;
+							GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+							const VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+							GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &colorWriteMask);
+						}
+						else {
+							SetColorDepthDynamicState(cmd, drawCommand);
+						}
 
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, drawCommand.pDescriptorSets, 0, nullptr);
+						const VkDescriptorSet* descriptorSet = drawCommand.pDescriptorSets;
+						if (bShadowReceiver) descriptorSet = &Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
+						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);
 
 						vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 
@@ -255,6 +309,16 @@ namespace Renderer
 						instanceIndex++;
 					}
 				}
+			}
+
+			void EndActivePass()
+			{
+				if (!bInRenderPass) return;
+				const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
+				Debug::Reset(cmd);
+				RecordEndRenderPass();
+				bInRenderPass = false;
+				currentRenderPassKey.Reset();
 			}
 
 			void Reset()
@@ -383,15 +447,44 @@ namespace Renderer
 				drawCommandRecorder.RecordDrawCommand(draw);
 			}
 
-			void ProcessDraws()
+			struct Command
 			{
+				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd } type = Type::Draw;
 				Draw draw;
-				while (draws.try_dequeue(draw)) {
-					UpdateInstanceDataForDraw(draw);
-					if (GetNativeRendererState().preview.IsSetup()) {
-						GetNativeRendererState().preview.SaveDraw(draw);
+				ShadowPassSettings settings;
+				ShadowReceiverViewport viewport;
+			};
+
+			void ProcessCommands()
+			{
+				Command command;
+				while (commands.try_dequeue(command)) {
+					switch (command.type) {
+					case Command::Type::Draw:
+						UpdateInstanceDataForDraw(command.draw);
+						if (GetNativeRendererState().preview.IsSetup() && command.draw.renderPassKey.kind == ERenderPassKind::Main) {
+							GetNativeRendererState().preview.SaveDraw(command.draw);
+						}
+						RecordDrawCommands(command.draw);
+						break;
+					case Command::Type::ShadowBegin:
+						drawCommandRecorder.EndActivePass();
+						Shadow::BeginMask(command.settings);
+						drawCommandRecorder.BeginPass(RenderPassKey{ EClearMode::ColorDepth, ERenderPassKind::ShadowMask });
+						break;
+					case Command::Type::ShadowBlur:
+						drawCommandRecorder.EndActivePass();
+						Shadow::RecordBlur(GetNativeRendererState().commandBuffers[GetCurrentFrame()]);
+						break;
+					case Command::Type::ShadowReceiver:
+						drawCommandRecorder.EndActivePass();
+						Shadow::BeginReceiver(command.viewport);
+						break;
+					case Command::Type::ShadowEnd:
+						drawCommandRecorder.EndActivePass();
+						Shadow::End();
+						break;
 					}
-					RecordDrawCommands(draw);
 				}
 			}
 
@@ -399,7 +492,7 @@ namespace Renderer
 			{
 				while (!bShouldStop) {
 					std::unique_lock<std::mutex> lock(mutex);
-					cv.wait(lock, [this] { return draws.peek() || bShouldStop; });
+					cv.wait(lock, [this] { return commands.peek() || bShouldStop; });
 
 					ZONE_SCOPED_NAME("RenderThread::Run");
 
@@ -410,7 +503,7 @@ namespace Renderer
 						bShouldRecordBegin = false;
 					}
 
-					ProcessDraws();
+					ProcessCommands();
 				}
 			}
 
@@ -423,7 +516,7 @@ namespace Renderer
 				}
 
 				// Any leftover draws to process.
-				ProcessDraws();
+				ProcessCommands();
 
 				MapBuffers();
 				RecordEndCommandBuffer();
@@ -432,7 +525,45 @@ namespace Renderer
 
 			void AddDraw(const Draw& draw)
 			{
-				draws.enqueue(draw); // Lock-free push
+				Command command;
+				command.type = Command::Type::Draw;
+				command.draw = draw;
+				AddCommand(command);
+			}
+
+			void AddShadowBegin(const ShadowPassSettings& settings)
+			{
+				Command command;
+				command.type = Command::Type::ShadowBegin;
+				command.settings = settings;
+				AddCommand(command);
+			}
+
+			void AddShadowBlur()
+			{
+				Command command;
+				command.type = Command::Type::ShadowBlur;
+				AddCommand(command);
+			}
+
+			void AddShadowReceiver(const ShadowReceiverViewport& viewport)
+			{
+				Command command;
+				command.type = Command::Type::ShadowReceiver;
+				command.viewport = viewport;
+				AddCommand(command);
+			}
+
+			void AddShadowEnd()
+			{
+				Command command;
+				command.type = Command::Type::ShadowEnd;
+				AddCommand(command);
+			}
+
+			void AddCommand(const Command& command)
+			{
+				commands.enqueue(command);
 
 				if (!bRecordedCommands) {
 					bRecordedCommands = true;
@@ -467,7 +598,7 @@ namespace Renderer
 		private:
 
 			std::thread thread;
-			moodycamel::ReaderWriterQueue<Draw> draws;
+			moodycamel::ReaderWriterQueue<Command> commands;
 			DrawCommandRecorder drawCommandRecorder;
 			std::atomic<bool> bShouldStop = false;
 			std::atomic<bool> bRecordedCommands = false;
@@ -514,6 +645,26 @@ namespace Renderer
 		void AddRenderThreadDraw(RenderThread* renderThread, const Draw& draw)
 		{
 			renderThread->AddDraw(draw);
+		}
+
+		void AddRenderThreadShadowBegin(RenderThread* renderThread, const ShadowPassSettings& settings)
+		{
+			renderThread->AddShadowBegin(settings);
+		}
+
+		void AddRenderThreadShadowBlur(RenderThread* renderThread)
+		{
+			renderThread->AddShadowBlur();
+		}
+
+		void AddRenderThreadShadowReceiver(RenderThread* renderThread, const ShadowReceiverViewport& viewport)
+		{
+			renderThread->AddShadowReceiver(viewport);
+		}
+
+		void AddRenderThreadShadowEnd(RenderThread* renderThread)
+		{
+			renderThread->AddShadowEnd();
 		}
 
 		bool GetRenderThreadHasRecordedCommands(RenderThread* renderThread)

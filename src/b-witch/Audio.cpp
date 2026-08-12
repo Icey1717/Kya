@@ -2119,7 +2119,7 @@ void CAudioManager::AddSoundStreams(ByteCode* pByteCode)
 				pCVar4 = pCVar10;
 				uVar8 = uVar15;
 				while (uVar3 = uVar6, uVar8 != 0) {
-					if ((__s[uVar3] == '\0') && (iVar11 = edStrCmp(pCVar10->sample.aSoundEntries[0].fileName, pCVar4[1].sample.aSoundEntries[0].fileName), iVar11 == 0)) {
+					if ((__s[uVar3] == '\0') && (iVar11 = edStrCmp(pCVar10->aSoundEntries[0].fileName, pCVar4[1].aSoundEntries[0].fileName), iVar11 == 0)) {
 						__s[uVar3] = cVar7;
 					}
 
@@ -2148,7 +2148,7 @@ void CAudioManager::AddSoundStreams(ByteCode* pByteCode)
 				gFreeSoundSamples.InsertAfterQueue(pCVar12);
 				pCVar12->node.loadFunc = &SoundSampleEntry::LoadStreamCh;
 
-				edStrCopy((pCVar12->node).fileName, pCVar10->sample.aSoundEntries[0].fileName);
+				edStrCopy((pCVar12->node).fileName, pCVar10->aSoundEntries[0].fileName);
 
 				bVar1 = 0 < iVar13;
 				iVar13 = iVar13 + -1;
@@ -2170,7 +2170,7 @@ void CAudioManager::AddSoundStreams(ByteCode* pByteCode)
 			pCVar10 = this->aSoundStreams;
 			while (uVar8 != 0) {
 				uVar8 = uVar8 - 1;
-				pCVar10->sample.aSoundEntries[0].pNode = this->aSoundStreamNodes + ((byte)__s[uVar8] - 1);
+				pCVar10->aSoundEntries[0].pNode = this->aSoundStreamNodes + ((byte)__s[uVar8] - 1);
 				pCVar10 = pCVar10 + 1;
 			}
 		}
@@ -2375,7 +2375,7 @@ void FUN_00188f10(CDoubleLinkedNode<SoundSampleEntry>* pNode, char* pData)
 
 		gTransferIndex_00448e74 = edSoundSampleLoad(pData, &(pNode->node).edSoundSample, flags);
 
-		(pNode->node).field_0x74 = (((pCVar1->node).pSoundStream)->sample).field_0x88;
+		(pNode->node).field_0x74 = ((pCVar1->node).pSoundStream)->field_0x88;
 		if ((pNode->node).field_0x74 == 0) {
 			gSoundSampleMemoryUsed = gSoundSampleMemoryUsed + (pNode->node).edSoundSample.dataSize;
 		}
@@ -2655,7 +2655,7 @@ void CSoundAmbiance::Init()
 		pCVar3 = this->field_0x4.pSample;
 	}
 	if (pCVar3 == (void*)0x0) {
-		pCVar3 = &this->field_0x8.pStream->sample;
+		pCVar3 = this->field_0x8.pStream;
 	}
 	this->field_0x4c = pCVar3;
 

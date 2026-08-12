@@ -45,6 +45,7 @@ public:
 	// Convenience factories: create image + view in one call.
 	// extraUsage is OR-ed with the base usage flags for that image type.
 	static OwnedImage CreateColor(uint32_t width, uint32_t height, VkImageUsageFlags extraUsage = 0);
+	static OwnedImage CreateColor(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags extraUsage);
 	static OwnedImage CreateDepth(uint32_t width, uint32_t height, VkImageUsageFlags extraUsage = 0);
 
 private:

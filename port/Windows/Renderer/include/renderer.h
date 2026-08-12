@@ -12,6 +12,8 @@
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;
+typedef struct VkSampler_T* VkSampler;
+typedef struct VkImageView_T* VkImageView;
 struct VkExtent2D;
 
 namespace PS2 {
@@ -263,6 +265,30 @@ namespace Renderer
 	};
 
 	namespace Native {
+		enum class ERenderPassKind
+		{
+			Main,
+			ShadowMask,
+			ShadowReceiver,
+		};
+
+		struct ShadowPassSettings
+		{
+			uint32_t width = 128;
+			uint32_t height = 128;
+			uint32_t blurSamples = 0;
+			uint32_t blurRadius = 0;
+			uint32_t alpha = 0x30;
+		};
+
+		struct ShadowReceiverViewport
+		{
+			int32_t x = 0;
+			int32_t y = 0;
+			uint32_t width = 0;
+			uint32_t height = 0;
+		};
+
 		struct MatrixPacket
 		{
 			float camNormalX[4]; // 0x0
@@ -301,6 +327,18 @@ namespace Renderer
 		};
 
 		void UpdateRenderPassKey(EClearMode clearMode);
+		ShadowPassSettings NormalizeShadowPassSettings(const ShadowPassSettings& settings);
+		void BeginShadowMask(const ShadowPassSettings& settings);
+		void BlurShadowMask();
+		void BeginShadowReceiver(const ShadowReceiverViewport& viewport);
+		void EndShadowPass();
+		void PushShadowProjectionMatrix(const float* matrix);
+		void BindShadowReceiver();
+		bool HasShadowTarget();
+		VkSampler GetShadowSampler();
+		VkImageView GetShadowMaskImageView();
+		VkImageView GetShadowBlurImageView();
+		ShadowPassSettings GetShadowPassSettings();
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;

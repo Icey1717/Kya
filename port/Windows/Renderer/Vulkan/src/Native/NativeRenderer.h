@@ -51,9 +51,22 @@ namespace Renderer
 			KeyType key;
 		};
 
+		struct GraphicsPipelineState
+		{
+			bool depthTestEnable = true;
+			bool depthWriteEnable = true;
+			bool blendEnable = false;
+			VkBlendFactor srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+			VkBlendFactor dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+			VkBlendOp colorBlendOp = VK_BLEND_OP_ADD;
+			VkBlendFactor srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			VkBlendFactor dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			VkBlendOp alphaBlendOp = VK_BLEND_OP_ADD;
+		};
+
 		using PipelineMap = std::unordered_map<size_t, Renderer::Pipeline>;
 
-		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
+		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state = {});
 
 		// Initializes and updates descriptor sets for the native pipeline.
 		void InitializeDescriptorsSets(SimpleTexture* pTexture);

@@ -3,6 +3,7 @@
 #include "Blending.h"
 #include "NativeDebugShapes.h"
 #include "NativeDisplayList.h"
+#include "NativeShadow.h"
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
@@ -69,15 +70,18 @@ namespace Renderer
 		void CreateRenderStage(const RenderPassKey& key, const char* name)
 		{
 			RenderStage& stage = GetNativeRendererState().renderPass[key];
+			stage.kind = key.kind;
 
-			const bool bClearColor = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Depth);
-			const bool bClearDepth = (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Color);
+			const bool bClearColor = key.kind == ERenderPassKind::ShadowMask || (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Depth);
+			const bool bClearDepth = key.kind == ERenderPassKind::ShadowMask || (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Color);
+			const bool bReceiver = key.kind == ERenderPassKind::ShadowReceiver;
+			const VkFormat colorFormat = key.kind == ERenderPassKind::ShadowMask ? VK_FORMAT_R8_UNORM : GetSwapchainImageFormat();
 
 			const Renderer::AttachmentInfo colorInfo{
-				GetSwapchainImageFormat(),
+				colorFormat,
 				bClearColor ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
 				bClearColor ? VK_IMAGE_LAYOUT_UNDEFINED   : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
-				VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+				key.kind == ERenderPassKind::ShadowMask ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
 			};
 
 			const Renderer::AttachmentInfo depthInfo{
@@ -85,21 +89,47 @@ namespace Renderer
 				bClearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
 				bClearDepth ? VK_IMAGE_LAYOUT_UNDEFINED   : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
 				VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+				VK_ATTACHMENT_STORE_OP_STORE,
+				bReceiver,
 			};
 
-			const VkSubpassDependency dependency{
+			const VkSubpassDependency mainDependency{
 				VK_SUBPASS_EXTERNAL, 0,
 				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-				0
+				0,
 			};
 
-			stage.gRenderPass = Renderer::CreateRenderPass2D({ &colorInfo, 1 }, depthInfo, { &dependency, 1 }, name);
+			const std::array shadowDependencies{
+				VkSubpassDependency{
+					VK_SUBPASS_EXTERNAL, 0,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+					VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+					VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+					VK_DEPENDENCY_BY_REGION_BIT,
+				},
+				VkSubpassDependency{
+					0, VK_SUBPASS_EXTERNAL,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+					VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+					VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+					VK_DEPENDENCY_BY_REGION_BIT,
+				},
+			};
+
+			const std::span<const VkSubpassDependency> dependencies = key.kind == ERenderPassKind::Main
+				? std::span<const VkSubpassDependency>(&mainDependency, 1)
+				: std::span<const VkSubpassDependency>(shadowDependencies);
+			stage.gRenderPass = Renderer::CreateRenderPass2D({ &colorInfo, 1 }, depthInfo, dependencies, name);
 
 			stage.CreatePipeline();
 
-			std::string debugLineName = std::string(name) + " Debug Lines";
-			DebugShapes::CreatePipeline(stage.gRenderPass, stage.gDebugLinePipeline, debugLineName.c_str());
+			if (key.kind == ERenderPassKind::Main) {
+				std::string debugLineName = std::string(name) + " Debug Lines";
+				DebugShapes::CreatePipeline(stage.gRenderPass, stage.gDebugLinePipeline, debugLineName.c_str());
+			}
 		}
 
 		static uint16_t GetBlendPipelineVariantKey(const ResolvedBlendState& blendState)
@@ -228,7 +258,7 @@ namespace Renderer
 			stage.gBlendPipelines.emplace(blendKey, blendPipeline);
 			return blendPipeline;
 		}
-		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
+		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state)
 		{
 			pipeline.debugName = name;
 
@@ -288,13 +318,13 @@ namespace Renderer
 
 			VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			colorBlendAttachment.blendEnable = VK_FALSE;
-			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-			colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-			colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-			colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+			colorBlendAttachment.blendEnable = state.blendEnable;
+			colorBlendAttachment.srcColorBlendFactor = state.srcColorBlendFactor;
+			colorBlendAttachment.dstColorBlendFactor = state.dstColorBlendFactor;
+			colorBlendAttachment.colorBlendOp = state.colorBlendOp;
+			colorBlendAttachment.srcAlphaBlendFactor = state.srcAlphaBlendFactor;
+			colorBlendAttachment.dstAlphaBlendFactor = state.dstAlphaBlendFactor;
+			colorBlendAttachment.alphaBlendOp = state.alphaBlendOp;
 
 			VkPipelineColorBlendStateCreateInfo colorBlending{};
 			colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -321,8 +351,8 @@ namespace Renderer
 
 			VkPipelineDepthStencilStateCreateInfo depthState{};
 			depthState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-			depthState.depthTestEnable = VK_TRUE;
-			depthState.depthWriteEnable = VK_TRUE;
+			depthState.depthTestEnable = state.depthTestEnable;
+			depthState.depthWriteEnable = state.depthWriteEnable;
 			depthState.depthCompareOp = VK_COMPARE_OP_GREATER;
 
 			VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -388,6 +418,13 @@ namespace Renderer
 			key.clearMode = EClearMode::Color;
 			CreateRenderStage(key, "Native Render Pass CM Color");
 
+			key.kind = ERenderPassKind::ShadowMask;
+			key.clearMode = EClearMode::ColorDepth;
+			CreateRenderStage(key, "Native Shadow Mask Render Pass");
+			key.kind = ERenderPassKind::ShadowReceiver;
+			key.clearMode = EClearMode::None;
+			CreateRenderStage(key, "Native Shadow Receiver Render Pass");
+
 			CreateFramebuffer();
 			CreateFramebufferSampler();
 			GetNativeRendererState().commandPool = CreateCommandPool("Native Renderer Command Pool");
@@ -402,6 +439,10 @@ namespace Renderer
 
 			GetNativeRendererState().lightingDynamicBuffer.Init();
 			GetNativeRendererState().animStBuffer.Init();
+			GetNativeRendererState().shadowProjectionBuffer.Init();
+			GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::mat4(1.0f));
+
+			Shadow::Setup();
 
 			GetRenderDelegate() += Render;
 
@@ -419,16 +460,19 @@ namespace Renderer
 
 		void Cleanup()
 		{
+			DestroyRenderThread(GetNativeRendererState().renderThread);
+			Shadow::Cleanup();
+
 			GetNativeRendererState().modelBuffer.DestroyResources();
 			GetNativeRendererState().animationBuffer.DestroyResources();
 			GetNativeRendererState().lightingDynamicBuffer.DestroyResources();
 			GetNativeRendererState().animStBuffer.DestroyResources();
+			GetNativeRendererState().shadowProjectionBuffer.DestroyResources();
 			GetNativeRendererState().fadeBuffer.DestroyResources();
 			GetNativeRendererState().nativeVertexBuffer.DestroyResources();
 
 			DebugShapes::Cleanup();
 			DisplayList::Cleanup();
-			DestroyRenderThread(GetNativeRendererState().renderThread);
 		}
 
 		void ResizeFrameBuffer(int width, int height)
@@ -457,6 +501,7 @@ namespace Renderer
 			vkDeviceWaitIdle(GetDevice());
 
 			DebugShapes::DestroyDedicatedPass();
+			Shadow::DestroyReceiverFramebuffer();
 
 			vkDestroyFramebuffer(GetDevice(), GetNativeRendererState().frameBuffer.framebuffer, GetAllocator());
 			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.colorImageView, GetAllocator());
@@ -471,6 +516,7 @@ namespace Renderer
 			gHeight = height;
 
 			CreateFramebuffer();
+			Shadow::CreateReceiverFramebuffer();
 
 			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 

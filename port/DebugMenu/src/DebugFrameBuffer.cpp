@@ -53,6 +53,28 @@ void Debug::FrameBuffer::ShowNativeFrameBuffer(bool* bOpen) {
 	}
 }
 
+void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
+{
+	ImGui::Begin("Native Shadow Buffers", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+	if (!Renderer::Native::HasShadowTarget()) {
+		ImGui::TextUnformatted("No native shadow pass has rendered yet.");
+		ImGui::End();
+		return;
+	}
+
+	const auto settings = Renderer::Native::GetShadowPassSettings();
+	ImGui::Text("%ux%u, %u samples, radius %u", settings.width, settings.height, settings.blurSamples, settings.blurRadius);
+	const ImVec2 size(256.0f, 256.0f * static_cast<float>(settings.height) / static_cast<float>(settings.width));
+	ImGui::TextUnformatted("Caster mask");
+	ImGui::Image(DebugMenu::GetNativeShadowBuffer(false), size);
+	ImGui::SameLine();
+	ImGui::BeginGroup();
+	ImGui::TextUnformatted("Blur output");
+	ImGui::Image(DebugMenu::GetNativeShadowBuffer(true), size);
+	ImGui::EndGroup();
+	ImGui::End();
+}
+
 int gRenderFramebufferIndex = 0;
 
 void Debug::FrameBuffer::ShowFramebuffers(bool* bOpen) {
@@ -132,5 +154,6 @@ ImVec2 Debug::FrameBuffer::GetGameWindowSize()
 namespace Debug {
     MenuRegisterer sDebugFramebufferMenuReg("Framebuffer", Debug::FrameBuffer::ShowMenu);
     MenuRegisterer sDebugFramebuffersMenuReg("Framebuffers", Debug::FrameBuffer::ShowFramebuffers);
+	MenuRegisterer sDebugShadowBuffersMenuReg("Native Shadow Buffers", Debug::FrameBuffer::ShowNativeShadowBuffers);
 }
 

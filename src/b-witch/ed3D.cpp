@@ -1940,6 +1940,7 @@ float fSecInc = 5.0f;
 
 #ifdef PLATFORM_WIN
 edF32MATRIX4 gNativeProjectionMatrix = { 0 };
+edF32MATRIX4 gShadowNativeProjectionMatrix = { 0 };
 
 static edF32MATRIX4 CalculateOpenGlPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
 {
@@ -2283,6 +2284,9 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 		memcpy(&gShadow_CamPos, &gCamPos, sizeof(edF32VECTOR4));
 		memcpy(&gShadow_gCamNormal_X, &gCamNormal_X, sizeof(edF32VECTOR4));
 		memcpy(&gShadow_gCamNormal_Y, &gCamNormal_Y, sizeof(edF32VECTOR4));
+#ifdef PLATFORM_WIN
+		gShadowNativeProjectionMatrix = gNativeProjectionMatrix;
+#endif
 	}
 	if (pScene->bShadowScene == 1) {
 		uVar1 = GetGreaterPower2Val((int)pScene->pViewport->screenWidth);
@@ -2319,6 +2323,15 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 
 		memcpy(&WorldToCamera_Matrix_CastShadow, WorldToCamera_Matrix, sizeof(edF32MATRIX4));
 		gShadowRenderScene = pScene;
+#ifdef PLATFORM_WIN
+		Renderer::Native::ShadowPassSettings shadowSettings{};
+		shadowSettings.width = static_cast<uint32_t>((gRenderSceneConfig_SPR->pShadowConfig).texWidth);
+		shadowSettings.height = static_cast<uint32_t>((gRenderSceneConfig_SPR->pShadowConfig).texHeight);
+		shadowSettings.blurSamples = (gRenderSceneConfig_SPR->pShadowConfig).nbBlurSamples;
+		shadowSettings.blurRadius = (gRenderSceneConfig_SPR->pShadowConfig).blurRadius;
+		shadowSettings.alpha = (gRenderSceneConfig_SPR->pShadowConfig).field_0x22;
+		Renderer::Native::BeginShadowMask(shadowSettings);
+#endif
 	}
 	else {
 		*gShadowRenderMask = 0;
@@ -5557,9 +5570,9 @@ edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial
 	PTR_AnimScratchpad_00449554->field_0xc = 0;
 
 #ifdef PLATFORM_WIN
-	//Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-	// This is all we need to do on windows, return here to save some processing time.
-	//return pNextPkt;
+	Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
+	Renderer::Native::BindShadowReceiver();
+	return pNextPkt;
 #endif
 
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
@@ -5656,6 +5669,14 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 				bVar3 = false;
 				while (pNode != pList) {
 					listNodeType = pNode->header.typeField.type;
+
+#ifdef PLATFORM_WIN
+					if (listNodeType == LIST_TYPE_STRIP) {
+						ed3DFlushStrip(pNode);
+						pNode = pNode->pPrev;
+						continue;
+					}
+#endif
 
 					if (listNodeType == LIST_TYPE_SPRITE) {
 						IMPLEMENTATION_GUARD();
@@ -5985,6 +6006,9 @@ edpkt_data* ed3DShadowManageProjectionSTMtx(edF32MATRIX4* pMtx, edpkt_data* pPkt
 	MTXLightFrustum(-fVar6, fVar6, -fVar7, fVar7, local_8, 0.5f, 0.5f, 0.5f, &eStack208, 0.5f);
 	edF32Matrix4GetTransposeHard(&eStack80, &eStack208);
 	edF32Matrix4MulF32Matrix4Hard(&eStack80, &eStack144, &eStack80);
+#ifdef PLATFORM_WIN
+	Renderer::Native::PushShadowProjectionMatrix(eStack80.raw);
+#endif
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(4);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x03f7, 04, UNPACK_V4_32, 0);
@@ -6317,10 +6341,10 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 				IMPLEMENTATION_GUARD();
 			}
 			else if (pMaterial->pMaterial == &gMaterial_Render_Zbuffer_Only) {
-				IMPLEMENTATION_GUARD();
+				Renderer::BindUntextured();
 			}
 			else if (pMaterial->pMaterial == &gMaterial_Render_Zbuffer_Only_Cluster) {
-				IMPLEMENTATION_GUARD();
+				Renderer::BindUntextured();
 			}
 			else if (pMaterial->pMaterial == nullptr) {
 				Renderer::BindNull();
@@ -7031,6 +7055,7 @@ edpkt_data* ed3DJitterShadow(edpkt_data* pPkt)
 	IMPLEMENTATION_GUARD_PS2();
 	return pPkt;
 #else 
+	Renderer::Native::BlurShadowMask();
 	return pPkt;
 #endif
 }
@@ -7066,6 +7091,11 @@ void ed3DFlushShadowList(void)
 		memcpy(&gCamNormal_X, &gShadow_gCamNormal_X, sizeof(edF32VECTOR4));
 		memcpy(&gCamNormal_Y, &gShadow_gCamNormal_Y, sizeof(edF32VECTOR4));
 
+#ifdef PLATFORM_WIN
+		gNativeProjectionMatrix = gShadowNativeProjectionMatrix;
+		Renderer::PushGlobalMatrices(gF32Matrix4Unit.raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw);
+#endif
+
 		peVar4 = g_VifRefPktCur;
 		g_VifRefPktCur->asU32[0] = ED_VIF1_SET_TAG_REF(0, 0);
 		g_VifRefPktCur->asU32[1] = SCE_VIF1_SET_NOP(0);
@@ -7074,6 +7104,16 @@ void ed3DFlushShadowList(void)
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 
 		g_VifRefPktCur = ed3DJitterShadow(g_VifRefPktCur);
+#ifdef PLATFORM_WIN
+		Renderer::Native::ShadowReceiverViewport receiverViewport{};
+		if (gShadowRenderViewport != (ed_viewport*)0x0) {
+			receiverViewport.x = gShadowRenderViewport->posX;
+			receiverViewport.y = gShadowRenderViewport->posY;
+			receiverViewport.width = static_cast<uint32_t>(gShadowRenderViewport->screenWidth);
+			receiverViewport.height = static_cast<uint32_t>(gShadowRenderViewport->screenHeight);
+		}
+		Renderer::Native::BeginShadowReceiver(receiverViewport);
+#endif
 		g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
 		g_VifRefPktCur = ed3DAddViewportContextPacket(gShadowRenderViewport, g_VifRefPktCur);
 		peVar4 = ed3DShadowFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
@@ -7145,6 +7185,10 @@ void ed3DFlushShadowList(void)
 
 	gShadowFlushMode = 0;
 	*gShadowRenderMask = 0;
+
+#ifdef PLATFORM_WIN
+	Renderer::Native::EndShadowPass();
+#endif
 
 	if (bRenderedShadow) {
 		pprevious_shadow_dma_matrix = (ed_dma_matrix*)0x0;
