@@ -124,6 +124,6 @@ void CHelpManager::Level_ManagePaused()
 
 void CHelpManager::Level_Draw()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_HELP();
 	return;
 }

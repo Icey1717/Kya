@@ -120,6 +120,8 @@ public:
 
 	int GetClassActorsWithCriterion(CActorsTable* pOutTable, int classId, CActor* pExcludeActor, CriterionActorFunc* pCriterion);
 
+	void FillActorsByClassId(int typeId, CActor** aList, int nbListSize);
+
 	_linked_actor* aLinkedActorData;
 	_linked_actor* pActorArray_0x8;
 	int field_0xc;

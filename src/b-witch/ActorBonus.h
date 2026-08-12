@@ -215,7 +215,7 @@ public:
 
 	int flareMaterialId;
 	int animMaterialId;
-	CActorSound* field_0x1d8;
+	CActorSoundNode* field_0x1d8;
 	S_STREAM_REF<CSound> field_0x1dc;
 	CFxTail* pFxTail;
 	edF32VECTOR4 vector_0x1e0;

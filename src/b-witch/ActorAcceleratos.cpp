@@ -5,7 +5,7 @@
 void CActorAcceleratos::Create(ByteCode* pByteCode)
 {
 	S_ACCELERATOS_CONFIG* pSVar1;
-	CActorSound* pCVar2;
+	CActorSoundNode* pCVar2;
 	CCollision* pCol;
 
 	CActor::Create(pByteCode);
@@ -14,7 +14,7 @@ void CActorAcceleratos::Create(ByteCode* pByteCode)
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar1 + 1);
 	this->pConfig = pSVar1;
 	if (((this->pConfig->field_0xc).index == -1) || ((this->pConfig->field_0x10).index == -1)) {
-		this->field_0x164 = (CActorSound*)0x0;
+		this->field_0x164 = (CActorSoundNode*)0x0;
 	}
 	else {
 		pCVar2 = CreateActorSound(2);
@@ -124,13 +124,13 @@ void CActorAcceleratos::BehaviourAcceleratosStand_Manage()
 
 		iVar1 = DoMessage(this->field_0x16c, MESSAGE_BOOST, &boostParams);
 		if (iVar1 == 0) {
-			if (this->field_0x164 != (CActorSound*)0x0) {
-				this->field_0x164->SoundStart(this, 1, (this->pConfig->field_0x10).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			if (this->field_0x164 != (CActorSoundNode*)0x0) {
+				this->field_0x164->node.SoundStart(this, 1, (this->pConfig->field_0x10).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 			}
 		}
 		else {
-			if (this->field_0x164 != (CActorSound*)0x0) {
-				this->field_0x164->SoundStart(this, 0, (this->pConfig->field_0xc).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			if (this->field_0x164 != (CActorSoundNode*)0x0) {
+				this->field_0x164->node.SoundStart(this, 0, (this->pConfig->field_0xc).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 			}
 		}
 

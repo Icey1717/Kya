@@ -1560,9 +1560,9 @@ void CPauseManager::FUN_001b0860(int param_2)
 	float fVar5;
 	float fVar6;
 
-	IMPLEMENTATION_GUARD_LOG(
-	uVar3 = CSaveManagement::FUN_002f39c0(&gSaveManagement);
+	uVar3 = gSaveManagement.FUN_002f39c0();
 	if ((uVar3 != 0) || (param_2 != 0)) {
+		IMPLEMENTATION_GUARD_LOG(
 		uVar4 = EncodeFloat(Timer::GetTimer()->totalTime * 256.0f);
 		uVar4 = (int)uVar4 % 0x140;
 		if (0xff < uVar4) {
@@ -1582,8 +1582,8 @@ void CPauseManager::FUN_001b0860(int param_2)
 			CSprite::Draw((float)&DAT_3f333333, fVar5, fVar6, BootBitmaps + 0x16, 0x12);
 			BootBitmaps[22].color[3] = 0x7f;
 			GuiDList_EndCurrent();
-		}
-	})
+		})
+	}
 
 	return;
 }

@@ -41,7 +41,7 @@ void CActorAraignos::Create(ByteCode* pByteCode)
 	this->pathFollowAbsolute.Create(this->field_0x1f8 * 1.5f, pPathFollow, 0);
 
 	if (((this->field_0x240 == 0) && (this->field_0x238 == 0)) && (this->field_0x23c == 0)) {
-		this->pActorSound = (CActorSound*)0x0;
+		this->pActorSound = (CActorSoundNode*)0x0;
 	}
 	else {
 		this->pActorSound = CreateActorSound(2);
@@ -255,9 +255,9 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							this->flags = this->flags & 0xffffff5f;
 							EvaluateDisplayState();
 
-							if (this->pActorSound != (CActorSound*)0x0) {
-								this->pActorSound->SoundStart(this, 1, (CSound*)this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
-								this->pActorSound->SetFrequency(this->field_0x1f8, 1);
+							if (this->pActorSound != (CActorSoundNode*)0x0) {
+								this->pActorSound->node.SoundStart(this, 1, (CSound*)this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+								this->pActorSound->node.SetFrequency(this->field_0x1f8, 1);
 							}
 
 							this->field_0x1d0 = 0.0f;

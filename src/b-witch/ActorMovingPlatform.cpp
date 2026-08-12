@@ -308,7 +308,7 @@ LAB_0015d240:
 	}
 
 	if (uVar16 == 0) {
-		this->pActorSound = (CActorSound*)0x0;
+		this->pActorSound = (CActorSoundNode*)0x0;
 	}
 	else {
 		this->pActorSound = CreateActorSound(uVar16);

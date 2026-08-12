@@ -31,8 +31,8 @@ struct ed_3D_Shadow_Config
 	int texHeight;
 	undefined2 renderMask;
 	byte field_0x22;
-	byte field_0x23;
-	byte field_0x24;
+	byte nbBlurSamples;
+	byte blurRadius;
 };
 
 struct SceneConfig

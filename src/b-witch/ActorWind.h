@@ -248,7 +248,7 @@ public:
 	int outerPatchId;
 	int whirlPatchId;
 	int fakePlanePatchId;
-	CActorSound* field_0x374;
+	CActorSoundNode* field_0x374;
 
 	float field_0x390;
 

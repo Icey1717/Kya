@@ -63,6 +63,8 @@ public:
 
 	SaveDataDesc* get_save_data_desc(int index);
 
+	bool FUN_002f39c0();
+
 public:
 	byte field_0x0;
 	byte field_0x1;

@@ -55,7 +55,7 @@ public:
 
 	S_ACCELERATOS_CONFIG* pConfig;
 
-	CActorSound* field_0x164;
+	CActorSoundNode* field_0x164;
 	int field_0x168;
 	CActor* field_0x16c;
 	CBehaviourAcceleratosStand behaviourStand;

@@ -57,7 +57,7 @@ void CActorRope::Create(ByteCode* pByteCode)
 	this->ropeFlags = pByteCode->GetU32();
 	this->field_0x188 = 0;
 	if ((this->soundStreamRef).index == -1) {
-		this->pActorSound = (CActorSound*)0x0;
+		this->pActorSound = (CActorSoundNode*)0x0;
 	}
 	else {
 		this->pActorSound = CreateActorSound(1);
@@ -913,7 +913,7 @@ int CBehaviourRopeStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					if ((uVar6 != 0) && ((pRope->ropeFlags & 1) == 0)) {
 						pCVar2 = (pRope->soundStreamRef).Get();
 						if (pCVar2 != (CSound*)0x0) {
-							pRope->pActorSound->SoundStart(pRope, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+							pRope->pActorSound->node.SoundStart(pRope, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 						}
 
 						pCVar3 = pRope->pCollisionData;

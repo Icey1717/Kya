@@ -21,6 +21,12 @@ struct SoundEntry
 class CSound
 {
 public:
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* param_5, uint* param_6) { IMPLEMENTATION_GUARD(); };
+	virtual uint Stop(uint instanceId) { IMPLEMENTATION_GUARD(); };
+	virtual bool IsLooping();
+
+	void FadeTo(float param_1, float param_2, float param_3, uint instanceId);
+
 	int setupIntFieldA;
 	SoundEntry aSoundEntries[6];
 	ed_sound_sample edSoundSample;
@@ -38,7 +44,6 @@ class CSoundSample : public CSound
 {
 public:
 	void Create(ByteCode* pByteCode);
-	uint Stop(uint instanceId) { IMPLEMENTATION_GUARD(); }
 };
 
 struct CSoundStream : public CSoundSample
@@ -266,6 +271,11 @@ struct MusicSomething_0x8
 {
 	void* pAdpcm;
 	uint size;
+};
+
+struct SOUND_SPATIALIZATION_PARAM
+{
+	float* field_0x0;
 };
 
 class CAudioManager : public CObjectManager

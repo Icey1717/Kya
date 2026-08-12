@@ -106,7 +106,7 @@ public:
 	CLightConfig lightConfig;
 
 	S_STREAM_REF<CSound> soundRef;
-	CActorSound* field_0x280;
+	CActorSoundNode* field_0x280;
 	edF32VECTOR4 field_0x288;
 };
 

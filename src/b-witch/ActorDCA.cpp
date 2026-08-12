@@ -870,8 +870,8 @@ void CActorDCA::CBhvControlled::End(int newBehaviourId)
 			CCameraManager::_gThis->PopCamera(pCVar1->pCamera);
 		}
 
-		pCVar1->field_0x4fc->SoundStop(0);
-		pCVar1->field_0x4fc->SoundStop(3);
+		pCVar1->field_0x4fc->node.SoundStop(0);
+		pCVar1->field_0x4fc->node.SoundStop(3);
 	}
 
 	pCVar1->bIsFiring = 0;

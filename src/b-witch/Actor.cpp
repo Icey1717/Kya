@@ -335,8 +335,6 @@ CActor::CActor()
 	//this->field_0x138 = -1.0f;
 	//this->field_0x140 = 0;
 	//this->field_0x144 = 0;
-	//this->aActorSounds = (CActorSound*)0x0;
-	//this->field_0x14c = 0;
 	this->actorManagerIndex = -1;
 	this->sectorId = -1;
 	this->pCinData = (CinNamedObject30*)0x0;
@@ -832,13 +830,11 @@ void CActor::Create(ByteCode* pByteCode)
 
 void CActor::Init()
 {
-	uint* puVar1;
+	CSimpleLinkedNode<CActorSound>* pActorSound;
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	for (puVar1 = (uint*)this->field_0x144; puVar1 != (uint*)0x0; puVar1 = (uint*)puVar1[0xe]) {
-		CActorSound::Init(puVar1);
+	for (pActorSound = this->aActorSounds.pHead; pActorSound != (CSimpleLinkedNode<CActorSound>*)0x0; pActorSound = pActorSound->pNext) {
+		pActorSound->node.Init();
 	}
-	)
 
 	this->SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
 
@@ -906,15 +902,14 @@ void CActor::Manage()
 
 	ComputeAltitude();
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	puVar2 = (uint*)this->field_0x144;
-	if (puVar2 != (uint*)0x0) {
-		(*(code*)this->pVTable->field_0x5c)(this);
-		for (; puVar2 != (uint*)0x0; puVar2 = (uint*)puVar2[0xe]) {
-			CActorSound::Manage(puVar2, this);
+	CSimpleLinkedNode<CActorSound>* pCVar1 = (this->aActorSounds).pHead;
+	if (pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0) {
+		LocationFunc_00100b70();
+
+		for (; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
+			pCVar1->node.Manage(this);
 		}
 	}
-	)
 
 	this->timeInAir = this->timeInAir + Timer::GetTimer()->cutsceneDeltaTime;
 
@@ -2911,12 +2906,14 @@ void CActor::GetPosition_00101130(edF32VECTOR4* pOutPosition)
 	return;
 }
 
-
-
-CActorSound* CActor::CreateActorSound(int soundType)
+CActorSoundNode* CActor::CreateActorSound(int nbInstances)
 {
-	IMPLEMENTATION_GUARD_AUDIO();
-	return NULL;
+	CActorSoundNode* pNewSound;
+
+	pNewSound = NewPool_CActorSoundNode(1);
+	pNewSound->node.Create(this, nbInstances);
+	this->aActorSounds.InsertAfterQueue(pNewSound);
+	return pNewSound;
 }
 
 void CActor::Compute2DOrientationFromAngles()
@@ -3097,6 +3094,13 @@ uint CActor::GetBehaviourFlags(int state)
 		uVar1 = _gBehaviourFlags_ACT[state];
 	}
 	return uVar1;
+}
+
+void CActor::LocationFunc_00100b70()
+{
+	this->vector_0x120 = (this->currentLocation).xyz;
+
+	return;
 }
 
 void CActor::RestartCurAnim()
@@ -5621,3 +5625,111 @@ void S_ACTOR_STREAM_REF::Reset()
 
 	return;
 }
+
+void CActorSound::Create(CActor* pActor, int nbInstances)
+{
+	bool bVar1;
+	CSoundInstance* pCVar2;
+	int iVar3;
+
+	this->nbInstances = nbInstances;
+	if (nbInstances != 0) {
+		pCVar2 = NewPool_CSoundInstance(nbInstances);
+		this->aSoundInstances = pCVar2;
+		pCVar2 = this->aSoundInstances;
+		iVar3 = nbInstances + -1;
+		if (nbInstances != 0) {
+			do {
+				//pCVar2->pFinishCallback = CActorSoundInstanceFinishCallback;
+				pCVar2->pOwner = this;
+				pCVar2 = pCVar2 + 1;
+				bVar1 = iVar3 != 0;
+				iVar3 = iVar3 + -1;
+			} while (bVar1);
+		}
+	}
+
+	this->flags = 1;
+
+	return;
+}
+
+void CActorSound::Init()
+{
+	CSoundInstance* pCVar1;
+	CSound* pCVar2;
+	CSoundInstance* pCVar3;
+	uint uVar4;
+
+	this->flags = this->flags | 1;
+	pCVar3 = this->field_0x30;
+	while (pCVar3 != (CSoundInstance*)0x0) {
+		pCVar1 = pCVar3->pNext;
+		if ((NoAudio == 0) && (pCVar2 = pCVar3->pSound, pCVar2 != (CSound*)0x0)) {
+			uVar4 = pCVar2->Stop(pCVar3->soundId);
+			pCVar3->soundId = uVar4;
+		}
+
+		if (pCVar3->pPrev == (CSoundInstance*)0x0) {
+			this->field_0x30 = pCVar3->pNext;
+		}
+		else {
+			pCVar3->pPrev->pNext = pCVar3->pNext;
+		}
+
+		if (pCVar3->pNext != (CSoundInstance*)0x0) {
+			pCVar3->pNext->pPrev = pCVar3->pPrev;
+		}
+
+		pCVar3->flags = pCVar3->flags & 0xfffffffe;
+		pCVar3 = pCVar1;
+	}
+
+	return;
+}
+
+void CActorSound::Manage(CActor* pActor)
+{
+	CSoundInstance* pCVar1;
+	CSound* pCVar2;
+	bool bVar3;
+	CSoundInstance* pCVar4;
+	uint uVar5;
+	long lVar6;
+
+	bVar3 = pActor->distanceToCamera <= pActor->subObjA->field_0x20;
+	if ((bVar3) || ((this->flags & 1) != 0)) {
+		if (bVar3) {
+			uVar5 = this->flags & 1;
+			if ((uVar5 != 0) && (uVar5 != 0)) {
+				this->flags = this->flags & 0xfffffffe;
+				for (pCVar1 = this->field_0x30; pCVar1 != (CSoundInstance*)0x0; pCVar1 = pCVar1->pNext) {
+					if ((NoAudio == 0) && (pCVar2 = pCVar1->pSound, pCVar2 != (CSound*)0x0)) {
+						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->field_0x14, (void*)0x0, &pCVar1->soundId);
+						pCVar1->soundId = uVar5;
+					}
+				}
+			}
+		}
+	}
+	else {
+		this->flags = this->flags | 1;
+		pCVar1 = this->field_0x30;
+		while (pCVar4 = pCVar1, pCVar4 != (CSoundInstance*)0x0) {
+			pCVar1 = pCVar4->pNext;
+			if (pCVar4->pSound == (CSound*)0x0) {
+				lVar6 = 0;
+			}
+			else {
+				lVar6 = pCVar4->pSound->IsLooping();
+			}
+
+			if ((lVar6 != 0) && (pCVar4->pSound != (CSound*)0x0)) {
+				pCVar4->pSound->FadeTo(0.0f, -2.0f, 1.0f, pCVar4->soundId);
+			}
+		}
+	}
+	return;
+}
+
+

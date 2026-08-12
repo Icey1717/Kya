@@ -128,9 +128,9 @@ ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 	(pCVar6->pShadowConfig).pCamera_0x10 = pViewport;
 	(pCVar6->pShadowConfig).pViewport = pCVar5;
 	(pCVar6->pShadowConfig).renderMask = (pTemplate->sceneConfig).pShadowConfig.renderMask;
-	(pCVar6->pShadowConfig).field_0x23 = (pTemplate->sceneConfig).pShadowConfig.field_0x23;
+	(pCVar6->pShadowConfig).nbBlurSamples = (pTemplate->sceneConfig).pShadowConfig.nbBlurSamples;
 	(pCVar6->pShadowConfig).field_0x22 = (pTemplate->sceneConfig).pShadowConfig.field_0x22;
-	(pCVar6->pShadowConfig).field_0x24 = (pTemplate->sceneConfig).pShadowConfig.field_0x24;
+	(pCVar6->pShadowConfig).blurRadius = (pTemplate->sceneConfig).pShadowConfig.blurRadius;
 	(pCVar6->pShadowConfig).texWidth = (pTemplate->sceneConfig).pShadowConfig.texWidth;
 	(pCVar6->pShadowConfig).texHeight = (pTemplate->sceneConfig).pShadowConfig.texHeight;
 	(pTemplate->sceneConfig).pShadowConfig.renderMask = 0;
@@ -1156,8 +1156,8 @@ void CScene::LoadFunc_001b87b0()
 	(pCVar1->pShadowConfig).field_0x8 = -0.01f;
 	(pCVar1->pShadowConfig).field_0xc = -150.0f;
 		(pCVar1->pShadowConfig).field_0x22 = 0x32;
-		(pCVar1->pShadowConfig).field_0x23 = 0;
-		(pCVar1->pShadowConfig).field_0x24 = 0;
+		(pCVar1->pShadowConfig).nbBlurSamples = 0;
+		(pCVar1->pShadowConfig).blurRadius = 0;
 	} while ((int)uVar3 < 10);
 	return;
 }

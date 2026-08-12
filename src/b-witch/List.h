@@ -154,4 +154,56 @@ public:
 	CDoubleLinkedNode<NodeType>* pTail;
 };
 
+template<typename NodeType>
+class CSimpleLinkedNode
+{
+public:
+	NodeType node;
+	CSimpleLinkedNode<NodeType>* pNext;
+};
+
+template<typename NodeType>
+class CSimpleLinkedList
+{
+public:
+	CSimpleLinkedList()
+	{
+		this->pHead = (CSimpleLinkedNode<NodeType>*)0x0;
+		this->pTail = (CSimpleLinkedNode<NodeType>*)0x0;
+
+		return;
+	}
+
+	void InsertAfterQueue(CSimpleLinkedNode<NodeType>* pNode)
+	{
+		pNode->pNext = this->pTail;
+
+		if (this->pTail == (CSimpleLinkedNode<NodeType>*)0x0) {
+			this->pHead = pNode;
+		}
+		else {
+			this->pTail->pNext = pNode;
+		}
+
+		this->pTail = pNode;
+
+		return;
+	}
+
+	void RemoveHead()
+	{
+		if (this->pHead != (CSimpleLinkedNode<NodeType>*)0x0) {
+			if (this->pHead->pNext == (CSimpleLinkedNode<NodeType>*)0x0) {
+				this->pTail = (CSimpleLinkedNode<NodeType>*)0x0;
+			}
+			this->pHead = this->pHead->pNext;
+		}
+
+		return;
+	}
+
+	CSimpleLinkedNode<NodeType>* pHead;
+	CSimpleLinkedNode<NodeType>* pTail;
+};
+
 #endif // LIST_H

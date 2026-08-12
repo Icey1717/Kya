@@ -139,7 +139,7 @@ public:
 
 	float field_0x4f0;
 	byte bCameraPushed;
-	CActorSound* field_0x4fc;
+	CActorSoundNode* field_0x4fc;
 
 	S_STREAM_REF<CSound> field_0x500;
 	S_STREAM_REF<CSound> field_0x504;

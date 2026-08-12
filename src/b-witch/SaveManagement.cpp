@@ -1251,3 +1251,17 @@ SaveDataDesc* CSaveManagement::get_save_data_desc(int index)
 
 	return pSVar1;
 }
+
+bool CSaveManagement::FUN_002f39c0()
+{
+	bool bVar1;
+
+	if (this->pFile_0x2c == (edFILEH*)0x0) {
+		bVar1 = false;
+	}
+	else {
+		bVar1 = this->pFile_0x2c->nbQueuedActions != 0;
+	}
+
+	return bVar1;
+}

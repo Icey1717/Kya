@@ -198,7 +198,7 @@ void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
 			EdSoundVoiceSetFree(pInstance->voiceIndices[voiceIndexIndex]);
 		}
 
-		pedSoundInstancesToDelete[edSoundInstancesToDeleteNb] = pInstance->soundInstanceId;
+		pedSoundInstancesToDelete[edSoundInstancesToDeleteNb] = pInstance->fullSoundInstanceId;
 		edSoundInstancesToDeleteNb = edSoundInstancesToDeleteNb + 1;
 	}
 
@@ -206,7 +206,7 @@ void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
 		_edSoundStreamFreeDynamicData(pInstance);
 	}
 
-	uint soundInstanceId = pInstance->soundInstanceId;
+	uint soundInstanceId = pInstance->fullSoundInstanceId;
 	edSoundInstanceCom[soundInstanceId & 0xffff].flags = 0;
 	edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = 0;
 	pInstance->soundInstanceId = 0xffff;

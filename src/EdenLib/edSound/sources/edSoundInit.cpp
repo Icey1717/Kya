@@ -18,16 +18,6 @@ uint edSoundVoicesNumberGet(void)
 	return 0x30;
 }
 
-struct ED_SOUND_3D_DATA
-{
-	edF32VECTOR3 field_0x0;
-	edF32VECTOR3 field_0xc;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
-	byte field_0x24;
-};
-
 ED_SOUND_3D_DATA edSound3DDataDefault;
 
 void _edSoundAcousticInit(void)

@@ -51,22 +51,22 @@ void edSoundInstancesComputeFade(ed_sound_instance* soundInstance)
 		do {
 			pInstance = soundInstance->lowerPrioritySoundInstance;
 			if ((soundInstance->flags & 0x2000) != 0) {
-				if (edSoundGlobalParams.g_DesiredFrameTime_00483824 < soundInstance->field_0x60) {
-					fVar1 = edSoundGlobalParams.g_DesiredFrameTime_00483824 / soundInstance->field_0x60;
-					soundInstance->field_0x44 = soundInstance->field_0x44 + fVar1 * (soundInstance->field_0x54 - soundInstance->field_0x44);
-					soundInstance->field_0x48 = soundInstance->field_0x48 + fVar1 * (soundInstance->field_0x58 - soundInstance->field_0x48);
-					soundInstance->field_0x60 = soundInstance->field_0x60 - edSoundGlobalParams.g_DesiredFrameTime_00483824;
+				if (edSoundGlobalParams.g_DesiredFrameTime_00483824 < soundInstance->duration) {
+					fVar1 = edSoundGlobalParams.g_DesiredFrameTime_00483824 / soundInstance->duration;
+					soundInstance->volume = soundInstance->volume + fVar1 * (soundInstance->targetVolume - soundInstance->volume);
+					soundInstance->frequency = soundInstance->frequency + fVar1 * (soundInstance->targetFrequency - soundInstance->frequency);
+					soundInstance->duration = soundInstance->duration - edSoundGlobalParams.g_DesiredFrameTime_00483824;
 				}
 				else {
 					soundInstance->flags = soundInstance->flags & 0xffffdfff;
-					soundInstance->field_0x60 = 0.0;
-					soundInstance->field_0x44 = soundInstance->field_0x54;
-					soundInstance->field_0x48 = soundInstance->field_0x58;
-					if ((soundInstance->field_0x54 == 0.0) || (soundInstance->field_0x58 == 0.0)) {
-						soundInstanceId = soundInstance->soundInstanceId;
+					soundInstance->duration = 0.0;
+					soundInstance->volume = soundInstance->targetVolume;
+					soundInstance->frequency = soundInstance->targetFrequency;
+					if ((soundInstance->targetVolume == 0.0) || (soundInstance->targetFrequency == 0.0)) {
+						soundInstanceId = soundInstance->fullSoundInstanceId;
 						edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags & 0xfffffffd;
 						edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
-						soundInstanceId = soundInstance->soundInstanceId;
+						soundInstanceId = soundInstance->fullSoundInstanceId;
 						edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags | 4;
 						edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
 						if ((soundInstance->flags & 1) == 0) {
@@ -171,7 +171,7 @@ bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2)
 
 	if ((pInstance->flags & 1) == 0) {
 		if (param_2 != 0) {
-			pedSoundFinishedInstances[edSoundNbFinishedInstances].pSoundInstance = (ed_sound_instance*)pInstance->soundInstanceId;
+			pedSoundFinishedInstances[edSoundNbFinishedInstances].pSoundInstance = (ed_sound_instance*)pInstance->fullSoundInstanceId;
 			pedSoundFinishedInstances[edSoundNbFinishedInstances].field_0x4 = pInstance->field_0xa0;
 			edSoundNbFinishedInstances = edSoundNbFinishedInstances + 1;
 		}
@@ -188,6 +188,12 @@ bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2)
 	}
 
 	return bSuccess;
+}
+
+bool edSoundInstanceIsAlive(uint soundID)
+{
+	return soundID != 0 &&
+		pedSoundInstances[soundID & 0xffff].fullSoundInstanceId == soundID;
 }
 
 uint _edSoundInstanceCheckFinished(ed_sound_instance* pSoundInstance)

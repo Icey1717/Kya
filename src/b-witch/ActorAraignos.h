@@ -44,7 +44,7 @@ public:
 
 	CAddOnGenerator addOnGenerator;
 
-	CActorSound* pActorSound;
+	CActorSoundNode* pActorSound;
 
 	CPathFollowReaderAbsolute pathFollowAbsolute;
 

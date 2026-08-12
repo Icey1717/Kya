@@ -115,15 +115,15 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 		}
 
 		if ((peVar3->flags & 0x1000) == 0) {
-			peVar3->field_0x4c = peVar3->field_0x44;
-			peVar3->field_0x50 = peVar3->field_0x48;
+			peVar3->field_0x4c = peVar3->volume;
+			peVar3->field_0x50 = peVar3->frequency;
 			if ((peVar3->flags & 0x20) == 0) {
 				while (uVar2 != 0) {
 					fVar4 = peVar3->field_0x68;
 					fVar5 = peVar3->field_0x4c;
 					peVar3->voiceIndices[uVar2 * 3 + 1] = static_cast<uint>(fVar5 * sqrtf((1.0f - fVar4) * 0.5f));
 					peVar3->field_0x80[uVar2 * 3] = static_cast<uint>(fVar5 * sqrtf((fVar4 + 1.0f) * 0.5f));
-					local_20 = peVar3->soundInstanceId;
+					local_20 = peVar3->fullSoundInstanceId;
 					edSoundInstanceCom[local_20 & 0xffff].flags = edSoundInstanceCom[local_20 & 0xffff].flags | 0x20 << (uVar2 - 1 & 0x1f);
 					edSoundInstanceCom[local_20 & 0xffff].soundInstanceId = local_20;
 					uVar2 = uVar2 - 1;
@@ -134,10 +134,10 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 				peVar3->field_0x8c = 0.0f;
 				peVar3->field_0x94 = 0.0f;
 				peVar3->field_0x98 = peVar3->field_0x4c;
-				local_18 = peVar3->soundInstanceId;
+				local_18 = peVar3->fullSoundInstanceId;
 				edSoundInstanceCom[local_18 & 0xffff].flags = edSoundInstanceCom[local_18 & 0xffff].flags | 0x20;
 				edSoundInstanceCom[local_18 & 0xffff].soundInstanceId = local_18;
-				local_1c = peVar3->soundInstanceId;
+				local_1c = peVar3->fullSoundInstanceId;
 				edSoundInstanceCom[local_1c & 0xffff].flags = edSoundInstanceCom[local_1c & 0xffff].flags | 0x40;
 				edSoundInstanceCom[local_1c & 0xffff].soundInstanceId = local_1c;
 			}
@@ -148,15 +148,15 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 			local_40.y = (pData->position).y - edSoundGlobalParams.field_0x24.y;
 			local_40.z = (pData->position).z - edSoundGlobalParams.field_0x24.z;
 			fVar4 = edSoundAcousticVolumeAttenuation(pData, &edSoundGlobalParams.field_0x24);
-			fVar4 = peVar3->field_0x44 * fVar4;
+			fVar4 = peVar3->volume * fVar4;
 			peVar3->field_0x4c = fVar4;
 			if (1.0f < fVar4) {
 				peVar3->field_0x4c = 1.0f;
 			}
 
 			fVar4 = edSoundAcousticDopplerShift(pData, &edSoundGlobalParams.field_0x24, &edSoundGlobalParams.field_0x48);
-			peVar3->field_0x50 = peVar3->field_0x48 * fVar4;
-			local_4 = peVar3->soundInstanceId;
+			peVar3->field_0x50 = peVar3->frequency * fVar4;
+			local_4 = peVar3->fullSoundInstanceId;
 			edSoundInstanceCom[local_4 & 0xffff].flags = edSoundInstanceCom[local_4 & 0xffff].flags | 0x80;
 			edSoundInstanceCom[local_4 & 0xffff].soundInstanceId = local_4;
 			if (edSoundGlobalParams.outputMode == MONO) {
@@ -173,12 +173,12 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 				if (((uVar2 == 2) && (peVar3->field_0x94 != 0.0f)) && (peVar3->field_0x98 != 0.0f)) {
 					peVar3->field_0x94 = 0.0f;
 					peVar3->field_0x98 = 0.0f;
-					local_10 = peVar3->soundInstanceId;
+					local_10 = peVar3->fullSoundInstanceId;
 					edSoundInstanceCom[local_10 & 0xffff].flags = edSoundInstanceCom[local_10 & 0xffff].flags | 0x40;
 					edSoundInstanceCom[local_10 & 0xffff].soundInstanceId = local_10;
 				}
 
-				local_14 = peVar3->soundInstanceId;
+				local_14 = peVar3->fullSoundInstanceId;
 				edSoundInstanceCom[local_14 & 0xffff].flags = edSoundInstanceCom[local_14 & 0xffff].flags | 0x20;
 				edSoundInstanceCom[local_14 & 0xffff].soundInstanceId = local_14;
 			}
@@ -323,14 +323,14 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 						peVar3->field_0x94 = 0.0f;
 					}
 
-					local_8 = peVar3->soundInstanceId;
+					local_8 = peVar3->fullSoundInstanceId;
 					edSoundInstanceCom[local_8 & 0xffff].flags = edSoundInstanceCom[local_8 & 0xffff].flags | 0x40;
 					edSoundInstanceCom[local_8 & 0xffff].soundInstanceId = local_8;
 				}
 
 				peVar3->field_0x88 = fVar5 * fVar4;
 				peVar3->field_0x8c = fVar7 * fVar4;
-				local_c = peVar3->soundInstanceId;
+				local_c = peVar3->fullSoundInstanceId;
 				edSoundInstanceCom[local_c & 0xffff].flags = edSoundInstanceCom[local_c & 0xffff].flags | 0x20;
 				edSoundInstanceCom[local_c & 0xffff].soundInstanceId = local_c;
 			}

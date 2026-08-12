@@ -117,7 +117,7 @@ void _edSoundCheckForInstancesToCreate(void)
 			return;
 		}
 		if ((pCurListEntry->flags & 0x400) == 0) {
-			local_4 = pCurListEntry->soundInstanceId;
+			local_4 = pCurListEntry->fullSoundInstanceId;
 			uVar4 = 2;
 			edSoundInstanceCom[local_4 & 0xffff].flags = edSoundInstanceCom[local_4 & 0xffff].flags | 0x800;
 			edSoundInstanceCom[local_4 & 0xffff].soundInstanceId = local_4;
@@ -167,10 +167,10 @@ void _edSoundCheckForInstancesToCreate(void)
 		if ((pCurListEntry->flags & 0x100) != 0) {
 			pCurListEntry->flags = pCurListEntry->flags & 0xfffffeff;
 			pCurListEntry->flags = pCurListEntry->flags & 0xffffff7f;
-			soundInstanceId = pCurListEntry->soundInstanceId;
+			soundInstanceId = pCurListEntry->fullSoundInstanceId;
 			edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags & 0xfffffffb;
 			edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
-			local_c = pCurListEntry->soundInstanceId;
+			local_c = pCurListEntry->fullSoundInstanceId;
 			edSoundInstanceCom[local_c & 0xffff].flags = edSoundInstanceCom[local_c & 0xffff].flags | 2;
 			edSoundInstanceCom[local_c & 0xffff].soundInstanceId = local_c;
 		}
@@ -302,12 +302,12 @@ void edSoundTerminateAllInstances(void)
 	bRemainingInstances = pedSoundInstanceListHead != (ed_sound_instance*)0x0;
 	peVar3 = pedSoundInstanceListHead;
 	while (bRemainingInstances) {
-		soundInstanceId = peVar3->soundInstanceId;
+		soundInstanceId = peVar3->fullSoundInstanceId;
 		peVar3 = peVar3->lowerPrioritySoundInstance;
 		if (soundInstanceId != 0) {
 			soundInstanceIndex = soundInstanceId & 0xffff;
 			pInstance = &pedSoundInstances[soundInstanceIndex];
-			if (pInstance->soundInstanceId == soundInstanceId) {
+			if (pInstance->fullSoundInstanceId == soundInstanceId) {
 				edSoundInstanceCom[soundInstanceIndex].flags = edSoundInstanceCom[soundInstanceIndex].flags & 0xfffffffd;
 				edSoundInstanceCom[soundInstanceIndex].soundInstanceId = soundInstanceId;
 				edSoundInstanceCom[soundInstanceIndex].flags = edSoundInstanceCom[soundInstanceIndex].flags | 4;
@@ -316,7 +316,7 @@ void edSoundTerminateAllInstances(void)
 			}
 
 			pInstance = &pedSoundInstances[soundInstanceIndex];
-			if (pInstance->soundInstanceId == soundInstanceId) {
+			if (pInstance->fullSoundInstanceId == soundInstanceId) {
 				pInstance->flags = pInstance->flags & 0xfffffffe;
 				if ((pInstance->flags & 0x80) == 0) {
 					_edSoundInstanceListInstanceRemove(pInstance);
@@ -338,6 +338,50 @@ uint edSoundInstanceStop(uint instanceId)
 {
 	IMPLEMENTATION_GUARD_AUDIO();
 	return 0;
+}
+
+void edSoundInstanceFade(float volume, float frequency, float targetVolume, float targetFrequency, float duration, uint soundId)
+{
+	ed_sound_instance* pInstance;
+
+	if (soundId == 0) {
+		return;
+	}
+
+	pInstance = &pedSoundInstances[soundId & 0xffff];
+	if (pInstance->fullSoundInstanceId != soundId) {
+		return;
+	}
+
+	pInstance->flags |= 0x2000;
+
+	if (volume != -1.0f) {
+		pInstance->volume = volume;
+	}
+
+	if (frequency != -1.0f) {
+		pInstance->frequency = frequency;
+	}
+
+	if (targetVolume == -1.0f) {
+		targetVolume = pInstance->volume;
+	}
+
+	if (targetFrequency == -1.0f) {
+		targetFrequency = pInstance->frequency;
+	}
+
+	pInstance->targetVolume = targetVolume;
+	pInstance->targetFrequency = targetFrequency;
+	pInstance->duration = duration;
+}
+
+void edSoundInstanceFadeTypeSet(uint soundId, uint fadeType)
+{
+	if (soundId != 0 &&
+		pedSoundInstances[soundId & 0xffff].fullSoundInstanceId == soundId) {
+		pedSoundInstances[soundId & 0xffff].fadeType = fadeType;
+	}
 }
 
 int _NbLoadedSamples = 0;

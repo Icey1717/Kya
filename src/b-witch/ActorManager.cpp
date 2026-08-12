@@ -1115,6 +1115,21 @@ int CActorManager::GetClassActorsWithCriterion(CActorsTable* pOutTable, int clas
 	return pOutTable->nbEntries;
 }
 
+void CActorManager::FillActorsByClassId(int typeId, CActor** aList, int nbListSize)
+{
+	CClassInfo* pClassInfo = &this->aClassInfo[typeId];
+	int actorCount = pClassInfo->totalCount;
+	if (nbListSize < actorCount) {
+		actorCount = nbListSize;
+	}
+
+	for (int actorIndex = 0; actorIndex < actorCount; actorIndex++) {
+		aList[actorIndex] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + actorIndex * pClassInfo->size);
+	}
+
+	return;
+}
+
 CCluster::CCluster()
 {
 	this->ppNodes = (CClusterNode**)0x0;

@@ -46,14 +46,14 @@ struct ed_sound_instance
 	};
 	edsound_3d_data* p3dData;
 	edsound_3d_data data3d;
-	float field_0x44;
-	float field_0x48;
+	float volume;
+	float frequency;
 	float field_0x4c;
 	float field_0x50;
-	float field_0x54;
-	float field_0x58;
-	undefined4 field_0x5c;
-	float field_0x60;
+	float targetVolume;
+	float targetFrequency;
+	undefined4 fadeType;
+	float duration;
 	undefined field_0x64;
 	undefined field_0x65;
 	undefined field_0x66;
@@ -103,6 +103,7 @@ uint _edSoundInstanceCheckFinished(ed_sound_instance* pSoundInstance);
 void _edSoundInstanceListInstanceRemove(ed_sound_instance* pInstance);
 void _edSoundInstanceListInstanceInsert(float priority, ed_sound_instance* newSoundInstance, long param_3);
 bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2);
+bool edSoundInstanceIsAlive(uint soundID);
 
 extern ed_sound_instance* pedSoundInstances;
 extern ed_sound_instance_finished* pedSoundFinishedInstances;

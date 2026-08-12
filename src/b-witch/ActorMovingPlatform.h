@@ -407,7 +407,7 @@ public:
 	S_ZONE_STREAM_REF* pZoneStream;
 	S_BRIDGE_CAMERA_STREAM* pCameraStream;
 
-	CActorSound* pActorSound;
+	CActorSoundNode* pActorSound;
 	undefined4 field_0x1e4;
 	CSound* field_0x1e8;
 };

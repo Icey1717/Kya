@@ -908,7 +908,7 @@ void CActorBoomy::StateBoomyGotoLauncher()
 			EvaluateDisplayState();
 			this->flags = this->flags | 0x400;
 
-			this->field_0x2b4->SoundStop(0);
+			this->field_0x2b4->node.SoundStop(0);
 
 			SetState(9, -1);
 		}
@@ -1204,7 +1204,7 @@ void CActorBoomy::StateBoomyControlHit()
 	EvaluateDisplayState();
 	this->flags = this->flags | 0x400;
 
-	this->field_0x2b4->SoundStop(0);
+	this->field_0x2b4->node.SoundStop(0);
 
 	if ((this->aBoomyTypeInfo[0].flags & 0x10) != 0) {
 		msgHitParam.projectileType = this->aBoomyTypeInfo[0].hitProjectileType;

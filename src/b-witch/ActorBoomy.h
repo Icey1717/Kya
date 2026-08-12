@@ -130,7 +130,7 @@ public:
 	edF32VECTOR4 targetPositionOffset;
 
 	byte field_0x2b0;
-	CActorSound* field_0x2b4;
+	CActorSoundNode* field_0x2b4;
 	S_STREAM_REF<CSound> field_0x2b8;
 	S_STREAM_REF<CSound> field_0x2bc;
 	float field_0x2c0;

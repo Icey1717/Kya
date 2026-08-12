@@ -19,4 +19,6 @@ char* edStrChr(char* inString, char searchChar);
 
 void edStrInt2Str(uint value, char* str, uint len, bool padWithSpaces);
 
+char* edStrFileNameBase(char* param_1);
+
 #endif //_ED_STR_H

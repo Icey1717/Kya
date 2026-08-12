@@ -440,19 +440,6 @@ public:
 	ed_3d_hierarchy_node* pHierarchy;
 };
 
-struct SOUND_SPATIALIZATION_PARAM
-{
-	float* field_0x0;
-};
-
-class CActorSound
-{
-public:
-	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam) { IMPLEMENTATION_GUARD_AUDIO(); }
-	void SoundStop(int) { IMPLEMENTATION_GUARD_AUDIO(); }
-	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
-};
-
 struct _msg_params_get_position
 {
 	int field_0x0;
@@ -462,6 +449,47 @@ struct _msg_params_get_position
 
 struct CCineActorConfig;
 class CActInstance;
+
+
+class CSoundInstance;
+
+class CActorSound
+{
+public:
+	void Create(CActor* pActor, int nbInstances);
+	void Init();
+	void Manage(CActor* pActor);
+	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void SoundStop(int) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
+
+	uint flags;
+	int nbInstances;
+	ED_SOUND_3D_DATA soundData;
+	CSoundInstance* field_0x30;
+	CSoundInstance* aSoundInstances;
+};
+
+class CActorSoundNode : public CSimpleLinkedNode<CActorSound>
+{
+
+};
+
+class CSoundInstance
+{
+public:
+	CSoundInstance* pPrev;
+	CSoundInstance* pNext;
+	uint flags;
+	CSound* pSound;
+	uint soundId;
+	edsound_3d_data* field_0x14;
+	undefined4 pFinishCallback;
+	CActorSound* pOwner;
+	uint field_0x20;
+	undefined4 field_0x24;
+};
+
 
 class CActor : public CObject
 {
@@ -498,6 +526,7 @@ public:
 
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
+	virtual void LocationFunc_00100b70();
 
 	virtual uint IsLookingAt();
 	virtual void SetLookingAtOn();
@@ -692,7 +721,7 @@ public:
 	float GetPosition_00117db0();
 	void GetPosition_00101130(edF32VECTOR4* pOutPosition);
 
-	CActorSound* CreateActorSound(int soundType);
+	CActorSoundNode* CreateActorSound(int nbInstances);
 
 	CActor* GetLinkFather();
 
@@ -794,6 +823,8 @@ public:
 	static uint _gBehaviourFlags_ACT[2];
 
 	float lodBiases[4];
+
+	CSimpleLinkedList<CActorSound> aActorSounds;
 };
 
 class CCinematic;

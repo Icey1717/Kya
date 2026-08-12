@@ -34,7 +34,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 
 	pCVar3 = CActor::GetBehaviour(2);
 	if (pCVar3 == (CBehaviour*)0x0) {
-		this->pActorSound = (CActorSound*)0x0;
+		this->pActorSound = (CActorSoundNode*)0x0;
 	}
 	else {
 		this->pActorSound = CreateActorSound(1);

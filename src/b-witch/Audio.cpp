@@ -1399,8 +1399,7 @@ void CAudioManager::Level_Manage()
 		local_4 = pCamera->GetTarget();
 		if (local_4 == (CActor*)0x0) {
 			local_4 = (CActor*)0x0;
-			IMPLEMENTATION_GUARD(
-			pActorManager->SoundFunc_00106570(6, &local_4, 1);)
+			pActorManager->FillActorsByClassId(ACTOR_HERO_PRIVATE, &local_4, 1);
 		}
 
 		if (local_4 == (CActor*)0x0) {
@@ -2757,6 +2756,62 @@ void CSoundSample::Create(ByteCode* pByteCode)
 	this->field_0x80 = pByteCode->GetU32();
 	this->field_0x84 = pByteCode->GetU32();
 	this->field_0x88 = pByteCode->GetU32();
+}
+
+bool CSound::IsLooping()
+{
+	return false;
+}
+
+void CSound::FadeTo(float param_1, float param_2, float param_3, uint instanceId)
+{
+	bool bVar1;
+	float puVar2;
+	float fVar2;
+	float puVar4;
+	float puVar6;
+	float puVar5;
+
+	if ((NoAudio == 0) && (bVar1 = edSoundInstanceIsAlive(instanceId), bVar1 != false)) {
+		edSoundInstanceFadeTypeSet(instanceId, 0);
+
+		if (param_1 == -2.0f) {
+			puVar6 = static_cast<float>(this->edSoundSample.loopEndOffset);
+			puVar2 = puVar6;
+			if (this->field_0x6c != 0.0f) {
+				fVar2 = this->field_0x6c * puVar6;
+				do {
+					puVar2 = edFRndGauss(puVar6, fVar2);
+				} while (puVar2 < 0.0f);
+			}
+		}
+		else {
+			puVar2 = -1.0f;
+			if (param_1 != -1.0f) {
+				puVar2 = param_1 * static_cast<float>(this->edSoundSample.loopEndOffset);
+			}
+		}
+		if (param_2 == -2.0f) {
+			puVar4 = this->field_0x70;
+			if (this->field_0x74 != 0.0f) {
+				fVar2 = this->field_0x74 * puVar4;
+				puVar5 = puVar4;
+				do {
+					puVar4 = edFRndGauss(puVar5, fVar2);
+				} while (puVar4 < 0.0f);
+			}
+		}
+		else {
+			puVar4 = -1.0f;
+			if (param_2 != -1.0f) {
+				puVar4 = param_2 * this->field_0x70;
+			}
+		}
+
+		edSoundInstanceFade(-1.0f, -1.0f, puVar2, puVar4, param_3, instanceId);
+	}
+
+	return;
 }
 
 CMusicAmbiance::CMusicAmbiance()

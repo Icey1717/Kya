@@ -231,7 +231,7 @@ public:
 	void ManageNativElevators();
 
 	S_NTF_SWITCH targetSwitch;
-	CActorSound* pActorSound;
+	CActorSoundNode* pActorSound;
 
 	CBehaviourSwitchMultiCondition behaviourSwitchMultiCondition;
 	CBehaviourSwitchSequence behaviourSwitchSequence;

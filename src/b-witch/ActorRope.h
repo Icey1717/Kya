@@ -68,7 +68,7 @@ public:
 	uint ropeFlags;
 	undefined4 field_0x188;
 	S_STREAM_REF<CSound> soundStreamRef;
-	CActorSound* pActorSound;
+	CActorSoundNode* pActorSound;
 	int field_0x194;
 	int nbSegments;
 	DisplayList* pDisplayList;

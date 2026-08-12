@@ -1727,8 +1727,8 @@ void ed3DShadowConfigSetDefault(ed_3D_Shadow_Config* pShadowConfig)
 	pShadowConfig->pViewport = (ed_viewport*)0x0;
 	pShadowConfig->renderMask = 0;
 	pShadowConfig->field_0x22 = 0x30;
-	pShadowConfig->field_0x23 = 0x14;
-	pShadowConfig->field_0x24 = 2;
+	pShadowConfig->nbBlurSamples = 0x14;
+	pShadowConfig->blurRadius = 2;
 	pShadowConfig->texWidth = 0x80;
 	pShadowConfig->texHeight = 0x80;
 	return;
@@ -7025,6 +7025,16 @@ edpkt_data* ed3DShadowFlushResetOffset(edpkt_data* pPkt, edRECT16* pRect)
 	return pPkt + 4;
 }
 
+edpkt_data* ed3DJitterShadow(edpkt_data* pPkt)
+{
+#ifdef PLATFORM_PS2
+	IMPLEMENTATION_GUARD_PS2();
+	return pPkt;
+#else 
+	return pPkt;
+#endif
+}
+
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DShadow.c
 void ed3DFlushShadowList(void)
 {
@@ -7063,8 +7073,7 @@ void ed3DFlushShadowList(void)
 		g_VifRefPktCur->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 
-		IMPLEMENTATION_GUARD_LOG();
-		//g_VifRefPktCur = ed3DJitterShadow(g_VifRefPktCur);
+		g_VifRefPktCur = ed3DJitterShadow(g_VifRefPktCur);
 		g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
 		g_VifRefPktCur = ed3DAddViewportContextPacket(gShadowRenderViewport, g_VifRefPktCur);
 		peVar4 = ed3DShadowFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);

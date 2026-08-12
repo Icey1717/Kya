@@ -249,4 +249,12 @@ void edStrInt2Str(uint value, char* str, uint len, bool padWithSpaces)
 	return;
 }
 
+char* edStrFileNameBase(char* param_1)
+{
+	char* pcVar1;
 
+	for (pcVar1 = edStrReturnEndPtr(param_1); (pcVar1 != param_1 && (pcVar1[-1] != '\\')); pcVar1 = pcVar1 + -1) {
+	}
+
+	return pcVar1;
+}

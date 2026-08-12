@@ -64,7 +64,7 @@ public:
 	byte field_0x354;
 
 	CBehaviourGravityAwareFall fallBehaviour;
-	CActorSound* pActorSound;
+	CActorSoundNode* pActorSound;
 };
 
 #endif //ACTOR_GRAVITY_AWARE_H

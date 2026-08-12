@@ -135,7 +135,7 @@ public:
 	uint field_0x44;
 	int field_0x48;
 	float angle;
-	CActorSound* field_0x50;
+	CActorSoundNode* field_0x50;
 	int nbBullets;
 
 	Bullet aBullets[8];

@@ -126,6 +126,16 @@ struct ed_sound_voice_position
 	int position;
 };
 
+struct ED_SOUND_3D_DATA
+{
+	edF32VECTOR3 field_0x0;
+	edF32VECTOR3 field_0xc;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	byte field_0x24;
+};
+
 int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath, ulong param_4, undefined8 param_5, undefined8 param_6);
 void _edSoundStreamTerm(_ed_sound_stream* pSoundStream);
 
@@ -138,6 +148,8 @@ void edSoundFlush();
 void edSoundTerminateAllInstances(void);
 
 uint edSoundInstanceStop(uint instanceId);
+void edSoundInstanceFade(float volume, float frequency, float targetVolume, float targetFrequency, float duration, uint soundId);
+void edSoundInstanceFadeTypeSet(uint soundId, uint fadeType);
 
 int _edSoundSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSample, ulong flags);
 int edSoundSampleLoad(char* pSoundFile, ed_sound_sample* pSoundSample, ulong flags);
@@ -198,5 +210,6 @@ extern edCSoundGlobalParams edSoundGlobalParams;
 extern edCSoundParam edSoundParam;
 extern ed_sound_voice_position* pedSoundVoicePosition;
 extern edsound_listener edSoundListenerDefault;
+extern ED_SOUND_3D_DATA edSound3DDataDefault;
 
 #endif // ED_SOUND_PLAY_H

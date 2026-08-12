@@ -20,7 +20,7 @@ void CActorGravityAware::Create(ByteCode* pByteCode)
 
 	pCVar1 = GetBehaviour(GRAVITY_AWARE_BEHAVIOUR_BELL);
 	if ((pCVar1 == (CBehaviour*)0x0) && (pCVar1 = GetBehaviour(GRAVITY_AWARE_BEHAVIOUR_FALL), pCVar1 == (CBehaviour*)0x0)) {
-		this->pActorSound = (CActorSound*)0x0;
+		this->pActorSound = (CActorSoundNode*)0x0;
 	}
 	else {
 		this->pActorSound = CreateActorSound(1);
@@ -395,7 +395,7 @@ void CBehaviourGravityAwareBell::Begin(CActor* pOwner, int newState, int newAnim
 void CBehaviourGravityAwareBell::End(int newBehaviourId)
 {
 	if ((this->soundRef).Get() != (CSound*)0x0) {
-		this->pOwner->pActorSound->SoundStop(0);
+		this->pOwner->pActorSound->node.SoundStop(0);
 	}
 
 	this->pOwner->rotationEuler.z = 0.0f;
@@ -435,7 +435,7 @@ void CBehaviourGravityAwareBell::TermState(int oldState, int newState)
 
 	if (oldState == 8) {
 		if ((this->soundRef).Get() != (CSound*)0x0) {
-			this->pOwner->pActorSound->SoundStop(0);
+			this->pOwner->pActorSound->node.SoundStop(0);
 		}
 	}
 	else {
