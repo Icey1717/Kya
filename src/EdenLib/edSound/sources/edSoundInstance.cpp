@@ -10,6 +10,8 @@ uint* pedSoundInstancesToDelete;
 int edSoundInstancesToDeleteNb;
 edSoundInstanceComType* edSoundInstanceCom;
 uint edSoundCurrentInstancesNumber;
+ushort edSoundInstanceNewGlobalIndex = 1;
+uint edSoundNextFreeInstanceIndex;
 
 ed_sound_instance* pedSoundInstanceListHead;
 ed_sound_instance* pedSoundInstanceListTail;
@@ -30,13 +32,146 @@ void edSoundInitInstances(int nbInstances)
 	edSoundMaxInstances = nbInstances;
 	if (nbInstances != 0) {
 		do {
-			peVar2->soundInstanceId = 0xffff;
+			peVar2->soundInstanceIndex = 0xffff;
 			peVar2->lowerPrioritySoundInstance = (ed_sound_instance*)0x0;
 			uVar1 = uVar1 + 1;
 			peVar2->higherPrioritySoundInstance = (ed_sound_instance*)0x0;
 			peVar2 = peVar2 + 1;
 		} while (uVar1 < edSoundMaxInstances);
 	}
+
+	return;
+}
+
+void _edSoundInitInstance(ed_sound_instance* pSoundInstance)
+{
+	pSoundInstance->field_0x88 = 1.0;
+	pSoundInstance->field_0x8c = 1.0;
+	pSoundInstance->field_0x90 = 0;
+	pSoundInstance->field_0x92 = 0;
+	pSoundInstance->field_0x94 = 1.0;
+	pSoundInstance->field_0x98 = 1.0;
+	pSoundInstance->field_0x9c = 0;
+	pSoundInstance->field_0x9e = 0;
+	return;
+}
+
+void edSoundInitInstance(ed_sound_instance* pSoundInstance)
+{
+	pSoundInstance->volume = 1.0f;
+	pSoundInstance->field_0x4c = 1.0f;
+	pSoundInstance->targetVolume = 1.0f;
+	pSoundInstance->frequency = 1.0f;
+	pSoundInstance->field_0x50 = 1.0f;
+	pSoundInstance->targetFrequency = 1.0f;
+	pSoundInstance->field_0x74 = 0;
+	pSoundInstance->field_0x75 = 0;
+	pSoundInstance->fadeType = 0;
+	pSoundInstance->duration = 0.0f;
+	pSoundInstance->field_0x64 = 0;
+	pSoundInstance->field_0x68 = 0.0f;
+	pSoundInstance->field_0x6c = 0;
+	pSoundInstance->field_0x70 = 0;
+
+	_edSoundInitInstance(pSoundInstance);
+
+	pSoundInstance->p3dData = (edsound_3d_data*)0x0;
+	pSoundInstance->field_0xa0 = 0;
+
+	return;
+}
+
+ed_sound_instance* edSoundInstanceCreate(float priority, int bForce)
+{
+	ed_sound_instance* pScanInstance;
+	ed_sound_instance* newSoundInstance;
+	uint soundInstanceIndex;
+
+	if (edSoundCurrentInstancesNumber < edSoundMaxInstances) {
+		if (edSoundNextFreeInstanceIndex == 0xffffffff) {
+			edSoundNextFreeInstanceIndex = 0;
+			pScanInstance = pedSoundInstances;
+			if (edSoundMaxInstances != 0) {
+				do {
+					if (pScanInstance->soundInstanceIndex == 0xffff) {
+						break;
+					}
+					edSoundNextFreeInstanceIndex++;
+					pScanInstance++;
+				} while (edSoundNextFreeInstanceIndex < edSoundMaxInstances);
+			}
+		}
+
+		soundInstanceIndex = edSoundNextFreeInstanceIndex;
+		newSoundInstance = pedSoundInstances + edSoundNextFreeInstanceIndex;
+	}
+	else {
+		edDebugPrintf("edSoundInstanceCreate : no free instances (trying to delete one), -> please increase the number of sound instances handled\\n");
+		newSoundInstance = pedSoundInstanceListTail;
+		if ((pedSoundInstanceListTail->flags & 1) == 0) {
+			if (bForce == 0 && priority < pedSoundInstanceListTail->priority) {
+				edDebugPrintf("edSoundInstanceCreate : new instance creation refused (not prioritary enough) -> you might increase the number of instances at edSoundInit()\\n");
+				return (ed_sound_instance*)0x0;
+			}
+		}
+		else if (bForce == 0 || priority < pedSoundInstanceListTail->priority) {
+			edDebugPrintf("edSoundInstanceCreate : new instance creation refused (not prioritary enough) -> you might increase the number of instances at edSoundInit()\\n");
+			return (ed_sound_instance*)0x0;
+		}
+
+		soundInstanceIndex = (uint)(pedSoundInstanceListTail - pedSoundInstances);
+		edSoundInstanceDeleteLessPrioritary();
+	}
+
+	newSoundInstance->soundInstanceIndex = (ushort)soundInstanceIndex;
+	newSoundInstance->generation = edSoundInstanceNewGlobalIndex;
+	newSoundInstance->flags = 0x82;
+	if (bForce) {
+		newSoundInstance->flags |= 1;
+	}
+	newSoundInstance->priority = priority;
+	if (++edSoundInstanceNewGlobalIndex == 0) {
+		edSoundInstanceNewGlobalIndex = 1;
+	}
+
+	edSoundNextFreeInstanceIndex = 0xffffffff;
+	edSoundCurrentInstancesNumber++;
+	if (soundInstanceIndex + 1 < edSoundMaxInstances &&
+		newSoundInstance[1].soundInstanceIndex == 0xffff) {
+		edSoundNextFreeInstanceIndex = soundInstanceIndex + 1;
+	}
+
+	_edSoundInstanceListInstanceInsert(priority, newSoundInstance, bForce);
+	edSoundInitInstance(newSoundInstance);
+
+	return newSoundInstance;
+}
+
+void _edSoundInstanceListRemoveTail(void)
+{
+	ed_sound_instance* peVar1;
+
+	peVar1 = pedSoundInstanceListTail;
+	if (pedSoundInstanceListTail == pedSoundInstanceListHead) {
+		pedSoundInstanceListTail = (ed_sound_instance*)0x0;
+		pedSoundInstanceListHead = (ed_sound_instance*)0x0;
+	}
+	else {
+		pedSoundInstanceListTail = pedSoundInstanceListTail->higherPrioritySoundInstance;
+		pedSoundInstanceListTail->lowerPrioritySoundInstance = (ed_sound_instance*)0x0;
+	}
+
+	peVar1->higherPrioritySoundInstance = (ed_sound_instance*)0x0;
+	peVar1->lowerPrioritySoundInstance = (ed_sound_instance*)0x0;
+
+	return;
+}
+
+void edSoundInstanceDeleteLessPrioritary()
+{
+	_edSoundInstanceSetFree(pedSoundInstanceListTail);
+	_edSoundInstanceListRemoveTail();
+	edSoundCurrentInstancesNumber = edSoundCurrentInstancesNumber - 1;
 
 	return;
 }

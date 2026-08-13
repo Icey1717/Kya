@@ -7,11 +7,11 @@ char gFilePath[8];
 
 void StaticEdFileBase::Remove()
 {
-	this->field_0x4 = this->field_0x4 + -1;
+	this->nbActiveUsers = this->nbActiveUsers + -1;
 
 	// HACK
-	if (this->field_0x4 < 0) {
-		this->field_0x4 = 0;
+	if (this->nbActiveUsers < 0) {
+		this->nbActiveUsers = 0;
 	}
 
 	return;
@@ -19,18 +19,18 @@ void StaticEdFileBase::Remove()
 
 void StaticEdFileBase::Add()
 {
-	this->field_0x4 = this->field_0x4 + 1;
+	this->nbActiveUsers = this->nbActiveUsers + 1;
 	return;
 }
 
-bool StaticEdFileBase::FUN_00401f30()
+bool StaticEdFileBase::IsAvailable()
 {
 	bool bVar1;
 	edCFiler* peVar2;
 	edCFileNoWaitStack* peVar3;
 	char acStack512[512];
 
-	bVar1 = this->field_0x4 == 0;
+	bVar1 = this->nbActiveUsers == 0;
 
 	if (bVar1) {
 		if (this->pEdFileBase == (edCFiler*)0x0) {
@@ -52,5 +52,5 @@ bool StaticEdFileBase::FUN_00401f30()
 
 bool StaticEdFileBase::Check()
 {
-	return this->field_0x4 == 0;
+	return this->nbActiveUsers == 0;
 }

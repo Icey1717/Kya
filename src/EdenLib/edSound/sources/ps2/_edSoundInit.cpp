@@ -5,8 +5,10 @@
 
 ed_sound_voice_position* pedSoundVoicePosition;
 void* edComBuffer_IOP;
+ushort USHORT_00449140;
+uint _edSoundApplyCommandMSLastCount;
 
-void _edSoundInit(undefined4 param_1)
+void _edSoundInit(undefined4 nbMaxInstances)
 {
 	bool bVar1;
 	undefined4* puVar2;
@@ -25,12 +27,13 @@ void _edSoundInit(undefined4 param_1)
 	int* piVar15;
 	//RPC_Client* pRVar16;
 
-	IMPLEMENTATION_GUARD_AUDIO(
+	IMPLEMENTATION_GUARD_PS2(
 	edComDoubleBuffers = edMemAllocAlign(H_MAIN, 0x1004, 0x10);
 	edComBuffer = static_cast<undefined4*>(edMemAllocAlign(H_MAIN, 0x1004, 0x10));
 	edComCurrentBufferIndex = 1;
 	DAT_004490ac = edComBuffer;
 	*edComBuffer = 0;)
+
 	pedSoundVoicePosition = static_cast<ed_sound_voice_position*>(edMemAllocAlign(TO_HEAP(H_MAIN), sizeof(ed_sound_voice_position) * 0x30, 0x10));
 	uVar8 = 0;
 	iVar6 = 0;
@@ -40,7 +43,7 @@ void _edSoundInit(undefined4 param_1)
 		pedSoundVoicePosition[i].position = -2;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
+	IMPLEMENTATION_GUARD_PS2(
 	FlushCache(0);
 	pedSoundVoicePosition = static_cast<undefined*>((uint)pedSoundVoicePosition | 0x20000000);
 	_pedSoundRPCSendBufferUncached = static_cast<undefined4*>(0x20486800);
@@ -75,7 +78,7 @@ void _edSoundInit(undefined4 param_1)
 	uVar11 = 0x1c;
 	uVar12 = 0;
 	uVar13 = 0;
-	*_pedSoundRPCSendBufferUncached = param_1;
+	*_pedSoundRPCSendBufferUncached = nbMaxInstances;
 	puVar2[1] = 0x1004;
 	puVar2[2] = 0x7764e28c;
 	puVar2[3] = 1;
@@ -108,14 +111,15 @@ void _edSoundInit(undefined4 param_1)
 		}
 		pRVar5->field_0x8 = pRVar5->field_0x4;
 	}
-	_pedSoundRPCClient = pRVar5;
+	_pedSoundRPCClient = pRVar5;)
 
 	SOUND_InitIOP();
+	IMPLEMENTATION_GUARD_PS2(
 	SOUND_InitCD(1, uVar7, uVar9, lVar10, uVar11, uVar12, uVar13, uVar14);
 	SOUND_InitStreamData(0, 1, 0, lVar10, uVar11, uVar12, uVar13, uVar14);
-	FlushIOPCommand(0, 0);
+	FlushIOPCommand(0, 0);)
 	USHORT_00449140 = 0;
-	_edSoundApplyCommandMSLastCount = 0;)
+	_edSoundApplyCommandMSLastCount = 0;
 
 	memset(_edSoundAllocatedVoices, 0, sizeof(_edSoundAllocatedVoices));
 	_edSoundSetVoiceRange(soundConfig.nbVoices, soundConfig.field_0x10);

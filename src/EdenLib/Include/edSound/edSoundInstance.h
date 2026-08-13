@@ -32,18 +32,25 @@ struct ed_sound_instance
 	union
 	{
 		uint fullSoundInstanceId;
-		ushort soundInstanceId;
+		struct
+		{
+			ushort soundInstanceIndex;
+			ushort generation;
+		};
+		//ushort soundInstanceId;
 	};
 
 	ed_sound_instance* higherPrioritySoundInstance;
 	ed_sound_instance* lowerPrioritySoundInstance;
 	float priority;
 	uint flags;
+
 	union
 	{
 		ed_sound_sample* pSample;		// flags & 0x10 == 0
 		_ed_sound_stream* pSoundStream;	// flags & 0x10 != 0
 	};
+
 	edsound_3d_data* p3dData;
 	edsound_3d_data data3d;
 	float volume;
@@ -54,7 +61,7 @@ struct ed_sound_instance
 	float targetFrequency;
 	undefined4 fadeType;
 	float duration;
-	undefined field_0x64;
+	byte field_0x64;
 	undefined field_0x65;
 	undefined field_0x66;
 	undefined field_0x67;
@@ -71,8 +78,7 @@ struct ed_sound_instance
 	float field_0x8c;
 	undefined field_0x90;
 	undefined field_0x91;
-	undefined field_0x92;
-	undefined field_0x93;
+	ushort field_0x92;
 	float field_0x94;
 	float field_0x98;
 	undefined field_0x9c;
@@ -96,6 +102,9 @@ struct edSoundInstanceComType
 };
 
 void edSoundInitInstances(int nbInstances);
+ed_sound_instance* edSoundInstanceCreate(float priority, int bForce);
+void edSoundInstanceDeleteLessPrioritary();
+void edSoundInitInstance(ed_sound_instance* pInstance);
 void edSoundInstancesComputeFade(ed_sound_instance* soundInstance);
 void edSoundInstanceDeleteAllFromCurrentLessPrioritary(ed_sound_instance* pInstance);
 void edSoundInstanceDelete(ed_sound_instance* pInstance);

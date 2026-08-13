@@ -10,21 +10,124 @@
 
 void _edSoundStreamFreeDynamicData(ed_sound_instance* pInstance);
 
-int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath,
-	ulong param_4, undefined8 param_5, undefined8 param_6)
+struct SOUND_MIH_INFO
 {
-	IMPLEMENTATION_GUARD_AUDIO();
-	return 1;
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
+};
+
+void SOUND_GetMIHInfo(GlobalSound_FileData* param_1, SOUND_MIH_INFO* param_2)
+{
+	param_2->field_0x0 = param_1->field_0x0;
+	param_2->field_0x4 = param_1->field_0x4;
+	param_2->field_0x8 = param_1->field_0x8;
+	param_2->field_0xc = param_1->field_0xc;
+	return;
+}
+
+void SOUND_CreateFileInfo(int param_1, char* param_2, uint param_3)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+extern ushort USHORT_00449140;
+
+void* _edSoundMemAlloc(int size)
+{
+#ifdef PLATFORM_PS2
+	*_pedSoundRPCSendBufferUncached = size;
+	_edSysCallRPC(2, 0, 0, (long)(int)_pedSoundRPCSendBufferUncached, 4, (long)(int)_pedSoundRPCReceiveBufferUncached, 4, 0, (uint*)0x0, _pedSoundRPCClient->field_0x4, &_pedSoundRPCClient->field_0xc,
+		&_pedSoundRPCClient->field_0x8);
+	return *_pedSoundRPCReceiveBufferUncached;
+#else
+	return malloc(size);
+#endif
+}
+
+int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath, uint lsn, undefined8 param_5, uint fileSize)
+{
+	char cVar1;
+	void* pvVar2;
+	int iVar3;
+	int foundStreamId;
+	char* pcVar5;
+	uint bufferSize;
+	uint curIndex;
+	_ed_sound_stream* p_Var7;
+	float fVar8;
+	SOUND_MIH_INFO streamFrequency;
+
+	if (szPath != (char*)0x0) {
+		cVar1 = *szPath;
+		pcVar5 = szPath;
+		while (cVar1 != '\0') {
+			if (*pcVar5 == '/') {
+				*pcVar5 = '\\';
+			}
+			pcVar5 = pcVar5 + 1;
+			cVar1 = *pcVar5;
+		}
+	}
+
+	SOUND_GetMIHInfo(pSoundData, &streamFrequency);
+	pSoundStream->field_0x10 = streamFrequency.field_0x8;
+	pSoundStream->field_0x14 = streamFrequency.field_0x4;
+	if (streamFrequency.field_0x0 < 0) {
+		fVar8 = (float)((uint)streamFrequency.field_0x0 >> 1 | streamFrequency.field_0x0 & 1U);
+		fVar8 = fVar8 + fVar8;
+	}
+	else {
+		fVar8 = (float)streamFrequency.field_0x0;
+	}
+	pSoundStream->field_0x18 = fVar8;
+	pSoundStream->pDynamicData = (void*)(pSoundStream->field_0x10 * streamFrequency.field_0xc);
+	bufferSize = pSoundStream->field_0x14 * pSoundStream->field_0x10 * 2;
+	pvVar2 = _edSoundMemAlloc(bufferSize);
+	pSoundStream->pMem = pvVar2;
+	if (pSoundStream->pMem == (void*)0x0) {
+		scePrintf("Warning :\n[edSound] could not allocate sound RAM CD streaming buffer\n");
+		scePrintf("Stream info : FREQUENCY = %6d Hz, buffer size = %8d bytes\n", streamFrequency.field_0x0, bufferSize);
+		iVar3 = 0;
+	}
+	else {
+		pSoundStream->streamFileId = (int)(short)USHORT_00449140;
+		USHORT_00449140 = USHORT_00449140 + 1;
+		curIndex = 0;
+		assert(pSoundStream->field_0x14 <= 2);
+		if (pSoundStream->field_0x14 != 0) {
+			do {
+				foundStreamId = SOUND_FindFreeStream();
+				SOUND_STREAM_STATUS[foundStreamId] = 2;
+				pSoundStream->streamBufferId[curIndex] = foundStreamId;
+				curIndex = curIndex + 1;
+			} while (curIndex < pSoundStream->field_0x14);
+		}
+
+		SOUND_AllocateStreamBuffer(pSoundStream->streamBufferId[0], pSoundStream->pMem, bufferSize);
+
+		if (szPath == (char*)0x0) {
+			SOUND_CreateFileInfoFromLsn(pSoundStream->streamFileId, lsn, fileSize, 1, param_5);
+		}
+		else {
+			SOUND_CreateFileInfo(pSoundStream->streamFileId, szPath, (uint)param_5);
+		}
+
+		iVar3 = 1;
+	}
+
+	return iVar3;
 }
 
 void _edSoundStreamTerm(_ed_sound_stream* pSoundStream)
 {
 	if (pSoundStream->pMem != (void*)0x0) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		SOUND_CloseStreamBuffer(pSoundStream->streamBufferId);
+		SOUND_CloseStreamBuffer(pSoundStream->streamBufferId[0]);
 		SOUND_FreeFileID(pSoundStream->streamFileId);
-		FlushIOPCommand(1, 0);
-		_edSoundMemFree(pSoundStream->pMem);)
+		IMPLEMENTATION_GUARD_PS2(
+		FlushIOPCommand(1, 0);)
+		_edSoundMemFree(pSoundStream->pMem);
 	}
 
 	return;
@@ -209,7 +312,7 @@ void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
 	uint soundInstanceId = pInstance->fullSoundInstanceId;
 	edSoundInstanceCom[soundInstanceId & 0xffff].flags = 0;
 	edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = 0;
-	pInstance->soundInstanceId = 0xffff;
+	pInstance->soundInstanceIndex = 0xffff;
 
 	return;
 }

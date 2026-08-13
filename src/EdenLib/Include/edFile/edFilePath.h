@@ -1040,6 +1040,7 @@ public:
 	int set_path(char* param_2);
 };
 
+void edFileCopyPath_002617d0(char* param_1, char* param_2);
 void edFileSetPath(char* mode);
 void edFilePathSplit(char* param_1, char* param_2, char* param_3, char* param_4, char* param_5);
 char* edFilePathGetFilePath(char* inString);

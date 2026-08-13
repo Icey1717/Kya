@@ -3394,9 +3394,136 @@ void CBehaviourNativSpeak::Reset()
 	return;
 }
 
-void CEmotionInfo::DoAnimation(float, float, CActor*)
+void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 {
-	IMPLEMENTATION_GUARD_EMOTION();
+	CAnimation* pAnimationController;
+	edANM_HDR* peVar1;
+	bool bVar2;
+	int iVar3;
+	int iVar4;
+	float* pfVar5;
+	edAnmLayer* peVar6;
+	float fVar7;
+	float fVar8;
+
+	if ((this->macroAnimId != -1) && ((this->field_0x4 != this->field_0x8 || (this->field_0x8 != -1)))) {
+		pAnimationController = pActor->pAnimationController;
+		bVar2 = pAnimationController->IsLayerActive(2);
+		if (bVar2 != false) {
+			iVar3 = pAnimationController->PhysicalLayerFromLayerId(2);
+			peVar6 = pAnimationController->anmBinMetaAnimator.aAnimData + iVar3;
+			this->field_0x1c = this->field_0x1c + param_1;
+			if ((this->field_0x4 != -1) || (this->field_0x1c <= this->field_0x18)) {
+				if (((peVar6->currentAnimDesc).animType != this->macroAnimId) || (peVar6->animPlayState != 1)) {
+					peVar6->animPlayState = 0;
+					pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(this->macroAnimId, iVar3, 0xffffffff);
+				}
+
+				fVar8 = 1.0f;
+				if (0.0f < this->field_0x18) {
+					fVar8 = this->field_0x1c / this->field_0x18;
+				}
+
+				if (fVar8 <= 0.0f) {
+					fVar7 = 0.0f;
+				}
+				else {
+					fVar7 = 1.0f;
+					if (fVar8 < 1.0f) {
+						fVar7 = fVar8;
+					}
+				}
+
+				fVar7 = this->field_0x14 * fVar7 + this->field_0xc * (1.0f - fVar7);
+				fVar8 = fVar7 * param_2;
+				this->field_0x10 = fVar7;
+				if (1.0f <= fVar8) {
+					peVar6->blendOp = ANM_BLEND_OP_REPLACE;
+					peVar6->blendWeight = 1.0f;
+				}
+				else {
+					if (fVar8 < 0.1f) {
+						peVar6->animPlayState = 0;
+					}
+					else {
+						peVar6->blendOp = ANM_BLEND_OP_WEIGHTED;
+						peVar6->blendWeight = fVar8;
+					}
+				}
+
+				IMPLEMENTATION_GUARD(
+				peVar1 = (peVar6->currentAnimDesc).state.pAnimKeyTableEntry;
+				iVar3 = peVar1->keyIndex_0x8;
+				if (iVar3 != 0) {
+					fVar8 = 1.0f;
+					if (0.0f < this->field_0x20) {
+						fVar8 = this->field_0x1c / this->field_0x20;
+					}
+					if (fVar8 <= 0.0f) {
+						fVar8 = 0.0f;
+					}
+					fVar7 = 1.0f;
+					if (fVar8 <= 1.0f) {
+						fVar7 = fVar8;
+					}
+					iVar4 = 0;
+					pfVar5 = static_cast<float*>(&peVar1[1].count_0x0 + iVar3);
+					if (0 < iVar3) {
+						do {
+							if (iVar4 == this->field_0x8) {
+								*pfVar5 = 1.0f - fVar7;
+							}
+							else {
+								if (iVar4 == this->field_0x4) {
+									*pfVar5 = fVar7;
+								}
+								else {
+									*pfVar5 = 0.0f;
+								}
+							}
+							iVar4 = iVar4 + 1;
+							pfVar5 = pfVar5 + 1;
+						} while (iVar4 < iVar3);
+					}
+
+					if ((0.0f <= this->field_0x24) && (fVar8 = this->field_0x24 - param_1, this->field_0x24 = fVar8, fVar8 < 0.0f)) {
+						iVar4 = rand();
+						this->field_0x24 = (static_cast<float>(iVar4) / 2.147484e+09f) * 1.0f + 2.0f;
+						fVar8 = this->field_0x30;
+						iVar4 = rand();
+						if (iVar3 == 0) {
+							trap(7);
+						}
+						if ((this->macroAnimId != -1) && (iVar4 % iVar3 != this->field_0x4)) {
+							this->field_0x8 = this->field_0x4;
+							this->field_0x4 = iVar4 % iVar3;
+							this->field_0x1c = 0.0f;
+							this->field_0x20 = 0.5f;
+							if (this->field_0x4 == -1) {
+								fVar8 = 0.0f;
+							}
+							else {
+								if (this->field_0x8 == -1) {
+									this->field_0x10 = 0.0f;
+								}
+							}
+							if (this->macroAnimId != -1) {
+								this->field_0xc = this->field_0x10;
+								this->field_0x14 = fVar8;
+								this->field_0x18 = 0.5f;
+							}
+						}
+					}
+				})
+			}
+			else {
+				peVar6->animPlayState = 0;
+				pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(-1, iVar3, 0xffffffff);
+			}
+		}
+	}
+
+	return;
 }
 
 bool CTakePutTrajectoryParam::IsWayPointValidPosition(CPathFinderClient* pPathFinderClient)

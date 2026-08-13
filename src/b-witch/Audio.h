@@ -320,6 +320,9 @@ public:
 	void FUN_00182c10();
 	void ManageSoundSamples();
 
+	char* GetStreamFileNameFromIndex_00184a40(int index);
+	GlobalSound_FileData* GetSoundFileDataFromIndex_00184a10(int index);
+
 	float field_0x68;
 	int field_0x6c;
 

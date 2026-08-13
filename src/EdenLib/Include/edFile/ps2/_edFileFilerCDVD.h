@@ -64,7 +64,7 @@ public:
 	virtual bool isnowaitcmdend(edFILE_STACK_ELEMENT* pEdFilerInternal);
 	virtual bool cmdbreak();
 
-private:
+public:
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -585,5 +585,6 @@ private:
 extern edCFiler_CDVD edFiler_CDVD;
 
 void _edFileCDVDAddFiler(void);
+int Ps2CdSearchFile(sceCdlFILE* param_1, char* param_2);
 
 #endif //_EDCFILER_CDVD_H

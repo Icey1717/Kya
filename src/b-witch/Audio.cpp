@@ -2007,14 +2007,10 @@ void CAudioManager::AddSceneData(ByteCode* pByteCode)
 
 void CAudioManager::LoadGlobalSoundFunc_00184a70(ByteCode* pByteCode)
 {
-	char cVar1;
 	uint uVar2;
-	int* pBase;
 	CSoundSample* pCurSample;
 	char* pcVar4;
 	GlobalSound_FileData* pGVar5;
-	int iVar6;
-	GlobalSound_FileData* pGVar7;
 	int iVar8;
 
 	pByteCode->GetChunk();
@@ -2050,17 +2046,8 @@ void CAudioManager::LoadGlobalSoundFunc_00184a70(ByteCode* pByteCode)
 			pcVar4 = pByteCode->GetString();
 			edStrCopy(pGVar5->field_0x10, pcVar4);
 			pcVar4 = pByteCode->currentSeekPos;
-			iVar6 = 8;
+			memcpy(pGVar5, pcVar4, 0x10);
 			pByteCode->currentSeekPos = pcVar4 + 0x10;
-			//pGVar7 = pGVar5;
-			//do {
-			//	iVar6 = iVar6 + -1;
-			//	cVar1 = pcVar4[1];
-			//	*(char*)&pGVar7->field_0x0 = *pcVar4;
-			//	pcVar4 = pcVar4 + 2;
-			//	*static_cast<char*>((int)&pGVar7->field_0x0 + 1) = cVar1;
-			//	pGVar7 = static_cast<GlobalSound_FileData*>((int)&pGVar7->field_0x0 + 2);
-			//} while (0 < iVar6);
 
 			pGVar5 = pGVar5 + 1;
 		}
@@ -2576,6 +2563,30 @@ void CAudioManager::ManageSoundSamples()
 	} while (true);
 }
 
+char* CAudioManager::GetStreamFileNameFromIndex_00184a40(int index)
+{
+	char* pcVar1;
+
+	pcVar1 = (char*)0x0;
+	if (index != -1) {
+		pcVar1 = this->pGlobalSoundFileData[index].field_0x10;
+	}
+
+	return pcVar1;
+}
+
+GlobalSound_FileData* CAudioManager::GetSoundFileDataFromIndex_00184a10(int index)
+{
+	GlobalSound_FileData* pGVar1;
+
+	pGVar1 = (GlobalSound_FileData*)0x0;
+	if (index != -1) {
+		pGVar1 = this->pGlobalSoundFileData + index;
+	}
+
+	return pGVar1;
+}
+
 bool SoundSampleEntry::LoadStreamCh()
 {
 	uint someSize;
@@ -2587,7 +2598,7 @@ bool SoundSampleEntry::LoadStreamCh()
 	char acStack768[512];
 	char acStack256[256];
 
-	bVar1 = StaticEdFileBase_004497f0.FUN_00401f30();
+	bVar1 = StaticEdFileBase_004497f0.IsAvailable();
 	if (bVar1 != false) {
 		/* \\STREAMCH\\ */
 		edStrCatMulti(acStack256, CLevelScheduler::gThis->levelPath, CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].levelName, "\\STREAMCH\\", this->fileName, NULL);

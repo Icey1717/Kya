@@ -13,6 +13,7 @@ int edStrnCopy(char* dst, char* src, int n);
 int edStrCopyUpper(char* outBuffer, char* inString);
 int edStrCmp(char* __s1, char* __s2);
 int edStrICmp(char const* __s1, char const* __s2);
+int edStrNICmp(char* param_1, char* param_2, int len);
 
 int edStrStr2Int(char* stream, int offset);
 char* edStrChr(char* inString, char searchChar);

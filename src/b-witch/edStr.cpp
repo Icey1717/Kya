@@ -137,6 +137,27 @@ int edStrICmp(char const* __s1, char const* __s2)
 	return iVar2;
 }
 
+int edStrNICmp(char* param_1, char* param_2, int len)
+{
+	bool bVar1;
+	byte bVar2;
+	int iVar3;
+
+	for (; (((bVar2 = *param_1, bVar2 != 0 && (*param_2 != 0)) && (bVar1 = len != 0, len = len + -1, bVar1)) && ((bVar2 & 0xdf) == (*param_2 & 0xdfU))); param_1 = (char*)((byte*)param_1 + 1)) {
+		param_2 = (char*)((byte*)param_2 + 1);
+	}
+	iVar3 = -1;
+	if (len == 0) {
+		iVar3 = 0;
+	}
+	else {
+		if (bVar2 != 0) {
+			iVar3 = 1;
+		}
+	}
+	return iVar3;
+}
+
 // SKIP
 
 int edStrStr2Int(char* stream, int offset)

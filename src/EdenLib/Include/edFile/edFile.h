@@ -102,7 +102,6 @@ void edFileNoWaitStackFlush(void);
 
 uint edFileGetSize(edFILEH* param_1);
 
-void edFileSetPath(char* mode);
 bool edFileInit(void);
 bool edFileGetPhysicalFileName(char* filePathOut, char* filePathIn);
 

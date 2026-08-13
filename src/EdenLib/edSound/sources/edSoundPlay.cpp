@@ -16,11 +16,11 @@ int edSoundStreamLoadA(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSo
 	return iVar1;
 }
 
-int edSoundStreamLoadB(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSoundData, ulong param_3, undefined8 param_4, undefined8 param_5)
+int edSoundStreamLoadB(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSoundData, uint lsn, undefined8 param_4, uint filesize)
 {
 	int iVar1;
 
-	iVar1 = _edSoundStreamInit(pSoundData, pSoundStream, (char*)0x0, param_3, param_4, param_5);
+	iVar1 = _edSoundStreamInit(pSoundData, pSoundStream, (char*)0x0, lsn, param_4, filesize);
 	gNbSoundStreams = gNbSoundStreams + 1;
 	return iVar1;
 }
@@ -336,7 +336,20 @@ void edSoundTerminateAllInstances(void)
 
 uint edSoundInstanceStop(uint instanceId)
 {
-	IMPLEMENTATION_GUARD_AUDIO();
+	bool bVar1;
+	ed_sound_instance* pInstance;
+
+	if ((instanceId != 0) && (pInstance = pedSoundInstances + (instanceId & 0xffff), pInstance->fullSoundInstanceId == instanceId)) {
+		edSoundInstanceCom[instanceId & 0xffff].flags = edSoundInstanceCom[instanceId & 0xffff].flags & 0xfffffffd;
+		edSoundInstanceCom[instanceId & 0xffff].soundInstanceId = instanceId;
+		edSoundInstanceCom[instanceId & 0xffff].flags = edSoundInstanceCom[instanceId & 0xffff].flags | 4;
+		edSoundInstanceCom[instanceId & 0xffff].soundInstanceId = instanceId;
+		bVar1 = edSoundInstanceFinish(pInstance, 0);
+		if (bVar1 == false) {
+			return instanceId;
+		}
+	}
+
 	return 0;
 }
 
@@ -634,4 +647,163 @@ void edSoundSetListener(edsound_listener* pListener)
 	}
 
 	return;
+}
+
+bool FUN_00289cf0(ed_sound_instance* param_1, _ed_sound_stream* param_2)
+{
+	if ((param_1->flags & 0x20) != 0) {
+		param_1->field_0x88 = 1.0f;
+		param_1->field_0x8c = 0.0f;
+		param_1->field_0x94 = 0.0f;
+		param_1->field_0x98 = 1.0f;
+	}
+
+	return param_2->pMem != (void*)0x0;
+}
+
+uint edSoundStreamCreate_00284500(float priority, _ed_sound_stream* pSoundStream)
+{
+	bool bVar1;
+	ed_sound_instance* pInstance;
+	uint uVar2;
+
+	if (pSoundStream->field_0x14 == 0) {
+		uVar2 = 0;
+	}
+	else {
+		pInstance = edSoundInstanceCreate(priority, 0);
+		if (pInstance == (ed_sound_instance*)0x0) {
+			uVar2 = 0;
+		}
+		else {
+			pInstance->pSoundStream = pSoundStream;
+			if (pInstance->pSoundStream->field_0x14 == 2) {
+				pInstance->flags = pInstance->flags | 0x20;
+			}
+
+			bVar1 = FUN_00289cf0(pInstance, pSoundStream);
+			if (bVar1 == false) {
+				edSoundInstanceDelete(pInstance);
+				uVar2 = 0;
+			}
+			else {
+				pInstance->flags = pInstance->flags | 0x10;
+				uVar2 = pInstance->fullSoundInstanceId;
+			}
+		}
+	}
+
+	if (uVar2 != 0 && pedSoundInstances[uVar2 & 0xffff].fullSoundInstanceId == uVar2) {
+		edSoundInstanceCom[uVar2 & 0xffff].flags |= 1;
+		edSoundInstanceCom[uVar2 & 0xffff].soundInstanceId = uVar2;
+	}
+
+	return uVar2;
+}
+
+bool Getb18FromStreamInfo(ed_sound_instance* pSoundInstance)
+{
+	SOUND_StreamInfo streamInfo;
+
+	SOUND_GetStreamInfo(pSoundInstance->pSoundStream->streamBufferId[0], &streamInfo);
+	return streamInfo.b18 != 0;
+}
+
+bool edSoundStream_00284650(uint index)
+{
+	bool bVar1;
+
+	if (index != 0 && pedSoundInstances[index & 0xffff].fullSoundInstanceId == index) {
+		bVar1 = Getb18FromStreamInfo(pedSoundInstances + (index & 0xffff));
+		return bVar1;
+	}
+	return true;
+}
+
+void edSoundStream_00283650(uint index)
+{
+	ed_sound_instance* puVar1;
+
+	if (index != 0) {
+		puVar1 = pedSoundInstances + index;
+		if (puVar1->fullSoundInstanceId == index) {
+			puVar1->flags = puVar1->flags | 0x100;
+		}
+	}
+
+	return;
+}
+
+uint edSoundStream_00283f70(uint index)
+{
+	uint uVar1;
+	uint uVar2;
+
+	uVar2 = 0;
+
+	if ((index != 0) && (pedSoundInstances[index & 0xffff].fullSoundInstanceId == index)) {
+		uVar1 = pedSoundInstances[index & 0xffff].flags;
+		uVar2 = 2;
+		if (((uVar1 & 0x200) == 0) && (uVar2 = 3, (uVar1 & 0x80) == 0)) {
+			uVar2 = 1;
+		}
+	}
+
+	return uVar2;
+}
+
+float edSoundInstanceGetPlaybackTime(ed_sound_instance* pSoundInstance)
+{
+	_ed_sound_stream* p_Var1;
+	bool bVar2;
+	uint uVar3;
+	float fVar4;
+	float puVar5;
+	SOUND_StreamInfo streamInfo;
+
+	if ((pSoundInstance->flags & 0x10) == 0) {
+		if (((pSoundInstance->pSample->flags & 2U) == 0) && (uVar3 = pSoundInstance->field_0x80[0], uVar3 != 0xffffffff)) {
+			fVar4 = DecodeFloat(uVar3);
+			puVar5 = (fVar4 * 3.5f) / pSoundInstance->frequency;
+		}
+		else {
+			puVar5 = -1.0f;
+		}
+	}
+	else {
+		p_Var1 = pSoundInstance->pSoundStream;
+		SOUND_GetStreamInfo(p_Var1->streamBufferId[0], &streamInfo);
+		bVar2 = true;
+		if (streamInfo.field_0x20 == -1) {
+			pSoundInstance->field_0x92 = pSoundInstance->field_0x92 + 1;
+			bVar2 = false;
+			uVar3 = p_Var1->field_0x10;
+			fVar4 = DecodeFloat(uVar3);
+			fVar4 = fVar4 * (float)(uint)pSoundInstance->field_0x92 * edSoundGlobalParams.g_DesiredFrameTime_00483824 * 0.9f;
+			uVar3 = EncodeFloat(fVar4);
+		}
+		else {
+			uVar3 = streamInfo.int4 + streamInfo.field_0x20 * p_Var1->field_0x10;
+		}
+
+		fVar4 = DecodeFloat(uVar3);
+		puVar5 = (fVar4 * 3.5f) / (p_Var1->field_0x18 * 2.0f);
+		if (bVar2) {
+			puVar5 = puVar5 + 0.04f;
+		}
+	}
+
+	return puVar5;
+}
+
+float edSoundStreamGetPlaybackTime(uint index)
+{
+	float puVar1;
+
+	if ((index != 0) && (pedSoundInstances[index & 0xffff].fullSoundInstanceId == index)) {
+		puVar1 = edSoundInstanceGetPlaybackTime(pedSoundInstances + (index & 0xffff));
+		return puVar1;
+	}
+
+	return -1.0f;
 }

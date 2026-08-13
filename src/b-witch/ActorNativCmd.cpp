@@ -674,7 +674,7 @@ LAB_003e1c88:
 
 	bVar3 = false;
 LAB_003e1d00:
-	if ((((!bVar3) && (uVar5 = StaticEdFileBase_004497f0.FUN_00401f30(), uVar5 != 0)) &&
+	if ((((!bVar3) && (uVar5 = StaticEdFileBase_004497f0.IsAvailable(), uVar5 != 0)) &&
 		(pCVar1->cineBankLoadStage_0x2b4 == 4)) && ((pCVar1->flags_0x8 & 0x80) == 0)) {
 		return pCVar7;
 	}

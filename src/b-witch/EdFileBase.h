@@ -7,11 +7,11 @@ struct StaticEdFileBase
 {
 	void Add();
 	void Remove();
-	bool FUN_00401f30();
+	bool IsAvailable();
 	bool Check();
 
 	struct edCFiler* pEdFileBase;
-	int field_0x4;
+	int nbActiveUsers;
 };
 
 extern StaticEdFileBase StaticEdFileBase_004497f0;

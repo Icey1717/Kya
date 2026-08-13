@@ -1,4 +1,5 @@
 #include "edSound/edSoundInit.h"
+#include "edSound/ps2/_edSoundInit.h"
 #include "edSound/edSoundPlay.h"
 #include "edSound/edSoundInstance.h"
 #include "EdenLib/edSys/sources/EdHandlers.h"
@@ -68,9 +69,7 @@ void edSoundInit(void)
 	pedSoundInstancesToDelete = (uint*)edMemAlloc(TO_HEAP(H_MAIN), soundConfig.nbMaxInstances * sizeof(uint));
 	edSoundInstancesToDeleteNb = 0;
 
-#ifdef PLATFORM_PS2
 	_edSoundInit(soundConfig.nbMaxInstances);
-#endif
 	edSoundAcousticInit();
 	edSoundGlobalParams.field_0x20 = 0;
 	edSoundGlobalParams.field_0x6c = 0;

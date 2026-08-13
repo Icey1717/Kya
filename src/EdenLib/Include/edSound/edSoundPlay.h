@@ -17,13 +17,17 @@ struct ed_sound_sample
 
 struct _ed_sound_stream
 {
-	int streamBufferId;
+	int streamBufferId[2];
 	int streamFileId;
 	void* pMem;
 	void* pDynamicData;
+
+	int field_0x10;
+	int field_0x14;
+	float field_0x18;
 };
 
-struct VAGp {
+PACK(struct VAGp {
 	char magic[4]; /* VAGp magic. */
 	uint versionBe; /* Big-endian VAG version. */
 	uint reserved0;
@@ -31,23 +35,28 @@ struct VAGp {
 	uint sampleRateBe; /* Big-endian sample rate in Hz. */
 	char reserved1[12];
 	char name[16];
-};
+});
 
-struct adpcmBlock {
+PACK(struct adpcmBlock {
 	byte predictorFilter;
 	byte flags;
 	byte data[14];
-};
+});
 
-struct SoundFileData {
+PACK(struct SoundFileData {
 	VAGp header;
 	adpcmBlock adpcm[];
-};
+});
 
+PACK(
 struct GlobalSound_FileData
 {
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
 	char field_0x10[64];
-};
+});
 
 typedef void (*edSoundFinishedInstancesCallback)(struct ed_sound_instance_finished*, uint);
 
@@ -136,11 +145,11 @@ struct ED_SOUND_3D_DATA
 	byte field_0x24;
 };
 
-int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath, ulong param_4, undefined8 param_5, undefined8 param_6);
+int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoundStream, char* szPath, uint lsn, undefined8 param_5, uint fileSize);
 void _edSoundStreamTerm(_ed_sound_stream* pSoundStream);
 
 int edSoundStreamLoadA(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSoundData, char* szPath, undefined8 param_4);
-int edSoundStreamLoadB(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSoundData, ulong param_3, undefined8 param_4, undefined8 param_5);
+int edSoundStreamLoadB(_ed_sound_stream* pSoundStream, GlobalSound_FileData* pSoundData, uint lsn, undefined8 param_4, uint filesize);
 void edSoundStreamFree(_ed_sound_stream* pSoundStream);
 
 void edSoundFlush();
@@ -203,8 +212,51 @@ bool edSoundAreAllSoundDataLoaded();
 
 void edSoundSetListener(edsound_listener* pListener);
 
+uint edSoundStreamCreate_00284500(float priority, _ed_sound_stream* pSoundStream);
+bool edSoundStream_00284650(uint index);
+void edSoundStream_00283650(uint index);
+uint edSoundStream_00283f70(uint index);
+float edSoundStreamGetPlaybackTime(uint index);
+
 // SOUND_
+
+struct SOUND_StreamInfo
+{
+	undefined4 field_0x0;
+	byte b5;
+	byte b6;
+	byte b7;
+	byte b8;
+	byte b9;
+	byte b10;
+	byte b11;
+	byte b12;
+	int int1;
+	byte b17;
+	byte playing;
+	byte b18;
+	byte b19;
+	byte b20;
+	byte b21;
+	ushort field_0x16;
+	undefined4 field_0x18;
+	undefined4 field_0x1c;
+	int field_0x20;
+	int int4;
+};
+
+int SOUND_InitIOP(void);
 int SOUND_SetMaxStreamLimit(uint nbStreams);
+int SOUND_FindFreeStream(void);
+void SOUND_AllocateStreamBuffer(int streamBufferId, void* pMem, uint size);
+void SOUND_CreateFileInfoFromLsn(ushort streamFileId, uint lsn, uint fileSize, undefined8 param_4, undefined8 param_5);
+int SOUND_GetStreamInfo(uint streamID, SOUND_StreamInfo* outStreamInfo);
+void SOUND_CloseStreamBuffer(int streamBufferId);
+void SOUND_FreeFileID(int streamFileId);
+
+extern byte SOUND_STREAM_STATUS[48];
+
+// End SOUND_
 
 extern edCSoundGlobalParams edSoundGlobalParams;
 extern edCSoundParam edSoundParam;

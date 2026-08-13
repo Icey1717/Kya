@@ -14,6 +14,8 @@
 
 #include "edBank/edBankFile.h"
 #include "edFile/edFile.h"
+#include "edFile/ps2/_edFileFilerCDVD.h"
+#include "edFile/edFilePath.h"
 
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
@@ -2988,7 +2990,7 @@ void CCinematic::Level_PauseChange(bool bPaused)
 
 			if (bVar1) {
 				if (((this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x38 == 0) ||
-					(bVar1 = StaticEdFileBase_004497f0.FUN_00401f30(), bVar1 == false)) {
+					(bVar1 = StaticEdFileBase_004497f0.IsAvailable(), bVar1 == false)) {
 					iVar3 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId;
 					if (iVar3 != 0) {
 						IMPLEMENTATION_GUARD_AUDIO(
@@ -5806,17 +5808,15 @@ bool CBWCinSourceAudio::Play()
 			bVar1 = false;
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
-			uVar3 = FUN_00284650(this->soundInstanceId);
-			bVar1 = uVar3 != 0;)
+			uVar3 = edSoundStream_00284650(this->soundInstanceId);
+			bVar1 = uVar3 != 0;
 		}
 
 		if (((bVar1) && (this->soundInstanceId != 0)) && (this->field_0x8 == 0.0f)) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			FUN_00283650(this->soundInstanceId);
+			edSoundStream_00283650(this->soundInstanceId);
 			edSoundFlush();
 			fVar4 = Timer::GetTimer()->cutsceneDeltaTime;
-			this->field_0x8 = Timer::GetTimer()->totalPlayTime - fVar4;)
+			this->field_0x8 = Timer::GetTimer()->totalPlayTime - fVar4;
 		}
 
 		bVar1 = true;
@@ -5850,6 +5850,8 @@ bool CBWCinSourceAudio::Destroy()
 	return true;
 }
 
+float FLOAT_00448ef8 = 0.0f;
+
 float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 {
 	bool bVar1;
@@ -5877,25 +5879,19 @@ float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 		}
 	}
 	else {
-		// REMOVE
-		IMPLEMENTATION_GUARD_AUDIO();
-		return -1.0f;
-
 		if (this->field_0x8 == 0.0f) {
 			if (this->field_0x39 != 0) {
 				if (uVar3 == 0) {
 					bVar1 = false;
 				}
 				else {
-					IMPLEMENTATION_GUARD_AUDIO(
-					uVar4 = FUN_00284650(uVar3);)
+					uVar4 = edSoundStream_00284650(uVar3);
 					bVar1 = uVar4 != 0;
 				}
 
 				if (bVar1) {
 					if ((this->soundInstanceId != 0) && (this->field_0x8 == 0.0f)) {
-						IMPLEMENTATION_GUARD_AUDIO(
-						FUN_00283650(this->soundInstanceId);)
+						edSoundStream_00283650(this->soundInstanceId);
 						edSoundFlush();
 						fVar7 = Timer::GetTimer()->cutsceneDeltaTime;
 						this->field_0x8 = Timer::GetTimer()->totalPlayTime - fVar7;
@@ -5922,18 +5918,17 @@ float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
-			uVar3 = FUN_00283f70(uVar3);
+			uVar3 = edSoundStream_00283f70(uVar3);
 			if (uVar3 == 0) {
 				fVar6 = fVar7 - this->field_0x8;
 			}
 			else {
-				fVar5 = CutsceneTypeTwoA(this->soundInstanceId);
-				if (fVar6 <= fVar5 - DAT_00448ef8) {
-					fVar6 = fVar5 - DAT_00448ef8;
+				fVar5 = edSoundStreamGetPlaybackTime(this->soundInstanceId);
+				if (fVar6 <= fVar5 - FLOAT_00448ef8) {
+					fVar6 = fVar5 - FLOAT_00448ef8;
 				}
 				this->field_0x8 = fVar7 - fVar6;
-			})
+			}
 		}
 	}
 
@@ -5963,17 +5958,15 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 			this->floatFieldA = Timer::GetTimer()->totalPlayTime;
 		}
 
-		bVar1 = StaticEdFileBase_004497f0.FUN_00401f30();
+		bVar1 = StaticEdFileBase_004497f0.IsAvailable();
 		pAudioManager = CScene::ptable.g_AudioManager_00451698;
 		pLevelScheduler = CLevelScheduler::gThis;
 		if (bVar1 != false) {
-			IMPLEMENTATION_GUARD_AUDIO(
 			pcVar3 = CScene::ptable.g_AudioManager_00451698->GetStreamFileNameFromIndex_00184a40(audioTrackId);
 			pcVar3 = edStrFileNameBase(pcVar3);
 			edStrCopyUpper(acStack17 + 1, pcVar3);
 			sVar5 = strlen(acStack17 + 1);
-			acStack17[(int)sVar5] = 'B';
-			/* \\Stream\\ */
+			acStack17[sVar5] = 'B';
 			edStrCatMulti(streamFilePath, pLevelScheduler->levelPath,
 				pLevelScheduler->aLevelInfo[pLevelScheduler->currentLevelID].levelName, "\\Stream\\",
 				acStack17 + 1, NULL);
@@ -5983,30 +5976,30 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 			pGVar4 = pAudioManager->GetSoundFileDataFromIndex_00184a10(audioTrackId);
 			this->pGlobalSoundFileData = pGVar4;
 
-			FUN_002617d0(local_610, "");
-			ret = SomeStringFunction(local_610, s_<cdvd>_0042b980, 6);
+			edFileCopyPath_002617d0(local_610, "");
+			ret = edStrNICmp(local_610, "<cdvd>", 6);
 			if (ret == 0) {
 				edStrCat(local_610, streamFilePath);
 				pcVar3 = local_610;
-				while (local_610[0] != '\0') {
+				while (*pcVar3 != '\0') {
 					if (*pcVar3 == '/') {
 						*pcVar3 = '\\';
 					}
 					pcVar3 = pcVar3 + 1;
-					local_610[0] = *pcVar3;
 				}
-				ret = edFile::Ps2CdSearchFile(&local_640, local_610);
+
+				ret = Ps2CdSearchFile(&local_640, local_610);
 				if (ret == 0) {
 					this->pGlobalSoundFileData = (GlobalSound_FileData*)0x0;
 				}
 				else {
-					fileSize = (long)(int)local_640.size;
-					uVar6 = SEXT48((int)local_640.lsn);
+					fileSize = local_640.size;
+					uVar6 = local_640.lsn;
 				}
 			}
 
-			pAudioManager->FUN_00184640(0x19800, 0xcc00);
-			pGVar4 = this->pGlobalSoundFileData;)
+			pAudioManager->EnsureSoundMemoryAvailable(0x19800, 0xcc00);
+			pGVar4 = this->pGlobalSoundFileData;
 			if (pGVar4 != (GlobalSound_FileData*)0x0) {
 				if (fileSize == 0) {
 					ret = edSoundStreamLoadA(this->pSoundStream, pGVar4, formattedFilePath, 0);
@@ -6016,11 +6009,9 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 				}
 
 				edSoundFlush();
-				IMPLEMENTATION_GUARD_AUDIO(
-				FUN_00284500(pAudioManager->field_0xcc, this->pSoundStream);)
-
-				this->soundInstanceId = ret;
+				this->soundInstanceId = edSoundStreamCreate_00284500(pAudioManager->field_0xcc, this->pSoundStream);
 				edSoundFlush();
+
 				if (this->soundInstanceId == 0) {
 					edSoundStreamFree(this->pSoundStream);
 				}
