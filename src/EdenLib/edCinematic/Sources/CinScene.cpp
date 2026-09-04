@@ -820,8 +820,6 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 	edF32VECTOR3 local_68;
 	edF32VECTOR4 locationOutVector;
 	edAnmSubControler local_48;
-	edAnmSubControler soundTrackBuffer;
-	edAnmSubControler local_40;
 	edAnmSubControler local_3c;
 	edAnmSubControler local_38;
 	edAnmSubControler local_34;
@@ -903,35 +901,54 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 				}
 				else {
 					if (currentTrackType == 0x6e756fb7) {
-						IMPLEMENTATION_GUARD_LOG(
-						soundTrackBuffer = (edAnmSubControlerTag*)(trackSeekPos + 3);
+						edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+						edAnmSubControler soundTrackBuffer = edAnmSubControler(pTag);
+						float* pKeyTimes = pTag->keyTimes;
 						soundKeyframe = 0;
 						/* Get the number of keyframes in this track */
 						/* Check some time */
-						if ((float)trackSeekPos[4] <= currentPlayTime) {
-							currentKeyframePtr =
-								edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &soundTrackBuffer, &soundKeyframe);
-							keyframeBodyPtr =
-								(float*)((int*)((int)animatedProperty + 0xc) +
-									(uint) * (ushort*)((int)animatedProperty + 0xc) + soundKeyframe * 3);
-							soundFileInfoObj = resCollection->pData[(int)keyframeBodyPtr[1]].pData;
-							soundStart = keyframeBodyPtr[2];
-							soundStop = keyframeBodyPtr[3];
-							(*(code*)pCinActorInterface->vt->SetSound)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
-						})
+						if (pKeyTimes[0] <= currentPlayTime) {
+							currentKeyframePtr = soundTrackBuffer.GetClosestKeyIndexSafe(currentPlayTime, &soundKeyframe);
+
+							struct SoundTagData
+							{
+								int field_0x0;
+								float field_0x4;
+								float field_0x8;
+							};
+
+							SoundTagData* pSoundTagData = reinterpret_cast<SoundTagData*>(pTag->keyTimes + pTag->keyCount);
+
+							edCinActorInterface::SOUND_PARAMStag soundParams;
+							soundParams.pSample = LOAD_POINTER_CAST(ed_sound_sample*, resCollection.pData->aTags[pSoundTagData[soundKeyframe].field_0x0].pData);
+							soundParams.field_0x4 = pSoundTagData[soundKeyframe].field_0x4;
+							soundParams.field_0x8 = pSoundTagData[soundKeyframe].field_0x8;
+
+							pCinActorInterface->SetSound(currentPlayTime - *currentKeyframePtr, &soundParams);
+						}
 					}
 					else {
 						if (currentTrackType == 0xdbd3d7c5) {
-							IMPLEMENTATION_GUARD_LOG(
-							local_40 = (edAnmSubControlerTag*)(trackSeekPos + 3);
+							edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+							edAnmSubControler local_40 = edAnmSubControler(pTag);
 							local_10 = 0;
-							if ((float)trackSeekPos[4] <= currentPlayTime) {
-								currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_40, &local_10);
-								(*(code*)pCinActorInterface->vt->SetLipsynch)
-									((currentPlayTime - *currentKeyframePtr) +
-										(float)((int*)((uint) * (ushort*)((int)animatedProperty + 0xc) * 4 +
-											(int)animatedProperty))[local_10 * 2 + 5], pCinActorInterface);
-							})
+							float* pKeyTimes = pTag->keyTimes;
+							if (pKeyTimes[0] <= currentPlayTime) {
+								currentKeyframePtr = local_40.GetClosestKeyIndexSafe(currentPlayTime, &local_10);
+
+								struct LipSynchData
+								{
+									int field_0x0;
+									float field_0x4;
+								};
+
+								LipSynchData* pLipSynchData = reinterpret_cast<LipSynchData*>(pTag->keyTimes + pTag->keyCount);
+
+								float lipSynchValue = pLipSynchData[local_c].field_0x4;
+								CKFrameTrackReader* pTrackReader = LOAD_POINTER_CAST(CKFrameTrackReader*, resCollection.pData->aTags[pLipSynchData[local_c].field_0x0].pData);
+
+								pCinActorInterface->SetLipsynch((currentPlayTime - *currentKeyframePtr) + lipSynchValue, pTrackReader);
+							}
 						}
 						else {
 							if (currentTrackType == 0xd9dec42c) {
@@ -942,7 +959,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 								local_c = 0;
 								if (pKeyTimes[0] <= currentPlayTime) {
 									currentKeyframePtr = local_3c.GetClosestKeyIndexSafe(currentPlayTime, &local_c);
-									pTrackDataStart = (int*)((ulong)pAnimProp + 0xc) + (uint)*(ushort*)((ulong)pAnimProp + 0xc) + local_c * 2;
+									pTrackDataStart = (int*)((ulong)pAnimProp + 0xc) + (uint) * (ushort*)((ulong)pAnimProp + 0xc) + local_c * 2;
 
 									struct ParticleTagData
 									{

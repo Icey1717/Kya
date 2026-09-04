@@ -372,20 +372,19 @@ void CActorProjectile::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator,
 	int* piVar2;
 	float fVar3;
 
-	char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-	AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+	float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 	if (newAnim == 0x13) {
 		fVar3 = this->field_0x3f0;
 		if (0.0f <= fVar3) {
-			pValue->field_0xc = fVar3;
-			pValue->field_0x10 = 1.0f - pValue->field_0xc;
-			pValue->field_0x14 = 0.0f;
+			pAnimValues[0] = fVar3;
+			pAnimValues[1] = 1.0f - pAnimValues[0];
+			pAnimValues[2] = 0.0f;
 		}
 		else {
-			pValue->field_0x14 = -fVar3;
-			pValue->field_0x10 = 1.0f - pValue->field_0x14;
-			pValue->field_0xc = 0.0f;
+			pAnimValues[2] = -fVar3;
+			pAnimValues[1] = 1.0f - pAnimValues[2];
+			pAnimValues[0] = 0.0f;
 		}
 	}
 	else {

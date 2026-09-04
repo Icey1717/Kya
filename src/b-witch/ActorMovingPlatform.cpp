@@ -155,21 +155,17 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 0x10;
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(PLATFORM_SOUND_STREAM_ENTRY);
 	}
-
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->field_0x1dc = piVar5;)
+	this->field_0x1dc = (PLATFORM_SOUND_STREAM*)piVar5;
 
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 0x10;
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(PLATFORM_SOUND_STREAM_ENTRY);
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->field_0x1e0 = piVar5;
-	)
+	this->field_0x1e0 = (PLATFORM_SOUND_STREAM*)piVar5;
 
 	CActorMovingPlatform_SubObj* pCVar3 = this->pProperties;
 	float fVar17 = pCVar3->field_0x14;
@@ -244,7 +240,7 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	if (0 < iVar15) {
 		S_BRIDGE_CAMERA_STREAM* pSVar13 = this->pCameraStream;
 		do {
-			if (pSVar13->aEntries[iVar9].field_0x44 != -1) {
+			if (pSVar13->aEntries[iVar9].field_0x44.index != -1) {
 				uVar16 = uVar16 + 1;
 			}
 
@@ -257,14 +253,14 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	}
 
 	pCVar3 = this->pProperties;
-	iVar15 = (pCVar3->field_0x0).field_0x0;
+	iVar15 = (pCVar3->field_0x0).soundRef.index;
 	if (iVar15 == -1) {
-		iVar15 = (pCVar3->field_0x0).field_0x4;
+		iVar15 = (pCVar3->field_0x0).sampleRef.index;
 	}
 	if (iVar15 == -1) {
-		iVar15 = (pCVar3->field_0x8).field_0x0;
+		iVar15 = (pCVar3->field_0x8).soundRef.index;
 		if (iVar15 == -1) {
-			iVar15 = (pCVar3->field_0x8).field_0x4;
+			iVar15 = (pCVar3->field_0x8).sampleRef.index;
 		}
 		if (iVar15 == -1) goto LAB_0015d240;
 	}
@@ -275,30 +271,28 @@ LAB_0015d240:
 	CBehaviour* pCVar10 = GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_STAND);
 	CBehaviourPlatformStand* pStand;
 	if ((pCVar10 != (CBehaviour*)0x0) &&
-		(pStand = (CBehaviourPlatformStand*)GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_STAND), pStand->field_0x8 != -1)) {
+		(pStand = (CBehaviourPlatformStand*)GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_STAND), pStand->field_0x8.index != -1)) {
 		this->movingPlatformFlags = this->movingPlatformFlags | 1;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	CBehaviour* pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB);
+	pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB);
 	CBehaviourPlatformSlab* pSlab;
 	if ((pCVar10 != (CBehaviour*)0x0) &&
-		(pSlab = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB), pSlab->field_0x20.Get()-> != (CBehaviourVtable*)0xffffffff)) {
+		(pSlab = (CBehaviourPlatformSlab*)CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SLAB), pSlab->field_0x20.index != -1)) {
 		this->movingPlatformFlags = this->movingPlatformFlags | 2;
-	})
+	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	CBehaviour* pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
-	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE), pCVar10 != (CBehaviour*)0x0)
-		) {
-		pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
-		if (pCVar10 == (CBehaviour*)0x0) {
-			pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE);
+	pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
+	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE), pCVar10 != (CBehaviour*)0x0)) {
+		CBehaviourSelector* pSelector = (CBehaviourSelector*)CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER);
+		if (pSelector == (CBehaviour*)0x0) {
+			pSelector = (CBehaviourSelector*)CActor::GetBehaviour(MOVING_PLATFORM_BEHAVIOUR_SELECTOR_SLAVE);
 		}
-		if (pCVar10[5].pVTable != (CBehaviourVtable*)0xffffffff) {
+
+		if (pSelector->streamRefSound.index != -1) {
 			this->movingPlatformFlags = this->movingPlatformFlags | 2;
 		}
-	})
+	}
 
 	if ((this->movingPlatformFlags & 2) != 0) {
 		uVar16 = uVar16 + 1;
@@ -336,7 +330,7 @@ void CActorMovingPlatform::Init()
 	edF32MATRIX4* peVar12;
 	S_STREAM_REF<CActor>* pSVar13;
 	S_STREAM_REF<ed_zone_3d>* pStreamRef;
-	int* piVar14;
+	PLATFORM_SOUND_STREAM_ENTRY* piVar14;
 	ed_zone_3d* peVar15;
 	S_STREAM_MPF_NO_FRICTION_ZONE* pNoFric;
 	CActor* pCVar16;
@@ -393,29 +387,28 @@ void CActorMovingPlatform::Init()
 			pEntry->streamTarget.Init();
 			pEntry->streamCameraEvent.Init();
 
-			IMPLEMENTATION_GUARD_AUDIO(
-				pEntry->field_0x44.FUN_00181e70();
-			)
+				pEntry->field_0x44.Init();
 				pEntry = pEntry + 1;
 		}
 	}
 
 	ForceCarriedStuff();
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	pCVar3 = this->pProperties;
-	FUN_00181d50(&pCVar3->field_0x0);
-	FUN_00181d50(&pCVar3->field_0x8);
-	piVar14 = this->field_0x1dc + 1;
-	for (iVar10 = *this->field_0x1dc; iVar10 != 0; iVar10 = iVar10 + -1) {
-		FUN_00181d50((uint*)(piVar14 + 2));
-		piVar14 = piVar14 + 4;
+	CActorMovingPlatform_SubObj* pCVar3 = this->pProperties;
+	pCVar3->field_0x0.Init();
+	pCVar3->field_0x8.Init();
+
+	piVar14 = this->field_0x1dc->aEntries;
+	for (iVar10 = this->field_0x1dc->nbEntries; iVar10 != 0; iVar10 = iVar10 + -1) {
+		piVar14->soundScenaricData.Init();
+		piVar14 = piVar14 + 1;
 	}
-	piVar14 = this->field_0x1e0 + 1;
-	for (iVar10 = *this->field_0x1e0; iVar10 != 0; iVar10 = iVar10 + -1) {
-		FUN_00181d50((uint*)(piVar14 + 2));
-		piVar14 = piVar14 + 4;
-	})
+
+	piVar14 = this->field_0x1e0->aEntries;
+	for (iVar10 = this->field_0x1e0->nbEntries; iVar10 != 0; iVar10 = iVar10 + -1) {
+		piVar14->soundScenaricData.Init();
+		piVar14 = piVar14 + 1;
+	}
 
 	CActor::Init();
 	return;
@@ -828,7 +821,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSe
 	uint uVar4;
 	CCamera* pCameraView;
 	StateConfig* pAVar5;
-	int* piVar6;
+	PLATFORM_SOUND_STREAM* piVar6;
 	int iVar7;
 	uint uVar8;
 	int iVar9;
@@ -901,78 +894,88 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSe
 
 	if ((uint)((this->movingPlatformFlags & 0x10) != 0) == param_3) {
 		if (param_3 == 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
 			piVar6 = this->field_0x1e0;
 			iVar10 = 0;
-			if (piVar6 != (int*)0x0) {
-				iVar10 = *piVar6;
+			if (piVar6 != (PLATFORM_SOUND_STREAM*)0x0) {
+				iVar10 = piVar6->nbEntries;
 			}
+
 			if (iVar10 != 0) {
-				iVar10 = (this->pProperties->field_0x8).field_0x0;
-				if (this->field_0x1e0 == (int*)0x0) {
+				CSound* pSound = (this->pProperties->field_0x8).soundRef.Get();
+				if (this->field_0x1e0 == (PLATFORM_SOUND_STREAM*)0x0) {
 					iVar9 = 0;
 				}
 				else {
-					iVar9 = *this->field_0x1e0;
+					iVar9 = this->field_0x1e0->nbEntries;
 				}
+
 				iVar7 = 0;
 				if (0 < iVar9) {
+					PLATFORM_SOUND_STREAM_ENTRY* pEntry = this->field_0x1e0->aEntries;
 					do {
-						if (piVar6[1] <= currentSegment) {
-							if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
-								iVar10 = piVar6[3];
+						if (pEntry->field_0x0 <= currentSegment) {
+							if (((currentSegment <= pEntry->field_0x4) && (pEntry->field_0x0 <= prevSegment)) && (prevSegment <= pEntry->field_0x4)) {
+								pSound = pEntry->soundScenaricData.soundRef.Get();
 								break;
 							}
 						}
+
 						iVar7 = iVar7 + 1;
-						piVar6 = piVar6 + 4;
+						pEntry = pEntry + 1;
 					} while (iVar7 < iVar9);
 				}
-				if (iVar10 != this->field_0x1e8) {
-					CActorSound::FUN_0032c600(this->pActorSound, 0);
-					this->field_0x1e8 = iVar10;
-					if ((int*)this->field_0x1e8 != (int*)0x0) {
-						CActorSound::SoundStart(this->pActorSound, this, 0, (int*)this->field_0x1e8, 1, 0, (float**)0x0);
+
+				if (pSound != this->field_0x1e8) {
+					this->pActorSound->node.SoundStop(0);
+					this->field_0x1e8 = pSound;
+					if (this->field_0x1e8 != (CSound*)0x0) {
+						this->pActorSound->node.SoundStart(this, 0, this->field_0x1e8, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 					}
 				}
-			})
+			}
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
 			piVar6 = this->field_0x1dc;
 			iVar10 = 0;
-			if (piVar6 != (int*)0x0) {
-				iVar10 = *piVar6;
+			if (piVar6 != (PLATFORM_SOUND_STREAM*)0x0) {
+				iVar10 = piVar6->nbEntries;
 			}
+
 			if (iVar10 != 0) {
-				iVar10 = (this->pProperties->field_0x0).field_0x0;
-				if (this->field_0x1dc == (int*)0x0) {
+				CSound* pSound = (this->pProperties->field_0x0).soundRef.Get();
+				if (this->field_0x1dc == (PLATFORM_SOUND_STREAM*)0x0) {
 					iVar9 = 0;
 				}
 				else {
-					iVar9 = *this->field_0x1dc;
+					iVar9 = this->field_0x1dc->nbEntries;
 				}
+
 				iVar7 = 0;
 				if (0 < iVar9) {
+					PLATFORM_SOUND_STREAM_ENTRY* pEntry = this->field_0x1dc->aEntries;
+
 					do {
-						if (piVar6[1] <= currentSegment) {
-							if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
-								iVar10 = piVar6[3];
+						if (pEntry->field_0x0 <= currentSegment) {
+							if (((currentSegment <= pEntry->field_0x4) && (pEntry->field_0x0 <= prevSegment)) && (prevSegment <= pEntry->field_0x4)) {
+								pSound = pEntry->soundScenaricData.soundRef.Get();
 								break;
 							}
 						}
+
 						iVar7 = iVar7 + 1;
-						piVar6 = piVar6 + 4;
+						pEntry = pEntry + 1;
 					} while (iVar7 < iVar9);
 				}
-				if (iVar10 != this->field_0x1e4) {
-					CActorSound::FUN_0032c600(this->pActorSound, 0);
-					this->field_0x1e4 = iVar10;
-					if ((int*)this->field_0x1e4 != (int*)0x0) {
-						CActorSound::SoundStart(this->pActorSound, this, 0, (int*)this->field_0x1e4, 1, 0, (float**)0x0);
+
+				if (pSound != this->field_0x1e4) {
+					this->pActorSound->node.SoundStop(0);
+
+					this->field_0x1e4 = pSound;
+					if (this->field_0x1e4 != (CSound*)0x0) {
+						this->pActorSound->node.SoundStart(this, 0, this->field_0x1e4, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 					}
 				}
-			})
+			}
 		}
 	}
 	else {
@@ -1061,34 +1064,33 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSe
 				PlayAnim(0x6);
 			}
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			iVar10 = (this->pProperties->field_0x0).field_0x0;
-			if (this->field_0x1dc == (int*)0x0) {
+			CSound* pSound = (this->pProperties->field_0x0).soundRef.Get();
+			if (this->field_0x1dc == (PLATFORM_SOUND_STREAM*)0x0) {
 				iVar9 = 0;
 			}
 			else {
-				iVar9 = *this->field_0x1dc;
+				iVar9 = this->field_0x1dc->nbEntries;
 			}
 
 			iVar7 = 0;
 			if (0 < iVar9) {
-				piVar6 = this->field_0x1dc;
+				PLATFORM_SOUND_STREAM_ENTRY* pEntry = this->field_0x1dc->aEntries;
 				do {
-					if (piVar6[1] <= currentSegment) {
-						if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
-							iVar10 = piVar6[3];
+					if (pEntry->field_0x0 <= currentSegment) {
+						if (((currentSegment <= pEntry->field_0x4) && (pEntry->field_0x0 <= prevSegment)) && (prevSegment <= pEntry->field_0x4)) {
+							pSound = pEntry->soundScenaricData.soundRef.Get();
 							break;
 						}
 					}
 					iVar7 = iVar7 + 1;
-					piVar6 = piVar6 + 4;
+					pEntry = pEntry + 1;
 				} while (iVar7 < iVar9);
 			}
 
-			this->field_0x1e4 = iVar10;
+			this->field_0x1e4 = pSound;
 			if (this->field_0x1e4 != (CSound*)0x0) {
-				CActorSound::SoundStart(this->pActorSound, this, 0, this->field_0x1e4, 1, 0, (float**)0x0);
-			})
+				this->pActorSound->node.SoundStart(this, 0, this->field_0x1e4, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			}
 
 			uVar4 = this->pProperties->field_0x1c;
 			if (uVar4 != 0xffffffff) {
@@ -2044,9 +2046,8 @@ void CActorMovingPlatform::Reset()
 		pCol->flags_0x0 = pCol->flags_0x0 & 0xffdfffff;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->field_0x1e4 = 0;
-	this->field_0x1e8 = (CSound*)0x0;)
+	this->field_0x1e4 = (CSound*)0x0;
+	this->field_0x1e8 = (CSound*)0x0;
 
 	return;
 }
@@ -2556,11 +2557,10 @@ void CBehaviourPlatformStand::Create(ByteCode* pByteCode)
 
 	ACTOR_LOG(LogLevel::Info, "CBehaviourPlatformStand::Create");
 
-	iVar1 = pByteCode->GetS32();
-	this->field_0x8 = iVar1;
-	iVar1 = pByteCode->GetS32();
-	this->field_0xc = iVar1;
+	this->field_0x8.index = pByteCode->GetS32();
+	this->field_0xc = pByteCode->GetS32();
 	this->pCinData.Reset();
+
 	return;
 }
 
@@ -2568,8 +2568,8 @@ void CBehaviourPlatformStand::Init(CActor* pOwner)
 {
 	this->pOwner = reinterpret_cast<CActorMovingPlatform*>(pOwner);
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	FUN_00181e70((uint*)&this->field_0x8);)
+	this->field_0x8.Init();
+
 	return;
 }
 
@@ -2650,13 +2650,13 @@ void CBehaviourPlatformStand::ChangeManageState(int state)
 
 		this->pCinData.Reset();
 
-		if (this->field_0x8 != 0) {
+		if (this->field_0x8.index != 0) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			CActorSound::FUN_0032c600(this->pOwner->pActorSound, 0);)
 		}
 	}
 	else {
-		if ((CSound*)this->field_0x8 != (CSound*)0x0) {
+		if (this->field_0x8.Get() != (CSound*)0x0) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			CActorSound::SoundStart
 			(this->pOwner->pActorSound, this->pOwner, 0, (CSound*)this->field_0x8, 1, 0,
@@ -2979,8 +2979,7 @@ void CBehaviourPlatformSlab::Init(CActor* pOwner)
 
 	switchOnOff.Init();
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	S_STREAM_REF<CSound>::Init(&this->field_0x20);)
+	this->field_0x20.Init();
 
 	return;
 }
@@ -3724,13 +3723,11 @@ void CBehaviourSelector::InitState(int state)
 	CSound* pSound;
 	CActorMovingPlatform* pActor;
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	if ((state == MOVING_PLATFORM_STATE_TRAJ_TO_A) && (pSound = (this->streamRefSound).pSound, pSound != (CSound*)0x0)) {
+	if ((state == MOVING_PLATFORM_STATE_TRAJ_TO_A) && (pSound = (this->streamRefSound).Get(), pSound != (CSound*)0x0)) {
 		pActor = this->pOwner;
-		CActorSound::SoundStart
-		(pActor->pActorSound, (CActor*)pActor, (uint)((pActor->movingPlatformFlags & 1) != 0), pSound, 1, 0,
-			(SOUND_SPATIALIZATION_PARAM*)0x0);
-	})
+		pActor->pActorSound->node.SoundStart(pActor, (uint)((pActor->movingPlatformFlags & 1) != 0), pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+	}
+
 	return;
 }
 

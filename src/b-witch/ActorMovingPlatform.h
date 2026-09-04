@@ -5,6 +5,7 @@
 #include "ActorMovable.h"
 #include "CinematicManager.h"
 #include "Fx.h"
+#include "FxSound.h"
 #include "PathManager.h"
 
 #define MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY				0x2
@@ -88,7 +89,7 @@ public:
 	virtual void LoadContext(S_SAVE_CLASS_MOVING_PLATFORM* pData);
 	virtual void ChangeManageState(int state);
 
-	int field_0x8;
+	S_STREAM_REF<CSound> field_0x8;
 	int field_0xc;
 	CFxHandle pCinData;
 };
@@ -280,17 +281,10 @@ public:
 };
 
 PACK(
-struct AudioSetupParams
-{
-	int field_0x0;
-	int field_0x4;
-});
-
-PACK(
 struct CActorMovingPlatform_SubObj
 {
-	AudioSetupParams field_0x0;
-	AudioSetupParams field_0x8;
+	CFxSoundScenaricData field_0x0;
+	CFxSoundScenaricData field_0x8;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
@@ -330,14 +324,30 @@ struct S_BRIDGE_CAMERA_STREAM_ENTRY
 	uint field_0x4;
 	S_STREAM_NTF_TARGET_SWITCH streamTarget;
 	S_STREAM_EVENT_CAMERA streamCameraEvent;
-	int field_0x44;
+	S_STREAM_REF<CSound> field_0x44;
 };
 
 static_assert(sizeof(S_BRIDGE_CAMERA_STREAM_ENTRY) == 0x48);
 
-struct S_BRIDGE_CAMERA_STREAM {
+struct S_BRIDGE_CAMERA_STREAM
+{
 	int entryCount;
 	S_BRIDGE_CAMERA_STREAM_ENTRY aEntries[];
+};
+
+struct PLATFORM_SOUND_STREAM_ENTRY
+{
+	int field_0x0;
+	int field_0x4;
+	CFxSoundScenaricData soundScenaricData;
+};
+
+static_assert(sizeof(PLATFORM_SOUND_STREAM_ENTRY) == 0x10);
+
+struct PLATFORM_SOUND_STREAM
+{
+	int nbEntries;
+	PLATFORM_SOUND_STREAM_ENTRY aEntries[];
 };
 
 class CActorMovingPlatform : public CActorMovable
@@ -397,6 +407,9 @@ public:
 
 	CActorMovingPlatform_SubObj* pProperties;
 
+	PLATFORM_SOUND_STREAM* field_0x1dc;
+	PLATFORM_SOUND_STREAM* field_0x1e0;
+
 	CFxHandle field_0x1ec;
 	CFxHandle field_0x1f4;
 
@@ -408,7 +421,7 @@ public:
 	S_BRIDGE_CAMERA_STREAM* pCameraStream;
 
 	CActorSoundNode* pActorSound;
-	undefined4 field_0x1e4;
+	CSound* field_0x1e4;
 	CSound* field_0x1e8;
 };
 

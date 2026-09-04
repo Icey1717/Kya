@@ -1,6 +1,10 @@
 #include "edSound/edSoundPlay.h"
 #include "edSound/edSoundInstance.h"
 #include "edSys/ps2/edSysDataTransfer.h"
+#ifdef PLATFORM_WIN
+#include "edSoundStreamService.h"
+#include "edSysTransferService.h"
+#endif
 
 #define READ_BE_UINT32(pValue) \
 		(((uint)((const byte*)(pValue))[0] << 24) | \
@@ -12,24 +16,24 @@ void _edSoundStreamFreeDynamicData(ed_sound_instance* pInstance);
 
 struct SOUND_MIH_INFO
 {
-	int field_0x0;
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
+	int sampleRate;
+	int nbChannels;
+	int interleaveBlockSize;
+	int interleaveBlockCount;
 };
 
 void SOUND_GetMIHInfo(GlobalSound_FileData* param_1, SOUND_MIH_INFO* param_2)
 {
-	param_2->field_0x0 = param_1->field_0x0;
-	param_2->field_0x4 = param_1->field_0x4;
-	param_2->field_0x8 = param_1->field_0x8;
-	param_2->field_0xc = param_1->field_0xc;
+	param_2->sampleRate = param_1->sampleRate;
+	param_2->nbChannels = param_1->nbChannels;
+	param_2->interleaveBlockSize = param_1->interleaveBlockSize;
+	param_2->interleaveBlockCount = param_1->interleaveBlockCount;
 	return;
 }
 
 void SOUND_CreateFileInfo(int param_1, char* param_2, uint param_3)
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_PS2();
 }
 
 extern ushort USHORT_00449140;
@@ -72,23 +76,23 @@ int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoun
 	}
 
 	SOUND_GetMIHInfo(pSoundData, &streamFrequency);
-	pSoundStream->field_0x10 = streamFrequency.field_0x8;
-	pSoundStream->field_0x14 = streamFrequency.field_0x4;
-	if (streamFrequency.field_0x0 < 0) {
-		fVar8 = (float)((uint)streamFrequency.field_0x0 >> 1 | streamFrequency.field_0x0 & 1U);
+	pSoundStream->field_0x10 = streamFrequency.interleaveBlockSize;
+	pSoundStream->field_0x14 = streamFrequency.nbChannels;
+	if (streamFrequency.sampleRate < 0) {
+		fVar8 = (float)((uint)streamFrequency.sampleRate >> 1 | streamFrequency.sampleRate & 1U);
 		fVar8 = fVar8 + fVar8;
 	}
 	else {
-		fVar8 = (float)streamFrequency.field_0x0;
+		fVar8 = (float)streamFrequency.sampleRate;
 	}
 	pSoundStream->field_0x18 = fVar8;
-	pSoundStream->pDynamicData = (void*)(pSoundStream->field_0x10 * streamFrequency.field_0xc);
+	pSoundStream->pDynamicData = (void*)(pSoundStream->field_0x10 * streamFrequency.interleaveBlockCount);
 	bufferSize = pSoundStream->field_0x14 * pSoundStream->field_0x10 * 2;
 	pvVar2 = _edSoundMemAlloc(bufferSize);
 	pSoundStream->pMem = pvVar2;
 	if (pSoundStream->pMem == (void*)0x0) {
 		scePrintf("Warning :\n[edSound] could not allocate sound RAM CD streaming buffer\n");
-		scePrintf("Stream info : FREQUENCY = %6d Hz, buffer size = %8d bytes\n", streamFrequency.field_0x0, bufferSize);
+		scePrintf("Stream info : FREQUENCY = %6d Hz, buffer size = %8d bytes\n", streamFrequency.sampleRate, bufferSize);
 		iVar3 = 0;
 	}
 	else {
@@ -106,6 +110,10 @@ int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoun
 		}
 
 		SOUND_AllocateStreamBuffer(pSoundStream->streamBufferId[0], pSoundStream->pMem, bufferSize);
+	#ifdef PLATFORM_WIN
+		Audio::RegisterStream(static_cast<uint>(pSoundStream->streamBufferId[0]), pSoundStream->field_0x10, pSoundStream->field_0x18,
+			static_cast<uint>(pSoundStream->field_0x14));
+	#endif
 
 		if (szPath == (char*)0x0) {
 			SOUND_CreateFileInfoFromLsn(pSoundStream->streamFileId, lsn, fileSize, 1, param_5);
@@ -114,7 +122,16 @@ int _edSoundStreamInit(GlobalSound_FileData* pSoundData, _ed_sound_stream* pSoun
 			SOUND_CreateFileInfo(pSoundStream->streamFileId, szPath, (uint)param_5);
 		}
 
+	#ifdef PLATFORM_WIN
+		if (szPath != (char*)0x0 && !Audio::LoadStream(static_cast<uint>(pSoundStream->streamBufferId[0]), szPath)) {
+			iVar3 = 0;
+		}
+		else {
+			iVar3 = 1;
+		}
+	#else
 		iVar3 = 1;
+	#endif
 	}
 
 	return iVar3;
@@ -203,7 +220,7 @@ void edSoundPrepareSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSa
 	}
 
 	pSample->loopStartOffset = 0;
-	pSample->loopEndOffset = 0;
+	pSample->loopEndOffset = 0.0f;
 
 	adpcmBlock* pFirstBlock = soundFileData->adpcm;
 	adpcmBlock* pBlock = pFirstBlock;
@@ -223,7 +240,7 @@ void edSoundPrepareSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSa
 			pBlock->flags = 2;
 		}
 		else {
-			pSample->loopEndOffset = blockOffset;
+			pSample->loopEndOffset = static_cast<float>(blockOffset);
 
 			if ((flags & 1) == 0) {
 				pBlock->flags = 3;
@@ -385,6 +402,13 @@ int _edSoundSampleFree(ed_sound_sample* pSoundSample)
 bool _edSoundAreAllSoundDataLoaded(uint lastIndex)
 {
 	bool bVar1;
+
+#ifdef PLATFORM_WIN
+	if ((_edSysTransferIndex != 0) && (lastIndex != 0) &&
+		(lastIndex > (uint)_edSysCompletedTransferIndex)) {
+		_edSysCompletedTransferIndex = static_cast<int>(Audio::PumpThrough(lastIndex));
+	}
+#endif
 
 	bVar1 = true;
 	if ((_edSysTransferIndex != 0) && ((lastIndex == 0 || (bVar1 = false, lastIndex <= _edSysCompletedTransferIndex)))) {

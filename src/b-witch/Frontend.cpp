@@ -51,10 +51,22 @@ CFrontendSamplePlayer::CFrontendSamplePlayer()
 	return;
 }
 
-long CFrontendSamplePlayer::PlaySample(float, int, int)
+uint CFrontendSamplePlayer::PlaySample(float volume, int sampleIndex, int param_4)
 {
-	IMPLEMENTATION_GUARD_AUDIO();
-	return 0;
+	uint soundId;
+
+	if (param_4 == 0) {
+		CScene::ptable.g_AudioManager_00451698->SetSfxVolume((CScene::ptable.g_AudioManager_00451698)->sfxVolume);
+	}
+	else {
+		edSoundSetMasterVolume(1.0f);
+	}
+
+	soundId = edSoundSamplePlay(1.0f, this->aSamples + sampleIndex);
+	edSoundInstanceSetVolume(this->field_0x0 * volume, soundId);
+	edSoundFlush();
+
+	return soundId;
 }
 
 bool CMagicInterface::Activate(int bActive)

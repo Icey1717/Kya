@@ -85,6 +85,8 @@ struct CActor;
 class CBWCinActor : public edCinActorInterface
 {
 public:
+	CBWCinActor();
+
 	virtual bool Initialize();
 	virtual bool SetVisibility(bool bVisible);
 	virtual bool OnFrameDirected();
@@ -93,9 +95,11 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
+	virtual bool SetSound(float param_1, edCinActorInterface::SOUND_PARAMStag* pTag);
 	virtual bool SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag);
 	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams);
 	virtual bool SetMessage(float param_1, edCinActorInterface::MESSAGE_PARAMStag* pTag);
+	virtual bool SetLipsynch(float param_1, CKFrameTrackReader* pTag);
 	virtual bool Shutdown();
 
 	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager);
@@ -103,12 +107,16 @@ public:
 	CActor* pParent;
 	int field_0x8;
 
+	CSound soundStruct;
+	CSoundInstance soundInstance;
+
 	edF32VECTOR4 nextPos;
 	edF32VECTOR4 position;
 	edF32VECTOR4 heading;
 	edF32VECTOR4 scale;
 	CActorAlternateModel alternateModel;
 	ed_g3d_manager* pAltModelManager;
+	CKFrameTrackReader* pLipSyncTag;
 };
 
 class CBWCinCam : public edCinCamInterface

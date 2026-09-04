@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "CinResCollection.h"
 
+class CKFrameTrackReader;
+
 struct CutsceneHoldsDurations
 {
 	float durationA;
@@ -19,6 +21,8 @@ struct edCinSourceAudioI
 	virtual bool Destroy() = 0;
 	virtual float Func_0x1c(int audioTrackId) = 0;
 };
+
+struct ed_sound_sample;
 
 struct edCinCamInterface
 {
@@ -79,6 +83,13 @@ struct edCinActorInterface
 		float field_0x18;
 	};
 
+	struct SOUND_PARAMStag
+	{
+		ed_sound_sample* pSample;
+		float field_0x4;
+		float field_0x8;
+	};
+
 	struct PARTICLE_PARAMStag
 	{
 		strd_ptr(void*) particleId;
@@ -101,9 +112,11 @@ struct edCinActorInterface
 	virtual bool SetHeadingQuat(float x, float y, float z, float w) = 0;
 	virtual bool SetScale(float x, float y, float z) = 0;
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag) = 0;
+	virtual bool SetSound(float param_1, edCinActorInterface::SOUND_PARAMStag* pTag) = 0;
 	virtual bool SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag) = 0;
 	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams) = 0;
 	virtual bool SetMessage(float param_1, edCinActorInterface::MESSAGE_PARAMStag* pTag) = 0;
+	virtual bool SetLipsynch(float param_1, CKFrameTrackReader* pTag) = 0;
 	virtual bool Shutdown() = 0;
 };
 

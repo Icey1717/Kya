@@ -1973,11 +1973,10 @@ void CActorWolfen::AnimEvaluate_0xa2(uint layerId)
 
 		peVar1 = (peVar2->currentAnimDesc).state.pAnimKeyTableEntry;
 		if ((peVar1->keyIndex_0x8.asKey == 2) && (peVar1->field_0x4.asKey == 1)) {
-			char* pBase = (char*)peVar1;
-			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + (peVar2->currentAnimDesc).state.pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+			float* pAnimValues = peVar1->pData + peVar1->keyIndex_0x8.asKey;
 
-			pValue->field_0xc = 1.0f - this->field_0xd28;
-			pValue->field_0x10 = this->field_0xd28;
+			pAnimValues[0] = 1.0f - this->field_0xd28;
+			pAnimValues[1] = this->field_0xd28;
 		}
 	}
 
@@ -2059,20 +2058,19 @@ void CActorWolfen::AnimEvaluate_0017c930(uint layerId, edAnmMacroAnimator* pAnim
 			fVar9 = (float)uVar3;
 		}
 
-		char* pBase = (char*)peVar1;
-		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + peVar1->keyIndex_0x8.asKey * 4);
+		float* pAnimValues = peVar1->pData + peVar1->keyIndex_0x8.asKey;
 
 		fVar7 = edFIntervalLERP(fVar7, fVar5 * fVar8, fVar9 * fVar8, 0.0f, 1.0f);
 		uVar3 = 0;
 		if (peVar1->keyIndex_0x8.asKey != 0) {
 			do {
-				pValue->field_0xc_array[uVar3];
+				pAnimValues[uVar3];
 				uVar3 = uVar3 + 1;
 			} while (uVar3 < peVar1->keyIndex_0x8.asKey);
 		}
 
-		pValue->field_0xc_array[uVar6] = fVar7;
-		pValue->field_0xc_array[uVar6] = (1.0f - fVar7);
+		pAnimValues[uVar6] = fVar7;
+		pAnimValues[uVar6] = (1.0f - fVar7);
 	}
 
 	return;
@@ -9375,8 +9373,7 @@ void CBehaviourWolfen::InitState(int newState)
 				}
 				else {
 					if (newState == WOLFEN_STATE_TRACK_CHASE) {
-						IMPLEMENTATION_GUARD_AUDIO(
-						GlobalSound::Func_001844f0(CScene::ptable.g_AudioManager_00451698);)
+						CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
 					}
 					else {
 						if ((newState != WOLFEN_STATE_COME_BACK) && (newState == WOLFEN_STATE_SURPRISE)) {
@@ -9451,9 +9448,9 @@ void CBehaviourWolfen::TermState(int oldState, int newState)
 		if (((bVar3 != false) && (AVar6 != -1)) && ((peVar7->currentAnimDesc).animType == AVar6)) {
 			peVar1 = (peVar7->currentAnimDesc).state.pAnimKeyTableEntry;
 			if ((peVar1->field_0x4.asKey == 1) && (peVar1->keyIndex_0x8.asKey == 2)) {
-				AnimKeySomething* peVar8 = reinterpret_cast<AnimKeySomething*>(peVar1);
-				peVar8->field_0x14 = 0.5f;
-				peVar8->field_0x18 = 0.5f;
+				float* pAnimValues = peVar1->pData + peVar1->keyIndex_0x8.asKey;
+				pAnimValues[2] = 0.5f;
+				pAnimValues[3] = 0.5f;
 			}
 
 			pAnim->anmBinMetaAnimator.SetAnimOnLayer(-1, iVar5, 0xffffffff);
@@ -9521,8 +9518,7 @@ void CBehaviourWolfen::TermState(int oldState, int newState)
 						}
 						else {
 							if (oldState == WOLFEN_STATE_TRACK_CHASE) {
-								IMPLEMENTATION_GUARD_AUDIO(
-								FUN_001844c0(CScene::ptable.g_AudioManager_00451698);)
+								CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
 								this->pOwner->SV_AUT_PathfindingEnd();
 							}
 						}

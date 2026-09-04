@@ -205,19 +205,16 @@ byte MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & (1 << confirmKey)) == 0)) {
 					if ((msgD != 0) && (((gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) != 0 &&
 							(closeResult = 2, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
-						IMPLEMENTATION_GUARD_AUDIO(
-						PlaySample(1.0f, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
+						CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
 					}
 				}
 				else {
 					closeResult = 1;
-					if (CLevelScheduler::gThis->currentLevelID != 0x10) {
-						IMPLEMENTATION_GUARD_AUDIO(
-						PlaySample(1.0f, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
-					}
+					CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
 				}
 			}
 		}
+
 		if ((flags & 2) == 0) {
 			if (cVar1 != false) {
 				GuiDList_EndCurrent();

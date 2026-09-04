@@ -227,8 +227,7 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 
 	if (layerId == 8) {
 		if (newAnim == 9) {
-			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+			float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 			fVar3 = 0.0f;
 			if (this->field_0x460 != 0.0f) {
@@ -245,14 +244,13 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 				fVar4 = 0.0f;
 			}
 
-			pValue->field_0xc = 1.0f - fVar4;
-			pValue->field_0x10 = fVar4;
+			pAnimValues[0] = 1.0f - fVar4;
+			pAnimValues[1] = fVar4;
 		}
 	}
 	else {
 		if ((layerId == 2) || (layerId == 1)) {
-			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+			float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 			fVar4 = ((this->aimDirection).x * 0.5f) / 3.141593f + 0.5f;
 			fVar3 = ((this->aimDirection).y * 0.5f) / 3.141593f + 0.5f;
@@ -277,8 +275,8 @@ void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint n
 				}
 			}
 
-			pValue->field_0xc = fVar5;
-			pValue->field_0x10 = fVar4;
+			pAnimValues[0] = fVar5;
+			pAnimValues[1] = fVar4;
 		}
 	}
 

@@ -118,6 +118,16 @@ void CFxPath::ManageAll(uint count, CFx* aFx)
 	return;
 }
 
+void CFxPath::PauseAll(uint count, CFx* aFx)
+{
+	return;
+}
+
+void CFxPath::ResumeAll(uint count, CFx* aFx)
+{
+	return;
+}
+
 void CFxPath::Draw()
 {
 	return;

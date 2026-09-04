@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <string.h>
 #include <fstream>
 #include <iostream>
@@ -20,6 +21,7 @@
 #include "../../Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/src/TextureUpload.h"
 #include "../../../src/port/pointer_conv.h"
 #include "edSysTransferService.h"
+#include "edSoundStreamService.h"
 
 // The function to be tested
 int Add(int a, int b) {
@@ -96,6 +98,83 @@ TEST(AudioTransferService, ResetReleasesData)
 	EXPECT_FALSE(Audio::LookupLoadedData(result, data));
 	EXPECT_EQ(Audio::PumpAll(), 0u);
 }
+
+TEST(AudioStreamService, LifecyclePreservesPlaybackState)
+{
+	Audio::ResetStreams();
+	Audio::RegisterStream(3, 100, 1000.0f);
+
+	Audio::StreamInfo info;
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_TRUE(info.ready);
+	EXPECT_FALSE(info.playing);
+	EXPECT_EQ(info.channels, 1u);
+	EXPECT_EQ(info.position, 0u);
+
+	EXPECT_TRUE(Audio::StartStream(3));
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_TRUE(info.playing);
+
+	EXPECT_TRUE(Audio::StopStream(3));
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_FALSE(info.playing);
+	EXPECT_TRUE(Audio::UnregisterStream(3));
+	EXPECT_FALSE(Audio::GetStreamInfo(3, info));
+}
+
+TEST(AudioStreamService, DecodesVagAdpcmBlock)
+{
+	std::vector<std::uint8_t> vag(0x30 + 16, 0);
+	vag[0] = 'V';
+	vag[1] = 'A';
+	vag[2] = 'G';
+	vag[3] = 'p';
+	vag[0xc] = 0;
+	vag[0xd] = 0;
+	vag[0xe] = 0;
+	vag[0xf] = 16;
+	vag[0x10] = 0;
+	vag[0x11] = 0;
+	vag[0x12] = 0x56;
+	vag[0x13] = 0x22;
+	vag[0x30] = 0x0c;
+	vag[0x31] = 1;
+
+	std::vector<std::int16_t> samples;
+	std::uint32_t sampleRate = 0;
+	ASSERT_TRUE(Audio::DecodeVag(vag.data(), vag.size(), samples, sampleRate));
+	EXPECT_EQ(sampleRate, 22050u);
+	EXPECT_EQ(samples.size(), 28u);
+	EXPECT_TRUE(std::all_of(samples.begin(), samples.end(), [](std::int16_t sample) { return sample == 0; }));
+}
+
+TEST(AudioStreamService, DecodesInterleavedMibAdpcm)
+{
+	constexpr std::uint32_t channels = 2;
+	constexpr std::uint32_t interleaveBlockSize = 16;
+	constexpr std::uint32_t sampleRate = 22050;
+	std::vector<std::uint8_t> mib(interleaveBlockSize * channels * 2, 0);
+
+	auto setBlock = [&mib](std::size_t offset, std::uint8_t firstNibble) {
+		mib[offset] = 0x00;
+		mib[offset + 2] = firstNibble;
+	};
+	setBlock(0, 1);
+	setBlock(16, 2);
+	setBlock(32, 3);
+	setBlock(48, 4);
+
+	std::vector<std::int16_t> samples;
+	ASSERT_TRUE(Audio::DecodeMib(mib.data(), mib.size(), channels, interleaveBlockSize, sampleRate, samples));
+	EXPECT_EQ(samples.size(), 112u);
+	EXPECT_EQ(samples[0], 4096);
+	EXPECT_EQ(samples[1], 8192);
+	EXPECT_EQ(samples[56], 12288);
+	EXPECT_EQ(samples[57], 16384);
+	EXPECT_EQ(samples[28], 0);
+	EXPECT_EQ(samples[29], 0);
+}
+
 class PointerConvTest : public ::testing::Test
 {
   protected:

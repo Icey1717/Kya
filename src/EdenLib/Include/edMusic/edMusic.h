@@ -111,6 +111,9 @@ void edMusicBankRemove(int bankIndex);
 bool _edMusicAreAllMusicDataLoaded(void);
 bool edMusicAreAllMusicDataLoaded();
 
+void _edMusicSongInstallNoWait(ed_music_song* pSong, void* pSource, uint size);
+uint edMusicSongInstallNoWait(void* pFileData, uint size);
+
 void edMusicStreamChannelFade(float fadeTime, int musicStreamIndex, int channel, uint otherVolume, int volume);
 
 extern edCMusicStatus edMusicStatus;

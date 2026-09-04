@@ -2,6 +2,9 @@
 
 #include "Types.h"
 #include "edSound/edSoundPlay.h"
+#ifdef PLATFORM_WIN
+#include "edSoundStreamService.h"
+#endif
 
 int gMaxStreamLimit_00449118;
 byte SOUND_STREAM_STATUS[48];
@@ -20,6 +23,10 @@ int SOUND_Command = 0;
 
 int SOUND_InitIOP(void)
 {
+	#ifdef PLATFORM_WIN
+	Audio::ResetStreams();
+	#endif
+
 	for (int i = 0; i < 48; i++) {
 		SOUND_STREAM_STATUS[i] = 0;
 		BYTE_ARRAY_00488990[i] = 0;
@@ -154,6 +161,24 @@ int SOUND_GetStreamInfo(uint streamID, SOUND_StreamInfo* outStreamInfo)
 	outStreamInfo->b6 = DAT_00449100;
 	outStreamInfo->b7 = SOUND_CD_IERROR;)
 	if (streamID < gMaxStreamLimit_00449118) {
+	#ifdef PLATFORM_WIN
+		Audio::StreamInfo hostInfo;
+		if (!Audio::GetStreamInfo(streamID, hostInfo)) {
+			outStreamInfo->playing = 0;
+			outStreamInfo->b18 = 0;
+			outStreamInfo->field_0x20 = -1;
+			outStreamInfo->int4 = 0;
+			return 0;
+		}
+		SOUND_STREAM_POSITION_BLOCK[streamID] = hostInfo.blockSize == 0 ? 0 : static_cast<int>(hostInfo.position / hostInfo.blockSize);
+		SOUND_STREAM_POSITION_OFFSET[streamID] = hostInfo.blockSize == 0 ? static_cast<int>(hostInfo.position) : static_cast<int>(hostInfo.position % hostInfo.blockSize);
+		BYTE_ARRAY_00488990[streamID] = hostInfo.ready ? 1 : 0;
+		outStreamInfo->playing = hostInfo.playing ? 1 : 0;
+		outStreamInfo->b18 = hostInfo.ready ? 1 : 0;
+		outStreamInfo->field_0x20 = SOUND_STREAM_POSITION_BLOCK[streamID];
+		outStreamInfo->int4 = SOUND_STREAM_POSITION_OFFSET[streamID];
+		iVar1 = 0;
+	#else
 		if ((SOUND_STREAM_STATUS[streamID] == 0) || (SOUND_STREAM_STATUS[streamID] == 3)) {
 			outStreamInfo->playing = 0;
 		}
@@ -172,6 +197,7 @@ int SOUND_GetStreamInfo(uint streamID, SOUND_StreamInfo* outStreamInfo)
 		outStreamInfo->field_0x16 = USHORT_ARRAY_004889f0[streamID];
 		outStreamInfo->field_0x20 = SOUND_STREAM_POSITION_BLOCK[streamID];
 		outStreamInfo->int4 = SOUND_STREAM_POSITION_OFFSET[streamID];
+	#endif
 	}
 	else {
 		printf(">>>>>ERROR: SOUND_GetStreamInfo\n");
@@ -187,6 +213,16 @@ int SOUND_GetStreamInfo(uint streamID, SOUND_StreamInfo* outStreamInfo)
 
 void SOUND_CloseStreamBuffer(int streamBufferId)
 {
+#ifdef PLATFORM_WIN
+	Audio::StopStream(static_cast<uint>(streamBufferId));
+	Audio::UnregisterStream(static_cast<uint>(streamBufferId));
+	if (streamBufferId >= 0 && streamBufferId < 0x30) {
+		SOUND_STREAM_STATUS[streamBufferId] = 0;
+		BYTE_ARRAY_00488990[streamBufferId] = 0;
+		SOUND_STREAM_POSITION_BLOCK[streamBufferId] = 0;
+		SOUND_STREAM_POSITION_OFFSET[streamBufferId] = 0;
+	}
+#endif
 #ifdef PLATFORM_PS2
 	if (SOUND_Command != -1) {
 		printf(">>>>> ERROR: SOUND_StartCommand");

@@ -39,7 +39,6 @@ CActorCinematic::CActorCinematic()
 	//(this->behaviourCinematic).cinActor.field_0xc0 = 0;
 	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
 	//(this->behaviourCinematic).field_0x140 = -1;
-	(this->behaviourCinematic).field_0x144.macroAnimId = -1;
 
 	return;
 }
@@ -377,26 +376,23 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 void CBehaviourCinematic::PauseChange(int bPaused)
 {
 	bool bVar1;
-	long lVar2;
-	IMPLEMENTATION_GUARD_AUDIO(
-	SoundStructAInternal* soundInternal;
+	CSoundInstance* pSoundInstance;
+	CSound* pSound;
 
-	soundInternal = &(this->cinActor).soundInternalStruct;
-	bVar1 = edSoundInstanceIsAlive(soundInternal);
+	pSoundInstance = &(this->cinActor).soundInstance;
+	bVar1 = pSoundInstance->IsAlive();
 	if (bVar1 != false) {
 		if (bPaused == 0) {
-			if (((NoAudio == 0) && (bVar1 = edSoundInstanceIsAlive(soundInternal), bVar1 != false)) &&
-				(lVar2 = (long)(int)(this->cinActor).soundInternalStruct.SoundStructPtr, lVar2 != 0)) {
-				FUN_001884d0(lVar2, (this->cinActor).soundInternalStruct.SoundID, 0);
+			if (((NoAudio == 0) && (bVar1 = pSoundInstance->IsAlive(), bVar1 != false)) && (pSound = (this->cinActor).soundInstance.pSound, pSound != (CSound*)0x0)) {
+				pSound->SetPause((this->cinActor).soundInstance.soundId, 0);
 			}
 		}
 		else {
-			if (((NoAudio == 0) && (bVar1 = edSoundInstanceIsAlive(soundInternal), bVar1 != false)) &&
-				(lVar2 = (long)(int)(this->cinActor).soundInternalStruct.SoundStructPtr, lVar2 != 0)) {
-				FUN_001884d0(lVar2, (this->cinActor).soundInternalStruct.SoundID, 1);
+			if (((NoAudio == 0) && (bVar1 = pSoundInstance->IsAlive(), bVar1 != false)) && (pSound = (this->cinActor).soundInstance.pSound, pSound != (CSound*)0x0)) {
+				pSound->SetPause((this->cinActor).soundInstance.soundId, 1);
 			}
 		}
-	})
+	}
 	return;
 }
 
@@ -424,12 +420,11 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	bVar2 = this->pOwner->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (bVar2 != false) {
 		pCVar1 = this->pOwner;
-		IMPLEMENTATION_GUARD_AUDIO(
-		*(undefined4*)&(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.field_0x8 = 0;
-		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.SoundStructPtr = (CSound*)0x0;
-		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.SoundID = 0;
-		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.field_0x14 = 0;
-		(pCVar1->behaviourCinematic).cinActor.field_0xbc = 0;)
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.flags = 0;
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.pSound = (CSound*)0x0;
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.soundId = 0;
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.field_0x14 = (edsound_3d_data*)0x0;
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.field_0x24 = 0;
 	}
 
 	this->field_0x178 = 0;

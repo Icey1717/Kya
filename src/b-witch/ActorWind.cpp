@@ -1,4 +1,5 @@
 ﻿#include "ActorWind.h"
+#include "AudioWind.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "MathOps.h"
@@ -143,8 +144,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 		this->field_0x200 = 0.0f;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->pSoundWind = pGVar5->GetWindSound();)
+	this->pSoundWind = pGVar5->GetWindSound(uVar6);
 
 	this->aFxWind = (CFxWind*)0x0;
 	this->nbFxWind = 0;
@@ -1596,8 +1596,7 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 
 	RetrieveFlags(this->pOwner);
 
-	IMPLEMENTATION_GUARD_AUDIO(
-		edCSound3DPrim::Init(&this->field_0x3a0, this->field_0x58, &this->field_0x10);)
+	this->field_0x3a0.Init(this->field_0x58, &this->field_0x10);
 
 	if (((this->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0) || ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0)) {
 		pHashCodeIt = aHashCodes;
@@ -1717,8 +1716,7 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 		pCVar3->nbHandles = pCVar3->nbHandles + 1;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->pOwner->pSoundWind->Init(this);)
+	this->pOwner->pSoundWind->Init(this);
 
 	return;
 }
@@ -3712,6 +3710,43 @@ LAB_0020d2a0:
 
 		GameDListPatch_EndCurrent(iVar2, 0);
 	}
+
+	return;
+}
+
+void edCSound3DPrim::Init(int param_2, edF32MATRIX4* param_3)
+{
+	int iVar1;
+	edF32VECTOR4* peVar2;
+	float fVar3;
+
+	this->field_0x0 = param_2;
+	this->field_0x4 = param_3;
+	iVar1 = this->field_0x0;
+	if (iVar1 != 5) {
+		if ((iVar1 != 4) && (iVar1 != 3)) {
+			if (iVar1 != 2) {
+				return;
+			}
+
+			fVar3 = edF32Vector4DotProductHard(&this->field_0x4->rowX, &this->field_0x4->rowX);
+			this->field_0x8 = sqrtf(fVar3);
+			peVar2 = &this->field_0x4->rowY;
+			fVar3 = edF32Vector4DotProductHard(peVar2, peVar2);
+			this->field_0xc = sqrtf(fVar3);
+			peVar2 = &this->field_0x4->rowZ;
+			fVar3 = edF32Vector4DotProductHard(peVar2, peVar2);
+			this->field_0x10 = sqrtf(fVar3);
+			return;
+		}
+
+		peVar2 = &this->field_0x4->rowY;
+		fVar3 = edF32Vector4DotProductHard(peVar2, peVar2);
+		this->field_0xc = fVar3;
+	}
+
+	fVar3 = edF32Vector4DotProductHard(&this->field_0x4->rowX, &this->field_0x4->rowX);
+	this->field_0x8 = fVar3;
 
 	return;
 }

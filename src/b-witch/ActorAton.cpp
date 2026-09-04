@@ -578,81 +578,80 @@ void CActorAton::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint 
 				}
 			}
 
-			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+			float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 			if (bVar1) {
 				//piVar3 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
-				fVar6 = pValue->field_0x14;
+				fVar6 = pAnimValues[2];
 				if (fVar6 < 0.0f) {
-					pValue->field_0x14 = fVar6 + 0.02f;
-					if (0.0f < pValue->field_0x14) {
-						pValue->field_0x14 = 0.0f;
+					pAnimValues[2] = fVar6 + 0.02f;
+					if (0.0f < pAnimValues[2]) {
+						pAnimValues[2] = 0.0f;
 					}
 				}
 				else {
-					pValue->field_0x14 = fVar6 - 0.02f;
-					if (pValue->field_0x14 < 0.0f) {
-						pValue->field_0x14 = 0.0f;
+					pAnimValues[2] = fVar6 - 0.02f;
+					if (pAnimValues[2] < 0.0f) {
+						pAnimValues[2] = 0.0f;
 					}
 				}
 
 				//piVar3 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
-				fVar6 = pValue->field_0x10;
+				fVar6 = pAnimValues[1];
 				if (fVar6 < 0.0f) {
-					pValue->field_0x10 = fVar6 + 0.02f;
-					if (0.0f < pValue->field_0x10) {
-						pValue->field_0x10 = 0.0f;
+					pAnimValues[1] = fVar6 + 0.02f;
+					if (0.0f < pAnimValues[1]) {
+						pAnimValues[1] = 0.0f;
 					}
 				}
 				else {
-					pValue->field_0x10 = fVar6 - 0.02f;
-					if (pValue->field_0x10 < 0.0f) {
-						pValue->field_0x10 = 0.0f;
+					pAnimValues[1] = fVar6 - 0.02f;
+					if (pAnimValues[1] < 0.0f) {
+						pAnimValues[1] = 0.0f;
 					}
 				}
 			}
 			else {
 				//piVar3 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
-				fVar6 = pValue->field_0x10;
+				fVar6 = pAnimValues[1];
 				if (fVar6 < this->field_0x484) {
-					pValue->field_0x10 = fVar6 + 0.02f;
-					if (this->field_0x484 < pValue->field_0x10) {
-						pValue->field_0x10 = this->field_0x484;
+					pAnimValues[1] = fVar6 + 0.02f;
+					if (this->field_0x484 < pAnimValues[1]) {
+						pAnimValues[1] = this->field_0x484;
 					}
 				}
 				else {
-					pValue->field_0x10 = fVar6 - 0.02f;
-					if (pValue->field_0x10 < this->field_0x484) {
-						pValue->field_0x10 = this->field_0x484;
+					pAnimValues[1] = fVar6 - 0.02f;
+					if (pAnimValues[1] < this->field_0x484) {
+						pAnimValues[1] = this->field_0x484;
 					}
 				}
 
 				//piVar3 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
-				fVar6 = pValue->field_0x14;
+				fVar6 = pAnimValues[2];
 				if (fVar6 < 1.0f - this->field_0x484) {
-					pValue->field_0x14 = fVar6 + 0.02f;
+					pAnimValues[2] = fVar6 + 0.02f;
 					fVar6 = 1.0f - this->field_0x484;
-					if (fVar6 < pValue->field_0x14) {
-						pValue->field_0x14 = fVar6;
+					if (fVar6 < pAnimValues[2]) {
+						pAnimValues[2] = fVar6;
 					}
 				}
 				else {
-					pValue->field_0x14 = fVar6 - 0.02f;
+					pAnimValues[2] = fVar6 - 0.02f;
 					fVar6 = 1.0f - this->field_0x484;
-					if (pValue->field_0x14 < fVar6) {
-						pValue->field_0x14 = fVar6;
+					if (pAnimValues[2] < fVar6) {
+						pAnimValues[2] = fVar6;
 					}
 				}
 			}
 
 			if (0.0f <= puVar12) {
-				pValue->field_0x1c = puVar12;
-				pValue->field_0xc =	1.0f - pValue->field_0x1c;
+				pAnimValues[4] = puVar12;
+				pAnimValues[0] =	1.0f - pAnimValues[4];
 			}
 			else {
-				pValue->field_0x18 = fabs(puVar12);
-				pValue->field_0xc = 1.0f - pValue->field_0x18;
+				pAnimValues[3] = fabs(puVar12);
+				pAnimValues[0] = 1.0f - pAnimValues[3];
 			}
 		}
 		else {
@@ -660,8 +659,7 @@ void CActorAton::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint 
 				edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
 
 				// Original code jumped straight to the floats after the 3 int values here.
-				char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-				AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+				float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 				fVar6 = 1.0f;
 				fVar7 = this->dynamic.speed / 5.0f;
@@ -735,23 +733,23 @@ void CActorAton::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint 
 
 				if (0.0f < this->field_0x3d4) {
 					CActor::SV_Blend4AnimationsWith2Ratios(this->field_0x3dc, this->field_0x3d4, &macroBlendN, 0, 1, 2, 3);
-					pValue->field_0x1c = 0.0f;
-					pValue->field_0x20 = 0.0f;
+					pAnimValues[4] = 0.0f;
+					pAnimValues[5] = 0.0f;
 				}
 				else {
 					fVar6 = this->field_0x3d8;
 					if (0.0f < fVar6) {
 						CActor::SV_Blend4AnimationsWith2Ratios(this->field_0x3dc, fVar6, &macroBlendN, 0, 1, 4, 5);
-						pValue->field_0x14 = 0.0f;
-						pValue->field_0x18 = 0.0f;
+						pAnimValues[2] = 0.0f;
+						pAnimValues[3] = 0.0f;
 					}
 					else {
 						if ((fVar6 == 0.0f) && (fVar6 == 0.0f)) {
 							CActor::SV_Blend4AnimationsWith2Ratios(this->field_0x3dc, fVar6, &macroBlendN, 0, 1, 2, 3);
-							pValue->field_0x1c = 0.0f;
-							pValue->field_0x20 = 0.0f;
-							pValue->field_0x14 = 0.0f;
-							pValue->field_0x18 = 0.0f;
+							pAnimValues[4] = 0.0f;
+							pAnimValues[5] = 0.0f;
+							pAnimValues[2] = 0.0f;
+							pAnimValues[3] = 0.0f;
 						}
 					}
 				}

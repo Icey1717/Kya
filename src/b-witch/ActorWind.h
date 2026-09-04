@@ -175,7 +175,13 @@ struct MaterialManagerCombined
 
 struct edCSound3DPrim
 {
+	void Init(int param_2, edF32MATRIX4* param_3);
 
+	int field_0x0;
+	edF32MATRIX4* field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
 };
 
 class CFxWind : public CObject
@@ -253,6 +259,8 @@ public:
 	float field_0x390;
 
 	edCSound3DPrim field_0x3a0;
+
+	float field_0x3b4;
 
 };
 

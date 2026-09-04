@@ -513,10 +513,6 @@ public:
 class CActorFighter : public CActorAutonomous
 {
 public:
-	CActorFighter() {
-		IMPLEMENTATION_GUARD_ACTOR()
-	}
-
 	static float _pStagger_check[8];
 
 	static StateConfig _gStateCfg_FIG[0x6c];

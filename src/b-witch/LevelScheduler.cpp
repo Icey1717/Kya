@@ -1132,7 +1132,7 @@ void CLevelScheduler::Levels_SaveDataToSavedGame()
 	pBSHD->gameTime = 0;
 	pBSHD->sectorId = -1;
 	pBSHD->musicId = -1;
-	pBSHD->field_0xc = -1;
+	pBSHD->ambianceId = -1;
 	SaveGame_EndChunk(pBSHD + 1);
 
 	SaveGame_SaveScenVars();
@@ -1285,13 +1285,12 @@ void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
 			}
 		}
 
-		IMPLEMENTATION_GUARD_AUDIO(
 		pAudioManager = CScene::ptable.g_AudioManager_00451698;
-		iVar9 = CAudioManager::FUN_001819b0(CScene::ptable.g_AudioManager_00451698);
-		pBSHD->field_0xc = iVar9;
-		uVar3 = CAudioManager::GetMusicId(pAudioManager);
+		iVar9 = CScene::ptable.g_AudioManager_00451698->GetAmbianceIndex_001819b0();
+		pBSHD->ambianceId = iVar9;
+		uVar3 = pAudioManager->GetMusicId();
 		pBSHD->musicId = uVar3;
-		)
+		
 		SaveGame_CloseChunk();
 
 		pChunk = SaveGame_GetLevelChunk(this->currentLevelID);
@@ -1350,9 +1349,8 @@ void CLevelScheduler::SaveGame_LoadLevelState(int levelId)
 
 	if (this->bShouldLoad != 0) {
 		SaveDataChunk_BSHD* pBSHD = reinterpret_cast<SaveDataChunk_BSHD*>(SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) + 1);
-		IMPLEMENTATION_GUARD_AUDIO(
-		CAudioCScene::ptable.g_AudioManager_00451698->FUN_00181970(pBSHD->field_0xc);
-		CAudioCScene::ptable.g_AudioManager_00451698->SetMusic(pBSHD->field_x10);)
+		CScene::ptable.g_AudioManager_00451698->SetAmbiance(pBSHD->ambianceId);
+		CScene::ptable.g_AudioManager_00451698->SetMusic(pBSHD->musicId);
 
 		SaveGame_CloseChunk();
 	}
@@ -2568,34 +2566,32 @@ bool BnkInstallAnim(char* pFileData, int length)
 
 bool BnkInstallSample(char* pFileData, int length)
 {
-	CAudioManager* pGVar1;
-	uint uVar2;
-
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallSample\n");
 
-	IMPLEMENTATION_GUARD_AUDIO(
+	uint uVar1;
+	CAudioManager* pAudioManager;
 
-	pGVar1 = CScene::ptable.g_AudioManager_00451698;
-	if (DAT_00448ef0 == 0) {
-		uVar2 = length - 0x30;
-		if ((uVar2 & 0x3f) != 0) {
-			uVar2 = (uVar2 & 0xffffffc0) + 0x40;
+	pAudioManager = CScene::ptable.g_AudioManager_00451698;
+	if (NoAudio == 0) {
+		uVar1 = length - 0x30;
+		if ((uVar1 & 0x3f) != 0) {
+			uVar1 = (uVar1 & 0xffffffc0) + 0x40;
 		}
-		if (0x1ee3c0 - (CScene::ptable.g_AudioManager_00451698)->field_0xb4 < (int)uVar2) {
-			*(undefined4*)
-				((CScene::ptable.g_AudioManager_00451698)->field_0x14 +
-					(CScene::ptable.g_AudioManager_00451698)->field_0xc * 0x18) = 0;
+
+		if ((int)(0x1ee3c0 - (CScene::ptable.g_AudioManager_00451698)->field_0xb4) < (int)uVar1) {
+			(CScene::ptable.g_AudioManager_00451698)->aSamples[(CScene::ptable.g_AudioManager_00451698)->nbLoadedSamples].soundRamAddress = 0;
 		}
 		else {
-			(CScene::ptable.g_AudioManager_00451698)->field_0xb4 =
-				(CScene::ptable.g_AudioManager_00451698)->field_0xb4 + uVar2;
-			edSoundSampleLoadNoWait(pFileData, (ed_sound_sample*)(pGVar1->field_0x14 + pGVar1->field_0xc * 0x18), 0);
+			(CScene::ptable.g_AudioManager_00451698)->field_0xb4 = (CScene::ptable.g_AudioManager_00451698)->field_0xb4 + uVar1;
+			edSoundSampleLoad(pFileData, pAudioManager->aSamples + pAudioManager->nbLoadedSamples, 0);
 		}
 	}
-	pGVar1->field_0xc = pGVar1->field_0xc + 1;
-	if (pGVar1->field_0xc == pGVar1->field_0x8) {
-		pGVar1->field_0xc = 0;
-	})
+
+	pAudioManager->nbLoadedSamples = pAudioManager->nbLoadedSamples + 1;
+	if (pAudioManager->nbLoadedSamples == pAudioManager->nbMaxSamples) {
+		pAudioManager->nbLoadedSamples = 0;
+	}
+
 	return false;
 }
 
@@ -2654,22 +2650,22 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 
 bool BnkInstallSong(char* pFileData, int length)
 {
-	CAudioManager* pGVar1;
-	uint uVar2;
-
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
 
-	IMPLEMENTATION_GUARD_AUDIO(
+	uint uVar1;
+	CAudioManager* pAudioManager;
 
-	pGVar1 = CScene::ptable.g_AudioManager_00451698;
-	if (DAT_00448ef0 == 0) {
-		uVar2 = FUN_00267d30(pFileData, (long)length);
-		*(uint*)(pGVar1->field_0x4c + pGVar1->field_0xc * 4) = uVar2;
+	pAudioManager = CScene::ptable.g_AudioManager_00451698;
+	if (NoAudio == 0) {
+		uVar1 = edMusicSongInstallNoWait(pFileData, length);
+		pAudioManager->aSongIndexes[pAudioManager->nbLoadedSamples] = uVar1;
 	}
-	pGVar1->field_0xc = pGVar1->field_0xc + 1;
-	if (pGVar1->field_0xc == pGVar1->field_0x44) {
-		pGVar1->field_0xc = 0;
-	})
+
+	pAudioManager->nbLoadedSamples = pAudioManager->nbLoadedSamples + 1;
+	if (pAudioManager->nbLoadedSamples == pAudioManager->field_0x44) {
+		pAudioManager->nbLoadedSamples = 0;
+	}
+
 	return false;
 }
 

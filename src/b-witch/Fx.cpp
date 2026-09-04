@@ -569,7 +569,59 @@ void CFxManager::Level_CheckpointReset()
 
 void CFxManager::Level_PauseChange(bool bPaused)
 {
-	IMPLEMENTATION_GUARD_FX();
+	CFx* pCVar1;
+	uint* puVar2;
+	uint uVar3;
+	CFx** ppCVar4;
+
+	if (bPaused == false) {
+		puVar2 = this->orderedCountArray + this->count_0x4;
+		ppCVar4 = this->aFx + this->count_0x4;
+		if (this->aFx < ppCVar4) {
+			do {
+				ppCVar4 = ppCVar4 + -1;
+				pCVar1 = *ppCVar4;
+				puVar2 = puVar2 + -1;
+				if (pCVar1 != (CFx*)0x0) {
+					pCVar1->ResumeAll(*puVar2, pCVar1);
+				}
+			} while (this->aFx < ppCVar4);
+		}
+
+		uVar3 = 0;
+		do {
+			if (this->aEffectCategory[uVar3] != (CFxPoolManagerFather*)0x0) {
+				this->aEffectCategory[uVar3]->Resume();
+			}
+
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < 7);
+	}
+	else {
+		puVar2 = this->orderedCountArray + this->count_0x4;
+		ppCVar4 = this->aFx + this->count_0x4;
+		if (this->aFx < ppCVar4) {
+			do {
+				ppCVar4 = ppCVar4 + -1;
+				pCVar1 = *ppCVar4;
+				puVar2 = puVar2 + -1;
+				if (pCVar1 != (CFx*)0x0) {
+					pCVar1->PauseAll(*puVar2, pCVar1);
+				}
+
+			} while (this->aFx < ppCVar4);
+		}
+
+		uVar3 = 0;
+		do {
+			if (this->aEffectCategory[uVar3] != (CFxPoolManagerFather*)0x0) {
+				this->aEffectCategory[uVar3]->Pause();
+			}
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < 7);
+	}
+
+	return;
 }
 
 char* CFxManager::ProfileGetName()

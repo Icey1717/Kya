@@ -143,20 +143,16 @@ void CActorAraignos::ChangeManageState(int state)
 
 		if ((uVar3 & 1) == 0) {
 			if (state == 0) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				if ((this->pActorSound != (CActorSound*)0x0) &&
-					(iVar2 = CActorSound::IsInstanceAlive(this->pActorSound, 1), iVar2 != 0)) {
-					CActorSound::FUN_0032c600(this->pActorSound, 1);
-				})
+				if ((this->pActorSound != (CActorSoundNode*)0x0) &&
+					(iVar2 = this->pActorSound->node.IsInstanceAlive(1), iVar2 != 0)) {
+					this->pActorSound->node.SoundStop(1);
+				}
 			}
 			else {
-				IMPLEMENTATION_GUARD_AUDIO(
-				if (this->pActorSound != (CActorSound*)0x0) {
-					CActorSound::SoundStart
-					(this->pActorSound, (CActor*)this, 1, (CSound*)this->field_0x240, 0, 0,
-						(SOUND_SPATIALIZATION_PARAM*)0x0);
-					CActorSound::SetFrequency(this->field_0x1f8, this->pActorSound, 1);
-				})
+				if (this->pActorSound != (CActorSoundNode*)0x0) {
+					this->pActorSound->node.SoundStart(this, 1, this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+					this->pActorSound->node.SetFrequency(this->field_0x1f8, 1);
+				}
 
 				this->field_0x1d0 = 0.0f;
 			}
@@ -306,12 +302,10 @@ void CActorAraignos::BehaviourDefault_InitState(int newState)
 		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(this->field_0x1f8, 0);
 		this->pAnimationController->anmBinMetaAnimator.SetLayerAnimTime(this->field_0x1fc, 0, 0);
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		if (this->pActorSound != (CActorSound*)0x0) {
-			CActorSound::SoundStart
-			(this->pActorSound, (CActor*)this, 1, (CSound*)this->field_0x240, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
-			CActorSound::SetFrequency(this->field_0x1f8, this->pActorSound, 1);
-		})
+		if (this->pActorSound != (CActorSoundNode*)0x0) {
+			this->pActorSound->node.SoundStart(this, 1, this->field_0x240, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			this->pActorSound->node.SetFrequency(this->field_0x1f8, 1);
+		}
 	}
 	else {
 		if (newState == 6) {

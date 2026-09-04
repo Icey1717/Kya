@@ -4,6 +4,7 @@
 #include "Types.h"
 
 struct edsound_listener;
+struct edsound_3d_data;
 
 struct ed_sound_sample
 {
@@ -12,7 +13,7 @@ struct ed_sound_sample
 	uint flags;
 	uint dataSize;
 	uint loopStartOffset;
-	uint loopEndOffset;
+	float loopEndOffset;
 };
 
 struct _ed_sound_stream
@@ -51,10 +52,10 @@ PACK(struct SoundFileData {
 PACK(
 struct GlobalSound_FileData
 {
-	int field_0x0;
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
+	int sampleRate;
+	int nbChannels;
+	int interleaveBlockSize;
+	int interleaveBlockCount;
 	char field_0x10[64];
 });
 
@@ -217,6 +218,15 @@ bool edSoundStream_00284650(uint index);
 void edSoundStream_00283650(uint index);
 uint edSoundStream_00283f70(uint index);
 float edSoundStreamGetPlaybackTime(uint index);
+uint edSoundSamplePlay(float priority, ed_sound_sample* pSample);
+void edSoundInstanceSetVolume(float param_1, uint soundInstanceId);
+void edSoundInstanceSetPause(uint soundInstanceId, int bPaused);
+void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr);
+void edSoundInstanceSetFrequency(float frequency, uint soundInstanceId);
+void edSoundInstanceSetUserData(uint soundInstanceId, void* pUserData);
+void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample);
+
+void* edSound_0x002840e0(uint soundInstanceId);
 
 // SOUND_
 

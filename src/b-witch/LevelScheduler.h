@@ -75,7 +75,7 @@ struct SaveDataChunk_BSHD
 	int levelId;
 	int sectorId;
 	int gameTime;
-	int field_0xc;
+	int ambianceId;
 	int musicId;
 };
 

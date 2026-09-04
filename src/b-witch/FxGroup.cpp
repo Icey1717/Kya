@@ -15,6 +15,16 @@ void CFxGroup::ManageAll(uint count, CFx* aFx)
 	return;
 }
 
+void CFxGroup::PauseAll(uint count, CFx* aFx)
+{
+	return;
+}
+
+void CFxGroup::ResumeAll(uint count, CFx* aFx)
+{
+	return;
+}
+
 void CFxGroup::Draw()
 {
 	return;

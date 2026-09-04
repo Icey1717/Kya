@@ -10,6 +10,7 @@
 #include "MathOps.h"
 #include "LevelScheduler.h"
 #include "edStr.h"
+#include "LipSync.h"
 #include "port/pointer_conv.h"
 
 #include "edBank/edBankFile.h"
@@ -891,13 +892,12 @@ void S_STREAM_REF<CSound>::Init()
 		pCVar2 = (CSound*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD_AUDIO(
-		if (pCVar1 < (CSound*)(CScene::ptable.g_AudioManager_00451698)->field_0x4) {
-			pCVar2 = (CSound*)((CScene::ptable.g_AudioManager_00451698)->aSoundSamplesA + (int)pCVar1);
+		if (pCVar1 < CScene::ptable.g_AudioManager_00451698->field_0x4) {
+			pCVar2 = CScene::ptable.g_AudioManager_00451698->aSoundSamplesA + pCVar1;
 		}
 		else {
-			pCVar2 = (CSound*)((CScene::ptable.g_AudioManager_00451698)->aSoundSamplesB + (int)((int)pCVar1 - (int)(CSound*)(CScene::ptable.g_AudioManager_00451698)->field_0x4));
-		})
+			pCVar2 = CScene::ptable.g_AudioManager_00451698->aSoundSamplesB + (pCVar1 - CScene::ptable.g_AudioManager_00451698->field_0x4);
+		}
 	}
 
 	this->pObj = STORE_POINTER(pCVar2);
@@ -1176,8 +1176,7 @@ void CCinematic::Start()
 
 				uVar3 = this->flags_0x4;
 				if ((uVar3 & CINEMATIC_FLAG_AUDIO_MODE_MASK) != 0) {
-					IMPLEMENTATION_GUARD_AUDIO(
-					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_A, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_B);)
+					CScene::ptable.g_AudioManager_00451698->FUN_00182db0(1.0f, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_A, uVar3 & CINEMATIC_FLAG_AUDIO_MODE_B);
 				}
 
 				if ((this->flags_0x4 & CINEMATIC_FLAG_KEEP_TIME_ON_START) == 0) {
@@ -1702,9 +1701,8 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 							}
 							else {
 								if (objectType == edResCollection::COT_LipTrack) {
-									IMPLEMENTATION_GUARD_LIP(
-									iVar4 = FUN_001ad730((int)CScene::ptable.g_LipTrackManager_00451694, (int)outFileData.fileBufferStart);
-									piVar7->pData = *(int*)(&pMVar1->field_0x8 + iVar4 * 4);)
+									iVar4 = CScene::ptable.g_LipTrackManager_00451694->InstallFromMem(outFileData.fileBufferStart);
+									piVar7->pData = (char*)pMVar1->aLipTracks[iVar4];
 								}
 								else {
 									if (objectType == edResCollection::COT_Animation) {
@@ -2347,8 +2345,7 @@ void CCinematic::Stop()
 		}
 
 		if ((this->flags_0x4 & CINEMATIC_FLAG_AUDIO_MODE_MASK) != 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			FUN_00182da0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698);)
+			CScene::ptable.g_AudioManager_00451698->FUN_00182da0(1.0f);
 		}
 
 		if ((this->flags_0x4 & CINEMATIC_FLAG_GAME_CUTSCENE_80_MASK) != 0) {
@@ -3011,8 +3008,7 @@ void CCinematic::Level_PauseChange(bool bPaused)
 				}
 				else {
 					StaticEdFileBase_004497f0.Add();
-					IMPLEMENTATION_GUARD_AUDIO(
-					edSoundInstanceSetPause((this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId, 0);)
+					edSoundInstanceSetPause((this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId, 0);
 					(this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 = Timer::GetTimer()->totalPlayTime - (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8;
 				}
 
@@ -3022,13 +3018,12 @@ void CCinematic::Level_PauseChange(bool bPaused)
 		else {
 			bVar1 = iVar3 != 0;
 			if ((bVar1) &&
-				(bVar1 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
+				(bVar1 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0f)) {
 				bVar1 = false;
 			}
 
 			if (bVar1) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				edSoundInstanceSetPause((this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId, 1);)
+				edSoundInstanceSetPause((this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId, 1);
 
 				(this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 =
 					Timer::GetTimer()->totalPlayTime - (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8;
@@ -3047,11 +3042,10 @@ void CCinematic::Level_PauseChange(bool bPaused)
 		if ((bVar1) && (bPaused != false)) {
 			iVar3 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId;
 			if (iVar3 != 0) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				edSoundInstanceStop(iVar3);)
+				edSoundInstanceStop(iVar3);
 				(this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId = 0;
-				IMPLEMENTATION_GUARD_AUDIO(
-				edSoundStreamFree((this->cinematicLoadObject).BWCinSourceAudio_Obj.pSoundStream);)
+				edSoundStreamFree((this->cinematicLoadObject).BWCinSourceAudio_Obj.pSoundStream);
+
 				if ((this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x38 == 0) {
 					StaticEdFileBase_004497f0.Remove();
 				}
@@ -3115,7 +3109,7 @@ void CCinematic::FUN_001cbe40()
 		this->nbActorRefs = 0;
 	}
 
-	IMPLEMENTATION_GUARD_LOG();
+	//IMPLEMENTATION_GUARD_LOG();
 
 	//if (this->pCineSunHolderArray != (BWCinSunLight*)0x0) {
 	//	__destroy_new_array((undefined*)this->pCineSunHolderArray, BWCinSunLight::~BWCinSunLight);
@@ -3292,20 +3286,20 @@ void CCinematic::Flush(bool param_2)
 		}
 
 		if (this->sound_0x2bc != (ed_sound_sample*)0x0) {
-			IMPLEMENTATION_GUARD_AUDIO(
 			uVar5 = 0;
 			if (this->soundCount_0x2b8 != 0) {
 				iVar4 = 0;
 				do {
-					piVar3 = (int*)(&this->sound_0x2bc->field_0x0 + iVar4);
-					if (*piVar3 != 0) {
-						edSoundSampleFree(piVar3);
+					ed_sound_sample* pSample = this->sound_0x2bc + uVar5;
+					if (pSample->soundRamAddress != 0) {
+						edSoundSampleFree(pSample);
 					}
+
 					uVar5 = uVar5 + 1;
-					iVar4 = iVar4 + 0x18;
 				} while (uVar5 < (uint)this->soundCount_0x2b8);
 			}
-			edMemFree(this->sound_0x2bc);)
+
+			edMemFree(this->sound_0x2bc);
 			this->sound_0x2bc = (ed_sound_sample*)0x0;
 			this->soundCount_0x2b8 = 0;
 		}
@@ -4203,6 +4197,14 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	return true;
 }
 
+CBWCinActor::CBWCinActor()
+{
+	this->pParent = (CActor*)0x0;
+	this->pLipSyncTag = (CKFrameTrackReader*)0x0;
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::Initialize()
 {
@@ -4422,6 +4424,83 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 	return true;
 }
 
+bool CBWCinActor::SetSound(float currentKeyframePlayTime, edCinActorInterface::SOUND_PARAMStag* pTag)
+{
+	CSound* pCVar1;
+	bool isPlaying;
+	ed_sound_sample* peVar2;
+	uint newSoundID;
+	uint uVar3;
+	CSound* pSound;
+	SoundEntry* pSVar4;
+	SoundEntry* pSVar5;
+	SoundEntry* pSVar6;
+	ed_sound_sample* soundFileInfoObj;
+
+	soundFileInfoObj = pTag->pSample;
+	/* Check if we have exceeded the sound file duraction */
+	if ((soundFileInfoObj == (ed_sound_sample*)0x0) || (pTag->field_0x8 < currentKeyframePlayTime)) {
+		isPlaying = this->soundInstance.IsAlive();
+		if (isPlaying != false) {
+			if ((NoAudio == 0) && (pCVar1 = (this->soundInstance).pSound, pCVar1 != (CSound*)0x0)) {
+				uVar3 = pCVar1->Stop((this->soundInstance).soundId);
+				(this->soundInstance).soundId = uVar3;
+			}
+
+			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).field_0x14);
+		}
+	}
+	else {
+		isPlaying = this->soundInstance.IsAlive();
+		if (isPlaying != false) {
+			uVar3 = this->soundStruct.setupIntFieldA;
+			pSVar6 = (SoundEntry*)0x0;
+			pSVar4 = this->soundStruct.aSoundEntries;
+			pSVar5 = (SoundEntry*)0x0;
+			if (uVar3 != 0) {
+				while (pSVar5 = (SoundEntry*)0x0, uVar3 != 0) {
+					uVar3 = uVar3 - 1;
+					pSVar5 = pSVar4;
+					if (pSVar4->selector == -1) break;
+					if (pSVar4->selector == -1) {
+						pSVar6 = pSVar4;
+					}
+					pSVar4 = pSVar4 + 1;
+				}
+			}
+
+			if (pSVar5 != (SoundEntry*)0x0) {
+				pSVar6 = pSVar5;
+			}
+
+			peVar2 = (ed_sound_sample*)0x0;
+			if (pSVar6 != (SoundEntry*)0x0) {
+				peVar2 = reinterpret_cast<ed_sound_sample*>(pSVar6->pNode);
+			}
+
+			if (peVar2 == soundFileInfoObj) {
+				return 1;
+			}
+		}
+
+		this->soundStruct.InitializeFromSample(pTag->field_0x4 * 20.0f, 0.0f, 1.0f, 0.0f, 5.0f, 1.0f, soundFileInfoObj, 1);
+		pSound = &this->soundStruct;
+		if ((NoAudio == 0) && (((this->soundInstance).field_0x14 = (edsound_3d_data*)0x0, pSound != (CSound*)0x0 || ((this->soundInstance).pSound != (CSound*)0x0)))) {
+			if (pSound == (CSound*)0x0) {
+				pSound = (this->soundInstance).pSound;
+			}
+			else {
+				(this->soundInstance).pSound = pSound;
+			}
+			(this->soundInstance).field_0x20 = 0xffffffff;
+			/* Spawn a new sound instance */
+			newSoundID = pSound->Play((this->soundInstance).soundId, (this->soundInstance).field_0x20, (edsound_3d_data*)0x0, &this->soundInstance, (uint*)0x0);
+			(this->soundInstance).soundId = newSoundID;
+		}
+	}
+	return 1;
+}
+
 void FUN_001c6ab0(float param_1, ParticleInstance* param_2)
 {
 	param_2->field_0x4 = param_2->field_0x8;
@@ -4581,6 +4660,26 @@ bool CBWCinActor::SetMessage(float param_1, edCinActorInterface::MESSAGE_PARAMSt
 	return true;
 }
 
+bool CBWCinActor::SetLipsynch(float param_1, CKFrameTrackReader* pTag)
+{
+	if (this->pLipSyncTag != pTag) {
+		if ((this->pLipSyncTag != (CKFrameTrackReader*)0x0) && (this->pParent != (CActor*)0x0)) {
+			this->pParent->SV_ACT_LipsyncTerm();
+		}
+
+		this->pLipSyncTag = pTag;
+		this->pLipSyncTag->Init();
+
+		if (this->pParent != (CActor*)0x0) {
+			this->pParent->SV_ACT_LipsyncInit();
+		}
+	}
+
+	this->pLipSyncTag->Manage(param_1);
+
+	return true;
+}
+
 // Should be in: D:/Projects/b-witch/Actor_Cinematic.cpp
 bool CBWCinActor::Shutdown()
 {
@@ -4594,25 +4693,26 @@ bool CBWCinActor::Shutdown()
 	CBehaviour* pCVar7;
 
 	if ((this->pParent->flags & 0x800000) != 0) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		bVar3 = edSoundInstanceIsAlive(&this->soundInternalStruct);
+		bVar3 = this->soundInstance.IsAlive();
 		if (bVar3 != false) {
-			if (DAT_00448ef0 == 0) {
-				pCVar1 = (this->soundInternalStruct).SoundStructPtr;
-				if (pCVar1 != (CSound*)0x0) {
-					uVar4 = (**(code**)(pCVar1->vt + 0xc))(pCVar1, (this->soundInternalStruct).SoundID);
-					(this->soundInternalStruct).SoundID = uVar4;
+			if (NoAudio == 0) {
+				CSound* pCVar1 = (this->soundInstance).pSound;
+				if (pCVar1 != (CSoundBase*)0x0) {
+					uVar4 = pCVar1->Stop((this->soundInstance).soundId);
+					(this->soundInstance).soundId = uVar4;
 				}
 			}
-			CAudioManager::ReleaseSound3DData
-			((int)CScene::ptable.g_AudioManager_00451698, (long)(this->soundInternalStruct).field_0x14);
+
+			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).field_0x14);
 		}
-		if (this->field_0xc0 != 0) {
+
+		if (this->pLipSyncTag != (void*)0x0) {
 			if (this->pParent != (CActor*)0x0) {
-				CActor::SV_ACT_LipsyncTerm(this->pParent);
+				this->pParent->SV_ACT_LipsyncTerm();
 			}
-			this->field_0xc0 = 0;
-		});
+
+			this->pLipSyncTag = (CKFrameTrackReader*)0x0;
+		};
 
 		pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 		pCVar5 = pCinematic->GetActorConfig(this->pParent);
@@ -5828,10 +5928,10 @@ bool CBWCinSourceAudio::Play()
 bool CBWCinSourceAudio::Stop()
 {
 	if (this->soundInstanceId != 0) {
-		IMPLEMENTATION_GUARD_AUDIO(
 		edSoundInstanceStop(this->soundInstanceId);
 		this->soundInstanceId = 0;
-		edSoundStreamFree(this->pSoundStream);)
+		edSoundStreamFree(this->pSoundStream);
+
 		if (this->field_0x38 == 0) {
 			StaticEdFileBase_004497f0.Remove();
 		}
@@ -5927,6 +6027,7 @@ float CBWCinSourceAudio::Func_0x1c(int audioTrackId)
 				if (fVar6 <= fVar5 - FLOAT_00448ef8) {
 					fVar6 = fVar5 - FLOAT_00448ef8;
 				}
+
 				this->field_0x8 = fVar7 - fVar6;
 			}
 		}
@@ -6001,12 +6102,18 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 			pAudioManager->EnsureSoundMemoryAvailable(0x19800, 0xcc00);
 			pGVar4 = this->pGlobalSoundFileData;
 			if (pGVar4 != (GlobalSound_FileData*)0x0) {
+			#ifdef PLATFORM_WIN
+				// The Windows stream backend reads the physical path directly. Keep the
+				// recovered LSN route for PS2, where the IOP owns CD/DVD reads.
+				ret = edSoundStreamLoadA(this->pSoundStream, pGVar4, formattedFilePath, 0);
+			#else
 				if (fileSize == 0) {
 					ret = edSoundStreamLoadA(this->pSoundStream, pGVar4, formattedFilePath, 0);
 				}
 				else {
 					ret = edSoundStreamLoadB(this->pSoundStream, pGVar4, uVar6, 0, fileSize);
 				}
+				#endif
 
 				edSoundFlush();
 				this->soundInstanceId = edSoundStreamCreate_00284500(pAudioManager->field_0xcc, this->pSoundStream);

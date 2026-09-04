@@ -697,10 +697,7 @@ bool CBehaviourWeaponBullets::Action(edF32VECTOR4* pPosition, CActor* pActor)
 		FireBullet(pBVar2);
 
 		if (this->field_0x50 != (CActorSoundNode*)0x0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::SoundStart
-			(this->field_0x50, (CActor*)this->pOwner, 0, (CSound*)this->field_0x3c, 1, 0,
-				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+			this->field_0x50->node.SoundStart(this->pOwner, 0, this->field_0x3c.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		}
 
 		this->field_0x8[this->field_0x38].field_0x10 = this->field_0x8[this->field_0x38].field_0x10 + 1;

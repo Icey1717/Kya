@@ -4331,9 +4331,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 		case 0xe:
 		case 0xf:
 		case EVENT_PRIM_AUDIO_LAST:
-			IMPLEMENTATION_GUARD_AUDIO(
-				CAudioManager::ReceiveEvent(CScene::ptable.g_AudioManager_00451698, (int*)param_2, lVar10, (uint*)param_3,
-				(long)(int)((uint)param_4 - 1), param_5 + 1);)
+			CScene::ptable.g_AudioManager_00451698->ReceiveEvent(param_2, lVar10, param_3, param_4 - 1, param_5 + 1);
 			iVar9 = 1;
 			break;
 		case EVENT_PRIM_ZONE_MESSAGE:
@@ -16602,16 +16600,15 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 
 	if (((newAnim == 0x19f) || (newAnim == 0x19e)) || (newAnim == 0x191)) {
 		edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
-		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+		float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 		if (this->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT) {
 			CBehaviourHeroRideJamGut* pRideBehaviour = static_cast<CBehaviourHeroRideJamGut*>(GetBehaviour(this->curBehaviourId));
 
 			if ((newAnim == 0x19f) || (newAnim == 0x19e)) {
 				float blendValue = pRideBehaviour->field_0xb0;
-				pValue->field_0xc_array[1] = blendValue;
-				pValue->field_0xc_array[0] = 1.0f - pValue->field_0xc_array[1];
+				pValue[1] = blendValue;
+				pValue[0] = 1.0f - pValue[1];
 			}
 			else if (newAnim == 0x191) {
 				float forwardBackRatio = pRideBehaviour->field_0x6c;
@@ -16620,83 +16617,79 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 				if (0.0f <= forwardBackRatio) {
 					if (0.0f <= leftRightRatio) {
 						CActor::SV_Blend4AnimationsWith2Ratios(leftRightRatio, forwardBackRatio, &macroBlendN, 4, 5, 7, 8);
-						pValue->field_0xc_array[3] = 0.0f;
-						pValue->field_0xc_array[6] = 0.0f;
+						pValue[3] = 0.0f;
+						pValue[6] = 0.0f;
 					}
 					else {
 						CActor::SV_Blend4AnimationsWith2Ratios(-leftRightRatio, forwardBackRatio, &macroBlendN, 4, 3, 7, 6);
-						pValue->field_0xc_array[5] = 0.0f;
-						pValue->field_0xc_array[8] = 0.0f;
+						pValue[5] = 0.0f;
+						pValue[8] = 0.0f;
 					}
-					pValue->field_0xc_array[0] = 0.0f;
-					pValue->field_0xc_array[1] = 0.0f;
-					pValue->field_0xc_array[2] = 0.0f;
+					pValue[0] = 0.0f;
+					pValue[1] = 0.0f;
+					pValue[2] = 0.0f;
 				}
 				else {
 					if (0.0f <= leftRightRatio) {
 						CActor::SV_Blend4AnimationsWith2Ratios(leftRightRatio, -forwardBackRatio, &macroBlendN, 4, 5, 1, 2);
-						pValue->field_0xc_array[0] = 0.0f;
-						pValue->field_0xc_array[3] = 0.0f;
+						pValue[0] = 0.0f;
+						pValue[3] = 0.0f;
 					}
 					else {
 						CActor::SV_Blend4AnimationsWith2Ratios(-leftRightRatio, -forwardBackRatio, &macroBlendN, 4, 3, 1, 0);
-						pValue->field_0xc_array[2] = 0.0f;
-						pValue->field_0xc_array[5] = 0.0f;
+						pValue[2] = 0.0f;
+						pValue[5] = 0.0f;
 					}
-					pValue->field_0xc_array[6] = 0.0f;
-					pValue->field_0xc_array[7] = 0.0f;
-					pValue->field_0xc_array[8] = 0.0f;
+					pValue[6] = 0.0f;
+					pValue[7] = 0.0f;
+					pValue[8] = 0.0f;
 				}
 			}
 		}
 	}
 	else {
 		if ((newAnim == 0xe1) || (newAnim == 0xd7)) {
-			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+			float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 			peVar2 = pAnimator->pAnimKeyTableEntry;
-			pValue->field_0x10 = this->field_0x10f8;
-			pValue->field_0xc = 1.0f - pValue->field_0x10;
+			pValue[1] = this->field_0x10f8;
+			pValue[0] = 1.0f - pValue[1];
 		}
 		else {
 			if ((newAnim == 0xe0) || (newAnim == 0xd6)) {
-				char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-				AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+				float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 				peVar2 = pAnimator->pAnimKeyTableEntry;
-				pValue->field_0x10 = this->field_0x10f4;
-				pValue->field_0xc = 1.0f - pValue->field_0x10;
+				pValue[1] = this->field_0x10f4;
+				pValue[0] = 1.0f - pValue[1];
 			}
 			else {
 				if ((newAnim == 0xdc) || (newAnim == 0xd2)) {
 					edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
-					char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 					fVar6 = this->field_0x10f0;
-					AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+					float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 					if (fVar6 < 0.0f) {
 						CActor::SV_Blend4AnimationsWith2Ratios(-fVar6, this->field_0x10f4, &macroBlendN, 2, 0, 3, 1);
-						pValue->field_0x1c = 0.0f;
-						pValue->field_0x20 = 0.0f;
+						pValue[4] = 0.0f;
+						pValue[5] = 0.0f;
 					}
 					else {
 						CActor::SV_Blend4AnimationsWith2Ratios(fVar6, this->field_0x10f4, &macroBlendN, 2, 4, 3, 5);
-						pValue->field_0xc = 0.0f;
-						pValue->field_0x10 = 0.0f;
+						pValue[0] = 0.0f;
+						pValue[1] = 0.0f;
 					}
 				}
 				else {
 					if (newAnim == 0xcf) {
-						char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-						AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+						float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 						peVar2 = pAnimator->pAnimKeyTableEntry;
 						if (this->field_0x1094 == 0) {
 							float yLimit = CCollision::GetWallNormalYLimit(&this->collisionContact);
 							fVar6 = edFIntervalUnitDstLERP(this->normalValue.y, 1.0f, yLimit);
 
-							pValue->field_0xc = 0.0f;
-							pValue->field_0x14 = fVar6;
-							pValue->field_0x10 = 1.0f - pValue->field_0x14;
+							pValue[0] = 0.0f;
+							pValue[2] = fVar6;
+							pValue[1] = 1.0f - pValue[2];
 
 							//(&peVar2->flags + iVar1)[3] = 0;
 							//(&peVar2[1].keyIndex_0x8)[peVar2->keyIndex_0x8] = (int)fVar6;
@@ -16707,9 +16700,9 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 							float yLimit = CCollision::GetWallNormalYLimit(&this->collisionContact);
 							fVar6 = edFIntervalUnitDstLERP(this->normalValue.y, yLimit, 1.0f);
 
-							pValue->field_0x10 = fVar6;
-							pValue->field_0xc = 1.0f - pValue->field_0x10;
-							pValue->field_0x14 = 0.0f;
+							pValue[1] = fVar6;
+							pValue[0] = 1.0f - pValue[1];
+							pValue[2] = 0.0f;
 
 							//(&peVar2[1].field_0x4)[peVar2->keyIndex_0x8] = (int)fVar6;
 							//(&peVar2->flags + peVar2->keyIndex_0x8)[3] =
@@ -16720,43 +16713,41 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 					else {
 						if (newAnim == 0xaa) {
 							fVar6 = this->field_0x1200;
-							char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-							AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+							float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 							if (0.0f <= fVar6) {
-								pValue->field_0x10 = fVar6;
-								pValue->field_0xc = 0.01f;
+								pValue[1] = fVar6;
+								pValue[0] = 0.01f;
 							}
 							else {
-								pValue->field_0x10 = 0.01f;
-								pValue->field_0xc = -this->field_0x1200;
+								pValue[1] = 0.01f;
+								pValue[0] = -this->field_0x1200;
 							}
 							fVar6 = this->field_0x1204;
 							if (0.0f <= fVar6) {
-								pValue->field_0x18 = fVar6;
-								pValue->field_0x14 = 0.01f;
+								pValue[3] = fVar6;
+								pValue[2] = 0.01f;
 							}
 							else {
-								pValue->field_0x18 = 0.01f;
-								pValue->field_0x14 = -this->field_0x1204;
+								pValue[3] = 0.01f;
+								pValue[2] = -this->field_0x1204;
 							}
 
 							fVar6 = this->field_0x1208;
 							if (0.0f <= fVar6) {
-								pValue->field_0x20 = fVar6;
-								pValue->field_0x1c = 0.01f;
+								pValue[5] = fVar6;
+								pValue[4] = 0.01f;
 							}
 							else {
-								pValue->field_0x20 = 0.01f;
-								pValue->field_0x1c = -this->field_0x1208;
+								pValue[5] = 0.01f;
+								pValue[4] = -this->field_0x1208;
 							}
 						}
 						else {
 							if (newAnim == 0x102) {
 								local_4 = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
 
-								char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-								AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+								float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 								const float windBoostStrength = std::clamp(this->windBoostStrength, -1.0f, 1.0f);
 
@@ -16764,70 +16755,68 @@ void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator
 									fVar6 = this->windRotationStrength;
 									if (fVar6 < 0.0f) {
 										CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, -windBoostStrength, &local_4, 1, 0, 3);
-										pValue->field_0x14 = 0.0f;
+										pValue[2] = 0.0f;
 									}
 									else {
 										CActor::SV_Blend3AnimationsWith2Ratios(fVar6, -windBoostStrength, &local_4, 1, 2, 3);
-										pValue->field_0xc = 0.0f;
+										pValue[0] = 0.0f;
 									}
 
-									pValue->field_0x1c = 0.0f;
-									pValue->field_0x20 = 0.0f;
+									pValue[4] = 0.0f;
+									pValue[5] = 0.0f;
 								}
 								else {
 									fVar6 = this->field_0x11fc;
 									if (0.0f < fVar6) {
-										pValue->field_0x20 = fVar6;
-										pValue->field_0x10 = (1.0f - pValue->field_0x20);
-										pValue->field_0x1c = 0.0f;
-										pValue->field_0x14 = 0.0f;
-										pValue->field_0xc = 0.0f;
+										pValue[5] = fVar6;
+										pValue[1] = (1.0f - pValue[5]);
+										pValue[4] = 0.0f;
+										pValue[2] = 0.0f;
+										pValue[0] = 0.0f;
 									}
 									else {
 										fVar6 = this->windRotationStrength;
 										if (fVar6 < 0.0f) {
 											CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, windBoostStrength, &local_4, 1, 0, 4);
-											pValue->field_0x14 = 0.0f;
+											pValue[2] = 0.0f;
 										}
 										else {
 											CActor::SV_Blend3AnimationsWith2Ratios(fVar6, windBoostStrength, &local_4, 1, 2, 4);
-											pValue->field_0xc = 0.0f;
+											pValue[0] = 0.0f;
 										}
 
-										pValue->field_0x20 = 0.0f;
+										pValue[5] = 0.0f;
 									}
 
-									pValue->field_0x18 = 0.0f;
+									pValue[3] = 0.0f;
 								}
 							}
 							else {
 								if (newAnim == 0x104) {
-									char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-									AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+									float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 									peVar2 = pAnimator->pAnimKeyTableEntry;
 									fVar6 = this->field_0x13d8;
 									//puVar4 = &peVar2->flags + peVar2->keyIndex_0x8;
 									if (fVar6 < 0.0f) {
-										pValue->field_0xc = -fVar6;
-										pValue->field_0x10 = 1.0f - pValue->field_0xc;
-										pValue->field_0x14 = 0.0f;
+									pValue[0] = -fVar6;
+									pValue[1] = 1.0f - pValue[0];
+									pValue[2] = 0.0f;
 									}
 									else {
-										pValue->field_0x14 = fVar6;
-										pValue->field_0x10 = 1.0f - pValue->field_0x14;
-										pValue->field_0xc = 0.0f;
+									pValue[2] = fVar6;
+									pValue[1] = 1.0f - pValue[2];
+									pValue[0] = 0.0f;
 									}
 								}
 								else {
 									if (newAnim == 0xfe) {
 										
-										char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 										fVar6 = edFIntervalUnitDstLERP(this->field_0x1048, 0.2f, 0.8f);
 
-										AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+										float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
-										pValue->field_0xc = fVar6;
-										pValue->field_0x10 = 1.0f - pValue->field_0xc;
+									pValue[0] = fVar6;
+									pValue[1] = 1.0f - pValue[0];
 									}
 									else {
 										CActorFighter::AnimEvaluate(layerId, pAnimator, newAnim);

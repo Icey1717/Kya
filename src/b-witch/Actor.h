@@ -459,9 +459,19 @@ public:
 	void Create(CActor* pActor, int nbInstances);
 	void Init();
 	void Manage(CActor* pActor);
-	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam);
 	void SoundStop(int) { IMPLEMENTATION_GUARD_AUDIO(); }
 	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
+
+	void ResumeSounds();
+	void PauseSounds();
+
+	void Reset();
+
+	void Term();
+
+	void DisableSounds();
+	bool IsInstanceAlive(int param_2);
 
 	uint flags;
 	int nbInstances;
@@ -472,12 +482,17 @@ public:
 
 class CActorSoundNode : public CSimpleLinkedNode<CActorSound>
 {
-
+public:
+	CActorSoundNode();
 };
 
 class CSoundInstance
 {
 public:
+	CSoundInstance();
+	bool IsAlive();
+	void Set3DData(edsound_3d_data* pNode, long param_3);
+
 	CSoundInstance* pPrev;
 	CSoundInstance* pNext;
 	uint flags;
@@ -610,6 +625,9 @@ public:
 	bool SV_IAmInFrontOfThisActor(CActor* pOther);
 	CActor* SV_GetNearestActor(float radius);
 
+	void SV_ACT_LipsyncInit();
+	void SV_ACT_LipsyncTerm();
+
 	void SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel);
 	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, ed_g3d_manager* p3dManager, edF32VECTOR4* pBoundingSphere);
 	void SV_SwitchToModel(CActorAlternateModel* pAlternateModel, int meshIndex, int materialIndex, edF32VECTOR4* pBoundingSphere);
@@ -728,6 +746,8 @@ public:
 	void UpdateBoundingSphere(CActInstance* pInstances, int nbInstances);
 
 	void SetupShadow(CShadow* pNewShadow);
+
+	void AnimEvaluateLipsync(int param_2, edAnmMacroAnimator* pAnimator);
 
 #ifdef DEBUG_FEATURES
 	// #Debug
@@ -884,6 +904,8 @@ struct S_ACTOR_STREAM_REF
 class CEmotionInfo
 {
 public:
+	CEmotionInfo();
+
 	void DoAnimation(float, float, CActor*);
 
 	int macroAnimId;

@@ -241,8 +241,8 @@ namespace Debug::Actor::MovingPlatform
 			}
 			else {
 				const CActorMovingPlatform_SubObj* p = pPlatform->pProperties;
-				ImGui::Text("Audio A (0x0):  id0=%d  id1=%d", p->field_0x0.field_0x0, p->field_0x0.field_0x4);
-				ImGui::Text("Audio B (0x8):  id0=%d  id1=%d", p->field_0x8.field_0x0, p->field_0x8.field_0x4);
+				ImGui::Text("Audio A (0x0):  id0=%d  id1=%d", p->field_0x0.soundRef.index, p->field_0x0.sampleRef.index);
+				ImGui::Text("Audio B (0x8):  id0=%d  id1=%d", p->field_0x8.soundRef.index, p->field_0x8.sampleRef.index);
 				ImGui::Text("Flags (0x24):   0x%08X", p->flags_0x24);
 				ImGui::Text("  Slip Surface: %s  (bit 6 / 0x40)", (p->flags_0x24 & 0x40) ? "yes" : "no");
 				ImGui::Text("  Ice Surface:  %s  (bit 22 / 0x400000)", (p->flags_0x24 & 0x400000) ? "yes" : "no");

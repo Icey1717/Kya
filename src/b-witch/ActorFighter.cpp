@@ -2152,20 +2152,19 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 		}
 		else {
 			if ((newAnim == 0x4d) || (newAnim == 0x38)) {
-				char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-				AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+				float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 				peVar1 = pAnimator->pAnimKeyTableEntry;
 				if (peVar1->keyIndex_0x8.asKey == 4) {
-					pValue->field_0xc = this->field_0x4e0.y;
-					pValue->field_0x18 = this->field_0x4e0.z;
+					pValue[0] = this->field_0x4e0.y;
+					pValue[3] = this->field_0x4e0.z;
 					fVar6 = this->field_0x4e0.x;
 					if (0.0f <= fVar6) {
-						pValue->field_0x14 = fVar6;
-						pValue->field_0x10 = 0.0f;
+						pValue[2] = fVar6;
+						pValue[1] = 0.0f;
 					}
 					else {
-						pValue->field_0x10 = -fVar6;
-						pValue->field_0x14 = 0.0f;
+						pValue[1] = -fVar6;
+						pValue[2] = 0.0f;
 					}
 				}
 			}
@@ -2173,16 +2172,14 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 				if (((newAnim == 0x27) || (newAnim == 0x18)) || (newAnim == 0x16)) {
 					peVar1 = pAnimator->pAnimKeyTableEntry;
 					if (peVar1->keyIndex_0x8.asKey == 2) {
-						char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-						AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
-						pValue->field_0x10 = this->field_0x4fc;
-						pValue->field_0xc = 1.0f - this->field_0x4fc;
+						float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
+						pValue[1] = this->field_0x4fc;
+						pValue[0] = 1.0f - this->field_0x4fc;
 					}
 				}
 				else {
 					if ((newAnim == 0x74) || (newAnim == 0x73)) {
-						char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-						AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+						float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 						local_c = pAnimator->pAnimKeyTableEntry;
 						if (local_c->keyIndex_0x8.asKey == 5) {
@@ -2214,31 +2211,29 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 							}
 							fVar8 = puVar10 * (1.0f - fabs(fVar6));
 							fVar7 = edFIntervalUnitDstLERP(this->dynamic.linearAcceleration, 0.8f, 4.0f);
-							pValue->field_0x1c = 1.0f - fVar7;
+							pValue[4] = 1.0f - fVar7;
 
 							if (0.0f <= fVar6) {
-								pValue->field_0x10 = fVar7 * fVar6;
-								pValue->field_0xc = 0.0f;
+								pValue[1] = fVar7 * fVar6;
+								pValue[0] = 0.0f;
 							}
 							else {
-								pValue->field_0xc = -fVar7 * fVar6;
-								pValue->field_0x10 = 0.0f;
+								pValue[0] = -fVar7 * fVar6;
+								pValue[1] = 0.0f;
 							}
 
 							if (0.0 <= fVar8) {
-								pValue->field_0x14 = fVar7 * fVar8;
-								pValue->field_0x18 = 0.0f;
+								pValue[2] = fVar7 * fVar8;
+								pValue[3] = 0.0f;
 							}
 							else {
-								pValue->field_0x18 = -fVar7 * fVar8;
-								pValue->field_0x14 = 0.0f;
+								pValue[3] = -fVar7 * fVar8;
+								pValue[2] = 0.0f;
 							}
 						}
 					}
 					else {
 						if (newAnim == 0x70) {
-							char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-
 							local_8 = pAnimator->pAnimKeyTableEntry;
 							if ((this->flags & 0x1000) == 0) {
 								GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
@@ -2250,7 +2245,7 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 							fVar9 = edF32Vector4DotProductHard(&eStack112, &auStack96.rowZ);
 
 							if (((fVar7 != 0.0f) || (fVar8 != 0.0f)) || (fVar9 != 0.0f)) {
-								AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+								float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 								if (0.0f <= fVar7) {
 									fVar12 = 0.5f;
 									fVar11 = fVar7 * ((fVar6 / 7.0f) / 2.0f);
@@ -2258,8 +2253,8 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar12 = fVar11;
 									}
 
-									pValue->field_0xc = (fVar12 + 0.5f) * 1000.0f * fVar7;
-									pValue->field_0x10 = (1.0f - (fVar12 + 0.5f)) * 1000.0f * fVar7;
+									pValue[0] = (fVar12 + 0.5f) * 1000.0f * fVar7;
+									pValue[1] = (1.0f - (fVar12 + 0.5f)) * 1000.0f * fVar7;
 								}
 								else {
 									fVar12 = 0.5f;
@@ -2268,11 +2263,11 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar12 = fVar11;
 									}
 
-									pValue->field_0xc = (1.0f - (fVar12 + 0.5f)) * 1000.0f * -fVar7;
-									pValue->field_0x10 = (fVar12 + 0.5f) * 1000.0f * -fVar7;
+									pValue[0] = (1.0f - (fVar12 + 0.5f)) * 1000.0f * -fVar7;
+									pValue[1] = (fVar12 + 0.5f) * 1000.0f * -fVar7;
 								}
 
-								pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+								pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 								if (0.0f <= fVar8) {
 									fVar7 = 0.5f;
 									fVar12 = fVar8 * ((fVar6 / 7.0f) / 2.0f);
@@ -2280,8 +2275,8 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar7 = fVar12;
 									}
 
-									pValue->field_0x18 = (fVar7 + 0.5f) * 1000.0f * fVar8;
-									pValue->field_0x14 = (1.0f - (fVar7 + 0.5f)) * 1000.0f * fVar8;
+									pValue[3] = (fVar7 + 0.5f) * 1000.0f * fVar8;
+									pValue[2] = (1.0f - (fVar7 + 0.5f)) * 1000.0f * fVar8;
 								}
 								else {
 									fVar7 = 0.5f;
@@ -2290,11 +2285,11 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar7 = fVar12;
 									}
 
-									pValue->field_0x18 = (1.0f - (fVar7 + 0.5f)) * 1000.0f * -fVar8;
-									pValue->field_0x14 = (fVar7 + 0.5f) * 1000.0f * -fVar8;
+									pValue[3] = (1.0f - (fVar7 + 0.5f)) * 1000.0f * -fVar8;
+									pValue[2] = (fVar7 + 0.5f) * 1000.0f * -fVar8;
 								}
 
-								pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+								pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 								if (0.0f <= fVar9) {
 									fVar7 = 0.5f;
 									fVar6 = fVar9 * ((fVar6 / 7.0f) / 2.0f);
@@ -2302,8 +2297,8 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar7 = fVar6;
 									}
 
-									pValue->field_0x20 = (fVar7 + 0.5f) * 1000.0f * fVar9;
-									pValue->field_0x1c = (1.0f - (fVar7 + 0.5f)) * 1000.0f * fVar9;
+									pValue[5] = (fVar7 + 0.5f) * 1000.0f * fVar9;
+									pValue[4] = (1.0f - (fVar7 + 0.5f)) * 1000.0f * fVar9;
 								}
 								else {
 									fVar7 = 0.5f;
@@ -2312,73 +2307,72 @@ void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, ui
 										fVar7 = fVar6;
 									}
 
-									pValue->field_0x20 = (1.0f - (fVar7 + 0.5f)) * 1000.0f * -fVar9;
-									pValue->field_0x1c = (fVar7 + 0.5f) * 1000.0f * -fVar9;
+									pValue[5] = (1.0f - (fVar7 + 0.5f)) * 1000.0f * -fVar9;
+									pValue[4] = (fVar7 + 0.5f) * 1000.0f * -fVar9;
 								}
 							}
 						}
 						else {
 							if (newAnim == 0x15) {
-								char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-								AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+								float* pValue = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 								assert(pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey == 8);
 								peVar1 = pAnimator->pAnimKeyTableEntry;
 								if ((this->fightFlags & FIGHT_FLAG_MOVE_BLEND_MIRRORED) == 0) {
 									fVar6 = this->field_0x4e0.x;
 									if (0.0f <= fVar6) {
-										pValue->field_0x1c = fVar6;
-										pValue->field_0x20 = 0.0f;
-										pValue->field_0xc = 0.0f;
-										pValue->field_0x10 = 0.0f;
+									pValue[4] = fVar6;
+									pValue[5] = 0.0f;
+									pValue[0] = 0.0f;
+									pValue[1] = 0.0f;
 									}
 									else {
-										pValue->field_0x10 = -fVar6;
-										pValue->field_0xc = 0.0f;
-										pValue->field_0x1c = 0.0f;
-										pValue->field_0x20 = 0.0f;
+									pValue[1] = -fVar6;
+									pValue[0] = 0.0f;
+									pValue[4] = 0.0f;
+									pValue[5] = 0.0f;
 									}
 
 									fVar6 = this->field_0x4e0.z;
 									if (0.0f <= fVar6) {
-										pValue->field_0x18 = fVar6;
-										pValue->field_0x14 = 0.0f;
-										pValue->field_0x24 = 0.0f;
-										pValue->field_0x28 = 0.0f;
+									pValue[3] = fVar6;
+									pValue[2] = 0.0f;
+									pValue[6] = 0.0f;
+									pValue[7] = 0.0f;
 									}
 									else {
-										pValue->field_0x24 = -fVar6;
-										pValue->field_0x28 = 0.0f;
-										pValue->field_0x14 = 0.0f;
-										pValue->field_0x18 = 0.0f;
+									pValue[6] = -fVar6;
+									pValue[7] = 0.0f;
+									pValue[2] = 0.0f;
+									pValue[3] = 0.0f;
 									}
 								}
 								else {
 									fVar6 = this->field_0x4e0.x;
 									if (0.0f <= fVar6) {
-										pValue->field_0x20 = fVar6;
-										pValue->field_0x1c = 0.0f;
-										pValue->field_0xc = 0.0f;
-										pValue->field_0x10 = 0.0f;
+									pValue[5] = fVar6;
+									pValue[4] = 0.0f;
+									pValue[0] = 0.0f;
+									pValue[1] = 0.0f;
 									}
 									else {
-										pValue->field_0xc = -fVar6;
-										pValue->field_0x10 = 0.0f;
-										pValue->field_0x1c = 0.0f;
-										pValue->field_0x20 = 0.0f;
+									pValue[0] = -fVar6;
+									pValue[1] = 0.0f;
+									pValue[4] = 0.0f;
+									pValue[5] = 0.0f;
 									}
 
 									fVar6 = this->field_0x4e0.z;
 									if (0.0f <= fVar6) {
-										pValue->field_0x14 = fVar6;
-										pValue->field_0x18 = 0.0f;
-										pValue->field_0x24 = 0.0f;
-										pValue->field_0x28 = 0.0f;
+									pValue[2] = fVar6;
+									pValue[3] = 0.0f;
+									pValue[6] = 0.0f;
+									pValue[7] = 0.0f;
 									}
 									else {
-										pValue->field_0x28 = -fVar6;
-										pValue->field_0x24 = 0.0f;
-										pValue->field_0x14 = 0.0f;
-										pValue->field_0x18 = 0.0f;
+									pValue[7] = -fVar6;
+									pValue[6] = 0.0f;
+									pValue[2] = 0.0f;
+									pValue[3] = 0.0f;
 									}
 								}
 							}

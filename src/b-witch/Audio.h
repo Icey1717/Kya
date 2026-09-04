@@ -10,6 +10,9 @@
 class CActor;
 class CAudioManager;
 class edCBankBufferEntry;
+class CSoundWind;
+
+struct edCEventMessage;
 
 struct SoundEntry
 {
@@ -18,14 +21,14 @@ struct SoundEntry
 	void* pNode;
 };
 
-class CSound
+class CSoundBase
 {
 public:
-	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* param_5, uint* param_6) { IMPLEMENTATION_GUARD(); };
-	virtual uint Stop(uint instanceId) { IMPLEMENTATION_GUARD(); };
-	virtual bool IsLooping();
+	CSoundBase();
 
-	void FadeTo(float param_1, float param_2, float param_3, uint instanceId);
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* param_5, uint* param_6) = 0;
+	virtual uint Stop(uint instanceId);
+	virtual bool IsLooping() = 0;
 
 	int setupIntFieldA;
 	SoundEntry aSoundEntries[6];
@@ -36,6 +39,19 @@ public:
 	float field_0x78;
 	float priority;
 	uint field_0x80;
+};
+
+class CSound : public CSoundBase
+{
+public:
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6);
+	virtual bool IsLooping();
+
+	void Create(ByteCode* pByteCode);
+	void FadeTo(float param_1, float param_2, float param_3, uint instanceId);
+	void SetPause(uint soundInstanceId, int bPaused);
+	void InitializeFromSample(float param_1, float param_2, float param_3, float param_4, float param_5, float priority, ed_sound_sample* soundInfoObj, uint param_9);
+
 	uint field_0x84;
 	uint field_0x88;
 };
@@ -43,18 +59,23 @@ public:
 class CSoundSample : public CSound
 {
 public:
-	void Create(ByteCode* pByteCode);
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId);
+	virtual bool IsLooping(int soundInstanceId);
 };
 
 struct CSoundStream : public CSoundSample
 {
+public:
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6) { IMPLEMENTATION_GUARD(); }
+	virtual uint Stop(uint instanceId);
+
 	undefined4 field_0x8c;
 };
 
 struct SOUND_SAMPLE_REF
 {
 	union {
-		CSoundSample* pSample;
+		CSound* pSample;
 		int index;
 	};
 
@@ -64,7 +85,7 @@ struct SOUND_SAMPLE_REF
 struct SOUND_STREAM_REF
 {
 	union {
-		CSoundStream* pStream;
+		strd_ptr(CSoundStream) pStream;
 		int index;
 	};
 
@@ -76,6 +97,7 @@ class CWayPoint;
 class CSoundAmbiance
 {
 public:
+	CSoundAmbiance();
 	void Init();
 
 	SOUND_SAMPLE_REF field_0x0;
@@ -84,22 +106,32 @@ public:
 	float field_0xc;
 	float field_0x10;
 	S_STREAM_REF<CWayPoint> wayPointRef;
-	edF32VECTOR3 location;
-	edF32VECTOR3 field_0x24;
-	float field_0x30;
-	float field_0x34;
+	edsound_3d_data soundPosData;
 
-	CSoundSample* field_0x4c;
+	undefined field_0x40;
+
+	CSound* field_0x4c;
 	uint field_0x50;
+	edsound_3d_data* field_0x54;
 
-	uint field_0x68;
+	uint field_0x60;
+	float field_0x68;
 	float field_0x6c;
 };
 
 class CAmbiance
 {
 public:
-	virtual void Play(float param_1) { IMPLEMENTATION_GUARD(); }
+	virtual void Play(float param_1);
+
+	CSoundAmbiance* aSoundAmbiance;
+	uint nbSoundAmbiance;
+	float field_0x8;
+	float field_0xc;
+	undefined4 field_0x10;
+	int field_0x14;
+	float field_0x18;
+	float field_0x1c;
 };
 
 class CMusicAmbiance : public CAmbiance
@@ -108,26 +140,6 @@ public:
 	CMusicAmbiance();
 
 	void Add(ByteCode* pByteCode);
-
-	CSoundAmbiance* aSoundAmbiance;
-	uint nbSoundAmbiance;
-	float field_0x8;
-	float field_0xc;
-	undefined4 field_0x10;
-	undefined4 field_0x14;
-	undefined4 field_0x18;
-	undefined4 field_0x1c;
-};
-
-class CSoundWind
-{
-public:
-	void Init();
-	void Add(ByteCode* pByteCode);
-
-	S_STREAM_REF<CSound> field_0x0;
-	S_STREAM_REF<CSound> field_0x4;
-	S_STREAM_REF<CSound> field_0x8;
 };
 
 class CMusic
@@ -274,7 +286,7 @@ struct MusicSomething_0x8
 
 struct SOUND_SPATIALIZATION_PARAM
 {
-	float* field_0x0;
+	float* data;
 };
 
 class CAudioManager : public CObjectManager
@@ -322,6 +334,21 @@ public:
 
 	char* GetStreamFileNameFromIndex_00184a40(int index);
 	GlobalSound_FileData* GetSoundFileDataFromIndex_00184a10(int index);
+	int GetAmbianceIndex_001819b0();
+	int GetMusicId();
+	void ReleaseSound3DData(edsound_3d_data* pData);
+
+	CSoundWind* GetWindSound(int index);
+
+	void SetAmbiance(uint ambianceId);
+	void SetMusic(uint index);
+
+	void FUN_00182db0(float param_1, undefined4 param_3, undefined4 param_4);
+	void FUN_00184470();
+	void FUN_00182da0(float param_1);
+	CDoubleLinkedNode<s_sound_3d_data>* ObtainSound3DData(int param_2, CActor* pActor, uint boneId);
+
+	void ReceiveEvent(edCEventMessage* pEventMessage, uint param_3, undefined8 param_4, uint param_5, uint* param_6);
 
 	float field_0x68;
 	int field_0x6c;
@@ -349,7 +376,7 @@ public:
 	CSoundStream* aSoundStreams;
 	uint field_0x78;
 	int field_0x7c;
-	CSoundSample* aSoundSamplesB;
+	CSound* aSoundSamplesB;
 	_ed_sound_stream* aEdSoundStreams;
 	CMusic* aMusic;
 	CMusicAmbiance* aMusicAmbiance;
@@ -429,7 +456,7 @@ public:
 	int field_0xb4;
 	int field_0xb8;
 	int musicIndex;
-	int field_0x2d8;
+	int activeAmbianceIndex;
 
 	uint field_0x28c;
 	CMusic* field_0x290;

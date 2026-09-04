@@ -10,12 +10,19 @@ callbacks—without emulating SIF RPC, DMA, IOP memory, or IOP threads.
 The first consumer is sound loading. The four-byte value returned to an
 `ed_sound_sample` will be an opaque PC handle, never a truncated native pointer.
 
+Runtime stream playback state is separate from this transfer service. The PC
+equivalent of the IOP stream-status snapshot is implemented by
+`edSoundStreamService`, which owns stream lifecycle and playback cursor state;
+the transfer service must not be used as a playback clock.
+
 ## Proposed Files
 
 - `port/Audio/CMakeLists.txt`: define an `Audio` library.
 - `port/Audio/edSysTransferService.h`: public PC transfer-service API.
 - `port/Audio/edSysTransferService.cpp`: loaded-data registry, pending queue,
   and callback dispatch.
+- `port/Audio/edSoundStreamService.h/.cpp`: Windows stream lifecycle and host
+  playback cursor state exposed through the recovered `SOUND_*` interface.
 - `port/Test/src/tests.cpp`: transfer-service unit tests.
 
 Add `Audio` from `port/CMakeLists.txt`, link it into `Port`, and expose only the

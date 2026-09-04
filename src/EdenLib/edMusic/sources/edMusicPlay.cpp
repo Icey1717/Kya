@@ -349,3 +349,28 @@ void edMusicStreamChannelFade(float fadeTime, int musicStreamIndex, int channel,
 
 	return;
 }
+
+uint edMusicSongInstallNoWait(void* pFileData, uint size)
+{
+	ed_music_song* peVar1;
+	uint uVar2;
+
+	uVar2 = 0;
+	peVar1 = _pedMusicSongs;
+	if (edMusicStatus.nbSongs != 0) {
+		do {
+			if ((peVar1->flags & 1) != 0) break;
+			uVar2 = uVar2 + 1;
+			peVar1 = peVar1 + 1;
+		} while (uVar2 < (uint)edMusicStatus.nbSongs);
+	}
+	if (uVar2 == edMusicStatus.nbSongs) {
+		do {
+			/* WARNING: Do nothing block with infinite loop */
+		} while (true);
+	}
+	peVar1->flags = peVar1->flags & 0xfffffffe;
+	_edMusicSongInstallNoWait(_pedMusicSongs + uVar2, pFileData, size);
+	return uVar2;
+}
+

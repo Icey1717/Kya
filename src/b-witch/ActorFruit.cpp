@@ -123,21 +123,20 @@ StateConfig* CActorFruit::GetStateCfg(int state)
 
 void CActorFruit::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
-	char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-	AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+	float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 	if (newAnim == 0xf) {
 		float fValue = this->field_0x36c;
 
 		if (0.0f <= fValue) {
-			pValue->field_0xc = fValue;
-			pValue->field_0x10 = (1.0f - pValue->field_0xc);
-			pValue->field_0x14 = 0.0f;
+			pAnimValues[0] = fValue;
+			pAnimValues[1] = (1.0f - pAnimValues[0]);
+			pAnimValues[2] = 0.0f;
 		}
 		else {
-			pValue->field_0x14 = -fValue;
-			pValue->field_0x10 = (1.0f - pValue->field_0x14);
-			pValue->field_0xc = 0.0f;
+			pAnimValues[2] = -fValue;
+			pAnimValues[1] = (1.0f - pAnimValues[2]);
+			pAnimValues[0] = 0.0f;
 		}
 	}
 	else {

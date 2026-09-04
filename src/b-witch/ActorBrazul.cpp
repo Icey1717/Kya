@@ -630,10 +630,9 @@ void CActorBrazul::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uin
 	edANM_HDR* peVar1;
 
 	if (newAnim == 0xec) {
-		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
-		pValue->field_0x10 = this->field_0x2ffc;
-		pValue->field_0x1c = (1.0f - (float)this->field_0x2ffc);
+		float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
+		pAnimValues[1] = this->field_0x2ffc;
+		pAnimValues[4] = (1.0f - (float)this->field_0x2ffc);
 	}
 	else {
 		CActorWolfen::AnimEvaluate(layerId, pAnimator, newAnim);

@@ -47,6 +47,8 @@ public:
 	virtual void AddAll(ByteCode* pByteCode, CFx* aFx, int count) = 0;
 	virtual void InitAll(CFx* aFx, int count) = 0;
 	virtual void ManageAll(uint count, CFx* aFx) = 0;
+	virtual void PauseAll(uint count, CFx* aFx) = 0;
+	virtual void ResumeAll(uint count, CFx* aFx) = 0;
 	virtual void Draw() = 0;
 	virtual void CheckpointResetAll(uint count, CFx* aFx) = 0;
 
@@ -160,6 +162,15 @@ public:
 		return;
 	}
 
+	inline void Hide()
+	{
+		if (IsValid()) {
+			pFx->Hide();
+		}
+
+		return;
+	}
+
 	inline void Start()
 	{
 		if (IsValid()) {
@@ -264,6 +275,8 @@ public:
 	virtual void CheckpointReset() = 0;
 	virtual void Manage() = 0;
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager) = 0;
+	virtual void Pause() = 0;
+	virtual void Resume() = 0;
 	virtual void SetupPool(ByteCode* pByteCode, uint param_3) = 0;
 	virtual uint InstallFxScenaricData(ByteCode* pByteCode) = 0;
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector) = 0;
@@ -393,6 +406,36 @@ public:
 
 				pCVar3 = pCVar3->pPrev;
 			} while (pCVar3 != (CDoubleLinkedNode<FxType*>*)0x0);
+		}
+
+		return;
+	}
+
+	virtual void Pause()
+	{
+		CDoubleLinkedNode<FxType*>* pCVar1;
+		FxType* ppCVar2;
+
+		pCVar1 = (this->activeList).pHead;
+		while (pCVar1 != (CDoubleLinkedNode<FxType*>*)0x0) {
+			ppCVar2 = pCVar1->node;
+			pCVar1 = pCVar1->pPrev;
+			ppCVar2->Pause();
+		}
+
+		return;
+	}
+
+	virtual void Resume()
+	{
+		CDoubleLinkedNode<FxType*>* pCVar1;
+		FxType* ppCVar2;
+
+		pCVar1 = (this->activeList).pHead;
+		while (pCVar1 != (CDoubleLinkedNode<FxType*>*)0x0) {
+			ppCVar2 = pCVar1->node;
+			pCVar1 = pCVar1->pPrev;
+			ppCVar2->Resume();
 		}
 
 		return;

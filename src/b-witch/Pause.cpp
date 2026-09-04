@@ -1562,27 +1562,28 @@ void CPauseManager::FUN_001b0860(int param_2)
 
 	uVar3 = gSaveManagement.FUN_002f39c0();
 	if ((uVar3 != 0) || (param_2 != 0)) {
-		IMPLEMENTATION_GUARD_LOG(
 		uVar4 = EncodeFloat(Timer::GetTimer()->totalTime * 256.0f);
 		uVar4 = (int)uVar4 % 0x140;
 		if (0xff < uVar4) {
 			uVar4 = (0x40 - (uVar4 - 0x100)) * 0xff >> 6;
 		}
+
 		if (param_2 == 0) {
 			fVar5 = 64.0;
-			fVar6 = ((float)gVideoConfig.screenHeight * 320.0) / 512.0;
+			fVar6 = ((float)gVideoConfig.screenHeight * 320.0f) / 512.0f;
 		}
 		else {
-			fVar5 = (float)gVideoConfig.screenWidth / 2.0;
-			fVar6 = (float)gVideoConfig.screenHeight / 2.0 - ((float)gVideoConfig.screenHeight * 32.0) / 512.0;
+			fVar5 = (float)gVideoConfig.screenWidth / 2.0f;
+			fVar6 = (float)gVideoConfig.screenHeight / 2.0f - ((float)gVideoConfig.screenHeight * 32.0f) / 512.0f;
 		}
+
 		bVar1 = GuiDList_BeginCurrent();
 		if (bVar1 != false) {
-			BootBitmaps[22].color[3] = (byte)(uVar4 >> 1);
-			CSprite::Draw((float)&DAT_3f333333, fVar5, fVar6, BootBitmaps + 0x16, 0x12);
-			BootBitmaps[22].color[3] = 0x7f;
+			BootBitmaps[22].rgba[3] = (byte)(uVar4 >> 1);
+			BootBitmaps[22].Draw(0.7f, fVar5, fVar6, 0x12);
+			BootBitmaps[22].rgba[3] = 0x7f;
 			GuiDList_EndCurrent();
-		})
+		}
 	}
 
 	return;

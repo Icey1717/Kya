@@ -39,6 +39,7 @@
 #include "Help.h"
 #include "LightManager.h"
 #include "EventManager.h"
+#include "LipSync.h"
 #include "EventTrack.h"
 #include "CameraGame.h"
 #include "kya.h"
@@ -239,14 +240,8 @@ CScene::CScene()
 	p3DFileManager = new C3DFileManager();
 	CScene::ptable.g_C3DFileManager_00451664 = p3DFileManager;
 	CScene::ptable.g_CollisionManager_00451690 = new CCollisionManager;
-	//g_Manager100_00451690 = pMVar4;
-	//pMVar5 = (Manager_208*)Allocate(0x208);
-	//if (pMVar5 != (Manager_208*)0x0) {
-	//	uVar17 = SetupManager208_001ad8f0(pMVar5);
-	//	pMVar5 = (Manager_208*)uVar17;
-	//}
-	//g_Manager208_00451694 = pMVar5;
-	CScene::ptable.g_AudioManager_00451698 = new CAudioManager();
+	CScene::ptable.g_LipTrackManager_00451694 = new CLipTrackManager;
+	CScene::ptable.g_AudioManager_00451698 = new CAudioManager;
 	CScene::ptable.g_WayPointManager_0045169c = new CWayPointManager;
 	CScene::ptable.g_PathManager_004516a0 = new CPathManager;
 	CScene::ptable.g_ActorManager_004516a4 = new CActorManager;

@@ -11,7 +11,7 @@ class CFrontendSamplePlayer
 public:
 	CFrontendSamplePlayer();
 
-	long PlaySample(float, int, int);
+	uint PlaySample(float volume, int sampleIndex, int param_4);
 
 	float field_0x0;
 	ed_sound_sample aSamples[5];

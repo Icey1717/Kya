@@ -85,13 +85,13 @@ struct ed_sound_instance
 	undefined field_0x9d;
 	undefined field_0x9e;
 	undefined field_0x9f;
-	undefined4 field_0xa0;
+	void* field_0xa0;
 };
 
 struct ed_sound_instance_finished
 {
 	ed_sound_instance* pSoundInstance;
-	undefined4 field_0x4;
+	void* field_0x4;
 
 };
 

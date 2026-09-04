@@ -4,6 +4,9 @@
 #include "edSound/ps2/_edSoundAcoustic3D.h"
 #include "edSound/ps2/_edSoundPlay.h"
 #include "MathOps.h"
+#ifdef PLATFORM_WIN
+#include "edSoundStreamService.h"
+#endif
 
 static int gNbSoundStreams = 0;
 
@@ -677,6 +680,9 @@ uint edSoundStreamCreate_00284500(float priority, _ed_sound_stream* pSoundStream
 		}
 		else {
 			pInstance->pSoundStream = pSoundStream;
+		#ifdef PLATFORM_WIN
+			Audio::PrepareStream(static_cast<uint>(pSoundStream->streamBufferId[0]));
+		#endif
 			if (pInstance->pSoundStream->field_0x14 == 2) {
 				pInstance->flags = pInstance->flags | 0x20;
 			}
@@ -725,9 +731,12 @@ void edSoundStream_00283650(uint index)
 	ed_sound_instance* puVar1;
 
 	if (index != 0) {
-		puVar1 = pedSoundInstances + index;
+		puVar1 = pedSoundInstances + (index & 0xffff);
 		if (puVar1->fullSoundInstanceId == index) {
 			puVar1->flags = puVar1->flags | 0x100;
+		#ifdef PLATFORM_WIN
+			Audio::StartStream(static_cast<uint>(puVar1->pSoundStream->streamBufferId[0]));
+		#endif
 		}
 	}
 
@@ -806,4 +815,239 @@ float edSoundStreamGetPlaybackTime(uint index)
 	}
 
 	return -1.0f;
+}
+
+uint edSoundSamplePlay(float priority, ed_sound_sample* pSample)
+{
+	ed_sound_instance* newSoundInstance;
+	uint newSoundId;
+	ed_sound_instance* newSoundInstanceB;
+	ed_sound_instance* newSoundInstanceA;
+
+	newSoundInstance = edSoundInstanceCreate(priority, 0);
+	if (newSoundInstance == (ed_sound_instance*)0x0) {
+		newSoundId = 0;
+	}
+	else {
+		newSoundInstance->pSample = pSample;
+		newSoundId = newSoundInstance->fullSoundInstanceId;
+	}
+
+	if (newSoundId != 0) {
+		if (newSoundId != 0) {
+			newSoundInstanceA = pedSoundInstances + (newSoundId & 0xffff);
+			if (newSoundInstanceA->fullSoundInstanceId == newSoundId) {
+				newSoundInstanceA->flags = newSoundInstanceA->flags | 0x100;
+			}
+		}
+
+		if (newSoundId != 0) {
+			newSoundInstanceB = pedSoundInstances + (newSoundId & 0xffff);
+			if (newSoundInstanceB->fullSoundInstanceId == newSoundId) {
+				if (newSoundInstanceB->field_0x74 == 0) {
+					edSoundInstanceCom[newSoundId & 0xffff].flags = edSoundInstanceCom[newSoundId & 0xffff].flags & 0xffffbfff;
+					edSoundInstanceCom[newSoundId & 0xffff].soundInstanceId = newSoundId;
+					edSoundInstanceCom[newSoundId & 0xffff].flags = edSoundInstanceCom[newSoundId & 0xffff].flags | 0x2000;
+					edSoundInstanceCom[newSoundId & 0xffff].soundInstanceId = newSoundId;
+				}
+
+				newSoundInstanceB->field_0x74 = 1;
+			}
+		}
+	}
+
+	return newSoundId;
+}
+
+void edSoundInstanceSetVolume(float param_1, uint soundInstanceId)
+{
+	ed_sound_instance* pSoundInstance;
+	float fVar1;
+
+	if ((soundInstanceId != 0) && (pSoundInstance = pedSoundInstances + (soundInstanceId & 0xffff), pSoundInstance->fullSoundInstanceId == soundInstanceId)) {
+		if (param_1 < 0.0f) {
+			param_1 = 0.0f;
+		}
+
+		fVar1 = 1.0f;
+		if (param_1 <= 1.0f) {
+			fVar1 = param_1;
+		}
+
+		pSoundInstance->targetVolume = fVar1;
+		pSoundInstance->volume = fVar1;
+	}
+
+	return;
+}
+
+void edSoundInstanceSetPause(uint soundInstanceId, int bPaused)
+{
+	if ((soundInstanceId != 0) && (pedSoundInstances[soundInstanceId & 0xffff].fullSoundInstanceId == soundInstanceId)) {
+		if (bPaused == 0) {
+			edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags & 0xfffffff7;
+			edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
+			edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags | 0x10;
+			edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
+		}
+		else {
+			edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags & 0xffffffef;
+			edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
+			edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags | 8;
+			edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
+		}
+	}
+
+	return;
+}
+
+void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr)
+{
+	undefined uVar1;
+	undefined uVar2;
+	bool bVar3;
+	ed_sound_instance* soundInstance;
+	edsound_3d_data* peVar4;
+	long in_a3;
+	float fVar5;
+	float fVar6;
+
+	if (soundInstanceId != 0) {
+		soundInstance = pedSoundInstances + (soundInstanceId & 0xffff);
+		bVar3 = false;
+		if (soundInstance->fullSoundInstanceId == soundInstanceId) {
+			if (pData == (edsound_3d_data*)0x0) {
+				soundInstance->flags = soundInstance->flags & 0xffffefff;
+				if (soundInstance->p3dData != (edsound_3d_data*)0x0) {
+					bVar3 = true;
+				}
+			}
+			else {
+				soundInstance->flags = soundInstance->flags | 0x1000;
+				soundInstance->flags = soundInstance->flags & 0xfffffffd;
+				if ((in_a3 == 0) || (edSoundGlobalParams.outputMode != SURROUND)) {
+					soundInstance->flags = soundInstance->flags | 4;
+				}
+				else {
+					soundInstance->flags = soundInstance->flags | 8;
+				}
+			}
+
+			if (bVar3) {
+				soundInstance->flags = soundInstance->flags & 0xfffffbff;
+			}
+
+			peVar4 = pData;
+			if ((existingSoundIDPtr != (uint*)0x0) && (pData != (edsound_3d_data*)0x0)) {
+				peVar4 = &soundInstance->data3d;
+				*peVar4 = *pData;
+			}
+
+			soundInstance->p3dData = peVar4;
+		}
+	}
+
+	return;
+}
+
+void edSoundInstanceSetFrequency(float frequency, uint soundInstanceId)
+{
+	ed_sound_instance* soundInstance;
+	uint loadedSoundID;
+
+	if (soundInstanceId != 0) {
+		soundInstance = pedSoundInstances + (soundInstanceId & 0xffff);
+		loadedSoundID = soundInstance->fullSoundInstanceId;
+		if (loadedSoundID == soundInstanceId) {
+			edSoundInstanceCom[loadedSoundID & 0xffff].flags = edSoundInstanceCom[loadedSoundID & 0xffff].flags | 0x80;
+			edSoundInstanceCom[loadedSoundID & 0xffff].soundInstanceId = loadedSoundID;
+			soundInstance->targetFrequency = frequency;
+			soundInstance->frequency = frequency;
+		}
+	}
+
+	return;
+}
+
+void edSoundInstanceSetUserData(uint soundInstanceId, void* pUserData)
+{
+	if (soundInstanceId != 0) {
+		pedSoundInstances[soundInstanceId & 0xffff].field_0xa0 = pUserData;
+	}
+
+	return;
+}
+
+void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample)
+{
+	bool bVar1;
+	ed_sound_instance* pInstance;
+	uint newSoundId;
+	uint* puVar3;
+
+	if (pSoundSample->loopEndOffset == 0.0) {
+		newSoundId = 0;
+	}
+	else {
+		pInstance = edSoundInstanceCreate(priority, 0);
+		if (pInstance == (ed_sound_instance*)0x0) {
+			newSoundId = 0;
+		}
+		else {
+			pInstance->pSample = pSoundSample;
+			if (((_ed_sound_stream*)pInstance->pSample)->field_0x14 == 2) {
+				pInstance->flags = pInstance->flags | 0x20;
+			}
+			bVar1 = FUN_00289cf0(pInstance, (_ed_sound_stream*)pSoundSample);
+			if (bVar1 == false) {
+				edSoundInstanceDelete(pInstance);
+				newSoundId = 0;
+			}
+			else {
+				pInstance->flags = pInstance->flags | 0x10;
+				newSoundId = pInstance->fullSoundInstanceId;
+			}
+		}
+	}
+
+	if (newSoundId != 0) {
+		if (newSoundId != 0) {
+			ed_sound_instance* newSoundInstanceA = pedSoundInstances + (newSoundId & 0xffff);
+			if (newSoundInstanceA->fullSoundInstanceId == newSoundId) {
+				newSoundInstanceA->flags = newSoundInstanceA->flags | 0x100;
+			}
+		}
+
+		if (newSoundId != 0) {
+			ed_sound_instance* newSoundInstanceB = pedSoundInstances + (newSoundId & 0xffff);
+			if (newSoundInstanceB->fullSoundInstanceId == newSoundId) {
+				if (newSoundInstanceB->field_0x74 == 0) {
+					edSoundInstanceCom[newSoundId & 0xffff].flags = edSoundInstanceCom[newSoundId & 0xffff].flags & 0xffffbfff;
+					edSoundInstanceCom[newSoundId & 0xffff].soundInstanceId = newSoundId;
+					edSoundInstanceCom[newSoundId & 0xffff].flags = edSoundInstanceCom[newSoundId & 0xffff].flags | 0x2000;
+					edSoundInstanceCom[newSoundId & 0xffff].soundInstanceId = newSoundId;
+				}
+
+				newSoundInstanceB->field_0x74 = 1;
+			}
+		}
+	}
+
+	return;
+}
+
+void* edSound_0x002840e0(uint soundInstanceId)
+{
+	void* pvVar1;
+
+	if (soundInstanceId == 0) {
+		pvVar1 = (void*)0x0;
+	}
+	else {
+		ed_sound_instance* newSoundInstanceB = pedSoundInstances + (soundInstanceId & 0xffff);
+
+		pvVar1 = newSoundInstanceB->field_0xa0;
+	}
+
+	return pvVar1;
 }

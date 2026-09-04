@@ -3394,6 +3394,13 @@ void CBehaviourNativSpeak::Reset()
 	return;
 }
 
+CEmotionInfo::CEmotionInfo()
+{
+	this->macroAnimId = -1;
+
+	return;
+}
+
 void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 {
 	CAnimation* pAnimationController;
@@ -3401,7 +3408,7 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 	bool bVar2;
 	int iVar3;
 	int iVar4;
-	float* pfVar5;
+	float* pBlendWeights;
 	edAnmLayer* peVar6;
 	float fVar7;
 	float fVar8;
@@ -3451,9 +3458,8 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 					}
 				}
 
-				IMPLEMENTATION_GUARD(
 				peVar1 = (peVar6->currentAnimDesc).state.pAnimKeyTableEntry;
-				iVar3 = peVar1->keyIndex_0x8;
+				iVar3 = peVar1->keyIndex_0x8.asKey;
 				if (iVar3 != 0) {
 					fVar8 = 1.0f;
 					if (0.0f < this->field_0x20) {
@@ -3466,23 +3472,24 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 					if (fVar8 <= 1.0f) {
 						fVar7 = fVar8;
 					}
+
 					iVar4 = 0;
-					pfVar5 = static_cast<float*>(&peVar1[1].count_0x0 + iVar3);
+					pBlendWeights = peVar1->pData + iVar3;
 					if (0 < iVar3) {
 						do {
 							if (iVar4 == this->field_0x8) {
-								*pfVar5 = 1.0f - fVar7;
+								*pBlendWeights = 1.0f - fVar7;
 							}
 							else {
 								if (iVar4 == this->field_0x4) {
-									*pfVar5 = fVar7;
+									*pBlendWeights = fVar7;
 								}
 								else {
-									*pfVar5 = 0.0f;
+									*pBlendWeights = 0.0f;
 								}
 							}
 							iVar4 = iVar4 + 1;
-							pfVar5 = pfVar5 + 1;
+							pBlendWeights = pBlendWeights + 1;
 						} while (iVar4 < iVar3);
 					}
 
@@ -3494,6 +3501,7 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 						if (iVar3 == 0) {
 							trap(7);
 						}
+
 						if ((this->macroAnimId != -1) && (iVar4 % iVar3 != this->field_0x4)) {
 							this->field_0x8 = this->field_0x4;
 							this->field_0x4 = iVar4 % iVar3;
@@ -3507,6 +3515,7 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 									this->field_0x10 = 0.0f;
 								}
 							}
+
 							if (this->macroAnimId != -1) {
 								this->field_0xc = this->field_0x10;
 								this->field_0x14 = fVar8;
@@ -3514,7 +3523,7 @@ void CEmotionInfo::DoAnimation(float param_1, float param_2, CActor* pActor)
 							}
 						}
 					}
-				})
+				}
 			}
 			else {
 				peVar6->animPlayState = 0;

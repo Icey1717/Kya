@@ -1,6 +1,9 @@
 #include "edMusic/edMusic.h"
 #include "edSound/edSoundPlay.h"
 #include "edSys/ps2/edSysDataTransfer.h"
+#ifdef PLATFORM_WIN
+#include "edSysTransferService.h"
+#endif
 
 extern uint _edMusicLastTransferIndex;
 
@@ -95,9 +98,48 @@ bool _edMusicAreAllMusicDataLoaded(void)
 {
 	bool bVar1;
 
+#ifdef PLATFORM_WIN
+	if ((_edSysTransferIndex != 0) && (_edMusicLastTransferIndex != 0) &&
+		(_edMusicLastTransferIndex > (uint)_edSysCompletedTransferIndex)) {
+		_edSysCompletedTransferIndex = static_cast<int>(Audio::PumpThrough(_edMusicLastTransferIndex));
+	}
+#endif
+
 	bVar1 = true;
 	if ((_edSysTransferIndex != 0) && ((_edMusicLastTransferIndex == 0 || (bVar1 = false, _edMusicLastTransferIndex <= _edSysCompletedTransferIndex)))) {
 		bVar1 = true;
 	}
 	return bVar1;
+}
+
+void _edMusicSongInstallTransferCallback(void* pData)
+{
+	uint peVar1;
+	int local_8;
+	void* local_4;
+
+	ed_music_song* pSong = (ed_music_song*)pData;
+
+	pSong->flags = pSong->flags | 4;
+	pSong->flags = pSong->flags & 0xfffffffd;
+
+	IMPLEMENTATION_GUARD_PS2(
+	peVar1 = (int)pSong - (int)_pedMusicSongs;
+	if ((int)peVar1 < 0) {
+		peVar1 = peVar1 + 7;
+	}
+	local_8 = (int)peVar1 >> 3;
+	local_4 = pSong->field_0x0;
+	_edMusicQueueCommand(0, 0, &local_8, 8);)
+
+	return;
+}
+
+void _edMusicSongInstallNoWait(ed_music_song* pSong, void* pSource, uint size)
+{
+	_edMusicLastTransferIndex = _edMusicLoadDataNoWait(pSource, size, pSong, _edMusicSongInstallTransferCallback);
+	pSong->flags = pSong->flags & 0xfffffffb;
+	pSong->flags = pSong->flags | 2;
+
+	return;
 }

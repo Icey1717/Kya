@@ -12,7 +12,8 @@ struct ed_g3d_manager;
 struct ed_3D_Scene;
 struct CActorCinematic;
 
-struct CBehaviourCinematic : public CBehaviour {
+struct CBehaviourCinematic : public CBehaviour
+{
 	CActorCinematic* pOwner;
 	CBWCinActor cinActor;
 	int leaveCinematicBehaviourId;
@@ -32,7 +33,8 @@ struct CBehaviourCinematic : public CBehaviour {
 	bool CinematicMode_InterpreteCinMessage(int param_2, int param_3);
 };
 
-struct CActorCinematic : public CActor {
+struct CActorCinematic : public CActor
+{
 	CActorCinematic();
 
 	void PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);

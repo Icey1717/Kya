@@ -426,20 +426,19 @@ bool CActorJamGut::CanPassThrough()
 void CActorJamGut::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edAnmMacroBlendN macroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
-	char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-	AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+	float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 
 	if (newAnim == 0x14) {
 		float fVar4 = this->field_0x380;
 		if (0.0f <= fVar4) {
-			pValue->field_0xc_array[2] = fVar4;
-			pValue->field_0xc_array[1] = 1.0f - pValue->field_0xc_array[2];
-			pValue->field_0xc_array[0] = 0.0f;
+			pAnimValues[2] = fVar4;
+			pAnimValues[1] = 1.0f - pAnimValues[2];
+			pAnimValues[0] = 0.0f;
 		}
 		else {
-			pValue->field_0xc_array[0] = fVar4;
-			pValue->field_0xc_array[1] = 1.0f - pValue->field_0xc_array[0];
-			pValue->field_0xc_array[2] = 0.0f;
+			pAnimValues[0] = fVar4;
+			pAnimValues[1] = 1.0f - pAnimValues[0];
+			pAnimValues[2] = 0.0f;
 		}
 	}
 	else if (newAnim == 0xe) {
@@ -453,38 +452,38 @@ void CActorJamGut::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uin
 				}
 			}
 			else {
-				pValue->field_0xc_array[3] = 0.0f;
-				pValue->field_0xc_array[4] = 0.0f;
-				pValue->field_0xc_array[5] = 0.0f;
+				pAnimValues[3] = 0.0f;
+				pAnimValues[4] = 0.0f;
+				pAnimValues[5] = 0.0f;
 			}
 
 			float r1 = this->field_0x380;
 			if (0.0f <= r1) {
 				CActor::SV_Blend4AnimationsWith2Ratios(r1, -this->field_0x378, &macroBlendN, 4, 5, 1, 2);
-				pValue->field_0xc_array[0] = 0.0f;
-				pValue->field_0xc_array[3] = 0.0f;
+				pAnimValues[0] = 0.0f;
+				pAnimValues[3] = 0.0f;
 			}
 			else {
 				CActor::SV_Blend4AnimationsWith2Ratios(-r1, -this->field_0x378, &macroBlendN, 4, 3, 1, 0);
-				pValue->field_0xc_array[2] = 0.0f;
-				pValue->field_0xc_array[5] = 0.0f;
+				pAnimValues[2] = 0.0f;
+				pAnimValues[5] = 0.0f;
 			}
 		}
 		else {
 			float r1 = this->field_0x380;
 			if (0.0f <= r1) {
 				CActor::SV_Blend4AnimationsWith2Ratios(r1, fVar4, &macroBlendN, 4, 5, 7, 8);
-				pValue->field_0xc_array[3] = 0.0f;
-				pValue->field_0xc_array[6] = 0.0f;
+				pAnimValues[3] = 0.0f;
+				pAnimValues[6] = 0.0f;
 			}
 			else {
 				CActor::SV_Blend4AnimationsWith2Ratios(-r1, fVar4, &macroBlendN, 4, 3, 7, 6);
-				pValue->field_0xc_array[5] = 0.0f;
-				pValue->field_0xc_array[6] = 0.0f;
+				pAnimValues[5] = 0.0f;
+				pAnimValues[6] = 0.0f;
 			}
-			pValue->field_0xc_array[0] = 0.0f;
-			pValue->field_0xc_array[1] = 0.0f;
-			pValue->field_0xc_array[2] = 0.0f;
+			pAnimValues[0] = 0.0f;
+			pAnimValues[1] = 0.0f;
+			pAnimValues[2] = 0.0f;
 		}
 	}
 	else {

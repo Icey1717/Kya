@@ -286,11 +286,10 @@ void CActorPunchingBall::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimato
 		uVar2 = 0;
 		r1 = (this->vibrationDyn).field_0x0;
 		
-		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
-		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
+		float* pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
 		if (anmMacroBlendN.pHdr->keyIndex_0x8.asKey != 0) {
 			do {
-				pValue->field_0xc_array[uVar2] = 0.0f;
+				pAnimValues[uVar2] = 0.0f;
 				uVar2 = uVar2 + 1;
 			} while (uVar2 < anmMacroBlendN.pHdr->keyIndex_0x8.asKey);
 		}

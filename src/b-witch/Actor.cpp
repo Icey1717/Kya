@@ -23,6 +23,7 @@
 #include "ActorAutonomous.h"
 #include "Vision.h"
 #include "WayPoint.h"
+#include "LipSync.h"
 
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
@@ -925,7 +926,7 @@ void CActor::ChangeManageState(int state)
 	CClusterNode* pClusterNode;
 	StateConfig* pAVar4;
 	uint uVar5;
-	//CActorSound* pActorSound;
+	CSimpleLinkedNode<CActorSound>* pActorSound;
 
 	if (state == 0) {
 		this->flags = this->flags & 0xfffffffb;
@@ -936,11 +937,9 @@ void CActor::ChangeManageState(int state)
 			this->pClusterNode = (CClusterNode*)0x0;
 		}
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		for (pActorSound = (CActorSound*)this->field_0x144; pActorSound != (CActorSound*)0x0;
-			pActorSound = *(CActorSound**)&pActorSound[1].field_0x4) {
-			CActorSound::DisableSounds(pActorSound);
-		})
+		for (pActorSound = (this->aActorSounds).pHead; pActorSound != (CSimpleLinkedNode<CActorSound> *)0x0; pActorSound = pActorSound->pNext) {
+			pActorSound->node.DisableSounds();
+		}
 
 		pHierNode = this->p3DHierNode;
 		if (pHierNode != (ed_3d_hierarchy_node*)0x0) {
@@ -953,14 +952,12 @@ void CActor::ChangeManageState(int state)
 			uVar5 = 0;
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
 			pAVar4 = GetStateCfg(actorState);
-			uVar5 = pAVar4->flags_0x4 & 0x80;)
+			uVar5 = pAVar4->flags_0x4 & 0x80;
 		}
 
 		if (uVar5 != 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_AudioManager_00451698);)
+			CScene::ptable.g_AudioManager_00451698->FUN_00184470();
 		}
 	}
 	else {
@@ -1937,6 +1934,41 @@ CActor* CActor::SV_GetNearestActor(float radius)
 	return local_10.pNearestActor;
 }
 
+void CActor::SV_ACT_LipsyncInit()
+{
+	CAnimation* pAnimationController;
+	bool bVar1;
+	int layerIndex;
+	int macroAnimId;
+
+	pAnimationController = this->pAnimationController;
+	if ((pAnimationController != (CAnimation*)0x0) && (bVar1 = pAnimationController->IsLayerActive(4), bVar1 != false)) {
+		layerIndex = pAnimationController->PhysicalLayerFromLayerId(4);
+		pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_WEIGHTED);
+		pAnimationController->anmBinMetaAnimator.aAnimData[layerIndex].blendWeight = 1.0f;
+		macroAnimId = GetIdMacroAnim(2);
+		pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(macroAnimId, layerIndex, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActor::SV_ACT_LipsyncTerm()
+{
+	bool bVar1;
+	int layerIndex;
+	CAnimation* pAnim;
+
+	pAnim = this->pAnimationController;
+	bVar1 = pAnim->IsLayerActive(4);
+	if (bVar1 != false) {
+		layerIndex = pAnim->PhysicalLayerFromLayerId(4);
+		pAnim->anmBinMetaAnimator.SetAnimOnLayer(-1, layerIndex, 0xffffffff);
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorServices.cpp
 void CActor::SV_RestoreOrgModel(CActorAlternateModel* pActorAlternateModel)
 {
@@ -2510,7 +2542,7 @@ void CActor::CheckpointReset()
 
 void CActor::Term()
 {
-	CActorSound* pCVar1;
+	CSimpleLinkedNode<CActorSound>* pCVar1;
 	int componentCount;
 	int* piVar3;
 
@@ -2526,16 +2558,15 @@ void CActor::Term()
 		pEntry = pEntry + 1;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
-		CActorSound::Term((int)pCVar1);
+	for (pCVar1 = (this->aActorSounds).pHead; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
+		pCVar1->node.Term();
 	}
 
-	pCVar1 = this->aActorSounds;
-	while (pCVar1 != (CActorSound*)0x0) {
-		CSimpleLinkedList<CActorSound>::RemoveHead((int*)&this->aActorSounds);
-		pCVar1 = this->aActorSounds;
-	})
+	pCVar1 = (this->aActorSounds).pHead;
+	while (pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0) {
+		this->aActorSounds.RemoveHead();
+		pCVar1 = (this->aActorSounds).pHead;
+	}
 
 	if (this->pClusterNode != (CClusterNode*)0x0) {
 		(CScene::ptable.g_ActorManager_004516a4)->cluster.DeleteNode(this->pClusterNode);
@@ -2821,9 +2852,9 @@ void CActor::Draw()
 void CActor::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	if (this->curBehaviourId == 1) {
-		IMPLEMENTATION_GUARD_LOG(
-		AnimEvaluateLipsync(layerId, pAnimator);)
+		AnimEvaluateLipsync(layerId, pAnimator);
 	}
+
 	return;
 }
 
@@ -2833,8 +2864,8 @@ void CActor::SetupLodInfo()
 
 	this->lodBiases[0] = (this->subObjA)->lodBiases[0];
 	this->lodBiases[1] = (this->subObjA)->lodBiases[1];
-	this->lodBiases[2] = 10000.0;
-	this->lodBiases[3] = 1e+10;
+	this->lodBiases[2] = 10000.0f;
+	this->lodBiases[3] = 1e+10f;
 	fVar1 = this->lodBiases[0];
 	this->lodBiases[0] = fVar1 * fVar1;
 	fVar1 = this->lodBiases[1];
@@ -3056,6 +3087,53 @@ void CActor::SetupShadow(CShadow* pNewShadow)
 	if ((this->pCollisionData != (CCollision*)0x0) && (this->pShadow != (CShadow*)0x0)) {
 		this->pShadow->field_0x48 = (this->pCollisionData->pObbPrim->scale).x * 1.8f;
 		this->pShadow->field_0x50 = (this->pCollisionData->pObbPrim->scale).z * 1.8f;
+	}
+
+	return;
+}
+
+void CActor::AnimEvaluateLipsync(int param_2, edAnmMacroAnimator* pAnimator)
+{
+	CBehaviourCinematic* pBehaviourCinematic;
+	float* pAnimValues;
+	int iVar3;
+	float fVar4;
+	CAnimation* pAnim;
+	CKFrameTrackReader* pTrackReader;
+
+	pBehaviourCinematic = static_cast<CBehaviourCinematic*>(GetBehaviour(1));
+	if (((pBehaviourCinematic != (CBehaviourCinematic*)0x0) && (pBehaviourCinematic != reinterpret_cast<CBehaviourCinematic*>(0xfffffff0))) &&
+		(pTrackReader = (pBehaviourCinematic->cinActor).pLipSyncTag, pTrackReader != (CKFrameTrackReader*)0x0)) {
+		pAnimValues = pAnimator->pAnimKeyTableEntry->pData + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey;
+		if (param_2 == 8) {
+			pAnimValues[0] = pTrackReader->GetValue(0x13);
+			pAnimValues[1] = pTrackReader->GetValue(0x14);
+		}
+		else {
+			if (param_2 == 2) {
+				pAnimValues[0] = pTrackReader->GetValue(0xc);
+				pAnimValues[1] = pTrackReader->GetValue(0xd);
+				pAnimValues[2] = pTrackReader->GetValue(0xe);
+				pAnimValues[3] = pTrackReader->GetValue(0xf);
+				pAnimValues[4] = pTrackReader->GetValue(0x10);
+				pAnimValues[5] = pTrackReader->GetValue(0x11);
+				pAnimValues[6] = pTrackReader->GetValue(0x12);
+			}
+			else {
+				if (param_2 == 4) {
+					iVar3 = 0;
+					do {
+						fVar4 = pTrackReader->GetValue(iVar3);
+						iVar3 = iVar3 + 1;
+						pAnimValues[iVar3 - 1] = fVar4;
+					} while (iVar3 < 0xc);
+
+					pAnim = this->pAnimationController;
+					iVar3 = pAnim->PhysicalLayerFromLayerId(4);
+					pAnim->anmBinMetaAnimator.aAnimData[iVar3].blendWeight = 1.0f - pAnimValues[0xb] * 0.01f;
+				}
+			}
+		}
 	}
 
 	return;
@@ -3660,7 +3738,7 @@ void CActor::SectorChange(int oldSectorId, int newSectorId)
 void CActor::Reset()
 {
 	bool bVar1;
-	//CActorSound* pActorSound;
+	CSimpleLinkedNode<CActorSound>* pActorSound;
 	float fVar2;
 	float fVar3;
 	CAnimation* pAnimation;
@@ -3675,12 +3753,12 @@ void CActor::Reset()
 		pMovable->vector_0x12c = pMovable->dynamic.velocityDirectionEuler.xyz * pMovable->dynamic.linearAcceleration;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	for (pActorSound = this->aActorSounds; pActorSound != (CActorSound*)0x0;
-		pActorSound = *(CActorSound**)&pActorSound[1].field_0x4) {
-		CActorSound::Reset(pActorSound);
-	})
+	for (pActorSound = (this->aActorSounds).pHead; pActorSound != (CSimpleLinkedNode<CActorSound> *)0x0; pActorSound = pActorSound->pNext) {
+		pActorSound->node.Reset();
+	}
+
 	SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
+
 	return;
 }
 
@@ -4799,20 +4877,19 @@ void CActor::SetBFCulling(byte bActive)
 
 void CActor::PauseChange(int bIsPaused)
 {
-	CActorSound* pCVar1;
+	CSimpleLinkedNode<CActorSound>* pCVar1;
 	CBehaviour* pCVar2;
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	if (bIsPaused == 0) {
-		for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
-			CActorSound::ResumeSounds((int)pCVar1);
+		for (pCVar1 = (this->aActorSounds).pHead; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
+			pCVar1->node.ResumeSounds();
 		}
 	}
 	else {
-		for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
-			CActorSounds::PauseSounds((int)pCVar1);
+		for (pCVar1 = (this->aActorSounds).pHead; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
+			pCVar1->node.PauseSounds();
 		}
-	})
+	}
 
 	if (this->pAnimationController != (CAnimation*)0x0) {
 		this->pAnimationController->PauseChange(bIsPaused);
@@ -5688,6 +5765,145 @@ void CActorSound::Init()
 	return;
 }
 
+void CActorSound::ResumeSounds()
+{
+	CSoundInstance* pInstance;
+	bool bVar1;
+
+	for (pInstance = this->field_0x30; pInstance != (CSoundInstance*)0x0; pInstance = pInstance->pNext) {
+		if (((NoAudio == 0) && (bVar1 = pInstance->IsAlive(), bVar1 != false)) && (pInstance->pSound != (CSound*)0x0)) {
+			pInstance->pSound->SetPause(pInstance->soundId, 0);
+		}
+	}
+
+	return;
+}
+
+void CActorSound::PauseSounds()
+{
+	CSoundInstance* pInstance;
+	bool bVar1;
+
+	for (pInstance = this->field_0x30; pInstance != (CSoundInstance*)0x0; pInstance = pInstance->pNext) {
+		if (((NoAudio == 0) && (bVar1 = pInstance->IsAlive(), bVar1 != false)) && (pInstance->pSound != (CSound*)0x0)) {
+			pInstance->pSound->SetPause(pInstance->soundId, 1);
+		}
+	}
+
+	return;
+}
+
+void CActorSound::Reset()
+{
+	CSoundInstance* pCVar1;
+	CSound* pCVar2;
+	CSoundInstance* pCVar3;
+	uint uVar4;
+
+	this->flags = this->flags | 1;
+	pCVar3 = this->field_0x30;
+
+	while (pCVar3 != (CSoundInstance*)0x0) {
+		pCVar1 = pCVar3->pNext;
+		if ((NoAudio == 0) && (pCVar2 = pCVar3->pSound, pCVar2 != (CSound*)0x0)) {
+			uVar4 = pCVar2->Stop(pCVar3->soundId);
+			pCVar3->soundId = uVar4;
+		}
+
+		if (pCVar3->pPrev == (CSoundInstance*)0x0) {
+			this->field_0x30 = pCVar3->pNext;
+		}
+		else {
+			pCVar3->pPrev->pNext = pCVar3->pNext;
+		}
+
+		if (pCVar3->pNext != (CSoundInstance*)0x0) {
+			pCVar3->pNext->pPrev = pCVar3->pPrev;
+		}
+		pCVar3->flags = pCVar3->flags & 0xfffffffe;
+		pCVar3 = pCVar1;
+	}
+
+	return;
+}
+
+void CActorSound::Term()
+{
+	CSoundInstance* pCVar1;
+	CSoundBase* pCVar2;
+	CSoundInstance* pCVar3;
+	uint uVar4;
+	CAudioManager* pAudio;
+
+	pCVar1 = this->field_0x30;
+	pAudio = CScene::ptable.g_AudioManager_00451698;
+	while (pCVar3 = pCVar1, pCVar3 != (CSoundInstance*)0x0) {
+		pCVar1 = pCVar3->pNext;
+		if ((pCVar3->flags & 1) != 0) {
+			CScene::ptable.g_AudioManager_00451698 = pAudio;
+			if ((NoAudio == 0) && (pCVar2 = pCVar3->pSound, pCVar2 != (CSoundBase*)0x0)) {
+				uVar4 = pCVar2->Stop(pCVar3->soundId);
+				pCVar3->soundId = uVar4;
+			}
+
+			pAudio->ReleaseSound3DData(pCVar3->field_0x14);
+			if (pCVar3->pPrev == (CSoundInstance*)0x0) {
+				this->field_0x30 = pCVar3->pNext;
+			}
+			else {
+				pCVar3->pPrev->pNext = pCVar3->pNext;
+			}
+
+			if (pCVar3->pNext != (CSoundInstance*)0x0) {
+				pCVar3->pNext->pPrev = pCVar3->pPrev;
+			}
+
+			pCVar3->flags = pCVar3->flags & 0xfffffffe;
+			pAudio = CScene::ptable.g_AudioManager_00451698;
+		}
+	}
+
+	CScene::ptable.g_AudioManager_00451698 = pAudio;
+
+	return;
+}
+
+void CActorSound::DisableSounds()
+{
+	CSoundInstance* pCVar1;
+	CSoundInstance* pCVar2;
+	long lVar3;
+
+	if ((this->flags & 1) == 0) {
+		this->flags = this->flags | 1;
+		pCVar1 = this->field_0x30;
+		while (pCVar2 = pCVar1, pCVar2 != (CSoundInstance*)0x0) {
+			pCVar1 = pCVar2->pNext;
+			if (pCVar2->pSound == (CSound*)0x0) {
+				lVar3 = 0;
+			}
+			else {
+				lVar3 = pCVar2->pSound->IsLooping();
+			}
+
+			if ((lVar3 != 0) && (pCVar2->pSound != (CSound*)0x0)) {
+				pCVar2->pSound->FadeTo(0.0f, -2.0f, 1.0f, pCVar2->soundId);
+			}
+		}
+	}
+
+	return;
+}
+
+bool CActorSound::IsInstanceAlive(int param_2)
+{
+	bool bVar1;
+
+	bVar1 = this->aSoundInstances[param_2].IsAlive();
+	return bVar1;
+}
+
+
 void CActorSound::Manage(CActor* pActor)
 {
 	CSoundInstance* pCVar1;
@@ -5732,4 +5948,123 @@ void CActorSound::Manage(CActor* pActor)
 	return;
 }
 
+void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam)
+{
+	bool bVar1;
+	edsound_3d_data* pNewNode;
+	uint uVar2;
+	long lVar3;
+	void* boneId;
+	CSoundInstance* this_00;
 
+	this_00 = this->aSoundInstances + param_3;
+	if (((param_5 != 0) || (bVar1 = this_00->IsAlive(), bVar1 == false)) || (this_00->pSound != static_cast<CSound*>(pSound))) {
+		if (param_6 == 2) {
+			pNewNode = (edsound_3d_data*)pSoundSpatializationParam->data;
+		}
+		else {
+			boneId = (void*)0x0;
+			if (pSoundSpatializationParam != (SOUND_SPATIALIZATION_PARAM*)0x0) {
+				boneId = pSoundSpatializationParam->data;
+			}
+
+			pNewNode = &CScene::ptable.g_AudioManager_00451698->ObtainSound3DData(param_6, pActor, reinterpret_cast<uint>(boneId))->node.edSoundData;
+		}
+		if ((this->flags & 1) == 0) {
+			if ((this_00->flags & 1) == 0) {
+				this_00->pPrev = (CSoundInstance*)0x0;
+				this_00->pNext = this->field_0x30;
+				if (this->field_0x30 != (CSoundInstance*)0x0) {
+					this->field_0x30->pPrev = this_00;
+				}
+
+				this->field_0x30 = this_00;
+				this_00->flags = 0;
+				this_00->flags = this_00->flags | 1;
+			}
+
+			if ((NoAudio == 0) && ((this_00->field_0x14 = pNewNode, pSound != (CSoundBase*)0x0 || (this_00->pSound != (CSound*)0x0)))) {
+				if (pSound == (CSoundBase*)0x0) {
+					pSound = this_00->pSound;
+				}
+				else {
+					this_00->pSound = static_cast<CSound*>(pSound);
+				}
+
+				this_00->field_0x20 = 0xffffffff;
+				uVar2 = pSound->Play(this_00->soundId, this_00->field_0x20, pNewNode, this_00, (uint*)0x0);
+				this_00->soundId = uVar2;
+			}
+		}
+		else {
+			if ((pSound != (CSoundBase*)0x0) && (lVar3 = pSound->IsLooping(), lVar3 != 0)) {
+				this_00->pSound = static_cast<CSound*>(pSound);
+				if ((this_00->flags & 1) == 0) {
+					this_00->pPrev = (CSoundInstance*)0x0;
+					this_00->pNext = this->field_0x30;
+					if (this->field_0x30 != (CSoundInstance*)0x0) {
+						this->field_0x30->pPrev = this_00;
+					}
+
+					this->field_0x30 = this_00;
+					this_00->flags = 0;
+					this_00->flags = this_00->flags | 1;
+				}
+
+				this_00->Set3DData(pNewNode, 0);
+			}
+		}
+	}
+
+	return;
+}
+
+CActorSoundNode::CActorSoundNode()
+{
+	this->node.flags = 0;
+	this->node.nbInstances = 0;
+	this->node.soundData = edSound3DDataDefault;
+	this->node.field_0x30 = (CSoundInstance*)0x0;
+	this->node.aSoundInstances = (CSoundInstance*)0x0;
+	this->pNext = (CSimpleLinkedNode<CActorSound> *)0x0;
+
+	return;
+}
+
+CSoundInstance::CSoundInstance()
+{
+	this->pPrev = (CSoundInstance*)0x0;
+	this->pNext = (CSoundInstance*)0x0;
+	this->flags = 0;
+	this->pSound = (CSound*)0x0;
+	this->soundId = 0;
+	this->field_0x14 = (edsound_3d_data*)0x0;
+	this->pFinishCallback = 0;
+	this->pOwner = (CActorSound*)0x0;
+	this->field_0x20 = 0xffffffff;
+	this->field_0x24 = 0;
+
+	return;
+}
+
+bool CSoundInstance::IsAlive()
+{
+	bool ret;
+
+	ret = false;
+	if (this->soundId != 0) {
+		ret = edSoundInstanceIsAlive(this->soundId);
+	}
+
+	return ret;
+}
+
+void CSoundInstance::Set3DData(edsound_3d_data* pNode, long param_3)
+{
+	this->field_0x14 = pNode;
+	if (param_3 != 0) {
+		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0);
+	}
+
+	return;
+}

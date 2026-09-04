@@ -37,8 +37,8 @@ public:
 	void Create(ByteCode* pByteCode);
 	void Term();
 
-	int field_0x0;
-	int field_0x4;
+	S_STREAM_REF<CSound> soundRef;
+	SOUND_STREAM_REF sampleRef;
 };
 
 class CFxSoundManager : public CFxPoolManager<CFxNewSound, CFxSoundScenaricData>
