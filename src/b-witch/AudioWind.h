@@ -13,6 +13,7 @@ public:
 	void Init();
 	void Init(CFxWind* pFx);
 	void Add(ByteCode* pByteCode);
+	void Reset(CFxWind* pFx);
 
 	S_STREAM_REF<CSound> field_0x0;
 	S_STREAM_REF<CSound> field_0x4;

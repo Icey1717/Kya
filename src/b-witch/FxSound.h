@@ -11,6 +11,8 @@ class CFxSoundScenaricData;
 class CFxNewSound : public CNewFx
 {
 public:
+	CFxNewSound();
+
 	virtual void Draw();
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
@@ -22,12 +24,15 @@ public:
 	virtual void Func_0x30(float param_1) { IMPLEMENTATION_GUARD(); }
 	virtual void SetTimeScaler(float);
 
-	void Manage() { IMPLEMENTATION_GUARD(); }
+	void Manage();
 
 	void Instanciate(CFxSoundScenaricData* pData, FX_MATERIAL_SELECTOR selector);
 
 	FX_MATERIAL_SELECTOR field_0x80;
 	CFxSoundScenaricData* field_0x84;
+	int field_0x88;
+	CSoundInstance soundInstance;
+	edsound_3d_data sound3dData;
 };
 
 class CFxSoundScenaricData

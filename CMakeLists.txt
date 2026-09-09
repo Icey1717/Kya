@@ -96,7 +96,7 @@ else()
 		endif()
 
 		message(STATUS "Enabling AddressSanitizer")
-		add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+		add_compile_options(-fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer)
 		add_link_options(-fsanitize=address)
 	endif()
 
@@ -118,6 +118,11 @@ else()
 			$<$<CONFIG:Debug>:-fno-limit-debug-info>
 			$<$<CONFIG:Debug>:-fno-omit-frame-pointer>
 			$<$<CONFIG:Debug>:-fno-inline>
+			$<$<CONFIG:Debug>:-gcodeview>
+		)
+		add_link_options(
+			$<$<CONFIG:Debug>:-Xlinker>
+			$<$<CONFIG:Debug>:/DEBUG>
 		)
 	endif()
 

@@ -460,7 +460,7 @@ public:
 	void Init();
 	void Manage(CActor* pActor);
 	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam);
-	void SoundStop(int) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void SoundStop(int index);
 	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
 
 	void ResumeSounds();
@@ -498,7 +498,7 @@ public:
 	uint flags;
 	CSound* pSound;
 	uint soundId;
-	edsound_3d_data* field_0x14;
+	edsound_3d_data* pSound3dData;
 	undefined4 pFinishCallback;
 	CActorSound* pOwner;
 	uint field_0x20;
@@ -541,7 +541,7 @@ public:
 
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
-	virtual void LocationFunc_00100b70();
+	virtual void SetSoundPosition();
 
 	virtual uint IsLookingAt();
 	virtual void SetLookingAtOn();
@@ -803,8 +803,7 @@ public:
 	};
 
 	MacroAnimTable* pMacroAnimTable;
-	edF32VECTOR3 vector_0x120;
-	edF32VECTOR3 vector_0x12c;
+	edsound_3d_data vector_0x120;
 
 	ACTOR_CLASS typeID;
 	int prevBehaviourId;

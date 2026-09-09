@@ -30,6 +30,8 @@ public:
 	virtual uint Stop(uint instanceId);
 	virtual bool IsLooping() = 0;
 
+	uint PlayAlt(float param_1, float param_2, float param_3, uint soundId, uint param_6);
+
 	int setupIntFieldA;
 	SoundEntry aSoundEntries[6];
 	ed_sound_sample edSoundSample;
@@ -51,6 +53,8 @@ public:
 	void FadeTo(float param_1, float param_2, float param_3, uint instanceId);
 	void SetPause(uint soundInstanceId, int bPaused);
 	void InitializeFromSample(float param_1, float param_2, float param_3, float param_4, float param_5, float priority, ed_sound_sample* soundInfoObj, uint param_9);
+
+	void SetVolume(float param_1, uint soundInstanceId);
 
 	uint field_0x84;
 	uint field_0x88;
@@ -346,9 +350,11 @@ public:
 	void FUN_00182db0(float param_1, undefined4 param_3, undefined4 param_4);
 	void FUN_00184470();
 	void FUN_00182da0(float param_1);
-	CDoubleLinkedNode<s_sound_3d_data>* ObtainSound3DData(int param_2, CActor* pActor, uint boneId);
+	edsound_3d_data* ObtainSound3DData(int param_2, CActor* pActor, uint boneId);
 
 	void ReceiveEvent(edCEventMessage* pEventMessage, uint param_3, undefined8 param_4, uint param_5, uint* param_6);
+
+	void ActivateCheckpoint();
 
 	float field_0x68;
 	int field_0x6c;

@@ -351,20 +351,14 @@ void CActorDCA::BehaviourDefault_InitState(int state)
 			iVar2 = GetIdMacroAnim(8);
 			pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(iVar2, layerIndex, 0xffffffff);
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::SoundStart
-			((CActorSound*)this->field_0x4fc, (CActor*)this, 2, (CSound*)this->field_0x508, 1, 0,
-				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+			this->field_0x4fc->node.SoundStart(this, 2, this->field_0x508.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		}
 		else {
 			if (state == 7) {
 				pAnimationController->anmBinMetaAnimator.SetLayerBlendingOp(layerIndex, ANM_BLEND_OP_REPLACE);
 				pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(GetIdMacroAnim(8), layerIndex, 0xffffffff);
 
-				IMPLEMENTATION_GUARD_AUDIO(
-				CActorSound::SoundStart
-				((CActorSound*)this->field_0x4fc, (CActor*)this, 1, (CSound*)this->field_0x504, 1, 0,
-					(SOUND_SPATIALIZATION_PARAM*)0x0);)
+				this->field_0x4fc->node.SoundStart(this, 1, this->field_0x504.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 			}
 			else {
 				if (state == 5) {

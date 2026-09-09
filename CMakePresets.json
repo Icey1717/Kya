@@ -34,6 +34,14 @@
 			"cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
 		},
 		{
+			"name": "x64-debug-asan",
+			"displayName": "x64 Debug (AddressSanitizer)",
+			"description": "Target Windows (64-bit) with Clang and AddressSanitizer. (Debug)",
+			"inherits": "x64-debug",
+			"cacheVariables": { "ENABLE_ADDRESS_SANITIZER": "ON" },
+			"environment": { "ASAN_OPTIONS": "halt_on_error=0" }
+		},
+		{
 			"name": "x64-release",
 			"displayName": "x64 Release",
 			"description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",

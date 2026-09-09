@@ -980,8 +980,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSe
 	}
 	else {
 		if ((this->movingPlatformFlags & 1) != 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::FUN_0032c600(this->pActorSound, 0);)
+			this->pActorSound->node.SoundStop(0);
 		}
 
 		if (param_3 == 0) {
@@ -994,39 +993,38 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSe
 				uVar4 = pAVar5->flags_0x4 & 1;
 			}
 
-			if (uVar4 == 0) {
+			if ((GetStateFlags(this->actorState) & 1) == 0) {
 				CActor::PlayAnim(0);
 			}
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			iVar10 = (this->pProperties->field_0x8).field_0x0;
+			CSound* pSound = (this->pProperties->field_0x8).soundRef.Get();
 
-			if (this->field_0x1e0 == (int*)0x0) {
+			if (this->field_0x1e0 == (PLATFORM_SOUND_STREAM*)0x0) {
 				iVar9 = 0;
 			}
 			else {
-				iVar9 = *this->field_0x1e0;
+				iVar9 = this->field_0x1e0->nbEntries;
 			}
 
 			iVar7 = 0;
 			if (0 < iVar9) {
-				piVar6 = this->field_0x1e0;
+				PLATFORM_SOUND_STREAM_ENTRY* pEntry = this->field_0x1e0->aEntries;
 				do {
-					if (piVar6[1] <= currentSegment) {
-						if (((currentSegment <= piVar6[2]) && (piVar6[1] <= prevSegment)) && (prevSegment <= piVar6[2])) {
-							iVar10 = piVar6[3];
+					if (pEntry->field_0x0 <= currentSegment) {
+						if (((currentSegment <= pEntry->field_0x4) && (pEntry->field_0x0 <= prevSegment)) && (prevSegment <= pEntry->field_0x4)) {
+							pSound = pEntry->soundScenaricData.soundRef.Get();
 							break;
 						}
 					}
 					iVar7 = iVar7 + 1;
-					piVar6 = piVar6 + 4;
+					pEntry = pEntry + 1;
 				} while (iVar7 < iVar9);
 			}
 
-			this->field_0x1e8 = iVar10;
-			if ((int*)this->field_0x1e8 != (int*)0x0) {
-				CActorSound::SoundStart(this->pActorSound, this, 0, (int*)this->field_0x1e8, 1, 0, (float**)0x0);
-			})
+			this->field_0x1e8 = pSound;
+			if (this->field_0x1e8 != (CSound*)0x0) {
+				this->pActorSound->node.SoundStart(this, 0, this->field_0x1e8, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			}
 
 			uVar4 = this->pProperties->field_0x20;
 			if (uVar4 != 0xffffffff) {

@@ -25,3 +25,9 @@ void CSoundWind::Add(ByteCode* pByteCode)
 
 	return;
 }
+
+void CSoundWind::Reset(CFxWind* pFx)
+{
+	pFx->field_0x3b4 = 0.0f;
+	return;
+}

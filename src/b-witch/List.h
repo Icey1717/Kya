@@ -176,7 +176,7 @@ public:
 
 	void InsertAfterQueue(CSimpleLinkedNode<NodeType>* pNode)
 	{
-		pNode->pNext = this->pTail;
+		pNode->pNext = (CSimpleLinkedNode<NodeType>*)0x0;
 
 		if (this->pTail == (CSimpleLinkedNode<NodeType>*)0x0) {
 			this->pHead = pNode;

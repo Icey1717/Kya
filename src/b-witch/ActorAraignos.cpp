@@ -204,14 +204,14 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			if (msg == 0xf) {
 				this->flags = this->flags & 0xfffffffc;
 				this->flags = this->flags & 0xffffff5f;
+
 				EvaluateDisplayState();
-				IMPLEMENTATION_GUARD_AUDIO(
-				if (this->pActorSound != (CActorSound*)0x0) {
-					CActorSound::SoundStart
-					(this->pActorSound, (CActor*)this, 1, (CSound*)this->field_0x240, 0, 0,
-						(SOUND_SPATIALIZATION_PARAM*)0x0);
-					CActorSound::SetFrequency(this->field_0x1f8, this->pActorSound, 1);
-				})
+
+				if (this->pActorSound != (CActorSoundNode*)0x0) {
+					this->pActorSound->node.SoundStart(this, 1, this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+					this->pActorSound->node.SetFrequency(this->field_0x1f8, 1);
+				}
+
 				this->field_0x1d0 = 0.0f;
 				iVar3 = 1;
 			}

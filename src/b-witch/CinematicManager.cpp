@@ -4447,7 +4447,7 @@ bool CBWCinActor::SetSound(float currentKeyframePlayTime, edCinActorInterface::S
 				(this->soundInstance).soundId = uVar3;
 			}
 
-			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).field_0x14);
+			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).pSound3dData);
 		}
 	}
 	else {
@@ -4485,7 +4485,7 @@ bool CBWCinActor::SetSound(float currentKeyframePlayTime, edCinActorInterface::S
 
 		this->soundStruct.InitializeFromSample(pTag->field_0x4 * 20.0f, 0.0f, 1.0f, 0.0f, 5.0f, 1.0f, soundFileInfoObj, 1);
 		pSound = &this->soundStruct;
-		if ((NoAudio == 0) && (((this->soundInstance).field_0x14 = (edsound_3d_data*)0x0, pSound != (CSound*)0x0 || ((this->soundInstance).pSound != (CSound*)0x0)))) {
+		if ((NoAudio == 0) && (((this->soundInstance).pSound3dData = (edsound_3d_data*)0x0, pSound != (CSound*)0x0 || ((this->soundInstance).pSound != (CSound*)0x0)))) {
 			if (pSound == (CSound*)0x0) {
 				pSound = (this->soundInstance).pSound;
 			}
@@ -4703,7 +4703,7 @@ bool CBWCinActor::Shutdown()
 				}
 			}
 
-			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).field_0x14);
+			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData((this->soundInstance).pSound3dData);
 		}
 
 		if (this->pLipSyncTag != (void*)0x0) {

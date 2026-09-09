@@ -396,7 +396,7 @@ CActor::CActor()
 	this->field_0xf0 = 3.0f;
 	this->field_0xf4 = 0xffff;
 	this->previousLocation = gF32Vector3Zero;
-	this->vector_0x12c = gF32Vector3Zero;
+	this->vector_0x120.rotation = gF32Vector3Zero;
 
 	//this->field_0x13c = 0;
 	//this->field_0x138 = 0.0;
@@ -693,7 +693,7 @@ void CActor::Create(ByteCode* pByteCode)
 
 	memcpy(this->name, name, 64);
 
-	if (strcmp(name, "TELEPORTER_LVL_DOOR_L1") == 0) {
+	if (strcmp(name, "PISTOL_L3") == 0) {
 		memcpy(this->name, name, 64);
 	}
 
@@ -905,7 +905,7 @@ void CActor::Manage()
 
 	CSimpleLinkedNode<CActorSound>* pCVar1 = (this->aActorSounds).pHead;
 	if (pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0) {
-		LocationFunc_00100b70();
+		SetSoundPosition();
 
 		for (; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
 			pCVar1->node.Manage(this);
@@ -2516,26 +2516,25 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 void CActor::CheckpointReset()
 {
 	bool bIsMoveable;
-	//CActorSound* pCVar2;
+	CSimpleLinkedNode<CActorSound>* pSoundNode;
 	float fVar3;
 	float fVar4;
 	CAnimation* pCVar5;
 
-	this->vector_0x120 = this->currentLocation.xyz;
+	this->vector_0x120.position = this->currentLocation.xyz;
 
 	bIsMoveable = IsKindOfObject(2);
 
 	if (bIsMoveable == false) {
-		this->vector_0x12c = gF32Vector3Zero;
+		this->vector_0x120.rotation = gF32Vector3Zero;
 	}
 	else {
-		this->vector_0x12c = static_cast<CActorMovable*>(this)->dynamic.velocityDirectionEuler.xyz;
+		this->vector_0x120.rotation = static_cast<CActorMovable*>(this)->dynamic.velocityDirectionEuler.xyz;
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	for (pCVar2 = this->aActorSounds; pCVar2 != (CActorSound*)0x0; pCVar2 = (CActorSound*)pCVar2[1].field_0x0) {
-		pCVar2->Reset();
-	})
+	for (pSoundNode = this->aActorSounds.pHead; pSoundNode != (CSimpleLinkedNode<CActorSound> *)0x0; pSoundNode = pSoundNode->pNext) {
+		pSoundNode->node.Reset();
+	}
 
 	return;
 }
@@ -2944,6 +2943,13 @@ CActorSoundNode* CActor::CreateActorSound(int nbInstances)
 	pNewSound = NewPool_CActorSoundNode(1);
 	pNewSound->node.Create(this, nbInstances);
 	this->aActorSounds.InsertAfterQueue(pNewSound);
+
+#ifdef PLATFORM_WIN
+	for (CSimpleLinkedNode<CActorSound>* pCVar1 = (this->aActorSounds).pHead; pCVar1 != (CSimpleLinkedNode<CActorSound> *)0x0; pCVar1 = pCVar1->pNext) {
+		assert(pCVar1 != pCVar1->pNext);
+	}
+#endif
+
 	return pNewSound;
 }
 
@@ -3174,9 +3180,9 @@ uint CActor::GetBehaviourFlags(int state)
 	return uVar1;
 }
 
-void CActor::LocationFunc_00100b70()
+void CActor::SetSoundPosition()
 {
-	this->vector_0x120 = (this->currentLocation).xyz;
+	this->vector_0x120.position = (this->currentLocation).xyz;
 
 	return;
 }
@@ -3743,14 +3749,14 @@ void CActor::Reset()
 	float fVar3;
 	CAnimation* pAnimation;
 
-	this->vector_0x120 = this->currentLocation.xyz;
+	this->vector_0x120.position = this->currentLocation.xyz;
 	bVar1 = IsKindOfObject(2);
 	if (bVar1 == false) {
-		this->vector_0x12c = gF32Vector3Zero;
+		this->vector_0x120.rotation = gF32Vector3Zero;
 	}
 	else {
 		CActorMovable* pMovable = static_cast<CActorMovable*>(this);
-		pMovable->vector_0x12c = pMovable->dynamic.velocityDirectionEuler.xyz * pMovable->dynamic.linearAcceleration;
+		pMovable->vector_0x120.rotation = pMovable->dynamic.velocityDirectionEuler.xyz * pMovable->dynamic.linearAcceleration;
 	}
 
 	for (pActorSound = (this->aActorSounds).pHead; pActorSound != (CSimpleLinkedNode<CActorSound> *)0x0; pActorSound = pActorSound->pNext) {
@@ -3997,7 +4003,29 @@ void CActor::ComputeLocalMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
 
 void CActor::ResetActorSound()
 {
-	IMPLEMENTATION_GUARD_AUDIO();
+	bool bVar1;
+	CSimpleLinkedNode<CActorSound>* pSoundNode;
+	float fVar2;
+	float fVar3;
+	float pAnim;
+
+	this->vector_0x120.position = this->currentLocation.xyz;
+
+	bVar1 = IsKindOfObject(2);
+	if (bVar1 == false) {
+		this->vector_0x120.rotation = gF32Vector3Zero;
+	}
+	else {
+		CActorMovable* pMovable = static_cast<CActorMovable*>(this);
+		fVar2 = (pMovable->dynamic).linearAcceleration;
+		this->vector_0x120.rotation = (pMovable->dynamic).velocityDirectionEuler.xyz * fVar2;
+	}
+
+	for (pSoundNode = this->aActorSounds.pHead; pSoundNode != (CSimpleLinkedNode<CActorSound> *)0x0; pSoundNode = pSoundNode->pNext) {
+		pSoundNode->node.Reset();
+	}
+
+	return;
 }
 
 bool CActor::IsMakingNoise()
@@ -5846,7 +5874,7 @@ void CActorSound::Term()
 				pCVar3->soundId = uVar4;
 			}
 
-			pAudio->ReleaseSound3DData(pCVar3->field_0x14);
+			pAudio->ReleaseSound3DData(pCVar3->pSound3dData);
 			if (pCVar3->pPrev == (CSoundInstance*)0x0) {
 				this->field_0x30 = pCVar3->pNext;
 			}
@@ -5921,7 +5949,7 @@ void CActorSound::Manage(CActor* pActor)
 				this->flags = this->flags & 0xfffffffe;
 				for (pCVar1 = this->field_0x30; pCVar1 != (CSoundInstance*)0x0; pCVar1 = pCVar1->pNext) {
 					if ((NoAudio == 0) && (pCVar2 = pCVar1->pSound, pCVar2 != (CSound*)0x0)) {
-						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->field_0x14, (void*)0x0, &pCVar1->soundId);
+						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->pSound3dData, (void*)0x0, &pCVar1->soundId);
 						pCVar1->soundId = uVar5;
 					}
 				}
@@ -5950,17 +5978,14 @@ void CActorSound::Manage(CActor* pActor)
 
 void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam)
 {
-	bool bVar1;
-	edsound_3d_data* pNewNode;
-	uint uVar2;
-	long lVar3;
+	edsound_3d_data* p3dData;
 	void* boneId;
-	CSoundInstance* this_00;
+	CSoundInstance* pSoundInstance;
 
-	this_00 = this->aSoundInstances + param_3;
-	if (((param_5 != 0) || (bVar1 = this_00->IsAlive(), bVar1 == false)) || (this_00->pSound != static_cast<CSound*>(pSound))) {
+	pSoundInstance = this->aSoundInstances + param_3;
+	if (((param_5 != 0) || (pSoundInstance->IsAlive() == false)) || (pSoundInstance->pSound != static_cast<CSound*>(pSound))) {
 		if (param_6 == 2) {
-			pNewNode = (edsound_3d_data*)pSoundSpatializationParam->data;
+			p3dData = (edsound_3d_data*)pSoundSpatializationParam->data;
 		}
 		else {
 			boneId = (void*)0x0;
@@ -5968,52 +5993,87 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 				boneId = pSoundSpatializationParam->data;
 			}
 
-			pNewNode = &CScene::ptable.g_AudioManager_00451698->ObtainSound3DData(param_6, pActor, reinterpret_cast<uint>(boneId))->node.edSoundData;
+			p3dData = CScene::ptable.g_AudioManager_00451698->ObtainSound3DData(param_6, pActor, reinterpret_cast<uint>(boneId));
 		}
 		if ((this->flags & 1) == 0) {
-			if ((this_00->flags & 1) == 0) {
-				this_00->pPrev = (CSoundInstance*)0x0;
-				this_00->pNext = this->field_0x30;
+			if ((pSoundInstance->flags & 1) == 0) {
+				pSoundInstance->pPrev = (CSoundInstance*)0x0;
+				pSoundInstance->pNext = this->field_0x30;
 				if (this->field_0x30 != (CSoundInstance*)0x0) {
-					this->field_0x30->pPrev = this_00;
+					this->field_0x30->pPrev = pSoundInstance;
 				}
 
-				this->field_0x30 = this_00;
-				this_00->flags = 0;
-				this_00->flags = this_00->flags | 1;
+				this->field_0x30 = pSoundInstance;
+				pSoundInstance->flags = 0;
+				pSoundInstance->flags = pSoundInstance->flags | 1;
 			}
 
-			if ((NoAudio == 0) && ((this_00->field_0x14 = pNewNode, pSound != (CSoundBase*)0x0 || (this_00->pSound != (CSound*)0x0)))) {
+			if ((NoAudio == 0) && ((pSoundInstance->pSound3dData = p3dData, pSound != (CSoundBase*)0x0 || (pSoundInstance->pSound != (CSound*)0x0)))) {
 				if (pSound == (CSoundBase*)0x0) {
-					pSound = this_00->pSound;
+					pSound = pSoundInstance->pSound;
 				}
 				else {
-					this_00->pSound = static_cast<CSound*>(pSound);
+					pSoundInstance->pSound = static_cast<CSound*>(pSound);
 				}
 
-				this_00->field_0x20 = 0xffffffff;
-				uVar2 = pSound->Play(this_00->soundId, this_00->field_0x20, pNewNode, this_00, (uint*)0x0);
-				this_00->soundId = uVar2;
+				pSoundInstance->field_0x20 = 0xffffffff;
+				pSoundInstance->soundId = pSound->Play(pSoundInstance->soundId, pSoundInstance->field_0x20, p3dData, pSoundInstance, (uint*)0x0);
 			}
 		}
 		else {
-			if ((pSound != (CSoundBase*)0x0) && (lVar3 = pSound->IsLooping(), lVar3 != 0)) {
-				this_00->pSound = static_cast<CSound*>(pSound);
-				if ((this_00->flags & 1) == 0) {
-					this_00->pPrev = (CSoundInstance*)0x0;
-					this_00->pNext = this->field_0x30;
+			if ((pSound != (CSoundBase*)0x0) && (pSound->IsLooping() != 0)) {
+				pSoundInstance->pSound = static_cast<CSound*>(pSound);
+				if ((pSoundInstance->flags & 1) == 0) {
+					pSoundInstance->pPrev = (CSoundInstance*)0x0;
+					pSoundInstance->pNext = this->field_0x30;
 					if (this->field_0x30 != (CSoundInstance*)0x0) {
-						this->field_0x30->pPrev = this_00;
+						this->field_0x30->pPrev = pSoundInstance;
 					}
 
-					this->field_0x30 = this_00;
-					this_00->flags = 0;
-					this_00->flags = this_00->flags | 1;
+					this->field_0x30 = pSoundInstance;
+					pSoundInstance->flags = 0;
+					pSoundInstance->flags = pSoundInstance->flags | 1;
 				}
 
-				this_00->Set3DData(pNewNode, 0);
+				pSoundInstance->Set3DData(p3dData, 0);
 			}
 		}
+	}
+
+	return;
+}
+
+void CActorSound::SoundStop(int index)
+{
+	CSound* pSound;
+	CAudioManager* pAudioManager;
+	CSoundInstance* pSoundInstance;
+
+	pAudioManager = CScene::ptable.g_AudioManager_00451698;
+
+	pSoundInstance = this->aSoundInstances + index;
+	if ((pSoundInstance->flags & 1) != 0) {
+		if (NoAudio == 0) {
+			pSound = pSoundInstance->pSound;
+			if (pSound != (CSound*)0x0) {
+				pSoundInstance->soundId = pSound->Stop(pSoundInstance->soundId);
+			}
+		}
+
+		pAudioManager->ReleaseSound3DData(pSoundInstance->pSound3dData);
+
+		if (pSoundInstance->pPrev == (CSoundInstance*)0x0) {
+			this->field_0x30 = pSoundInstance->pNext;
+		}
+		else {
+			pSoundInstance->pPrev->pNext = pSoundInstance->pNext;
+		}
+
+		if (pSoundInstance->pNext != (CSoundInstance*)0x0) {
+			pSoundInstance->pNext->pPrev = pSoundInstance->pPrev;
+		}
+
+		pSoundInstance->flags = pSoundInstance->flags & 0xfffffffe;
 	}
 
 	return;
@@ -6038,7 +6098,7 @@ CSoundInstance::CSoundInstance()
 	this->flags = 0;
 	this->pSound = (CSound*)0x0;
 	this->soundId = 0;
-	this->field_0x14 = (edsound_3d_data*)0x0;
+	this->pSound3dData = (edsound_3d_data*)0x0;
 	this->pFinishCallback = 0;
 	this->pOwner = (CActorSound*)0x0;
 	this->field_0x20 = 0xffffffff;
@@ -6061,7 +6121,8 @@ bool CSoundInstance::IsAlive()
 
 void CSoundInstance::Set3DData(edsound_3d_data* pNode, long param_3)
 {
-	this->field_0x14 = pNode;
+	this->pSound3dData = pNode;
+
 	if (param_3 != 0) {
 		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0);
 	}

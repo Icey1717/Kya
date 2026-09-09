@@ -2019,8 +2019,7 @@ void CFxWind::Draw()
 
 void CFxWind::Reset()
 {
-	IMPLEMENTATION_GUARD_AUDIO(
-	this->pOwner->pSoundWind->Reset(this);)
+	this->pOwner->pSoundWind->Reset(this);
 
 	if ((this->flags_0x54 & FXWIND_FLAG_SOLID_GRAPHICS_ENABLED) != 0) {
 		(this->windSolid).field_0xc = 0.0f;

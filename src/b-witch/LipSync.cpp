@@ -308,12 +308,10 @@ int CTrackMultiChannel::UpdateKFrame(float param_1)
 	iVar8 = this->outputWidth;
 	iVar2 = 0;
 	if (0 < iVar8) {
-		iVar4 = 0;
 		do {
-			iVar2 = iVar2 + 1;
 			this->aOutputPtrs[iVar2] = 0.0f;
+			iVar2 = iVar2 + 1;
 			iVar8 = this->outputWidth;
-			iVar4 = iVar4 + 4;
 		} while (iVar2 < iVar8);
 	}
 

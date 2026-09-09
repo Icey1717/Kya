@@ -944,8 +944,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 
 								LipSynchData* pLipSynchData = reinterpret_cast<LipSynchData*>(pTag->keyTimes + pTag->keyCount);
 
-								float lipSynchValue = pLipSynchData[local_c].field_0x4;
-								CKFrameTrackReader* pTrackReader = LOAD_POINTER_CAST(CKFrameTrackReader*, resCollection.pData->aTags[pLipSynchData[local_c].field_0x0].pData);
+								float lipSynchValue = pLipSynchData[local_10].field_0x4;
+								CKFrameTrackReader* pTrackReader = LOAD_POINTER_CAST(CKFrameTrackReader*, resCollection.pData->aTags[pLipSynchData[local_10].field_0x0].pData);
 
 								pCinActorInterface->SetLipsynch((currentPlayTime - *currentKeyframePtr) + lipSynchValue, pTrackReader);
 							}

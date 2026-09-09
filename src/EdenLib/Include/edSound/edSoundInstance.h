@@ -8,6 +8,8 @@ struct _ed_sound_stream;
 
 struct edsound_3d_data
 {
+	edsound_3d_data();
+
 	edF32VECTOR3 position;
 	edF32VECTOR3 rotation;
 	float field_0x18;

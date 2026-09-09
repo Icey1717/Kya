@@ -423,7 +423,7 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 		(pCVar1->behaviourCinematic).cinActor.soundInstance.flags = 0;
 		(pCVar1->behaviourCinematic).cinActor.soundInstance.pSound = (CSound*)0x0;
 		(pCVar1->behaviourCinematic).cinActor.soundInstance.soundId = 0;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.field_0x14 = (edsound_3d_data*)0x0;
+		(pCVar1->behaviourCinematic).cinActor.soundInstance.pSound3dData = (edsound_3d_data*)0x0;
 		(pCVar1->behaviourCinematic).cinActor.soundInstance.field_0x24 = 0;
 	}
 

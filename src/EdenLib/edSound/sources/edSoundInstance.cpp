@@ -424,3 +424,11 @@ void _edSoundInstanceListInstanceInsert(float priority, ed_sound_instance* newSo
 	return;
 }
 
+edsound_3d_data::edsound_3d_data()
+{
+	this->field_0x18 = -1.0f;
+	this->field_0x20 = 0.0f;
+	this->field_0x24 = 0;
+
+	return;
+}

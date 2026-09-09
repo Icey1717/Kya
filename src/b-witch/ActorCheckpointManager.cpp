@@ -193,8 +193,7 @@ void CActorCheckpointManager::ActivateCheckpoint(int index)
 		evtChekpointParam.flags = pNewCheckpoint->flags;
 		CActorHero::_gThis->ActivateCheckpoint(&evtChekpointParam);
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		SoundManagerFunc_001819e0(CScene::ptable.g_AudioManager_00451698);)
+		CScene::ptable.g_AudioManager_00451698->ActivateCheckpoint();
 
 		if ((pPrevCheckpoint != (S_CHECKPOINT*)0x0) && (iVar5 = 0, 0 < pPrevCheckpoint->actorWaypointsCount)) {
 			do {
