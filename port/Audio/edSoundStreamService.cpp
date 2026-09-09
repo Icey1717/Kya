@@ -1,4 +1,5 @@
 #include "edSoundStreamService.h"
+#include "edSoundDevice.h"
 
 #include "log.h"
 
@@ -16,6 +17,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <XAudio2.h>
+#include <objbase.h>
 #endif
 
 namespace Audio
@@ -49,10 +51,11 @@ std::unordered_map<std::uint32_t, Stream> streams;
 IXAudio2* audioEngine = nullptr;
 IXAudio2MasteringVoice* masteringVoice = nullptr;
 bool audioDeviceFailed = false;
+bool audioOwnsCom = false;
 
 void LogAudioError(const char* message, HRESULT result)
 {
-	Log::GetInstance().AddLog(LogLevel::Error, "Audio", "%s (HRESULT 0x%08lx)", message,
+	Log::GetInstance().AddLog(LogLevel::Error, "Audio", "{} (HRESULT 0x{:08x})", message,
 		static_cast<unsigned long>(result));
 }
 
@@ -63,7 +66,15 @@ bool EnsureAudioDevice()
 	if (audioDeviceFailed)
 		return false;
 
-	HRESULT result = XAudio2Create(&audioEngine, 0, XAUDIO2_DEFAULT_PROCESSOR);
+	HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (FAILED(result) && result != RPC_E_CHANGED_MODE) {
+		LogAudioError("CoInitializeEx failed", result);
+		audioDeviceFailed = true;
+		return false;
+	}
+	// Balance both S_OK and S_FALSE; an existing STA belongs to its caller.
+	audioOwnsCom = SUCCEEDED(result);
+	result = XAudio2Create(&audioEngine, 0, XAUDIO2_DEFAULT_PROCESSOR);
 	if (FAILED(result)) {
 		LogAudioError("XAudio2Create failed", result);
 		audioDeviceFailed = true;
@@ -150,7 +161,7 @@ bool DecodePsxAdpcm(const std::uint8_t* data, std::size_t size, PsxAdpcmState& s
 			if (nibble >= 8)
 				nibble -= 16;
 
-			int sample = (nibble << 12) >> shift;
+			int sample = (nibble * 4096) >> shift;
 			sample += (state.previous * Filter0[filter] + state.previousPrevious * Filter1[filter] + 32) >> 6;
 			sample = std::clamp(sample, -32768, 32767);
 			samples.push_back(static_cast<std::int16_t>(sample));
@@ -246,6 +257,31 @@ std::uint64_t CurrentPosition(Stream& stream)
 }
 
 } // namespace
+
+#ifdef _WIN32
+IXAudio2* GetAudioEngine() { return EnsureAudioDevice() ? audioEngine : nullptr; }
+IXAudio2MasteringVoice* GetAudioMasteringVoice() { return masteringVoice; }
+void ShutdownAudioDevice()
+{
+	if (masteringVoice) masteringVoice->DestroyVoice();
+	if (audioEngine) audioEngine->Release();
+	masteringVoice = nullptr;
+	audioEngine = nullptr;
+	audioDeviceFailed = false;
+	if (audioOwnsCom) CoUninitialize();
+	audioOwnsCom = false;
+}
+#endif
+
+bool DecodeRawAdpcm(const std::uint8_t* data, std::size_t size, std::vector<std::int16_t>& samples)
+{
+	samples.clear();
+	if (!data || !size || size % 16) return false;
+	for (std::size_t offset = 0; offset < size; offset += 16)
+		if ((data[offset] >> 4) > 4 || (data[offset] & 15) > 12) return false;
+	PsxAdpcmState state;
+	return DecodePsxAdpcm(data, size, state, samples);
+}
 
 bool DecodeVag(const std::uint8_t* data, std::size_t size, std::vector<std::int16_t>& samples,
 	std::uint32_t& sampleRate)

@@ -6,6 +6,7 @@
 #include "MathOps.h"
 #ifdef PLATFORM_WIN
 #include "edSoundStreamService.h"
+#include "edSoundSampleService.h"
 #endif
 
 static int gNbSoundStreams = 0;
@@ -55,7 +56,11 @@ static void EdSoundPrepareFlush()
 		}
 	}
 #elif defined(PLATFORM_WIN)
-	// HINT: consume completion IDs here, never directly from an audio callback.
+	for (uint instanceId : Audio::PollFinishedSamples()) {
+		if ((instanceId & 0xffff) < edSoundMaxInstances && edSoundInstanceIsAlive(instanceId)) {
+			edSoundInstanceFinish(pedSoundInstances + (instanceId & 0xffff), 1);
+		}
+	}
 #endif
 }
 
@@ -139,7 +144,7 @@ void _edSoundCheckForInstancesToCreate(void)
 						soundBitArrayHandle.field_0x4 = (uint)lVar3 + soundBitArrayHandle.voiceIndex * -0x20;
 					}
 					_edSoundAllocatedVoices[soundBitArrayHandle.voiceIndex] = _edSoundAllocatedVoices[soundBitArrayHandle.voiceIndex] | 1 << (soundBitArrayHandle.field_0x4 & 0x1fU);
-					*pVoiceIndices = (uint)((lVar3 << 0x30) >> 0x30);
+					*pVoiceIndices = (uint)lVar3;
 					*pOther = 0xfffffffe;
 					soundBitArrayHandle.field_0x4 = soundBitArrayHandle.field_0x4 + 1;
 					uVar1 = ~- (1 << (soundBitArrayHandle.field_0x4 & 0x1fU)) | _edSoundAllocatedVoices[soundBitArrayHandle.voiceIndex];
@@ -217,7 +222,7 @@ void edSoundFlush()
 {
 	//SoundFlushCommand* iVar1;
 	uint* pToDelete;
-	uint nbFlush;
+	uint nbFlush = 0;
 	uint uVar4;
 
 	edSoundNbFinishedInstances = 0;
@@ -242,9 +247,6 @@ void edSoundFlush()
 	_pedSoundInstanceCommandsCount = &iVar1->nbCommands;
 	_edSoundInstanceCommandsCount = 0;
 	gSoundFlushCurrent_0044915c = iVar1->aSoundFlushes;
-#else 
-	// Windows will start a typed command list for this flush.
-	// The Windows backend begins an empty typed command list here.
 #endif
 
 #ifdef PLATFORM_PS2
@@ -259,8 +261,9 @@ void edSoundFlush()
 		gSoundFlushCurrent_0044915c = gSoundFlushCurrent_0044915c + 1;
 	}
 #else
-	// Windows will emit typed destroy commands that contain only a copied soundInstanceID.
-	// The Windows backend appends one typed destroy command per pending delete.
+	// Windows destroys voices synchronously in _edSoundInstanceSetFree, before
+	// their instance slots can be reused. No bounded PS2 deletion queue is needed.
+	edSoundInstancesToDeleteNb = 0;
 #endif
 
 #ifdef PLATFORM_PS2
@@ -283,8 +286,49 @@ void edSoundFlush()
 		} while (uVar4 < edSoundMaxInstances);
 	}
 #else
-	// Windows will translate each pending mask into typed create/start/gain/pitch commands.
-	// The Windows backend converts masks and copied payloads to typed commands.
+	for (uint index = 0; index < edSoundMaxInstances; ++index) {
+		ed_sound_instance* pInstance = pedSoundInstances + index;
+		const uint mask = edSoundInstanceCom[index].flags;
+		const uint instanceId = edSoundInstanceCom[index].soundInstanceId;
+		edSoundInstanceCom[index].flags = 0;
+		edSoundInstanceCom[index].soundInstanceId = 0;
+		if (mask == 0 || instanceId == 0 || pInstance->fullSoundInstanceId != instanceId) continue;
+		// Streams already start through edSoundStream_00283650. Do not create a
+		// sample voice for their differently laid-out pSoundStream union member.
+		if ((pInstance->flags & 0x10) != 0) {
+			if ((mask & (4 | 8)) != 0) Audio::StopStream(pInstance->pSoundStream->streamBufferId[0]);
+			else if ((mask & 0x10) != 0) Audio::StartStream(pInstance->pSoundStream->streamBufferId[0]);
+			continue;
+		}
+		Audio::SampleDescription sample;
+		if (pInstance->pSample != (ed_sound_sample*)0x0) {
+			sample = {pInstance->pSample->soundRamAddress, pInstance->pSample->sampleRate,
+				pInstance->pSample->dataSize, pInstance->pSample->loopStartOffset,
+				pInstance->pSample->loopEndOffset, (pInstance->pSample->flags & 1) != 0};
+		}
+		const Audio::SampleControls controls = {
+			(pInstance->field_0x88 + ((pInstance->flags & 0x28) != 0 ? pInstance->field_0x94 : 0.0f)) * edSoundGlobalParams.volume,
+			(pInstance->field_0x8c + ((pInstance->flags & 0x28) != 0 ? pInstance->field_0x98 : 0.0f)) * edSoundGlobalParams.volume,
+			pInstance->field_0x50};
+		if ((mask & 4) != 0) {
+			Audio::QueueSampleCommand({Audio::SampleCommandType::Stop, instanceId});
+			continue;
+		}
+		// Recreate on start as well: retained (flags & 1) instances may have
+		// finished naturally and released their previous host voice.
+		Audio::QueueSampleCommand({(mask & (0x800 | 2)) != 0 ? Audio::SampleCommandType::Create : Audio::SampleCommandType::Update,
+			instanceId, sample, controls});
+		if ((mask & 2) != 0 && (mask & 8) == 0) Audio::QueueSampleCommand({Audio::SampleCommandType::Start, instanceId});
+		if ((mask & 8) != 0) {
+			pInstance->flags |= 0x200;
+			Audio::QueueSampleCommand({Audio::SampleCommandType::Pause, instanceId});
+		}
+		else if ((mask & 0x10) != 0) {
+			pInstance->flags &= ~0x200u;
+			Audio::QueueSampleCommand({Audio::SampleCommandType::Resume, instanceId});
+		}
+		++nbFlush;
+	}
 #endif
 
 	if (edSoundGlobalParams.finishedInstancesCallback != (edSoundFinishedInstancesCallback)0x0) {
@@ -901,14 +945,13 @@ void edSoundInstanceSetPause(uint soundInstanceId, int bPaused)
 	return;
 }
 
-void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr)
+void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr, uint param_4)
 {
 	undefined uVar1;
 	undefined uVar2;
 	bool bVar3;
 	ed_sound_instance* soundInstance;
 	edsound_3d_data* peVar4;
-	long in_a3;
 	float fVar5;
 	float fVar6;
 
@@ -925,7 +968,7 @@ void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint
 			else {
 				soundInstance->flags = soundInstance->flags | 0x1000;
 				soundInstance->flags = soundInstance->flags & 0xfffffffd;
-				if ((in_a3 == 0) || (edSoundGlobalParams.outputMode != SURROUND)) {
+				if ((param_4 == 0) || (edSoundGlobalParams.outputMode != SURROUND)) {
 					soundInstance->flags = soundInstance->flags | 4;
 				}
 				else {

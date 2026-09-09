@@ -7,6 +7,7 @@
 #include "gamepad.h"
 #include "Texture.h"
 #include "Mesh.h"
+#include "edSysTransferService.h"
 
 #include <csignal>
 #include "log.h"
@@ -29,4 +30,5 @@ int main(int argc, char** argv) {
 	DebugMenu::AddKeyboardMouseSupport();
 	KyaGamepad::AddGamepadSupport();
 	main_internal(argc, argv);
+	Audio::Shutdown();
 }

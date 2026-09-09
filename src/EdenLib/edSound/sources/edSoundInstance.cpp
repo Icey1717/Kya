@@ -1,6 +1,9 @@
 #include "edSound/edSoundInstance.h"
 #include "edSound/edSoundPlay.h"
 #include "edMem.h"
+#ifdef PLATFORM_WIN
+#include "edSoundSampleService.h"
+#endif
 
 ed_sound_instance* pedSoundInstances;
 ed_sound_instance_finished* pedSoundFinishedInstances;
@@ -333,6 +336,14 @@ bool edSoundInstanceIsAlive(uint soundID)
 
 uint _edSoundInstanceCheckFinished(ed_sound_instance* pSoundInstance)
 {
+#ifdef PLATFORM_WIN
+	if ((pSoundInstance->flags & 0x10) == 0) {
+		// Host completion is drained once per flush, keyed by the full instance
+		// ID. The PS2 position table is not updated by the Windows sample device.
+		Audio::GetSamplePosition(pSoundInstance->fullSoundInstanceId, pSoundInstance->field_0x80[0]);
+		return 0;
+	}
+#endif
 	uint voiceCount = EdSoundVoiceCountFromFlags(pSoundInstance->flags);
 
 	if ((pSoundInstance->flags & 0x10) == 0) {

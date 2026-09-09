@@ -783,20 +783,20 @@ void CMusicManager_EndOfSongCallback(uint index)
 }
 
 void CAudioManager_SoundFinishedInstancesCallback(ed_sound_instance_finished* pFinishedInstances, uint nbCount)
-
 {
 	bool bVar1;
-	undefined* puVar2;
+	CSoundInstance* pSoundInstance;
 	int iVar3;
 
 	if ((nbCount != 0) && (iVar3 = nbCount + -1, nbCount != 0)) {
 		do {
-			IMPLEMENTATION_GUARD(
-			puVar2 = pFinishedInstances->field_0x4;
-			if ((puVar2 != (undefined*)0x0) && (*static_cast<code**>(puVar2 + 0x18) != (code*)0x0)) {
-				(**static_cast<code**>(puVar2 + 0x18))(puVar2, *static_cast<undefined4*>(puVar2 + 0x1c));
-			})
+			pSoundInstance = reinterpret_cast<CSoundInstance*>(pFinishedInstances->field_0x4);
+			if ((pSoundInstance != (CSoundInstance*)0x0) && (pSoundInstance->pFinishCallback != (CActorSoundFinishCallback)0x0)) {
+				pSoundInstance->pFinishCallback(pSoundInstance, pSoundInstance->pOwner);
+			}
+
 			pFinishedInstances = pFinishedInstances + 1;
+
 			bVar1 = iVar3 != 0;
 			iVar3 = iVar3 + -1;
 		} while (bVar1);
@@ -2546,7 +2546,7 @@ void CAudioManager::ManageSoundSamples()
 					pData->field_0x18 = fVar10;
 				}
 
-				edSoundInstanceSet3DData(uVar8, pData, existingSoundIDPtr);
+				edSoundInstanceSet3DData(uVar8, pData, existingSoundIDPtr, pCVar5->sample.field_0x80);
 				fVar10 = pCVar5->sample.field_0x6c;
 				fVar11 = static_cast<float>(pCVar5)->sample.edSoundSample.loopEndOffset;
 				if (fVar10 != 0.0f) {
@@ -2637,7 +2637,12 @@ void CAudioManager::ReleaseSound3DData(edsound_3d_data* pData)
 	CAnimation* pAnim;
 
 	if ((NoAudio == 0) && (pData != (edsound_3d_data*)0x0)) {
-		uVar1 = static_cast<int>((uintptr_t)pData - (uintptr_t)this->aSoundDataNodes) / sizeof(edsound_3d_data);
+		// Pool entries include actor metadata and linkage; match the payload
+		// rather than dividing by sizeof(edsound_3d_data). Actor data is external.
+		uVar1 = 0;
+		while (uVar1 < this->nbSoundDataNodes && &this->aSoundDataNodes[uVar1].node.edSoundData != pData) {
+			++uVar1;
+		}
 		if ((-1 < static_cast<int>(uVar1)) && (uVar1 < this->nbSoundDataNodes)) {
 			pCVar2 = this->aSoundDataNodes + uVar1;
 			if ((pCVar2->node).field_0x34 == 1) {
@@ -2647,9 +2652,9 @@ void CAudioManager::ReleaseSound3DData(edsound_3d_data* pData)
 				}
 
 				this->field_0xb0->RemoveNode(pCVar2);
+				(pCVar2->node).field_0x34 = 0;
+				this->field_0xac->InsertAfterQueue(pCVar2);
 			}
-
-			this->field_0xac->InsertAfterQueue(pCVar2);
 		}
 	}
 
@@ -2738,6 +2743,8 @@ edsound_3d_data* CAudioManager::ObtainSound3DData(int param_2, CActor* pActor, u
 		if (param_2 != 0) {
 			if (param_2 == 1) {
 				CDoubleLinkedNode<s_sound_3d_data>* pHead = this->field_0xac->RemoveHead();
+				if (pHead == (CDoubleLinkedNode<s_sound_3d_data>*)0x0) return pData;
+				pData = &pHead->node.edSoundData;
 				(pHead->node).field_0x34 = 1;
 				(pHead->node).pActor = pActor;
 				(pHead->node).boneId = boneId;
@@ -3220,7 +3227,7 @@ uint CSound::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, 
 			p3dData->field_0x18 = fVar4;
 		}
 
-		edSoundInstanceSet3DData(soundInstanceId, p3dData, param_6);
+		edSoundInstanceSet3DData(soundInstanceId, p3dData, param_6, this->field_0x80);
 
 		fVar4 = (this->edSoundSample).loopEndOffset;
 		if (this->field_0x6c != 0.0f) {
@@ -3393,7 +3400,7 @@ uint CSoundSample::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3d
 			p3dData->field_0x18 = fVar4;
 		}
 
-		edSoundInstanceSet3DData(soundInstanceId, p3dData, pOutId);
+		edSoundInstanceSet3DData(soundInstanceId, p3dData, pOutId, this->field_0x80);
 
 		fVar4 = (this->edSoundSample).loopEndOffset;
 		if (this->field_0x6c != 0.0f) {

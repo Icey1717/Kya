@@ -64,6 +64,7 @@ class CSoundSample : public CSound
 {
 public:
 	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId);
+	virtual bool IsLooping() { return IsLooping(-1); }
 	virtual bool IsLooping(int soundInstanceId);
 };
 

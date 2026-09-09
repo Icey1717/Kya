@@ -221,7 +221,7 @@ float edSoundStreamGetPlaybackTime(uint index);
 uint edSoundSamplePlay(float priority, ed_sound_sample* pSample);
 void edSoundInstanceSetVolume(float param_1, uint soundInstanceId);
 void edSoundInstanceSetPause(uint soundInstanceId, int bPaused);
-void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr);
+void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr, uint param_4);
 void edSoundInstanceSetFrequency(float frequency, uint soundInstanceId);
 void edSoundInstanceSetUserData(uint soundInstanceId, void* pUserData);
 void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample);

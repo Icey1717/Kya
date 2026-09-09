@@ -4,6 +4,7 @@
 #ifdef PLATFORM_WIN
 #include "edSoundStreamService.h"
 #include "edSysTransferService.h"
+#include "edSoundSampleService.h"
 #endif
 
 #define READ_BE_UINT32(pValue) \
@@ -144,7 +145,12 @@ void _edSoundStreamTerm(_ed_sound_stream* pSoundStream)
 		SOUND_FreeFileID(pSoundStream->streamFileId);
 		IMPLEMENTATION_GUARD_PS2(
 		FlushIOPCommand(1, 0);)
+#ifdef PLATFORM_WIN
+		free(pSoundStream->pMem);
+		pSoundStream->pMem = (void*)0x0;
+#else
 		_edSoundMemFree(pSoundStream->pMem);
+#endif
 	}
 
 	return;
@@ -215,7 +221,12 @@ void edSoundPrepareSampleLoad(SoundFileData* soundFileData, ed_sound_sample* pSa
 
 	// The instruction at 0x00288730 reads offset 0x41.
 	// ADPCM data starts at 0x30, making this block 1's flags byte.
+#ifdef PLATFORM_WIN
+	// A one-block sample has no second flags byte in the host buffer.
+	if ((pSample->dataSize >= 32) && ((soundFileData->adpcm[1].flags & 2) != 0)) {
+#else
 	if ((soundFileData->adpcm[1].flags & 2) != 0) {
+#endif
 		pSample->flags |= 1;
 	}
 
@@ -292,8 +303,7 @@ void _edSoundEndFlush(uint nbFlush)
 	edComBuffer = (SoundFlush_0x8**)(&edComDoubleBuffers)[edComCurrentBufferIndex];
 	*edComBuffer = (SoundFlush_0x8*)0x0;
 #else
-	// Windows submits the typed list to its audio thread and swaps frame buffers.
-	// HINT: only copied command data may cross this thread boundary.
+	Audio::FlushSampleCommands();
 #endif
 
 	return;
@@ -310,6 +320,14 @@ void _edSoundStreamFreeDynamicData(ed_sound_instance* pInstance)
 
 void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
 {
+#ifdef PLATFORM_WIN
+	if ((pInstance->flags & 0x10) != 0) {
+		Audio::StopStream(pInstance->pSoundStream->streamBufferId[0]);
+	}
+	else {
+		Audio::DestroySample(pInstance->fullSoundInstanceId);
+	}
+#endif
 	if ((pInstance->flags & 0x400) != 0) {
 		uint voiceCount = EdSoundVoiceCountFromFlags(pInstance->flags);
 
@@ -318,8 +336,10 @@ void _edSoundInstanceSetFree(ed_sound_instance* pInstance)
 			EdSoundVoiceSetFree(pInstance->voiceIndices[voiceIndexIndex]);
 		}
 
+#ifdef PLATFORM_PS2
 		pedSoundInstancesToDelete[edSoundInstancesToDeleteNb] = pInstance->fullSoundInstanceId;
 		edSoundInstancesToDeleteNb = edSoundInstancesToDeleteNb + 1;
+#endif
 	}
 
 	if ((pInstance->flags & 0x10) != 0) {
@@ -338,6 +358,10 @@ uint _edSoundVoiceGetFirstFreeFromPointer(uint* param_1, _ed_sound_bit_array_han
 {
 	uint uVar1;
 	uint uVar2;
+
+#ifdef PLATFORM_WIN
+	if (pSoundBitArrayHandle->voiceIndex >= 2) return 0xffffffff;
+#endif
 
 	uVar2 = *param_1;
 	while (uVar2 == 0xffffffff) {
@@ -387,6 +411,13 @@ uint _edSoundMemFree(void* pMem)
 
 int _edSoundSampleFree(ed_sound_sample* pSoundSample)
 {
+#ifdef PLATFORM_WIN
+	_edSoundWaitAllSoundDataLoaded();
+	const bool released = Audio::ReleaseLoadedData(pSoundSample->soundRamAddress);
+	pSoundSample->soundRamAddress = 0;
+	pSoundSample->flags &= ~4u;
+	return released ? 1 : 0;
+#else
 	int iVar1;
 
 	if ((pSoundSample->flags & 2) == 0) {
@@ -397,6 +428,7 @@ int _edSoundSampleFree(ed_sound_sample* pSoundSample)
 		iVar1 = sceSifFreeSysMemory((void*)pSoundSample->soundRamAddress);)
 	}
 	return iVar1;
+#endif
 }
 
 bool _edSoundAreAllSoundDataLoaded(uint lastIndex)

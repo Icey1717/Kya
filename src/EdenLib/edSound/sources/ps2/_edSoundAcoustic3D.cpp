@@ -77,8 +77,13 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 	float puVar9;
 	float puVar12;
 	float local_f12_21304;
+#ifdef PLATFORM_WIN
+	float in_f21 = 0.0f;
+	float unaff_f20 = 0.0f;
+#else
 	float in_f21;
 	float unaff_f20;
+#endif
 	float fVar7;
 	edF32VECTOR3 local_40;
 	edF32VECTOR3 eStack48;
@@ -100,8 +105,17 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 	}
 
 	if (edSoundGlobalParams.outputMode != MONO) {
+#ifdef PLATFORM_WIN
+		if (edF32Vector3GetLengthSoft(&edSoundGlobalParams.field_0x30) > 0.0f)
+			edF32Vector3NormalizeSoft(&edSoundGlobalParams.field_0x30, &edSoundGlobalParams.field_0x30);
+		else edSoundGlobalParams.field_0x30 = {0.0f, 0.0f, 1.0f};
+		if (edF32Vector3GetLengthSoft(&edSoundGlobalParams.field_0x3c) > 0.0f)
+			edF32Vector3NormalizeSoft(&edSoundGlobalParams.field_0x3c, &edSoundGlobalParams.field_0x3c);
+		else edSoundGlobalParams.field_0x3c = {0.0f, 1.0f, 0.0f};
+#else
 		edF32Vector3NormalizeSoft(&edSoundGlobalParams.field_0x30, &edSoundGlobalParams.field_0x30);
 		edF32Vector3NormalizeSoft(&edSoundGlobalParams.field_0x3c, &edSoundGlobalParams.field_0x3c);
+#endif
 		edF32Vector3CrossProductSoft(&eStack48, &edSoundGlobalParams.field_0x30, &edSoundGlobalParams.field_0x3c);
 	}
 
@@ -121,8 +135,15 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 				while (uVar2 != 0) {
 					fVar4 = peVar3->field_0x68;
 					fVar5 = peVar3->field_0x4c;
-					peVar3->voiceIndices[uVar2 * 3 + 1] = static_cast<uint>(fVar5 * sqrtf((1.0f - fVar4) * 0.5f));
-					peVar3->field_0x80[uVar2 * 3] = static_cast<uint>(fVar5 * sqrtf((fVar4 + 1.0f) * 0.5f));
+					// Ghidra's indexed accesses resolve to these float gain fields in the PS2 layout.
+					if (uVar2 == 1) {
+						peVar3->field_0x88 = fVar5 * sqrtf((1.0f - fVar4) * 0.5f);
+						peVar3->field_0x8c = fVar5 * sqrtf((fVar4 + 1.0f) * 0.5f);
+					}
+					else {
+						peVar3->field_0x94 = fVar5 * sqrtf((1.0f - fVar4) * 0.5f);
+						peVar3->field_0x98 = fVar5 * sqrtf((fVar4 + 1.0f) * 0.5f);
+					}
 					local_20 = peVar3->fullSoundInstanceId;
 					edSoundInstanceCom[local_20 & 0xffff].flags = edSoundInstanceCom[local_20 & 0xffff].flags | 0x20 << (uVar2 - 1 & 0x1f);
 					edSoundInstanceCom[local_20 & 0xffff].soundInstanceId = local_20;
@@ -196,7 +217,11 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 				if (fVar4 < fVar5) {
 					edF32Vector3NormalizeSoft(&listenerSpacePosition, &listenerSpacePosition);
 				}
-				else {
+				else
+#ifdef PLATFORM_WIN
+				if (fVar4 > 0.0f)
+#endif
+				{
 					fVar4 = pData->field_0x18;
 					if (fVar4 < 0.0f) {
 						fVar4 = sqrtf(pData->field_0x1c);
@@ -220,7 +245,13 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 				listenerSpaceDirection.z = 0.0f;
 				listenerSpaceDirection.x = listenerSpacePosition.x;
 				listenerSpaceDirection.y = listenerSpacePosition.y;
+#ifdef PLATFORM_WIN
+				if (edF32Vector3GetLengthSoft(&listenerSpaceDirection) > 0.0f)
+					edF32Vector3NormalizeSoft(&listenerSpaceDirection, &listenerSpaceDirection);
+				else listenerSpaceDirection = {0.0f, 1.0f, 0.0f};
+#else
 				edF32Vector3NormalizeSoft(&listenerSpaceDirection, &listenerSpaceDirection);
+#endif
 				if (0.0f <= listenerSpaceDirection.y) {
 					puVar7 = -listenerSpaceDirection.x;
 					if (1.0f < puVar7) {

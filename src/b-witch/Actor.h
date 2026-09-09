@@ -486,6 +486,9 @@ public:
 	CActorSoundNode();
 };
 
+// Finish callback.
+typedef void (*CActorSoundFinishCallback)(CSoundInstance* pInstance, void* pUserData);
+
 class CSoundInstance
 {
 public:
@@ -499,7 +502,7 @@ public:
 	CSound* pSound;
 	uint soundId;
 	edsound_3d_data* pSound3dData;
-	undefined4 pFinishCallback;
+	CActorSoundFinishCallback pFinishCallback;
 	CActorSound* pOwner;
 	uint field_0x20;
 	undefined4 field_0x24;

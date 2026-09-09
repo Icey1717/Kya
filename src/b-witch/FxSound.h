@@ -16,8 +16,8 @@ public:
 	virtual void Draw();
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
-	virtual void Pause() { IMPLEMENTATION_GUARD(); }
-	virtual void Resume() { IMPLEMENTATION_GUARD(); }
+	virtual void Pause();
+	virtual void Resume();
 	virtual void Stop(float param_1);
 	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
 	virtual int GetType();

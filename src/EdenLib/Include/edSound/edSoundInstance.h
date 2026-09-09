@@ -117,6 +117,7 @@ bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2);
 bool edSoundInstanceIsAlive(uint soundID);
 
 extern ed_sound_instance* pedSoundInstances;
+extern uint edSoundMaxInstances;
 extern ed_sound_instance_finished* pedSoundFinishedInstances;
 extern uint edSoundNbFinishedInstances;
 extern ed_sound_instance* pedSoundInstanceListHead;

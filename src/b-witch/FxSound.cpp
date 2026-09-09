@@ -152,6 +152,33 @@ void CFxNewSound::Start(float param_1, float param_2)
 	return;
 }
 
+void CFxNewSound::Pause()
+{
+	bool bVar1;
+	CSound* pSound;
+
+	this->flags = this->flags | 4;
+
+	if (((NoAudio == 0) && (bVar1 = this->soundInstance.IsAlive(), bVar1 != false)) && (pSound = (this->soundInstance).pSound, pSound != (CSound*)0x0)) {
+		pSound->SetPause((this->soundInstance).soundId, 1);
+	}
+
+	return;
+}
+
+void CFxNewSound::Resume()
+{
+	bool bVar1;
+	CSound* pSound;
+
+	this->flags = this->flags & 0xfffffffb;
+	if (((NoAudio == 0) && (bVar1 = this->soundInstance.IsAlive(), bVar1 != false)) && (pSound = (this->soundInstance).pSound, pSound != (CSound*)0x0)) {
+		pSound->SetPause((this->soundInstance).soundId, 0);
+	}
+
+	return;
+}
+
 void CFxNewSound::Stop(float param_1)
 {
 	CSound* pCVar1;

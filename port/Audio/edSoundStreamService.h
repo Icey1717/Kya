@@ -26,6 +26,7 @@ void ResetStreams();
 
 bool LoadStream(std::uint32_t streamId, const char* path);
 bool DecodeVag(const std::uint8_t* data, std::size_t size, std::vector<std::int16_t>& samples, std::uint32_t& sampleRate);
+bool DecodeRawAdpcm(const std::uint8_t* data, std::size_t size, std::vector<std::int16_t>& samples);
 bool DecodeMib(const std::uint8_t* data, std::size_t size, std::uint32_t channels,
 	std::uint32_t interleaveBlockSize, std::uint32_t sampleRate, std::vector<std::int16_t>& samples);
 

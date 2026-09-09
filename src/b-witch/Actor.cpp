@@ -5731,6 +5731,30 @@ void S_ACTOR_STREAM_REF::Reset()
 	return;
 }
 
+void CActorSoundInstanceFinishCallback(CSoundInstance* pInstance, void* pData)
+{
+	CActorSound* pOwner = (CActorSound*)pData;
+
+	if ((pInstance->flags & 1) != 0) {
+		CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData(pInstance->pSound3dData);
+
+		if (pInstance->pPrev == (CSoundInstance*)0x0) {
+			pOwner->field_0x30 = pInstance->pNext;
+		}
+		else {
+			pInstance->pPrev->pNext = pInstance->pNext;
+		}
+
+		if (pInstance->pNext != (CSoundInstance*)0x0) {
+			pInstance->pNext->pPrev = pInstance->pPrev;
+		}
+
+		pInstance->flags = pInstance->flags & 0xfffffffe;
+	}
+
+	return;
+}
+
 void CActorSound::Create(CActor* pActor, int nbInstances)
 {
 	bool bVar1;
@@ -5745,7 +5769,7 @@ void CActorSound::Create(CActor* pActor, int nbInstances)
 		iVar3 = nbInstances + -1;
 		if (nbInstances != 0) {
 			do {
-				//pCVar2->pFinishCallback = CActorSoundInstanceFinishCallback;
+				pCVar2->pFinishCallback = CActorSoundInstanceFinishCallback;
 				pCVar2->pOwner = this;
 				pCVar2 = pCVar2 + 1;
 				bVar1 = iVar3 != 0;
@@ -5995,6 +6019,10 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 
 			p3dData = CScene::ptable.g_AudioManager_00451698->ObtainSound3DData(param_6, pActor, reinterpret_cast<uint>(boneId));
 		}
+		if (pSoundInstance->pSound3dData != (edsound_3d_data*)0x0 && pSoundInstance->pSound3dData != p3dData) {
+			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData(pSoundInstance->pSound3dData);
+			pSoundInstance->pSound3dData = (edsound_3d_data*)0x0;
+		}
 		if ((this->flags & 1) == 0) {
 			if ((pSoundInstance->flags & 1) == 0) {
 				pSoundInstance->pPrev = (CSoundInstance*)0x0;
@@ -6061,6 +6089,7 @@ void CActorSound::SoundStop(int index)
 		}
 
 		pAudioManager->ReleaseSound3DData(pSoundInstance->pSound3dData);
+		pSoundInstance->pSound3dData = (edsound_3d_data*)0x0;
 
 		if (pSoundInstance->pPrev == (CSoundInstance*)0x0) {
 			this->field_0x30 = pSoundInstance->pNext;
@@ -6124,7 +6153,7 @@ void CSoundInstance::Set3DData(edsound_3d_data* pNode, long param_3)
 	this->pSound3dData = pNode;
 
 	if (param_3 != 0) {
-		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0);
+		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0, 0);
 	}
 
 	return;

@@ -1,4 +1,7 @@
 #include "edSysTransferService.h"
+#include "edSoundSampleService.h"
+#include "edSoundStreamService.h"
+#include "edSoundDevice.h"
 #include "log.h"
 #include <cstring>
 #include <deque>
@@ -109,6 +112,10 @@ void Initialize()
 void Shutdown()
 {
 	Reset();
+	ResetStreams();
+#ifdef _WIN32
+	ShutdownAudioDevice();
+#endif
 }
 
 std::uint32_t Submit(const void* source, std::uint32_t size, std::uint32_t alignment, TransferFlags flags, int setup, int transfer, int end,
@@ -162,11 +169,13 @@ bool LookupLoadedData(std::uint32_t h, LoadedDataInfo& out)
 
 bool ReleaseLoadedData(std::uint32_t h)
 {
+	InvalidateSample(h);
 	return loaded.erase(h) != 0;
 }
 
 void Reset()
 {
+	ResetSamples();
 	queue.clear();
 	loaded.clear();
 	transfers.clear();
