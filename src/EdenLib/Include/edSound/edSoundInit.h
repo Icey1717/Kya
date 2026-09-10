@@ -7,7 +7,7 @@ struct edSoundConfig
 {
 	uint nbMaxInstances;
 	uint nbVoices;
-	undefined4 field_0x8;
+	int field_0x8;
 	uint field_0x10;
 	uint field_0x14;
 };

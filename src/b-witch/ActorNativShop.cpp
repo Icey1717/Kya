@@ -10,6 +10,7 @@
 #include "ed3D.h"
 #include "Frontend.h"
 #include "DlistManager.h"
+#include "EventManager.h"
 #include "Pause.h"
 #include "FileManager3D.h"
 #include "FrontEndDisp.h"
@@ -239,8 +240,8 @@ void CBehaviourNativShopSell::Create(ByteCode* pByteCode)
 	this->materialId = pByteCode->GetS32();
 
 	uVar5 = pByteCode->GetU32();
-	IMPLEMENTATION_GUARD_AUDIO(
-	if ((uVar5 == 0xffffffff) || (bVar1 = (uint)pCVar2->nbMusic <= uVar5, bVar1)) {
+
+	if ((uVar5 == 0xffffffff) || (bVar1 = pCVar2->nbMusic <= uVar5, bVar1)) {
 		pCVar6 = (CMusic*)0x0;
 	}
 	else {
@@ -248,7 +249,7 @@ void CBehaviourNativShopSell::Create(ByteCode* pByteCode)
 			uVar5 = 0;
 		}
 		pCVar6 = pCVar2->aMusic + uVar5;
-	})
+	}
 
 	this->field_0xb8 = pCVar6;
 	(this->streamRefZone).index = pByteCode->GetS32();
@@ -372,13 +373,10 @@ void CBehaviourNativShopSell::Manage()
 		}
 	}
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	pZone = (this->streamRefZone).Get();
 	pMusicManager = CScene::ptable.g_AudioManager_00451698->field_0x38;
 	if (pZone != (ed_zone_3d*)0x0) {
-		iVar5 = edEventComputeZoneAgainstVertex
-		((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone,
-			&(CActorHero::_gThis->character).characterBase.base.base.currentLocation, 0);
+		iVar5 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
 		if ((iVar5 == 1) && (this->field_0xc0 == -1)) {
 			this->field_0xc0 = pMusicManager->Start(this->field_0xc4, 1.0f, this->field_0xc8, 0.0f, this->field_0xb8, 0x19);
 		}
@@ -388,7 +386,7 @@ void CBehaviourNativShopSell::Manage()
 				this->field_0xc0 = -1;
 			}
 		}
-	})
+	}
 
 	return;
 }

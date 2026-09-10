@@ -1705,6 +1705,62 @@ void edAnmStage::WRTSToPreviousPosture()
 			peVar5 = peVar5 + 1;
 		} while (0 < (int)meshSectionCount);
 	}
+
+	return;
+}
+
+void edAnmStage::BlendDefaultRTSWithDestWRTS(float param_1, int param_3)
+{
+	float* pfVar1;
+	edF32MATRIX3* peVar2;
+	edF32MATRIX3* targetRotation;
+	edF32MATRIX4* pMatrix;
+	float fVar3;
+	float alpha;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	pMatrix = this->pRelativeTransformMatrixBuffer->matrices;
+	targetRotation = this->pConstantMatrixData;
+	peVar2 = targetRotation + ((this->anmSkeleton).pTag)->boneCount;
+	for (; targetRotation < peVar2; targetRotation = targetRotation + 1) {
+		fVar3 = pMatrix->da;
+		if (fVar3 != -1.0f) {
+			if (param_3 == 0) {
+				alpha = param_1 / (fVar3 + param_1);
+				pMatrix->da = fVar3 + param_1;
+			}
+			else {
+				alpha = (param_1 - fVar3) / param_1;
+				pMatrix->da = param_1;
+			}
+
+			if (0.1f < alpha) {
+				edQuatShortestSLERPHard(alpha, &pMatrix->rowX, &pMatrix->rowX, &targetRotation->rowX);
+				pfVar1 = &pMatrix->ba;
+				fVar4 = targetRotation->bb;
+				fVar5 = targetRotation->bc;
+				fVar6 = targetRotation->bd;
+				fVar3 = 1.0f - alpha;
+				*pfVar1 = targetRotation->ba * alpha + *pfVar1 * fVar3;
+				pMatrix->bb = fVar4 * alpha + pMatrix->bb * fVar3;
+				pMatrix->bc = fVar5 * alpha + pMatrix->bc * fVar3;
+				pMatrix->bd = fVar6 * alpha + pMatrix->bd * fVar3;
+				fVar4 = targetRotation->cb;
+				fVar5 = targetRotation->cc;
+				fVar6 = targetRotation->cd;
+				fVar3 = 1.0f - alpha;
+				pMatrix->ca = targetRotation->ca * alpha + pMatrix->ca * fVar3;
+				pMatrix->cb = fVar4 * alpha + pMatrix->cb * fVar3;
+				pMatrix->cc = fVar5 * alpha + pMatrix->cc * fVar3;
+				pMatrix->cd = fVar6 * alpha + pMatrix->cd * fVar3;
+			}
+		}
+
+		pMatrix = pMatrix + 1;
+	}
+
 	return;
 }
 

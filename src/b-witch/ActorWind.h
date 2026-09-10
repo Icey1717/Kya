@@ -175,7 +175,10 @@ struct MaterialManagerCombined
 
 struct edCSound3DPrim
 {
+	edCSound3DPrim();
+
 	void Init(int param_2, edF32MATRIX4* param_3);
+	void ComputeResultingPosition(edsound_3d_data* param_2, float* param_3, edF32VECTOR4* param_4);
 
 	int field_0x0;
 	edF32MATRIX4* field_0x4;
@@ -196,7 +199,6 @@ public:
 
 	static WindAnimST gUseAnimST[5];
 
-	CFxWind();
 	virtual ~CFxWind();
 
 	// CObject
@@ -255,12 +257,10 @@ public:
 	int whirlPatchId;
 	int fakePlanePatchId;
 	CActorSoundNode* field_0x374;
-
-	float field_0x390;
-
+	edsound_3d_data field_0x378;
 	edCSound3DPrim field_0x3a0;
 
-	float field_0x3b4;
+	uint field_0x3b4;
 
 };
 

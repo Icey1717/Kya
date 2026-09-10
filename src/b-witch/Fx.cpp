@@ -176,6 +176,37 @@ void SV_FX_001a0600(CFxHandleExt* param_1, edF32MATRIX4* param_2, CFxHandle* par
 	return;
 }
 
+void SV_FX_Sound_SetVolume(float param_1, CFxHandle* pFxHandle)
+{
+	CNewFx* pFx;
+	int fxType;
+	uint fxId;
+	CFxNewSound* pFxSound;
+	CSound* pSound;
+
+	pFx = pFxHandle->pFx;
+	if (((pFx == (CNewFx*)0x0) || (pFxHandle->id == 0)) || (pFxHandle->id != pFx->id)) {
+		fxType = 7;
+	}
+	else {
+		fxType = pFx->GetType();
+	}
+	if (fxType == 4) {
+		pFxSound = static_cast<CFxNewSound*>(pFxHandle->pFx);
+		fxId = pFxHandle->id & 0x7fffffff;
+		if (((pFxSound == (CFxNewSound*)0x0) || (fxId == 0)) || (fxId != pFxSound->id)) {
+			pFxSound = (CFxNewSound*)0x0;
+		}
+
+		pSound = (pFxSound->soundInstance).pSound;
+		if (pSound != (CSound*)0x0) {
+			pSound->SetVolume(param_1, (pFxSound->soundInstance).soundId);
+		}
+	}
+
+	return;
+}
+
 CFxManager::CFxManager()
 {
 	CFxManager* local_a0_lo_24;

@@ -7,7 +7,7 @@
 #include "edVideo/VideoD.h"
 #include "MathOps.h"
 
-edSoundConfig soundConfig;
+edSoundConfig soundConfig = { 0, 0, 1, 0, 0 };
 
 edSoundConfig* edSoundGetConfig(void)
 {

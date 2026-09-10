@@ -417,8 +417,7 @@ void edAnmMacroAnimator::Animate()
 			}
 
 			if ((0.0f < fVar8) && (fVar8 < 1.0f)) {
-				IMPLEMENTATION_GUARD(
-				edAnmStage::BlendDefaultRTSWithDestWRTS(1.0, &TheAnimStage, 1);)
+				TheAnimStage.BlendDefaultRTSWithDestWRTS(1.0f, 1);
 			}
 			this->flags = this->flags | 0x80000000;
 			this->flags = this->flags | 0x40000000;

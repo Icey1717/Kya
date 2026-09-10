@@ -1494,6 +1494,7 @@ void MainInit(int argc,char **argv)
 		soundConfig->nbVoices = musicConfig->nbVoices;
 		soundConfig->field_0x10 = nbVoices - 1;
 		soundConfig->nbMaxInstances = 0x80;
+
 		if (gVideoConfig.omode == SCE_GS_PAL) {
 			soundConfig->field_0x14 = 0x32;
 		}

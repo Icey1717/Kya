@@ -72,6 +72,7 @@ struct edAnmStage
 	void AnimBlendToWRTS(float param_1);
 	void PreviousPostureToWRTS(float param_1);
 	void WRTSToPreviousPosture();
+	void BlendDefaultRTSWithDestWRTS(float param_1, int param_3);
 
 };
 

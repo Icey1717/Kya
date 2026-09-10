@@ -349,9 +349,9 @@ TEST_F(EdenAudioSamples, GameCallbackUsesFullIdAndExactCount)
 	int called = 0;
 	// pOwner is callback data in the original callback contract.
 	actorInstance.pOwner = reinterpret_cast<CActorSound*>(&called);
-	actorInstance.pFinishCallback = STORE_POINTER(reinterpret_cast<void*>(+[](CSoundInstance*, CActorSound* owner) {
+	actorInstance.pFinishCallback = [](CSoundInstance*, void* owner) {
 		++*reinterpret_cast<int*>(owner);
-	}));
+	};
 	actorInstance.soundId = edSoundSamplePlay(1, &sample);
 	edSoundInstanceSetUserData(actorInstance.soundId, &actorInstance);
 	edSoundGlobalParams.finishedInstancesCallback = CAudioManager_SoundFinishedInstancesCallback;
@@ -362,7 +362,6 @@ TEST_F(EdenAudioSamples, GameCallbackUsesFullIdAndExactCount)
 	EXPECT_EQ(called, 1);
 	edSoundFlush();
 	EXPECT_EQ(called, 1);
-	RELEASE_POINTER(actorInstance.pFinishCallback);
 }
 
 TEST_F(EdenAudioSamples, ActorSoundStartUsesSampleOverrideAndReplacesPlayback)

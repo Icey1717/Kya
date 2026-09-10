@@ -893,13 +893,12 @@ void CActorWind::BehaviourWind_Manage()
 			pFxWind = pFxWind + 1;
 		}
 
-		IMPLEMENTATION_GUARD_AUDIO(
 		if ((this->aFxWind != (CFxWind*)0x0) && (this->pSoundWind != (CSoundWind*)0x0)) {
 			pFxWind = this->aFxWind + this->nbFxWind;
 			while (bVar3 = this->aFxWind < pFxWind, pFxWind = pFxWind + -1, bVar3) {
 				this->pSoundWind->Play(this, pFxWind);
 			}
-		})
+		}
 
 		if (2.2f <= CScene::_pinstance->field_0x1c) {
 			this->field_0x1d0.pStreamEventCamera->Manage(this);
@@ -1453,13 +1452,6 @@ void CBehaviourWind::InitState(int newState)
 }
 
 CFxEmitterPool* gpWIND_PartPool = (CFxEmitterPool*)0x0;
-
-CFxWind::CFxWind()
-{
-	this->field_0x390 = -1.0f;
-	//*(undefined4*)&this->field_0x398 = 0;
-	//*(undefined*)&this->field_0x39c = 0;
-}
 
 CFxWind::~CFxWind()
 {
@@ -3713,6 +3705,14 @@ LAB_0020d2a0:
 	return;
 }
 
+edCSound3DPrim::edCSound3DPrim()
+{
+	this->field_0x0 = 6;
+	this->field_0x4 = (edF32MATRIX4*)0x0;
+
+	return;
+}
+
 void edCSound3DPrim::Init(int param_2, edF32MATRIX4* param_3)
 {
 	int iVar1;
@@ -3746,6 +3746,121 @@ void edCSound3DPrim::Init(int param_2, edF32MATRIX4* param_3)
 
 	fVar3 = edF32Vector4DotProductHard(&this->field_0x4->rowX, &this->field_0x4->rowX);
 	this->field_0x8 = fVar3;
+
+	return;
+}
+
+void edCSound3DPrim::ComputeResultingPosition(edsound_3d_data* param_2, float* param_3, edF32VECTOR4* param_4)
+{
+	int iVar1;
+	edF32MATRIX4* peVar2;
+	edF32VECTOR4* v1;
+	float fVar3;
+	float fVar4;
+	float puVar5;
+	float puVar6;
+	float puVar7;
+	float t;
+	edF32VECTOR4 local_a0;
+	edF32VECTOR4 eStack144;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	float local_10;
+	float local_c;
+	float local_8;
+
+	iVar1 = this->field_0x0;
+	if (iVar1 == 5) {
+		peVar2 = this->field_0x4;
+		param_2->position = peVar2->rowT.xyz;
+		*param_3 = this->field_0x8;
+	}
+	else {
+		if ((iVar1 == 4) || (iVar1 == 3)) {
+			peVar2 = this->field_0x4;
+			v1 = &peVar2->rowY;
+			edF32Vector4SubHard(&eStack144, param_4, &peVar2->rowT);
+			fVar3 = edF32Vector4DotProductHard(&eStack144, v1);
+			puVar5 = 0.5f;
+			fVar3 = fVar3 / this->field_0xc;
+			*param_3 = this->field_0x8;
+			if (fabsf(fVar3) <= 0.5f) {
+				edF32Vector4ScaleHard(fVar3, &local_a0, v1);
+				param_2->position = local_a0.xyz + this->field_0x4->rowT.xyz;
+				local_10 = param_4->x - (param_2->position).x;
+				local_c = param_4->y - (param_2->position).y;
+				local_8 = param_4->z - (param_2->position).z;
+				if (local_8 * local_8 + local_10 * local_10 + local_c * local_c < *param_3) {
+					edF32Vector4SubHard(&eStack144, &eStack144, &local_a0);
+					fVar3 = edF32Vector4DotProductHard(&eStack144, &eStack144);
+					*param_3 = fVar3;
+				}
+			}
+			else {
+				if (fVar3 <= 0.0f) {
+					puVar5 = -0.5f;
+				}
+				(param_2->position).x = v1->x * puVar5;
+				(param_2->position).y = peVar2->bb * puVar5;
+				(param_2->position).z = peVar2->bc * puVar5;
+				param_2->position = param_2->position + this->field_0x4->rowT.xyz;
+			}
+		}
+		else {
+			if (iVar1 == 2) {
+				peVar2 = this->field_0x4;
+				local_20 = peVar2->rowX;
+				peVar2 = this->field_0x4;
+				local_30 = peVar2->rowY;
+				peVar2 = this->field_0x4;
+				local_40 = peVar2->rowZ;
+				edF32Vector4SubHard(&eStack80, param_4, &this->field_0x4->rowT);
+				fVar3 = edF32Vector4DotProductHard(&local_20, &eStack80);
+				local_60.x = fVar3 / (this->field_0x8 * this->field_0x8);
+				fVar3 = edF32Vector4DotProductHard(&local_30, &eStack80);
+				local_60.y = fVar3 / (this->field_0xc * this->field_0xc);
+				fVar3 = edF32Vector4DotProductHard(&local_40, &eStack80);
+				local_60.z = fVar3 / (this->field_0x10 * this->field_0x10);
+				peVar2 = this->field_0x4;
+				param_2->position = peVar2->rowT.xyz;
+				if (((0.5f < fabsf(local_60.x)) || (0.5f < fabsf(local_60.y))) || (0.5f < fabsf(local_60.z))) {
+					local_80 = gF32Vector4Zero;
+					puVar6 = 0.5f;
+					if ((local_60.x <= 0.5f) && (puVar6 = -0.5f, -0.5f <= local_60.x)) {
+						puVar6 = local_60.x;
+					}
+					edF32Vector4ScaleHard(puVar6, &eStack112, &local_20);
+					edF32Vector4AddHard(&local_80, &local_80, &eStack112);
+					puVar7 = 0.5f;
+					if ((local_60.y <= 0.5f) && (puVar7 = -0.5f, -0.5f <= local_60.y)) {
+						puVar7 = local_60.y;
+					}
+					edF32Vector4ScaleHard(puVar7, &eStack112, &local_30);
+					edF32Vector4AddHard(&local_80, &local_80, &eStack112);
+					t = 0.5f;
+					if ((local_60.z <= 0.5f) && (t = -0.5f, -0.5f <= local_60.z)) {
+						t = local_60.z;
+					}
+					edF32Vector4ScaleHard(t, &eStack112, &local_40);
+					edF32Vector4AddHard(&local_80, &local_80, &eStack112);
+					fVar3 = edF32Vector4DotProductHard(&local_80, &local_80);
+					*param_3 = fVar3;
+				}
+				else {
+					local_60.x = local_60.x * this->field_0x8;
+					local_60.y = local_60.y * this->field_0xc;
+					local_60.z = local_60.z * this->field_0x10;
+					fVar3 = edF32Vector4DotProductHard(&local_60, &local_60);
+					*param_3 = fVar3;
+				}
+			}
+		}
+	}
 
 	return;
 }

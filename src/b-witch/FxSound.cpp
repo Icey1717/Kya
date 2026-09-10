@@ -28,7 +28,7 @@ void CFxSoundScenaricData::Create(ByteCode* pByteCode)
 
 void CFxSoundScenaricData::Term()
 {
-	IMPLEMENTATION_GUARD_AUDIO();
+	return;
 }
 
 CFxNewSound::CFxNewSound()
@@ -131,7 +131,7 @@ void CFxNewSound::Start(float param_1, float param_2)
 				(this->soundInstance).field_0x20 = FVar4;
 			}
 
-			uVar6 = pCVar8->Play(this->soundInstance.soundId, this->soundInstance.field_0x20, pCVar9, &this->soundInstance, (uint*)0x0);
+			uVar6 = pCVar8->Play(this->soundInstance.soundId, this->soundInstance.field_0x20, pCVar9, &this->soundInstance, (uint*)0x0, &this->soundInstance.soundId);
 			(this->soundInstance).soundId = uVar6;
 		}
 
@@ -208,15 +208,14 @@ int CFxNewSound::GetType()
 	return FX_TYPE_SOUND;
 }
 
-void CFxNewSound::SetTimeScaler(float)
+void CFxNewSound::SetTimeScaler(float param_1)
 {
 	CSound* pSound;
 
-	IMPLEMENTATION_GUARD_AUDIO(
-	pSound = (this->soundInstance).pSoundStruct;
+	pSound = (this->soundInstance).pSound;
 	if (pSound != (CSound*)0x0) {
-		CSound::SetFrequency(param_1, pSound, (this->soundInstance).soundId);
-	})
+		pSound->SetFrequency(param_1, (this->soundInstance).soundId);
+	}
 
 	return;
 }

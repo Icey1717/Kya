@@ -309,7 +309,7 @@ bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2)
 
 	if ((pInstance->flags & 1) == 0) {
 		if (param_2 != 0) {
-			pedSoundFinishedInstances[edSoundNbFinishedInstances].pSoundInstance = (ed_sound_instance*)pInstance->fullSoundInstanceId;
+			pedSoundFinishedInstances[edSoundNbFinishedInstances].soundInstanceId = pInstance->fullSoundInstanceId;
 			pedSoundFinishedInstances[edSoundNbFinishedInstances].field_0x4 = pInstance->field_0xa0;
 			edSoundNbFinishedInstances = edSoundNbFinishedInstances + 1;
 		}

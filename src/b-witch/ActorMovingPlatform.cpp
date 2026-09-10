@@ -2542,7 +2542,7 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 				})
 			}
 
-			curEntryIndex = curEntryIndex + 1;
+			curEntryIndex = curEntryIndex + 1;;
 		} while (curEntryIndex < nbEntries);
 	}
 

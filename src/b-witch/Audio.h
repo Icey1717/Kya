@@ -11,6 +11,8 @@ class CActor;
 class CAudioManager;
 class edCBankBufferEntry;
 class CSoundWind;
+class CSoundInstance;
+class CActorSound;
 
 struct edCEventMessage;
 
@@ -26,7 +28,7 @@ class CSoundBase
 public:
 	CSoundBase();
 
-	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* param_5, uint* param_6) = 0;
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId) = 0;
 	virtual uint Stop(uint instanceId);
 	virtual bool IsLooping() = 0;
 
@@ -46,7 +48,7 @@ public:
 class CSound : public CSoundBase
 {
 public:
-	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6);
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId);
 	virtual bool IsLooping();
 
 	void Create(ByteCode* pByteCode);
@@ -55,6 +57,7 @@ public:
 	void InitializeFromSample(float param_1, float param_2, float param_3, float param_4, float param_5, float priority, ed_sound_sample* soundInfoObj, uint param_9);
 
 	void SetVolume(float param_1, uint soundInstanceId);
+	void SetFrequency(float frequency, uint soundInstanceId);
 
 	uint field_0x84;
 	uint field_0x88;
@@ -63,7 +66,7 @@ public:
 class CSoundSample : public CSound
 {
 public:
-	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId);
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId);
 	virtual bool IsLooping() { return IsLooping(-1); }
 	virtual bool IsLooping(int soundInstanceId);
 };
@@ -71,7 +74,7 @@ public:
 struct CSoundStream : public CSoundSample
 {
 public:
-	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6) { IMPLEMENTATION_GUARD(); }
+	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6, uint* pExistingSoundId);
 	virtual uint Stop(uint instanceId);
 
 	undefined4 field_0x8c;
@@ -99,10 +102,36 @@ struct SOUND_STREAM_REF
 
 class CWayPoint;
 
+struct AmbianceUserData
+{
+	CSound* pSound;
+};
+
+// Finish callback.
+typedef void (*CActorSoundFinishCallback)(CSoundInstance* pInstance, void* pUserData);
+
+class CSoundInstance
+{
+public:
+	CSoundInstance();
+	bool IsAlive();
+	void Set3DData(edsound_3d_data* pNode, long param_3);
+
+	CSoundInstance* pPrev;
+	CSoundInstance* pNext;
+	uint flags;
+	CSound* pSound;
+	uint soundId;
+	edsound_3d_data* pSound3dData;
+	CActorSoundFinishCallback pFinishCallback;
+	CActorSound* pOwner;
+	uint field_0x20;
+	undefined4 field_0x24;
+};
+
 class CSoundAmbiance
 {
 public:
-	CSoundAmbiance();
 	void Init();
 
 	SOUND_SAMPLE_REF field_0x0;
@@ -113,13 +142,7 @@ public:
 	S_STREAM_REF<CWayPoint> wayPointRef;
 	edsound_3d_data soundPosData;
 
-	undefined field_0x40;
-
-	CSound* field_0x4c;
-	uint field_0x50;
-	edsound_3d_data* field_0x54;
-
-	uint field_0x60;
+	CSoundInstance soundInstance;
 	float field_0x68;
 	float field_0x6c;
 };
@@ -213,9 +236,9 @@ struct PendingSoundPlay
 	CSoundStream* pSoundStream;
 	float priority;
 	edsound_3d_data* p3dData;
-	int* field_0x10;
-	uint* field_0x14;
-	uint* field_0x18;
+	void* pUserData;
+	uint* pOutId;
+	uint* pExistingSoundId;
 };
 
 struct SoundSampleEntry

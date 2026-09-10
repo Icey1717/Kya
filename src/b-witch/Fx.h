@@ -612,5 +612,6 @@ public:
 void SV_FX_Start(CFxHandleExt* pFxHandle);
 void SV_FX_UpdateEffectorPosition(CFxHandle* pFxHandle, char* szName, edF32VECTOR4* pPosition);
 void SV_FX_001a0600(CFxHandleExt* param_1, edF32MATRIX4* param_2, CFxHandle* param_3);
+void SV_FX_Sound_SetVolume(float param_1, CFxHandle* pFxHandle);
 
 #endif // FX_MANAGER_H

@@ -92,7 +92,7 @@ struct ed_sound_instance
 
 struct ed_sound_instance_finished
 {
-	ed_sound_instance* pSoundInstance;
+	uint soundInstanceId;
 	void* field_0x4;
 
 };

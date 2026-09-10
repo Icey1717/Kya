@@ -5973,7 +5973,7 @@ void CActorSound::Manage(CActor* pActor)
 				this->flags = this->flags & 0xfffffffe;
 				for (pCVar1 = this->field_0x30; pCVar1 != (CSoundInstance*)0x0; pCVar1 = pCVar1->pNext) {
 					if ((NoAudio == 0) && (pCVar2 = pCVar1->pSound, pCVar2 != (CSound*)0x0)) {
-						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->pSound3dData, (void*)0x0, &pCVar1->soundId);
+						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->pSound3dData, pCVar1, (uint*)0x0, &pCVar1->soundId);
 						pCVar1->soundId = uVar5;
 					}
 				}
@@ -6045,7 +6045,7 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 				}
 
 				pSoundInstance->field_0x20 = 0xffffffff;
-				pSoundInstance->soundId = pSound->Play(pSoundInstance->soundId, pSoundInstance->field_0x20, p3dData, pSoundInstance, (uint*)0x0);
+				pSoundInstance->soundId = pSound->Play(pSoundInstance->soundId, pSoundInstance->field_0x20, p3dData, pSoundInstance, (uint*)0x0, &pSoundInstance->soundId);
 			}
 		}
 		else {
@@ -6108,6 +6108,32 @@ void CActorSound::SoundStop(int index)
 	return;
 }
 
+void CActorSound::FadeTo(float param_1, float param_2, float param_3, int index)
+{
+	CSound* pSound;
+
+	pSound = this->aSoundInstances[index].pSound;
+
+	if (pSound != (CSound*)0x0) {
+		pSound->FadeTo(param_1, param_2, param_3, this->aSoundInstances[index].soundId);
+	}
+
+	return;
+}
+
+void CActorSound::SetVolume(float volume, int index)
+{
+	CSound* pSound;
+
+	pSound = this->aSoundInstances[index].pSound;
+
+	if (pSound != (CSound*)0x0) {
+		pSound->SetVolume(volume, this->aSoundInstances[index].soundId);
+	}
+
+	return;
+}
+
 CActorSoundNode::CActorSoundNode()
 {
 	this->node.flags = 0;
@@ -6116,45 +6142,6 @@ CActorSoundNode::CActorSoundNode()
 	this->node.field_0x30 = (CSoundInstance*)0x0;
 	this->node.aSoundInstances = (CSoundInstance*)0x0;
 	this->pNext = (CSimpleLinkedNode<CActorSound> *)0x0;
-
-	return;
-}
-
-CSoundInstance::CSoundInstance()
-{
-	this->pPrev = (CSoundInstance*)0x0;
-	this->pNext = (CSoundInstance*)0x0;
-	this->flags = 0;
-	this->pSound = (CSound*)0x0;
-	this->soundId = 0;
-	this->pSound3dData = (edsound_3d_data*)0x0;
-	this->pFinishCallback = 0;
-	this->pOwner = (CActorSound*)0x0;
-	this->field_0x20 = 0xffffffff;
-	this->field_0x24 = 0;
-
-	return;
-}
-
-bool CSoundInstance::IsAlive()
-{
-	bool ret;
-
-	ret = false;
-	if (this->soundId != 0) {
-		ret = edSoundInstanceIsAlive(this->soundId);
-	}
-
-	return ret;
-}
-
-void CSoundInstance::Set3DData(edsound_3d_data* pNode, long param_3)
-{
-	this->pSound3dData = pNode;
-
-	if (param_3 != 0) {
-		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0, 0);
-	}
 
 	return;
 }

@@ -181,7 +181,7 @@ namespace Debug::Actor::Wind
 			ImGui::Text("Fake Plane Patch ID: 0x%x", pFxWind->fakePlanePatchId);
 			ImGui::Text("Sound Actor: %p", pFxWind->field_0x374);
 
-			ImGui::Text("Field 0x390: %.2f", pFxWind->field_0x390);
+			ImGui::Text("Field 0x390: %.2f", pFxWind->field_0x378.field_0x20);
 
 			ShowFxWindSolidInfo(&pFxWind->windSolid);
 

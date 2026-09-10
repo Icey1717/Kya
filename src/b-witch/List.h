@@ -85,6 +85,49 @@ public:
 		return;
 	}
 
+	void InsertAfter(CDoubleLinkedNode<NodeType>* param_2, CDoubleLinkedNode<NodeType>* param_3)
+	{
+		if (param_3 == (CDoubleLinkedNode<NodeType> *)0x0) {
+			param_2->pNext = (CDoubleLinkedNode<NodeType> *)0x0;
+			param_2->pPrev = this->pHead;
+
+			if (this->pHead == (CDoubleLinkedNode<NodeType> *)0x0) {
+				this->pTail = param_2;
+			}
+			else {
+				this->pHead->pNext = param_2;
+			}
+
+			this->pHead = param_2;
+		}
+		else {
+			if (param_3 == this->pTail) {
+				param_2->pNext = this->pTail;
+				param_2->pPrev = (CDoubleLinkedNode<NodeType> *)0x0;
+				if (this->pTail == (CDoubleLinkedNode<NodeType> *)0x0) {
+					this->pHead = param_2;
+				}
+				else {
+					this->pTail->pPrev = param_2;
+				}
+
+				this->pTail = param_2;
+			}
+			else {
+				if (param_3->pPrev != (CDoubleLinkedNode<NodeType> *)0x0) {
+					param_3->pPrev->pNext = param_2;
+				}
+
+				param_2->pPrev = param_3->pPrev;
+				param_3->pPrev = param_2;
+			}
+		}
+
+		return;
+	}
+
+
+
 	void InsertAfterQueue(CDoubleLinkedNode<NodeType>* pNode)
 	{
 		pNode->pNext = this->pTail;

@@ -462,6 +462,8 @@ public:
 	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam);
 	void SoundStop(int index);
 	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void FadeTo(float param_1, float param_2, float param_3, int index);
+	void SetVolume(float volume, int index);
 
 	void ResumeSounds();
 	void PauseSounds();
@@ -484,28 +486,6 @@ class CActorSoundNode : public CSimpleLinkedNode<CActorSound>
 {
 public:
 	CActorSoundNode();
-};
-
-// Finish callback.
-typedef void (*CActorSoundFinishCallback)(CSoundInstance* pInstance, void* pUserData);
-
-class CSoundInstance
-{
-public:
-	CSoundInstance();
-	bool IsAlive();
-	void Set3DData(edsound_3d_data* pNode, long param_3);
-
-	CSoundInstance* pPrev;
-	CSoundInstance* pNext;
-	uint flags;
-	CSound* pSound;
-	uint soundId;
-	edsound_3d_data* pSound3dData;
-	CActorSoundFinishCallback pFinishCallback;
-	CActorSound* pOwner;
-	uint field_0x20;
-	undefined4 field_0x24;
 };
 
 

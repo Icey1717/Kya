@@ -98,7 +98,7 @@ struct edCSoundGlobalParams
 	edF32VECTOR3 field_0x3c;
 	edF32VECTOR3 field_0x48;
 	AUDIO_MODE outputMode;
-	undefined4 field_0x58;
+	int field_0x58;
 	float field_0x5c;
 	float field_0x60;
 	float field_0x64;

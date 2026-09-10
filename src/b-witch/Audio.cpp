@@ -1092,7 +1092,7 @@ uint StopQueuedSampleLoad(CDoubleLinkedNode<SoundSampleEntry>* pEntry, uint soun
 {
 	CDoubleLinkedNode<PendingSoundPlay>* pNode;
 
-	for (pNode = (pEntry->node).field_0x6c.pHead; (pNode != (CDoubleLinkedNode<PendingSoundPlay> *)0x0 && ((soundInstanceId != *(pNode->node).field_0x18 || ((pNode->node).pSoundStream != pSoundStream))));
+	for (pNode = (pEntry->node).field_0x6c.pHead; (pNode != (CDoubleLinkedNode<PendingSoundPlay> *)0x0 && ((soundInstanceId != *(pNode->node).pExistingSoundId || ((pNode->node).pSoundStream != pSoundStream))));
 		pNode = pNode->pPrev) {
 	}
 
@@ -1123,7 +1123,7 @@ void FreeSamples_00189150(void)
 			pCVar3 = (pCVar2->node).pSoundStream;
 			pPVar6 = &pCVar2->node;
 			pCVar2 = pCVar2->pPrev;
-			pCVar3->Stop(*pPVar6->field_0x18);
+			pCVar3->Stop(*pPVar6->pExistingSoundId);
 		}
 		pCVar4 = pCVar4->pPrev;
 		bVar1 = pCVar4 != (CDoubleLinkedNode<SoundSampleEntry> *)0x0;
@@ -1590,9 +1590,9 @@ void CAudioManager::Level_Reset()
 		if (uVar2 != 0) {
 			do {
 				pSoundAmbiance = pMusicAmbiance->aSoundAmbiance + uVar14;
-				if ((NoAudio == 0) && (pCVar3 = pSoundAmbiance->field_0x4c, pCVar3 != (CSoundSample*)0x0)) {
-					uVar8 = pCVar3->Stop(pSoundAmbiance->field_0x50);
-					pSoundAmbiance->field_0x50 = uVar8;
+				if ((NoAudio == 0) && (pCVar3 = pSoundAmbiance->soundInstance.pSound, pCVar3 != (CSoundSample*)0x0)) {
+					uVar8 = pCVar3->Stop(pSoundAmbiance->soundInstance.soundId);
+					pSoundAmbiance->soundInstance.soundId = uVar8;
 				}
 				uVar14 = uVar14 + 1;
 				pSoundAmbiance->field_0x68 = pSoundAmbiance->field_0x6c;
@@ -2304,7 +2304,7 @@ void UnloadSoundSample(CDoubleLinkedNode<SoundSampleEntry>* pNode)
 		bVar3 = true;
 		while (pCVar6 != (CDoubleLinkedNode<PendingSoundPlay>*)0x0) {
 			pCVar1 = (pCVar6->node).pSoundStream;
-			piVar2 = (pCVar6->node).field_0x18;
+			piVar2 = (pCVar6->node).pExistingSoundId;
 			pCVar6 = pCVar6->pPrev;
 			iVar5 = pCVar1->Stop(*piVar2);
 			*piVar2 = iVar5;
@@ -2927,26 +2927,6 @@ bool SoundSampleEntry::LoadStreamCh()
 	return gSoundSampleFileData_00448e68 != (void*)0x0;
 }
 
-CSoundAmbiance::CSoundAmbiance()
-{
-	(this->soundPosData).field_0x18 = -1.0f;
-	(this->soundPosData).field_0x20 = 0.0f;
-	(this->soundPosData).field_0x24 = 0;
-
-	//*(undefined4*)&this->field_0x40 = 0;
-	//*(undefined4*)&this->field_0x44 = 0;
-	//*(undefined4*)&this->field_0x48 = 0;
-	this->field_0x4c = (CSoundSample*)0x0;
-	this->field_0x50 = 0;
-	this->field_0x54 = (edsound_3d_data*)0x0;
-	//*(undefined4*)&this->field_0x58 = 0;
-	//*(undefined4*)&this->field_0x5c = 0;
-	this->field_0x60 = 0xffffffff;
-	//*(undefined4*)&this->field_0x64 = 0;
-
-	return;
-}
-
 void CSoundAmbiance::Init()
 {
 	CWayPoint* pCVar1;
@@ -2968,7 +2948,7 @@ void CSoundAmbiance::Init()
 	if (pCVar3 == (void*)0x0) {
 		pCVar3 = LOAD_POINTER_CAST(CSoundStream*, this->field_0x8.pStream);
 	}
-	this->field_0x4c = pCVar3;
+	this->soundInstance.pSound = pCVar3;
 
 	this->wayPointRef.Init();
 	pCVar1 = (this->wayPointRef).Get();
@@ -3066,7 +3046,7 @@ uint CSoundBase::PlayAlt(float param_1, float param_2, float param_3, uint sound
 		bVar1 = edSoundInstanceIsAlive(soundId);
 		puVar3 = param_2;
 		if (bVar1 == false) {
-			soundId = Play(0, param_6, (edsound_3d_data*)0x0, (void*)0x0, (uint*)0x0);
+			soundId = Play(0, param_6, (edsound_3d_data*)0x0, (void*)0x0, (uint*)0x0, (uint*)0x0);
 			param_1 = 0.0f;
 			puVar3 = param_2;
 		}
@@ -3186,7 +3166,7 @@ void CSound::Create(ByteCode* pByteCode)
 	return;
 }
 
-uint CSound::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* param_6)
+uint CSound::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId)
 {
 	ed_sound_sample* p_Var1;
 	uint uVar2;
@@ -3227,7 +3207,7 @@ uint CSound::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, 
 			p3dData->field_0x18 = fVar4;
 		}
 
-		edSoundInstanceSet3DData(soundInstanceId, p3dData, param_6, this->field_0x80);
+		edSoundInstanceSet3DData(soundInstanceId, p3dData, pOutId, this->field_0x80);
 
 		fVar4 = (this->edSoundSample).loopEndOffset;
 		if (this->field_0x6c != 0.0f) {
@@ -3346,7 +3326,16 @@ void CSound::SetVolume(float param_1, uint soundInstanceId)
 	return;
 }
 
-uint CSoundSample::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId)
+void CSound::SetFrequency(float frequency, uint soundInstanceId)
+{
+	if (NoAudio == 0) {
+		edSoundInstanceSetFrequency(frequency * this->field_0x70, soundInstanceId);
+	}
+
+	return;
+}
+
+uint CSoundSample::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId)
 {
 	int iVar1;
 	uint newSoundID;
@@ -3513,9 +3502,9 @@ void CAmbiance::Play(float param_1)
 			do {
 				iVar8 = this->aSoundAmbiance + uVar7;
 				if (this->field_0x1c == 0.0f) {
-					if ((NoAudio == 0) && (iVar8->field_0x4c != (CSoundSample*)0x0)) {
-						uVar3 = iVar8->field_0x4c->Stop(iVar8->field_0x50);
-						iVar8->field_0x50 = uVar3;
+					if ((NoAudio == 0) && (iVar8->soundInstance.pSound != (CSoundSample*)0x0)) {
+						uVar3 = iVar8->soundInstance.pSound->Stop(iVar8->soundInstance.soundId);
+						iVar8->soundInstance.soundId = uVar3;
 					}
 
 					iVar8->field_0x68 = iVar8->field_0x6c;
@@ -3524,42 +3513,42 @@ void CAmbiance::Play(float param_1)
 					if (iVar8->field_0x68 != -1.0f) {
 						if (iVar8->field_0x6c <= iVar8->field_0x68) {
 							cVar2 = false;
-							if (iVar8->field_0x50 != 0) {
-								cVar2 = edSoundInstanceIsAlive(iVar8->field_0x50);
+							if (iVar8->soundInstance.soundId != 0) {
+								cVar2 = edSoundInstanceIsAlive(iVar8->soundInstance.soundId);
 							}
 
 							if (cVar2 == false) {
 								if ((iVar8->wayPointRef).Get() == (CWayPoint*)0x0) {
 									if (NoAudio == 0) {
-										iVar8->field_0x54 = (edsound_3d_data*)0x0;
-										pCVar5 = iVar8->field_0x4c;
+										iVar8->soundInstance.pSound3dData = (edsound_3d_data*)0x0;
+										pCVar5 = iVar8->soundInstance.pSound;
 										if (pCVar5 != (CSound*)0x0) {
-											uVar3 = pCVar5->Play(iVar8->field_0x50, iVar8->field_0x60, (edsound_3d_data*)0x0, &iVar8->field_0x40, (uint*)0x0);
-											iVar8->field_0x50 = uVar3;
+											uVar3 = pCVar5->Play(iVar8->soundInstance.soundId, iVar8->soundInstance.field_0x20, (edsound_3d_data*)0x0, &iVar8->soundInstance, (uint*)0x0, (uint*)0x0);
+											iVar8->soundInstance.soundId = uVar3;
 										}
 									}
 								}
 								else {
-									pCVar5 = iVar8->field_0x4c;
-									if ((NoAudio == 0) && ((iVar8->field_0x54 = &iVar8->soundPosData, pCVar5 != (CSound*)0x0 || (iVar8->field_0x4c != (CSound*)0x0)))) {
+									pCVar5 = iVar8->soundInstance.pSound;
+									if ((NoAudio == 0) && ((iVar8->soundInstance.pSound3dData = &iVar8->soundPosData, pCVar5 != (CSound*)0x0 || (iVar8->soundInstance.pSound != (CSound*)0x0)))) {
 										if (pCVar5 == (CSound*)0x0) {
-											pCVar5 = iVar8->field_0x4c;
+											pCVar5 = iVar8->soundInstance.pSound;
 										}
 										else {
-											iVar8->field_0x4c = pCVar5;
+											iVar8->soundInstance.pSound = pCVar5;
 										}
 
-										uVar3 = pCVar5->Play(iVar8->field_0x50, iVar8->field_0x60, &iVar8->soundPosData, &iVar8->field_0x40, (uint*)0x0);
-										iVar8->field_0x50 = uVar3;
+										uVar3 = pCVar5->Play(iVar8->soundInstance.soundId, iVar8->soundInstance.field_0x20, &iVar8->soundPosData, &iVar8->soundInstance, (uint*)0x0, &iVar8->soundInstance.soundId);
+										iVar8->soundInstance.soundId = uVar3;
 									}
 								}
 							}
 
-							if (iVar8->field_0x4c == (CSoundSample*)0x0) {
+							if (iVar8->soundInstance.pSound == (CSoundSample*)0x0) {
 								lVar4 = 0;
 							}
 							else {
-								lVar4 = iVar8->field_0x4c->IsLooping();
+								lVar4 = iVar8->soundInstance.pSound->IsLooping();
 							}
 
 							if ((lVar4 == 0) && (iVar8->field_0xc != 0.0f)) {
@@ -3578,12 +3567,12 @@ void CAmbiance::Play(float param_1)
 					}
 
 					cVar3 = false;
-					if (iVar8->field_0x50 != 0) {
-						cVar3 = edSoundInstanceIsAlive(iVar8->field_0x50);
+					if (iVar8->soundInstance.soundId != 0) {
+						cVar3 = edSoundInstanceIsAlive(iVar8->soundInstance.soundId);
 					}
 
-					if (((cVar3 != false) && (iVar8->field_0x4c != (CSoundSample*)0x0)) && (NoAudio == 0)) {
-						edSoundInstanceSetVolume(fVar9 * iVar8->field_0x4c->edSoundSample.loopEndOffset, iVar8->field_0x50);
+					if (((cVar3 != false) && (iVar8->soundInstance.pSound != (CSoundSample*)0x0)) && (NoAudio == 0)) {
+						edSoundInstanceSetVolume(fVar9 * iVar8->soundInstance.pSound->edSoundSample.loopEndOffset, iVar8->soundInstance.soundId);
 					}
 				}
 
@@ -3643,6 +3632,164 @@ void CMusicAmbiance::Add(ByteCode* pByteCode)
 	return;
 }
 
+uint CSoundStream::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId)
+{
+	CDoubleLinkedNode<PendingSoundPlay>* pCVar1;
+	int iVar2;
+	CDoubleLinkedNode<SoundSampleEntry>* pCVar3;
+	CDoubleLinkedNode<PendingSoundPlay>* pPendingSoundNode;
+	uint newSoundId;
+	SoundEntry* pSVar5;
+	SoundEntry* pSVar6;
+	SoundEntry* pSVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	CDoubleLinkedNode<SoundSampleEntry>* pSoundSampleEntryNode;
+
+	if (soundInstanceId != 0) {
+		edSoundInstanceStop(soundInstanceId);
+	}
+
+	newSoundId = this->setupIntFieldA;
+	pSVar6 = (SoundEntry*)0x0;
+	pSVar7 = this->aSoundEntries;
+	pSVar5 = (SoundEntry*)0x0;
+	if (newSoundId != 0) {
+		while (pSVar5 = (SoundEntry*)0x0, newSoundId != 0) {
+			newSoundId = newSoundId - 1;
+			pSVar5 = pSVar7;
+			if (pSVar7->selector == otherId) break;
+			if (pSVar7->selector == 0xffffffff) {
+				pSVar6 = pSVar7;
+			}
+			pSVar7 = pSVar7 + 1;
+		}
+	}
+
+	if (pSVar5 == (SoundEntry*)0x0) {
+		pSoundSampleEntryNode = (CDoubleLinkedNode<SoundSampleEntry> *)pSVar6->pNode;
+	}
+	else {
+		pSoundSampleEntryNode = (CDoubleLinkedNode<SoundSampleEntry> *)pSVar5->pNode;
+	}
+
+	fVar10 = this->priority;
+	pPendingSoundNode = gFreePendingSoundPlays.RemoveHead();
+	(pPendingSoundNode->node).pSoundStream = this;
+	(pPendingSoundNode->node).p3dData = p3dData;
+	(pPendingSoundNode->node).pUserData = pUserData;
+	(pPendingSoundNode->node).pOutId = pOutId;
+	(pPendingSoundNode->node).priority = fVar10;
+	(pPendingSoundNode->node).pExistingSoundId = pExistingSoundId;
+	(pPendingSoundNode->node).pNode = pSoundSampleEntryNode;
+	(pSoundSampleEntryNode->node).field_0x74 = this->field_0x88;
+
+	for (pCVar1 = (pSoundSampleEntryNode->node).field_0x6c.pHead; (pCVar1 != (CDoubleLinkedNode<PendingSoundPlay> *)0x0 && (fVar10 < (pCVar1->node).priority)); pCVar1 = pCVar1->pPrev) {
+	}
+
+	if (pCVar1 == (CDoubleLinkedNode<PendingSoundPlay> *)0x0) {
+		(pSoundSampleEntryNode->node).field_0x6c.InsertAfterQueue(pPendingSoundNode);
+	}
+	else {
+		(pSoundSampleEntryNode->node).field_0x6c.InsertBefore(pPendingSoundNode, pCVar1);
+	}
+
+	(pSoundSampleEntryNode->node).nbCount = (pSoundSampleEntryNode->node).nbCount + 1;
+	iVar2 = (pSoundSampleEntryNode->node).mode;
+	if (iVar2 == 4) {
+		newSoundId = edSoundSamplePlay(fVar10, &(pSoundSampleEntryNode->node).edSoundSample);
+		if (p3dData != (edsound_3d_data*)0x0) {
+			fVar10 = this->field_0x78;
+			p3dData->field_0x1c = fVar10 * fVar10;
+			p3dData->field_0x18 = fVar10;
+		}
+
+		edSoundInstanceSet3DData(newSoundId, p3dData, pOutId, this->field_0x80);
+
+		fVar10 = this->field_0x6c;
+		fVar8 = this->edSoundSample.loopEndOffset;
+		if (fVar10 != 0.0f) {
+			fVar10 = fVar10 * fVar8;
+			fVar9 = fVar8;
+			do {
+				fVar8 = edFRndGauss(fVar9, fVar10);
+			} while (fVar8 < 0.0f);
+		}
+
+		edSoundInstanceSetVolume(fVar8, newSoundId);
+
+		fVar10 = this->field_0x74;
+		fVar8 = this->field_0x70;
+		if (fVar10 != 0.0f) {
+			fVar10 = fVar10 * fVar8;
+			fVar9 = fVar8;
+			do {
+				fVar8 = edFRndGauss(fVar9, fVar10);
+			} while (fVar8 < 0.0f);
+		}
+
+		edSoundInstanceSetFrequency(fVar8, newSoundId);
+		edSoundInstanceSetUserData(newSoundId, pUserData);
+	}
+	else {
+		if (iVar2 == 0) {
+			gFreeSoundSamples.RemoveNode(pSoundSampleEntryNode);
+			pCVar1 = (pSoundSampleEntryNode->node).field_0x6c.pHead;
+			pCVar3 = gQueuedSoundSamples.pHead;
+			if (pCVar1 == (CDoubleLinkedNode<PendingSoundPlay> *)0x0) {
+				fVar10 = 0.0f;
+			}
+			else {
+				fVar10 = (pCVar1->node).priority;
+			}
+
+			for (; pCVar3 != (CDoubleLinkedNode<SoundSampleEntry> *)0x0; pCVar3 = pCVar3->pPrev) {
+				pCVar1 = (pCVar3->node).field_0x6c.pHead;
+				if (pCVar1 == (CDoubleLinkedNode<PendingSoundPlay> *)0x0) {
+					fVar8 = 0.0f;
+				}
+				else {
+					fVar8 = (pCVar1->node).priority;
+				}
+
+				if (fVar8 <= fVar10) break;
+			}
+
+			if (pCVar3 == (CDoubleLinkedNode<SoundSampleEntry> *)0x0) {
+				gQueuedSoundSamples.InsertAfterQueue(pSoundSampleEntryNode);
+			}
+			else {
+				gQueuedSoundSamples.InsertBefore(pSoundSampleEntryNode, pCVar3);
+			}
+
+			(pSoundSampleEntryNode->node).mode = 1;
+		}
+		else {
+			for (pCVar3 = pSoundSampleEntryNode->pNext; pCVar3 != (CDoubleLinkedNode<SoundSampleEntry> *)0x0; pCVar3 = pCVar3->pNext) {
+				pCVar1 = (pCVar3->node).field_0x6c.pHead;
+				if (pCVar1 == (CDoubleLinkedNode<PendingSoundPlay> *)0x0) {
+					fVar8 = 0.0f;
+				}
+				else {
+					fVar8 = (pCVar1->node).priority;
+				}
+
+				if (fVar10 < fVar8) break;
+			}
+
+			if ((pCVar3 != (CDoubleLinkedNode<SoundSampleEntry> *)0x0) && (pCVar3->pPrev != pSoundSampleEntryNode)) {
+				gQueuedSoundSamples.RemoveNode(pSoundSampleEntryNode);
+				gQueuedSoundSamples.InsertAfter(pSoundSampleEntryNode, pCVar3);
+			}
+		}
+
+		newSoundId = 0;
+	}
+
+	return newSoundId;
+}
+
 uint CSoundStream::Stop(uint instanceId)
 {
 	int iVar1;
@@ -3690,4 +3837,44 @@ uint CSoundStream::Stop(uint instanceId)
 	}
 
 	return instanceId;
+}
+
+
+CSoundInstance::CSoundInstance()
+{
+	this->pPrev = (CSoundInstance*)0x0;
+	this->pNext = (CSoundInstance*)0x0;
+	this->flags = 0;
+	this->pSound = (CSound*)0x0;
+	this->soundId = 0;
+	this->pSound3dData = (edsound_3d_data*)0x0;
+	this->pFinishCallback = 0;
+	this->pOwner = (CActorSound*)0x0;
+	this->field_0x20 = 0xffffffff;
+	this->field_0x24 = 0;
+
+	return;
+}
+
+bool CSoundInstance::IsAlive()
+{
+	bool ret;
+
+	ret = false;
+	if (this->soundId != 0) {
+		ret = edSoundInstanceIsAlive(this->soundId);
+	}
+
+	return ret;
+}
+
+void CSoundInstance::Set3DData(edsound_3d_data* pNode, long param_3)
+{
+	this->pSound3dData = pNode;
+
+	if (param_3 != 0) {
+		edSoundInstanceSet3DData(this->soundId, pNode, (uint*)0x0, 0);
+	}
+
+	return;
 }

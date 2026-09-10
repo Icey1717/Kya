@@ -745,15 +745,11 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 LAB_0014a028:
 	if (bVar6) {
 		SV_UpdateValue(0.0f, 1.2f, &this->field_0x13cc);
-		IMPLEMENTATION_GUARD_AUDIO(
-			SV_FX_Sound_SetVolume(this->field_0x13cc, (CFxHandle*)&this->field_0x13c0);)
+		SV_FX_Sound_SetVolume(this->field_0x13cc, &this->field_0x13c0);
 	}
 	else {
-		IMPLEMENTATION_GUARD_AUDIO(
-			SV_UpdateValue(edFCosinus[(int)(fabs((this->timeInAir * 2.5 - 1.570796) * 1303.797) + 0.5)
-				& 0x1fff] * 0.1 + 1.0, (float)&DAT_3f4ccccd, this, &this->field_0x13cc);
-		SV_FX_Sound_SetVolume(this->field_0x13cc, (CFxHandle*)&this->field_0x13c0);
-			)
+		SV_UpdateValue(cosf(this->timeInAir * 2.5f - 1.570796f) * 0.1f + 1.0f, 0.80000001f, &this->field_0x13cc);
+		SV_FX_Sound_SetVolume(this->field_0x13cc, &this->field_0x13c0);
 
 		fVar27 = fabs(this->field_0xa88);
 		if (fVar27 < 19.0f) {
@@ -764,10 +760,6 @@ LAB_0014a028:
 			fVar28 = edFIntervalLERP(fVar27, 19.0f, 27.0f, 1.1f, 1.5f);
 			this->field_0x13d0 = fVar28;
 		}
-
-		IMPLEMENTATION_GUARD_AUDIO(
-			fVar28 = edFCosinus[(int)(fabs((this->timeInAir * 4.0 - 1.570796) * 1303.797) + 0.5) &
-			0x1fff];)
 
 		fVar28 = cosf(this->timeInAir * 4.0f - 1.570796f);
 
@@ -781,11 +773,10 @@ LAB_0014a028:
 		}
 
 		this->field_0x13d0 = this->field_0x13d0 + fVar28;
-		IMPLEMENTATION_GUARD_AUDIO(
-			piVar21 = (int*)this->field_0x13c4;
-		if ((piVar21 != (int*)0x0) && (*(int*)&this->field_0x13c0 != 0)) {
-			(**(code**)(*piVar21 + 0x40))();
-		})
+
+		if (this->field_0x13c0.IsValid()) {
+			this->field_0x13c0.pFx->SetTimeScaler(this->field_0x13d0);
+		}
 	}
 
 	pCameraManager = CCameraManager::_gThis;

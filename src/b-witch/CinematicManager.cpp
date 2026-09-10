@@ -4494,7 +4494,7 @@ bool CBWCinActor::SetSound(float currentKeyframePlayTime, edCinActorInterface::S
 			}
 			(this->soundInstance).field_0x20 = 0xffffffff;
 			/* Spawn a new sound instance */
-			newSoundID = pSound->Play((this->soundInstance).soundId, (this->soundInstance).field_0x20, (edsound_3d_data*)0x0, &this->soundInstance, (uint*)0x0);
+			newSoundID = pSound->Play((this->soundInstance).soundId, (this->soundInstance).field_0x20, (edsound_3d_data*)0x0, &this->soundInstance, (uint*)0x0, &this->soundInstance.soundId);
 			(this->soundInstance).soundId = newSoundID;
 		}
 	}
