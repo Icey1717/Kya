@@ -826,6 +826,32 @@ void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint scenaricDataIndex, FX_MAT
 	return;
 }
 
+bool CFxManager::IsLooped(uint param_2)
+{
+	bool bIsLooped;
+	uint uVar1;
+	uint* puVar2;
+
+	if (param_2 == 0xffffffff) {
+		bIsLooped = false;
+	}
+	else {
+		puVar2 = this->effectCountByType;
+		uVar1 = 0;
+		do {
+			if (param_2 < *puVar2) break;
+
+			uVar1 = uVar1 + 1;
+			param_2 = param_2 - *puVar2;
+			puVar2 = puVar2 + 1;
+		} while (uVar1 < 7);
+
+		bIsLooped = this->aEffectCategory[uVar1]->IsFxLooped(param_2);
+	}
+
+	return bIsLooped;
+}
+
 CNewFx::CNewFx()
 {
 	this->position = gF32Vertex4Zero;

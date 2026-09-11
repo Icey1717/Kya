@@ -50,6 +50,7 @@ class CFxSoundManager : public CFxPoolManager<CFxNewSound, CFxSoundScenaricData>
 {
 public:
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
+	virtual bool IsFxLooped(uint index);
 };
 
 #endif //FX_SOUND_H

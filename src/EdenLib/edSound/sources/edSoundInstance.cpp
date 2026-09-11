@@ -3,6 +3,21 @@
 #include "edMem.h"
 #ifdef PLATFORM_WIN
 #include "edSoundSampleService.h"
+#include "log.h"
+
+extern ed_sound_instance* pedSoundInstanceListTail;
+extern uint edSoundCurrentInstancesNumber;
+
+static void LogSoundInstance(const char* event, ed_sound_instance* pInstance)
+{
+	AUDIO_INSTANCE_LOG(LogLevel::Info,
+		"{} id=0x{:08x} slot={} flags=0x{:x} priority={} higher=0x{:08x} lower=0x{:08x} head=0x{:08x} tail=0x{:08x} count={}",
+		event, pInstance->fullSoundInstanceId, pInstance->soundInstanceIndex, pInstance->flags, pInstance->priority,
+		pInstance->higherPrioritySoundInstance ? pInstance->higherPrioritySoundInstance->fullSoundInstanceId : 0u,
+		pInstance->lowerPrioritySoundInstance ? pInstance->lowerPrioritySoundInstance->fullSoundInstanceId : 0u,
+		pedSoundInstanceListHead ? pedSoundInstanceListHead->fullSoundInstanceId : 0u,
+		pedSoundInstanceListTail ? pedSoundInstanceListTail->fullSoundInstanceId : 0u, edSoundCurrentInstancesNumber);
+}
 #endif
 
 ed_sound_instance* pedSoundInstances;
@@ -147,6 +162,10 @@ ed_sound_instance* edSoundInstanceCreate(float priority, int bForce)
 	_edSoundInstanceListInstanceInsert(priority, newSoundInstance, bForce);
 	edSoundInitInstance(newSoundInstance);
 
+#ifdef PLATFORM_WIN
+	LogSoundInstance("create", newSoundInstance);
+#endif
+
 	return newSoundInstance;
 }
 
@@ -172,6 +191,9 @@ void _edSoundInstanceListRemoveTail(void)
 
 void edSoundInstanceDeleteLessPrioritary()
 {
+#ifdef PLATFORM_WIN
+	LogSoundInstance("evict-tail", pedSoundInstanceListTail);
+#endif
 	_edSoundInstanceSetFree(pedSoundInstanceListTail);
 	_edSoundInstanceListRemoveTail();
 	edSoundCurrentInstancesNumber = edSoundCurrentInstancesNumber - 1;
@@ -208,6 +230,9 @@ void edSoundInstancesComputeFade(ed_sound_instance* soundInstance)
 						edSoundInstanceCom[soundInstanceId & 0xffff].flags = edSoundInstanceCom[soundInstanceId & 0xffff].flags | 4;
 						edSoundInstanceCom[soundInstanceId & 0xffff].soundInstanceId = soundInstanceId;
 						if ((soundInstance->flags & 1) == 0) {
+#ifdef PLATFORM_WIN
+							LogSoundInstance("fade-finished", soundInstance);
+#endif
 							_edSoundInstanceSetFree(soundInstance);
 
 							edSoundCurrentInstancesNumber = edSoundCurrentInstancesNumber + -1;
@@ -254,6 +279,9 @@ int _edSoundInstanceListRemoveFromCurrentToTail(ed_sound_instance* pInstance)
 	nbRemoved = 0;
 	if (pInstance != (ed_sound_instance*)0x0) {
 		do {
+#ifdef PLATFORM_WIN
+			LogSoundInstance("cull-tail-chain", pInstance);
+#endif
 			_edSoundInstanceSetFree(pInstance);
 
 			pCurInstance = pInstance->lowerPrioritySoundInstance;
@@ -296,6 +324,9 @@ void _edSoundInstanceListInstanceRemove(ed_sound_instance* pInstance)
 
 void edSoundInstanceDelete(ed_sound_instance* pInstance)
 {
+#ifdef PLATFORM_WIN
+	LogSoundInstance("delete", pInstance);
+#endif
 	_edSoundInstanceSetFree(pInstance);
 	edSoundCurrentInstancesNumber = edSoundCurrentInstancesNumber - 1;
 	_edSoundInstanceListInstanceRemove(pInstance);
@@ -306,6 +337,10 @@ void edSoundInstanceDelete(ed_sound_instance* pInstance)
 bool edSoundInstanceFinish(ed_sound_instance* pInstance, int param_2)
 {
 	bool bSuccess;
+
+#ifdef PLATFORM_WIN
+	LogSoundInstance(param_2 ? "finish-notify" : "finish-stop", pInstance);
+#endif
 
 	if ((pInstance->flags & 1) == 0) {
 		if (param_2 != 0) {
@@ -432,6 +467,9 @@ void _edSoundInstanceListInstanceInsert(float priority, ed_sound_instance* newSo
 
 	pedSoundInstanceListTail = peVar2;
 	/* Set the lowest priority sound back to global memory */
+#ifdef PLATFORM_WIN
+	LogSoundInstance("insert", newSoundInstance);
+#endif
 	return;
 }
 

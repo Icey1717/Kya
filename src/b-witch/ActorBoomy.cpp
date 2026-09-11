@@ -624,16 +624,12 @@ void CActorBoomy::StateBoomyGetTarget()
 	(this->speedDyn).currentAlpha = (this->pSpline->aPoints->position).y;
 	this->field_0x1d4 = DBG_TAIL_MIN_DIST <= this->distanceToTarget;
 	if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		CActorSound::SoundStart
-		(this->field_0x2b4, (CActor*)this, 0, (this->field_0x2bc).pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+		this->field_0x2b4->node.SoundStart(this, 0, (this->field_0x2bc).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		this->field_0x654 = 0;
 		SetState(BOOMY_STATE_CONTROL, -1);
 	}
 	else {
-		IMPLEMENTATION_GUARD_AUDIO(
-		CActorSound::SoundStart
-		(this->field_0x2b4, (CActor*)this, 0, (this->field_0x2b8).pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+		this->field_0x2b4->node.SoundStart(this, 0, (this->field_0x2b8).Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		SetState(BOOMY_STATE_GOTO_TARGET, -1);
 	}
 

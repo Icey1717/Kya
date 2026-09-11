@@ -48,6 +48,8 @@ public:
 	void Create(ByteCode* pByteCode);
 	void Term();
 
+	bool IsLooped();
+
 	uint nbData;
 	CFxRandomScenaricDataSubObj aSubObjs[8];
 	float field_0x44;
@@ -57,6 +59,7 @@ class CFxRandomManager : public CFxPoolManager<CRandomFx, CFxRandomScenaricData>
 {
 public:
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
+	virtual bool IsFxLooped(uint index);
 };
 
 #endif //FX_RANDOM_H

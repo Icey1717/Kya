@@ -34,6 +34,29 @@ void CFxRandomScenaricData::Term()
 	return;
 }
 
+bool CFxRandomScenaricData::IsLooped()
+{
+	bool bVar1;
+	CFxRandomScenaricDataSubObj* pCVar2;
+	uint uVar3;
+	CFxManager* pFxManager;
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+	if ((this->nbData != 0) && (uVar3 = 0, pCVar2 = this->aSubObjs, this->nbData != 0)) {
+		do {
+			bVar1 = pFxManager->IsLooped(pCVar2->field_0x0);
+			if (bVar1 != false) {
+				return true;
+			}
+
+			uVar3 = uVar3 + 1;
+			pCVar2 = pCVar2 + 1;
+		} while (uVar3 < this->nbData);
+	}
+
+	return false;
+}
+
 CRandomFx::CRandomFx()
 	: CNewFx()
 {
@@ -76,6 +99,87 @@ void CRandomFx::Kill()
 
 void CRandomFx::Start(float param_1, float param_2)
 {
+	CNewFx* pCVar1;
+	CFxRandomScenaricData* pCVar2;
+	bool bVar3;
+	byte bVar4;
+	int iVar5;
+	CFxRandomScenaricData::CFxRandomScenaricDataSubObj* pCVar6;
+	uint uVar7;
+	uint uVar8;
+	float fVar9;
+	CFxManager* pFxManager;
+
+	this->flags = this->flags | 3;
+	this->flags = this->flags & 0xfffffff3;
+	if (0.0f < param_1) {
+		this->flags = this->flags | 0x40;
+	}
+
+	this->field_0xc = param_1;
+	this->field_0x10 = param_2;
+
+
+	if (this->randFxHandle.IsValid()) {
+		this->randFxHandle.Kill();
+		this->randFxHandle.Reset();
+	}
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+	pCVar2 = this->pScenariacData;
+	fVar9 = pCVar2->field_0x44;
+	iVar5 = rand();
+	uVar7 = pCVar2->nbData;
+	uVar8 = 0;
+	fVar9 = fVar9 * (static_cast<float>(iVar5) / 2.147484e+09f);
+	pCVar6 = pCVar2->aSubObjs;
+	if (uVar7 != 1) {
+		do {
+			fVar9 = fVar9 - pCVar6->field_0x4;
+			if (fVar9 < 0.0f) {
+				uVar7 = pCVar2->aSubObjs[uVar8].field_0x0;
+				goto LAB_0036ae68;
+			}
+			uVar8 = uVar8 + 1;
+			pCVar6 = pCVar6 + 1;
+		} while (uVar8 < uVar7 - 1);
+	}
+
+	if (uVar7 == 0) {
+		uVar7 = 0xffffffff;
+	}
+	else {
+		uVar7 = pCVar2->aSubObjs[uVar7 - 1].field_0x0;
+	}
+
+LAB_0036ae68:
+	if (-1 < static_cast<int>(uVar7)) {
+		pFxManager->GetDynamicFx(&this->randFxHandle, uVar7, this->selector);
+		pCVar1 = (this->randFxHandle).pFx;
+
+		if (this->randFxHandle.IsValid()) {
+			if (((pCVar1 != (CNewFx*)0x0) && (iVar5 = (this->randFxHandle).id, iVar5 != 0)) && (iVar5 == pCVar1->id)) {
+				pCVar1->pSon = this;
+				pCVar1->field_0x8 = 0;
+			}
+
+			this->field_0x88 = this->randFxHandle.GetType();
+		}
+	}
+
+	if (this->randFxHandle.IsValid()) {
+		if (this->spatializeActor != (CActor*)0x0) {
+			this->randFxHandle.SpatializeOnActor(this->spatializeFlags, (CActor*)this->spatializeActor, this->spatializeBone);
+		}
+
+		this->randFxHandle.Start();
+		this->flags = this->flags & 0xfffffffd;
+	}
+	else {
+		Kill();
+	}
+
+	return;
 }
 
 void CRandomFx::Stop(float param_1)
@@ -219,4 +323,9 @@ void* CFxRandomManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECT
 	}
 
 	return pNewRandomFx;
+}
+
+bool CFxRandomManager::IsFxLooped(uint index)
+{
+	return this->aScenaricData[index].IsLooped();
 }

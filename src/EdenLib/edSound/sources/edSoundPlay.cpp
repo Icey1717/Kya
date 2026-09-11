@@ -7,6 +7,7 @@
 #ifdef PLATFORM_WIN
 #include "edSoundStreamService.h"
 #include "edSoundSampleService.h"
+#include "log.h"
 #endif
 
 static int gNbSoundStreams = 0;
@@ -83,6 +84,16 @@ void _edSoundCheckForInstancesToCreate(void)
 
 	pCurInstance = (ed_sound_instance*)0x0;
 	uVar4 = (edSoundParam.field_0x4 - edSoundParam.nbVoices) + 1;
+#ifdef PLATFORM_WIN
+	for (ed_sound_instance* pPending = pedSoundInstanceListHead; pPending; pPending = pPending->lowerPrioritySoundInstance) {
+		if ((pPending->flags & 0x100) != 0) {
+			AUDIO_INSTANCE_LOG(LogLevel::Info,
+				"flush-pending id=0x{:08x} flags=0x{:x} priority={} voiceRange=[{},{}] budget={}",
+				pPending->fullSoundInstanceId, pPending->flags, pPending->priority,
+				edSoundParam.nbVoices, edSoundParam.field_0x4, uVar4);
+		}
+	}
+#endif
 	pCurListEntry = pedSoundInstanceListHead;
 	if (pedSoundInstanceListHead != (ed_sound_instance*)0x0) {
 		do {
@@ -91,6 +102,10 @@ void _edSoundCheckForInstancesToCreate(void)
 				uVar6 = 1;
 			}
 			if (uVar4 < uVar6) {
+#ifdef PLATFORM_WIN
+				AUDIO_INSTANCE_LOG(LogLevel::Info,
+					"cull-no-voices id=0x{:08x} remaining={} required={}", pCurListEntry->fullSoundInstanceId, uVar4, uVar6);
+#endif
 				pCurListEntry->flags = pCurListEntry->flags | 0x800;
 				if (pCurInstance == (ed_sound_instance*)0x0) {
 					pCurInstance = pCurListEntry;
@@ -310,6 +325,13 @@ void edSoundFlush()
 			(pInstance->field_0x88 + ((pInstance->flags & 0x28) != 0 ? pInstance->field_0x94 : 0.0f)) * edSoundGlobalParams.volume,
 			(pInstance->field_0x8c + ((pInstance->flags & 0x28) != 0 ? pInstance->field_0x98 : 0.0f)) * edSoundGlobalParams.volume,
 			pInstance->field_0x50};
+		if ((mask & (0x800 | 2 | 4 | 8 | 0x10)) != 0) {
+			AUDIO_INSTANCE_LOG(LogLevel::Info,
+				"host-dispatch id=0x{:08x} mask=0x{:x} flags=0x{:x} handle={} sampleRate={} bytes={} volume={} attenuated={} master={} left={} right={} pitch={} spatial={}",
+				instanceId, mask, pInstance->flags, sample.handle, sample.sampleRate, sample.dataSize,
+				pInstance->volume, pInstance->field_0x4c, edSoundGlobalParams.volume,
+				controls.left, controls.right, controls.pitch, pInstance->p3dData != nullptr);
+		}
 		if ((mask & 4) != 0) {
 			Audio::QueueSampleCommand({Audio::SampleCommandType::Stop, instanceId});
 			continue;
@@ -386,6 +408,10 @@ uint edSoundInstanceStop(uint instanceId)
 	bool bVar1;
 	ed_sound_instance* pInstance;
 
+#ifdef PLATFORM_WIN
+	AUDIO_INSTANCE_LOG(LogLevel::Info, "stop-request id=0x{:08x}", instanceId);
+#endif
+
 	if ((instanceId != 0) && (pInstance = pedSoundInstances + (instanceId & 0xffff), pInstance->fullSoundInstanceId == instanceId)) {
 		edSoundInstanceCom[instanceId & 0xffff].flags = edSoundInstanceCom[instanceId & 0xffff].flags & 0xfffffffd;
 		edSoundInstanceCom[instanceId & 0xffff].soundInstanceId = instanceId;
@@ -403,6 +429,12 @@ uint edSoundInstanceStop(uint instanceId)
 void edSoundInstanceFade(float volume, float frequency, float targetVolume, float targetFrequency, float duration, uint soundId)
 {
 	ed_sound_instance* pInstance;
+
+#ifdef PLATFORM_WIN
+	AUDIO_INSTANCE_LOG(LogLevel::Info,
+		"fade-request id=0x{:08x} volume={} frequency={} targetVolume={} targetFrequency={} duration={}",
+		soundId, volume, frequency, targetVolume, targetFrequency, duration);
+#endif
 
 	if (soundId == 0) {
 		return;
@@ -900,6 +932,12 @@ uint edSoundSamplePlay(float priority, ed_sound_sample* pSample)
 		}
 	}
 
+
+#ifdef PLATFORM_WIN
+	AUDIO_INSTANCE_LOG(LogLevel::Info,
+		"sample-play id=0x{:08x} priority={} handle={} sampleFlags=0x{:x} sampleRate={} bytes={}",
+		newSoundId, priority, pSample->soundRamAddress, pSample->flags, pSample->sampleRate, pSample->dataSize);
+#endif
 	return newSoundId;
 }
 

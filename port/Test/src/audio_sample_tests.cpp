@@ -18,6 +18,8 @@ extern uint edSoundCurrentInstancesNumber;
 extern uint edSoundNextFreeInstanceIndex;
 extern ed_sound_instance* pedSoundInstanceListTail;
 extern void CAudioManager_SoundFinishedInstancesCallback(ed_sound_instance_finished*, uint);
+extern int edSoundLoadToSoundRamNoWaitDirect(void*, uint, long, ed_sound_sample*, void (*)(void*));
+extern void SetFlag_00288910(void*);
 
 namespace
 {
@@ -271,6 +273,85 @@ protected:
 		AudioSamples::TearDown();
 	}
 };
+
+TEST_F(EdenAudioSamples, FlushCompletesPendingSampleTransfer)
+{
+	sample.soundRamAddress = 0;
+	sample.flags = 0;
+	ASSERT_NE(edSoundLoadToSoundRamNoWaitDirect(adpcm.data(), static_cast<uint>(adpcm.size()),
+		0, &sample, SetFlag_00288910), 0);
+	EXPECT_EQ(sample.flags & 4, 0u);
+	EXPECT_EQ(sample.soundRamAddress, 0u);
+
+	edSoundFlush();
+
+	EXPECT_NE(sample.flags & 4, 0u);
+	Audio::LoadedDataInfo data{};
+	ASSERT_TRUE(Audio::LookupLoadedData(sample.soundRamAddress, data));
+	EXPECT_EQ(data.size, adpcm.size());
+}
+
+TEST_F(EdenAudioSamples, PriorityListRemainsLinkedAfterRemovalAndSlotReuse)
+{
+	const uint low = edSoundSamplePlay(1.0f, &sample);
+	const uint high = edSoundSamplePlay(3.0f, &sample);
+	const uint middle = edSoundSamplePlay(2.0f, &sample);
+	const uint equal = edSoundSamplePlay(2.0f, &sample);
+	auto checkList = [](std::initializer_list<uint> expected) {
+		ed_sound_instance* previous = nullptr;
+		ed_sound_instance* current = pedSoundInstanceListHead;
+		for (uint id : expected) {
+			ASSERT_NE(current, nullptr);
+			EXPECT_EQ(current->fullSoundInstanceId, id);
+			EXPECT_EQ(current->higherPrioritySoundInstance, previous);
+			previous = current;
+			current = current->lowerPrioritySoundInstance;
+		}
+		EXPECT_EQ(current, nullptr);
+		EXPECT_EQ(pedSoundInstanceListTail, previous);
+		EXPECT_EQ(edSoundCurrentInstancesNumber, expected.size());
+	};
+	checkList({high, equal, middle, low});
+	edSoundInstanceStop(middle);
+	checkList({high, equal, low});
+	edSoundInstanceStop(high);
+	checkList({equal, low});
+	edSoundInstanceStop(low);
+	checkList({equal});
+	edSoundNextFreeInstanceIndex = 0xffffffff;
+	const uint reused = edSoundSamplePlay(1.0f, &sample);
+	EXPECT_EQ(reused & 0xffff, low & 0xffff);
+	EXPECT_NE(reused, low);
+	checkList({equal, reused});
+	edSoundInstanceStop(equal);
+	edSoundInstanceStop(reused);
+	checkList({});
+}
+
+TEST_F(EdenAudioSamples, FlushSpatializesEveryInstanceInPriorityList)
+{
+	std::array<uint, 43> ids{};
+	edsound_3d_data spatial{};
+	spatial.position = {10.0f, 0.0f, 0.0f};
+	spatial.rotation = {0.0f, 0.0f, 0.0f};
+	spatial.field_0x18 = 10.0f;
+	spatial.field_0x1c = 100.0f;
+	for (unsigned i = 0; i < ids.size(); ++i) {
+		ids[i] = edSoundSamplePlay(static_cast<float>(i % 5 + 1), &sample);
+		ASSERT_NE(ids[i], 0u);
+		edSoundInstanceSet3DData(ids[i], &spatial, nullptr, 0);
+		pedSoundInstances[ids[i] & 0xffff].field_0x4c = -1.0f;
+	}
+	edSoundFlush();
+	EXPECT_EQ(voices.size(), ids.size());
+	for (uint id : ids) {
+		const auto& instance = pedSoundInstances[id & 0xffff];
+		EXPECT_EQ(instance.fullSoundInstanceId, id);
+		EXPECT_FLOAT_EQ(instance.field_0x4c, 1.0f);
+		EXPECT_FLOAT_EQ(instance.field_0x88, 1.0f);
+		EXPECT_FLOAT_EQ(instance.field_0x8c, 1.0f);
+	}
+}
 
 TEST_F(EdenAudioSamples, FlushStartsCompletesAndReusesSlots)
 {

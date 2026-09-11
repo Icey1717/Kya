@@ -3,14 +3,29 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "Fx.h"
 
 struct ByteCode;
 class CActor;
 
 bool BnkInstallTrack(char* pFileData, int length);
 
+#ifdef PLATFORM_WIN
+class CFxHandlePackedHack
+{
+public:
+	int id;
+	strd_ptr(CNewFx*) pFx;
+};
+
+#define UNPACK_HANDLE(s_track_event_ptr) CFxHandle{(s_track_event_ptr)->fxHandle.id, LOAD_POINTER_CAST(CNewFx*, (s_track_event_ptr)->fxHandle.pFx)}
+#else
+#define UNPACK_HANDLE(s_track_event_ptr) (s_track_event_ptr)->fxHandle
+#endif
+
 PACK(
-struct s_track_event {
+struct s_track_event
+{
 	float field_0x0;
 	undefined field_0x4;
 	undefined field_0x5;
@@ -20,12 +35,16 @@ struct s_track_event {
 	int type;
 	uint field_0x10;
 	undefined4 field_0x14;
-	int field_0x18;
-	strd_ptr(int*) field_0x1c;
+#ifdef PLATFORM_PS2
+	CFxHandle fxHandle;
+#else
+	CFxHandlePackedHack fxHandle;
+#endif
 	int field_0x20;
 });
 
-class CEventTrack {
+class CEventTrack
+{
 public:
 	void Add(ByteCode* pByteCode);
 	void Play(float param_1, float param_2, undefined8 param_4, CActor* pActor);
@@ -35,6 +54,8 @@ public:
 	void Resume();
 
 	bool FUN_0019f140();
+
+	void _PlayEvent(s_track_event* pEvent, CActor* pActor);
 
 	ushort eventCount;
 	s_track_event* pTrackEvent;

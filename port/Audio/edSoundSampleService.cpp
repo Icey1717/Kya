@@ -189,6 +189,9 @@ void FlushSampleCommands()
 			if (instance.decoded) instance.voice = CreateVoice(*instance.decoded);
 			success = instance.voice && instance.voice->SetControls(command.controls);
 			if (success) instances.emplace(id, std::move(instance));
+			Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances",
+				"host-create id=0x{:08x} handle={} success={} left={} right={} pitch={}",
+				id, command.sample.handle, success, command.controls.left, command.controls.right, command.controls.pitch);
 		}
 		else {
 			auto found = instances.find(id);
@@ -199,6 +202,7 @@ void FlushSampleCommands()
 			case SampleCommandType::Resume:
 				success = instance.voice->SetPlaying(true);
 				instance.started = success;
+				Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances", "host-start id=0x{:08x} success={}", id, success);
 				break;
 			case SampleCommandType::Pause: success = instance.voice->SetPlaying(false); break;
 			case SampleCommandType::Update: success = instance.voice->SetControls(command.controls); break;
@@ -220,6 +224,7 @@ std::vector<std::uint32_t> PollFinishedSamples()
 	failedInstances.clear();
 	for (auto it = instances.begin(); it != instances.end();) {
 		if (it->second.started && it->second.voice->IsFinished()) {
+			Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances", "host-finished id=0x{:08x}", it->first);
 			finished.push_back(it->first);
 			it = instances.erase(it);
 		}

@@ -303,6 +303,8 @@ void _edSoundEndFlush(uint nbFlush)
 	edComBuffer = (SoundFlush_0x8**)(&edComDoubleBuffers)[edComCurrentBufferIndex];
 	*edComBuffer = (SoundFlush_0x8*)0x0;
 #else
+	// Windows has no IOP transfer thread; advance asynchronous loads each flush.
+	_edSysCompletedTransferIndex = static_cast<int>(Audio::PumpAll());
 	Audio::FlushSampleCommands();
 #endif
 

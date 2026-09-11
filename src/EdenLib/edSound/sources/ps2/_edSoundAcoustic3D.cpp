@@ -2,6 +2,9 @@
 #include "edSound/edSoundPlay.h"
 #include "edSound/edSoundInstance.h"
 #include "MathOps.h"
+#ifdef PLATFORM_WIN
+#include "log.h"
+#endif
 
 float edSoundAcousticVolumeAttenuation(edsound_3d_data* pData, edF32VECTOR3* pPosition)
 {
@@ -121,6 +124,21 @@ void _edSoundAcousticCompute(ed_sound_instance* pInstance)
 
 	while (peVar3 = pInstance, peVar3 != (ed_sound_instance*)0x0) {
 		pInstance = peVar3->lowerPrioritySoundInstance;
+#ifdef PLATFORM_WIN
+		if ((edSoundInstanceCom[peVar3->fullSoundInstanceId & 0xffff].flags & 2) != 0) {
+			AUDIO_INSTANCE_LOG(LogLevel::Info,
+				"acoustic-start id=0x{:08x} flags=0x{:x} next=0x{:08x} volume={} frequency={}",
+				peVar3->fullSoundInstanceId, peVar3->flags, pInstance ? pInstance->fullSoundInstanceId : 0u,
+				peVar3->volume, peVar3->frequency);
+			if ((peVar3->flags & 0x1000) != 0 && peVar3->p3dData) {
+				AUDIO_INSTANCE_LOG(LogLevel::Info,
+					"spatial-start id=0x{:08x} source=({},{},{}) listener=({},{},{}) radius={} radiusSquared={} distanceScale={}",
+					peVar3->fullSoundInstanceId, peVar3->p3dData->position.x, peVar3->p3dData->position.y, peVar3->p3dData->position.z,
+					edSoundGlobalParams.field_0x24.x, edSoundGlobalParams.field_0x24.y, edSoundGlobalParams.field_0x24.z,
+					peVar3->p3dData->field_0x18, peVar3->p3dData->field_0x1c, edSoundGlobalParams.field_0x64);
+			}
+		}
+#endif
 		if ((peVar3->flags & 0x28) == 0) {
 			uVar2 = 1;
 		}

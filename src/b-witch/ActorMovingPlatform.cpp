@@ -1239,22 +1239,21 @@ int CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbs
 					pStreamEntry->streamTarget.PostSwitch(this);
 					pStreamEntry->streamCameraEvent.SwitchOn(this);
 		
-					IMPLEMENTATION_GUARD_AUDIO(
-					piVar1 = *(int**)(iVar9 + 0x48);
-					if (piVar1 != (int*)0x0) {
-						uVar2 = *(uint*)&this->pActorSound->field_0x4;
-						uVar11 = (uint)((this->movingPlatformFlags & 1) != 0);
+					CSound* pSound = pStreamEntry->field_0x44.Get();
+					if (pSound != (CSound*)0x0) {
+						uVar2 = this->pActorSound->node.nbInstances;
+						uVar11 = (this->movingPlatformFlags & 1) != 0;
 						if ((this->movingPlatformFlags & 2) != 0) {
 							uVar11 = uVar11 + 1;
 						}
 						for (; uVar11 < uVar2; uVar11 = uVar11 + 1) {
-							iVar9 = CActorSound::IsInstanceAlive(this->pActorSound, uVar11);
+							iVar9 = this->pActorSound->node.IsInstanceAlive(uVar11);
 							if (iVar9 == 0) {
-								CActorSound::SoundStart(this->pActorSound, this, uVar11, piVar1, 1, 0, (float**)0x0);
+								this->pActorSound->node.SoundStart(this, uVar11, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 								break;
 							}
 						}
-					})
+					}
 				}
 
 				iVar12 = iVar12 + 1;
@@ -2524,22 +2523,21 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 				pEntry->streamTarget.PostSwitch(this);
 				pEntry->streamCameraEvent.SwitchOn(this);
 
-				IMPLEMENTATION_GUARD_AUDIO(
-					piVar6 = *(int**)(iVar3 + 0x48);
-				if (piVar6 != (int*)0x0) {
-					uVar4 = *(uint*)&this->pActorSound->field_0x4;
-					uVar8 = (uint)((this->movingPlatformFlags & 1) != 0);
+				CSound* pSound = pEntry->field_0x44.Get();
+				if (pSound != (CSound*)0x0) {
+					uint uVar4 = this->pActorSound->node.nbInstances;
+					uint uVar8 = (this->movingPlatformFlags & 1) != 0;
 					if ((this->movingPlatformFlags & 2) != 0) {
 						uVar8 = uVar8 + 1;
 					}
 					for (; uVar8 < uVar4; uVar8 = uVar8 + 1) {
-						iVar3 = CActorSound::IsInstanceAlive(this->pActorSound, uVar8);
+						int iVar3 = this->pActorSound->node.IsInstanceAlive(uVar8);
 						if (iVar3 == 0) {
-							CActorSound::SoundStart(this->pActorSound, this, uVar8, piVar6, 1, 0, (float**)0x0);
+							this->pActorSound->node.SoundStart(this, uVar8, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 							break;
 						}
 					}
-				})
+				}
 			}
 
 			curEntryIndex = curEntryIndex + 1;;

@@ -7,6 +7,8 @@
 #include "edSound/edSoundInstance.h"
 #include "LargeObject.h"
 
+#define AUDIO_LOG(level, format, ...) MY_LOG_CATEGORY("Audio", level, format, ##__VA_ARGS__)
+
 class CActor;
 class CAudioManager;
 class edCBankBufferEntry;
@@ -30,7 +32,7 @@ public:
 
 	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId) = 0;
 	virtual uint Stop(uint instanceId);
-	virtual bool IsLooping() = 0;
+	virtual bool IsLooping(uint soundInstanceId) = 0;
 
 	uint PlayAlt(float param_1, float param_2, float param_3, uint soundId, uint param_6);
 
@@ -49,7 +51,7 @@ class CSound : public CSoundBase
 {
 public:
 	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId);
-	virtual bool IsLooping();
+	virtual bool IsLooping(uint soundInstanceId);
 
 	void Create(ByteCode* pByteCode);
 	void FadeTo(float param_1, float param_2, float param_3, uint instanceId);
@@ -67,8 +69,7 @@ class CSoundSample : public CSound
 {
 public:
 	virtual uint Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, void* pUserData, uint* pOutId, uint* pExistingSoundId);
-	virtual bool IsLooping() { return IsLooping(-1); }
-	virtual bool IsLooping(int soundInstanceId);
+	virtual bool IsLooping(uint soundInstanceId);
 };
 
 struct CSoundStream : public CSoundSample
@@ -243,6 +244,8 @@ struct PendingSoundPlay
 
 struct SoundSampleEntry
 {
+	SoundSampleEntry();
+
 	bool LoadStreamCh();
 
 	int mode;

@@ -24,15 +24,34 @@
 #include "Vision.h"
 #include "WayPoint.h"
 #include "LipSync.h"
-
-#ifdef PLATFORM_WIN
-#include "displaylist.h"
-#endif
 #include "ActorMoney.h"
 #include "ActorBonus.h"
 #include "ActorHero.h"
 #include "ed3D/ed3DG2D.h"
 #include "ed3D/ed3DG3D.h"
+
+#ifdef PLATFORM_WIN
+static void LogActorSound(const char* event, CActor* pActor, CActorSound* pActorSound, CSoundInstance* pInstance, CSound* pSound)
+{
+	if (!pActor) {
+		AUDIO_INSTANCE_LOG(LogLevel::Info,
+			"{} actor=null actorSound={} instance={} id=0x{:08x} sound={}", event,
+			static_cast<void*>(pActorSound), static_cast<void*>(pInstance), pInstance ? pInstance->soundId : 0u, static_cast<void*>(pSound));
+		return;
+	}
+	const char* actorName = "";
+#ifdef DEBUG_FEATURES
+	actorName = pActor->name;
+#endif
+	AUDIO_INSTANCE_LOG(LogLevel::Info,
+		"{} actor={} name={:.64} actorIndex={} type={} actorSound={} actorSoundFlags=0x{:x} instance={} id=0x{:08x} sound={} priority={} position=({},{},{}) cameraDistance={} activationDistance={}",
+		event, static_cast<void*>(pActor), actorName, pActor->actorManagerIndex, static_cast<int>(pActor->typeID),
+		static_cast<void*>(pActorSound), pActorSound->flags, static_cast<void*>(pInstance), pInstance ? pInstance->soundId : 0u,
+		static_cast<void*>(pSound), pSound ? pSound->priority : 0.0f,
+		pActor->currentLocation.x, pActor->currentLocation.y, pActor->currentLocation.z,
+		pActor->distanceToCamera, pActor->subObjA ? pActor->subObjA->field_0x20 : -1.0f);
+}
+#endif
 
 CPathFollowReader::CPathFollowReader()
 {
@@ -5935,7 +5954,7 @@ void CActorSound::DisableSounds()
 				lVar3 = 0;
 			}
 			else {
-				lVar3 = pCVar2->pSound->IsLooping();
+				lVar3 = pCVar2->pSound->IsLooping(pCVar2->field_0x20);
 			}
 
 			if ((lVar3 != 0) && (pCVar2->pSound != (CSound*)0x0)) {
@@ -5970,11 +5989,17 @@ void CActorSound::Manage(CActor* pActor)
 		if (bVar3) {
 			uVar5 = this->flags & 1;
 			if ((uVar5 != 0) && (uVar5 != 0)) {
+#ifdef PLATFORM_WIN
+				LogActorSound("actor-enable-range", pActor, this, nullptr, nullptr);
+#endif
 				this->flags = this->flags & 0xfffffffe;
 				for (pCVar1 = this->field_0x30; pCVar1 != (CSoundInstance*)0x0; pCVar1 = pCVar1->pNext) {
 					if ((NoAudio == 0) && (pCVar2 = pCVar1->pSound, pCVar2 != (CSound*)0x0)) {
 						uVar5 = pCVar2->Play(pCVar1->soundId, pCVar1->field_0x20, pCVar1->pSound3dData, pCVar1, (uint*)0x0, &pCVar1->soundId);
 						pCVar1->soundId = uVar5;
+#ifdef PLATFORM_WIN
+						LogActorSound("actor-deferred-play", pActor, this, pCVar1, pCVar2);
+#endif
 					}
 				}
 			}
@@ -5982,6 +6007,9 @@ void CActorSound::Manage(CActor* pActor)
 	}
 	else {
 		this->flags = this->flags | 1;
+#ifdef PLATFORM_WIN
+		LogActorSound("actor-disable-range", pActor, this, nullptr, nullptr);
+#endif
 		pCVar1 = this->field_0x30;
 		while (pCVar4 = pCVar1, pCVar4 != (CSoundInstance*)0x0) {
 			pCVar1 = pCVar4->pNext;
@@ -5989,7 +6017,7 @@ void CActorSound::Manage(CActor* pActor)
 				lVar6 = 0;
 			}
 			else {
-				lVar6 = pCVar4->pSound->IsLooping();
+				lVar6 = pCVar4->pSound->IsLooping(pCVar4->field_0x20);
 			}
 
 			if ((lVar6 != 0) && (pCVar4->pSound != (CSound*)0x0)) {
@@ -6008,6 +6036,12 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 
 	pSoundInstance = this->aSoundInstances + param_3;
 	if (((param_5 != 0) || (pSoundInstance->IsAlive() == false)) || (pSoundInstance->pSound != static_cast<CSound*>(pSound))) {
+#ifdef PLATFORM_WIN
+		LogActorSound("actor-start-request", pActor, this, pSoundInstance, pSound);
+		AUDIO_INSTANCE_LOG(LogLevel::Info,
+			"actor-start-params actor={} instance={} slot={} restart={} spatialMode={}",
+			static_cast<void*>(pActor), static_cast<void*>(pSoundInstance), param_3, param_5, param_6);
+#endif
 		if (param_6 == 2) {
 			p3dData = (edsound_3d_data*)pSoundSpatializationParam->data;
 		}
@@ -6019,10 +6053,12 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 
 			p3dData = CScene::ptable.g_AudioManager_00451698->ObtainSound3DData(param_6, pActor, reinterpret_cast<uint>(boneId));
 		}
+
 		if (pSoundInstance->pSound3dData != (edsound_3d_data*)0x0 && pSoundInstance->pSound3dData != p3dData) {
 			CScene::ptable.g_AudioManager_00451698->ReleaseSound3DData(pSoundInstance->pSound3dData);
 			pSoundInstance->pSound3dData = (edsound_3d_data*)0x0;
 		}
+
 		if ((this->flags & 1) == 0) {
 			if ((pSoundInstance->flags & 1) == 0) {
 				pSoundInstance->pPrev = (CSoundInstance*)0x0;
@@ -6041,16 +6077,19 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 					pSound = pSoundInstance->pSound;
 				}
 				else {
-					pSoundInstance->pSound = static_cast<CSound*>(pSound);
+					pSoundInstance->pSound = pSound;
 				}
 
 				pSoundInstance->field_0x20 = 0xffffffff;
 				pSoundInstance->soundId = pSound->Play(pSoundInstance->soundId, pSoundInstance->field_0x20, p3dData, pSoundInstance, (uint*)0x0, &pSoundInstance->soundId);
+#ifdef PLATFORM_WIN
+				LogActorSound("actor-immediate-play", pActor, this, pSoundInstance, pSound);
+#endif
 			}
 		}
 		else {
-			if ((pSound != (CSoundBase*)0x0) && (pSound->IsLooping() != 0)) {
-				pSoundInstance->pSound = static_cast<CSound*>(pSound);
+			if ((pSound != (CSoundBase*)0x0) && (pSound->IsLooping(0xffffffff) != 0)) {
+				pSoundInstance->pSound = pSound;
 				if ((pSoundInstance->flags & 1) == 0) {
 					pSoundInstance->pPrev = (CSoundInstance*)0x0;
 					pSoundInstance->pNext = this->field_0x30;
@@ -6064,6 +6103,9 @@ void CActorSound::SoundStart(CActor* pActor, int param_3, CSound* pSound, long p
 				}
 
 				pSoundInstance->Set3DData(p3dData, 0);
+#ifdef PLATFORM_WIN
+				LogActorSound("actor-defer-loop", pActor, this, pSoundInstance, pSound);
+#endif
 			}
 		}
 	}

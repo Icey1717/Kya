@@ -1,5 +1,6 @@
 #include "EventTrack.h"
 #include "MemoryStream.h"
+#include "CollisionManager.h"
 #include "port/pointer_conv.h"
 
 bool BnkInstallTrack(char* pFileData, int length)
@@ -46,6 +47,7 @@ void CEventTrack::Add(ByteCode* pByteCode)
 	pTrackEvent = (s_track_event*)pByteCode->GetPosition();
 	this->pTrackEvent = pTrackEvent;
 	pTrackEvent = this->pTrackEvent;
+
 	eventIndex = 0;
 	if (this->eventCount != 0) {
 		do {
@@ -77,16 +79,19 @@ void CEventTrack::Add(ByteCode* pByteCode)
 					} while (bIsLooping);
 				}
 			}
+
 			iVar5 = 2;
 			do {
 				pByteCode->GetU32();
 				bIsLooping = iVar5 != 0;
 				iVar5 = iVar5 + -1;
 			} while (bIsLooping);
+
 			eventIndex = eventIndex + 1;
 			pTrackEvent = pTrackEvent + 1;
 		} while (eventIndex < this->eventCount);
 	}
+
 	return;
 }
 
@@ -124,31 +129,23 @@ void CTrackManager::Level_Init()
 			if (piVar5->eventCount != 0) {
 				do {
 					uVar5 = uVar5 - 1;
-					if (((psVar4->field_0x1c == 0x0) || (psVar4->field_0x18 == 0)) || (psVar4->field_0x18 != LOAD_POINTER_CAST(int*, psVar4->field_0x1c)[6])) {
-						bVar1 = false;
+					if (UNPACK_HANDLE(psVar4).IsValid()) {
+						UNPACK_HANDLE(psVar4).Kill();
+						UNPACK_HANDLE(psVar4).Reset();
 					}
-					else {
-						bVar1 = true;
-					}
-					if (bVar1) {
-						piVar2 = LOAD_POINTER_CAST(int*, psVar4->field_0x1c);
-						if (((piVar2 != (int*)0x0) && (iVar3 = psVar4->field_0x18, iVar3 != 0)) && (iVar3 == piVar2[6])) {
-							IMPLEMENTATION_GUARD(
-							(**(code**)(*piVar2 + 0xc))();)
-						}
-						psVar4->field_0x1c = 0x0;
-						psVar4->field_0x18 = 0;
-					}
-					psVar4->field_0x18 = 0;
-					psVar4->field_0x1c = 0x0;
+
+					psVar4->fxHandle.id = 0;
+					psVar4->fxHandle.pFx = 0x0;
 					psVar4->field_0x20 = 0;
 					psVar4 = psVar4 + 1;
 				} while (uVar5 != 0);
 			}
+
 			bVar1 = iVar7 != 0;
 			iVar7 = iVar7 + -1;
 		} while (bVar1);
 	}
+
 	return;
 }
 
@@ -163,14 +160,14 @@ void CEventTrack::Resume()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_POINTER_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
-				&& (psVar2->field_0x18 == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-				(**(code**)(*piVar1 + 0x18))();)
+			if ((((psVar2->type == 0x39) && UNPACK_HANDLE(psVar2).IsValid()))) {
+				UNPACK_HANDLE(psVar2).Resume();
 			}
+
 			psVar2 = psVar2 + 1;
 		} while (uVar3 != 0);
 	}
+
 	return;
 }
 
@@ -185,10 +182,8 @@ void CEventTrack::Pause()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_POINTER_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
-				&& (psVar2->field_0x18 == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-					(**(code**)(*piVar1 + 0x14))();)
+			if ((((psVar2->type == 0x39) && UNPACK_HANDLE(psVar2).IsValid()))) {
+				UNPACK_HANDLE(psVar2).Pause();
 			}
 			psVar2 = psVar2 + 1;
 		} while (uVar3 != 0);
@@ -218,15 +213,8 @@ bool CEventTrack::FUN_0019f140()
 	if (this->eventCount != 0) {
 		do {
 			eventIndex = eventIndex - 1;
-			if (((pCurrentEvent->field_0x1c == 0x0) || (pCurrentEvent->field_0x18 == 0)) ||
-				(pCurrentEvent->field_0x18 != LOAD_POINTER_CAST(int*, pCurrentEvent->field_0x1c)[6])) {
-				bIsValid = false;
-			}
-			else {
-				bIsValid = true;
-			}
 
-			if (bIsValid) {
+			if (UNPACK_HANDLE(pCurrentEvent).IsValid()) {
 				return true;
 			}
 
@@ -235,6 +223,49 @@ bool CEventTrack::FUN_0019f140()
 	}
 
 	return false;
+}
+
+void CEventTrack::_PlayEvent(s_track_event* pEvent, CActor* pActor)
+{
+	CNewFx* pCVar1;
+	int iVar2;
+	bool bVar3;
+	long lVar4;
+	uint uVar5;
+	FX_MATERIAL_SELECTOR selector;
+	CCollision* pCol;
+	CFxManager* pFxManager;
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+	if (pEvent->type == 0x39) {
+		lVar4 = CScene::ptable.g_EffectsManager_004516b8->IsLooped(pEvent->field_0x10);
+		if (((lVar4 != 0) && (pEvent->field_0x20 == 0)) || ((lVar4 == 0 && ((uVar5 = pEvent->field_0x8 & 1, uVar5 == 0 || ((uVar5 != 0 && (pEvent->field_0x20 == 0)))))))) {
+			pCol = pActor->pCollisionData;
+			selector = FX_MATERIAL_SELECTOR_NONE;
+			if ((pCol != (CCollision*)0x0) && (((pCol->flags_0x4 & 2) != 0 && (selector = (FX_MATERIAL_SELECTOR)(pCol->aCollisionContact[1].materialFlags & 0xf), selector == FX_MATERIAL_SELECTOR_DEFAULT)))) {
+				selector = (FX_MATERIAL_SELECTOR)CScene::_pinstance->defaultMaterialIndex;
+			}
+#ifdef PLATFORM_PS2
+			pFxManager->GetDynamicFx(&pEvent->fxHandle, pEvent->field_0x10, selector);
+#else
+			CFxHandle tempHandle;
+			pFxManager->GetDynamicFx(&tempHandle, pEvent->field_0x10, selector);
+			pEvent->fxHandle = CFxHandlePackedHack{ tempHandle.id, STORE_POINTER(tempHandle.pFx)};
+#endif
+
+			if (UNPACK_HANDLE(pEvent).IsValid()) {
+				UNPACK_HANDLE(pEvent).SpatializeOnActor(0xe, pActor, pEvent->field_0x14);
+				UNPACK_HANDLE(pEvent).Start();
+			}
+
+			pEvent->field_0x20 = 1;
+		}
+	}
+	else {
+		pActor->DoMessage(pActor, (ACTOR_MESSAGE)pEvent->type, 0);
+	}
+
+	return;
 }
 
 void CEventTrack::Stop()
@@ -250,26 +281,20 @@ void CEventTrack::Stop()
 		do {
 			uVar3 = uVar3 - 1;
 			if (pEvent->type == 0x39) {
-				piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c);
-				if (((piVar1 == (int*)0x0) || (pEvent->field_0x18 == 0)) || (pEvent->field_0x18 != piVar1[6])) {
-					lVar2 = 7;
+				lVar2 = UNPACK_HANDLE(pEvent).GetType();
+
+				if (((lVar2 != 0) && UNPACK_HANDLE(pEvent).IsValid())) {
+					UNPACK_HANDLE(pEvent).Stop();
 				}
-				else {
-					IMPLEMENTATION_GUARD(
-					lVar2 = (**(code**)(*piVar1 + 0x28))();)
-				}
-				if (((lVar2 != 0) && (piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c), piVar1 != (int*)0x0)) &&
-					((pEvent->field_0x18 != 0 && (pEvent->field_0x18 == piVar1[6])))) {
-					IMPLEMENTATION_GUARD(
-					(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
-				}
-				pEvent->field_0x18 = 0;
-				pEvent->field_0x1c = 0x0;
+
+				UNPACK_HANDLE(pEvent).Reset();
 			}
+
 			pEvent->field_0x20 = 0;
 			pEvent = pEvent + 1;
 		} while (uVar3 != 0);
 	}
+
 	return;
 }
 
@@ -298,13 +323,13 @@ void CEventTrack::Play(float param_1, float param_2, undefined8 param_4, CActor*
 			if ((((param_2 <= fVar2) && (fVar2 < param_1)) ||
 				((param_1 < param_2 && ((param_2 <= fVar2 || (fVar2 < param_1)))))) ||
 				((param_2 == param_1 && (fVar2 == param_1)))) {
-				IMPLEMENTATION_GUARD_LOG(
-				_PlayEvent(this, pEvent, pActor);)
+				_PlayEvent(pEvent, pActor);
 			}
 			uVar1 = uVar1 + 1;
 			pEvent = pEvent + 1;
 		} while (uVar1 < this->eventCount);
 	}
+
 	return;
 }
 
@@ -320,23 +345,17 @@ void CEventTrack::Reset()
 	if (this->eventCount != 0) {
 		do {
 			uVar3 = uVar3 - 1;
-			piVar1 = LOAD_POINTER_CAST(int*, pEvent->field_0x1c);
-			if (((piVar1 == (int*)0x0) || (pEvent->field_0x18 == 0)) || (bVar2 = true, pEvent->field_0x18 != piVar1[6])) {
-				bVar2 = false;
+
+			if (UNPACK_HANDLE(pEvent).IsValid()) {
+				UNPACK_HANDLE(pEvent).Kill();
+				UNPACK_HANDLE(pEvent).Reset();
 			}
-			if (bVar2) {
-				if (((piVar1 != (int*)0x0) && (pEvent->field_0x18 != 0)) && (pEvent->field_0x18 == piVar1[6])) {
-					IMPLEMENTATION_GUARD(
-					(**(code**)(*piVar1 + 0xc))();)
-				}
-				pEvent->field_0x1c = 0x0;
-				pEvent->field_0x18 = 0;
-			}
-			pEvent->field_0x18 = 0;
-			pEvent->field_0x1c = 0x0;
+			pEvent->fxHandle.id = 0;
+			pEvent->fxHandle.pFx = 0x0;
 			pEvent->field_0x20 = 0;
 			pEvent = pEvent + 1;
 		} while (uVar3 != 0);
 	}
+
 	return;
 }

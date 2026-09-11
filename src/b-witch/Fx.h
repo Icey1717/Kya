@@ -121,6 +121,10 @@ class CFxHandle
 public:
 	CFxHandle();
 
+	CFxHandle(int newId, CNewFx* pNewFx)
+		: id(newId), pFx(pNewFx)
+	{}
+
 	inline bool IsValid()
 	{
 		bool bValidFx;
@@ -133,6 +137,18 @@ public:
 		}
 
 		return bValidFx;
+	}
+
+	inline int GetType()
+	{
+		int type;
+		if (IsValid()) {
+			type = pFx->GetType();
+		}
+		else {
+			type = 7;
+		}
+		return type;
 	}
 
 	inline void SetPosition(edF32VECTOR4* pNewPosition)
@@ -184,6 +200,24 @@ public:
 	{
 		if (IsValid()) {
 			pFx->Stop(-1.0f);
+		}
+
+		return;
+	}
+
+	inline void Resume()
+	{
+		if (IsValid()) {
+			pFx->Resume();
+		}
+
+		return;
+	}
+
+	inline void Pause()
+	{
+		if (IsValid()) {
+			pFx->Pause();
 		}
 
 		return;
@@ -282,6 +316,7 @@ public:
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector) = 0;
 	virtual void Remove(CNewFx* pFx) = 0;
 	virtual int GetNbPool() = 0;
+	virtual bool IsFxLooped(uint index) = 0;
 
 	void* pPoolHeap;
 };
@@ -541,6 +576,11 @@ public:
 		return pNewFx;
 	}
 
+	virtual bool IsFxLooped(uint index)
+	{
+		return false;
+	}
+
 	CDoubleLinkedList<FxType*> freeList;
 	CDoubleLinkedList<FxType*> activeList;
 
@@ -585,6 +625,7 @@ struct CFxManager : public CObjectManager
 	uint AddFxClass(ByteCode* pByteCode, CFx** pOutEffectObj, int* outClass);
 
 	void GetDynamicFx(CFxHandle* pHandle, uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
+	bool IsLooped(uint param_2);
 
 	uint count_0x4;
 	CFx** aFx;

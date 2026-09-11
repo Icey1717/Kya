@@ -41,6 +41,7 @@ public:
 	void Init();
 	void Create(ByteCode* pByteCode);
 	void Term();
+	bool IsLooped();
 
 	uint nbData;
 	uint* aComponentParticles;
@@ -51,6 +52,7 @@ class CFxCompositeManager : public CFxPoolManager<CFxNewComposite, CFxCompositeS
 {
 public:
 	virtual void* InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector);
+	virtual bool IsFxLooped(uint index);
 };
 
 #endif //FX_COMPOSITE_H

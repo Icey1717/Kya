@@ -44,6 +44,33 @@ void CFxCompositeScenaricData::Term()
 	return;
 }
 
+bool CFxCompositeScenaricData::IsLooped()
+{
+	uint* puVar1;
+	bool bVar2;
+	uint uVar3;
+	CFxManager* pFxManager;
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+	uVar3 = this->nbData;
+	if (uVar3 == 0) {
+	LAB_0034d9e0:
+		bVar2 = false;
+	}
+	else {
+		puVar1 = this->aComponentParticles;
+		do {
+			if (uVar3 == 0) goto LAB_0034d9e0;
+			uVar3 = uVar3 - 1;
+			bVar2 = pFxManager->IsLooped(*puVar1);
+		} while (bVar2 == false);
+
+		bVar2 = true;
+	}
+
+	return bVar2;
+}
+
 void* CFxCompositeManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTOR selector)
 {
 	CFxNewComposite* pNewComposite = _InstanciateFx();
@@ -358,3 +385,7 @@ void CFxNewComposite::Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_S
 	return;
 }
 
+bool CFxCompositeManager::IsFxLooped(uint index)
+{
+	return this->aScenaricData[index].IsLooped();
+}

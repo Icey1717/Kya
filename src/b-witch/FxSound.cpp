@@ -305,3 +305,10 @@ void* CFxSoundManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECTO
 
 	return pNewParticle;
 }
+
+bool CFxSoundManager::IsFxLooped(uint index)
+{
+	CSound* pSound = this->aScenaricData[index].soundRef.Get();
+
+	return pSound->IsLooping(0xffffffff);
+}
