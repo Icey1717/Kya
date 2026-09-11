@@ -461,7 +461,7 @@ public:
 	void Manage(CActor* pActor);
 	void SoundStart(CActor* pActor, int param_3, CSound* pSound, long param_5, int param_6, SOUND_SPATIALIZATION_PARAM* pSoundSpatializationParam);
 	void SoundStop(int index);
-	void SetFrequency(float frequency, int) { IMPLEMENTATION_GUARD_AUDIO(); }
+	void SetFrequency(float frequency, int index);
 	void FadeTo(float param_1, float param_2, float param_3, int index);
 	void SetVolume(float volume, int index);
 

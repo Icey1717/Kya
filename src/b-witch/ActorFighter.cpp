@@ -8147,8 +8147,7 @@ void CBehaviourFighter::Begin(CActor* pOwner, int newState, int newAnimationType
 	}
 
 	if (CActorHero::_gThis != pOwner) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();)
+		CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
 	}
 
 	this->pOwner->GetLifeInterfaceOther()->SetPriority(4);
@@ -8178,10 +8177,9 @@ void CBehaviourFighter::End(int newBehaviourId)
 
 	this->pOwner->GetLifeInterfaceOther()->SetPriority(0);
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	if (CActorHero::_gThis != (CActorHero*)this->pOwner) {
-		FUN_001844c0(CScene::ptable.g_AudioManager_00451698);
-	})
+		CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
+	}
 
 	return;
 }

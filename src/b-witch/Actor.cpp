@@ -997,8 +997,7 @@ void CActor::ChangeManageState(int state)
 		}
 
 		if (uVar5 != 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_AudioManager_00451698);)
+			CScene::ptable.g_AudioManager_00451698->FUN_001844a0();
 		}
 	}
 
@@ -1096,13 +1095,11 @@ void CActor::SetState(int newState, int animType)
 
 		if (((curStateFlags & 0x80) == 0) || ((newStateFlags & 0x80) != 0)) {
 			if (((curStateFlags & 0x80) == 0) && ((newStateFlags & 0x80) != 0)) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				StateTransitionSoundFunc_001844a0((int)pGVar2);)
+				pGVar2->FUN_001844a0();
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
-			StateTransitionSoundFunc_00184470((int)pGVar2);)
+			pGVar2->FUN_00184470();
 		}
 
 		if ((pBehaviour != (CBehaviour*)0x0) && (curActorState = this->actorState, curActorState != AS_None)) {
@@ -6145,6 +6142,18 @@ void CActorSound::SoundStop(int index)
 		}
 
 		pSoundInstance->flags = pSoundInstance->flags & 0xfffffffe;
+	}
+
+	return;
+}
+
+void CActorSound::SetFrequency(float frequency, int index)
+{
+	CSound* pSound;
+
+	pSound = this->aSoundInstances[index].pSound;
+	if (pSound != (CSound*)0x0) {
+		pSound->SetFrequency(frequency, this->aSoundInstances[index].soundId);
 	}
 
 	return;

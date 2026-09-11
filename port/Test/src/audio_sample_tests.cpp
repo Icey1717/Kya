@@ -472,7 +472,7 @@ TEST_F(EdenAudioSamples, ActorSoundStartUsesSampleOverrideAndReplacesPlayback)
 	edSoundFlush();
 	EXPECT_FALSE(slot.IsAlive());
 	sample.flags |= 1;
-	EXPECT_TRUE(static_cast<CSound*>(&sound)->IsLooping());
+	EXPECT_TRUE(static_cast<CSound*>(&sound)->IsLooping(1));
 }
 
 TEST_F(EdenAudioSamples, StereoAtListenerIsFiniteAndBalanced)

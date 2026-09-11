@@ -25,12 +25,12 @@ void CActorBonus::Create(ByteCode* pByteCode)
 	CActorMovable::Create(pByteCode);
 
 	this->pFxTail = (CFxTail*)0x0;
-	this->field_0x1dc.index = pByteCode->GetS32();
+	this->soundRef.index = pByteCode->GetS32();
 	this->flareMaterialId = pByteCode->GetS32();
 	CActor::SV_InstallMaterialId(this->flareMaterialId);
 	this->animMaterialId = pByteCode->GetS32();
 	CActor::SV_InstallMaterialId(this->animMaterialId);
-	this->field_0x1d8 = CreateActorSound(1);
+	this->pActorSound = CreateActorSound(1);
 	this->vector_0x1e0 = (this->subObjA)->boundingSphere;
 
 	return;
@@ -44,7 +44,7 @@ void CActorBonus::Init()
 
 	this->field_0xf0 = 20.0f;
 	CActor::Init();
-	this->field_0x1dc.Init();
+	this->soundRef.Init();
 
 	pCVar1 = this->pShadow;
 	if (pCVar1 != (CShadow*)0x0) {
@@ -283,7 +283,7 @@ void CActorBonus::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
 				pBnsInstance->angleRotYalt = (newAngleRotY >= 16.0f) ? newAngleRotY - 16.0f : newAngleRotY;
 				pBnsInstance->UpdateVisibility();
 				pBnsInstance->field_0x5c += deltaTime;
-				pBnsInstance->field_0x64 = pBnsInstance->currentPosition.xyz;
+				pBnsInstance->field_0x64.position = pBnsInstance->currentPosition.xyz;
 			}
 
 			fieldA0 = pBnsInstance->angleRotYalt + GetTimer()->cutsceneDeltaTime * 1.8f;
@@ -1534,9 +1534,8 @@ void CBnsInstance::SetState(int newState)
 		pBonus->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)1);
 		IMPLEMENTATION_GUARD_LIGHT(
 		CActorBonus::_gBNS_Lights.Register(this);)
-		IMPLEMENTATION_GUARD_AUDIO(
-		soundSpatParam.field_0x0 = this->field_0x64.raw;
-		CActorSound::SoundStart(pBonus->pActorSound, (CActor*)pBonus, 0, (pBonus->soundRef).pSound, 1, 2, &soundSpatParam);)
+		soundSpatParam.data = &this->field_0x64;
+		pBonus->pActorSound->node.SoundStart(pBonus, 0, (pBonus->soundRef).Get(), 1, 2, &soundSpatParam);
 	}
 
 	return;
@@ -1667,7 +1666,7 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 
 			UpdateVisibility();
 			this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
-			this->field_0x64 = this->currentPosition.xyz;
+			this->field_0x64.position = this->currentPosition.xyz;
 		}
 
 		pOwner = static_cast<CActorBonus*>(this->pOwner);
@@ -1781,7 +1780,7 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 
 		this->UpdateVisibility();
 		this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
-		this->field_0x64 = this->currentPosition.xyz;
+		this->field_0x64.position = this->currentPosition.xyz;
 	}
 
 	pOwner = static_cast<CActorBonus*>(this->pOwner);
@@ -1847,7 +1846,7 @@ void CBnsInstance::BehaviourAddOn_Manage(CBehaviourBonusFlock* pBehaviour)
 
 			this->UpdateVisibility();
 			this->field_0x5c += GetTimer()->cutsceneDeltaTime;
-			this->field_0x64 = this->currentPosition.xyz;
+			this->field_0x64.position = this->currentPosition.xyz;
 		}
 	}
 
@@ -1917,7 +1916,7 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 
 			this->UpdateVisibility();
 			this->field_0x5c = this->field_0x5c + GetTimer()->cutsceneDeltaTime;
-			this->field_0x64 = this->currentPosition.xyz;
+			this->field_0x64.position = this->currentPosition.xyz;
 		}
 	}
 
@@ -1956,7 +1955,7 @@ void CBnsInstance::MoveOnPath(float param_1, float speed, CBehaviourBonusPath* p
 	edF32Vector4ScaleHard(scale, &this->pathDelta, &this->pathDelta);
 	edF32Vector4AddHard(&newPosition, &this->currentPosition, &this->pathDelta);
 	this->SetPosition(&newPosition);
-	this->field_0x64 = newPosition.xyz;
+	this->field_0x64.position = newPosition.xyz;
 	max = this->field_0x98;
 	if (distToWayPoint <= max * GetTimer()->cutsceneDeltaTime) {
 		atGoal = pBehaviour->pathPlane.pathFollowReader.AtGoal(

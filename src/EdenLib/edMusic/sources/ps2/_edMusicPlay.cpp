@@ -3,6 +3,7 @@
 #include "edSys/ps2/edSysDataTransfer.h"
 #ifdef PLATFORM_WIN
 #include "edSysTransferService.h"
+#include "edMusicService.h"
 #endif
 
 extern uint _edMusicLastTransferIndex;
@@ -20,6 +21,11 @@ void _edMusicBankInstallTransferCallback(void* pData)
 
 	pMusicBank->flags = pMusicBank->flags | 4;
 	pMusicBank->flags = pMusicBank->flags & 0xfffffffd;
+#ifdef PLATFORM_WIN
+	Audio::InstallMusicBank(static_cast<unsigned>(pMusicBank - _pedMusicBanks),
+		static_cast<uint>(reinterpret_cast<uintptr_t>(pMusicBank->field_0x4)),
+		static_cast<uint>(reinterpret_cast<uintptr_t>(pMusicBank->field_0x0)));
+#endif
 
 	IMPLEMENTATION_GUARD_PS2(
 	local_10 = (int)(_ed_music_bank*)((int)pMusicBank - (int)_pedMusicBanks) >> 0x1f;
@@ -33,6 +39,10 @@ void _edMusicBankInstallTransferCallback(void* pData)
 
 void _edMusicBankInstallNoWait(_ed_music_bank* pBank, void* param_2, void* pAdpcm, uint size, uint dataSize)
 {
+#ifdef PLATFORM_WIN
+	pBank->field_0x0 = nullptr;
+	pBank->field_0x4 = nullptr;
+#endif
 	_edMusicLastTransferIndex = _edMusicLoadDataNoWait(param_2, size, (void*)&pBank->field_0x4, (edSysTransferFunc*)0x0);
 	_edMusicLastTransferIndex = _edSoundLoadToSoundRamNoWait(pAdpcm, dataSize, 0, pBank, _edMusicBankInstallTransferCallback);
 
@@ -44,6 +54,10 @@ void _edMusicBankInstallNoWait(_ed_music_bank* pBank, void* param_2, void* pAdpc
 
 void _edMusicDataRemove(uint flags, void* pSong)
 {
+#ifdef PLATFORM_WIN
+	Audio::ReleaseLoadedData(static_cast<uint>(reinterpret_cast<uintptr_t>(pSong)));
+	return;
+#endif
 	if ((flags & 1) == 1) {
 		_edSoundMemFree(pSong);
 	}
@@ -59,6 +73,10 @@ void _edMusicDataRemove(uint flags, void* pSong)
 
 void _edMusicSongRemove(ed_music_song* pSong)
 {
+#ifdef PLATFORM_WIN
+	_edMusicAreAllMusicDataLoaded();
+	Audio::RemoveMusicSong(static_cast<unsigned>(pSong - _pedMusicSongs));
+#endif
 	IMPLEMENTATION_GUARD_PS2(
 	int peVar1;
 	int local_4;
@@ -69,6 +87,9 @@ void _edMusicSongRemove(ed_music_song* pSong)
 	}
 	local_4 = peVar1 >> 3;)
 	_edMusicDataRemove(0, pSong->field_0x0);
+#ifdef PLATFORM_WIN
+	pSong->field_0x0 = nullptr;
+#endif
 	//_edMusicQueueCommand(1, 0, &local_4, 4);
 
 	pSong->flags = pSong->flags & 0xfffffffb;
@@ -79,10 +100,18 @@ void _edMusicSongRemove(ed_music_song* pSong)
 
 void _edMusicBankRemove(_ed_music_bank* pMusicBank)
 {
+#ifdef PLATFORM_WIN
+	_edMusicAreAllMusicDataLoaded();
+	Audio::RemoveMusicBank(static_cast<unsigned>(pMusicBank - _pedMusicBanks));
+#endif
 	int local_4;
 
 	_edMusicDataRemove(1, pMusicBank->field_0x0);
 	_edMusicDataRemove(0, pMusicBank->field_0x4);
+#ifdef PLATFORM_WIN
+	pMusicBank->field_0x0 = nullptr;
+	pMusicBank->field_0x4 = nullptr;
+#endif
 
 	IMPLEMENTATION_GUARD_PS2(
 	local_4 = (int)(_ed_music_bank*)((int)pMusicBank - (int)_pedMusicBanks) >> 0x1f;
@@ -122,6 +151,10 @@ void _edMusicSongInstallTransferCallback(void* pData)
 
 	pSong->flags = pSong->flags | 4;
 	pSong->flags = pSong->flags & 0xfffffffd;
+#ifdef PLATFORM_WIN
+	Audio::InstallMusicSong(static_cast<unsigned>(pSong - _pedMusicSongs),
+		static_cast<uint>(reinterpret_cast<uintptr_t>(pSong->field_0x0)));
+#endif
 
 	IMPLEMENTATION_GUARD_PS2(
 	peVar1 = (int)pSong - (int)_pedMusicSongs;
@@ -137,6 +170,9 @@ void _edMusicSongInstallTransferCallback(void* pData)
 
 void _edMusicSongInstallNoWait(ed_music_song* pSong, void* pSource, uint size)
 {
+#ifdef PLATFORM_WIN
+	pSong->field_0x0 = nullptr;
+#endif
 	_edMusicLastTransferIndex = _edMusicLoadDataNoWait(pSource, size, pSong, _edMusicSongInstallTransferCallback);
 	pSong->flags = pSong->flags & 0xfffffffb;
 	pSong->flags = pSong->flags | 2;

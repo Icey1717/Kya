@@ -407,7 +407,7 @@ void CBehaviourMoneyFlock::Manage()
 
 							pCurrentInstance->UpdateVisibility();
 							
-							pCurrentInstance->field_0x64 = pCurrentInstance->currentPosition.xyz;
+							pCurrentInstance->field_0x64.position = pCurrentInstance->currentPosition.xyz;
 							pCurrentInstance->field_0x5c = pCurrentInstance->field_0x5c + GetTimer()->cutsceneDeltaTime;
 						}
 					}
@@ -627,7 +627,7 @@ void CInstantFlares::Manage(CActInstance* pInstances, int nbInstances)
 
 void CMnyInstance::SetState(int newState)
 {
-	//SOUND_SPATIALIZATION_PARAM local_4;
+	SOUND_SPATIALIZATION_PARAM local_4;
 	CActorMoney* pActor;
 
 	CActInstance::SetState(newState);
@@ -642,10 +642,8 @@ void CMnyInstance::SetState(int newState)
 			CLevelScheduler::gThis->Money_TakeFromBank(pActor->moneyValue);
 		}
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		local_4 = (float*)&this->field_0x64;
-		CActorSound::SoundStart
-		((CActorSound*)pActor->field_0x280, (CActor*)pActor, 0, (pActor->soundRef).pSound, 1, 2, &local_4);)
+		local_4.data = &this->field_0x64;
+		pActor->field_0x280->node.SoundStart(pActor, 0, (pActor->soundRef).Get(), 1, 2, &local_4);
 	}
 
 	return;
@@ -870,11 +868,7 @@ void CBehaviourMoneyAddOn::Manage()
 							}
 
 							pInstanceIt->UpdateVisibility();
-							fVar8 = pInstanceIt->currentPosition.y;
-							fVar9 = pInstanceIt->currentPosition.z;
-							pInstanceIt->field_0x64.x = pInstanceIt->currentPosition.x;
-							pInstanceIt->field_0x64.y = fVar8;
-							pInstanceIt->field_0x64.z = fVar9;
+							pInstanceIt->field_0x64.position = pInstanceIt->currentPosition.xyz;
 							pInstanceIt->field_0x5c = pInstanceIt->field_0x5c + GetTimer()->cutsceneDeltaTime;
 						}
 					}

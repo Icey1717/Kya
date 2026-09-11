@@ -2,6 +2,7 @@
 #define _ACTOR_BONUS_SERVICES_H
 
 #include "Types.h"
+#include "edSound/edSoundInstance.h"
 
 struct ByteCode;
 struct edNODE;
@@ -24,8 +25,6 @@ public:
 		STT_INS_WAIT = 1,
 		STT_INS_GOTO_KIM = 3,
 	};
-
-	CActInstance();
 
 	virtual void SetState(int newState);
 	virtual float GetAngleRotY() = 0;
@@ -67,12 +66,7 @@ public:
 
 	int state;
 
-	edF32VECTOR3 field_0x64;
-	edF32VECTOR3 field_0x70;
-
-	float field_0x7c;
-	undefined4 field_0x84;
-	undefined4 field_0x88;
+	edsound_3d_data field_0x64;
 
 	float field_0x90;
 	float angleRotY;

@@ -115,6 +115,14 @@ void _edMusicSongInstallNoWait(ed_music_song* pSong, void* pSource, uint size);
 uint edMusicSongInstallNoWait(void* pFileData, uint size);
 
 void edMusicStreamChannelFade(float fadeTime, int musicStreamIndex, int channel, uint otherVolume, int volume);
+#ifdef PLATFORM_WIN
+void edMusicWinStreamPlay(int streamIndex, int mode);
+void edMusicWinStreamSetSong(int streamIndex, int songIndex);
+void edMusicWinStreamSetBank(int streamIndex, int bankIndex);
+void edMusicWinStreamSetAutoLooping(int streamIndex, bool autoLoop);
+bool edMusicStreamGetAutoLooping(int streamIndex);
+void edMusicWinStreamSetVolume(int streamIndex, int volume);
+#endif
 
 extern edCMusicStatus edMusicStatus;
 extern ed_music_stream* pedMusicStreams;

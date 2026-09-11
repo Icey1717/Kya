@@ -2110,13 +2110,11 @@ void CCinematic::Manage()
 		}
 
 		if ((this != (CCinematic*)0xffffff4c) && (this->field_0x2c8 != -1.0f)) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			fVar4 = edFIntervalLERP((this->pActor->actorBase).data.adjustedMagnitude, this->field_0x2c8, this->field_0x2cc,
-				this->field_0x2d4, this->field_0x2d0);
+			fVar4 = edFIntervalLERP(this->pActor->distanceToCamera, this->field_0x2c8, this->field_0x2cc, this->field_0x2d4, this->field_0x2d0);
 			soundInfo = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId;
 			if (soundInfo != 0) {
 				edSoundInstanceSetVolume(fVar4, soundInfo);
-			})
+			}
 		}
 	}
 
@@ -2990,13 +2988,11 @@ void CCinematic::Level_PauseChange(bool bPaused)
 					(bVar1 = StaticEdFileBase_004497f0.IsAvailable(), bVar1 == false)) {
 					iVar3 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId;
 					if (iVar3 != 0) {
-						IMPLEMENTATION_GUARD_AUDIO(
-						edSoundInstanceStop(iVar3);)
+						edSoundInstanceStop(iVar3);
 
 						(this->cinematicLoadObject).BWCinSourceAudio_Obj.soundInstanceId = 0;
 
-						IMPLEMENTATION_GUARD_AUDIO(
-						edSoundStreamFree((this->cinematicLoadObject).BWCinSourceAudio_Obj.pSoundStream);)
+						edSoundStreamFree((this->cinematicLoadObject).BWCinSourceAudio_Obj.pSoundStream);
 
 						if ((this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x38 == 0) {
 							StaticEdFileBase_004497f0.Remove();

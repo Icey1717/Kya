@@ -257,8 +257,7 @@ void CBehaviourGravityAwareFall::Manage()
 		if (0.1f <= pGravityAware->field_0x350) {
 			pSound = this->soundRef.Get();
 			if (pSound != (CSound*)0x0) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				pGravityAware->pActorSound->SoundStart(pGravityAware, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+				pGravityAware->pActorSound->node.SoundStart(pGravityAware, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 			}
 			
 			pGravityAware->SetState(6, -1);
@@ -415,8 +414,7 @@ void CBehaviourGravityAwareBell::InitState(int newState)
 	if (newState == 7) {
 		pSound = (this->soundRef).Get();
 		if (pSound != (CSound*)0x0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			this->pOwner->pActorSound->SoundStart(this->pOwner, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+			this->pOwner->pActorSound->node.SoundStart(this->pOwner, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		}
 
 		this->field_0x10 = Timer::GetTimer()->scaledTotalTime;

@@ -11167,13 +11167,12 @@ void CBehaviourFighterWolfen::ManageExit()
 
 void CBehaviourFighterWolfen::ManageCombatMusic(int state)
 {
-	IMPLEMENTATION_GUARD_AUDIO(
 	if (state == 0) {
-		CAudioManager::StopCombatMusic(CScene::ptable.g_AudioManager_00451698);
+		CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
 	}
 	else {
-		CAudioManager::PlayCombatMusic(CScene::ptable.g_AudioManager_00451698);
-	})
+		CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
+	}
 	return;
 }
 
@@ -15817,13 +15816,13 @@ void CBehaviourWolfenFighterRidden::End(int newBehaviourId)
 
 void CBehaviourWolfenFighterRidden::ManageCombatMusic(int state)
 {
-	IMPLEMENTATION_GUARD_AUDIO(
 	if (state == 0) {
-		CAudioManager::StopCombatMusic(CScene::ptable.g_AudioManager_00451698);
+		CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
 	}
 	else {
-		CAudioManager::PlayCombatMusic(CScene::ptable.g_AudioManager_00451698);
-	})
+		CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
+	}
+
 	return;
 }
 

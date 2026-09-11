@@ -1,2 +1,0 @@
-Sample command 0 failed (instance 65536, handle 1)
-Sample command 0 failed (instance 262144, handle 1)

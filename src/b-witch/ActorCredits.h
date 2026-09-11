@@ -59,7 +59,7 @@ public:
 	float boxBorderWidth;
 	float boxBorderHeight;
 
-	// CMusic* pMusic;
+	CMusic* pMusic;
 	float musicFadeInTime;
 	float musicVolume;
 	float musicFadeOutTime;

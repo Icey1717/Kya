@@ -37,6 +37,33 @@ CDoubleLinkedNode<SoundSampleEntry>* gCurrentLoadingSoundSample;
 void* gSoundSampleFileData_00448e68;
 CDoubleLinkedList<SoundSampleEntry> gFreeSoundSamples;
 
+#ifdef PLATFORM_WIN
+static void edMusicStreamPlay(int streamIndex, int mode)
+{
+	if (NoAudio == 0) edMusicWinStreamPlay(streamIndex, mode);
+}
+
+static void edMusicStreamSetSong(int streamIndex, int songIndex)
+{
+	if (NoAudio == 0) edMusicWinStreamSetSong(streamIndex, songIndex);
+}
+
+static void edMusicStreamSetBank(int streamIndex, int bankIndex)
+{
+	if (NoAudio == 0) edMusicWinStreamSetBank(streamIndex, bankIndex);
+}
+
+static void edMusicStreamSetAutoLooping(int streamIndex, bool autoLoop)
+{
+	if (NoAudio == 0) edMusicWinStreamSetAutoLooping(streamIndex, autoLoop);
+}
+
+static void edMusicStreamSetVolume(int streamIndex, int volume)
+{
+	if (NoAudio == 0) edMusicWinStreamSetVolume(streamIndex, volume);
+}
+
+#else
 // The Windows edMusic port has no streamed-music backend yet. Keep the
 // scheduler's stream state coherent so adding that backend only requires
 // replacing these small adapters with its commands.
@@ -76,6 +103,8 @@ static void edMusicStreamSetVolume(int streamIndex, int volume)
 	}
 	pedMusicStreams[streamIndex].volume = volume;
 }
+
+#endif
 
 CMusicManager::CMusicManager()
 {
@@ -219,6 +248,19 @@ int CMusicManager::Start(float priority, float initialVolume, float fadeInTime, 
 	cell.transitionDuration = fadeInTime;
 	cell.transitionRemaining = fadeInTime;
 	return handle;
+}
+
+bool CMusicManager::IsActive(int handle)
+{
+	bool bVar1;
+
+	bVar1 = false;
+	IMPLEMENTATION_GUARD(
+	if ((handle != -1) && ((this->aMusicCells[handle].pMusic == (CMusic*)0x0 || (bVar1 = true, (static_cast<uint>(&this->aMusicCells[handle].pMusic)[3] & 2) == 0)))) {
+		bVar1 = false;
+	})
+
+	return bVar1;
 }
 
 uint CMusicManager::_ManageCell(float param_1, float param_2, CAudioManager* pAudioManager, CMusicManager::s_music_cell* pMusicCell, int* pStart, int* pStop, int* pClearCell, int* pResume,
@@ -760,6 +802,32 @@ void CAudioManager::WillLoadFileFromBank(edCBankBufferEntry* pBankBuffer)
 	return;
 }
 
+#ifdef PLATFORM_WIN
+void CMusicManager_EndOfSongCallback(uint index)
+{
+	CMusicManager* pCVar1;
+	CMusicManager* pCVar2;
+	CMusicManager* pCVar3;
+	ulong uVar4;
+	CMusicManager* pCVar5;
+
+	pCVar1 = (CScene::ptable.g_AudioManager_00451698)->field_0x38;
+	if (index < 10 && pCVar1->aStreamUsed[index] != 0) {
+		uVar4 = edMusicStreamGetAutoLooping(index);
+		if (uVar4 == 0) {
+			for (int handle = 0; handle < 10; ++handle) {
+				if (pCVar1->aMusicCells[handle].pMusic != 0 && pCVar1->aMusicCells[handle].streamIndex == static_cast<int>(index)) {
+					pCVar1->Stop(0.0f, 0.0f, handle);
+					break;
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+#else
 void CMusicManager_EndOfSongCallback(uint index)
 {
 	CMusicManager* pCVar1;
@@ -784,6 +852,8 @@ void CMusicManager_EndOfSongCallback(uint index)
 
 	return;
 }
+
+#endif
 
 void CAudioManager_SoundFinishedInstancesCallback(ed_sound_instance_finished* pFinishedInstances, uint nbCount)
 {
@@ -1287,7 +1357,11 @@ void CAudioManager::Level_ClearAll()
 	if (this->nbBanks != 0) {
 		if ((NoAudio == 0) && (uVar6 = 0, this->nbBanks != 0)) {
 			do {
+#ifdef PLATFORM_WIN
+				edMusicBankRemove(this->aBankIndexes[uVar6]);
+#else
 				edMusicBankRemove(uVar6);
+#endif
 				uVar6 = uVar6 + 1;
 				this->field_0xb4 = this->field_0xb4 - this->field_0xb8;
 			} while (uVar6 < this->nbBanks);
@@ -1859,7 +1933,11 @@ void CAudioManager::AddMusics(ByteCode* pByteCode)
 		uVar1 = 0;
 		if (this->nbBanks != 0) {
 			do {
+#ifdef PLATFORM_WIN
+				this->aBankIndexes[uVar1] = -1;
+#else
 				this->aSongIndexes[uVar1] = -1;
+#endif
 				uVar1 = uVar1 + 1;
 			} while (uVar1 < this->nbBanks);
 		}
@@ -2732,6 +2810,15 @@ void CAudioManager::FUN_00182da0(float param_1)
 {
 	this->field_0x64 = param_1;
 	this->field_0x6c = 0;
+	return;
+}
+
+void CAudioManager::FUN_001844a0()
+{
+	if (this->field_0x290 != (CMusic*)0x0) {
+		this->field_0x294 = this->field_0x294 + 1;
+	}
+
 	return;
 }
 

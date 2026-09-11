@@ -2,6 +2,7 @@
 #include "edSoundSampleService.h"
 #include "edSoundStreamService.h"
 #include "edSoundDevice.h"
+#include "edMusicService.h"
 #include "log.h"
 #include <cstring>
 #include <deque>
@@ -55,15 +56,17 @@ std::uint32_t NewHandle()
 
 bool Dispatch(Pending& t, int id)
 {
-	if (!id || (id >= 4 && id <= 6))
+	if (!id)
 		return true;
 	switch (id)
 	{
 	case 1:
+	case 4:
 		t.handle = NewHandle();
 		loaded.emplace(t.handle, Loaded{{}, t.info.alignment, t.info.flags});
 		return true;
 	case 2:
+	case 5:
 	{
 		auto i = loaded.find(t.handle);
 		if (i == loaded.end())
@@ -75,6 +78,7 @@ bool Dispatch(Pending& t, int id)
 		return true;
 	}
 	case 3:
+	case 6:
 		if (!t.handle || t.returnBytes < sizeof(t.handle))
 		{
 			Error("sound end callback cannot return a handle", id);
@@ -175,6 +179,7 @@ bool ReleaseLoadedData(std::uint32_t h)
 
 void Reset()
 {
+	ResetMusic();
 	ResetSamples();
 	queue.clear();
 	loaded.clear();

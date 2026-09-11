@@ -497,15 +497,13 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 
 		if ((0.001f < fabs(lx)) || (0.001f < fabs(ly))) {
 			if (this->bMoveSoundActive == 0) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				CActorSound::SoundStart(this->field_0x4fc, 3, this->field_0x50c.pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+				this->field_0x4fc->node.SoundStart(this, 3, this->field_0x50c.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 				this->bMoveSoundActive = 1;
 			}
 		}
 		else {
 			if (this->bMoveSoundActive != 0) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				CActorSound::FadeTo(0.0f, -2.0f, 0.1f, this->field_0x4fc, 3);)
+				this->field_0x4fc->node.FadeTo(0.0f, -2.0f, 0.1f, 3);
 				this->bMoveSoundActive = 0;
 			}
 		}
@@ -595,19 +593,19 @@ void CActorDCA::BehaviourControlled_Manage(CBhvControlled* pBehaviour, CONTROLLE
 
 						this->bIsFiring = 1;
 						this->field_0x460 = 0.0f;
-						IMPLEMENTATION_GUARD_AUDIO(
-						CActorSound::FadeTo(1.0f, 1.0f, 0.0f, this->field_0x4fc, 0);)
+						this->field_0x4fc->node.FadeTo(1.0f, 1.0f, 0.0f, 0);
 					}
 				}
 				else {
 					if (this->bCharging == 0) {
 						this->bCharging = 1;
+
 						if (this->field_0x460 == 0.0f) {
 							this->field_0x460 = GetTimer()->scaledTotalTime;
 						}
+
 						if ((0.0f < pParams->field_0x8) && (CScene::ptable.g_AudioManager_00451698 != (CAudioManager*)0x0)) {
-							IMPLEMENTATION_GUARD_AUDIO(
-							CActorSound::FadeTo(1.0f, this->field_0x464, (pParams->field_0x4 - pParams->field_0x0) / pParams->field_0x8, this->field_0x4fc, 0);)
+							this->field_0x4fc->node.FadeTo(1.0f, this->field_0x464, (pParams->field_0x4 - pParams->field_0x0) / pParams->field_0x8, 0);
 						}
 					}
 				}
@@ -804,10 +802,7 @@ void CActorDCA::CBhvControlled::Begin(CActor* pOwner, int newState, int newAnima
 		if (bControlledByHero) {
 			pDCA->bCameraPushed = 0;
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::SoundStart
-			((CActorSound*)pDCA->field_0x4fc, (CActor*)pDCA, 0, (CSound*)pDCA->field_0x500, 1, 0,
-				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+			pDCA->field_0x4fc->node.SoundStart(pDCA, 0, pDCA->field_0x500.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		}
 
 		pDCA->bIsFiring = 0;

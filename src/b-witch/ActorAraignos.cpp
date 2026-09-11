@@ -178,23 +178,21 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				this->flags = this->flags & 0xffffff7f;
 				this->flags = this->flags | 0x20;
 				EvaluateDisplayState();
-				IMPLEMENTATION_GUARD_AUDIO(
-				if ((this->pActorSound != (CActorSound*)0x0) &&
-					(iVar3 = CActorSound::IsInstanceAlive(this->pActorSound, 1), iVar3 != 0)) {
-					CActorSound::FUN_0032c600(this->pActorSound, 1);
-				})
+
+				if ((this->pActorSound != (CActorSoundNode*)0x0) &&
+					(iVar3 = this->pActorSound->node.IsInstanceAlive(1), iVar3 != 0)) {
+					this->pActorSound->node.SoundStop(1);
+				}
 			}
 			else {
 				this->flags = this->flags & 0xfffffffc;
 				this->flags = this->flags & 0xffffff5f;
 				EvaluateDisplayState();
-				IMPLEMENTATION_GUARD_AUDIO(
-				if (this->pActorSound != (CActorSound*)0x0) {
-					CActorSound::SoundStart
-					(this->pActorSound, (CActor*)this, 1, (CSound*)this->field_0x240, 0, 0,
-						(SOUND_SPATIALIZATION_PARAM*)0x0);
-					CActorSound::SetFrequency(this->field_0x1f8, this->pActorSound, 1);
-				})
+
+				if (this->pActorSound != (CActorSoundNode*)0x0) {
+					this->pActorSound->node.SoundStart(this, 1, (CSound*)this->field_0x240, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+					this->pActorSound->node.SetFrequency(this->field_0x1f8, 1);
+				}
 
 				this->field_0x1d0 = 0.0f;
 			}
@@ -222,11 +220,10 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					this->flags = this->flags & 0xffffff7f;
 					this->flags = this->flags | 0x20;
 					EvaluateDisplayState();
-					IMPLEMENTATION_GUARD_AUDIO(
-					if ((this->pActorSound != (CActorSound*)0x0) &&
-						(iVar3 = CActorSound::IsInstanceAlive(this->pActorSound, 1), iVar3 != 0)) {
-						CActorSound::FUN_0032c600(this->pActorSound, 1);
-					})
+					if ((this->pActorSound != (CActorSoundNode*)0x0) &&
+						(iVar3 = this->pActorSound->node.IsInstanceAlive(1), iVar3 != 0)) {
+						this->pActorSound->node.SoundStop(1);
+					}
 					iVar3 = 1;
 				}
 				else {
@@ -240,11 +237,10 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							this->flags = this->flags | 0x20;
 							EvaluateDisplayState();
 
-							IMPLEMENTATION_GUARD_AUDIO(
-							if ((this->pActorSound != (CActorSound*)0x0) &&
-								(iVar3 = CActorSound::IsInstanceAlive(this->pActorSound, 1), iVar3 != 0)) {
-								CActorSound::FUN_0032c600(this->pActorSound, 1);
-							})
+							if ((this->pActorSound != (CActorSoundNode*)0x0) &&
+								(iVar3 = this->pActorSound->node.IsInstanceAlive(1), iVar3 != 0)) {
+								this->pActorSound->node.SoundStop(1);
+							}
 						}
 						else {
 							this->flags = this->flags & 0xfffffffc;
@@ -313,13 +309,10 @@ void CActorAraignos::BehaviourDefault_InitState(int newState)
 			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffefff;
 			this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			if (this->pActorSound != (CActorSound*)0x0) {
-				CActorSound::SoundStart
-				(this->pActorSound, (CActor*)this, 0, (CSound*)this->field_0x23c, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0)
-					;
-				CActorSound::SetFrequency(1.0, this->pActorSound, 0);
-			})
+			if (this->pActorSound != (CActorSoundNode*)0x0) {
+				this->pActorSound->node.SoundStart(this, 0, (CSound*)this->field_0x23c, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+				this->pActorSound->node.SetFrequency(1.0f, 0);
+			}
 
 			local_10.x = this->currentLocation.x;
 			local_10.z = this->currentLocation.z;
@@ -372,17 +365,16 @@ void CActorAraignos::BehaviourDefault_Manage()
 			this->flags = this->flags & 0xfffffffd;
 			this->flags = this->flags | 1;
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			if (this->pActorSound != (CActorSound*)0x0) {
-				iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, 0);
+			if (this->pActorSound != (CActorSoundNode*)0x0) {
+				iVar4 = this->pActorSound->node.IsInstanceAlive(0);
 				if (iVar4 != 0) {
-					CActorSound::SoundStop(this->pActorSound, 0);
+					this->pActorSound->node.SoundStop(0);
 				}
-				iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, 1);
+				iVar4 = this->pActorSound->node.IsInstanceAlive(1);
 				if (iVar4 != 0) {
-					CActorSound::SoundStop(this->pActorSound, 1);
+					this->pActorSound->node.SoundStop(1);
 				}
-			})
+			}
 		}
 	}
 	else {
@@ -397,13 +389,10 @@ void CActorAraignos::BehaviourDefault_Manage()
 
 				fVar5 = this->field_0x1f8;
 
-				IMPLEMENTATION_GUARD_AUDIO(
-				if (this->pActorSound != (CActorSound*)0x0) {
-					CActorSound::SoundStart
-					(this->pActorSound, (CActor*)this, 0, (CSound*)this->field_0x238, 0, 0,
-						(SOUND_SPATIALIZATION_PARAM*)0x0);
-					CActorSound::SetFrequency(fVar5, this->pActorSound, 0);
-				})
+				if (this->pActorSound != (CActorSoundNode*)0x0) {
+					this->pActorSound->node.SoundStart(this, 0, this->field_0x238, 0, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+					this->pActorSound->node.SetFrequency(fVar5, 0);
+				}
 
 				this->field_0x1d4 = (CActor*)0x0;
 			}

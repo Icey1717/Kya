@@ -29,16 +29,6 @@ static int _gAddOn_NbRemainingMinusTermed = 0;
 static bool _gDoneTerm = false;
 #endif
 
-
-CActInstance::CActInstance()
-{
-	this->field_0x7c = -1.0f;
-	this->field_0x84 = 0;
-	this->field_0x88 = 0;
-
-	return;
-}
-
 void CActInstance::SetState(int newState)
 {
 	this->state = newState;
@@ -106,8 +96,8 @@ void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* p
 		this->pHierarchy->transformA.rowT = this->currentPosition;
 	}
 
-	this->field_0x64 = this->basePosition.xyz;
-	this->field_0x70 = gF32Vector3Zero;
+	this->field_0x64.position = this->basePosition.xyz;
+	this->field_0x64.rotation = gF32Vector3Zero;
 
 	this->flags = this->flags & 0xfffffffb;
 
@@ -154,8 +144,8 @@ void CActInstance::Reset()
 		this->pHierarchy->transformA.rowT = this->currentPosition;
 	}
 
-	this->field_0x64 = this->basePosition.xyz;
-	this->field_0x70 = gF32Vector3Zero;
+	this->field_0x64.position = this->basePosition.xyz;
+	this->field_0x64.rotation = gF32Vector3Zero;
 
 	this->field_0x5c = 0.0f;
 	this->distanceToKim = 0.0f;

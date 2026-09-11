@@ -16,7 +16,7 @@ void CActorCredits::Create(ByteCode* pByteCode)
 	S_STREAM_EVENT_CAMERA* pSVar3;
 	bool bVar4;
 	uint uVar5;
-	//CMusic* pMusic;
+	CMusic* pMusicFound;
 	int iVar6;
 	float fVar7;
 	CAudioManager* pAudioManager;
@@ -63,17 +63,16 @@ void CActorCredits::Create(ByteCode* pByteCode)
 	pAudioManager = CScene::ptable.g_AudioManager_00451698;
 	uVar5 = pByteCode->GetU32();
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	if ((uVar5 == 0xffffffff) || (bVar4 = pAudioManager->nbMusic <= uVar5, bVar4)) {
-		pMusic = (CMusic*)0x0;
+		pMusicFound = (CMusic*)0x0;
 	}
 	else {
 		if (bVar4) {
 			uVar5 = 0;
 		}
-		pMusic = pAudioManager->aMusic + uVar5;
+		pMusicFound = pAudioManager->aMusic + uVar5;
 	}
-	this->field_0x190 = pMusic;)
+	this->pMusic = pMusicFound;
 
 	this->musicFadeInTime = pByteCode->GetF32();
 	this->musicVolume = pByteCode->GetF32();
@@ -340,11 +339,10 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		this->flags = this->flags | 0x20;
 		EvaluateDisplayState();
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		if (this->field_0x190 != (CMusic*)0x0) {
-			MusicStop(this->musicFadeOutTime, 0, (CScene::ptable.g_AudioManager_00451698)->field_0x38, this->musicHandle);
+		if (this->pMusic != (CMusic*)0x0) {
+			(CScene::ptable.g_AudioManager_00451698)->field_0x38->Stop(this->musicFadeOutTime, 0, this->musicHandle);
 			this->musicHandle = -1;
-		})
+		}
 
 		iVar4 = 1;
 	}
@@ -359,11 +357,11 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 			ClearLocalData();
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			if (this->field_0x190 != (CMusic*)0x0) {
-				musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->field_0x190, 0x19);
+			if (this->pMusic != (CMusic*)0x0) {
+				musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->pMusic, 0x19);
 				this->musicHandle = musicHandle;
-			})
+			}
+
 			iVar4 = 1;
 		}
 		else {
@@ -377,11 +375,10 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 					ClearLocalData();
 
-					IMPLEMENTATION_GUARD_AUDIO(
-					if (this->field_0x190 != (CMusic*)0x0) {
-						musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->field_0x190, 0x19);
+					if (this->pMusic != (CMusic*)0x0) {
+						musicHandle = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(this->musicFadeInTime, 1.0f, this->musicVolume, 0.0f, this->pMusic, 0x19);
 						this->musicHandle = musicHandle;
-					})
+					}
 				}
 				else {
 					this->flags = this->flags & 0xfffffffd;
@@ -391,11 +388,10 @@ int CActorCredits::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 					EvaluateDisplayState();
 
-					IMPLEMENTATION_GUARD_AUDIO(
-					if (this->field_0x190 != (CMusic*)0x0) {
-						MusicStop(this->musicFadeOutTime, 0, (CScene::ptable.g_AudioManager_00451698)->field_0x38, this->musicHandle);
+					if (this->pMusic != (CMusic*)0x0) {
+						(CScene::ptable.g_AudioManager_00451698)->field_0x38->Stop(this->musicFadeOutTime, 0, this->musicHandle);
 						this->musicHandle = -1;
-					})
+					}
 				}
 			}
 
@@ -492,11 +488,10 @@ void CBehaviourCreditsDefault::Manage()
 		pCredits->flags = pCredits->flags | 0x20;
 		pCredits->EvaluateDisplayState();
 
-		IMPLEMENTATION_GUARD_AUDIO(
-		if (((edF32VECTOR4*)&pCredits->field_0x190)->x != 0.0f) {
-			MusicStop(pCredits->musicFadeOutTime, 0, (CScene::ptable.g_AudioManager_00451698)->field_0x38, static_cast<int>((edF32VECTOR4*)&pCredits->musicHandle)->x);
-			((edF32VECTOR4*)&pCredits->musicHandle)->x = -NAN;
-		})
+		if (pCredits->pMusic != (CMusic*)0x0) {
+			(CScene::ptable.g_AudioManager_00451698)->field_0x38->Stop(pCredits->musicFadeOutTime, 0, pCredits->musicHandle);
+			pCredits->musicHandle = -1;
+		}
 
 		levelID = pCredits->nextLevelId;
 		if (levelID != 0x10) {

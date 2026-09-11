@@ -604,9 +604,8 @@ void CActorTeleporter::StateTeleporterActive()
 					}
 				}
 
-				IMPLEMENTATION_GUARD_AUDIO(
-				this->pOwner->field_0x2ac = CScene::ptable.g_AudioManager_00451698->FUN_001819b0();
-				this->pOwner->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->FUN_00184580();)
+				this->field_0x2ac = CScene::ptable.g_AudioManager_00451698->GetAmbianceIndex_001819b0();
+				this->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->GetMusicId();
 
 				this->condOpArray.Perform();
 				CLevelScheduler::gThis->Level_Teleport(this, levelId, iVar8, cutsceneId, this->subsectorMaterialId);
@@ -682,11 +681,10 @@ void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
 			}
 		}
 
-		IMPLEMENTATION_GUARD_AUDIO(
 		pAudioManager = CScene::ptable.g_AudioManager_00451698;
-		CScene::ptable.g_AudioManager_00451698->FUN_00181970(this->field_0x2ac);
+		CScene::ptable.g_AudioManager_00451698->SetAmbiance(this->field_0x2ac);
 		pAudioManager->SetMusic(this->field_0x2b0);
-		(**(code**)(pAudioManager->field_0x0 + 0x50))();)
+		pAudioManager->Level_CheckpointReset();
 	}
 
 	return;
@@ -1214,9 +1212,8 @@ int CBehaviourTeleporterDefault::InterpretMessage(CActor* pSender, int msg, void
 
 			CLevelScheduler::gThis->Level_TeleporterChanged();
 
-			IMPLEMENTATION_GUARD_AUDIO(
-			this->pOwner->field_0x2ac = CScene::ptable.g_AudioManager_00451698->FUN_001819b0();
-			this->pOwner->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->FUN_00184580();)
+			this->pOwner->field_0x2ac = CScene::ptable.g_AudioManager_00451698->GetAmbianceIndex_001819b0();
+			this->pOwner->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->GetMusicId();
 
 			return 1;
 		}

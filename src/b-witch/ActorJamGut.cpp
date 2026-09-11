@@ -3680,7 +3680,6 @@ void CBehaviourJamGutRidden::Create(ByteCode* pByteCode)
 	pCVar2 = CScene::ptable.g_AudioManager_00451698;
 	uVar3 = pByteCode->GetU32();
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	if ((uVar3 == 0xffffffff) || (bVar1 = (uint)pCVar2->nbMusic <= uVar3, bVar1)) {
 		pCVar4 = (CMusic*)0x0;
 	}
@@ -3690,7 +3689,8 @@ void CBehaviourJamGutRidden::Create(ByteCode* pByteCode)
 		}
 		pCVar4 = pCVar2->aMusic + uVar3;
 	}
-	this->field_0x10 = pCVar4;)
+
+	this->field_0x10 = pCVar4;
 
 	this->field_0x14 = pByteCode->GetF32();
 	this->field_0x18 = pByteCode->GetF32();
@@ -3752,7 +3752,7 @@ void CBehaviourJamGutRidden::Begin(CActor* pOwner, int newState, int newAnimatio
 	this->field_0x8 = 0;
 
 	if (this->field_0x10 != (CMusic*)0x0) {
-		IMPLEMENTATION_GUARD_AUDIO(
+
 		pMusicManager = CScene::ptable.g_AudioManager_00451698->field_0x38;
 		bVar2 = pMusicManager->IsMusic(this->field_0xc, this->field_0x10);
 		if (!bVar2 || !pMusicManager->IsActive(this->field_0xc)) {
@@ -3761,7 +3761,7 @@ void CBehaviourJamGutRidden::Begin(CActor* pOwner, int newState, int newAnimatio
 		}
 		else {
 			pMusicManager->CancelStop(this->field_0x18, this->field_0xc);
-		})
+		}
 	}
 
 	return;
@@ -3798,9 +3798,8 @@ void CBehaviourJamGutRidden::End(int newBehaviourId)
 	this->pOwner->RestoreCollisionSphere(0.2f);
 
 	if (this->field_0x10 != (CMusic*)0x0) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		(CScene::ptable.g_AudioManager_00451698)->field_0x38->Stop(this->field_0x1c, 0, this->field_0xc);
-		this->field_0xc = -1;)
+		CScene::ptable.g_AudioManager_00451698->field_0x38->Stop(this->field_0x1c, 0, this->field_0xc);
+		this->field_0xc = -1;
 	}
 
 	pJamGut = this->pOwner;

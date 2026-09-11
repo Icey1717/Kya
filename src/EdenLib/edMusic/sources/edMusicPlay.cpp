@@ -1,6 +1,59 @@
 #include "edMusic/edMusic.h"
+#ifdef PLATFORM_WIN
+#include "edMusicService.h"
+#include <algorithm>
+#endif
 
 edCMusicStatus edMusicStatus;
+
+#ifdef PLATFORM_WIN
+static bool ValidMusicStream(int streamIndex)
+{
+	return pedMusicStreams && streamIndex >= 0 && static_cast<uint>(streamIndex) < edMusicStatus.nbStreams;
+}
+
+void edMusicWinStreamPlay(int streamIndex, int mode)
+{
+	if (!ValidMusicStream(streamIndex) || mode < 0 || mode > 2) return;
+	ed_music_stream* pStream = pedMusicStreams + streamIndex;
+	if ((mode == 1 && pStream->field_0xc == 0) || (mode == 2 && pStream->field_0xc == 1)) return;
+	pStream->field_0xc = mode == 2 ? 1 : 0;
+	Audio::QueueMusicCommand({mode == 0 ? Audio::MusicCommandType::Restart : mode == 1 ? Audio::MusicCommandType::Resume : Audio::MusicCommandType::Pause, static_cast<uint>(streamIndex)});
+}
+
+void edMusicWinStreamSetSong(int streamIndex, int songIndex)
+{
+	if (!ValidMusicStream(streamIndex) || !_pedMusicSongs || songIndex < 0 || static_cast<uint>(songIndex) >= edMusicStatus.nbSongs) return;
+	pedMusicStreams[streamIndex].pSong = _pedMusicSongs + songIndex;
+	Audio::QueueMusicCommand({Audio::MusicCommandType::Song, static_cast<uint>(streamIndex), static_cast<uint>(songIndex)});
+	if (pedMusicStreams[streamIndex].field_0xc == 0) Audio::QueueMusicCommand({Audio::MusicCommandType::Restart, static_cast<uint>(streamIndex)});
+}
+
+void edMusicWinStreamSetBank(int streamIndex, int bankIndex)
+{
+	if (!ValidMusicStream(streamIndex) || !_pedMusicBanks || bankIndex < 0 || static_cast<uint>(bankIndex) >= edMusicStatus.nbBanks) return;
+	Audio::QueueMusicCommand({Audio::MusicCommandType::Bank, static_cast<uint>(streamIndex), static_cast<uint>(bankIndex)});
+	if (pedMusicStreams[streamIndex].field_0xc == 0) Audio::QueueMusicCommand({Audio::MusicCommandType::Restart, static_cast<uint>(streamIndex)});
+}
+
+void edMusicWinStreamSetAutoLooping(int streamIndex, bool autoLoop)
+{
+	if (!ValidMusicStream(streamIndex)) return;
+	if (autoLoop) pedMusicStreams[streamIndex].fadeFlags |= 4;
+	else pedMusicStreams[streamIndex].fadeFlags &= ~4u;
+}
+
+bool edMusicStreamGetAutoLooping(int streamIndex)
+{
+	return ValidMusicStream(streamIndex) && (pedMusicStreams[streamIndex].fadeFlags & 4) != 0;
+}
+
+void edMusicWinStreamSetVolume(int streamIndex, int volume)
+{
+	if (!ValidMusicStream(streamIndex)) return;
+	pedMusicStreams[streamIndex].volume = volume;
+}
+#endif
 
 void edMusicSetMasterVolume(uint newVolume)
 {
@@ -48,7 +101,9 @@ void _edMusicStreamSetChannelVolume(ed_music_stream* pMusicStream, int channel, 
 	local_4 = volume;
 	_edMusicQueueCommand(0xf, pMusicStream->index, &local_8, 8);
 #else
-
+#ifdef PLATFORM_WIN
+	if (channel >= 0 && channel < 16) Audio::QueueMusicCommand({Audio::MusicCommandType::ChannelVolume, pMusicStream->index, static_cast<uint>(std::clamp(volume, 0, 65535)), static_cast<uint>(channel)});
+#endif
 #endif
 	return;
 }
@@ -61,7 +116,9 @@ void _edMusicStreamPause(ed_music_stream* pMusicStream)
 	local_4 = 2;
 	_edMusicQueueCommand(10, pMusicStream->index, &local_4, 4);
 #else
-
+#ifdef PLATFORM_WIN
+	Audio::QueueMusicCommand({Audio::MusicCommandType::Pause, pMusicStream->index});
+#endif
 #endif
 	return;
 }
@@ -127,11 +184,30 @@ uint _edMusicFlush(void)
 	uVar3 = _edSysCallRPC(2, 0, 1, 0x4822b0, uVar4, 0x4826b0, 0x400, 0, (uint*)0x0, *(int*)(_pedMusicRPCClient + 4), (sceSifClientData*)(_pedMusicRPCClient + 0xc), (int*)(_pedMusicRPCClient + 8));
 	_edMusicCommandQueuePtr = &_edMusicUnfilteredCommandQueue;
 #else
+#ifdef PLATFORM_WIN
+	std::vector<Audio::MusicControls> controls(edMusicStatus.nbStreams);
+	for (uint i = 0; i < edMusicStatus.nbStreams; ++i) {
+		const auto& stream = pedMusicStreams[i];
+		controls[i].volume = static_cast<float>(Audio::MusicVolumeByte(edMusicStatus.masterVolume)) / 256.0f;
+		controls[i].streamVolume = Audio::MusicVolumeByte(stream.volume);
+		controls[i].tempo = (static_cast<float>(stream.tempo) / 256.0f) * (static_cast<float>(edMusicStatus.masterTempo) / 256.0f);
+		controls[i].looping = (stream.fadeFlags & 4) != 0;
+		controls[i].mono = edMusicStatus.outputMode == MONO;
+		// The IOP starts channel gains at 128; only explicit channel commands
+		// replace them. The EE's initial 65535 values are not sent to the IOP.
+	}
+	const auto finished = Audio::FlushMusicCommands(controls);
+	for (auto index : finished) {
+		pedMusicStreams[index].field_0xc = 1;
+		if (edMusicStatus.endOfSongCallback) edMusicStatus.endOfSongCallback(index);
+	}
+#else
 	// TODO(Windows): _edMusicFlush only submits PS2 music commands through IOP RPC.
 	// The PC port currently has no streamed-music backend, so command submission
 	// and IOP return-queue processing are intentionally omitted. When a backend is
 	// added, submit pending stream state here and poll it for completion/end-of-song
 	// events, invoking edMusicStatus.endOfSongCallback on the main thread.
+#endif
 	result = 0;
 #endif
 	return result;
@@ -165,6 +241,10 @@ uint edMusicFlush(void)
 			else {
 				stream->fadeFlags &= ~ED_MUSIC_FADE_VOLUME_TEMPO;
 				stream->volumeTempoFadeTime = 0.0f;
+#ifdef PLATFORM_WIN
+				stream->volume = stream->targetVolume;
+				stream->tempo = stream->targetTempo;
+#endif
 
 				_edMusicStreamSetVolume(hardwareStream, stream->volume);
 				_edMusicStreamSetTempo(hardwareStream, stream->tempo);
@@ -248,6 +328,9 @@ void edMusicSetReverb(float param_1, float param_2, float param_3, float param_4
 
 void _edMusicStreamMute(ed_music_stream* pMusicStream)
 {
+#ifdef PLATFORM_WIN
+	Audio::QueueMusicCommand({Audio::MusicCommandType::Mute, pMusicStream->index});
+#endif
 	IMPLEMENTATION_GUARD_PS2(
 	_edMusicQueueCommand(0x11, pMusicStream->index, (void*)0x0, 0);)
 
@@ -308,6 +391,9 @@ uint edMusicBankInstallNoWait(void* pAdpcm, void* pFileData, uint dataSize, uint
 
 void edMusicSongRemove(int songIndex)
 {
+#ifdef PLATFORM_WIN
+	if (songIndex < 0 || static_cast<uint>(songIndex) >= edMusicStatus.nbSongs || !_pedMusicSongs) return;
+#endif
 	ed_music_song* pSong;
 
 	pSong = _pedMusicSongs + songIndex;
@@ -320,6 +406,9 @@ void edMusicSongRemove(int songIndex)
 
 void edMusicBankRemove(int bankIndex)
 {
+#ifdef PLATFORM_WIN
+	if (bankIndex < 0 || static_cast<uint>(bankIndex) >= edMusicStatus.nbBanks || !_pedMusicBanks) return;
+#endif
 	_ed_music_bank* pMusicBank;
 
 	pMusicBank = _pedMusicBanks + bankIndex;
@@ -336,6 +425,9 @@ bool edMusicAreAllMusicDataLoaded()
 
 void edMusicStreamChannelFade(float fadeTime, int musicStreamIndex, int channel, uint otherVolume, int volume)
 {
+#ifdef PLATFORM_WIN
+	if (!ValidMusicStream(musicStreamIndex) || channel < 0 || channel >= 16) return;
+#endif
 	ed_music_stream* pMusicStream;
 
 	pMusicStream = pedMusicStreams + musicStreamIndex;

@@ -1,8 +1,14 @@
 #include "edMusic/edMusic.h"
 #include "edMem.h"
+#ifdef PLATFORM_WIN
+#include "edMusicService.h"
+#endif
 
 void _edMusicInit(ed_music_config* pConfig)
 {
+#ifdef PLATFORM_WIN
+	Audio::InitializeMusic(pConfig->nbStreams, pConfig->nbVoices);
+#endif
 	bool bVar1;
 	int* piVar2;
 	int iVar3;

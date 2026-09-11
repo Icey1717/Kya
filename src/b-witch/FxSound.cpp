@@ -193,11 +193,10 @@ void CFxNewSound::Stop(float param_1)
 		Kill();
 	}
 	else {
-		IMPLEMENTATION_GUARD_AUDIO(
-		pCVar1 = (this->soundInstance).SoundStructPtr;
+		pCVar1 = (this->soundInstance).pSound;
 		if (pCVar1 != (CSound*)0x0) {
-			CSound::FadeTo(0.0, -2.0, param_1, pCVar1, (this->soundInstance).SoundID);
-		})
+			pCVar1->FadeTo(0.0f, -2.0f, param_1, (this->soundInstance).soundId);
+		}
 	}
 
 	return;

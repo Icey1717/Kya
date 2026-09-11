@@ -1710,7 +1710,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 
 void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour)
 {
-	//CSound* pSound;
+	CSound* pSound;
 	bool bVar1;
 	bool bVar2;
 	S_TARGET_ON_OFF_STREAM_REF* pSVar4;
@@ -1731,13 +1731,10 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	}
 	else {
 		if (bVar1) {
-			IMPLEMENTATION_GUARD_AUDIO(
-				pSound = (CSound*)(pBehaviour->field_0x20).field_0x0;
+			pSound = pBehaviour->field_0x20.Get();
 			if (pSound != (CSound*)0x0) {
-				CActorSound::SoundStart
-				(this->pActorSound, this, (uint)((this->movingPlatformFlags & 1) != 0), pSound, 1, 0,
-					(float**)0x0);
-			})
+				this->pActorSound->node.SoundStart(this, (this->movingPlatformFlags & 1) != 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+			}
 
 			pBehaviour->switchOnOff.SwitchOn(this);
 
@@ -2647,16 +2644,12 @@ void CBehaviourPlatformStand::ChangeManageState(int state)
 		this->pCinData.Reset();
 
 		if (this->field_0x8.index != 0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::FUN_0032c600(this->pOwner->pActorSound, 0);)
+			this->pOwner->pActorSound->node.SoundStop(0);
 		}
 	}
 	else {
 		if (this->field_0x8.Get() != (CSound*)0x0) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			CActorSound::SoundStart
-			(this->pOwner->pActorSound, this->pOwner, 0, (CSound*)this->field_0x8, 1, 0,
-				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+			this->pOwner->pActorSound->node.SoundStart(this->pOwner, 0, this->field_0x8.Get(), 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 		}
 
 		if (this->field_0xc != 0xffffffff) {

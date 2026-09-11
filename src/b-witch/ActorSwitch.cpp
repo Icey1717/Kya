@@ -1109,13 +1109,11 @@ void CBehaviourSwitchLever::InitState(int newState)
 	CActorSwitch* pActor;
 
 	if (newState == 9) {
-		IMPLEMENTATION_GUARD_AUDIO(
-		pSound = (this->field_0x44).pSound;
+		pSound = (this->field_0x44).Get();
 		if (pSound != (CSound*)0x0) {
 			pActor = this->pOwner;
-			CActorSound::SoundStart
-			((CActorSound*)pActor->pActorSound, (CActor*)pActor, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
-		})
+			pActor->pActorSound->node.SoundStart(pActor, 0, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+		}
 	}
 	else {
 		if (newState == 6) {
@@ -1169,8 +1167,7 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 			pCVar2 = (this->field_0x40).Get();
 			if (pCVar2 != (CSound*)0x0) {
 				pSwitch = this->pOwner;
-				IMPLEMENTATION_GUARD_AUDIO(
-				CActorSound::SoundStart((CActorSound*)pSwitch->pActorSound, (CActor*)pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+				pSwitch->pActorSound->node.SoundStart(pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 			}
 			pSwitch = this->pOwner;
 			pSwitch->SetState(7, -1);
@@ -1193,9 +1190,9 @@ int CBehaviourSwitchLever::InterpretMessage(CActor* pSender, int msg, void* pMsg
 				pCVar2 = (this->field_0x40).Get();
 				if (pCVar2 != (CSound*)0x0) {
 					pSwitch = this->pOwner;
-					IMPLEMENTATION_GUARD_AUDIO(
-					CActorSound::SoundStart((CActorSound*)pSwitch->pActorSound, (CActor*)pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);)
+					pSwitch->pActorSound->node.SoundStart(pSwitch, 0, pCVar2, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
 				}
+
 				this->pActor = pSender;
 				pSwitch = this->pOwner;
 				pSwitch->SetState(SWITCH_STATE_LEVER_STATE_OFF_2_ON, -1);

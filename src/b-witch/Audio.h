@@ -216,6 +216,8 @@ public:
 
 	CMusicManager();
 
+	bool IsActive(int handle);
+
 	uint _ManageCell(float param_1, float param_2, CAudioManager* pAudioManager, CMusicManager::s_music_cell* pMusicCell, int* pStart, int* pStop, int* pClearCell, int* pResume, int* pForceStop, float* pGain, float* pGainSource);
 	void Manage(CAudioManager* pAudioManager);
 	bool IsMusic(int handle, CMusic* pMusic);
@@ -226,8 +228,6 @@ public:
 	s_music_cell aMusicCells[10];
 	byte aStreamUsed[10];
 };
-
-void MusicStop(float fadeOutTime, int callback, CMusicManager* pMusicManager, int handle);
 
 struct SoundSampleEntry;
 
@@ -317,7 +317,7 @@ struct MusicSomething_0x8
 
 struct SOUND_SPATIALIZATION_PARAM
 {
-	float* data;
+	edsound_3d_data* data;
 };
 
 class CAudioManager : public CObjectManager
@@ -377,6 +377,7 @@ public:
 	void FUN_00182db0(float param_1, undefined4 param_3, undefined4 param_4);
 	void FUN_00184470();
 	void FUN_00182da0(float param_1);
+	void FUN_001844a0();
 	edsound_3d_data* ObtainSound3DData(int param_2, CActor* pActor, uint boneId);
 
 	void ReceiveEvent(edCEventMessage* pEventMessage, uint param_3, undefined8 param_4, uint param_5, uint* param_6);
