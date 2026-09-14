@@ -492,6 +492,33 @@ TEST_F(EdenAudioSamples, StereoAtListenerIsFiniteAndBalanced)
 	EXPECT_GT(voices[0]->controls.left, 0);
 }
 
+TEST_F(EdenAudioSamples, AmbianceAppliesAuthoredGainAndSfxMasterOnce)
+{
+	CSoundSample sound;
+	sound.InitializeFromSample(0.4f, 0, 1, 0, 1, 1, &sample, 0);
+	CSoundAmbiance entry{};
+	entry.soundInstance.pSound = &sound;
+	entry.soundInstance.soundId = edSoundSamplePlay(1, &sample);
+	entry.field_0x68 = -1; // Already playing; no random restart timer.
+	CAmbiance ambiance{};
+	ambiance.aSoundAmbiance = &entry;
+	ambiance.nbSoundAmbiance = 1;
+	ambiance.field_0x14 = 1;
+	edSoundGlobalParams.outputMode = STEREO;
+	edSoundGlobalParams.volume = 0.5f;
+	ambiance.Play(0.5f);
+	edSoundFlush();
+	ASSERT_EQ(voices.size(), 1u);
+	const float expected = 0.4f * 0.5f * 0.5f * std::sqrt(0.5f);
+	EXPECT_NEAR(voices[0]->controls.left, expected, 0.000001f);
+	EXPECT_NEAR(voices[0]->controls.right, expected, 0.000001f);
+	edSoundGlobalParams.volume = 0;
+	ambiance.Play(0.5f);
+	edSoundFlush();
+	EXPECT_EQ(voices[0]->controls.left, 0);
+	EXPECT_EQ(voices[0]->controls.right, 0);
+}
+
 TEST_F(EdenAudioSamples, SamplesAndStreamsUseSeparateVoices)
 {
 	Audio::RegisterStream(3, 100, 1000);
@@ -515,6 +542,50 @@ TEST_F(EdenAudioSamples, SamplesAndStreamsUseSeparateVoices)
 	edSoundInstanceStop(streamId);
 	ASSERT_TRUE(Audio::GetStreamInfo(3, streamInfo));
 	EXPECT_FALSE(streamInfo.playing);
+	Audio::UnregisterStream(3);
+}
+
+TEST_F(EdenAudioSamples, CinematicStreamHonorsVolumeMasterPauseAndFade)
+{
+	Audio::RegisterStream(3, 100, 1000, 2);
+	_ed_sound_stream stream{};
+	stream.streamBufferId[0] = 3;
+	stream.field_0x14 = 2;
+	stream.pMem = &stream;
+	const uint id = edSoundStreamCreate_00284500(1, &stream);
+	edSoundInstanceSetVolume(0.4f, id);
+	edSoundGlobalParams.volume = 0.5f;
+	edSoundStream_00283650(id);
+	Audio::StreamInfo info;
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_FLOAT_EQ(info.volume, 0.2f); // Applied before playback starts.
+	edSoundFlush();
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_FLOAT_EQ(info.volume, 0.2f);
+	EXPECT_TRUE(voices.empty());
+	edSoundInstanceSetPause(id, 1);
+	edSoundFlush();
+	edSoundInstanceSetVolume(0.8f, id);
+	edSoundFlush();
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_FALSE(info.playing);
+	EXPECT_FLOAT_EQ(info.volume, 0.4f);
+	edSoundInstanceSetPause(id, 0);
+	edSoundGlobalParams.volume = 0;
+	edSoundFlush();
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_TRUE(info.playing);
+	EXPECT_EQ(info.volume, 0);
+	edSoundGlobalParams.volume = 0.5f;
+	edSoundInstanceFade(-1, -1, 0.4f, -1, 0.02f, id);
+	edSoundFlush();
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_FLOAT_EQ(info.volume, 0.2f);
+	edSoundInstanceStop(id);
+	Audio::UnregisterStream(3);
+	Audio::RegisterStream(3, 100, 1000);
+	ASSERT_TRUE(Audio::GetStreamInfo(3, info));
+	EXPECT_EQ(info.volume, 1);
 	Audio::UnregisterStream(3);
 }
 }

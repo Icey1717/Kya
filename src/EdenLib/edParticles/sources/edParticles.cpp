@@ -1168,8 +1168,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 					}
 					else {
 						if (iVar5 == 0) {
-							IMPLEMENTATION_GUARD(
-								pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
+							pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 							uVar6 = pGeneratorParam->field_0x21c;
 							if ((uVar6 & 1) == 0) {
 								puVar10 = 0.5f;
@@ -1177,27 +1176,29 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 							else {
 								puVar10 = -0.5f;
 							}
-							param_2->x = (float)puVar10;
+
+							param_2->x = puVar10;
 							if ((uVar6 & 2) == 0) {
 								puVar10 = 0.5f;
 							}
 							else {
 								puVar10 = -0.5f;
 							}
-							param_2->y = (float)puVar10;
+							param_2->y = puVar10;
 							if ((uVar6 & 4) == 0) {
-								param_2->z = 0.5;
+								param_2->z = 0.5f;
 							}
 							else {
 								param_2->z = -0.5f;
 							}
-							param_2->w = 1.0;
+							param_2->w = 1.0f;
+
 							if (bVar8 == 1) {
 								local_e0.x = param_2->x;
 								local_e0.y = param_2->y;
 								local_e0.z = param_2->z;
 								local_e0.w = 0.0;
-							})
+							}
 						}
 					}
 				}

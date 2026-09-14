@@ -311,6 +311,9 @@ void edSoundFlush()
 		// Streams already start through edSoundStream_00283650. Do not create a
 		// sample voice for their differently laid-out pSoundStream union member.
 		if ((pInstance->flags & 0x10) != 0) {
+#ifdef PLATFORM_WIN
+			Audio::SetStreamVolume(pInstance->pSoundStream->streamBufferId[0], pInstance->field_0x4c * edSoundGlobalParams.volume);
+#endif
 			if ((mask & (4 | 8)) != 0) Audio::StopStream(pInstance->pSoundStream->streamBufferId[0]);
 			else if ((mask & 0x10) != 0) Audio::StartStream(pInstance->pSoundStream->streamBufferId[0]);
 			continue;
@@ -811,6 +814,7 @@ void edSoundStream_00283650(uint index)
 		if (puVar1->fullSoundInstanceId == index) {
 			puVar1->flags = puVar1->flags | 0x100;
 		#ifdef PLATFORM_WIN
+			Audio::SetStreamVolume(static_cast<uint>(puVar1->pSoundStream->streamBufferId[0]), puVar1->volume * edSoundGlobalParams.volume);
 			Audio::StartStream(static_cast<uint>(puVar1->pSoundStream->streamBufferId[0]));
 		#endif
 		}

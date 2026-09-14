@@ -2955,7 +2955,8 @@ void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 	this->field_0x18 = pByteCode->GetF32();
 	this->field_0x1c = pByteCode->GetF32();
 
-	this->field_0x20.index = pByteCode->GetF32();
+	this->field_0x20.index = pByteCode->GetS32();
+
 	return;
 }
 

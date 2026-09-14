@@ -127,6 +127,12 @@ bool CreateSourceVoice(Stream& stream)
 		return false;
 	}
 
+	const HRESULT volumeResult = stream.sourceVoice->SetVolume(stream.info.volume);
+	if (FAILED(volumeResult)) {
+		LogAudioError("SourceVoice SetVolume failed", volumeResult);
+		DestroySourceVoice(stream);
+		return false;
+	}
 	return true;
 }
 #endif
@@ -355,6 +361,7 @@ void RegisterStream(std::uint32_t streamId, std::uint32_t blockSize, float sampl
 	stream.info.ready = true;
 	stream.info.playing = false;
 	stream.info.blockSize = blockSize;
+	stream.info.volume = 1.0f;
 	stream.info.channels = channels;
 	stream.info.sampleRate = static_cast<std::uint32_t>(std::fabs(sampleRate));
 	stream.info.position = 0;
@@ -475,6 +482,25 @@ bool StartStream(std::uint32_t streamId)
 	stream.positionAtStart = stream.info.position;
 	stream.startedAt = Clock::now();
 	stream.info.playing = true;
+	return true;
+}
+
+bool SetStreamVolume(std::uint32_t streamId, float volume)
+{
+	auto it = streams.find(streamId);
+	if (it == streams.end()) return false;
+	volume = std::isfinite(volume) ? std::clamp(volume, 0.0f, 1.0f) : 0.0f;
+	auto& stream = it->second;
+#ifdef _WIN32
+	if (stream.sourceVoice) {
+		const HRESULT result = stream.sourceVoice->SetVolume(volume);
+		if (FAILED(result)) {
+			LogAudioError("SourceVoice SetVolume failed", result);
+			return false;
+		}
+	}
+#endif
+	stream.info.volume = volume;
 	return true;
 }
 
