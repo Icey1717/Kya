@@ -615,9 +615,20 @@ void CBehaviourMoneyFlock::LoadContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
-void CInstantFlares::Create(float, float, int)
+void CInstantFlares::Create(float param_1, float param_2, int param_4)
 {
-	IMPLEMENTATION_GUARD_FX();
+	this->field_0x4 = param_1;
+	this->field_0x8 = param_2;
+	this->field_0x10 = param_4;
+	this->field_0x14 = 0;
+	this->field_0xc = 0;
+	this->field_0x0 = new CInstantFlares_8[param_4];
+
+	if (0 < param_4) {
+
+	}
+
+	return;
 }
 
 void CInstantFlares::Manage(CActInstance* pInstances, int nbInstances)

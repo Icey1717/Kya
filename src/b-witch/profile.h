@@ -3,7 +3,9 @@
 
 #include "Types.h"
 
-#define IMPLEMENTATION_GUARD_PROFILE()
+#define IMPLEMENTATION_GUARD_PROFILE(x)
+
+void ProfileInit(byte bEnabled);
 
 uint edProfileNew(uint, uint, uint, uint);
 uint edProfileNew(uint, uint, uint, uint, char*);
@@ -12,5 +14,7 @@ void edProfileBegin(uint profileId);
 void edProfileEnd(uint profileId);
 
 void edProfileDel(uint profileId);
+
+extern byte GameProfile;
 
 #endif

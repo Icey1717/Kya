@@ -28,9 +28,15 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
+	virtual void Reset();
 	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor);
 	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor);
 	virtual bool Func_0x24(uint param_2, CActor* pActor);
+	virtual void ClearCinematic(int index);
+	virtual bool Func_0x2c(uint param_2, CActor* pActor);
+	virtual bool Func_0x30(uint param_2, CActor* pActor);
+
+	int FUN_003e35e0();
 
 	int nbAtonSubObjs;
 	CAddOnSubObjAton* aAtonSubObjs;
@@ -125,10 +131,13 @@ public:
 	// very likely inlined
 	bool AnalyseForRun();
 
+	uint FUN_00387070();
+	int FUN_003872d0(uint param_2);
+
 	static StateConfig _gStateCfg_ATO[46];
 
 	CPathPlaneArray pathPlaneArray;
-	CBehaviourAddOnAton behaviourAddOn;
+	CBehaviourAddOnAton addOn;
 	CBehaviourAtonEscape behaviourAtonEscape;
 
 	CFxTail fxTailA;
@@ -167,6 +176,7 @@ public:
 	float field_0x47c;
 	undefined4 field_0x480;
 	float field_0x484;
+	int field_0x488;
 
 	int trailMaterialId;
 

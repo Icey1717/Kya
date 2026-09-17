@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 #include "ed3D/ed3DSceneManager.h"
+#include "Light.h"
 
 class CActor;
 struct ed_3d_hierarchy;
@@ -20,51 +21,6 @@ struct CLightConfig {
 
 	static void Validate(ed_3D_Light_Config* pConfig, bool bDoSomething);
 	static float ComputeShadow(ed_3D_Light_Config* pConfig, edF32VECTOR4* param_2);
-};
-
-struct LightingContext {
-	edF32VECTOR4 position;
-	edF32VECTOR4* pLightDirection;
-	edF32VECTOR4* pLightAmbient;
-	edF32VECTOR4* pLightColor;
-	undefined4 field_0x1c;
-	float colorMultiplier;
-};
-
-class CLight {
-public:
-	CLight();
-	virtual ~CLight() = default;
-
-	virtual void Init();
-	virtual void Manage() { return; }
-	virtual void Term() { return; }
-	virtual void Activate();
-	virtual bool DoLighting(LightingContext* pContext) { return false; }
-	virtual int GetBaseShape(BaseShape** ppBaseShape) { return 0; }
-	virtual edF32VECTOR4* GetPosition() { return NULL; }
-	virtual void Create(ByteCode* pByteCode) {}
-
-	bool TestIlluminationZones(edF32VECTOR4* pLocation, int id);
-	bool IsInCluster(ed_zone_3d* pZone);
-
-	_rgba colour_0x4;
-	ushort field_0x8;
-	short referencedLightIndex;
-	S_ZONE_STREAM_REF* pZoneHolderA;
-	S_ZONE_STREAM_REF* pZoneHolderB;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
 };
 
 struct S_LIGHT_STREAM_REF {

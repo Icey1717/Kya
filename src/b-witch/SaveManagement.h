@@ -62,8 +62,7 @@ public:
 	bool save_settings();
 
 	SaveDataDesc* get_save_data_desc(int index);
-
-	bool FUN_002f39c0();
+	bool has_queued_file_action();
 
 public:
 	byte field_0x0;
@@ -2121,5 +2120,6 @@ void SaveManagementBootCheck(void);
 void SaveManagement_MemCardSave0(int slotIndex);
 bool SaveManagement_MemCardSave(int slotIndex);
 bool SaveManagement_MemCardLoad(int slotIndex);
+void SaveManagement_MemCardAutoSave(void);
 
 #endif // _SAVE_H

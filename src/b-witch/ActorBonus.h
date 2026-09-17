@@ -8,6 +8,8 @@
 #include "Fx_Tail.h"
 #include "PathFollow.h"
 #include "Audio.h"
+#include "Light.h"
+#include "SharedLights.h"
 
 #define BONUS_BEHAVIOUR_TURN 0x3
 #define BONUS_BEHAVIOUR_PATH 0x4
@@ -177,22 +179,10 @@ public:
 	CBnsInstance** Generate(edF32VECTOR4* pPosition, CAddOnGenerator_SubObj* pSubObj, int nbToSpawn, CBnsInstance** pInstance);
 };
 
-class COmniLight { };
-
-template<class T, int count>
-class CSharedLights
-{
-public:
-	void Init(int param_1, int param_2, uint param_4, uint param_5, uint param_6) { IMPLEMENTATION_GUARD_LIGHT(); }
-	void Term() { field_0x0 = 0; }
-
-	undefined4 field_0x0;
-};
-
 class CActorBonus : public CActorMovable
 {
 public:
-	static CSharedLights<COmniLight, 3> _gBNS_Lights;
+	static CSharedLights<CLightOmni, 3> _gBNS_Lights;
 	static StateConfig _gStateCfg_BNS[6];
 
 	virtual void Create(ByteCode* pByteCode);

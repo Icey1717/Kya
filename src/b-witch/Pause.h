@@ -313,5 +313,6 @@ public:
 };
 extern CSimpleMenuPause gPauseMenu;
 extern int gDebugLevelCheatEnabled_00449824;
+extern uint UINT_00448eac;
 
 #endif // _PAUSEMANAGER_H

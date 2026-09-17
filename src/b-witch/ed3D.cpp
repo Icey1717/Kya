@@ -6312,7 +6312,7 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 				g_GifRefPktCur = g_GifRefPktCur + 1;
 			}
 			else {
-				IMPLEMENTATION_GUARD_LOG(
+				IMPLEMENTATION_GUARD_PS2(
 					g_GifRefPktCur = ed3DFlushMultiTexture(pMaterial, g_GifRefPktCur, 0, gVRAMBufferFlush);)
 			}
 		}
@@ -7957,6 +7957,107 @@ LAB_00297870:
 	return;
 }
 
+void ed3DLinkClusterSpriteToViewport(ed_3d_sprite* pSprite, int boundingSphereTestResult, ed_hash_code* pMBNK)
+{
+	ed_g2d_material* pMaterial = (ed_g2d_material*)0x0;
+	if (pSprite->materialIndex != -1) {
+		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (ushort)pSprite->materialIndex);
+		if ((pMaterial != (ed_g2d_material*)0x0) && ((pMaterial->flags & 1) != 0)) {
+			return;
+		}
+	}
+
+	if (boundingSphereTestResult == 1) {
+		pSprite->flags_0x0 = pSprite->flags_0x0 & 0xfffffffc;
+	}
+	else {
+		gBoundSphereCenter->xyz = pSprite->boundingSphere.xyz;
+		gBoundSphereCenter->w = 1.0f;
+		*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
+
+		EVectorMode_A sphereTestResult = ed3DTestBoundingSphere(&pSprite->boundingSphere);
+		if (sphereTestResult == VM_4) {
+			return;
+		}
+
+		pSprite->flags_0x0 = pSprite->flags_0x0 & 0xfffffffc;
+		if ((sphereTestResult != VM_1) && (ed3DTestBoundingSphereObjectNoZFar(&pSprite->boundingSphere) != 1)) {
+			if ((pSprite->flags_0x0 & 0x1000) == 0) {
+				pSprite->flags_0x0 = pSprite->flags_0x0 | 3;
+			}
+			else {
+				pSprite->flags_0x0 = pSprite->flags_0x0 | 1;
+			}
+		}
+	}
+
+	ed_g2d_layer* pLayer = (ed_g2d_layer*)0x0;
+	uint layerFlagsA = 0;
+	uint layerFlagsB = 0;
+	if ((pMaterial != (ed_g2d_material*)0x0) && (pMaterial->nbLayers != 0)) {
+		ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMaterial->aLayers[0]);
+		pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+		layerFlagsA = pLayer->flags_0x0;
+		if ((pLayer->bHasTexture == 0) || ((*gShadowRenderMask != 0) && ((layerFlagsA & 0x100) == 0))) {
+			pLayer = (ed_g2d_layer*)0x0;
+			layerFlagsA = 0;
+		}
+		else {
+			layerFlagsB = pLayer->flags_0x4;
+		}
+	}
+	if (pLayer == (ed_g2d_layer*)0x0) {
+		pMaterial = gDefault_Material_Cluster_Current;
+	}
+
+	ed_dma_material* pDmaMaterial = LOAD_POINTER_CAST(ed_dma_material*, pMaterial->pDMA_Material);
+	if (pDmaMaterial == (ed_dma_material*)0x0) {
+		pDmaMaterial = ed3DListCreateDmaMaterialNode(0.0f, pMaterial);
+		// Cluster sprites are linked directly using the DMA matrix node pool.
+		pDmaMaterial->list.pData = gNodeDmaMatrix;
+		pDmaMaterial->flags = pDmaMaterial->flags | 1;
+		pMaterial->pDMA_Material = STORE_POINTER(pDmaMaterial);
+		pDmaMaterial->pBitmap = (ed_g2d_bitmap*)0x0;
+		if (pMaterial->nbLayers != 0) {
+			if (pLayer != (ed_g2d_layer*)0x0) {
+				pDmaMaterial->pBitmap = ed3DGetG2DPalette(pDmaMaterial, 0);
+			}
+			if ((pDmaMaterial->pBitmap == (ed_g2d_bitmap*)0x0) || (pDmaMaterial->pBitmap->pPSX2 == 0x0)) {
+				pDmaMaterial->pBitmap = ed3DGetG2DBitmap(pDmaMaterial, 0);
+			}
+		}
+
+		int primListIndex;
+		if ((pSprite->pRenderFrame30 & 0x200) != 0) {
+			primListIndex = PRIM_LIST_A;
+		}
+		else if (((layerFlagsA & 0x80000000) != 0) ||
+			(((layerFlagsB & 0x40) == 0) && ((pSprite->flags_0x0 & 0x280) != 0))) {
+			primListIndex = PRIM_LIST_5;
+		}
+		else if ((layerFlagsA & 0x4000) != 0) {
+			primListIndex = PRIM_LIST_4;
+		}
+		else if (((layerFlagsB & 0x40) != 0) && ((layerFlagsA & 0xfc) != 0)) {
+			primListIndex = PRIM_LIST_3;
+		}
+		else if ((layerFlagsA & 0x100) != 0) {
+			primListIndex = PRIM_LIST_2;
+		}
+		else if ((layerFlagsB & 0x40) != 0) {
+			primListIndex = PRIM_LIST_1;
+		}
+		else {
+			primListIndex = PRIM_LIST_0;
+		}
+
+		ed3DLinkMaterialToPrimList(pDmaMaterial, primListIndex);
+	}
+
+	ed3DLinkSpriteToList(&pDmaMaterial->list, pSprite);
+	pDmaMaterial->list.pPrev->pNext = (edNODE*)0x0;
+}
+
 edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_g3d_hierarchy* pHier)
 {
 	ed_hash_code* pLodHash;
@@ -8076,7 +8177,7 @@ void ed3DRenderClusterObject(ed_hash_code* pLOD, ed_hash_code* pMBNK, uint clust
 	uint testResult;
 	edF32VECTOR4* pSphere;
 	int stripCount;
-	ed_3d_strip* pStrip;
+	void* pData;
 	int defaultTestResult;
 	edF32VECTOR4 boundingSphere;
 	ed_g3d_object* pObjInternal;
@@ -8086,13 +8187,13 @@ void ed3DRenderClusterObject(ed_hash_code* pLOD, ed_hash_code* pMBNK, uint clust
 	ed_Chunck* pOBJ = LOAD_POINTER_CAST(ed_Chunck*, pLOD->pData);
 	pObjInternal = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
 
-	pStrip = (ed_3d_strip*)LOAD_POINTER(pObjInternal->p3DData);
+	pData = LOAD_POINTER(pObjInternal->p3DData);
 
-	if (pStrip == (ed_3d_strip*)0x0) {
+	if (pData == (void*)0x0) {
 		return;
 	}
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DRenderClusterObject valid strip: 0x{:x}", (uintptr_t)pStrip);
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DRenderClusterObject valid strip: 0x{:x}", (uintptr_t)pData);
 
 	gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix;
 	pBoundSphereCenter = gBoundSphereCenter;
@@ -8121,18 +8222,20 @@ LAB_002b181c:
 		if ((EVar3 != VM_1) && (testResult = ed3DTestBoundingSphereObjectNoZFar(pSphere), testResult != 1)) {
 			gRender_info_SPR->boundingSphereTestResult = defaultTestResult;
 		}
+
 		if (clusterType == 0) {
+			ed_3d_strip* pStrip = reinterpret_cast<ed_3d_strip*>(pData);
 			for (; stripCount != 0; stripCount = stripCount + -1) {
 				ed3DLinkClusterStripToViewport(pStrip, pMBNK);
-				pStrip = (ed_3d_strip*)LOAD_POINTER(pStrip->pNext);
+				pStrip = LOAD_POINTER_CAST(ed_3d_strip*, pStrip->pNext);
 			}
 		}
 		else {
 			if (clusterType == 3) {
+				ed_3d_sprite* pSprite = reinterpret_cast<ed_3d_sprite*>(pData);
 				for (; stripCount != 0; stripCount = stripCount + -1) {
-					IMPLEMENTATION_GUARD_LOG(
-					ed3DLinkClusterSpriteToViewport(pStrip, gRender_info_SPR->boundingSphereTestResult, pMBNK);)
-					pStrip = (ed_3d_strip*)LOAD_POINTER(pStrip->pNext);
+					ed3DLinkClusterSpriteToViewport(pSprite, gRender_info_SPR->boundingSphereTestResult, pMBNK);
+					pSprite = LOAD_POINTER_CAST(ed_3d_sprite*, pSprite->pNext);
 				}
 			}
 		}

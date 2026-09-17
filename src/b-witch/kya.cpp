@@ -5,6 +5,7 @@
 
 #include "kya.h"
 #include "Audio.h"
+#include "profile.h"
 
 #if defined(PLATFORM_PS2)
 #include <libsdr.h>
@@ -1454,7 +1455,7 @@ void MainInit(int argc,char **argv)
 	//edClusterConfig = edClusterGetConfig();
 	//edClusterConfig->field_0x0 = 6;
 	//edClusterInit();
-	//ProfileInit(0);
+	ProfileInit(0);
 	gCompatibilityHandlingPtr->edVideoInit(0);
 	edDebugPrintf("---- Init edDlist \n");
 	edDlistConfiguration* edDListConfig_ = edDListGetConfig();

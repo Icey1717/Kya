@@ -3,6 +3,8 @@
 #include "MathOps.h"
 #include "edDlist.h"
 #include "FileManager3D.h"
+#include "EventManager.h"
+#include "EdFileBase.h"
 #include "TimeController.h"
 #include "ActorHero.h"
 
@@ -63,7 +65,7 @@ void CActorAton::Create(ByteCode* pByteCode)
 
 	this->pathDefaultDelay = pByteCode->GetF32();
 	this->pathPlaneArray.Create(pByteCode);
-	behaviourAddOn.Create(pByteCode);
+	addOn.Create(pByteCode);
 	return;
 }
 
@@ -101,7 +103,8 @@ void CActorAton::Init()
 		this->fxTailB.Init(0.3333333f, this->sectorId);
 	}
 
-	this->behaviourAddOn.Init(this);
+	this->addOn.Init(this);
+
 	return;
 }
 
@@ -860,8 +863,10 @@ void CActorAton::ClearLocalData()
 	this->field_0x484 = 0.5f;
 	this->field_0x3dc = 0.0f;
 	this->field_0x474 = 0;
-	//this->field_0x488 = 0;
-	this->behaviourAddOn.Manage();
+
+	this->field_0x488 = 0;
+	this->addOn.Reset();
+
 	return;
 }
 
@@ -1595,21 +1600,20 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	for (uVar21 = 0; (long)uVar21 < 0xb; uVar21 = SEXT48((int)uVar21 + 1)) {
-		lVar19 = FUN_003872d0(lVar20, uVar21);
+	for (uVar21 = 0; uVar21 < 0xb; uVar21 = uVar21 + 1) {
+		lVar19 = FUN_003872d0(uVar21);
 		if (lVar19 != 0) {
-			(*(code*)((this->behaviourAddOn).pVTable)->InitState)(&this->behaviourAddOn, uVar21);
+			this->addOn.Func_0x34(uVar21, (CActor*)0x0);
 		}
 	}
 
-	iVar13 = FUN_003e35e0((int)&this->behaviourAddOn);
+	iVar13 = this->addOn.FUN_003e35e0();
 	if (iVar13 == 0) {
-		uVar14 = FUN_00387070((int)this);
-		behaviourAddOn.SectorChange(uVar14);
+		uVar14 = FUN_00387070();
+		addOn.Func_0x20(uVar14, (CActor*)0x0, 0);
 	}
 
-	behaviourAddOn.Term();)
+	addOn.Manage();
 
 	pCVar8 = CActorHero::_gThis;
 	iVar13 = this->actorState;
@@ -3565,6 +3569,120 @@ bool CActorAton::AnalyseForRun()
 	return bVar10;
 }
 
+uint CActorAton::FUN_00387070()
+{
+	int iVar1;
+	uint uVar2;
+
+	uVar2 = CActorHero::_gThis->FUN_00132910(0xffffffff);
+	if (uVar2 != 0) {
+		return 1;
+	}
+	iVar1 = this->actorState;
+	if (((((iVar1 == 0x2a) || (iVar1 == 0x29)) || (iVar1 == 0x28)) || ((iVar1 == 0x27 || (iVar1 == 0x26)))) || (iVar1 == 0x25)) {
+		uVar2 = CActorHero::_gThis->TestState_IsInHit(0xffffffff);
+		if ((uVar2 != 0) && ((uVar2 = CActorHero::_gThis->TestState_IsFlying(0xffffffff), uVar2 != 0 || (uVar2 = CActorHero::_gThis->TestState_IsInTheWind(0xffffffff), uVar2 != 0))))
+		{
+			return 10;
+		}
+	}
+	else {
+		if (iVar1 == 0x23) {
+			return 9;
+		}
+
+		if (((iVar1 == 0x24) || (iVar1 == 0x22)) || (iVar1 == 0x21)) {
+			uVar2 = CActorHero::_gThis->TestState_IsCrouched(0xffffffff);
+			if (uVar2 == 0) {
+				return 8;
+			}
+		}
+		else {
+			if (iVar1 == 0x2c) {
+				if (this->prevActorState == 0x2e) {
+					return 5;
+				}
+			}
+			else {
+				if (iVar1 == 0x2e) {
+					return 4;
+				}
+
+				if (iVar1 == 0x2f) {
+					uVar2 = CActorHero::_gThis->TestState_IsOnAToboggan(0xffffffff);
+					if ((uVar2 != 0) && (uVar2 = CActorHero::_gThis->TestState_IsInHit(0xffffffff), uVar2 != 0)) {
+						return 7;
+					}
+
+					return 6;
+				}
+
+				if (((iVar1 == 0x1b) || (iVar1 == 0x1a)) || ((iVar1 == 0x19 || (((iVar1 == 10 || (iVar1 == 0xb)) || (iVar1 == 0xc)))))) {
+					return 3;
+				}
+
+				if ((((iVar1 == 0x12) || (iVar1 == 0x11)) || (((iVar1 == 0x10 || ((iVar1 == 0xf || (iVar1 == 0xe)))) || (iVar1 == 0xd)))) && ((0.8f < this->field_0x3d4 || (0.8f < this->field_0x3d8)))) {
+					return 2;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int CActorAton::FUN_003872d0(uint param_2)
+{
+	int result;
+
+	if (param_2 < 0xb) {
+		switch (param_2) {
+		case 0:
+			result = 0;
+			break;
+		case 1:
+			result = CActorHero::_gThis->FUN_00132910(0xffffffff) != 0;
+			break;
+		case 2:
+			if (((GetStateFlags(this->actorState) & 0x40000) == 0) || ((this->field_0x3d4 <= 0.4f && (this->field_0x3d8 <= 0.4f)))) {
+				result = 0;
+			}
+			else {
+				result = 1;
+			}
+			break;
+		case 3:
+			result = (GetStateFlags(this->actorState) & 0x80000) != 0;
+			break;
+		case 4:
+			result = (GetStateFlags(this->actorState) & 0x200000) != 0;
+			break;
+		case 5:
+			result = (GetStateFlags(this->actorState) & 0x200000) != 0;
+			break;
+		case 6:
+			result = this->actorState == 0x2f;
+			break;
+		case 7:
+			result = this->actorState == 0x2f;
+			break;
+		case 8:
+			result = (GetStateFlags(this->actorState) & 0x100000) != 0;
+			break;
+		case 9:
+			result = (GetStateFlags(this->actorState) & 0x100000) != 0;
+			break;
+		case 0xa:
+			result = (GetStateFlags(this->actorState) & 0x400000) != 0;
+			break;
+		}
+
+		return result;
+	}
+
+	return 0;
+}
+
 CBehaviourAddOnAton::CBehaviourAddOnAton()
 {
 	this->nbAtonSubObjs = 0;
@@ -3786,19 +3904,680 @@ LAB_003e2fa0:
 	return;
 }
 
+void CBehaviourAddOnAton::Reset()
+{
+	CAddOnSubObj* pCVar1;
+	CAddOnSubObj* iVar2;
+	int iVar3;
+	int iVar4;
+
+	pCVar1 = this->pSubObj;
+	if (pCVar1 != (CAddOnSubObj*)0x0) {
+		pCVar1->pCinematic = (CCinematic*)0x0;
+		pCVar1->lastPlayedCinematicId = -1;
+		pCVar1->field_0x14 = 0.0f;
+	}
+
+	this->pSubObj = (CAddOnSubObj*)0x0;
+	this->field_0xc = 0;
+	this->field_0xd = 1;
+	this->field_0x28 = this->field_0x24;
+
+	iVar4 = 0;
+	if (0 < this->nbOtherSubObjs) {
+		iVar3 = 0;
+		do {
+			iVar2 = this->aOtherSubObjs + iVar4;
+			iVar4 = iVar4 + 1;
+			iVar2->pCinematic = (CCinematic*)0x0;
+			iVar2->lastPlayedCinematicId = -1;
+			iVar2->field_0x14 = 0.0f;
+		} while (iVar4 < this->nbOtherSubObjs);
+	}
+
+	iVar4 = 0;
+	if (0 < this->nbAtonSubObjs) {
+		iVar3 = 0;
+		do {
+			iVar2 = this->aOtherSubObjs + iVar4;
+			iVar4 = iVar4 + 1;
+			iVar2->pCinematic = (CCinematic*)0x0;
+			iVar2->lastPlayedCinematicId = -1;
+			iVar2->field_0x14 = 0.0f;
+		} while (iVar4 < this->nbAtonSubObjs);
+	}
+
+	return;
+}
+
 CAddOnSubObj* CBehaviourAddOnAton::GetSubObj(uint param_2, int pActor)
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pCVar1;
+	uint zoneId;
+	CAddOnSubObj* pCVar2;
+	bool bVar3;
+	ed_zone_3d* pZone;
+	int iVar4;
+	CCinematic* pCVar5;
+	int iVar6;
+	int iVar8;
+	CAddOnSubObjAton* pReturnValue;
+	float fVar9;
+	float fVar10;
+	CAddOnSubObj* iVar7;
+	CCinematic* pCinematic;
+	CEventManager* pEventManager;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	fVar9 = this->field_0x28;
+	pCVar1 = this->pOwner;
+	fVar10 = this->field_0x24;
+	pZone = (ed_zone_3d*)0x0;
+
+	if (this->field_0x18 != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x18);
+	}
+
+	if ((pZone == (ed_zone_3d*)0x0) || (pCVar1 == (CActor*)0x0)) {
+		bVar3 = false;
+	}
+	else {
+		iVar4 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pCVar1->currentLocation, 0);
+		if (iVar4 == 1) {
+			bVar3 = true;
+		}
+		else {
+			bVar3 = false;
+		}
+	}
+
+	if ((bVar3) || (fVar9 < fVar10)) {
+		pReturnValue = (CAddOnSubObjAton*)0x0;
+	}
+	else {
+		iVar4 = 0;
+		if (0 < this->nbOtherSubObjs) {
+			pReturnValue = (CAddOnSubObjAton*)this->aOtherSubObjs;
+			do {
+				if (param_2 == pReturnValue->field_0x0) goto LAB_003e2b50;
+				iVar4 = iVar4 + 1;
+				pReturnValue = (CAddOnSubObjAton*)&pReturnValue->field_0x18;
+			} while (iVar4 < this->nbOtherSubObjs);
+		}
+
+		pReturnValue = (CAddOnSubObjAton*)0x0;
+	}
+LAB_003e2b50:
+	if ((pReturnValue != (CAddOnSubObjAton*)0x0) && (pCinematic = pReturnValue->pCinematic, pCinematic != (CCinematic*)0x0)) {
+		iVar7 = this->pSubObj;
+		pCVar5 = (CCinematic*)0x0;
+		if (iVar7 != (CAddOnSubObj*)0x0) {
+			pCVar5 = iVar7->pCinematic;
+		}
+		if (pCVar5 == (CCinematic*)0x0) {
+		LAB_003e2bb0:
+			bVar3 = false;
+		}
+		else {
+			pCVar5 = (CCinematic*)0x0;
+			if (iVar7 != (CAddOnSubObj*)0x0) {
+				pCVar5 = iVar7->pCinematic;
+			}
+			if ((pCVar5->state == CS_Stopped) || (bVar3 = true, this->field_0xc == 0)) goto LAB_003e2bb0;
+		}
+		if (!bVar3) {
+			if (pActor != 0) {
+				return pReturnValue;
+			}
+			bVar3 = StaticEdFileBase_004497f0.IsAvailable();
+			if (((bVar3 != false) && (pCinematic->cineBankLoadStage_0x2b4 == 4)) && ((pCinematic->flags_0x8 & 0x80) == 0)) {
+				return pReturnValue;
+			}
+		}
+	}
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pCVar1 = this->pOwner;
+	if (this->field_0x28 < this->field_0x24) {
+	LAB_003e2ce8:
+		pReturnValue = (CAddOnSubObjAton*)0x0;
+	}
+	else {
+		iVar4 = 0;
+		if (0 < this->nbAtonSubObjs) {
+			do {
+				zoneId = this->aAtonSubObjs[iVar4].field_0x18;
+				pZone = (ed_zone_3d*)0x0;
+				if (zoneId != 0xffffffff) {
+					pZone = edEventGetChunkZone(pEventManager->activeChunkId, zoneId);
+				}
+				if ((pZone != (ed_zone_3d*)0x0) && (iVar6 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pCVar1->currentLocation, 0), iVar6 == 1)) goto LAB_003e2cc0;
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->nbAtonSubObjs);
+		}
+
+		iVar4 = -1;
+	LAB_003e2cc0:
+		if (iVar4 == -1) goto LAB_003e2ce8;
+
+		pReturnValue = this->aAtonSubObjs + iVar4;
+	}
+
+	if (pReturnValue == (CAddOnSubObjAton*)0x0) {
+		return (CAddOnSubObj*)0x0;
+	}
+	pCinematic = pReturnValue->pCinematic;
+	if (pCinematic == (CCinematic*)0x0) {
+		return (CAddOnSubObj*)0x0;
+	}
+
+	pCVar2 = this->pSubObj;
+	pCVar5 = (CCinematic*)0x0;
+	if (pCVar2 != (CAddOnSubObj*)0x0) {
+		pCVar5 = pCVar2->pCinematic;
+	}
+
+	if (pCVar5 != (CCinematic*)0x0) {
+		pCVar5 = (CCinematic*)0x0;
+		if (pCVar2 != (CAddOnSubObj*)0x0) {
+			pCVar5 = pCVar2->pCinematic;
+		}
+
+		if ((pCVar5->state != CS_Stopped) && (bVar3 = true, this->field_0xc != 0)) goto LAB_003e2d58;
+	}
+
+	bVar3 = false;
+LAB_003e2d58:
+	if ((((!bVar3) && (pCinematic->cineBankLoadStage_0x2b4 == 4)) && (this->field_0xc == 0)) && ((pCinematic->flags_0x8 & 0x80) == 0)) {
+		return pReturnValue;
+	}
+
+	return (CAddOnSubObj*)0x0;
 }
 
 bool CBehaviourAddOnAton::Func_0x20(uint param_2, CActor* param_3, int pActor)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	CCinematic* pCinematic;
+	CAddOnSubObj* pCVar2;
+	CAddOnSubObj* pCurSubObj;
+
+	if (param_3 == (CActor*)0x0) {
+		param_3 = this->pOwner;
+	}
+
+	pCVar2 = this->pSubObj;
+	pCinematic = (CCinematic*)0x0;
+	if (pCVar2 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar2->pCinematic;
+	}
+
+	if (pCinematic == (CCinematic*)0x0) {
+	LAB_003e1fe8:
+		bVar1 = false;
+	}
+	else {
+		pCinematic = (CCinematic*)0x0;
+		if (pCVar2 != (CAddOnSubObj*)0x0) {
+			pCinematic = pCVar2->pCinematic;
+		}
+		if ((pCinematic->state == CS_Stopped) || (bVar1 = true, this->field_0xc == 0)) goto LAB_003e1fe8;
+	}
+
+	if (((bVar1) || (this->field_0xc != 0)) && (pActor == 0)) {
+		return false;
+	}
+
+	pCinematic = (CCinematic*)0x0;
+	if (pCVar2 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar2->pCinematic;
+	}
+
+	if (pCinematic != (CCinematic*)0x0) {
+		pCinematic = (CCinematic*)0x0;
+		if (pCVar2 != (CAddOnSubObj*)0x0) {
+			pCinematic = pCVar2->pCinematic;
+		}
+		if ((pCinematic->state != CS_Stopped) && (bVar1 = true, this->field_0xc != 0)) goto LAB_003e2060;
+	}
+
+	bVar1 = false;
+LAB_003e2060:
+	if (bVar1) {
+		pCinematic = (CCinematic*)0x0;
+		if (pCVar2 != (CAddOnSubObj*)0x0) {
+			pCinematic = pCVar2->pCinematic;
+		}
+		pCinematic->FUN_001c92b0();
+		pCVar2 = this->pSubObj;
+		pCinematic = (CCinematic*)0x0;
+		if (pCVar2 != (CAddOnSubObj*)0x0) {
+			pCinematic = pCVar2->pCinematic;
+		}
+		bVar1 = pCinematic->Has_0x2d8();
+		if (bVar1 != false) {
+			pCVar2 = this->pSubObj;
+			pCinematic = (CCinematic*)0x0;
+			if (pCVar2 != (CAddOnSubObj*)0x0) {
+				pCinematic = pCVar2->pCinematic;
+			}
+			pCinematic->Remove_0x2d8();
+		}
+	}
+
+	Func_0x34(param_2, param_3);
+
+	pCVar2 = GetSubObj(param_2, pActor);
+	if ((pCVar2 == (CAddOnSubObj*)0x0) && (pCurSubObj = this->pSubObj, pCurSubObj != (CAddOnSubObj*)0x0)) {
+		pCurSubObj->SetCinematic((CCinematic*)0x0);
+	}
+
+	this->pSubObj = pCVar2;
+	pCVar2 = this->pSubObj;
+	pCinematic = (CCinematic*)0x0;
+	if (pCVar2 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar2->pCinematic;
+	}
+
+	if (pCinematic == (CCinematic*)0x0) {
+		return false;
+	}
+
+	pCinematic = (CCinematic*)0x0;
+	if (pCVar2 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar2->pCinematic;
+	}
+
+	pCinematic->field_0x2c8 = 3.0f;
+	pCinematic->field_0x2cc = 15.0f;
+	pCinematic->field_0x2d0 = 0.3f;
+	pCinematic->field_0x2d4 = 1.0f;
+	pCVar2 = this->pSubObj;
+	if (pCVar2 == (CAddOnSubObj*)0x0) {
+		pCinematic = (CCinematic*)0x0;
+	}
+	else {
+		pCinematic = pCVar2->pCinematic;
+	}
+
+	pCinematic->TryTriggerCutscene(param_3, 0);
+	this->field_0xc = 1;
+	this->field_0x28 = 0.0f;
+
+	return true;
 }
 
 bool CBehaviourAddOnAton::Func_0x24(uint param_2, CActor* pActor)
 {
+	uint zoneId;
+	bool bVar1;
+	CCinematic* pCinematic;
+	ed_zone_3d* pZone;
+	int iVar2;
+	int iVar3;
+	long lVar4;
+	CAddOnSubObjAton* pCurSubObj;
+	CAddOnSubObj* pCVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	CEventManager* pEventManager;
+
+	if (pActor == (CActor*)0x0) {
+		pActor = this->pOwner;
+	}
+
+	Func_0x30(param_2, pActor);
+	lVar4 = Func_0x2c(param_2, pActor);
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	if (lVar4 == 0) {
+		return false;
+	}
+
+	pCVar5 = this->pSubObj;
+	pCinematic = (CCinematic*)0x0;
+	if (pCVar5 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar5->pCinematic;
+	}
+
+	if (pCinematic == (CCinematic*)0x0) {
+	LAB_003e22e0:
+		bVar1 = false;
+	}
+	else {
+		pCinematic = (CCinematic*)0x0;
+		if (pCVar5 != (CAddOnSubObj*)0x0) {
+			pCinematic = pCVar5->pCinematic;
+		}
+
+		if ((pCinematic->state == CS_Stopped) || (bVar1 = true, this->field_0xc == 0)) goto LAB_003e22e0;
+	}
+
+	if (bVar1) {
+		return false;
+	}
+
+	fVar7 = this->field_0x28;
+	fVar8 = this->field_0x24;
+	pZone = (ed_zone_3d*)0x0;
+	if (this->field_0x18 != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x18);
+	}
+
+	if ((pZone == (ed_zone_3d*)0x0) || (pActor == (CActor*)0x0)) {
+		bVar1 = false;
+	}
+	else {
+		iVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pActor->currentLocation, 0);
+		if (iVar2 == 1) {
+			bVar1 = true;
+		}
+		else {
+			bVar1 = false;
+		}
+	}
+
+	if ((bVar1) || (fVar7 < fVar8)) {
+		pCVar5 = (CAddOnSubObj*)0x0;
+	}
+	else {
+		iVar2 = 0;
+		if (0 < this->nbOtherSubObjs) {
+			pCVar5 = this->aOtherSubObjs;
+			do {
+				if (param_2 == pCVar5->field_0x0) {
+					iVar2 = pCVar5->PickCinematic();
+					if (iVar2 == -1) {
+						pCVar5 = (CAddOnSubObj*)0x0;
+					}
+					goto LAB_003e2408;
+				}
+
+				iVar2 = iVar2 + 1;
+				pCVar5 = pCVar5 + 1;
+			} while (iVar2 < this->nbOtherSubObjs);
+		}
+
+		pCVar5 = (CAddOnSubObj*)0x0;
+	}
+
+LAB_003e2408:
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	if (pCVar5 != (CAddOnSubObj*)0x0) {
+		pCinematic = pCVar5->pCinematic;
+		bVar1 = pCinematic->Has_0x2d8();
+		if (bVar1 == false) {
+			pCinematic->Add_0x2d8();
+		}
+
+		return true;
+	}
+
+	if (this->field_0x24 <= this->field_0x28) {
+		iVar2 = 0;
+		if (0 < this->nbAtonSubObjs) {
+			iVar6 = 0;
+			do {
+				zoneId = this->aAtonSubObjs[iVar2].field_0x18;
+				pZone = (ed_zone_3d*)0x0;
+				if (zoneId != 0xffffffff) {
+					pZone = edEventGetChunkZone(pEventManager->activeChunkId, zoneId);
+				}
+
+				if ((pZone != (ed_zone_3d*)0x0) && (iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pActor->currentLocation, 0), iVar3 == 1)) goto LAB_003e24e8;
+				
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < this->nbAtonSubObjs);
+		}
+
+		iVar2 = -1;
+	LAB_003e24e8:
+		if (iVar2 != -1) {
+			pCurSubObj = this->aAtonSubObjs + iVar2;
+			iVar2 = pCurSubObj->PickCinematic();
+			if (iVar2 == -1) {
+				pCurSubObj = (CAddOnSubObjAton*)0x0;
+			}
+			goto LAB_003e2538;
+		}
+	}
+
+	pCurSubObj = (CAddOnSubObjAton*)0x0;
+LAB_003e2538:
+	if (pCurSubObj == (CAddOnSubObjAton*)0x0) {
+		bVar1 = false;
+	}
+	else {
+		pCinematic = pCurSubObj->pCinematic;
+		if (pCinematic->cineBankLoadStage_0x2b4 != 4) {
+			pCinematic->Add_0x2d8();
+		}
+
+		bVar1 = true;
+	}
+
+	return bVar1;
+}
+
+bool CBehaviourAddOnAton::Func_0x2c(uint param_2, CActor* pActor)
+{
+	uint zoneId;
+	CEventManager* pCVar1;
+	bool bVar2;
+	ed_zone_3d* peVar3;
+	int iVar4;
+	int iVar5;
+	CAddOnSubObjAton* pCVar6;
+	CAddOnSubObj* pCVar7;
+	int iVar8;
+	CCinematic* pCinematic;
+
+	pCVar1 = CScene::ptable.g_EventManager_006f5080;
+	if (pActor == (CActor*)0x0) {
+		pActor = this->pOwner;
+	}
+
+	peVar3 = (ed_zone_3d*)0x0;
+	if (this->field_0x18 != 0xffffffff) {
+		peVar3 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x18);
+	}
+
+	if ((peVar3 == (ed_zone_3d*)0x0) || (pActor == (CActor*)0x0)) {
+		bVar2 = false;
+	}
+	else {
+		iVar4 = edEventComputeZoneAgainstVertex(pCVar1->activeChunkId, peVar3, &pActor->currentLocation, 0);
+		if (iVar4 == 1) {
+			bVar2 = true;
+		}
+		else {
+			bVar2 = false;
+		}
+	}
+
+	pCVar7 = (CAddOnSubObj*)0x0;
+	if (!bVar2) {
+		iVar4 = 0;
+		if (0 < this->nbOtherSubObjs) {
+			pCVar7 = this->aOtherSubObjs;
+			do {
+				if (param_2 == pCVar7->field_0x0) goto LAB_003e28a8;
+				iVar4 = iVar4 + 1;
+				pCVar7 = pCVar7 + 1;
+			} while (iVar4 < this->nbOtherSubObjs);
+		}
+		pCVar7 = (CAddOnSubObj*)0x0;
+	}
+
+LAB_003e28a8:
+	if (pCVar7 != (CAddOnSubObj*)0x0) {
+		if (pCVar7->pCinematic == (CCinematic*)0x0) {
+			return true;
+		}
+
+		bVar2 = pCVar7->pCinematic->Has_0x2d8();
+
+		if (bVar2 == false) {
+			return true;
+		}
+	}
+
+	pCVar1 = CScene::ptable.g_EventManager_006f5080;
+	if (this->field_0x24 <= this->field_0x28) {
+		iVar4 = 0;
+		if (0 < this->nbAtonSubObjs) {
+			iVar8 = 0;
+			do {
+				zoneId = *(uint*)((int)&this->aAtonSubObjs->field_0x18 + iVar8);
+				peVar3 = (ed_zone_3d*)0x0;
+				if (zoneId != 0xffffffff) {
+					peVar3 = edEventGetChunkZone(pCVar1->activeChunkId, zoneId);
+				}
+				if ((peVar3 != (ed_zone_3d*)0x0) && (iVar5 = edEventComputeZoneAgainstVertex(pCVar1->activeChunkId, peVar3, &pActor->currentLocation, 0), iVar5 == 1)) goto LAB_003e2990;
+				iVar4 = iVar4 + 1;
+				iVar8 = iVar8 + 0x1c;
+			} while (iVar4 < this->nbAtonSubObjs);
+		}
+
+		iVar4 = -1;
+	LAB_003e2990:
+		if (iVar4 != -1) {
+			pCVar6 = this->aAtonSubObjs + iVar4;
+			goto LAB_003e29c0;
+		}
+	}
+
+	pCVar6 = (CAddOnSubObjAton*)0x0;
+LAB_003e29c0:
+	if (pCVar6 != (CAddOnSubObjAton*)0x0) {
+		pCinematic = pCVar6->pCinematic;
+		if (pCinematic == (CCinematic*)0x0) {
+			return true;
+		}
+
+		bVar2 = pCVar6->pCinematic->Has_0x2d8();
+		if (bVar2 == false) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CBehaviourAddOnAton::Func_0x30(uint param_2, CActor* pActor)
+{
+	uint zoneId;
+	bool bVar1;
+	ed_zone_3d* pZone;
+	int iVar2;
+	int iVar3;
+	CAddOnSubObjAton* pCVar4;
+	CAddOnSubObj* pCVar5;
+	int iVar6;
+	CEventManager* pEventManager;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	if (pActor == (CActor*)0x0) {
+		pActor = this->pOwner;
+	}
+
+	pZone = (ed_zone_3d*)0x0;
+	if (this->field_0x18 != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x18);
+	}
+
+	if ((pZone == (ed_zone_3d*)0x0) || (pActor == (CActor*)0x0)) {
+		bVar1 = false;
+	}
+	else {
+		iVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pActor->currentLocation, 0);
+		if (iVar2 == 1) {
+			bVar1 = true;
+		}
+		else {
+			bVar1 = false;
+		}
+	}
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pCVar5 = (CAddOnSubObj*)0x0;
+	if (!bVar1) {
+		iVar2 = 0;
+		if (0 < this->nbOtherSubObjs) {
+			pCVar5 = this->aOtherSubObjs;
+			do {
+				if (param_2 == pCVar5->field_0x0) goto LAB_003e26a8;
+				iVar2 = iVar2 + 1;
+				pCVar5 = pCVar5 + 1;
+			} while (iVar2 < this->nbOtherSubObjs);
+		}
+		pCVar5 = (CAddOnSubObj*)0x0;
+	}
+
+LAB_003e26a8:
+	if (pCVar5 == (CAddOnSubObj*)0x0) {
+		iVar2 = 0;
+		if (0 < this->nbAtonSubObjs) {
+			do {
+				zoneId = this->aAtonSubObjs[iVar2].field_0x18;
+				pZone = (ed_zone_3d*)0x0;
+				if (zoneId != 0xffffffff) {
+					pZone = edEventGetChunkZone(pEventManager->activeChunkId, zoneId);
+				}
+
+				if ((pZone != (ed_zone_3d*)0x0) && (iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &pActor->currentLocation, 0), iVar3 == 1)) goto LAB_003e2750;
+				
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < this->nbAtonSubObjs);
+		}
+
+		iVar2 = -1;
+	LAB_003e2750:
+		pCVar4 = (CAddOnSubObjAton*)0x0;
+		if (iVar2 != -1) {
+			pCVar4 = this->aAtonSubObjs + iVar2;
+		}
+
+		if (pCVar4 != (CAddOnSubObjAton*)0x0) {
+			pCVar4->field_0x14 = 0.0f;
+		}
+	}
+	else {
+		pCVar5->field_0x14 = 0.0f;
+	}
+
+	return;
+}
+
+void CBehaviourAddOnAton::ClearCinematic(int index)
+{
 	IMPLEMENTATION_GUARD();
+}
+
+int CBehaviourAddOnAton::FUN_003e35e0()
+{
+	CAddOnSubObj* pAddOnSubObj;
+	CCinematic* pCinematic;
+
+	pAddOnSubObj = this->pSubObj;
+	pCinematic = (CCinematic*)0x0;
+	if (pAddOnSubObj != (CAddOnSubObj*)0x0) {
+		pCinematic = pAddOnSubObj->pCinematic;
+	}
+
+	if (pCinematic != (CCinematic*)0x0) {
+		pCinematic = (CCinematic*)0x0;
+		if (pAddOnSubObj != (CAddOnSubObj*)0x0) {
+			pCinematic = pAddOnSubObj->pCinematic;
+		}
+
+		if ((pCinematic->state != CS_Stopped) && (this->field_0xc != 0)) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 void CBehaviourAton::Begin(CActor* pOwner, int newState, int newAnimationType)

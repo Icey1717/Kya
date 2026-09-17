@@ -1,11 +1,11 @@
 ; special_paste.ahk
-; Hotkey: Ctrl+Shift+V
+; Hotkey: Ctrl+E
 ; Reads clipboard, transforms it via transform.py, then pastes.
 ;
 ; Setup:
 ;   1. Install AutoHotkey v2  (https://www.autohotkey.com/)
 ;   2. Ensure Python 3 is on your PATH
-;   3. Place this file and transform.py in the same directory
+;   3. Keep this file, transform.py and symbol_index.py in tools/special_paste
 ;   4. Double-click this script (or run: AutoHotkey64.exe special_paste.ahk)
 ;
 ; Add a new transform: edit transform.py and add a function to the TRANSFORMS list.

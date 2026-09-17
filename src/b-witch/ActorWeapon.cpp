@@ -951,9 +951,113 @@ void CBehaviourWeaponPistol::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
+float LENGTH_1 = -0.4f;
+float LENGTH_0 = -1.5f;
+float WIDTH_1 = 0.075f;
+float WIDTH_0 = 0.15f;
+float OFFSET_TAIL = -0.1f;
+
+void BuildRotationMatrixFromVectorNormalized(edF32MATRIX4* param_1, edF32VECTOR4* param_2)
+{
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4NormalizeSoft(&eStack16, param_2);
+	edF32Matrix4BuildFromVectorUnitSoft(param_1, &eStack16);
+
+	return;
+}
+
 void CBehaviourWeaponPistol::DrawBullets()
 {
-	IMPLEMENTATION_GUARD_FX();
+	float z;
+	bool bVar1;
+	edDList_material* pMaterialInfo;
+	edDList_material* pMaterialInfo_00;
+	Bullet* pBVar2;
+	int iVar3;
+	float y;
+	float y_00;
+	float x;
+	float z_00;
+	float x_00;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pMaterialInfo = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->field_0x2e0, 0);
+	pMaterialInfo_00 = pFileManager->GetMaterialFromId(this->field_0x2e4, 0);
+	edF32Matrix4RotateZHard(this->angle, &eStack64, &gF32Matrix4Unit);
+	bVar1 = GameDList_BeginCurrent();
+	if (bVar1 != false) {
+		edDListLoadIdentity();
+		iVar3 = 0;
+		do {
+			pBVar2 = this->aBullets;
+			if (this->aBullets[iVar3].bulletState == 1) {
+				BuildRotationMatrixFromVectorNormalized(&eStack128, &this->aBullets[iVar3].field_0x10);
+				edF32Matrix4MulF32Matrix4Hard(&eStack128, &eStack64, &eStack128);
+				eStack128.rowT = pBVar2->position;
+				edDListUseMaterial(pMaterialInfo);
+				edDListLoadMatrix(&eStack128);
+				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, 4, 10);
+				z = LENGTH_1;
+				z_00 = LENGTH_1 * 0.1f;
+				x_00 = WIDTH_1 * 0.8660254f;
+				y_00 = -WIDTH_1 * 0.5f;
+				x = -WIDTH_1 * 0.8660254f;
+				y = WIDTH_1;
+				edDListTexCoo2f(0.0f, 0.1666667f);
+				edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+				edDListTexCoo2f(0.1f, 0.0f);
+				edDListVertex4f(0.0f, y, z_00, 0.0f);
+				edDListTexCoo2f(0.1f, 0.3333333f);
+				edDListVertex4f(x_00, y_00, z_00, 0.0f);
+				edDListTexCoo2f(1.0f, 0.1666667f);
+				edDListVertex4f(0.0f, 0.0f, z, 0.0f);
+				edDListTexCoo2f(0.1f, 0.3333333f);
+				edDListVertex4f(x_00, y_00, z_00, 49152.0f);
+				edDListTexCoo2f(0.1f, 0.6666667f);
+				edDListVertex4f(x, y_00, z_00, 0.0f);
+				edDListTexCoo2f(0.0f, 0.5f);
+				edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+				edDListTexCoo2f(0.1f, 0.6666667f);
+				edDListVertex4f(x, y_00, z_00, 49152.0f);
+				edDListTexCoo2f(0.1f, 1.0f);
+				edDListVertex4f(0.0f, y, z_00, 0.0f);
+				edDListTexCoo2f(1.0f, 0.8333333f);
+				edDListVertex4f(0.0f, 0.0f, z, 0.0f);
+				edDListEnd();
+				edDListUseMaterial(pMaterialInfo_00);
+				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, 4, 8);
+				edDListTexCoo2f(0.0f, 0.0f);
+				edDListVertex4f(0.0f, WIDTH_0, OFFSET_TAIL, 0.0f);
+				edDListTexCoo2f(0.0f, 1.0f);
+				edDListVertex4f(0.0f, -WIDTH_0, OFFSET_TAIL, 0.0f);
+				edDListTexCoo2f(1.0f, 0.0f);
+				edDListVertex4f(0.0f, WIDTH_0, OFFSET_TAIL + LENGTH_0, 0.0f);
+				edDListTexCoo2f(1.0f, 1.0f);
+				edDListVertex4f(0.0f, -WIDTH_0, OFFSET_TAIL + LENGTH_0, 0.0f);
+				edDListTexCoo2f(0.0f, 0.0f);
+				edDListVertex4f(WIDTH_0, 0.0f, OFFSET_TAIL, 49152.0f);
+				edDListTexCoo2f(0.0f, 1.0f);
+				edDListVertex4f(-WIDTH_0, 0.0f, OFFSET_TAIL, 49152.0f);
+				edDListTexCoo2f(1.0f, 0.0f);
+				edDListVertex4f(WIDTH_0, 0.0f, OFFSET_TAIL + LENGTH_0, 0.0f);
+				edDListTexCoo2f(1.0f, 1.0f);
+				edDListVertex4f(-WIDTH_0, 0.0f, OFFSET_TAIL + LENGTH_0, 0.0f);
+				edDListEnd();
+			}
+
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < 8);
+
+		GameDList_EndCurrent();
+	}
+
+	return;
 }
 
 void CSniperBullet::FUN_002d3be0(float param_1)

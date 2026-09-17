@@ -15,6 +15,14 @@ Transforms (in order applied):
 import re
 import struct
 import sys
+from functools import lru_cache
+
+from symbol_index import LoadIndex
+
+
+@lru_cache(maxsize=1)
+def GetRepositoryIndex():
+    return LoadIndex()
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +138,7 @@ def _extract_address_of_object_expr(arg: str) -> str | None:
         return None
 
     expr = _strip_wrapping_parens(arg[1:])
-    if not re.match(r"^(?:this|[A-Za-z_]\w*)(?:->\w+|\.\w+)*$", expr):
+    if not re.match(r"^(?:this|[A-Za-z_]\w*)(?:::\w+)*(?:->\w+|\.\w+)*$", expr):
         return None
     if expr.startswith("DAT_"):
         return None
@@ -231,14 +239,34 @@ _KNOWN_ADDRESS_OF_OBJECT_ARG_CLASSES: set[str] = {
 }
 
 
-def t_free_to_member_calls(text: str) -> str:
+def t_free_to_member_calls(text: str, symbol_index=None) -> str:
     """
     Class::Method(baseChainExpr, rest...)
         ->  strippedExpr->Method(rest...)
 
-    Only fires when the first argument is (or contains) a base-chain expression,
-    i.e. stripping it changes the expression.
+    Recognizes base chains, casts, known object-argument classes, and simple
+    local pointers declared with the same type as the call's class qualifier.
     """
+    if symbol_index is None:
+        symbol_index = GetRepositoryIndex()
+    pointer_types: dict[str, set[str]] = {}
+    local_types = {}
+    for declaration in re.finditer(
+        r"^[ \t]*(\w+)[ \t]*(\*)?[ \t]+(\w+)[ \t]*;|^[ \t]*(\w+)[ \t]*\*[ \t]*(\w+)[ \t]*;",
+        text, re.MULTILINE,
+    ):
+        if declaration.group(4):
+            name, value = declaration.group(5), [declaration.group(4), True]
+        else:
+            name, value = declaration.group(3), [declaration.group(1), bool(declaration.group(2))]
+        local_types.setdefault(name, []).append(value)
+    for declaration in re.finditer(
+        r"^\s*(?:const\s+)?(\w+)\s*\*\s*(\w+)\s*;",
+        text,
+        re.MULTILINE,
+    ):
+        pointer_types.setdefault(declaration.group(2), set()).add(declaration.group(1))
+
     call_re = re.compile(r"\b(\w+)::(\w+)\(")
     result: list[str] = []
     pos = 0
@@ -260,6 +288,12 @@ def t_free_to_member_calls(text: str) -> str:
         args = split_top_level_args(args_text)
         class_name = m.group(1)
         fn_name = m.group(2)
+
+        method_kinds = symbol_index["methods"].get(f"{class_name}::{fn_name}", [])
+        if "static" in method_kinds:
+            result.append(text[m.start():call_end + 1])
+            pos = call_end + 1
+            continue
 
         if args:
             stripped_args = [_strip_leading_cast(strip_base_chain_in(a)) for a in args]
@@ -298,7 +332,16 @@ def t_free_to_member_calls(text: str) -> str:
             bare = _strip_leading_cast(stripped)
             rest_str = ", ".join(args[1:])
 
-            if bare == "this":
+            address_object = _extract_address_of_object_expr(first_arg)
+            object_name = address_object if address_object is not None else first_arg
+            declarations = local_types.get(object_name, symbol_index["symbols"].get(object_name, []))
+            expected = [class_name, address_object is None]
+            if method_kinds == ["member"] and declarations and all(value == expected for value in declarations):
+                operator = "." if address_object is not None else "->"
+                result.append(f"{object_name}{operator}{fn_name}({rest_str})")
+                pos = call_end + 1
+                continue
+            elif bare == "this":
                 # Object is this (possibly cast) — use implicit this
                 result.append(f"{fn_name}({rest_str})")
                 pos = call_end + 1
@@ -311,8 +354,11 @@ def t_free_to_member_calls(text: str) -> str:
                     result.append(f"{bare}->{fn_name}()")
                 pos = call_end + 1
                 continue
-            elif re.match(r"^\w+$", first_arg) and class_name in _KNOWN_FIRST_ARG_IS_OBJECT:
-                # Known class where first arg is always the object, no cast needed
+            elif re.match(r"^\w+$", first_arg) and (
+                class_name in _KNOWN_FIRST_ARG_IS_OBJECT
+                or pointer_types.get(first_arg) == {class_name}
+            ):
+                # Known object convention or a matching local pointer declaration.
                 if rest_str:
                     result.append(f"{first_arg}->{fn_name}({rest_str})")
                 else:
@@ -674,6 +720,31 @@ def t_remove_timer_vars(text: str) -> str:
     return "\n".join(result)
 
 
+def t_function_header_newline(text: str) -> str:
+    """Place a function's opening brace exactly one newline after its header."""
+    header_re = re.compile(
+        r"^(?P<indent>[ \t]*)"
+        r"(?:[\w:*&<>]+[ \t]+)+[\w:~]+[ \t]*\(",
+        re.MULTILINE,
+    )
+    edits = []
+    for header in header_re.finditer(text):
+        close = find_matching_paren(text, header.end() - 1)
+        if close == -1:
+            continue
+        gap = re.match(r"[ \t\r\n]*\{", text[close + 1:])
+        if gap is None:
+            continue
+        whitespace = gap.group(0)[:-1]
+        newline = "\r\n" if "\r\n" in whitespace else "\n"
+        if "\n" not in whitespace:
+            newline = "\r\n" if "\r\n" in text else "\n"
+        edits.append((close + 1, close + gap.end(), newline + header.group("indent")))
+    for start, end, replacement in reversed(edits):
+        text = text[:start] + replacement + text[end:]
+    return text
+
+
 TRANSFORMS = [
     t_collapse_vector_assignment,
     t_vtable_calls,
@@ -687,12 +758,13 @@ TRANSFORMS = [
     t_math_macros,
     t_remove_this_param,
     t_inline_bytecode_temps,
+    t_function_header_newline,
 ]
 
 
-def transform(text: str) -> str:
+def transform(text: str, symbol_index=None) -> str:
     for fn in TRANSFORMS:
-        text = fn(text)
+        text = fn(text, symbol_index) if fn is t_free_to_member_calls else fn(text)
     return text
 
 
@@ -702,6 +774,83 @@ def transform(text: str) -> str:
 
 def _run_tests() -> None:
     cases = [
+        # Singleton pointer and address-of global object member calls.
+        (
+            "gSaveManagement.saveSize_0x44 = CLevelScheduler::SaveGame_SaveToBuffer(CLevelScheduler::gThis,gSaveManagement.pBigAlloc_0x34,pSaveDesc);",
+            "gSaveManagement.saveSize_0x44 = CLevelScheduler::gThis->SaveGame_SaveToBuffer(gSaveManagement.pBigAlloc_0x34, pSaveDesc);",
+        ),
+        (
+            "bVar1 = CSaveManagement::save_game(&gSaveManagement,1);",
+            "bVar1 = gSaveManagement.save_game(1);",
+        ),
+        (
+            "CSaveManagement::test_device_has_enough_room(&gSaveManagement);",
+            "gSaveManagement.test_device_has_enough_room();",
+        ),
+        (
+            "bVar2 = CSaveManagement::message_box(&gSaveManagement,0,3);",
+            "bVar2 = gSaveManagement.message_box(0, 3);",
+        ),
+        (
+            "if (((bVar2 == 1) && (iVar3 = CSaveManagement::test_device_has_enough_room(&gSaveManagement), iVar3 == 3)) && (gSaveManagement.fileExistsFlags == 0x1ff)) {",
+            "if (((bVar2 == 1) && (iVar3 = gSaveManagement.test_device_has_enough_room(), iVar3 == 3)) && (gSaveManagement.fileExistsFlags == 0x1ff)) {",
+        ),
+        ("CLevelScheduler::Reset(CLevelScheduler::gThis);", "CLevelScheduler::Reset(CLevelScheduler::gThis);"),
+        # Other static members and unrelated address arguments stay unchanged.
+        ("CLevelScheduler::Reset(COther::gThis);", "CLevelScheduler::Reset(COther::gThis);"),
+        ("CLevelScheduler::Reset(CLevelScheduler::value);", "CLevelScheduler::Reset(CLevelScheduler::value);"),
+        ("COther::Read(&buffer,1);", "COther::Read(&buffer,1);"),
+        # Normalize only the gap between a function header and its brace.
+        (
+            "bool CBehaviourAddOnAton::Func_0x20(uint param_2)\n  \n\n{\n  return true;\n}",
+            "bool CBehaviourAddOnAton::Func_0x20(uint param_2)\n{\n  return true;\n}",
+        ),
+        ("bool Ready() {\n}\n", "bool Ready()\n{\n}\n"),
+        ("bool Ready()\n{\n}\n", "bool Ready()\n{\n}\n"),
+        (
+            "  bool Ready(\r\n    int value)\r\n\r\n  {\r\n  }",
+            "  bool Ready(\r\n    int value)\r\n  {\r\n  }",
+        ),
+        ("if (ready) {\n\n  Run();\n}", "if (ready) {\n\n  Run();\n}"),
+        # Uncast local object pointers, as emitted for CBehaviourAddOnAton.
+        (
+            "CCinematic *pCinematic;\nCAddOnSubObj *pCurSubObj;\n"
+            "CCinematic::FUN_001c92b0(pCinematic);\n"
+            "bVar1 = CCinematic::Has_0x2d8(pCinematic);\n"
+            "CCinematic::Remove_0x2d8(pCinematic);\n"
+            "CAddOnSubObj::SetCinematic(pCurSubObj,(CCinematic *)0x0);\n"
+            "CCinematic::TryTriggerCutscene(pCinematic,param_3,0);",
+            "CCinematic *pCinematic;\nCAddOnSubObj *pCurSubObj;\n"
+            "pCinematic->FUN_001c92b0();\n"
+            "bVar1 = pCinematic->Has_0x2d8();\n"
+            "pCinematic->Remove_0x2d8();\n"
+            "pCurSubObj->SetCinematic((CCinematic *)0x0);\n"
+            "pCinematic->TryTriggerCutscene(param_3, 0);",
+        ),
+        # Matching works for other classes and preserves indentation/blank lines.
+        (
+            "  CShadow* pShadow;\n\n  CShadow::Reset(pShadow);",
+            "  CShadow* pShadow;\n\n  pShadow->Reset();",
+        ),
+        # No type evidence, a different type, and value/double-pointer declarations
+        # must not trigger the new local-pointer heuristic.
+        ("CCinematic::Reset(pObject);", "CCinematic::Reset(pObject);"),
+        (
+            "CActor *pObject;\nCCinematic::Reset(pObject);",
+            "CActor *pObject;\nCCinematic::Reset(pObject);",
+        ),
+        (
+            "CCinematic object;\nCCinematic::Reset(object);",
+            "CCinematic object;\nCCinematic::Reset(object);",
+        ),
+        (
+            "CCinematic **ppObject;\nCCinematic::Reset(ppObject);",
+            "CCinematic **ppObject;\nCCinematic::Reset(ppObject);",
+        ),
+        (
+            "CActor *pObject;\nCCinematic *pObject;\nCCinematic::Reset(pObject);",
+            "CActor *pObject;\nCCinematic *pObject;\nCCinematic::Reset(pObject);",
+        ),
         # float literals
         ("x = 0.0;", "x = 0.0f;"),
         ("x = 1.5e3;", "x = 1.5e3f;"),

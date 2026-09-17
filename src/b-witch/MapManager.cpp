@@ -1336,6 +1336,64 @@ void CMapManager::DrawButtons(char* pText)
 	return;
 }
 
+void CMapManager::Func_003f81c0()
+{
+	ed_zone_3d* pZone;
+	uint uVar1;
+	int iVar2;
+	CLevelScheduler* pLevelScheduler;
+
+	pLevelScheduler = CLevelScheduler::gThis;
+	if (CLevelScheduler::gThis->bShouldLoad != 0) {
+		(this->field_0x338).field_0x0 = 0x62;
+		(this->field_0x338).field_0x4 = 6;
+		(this->field_0x338).hash = 0;
+		(this->field_0x338).field_0x10 = 0x10;
+		(this->field_0x338).field_0x14 = 0;
+		(this->field_0x338).hash_2 = 0;
+
+		(this->field_0x358).field_0x0 = (this->field_0x338).field_0x0;
+		(this->field_0x358).field_0x4 = (this->field_0x338).field_0x4;
+		(this->field_0x358).hash = (this->field_0x338).hash;
+		(this->field_0x358).field_0x10 = (this->field_0x338).field_0x10;
+		(this->field_0x358).field_0x14 = (this->field_0x338).field_0x14;
+		(this->field_0x358).hash_2 = (this->field_0x338).hash_2;
+
+		this->field_0x334 = 0;
+		this->field_0x330 = 0.0f;
+		this->field_0x37c = 0.0f;
+	}
+
+	Func_003f8d80();
+
+	if ((((this->field_0x394 == 0) && (pZone = (this->field_0x18).Get(), pZone != (ed_zone_3d*)0x0)) && (CActorHero::_gThis != (CActorHero*)0x0)) &&
+		(uVar1 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0), (uVar1 & 1) != 0)) {
+		this->field_0x394 = 1;
+	}
+
+	if (this->field_0x14 == 0x62) {
+		iVar2 = 2;
+	}
+	else {
+		iVar2 = CLevelScheduler::ScenVar_Get(this->field_0x14);
+	}
+
+	this->bHasWolfenMap = static_cast<uint>(iVar2 == 2);
+	this->field_0x390 = 0;
+
+	if (pLevelScheduler->bShouldLoad != 0) {
+		this->field_0x334 = 0;
+		(this->field_0x358).field_0x0 = (this->field_0x338).field_0x0;
+		(this->field_0x358).field_0x4 = (this->field_0x338).field_0x4;
+		(this->field_0x358).hash = (this->field_0x338).hash;
+		(this->field_0x358).field_0x10 = (this->field_0x338).field_0x10;
+		(this->field_0x358).field_0x14 = (this->field_0x338).field_0x14;
+		(this->field_0x358).hash_2 = (this->field_0x338).hash_2;
+	}
+
+	return;
+}
+
 void CMapManager::Game_Init()
 {
 	(this->field_0x58).field_0x0.x = 0.0f;

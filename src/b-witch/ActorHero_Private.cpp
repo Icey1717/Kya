@@ -984,8 +984,7 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	IMPLEMENTATION_GUARD_LOG(
-	FUN_00133b10();)
+	FUN_00133b10();
 
 	pCVar1 = this->pPlayerInput;
 	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -2976,8 +2975,7 @@ bool CActorHeroPrivate::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	peVar3 = &this->field_0x1460;
 	edF32Matrix4MulF32Vector4Hard(peVar3, m0, peVar3);
 	peVar3 = &this->field_0x1460;
-	IMPLEMENTATION_GUARD_LOG(
-	*(undefined4*)&this->field_0x1464 = 0;)
+	peVar3->y = 0.0f;
 	edF32Vector4NormalizeHard(peVar3, peVar3);
 	pCVar1 = this->pActorBoomy;
 	pCVar1->field_0x610 = *m0;
@@ -5131,7 +5129,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->field_0x13cc = 0.0f;
 	this->bUnknownBool = 1;
 	this->field_0x1c38 = -1;
-	this->field_0x1c3c = 0;
+	this->field_0x1c3c = 0.0f;
 	this->field_0xe44 = 0x0;
 	
 	for (int i = 0; i < 0x10; i++) {
@@ -12322,7 +12320,7 @@ void CActorHeroPrivate::StateHeroBoomyPrepareFightBlowInit()
 			this->playerSubStruct_64_0x1bf0.FUN_00401460(0.0f, 6);
 			this->playerSubStruct_64_0x1bf0.FUN_004012f0(0.1f, uVar4, iVar3, uVar5);
 			this->field_0x1c38 = -1;
-			this->field_0x1c3c = 0;
+			this->field_0x1c3c = 0.0f;
 		}
 	}
 	return;
@@ -15434,6 +15432,108 @@ void CActorHeroPrivate::FUN_00347480()
 			edTextStyleSetCurrent(pNewFont);
 			GuiDList_EndCurrent();
 		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::FUN_00133b10()
+{
+	int iVar1;
+	uint uVar2;
+	bool bVar3;
+	uint uVar5;
+
+	iVar1 = this->actorState;
+	bVar3 = false;
+
+	if ((0xdb < iVar1) && (iVar1 < 0xdf)) {
+		bVar3 = true;
+	}
+
+	if (bVar3) {
+		uVar2 = (this->pBlow)->hash.hash;
+		uVar5 = static_cast<uint>(this->aBoomyBlows[1]->hash.hash == uVar2);
+		if (this->aBoomyBlows[2]->hash.hash == uVar2) {
+			uVar5 = 2;
+		}
+
+		if (this->field_0x1ba8 != uVar5) {
+			this->field_0x1bac = 0.0f;
+			this->field_0x1ba8 = uVar5;
+		}
+
+		this->field_0x1bac = this->field_0x1bac + GetTimer()->cutsceneDeltaTime;
+	}
+
+	this->field_0x1c3c = this->field_0x1c3c + GetTimer()->cutsceneDeltaTime;
+	iVar1 = this->actorState;
+	if ((((iVar1 != 0xdc) && (iVar1 != 0xdd)) && (uVar2 = (this->playerSubStruct_64_0x1bf0).flags, (uVar2 & 2) != 0)) && ((uVar2 & 0x10) == 0)) {
+		this->playerSubStruct_64_0x1bf0.FUN_004012a0(0.1f);
+	}
+
+	UpdateTrail_00133470();
+
+	return;
+}
+
+struct TrailKeyframe
+{
+	edF32VECTOR4 pointA;
+	edF32VECTOR4 pointB;
+	float time;
+};
+
+TrailKeyframe TrailKeyframe_ARRAY_0040e2d0[21];
+
+void CActorHeroPrivate::UpdateTrail_00133470()
+{
+	bool bVar1;
+	bool bVar2;
+	TrailKeyframe* pTVar3;
+	uint uVar4;
+	float in_f1;
+	float in_f2;
+	float fVar5;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	if ((this->playerSubStruct_64_0x1bf0.flags & 2) != 0) {
+		uVar4 = 0;
+		bVar2 = false;
+		pTVar3 = TrailKeyframe_ARRAY_0040e2d0;
+		while ((uVar4 < 0x14 && (!bVar2))) {
+			in_f2 = pTVar3->time;
+			fVar5 = this->field_0x1c3c;
+			in_f1 = pTVar3[1].time;
+			if (fVar5 < in_f2 || in_f1 < fVar5) {
+				pTVar3 = pTVar3 + 1;
+				uVar4 = uVar4 + 1;
+			}
+			else {
+				bVar2 = true;
+			}
+		}
+
+		bVar1 = uVar4 != this->field_0x1c38;
+		if (bVar1) {
+			this->field_0x1c38 = uVar4;
+		}
+
+		if (bVar2) {
+			fVar5 = (this->field_0x1c3c - in_f2) / (in_f1 - in_f2);
+			edF32Vector4LERPHard(fVar5, &local_20, &TrailKeyframe_ARRAY_0040e2d0[uVar4].pointA, &TrailKeyframe_ARRAY_0040e2d0[uVar4 + 1].pointA);
+			edF32Vector4LERPHard(fVar5, &local_10, &TrailKeyframe_ARRAY_0040e2d0[uVar4].pointB, &TrailKeyframe_ARRAY_0040e2d0[uVar4 + 1].pointB);
+		}
+		else {
+			local_20 = TrailKeyframe_ARRAY_0040e2d0[uVar4].pointA;
+			fVar5 = 0.0f;
+			local_10 = TrailKeyframe_ARRAY_0040e2d0[uVar4].pointB;
+		}
+
+		edF32Matrix4MulF32Vector4Hard(&local_20, (edF32MATRIX4*)this->pMeshTransform, &local_20);
+		edF32Matrix4MulF32Vector4Hard(&local_10, (edF32MATRIX4*)this->pMeshTransform, &local_10);
+		this->playerSubStruct_64_0x1bf0.UpdateTrailFromEndpoints(fVar5, &local_20, static_cast<uint>(bVar1));
 	}
 
 	return;

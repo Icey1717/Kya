@@ -372,6 +372,11 @@ set(main_src
 	"${src_root}/b-witch/Audio.h"
 	"${src_root}/b-witch/AudioWind.cpp"
 	"${src_root}/b-witch/AudioWind.h"
+	"${src_root}/b-witch/light.cpp"
+	"${src_root}/b-witch/Light.h"
+	"${src_root}/b-witch/LightBase.cpp"
+	"${src_root}/b-witch/LightBase.h"
+	"${src_root}/b-witch/SharedLights.h"
 
 	"${src_root}/edC/edCFiler_BNK.cpp"
 	"${src_root}/edC/edCFiler_BNK.h"

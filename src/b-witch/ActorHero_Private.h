@@ -621,6 +621,9 @@ public:
 	void TermInputAnalyzers();
 	void FUN_00347480();
 
+	void FUN_00133b10();
+	void UpdateTrail_00133470();
+
 	uint FUN_00132c60(uint state);
 
 	uint FUN_00132790(uint param_2);
@@ -683,7 +686,8 @@ public:
 	int bUnknownBool;
 
 	int boomyBlowStage;
-	undefined4 field_0x1ba8;
+	uint field_0x1ba8;
+	float field_0x1bac;
 
 	float field_0x13cc;
 	float field_0x13d0;
@@ -704,7 +708,7 @@ public:
 	int field_0x187c;
 
 	int field_0x1c38;
-	undefined4 field_0x1c3c;
+	float field_0x1c3c;
 
 	int field_0x12e0;
 

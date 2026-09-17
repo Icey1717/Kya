@@ -170,6 +170,66 @@ bool SaveManagement_MemCardLoad(int slotIndex)
 	return gSaveManagement.load_sequence(slotIndex);
 }
 
+void SaveManagement_MemCardAutoSave(void)
+{
+	bool bVar1;
+	byte bVar2;
+	int iVar3;
+	SaveDataDesc* pSaveDesc;
+
+	iVar3 = gSaveManagement.slotID_0x28;
+	if (gSaveManagement.field_0x0 != 0) {
+		if (gSaveManagement.pFile_0x2c == (edFILEH*)0x0) {
+			bVar1 = false;
+		}
+		else {
+			if ((gSaveManagement.pFile_0x2c)->nbQueuedActions == 0) {
+				bVar1 = false;
+			}
+			else {
+				bVar1 = true;
+			}
+		}
+
+		if ((!bVar1) && (gSaveManagement.slotID_0x28 != -1)) {
+			if ((gSaveManagement.slotID_0x28 < 0) || (3 < gSaveManagement.slotID_0x28)) {
+				pSaveDesc = (SaveDataDesc*)0x0;
+			}
+			else {
+				pSaveDesc = gSaveManagement.aSaveDataDescriptions + gSaveManagement.slotID_0x28;
+			}
+
+			gSaveManagement.saveSize_0x44 = CLevelScheduler::gThis->SaveGame_SaveToBuffer(gSaveManagement.pBigAlloc_0x34, pSaveDesc);
+			if (gSaveManagement.slotID_0x28 != iVar3) {
+				gSaveManagement.slotID_0x28 = iVar3;
+			}
+			gSaveManagement.field_0x0 = 0;
+			bVar1 = gSaveManagement.save_game(1);
+			if (bVar1 == false) {
+				gSaveManagement.test_device_has_enough_room();
+				bVar2 = gSaveManagement.message_box(0, 3);
+				if (((bVar2 == 1) && (iVar3 = gSaveManagement.test_device_has_enough_room(), iVar3 == 3)) && (gSaveManagement.fileExistsFlags == 0x1ff)) {
+					gSaveManagement.message_box(0, 5);
+					bVar1 = gSaveManagement.save_game(0);
+					if (bVar1 != false) {
+						gSaveManagement.field_0x0 = 1;
+						edFileIsIdle(gSaveManagement.memCardAccessPath, 1);
+						return;
+					}
+				}
+
+				gSaveManagement.message_box(0, 4);
+				gSaveManagement.slotID_0x28 = -1;
+			}
+			else {
+				gSaveManagement.field_0x0 = 1;
+			}
+		}
+	}
+
+	return;
+}
+
 bool CSaveManagement::boot_check_load()
 {
 	int deviceRoomCheckResult;
@@ -1252,7 +1312,7 @@ SaveDataDesc* CSaveManagement::get_save_data_desc(int index)
 	return pSVar1;
 }
 
-bool CSaveManagement::FUN_002f39c0()
+bool CSaveManagement::has_queued_file_action()
 {
 	bool bVar1;
 

@@ -166,6 +166,8 @@ public:
 
 	void InitiateCheckpointReset(int param_2);
 
+	bool FUN_001b92f0();
+
 	static void CreateScene(void);
 	static void* GetManager(MANAGER_TYPE type);
 

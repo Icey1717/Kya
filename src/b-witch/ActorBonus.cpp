@@ -9,7 +9,7 @@
 #include "ActorHero.h"
 #include "edDList/edDList.inl"
 
-CSharedLights<COmniLight, 3> CActorBonus::_gBNS_Lights;
+CSharedLights<CLightOmni, 3> CActorBonus::_gBNS_Lights;
 
 StateConfig CActorBonus::_gStateCfg_BNS[6] = {
 	StateConfig(0x6, 0x0),

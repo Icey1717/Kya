@@ -12,6 +12,7 @@
 #include "LargeObject.h"
 #include "LocalizationManager.h"
 #include "edDlist.h"
+#include "profile.h"
 #include "CameraViewManager.h"
 #include "MapManager.h"
 #include "EdFileBase.h"
@@ -178,9 +179,15 @@ bool CPauseManager::LevelLoading_Manage()
 
 edCTextFont* BootDataFont = NULL;
 
-void ProfileDraw(int)
+void ProfileDraw(int bEnabled)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	if (GameProfile != 0) {
+		IMPLEMENTATION_GUARD(
+		ProfileManager.enabled_0041ed4b = bEnabled;
+		GameProfile = bEnabled;)
+	}
+
+	return;
 }
 
 void PauseEnter(EPauseMenu mode)
@@ -1560,7 +1567,7 @@ void CPauseManager::FUN_001b0860(int param_2)
 	float fVar5;
 	float fVar6;
 
-	uVar3 = gSaveManagement.FUN_002f39c0();
+	uVar3 = gSaveManagement.has_queued_file_action();
 	if ((uVar3 != 0) || (param_2 != 0)) {
 		uVar4 = EncodeFloat(Timer::GetTimer()->totalTime * 256.0f);
 		uVar4 = (int)uVar4 % 0x140;

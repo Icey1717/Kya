@@ -3,6 +3,7 @@
 #include "FrontEndBank.h"
 #include "LargeObject.h"
 #include "LocalizationManager.h"
+#include "DlistManager.h"
 
 CSimpleMenuSound gHelpMenu;
 
@@ -96,9 +97,43 @@ void CHelpManager::Game_Term()
 	return;
 }
 
+int INT_ARRAY_00426520[33] = {
+	0xf, 0x19, 0x1e, 0x23,
+	0x6, 0xb, 0x15, 0x1a,
+	0x1f, 0x24, 0x7, 0xc,
+	0x11, 0x16, 0x1b, 0x20,
+	0x25, 0x3, 0x8, 0xd,
+	0x12, 0x17, 0x1c, 0x21,
+	0x26, 0x4, 0x9, 0xe,
+	0x13, 0x18, 0x1d, 0x22,
+	0x27
+};
+
+OtherMysteryHelpObj OtherMysteryHelpObj_00496950;
+MysteryHelpObj MysteryHelpObj_ARRAY_00425ee0[40];
+
 void CHelpManager::Level_Init()
 {
-	IMPLEMENTATION_GUARD_HELP();
+	OtherMysteryHelpObj* pOVar1;
+	int local_90[33];
+
+	this->field_0x1dc = &OtherMysteryHelpObj_00496950;
+	pOVar1 = this->field_0x1dc;
+	pOVar1->field_0x0 = 8;
+	pOVar1->field_0x4 = 5;
+	pOVar1->field_0x8 = MysteryHelpObj_ARRAY_00425ee0;
+	pOVar1->field_0xc = 0x80ffffff;
+	pOVar1->field_0x10 = 0x70707070;
+
+	for (int i = 0; i < 33; i++) {
+		local_90[i] = INT_ARRAY_00426520[i];
+	}
+
+	for (int i = 0; i < 33; i++) {
+		assert(local_90[i] < 40);
+		MysteryHelpObj_ARRAY_00425ee0[local_90[i]].pMaterial = &g_aEquipmentTextures_00495090[i].materialInfo;
+	}
+
 	return;
 }
 
@@ -122,8 +157,25 @@ void CHelpManager::Level_ManagePaused()
 	return;
 }
 
+uint DrawHelpMenu(CSimpleMenu* pSimpleMenu, uint)
+{
+
+}
+
 void CHelpManager::Level_Draw()
 {
-	IMPLEMENTATION_GUARD_HELP();
+	bool bVar1;
+
+	if (((GameFlags & 8) != 0) && ((UINT_00448eac == 1 || (UINT_00448eac == 2)))) {
+		ClearDisplay();
+		bVar1 = GuiDList_BeginCurrent();
+		if (bVar1 != false) {
+			gHelpMenu.draw(DrawHelpMenu);
+			GuiDList_EndCurrent();
+		}
+
+		gHelpMenu.perform_action();
+	}
+
 	return;
 }

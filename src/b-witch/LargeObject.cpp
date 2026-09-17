@@ -745,6 +745,11 @@ void CScene::InitiateCheckpointReset(int bFadeOut)
 	return;
 }
 
+bool CScene::FUN_001b92f0()
+{
+	return this->curState != 0;
+}
+
 // Should be in: D:/Projects/b-witch/scene.cpp
 void CScene::Level_SaveContext()
 {

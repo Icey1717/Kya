@@ -1369,8 +1369,7 @@ void CLevelScheduler::SaveGame_LoadLevelState(int levelId)
 
 			this->aSaveGameChunks[this->curChunkIndex] = (CChunk*)0x0;
 			this->curChunkIndex = this->curChunkIndex + -1;
-			IMPLEMENTATION_GUARD_LOG(
-			CMapManager::Func_003f81c0(CScene::ptable.g_MapManager_0045168c);)
+			CScene::ptable.g_MapManager_0045168c->Func_003f81c0();
 
 			if (this->bShouldLoad != 0) {
 				pScene->Level_CheckpointReset();
@@ -3254,31 +3253,22 @@ void CLevelScheduler::Level_Manage()
 		return;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
 	if (((gSaveManagement.field_0x0 != 0) && (gSaveManagement.slotID_0x28 != -1)) &&
-		((uVar7 = FUN_002f39c0((int)&gSaveManagement), uVar7 == 0 &&
-			(uVar7 = FUN_001b92f0(CScene::_pinstance), pCVar3 = CActorHero::_gThis, uVar7 == 0)))) {
+		((uVar7 = gSaveManagement.has_queued_file_action(), uVar7 == 0 &&
+			(uVar7 = CScene::_pinstance->FUN_001b92f0(), pCVar3 = CActorHero::_gThis, uVar7 == 0)))) {
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
-			pCVar5 = (*(CActorHero::_gThis->pVTable)->GetLifeInterface)
-				((CActor*)CActorHero::_gThis);
-			fVar15 = (float)(**(code**)((int)pCVar5->pVtable + 0x24))(pCVar5);
-			bVar2 = fVar15 - (pCVar3->character).characterBase.field_0x2e4 <= 0.0;
+			fVar15 = CActorHero::_gThis->GetLifeInterface()->GetValue();
+			bVar2 = fVar15 - pCVar3->field_0x2e4 <= 0.0f;
 			if (!bVar2) {
-				iVar12 = (pCVar3->character).characterBase.base.base.actorState;
-				if (iVar12 == -1) {
-					uVar8 = 0;
-				}
-				else {
-					pSVar6 = (*((pCVar3->character).characterBase.base.base.pVTable)->GetStateCfg)((CActor*)pCVar3, iVar12);
-					uVar8 = pSVar6->flags_0x4 & 1;
-				}
-				bVar2 = uVar8 != 0;
+				bVar2 = (CActorHero::_gThis-> GetStateFlags(CActorHero::_gThis->actorState) & 1) != 0;
 			}
+
 			if (bVar2) goto LAB_002dc8d8;
 		}
+
 		SaveManagement_MemCardAutoSave();
 		this->curAutoSaveTime = pTVar4->scaledTotalTime;
-	})
+	}
 
 LAB_002dc8d8:
 	this->autoSaveTriggerTime = 0.0f;

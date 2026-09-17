@@ -857,6 +857,7 @@ public:
 	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor) = 0;
 	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor) = 0;
 	virtual bool Func_0x24(uint param_2, CActor* pActor) = 0;
+	virtual void ClearCinematic(int index) = 0;
 	virtual bool Func_0x34(uint param_2, CActor* pActor);
 
 	CCinematic* GetCinematic();
