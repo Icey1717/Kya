@@ -7,7 +7,11 @@ struct RAY_DEF
 {
 	edF32VECTOR4 field_0x0;
 	edF32VECTOR4 field_0x10;
+	float field_0x20;
+	float field_0x24;
 	float field_0x28;
+	ushort field_0x2c;
+	ushort field_0x2e;
 	ushort field_0x30;
 	byte field_0x32;
 	byte field_0x33;
@@ -46,6 +50,9 @@ public:
 	bool Begin_SharedDraw();
 	bool End_SharedDraw();
 
+	void GenerateRay(RAY_DEF* pRayDef);
+	int ManageSlice(RAY_DEF* pDefs, int param_3, edF32VECTOR4* param_4, uint param_5);
+
 	void Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* param_4);
 
 	RAY_DEF* pRayDef;
@@ -69,7 +76,10 @@ public:
 
 	float instanceIndex;
 
+	undefined4 field_0x50;
 	int field_0x54;
+
+	float field_0x5c;
 
 	float field_0x60;
 
@@ -96,9 +106,14 @@ public:
 	float radiusMin;
 	float radiusMax;
 
+	undefined4 field_0xa0;
+	float field_0xa4;
+
 	float field_0xb8;
 	short field_0xbc;
 	short field_0xbe;
+	float field_0xc0;
+	undefined4 field_0xc4;
 };
 
 #endif // FX_LIGHT_EMITTER_H

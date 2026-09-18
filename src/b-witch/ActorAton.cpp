@@ -3739,9 +3739,9 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourAddOnAton::Init(CActor* pActor)
+void CBehaviourAddOnAton::Init(CActor* pOwner)
 {
-	this->pOwner = (CActorAton*)pOwner;
+	this->pOwner = pOwner;
 	this->pSubObj = 0;
 	this->field_0xc = 0;
 	this->field_0xd = 1;

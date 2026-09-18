@@ -43,68 +43,62 @@ void CFxLightEmitter::Create(float param_1, uint param_3, uint param_4)
 	this->pRayDef = (RAY_DEF*)0x0;
 	this->flags = param_4;
 
-	//this->field_0x60 = param_1;
-	//this->field_0xc0 = 0;
-	//this->nbRayDefs = param_3;
-	//this->field_0x50 = 0;
-	//this->field_0x54 = 0;
-	//this->stallTime = 1;
-	//this->field_0x68 = 0;
-	//if ((this->flags & 0x200) == 0) {
-	//	this->pRayDef = new RAY_DEF[this->nbRayDefs << 6];
-	//	iVar11 = 0;
-	//	uVar1 = this->nbRayDefs;
-	//	this->field_0x54 = 0;
-	//	this->field_0x50 = 0;
-	//	if (0 < (int)uVar1) {
-	//		iVar10 = 0;
-	//		do {
-	//			fVar7 = gF32Vector4UnitZ.w;
-	//			fVar4 = gF32Vector4UnitZ.z;
-	//			fVar3 = gF32Vector4UnitZ.y;
-	//			iVar11 = iVar11 + 1;
-	//			iVar9 = &this->pRayDef->field_0x0 + iVar10;
-	//			*(float*)(iVar9 + 0x10) = gF32Vector4UnitZ.x;
-	//			*(float*)(iVar9 + 0x14) = fVar3;
-	//			*(float*)(iVar9 + 0x18) = fVar4;
-	//			*(float*)(iVar9 + 0x1c) = fVar7;
-	//			*(undefined2*)(&this->pRayDef->field_0x2c + iVar10) = 0xffff;
-	//			*(undefined2*)(&this->pRayDef->field_0x2e + iVar10) = 0x3039;
-	//			*(undefined2*)(&this->pRayDef->field_0x30 + iVar10) = 0;
-	//			*(undefined*)(&this->pRayDef->field_0x33 + iVar10) = 0xff;
-	//			*(undefined4*)(&this->pRayDef->field_0x38 + iVar10) = 0;
-	//			*(undefined4*)(&this->pRayDef->field_0x3c + iVar10) = 0;
-	//			iVar10 = iVar10 + 0x40;
-	//		} while (iVar11 < (int)uVar1);
-	//	}
-	//}
-	//
-	//this->flags = this->flags | 1;
-	//
-	//this->field_0x5c = 1.0f;
-	//
-	//this->field_0x20 = gF32Vector4Zero;
-	//
-	//this->field_0xa0 = 0;
-	//this->field_0xa4 = 0;
-	//this->flags = this->flags | 0x80;
-	//this->field_0xb8 = 0.0f;
-	//this->field_0xbc = 1;
-	//this->field_0xbe = 1;
-	//
-	//this->uvMapping = edF32VECTOR4_00426890;
-	//this->field_0x10 = edF32VECTOR4_004268a0;
-	//
-	//if ((this->flags & 2) != 0) {
-	//	this->field_0x30 = g_xVector;
-	//}
-	//
-	//this->field_0xc4 = 0;
-	//this->aColors[0] = 0x80808080;
-	//this->aColors[1] = 0x80808080;
-	//this->aColors[2] = 0x80808080;
-	//this->aColors[3] = 0x80808080;
-	//this->flags = this->flags | 1;
+	this->field_0x60 = param_1;
+	this->field_0xc0 = 0;
+	this->nbRayDefs = param_3;
+	this->field_0x50 = 0;
+	this->field_0x54 = 0;
+	this->stallTime = 1;
+	this->field_0x68 = 0;
+
+	if ((this->flags & 0x200) == 0) {
+		this->pRayDef = new RAY_DEF[this->nbRayDefs];
+		iVar11 = 0;
+		uVar1 = this->nbRayDefs;
+		this->field_0x54 = 0;
+		this->field_0x50 = 0;
+		if (0 < (int)uVar1) {
+			do {
+				RAY_DEF* pRayDef = &this->pRayDef[iVar11];
+				iVar11 = iVar11 + 1;
+
+				pRayDef->field_0x10 = gF32Vector4UnitZ;
+				pRayDef->field_0x2c = 0xffff;
+				pRayDef->field_0x2e = 0x3039;
+				pRayDef->field_0x30 = 0;
+				pRayDef->field_0x33 = 0xff;
+				pRayDef->field_0x38 = 0;
+				pRayDef->field_0x3c = 0;
+			} while (iVar11 < (int)uVar1);
+		}
+	}
+	
+	this->flags = this->flags | 1;
+	
+	this->field_0x5c = 1.0f;
+	
+	this->field_0x20 = gF32Vector4Zero;
+	
+	this->field_0xa0 = 0;
+	this->field_0xa4 = 0;
+	this->flags = this->flags | 0x80;
+	this->field_0xb8 = 0.0f;
+	this->field_0xbc = 1;
+	this->field_0xbe = 1;
+	
+	this->uvMapping = edF32VECTOR4_00426890;
+	this->field_0x10 = edF32VECTOR4_004268a0;
+	
+	if ((this->flags & 2) != 0) {
+		this->direction = g_xVector;
+	}
+	
+	this->field_0xc4 = 0;
+	this->aColors[0] = 0x80808080;
+	this->aColors[1] = 0x80808080;
+	this->aColors[2] = 0x80808080;
+	this->aColors[3] = 0x80808080;
+	this->flags = this->flags | 1;
 
 	return;
 }
@@ -118,30 +112,24 @@ void CFxLightEmitter::InitRays(int nbRays)
 	int iVar5;
 	int iVar6;
 
-	//this->field_0x54 = 0;
-	//this->field_0x50 = 0;
-	//iVar6 = 0;
-	//if (0 < nbRays) {
-	//	iVar5 = 0;
-	//	do {
-	//		fVar3 = gF32Vector4UnitZ.w;
-	//		fVar2 = gF32Vector4UnitZ.z;
-	//		fVar1 = gF32Vector4UnitZ.y;
-	//		iVar6 = iVar6 + 1;
-	//		iVar4 = &this->pRayDef->field_0x0 + iVar5;
-	//		*(float*)(iVar4 + 0x10) = gF32Vector4UnitZ.x;
-	//		*(float*)(iVar4 + 0x14) = fVar1;
-	//		*(float*)(iVar4 + 0x18) = fVar2;
-	//		*(float*)(iVar4 + 0x1c) = fVar3;
-	//		*(undefined2*)((int)&this->pRayDef->field_0x2c + iVar5) = 0xffff;
-	//		*(undefined2*)(&this->pRayDef->field_0x2e + iVar5) = 0x3039;
-	//		*(undefined2*)(&this->pRayDef->field_0x30 + iVar5) = 0;
-	//		(&this->pRayDef->field_0x33)[iVar5] = 0xff;
-	//		*(undefined4*)(&this->pRayDef->field_0x38 + iVar5) = 0;
-	//		*(undefined4*)(&this->pRayDef->field_0x3c + iVar5) = 0;
-	//		iVar5 = iVar5 + 0x40;
-	//	} while (iVar6 < nbRays);
-	//}
+	this->field_0x54 = 0;
+	this->field_0x50 = 0;
+	iVar6 = 0;
+	if (0 < nbRays) {
+		iVar5 = 0;
+		do {
+			RAY_DEF* pRayDef = &this->pRayDef[iVar6];
+			iVar6 = iVar6 + 1;
+			pRayDef->field_0x10 = gF32Vector4UnitZ;
+			pRayDef->field_0x2c = 0xffff;
+			pRayDef->field_0x2e = 0x3039;
+			pRayDef->field_0x30 = 0;
+			pRayDef->field_0x33 = 0xff;
+			pRayDef->field_0x38 = 0;
+			pRayDef->field_0x3c = 0;
+			iVar5 = iVar5 + 0x40;
+		} while (iVar6 < nbRays);
+	}
 
 	return;
 }
@@ -153,25 +141,25 @@ void CFxLightEmitter::ResetRays()
 	int iVar3;
 	int iVar4;
 
-	//if (this->pRayDef != (RAY_DEF*)0x0) {
-	//	uVar1 = this->nbRayDefs;
-	//	iVar4 = 0;
-	//	this->field_0x54 = 0;
-	//	this->field_0x50 = 0;
-	//	if (0 < (int)uVar1) {
-	//		iVar3 = 0;
-	//		do {
-	//			iVar2 = (RAY_DEF*)(&this->pRayDef->field_0x0 + iVar3);
-	//			if (this->countId == *(char*)&iVar2->field_0x33) {
-	//				*(undefined2*)&iVar2->field_0x30 = 0;
-	//				*(undefined*)(&this->pRayDef->field_0x33 + iVar3) = 0xff;
-	//				*(undefined2*)(&this->pRayDef->field_0x2c + iVar3) = 0xffff;
-	//			}
-	//			iVar4 = iVar4 + 1;
-	//			iVar3 = iVar3 + 0x40;
-	//		} while (iVar4 < (int)uVar1);
-	//	}
-	//}
+	if (this->pRayDef != (RAY_DEF*)0x0) {
+		uVar1 = this->nbRayDefs;
+		iVar4 = 0;
+		this->field_0x54 = 0;
+		this->field_0x50 = 0;
+
+		if (0 < (int)uVar1) {
+			do {
+				RAY_DEF* pRayDef = &this->pRayDef[iVar4];
+				if (this->countId == *(char*)&pRayDef->field_0x33) {
+					pRayDef->field_0x30 = 0;
+					pRayDef->field_0x33 = 0xff;
+					pRayDef->field_0x2c = 0xffff;
+				}
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < (int)uVar1);
+		}
+	}
+
 	return;
 }
 
@@ -323,27 +311,25 @@ void CFxLightEmitter::Enable(int bEnable)
 
 void CFxLightEmitter::ReleaseRays(int nbRays)
 {
-	int iVar1;
+	RAY_DEF* iVar1;
 	int iVar2;
 	int iVar3;
 
-	IMPLEMENTATION_GUARD_FX(
 	this->field_0x54 = 0;
 	this->field_0x50 = 0;
 	iVar3 = 0;
 	if (0 < nbRays) {
-		iVar2 = 0;
 		do {
-			iVar1 = &this->pRayDef->field_0x0 + iVar2;
-			if (this->countId == *(char*)(iVar1 + 0x33)) {
-				*(undefined2*)(iVar1 + 0x30) = 0;
-				(&this->pRayDef->field_0x33)[iVar2] = 0xff;
-				*(undefined2*)((int)&this->pRayDef->field_0x2c + iVar2) = 0xffff;
+			iVar1 = this->pRayDef + iVar3;
+			if (this->countId == iVar1->field_0x33) {
+				iVar1->field_0x30 = 0;
+				iVar1->field_0x33 = 0xff;
+				iVar1->field_0x2c = 0xffff;
 			}
+
 			iVar3 = iVar3 + 1;
-			iVar2 = iVar2 + 0x40;
 		} while (iVar3 < nbRays);
-	})
+	}
 
 	return;
 }
@@ -386,6 +372,220 @@ bool CFxLightEmitter::End_SharedDraw()
 	}
 
 	return bVar1;
+}
+
+int CFxLightEmitter::ManageSlice(RAY_DEF* pDefs, int param_3, edF32VECTOR4* param_4, uint param_5)
+{
+	byte bVar1;
+	byte bVar2;
+	short sVar3;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 eStack16;
+
+	iVar8 = 0;
+	if (static_cast<int>(param_5) < 0) {
+		param_5 = this->nbRayDefs;
+	}
+
+	if (this->field_0x54 + param_5 == 0) {
+		this->flags = this->flags & 0xfffffffe;
+	}
+	else {
+		this->flags = this->flags | 1;
+	}
+
+	if (param_4 != (edF32VECTOR4*)0x0) {
+		this->field_0x10 = *param_4;
+	}
+
+	iVar7 = 0;
+	if ((this->flags & 1) != 0) {
+		if ((this->flags & 0x80) != 0) {
+			fVar9 = this->field_0xb8;
+			fVar9 = this->field_0xc0 + fVar9 * GetTimer()->cutsceneDeltaTime;
+			this->field_0xc0 = fVar9;
+			if (1.0f <= fVar9) {
+				this->field_0xc0 = 0;
+				iVar8 = 1;
+			}
+		}
+		iVar6 = 0;
+		iVar7 = 0;
+		if (0 < param_3) {
+			do {
+				bVar1 = this->countId;
+				bVar2 = pDefs->field_0x33;
+				if ((bVar2 == bVar1) || (bVar2 == 0xff)) {
+					if (bVar2 == bVar1) {
+						iVar7 = iVar7 + 1;
+						if ((pDefs->field_0x30 & 1) == 0) {
+							if ((this->flags & 8) == 0) {
+								sVar3 = pDefs->field_0x2c;
+								if (sVar3 < 1) {
+									GenerateRay(pDefs);
+								}
+								else {
+									if (0 < sVar3) {
+										pDefs->field_0x2c = sVar3 + -1;
+									}
+								}
+							}
+						}
+						else {
+							if ((this->flags & 4) != 0) {
+								edF32Vector4SubHard(&pDefs->field_0x10, &this->field_0x10, &pDefs->field_0x0);
+								edF32Vector4NormalizeHard(&pDefs->field_0x10, &pDefs->field_0x10);
+							}
+
+							if (this->field_0x60 <= pDefs->field_0x28) {
+								pDefs->field_0x30 = pDefs->field_0x30 & 0xfffe;
+								pDefs->field_0x33 = 0xff;
+								this->field_0x54 = this->field_0x54 + -1;
+								this->field_0x50 = this->field_0x50 + -1;
+							}
+
+							pDefs->field_0x28 = pDefs->field_0x28 + GetTimer()->cutsceneDeltaTime;
+							fVar9 = this->field_0x84;
+							pDefs->field_0x20 = pDefs->field_0x20 + fVar9 * GetTimer()->cutsceneDeltaTime;
+							if (((pDefs->field_0x30 & 2) == 0) && ((this->flags & 0x20) != 0)) {
+								fVar9 = this->field_0xa4;
+								fVar9 = edF32Between_0_2Pi(pDefs->field_0x38 + fVar9 * GetTimer()->cutsceneDeltaTime);
+								pDefs->field_0x38 = fVar9;
+							}
+
+							if (pDefs->field_0x24 < pDefs->field_0x20) {
+								pDefs->field_0x20 = pDefs->field_0x24;
+							}
+
+							fVar9 = pDefs->field_0x20;
+							edF32Vector4ScaleHard(fVar9 * GetTimer()->cutsceneDeltaTime, &eStack16, &pDefs->field_0x10);
+							edF32Vector4AddHard(&pDefs->field_0x0, &pDefs->field_0x0, &eStack16);
+							(pDefs->field_0x0).w = 1.0f;
+
+							if (((this->flags & 0x80) != 0) && (pDefs->field_0x3c = pDefs->field_0x3c + iVar8, pDefs->field_0x3c == this->field_0xbc * this->field_0xbe)) {
+								pDefs->field_0x3c = 0;
+							}
+						}
+					}
+					else {
+						if (((this->flags & 8) == 0) && ((int)this->field_0x50 < static_cast<int>(param_5))) {
+							pDefs->field_0x33 = bVar1;
+							if (pDefs->field_0x2c == -1) {
+								iVar5 = rand();
+								if (this->stallTime == 0) {
+									trap(7);
+								}
+
+								pDefs->field_0x2c = (short)(iVar5 % this->stallTime);
+							}
+
+							iVar7 = iVar7 + 1;
+							this->field_0x50 = this->field_0x50 + 1;
+						}
+					}
+				}
+
+				iVar6 = iVar6 + 1;
+				pDefs = pDefs + 1;
+			} while (iVar6 < param_3);
+		}
+	}
+
+	return iVar7;
+}
+
+
+void CFxLightEmitter::GenerateRay(RAY_DEF* pRayDef)
+{
+	int iVar1;
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR3 local_10;
+
+	fVar4 = this->field_0x80;
+	fVar5 = this->field_0x7c;
+	local_60.z = 0.0f;
+	iVar1 = rand();
+	pRayDef->field_0x24 = fVar5 + (fVar4 - fVar5) * (static_cast<float>(iVar1) / 2.147484e+09f);
+	pRayDef->field_0x20 = this->field_0x78;
+	iVar1 = rand();
+	pRayDef->field_0x28 = this->field_0x60 * (static_cast<float>(iVar1) / 2.147484e+09f) * 0.1f;
+
+	if ((this->flags & 0x800) != 0) {
+		local_60.z = this->field_0x68;
+		iVar1 = rand();
+		local_60.z = local_60.z * (static_cast<float>(iVar1) / 2.147484e+09f);
+		pRayDef->field_0x28 = pRayDef->field_0x28 + local_60.z / this->field_0x78;
+	}
+
+	fVar4 = (this->field_0x20).x;
+	iVar1 = rand();
+	local_10.x = (this->field_0x40 + fVar4 * (static_cast<float>(iVar1) / 2.147484e+09f)) - (this->field_0x20).x * 0.5f;
+	fVar4 = (this->field_0x20).y;
+	iVar1 = rand();
+	local_10.y = (this->field_0x44 + fVar4 * (static_cast<float>(iVar1) / 2.147484e+09f)) - (this->field_0x20).y * 0.5f;
+	local_10.z = (this->field_0x20).z;
+	iVar1 = rand();
+	local_60.x = 0.0f;
+	local_10.z = local_10.z * (static_cast<float>(iVar1) / 2.147484e+09f);
+	local_60.y = this->radiusMin;
+	fVar4 = this->radiusMax;
+	iVar1 = rand();
+	local_60.w = 1.0f;
+	local_60.y = local_60.y + (fVar4 - local_60.y) * (static_cast<float>(iVar1) / 2.147484e+09f);
+
+	edF32Matrix4FromEulerSoft(&eStack80, &local_10, "ZXY");
+	edF32Matrix4MulF32Vector4Hard(&local_60, &eStack80, &local_60);
+	edF32Vector4AddHard(&pRayDef->field_0x0, &this->field_0x10, &local_60);
+
+	(pRayDef->field_0x0).w = 1.0f;
+	pRayDef->field_0x33 = this->countId;
+	pRayDef->field_0x32 = this->field_0xc4;
+	this->field_0xc4 = this->field_0xc4 + 1 & 3;
+
+	if ((pRayDef->field_0x30 & 2) == 0) {
+		fVar4 = this->field_0x88;
+		fVar5 = this->field_0x8c;
+		iVar1 = rand();
+		pRayDef->field_0x34 = fVar4 + (fVar5 - fVar4) * (static_cast<float>(iVar1) / 2.147484e+09f);
+		if ((this->flags & 0x20) != 0) {
+			fVar4 = (float)this->field_0xa0;
+			iVar1 = rand();
+			pRayDef->field_0x38 = fVar4 * (static_cast<float>(iVar1) / 2.147484e+09f);
+		}
+	}
+
+	if ((this->flags & 2) == 0) {
+		edF32Vector4SubHard(&pRayDef->field_0x10, &pRayDef->field_0x0, &this->field_0x10);
+		edF32Vector4NormalizeHard(&pRayDef->field_0x10, &pRayDef->field_0x10);
+	}
+	else {
+		pRayDef->field_0x10 = this->direction;
+	}
+
+	if ((this->flags & 0x80) != 0) {
+		iVar2 = rand();
+		iVar1 = this->field_0xbc * this->field_0xbe;
+		if (iVar1 == 0) {
+			trap(7);
+		}
+		pRayDef->field_0x3c = iVar2 % iVar1;
+	}
+
+	pRayDef->field_0x30 = pRayDef->field_0x30 | 1;
+	this->field_0x54 = this->field_0x54 + 1;
+
+	return;
 }
 
 byte BYTE_00448d1c = 1;

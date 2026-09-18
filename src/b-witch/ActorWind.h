@@ -90,9 +90,11 @@ struct _SP_PartNfo
 	float field_0x1c;
 };
 
-struct FASTRAM_MNG
+struct FASTRAM_ENTRY
 {
-
+	RAY_DEF* field_0x0;
+	void* field_0x4;
+	int field_0x8;
 };
 
 class CFxEmitterPool
@@ -103,6 +105,21 @@ public:
 	void _SortRegNfo(int param_2);
 	void _PrepareCommonSubPart(_EmiNfo* pEmiInfo, _SP_PartNfo* pSubPartInfo);
 	void Draw();
+
+	struct FASTRAM_MNG
+	{
+		void Init(RAY_DEF* pDef, int param_3);
+		int Sync(int direction);
+
+		int field_0x0;
+		void* field_0x4;
+		void* field_0x8;
+		int field_0xc;
+		uint field_0x10;
+		uint field_0x14;
+		int field_0x18;
+		FASTRAM_ENTRY aEntries[3];
+	};
 
 	int field_0x0;
 	undefined4 field_0x4;

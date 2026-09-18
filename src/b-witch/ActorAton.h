@@ -26,7 +26,7 @@ class CBehaviourAddOnAton : public CAddOn
 public:
 	CBehaviourAddOnAton();
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Init(CActor* pActor);
+	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Reset();
 	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor);

@@ -11,6 +11,7 @@
 #include "ActorHero.h"
 #include "CameraViewManager.h"
 #include "kya.h"
+#include "Rendering/CustomShell.h"
 #include "CameraGame.h"
 #include "ed3D/ed3DG2D.h"
 #include "edDList/edDList.inl"
@@ -2481,21 +2482,19 @@ void CFxEmitterPool::Manage(CFxWind* pFxWind)
 	CFxWindHandle* pCVar12;
 	int iVar13;
 	_EmiNfo* pCurEmiInfo;
-	CFxWindHandle* pCVar14;
+	_EmiNfo* pCVar14;
 	int iVar15;
 	CFxLightEmitter* this_00;
 	CFxLightEmitter* pCVar16;
 	undefined4* pCVar17;
 	int* piVar18;
-	int iVar19;
-	int iVar20;
 	float fVar21;
 	RayMem* local_60;
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 auStack64;
 
 	iVar15 = -1;
-	iVar20 = 0;
+	int iVar20 = 0;
 	CFxWindHandle* pCurHandle = this->aWindHandles;
 	while ((iVar20 < 0x40 && (iVar15 == -1))) {
 		if (pCurHandle->pFxWind == pFxWind) {
@@ -2554,7 +2553,7 @@ LAB_0020e508:
 		_EmiNfo* pCurEmiInfo = this->aHolders;
 		do {
 			pCVar2 = pCurEmiInfo->pFxWind;
-			iVar19 = -1;
+			int iVar19 = -1;
 
 			if (pCVar2 != (CFxWind*)0x0) {
 				iVar13 = 0;
@@ -2613,11 +2612,11 @@ LAB_0020e508:
 		} while (iVar20 < 4);
 
 		iVar15 = 0;
-		pCVar14 = this->aWindHandles;
+		CFxWindHandle* pWindHandle = this->aWindHandles;
 		do {
-			pCVar2 = pCVar14->pFxWind;
+			pCVar2 = pWindHandle->pFxWind;
 			iVar20 = -1;
-			iVar19 = 0;
+			int iVar19 = 0;
 			pCurEmiInfo = this->aHolders;
 			do {
 				if (pCVar2 == pCurEmiInfo->pFxWind) {
@@ -2633,7 +2632,7 @@ LAB_0020e508:
 				pCurEmiInfo = this->aHolders + iVar20;
 			}
 
-			if ((((pCurEmiInfo == (_EmiNfo*)0x0) && ((pCVar2->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0)) && ((pCVar2->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0)) && (pCVar14->field_0x4 < 0.3f)) {
+			if ((((pCurEmiInfo == (_EmiNfo*)0x0) && ((pCVar2->flags_0x54 & FXWIND_FLAG_ACTIVE) != 0)) && ((pCVar2->flags_0x54 & FXWIND_FLAG_EMITTER_POOL_ACTIVE) == 0)) && (pWindHandle->field_0x4 < 0.3f)) {
 				iVar20 = -1;
 				iVar19 = 0;
 				_EmiNfo* pCurEmiInfoInternal = this->aHolders;
@@ -2698,7 +2697,7 @@ LAB_0020e508:
 			}
 
 			iVar15 = iVar15 + 1;
-			pCVar14 = pCVar14 + 1;
+			pWindHandle = pWindHandle + 1;
 		} while (iVar15 < 4);
 
 		iVar15 = 0;
@@ -2719,7 +2718,7 @@ LAB_0020e508:
 					if (bVar3) {
 						local_50 = {};
 
-						iVar19 = rand();
+						int iVar19 = rand();
 						local_50.x = 0.08726646f - ((float)iVar19 / 2.147484e+09f) * 0.1745329f;
 						iVar19 = rand();
 						local_50.y = 0.08726646f - ((float)iVar19 / 2.147484e+09f) * 0.1745329f;
@@ -2768,63 +2767,59 @@ LAB_0020e508:
 
 		iVar15 = 0;
 		if (iVar20 != 0) {
-
-			iVar19 = 0;
 			local_60 = this->field_0xd5c;
-			IMPLEMENTATION_GUARD_FX(
+
 			do {
 				this->field_0xd74.Init(local_60->pRayDef, local_60->nbRays);
 
-				iVar13 = (int)this->aWindHandles + (*(int*)&this->field_0xd74 % 3) * 0xc + -0x20;
-				uVar11 = SEXT48(*(int*)(iVar13 + 0xd98) << 6);
-				if ((*(int*)(iVar13 + 0xd98) != 0) && (uVar11 <= (ulong)(long)*(int*)&this->field_0xd84))
+				FASTRAM_ENTRY* pFastEntry = this->field_0xd74.aEntries + (this->field_0xd74.field_0x0 % 3);
+				uVar11 = pFastEntry->field_0x8 << 6;
+				if ((pFastEntry->field_0x8 != 0) && (uVar11 <= this->field_0xd74.field_0x10))
 				{
-					edDmaLoadToFastRam_nowait(*(undefined4*)(iVar13 + 0xd90), uVar11, *(undefined4*)(iVar13 + 0xd94));
+					edDmaLoadToFastRam_nowait(pFastEntry->field_0x0, uVar11, pFastEntry->field_0x4);
 				}
 				do {
 					this->field_0xd74.Sync(1);
 
-					iVar13 = (int)this->aWindHandles + (*(int*)&this->field_0xd74 % 3) * 0xc + -0x20;
-					uVar11 = SEXT48(*(int*)(iVar13 + 0xd98) << 6);
-					if ((*(int*)(iVar13 + 0xd98) != 0) && (uVar11 <= (ulong)(long)*(int*)&this->field_0xd84)
-						) {
-						edDmaLoadToFastRam_nowait
-						(*(undefined4*)(iVar13 + 0xd90), uVar11, *(undefined4*)(iVar13 + 0xd94));
+					pFastEntry = this->field_0xd74.aEntries + (this->field_0xd74.field_0x0 % 3);
+					uVar11 = pFastEntry->field_0x8 << 6;
+					if ((pFastEntry->field_0x8 != 0) && (uVar11 <= this->field_0xd74.field_0x10))
+					{
+						edDmaLoadToFastRam_nowait(pFastEntry->field_0x0, uVar11, pFastEntry->field_0x4);
 					}
-					iVar13 = (int)this->aWindHandles + ((*(int*)&this->field_0xd74 + 1) % 3) * 0xc + -0x20;
-					uVar10 = *(int*)(iVar13 + 0xd98) << 6;
-					if ((uVar10 <= *(uint*)&this->field_0xd84) && (*(int*)(iVar13 + 0xd98) != 0)) {
-						edDmaLoadFromFastRam_nowait
-						(*(void**)(iVar13 + 0xd94), uVar10, *(void**)(iVar13 + 0xd90));
+
+					pFastEntry = this->field_0xd74.aEntries + ((this->field_0xd74.field_0x0 + 1) % 3);
+					uVar10 = pFastEntry->field_0x8 << 6;
+					if ((uVar10 <= this->field_0xd74.field_0x10) && (pFastEntry->field_0x8 != 0)) {
+						edDmaLoadFromFastRam_nowait(pFastEntry->field_0x4, uVar10, pFastEntry->field_0x0);
 					}
+
 					iVar13 = 0;
-					pCVar14 = this;
+					_EmiNfo* pEmi = this->aHolders;
 					do {
-						if (pCVar14->aHolders[0].pFxWind != (CFxWind*)0x0) {
-							pCVar9 = (CFxLightEmitter*)((int)&pCVar14->aHolders[0].field_0x0[0].flags + iVar20);
-							uVar10 = (uint)(pCVar14->aHolders[0].field_0x2b4 *
-								(float)local_60->field_0xd5c[0].nbRays);
-							iVar7 = (int)&pCVar14->aHolders[0].field_0x0[0].flags + iVar19;
+						if (pEmi->pFxWind != (CFxWind*)0x0) {
+							pCVar9 = pEmi->aFxLightEmitters + iVar15;
+							uVar10 = (uint)(pEmi->field_0x2b4 * (float)local_60->nbRays);
+							undefined4* pOther = &pEmi->field_0x2a4[iVar15];
 							if (((pCVar9->flags & 1) != 0) &&
-								(piVar18 = (int*)(iVar7 + 0x2a4), *(int*)(iVar7 + 0x2a4) < (int)uVar10)) {
-								iVar7 = (int)this->aWindHandles +
-									((*(int*)&this->field_0xd74 + 2) % 3) * 0xc + -0x20;
-								iVar7 = CFxLightEmitter::ManageSlice
-								(pCVar9, *(edF32VECTOR4**)(iVar7 + 0xd94), *(int*)(iVar7 + 0xd98),
-									0, uVar10);
-								*piVar18 = *piVar18 + iVar7;
+								(*pOther < uVar10)) {
+								pFastEntry = this->field_0xd74.aEntries + ((this->field_0xd74.field_0x0 + 2) % 3);
+								iVar7 = pCVar9->ManageSlice((RAY_DEF*)pFastEntry->field_0x4, pFastEntry->field_0x8, 0, uVar10);
+								*pOther = *pOther + iVar7;
 							}
 						}
+
 						iVar13 = iVar13 + 1;
-						pCVar14 = (CFxEmitterPool*)&pCVar14->aHolders[0].field_0x0[0].field_0xa0;
+						pEmi = pEmi + 1;
 					} while (iVar13 < 4);
-					FASTRAM_MNG::Sync((FASTRAM_MNG*)&this->field_0xd74, 0);
-				} while (*(int*)((int)this->field_0xd5c + (*(int*)&this->field_0xd74 % 3) * 0xc + 0x3c) !=
-					0);
-				iVar13 = (int)this->aWindHandles + ((*(int*)&this->field_0xd74 + 2) % 3) * 0xc + -0x20;
-				uVar10 = *(int*)(iVar13 + 0xd98) << 6;
-				if ((uVar10 <= *(uint*)&this->field_0xd84) && (*(int*)(iVar13 + 0xd98) != 0)) {
-					edDmaLoadFromFastRam_nowait(*(void**)(iVar13 + 0xd94), uVar10, *(void**)(iVar13 + 0xd90));
+
+					this->field_0xd74.Sync(0);
+				} while ((this->field_0xd74).aEntries[(this->field_0xd74).field_0x0 % 3].field_0x8 != 0);
+
+				pFastEntry = this->field_0xd74.aEntries + ((this->field_0xd74.field_0x0 + 2) % 3);
+				uVar10 = pFastEntry->field_0x8 << 6;
+				if ((uVar10 <= this->field_0xd74.field_0x10) && (pFastEntry->field_0x8 != 0)) {
+					edDmaLoadFromFastRam_nowait(pFastEntry->field_0x4, uVar10, pFastEntry->field_0x0);
 				}
 
 				this->field_0xd74.Sync(0);
@@ -2857,17 +2852,15 @@ LAB_0020e508:
 					}
 
 					iVar13 = iVar13 + 1;
-					pCVar14 = pCVar14 + 1;
+					pCurEmiInfo = pCurEmiInfo + 1;
 				} while (iVar13 < 4);
 
 				gSP_Manager.ReleaseBuffer(this->field_0xd74.field_0x8);
 				gSP_Manager.ReleaseBuffer(this->field_0xd74.field_0x4);
 
 				iVar15 = iVar15 + 1;
-				iVar20 = iVar20 + 0xe0;
 				local_60 = local_60 + 1;
-				iVar19 = iVar19 + 4;
-			} while (iVar15 < 3);)
+			} while (iVar15 < 3);
 		}
 	}
 
@@ -3076,6 +3069,8 @@ struct EmitterDrawState
 	float invScreenHeight;
 };
 
+HEAT_FX_VDEF g_desc_magn[16];
+
 void Create_DListMagnifier(HEAT_FX_VDEF* pDef, HEAT_FX_PARAM* pParam)
 {
 	int iVar1;
@@ -3088,6 +3083,9 @@ void Create_DListMagnifier(HEAT_FX_VDEF* pDef, HEAT_FX_PARAM* pParam)
 		fVar5 = static_cast<float>(iVar1) / static_cast<float>(pParam->nbVertices + -1) + -0.5f;
 
 		for (iVar2 = 0; iVar2 < pParam->nextVertexOffset; iVar2 = iVar2 + 1) {
+			//Ensure we aren't writing outside pDef bounds (g_desc_magn)
+			assert(pDef < g_desc_magn + 16);
+
 			fVar4 = static_cast<float>(iVar2) / static_cast<float>(pParam->nextVertexOffset + -1) + -0.5f;
 			fVar3 = sqrtf(fVar4 * fVar4 + fVar5 * fVar5);
 			if (fVar3 < pParam->field_0x10) {
@@ -3181,8 +3179,6 @@ void Draw_DListMagnifier(float param_1, EmitterDrawState* param_2)
 
 	return;
 }
-
-HEAT_FX_VDEF g_desc_magn[16];
 
 edF32MATRIX4 edF32MATRIX4_004574f0 = {
 	-35632.54f,
@@ -4233,6 +4229,69 @@ void edCSound3DPrim::ComputeResultingPosition(edsound_3d_data* param_2, float* p
 			}
 		}
 	}
+
+	return;
+}
+
+int CFxEmitterPool::FASTRAM_MNG::Sync(int direction)
+{
+	int result = edDmaSync(direction == 0 ? SHELLDMA_CHANNEL_FROMSPR : SHELLDMA_CHANNEL_TOSPR);
+	FASTRAM_ENTRY* pNextEntry = this->aEntries + ((this->field_0x0 + 1) % 3);
+
+	if (direction == 1) {
+		FASTRAM_ENTRY* pCurEntry = this->aEntries + (this->field_0x0 % 3);
+		pNextEntry->field_0x0 = pCurEntry->field_0x0 + pCurEntry->field_0x8;
+		this->field_0x18 = this->field_0x18 - pCurEntry->field_0x8;
+		pNextEntry->field_0x8 = this->field_0x18;
+		if ((int)this->field_0x14 <= this->field_0x18) {
+			pNextEntry->field_0x8 = this->field_0x14;
+		}
+		this->field_0x0 = (this->field_0x0 + 1) % 3;
+	}
+	else {
+		pNextEntry->field_0x0 = (RAY_DEF*)0x0;
+		pNextEntry->field_0x8 = -1;
+	}
+
+	return result;
+}
+
+void CFxEmitterPool::FASTRAM_MNG::Init(RAY_DEF* pDef, int param_3)
+{
+	void* pvVar1;
+
+	pvVar1 = gSP_Manager.GetFreeBuffer(0x10);
+	this->field_0x4 = pvVar1;
+#ifdef PLATFORM_PS2
+	this->field_0xc = gSP_Manager.totalSize - gSP_Manager.currentOffset;
+#else
+	this->field_0xc = 0x1024 * 8;
+#endif
+	pvVar1 = gSP_Manager.GetFreeBuffer(0x1024 * 8);
+	this->field_0x8 = pvVar1;
+	this->field_0x10 = this->field_0xc / 3;
+	this->field_0x14 = this->field_0x10 >> 6;
+	this->field_0x10 = this->field_0x14 << 6;
+	this->field_0x18 = param_3;
+	this->field_0x0 = 0;
+	if ((int)this->field_0x14 <= param_3) {
+		param_3 = this->field_0x14;
+	}
+
+	this->aEntries[0].field_0x0 = pDef;
+	this->aEntries[0].field_0x4 = this->field_0x8;
+	this->aEntries[0].field_0x8 = param_3;
+
+	this->aEntries[1].field_0x0 = pDef;
+	this->aEntries[1].field_0x4 = (char*)this->field_0x8 + this->field_0x10;
+	this->aEntries[1].field_0x8 = param_3;
+
+	this->aEntries[2].field_0x0 = pDef;
+	this->aEntries[2].field_0x4 = (char*)this->field_0x8 + this->field_0x10 * 2;
+	this->aEntries[2].field_0x8 = param_3;
+
+	edDmaFlushCache();
+	edDmaSync(9);
 
 	return;
 }

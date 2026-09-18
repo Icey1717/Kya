@@ -155,6 +155,31 @@ bool edDmaLoadFromFastRam(void* pSrc, uint size, void* pDest)
 	return bVar2;
 }
 
+void edDmaLoadToFastRam_nowait(void* pSrc, uint size, void* pDst)
+{
+#ifdef PLATFORM_PS2
+	DMA_Reg_Ptr* pReg = edDmaChannelList[9].pReg;
+	uint madr = edDmaChannelList[9].MADR;
+	if (size == 0) {
+		pReg->TADR = (uint)pSrc;
+	}
+	else {
+		pReg->MADR = (uint)pSrc;
+	}
+	SYNC(0);
+	pReg->SADR = (uint)pDst;
+	SYNC(0);
+	pReg->QWC = size >> 4;
+	SYNC(0);
+	DPUT_D_STAT(madr);
+	SYNC(0);
+	pReg->CHCR = edDmaChannelList[9].QWC | (size == 0 ? 0x104 : 0x100);
+#else
+	memcpy(pDst, pSrc, size);
+#endif
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadToFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
+}
+
 bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
 {
 	DMA_Reg_Ptr* pReg;

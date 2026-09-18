@@ -5,11 +5,11 @@
 #include "SaveManagement.h"
 #include "LevelScheduler.h"
 #include "Pause.h"
-#include "InputManager.h"
+#include "log.h"
 
 #include "DebugSetting.h"
 
-#include <future>
+#include <chrono>
 
 namespace Debug::SaveLoad
 {
@@ -44,37 +44,109 @@ namespace Debug::SaveLoad
 		}
 	}
 
-	std::future<void> gAutoLoadFuture;
-
-	void AutoLoad()
+	namespace
 	{
-		gAutoLoadFuture = std::async(std::launch::async, []() {
-			gPlayerInput.bActive = 0;
+		enum class AutoLoadState { Disabled, Waiting, Loading, Done, Failed, Cancelled };
+		AutoLoadState autoLoadState = AutoLoadState::Disabled;
+		int autoLoadSlot = -1;
+		bool autoLoadTaskPending = false;
+		const char* autoLoadStatus = "Disabled";
+		std::chrono::steady_clock::time_point lastAutoLoadLog;
 
-			// Wait for a few seconds to allow the game to initialize by sleeping
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		void SetAutoLoadStatus(AutoLoadState state, const char* status)
+		{
+			const auto now = std::chrono::steady_clock::now();
+			// Repeat waiting diagnostics occasionally, but never use elapsed time for readiness.
+			if (state != autoLoadState || status != autoLoadStatus || now - lastAutoLoadLog >= std::chrono::seconds(5)) {
+				MY_LOG_CATEGORY("AutoLoad", LogLevel::Info, "AutoLoad: slot={} {}", autoLoadSlot, status);
+				// Preserve the last operation in the log even if the subsequent load hangs.
+				Log::GetInstance().ForceFlush();
+				lastAutoLoadLog = now;
+			}
+			autoLoadState = state;
+			autoLoadStatus = status;
+		}
 
-			// Simulate pressing Enter to load the game
-			CPlayerInput& input = gPlayerInput;
-
-			input.releasedBitfield |= PAD_BITMASK_START;
-
-			while (CScene::ptable.g_PauseManager_00451688->pSimpleMenu == nullptr) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		void AutoLoad()
+		{
+			auto* scene = CScene::_pinstance;
+			auto* scheduler = CLevelScheduler::gThis;
+			auto* pause = CScene::ptable.g_PauseManager_00451688;
+			if (!scene || !scheduler || !pause) {
+				SetAutoLoadStatus(AutoLoadState::Waiting, "Waiting for scene managers");
+				return;
 			}
 
-			CScene::ptable.g_PauseManager_00451688->pSimpleMenu->currentPage = PM_LoadMenu;
-			CScene::ptable.g_PauseManager_00451688->pSimpleMenu->selectedIndex = gDefaultSaveSlot;
+			// 0xe is the title level, 0xf the preintro, and 0x10 means no level.
+			if (scheduler->currentLevelID >= 0 && scheduler->currentLevelID < 0xe) {
+				SetAutoLoadStatus(AutoLoadState::Cancelled, "Cancelled: gameplay already started");
+				return;
+			}
+			if (scheduler->currentLevelID != 0xe || !(GameFlags & 0x40) ||
+				!pause->pSimpleMenu || !pause->pSplashScreen || !gSaveManagement.pBigAlloc_0x34) {
+				SetAutoLoadStatus(AutoLoadState::Waiting, "Waiting for initialized title screen");
+				return;
+			}
+			if (scheduler->nextLevelID != 0x10 || scene->IsFadeTermActive() || (GameFlags & GAME_REQUEST_TERM)) {
+				SetAutoLoadStatus(AutoLoadState::Cancelled, "Cancelled: another level transition has started");
+				return;
+			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			// The title screen is ready even before Start is pressed. No menu navigation is needed.
+			// Mark Loading before entering code that can render nested frames/message boxes.
+			SetAutoLoadStatus(AutoLoadState::Loading, "Checking save metadata");
+			const int deviceState = gSaveManagement.test_device_has_enough_room();
+			MY_LOG_CATEGORY("AutoLoad", LogLevel::Info,
+				"AutoLoad: slot={} level={} nextLevel={} flags={:#x} titleState={} device={} files={:#x}",
+				autoLoadSlot, scheduler->currentLevelID, scheduler->nextLevelID, GameFlags,
+				pause->field_0x34, deviceState, gSaveManagement.fileExistsFlags);
+			if (deviceState != ROOM_CHECK_RESULT_OK && deviceState != ROOM_CHECK_RESULT_NOT_ENOUGH_ROOM) {
+				SetAutoLoadStatus(AutoLoadState::Failed, "Failed: save device unavailable");
+				return;
+			}
+			// Despite its name, is_valid returns true for an empty/invalid slot.
+			if (gSaveManagement.is_valid(autoLoadSlot)) {
+				SetAutoLoadStatus(AutoLoadState::Failed, "Failed: save slot is empty or invalid");
+				return;
+			}
 
-			input.pressedBitfield = 0x01000010;
+			SetAutoLoadStatus(AutoLoadState::Loading, "Calling MemCardLoad0");
+			MemCardLoad0(autoLoadSlot);
+			const bool requested = scheduler->bShouldLoad && scheduler->nextLevelID != 0x10 && scene->IsFadeTermActive();
+			MY_LOG_CATEGORY("AutoLoad", LogLevel::Info,
+				"AutoLoad: load returned; slot={} shouldLoad={} nextLevel={} fadeTerm={} flags={:#x}",
+				autoLoadSlot, scheduler->bShouldLoad, scheduler->nextLevelID, scene->IsFadeTermActive(), GameFlags);
+			SetAutoLoadStatus(requested ? AutoLoadState::Done : AutoLoadState::Failed,
+				requested ? "Save loaded; level transition requested" : "Failed: load returned without a level transition");
+		}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-			input.pressedBitfield = 0;
-			gPlayerInput.bActive = 1;
-			});
+		void UpdateAutoLoad()
+		{
+			static bool initialized = false;
+			if (!initialized) {
+				initialized = true;
+				autoLoadSlot = gDefaultSaveSlot;
+				if (gAutoLoadOnStart) {
+					SetAutoLoadStatus(autoLoadSlot >= 0 && autoLoadSlot < 4 ? AutoLoadState::Waiting : AutoLoadState::Failed,
+						autoLoadSlot >= 0 && autoLoadSlot < 4 ? "Armed; waiting for title screen" : "Failed: default slot must be 0-3");
+				}
+				else {
+					SetAutoLoadStatus(AutoLoadState::Disabled, "Disabled at startup");
+				}
+			}
+			if (autoLoadState == AutoLoadState::Waiting && autoLoadTaskPending) {
+				SetAutoLoadStatus(AutoLoadState::Waiting, "Waiting for queued level-management check");
+			}
+			if (autoLoadState == AutoLoadState::Waiting && !autoLoadTaskPending) {
+				autoLoadTaskPending = true;
+				EnqueueLevelManageTask([]() {
+					AutoLoad();
+					// Keep pending through nested rendering. Retry only from a later debug update,
+					// never by appending to the queue while Level_Manage is iterating it.
+					autoLoadTaskPending = false;
+				});
+			}
+		}
 	}
 }
 
@@ -85,6 +157,7 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 		gDefaultSaveSlot.DrawImguiControl();
 
 		gAutoLoadOnStart.DrawImguiControl();
+		ImGui::TextWrapped("Auto-load: %s (slot %d)", autoLoadStatus, autoLoadSlot);
 
 		ImGui::TextWrapped("Press F5 to save, F7 to load");
 
@@ -104,11 +177,11 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 
 void Debug::SaveLoad::Update()
 {
-	static bool bAutoLoad = gAutoLoadOnStart;
-
-	if (bAutoLoad) {
-		AutoLoad();
-		bAutoLoad = false;
+	UpdateAutoLoad();
+	// Save loading can render nested debug frames. Do not append hotkey tasks to
+	// the scheduler's queue while the auto-load callback is executing.
+	if (autoLoadState == AutoLoadState::Loading) {
+		return;
 	}
 
 	// Listen for F5 and F7 key presses
