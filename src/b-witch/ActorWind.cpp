@@ -8,7 +8,9 @@
 #include "ActorFactory.h"
 #include "ActorAutonomous.h"
 #include "WayPoint.h"
+#include "ActorHero.h"
 #include "CameraViewManager.h"
+#include "kya.h"
 #include "CameraGame.h"
 #include "ed3D/ed3DG2D.h"
 #include "edDList/edDList.inl"
@@ -1763,7 +1765,7 @@ void CFxWind::SectorChange(int oldSectorId, int newSectorId)
 
 			iVar3 = 0;
 			pCurHandle = gpWIND_PartPool->aWindHandles;
-			pCurEmitter = pMyEmiInfo->field_0x0;
+			pCurEmitter = pMyEmiInfo->aFxLightEmitters;
 			if (pMyEmiInfo != (_EmiNfo*)0x0) {
 				do {
 					pCurEmitter->Enable(0);
@@ -1790,7 +1792,7 @@ void CFxWind::SectorChange(int oldSectorId, int newSectorId)
 
 			if (iVar3 != -1) {
 				iVar1 = 0;
-				pCurEmitter = pWindPartPool->aHolders[iVar3].field_0x0;
+				pCurEmitter = pWindPartPool->aHolders[iVar3].aFxLightEmitters;
 				do {
 					pCurEmitter->Enable(0);
 					iVar1 = iVar1 + 1;
@@ -2412,7 +2414,7 @@ CFxEmitterPool::CFxEmitterPool()
 		this->aHolders[iVar6].pFxWind = (CFxWind*)0x0;
 		iVar5 = 0;
 		do {
-			pLightEmitter = this->aHolders[iVar6].field_0x0 + iVar5;
+			pLightEmitter = this->aHolders[iVar6].aFxLightEmitters + iVar5;
 			if (iVar5 == 0) {
 				pLightEmitter->Create(2.0f, 0x10, 0xf12);
 			}
@@ -2446,15 +2448,15 @@ CFxEmitterPool::CFxEmitterPool()
 	do {
 		this->field_0xd20[iVar4] = 0.0f;
 		this->field_0xd2c[iVar4] = 3.141593f / (float)(iVar4 + 1);
-		this->aHolders[0].field_0x0[iVar4].InitRays(this->field_0xd5c[iVar4].nbRays);
+		this->aHolders[0].aFxLightEmitters[iVar4].InitRays(this->field_0xd5c[iVar4].nbRays);
 		iVar4 = iVar4 + 1;
 	} while (iVar4 < 3);
 
-	(this->heatFxParam).field_0x0 = 4;
-	(this->heatFxParam).field_0x4 = 4;
+	(this->heatFxParam).nbVertices = 4;
+	(this->heatFxParam).nextVertexOffset = 4;
 	(this->heatFxParam).field_0x8 = 1;
 	(this->heatFxParam).field_0xc = 0x80808080;
-	(this->heatFxParam).field_0x10 = 0;
+	(this->heatFxParam).field_0x10 = 0.0f;
 	(this->heatFxParam).field_0x14 = 0.55f;
 	(this->heatFxParam).field_0x18 = 0.0f;
 	(this->heatFxParam).field_0x1c = 1.25f;
@@ -2590,7 +2592,7 @@ LAB_0020e508:
 
 					iVar19 = 0;
 					RayMem* pRayMem = this->field_0xd5c;
-					this_00 = pCurEmiInfoInternal->field_0x0;
+					this_00 = pCurEmiInfoInternal->aFxLightEmitters;
 					if (pCurEmiInfoInternal != (_EmiNfo*)0x0) {
 						do {
 							this_00->Enable(0);
@@ -2703,7 +2705,7 @@ LAB_0020e508:
 		pCurEmiInfo = this->aHolders;
 		do {
 			iVar20 = 0;
-			pCVar16 = pCurEmiInfo->field_0x0;
+			pCVar16 = pCurEmiInfo->aFxLightEmitters;
 			pCVar17 = pCurEmiInfo->field_0x2a4;
 			do {
 				pCVar2 = pCurEmiInfo->pFxWind;
@@ -2835,7 +2837,7 @@ LAB_0020e508:
 						do {
 							pCVar2 = pCurEmiInfo->pFxWind;
 							if (pCVar2 != (CFxWind*)0x0) {
-								pCurEmiInfo->field_0x0[iVar7].ChangeAlphaFactor(pCVar2->field_0x2c4);
+								pCurEmiInfo->aFxLightEmitters[iVar7].ChangeAlphaFactor(pCVar2->field_0x2c4);
 							}
 							iVar7 = iVar7 + 1;
 						} while (iVar7 < 3);
@@ -2849,7 +2851,7 @@ LAB_0020e508:
 
 						iVar7 = 0;
 						do {
-							pCurEmiInfo->field_0x0[iVar7].ChangeAlphaFactor(pCurEmiInfo->field_0x2b0);
+							pCurEmiInfo->aFxLightEmitters[iVar7].ChangeAlphaFactor(pCurEmiInfo->field_0x2b0);
 							iVar7 = iVar7 + 1;
 						} while (iVar7 < 3);
 					}
@@ -2997,7 +2999,7 @@ void CFxEmitterPool::_PrepareCommonSubPart(_EmiNfo* pEmiInfo, _SP_PartNfo* pSubP
 	iVar5 = 0;
 	fVar3 = gF32Vertex4Zero.x;
 	fVar6 = (pEmiInfo->pFxWind->field_0x130).y;
-	pLightEmitter = pEmiInfo->field_0x0;
+	pLightEmitter = pEmiInfo->aFxLightEmitters;
 	p_Var4 = pSubPartInfo->field_0x4;
 
 	do {
@@ -3054,9 +3056,379 @@ void CFxEmitterPool::_PrepareCommonSubPart(_EmiNfo* pEmiInfo, _SP_PartNfo* pSubP
 	return;
 }
 
+struct EmitterDrawState
+{
+	int nbVertices;
+	int nextVertexOffset;
+	int field_0x8;
+	_rgba field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
+
+	float invScreenWidth;
+	float invScreenHeight;
+};
+
+void Create_DListMagnifier(HEAT_FX_VDEF* pDef, HEAT_FX_PARAM* pParam)
+{
+	int iVar1;
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+
+	for (iVar1 = 0; iVar1 < pParam->nbVertices; iVar1 = iVar1 + 1) {
+		fVar5 = static_cast<float>(iVar1) / static_cast<float>(pParam->nbVertices + -1) + -0.5f;
+
+		for (iVar2 = 0; iVar2 < pParam->nextVertexOffset; iVar2 = iVar2 + 1) {
+			fVar4 = static_cast<float>(iVar2) / static_cast<float>(pParam->nextVertexOffset + -1) + -0.5f;
+			fVar3 = sqrtf(fVar4 * fVar4 + fVar5 * fVar5);
+			if (fVar3 < pParam->field_0x10) {
+				fVar3 = pParam->field_0x14;
+			}
+			else {
+				fVar3 = edFIntervalLERP(fVar3, pParam->field_0x10, pParam->field_0x14, pParam->field_0x1c, pParam->field_0x18);
+			}
+
+			pDef->u = fVar5;
+			pDef->v = fVar4;
+
+			pDef->x = fVar5 * (fVar3 + 1.0f);
+			pDef->y = fVar4 * (fVar3 + 1.0f);
+			pDef->z = fabsf(fVar3 * fVar5 * fVar4);
+
+			pDef = pDef + 1;
+		}
+	}
+
+	return;
+}
+
+
+void Draw_DListMagnifier(float param_1, EmitterDrawState* param_2)
+{
+	undefined8 uVar1;
+	undefined8 uVar2;
+	undefined8 uVar3;
+	bool bVar4;
+	CCameraManager* pCameraManager;
+	int iVar5;
+	int iVar6;
+	float* pfVar7;
+	EmitterDrawState* pEVar8;
+	float fVar9;
+	edF32VECTOR4 eStack112;
+	edF32MATRIX4 local_60;
+	edF32VECTOR2 local_20;
+	float local_18;
+	float local_14;
+	float local_10;
+	float local_c;
+	float local_4;
+
+	pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+
+	local_60 = pCameraManager->transMatrix_0x390;
+
+	edF32Vector4ScaleHard(param_1, &eStack112, &param_2->field_0x30);
+	edF32Vector4AddHard(&eStack112, &eStack112, &param_2->field_0x20);
+	bVar4 = ed3DComputeSceneCoordinate(&local_20, &eStack112, CScene::_scene_handleA);
+	if (bVar4 != false) {
+		(param_2->field_0x50).x = local_20.x * 0.5f + 0.5f;
+		(param_2->field_0x50).y = local_20.y * 0.5f + -0.5f;
+		(param_2->field_0x50).z = 0.0f;
+		(param_2->field_0x50).w = 1.0f;
+
+		edF32Vector4SubHard(&param_2->field_0x50, &param_2->field_0x50, &param_2->field_0x40);
+
+		local_18 = fabsf((param_2->field_0x40).x);
+		local_14 = fabsf((param_2->field_0x40).y);
+
+		local_10 = fabsf((param_2->field_0x50).x);
+		local_c = fabsf((param_2->field_0x50).y);
+
+		local_60.rowT = param_2->field_0x20;
+		edDListLoadMatrix(&local_60);
+		fVar9 = param_1 * 0.75f;
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, param_2->nextVertexOffset * ((int)param_2->nbVertices + -1) * 2);
+		edDListColor4u8((param_2->field_0xc).r, (param_2->field_0xc).g, (param_2->field_0xc).b, (param_2->field_0xc).a);
+		HEAT_FX_VDEF* pVtx = reinterpret_cast<HEAT_FX_VDEF*>(param_2 + 1);
+		for (iVar6 = 0; iVar6 < param_2->nbVertices + -1; iVar6 = iVar6 + 1) {
+			for (iVar5 = 0; iVar5 < param_2->nextVertexOffset; iVar5 = iVar5 + 1) {
+				local_4 = 1.0f;
+				if (iVar5 == 0) {
+					local_4 = 6.887662e-41f;
+				}
+
+				edDListTexCoo2f(local_18 + pVtx->u * local_10, local_14 - pVtx->v * local_c);
+				edDListVertex4f(pVtx->x * fVar9, pVtx->y * fVar9, pVtx->z * 2.5f, local_4);
+				HEAT_FX_VDEF* pNextVtx = pVtx + param_2->nextVertexOffset;
+				edDListTexCoo2f(local_18 + pNextVtx->u * local_10, local_14 - pNextVtx->v * local_c);
+				edDListVertex4f(pNextVtx->x * fVar9, pNextVtx->y * fVar9, pNextVtx->z * 2.5f, local_4);
+				pVtx = pVtx + param_2->nbVertices + -1;
+ 			}
+		}
+
+		edDListEnd();
+	}
+
+	return;
+}
+
+HEAT_FX_VDEF g_desc_magn[16];
+
+edF32MATRIX4 edF32MATRIX4_004574f0 = {
+	-35632.54f,
+	351.73965f,
+	- 18.111656f,
+	- 8346.239f,
+	- 16716.883f,
+	79.14511f,
+	- 4.0753126f,
+	15746.738f,
+	19186.775f,
+	- 189.3985f,
+	9.752442f,
+	4539709.0f,
+	6087721.0f,
+	2085873.4f,
+	2846.0708f
+};
+
+
 void CFxEmitterPool::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	CFxWind* pCVar1;
+	undefined8 uVar2;
+	CCameraManager* pCameraManager;
+	bool bVar4;
+	edF32MATRIX4* peVar5;
+	EmitterDrawState* piVar6;
+	int iVar6;
+	edF32MATRIX4* peVar7;
+	int* piVar8;
+	int iVar9;
+	CFxLightEmitter* pFxLightEmitter;
+	int iVar11;
+	int iVar12;
+	RAY_DEF* v1;
+	int iVar13;
+	float inMax;
+	float fVar14;
+	float fVar15;
+	edF32MATRIX4 local_90;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR2 local_10;
+	e_ed_event_prim3d_type eStack4;
+
+	pCameraManager = CCameraManager::_gThis;
+	local_20 = (CCameraManager::_gThis->transformationMatrix).rowZ;
+
+	if (this->field_0x4 == 0) {
+		this->field_0x4 = 1;
+		if ((this->heatFxParam).field_0x8 != 0) {
+			Create_DListMagnifier(g_desc_magn, &this->heatFxParam);
+			(this->heatFxParam).field_0x8 = 0;
+		}
+
+		for (iVar11 = 0; (this->aHolders[iVar11].pFxWind == (CFxWind*)0x0 && (iVar11 < 4)); iVar11 = iVar11 + 1) {
+		}
+
+		if (iVar11 == 4) {
+			iVar11 = 0;
+		}
+
+		for (iVar9 = 0; iVar9 < 3; iVar9 = iVar9 + 1) {
+			if ((iVar9 == 2) || (iVar9 == 1)) {
+				this->aHolders[iVar11].aFxLightEmitters[iVar9].Begin_SharedDraw();
+			}
+			else {
+				if ((iVar9 == 0) && (bVar4 = GameDList_BeginCurrent(), bVar4 != false)) {
+					edDListUseMaterial(&CScene::_pinstance->frameBufferMaterial);
+					edDListLoadIdentity();
+				}
+			}
+
+			for (iVar12 = 0; iVar12 < 4; iVar12 = iVar12 + 1) {
+				pCVar1 = this->aWindHandles[iVar12].pFxWind;
+				if (pCVar1 != (CFxWind*)0x0) {
+					bVar4 = false;
+					if ((pCVar1->pOwner->field_0x19c < -1.0f) && (pCVar1->pOwner->field_0x1a0 < -1.0f)) {
+						bVar4 = true;
+					}
+
+					if (bVar4) {
+						edF32Vector4ScaleHard(-8.0f, &local_40, &pCVar1->windMatrix.rowY);
+						edF32Vector4AddHard(&local_40, &local_40, &CActorHero::_gThis->currentLocation);
+
+						local_50.x = (pCameraManager->transformationMatrix).ca;
+						local_50.z = (pCameraManager->transformationMatrix).cc;
+						local_50.w = (pCameraManager->transformationMatrix).cd;
+						local_50.y = 0.0f;
+
+						edF32Vector4NormalizeHard(&local_50, &local_50);
+						edF32Vector4ScaleHard(6.5f, &local_50, &local_50);
+						edF32Vector4AddHard(&local_40, &local_40, &local_50);
+						peVar5 = edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pCVar1->pOwner->field_0x21c, 0, &eStack4);
+						edF32Matrix4MulF32Vector4Hard(&local_30, peVar5, &local_40);
+
+						if ((0.5f < fabsf(local_30.x)) && (bVar4 = local_30.x < 0.0f, local_30.x = 0.5f, bVar4)) {
+							local_30.x = -0.5f;
+						}
+
+						if ((0.5f < fabsf(local_30.y)) && (bVar4 = local_30.y < 0.0f, local_30.y = 0.5f, bVar4)) {
+							local_30.y = -0.5f;
+						}
+
+						if ((0.5f < fabsf(local_30.z)) && (bVar4 = local_30.z < 0.0f, local_30.z = 0.5f, bVar4)) {
+							local_30.z = -0.5f;
+						}
+
+						edF32Matrix4MulF32Vector4Hard(&local_30, &pCVar1->field_0x10, &local_30);
+						edF32Matrix4MulF32Vector4Hard(&local_40, &pCVar1->field_0xe0, &local_30);
+						local_40.w = 1.0f;
+					}
+
+					pFxLightEmitter = this->aHolders[iVar12].aFxLightEmitters + iVar9;
+					if (((pCVar1->flags_0x54 & 0x40) == 0) && ((pFxLightEmitter->flags & 0x100) != 0)) {
+#ifdef PLATFORM_PS2
+						piVar6 = static_cast<EmitterDrawState*>(gSP_Manager.GetFreeBuffer(0x70));
+#else
+						// PS2 blatantly writes past the allocated space with additional vertex data. We can't do that so allocate more.
+						piVar6 = static_cast<EmitterDrawState*>(gSP_Manager.GetFreeBuffer(0x70 + sizeof(g_desc_magn)));
+#endif
+						piVar6->nbVertices = (this->heatFxParam).nbVertices;
+						piVar6->nextVertexOffset = (this->heatFxParam).nextVertexOffset;
+						piVar6->field_0x8 = (this->heatFxParam).field_0x8;
+
+						piVar6->field_0xc.rgba = (this->heatFxParam).field_0xc;
+
+						piVar6->field_0x10 = (this->heatFxParam).field_0x10;
+						piVar6->field_0x14 = (this->heatFxParam).field_0x14;
+						piVar6->field_0x18 = (this->heatFxParam).field_0x18;
+						piVar6->field_0x1c = (this->heatFxParam).field_0x1c;
+
+						piVar6->invScreenWidth = 1.0f / static_cast<float>(gVideoConfig.screenWidth);
+						piVar6->invScreenHeight = 1.0f / static_cast<float>(gVideoConfig.screenHeight);
+						for (iVar13 = 0; iVar13 < piVar6->nextVertexOffset * piVar6->nbVertices; iVar13 = iVar13 + 1) {
+							HEAT_FX_VDEF* pVtx = &g_desc_magn[iVar13];
+							*pVtx = g_desc_magn[iVar13];
+						}
+
+						bVar4 = false;
+						if ((pCVar1->pOwner->field_0x19c < -1.0f) && (pCVar1->pOwner->field_0x1a0 < -1.0f)) {
+							bVar4 = true;
+						}
+
+						if (bVar4) {
+							pFxLightEmitter->field_0x10 = local_40;
+						}
+
+						pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+						edF32Vector4AddHard(&piVar6->field_0x30, &pCameraManager->transMatrix_0x390.rowX, &(pCameraManager->transMatrix_0x390).rowY);
+						edF32Vector4NormalizeHard(&piVar6->field_0x30, &piVar6->field_0x30);
+						edF32Matrix4MulF32Matrix4Hard(&edF32MATRIX4_004574f0, &pCameraManager->worldToCamera_0x3d0, &pCameraManager->matrix_0x10);
+						for (iVar13 = 0; iVar13 < this->field_0xd5c[0].nbRays; iVar13 = iVar13 + 1) {
+							v1 = pFxLightEmitter->pRayDef + iVar13;
+							if ((v1->field_0x33 == pFxLightEmitter->countId) && ((v1->field_0x30 & 1) != 0)) {
+								edF32Matrix4MulF32Vector4Hard(&piVar6->field_0x20, &pCVar1->windMatrix, &v1->field_0x0);
+								bVar4 = ed3DComputeSceneCoordinate(&local_10, &piVar6->field_0x20, CScene::_scene_handleA);
+								if (bVar4 != false) {
+									(piVar6->field_0x40).x = local_10.x * 0.5f + 0.5f;
+									(piVar6->field_0x40).y = local_10.y * 0.5f + -0.5f;
+									(piVar6->field_0x40).z = 0.0f;
+									(piVar6->field_0x40).w = 1.0f;
+
+									if ((fabsf((piVar6->field_0x40).x) <= 1.0f) && (fVar14 = 1.0f, fabsf((piVar6->field_0x40).y) <= 1.0f)) {
+										inMax = pFxLightEmitter->field_0x60;
+										fVar15 = v1->field_0x28;
+										if (fVar15 < inMax * 0.25f) {
+											fVar14 = edFIntervalLERP(fVar15, 0.0f, inMax * 0.25f, 0.0f, 1.0f);
+											fVar14 = fVar14 * 1.0f;
+										}
+										else {
+											if (inMax * 0.75f < fVar15) {
+												fVar14 = edFIntervalLERP(fVar15, inMax * 0.75f, inMax, 1.0f, 0.0f);
+												fVar14 = fVar14 * 1.0f;
+											}
+										}
+
+										Draw_DListMagnifier(fVar14, piVar6);
+									}
+								}
+							}
+						}
+
+						gSP_Manager.ReleaseBuffer(piVar6);
+					}
+					else {
+						if (iVar9 == 1) {
+							bVar4 = false;
+							if ((pCVar1->pOwner->field_0x19c < -1.0f) && (pCVar1->pOwner->field_0x1a0 < -1.0f)) {
+								bVar4 = true;
+							}
+
+							if (bVar4) {
+								pFxLightEmitter->field_0x10 = local_40;
+							}
+
+							pFxLightEmitter->Draw(this->field_0xd5c[1].nbRays, &pCVar1->windMatrix, pCVar1->field_0x5c);
+						}
+						else {
+							bVar4 = false;
+							if ((pCVar1->pOwner->field_0x19c < -1.0f) && (pCVar1->pOwner->field_0x1a0 < -1.0f)) {
+								bVar4 = true;
+							}
+
+							if (bVar4) {
+								pFxLightEmitter->field_0x10 = local_40;
+							}
+
+							peVar5 = &pCVar1->windMatrix;
+							if ((pCVar1->flags_0x54 & 0x20) == 0) {
+								edF32Matrix4RotateYHard(this->field_0xd20[iVar9], &local_90, &gF32Matrix4Unit);
+								edF32Matrix4MulF32Matrix4Hard(&local_90, &local_90, &pCVar1->windMatrix);
+							}
+							else {
+								peVar7 = &local_90;
+								iVar13 = 8;
+								do {
+									iVar13 = iVar13 + -1;
+									fVar14 = peVar5->ab;
+									peVar7->aa = peVar5->aa;
+									peVar5 = (edF32MATRIX4*)&peVar5->ac;
+									peVar7->ab = fVar14;
+									peVar7 = (edF32MATRIX4*)&peVar7->ac;
+								} while (0 < iVar13);
+							}
+
+							pFxLightEmitter->Draw(this->field_0xd5c[2].nbRays, &local_90, 0);
+						}
+					}
+				}
+			}
+
+			if ((iVar9 == 2) || (iVar9 == 1)) {
+				this->aHolders[iVar11].aFxLightEmitters[iVar9].End_SharedDraw();
+			}
+			else {
+				if (iVar9 == 0) {
+					GameDList_EndCurrent();
+				}
+			}
+		}
+	}
+
 	return;
 }
 

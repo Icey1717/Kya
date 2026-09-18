@@ -2545,6 +2545,71 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 	return;
 }
 
+void edDListLightVertex(float param_1, float param_2, edF32VECTOR2* param_3, edF32VECTOR2* param_4, _rgba* param_5, edF32VECTOR4* param_6)
+{
+	undefined8 uVar1;
+	float* pfVar2;
+	edVertex* peVar3;
+	short* psVar4;
+	short* psVar5;
+	float fVar6;
+	float fVar7;
+	edS32VECTOR4 local_10;
+
+	psVar5 = gCurSTBuf;
+	psVar4 = gCurWHBuf;
+	pfVar2 = gCurST_SPR;
+	*gCurST_SPR = param_3->x;
+	pfVar2[1] = param_3->y;
+	pfVar2 = gCurST_SPR;
+	gCurST_SPR[2] = param_4->x;
+	pfVar2[3] = param_4->y;
+	edF32Vector4ScaleHard(4096.0f, reinterpret_cast<edF32VECTOR4*>(gCurST_SPR), reinterpret_cast<edF32VECTOR4*>(gCurST_SPR));
+	gCurFloatWH.x = param_1 * 0.5f;
+	gCurFloatWH.y = param_2 * 0.5f;
+	edF32Vector4FTOI12Hard(&local_10, &gCurFloatWH);
+	gCurWHBuf = psVar4 + 2;
+	gCurSTBuf = psVar5 + 8;
+	*psVar4 = local_10.x;
+	psVar4[1] = local_10.y;
+	psVar5[0] = (short)static_cast<int>(gCurST_SPR[0]);
+	psVar5[1] = (short)static_cast<int>(gCurST_SPR[1]);
+	psVar5[2] = (short)static_cast<int>(gCurST_SPR[0]);
+	psVar5[3] = (short)static_cast<int>(gCurST_SPR[3]);
+	psVar5[4] = (short)static_cast<int>(gCurST_SPR[2]);
+	psVar5[5] = (short)static_cast<int>(gCurST_SPR[1]);
+	psVar5[6] = (short)static_cast<int>(gCurST_SPR[2]);
+	psVar5[7] = (short)static_cast<int>(gCurST_SPR[3]);
+	*gCurColorBuf = *param_5;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *param_5;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *param_5;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *param_5;
+	peVar3 = gCurVertexBuf;
+	gCurColorBuf = gCurColorBuf + 1;
+
+	gCurVertexBuf->x = param_6->x;
+	peVar3->y = param_6->y;
+	peVar3->z = param_6->z;
+	peVar3->fSkip = param_6->w;
+	gNbDMAVertex = gNbDMAVertex + 4;
+	gCurVertexBuf = gCurVertexBuf + 4;
+	gNbAddedVertex = gNbAddedVertex + 4;
+	if (gNbDMAVertex == 0x48) {
+		gCurWHBuf[0] = 0;
+		gCurWHBuf[1] = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+		gCurWHBuf[0] = 0;
+		gCurWHBuf[1] = 0;
+		gNbDMAVertex = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+	}
+
+	return;
+}
+
 void edDListTexCoo2f(float s, float t)
 {
 	(gAddSTFUNC)(s, t);

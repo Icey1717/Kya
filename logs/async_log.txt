@@ -1,7 +1,0 @@
-insert id=0x00010000 slot=0 flags=0x82 priority=1 higher=0x00000000 lower=0x00000000 head=0x00010000 tail=0x00010000 count=1
-create id=0x00010000 slot=0 flags=0x82 priority=1 higher=0x00000000 lower=0x00000000 head=0x00010000 tail=0x00010000 count=1
-flush-pending id=0x00010000 flags=0x1b2 priority=1 voiceRange=[0,47] budget=48
-acoustic-start id=0x00010000 flags=0x432 next=0x00000000 volume=0.4 frequency=1
-fade-request id=0x00010000 volume=-1 frequency=-1 targetVolume=0.4 targetFrequency=-1 duration=0.02
-stop-request id=0x00010000
-finish-stop id=0x00010000 slot=0 flags=0x432 priority=1 higher=0x00000000 lower=0x00000000 head=0x00010000 tail=0x00010000 count=1

@@ -3424,8 +3424,7 @@ void CCinematic::UninstallResources()
 			}
 			else {
 				if (resourceType == edResCollection::COT_LipTrack) {
-					IMPLEMENTATION_GUARD_LOG(
-					CScene::ptable.g_LipTrackManager_00451694->Remove(pData);)
+					CScene::ptable.g_LipTrackManager_00451694->Remove((CKFrameTrackReader*)pData);
 				}
 				else {
 					if (resourceType == edResCollection::COT_MeshModel) {

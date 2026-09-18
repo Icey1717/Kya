@@ -5,12 +5,25 @@
 
 struct RAY_DEF
 {
-
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+	float field_0x28;
+	ushort field_0x30;
+	byte field_0x32;
+	byte field_0x33;
+	float field_0x34;
+	float field_0x38;
+	int field_0x3c;
 };
 
 class CFxLightEmitter
 {
 public:
+	static byte _gs8CountId;
+
+	CFxLightEmitter();
+	~CFxLightEmitter();
+
 	void Create(float param_1, uint param_3, uint param_4);
 	void InitRays(int nbRays);
 	void ResetRays();
@@ -30,6 +43,10 @@ public:
 	void GenerateNewOne(edF32VECTOR4* param_2);
 	void Enable(int bEnable);
 	void ReleaseRays(int nbRays);
+	bool Begin_SharedDraw();
+	bool End_SharedDraw();
+
+	void Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* param_4);
 
 	RAY_DEF* pRayDef;
 	float alphaFactor;
@@ -48,8 +65,11 @@ public:
 
 	float field_0x40;
 	float field_0x44;
+	byte countId;
 
 	float instanceIndex;
+
+	int field_0x54;
 
 	float field_0x60;
 

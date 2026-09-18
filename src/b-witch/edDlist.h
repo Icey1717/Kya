@@ -137,6 +137,8 @@ void edDListBegin(float x, float y, float z, uint mode, int count);
 
 void edDListColor4u8(byte r, byte g, byte b, byte a);
 
+void edDListLightVertex(float param_1, float param_2, edF32VECTOR2* param_3, edF32VECTOR2* param_4, _rgba* param_5, edF32VECTOR4* param_6);
+
 void edDListTexCoo2f(float param_1, float param_2);
 void edDListVertex4f(float x, float y, float param_3, float skip);
 void edDListWidthHeight2f(float width, float height);

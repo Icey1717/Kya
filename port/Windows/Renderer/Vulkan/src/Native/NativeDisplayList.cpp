@@ -17,6 +17,7 @@ namespace Renderer::Native::DisplayList
 	static CommandBufferVector gCommandBuffers;
 
 	static bool gRecordingCommandBuffer = false;
+	static bool gDrawLabelActive = false;
 
 	static SimpleTexture* gBoundTexture = nullptr;
 
@@ -490,8 +491,9 @@ namespace Renderer::Native::DisplayList
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}
 
-		if (gRecordingCommandBuffer) {
+		if (gDrawLabelActive) {
 			Renderer::Debug::EndLabel(GetCommandBuffer());
+			gDrawLabelActive = false;
 		}
 
 		gBoundPipeline = nullptr;
@@ -511,6 +513,10 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	}
 
 	bCalledBegin = true;
+
+	if (!gRecordingCommandBuffer) {
+		BeginCommandBufferRecording();
+	}
 
 	gViewport.width = viewportWidth;
 	gViewport.height = viewportHeight;
@@ -602,11 +608,11 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 {
 	using namespace Renderer::Native::DisplayList;
 
-	FinalizeDraw();
-
 	if (!gRecordingCommandBuffer) {
 		BeginCommandBufferRecording();
 	}
+
+	FinalizeDraw();
 	
 	gBoundTexture = pNewTexture;
 
@@ -616,6 +622,7 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	}
 
 	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture ? gBoundTexture->GetName().c_str() : "No Texture Binding");
+	gDrawLabelActive = true;
 
 	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
 	gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();
@@ -647,9 +654,8 @@ VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer(bool bEndC
 		BeginCommandBufferRecording();
 	}
 
-	if (gBoundTexture) {
-		FinalizeDraw();
-	}
+	// Pending geometry must be flushed even when no sprite is bound.
+	FinalizeDraw();
 
 	VkCommandBuffer& cmd = GetCommandBuffer();
 

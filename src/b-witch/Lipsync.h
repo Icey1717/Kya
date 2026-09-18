@@ -118,6 +118,7 @@ public:
 	virtual void Level_ManagePaused();
 
 	int InstallFromMem(char* pFileData);
+	void Remove(CKFrameTrackReader* pTrackReader);
 
 	int nbLipTracks;
 	CKFrameTrackReader* aLipTracks[0x80];

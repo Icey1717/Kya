@@ -86,6 +86,30 @@ int CLipTrackManager::InstallFromMem(char* pFileData)
 	return iVar3;
 }
 
+void CLipTrackManager::Remove(CKFrameTrackReader* pTrackReader)
+{
+	CKFrameTrackReader* pCVar1;
+	CKFrameTrackReader** pCVar2;
+	int iVar3;
+
+	iVar3 = 0;
+	pCVar2 = this->aLipTracks;
+	do {
+		if (pTrackReader == *pCVar2) {
+			delete this->aLipTracks[iVar3];
+			this->aLipTracks[iVar3] = (CKFrameTrackReader*)0x0;
+
+			this->nbLipTracks = this->nbLipTracks + -1;
+			return;
+		}
+
+		iVar3 = iVar3 + 1;
+		pCVar2 = pCVar2 + 1;
+	} while (iVar3 < 0x80);
+
+	return;
+}
+
 void CKFrameTrackReader::Create(ByteCode* pByteCode)
 {
 	int* piVar1;

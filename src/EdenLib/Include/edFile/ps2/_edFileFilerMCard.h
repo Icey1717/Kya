@@ -25,6 +25,7 @@ struct MC_OpenFile
 	int syncResult;
 #else
 	void* pStream;
+	class WinSaveFile* pSaveFile;
 #endif
 	MCSpaceStruct_0x10* pSpaceStruct;
 };
@@ -41,6 +42,9 @@ public:
 
 	virtual bool open(edFILEH* pFile, char* szPath);
 	virtual bool close(edFILEH* pFile);
+#ifdef PLATFORM_WIN
+	virtual bool cmdbreak();
+#endif
 	virtual uint read(edFILEH* pFile, void* pDst, uint requiredSize);
 	virtual bool write(edFILEH* pFile, void* pDst, uint size);
 	virtual bool seek(edFILEH* pFile);

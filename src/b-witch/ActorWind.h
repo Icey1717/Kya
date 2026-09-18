@@ -44,7 +44,7 @@ public:
 
 struct _EmiNfo
 {
-	CFxLightEmitter field_0x0[3];
+	CFxLightEmitter aFxLightEmitters[3];
 	CFxWind* pFxWind;
 	undefined4 field_0x2a4[3];
 	float field_0x2b0;
@@ -53,15 +53,25 @@ struct _EmiNfo
 
 struct HEAT_FX_PARAM
 {
-	int field_0x0;
-	int field_0x4;
+	int nbVertices;
+	int nextVertexOffset;
 	int field_0x8;
 	uint field_0xc;
-	int field_0x10;
+	float field_0x10;
 	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
 	int field_0x20;
+};
+
+struct HEAT_FX_VDEF
+{
+	float x;
+	float y;
+	float z;
+	int field_0xc;
+	float u;
+	float v;
 };
 
 struct RayMem
