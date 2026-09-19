@@ -29,6 +29,7 @@ namespace Debug {
 		static Debug::Setting<int> gRenderWidth = { "Render Resolution Width", Renderer::Native::kDefaultWidth };
 		static Debug::Setting<int> gRenderHeight = { "Render Resolution Height", Renderer::Native::kDefaultHeight };
 		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
+		static Debug::Setting<bool> gFullResolutionHeatCapture = { "Full Resolution Heat FX Capture", false };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -163,6 +164,16 @@ void Debug::Rendering::DrawContents()
 		const VkExtent2D renderSize = Renderer::Native::GetFrameBufferSize();
 		ImGui::Text("Render Buffer:  %u x %u", renderSize.width, renderSize.height);
 
+		if (gFullResolutionHeatCapture.DrawImguiControl()) {
+			gFullResolutionHeatCapture.UpdateValue();
+			Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
+		}
+		if (ImGui::IsItemHovered()) {
+			ImGui::SetTooltip("Capture heat distortion at the render-buffer resolution instead of 512 x 512. Applies next frame.");
+		}
+		const VkExtent2D captureSize = Renderer::Native::GetHeatCaptureSize();
+		ImGui::Text("Heat FX Capture: %u x %u", captureSize.width, captureSize.height);
+
 		ImVec2 imageSize = Debug::GetGameViewportImageSize();
 		ImGui::Text("Viewport Image: %.0f x %.0f", imageSize.x, imageSize.y);
 
@@ -264,6 +275,7 @@ void Debug::Rendering::Init()
 	ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
+	Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
 
 	if (gAutoApplyResolution) {
 		Renderer::Native::ResizeFrameBuffer(gRenderWidth.get(), gRenderHeight.get());

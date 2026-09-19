@@ -11,6 +11,8 @@ namespace Renderer::Native::FrameBufferCopy
 	namespace
 	{
 		constexpr uint32_t captureSize = 512;
+		bool fullResolution = false;
+		VkExtent2D captureExtent{ captureSize, captureSize };
 		std::array<OwnedImage, MAX_FRAMES_IN_FLIGHT> images;
 		std::array<bool, MAX_FRAMES_IN_FLIGHT> initialized{};
 		std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> descriptors{};
@@ -36,6 +38,7 @@ namespace Renderer::Native::FrameBufferCopy
 
 	void Setup()
 	{
+		captureExtent = fullResolution ? GetFrameBufferSize() : VkExtent2D{ captureSize, captureSize };
 		auto& state = GetNativeRendererState();
 		const auto& pipeline = state.renderPass.at(RenderPassKey{ EClearMode::None }).GetPipeline();
 		VkFormatProperties properties{};
@@ -70,8 +73,9 @@ namespace Renderer::Native::FrameBufferCopy
 		}
 
 		for (uint32_t i = 0; i < images.size(); ++i) {
-			images[i] = VulkanImage::CreateColor(captureSize, captureSize);
-			SetObjectName(reinterpret_cast<uint64_t>(images[i].image), VK_OBJECT_TYPE_IMAGE, "Native Framebuffer Capture %u", i);
+			images[i] = VulkanImage::CreateColor(captureExtent.width, captureExtent.height);
+			SetObjectName(reinterpret_cast<uint64_t>(images[i].image), VK_OBJECT_TYPE_IMAGE,
+				"Native Framebuffer Capture %u (%u x %u)", i, captureExtent.width, captureExtent.height);
 			SetObjectName(reinterpret_cast<uint64_t>(descriptors[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "Native Framebuffer Material %u", i);
 			const VkDescriptorImageInfo imageInfo{ sampler, images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 			const auto modelInfo = state.modelBuffer.GetDescBufferInfo(i);
@@ -100,12 +104,24 @@ namespace Renderer::Native::FrameBufferCopy
 		descriptors.fill(VK_NULL_HANDLE);
 	}
 
+	void ApplyPendingResize()
+	{
+		if (sampler == VK_NULL_HANDLE) return;
+		const VkExtent2D desired = fullResolution ? GetFrameBufferSize() : VkExtent2D{ captureSize, captureSize };
+		if (desired.width == captureExtent.width && desired.height == captureExtent.height) return;
+		// Called at the same frame boundary as native framebuffer resizing, before
+		// recording starts. Retire GPU references before replacing images/descriptors.
+		vkDeviceWaitIdle(GetDevice());
+		Cleanup();
+		Setup();
+	}
+
 	void Record(VkCommandBuffer cmd)
 	{
 		const auto frame = GetCurrentFrame();
 		const auto source = GetNativeRendererState().frameBuffer.colorImage;
 		const auto destination = images[frame].image;
-		Debug::BeginLabel(cmd, "Framebuffer Capture (GS base 0)");
+		Debug::BeginLabel(cmd, "Framebuffer Capture (GS base 0, %u x %u)", captureExtent.width, captureExtent.height);
 		// EndRenderPass leaves the native color attachment in READ_ONLY_OPTIMAL.
 		// ALL_COMMANDS also covers the frame-start clear if there were no preceding draws.
 		Barrier(cmd, source, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -121,7 +137,7 @@ namespace Renderer::Native::FrameBufferCopy
 		blit.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 		blit.dstSubresource = blit.srcSubresource;
 		blit.srcOffsets[1] = { gWidth, gHeight, 1 };
-		blit.dstOffsets[1] = { captureSize, captureSize, 1 };
+		blit.dstOffsets[1] = { static_cast<int32_t>(captureExtent.width), static_cast<int32_t>(captureExtent.height), 1 };
 		// Native approximation of the PS2 strip resample. Exact half-texel and copy-alpha
 		// behavior can be compared against the GS packet using this labelled capture.
 		vkCmdBlitImage(cmd, source, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -149,4 +165,15 @@ namespace Renderer::Native::FrameBufferCopy
 	{
 		return descriptors[frame];
 	}
+}
+
+void Renderer::Native::SetFullResolutionHeatCapture(bool enabled)
+{
+	// Main-thread request; resources change at the next frame boundary.
+	FrameBufferCopy::fullResolution = enabled;
+}
+
+VkExtent2D Renderer::Native::GetHeatCaptureSize()
+{
+	return FrameBufferCopy::captureExtent;
 }

@@ -89,6 +89,8 @@ namespace Renderer
 		void ResizeFrameBuffer(int width, int height);
 		void ApplyPendingResizeIfNeeded();
 		VkExtent2D GetFrameBufferSize();
+		void SetFullResolutionHeatCapture(bool enabled);
+		VkExtent2D GetHeatCaptureSize();
 		void Cleanup();
 		const glm::mat4& GetInitialViewMatrix();
 		const glm::mat4& GetInitialProjMatrix();

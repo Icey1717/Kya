@@ -6,6 +6,7 @@ namespace Renderer::Native::FrameBufferCopy
 {
 	void Setup();
 	void Cleanup();
+	void ApplyPendingResize();
 	void Record(VkCommandBuffer cmd);
 	const VkDescriptorSet& GetDescriptorSet(int frame);
 }

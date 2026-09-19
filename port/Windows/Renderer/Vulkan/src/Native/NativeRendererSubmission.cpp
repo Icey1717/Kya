@@ -2,6 +2,7 @@
 
 #include "NativeDebugShapes.h"
 #include "NativeDisplayList.h"
+#include "NativeFrameBufferCopy.h"
 #include "PostProcessing.h"
 #include "ScopedTimer.h"
 #include "VulkanRenderer.h"
@@ -153,6 +154,7 @@ void Renderer::Native::OnVideoFlip()
 void Renderer::Native::ApplyPendingResizeIfNeeded()
 {
 	ApplyPendingResizeInternal();
+	FrameBufferCopy::ApplyPendingResize();
 }
 
 
