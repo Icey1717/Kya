@@ -72,7 +72,10 @@ struct HEAT_FX_VDEF
 	int field_0xc;
 	float u;
 	float v;
+	undefined4 field_0x18[2]; // PS2 vertex stride is 0x20 bytes.
 };
+
+static_assert(sizeof(HEAT_FX_VDEF) == 0x20, "Invalid heat-effect vertex stride");
 
 struct RayMem
 {

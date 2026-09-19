@@ -3067,7 +3067,10 @@ struct EmitterDrawState
 
 	float invScreenWidth;
 	float invScreenHeight;
+	undefined4 field_0x68[2];
 };
+
+static_assert(sizeof(EmitterDrawState) == 0x70, "Heat-effect vertices must start at offset 0x70");
 
 HEAT_FX_VDEF g_desc_magn[16];
 
@@ -3170,7 +3173,7 @@ void Draw_DListMagnifier(float param_1, EmitterDrawState* param_2)
 				HEAT_FX_VDEF* pNextVtx = pVtx + param_2->nextVertexOffset;
 				edDListTexCoo2f(local_18 + pNextVtx->u * local_10, local_14 - pNextVtx->v * local_c);
 				edDListVertex4f(pNextVtx->x * fVar9, pNextVtx->y * fVar9, pNextVtx->z * 2.5f, local_4);
-				pVtx = pVtx + param_2->nbVertices + -1;
+				pVtx = pNextVtx - (param_2->nbVertices - 1);
  			}
 		}
 
@@ -3317,7 +3320,7 @@ void CFxEmitterPool::Draw()
 						piVar6->invScreenWidth = 1.0f / static_cast<float>(gVideoConfig.screenWidth);
 						piVar6->invScreenHeight = 1.0f / static_cast<float>(gVideoConfig.screenHeight);
 						for (iVar13 = 0; iVar13 < piVar6->nextVertexOffset * piVar6->nbVertices; iVar13 = iVar13 + 1) {
-							HEAT_FX_VDEF* pVtx = &g_desc_magn[iVar13];
+							HEAT_FX_VDEF* pVtx = reinterpret_cast<HEAT_FX_VDEF*>(piVar6 + 1) + iVar13;
 							*pVtx = g_desc_magn[iVar13];
 						}
 
