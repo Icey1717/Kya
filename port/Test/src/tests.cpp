@@ -22,6 +22,10 @@
 #include "../../../src/port/pointer_conv.h"
 #include "edSysTransferService.h"
 #include "edSoundStreamService.h"
+#include "port/NativeProjection.h"
+#include "CameraViewManager.h"
+#include "ed3D.h"
+#include "ed3D/ed3DSceneManager.h"
 
 // The function to be tested
 int Add(int a, int b) {
@@ -41,6 +45,52 @@ TEST(AddTest, PositiveNumbers) {
 }
 
 #ifdef PLATFORM_WIN
+TEST(NativeProjection, MatchesGameScreenCoordinatesAcrossFovAndAspect)
+{
+	for (float aspect : { 1.0f, 4.0f / 3.0f, 16.0f / 9.0f }) {
+		for (float halfHeightOverDistance : { 0.2f, 0.5f, 1.0f }) {
+			edFCamera camera{};
+			edF32Matrix4SetIdentityHard(&camera.worldToCamera);
+			camera.worldToCamera.da = -2.0f;
+			camera.worldToCamera.db = 1.0f;
+			camera.worldToCamera.dc = -3.0f;
+			edFCameraSetSizeRatioFov(0.05f, aspect, halfHeightOverDistance, &camera);
+			ed_3D_Scene scene{};
+			scene.pCamera = &camera;
+			auto projection = BuildNativeProjection(camera.finalHorizontalHalfFOV,
+				camera.baseHorizontalHalfFOV, camera.computedVerticalHalfFOV, -0.1f, -5000.0f);
+			for (edF32VECTOR4 position : { edF32VECTOR4{ 2.0f, -1.0f, -10.0f, 1.0f },
+				edF32VECTOR4{ -1.0f, 2.0f, -20.0f, 1.0f }, edF32VECTOR4{ 4.0f, -3.0f, -100.0f, 1.0f } }) {
+				edF32VECTOR2 screen{};
+				ASSERT_TRUE(ed3DComputeSceneCoordinate(&screen, &position, &scene));
+				edF32VECTOR4 view{}, clip{};
+				edF32Matrix4MulF32Vector4Hard(&view, &camera.worldToCamera, &position);
+				edF32Matrix4MulF32Vector4Hard(&clip, &projection, &view);
+				ASSERT_GT(clip.w, 0.0f);
+				EXPECT_NEAR(clip.x / clip.w, screen.x, 1.0e-6f);
+				EXPECT_NEAR(clip.y / clip.w, -screen.y, 1.0e-6f);
+			}
+		}
+	}
+}
+
+TEST(NativeProjection, PreservesReverseDepthAndFrustumEdges)
+{
+	auto projection = BuildNativeProjection(0.08f, 0.05f, 0.1f, -0.1f, -5000.0f);
+	edF32VECTOR4 nearPoint{ 0.0f, 0.0f, -0.1f, 1.0f }, farPoint{ 0.0f, 0.0f, -5000.0f, 1.0f };
+	edF32VECTOR4 nearClip{}, farClip{};
+	edF32Matrix4MulF32Vector4Hard(&nearClip, &projection, &nearPoint);
+	edF32Matrix4MulF32Vector4Hard(&farClip, &projection, &farPoint);
+	EXPECT_NEAR(nearClip.z / nearClip.w, 1.0f, 1.0e-6f);
+	EXPECT_NEAR(farClip.z / farClip.w, 0.0f, 1.0e-6f);
+	edF32VECTOR4 corner{ 8.0f, 5.0f, -10.0f, 1.0f }, clip{};
+	edF32Matrix4MulF32Vector4Hard(&clip, &projection, &corner);
+	EXPECT_NEAR(clip.x / clip.w, 1.0f, 1.0e-6f);
+	EXPECT_NEAR(clip.y / clip.w, -1.0f, 1.0e-6f);
+	EXPECT_GT(clip.z / clip.w, 0.0f);
+	EXPECT_LT(clip.z / clip.w, 1.0f);
+}
+
 TEST(NativeShadowSettings, NormalizesExtentAndSampleBudget)
 {
 	Renderer::Native::ShadowPassSettings settings{};

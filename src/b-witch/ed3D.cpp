@@ -44,6 +44,7 @@
 
 #ifdef PLATFORM_WIN
 #include "Texture.h"
+#include "port/NativeProjection.h"
 #include "Mesh.h"
 #include "Sprite.h"
 #endif
@@ -1969,45 +1970,6 @@ float fSecInc = 5.0f;
 edF32MATRIX4 gNativeProjectionMatrix = { 0 };
 edF32MATRIX4 gShadowNativeProjectionMatrix = { 0 };
 
-static edF32MATRIX4 CalculateOpenGlPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
-{
-	const float e = 1.0f / std::tan(fovy * 0.5f);
-	return { e / aspect, 0.0f,  0.0f,                   0.0f,
-			0.0f,       e,     0.0f,                    0.0f,
-			0.0f,       0.0f, (f + n) / (n - f),       -1.0f,
-			0.0f,       0.0f, (2.0f * f * n) / (n - f), 0.0f };
-}
-
-static edF32MATRIX4 CalculateVulkanPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
-{
-	constexpr edF32MATRIX4 vulkanClip{	1.0f,  0.0f, 0.0f, 0.0f,
-										0.0f, -1.0f, 0.0f, 0.0f,
-										0.0f,  0.0f, 0.5f, 0.0f,
-										0.0f,  0.0f, 0.5f, 1.0f };
-	return vulkanClip * CalculateOpenGlPerspectiveMatrix(fovy, aspect, n, f);
-}
-
-static edF32MATRIX4 ReverseZ(const edF32MATRIX4& perspectiveProjection)
-{
-	constexpr edF32MATRIX4 reverseZ{ 1.0f, 0.0f,  0.0f, 0.0f,
-							  0.0f, 1.0f,  0.0f, 0.0f,
-							  0.0f, 0.0f, -1.0f, 0.0f,
-							  0.0f, 0.0f,  1.0f, 1.0f };
-	return reverseZ * perspectiveProjection;
-}
-
-static void ComputeReverseProjectionMatrix(const float nearClip, const float farClip, const float fov, const float aspect)
-{
-	gNativeProjectionMatrix = ReverseZ(CalculateVulkanPerspectiveMatrix(fov, aspect, -nearClip, -farClip));
-}
-
-static void ComputeReverseProjectionMatrix(const float fov, const float nearClip, const float farClip)
-{
-	//const float fov = 48.0f * (3.1415f / 180.0f); // Convert to radians
-	const float aspect = 4.0f / 3.0f;
-
-	ComputeReverseProjectionMatrix(nearClip, farClip, fov, aspect);
-}
 #endif
 
 void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float finalHorizontalHalfFOV, float baseHorizontalHalfFOV, float computedVerticalHalfFOV, float targetWidth, float targetHeight,
@@ -2024,11 +1986,10 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32MATRIX4 projectionMatrix;
 
 #ifdef PLATFORM_WIN
-	const float fovy = 0.027378f / computedVerticalHalfFOV + 0.2654f;
-
-	MY_LOG_CATEGORY("Viewport", LogLevel::Verbose, "ed3DViewportComputeViewMatrices fovy: {}", fovy);
-
-	ComputeReverseProjectionMatrix(nearClip, farClip, fovy, 1.3333f);
+	// Match ed3DComputeSceneCoordinate: these are plane extents and distance,
+	// so tan(verticalFov / 2) = baseHorizontalHalfFOV / computedVerticalHalfFOV.
+	gNativeProjectionMatrix = BuildNativeProjection(finalHorizontalHalfFOV, baseHorizontalHalfFOV,
+		computedVerticalHalfFOV, nearClip, farClip);
 #endif
 
 	MY_LOG_CATEGORY("Viewport", LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, finalHorizontalHalfFOV: {}, baseHorizontalHalfFOV: {}, computedVerticalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n",
