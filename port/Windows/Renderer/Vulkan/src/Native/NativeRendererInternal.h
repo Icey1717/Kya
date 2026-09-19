@@ -156,6 +156,9 @@ namespace Renderer
 			uint32_t lightingDataIndex = 0;
 			uint32_t globalAlpha = 0x80;
 			uint32_t shadowProjectionIndex = 0;
+			uint32_t frameBufferMode = 0; // 0: ordinary texture, 1: MODULATE, 2: DECAL
+			float frameBufferScaleX = 1.0f;
+			float frameBufferScaleY = 1.0f;
 		};
 
 		struct FadeConstantBuffer
@@ -236,6 +239,7 @@ namespace Renderer
 
 			bool bIsAfailZOnly = false;
 			bool bIsZMask = false;
+			std::optional<FrameBufferMaterialSettings> frameBufferMaterial;
 
 			const VkDescriptorSet* pDescriptorSets = nullptr;
 		};
@@ -315,6 +319,7 @@ namespace Renderer
 
 			PerDrawData cachedPerDrawData;
 			uint32_t shadowAlpha = 0x30;
+			FrameBufferMaterialSettings frameBufferMaterial;
 			int currentAnimMatrixIndex = 0;
 
 			NativePreviewRenderer preview;
@@ -342,6 +347,7 @@ namespace Renderer
 		void AddRenderThreadShadowBlur(RenderThread* renderThread);
 		void AddRenderThreadShadowReceiver(RenderThread* renderThread, const ShadowReceiverViewport& viewport);
 		void AddRenderThreadShadowEnd(RenderThread* renderThread);
+		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending);
 
 		RenderThread* CreateRenderThread();
 		void DestroyRenderThread(RenderThread*& renderThread);

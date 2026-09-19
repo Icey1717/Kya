@@ -26,7 +26,10 @@ layout(push_constant) uniform PerDrawData
 	uint lightingDataIndex;
 	uint globalAlpha;
 	uint shadowProjectionIndex;
-	uint _pad[5];
+	uint frameBufferMode;
+	float frameBufferScaleX;
+	float frameBufferScaleY;
+	uint _pad[2];
 } perDrawData;
 
 #define ATST_NEVER 0
@@ -112,10 +115,18 @@ void afail()
 void main() 
 {
 	// Sample texture color using fragTexCoord
-	vec4 textureColor = texture(textureSampler, fragTexCoord.xy);
+	vec2 uv = fragTexCoord.xy;
+	if (perDrawData.frameBufferMode != 0) {
+		uv *= vec2(perDrawData.frameBufferScaleX, perDrawData.frameBufferScaleY);
+	}
+	vec4 textureColor = texture(textureSampler, uv);
 
 	// Combine texture color with fragment color
 	outColor = fragColor * textureColor / (128.0 / 255.0);
+	if (perDrawData.frameBufferMode == 2) {
+		// GS DECAL with TCC enabled takes both RGB and alpha from the texture.
+		outColor = textureColor;
+	}
 
 	bool atst_pass = atst(outColor);
 

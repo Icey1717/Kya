@@ -334,6 +334,16 @@ namespace Renderer
 		void EndShadowPass();
 		void PushShadowProjectionMatrix(const float* matrix);
 		void BindShadowReceiver();
+		struct FrameBufferMaterialSettings
+		{
+			uint64_t alpha = 0;
+			uint32_t textureFunction = 0;
+			uint32_t textureWidth = 512;
+			uint32_t textureHeight = 512;
+		};
+		void CaptureFrameBuffer();
+		void SetFrameBufferMaterial(const FrameBufferMaterialSettings& settings);
+		void BindFrameBufferTexture();
 		bool HasShadowTarget();
 		VkSampler GetShadowSampler();
 		VkImageView GetShadowMaskImageView();

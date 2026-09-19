@@ -4,6 +4,7 @@
 #include "NativeDebugShapes.h"
 #include "NativeDisplayList.h"
 #include "NativeShadow.h"
+#include "NativeFrameBufferCopy.h"
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
@@ -202,6 +203,7 @@ namespace Renderer
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+				VK_DYNAMIC_STATE_DEPTH_COMPARE_OP,
 				VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
 				VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
 			};
@@ -341,6 +343,7 @@ namespace Renderer
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+				VK_DYNAMIC_STATE_DEPTH_COMPARE_OP,
 				VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
 				VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
 			};
@@ -443,6 +446,7 @@ namespace Renderer
 			GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::mat4(1.0f));
 
 			Shadow::Setup();
+			FrameBufferCopy::Setup();
 
 			GetRenderDelegate() += Render;
 
@@ -462,6 +466,7 @@ namespace Renderer
 		{
 			DestroyRenderThread(GetNativeRendererState().renderThread);
 			Shadow::Cleanup();
+			FrameBufferCopy::Cleanup();
 
 			GetNativeRendererState().modelBuffer.DestroyResources();
 			GetNativeRendererState().animationBuffer.DestroyResources();

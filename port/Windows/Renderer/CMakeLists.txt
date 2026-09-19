@@ -50,6 +50,8 @@ set (SOURCES
 	"Vulkan/src/Native/NativeRendererSubmission.cpp"
 	"Vulkan/src/Native/NativeShadow.h"
 	"Vulkan/src/Native/NativeShadow.cpp"
+	"Vulkan/src/Native/NativeFrameBufferCopy.h"
+	"Vulkan/src/Native/NativeFrameBufferCopy.cpp"
 	"Vulkan/src/Native/NativePreviewRenderer.cpp"
 	"Vulkan/src/Native/Blending.h"
 	"Vulkan/src/Native/Blending.cpp"

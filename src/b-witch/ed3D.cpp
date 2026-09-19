@@ -6336,6 +6336,11 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 		pMaterial->flags = pMaterial->flags & 0xfffffffd;
 	}
 	peVar2 = g_GifRefPktCur;
+#ifdef PLATFORM_WIN
+	if (gFushListCounter == 0xe) {
+		Renderer::Native::BindFrameBufferTexture();
+	}
+#endif
 	if (gFushListCounter != 0xe) {
 		if ((gbFirstTex == 0) && (pMaterial->pBitmap != (ed_g2d_bitmap*)0x0)) {
 			if (pMaterial->pMaterial->nbLayers < 2) {
@@ -6920,8 +6925,10 @@ void ed3DFlushList(void)
 					ed3DFlushMaterial((ed_dma_material*)pPrevList->pData);
 					pLastFlushed = pPrevList;
 				}
+#ifndef PLATFORM_WIN
 				IMPLEMENTATION_GUARD(
 				g_VifRefPktCur = (edpkt_data*)FUN_002b4d50();)
+#endif
 			}
 
 			if (gPrim_List_FlushTex[gCurRenderList].pPrev == gPrim_List_FlushTex + gCurRenderList) {
@@ -7116,6 +7123,15 @@ edpkt_data* ed3DFlushFrameBufferMaterial(edpkt_data* pPkt)
 		pPkt[6].cmdA = 5;
 		pPkt[6].cmdB = SCE_GS_CLAMP_1;
 
+#ifdef PLATFORM_WIN
+		Renderer::Native::FrameBufferMaterialSettings settings{};
+		settings.alpha = pPkt[4].cmdA;
+		settings.textureFunction = BYTE_004489e4;
+		settings.textureWidth = 1u << UINT_004489e8;
+		settings.textureHeight = 1u << UINT_004489ec;
+		Renderer::Native::SetFrameBufferMaterial(settings);
+#endif
+
 		pPkt[7].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 		pPkt[7].asU32[2] = SCE_VIF1_SET_FLUSH(0);
 		pPkt[7].asU32[3] = SCE_VIF1_SET_FLUSH(0);
@@ -7170,6 +7186,11 @@ void ed3DSetSpriteCoords(int param_1, int param_2, int param_3, int param_4, int
 
 edpkt_data* ed3DFlushFrameBufferCopy(edpkt_data* pPkt)
 {
+#ifdef PLATFORM_WIN
+	if (gCurViewportUsed != (ed_viewport*)0x0) {
+		Renderer::Native::CaptureFrameBuffer();
+	}
+#endif
 	ushort uVar1;
 	edSurface* pSurface;
 	int iVar2;

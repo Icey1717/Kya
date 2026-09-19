@@ -27,7 +27,10 @@ layout( push_constant ) uniform PerDrawData
 	uint lightingDataIndex;
 	uint globalAlpha;
 	uint shadowProjectionIndex;
-	uint _pad[5];
+	uint frameBufferMode;
+	float frameBufferScaleX;
+	float frameBufferScaleY;
+	uint _pad[2];
 } perDrawData;
 
 struct LightingDataBlock {

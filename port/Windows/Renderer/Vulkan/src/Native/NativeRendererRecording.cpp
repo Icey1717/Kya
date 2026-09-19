@@ -3,6 +3,7 @@
 #include "NativeDebug.h"
 #include "NativeDebugShapes.h"
 #include "NativeShadow.h"
+#include "NativeFrameBufferCopy.h"
 #include "Objects/VulkanImage.h"
 #include "profiling.h"
 
@@ -62,7 +63,7 @@ namespace Renderer
 			}
 
 			for (auto& instance : draw.instances) {
-				instance.perDrawData.alphaEnable = textureRegisters.test.ATE;
+				instance.perDrawData.alphaEnable = draw.frameBufferMaterial ? VK_FALSE : textureRegisters.test.ATE;
 				instance.perDrawData.alphaAtst   = textureRegisters.test.ATST;
 				instance.perDrawData.alphaAref   = textureRegisters.test.AREF;
 				instance.perDrawData.alphaAfail  = textureRegisters.test.AFAIL;
@@ -148,6 +149,7 @@ namespace Renderer
 
 			const auto& pipeline = stage.GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+			vkCmdSetDepthCompareOp(cmd, VK_COMPARE_OP_GREATER);
 
 			GetNativeRendererState().activeRenderPassKey = key;
 			GetNativeRendererState().hasActiveRenderPass = true;
@@ -176,6 +178,7 @@ namespace Renderer
 		{
 			VkBool32 colorWriteEnable = VK_TRUE;
 			VkBool32 depthWriteEnable = drawCommand.pTexture->GetTextureRegisters().test.AFAIL != AFAIL_FB_ONLY ? VK_TRUE : VK_FALSE;
+			if (drawCommand.frameBufferMaterial) depthWriteEnable = VK_TRUE;
 
 			if (drawCommand.bIsAfailZOnly) {
 				depthWriteEnable = VK_TRUE;
@@ -188,6 +191,7 @@ namespace Renderer
 
 			// Depth.
 			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
+			vkCmdSetDepthCompareOp(cmd, drawCommand.frameBufferMaterial ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_GREATER);
 
 			// Color.
 			GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
@@ -196,7 +200,7 @@ namespace Renderer
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
 			};
 
-			if (drawCommand.pTexture->GetTextureRegisters().test.AFAIL == AFAIL_RGB_ONLY) {
+			if (!drawCommand.frameBufferMaterial && drawCommand.pTexture->GetTextureRegisters().test.AFAIL == AFAIL_RGB_ONLY) {
 				// Enable only RGB channels (disable alpha write)
 				colorWriteMasks[0] = {
 					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
@@ -245,6 +249,7 @@ namespace Renderer
 					const bool bShadowMask = currentRenderPassKey.kind == ERenderPassKind::ShadowMask;
 
 					Debug::UpdateLabel(pTexture, cmd);
+					if (drawCommand.frameBufferMaterial) Renderer::Debug::BeginLabel(cmd, "Framebuffer Material TFX %u", drawCommand.frameBufferMaterial->textureFunction);
 
 					PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
@@ -272,6 +277,7 @@ namespace Renderer
 						if ((instance.perDrawData.renderFlags & 0x20) != 0) {
 							effectiveAlpha = instance.gsAlpha;
 						}
+						if (drawCommand.frameBufferMaterial) effectiveAlpha.CMD = drawCommand.frameBufferMaterial->alpha;
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
 						if (bShadowReceiver || bShadowMask) {
@@ -300,6 +306,7 @@ namespace Renderer
 
 						const VkDescriptorSet* descriptorSet = drawCommand.pDescriptorSets;
 						if (bShadowReceiver) descriptorSet = &Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
+						if (drawCommand.frameBufferMaterial) descriptorSet = &FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);
 
 						vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
@@ -308,6 +315,7 @@ namespace Renderer
 
 						instanceIndex++;
 					}
+					if (drawCommand.frameBufferMaterial) Renderer::Debug::EndLabel(cmd);
 				}
 			}
 
@@ -449,10 +457,12 @@ namespace Renderer
 
 			struct Command
 			{
-				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd } type = Type::Draw;
+				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy } type = Type::Draw;
 				Draw draw;
 				ShadowPassSettings settings;
 				ShadowReceiverViewport viewport;
+				RenderPassKey capturePassKey;
+				bool clearPending = false;
 			};
 
 			void ProcessCommands()
@@ -462,7 +472,8 @@ namespace Renderer
 					switch (command.type) {
 					case Command::Type::Draw:
 						UpdateInstanceDataForDraw(command.draw);
-						if (GetNativeRendererState().preview.IsSetup() && command.draw.renderPassKey.kind == ERenderPassKind::Main) {
+						// The second-camera preview has no matching scene-color capture.
+						if (GetNativeRendererState().preview.IsSetup() && command.draw.renderPassKey.kind == ERenderPassKind::Main && !command.draw.frameBufferMaterial) {
 							GetNativeRendererState().preview.SaveDraw(command.draw);
 						}
 						RecordDrawCommands(command.draw);
@@ -483,6 +494,11 @@ namespace Renderer
 					case Command::Type::ShadowEnd:
 						drawCommandRecorder.EndActivePass();
 						Shadow::End();
+						break;
+					case Command::Type::FrameBufferCopy:
+						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
+						drawCommandRecorder.EndActivePass();
+						FrameBufferCopy::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()]);
 						break;
 					}
 				}
@@ -543,6 +559,15 @@ namespace Renderer
 			{
 				Command command;
 				command.type = Command::Type::ShadowBlur;
+				AddCommand(command);
+			}
+
+			void AddFrameBufferCopy(const RenderPassKey& key, bool clearPending)
+			{
+				Command command;
+				command.type = Command::Type::FrameBufferCopy;
+				command.capturePassKey = key;
+				command.clearPending = clearPending;
 				AddCommand(command);
 			}
 
@@ -645,6 +670,11 @@ namespace Renderer
 		void AddRenderThreadDraw(RenderThread* renderThread, const Draw& draw)
 		{
 			renderThread->AddDraw(draw);
+		}
+
+		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending)
+		{
+			renderThread->AddFrameBufferCopy(key, clearPending);
 		}
 
 		void AddRenderThreadShadowBegin(RenderThread* renderThread, const ShadowPassSettings& settings)

@@ -362,6 +362,36 @@ void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMod
 	}
 }
 
+void Renderer::Native::CaptureFrameBuffer()
+{
+	auto& state = GetNativeRendererState();
+	if (!state.renderThread) return;
+	assert(!state.currentDraw); // Materials must submit their geometry before this boundary.
+	AddRenderThreadFrameBufferCopy(state.renderThread, state.cachedRenderPassKey, state.renderPassDirty);
+	state.cachedRenderPassKey = RenderPassKey{ EClearMode::None, ERenderPassKind::Main };
+	state.renderPassDirty = true;
+}
+
+void Renderer::Native::SetFrameBufferMaterial(const FrameBufferMaterialSettings& settings)
+{
+	GetNativeRendererState().frameBufferMaterial = settings;
+}
+
+void Renderer::Native::BindFrameBufferTexture()
+{
+	auto& state = GetNativeRendererState();
+	if (!state.currentDraw) return;
+	auto& draw = *state.currentDraw;
+	draw.frameBufferMaterial = state.frameBufferMaterial;
+	for (auto& instance : draw.instances) {
+		instance.perDrawData.frameBufferMode = state.frameBufferMaterial.textureFunction == 1 ? 2 : 1;
+		instance.perDrawData.frameBufferScaleX = state.frameBufferMaterial.textureWidth / 512.0f;
+		instance.perDrawData.frameBufferScaleY = state.frameBufferMaterial.textureHeight / 512.0f;
+	}
+	// Reuse normal submission and buffer bindings; recording substitutes the capture descriptor.
+	Renderer::Native::BindTexture(state.whiteTexture);
+}
+
 void Renderer::Native::BeginShadowMask(const ShadowPassSettings& settings)
 {
 	if (GetNativeRendererState().currentDraw) {
