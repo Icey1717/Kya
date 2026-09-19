@@ -1,6 +1,11 @@
 ﻿#include "DebugMenu.h"
 #include "DebugSaveLoad.h"
 #include "DebugSaveLoadPaths.h"
+#include "DebugSaveCheckpoint.h"
+#include "DebugWorldNames.h"
+#include "ActorManager.h"
+#include "ActorCheckpointManager.h"
+#include "WayPoint.h"
 #include "imgui.h"
 
 #include "SaveManagement.h"
@@ -79,6 +84,8 @@ namespace Debug::SaveLoad
 			std::vector<char> data;
 			std::string error;
 			SYSTEMTIME modified = {};
+			SavedCheckpoint checkpoint;
+			bool checkpointReadable = false;
 		};
 		std::vector<SaveBackup> backups;
 
@@ -115,6 +122,57 @@ namespace Debug::SaveLoad
 				backup.desc.levelId >= 0xe || !std::isfinite(backup.desc.gameTime) || backup.desc.gameTime < 0) {
 				backup.error = "Invalid save header, data, or checksum";
 			}
+			else {
+				backup.checkpointReadable = ReadSavedCheckpoint(
+					std::string_view(backup.data.data() + prefixSize, header.mainBlockSize), backup.checkpoint);
+			}
+		}
+
+		void DrawCheckpoint(const SaveBackup& backup)
+		{
+			const auto& saved = backup.checkpoint;
+			if (!backup.checkpointReadable) {
+				ImGui::TextUnformatted("Checkpoint: save layout not recognized");
+				return;
+			}
+			const auto sectorName = WorldNames::GetSectorName(saved.level, saved.sector);
+			ImGui::Text("Checkpoint sector: %d%s%s", saved.sector, sectorName.empty() ? "" : " - ", sectorName.c_str());
+			if (!saved.hasPosition) {
+				ImGui::TextUnformatted("Checkpoint: no saved hero position");
+				return;
+			}
+			ImGui::Text("Checkpoint position: %.3f, %.3f, %.3f", saved.position[0], saved.position[1], saved.position[2]);
+			auto* scheduler = CLevelScheduler::gThis;
+			auto* actors = CScene::ptable.g_ActorManager_004516a4;
+			if (!scheduler || scheduler->currentLevelID != saved.level || !actors ||
+				!CScene::_pinstance || CScene::_pinstance->IsFadeTermActive() || (GameFlags & GAME_REQUEST_TERM)) {
+				ImGui::TextUnformatted("Checkpoint name: load this level to resolve");
+				return;
+			}
+			int matches = 0;
+			std::string label;
+			for (int actorIndex = 0; actorIndex < actors->nbActors; ++actorIndex) {
+				auto* actor = actors->aActors[actorIndex];
+				if (!actor || actor->typeID != CHECKPOINT_MANAGER) continue;
+				auto* manager = static_cast<CActorCheckpointManager*>(actor);
+				for (int index = 0; index < manager->checkpointCount; ++index) {
+					auto& checkpoint = manager->aCheckpoints[index];
+					const auto* waypoint = checkpoint.pWayPointA.Get();
+					if (!waypoint || (checkpoint.sectorId > 0 && checkpoint.sectorId != saved.sector)) continue;
+					const auto& p = waypoint->location;
+					const auto& r = waypoint->rotation;
+					if (std::fabs(p.x - saved.position[0]) > 0.01f || std::fabs(p.y - saved.position[1]) > 0.01f ||
+						std::fabs(p.z - saved.position[2]) > 0.01f || std::fabs(r.x - saved.rotation[0]) > 0.001f ||
+						std::fabs(r.y - saved.rotation[1]) > 0.001f || std::fabs(r.z - saved.rotation[2]) > 0.001f) continue;
+					++matches;
+					const auto name = WorldNames::GetCheckpointName(saved.level, manager->name, index);
+					label = std::string(manager->name) + " / " + std::to_string(index);
+					if (!name.empty()) label = name + " (" + label + ")";
+				}
+			}
+			if (matches == 1) ImGui::TextWrapped("Checkpoint: %s (waypoint match)", label.c_str());
+			else if (matches > 1) ImGui::Text("Checkpoint name: ambiguous (%d matching waypoints)", matches);
+			else ImGui::TextUnformatted("Checkpoint name: no matching waypoint");
 		}
 
 		void RefreshBackups()
@@ -223,7 +281,10 @@ namespace Debug::SaveLoad
 						ImGui::Text("Modified: %04d-%02d-%02d %02d:%02d:%02d (local)",
 							time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
 					}
-					if (backup.error.empty()) DrawSaveInfo(backup.desc);
+					if (backup.error.empty()) {
+						DrawSaveInfo(backup.desc);
+						DrawCheckpoint(backup);
+					}
 					else ImGui::TextWrapped("%s", backup.error.c_str());
 					ImGui::BeginDisabled(!backup.error.empty() || !CanRestore());
 					if (ImGui::Button("Restore")) QueueRestore(backup, false);

@@ -1802,14 +1802,12 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 		}
 	}
 
-	// Forward elimination
+	// Compute every row scale before pivot selection reads them.
 	for (iVar5 = 0; iVar5 < 4; iVar5++) {
-		// Find max in column for pivot (normalize row)
 		local_a0[iVar5] = fabsf(local_90[iVar5][0]);
 		for (iVar4 = 1; iVar4 < 4; iVar4++) {
-			float absVal = fabsf(local_90[iVar5][iVar4]);
-			if (absVal > local_a0[iVar5]) {
-				local_a0[iVar5] = absVal;
+			if (local_a0[iVar5] < fabsf(local_90[iVar5][iVar4])) {
+				local_a0[iVar5] = fabsf(local_90[iVar5][iVar4]);
 			}
 		}
 
@@ -1817,15 +1815,17 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 		if (local_a0[iVar5] < g_TinyFloat_00448548) {
 			return false;
 		}
+	}
 
+	// Forward elimination
+	for (iVar5 = 0; iVar5 < 4; iVar5++) {
 		// Find pivot row
 		fVar6 = fabsf(local_90[iVar5][iVar5] / local_a0[iVar5]);
 		iVar3 = iVar5;
 
 		for (iVar4 = iVar5 + 1; iVar4 < 4; iVar4++) {
-			float pivotVal = fabsf(local_90[iVar4][iVar5] / local_a0[iVar4]);
-			if (pivotVal > fVar6) {
-				fVar6 = pivotVal;
+			if (fVar6 < fabsf(local_90[iVar4][iVar5] / local_a0[iVar4])) {
+				fVar6 = fabsf(local_90[iVar4][iVar5] / local_a0[iVar4]);
 				iVar3 = iVar4;
 			}
 		}
@@ -1835,9 +1835,9 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 			pfVar1 = local_90[iVar5];
 			local_90[iVar5] = local_90[iVar3];
 			local_90[iVar3] = pfVar1;
-			float temp = local_a0[iVar5];
+			fVar6 = local_a0[iVar5];
 			local_a0[iVar5] = local_a0[iVar3];
-			local_a0[iVar3] = temp;
+			local_a0[iVar3] = fVar6;
 		}
 
 		// Eliminate column
@@ -1863,7 +1863,7 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 			fVar7 = local_90[iVar5][iVar5];
 			fVar6 = local_90[iVar4][iVar5];
 
-			for (iVar3 = iVar5; iVar3 < 8; iVar3++) {
+			for (iVar3 = iVar4 + 1; iVar3 < 8; iVar3++) {
 				local_90[iVar4][iVar3] -= (fVar6 / fVar7) * local_90[iVar5][iVar3];
 			}
 		}

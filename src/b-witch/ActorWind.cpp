@@ -164,8 +164,8 @@ void CActorWind::Create(ByteCode* pByteCode)
 
 void CActorWind::Init()
 {
-	ed_zone_3d* peVar1;
-	CEventManager* pCVar2;
+	ed_zone_3d* pZone;
+	CEventManager* pEventManager;
 	void* pvVar3;
 	uint uVar4;
 	int* pBase;
@@ -180,8 +180,10 @@ void CActorWind::Init()
 	edF32MATRIX4 eStack128;
 	edF32MATRIX4 eStack64;
 
-	pCVar2 = CScene::ptable.g_EventManager_006f5080;
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+
 	CActor::Init();
+
 	pSVar10 = this->pActorStreamRef->aEntries;
 	for (iVar11 = this->pActorStreamRef->entryCount; iVar11 != 0; iVar11 = iVar11 + -1) {
 		pSVar10->Init();
@@ -192,14 +194,14 @@ void CActorWind::Init()
 	this->field_0x1c4.Init();
 
 	if (this->field_0x1e8 != (edF32MATRIX4*)0x0) {
-		peVar1 = (this->activationZone).Get();
-		if (peVar1 != (ed_zone_3d*)0x0) {
-			peVar1->pMatrix = STORE_POINTER(this->field_0x1e8);
+		pZone = (this->activationZone).Get();
+		if (pZone != (ed_zone_3d*)0x0) {
+			pZone->pMatrix = STORE_POINTER(this->field_0x1e8);
 		}
 
-		peVar1 = (this->field_0x1c4).Get();
-		if (peVar1 != (ed_zone_3d*)0x0) {
-			peVar1->pMatrix = STORE_POINTER(this->field_0x1e8);
+		pZone = (this->field_0x1c4).Get();
+		if (pZone != (ed_zone_3d*)0x0) {
+			pZone->pMatrix = STORE_POINTER(this->field_0x1e8);
 		}
 	}
 
@@ -238,7 +240,7 @@ void CActorWind::Init()
 	}
 
 	if (this->field_0x21c != (ed_zone_3d*)0x0) {
-		uVar4 = edEventGetChunkZoneNbInclusivePrimitives(pCVar2->activeChunkId, this->field_0x21c);
+		uVar4 = edEventGetChunkZoneNbInclusivePrimitives(pEventManager->activeChunkId, this->field_0x21c);
 		this->nbFxWind = uVar4;
 		uVar4 = this->nbFxWind;
 		if (uVar4 != 0) {
@@ -1310,6 +1312,7 @@ void CActorWind::ReComputeBoundingSphere(edF32MATRIX4* pMatrix)
 	}
 
 	CActor::SetLocalBoundingSphere(fVar9 / 1.414214f, &eStack16);
+
 	return;
 }
 

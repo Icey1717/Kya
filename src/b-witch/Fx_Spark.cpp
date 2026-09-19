@@ -174,3 +174,6 @@ void CFxSpark::SetParameters(float param_1, float param_2, float param_3, float 
 
 	return;
 }
+
+void CFxSpark::Draw(bool param_2)
+{}

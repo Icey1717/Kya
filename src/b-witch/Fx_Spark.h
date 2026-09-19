@@ -21,9 +21,7 @@ public:
 		IMPLEMENTATION_GUARD_FX();
 	}
 
-	void Draw(bool) {
-		IMPLEMENTATION_GUARD_FX();
-	}
+	void Draw(bool param_2);
 
 	edF32VECTOR3* pVector_0xc;
 	float* pFloat_0x10;
