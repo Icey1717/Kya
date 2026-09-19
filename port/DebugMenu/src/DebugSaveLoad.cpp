@@ -1,5 +1,6 @@
 ﻿#include "DebugMenu.h"
 #include "DebugSaveLoad.h"
+#include "DebugSaveLoadPaths.h"
 #include "imgui.h"
 
 #include "SaveManagement.h"
@@ -8,14 +9,29 @@
 #include "log.h"
 
 #include "DebugSetting.h"
+#include "edFile/edFileCRC32.h"
+#include "EdenLib/edFile/sources/ps2/WinSaveFile.h"
 
 #include <chrono>
+#include <cmath>
+#include <cstring>
+#include <vector>
 
 namespace Debug::SaveLoad
 {
 	Debug::Setting<int> gDefaultSaveSlot = { "Default Save Slot", -1 };
 
 	Debug::Setting<bool> gAutoLoadOnStart = { "Auto Load On Start", false };
+
+	void DrawSaveInfo(const SaveDataDesc& desc)
+	{
+		ImGui::Text("Level: %02X", desc.levelId);
+		const double seconds = std::isfinite(desc.gameTime) && desc.gameTime >= 0 ? desc.gameTime : 0;
+		ImGui::Text("Time: %.0f:%02d:%02d", std::floor(seconds / 3600),
+			(int)std::fmod(seconds / 60, 60), (int)std::fmod(seconds, 60));
+		ImGui::Text("Wolfen: %d   Magic: %d   Money: %d", desc.nbFreedWolfen, desc.nbMagic, desc.nbMoney);
+		ImGui::Text("Completed: %s", desc.bGameCompleted ? "Yes" : "No");
+	}
 
 	void DrawSlot(int slotIndex)
 	{
@@ -26,12 +42,7 @@ namespace Debug::SaveLoad
 			ImGui::TextColored((gSaveManagement.slotID_0x28 == slotIndex) ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Slot %d", slotIndex);
 
 			// Show the slot name and timestamp
-			ImGui::TextWrapped("Level: %02X", slotDesc->levelId);
-			ImGui::TextWrapped("Time: %02d:%02d:%02d", (int)(slotDesc->gameTime / 3600.0f), (int)((slotDesc->gameTime / 60.0f) / 60.0f), (int)(slotDesc->gameTime / 60.0f));
-			ImGui::TextWrapped("Wolfen: %d", slotDesc->nbFreedWolfen);
-			ImGui::TextWrapped("Magic: %d", slotDesc->nbMagic);
-			ImGui::TextWrapped("Money: %d", slotDesc->nbMoney);
-			ImGui::TextWrapped("Completed: %s", slotDesc->bGameCompleted ? "Yes" : "No");
+			DrawSaveInfo(*slotDesc);
 
 			ImGui::PopID();
 		}
@@ -52,6 +63,180 @@ namespace Debug::SaveLoad
 		bool autoLoadTaskPending = false;
 		const char* autoLoadStatus = "Disabled";
 		std::chrono::steady_clock::time_point lastAutoLoadLog;
+		bool backupsOpen = false;
+		bool restorePending = false;
+		bool hotkeyTaskPending = false;
+		bool refreshBackups = false;
+		std::string backupStatus;
+		std::string backupDirectory;
+
+		struct SaveBackup
+		{
+			int slot;
+			int index;
+			std::filesystem::path destination;
+			SaveDataDesc desc;
+			std::vector<char> data;
+			std::string error;
+			SYSTEMTIME modified = {};
+		};
+		std::vector<SaveBackup> backups;
+
+		void ReadBackup(SaveBackup& backup, const std::filesystem::path& path)
+		{
+			WIN32_FILE_ATTRIBUTE_DATA attributes;
+			FILETIME localTime;
+			if (GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &attributes) &&
+				FileTimeToLocalFileTime(&attributes.ftLastWriteTime, &localTime)) {
+				FileTimeToSystemTime(&localTime, &backup.modified);
+			}
+			std::ifstream input(path, std::ios::binary | std::ios::ate);
+			const auto size = input.tellg();
+			constexpr size_t prefixSize = sizeof(SaveDataHeader) + sizeof(SaveDataDesc);
+			if (!input || size < static_cast<std::streamoff>(prefixSize) || size > 0x10000 + prefixSize) {
+				backup.error = "Unreadable or invalid save size";
+				return;
+			}
+			backup.data.resize(static_cast<size_t>(size));
+			input.seekg(0);
+			if (!input.read(backup.data.data(), size)) {
+				backup.error = "Could not read backup";
+				return;
+			}
+			SaveDataHeader header;
+			std::memcpy(&header, backup.data.data(), sizeof(header));
+			std::memcpy(&backup.desc, backup.data.data() + sizeof(header), sizeof(backup.desc));
+			if (header.hash != 0x4544454e || header.headerSize != sizeof(header) ||
+				header.initialBlockSize != sizeof(SaveDataDesc) || header.mainBlockSize <= 0 ||
+				header.mainBlockSize > backup.data.size() - prefixSize ||
+				header.headerCrc != edFileComputeCRC32(&header.headerSize, 0x14) ||
+				header.initialBlockCrc != edFileComputeCRC32(&backup.desc, sizeof(backup.desc)) ||
+				header.mainBlockCrc != edFileComputeCRC32(backup.data.data() + prefixSize, header.mainBlockSize) ||
+				backup.desc.levelId >= 0xe || !std::isfinite(backup.desc.gameTime) || backup.desc.gameTime < 0) {
+				backup.error = "Invalid save header, data, or checksum";
+			}
+		}
+
+		void RefreshBackups()
+		{
+			backups.clear();
+			backupDirectory.clear();
+			refreshBackups = false;
+			try {
+				// The Windows memory-card filer strips the leading slash and uses the working directory.
+				std::filesystem::path directory;
+				if (!TryGetBackupDirectory(
+					std::string_view(gSaveManagement.memCardPathEnd, sizeof(gSaveManagement.memCardPathEnd)),
+					std::string_view(gSaveManagement.serialNumber, sizeof(gSaveManagement.serialNumber)), directory)) {
+					backupStatus = "Cannot list backups: save directory is uninitialized or invalid";
+					return;
+				}
+				backupDirectory = directory.string();
+				for (int slot = 0; slot < 4; ++slot) {
+					for (int index = 1; index <= 10; ++index) {
+						SaveBackup backup;
+						backup.slot = slot;
+						backup.index = index;
+						backup.destination = directory / ("slot_" + std::to_string(slot) + ".dat");
+						auto path = backup.destination;
+						path += ".bak." + std::to_string(index);
+						if (!std::filesystem::exists(path)) continue;
+						ReadBackup(backup, path);
+						backups.push_back(std::move(backup));
+					}
+				}
+			}
+			catch (const std::exception& error) {
+				backupStatus = std::string("Could not list backups: ") + error.what();
+			}
+		}
+
+		bool CanRestore()
+		{
+			auto* scene = CScene::_pinstance;
+			auto* scheduler = CLevelScheduler::gThis;
+			auto* pause = CScene::ptable.g_PauseManager_00451688;
+			return !restorePending && !hotkeyTaskPending && !autoLoadTaskPending && autoLoadState != AutoLoadState::Loading &&
+				scene && scheduler && pause && pause->pSimpleMenu && pause->pSplashScreen &&
+				gSaveManagement.pBigAlloc_0x34 && !gSaveManagement.has_queued_file_action() &&
+				scheduler->currentLevelID >= 0 && scheduler->currentLevelID <= 0xe &&
+				scheduler->nextLevelID == 0x10 && !scene->IsFadeTermActive() && !(GameFlags & GAME_REQUEST_TERM);
+		}
+
+		void QueueRestore(const SaveBackup& backup, bool load)
+		{
+			// Capture the displayed bytes: autosave may rotate the backup filenames before execution.
+			restorePending = true;
+			backupStatus = "Restore queued";
+			EnqueueLevelManageTask([backup, load]() {
+				restorePending = false;
+				if (!CanRestore()) {
+					backupStatus = "Restore cancelled: save/load or level transition in progress";
+					return;
+				}
+				restorePending = true;
+				try {
+					// Reuse atomic save replacement and preserve the current slot in the backup rotation.
+					WinSaveFile output(backup.destination, 0x2e);
+					if (!output.IsOpen() || !output.Write(backup.data.data(), static_cast<uint>(backup.data.size())) || !output.Commit()) {
+						backupStatus = "Restore failed: could not back up or replace the current slot";
+					}
+					else {
+						gSaveManagement.read_slot_info(backup.slot);
+						gSaveManagement.fileExistsFlags |= 0x20u << backup.slot;
+						backupStatus = "Restored slot " + std::to_string(backup.slot);
+						if (load) {
+							MemCardLoad0(backup.slot);
+							backupStatus += CLevelScheduler::gThis->bShouldLoad && CLevelScheduler::gThis->nextLevelID != 0x10
+								? "; load requested" : "; load failed";
+						}
+					}
+				}
+				catch (const std::exception& error) {
+					backupStatus = std::string("Restore failed: ") + error.what();
+				}
+				restorePending = false;
+				refreshBackups = true;
+			});
+		}
+
+		void ShowBackups()
+		{
+			if (!backupsOpen) return;
+			if (refreshBackups && !restorePending) RefreshBackups();
+			ImGui::SetNextWindowSize(ImVec2(620, 550), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Save Backups", &backupsOpen)) {
+				ImGui::BeginDisabled(restorePending);
+				if (ImGui::Button("Refresh")) RefreshBackups();
+				ImGui::EndDisabled();
+				ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save.");
+				if (!backupDirectory.empty()) ImGui::TextWrapped("Directory: %s", backupDirectory.c_str());
+				if (!backupStatus.empty()) ImGui::TextWrapped("%s", backupStatus.c_str());
+				if (!CanRestore()) ImGui::TextWrapped("Restore is available when the title screen or gameplay is ready and no save/load is active.");
+				if (backups.empty()) ImGui::TextUnformatted("No backed up saves found. Autosaves create backups of existing slots.");
+				ImGui::BeginChild("Backups", ImVec2(0, 0), true);
+				for (const auto& backup : backups) {
+					ImGui::PushID(backup.slot * 10 + backup.index);
+					ImGui::Text("Slot %d - backup %d%s", backup.slot, backup.index, backup.index == 1 ? " (newest)" : "");
+					if (backup.modified.wYear) {
+						const auto& time = backup.modified;
+						ImGui::Text("Modified: %04d-%02d-%02d %02d:%02d:%02d (local)",
+							time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+					}
+					if (backup.error.empty()) DrawSaveInfo(backup.desc);
+					else ImGui::TextWrapped("%s", backup.error.c_str());
+					ImGui::BeginDisabled(!backup.error.empty() || !CanRestore());
+					if (ImGui::Button("Restore")) QueueRestore(backup, false);
+					ImGui::SameLine();
+					if (ImGui::Button("Restore & Load")) QueueRestore(backup, true);
+					ImGui::EndDisabled();
+					ImGui::Separator();
+					ImGui::PopID();
+				}
+				ImGui::EndChild();
+			}
+			ImGui::End();
+		}
 
 		void SetAutoLoadStatus(AutoLoadState state, const char* status)
 		{
@@ -160,6 +345,10 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 		ImGui::TextWrapped("Auto-load: %s (slot %d)", autoLoadStatus, autoLoadSlot);
 
 		ImGui::TextWrapped("Press F5 to save, F7 to load");
+		if (ImGui::Button("Browse Backed Up Saves")) {
+			backupsOpen = true;
+			refreshBackups = true;
+		}
 
 		ImGui::BeginChild("SaveLoadSlots", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -173,10 +362,12 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 	}
 
 	ImGui::End();
+	ShowBackups();
 }
 
 void Debug::SaveLoad::Update()
 {
+	if (restorePending || hotkeyTaskPending) return;
 	UpdateAutoLoad();
 	// Save loading can render nested debug frames. Do not append hotkey tasks to
 	// the scheduler's queue while the auto-load callback is executing.
@@ -187,6 +378,7 @@ void Debug::SaveLoad::Update()
 	// Listen for F5 and F7 key presses
 	if (ImGui::IsKeyPressed(ImGuiKey_F5)) {
 		const int slotId = gSaveManagement.slotID_0x28 >= 0 ? gSaveManagement.slotID_0x28 : gDefaultSaveSlot;
+		hotkeyTaskPending = true;
 		EnqueueLevelManageTask([slotId]() {
 			uint uVar4 = GameFlags | 4;
 			if ((GameFlags & 0x800) == 0) {
@@ -211,14 +403,17 @@ void Debug::SaveLoad::Update()
 			SaveManagement_MemCardSave(slotId);
 			CScene::_pinstance->Level_PauseChange(0);
 			CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+			hotkeyTaskPending = false;
 			});
 	}
 
-	if (ImGui::IsKeyPressed(ImGuiKey_F7)) {
+	if (!hotkeyTaskPending && ImGui::IsKeyPressed(ImGuiKey_F7)) {
 		const int slotId = gSaveManagement.slotID_0x28 >= 0 ? gSaveManagement.slotID_0x28 : gDefaultSaveSlot;
+		hotkeyTaskPending = true;
 		EnqueueLevelManageTask([slotId]() {
 			CScene::_pinstance->SetGlobalPaused_001b8c30(1);
 			MemCardLoad0(slotId);
+			hotkeyTaskPending = false;
 			});
 	}
 }

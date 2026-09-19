@@ -62,6 +62,7 @@ set(SOURCES
 	"src/DebugMesh.h"
 	"src/DebugMesh.cpp"
 	"src/DebugSaveLoad.h"
+	"src/DebugSaveLoadPaths.h"
 	"src/DebugSaveLoad.cpp"
 	"src/DebugTutorial.h"
 	"src/DebugTutorial.cpp"

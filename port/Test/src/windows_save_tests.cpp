@@ -2,7 +2,50 @@
 
 #ifdef PLATFORM_WIN
 #include "../../../src/EdenLib/edFile/sources/ps2/WinSaveFile.h"
+#include "../../DebugMenu/src/DebugSaveLoadPaths.h"
+#include "edFile/edFilePath.h"
 #include <iterator>
+#include <algorithm>
+
+TEST(WindowsSavePaths, ResolvesFullWidthSaveManagerSerials)
+{
+	char pathBuffer[4] = {};
+	char drive[8] = {};
+	char cardRoot[] = "<mc>0:\\";
+	edFilePathSplit(drive, pathBuffer, nullptr, nullptr, cardRoot);
+	ASSERT_STREQ(pathBuffer, "0:");
+	char serialBuffer[16];
+	std::copy_n("BESLES-51473-KYA", sizeof(serialBuffer), serialBuffer);
+	std::filesystem::path directory;
+	ASSERT_TRUE(Debug::SaveLoad::TryGetBackupDirectory(
+		{pathBuffer, sizeof(pathBuffer)}, {serialBuffer, sizeof(serialBuffer)}, directory));
+	EXPECT_EQ(directory, std::filesystem::absolute("BESLES-51473-KYA"));
+	char otherSerial[16];
+	std::copy_n("BASLUS-20440-KYA", sizeof(otherSerial), otherSerial);
+	ASSERT_TRUE(Debug::SaveLoad::TryGetBackupDirectory(
+		{pathBuffer, sizeof(pathBuffer)}, {otherSerial, sizeof(otherSerial)}, directory));
+	EXPECT_EQ(directory, std::filesystem::absolute("BASLUS-20440-KYA"));
+}
+
+TEST(WindowsSavePaths, RejectsUnterminatedOrUninitializedBuffers)
+{
+	std::filesystem::path directory;
+	const std::string_view validPath("0:\0", 3);
+	const std::string_view validSerial("BESLES-51473-KYA\0", 16);
+	EXPECT_FALSE(Debug::SaveLoad::TryGetBackupDirectory("xxxx", validSerial, directory));
+	EXPECT_FALSE(Debug::SaveLoad::TryGetBackupDirectory(std::string_view("\0", 1), validSerial, directory));
+	EXPECT_FALSE(Debug::SaveLoad::TryGetBackupDirectory(validPath, std::string_view("\0", 1), directory));
+	EXPECT_FALSE(Debug::SaveLoad::TryGetBackupDirectory(validPath, std::string_view("..\0", 3), directory));
+}
+
+TEST(WindowsSavePaths, IgnoresBytesAfterSerialTerminator)
+{
+	const char serialBuffer[16] = {'K', 'Y', 'A', '\0', 'x'};
+	std::filesystem::path directory;
+	ASSERT_TRUE(Debug::SaveLoad::TryGetBackupDirectory(std::string_view("0:\0", 3),
+		{serialBuffer, sizeof(serialBuffer)}, directory));
+	EXPECT_EQ(directory, std::filesystem::absolute("KYA"));
+}
 
 class WindowsSave : public testing::Test
 {

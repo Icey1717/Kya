@@ -44,6 +44,11 @@ void CActorWind::Create(ByteCode* pByteCode)
 	float fVar9;
 
 	CActor::Create(pByteCode);
+
+	if (strcmp(this->name, "WIND_02") == 0) {
+		this->field_0x160 = 0;
+	}
+
 	this->field_0x160 = pByteCode->GetU32();
 	this->maxWind = pByteCode->GetF32();
 	this->field_0x168 = pByteCode->GetF32();
