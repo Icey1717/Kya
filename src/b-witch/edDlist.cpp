@@ -569,8 +569,6 @@ struct
 
 	ed_g2d_material material;
 
-	int aLayers[4];
-
 	ed_Chunck LAYA;
 	ed_Chunck LAY;
 
@@ -624,7 +622,7 @@ void edDlistFrameBufMaterialInit(void)
 	gFrameBufG2D.material.pCommandBufferTexture = 0x0;
 	gFrameBufG2D.material.commandBufferTextureSize = 0;
 
-	gFrameBufG2D.aLayers[0] = STORE_POINTER(&gFrameBufG2D.LAY);
+	gFrameBufG2D.material.aLayers[0] = STORE_POINTER(&gFrameBufG2D.LAY);
 
 	gFrameBufG2D.LAYA.hash = HASH_CODE_LAYA; // LAYA
 	gFrameBufG2D.LAYA.field_0x4 = 1;
@@ -2543,6 +2541,50 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 	}
 
 	return;
+}
+
+// Original FUN_002d17d0.
+void edDListAddTexturedQuad(edF32VECTOR2* texCoords[4], _rgba* colors[4], edF32VECTOR4* positions[4])
+{
+	for (int i = 0; i < 4; i++) {
+		gCurST_SPR[i * 2] = texCoords[i]->x;
+		gCurST_SPR[i * 2 + 1] = texCoords[i]->y;
+	}
+
+	edF32Vector4ScaleHard(4096.0f, reinterpret_cast<edF32VECTOR4*>(gCurST_SPR), reinterpret_cast<edF32VECTOR4*>(gCurST_SPR));
+	edF32Vector4ScaleHard(4096.0f, reinterpret_cast<edF32VECTOR4*>(gCurST_SPR + 4), reinterpret_cast<edF32VECTOR4*>(gCurST_SPR + 4));
+
+	for (int i = 0; i < 8; i++) {
+		gCurSTBuf[i] = static_cast<short>(static_cast<int>(gCurST_SPR[i]));
+	}
+	gCurSTBuf += 8;
+
+	for (int i = 0; i < 4; i++) {
+		gCurColorBuf[i] = *colors[i];
+		gCurVertexBuf[i].x = positions[i]->x;
+		gCurVertexBuf[i].y = positions[i]->y;
+		gCurVertexBuf[i].z = positions[i]->z;
+		gCurVertexBuf[i].uSkip = i < 2 ? 0xc000 : 0;
+	}
+	gCurColorBuf += 4;
+
+	// Preserve the original marker after the quad.
+	gCurVertexBuf[4].uSkip = 0x47400000;
+	gCurVertexBuf += 4;
+	gNbDMAVertex += 4;
+	gNbAddedVertex += 4;
+
+	if (gNbDMAVertex == 0x48) {
+		// Carry the last two colors and UVs across the DMA boundary.
+		gCurColorBuf[0] = gCurColorBuf[-2];
+		gCurColorBuf[1] = gCurColorBuf[-1];
+		gCurColorBuf += 2;
+		for (int i = 0; i < 4; i++) {
+			gCurSTBuf[i] = gCurSTBuf[i - 4];
+		}
+		gCurSTBuf += 4;
+		gNbDMAVertex = 2;
+	}
 }
 
 void edDListLightVertex(float param_1, float param_2, edF32VECTOR2* param_3, edF32VECTOR2* param_4, _rgba* param_5, edF32VECTOR4* param_6)

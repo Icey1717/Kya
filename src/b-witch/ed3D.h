@@ -653,6 +653,9 @@ ed_hash_code* edHashcodeGet(Hash_8 meshHashValue, ed_Chunck* pChunck);
 edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand);
 edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand);
 
+edpkt_data* ed3DFlushFrameBufferMaterial(edpkt_data* pPkt);
+edpkt_data* ed3DFlushFrameBufferCopy(edpkt_data* pPkt);
+
 void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0);
 
 void ed3DResetTime(void);

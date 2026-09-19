@@ -11,6 +11,8 @@
 
 namespace Renderer::Kya::Sprite
 {
+	constexpr uint32_t gMaxSpriteVertices = 0x400; // 1024 vertices max for a sprite, enough for a 32x32 sprite with 4 vertices per quad.
+
 	// Circular pool of simple meshes to avoid having to allocate a new one for every sprite. The pool is large enough to hold all sprites in a scene, but can be reset when needed.
 	class SpritePool
 	{
@@ -22,7 +24,7 @@ namespace Renderer::Kya::Sprite
 				GIFReg::GSPrim prim;
 				prim.ABE = 1;
 				sprite = std::make_unique<SimpleMesh>("Sprite", prim);
-				sprite->GetVertexBufferData().Init(0x200, 0x1000);
+				sprite->GetVertexBufferData().Init(gMaxSpriteVertices, 0x1000);
 			}
 		}
 
@@ -163,8 +165,8 @@ namespace Renderer::Kya::Sprite
 		// Color
 		// Width Height
 
-		constexpr int nbStagingVertices = 0x200;
-		static edF32VECTOR4 vtxStagingBuff[nbStagingVertices]; // 512 vertices max
+		constexpr int nbStagingVertices = gMaxSpriteVertices;
+		static edF32VECTOR4 vtxStagingBuff[nbStagingVertices];
 
 		VertexColor* pRgba = LOAD_POINTER_CAST(VertexColor*, pSprite->pColorBuf);
 		TextureData* pStq = LOAD_POINTER_CAST(TextureData*, pSprite->pSTBuf);

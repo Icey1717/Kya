@@ -536,6 +536,8 @@ inline ulong SetScissorWin(A scax0, B scax1, C scay0, D scay1)
 #define SCE_GS_SET_SCISSOR SCE_GS_SET_SCISSOR_PS2
 #endif
 
+//#define SCE_GS_SET_CLAMP(WMS, WMT, MINU, MAXU, MINV, MAXV)
+
 #define SCE_GS_ALPHA_CS			(0)
 #define SCE_GS_ALPHA_CD			(1)
 #define SCE_GS_ALPHA_ZERO		(2)
