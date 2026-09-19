@@ -6782,7 +6782,7 @@ void ed3DFlushList(void)
 {
 	float fVar1;
 	int iVar2;
-	edNODE* unaff_s1_lo;
+	edNODE* pLastFlushed;
 	edNODE* pPrevList;
 	edNODE* peVar3;
 	edLIST* pCurrentList;
@@ -6833,7 +6833,7 @@ void ed3DFlushList(void)
 					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
 
 					ed3DFlushMaterial((ed_dma_material*)(peVar3)->pData);
-					unaff_s1_lo = peVar3;
+					pLastFlushed = peVar3;
 					pPrevList = (peVar3)->pPrev;
 				}
 				break;
@@ -6845,7 +6845,7 @@ void ed3DFlushList(void)
 				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaInit(g_VifRefPktCur);
 				}
-				pvVar3 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar3 = (ed_dma_material*)pPrevList->pData;
 				pvVar3->flags = pvVar3->flags | 2;
 
 				// #Debug
@@ -6856,7 +6856,7 @@ void ed3DFlushList(void)
 					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
 
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+					pLastFlushed = pPrevList;
 				}
 				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaTerm(g_VifRefPktCur);
@@ -6867,7 +6867,7 @@ void ed3DFlushList(void)
 				pvVar2->flags = pvVar2->flags | 2;
 				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+					pLastFlushed = pPrevList;
 				}
 				g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
 				break;
@@ -6879,7 +6879,7 @@ void ed3DFlushList(void)
 				pvVar7->flags = pvVar7->flags & 0xfffffffd;
 				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+					pLastFlushed = pPrevList;
 				}
 				g_VifRefPktCur = (edpkt_data*)ed3DFlushBackFaceTerm(g_VifRefPktCur);
 				g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);)
@@ -6891,7 +6891,7 @@ void ed3DFlushList(void)
 				pvVar1->flags = pvVar1->flags | 2;
 				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+					pLastFlushed = pPrevList;
 				}
 				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaTerm(g_VifRefPktCur);
@@ -6906,40 +6906,39 @@ void ed3DFlushList(void)
 				pvVar5->flags = pvVar5->flags | 2;
 				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+					pLastFlushed = pPrevList;
 				}
 				gFushListCounter = 0xd;
 				FLOAT_00448a04 = fVar1;
 					break;
 			case 0xe:
-				IMPLEMENTATION_GUARD(
-					g_VifRefPktCur = (edpkt_data*)FUN_002b4e60((ulong*)g_VifRefPktCur);
+				g_VifRefPktCur = ed3DFlushFrameBufferCopy(g_VifRefPktCur);
 				BYTE_004489e4 = 1;
-				pvVar6 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar6 = (ed_dma_material*)pPrevList->pData;
 				pvVar6->flags = pvVar6->flags | 2;
-				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
-					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
-					unaff_s1_lo = pPrevList;
+				for (; pPrevList != pCurrentList; pPrevList = pPrevList->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)pPrevList->pData);
+					pLastFlushed = pPrevList;
 				}
+				IMPLEMENTATION_GUARD(
 				g_VifRefPktCur = (edpkt_data*)FUN_002b4d50();)
 			}
-			iVar2 = gCurRenderList;
+
 			if (gPrim_List_FlushTex[gCurRenderList].pPrev == gPrim_List_FlushTex + gCurRenderList) {
 				pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
-				gPrim_List_FlushTex[gCurRenderList].pPrev = (pCurrentList)->pPrev;
-				gPrim_List_FlushTex[iVar2].nodeCount = pCurrentList->nodeCount;
+				gPrim_List_FlushTex[gCurRenderList].pPrev = pCurrentList->pPrev;
+				gPrim_List_FlushTex[gCurRenderList].nodeCount = pCurrentList->nodeCount;
 			}
 			else {
 				pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
-				gPrim_List_FlushTex[gCurRenderList].nodeCount =
-					gPrim_List_FlushTex[gCurRenderList].nodeCount + pCurrentList->nodeCount;
+				gPrim_List_FlushTex[gCurRenderList].nodeCount = gPrim_List_FlushTex[gCurRenderList].nodeCount + pCurrentList->nodeCount;
 				gPrim_List_FlushTex_Last->pPrev = pCurrentList->pPrev;
 			}
 
 			pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
-			gPrim_List_FlushTex_Last = unaff_s1_lo;
+			gPrim_List_FlushTex_Last = pLastFlushed;
 			pCurrentList->nodeCount = 0;
-			(pCurrentList)->pPrev = (edNODE*)pCurrentList;
+			pCurrentList->pPrev = (edNODE*)pCurrentList;
 		}
 
 		gFushListCounter = gFushListCounter + 1;
