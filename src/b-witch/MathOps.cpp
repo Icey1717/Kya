@@ -1970,6 +1970,58 @@ void edF32Vector4FTOI12Hard(edS32VECTOR4* s0, edF32VECTOR4* v0)
 	return;
 }
 
+void edF32Matrix4MulF32Hard(float t, edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+
+	fVar1 = m1->ab;
+	fVar2 = m1->ac;
+	fVar3 = m1->ad;
+	fVar4 = m1->ba;
+	fVar5 = m1->bb;
+	fVar6 = m1->bc;
+	fVar7 = m1->bd;
+	fVar8 = m1->ca;
+	fVar9 = m1->cb;
+	fVar10 = m1->cc;
+	fVar11 = m1->cd;
+	fVar12 = m1->da;
+	fVar13 = m1->db;
+	fVar14 = m1->dc;
+	fVar15 = m1->dd;
+	m0->aa = m1->aa * t;
+	m0->ab = fVar1 * t;
+	m0->ac = fVar2 * t;
+	m0->ad = fVar3 * t;
+	m0->ba = fVar4 * t;
+	m0->bb = fVar5 * t;
+	m0->bc = fVar6 * t;
+	m0->bd = fVar7 * t;
+	m0->ca = fVar8 * t;
+	m0->cb = fVar9 * t;
+	m0->cc = fVar10 * t;
+	m0->cd = fVar11 * t;
+	m0->da = fVar12 * t;
+	m0->db = fVar13 * t;
+	m0->dc = fVar14 * t;
+	m0->dd = fVar15 * t;
+	return;
+}
+
 void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0)
 {
 	float fVar1;

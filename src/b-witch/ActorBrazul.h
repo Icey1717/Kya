@@ -35,9 +35,9 @@ struct astruct_19
 	float field_0x38;
 	float field_0x3c;
 
+	// THIS IS LIKELY AN FX_SPARK_NO_ALLOC
 	CFxSpark field_0x40;
-
-	edF32VECTOR3 field_0x130[3];
+	DATA field_0x130[3];
 	float field_0x154[3];
 
 	CFxHandleExt field_0x3d0;

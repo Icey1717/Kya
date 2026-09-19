@@ -101,6 +101,7 @@ void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 void edF32Vector4NormalizeSoft(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Vector4FTOI12Hard(edS32VECTOR4* s0, edF32VECTOR4* v0);
+void edF32Matrix4MulF32Hard(float t, edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);
 
 const float g_TinyFloat_00448548 = 1.0E-6f;

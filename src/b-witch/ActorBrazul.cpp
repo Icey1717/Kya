@@ -1081,6 +1081,8 @@ void CActorBrazul::FUN_003e87e0(int nextState, int param_3)
 
 void astruct_19::Create(int param_2, int param_3, int param_4)
 {
+	// THIS IS LIKELY AN FX_SPARK_NO_ALLOC
+	// aka a spark with 3 data sections following it in the struct.
 	this->field_0x40.Create(3, 0xc, this->field_0x130, this->field_0x154, param_2);
 	//(this->field_0x40).field_0xe4 = &this->field_0x190;
 	this->field_0x3d0.Init(param_3);

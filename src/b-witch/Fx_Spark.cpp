@@ -24,9 +24,6 @@ bool CFxSpark::InitDlistPatchable(int)
 	float s;
 	_rgba local_4;
 
-	// Broken
-	//IMPLEMENTATION_GUARD();
-
 	edDListLoadIdentity();
 
 	edDListUseMaterial(CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->particleID, 0));
@@ -77,13 +74,23 @@ bool CFxSpark::InitDlistPatchable(int)
 	return true;
 }
 
-void CFxSpark::Create(int vectorCount, int floatCount, edF32VECTOR3* pVectorBuffer, float* pFloatBuffer, int particleID)
+edF32VECTOR4* _DefaultModifyVertex(edF32VECTOR4* param_1, edF32VECTOR4* param_2)
+{
+	edF32VECTOR4 local_10;
+
+	edF32Vector4ScaleHard(cosf(param_1->z * 3.141593f - 1.570796f), &local_10, param_2);
+	param_1->x = local_10.x;
+	param_1->y = local_10.y;
+	return param_1;
+}
+
+void CFxSpark::Create(int vectorCount, int floatCount, DATA* pVectorBuffer, float* pFloatBuffer, int particleID)
 {
 	int iVar5;
 
 	this->count_0x98 = vectorCount;
 	this->count_0xa0 = floatCount;
-	//this->field_0x9c = 0;
+	this->field_0x9c = 0;
 	this->particleID = particleID;
 	this->pVector_0xc = pVectorBuffer;
 	this->pFloat_0x10 = pFloatBuffer;
@@ -92,9 +99,9 @@ void CFxSpark::Create(int vectorCount, int floatCount, edF32VECTOR3* pVectorBuff
 	iVar5 = 0;
 	if (0 < this->count_0x98) {
 		do {
-			this->pVector_0xc[iVar5].x = 1.0f;
-			this->pVector_0xc[iVar5].y = 0.0f;
-			this->pVector_0xc[iVar5].z = 0.0f;
+			this->pVector_0xc[iVar5].field_0x0 = 1.0f;
+			this->pVector_0xc[iVar5].field_0x8 = 0;
+			this->pVector_0xc[iVar5].field_0x9 = 0;
 			iVar5 = iVar5 + 1;
 		} while (iVar5 < this->count_0x98);
 	}
@@ -103,7 +110,7 @@ void CFxSpark::Create(int vectorCount, int floatCount, edF32VECTOR3* pVectorBuff
 	
 	this->field_0xd0 = gF32Vector4UnitZ;
 	this->field_0xe4 = 0;
-	//this->pFunc_0xc4 = _DefaultModifyVertex;
+	this->pFunc_0xc4 = _DefaultModifyVertex;
 
 	return;
 }
@@ -156,21 +163,62 @@ void CFxSpark::SetParameters(float param_1, float param_2, float param_3, float 
 {
 	int iVar2;
 
-	//this->field_0x8 = param_7;
+	this->field_0x8 = param_7;
 	this->field_0xb0 = param_2;
 	this->field_0xc0 = param_5;
-	//this->field_0xac = param_1;
-	//this->field_0xb8 = param_3;
-	//this->field_0xbc = 1.0f / param_3;
-	//this->field_0xb4 = param_4;
-	//
-	//iVar2 = 0;
-	//if (0 < this->count_0xa0) {
-	//	do {
-	//		pFloat_0x10[iVar1] = param_2;
-	//		iVar2 = iVar2 + 1;
-	//	} while (iVar2 < this->count_0xa0);
-	//}
+	this->field_0xac = param_1;
+	this->field_0xb8 = param_3;
+	this->field_0xbc = 1.0f / param_3;
+	this->field_0xb4 = param_4;
+	
+	iVar2 = 0;
+	if (0 < this->count_0xa0) {
+		do {
+			this->pFloat_0x10[iVar2] = param_2;
+			iVar2 = iVar2 + 1;
+		} while (iVar2 < this->count_0xa0);
+	}
+
+	return;
+}
+
+void CFxSpark::Reset()
+{
+	int iVar2;
+
+	iVar2 = 0;
+	if (0 < this->count_0x98) {
+		do {
+			this->pVector_0xc[iVar2].field_0x0 = 1.0f;
+			this->pVector_0xc[iVar2].field_0x8 = 0;
+			this->pVector_0xc[iVar2].field_0x9 = 0;
+			iVar2 = iVar2 + 1;
+		} while (iVar2 < this->count_0x98);
+	}
+
+	this->field_0x9c = 0;
+	this->pVector_0xcc = this->pVector_0xc;
+	this->field_0xbc = 0.0f;
+	CScene::ptable.g_GlobalDListManager_004516bc->SetActive(this->dlistPatchId, 0);
+
+	return;
+}
+
+void CFxSpark::Manage(edF32VECTOR4* param_1, edF32VECTOR4* param_2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	this->field_0x60 = *param_2;
+	this->field_0x70 = *param_1;
+
+	edF32Vector4SubHard(&this->field_0xd0, &this->field_0x70, &this->field_0x60);
+	fVar1 = edF32Vector4NormalizeHard(&this->field_0xd0, &this->field_0xd0);
+	this->field_0xe0 = fVar1;
+	edF32Matrix4BuildFromVectorUnitSoft(&this->field_0x20, &this->field_0xd0);
+	edF32Matrix4MulF32Hard(this->field_0xe0, &this->field_0x20, &this->field_0x20);
+	this->field_0x20.rowT = this->field_0x60;
 
 	return;
 }

@@ -3,29 +3,36 @@
 
 #include "Types.h"
 
+struct DATA
+{
+	float field_0x0;
+	byte field_0x8;
+	byte field_0x9;
+};
+
+typedef edF32VECTOR4* (*ModifyVertexFunc)(edF32VECTOR4*, edF32VECTOR4*);
+
 class CFxSpark : public CObject
 {
 public:
 	virtual bool IsKindOfObject(ulong kind);
 	virtual bool InitDlistPatchable(int);
 
-	void Create(int vectorCount, int floatCount, edF32VECTOR3* pVectorBuffer, float* pFloatBuffer, int particleID);
+	void Create(int vectorCount, int floatCount, DATA* pVectorBuffer, float* pFloatBuffer, int particleID);
 	void Init(int id);
 	void SetParameters(float param_1, float param_2, float param_3, float param_4, float param_5, undefined4 param_7);
 
-	void Reset() {
-		IMPLEMENTATION_GUARD_FX();
-	}
-
-	void Manage(edF32VECTOR4*, edF32VECTOR4*) {
-		IMPLEMENTATION_GUARD_FX();
-	}
-
+	void Reset();
+	void Manage(edF32VECTOR4*, edF32VECTOR4*);
 	void Draw(bool param_2);
 
-	edF32VECTOR3* pVector_0xc;
+	undefined4 field_0x8;
+	DATA* pVector_0xc;
 	float* pFloat_0x10;
 
+	edF32MATRIX4 field_0x20;
+	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 field_0x70;
 	edF32VECTOR4 vector_0x80;
 
 	int particleID;
@@ -36,17 +43,22 @@ public:
 	uint field_0x94;
 
 	int count_0x98;
+	undefined4 field_0x9c;
 
 	int count_0xa0;
+	float field_0xac;
 
 	float field_0xb0;
+	float field_0xb4;
+	float field_0xb8;
+	float field_0xbc;
 
 	float field_0xc0;
-
-	edF32VECTOR3* pVector_0xcc;
+	ModifyVertexFunc pFunc_0xc4;
+	DATA* pVector_0xcc;
 	edF32VECTOR4 field_0xd0;
 
-	undefined4 field_0xe0;
+	float field_0xe0;
 	byte* field_0xe4;
 };
 
@@ -54,7 +66,7 @@ template<int countA, int countB>
 class CFxSparkNoAlloc : public CFxSpark
 {
 public:
-	edF32VECTOR3 aVectorData[countA];
+	DATA aVectorData[countA];
 	float aFloatData[countB];
 	byte aUnknown[countB];
 };
