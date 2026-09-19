@@ -109,7 +109,7 @@ void CFxSpark::Create(int vectorCount, int floatCount, DATA* pVectorBuffer, floa
 	this->pVector_0xcc = this->pVector_0xc;
 	
 	this->field_0xd0 = gF32Vector4UnitZ;
-	this->field_0xe4 = 0;
+	this->field_0xe4 = (edF32VECTOR4*)0x0;
 	this->pFunc_0xc4 = _DefaultModifyVertex;
 
 	return;
@@ -119,36 +119,24 @@ void CFxSpark::Init(int id)
 {
 	int iVar1;
 	int iVar2;
-	float* pfVar3;
-	float* pfVar4;
+	edF32VECTOR4* peVar3;
+	edF32VECTOR4* peVar4;
 	float fVar5;
 	float fVar6;
 	float fVar7;
 
 	iVar2 = 0;
-	//if (0 < this->count_0x98) {
-	//	do {
-	//		fVar7 = gF32Vertex4Zero.w;
-	//		fVar6 = gF32Vertex4Zero.z;
-	//		fVar5 = gF32Vertex4Zero.y;
-	//		pfVar4 = (float*)(this->field_0xe4 + (this->count_0xa0 + iVar2 * this->count_0xa0 + -1) * 0x10);
-	//		*pfVar4 = gF32Vertex4Zero.x;
-	//		pfVar4[1] = fVar5;
-	//		pfVar4[2] = fVar6;
-	//		pfVar4[3] = fVar7;
-	//		fVar7 = pfVar4[1];
-	//		fVar5 = pfVar4[2];
-	//		fVar6 = pfVar4[3];
-	//		pfVar3 = (float*)(this->field_0xe4 + iVar2 * this->count_0xa0 * 0x10);
-	//		*pfVar3 = *pfVar4;
-	//		pfVar3[1] = fVar7;
-	//		pfVar3[2] = fVar5;
-	//		pfVar3[3] = fVar6;
-	//		iVar1 = iVar2 * this->count_0xa0;
-	//		iVar2 = iVar2 + 1;
-	//		*(undefined4*)(this->field_0xe4 + (this->count_0xa0 + iVar1) * 0x10 + -8) = 0x3f800000;
-	//	} while (iVar2 < this->count_0x98);
-	//}
+	if (0 < this->count_0x98) {
+		do {
+			peVar4 = this->field_0xe4 + this->count_0xa0 + iVar2 * this->count_0xa0 + -1;
+			*peVar4 = gF32Vertex4Zero;
+			peVar3 = this->field_0xe4 + iVar2 * this->count_0xa0;
+			*peVar3 = *peVar4;
+			iVar1 = iVar2 * this->count_0xa0;
+			iVar2 = iVar2 + 1;
+			this->field_0xe4[this->count_0xa0 + iVar1 + -1].z = 1.0f;
+		} while (iVar2 < this->count_0x98);
+	}
 
 	this->sectorId = id;
 	this->field_0xe0 = 0;
