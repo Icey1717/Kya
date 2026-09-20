@@ -9,6 +9,7 @@
 #include "edText.h"
 #include "TimeController.h"
 #include "BootData.h"
+#include "TranslatedTextData.h"
 
 void CActorHelperSign::Create(ByteCode* pByteCode)
 {

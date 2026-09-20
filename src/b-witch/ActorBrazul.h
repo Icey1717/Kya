@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorWolfen.h"
+#include "Fx_Spark.h"
 
 class CActorBrazul;
 

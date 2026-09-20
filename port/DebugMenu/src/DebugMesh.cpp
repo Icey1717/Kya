@@ -390,7 +390,7 @@ namespace Debug
 						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x30);
 						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x34);
 						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x38);
-						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x3c);
+						ImGui::Text("pSpritePkt: 0x%x", pCluster->pSpritePkt);
 
 						ImGui::Spacing();
 						ImGui::Spacing();

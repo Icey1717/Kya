@@ -6,9 +6,14 @@
 struct DATA
 {
 	float field_0x0;
+	undefined4 field_0x4;
 	byte field_0x8;
 	byte field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
 };
+
+class CGlobalDListPatch;
 
 typedef edF32VECTOR4* (*ModifyVertexFunc)(edF32VECTOR4*, edF32VECTOR4*);
 
@@ -25,6 +30,8 @@ public:
 	void Reset();
 	void Manage(edF32VECTOR4*, edF32VECTOR4*);
 	void Draw(bool param_2);
+	void UpdateVertices();
+	void SubdivideVertices(int first, int last);
 
 	undefined4 field_0x8;
 	DATA* pVector_0xc;
@@ -35,17 +42,15 @@ public:
 	edF32VECTOR4 field_0x70;
 	edF32VECTOR4 vector_0x80;
 
-	int particleID;
-
-	int dlistPatchId;
-
 	uint field_0x90;
 	uint field_0x94;
 
 	int count_0x98;
-	undefined4 field_0x9c;
+	int field_0x9c;
 
 	int count_0xa0;
+	int particleID;
+	int dlistPatchId;
 	float field_0xac;
 
 	float field_0xb0;
@@ -55,6 +60,7 @@ public:
 
 	float field_0xc0;
 	ModifyVertexFunc pFunc_0xc4;
+	CGlobalDListPatch* field_0xc8;
 	DATA* pVector_0xcc;
 	edF32VECTOR4 field_0xd0;
 

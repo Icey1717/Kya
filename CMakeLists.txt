@@ -233,6 +233,8 @@ set(main_src
 	"${src_root}/b-witch/SectorManager.h"
 	"${src_root}/b-witch/DlistManager.cpp"
 	"${src_root}/b-witch/DlistManager.h"
+	"${src_root}/b-witch/StaticMeshComponent.cpp"
+	"${src_root}/b-witch/StaticMeshComponent.h"
 	"${src_root}/b-witch/ActorManager.cpp"
 	"${src_root}/b-witch/ActorManager.h"
 	"${src_root}/b-witch/AnmManager.cpp"

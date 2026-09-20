@@ -2863,7 +2863,7 @@ void CAudioManager::ReceiveEvent(edCEventMessage* pEventMessage, uint param_3, u
 	EventSendInfo* pEVar1;
 	bool bVar2;
 	int iVar3;
-	CDoubleLinkedNode<CMusic>* pCVar4;
+	CDoubleLinkedNode<CMusic*>* pCVar4;
 	CMusicManager* pCVar5;
 	CMusicManager::s_music_cell* psVar6;
 	CMusicAmbiance* pCVar7;
@@ -2918,6 +2918,116 @@ void CAudioManager::ReceiveEvent(edCEventMessage* pEventMessage, uint param_3, u
 			}
 		}
 	break;
+	case 0xb:
+		uVar10 = param_6[6];
+		uVar8 = param_6[7];
+		flags = uVar10 & 0xfffffffc | 0x1c;
+		if ((uVar8 == 0xffffffff) || (bVar2 = (uint)this->nbMusic <= uVar8, bVar2)) {
+			floatValue = (CMusic*)0x0;
+		}
+		else {
+			if (bVar2) {
+				uVar8 = 0;
+			}
+
+			floatValue = this->aMusic + uVar8;
+		}
+
+		bVar2 = LOAD_POINTER_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[2]) != (EventSendInfo*)0x0;
+		if (((int)param_4 == 2) || (((int)param_4 == 3 && (!bVar2)))) {
+			if (bVar2 == (LOAD_POINTER_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[3]) != (EventSendInfo*)0x0)) {
+				pCVar4 = this->musicActiveList.RemoveHead();
+				pCVar4->node = floatValue;
+				this->musicFreeList.InsertBeforeHead(pCVar4);
+			}
+			else {
+				this->field_0x114 = floatValue;
+			}
+
+			if ((int)param_4 == 3) {
+				param_6 = param_6 + 3;
+			}
+		}
+		else {
+			for (pCVar4 = (this->musicFreeList).pHead; (pCVar4 != (CDoubleLinkedNode<CMusic*>*)0x0 && (pCVar4->node != floatValue)); pCVar4 = pCVar4->pPrev) {
+			}
+			if (pCVar4 != (CDoubleLinkedNode<CMusic*>*)0x0) {
+				pCVar4 = this->musicFreeList.RemoveNode(pCVar4);
+				this->musicActiveList.InsertAfterQueue(pCVar4);
+			}
+
+			pCVar4 = (this->musicFreeList).pHead;
+			floatValue = (CMusic*)0x0;
+			if (pCVar4 != (CDoubleLinkedNode<CMusic*>*)0x0) {
+				floatValue = pCVar4->node;
+			}
+
+			if (floatValue == (CMusic*)0x0) {
+				floatValue = this->field_0x114;
+			}
+
+			param_6 = param_6 + 3;
+		}
+
+		fVar11 = *reinterpret_cast<float*>(&param_6[2]);
+		fVar13 = *reinterpret_cast<float*>(&param_6[1]);
+
+		if ((*param_6 & 1) == 0) {
+			flags = uVar10 & 0xfffffffc | 0x3c;
+		}
+
+		if (this->pPrevMusic != floatValue) {
+			this->pPrevMusic = floatValue;
+			if (floatValue == (CMusic*)0x0) {
+				if (this->field_0xf0 != -1) {
+					this->field_0x38->Stop(fVar11, 0.0f, this->field_0xf0);
+					this->field_0xf0 = 0xffffffff;
+				}
+			}
+			else {
+				if (this->field_0xf0 != -1) {
+					psVar6 = this->field_0x38->aMusicCells + this->field_0xf0;
+					if (psVar6->pMusic != (CMusic*)0x0) {
+						psVar6->priority = 0.0f;
+					}
+
+					psVar6 = this->field_0x38->aMusicCells + this->field_0xf0;
+					if (psVar6->pMusic != (CMusic*)0x0) {
+						psVar6->volume = 0.5f;
+					}
+				}
+
+				iVar3 = this->field_0x38->Start(1.0f, this->field_0xf8, fVar13, fVar11, floatValue, flags);
+				this->field_0xf0 = iVar3;
+				if (this->field_0xf0 != -1) {
+					psVar6 = this->field_0x38->aMusicCells + this->field_0xf0;
+					if (psVar6->pMusic != (CMusic*)0x0) {
+						psVar6->pCallback = FUN_00182e40;
+					}
+
+					uVar10 = this->field_0xf4;
+					if (this->field_0xf0 != -1) {
+						puVar9 = (uint*)&this->field_0x268;
+						iVar3 = 0xf;
+						do {
+							puVar9 = puVar9 + -1;
+							fVar11 = 0.0f;
+							if ((*puVar9 & uVar10) != 0) {
+								fVar11 = 1.0f;
+							}
+							psVar6 = this->field_0x38->aMusicCells + this->field_0xf0;
+							if ((psVar6->pMusic != (CMusic*)0x0) && (NoAudio == 0)) {
+								edMusicStreamChannelFade(0.0f, psVar6->streamIndex, iVar3, 0x10000, (int)(fVar11 * 65535.0f));
+							}
+
+							bVar2 = iVar3 != 0;
+							iVar3 = iVar3 + -1;
+						} while (bVar2);
+					}
+				}
+			}
+		}
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 		break;

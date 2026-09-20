@@ -266,6 +266,15 @@ public:
 		return;
 	}
 
+	inline void SetTimeScaler(float newTimeScale)
+	{
+		if (IsValid()) {
+			pFx->SetTimeScaler(newTimeScale);
+		}
+
+		return;
+	}
+
 	int id;
 	CNewFx* pFx;
 };

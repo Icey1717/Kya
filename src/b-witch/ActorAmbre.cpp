@@ -8,107 +8,6 @@
 #include "TimeController.h"
 #include "LevelScheduler.h"
 
-StaticMeshComponent::StaticMeshComponent()
-{
-	this->pMeshTransformParent = (edNODE*)0x0;
-	this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	this->meshIndex = -1;
-	this->textureIndex = -1;
-}
-
-void StaticMeshComponent::Reset()
-{
-	this->pMeshTransformParent = (edNODE*)0x0;
-	this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-
-	return;
-}
-
-void StaticMeshComponent::SetHidden(ed_3D_Scene* pScene)
-{
-	if (pScene == (ed_3D_Scene*)0x0) {
-		pScene = CScene::_scene_handleA;
-	}
-
-	if ((this->pMeshTransformParent != (edNODE*)0x0) && (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0)) {
-		ed3DHierarchyNodeSetRenderOff(pScene, this->pMeshTransformParent);
-	}
-
-	return;
-}
-
-void StaticMeshComponent::SetVisible(ed_3D_Scene* pScene)
-{
-	if (pScene == (ed_3D_Scene*)0x0) {
-		pScene = CScene::_scene_handleA;
-	}
-
-	if ((this->pMeshTransformParent != (edNODE*)0x0) && (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0)) {
-		ed3DHierarchyNodeSetRenderOn(pScene, this->pMeshTransformParent);
-	}
-
-	return;
-}
-
-bool StaticMeshComponent::HasMesh()
-{
-	return this->pMeshTransformParent != (edNODE*)0x0;
-}
-
-void StaticMeshComponent::Term()
-{
-	this->pMeshTransformParent = (edNODE*)0x0;
-	this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
-	this->meshIndex = -1;
-	this->textureIndex = -1;
-
-	return;
-}
-
-void StaticMeshComponent::Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString)
-{
-	if (pScene == (ed_3D_Scene*)0x0) {
-		pScene = CScene::_scene_handleA;
-	}
-
-	if (pMeshManager == (ed_g3d_manager*)0x0) {
-		pMeshManager = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(this->meshIndex, this->textureIndex);
-	}
-
-	this->pMeshTransformParent = ed3DHierarchyAddToScene(pScene, pMeshManager, szString);
-
-	if (this->pMeshTransformParent != (edNODE*)0x0) {
-		this->pMeshTransformData = reinterpret_cast<ed_3d_hierarchy_node*>(this->pMeshTransformParent->pData);
-
-		if (pHierarchySetup != (ed_3d_hierarchy_setup*)0x0) {
-			ed3DHierarchySetSetup((ed_3d_hierarchy*)this->pMeshTransformData, pHierarchySetup);
-		}
-
-		if (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
-			edF32Matrix4CopyHard(&this->perspectiveMatrix, &this->pMeshTransformData->base.transformA);
-		}
-
-		SetHidden((ed_3D_Scene*)0x0);
-	}
-
-	return;
-}
-
-void StaticMeshComponent::Term(ed_3D_Scene* pScene)
-{
-	if (pScene == (ed_3D_Scene*)0x0) {
-		pScene = CScene::_scene_handleA;
-	}
-
-	if (this->pMeshTransformParent != (edNODE*)0x0) {
-		ed3DHierarchyRemoveFromScene(pScene, this->pMeshTransformParent);
-	}
-
-	this->pMeshTransformParent = (edNODE*)0x0;
-
-	return;
-}
-
 StateConfig CActorAmbre::_gStateCfg_AMB[6]
 {
 	StateConfig(0x0, 0x0),
@@ -127,7 +26,7 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 	int materialId;
 	undefined* puVar4;
 	int iVar5;
-	CFxSparkNoAlloc<4, 12>* pFxSpark;
+	CFxSparkNoAlloc<4, 16>* pFxSpark;
 
 	CActor::Create(pByteCode);
 	materialId = pByteCode->GetS32();
@@ -175,7 +74,7 @@ void CActorAmbre::Init()
 	int iVar3;
 	S_NTF_TARGET_STREAM_REF* pSVar4;
 	AmberSparkProps* pCurProps;
-	CFxSparkNoAlloc<4, 12>* pFxSpark;
+	CFxSparkNoAlloc<4, 16>* pFxSpark;
 	CActorAmbre* iVar6;
 	int iVar7;
 	float fVar8;

@@ -4,7 +4,8 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorAutonomous.h"
-#include "ActorAmbre.h"
+#include "StaticMeshComponent.h"
+#include "Fx.h"
 #include "Dynamic.h"
 
 #define IMPLEMENTATION_GUARD_FIGHT(x)

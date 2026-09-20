@@ -2526,8 +2526,7 @@ void CActorHeroPrivate::Manage()
 
 	uVar6 = TestState_IsOnAToboggan(0xffffffff);
 	if (uVar6 != 0) {
-		IMPLEMENTATION_GUARD_FX(
-		FxManageToboggan(this);)
+		FxManageToboggan();
 	}
 
 	bVar4 = ManageActions();
@@ -6772,11 +6771,19 @@ LAB_0034f410:
 		edF32Matrix4ToEulerSoft(&local_40, &local_50.xyz, "XYZ");
 	}
 
-	this->pTobogganFxB->SetRotationEuler(&local_50);
-	this->pTobogganFxB->SetPosition(&local_40.rowT);
+	if (this->pTobogganFxB != (CFxHandleExt*)0x0) {
+		this->pTobogganFxB->SetRotationEuler(&local_50);
+	}
+	if (this->pTobogganFxB != (CFxHandleExt*)0x0) {
+		this->pTobogganFxB->SetPosition(&local_40.rowT);
+	}
 
-	this->pTobogganFxC->SetRotationEuler(&local_50);
-	this->pTobogganFxC->SetPosition(&local_40.rowT);
+	if (this->pTobogganFxC != (CFxHandleExt*)0x0) {
+		this->pTobogganFxC->SetRotationEuler(&local_50);
+	}
+	if (this->pTobogganFxC != (CFxHandleExt*)0x0) {
+		this->pTobogganFxC->SetPosition(&local_40.rowT);
+	}
 
 	pSVar2 = this->pTobogganStaticMeshB;
 	if ((pSVar2 != (StaticMeshComponentHeroEx*)0x0) && (bVar8 = pSVar2->HasMesh(), bVar8 != false)) {
@@ -17753,39 +17760,6 @@ void CBehaviourHero::End(int newBehaviourId)
 void CBehaviourHero::SetInitialState()
 {
 	this->pHero->SetInitialState();
-
-	return;
-}
-
-void StaticMeshComponentHeroEx::Init(float param_1, float param_2, ed_3D_Scene* param_4, ed_g3d_manager* param_5, char* szString)
-{
-	StaticMeshComponent::Init(param_4, param_5, (ed_3d_hierarchy_setup*)0x0, szString);
-
-	memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
-
-	if (param_1 != 0.0f) {
-		(this->hierarchySetup).pBoundingSphere = (edF32VECTOR4*)this->bounds;
-		this->bounds[0] = 0.0f;
-		this->bounds[1] = 0.0f;
-		this->bounds[2] = 0.0f;
-		this->bounds[3] = param_1;
-	}
-
-	if (param_2 != 0.0f) {
-		(this->hierarchySetup).clipping_0x0 = &this->field_0x60;
-		this->field_0x60 = param_2;
-	}
-
-	ed3DHierarchySetSetup(&this->pMeshTransformData->base, &this->hierarchySetup);
-	(this->hierarchySetup).pLightData = &this->lightConfig;
-	(this->lightConfig).pLightAmbient = &this->lightAmbient;
-	(this->lightConfig).pLightColorMatrix = (edF32MATRIX4*)0x0;
-	(this->lightConfig).pLightDirections = (edF32MATRIX4*)0x0;
-	ed3DHierarchySetSetup(&this->pMeshTransformData->base, &this->hierarchySetup);
-	(this->lightAmbient).x = 255.0f;
-	(this->lightAmbient).y = 255.0f;
-	(this->lightAmbient).z = 255.0f;
-	(this->lightAmbient).w = 0.0f;
 
 	return;
 }

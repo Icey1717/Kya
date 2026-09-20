@@ -777,7 +777,7 @@ void edDListPatchGifTag2D(void)
 	return;
 }
 
-void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
+void ed3DG2DMaterialSetLayerProp(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->nbLayers) {
 		ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
@@ -792,7 +792,7 @@ void edDListBlendSet(uint bAlphaBlendEnable)
 {
 	if ((((gbInsideBegin == false) && (gBlendMode = bAlphaBlendEnable & 0xff, gCurMaterial != (edDList_material*)0x0)) &&
 		(gCurMaterial->pMaterial != (ed_g2d_material*)0x0)) && (gBlendMode == 1)) {
-		ApplyFlag_0029f1e0(gCurMaterial->pMaterial, 0, 4);
+		ed3DG2DMaterialSetLayerProp(gCurMaterial->pMaterial, 0, 4);
 	}
 	return;
 }

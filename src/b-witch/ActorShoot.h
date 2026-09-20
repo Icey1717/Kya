@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "ActorAutonomous.h"
-#include "ActorAmbre.h"
+#include "StaticMeshComponent.h"
 #include "ActorBonusServices.h"
 #include "FireShot.h"
 

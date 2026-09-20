@@ -3,6 +3,8 @@
 #include "MathOps.h"
 #include "edDlist.h"
 #include "FileManager3D.h"
+#include "TimeController.h"
+#include "edDList/edDList.inl"
 
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
@@ -212,4 +214,203 @@ void CFxSpark::Manage(edF32VECTOR4* param_1, edF32VECTOR4* param_2)
 }
 
 void CFxSpark::Draw(bool param_2)
-{}
+{
+	CGlobalDListManager* pManager;
+	CGlobalDListPatch* pPatch;
+	DATA* pData;
+	uint sparkIndex;
+	uint vertexIndex;
+	uint colorIndex;
+	int vertexOffset;
+	int pointIndex;
+	int alpha;
+	byte bVar1;
+	_rgba color;
+
+	pManager = CScene::ptable.g_GlobalDListManager_004516bc;
+	if (this->particleID != -1) {
+		if (param_2 != false) {
+			pPatch = GameDListPatch_BeginCurrent(this->dlistPatchId);
+			this->field_0xc8 = pPatch;
+			if (pPatch != (CGlobalDListPatch*)0x0) {
+				pManager->SetActive(this->dlistPatchId, 1);
+				vertexOffset = 0;
+				edF32Matrix4CopyHard(&this->field_0xc8->pCurrentPatch->pDisplayListCommand->matrix, &this->field_0x20);
+				sparkIndex = 0;
+
+				if (this->count_0x98 != 0) {
+					do {
+						pData = this->pVector_0xc + sparkIndex;
+						if ((pData->field_0x8 == 0) || (pData->field_0x0 == 0.0f)) {
+							pointIndex = 0;
+							if (0 < this->count_0xa0) {
+								do {
+									vertexIndex = vertexOffset + pointIndex * 2;
+									colorIndex = vertexIndex;
+									if (0x47 < vertexIndex) {
+										colorIndex = vertexIndex + ((vertexIndex - 0x48) / 0x46 + 1) * 2;
+									}
+									color.rgba = this->field_0xc8->pCurrentPatch->pRgba[colorIndex].rgba & 0xffffff;
+									edDListPatchRGBA_Inline(this->field_0xc8->pCurrentPatch->pRgba, color, vertexIndex, this->field_0xc8->pCurrentPatch->nbMatrices);
+									vertexIndex = vertexIndex + 1;
+									colorIndex = vertexIndex;
+									if (0x47 < vertexIndex) {
+										colorIndex = vertexIndex + ((vertexIndex - 0x48) / 0x46 + 1) * 2;
+									}
+									gpCurPatchRGBABuf = 0;
+									color.rgba = this->field_0xc8->pCurrentPatch->pRgba[colorIndex].rgba & 0xffffff;
+									edDListPatchRGBA_Inline(this->field_0xc8->pCurrentPatch->pRgba, color, vertexIndex, this->field_0xc8->pCurrentPatch->nbMatrices);
+									pointIndex = pointIndex + 1;
+								} while (pointIndex < this->count_0xa0);
+							}
+						}
+						else {
+							pointIndex = 0;
+							alpha = (int)((float)(this->field_0x90 >> 0x18) * pData->field_0x0);
+							if (0 < this->count_0xa0) {
+								do {
+									vertexIndex = vertexOffset + pointIndex * 2;
+									colorIndex = vertexIndex;
+									if (0x47 < vertexIndex) {
+										colorIndex = vertexIndex + ((vertexIndex - 0x48) / 0x46 + 1) * 2;
+									}
+									color.rgba = (this->field_0xc8->pCurrentPatch->pRgba[colorIndex].rgba & 0xffffff) | (uint)alpha << 0x18;
+									edDListPatchRGBA_Inline(this->field_0xc8->pCurrentPatch->pRgba, color, vertexIndex, this->field_0xc8->pCurrentPatch->nbMatrices);
+									vertexIndex = vertexIndex + 1;
+									colorIndex = vertexIndex;
+									if (0x47 < vertexIndex) {
+										colorIndex = vertexIndex + ((vertexIndex - 0x48) / 0x46 + 1) * 2;
+									}
+									gpCurPatchRGBABuf = 0;
+									color.rgba = (this->field_0xc8->pCurrentPatch->pRgba[colorIndex].rgba & 0xffffff) | (uint)alpha << 0x18;
+									edDListPatchRGBA_Inline(this->field_0xc8->pCurrentPatch->pRgba, color, vertexIndex, this->field_0xc8->pCurrentPatch->nbMatrices);
+									pointIndex = pointIndex + 1;
+								} while (pointIndex < this->count_0xa0);
+							}
+						}
+
+						vertexOffset = vertexOffset + this->count_0xa0 * 2;
+						pData->field_0x0 = pData->field_0x0 - (this->field_0xb8 / (float)this->count_0x98) * GetTimer()->cutsceneDeltaTime;
+						if (pData->field_0x0 < 0.0f) {
+							pData->field_0x0 = 0.0f;
+							pData->field_0x8 = 0;
+						}
+
+						sparkIndex = sparkIndex + 1;
+					} while (sparkIndex < (uint)this->count_0x98);
+				}
+
+				if ((this->field_0xbc <= 0.0f) || (this->pVector_0xcc->field_0x9 != 0)) {
+					this->field_0xbc = 1.0f / this->field_0xb8;
+					UpdateVertices();
+
+					bVar1 = this->pVector_0xcc->field_0x9;
+					this->pVector_0xcc->field_0x9 = bVar1 ^ 1;
+					if (bVar1 != 0) {
+						this->field_0x9c = (this->field_0x9c + 1) % this->count_0x98;
+						this->pVector_0xcc = this->pVector_0xc + this->field_0x9c;
+					}
+				}
+
+				this->field_0xbc = this->field_0xbc - GetTimer()->cutsceneDeltaTime;
+				GameDListPatch_EndCurrent(-1, 0);
+				return;
+			}
+		}
+
+		pManager->SetActive(this->dlistPatchId, 0);
+	}
+
+	return;
+}
+
+// 001d5ab0
+void CFxSpark::UpdateVertices()
+{
+	edF32VECTOR4 vertex;
+	edF32VECTOR4* pPoint;
+	uint vertexIndex;
+	int pointIndex;
+	float width;
+
+	*this->pFloat_0x10 = this->field_0xb0;
+	this->pFloat_0x10[this->count_0xa0 - 1] = this->field_0xb0;
+	vertexIndex = this->count_0xa0 * this->field_0x9c * 2;
+	vertex = { this->field_0xb0 / this->field_0xe0, 0.0f, 0.0f, 0.0f };
+	// The first pair starts a new strip: the skip word is 0x0000c000.
+	uint skip = 0xc000;
+	memcpy(&vertex.w, &skip, sizeof(skip));
+	edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex);
+	vertex.x = -this->field_0xb0 / this->field_0xe0;
+	edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex + 1);
+	vertex.x = this->field_0xb0 / this->field_0xe0;
+	vertex.z = 1.0f;
+	vertex.w = 1.0f;
+	edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex + this->count_0xa0 * 2 - 2);
+	vertex.x = -this->field_0xb0 / this->field_0xe0;
+	edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex + this->count_0xa0 * 2 - 1);
+	if (this->pVector_0xcc->field_0x9 == 0) {
+		SubdivideVertices(0, this->count_0xa0 - 1);
+	}
+	else {
+		pointIndex = 1;
+		if (1 < this->count_0xa0 - 1) {
+			do {
+				width = this->pFloat_0x10[pointIndex];
+				pPoint = this->field_0xe4 + pointIndex + this->field_0x9c * this->count_0xa0;
+				vertex = *pPoint;
+				vertex.y = pPoint->y - width;
+				edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex + pointIndex * 2);
+				vertex.y = pPoint->y + width;
+				edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&vertex, &vertex.w, vertexIndex + pointIndex * 2 + 1);
+				pointIndex = pointIndex + 1;
+			} while (pointIndex < this->count_0xa0 - 1);
+		}
+	}
+	this->pVector_0xcc->field_0x0 = 1.0f;
+	this->pVector_0xcc->field_0x8 = 1;
+	return;
+}
+
+// 001d4d60
+void CFxSpark::SubdivideVertices(int first, int last)
+{
+	int middle;
+	int vertexOffset;
+	float spread;
+	float width;
+	edF32VECTOR4 difference;
+	edF32VECTOR4 leftVertex;
+	edF32VECTOR4 midpoint;
+	edF32VECTOR4 lastPoint;
+	edF32VECTOR4 firstPoint;
+
+	middle = (first + last) >> 1;
+	if (middle != first) {
+		vertexOffset = this->count_0xa0 * this->field_0x9c * 2;
+		firstPoint = this->field_0xe4[first + this->field_0x9c * this->count_0xa0];
+		lastPoint = this->field_0xe4[last + this->field_0x9c * this->count_0xa0];
+		edF32Vector4SubHard(&difference, &lastPoint, &firstPoint);
+		edF32Vector4AddHard(&midpoint, &lastPoint, &firstPoint);
+		edF32Vector4ScaleHard(0.5f, &midpoint, &midpoint);
+		this->pFunc_0xc4(&midpoint, &this->vector_0x80);
+		spread = difference.z + difference.z;
+		difference.z = -difference.z;
+		midpoint.x = midpoint.x + this->field_0xb4 * (difference.z + spread * ((float)rand() / 2.147484e+09f));
+		midpoint.y = midpoint.y + this->field_0xb4 * (difference.z + spread * ((float)rand() / 2.147484e+09f));
+		midpoint.z = midpoint.z + this->field_0xb4 * (difference.z + spread * ((float)rand() / 2.147484e+09f));
+		this->field_0xe4[middle + this->field_0x9c * this->count_0xa0] = midpoint;
+		width = (this->field_0xac * (2.0f - ((float)rand() / 2.147484e+09f) * 1.5f) +
+			this->pFloat_0x10[first] + this->pFloat_0x10[last]) / (this->field_0xe0 * 3.0f);
+		this->pFloat_0x10[middle] = width;
+		midpoint.w = 1.0f;
+		leftVertex = midpoint;
+		leftVertex.x = midpoint.x - width;
+		midpoint.x = midpoint.x + width;
+		edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&midpoint, &midpoint.w, vertexOffset + middle * 2);
+		edDListPatchVertex_Inline(this->field_0xc8->pCurrentPatch->pVertex, (edF32VECTOR3*)&leftVertex, &leftVertex.w, vertexOffset + middle * 2 + 1);
+		SubdivideVertices(first, middle);
+		SubdivideVertices(middle, last);
+	}
+	return;
+}

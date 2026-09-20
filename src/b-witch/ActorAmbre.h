@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "CinematicManager.h"
 #include "Fx_Spark.h"
+#include "StaticMeshComponent.h"
 #include "Fx.h"
 
 struct S_NTF_TARGET_STREAM_REF;
@@ -31,29 +32,6 @@ public:
 	virtual bool UnknownFunction() { return true; }
 };
 
-class StaticMeshComponent
-{
-public:
-	StaticMeshComponent();
-
-	virtual void Reset();
-	virtual void SetHidden(ed_3D_Scene* pScene);
-	virtual void SetVisible(ed_3D_Scene* pScene);
-	virtual bool HasMesh();
-	virtual void Term();
-
-	void Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString);
-	void Term(ed_3D_Scene* pScene);
-
-	edNODE* pMeshTransformParent;
-	ed_3d_hierarchy_node* pMeshTransformData;
-
-	int meshIndex;
-	int textureIndex;
-
-	edF32MATRIX4 perspectiveMatrix;
-};
-
 struct AmberSparkProps
 {
 	uint boneId;
@@ -76,7 +54,7 @@ public:
 
 	void BehaviourStand_Manage(CBehaviourAmbre* pBehaviour);
 
-	CFxSparkNoAlloc<4, 12> aFxSparks[3];
+	CFxSparkNoAlloc<4, 16> aFxSparks[3];
 	AmberSparkProps aFxSparkProps[3];
 
 	CFxHandleExt effectsStructC;

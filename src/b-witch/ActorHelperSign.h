@@ -3,7 +3,8 @@
 
 #include "Types.h"
 #include "Actor.h"
-#include "ActorAmbre.h"
+#include "StaticMeshComponent.h"
+#include "Fx.h"
 #include "SpriteWidget.h"
 
 #define HELPER_SIGN_BEHAVIOUR_STAND 2

@@ -6,7 +6,8 @@
 #include "PathManager.h"
 #include "Path.h"
 #include "Fx_Tail.h"
-#include "ActorAmbre.h"
+#include "StaticMeshComponent.h"
+#include "Fx.h"
 #include "Dynamic.h"
 
 struct edDList_material;
@@ -180,16 +181,14 @@ public:
 
 	int trailMaterialId;
 
-	int field_0x63c;
-	int field_0x644;
-	int field_0x648;
+	CFxHandleExt field_0x634;
+	StaticMeshComponentHeroEx staticMeshComponent;
+	float field_0x700;
 
 	edF32VECTOR4 waypointLocation;
 	byte bWaypointSet;
 
 	edDList_material* pTrailMaterial;
-
-	StaticMeshComponent staticMeshComponent;
 };
 
 #endif //ACTOR_ATON_H

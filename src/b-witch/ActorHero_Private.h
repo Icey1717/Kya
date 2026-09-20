@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "ActorHero.h"
 #include "Fx_Tail.h"
+#include "StaticMeshComponent.h"
 
 #define ACTION_EXPLOSIVE_DISTRIBUTOR 0x8
 #define ACTION_MOUNT 0xd
@@ -18,18 +19,6 @@ struct HeroActionParams
 	undefined4 field_0xc;
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 field_0x20;
-};
-
-class StaticMeshComponentHeroEx : public StaticMeshComponent
-{
-public:
-	void Init(float param_1, float param_2, ed_3D_Scene* param_4, ed_g3d_manager* param_5, char* szString);
-
-	float field_0x60;
-	float bounds[4];
-	ed_3d_hierarchy_setup hierarchySetup;
-	ed_3D_Light_Config lightConfig;
-	edF32VECTOR4 lightAmbient;
 };
 
 enum EBoomyThrowState

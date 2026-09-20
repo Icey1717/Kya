@@ -209,7 +209,7 @@ struct ed_g3d_cluster
 	strd_ptr(int*) field_0x30;
 	strd_ptr(int*) field_0x34;
 	strd_ptr(uint*) field_0x38;
-	strd_ptr(uint*) field_0x3c;
+	strd_ptr(ed_3d_sprite*) pSpritePkt;
 	strd_ptr(char*) pMBNK;
 	undefined field_0x44;
 	undefined field_0x45;

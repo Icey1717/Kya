@@ -7,6 +7,7 @@
 #include "EdFileBase.h"
 #include "TimeController.h"
 #include "ActorHero.h"
+#include "CinematicManager.h"
 
 #define ATON_ESCAPE_STATE_PATH_BEGIN					0x7
 #define ATON_ESCAPE_STATE_PATH_STAND_CALL_NEAR			0xa
@@ -50,9 +51,9 @@ void CActorAton::Create(ByteCode* pByteCode)
 	this->field_0x358 = pByteCode->GetU32();
 	this->field_0x35c = pByteCode->GetU32();
 	this->field_0x360 = pByteCode->GetU32();
-	this->field_0x63c = pByteCode->GetS32();
-	this->field_0x644 = pByteCode->GetS32();
-	this->field_0x648 = pByteCode->GetS32();
+	this->field_0x634.type = pByteCode->GetS32();
+	this->staticMeshComponent.textureIndex = pByteCode->GetS32();
+	this->staticMeshComponent.meshIndex = pByteCode->GetS32();
 
 	staticMeshComponent.Reset();
 
@@ -1173,21 +1174,19 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 								this->field_0x3c0 = this->rotationQuat;
 								this->flags = this->flags | 0x1000;
 
-								IMPLEMENTATION_GUARD_FX(
-								CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x634);
-								piVar3 = (int*)this->field_0x638;
-								if (((piVar3 != (int*)0x0) && (this->field_0x634 != 0)) && (this->field_0x634 == piVar3[6])) {
-									(**(code**)(*piVar3 + 0x10))(0, 0);
-								}
+								SV_FX_Start(&this->field_0x634);
+
+								this->field_0x634.Start();
+
 								bVar4 = false;
-								if ((this->field_0x644 != -1) && (this->field_0x648 != -1)) {
+								if ((this->staticMeshComponent.textureIndex != -1) && (this->staticMeshComponent.meshIndex != -1)) {
 									bVar4 = true;
 								}
+
 								if (bVar4) {
-									FUN_00114bc0(0.0, 0.0, (StaticMeshComponent*)&this->staticMeshComponent, (ed_3D_Scene*)0x0,
-										(ed_g3d_manager*)0x0, (char*)0x0);
-									this->field_0x700 = 0;
-								})
+									this->staticMeshComponent.Init(0.0f, 0.0f, (ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (char*)0x0);
+									this->field_0x700 = 0.0f;
+								}
 							}
 							else {
 								if (newState == ATON_ESCAPE_STATE_PATH_JUMP_2_4) {
@@ -3129,41 +3128,39 @@ void CActorAton::StateAtonPathToboggan()
 	fVar8 = edFIntervalLERP(((this->pMeshTransform)->base).transformA.bb, 0.93972176f, 0.0f, 1.0f, 1.3f);
 	fVar7 = edFIntervalLERP(this->dynamic.linearAcceleration, 0.0f, 25.0f, 0.8f, 1.2f);
 
-	IMPLEMENTATION_GUARD_LOG(
-	if (((int*)this->field_0x638 != (int*)0x0) && (this->field_0x634 != 0)) {
-		(**(code**)(*(int*)this->field_0x638 + 0x40))(fVar8 * fVar7);
-	}
+	this->field_0x634.SetTimeScaler(fVar8 * fVar7);
 
-	lVar6 = (*(code*)this->staticMeshComponent->field_0x14)();
-	if (lVar6 != 0) {
-		local_60.aa = edFIntervalLERP(this->dynamic.linearAcceleration, 19.0, 25.0, 0.5, 1.0);
+	if (this->staticMeshComponent.HasMesh()) {
+		local_60.aa = edFIntervalLERP(this->dynamic.linearAcceleration, 19.0f, 25.0f, 0.5f, 1.0f);
 		edF32Matrix4CopyHard(&local_60, &gF32Matrix4Unit);
 		local_60.bb = local_60.aa;
 		local_60.cc = local_60.aa;
-		edF32Matrix4MulF32Matrix4Hard(&local_60, &local_60, (edF32MATRIX4*)this->pMeshTransform);
-		if ((edF32MATRIX4*)this->field_0x694 != (edF32MATRIX4*)0x0) {
-			edF32Matrix4CopyHard((edF32MATRIX4*)this->field_0x694, &local_60);
+		edF32Matrix4MulF32Matrix4Hard(&local_60, &local_60, &this->pMeshTransform->base.transformA);
+		if (this->staticMeshComponent.pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
+			edF32Matrix4CopyHard(&this->pMeshTransform->base.transformA, &local_60);
 		}
-		fVar8 = edFIntervalLERP(this->dynamic.linearAcceleration, 0.0, 25.0, 0.0, 64.0);
-		CActor::SV_UpdateValue(fVar8, 500.0, this, (float*)&this->field_0x700);
-		fVar8 = (float)this->field_0x700;
-		if (this->field_0x690 != (edNODE*)0x0) {
-			if (fVar8 < 2.147484e+09) {
+
+		fVar8 = edFIntervalLERP(this->dynamic.linearAcceleration, 0.0f, 25.0f, 0.0f, 64.0f);
+		SV_UpdateValue(fVar8, 500.0f, &this->field_0x700);
+		fVar8 = this->field_0x700;
+		if (this->staticMeshComponent.pMeshTransformParent != (edNODE*)0x0) {
+			if (fVar8 < 2.147484e+09f) {
 				alpha = (byte)(int)fVar8;
-				pNode = this->field_0x690;
 			}
 			else {
 				alpha = (byte)(int)(fVar8 - 2.147484e+09);
-				pNode = this->field_0x690;
 			}
+
+			pNode = this->staticMeshComponent.pMeshTransformParent;
 			ed3DHierarchyNodeSetAlpha(pNode, alpha);
 		}
+
 		uVar1 = this->field_0xf4;
-		(this->field_0x6f0).x = (float)((uVar1 & 0xf) << 4);
-		(this->field_0x6f0).y = (float)(((int)(uint)uVar1 >> 4 & 0xfU) << 4);
-		(this->field_0x6f0).z = (float)(((int)(uint)uVar1 >> 8 & 0xfU) << 4);
-		(this->field_0x6f0).w = 0.0;
-	})
+		this->staticMeshComponent.lightAmbient.x = (float)((uVar1 & 0xf) << 4);
+		this->staticMeshComponent.lightAmbient.y = (float)(((int)(uint)uVar1 >> 4 & 0xfU) << 4);
+		this->staticMeshComponent.lightAmbient.z = (float)(((int)(uint)uVar1 >> 8 & 0xfU) << 4);
+		this->staticMeshComponent.lightAmbient.w = 0.0f;
+	}
 
 	pTVar4 = GetTimer();
 	fVar8 = 0.5f;

@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "ActorMovable.h"
 #include "Vision.h"
-#include "ActorAmbre.h"
+#include "StaticMeshComponent.h"
 #include "Fx_Tail.h"
 #include "FxLightEmitter.h"
 #include "Dynamic.h"
