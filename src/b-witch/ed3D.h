@@ -2,6 +2,7 @@
 #define _ED3D_H
 
 #include "Types.h"
+#include <stddef.h>
 
 #ifdef PLATFORM_WIN
 #include "delegate.h"
@@ -188,52 +189,38 @@ struct ed_3d_octree {
 
 struct ClusterDetails
 {
-	union
-	{
-		struct
-		{
-			strd_ptr(char*) pXYZW;
-			strd_ptr(char*) pWH;
-			strd_ptr(char*) pRGBA;
-			strd_ptr(char*) pNORMAL;
-			strd_ptr(ed_Chunck*) pMBNK;
-		};
-		struct
-		{
-			strd_ptr(int*) field_0x20;
-			strd_ptr(int*) field_0x24;
-			ushort count_0x28;
-			ushort clusterHierCount;
-			undefined field_0x2c;
-			undefined field_0x2d;
-			ushort spriteCount;
-			strd_ptr(int*) field_0x30;
-		};
-	};
+	strd_ptr(char*) pXYZW;
+	strd_ptr(char*) pWH;
+	strd_ptr(char*) pRGBA;
+	strd_ptr(char*) pNORMAL;
+	strd_ptr(ed_Chunck*) pMBNK;
 };
 
 static_assert(sizeof(ClusterDetails) == 0x14);
 
 struct ed_g3d_cluster
 {
-	ushort aClusterStripCounts[5];
-	ushort field_0x1a;
+	// Cluster payload; the ed_Chunck header precedes this structure.
+	ushort aClusterStripCounts[13];
+	ushort clusterHierCount;
 	ushort flags_0x1c;
-	undefined2 field_0x1e;
+	ushort spriteCount;
 	ClusterDetails clusterDetails;
 	strd_ptr(int*) field_0x34;
-	strd_ptr(uint*) field_0x38;
-	strd_ptr(ed_3d_sprite*) pSpritePkt;
-	strd_ptr(char*) pMBNK;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
 	strd_ptr(ed_3d_strip*) p3DStrip;
 	strd_ptr(ed_3d_sprite*) p3DSprite;
 };
 
 static_assert(sizeof(ed_g3d_cluster) == 0x40);
+static_assert(offsetof(ed_g3d_cluster, aClusterStripCounts) == 0x00);
+static_assert(offsetof(ed_g3d_cluster, clusterHierCount) == 0x1a);
+static_assert(offsetof(ed_g3d_cluster, flags_0x1c) == 0x1c);
+static_assert(offsetof(ed_g3d_cluster, spriteCount) == 0x1e);
+static_assert(offsetof(ed_g3d_cluster, clusterDetails) == 0x20);
+static_assert(offsetof(ClusterDetails, pMBNK) == 0x10);
+static_assert(offsetof(ed_g3d_cluster, field_0x34) == 0x34);
+static_assert(offsetof(ed_g3d_cluster, p3DStrip) == 0x38);
+static_assert(offsetof(ed_g3d_cluster, p3DSprite) == 0x3c);
 
 struct ed_g3d_Anim_def
 {

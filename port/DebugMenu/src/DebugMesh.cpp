@@ -348,7 +348,7 @@ namespace Debug
 
 						const uint stripCountArrayEntryIndex = 4;
 
-						for (int i = 0; i < 5; i++) {
+						for (int i = 0; i < 13; i++) {
 							char buff[256];
 							sprintf_s(buff, 256, "aClusterStripCounts[%d]: %d", i, pCluster->aClusterStripCounts[i]);
 
@@ -363,34 +363,27 @@ namespace Debug
 						ImGui::Spacing();
 						ImGui::Spacing();
 
-						ImGui::Text("field_0x1a: %d", pCluster->field_0x1a);
+						ImGui::Text("clusterHierCount: %d", pCluster->clusterHierCount);
 						ImGui::Text("flags_0x1c: %d", pCluster->flags_0x1c);
-						ImGui::Text("field_0x1e: %d", pCluster->field_0x1e);
+						ImGui::Text("spriteCount: %d", pCluster->spriteCount);
 
 						ImGui::Spacing();
 						ImGui::Spacing();
 
 						if (ImGui::CollapsingHeader("Cluster Details", ImGuiTreeNodeFlags_DefaultOpen)) {
-							DebugHelpers::TextValidValue("field_0x20: %p", pCluster->clusterDetails.field_0x20);
-							DebugHelpers::TextValidValue("field_0x24: %p", pCluster->clusterDetails.field_0x24);
-
-							ImGui::Spacing();
-							ImGui::Spacing();
-
-							ImGui::Text("count_0x28: %d", pCluster->clusterDetails.count_0x28);
-							ImGui::Text("clusterHierCount: %d", pCluster->clusterDetails.clusterHierCount);
-							ImGui::Text("field_0x2c: %d", pCluster->clusterDetails.field_0x2c);
-							ImGui::Text("field_0x2d: %d", pCluster->clusterDetails.field_0x2d);
-							ImGui::Text("spriteCount: %d", pCluster->clusterDetails.spriteCount);
+							ImGui::Text("pXYZW handle: 0x%x", pCluster->clusterDetails.pXYZW);
+							ImGui::Text("pWH handle: 0x%x", pCluster->clusterDetails.pWH);
+							ImGui::Text("pRGBA handle: 0x%x", pCluster->clusterDetails.pRGBA);
+							ImGui::Text("pNORMAL handle: 0x%x", pCluster->clusterDetails.pNORMAL);
+							ImGui::Text("pMBNK handle: 0x%x", pCluster->clusterDetails.pMBNK);
 						}
 
 						ImGui::Spacing();
 						ImGui::Spacing();
 
-						ImGui::Text("field_0x34: 0x%x", pCluster->clusterDetails.field_0x30);
 						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x34);
-						ImGui::Text("field_0x34: 0x%x", pCluster->field_0x38);
-						ImGui::Text("pSpritePkt: 0x%x", pCluster->pSpritePkt);
+						ImGui::Text("p3DStrip handle: 0x%x", pCluster->p3DStrip);
+						ImGui::Text("p3DSprite handle: 0x%x", pCluster->p3DSprite);
 
 						ImGui::Spacing();
 						ImGui::Spacing();
@@ -400,7 +393,7 @@ namespace Debug
 							bool bProcessedStrip = false;
 
 							if ((stripCount != 0) && (bProcessedStrip = true, stripCount != 0)) {
-								ed_Chunck* pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->pMBNK);
+								ed_Chunck* pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
 								ed_3d_strip* p3DStrip = LOAD_POINTER_CAST(ed_3d_strip*, pCluster->p3DStrip);
 
 								// clamp our strip count
@@ -418,14 +411,14 @@ namespace Debug
 						ImGui::Spacing();
 						ImGui::Spacing();
 
-						uint spriteCount = pCluster->clusterDetails.spriteCount;
+						uint spriteCount = pCluster->spriteCount;
 
 						if (spriteCount != 0) {
 							
 						}
 
 						if (ImGui::CollapsingHeader("Cluster Hier Details")) {
-							uint clusterHierCount = pCluster->clusterDetails.clusterHierCount;
+							uint clusterHierCount = pCluster->clusterHierCount;
 
 							if (clusterHierCount != 0) {
 								ed_Chunck* pHASH = reinterpret_cast<ed_Chunck*>(pCluster + 1);

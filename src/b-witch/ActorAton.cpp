@@ -4696,17 +4696,12 @@ void CBehaviourAtonEscape::TermState(int oldState, int newState)
 	if (oldState == ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN) {
 		pActorAton->flags = pActorAton->flags & 0xffffefff;
 
-		IMPLEMENTATION_GUARD_FX(
-		piVar3 = (int*)pActorAton->field_0x638;
-		if (((piVar3 != (int*)0x0) && (pActorAton->field_0x634 != 0)) && (pActorAton->field_0x634 == piVar3[6])) {
-			(**(code**)(*piVar3 + 0xc))();
+		pActorAton->field_0x634.Kill();
+		pActorAton->field_0x634.Reset();
+
+		if (pActorAton->staticMeshComponent.HasMesh()) {
+			pActorAton->staticMeshComponent.Term((ed_3D_Scene*)0x0);
 		}
-		pActorAton->field_0x638 = 0;
-		pActorAton->field_0x634 = 0;
-		lVar5 = (**(code**)((int)((edF32VECTOR4*)&pActorAton->staticMeshComponent)->x + 0x14))();
-		if (lVar5 != 0) {
-			StaticMeshComponent::Unload_00114e80((StaticMeshComponent*)&pActorAton->staticMeshComponent, (ed_3D_Scene*)0x0);
-		})
 	}
 	else {
 		if ((oldState == ATON_ESCAPE_STATE_PATH_JUMP_2_4) || (oldState == 0x14)) {

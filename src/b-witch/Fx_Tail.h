@@ -24,19 +24,25 @@ public:
 	bool Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
 	bool Manage(edF32VECTOR4* param_2, int param_3, int param_4);
 
+	void _ManageLife();
+	void _PatchListAlpha();
+
 	int dlistPatchId;
+	CGlobalDListPatch* field_0x8;
 
 	uint flags;
 
 	int particleID_0x14;
 
-	void* pData_0x18;
+	float* pData_0x18;
 
 	_rgba field_0x24;
 	_rgba field_0x28;
+	int field_0x2c;
 
 	float field_0x30;
 	int count_0x34;
+	int field_0x38;
 	int field_0x3c;
 	int field_0x40;
 

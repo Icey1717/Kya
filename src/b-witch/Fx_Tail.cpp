@@ -1,7 +1,7 @@
 #include "Fx_Tail.h"
 #include "edMem.h"
 #include "DlistManager.h"
-#include "DlistManager.h"
+#include "MathOps.h"
 #include "FileManager3D.h"
 
 #ifdef PLATFORM_WIN
@@ -164,7 +164,7 @@ bool CFxTail::SetPatchActive(int bActive)
 bool CFxTail::Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4)
 {
 	bool bVar1;
-	ulong uVar2;
+	uint uVar2;
 	int iVar3;
 
 	if (param_4 == 0) {
@@ -178,34 +178,291 @@ bool CFxTail::Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4)
 		bVar1 = true;
 	}
 	else {
-		IMPLEMENTATION_GUARD_LOG(
-		uVar2 = (long)(int)this->flags | 0x1000;
-		this->flags = (uint)uVar2;
-		GameDListPatch_BeginCurrent((long)this->dlistPatchId);
-		this->field_0x8 = (int)uVar2;
-		if (uVar2 != 0) {
-			edF32Matrix4CopyHard
-			(*(edF32MATRIX4**)(*(int*)(this->field_0x8 + 0x4d0) + 0x20), (edF32MATRIX4*)&this->field_0x70);
+		this->flags = this->flags | 0x1000;
+		this->field_0x8 = GameDListPatch_BeginCurrent(this->dlistPatchId);
+		if (this->field_0x8 != (CGlobalDListPatch*)0x0) {
+			edF32Matrix4CopyHard(&this->field_0x8->pCurrentPatch->pDisplayListCommand->matrix, &this->field_0x70);
 			if (param_4 == 0) {
-				CFxTail::_CreateSegment((int)this, (undefined4*)param_2, (undefined4*)param_3);
+				_CreateSegment(param_2, param_3);
 				this->field_0x38 = this->field_0x38 + 1;
 				iVar3 = this->count_0x34 + 1;
-				if (iVar3 < (int)this->field_0x38) {
+				if (iVar3 < this->field_0x38) {
 					this->field_0x38 = iVar3;
 				}
+
 				if (this->count_0x34 == 0) {
 					trap(7);
 				}
+
 				this->field_0x3c = (this->field_0x3c + 1) % this->count_0x34;
 			}
-			_ManageLife(this);
+
+			_ManageLife();
 			GameDListPatch_EndCurrent(this->field_0x38 << 1, 1);
-		})
+		}
 
 		bVar1 = false;
 	}
 
 	return bVar1;
+}
+
+void CFxTail::_ManageLife()
+{
+	float* pfVar1;
+	int iVar2;
+	int iVar3;
+	float fVar4;
+
+	fVar4 = 0.0f;
+	if (1 < this->field_0x38) {
+		this->pData_0x18[this->count_0x34] = *this->pData_0x18;
+	}
+
+	iVar2 = this->field_0x38;
+	iVar3 = 0;
+	if (0 < iVar2) {
+		if (8 < iVar2) {
+			pfVar1 = this->pData_0x18;
+			do {
+				iVar3 = iVar3 + 8;
+				fVar4 = fVar4 + *pfVar1 + pfVar1[1] + pfVar1[2] + pfVar1[3] + pfVar1[4] + pfVar1[5] + pfVar1[6] + pfVar1[7];
+				pfVar1 = pfVar1 + 8;
+			} while (iVar3 < iVar2 + -8);
+		}
+
+		if (iVar3 < iVar2) {
+			pfVar1 = this->pData_0x18 + iVar3;
+			do {
+				iVar3 = iVar3 + 1;
+				fVar4 = fVar4 + *pfVar1;
+				pfVar1 = pfVar1 + 1;
+			} while (iVar3 < iVar2);
+		}
+	}
+
+	if (fVar4 == 0.0f) {
+		this->flags = this->flags & 0xffffefff;
+		this->field_0x38 = 0;
+		this->field_0x3c = 0;
+	}
+	else {
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				pfVar1 = this->pData_0x18 + iVar3;
+				if (this->field_0x30 <= *pfVar1) {
+					*pfVar1 = *pfVar1 - this->field_0x30;
+				}
+				else {
+					*pfVar1 = 0.0f;
+				}
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < this->field_0x38);
+		}
+
+		_PatchListAlpha();
+	}
+
+	return;
+}
+
+void CFxTail::_PatchListAlpha()
+{
+	S_GLOBAL_DLIST_PATCH* pSVar1;
+	_rgba _Var2;
+	int iVar3;
+	uint uVar4;
+	_rgba* p_Var5;
+	uint uVar6;
+	uint uVar7;
+	int iVar8;
+	uint uVar9;
+	int iVar10;
+	int iVar11;
+
+	iVar10 = 0;
+	if (0 < this->field_0x38) {
+		uVar7 = 0;
+		uVar6 = 1;
+		do {
+			iVar11 = static_cast<int>(this->pData_0x18[iVar10]);
+			uVar4 = uVar7;
+			if (0x47 < uVar7) {
+				uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
+			pSVar1 = this->field_0x8->pCurrentPatch;
+			uVar4 = pSVar1->nbMatrices;
+			uVar9 = uVar7;
+			if (0x47 < uVar7) {
+				uVar9 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			if (0x47 < uVar4) {
+				uVar4 = uVar4 + ((uVar4 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			p_Var5 = pSVar1->pRgba + uVar9;
+			*p_Var5 = _Var2;
+			if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar9 < uVar4)) {
+				p_Var5[2] = _Var2;
+			}
+
+			uVar4 = uVar6;
+			if (0x47 < uVar6) {
+				uVar4 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			gpCurPatchRGBABuf = 0;
+			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
+			pSVar1 = this->field_0x8->pCurrentPatch;
+			uVar4 = pSVar1->nbMatrices;
+			uVar9 = uVar6;
+			if (0x47 < uVar6) {
+				uVar9 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			if (0x47 < uVar4) {
+				uVar4 = uVar4 + ((uVar4 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			p_Var5 = pSVar1->pRgba + uVar9;
+			*p_Var5 = _Var2;
+			if (((1 < uVar6) && (static_cast<uint>((int)uVar6 % 0x46) < 2)) && (uVar9 < uVar4)) {
+				p_Var5[2] = _Var2;
+			}
+
+			iVar10 = iVar10 + 1;
+			uVar7 = uVar7 + 2;
+			uVar6 = uVar6 + 2;
+		} while (iVar10 < this->field_0x38);
+	}
+
+	iVar8 = this->count_0x34;
+	iVar10 = (this->field_0x3c + iVar8 + -1) % iVar8;
+	if (iVar8 == 0) {
+		trap(7);
+	}
+
+	iVar8 = this->field_0x2c;
+	iVar11 = 0;
+	if (0 < iVar8) {
+		do {
+			uVar7 = iVar10 * 2;
+			iVar8 = static_cast<int>(((float)iVar11 / (float)iVar8) * this->pData_0x18[iVar10]);
+			uVar6 = uVar7;
+			if (0x47 < uVar7) {
+				uVar6 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+			}
+			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+			pSVar1 = this->field_0x8->pCurrentPatch;
+			uVar6 = pSVar1->nbMatrices;
+			uVar4 = uVar7;
+			if (0x47 < uVar7) {
+				uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			if (0x47 < uVar6) {
+				uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			p_Var5 = pSVar1->pRgba + uVar4;
+			*p_Var5 = _Var2;
+			if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
+				p_Var5[2] = _Var2;
+			}
+
+			uVar4 = uVar7 + 1;
+			uVar6 = uVar4;
+			if (0x47 < uVar4) {
+				uVar6 = uVar4 + ((uVar7 - 0x47) / 0x46 + 1) * 2;
+			}
+
+			gpCurPatchRGBABuf = 0;
+
+			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+			pSVar1 = this->field_0x8->pCurrentPatch;
+			uVar6 = pSVar1->nbMatrices;
+			uVar9 = uVar4;
+			if (0x47 < uVar4) {
+				uVar9 = uVar4 + ((uVar7 - 0x47) / 0x46 + 1) * 2;
+			}
+
+			if (0x47 < uVar6) {
+				uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+			}
+
+			p_Var5 = pSVar1->pRgba + uVar9;
+			*p_Var5 = _Var2;
+			if (((1 < uVar4) && (static_cast<uint>((int)uVar4 % 0x46) < 2)) && (uVar9 < uVar6)) {
+				p_Var5[2] = _Var2;
+			}
+
+			if (iVar10 == 0) {
+				uVar7 = this->count_0x34 * 2;
+				uVar6 = uVar7;
+				if (0x47 < uVar7) {
+					uVar6 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+				}
+
+				_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+				pSVar1 = this->field_0x8->pCurrentPatch;
+				uVar6 = pSVar1->nbMatrices;
+				uVar4 = uVar7;
+				if (0x47 < uVar7) {
+					uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
+				}
+
+				if (0x47 < uVar6) {
+					uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+				}
+
+				p_Var5 = pSVar1->pRgba + uVar4;
+				*p_Var5 = _Var2;
+				if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
+					p_Var5[2] = _Var2;
+				}
+
+				iVar3 = this->count_0x34 * 2;
+				uVar7 = iVar3 + 1;
+				uVar6 = uVar7;
+				if (0x47 < uVar7) {
+					uVar6 = uVar7 + ((iVar3 - 0x47U) / 0x46 + 1) * 2;
+				}
+
+				gpCurPatchRGBABuf = 0;
+
+				_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+				pSVar1 = this->field_0x8->pCurrentPatch;
+				uVar6 = pSVar1->nbMatrices;
+				uVar4 = uVar7;
+				if (0x47 < uVar7) {
+					uVar4 = uVar7 + ((iVar3 - 0x47U) / 0x46 + 1) * 2;
+				}
+				if (0x47 < uVar6) {
+					uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
+				}
+				p_Var5 = pSVar1->pRgba + uVar4;
+				*p_Var5 = _Var2;
+				if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
+					p_Var5[2] = _Var2;
+				}
+			}
+
+			iVar8 = this->count_0x34;
+			iVar10 = (iVar10 + iVar8 + -1) % iVar8;
+			if (iVar8 == 0) {
+				trap(7);
+			}
+
+			iVar8 = this->field_0x2c;
+			iVar11 = iVar11 + 1;
+		} while (iVar11 < iVar8);
+	}
+
+	return;
 }
 
 bool CFxTail::Manage(edF32VECTOR4* param_2, int param_3, int param_4)

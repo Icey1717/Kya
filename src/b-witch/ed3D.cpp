@@ -8720,7 +8720,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	bProcessedStrip = false;
 
 	if ((stripCount != 0) && (bProcessedStrip = true, stripCount != 0)) {
-		pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->pMBNK);
+		pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
 		p3DStrip = LOAD_POINTER_CAST(ed_3d_strip*, pCluster->p3DStrip);
 
 		gRender_info_SPR->boundingSphereTestResult = (uint)p3DOctree->boundingSphereTestResult;
@@ -8735,25 +8735,25 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 		bProcessedStrip = true;
 	}
 
-	uint spriteCount = pCluster->clusterDetails.spriteCount;
+	uint spriteCount = pCluster->spriteCount;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Sprite Count: {}", spriteCount);
 
 	if (spriteCount != 0) {
-		IMPLEMENTATION_GUARD_LOG(
-		iVar10 = *(int*)pCluster->p3DSprite;
-		pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->pMBNK);
+
+		ed_3d_sprite* pSprite = LOAD_POINTER_CAST(ed_3d_sprite*, pCluster->p3DSprite);
+		pMBNK = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
 		uVar2 = p3DOctree->boundingSphereTestResult;
-		for (; 0 < (int)spriteCount; spriteCount = spriteCount - 1) {
+		for (; 0 < spriteCount; spriteCount = spriteCount - 1) {
 			ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
-			//ed3DLinkClusterSpriteToViewport(iVar10, uVar2, pMaterialBank);
-			iVar10 = *(int*)(iVar10 + 0xc);
-		})
+			ed3DLinkClusterSpriteToViewport(pSprite, uVar2, pMaterialBank);
+			pSprite = LOAD_POINTER_CAST(ed_3d_sprite*, pSprite->pNext);
+		}
 
 		bProcessedStrip = true;
 	}
 
-	uint clusterHierCount = pCluster->clusterDetails.clusterHierCount;
+	uint clusterHierCount = pCluster->clusterHierCount;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Cluster Hier Count: {}", clusterHierCount);
 
@@ -8771,7 +8771,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	}
 
 	if (!bProcessedStrip) {
-		uVar2 = pCluster->clusterDetails.clusterHierCount;
+		uVar2 = pCluster->clusterHierCount;
 		uVar9 = 0;
 		uVar15 = 0;
 		iVar10 = 0;
@@ -12943,27 +12943,27 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 			uVar7 = 0;
 			do {
 				uVar6 = uVar7 + 1 & 0xffff;
-				uVar8 = uVar8 + pCluster->aClusterStripCounts[uVar7 - 8];
+				uVar8 = uVar8 + pCluster->aClusterStripCounts[uVar7];
 				uVar7 = uVar6;
 			} while (uVar6 < 0xd);
 
 			INT_0044935c = 0x60;
 			stripDef.field_0xc = '\0';
 			stripDef.clusterDetails = pCluster->clusterDetails;
-			piVar4 = (ed_Chunck*)pCluster->clusterDetails.field_0x30;
-			piVar2 = (ed_Chunck*)pCluster->field_0x34;
+			piVar4 = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
+			piVar2 = LOAD_POINTER_CAST(ed_Chunck*, pCluster->field_0x34);
 			stripDef.pTextureInfo = pTextureInfo;
 			stripDef.field_0x8 = (int*)param_5;
 			for (uVar7 = 0; uVar7 < uVar8; uVar7 = uVar7 + 1 & 0xffff) {
 				IMPLEMENTATION_GUARD(
-					stripDef.field_0x0 = piVar2 + 4;
+					stripDef.field_0x0 = reinterpret_cast<int*>(piVar2 + 1);
 				puVar5 = ed3DPrepareStrip(&stripDef);
 				if ((puVar5 != (uint*)0x0) &&
 					(g_pStrippBufLastPos =
 						(edpkt_data*)
-						ed3DStripPreparePacket(puVar5, (ulong*)g_pStrippBufLastPos, (int)(piVar4 + 4), 4), uVar7 == 0
+						ed3DStripPreparePacket(puVar5, (ulong*)g_pStrippBufLastPos, (int)(piVar4 + 1), 4), uVar7 == 0
 						)) {
-					pCluster->field_0x38 = puVar5;
+					pCluster->p3DStrip = STORE_POINTER(puVar5);
 				}
 				piVar2 = edChunckGetNext(piVar2, (int*)0x0);)
 			}
@@ -12972,25 +12972,23 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 	else {
 		if (BOOL_00449370 == true) {
 			IMPLEMENTATION_GUARD(
-				piVar4 = (int*)pCluster->field_0x30;
-			puVar5 = (uint*)pCluster->field_0x38;
+				piVar4 = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
+			puVar5 = LOAD_POINTER_CAST(uint*, pCluster->p3DStrip);
 			uVar7 = 0;
 			if ((piVar4 != (int*)0x0) && (puVar5 != (uint*)0x0)) {
 				uVar8 = 0;
 				do {
 					uVar6 = uVar8 + 1 & 0xffff;
-					uVar7 = uVar7 + pCluster->field_0x10[uVar8 - 8];
+					uVar7 = uVar7 + pCluster->aClusterStripCounts[uVar8];
 					uVar8 = uVar6;
 				} while (uVar6 < 0xd);
 				INT_0044935c = 0x60;
 				for (uVar8 = 0; uVar8 < uVar7; uVar8 = uVar8 + 1 & 0xffff) {
 					if ((long)(int)puVar5[0xf] != 0) {
-						ed3DStripPrepareSpherePacket((int)puVar5, (long)(int)puVar5[0xf], (int)(piVar4 + 4));
+						ed3DStripPrepareSpherePacket((int)puVar5, (long)(int)puVar5[0xf], (int)(piVar4 + 1));
 					}
 					puVar5 = (uint*)puVar5[3];
 				}
-				chunkSize = *(int*)&pCluster[-1].field_0x44;
-				goto LAB_002a40c4;
 			})
 		}
 	}
@@ -12998,8 +12996,7 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 	ed_Chunck* pChunk = reinterpret_cast<ed_Chunck*>(reinterpret_cast<char*>(pCluster) - sizeof(ed_Chunck));
 
 	chunkSize = pChunk->size;
-LAB_002a40c4:
-	uVar1 = pCluster->field_0x1a;
+	uVar1 = pCluster->clusterHierCount;
 	offset = (uint)uVar1 << 3;
 
 	if ((uVar1 & 1) != 0) {
@@ -13023,13 +13020,13 @@ LAB_002a40c4:
 				eStack96.field_0x8 = param_5;
 				ed_3d_sprite* pSpritePkt = ed3DPrepareAllSprite(pPostClusterChunk, &eStack96, 
 					reinterpret_cast<ed_hash_code*>(LOAD_POINTER_CAST(ed_Chunck*, (pCluster->clusterDetails).pMBNK) + 1), 4);
-				pCluster->pSpritePkt = STORE_POINTER(pSpritePkt);
-				pCluster->field_0x1e = eStack96.field_0x24;
+				pCluster->p3DSprite = STORE_POINTER(pSpritePkt);
+				pCluster->spriteCount = eStack96.field_0x24;
 			}
 		}
 		else {
 			if ((pPostClusterChunk->hash == HASH_CODE_CDQU) || (pPostClusterChunk->hash == HASH_CODE_CDOC)) {
-				ed3DPrepareCluster((ed_g3d_cluster*)(pPostClusterChunk + 4), param_2, pMeshInfo, pTextureInfo, param_5, bHasFlag);
+				ed3DPrepareCluster((ed_g3d_cluster*)(pPostClusterChunk + 1), param_2, pMeshInfo, pTextureInfo, param_5, bHasFlag);
 			}
 		}
 	}

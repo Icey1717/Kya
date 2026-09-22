@@ -2272,25 +2272,17 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 				}
 
 				if ((pEffectorParam->field_0x226 & 2) != 0) {
-					IMPLEMENTATION_GUARD(
-						pp_Var27 = aParticleVectors;
+					pp_Var27 = aParticleVectors;
 					pVectorIt = local_660;
 					for (pp_Var20 = aParticles; pp_Var20 < aParticles + local_bc0; pp_Var20 = pp_Var20 + 1) {
 						pParticleIt = *pp_Var20;
 						pParticleVectorIt = *pp_Var27;
-						local_b20.x = gF32Vertex4Zero.x;
-						local_b20.y = gF32Vertex4Zero.y;
-						local_b20.z = gF32Vertex4Zero.z;
-						local_b20.w = gF32Vertex4Zero.w;
-						local_b30.x = gF32Vector4Zero.x;
-						local_b30.y = gF32Vector4Zero.y;
-						local_b30.z = gF32Vector4Zero.z;
-						local_b30.w = gF32Vector4Zero.w;
-						local_b40.x = gF32Vector4Zero.x;
-						local_b40.y = gF32Vector4Zero.y;
-						local_b40.z = gF32Vector4Zero.z;
-						local_b40.w = gF32Vector4Zero.w;
+						local_b20 = gF32Vertex4Zero;
+						local_b30 = gF32Vector4Zero;
+						local_b40 = gF32Vector4Zero;
+
 						edF32Vector4SubHard(&local_b30, &local_b20, pVectorIt);
+
 						local_10 = gF32Vector4UnitZ.y * local_b30.z - local_b30.y * gF32Vector4UnitZ.z;
 						fStack12 = gF32Vector4UnitZ.z * local_b30.x - local_b30.z * gF32Vector4UnitZ.x;
 						fStack8 = gF32Vector4UnitZ.x * local_b30.y - local_b30.x * gF32Vector4UnitZ.y;
@@ -2303,6 +2295,7 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 						fVar32 = (pEffectorParam->field_0x40).bc * local_b20.y;
 						fVar33 = (pEffectorParam->field_0x40).bd * local_b20.y;
 						fVar29 = (pEffectorParam->field_0x40).cd * local_b20.z;
+
 						local_b20.x = (pEffectorParam->field_0x40).aa * local_b20.x + (pEffectorParam->field_0x40).ba * local_b20.y +
 							(pEffectorParam->field_0x40).ca * local_b20.z + (pEffectorParam->field_0x40).da * local_b20.w;
 						local_b20.y = fVar30 + (pEffectorParam->field_0x40).bb * local_b20.y + (pEffectorParam->field_0x40).cb * local_b20.z +
@@ -2324,19 +2317,13 @@ void edParticleGroupUpdate(float time, _ed_particle_group* pGroup)
 						edF32Vector4SafeNormalize0Hard(&local_b40, &local_b40);
 						fVar31 = (pEffectorParam->field_0x194 * pParticleIt->mass) /
 							(fVar30 * fVar30 + pEffectorParam->field_0x19c);
-						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_b30.x * fVar31;
-						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + local_b30.y * fVar31;
-						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + local_b30.z * fVar31;
-						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_b30.w * fVar31;
-						unaff_f20 = ((float)pEffectorParam->pPosFunc * *(float*)&pParticleIt->mass) /
+						pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + local_b30.x * fVar31;
+						unaff_f20 = (pEffectorParam->field_0x190 * pParticleIt->mass) /
 							(fVar30 * fVar30 + pEffectorParam->field_0x198);
-						(pParticleVectorIt->acceleration).x = (pParticleVectorIt->acceleration).x + local_b40.x * unaff_f20;
-						(pParticleVectorIt->acceleration).y = (pParticleVectorIt->acceleration).y + local_b40.y * unaff_f20;
-						(pParticleVectorIt->acceleration).z = (pParticleVectorIt->acceleration).z + local_b40.z * unaff_f20;
-						(pParticleVectorIt->acceleration).w = (pParticleVectorIt->acceleration).w + local_b40.w * unaff_f20;
+						pParticleVectorIt->acceleration = pParticleVectorIt->acceleration + local_b40.x * unaff_f20;
 						pp_Var27 = pp_Var27 + 1;
 						pVectorIt = pVectorIt + 1;
-					})
+					}
 				}
 
 				if ((pEffectorParam->field_0x226 & 0x100) != 0) {

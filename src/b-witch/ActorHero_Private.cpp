@@ -14152,12 +14152,12 @@ void CActorHeroPrivate::EndToboggan()
 	//StaticMeshComponent* pSVar3;
 	CCameraManager* pCameraManager;
 
-	if (pTobogganFxB->IsValid()) {
+	if (pTobogganFxB != (CFxHandleExt*)0x0) {
 		pTobogganFxB->Kill();
 		pTobogganFxB->Reset();
 	}
 
-	if (pTobogganFxC->IsValid()) {
+	if (pTobogganFxC != (CFxHandleExt*)0x0) {
 		pTobogganFxC->Kill();
 		pTobogganFxC->Reset();
 	}

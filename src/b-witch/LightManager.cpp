@@ -1139,14 +1139,16 @@ void CLightManager::BuildActiveList()
 							iVar7 = iVar7 + 1;
 						} while (iVar7 < this->activeLightCount);
 					}
+
 					uVar5 = (ulong)(local_20[1] < local_20[0]);
 					if (local_20[2] < local_20[local_20[1] < local_20[0]]) {
 						uVar5 = 2;
 					}
+
 					if (local_20[3] < local_20[(int)uVar5]) {
 						uVar5 = 3;
 					}
-					IMPLEMENTATION_GUARD_LOG();
+
 					long long shifted = (long long)uVar5 << 0x38;
 					shifted = shifted >> 0x38;
 					byte a = (byte)((shifted & 0xf) << 4);
