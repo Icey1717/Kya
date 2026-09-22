@@ -14,6 +14,15 @@ inline void edDListPatchRGBASprite_Inline(_rgba* pRgba, _rgba* pColor, uint inde
 	return;
 }
 
+inline _rgba edDListGetRGBA_Inline(_rgba* pRgba, uint index)
+{
+	if (0x47 < index) {
+		index = index + ((index - 0x48) / 0x46 + 1) * 2;
+	}
+
+	return pRgba[index];
+}
+
 inline void edDListPatchRGBA_Inline(_rgba* param_1, _rgba newColor, uint param_3, uint param_4)
 {
 	uint uVar2 = param_3;

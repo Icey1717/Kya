@@ -12,13 +12,13 @@
 char* gDefaultOrder = "XYZ";
 
 CFxTail::CFxTail()
-	: pData_0x18((void*)0x0)
+	: pData_0x18((float*)0x0)
 {
 }
 
 CFxTail::~CFxTail()
 {
-	if (this->pData_0x18 != (undefined*)0x0) {
+	if (this->pData_0x18 != (float*)0x0) {
 		edMemFree(this->pData_0x18);
 	}
 
@@ -69,7 +69,7 @@ void CFxTail::Create(float param_1, int count, int param_4, int materialId)
 {
 	undefined* puVar1;
 
-	this->pData_0x18 = edMemAlloc(TO_HEAP(H_MAIN), (count + 1) * 4);
+	this->pData_0x18 = reinterpret_cast<float*>(edMemAlloc(TO_HEAP(H_MAIN), (count + 1) * sizeof(float)));
 
 	if (param_4 == 0) {
 		param_4 = 1;
@@ -77,13 +77,13 @@ void CFxTail::Create(float param_1, int count, int param_4, int materialId)
 
 	this->flags = 0;
 	this->count_0x34 = count;
-	//this->field_0x2c = param_4;
-	//this->field_0x3c = 0;
-	//this->field_0x8 = 0;
+	this->field_0x2c = param_4;
+	this->field_0x3c = 0;
+	this->field_0x8 = 0;
 	this->particleID_0x14 = materialId;
-	//this->field_0x20 = this->field_0x1c;
-	//this->field_0x1c = param_1 * 0.5;
-	//this->field_0x20 = param_1 * 0.5;
+	this->field_0x20 = this->field_0x1c;
+	this->field_0x1c = param_1 * 0.5f;
+	this->field_0x20 = param_1 * 0.5f;
 
 	this->field_0x28 = this->field_0x24;
 	this->field_0x24.rgba = 0x80808080;
@@ -104,7 +104,9 @@ void CFxTail::Init(float param_1, int id)
 	this->field_0xc0 = 0.0f;
 	this->field_0xc4 = 1.0f;
 	this->field_0xb8 = param_1 / (float)this->count_0x34;
+
 	Reset();
+
 	this->dlistPatchId = GameDListPatch_Register(this, (this->count_0x34 + 1) * 2, 0);
 	this->field_0x30 = (float)this->field_0x24.a / (float)this->count_0x34;
 	return;
@@ -116,30 +118,26 @@ void CFxTail::Reset()
 	int iVar3;
 
 	this->flags = this->flags & 0xfffdefff;
-	this->field_0xbc = -8.0;
-	//this->field_0x38 = 0;
-	//this->field_0x3c = 0;
-	//this->field_0x40 = -1;
-	//this->field_0x50 = 0;
-	//this->field_0x54 = 0;
-	//this->field_0x58 = 0;
-	//this->field_0x5c = 0;
-	//this->field_0x60 = this->field_0x50;
-	//this->field_0x64 = this->field_0x54;
-	//this->field_0x68 = this->field_0x58;
-	//this->field_0x6c = this->field_0x5c;
-	//
-	//this->field_0x70 = gF32Matrix4Unit;
-	//
-	//iVar3 = 0;
-	//if (0 < this->count_0x34 + 1) {
-	//	iVar2 = 0;
-	//	do {
-	//		iVar3 = iVar3 + 1;
-	//		*(undefined4*)(this->pData_0x18 + iVar2) = 0;
-	//		iVar2 = iVar2 + 4;
-	//	} while (iVar3 < this->count_0x34 + 1);
-	//}
+	this->field_0xbc = -8.0f;
+	this->field_0x38 = 0;
+	this->field_0x3c = 0;
+	this->field_0x40 = -1;
+	this->field_0x50.x = 0.0f;
+	this->field_0x50.y = 0.0f;
+	this->field_0x50.z = 0.0f;
+	this->field_0x50.w = 0.0f;
+
+	this->field_0x60 = this->field_0x50;
+	
+	this->field_0x70 = gF32Matrix4Unit;
+	
+	iVar3 = 0;
+	if (0 < this->count_0x34 + 1) {
+		do {
+			this->pData_0x18[iVar3] = 0.0f;
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < this->count_0x34 + 1);
+	}
 
 	return;
 }

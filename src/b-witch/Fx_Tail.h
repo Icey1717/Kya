@@ -36,6 +36,9 @@ public:
 
 	float* pData_0x18;
 
+	float field_0x1c;
+	float field_0x20;
+
 	_rgba field_0x24;
 	_rgba field_0x28;
 	int field_0x2c;
@@ -47,7 +50,7 @@ public:
 	int field_0x40;
 
 	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 instanceIndex;
+	edF32VECTOR4 field_0x60;
 	edF32MATRIX4 field_0x70;
 
 	uint field_0xb0;
