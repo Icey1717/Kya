@@ -188,16 +188,31 @@ struct ed_3d_octree {
 
 struct ClusterDetails
 {
-	strd_ptr(int*) field_0x20;
-	strd_ptr(int*) field_0x24;
-	ushort count_0x28;
-	ushort clusterHierCount;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	ushort spriteCount;
+	union
+	{
+		struct
+		{
+			strd_ptr(char*) pXYZW;
+			strd_ptr(char*) pWH;
+			strd_ptr(char*) pRGBA;
+			strd_ptr(char*) pNORMAL;
+			strd_ptr(ed_Chunck*) pMBNK;
+		};
+		struct
+		{
+			strd_ptr(int*) field_0x20;
+			strd_ptr(int*) field_0x24;
+			ushort count_0x28;
+			ushort clusterHierCount;
+			undefined field_0x2c;
+			undefined field_0x2d;
+			ushort spriteCount;
+			strd_ptr(int*) field_0x30;
+		};
+	};
 };
 
-static_assert(sizeof(ClusterDetails) == 0x10);
+static_assert(sizeof(ClusterDetails) == 0x14);
 
 struct ed_g3d_cluster
 {
@@ -206,7 +221,6 @@ struct ed_g3d_cluster
 	ushort flags_0x1c;
 	undefined2 field_0x1e;
 	ClusterDetails clusterDetails;
-	strd_ptr(int*) field_0x30;
 	strd_ptr(int*) field_0x34;
 	strd_ptr(uint*) field_0x38;
 	strd_ptr(ed_3d_sprite*) pSpritePkt;

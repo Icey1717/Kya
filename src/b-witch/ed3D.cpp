@@ -10288,10 +10288,87 @@ struct ed_prepare_Sprite_Def
 	char* pST;
 	char* pRGBA;
 	char* pWH;
-	ed_hash_code* pHashCode;
+	ed_Chunck* pMBNK;
 	ushort field_0x24;
 };
 
+
+edpkt_data* ed3DPrepareSTPacket(ed_Chunck* param_1, ushort* param_2, uint param_3, edpkt_data* param_4)
+{
+	uint* pST = reinterpret_cast<uint*>(param_4);
+
+	if (param_1->hash == 0x35315655) { // UV15
+		short* pUV = reinterpret_cast<short*>(param_1 + 1);
+		for (; param_3 != 0; param_3 = param_3 - 1) {
+			ushort index = *param_2;
+			param_2 = param_2 + 1;
+			*pST = static_cast<ushort>(pUV[index * 2] >> 3) |
+				(static_cast<uint>(static_cast<ushort>(pUV[index * 2 + 1] >> 3)) << 16);
+			pST = pST + 1;
+		}
+	}
+	else if (param_1->hash == 0x32315655) { // UV12
+		uint* pUV = reinterpret_cast<uint*>(param_1 + 1);
+		uint vertexCount = 0;
+		uint previousST = static_cast<uint>(reinterpret_cast<uintptr_t>(param_1));
+		for (; param_3 != 0; param_3 = param_3 - 1) {
+			vertexCount = (vertexCount + 1) & 0xffff;
+			*pST = pUV[*param_2];
+			pST = pST + 1;
+			if (vertexCount == gNbVertexDMA - 1) {
+				previousST = pUV[*param_2];
+			}
+			else if (vertexCount == gNbVertexDMA) {
+				// Repeat the last two vertices at the start of the next DMA packet.
+				pST[0] = previousST;
+				vertexCount = 2;
+				pST[1] = pUV[*param_2];
+				pST = pST + 2;
+			}
+			param_2 = param_2 + 1;
+		}
+	}
+	else if (param_1->hash == 0x34305655) { // UV04
+		short* pUV = reinterpret_cast<short*>(param_1 + 1);
+		for (; param_3 != 0; param_3 = param_3 - 1) {
+			ushort index = *param_2;
+			param_2 = param_2 + 1;
+			*pST = ((static_cast<uint>(pUV[index * 2]) & 0xff) << 8) |
+				(static_cast<uint>(pUV[index * 2 + 1]) << 24);
+			pST = pST + 1;
+		}
+	}
+	else if (param_1->hash == 0x2e465655) { // UVF.
+		float* pUV = reinterpret_cast<float*>(param_1 + 1);
+		edF32VECTOR4 local_30 = {};
+		edS32VECTOR4 local_20;
+		if ((param_3 & 1) != 0) {
+			local_30.x = pUV[*param_2 * 2];
+			local_30.y = pUV[*param_2 * 2 + 1];
+			edF32Vector4FTOI12Hard(&local_20, &local_30);
+			param_3 = param_3 - 1;
+			param_2 = param_2 + 1;
+			*pST = (static_cast<uint>(local_20.x) & 0xffff) | (static_cast<uint>(local_20.y) << 16);
+			pST = pST + 1;
+		}
+		for (; param_3 != 0; param_3 = param_3 - 2) {
+			local_30.x = pUV[param_2[0] * 2];
+			local_30.y = pUV[param_2[0] * 2 + 1];
+			local_30.z = pUV[param_2[1] * 2];
+			local_30.w = pUV[param_2[1] * 2 + 1];
+			param_2 = param_2 + 2;
+			edF32Vector4FTOI12Hard(&local_20, &local_30);
+			pST[0] = (static_cast<uint>(local_20.x) & 0xffff) | (static_cast<uint>(local_20.y) << 16);
+			pST[1] = (static_cast<uint>(local_20.z) & 0xffff) | (static_cast<uint>(local_20.w) << 16);
+			pST = pST + 2;
+		}
+	}
+
+	for (; (reinterpret_cast<uintptr_t>(pST) & 0xf) != 0; pST = pST + 1) {
+	}
+
+	return reinterpret_cast<edpkt_data*>(pST);
+}
 
 edpkt_data* ed3DPrepareSpriteWHPacket(ed_Chunck* param_1, ushort* param_2, int param_3, edpkt_data* param_4)
 {
@@ -10388,19 +10465,19 @@ edpkt_data* ed3DPrepareSpriteXYZWPacket_F32(ed_Chunck* param_1, ushort* param_2,
 			pXYZW[0].x = fVar3;
 			pXYZW[0].y = fVar4;
 			pXYZW[0].z = fVar5;
-			pXYZW[0].fSkip = 6.887662e-41;
+			pXYZW[0].fSkip = 6.887662e-41f;
 			pXYZW[1].x = fVar3;
 			pXYZW[1].y = fVar4;
 			pXYZW[1].z = fVar5;
-			pXYZW[1].fSkip = 6.887662e-41;
+			pXYZW[1].fSkip = 6.887662e-41f;
 			pXYZW[2].x = fVar3;
 			pXYZW[2].y = fVar4;
 			pXYZW[2].z = fVar5;
-			pXYZW[2].fSkip = 6.887662e-41;
+			pXYZW[2].fSkip = 6.887662e-41f;
 			pXYZW[3].x = fVar3;
 			pXYZW[3].y = fVar4;
 			pXYZW[3].z = fVar5;
-			pXYZW[3].fSkip = 6.887662e-41;
+			pXYZW[3].fSkip = 6.887662e-41f;
 			pXYZW = pXYZW + 4;
 		}
 	}
@@ -10437,8 +10514,8 @@ ed_3d_sprite* ed3DPrepareSprite(ed_prepare_Sprite_Def* pDef)
 		uVar2 = pSpriteDataFromChunk->field_0x6;
 		peVar4 = (ed_hash_code*)0x0;
 		if ((pSpriteDataFromChunk->materialIndex != -1) && (pDef->pTextureInfo != (ed_g2d_manager*)0x0)) {
-			peVar10 = pDef->pHashCode + pSpriteDataFromChunk->materialIndex + 1;
-			peVar4 = (ed_hash_code*)peVar10->pData;
+			peVar10 = reinterpret_cast<ed_hash_code*>(pDef->pMBNK + 1) + pSpriteDataFromChunk->materialIndex;
+			peVar4 = LOAD_POINTER_CAST(ed_hash_code*, peVar10->pData);
 			if (peVar4 == (ed_hash_code*)0x0) {
 				peVar4 = edHashcodeGet(peVar10->hash, pDef->pTextureInfo->pMATA_HASH);
 				peVar10->pData = STORE_POINTER(peVar4);
@@ -12873,7 +12950,7 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 			INT_0044935c = 0x60;
 			stripDef.field_0xc = '\0';
 			stripDef.clusterDetails = pCluster->clusterDetails;
-			piVar4 = (ed_Chunck*)pCluster->field_0x30;
+			piVar4 = (ed_Chunck*)pCluster->clusterDetails.field_0x30;
 			piVar2 = (ed_Chunck*)pCluster->field_0x34;
 			stripDef.pTextureInfo = pTextureInfo;
 			stripDef.field_0x8 = (int*)param_5;
@@ -12937,14 +13014,15 @@ LAB_002a40c4:
 		if (pPostClusterChunk->hash == HASH_CODE_SPRA) {
 			if (bHasInternalFlag) {
 				eStack96.field_0xc = 0;
-				//eStack96.field_0x10 = (pCluster->clusterDetails).field_0x0;
-				//eStack96.field_0x14 = (pCluster->clusterDetails).field_0x4;
-				//eStack96.field_0x18 = *(int**)&(pCluster->clusterDetails).field_0x8;
-				//eStack96.field_0x1c = (pCluster->clusterDetails).field_0x4;
-				//eStack96.field_0x20 = (pCluster->clusterDetails).field_0x10;
+				eStack96.pXYZW = LOAD_POINTER_CAST(char*, (pCluster->clusterDetails).pXYZW);
+				eStack96.pST = LOAD_POINTER_CAST(char*, (pCluster->clusterDetails).pWH);
+				eStack96.pRGBA = LOAD_POINTER_CAST(char*, (pCluster->clusterDetails).pRGBA);
+				eStack96.pWH = LOAD_POINTER_CAST(char*, (pCluster->clusterDetails).pWH);
+				eStack96.pMBNK = LOAD_POINTER_CAST(ed_Chunck*, (pCluster->clusterDetails).pMBNK);
 				eStack96.pTextureInfo = pTextureInfo;
-				eStack96.field_0x8 = (int*)param_5;
-				ed_3d_sprite* pSpritePkt = ed3DPrepareAllSprite(pPostClusterChunk, &eStack96, (ed_hash_code*)(pCluster->field_0x30 + 4), 4);
+				eStack96.field_0x8 = param_5;
+				ed_3d_sprite* pSpritePkt = ed3DPrepareAllSprite(pPostClusterChunk, &eStack96, 
+					reinterpret_cast<ed_hash_code*>(LOAD_POINTER_CAST(ed_Chunck*, (pCluster->clusterDetails).pMBNK) + 1), 4);
 				pCluster->pSpritePkt = STORE_POINTER(pSpritePkt);
 				pCluster->field_0x1e = eStack96.field_0x24;
 			}
