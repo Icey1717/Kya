@@ -3,6 +3,7 @@
 #include "DlistManager.h"
 #include "MathOps.h"
 #include "FileManager3D.h"
+#include "edDList/edDList.inl"
 
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
@@ -273,11 +274,9 @@ void CFxTail::_PatchListAlpha()
 	_rgba _Var2;
 	int iVar3;
 	uint uVar4;
-	_rgba* p_Var5;
 	uint uVar6;
 	uint uVar7;
 	int iVar8;
-	uint uVar9;
 	int iVar10;
 	int iVar11;
 
@@ -292,23 +291,9 @@ void CFxTail::_PatchListAlpha()
 				uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
 			}
 
-			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
 			pSVar1 = this->field_0x8->pCurrentPatch;
-			uVar4 = pSVar1->nbMatrices;
-			uVar9 = uVar7;
-			if (0x47 < uVar7) {
-				uVar9 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			if (0x47 < uVar4) {
-				uVar4 = uVar4 + ((uVar4 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			p_Var5 = pSVar1->pRgba + uVar9;
-			*p_Var5 = _Var2;
-			if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar9 < uVar4)) {
-				p_Var5[2] = _Var2;
-			}
+			_Var2 = (_rgba)(pSVar1->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
+			edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar7, pSVar1->nbMatrices);
 
 			uVar4 = uVar6;
 			if (0x47 < uVar6) {
@@ -316,23 +301,8 @@ void CFxTail::_PatchListAlpha()
 			}
 
 			gpCurPatchRGBABuf = 0;
-			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
-			pSVar1 = this->field_0x8->pCurrentPatch;
-			uVar4 = pSVar1->nbMatrices;
-			uVar9 = uVar6;
-			if (0x47 < uVar6) {
-				uVar9 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			if (0x47 < uVar4) {
-				uVar4 = uVar4 + ((uVar4 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			p_Var5 = pSVar1->pRgba + uVar9;
-			*p_Var5 = _Var2;
-			if (((1 < uVar6) && (static_cast<uint>((int)uVar6 % 0x46) < 2)) && (uVar9 < uVar4)) {
-				p_Var5[2] = _Var2;
-			}
+			_Var2 = (_rgba)(pSVar1->pRgba[uVar4].rgba & 0xffffff | iVar11 << 0x18);
+			edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar6, pSVar1->nbMatrices);
 
 			iVar10 = iVar10 + 1;
 			uVar7 = uVar7 + 2;
@@ -356,23 +326,9 @@ void CFxTail::_PatchListAlpha()
 			if (0x47 < uVar7) {
 				uVar6 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
 			}
-			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
 			pSVar1 = this->field_0x8->pCurrentPatch;
-			uVar6 = pSVar1->nbMatrices;
-			uVar4 = uVar7;
-			if (0x47 < uVar7) {
-				uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			if (0x47 < uVar6) {
-				uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			p_Var5 = pSVar1->pRgba + uVar4;
-			*p_Var5 = _Var2;
-			if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
-				p_Var5[2] = _Var2;
-			}
+			_Var2 = (_rgba)(pSVar1->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+			edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar7, pSVar1->nbMatrices);
 
 			uVar4 = uVar7 + 1;
 			uVar6 = uVar4;
@@ -381,24 +337,8 @@ void CFxTail::_PatchListAlpha()
 			}
 
 			gpCurPatchRGBABuf = 0;
-
-			_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
-			pSVar1 = this->field_0x8->pCurrentPatch;
-			uVar6 = pSVar1->nbMatrices;
-			uVar9 = uVar4;
-			if (0x47 < uVar4) {
-				uVar9 = uVar4 + ((uVar7 - 0x47) / 0x46 + 1) * 2;
-			}
-
-			if (0x47 < uVar6) {
-				uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
-			}
-
-			p_Var5 = pSVar1->pRgba + uVar9;
-			*p_Var5 = _Var2;
-			if (((1 < uVar4) && (static_cast<uint>((int)uVar4 % 0x46) < 2)) && (uVar9 < uVar6)) {
-				p_Var5[2] = _Var2;
-			}
+			_Var2 = (_rgba)(pSVar1->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+			edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar4, pSVar1->nbMatrices);
 
 			if (iVar10 == 0) {
 				uVar7 = this->count_0x34 * 2;
@@ -407,23 +347,9 @@ void CFxTail::_PatchListAlpha()
 					uVar6 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
 				}
 
-				_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
 				pSVar1 = this->field_0x8->pCurrentPatch;
-				uVar6 = pSVar1->nbMatrices;
-				uVar4 = uVar7;
-				if (0x47 < uVar7) {
-					uVar4 = uVar7 + ((uVar7 - 0x48) / 0x46 + 1) * 2;
-				}
-
-				if (0x47 < uVar6) {
-					uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
-				}
-
-				p_Var5 = pSVar1->pRgba + uVar4;
-				*p_Var5 = _Var2;
-				if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
-					p_Var5[2] = _Var2;
-				}
+				_Var2 = (_rgba)(pSVar1->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+				edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar7, pSVar1->nbMatrices);
 
 				iVar3 = this->count_0x34 * 2;
 				uVar7 = iVar3 + 1;
@@ -434,21 +360,8 @@ void CFxTail::_PatchListAlpha()
 
 				gpCurPatchRGBABuf = 0;
 
-				_Var2 = (_rgba)(this->field_0x8->pCurrentPatch->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
-				pSVar1 = this->field_0x8->pCurrentPatch;
-				uVar6 = pSVar1->nbMatrices;
-				uVar4 = uVar7;
-				if (0x47 < uVar7) {
-					uVar4 = uVar7 + ((iVar3 - 0x47U) / 0x46 + 1) * 2;
-				}
-				if (0x47 < uVar6) {
-					uVar6 = uVar6 + ((uVar6 - 0x48) / 0x46 + 1) * 2;
-				}
-				p_Var5 = pSVar1->pRgba + uVar4;
-				*p_Var5 = _Var2;
-				if (((1 < uVar7) && (static_cast<uint>((int)uVar7 % 0x46) < 2)) && (uVar4 < uVar6)) {
-					p_Var5[2] = _Var2;
-				}
+				_Var2 = (_rgba)(pSVar1->pRgba[uVar6].rgba & 0xffffff | iVar8 << 0x18);
+				edDListPatchRGBA_Inline(pSVar1->pRgba, _Var2, uVar7, pSVar1->nbMatrices);
 			}
 
 			iVar8 = this->count_0x34;
