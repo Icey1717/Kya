@@ -413,3 +413,14 @@ ed_hash_code* ed3DG2DGetHASHFromMat(ed_g2d_manager* pManager, ed_g2d_material* p
 
 	return pCur;
 }
+
+void ed3DG2DMaterialSetLayerProp(ed_g2d_material* pMAT_Internal, uint index, uint flag)
+{
+	if (index < pMAT_Internal->nbLayers) {
+		ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
+
+		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+		pLayer->flags_0x0 |= flag;
+	}
+	return;
+}

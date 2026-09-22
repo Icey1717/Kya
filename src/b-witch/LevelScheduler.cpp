@@ -3609,11 +3609,19 @@ void CLevelScheduler::Level_TeleporterChanged()
 	return;
 }
 
+#ifdef PLATFORM_WIN
+float CLevelScheduler::autoSaveCooldown = 180.0f;
+#endif
+
 void CLevelScheduler::SetLevelTimerFunc_002df450(float param_1, int mode)
 {
 	Timer* pTVar1;
 
+#ifdef PLATFORM_WIN
+	if (((this->curAutoSaveTime == 0.0f) || (mode != 0)) || (pTVar1 = Timer::GetTimer(), autoSaveCooldown < (param_1 + pTVar1->scaledTotalTime) - this->curAutoSaveTime)) {
+#else
 	if (((this->curAutoSaveTime == 0.0f) || (mode != 0)) || (pTVar1 = Timer::GetTimer(), 180.0f < (param_1 + pTVar1->scaledTotalTime) - this->curAutoSaveTime)) {
+#endif
 		if (param_1 == 0.0f) {
 			param_1 = 0.001f;
 		}

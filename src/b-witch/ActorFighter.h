@@ -880,14 +880,7 @@ public:
 	float field_0x514;
 
 	uint field_0x518;
-	uint field_0x51c;
-	uint field_0x520;
-	uint field_0x524;
-	uint field_0x528;
-	uint field_0x52c;
-	uint field_0x530;
-	uint field_0x534;
-	uint field_0x538;
+	uint field_0x51c[8];
 	uint field_0x53c;
 	uint field_0x540;
 	uint field_0x544;

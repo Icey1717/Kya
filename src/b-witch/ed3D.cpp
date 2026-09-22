@@ -97,6 +97,19 @@ char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 #define LIST_TYPE_PKT_STRIP		5
 #define LIST_TYPE_PKT_SPRITE	6
 
+#define HASH_CODE_CDZA 0x415a4443
+#define HASH_CODE_INFA 0x41464e49
+#define HASH_CODE_MBNA 0x414e424d
+#define HASH_CODE_SPR  0x2e525053
+#define HASH_CODE_SPRA 0x41525053
+#define HASH_CODE_CAMA 0x414d4143
+#define HASH_CODE_LIA_ 0x2e41494c
+#define HASH_CODE_CSTA 0x41545343
+#define HASH_CODE_ANMA 0x414d4e41
+#define HASH_CODE_HALL 0x4c4c4148
+#define HASH_CODE_OBJA 0x414a424f
+#define HASH_CODE_GEOM 0x4d4f4547
+
 // Debug
 #ifdef PLATFORM_WIN
 namespace ed3D {
@@ -10239,6 +10252,293 @@ void SanityCheckSpriteGifTag(edpkt_data* pGifTag, int vertexCount)
 	assert(gifTag.nLoop == vertexCount);
 }
 
+struct SPR
+{
+	int materialIndex;
+	ushort flags_0x0;
+	ushort field_0x6;
+	short bUseShadowMatrix_0x30;
+	ushort field_0xa;
+	ushort pRenderFrame30;
+	undefined field_0xe;
+	undefined field_0xf;
+	int field_0x10;
+	undefined field_0x14;
+	undefined field_0x15;
+	undefined field_0x16;
+	undefined field_0x17;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	char field_0x20;
+};
+
+struct ed_prepare_Sprite_Def
+{
+	SPR* pSPR;
+	ed_g2d_manager* pTextureInfo;
+	int field_0x8;
+	byte field_0xc;
+	char* pXYZW;
+	char* pST;
+	char* pRGBA;
+	char* pWH;
+	ed_hash_code* pHashCode;
+	ushort field_0x24;
+};
+
+
+edpkt_data* ed3DPrepareSpriteWHPacket(ed_Chunck* param_1, ushort* param_2, int param_3, edpkt_data* param_4)
+{
+	int* piVar1;
+	uint uVar2;
+
+	int* pWH = reinterpret_cast<int*>(param_1 + 1);
+
+	if (param_1->hash != 0x32315655) {
+		uVar2 = reinterpret_cast<uint>(pWH) & 0xf;
+		while (uVar2 != 0) {
+			pWH = pWH + 1;
+		LAB_002a3c5c:
+			uVar2 = reinterpret_cast<uint>(pWH) & 0xf;
+		}
+
+		return reinterpret_cast<edpkt_data*>(pWH);
+	}
+	do {
+		if (param_3 == 0) goto LAB_002a3c5c;
+
+		int* piVar1 = reinterpret_cast<int*>(param_1 + 1);
+		*pWH = piVar1[*param_2];
+
+		piVar1 = pWH + 1;
+		if (param_3 % 0x12 != 0) {
+			piVar1 = pWH + 3;
+		}
+
+		pWH = piVar1;
+		param_3 = param_3 + -1;
+		param_2 = param_2 + 1;
+	} while (true);
+}
+
+
+edpkt_data* ed3DPrepareSpriteRGBAPacket(ed_Chunck* param_1, ushort* param_2, uint param_3, edpkt_data* param_4)
+{
+	ushort uVar1;
+	uint uVar2;
+	int iVar3;
+
+	iVar3 = param_3 << 1;
+
+	uint* piVar1 = reinterpret_cast<uint*>(param_1 + 1);
+	_rgba* pRGBA = reinterpret_cast<_rgba*>(param_4);
+
+	if (param_1->hash == 0x38383838) {
+		for (; 0 < iVar3; iVar3 = iVar3 + -1) {
+			*pRGBA = piVar1[*param_2];
+			uVar1 = *param_2;
+			param_2 = param_2 + 1;
+			pRGBA[1] = piVar1[uVar1];
+			pRGBA = pRGBA + 2;
+		}
+
+		while (true) {
+			uVar2 = reinterpret_cast<uint>(pRGBA) & 0xf;
+		code_r0x002a3cfc:
+			if (uVar2 == 0) break;
+			pRGBA = pRGBA + 1;
+		}
+
+		return reinterpret_cast<edpkt_data*>(pRGBA);
+	}
+	uVar2 = reinterpret_cast<uint>(pRGBA) & 0xf;
+	goto code_r0x002a3cfc;
+}
+
+float g_XOffset = 0.0f;
+float g_YOffset = 0.0f;
+float g_ZOffset = 0.0f;
+float g_ed3DScale = 1.0f;
+
+edpkt_data* ed3DPrepareSpriteXYZWPacket_F32(ed_Chunck* param_1, ushort* param_2, int param_3, edpkt_data* param_4)
+{
+	ushort uVar1;
+	float* pfVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+
+	edVertex* pXYZW = reinterpret_cast<edVertex*>(param_4);
+	float* pXYZW_F32 = reinterpret_cast<float*>(param_1 + 1);
+
+	if (param_1->hash == 0x2e465856) {
+		for (; param_3 != 0; param_3 = param_3 + -1) {
+			uVar1 = *param_2;
+			param_2 = param_2 + 1;
+			pfVar2 = pXYZW_F32 + (uVar1 * 3);
+			fVar3 = g_XOffset + pfVar2[0] / g_ed3DScale;
+			fVar4 = g_YOffset + pfVar2[1] / g_ed3DScale;
+			fVar5 = g_ZOffset + pfVar2[2] / g_ed3DScale;
+			pXYZW[0].x = fVar3;
+			pXYZW[0].y = fVar4;
+			pXYZW[0].z = fVar5;
+			pXYZW[0].fSkip = 6.887662e-41;
+			pXYZW[1].x = fVar3;
+			pXYZW[1].y = fVar4;
+			pXYZW[1].z = fVar5;
+			pXYZW[1].fSkip = 6.887662e-41;
+			pXYZW[2].x = fVar3;
+			pXYZW[2].y = fVar4;
+			pXYZW[2].z = fVar5;
+			pXYZW[2].fSkip = 6.887662e-41;
+			pXYZW[3].x = fVar3;
+			pXYZW[3].y = fVar4;
+			pXYZW[3].z = fVar5;
+			pXYZW[3].fSkip = 6.887662e-41;
+			pXYZW = pXYZW + 4;
+		}
+	}
+
+	return reinterpret_cast<edpkt_data*>(pXYZW);
+}
+
+
+
+ed_3d_sprite* ed3DPrepareSprite(ed_prepare_Sprite_Def* pDef)
+{
+	int iVar1;
+	ushort uVar2;
+	ushort uVar3;
+	ed_hash_code* peVar4;
+	ed_Chunck* peVar5;
+	ed_Chunck* pChunk;
+	float* pfVar7;
+	edpkt_data* pBuffer;
+	uint uVar9;
+	edF32VECTOR4* __dest;
+	ed_hash_code* peVar10;
+	uint uVar11;
+	ed_3d_sprite* pSprite;
+	char* pBuffEnd;
+	SPR* pSpriteDataFromChunk;
+
+	pSprite = (ed_3d_sprite*)0x0;
+	pSpriteDataFromChunk = pDef->pSPR;
+
+	ed_Chunck* pSPR = reinterpret_cast<ed_Chunck*>(reinterpret_cast<char*>(pSpriteDataFromChunk) - sizeof(ed_Chunck));
+
+	if (pSPR->hash == HASH_CODE_SPR) {
+		uVar2 = pSpriteDataFromChunk->field_0x6;
+		peVar4 = (ed_hash_code*)0x0;
+		if ((pSpriteDataFromChunk->materialIndex != -1) && (pDef->pTextureInfo != (ed_g2d_manager*)0x0)) {
+			peVar10 = pDef->pHashCode + pSpriteDataFromChunk->materialIndex + 1;
+			peVar4 = (ed_hash_code*)peVar10->pData;
+			if (peVar4 == (ed_hash_code*)0x0) {
+				peVar4 = edHashcodeGet(peVar10->hash, pDef->pTextureInfo->pMATA_HASH);
+				peVar10->pData = STORE_POINTER(peVar4);
+			}
+		}
+
+		if ((peVar4 != (ed_hash_code*)0x0) && (pDef->field_0xc != 0)) {
+			ed_g2d_material* pMaterial = (ed_g2d_material*)(LOAD_POINTER_CAST(ed_Chunck*, peVar4->pData) + 1);
+			ed3DG2DMaterialSetLayerProp(pMaterial, 0, 0x2000);
+		}
+
+		pSprite = (ed_3d_sprite*)g_pStrippBufLastPos;
+		uVar3 = pSpriteDataFromChunk->field_0x6;
+		uVar9 = (uint)uVar3;
+		iVar1 = (int)(uVar3 - 1) / 0x12;
+
+		// Advance past the sprite, this will be the start of the buffer for the sprite data.
+		pBuffer = (edpkt_data*)(pSprite + 1);
+
+		uVar11 = iVar1 + 1;
+		if (1 < uVar11) {
+			uVar9 = (uint)uVar3 + iVar1 * -0x12;
+		}
+		__dest = &pSprite->boundingSphere;
+		pSprite->flags_0x0 = (uint)pSpriteDataFromChunk->flags_0x0;
+		pSprite->materialIndex = (short)pSpriteDataFromChunk->materialIndex;
+		pSprite->offsetA = 0;
+		pSprite->pNext = 0x0;
+		memcpy(__dest, &pSpriteDataFromChunk->field_0x10, 0x10);
+
+		pSprite->pSTBuf = 0x0;
+		pSprite->pColorBuf = 0x0;
+		pSprite->pVertexBuf = 0x0;
+		pSprite->pWHBuf = 0x0;
+
+		pSprite->bUseShadowMatrix_0x30 = pSpriteDataFromChunk->bUseShadowMatrix_0x30;
+		pSprite->field_0x32 = pSpriteDataFromChunk->field_0xa;
+		pSprite->pRenderFrame30 = pSpriteDataFromChunk->pRenderFrame30;
+		pSprite->field_0x36 = pSpriteDataFromChunk->field_0x6;
+		pSprite->nbRemainderRects = (short)uVar9;
+		pSprite->nbRemainderVertices = (short)(uVar9 << 2);
+		pSprite->nbBatches = (ushort)uVar11;
+
+		pBuffEnd = (char*)((int)pSpriteDataFromChunk + *(int*)&pSpriteDataFromChunk[-1].field_0x19 + -0x10);
+		for (peVar5 = edChunckGetFirst(&pSpriteDataFromChunk->field_0x20, pBuffEnd); peVar5 != (ed_Chunck*)0x0; peVar5 = edChunckGetNext(peVar5, pBuffEnd)) {
+			uVar9 = peVar5->hash;
+			if (uVar9 == 0x2e363155) {
+				pChunk = edChunckGetFirst(pDef->pWH, (char*)0x0);
+				pSprite->pWHBuf = STORE_POINTER(pBuffer);
+				if ((pSpriteDataFromChunk->pRenderFrame30 & 1) == 0) {
+					pBuffer = ed3DPrepareSpriteWHPacket(pChunk, (ushort*)(peVar5 + 1), pSpriteDataFromChunk->field_0x6, LOAD_POINTER_CAST(edpkt_data*, pSprite->pWHBuf));
+				}
+				else {
+					pBuffer = ed3DPrepareSpriteWHPacket(pChunk, (ushort*)(peVar5 + 1), 1, LOAD_POINTER_CAST(edpkt_data*, pSprite->pWHBuf));
+				}
+			}
+			else {
+				if (uVar9 == 0x47524953) {
+					pChunk = edChunckGetFirst(pDef->pRGBA, (char*)0x0);
+					pSprite->pColorBuf = STORE_POINTER(pBuffer);
+					if ((pSpriteDataFromChunk->pRenderFrame30 & 4) == 0) {
+						pBuffer = ed3DPrepareSpriteRGBAPacket(pChunk, (ushort*)(peVar5 + 1), pSpriteDataFromChunk->field_0x6, LOAD_POINTER_CAST(edpkt_data*, pSprite->pColorBuf));
+					}
+					else {
+						pBuffer = ed3DPrepareSpriteRGBAPacket(pChunk, (ushort*)(peVar5 + 1), 4, LOAD_POINTER_CAST(edpkt_data*, pSprite->pColorBuf));
+					}
+				}
+				else {
+					if (uVar9 == 0x56554953) {
+						pChunk = edChunckGetFirst(pDef->pST, (char*)0x0);
+						pSprite->pSTBuf = STORE_POINTER(pBuffer);
+						if ((pSpriteDataFromChunk->pRenderFrame30 & 2) == 0) {
+							pBuffer = ed3DPrepareSTPacket(pChunk, (ushort*)(peVar5 + 1), uVar2 << 2, LOAD_POINTER_CAST(edpkt_data*, pSprite->pSTBuf));
+						}
+						else {
+							pBuffer = ed3DPrepareSTPacket(pChunk, (ushort*)(peVar5 + 1), 4, LOAD_POINTER_CAST(edpkt_data*, pSprite->pSTBuf));
+						}
+					}
+					else {
+						if (uVar9 == 0x2e564953) {
+							pChunk = edChunckGetFirst(pDef->pXYZW, (char*)0x0);
+							pSprite->pVertexBuf = STORE_POINTER(pBuffer);
+							if (pDef->field_0x8 == 0xc) {
+								edpkt_data* pTempBuffer = ed3DPrepareSpriteXYZWPacket_F32(pChunk, (ushort*)(peVar5 + 1), pSpriteDataFromChunk->field_0x6, LOAD_POINTER_CAST(edpkt_data*, pSprite->pVertexBuf));
+								pBuffer = (edpkt_data*)(pTempBuffer + 1);
+								pSprite->flags_0x0 = pSprite->flags_0x0 | 0x4000000;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		pSprite->offsetA = (uintptr_t)pBuffer + (pSprite->offsetA - (uintptr_t)g_pStrippBufLastPos);
+		g_pStrippBufLastPos = reinterpret_cast<edpkt_data*>((char*)g_pStrippBufLastPos + pSprite->offsetA);
+	}
+
+	return pSprite;
+}
+
 // Prepares the GPU packet data for a sprite. Describes how to unpack the ST, RGBA, and VTX data into the PS2 GPU memory.
 // Unlike the strip, the packet data is built from scratch for each sprite, and shared data is stored in g_PKTSpriteHeaderRef
 // which is initialised in ed3DDMAGenerateSpritePacketRefHeader.
@@ -12272,19 +12572,6 @@ ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, e
 	return pOutManager;
 }
 
-#define HASH_CODE_CDZA 0x415a4443
-#define HASH_CODE_INFA 0x41464e49
-#define HASH_CODE_MBNA 0x414e424d
-#define HASH_CODE_SPR  0x2e525053
-#define HASH_CODE_SPRA 0x41525053
-#define HASH_CODE_CAMA 0x414d4143
-#define HASH_CODE_LIA_ 0x2e41494c
-#define HASH_CODE_CSTA 0x41545343
-#define HASH_CODE_ANMA 0x414d4e41
-#define HASH_CODE_HALL 0x4c4c4148
-#define HASH_CODE_OBJA 0x414a424f
-#define HASH_CODE_GEOM 0x4d4f4547
-
 // Inlined function?
 inline void ProcessG3DChunck(ed_g3d_manager* pManager, ed_Chunck* pChunck)
 {
@@ -12520,18 +12807,6 @@ struct ed_prepare_Strip_Def
 	short field_0x24;
 };
 
-struct ed_prepare_Sprite_Def
-{
-	int* pSPR;
-	ed_g2d_manager* pTextureInfo;
-	int* field_0x8;
-	byte field_0xc;
-	int* field_0x10;
-	int* field_0x14;
-	int* field_0x18;
-	ushort field_0x24;
-};
-
 int INT_0044935c = 0;
 bool BOOL_00449370 = false;
 
@@ -12548,8 +12823,8 @@ ed_3d_sprite* ed3DPrepareAllSprite(ed_Chunck* pSPRA, ed_prepare_Sprite_Def* pDef
 	pBuffEnd = (char*)((char*)pSPRA + pSPRA->size);
 	for (peVar1 = edChunckGetFirst((char*)(pSPRA + 1), pBuffEnd); peVar1 != (ed_Chunck*)0x0; peVar1 = edChunckGetNext(peVar1, pBuffEnd)) {
 		if (peVar1->hash == HASH_CODE_SPR) {
-			pDef->pSPR = (int*)(peVar1 + 1);
-			//pSprite = ed3DPrepareSprite(pDef);
+			pDef->pSPR = (SPR*)(peVar1 + 1);
+			pSprite = ed3DPrepareSprite(pDef);
 			if ((pSprite != (ed_3d_sprite*)0x0) && (g_pStrippBufLastPos = ed3DSpritePreparePacket(pSprite, g_pStrippBufLastPos, pHashCode, param_4), iVar2 == 0)) {
 				pOutSprite = pSprite;
 			}

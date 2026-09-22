@@ -29,4 +29,6 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 
 ed_hash_code* ed3DG2DGetHASHFromMat(ed_g2d_manager* pManager, ed_g2d_material* pMaterial);
 
+void ed3DG2DMaterialSetLayerProp(ed_g2d_material* pMAT_Internal, uint index, uint flag);
+
 #endif // ED3D_G2D_H

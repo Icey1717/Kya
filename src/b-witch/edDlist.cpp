@@ -777,17 +777,6 @@ void edDListPatchGifTag2D(void)
 	return;
 }
 
-void ed3DG2DMaterialSetLayerProp(ed_g2d_material* pMAT_Internal, uint index, uint flag)
-{
-	if (index < pMAT_Internal->nbLayers) {
-		ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, pMAT_Internal->aLayers[index]);
-
-		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-		pLayer->flags_0x0 |= flag;
-	}
-	return;
-}
-
 void edDListBlendSet(uint bAlphaBlendEnable)
 {
 	if ((((gbInsideBegin == false) && (gBlendMode = bAlphaBlendEnable & 0xff, gCurMaterial != (edDList_material*)0x0)) &&

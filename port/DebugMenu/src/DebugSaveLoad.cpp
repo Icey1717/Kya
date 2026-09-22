@@ -21,12 +21,20 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
+#include <algorithm>
+#include <stdexcept>
 
 namespace Debug::SaveLoad
 {
 	Debug::Setting<int> gDefaultSaveSlot = { "Default Save Slot", -1 };
 
 	Debug::Setting<bool> gAutoLoadOnStart = { "Auto Load On Start", false };
+	Debug::Setting<bool> gShortAutosaveCooldown = { "10 Second Autosave Cooldown", false };
+
+	void ApplyAutosaveCooldown()
+	{
+		CLevelScheduler::autoSaveCooldown = gShortAutosaveCooldown ? 10.0f : 180.0f;
+	}
 
 	void DrawSaveInfo(const SaveDataDesc& desc)
 	{
@@ -69,6 +77,11 @@ namespace Debug::SaveLoad
 		const char* autoLoadStatus = "Disabled";
 		std::chrono::steady_clock::time_point lastAutoLoadLog;
 		bool backupsOpen = false;
+		bool showAutosaves = false;
+		int archiveRestoreSlot = 0;
+		int pendingArchiveSlot = -1;
+		std::vector<char> pendingArchiveData;
+		std::string archiveStatus;
 		bool restorePending = false;
 		bool hotkeyTaskPending = false;
 		bool refreshBackups = false;
@@ -88,6 +101,13 @@ namespace Debug::SaveLoad
 			bool checkpointReadable = false;
 		};
 		std::vector<SaveBackup> backups;
+
+		bool GetSaveDirectory(std::filesystem::path& directory)
+		{
+			return TryGetBackupDirectory(
+				std::string_view(gSaveManagement.memCardPathEnd, sizeof(gSaveManagement.memCardPathEnd)),
+				std::string_view(gSaveManagement.serialNumber, sizeof(gSaveManagement.serialNumber)), directory);
+		}
 
 		void ReadBackup(SaveBackup& backup, const std::filesystem::path& path)
 		{
@@ -175,6 +195,44 @@ namespace Debug::SaveLoad
 			else ImGui::TextUnformatted("Checkpoint name: no matching waypoint");
 		}
 
+		void ArchiveAutosave()
+		{
+			if (pendingArchiveSlot < 0 || gSaveManagement.has_queued_file_action()) return;
+			const int slot = pendingArchiveSlot;
+			pendingArchiveSlot = -1;
+			try {
+				std::filesystem::path directory;
+				if (!GetSaveDirectory(directory)) throw std::runtime_error("Save directory is unavailable");
+				SaveBackup saved{};
+				ReadBackup(saved, directory / ("slot_" + std::to_string(slot) + ".dat"));
+				// A queued write can fail at close. Only catalogue the exact save that
+				// triggered this request once it has actually reached disk.
+				if (!saved.error.empty() || saved.data != pendingArchiveData) {
+					throw std::runtime_error("Autosave did not reach disk or failed validation");
+				}
+				const auto name = saved.checkpointReadable ? GetCheckpointArchiveName(saved.checkpoint) : std::string();
+				if (name.empty()) throw std::runtime_error("Autosave has no recognizable checkpoint");
+				directory /= "autosaves";
+				std::filesystem::create_directories(directory);
+				const auto destination = directory / name;
+				if (!std::filesystem::exists(destination)) {
+					WinSaveFile output(destination);
+					if (!output.IsOpen() || !output.Write(saved.data.data(), static_cast<uint>(saved.data.size())) || !output.Commit()) {
+						throw std::runtime_error("Could not write checkpoint archive");
+					}
+					archiveStatus = "Archived autosave for level " + std::to_string(saved.checkpoint.level) +
+						", sector " + std::to_string(saved.checkpoint.sector);
+					if (showAutosaves) refreshBackups = true;
+				}
+				else archiveStatus = "Checkpoint already archived; kept its first autosave";
+			}
+			catch (const std::exception& error) {
+				archiveStatus = std::string("Autosave archive: ") + error.what();
+				MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "{}", archiveStatus);
+			}
+			pendingArchiveData.clear();
+		}
+
 		void RefreshBackups()
 		{
 			backups.clear();
@@ -190,6 +248,23 @@ namespace Debug::SaveLoad
 					return;
 				}
 				backupDirectory = directory.string();
+				if (showAutosaves) {
+					directory /= "autosaves";
+					backupDirectory = directory.string();
+					if (!std::filesystem::exists(directory)) return;
+					std::vector<std::filesystem::path> paths;
+					for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+						if (entry.is_regular_file() && entry.path().extension() == ".dat") paths.push_back(entry.path());
+					}
+					std::sort(paths.begin(), paths.end());
+					for (const auto& path : paths) {
+						SaveBackup backup{};
+						backup.index = static_cast<int>(backups.size());
+						ReadBackup(backup, path);
+						backups.push_back(std::move(backup));
+					}
+					return;
+				}
 				for (int slot = 0; slot < 4; ++slot) {
 					for (int index = 1; index <= 10; ++index) {
 						SaveBackup backup;
@@ -263,19 +338,24 @@ namespace Debug::SaveLoad
 			if (!backupsOpen) return;
 			if (refreshBackups && !restorePending) RefreshBackups();
 			ImGui::SetNextWindowSize(ImVec2(620, 550), ImGuiCond_FirstUseEver);
-			if (ImGui::Begin("Save Backups", &backupsOpen)) {
+			if (ImGui::Begin(showAutosaves ? "Checkpoint Autosaves###SaveArchiveBrowser" : "Save Backups###SaveArchiveBrowser", &backupsOpen)) {
 				ImGui::BeginDisabled(restorePending);
 				if (ImGui::Button("Refresh")) RefreshBackups();
 				ImGui::EndDisabled();
-				ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save.");
+				if (showAutosaves) {
+					ImGui::TextWrapped("First autosave per checkpoint. Restore replaces the selected slot and backs up its current save.");
+					ImGui::Combo("Restore into slot", &archiveRestoreSlot, "0\0" "1\0" "2\0" "3\0");
+				}
+				else ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save.");
 				if (!backupDirectory.empty()) ImGui::TextWrapped("Directory: %s", backupDirectory.c_str());
 				if (!backupStatus.empty()) ImGui::TextWrapped("%s", backupStatus.c_str());
 				if (!CanRestore()) ImGui::TextWrapped("Restore is available when the title screen or gameplay is ready and no save/load is active.");
-				if (backups.empty()) ImGui::TextUnformatted("No backed up saves found. Autosaves create backups of existing slots.");
+				if (backups.empty()) ImGui::TextUnformatted(showAutosaves ? "No checkpoint autosaves archived yet." : "No backed up saves found. Autosaves create backups of existing slots.");
 				ImGui::BeginChild("Backups", ImVec2(0, 0), true);
 				for (const auto& backup : backups) {
 					ImGui::PushID(backup.slot * 10 + backup.index);
-					ImGui::Text("Slot %d - backup %d%s", backup.slot, backup.index, backup.index == 1 ? " (newest)" : "");
+					if (showAutosaves) ImGui::Text("Checkpoint autosave %d", backup.index + 1);
+					else ImGui::Text("Slot %d - backup %d%s", backup.slot, backup.index, backup.index == 1 ? " (newest)" : "");
 					if (backup.modified.wYear) {
 						const auto& time = backup.modified;
 						ImGui::Text("Modified: %04d-%02d-%02d %02d:%02d:%02d (local)",
@@ -287,9 +367,18 @@ namespace Debug::SaveLoad
 					}
 					else ImGui::TextWrapped("%s", backup.error.c_str());
 					ImGui::BeginDisabled(!backup.error.empty() || !CanRestore());
-					if (ImGui::Button("Restore")) QueueRestore(backup, false);
+					const bool restore = ImGui::Button("Restore");
 					ImGui::SameLine();
-					if (ImGui::Button("Restore & Load")) QueueRestore(backup, true);
+					const bool load = ImGui::Button("Restore & Load");
+					if (restore || load) {
+						auto selected = backup;
+						if (showAutosaves) {
+							selected.slot = archiveRestoreSlot;
+							selected.destination = std::filesystem::path(backupDirectory).parent_path() /
+								("slot_" + std::to_string(archiveRestoreSlot) + ".dat");
+							}
+						QueueRestore(selected, load);
+					}
 					ImGui::EndDisabled();
 					ImGui::Separator();
 					ImGui::PopID();
@@ -403,13 +492,21 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 		gDefaultSaveSlot.DrawImguiControl();
 
 		gAutoLoadOnStart.DrawImguiControl();
+		if (gShortAutosaveCooldown.DrawImguiControl()) ApplyAutosaveCooldown();
 		ImGui::TextWrapped("Auto-load: %s (slot %d)", autoLoadStatus, autoLoadSlot);
 
 		ImGui::TextWrapped("Press F5 to save, F7 to load");
 		if (ImGui::Button("Browse Backed Up Saves")) {
+			showAutosaves = false;
 			backupsOpen = true;
 			refreshBackups = true;
 		}
+		if (ImGui::Button("Browse Checkpoint Autosaves")) {
+			showAutosaves = true;
+			backupsOpen = true;
+			refreshBackups = true;
+		}
+		if (!archiveStatus.empty()) ImGui::TextWrapped("%s", archiveStatus.c_str());
 
 		ImGui::BeginChild("SaveLoadSlots", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -426,8 +523,27 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 	ShowBackups();
 }
 
+void Debug::SaveLoad::QueueAutosaveArchive(int slot)
+{
+	if (slot < 0 || slot >= 4 || !gSaveManagement.pBigAlloc_0x34) return;
+	try {
+		constexpr size_t prefixSize = sizeof(SaveDataHeader) + sizeof(SaveDataDesc);
+		pendingArchiveData.resize(prefixSize + 0x10000);
+		std::memcpy(pendingArchiveData.data(), &gSaveManagement.saveDataHeader, sizeof(SaveDataHeader));
+		std::memcpy(pendingArchiveData.data() + sizeof(SaveDataHeader),
+			&gSaveManagement.aSaveDataDescriptions[slot], sizeof(SaveDataDesc));
+		std::memcpy(pendingArchiveData.data() + prefixSize, gSaveManagement.pBigAlloc_0x34, 0x10000);
+		pendingArchiveSlot = slot;
+	}
+	catch (const std::exception& error) {
+		pendingArchiveSlot = -1;
+		MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "Could not queue autosave archive: {}", error.what());
+	}
+}
+
 void Debug::SaveLoad::Update()
 {
+	ArchiveAutosave();
 	if (restorePending || hotkeyTaskPending) return;
 	UpdateAutoLoad();
 	// Save loading can render nested debug frames. Do not append hotkey tasks to
@@ -480,6 +596,10 @@ void Debug::SaveLoad::Update()
 }
 
 namespace Debug {
+	StartupRegisterer sDebugSaveLoadStartupReg([]() {
+		SaveLoad::ApplyAutosaveCooldown();
+		SaveManagement_SetAutoSaveQueuedCallback(Debug::SaveLoad::QueueAutosaveArchive);
+	});
 	MenuRegisterer sDebugSaveLoadMenuReg("Save/Load", Debug::SaveLoad::ShowMenu, true);
 	UpdateRegisterer sDebugSaveLoadUpdateReg(Debug::SaveLoad::Update);
 }

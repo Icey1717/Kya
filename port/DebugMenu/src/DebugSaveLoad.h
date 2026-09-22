@@ -4,5 +4,6 @@ namespace Debug {
 	namespace SaveLoad {
 		void ShowMenu(bool* bOpen);
 		void Update();
+		void QueueAutosaveArchive(int slot);
 	}
 }

@@ -24,6 +24,18 @@
 #include "TranslatedTextData.h"
 #include "TimeController.h"
 
+#ifdef PLATFORM_WIN
+namespace
+{
+	void (*autoSaveQueuedCallback)(int slot) = nullptr;
+}
+
+void SaveManagement_SetAutoSaveQueuedCallback(void (*callback)(int slot))
+{
+	autoSaveQueuedCallback = callback;
+}
+#endif
+
 edBANK_ENTRY_INFO gSaveManagementInfoIconSys;
 edBANK_ENTRY_INFO gSaveManagementInfoFileIco;
 char gSaveManagementSaveGameSize[256];
@@ -214,6 +226,9 @@ void SaveManagement_MemCardAutoSave(void)
 					if (bVar1 != false) {
 						gSaveManagement.field_0x0 = 1;
 						edFileIsIdle(gSaveManagement.memCardAccessPath, 1);
+#ifdef PLATFORM_WIN
+						if (autoSaveQueuedCallback) autoSaveQueuedCallback(gSaveManagement.slotID_0x28);
+#endif
 						return;
 					}
 				}
@@ -223,6 +238,9 @@ void SaveManagement_MemCardAutoSave(void)
 			}
 			else {
 				gSaveManagement.field_0x0 = 1;
+#ifdef PLATFORM_WIN
+				if (autoSaveQueuedCallback) autoSaveQueuedCallback(gSaveManagement.slotID_0x28);
+#endif
 			}
 		}
 	}

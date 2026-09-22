@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string_view>
+#include <string>
 
 namespace Debug::SaveLoad
 {
@@ -15,6 +16,24 @@ namespace Debug::SaveLoad
 		float position[3] = {};
 		float rotation[3] = {};
 	};
+
+	inline std::string GetCheckpointArchiveName(const SavedCheckpoint& checkpoint)
+	{
+		if (!checkpoint.hasPosition || checkpoint.level < 0 || checkpoint.level >= 0xe) return {};
+		std::string name = "level_" + std::to_string(checkpoint.level) + "_sector_" + std::to_string(checkpoint.sector);
+		// Use the serialized respawn transform, not the hero's current location or
+		// progress counters. The identity survives revisits, slots and restarts.
+		for (const auto* values : {checkpoint.position, checkpoint.rotation}) {
+			for (int axis = 0; axis < 3; ++axis) {
+				if (!std::isfinite(values[axis])) return {};
+				const float value = values[axis] == 0.0f ? 0.0f : values[axis];
+				uint32_t bits;
+				std::memcpy(&bits, &value, sizeof(bits));
+				name += "_" + std::to_string(bits);
+			}
+		}
+		return name + ".dat";
+	}
 
 	namespace SaveChunks
 	{

@@ -715,14 +715,14 @@ void CActorFighter::Create(ByteCode* pByteCode)
 
 	pByteCode->GetU32();
 
-	this->field_0x51c = pByteCode->GetU32();
-	this->field_0x520 = pByteCode->GetU32();
-	this->field_0x524 = pByteCode->GetU32();
-	this->field_0x528 = pByteCode->GetU32();
-	this->field_0x52c = pByteCode->GetU32();
-	this->field_0x530 = pByteCode->GetU32();
-	this->field_0x534 = pByteCode->GetU32();
-	this->field_0x538 = pByteCode->GetU32();
+	this->field_0x51c[0] = pByteCode->GetU32();
+	this->field_0x51c[1] = pByteCode->GetU32();
+	this->field_0x51c[2] = pByteCode->GetU32();
+	this->field_0x51c[3] = pByteCode->GetU32();
+	this->field_0x51c[4] = pByteCode->GetU32();
+	this->field_0x51c[5] = pByteCode->GetU32();
+	this->field_0x51c[6] = pByteCode->GetU32();
+	this->field_0x51c[7] = pByteCode->GetU32();
 	this->field_0x53c = pByteCode->GetU32();
 	this->field_0x540 = pByteCode->GetU32();
 	this->field_0x544 = pByteCode->GetU32();
@@ -751,8 +751,8 @@ void CActorFighter::Create(ByteCode* pByteCode)
 		pCurSubStruct = pCurSubStruct + 1;
 	} while (uVar2 < 4);
 
-	this->field_0x550[0].Init(this->field_0x52c);
-	this->field_0x550[1].Init(this->field_0x52c);
+	this->field_0x550[0].Init(this->field_0x51c[4]);
+	this->field_0x550[1].Init(this->field_0x51c[4]);
 
 	_CreateBlowsDB(pByteCode);
 	_CreateGrabsDB(pByteCode);
@@ -3265,8 +3265,7 @@ void CActorFighter::_InterpretCollisions(int param_2)
 		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(fVar9, 0);
 
 		if (this->field_0x8e4 == 0) {
-			IMPLEMENTATION_GUARD_FX(
-			PlayOrientedFx(&this->field_0x690, &local_10, (&this->field_0x51c)[iVar5], (int*)0x0);)
+			PlayOrientedFx(&this->field_0x690, &local_10, this->field_0x51c[iVar5], (CFxHandle*)0x0);
 		}
 
 		SetState(0x54, inAnimType);
@@ -6737,27 +6736,27 @@ void CActorFighter::PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3,
 
 		if (hitZone == 0) {
 			if (param_4 == 0) {
-				hitZone = this->field_0x524;
+				hitZone = this->field_0x51c[2];
 			}
 			else {
-				hitZone = this->field_0x51c;
+				hitZone = this->field_0x51c[0];
 			}
 		}
 		else {
 			if (param_4 == 0) {
-				hitZone = this->field_0x528;
+				hitZone = this->field_0x51c[3];
 			}
 			else {
-				hitZone = this->field_0x520;
+				hitZone = this->field_0x51c[1];
 			}
 		}
 	}
 	else {
 		if (param_4 == 0) {
-			hitZone = this->field_0x534;
+			hitZone = this->field_0x51c[6];
 		}
 		else {
-			hitZone = this->field_0x530;
+			hitZone = this->field_0x51c[5];
 		}
 	}
 

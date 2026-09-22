@@ -424,6 +424,9 @@ public:
 	void Level_TeleporterChanged();
 
 	void SetLevelTimerFunc_002df450(float param_1, int mode);
+#ifdef PLATFORM_WIN
+	static float autoSaveCooldown;
+#endif
 	int GetNbAreas(int currentLevelID);
 	void ExitLevel(int param_2);
 	void ManageLoadElevator(int elevatorId, int levelId, int param_4);

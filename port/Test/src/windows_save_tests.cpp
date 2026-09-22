@@ -53,6 +53,33 @@ TEST(WindowsSaveCheckpoint, ReadsHeroCheckpointWithoutLoadingGame)
 	EXPECT_FLOAT_EQ(checkpoint.position[2], 30.0f);
 }
 
+TEST(WindowsSaveCheckpoint, ArchiveIdentitySurvivesReloadAndDistinguishesCheckpoints)
+{
+	Debug::SaveLoad::SavedCheckpoint checkpoint, reloaded;
+	ASSERT_TRUE(Debug::SaveLoad::ReadSavedCheckpoint(CheckpointSave(), checkpoint));
+	ASSERT_TRUE(Debug::SaveLoad::ReadSavedCheckpoint(CheckpointSave(), reloaded));
+	const auto name = Debug::SaveLoad::GetCheckpointArchiveName(checkpoint);
+	ASSERT_FALSE(name.empty());
+	EXPECT_EQ(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	EXPECT_EQ(std::filesystem::path(name).filename(), name);
+	reloaded.level++;
+	EXPECT_NE(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	reloaded = checkpoint;
+	reloaded.sector++;
+	EXPECT_NE(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	reloaded = checkpoint;
+	reloaded.position[0] += 1.0f;
+	EXPECT_NE(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	reloaded = checkpoint;
+	reloaded.rotation[1] = 1.0f;
+	EXPECT_NE(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	reloaded = checkpoint;
+	reloaded.rotation[0] = -0.0f;
+	EXPECT_EQ(name, Debug::SaveLoad::GetCheckpointArchiveName(reloaded));
+	reloaded.hasPosition = false;
+	EXPECT_TRUE(Debug::SaveLoad::GetCheckpointArchiveName(reloaded).empty());
+}
+
 TEST(WindowsSaveCheckpoint, RejectsTruncatedChunksAndActorRecords)
 {
 	Debug::SaveLoad::SavedCheckpoint checkpoint;
