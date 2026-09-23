@@ -98,6 +98,7 @@ public:
 	void BehaviourAtonEscape_InitState(int newState);
 	void BehaviourAtonEscape_Manage();
 
+	void StateAtonPathWaitJumpCallNear();
 	void StateAtonPathWaitJumpCallFar();
 
 	void StateAtonPathStandCallNear();

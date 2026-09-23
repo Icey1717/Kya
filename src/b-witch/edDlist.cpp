@@ -4065,6 +4065,8 @@ void edDListGetPatchableVertexEnd_Inline(void)
 	return;
 }
 
+edVertex* gCurVertBufPatched;
+
 // Should be in: D:/Projects/EdenLib/edDList/sources/ps2/edDListPatchable.c
 void edDListPatcheEnd(int nbVertex, int param_2)
 {
@@ -4124,13 +4126,11 @@ void edDListPatcheEnd(int nbVertex, int param_2)
 					}
 					else {
 						if (iVar1 != gCurStripPatchable->meshCount - 1) {
-							IMPLEMENTATION_GUARD(
-							edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x460), 0x48, gCurStripPatchable->pBoundSpherePkt + iVar1);)
+							edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x46), 0x48, LOAD_POINTER_CAST(ed_Bound_Sphere_packet*, gCurStripPatchable->pBoundSpherePkt) + iVar1);
 							goto LAB_002d121c;
 						}
 
-						IMPLEMENTATION_GUARD(
-						edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x460), (uint)gCurStripPatchable->field_0x38, gCurStripPatchable->pBoundSpherePkt + iVar1);)
+						edDListFindBoundingSphere((edF32VECTOR4*)(gCurVertBufPatched + iVar1 * 0x46), gCurStripPatchable->field_0x38, LOAD_POINTER_CAST(ed_Bound_Sphere_packet*, gCurStripPatchable->pBoundSpherePkt) + iVar1);
 						iVar1 = iVar1 + 1;
 					}
 				}
@@ -4143,8 +4143,6 @@ void edDListPatcheEnd(int nbVertex, int param_2)
 
 	return;
 }
-
-edVertex* gCurVertBufPatched;
 
 DisplayListCommand* edDListPatchableInfo(edVertex** pVertexBufOut, _rgba** pColorBufOut, uint** pSTBufOut, uint** pUvOut, uint nbAddedVertex, uint index)
 {

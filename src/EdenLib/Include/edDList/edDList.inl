@@ -44,4 +44,24 @@ inline void edDListPatchRGBA_Inline(_rgba* param_1, _rgba newColor, uint param_3
 	return;
 }
 
+inline void edDListPatchST_Inline(uint* pSt, float s, float t, uint index, uint count)
+{
+	uint patchedIndex = index;
+	if (0x47 < index) {
+		patchedIndex = index + ((index - 0x48) / 0x46 + 1) * 2;
+	}
+
+	if (0x47 < count) {
+		count = count + ((count - 0x48) / 0x46 + 1) * 2;
+	}
+
+	uint* pValue = pSt + patchedIndex;
+	*pValue = (uint)(ushort)(int)(s * 4096.0f) | ((uint)(ushort)(int)(t * 4096.0f) << 16);
+	if (((1 < index) && ((index % 0x46) < 2)) && (patchedIndex < count)) {
+		pValue[2] = *pValue;
+	}
+
+	return;
+}
+
 #endif // ED_DLIST_INL

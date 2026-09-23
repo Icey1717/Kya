@@ -69,7 +69,7 @@ void CActorBoomy::Create(ByteCode* pByteCode)
 	CActor::SV_InstallMaterialId(this->particleID_0x3dc);
 
 	this->fxTail.Create(0.5f, count, 4, this->particleID_0x3d0);
-	this->fxTail.field_0xb0 = uVar4;
+	this->fxTail.widthAxis = uVar4;
 	this->fxTail.ChangeOrder("ZXY");
 
 	pCVar2 = this->pCollisionData;
@@ -146,12 +146,12 @@ void CActorBoomy::Init()
 	this->fxTail.Init(16.0f, this->sectorId);
 
 	local_4 = this->aBoomyTypeInfo[0].fxColorA;
-	iVar2 = (this->fxTail).count_0x34;
+	iVar2 = (this->fxTail).nbSegments;
 	if (iVar2 == 0) {
 		trap(7);
 	}
 
-	(this->fxTail).field_0x30 = (float)((int)((local_4 >> 0x18) * 6) / iVar2);
+	(this->fxTail).alphaDecayPerUpdate = (float)((int)((local_4 >> 0x18) * 6) / iVar2);
 
 	this->fxLightEmitterA.Create(0.4f, 0x80, 0x10);
 	this->fxLightEmitterA.ChangeMaterialId(this->particleID_0x3d4, 0);
@@ -616,9 +616,9 @@ void CActorBoomy::StateBoomyGetTarget()
 	this->field_0x650 = 0;
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 
-	this->fxTail.field_0x70 = gF32Matrix4Unit;
-	(this->fxTail).field_0x40 = (this->fxTail).field_0x3c;
-	(this->fxTail).field_0xb8 = 16.0f / (float)(this->fxTail).count_0x34;
+	this->fxTail.transformMatrix = gF32Matrix4Unit;
+	(this->fxTail).pendingBreakSegmentIndex = (this->fxTail).nextSegmentIndex;
+	(this->fxTail).textureSStep = 16.0f / (float)(this->fxTail).nbSegments;
 
 	this->fxTail.SetPatchActive(1);
 	(this->speedDyn).currentAlpha = (this->pSpline->aPoints->position).y;
@@ -997,7 +997,7 @@ void CActorBoomy::StateBoomyControl()
 		FUN_0012d8f0(pBestTarget);
 	}
 
-	fVar8 = (this->fxTail).field_0x50.z;
+	fVar8 = (this->fxTail).rotationEuler.z;
 	fVar7 = this->rotationEuler.y;
 	this->rotationEuler.x = 0.0f;
 	this->rotationEuler.y = fVar7;
@@ -1294,8 +1294,8 @@ bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* aSplinePosition
 	this->rotationEuler.z = -0.7853982f;
 
 	local_4 = this->aBoomyTypeInfo[0].fxColorA;
-	(this->fxTail).field_0x28 = (this->fxTail).field_0x24;
-	(this->fxTail).field_0x24.rgba = local_4;
+	(this->fxTail).previousColor = (this->fxTail).color;
+	(this->fxTail).color.rgba = local_4;
 	local_8 = this->aBoomyTypeInfo[0].fxColorA;
 	this->fxLightEmitterB.ChangeColors(local_8);
 	if ((this->field_0x1d4 == 0) || ((this->aBoomyTypeInfo[0].flags & 2) == 0)) {
@@ -1314,8 +1314,8 @@ bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* aSplinePosition
 
 		this->fxLightEmitterB.Manage(aSplinePositions + nbSplinePositions + -1, 0xffffffff);
 
-		(this->fxTail).instanceIndex = (this->fxTail).field_0x50;
-		(this->fxTail).field_0x50 = this->rotationEuler;
+		(this->fxTail).previousRotationEuler = (this->fxTail).rotationEuler;
+		(this->fxTail).rotationEuler = this->rotationEuler;
 
 		if ((this->field_0x2b0 == 0) || (this->field_0x1e8 != 1.0f)) {
 			this->fxTail.Manage(aSplinePositions, nbSplinePositions, 0);

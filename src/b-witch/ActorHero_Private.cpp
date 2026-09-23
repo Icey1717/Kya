@@ -1861,27 +1861,27 @@ void CActorHeroPrivate::FxManageGlideTail()
 			if (GetTimer()->scaledTotalTime - this->currentGlideTime < this->maximumGlideTime) {
 				fVar7 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->currentGlideTime, 0.0f, this->maximumGlideTime);
 				fVar5 = fVar7 * 128.0f;
-				this->fxTrailA.field_0x28 = this->fxTrailA.field_0x24;
-				this->fxTrailA.field_0x24.r = 0x80;
-				this->fxTrailA.field_0x24.g = 0x80;
-				this->fxTrailA.field_0x24.b = 0x80;
+				this->fxTrailA.previousColor = this->fxTrailA.color;
+				this->fxTrailA.color.r = 0x80;
+				this->fxTrailA.color.g = 0x80;
+				this->fxTrailA.color.b = 0x80;
 				if (fVar5 < 2.147484e+09) {
-					this->fxTrailA.field_0x24.a = (char)(int)fVar5;
+					this->fxTrailA.color.a = (char)(int)fVar5;
 				}
 				else {
-					this->fxTrailA.field_0x24.a = (char)(int)(fVar5 - 2.147484e+09f);
+					this->fxTrailA.color.a = (char)(int)(fVar5 - 2.147484e+09f);
 				}
 
 				fVar7 = fVar7 * 128.0f;
-				this->fxTrailB.field_0x28 = this->fxTrailB.field_0x24;
-				this->fxTrailB.field_0x24.r = 0x80;
-				this->fxTrailB.field_0x24.g = 0x80;
-				this->fxTrailB.field_0x24.b = 0x80;
+				this->fxTrailB.previousColor = this->fxTrailB.color;
+				this->fxTrailB.color.r = 0x80;
+				this->fxTrailB.color.g = 0x80;
+				this->fxTrailB.color.b = 0x80;
 				if (fVar7 < 2.147484e+09) {
-					this->fxTrailB.field_0x24.a = (char)(int)fVar7;
+					this->fxTrailB.color.a = (char)(int)fVar7;
 				}
 				else {
-					this->fxTrailB.field_0x24.a = (char)(int)(fVar7 - 2.147484e+09f);
+					this->fxTrailB.color.a = (char)(int)(fVar7 - 2.147484e+09f);
 				}
 			}
 			else {
@@ -1895,7 +1895,7 @@ void CActorHeroPrivate::FxManageGlideTail()
 				fVar7 = local_30.z * fVar8 + local_20.z * fVar7;
 				fVar8 = fVar5 * 128.0f;
 
-				this->fxTrailA.field_0x28 = this->fxTrailA.field_0x24;
+				this->fxTrailA.previousColor = this->fxTrailA.color;
 
 				if (fVar8 < 2.147484e+09) {
 					uVar4 = (undefined)(int)fVar8;
@@ -1905,7 +1905,7 @@ void CActorHeroPrivate::FxManageGlideTail()
 				}
 
 				fVar8 = fVar6 * 128.0f;
-				this->fxTrailA.field_0x24.r = uVar4;
+				this->fxTrailA.color.r = uVar4;
 				if (fVar8 < 2.147484e+09) {
 					uVar4 = (undefined)(int)fVar8;
 				}
@@ -1914,17 +1914,17 @@ void CActorHeroPrivate::FxManageGlideTail()
 				}
 
 				fVar8 = fVar7 * 128.0f;
-				this->fxTrailA.field_0x24.g = uVar4;
+				this->fxTrailA.color.g = uVar4;
 				if (fVar8 < 2.147484e+09) {
-					this->fxTrailA.field_0x24.b = (char)(int)fVar8;
+					this->fxTrailA.color.b = (char)(int)fVar8;
 				}
 				else {
-					this->fxTrailA.field_0x24.b = (char)(int)(fVar8 - 2.147484e+09f);
+					this->fxTrailA.color.b = (char)(int)(fVar8 - 2.147484e+09f);
 				}
-				this->fxTrailA.field_0x24.a = 100;
+				this->fxTrailA.color.a = 100;
 
 				fVar5 = fVar5 * 128.0f;
-				this->fxTrailB.field_0x28 = this->fxTrailB.field_0x24;
+				this->fxTrailB.previousColor = this->fxTrailB.color;
 				if (fVar5 < 2.147484e+09) {
 					uVar4 = (undefined)(int)fVar5;
 				}
@@ -1932,7 +1932,7 @@ void CActorHeroPrivate::FxManageGlideTail()
 					uVar4 = (undefined)(int)(fVar5 - 2.147484e+09f);
 				}
 				fVar6 = fVar6 * 128.0f;
-				this->fxTrailB.field_0x24.r = uVar4;
+				this->fxTrailB.color.r = uVar4;
 				if (fVar6 < 2.147484e+09) {
 					uVar4 = (undefined)(int)fVar6;
 				}
@@ -1940,14 +1940,14 @@ void CActorHeroPrivate::FxManageGlideTail()
 					uVar4 = (undefined)(int)(fVar6 - 2.147484e+09f);
 				}
 				fVar7 = fVar7 * 128.0f;
-				this->fxTrailB.field_0x24.g = uVar4;
+				this->fxTrailB.color.g = uVar4;
 				if (fVar7 < 2.147484e+09) {
-					this->fxTrailB.field_0x24.b = (char)(int)fVar7;
+					this->fxTrailB.color.b = (char)(int)fVar7;
 				}
 				else {
-					this->fxTrailB.field_0x24.b = (char)(int)(fVar7 - 2.147484e+09f);
+					this->fxTrailB.color.b = (char)(int)(fVar7 - 2.147484e+09f);
 				}
-				this->fxTrailB.field_0x24.a = 100;
+				this->fxTrailB.color.a = 100;
 			}
 
 			SV_GetBoneWorldPosition(this->fxGlideBoneA, &local_60);
@@ -9440,7 +9440,7 @@ void CActorHeroPrivate::StateHeroBoomyControl()
 		fVar11 = edF32Between_0_2Pi(pBoomy->rotationEuler.y + fVar11 * GetTimer()->cutsceneDeltaTime);
 		pBoomy->rotationEuler.y = fVar11;
 		this->field_0xca4.Update(fVar8 * fVar7);
-		((this->pActorBoomy)->fxTail).field_0x50.z = this->field_0xca4.currentAlpha;
+		((this->pActorBoomy)->fxTail).rotationEuler.z = this->field_0xca4.currentAlpha;
 		this->field_0xcac.UpdateLerp(target);
 		this->field_0xcb4.UpdateLerp(fVar10 * fVar7);
 		pCameraGame->SetAngleGamma(this->field_0xcb4.currentAlpha);

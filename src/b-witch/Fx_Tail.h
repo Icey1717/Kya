@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+class CGlobalDListPatch;
+
 class CFxTail : public CObject
 {
 public:
@@ -26,41 +28,50 @@ public:
 
 	void _ManageLife();
 	void _PatchListAlpha();
+	void _CreateSegment(edF32VECTOR4* param_2, edF32VECTOR4* param_3);
+	void _CreateSegment(edF32VECTOR4* param_2, int param_3);
+	void _PatchSegmentST(float param_1, uint param_3);
 
 	int dlistPatchId;
-	CGlobalDListPatch* field_0x8;
+	CGlobalDListPatch* pDlistPatch;
 
 	uint flags;
 
-	int particleID_0x14;
+	int materialId;
 
-	float* pData_0x18;
+	float* pSegmentAlpha;
 
-	float field_0x1c;
-	float field_0x20;
+	// Distance from the center to either edge.
+	float halfWidth;
+	float previousHalfWidth;
 
-	_rgba field_0x24;
-	_rgba field_0x28;
-	int field_0x2c;
+	_rgba color;
+	_rgba previousColor;
 
-	float field_0x30;
-	int count_0x34;
-	int field_0x38;
-	int field_0x3c;
-	int field_0x40;
+	// Number of newest segments over which alpha ramps up from zero.
+	int headFadeSegmentCount;
 
-	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 field_0x60;
-	edF32MATRIX4 field_0x70;
+	float alphaDecayPerUpdate;
+	int nbSegments;
+	int nbUsedSegments;
+	int nextSegmentIndex;
+	int pendingBreakSegmentIndex;
 
-	uint field_0xb0;
-	float field_0xb8;
-	float field_0xbc;
+	edF32VECTOR4 rotationEuler;
+	edF32VECTOR4 previousRotationEuler;
+	edF32MATRIX4 transformMatrix;
 
-	float field_0xc0;
-	float field_0xc4;
-
+	uint widthAxis;
 	char szOrder[4];
+
+	// S-coordinate increment, divided across interpolated segments.
+	float textureSStep;
+
+	// Running S coordinate used by _PatchSegmentST.
+	float nextTextureS;
+
+	float negativeEdgeTextureT;
+	float positiveEdgeTextureT;
 };
 
 #endif // FX_TAIL_H

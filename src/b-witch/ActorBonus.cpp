@@ -412,7 +412,7 @@ void CBehaviourBonusAlone::Create(ByteCode* pByteCode)
 	}
 
 	this->fxTail.Create(0.4f, fxTailCount, 2, g2dIndex);
-	this->fxTail.field_0xb0 = materialId;
+	this->fxTail.widthAxis = materialId;
 
 	return;
 }
@@ -652,7 +652,7 @@ void CBehaviourBonusTurn::Manage()
 	}
 
 	pFxTail = this->pOwner->pFxTail;
-	pFxTail->field_0x30 = 128.0f / static_cast<float>(pFxTail->count_0x34 << 2);
+	pFxTail->alphaDecayPerUpdate = 128.0f / static_cast<float>(pFxTail->nbSegments << 2);
 
 	if (this->field_0x1dc == 0) {
 		pFxTail->Manage(&this->actInstance.currentPosition, 1, ((this->actInstance.flags & 1) == 0));
@@ -1680,11 +1680,11 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 			nextZ = pOwner->rotationEuler.y;
 			nextW = pOwner->rotationEuler.z;
 			pFxTail = pOwner->pFxTail;
-			pFxTail->instanceIndex = pFxTail->field_0x50;
-			pFxTail->field_0x50.x = nextY;
-			pFxTail->field_0x50.y = nextZ;
-			pFxTail->field_0x50.z = nextW;
-			pFxTail->field_0x50.w = 0.0f;
+			pFxTail->previousRotationEuler = pFxTail->rotationEuler;
+			pFxTail->rotationEuler.x = nextY;
+			pFxTail->rotationEuler.y = nextZ;
+			pFxTail->rotationEuler.z = nextW;
+			pFxTail->rotationEuler.w = 0.0f;
 		}
 	}
 
@@ -1795,14 +1795,14 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		float nextW = pOwner->rotationEuler.z;
 		pFxTail = pOwner->pFxTail;
 
-		tailY = pFxTail->field_0x50.y;
-		tailZ = pFxTail->field_0x50.z;
-		tailW = pFxTail->field_0x50.w;
-		pFxTail->instanceIndex = pFxTail->field_0x50;
-		pFxTail->field_0x50.x = nextY;
-		pFxTail->field_0x50.y = nextZ;
-		pFxTail->field_0x50.z = nextW;
-		pFxTail->field_0x50.w = 0.0f;
+		tailY = pFxTail->rotationEuler.y;
+		tailZ = pFxTail->rotationEuler.z;
+		tailW = pFxTail->rotationEuler.w;
+		pFxTail->previousRotationEuler = pFxTail->rotationEuler;
+		pFxTail->rotationEuler.x = nextY;
+		pFxTail->rotationEuler.y = nextZ;
+		pFxTail->rotationEuler.z = nextW;
+		pFxTail->rotationEuler.w = 0.0f;
 	}
 
 	return;
