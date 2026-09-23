@@ -29,7 +29,7 @@ public:
 	bool ProjectDirected(float velocity, edF32VECTOR4* pSource, edF32VECTOR4* pTarget, CActor* pFiringActor);
 
 	uint GetProjectileIndex(edF32VECTOR4* pLocation, bool param_3);
-	CActorProjectile* _ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7);
+	CActorProjectile* _ComputeNewShotNoRelease(float amplitude, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7);
 
 	bool FireNewShot(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor);
 	bool FireNewShotStraight(edF32VECTOR4* pPosition, edF32VECTOR4* pDirection, CActor* pActor);

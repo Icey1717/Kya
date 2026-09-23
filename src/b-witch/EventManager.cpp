@@ -188,7 +188,7 @@ int _edEventComputePrimAgainstVertex(uint prim, edF32MATRIX4* pMatrix, edF32VECT
 	case 5:
 		fVar1 = local_10.z * local_10.z + local_10.x * local_10.x + local_10.y * local_10.y;
 	joined_r0x00258cbc:
-		if (fVar1 <= 1.0) {
+		if (fVar1 <= 1.0f) {
 			return 1;
 		}
 	}
@@ -205,11 +205,11 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	uint uVar6;
 	int* piVar7;
 	uint uVar8;
-	float fVar9;
-	float fVar10;
+	float radius;
+	float distanceSqr;
 	uint local_30;
 	edF32VECTOR4 eStack32;
-	edF32VECTOR3 local_10;
+	edF32VECTOR3 locationToSphere;
 
 	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: bound sphere: {}, location: {}, mode: {}, has zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
 
@@ -220,11 +220,11 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	}
 
 	if ((pZone->boundSphere).w != 0.0f) {
-		local_10 = pLocation->xyz - (pZone->boundSphere).xyz;
-		fVar10 = edF32Vector3DotProductSoft(&local_10, &local_10);
-		fVar9 = (pZone->boundSphere).w;
+		locationToSphere = pLocation->xyz - (pZone->boundSphere).xyz;
+		distanceSqr = edF32Vector3DotProductSoft(&locationToSphere, &locationToSphere);
+		radius = (pZone->boundSphere).w;
 
-		if (fVar9 * fVar9 < fVar10) {
+		if (radius * radius < distanceSqr) {
 			EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex: actor outside bounding sphere, returning outside");
 			return 2;
 		}

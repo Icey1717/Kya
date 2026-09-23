@@ -252,7 +252,7 @@ uint CFireShot::GetProjectileIndex(edF32VECTOR4* pLocation, bool param_3)
 	return 0xffffffff;
 }
 
-CActorProjectile* CFireShot::_ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7)
+CActorProjectile* CFireShot::_ComputeNewShotNoRelease(float amplitude, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7)
 {
 	uint projectileIndex;
 	CActorProjectile* pRef;
@@ -277,7 +277,7 @@ CActorProjectile* CFireShot::_ComputeNewShotNoRelease(float velocity, edF32VECTO
 
 		pRef->UpdatePosition(pLocation, true);
 
-		(*pShotData)->field_0x10 = velocity;
+		(*pShotData)->field_0x10 = amplitude;
 		(*pShotData)->timeToExplode = pRef->aProjectileSubObjs->timeToExplode;
 		(*pShotData)->field_0x18 = 0.0f;
 	}

@@ -3462,7 +3462,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				})
 				goto LAB_00344ed0;
 		}
+
 		if (msg == 0x83) {
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x83 requested: inputEnabled {} field_0x1610 {} field_0x1558 {} actorState 0x{:x} sender {} ({})", this->field_0x18dc == 0, this->field_0x1610, this->field_0x1558, (int)this->actorState, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3506,11 +3508,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					PlayAnim(GetStateCfg(this->actorState)->animId);
 					this->prevAnimType = GetStateCfg(this->actorState)->animId;
 				}
+				ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x83 restored input: inputEnabled {} field_0x1610 {} pPlayerInput {}", this->field_0x18dc == 0, this->field_0x1610, (void*)this->pPlayerInput);
 				return 1;
 			}
+
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x83 rejected: inputEnabled {} life {} deathThreshold {} stateFlags 0x{:x} field_0x1558 {} sender {} ({})", this->field_0x18dc == 0, fVar25, this->field_0x2e4, GetStateFlags(this->actorState), this->field_0x1558, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 			return 0;
 		}
+
 		if (msg == 0x82) {
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x82 requested: inputEnabled {} sender {} ({}) actorState 0x{:x}", this->field_0x18dc == 0, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)", (int)this->actorState);
 			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3537,12 +3544,15 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 				this->field_0x1610 = 0;
 				this->field_0x18dc = 1;
+				ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x82 disabled input: sender {} ({})", (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 				return 1;
 			}
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage message 0x82 did not disable input: sender {} ({})", (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 			return 0;
 		}
 
 		if (msg == MESSAGE_ENABLE_INPUT) {
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage ENABLE_INPUT requested: inputEnabled {} field_0x1610 {} field_0x1558 {} actorState 0x{:x} sender {} ({})", this->field_0x18dc == 0, this->field_0x1610, this->field_0x1558, (int)this->actorState, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3576,14 +3586,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						this->field_0x18dc = 0;
 					}
 				}
+				ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage ENABLE_INPUT result: inputEnabled {} field_0x1610 {} pPlayerInput {} sender {} ({})", this->field_0x18dc == 0, this->field_0x1610, (void*)this->pPlayerInput, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 
 				return 1;
 			}
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage ENABLE_INPUT rejected: inputEnabled {} life {} deathThreshold {} stateFlags 0x{:x} field_0x1558 {} sender {} ({})", this->field_0x18dc == 0, fVar25, this->field_0x2e4, GetStateFlags(this->actorState), this->field_0x1558, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 
 			return 0;
 		}
 
 		if (msg == MESSAGE_DISABLE_INPUT) {
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage DISABLE_INPUT requested: inputEnabled {} field_0x1610 {} field_0x1558 {} actorState 0x{:x} sender {} ({})", this->field_0x18dc == 0, this->field_0x1610, this->field_0x1558, (int)this->actorState, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 			fVar25 = GetLifeInterface()->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
@@ -3610,8 +3623,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 				this->field_0x1610 = 1;
 				this->field_0x18dc = 1;
+				ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage DISABLE_INPUT applied: inputEnabled {} field_0x1610 {}", this->field_0x18dc == 0, this->field_0x1610);
 				return 1;
 			}
+			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage DISABLE_INPUT rejected: inputEnabled {} life {} deathThreshold {} stateFlags 0x{:x} field_0x1558 {} sender {} ({})", this->field_0x18dc == 0, fVar25, this->field_0x2e4, GetStateFlags(this->actorState), this->field_0x1558, (void*)pSender, pSender != (CActor*)0x0 ? pSender->name : "(null)");
 
 			return 0;
 		}

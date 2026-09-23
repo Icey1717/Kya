@@ -2302,7 +2302,7 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 
 		pKVar1 = this->subObjA;
 		local_50.xyz = pKVar1->boundingSphere.xyz;
-		local_50.w = 1.0;
+		local_50.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_50, &pHier->base.transformA, &local_50);
 
 
