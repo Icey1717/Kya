@@ -1,4 +1,5 @@
 #include "ActorGravityAware.h"
+#include "MathOps.h"
 #include "EventManager.h"
 #include "MemoryStream.h"
 #include "TimeController.h"

@@ -2,6 +2,10 @@
 #include <math.h>
 #include <cmath>
 
+extern const float edFCosinus[8192] = {
+#include "Ps2CosineTable.inc"
+};
+
 #define absf std::abs
 
 edF32MATRIX4 gF32Matrix4Zero = { };

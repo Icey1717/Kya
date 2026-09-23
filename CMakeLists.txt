@@ -836,6 +836,9 @@ else()
 	target_compile_features(Kya PUBLIC cxx_std_17)
 	target_compile_definitions(Kya PUBLIC "PLATFORM_WIN")
 
+	# MathOps.h enables the PS2 trig macros only while compiling this library.
+	target_compile_definitions(Kya PRIVATE KYA_USE_PS2_TRIG)
+
 	if (ENABLE_STRICT_FLOAT_CONVERSION_ERRORS)
 		if (MSVC)
 			target_compile_options(Kya PUBLIC /we4244 /we4305)

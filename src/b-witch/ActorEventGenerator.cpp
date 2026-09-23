@@ -1,4 +1,5 @@
 #include "ActorEventGenerator.h"
+#include "MathOps.h"
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "EventManager.h"

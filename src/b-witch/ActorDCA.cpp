@@ -303,12 +303,12 @@ void CActorDCA::UpdateAimAngle()
 		fVar2 = (this->aimDirection).x + fVar2;
 		(this->aimDirection).x = fVar2;
 
-		if (1.047198f <= fVar2) {
-			(this->aimDirection).x = 1.0472f;
+		if (1.04719758f <= fVar2) {
+			(this->aimDirection).x = 1.04719758f;
 		}
 		else {
-			if (fVar2 < -1.047198f) {
-				(this->aimDirection).x = -1.047198f;
+			if (fVar2 < -1.04719758f) {
+				(this->aimDirection).x = -1.04719758f;
 			}
 		}
 	}

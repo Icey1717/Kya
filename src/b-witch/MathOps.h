@@ -3,6 +3,10 @@
 
 #include "Types.h"
 
+#ifdef KYA_USE_PS2_TRIG
+#include "Ps2Trig.h"
+#endif
+
 #ifdef PLATFORM_PS2
 #include <libvu0.h>
 #endif
