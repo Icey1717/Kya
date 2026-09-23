@@ -608,6 +608,7 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 }
 
 int gpCurPatchRGBABuf;
+uint* gpCurPatchSTBuf;
 
 void CGlobalDListManager::_ExecuteCallFunc()
 {
@@ -1050,27 +1051,14 @@ bool CGlobalDListManager::_AddCallFuncElement2(int patchId, DLIST_FUNCTION type,
 void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 {
 	byte bVar1;
-	short sVar2;
 	CGlobalDListPatch* pCVar3;
 	bool bVar4;
 	int iVar5;
 	CGlobalDListPatch* pCVar6;
-	edVertex* peVar7;
-	int iVar9;
 	int iVar10;
-	ulong uVar11;
 	CallFuncElement2* pElement2;
-	edVertex* peVar13;
-	ulong uVar14;
 	uint uVar15;
-	ulong uVar16;
-	ulong uVar17;
-	_rgba* p_Var18;
-	undefined4* puVar19;
-	float* pfVar20;
 	_rgba* p_Var21;
-	float fVar22;
-	float fVar23;
 	_rgba local_c;
 
 	if (this->nbActiveCallFuncElements2 != 0) {
@@ -1119,121 +1107,58 @@ void CGlobalDListManager::_ExecuteCallFunc_BeginDList(_reg_data* pRegData)
 						}
 						else {
 							if (bVar1 == 8) {
-								IMPLEMENTATION_GUARD(
-								sVar2 = pElement2->instanceId;
-								uVar15 = SEXT24(sVar2);
-								peVar13 = pCVar3->pCurrentPatch->pVertex + uVar15;
-								fVar22 = peVar13->y;
-								fVar23 = peVar13->z;
-								peVar7 = pCVar3->pCurrentPatch->pVertex;
-								if (gCurStripPatchable == (ed_3d_strip*)0x0) {
-									peVar7 = peVar7 + uVar15;
-									peVar7->x = peVar13->x;
-									peVar7->y = fVar22;
-									peVar7->z = fVar23;
-									peVar7->skip = 0xc000;
-								}
-								else {
-									peVar7 = peVar7 + uVar15;
-									peVar7->x = peVar13->x;
-									peVar7->y = fVar22;
-									peVar7->z = fVar23;
-									if (gCurDListInfo3DPatchable->primType != 3) {
-										peVar7->skip = 0xc000;
-									}
-									iVar10 = (int)((ulong)uVar15 * 0xd41d41d5 >> 0x20);
-									uVar15 = ((uint)(sVar2 - iVar10) >> 1) + iVar10 >> 6;
-									gCurPacketPatched[uVar15] = gCurPacketPatched[uVar15] + 1;
-									if (gLastPacketPatched < (int)uVar15) {
-										gLastPacketPatched = uVar15;
-									}
-								}
-								edDListGetPatchableVertexEnd_Inline();)
+								uint index = (int)pElement2->instanceId;
+								edDListGetPatchableVertexBegin_Inline(pCVar3->pCurrentPatch->pVertex);
+								float* pXyz;
+								float* pSkip;
+								edDListGetPatchableVertex_Inline(index, &pXyz, &pSkip);
+								edF32VECTOR3 xyz;
+								edVertex vertex;
+								edDListGetVertexFromDataPatch_Inline(pXyz, pSkip, &xyz, &vertex.fSkip);
+								edDListGetPatchableVertexEnd_Inline();
+								vertex.uSkip = 0xc000;
+								edDListPatchVertex_Inline(pCVar3->pCurrentPatch->pVertex, &xyz, &vertex.fSkip, index);
+								edDListGetPatchableVertexEnd_Inline();
 							}
 							else {
 								if (bVar1 == 0xc) {
-									IMPLEMENTATION_GUARD(
-									sVar2 = pElement2->instanceId;
-									uVar11 = SEXT28(sVar2);
-									uVar14 = uVar11;
-									if (0x47 < uVar11) {
-										uVar14 = SEXT48((int)((int)sVar2 + (((int)sVar2 - 0x48U) / 0x46 + 1) * 2));
+									uint index = (int)pElement2->instanceId;
+									uint patchedIndex = index;
+									if (0x47 < index) {
+										patchedIndex = index + ((index - 0x48) / 0x46 + 1) * 2;
 									}
-									iVar10 = pCVar3->pCurrentPatch->nbMatrices;
-									uVar17 = SEXT48(iVar10);
-									iVar9 = (int)sVar2;
-									uVar16 = uVar11;
-									if (0x47 < uVar11) {
-										uVar16 = SEXT48((int)(iVar9 + ((iVar9 - 0x48U) / 0x46 + 1) * 2));
+
+									uint count = pCVar3->pCurrentPatch->nbMatrices;
+									if (0x47 < count) {
+										count = count + ((count - 0x48) / 0x46 + 1) * 2;
 									}
-									if (0x47 < uVar17) {
-										uVar17 = SEXT48((int)(iVar10 + ((iVar10 - 0x48U) / 0x46 + 1) * 2));
+
+									// The source contains packed ST words; do not convert them through floats.
+									uint* pSource = LOAD_POINTER_CAST(uint*, pElement2->field_0x4);
+									uint* pSt = pCVar3->pCurrentPatch->pSt + patchedIndex;
+									*pSt = pSource[patchedIndex];
+									if (((1 < index) && ((index % 0x46) < 2)) && (patchedIndex < count)) {
+										pSt[2] = *pSt;
 									}
-									puVar19 = (undefined4*)(pCVar3->pCurrentPatch->pSt + (int)uVar16 * 4);
-									*puVar19 = *(undefined4*)(pElement2->field_0x4 + (int)uVar14 * 4);
-									if (((1 < uVar11) && ((uint)(iVar9 % 0x46) < 2)) && (uVar16 < uVar17)) {
-										puVar19[2] = *puVar19;
-									}
-									DAT_00449710 = 0;)
+									gpCurPatchSTBuf = 0;
 								}
 								else {
 									if (bVar1 == 0xb) {
-										IMPLEMENTATION_GUARD(
-										sVar2 = pElement2->instanceId;
-										uVar11 = SEXT28(sVar2);
-										uVar14 = uVar11;
-										if (0x47 < uVar11) {
-											uVar14 = SEXT48((int)((int)sVar2 + (((int)sVar2 - 0x48U) / 0x46 + 1) * 2));
-										}
-										p_Var21 = (_rgba*)(pElement2->field_0x4 + (int)uVar14 * 4);
-										iVar10 = pCVar3->pCurrentPatch->nbMatrices;
-										uVar16 = SEXT48(iVar10);
-										iVar9 = (int)sVar2;
-										uVar14 = uVar11;
-										if (0x47 < uVar11) {
-											uVar14 = SEXT48((int)(iVar9 + ((iVar9 - 0x48U) / 0x46 + 1) * 2));
-										}
-										if (0x47 < uVar16) {
-											uVar16 = SEXT48((int)(iVar10 + ((iVar10 - 0x48U) / 0x46 + 1) * 2));
-										}
-										p_Var18 = pCVar3->pCurrentPatch->pRgba + (int)uVar14;
-										*p_Var18 = *p_Var21;
-										if (((1 < uVar11) && ((uint)(iVar9 % 0x46) < 2)) && (uVar14 < uVar16)) {
-											p_Var18[2] = *p_Var21;
-										}
-										gpCurPatchRGBABuf = 0;)
+										uint index = (int)pElement2->instanceId;
+										_rgba* pSource = LOAD_POINTER_CAST(_rgba*, pElement2->field_0x4);
+										_rgba color = edDListGetRGBA_Inline(pSource, index);
+										edDListPatchRGBA_Inline(pCVar3->pCurrentPatch->pRgba, color, index, pCVar3->pCurrentPatch->nbMatrices);
+										gpCurPatchRGBABuf = 0;
 									}
 									else {
 										if (bVar1 == 10) {
-											IMPLEMENTATION_GUARD(
-											sVar2 = pElement2->instanceId;
-											peVar7 = pCVar3->pCurrentPatch->pVertex;
-											uVar15 = SEXT24(sVar2);
-											pfVar20 = (float*)(pElement2->field_0x4 + uVar15 * 0x10);
-											if (gCurStripPatchable == (ed_3d_strip*)0x0) {
-												peVar7 = peVar7 + uVar15;
-												peVar7->x = *pfVar20;
-												peVar7->y = pfVar20[1];
-												peVar7->z = pfVar20[2];
-												peVar7->skip = (uint)pfVar20[3];
-											}
-											else {
-												peVar7 = peVar7 + uVar15;
-												peVar7->x = *pfVar20;
-												peVar7->y = pfVar20[1];
-												peVar7->z = pfVar20[2];
-												if (gCurDListInfo3DPatchable->primType != 3) {
-													peVar7->skip = (uint)pfVar20[3];
-												}
-												iVar10 = (int)((ulong)uVar15 * 0xd41d41d5 >> 0x20);
-												uVar15 = ((uint)(sVar2 - iVar10) >> 1) + iVar10 >> 6;
-												gCurPacketPatched[uVar15] = gCurPacketPatched[uVar15] + 1;
-												if (gLastPacketPatched < (int)uVar15) {
-													gLastPacketPatched = uVar15;
-												}
-											}
-
-											edDListGetPatchableVertexEnd_Inline();)
+											uint index = (int)pElement2->instanceId;
+											edDListGetPatchableVertexBegin_Inline(LOAD_POINTER_CAST(edVertex*, pElement2->field_0x4));
+											float* pXyz;
+											float* pSkip;
+											edDListGetPatchableVertex_Inline(index, &pXyz, &pSkip);
+											edDListPatchVertex_Inline(pCVar3->pCurrentPatch->pVertex, (edF32VECTOR3*)pXyz, pSkip, index);
+											edDListGetPatchableVertexEnd_Inline();
 										}
 									}
 								}
