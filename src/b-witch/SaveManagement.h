@@ -2,6 +2,7 @@
 #define _SAVE_H
 
 #include "Types.h"
+#include <cstddef>
 
 #define ROOM_CHECK_RESULT_ERROR 1
 #define ROOM_CHECK_RESULT_NOT_ENOUGH_ROOM 2
@@ -58,6 +59,7 @@ public:
 	bool save(int mode);
 
 	bool load_game();
+	bool stage_backup_save(const void* data, size_t size);
 	bool save_game(int param_2);
 	bool save_settings();
 

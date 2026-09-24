@@ -1269,6 +1269,88 @@ bool CSaveManagement::load_game()
 	return bSuccess;
 }
 
+bool CSaveManagement::stage_backup_save(const void* data, size_t size)
+{
+	// Stages a fully-validated backup save payload directly into the transient
+	// main-block buffer without touching any live slot descriptor, header, or
+	// file metadata. Callers (e.g. a future debug-menu direct-load action) can
+	// follow this with load_level() to hand the payload to CLevelScheduler.
+	if ((data == nullptr) || (this->pBigAlloc_0x34 == nullptr)) {
+		return false;
+	}
+
+	if (size < sizeof(SaveDataHeader)) {
+		return false;
+	}
+
+	const char* pBytes = reinterpret_cast<const char*>(data);
+
+	SaveDataHeader header;
+	memcpy(&header, pBytes, sizeof(SaveDataHeader));
+
+	if ((header.hash != SAVE_HEADER_HASH_EDEN) || (header.headerSize != sizeof(SaveDataHeader))) {
+		return false;
+	}
+
+	if (edFileComputeCRC32(&header.headerSize, 0x14) != header.headerCrc) {
+		return false;
+	}
+
+	// Validate the signed declared sizes before converting either to an
+	// unsigned/size_t value, so a negative field can never be reinterpreted
+	// as a huge unsigned size.
+	if ((header.initialBlockSize < 0) || (header.mainBlockSize < 0)) {
+		return false;
+	}
+
+	const size_t initialBlockSize = static_cast<size_t>(header.initialBlockSize);
+	const size_t mainBlockSize = static_cast<size_t>(header.mainBlockSize);
+
+	if (initialBlockSize != sizeof(SaveDataDesc)) {
+		return false;
+	}
+
+	if (mainBlockSize == 0) {
+		return false;
+	}
+
+	if (this->gameSaveMaxBufferSize < 0) {
+		return false;
+	}
+
+	if ((mainBlockSize > 0x10000) || (mainBlockSize > static_cast<size_t>(this->gameSaveMaxBufferSize))) {
+		return false;
+	}
+
+	const size_t prefixSize = sizeof(SaveDataHeader) + initialBlockSize;
+	if (size < prefixSize) {
+		return false;
+	}
+
+	// Only now that size >= prefixSize is known can (size - prefixSize) be
+	// computed without risk of underflow.
+	if (mainBlockSize > (size - prefixSize)) {
+		return false;
+	}
+
+	const char* pDesc = pBytes + sizeof(SaveDataHeader);
+	SaveDataDesc desc;
+	memcpy(&desc, pDesc, sizeof(SaveDataDesc));
+	if (edFileComputeCRC32(&desc, sizeof(SaveDataDesc)) != header.initialBlockCrc) {
+		return false;
+	}
+
+	const char* pMainBlock = pDesc + initialBlockSize;
+	if (edFileComputeCRC32(const_cast<char*>(pMainBlock), static_cast<uint>(mainBlockSize)) != header.mainBlockCrc) {
+		return false;
+	}
+
+	memcpy(this->pBigAlloc_0x34, pMainBlock, mainBlockSize);
+	this->saveSize_0x44 = static_cast<uint>(mainBlockSize);
+
+	return true;
+}
+
 bool CSaveManagement::save_settings()
 {
 	bool bVar1;
