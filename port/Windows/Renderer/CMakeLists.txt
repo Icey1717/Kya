@@ -16,6 +16,8 @@ add_subdirectory("Vulkan/src/pcsx2/TextureUpload")
 add_subdirectory("ext/imgui")
 
 set (SOURCES
+    "include/DrawTrace.h"
+    "Vulkan/src/DrawTrace.cpp"
 	"Vulkan/src/VulkanRenderer.cpp"
 	"Vulkan/src/VulkanRenderer.h"
 	"Vulkan/src/VulkanReflect.h"

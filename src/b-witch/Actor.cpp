@@ -1,4 +1,7 @@
 #include "Actor.h"
+#ifdef PLATFORM_WIN
+#include "DrawTrace.h"
+#endif
 #include "DlistManager.h"
 #include "EventManager.h"
 #include "SectorManager.h"
@@ -1354,6 +1357,9 @@ void CActor::UpdatePostAnimEffects()
 
 void CActor::Destroy()
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(this));
+#endif
 	int iVar2;
 	BehaviourEntry* piVar3;
 

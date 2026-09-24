@@ -47,6 +47,7 @@
 #include "port/NativeProjection.h"
 #include "Mesh.h"
 #include "Sprite.h"
+#include "DrawTrace.h"
 #endif
 
 #include "ed3D/ed3DG2D.h"
@@ -890,6 +891,44 @@ inline void ed3DListAddNodeSorted(edLIST* pList, void* pData, byte type)
 	return;
 }
 
+#ifdef PLATFORM_WIN
+static void TraceLinkedPrimitive(edNODE* pNode, edLIST* pList, void* pObject, bool sprite,
+    int material, uint flags, const edF32VECTOR4& bounds)
+{
+    if (!Renderer::DrawTrace::IsEnabled()) return;
+    Renderer::DrawTrace::Source source;
+    source.kind = sprite ? Renderer::DrawTrace::Kind::Sprite : Renderer::DrawTrace::Kind::Strip;
+    source.node = reinterpret_cast<uintptr_t>(pNode);
+    source.object = reinterpret_cast<uintptr_t>(pObject);
+    source.list = reinterpret_cast<uintptr_t>(pList);
+    source.viewport = reinterpret_cast<uintptr_t>(gCurViewportUsed);
+    source.material = material;
+    source.flags = flags;
+    source.nodeFlags = pNode->header.typeField.flags;
+    source.bounds = { bounds.x, bounds.y, bounds.z, bounds.w };
+    source.renderList = gCurRenderList;
+    if (gRender_info_SPR) {
+        source.hierarchy = reinterpret_cast<uintptr_t>(gRender_info_SPR->pMeshTransformData);
+        if (gRender_info_SPR->pMeshTransformMatrix) {
+            memcpy(source.model.data(), gRender_info_SPR->pMeshTransformMatrix, sizeof(float) * 16);
+            source.hasModel = true;
+        }
+    }
+    if (sprite) {
+        auto* pSprite = static_cast<ed_3d_sprite*>(pObject);
+        source.batches = pSprite->nbBatches;
+        source.remainder = pSprite->nbRemainderRects;
+    }
+    else {
+        auto* pStrip = static_cast<ed_3d_strip*>(pObject);
+        source.meshCount = pStrip->meshCount;
+        source.shadowCast = pStrip->shadowCastFlags;
+        source.shadowReceive = pStrip->shadowReceiveFlags;
+    }
+    Renderer::DrawTrace::Link(source);
+}
+#endif
+
 inline void ed3DLinkStripToList(edLIST* pList, ed_3d_strip* pStrip)
 {
 	edNODE_MANAGER* pNodeManager = (edNODE_MANAGER*)pList->pData;
@@ -898,6 +937,9 @@ inline void ed3DLinkStripToList(edLIST* pList, ed_3d_strip* pStrip)
 
 	pNode->header.typeField.type = LIST_TYPE_STRIP;
 	pNode->header.typeField.flags = pStrip->flags;
+#ifdef PLATFORM_WIN
+    TraceLinkedPrimitive(pNode, pList, pStrip, false, pStrip->materialIndex, pStrip->flags, pStrip->boundingSphere);
+#endif
 	pNodeManager->linkCount = pNodeManager->linkCount + 1;
 
 	pList->nodeCount = pList->nodeCount + 1;
@@ -916,6 +958,9 @@ inline void ed3DLinkSpriteToList(edLIST* pList, ed_3d_sprite* pSprite)
 
 	pNode->header.typeField.type = LIST_TYPE_SPRITE;
 	pNode->header.typeField.flags = pSprite->flags_0x0;
+#ifdef PLATFORM_WIN
+    TraceLinkedPrimitive(pNode, pList, pSprite, true, pSprite->materialIndex, pSprite->flags_0x0, pSprite->boundingSphere);
+#endif
 	pNodeManager->linkCount = pNodeManager->linkCount + 1;
 
 	pList->nodeCount = pList->nodeCount + 1;
@@ -1897,6 +1942,9 @@ void ed3DSceneTermForList(void* pScene)
 
 int ed3DSceneTerm(ed_3D_Scene* pScene)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pScene));
+#endif
 	if (pScene->pViewport == gDebugViewport) {
 		gDebugViewport = (ed_viewport*)0x0;
 	}
@@ -3584,6 +3632,7 @@ static void ed3DRenderMultiTextureNodeWindows(edpkt_data* pCurPkt, edNODE* pNode
 		}
 
 		Renderer::SetGlobalAlpha((pNode->header.typeField.flags & 0x20) != 0 ? static_cast<uint32_t>(gGlobalAlhaON) : 0x80);
+        Renderer::DrawTrace::FlushScope traceLayer(reinterpret_cast<uintptr_t>(pNode), layerIndex);
 		Renderer::Kya::GetMeshLibrary().RenderNode(pNode, layerIndex);
 		Renderer::Kya::GetTextureLibrary().BindMaterialLayer(pMaterial, layerIndex);
 	}
@@ -3593,6 +3642,9 @@ static void ed3DRenderMultiTextureNodeWindows(edpkt_data* pCurPkt, edNODE* pNode
 
 void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::FlushScope traceFlush(reinterpret_cast<uintptr_t>(pNode));
+#endif
 	bool bVar1;
 	byte materialNbLayers;
 	ushort stripMeshCountA;
@@ -4057,6 +4109,9 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushStrip.c
 void ed3DFlushStrip(edNODE* pNode)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::FlushScope traceFlush(reinterpret_cast<uintptr_t>(pNode));
+#endif
 	undefined8 uVar1;
 	uint incPacketSize;
 	edpkt_data* pPktBufferB;
@@ -5349,6 +5404,9 @@ edpkt_data* ed3DRefreshFANGifTag(edpkt_data* pPkt, uint flags, ed_g2d_material* 
 
 void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::FlushScope traceFlush(reinterpret_cast<uintptr_t>(pNode));
+#endif
 	short sVar1;
 	ushort uVar2;
 	ushort uVar3;
@@ -5577,6 +5635,9 @@ edpkt_data* ed3DFlushStripPacketReceive(edpkt_data* pPkt, edpkt_data* pVifList, 
 
 edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::FlushScope traceFlush(reinterpret_cast<uintptr_t>(pNode));
+#endif
 	byte bVar1;
 	ushort headerFlags;
 	ed_3d_strip* pStrip;
@@ -8900,6 +8961,9 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRender.c
 bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::OwnerScope traceCluster(reinterpret_cast<uintptr_t>(pMeshInfo), "Scenery cluster", -1, -1, -1);
+#endif
 	bool bVar1;
 	edF32VECTOR4 location;
 	ed_3d_octree octree;
@@ -9525,6 +9589,9 @@ static edF32MATRIX4 hackyMatrices[0x100] =
 
 void _ed3DLinkStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::BankScope traceBank(reinterpret_cast<uintptr_t>(pMBNK));
+#endif
 	ed_Chunck* pLAY;
 	ed_Chunck* pTEX;
 	edF32MATRIX4* peVar3;
@@ -9746,6 +9813,9 @@ LAB_002980e4:
 
 void _ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, ed_hash_code* pMBNK)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::BankScope traceBank(reinterpret_cast<uintptr_t>(pMBNK));
+#endif
 	edF32MATRIX4* peVar1;
 	int iVar2;
 	ed_dma_material* pExistingDmaMaterial;
@@ -9992,6 +10062,9 @@ bool ed3DLinkStripShadowManageMaterial(ed_3d_strip* pStrip, ed_g2d_material** pp
 
 void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::BankScope traceBank(reinterpret_cast<uintptr_t>(pHashCode));
+#endif
 	edF32MATRIX4* peVar1;
 	ed_dma_material* pDmaMaterial;
 	int iVar3;
@@ -11165,6 +11238,10 @@ const char* gSceneNames[] = {
 
 void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::SceneScope traceScene(reinterpret_cast<uintptr_t>(pScene),
+        gSceneNames[GetStaticMeshMasterIndex(pScene)], reinterpret_cast<uintptr_t>(pShadowScene->pViewport));
+#endif
 	ed_g3d_manager* pMeshInfo;
 	float fVar1;
 	ed_viewport* pCVar2;
@@ -11339,6 +11416,10 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DSceneManager_ps2.cpp
 uint ed3DSceneRenderDlist(ed_3D_Scene* pScene)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::SceneScope traceScene(reinterpret_cast<uintptr_t>(pScene),
+        gSceneNames[GetStaticMeshMasterIndex(pScene)], reinterpret_cast<uintptr_t>(pScene->pViewport));
+#endif
 	bool bVar1;
 	bool bVar2;
 	byte bVar3;
@@ -15435,6 +15516,9 @@ ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong ha
 
 void ed3DHierarchyRemoveNode(edLIST* pList, edNODE* pNode)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pNode->pData));
+#endif
 	edNODE_MANAGER* peVar1;
 	edNODE* peVar2;
 	edNODE* peVar3;
@@ -15491,6 +15575,9 @@ void ed3DHierarchyRemoveFromScene(ed_3D_Scene* pScene, edNODE* pNode)
 
 void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo)
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pMeshInfo));
+#endif
 	edNODE* peVar1;
 	edCluster* pCluster;
 	edNODE* peVar4;
@@ -15540,6 +15627,7 @@ void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo)
 void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo)
 {
 #ifdef  PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pMeshInfo));
 	onMeshUnloadedDelegate(pMeshInfo);
 #endif //  PLATFORM_WIN
 

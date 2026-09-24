@@ -210,6 +210,49 @@ namespace Renderer
 			GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 		}
 
+        static bool TraceDraw(const Draw& draw, const Draw::Instance& instance, bool canRecord)
+        {
+            if (!instance.traceSubmission) return true;
+            DrawTrace::Draw trace;
+            trace.recorded = canRecord;
+            trace.pass = static_cast<int>(draw.renderPassKey.kind);
+            trace.indexStart = instance.indexStart;
+            trace.indexCount = instance.indexCount;
+            trace.vertexStart = instance.vertexStart;
+            trace.framebuffer = draw.frameBufferMaterial.has_value();
+            trace.zOnly = draw.bIsAfailZOnly;
+            memcpy(trace.view.data(), &draw.viewMatrix, sizeof(float) * 16);
+            memcpy(trace.projection.data(), &draw.projMatrix, sizeof(float) * 16);
+            const auto& data = instance.perDrawData;
+            trace.alphaTest = data.alphaEnable != 0;
+            trace.alphaAtst = data.alphaAtst;
+            trace.alphaAref = data.alphaAref;
+            trace.alphaAfail = data.alphaAfail;
+            if (draw.pTexture) {
+                DrawTrace::CopyName(trace.texture, draw.pTexture->GetName().c_str());
+                trace.material = draw.pTexture->GetMaterialIndex();
+                trace.layer = draw.pTexture->GetLayerIndex();
+                const auto& registers = draw.pTexture->GetTextureRegisters();
+                trace.alpha = (data.renderFlags & 0x20) ? instance.gsAlpha.CMD : registers.alpha.CMD;
+                if (draw.frameBufferMaterial) trace.alpha = draw.frameBufferMaterial->alpha;
+                trace.test = registers.test.CMD;
+                trace.tex = registers.tex.CMD;
+                trace.clamp = registers.clamp.CMD;
+                trace.blend = instance.pMesh->GetPrim().ABE || (data.renderFlags & 0x20);
+                trace.depthWrite = registers.test.AFAIL != AFAIL_FB_ONLY || trace.framebuffer;
+                if (draw.bIsAfailZOnly) { trace.depthWrite = true; trace.colorWrite = false; }
+                if (draw.bIsZMask) trace.depthWrite = false;
+                if (!trace.framebuffer && registers.test.AFAIL == AFAIL_RGB_ONLY) trace.colorMask = 7;
+                trace.depthGreaterEqual = trace.framebuffer;
+                if (draw.renderPassKey.kind == ERenderPassKind::ShadowReceiver) {
+                    trace.depthWrite = false; trace.colorWrite = true; trace.colorMask = 15;
+                    trace.blend = true; trace.depthGreaterEqual = false;
+                }
+                if (draw.renderPassKey.kind == ERenderPassKind::ShadowMask) trace.blend = false;
+            }
+            return DrawTrace::Record(instance.traceSubmission, trace);
+        }
+
 		class DrawCommandRecorder
 		{
 		public:
@@ -238,6 +281,9 @@ namespace Renderer
 				}
 
 				SimpleTexture* pTexture = drawCommand.pTexture;
+                if (!pTexture) {
+                    for (const auto& instance : drawCommand.instances) TraceDraw(drawCommand, instance, false);
+                }
 
 				if (pTexture && !drawCommand.instances.empty()) {
 					NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand {}", pTexture->GetName());
@@ -263,6 +309,7 @@ namespace Renderer
 
 					for (auto& instance : drawCommand.instances) {
 						if (instance.indexCount == 0) {
+                            TraceDraw(drawCommand, instance, false);
 							continue;
 						}
 
@@ -309,7 +356,9 @@ namespace Renderer
 						if (drawCommand.frameBufferMaterial) descriptorSet = &FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);
 
-						vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+                        if (TraceDraw(drawCommand, instance, true)) {
+						    vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+                        }
 
 						Renderer::Debug::EndLabel(cmd);
 

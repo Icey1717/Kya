@@ -1,5 +1,6 @@
 ﻿#include "DebugMenu.h"
 #include "DebugRendering.h"
+#include "DebugDrawInspector.h"
 
 #include "imgui.h"
 #include "DebugSetting.h"
@@ -149,6 +150,7 @@ namespace Debug {
 
 void Debug::Rendering::DrawContents()
 {
+    Debug::DrawInspector::DrawLauncher();
 	// --- Timings ---
 	if (ImGui::CollapsingHeader("Timings", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::Text("Render:        %.1f ms", Renderer::Native::GetRenderTime());

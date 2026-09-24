@@ -1,4 +1,8 @@
 #include "DebugMeshViewer.h"
+#include "DebugMenu.h"
+#include "DebugTexture.h"
+#include "DrawTrace.h"
+#include <optional>
 
 #include "ed3D.h"
 #include "ed3D/ed3DG2D.h"
@@ -49,7 +53,7 @@ namespace DebugMeshViewer {
 		newBuffer.index.tail += pCachedStripBuffer.GetIndexTail();
 	}
 
-	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate, Renderer::NativeVertexBufferData& vertexBufferData)
+	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate, Renderer::NativeVertexBufferData& vertexBufferData, int textureLayer = 0)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Strip: 0x{:x}", (uintptr_t)pCurrentStrip);
 
@@ -137,7 +141,7 @@ namespace DebugMeshViewer {
 
 		auto* pMesh = Renderer::Kya::GetMeshLibrary().FindStrip(pCurrentStrip);
 
-		FillVertexBufferData(pMesh->pSimpleMesh->GetVertexBufferData(), vertexBufferData);
+		if (auto* mesh = pMesh->GetSimpleMesh(textureLayer)) FillVertexBufferData(mesh->GetVertexBufferData(), vertexBufferData);
 	}
 
 	Renderer::NativeVertexBufferData* UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
@@ -173,12 +177,12 @@ namespace DebugMeshViewer {
 		return nullptr;
 	}
 
-	bool UpdateDrawBuffer(ed_3d_strip* pStrip, Renderer::NativeVertexBufferData& vertexBufferData)
+	bool UpdateDrawBuffer(ed_3d_strip* pStrip, Renderer::NativeVertexBufferData& vertexBufferData, int textureLayer = 0)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
 
 		int maxAnimIndex;
-		RenderStrip(pStrip, 0, maxAnimIndex, false, vertexBufferData);
+		RenderStrip(pStrip, 0, maxAnimIndex, false, vertexBufferData, textureLayer);
 
 		VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
 
@@ -191,10 +195,10 @@ namespace DebugMeshViewer {
 		return vertexBufferData.index.tail > 0;
 	}
 
-	void ShowPreviewerWindow()
+	void ShowPreviewerWindow(bool* pOpen = nullptr)
 	{
 		if (GetPreviewerDrawCommandCount() > 0) {
-			ImGui::Begin("Mesh Previewer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("Mesh Previewer", pOpen, ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Checkbox("Animate", &gAnimate);
 			ImGui::SameLine();
 			ImGui::Checkbox("Rotate", &gRotate);
@@ -250,6 +254,46 @@ namespace DebugMeshViewer {
 		//UpdateDrawBuffer(pData);
 		ShowPreviewerWindow();
 	}
+
+	struct DrawSelection {
+		Renderer::DrawTrace::Source source;
+		Renderer::DrawTrace::Submission submission;
+		Renderer::DrawTrace::Draw draw;
+	};
+	static std::optional<DrawSelection> gDrawSelection;
+	static bool gFocusDraw = false;
+
+	bool OpenDraw(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Submission& submission,
+		const Renderer::DrawTrace::Draw& draw)
+	{
+		if (source.kind != Renderer::DrawTrace::Kind::Strip || !Renderer::DrawTrace::IsSourceLive(source) ||
+			!Debug::Texture::FindDrawTexture(source, draw)) return false;
+		gDrawSelection = DrawSelection{ source, submission, draw };
+		gFocusDraw = true;
+		gIsolateStripIndex = -1;
+		return true;
+	}
+
+	static void UpdateDrawPreview()
+	{
+		if (!gDrawSelection) return;
+		const auto& selection = *gDrawSelection;
+		auto* texture = Debug::Texture::FindDrawTexture(selection.source, selection.draw);
+		if (!texture) { gDrawSelection.reset(); return; }
+		// The lifetime check above precedes the cache lookup and any source access.
+		auto* strip = Renderer::Kya::GetMeshLibrary().FindStrip(reinterpret_cast<const ed_3d_strip*>(selection.source.object));
+		auto* mesh = strip ? strip->GetSimpleMesh(selection.submission.layer) : nullptr;
+		if (!mesh || Renderer::DrawTrace::AssetKey(mesh->GetName().c_str()) != selection.submission.assetKey) {
+			gDrawSelection.reset(); return;
+		}
+		auto& vertices = AddPreviewerDrawCommand(texture, mesh);
+		UpdateDrawBuffer(strip->pStrip, vertices, selection.submission.layer);
+		bool open = true;
+		if (gFocusDraw) { ImGui::SetNextWindowFocus(); gFocusDraw = false; }
+		ShowPreviewerWindow(&open);
+		if (!open) gDrawSelection.reset();
+	}
+	static Debug::UpdateRegisterer drawPreviewUpdate(UpdateDrawPreview);
 } // DebugMeshViewer
 
 

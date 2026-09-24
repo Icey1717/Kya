@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NativeRenderer.h"
+#include "DrawTrace.h"
 
 #include "VulkanRenderer.h"
 #include "Objects/UniformBuffer.h"
@@ -57,6 +58,12 @@ namespace Renderer
 			{
 				return currentInstanceIndex;
 			}
+
+            const T& GetLastInstance() const
+            {
+                assert(currentInstanceIndex > 0);
+                return *gStorageBuffer.GetInstancePtr(currentInstanceIndex - 1);
+            }
 
 			bool MatchesLastInstance(const glm::vec4& data) const
 			{
@@ -159,6 +166,7 @@ namespace Renderer
 			uint32_t frameBufferMode = 0; // 0: ordinary texture, 1: MODULATE, 2: DECAL
 			float frameBufferScaleX = 1.0f;
 			float frameBufferScaleY = 1.0f;
+			uint animBaseOffset;
 		};
 
 		struct FadeConstantBuffer
@@ -225,6 +233,7 @@ namespace Renderer
 			bool bRenderPassDirty = true;
 
 			struct Instance {
+                uint64_t traceSubmission = 0;
 				SimpleMesh* pMesh = nullptr;
 				int indexStart = 0;
 				int indexCount = 0;

@@ -50,7 +50,32 @@ namespace Renderer
 				instance.perDrawData.globalAlpha = 0x80;
 			}
 
+			const bool bOffsetType = (pMesh->GetStripFlags() & 0x8000000) == 0;
+
+			instance.perDrawData.animBaseOffset = bOffsetType ? 0x394 : 0x3dc;
+
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
+            if (DrawTrace::IsEnabled()) {
+                DrawTrace::Submission trace;
+                DrawTrace::CopyName(trace.mesh, pMesh->GetName().c_str());
+                trace.assetKey = DrawTrace::AssetKey(pMesh->GetName().c_str());
+                trace.flags = renderFlags;
+                trace.primitive = pMesh->GetPrim().CMD;
+                trace.modelIndex = instance.perDrawData.modelMatrixIndex;
+                trace.animationIndex = instance.perDrawData.animMatrixStart;
+                trace.lightingIndex = instance.perDrawData.lightingDataIndex;
+                trace.animStIndex = instance.perDrawData.animStDataIndex;
+                trace.globalAlpha = instance.perDrawData.globalAlpha;
+                memcpy(trace.model.data(), &GetNativeRendererState().modelBuffer.GetLastInstance(), sizeof(float) * 16);
+                instance.traceSubmission = DrawTrace::Submit(trace);
+                DrawTrace::Source source;
+                if (DrawTrace::Highlight(instance.traceSubmission, source)) {
+                    const glm::mat4 model = glm::make_mat4(source.model.data());
+                    const glm::vec3 center = glm::vec3(model * glm::vec4(source.bounds[0], source.bounds[1], source.bounds[2], 1.0f));
+                    const float scale = std::max({glm::length(glm::vec3(model[0])), glm::length(glm::vec3(model[1])), glm::length(glm::vec3(model[2]))});
+                    DebugShapes::AddSphere(center, std::abs(source.bounds[3]) * scale, glm::vec4(1.0f, 0.75f, 0.15f, 1.0f));
+                }
+            }
 		}
 
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj)
@@ -279,6 +304,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::mat4(1.0f));
 	GetNativeRendererState().cachedPerDrawData.shadowProjectionIndex = 0;
 	DebugShapes::ResetFrame();
+    DrawTrace::AdvanceFrame();
 
 	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");
 }

@@ -11,6 +11,7 @@ struct ed_3d_strip;
 struct ed_hash_code;
 
 namespace PS2 { struct GSTexEntry; }
+namespace Renderer::DrawTrace { struct Source; struct Submission; struct Draw; }
 
 namespace DebugMeshViewer {
 
@@ -45,4 +46,6 @@ namespace DebugMeshViewer {
 
 	void AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK);
 	void ShowPreviewer();
+	bool OpenDraw(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Submission& submission,
+		const Renderer::DrawTrace::Draw& draw);
 }

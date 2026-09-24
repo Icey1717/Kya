@@ -8,6 +8,7 @@ message(STATUS "Using google test root: ${GTEST_ROOT}")
 include(GoogleTest)
 
 add_executable(KyaPortTest "src/tests.cpp" "src/audio_sample_tests.cpp" "src/audio_music_tests.cpp" "src/windows_save_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/draw_trace_tests.cpp")
 target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 
 target_compile_definitions(KyaPortTest PRIVATE TEST_DATA_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/data/")
@@ -22,7 +23,7 @@ endif()
 target_compile_definitions(Renderer PRIVATE HEADLESS)
 
 set_target_properties(KyaPortTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${KYA_EXECUTABLE_DIRECTORY}")
-target_link_libraries(KyaPortTest PRIVATE gtest gtest_main Kya Renderer DebugMenu glfw)
+target_link_libraries(KyaPortTest PRIVATE gtest gtest_main Kya Renderer DebugMenu glfw imgui)
 
 add_test(KyaPortTest KyaPortTest)
 set_tests_properties(KyaPortTest PROPERTIES WORKING_DIRECTORY ${KYA_EXECUTABLE_DIRECTORY})

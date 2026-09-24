@@ -9,17 +9,15 @@ layout(location = 0, index = 1) out vec4 outAlphaBlend;
 // Texture sampler
 layout(binding = 1) uniform sampler2D textureSampler;
 
-layout(push_constant) uniform PerDrawData
+//push constants block
+layout( push_constant ) uniform PerDrawData
 {
 	mat4 projXView;
 	uint renderFlags;
-
-	// ATST (alpha test) state
 	uint alphaEnable;
 	int  alphaAtst;
 	int  alphaAref;
 	int  alphaAfail;
-
 	uint modelMatrixIndex;
 	uint animStDataIndex;
 	uint animMatrixStart;
@@ -29,7 +27,12 @@ layout(push_constant) uniform PerDrawData
 	uint frameBufferMode;
 	float frameBufferScaleX;
 	float frameBufferScaleY;
-	uint _pad[2];
+
+	// Equivalent of VU destination address for animation matrix data.
+	// Usually 0x394 or 0x3dc.
+	uint animBaseOffset;
+
+	uint _pad[1];
 } perDrawData;
 
 #define ATST_NEVER 0

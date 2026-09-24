@@ -242,15 +242,18 @@ namespace Renderer
 
 	struct SimpleMesh : public RendererObject
 	{
-		SimpleMesh(std::string inName, const GIFReg::GSPrim& inPrim)
+		SimpleMesh(std::string inName, const GIFReg::GSPrim& inPrim, const uint32_t& inStripFlags)
 			: RendererObject(inName)
 			, prim(inPrim)
+			, stripFlags(inStripFlags)
 		{}
 
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData() { return vertexBufferData; }
 
 		const GIFReg::GSPrim& GetPrim() const { return prim; }
+
+		const uint32_t GetStripFlags() const { return stripFlags; }
 
 	private:
 		// Could cache our vertex data in the simple mesh, then just copy instead of processing vertices one by one.
@@ -261,6 +264,8 @@ namespace Renderer
 		GIFReg::GSPrim prim;
 
 		NativeVertexBufferData vertexBufferData;
+
+		uint32_t stripFlags;
 
 	};
 

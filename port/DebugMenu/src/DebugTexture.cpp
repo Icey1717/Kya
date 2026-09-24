@@ -1,5 +1,7 @@
 ﻿#include "DebugMenu.h"
 #include "DebugTexture.h"
+#include "DrawTrace.h"
+#include <optional>
 
 #include <imgui.h>
 
@@ -24,6 +26,61 @@ namespace Debug
 		static const ed_g2d_material* gSelectedMaterial = nullptr;
 
 		static bool bOpenFirstMaterial = false;
+		static int gSelectedLayer = 0, gSelectedTextureIndex = 0;
+		static bool gFocusDraw = false;
+		struct DrawSelection {
+			Renderer::DrawTrace::Source source;
+			Renderer::DrawTrace::Draw draw;
+		};
+		static std::optional<DrawSelection> gDrawSelection;
+		struct ResolvedDrawTexture {
+			const Renderer::Kya::G2D* file = nullptr;
+			const Renderer::Kya::G2D::Material* material = nullptr;
+			Renderer::SimpleTexture* texture = nullptr;
+			int layer = 0, index = 0;
+		};
+
+		static ResolvedDrawTexture ResolveDrawTexture(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Draw& draw)
+		{
+			ResolvedDrawTexture result;
+			if (!Renderer::DrawTrace::IsSourceLive(source) || draw.framebuffer || !draw.texture[0]) return result;
+			int matches = 0;
+			Renderer::Kya::GetTextureLibrary().ForEach([&](const Renderer::Kya::G2D& file) {
+				for (const auto& material : file.GetMaterials()) {
+					for (size_t layer = 0; layer < material.layers.size(); ++layer) {
+						const auto& textures = material.layers[layer].textures;
+						for (size_t index = 0; index < textures.size(); ++index) {
+							auto* texture = textures[index].pSimpleTexture.get();
+							if (texture && texture->GetName() == draw.texture.data() &&
+								texture->GetMaterialIndex() == draw.material && texture->GetLayerIndex() == draw.layer) {
+								result = { &file, &material, texture, static_cast<int>(layer), static_cast<int>(index) };
+								++matches;
+							}
+						}
+					}
+				}
+			});
+			return matches == 1 ? result : ResolvedDrawTexture{};
+		}
+
+		Renderer::SimpleTexture* FindDrawTexture(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Draw& draw)
+		{
+			return ResolveDrawTexture(source, draw).texture;
+		}
+
+		bool OpenDraw(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Draw& draw)
+		{
+			const auto resolved = ResolveDrawTexture(source, draw);
+			if (!resolved.texture) return false;
+			gDrawSelection = DrawSelection{ source, draw };
+			gSelectedTexture = resolved.file;
+			gSelectedMaterial = resolved.material->pMaterial;
+			gSelectedLayer = resolved.layer;
+			gSelectedTextureIndex = resolved.index;
+			bOpenFirstMaterial = false;
+			gFocusDraw = true;
+			return true;
+		}
 
 		struct RemovedTextureEntry
 		{
@@ -124,6 +181,8 @@ namespace Debug
 					ImGui::PushID(static_cast<int>(i));
 
 					if (ImGui::Selectable(texture.GetName().c_str())) {
+						gDrawSelection.reset();
+						gSelectedLayer = gSelectedTextureIndex = 0;
 						gSelectedTexture = &texture;
 						gSelectedMaterial = nullptr;
 						bOpenFirstMaterial = true;
@@ -383,6 +442,7 @@ namespace Debug
 			for (int i = 0; i < gSelectedMaterial->nbLayers; ++i) {
 				char buffer[256];
 				sprintf_s(buffer, "Layer %d", i);
+				if (gFocusDraw) ImGui::SetNextItemOpen(i == gSelectedLayer);
 				if (ImGui::CollapsingHeader(buffer)) {
 					ed_Chunck* pLAY = LOAD_POINTER_CAST(ed_Chunck*, gSelectedMaterial->aLayers[i]);
 
@@ -465,14 +525,27 @@ namespace Debug
 
 			ImGui::End();
 
+			if (gFocusDraw) ImGui::SetNextWindowFocus();
 			ImGui::Begin("Preview", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+			gFocusDraw = false;
 
 			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 			const auto& texture = textureLibrary.FindMaterial(gSelectedMaterial);
 
-			auto* pSimpleTexture = texture->layers.begin()->textures.begin()->pSimpleTexture.get();
+			Renderer::SimpleTexture* pSimpleTexture = nullptr;
+			if (texture && !texture->layers.empty()) {
+				gSelectedLayer = std::clamp(gSelectedLayer, 0, static_cast<int>(texture->layers.size()) - 1);
+				if (ImGui::SliderInt("Layer", &gSelectedLayer, 0, static_cast<int>(texture->layers.size()) - 1)) gSelectedTextureIndex = 0;
+				const auto& textures = texture->layers[gSelectedLayer].textures;
+				if (!textures.empty()) {
+					gSelectedTextureIndex = std::clamp(gSelectedTextureIndex, 0, static_cast<int>(textures.size()) - 1);
+					if (textures.size() > 1) ImGui::SliderInt("Texture", &gSelectedTextureIndex, 0, static_cast<int>(textures.size()) - 1);
+					pSimpleTexture = textures[gSelectedTextureIndex].pSimpleTexture.get();
+				}
+			}
 
-			if (pSimpleTexture) {
+			if (pSimpleTexture && pSimpleTexture->GetRenderer()) {
+				ImGui::TextUnformatted(pSimpleTexture->GetName().c_str());
 				static PS2::GSSimpleTexture* pRenderer = nullptr;
 				static VkImageView lastImageView = VK_NULL_HANDLE;
 				static VkDescriptorSet textureId;
@@ -523,11 +596,14 @@ namespace Debug
 
 			if (!bOpen) {
 				gSelectedMaterial = nullptr;
+				gDrawSelection.reset();
 			}
 		}
 
 		void ShowMaterialDetails(const ed_g2d_material* pMaterial)
 		{
+			gDrawSelection.reset();
+			gSelectedLayer = gSelectedTextureIndex = 0;
 			gSelectedMaterial = pMaterial;
 
 			// Try find the texture related to the material.
@@ -603,6 +679,8 @@ namespace Debug
 							sprintf_s(buff, 256, "%d - %s", i, pHashCode->hash.ToString().c_str());
 
 							if (ImGui::Selectable(buff) || bOpenFirstMaterial) {
+								gDrawSelection.reset();
+								gSelectedLayer = gSelectedTextureIndex = 0;
 								gSelectedMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 								bOpenFirstMaterial = false;
 							}
@@ -688,6 +766,12 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 
 void Debug::Texture::Update()
 {
+	if (gDrawSelection) {
+		const auto resolved = ResolveDrawTexture(gDrawSelection->source, gDrawSelection->draw);
+		gSelectedTexture = resolved.file;
+		gSelectedMaterial = resolved.material ? resolved.material->pMaterial : nullptr;
+		if (!resolved.texture) gDrawSelection.reset();
+	}
 	if (gSelectedTexture) {
 		ShowTextureDetails();
 	}

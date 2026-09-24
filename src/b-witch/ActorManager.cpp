@@ -10,6 +10,7 @@
 
 #ifdef PLATFORM_WIN
 #include "profiling.h"
+#include "DrawTrace.h"
 #endif
 #include "LevelScheduler.h"
 
@@ -47,6 +48,9 @@ void CActorManager::Level_Init()
 
 void CActorManager::Level_Term()
 {
+#ifdef PLATFORM_WIN
+    Renderer::DrawTrace::InvalidateSources();
+#endif
 	edAnmLayer* peVar1;
 	int iVar2;
 	uint classId;
@@ -380,6 +384,21 @@ void CActorManager::Level_ManagePaused()
 
 void CActorManager::Level_Draw()
 {
+#ifdef PLATFORM_WIN
+    if (Renderer::DrawTrace::IsEnabled()) {
+        for (int actorIndex = 0; actorIndex < this->nbActors; ++actorIndex) {
+            CActor* pTraceActor = this->aActors[actorIndex];
+            edNODE* pTraceNode = pTraceActor->pMeshNode;
+            if (!pTraceNode || !pTraceNode->pData) continue;
+            const int traceCount = static_cast<ed_3d_hierarchy*>(pTraceNode->pData)->linkedHierCount + 1;
+            for (int traceIndex = 0; traceIndex < traceCount && pTraceNode; ++traceIndex, pTraceNode = pTraceNode->pPrev) {
+                Renderer::DrawTrace::RegisterOwner(reinterpret_cast<uintptr_t>(pTraceNode->pData),
+                    reinterpret_cast<uintptr_t>(pTraceActor), pTraceActor->name, pTraceActor->actorManagerIndex,
+                    pTraceActor->typeID, pTraceActor->sectorId);
+            }
+        }
+    }
+#endif
 	CActor* pActor;
 	bool bShouldDraw;
 	CActor** pActorsEnd;
@@ -395,6 +414,10 @@ void CActorManager::Level_Draw()
 				bShouldDraw = pActor->distanceToCamera <= (pActor->subObjA)->cullingDistance;
 			}
 			if (bShouldDraw) {
+#ifdef PLATFORM_WIN
+                Renderer::DrawTrace::OwnerScope traceOwner(reinterpret_cast<uintptr_t>(pActor), pActor->name,
+                    pActor->actorManagerIndex, pActor->typeID, pActor->sectorId);
+#endif
 				pActor->Draw();
 			}
 		}

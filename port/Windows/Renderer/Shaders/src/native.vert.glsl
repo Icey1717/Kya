@@ -30,7 +30,12 @@ layout( push_constant ) uniform PerDrawData
 	uint frameBufferMode;
 	float frameBufferScaleX;
 	float frameBufferScaleY;
-	uint _pad[2];
+
+	// Equivalent of VU destination address for animation matrix data.
+	// Usually 0x394 or 0x3dc.
+	uint animBaseOffset;
+
+	uint _pad[1];
 } perDrawData;
 
 struct LightingDataBlock {
@@ -71,7 +76,7 @@ void main() {
 	vec4 fixedPos = vec4(inPosition, 1.0);
 
 	if (animFlags > 0) {
-		uint animIndex = animFlags - 0x3dc;
+		uint animIndex = animFlags - perDrawData.animBaseOffset;
 		animIndex = animIndex / 4;
 
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
