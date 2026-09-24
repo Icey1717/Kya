@@ -314,5 +314,6 @@ public:
 extern CSimpleMenuPause gPauseMenu;
 extern int gDebugLevelCheatEnabled_00449824;
 extern uint UINT_00448eac;
+extern undefined4 DAT_00448ea8;
 
 #endif // _PAUSEMANAGER_H

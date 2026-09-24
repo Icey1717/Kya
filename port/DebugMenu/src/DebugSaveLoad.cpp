@@ -11,6 +11,7 @@
 #include "SaveManagement.h"
 #include "LevelScheduler.h"
 #include "Pause.h"
+#include "TimeController.h"
 #include "log.h"
 
 #include "DebugSetting.h"
@@ -333,6 +334,48 @@ namespace Debug::SaveLoad
 			});
 		}
 
+		void QueueLoad(const SaveBackup& backup)
+		{
+			// Capture the displayed bytes: autosave may rotate the backup filenames before execution.
+			restorePending = true;
+			backupStatus = "Load queued";
+			EnqueueLevelManageTask([backup]() {
+				restorePending = false;
+				if (!CanRestore()) {
+					backupStatus = "Load cancelled: save/load or level transition in progress";
+					return;
+				}
+				restorePending = true;
+				try {
+					// Stage the displayed bytes directly without touching disk or live slot metadata.
+					if (!gSaveManagement.stage_backup_save(backup.data.data(), backup.data.size())) {
+						backupStatus = "Load failed: could not stage backup save data";
+					}
+					else {
+						// Reproduce MemCardLoad0's successful post-load transition without calling it or writing a slot.
+						gSaveManagement.load_level();
+
+						if ((GameFlags & 0xc) != 0) {
+							if (DAT_00448ea8 == 0) {
+								GetTimer()->Update();
+							}
+
+							PauseLeave();
+						}
+
+						UINT_00448eac = 0;
+						CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+						backupStatus = "Loaded slot " + std::to_string(backup.slot) + " directly; load requested";
+					}
+				}
+				catch (const std::exception& error) {
+					backupStatus = std::string("Load failed: ") + error.what();
+				}
+				restorePending = false;
+				refreshBackups = true;
+			});
+		}
+
 		void ShowBackups()
 		{
 			if (!backupsOpen) return;
@@ -343,13 +386,13 @@ namespace Debug::SaveLoad
 				if (ImGui::Button("Refresh")) RefreshBackups();
 				ImGui::EndDisabled();
 				if (showAutosaves) {
-					ImGui::TextWrapped("First autosave per checkpoint. Restore replaces the selected slot and backs up its current save.");
+					ImGui::TextWrapped("First autosave per checkpoint. Restore replaces the selected slot and backs up its current save. Load starts it directly without touching any slot.");
 					ImGui::Combo("Restore into slot", &archiveRestoreSlot, "0\0" "1\0" "2\0" "3\0");
 				}
-				else ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save.");
+				else ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save. Load starts it directly without touching any slot.");
 				if (!backupDirectory.empty()) ImGui::TextWrapped("Directory: %s", backupDirectory.c_str());
 				if (!backupStatus.empty()) ImGui::TextWrapped("%s", backupStatus.c_str());
-				if (!CanRestore()) ImGui::TextWrapped("Restore is available when the title screen or gameplay is ready and no save/load is active.");
+				if (!CanRestore()) ImGui::TextWrapped("Restore and Load are available when the title screen or gameplay is ready and no save/load is active.");
 				if (backups.empty()) ImGui::TextUnformatted(showAutosaves ? "No checkpoint autosaves archived yet." : "No backed up saves found. Autosaves create backups of existing slots.");
 				ImGui::BeginChild("Backups", ImVec2(0, 0), true);
 				for (const auto& backup : backups) {
@@ -370,14 +413,17 @@ namespace Debug::SaveLoad
 					const bool restore = ImGui::Button("Restore");
 					ImGui::SameLine();
 					const bool load = ImGui::Button("Restore & Load");
-					if (restore || load) {
+					ImGui::SameLine();
+					const bool directLoad = ImGui::Button("Load");
+					if (restore || load || directLoad) {
 						auto selected = backup;
 						if (showAutosaves) {
 							selected.slot = archiveRestoreSlot;
 							selected.destination = std::filesystem::path(backupDirectory).parent_path() /
 								("slot_" + std::to_string(archiveRestoreSlot) + ".dat");
 							}
-						QueueRestore(selected, load);
+						if (directLoad) QueueLoad(selected);
+						else QueueRestore(selected, load);
 					}
 					ImGui::EndDisabled();
 					ImGui::Separator();
