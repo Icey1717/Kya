@@ -8,12 +8,15 @@ Add a `Load` action to the debug backup browser that starts the selected backup 
 
 Add a `CSaveManagement` method that accepts a complete, already-validated save-file buffer. It will:
 
-1. Verify the file header, descriptor size, payload size, and CRCs.
-2. Copy the save descriptor and payload into the existing save-management buffers.
-3. Set `saveSize_0x44` to the staged payload size.
-4. Return `false` without changing memory on invalid input.
+1. Accept `(const void* data, size_t size)` and verify a non-null source and destination.
+2. Verify the file header, descriptor size, payload size, CRCs, and that the declared payload fits entirely within `size`.
+3. Reject payloads larger than the fixed 64 KiB allocation or `gameSaveMaxBufferSize`.
+4. Copy only the payload into the existing save-management buffer and set `saveSize_0x44` after all validation succeeds.
+5. Return `false` without changing memory on invalid input.
 
-The debug backup browser will queue the operation through the existing level-management task queue. Once the buffer is staged successfully, it will call `gSaveManagement.load_level()`, which is the existing path used after an ordinary memory-card load. The `Restore` and `Restore & Load` actions retain their current behavior.
+The staging method must not change `aSaveDataDescriptions`, `slotID_0x28`, `saveDataHeader`, or file-related flags. The descriptor is validated but never becomes live slot metadata.
+
+The debug backup browser will queue the operation through the existing level-management task queue. Once the buffer is staged successfully, it will execute the same post-load state cleanup as `MemCardLoad0`: call `gSaveManagement.load_level()`, leave the pause menu when appropriate, clear `UINT_00448eac`, and clear the global pause. The `Restore` and `Restore & Load` actions retain their current behavior.
 
 ## User Interface
 
@@ -25,4 +28,4 @@ The new loader validates all externally supplied bytes before writing to `pBigAl
 
 ## Testing
 
-Extract the validation/staging behavior behind the new `CSaveManagement` method so it can be covered by GoogleTest. Tests will verify that a valid file stages the descriptor and payload, while malformed headers, invalid CRCs, and oversized payloads fail without mutating previously staged data. The existing Windows save test target will run afterward.
+Extract the validation/staging behavior behind the new `CSaveManagement` method so it can be covered by GoogleTest. Tests will verify that valid data stages only the payload and updates its size; malformed headers, invalid CRCs, truncated input, declared payloads beyond supplied bytes, absent allocations, and payloads beyond either size limit fail without mutating previously staged data or slot metadata. Direct loads will be exercised from the title screen and paused gameplay to verify normal post-load cleanup. The existing Windows save test target will run afterward.
