@@ -339,6 +339,7 @@ protected:
 	int previousMaxBufferSize = 0;
 	uint previousSaveSize = 0;
 	int previousSlotID = 0;
+	uint previousFileExistsFlags = 0;
 	SaveDataHeader previousHeader{};
 	SaveDataDesc previousDescs[4];
 
@@ -348,6 +349,7 @@ protected:
 		previousMaxBufferSize = gSaveManagement.gameSaveMaxBufferSize;
 		previousSaveSize = gSaveManagement.saveSize_0x44;
 		previousSlotID = gSaveManagement.slotID_0x28;
+		previousFileExistsFlags = gSaveManagement.fileExistsFlags;
 		previousHeader = gSaveManagement.saveDataHeader;
 		std::memcpy(previousDescs, gSaveManagement.aSaveDataDescriptions, sizeof(previousDescs));
 
@@ -358,6 +360,7 @@ protected:
 		gSaveManagement.gameSaveMaxBufferSize = 0x10000;
 		gSaveManagement.saveSize_0x44 = 0xdeadbeefu;
 		gSaveManagement.slotID_0x28 = 7;
+		gSaveManagement.fileExistsFlags = 0xa5a5a5a5u;
 		gSaveManagement.saveDataHeader = SaveDataHeader{};
 		gSaveManagement.saveDataHeader.hash = 0x11223344u;
 		for (auto& desc : gSaveManagement.aSaveDataDescriptions) desc.levelId = 0x99;
@@ -369,14 +372,17 @@ protected:
 		gSaveManagement.gameSaveMaxBufferSize = previousMaxBufferSize;
 		gSaveManagement.saveSize_0x44 = previousSaveSize;
 		gSaveManagement.slotID_0x28 = previousSlotID;
+		gSaveManagement.fileExistsFlags = previousFileExistsFlags;
 		gSaveManagement.saveDataHeader = previousHeader;
 		std::memcpy(gSaveManagement.aSaveDataDescriptions, previousDescs, sizeof(previousDescs));
 	}
 
-	void ExpectUntouched(int expectedSlotID, uint expectedSaveSize, const SaveDataHeader& expectedHeader)
+	void ExpectUntouched(int expectedSlotID, uint expectedSaveSize, uint expectedFileExistsFlags,
+		const SaveDataHeader& expectedHeader)
 	{
 		EXPECT_EQ(gSaveManagement.slotID_0x28, expectedSlotID);
 		EXPECT_EQ(gSaveManagement.saveSize_0x44, expectedSaveSize);
+		EXPECT_EQ(gSaveManagement.fileExistsFlags, expectedFileExistsFlags);
 		EXPECT_EQ(std::memcmp(&gSaveManagement.saveDataHeader, &expectedHeader, sizeof(SaveDataHeader)), 0);
 		for (auto& desc : gSaveManagement.aSaveDataDescriptions) EXPECT_EQ(desc.levelId, 0x99u);
 		EXPECT_TRUE(std::all_of(stagingBuffer.begin(), stagingBuffer.end(),
@@ -405,23 +411,29 @@ TEST_F(SaveManagementStage, StagesValidPayloadAndUpdatesOnlySaveSize)
 
 TEST_F(SaveManagementStage, RejectsNullData)
 {
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(nullptr, 64));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsMissingDestinationAllocation)
 {
 	gSaveManagement.pBigAlloc_0x34 = nullptr;
 	const auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	EXPECT_EQ(gSaveManagement.saveSize_0x44, 0xdeadbeefu);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsBufferShorterThanOuterHeader)
 {
 	const auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), sizeof(SaveDataHeader) - 1));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsWrongHeaderHash)
@@ -429,8 +441,10 @@ TEST_F(SaveManagementStage, RejectsWrongHeaderHash)
 	auto bytes = BuildBackupSaveBytes("payload");
 	uint32_t badHash = 0;
 	std::memcpy(bytes.data(), &badHash, sizeof(badHash));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsWrongHeaderSize)
@@ -441,8 +455,10 @@ TEST_F(SaveManagementStage, RejectsWrongHeaderSize)
 	header.headerSize = sizeof(SaveDataHeader) - 1;
 	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
 	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsCorruptHeaderCrc)
@@ -450,8 +466,10 @@ TEST_F(SaveManagementStage, RejectsCorruptHeaderCrc)
 	auto bytes = BuildBackupSaveBytes("payload");
 	// Flip a header-covered byte without recomputing headerCrc.
 	bytes[static_cast<size_t>(offsetof(SaveDataHeader, initialBlockSize))] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsNegativeInitialBlockSize)
@@ -462,8 +480,10 @@ TEST_F(SaveManagementStage, RejectsNegativeInitialBlockSize)
 	header.initialBlockSize = -1;
 	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
 	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsNegativeMainBlockSize)
@@ -474,15 +494,19 @@ TEST_F(SaveManagementStage, RejectsNegativeMainBlockSize)
 	header.mainBlockSize = -1;
 	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
 	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsZeroMainBlockSize)
 {
 	auto bytes = BuildBackupSaveBytes("");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsWrongInitialBlockSize)
@@ -493,39 +517,49 @@ TEST_F(SaveManagementStage, RejectsWrongInitialBlockSize)
 	header.initialBlockSize = sizeof(SaveDataDesc) - 1;
 	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
 	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsCorruptDescriptorCrc)
 {
 	auto bytes = BuildBackupSaveBytes("payload");
 	bytes[sizeof(SaveDataHeader)] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsCorruptMainBlockCrc)
 {
 	auto bytes = BuildBackupSaveBytes("payload");
 	bytes[kBackupPrefixSize] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsMainBlockLargerThanSuppliedBytes)
 {
 	auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size() - 1));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsMainBlockLargerThanFixedAllocation)
 {
 	const std::string payload(0x10001, 'x');
 	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
 TEST_F(SaveManagementStage, RejectsMainBlockLargerThanGameSaveMaxBufferSize)
@@ -533,7 +567,9 @@ TEST_F(SaveManagementStage, RejectsMainBlockLargerThanGameSaveMaxBufferSize)
 	const std::string payload(64, 'x');
 	const auto bytes = BuildBackupSaveBytes(payload);
 	gSaveManagement.gameSaveMaxBufferSize = static_cast<int>(payload.size()) - 1;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, gSaveManagement.saveDataHeader);
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 #endif
