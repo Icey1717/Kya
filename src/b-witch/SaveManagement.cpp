@@ -1297,14 +1297,22 @@ namespace
 	// children (no signed overflow or unsigned underflow is possible, since
 	// every bound is confirmed before it is used to advance a pointer).
 	//
-	// Unlike a validator that only checks BSAV's direct children, this also
-	// recurses into every child's own nested data, so a later
-	// CLevelScheduler::SaveGame_OpenChunk / IsACompatibleChunkRecurse
-	// traversal - which descends arbitrarily deep into whichever chunk is
-	// currently open - can never encounter an out-of-bounds chunk extent
-	// anywhere in the tree, not just at the top level. Recursion depth is
-	// capped at kMaxChunkTreeDepth, so a maliciously deep chain of nested
-	// chunks is rejected instead of recursing without bound.
+	// This also recurses into every child's own nested data (not just BSAV's
+	// direct children), so a later CLevelScheduler::SaveGame_OpenChunk /
+	// IsACompatibleChunkRecurse traversal - which descends arbitrarily deep
+	// into whichever chunk is currently open - can never encounter an
+	// out-of-bounds chunk extent anywhere in the tree, not just at the top
+	// level. Recursion depth is capped at kMaxChunkTreeDepth, so a
+	// maliciously deep chain of nested chunks is rejected instead of
+	// recursing without bound.
+	//
+	// However, only a BSHD found at depth 0 (a direct child of the BSAV
+	// root) can satisfy *pFoundLoadableBSHD: SaveGame_LoadFromBuffer's very
+	// first SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) call only searches BSAV's
+	// direct children (CChunk::FindNextSubChunk does not descend), so a
+	// structurally valid BSHD nested only deeper in the tree would never
+	// actually be reached by the real loader and must not be accepted as
+	// making the payload loadable.
 	bool ValidateChunkTree(const char* pBase, size_t dataOffset, size_t dataEnd, int depth, bool* pFoundLoadableBSHD)
 	{
 		if (depth > kMaxChunkTreeDepth) {
@@ -1331,7 +1339,16 @@ namespace
 
 			const size_t childDataEnd = childDataOffset + childDataSize;
 
-			if (!*pFoundLoadableBSHD && child.hash == SAVEGAME_CHUNK_BSHD) {
+			if (depth == 0 && !*pFoundLoadableBSHD && child.hash == SAVEGAME_CHUNK_BSHD) {
+				// CLevelScheduler::SaveGame_LoadFromBuffer opens the BSHD via
+				// SaveGame_OpenChunk on the freshly-opened BSAV root, which
+				// calls CChunk::FindNextSubChunk over BSAV's *direct*
+				// children only - it never descends into nested sub-chunks.
+				// A BSHD found deeper in the tree (depth > 0) is therefore
+				// never actually reached by the real loader, so it must not
+				// satisfy this qualification even though the recursive walk
+				// still validates its structural bounds for safety.
+				//
 				// The immediate loader reads a full SaveDataChunk_BSHD (not
 				// just its first field) out of this chunk, so require enough
 				// bytes for the whole struct, not merely sizeof(int). A BSHD

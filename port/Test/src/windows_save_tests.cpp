@@ -805,6 +805,25 @@ TEST_F(SaveManagementStage, RejectsMalformedGrandchildChunkNestedInsideValidWrap
 	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
+TEST_F(SaveManagementStage, RejectsNestedOnlyValidBSHD)
+{
+	// A structurally valid, loadable BSHD child exists in the tree, but only
+	// as a grandchild nested inside a container wrapper - not as a direct
+	// child of the BSAV root. CLevelScheduler::SaveGame_LoadFromBuffer's
+	// first SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) call resolves via
+	// CChunk::FindNextSubChunk over BSAV's direct children only, so the real
+	// loader would never actually find this nested BSHD. The recursive
+	// validator must still walk into the wrapper to bounds-check it (so a
+	// malformed descendant there is still caught), but must not treat the
+	// nested BSHD as satisfying the root's loadability requirement.
+	const std::string wrapper = SaveContainerChunk(0x11223344u, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)));
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, wrapper));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
 TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByOneTrailingByte)
 {
 	// A structurally valid, loadable BSHD child is the root's only chunk-shaped
