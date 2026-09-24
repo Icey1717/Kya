@@ -1271,21 +1271,112 @@ bool CSaveManagement::load_game()
 
 namespace
 {
+	// The deepest legitimate save-chunk tree walked by CLevelScheduler (BSAV ->
+	// BLEV -> BLHD/BSCN/BGNF/BOBJ/BLMP -> ...) is a small, fixed handful of
+	// levels, bounded in practice by aSaveGameChunks[8] (see LevelScheduler.h).
+	// 32 gives generous headroom above any real tree while still rejecting a
+	// maliciously crafted chain of degenerate single-child chunks with a bound
+	// that keeps native recursion trivially shallow (never a stack-overflow
+	// risk), well before the tree could ever reach CChunk::FindNextSubChunk or
+	// CLevelScheduler::IsACompatibleChunkRecurse.
+	constexpr int kMaxChunkTreeDepth = 32;
+
+	// CLevelScheduler::SaveGame_BeginChunk/IsACompatibleChunkRecurse mark a
+	// chunk as a container of further nested sub-chunks by writing this exact
+	// value into CChunk::field_0x0 (see LevelScheduler.cpp); any other value
+	// means the chunk's data is a raw leaf payload (e.g. SaveDataChunk_BSHD's
+	// plain ints), not a nested chunk tree, and must not be reinterpreted as
+	// one.
+	constexpr uint kChunkContainerMarker = 0x16660666u;
+
+	// Structurally validates every chunk nested within [dataOffset, dataEnd)
+	// against pBase/mainBlockSize, mirroring CChunk::FindNextSubChunk's
+	// traversal: each child header must fully fit, each child's declared data
+	// extent (offset) must fit within the remaining parent data, and the
+	// parent's declared data must be consumed exactly by walking its direct
+	// children (no signed overflow or unsigned underflow is possible, since
+	// every bound is confirmed before it is used to advance a pointer).
+	//
+	// Unlike a validator that only checks BSAV's direct children, this also
+	// recurses into every child's own nested data, so a later
+	// CLevelScheduler::SaveGame_OpenChunk / IsACompatibleChunkRecurse
+	// traversal - which descends arbitrarily deep into whichever chunk is
+	// currently open - can never encounter an out-of-bounds chunk extent
+	// anywhere in the tree, not just at the top level. Recursion depth is
+	// capped at kMaxChunkTreeDepth, so a maliciously deep chain of nested
+	// chunks is rejected instead of recursing without bound.
+	bool ValidateChunkTree(const char* pBase, size_t dataOffset, size_t dataEnd, int depth, bool* pFoundLoadableBSHD)
+	{
+		if (depth > kMaxChunkTreeDepth) {
+			return false;
+		}
+
+		size_t cursor = dataOffset;
+		while ((dataEnd - cursor) >= sizeof(CChunk)) {
+			CChunk child;
+			memcpy(&child, pBase + cursor, sizeof(CChunk));
+
+			if (child.offset < 0) {
+				return false;
+			}
+
+			const size_t childDataOffset = cursor + sizeof(CChunk);
+			const size_t childDataSize = static_cast<size_t>(child.offset);
+
+			// childDataOffset <= dataEnd is guaranteed by the loop condition,
+			// so this subtraction cannot underflow.
+			if (childDataSize > (dataEnd - childDataOffset)) {
+				return false;
+			}
+
+			const size_t childDataEnd = childDataOffset + childDataSize;
+
+			if (!*pFoundLoadableBSHD && child.hash == SAVEGAME_CHUNK_BSHD) {
+				// The immediate loader reads a full SaveDataChunk_BSHD (not
+				// just its first field) out of this chunk, so require enough
+				// bytes for the whole struct, not merely sizeof(int). A BSHD
+				// that is too small simply doesn't qualify; traversal
+				// continues so later siblings/descendants are still
+				// bounds-checked.
+				if (childDataSize >= sizeof(SaveDataChunk_BSHD)) {
+					int levelId;
+					memcpy(&levelId, pBase + childDataOffset, sizeof(int));
+					*pFoundLoadableBSHD = (levelId >= 0) && (levelId < 0xe);
+				}
+			}
+
+			// Only descend into this child's own data as a further nested
+			// chunk tree if it is actually marked as a container (matching
+			// CLevelScheduler::IsACompatibleChunkRecurse's own field_0x0
+			// check); leaf chunks (e.g. BSHD) hold raw struct data that must
+			// not be misinterpreted as chunk headers. A malformed descendant
+			// underneath any container, at any depth, still rejects the
+			// whole payload.
+			if (child.field_0x0 == kChunkContainerMarker) {
+				if (!ValidateChunkTree(pBase, childDataOffset, childDataEnd, depth + 1, pFoundLoadableBSHD)) {
+					return false;
+				}
+			}
+
+			cursor = childDataEnd;
+		}
+
+		// Every direct child was structurally valid (or there were none). The
+		// parent's declared data must be consumed exactly by walking its
+		// direct children: any leftover bytes (too small to form another
+		// CChunk header, or otherwise) are a malformed/truncated trailing
+		// chunk, not padding, and must reject the whole payload even if a
+		// loadable BSHD was already seen among earlier children.
+		return cursor == dataEnd;
+	}
+
 	// Minimal structural validation of the root save-chunk payload consumed
 	// immediately by CLevelScheduler::SaveGame_LoadFromBuffer: it opens the
-	// BSAV root chunk written at buffer offset 0 and reads the levelId out of
-	// a direct BSHD child before any other chunk is touched. Chunk traversal
-	// mirrors CChunk::FindNextSubChunk (LevelScheduler.cpp), but every header
-	// and extent is bounds-checked against the actual buffer length instead
-	// of being trusted, and every offset arithmetic step is ordered so a
-	// bound is confirmed before it is used to advance a pointer (no signed
-	// overflow or unsigned underflow is possible).
-	//
-	// Every direct child extent underneath the root is validated, all the way
-	// to the end of the root's declared data: a malformed or truncated child
-	// that happens to follow a perfectly valid BSHD must still reject the
-	// whole payload, since the same buffer traversal logic is what the
-	// immediate loader relies on later.
+	// BSAV root chunk written at buffer offset 0 and reads a BSHD child
+	// before any other chunk is touched. The entire nested chunk tree
+	// underneath the root - not just its direct children - is validated via
+	// ValidateChunkTree, since deeper application traversal (SaveGame_OpenChunk,
+	// IsACompatibleChunkRecurse) relies on every nested extent being sound.
 	bool ValidateRootSaveChunkPayload(const void* pMainBlock, size_t mainBlockSize)
 	{
 		if (mainBlockSize < sizeof(CChunk)) {
@@ -1316,53 +1407,8 @@ namespace
 
 		const size_t rootDataEnd = rootDataOffset + rootDataSize;
 
-		// Walk every direct child of the root chunk. Every child header must
-		// fully fit before rootDataEnd, and every child's declared extent must
-		// fit within the remaining root data before advancing; any violation
-		// rejects the whole payload, even after a loadable BSHD was already
-		// seen, so malformed/truncated trailing children are never ignored.
 		bool foundLoadableBSHD = false;
-		size_t cursor = rootDataOffset;
-		while ((rootDataEnd - cursor) >= sizeof(CChunk)) {
-			CChunk child;
-			memcpy(&child, pBase + cursor, sizeof(CChunk));
-
-			if (child.offset < 0) {
-				return false;
-			}
-
-			const size_t childDataOffset = cursor + sizeof(CChunk);
-			const size_t childDataSize = static_cast<size_t>(child.offset);
-
-			// childDataOffset <= rootDataEnd is guaranteed by the loop condition,
-			// so this subtraction cannot underflow.
-			if (childDataSize > (rootDataEnd - childDataOffset)) {
-				return false;
-			}
-
-			if (!foundLoadableBSHD && child.hash == SAVEGAME_CHUNK_BSHD) {
-				// The immediate loader only reads levelId (the first field) out
-				// of SaveDataChunk_BSHD, so require just enough bytes for that.
-				// A BSHD that is too small to hold levelId simply doesn't
-				// qualify; traversal continues so later siblings are still
-				// bounds-checked.
-				if (childDataSize >= sizeof(int)) {
-					int levelId;
-					memcpy(&levelId, pBase + childDataOffset, sizeof(int));
-					foundLoadableBSHD = (levelId >= 0) && (levelId < 0xe);
-				}
-			}
-
-			cursor = childDataOffset + childDataSize;
-		}
-
-		// Every direct child was structurally valid (or there were none). The
-		// root's declared data must be consumed exactly by walking its direct
-		// children: any leftover bytes (too small to form another CChunk
-		// header, or otherwise) are a malformed/truncated trailing chunk, not
-		// padding, and must reject the whole payload even if a loadable BSHD
-		// was already seen among the earlier children.
-		if (cursor != rootDataEnd) {
+		if (!ValidateChunkTree(pBase, rootDataOffset, rootDataEnd, 0, &foundLoadableBSHD)) {
 			return false;
 		}
 

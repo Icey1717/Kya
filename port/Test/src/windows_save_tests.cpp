@@ -27,6 +27,17 @@ namespace
 		return bytes + payload;
 	}
 
+	// Same layout as SaveChunk, but marks field_0x0 with the real container
+	// marker (0x16660666, see CLevelScheduler::SaveGame_BeginChunk /
+	// IsACompatibleChunkRecurse) so the chunk's payload is itself walked as a
+	// nested sub-chunk tree, matching real BLEV-style container chunks.
+	std::string SaveContainerChunk(uint32_t hash, const std::string& payload)
+	{
+		std::string bytes;
+		for (auto word : {0x16660666u, hash, 0u, static_cast<uint32_t>(payload.size())}) AppendSaveWord(bytes, word);
+		return bytes + payload;
+	}
+
 	std::string CheckpointSave(bool truncatedActor = false)
 	{
 		std::string header, levelHeader, classes;
@@ -331,7 +342,15 @@ namespace
 
 	std::string BuildBackupSaveBytes(const std::string& mainBlock)
 	{
-		SaveDataDesc desc;
+		// Value-initialize every field so hashing/serializing the fixture
+		// never reads uninitialized memory (SaveDataDesc's constructor only
+		// sets levelId).
+		SaveDataDesc desc{};
+		desc.gameTime = 0.0f;
+		desc.nbFreedWolfen = 0;
+		desc.bGameCompleted = 0;
+		desc.nbMagic = 0;
+		desc.nbMoney = 0;
 		SaveDataHeader header{};
 		header.hash = 0x4544454e;
 		header.headerSize = sizeof(SaveDataHeader);
@@ -712,6 +731,22 @@ TEST_F(SaveManagementStage, RejectsShortBSHDChild)
 	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
+TEST_F(SaveManagementStage, RejectsFourByteBSHDChild)
+{
+	// BSHD child has exactly sizeof(int) (4) bytes: enough for the old,
+	// under-strict check to read levelId, but fewer than
+	// sizeof(SaveDataChunk_BSHD) (0x14), so the immediate loader could read
+	// past the chunk's declared extent for sectorId/gameTime/ambianceId/
+	// musicId. Must still be rejected as a malformed BSHD.
+	std::string shortBSHD;
+	AppendSaveWord(shortBSHD, 3u); // levelId, otherwise a "loadable" value
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, shortBSHD)));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
 TEST_F(SaveManagementStage, RejectsNegativeLevelId)
 {
 	const auto bytes = BuildBackupSaveBytes(ValidRootChunkPayload(-1));
@@ -742,6 +777,27 @@ TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByMalformedTrailingChild)
 	uint32_t hugeOffset = 0x7fffffffu;
 	std::memcpy(trailingChild.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
 	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + trailingChild;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMalformedGrandchildChunkNestedInsideValidWrapper)
+{
+	// The malformed chunk here is not a direct child of BSAV; it is nested
+	// two levels deep inside a wrapper chunk whose own declared extent is
+	// perfectly well-formed. A validator that only checked BSAV's direct
+	// children would accept this payload and only fail later, inside
+	// CLevelScheduler::SaveGame_OpenChunk / IsACompatibleChunkRecurse, when it
+	// descends into the wrapper and reads the malformed grandchild's
+	// out-of-bounds extent. The nested tree must be rejected up front instead.
+	std::string grandchild = SaveChunk(0x33445566u, std::string(4, '\0'));
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(grandchild.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const std::string wrapper = SaveContainerChunk(0x11223344u, grandchild);
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper;
 	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
 	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
 	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
