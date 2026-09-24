@@ -1269,6 +1269,87 @@ bool CSaveManagement::load_game()
 	return bSuccess;
 }
 
+namespace
+{
+	// Minimal structural validation of the root save-chunk payload consumed
+	// immediately by CLevelScheduler::SaveGame_LoadFromBuffer: it opens the
+	// BSAV root chunk written at buffer offset 0 and reads the levelId out of
+	// a direct BSHD child before any other chunk is touched. Chunk traversal
+	// mirrors CChunk::FindNextSubChunk (LevelScheduler.cpp), but every header
+	// and extent is bounds-checked against the actual buffer length instead
+	// of being trusted, and every offset arithmetic step is ordered so a
+	// bound is confirmed before it is used to advance a pointer (no signed
+	// overflow or unsigned underflow is possible).
+	bool ValidateRootSaveChunkPayload(const void* pMainBlock, size_t mainBlockSize)
+	{
+		if (mainBlockSize < sizeof(CChunk)) {
+			return false;
+		}
+
+		const char* pBase = reinterpret_cast<const char*>(pMainBlock);
+
+		CChunk root;
+		memcpy(&root, pBase, sizeof(CChunk));
+
+		if (root.hash != SAVEGAME_CHUNK_BSAV) {
+			return false;
+		}
+
+		if (root.offset < 0) {
+			return false;
+		}
+
+		const size_t rootDataOffset = sizeof(CChunk);
+		const size_t rootDataSize = static_cast<size_t>(root.offset);
+
+		// mainBlockSize >= rootDataOffset was just established above, so this
+		// subtraction cannot underflow.
+		if (rootDataSize > (mainBlockSize - rootDataOffset)) {
+			return false;
+		}
+
+		const size_t rootDataEnd = rootDataOffset + rootDataSize;
+
+		// Walk direct children of the root chunk looking for BSHD. Every child
+		// header must fully fit before rootDataEnd, and every child's declared
+		// extent must fit within the remaining root data before advancing.
+		size_t cursor = rootDataOffset;
+		while ((rootDataEnd - cursor) >= sizeof(CChunk)) {
+			CChunk child;
+			memcpy(&child, pBase + cursor, sizeof(CChunk));
+
+			if (child.offset < 0) {
+				return false;
+			}
+
+			const size_t childDataOffset = cursor + sizeof(CChunk);
+			const size_t childDataSize = static_cast<size_t>(child.offset);
+
+			// childDataOffset <= rootDataEnd is guaranteed by the loop condition,
+			// so this subtraction cannot underflow.
+			if (childDataSize > (rootDataEnd - childDataOffset)) {
+				return false;
+			}
+
+			if (child.hash == SAVEGAME_CHUNK_BSHD) {
+				// The immediate loader only reads levelId (the first field) out
+				// of SaveDataChunk_BSHD, so require just enough bytes for that.
+				if (childDataSize < sizeof(int)) {
+					return false;
+				}
+
+				int levelId;
+				memcpy(&levelId, pBase + childDataOffset, sizeof(int));
+				return (levelId >= 0) && (levelId < 0xe);
+			}
+
+			cursor = childDataOffset + childDataSize;
+		}
+
+		return false;
+	}
+}
+
 bool CSaveManagement::stage_backup_save(const void* data, size_t size)
 {
 	// Stages a fully-validated backup save payload directly into the transient
@@ -1342,6 +1423,14 @@ bool CSaveManagement::stage_backup_save(const void* data, size_t size)
 
 	const char* pMainBlock = pDesc + initialBlockSize;
 	if (edFileComputeCRC32(const_cast<char*>(pMainBlock), static_cast<uint>(mainBlockSize)) != header.mainBlockCrc) {
+		return false;
+	}
+
+	// The envelope CRCs only prove the bytes are intact, not that they form a
+	// well-formed chunk tree. Reject malformed/truncated chunk data before
+	// copying anything or updating saveSize_0x44, since SaveGame_LoadFromBuffer
+	// opens the root BSAV chunk and reads BSHD::levelId immediately on load.
+	if (!ValidateRootSaveChunkPayload(pMainBlock, mainBlockSize)) {
 		return false;
 	}
 
