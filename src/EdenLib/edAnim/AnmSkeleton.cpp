@@ -110,3 +110,41 @@ void edAnmSkeleton::UnskinNMatrices(edF32MATRIX4* m0, edF32MATRIX4* m1, int inde
 	}
 	return;
 }
+
+void edAnmSkeleton::ApplyInvSkin(edF32MATRIX4* m)
+{
+	ushort uVar1;
+	edANM_SKELETON* peVar2;
+	edF32MATRIX4* peVar3;
+	edF32VECTOR4* v1;
+	edF32MATRIX4* m1;
+
+	peVar2 = this->pTag;
+	if ((peVar2->flags & 2) == 0) {
+		uVar1 = peVar2->boneCount;
+		peVar3 = m + uVar1;
+		m1 = (edF32MATRIX4*)((uintptr_t)&peVar2[((uint)uVar1 * 2 + (uint)uVar1) * 4].boneCount + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0));
+		if (m < peVar3) {
+			do {
+				edF32Matrix4MulF32Matrix4Hard(m, m1, m);
+				m = m + 1;
+				m1 = m1 + 1;
+			} while (m < peVar3);
+		}
+	}
+	else {
+		uVar1 = peVar2->boneCount;
+		peVar3 = m + uVar1;
+		v1 = (edF32VECTOR4*)((uintptr_t)&peVar2[((uint)uVar1 * 2 + (uint)uVar1) * 4].boneCount + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0));
+		if (m < peVar3) {
+			do {
+				edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&m->da, m, v1);
+				m = m + 1;
+				v1 = v1 + 1;
+			} while (m < peVar3);
+		}
+	}
+	return;
+}
+
+

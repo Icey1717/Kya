@@ -82,33 +82,41 @@ void main() {
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		fixedPos = currentAnimMatrix * fixedPos;
 
-		vec4 normal = currentAnimMatrix * inNormal;
+		if (perDrawData.animBaseOffset != 0x394) {
+			vec4 normal = currentAnimMatrix * inNormal;
 
-		normal = (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[0] * normal.x);
+			normal = (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[0] * normal.x);
 
-		normal.x = max(normal.x, 0.0);
-		normal.y = max(normal.y, 0.0);
-		normal.z = max(normal.z, 0.0);
-		normal.w = max(normal.w, 0.0);
+			normal.x = max(normal.x, 0.0);
+			normal.y = max(normal.y, 0.0);
+			normal.z = max(normal.z, 0.0);
+			normal.w = max(normal.w, 0.0);
 
-		vec4 lightAmbientAdjusted = vec4(lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.x, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.y, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.z, 0.0f);
+			vec4 lightAmbientAdjusted = vec4(lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.x, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.y, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.z, 0.0f);
 
-		normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[3] * normal.w) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[0] * normal.x);
+			normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[3] * normal.w) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[0] * normal.x);
 
-		normal.x = min(normal.x, 255.0);
-		normal.y = min(normal.y, 255.0);
-		normal.z = min(normal.z, 255.0);
-		normal.w = min(normal.w, 255.0);
+			normal.x = min(normal.x, 255.0);
+			normal.y = min(normal.y, 255.0);
+			normal.z = min(normal.z, 255.0);
+			normal.w = min(normal.w, 255.0);
 
-		vec4 color = vec4(inColor.x, inColor.y, inColor.z, inColor.w);
-		color = color * lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.w;
+			vec4 color = vec4(inColor.x, inColor.y, inColor.z, inColor.w);
+			color = color * lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.w;
 		
-		color = color * normal;
+			color = color * normal;
 
-		fragColor.x = color.x / 255.0;
-		fragColor.y = color.y / 255.0;
-		fragColor.z = color.z / 255.0; 
-		fragColor.w = inColor.w / 255.0;
+			fragColor.x = color.x / 255.0;
+			fragColor.y = color.y / 255.0;
+			fragColor.z = color.z / 255.0; 
+			fragColor.w = inColor.w / 255.0;
+		}
+		else {
+			fragColor.x = inColor.x / 255.0;
+			fragColor.y = inColor.y / 255.0;
+			fragColor.z = inColor.z / 255.0;
+			fragColor.w = inColor.w / 255.0;
+		}
 	}
 	else {
 		fragColor.x = inColor.x / 255.0;

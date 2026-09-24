@@ -14689,7 +14689,7 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 	edNODE* pNode;
 	float fVar3;
 	CCameraManager* pCVar4;
-	//edAnmSkeleton eVar5;
+	char* eVar5;
 	bool bVar6;
 	SceneConfig* pSVar7;
 	uint uVar8;
@@ -14699,7 +14699,6 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 	edF32MATRIX4* pMatrix;
 	int* piVar11;
 	uint uVar12;
-	ANHR_Internal* pAVar13;
 	float fVar14;
 	float fVar15;
 	edF32VECTOR4 local_30;
@@ -14710,7 +14709,7 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 
 	pCVar4 = CCameraManager::_gThis;
 	if (this->pThis != (MeshData_ANHR*)0x0) {
-		if (param_2 == 0.0) {
+		if (param_2 == 0.0f) {
 			pSVar7 = ed3DSceneGetConfig(CScene::_scene_handleA);
 			param_2 = pSVar7->clipValue_0x4;
 		}
@@ -14779,50 +14778,56 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 						}
 					}
 
-					// #HACK !!!
-					uVar8 = 0;
-
 					if (uVar8 == 0) {
 						for (; m0 < peVar9; m0 = m0 + 1) {
 							edF32Matrix4SetIdentityHard(m0);
 						}
 					}
 					else {
-						IMPLEMENTATION_GUARD(
 						bVar10 = 1;
 						fVar15 = peVar3->field_0x28 + param_1 * peVar3->field_0x2c;
 						peVar3->field_0x28 = fVar15;
-						uVar8 = peVar3->field_0x20 & 1;
-						if (peVar3->pHierAnimStream != (S_HIERANM_ANIM*)0x0) {
-							bVar6 = UpdateMatrix(fVar15, this, (edF32MATRIX4*)peVar3->pHierNodeData, peVar3->pHierAnimStream, uVar8);
+						uVar8 = peVar3->flags & 1;
+						if (peVar3->pHierAnimStream != 0x0) {
+							bVar6 = UpdateMatrix(fVar15, &LOAD_POINTER_CAST(ed_3d_hierarchy_node*, peVar3->pHierNodeData)->base.transformA, LOAD_POINTER_CAST(S_HIERANM_ANIM*, peVar3->pHierAnimStream), uVar8);
 							bVar10 = bVar6 & 1;
 						}
-						eVar5 = skeleton;
+
+						eVar5 = (char*)skeleton.pTag;
 						edF32Matrix4SetIdentityHard(m0);
-						piVar11 = (int*)((int)eVar5 + 8);
-						pAVar13 = peVar3 + 1;
+						piVar11 = (int*)((char*)eVar5 + 8);
+
+						struct AfterANHR
+						{
+							undefined4 field_0x0;
+							int field_0x4; // S_HIERANM_ANIM*
+						};
+
+						AfterANHR* pAVar13 = (AfterANHR*)(peVar3 + 1);
 						pMatrix = m0;
 						while (pMatrix = pMatrix + 1, pMatrix < peVar9) {
-							bVar6 = UpdateMatrix(fVar15, this, pMatrix, (S_HIERANM_ANIM*)pAVar13->pHierNodeData, uVar8);
+							bVar6 = UpdateMatrix(fVar15, pMatrix, LOAD_POINTER_CAST(S_HIERANM_ANIM*, pAVar13->field_0x4), uVar8);
 							bVar10 = bVar10 & bVar6;
 							if (0 < *piVar11) {
 								edF32Matrix4MulF32Matrix4Hard(pMatrix, pMatrix, m0 + *piVar11);
 							}
-							pAVar13 = (ANHR_Internal*)&pAVar13->pHierAnimStream;
+
+							pAVar13 = pAVar13 + 1;
 							piVar11 = piVar11 + 1;
 						}
+
 						skeleton.ApplyInvSkin(m0);
+
 						if (bVar10 != 0) {
-							if ((peVar3->field_0x20 & 2) != 0) {
-								peVar3->field_0x20 = peVar3->field_0x20 | 0x40000000;
+							if ((peVar3->flags & 2) != 0) {
+								peVar3->flags = peVar3->flags | 0x40000000;
 								ed3DHierarchyNodeSetFlag(pNode, ED_3D_HIDDEN_FLAG);
 							}
-							if (((peVar3->field_0x20 & 0x11) == 0) &&
-								(((peVar3->field_0x20 & 8) == 0 ||
-									(*(float*)&peVar3->field_0x24 * *(float*)&peVar3->field_0x24 < fVar14)))) {
-								peVar3->field_0x28 = 0.0;
+
+							if (((peVar3->flags & 0x11) == 0) && (((peVar3->flags & 8) == 0 || (peVar3->field_0x24 * peVar3->field_0x24 < fVar14)))) {
+								peVar3->field_0x28 = 0.0f;
 							}
-						})
+						}
 					}
 				}
 				else {
