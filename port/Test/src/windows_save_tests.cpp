@@ -748,4 +748,20 @@ TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByMalformedTrailingChild)
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
 	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
+
+TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByOneTrailingByte)
+{
+	// A structurally valid, loadable BSHD child is the root's only chunk-shaped
+	// child, but the root's declared data extends one byte past the end of
+	// that child - too few bytes to form another CChunk header, so a padding
+	// interpretation would previously accept this. That leftover byte is
+	// really a truncated/malformed trailing chunk and must still cause
+	// rejection with no staging mutation.
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + std::string(1, '\0');
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
 #endif

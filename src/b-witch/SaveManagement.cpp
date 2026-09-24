@@ -1356,11 +1356,16 @@ namespace
 			cursor = childDataOffset + childDataSize;
 		}
 
-		// Every direct child was structurally valid (or there were none), so
-		// acceptance now depends solely on whether a loadable BSHD was seen.
-		// Any leftover bytes too small to form another CChunk header are
-		// trailing padding within the root's own declared extent, not a
-		// malformed child, and do not affect this result.
+		// Every direct child was structurally valid (or there were none). The
+		// root's declared data must be consumed exactly by walking its direct
+		// children: any leftover bytes (too small to form another CChunk
+		// header, or otherwise) are a malformed/truncated trailing chunk, not
+		// padding, and must reject the whole payload even if a loadable BSHD
+		// was already seen among the earlier children.
+		if (cursor != rootDataEnd) {
+			return false;
+		}
+
 		return foundLoadableBSHD;
 	}
 }
