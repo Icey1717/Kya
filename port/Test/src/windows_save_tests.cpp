@@ -731,4 +731,21 @@ TEST_F(SaveManagementStage, RejectsLevelIdAtOrAboveLoadableRange)
 		ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 	}
 }
+
+TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByMalformedTrailingChild)
+{
+	// A structurally valid, loadable BSHD child is followed by a second direct
+	// child whose declared extent overruns the remaining root data. Even
+	// though the loader would already have a usable levelId from the first
+	// child, the malformed trailing child must still cause rejection.
+	std::string trailingChild = SaveChunk(0x11223344u, std::string(4, '\0'));
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(trailingChild.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + trailingChild;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
 #endif

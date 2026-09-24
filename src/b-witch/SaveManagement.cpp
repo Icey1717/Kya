@@ -1280,6 +1280,12 @@ namespace
 	// of being trusted, and every offset arithmetic step is ordered so a
 	// bound is confirmed before it is used to advance a pointer (no signed
 	// overflow or unsigned underflow is possible).
+	//
+	// Every direct child extent underneath the root is validated, all the way
+	// to the end of the root's declared data: a malformed or truncated child
+	// that happens to follow a perfectly valid BSHD must still reject the
+	// whole payload, since the same buffer traversal logic is what the
+	// immediate loader relies on later.
 	bool ValidateRootSaveChunkPayload(const void* pMainBlock, size_t mainBlockSize)
 	{
 		if (mainBlockSize < sizeof(CChunk)) {
@@ -1310,9 +1316,12 @@ namespace
 
 		const size_t rootDataEnd = rootDataOffset + rootDataSize;
 
-		// Walk direct children of the root chunk looking for BSHD. Every child
-		// header must fully fit before rootDataEnd, and every child's declared
-		// extent must fit within the remaining root data before advancing.
+		// Walk every direct child of the root chunk. Every child header must
+		// fully fit before rootDataEnd, and every child's declared extent must
+		// fit within the remaining root data before advancing; any violation
+		// rejects the whole payload, even after a loadable BSHD was already
+		// seen, so malformed/truncated trailing children are never ignored.
+		bool foundLoadableBSHD = false;
 		size_t cursor = rootDataOffset;
 		while ((rootDataEnd - cursor) >= sizeof(CChunk)) {
 			CChunk child;
@@ -1331,22 +1340,28 @@ namespace
 				return false;
 			}
 
-			if (child.hash == SAVEGAME_CHUNK_BSHD) {
+			if (!foundLoadableBSHD && child.hash == SAVEGAME_CHUNK_BSHD) {
 				// The immediate loader only reads levelId (the first field) out
 				// of SaveDataChunk_BSHD, so require just enough bytes for that.
-				if (childDataSize < sizeof(int)) {
-					return false;
+				// A BSHD that is too small to hold levelId simply doesn't
+				// qualify; traversal continues so later siblings are still
+				// bounds-checked.
+				if (childDataSize >= sizeof(int)) {
+					int levelId;
+					memcpy(&levelId, pBase + childDataOffset, sizeof(int));
+					foundLoadableBSHD = (levelId >= 0) && (levelId < 0xe);
 				}
-
-				int levelId;
-				memcpy(&levelId, pBase + childDataOffset, sizeof(int));
-				return (levelId >= 0) && (levelId < 0xe);
 			}
 
 			cursor = childDataOffset + childDataSize;
 		}
 
-		return false;
+		// Every direct child was structurally valid (or there were none), so
+		// acceptance now depends solely on whether a loadable BSHD was seen.
+		// Any leftover bytes too small to form another CChunk header are
+		// trailing padding within the root's own declared extent, not a
+		// malformed child, and do not affect this result.
+		return foundLoadableBSHD;
 	}
 }
 
