@@ -38,6 +38,18 @@ namespace
 		return bytes + payload;
 	}
 
+	// Full control over every header word, used to exercise CChunk::size
+	// independently of CChunk::offset. CLevelScheduler::IsACompatibleChunkRecurse
+	// walks a container chunk's children using `size` (see LevelScheduler.cpp),
+	// a completely separate field from the `offset` that CChunk::FindNextSubChunk
+	// and the other SaveChunk helpers above always derive from payload.size().
+	std::string SaveChunkWithMarkerAndSize(uint32_t marker, uint32_t hash, uint32_t sizeField, const std::string& payload)
+	{
+		std::string bytes;
+		for (auto word : {marker, hash, sizeField, static_cast<uint32_t>(payload.size())}) AppendSaveWord(bytes, word);
+		return bytes + payload;
+	}
+
 	std::string CheckpointSave(bool truncatedActor = false)
 	{
 		std::string header, levelHeader, classes;
@@ -838,5 +850,58 @@ TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByOneTrailingByte)
 	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
 	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
 	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsContainerChildWithOversizedSizeField)
+{
+	// CLevelScheduler::IsACompatibleChunkRecurse walks a container chunk's
+	// children by stepping CChunk::size (not CChunk::offset) directly onto
+	// each child's own header address. Here the grandchild's `offset` is
+	// perfectly well-formed (ValidateChunkTree's offset-based walk accepts
+	// the whole tree), but its `size` field is a huge, corrupt value; a
+	// validator that only checks `offset` would miss this and let the real
+	// loader's size-driven traversal read far past the staged buffer. Must
+	// be rejected with no mutation.
+	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x7fffffffu, std::string(4, '\0'));
+	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsRootContainerWithOversizedChildSizeField)
+{
+	// Same corrupt-size attack as above, but the container itself is the
+	// BSAV root (which real production code always marks as a container -
+	// see CLevelScheduler::Levels_SaveDataToSavedGame) rather than a nested
+	// wrapper, so both root-level and nested container traversal safety
+	// are exercised.
+	const std::string corruptChild = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD, 0x7fffffffu, BSHDChunkData(3));
+	const auto bytes = BuildBackupSaveBytes(SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BSAV, 0x10000u, corruptChild));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, AcceptsContainerChildWithInBoundsSizeField)
+{
+	// Negative control for the two rejection tests above: the container's
+	// own `size` field is generously large (matching the real magnitude of
+	// CLevelScheduler::_gGameChunks entries, e.g. SAVEGAME_CHUNK_BLEV's
+	// 0x10000) and the single child's `size` field, while not equal to its
+	// `offset`, still lands well within the staged buffer once stepped. This
+	// must still be accepted and staged - the fix must not reject sizes
+	// merely because they differ from offset or exceed the child's own data,
+	// only because the size-driven traversal would escape the buffer.
+	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x10u, std::string(4, '\0'));
+	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
+	const std::string payload = SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper);
+	const auto bytes = BuildBackupSaveBytes(payload);
+	EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	EXPECT_EQ(gSaveManagement.saveSize_0x44, payload.size());
 }
 #endif

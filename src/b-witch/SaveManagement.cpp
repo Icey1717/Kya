@@ -1289,6 +1289,128 @@ namespace
 	// one.
 	constexpr uint kChunkContainerMarker = 0x16660666u;
 
+	// Defense-in-depth width cap mirroring kMaxChunkTreeDepth. The main block
+	// staged by CSaveManagement::stage_backup_save is capped at 0x10000
+	// bytes, and every simulated step below advances by at least
+	// sizeof(CChunk), so this already gives generous headroom above any
+	// buffer this validator will ever see while keeping a maliciously
+	// degenerate chain of zero-size chunks from making validation itself do
+	// unbounded work.
+	constexpr int kMaxChunkSizeTraversalSteps = 0x10000 / sizeof(CChunk);
+
+	// CLevelScheduler::IsACompatibleChunkRecurse does NOT walk a container
+	// chunk's children with CChunk::offset like CChunk::FindNextSubChunk
+	// does; it instead bounds the whole scan by pChunk->size (relative to
+	// pChunk's own header address) and steps from one child to the next by
+	// adding that CHILD's own size field directly to its header address:
+	//
+	//   bound  = (char*)pChunk + pChunk->size + sizeof(CChunk);
+	//   pChild = pChunk + 1;                     // first candidate header
+	//   while (pChild < bound) {
+	//       IsACompatibleChunkRecurse(pChild);     // reads/recurses here
+	//       pChild = (char*)pChild + pChild->size; // -> next candidate
+	//       pChild = pChild + 1;                   // (i.e. + sizeof(CChunk))
+	//   }
+	//
+	// ValidateChunkTree above only proves CChunk::offset is sound, which
+	// bounds CChunk::FindNextSubChunk/DeleteSubChunk correctly, but says
+	// nothing about CChunk::size - an entirely independent, fully
+	// attacker-controlled field. In real saves it holds a compile-time
+	// per-hash schema/version tag (CLevelScheduler::_gGameChunks, e.g.
+	// SAVEGAME_CHUNK_BLEV's 0x10000), deliberately far larger than any
+	// actual data extent, so the loop's own `bound` is never the true
+	// terminator for well-formed data - a child's oversized `size` field
+	// stepping the cursor past `bound` on the very next iteration is what
+	// naturally ends a real, well-formed traversal. A corrupt/oversized
+	// `size` can therefore drive this independent traversal to dereference
+	// a would-be CChunk header at any attacker-chosen offset, regardless of
+	// what CChunk::offset validated, unless every address it could ever
+	// dereference is itself proven to lie within the validated buffer first.
+	//
+	// This walk is simulated here with the exact same arithmetic (widened to
+	// avoid any pointer/size_t overflow, including on 32-bit builds), but
+	// every address the real code would actually dereference is checked
+	// against dataEnd before being treated as readable, and the whole
+	// payload is rejected if it is not. Recursion depth is capped identically
+	// to ValidateChunkTree (kMaxChunkTreeDepth) and the number of simulated
+	// steps at any one level is separately capped
+	// (kMaxChunkSizeTraversalSteps), so this can never do more than a small
+	// bounded amount of work even for maximally adversarial input.
+	bool ValidateChunkSizeTraversal(const char* pBase, size_t dataEnd, size_t chunkOffset, int depth)
+	{
+		if (depth > kMaxChunkTreeDepth) {
+			return false;
+		}
+
+		// The caller already proved [chunkOffset, chunkOffset + sizeof(CChunk))
+		// lies within dataEnd before recursing/calling here.
+		CChunk chunk;
+		memcpy(&chunk, pBase + chunkOffset, sizeof(CChunk));
+
+		if (chunk.field_0x0 != kChunkContainerMarker) {
+			// Leaf chunks are never walked by IsACompatibleChunkRecurse's
+			// size-stepping loop at all - it returns immediately without
+			// reading `size` again.
+			return true;
+		}
+
+		// bound = chunkOffset + chunk.size + sizeof(CChunk), computed exactly
+		// as CLevelScheduler::IsACompatibleChunkRecurse does, but widened to
+		// unsigned long long first so an oversized chunk.size can never wrap
+		// a 32-bit size_t, then clamped to dataEnd: the true safety boundary
+		// is the validated buffer, never whatever oversized bound a corrupt
+		// `size` field claims.
+		const unsigned long long rawBound =
+			static_cast<unsigned long long>(chunkOffset) + chunk.size + sizeof(CChunk);
+		const size_t bound = (rawBound > dataEnd) ? dataEnd : static_cast<size_t>(rawBound);
+
+		size_t cursor = chunkOffset;
+		for (int steps = 0; ; ++steps) {
+			if (steps > kMaxChunkSizeTraversalSteps) {
+				return false;
+			}
+
+			// cursor <= dataEnd is an invariant of this loop (established
+			// below), so this addition cannot wrap.
+			const size_t childOffset = cursor + sizeof(CChunk);
+			if (childOffset >= bound) {
+				break;
+			}
+
+			// The real loop dereferences this candidate (via
+			// IsACompatibleChunkRecurse) as soon as the bound check above
+			// passes, so it must be provably safe to read a whole CChunk
+			// header there first.
+			if (childOffset + sizeof(CChunk) > dataEnd) {
+				return false;
+			}
+
+			if (!ValidateChunkSizeTraversal(pBase, dataEnd, childOffset, depth + 1)) {
+				return false;
+			}
+
+			CChunk childChunk;
+			memcpy(&childChunk, pBase + childOffset, sizeof(CChunk));
+
+			// pCurChunk = (char*)pChild + pChild->size, widened the same way
+			// as `bound` above to avoid any wraparound.
+			const unsigned long long rawNext = static_cast<unsigned long long>(childOffset) + childChunk.size;
+			if (rawNext > dataEnd) {
+				// The real traversal would only ever dereference again after
+				// adding sizeof(CChunk) on the next iteration; since this
+				// step already escapes the validated buffer, no further step
+				// can be proven safe, so reject rather than silently
+				// trusting whatever lies beyond dataEnd.
+				return false;
+			}
+
+			cursor = static_cast<size_t>(rawNext);
+		}
+
+		return true;
+	}
+
+
 	// Structurally validates every chunk nested within [dataOffset, dataEnd)
 	// against pBase/mainBlockSize, mirroring CChunk::FindNextSubChunk's
 	// traversal: each child header must fully fit, each child's declared data
@@ -1306,6 +1428,16 @@ namespace
 	// maliciously deep chain of nested chunks is rejected instead of
 	// recursing without bound.
 	//
+	// Every container-marked node encountered here is also independently
+	// checked with ValidateChunkSizeTraversal against bufferEnd (the whole
+	// validated main block, not just this node's own offset-derived data
+	// window): CLevelScheduler::IsACompatibleChunkRecurse can be invoked by
+	// real callers on any such node (e.g. a BLEV chunk located via
+	// FindNextSubChunk), and it walks that node's children using
+	// CChunk::size, not CChunk::offset - a completely independent,
+	// attacker-controlled traversal that this offset-based walk alone does
+	// not validate.
+	//
 	// However, only a BSHD found at depth 0 (a direct child of the BSAV
 	// root) can satisfy *pFoundLoadableBSHD: SaveGame_LoadFromBuffer's very
 	// first SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) call only searches BSAV's
@@ -1313,7 +1445,7 @@ namespace
 	// structurally valid BSHD nested only deeper in the tree would never
 	// actually be reached by the real loader and must not be accepted as
 	// making the payload loadable.
-	bool ValidateChunkTree(const char* pBase, size_t dataOffset, size_t dataEnd, int depth, bool* pFoundLoadableBSHD)
+	bool ValidateChunkTree(const char* pBase, size_t dataOffset, size_t dataEnd, size_t bufferEnd, int depth, bool* pFoundLoadableBSHD)
 	{
 		if (depth > kMaxChunkTreeDepth) {
 			return false;
@@ -1370,7 +1502,11 @@ namespace
 			// underneath any container, at any depth, still rejects the
 			// whole payload.
 			if (child.field_0x0 == kChunkContainerMarker) {
-				if (!ValidateChunkTree(pBase, childDataOffset, childDataEnd, depth + 1, pFoundLoadableBSHD)) {
+				if (!ValidateChunkTree(pBase, childDataOffset, childDataEnd, bufferEnd, depth + 1, pFoundLoadableBSHD)) {
+					return false;
+				}
+
+				if (!ValidateChunkSizeTraversal(pBase, bufferEnd, cursor, 0)) {
 					return false;
 				}
 			}
@@ -1424,8 +1560,17 @@ namespace
 
 		const size_t rootDataEnd = rootDataOffset + rootDataSize;
 
+		// The root BSAV chunk itself is also container-marked (see
+		// CLevelScheduler::Levels_SaveDataToSavedGame); validate its own
+		// size-driven traversal safety too, not just its descendants',
+		// since nothing else does so before ValidateChunkTree recurses into
+		// its children below.
+		if (!ValidateChunkSizeTraversal(pBase, mainBlockSize, 0, 0)) {
+			return false;
+		}
+
 		bool foundLoadableBSHD = false;
-		if (!ValidateChunkTree(pBase, rootDataOffset, rootDataEnd, 0, &foundLoadableBSHD)) {
+		if (!ValidateChunkTree(pBase, rootDataOffset, rootDataEnd, mainBlockSize, 0, &foundLoadableBSHD)) {
 			return false;
 		}
 
