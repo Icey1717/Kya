@@ -5,8 +5,13 @@
 #include "../../DebugMenu/src/DebugSaveLoadPaths.h"
 #include "../../DebugMenu/src/DebugSaveCheckpoint.h"
 #include "edFile/edFilePath.h"
+#include "SaveManagement.h"
+#include "LevelScheduler.h"
+#include "edFile/edFileCRC32.h"
 #include <iterator>
 #include <algorithm>
+#include <cstring>
+#include <vector>
 
 namespace
 {
@@ -19,6 +24,29 @@ namespace
 	{
 		std::string bytes;
 		for (auto word : {0x06667666u, hash, 0u, static_cast<uint32_t>(payload.size())}) AppendSaveWord(bytes, word);
+		return bytes + payload;
+	}
+
+	// Same layout as SaveChunk, but marks field_0x0 with the real container
+	// marker (0x16660666, see CLevelScheduler::SaveGame_BeginChunk /
+	// IsACompatibleChunkRecurse) so the chunk's payload is itself walked as a
+	// nested sub-chunk tree, matching real BLEV-style container chunks.
+	std::string SaveContainerChunk(uint32_t hash, const std::string& payload)
+	{
+		std::string bytes;
+		for (auto word : {0x16660666u, hash, 0u, static_cast<uint32_t>(payload.size())}) AppendSaveWord(bytes, word);
+		return bytes + payload;
+	}
+
+	// Full control over every header word, used to exercise CChunk::size
+	// independently of CChunk::offset. CLevelScheduler::IsACompatibleChunkRecurse
+	// walks a container chunk's children using `size` (see LevelScheduler.cpp),
+	// a completely separate field from the `offset` that CChunk::FindNextSubChunk
+	// and the other SaveChunk helpers above always derive from payload.size().
+	std::string SaveChunkWithMarkerAndSize(uint32_t marker, uint32_t hash, uint32_t sizeField, const std::string& payload)
+	{
+		std::string bytes;
+		for (auto word : {marker, hash, sizeField, static_cast<uint32_t>(payload.size())}) AppendSaveWord(bytes, word);
 		return bytes + payload;
 	}
 
@@ -300,5 +328,580 @@ TEST_F(WindowsSave, FailedBackupCopyPreservesOriginal)
 	CloseHandle(lock);
 	EXPECT_EQ(Read(), "original save");
 	EXPECT_EQ(std::distance(std::filesystem::directory_iterator(directory), std::filesystem::directory_iterator()), 1);
+}
+
+namespace
+{
+	// Builds a minimal-but-structurally-valid root save-chunk payload: a BSAV
+	// root chunk containing a single direct BSHD child chunk whose first field
+	// is levelId, matching what CLevelScheduler::SaveGame_LoadFromBuffer reads
+	// immediately on load.
+	std::string BSHDChunkData(int levelId)
+	{
+		std::string bytes;
+		AppendSaveWord(bytes, static_cast<uint32_t>(levelId));
+		AppendSaveWord(bytes, 0xffffffffu); // sectorId
+		AppendSaveWord(bytes, 0u);          // gameTime
+		AppendSaveWord(bytes, 0xffffffffu); // ambianceId
+		AppendSaveWord(bytes, 0xffffffffu); // musicId
+		return bytes;
+	}
+
+	std::string ValidRootChunkPayload(int levelId = 3)
+	{
+		return SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(levelId)));
+	}
+
+	std::string BuildBackupSaveBytes(const std::string& mainBlock)
+	{
+		// Value-initialize every field so hashing/serializing the fixture
+		// never reads uninitialized memory (SaveDataDesc's constructor only
+		// sets levelId).
+		SaveDataDesc desc{};
+		desc.gameTime = 0.0f;
+		desc.nbFreedWolfen = 0;
+		desc.bGameCompleted = 0;
+		desc.nbMagic = 0;
+		desc.nbMoney = 0;
+		SaveDataHeader header{};
+		header.hash = 0x4544454e;
+		header.headerSize = sizeof(SaveDataHeader);
+		header.initialBlockSize = sizeof(SaveDataDesc);
+		header.mainBlockSize = static_cast<int>(mainBlock.size());
+		header.initialBlockCrc = edFileComputeCRC32(&desc, sizeof(desc));
+		header.mainBlockCrc = edFileComputeCRC32(
+			const_cast<char*>(mainBlock.data()), static_cast<uint>(mainBlock.size()));
+		header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
+
+		std::string bytes;
+		bytes.append(reinterpret_cast<const char*>(&header), sizeof(header));
+		bytes.append(reinterpret_cast<const char*>(&desc), sizeof(desc));
+		bytes.append(mainBlock);
+		return bytes;
+	}
+
+	constexpr size_t kBackupPrefixSize = sizeof(SaveDataHeader) + sizeof(SaveDataDesc);
+}
+
+class SaveManagementStage : public testing::Test
+{
+protected:
+	std::vector<char> stagingBuffer;
+	void* previousAlloc = nullptr;
+	int previousMaxBufferSize = 0;
+	uint previousSaveSize = 0;
+	int previousSlotID = 0;
+	uint previousFileExistsFlags = 0;
+	SaveDataHeader previousHeader{};
+	SaveDataDesc previousDescs[4];
+
+	void SetUp() override
+	{
+		previousAlloc = gSaveManagement.pBigAlloc_0x34;
+		previousMaxBufferSize = gSaveManagement.gameSaveMaxBufferSize;
+		previousSaveSize = gSaveManagement.saveSize_0x44;
+		previousSlotID = gSaveManagement.slotID_0x28;
+		previousFileExistsFlags = gSaveManagement.fileExistsFlags;
+		previousHeader = gSaveManagement.saveDataHeader;
+		std::memcpy(previousDescs, gSaveManagement.aSaveDataDescriptions, sizeof(previousDescs));
+
+		// Sentinel-fill the staging buffer and saveSize so tests can prove
+		// rejected input leaves both completely untouched.
+		stagingBuffer.assign(0x10000, static_cast<char>(0xCC));
+		gSaveManagement.pBigAlloc_0x34 = reinterpret_cast<SaveBigAlloc*>(stagingBuffer.data());
+		gSaveManagement.gameSaveMaxBufferSize = 0x10000;
+		gSaveManagement.saveSize_0x44 = 0xdeadbeefu;
+		gSaveManagement.slotID_0x28 = 7;
+		gSaveManagement.fileExistsFlags = 0xa5a5a5a5u;
+		gSaveManagement.saveDataHeader = SaveDataHeader{};
+		gSaveManagement.saveDataHeader.hash = 0x11223344u;
+		for (auto& desc : gSaveManagement.aSaveDataDescriptions) desc.levelId = 0x99;
+	}
+
+	void TearDown() override
+	{
+		gSaveManagement.pBigAlloc_0x34 = reinterpret_cast<SaveBigAlloc*>(previousAlloc);
+		gSaveManagement.gameSaveMaxBufferSize = previousMaxBufferSize;
+		gSaveManagement.saveSize_0x44 = previousSaveSize;
+		gSaveManagement.slotID_0x28 = previousSlotID;
+		gSaveManagement.fileExistsFlags = previousFileExistsFlags;
+		gSaveManagement.saveDataHeader = previousHeader;
+		std::memcpy(gSaveManagement.aSaveDataDescriptions, previousDescs, sizeof(previousDescs));
+	}
+
+	void ExpectUntouched(int expectedSlotID, uint expectedSaveSize, uint expectedFileExistsFlags,
+		const SaveDataHeader& expectedHeader)
+	{
+		EXPECT_EQ(gSaveManagement.slotID_0x28, expectedSlotID);
+		EXPECT_EQ(gSaveManagement.saveSize_0x44, expectedSaveSize);
+		EXPECT_EQ(gSaveManagement.fileExistsFlags, expectedFileExistsFlags);
+		EXPECT_EQ(std::memcmp(&gSaveManagement.saveDataHeader, &expectedHeader, sizeof(SaveDataHeader)), 0);
+		for (auto& desc : gSaveManagement.aSaveDataDescriptions) EXPECT_EQ(desc.levelId, 0x99u);
+		EXPECT_TRUE(std::all_of(stagingBuffer.begin(), stagingBuffer.end(),
+			[](char c) { return c == static_cast<char>(0xCC); }));
+	}
+};
+
+TEST_F(SaveManagementStage, StagesValidPayloadAndUpdatesOnlySaveSize)
+{
+	const std::string payload = ValidRootChunkPayload();
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const int slotBefore = gSaveManagement.slotID_0x28;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+
+	EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+
+	EXPECT_EQ(gSaveManagement.saveSize_0x44, payload.size());
+	EXPECT_EQ(std::memcmp(stagingBuffer.data(), payload.data(), payload.size()), 0);
+	// Bytes past the staged payload must remain untouched.
+	EXPECT_TRUE(std::all_of(stagingBuffer.begin() + payload.size(), stagingBuffer.end(),
+		[](char c) { return c == static_cast<char>(0xCC); }));
+	EXPECT_EQ(gSaveManagement.slotID_0x28, slotBefore);
+	EXPECT_EQ(std::memcmp(&gSaveManagement.saveDataHeader, &headerBefore, sizeof(SaveDataHeader)), 0);
+	for (auto& desc : gSaveManagement.aSaveDataDescriptions) EXPECT_EQ(desc.levelId, 0x99u);
+}
+
+TEST_F(SaveManagementStage, RejectsNullData)
+{
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(nullptr, 64));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMissingDestinationAllocation)
+{
+	gSaveManagement.pBigAlloc_0x34 = nullptr;
+	const auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsBufferShorterThanOuterHeader)
+{
+	const auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), sizeof(SaveDataHeader) - 1));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsWrongHeaderHash)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	uint32_t badHash = 0;
+	std::memcpy(bytes.data(), &badHash, sizeof(badHash));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsWrongHeaderSize)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	SaveDataHeader header;
+	std::memcpy(&header, bytes.data(), sizeof(header));
+	header.headerSize = sizeof(SaveDataHeader) - 1;
+	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
+	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsCorruptHeaderCrc)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	// Flip a header-covered byte without recomputing headerCrc.
+	bytes[static_cast<size_t>(offsetof(SaveDataHeader, initialBlockSize))] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNegativeInitialBlockSize)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	SaveDataHeader header;
+	std::memcpy(&header, bytes.data(), sizeof(header));
+	header.initialBlockSize = -1;
+	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
+	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNegativeMainBlockSize)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	SaveDataHeader header;
+	std::memcpy(&header, bytes.data(), sizeof(header));
+	header.mainBlockSize = -1;
+	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
+	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsZeroMainBlockSize)
+{
+	auto bytes = BuildBackupSaveBytes("");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsWrongInitialBlockSize)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	SaveDataHeader header;
+	std::memcpy(&header, bytes.data(), sizeof(header));
+	header.initialBlockSize = sizeof(SaveDataDesc) - 1;
+	header.headerCrc = edFileComputeCRC32(&header.headerSize, 0x14);
+	std::memcpy(bytes.data(), &header, sizeof(header));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsCorruptDescriptorCrc)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	bytes[sizeof(SaveDataHeader)] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsCorruptMainBlockCrc)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	bytes[kBackupPrefixSize] ^= 0xFF;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMainBlockLargerThanSuppliedBytes)
+{
+	auto bytes = BuildBackupSaveBytes("payload");
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size() - 1));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMainBlockLargerThanFixedAllocation)
+{
+	const std::string payload(0x10001, 'x');
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMainBlockLargerThanGameSaveMaxBufferSize)
+{
+	const std::string payload(64, 'x');
+	const auto bytes = BuildBackupSaveBytes(payload);
+	gSaveManagement.gameSaveMaxBufferSize = static_cast<int>(payload.size()) - 1;
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, AcceptsBoundaryLoadableLevelIds)
+{
+	for (int levelId : {0, 0xd}) {
+		const auto bytes = BuildBackupSaveBytes(ValidRootChunkPayload(levelId));
+		EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size())) << levelId;
+	}
+}
+
+TEST_F(SaveManagementStage, RejectsMainBlockShorterThanChunkHeader)
+{
+	// Truncated root data: not even a full CChunk header is present.
+	const auto bytes = BuildBackupSaveBytes(std::string(sizeof(CChunk) - 1, '\0'));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsWrongRootChunkHash)
+{
+	// Malformed root: hash is not BSAV.
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(0x12345678u, BSHDChunkData(3)));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsTruncatedRootExtent)
+{
+	// Truncated root data: the root chunk's own offset claims more bytes than
+	// are actually present in the staged main block.
+	const std::string full = ValidRootChunkPayload();
+	const std::string truncated = full.substr(0, full.size() - 1);
+	const auto bytes = BuildBackupSaveBytes(truncated);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsRootOffsetExceedingBuffer)
+{
+	// Malformed root extent: patch the root chunk's offset field to a huge,
+	// out-of-bounds value without changing the actual buffer length.
+	std::string payload = ValidRootChunkPayload();
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(payload.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNegativeRootOffset)
+{
+	// Malformed root extent: a negative offset must never be reinterpreted as
+	// a huge unsigned extent.
+	std::string payload = ValidRootChunkPayload();
+	uint32_t negativeOffset = 0xffffffffu;
+	std::memcpy(payload.data() + offsetof(CChunk, offset), &negativeOffset, sizeof(negativeOffset));
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsChildOffsetExceedingRootExtent)
+{
+	// Malformed child extent: the BSHD child's own offset claims more bytes
+	// than remain inside the root chunk's declared extent.
+	std::string payload = ValidRootChunkPayload();
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(payload.data() + sizeof(CChunk) + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNegativeChildOffset)
+{
+	// Malformed child extent: a negative child offset must never be
+	// reinterpreted as a huge unsigned extent.
+	std::string payload = ValidRootChunkPayload();
+	uint32_t negativeOffset = 0xffffffffu;
+	std::memcpy(payload.data() + sizeof(CChunk) + offsetof(CChunk, offset), &negativeOffset, sizeof(negativeOffset));
+	const auto bytes = BuildBackupSaveBytes(payload);
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMissingBSHDChild)
+{
+	// No BSHD child chunk is present at all beneath the BSAV root.
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(0x11223344u, std::string(4, '\0'))));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsShortBSHDChild)
+{
+	// BSHD child is present but has fewer than sizeof(int) bytes, so levelId
+	// cannot be safely read out of it.
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, std::string(3, '\0'))));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsFourByteBSHDChild)
+{
+	// BSHD child has exactly sizeof(int) (4) bytes: enough for the old,
+	// under-strict check to read levelId, but fewer than
+	// sizeof(SaveDataChunk_BSHD) (0x14), so the immediate loader could read
+	// past the chunk's declared extent for sectorId/gameTime/ambianceId/
+	// musicId. Must still be rejected as a malformed BSHD.
+	std::string shortBSHD;
+	AppendSaveWord(shortBSHD, 3u); // levelId, otherwise a "loadable" value
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, shortBSHD)));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNegativeLevelId)
+{
+	const auto bytes = BuildBackupSaveBytes(ValidRootChunkPayload(-1));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsLevelIdAtOrAboveLoadableRange)
+{
+	for (int levelId : {0xe, 0x10, 0x7fffffff}) {
+		const auto bytes = BuildBackupSaveBytes(ValidRootChunkPayload(levelId));
+		const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+		const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+		EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size())) << levelId;
+		ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+	}
+}
+
+TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByMalformedTrailingChild)
+{
+	// A structurally valid, loadable BSHD child is followed by a second direct
+	// child whose declared extent overruns the remaining root data. Even
+	// though the loader would already have a usable levelId from the first
+	// child, the malformed trailing child must still cause rejection.
+	std::string trailingChild = SaveChunk(0x11223344u, std::string(4, '\0'));
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(trailingChild.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + trailingChild;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsMalformedGrandchildChunkNestedInsideValidWrapper)
+{
+	// The malformed chunk here is not a direct child of BSAV; it is nested
+	// two levels deep inside a wrapper chunk whose own declared extent is
+	// perfectly well-formed. A validator that only checked BSAV's direct
+	// children would accept this payload and only fail later, inside
+	// CLevelScheduler::SaveGame_OpenChunk / IsACompatibleChunkRecurse, when it
+	// descends into the wrapper and reads the malformed grandchild's
+	// out-of-bounds extent. The nested tree must be rejected up front instead.
+	std::string grandchild = SaveChunk(0x33445566u, std::string(4, '\0'));
+	uint32_t hugeOffset = 0x7fffffffu;
+	std::memcpy(grandchild.data() + offsetof(CChunk, offset), &hugeOffset, sizeof(hugeOffset));
+	const std::string wrapper = SaveContainerChunk(0x11223344u, grandchild);
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsNestedOnlyValidBSHD)
+{
+	// A structurally valid, loadable BSHD child exists in the tree, but only
+	// as a grandchild nested inside a container wrapper - not as a direct
+	// child of the BSAV root. CLevelScheduler::SaveGame_LoadFromBuffer's
+	// first SaveGame_OpenChunk(SAVEGAME_CHUNK_BSHD) call resolves via
+	// CChunk::FindNextSubChunk over BSAV's direct children only, so the real
+	// loader would never actually find this nested BSHD. The recursive
+	// validator must still walk into the wrapper to bounds-check it (so a
+	// malformed descendant there is still caught), but must not treat the
+	// nested BSHD as satisfying the root's loadability requirement.
+	const std::string wrapper = SaveContainerChunk(0x11223344u, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)));
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, wrapper));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByOneTrailingByte)
+{
+	// A structurally valid, loadable BSHD child is the root's only chunk-shaped
+	// child, but the root's declared data extends one byte past the end of
+	// that child - too few bytes to form another CChunk header, so a padding
+	// interpretation would previously accept this. That leftover byte is
+	// really a truncated/malformed trailing chunk and must still cause
+	// rejection with no staging mutation.
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + std::string(1, '\0');
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsContainerChildWithOversizedSizeField)
+{
+	// CLevelScheduler::IsACompatibleChunkRecurse walks a container chunk's
+	// children by stepping CChunk::size (not CChunk::offset) directly onto
+	// each child's own header address. Here the grandchild's `offset` is
+	// perfectly well-formed (ValidateChunkTree's offset-based walk accepts
+	// the whole tree), but its `size` field is a huge, corrupt value; a
+	// validator that only checks `offset` would miss this and let the real
+	// loader's size-driven traversal read far past the staged buffer. Must
+	// be rejected with no mutation.
+	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x7fffffffu, std::string(4, '\0'));
+	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
+	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper;
+	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, RejectsRootContainerWithOversizedChildSizeField)
+{
+	// Same corrupt-size attack as above, but the container itself is the
+	// BSAV root (which real production code always marks as a container -
+	// see CLevelScheduler::Levels_SaveDataToSavedGame) rather than a nested
+	// wrapper, so both root-level and nested container traversal safety
+	// are exercised.
+	const std::string corruptChild = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD, 0x7fffffffu, BSHDChunkData(3));
+	const auto bytes = BuildBackupSaveBytes(SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BSAV, 0x10000u, corruptChild));
+	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
+	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
+	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
+}
+
+TEST_F(SaveManagementStage, AcceptsContainerChildWithInBoundsSizeField)
+{
+	// Negative control for the two rejection tests above: the container's
+	// own `size` field is generously large (matching the real magnitude of
+	// CLevelScheduler::_gGameChunks entries, e.g. SAVEGAME_CHUNK_BLEV's
+	// 0x10000) and the single child's `size` field, while not equal to its
+	// `offset`, still lands well within the staged buffer once stepped. This
+	// must still be accepted and staged - the fix must not reject sizes
+	// merely because they differ from offset or exceed the child's own data,
+	// only because the size-driven traversal would escape the buffer.
+	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x10u, std::string(4, '\0'));
+	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
+	const std::string payload = SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper);
+	const auto bytes = BuildBackupSaveBytes(payload);
+	EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	EXPECT_EQ(gSaveManagement.saveSize_0x44, payload.size());
 }
 #endif
