@@ -800,9 +800,25 @@ void CScene::Level_Term(void)
 
 	CLevelScheduler::gThis->Level_PreTerm();
 
+#ifdef PLATFORM_WIN
+	// PS2 tears down FX before actors. Actor behaviours still hold FX pool handles
+	// on Windows, so release actors while those pools are alive.
+	if (CScene::ptable.g_ActorManager_004516a4 != (CActorManager*)0x0) {
+		CScene::ptable.g_ActorManager_004516a4->Level_Term();
+	}
+#endif
+
 	curIndex = 0;
 	CObjectManager** ppManager = CScene::ptable.IterateBackwards();
 	do {
+#ifdef PLATFORM_WIN
+		// The actor manager was terminated before the reverse-order manager walk.
+		if (*ppManager == (CObjectManager*)CScene::ptable.g_ActorManager_004516a4) {
+			curIndex = curIndex + 1;
+			ppManager = ppManager - 1;
+			continue;
+		}
+#endif
 		if (*ppManager != (CObjectManager*)0x0) {
 			(*ppManager)->Level_Term();
 		}

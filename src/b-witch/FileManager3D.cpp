@@ -183,6 +183,7 @@ edDList_material* C3DFileManager::GetMaterialFromId(int materialId, int internal
 
 	pPVar3 = this->pParticleInfoArray_0x50;
 #ifdef PLATFORM_WIN
+	// Ghidra reads the entry before checking the 0x80-element bound.
 	for (curIndex = 0; (curIndex < 0x80) && (pPVar3->ID != materialId); curIndex = curIndex + 1) {
 #else
 	for (curIndex = 0; (pPVar3->ID != materialId && (curIndex < 0x80)); curIndex = curIndex + 1) {
@@ -191,6 +192,7 @@ edDList_material* C3DFileManager::GetMaterialFromId(int materialId, int internal
 	}
 
 #ifdef PLATFORM_WIN
+	// A missing ID leaves pPVar3 one past the allocation.
 	if ((curIndex == 0x80) || (pPVar3->materialInfoArray_0x8 == (edDList_material*)0x0)) {
 #else
 	if (pPVar3->materialInfoArray_0x8 == (edDList_material*)0x0) {

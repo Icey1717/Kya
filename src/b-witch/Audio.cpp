@@ -2199,6 +2199,48 @@ void CAudioManager::AddSoundStreams(ByteCode* pByteCode)
 	}
 
 	this->field_0x7c = 0;
+#ifdef PLATFORM_WIN
+	// The PS2 grouping loop can read before __s when the last group has no successor.
+	// Group equal stream names explicitly so every node index stays in bounds.
+	if (this->field_0x78 != 0) {
+		__s = new char[this->field_0x78];
+		memset(__s, 0, this->field_0x78);
+
+		for (uint streamIndex = 0; streamIndex < this->field_0x78; streamIndex++) {
+			for (uint previousIndex = 0; previousIndex < streamIndex; previousIndex++) {
+				if (edStrCmp(this->aSoundStreams[streamIndex].aSoundEntries[0].fileName,
+					this->aSoundStreams[previousIndex].aSoundEntries[0].fileName) == 0) {
+					__s[streamIndex] = __s[previousIndex];
+					break;
+				}
+			}
+			if (__s[streamIndex] == 0) {
+				this->field_0x7c++;
+				__s[streamIndex] = static_cast<char>(this->field_0x7c);
+			}
+		}
+
+		this->aSoundStreamNodes = new CDoubleLinkedNode<SoundSampleEntry>[this->field_0x7c];
+		for (uint streamIndex = 0; streamIndex < this->field_0x78; streamIndex++) {
+			pCVar12 = this->aSoundStreamNodes + (static_cast<byte>(__s[streamIndex]) - 1);
+			bool firstInGroup = true;
+			for (uint previousIndex = 0; previousIndex < streamIndex; previousIndex++) {
+				if (__s[previousIndex] == __s[streamIndex]) {
+					firstInGroup = false;
+					break;
+				}
+			}
+			if (firstInGroup) {
+				gFreeSoundSamples.InsertAfterQueue(pCVar12);
+				pCVar12->node.loadFunc = &SoundSampleEntry::LoadStreamCh;
+				edStrCopy(pCVar12->node.fileName, this->aSoundStreams[streamIndex].aSoundEntries[0].fileName);
+			}
+			this->aSoundStreams[streamIndex].aSoundEntries[0].pNode = pCVar12;
+		}
+		delete[] __s;
+	}
+	return;
+#else
 	if (this->field_0x78 != 0) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 		__s = new char[this->field_0x78];
@@ -2274,6 +2316,7 @@ void CAudioManager::AddSoundStreams(ByteCode* pByteCode)
 
 		delete[] __s;
 	}
+#endif
 
 	return;
 }

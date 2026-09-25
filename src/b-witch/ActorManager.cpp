@@ -11,6 +11,7 @@
 #ifdef PLATFORM_WIN
 #include "profiling.h"
 #include "DrawTrace.h"
+#include "ActorHero.h"
 #endif
 #include "LevelScheduler.h"
 
@@ -88,6 +89,12 @@ void CActorManager::Level_Term()
 		classId = classId + 1;
 		pCVar4 = pCVar4 + 1;
 	} while ((int)classId < 0x57);
+
+#ifdef PLATFORM_WIN
+	// The next level's loading camera and debug UI can still read this pointer.
+	// Clear it after the hero actor array has been destroyed.
+	CActorHero::_gThis = (CActorHero*)0x0;
+#endif
 
 	this->cluster.Term();
 	
