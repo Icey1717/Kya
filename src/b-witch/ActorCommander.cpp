@@ -151,7 +151,6 @@ void CActorCommander::Term()
 	pCVar1 = this->aTeamElt;
 	if (pCVar1 != (CTeamElt*)0x0) {
 		if (pCVar1 != (CTeamElt*)0x0) {
-			IMPLEMENTATION_GUARD_LOG(); // VECTOR?
 			delete pCVar1;
 		}
 

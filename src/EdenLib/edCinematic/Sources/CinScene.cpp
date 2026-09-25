@@ -1566,8 +1566,169 @@ void edSceneLight::Initialize()
 
 bool edSceneLight::Timeslice(float currentPlayTime)
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	edSceneLightTag* pLightTag = this->pTag;
+	edCinLightInterface* pLightInterface = LOAD_POINTER_CAST(edCinLightInterface*, pLightTag->pLightInterface);
+	int trackCount = *(int*)&pLightTag->field_0x10;
+	edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)((char*)pLightTag + *(int*)&pLightTag->field_0x4);
+
+	if (pLightInterface->OnFrameDirected()) {
+		while (0 < trackCount) {
+			trackCount = trackCount - 1;
+			edAnimatedProperty animatedProperty = edAnimatedProperty(pAnimProp);
+			edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+			ushort keyCount;
+			float* keyTimes = pSubControllerTag->keyTimes;
+			int currentKey;
+			int nextKey;
+			float ratio;
+			bool hasValue;
+
+			if (pAnimProp->type == 0x666) {
+				keyCount = pSubControllerTag->keyCount;
+				float fallout;
+				if (currentPlayTime < keyTimes[0]) {
+					hasValue = false;
+				}
+				else {
+					edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+					controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+					ratio = keyTimes[nextKey] - keyTimes[currentKey];
+					if (ratio != 0.0f) {
+						ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+					}
+					fallout = ratio * keyTimes[keyCount + nextKey] +
+						(1.0f - ratio) * keyTimes[keyCount + currentKey];
+					hasValue = true;
+				}
+				if (hasValue) {
+					pLightInterface->SetFallout(fallout);
+				}
+			}
+			else if (pAnimProp->type == 0x69d6dba6) {
+				keyCount = pSubControllerTag->keyCount;
+				edF32VECTOR3 ambient;
+				if (currentPlayTime < keyTimes[0]) {
+					hasValue = false;
+				}
+				else {
+					edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+					controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+					ratio = keyTimes[nextKey] - keyTimes[currentKey];
+					if (ratio != 0.0f) {
+						ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+					}
+					edF32Vector3LERPSoft(ratio, &ambient,
+						(edF32VECTOR3*)(keyTimes + keyCount + currentKey * 3),
+						(edF32VECTOR3*)(keyTimes + keyCount + nextKey * 3));
+					hasValue = true;
+				}
+				if (hasValue) {
+					pLightInterface->SetAmbient(ambient.x, ambient.y, ambient.z);
+				}
+			}
+			else if (pAnimProp->type == 0x64c8d3b1) {
+				edF32VECTOR4 heading;
+				if (pAnimProp->propType == 2) {
+					hasValue = animatedProperty.GetQuaternionValue(currentPlayTime, &heading);
+					if (hasValue) {
+						pLightInterface->SetHeading(heading.x, heading.y, heading.z, heading.w);
+					}
+				}
+				else if (pAnimProp->propType == 1 || pAnimProp->propType == 0) {
+					keyCount = pSubControllerTag->keyCount;
+					if (currentPlayTime < keyTimes[0]) {
+						hasValue = false;
+					}
+					else {
+						edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+						controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+						ratio = keyTimes[nextKey] - keyTimes[currentKey];
+						if (ratio != 0.0f) {
+							ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+						}
+						edF32Vector3LERPSoft(ratio, &heading.xyz,
+							(edF32VECTOR3*)(keyTimes + keyCount + currentKey * 3),
+							(edF32VECTOR3*)(keyTimes + keyCount + nextKey * 3));
+						hasValue = true;
+					}
+					if (hasValue) {
+						pLightInterface->SetHeading(heading.x, heading.y, heading.z,
+							pAnimProp->propType == 1 ? 1.0f : 0.0f);
+					}
+				}
+			}
+			else if (pAnimProp->type == 0xd7e2d8c4) {
+				keyCount = pSubControllerTag->keyCount;
+				edF32VECTOR3 position;
+				if (currentPlayTime < keyTimes[0]) {
+					hasValue = false;
+				}
+				else {
+					edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+					controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+					ratio = keyTimes[nextKey] - keyTimes[currentKey];
+					if (ratio != 0.0f) {
+						ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+					}
+					edF32Vector3LERPSoft(ratio, &position,
+						(edF32VECTOR3*)(keyTimes + keyCount + currentKey * 3),
+						(edF32VECTOR3*)(keyTimes + keyCount + nextKey * 3));
+					hasValue = true;
+				}
+				if (hasValue) {
+					pLightInterface->SetPos(position.x, position.y, position.z);
+				}
+			}
+			else if (pAnimProp->type == 0x66cbdcb9 || pAnimProp->type == 0x766f46) {
+				if (pAnimProp->type == 0x66cbdcb9) {
+					keyCount = pSubControllerTag->keyCount;
+					edF32VECTOR3 diffuse;
+					if (currentPlayTime < keyTimes[0]) {
+						hasValue = false;
+					}
+					else {
+						edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+						controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+						ratio = keyTimes[nextKey] - keyTimes[currentKey];
+						if (ratio != 0.0f) {
+							ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+						}
+						edF32Vector3LERPSoft(ratio, &diffuse,
+							(edF32VECTOR3*)(keyTimes + keyCount + currentKey * 3),
+							(edF32VECTOR3*)(keyTimes + keyCount + nextKey * 3));
+						hasValue = true;
+					}
+					if (hasValue) {
+						pLightInterface->SetDiffuse(diffuse.x, diffuse.y, diffuse.z);
+					}
+				}
+
+				float fov;
+				keyCount = pSubControllerTag->keyCount;
+				if (currentPlayTime < keyTimes[0]) {
+					hasValue = false;
+				}
+				else {
+					edAnmSubControler controller = edAnmSubControler(pSubControllerTag);
+					controller.GetKeyIndicesAndRatioSafe(currentPlayTime, &currentKey, &nextKey, 0);
+					ratio = keyTimes[nextKey] - keyTimes[currentKey];
+					if (ratio != 0.0f) {
+						ratio = (currentPlayTime - keyTimes[currentKey]) / ratio;
+					}
+					fov = ratio * keyTimes[keyCount + nextKey] +
+						(1.0f - ratio) * keyTimes[keyCount + currentKey];
+					hasValue = true;
+				}
+				if (hasValue) {
+					pLightInterface->SetFov(fov);
+				}
+			}
+
+			pAnimProp = (edAnimatedPropertyTag*)((char*)pAnimProp + pAnimProp->size);
+		}
+		pLightInterface->OnFrameDirected();
+	}
+	return true;
 }
 
 void edSceneLight::Shutdown()
