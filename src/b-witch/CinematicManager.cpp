@@ -6187,6 +6187,11 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 		bVar1 = StaticEdFileBase_004497f0.IsAvailable();
 		pAudioManager = CScene::ptable.g_AudioManager_00451698;
 		pLevelScheduler = CLevelScheduler::gThis;
+#ifdef PLATFORM_WIN
+		if (audioTrackId < 0 || audioTrackId >= pAudioManager->field_0x30 || pAudioManager->pGlobalSoundFileData == nullptr) {
+			return;
+		}
+#endif
 		if (bVar1 != false) {
 			pcVar3 = CScene::ptable.g_AudioManager_00451698->GetStreamFileNameFromIndex_00184a40(audioTrackId);
 			pcVar3 = edStrFileNameBase(pcVar3);
@@ -6202,6 +6207,7 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 			pGVar4 = pAudioManager->GetSoundFileDataFromIndex_00184a10(audioTrackId);
 			this->pGlobalSoundFileData = pGVar4;
 
+#ifndef PLATFORM_WIN
 			edFileCopyPath_002617d0(local_610, "");
 			ret = edStrNICmp(local_610, "<cdvd>", 6);
 			if (ret == 0) {
@@ -6223,33 +6229,40 @@ void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 					uVar6 = local_640.lsn;
 				}
 			}
+#endif
 
 			pAudioManager->EnsureSoundMemoryAvailable(0x19800, 0xcc00);
 			pGVar4 = this->pGlobalSoundFileData;
 			if (pGVar4 != (GlobalSound_FileData*)0x0) {
-			#ifdef PLATFORM_WIN
+#ifdef PLATFORM_WIN
 				// The Windows stream backend reads the physical path directly. Keep the
 				// recovered LSN route for PS2, where the IOP owns CD/DVD reads.
 				ret = edSoundStreamLoadA(this->pSoundStream, pGVar4, formattedFilePath, 0);
-			#else
+#else
 				if (fileSize == 0) {
 					ret = edSoundStreamLoadA(this->pSoundStream, pGVar4, formattedFilePath, 0);
 				}
 				else {
 					ret = edSoundStreamLoadB(this->pSoundStream, pGVar4, uVar6, 0, fileSize);
 				}
-				#endif
+#endif
 
-				edSoundFlush();
-				this->soundInstanceId = edSoundStreamCreate_00284500(pAudioManager->field_0xcc, this->pSoundStream);
-				edSoundFlush();
+#ifdef PLATFORM_WIN
+			if (ret == 0) {
+				edSoundStreamFree(this->pSoundStream);
+				return;
+			}
+#endif
+			edSoundFlush();
+			this->soundInstanceId = edSoundStreamCreate_00284500(pAudioManager->field_0xcc, this->pSoundStream);
+			edSoundFlush();
 
-				if (this->soundInstanceId == 0) {
-					edSoundStreamFree(this->pSoundStream);
-				}
-				else {
-					StaticEdFileBase_004497f0.Add();
-				}
+			if (this->soundInstanceId == 0) {
+				edSoundStreamFree(this->pSoundStream);
+			}
+			else {
+				StaticEdFileBase_004497f0.Add();
+			}
 			}
 		}
 	}

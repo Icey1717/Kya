@@ -158,6 +158,9 @@ void edSoundStreamFree(_ed_sound_stream* pSoundStream);
 void edSoundFlush();
 
 void edSoundTerminateAllInstances(void);
+#ifdef PLATFORM_WIN
+void edSoundTerminateAllInstancesExcept(uint preservedSoundId);
+#endif
 
 uint edSoundInstanceStop(uint instanceId);
 void edSoundInstanceFade(float volume, float frequency, float targetVolume, float targetFrequency, float duration, uint soundId);
@@ -226,7 +229,7 @@ void edSoundInstanceSetPause(uint soundInstanceId, int bPaused);
 void edSoundInstanceSet3DData(uint soundInstanceId, edsound_3d_data* pData, uint* existingSoundIDPtr, uint param_4);
 void edSoundInstanceSetFrequency(float frequency, uint soundInstanceId);
 void edSoundInstanceSetUserData(uint soundInstanceId, void* pUserData);
-void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample);
+uint edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample);
 
 void* edSound_0x002840e0(uint soundInstanceId);
 

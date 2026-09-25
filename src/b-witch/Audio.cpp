@@ -19,6 +19,7 @@
 #include "CameraViewManager.h"
 #include "LevelScheduler.h"
 #ifdef PLATFORM_WIN
+#include "CinematicManager.h"
 #include "log.h"
 #endif
 
@@ -1241,7 +1242,15 @@ void CAudioManager::Level_ClearAll()
 	CMusicManager* pCVar7;
 
 	if (NoAudio == 0) {
+	#ifdef PLATFORM_WIN
+		CCinematic* pLoadingCinematic = g_CinematicManager_0048efc != nullptr
+			? g_CinematicManager_0048efc->pCinematic : nullptr;
+		const uint preservedSoundId = pLoadingCinematic != nullptr && pLoadingCinematic->state != CS_Stopped
+			? pLoadingCinematic->cinematicLoadObject.BWCinSourceAudio_Obj.soundInstanceId : 0;
+		edSoundTerminateAllInstancesExcept(preservedSoundId);
+	#else
 		edSoundTerminateAllInstances();
+	#endif
 		edSoundFlush();
 	}
 
@@ -3452,7 +3461,13 @@ uint CSound::Play(uint soundInstanceId, uint otherId, edsound_3d_data* p3dData, 
 			soundInstanceId = uVar2;
 		}
 
-		edSoundSamplePlayAlt(this->priority, p_Var1);
+#ifdef PLATFORM_WIN
+		// Cinematic sound cues refer to loaded samples. The PS2 alternate entry
+		// uses the PS2 stream layout, which is incompatible with host samples.
+		soundInstanceId = edSoundSamplePlay(this->priority, p_Var1);
+#else
+		soundInstanceId = edSoundSamplePlayAlt(this->priority, p_Var1);
+#endif
 
 		if (p3dData != (edsound_3d_data*)0x0) {
 			fVar4 = this->field_0x78;

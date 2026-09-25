@@ -5513,7 +5513,7 @@ void CBehaviourNativAkasa::FUN_003ef170()
 
 void CBehaviourNativAkasa::FUN_003f2900()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	
 }
 
 CLevelScheduler* GetLevelScheduler(void)

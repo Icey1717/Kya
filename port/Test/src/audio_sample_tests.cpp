@@ -475,6 +475,21 @@ TEST_F(EdenAudioSamples, ActorSoundStartUsesSampleOverrideAndReplacesPlayback)
 	EXPECT_TRUE(static_cast<CSound*>(&sound)->IsLooping(1));
 }
 
+TEST_F(EdenAudioSamples, CinematicSoundCueStartsLoadedSample)
+{
+	CSound sound;
+	sound.InitializeFromSample(0.5f, 0, 1.0f, 0, 5.0f, 1.0f, &sample, 1);
+	const uint id = sound.Play(0, 0xffffffff, nullptr, nullptr, nullptr, nullptr);
+	ASSERT_NE(id, 0u);
+	EXPECT_TRUE(edSoundInstanceIsAlive(id));
+	edSoundFlush();
+	ASSERT_EQ(voices.size(), 1u);
+	EXPECT_TRUE(voices[0]->playing);
+	EXPECT_GT(voices[0]->controls.left, 0.0f);
+	EXPECT_EQ(sound.Stop(id), 0u);
+	EXPECT_TRUE(voices[0]->destroyed);
+}
+
 TEST_F(EdenAudioSamples, StereoAtListenerIsFiniteAndBalanced)
 {
 	edSoundGlobalParams.outputMode = STEREO;
@@ -542,6 +557,30 @@ TEST_F(EdenAudioSamples, SamplesAndStreamsUseSeparateVoices)
 	edSoundInstanceStop(streamId);
 	ASSERT_TRUE(Audio::GetStreamInfo(3, streamInfo));
 	EXPECT_FALSE(streamInfo.playing);
+	Audio::UnregisterStream(3);
+}
+
+TEST_F(EdenAudioSamples, LevelTeardownPreservesTransitionStream)
+{
+	Audio::RegisterStream(3, 100, 1000);
+	_ed_sound_stream stream{};
+	stream.streamBufferId[0] = 3;
+	stream.field_0x14 = 1;
+	stream.pMem = &stream;
+	const uint streamId = edSoundStreamCreate_00284500(1, &stream);
+	edSoundStream_00283650(streamId);
+	const uint sampleId = edSoundSamplePlay(1, &sample);
+	edSoundFlush();
+
+	edSoundTerminateAllInstancesExcept(streamId);
+	edSoundFlush();
+	Audio::StreamInfo streamInfo;
+	ASSERT_TRUE(Audio::GetStreamInfo(3, streamInfo));
+	EXPECT_TRUE(streamInfo.playing);
+	EXPECT_TRUE(edSoundInstanceIsAlive(streamId));
+	EXPECT_FALSE(edSoundInstanceIsAlive(sampleId));
+
+	edSoundInstanceStop(streamId);
 	Audio::UnregisterStream(3);
 }
 

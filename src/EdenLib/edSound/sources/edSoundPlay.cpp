@@ -363,7 +363,7 @@ void edSoundFlush()
 	_edSoundEndFlush(nbFlush);
 }
 
-void edSoundTerminateAllInstances(void)
+static void TerminateAllSoundInstances(uint preservedSoundId)
 {
 	bool bRemainingInstances;
 	uint soundInstanceId;
@@ -376,7 +376,7 @@ void edSoundTerminateAllInstances(void)
 	while (bRemainingInstances) {
 		soundInstanceId = peVar3->fullSoundInstanceId;
 		peVar3 = peVar3->lowerPrioritySoundInstance;
-		if (soundInstanceId != 0) {
+		if ((soundInstanceId != 0) && (soundInstanceId != preservedSoundId)) {
 			soundInstanceIndex = soundInstanceId & 0xffff;
 			pInstance = &pedSoundInstances[soundInstanceIndex];
 			if (pInstance->fullSoundInstanceId == soundInstanceId) {
@@ -405,6 +405,18 @@ void edSoundTerminateAllInstances(void)
 
 	return;
 }
+
+void edSoundTerminateAllInstances(void)
+{
+	TerminateAllSoundInstances(0);
+}
+
+#ifdef PLATFORM_WIN
+void edSoundTerminateAllInstancesExcept(uint preservedSoundId)
+{
+	TerminateAllSoundInstances(preservedSoundId);
+}
+#endif
 
 uint edSoundInstanceStop(uint instanceId)
 {
@@ -1063,8 +1075,10 @@ void edSoundInstanceSetUserData(uint soundInstanceId, void* pUserData)
 	return;
 }
 
-void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample)
+uint edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample)
 {
+	// The PS2 caller keeps v0 as its instance ID even though Ghidra inferred
+	// a void return for this entry point.
 	bool bVar1;
 	ed_sound_instance* pInstance;
 	uint newSoundId;
@@ -1118,7 +1132,7 @@ void edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample)
 		}
 	}
 
-	return;
+	return newSoundId;
 }
 
 void* edSound_0x002840e0(uint soundInstanceId)

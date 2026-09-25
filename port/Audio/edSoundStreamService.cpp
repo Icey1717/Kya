@@ -387,10 +387,10 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 		file.clear();
 	}
 	if (!file) {
-		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not open stream file '%s'", path);
+		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not open stream file '{}'", path);
 		return false;
 	}
-	Log::GetInstance().AddLog(LogLevel::Info, "Audio", "Loaded stream '%s' as '%s'", path, resolvedPath.c_str());
+	Log::GetInstance().AddLog(LogLevel::Info, "Audio", "Loaded stream '{}' as '{}'", path, resolvedPath);
 
 	const std::streamoff fileSize = file.tellg();
 	if (fileSize <= 0 || static_cast<std::uintmax_t>(fileSize) > static_cast<std::uintmax_t>(SIZE_MAX))
@@ -409,7 +409,7 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 		? DecodeVag(data.data(), data.size(), samples, sampleRate)
 		: DecodeMib(data.data(), data.size(), stream.info.channels, stream.info.blockSize, sampleRate, samples);
 	if (!decoded) {
-		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not decode stream '%s'", path);
+		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not decode stream '{}'", path);
 		return false;
 	}
 
