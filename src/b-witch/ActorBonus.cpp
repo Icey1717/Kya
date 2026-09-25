@@ -897,7 +897,7 @@ void CBehaviourBonusFlock::Init(CActor* pOwner)
 	if ((this->pOwner->pShadow != (CShadow*)0x0) && ((this->pathFollowRef).Get() != (CPathFollow*)0x0)) {
 		this->nbSharedShadows = this->nbInstances + -1;
 		uVar2 = this->nbSharedShadows;
-		this->aShadowShared = new CShadowShared[uVar2];
+		this->aShadowShared = NEW_ARRAY_POLYMORPHIC(CShadowShared, uVar2);
 	}
 
 	if (this->nbInstances == 1) {
@@ -983,7 +983,7 @@ void CBehaviourBonusFlock::Term()
 	}
 
 	if (this->aShadowShared != (CShadowShared*)0x0) {
-		delete[] this->aShadowShared;
+		DELETE_ARRAY_POLYMORPHIC(CShadowShared, this->aShadowShared, this->nbSharedShadows);
 	}
 
 	return;

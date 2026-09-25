@@ -182,11 +182,19 @@ edDList_material* C3DFileManager::GetMaterialFromId(int materialId, int internal
 	ParticleInfo* pPVar3;
 
 	pPVar3 = this->pParticleInfoArray_0x50;
+#ifdef PLATFORM_WIN
+	for (curIndex = 0; (curIndex < 0x80) && (pPVar3->ID != materialId); curIndex = curIndex + 1) {
+#else
 	for (curIndex = 0; (pPVar3->ID != materialId && (curIndex < 0x80)); curIndex = curIndex + 1) {
+#endif
 		pPVar3 = pPVar3 + 1;
 	}
 
+#ifdef PLATFORM_WIN
+	if ((curIndex == 0x80) || (pPVar3->materialInfoArray_0x8 == (edDList_material*)0x0)) {
+#else
 	if (pPVar3->materialInfoArray_0x8 == (edDList_material*)0x0) {
+#endif
 		pPVar3 = (ParticleInfo*)0x0;
 	}
 

@@ -89,373 +89,373 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, voi
 	if (classId < 0x57) {
 		switch (classId) {
 		case ACTOR:
-			if (pAlloc != (void*)0x0) { CActor* pType = reinterpret_cast<CActor*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActor* pType = reinterpret_cast<CActor*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActor, pType, count); return 0x0; }
 			*outSize = sizeof(CActor);
-			return new CActor[count];
+			return NEW_ARRAY_POLYMORPHIC(CActor, count);
 		case BOOMY:
-			if (pAlloc != (void*)0x0) { CActorBoomy* pType = reinterpret_cast<CActorBoomy*>(pAlloc); delete[] pType; return 0x0;
+			if (pAlloc != (void*)0x0) { CActorBoomy* pType = reinterpret_cast<CActorBoomy*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBoomy, pType, count); return 0x0;
 			}
 			*outSize = sizeof(CActorBoomy);
-			return new CActorBoomy[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBoomy, count);
 			break;
 		case ACTOR_HERO_PRIVATE:
-			if (pAlloc != (void*)0x0) { CActorHeroPrivate* pType = reinterpret_cast<CActorHeroPrivate*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorHeroPrivate* pType = reinterpret_cast<CActorHeroPrivate*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorHeroPrivate, pType, count); return 0x0; }
 			*outSize = sizeof(CActorHeroPrivate);
-			return new CActorHeroPrivate[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorHeroPrivate, count);
 			break;
 		case MICKEN:
-			if (pAlloc != (void*)0x0) { CActorMicken* pType = reinterpret_cast<CActorMicken*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMicken* pType = reinterpret_cast<CActorMicken*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMicken, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMicken);
-			return new CActorMicken[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMicken, count);
 			break;
 		case WOLFEN:
-			if (pAlloc != (void*)0x0) { CActorWolfen* pType = reinterpret_cast<CActorWolfen*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWolfen* pType = reinterpret_cast<CActorWolfen*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWolfen, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWolfen);
-			return new CActorWolfen[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWolfen, count);
 			break;
 		case NATIV:
-			if (pAlloc != (void*)0x0) { CActorNativ* pType = reinterpret_cast<CActorNativ*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorNativ* pType = reinterpret_cast<CActorNativ*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorNativ, pType, count); return 0x0; }
 			*outSize = sizeof(CActorNativ);
-			return new CActorNativ[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorNativ, count);
 			break;
 		case ELECTROLLA:
-			if (pAlloc != (void*)0x0) { CActorElectrolla* pType = reinterpret_cast<CActorElectrolla*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorElectrolla* pType = reinterpret_cast<CActorElectrolla*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorElectrolla, pType, count); return 0x0; }
 			*outSize = sizeof(CActorElectrolla);
-			return new CActorElectrolla[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorElectrolla, count);
 			break;
 		case MOVING_PLATFORM:
-			if (pAlloc != (void*)0x0) { CActorMovingPlatform* pType = reinterpret_cast<CActorMovingPlatform*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMovingPlatform* pType = reinterpret_cast<CActorMovingPlatform*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMovingPlatform, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMovingPlatform);
-			return new CActorMovingPlatform[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMovingPlatform, count);
 			break;
 		case BONUS:
-			if (pAlloc != (void*)0x0) { CActorBonus* pType = reinterpret_cast<CActorBonus*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBonus* pType = reinterpret_cast<CActorBonus*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBonus, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBonus);
-			return new CActorBonus[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBonus, count);
 			break;
 		case ROPE:
-			if (pAlloc != (void*)0x0) { CActorRope* pType = reinterpret_cast<CActorRope*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorRope* pType = reinterpret_cast<CActorRope*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorRope, pType, count); return 0x0; }
 			*outSize = sizeof(CActorRope);
-			return new CActorRope[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorRope, count);
 			break;
 		case GRAVITY_AWARE:
-			if (pAlloc != (void*)0x0) { CActorGravityAware* pType = reinterpret_cast<CActorGravityAware*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorGravityAware* pType = reinterpret_cast<CActorGravityAware*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorGravityAware, pType, count); return 0x0; }
 			*outSize = sizeof(CActorGravityAware);
-			return new CActorGravityAware[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorGravityAware, count);
 			break;
 		case SWITCH:
-			if (pAlloc != (void*)0x0) { CActorSwitch* pType = reinterpret_cast<CActorSwitch*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorSwitch* pType = reinterpret_cast<CActorSwitch*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorSwitch, pType, count); return 0x0; }
 			*outSize = sizeof(CActorSwitch);
-			return new CActorSwitch[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorSwitch, count);
 			break;
 		case WIND:
-			if (pAlloc != (void*)0x0) { CActorWind* pType = reinterpret_cast<CActorWind*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWind* pType = reinterpret_cast<CActorWind*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWind, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWind);
-			return new CActorWind[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWind, count);
 			break;
 		case COMMANDER:
-			if (pAlloc != (void*)0x0) { CActorCommander* pType = reinterpret_cast<CActorCommander*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorCommander* pType = reinterpret_cast<CActorCommander*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorCommander, pType, count); return 0x0; }
 			*outSize = sizeof(CActorCommander);
-			return new CActorCommander[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorCommander, count);
 			break;
 		case AMBER:
-			if (pAlloc != (void*)0x0) { CActorAmbre* pType = reinterpret_cast<CActorAmbre*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAmbre* pType = reinterpret_cast<CActorAmbre*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAmbre, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAmbre);
-			return new CActorAmbre[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAmbre, count);
 			break;
 		case FRUIT:
-			if (pAlloc != (void*)0x0) { CActorFruit* pType = reinterpret_cast<CActorFruit*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorFruit* pType = reinterpret_cast<CActorFruit*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorFruit, pType, count); return 0x0; }
 			*outSize = sizeof(CActorFruit);
-			return new CActorFruit[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorFruit, count);
 			break;
 		case BRIDGE:
-			if (pAlloc != (void*)0x0) { CActorBridge* pType = reinterpret_cast<CActorBridge*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBridge* pType = reinterpret_cast<CActorBridge*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBridge, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBridge);
-			return new CActorBridge[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBridge, count);
 			break;
 		case CLUSTERISER:
-			if (pAlloc != (void*)0x0) { CActorClusteriser* pType = reinterpret_cast<CActorClusteriser*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorClusteriser* pType = reinterpret_cast<CActorClusteriser*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorClusteriser, pType, count); return 0x0; }
 			*outSize = sizeof(CActorClusteriser);
-			return new CActorClusteriser[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorClusteriser, count);
 			break;
 		case COMPANION:
-			if (pAlloc != (void*)0x0) { CActorCompanion* pType = reinterpret_cast<CActorCompanion*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorCompanion* pType = reinterpret_cast<CActorCompanion*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorCompanion, pType, count); return 0x0; }
 			*outSize = sizeof(CActorCompanion);
-			return new CActorCompanion[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorCompanion, count);
 			break;
 		case DCA:
-			if (pAlloc != (void*)0x0) { CActorDCA* pType = reinterpret_cast<CActorDCA*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorDCA* pType = reinterpret_cast<CActorDCA*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorDCA, pType, count); return 0x0; }
 			*outSize = sizeof(CActorDCA);
-			return new CActorDCA[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorDCA, count);
 			break;
 		case PROJECTILE:
-			if (pAlloc != (void*)0x0) { CActorProjectile* pType = reinterpret_cast<CActorProjectile*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorProjectile* pType = reinterpret_cast<CActorProjectile*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorProjectile, pType, count); return 0x0; }
 			*outSize = sizeof(CActorProjectile);
-			return new CActorProjectile[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorProjectile, count);
 			break;
 		case EXPLOSIVE_DISTRIBUTOR:
-			if (pAlloc != (void*)0x0) { CActorExplosiveDistributor* pType = reinterpret_cast<CActorExplosiveDistributor*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorExplosiveDistributor* pType = reinterpret_cast<CActorExplosiveDistributor*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorExplosiveDistributor, pType, count); return 0x0; }
 			*outSize = sizeof(CActorExplosiveDistributor);
-			return new CActorExplosiveDistributor[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorExplosiveDistributor, count);
 			break;
 		case CHECKPOINT_MANAGER:
-			if (pAlloc != (void*)0x0) { CActorCheckpointManager* pType = reinterpret_cast<CActorCheckpointManager*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorCheckpointManager* pType = reinterpret_cast<CActorCheckpointManager*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorCheckpointManager, pType, count); return 0x0; }
 			*outSize = sizeof(CActorCheckpointManager);
-			return new CActorCheckpointManager[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorCheckpointManager, count);
 			break;
 		case WEAPON:
-			if (pAlloc != (void*)0x0) { CActorWeapon* pType = reinterpret_cast<CActorWeapon*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWeapon* pType = reinterpret_cast<CActorWeapon*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWeapon, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWeapon);
-			return new CActorWeapon[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWeapon, count);
 			break;
 		case ARAIGNOS:
-			if (pAlloc != (void*)0x0) { CActorAraignos* pType = reinterpret_cast<CActorAraignos*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAraignos* pType = reinterpret_cast<CActorAraignos*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAraignos, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAraignos);
-			return new CActorAraignos[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAraignos, count);
 			break;
 		case HEDGEHOG:
-			if (pAlloc != (void*)0x0) { CActorHedgehog* pType = reinterpret_cast<CActorHedgehog*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorHedgehog* pType = reinterpret_cast<CActorHedgehog*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorHedgehog, pType, count); return 0x0; }
 			*outSize = sizeof(CActorHedgehog);
-			return new CActorHedgehog[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorHedgehog, count);
 			break;
 		case TELEPORTER:
-			if (pAlloc != (void*)0x0) { CActorTeleporter* pType = reinterpret_cast<CActorTeleporter*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorTeleporter* pType = reinterpret_cast<CActorTeleporter*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorTeleporter, pType, count); return 0x0; }
 			*outSize = sizeof(CActorTeleporter);
-			return new CActorTeleporter[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorTeleporter, count);
 			break;
 		case NOSE_MONSTER:
-			if (pAlloc != (void*)0x0) { CActorNoseMonster* pType = reinterpret_cast<CActorNoseMonster*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorNoseMonster* pType = reinterpret_cast<CActorNoseMonster*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorNoseMonster, pType, count); return 0x0; }
 			*outSize = sizeof(CActorNoseMonster);
-			return new CActorNoseMonster[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorNoseMonster, count);
 			break;
 		case WOOD_MONSTER:
-			if (pAlloc != (void*)0x0) { CActorWoodMonster* pType = reinterpret_cast<CActorWoodMonster*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWoodMonster* pType = reinterpret_cast<CActorWoodMonster*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWoodMonster, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWoodMonster);
-			return new CActorWoodMonster[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWoodMonster, count);
 			break;
 		case AMORTOS:
-			if (pAlloc != (void*)0x0) { CActorAmortos* pType = reinterpret_cast<CActorAmortos*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAmortos* pType = reinterpret_cast<CActorAmortos*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAmortos, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAmortos);
-			return new CActorAmortos[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAmortos, count);
 			break;
 		case TRAP:
-			if (pAlloc != (void*)0x0) { CActorTrap* pType = reinterpret_cast<CActorTrap*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorTrap* pType = reinterpret_cast<CActorTrap*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorTrap, pType, count); return 0x0; }
 			*outSize = sizeof(CActorTrap);
-			return new CActorTrap[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorTrap, count);
 			break;
 		case FX:
-			if (pAlloc != (void*)0x0) { CActorFx* pType = reinterpret_cast<CActorFx*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorFx* pType = reinterpret_cast<CActorFx*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorFx, pType, count); return 0x0; }
 			*outSize = sizeof(CActorFx);
-			return new CActorFx[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorFx, count);
 			break;
 		case EGG:
-			if (pAlloc != (void*)0x0) { CActorEgg* pType = reinterpret_cast<CActorEgg*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorEgg* pType = reinterpret_cast<CActorEgg*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorEgg, pType, count); return 0x0; }
 			*outSize = sizeof(CActorEgg);
-			return new CActorEgg[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorEgg, count);
 			break;
 		case AMORTOS_CMD:
-			if (pAlloc != (void*)0x0) { CActorAmortosCmd* pType = reinterpret_cast<CActorAmortosCmd*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAmortosCmd* pType = reinterpret_cast<CActorAmortosCmd*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAmortosCmd, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAmortosCmd);
-			return new CActorAmortosCmd[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAmortosCmd, count);
 			break;
 		case MONEY:
-			if (pAlloc != (void*)0x0) { CActorMoney* pType = reinterpret_cast<CActorMoney*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMoney* pType = reinterpret_cast<CActorMoney*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMoney, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMoney);
-			return new CActorMoney[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMoney, count);
 			break;
 		case BOX:
-			if (pAlloc != (void*)0x0) { CActorBox* pType = reinterpret_cast<CActorBox*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBox* pType = reinterpret_cast<CActorBox*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBox, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBox);
-			return new CActorBox[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBox, count);
 			break;
 		case ATON:
-			if (pAlloc != (void*)0x0) { CActorAton* pType = reinterpret_cast<CActorAton*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAton* pType = reinterpret_cast<CActorAton*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAton, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAton);
-			return new CActorAton[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAton, count);
 			break;
 		case BASIC_BOX:
-			if (pAlloc != (void*)0x0) { CActorBasicBox* pType = reinterpret_cast<CActorBasicBox*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBasicBox* pType = reinterpret_cast<CActorBasicBox*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBasicBox, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBasicBox);
-			return new CActorBasicBox[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBasicBox, count);
 			break;
 		case NATIV_CMD:
-			if (pAlloc != (void*)0x0) { CActorNativCmd* pType = reinterpret_cast<CActorNativCmd*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorNativCmd* pType = reinterpret_cast<CActorNativCmd*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorNativCmd, pType, count); return 0x0; }
 			*outSize = sizeof(CActorNativCmd);
-			return new CActorNativCmd[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorNativCmd, count);
 			break;
 		case FOG_MANAGER:
-			if (pAlloc != (void*)0x0) { CActorFogManager* pType = reinterpret_cast<CActorFogManager*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorFogManager* pType = reinterpret_cast<CActorFogManager*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorFogManager, pType, count); return 0x0; }
 			*outSize = sizeof(CActorFogManager);
-			return new CActorFogManager[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorFogManager, count);
 			break;
 		case SHOOT:
-			if (pAlloc != (void*)0x0) { CActorShoot* pType = reinterpret_cast<CActorShoot*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorShoot* pType = reinterpret_cast<CActorShoot*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorShoot, pType, count); return 0x0; }
 			*outSize = sizeof(CActorShoot);
-			return new CActorShoot[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorShoot, count);
 			break;
 		case SHOCKER:
-			if (pAlloc != (void*)0x0) { CActorShocker* pType = reinterpret_cast<CActorShocker*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorShocker* pType = reinterpret_cast<CActorShocker*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorShocker, pType, count); return 0x0; }
 			*outSize = sizeof(CActorShocker);
-			return new CActorShocker[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorShocker, count);
 			break;
 		case STILLER:
-			if (pAlloc != (void*)0x0) { CActorStiller* pType = reinterpret_cast<CActorStiller*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorStiller* pType = reinterpret_cast<CActorStiller*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorStiller, pType, count); return 0x0; }
 			*outSize = sizeof(CActorStiller);
-			return new CActorStiller[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorStiller, count);
 			break;
 		case BLAZER:
-			if (pAlloc != (void*)0x0) { CActorBlazer* pType = reinterpret_cast<CActorBlazer*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBlazer* pType = reinterpret_cast<CActorBlazer*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBlazer, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBlazer);
-			return new CActorBlazer[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBlazer, count);
 			break;
 		case SHOCKER_CMD:
-			if (pAlloc != (void*)0x0) { CActorShockerCmd* pType = reinterpret_cast<CActorShockerCmd*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorShockerCmd* pType = reinterpret_cast<CActorShockerCmd*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorShockerCmd, pType, count); return 0x0; }
 			*outSize = sizeof(CActorShockerCmd);
-			return new CActorShockerCmd[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorShockerCmd, count);
 			break;
 		case RUNE:
-			if (pAlloc != (void*)0x0) { CActorRune* pType = reinterpret_cast<CActorRune*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorRune* pType = reinterpret_cast<CActorRune*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorRune, pType, count); return 0x0; }
 			*outSize = sizeof(CActorRune);
-			return new CActorRune[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorRune, count);
 			break;
 		case BONUS_FOUNTAIN:
-			if (pAlloc != (void*)0x0) { CActorBonusFountain* pType = reinterpret_cast<CActorBonusFountain*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBonusFountain* pType = reinterpret_cast<CActorBonusFountain*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBonusFountain, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBonusFountain);
-			return new CActorBonusFountain[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBonusFountain, count);
 			break;
 		case EVENT_GENERATOR:
-			if (pAlloc != (void*)0x0) { CActorEventGenerator* pType = reinterpret_cast<CActorEventGenerator*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorEventGenerator* pType = reinterpret_cast<CActorEventGenerator*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorEventGenerator, pType, count); return 0x0; }
 			*outSize = sizeof(CActorEventGenerator);
-			return new CActorEventGenerator[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorEventGenerator, count);
 			break;
 		case WOOF:
-			if (pAlloc != (void*)0x0) { CActorWoof* pType = reinterpret_cast<CActorWoof*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWoof* pType = reinterpret_cast<CActorWoof*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWoof, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWoof);
-			return new CActorWoof[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWoof, count);
 			break;
 		case HELPER_SIGN:
-			if (pAlloc != (void*)0x0) { CActorHelperSign* pType = reinterpret_cast<CActorHelperSign*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorHelperSign* pType = reinterpret_cast<CActorHelperSign*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorHelperSign, pType, count); return 0x0; }
 			*outSize = sizeof(CActorHelperSign);
-			return new CActorHelperSign[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorHelperSign, count);
 			break;
 		case BUNCH:
-			if (pAlloc != (void*)0x0) { CActorBunch* pType = reinterpret_cast<CActorBunch*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBunch* pType = reinterpret_cast<CActorBunch*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBunch, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBunch);
-			return new CActorBunch[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBunch, count);
 			break;
 		case BRAZUL:
-			if (pAlloc != (void*)0x0) { CActorBrazul* pType = reinterpret_cast<CActorBrazul*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBrazul* pType = reinterpret_cast<CActorBrazul*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBrazul, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBrazul);
-			return new CActorBrazul[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBrazul, count);
 			break;
 		case PUNCHING_BALL:
-			if (pAlloc != (void*)0x0) { CActorPunchingBall* pType = reinterpret_cast<CActorPunchingBall*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorPunchingBall* pType = reinterpret_cast<CActorPunchingBall*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorPunchingBall, pType, count); return 0x0; }
 			*outSize = sizeof(CActorPunchingBall);
-			return new CActorPunchingBall[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorPunchingBall, count);
 			break;
 		case NATIV_SHOP:
-			if (pAlloc != (void*)0x0) { CActorNativShop* pType = reinterpret_cast<CActorNativShop*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorNativShop* pType = reinterpret_cast<CActorNativShop*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorNativShop, pType, count); return 0x0; }
 			*outSize = sizeof(CActorNativShop);
-			return new CActorNativShop[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorNativShop, count);
 			break;
 		case ADD_ON_PURCHASE:
-			if (pAlloc != (void*)0x0) { CActorAddOnPurchase* pType = reinterpret_cast<CActorAddOnPurchase*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAddOnPurchase* pType = reinterpret_cast<CActorAddOnPurchase*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAddOnPurchase, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAddOnPurchase);
-			return new CActorAddOnPurchase[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAddOnPurchase, count);
 			break;
 		case CARE_BOY:
-			if (pAlloc != (void*)0x0) { CActorCareBoy* pType = reinterpret_cast<CActorCareBoy*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorCareBoy* pType = reinterpret_cast<CActorCareBoy*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorCareBoy, pType, count); return 0x0; }
 			*outSize = sizeof(CActorCareBoy);
-			return new CActorCareBoy[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorCareBoy, count);
 			break;
 		case SHIP:
-			if (pAlloc != (void*)0x0) { CActorShip* pType = reinterpret_cast<CActorShip*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorShip* pType = reinterpret_cast<CActorShip*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorShip, pType, count); return 0x0; }
 			*outSize = sizeof(CActorShip);
-			return new CActorShip[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorShip, count);
 			break;
 		case HUNTER:
-			if (pAlloc != (void*)0x0) { CActorHunter* pType = reinterpret_cast<CActorHunter*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorHunter* pType = reinterpret_cast<CActorHunter*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorHunter, pType, count); return 0x0; }
 			*outSize = sizeof(CActorHunter);
-			return new CActorHunter[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorHunter, count);
 			break;
 		case JAMGUT:
-			if (pAlloc != (void*)0x0) { CActorJamGut* pType = reinterpret_cast<CActorJamGut*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorJamGut* pType = reinterpret_cast<CActorJamGut*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorJamGut, pType, count); return 0x0; }
 			*outSize = sizeof(CActorJamGut);
-			return new CActorJamGut[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorJamGut, count);
 			break;
 		case ACCELERATOS:
-			if (pAlloc != (void*)0x0) { CActorAcceleratos* pType = reinterpret_cast<CActorAcceleratos*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorAcceleratos* pType = reinterpret_cast<CActorAcceleratos*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorAcceleratos, pType, count); return 0x0; }
 			*outSize = sizeof(CActorAcceleratos);
-			return new CActorAcceleratos[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorAcceleratos, count);
 			break;
 		case PATTERN_CON:
-			if (pAlloc != (void*)0x0) { CActorPattern* pType = reinterpret_cast<CActorPattern*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorPattern* pType = reinterpret_cast<CActorPattern*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorPattern, pType, count); return 0x0; }
 			*outSize = sizeof(CActorPattern);
-			return new CActorPattern[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorPattern, count);
 			break;
 		case PATTERN_CMD:
-			if (pAlloc != (void*)0x0) { CActorPatternCmd* pType = reinterpret_cast<CActorPatternCmd*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorPatternCmd* pType = reinterpret_cast<CActorPatternCmd*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorPatternCmd, pType, count); return 0x0; }
 			*outSize = sizeof(CActorPatternCmd);
-			return new CActorPatternCmd[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorPatternCmd, count);
 			break;
 		case CREDITS:
-			if (pAlloc != (void*)0x0) { CActorCredits* pType = reinterpret_cast<CActorCredits*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorCredits* pType = reinterpret_cast<CActorCredits*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorCredits, pType, count); return 0x0; }
 			*outSize = sizeof(CActorCredits);
-			return new CActorCredits[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorCredits, count);
 			break;
 		case MINI_GAME:
-			if (pAlloc != (void*)0x0) { CActorMiniGame* pType = reinterpret_cast<CActorMiniGame*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGame* pType = reinterpret_cast<CActorMiniGame*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGame, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGame);
-			return new CActorMiniGame[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGame, count);
 			break;
 		case MINI_GAME_TIME_ATTACK:
-			if (pAlloc != (void*)0x0) { CActorMiniGameTimeAttack* pType = reinterpret_cast<CActorMiniGameTimeAttack*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGameTimeAttack* pType = reinterpret_cast<CActorMiniGameTimeAttack*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGameTimeAttack, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGameTimeAttack);
-			return new CActorMiniGameTimeAttack[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGameTimeAttack, count);
 			break;
 		case MINI_GAME_BOX_COUNTER:
-			if (pAlloc != (void*)0x0) { CActorMiniGameBoxCounter* pType = reinterpret_cast<CActorMiniGameBoxCounter*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGameBoxCounter* pType = reinterpret_cast<CActorMiniGameBoxCounter*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGameBoxCounter, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGameBoxCounter);
-			return new CActorMiniGameBoxCounter[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGameBoxCounter, count);
 			break;
 		case MINI_GAMES_MANAGER:
-			if (pAlloc != (void*)0x0) { CActorMiniGamesManager* pType = reinterpret_cast<CActorMiniGamesManager*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGamesManager* pType = reinterpret_cast<CActorMiniGamesManager*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGamesManager, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGamesManager);
-			return new CActorMiniGamesManager[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGamesManager, count);
 			break;
 		case MINI_GAMES_ORGANIZER:
-			if (pAlloc != (void*)0x0) { CActorMiniGamesOrganizer* pType = reinterpret_cast<CActorMiniGamesOrganizer*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGamesOrganizer* pType = reinterpret_cast<CActorMiniGamesOrganizer*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGamesOrganizer, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGamesOrganizer);
-			return new CActorMiniGamesOrganizer[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGamesOrganizer, count);
 			break;
 		case MINI_GAME_BOOMY:
-			if (pAlloc != (void*)0x0) { CActorMiniGameBoomy* pType = reinterpret_cast<CActorMiniGameBoomy*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGameBoomy* pType = reinterpret_cast<CActorMiniGameBoomy*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGameBoomy, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGameBoomy);
-			return new CActorMiniGameBoomy[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGameBoomy, count);
 			break;
 		case MINI_GAME_DISTANCE:
-			if (pAlloc != (void*)0x0) { CActorMiniGameDistance* pType = reinterpret_cast<CActorMiniGameDistance*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorMiniGameDistance* pType = reinterpret_cast<CActorMiniGameDistance*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorMiniGameDistance, pType, count); return 0x0; }
 			*outSize = sizeof(CActorMiniGameDistance);
-			return new CActorMiniGameDistance[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorMiniGameDistance, count);
 			break;
 		case BOMB_LAUNCHER:
-			if (pAlloc != (void*)0x0) { CActorBombLauncher* pType = reinterpret_cast<CActorBombLauncher*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorBombLauncher* pType = reinterpret_cast<CActorBombLauncher*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorBombLauncher, pType, count); return 0x0; }
 			*outSize = sizeof(CActorBombLauncher);
-			return new CActorBombLauncher[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorBombLauncher, count);
 			break;
 		case WANTED_ZOO:
-			if (pAlloc != (void*)0x0) { CActorWantedZoo* pType = reinterpret_cast<CActorWantedZoo*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorWantedZoo* pType = reinterpret_cast<CActorWantedZoo*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWantedZoo, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWantedZoo);
-			return new CActorWantedZoo[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorWantedZoo, count);
 			break;
 		default:
 			classId;
 			IMPLEMENTATION_GUARD();
 			ACTOR_LOG(LogLevel::Info, "Unimplemented class: 0x{:x} ({})", (int)classId, (int)classId);
 
-			if (pAlloc != (void*)0x0) { CActorSKIP_HACK* pType = reinterpret_cast<CActorSKIP_HACK*>(pAlloc); delete[] pType; return 0x0; }
+			if (pAlloc != (void*)0x0) { CActorSKIP_HACK* pType = reinterpret_cast<CActorSKIP_HACK*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorSKIP_HACK, pType, count); return 0x0; }
 			*outSize = sizeof(CActorSKIP_HACK);
-			return new CActorSKIP_HACK[count];
+			return NEW_ARRAY_POLYMORPHIC(CActorSKIP_HACK, count);
 			break;
 		}
 	}

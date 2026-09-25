@@ -1472,11 +1472,16 @@ ulong FUN_00253340(edF32TRIANGLE4* param_1, edObbBOX* param_2)
 int INT_ARRAY_00448918[2] = { 1, 0 };
 int gObbCurrentIndex = 0;
 
-edF32VECTOR4 __cube_corners[4] = {
+// Ghidra labels the last four contiguous vectors __cube_faces; the index table uses all eight.
+edF32VECTOR4 __cube_corners[8] = {
 	{ 0.5f, 0.5f, 0.5f, 1.0f },
 	{ 0.5f, 0.5f, -0.5f, 1.0f },
 	{ 0.5f, -0.5f, 0.5f, 1.0f },
 	{ 0.5f, -0.5f, -0.5f, 1.0f },
+	{ -0.5f, 0.5f, 0.5f, 1.0f },
+	{ -0.5f, 0.5f, -0.5f, 1.0f },
+	{ -0.5f, -0.5f, 0.5f, 1.0f },
+	{ -0.5f, -0.5f, -0.5f, 1.0f },
 };
 
 int INT_ARRAY_0041d910[24] = {

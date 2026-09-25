@@ -1,0 +1,1221 @@
+=================================================================
+==41596==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x12ba13923648 at pc 0x7ff6416a6bf3 bp 0x00d2de5be600 sp 0x00d2de5be648
+READ of size 8 at 0x12ba13923648 thread T0
+    #0 0x7ff6416a6bf2 in CFxEmitterPool::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:3251
+    #1 0x7ff6416880c1 in CFxWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:2018
+    #2 0x7ff641686485 in CActorWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:335
+    #3 0x7ff640fb87de in CActorManager::Level_Draw G:\repos\Kya\src\b-witch\ActorManager.cpp:421
+    #4 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #5 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #6 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #7 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #8 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #9 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #10 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x12ba13923648 is located 424 bytes after 4000-byte region [0x12ba13922500,0x12ba139234a0)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff641680d8d in CFxWind::Create G:\repos\Kya\src\b-witch\ActorWind.cpp:1548
+    #2 0x7ff64167f302 in CActorWind::Init G:\repos\Kya\src\b-witch\ActorWind.cpp:254
+    #3 0x7ff640faea1f in CActorManager::Level_Init G:\repos\Kya\src\b-witch\ActorManager.cpp:40
+    #4 0x7ff6402eeeaa in CScene::Level_Init G:\repos\Kya\src\b-witch\LargeObject.cpp:545
+    #5 0x7ff640806065 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2212
+    #6 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #7 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #8 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #9 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #10 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow G:\repos\Kya\src\b-witch\ActorWind.cpp:3251 in CFxEmitterPool::Draw
+Shadow bytes around the buggy address:
+  0x12ba13923380: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12ba13923400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12ba13923480: 00 00 00 00 fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923500: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923580: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x12ba13923600: fa fa fa fa fa fa fa fa fa[fa]fa fa fa fa fa fa
+  0x12ba13923680: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923700: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923780: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923800: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12ba13923880: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x12b210b54880 at pc 0x7ff641170484 bp 0x00d2de5be4b0 sp 0x00d2de5be4f8
+READ of size 4 at 0x12b210b54880 thread T0
+    #0 0x7ff641170483 in C3DFileManager::GetMaterialFromId G:\repos\Kya\src\b-witch\FileManager3D.cpp:185
+    #1 0x7ff64153eb53 in CFxLightEmitter::Begin_SharedDraw G:\repos\Kya\src\b-witch\FxLightEmitter.cpp:347
+    #2 0x7ff6416a6cb2 in CFxEmitterPool::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:3260
+    #3 0x7ff6416880c1 in CFxWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:2018
+    #4 0x7ff641686485 in CActorWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:335
+    #5 0x7ff640fb87de in CActorManager::Level_Draw G:\repos\Kya\src\b-witch\ActorManager.cpp:421
+    #6 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #7 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #8 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #9 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #10 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #11 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #12 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x12b210b54880 is located 0 bytes after 2048-byte region [0x12b210b54080,0x12b210b54880)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e51f in operator new[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e51f)
+    #1 0x7ff64116d97a in C3DFileManager::C3DFileManager G:\repos\Kya\src\b-witch\FileManager3D.cpp:19
+    #2 0x7ff6402e9301 in CScene::CScene G:\repos\Kya\src\b-witch\LargeObject.cpp:240
+    #3 0x7ff6402ebdba in CScene::CreateScene G:\repos\Kya\src\b-witch\LargeObject.cpp:328
+    #4 0x7ff640800c17 in MainInit G:\repos\Kya\src\b-witch\kya.cpp:1529
+    #5 0x7ff640806685 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2243
+    #6 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #7 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #8 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #9 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow G:\repos\Kya\src\b-witch\FileManager3D.cpp:185 in C3DFileManager::GetMaterialFromId
+Shadow bytes around the buggy address:
+  0x12b210b54600: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54680: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54700: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54780: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54800: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x12b210b54880:[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54900: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54980: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54a00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54b00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x12b210b54888 at pc 0x7ff6411704e8 bp 0x00d2de5be4b0 sp 0x00d2de5be4f8
+READ of size 8 at 0x12b210b54888 thread T0
+    #0 0x7ff6411704e7 in C3DFileManager::GetMaterialFromId G:\repos\Kya\src\b-witch\FileManager3D.cpp:189
+    #1 0x7ff64153eb53 in CFxLightEmitter::Begin_SharedDraw G:\repos\Kya\src\b-witch\FxLightEmitter.cpp:347
+    #2 0x7ff6416a6cb2 in CFxEmitterPool::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:3260
+    #3 0x7ff6416880c1 in CFxWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:2018
+    #4 0x7ff641686485 in CActorWind::Draw G:\repos\Kya\src\b-witch\ActorWind.cpp:335
+    #5 0x7ff640fb87de in CActorManager::Level_Draw G:\repos\Kya\src\b-witch\ActorManager.cpp:421
+    #6 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #7 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #8 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #9 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #10 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #11 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #12 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x12b210b54888 is located 8 bytes after 2048-byte region [0x12b210b54080,0x12b210b54880)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e51f in operator new[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e51f)
+    #1 0x7ff64116d97a in C3DFileManager::C3DFileManager G:\repos\Kya\src\b-witch\FileManager3D.cpp:19
+    #2 0x7ff6402e9301 in CScene::CScene G:\repos\Kya\src\b-witch\LargeObject.cpp:240
+    #3 0x7ff6402ebdba in CScene::CreateScene G:\repos\Kya\src\b-witch\LargeObject.cpp:328
+    #4 0x7ff640800c17 in MainInit G:\repos\Kya\src\b-witch\kya.cpp:1529
+    #5 0x7ff640806685 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2243
+    #6 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #7 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #8 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #9 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow G:\repos\Kya\src\b-witch\FileManager3D.cpp:189 in C3DFileManager::GetMaterialFromId
+Shadow bytes around the buggy address:
+  0x12b210b54600: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54680: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54700: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54780: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54800: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x12b210b54880: fa[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54900: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54980: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54a00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x12b210b54a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x12b210b54b00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd40 at pc 0x7ff6407641bb bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd40 thread T0
+    #0 0x7ff6407641ba in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1622
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd40 is located 32 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd40 is located 0 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1622 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00[f9]f9 f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd43 at pc 0x7ff640764204 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd43 thread T0
+    #0 0x7ff640764203 in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1622
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd43 is located 29 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd43 is located 3 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1622 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00[f9]f9 f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd44 at pc 0x7ff640764279 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd44 thread T0
+    #0 0x7ff640764278 in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1623
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd44 is located 28 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd44 is located 4 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1623 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00[f9]f9 f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd47 at pc 0x7ff6407642c2 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd47 thread T0
+    #0 0x7ff6407642c1 in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1623
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd47 is located 25 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd47 is located 7 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1623 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00[f9]f9 f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd48 at pc 0x7ff640764337 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd48 thread T0
+    #0 0x7ff640764336 in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1624
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd48 is located 24 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd48 is located 8 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1624 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00 f9[f9]f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd4b at pc 0x7ff640764380 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd4b thread T0
+    #0 0x7ff64076437f in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1624
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd4b is located 21 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd4b is located 11 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1624 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00 f9[f9]f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd4c at pc 0x7ff6407643f5 bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd4c thread T0
+    #0 0x7ff6407643f4 in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1625
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd4c is located 20 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd4c is located 12 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1625 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00 f9[f9]f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: global-buffer-overflow on address 0x7ff64249dd4f at pc 0x7ff64076443e bp 0x00d2de5bdde0 sp 0x00d2de5bde28
+READ of size 4 at 0x7ff64249dd4f thread T0
+    #0 0x7ff64076443d in edF32Matrix4MulF32Vector4Hard G:\repos\Kya\src\b-witch\MathOps.cpp:1625
+    #1 0x7ff6418e7ae7 in edObbIntersectObbtreeTrisBox G:\repos\Kya\src\EdenLib\edCollision\sources\OBBTree.cpp:1560
+    #2 0x7ff6412fef35 in CCameraShadow::ComputeShadowTriangles G:\repos\Kya\src\b-witch\CameraShadow.cpp:587
+    #3 0x7ff6412fb7a7 in CCameraShadow::Draw G:\repos\Kya\src\b-witch\CameraShadow.cpp:288
+    #4 0x7ff6405bc3bc in CCameraManager::Level_Draw G:\repos\Kya\src\b-witch\CameraViewManager.cpp:1387
+    #5 0x7ff6402f199c in CScene::Level_Draw G:\repos\Kya\src\b-witch\LargeObject.cpp:937
+    #6 0x7ff640805b91 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2184
+    #7 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #8 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #9 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #10 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #11 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x7ff64249dd4f is located 17 bytes before global variable 'int *INT_ARRAY_0041d910' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd60) of size 96
+0x7ff64249dd4f is located 15 bytes after global variable 'union edF32VECTOR4 *__cube_corners' defined in 'G:/repos/Kya/src/EdenLib/edCollision/sources/OBBTree.cpp' (0x7ff64249dd00) of size 64
+SUMMARY: AddressSanitizer: global-buffer-overflow G:\repos\Kya\src\b-witch\MathOps.cpp:1625 in edF32Matrix4MulF32Vector4Hard
+Shadow bytes around the buggy address:
+  0x7ff64249da80: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x7ff64249db00: 00 00 f9 f9 00 00 f9 f9 00 00 00 00 00 00 00 f9
+  0x7ff64249db80: f9 f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x7ff64249dc00: 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249dc80: 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+=>0x7ff64249dd00: 00 00 00 00 00 00 00 00 f9[f9]f9 f9 00 00 00 00
+  0x7ff64249dd80: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x7ff64249de00: 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9
+  0x7ff64249de80: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x7ff64249df00: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9
+  0x7ff64249df80: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: heap-use-after-free on address 0x12c21342c258 at pc 0x7ff640188811 bp 0x00d2de5bf600 sp 0x00d2de5bf648
+READ of size 4 at 0x12c21342c258 thread T0
+    #0 0x7ff640188810 in CFxHandle::IsValid G:\repos\Kya\src\b-witch\Fx.h:132
+    #1 0x7ff64182c88e in CActorFx::CBhvSingle::Term G:\repos\Kya\src\b-witch\ActorFx.cpp:102
+    #2 0x7ff6402147a3 in CActor::Term G:\repos\Kya\src\b-witch\Actor.cpp:2578
+    #3 0x7ff640fb0bd6 in CActorManager::Level_Term G:\repos\Kya\src\b-witch\ActorManager.cpp:63
+    #4 0x7ff6402f07ae in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:807
+    #5 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #6 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #7 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #8 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #9 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #10 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x12c21342c258 is located 4440 bytes inside of 9728-byte region [0x12c21342b100,0x12c21342d700)
+freed by thread T0 here:
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff6411e9014 in CFxPoolManager<CFxNewParticle,CFxParticleScenaricData>::Term G:\repos\Kya\src\b-witch\Fx.h:370
+    #2 0x7ff64124b3e0 in CFxManager::Level_Term G:\repos\Kya\src\b-witch\Fx.cpp:324
+    #3 0x7ff6402f07ae in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:807
+    #4 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #5 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #6 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #7 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #8 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #9 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+previously allocated by thread T0 here:
+    #0 0x7ffc84f5e51f in operator new[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e51f)
+    #1 0x7ff6411e9dee in CFxPoolManager<CFxNewParticle,CFxParticleScenaricData>::SetupPool G:\repos\Kya\src\b-witch\Fx.h:493
+    #2 0x7ff64124eceb in CFxManager::AddPool G:\repos\Kya\src\b-witch\Fx.cpp:710
+    #3 0x7ff6402f22b7 in CScene::Level_Setup G:\repos\Kya\src\b-witch\LargeObject.cpp:994
+    #4 0x7ff64027feb9 in BnkInstallScene G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2373
+    #5 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #6 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #7 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #8 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #9 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #10 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #11 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #12 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #13 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #14 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: heap-use-after-free G:\repos\Kya\src\b-witch\Fx.h:132 in CFxHandle::IsValid
+Shadow bytes around the buggy address:
+  0x12c21342bf80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c000: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c080: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c100: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c180: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+=>0x12c21342c200: fd fd fd fd fd fd fd fd fd fd fd[fd]fd fd fd fd
+  0x12c21342c280: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c300: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c380: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c400: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x12c21342c480: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x12c010ad4108 in thread T0
+    #0 0x7ffc84f5efe6 in operator delete+0x96 (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005efe6)
+    #1 0x7ff6410eb410 in CShadow::~CShadow G:\repos\Kya\src\b-witch\ActorShadows.h:36
+    #2 0x7ff640fb12bf in CActorManager::Level_Term G:\repos\Kya\src\b-witch\ActorManager.cpp:110
+    #3 0x7ff6402f07ae in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:807
+    #4 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #5 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #6 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #7 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #8 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #9 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x12c010ad4108 is located 8 bytes inside of 7016-byte region [0x12c010ad4100,0x12c010ad5c68)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e51f in operator new[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e51f)
+    #1 0x7ff640fb2ec8 in CActorManager::Level_AddAll G:\repos\Kya\src\b-witch\ActorManager.cpp:214
+    #2 0x7ff640280187 in BnkInstallScene G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2377
+    #3 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #4 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #5 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #6 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #7 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #8 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #9 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #10 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #11 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #12 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\ActorShadows.h:36 in CShadow::~CShadow
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad2e98 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad2e98 is located 0 bytes after 152-byte region [0x129410ad2e00,0x129410ad2e98)
+freed by thread T0 here:
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+previously allocated by thread T0 here:
+    #0 0x7ffc84f5e51f in operator new[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e51f)
+    #1 0x7ff640eefe25 in CMusicAmbiance::Add G:\repos\Kya\src\b-witch\Audio.cpp:3844
+    #2 0x7ff640eee3ce in CAudioManager::Level_AddAll G:\repos\Kya\src\b-witch\Audio.cpp:1109
+    #3 0x7ff640280fdf in BnkInstallSoundCfg G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2422
+    #4 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #5 0x7ff641598df1 in edBankStackFileCallBack G:\repos\Kya\src\EdenLib\edBank\sources\edBankStackFile.cpp:40
+    #6 0x7ff641274d52 in edSysHandlersCall G:\repos\Kya\src\EdenLib\edSys\sources\EdHandlers.cpp:256
+    #7 0x7ff641090520 in edFileNoWaitStackCallBack G:\repos\Kya\src\EdenLib\edFile\sources\edFileNoWaitStack.cpp:216
+    #8 0x7ff641092916 in edFileNoWaitStackFlush G:\repos\Kya\src\EdenLib\edFile\sources\edFileNoWaitStack.cpp:354
+    #9 0x7ff64108d878 in edFileGetFiler G:\repos\Kya\src\EdenLib\edFile\sources\edFile.cpp:437
+    #10 0x7ff641274d52 in edSysHandlersCall G:\repos\Kya\src\EdenLib\edSys\sources\EdHandlers.cpp:256
+    #11 0x7ff641097cf7 in edVideoFlip G:\repos\Kya\src\edVideo\VideoD.cpp:268
+    #12 0x7ff640804269 in LoadingLoop G:\repos\Kya\src\b-witch\kya.cpp:2066
+    #13 0x7ff64080600d in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2209
+    #14 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #15 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #16 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #17 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #18 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad2f30 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad2f30 is located 80 bytes inside of 160-byte region [0x129410ad2ee0,0x129410ad2f80)
+allocated by thread T0 here:
+    #0 0x7ffc84f4c92f in _asan_wrap_memcpy+0x73f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18004c92f)
+    #1 0x7ff640c7405b in MallocWrapper G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui.cpp:1406
+    #2 0x7ff640b70ccc in ImGui::MemAlloc G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui.cpp:5091
+    #3 0x7ff640cab9a5 in ImVector<ImDrawVert>::reserve G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui.h:2316
+    #4 0x7ff640d3bb94 in ImVector<ImDrawVert>::resize G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui.h:2313
+    #5 0x7ff640cd6e97 in ImDrawList::PrimReserve G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui_draw.cpp:733
+    #6 0x7ff640cec45a in ImDrawList::AddImage G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui_draw.cpp:1748
+    #7 0x7ff640d54038 in ImGui::ImageWithBg G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui_widgets.cpp:1138
+    #8 0x7ff640d542c9 in ImGui::Image G:\repos\Kya\port\Windows\Renderer\ext\imgui\imgui\imgui_widgets.cpp:1143
+    #9 0x7ff640033f66 in Debug::DrawGameViewportImage G:\repos\Kya\port\DebugMenu\src\DebugMenuLayout.cpp:125
+    #10 0x7ff640034261 in Debug::DrawFullscreenGameViewportWindow G:\repos\Kya\port\DebugMenu\src\DebugMenuLayout.cpp:146
+    #11 0x7ff63ffc1461 in Debug::DrawInternal G:\repos\Kya\port\DebugMenu\src\DebugMenu.cpp:206
+    #12 0x7ff63ffc0f33 in DebugMenu::BuildImguiCommands G:\repos\Kya\port\DebugMenu\src\DebugMenu.cpp:227
+    #13 0x7ff6401b2707 in DebugRendererImgui::Render G:\repos\Kya\port\DebugMenu\src\DebugRendererVulkan.cpp:247
+    #14 0x7ff6401b7b45 in std::invoke<void (*&)(VkFramebuffer_T *const &, const VkExtent2D &, std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &),VkFramebuffer_T *const &,const VkExtent2D &,std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #15 0x7ff6401b78e2 in std::_Func_impl_no_alloc<void (*)(VkFramebuffer_T *const &, const VkExtent2D &, std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &),void,VkFramebuffer_T *const &,const VkExtent2D &,std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &>::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #16 0x7ff640914b9b in std::_Func_class<void,VkFramebuffer_T *const &,const VkExtent2D &,std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &>::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #17 0x7ff64091437c in Multidelegate<VkFramebuffer_T *const &,const VkExtent2D &,std::vector<VkCommandBuffer_T *,std::allocator<VkCommandBuffer_T *> > &>::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #18 0x7ff6408c95e3 in ImageRendererApp::present G:\repos\Kya\port\Windows\Renderer\Vulkan\src\VulkanRenderer.cpp:961
+    #19 0x7ff6408c587e in Renderer::Present G:\repos\Kya\port\Windows\Renderer\Vulkan\src\VulkanRenderer.cpp:1332
+    #20 0x7ff641097eb8 in edVideoFlip G:\repos\Kya\src\edVideo\VideoD.cpp:289
+    #21 0x7ff640805b96 in GameLoop G:\repos\Kya\src\b-witch\kya.cpp:2189
+    #22 0x7ff6408067cc in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2271
+    #23 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #24 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #25 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #26 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad2fc8 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad2fc8 is located 8 bytes inside of 152-byte region [0x129410ad2fc0,0x129410ad3058)
+allocated by thread T0 here:
+    #0 0x7ffc84f4c92f in _asan_wrap_memcpy+0x73f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18004c92f)
+    #1 0x7ffdf933ac34 in o___stdio_common_vswprintf+0x334 (C:\WINDOWS\System32\ucrtbase.dll+0x18000ac34)
+    #2 0x7ffdf474f253 in CoreUICallSend+0x25373 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003f253)
+    #3 0x7ffdf474f0b9 in CoreUICallSend+0x251d9 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003f0b9)
+    #4 0x7ffdf474d95c in CoreUICallSend+0x23a7c (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d95c)
+    #5 0x7ffdf474d43a in CoreUICallSend+0x2355a (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d43a)
+    #6 0x7ffdf474d215 in CoreUICallSend+0x23335 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d215)
+    #7 0x7ffdf4748e3d in CoreUICallSend+0x1ef5d (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180038e3d)
+    #8 0x7ffdf479cdff in CoreUICallCreateEndpointHost+0x4b0f (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18008cdff)
+    #9 0x7ffdf47b2665 in ServiceMain+0x6ec5 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x1800a2665)
+    #10 0x7ffdf47b2c74 in ServiceMain+0x74d4 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x1800a2c74)
+    #11 0x7ffdf474809b in CoreUICallSend+0x1e1bb (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003809b)
+    #12 0x7ffdf4747fe0 in CoreUICallSend+0x1e100 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180037fe0)
+    #13 0x7ffdf4747f6b in CoreUICallSend+0x1e08b (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180037f6b)
+    #14 0x7ffdf471a54b  (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18000a54b)
+    #15 0x7ffdf0929d82  (C:\WINDOWS\SYSTEM32\CoreUIComponents.dll+0x180009d82)
+    #16 0x7ffdf092a01d  (C:\WINDOWS\SYSTEM32\CoreUIComponents.dll+0x18000a01d)
+    #17 0x7ffdcfdd9a20 in InputFocusChanged+0x12010 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180059a20)
+    #18 0x7ffdcfd9caeb in tsfGetKeyState+0xd6bb (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001caeb)
+    #19 0x7ffdcfd9c483 in tsfGetKeyState+0xd053 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001c483)
+    #20 0x7ffdcfdf0d5a in TextInputServerCreate+0x1c0a (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180070d5a)
+    #21 0x7ffdcfd9d6f1 in tsfGetKeyState+0xe2c1 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001d6f1)
+    #22 0x7ffdcfde67bb in TextInputHostCreate+0x16b (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800667bb)
+    #23 0x7ffdcfde66c1 in TextInputHostCreate+0x71 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800666c1)
+    #24 0x7ffdfb7231da in TF_GetThreadFlags+0x407a (C:\WINDOWS\System32\MSCTF.dll+0x1800631da)
+    #25 0x7ffdfb75c278 in TF_InitSystem+0x50a8 (C:\WINDOWS\System32\MSCTF.dll+0x18009c278)
+    #26 0x7ffdcfdb15b4 in tsfGetKeyState+0x22184 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800315b4)
+    #27 0x7ffdcfe02de1 in TextInputServerCreate+0x13c91 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180082de1)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3060 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3060 is located 8 bytes after 152-byte region [0x129410ad2fc0,0x129410ad3058)
+allocated by thread T0 here:
+    #0 0x7ffc84f4c92f in _asan_wrap_memcpy+0x73f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18004c92f)
+    #1 0x7ffdf933ac34 in o___stdio_common_vswprintf+0x334 (C:\WINDOWS\System32\ucrtbase.dll+0x18000ac34)
+    #2 0x7ffdf474f253 in CoreUICallSend+0x25373 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003f253)
+    #3 0x7ffdf474f0b9 in CoreUICallSend+0x251d9 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003f0b9)
+    #4 0x7ffdf474d95c in CoreUICallSend+0x23a7c (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d95c)
+    #5 0x7ffdf474d43a in CoreUICallSend+0x2355a (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d43a)
+    #6 0x7ffdf474d215 in CoreUICallSend+0x23335 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003d215)
+    #7 0x7ffdf4748e3d in CoreUICallSend+0x1ef5d (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180038e3d)
+    #8 0x7ffdf479cdff in CoreUICallCreateEndpointHost+0x4b0f (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18008cdff)
+    #9 0x7ffdf47b2665 in ServiceMain+0x6ec5 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x1800a2665)
+    #10 0x7ffdf47b2c74 in ServiceMain+0x74d4 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x1800a2c74)
+    #11 0x7ffdf474809b in CoreUICallSend+0x1e1bb (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18003809b)
+    #12 0x7ffdf4747fe0 in CoreUICallSend+0x1e100 (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180037fe0)
+    #13 0x7ffdf4747f6b in CoreUICallSend+0x1e08b (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x180037f6b)
+    #14 0x7ffdf471a54b  (C:\WINDOWS\SYSTEM32\CoreMessaging.dll+0x18000a54b)
+    #15 0x7ffdf0929d82  (C:\WINDOWS\SYSTEM32\CoreUIComponents.dll+0x180009d82)
+    #16 0x7ffdf092a01d  (C:\WINDOWS\SYSTEM32\CoreUIComponents.dll+0x18000a01d)
+    #17 0x7ffdcfdd9a20 in InputFocusChanged+0x12010 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180059a20)
+    #18 0x7ffdcfd9caeb in tsfGetKeyState+0xd6bb (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001caeb)
+    #19 0x7ffdcfd9c483 in tsfGetKeyState+0xd053 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001c483)
+    #20 0x7ffdcfdf0d5a in TextInputServerCreate+0x1c0a (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180070d5a)
+    #21 0x7ffdcfd9d6f1 in tsfGetKeyState+0xe2c1 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x18001d6f1)
+    #22 0x7ffdcfde67bb in TextInputHostCreate+0x16b (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800667bb)
+    #23 0x7ffdcfde66c1 in TextInputHostCreate+0x71 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800666c1)
+    #24 0x7ffdfb7231da in TF_GetThreadFlags+0x407a (C:\WINDOWS\System32\MSCTF.dll+0x1800631da)
+    #25 0x7ffdfb75c278 in TF_InitSystem+0x50a8 (C:\WINDOWS\System32\MSCTF.dll+0x18009c278)
+    #26 0x7ffdcfdb15b4 in tsfGetKeyState+0x22184 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x1800315b4)
+    #27 0x7ffdcfe02de1 in TextInputServerCreate+0x13c91 (C:\WINDOWS\SYSTEM32\textinputframework.dll+0x180082de1)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad30f8 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad30f8 is located 88 bytes inside of 160-byte region [0x129410ad30a0,0x129410ad3140)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3190 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3190 is located 16 bytes inside of 160-byte region [0x129410ad3180,0x129410ad3220)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3228 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3228 is located 8 bytes after 160-byte region [0x129410ad3180,0x129410ad3220)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad32c0 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad32c0 is located 96 bytes inside of 160-byte region [0x129410ad3260,0x129410ad3300)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3358 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3358 is located 24 bytes inside of 160-byte region [0x129410ad3340,0x129410ad33e0)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad33f0 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad33f0 is located 16 bytes after 160-byte region [0x129410ad3340,0x129410ad33e0)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3488 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3488 is located 104 bytes inside of 160-byte region [0x129410ad3420,0x129410ad34c0)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll
+=================================================================
+==41596==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x129410ad3520 in thread T0
+    #0 0x7ffc84f5ed0f in operator delete[]+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005ed0f)
+    #1 0x7ff640ef4f3b in CAudioManager::Level_ClearAll G:\repos\Kya\src\b-witch\Audio.cpp:1389
+    #2 0x7ff6402f0b49 in CScene::Level_Term G:\repos\Kya\src\b-witch\LargeObject.cpp:839
+    #3 0x7ff6408064fb in LevelTerm G:\repos\Kya\src\b-witch\kya.cpp:2220
+    #4 0x7ff6408067d1 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2272
+    #5 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #6 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #7 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #8 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+0x129410ad3520 is located 32 bytes inside of 160-byte region [0x129410ad3500,0x129410ad35a0)
+allocated by thread T0 here:
+    #0 0x7ffc84f5e41f in operator new+0x8f (G:\repos\Kya\bin\WIN\clang_rt.asan_dynamic-x86_64.dll+0x18005e41f)
+    #1 0x7ff640998642 in Renderer::SimpleTexture::CreateRenderer G:\repos\Kya\port\Windows\Renderer\Vulkan\src\Texture\TextureCache.cpp:1086
+    #2 0x7ff64081a935 in Renderer::Kya::G2D::Material::Layer::ProcessTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:392
+    #3 0x7ff640819baf in Renderer::Kya::G2D::Material::ProcessLayer G:\repos\Kya\port\KyaTexture\src\Texture.cpp:303
+    #4 0x7ff640819941 in Renderer::Kya::G2D::ProcessMaterial G:\repos\Kya\port\KyaTexture\src\Texture.cpp:283
+    #5 0x7ff6408191a6 in Renderer::Kya::G2D::G2D G:\repos\Kya\port\KyaTexture\src\Texture.cpp:252
+    #6 0x7ff640830be0 in std::construct_at<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xutility:647
+    #7 0x7ff6408308aa in std::_Default_allocator_traits<std::allocator<Renderer::Kya::G2D> >::construct<Renderer::Kya::G2D,ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\xmemory:730
+    #8 0x7ff64082f23e in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_back_with_unused_capacity<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:865
+    #9 0x7ff64082ef6c in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::_Emplace_one_at_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:847
+    #10 0x7ff64081ed06 in std::vector<Renderer::Kya::G2D,std::allocator<Renderer::Kya::G2D> >::emplace_back<ed_g2d_manager *&,std::basic_string<char,std::char_traits<char>,std::allocator<char> > &> C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\vector:927
+    #11 0x7ff64081ca3b in Renderer::Kya::TextureLibrary::AddTexture G:\repos\Kya\port\KyaTexture\src\Texture.cpp:466
+    #12 0x7ff640839de9 in std::invoke<void (*&)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > > C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\type_traits:1811
+    #13 0x7ff640839a7a in std::_Func_impl_no_alloc<void (*)(ed_g2d_manager *, std::basic_string<char,std::char_traits<char>,std::allocator<char> >),void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::_Do_call C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1005
+    #14 0x7ff6404110fb in std::_Func_class<void,ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\functional:1057
+    #15 0x7ff6403b808e in Multidelegate<ed_g2d_manager *,std::basic_string<char,std::char_traits<char>,std::allocator<char> > >::operator() G:\repos\Kya\port\Windows\Renderer\include\delegate.h:21
+    #16 0x7ff64037d916 in ed3DInstallG2D G:\repos\Kya\src\b-witch\ed3D.cpp:12727
+    #17 0x7ff6402813ae in BnkInstallG2D G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2435
+    #18 0x7ff6413999a5 in edCBankFileHeader::apply_callback G:\repos\Kya\src\EdenLib\edBank\sources\edBankFile.cpp:527
+    #19 0x7ff6410cd2bd in edCBankBufferEntry::install G:\repos\Kya\src\EdenLib\edBank\sources\edBankBuffer.cpp:446
+    #20 0x7ff640289384 in CLevelScheduler::Level_Install G:\repos\Kya\src\b-witch\LevelScheduler.cpp:2858
+    #21 0x7ff6402eda5c in CScene::Level_Install G:\repos\Kya\src\b-witch\LargeObject.cpp:440
+    #22 0x7ff640806054 in LevelInit G:\repos\Kya\src\b-witch\kya.cpp:2211
+    #23 0x7ff6408067c7 in main_internal G:\repos\Kya\src\b-witch\kya.cpp:2270
+    #24 0x7ff6401c159b in main G:\repos\Kya\port\Windows\Host\src\win_main.cpp:32
+    #25 0x7ff641e3642e in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #26 0x7ffdf9e7cd86 in BaseThreadInitThunk+0x16 (C:\WINDOWS\System32\KERNEL32.DLL+0x18002cd86)
+    #27 0x7ffdfbf8caeb in RtlUserThreadStart+0x2b (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800acaeb)
+
+SUMMARY: AddressSanitizer: bad-free G:\repos\Kya\src\b-witch\Audio.cpp:1389 in CAudioManager::Level_ClearAll

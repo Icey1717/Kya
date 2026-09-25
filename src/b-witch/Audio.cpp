@@ -1384,7 +1384,7 @@ void CAudioManager::Level_ClearAll()
 		uVar6 = 0;
 		if (this->nbMusicAmbiance != 0) {
 			do {
-				pSectorArray = this->aMusicAmbiance->aSoundAmbiance + uVar6;
+				pSectorArray = this->aMusicAmbiance[uVar6].aSoundAmbiance;
 				if (pSectorArray != (CSoundAmbiance*)0x0) {
 					delete[] pSectorArray;
 				}

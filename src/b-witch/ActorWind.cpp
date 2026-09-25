@@ -3248,7 +3248,11 @@ void CFxEmitterPool::Draw()
 			(this->heatFxParam).field_0x8 = 0;
 		}
 
+#ifdef PLATFORM_WIN
+		for (iVar11 = 0; (iVar11 < 4) && (this->aHolders[iVar11].pFxWind == (CFxWind*)0x0); iVar11 = iVar11 + 1) {
+#else
 		for (iVar11 = 0; (this->aHolders[iVar11].pFxWind == (CFxWind*)0x0 && (iVar11 < 4)); iVar11 = iVar11 + 1) {
+#endif
 		}
 
 		if (iVar11 == 4) {

@@ -107,7 +107,7 @@ void CActorManager::Level_Term()
 	}
 
 	if (this->aShadows != (CShadow*)0x0) {
-		delete[] this->aShadows;
+		DELETE_ARRAY_POLYMORPHIC(CShadow, this->aShadows, this->shadowCount);
 	}
 
 	Level_ClearInternalData();
@@ -211,7 +211,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 		if (shadowCount != 0) {
 			this->initializedShadowCount = 0;
 			this->shadowCount = shadowCount;
-			this->aShadows = new CShadow[this->shadowCount];
+			this->aShadows = NEW_ARRAY_POLYMORPHIC(CShadow, this->shadowCount);
 		}
 
 		if (0 < this->nbActors) {

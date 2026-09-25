@@ -241,7 +241,7 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 	if ((this->pOwner->pShadow != (CShadow*)0x0) && ((this->pathFollow).Get() != (CPathFollow*)0x0)) {
 		this->nbSharedShadows = this->nbMoneyInstances + -1;
 		uVar2 = this->nbSharedShadows;
-		this->aSharedShadows = new CShadowShared[uVar2];
+		this->aSharedShadows = NEW_ARRAY_POLYMORPHIC(CShadowShared, uVar2);
 	}
 
 	if (this->nbMoneyInstances == 1) {
@@ -336,7 +336,7 @@ void CBehaviourMoneyFlock::Term()
 	}
 
 	if (this->aSharedShadows != (CShadowShared*)0x0) {
-		delete[] this->aSharedShadows;
+		DELETE_ARRAY_POLYMORPHIC(CShadowShared, this->aSharedShadows, this->nbSharedShadows);
 	}
 
 	return;
