@@ -78,7 +78,13 @@ void CActorManager::Level_Term()
 	pCVar4 = this->aClassInfo;
 	do {
 		if (pCVar4->aActors != (CActor*)0x0) {
+#ifdef PLATFORM_WIN
+			// The Windows polymorphic array helper needs the count to run every destructor.
+			CActorFactory::Factory((ACTOR_CLASS)classId, pCVar4->totalCount, (int*)0x0, pCVar4->aActors);
+#else
+			// PS2 delete[] reads the count from the array allocation, so the factory receives 0.
 			CActorFactory::Factory((ACTOR_CLASS)classId, 0, (int*)0x0, pCVar4->aActors);
+#endif
 		}
 
 		pCVar4->aActors = (CActor*)0x0;
