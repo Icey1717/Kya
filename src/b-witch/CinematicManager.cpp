@@ -4050,7 +4050,7 @@ bool CBWitchCin::CreateDirectionalLight(edCinLightInterface** ppLightInterface, 
 
 	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
 	while ((iVar3 < pCinematic->count_0x224 && (pNewCinLight == (CBWCinSunLight*)0x0))) {
-		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSunHolderArray[iVar2].name);
+		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSunHolderArray[iVar3].name);
 		if (iVar1 == 0) {
 			pNewCinLight = pCinematic->pCineSunHolderArray + iVar3;
 		}
@@ -4108,8 +4108,8 @@ bool CBWitchCin::CreateSpotLight(edCinLightInterface** ppLightInterface, LIGHTS_
 	iVar3 = 0;
 
 	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
-	while ((iVar3 < pCinematic->count_0x224 && (pNewCinLight == (CBWCinSpotLight*)0x0))) {
-		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSpotHolderArray[iVar2].name);
+	while ((iVar3 < pCinematic->count_0x22c && (pNewCinLight == (CBWCinSpotLight*)0x0))) {
+		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSpotHolderArray[iVar3].name);
 		if (iVar1 == 0) {
 			pNewCinLight = pCinematic->pCineSpotHolderArray + iVar3;
 		}
@@ -4118,8 +4118,8 @@ bool CBWitchCin::CreateSpotLight(edCinLightInterface** ppLightInterface, LIGHTS_
 	}
 
 	if (pNewCinLight == (CBWCinSpotLight*)0x0) {
-		iVar2 = pCinematic->count_0x224;
-		pCinematic->count_0x224 = iVar2 + 1;
+		iVar2 = pCinematic->count_0x22c;
+		pCinematic->count_0x22c = iVar2 + 1;
 		pNewCinLight = pCinematic->pCineSpotHolderArray + iVar2;
 		strcpy(pNewCinLight->name, pTag->name);
 		pNewCinLight->light.referencedLightIndex = -1;
