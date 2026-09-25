@@ -1135,15 +1135,23 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 			fVar14 = fVar11 - fVar12 * fVar11;
 			fVar12 = fVar12 * fVar11;
 
-			fVar11 = sinf(fVar11);
+			// SLES_514.73, 0x0023f170..0x0023f278: interpolate adjacent table entries.
+			const auto tableSine = [](float angle) {
+				const float position = std::fabs((angle - 0x1.921fb6p+0f) * 0x1.45f306p+10f);
+				const float rounded = (position + 8388608.0f) - 8388608.0f;
+				const int index = static_cast<int>(rounded) & 0x1fff;
+				return edFCosinus[index] + (position - rounded) *
+					(edFCosinus[index + 1] - edFCosinus[index]);
+			};
+			fVar11 = tableSine(fVar11);
 
 			if (fVar11 < 1e-06f) {
 				pAnimMatrix->rowX = local_60;
 			}
 			else {
 				fVar11 = 1.0f / fVar11;
-				fVar13 = sinf(fVar14) * fVar11;
-				fVar11 = sinf(fVar12) * fVar11;
+				fVar13 = tableSine(fVar14) * fVar11;
+				fVar11 = tableSine(fVar12) * fVar11;
 
 				// 0.777459
 				// 0.223343

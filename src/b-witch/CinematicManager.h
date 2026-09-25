@@ -170,7 +170,46 @@ public:
 	undefined field_0x3b;
 };
 
-class CBWitchCin : public edCinGameInterface {
+class CBWCinSunLight : public edCinLightInterface
+{
+public:
+	virtual bool OnFrameDirected();
+	virtual bool Initialize();
+	virtual bool SetPos(float x, float y, float z);
+	virtual bool SetHeading(float x, float y, float z, float w);
+	virtual bool SetAmbient(float r, float g, float b);
+	virtual bool SetDiffuse(float r, float g, float b);
+	virtual bool SetFov(float fov);
+	virtual bool SetFallout(float fallout);
+	virtual bool Shutdown();
+
+	CLightSun light;
+	char name[32];
+
+	bool field_0xb0;
+};
+
+class CBWCinSpotLight : public edCinLightInterface
+{
+public:
+	virtual bool OnFrameDirected();
+	virtual bool Initialize();
+	virtual bool SetPos(float x, float y, float z);
+	virtual bool SetHeading(float x, float y, float z, float w);
+	virtual bool SetAmbient(float r, float g, float b);
+	virtual bool SetDiffuse(float r, float g, float b);
+	virtual bool SetFov(float fov);
+	virtual bool SetFallout(float fallout);
+	virtual bool Shutdown();
+
+	CLightSpot light;
+	char name[32];
+
+	bool field_0xc0;
+};
+
+class CBWitchCin : public edCinGameInterface
+{
 public:
 
 	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut);
@@ -191,6 +230,10 @@ public:
 
 	virtual bool GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubtitleInterface);
 	virtual bool ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*);
+
+	virtual bool CreateDirectionalLight(edCinLightInterface** ppLightInterface, LIGHTD_CREATIONtag* pTag);
+	virtual bool CreateSpotLight(edCinLightInterface** ppLightInterface, LIGHTS_CREATIONtag* pTag);
+	virtual bool ReleaseLight(edCinLightInterface* pLightInterface);
 
 	CBWCinSourceAudio BWCinSourceAudio_Obj;
 	CBWCinCam BWCinCam_Obj;
@@ -796,9 +839,9 @@ public:
 	int nbCinematicActors;
 
 	int count_0x224;
-	//struct CineSunHolder* pCineSunHolderArray;
+	CBWCinSunLight* pCineSunHolderArray;
 	int count_0x22c;
-	//struct CineSpotHolder* pCineSpotHolderArray;
+	CBWCinSpotLight* pCineSpotHolderArray;
 	CinFileContainer* fileInfoStart;
 	int cinFileCount;
 	CActor* pActor;

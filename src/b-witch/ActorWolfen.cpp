@@ -10255,7 +10255,6 @@ void CBehaviourTrackWeaponStand::Term()
 	pTVar1 = this->aSubObjs;
 	if (pTVar1 != (TrackSubObj*)0x0) {
 		if (pTVar1 != (TrackSubObj*)0x0) {
-			IMPLEMENTATION_GUARD_LOG(); // Diff from expected code.
 			delete[] this->aSubObjs;
 		}
 

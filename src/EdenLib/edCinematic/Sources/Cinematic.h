@@ -28,7 +28,10 @@ struct edCinCamInterface
 {
 	struct CAMERA_CREATIONtag
 	{
-		int a;
+		char name[32];
+		float fov;
+		edF32VECTOR4 position;
+		edF32VECTOR4 heading;
 	};
 
 	virtual bool Activate() = 0;
@@ -120,8 +123,42 @@ struct edCinActorInterface
 	virtual bool Shutdown() = 0;
 };
 
-struct edCinSceneryInterface {
+struct edCinSceneryInterface
+{
 
+};
+
+struct edCinLightInterface
+{
+	virtual bool OnFrameDirected() = 0;
+	virtual bool Initialize() = 0;
+	virtual bool SetPos(float x, float y, float z) = 0;
+	virtual bool SetHeading(float x, float y, float z, float w) = 0;
+	virtual bool SetAmbient(float r, float g, float b) = 0;
+	virtual bool SetDiffuse(float r, float g, float b) = 0;
+	virtual bool SetFov(float fov) = 0;
+	virtual bool SetFallout(float fallout) = 0;
+	virtual bool Shutdown() = 0;
+};
+
+struct LIGHTD_CREATIONtag
+{
+	char name[32];
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
+};
+
+struct LIGHTS_CREATIONtag
+{
+	char name[32];
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
+	float fov;
+	float fallout;
 };
 
 struct edCinGameInterface 
@@ -187,6 +224,10 @@ struct edCinGameInterface
 
 	virtual bool GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubtitleInterface) = 0;
 	virtual bool ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*) = 0;
+
+	virtual bool CreateDirectionalLight(edCinLightInterface** ppLightInterface, LIGHTD_CREATIONtag* pTag) = 0;
+	virtual bool CreateSpotLight(edCinLightInterface** ppLightInterface, LIGHTS_CREATIONtag* pTag) = 0;
+	virtual bool ReleaseLight(edCinLightInterface* pLightInterface) = 0;
 };
 
 struct edCinematicSourceInternal

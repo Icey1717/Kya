@@ -1139,12 +1139,12 @@ void _edQuatFromAngAxis(float t0, edF32VECTOR4* v0, edF32VECTOR3* v1)
 		v0->w = fVar2;
 	}
 	else {
-		fVar3 = sinf(t0 * 0.5f);
+		fVar3 = std::sin(t0 * 0.5f);
 		fVar3 = fVar3 / fVar4;
 		v0->x = v1->x * fVar3;
 		v0->y = v1->y * fVar3;
 		v0->z = v1->z * fVar3;
-		fVar3 = cosf(t0 * 0.5f);
+		fVar3 = std::cos(t0 * 0.5f);
 		v0->w = fVar3;
 	}
 
@@ -1896,12 +1896,12 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			local_40.w = gF32Vertex4Zero.w;
 		}
 		else {
-			fVar4 = sinf(fVar5 * 0.5f);
+			fVar4 = std::sin(fVar5 * 0.5f);
 			fVar4 = fVar4 / fVar6;
 			local_40.z = local_20.z * fVar4;
 			local_40.x = local_20.x * fVar4;
 			local_40.y = local_20.y * fVar4;
-			local_40.w = cosf(fVar5 * 0.5f);
+			local_40.w = std::cos(fVar5 * 0.5f);
 		}
 
 		fVar5 = param_1 * param_1 * fVar2 * -pConfig->damping * fVar2;
@@ -1930,12 +1930,12 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			local_50.w = gF32Vertex4Zero.w;
 		}
 		else {
-			fVar6 = sinf(fVar5 * 0.5f);
+			fVar6 = std::sin(fVar5 * 0.5f);
 			fVar6 = fVar6 / fVar2;
 			local_50.z = local_10.z * fVar6;
 			local_50.x = local_10.x * fVar6;
 			local_50.y = local_10.y * fVar6;
-			local_50.w = cosf(fVar5 * 0.5f);
+			local_50.w = std::cos(fVar5 * 0.5f);
 		}
 
 		edQuatMul(&eStack96, &local_40, &local_50);
@@ -1985,12 +1985,12 @@ bool S_OSCILLATING_QUAT::Update(float param_1, S_OSCILLATION_CONFIG* pConfig, ed
 			local_70 = gF32Vertex4Zero;
 		}
 		else {
-			fVar6 = sinf(fVar5 * param_1 * 0.5f);
+			fVar6 = std::sin(fVar5 * param_1 * 0.5f);
 			fVar6 = fVar6 / fVar2;
 			local_70.z = local_10.z * fVar6;
 			local_70.x = local_10.x * fVar6;
 			local_70.y = local_10.y * fVar6;
-			local_70.w = cosf(fVar5 * param_1 * 0.5f);
+			local_70.w = std::cos(fVar5 * param_1 * 0.5f);
 		}
 
 		edQuatMul(&this->quat, &this->quat, &local_70);

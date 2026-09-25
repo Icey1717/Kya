@@ -2,7 +2,7 @@
 #include <math.h>
 #include <cmath>
 
-extern const float edFCosinus[8192] = {
+extern const float edFCosinus[8193] = {
 #include "Ps2CosineTable.inc"
 };
 
@@ -158,12 +158,12 @@ void edQuatFromEuler(edF32VECTOR4* v0, float x, float y, float z)
 	float fVar6;
 
 	fVar6 = x / 2.0f;
-	fVar1 = cosf(fVar6);
-	fVar2 = cosf(y / 2.0f);
-	fVar3 = cosf(z / 2.0f);
-	fVar6 = sinf(fVar6);
-	fVar4 = sinf(y / 2.0f);
-	fVar5 = sinf(z / 2.0f);
+	fVar1 = std::cos(fVar6);
+	fVar2 = std::cos(y / 2.0f);
+	fVar3 = std::cos(z / 2.0f);
+	fVar6 = std::sin(fVar6);
+	fVar4 = std::sin(y / 2.0f);
+	fVar5 = std::sin(z / 2.0f);
 	v0->w = fVar6 * fVar4 * fVar5 + fVar1 * fVar2 * fVar3;
 	v0->x = fVar6 * fVar2 * fVar3 - fVar1 * fVar4 * fVar5;
 	v0->y = fVar5 * fVar6 * fVar2 + fVar3 * fVar1 * fVar4;
@@ -222,11 +222,13 @@ void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECT
 	}
 	else {
 		fVar2 = acosf(fVar2);
-		fVar3 = sinf(fVar2);
+		// SLES_514.73: jal sinf (0x00234ca0) at 0x0019417c, 0x0019419c,
+		// and 0x001941a8. These are library calls, not edFCosinus lookups.
+		fVar3 = std::sin(fVar2);
 		fVar3 = 1.0f / fVar3;
-		fVar4 = sinf(fVar2 - param_1 * fVar2);
+		fVar4 = std::sin(fVar2 - param_1 * fVar2);
 		fVar4 = fVar3 * fVar4;
-		fVar2 = sinf(param_1 * fVar2);
+		fVar2 = std::sin(param_1 * fVar2);
 		fVar3 = fVar3 * fVar2;
 
 		if (bVar1) {
@@ -772,7 +774,7 @@ float edFRndGauss(float param_1, float param_2)
 	fVar3 = (float)iVar1 / -2.147484e+09f;
 	iVar1 = rand();
 	fVar3 = logf(1.0f - fVar3);
-	fVar2 = cosf(FLOAT_004485a8 * ((float)iVar1 / 2.147484e+09f));
+	fVar2 = std::cos(FLOAT_004485a8 * ((float)iVar1 / 2.147484e+09f));
 	return param_1 + param_2 * sqrtf(fVar3 * -2.0f)* fVar2;
 }
 

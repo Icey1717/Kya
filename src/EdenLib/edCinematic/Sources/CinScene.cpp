@@ -34,31 +34,20 @@ struct edSceneCamera
 void edSceneCamera::Create(edCinGameInterface& pCinematic)
 {
 	edCinCamInterface::CAMERA_CREATIONtag tag;
-	char cameraName[32];
-	float local_30;
-	float local_20;
-	float local_1c;
-	float local_18;
-	undefined4 local_14;
-	float local_10;
-	float local_c;
-	float local_8;
-	float local_4;
 	CameraInfo* cameraInfoPtr;
 
 	cameraInfoPtr = this->pInternal;
-	//local_30 = (cameraInfoPtr->field_0x34).x;
-	//local_20 = (cameraInfoPtr->field_0x34).y;
-	//local_1c = (cameraInfoPtr->field_0x34).z;
-	//local_18 = (cameraInfoPtr->field_0x34).w;
-	//local_14 = 0x3f800000;
-	//local_10 = (cameraInfoPtr->field_0x44).x;
-	//local_c = (cameraInfoPtr->field_0x44).y;
-	//local_8 = (cameraInfoPtr->field_0x44).z;
-	//local_4 = (cameraInfoPtr->field_0x44).w;
-	strcpy(cameraName, cameraInfoPtr->name);
+	tag.fov = cameraInfoPtr->fov;
+	tag.position.x = (cameraInfoPtr->position).x;
+	tag.position.y = (cameraInfoPtr->position).y;
+	tag.position.z = (cameraInfoPtr->position).z;
+	tag.position.w = 1.0f;
 
-	CUTSCENE_LOG(LogLevel::Info, "edSceneCamera::Create {}", cameraName);
+	tag.heading = cameraInfoPtr->heading;
+
+	strcpy(tag.name, cameraInfoPtr->name);
+
+	CUTSCENE_LOG(LogLevel::Info, "edSceneCamera::Create {}", tag.name);
 
 	edCinCamInterface* cinCam;
 
@@ -1185,13 +1174,9 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 	char* filePath;
 	int seekIncrement;
 	CameraInfo* local_30;
-	//edSceneLight_VTable* local_2c;
 	CameraInfo* local_28;
-	//edSceneLight_VTable* local_24;
 	CameraInfo* cineCreature;
-	//edSceneLight_VTable* local_1c;
 	CameraInfo* local_18;
-	//edSceneLight_VTable* local_14;
 	CameraInfo* cachedReturn;
 	CameraInfo* cineCamera;
 	edResCollectionHeader* resPtr;
@@ -1263,6 +1248,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 					filePath = filePath + (byte)filePath[-1];
 				} while (seekCounter < (ulong)pcVar1);
 			}
+			
 			/* Load the rest of the cutscene assets */
 			seekIncrement = 0;
 			seekCounter = this->pTag->size;
@@ -1271,17 +1257,15 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 				do {
 					iVar1 = pItemStream->type;
 					if (iVar1 == -0x2725f4b1) {
-						CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-						//local_2c = &edSceneLight_VTable_00441cc0;
-						//local_30 = (CameraInfo*)pCVar3;
-						//(*(code*)edSceneLight_VTable_00441cc0.Create)(&local_30, loadObj);
+						edSceneLightSpot light = { (edSceneLightTag*)pItemStream };
+						edResCollection resCol = { resPtr };
+						light.Create(loadObj, resCol);
 					}
 					else {
 						if (iVar1 == -0x596394d9) {
-							CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-							//local_24 = &edSceneLight_VTable_00441cd0;
-							//local_28 = (CameraInfo*)pCVar3;
-							//(*(code*)edSceneLight_VTable_00441cd0.Create)(&local_28, loadObj);
+							edSceneLightDirectional light = { (edSceneLightTag*)pItemStream };
+							edResCollection resCol = { resPtr };
+							light.Create(loadObj, resCol);
 						}
 						else {
 							if (iVar1 == 0x551369d) {
@@ -1330,13 +1314,9 @@ bool edScene::Initialize()
 	int iVar3;
 	edSceneItemHeader* pItemStream;
 	edSceneCamera local_28;
-	//edSceneLight_VTable* local_24;
 	edSceneCamera local_20;
-	//edSceneLight_VTable* local_1c;
 	edSceneCamera local_18;
-	//edSceneLight_VTable* local_14;
 	edSceneCamera local_10;
-	//edSceneLight_VTable* local_c;
 	edSceneCamera local_4;
 
 	iVar3 = 0;
@@ -1346,17 +1326,13 @@ bool edScene::Initialize()
 		do {
 			iVar2 = pItemStream->type;
 			if (iVar2 == -0x2725f4b1) {
-				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-				//local_24 = &edSceneLight_VTable_00441cc0;
-				//local_28 = (CameraInfo*)pBuffer;
-				//edSceneLight::Initialize((edSceneLight*)&local_28);
+				edSceneLightSpot lightSpot = { (edSceneLightTag*)pItemStream };
+				lightSpot.Initialize();
 			}
 			else {
 				if (iVar2 == -0x596394d9) {
-					CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-					//local_1c = &edSceneLight_VTable_00441cd0;
-					//local_20 = (CameraInfo*)pBuffer;
-					//edSceneLight::Initialize((edSceneLight*)&local_20);
+					edSceneLightDirectional lightDirectional = { (edSceneLightTag*)pItemStream };
+					lightDirectional.Initialize();
 				}
 				else {
 					if (iVar2 == 0x395f05b1) {
@@ -1389,13 +1365,6 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 {
 	int iVar1;
 	edSceneItemHeader* pItemStream;
-	//edSceneLight local_28;
-	//edSceneLight_VTable* local_24;
-	//edSceneLight local_20;
-	//edSceneLight_VTable* local_1c;
-	//edSceneLight_VTable* local_14;
-	//edSceneActor sceSeekPtr;
-	//edSceneLight_VTable* local_c;
 	int elementType;
 	int numElements;
 
@@ -1407,15 +1376,13 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 		do {
 			elementType = pItemStream->type;
 			if (elementType == -0x2725f4b1) {
-				//local_24 = &edSceneLight_VTable_00441cc0;
-				//local_28 = (int)sceSeek;
-				//edSceneLight::Timeslice(currentPlayTime, &local_28);
+				edSceneLightSpot lightSpot = { (edSceneLightTag*)pItemStream };
+				lightSpot.Timeslice(currentPlayTime);
 			}
 			else {
 				if (elementType == -0x596394d9) {
-					//local_1c = &edSceneLight_VTable_00441cd0;
-					//local_20 = (int)sceSeek;
-					//edSceneLight::Timeslice(currentPlayTime, &local_20);
+					edSceneLightDirectional lightDirectional = { (edSceneLightTag*)pItemStream };
+					lightDirectional.Timeslice(currentPlayTime);
 				}
 				else {
 					if (elementType == 0x395f05b1) {
@@ -1459,17 +1426,13 @@ bool edScene::Shutdown()
 		do {
 			itemType = pItemStream->type;
 			if (itemType == -0x2725f4b1) {
-				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-				//local_24 = &edSceneLight_VTable_00441cc0;
-				//local_28 = peVar4;
-				//edSceneLight::Shutdown((int*)&local_28);
+				edSceneLightSpot lightSpot = { (edSceneLightTag*)pItemStream };
+				lightSpot.Shutdown();
 			}
 			else {
 				if (itemType == -0x596394d9) {
-					CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-					//local_1c = &edSceneLight_VTable_00441cd0;
-					//local_20 = peVar4;
-					//edSceneLight::Shutdown((int*)&local_20);
+					edSceneLightDirectional lightDirectional = { (edSceneLightTag*)pItemStream };
+					lightDirectional.Shutdown();
 				}
 				else {
 					if (itemType == 0x395f05b1) {
@@ -1511,17 +1474,13 @@ bool edScene::Destroy(edCinGameInterface& pInterface)
 		do {
 			itemType = pItemStream->type;
 			if (itemType == -0x2725f4b1) {
-				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-				//local_2c = &edSceneLight_VTable_00441cc0;
-				//local_30 = pItemStream;
-				//(*(code*)edSceneLight_VTable_00441cc0.Destroy)(&local_30, pInterface);
+				edSceneLightSpot lightSpot = { (edSceneLightTag*)pItemStream };
+				lightSpot.Destroy(pInterface);
 			}
 			else {
 				if (itemType == -0x596394d9) {
-					CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
-					//local_24 = &edSceneLight_VTable_00441cd0;
-					//local_28 = pItemStream;
-					//(*(code*)edSceneLight_VTable_00441cd0.Destroy)(&local_28, pInterface);
+					edSceneLightDirectional lightDirectional = { (edSceneLightTag*)pItemStream };
+					lightDirectional.Destroy(pInterface);
 				}
 				else {
 					if (itemType == 0x551369d) {
@@ -1554,6 +1513,7 @@ bool edScene::Destroy(edCinGameInterface& pInterface)
 	}
 	edResCollection resCol = { (edResCollectionHeader*)LOAD_POINTER(this->pTag->pCollection) };
 	resCol.FlushAllResources(pInterface);
+
 	return true;
 }
 
@@ -1584,6 +1544,7 @@ void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collec
 		creationTag.meshType = (collection.pData->aTags[pSceneryTag->meshOffset].flags & 0x80000000U) != 0;
 	}
 	loadObj.CreateScenery((edCinSceneryInterface**)&pSceneryTag->pInterface, &creationTag);
+
 	return;
 }
 
@@ -1591,5 +1552,117 @@ bool edSceneScenery::Destroy(edCinGameInterface& pInterface)
 {
 	const bool bSuccess = pInterface.ReleaseScenery((edCinSceneryInterface*)LOAD_POINTER(this->pTag->pInterface));
 	this->pTag->pInterface = 0x0;
+
 	return bSuccess;
+}
+
+void edSceneLight::Initialize()
+{
+	edCinLightInterface* pLightInterface = LOAD_POINTER_CAST(edCinLightInterface*, this->pTag->pLightInterface);
+	pLightInterface->Initialize();
+
+	return;
+}
+
+bool edSceneLight::Timeslice(float currentPlayTime)
+{
+	IMPLEMENTATION_GUARD();
+	return false;
+}
+
+void edSceneLight::Shutdown()
+{
+	LOAD_POINTER_CAST(edCinLightInterface*, this->pTag->pLightInterface)->Shutdown();
+
+	return;
+}
+
+bool edSceneLightDirectional::Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer)
+{
+	LIGHTD_CREATIONtag creationTag;
+	edSceneLightTag* pLightTag;
+
+	pLightTag = this->pTag;
+
+	creationTag.field_0x20.x = (pLightTag->field_0x34).x;
+	creationTag.field_0x20.y = (pLightTag->field_0x34).y;
+	creationTag.field_0x20.z = (pLightTag->field_0x34).z;
+	creationTag.field_0x20.w = 1.0f;
+
+	creationTag.field_0x30.x = (pLightTag->field_0x40).x;
+	creationTag.field_0x30.y = (pLightTag->field_0x40).y;
+	creationTag.field_0x30.z = (pLightTag->field_0x40).z;
+	creationTag.field_0x30.w = (pLightTag->field_0x40).w;
+
+	creationTag.field_0x40.x = (pLightTag->field_0x50).x;
+	creationTag.field_0x40.y = (pLightTag->field_0x50).y;
+	creationTag.field_0x40.z = (pLightTag->field_0x50).z;
+	creationTag.field_0x40.w = 0.0f;
+
+	creationTag.field_0x50.x = (pLightTag->field_0x5c).x;
+	creationTag.field_0x50.y = (pLightTag->field_0x5c).y;
+	creationTag.field_0x50.z = (pLightTag->field_0x5c).z;
+	creationTag.field_0x50.w = 0.0f;
+
+	strcpy(creationTag.name, pLightTag->name);
+
+	bool bSuccess = loadObj.CreateDirectionalLight(reinterpret_cast<edCinLightInterface**>(&pLightTag->pLightInterface), &creationTag);
+	return bSuccess;
+}
+
+bool edSceneLightDirectional::Destroy(edCinGameInterface& pInterface)
+{
+	bool bResult;
+
+	bResult = pInterface.ReleaseLight(LOAD_POINTER_CAST(edCinLightInterface*, this->pTag->pLightInterface));
+	this->pTag->pLightInterface = 0x0;
+
+	return bResult;
+}
+
+bool edSceneLightSpot::Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer)
+{
+	LIGHTS_CREATIONtag creationTag;
+	edSceneLightTag* pLightTag;
+
+	pLightTag = this->pTag;
+
+	creationTag.field_0x20.x = (pLightTag->field_0x34).x;
+	creationTag.field_0x20.y = (pLightTag->field_0x34).y;
+	creationTag.field_0x20.z = (pLightTag->field_0x34).z;
+	creationTag.field_0x20.w = 1.0f;
+
+	creationTag.field_0x30.x = (pLightTag->field_0x40).x;
+	creationTag.field_0x30.y = (pLightTag->field_0x40).y;
+	creationTag.field_0x30.z = (pLightTag->field_0x40).z;
+	creationTag.field_0x30.w = (pLightTag->field_0x40).w;
+
+	creationTag.field_0x40.x = (pLightTag->field_0x50).x;
+	creationTag.field_0x40.y = (pLightTag->field_0x50).y;
+	creationTag.field_0x40.z = (pLightTag->field_0x50).z;
+	creationTag.field_0x40.w = 0.0f;
+
+	creationTag.field_0x50.x = (pLightTag->field_0x5c).x;
+	creationTag.field_0x50.y = (pLightTag->field_0x5c).y;
+	creationTag.field_0x50.z = (pLightTag->field_0x5c).z;
+	creationTag.field_0x50.w = 0.0f;
+
+	creationTag.fov = pLightTag->fov;
+	creationTag.fallout = pLightTag->fallout;
+
+	strcpy(creationTag.name, pLightTag->name);
+
+	bool bSuccess = loadObj.CreateSpotLight(reinterpret_cast<edCinLightInterface**>(&pLightTag->pLightInterface), &creationTag);
+
+	return bSuccess;
+}
+
+bool edSceneLightSpot::Destroy(edCinGameInterface& pInterface)
+{
+	bool bResult;
+
+	bResult = pInterface.ReleaseLight(LOAD_POINTER_CAST(edCinLightInterface*, this->pTag->pLightInterface));
+	this->pTag->pLightInterface = 0x0;
+
+	return bResult;
 }

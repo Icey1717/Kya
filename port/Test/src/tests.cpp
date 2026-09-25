@@ -27,6 +27,23 @@
 #include "ed3D.h"
 #include "ed3D/ed3DSceneManager.h"
 
+TEST(QuaternionInterpolation, NearbyRotationsPreserveUnitLength)
+{
+	for (float angle : { 0.002f, 0.003f, 0.005f, 0.01f }) {
+		for (float alpha : { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f }) {
+			for (float sign : { -1.0f, 1.0f }) {
+				edF32VECTOR4 current = { std::sin(0.7f), 0.0f, 0.0f, std::cos(0.7f) };
+				edF32VECTOR4 target = { sign * std::sin(0.7f + angle), 0.0f, 0.0f, sign * std::cos(0.7f + angle) };
+				edF32VECTOR4 result;
+				edQuatShortestSLERPAccurate(alpha, &result, &current, &target);
+				EXPECT_NEAR(result.x, std::sin(0.7f + alpha * angle), 1e-5f);
+				EXPECT_NEAR(result.w, std::cos(0.7f + alpha * angle), 1e-5f);
+				EXPECT_NEAR(result.x * result.x + result.y * result.y + result.z * result.z + result.w * result.w, 1.0f, 1e-5f);
+			}
+		}
+	}
+}
+
 // The function to be tested
 int Add(int a, int b) {
 	return a + b;

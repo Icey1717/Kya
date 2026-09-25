@@ -594,9 +594,9 @@ void CCinematic::InitInternalData()
 	this->playingSounds_0x2c0 = 0;
 	this->field_0x2c4 = 0;
 	this->field_0x2c8 = -1.0f;
-	//this->pCineSunHolderArray = (CineSunHolder*)0x0;
+	this->pCineSunHolderArray = (CBWCinSunLight*)0x0;
 	this->count_0x224 = 0;
-	//this->pCineSpotHolderArray = (CineSpotHolder*)0x0;
+	this->pCineSpotHolderArray = (CBWCinSpotLight*)0x0;
 	this->count_0x22c = 0;
 	this->numberOfParticles = 0;
 	this->nbInstalledParticles = 0;
@@ -643,8 +643,8 @@ void CCinematic::SetupInternalData()
 	int* piVar2;
 	CActorCinematic* pCVar3;
 	CActorCinematic** ppCVar4;
-	//BWCinSunLight* pBVar5;
-	//BWCinSpotLight* pBVar6;
+	CBWCinSunLight* pBVar5;
+	CBWCinSpotLight* pBVar6;
 	void* pvVar7;
 	int nbTotalRefs;
 
@@ -667,26 +667,21 @@ void CCinematic::SetupInternalData()
 		this->ppActorCinematics = new CActorCinematic*[nbTotalRefs];
 	}
 
-	//uVar1 = this->count_0x20;
-	//if (uVar1 == 0) {
-	//	this->pCineSunHolderArray = (BWCinSunLight*)0x0;
-	//}
-	//else {
-	//	piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0xc0 + 0x10));
-	//	pBVar5 = (BWCinSunLight*)
-	//		__construct_new_array(piVar2, BWCinSunLight::BWCinSunLight, BWCinSunLight::~BWCinSunLight, 0xc0, uVar1);
-	//	this->pCineSunHolderArray = pBVar5;
-	//}
-	//uVar1 = this->field_0x24;
-	//if (uVar1 == 0) {
-	//	this->pCineSpotHolderArray = (BWCinSpotLight*)0x0;
-	//}
-	//else {
-	//	piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0xd0 + 0x10));
-	//	pBVar6 = (BWCinSpotLight*)
-	//		__construct_new_array(piVar2, BWCinSpotLight::BWCinSpotLight, BWCinSpotLight::~BWCinSpotLight, 0xd0, uVar1);
-	//	this->pCineSpotHolderArray = pBVar6;
-	//}
+	uint uVar1 = this->count_0x20;
+	if (uVar1 == 0) {
+		this->pCineSunHolderArray = (CBWCinSunLight*)0x0;
+	}
+	else {
+		this->pCineSunHolderArray = new CBWCinSunLight[uVar1];
+	}
+
+	uVar1 = this->field_0x24;
+	if (uVar1 == 0) {
+		this->pCineSpotHolderArray = (CBWCinSpotLight*)0x0;
+	}
+	else {
+		this->pCineSpotHolderArray = new CBWCinSpotLight[uVar1];
+	}
 
 	if (this->field_0x28 == 0) {
 		this->particleSectionStart = (ParticleEntry*)0x0;
@@ -2440,10 +2435,10 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	CCameraManager* pCVar4;
 	CCinematicManager* pCVar5;
 	CActorManager* pActorManager;
-	//CLightManager* pCVar6;
+	CLightManager* pLightManager;
 	CBehaviourCinematic* cutsceneSubSubInfoObj;
-	//BWCinSunLight* pBVar7;
-	//BWCinSpotLight* pBVar8;
+	CBWCinSunLight* pCurSunLight;
+	CBWCinSpotLight* pCurSpotLight;
 	undefined8 uVar9;
 	int iVar10;
 	int i;
@@ -2469,16 +2464,16 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 		(cutsceneSubSubInfoObj->cinActor).nextPos = cutsceneSubInfoObj->currentLocation;
 	}
 
-	//pBVar7 = this->pCineSunHolderArray;
-	//for (i = 0; i < this->count_0x224; i = i + 1) {
-	//	*(undefined*)&pBVar7->field_0xb0 = 0;
-	//	pBVar7 = pBVar7 + 1;
-	//}
-	//pBVar8 = this->pCineSpotHolderArray;
-	//for (i = 0; i < this->count_0x22c; i = i + 1) {
-	//	*(undefined*)&pBVar8->field_0xc0 = 0;
-	//	pBVar8 = pBVar8 + 1;
-	//}
+	pCurSunLight = this->pCineSunHolderArray;
+	for (i = 0; i < this->count_0x224; i = i + 1) {
+		pCurSunLight->field_0xb0 = false;
+		pCurSunLight = pCurSunLight + 1;
+	}
+	pCurSpotLight = this->pCineSpotHolderArray;
+	for (i = 0; i < this->count_0x22c; i = i + 1) {
+		pCurSpotLight->field_0xc0 = false;
+		pCurSpotLight = pCurSpotLight + 1;
+	}
 
 	for (i = 0; i < this->nbInstalledParticles; i = i + 1) {
 		this->buffer_0x2e4[i].field_0xc = 0;
@@ -2515,41 +2510,46 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 		CScene::ptable.g_ActorManager_004516a4->UpdateLinkedActors();
 	}
 
-	//pCVar6 = CScene::ptable.g_LightManager_004516b0;
-	//pBVar7 = this->pCineSunHolderArray;
-	//for (i = 0; i < this->count_0x224; i = i + 1) {
-	//	if (*(char*)&pBVar7->field_0xb0 == '\0') {
-	//		if ((*(byte*)((int)&(pBVar7->lightSun).light.colour_0x4 + 3) & 2) != 0) {
-	//			(*(code*)((pBVar7->lightSun).light.pVTable)->field_0x1c)();
-	//		}
-	//	}
-	//	else {
-	//		if ((pBVar7->lightSun).light.field_0xa == -1) {
-	//			LightManager::Reference(pCVar6, (Light*)&pBVar7->lightSun, 0xff, 0, 0, -1);
-	//		}
-	//		if ((*(byte*)((int)&(pBVar7->lightSun).light.colour_0x4 + 3) & 2) == 0) {
-	//			(*(code*)((pBVar7->lightSun).light.pVTable)->field_0x18)();
-	//		}
-	//	}
-	//	pBVar7 = pBVar7 + 1;
-	//}
-	//pBVar8 = this->pCineSpotHolderArray;
-	//for (i = 0; iVar13 = 0, i < this->count_0x22c; i = i + 1) {
-	//	if (*(char*)&pBVar8->field_0xc0 == '\0') {
-	//		if ((*(byte*)((int)&(pBVar8->lightSpot).light.colour_0x4 + 3) & 2) != 0) {
-	//			(*(code*)((pBVar8->lightSpot).light.pVTable)->field_0x1c)();
-	//		}
-	//	}
-	//	else {
-	//		if ((pBVar8->lightSpot).light.field_0xa == -1) {
-	//			LightManager::Reference(pCVar6, (Light*)&pBVar8->lightSpot, 0xff, 0, 0, -1);
-	//		}
-	//		if ((*(byte*)((int)&(pBVar8->lightSpot).light.colour_0x4 + 3) & 2) == 0) {
-	//			(*(code*)((pBVar8->lightSpot).light.pVTable)->field_0x18)();
-	//		}
-	//	}
-	//	pBVar8 = pBVar8 + 1;
-	//}
+	pLightManager = CScene::ptable.g_LightManager_004516b0;
+	pCurSunLight = this->pCineSunHolderArray;
+	for (i = 0; i < this->count_0x224; i = i + 1) {
+		if (pCurSunLight->field_0xb0 == false) {
+			if ((pCurSunLight->light.colour_0x4.a & 2) != 0) {
+				pCurSunLight->light.Inactivate();
+			}
+		}
+		else {
+			if (pCurSunLight->light.referencedLightIndex == -1) {
+				pLightManager->Reference(&pCurSunLight->light, 0xff, 0, 0, -1);
+			}
+
+			if ((pCurSunLight->light.colour_0x4.a & 2) == 0) {
+				pCurSunLight->light.Activate();
+			}
+		}
+
+		pCurSunLight = pCurSunLight + 1;
+	}
+
+	pCurSpotLight = this->pCineSpotHolderArray;
+	for (i = 0; iVar13 = 0, i < this->count_0x22c; i = i + 1) {
+		if (*(char*)&pCurSpotLight->field_0xc0 == false) {
+			if ((pCurSpotLight->light.colour_0x4.a & 2) != 0) {
+				pCurSpotLight->light.Inactivate();
+			}
+		}
+		else {
+			if (pCurSpotLight->light.referencedLightIndex == -1) {
+				pLightManager->Reference(&pCurSpotLight->light, 0xff, 0, 0, -1);
+			}
+
+			if ((pCurSpotLight->light.colour_0x4.a & 2) == 0) {
+				pCurSpotLight->light.Activate();
+			}
+		}
+
+		pCurSpotLight = pCurSpotLight + 1;
+	}
 
 	for (iVar10 = 0; pCVar5 = g_CinematicManager_0048efc, iVar10 < this->nbInstalledParticles; iVar10 = iVar10 + 1) {
 		ParticleInstance* pParticleInstance = this->buffer_0x2e4 + iVar10;
@@ -2646,14 +2646,11 @@ void CCinematic::IncrementCutsceneDelta()
 {
 	Timer* timeController;
 	int iVar1;
-	//BWCinSourceAudio* pBVar2;
 	float fVar3;
 	float deltaTime;
 
-	/* This is true for cutscenes */
 	if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) == 0) {
 		timeController = Timer::GetTimer();
-		/* Returns 0.2 for cutscenes */
 		deltaTime = timeController->cutsceneDeltaTime;
 	}
 	else {
@@ -3105,19 +3102,18 @@ void CCinematic::FUN_001cbe40()
 		this->nbActorRefs = 0;
 	}
 
-	//IMPLEMENTATION_GUARD_LOG();
 
-	//if (this->pCineSunHolderArray != (BWCinSunLight*)0x0) {
-	//	__destroy_new_array((undefined*)this->pCineSunHolderArray, BWCinSunLight::~BWCinSunLight);
-	//	this->pCineSunHolderArray = (BWCinSunLight*)0x0;
-	//	this->count_0x224 = 0;
-	//}
-	//
-	//if (this->pCineSpotHolderArray != (BWCinSpotLight*)0x0) {
-	//	__destroy_new_array((undefined*)this->pCineSpotHolderArray, BWCinSpotLight::~BWCinSpotLight);
-	//	this->pCineSpotHolderArray = (BWCinSpotLight*)0x0;
-	//	this->count_0x22c = 0;
-	//}
+	if (this->pCineSunHolderArray != (CBWCinSunLight*)0x0) {
+		delete[] this->pCineSunHolderArray;
+		this->pCineSunHolderArray = (CBWCinSunLight*)0x0;
+		this->count_0x224 = 0;
+	}
+	
+	if (this->pCineSpotHolderArray != (CBWCinSpotLight*)0x0) {
+		delete[] this->pCineSpotHolderArray;
+		this->pCineSpotHolderArray = (CBWCinSpotLight*)0x0;
+		this->count_0x22c = 0;
+	}
 	
 	if (this->buffer_0x2e4 != (ParticleInstance*)0x0) {
 		delete[] this->buffer_0x2e4;
@@ -4035,6 +4031,140 @@ bool CBWitchCin::GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubti
 bool CBWitchCin::ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*)
 {
 	return false;
+}
+
+bool CBWitchCin::CreateDirectionalLight(edCinLightInterface** ppLightInterface, LIGHTD_CREATIONtag* pTag)
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	CBWCinSunLight* pNewCinLight;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	edF32MATRIX4 auStack64;
+	CCinematic* pCinematic;
+
+	pNewCinLight = (CBWCinSunLight*)0x0;
+	iVar3 = 0;
+
+	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
+	while ((iVar3 < pCinematic->count_0x224 && (pNewCinLight == (CBWCinSunLight*)0x0))) {
+		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSunHolderArray[iVar2].name);
+		if (iVar1 == 0) {
+			pNewCinLight = pCinematic->pCineSunHolderArray + iVar3;
+		}
+
+		iVar3 = iVar3 + 1;
+	}
+
+	if (pNewCinLight == (CBWCinSunLight*)0x0) {
+		iVar2 = pCinematic->count_0x224;
+		pCinematic->count_0x224 = iVar2 + 1;
+		pNewCinLight = pCinematic->pCineSunHolderArray + iVar2;
+		strcpy(pNewCinLight->name, pTag->name);
+		pNewCinLight->light.referencedLightIndex = -1;
+		pNewCinLight->light.field_0x8 = 0;
+
+		pNewCinLight->light.colorModel.field_0x20 = gF32Vector4Zero;
+		pNewCinLight->light.colorModel.color = (pNewCinLight->light).colorModel.field_0x20;
+		pNewCinLight->light.colorModel.ambientColor = (pNewCinLight->light).colorModel.color;
+		
+		pNewCinLight->light.baseShape.position = gF32Vector4Zero;
+
+		pNewCinLight->light.baseShape.fallout1 = 1.0f;
+		pNewCinLight->light.baseShape.fallout0 = 1.0f;
+
+		pNewCinLight->light.baseShape.position = pTag->field_0x20;
+
+		edF32Vector4ScaleHard(255.0f, &pNewCinLight->light.colorModel.ambientColor, &pTag->field_0x40);
+		edF32Vector4ScaleHard(255.0f, &pNewCinLight->light.colorModel.color, &pTag->field_0x50);
+		pNewCinLight->light.colorModel.ambientColor.w = 255.0f;
+		pNewCinLight->light.colorModel.color.w = 255.0f;
+		edQuatToMatrix4Hard(&pTag->field_0x30, &auStack64);
+		edF32Vector4GetNegHard(&pNewCinLight->light.baseShape.direction, &auStack64.rowY);
+		pNewCinLight->light.baseShape.direction.w = 0.0f;
+		pNewCinLight->light.Inactivate();
+	}
+
+	*reinterpret_cast<int*>(ppLightInterface) = STORE_POINTER(pNewCinLight);
+
+	return true;
+}
+
+bool CBWitchCin::CreateSpotLight(edCinLightInterface** ppLightInterface, LIGHTS_CREATIONtag* pTag)
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	CBWCinSpotLight* pNewCinLight;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	edF32MATRIX4 auStack64;
+	CCinematic* pCinematic;
+
+	pNewCinLight = (CBWCinSpotLight*)0x0;
+	iVar3 = 0;
+
+	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
+	while ((iVar3 < pCinematic->count_0x224 && (pNewCinLight == (CBWCinSpotLight*)0x0))) {
+		iVar1 = edStrICmp(pTag->name, pCinematic->pCineSpotHolderArray[iVar2].name);
+		if (iVar1 == 0) {
+			pNewCinLight = pCinematic->pCineSpotHolderArray + iVar3;
+		}
+
+		iVar3 = iVar3 + 1;
+	}
+
+	if (pNewCinLight == (CBWCinSpotLight*)0x0) {
+		iVar2 = pCinematic->count_0x224;
+		pCinematic->count_0x224 = iVar2 + 1;
+		pNewCinLight = pCinematic->pCineSpotHolderArray + iVar2;
+		strcpy(pNewCinLight->name, pTag->name);
+		pNewCinLight->light.referencedLightIndex = -1;
+		pNewCinLight->light.field_0x8 = 0;
+
+		pNewCinLight->light.colorModel.field_0x20 = gF32Vector4Zero;
+		pNewCinLight->light.colorModel.color = (pNewCinLight->light).colorModel.field_0x20;
+		pNewCinLight->light.colorModel.ambientColor = (pNewCinLight->light).colorModel.color;
+
+		pNewCinLight->light.baseShape.position = gF32Vector4Zero;
+
+		pNewCinLight->light.baseShape.fallout1 = 1.0f;
+		pNewCinLight->light.baseShape.fallout0 = 1.0f;
+
+		pNewCinLight->light.baseShape.direction = gF32Vector4Zero;
+		pNewCinLight->light.baseShape.fov1 = 0.0f;
+		pNewCinLight->light.baseShape.fov0 = 0.0f;
+
+		pNewCinLight->light.baseShape.position = pTag->field_0x20;
+
+		edF32Vector4ScaleHard(255.0f, &pNewCinLight->light.colorModel.ambientColor, &pTag->field_0x40);
+		edF32Vector4ScaleHard(255.0f, &pNewCinLight->light.colorModel.color, &pTag->field_0x50);
+		pNewCinLight->light.colorModel.ambientColor.w = 255.0f;
+		pNewCinLight->light.colorModel.color.w = 255.0f;
+
+		pNewCinLight->light.baseShape.fov1 = cosf(pTag->fov);
+		pNewCinLight->light.baseShape.fov0 = cosf(pTag->fov);
+
+		pNewCinLight->light.baseShape.fallout1 = pTag->fallout;
+		pNewCinLight->light.baseShape.fallout0 = pTag->fallout;
+
+		edQuatToMatrix4Hard(&pTag->field_0x30, &auStack64);
+		edF32Vector4GetNegHard(&pNewCinLight->light.baseShape.direction, &auStack64.rowY);
+		pNewCinLight->light.baseShape.direction.w = 0.0f;
+		pNewCinLight->light.Inactivate();
+	}
+
+	*reinterpret_cast<int*>(ppLightInterface) = STORE_POINTER(pNewCinLight);
+
+	return true;
+}
+
+bool CBWitchCin::ReleaseLight(edCinLightInterface* pLightInterface)
+{
+    return true;
 }
 
 char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut)
@@ -6831,4 +6961,190 @@ void S_STREAM_NTF_TARGET_SWITCH_EX_LIST::Reset()
 	}
 
 	return;
+}
+
+bool CBWCinSunLight::OnFrameDirected()
+{
+	if (g_CinematicManager_0048efc->pCurCinematic->state != CS_Interpolate) {
+		this->field_0xb0 = true;
+	}
+
+	return;
+}
+
+bool CBWCinSunLight::Initialize()
+{
+	return true;
+}
+
+bool CBWCinSunLight::SetPos(float x, float y, float z)
+{
+	edF32VECTOR4* pPosition = this->light.GetPosition();
+
+	pPosition->x = x;
+	pPosition->y = y;
+	pPosition->z = z;
+	pPosition->w = 1.0f;
+
+	edF32Matrix4MulF32Vector4Hard(pPosition, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, pPosition);
+
+	return true;
+}
+
+bool CBWCinSunLight::SetHeading(float x, float y, float z, float w)
+{
+	edF32MATRIX4 m0;
+	edF32VECTOR4 newHeading;
+
+	newHeading.x = x;
+	newHeading.y = y;
+	newHeading.z = z;
+	newHeading.w = w;
+
+	edQuatToMatrix4Hard(&newHeading, &m0);
+	edF32Matrix4MulF32Matrix4Hard(&m0, &m0, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120);
+	edF32Vector4GetNegHard(&(this->light).baseShape.direction, &m0.rowY);
+
+	(this->light).baseShape.direction.w = 0.0f;
+
+	return true;
+}
+
+bool CBWCinSunLight::SetAmbient(float r, float g, float b)
+{
+	(this->light).colorModel.ambientColor.x = r * 255.0f;
+	(this->light).colorModel.ambientColor.y = g * 255.0f;
+	(this->light).colorModel.ambientColor.z = b * 255.0f;
+	(this->light).colorModel.ambientColor.w = 255.0f;
+
+	return true;
+}
+
+bool CBWCinSunLight::SetDiffuse(float r, float g, float b)
+{
+	this->light.colorModel.color.x = r * 255.0f;
+	this->light.colorModel.color.y = g * 255.0f;
+	this->light.colorModel.color.z = b * 255.0f;
+	this->light.colorModel.color.w = 255.0f;
+
+	return true;
+}
+
+bool CBWCinSunLight::SetFov(float fov)
+{
+	return true;
+}
+
+bool CBWCinSunLight::SetFallout(float fallout)
+{
+	return true;
+}
+
+bool CBWCinSunLight::Shutdown()
+{
+	if ((this->light.colour_0x4.a & 2) != 0) {
+		this->light.Inactivate();
+	}
+
+	if (this->light.referencedLightIndex != -1) {
+		CScene::ptable.g_LightManager_004516b0->CinematicLightShutdown(&this->light);
+	}
+
+	return true;
+}
+
+bool CBWCinSpotLight::OnFrameDirected()
+{
+	if (g_CinematicManager_0048efc->pCurCinematic->state != CS_Interpolate) {
+		this->field_0xc0 = true;
+	}
+
+	return;
+}
+
+bool CBWCinSpotLight::Initialize()
+{
+	return true;
+}
+
+bool CBWCinSpotLight::SetPos(float x, float y, float z)
+{
+	edF32VECTOR4* pPosition = this->light.GetPosition();
+
+	pPosition->x = x;
+	pPosition->y = y;
+	pPosition->z = z;
+	pPosition->w = 1.0f;
+
+	edF32Matrix4MulF32Vector4Hard(pPosition, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, pPosition);
+
+	return true;
+}
+
+bool CBWCinSpotLight::SetHeading(float x, float y, float z, float w)
+{
+	edF32MATRIX4 m0;
+	edF32VECTOR4 newHeading;
+
+	newHeading.x = x;
+	newHeading.y = y;
+	newHeading.z = z;
+	newHeading.w = w;
+
+	edQuatToMatrix4Hard(&newHeading, &m0);
+	edF32Matrix4MulF32Matrix4Hard(&m0, &m0, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120);
+	edF32Vector4GetNegHard(&(this->light).baseShape.direction, &m0.rowY);
+
+	(this->light).baseShape.direction.w = 0.0f;
+
+	return true;
+}
+
+bool CBWCinSpotLight::SetAmbient(float r, float g, float b)
+{
+	(this->light).colorModel.ambientColor.x = r * 255.0f;
+	(this->light).colorModel.ambientColor.y = g * 255.0f;
+	(this->light).colorModel.ambientColor.z = b * 255.0f;
+	(this->light).colorModel.ambientColor.w = 255.0f;
+
+	return true;
+}
+
+bool CBWCinSpotLight::SetDiffuse(float r, float g, float b)
+{
+	this->light.colorModel.color.x = r * 255.0f;
+	this->light.colorModel.color.y = g * 255.0f;
+	this->light.colorModel.color.z = b * 255.0f;
+	this->light.colorModel.color.w = 255.0f;
+
+	return true;
+}
+
+bool CBWCinSpotLight::SetFov(float fov)
+{
+	(this->light).baseShape.fov0 = cosf(fov);
+	(this->light).baseShape.fov1 = cosf(fov);
+
+	return true;
+}
+
+bool CBWCinSpotLight::SetFallout(float fallout)
+{
+	(this->light).baseShape.fallout0 = fallout;
+	(this->light).baseShape.fallout1 = fallout;
+
+	return true;
+}
+
+bool CBWCinSpotLight::Shutdown()
+{
+	if (((this->light).colour_0x4.a & 2) != 0) {
+		this->light.Inactivate();
+	}
+
+	if ((this->light).referencedLightIndex != -1) {
+		CScene::ptable.g_LightManager_004516b0->CinematicLightShutdown(&this->light);
+	}
+
+	return true;
 }

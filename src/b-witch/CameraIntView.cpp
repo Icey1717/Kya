@@ -35,8 +35,8 @@ void AccurateMatrix4RotateY(edF32MATRIX4* param_1, edF32MATRIX4* param_2, float 
 {
 	edF32MATRIX4 local_40;
 
-	local_40.aa = cosf(param_3);
-	local_40.ca = sinf(param_3);
+	local_40.aa = std::cos(param_3);
+	local_40.ca = std::sin(param_3);
 	local_40.ac = -local_40.ca;
 	local_40.bb = 1.0f;
 	local_40.dd = 1.0f;
@@ -60,8 +60,8 @@ void AccurateMatrix4RotateX(edF32MATRIX4* param_1, edF32MATRIX4* param_2, float 
 {
 	edF32MATRIX4 local_40;
 
-	local_40.bb = cosf(param_3);
-	local_40.bc = sinf(param_3);
+	local_40.bb = std::cos(param_3);
+	local_40.bc = std::sin(param_3);
 	local_40.cb = -local_40.bc;
 	local_40.aa = 1.0f;
 	local_40.dd = 1.0f;

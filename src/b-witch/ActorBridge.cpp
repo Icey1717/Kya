@@ -153,16 +153,16 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 	iVar12 = 5;
 	do {
-		fVar19 = sinf(fVar26);
+		fVar19 = std::sin(fVar26);
 		fVar19 = fVar19 - fVar18 * fVar26;
-		fVar20 = cosf(fVar26);
+		fVar20 = std::cos(fVar26);
 		bVar1 = 0 < iVar12;
 		fVar26 = fVar26 - fVar19 / (fVar20 - fVar18);
 		iVar12 = iVar12 + -1;
 	} while (bVar1);
 
 	fVar26 = fVar26 + fVar26;
-	fVar18 = cosf(fVar26 / 2.0f);
+	fVar18 = std::cos(fVar26 / 2.0f);
 	local_30.y = local_30.y + (fVar25 / fVar26) * fVar18;
 	iVar12 = this->altStepCount;
 	fVar19 = 0.0f;
@@ -180,8 +180,8 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 	iVar15 = 0;
 	if (0 < this->altStepCount) {
 		do {
-			fVar20 = cosf(fVar19);
-			fVar21 = sinf(fVar19);
+			fVar20 = std::cos(fVar19);
+			fVar21 = std::sin(fVar19);
 			local_50.w = gF32Vector4Zero.w;
 			local_50.x = local_40.x;
 			local_50.y = local_40.y * fVar20 + local_40.z * fVar21;

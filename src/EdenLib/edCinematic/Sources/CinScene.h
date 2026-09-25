@@ -7,7 +7,8 @@ struct edCinGameInterface;
 struct edResCollection;
 
 PACK(
-	struct CineCreatureObject {
+struct CineCreatureObject
+{
 	int field_0x0;
 	int trackDataOffset;
 	undefined field_0x8;
@@ -132,7 +133,8 @@ PACK(
 });
 
 PACK(
-struct edSceneSceneryTag {
+struct edSceneSceneryTag
+{
 	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;
@@ -159,14 +161,73 @@ struct edSceneSceneryTag {
 	strd_ptr(edCinSceneryInterface*) pInterface;
 });
 
-struct edSceneScenery {
+struct edSceneScenery
+{
 	edSceneSceneryTag* pTag;
 	void Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer);
 	bool Destroy(edCinGameInterface& pInterface);
 };
 
+struct edSceneLightTag
+{
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	undefined field_0x10;
+	undefined field_0x11;
+	undefined field_0x12;
+	undefined field_0x13;
+	char name[32];
+	edF32VECTOR3 field_0x34;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR3 field_0x50;
+	edF32VECTOR3 field_0x5c;
+	strd_ptr(edCinLightInterface*) pLightInterface;
+	float fov;
+	float fallout;
+};
+
+struct edSceneLight
+{
+	void Initialize();
+	bool Timeslice(float currentPlayTime);
+	void Shutdown();
+
+	edSceneLightTag* pTag;
+};
+
+struct edSceneLightDirectional : public edSceneLight
+{
+	edSceneLightDirectional(edSceneLightTag* pTag) : edSceneLight{ pTag } {}
+
+	virtual bool Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer);
+	virtual bool Destroy(edCinGameInterface& pInterface);
+};
+
+struct edSceneLightSpot : public edSceneLight
+{
+	edSceneLightSpot(edSceneLightTag* pTag) : edSceneLight{ pTag } {}
+
+	virtual bool Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer);
+	virtual bool Destroy(edCinGameInterface& pInterface);
+};
+
 PACK(
-	struct edAnimatedPropertyTag {
+struct edAnimatedPropertyTag
+{
 	short propType;
 	undefined field_0x2;
 	undefined field_0x3;
@@ -174,7 +235,8 @@ PACK(
 	uint type;
 });
 
-struct edAnimatedProperty {
+struct edAnimatedProperty
+{
 	edAnimatedProperty() 
 		: pData((edAnimatedPropertyTag*)0x0)
 	{

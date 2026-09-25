@@ -1,12 +1,14 @@
 #ifndef KYA_PS2_TRIG_H
 #define KYA_PS2_TRIG_H
 
-// Parse the standard declarations before replacing the game library's calls.
+// Parse the standard declarations before replacing table-backed calls.
 #include <cmath>
 
-extern const float edFCosinus[8192];
+extern const float edFCosinus[8193];
 
 // SLES_514.73: scale bits 0x44a2f983; pi/2 bits 0x3fc90fdb.
+// These cover reconstructed table lookups. Original libc call sites use
+// std::sin(float) and std::cos(float), which bypass these macros.
 // Each argument is evaluated once. Preserve float rounding before the index cast.
 #undef cosf
 #define cosf(angle) (edFCosinus[static_cast<int>(std::fabs(static_cast<float>(angle) * 0x1.45f306p+10f) + 0.5f) & 0x1fff])

@@ -81,6 +81,8 @@ public:
 	void EnterManagedCluster(CLight* pLight);
 	void LeaveManagedCluster(CLight* pLight);
 
+	void CinematicLightShutdown(CLight* pLight);
+
 	int referencedLightsCount;
 	int lightCount;
 	int sectorLightCount;

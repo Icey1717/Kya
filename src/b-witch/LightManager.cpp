@@ -1496,6 +1496,25 @@ void CLightManager::LeaveManagedCluster(CLight* pLight)
 	return;
 }
 
+void CLightManager::CinematicLightShutdown(CLight* pLight)
+{
+	short sVar1;
+
+	sVar1 = pLight->referencedLightIndex;
+	if (sVar1 < this->referencedLightsCount) {
+		this->referencedLightsCount = sVar1;
+	}
+
+	pLight->referencedLightIndex = -1;
+
+	this->aLights[sVar1] = (CLight*)0x0;
+	this->lightCount = this->lightCount + -1;
+	this->bSectorListDirty = 1;
+	this->bActiveListDirty = 1;
+
+	return;
+}
+
 template<>
 void S_STREAM_REF<CLight>::Init()
 {
