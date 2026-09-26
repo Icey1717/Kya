@@ -55,16 +55,17 @@ class CBehaviourNativExorcisme : public CBehaviourNativ
 struct s_fighter_combo;
 struct s_input_pattern;
 
-struct NativSubObjB
+struct NativComboSequenceStep
 {
-	NativSubObjB();
+	NativComboSequenceStep();
 
 	void Create(ByteCode* pByteCode);
 	bool IsRequiredCombo(s_fighter_combo* pCombo);
+	bool HasSingleDirectionalInput();
 
 	int nbRequiredCombos;
 	s_fighter_combo* aRequiredCombos[2];
-	undefined4 field_0xc;
+	uint field_0xc;
 };
 
 struct ArenaTutorial
@@ -72,24 +73,22 @@ struct ArenaTutorial
 	ArenaTutorial();
 
 	int nbRequiredMoves;
-	NativSubObjB* aRequiredMoves;
+	NativComboSequenceStep* aRequiredMoves;
 };
 
-struct NativSellerSubObjA
+struct NativComboSequenceEntry
 {
-	NativSellerSubObjA();
+	NativComboSequenceEntry();
 
-	bool FUN_003fffb0(uint param_2);
+	bool SupportsComboSlot(uint param_2);
 
-	NativSubObjB aSubObjs[0x8];
+	NativComboSequenceStep aSubObjs[0x8];
 
 	int field_0x80;
+	int field_0x84;
 
-	undefined4 field_0x88;
-	undefined4 field_0x8c;
-
-	NativSellerSubObjA* pNext;
-	NativSellerSubObjA* pPrev;
+	NativComboSequenceEntry* pNext;
+	NativComboSequenceEntry* pPrev;
 };
 
 struct ComboTutorialManager
@@ -104,23 +103,31 @@ struct ComboTutorialManager
 	int activeTutorialIndex;
 };
 
-struct NativSubObjD
+struct NativComboSequenceManager
 {
 	void Init();
-	void Clear_0x1630();
-	NativSellerSubObjA* Set_0x1630(int param_2);
+	void ClearActiveComboSequence();
+	NativComboSequenceEntry* FindNextComboSequenceForSlot(int param_2);
 
-	void FUN_003fede0();
+	void BuildComboSequenceList();
+	void CollectComboBranchPaths(s_fighter_combo* pCombo, int depth);
+	int InsertComboPathByScore(NativComboSequenceEntry* pSubObj);
+	void InitializeTailComboCommands();
+	void InsertComboPathAfter(NativComboSequenceEntry* pSubObj, NativComboSequenceEntry* pBefore);
+	void InsertComboPathAtHead(NativComboSequenceEntry* pSubObj);
+	void InsertComboPathAtTail(NativComboSequenceEntry* pSubObj);
 
-	NativSellerSubObjA* pSellerSubObjAA;
-	NativSellerSubObjA* pSellerSubObjAB;
-	NativSellerSubObjA field_0x8[0x1e];
-
-	s_fighter_combo field_0x10f0[30];
+	NativComboSequenceEntry* pSellerSubObjAA;
+	NativComboSequenceEntry* pSellerSubObjAB;
+	NativComboSequenceEntry field_0x8[0x1e];
 
 	int field_0x10e8;
+	undefined4 field_0x10ec;
+	s_fighter_combo field_0x10f0[6];
+	undefined4 field_0x11c8[2];
+	s_fighter_blow field_0x11d0[5];
 
-	NativSellerSubObjA* field_0x1630;
+	NativComboSequenceEntry* pActiveComboSequence;
 	int activeSubObjIndex;
 };
 
@@ -223,7 +230,7 @@ public:
 	S_NTF_SWITCH field_0x48;
 	S_NTF_SWITCH field_0x50;
 
-	NativSubObjD field_0x60;
+	NativComboSequenceManager field_0x60;
 
 	int initialAnimId;
 

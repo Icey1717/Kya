@@ -1837,6 +1837,20 @@ void CActorHero::InitBoomy()
 	return;
 }
 
+
+s_fighter_combo* CActorHero::GetComboByIndex(uint index)
+{
+	s_fighter_combo* psVar1;
+
+	psVar1 = (s_fighter_combo*)0x0;
+	if (index < this->nbComboRoots + this->nbCombos) {
+		psVar1 = this->aCombos + index;
+	}
+	return psVar1;
+}
+
+
+
 void CBehaviourRideJamGut::ManageInput()
 {
 	return;

@@ -2297,7 +2297,7 @@ int CBehaviourNativAkasa::FUN_003f1b90(int param_2)
 			bVar1 = true;
 		}
 		else {
-			if ((param_2 == 1) && (this->field_0x60.Set_0x1630(this->field_0x16b0) == false)) {
+			if ((param_2 == 1) && (this->field_0x60.FindNextComboSequenceForSlot(this->field_0x16b0) == false)) {
 				bVar1 = true;
 			}
 			else {
@@ -3940,8 +3940,8 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 
 CBehaviourNativAkasa::CBehaviourNativAkasa()
 {
-	//this->field_0x60 = 0;
-	//this->field_0x64 = 0;
+	this->field_0x60.pSellerSubObjAA = (NativComboSequenceEntry*)0x0;
+	this->field_0x60.pSellerSubObjAB = (NativComboSequenceEntry*)0x0;
 }
 
 void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
@@ -3973,7 +3973,7 @@ void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 				pSubObjA->nbRequiredMoves = pByteCode->GetS32();
 				uVar3 = pSubObjA->nbRequiredMoves;
 				if (uVar3 != 0) {
-					pSubObjA->aRequiredMoves = new NativSubObjB[uVar3];
+					pSubObjA->aRequiredMoves = new NativComboSequenceStep[uVar3];
 					iVar8 = 0;
 					if (0 < pSubObjA->nbRequiredMoves) {
 						do {
@@ -4554,7 +4554,7 @@ void CBehaviourNativAkasa::FUN_003f1da0(s_fighter_combo* pCombo)
 bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 {
 	int iVar1;
-	NativSellerSubObjA* pNVar2;
+	NativComboSequenceEntry* pNVar2;
 
 	if (param_2 == 0) {
 		(this->comboTutorialManager).activeTutorialIndex = -1;
@@ -4566,9 +4566,9 @@ bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 	}
 
 	if (param_2 == 1) {
-		this->field_0x60.Clear_0x1630();
-		pNVar2 = this->field_0x60.Set_0x1630(this->field_0x16b0);
-		if (pNVar2 == (NativSellerSubObjA*)0x0) {
+		this->field_0x60.ClearActiveComboSequence();
+		pNVar2 = this->field_0x60.FindNextComboSequenceForSlot(this->field_0x16b0);
+		if (pNVar2 == (NativComboSequenceEntry*)0x0) {
 			return true;
 		}
 	}
@@ -5513,7 +5513,7 @@ void CBehaviourNativAkasa::FUN_003ef170()
 
 void CBehaviourNativAkasa::FUN_003f2900()
 {
-	
+	this->field_0x60.BuildComboSequenceList();
 }
 
 CLevelScheduler* GetLevelScheduler(void)
@@ -5831,7 +5831,7 @@ ArenaTutorial* CBehaviourNativAkasa::GetActiveComboTutorial()
 	return pReqCombo;
 }
 
-NativSubObjB::NativSubObjB()
+NativComboSequenceStep::NativComboSequenceStep()
 {
 	this->nbRequiredCombos = 0;
 	this->aRequiredCombos[0] = (s_fighter_combo*)0x0;
@@ -5841,7 +5841,7 @@ NativSubObjB::NativSubObjB()
 	return;
 }
 
-void NativSubObjB::Create(ByteCode* pByteCode)
+void NativComboSequenceStep::Create(ByteCode* pByteCode)
 {
 	int iVar2;
 	uint* puVar4;
@@ -5863,7 +5863,7 @@ void NativSubObjB::Create(ByteCode* pByteCode)
 	return;
 }
 
-bool NativSubObjB::IsRequiredCombo(s_fighter_combo* pCombo)
+bool NativComboSequenceStep::IsRequiredCombo(s_fighter_combo* pCombo)
 {
 	int iVar2;
 
@@ -5884,15 +5884,15 @@ bool NativSubObjB::IsRequiredCombo(s_fighter_combo* pCombo)
 ArenaTutorial::ArenaTutorial()
 {
 	this->nbRequiredMoves = 0;
-	this->aRequiredMoves = (NativSubObjB*)0x0;
+	this->aRequiredMoves = (NativComboSequenceStep*)0x0;
 
 	return;
 }
 
-NativSellerSubObjA::NativSellerSubObjA()
+NativComboSequenceEntry::NativComboSequenceEntry()
 {
-	this->field_0x88 = 0;
-	this->field_0x8c = 0;
+	this->pNext = (NativComboSequenceEntry*)0x0;
+	this->pPrev = (NativComboSequenceEntry*)0x0;
 
 	return;
 }
@@ -5942,21 +5942,21 @@ int ComboTutorialManager::StepRequiredCombo()
 	return this->activeTutorialIndex;
 }
 
-void NativSubObjD::Init()
+void NativComboSequenceManager::Init()
 {
-	this->field_0x1630 = (NativSellerSubObjA*)0x0;
+	this->pActiveComboSequence = (NativComboSequenceEntry*)0x0;
 
 	return;
 }
 
-void NativSubObjD::Clear_0x1630()
+void NativComboSequenceManager::ClearActiveComboSequence()
 {
-	this->field_0x1630 = (NativSellerSubObjA*)0x0;
+	this->pActiveComboSequence = (NativComboSequenceEntry*)0x0;
 
 	return;
 }
 
-bool NativSellerSubObjA::FUN_003fffb0(uint param_2)
+bool NativComboSequenceEntry::SupportsComboSlot(uint param_2)
 {
 	int* piVar1;
 	bool bVar2;
@@ -5981,283 +5981,376 @@ bool NativSellerSubObjA::FUN_003fffb0(uint param_2)
 	return bVar2;
 }
 
-void NativSubObjD::FUN_003fede0()
+void NativComboSequenceManager::BuildComboSequenceList()
 {
-	byte bVar1;
-	uint uVar2;
-	bool bVar3;
-	s_fighter_combo* pCombo;
-	NativSubObjD* ppNVar5;
-	NativSellerSubObjA* pNVar4;
-	NativSubObjD* ppNVar7;
-	NativSubObjD* ppNVar8;
-	NativSubObjD* ppNVar9;
-	NativSubObjD* ppNVar6;
-	ulong uVar5;
-	NativSellerSubObjA* pNVar6;
-	int iVar7;
-	NativSubObjD* pNVar8;
-	uint index;
-	int iVar9;
-	CActorHero* pHero;
-
-	pHero = CActorHero::_gThis;
-	index = 0;
-	uVar2 = CActorHero::_gThis->nbComboRoots;
+	CActorHero* pHero = CActorHero::_gThis;
+	uint nbRoots = pHero->nbComboRoots;
+	uint index = 0;
 	this->field_0x10e8 = 0;
 
-	IMPLEMENTATION_GUARD(
-
-	if (uVar2 != 0) {
+	if (nbRoots != 0) {
 		do {
-			pCombo = pHero->GetComboByIndex(index);
-			FUN_003ff510(pCombo, 0);
+			s_fighter_combo* pCombo = pHero->GetComboByIndex(index);
+
+			CollectComboBranchPaths(pCombo, 0);
 			index = index + 1;
-		} while (index < uVar2);
+		} while (index < nbRoots);
 	}
 
-	//this->field_0x10f0[4].pattern.nbInputs = 0;
-	//this->field_0x10f0[4].pattern.field_0x0uint = this->field_0x10f0[4].pattern.field_0x0uint & 0xfff00000;
-	//iVar7 = 0;
-	//this->field_0x10f0[4].pattern.field_0x2ushort = this->field_0x10f0[4].pattern.field_0x2ushort & 0xf00f | 0x80;
-	//this->field_0x10f0[4].pattern.field_0x3byte = this->field_0x10f0[4].pattern.field_0x3byte & 0xf;
-	//this->field_0x10f0[4].field_0x4.field_0x0uint = 0;
-	//this->field_0x10f0[4].field_0x4.field_0x0uint = this->field_0x10f0[4].field_0x4.field_0x0uint | 0x204;
-	//*(undefined*)((int)&this->field_0x10f0[0x19].hash + 1) = 0;
-	//*(byte*)((int)&this->field_0x10f0[0x19].hash + 1) =
-	//	*(byte*)((int)&this->field_0x10f0[0x19].hash + 1) | 0x67;
-	//*(byte*)((int)&this->field_0x10f0[0x19].hash + 2) =
-	//	*(byte*)((int)&this->field_0x10f0[0x19].hash + 2) | 1;
-	//this->field_0x10f0[4].actionHash.hash = this->field_0x10f0[0x18].nbBranches;
-	//this->field_0x10f0[3].pattern.nbInputs = 0;
-	//this->field_0x10f0[3].pattern.field_0x0uint = this->field_0x10f0[3].pattern.field_0x0uint & 0xfff00000;
-	//this->field_0x10f0[3].pattern.field_0x2ushort = this->field_0x10f0[3].pattern.field_0x2ushort & 0xf00f | 0x10;
-	//*(byte*)((int)&this->field_0x10f0[3].pattern.field_0x3byte =
-	//	*(byte*)((int)&this->field_0x10f0[3].pattern.field_0x3byte & 0xf;
-	//this->field_0x10f0[3].field_0x4.field_0x0uint = 0;
-	//this->field_0x10f0[3].field_0x4.field_0x0uint = this->field_0x10f0[3].field_0x4.field_0x0uint | 0x204;
-	//*(undefined*)((int)&this->field_0x10f0[0x12].aBranches + 1) = 0;
-	//*(byte*)((int)&this->field_0x10f0[0x12].aBranches + 1) =
-	//	*(byte*)((int)&this->field_0x10f0[0x12].aBranches + 1) | 0x67;
-	//*(undefined*)((int)&this->field_0x10f0[0x12].aBranches + 2) = 0;
-	//this->field_0x10f0[3].actionHash = (s_fighter_combo*)&this->field_0x10f0[0x12].actionHash;
-	//this->field_0x10f0[5].pattern.nbInputs = 0;
-	//this->field_0x10f0[5].pattern.field_0x0uint = this->field_0x10f0[5].pattern.field_0x0uint & 0xfff00000;
-	//this->field_0x10f0[5].pattern.field_0x2ushort = this->field_0x10f0[5].pattern.field_0x2ushort & 0xf00f | 0x80;
-	//*(byte*)((int)&this->field_0x10f0[5].pattern.field_0x3byte =
-	//	*(byte*)((int)&this->field_0x10f0[5].pattern.field_0x3byte & 0xf;
-	//this->field_0x10f0[5].field_0x4.field_0x0uint = 0;
-	//this->field_0x10f0[5].field_0x4.field_0x0uint = this->field_0x10f0[5].field_0x4.field_0x0uint | 0x204;
-	//*(undefined*)&this->field_0x1555 = 0;
-	//*(byte*)&this->field_0x1555 = *(byte*)&this->field_0x1555 | 0x7b;
-	//*(undefined*)&this->field_0x1556 = 0;
-	//this->field_0x10f0[5].actionHash = (s_fighter_combo*)&this->field_0x1550;
-	//ppNVar5 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
-	//ppNVar5->field_0x8[0].aSubObjs[0].nbRequiredCombos = 1;
-	//pNVar6 = ppNVar5->field_0x8;
-	//pNVar4 = pNVar6;
-	if (0 < ppNVar5->field_0x8[0].aSubObjs[0].nbRequiredCombos) {
-		do {
-			pNVar4->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
-			iVar7 = iVar7 + 1;
-			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
-		} while (iVar7 < pNVar6->aSubObjs[0].nbRequiredCombos);
-	}
-	if (0 < pNVar6->aSubObjs[0].nbRequiredCombos) {
-		do {
-			if (ppNVar5->field_0x8[0].aSubObjs[0].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
-				ppNVar5->field_0x8[0].aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 4;
-				bVar3 = true;
-				goto LAB_003ff040;
-			}
-		} while (0 < pNVar6->aSubObjs[0].nbRequiredCombos);
-	}
-	bVar3 = false;
-LAB_003ff040:
-	if (bVar3) {
-		ppNVar5->field_0x8[0].field_0x80 = 1;
-	}
-	iVar7 = 0;
-	ppNVar7 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
-	ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos = 1;
-	pNVar4 = ppNVar7->field_0x8;
-	if (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos) {
-		do {
-			pNVar4->aSubObjs[1].aRequiredCombos[0] = (s_fighter_combo*)0x0;
-			iVar7 = iVar7 + 1;
-			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
-		} while (iVar7 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos);
-	}
-	if (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos) {
-		do {
-			if (ppNVar7->field_0x8[0].aSubObjs[1].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
-				ppNVar7->field_0x8[0].aSubObjs[1].aRequiredCombos[0] = this->field_0x10f0 + 3;
-				bVar3 = true;
-				goto LAB_003ff0f0;
-			}
-		} while (0 < ppNVar7->field_0x8[0].aSubObjs[1].nbRequiredCombos);
-	}
-	bVar3 = false;
-LAB_003ff0f0:
-	if (bVar3) {
-		ppNVar7->field_0x8[0].field_0x80 = 2;
-	}
-	iVar7 = 0;
-	ppNVar8 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
-	ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos = 1;
-	pNVar4 = ppNVar8->field_0x8;
-	if (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos) {
-		do {
-			pNVar4->aSubObjs[2].aRequiredCombos[0] = (s_fighter_combo*)0x0;
-			iVar7 = iVar7 + 1;
-			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
-		} while (iVar7 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos);
-	}
-	if (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos) {
-		do {
-			if (ppNVar8->field_0x8[0].aSubObjs[2].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
-				ppNVar8->field_0x8[0].aSubObjs[2].aRequiredCombos[0] = this->field_0x10f0 + 3;
-				bVar3 = true;
-				goto LAB_003ff1a0;
-			}
-		} while (0 < ppNVar8->field_0x8[0].aSubObjs[2].nbRequiredCombos);
-	}
-	bVar3 = false;
-LAB_003ff1a0:
-	if (bVar3) {
-		ppNVar8->field_0x8[0].field_0x80 = 3;
-	}
-	iVar7 = 0;
-	ppNVar9 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
-	ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos = 1;
-	pNVar4 = ppNVar9->field_0x8;
-	if (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos) {
-		do {
-			pNVar4->aSubObjs[3].aRequiredCombos[0] = (s_fighter_combo*)0x0;
-			iVar7 = iVar7 + 1;
-			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
-		} while (iVar7 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos);
-	}
-	if (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos) {
-		do {
-			if (ppNVar9->field_0x8[0].aSubObjs[3].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
-				ppNVar9->field_0x8[0].aSubObjs[3].aRequiredCombos[0] = this->field_0x10f0 + 3;
-				bVar3 = true;
-				goto LAB_003ff250;
-			}
-		} while (0 < ppNVar9->field_0x8[0].aSubObjs[3].nbRequiredCombos);
-	}
-	bVar3 = false;
-LAB_003ff250:
-	if (bVar3) {
-		ppNVar9->field_0x8[0].field_0x80 = 4;
-	}
-	iVar7 = 0;
+	this->field_0x10f0[4].pattern.nbInputs = 0;
+	this->field_0x10f0[4].pattern.field_0x0uint = this->field_0x10f0[4].pattern.field_0x0uint & 0xfff00000;
+	this->field_0x10f0[4].pattern.field_0x2ushort = (this->field_0x10f0[4].pattern.field_0x2ushort & 0xf00f) | 0x80;
+	this->field_0x10f0[4].pattern.field_0x3byte = this->field_0x10f0[4].pattern.field_0x3byte & 0xf;
+	this->field_0x10f0[4].field_0x4.field_0x0ushort = 0;
+	this->field_0x10f0[4].field_0x4.field_0x0ushort = this->field_0x10f0[4].field_0x4.field_0x0ushort | 0x204;
+	this->field_0x11d0[3].field_0x4.field_0x1byte = 0;
+	this->field_0x11d0[3].field_0x4.field_0x1byte = this->field_0x11d0[3].field_0x4.field_0x1byte | 0x67;
+	this->field_0x11d0[3].field_0x4.field_0x2byte = this->field_0x11d0[3].field_0x4.field_0x2byte | 1;
+	this->field_0x10f0[4].actionHash.pData = STORE_POINTER(this->field_0x11d0 + 3);
+
+	this->field_0x10f0[3].pattern.nbInputs = 0;
+	this->field_0x10f0[3].pattern.field_0x0uint = this->field_0x10f0[3].pattern.field_0x0uint & 0xfff00000;
+	this->field_0x10f0[3].pattern.field_0x2ushort = (this->field_0x10f0[3].pattern.field_0x2ushort & 0xf00f) | 0x10;
+	this->field_0x10f0[3].pattern.field_0x3byte = this->field_0x10f0[3].pattern.field_0x3byte & 0xf;
+	this->field_0x10f0[3].field_0x4.field_0x0ushort = 0;
+	this->field_0x10f0[3].field_0x4.field_0x0ushort = this->field_0x10f0[3].field_0x4.field_0x0ushort | 0x204;
+	this->field_0x11d0[2].field_0x4.field_0x1byte = 0;
+	this->field_0x11d0[2].field_0x4.field_0x1byte = this->field_0x11d0[2].field_0x4.field_0x1byte | 0x67;
+	this->field_0x11d0[2].field_0x4.field_0x2byte = 0;
+	this->field_0x10f0[3].actionHash.pData = STORE_POINTER(this->field_0x11d0 + 2);
+
+	this->field_0x10f0[5].pattern.nbInputs = 0;
+	this->field_0x10f0[5].pattern.field_0x0uint = this->field_0x10f0[5].pattern.field_0x0uint & 0xfff00000;
+	this->field_0x10f0[5].pattern.field_0x2ushort = (this->field_0x10f0[5].pattern.field_0x2ushort & 0xf00f) | 0x80;
+	this->field_0x10f0[5].pattern.field_0x3byte = this->field_0x10f0[5].pattern.field_0x3byte & 0xf;
+	this->field_0x10f0[5].field_0x4.field_0x0ushort = 0;
+	this->field_0x10f0[5].field_0x4.field_0x0ushort = this->field_0x10f0[5].field_0x4.field_0x0ushort | 0x204;
+	this->field_0x11d0[4].field_0x4.field_0x1byte = 0;
+	this->field_0x11d0[4].field_0x4.field_0x1byte = this->field_0x11d0[4].field_0x4.field_0x1byte | 0x7b;
+	this->field_0x11d0[4].field_0x4.field_0x2byte = 0;
+	this->field_0x10f0[5].actionHash.pData = STORE_POINTER(this->field_0x11d0 + 4);
+
+	// The inlined insertions at 003fefa8..003ff31c each clear and fill one entry.
+	NativComboSequenceEntry* pSubObj = this->field_0x8 + this->field_0x10e8;
+	pSubObj->aSubObjs[0].nbRequiredCombos = 1;
+	pSubObj->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	pSubObj->aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 4;
+	pSubObj->field_0x80 = 1;
+
+	pSubObj = this->field_0x8 + this->field_0x10e8;
+	pSubObj->aSubObjs[1].nbRequiredCombos = 1;
+	pSubObj->aSubObjs[1].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	pSubObj->aSubObjs[1].aRequiredCombos[0] = this->field_0x10f0 + 3;
+	pSubObj->field_0x80 = 2;
+
+	pSubObj = this->field_0x8 + this->field_0x10e8;
+	pSubObj->aSubObjs[2].nbRequiredCombos = 1;
+	pSubObj->aSubObjs[2].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	pSubObj->aSubObjs[2].aRequiredCombos[0] = this->field_0x10f0 + 3;
+	pSubObj->field_0x80 = 3;
+
+	pSubObj = this->field_0x8 + this->field_0x10e8;
+	pSubObj->aSubObjs[3].nbRequiredCombos = 1;
+	pSubObj->aSubObjs[3].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	pSubObj->aSubObjs[3].aRequiredCombos[0] = this->field_0x10f0 + 3;
+	pSubObj->field_0x80 = 4;
 	this->field_0x10e8 = this->field_0x10e8 + 1;
-	ppNVar6 = (NativSubObjD*)&this->field_0x8[this->field_0x10e8 + -1].pNext;
-	ppNVar6->field_0x8[0].aSubObjs[0].nbRequiredCombos = 1;
-	pNVar6 = ppNVar6->field_0x8;
-	pNVar4 = pNVar6;
-	if (0 < ppNVar6->field_0x8[0].aSubObjs[0].nbRequiredCombos) {
-		do {
-			pNVar4->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
-			iVar7 = iVar7 + 1;
-			pNVar4 = (NativSellerSubObjA*)pNVar4->aSubObjs[0].aRequiredCombos;
-		} while (iVar7 < pNVar6->aSubObjs[0].nbRequiredCombos);
-	}
-	if (0 < pNVar6->aSubObjs[0].nbRequiredCombos) {
-		do {
-			if (ppNVar6->field_0x8[0].aSubObjs[0].aRequiredCombos[0] == (s_fighter_combo*)0x0) {
-				ppNVar6->field_0x8[0].aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 5;
-				bVar3 = true;
-				goto LAB_003ff310;
-			}
-		} while (0 < pNVar6->aSubObjs[0].nbRequiredCombos);
-	}
-	bVar3 = false;
-LAB_003ff310:
-	if (bVar3) {
-		ppNVar6->field_0x8[0].field_0x80 = 1;
-	}
+
+	pSubObj = this->field_0x8 + this->field_0x10e8;
+	pSubObj->aSubObjs[0].nbRequiredCombos = 1;
+	pSubObj->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	pSubObj->aSubObjs[0].aRequiredCombos[0] = this->field_0x10f0 + 5;
+	pSubObj->field_0x80 = 1;
 	this->field_0x10e8 = this->field_0x10e8 + 1;
-	iVar7 = this->field_0x10e8;
-	iVar9 = 0;
-	pNVar8 = this;
-	if (0 < iVar7) {
+
+	int subObjIndex = 0;
+	pSubObj = this->field_0x8;
+	if (0 < this->field_0x10e8) {
 		do {
-			pNVar8->field_0x8[0].field_0x84 = 0;
-			pNVar4 = pNVar8->field_0x8;
-			iVar7 = 0;
-			if (0 < pNVar8->field_0x8[0].field_0x80) {
+			pSubObj->field_0x84 = 0;
+			NativComboSequenceStep* pRequiredCombo = pSubObj->aSubObjs;
+			int comboIndex = 0;
+			if (0 < pSubObj->field_0x80) {
 				do {
-					pNVar4->aSubObjs[0].aRequiredCombos[2] = (s_fighter_combo*)0x1;
-					bVar1 = *(byte*)((int)&pNVar4->aSubObjs[0].aRequiredCombos[0]->actionHash->field_0x4 + 1)
-						;
-					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
-						bVar3 = true;
+					pRequiredCombo->field_0xc = 1;
+					s_fighter_combo* pCombo = pRequiredCombo->aRequiredCombos[0];
+					s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, pCombo->actionHash.pData);
+					byte flags = pMove->field_0x4.field_0x1byte;
+					if (((flags & 4) == 0) && (((flags & 8) != 0) || ((flags & 0x10) != 0))) {
+						pRequiredCombo->field_0xc = pRequiredCombo->field_0xc + 0x200;
 					}
-					else {
-						bVar3 = false;
+
+					if ((pCombo->field_0x4.field_0x0ushort & 0x400) != 0) {
+						pRequiredCombo->field_0xc = pRequiredCombo->field_0xc + 0x1000;
 					}
-					if (bVar3) {
-						pNVar4->aSubObjs[0].aRequiredCombos[2] =
-							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0xe].field_0x8;
+
+					if (pCombo->pattern.nbInputs != 0) {
+						pRequiredCombo->field_0xc = pRequiredCombo->field_0xc + 8;
 					}
-					if ((pNVar4->aSubObjs[0].aRequiredCombos[0]->field_0x4 & 0x400U) != 0) {
-						pNVar4->aSubObjs[0].aRequiredCombos[2] =
-							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0x71].aBranches;
+
+					if (pRequiredCombo->HasSingleDirectionalInput() != false) {
+						pRequiredCombo->field_0xc = pRequiredCombo->field_0xc + 0x40;
 					}
-					if ((pNVar4->aSubObjs[0].aRequiredCombos[0]->pattern).nbInputs != 0) {
-						pNVar4->aSubObjs[0].aRequiredCombos[2] =
-							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2]->field_0x8;
+
+					uint direction = pCombo->pattern.field_0x3byte >> 4;
+					if (((direction & 1) != 0) || ((direction & 2) != 0)) {
+						pRequiredCombo->field_0xc = pRequiredCombo->field_0xc + 0x8000;
 					}
-					bVar3 = NativSellerSubObjA::FUN_004001b0(pNVar4);
-					if (bVar3 != false) {
-						pNVar4->aSubObjs[0].aRequiredCombos[2] =
-							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][1].aBranches;
-					}
-					uVar5 = ((ulong) * (byte*)((int)&(pNVar4->aSubObjs[0].aRequiredCombos[0]->pattern).
-						field_0x0 + 3) << 0x38) >> 0x3c;
-					if (((uVar5 & 1) == 0) && ((uVar5 & 2) == 0)) {
-						bVar3 = false;
-					}
-					else {
-						bVar3 = true;
-					}
-					if (bVar3) {
-						pNVar4->aSubObjs[0].aRequiredCombos[2] =
-							(s_fighter_combo*)&pNVar4->aSubObjs[0].aRequiredCombos[2][0x38e].field_0x8;
-					}
-					iVar7 = iVar7 + 1;
-					pNVar8->field_0x8[0].field_0x84 =
-						(int)&pNVar4->aSubObjs[0].aRequiredCombos[2]->hash + pNVar8->field_0x8[0].field_0x84;
-					pNVar4 = (NativSellerSubObjA*)(pNVar4->aSubObjs + 1);
-				} while (iVar7 < pNVar8->field_0x8[0].field_0x80);
+
+					comboIndex = comboIndex + 1;
+					pSubObj->field_0x84 = pSubObj->field_0x84 + pRequiredCombo->field_0xc;
+					pRequiredCombo = pRequiredCombo + 1;
+				} while (comboIndex < pSubObj->field_0x80);
 			}
-			iVar7 = this->field_0x10e8;
-			iVar9 = iVar9 + 1;
-			pNVar8 = (NativSubObjD*)&pNVar8->field_0x8[0].pNext;
-		} while (iVar9 < iVar7);
+
+			subObjIndex = subObjIndex + 1;
+			pSubObj = pSubObj + 1;
+		} while (subObjIndex < this->field_0x10e8);
 	}
-	iVar9 = 0;
-	pNVar8 = this;
-	if (0 < iVar7) {
+
+	subObjIndex = 0;
+	pSubObj = this->field_0x8;
+	if (0 < this->field_0x10e8) {
 		do {
-			FUN_003ffb50(this, pNVar8->field_0x8);
-			iVar9 = iVar9 + 1;
-			pNVar8 = (NativSubObjD*)&pNVar8->field_0x8[0].pNext;
-		} while (iVar9 < this->field_0x10e8);
-	})
+			InsertComboPathByScore(pSubObj);
+			subObjIndex = subObjIndex + 1;
+			pSubObj = pSubObj + 1;
+		} while (subObjIndex < this->field_0x10e8);
+	}
+
 	return;
 }
 
-NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
+void NativComboSequenceManager::CollectComboBranchPaths(s_fighter_combo* pCombo, int depth)
+{
+	if (pCombo == (s_fighter_combo*)0x0) {
+		return;
+	}
+
+	NativComboSequenceEntry* pSubObj = this->field_0x8 + this->field_0x10e8;
+	if (depth < 8) {
+		pSubObj->aSubObjs[depth].nbRequiredCombos = 1;
+		pSubObj->aSubObjs[depth].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+		pSubObj->aSubObjs[depth].aRequiredCombos[0] = pCombo;
+		pSubObj->field_0x80 = depth + 1;
+
+		s_fighter_action_hash* pBranch = pCombo->aBranches;
+		if (pCombo->nbBranches == 0) {
+			if (pCombo == CActorHero::_gThis->FindComboByName("ROOT_G_tail")) {
+				this->field_0x10f0[0].pattern.nbInputs = 0;
+				this->field_0x10f0[0].pattern.field_0x0uint = this->field_0x10f0[0].pattern.field_0x0uint & 0xfff00000;
+				this->field_0x10f0[0].pattern.field_0x2ushort = (this->field_0x10f0[0].pattern.field_0x2ushort & 0xf00f) | 0x20;
+				this->field_0x10f0[0].pattern.field_0x3byte = this->field_0x10f0[0].pattern.field_0x3byte & 0xf;
+				this->field_0x10f0[0].field_0x4.field_0x0ushort = 0;
+				this->field_0x10f0[0].field_0x4.field_0x0ushort = this->field_0x10f0[0].field_0x4.field_0x0ushort | 0x204;
+				this->field_0x11d0[0].field_0x4.field_0x1byte = 0;
+				this->field_0x11d0[0].field_0x4.field_0x1byte = this->field_0x11d0[0].field_0x4.field_0x1byte | 0x67;
+				this->field_0x11d0[0].field_0x4.field_0x2byte = this->field_0x11d0[0].field_0x4.field_0x2byte | 1;
+				this->field_0x10f0[0].actionHash.pData = STORE_POINTER(this->field_0x11d0);
+
+				pSubObj = this->field_0x8 + this->field_0x10e8;
+				pSubObj->aSubObjs[1].nbRequiredCombos = 1;
+				pSubObj->aSubObjs[1].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+				pSubObj->aSubObjs[1].aRequiredCombos[0] = this->field_0x10f0;
+				pSubObj->field_0x80 = 2;
+				this->field_0x10e8 = this->field_0x10e8 + 1;
+
+				s_fighter_combo* pRootCombo = this->field_0x8[this->field_0x10e8 - 1].aSubObjs[0].aRequiredCombos[0];
+				InitializeTailComboCommands();
+
+				pSubObj = this->field_0x8 + this->field_0x10e8;
+				pSubObj->aSubObjs[0].nbRequiredCombos = 1;
+				pSubObj->aSubObjs[0].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+				pSubObj->aSubObjs[0].aRequiredCombos[0] = pRootCombo;
+				pSubObj->field_0x80 = 1;
+
+				pSubObj = this->field_0x8 + this->field_0x10e8;
+				pSubObj->aSubObjs[1].nbRequiredCombos = 1;
+				pSubObj->aSubObjs[1].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+				pSubObj->aSubObjs[1].aRequiredCombos[0] = this->field_0x10f0 + 1;
+				pSubObj->field_0x80 = 2;
+
+				pSubObj = this->field_0x8 + this->field_0x10e8;
+				pSubObj->aSubObjs[2].nbRequiredCombos = 1;
+				pSubObj->aSubObjs[2].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+				pSubObj->aSubObjs[2].aRequiredCombos[0] = this->field_0x10f0 + 2;
+				pSubObj->field_0x80 = 3;
+			}
+
+			this->field_0x10e8 = this->field_0x10e8 + 1;
+		}
+		else {
+			uint branchIndex = 0;
+			do {
+				s_fighter_combo* pBranchCombo = LOAD_POINTER_CAST(s_fighter_combo*, pBranch->pData);
+				if ((pBranchCombo->field_0x4.field_0x0ushort & 0x100) != 0) {
+					this->field_0x10e8 = this->field_0x10e8 + 1;
+					return;
+				}
+
+				CollectComboBranchPaths(pBranchCombo, depth + 1);
+				if ((branchIndex < pCombo->nbBranches - 1) && (0 < depth + 1)) {
+					int comboIndex = 0;
+					do {
+						pSubObj = this->field_0x8 + this->field_0x10e8;
+						s_fighter_combo* pPreviousCombo = this->field_0x8[this->field_0x10e8 - 1].aSubObjs[comboIndex].aRequiredCombos[0];
+						if (comboIndex < 8) {
+							pSubObj->aSubObjs[comboIndex].nbRequiredCombos = 1;
+							pSubObj->aSubObjs[comboIndex].aRequiredCombos[0] = (s_fighter_combo*)0x0;
+							pSubObj->aSubObjs[comboIndex].aRequiredCombos[0] = pPreviousCombo;
+							pSubObj->field_0x80 = comboIndex + 1;
+						}
+
+						comboIndex = comboIndex + 1;
+					} while (comboIndex < depth + 1);
+				}
+
+				branchIndex = branchIndex + 1;
+				pBranch = pBranch + 1;
+			} while (branchIndex < pCombo->nbBranches);
+		}
+	}
+
+	return;
+}
+
+int NativComboSequenceManager::InsertComboPathByScore(NativComboSequenceEntry* pSubObj)
+{
+	NativComboSequenceEntry* pBefore = this->pSellerSubObjAA;
+	int index = 0;
+	if (pBefore == (NativComboSequenceEntry*)0x0) {
+		InsertComboPathAtTail(pSubObj);
+	}
+	else {
+		for (; (pBefore != (NativComboSequenceEntry*)0x0) && (pBefore->field_0x84 <= pSubObj->field_0x84); pBefore = pBefore->pPrev) {
+			index = index + 1;
+		}
+
+		if (pBefore == (NativComboSequenceEntry*)0x0) {
+			InsertComboPathAtHead(pSubObj);
+		}
+		else {
+			InsertComboPathAfter(pSubObj, pBefore);
+		}
+	}
+
+	return index;
+}
+
+void NativComboSequenceManager::InitializeTailComboCommands()
+{
+	this->field_0x10f0[1].pattern.nbInputs = 0;
+	this->field_0x10f0[1].pattern.field_0x0uint = this->field_0x10f0[1].pattern.field_0x0uint & 0xfff00000;
+	this->field_0x10f0[1].pattern.field_0x2ushort = (this->field_0x10f0[1].pattern.field_0x2ushort & 0xf00f) | 0x100;
+	this->field_0x10f0[1].pattern.field_0x3byte = this->field_0x10f0[1].pattern.field_0x3byte & 0xf;
+	this->field_0x10f0[1].field_0x4.field_0x0ushort = 0;
+	this->field_0x10f0[1].field_0x4.field_0x0ushort = this->field_0x10f0[1].field_0x4.field_0x0ushort | 0x204;
+	this->field_0x11d0[1].field_0x4.field_0x1byte = 0;
+	this->field_0x11d0[1].field_0x4.field_0x1byte = this->field_0x11d0[1].field_0x4.field_0x1byte | 0x67;
+	this->field_0x11d0[1].field_0x4.field_0x2byte = this->field_0x11d0[1].field_0x4.field_0x2byte | 1;
+	this->field_0x10f0[1].actionHash.pData = STORE_POINTER(this->field_0x11d0 + 1);
+
+	this->field_0x10f0[2].pattern.nbInputs = 0;
+	this->field_0x10f0[2].pattern.field_0x0uint = this->field_0x10f0[2].pattern.field_0x0uint & 0xfff00000;
+	this->field_0x10f0[2].pattern.field_0x2ushort = (this->field_0x10f0[2].pattern.field_0x2ushort & 0xf00f) | 0x40;
+	this->field_0x10f0[2].pattern.field_0x3byte = this->field_0x10f0[2].pattern.field_0x3byte & 0xf;
+	this->field_0x10f0[2].field_0x4.field_0x0ushort = 0;
+	this->field_0x10f0[2].field_0x4.field_0x0ushort = this->field_0x10f0[2].field_0x4.field_0x0ushort | 0x204;
+	this->field_0x11d0[1].field_0x4.field_0x1byte = 0;
+	this->field_0x11d0[1].field_0x4.field_0x1byte = this->field_0x11d0[1].field_0x4.field_0x1byte | 0x67;
+	this->field_0x11d0[1].field_0x4.field_0x2byte = this->field_0x11d0[1].field_0x4.field_0x2byte | 1;
+	this->field_0x10f0[2].actionHash.pData = STORE_POINTER(this->field_0x11d0 + 1);
+
+	return;
+}
+
+bool NativComboSequenceStep::HasSingleDirectionalInput()
+{
+	s_fighter_move* pMove = LOAD_POINTER_CAST(s_fighter_move*, this->aRequiredCombos[0]->actionHash.pData);
+	byte flags = pMove->field_0x4.field_0x1byte;
+	uint direction = (flags & 1) != 0;
+	if ((flags & 2) != 0) {
+		direction = direction + 2;
+	}
+
+	if ((flags & 0x20) != 0) {
+		direction = direction + 4;
+	}
+
+	if ((flags & 0x40) != 0) {
+		direction = direction + 8;
+	}
+
+	return ((direction - 1 < 2) || (direction == 4)) || (direction == 8);
+}
+
+void NativComboSequenceManager::InsertComboPathAfter(NativComboSequenceEntry* pSubObj, NativComboSequenceEntry* pBefore)
+{
+	if (pBefore == (NativComboSequenceEntry*)0x0) {
+		pSubObj->pNext = (NativComboSequenceEntry*)0x0;
+		pSubObj->pPrev = this->pSellerSubObjAA;
+		if (this->pSellerSubObjAA == (NativComboSequenceEntry*)0x0) {
+			this->pSellerSubObjAB = pSubObj;
+		}
+		else {
+			this->pSellerSubObjAA->pNext = pSubObj;
+		}
+
+		this->pSellerSubObjAA = pSubObj;
+	}
+	else {
+		if (pBefore->pNext != (NativComboSequenceEntry*)0x0) {
+			pBefore->pNext->pPrev = pSubObj;
+		}
+
+		pSubObj->pNext = pBefore->pNext;
+		pSubObj->pPrev = pBefore;
+		pBefore->pNext = pSubObj;
+		if (this->pSellerSubObjAA == pBefore) {
+			this->pSellerSubObjAA = pSubObj;
+		}
+	}
+
+	return;
+}
+
+void NativComboSequenceManager::InsertComboPathAtHead(NativComboSequenceEntry* pSubObj)
+{
+	pSubObj->pNext = this->pSellerSubObjAB;
+	pSubObj->pPrev = (NativComboSequenceEntry*)0x0;
+	if (this->pSellerSubObjAB == (NativComboSequenceEntry*)0x0) {
+		this->pSellerSubObjAA = pSubObj;
+	}
+	else {
+		this->pSellerSubObjAB->pPrev = pSubObj;
+	}
+
+	this->pSellerSubObjAB = pSubObj;
+	return;
+}
+
+void NativComboSequenceManager::InsertComboPathAtTail(NativComboSequenceEntry* pSubObj)
+{
+	pSubObj->pNext = (NativComboSequenceEntry*)0x0;
+	pSubObj->pPrev = this->pSellerSubObjAA;
+	if (this->pSellerSubObjAA == (NativComboSequenceEntry*)0x0) {
+		this->pSellerSubObjAB = pSubObj;
+	}
+	else {
+		this->pSellerSubObjAA->pNext = pSubObj;
+	}
+
+	this->pSellerSubObjAA = pSubObj;
+	return;
+}
+
+NativComboSequenceEntry* NativComboSequenceManager::FindNextComboSequenceForSlot(int param_2)
 {
 	bool bVar1;
-	NativSellerSubObjA* pNVar2;
+	NativComboSequenceEntry* pNVar2;
 
-	pNVar2 = this->field_0x1630;
-	if (pNVar2 == (NativSellerSubObjA*)0x0) {
+	pNVar2 = this->pActiveComboSequence;
+	if (pNVar2 == (NativComboSequenceEntry*)0x0) {
 		pNVar2 = this->pSellerSubObjAA;
 	}
 	else {
@@ -6271,7 +6364,7 @@ NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
 
 	while (true) {
 		while (true) {
-			if (((pNVar2 == this->field_0x1630) || (pNVar2 == (NativSellerSubObjA*)0x0)) || (bVar1 = pNVar2->FUN_003fffb0(param_2), bVar1 != false))
+			if (((pNVar2 == this->pActiveComboSequence) || (pNVar2 == (NativComboSequenceEntry*)0x0)) || (bVar1 = pNVar2->SupportsComboSlot(param_2), bVar1 != false))
 				goto LAB_003fff50;
 
 			if (pNVar2 == this->pSellerSubObjAB) break;
@@ -6279,18 +6372,18 @@ NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
 			pNVar2 = pNVar2->pPrev;
 		}
 
-		if (this->field_0x1630 == (NativSellerSubObjA*)0x0) break;
+		if (this->pActiveComboSequence == (NativComboSequenceEntry*)0x0) break;
 
 		pNVar2 = this->pSellerSubObjAA;
 	}
 
-	pNVar2 = (NativSellerSubObjA*)0x0;
+	pNVar2 = (NativComboSequenceEntry*)0x0;
 
 LAB_003fff50:
-	this->field_0x1630 = pNVar2;
-	pNVar2 = this->field_0x1630;
-	if (pNVar2 == (NativSellerSubObjA*)0x0) {
-		pNVar2 = (NativSellerSubObjA*)0x0;
+	this->pActiveComboSequence = pNVar2;
+	pNVar2 = this->pActiveComboSequence;
+	if (pNVar2 == (NativComboSequenceEntry*)0x0) {
+		pNVar2 = (NativComboSequenceEntry*)0x0;
 	}
 
 	return pNVar2;

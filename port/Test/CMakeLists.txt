@@ -9,6 +9,7 @@ include(GoogleTest)
 
 add_executable(KyaPortTest "src/tests.cpp" "src/audio_sample_tests.cpp" "src/audio_music_tests.cpp" "src/windows_save_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/draw_trace_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/nativ_akasa_tests.cpp")
 target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 
 target_compile_definitions(KyaPortTest PRIVATE TEST_DATA_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/data/")

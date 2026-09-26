@@ -528,6 +528,8 @@ public:
 	void MagicDecrease(float amount);
 
 	void InitBoomy();
+
+	s_fighter_combo* GetComboByIndex(uint index);
 };
 
 extern ulong gBoomyHashCodes[4];
