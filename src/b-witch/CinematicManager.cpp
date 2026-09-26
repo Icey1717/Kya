@@ -2644,6 +2644,13 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 
 void CCinematic::IncrementCutsceneDelta() 
 {
+#ifdef PLATFORM_WIN
+	// A paused cinematic must hold its time even when an audio stream has its own clock.
+	if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) != 0) {
+		return;
+	}
+#endif
+
 	Timer* timeController;
 	int iVar1;
 	float fVar3;
@@ -2667,13 +2674,17 @@ void CCinematic::IncrementCutsceneDelta()
 		}
 	}
 	else {
+		// Select the localized track, falling back to the cinematic's default track.
 		iVar1 = this->aAudioTrackIds[CMessageFile::get_default_language()];
 		if (iVar1 == -1) {
 			iVar1 = this->defaultAudioTrackId;
 		}
 
+		// With an audio track, its playback position is the cinematic clock. A
+		// direct change to totalCutsceneDelta will be replaced on the next update.
 		fVar3 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.Func_0x1c(iVar1);
 		if (fVar3 == -1.0f) {
+			// If the audio source cannot provide a time, advance using frame time.
 			this->totalCutsceneDelta = this->totalCutsceneDelta + deltaTime;
 		}
 		else {

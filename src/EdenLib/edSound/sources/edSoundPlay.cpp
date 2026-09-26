@@ -957,6 +957,19 @@ uint edSoundSamplePlay(float priority, ed_sound_sample* pSample)
 	return newSoundId;
 }
 
+#ifdef PLATFORM_WIN
+bool edSoundStreamSetPlaybackTime(uint index, float seconds)
+{
+	if ((index != 0) && (pedSoundInstances[index & 0xffff].fullSoundInstanceId == index)) {
+		ed_sound_instance* pInstance = pedSoundInstances + (index & 0xffff);
+		if ((pInstance->flags & 0x10) != 0 && pInstance->pSoundStream != nullptr) {
+			return Audio::SeekStream(pInstance->pSoundStream->streamBufferId[0], seconds);
+		}
+	}
+	return false;
+}
+#endif
+
 void edSoundInstanceSetVolume(float param_1, uint soundInstanceId)
 {
 	ed_sound_instance* pSoundInstance;

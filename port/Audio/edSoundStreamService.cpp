@@ -37,6 +37,7 @@ struct Stream
 	StreamInfo info;
 	Clock::time_point startedAt{};
 	std::uint64_t positionAtStart = 0;
+	std::uint64_t voiceStartFrame = 0;
 	std::vector<std::int16_t> samples;
 	std::uint32_t sampleRate = 0;
 
@@ -248,9 +249,9 @@ std::uint64_t CurrentPosition(Stream& stream)
 	if (stream.sourceVoice != nullptr && !stream.samples.empty()) {
 		XAUDIO2_VOICE_STATE state{};
 		stream.sourceVoice->GetState(&state, 0);
-		if (state.BuffersQueued == 0 && state.SamplesPlayed >= stream.samples.size())
+		if (state.BuffersQueued == 0 && stream.voiceStartFrame + state.SamplesPlayed >= stream.samples.size() / stream.info.channels)
 			stream.info.playing = false;
-		return state.SamplesPlayed * VagBytesPerBlock / VagSamplesPerBlock;
+		return (stream.voiceStartFrame + state.SamplesPlayed) * VagBytesPerBlock / VagSamplesPerBlock;
 	}
 #endif
 
@@ -366,6 +367,7 @@ void RegisterStream(std::uint32_t streamId, std::uint32_t blockSize, float sampl
 	stream.info.sampleRate = static_cast<std::uint32_t>(std::fabs(sampleRate));
 	stream.info.position = 0;
 	stream.positionAtStart = 0;
+	stream.voiceStartFrame = 0;
 	stream.samples.clear();
 	stream.sampleRate = 0;
 }
@@ -421,6 +423,7 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 	stream.info.sampleRate = sampleRate;
 	stream.info.position = 0;
 	stream.positionAtStart = 0;
+	stream.voiceStartFrame = 0;
 	stream.info.playing = false;
 	return true;
 }
@@ -461,6 +464,7 @@ bool StartStream(std::uint32_t streamId)
 			XAUDIO2_BUFFER buffer{};
 			buffer.AudioBytes = static_cast<UINT32>(stream.samples.size() * sizeof(std::int16_t));
 			buffer.pAudioData = reinterpret_cast<const BYTE*>(stream.samples.data());
+			buffer.PlayBegin = static_cast<UINT32>(stream.voiceStartFrame);
 			const HRESULT result = stream.sourceVoice->SubmitSourceBuffer(&buffer);
 			if (FAILED(result)) {
 				LogAudioError("SubmitSourceBuffer failed", result);
@@ -519,6 +523,32 @@ bool StopStream(std::uint32_t streamId)
 	stream.positionAtStart = stream.info.position;
 	stream.info.playing = false;
 	return true;
+}
+
+bool SeekStream(std::uint32_t streamId, float seconds)
+{
+	auto it = streams.find(streamId);
+	if (it == streams.end() || !it->second.info.ready || !std::isfinite(seconds))
+		return false;
+
+	Stream& stream = it->second;
+	const bool wasPlaying = stream.info.playing;
+	const double frames = (std::max)(0.0, static_cast<double>(seconds) * stream.info.sampleRate);
+	std::uint64_t frame = static_cast<std::uint64_t>(frames);
+	if (!stream.samples.empty()) {
+		const std::uint64_t frameCount = stream.samples.size() / stream.info.channels;
+		frame = (std::min)(frame, frameCount > 0 ? frameCount - 1 : 0);
+	}
+	stream.info.position = frame * VagBytesPerBlock / VagSamplesPerBlock;
+	stream.positionAtStart = stream.info.position;
+	stream.startedAt = Clock::now();
+#ifdef _WIN32
+	if (stream.sourceVoice != nullptr)
+		DestroySourceVoice(stream);
+	stream.voiceStartFrame = frame;
+#endif
+	stream.info.playing = false;
+	return !wasPlaying || StartStream(streamId);
 }
 
 bool GetStreamInfo(std::uint32_t streamId, StreamInfo& out)

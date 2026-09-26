@@ -219,6 +219,18 @@ namespace Debug::Cinematic
 			(pCinematic->cinFileData.pCinTag != nullptr);
 	}
 
+	static void SetCinematicTime(CCinematic* pCinematic, float time) {
+		if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) != 0) {
+			CBWCinSourceAudio& audio = pCinematic->cinematicLoadObject.BWCinSourceAudio_Obj;
+			if (audio.soundInstanceId != 0 && !edSoundStreamSetPlaybackTime(audio.soundInstanceId, time)) {
+				return;
+			}
+			// Func_0x1c also uses this origin when the stream is unavailable.
+			audio.field_0x8 = Timer::GetTimer()->totalPlayTime - time;
+		}
+		pCinematic->totalCutsceneDelta = time;
+	}
+
 	static void ShowSaveContextWindow(bool* bOpen, CCinematicManager* pCinematicManager)
 	{
 		ImGui::SetNextWindowSize(ImVec2(1100.0f, 420.0f), ImGuiCond_FirstUseEver);
@@ -351,20 +363,32 @@ namespace Debug::Cinematic
 			? pCinematic->triggerActorRef.Get()->name : "None");
 
 		if (HasInitializedCinData(pCinematic)) {
-			auto& currentTime = pCinematic->totalCutsceneDelta;
+			float currentTime = pCinematic->totalCutsceneDelta;
 			float totalTime = pCinematic->cinFileData.pCinTag->totalPlayTime;
 
-			bool bPlaying = (pCinematic->state == CS_Playing);
+			bool bPlaying = (pCinematic->state == CS_Playing) &&
+				((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_TIME_PAUSED) == 0);
 			if (ImGui::Button(bPlaying ? "Pause" : "Play")) {
-				pCinematic->state = bPlaying ? CS_Stopped : CS_Playing;
+				if (bPlaying) {
+					pCinematic->flags_0x8 |= CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
+				} else {
+					pCinematic->state = CS_Playing;
+					pCinematic->flags_0x8 &= ~CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
+				}
+				const uint soundId = pCinematic->cinematicLoadObject.BWCinSourceAudio_Obj.soundInstanceId;
+				if (soundId != 0) {
+					edSoundInstanceSetPause(soundId, bPlaying ? 1 : 0);
+				}
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("|<")) { currentTime = 0.0f; }
+			if (ImGui::Button("|<")) { SetCinematicTime(pCinematic, 0.0f); }
 			ImGui::SameLine();
-			if (ImGui::Button(">|")) { currentTime = totalTime; }
+			if (ImGui::Button(">|")) { SetCinematicTime(pCinematic, totalTime); }
 
 			ImGui::SetNextItemWidth(-1.0f);
-			ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime, "%.2fs");
+			if (ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime, "%.2fs")) {
+				SetCinematicTime(pCinematic, currentTime);
+			}
 
 			auto& stepState = sStepStates[pCinematic];
 			bool bWasEnabled = stepState.bEnabled;
@@ -374,13 +398,18 @@ namespace Debug::Cinematic
 				if (!bWasEnabled) {
 					stepState.baseTime = currentTime;
 					stepState.stepOffset = 0.0f;
+					pCinematic->flags_0x8 |= CINEMATIC_RUNTIME_FLAG_TIME_PAUSED;
+					const uint soundId = pCinematic->cinematicLoadObject.BWCinSourceAudio_Obj.soundInstanceId;
+					if (soundId != 0) { edSoundInstanceSetPause(soundId, 1); }
 				}
 
-				pCinematic->totalCutsceneDelta = std::clamp(stepState.baseTime + stepState.stepOffset, 0.0f, totalTime - 1.0f);
-
-				if (ImGui::Button("<<")) { stepState.stepOffset -= Timer::GetTimer()->cutsceneDeltaTime; }
+				bool bStepped = false;
+				if (ImGui::Button("<<")) { stepState.stepOffset -= Timer::GetTimer()->cutsceneDeltaTime; bStepped = true; }
 				ImGui::SameLine();
-				if (ImGui::Button(">>")) { stepState.stepOffset += Timer::GetTimer()->cutsceneDeltaTime; }
+				if (ImGui::Button(">>")) { stepState.stepOffset += Timer::GetTimer()->cutsceneDeltaTime; bStepped = true; }
+				if (bStepped) {
+					SetCinematicTime(pCinematic, std::clamp(stepState.baseTime + stepState.stepOffset, 0.0f, totalTime));
+				}
 				ImGui::SameLine();
 				if (ImGui::Button("Commit")) {
 					stepState.baseTime += stepState.stepOffset;

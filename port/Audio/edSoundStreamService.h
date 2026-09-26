@@ -22,6 +22,7 @@ void PrepareStream(std::uint32_t streamId);
 bool StartStream(std::uint32_t streamId);
 bool SetStreamVolume(std::uint32_t streamId, float volume);
 bool StopStream(std::uint32_t streamId);
+bool SeekStream(std::uint32_t streamId, float seconds);
 bool GetStreamInfo(std::uint32_t streamId, StreamInfo& out);
 bool UnregisterStream(std::uint32_t streamId);
 void ResetStreams();

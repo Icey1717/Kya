@@ -233,6 +233,11 @@ uint edSoundSamplePlayAlt(float priority, ed_sound_sample* pSoundSample);
 
 void* edSound_0x002840e0(uint soundInstanceId);
 
+#ifdef PLATFORM_WIN
+// Debug controls
+bool edSoundStreamSetPlaybackTime(uint index, float seconds);
+#endif
+
 // SOUND_
 
 struct SOUND_StreamInfo
