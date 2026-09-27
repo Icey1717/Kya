@@ -7,7 +7,9 @@
 
 #include <profiling.h>
 #include <imgui.h>
+#include <algorithm>
 #include <cstdio>
+#include <vector>
 
 #include "SectorManager.h"
 #include "LevelScheduler.h"
@@ -90,14 +92,27 @@ namespace Debug {
 			ImGui::SameLine();
 			if (ImGui::BeginMenu("Tools")) {
 				ZONE_SCOPED_NAME("Tools");
-				ImGui::MenuItem("Camera", nullptr, &gShowCameraWindow);
-				ImGui::Separator();
-
+				std::vector<Debug::Menu*> menus;
 				for (auto& menu : Debug::MenuRegisterer::GetMenus()) {
-					bool bOpen = menu.GetOpen();
-					if (ImGui::MenuItem(menu.name.c_str(), nullptr, &bOpen)) {
-						menu.SetOpen(bOpen);
+					menus.push_back(&menu);
+				}
+				std::sort(menus.begin(), menus.end(), [](const auto* pLeft, const auto* pRight) {
+					return pLeft->name < pRight->name;
+				});
+
+				bool bCameraDrawn = false;
+				for (auto* pMenu : menus) {
+					if (!bCameraDrawn && pMenu->name > "Camera") {
+						ImGui::MenuItem("Camera", nullptr, &gShowCameraWindow);
+						bCameraDrawn = true;
 					}
+					bool bOpen = pMenu->GetOpen();
+					if (ImGui::MenuItem(pMenu->name.c_str(), nullptr, &bOpen)) {
+						pMenu->SetOpen(bOpen);
+					}
+				}
+				if (!bCameraDrawn) {
+					ImGui::MenuItem("Camera", nullptr, &gShowCameraWindow);
 				}
 
 				ImGui::EndMenu();

@@ -54,6 +54,8 @@ set(SOURCES
 	"src/DebugProjection.h"
 	"src/DebugCinematic.cpp"
 	"src/DebugCinematic.h"
+	"src/DebugAudio.cpp"
+	"src/DebugAudio.h"
 	"src/DebugProjection.cpp"
 	"src/DebugMaterial.cpp"
 	"src/DebugFrameBuffer.h"

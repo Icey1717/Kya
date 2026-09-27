@@ -29,6 +29,9 @@ struct Instance
 	std::shared_ptr<DecodedSample> decoded;
 	std::unique_ptr<SampleVoice> voice;
 	bool started = false;
+	bool playing = false;
+	SampleDescription description;
+	SampleControls controls;
 };
 std::unordered_map<std::uint32_t, SampleEntry> cache;
 std::unordered_map<std::uint32_t, Instance> instances;
@@ -185,6 +188,8 @@ void FlushSampleCommands()
 		if (command.type == SampleCommandType::Create) {
 			DestroySample(id);
 			Instance instance;
+			instance.description = command.sample;
+			instance.controls = command.controls;
 			instance.decoded = LoadSample(command.sample);
 			if (instance.decoded) instance.voice = CreateVoice(*instance.decoded);
 			success = instance.voice && instance.voice->SetControls(command.controls);
@@ -202,10 +207,11 @@ void FlushSampleCommands()
 			case SampleCommandType::Resume:
 				success = instance.voice->SetPlaying(true);
 				instance.started = success;
+				instance.playing = success;
 				Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances", "host-start id=0x{:08x} success={}", id, success);
 				break;
-			case SampleCommandType::Pause: success = instance.voice->SetPlaying(false); break;
-			case SampleCommandType::Update: success = instance.voice->SetControls(command.controls); break;
+			case SampleCommandType::Pause: success = instance.voice->SetPlaying(false); if (success) instance.playing = false; break;
+			case SampleCommandType::Update: success = instance.voice->SetControls(command.controls); if (success) instance.controls = command.controls; break;
 			default: break;
 			}
 		}
@@ -244,6 +250,27 @@ bool GetSamplePosition(std::uint32_t instanceId, std::uint32_t& adpcmOffset)
 	else frames = std::min<std::uint64_t>(frames, sample.pcm.size());
 	adpcmOffset = static_cast<std::uint32_t>(frames / 28 * 16);
 	return true;
+}
+
+std::vector<SampleInstanceInfo> GetSampleInstances()
+{
+	std::vector<SampleInstanceInfo> result;
+	result.reserve(instances.size());
+	for (const auto& [id, instance] : instances) {
+		const auto& sample = *instance.decoded;
+		SampleInstanceInfo info;
+		info.instanceId = id;
+		info.sampleHandle = instance.description.handle;
+		info.sampleRate = sample.sampleRate;
+		info.playtime = sample.sampleRate != 0 ? static_cast<float>(instance.voice->GetFramesPlayed()) / sample.sampleRate : 0.0f;
+		info.duration = sample.sampleRate != 0 ? static_cast<float>(sample.pcm.size()) / sample.sampleRate : 0.0f;
+		info.controls = instance.controls;
+		info.playing = instance.playing;
+		info.started = instance.started;
+		info.looping = sample.loopLength != 0;
+		result.push_back(info);
+	}
+	return result;
 }
 
 void InvalidateSample(std::uint32_t handle) { cache.erase(handle); }

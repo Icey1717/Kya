@@ -366,6 +366,8 @@ void RegisterStream(std::uint32_t streamId, std::uint32_t blockSize, float sampl
 	stream.info.channels = channels;
 	stream.info.sampleRate = static_cast<std::uint32_t>(std::fabs(sampleRate));
 	stream.info.position = 0;
+	stream.info.duration = 0.0f;
+	stream.info.path.clear();
 	stream.positionAtStart = 0;
 	stream.voiceStartFrame = 0;
 	stream.samples.clear();
@@ -421,6 +423,8 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 	stream.samples = std::move(samples);
 	stream.sampleRate = sampleRate;
 	stream.info.sampleRate = sampleRate;
+	stream.info.duration = static_cast<float>(stream.samples.size() / stream.info.channels) / sampleRate;
+	stream.info.path = resolvedPath;
 	stream.info.position = 0;
 	stream.positionAtStart = 0;
 	stream.voiceStartFrame = 0;
@@ -561,6 +565,17 @@ bool GetStreamInfo(std::uint32_t streamId, StreamInfo& out)
 	stream.info.position = CurrentPosition(stream);
 	out = stream.info;
 	return true;
+}
+
+std::vector<std::pair<std::uint32_t, StreamInfo>> GetStreams()
+{
+	std::vector<std::pair<std::uint32_t, StreamInfo>> result;
+	result.reserve(streams.size());
+	for (auto& [streamId, stream] : streams) {
+		stream.info.position = CurrentPosition(stream);
+		result.emplace_back(streamId, stream.info);
+	}
+	return result;
 }
 
 bool UnregisterStream(std::uint32_t streamId)

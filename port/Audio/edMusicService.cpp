@@ -124,6 +124,18 @@ void ServiceMusic()
 		}
 	}
 }
+std::vector<MusicStreamInfo> GetMusicStreams()
+{
+	std::lock_guard lock(service.mutex);
+	std::vector<MusicStreamInfo> result;
+	result.reserve(service.streams.size());
+	for (unsigned index = 0; index < service.streams.size(); ++index) {
+		const auto& stream = service.streams[index];
+		result.push_back({index, stream.song, stream.bank, stream.controls.volume,
+			stream.controls.tempo, stream.playing, stream.synth != nullptr, stream.controls.looping});
+	}
+	return result;
+}
 void ResetMusic()
 {
 	if (service.worker.joinable()) { service.worker.request_stop(); service.worker.join(); }

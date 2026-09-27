@@ -9,6 +9,7 @@
 #include "DebugCollision.h"
 #include "DebugFrameBuffer.h"
 #include "DebugHeroReplay.h"
+#include "DebugAudio.h"
 #include "Native/NativeRenderer.h"
 #include "TimeController.h"
 #include "Actor.h"
@@ -22,19 +23,6 @@ namespace Debug {
 	void SetShowDebugPanel(bool bShow) { gShowDebugPanel = bShow; }
 
 	static constexpr const char* kDebugWindowName = "Debug";
-
-	static void DrawAudioContents() {
-		auto* pAudioManager = CScene::ptable.g_AudioManager_00451698;
-		if (pAudioManager == nullptr) {
-			ImGui::TextDisabled("Audio manager unavailable.");
-			return;
-		}
-
-		ImGui::Text("Audio Manager: 0x%p", pAudioManager);
-		ImGui::Text("field_0xcc: %.3f", pAudioManager->field_0xcc);
-		ImGui::Separator();
-		ImGui::TextWrapped("Audio debugging has not been split into a dedicated panel yet. This tab is the new home for audio-specific tools.");
-	}
 
 	static void DrawPerformanceContents() {
 		const double deltaTime = DebugMenu::GetDeltaTime();
@@ -92,7 +80,7 @@ namespace Debug {
 			}
 
 			if (ImGui::BeginTabItem("Audio")) {
-				DrawAudioContents();
+				Debug::Audio::DrawContents();
 				ImGui::EndTabItem();
 			}
 

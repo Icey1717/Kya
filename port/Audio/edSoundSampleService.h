@@ -40,6 +40,19 @@ struct SampleCommand
 	SampleControls controls{};
 };
 
+struct SampleInstanceInfo
+{
+	std::uint32_t instanceId = 0;
+	std::uint32_t sampleHandle = 0;
+	std::uint32_t sampleRate = 0;
+	float playtime = 0.0f;
+	float duration = 0.0f;
+	SampleControls controls{};
+	bool playing = false;
+	bool started = false;
+	bool looping = false;
+};
+
 // The service owns PCM until the voice is destroyed. All calls, including
 // polling, run on the game thread; no Eden objects cross into XAudio2 callbacks.
 class SampleVoice
@@ -58,6 +71,7 @@ void QueueSampleCommand(const SampleCommand& command);
 void FlushSampleCommands();
 std::vector<std::uint32_t> PollFinishedSamples();
 bool GetSamplePosition(std::uint32_t instanceId, std::uint32_t& adpcmOffset);
+std::vector<SampleInstanceInfo> GetSampleInstances();
 void DestroySample(std::uint32_t instanceId);
 void InvalidateSample(std::uint32_t handle);
 void ResetSamples();

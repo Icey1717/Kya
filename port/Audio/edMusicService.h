@@ -8,6 +8,12 @@ namespace Audio
 {
 enum class MusicCommandType { Song, Bank, Restart, Resume, Pause, Mute, ChannelVolume };
 struct MusicCommand { MusicCommandType type; unsigned stream; unsigned value = 0; unsigned channel = 0; };
+struct MusicStreamInfo
+{
+	unsigned index = 0, song = 0, bank = 0;
+	float volume = 0.0f, tempo = 0.0f;
+	bool playing = false, prepared = false, looping = false;
+};
 class MusicOutput
 {
 public:
@@ -29,4 +35,5 @@ std::vector<unsigned> FlushMusicCommands(const std::vector<MusicControls>& contr
 // Deterministic output tests can service queued audio explicitly without a worker.
 void SetMusicOutputFactory(MusicOutputFactory factory);
 void ServiceMusic();
+std::vector<MusicStreamInfo> GetMusicStreams();
 }

@@ -43,8 +43,8 @@ namespace
 		void ExpectSortedList(std::initializer_list<int> indices)
 		{
 			auto& list = behaviour.field_0x60;
-			NativSellerSubObjA* previous = nullptr;
-			NativSellerSubObjA* current = list.pSellerSubObjAA;
+			NativComboSequenceEntry* previous = nullptr;
+			NativComboSequenceEntry* current = list.pSellerSubObjAA;
 			for (int index : indices) {
 				ASSERT_EQ(current, &list.field_0x8[index]);
 				EXPECT_EQ(current->pNext, previous);
@@ -189,7 +189,7 @@ TEST_F(NativAkasaTest, SortingPreservesEqualScoreOrderAndBothListLinks)
 	const int positions[] = {0, 0, 2, 1};
 	for (int i = 0; i < 4; i++) {
 		list.field_0x8[i].field_0x84 = scores[i];
-		EXPECT_EQ(list.FUN_003ffb50(&list.field_0x8[i]), positions[i]);
+		EXPECT_EQ(list.InsertComboPathByScore(&list.field_0x8[i]), positions[i]);
 	}
 	ExpectSortedList({1, 3, 0, 2});
 }
@@ -199,8 +199,8 @@ TEST_F(NativAkasaTest, TraversalRejectsNullCombosAndDepthEight)
 	auto& list = behaviour.field_0x60;
 	list.field_0x10e8 = 0;
 	s_fighter_combo combo = {};
-	list.FUN_003ff510(nullptr, 0);
-	list.FUN_003ff510(&combo, 8);
+	list.CollectComboBranchPaths(nullptr, 0);
+	list.CollectComboBranchPaths(&combo, 8);
 	EXPECT_EQ(list.field_0x10e8, 0);
 	EXPECT_EQ(list.field_0x8[0].aSubObjs[0].nbRequiredCombos, 0);
 }
