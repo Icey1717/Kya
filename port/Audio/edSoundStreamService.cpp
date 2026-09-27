@@ -249,8 +249,10 @@ std::uint64_t CurrentPosition(Stream& stream)
 	if (stream.sourceVoice != nullptr && !stream.samples.empty()) {
 		XAUDIO2_VOICE_STATE state{};
 		stream.sourceVoice->GetState(&state, 0);
-		if (state.BuffersQueued == 0 && stream.voiceStartFrame + state.SamplesPlayed >= stream.samples.size() / stream.info.channels)
+		if (state.BuffersQueued == 0 && stream.voiceStartFrame + state.SamplesPlayed >= stream.samples.size() / stream.info.channels) {
 			stream.info.playing = false;
+			stream.info.finished = true;
+		}
 		return (stream.voiceStartFrame + state.SamplesPlayed) * VagBytesPerBlock / VagSamplesPerBlock;
 	}
 #endif
@@ -361,6 +363,7 @@ void RegisterStream(std::uint32_t streamId, std::uint32_t blockSize, float sampl
 #endif
 	stream.info.ready = true;
 	stream.info.playing = false;
+	stream.info.finished = false;
 	stream.info.blockSize = blockSize;
 	stream.info.volume = 1.0f;
 	stream.info.channels = channels;
@@ -429,6 +432,7 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 	stream.positionAtStart = 0;
 	stream.voiceStartFrame = 0;
 	stream.info.playing = false;
+	stream.info.finished = false;
 	return true;
 }
 
@@ -447,6 +451,7 @@ void PrepareStream(std::uint32_t streamId)
 #endif
 	stream.info.position = 0;
 	stream.info.playing = false;
+	stream.info.finished = false;
 	stream.positionAtStart = 0;
 }
 
@@ -457,6 +462,7 @@ bool StartStream(std::uint32_t streamId)
 		return false;
 
 	Stream& stream = it->second;
+	stream.info.finished = false;
 #ifdef _WIN32
 	if (!stream.samples.empty()) {
 		if (!CreateSourceVoice(stream))
@@ -552,6 +558,7 @@ bool SeekStream(std::uint32_t streamId, float seconds)
 	stream.voiceStartFrame = frame;
 #endif
 	stream.info.playing = false;
+	stream.info.finished = false;
 	return !wasPlaying || StartStream(streamId);
 }
 
@@ -565,6 +572,14 @@ bool GetStreamInfo(std::uint32_t streamId, StreamInfo& out)
 	stream.info.position = CurrentPosition(stream);
 	out = stream.info;
 	return true;
+}
+
+bool IsStreamFinished(std::uint32_t streamId)
+{
+	// Eden's stream state must report completion after the Windows voice drains
+	// so cinematic time can continue on the game timer.
+	StreamInfo info;
+	return GetStreamInfo(streamId, info) && info.finished;
 }
 
 std::vector<std::pair<std::uint32_t, StreamInfo>> GetStreams()
