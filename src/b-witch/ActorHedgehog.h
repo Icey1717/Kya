@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorAutonomous.h"
 #include "ActorBonusServices.h"
+#include "PathFollow.h"
 
 class CActorHedgehog;
 
@@ -23,6 +24,49 @@ public:
 
 	edF32VECTOR4 comeBackPosition;
 	CActorHedgehog* pOwner;
+};
+
+class CBehaviourHedgehogWatchDog : public CBehaviourHedgehog
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual bool HasArmor();
+};
+
+class CBehaviourHedgehogGuardArea : public CBehaviourHedgehog
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual bool HasArmor();
+	virtual edF32VECTOR4* GetComeBackPosition();
+
+	CPathFollowReader pathFollowReader;
+};
+
+class CBehaviourHedgehogWatchDogArmor : public CBehaviourHedgehogWatchDog
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual bool HasArmor();
+};
+
+class CBehaviourHedgehogGuardAreaArmor : public CBehaviourHedgehogGuardArea
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual bool HasArmor();
 };
 
 class CActorHedgehog : public CActorAutonomous
@@ -61,6 +105,10 @@ public:
 	uint field_0x378;
 	uint field_0x380;
 	edF32VECTOR4 field_0x390;
+	CBehaviourHedgehogWatchDog behaviourWatchDog;
+	CBehaviourHedgehogGuardArea behaviourGuardArea;
+	CBehaviourHedgehogWatchDogArmor behaviourWatchDogArmor;
+	CBehaviourHedgehogGuardAreaArmor behaviourGuardAreaArmor;
 
 	CAddOnGenerator addOnGenerator;
 };

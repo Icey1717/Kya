@@ -385,3 +385,126 @@ edF32VECTOR4* CBehaviourHedgehog::GetComeBackPosition()
 
 	return &this->comeBackPosition;
 }
+
+void CBehaviourHedgehogWatchDog::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
+void CBehaviourHedgehogWatchDog::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorHedgehog*>(pOwner);
+	return;
+}
+
+void CBehaviourHedgehogWatchDog::Manage()
+{
+	IMPLEMENTATION_GUARD();
+	return;
+}
+
+void CBehaviourHedgehogWatchDog::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CBehaviourHedgehog::Begin(pOwner, newState, newAnimationType);
+	return;
+}
+
+bool CBehaviourHedgehogWatchDog::HasArmor()
+{
+	return false;
+}
+
+void CBehaviourHedgehogGuardArea::Create(ByteCode* pByteCode)
+{
+	this->pathFollowReader.Create(pByteCode);
+	return;
+}
+
+void CBehaviourHedgehogGuardArea::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorHedgehog*>(pOwner);
+	this->pathFollowReader.Init();
+	this->pathFollowReader.Reset();
+	return;
+}
+
+void CBehaviourHedgehogGuardArea::Manage()
+{
+	IMPLEMENTATION_GUARD();
+	return;
+}
+
+void CBehaviourHedgehogGuardArea::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CBehaviourHedgehog::Begin(pOwner, newState, newAnimationType);
+	return;
+}
+
+bool CBehaviourHedgehogGuardArea::HasArmor()
+{
+	return false;
+}
+
+edF32VECTOR4* CBehaviourHedgehogGuardArea::GetComeBackPosition()
+{
+	return this->pathFollowReader.GetWayPoint();
+}
+
+void CBehaviourHedgehogWatchDogArmor::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
+void CBehaviourHedgehogWatchDogArmor::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorHedgehog*>(pOwner);
+	return;
+}
+
+void CBehaviourHedgehogWatchDogArmor::Manage()
+{
+	IMPLEMENTATION_GUARD();
+	return;
+}
+
+void CBehaviourHedgehogWatchDogArmor::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CBehaviourHedgehog::Begin(pOwner, newState, newAnimationType);
+	return;
+}
+
+bool CBehaviourHedgehogWatchDogArmor::HasArmor()
+{
+	return true;
+}
+
+void CBehaviourHedgehogGuardAreaArmor::Create(ByteCode* pByteCode)
+{
+	this->pathFollowReader.Create(pByteCode);
+	return;
+}
+
+void CBehaviourHedgehogGuardAreaArmor::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorHedgehog*>(pOwner);
+	this->pathFollowReader.Init();
+	this->pathFollowReader.Reset();
+	return;
+}
+
+void CBehaviourHedgehogGuardAreaArmor::Manage()
+{
+	IMPLEMENTATION_GUARD();
+	return;
+}
+
+void CBehaviourHedgehogGuardAreaArmor::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CBehaviourHedgehog::Begin(pOwner, newState, newAnimationType);
+	return;
+}
+
+bool CBehaviourHedgehogGuardAreaArmor::HasArmor()
+{
+	return true;
+}
