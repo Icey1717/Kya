@@ -43,3 +43,16 @@ This repository is an ongoing Windows-focused decompilation and PC port of *Kya:
   - `git -C port/KyaTexture status --short`
 - After committing inside a submodule, stage the submodule path in the parent to record the new commit.
 - Avoid committing unrelated generated artifacts unless the user explicitly wants them.
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on the fork `mgiuditta/Kya` (not upstream). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
