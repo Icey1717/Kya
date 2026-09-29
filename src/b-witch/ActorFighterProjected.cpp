@@ -1126,11 +1126,9 @@ void CBehaviourFighterProjected::_ManageHit(bool bPlayImpact)
 	}
 
 	if (bPlayImpact == true) {
-		IMPLEMENTATION_GUARD_FX(
-			pCVar1 = this->pOwner;
-		CActorFighter::PlayImpactFx
-		(pCVar1, (long)(int)&pCVar1->field_0x690, &pCVar1->field_0x6a0, (ulong)((pCVar1->hitFlags & 1U) != 0), '\0');)
+		this->pOwner->PlayImpactFx(&this->pOwner->field_0x690, &this->pOwner->field_0x6a0, (this->pOwner->hitFlags & 1U) != 0, false);
 	}
+
 	return;
 }
 
@@ -1193,13 +1191,13 @@ void CBehaviourFighterProjected::_ComputeDynamics()
 			}
 			else {
 				if (uVar3 == 2) {
-					edF32Vector4ScaleHard(this->pOwner->field_0x428, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
+					edF32Vector4ScaleHard(this->pOwner->fighterAnatomyZones.field_0x28, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
 					local_30.w = 1.0f;
 					unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->scale).z / 2.0f;
 				}
 				else {
 					if (uVar3 == 0) {
-						edF32Vector4ScaleHard(this->pOwner->field_0x42c, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
+						edF32Vector4ScaleHard(this->pOwner->fighterAnatomyZones.field_0x2c, &local_30, &(this->pOwner->fighterAnatomyZones).field_0x10);
 						local_30.w = 1.0f;
 						unaff_f20 = ((this->pOwner->pCollisionData)->pObbPrim->scale).z / 2.0f;
 					}

@@ -509,16 +509,6 @@ bool CActorBrazul::SetBehaviour(int behaviourId, int newState, int animationType
 	return CActorFighter::SetBehaviour(behaviourId, newState, animationType);
 }
 
-struct BrazulStateStruct
-{
-	int field_0x0;
-	byte field_0x4;
-	byte field_0x5;
-	byte field_0x6;
-	byte field_0x7;
-	float field_0x8;
-};
-
 BrazulStateStruct BrazulStateStruct_ARRAY_00426d20[34] = {
 	{ 0x0C, 0, 2, 2, 0, 0.5f },
 	{ 0x15, 1, 1, 1, 0, 0.0f },
@@ -587,7 +577,7 @@ void CActorBrazul::SetState(int newState, int animType)
 			}
 		}
 
-		//this->field_0x3020.FUN_003e4460(puVar4, (int)&DAT_00426ec0, (int)&DAT_004276c0);)
+		this->field_0x3020.ChangeState(pBVar3);
 	}
 
 	CActorWolfen::SetState(newState, animType);

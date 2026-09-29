@@ -672,13 +672,13 @@ void CActorFighter::Create(ByteCode* pByteCode)
 
 	peVar1 = (this->pCollisionData)->pObbPrim;
 
-	this->field_0x410 = peVar1->position;
-	this->field_0x400 = this->field_0x410;
+	this->fighterAnatomyZones.field_0x10 = peVar1->position;
+	this->fighterAnatomyZones.field_0x0 = this->fighterAnatomyZones.field_0x10;
 
-	this->field_0x420 = pByteCode->GetF32() * 2.0f;
-	this->field_0x428 = pByteCode->GetF32() * 2.0f;
-	this->field_0x424 = pByteCode->GetF32() * 2.0f;
-	this->field_0x42c = pByteCode->GetF32() * 2.0f;
+	this->fighterAnatomyZones.field_0x20 = pByteCode->GetF32() * 2.0f;
+	this->fighterAnatomyZones.field_0x28 = pByteCode->GetF32() * 2.0f;
+	this->fighterAnatomyZones.field_0x24 = pByteCode->GetF32() * 2.0f;
+	this->fighterAnatomyZones.field_0x2c = pByteCode->GetF32() * 2.0f;
 
 	this->field_0x3f8 = ((this->subObjA)->boundingSphere).w;
 
@@ -1649,8 +1649,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 
 LAB_00319fb0:
 	if (bPlayImpact == true) {
-		IMPLEMENTATION_GUARD_FX(
-		PlayImpactFx(this, (long)(int)&this->field_0x690, &this->field_0x6a0, (ulong)((this->hitFlags & 1U) != 0), '\0');)
+		PlayImpactFx(&this->field_0x690, &this->field_0x6a0, (this->hitFlags & 1U) != 0, false);
 	}
 
 	return;
@@ -8247,8 +8246,7 @@ void CBehaviourFighter::InitState(int newState)
 	if ((newState == FIGHTER_HIT_STEP_BACK) || (newState == 0x18)) {
 		for (uVar10 = 0; uVar10 < 2; uVar10 = uVar10 + 1) {
 			pFighter->pAnimationController->RegisterBone(gBoneIds_004343a0[uVar10]);
-			IMPLEMENTATION_GUARD_FX(
-			CFxHandle::FUN_004074f0(pFighter->field_0x550 + uVar10, 0, 0);)
+			pFighter->field_0x550[uVar10].InitPositionRotation((edF32VECTOR4*)0x0, (edF32VECTOR4*)0x0);
 		}
 	}
 
@@ -8790,15 +8788,13 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	if ((oldState == FIGHTER_HIT_STEP_BACK) || (oldState == 0x18)) {
 		uVar13 = 0;
 		puVar12 = gBoneIds_004343a0;
-		//pCVar11 = pFighter;
+		CFxHandleExt* pFxHandleExt = pFighter->field_0x550;
 		do {
 			pFighter->pAnimationController->UnRegisterBone(*puVar12);
-
-			IMPLEMENTATION_GUARD_FX(
-			CFxHandle::FUN_00407310(pCVar11->field_0x550);)
+			pFxHandleExt->Stop();
 			uVar13 = uVar13 + 1;
 			puVar12 = puVar12 + 1;
-			//pCVar11 = (CActorFighter*)&(pCVar11->characterBase).base.base.actorFieldS;
+			pFxHandleExt = pFxHandleExt + 1;
 		} while (uVar13 < 2);
 	}
 

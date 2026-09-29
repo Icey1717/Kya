@@ -41,7 +41,7 @@ void CActorPunchingBall::Create(ByteCode* pByteCode)
 
 	ChangeCollisionSphere(0.0f, &local_10, &local_20);
 	StoreCollisionSphere();
-	//(*(code*)((this->field_0xe50).pVTable)->setObjCounts)(&this->field_0xe50, 3, 2);
+	this->field_0xe50.SetObjCounts(3, 2);
 }
 
 void CActorPunchingBall::Init()
@@ -56,7 +56,7 @@ void CActorPunchingBall::Init()
 
 	CActorFighter::Init();
 
-	//(*(code*)((this->field_0xe50).pVTable)->setupObjects)(&this->field_0xe50, this);
+	this->field_0xe50.SetupObjects(this);
 
 	ClearLocalData();
 
@@ -69,7 +69,7 @@ void CActorPunchingBall::Term()
 {
 	CActorFighter::Term();
 
-	//(*(code*)((this->field_0xe50).pVTable)->field_0x10)(&this->field_0xe50);
+	this->field_0xe50.Term();
 
 	this->field_0xa90 = (S_TRAP_STREAM_REF*)0x0;
 
@@ -213,7 +213,7 @@ uint CActorPunchingBall::GetBehaviourFlags(int state)
 
 void CActorPunchingBall::UpdatePostAnimEffects()
 {
-	IMPLEMENTATION_GUARD_FX();
+	this->field_0xe50.UpdateLinkedPostAnimEffects();
 }
 
 void CActorPunchingBall::SetState(int newState, int animType)
@@ -519,7 +519,7 @@ void CActorPunchingBall::ClearLocalData()
 	this->camFigData.Reset();
 	this->camFigData.IsValid(0);
 
-	// (*(code*)((this->field_0xe50).pVTable)->field_0x14)(&this->field_0xe50, 7);
+	this->field_0xe50.Func_0x14(7);
 
 	this->field_0xee0 = 0.0f;
 	this->field_0xee4 = 1;

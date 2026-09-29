@@ -13,7 +13,7 @@ public:
 		float fVar1;
 		float fVar2;
 		float fVar3;
-		int* pCVar4;
+		CActInstance** pCVar4;
 		T* pCVar5;
 		CLight* pLight;
 		int iVar6;
@@ -58,7 +58,7 @@ public:
 				pLightManager->Reference(pLight, -1, false, false, -1);
 				pLight->Inactivate();
 				iVar6 = iVar6 + 1;
-				*pCVar4 = 0;
+				*pCVar4 = (CActInstance*)0x0;
 				pCVar5 = pCVar5 + 1;
 				pCVar4 = pCVar4 + 1;
 			} while (iVar6 < count);
@@ -71,10 +71,94 @@ public:
 
 	void Term() { field_0x0 = 0; }
 
+	bool Register(CActInstance* pOwner)
+	{
+		bool bVar1;
+		int curIndex;
+
+		curIndex = 0;
+		CActInstance** pCVar3 = this->field_0x60;
+		while (true) {
+			bVar1 = false;
+			if ((*pCVar3 != (CActInstance*)0x0) && (curIndex < 3)) {
+				bVar1 = true;
+			}
+
+			if (!bVar1) break;
+
+			pCVar3 = pCVar3 + 1;
+			curIndex = curIndex + 1;
+		}
+
+		if (curIndex < 3) {
+			this->aLightArray[curIndex].Activate();
+			this->field_0x60[curIndex] = pOwner;
+		}
+
+		return curIndex < 3;
+	}
+
+	bool Unregister(CActInstance* pOwner)
+	{
+		bool bVar1;
+		int curIndex;
+
+		curIndex = 0;
+		CActInstance** pCVar3 = this->field_0x60;
+		while (true) {
+			bVar1 = false;
+			if ((*pCVar3 != pOwner) && (curIndex < 3)) {
+				bVar1 = true;
+			}
+
+			if (!bVar1) break;
+
+			pCVar3 = pCVar3 + 1;
+			curIndex = curIndex + 1;
+		}
+
+		if (curIndex < 3) {
+			this->aLightArray[curIndex].Inactivate();
+			this->field_0x60[curIndex] = (CActInstance*)0x0;
+		}
+
+		return curIndex < 3;
+	}
+
+	void Update(CActInstance* pInstance, edF32VECTOR4* param_3)
+	{
+		bool bVar1;
+		FullColorModel* pFVar2;
+		int iVar4;
+		float fVar5;
+		float fVar6;
+		float fVar7;
+
+		iVar4 = 0;
+		CActInstance** pCVar3 = this->field_0x60;
+		while (true) {
+			bVar1 = false;
+			if ((*pCVar3 != pInstance) && (iVar4 < 3)) {
+				bVar1 = true;
+			}
+
+			if (!bVar1) break;
+
+			pCVar3 = pCVar3 + 1;
+			iVar4 = iVar4 + 1;
+		}
+
+		if (iVar4 < 3) {
+			this->aLightArray[iVar4].baseShape.position = *param_3;
+		}
+
+		return;
+	}
+
 	undefined4 field_0x0;
 
 	T aLightArray[count];
-	int field_0x60[count];
+	CActInstance* field_0x60[count];
 };
 
 #endif // SHARED_LIGHTS_H

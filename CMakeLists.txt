@@ -577,6 +577,7 @@ set (actor_src
 	"${src_root}/b-witch/ActorMicken.cpp"
 	"${src_root}/b-witch/ActorMicken.h"
 	"${src_root}/b-witch/ActorWolfen.cpp"
+	"${src_root}/b-witch/ActorBonePhysics.cpp"
 	"${src_root}/b-witch/ActorWolfen.h"
 	"${src_root}/b-witch/ActorNativ.cpp"
 	"${src_root}/b-witch/ActorNativ.h"

@@ -4,10 +4,17 @@
 #include "Types.h"
 #include "ActorFighter.h"
 #include "ActorBasicBox.h"
+#include "ActorWolfen.h"
 #include "CameraViewManager.h"
 #include "CameraFightData.h"
 
 class CActorPunchingBall;
+
+struct CPunchingBallBonePhysics : public CActorBonePhysics
+{
+	void SetupObjects(CActor* pOwner) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+};
 
 struct S_TRAP_STREAM_REF;
 
@@ -93,6 +100,7 @@ public:
 	CVibrationDyn vibrationDyn;
 
 	CCamFigData camFigData;
+	CPunchingBallBonePhysics field_0xe50;
 
 	float field_0xee0;
 	int field_0xee4;

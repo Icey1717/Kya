@@ -7,12 +7,30 @@
 
 class CActorBrazul;
 
-struct EnemyComponent80Ext : public EnemyComponent80_00447ec0
+struct BrazulStateStruct
 {
-	virtual void SetupObjects(CActor* pOwner) {}
-	virtual void Term() {}
+	int field_0x0;
+	byte field_0x4;
+	byte field_0x5;
+	byte field_0x6;
+	byte field_0x7;
+	float field_0x8;
+};
 
-	int UpdatePostAnimEffects() { return 0; }
+struct CBrazulBonePhysics : public CActorBonePhysics
+{
+	void SetupObjects(CActor* pOwner) override;
+	void Term() override;
+	void Func_0x14(uint flags) override;
+	void Func_0x18() override;
+	ActorBonePhysicsLink* allocateB(uint index) override;
+	void Func_0x34(int index) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+
+	int UpdatePostAnimEffects();
+	void ChangeState(const BrazulStateStruct* pState);
+
+	const BrazulStateStruct* pCurrentState = nullptr;
 };
 
 struct astruct_19
@@ -172,7 +190,7 @@ public:
 
 	CFxHandleExt field_0x3000;
 	CFxHandleExt field_0x300c;
-	EnemyComponent80Ext field_0x3020;
+	CBrazulBonePhysics field_0x3020;
 	CFxHandleExt field_0x30a0;
 	CFxHandleExt field_0x30ac[6];
 

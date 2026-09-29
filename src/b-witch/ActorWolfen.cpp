@@ -124,7 +124,7 @@ WolfenCollisionSphere CActorWolfen::_pDefCollisions[6] =
 	{ { 0.4f, 0.9f, 0.4f, 0.0f }, { 0.0f, 0.9f, 0.0f, 1.0f } },
 };
 
-EnemyComponent80_00446100 g_EnemyComponent80_0049c6d0;
+CWolfenSharedBonePhysics g_EnemyComponent80_0049c6d0;
 int INT_004497e8 = 0;
 
 void CActorWolfen::Create(ByteCode* pByteCode)
@@ -149,7 +149,7 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 
 	uVar3 = this->field_0xb74;
 	if ((uVar3 == 1) || (uVar3 == 0)) {
-		if (g_EnemyComponent80_0049c6d0.field_0x0 == (StaticEnemy90*)0x0 || g_EnemyComponent80_0049c6d0.field_0x4 == 0) {
+		if (g_EnemyComponent80_0049c6d0.field_0x0 == nullptr || g_EnemyComponent80_0049c6d0.field_0x4 == nullptr) {
 			g_EnemyComponent80_0049c6d0.SetObjCounts(4, 0);
 			INT_004497e8 = 0;
 		}
@@ -159,12 +159,12 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	}
 	else {
 		if (uVar3 == 3) {
-			this->pEnemyComponent80_0xd34 = new EnemyComponent80_004460b0();
+			this->pEnemyComponent80_0xd34 = new CWolfenFullBodyPhysics();
 			this->pEnemyComponent80_0xd34->SetObjCounts(0x1a, 0x1d);
 			this->pEnemyComponent80_0xd34->SetupObjects(this);
 		}
 		else {
-			this->pEnemyComponent80_0xd34 = (EnemyComponent80_00447ec0*)0x0;
+			this->pEnemyComponent80_0xd34 = nullptr;
 		}
 	}
 
@@ -497,7 +497,7 @@ void CActorWolfen::Init()
 void CActorWolfen::Term()
 {
 	uint uVar1;
-	EnemyComponent80_00447ec0* pAlloc;
+	CActorBonePhysics* pAlloc;
 	CActorWeapon* pCVar2;
 	CActor* pCVar3;
 
@@ -512,19 +512,19 @@ void CActorWolfen::Term()
 
 	uVar1 = this->field_0xb74;
 	if (uVar1 == 3) {
-		if (this->pEnemyComponent80_0xd34 != (EnemyComponent80_00447ec0*)0x0) {
+		if (this->pEnemyComponent80_0xd34 != nullptr) {
 			this->pEnemyComponent80_0xd34->Term();
 			pAlloc = this->pEnemyComponent80_0xd34;
-			if (pAlloc != (EnemyComponent80_00447ec0*)0x0) {
+			if (pAlloc != nullptr) {
 				delete pAlloc;
 			}
 
-			this->pEnemyComponent80_0xd34 = (EnemyComponent80_00447ec0*)0x0;
+			this->pEnemyComponent80_0xd34 = nullptr;
 		}
 	}
 	else {
-		if (((uVar1 == 1) || (uVar1 == 0)) && (this->pEnemyComponent80_0xd34 != (EnemyComponent80_00447ec0*)0x0)) {
-			this->pEnemyComponent80_0xd34 = (EnemyComponent80_00447ec0*)0x0;
+		if (((uVar1 == 1) || (uVar1 == 0)) && (this->pEnemyComponent80_0xd34 != nullptr)) {
+			this->pEnemyComponent80_0xd34 = nullptr;
 			INT_004497e8 = INT_004497e8 + -1;
 			if (INT_004497e8 < 1) {
 				g_EnemyComponent80_0049c6d0.Term();
@@ -924,17 +924,17 @@ void CActorWolfen::UpdateLookingAt()
 void CActorWolfen::UpdatePostAnimEffects()
 {
 	uint uVar1;
-	EnemyComponent80_00447ec0* this_00;
+	CActorBonePhysics* this_00;
 
 	uVar1 = this->field_0xb74;
 	if (uVar1 == 3) {
-		if (this->pEnemyComponent80_0xd34 != (EnemyComponent80_00447ec0*)0x0) {
-			this->pEnemyComponent80_0xd34->FUN_003c1400();
+		if (this->pEnemyComponent80_0xd34 != nullptr) {
+			this->pEnemyComponent80_0xd34->UpdateFullBodyPostAnimEffects();
 		}
 	}
 	else {
-		if ((((uVar1 == 1) || (uVar1 == 0)) && (this_00 = this->pEnemyComponent80_0xd34, this_00 != (EnemyComponent80_00447ec0*)0x0)) && (this_00->pEnemy_0x60 == this)) {
-			this_00->FUN_003c2b20();
+		if ((((uVar1 == 1) || (uVar1 == 0)) && (this_00 = this->pEnemyComponent80_0xd34, this_00 != nullptr)) && (this_00->pEnemy_0x60 == this)) {
+			this_00->UpdateLinkedPostAnimEffects();
 		}
 	}
 
@@ -1105,7 +1105,7 @@ void CActorWolfen::CinematicMode_Leave(int behaviourId)
 bool CActorWolfen::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 {
 	int iVar1;
-	EnemyComponent80_00447ec0* pEVar2;
+	CActorBonePhysics* pEVar2;
 	CBehaviour* pCVar3;
 
 	CActorFighter::CarriedByActor(pActor, m0);
@@ -1124,15 +1124,15 @@ bool CActorWolfen::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 
 	iVar1 = this->field_0xb74;
 	if (iVar1 == 3) {
-		IMPLEMENTATION_GUARD(
-		if (this->pEnemyComponent80_0xd34 != (EnemyComponent80*)0x0) {
-			FUN_003c1350((int*)this->pEnemyComponent80_0xd34, m0);
-		})
+		if (this->pEnemyComponent80_0xd34 != nullptr) {
+			this->pEnemyComponent80_0xd34->TransformPoints(m0);
+		}
 	}
 	else {
-		if ((((iVar1 == 1) || (iVar1 == 0)) && (pEVar2 = this->pEnemyComponent80_0xd34, pEVar2 != (EnemyComponent80_00447ec0*)0x0)) && (pEVar2->pEnemy_0x60 == this)) {
-			IMPLEMENTATION_GUARD(
-			FUN_003c2980((int*)pEVar2, m0);)
+		if ((((iVar1 == 1) || (iVar1 == 0)) && (pEVar2 = this->pEnemyComponent80_0xd34, pEVar2 != nullptr)) && (pEVar2->pEnemy_0x60 == this)) {
+			if (pEVar2->field_0x70 != 0) {
+				pEVar2->TransformPoints(m0);
+			}
 		}
 	}
 
@@ -15827,7 +15827,7 @@ void CBehaviourWolfenFighterRidden::ManageCombatMusic(int state)
 
 void CBehaviourWolfenFighterSlave::Manage()
 {
-	EnemyComponent80_00447ec0* this_00;
+	CActorBonePhysics* this_00;
 	uint uVar1;
 	CActorWolfen* pCVar2;
 	CActorWolfen* pCVar1;
@@ -15840,7 +15840,7 @@ void CBehaviourWolfenFighterSlave::Manage()
 	uVar1 = pCVar2->fightFlags & 0x400;
 	if (this->field_0xc != static_cast<uint>(uVar1 != 0)) {
 		this_00 = pCVar2->pEnemyComponent80_0xd34;
-		if (this_00 != (EnemyComponent80_00447ec0*)0x0) {
+		if (this_00 != nullptr) {
 			if (uVar1 == 0) {
 				this_00->FUN_003c2910();
 			}

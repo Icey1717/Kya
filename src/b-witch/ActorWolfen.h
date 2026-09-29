@@ -89,37 +89,100 @@ class CActorHero;
 
 struct StaticEnemy90
 {
-
+	uint boneHash;
+	uint flags;
+	float inverseMass;
+	float field_0xc;
+	edF32VECTOR4 position;
+	edF32VECTOR4 previousPosition;
+	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 rotation;
+	edF32VECTOR4 scale;
+	edF32VECTOR4 acceleration;
+	edF32VECTOR4 gravity;
+	void* pVTable_0x80;
+	uint field_0x84;
+	uint field_0x88;
+	uint field_0x8c;
 };
 
-// Named for their VTable ptrs
-struct EnemyComponent80_00447ec0
+struct ActorBonePhysicsLink
 {
-	virtual void SetObjCounts(int countA, int countB) {}
-	virtual void SetupObjects(CActor* CActorWolfen) {}
-	virtual void Term() {}
-
-	void FUN_003c2910() {}
-	void FUN_003c28a0() {}
-	void FUN_003c2aa0() {}
-	void FUN_003c2a30() {}
-	void FUN_003c1400() {}
-	void FUN_003c2b20() {}
-
-	StaticEnemy90* field_0x0;
-	void* field_0x4;
-	CActorWolfen* pEnemy_0x60;
+	uint pointA;
+	uint pointB;
+	float minDistance;
+	float maxDistance;
+	void* pVTable_0x10;
+	ushort constraintType;
+	ushort parentLink;
+	uint field_0x18;
+	uint field_0x1c;
+	edF32VECTOR4 axis;
+	edF32VECTOR4 field_0x30;
+	float field_0x40;
+	float field_0x44;
+	float field_0x48;
+	float field_0x4c;
 };
 
-struct EnemyComponent80_004460b0 : public EnemyComponent80_00447ec0
+// Base vtable at 00447ec0 in the PS2 executable.
+struct CActorBonePhysics
 {
-	virtual void SetupObjects(CActor* CActorWolfen) {}
+	virtual ~CActorBonePhysics() = default;
+	virtual void SetObjCounts(int countA, int countB);
+	virtual void SetupObjects(CActor* pOwner);
+	virtual void Term();
+	virtual void Func_0x14(uint flags);
+	virtual void Func_0x18();
+	virtual void Func_0x1c();
+	virtual void Func_0x20();
+	virtual StaticEnemy90* allocateA(uint index);
+	virtual ActorBonePhysicsLink* allocateB(uint index);
+	virtual void* Func_0x2c();
+	virtual void Func_0x30();
+	virtual void Func_0x34(int index);
+	virtual void Func_0x38(int index);
+	virtual void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction);
+
+	void FUN_003c2910();
+	void FUN_003c28a0();
+	void FUN_003c2aa0();
+	void FUN_003c2a30();
+	int UpdateFullBodyPostAnimEffects();
+	int UpdateLinkedPostAnimEffects();
+	void Simulate(uint iterations);
+	void ApplyToAnimation();
+	void TransformPoints(edF32MATRIX4* pTransform);
+
+	StaticEnemy90** field_0x0 = nullptr;
+	ActorBonePhysicsLink** field_0x4 = nullptr;
+	uint count_0x8 = 0;
+	uint count_0xc = 0;
+	float field_0x10 = 1.0f;
+	float field_0x14 = 0.0f;
+	edF32MATRIX4 matrix_0x20;
+	CActor* pEnemy_0x60 = nullptr;
+	int field_0x70 = 0;
+	float field_0x74 = 0.0f;
+	float field_0x78 = 0.0f;
+	edF32VECTOR4 field_0x80;
 };
 
-struct EnemyComponent80_00446100 : public EnemyComponent80_00447ec0
+// Vtable at 004460b0; used by Wolfen variant 3.
+struct CWolfenFullBodyPhysics : public CActorBonePhysics
 {
-	virtual void SetupObjects(CActor* CActorWolfen) {}
-	virtual void Func_0x30() {}
+	void SetupObjects(CActor* pOwner) override;
+	ActorBonePhysicsLink* allocateB(uint index) override;
+	void Func_0x34(int index) override;
+	void Func_0x38(int index) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+};
+
+// Vtable at 00446100; shared by Wolfen variants 0 and 1.
+struct CWolfenSharedBonePhysics : public CActorBonePhysics
+{
+	void SetupObjects(CActor* pOwner) override;
+	void Func_0x30() override;
 };
 
 struct RndData
@@ -1376,7 +1439,7 @@ public:
 
 	EEnemyCombatMode combatMode_0xb7c;
 
-	EnemyComponent80_00447ec0* pEnemyComponent80_0xd34 = nullptr; // delete init
+	CActorBonePhysics* pEnemyComponent80_0xd34 = nullptr; // delete init
 
 	CVision vision;
 

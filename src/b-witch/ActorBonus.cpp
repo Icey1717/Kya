@@ -1532,8 +1532,7 @@ void CBnsInstance::SetState(int newState)
 	if (this->state == 4) {
 		pBonus = static_cast<CActorBonus*>(this->pOwner);
 		pBonus->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (MSG_PARAM)1);
-		IMPLEMENTATION_GUARD_LIGHT(
-		CActorBonus::_gBNS_Lights.Register(this);)
+		CActorBonus::_gBNS_Lights.Register(this);
 		soundSpatParam.data = &this->field_0x64;
 		pBonus->pActorSound->node.SoundStart(pBonus, 0, (pBonus->soundRef).Get(), 1, 2, &soundSpatParam);
 	}
@@ -1635,9 +1634,8 @@ void CBnsInstance::BehaviourTurn_Manage(CBehaviourBonusTurn* pBehaviour)
 	if ((this->flags & 1) != 0) {
 		curState = this->state;
 		if ((curState == 5) || (curState == 4)) {
-			IMPLEMENTATION_GUARD_LIGHT(
 			CActorBonus::_gBNS_Lights.Update(this, &this->currentPosition);
-			CActorBonus::_gBNS_Lights.Unregister(this);)
+			CActorBonus::_gBNS_Lights.Unregister(this);
 			pBehaviour->KillInstance(this);
 		}
 		else {
@@ -1756,9 +1754,8 @@ void CBnsInstance::BehaviourPath_Manage(CBehaviourBonusPath* pBehaviour)
 		break;
 	case 4:
 	case 5:
-		IMPLEMENTATION_GUARD_LIGHT(
 		CActorBonus::_gBNS_Lights.Update(this, &this->currentPosition);
-		CActorBonus::_gBNS_Lights.Unregister(this);)
+		CActorBonus::_gBNS_Lights.Unregister(this);
 		pBehaviour->KillInstance(this);
 		break;
 	}
@@ -1814,9 +1811,8 @@ void CBnsInstance::BehaviourAddOn_Manage(CBehaviourBonusFlock* pBehaviour)
 		int currentState = this->state;
 
 		if ((currentState == 5) || (currentState == 4)) {
-			IMPLEMENTATION_GUARD_LIGHT(
 			CActorBonus::_gBNS_Lights.Update(this, &this->currentPosition);
-			CActorBonus::_gBNS_Lights.Unregister(this);)
+			CActorBonus::_gBNS_Lights.Unregister(this);
 			pBehaviour->KillInstance(this);
 		}
 		else if (currentState == CActInstance::STT_INS_GOTO_KIM) {
@@ -1861,9 +1857,8 @@ void CBnsInstance::BehaviourFlock_Manage(CBehaviourBonusFlock* pBehaviour)
 	if ((this->flags & 1) != 0) {
 		curState = this->state;
 		if ((curState == 5) || (curState == 4)) {
-			IMPLEMENTATION_GUARD_LIGHT(
 			CActorBonus::_gBNS_Lights.Update(this, &this->currentPosition);
-			CActorBonus::_gBNS_Lights.Unregister(this);)
+			CActorBonus::_gBNS_Lights.Unregister(this);
 			pBehaviour->KillInstance(this);
 		}
 		else {

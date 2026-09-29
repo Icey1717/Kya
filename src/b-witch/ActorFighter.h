@@ -73,6 +73,8 @@ struct s_fighter_anatomy_zones
 	edF32VECTOR4 field_0x10;
 	float field_0x20;
 	float field_0x24;
+	float field_0x28;
+	float field_0x2c;
 };
 
 struct s_fighter_multiways_anim
@@ -811,14 +813,6 @@ public:
 
 	float field_0x3f4;
 	float field_0x3f8;
-
-	edF32VECTOR4 field_0x400;
-	edF32VECTOR4 field_0x410;
-
-	float field_0x420;
-	float field_0x424;
-	float field_0x428;
-	float field_0x42c;
 
 	float hitMultiplier;
 	uint field_0x444;

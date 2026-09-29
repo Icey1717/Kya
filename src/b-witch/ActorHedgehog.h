@@ -2,17 +2,46 @@
 #define ACTOR_HEDGEHOG_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
+#include "ActorBonusServices.h"
 
-class CActorHedgehog : public CActor {
+class CActorHedgehog : public CActorAutonomous
+{
 public:
 	static StateConfig _gStateCfg_ABV[28];
 
-	CActorHedgehog(){
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
 	virtual void Create(ByteCode* pByteCode);
+
+	virtual void Init();
+	virtual void Term();
+
+	virtual void Reset();
+
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
+
+	virtual StateConfig* GetStateCfg(int state);
+
+	virtual float GetWalkSpeed();
+	virtual float GetWalkRotSpeed();
+	virtual float GetWalkAcceleration();
+	virtual float GetRunSpeed();
+	virtual float GetRunRotSpeed();
+	virtual float GetRunAcceleration();
+
+	uint field_0x350;
+	undefined4 field_0x354;
+	float walkSpeed;
+	float walkAcceleration;
+	float walkRotSpeed;
+	float runSpeed;
+	float field_0x368;
+	float field_0x36c;
+	float field_0x370;
+	uint field_0x374;
+	uint field_0x378;
+	uint field_0x380;
+
+	CAddOnGenerator addOnGenerator;
 };
 
 #endif //ACTOR_HEDGEHOG_H
