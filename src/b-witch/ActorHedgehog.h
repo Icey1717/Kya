@@ -5,6 +5,26 @@
 #include "ActorAutonomous.h"
 #include "ActorBonusServices.h"
 
+class CActorHedgehog;
+
+class CBehaviourHedgehog : public CBehaviour
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	// CBehaviourHedgehog
+	virtual bool HasArmor() = 0;
+	virtual edF32VECTOR4* GetComeBackPosition();
+
+	edF32VECTOR4 comeBackPosition;
+	CActorHedgehog* pOwner;
+};
+
 class CActorHedgehog : public CActorAutonomous
 {
 public:
@@ -29,7 +49,7 @@ public:
 	virtual float GetRunAcceleration();
 
 	uint field_0x350;
-	undefined4 field_0x354;
+	CActor* field_0x354;
 	float walkSpeed;
 	float walkAcceleration;
 	float walkRotSpeed;
@@ -40,6 +60,7 @@ public:
 	uint field_0x374;
 	uint field_0x378;
 	uint field_0x380;
+	edF32VECTOR4 field_0x390;
 
 	CAddOnGenerator addOnGenerator;
 };
