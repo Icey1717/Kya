@@ -5,8 +5,10 @@
 #include "Actor.h"
 
 class CActorMiniGamesManager;
+class CActorMiniGame;
 
-class CActorMiniGamesManager;
+#define MINI_GAMES_MANAGER_BEHAVIOUR_STAND 2
+#define MINI_GAMES_MANAGER_STATE_STAND 5
 
 class CBehaviourMiniGamesManager : public CBehaviour
 {
@@ -33,9 +35,10 @@ public:
 class CActorMiniGamesManager : public CActor
 {
 public:
-	CActorMiniGamesManager() {
-		IMPLEMENTATION_GUARD_LOG()
-	}
+	CActorMiniGamesManager();
+	virtual ~CActorMiniGamesManager();
+
+	static StateConfig _gStateCfg_MGM[1];
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
@@ -45,8 +48,16 @@ public:
 	virtual StateConfig* GetStateCfg(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	CBehaviourMiniGamesManager behaviourMiniGamesManager;
+	void ClearLocalData();
+
 	CBehaviourMiniGamesManagerStand behaviourStand;
+	S_ACTOR_STREAM_REF* pOrganizerStreamRefs;
+	S_STREAM_REF<CActor> actorRef;
+	int nextMiniGameOrder;
+	int field_0x174;
+	CActorMiniGame** aMiniGames;
+	int nbMaxMiniGames;
+	int nbMiniGames;
 };
 
 #endif //ACTOR_MINI_GAME_MANAGER_H

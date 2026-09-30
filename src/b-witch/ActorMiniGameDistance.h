@@ -2,9 +2,9 @@
 #define ACTOR_MINI_DISTANCE_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMiniGame.h"
 
-class CActorMiniGameDistance : public CActor {
+class CActorMiniGameDistance : public CActorMiniGame {
 public:
 	CActorMiniGameDistance() {
 		IMPLEMENTATION_GUARD_LOG()

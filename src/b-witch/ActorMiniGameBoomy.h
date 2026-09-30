@@ -2,9 +2,9 @@
 #define ACTOR_MINI_GAME_BOOMY_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMiniGame.h"
 
-class CActorMiniGameBoomy : public CActor {
+class CActorMiniGameBoomy : public CActorMiniGame {
 public:
 	CActorMiniGameBoomy() {
 		IMPLEMENTATION_GUARD_LOG()

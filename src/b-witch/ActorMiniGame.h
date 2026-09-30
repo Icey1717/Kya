@@ -11,6 +11,12 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+
+	void FUN_003ace00();
+
+	// Unrecovered mini-game data preceding the ordering field.
+	undefined field_0x160[0x78];
+	int field_0x1d8;
 };
 
 #endif //ACTOR_MINI_GAME_H

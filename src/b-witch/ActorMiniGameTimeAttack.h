@@ -2,9 +2,9 @@
 #define ACTOR_MINI_GAME_TIME_ATTACK_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMiniGame.h"
 
-class CActorMiniGameTimeAttack : public CActor {
+class CActorMiniGameTimeAttack : public CActorMiniGame {
 public:
 	CActorMiniGameTimeAttack() {
 		IMPLEMENTATION_GUARD_LOG()
