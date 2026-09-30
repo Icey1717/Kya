@@ -24,6 +24,8 @@ public:
 	void Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString);
 	void Term(ed_3D_Scene* pScene);
 
+	void SetScale(float x, float y, float z);
+
 	edNODE* pMeshTransformParent;
 	ed_3d_hierarchy_node* pMeshTransformData;
 

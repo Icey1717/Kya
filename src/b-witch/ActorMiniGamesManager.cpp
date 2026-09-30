@@ -3,6 +3,32 @@
 #include "ActorMiniGame.h"
 #include "ActorNativCmd.h"
 #include "ActorMiniGamesOrganizer.h"
+#include "LevelScheduler.h"
+
+bool CActorMiniGamesManager::IsBetAvailable(int cost, int reward)
+{
+	Episode* pEVar1;
+	int iVar2;
+
+	iVar2 = cost + CLevelScheduler::_gGameNfo.bet;
+	pEVar1 = CLevelScheduler::GetLastEpisode();
+	if (pEVar1->bet < iVar2) {
+		pEVar1 = CLevelScheduler::GetLastEpisode();
+		iVar2 = pEVar1->bet;
+	}
+	return reward <= iVar2;
+}
+
+bool CActorMiniGamesManager::PlaceBet(int cost)
+{
+	bool bVar1;
+
+	bVar1 = cost <= CLevelScheduler::_gGameNfo.nbMoney;
+	if (bVar1) {
+		CLevelScheduler::gThis->Money_GiveToBet(cost);
+	}
+	return bVar1;
+}
 
 CActorMiniGamesManager::CActorMiniGamesManager()
 {
@@ -52,8 +78,8 @@ void CActorMiniGamesManager::Init()
 
 		pCVar1 = static_cast<CActorMiniGamesOrganizer*>(pRef->aEntries[iVar2].Get());
 		iVar3 = 0;
-		if (pCVar1->field_0x17c != (S_ACTOR_STREAM_REF*)0x0) {
-			iVar3 = pCVar1->field_0x17c->entryCount;
+		if (pCVar1->pMiniGameStreamRefs != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar3 = pCVar1->pMiniGameStreamRefs->entryCount;
 		}
 
 		iVar2 = iVar2 + 1;
@@ -244,7 +270,7 @@ void CActorMiniGamesManager::ClearLocalData()
 		pCVar2 = static_cast<CActorMiniGamesOrganizer*>(pSVar3->aEntries[iVar6].Get());
 		iVar8 = 0;
 		while (true) {
-			pSVar3 = pCVar2->field_0x17c;
+			pSVar3 = pCVar2->pMiniGameStreamRefs;
 			iVar7 = 0;
 			if (pSVar3 != (S_ACTOR_STREAM_REF*)0x0) {
 				iVar7 = pSVar3->entryCount;

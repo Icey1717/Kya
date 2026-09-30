@@ -23,77 +23,97 @@
 #include "MathOps.h"
 #include "edText.h"
 #include "edVideo/VideoA.h"
+#include "edVideo/VideoD.h"
 #include "ed3D/ed3DG3D.h"
 #include "kya.h"
 #include "WayPoint.h"
 #include "Rendering/edCTextFormat.h"
 
-static void MoveMenuArrow(astruct_22* pArrow, bool bNext)
+void astruct_22::MoveMenuArrow(bool bNext)
 {
-	pArrow->field_0x19c = !bNext;
-	if (pArrow->field_0x198 == 0.0f) {
-		pArrow->field_0x198 = pArrow->field_0x180;
+	float fVar1;
+
+	if (bNext == true) {
+		this->field_0x19c = false;
 	}
-	float fVar1 = pArrow->field_0x180 / 2.0f;
-	if (pArrow->field_0x198 <= fVar1) {
-		pArrow->field_0x198 = fVar1;
+	else {
+		this->field_0x19c = true;
 	}
+
+	if (this->field_0x198 == 0.0f) {
+		this->field_0x198 = this->field_0x180;
+	}
+
+	fVar1 = this->field_0x180 / 2.0f;
+	if (this->field_0x198 <= fVar1) {
+		this->field_0x198 = fVar1;
+	}
+
 	return;
 }
 
-static void ScaleMenuMesh(float x, float y, float z, StaticMeshComponent* pMesh)
+void astruct_22::Reset()
+{
+	this->field_0x198 = 0.0f;
+}
+
+void StaticMeshComponent::SetScale(float x, float y, float z)
 {
 	edF32MATRIX4 local_40;
 	edF32VECTOR4 local_50;
-	if (pMesh->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
-		local_40 = pMesh->pMeshTransformData->base.transformA;
+	if (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
+		local_40 = this->pMeshTransformData->base.transformA;
 		local_50.x = x;
 		local_50.y = y;
 		local_50.z = z;
 		local_50.w = 0.0f;
-		edF32Matrix4ScaleHard(&local_40, &pMesh->perspectiveMatrix, &local_50);
-		local_40.rowT = pMesh->pMeshTransformData->base.transformA.rowT;
-		pMesh->pMeshTransformData->base.transformA = local_40;
+		edF32Matrix4ScaleHard(&local_40, &this->perspectiveMatrix, &local_50);
+		local_40.rowT = this->pMeshTransformData->base.transformA.rowT;
+		this->pMeshTransformData->base.transformA = local_40;
 	}
+
 	return;
 }
 
-static void MenuFade(float duration, int direction)
-{
-	uint speed = (uint)(duration * (gVideoConfig.isNTSC == 1 ? 50.0f : 60.0f));
-	if (speed == 0) {
-		speed = 1;
-	}
-	edVideoSetFadeColor(0, 0, 0);
-	if (direction == 1) {
-		edVideoSetFade(1.0f);
-		edVideoSetFadeIn(speed);
-	}
-	else {
-		edVideoSetFade(0.0f);
-		edVideoSetFadeOut(speed, 1);
-	}
-	return;
-}
 
-static void DrawDisconnectedController()
+void DrawDisconnectedController(int param_1)
 {
-	edCTextStyle local_c0;
-	edCTextStyle* pOldStyle;
-	if (GuiDList_BeginCurrent()) {
-		local_c0.SetShadow(0x100);
-		local_c0.rgbaColour = 0xffffffff;
-		local_c0.alpha = 0xff;
-		local_c0.SetFont(BootDataFont, false);
-		local_c0.SetHorizontalAlignment(2);
-		local_c0.SetVerticalAlignment(8);
-		local_c0.spaceSize = 10.0f;
-		pOldStyle = edTextStyleSetCurrent(&local_c0);
-		edTextDraw((float)gVideoConfig.screenWidth / 2.0f, (float)gVideoConfig.screenHeight / 2.0f,
-			gMessageManager.get_message(0x52525f503700080c));
-		edTextStyleSetCurrent(pOldStyle);
+	bool bVar1;
+	edCTextStyle* pNewFont;
+	char* text;
+	float fVar2;
+	float x;
+	edCTextStyle eStack192;
+
+	bVar1 = GuiDList_BeginCurrent();
+	if (bVar1 != false) {
+		if (param_1 != 0) {
+			edDListUseMaterial((edDList_material*)0x0);
+			edDListColor4u8(0, 0, 0, 0x80);
+			edDListLoadIdentity();
+			edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+			edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+			edDListVertex4f(static_cast<float>(gVideoConfig.screenWidth), static_cast<float>(gVideoConfig.screenHeight), 0.0f, 0.0f);
+			edDListEnd();
+		}
+
+		x = static_cast<float>(gVideoConfig.screenWidth) / 2.0f;
+		fVar2 = static_cast<float>(gVideoConfig.screenHeight);
+		eStack192.Reset();
+		eStack192.SetShadow(0x100);
+		eStack192.rgbaColour = 0xffffffff;
+		eStack192.alpha = 0xff;
+		eStack192.SetFont(BootDataFont, false);
+		eStack192.SetHorizontalAlignment(2);
+		eStack192.SetVerticalAlignment(8);
+		eStack192.spaceSize = 10.0f;
+		pNewFont = edTextStyleSetCurrent(&eStack192);
+		text = gMessageManager.get_message(0x52525f503700080c);
+		edTextDraw(x, fVar2 / 2.0f, text);
+		edTextStyleSetCurrent(pNewFont);
 		GuiDList_EndCurrent();
 	}
+
 	return;
 }
 
@@ -117,11 +137,14 @@ void CMenuWheel::Init(edDList_material* pMaterial, edDList_material* pArrow, edD
 	this->pFunc = 0;
 	this->field_0x298 = 0;
 	this->field_0x290 = false;
+
 	if (pMaterial != (edDList_material*)0x0) {
 		this->field_0x0.Install(pMaterial);
 		this->field_0x290 = true;
 	}
+
 	this->field_0xc0.FUN_002ef9b0(pArrow, pArrowHighlight);
+
 	return;
 }
 
@@ -131,6 +154,7 @@ void CMenuWheel::Reset()
 	this->field_0x280 = 255.0f;
 	this->field_0x27c = 0;
 	this->field_0xc0.field_0x198 = 0.0f;
+
 	return;
 }
 
@@ -138,12 +162,16 @@ void CMenuWheel::MoveWheel()
 {
 	this->field_0x284 = this->field_0x280;
 	this->field_0xc0.field_0x198 = 0.0f;
+
 	return;
 }
 
 void CMenuWheel::MoveWheel(bool bNext)
 {
-	int iVar1 = this->field_0x274;
+	int iVar1;
+	float fVar2;
+
+	iVar1 = this->field_0x274;
 	if (1 < iVar1) {
 		if (!bNext) {
 			this->field_0x27c = (this->field_0x27c + -1 + iVar1) % iVar1;
@@ -151,48 +179,95 @@ void CMenuWheel::MoveWheel(bool bNext)
 		else {
 			this->field_0x27c = (this->field_0x27c + 1) % iVar1;
 		}
-		MoveMenuArrow(&this->field_0xc0, bNext);
+
+		if (bNext == true) {
+			this->field_0xc0.field_0x19c = false;
+		}
+		else {
+			this->field_0xc0.field_0x19c = true;
+		}
+
+		if (this->field_0xc0.field_0x198 == 0.0f) {
+			this->field_0xc0.field_0x198 = this->field_0xc0.field_0x180;
+		}
+
+		fVar2 = this->field_0xc0.field_0x180 / 2.0f;
+		if (this->field_0xc0.field_0x198 <= fVar2) {
+			this->field_0xc0.field_0x198 = fVar2;
+		}
+
 		this->field_0x280 = 255.0f;
 		this->field_0x284 = 0.0f;
 		this->field_0x288 = bNext;
 	}
+
 	return;
 }
 
-void CMenuWheel::Manage()
+bool CMenuWheel::Manage()
 {
-	float fVar3 = this->field_0x284;
-	float fVar4 = this->field_0x280;
-	if (fabsf(fVar3 - fVar4) < this->field_0x28c * GetTimer()->lastFrameTime) {
+	Timer *pTVar1;
+	bool bVar2;
+	float fVar3;
+	float fVar4;
+
+	fVar3 = this->field_0x284;
+	fVar4 = this->field_0x280;
+	pTVar1 = GetTimer();
+
+	if (fabsf(fVar3 - fVar4) < this->field_0x28c * pTVar1->lastFrameTime) {
 		this->field_0x284 = 255.0f;
 	}
-	this->field_0xc0.FUN_002ef890();
+
+	if (0.0f < this->field_0xc0.field_0x198) {
+		pTVar1 = GetTimer();
+		fVar3 = this->field_0xc0.field_0x198 - pTVar1->lastFrameTime;
+		this->field_0xc0.field_0x198 = fVar3;
+		fVar4 = this->field_0xc0.field_0x180;
+		if (fVar4 < fVar3) {
+			this->field_0xc0.field_0x198 = fVar4;
+		}
+		else {
+			if (fVar3 < 0.0f) {
+				this->field_0xc0.field_0x198 = 0.0f;
+			}
+		}
+	}
+
 	if ((this->field_0x278 == 0) || (this->field_0x280 <= this->field_0x284)) {
+		bVar2 = false;
 		this->field_0x284 = this->field_0x280;
 	}
 	else {
-		this->field_0x284 = this->field_0x284 + this->field_0x28c * GetTimer()->lastFrameTime;
+		bVar2 = true;
+		pTVar1 = GetTimer();
+		this->field_0x284 = this->field_0x284 + this->field_0x28c * pTVar1->lastFrameTime;
 	}
-	return;
+
+	return bVar2;
 }
 
 void CMenuWheel::FUN_002efa80(float x, float y, edF32VECTOR2* pRight, edF32VECTOR2* pLeft)
 {
 	this->field_0xc0.centerX = x;
 	this->field_0x270 = y;
+
 	if (!this->field_0x290) {
 		if (pRight == (edF32VECTOR2*)0x0) return;
 		this->field_0xc0.field_0x184 = pLeft->x;
 		this->field_0xc0.field_0x188 = pLeft->y;
+
 		this->field_0xc0.field_0x18c = pRight->x;
 		this->field_0xc0.field_0x190 = pRight->y;
 	}
 	else {
 		this->field_0xc0.field_0x184 = x - (float)this->field_0x0.iWidth / 2.0f;
 		this->field_0xc0.field_0x188 = y;
+
 		this->field_0xc0.field_0x18c = x + (float)this->field_0x0.iWidth / 2.0f;
 		this->field_0xc0.field_0x190 = y;
 	}
+
 	return;
 }
 
@@ -226,14 +301,13 @@ void CMenuWheel::Draw()
 CActorMiniGamesOrganizer::CActorMiniGamesOrganizer()
 {
 	this->field_0x76c.field_0x1a8 = 0;
-	this->field_0x76c.pContext = 0;
-	this->field_0x17c = (S_ACTOR_STREAM_REF*)0x0;
-	this->field_0x9b8 = (edDList_material*)0x0;
+
+	return;
 }
 
 CActorMiniGame* CActorMiniGamesOrganizer::GetMiniGame(int index)
 {
-	return static_cast<CActorMiniGame*>(this->field_0x17c->aEntries[index].Get());
+	return static_cast<CActorMiniGame*>(this->pMiniGameStreamRefs->aEntries[index].Get());
 }
 
 void CActorMiniGamesOrganizer::Create(ByteCode* pByteCode)
@@ -245,7 +319,7 @@ void CActorMiniGamesOrganizer::Create(ByteCode* pByteCode)
 	this->textureIndex_0x170 = pByteCode->GetS32();
 	this->field_0x174 = pByteCode->GetS32();
 	this->materialId_0x178 = pByteCode->GetS32();
-	this->field_0x17c = S_ACTOR_STREAM_REF::Create(pByteCode);
+	this->pMiniGameStreamRefs = S_ACTOR_STREAM_REF::Create(pByteCode);
 	this->field_0x180 = pByteCode->GetU32();
 	this->field_0x184 = pByteCode->GetU32();
 	this->field_0x188 = pByteCode->GetS32();
@@ -271,12 +345,12 @@ void CActorMiniGamesOrganizer::Init()
 
 	CActor::Init();
 
-	this->field_0x17c->Init();
+	this->pMiniGameStreamRefs->Init();
 
 	int iVar1 = 0;
 	while (true) {
 		int iVar2 = 0;
-		if (this->field_0x17c != 0) iVar2 = this->field_0x17c->entryCount;
+		if (this->pMiniGameStreamRefs != 0) iVar2 = this->pMiniGameStreamRefs->entryCount;
 		if (iVar2 <= iVar1) break;
 		GetMiniGame(iVar1)->field_0x1c0 = this;
 		iVar1 = iVar1 + 1;
@@ -304,7 +378,7 @@ void CActorMiniGamesOrganizer::Init()
 
 	this->menuWheel.Init(0, &MenuBitmaps[9].materialInfo, &MenuBitmaps[10].materialInfo);
 	this->menuWheel.field_0x278 = 1;
-	this->menuWheel.field_0x274 = this->field_0x17c == 0 ? 0 : this->field_0x17c->entryCount;
+	this->menuWheel.field_0x274 = this->pMiniGameStreamRefs == 0 ? 0 : this->pMiniGameStreamRefs->entryCount;
 	this->menuWheel.field_0x28c = 1020.0f;
 	this->menuWheel.pFunc = DrawMiniGameWheel;
 	this->menuWheel.field_0x298 = &this->field_0x76c.pContext;
@@ -341,7 +415,7 @@ void CActorMiniGamesOrganizer::Init()
 	this->field_0x198.pBoundingSphere = &this->field_0x1b8;
 	this->field_0x198.clipping_0x0 = &this->field_0x1c8;
 
-	iVar1 = this->field_0x17c == 0 ? 0 : this->field_0x17c->entryCount;
+	iVar1 = this->pMiniGameStreamRefs == 0 ? 0 : this->pMiniGameStreamRefs->entryCount;
 	if (iVar1 != 0) {
 		this->field_0x9b8 = NewPool_edDLIST_MATERIAL(iVar1);
 	}
@@ -410,7 +484,7 @@ CBehaviour* CActorMiniGamesOrganizer::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
-StateConfig CActorMiniGamesOrganizer::_gStateCfg_MGO[12] = {
+StateConfig CActorMiniGamesOrganizer::_gStateCfg_ORG[12] = {
 	StateConfig(0, 0x100), StateConfig(0, 0x200), StateConfig(0, 0x200),
 	StateConfig(0, 0x200), StateConfig(0, 0x200), StateConfig(0, 0),
 	StateConfig(0, 0), StateConfig(0, 0x100), StateConfig(0, 0),
@@ -425,8 +499,9 @@ StateConfig* CActorMiniGamesOrganizer::GetStateCfg(int state)
 	}
 	else {
 		assert((state - 5) < 12);
-		pStateConfig = _gStateCfg_MGO + state + -5;
+		pStateConfig = _gStateCfg_ORG + state + -5;
 	}
+
 	return pStateConfig;
 }
 
@@ -447,9 +522,9 @@ void CActorMiniGamesOrganizer::InitAlphabet()
 
 void CActorMiniGamesOrganizer::ClearLocalData()
 {
-	this->field_0x17c->Reset();
+	this->pMiniGameStreamRefs->Reset();
 	this->menuWheel.Reset();
-	this->field_0x76c.field_0x198 = 0.0f;
+	this->field_0x76c.Reset();
 	this->field_0x920 = 0;
 	this->field_0x924 = 0;
 	this->field_0x928 = 0;
@@ -473,9 +548,9 @@ void CActorMiniGamesOrganizer::ClearLocalData()
 	this->field_0x941 = false;
 	this->field_0x9f8 = -1;
 
-	CCinematic* pCVar1 = g_CinematicManager_0048efc->GetCinematic(this->field_0x16c);
-	if (pCVar1 != 0) {
-		pCVar1->pActor = this;
+	CCinematic* pCinematic = g_CinematicManager_0048efc->GetCinematic(this->field_0x16c);
+	if (pCinematic != 0) {
+		pCinematic->pActor = this;
 	}
 
 	this->field_0x1d0.Reset();
@@ -490,9 +565,7 @@ void CActorMiniGamesOrganizer::ClearLocalData()
 	return;
 }
 
-
 void CActorMiniGamesOrganizer::Draw()
-
 {
 	ed_3d_hierarchy_node *peVar1;
 	bool bVar2;
@@ -576,13 +649,14 @@ void CActorMiniGamesOrganizer::Draw()
 	edF32VECTOR2 local_8;
 
 	if (this->actorState == 0x10) {
-		DrawDisconnectedController();
+		DrawDisconnectedController(0);
+
 		bVar2 = Frontend2DDList_BeginCurrent();
 		if (bVar2 != false) {
 			local_8.x = 0.0f;
 			local_8.y = 0.0f;
 			ed3DComputeScreenCoordinate(104.0f,&local_150,&local_8,CFrontend::_scene_handle);
-			ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+			this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 			peVar1 = (this->field_0x1d0).pMeshTransformData;
 			if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 				(peVar1->base).transformA.rowT.x = local_150.x;
@@ -604,7 +678,7 @@ void CActorMiniGamesOrganizer::Draw()
 					local_10.x = 0.0f;
 					local_10.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_160,&local_10,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_160.x;
@@ -612,13 +686,14 @@ void CActorMiniGamesOrganizer::Draw()
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.z = local_160.z;
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.w = local_160.w;
 					}
+
 					local_18.x = 0.31f;
 					local_18.y = -0.25f;
 					ed3DComputeScreenCoordinate(102.0f,&local_170,&local_18,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_170.x;
@@ -627,13 +702,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_170.w;
 						}
 					}
+
 					local_20.x = -0.44f;
 					local_20.y = -0.22f;
 					ed3DComputeScreenCoordinate(100.0f,&local_180,&local_20,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_180.x;
@@ -642,13 +718,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x290).pMeshTransformData)->base).transformA.rowT.w = local_180.w;
 						}
 					}
+
 					local_28.y = 0.745f;
 					local_28.x = 0.0f;
 					ed3DComputeScreenCoordinate(103.0f,&local_190,&local_28,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_190.x;
@@ -657,13 +734,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_190.w;
 						}
 					}
+
 					local_30.x = 0.0f;
 					local_30.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_1a0,&local_30,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_1a0.x;
@@ -672,18 +750,21 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_1a0.w;
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
+
 				DrawMenuChooseText();
 				break;
 			case 7:
 				DrawMenuBetText();
+
 				bVar2 = Frontend2DDList_BeginCurrent();
 				if (bVar2 != false) {
 					local_38.x = 0.0f;
 					local_38.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_1b0,&local_38,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_1b0.x;
@@ -691,13 +772,14 @@ void CActorMiniGamesOrganizer::Draw()
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.z = local_1b0.z;
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.w = local_1b0.w;
 					}
+
 					local_40.x = -0.55f;
 					local_40.y = 0.68f;
 					ed3DComputeScreenCoordinate(100.0f,&local_1c0,&local_40,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_1c0.x;
@@ -706,13 +788,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_1c0.w;
 						}
 					}
+
 					local_48.x = 0.09f;
 					local_48.y = -0.58f;
 					ed3DComputeScreenCoordinate(103.0f,&local_1d0,&local_48,CFrontend::_scene_handle);
 					bVar2 = this->field_0x350.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x350);
+						this->field_0x350.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x350).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_1d0.x;
@@ -721,13 +804,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x350).pMeshTransformData)->base).transformA.rowT.w = local_1d0.w;
 						}
 					}
+
 					local_50.x = 0.39f;
 					local_50.y = 0.59f;
 					ed3DComputeScreenCoordinate(103.0f,&local_1e0,&local_50,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_1e0.x;
@@ -736,13 +820,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_1e0.w;
 						}
 					}
+
 					local_58.x = 0.0f;
 					local_58.y = 0.0f;
 					ed3DComputeScreenCoordinate(102.0f,&local_1f0,&local_58,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_1f0.x;
@@ -751,13 +836,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x290).pMeshTransformData)->base).transformA.rowT.w = local_1f0.w;
 						}
 					}
+
 					local_60.x = 0.0f;
 					local_60.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_200,&local_60,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_200.x;
@@ -766,17 +852,19 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_200.w;
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
 				break;
 			case 8:
 				DrawMenuTrainText();
+
 				bVar2 = Frontend2DDList_BeginCurrent();
 				if (bVar2 != false) {
 					local_68.x = 0.0f;
 					local_68.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_210,&local_68,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_210.x;
@@ -784,13 +872,14 @@ void CActorMiniGamesOrganizer::Draw()
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.z = local_210.z;
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.w = local_210.w;
 					}
+
 					local_70.x = 0.25f;
 					local_70.y = 0.15f;
 					ed3DComputeScreenCoordinate(103.0f,&local_220,&local_70,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_220.x;
@@ -799,13 +888,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_220.w;
 						}
 					}
+
 					local_78.y = 0.745f;
 					local_78.x = 0.0f;
 					ed3DComputeScreenCoordinate(103.0f,&local_230,&local_78,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_230.x;
@@ -819,8 +909,8 @@ void CActorMiniGamesOrganizer::Draw()
 					ed3DComputeScreenCoordinate(103.0f,&local_240,&local_80,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_240.x;
@@ -829,13 +919,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_240.w;
 						}
 					}
+
 					local_88.x = 0.09f;
 					local_88.y = -0.58f;
 					ed3DComputeScreenCoordinate(103.0f,&local_250,&local_88,CFrontend::_scene_handle);
 					bVar2 = this->field_0x350.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x350);
+						this->field_0x350.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x350).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_250.x;
@@ -844,13 +935,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x350).pMeshTransformData)->base).transformA.rowT.w = local_250.w;
 						}
 					}
+
 					local_90.x = 0.0f;
 					local_90.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_260,&local_90,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_260.x;
@@ -859,17 +951,19 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_260.w;
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
 				break;
 			case 9:
 				DrawMenuMultiText();
+
 				bVar2 = Frontend2DDList_BeginCurrent();
 				if (bVar2 != false) {
 					local_98.x = 0.0f;
 					local_98.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_270,&local_98,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_270.x;
@@ -877,13 +971,14 @@ void CActorMiniGamesOrganizer::Draw()
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.z = local_270.z;
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.w = local_270.w;
 					}
+
 					local_a0.y = 0.71f;
 					local_a0.x = 0.0f;
 					ed3DComputeScreenCoordinate(103.0f,&local_280,&local_a0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_280.x;
@@ -892,13 +987,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_280.w;
 						}
 					}
+
 					local_a8.x = -0.37f;
 					local_a8.y = 0.11f;
 					ed3DComputeScreenCoordinate(103.0f,&local_290,&local_a8,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_290.x;
@@ -907,13 +1003,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x290).pMeshTransformData)->base).transformA.rowT.w = local_290.w;
 						}
 					}
+
 					local_b0.x = 0.56f;
 					local_b0.y = 0.22f;
 					ed3DComputeScreenCoordinate(103.0f,&local_2a0,&local_b0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_2a0.x;
@@ -922,13 +1019,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_2a0.w;
 						}
 					}
+
 					local_b8.x = 0.09f;
 					local_b8.y = -0.58f;
 					ed3DComputeScreenCoordinate(103.0f,&local_2b0,&local_b8,CFrontend::_scene_handle);
 					bVar2 = this->field_0x350.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x350);
+						this->field_0x350.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x350).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_2b0.x;
@@ -937,13 +1035,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x350).pMeshTransformData)->base).transformA.rowT.w = local_2b0.w;
 						}
 					}
+
 					local_c0.x = 0.0f;
 					local_c0.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_2c0,&local_c0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_2c0.x;
@@ -952,17 +1051,19 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_2c0.w;
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
 				break;
 			case 0xe:
 				DrawMenuResultText();
+
 				bVar2 = Frontend2DDList_BeginCurrent();
 				if (bVar2 != false) {
 					local_c8.x = 0.0f;
 					local_c8.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_2d0,&local_c8,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_2d0.x;
@@ -975,8 +1076,8 @@ void CActorMiniGamesOrganizer::Draw()
 					ed3DComputeScreenCoordinate(103.0f,&local_2e0,&local_d0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_2e0.x;
@@ -985,13 +1086,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_2e0.w;
 						}
 					}
+
 					local_d8.x = 0.44f;
 					local_d8.y = -0.38f;
 					ed3DComputeScreenCoordinate(103.0f,&local_2f0,&local_d8,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_2f0.x;
@@ -1000,13 +1102,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x290).pMeshTransformData)->base).transformA.rowT.w = local_2f0.w;
 						}
 					}
+
 					local_e0.x = -0.31f;
 					local_e0.y = 0.31f;
 					ed3DComputeScreenCoordinate(103.0f,&local_300,&local_e0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_300.x;
@@ -1015,13 +1118,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_300.w;
 						}
 					}
+
 					local_e8.x = -0.46f;
 					local_e8.y = -0.06f;
 					ed3DComputeScreenCoordinate(103.0f,&local_310,&local_e8,CFrontend::_scene_handle);
 					bVar2 = this->field_0x350.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x350);
+						this->field_0x350.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x350).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_310.x;
@@ -1030,13 +1134,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x350).pMeshTransformData)->base).transformA.rowT.w = local_310.w;
 						}
 					}
+
 					local_f0.x = 0.0f;
 					local_f0.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_320,&local_f0,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_320.x;
@@ -1045,6 +1150,7 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_320.w;
 						}
 					}
+
 					bVar2 = this->field_0x3b0.HasMesh();
 					if (bVar2 != false) {
 						local_f8.x = -0.31f;
@@ -1052,8 +1158,8 @@ void CActorMiniGamesOrganizer::Draw()
 						ed3DComputeScreenCoordinate(103.0f,&local_330,&local_f8,CFrontend::_scene_handle);
 						bVar2 = this->field_0x3b0.HasMesh();
 						if (bVar2 != false) {
-							ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-													 1.0f,1.0f,&this->field_0x3b0);
+							this->field_0x3b0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+													 1.0f,1.0f);
 							peVar1 = (this->field_0x3b0).pMeshTransformData;
 							if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 								(peVar1->base).transformA.rowT.x = local_330.x;
@@ -1063,17 +1169,19 @@ void CActorMiniGamesOrganizer::Draw()
 							}
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
 				break;
 			case 0xf:
 				DrawMenuEnterNameText();
+
 				bVar2 = Frontend2DDList_BeginCurrent();
 				if (bVar2 != false) {
 					local_100.x = 0.0f;
 					local_100.y = 0.0f;
 					ed3DComputeScreenCoordinate(104.0f,&local_340,&local_100,CFrontend::_scene_handle);
-					ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f, &this->field_0x1d0);
+					this->field_0x1d0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f, 1.0f);
 					peVar1 = (this->field_0x1d0).pMeshTransformData;
 					if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 						(peVar1->base).transformA.rowT.x = local_340.x;
@@ -1081,13 +1189,14 @@ void CActorMiniGamesOrganizer::Draw()
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.z = local_340.z;
 						(((this->field_0x1d0).pMeshTransformData)->base).transformA.rowT.w = local_340.w;
 					}
+
 					local_108.y = 0.745f;
 					local_108.x = 0.0f;
 					ed3DComputeScreenCoordinate(103.0f,&local_350,&local_108,CFrontend::_scene_handle);
 					bVar2 = this->field_0x230.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x230);
+						this->field_0x230.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x230).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_350.x;
@@ -1096,13 +1205,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x230).pMeshTransformData)->base).transformA.rowT.w = local_350.w;
 						}
 					}
+
 					local_110.x = 0.44f;
 					local_110.y = -0.38f;
 					ed3DComputeScreenCoordinate(103.0f,&local_360,&local_110,CFrontend::_scene_handle);
 					bVar2 = this->field_0x290.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x290);
+						this->field_0x290.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x290).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_360.x;
@@ -1111,13 +1221,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x290).pMeshTransformData)->base).transformA.rowT.w = local_360.w;
 						}
 					}
+
 					local_118.x = -0.31f;
 					local_118.y = 0.31f;
 					ed3DComputeScreenCoordinate(103.0f,&local_370,&local_118,CFrontend::_scene_handle);
 					bVar2 = this->field_0x2f0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x2f0);
+						this->field_0x2f0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x2f0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_370.x;
@@ -1126,13 +1237,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x2f0).pMeshTransformData)->base).transformA.rowT.w = local_370.w;
 						}
 					}
+
 					local_120.x = -0.46f;
 					local_120.y = -0.06f;
 					ed3DComputeScreenCoordinate(103.0f,&local_380,&local_120,CFrontend::_scene_handle);
 					bVar2 = this->field_0x350.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x350);
+						this->field_0x350.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x350).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_380.x;
@@ -1141,13 +1253,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x350).pMeshTransformData)->base).transformA.rowT.w = local_380.w;
 						}
 					}
+
 					local_128.x = -0.36f;
 					local_128.y = -0.61f;
 					ed3DComputeScreenCoordinate(103.0f,&local_390,&local_128,CFrontend::_scene_handle);
 					bVar2 = this->field_0x3b0.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x3b0);
+						this->field_0x3b0.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x3b0).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_390.x;
@@ -1156,13 +1269,14 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x3b0).pMeshTransformData)->base).transformA.rowT.w = local_390.w;
 						}
 					}
+
 					local_130.x = 0.0f;
 					local_130.y = 0.0f;
 					ed3DComputeScreenCoordinate(99.0f,&local_3a0,&local_130,CFrontend::_scene_handle);
 					bVar2 = this->field_0x470.HasMesh();
 					if (bVar2 != false) {
-						ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-												 1.0f,1.0f,&this->field_0x470);
+						this->field_0x470.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
+												 1.0f,1.0f);
 						peVar1 = (this->field_0x470).pMeshTransformData;
 						if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 							(peVar1->base).transformA.rowT.x = local_3a0.x;
@@ -1171,6 +1285,7 @@ void CActorMiniGamesOrganizer::Draw()
 							(((this->field_0x470).pMeshTransformData)->base).transformA.rowT.w = local_3a0.w;
 						}
 					}
+
 					bVar2 = this->field_0x410.HasMesh();
 					if (bVar2 != false) {
 						local_138.x = -0.31f;
@@ -1178,8 +1293,7 @@ void CActorMiniGamesOrganizer::Draw()
 						ed3DComputeScreenCoordinate(103.0f,&local_3b0,&local_138,CFrontend::_scene_handle);
 						bVar2 = this->field_0x410.HasMesh();
 						if (bVar2 != false) {
-							ScaleMenuMesh((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f,
-													 1.0f,1.0f,&this->field_0x410);
+							this->field_0x410.SetScale((CScene::ptable.g_CameraManager_0045167c)->aspectRatio / 1.333333f, 1.0f,1.0f);
 							peVar1 = (this->field_0x410).pMeshTransformData;
 							if (peVar1 != (ed_3d_hierarchy_node *)0x0) {
 								(peVar1->base).transformA.rowT.x = local_3b0.x;
@@ -1189,112 +1303,258 @@ void CActorMiniGamesOrganizer::Draw()
 							}
 						}
 					}
+
 					FrontendDList_EndCurrent();
 				}
 			}
 		}
 	}
-	return;
-}
 
-
-
-void CActorMiniGamesOrganizer::PlayMenuSound(int soundId)
-{
-	this->field_0xa00.pSound = CScene::ptable.g_AudioManager_00451698->GetSound(soundId);
-	if (NoAudio == 0) {
-		this->field_0xa00.pSound3dData = 0;
-		if (this->field_0xa00.pSound != 0) {
-			this->field_0xa00.field_0x20 = -1;
-			this->field_0xa00.soundId = this->field_0xa00.pSound->Play(this->field_0xa00.soundId,
-				this->field_0xa00.field_0x20, 0, &this->field_0xa00, 0, &this->field_0xa00.soundId);
-		}
-	}
 	return;
 }
 
 void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_Manage()
 {
+	int iVar1;
+	bool bVar2;
+	StateConfig *pSVar3;
+	CPlayerInput *pCVar4;
+	CSoundSample *pCVar5;
+	uint uVar6;
+
 	ManageFade();
 
 	ManageMusic(this->actorState);
 
-	bool bVar2 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
-	if (!bVar2 || ((GameFlags & 0x1c) != 0)) {
-		if (this->actorState == 0x10) SetState(this->prevActorState, -1);
+	bVar2 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+	if ((bVar2 == false) || ((GameFlags & 0x1c) != 0)) {
+		if (this->actorState == 0x10) {
+			SetState(this->prevActorState, -1);
+		}
 	}
 	else {
-		if ((GetStateFlags(this->actorState) & 0x200) != 0) SetState(0x10, -1);
+		iVar1 = this->actorState;
+		if (iVar1 == -1) {
+			uVar6 = 0;
+		}
+		else {
+			pSVar3 = GetStateCfg(iVar1);
+			uVar6 = pSVar3->flags_0x4;
+		}
+
+		if ((uVar6 & 0x200) != 0) {
+			SetState(0x10, -1);
+		}
 	}
-	if (this->field_0x940) {
-		switch (this->actorState) {
-		case 6: ManageMenuChoose(); break;
-		case 7: ManageMenuMulti(); break;
-		case 8: {
-			CPlayerInput* pCVar4 = this->field_0x9f0->GetInputManager(0, 0);
-			if (pCVar4 != 0) {
+
+	if (this->field_0x940 != false) {
+		switch(this->actorState) {
+		case 6:
+			ManageMenuChoose();
+			break;
+		case 7:
+			ManageMenuBet();
+			break;
+		case 8:
+			pCVar4 = this->field_0x9f0->GetInputManager(0, 0);
+			if (pCVar4 != (CPlayerInput *)0x0) {
 				if ((pCVar4->pressedBitfield & 0x1000000) != 0) {
 					DoMessage(GetMiniGame(this->field_0x920), (ACTOR_MESSAGE)0x56, (void*)3);
 					DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x24, 0);
 					SetState(10, -1);
-					PlayMenuSound(this->field_0x188);
+
+					pCVar5 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+					this->field_0xa00.pSound = pCVar5;
+					if ((NoAudio == 0) &&
+						(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0))
+					{
+						this->field_0xa00.field_0x20 = 0xffffffff;
+						uVar6 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+							(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+						this->field_0xa00.soundId = uVar6;
+					}
 				}
+
 				if ((pCVar4->pressedBitfield & 0x4000000) != 0) {
-					PlayMenuSound(this->field_0x18c);
+					pCVar5 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x18c);
+					this->field_0xa00.pSound = pCVar5;
+					if ((NoAudio == 0) &&
+						(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0))
+					{
+						this->field_0xa00.field_0x20 = 0xffffffff;
+						uVar6 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+							(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+						this->field_0xa00.soundId = uVar6;
+					}
+
 					SetState(6, -1);
 				}
 			}
 			break;
+		case 9:
+			ManageMenuMulti();
+			break;
+		case 10:
+			break;
+		case 0xd:
+			if (0.5f < this->timeInAir) {
+				SetState(0xe, -1);
+			}
+			break;
+		case 0xe:
+			ManageMenuResult();
+			break;
+		case 0xf:
+			ManageMenuEnterName();
 		}
-		case 9: ManageMenuTrain(); break;
-		case 10: break;
-		case 0xd: if (0.5f < this->timeInAir) SetState(0xe, -1); break;
-		case 0xe: ManageMenuResult(); break;
-		case 0xf: ManageMenuEnterName(); break;
-		}
+
 		ManageZone();
 	}
+
 	return;
 }
 
-static void SetMenuArrowSize(astruct_22* pArrow, float size)
-{
-	pArrow->field_0x198 = 0.0f;
-	pArrow->field_0x0.iWidth = (ushort)(int)((float)gVideoConfig.screenWidth * size);
-	pArrow->field_0x0.iHeight = (ushort)(int)((float)gVideoConfig.screenHeight * size);
-	pArrow->field_0xc0.iWidth = pArrow->field_0x0.iWidth;
-	pArrow->field_0xc0.iHeight = pArrow->field_0x0.iHeight;
-}
 
 void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_InitState(int newState)
 {
+	int iVar1;
+	StateConfig *pSVar3;
+	CCameraManager* pCameraManager;
+	uint uVar5;
+	float fVar6;
+	_msg_enter_shop local_20;
+	void* local_8;
+
 	InitMenuMeshes(newState);
-	if (((GetStateFlags(this->actorState) & 0x200) != 0) &&
-		!((this->prevActorState == 0xe) && (this->actorState == 0xf)) &&
-		!((this->prevActorState == 0xf) && (this->actorState == 0xe)) && !this->field_0x941) {
-		MenuFade(0.1f, 1);
+
+	iVar1 = this->actorState;
+	if (iVar1 == -1) {
+		uVar5 = 0;
+	}
+	else {
+		pSVar3 = GetStateCfg(iVar1);
+		uVar5 = pSVar3->flags_0x4 & 0x200;
+	}
+
+	if ((((uVar5 != 0) && ((iVar1 = this->prevActorState, iVar1 != 0xe || (this->actorState != 0xf)))) &&
+			((iVar1 != 0xf || (this->actorState != 0xe)))) &&
+		(this->field_0x941 == false)) {
+		Fade(0.1f, 1, 0);
 		this->field_0x944 = 1.0f;
 	}
-	if ((GetStateFlags(this->actorState) & 0x200) != 0) {
+
+	iVar1 = this->actorState;
+	if (iVar1 == -1) {
+		uVar5 = 0;
+	}
+	else {
+		pSVar3 = GetStateCfg(iVar1);
+		uVar5 = pSVar3->flags_0x4 & 0x200;
+	}
+
+	if (uVar5 != 0) {
 		CallPauseChange(1);
 		GameFlags = GameFlags | 0x4080;
 		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
 	}
-	switch (newState) {
-	case 6: {
+
+	switch(newState) {
+	case 6:
 		ComputeCurPlayMode();
-		int local_20[4] = { 0, 0, 1, 1 };
-		DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x23, local_20);
-		SetMenuArrowSize(&this->field_0x76c, 0.06f);
+
+		local_20.field_0x0 = 0;
+		local_20.field_0x4 = 0;
+		local_20.field_0x8 = 1;
+		local_20.field_0xc = 1;
+		DoMessage(this->field_0x9f0, MESSAGE_ENTER_SHOP, &local_20);
+
+		this->field_0x76c.Reset();
+		fVar6 = (float)gVideoConfig.screenWidth * 0.06f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0x0.iWidth = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0x0.iWidth =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenHeight * 0.06f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0x0.iHeight = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0x0.iHeight =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenWidth * 0.06f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0xc0.iWidth = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0xc0.iWidth =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenHeight * 0.06f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0xc0.iHeight = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0xc0.iHeight =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
 		break;
-	}
-	case 7: InitMenuMulti(); break;
-	case 8: this->field_0x924 = 3; break;
+	case 7:
+		InitMenuBet();
+		break;
+	case 8:
+		this->field_0x924 = 3;
+		break;
 	case 9:
-		SetMenuArrowSize(&this->field_0x76c, 0.045f);
+		this->field_0x76c.Reset();
+		fVar6 = (float)gVideoConfig.screenWidth * 0.045f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0x0.iWidth = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0x0.iWidth =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenHeight * 0.045f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0x0.iHeight = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0x0.iHeight =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenWidth * 0.045f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0xc0.iWidth = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0xc0.iWidth =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
+		fVar6 = (float)gVideoConfig.screenHeight * 0.045f;
+		if (fVar6 < 2.147484e+09f) {
+			this->field_0x76c.field_0xc0.iHeight = (ushort)(int)fVar6;
+		}
+		else {
+			this->field_0x76c.field_0xc0.iHeight =
+					(ushort)(int)(fVar6 - 2.147484e+09f);
+		}
+
 		this->field_0x924 = 2;
 		break;
 	case 10:
+		this->flags = this->flags | 2;
+		this->flags = this->flags & 0xfffffffe;
+		break;
 	case 0xb:
 		this->flags = this->flags | 2;
 		this->flags = this->flags & 0xfffffffe;
@@ -1302,14 +1562,24 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_InitState(int ne
 	case 0xd:
 		this->flags = this->flags | 2;
 		this->flags = this->flags & 0xfffffffe;
-		if (!this->field_0x941) {
-			MenuFade(0.5f, 2);
+		if (this->field_0x941 == false) {
+			Fade(0.5f, 2, 0);
 			this->field_0x944 = 1.0f;
 		}
-		DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x25, 0);
-		CScene::ptable.g_CameraManager_0045167c->PushCamera(CActorHero::_gThis->pDeathCamera, 0);
+
+		local_8 = 0;
+		DoMessage(this->field_0x9f0, MESSAGE_DISABLE_INPUT, local_8);
+		pCameraManager = static_cast<CCameraManager*>(CScene::GetManager(MO_Camera));
+		pCameraManager->PushCamera(CActorHero::_gThis->pDeathCamera, 0);
 		break;
 	case 0xe:
+		this->flags = this->flags | 2;
+		this->flags = this->flags & 0xfffffffe;
+		this->flags = this->flags | 0x80;
+		this->flags = this->flags & 0xffffffdf;
+		EvaluateDisplayState();
+		this->flags = this->flags | 0x400;
+		break;
 	case 0xf:
 		this->flags = this->flags | 2;
 		this->flags = this->flags & 0xfffffffe;
@@ -1317,11 +1587,9 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_InitState(int ne
 		this->flags = this->flags & 0xffffffdf;
 		EvaluateDisplayState();
 		this->flags = this->flags | 0x400;
-		if (newState == 0xf) {
-			this->field_0x9b4 = 0;
-			this->field_0x998 = 0;
-			this->field_0x994 = 0;
-		}
+		this->field_0x9b4 = 0;
+		this->field_0x998 = 0;
+		this->field_0x994 = 0;
 		break;
 	case 0x10:
 		this->flags = this->flags | 0x80;
@@ -1330,16 +1598,29 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_InitState(int ne
 		this->flags = this->flags | 2;
 		this->flags = this->flags & 0xfffffffe;
 		this->flags = this->flags | 0x400;
-		break;
 	}
+
 	return;
 }
 
 void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_TermState(int oldState)
 {
-	if ((oldState == 0x10) || (oldState == 6) || (oldState == 8) || (oldState == 9) ||
-		(oldState == 7) || (oldState == 0xe) || (oldState == 0xf)) TermMenuMeshes();
-	if ((GetStateFlags(this->actorState) & 0x200) != 0) {
+	StateConfig* pSVar1;
+	uint uVar2;
+	char local_4[4];
+
+	if ((((oldState == 0x10) || (oldState == 6)) || (oldState == 8)) ||
+		(((oldState == 9 || (oldState == 7)) || ((oldState == 0xe || (oldState == 0xf)))))) {
+		TermMenuMeshes();
+	}
+	if (this->actorState == -1) {
+		uVar2 = 0;
+	}
+	else {
+		pSVar1 = GetStateCfg(this->actorState);
+		uVar2 = pSVar1->flags_0x4 & 0x200;
+	}
+	if (uVar2 != 0) {
 		CallPauseChange(0);
 		GameFlags = GameFlags & 0xffffbf7f;
 		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
@@ -1355,280 +1636,1111 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_TermState(int ol
 		CScene::ptable.g_CameraManager_0045167c->PopCamera(CActorHero::_gThis->pDeathCamera);
 		break;
 	case 0xe:
-	case 0xf:
-		if (oldState == 0xf) {
-			char local_4[4] = { this->field_0x9ac[0][0], this->field_0x9ac[1][0], this->field_0x9ac[2][0], 0 };
-			GetMiniGame(this->field_0x920)->SetScoreName(local_4);
-		}
 		this->flags = this->flags & 0xfffffffc;
 		this->flags = this->flags & 0xffffff5f;
 		EvaluateDisplayState();
 		this->flags = this->flags & 0xfffffbff;
-		if (oldState == 0xf) this->field_0x9b4 = -1;
+		break;
+	case 0xf:
+		local_4[0] = this->field_0x9ac[0][0];
+		local_4[1] = this->field_0x9ac[1][0];
+		local_4[2] = this->field_0x9ac[2][0];
+		local_4[3] = 0;
+		GetMiniGame(this->field_0x920)->SetScoreName(local_4);
+		this->flags = this->flags & 0xfffffffc;
+		this->flags = this->flags & 0xffffff5f;
+		EvaluateDisplayState();
+		this->flags = this->flags & 0xfffffbff;
+		this->field_0x9b4 = -1;
 		break;
 	case 0x10:
 		this->flags = this->flags & 0xffffff5f;
 		EvaluateDisplayState();
 		this->flags = this->flags & 0xfffffffc;
 		this->flags = this->flags & 0xfffffbff;
-		break;
 	}
 	return;
 }
 
 void CActorMiniGamesOrganizer::InitMenuMeshes(int state)
 {
-	StaticMeshComponent* aMeshes[] = { &this->field_0x1d0, &this->field_0x230, &this->field_0x290,
-		&this->field_0x2f0, &this->field_0x350, &this->field_0x3b0, &this->field_0x410, &this->field_0x470 };
-	if ((state != 6) && (state != 7) && (state != 8) && (state != 9) &&
-		(state != 0xe) && (state != 0xf) && (state != 0x10)) return;
-	for (int i = 0; i < 8; i++) {
-		if ((aMeshes[i]->meshIndex == -1) || (aMeshes[i]->textureIndex == -1)) return;
-	}
-	ed_g3d_manager* pMesh = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(this->field_0x174, this->textureIndex_0x170);
-	this->field_0x1d0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_back_01");
-	switch (state) {
-	case 6:
-		this->field_0x230.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_01_pan_01");
-		this->field_0x290.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_01_pan_02");
-		this->field_0x2f0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_03_pan_02");
-		this->field_0x470.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_Symbole_01");
-		this->field_0x76c.pContext = this;
-		break;
-	case 7:
-		this->field_0x230.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_04_pan_01");
-		this->field_0x290.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_04_pan_02");
-		this->field_0x2f0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_04_pan_03");
-		this->field_0x350.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_04");
-		this->field_0x470.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_Symbole_01");
-		break;
-	case 8:
-		this->field_0x230.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_03_pan_01");
-		this->field_0x290.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_03_pan_02");
-		this->field_0x2f0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_03_pan_03");
-		this->field_0x350.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_04");
-		this->field_0x470.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_Symbole_01");
-		break;
-	case 9:
-		this->field_0x230.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_01");
-		this->field_0x290.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_02");
-		this->field_0x2f0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_03");
-		this->field_0x350.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_02_pan_04");
-		this->field_0x470.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_Symbole_02");
-		break;
-	case 0xe:
-	case 0xf:
-		this->field_0x230.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_03_pan_02");
-		this->field_0x290.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_05_pan_01");
-		this->field_0x2f0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_05_pan_02");
-		this->field_0x350.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_05_pan_03");
-		this->field_0x470.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_Symbole_01");
-		if (state == 0xf) this->field_0x3b0.Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_05_pan_04");
-		if ((GetMiniGame(this->field_0x920)->curBehaviourId == 3) && (GetMiniGame(this->field_0x920)->field_0x1b0 == 0)) {
-			(state == 0xe ? this->field_0x3b0 : this->field_0x410).Init(CFrontend::_scene_handle, pMesh, &this->field_0x198, "Gam_05_pan_02_5");
+	CActorMiniGame* pMiniGame;
+	bool bVar2;
+
+	if (state != 0x10) {
+		if (state != 6) {
+			if (state != 9) {
+				if (state != 8) {
+					if (state != 7) {
+						if (state != 0xf) {
+							if (state != 0xe) {
+								return;
+							}
+							bVar2 = this->field_0x1d0.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x1d0.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x230.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x230.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x290.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x290.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = this->field_0x2f0.textureIndex != -1;
+										if (bVar2) {
+											bVar2 = this->field_0x2f0.meshIndex != -1;
+										}
+										if (bVar2) {
+											bVar2 = this->field_0x350.textureIndex != -1;
+											if (bVar2) {
+												bVar2 = this->field_0x350.meshIndex != -1;
+											}
+											if (bVar2) {
+												bVar2 = this->field_0x3b0.textureIndex != -1;
+												if (bVar2) {
+													bVar2 = this->field_0x3b0.meshIndex != -1;
+												}
+												if (bVar2) {
+													bVar2 = this->field_0x410.textureIndex != -1;
+													if (bVar2) {
+														bVar2 = this->field_0x410.meshIndex != -1;
+													}
+													if (bVar2) {
+														bVar2 = this->field_0x470.textureIndex != -1;
+														if (bVar2) {
+															bVar2 = this->field_0x470.meshIndex != -1;
+														}
+														if (bVar2) {
+															bVar2 = true;
+															goto LAB_003b1240;
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							bVar2 = false;
+LAB_003b1240:
+							if (!bVar2) {
+								return;
+							}
+							this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+							this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_02");
+							this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_01");
+							this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_02");
+							this->field_0x350.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_03");
+							this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_01");
+							pMiniGame = GetMiniGame(this->field_0x920);
+							if (pMiniGame->curBehaviourId != 3) {
+								return;
+							}
+							if (pMiniGame->field_0x1b0 != 0) {
+								return;
+							}
+							this->field_0x3b0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_02_5");
+							return;
+						}
+						bVar2 = this->field_0x1d0.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x1d0.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x230.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x230.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x290.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x290.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x2f0.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x2f0.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = this->field_0x350.textureIndex != -1;
+										if (bVar2) {
+											bVar2 = this->field_0x350.meshIndex != -1;
+										}
+										if (bVar2) {
+											bVar2 = this->field_0x3b0.textureIndex != -1;
+											if (bVar2) {
+												bVar2 = this->field_0x3b0.meshIndex != -1;
+											}
+											if (bVar2) {
+												bVar2 = this->field_0x410.textureIndex != -1;
+												if (bVar2) {
+													bVar2 = this->field_0x410.meshIndex != -1;
+												}
+												if (bVar2) {
+													bVar2 = this->field_0x470.textureIndex != -1;
+													if (bVar2) {
+														bVar2 = this->field_0x470.meshIndex != -1;
+													}
+													if (bVar2) {
+														bVar2 = true;
+														goto LAB_003b14b8;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						bVar2 = false;
+LAB_003b14b8:
+						if (!bVar2) {
+							return;
+						}
+						this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+						this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_02");
+						this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_01");
+						this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_02");
+						this->field_0x350.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_03");
+						this->field_0x3b0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_04");
+						this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_01");
+						pMiniGame = GetMiniGame(this->field_0x920);
+						if (pMiniGame->curBehaviourId != 3) {
+							return;
+						}
+						if (pMiniGame->field_0x1b0 != 0) {
+							return;
+						}
+						this->field_0x410.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_05_pan_02_5");
+						return;
+					}
+					bVar2 = this->field_0x1d0.textureIndex != -1;
+					if (bVar2) {
+						bVar2 = this->field_0x1d0.meshIndex != -1;
+					}
+					if (bVar2) {
+						bVar2 = this->field_0x230.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x230.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x290.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x290.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x2f0.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x2f0.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x350.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x350.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = this->field_0x3b0.textureIndex != -1;
+										if (bVar2) {
+											bVar2 = this->field_0x3b0.meshIndex != -1;
+										}
+										if (bVar2) {
+											bVar2 = this->field_0x410.textureIndex != -1;
+											if (bVar2) {
+												bVar2 = this->field_0x410.meshIndex != -1;
+											}
+											if (bVar2) {
+												bVar2 = this->field_0x470.textureIndex != -1;
+												if (bVar2) {
+													bVar2 = this->field_0x470.meshIndex != -1;
+												}
+												if (bVar2) {
+													bVar2 = true;
+													goto LAB_003b1748;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					bVar2 = false;
+LAB_003b1748:
+					if (!bVar2) {
+						return;
+					}
+					this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+					this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_01");
+					this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_02");
+					this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_03");
+					this->field_0x350.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_04");
+					this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_02");
+					return;
+				}
+				bVar2 = this->field_0x1d0.textureIndex != -1;
+				if (bVar2) {
+					bVar2 = this->field_0x1d0.meshIndex != -1;
+				}
+				if (bVar2) {
+					bVar2 = this->field_0x230.textureIndex != -1;
+					if (bVar2) {
+						bVar2 = this->field_0x230.meshIndex != -1;
+					}
+					if (bVar2) {
+						bVar2 = this->field_0x290.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x290.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x2f0.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x2f0.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x350.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x350.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x3b0.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x3b0.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = this->field_0x410.textureIndex != -1;
+										if (bVar2) {
+											bVar2 = this->field_0x410.meshIndex != -1;
+										}
+										if (bVar2) {
+											bVar2 = this->field_0x470.textureIndex != -1;
+											if (bVar2) {
+												bVar2 = this->field_0x470.meshIndex != -1;
+											}
+											if (bVar2) {
+												bVar2 = true;
+												goto LAB_003b1970;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				bVar2 = false;
+LAB_003b1970:
+				if (!bVar2) {
+					return;
+				}
+				this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+				this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_01");
+				this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_02");
+				this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_03");
+				this->field_0x350.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_04");
+				this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_01");
+				return;
+			}
+			bVar2 = this->field_0x1d0.textureIndex != -1;
+			if (bVar2) {
+				bVar2 = this->field_0x1d0.meshIndex != -1;
+			}
+			if (bVar2) {
+				bVar2 = this->field_0x230.textureIndex != -1;
+				if (bVar2) {
+					bVar2 = this->field_0x230.meshIndex != -1;
+				}
+				if (bVar2) {
+					bVar2 = this->field_0x290.textureIndex != -1;
+					if (bVar2) {
+						bVar2 = this->field_0x290.meshIndex != -1;
+					}
+					if (bVar2) {
+						bVar2 = this->field_0x2f0.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x2f0.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x350.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x350.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x3b0.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x3b0.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x410.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x410.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = this->field_0x470.textureIndex != -1;
+										if (bVar2) {
+											bVar2 = this->field_0x470.meshIndex != -1;
+										}
+										if (bVar2) {
+											bVar2 = true;
+											goto LAB_003b1b98;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			bVar2 = false;
+LAB_003b1b98:
+			if (!bVar2) {
+				return;
+			}
+			this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+			this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_04_pan_01");
+			this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_04_pan_02");
+			this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_04_pan_03");
+			this->field_0x350.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_02_pan_04");
+			this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_01");
+			return;
 		}
-		break;
+		bVar2 = this->field_0x1d0.textureIndex != -1;
+		if (bVar2) {
+			bVar2 = this->field_0x1d0.meshIndex != -1;
+		}
+		if (bVar2) {
+			bVar2 = this->field_0x230.textureIndex != -1;
+			if (bVar2) {
+				bVar2 = this->field_0x230.meshIndex != -1;
+			}
+			if (bVar2) {
+				bVar2 = this->field_0x290.textureIndex != -1;
+				if (bVar2) {
+					bVar2 = this->field_0x290.meshIndex != -1;
+				}
+				if (bVar2) {
+					bVar2 = this->field_0x2f0.textureIndex != -1;
+					if (bVar2) {
+						bVar2 = this->field_0x2f0.meshIndex != -1;
+					}
+					if (bVar2) {
+						bVar2 = this->field_0x350.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x350.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x3b0.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x3b0.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x410.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x410.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = this->field_0x470.textureIndex != -1;
+									if (bVar2) {
+										bVar2 = this->field_0x470.meshIndex != -1;
+									}
+									if (bVar2) {
+										bVar2 = true;
+										goto LAB_003b1dc0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		bVar2 = false;
+LAB_003b1dc0:
+		if (bVar2) {
+			this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
+			this->field_0x230.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_01_pan_01");
+			this->field_0x290.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_01_pan_02");
+			this->field_0x2f0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_03_pan_02");
+			this->field_0x470.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_Symbole_01");
+		}
+		this->field_0x76c.pContext = this;
+		return;
+	}
+	bVar2 = this->field_0x1d0.textureIndex != -1;
+	if (bVar2) {
+		bVar2 = this->field_0x1d0.meshIndex != -1;
+	}
+	if (bVar2) {
+		bVar2 = this->field_0x230.textureIndex != -1;
+		if (bVar2) {
+			bVar2 = this->field_0x230.meshIndex != -1;
+		}
+		if (bVar2) {
+			bVar2 = this->field_0x290.textureIndex != -1;
+			if (bVar2) {
+				bVar2 = this->field_0x290.meshIndex != -1;
+			}
+			if (bVar2) {
+				bVar2 = this->field_0x2f0.textureIndex != -1;
+				if (bVar2) {
+					bVar2 = this->field_0x2f0.meshIndex != -1;
+				}
+				if (bVar2) {
+					bVar2 = this->field_0x350.textureIndex != -1;
+					if (bVar2) {
+						bVar2 = this->field_0x350.meshIndex != -1;
+					}
+					if (bVar2) {
+						bVar2 = this->field_0x3b0.textureIndex != -1;
+						if (bVar2) {
+							bVar2 = this->field_0x3b0.meshIndex != -1;
+						}
+						if (bVar2) {
+							bVar2 = this->field_0x410.textureIndex != -1;
+							if (bVar2) {
+								bVar2 = this->field_0x410.meshIndex != -1;
+							}
+							if (bVar2) {
+								bVar2 = this->field_0x470.textureIndex != -1;
+								if (bVar2) {
+									bVar2 = this->field_0x470.meshIndex != -1;
+								}
+								if (bVar2) {
+									bVar2 = true;
+									goto LAB_003b1fd0;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	bVar2 = false;
+LAB_003b1fd0:
+	if (bVar2) {
+		this->field_0x1d0.Init(CFrontend::_scene_handle, (ed_g3d_manager*)0x0, &this->field_0x198, "Gam_back_01");
 	}
 	return;
 }
 
 void CActorMiniGamesOrganizer::TermMenuMeshes()
 {
-	StaticMeshComponent* aMeshes[] = { &this->field_0x1d0, &this->field_0x230, &this->field_0x290,
-		&this->field_0x2f0, &this->field_0x350, &this->field_0x3b0, &this->field_0x410, &this->field_0x470 };
-	for (int i = 0; i < 8; i++) {
-		if (aMeshes[i]->HasMesh()) aMeshes[i]->Term(CFrontend::_scene_handle);
+	bool bVar1;
+
+	bVar1 = this->field_0x1d0.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x1d0.Term(CFrontend::_scene_handle);
 	}
+
+	bVar1 = this->field_0x230.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x230.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x290.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x290.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x2f0.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x2f0.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x350.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x350.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x3b0.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x3b0.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x410.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x410.Term(CFrontend::_scene_handle);
+	}
+
+	bVar1 = this->field_0x470.HasMesh();
+	if (bVar1 != 0) {
+		this->field_0x470.Term(CFrontend::_scene_handle);
+	}
+
 	return;
 }
 
 void CActorMiniGamesOrganizer::ManageMenuChoose()
 {
-	CPlayerInput* pCVar2 = this->field_0x9f0->GetInputManager(0, 0);
-	if (pCVar2 != 0) {
+	CPlayerInput *pInputManager;
+	CSoundSample *pSoundSample;
+	uint uVar4;
+	int iVar5;
+	int iVar7;
+
+	pInputManager = this->field_0x9f0->GetInputManager(0, 0);
+	if (pInputManager != (CPlayerInput*)0x0) {
 		this->menuWheel.Manage();
 		this->field_0x76c.FUN_002ef890();
-		uint uVar4 = pCVar2->pressedBitfield;
-		if ((uVar4 & 0x100004) != 0) {
-			MoveMenuArrow(&this->field_0x76c, false);
-			PlayMenuSound(this->field_0x190);
+
+		uVar4 = pInputManager->pressedBitfield;
+		if (((uVar4 & 0x100000) == 0) && ((uVar4 & 4) == 0)) {
+			if (((uVar4 & 0x200000) == 0) && ((uVar4 & 8) == 0)) {
+				if (((uVar4 & 0x400000) == 0) && ((uVar4 & 1) == 0)) {
+					if (((uVar4 & 0x800000) == 0) && ((uVar4 & 2) == 0)) {
+						if ((uVar4 & 0x1000000) == 0) {
+							if ((uVar4 & 0x4000000) != 0) {
+								pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x18c);
+								this->field_0xa00.pSound = pSoundSample;
+
+								if ((NoAudio == 0) &&
+									(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)
+									) {
+									this->field_0xa00.field_0x20 = 0xffffffff;
+									uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+										(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+									this->field_0xa00.soundId = uVar4;
+								}
+
+								DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x24, 0);
+								SetState(5, -1);
+							}
+						}
+						else {
+							iVar7 = this->field_0x928;
+							if (iVar7 == 2) {
+								SetState(9, -1);
+							}
+							else {
+								if (iVar7 == 3) {
+									pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+									this->field_0xa00.pSound = pSoundSample;
+
+									if ((NoAudio == 0) &&
+										(this->field_0xa00.pSound3dData = 0,
+										this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+										this->field_0xa00.field_0x20 = 0xffffffff;
+										uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+											(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+										this->field_0xa00.soundId = uVar4;
+									}
+
+									SetState(8, -1);
+								}
+								else {
+									if (iVar7 == 1) {
+										SetState(7, -1);
+									}
+								}
+							}
+						}
+					}
+					else {
+						iVar7 = 0;
+						if (this->pMiniGameStreamRefs != (S_ACTOR_STREAM_REF*)0x0) {
+							iVar7 = this->pMiniGameStreamRefs->entryCount;
+						}
+						assert(iVar7 != 0);
+						this->field_0x920 = (this->field_0x920 + 1) % iVar7;
+						ComputeCurPlayMode();
+						ComputeCurPlayMode();
+						this->menuWheel.MoveWheel(true);
+						pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+						this->field_0xa00.pSound = pSoundSample;
+						if ((NoAudio == 0) &&
+							(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+							this->field_0xa00.field_0x20 = 0xffffffff;
+							uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+								(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+							this->field_0xa00.soundId = uVar4;
+						}
+					}
+				}
+				else {
+					if (this->pMiniGameStreamRefs == (S_ACTOR_STREAM_REF*)0x0) {
+						iVar7 = 0;
+					}
+					else {
+						iVar7 = this->pMiniGameStreamRefs->entryCount;
+					}
+
+					if (this->pMiniGameStreamRefs == (S_ACTOR_STREAM_REF*)0x0) {
+						iVar5 = 0;
+					}
+					else {
+						iVar5 = this->pMiniGameStreamRefs->entryCount;
+					}
+
+					assert(iVar5 != 0);
+					this->field_0x920 = (this->field_0x920 + iVar7 + -1) % iVar5;
+					ComputeCurPlayMode();
+					ComputeCurPlayMode();
+
+					this->menuWheel.MoveWheel(false);
+					pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+					this->field_0xa00.pSound = pSoundSample;
+
+					if ((NoAudio == 0) &&
+						(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+						this->field_0xa00.field_0x20 = 0xffffffff;
+						uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+							(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+						this->field_0xa00.soundId = uVar4;
+					}
+				}
+			}
+			else {
+				this->field_0x76c.MoveMenuArrow(true);
+
+				pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+				this->field_0xa00.pSound = pSoundSample;
+
+				if ((NoAudio == 0) && (this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+					this->field_0xa00.field_0x20 = 0xffffffff;
+
+					uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+						(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+					this->field_0xa00.soundId = uVar4;
+				}
+
+				NextPlayMode();
+			}
+		}
+		else {
+			this->field_0x76c.MoveMenuArrow(false);
+
+			pSoundSample = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+			this->field_0xa00.pSound = pSoundSample;
+
+			if ((NoAudio == 0) &&
+				(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+				this->field_0xa00.field_0x20 = 0xffffffff;
+				uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+					(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+				this->field_0xa00.soundId = uVar4;
+			}
+
 			PrevPlayMode();
 		}
-		else if ((uVar4 & 0x200008) != 0) {
-			MoveMenuArrow(&this->field_0x76c, true);
-			PlayMenuSound(this->field_0x190);
-			NextPlayMode();
-		}
-		else if ((uVar4 & 0x400001) != 0) {
-			this->field_0x920 = (this->field_0x920 + this->field_0x17c->entryCount - 1) % this->field_0x17c->entryCount;
-			ComputeCurPlayMode();
-			ComputeCurPlayMode();
-			this->menuWheel.MoveWheel(false);
-			PlayMenuSound(this->field_0x190);
-		}
-		else if ((uVar4 & 0x800002) != 0) {
-			this->field_0x920 = (this->field_0x920 + 1) % this->field_0x17c->entryCount;
-			ComputeCurPlayMode();
-			ComputeCurPlayMode();
-			this->menuWheel.MoveWheel(true);
-			PlayMenuSound(this->field_0x190);
-		}
-		else if ((uVar4 & 0x1000000) != 0) {
-			if (this->field_0x928 == 2) SetState(9, -1);
-			else if (this->field_0x928 == 3) {
-				PlayMenuSound(this->field_0x188);
-				SetState(8, -1);
-			}
-			else if (this->field_0x928 == 1) SetState(7, -1);
-		}
-		else if ((uVar4 & 0x4000000) != 0) {
-			PlayMenuSound(this->field_0x18c);
-			DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x24, 0);
-			SetState(5, -1);
-		}
 	}
+
 	return;
 }
 
-static bool IsMenuBetAvailable(S_MINI_GAME_BET* pBet)
-{
-	CLevelScheduler* pLevel = CScene::ptable.g_LevelScheduleManager_00451660;
-	int iVar1 = pBet->cost + CLevelScheduler::_gGameNfo.bet;
-	int iVar2 = pLevel->GetEpisode(CLevelScheduler::ScenVar_Get(SCN_GAME_CURRENT_EPISODE))->bet;
-	if (iVar2 < iVar1) iVar1 = iVar2;
-	return pBet->reward <= iVar1;
-}
 
-void CActorMiniGamesOrganizer::InitMenuMulti()
+void CActorMiniGamesOrganizer::InitMenuBet()
 {
-	SetMenuArrowSize(&this->field_0x76c, 0.045f);
-	CBehaviourMiniGameMulti* pBehaviour = GetMiniGame(this->field_0x920)->GetMultiBehaviour();
-	this->field_0x938 = 0;
+	CActorMiniGame* pMiniGame;
+	CBehaviourMiniGameBetting* pBehaviour;
+	S_MINI_GAME_BET* pBet;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	float fVar7;
+
+	this->field_0x76c.field_0x198 = 0.0f;
+
+	fVar7 = (float)gVideoConfig.screenWidth * 0.045f;
+	if (fVar7 < 2.147484e+09f) {
+		this->field_0x76c.field_0x0.iWidth = (ushort)(int)fVar7;
+	}
+	else {
+		this->field_0x76c.field_0x0.iWidth = (ushort)(int)(fVar7 - 2.147484e+09f);
+	}
+
+	fVar7 = (float)gVideoConfig.screenHeight * 0.045f;
+	if (fVar7 < 2.147484e+09f) {
+		this->field_0x76c.field_0x0.iHeight = (ushort)(int)fVar7;
+	}
+	else {
+		this->field_0x76c.field_0x0.iHeight = (ushort)(int)(fVar7 - 2.147484e+09f);
+	}
+
+	fVar7 = (float)gVideoConfig.screenWidth * 0.045f;
+	if (fVar7 < 2.147484e+09f) {
+		this->field_0x76c.field_0xc0.iWidth = (ushort)(int)fVar7;
+	}
+	else {
+		this->field_0x76c.field_0xc0.iWidth = (ushort)(int)(fVar7 - 2.147484e+09f);
+	}
+
+	fVar7 = (float)gVideoConfig.screenHeight * 0.045f;
+	if (fVar7 < 2.147484e+09f) {
+		this->field_0x76c.field_0xc0.iHeight = (ushort)(int)fVar7;
+	}
+	else {
+		this->field_0x76c.field_0xc0.iHeight = (ushort)(int)(fVar7 - 2.147484e+09f);
+	}
+
+	iVar5 = 0;
+	iVar4 = 0;
+	pMiniGame = GetMiniGame(this->field_0x920);
+	pBehaviour = pMiniGame->GetBhvBetting();
+	iVar3 = 0;
+	if (0 < pBehaviour->nbBets) {
+		do {
+			pBehaviour = pMiniGame->GetBhvBetting();
+			pBet = pBehaviour->aBets + iVar3;
+			iVar2 = this->field_0x9f4->IsBetAvailable(pBet->cost, pBet->reward);
+			if (iVar2 == 0) {
+				pBet->bAvailable = 0;
+			}
+			else {
+				iVar5 = iVar5 + 1;
+				pBet->bAvailable = 1;
+			}
+
+			iVar3 = iVar3 + 1;
+			iVar4 = iVar4 + 1;
+			pBehaviour = pMiniGame->GetBhvBetting();
+		} while (iVar4 < pBehaviour->nbBets);
+	}
+
+	this->field_0x938 = iVar5;
 	this->field_0x924 = 0;
-	for (int i = 0; i < pBehaviour->nbBets; i++) {
-		pBehaviour->aBets[i].bAvailable = IsMenuBetAvailable(pBehaviour->aBets + i);
-		if (pBehaviour->aBets[i].bAvailable) {
-			if (this->field_0x938 == 0) this->field_0x924 = i;
-			this->field_0x938++;
-		}
+	pBehaviour = pMiniGame->GetBhvBetting();
+	if (((0 < pBehaviour->nbBets) &&
+		(pBehaviour = pMiniGame->GetBhvBetting(), pBehaviour->aBets[0].bAvailable == 0)) &&
+		(pMiniGame = GetMiniGame(this->field_0x920), this->field_0x938 != 0)) {
+		pBehaviour = pMiniGame->GetBhvBetting();
+		assert(pBehaviour->nbBets != 0);
+		iVar2 = (this->field_0x924 + 1) % pBehaviour->nbBets;
+		do {
+			pBehaviour = pMiniGame->GetBhvBetting();
+			if (pBehaviour->nbBets <= iVar2) {
+				return;
+			}
+
+			pBehaviour = pMiniGame->GetBhvBetting();
+			if (pBehaviour->aBets[iVar2].bAvailable != 0) break;
+			pBehaviour = pMiniGame->GetBhvBetting();
+			assert(pBehaviour->nbBets != 0);
+			iVar2 = (iVar2 + 1) % pBehaviour->nbBets;
+		} while (iVar2 != this->field_0x924);
+
+		this->field_0x924 = iVar2;
 	}
+
 	return;
 }
 
-void CActorMiniGamesOrganizer::ManageMenuMulti()
+void CActorMiniGamesOrganizer::ManageMenuBet()
 {
-	CPlayerInput* pInput = this->field_0x9f0->GetInputManager(0, 0);
-	if (pInput != 0) {
+	CActorMiniGame* pReceiver;
+	CActorMiniGame* pMiniGame;
+	CPlayerInput* pCVar1;
+	int iVar2;
+	CSoundSample* pCVar3;
+	uint uVar4;
+	CBehaviourMiniGameBetting* pBehaviour;
+	S_MINI_GAME_BET* pBet;
+	int iVar11;
+	int iVar12;
+	int iVar13;
+
+	pCVar1 = this->field_0x9f0->GetInputManager(0, 0);
+	if (pCVar1 != (CPlayerInput*)0x0) {
+		iVar12 = 0;
+		iVar11 = 0;
+		pReceiver = GetMiniGame(this->field_0x920);
+		pBehaviour = pReceiver->GetBhvBetting();
+		iVar13 = 0;
+		if (0 < pBehaviour->nbBets) {
+			do {
+				pBehaviour = pReceiver->GetBhvBetting();
+				pBet = pBehaviour->aBets + iVar13;
+				iVar2 = this->field_0x9f4->IsBetAvailable(pBet->cost, pBet->reward);
+				if (iVar2 == 0) {
+					pBet->bAvailable = 0;
+				}
+				else {
+					iVar12 = iVar12 + 1;
+					pBet->bAvailable = 1;
+				}
+
+				iVar13 = iVar13 + 1;
+				iVar11 = iVar11 + 1;
+				pBehaviour = pReceiver->GetBhvBetting();
+			} while (iVar11 < pBehaviour->nbBets);
+		}
+
+		this->field_0x938 = iVar12;
 		this->field_0x76c.FUN_002ef890();
-		CActorMiniGame* pMiniGame = GetMiniGame(this->field_0x920);
-		CBehaviourMiniGameMulti* pBehaviour = pMiniGame->GetMultiBehaviour();
-		this->field_0x938 = 0;
-		for (int i = 0; i < pBehaviour->nbBets; i++) {
-			pBehaviour->aBets[i].bAvailable = IsMenuBetAvailable(pBehaviour->aBets + i);
-			if (pBehaviour->aBets[i].bAvailable) this->field_0x938++;
-		}
-		if ((0 < pBehaviour->nbBets) && (0 < this->field_0x938) && ((pInput->pressedBitfield & 0x100004) != 0)) {
-			PlayMenuSound(this->field_0x190);
-			MoveMenuArrow(&this->field_0x76c, false);
-			if (0 < this->field_0x938) {
-				do { this->field_0x924 = (this->field_0x924 + 1) % pBehaviour->nbBets; }
-				while (!pBehaviour->aBets[this->field_0x924].bAvailable);
+
+		pBehaviour = pReceiver->GetBhvBetting();
+		if ((0 < pBehaviour->nbBets) && (0 < this->field_0x938)) {
+			if (((pCVar1->pressedBitfield & 0x100000) != 0) || ((pCVar1->pressedBitfield & 4) != 0)) {
+				pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+				this->field_0xa00.pSound = pCVar3;
+				if ((NoAudio == 0) &&
+					(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample*)0x0)) {
+					this->field_0xa00.field_0x20 = 0xffffffff;
+					uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+						(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+					this->field_0xa00.soundId = uVar4;
+				}
+
+				this->field_0x76c.MoveMenuArrow(false);
+
+				pMiniGame = GetMiniGame(this->field_0x920);
+				if (this->field_0x938 != 0) {
+					pBehaviour = pMiniGame->GetBhvBetting();
+					assert(pBehaviour->nbBets != 0);
+					iVar2 = (this->field_0x924 + 1) % pBehaviour->nbBets;
+					do {
+						pBehaviour = pMiniGame->GetBhvBetting();
+						if (pBehaviour->nbBets <= iVar2) goto LAB_003b6910;
+						pBehaviour = pMiniGame->GetBhvBetting();
+						if (pBehaviour->aBets[iVar2].bAvailable != 0) break;
+						pBehaviour = pMiniGame->GetBhvBetting();
+						assert(pBehaviour->nbBets != 0);
+						iVar2 = (iVar2 + 1) % pBehaviour->nbBets;
+					} while (iVar2 != this->field_0x924);
+					this->field_0x924 = iVar2;
+				}
 			}
-		}
-		if ((0 < pBehaviour->nbBets) && (0 < this->field_0x938) && ((pInput->pressedBitfield & 0x200008) != 0)) {
-			PlayMenuSound(this->field_0x190);
-			MoveMenuArrow(&this->field_0x76c, true);
-			if (0 < this->field_0x938) {
-				do { this->field_0x924 = (this->field_0x924 + pBehaviour->nbBets - 1) % pBehaviour->nbBets; }
-				while (!pBehaviour->aBets[this->field_0x924].bAvailable);
+		LAB_003b6910:
+			if (((pCVar1->pressedBitfield & 0x200000) != 0) || ((pCVar1->pressedBitfield & 8) != 0)) {
+				pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+				this->field_0xa00.pSound = pCVar3;
+				if ((NoAudio == 0) &&
+					(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample*)0x0)) {
+					this->field_0xa00.field_0x20 = 0xffffffff;
+					uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+						(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+					this->field_0xa00.soundId = uVar4;
+				}
+
+				this->field_0x76c.MoveMenuArrow(true);
+				pMiniGame = GetMiniGame(this->field_0x920);
+				pBehaviour = pMiniGame->GetBhvBetting();
+				iVar11 = pBehaviour->nbBets;
+				pBehaviour = pMiniGame->GetBhvBetting();
+				assert(iVar11 != 0);
+				iVar2 = (this->field_0x924 + pBehaviour->nbBets + -1) % iVar11;
+				do {
+					pBehaviour = pMiniGame->GetBhvBetting();
+					if (pBehaviour->nbBets <= iVar2) goto LAB_003b6aa0;
+					pBehaviour = pMiniGame->GetBhvBetting();
+					if (pBehaviour->aBets[iVar2].bAvailable != 0) break;
+					pBehaviour = pMiniGame->GetBhvBetting();
+					iVar11 = pBehaviour->nbBets;
+					pBehaviour = pMiniGame->GetBhvBetting();
+					assert(iVar11 != 0);
+					iVar2 = (iVar2 + pBehaviour->nbBets + -1) % iVar11;
+				} while (iVar2 != this->field_0x924);
+
+				this->field_0x924 = iVar2;
 			}
-		}
-		if ((pInput->pressedBitfield & 0x1000000) != 0) {
-			if (0 < this->field_0x938) {
-				pBehaviour->curBet = this->field_0x924;
-				int cost = pBehaviour->aBets[pBehaviour->curBet].cost;
-				if (cost <= CLevelScheduler::_gGameNfo.nbMoney) {
-					CLevelScheduler::gThis->Money_GiveToBet(cost);
-					DoMessage(pMiniGame, (ACTOR_MESSAGE)0x56, (void*)1);
+		LAB_003b6aa0:
+			if ((pCVar1->pressedBitfield & 0x1000000) != 0) {
+				CActorMiniGamesManager* pManager = this->field_0x9f4;
+				iVar11 = this->field_0x924;
+				pBehaviour = pReceiver->GetBhvBetting();
+				pBehaviour->curBet = iVar11;
+				pBehaviour = pReceiver->GetBhvBetting();
+				iVar2 = pManager->PlaceBet(pBehaviour->aBets[pBehaviour->curBet].cost);
+				if (iVar2 != 0) {
+					DoMessage(pReceiver, (ACTOR_MESSAGE)0x56, (void*)1);
 					DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x24, 0);
 					SetState(10, -1);
 				}
 			}
 		}
-		if ((pInput->pressedBitfield & 0x4000000) != 0) SetState(6, -1);
+
+		if ((pCVar1->pressedBitfield & 0x4000000) != 0) {
+			SetState(6, -1);
+		}
 	}
+
 	return;
 }
 
-void CActorMiniGamesOrganizer::ManageMenuTrain()
+void CActorMiniGamesOrganizer::ManageMenuMulti()
 {
-	CPlayerInput* pInput = this->field_0x9f0->GetInputManager(0, 0);
-	if (pInput != 0) {
+	CActorMiniGame* pReceiver;
+	CPlayerInput *pCVar1;
+	CSoundSample *pCVar2;
+	uint uVar3;
+	CBehaviourMiniGameMulti *pCVar4;
+
+	pCVar1 = this->field_0x9f0->GetInputManager(0, 0);
+	if (pCVar1 != (CPlayerInput *)0x0) {
 		this->field_0x76c.FUN_002ef890();
-		CActorMiniGame* pMiniGame = GetMiniGame(this->field_0x920);
-		if ((pInput->pressedBitfield & 0x100004) != 0) {
-			PlayMenuSound(this->field_0x190);
-			MoveMenuArrow(&this->field_0x76c, false);
-			if (pMiniGame->GetSoloBehaviour()->nbPlayers < 6) pMiniGame->GetSoloBehaviour()->nbPlayers++;
+		pReceiver = GetMiniGame(this->field_0x920);
+		if (((pCVar1->pressedBitfield & 0x100000) != 0) || ((pCVar1->pressedBitfield & 4) != 0)) {
+			pCVar2 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+			this->field_0xa00.pSound = pCVar2;
+			if ((NoAudio == 0) &&
+				(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+				this->field_0xa00.field_0x20 = 0xffffffff;
+				uVar3 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+					(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+				this->field_0xa00.soundId = uVar3;
+			}
+
+			this->field_0x76c.MoveMenuArrow(false);
+			pCVar4 = pReceiver->GetBhvMulti();
+			pCVar4->AddOnePlayer();
 		}
-		if ((pInput->pressedBitfield & 0x200008) != 0) {
-			PlayMenuSound(this->field_0x190);
-			MoveMenuArrow(&this->field_0x76c, true);
-			if (2 < pMiniGame->GetSoloBehaviour()->nbPlayers) pMiniGame->GetSoloBehaviour()->nbPlayers--;
+
+		if (((pCVar1->pressedBitfield & 0x200000) != 0) || ((pCVar1->pressedBitfield & 8) != 0)) {
+			pCVar2 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+			this->field_0xa00.pSound = pCVar2;
+			if ((NoAudio == 0) &&
+				(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+				this->field_0xa00.field_0x20 = 0xffffffff;
+				uVar3 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+					(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+				this->field_0xa00.soundId = uVar3;
+			}
+
+			this->field_0x76c.MoveMenuArrow(true);
+			pCVar4 = pReceiver->GetBhvMulti();
+			pCVar4->SubOnePlayer();
 		}
-		if ((pInput->pressedBitfield & 0x1000000) != 0) {
-			DoMessage(pMiniGame, (ACTOR_MESSAGE)0x56, (void*)2);
+
+		if ((pCVar1->pressedBitfield & 0x1000000) != 0) {
+			DoMessage(pReceiver, (ACTOR_MESSAGE)0x56, (void*)2);
 			DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x24, 0);
 			SetState(10, -1);
 		}
-		if ((pInput->pressedBitfield & 0x4000000) != 0) SetState(6, -1);
+
+		if ((pCVar1->pressedBitfield & 0x4000000) != 0) {
+			SetState(6, -1);
+		}
 	}
+
 	return;
 }
 
 void CActorMiniGamesOrganizer::ManageMenuResult()
 {
-	CActorMiniGame* pMiniGame = GetMiniGame(this->field_0x920);
+	CActorMiniGame* pMiniGame;
+	int iVar1;
+	CActorMiniGame* pAVar2;
+	CSoundSample *pCVar3;
+	uint uVar4;
+	_msg_mini_game_restart local_28;
+	void* local_18;
+	void* local_14;
+	_msg_mini_game_restart* local_10;
+	void* local_c;
+	char local_8[4];
+	char local_4[4];
+
+	pMiniGame = GetMiniGame(this->field_0x920);
 	this->field_0x76c.FUN_002ef890();
-	if ((gPlayerInput.pressedBitfield & 0x200008) != 0) {
-		PlayMenuSound(this->field_0x190);
-		MoveMenuArrow(&this->field_0x76c, true);
+
+	if (((gPlayerInput.pressedBitfield & 0x200000) != 0) || ((gPlayerInput.pressedBitfield & 8) != 0))
+	{
+		pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar3;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar4;
+		}
+		this->field_0x76c.MoveMenuArrow(true);
 		pMiniGame->NextFinalAction();
 	}
-	if ((gPlayerInput.pressedBitfield & 0x100004) != 0) {
-		PlayMenuSound(this->field_0x190);
-		MoveMenuArrow(&this->field_0x76c, false);
+
+	if (((gPlayerInput.pressedBitfield & 0x100000) != 0) || ((gPlayerInput.pressedBitfield & 4) != 0))
+	{
+		pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar3;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar4;
+		}
+
+		this->field_0x76c.MoveMenuArrow(false);
 		pMiniGame->PrevFinalAction();
 	}
+
 	if ((gPlayerInput.pressedBitfield & 0x1000000) != 0) {
-		int iVar1 = pMiniGame->field_0x1cc;
+		iVar1 = pMiniGame->field_0x1cc;
 		if (iVar1 == 0) {
-			for (int i = 0; i < 3; i++) strcpy(this->field_0x9ac[i], "-");
-			PlayMenuSound(this->field_0x188);
+			strcpy(this->field_0x9ac[0], "-");
+			strcpy(this->field_0x9ac[1], "-");
+			strcpy(this->field_0x9ac[2], "-");
+			pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+			this->field_0xa00.pSound = pCVar3;
+			if ((NoAudio == 0) &&
+				(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+				this->field_0xa00.field_0x20 = 0xffffffff;
+				uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+					(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+				this->field_0xa00.soundId = uVar4;
+			}
 			SetState(0xf, -1);
 		}
-		else if (iVar1 == 2) {
-			PlayMenuSound(this->field_0x188);
-			pMiniGame->DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x58, 0);
-			char local_8[4] = { this->field_0x9ac[0][0], this->field_0x9ac[1][0], this->field_0x9ac[2][0], 0 };
-			pMiniGame->SetScoreName(local_8);
-			DoMessage(pMiniGame, (ACTOR_MESSAGE)0x56, 0);
-			this->field_0x93c = 5;
-			this->field_0x940 = false;
-		}
-		else if (iVar1 == 1) {
-			PlayMenuSound(this->field_0x188);
-			_msg_mini_game_restart local_28;
-			local_28.pLocation = &pMiniGame->field_0x18c.Get()->location;
-			local_28.pRotation = &pMiniGame->field_0x18c.Get()->rotation;
-			local_28.sectorId = pMiniGame->field_0x190;
-			if (local_28.sectorId == -1) local_28.sectorId = CScene::ptable.g_SectorManager_00451670->baseSector.desiredSectorID;
-			char local_4[4] = { this->field_0x9ac[0][0], this->field_0x9ac[1][0], this->field_0x9ac[2][0], 0 };
-			pMiniGame->SetScoreName(local_4);
-			pMiniGame->DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x5b, &local_28);
-			DoMessage(pMiniGame, (ACTOR_MESSAGE)0x5b, 0);
-			this->field_0x93c = 10;
-			this->field_0x940 = false;
+		else {
+			if (iVar1 == 2) {
+				pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+				this->field_0xa00.pSound = pCVar3;
+				if ((NoAudio == 0) &&
+					(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+					this->field_0xa00.field_0x20 = 0xffffffff;
+					uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+						(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+					this->field_0xa00.soundId = uVar4;
+				}
+				local_18 = 0;
+				pMiniGame->DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x58, local_18);
+				local_8[0] = this->field_0x9ac[0][0];
+				local_8[1] = this->field_0x9ac[1][0];
+				local_8[2] = this->field_0x9ac[2][0];
+				local_8[3] = 0;
+				pAVar2 = GetMiniGame(this->field_0x920);
+				pAVar2->SetScoreName(local_8);
+				local_c = 0;
+				DoMessage(pAVar2, (ACTOR_MESSAGE)0x56, local_c);
+				this->field_0x93c = 5;
+				this->field_0x940 = false;
+			}
+			else {
+				if (iVar1 == 1) {
+					pCVar3 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+					this->field_0xa00.pSound = pCVar3;
+					if ((NoAudio == 0) &&
+						(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+						this->field_0xa00.field_0x20 = 0xffffffff;
+						uVar4 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+							(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+						this->field_0xa00.soundId = uVar4;
+					}
+					local_28.pLocation = &pMiniGame->field_0x18c.Get()->location;
+					local_28.pRotation = &pMiniGame->field_0x18c.Get()->rotation;
+					local_28.sectorId = pMiniGame->field_0x190;
+					if (local_28.sectorId == -1) {
+						local_28.sectorId = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
+					}
+					local_4[0] = this->field_0x9ac[0][0];
+					local_4[1] = this->field_0x9ac[1][0];
+					local_4[2] = this->field_0x9ac[2][0];
+					local_4[3] = 0;
+					pAVar2 = GetMiniGame(this->field_0x920);
+					pAVar2->SetScoreName(local_4);
+					local_10 = &local_28;
+					pAVar2->DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x5b, local_10);
+					local_14 = 0;
+					DoMessage(pAVar2, (ACTOR_MESSAGE)0x5b, local_14);
+					this->field_0x93c = 10;
+					this->field_0x940 = false;
+				}
+			}
 		}
 	}
 	return;
@@ -1636,112 +2748,351 @@ void CActorMiniGamesOrganizer::ManageMenuResult()
 
 void CActorMiniGamesOrganizer::ManageMenuEnterName()
 {
-	uint uVar2 = gPlayerInput.pressedBitfield;
-	if ((uVar2 & 0x400001) != 0) {
-		PlayMenuSound(this->field_0x190);
-		int iVar6 = this->field_0x99c[this->field_0x998];
-		this->field_0x994 = (this->field_0x994 - 1 + iVar6) % iVar6;
+	CSoundSample *pCVar1;
+	uint uVar2;
+	uint uVar3;
+	int* piVar4;
+	int iVar5;
+	int iVar6;
+
+	if (((gPlayerInput.pressedBitfield & 0x400000) != 0) || ((gPlayerInput.pressedBitfield & 1) != 0)) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+		iVar6 = this->field_0x99c[this->field_0x998];
+		assert(iVar6 != 0);
+		this->field_0x994 = (this->field_0x994 + -1 + iVar6) % iVar6;
 	}
-	if ((uVar2 & 0x800002) != 0) {
-		PlayMenuSound(this->field_0x190);
-		this->field_0x994 = (this->field_0x994 + 1) % this->field_0x99c[this->field_0x998];
+
+	if (((gPlayerInput.pressedBitfield & 0x800000) != 0) || ((gPlayerInput.pressedBitfield & 2) != 0)) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+		assert(this->field_0x99c[this->field_0x998] != 0);
+		this->field_0x994 =
+				(this->field_0x994 + 1) %
+				this->field_0x99c[this->field_0x998];
 	}
-	if ((uVar2 & 0x100004) != 0) {
-		PlayMenuSound(this->field_0x190);
-		this->field_0x998 = (this->field_0x998 + 3) % 4;
-		this->field_0x994 %= this->field_0x99c[this->field_0x998];
+
+	if (((gPlayerInput.pressedBitfield & 0x100000) != 0) || ((gPlayerInput.pressedBitfield & 4) != 0)) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+
+		uVar3 = this->field_0x998 + 3;
+		uVar2 = uVar3 & 3;
+		if (((int)uVar3 < 0) && (uVar2 != 0)) {
+			uVar2 = uVar2 - 4;
+		}
+
+		this->field_0x998 = uVar2;
+		assert(this->field_0x99c[this->field_0x998] != 0);
+		this->field_0x994 =
+				this->field_0x994 %
+				this->field_0x99c[this->field_0x998];
 	}
-	if ((uVar2 & 0x200008) != 0) {
-		PlayMenuSound(this->field_0x190);
-		this->field_0x998 = (this->field_0x998 + 1) % 4;
-		this->field_0x994 %= this->field_0x99c[this->field_0x998];
+
+	if (((gPlayerInput.pressedBitfield & 0x200000) != 0) || ((gPlayerInput.pressedBitfield & 8) != 0)) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x190);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+
+		uVar3 = this->field_0x998 + 1;
+		uVar2 = uVar3 & 3;
+		if (((int)uVar3 < 0) && (uVar2 != 0)) {
+			uVar2 = uVar2 - 4;
+		}
+
+		this->field_0x998 = uVar2;
+		assert(this->field_0x99c[this->field_0x998] != 0);
+		this->field_0x994 =
+				this->field_0x994 %
+				this->field_0x99c[this->field_0x998];
 	}
-	if ((uVar2 & 0x1000000) != 0) {
-		PlayMenuSound(this->field_0x188);
-		int iVar6 = this->field_0x994;
-		for (int i = 0; i < this->field_0x998; i++) iVar6 += this->field_0x99c[i];
+
+	if ((gPlayerInput.pressedBitfield & 0x1000000) != 0) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x188);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+
+		iVar6 = this->field_0x994;
+		iVar5 = 0;
+		piVar4 = this->field_0x99c;
+		if (this->field_0x998 != 0) {
+			do {
+				iVar5 = iVar5 + 1;
+				iVar6 = iVar6 + *piVar4;
+				piVar4 = piVar4 + 1;
+			} while (iVar5 != this->field_0x998);
+		}
+
 		if (iVar6 == 0x1a) {
-			this->field_0x9b4--;
-			if (this->field_0x9b4 < 0) this->field_0x9b4 = 0;
+			this->field_0x9b4 = this->field_0x9b4 + -1;
+			if (this->field_0x9b4 < 0) {
+				this->field_0x9b4 = 0;
+			}
 			this->field_0x9ac[this->field_0x9b4][0] = '-';
 			return;
 		}
+
 		if (iVar6 == 0x1b) {
 			this->field_0x9b4 = 3;
 			SetState(0xe, -1);
 			return;
 		}
+
 		if (this->field_0x9b4 < 3) {
 			this->field_0x9ac[this->field_0x9b4][0] = this->field_0x958[iVar6][0];
 			if (this->field_0x9b4 == 2) {
 				this->field_0x998 = 3;
 				this->field_0x994 = 0;
 			}
-			this->field_0x9b4++;
+			this->field_0x9b4 = this->field_0x9b4 + 1;
 		}
 	}
-	if ((uVar2 & 0x4000000) != 0) {
-		PlayMenuSound(this->field_0x18c);
-		// The PS2 writes the next name byte even when all three letters have been entered.
-		if (this->field_0x9b4 < 3) this->field_0x9ac[this->field_0x9b4][0] = '-';
+
+	if ((gPlayerInput.pressedBitfield & 0x4000000) != 0) {
+		pCVar1 = CScene::ptable.g_AudioManager_00451698->GetSound(this->field_0x18c);
+		this->field_0xa00.pSound = pCVar1;
+		if ((NoAudio == 0) &&
+			(this->field_0xa00.pSound3dData = 0, this->field_0xa00.pSound != (CSoundSample *)0x0)) {
+			this->field_0xa00.field_0x20 = 0xffffffff;
+			uVar2 = this->field_0xa00.pSound->Play(this->field_0xa00.soundId, this->field_0xa00.field_0x20,
+				(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
+			this->field_0xa00.soundId = uVar2;
+		}
+
+		// Keep the port's guard: index 3 would overwrite field_0x9b4 on PS2.
+		if (this->field_0x9b4 < 3) {
+			this->field_0x9ac[this->field_0x9b4][0] = '-';
+		}
 	}
+
 	return;
 }
 
 void CActorMiniGamesOrganizer::ManageFade()
 {
-	if (!CScene::_pinstance->FUN_001b92f0()) {
-		if (0.0f < this->field_0x944) this->field_0x944 -= GetTimer()->lastFrameTime / 0.2f;
+	bool bVar1;
+	Timer *pTVar2;
+	float fVar3;
+	float fVar4;
+
+	bVar1 = CScene::_pinstance->FUN_001b92f0();
+	if (bVar1 == false) {
+		if (0.0f < this->field_0x944) {
+			pTVar2 = GetTimer();
+			this->field_0x944 = this->field_0x944 - pTVar2->lastFrameTime / 0.2f;
+			if (this->field_0x948 < this->field_0x944) {
+				this->field_0x944 = this->field_0x948;
+			}
+			else {
+				if (this->field_0x944 < 0.0f) {
+					this->field_0x944 = 0.0f;
+				}
+			}
+		}
 	}
 	else {
-		this->field_0x944 += GetTimer()->lastFrameTime;
-	}
-	if (this->field_0x948 < this->field_0x944) this->field_0x944 = this->field_0x948;
-	else if (this->field_0x944 < 0.0f) this->field_0x944 = 0.0f;
-	float fVar4 = (this->field_0x948 - this->field_0x944) / this->field_0x948;
-	float fVar3 = 1.0f;
-	if (fVar4 <= 1.0f) {
-		fVar3 = fVar4;
-		if (fVar4 < 0.0f) fVar3 = 0.0f;
+		pTVar2 = GetTimer();
+		this->field_0x944 = this->field_0x944 + pTVar2->lastFrameTime;
+		if (this->field_0x948 < this->field_0x944) {
+			this->field_0x944 = this->field_0x948;
+		}
+		else {
+			if (this->field_0x944 < 0.0f) {
+				this->field_0x944 = 0.0f;
+			}
+		}
 	}
 
-	this->field_0x94c = (byte)(int)(fVar3 * 255.0f);
+	fVar4 = (this->field_0x948 - this->field_0x944) / this->field_0x948;
+	fVar3 = 1.0f;
+	if ((fVar4 <= 1.0f) && (fVar3 = fVar4, fVar4 < 0.0f)) {
+		fVar3 = 0.0f;
+	}
+
+	fVar3 = fVar3 * 255.0f;
+	if (fVar3 < 2.147484e+09f) {
+		this->field_0x94c = (byte)(int)fVar3;
+	}
+	else {
+		this->field_0x94c = (byte)(int)(fVar3 - 2.147484e+09f);
+	}
 
 	return;
 }
 
 void CActorMiniGamesOrganizer::ManageMusic(int state)
 {
-	CAudioManager* pAudio = CScene::ptable.g_AudioManager_00451698;
-	CMusic* pMusic = ((this->field_0x184 == -1) || ((uint)pAudio->nbMusic <= this->field_0x184)) ? 0 : pAudio->aMusic + this->field_0x184;
-	if (((GetStateFlags(this->prevActorState) & 0x200) == 0) && ((GetStateFlags(state) & 0x200) != 0)) {
-		if ((pMusic != 0) && (this->field_0x9f8 == -1)) this->field_0x9f8 = pAudio->field_0x38->Start(5.0f, 1.0f, 1.3f, 0.0f, pMusic, 0x19);
+	bool bVar1;
+	int iVar2;
+	StateConfig* pSVar3;
+	uint uVar4;
+	CMusic* pCVar5;
+	CMusicManager* pMusicManager;
+
+	iVar2 = this->prevActorState;
+	if (iVar2 == -1) {
+		uVar4 = 0;
 	}
-	if (((GetStateFlags(state) & 0x200) == 0) && ((GetStateFlags(this->prevActorState) & 0x200) != 0)) {
-		if ((this->field_0x9f8 != -1) && pAudio->field_0x38->IsMusic(this->field_0x9f8, pMusic)) pAudio->field_0x38->Stop(0.0f, 0.0f, this->field_0x9f8);
-		this->field_0x9f8 = -1;
+	else {
+		pSVar3 = GetStateCfg(iVar2);
+		uVar4 = pSVar3->flags_0x4;
 	}
+	if ((uVar4 & 0x200) == 0) {
+		if (state == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar3 = GetStateCfg(state);
+			uVar4 = pSVar3->flags_0x4 & 0x200;
+		}
+		if (uVar4 != 0) {
+			uVar4 = this->field_0x184;
+			if ((uVar4 == 0xffffffff) ||
+				(bVar1 = (uint)CScene::ptable.g_AudioManager_00451698->nbMusic <= uVar4, bVar1)) {
+				pCVar5 = (CMusic*)0x0;
+			}
+			else {
+				if (bVar1) {
+					uVar4 = 0;
+				}
+				pCVar5 = CScene::ptable.g_AudioManager_00451698->aMusic + uVar4;
+			}
+			if ((pCVar5 != (CMusic*)0x0) && (this->field_0x9f8 == -1)) {
+				iVar2 = CScene::ptable.g_AudioManager_00451698->field_0x38->Start(5.0f, 1.0f, 1.3f, 0.0f, pCVar5, 0x19);
+				this->field_0x9f8 = iVar2;
+			}
+		}
+	}
+	if (state == -1) {
+		uVar4 = 0;
+	}
+	else {
+		pSVar3 = GetStateCfg(state);
+		uVar4 = pSVar3->flags_0x4 & 0x200;
+	}
+	if (uVar4 == 0) {
+		iVar2 = this->prevActorState;
+		if (iVar2 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar3 = GetStateCfg(iVar2);
+			uVar4 = pSVar3->flags_0x4 & 0x200;
+		}
+		if (uVar4 != 0) {
+			pMusicManager = CScene::ptable.g_AudioManager_00451698->field_0x38;
+			if (this->field_0x9f8 != -1) {
+				uVar4 = this->field_0x184;
+				if ((uVar4 == 0xffffffff) ||
+					(bVar1 = (uint)CScene::ptable.g_AudioManager_00451698->nbMusic <= uVar4, bVar1)) {
+					pCVar5 = (CMusic*)0x0;
+				}
+				else {
+					if (bVar1) {
+						uVar4 = 0;
+					}
+					pCVar5 = CScene::ptable.g_AudioManager_00451698->aMusic + uVar4;
+				}
+				bVar1 = pMusicManager->IsMusic(this->field_0x9f8, pCVar5);
+				if (bVar1 != false) {
+					pMusicManager->Stop(0.0f, 0.0f, this->field_0x9f8);
+				}
+			}
+			this->field_0x9f8 = -1;
+		}
+	}
+
 	return;
 }
 
 void CActorMiniGamesOrganizer::ManageZone()
 {
-	bool bVar2 = false;
-	for (int i = 0; i < this->field_0x17c->entryCount; i++) {
-		CActorMiniGame* pMiniGame = GetMiniGame(i);
-		if (pMiniGame->field_0x1d4 && (pMiniGame->field_0x1d8 == 0)) bVar2 = true;
+	S_ACTOR_STREAM_REF* pStream;
+	bool bVar2;
+	CActorHero* pCVar3;
+	CEventManager* pCVar4;
+	ed_zone_3d* pZone;
+	CActorMiniGame* pMiniGame;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	int local_20[3];
+	int* local_4;
+
+	pCVar4 = CScene::ptable.g_EventManager_006f5080;
+	pCVar3 = CActorHero::_gThis;
+	bVar2 = false;
+	iVar7 = 0;
+	pStream = this->pMiniGameStreamRefs;
+	iVar5 = 0;
+	while (true) {
+		iVar6 = 0;
+		if (pStream != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar6 = pStream->entryCount;
+		}
+		if (iVar6 <= iVar7) break;
+		pMiniGame = static_cast<CActorMiniGame*>(pStream->aEntries[iVar5].Get());
+		if ((pMiniGame->field_0x1d4 != 0) && (pMiniGame->field_0x1d8 == 0)) {
+			bVar2 = true;
+		}
+		iVar5 = iVar5 + 1;
+		iVar7 = iVar7 + 1;
 	}
 	if (bVar2) {
-		ed_zone_3d* pZone = 0;
-		CEventManager* pEvent = CScene::ptable.g_EventManager_006f5080;
-		if (this->field_0x180 != -1) pZone = edEventGetChunkZone(pEvent->activeChunkId, this->field_0x180);
-		if (pZone != 0) {
-			int iVar5 = edEventComputeZoneAgainstVertex(pEvent->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
-			int local_20[3] = { iVar5 == 1 ? 0x10 : 0x12, 0, this->field_0x9fc };
-			this->field_0x9f4->DoMessage(this->field_0x9f4->actorRef.Get(), (ACTOR_MESSAGE)0x4e, local_20);
+		pZone = (ed_zone_3d*)0x0;
+		if (this->field_0x180 != 0xffffffff) {
+			pZone = edEventGetChunkZone(CScene::ptable.g_EventManager_006f5080->activeChunkId, this->field_0x180);
+		}
+		if (pZone != (ed_zone_3d*)0x0) {
+			iVar5 = edEventComputeZoneAgainstVertex(pCVar4->activeChunkId, pZone, &pCVar3->currentLocation, 0);
+			local_20[2] = this->field_0x9fc;
+			if (iVar5 == 1) {
+				local_20[0] = 0x10;
+			}
+			else {
+				local_20[0] = 0x12;
+			}
+			// The PS2 leaves this unused message word uninitialized.
+			local_20[1] = 0;
+			local_4 = local_20;
+			this->field_0x9f4->DoMessage(this->field_0x9f4->actorRef.Get(), (ACTOR_MESSAGE)0x4e, local_4);
 			this->field_0x9fc = local_20[2];
 		}
 	}
+
 	return;
 }
 
@@ -1752,11 +3103,11 @@ void CActorMiniGamesOrganizer::ComputeCurPlayMode()
 	int iVar3;
 
 	pActor = GetMiniGame(this->field_0x920);
-	if (this->field_0x17c == 0) {
+	if (this->pMiniGameStreamRefs == 0) {
 		iVar3 = 0;
 	}
 	else {
-		iVar3 = this->field_0x17c->entryCount;
+		iVar3 = this->pMiniGameStreamRefs->entryCount;
 	}
 	if (0 < iVar3) {
 		iVar3 = this->field_0x928;
@@ -1930,7 +3281,7 @@ int CActorMiniGamesOrganizer::InterpretMessage(CActor* pSender, int msg, void* p
 				if (!pCVar6->LoadEntryByFile(&eStack32, "G2D", 0)) return 0;
 				ed3DInstallG2D((char*)eStack32.fileBufferStart, eStack32.size, &iStack4, &this->field_0x9c0, 1);
 				this->field_0x9bc = ed3DG2DGetG2DNbMaterials(&this->field_0x9c0);
-				int iVar8 = this->field_0x17c == 0 ? 0 : this->field_0x17c->entryCount;
+				int iVar8 = this->pMiniGameStreamRefs == 0 ? 0 : this->pMiniGameStreamRefs->entryCount;
 				if (iVar8 < this->field_0x9bc) this->field_0x9bc = iVar8;
 				for (int i = 0; i < this->field_0x9bc; i++)
 					edDListCreatMaterialFromIndex(this->field_0x9b8 + i, i, &this->field_0x9c0, 2);
@@ -1948,7 +3299,7 @@ int CActorMiniGamesOrganizer::InterpretMessage(CActor* pSender, int msg, void* p
 		if (pMsgParam != (void*)1) return 0;
 		CActorMiniGame* pMiniGame = static_cast<CActorMiniGame*>(pSender);
 		if ((pMiniGame->curBehaviourId == 3) && (pMiniGame->field_0x1b0 == 0)) {
-			CBehaviourMiniGameMulti* pBehaviour = pMiniGame->GetMultiBehaviour();
+			CBehaviourMiniGameBetting* pBehaviour = pMiniGame->GetBhvBetting();
 			if (this->field_0x924 < pBehaviour->nbBets)
 				CScene::ptable.g_LevelScheduleManager_00451660->Money_TakeFromBet(pBehaviour->aBets[pBehaviour->curBet].reward);
 		}
@@ -1966,7 +3317,7 @@ int CActorMiniGamesOrganizer::InterpretMessage(CActor* pSender, int msg, void* p
 		float fVar2 = pSender->currentLocation.z - this->currentLocation.z;
 		if ((sqrtf(fVar1 * fVar1 + fVar2 * fVar2) < this->field_0x194) &&
 			((GetStateFlags(this->actorState) & 0x100) != 0) &&
-			(this->field_0x17c != 0) && (0 < this->field_0x17c->entryCount)) return 0xe;
+			(this->pMiniGameStreamRefs != 0) && (0 < this->pMiniGameStreamRefs->entryCount)) return 0xe;
 		return 0;
 	}
 	return CActor::InterpretMessage(pSender, msg, pMsgParam);
@@ -2074,7 +3425,7 @@ static void FormatMiniGameResultScore(float score, CActorMiniGame* pMiniGame, ed
 	return;
 }
 
-static void DrawMiniGameHighScores(float x, float y, float width, float lineScale, CActorMiniGame* pMiniGame, CBehaviourMiniGameTrain* pBehaviour)
+static void DrawMiniGameHighScores(float x, float y, float width, float lineScale, CActorMiniGame* pMiniGame, CBehaviourMiniGameTraining* pBehaviour)
 {
 	for (int iVar3 = 0; iVar3 < pBehaviour->nbScores; iVar3++) {
 		edCTextFormat auStack10784;
@@ -2082,6 +3433,7 @@ static void DrawMiniGameHighScores(float x, float y, float width, float lineScal
 		auStack10784.Display(x, y);
 		y = y + lineScale * auStack10784.field_0xc;
 	}
+
 	return;
 }
 
@@ -2325,7 +3677,7 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 		eStack192.SetEolAutomatic(0);
 		eStack192.SetScale(1.0f, 1.0f);
 		DrawMiniGameHighScores((float)gVideoConfig.screenWidth * 0.62f, (float)gVideoConfig.screenHeight * 0.3f,
-			(float)gVideoConfig.screenWidth * 0.25f, 0.9714286f, piVar1, piVar1->GetTrainBehaviour());
+			(float)gVideoConfig.screenWidth * 0.25f, 0.9714286f, piVar1, piVar1->GetBhvTraining());
 		eStack192.SetEolAutomatic(0x80);
 		eStack192.SetHorizontalJustification(0x10);
 		eStack192.SetVerticalAlignment(8);
@@ -2359,7 +3711,7 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 	int iVar2;
 	bool bVar3;
 	edCTextStyle *pNewFont;
-	CBehaviourMiniGameMulti* iVar4;
+	CBehaviourMiniGameBetting* iVar4;
 	char *pcVar5;
 	uint uVar6;
 	S_MINI_GAME_BET* piVar7;
@@ -2394,10 +3746,10 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 		fVar10 = (float)gVideoConfig.screenHeight * 0.245f;
 		this->field_0x76c.FUN_002ef4e0(fVar8, (float)gVideoConfig.screenHeight * 0.13f, fVar8, fVar10, 0);
 		uVar6 = this->field_0x94c | 0x3b3b0000;
-		iVar4 = piVar1->GetMultiBehaviour();
+		iVar4 = piVar1->GetBhvBetting();
 		iVar2 = this->field_0x924;
 		if (iVar2 < iVar4->nbBets) {
-			iVar4 = piVar1->GetMultiBehaviour();
+			iVar4 = piVar1->GetBhvBetting();
 			piVar7 = iVar4->aBets + iVar2;
 			eStack192.rgbaColour = uVar6;
 			eStack192.altColour = uVar6;
@@ -2481,7 +3833,7 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 	bool bVar2;
 	edCTextStyle *pNewFont;
 	char *pcVar3;
-	CBehaviourMiniGameSolo* iVar4;
+	CBehaviourMiniGameMulti* iVar4;
 	ulong uVar6;
 	uint uVar7;
 	float fVar8;
@@ -2521,7 +3873,7 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.47f, (float)gVideoConfig.screenHeight * 0.14f);
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 		eStack192.SetScale(1.13f, 1.13f);
-		iVar4 = piVar1->GetSoloBehaviour();
+		iVar4 = piVar1->GetBhvMulti();
 		auStack5584.FormatString("%d", iVar4->nbPlayers);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.77f, (float)gVideoConfig.screenHeight * 0.14f);
 		eStack192.SetScale(1.2f, 1.2f);
@@ -2530,12 +3882,12 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 		pcVar3 = gMessageManager.get_message(0x1e161c0c040e1f01);
 		auStack5584.FormatString(pcVar3);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.81f, (float)gVideoConfig.screenHeight * 0.35f);
-		iVar4 = piVar1->GetSoloBehaviour();
+		iVar4 = piVar1->GetBhvMulti();
 		if (0 < iVar4->nbScores) {
 			eStack192.SetScale(1.2f, 1.2f);
 			eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 			eStack192.SetRotation(-0.11f);
-			iVar4 = piVar1->GetSoloBehaviour();
+			iVar4 = piVar1->GetBhvMulti();
 			FormatMiniGameScore(iVar4->aScores[0].score, piVar1, &auStack5584, "");
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.785f, (float)gVideoConfig.screenHeight * 0.43f);
 		}
@@ -2556,7 +3908,7 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 		uVar6 = 0;
 		do {
 			uVar7 = MiniGamePlayerColour((int)uVar6);
-			iVar4 = piVar1->GetSoloBehaviour();
+			iVar4 = piVar1->GetBhvMulti();
 			if ((long)uVar6 < (long)iVar4->nbPlayers) {
 				eStack192.SetScale(0.98f, 0.98f);
 			}
@@ -2665,7 +4017,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 		}
 		if ((piVar1->curBehaviourId == 3) && (piVar1->field_0x1b0 == 0)) {
 			eStack192.SetScale(1.26f, 1.26f);
-			CBehaviourMiniGameMulti* pBehaviour = piVar1->GetMultiBehaviour();
+			CBehaviourMiniGameBetting* pBehaviour = piVar1->GetBhvBetting();
 			auStack5584.FormatString("%d", pBehaviour->aBets[pBehaviour->curBet].reward);
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.39f, (float)gVideoConfig.screenHeight * 0.34f);
 			eStack192.SetScale(0.9f, 0.9f);
@@ -2743,18 +4095,18 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 			else {
 				if (piVar1->field_0x1cc == 1) {
 					eStack192.SetScale(1.25f, 1.25f);
-					uVar5 = MiniGamePlayerColour(piVar1->GetSoloBehaviour()->winner);
+					uVar5 = MiniGamePlayerColour(piVar1->GetBhvMulti()->winner);
 				}
 				else {
 					eStack192.SetScale(1.0f, 1.0f);
-					uint colour = MiniGamePlayerColour(piVar1->GetSoloBehaviour()->winner);
+					uint colour = MiniGamePlayerColour(piVar1->GetBhvMulti()->winner);
 					uVar5 = ((((colour & 0xff00) >> 8) * 0x78 >> 8) << 8) |
 						(((colour >> 24) * 0x78 >> 8) << 24) |
 						((((colour & 0xff0000) >> 16) * 0x78 >> 8) << 16);
 				}
 				eStack192.rgbaColour = uVar5 & 0xffffff00 | (uint)this->field_0x94c;
 				pcVar3 = gMessageManager.get_message(0x1e161e0506180817);
-				auStack5584.FormatString(pcVar3, piVar1->GetSoloBehaviour()->winner + 1);
+				auStack5584.FormatString(pcVar3, piVar1->GetBhvMulti()->winner + 1);
 			}
 			auStack5584.Display(x, y);
 			y = y + fVar13;

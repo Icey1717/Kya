@@ -23,7 +23,7 @@ public:
 	CMenuWheel();
 	void Init(edDList_material* pMaterial, edDList_material* pArrow, edDList_material* pArrowHighlight);
 	void Reset();
-	void Manage();
+	bool Manage();
 	void Draw();
 	void MoveWheel(bool bNext);
 	void MoveWheel();
@@ -69,10 +69,12 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
-class CActorMiniGamesOrganizer : public CActor {
+class CActorMiniGamesOrganizer : public CActor
+{
 public:
 	CActorMiniGamesOrganizer();
-	static StateConfig _gStateCfg_MGO[12];
+
+	static StateConfig _gStateCfg_ORG[12];
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
@@ -95,15 +97,14 @@ public:
 	void NextPlayMode();
 	void PrevPlayMode();
 	void ManageMenuChoose();
+	void ManageMenuBet();
 	void ManageMenuMulti();
-	void ManageMenuTrain();
 	void ManageMenuResult();
 	void ManageMenuEnterName();
-	void InitMenuMulti();
+	void InitMenuBet();
 	void ManageFade();
 	void ManageMusic(int state);
 	void ManageZone();
-	void PlayMenuSound(int soundId);
 	void DrawMenuChooseText();
 	void DrawMenuBetText();
 	void DrawMenuMultiText();
@@ -120,7 +121,7 @@ public:
 	int textureIndex_0x170;
 	int field_0x174;
 	int materialId_0x178;
-	S_ACTOR_STREAM_REF* field_0x17c;
+	S_ACTOR_STREAM_REF* pMiniGameStreamRefs;
 	uint field_0x180;
 	uint field_0x184;
 	int field_0x188;

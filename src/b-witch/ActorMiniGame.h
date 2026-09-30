@@ -26,7 +26,7 @@ public:
 	CActorMiniGame* pOwner;
 };
 
-class CBehaviourMiniGameMulti : public CBehaviourMiniGame
+class CBehaviourMiniGameBetting : public CBehaviourMiniGame
 {
 public:
 	int field_0x8;
@@ -35,16 +35,19 @@ public:
 	int curBet;
 };
 
-class CBehaviourMiniGameTrain : public CBehaviourMiniGame
+class CBehaviourMiniGameTraining : public CBehaviourMiniGame
 {
 public:
 	int nbScores;
 	S_MINI_GAME_SCORE* aScores;
 };
 
-class CBehaviourMiniGameSolo : public CBehaviourMiniGame
+class CBehaviourMiniGameMulti : public CBehaviourMiniGame
 {
 public:
+	void AddOnePlayer();
+	void SubOnePlayer();
+
 	int nbPlayers;
 	int winner;
 	int nbScores;
@@ -65,9 +68,9 @@ public:
 	void NextFinalAction();
 	void PrevFinalAction();
 	void SetScoreName(char* pName);
-	CBehaviourMiniGameMulti* GetMultiBehaviour();
-	CBehaviourMiniGameTrain* GetTrainBehaviour();
-	CBehaviourMiniGameSolo* GetSoloBehaviour();
+	virtual CBehaviourMiniGameBetting* GetBhvBetting();
+	virtual CBehaviourMiniGameTraining* GetBhvTraining();
+	virtual CBehaviourMiniGameMulti* GetBhvMulti();
 
 	// Recovered fields used by the organizer; remaining ranges retain their PS2 offsets.
 	ulong field_0x160;

@@ -3966,6 +3966,17 @@ Episode* CLevelScheduler::GetEpisode(int index)
 	return g_EpisodeDataArray_0048eb0 + index;
 }
 
+Episode* CLevelScheduler::GetLastEpisode()
+{
+	int index;
+
+	if ((_gScenVarInfo[6].currentValue < 0) || (index = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		index = _gGameNfo.nbEpisodes + -1;
+	}
+
+	return g_EpisodeDataArray_0048eb0 + index;
+}
+
 int CLevelScheduler::MapFunc_002d8dc0(ObjectiveEntry* param_1)
 {
 	bool bVar1;

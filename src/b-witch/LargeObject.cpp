@@ -565,7 +565,7 @@ void CScene::Level_Init()
 	return;
 }
 
-static void Fade(float speed, int bFadeIn, int bWaitForFade)
+void Fade(float speed, int bFadeIn, int bWaitForFade)
 {
 	ulong uVar1;
 	float fVar2;

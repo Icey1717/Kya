@@ -49,6 +49,8 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void ClearLocalData();
+	bool IsBetAvailable(int cost, int reward);
+	bool PlaceBet(int cost);
 
 	CBehaviourMiniGamesManagerStand behaviourStand;
 	S_ACTOR_STREAM_REF* pOrganizerStreamRefs;

@@ -365,5 +365,6 @@ extern ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10];
 #define GAME_REQUEST_MAP 0x400
 
 extern uint GameFlags;
+void Fade(float speed, int bFadeIn, int bWaitForFade);
 
 #endif //_LARGEOBJECT_H

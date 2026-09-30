@@ -470,6 +470,7 @@ public:
 	bool OpenLevelChunk(int levelId);
 	void CloseLevelChunk();
 	Episode* GetEpisode(int index);
+	static Episode* GetLastEpisode();
 
 public:
 
