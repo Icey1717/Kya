@@ -3295,17 +3295,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				goto LAB_00344ed0;
 		}
 		if (msg == 0x5b) {
-			struct Message_0x5b
-			{
-				edF32VECTOR4 location;
-				edF32VECTOR4 rotation;
-				int sectorId;
-			};
-
-			Message_0x5b* pMsg = (Message_0x5b*)pMsgParam;
-			this->field_0xeb0.xyz = pMsg->location.xyz;
+			_msg_mini_game_restart* pMsg = (_msg_mini_game_restart*)pMsgParam;
+			this->field_0xeb0.xyz = *pMsg->pLocation;
 			this->field_0xeb0.w = 1.0f;
-			this->field_0xec0.xyz = pMsg->rotation.xyz;
+			this->field_0xec0.xyz = *pMsg->pRotation;
 			this->field_0xec0.w = 0.0f;
 			this->field_0xed0 = pMsg->sectorId;
 			LifeRestore();

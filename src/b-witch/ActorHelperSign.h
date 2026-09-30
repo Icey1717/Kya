@@ -42,7 +42,11 @@ struct astruct_22
 	uint field_0x1a0;
 	byte field_0x1a4;
 	int field_0x1a8;
-	int field_0x1ac;
+	union {
+		int field_0x1ac;
+		float centerX;
+		void* pContext;
+	};
 };
 
 class CBehaviourHelperSign : public CBehaviour

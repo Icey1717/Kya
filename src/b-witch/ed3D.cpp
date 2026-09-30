@@ -15713,6 +15713,23 @@ ulong ed3DComputeHashCode(char* inString)
 	return hashCode;
 }
 
+void ed3DReplaceTexture(ed_g3d_manager* pMesh, ed_g2d_manager* pTexture, ulong hashA, ulong hashB)
+{
+	char* pBuffEnd = (char*)pMesh->MBNA + pMesh->MBNA->size;
+	for (ed_Chunck* pChunk = edChunckGetFirst((char*)(pMesh->MBNA + 1), pBuffEnd); pChunk != 0;
+		pChunk = edChunckGetNext(pChunk, pBuffEnd)) {
+		if (pChunk->hash == 0x4b4e424d) {
+			ed_hash_code* pDst = edHashcodeGet(hashB, pChunk);
+			ed_hash_code* pSrc = edHashcodeGet(hashA, pTexture->pMATA_HASH);
+			if ((pDst != 0) && (pSrc != 0)) {
+				pDst->pData = STORE_POINTER(pSrc);
+			}
+		}
+	}
+
+	return;
+}
+
 bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene)
 {
 	float fov;

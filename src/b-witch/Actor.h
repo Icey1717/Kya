@@ -166,6 +166,13 @@ enum ACTOR_MESSAGE
 
 typedef void* MSG_PARAM;
 
+struct _msg_mini_game_restart
+{
+	edF32VECTOR3* pLocation;
+	edF32VECTOR3* pRotation;
+	int sectorId;
+};
+
 struct _msg_cinematic_install_param
 {
 	class CCinematic* pCinematic;

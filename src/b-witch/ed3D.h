@@ -744,6 +744,7 @@ ed_g2d_bitmap* ed3DGetG2DBitmap(ed_g2d_material* pMaterial, int index);
 ed_3D_Scene* ed3DGetScene(int index);
 
 ulong ed3DComputeHashCode(char* inString);
+void ed3DReplaceTexture(ed_g3d_manager* pMesh, ed_g2d_manager* pTexture, ulong hashA, ulong hashB);
 bool ed3DComputeScreenCoordinate(float z, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene);
 bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene);
 
