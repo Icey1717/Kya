@@ -14,6 +14,12 @@ struct S_MINI_GAME_SCORE
 	char name[4];
 };
 
+class CHighScoreArray
+{
+public:
+	static char _STRING_Init[4];
+};
+
 struct S_MINI_GAME_BET
 {
 	int cost;
