@@ -3337,106 +3337,6 @@ static uint MiniGamePlayerColour(int player)
 	return 0;
 }
 
-static void FormatMiniGameScore(float score, CActorMiniGame* pMiniGame, edCTextFormat* pText, char* pName)
-{
-	int iVar2 = pMiniGame->GetScoreType();
-	if (iVar2 == 3) {
-		if (score == -1.0f) pText->FormatString("%s%s--", pName, "     ");
-		else pText->FormatString("%s%s%d ", pName, "     ", (int)score);
-	}
-	else if (iVar2 == 2) {
-		const char* pUnits = gVideoConfig.omode == 2 ? "Y." : "m";
-		int precision = 2;
-		if ((999.99f <= score) && (score <= 9999.99f)) precision = 1;
-		if ((9999.99f <= score) && (score <= 99999.99f)) precision = 0;
-		if (score == -1.0f) pText->FormatString("%s%s-- %s", pName, "   ", pUnits);
-		else {
-			char local_80[128];
-			snprintf(local_80, sizeof(local_80), "%.*f", precision, score);
-			pText->FormatString("%s%s%s  %s", pName, "   ", local_80, pUnits);
-		}
-	}
-	else if (iVar2 == 1) {
-		if (score == -1.0f) pText->FormatString("%s%s--'--\"--", pName, "     ");
-		else {
-			int iVar5 = (int)score / 100;
-			int iVar4 = iVar5 / 60;
-			int iVar3 = iVar5 - iVar4 * 60;
-			int iVar1 = (int)score - iVar5 * 100;
-			pText->FormatString("%s%s%d%d'%d%d\"%d%d", pName, "     ",
-				iVar4 / 10, iVar4 % 10, iVar3 / 10, iVar3 % 10, iVar1 / 10, iVar1 % 10);
-		}
-	}
-	return;
-}
-
-static void FormatMiniGameResultScore(float score, CActorMiniGame* pMiniGame, edCTextFormat* pText)
-{
-	CActorMiniGamesOrganizer* pOrganizer = pMiniGame->field_0x1c0;
-	char* pcVar2;
-	if (pOrganizer->field_0x9b4 == 2) pcVar2 = "%s%s%[RED]k%s%[YELLOW]k     ";
-	else if (pOrganizer->field_0x9b4 == 1) pcVar2 = "%s%[RED]k%s%[YELLOW]k%s     ";
-	else if (pOrganizer->field_0x9b4 == 0) pcVar2 = "%[RED]k%s%[YELLOW]k%s%s     ";
-	else pcVar2 = "%s%s%s     ";
-	char acStack128[128];
-	strcpy(acStack128, pcVar2);
-	int scoreType = pMiniGame->GetScoreType();
-	if (scoreType == 3) {
-		if (score == -1.0f) {
-			strcat(acStack128, " --");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2]);
-		}
-		else {
-			strcat(acStack128, " %d");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2], (int)score);
-		}
-	}
-	else if (scoreType == 2) {
-		const char* pUnits = gVideoConfig.omode == 2 ? "Y." : "m";
-		int precision = 2;
-		if ((999.99f <= score) && (score <= 9999.99f)) precision = 1;
-		if ((9999.99f <= score) && (score <= 99999.99f)) precision = 0;
-		if (score == -1.0f) {
-			strcat(acStack128, " --  %s");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2], pUnits);
-		}
-		else {
-			char local_80[128];
-			snprintf(local_80, sizeof(local_80), "%.*f", precision, score);
-			strcat(acStack128, " %s  %s");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2], local_80, pUnits);
-		}
-	}
-	else if (scoreType == 1) {
-		if (score == -1.0f) {
-			strcat(acStack128, " --'--\"--");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2]);
-		}
-		else {
-			int iVar10 = (int)score / 100;
-			int iVar9 = iVar10 / 60;
-			int iVar8 = iVar10 - iVar9 * 60;
-			int iVar7 = (int)score - iVar10 * 100;
-			strcat(acStack128, "%d%d'%d%d\"%d%d");
-			pText->FormatString(acStack128, pOrganizer->field_0x9ac[0], pOrganizer->field_0x9ac[1], pOrganizer->field_0x9ac[2],
-				iVar9 / 10, iVar9 % 10, iVar8 / 10, iVar8 % 10, iVar7 / 10, iVar7 % 10);
-		}
-	}
-	return;
-}
-
-static void DrawMiniGameHighScores(float x, float y, float width, float lineScale, CActorMiniGame* pMiniGame, CBehaviourMiniGameTraining* pBehaviour)
-{
-	for (int iVar3 = 0; iVar3 < pBehaviour->nbScores; iVar3++) {
-		edCTextFormat auStack10784;
-		FormatMiniGameScore(pBehaviour->aScores[iVar3].score, pMiniGame, &auStack10784, pBehaviour->aScores[iVar3].name);
-		auStack10784.Display(x, y);
-		y = y + lineScale * auStack10784.field_0xc;
-	}
-
-	return;
-}
-
 static void DrawMiniGameWheel(int curIndex, int nextIndex, S_MENU_WHEEL_DRAW* pDraw, void** pContext)
 {
 	CActorMiniGamesOrganizer* pOrganizer = static_cast<CActorMiniGamesOrganizer*>(*pContext);
@@ -3636,7 +3536,7 @@ void CActorMiniGamesOrganizer::DrawMenuChooseText()
 
 void CActorMiniGamesOrganizer::DrawMenuTrainText()
 {
-	CActorMiniGame* piVar1;
+	CActorMiniGame* pMiniGame;
 	bool bVar2;
 	edCTextStyle *pNewFont;
 	char *pcVar3;
@@ -3654,7 +3554,7 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 	eStack192.alpha = this->field_0x94c;
 	eStack192.altColour = this->field_0x94c | 0xffffff00;
 	eStack192.SetShadow(0x100);
-	piVar1 = GetMiniGame(this->field_0x920);
+	pMiniGame = GetMiniGame(this->field_0x920);
 	bVar2 = GuiDList_BeginCurrent();
 	if (bVar2 != false) {
 		pNewFont = edTextStyleSetCurrent(&eStack192);
@@ -3676,15 +3576,15 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 		eStack192.SetEolAutomatic(0);
 		eStack192.SetScale(1.0f, 1.0f);
-		DrawMiniGameHighScores((float)gVideoConfig.screenWidth * 0.62f, (float)gVideoConfig.screenHeight * 0.3f,
-			(float)gVideoConfig.screenWidth * 0.25f, 0.9714286f, piVar1, piVar1->GetBhvTraining());
+		pMiniGame->DrawHighScoreArray((float)gVideoConfig.screenWidth * 0.62f, (float)gVideoConfig.screenHeight * 0.3f,
+			(float)gVideoConfig.screenWidth * 0.25f, 0.9714286f, &pMiniGame->GetBhvTraining()->scoreList);
 		eStack192.SetEolAutomatic(0x80);
 		eStack192.SetHorizontalJustification(0x10);
 		eStack192.SetVerticalAlignment(8);
 		eStack192.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.8421053f);
 		eStack192.SetScale(0.95f, 0.95f);
 		eStack192.rgbaColour = this->field_0x94c | 0xffffff00;
-		pcVar3 = gMessageManager.get_message(piVar1->field_0x1a8);
+		pcVar3 = gMessageManager.get_message(pMiniGame->field_0x1a8);
 		auStack5584.FormatString(pcVar3);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.49f, (float)gVideoConfig.screenHeight * 0.74f);
 		eStack192.SetHorizontalJustification(0);
@@ -3699,8 +3599,8 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.88f, (float)gVideoConfig.screenHeight * 0.92f);
 		edTextStyleSetCurrent(pNewFont);
 		GuiDList_EndCurrent();
-
 	}
+
 	return;
 }
 
@@ -3797,7 +3697,7 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 			eStack192.SetScale(1.5f, 1.5f);
 			eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 			eStack192.SetRotation(0);
-			FormatMiniGameScore(piVar1->defaultScore, piVar1, &auStack5584, "");
+			piVar1->FormatScore(piVar1->defaultScore.score, &auStack5584, "", 0, 1);
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.45f, (float)gVideoConfig.screenHeight * 0.51f);
 		}
 		eStack192.SetRotation(0);
@@ -3883,12 +3783,12 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 		auStack5584.FormatString(pcVar3);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.81f, (float)gVideoConfig.screenHeight * 0.35f);
 		iVar4 = piVar1->GetBhvMulti();
-		if (0 < iVar4->nbScores) {
+		if (0 < iVar4->scoreList.nbScores) {
 			eStack192.SetScale(1.2f, 1.2f);
 			eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 			eStack192.SetRotation(-0.11f);
 			iVar4 = piVar1->GetBhvMulti();
-			FormatMiniGameScore(iVar4->aScores[0].score, piVar1, &auStack5584, "");
+			piVar1->FormatScore(iVar4->scoreList.aScores[0].score, &auStack5584, "", 0, 1);
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.785f, (float)gVideoConfig.screenHeight * 0.43f);
 		}
 		eStack192.SetHorizontalJustification(0x10);
@@ -3988,10 +3888,11 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 		else {
 			this->field_0x76c.field_0x1a4 = (char)(int)(fVar12 - 2.147484e+09f);
 		}
+
 		this->field_0x76c.FUN_002ef4e0((float)gVideoConfig.screenWidth * 0.73f, (float)gVideoConfig.screenHeight * 0.43f, (float)gVideoConfig.screenWidth * 0.73f, (float)gVideoConfig.screenHeight * 0.88f, 0);
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 		eStack192.SetScale(1.5f, 1.5f);
-		pcVar3 = gMessageManager.get_message(piVar1->field_0x160);
+		pcVar3 = piVar1->FUN_003ace10();
 		auStack5584.FormatString(pcVar3);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.5f, (float)gVideoConfig.screenHeight * 0.13f);
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
@@ -4008,6 +3909,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 				pcVar3 = gMessageManager.get_message(0x5d59544553091216);
 			}
 		}
+
 		auStack5584.FormatString(pcVar3);
 		if ((piVar1->curBehaviourId == 3) && (piVar1->field_0x1b0 == 0)) {
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.19f, (float)gVideoConfig.screenHeight * 0.34f);
@@ -4015,6 +3917,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 		else {
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.3f, (float)gVideoConfig.screenHeight * 0.34f);
 		}
+
 		if ((piVar1->curBehaviourId == 3) && (piVar1->field_0x1b0 == 0)) {
 			eStack192.SetScale(1.26f, 1.26f);
 			CBehaviourMiniGameBetting* pBehaviour = piVar1->GetBhvBetting();
@@ -4024,6 +3927,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 			auStack5584.FormatString("%[MONEY]b");
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.45f, (float)gVideoConfig.screenHeight * 0.35f);
 		}
+
 		eStack192.SetScale(1.22f, 1.22f);
 		eStack192.SetRotation(0.03f);
 		pcVar3 = gMessageManager.get_message(0x5d59454312131216);
@@ -4031,8 +3935,9 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.28f, (float)gVideoConfig.screenHeight * 0.45f);
 		eStack192.SetRotation(0.06f);
 		eStack192.SetScale(1.0f, 1.0f);
-		FormatMiniGameResultScore(piVar1->field_0x1d0, piVar1, &auStack5584);
+		piVar1->FormatScore(piVar1->field_0x1d0, &auStack5584, 0);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.27f, (float)gVideoConfig.screenHeight * 0.55f);
+
 		iVar4 = 1;
 		if ((piVar1->field_0x1b0 == 0) || (piVar1->field_0x1b0 == 1)) {
 			iVar4 = 2;
@@ -4060,8 +3965,10 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 				}
 			}
 		}
+
 		eStack192.SetEolAutomatic(0x80);
 		eStack192.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.35f);
+
 		if ((piVar1->field_0x1b0 == 0) || (piVar1->field_0x1b0 == 1)) {
 			if (piVar1->field_0x1cc == 0) {
 				eStack192.SetScale(1.25f, 1.25f);
@@ -4071,6 +3978,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 				eStack192.SetScale(1.0f, 1.0f);
 				eStack192.rgbaColour = this->field_0x94c | 0xffffd200;
 			}
+
 			eStack192.SetRotation(in_f21);
 			pcVar3 = gMessageManager.get_message(0x5057464213041f1a);
 			auStack5584.FormatString(pcVar3);
@@ -4078,6 +3986,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 			y = y + fVar13;
 			in_f21 = in_f21 + fVar12;
 		}
+
 		if (piVar1->curBehaviourId != 3) {
 			eStack192.SetRotation(in_f21);
 			if (piVar1->curBehaviourId == 2) {
@@ -4089,6 +3998,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 					eStack192.SetScale(1.0f, 1.0f);
 					eStack192.rgbaColour = this->field_0x94c | 0xffffd200;
 				}
+
 				pcVar3 = gMessageManager.get_message(0x4a161c0c14150c17);
 				auStack5584.FormatString(pcVar3);
 			}
@@ -4104,14 +4014,17 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 						(((colour >> 24) * 0x78 >> 8) << 24) |
 						((((colour & 0xff0000) >> 16) * 0x78 >> 8) << 16);
 				}
+
 				eStack192.rgbaColour = uVar5 & 0xffffff00 | (uint)this->field_0x94c;
 				pcVar3 = gMessageManager.get_message(0x1e161e0506180817);
 				auStack5584.FormatString(pcVar3, piVar1->GetBhvMulti()->winner + 1);
 			}
+
 			auStack5584.Display(x, y);
 			y = y + fVar13;
 			in_f21 = in_f21 + fVar12;
 		}
+
 		if (piVar1->field_0x1cc == 2) {
 			eStack192.SetScale(1.25f, 1.25f);
 			eStack192.rgbaColour = this->field_0x94c | 0xfc990000;
@@ -4120,6 +4033,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 			eStack192.SetScale(1.0f, 1.0f);
 			eStack192.rgbaColour = this->field_0x94c | 0xffffd200;
 		}
+
 		eStack192.SetRotation(in_f21);
 		pcVar3 = gMessageManager.get_message(0x1e160b110e154d45);
 		auStack5584.FormatString(pcVar3);

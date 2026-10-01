@@ -1,5 +1,10 @@
 #include "ActorMiniGame.h"
 #include "MemoryStream.h"
+#include "ActorFactory.h"
+#include "ActorMiniGamesOrganizer.h"
+#include "ActorMiniGamesManager.h"
+#include "ActorNativShop.h"
+#include "LargeObject.h"
 
 char CHighScoreArray::_STRING_Init[4] = { 0, 0, 0, 0 };
 
@@ -112,15 +117,15 @@ void CActorMiniGame::UpdateCurHighScoreName(char* pName)
 		pSVar1 = (S_MINI_GAME_SCORE*)0x0;
 		if (iVar2 == 2) {
 			CBehaviourMiniGameTraining* pBehaviour = GetBhvTraining();
-			if (this->field_0x1b4 < pBehaviour->nbScores) {
-				pSVar1 = pBehaviour->aScores + this->field_0x1b4;
+			if (this->field_0x1b4 < pBehaviour->scoreList.nbScores) {
+				pSVar1 = pBehaviour->scoreList.aScores + this->field_0x1b4;
 			}
 		}
 		else {
 			if (iVar2 == 4) {
 				CBehaviourMiniGameMulti* pBehaviour = GetBhvMulti();
-				if (this->field_0x1b4 < pBehaviour->nbScores) {
-					pSVar1 = pBehaviour->aScores + this->field_0x1b4;
+				if (this->field_0x1b4 < pBehaviour->scoreList.nbScores) {
+					pSVar1 = pBehaviour->scoreList.aScores + this->field_0x1b4;
 				}
 			}
 		}
@@ -131,6 +136,27 @@ void CActorMiniGame::UpdateCurHighScoreName(char* pName)
 	}
 
 	return;
+}
+
+void CActorMiniGame::DrawHighScoreArray(float param_1, float param_2, float param_3, float param_4, S_MINI_GAME_SCORE_LIST* pList)
+{}
+
+void CActorMiniGame::FormatScore(float param_1, edCTextFormat* pFormat, char* param_4, int unity, int param_6)
+{
+
+}
+
+void CActorMiniGame::FormatScore(float param_1, edCTextFormat* pFormat, int param_4)
+{}
+
+
+char* CActorMiniGame::FUN_003ace10()
+{
+	char* pcVar1;
+
+	pcVar1 = gMessageManager.get_message(this->field_0x160);
+
+	return pcVar1;
 }
 
 CActorMiniGame::CActorMiniGame()
@@ -145,50 +171,435 @@ CActorMiniGame::CActorMiniGame()
 
 void CActorMiniGame::Create(ByteCode* pByteCode)
 {
-	SkipToNextActor(pByteCode);
+	S_MINI_GAME_SCORE* pScore;
+	char* pName;
+	int iVar5;
+	int iVar12;
+	float fVar13;
+	float fVar14;
+	S_STREAM_REF<CWayPoint> local_4;
+
+	CActor::Create(pByteCode);
+	this->field_0x160 = pByteCode->GetU64();
+	this->field_0x168 = pByteCode->GetU32();
+	this->field_0x16c = pByteCode->GetU32();
+	this->field_0x170 = S_ACTOR_STREAM_REF::Create(pByteCode);
+	this->field_0x174 = pByteCode->GetS32();
+	if (this->field_0x174 != 0) {
+		this->field_0x178 = new float[this->field_0x174];
+		iVar5 = 0;
+		if (0 < this->field_0x174) {
+			do {
+				this->field_0x178[iVar5] = pByteCode->GetF32();
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < this->field_0x174);
+		}
+	}
+	this->nbScores = pByteCode->GetS32();
+	if (this->nbScores != 0) {
+		this->aScores = new S_MINI_GAME_SCORE[this->nbScores];
+		iVar5 = 0;
+		if (0 < this->nbScores) {
+			do {
+				pScore = this->aScores + iVar5;
+				pScore->score = pByteCode->GetF32();
+				pName = pByteCode->GetString();
+				memcpy(pScore->name, pName, 4);
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < this->nbScores);
+		}
+	}
+	if (2.21f <= CScene::_pinstance->field_0x1c) {
+		this->defaultScore.score = pByteCode->GetF32();
+		pName = pByteCode->GetString();
+		memcpy(this->defaultScore.name, pName, 4);
+	}
+	else {
+		this->defaultScore.score = 0.0f;
+		memcpy(this->defaultScore.name, "NAT", 4);
+		this->defaultScore.name[3] = 0;
+	}
+	local_4.index = pByteCode->GetS32();
+	local_4.Init();
+	this->wayPointRef = local_4;
+	this->field_0x190 = pByteCode->GetS32();
+	this->field_0x1a8 = pByteCode->GetU64();
+	this->field_0x19c.Create(pByteCode);
+	iVar5 = this->nbScores + -1;
+	iVar12 = 0;
+	if (0 < iVar5) {
+		do {
+			fVar14 = this->aScores[iVar12].score;
+			fVar13 = this->aScores[iVar12 + 1].score;
+			if (fVar14 < fVar13) {
+				this->field_0x1c4 = 1;
+				return;
+			}
+			if (fVar13 < fVar14) {
+				this->field_0x1c4 = 0;
+				return;
+			}
+			iVar12 = iVar12 + 1;
+		} while (iVar12 < iVar5);
+	}
+	return;
 }
 
 void CActorMiniGame::Init()
 {
-	IMPLEMENTATION_GUARD();
+	CActor::Init();
+	this->field_0x1bc = 1;
+	this->field_0x1b9 = 0;
+	this->bMustStop = false;
+	this->field_0x1b4 = -1;
+	this->field_0x1b0 = -1;
+	this->field_0x170->Init();
+	this->field_0x19c.Init();
+	FUN_003ad480();
+	this->field_0x1b8 = 0;
+	this->field_0x1d4 = 0;
+	this->field_0x1d8 = -1;
+	this->field_0x1c0 = (CActorMiniGamesOrganizer*)0x0;
+	return;
 }
 
 void CActorMiniGame::Reset()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+
+	CActor::ResetActorSound();
+	iVar1 = this->prevBehaviourId;
+	if (iVar1 == -1) {
+		SetBehaviour(this->subObjA->defaultBehaviourId, -1, -1);
+	}
+	else {
+		SetBehaviour(iVar1, -1, -1);
+	}
+	this->field_0x1bc = 1;
+	this->field_0x1b9 = 0;
+	this->bMustStop = false;
+	this->field_0x1b4 = -1;
+	this->field_0x1b0 = -1;
+	return;
 }
 
 void CActorMiniGame::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	this->field_0x1bc = 1;
+	this->field_0x1b9 = 0;
+	this->bMustStop = false;
+	this->field_0x1b4 = -1;
+	this->field_0x1b0 = -1;
+	if (this->field_0x1b8 != 0) {
+		this->field_0x19c.Switch(this);
+	}
+	SetState(5, -1);
+	return;
 }
 
 void CActorMiniGame::SaveContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	S_SAVE_CLASS_MINI_GAME* pSaveData = static_cast<S_SAVE_CLASS_MINI_GAME*>(pData);
+	CBehaviourMiniGameMulti* pMulti;
+	CBehaviourMiniGameTraining* pTraining;
+	int iVar5;
+
+	pSaveData->field_0x0 = this->field_0x1d8;
+	if (mode == 1) {
+		pSaveData->defaultScore.score = this->defaultScore.score;
+		memcpy(pSaveData->defaultScore.name, this->defaultScore.name, 4);
+		pSaveData->defaultScore.name[3] = 0;
+	}
+	if (GetBehaviour(4) != (CBehaviour*)0x0) {
+		pMulti = static_cast<CBehaviourMiniGameMulti*>(GetBehaviour(4));
+		iVar5 = 0;
+		if (0 < pMulti->scoreList.nbScores) {
+			do {
+				pSaveData->multiScores[iVar5].score = pMulti->scoreList.aScores[iVar5].score;
+				memcpy(pSaveData->multiScores[iVar5].name, pMulti->scoreList.aScores[iVar5].name, 4);
+				pSaveData->multiScores[iVar5].name[3] = 0;
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < pMulti->scoreList.nbScores);
+		}
+	}
+	if (GetBehaviour(2) != (CBehaviour*)0x0) {
+		pTraining = static_cast<CBehaviourMiniGameTraining*>(GetBehaviour(2));
+		pTraining->SaveContext(pData, mode, maxSize);
+	}
+	return;
 }
 
 void CActorMiniGame::LoadContext(void* pData, uint mode, uint maxSize)
 {
-	IMPLEMENTATION_GUARD();
+	S_SAVE_CLASS_MINI_GAME* pSaveData = static_cast<S_SAVE_CLASS_MINI_GAME*>(pData);
+	CBehaviourMiniGameMulti* pMulti;
+	CBehaviourMiniGameTraining* pTraining;
+	int iVar6;
+
+	if ((mode == 0) || (mode == 1)) {
+		this->defaultScore.score = pSaveData->defaultScore.score;
+		memcpy(this->defaultScore.name, pSaveData->defaultScore.name, 4);
+		this->defaultScore.name[3] = 0;
+		if (GetBehaviour(4) != (CBehaviour*)0x0) {
+			pMulti = static_cast<CBehaviourMiniGameMulti*>(GetBehaviour(4));
+			if (mode == 1) {
+				iVar6 = 0;
+				if (0 < pMulti->scoreList.nbScores) {
+					do {
+						pMulti->scoreList.aScores[iVar6].score = pSaveData->multiScores[iVar6].score;
+						memcpy(pMulti->scoreList.aScores[iVar6].name, pSaveData->multiScores[iVar6].name, 4);
+						pMulti->scoreList.aScores[iVar6].name[3] = 0;
+						iVar6 = iVar6 + 1;
+					} while (iVar6 < pMulti->scoreList.nbScores);
+				}
+			}
+		}
+		if (GetBehaviour(2) != (CBehaviour*)0x0) {
+			pTraining = static_cast<CBehaviourMiniGameTraining*>(GetBehaviour(2));
+			pTraining->LoadContext(pData, mode, maxSize);
+		}
+		this->field_0x1d8 = pSaveData->field_0x0;
+		if (this->field_0x1d8 == -1) {
+			this->field_0x1d4 = 0;
+		}
+		else {
+			this->field_0x1d4 = FUN_003ab830();
+		}
+	}
+	return;
 }
 
 CBehaviour* CActorMiniGame::BuildBehaviour(int behaviourType)
 {
-	IMPLEMENTATION_GUARD();
-	return nullptr;
+	return CActor::BuildBehaviour(behaviourType);
 }
+
+StateConfig CActorMiniGame::_gStateCfg_MIG[4] =
+{
+	StateConfig(0, 0),
+	StateConfig(0, 0),
+	StateConfig(0, 0),
+	StateConfig(0, 0)
+};
 
 StateConfig* CActorMiniGame::GetStateCfg(int state)
 {
-	IMPLEMENTATION_GUARD();
-	return nullptr;
+	StateConfig* pStateConfig;
+
+	if (state < 5) {
+		pStateConfig = CActor::GetStateCfg(state);
+	}
+	else {
+		assert((state - 5) < 4);
+		pStateConfig = _gStateCfg_MIG + state + -5;
+	}
+	return pStateConfig;
 }
 
 int CActorMiniGame::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	S_ACTOR_STREAM_REF* pRef;
+	int iVar4;
+
+	if (msg == 0x58) {
+		if (this->field_0x1b8 != 0) {
+			if (pMsgParam == (void*)2) {
+				this->field_0x1bc = 0;
+			}
+			else {
+				if (pMsgParam == (void*)1) {
+					this->field_0x1bc = this->field_0x168;
+				}
+				else {
+					if (pMsgParam == (void*)0x0) {
+						this->field_0x1bc = 1;
+					}
+				}
+			}
+			this->bMustStop = true;
+			this->field_0x1b9 = 0;
+		}
+	}
+	else {
+		if (msg != 0x57) {
+			if (msg != 0x56) {
+				return CActor::InterpretMessage(pSender, msg, static_cast<_msg_params_get_position*>(pMsgParam));
+			}
+			this->field_0x1c0 = static_cast<CActorMiniGamesOrganizer*>(pSender);
+			if (pMsgParam == (void*)2) {
+				DoMessage(this->field_0x1c0->field_0x9f0, (ACTOR_MESSAGE)0x57, (void*)(uintptr_t)this->field_0x16c);
+				GameFlags = GameFlags | 0x800;
+				GetBhvMulti()->winner = 0;
+				SetBehaviour(4, -1, -1);
+				SetYouAreChosen(1);
+			}
+			else {
+				if (pMsgParam == (void*)3) {
+					DoMessage(this->field_0x1c0->field_0x9f0, (ACTOR_MESSAGE)0x57, (void*)(uintptr_t)this->field_0x16c);
+					GameFlags = GameFlags | 0x800;
+					SetBehaviour(2, -1, -1);
+					SetYouAreChosen(1);
+				}
+				else {
+					if (pMsgParam == (void*)1) {
+						DoMessage(this->field_0x1c0->field_0x9f0, (ACTOR_MESSAGE)0x57, (void*)(uintptr_t)this->field_0x16c);
+						GameFlags = GameFlags | 0x800;
+						SetBehaviour(3, -1, -1);
+						SetYouAreChosen(1);
+					}
+					else {
+						if (pMsgParam == (void*)0x0) {
+							SetYouAreChosen(0);
+							GameFlags = GameFlags & 0xfffff7ff;
+							iVar4 = 0;
+							while (true) {
+								pRef = this->field_0x170;
+								if ((pRef == (S_ACTOR_STREAM_REF*)0x0) || (pRef->entryCount <= iVar4)) break;
+								DoMessage(pRef->aEntries[iVar4].Get(), (ACTOR_MESSAGE)0x3c, 0);
+								iVar4 = iVar4 + 1;
+							}
+						}
+					}
+				}
+			}
+			return 1;
+		}
+		if ((this->field_0x1b8 != 0) && (this->field_0x1b9 == 0)) {
+			this->field_0x1b9 = 1;
+			this->bMustStop = false;
+		}
+	}
 	return 0;
+}
+
+void CActorMiniGame::FUN_003ad480()
+{
+	S_ACTOR_STREAM_REF* pRef;
+	CActor* pActor;
+	CActor* pOther;
+	int iVar4;
+	int iVar5;
+
+	iVar4 = 0;
+	while (true) {
+		pRef = this->field_0x170;
+		if ((pRef == (S_ACTOR_STREAM_REF*)0x0) || (pRef->entryCount + -1 <= iVar4)) break;
+		iVar5 = iVar4 + 1;
+		while (true) {
+			pRef = this->field_0x170;
+			if ((pRef == (S_ACTOR_STREAM_REF*)0x0) || (pRef->entryCount <= iVar5)) break;
+			pOther = pRef->aEntries[iVar5].Get();
+			pActor = pRef->aEntries[iVar4].Get();
+			if (CActorFactory::gClassProperties[pOther->typeID].classPriority <
+				CActorFactory::gClassProperties[pActor->typeID].classPriority) {
+				pRef->aEntries[iVar5].pObj = STORE_POINTER(pActor);
+				this->field_0x170->aEntries[iVar4].pObj = STORE_POINTER(pOther);
+			}
+			iVar5 = iVar5 + 1;
+		}
+		iVar4 = iVar4 + 1;
+	}
+	return;
+}
+
+// The name returned by FUN_00395080 is at PS2 offset 0x8, after the
+// behaviour vtable and owner pointer. Keep those native pointer sizes here.
+struct S_MINI_GAME_NAME_BEHAVIOUR : public CBehaviour
+{
+	CActor* pOwner;
+	char name[4];
+};
+
+static char* FUN_00395080(CActorNativShop* pShop)
+{
+	S_ACTOR_STREAM_REF* pRef;
+	CBehaviour* pBehaviour;
+	int iVar8;
+	int iVar6;
+	int iVar2;
+	ulong uVar5;
+
+	iVar8 = 0;
+	iVar6 = 0;
+	while (true) {
+		pRef = pShop->pActorStream;
+		if ((pRef == (S_ACTOR_STREAM_REF*)0x0) || (pRef->entryCount <= iVar8)) break;
+		pBehaviour = pRef->aEntries[iVar8].Get()->GetBehaviour(9);
+		if (pBehaviour != (CBehaviour*)0x0) {
+			iVar6 = iVar6 + 1;
+		}
+		iVar8 = iVar8 + 1;
+	}
+	uVar5 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+	CScene::_pinstance->field_0x38 = uVar5;
+	iVar2 = (iVar6 + 1) * ((uint)(uVar5 >> 0x10) & 0x7fff);
+	if (iVar2 < 0) {
+		iVar2 = iVar2 + 0x7fff;
+	}
+	iVar8 = 0;
+	iVar6 = 0;
+	while (true) {
+		pRef = pShop->pActorStream;
+		if ((pRef == (S_ACTOR_STREAM_REF*)0x0) || (pRef->entryCount <= iVar6)) break;
+		pBehaviour = pRef->aEntries[iVar6].Get()->GetBehaviour(9);
+		if (pBehaviour != (CBehaviour*)0x0) {
+			if ((iVar2 >> 0xf) == iVar8) {
+				return static_cast<S_MINI_GAME_NAME_BEHAVIOUR*>(pBehaviour)->name;
+			}
+			iVar8 = iVar8 + 1;
+		}
+		iVar6 = iVar6 + 1;
+	}
+	return (char*)0x0;
+}
+
+bool CActorMiniGame::FUN_003ab830()
+{
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	char* pName;
+	CActorNativShop* pShop;
+
+	if (0 < this->nbScores) {
+		fVar5 = this->defaultScore.score;
+		iVar4 = this->field_0x174 + -1;
+		while (-1 < iVar4) {
+			fVar6 = this->field_0x178[iVar4];
+			if (this->field_0x1c4 == 0) {
+				if (fVar5 <= fVar6) break;
+			}
+			else {
+				if (fVar6 <= fVar5) break;
+			}
+			iVar4 = iVar4 + -1;
+		}
+		if (iVar4 != -1) {
+			fVar6 = this->field_0x178[iVar4];
+			if (this->field_0x1c4 == 0) {
+				if (fVar5 <= fVar6) {
+					this->defaultScore.score = fVar6;
+					return true;
+				}
+			}
+			else {
+				if (fVar6 <= fVar5) {
+					this->defaultScore.score = fVar6;
+					pName = (char*)0x0;
+					pShop = static_cast<CActorNativShop*>(this->field_0x1c0->field_0x9f4->actorRef.Get());
+					if (pShop != (CActorNativShop*)0x0) {
+						pName = FUN_00395080(pShop);
+					}
+					if (pName != (char*)0x0) {
+						memcpy(this->defaultScore.name, pName, 4);
+						this->defaultScore.name[3] = 0;
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
 }
 
 void CActorMiniGame::FUN_003ace00()
@@ -303,57 +714,57 @@ void CBehaviourMiniGameTraining::Init(CActor* pOwner)
 	char local_2;
 
 	this->pOwner = static_cast<CActorMiniGame*>(pOwner);
-	this->nbScores = 5;
-	if (this->nbScores != 0) {
-		this->aScores = new S_MINI_GAME_SCORE[this->nbScores];
+	this->scoreList.nbScores = 5;
+	if (this->scoreList.nbScores != 0) {
+		this->scoreList.aScores = new S_MINI_GAME_SCORE[this->scoreList.nbScores];
 	}
 
 	iVar8 = 0;
-	if (0 < this->nbScores) {
+	if (0 < this->scoreList.nbScores) {
 		do {
-			this->aScores[iVar8].score = -1.0f;
-			this->aScores[iVar8].name[0] = CHighScoreArray::_STRING_Init[0];
-			this->aScores[iVar8].name[1] = CHighScoreArray::_STRING_Init[1];
-			this->aScores[iVar8].name[2] = CHighScoreArray::_STRING_Init[2];
-			this->aScores[iVar8].name[3] = CHighScoreArray::_STRING_Init[3];
-			this->aScores[iVar8].name[3] = 0;
+			this->scoreList.aScores[iVar8].score = -1.0f;
+			this->scoreList.aScores[iVar8].name[0] = CHighScoreArray::_STRING_Init[0];
+			this->scoreList.aScores[iVar8].name[1] = CHighScoreArray::_STRING_Init[1];
+			this->scoreList.aScores[iVar8].name[2] = CHighScoreArray::_STRING_Init[2];
+			this->scoreList.aScores[iVar8].name[3] = CHighScoreArray::_STRING_Init[3];
+			this->scoreList.aScores[iVar8].name[3] = 0;
 			iVar8 = iVar8 + 1;
-		} while (iVar8 < this->nbScores);
+		} while (iVar8 < this->scoreList.nbScores);
 	}
 
 	iVar7 = 0;
 	while (true) {
 		if ((this->pOwner->nbScores <= iVar7) || (4 < iVar7)) break;
 		pScore = this->pOwner->aScores + iVar7;
-		if (iVar7 <= this->nbScores) {
-			local_4 = this->aScores[iVar7].name[0];
-			local_3 = this->aScores[iVar7].name[1];
-			local_2 = this->aScores[iVar7].name[2];
-			local_8 = this->aScores[iVar7].score;
-			this->aScores[iVar7].score = pScore->score;
+		if (iVar7 <= this->scoreList.nbScores) {
+			local_4 = this->scoreList.aScores[iVar7].name[0];
+			local_3 = this->scoreList.aScores[iVar7].name[1];
+			local_2 = this->scoreList.aScores[iVar7].name[2];
+			local_8 = this->scoreList.aScores[iVar7].score;
+			this->scoreList.aScores[iVar7].score = pScore->score;
 			if (pScore->name != (char*)0x0) {
-				memcpy(this->aScores[iVar7].name, pScore->name, 4);
-				this->aScores[iVar7].name[3] = 0;
+				memcpy(this->scoreList.aScores[iVar7].name, pScore->name, 4);
+				this->scoreList.aScores[iVar7].name[3] = 0;
 			}
 
 			iVar6 = iVar7 + 1;
-			if (iVar6 < this->nbScores) {
+			if (iVar6 < this->scoreList.nbScores) {
 				do {
-					cVar1 = this->aScores[iVar6].name[0];
-					cVar2 = this->aScores[iVar6].name[1];
-					cVar3 = this->aScores[iVar6].name[2];
-					fVar13 = this->aScores[iVar6].score;
-					this->aScores[iVar6].name[0] = local_4;
-					this->aScores[iVar6].name[1] = local_3;
-					this->aScores[iVar6].name[2] = local_2;
-					this->aScores[iVar6].name[3] = 0;
-					this->aScores[iVar6].score = local_8;
+					cVar1 = this->scoreList.aScores[iVar6].name[0];
+					cVar2 = this->scoreList.aScores[iVar6].name[1];
+					cVar3 = this->scoreList.aScores[iVar6].name[2];
+					fVar13 = this->scoreList.aScores[iVar6].score;
+					this->scoreList.aScores[iVar6].name[0] = local_4;
+					this->scoreList.aScores[iVar6].name[1] = local_3;
+					this->scoreList.aScores[iVar6].name[2] = local_2;
+					this->scoreList.aScores[iVar6].name[3] = 0;
+					this->scoreList.aScores[iVar6].score = local_8;
 					local_8 = fVar13;
 					local_4 = cVar1;
 					local_3 = cVar2;
 					local_2 = cVar3;
 					iVar6 = iVar6 + 1;
-				} while (iVar6 < this->nbScores);
+				} while (iVar6 < this->scoreList.nbScores);
 			}
 		}
 		iVar7 = iVar7 + 1;
@@ -364,6 +775,40 @@ void CBehaviourMiniGameTraining::Init(CActor* pOwner)
 
 void CBehaviourMiniGameTraining::Manage()
 {
+	return;
+}
+
+void CBehaviourMiniGameTraining::LoadContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_MINI_GAME* pSaveData = static_cast<S_SAVE_CLASS_MINI_GAME*>(pData);
+	int iVar4;
+
+	iVar4 = 0;
+	if ((mode == 1) && (0 < this->scoreList.nbScores)) {
+		do {
+			this->scoreList.aScores[iVar4].score = pSaveData->trainingScores[iVar4].score;
+			memcpy(this->scoreList.aScores[iVar4].name, pSaveData->trainingScores[iVar4].name, 4);
+			this->scoreList.aScores[iVar4].name[3] = 0;
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->scoreList.nbScores);
+	}
+	return;
+}
+
+void CBehaviourMiniGameTraining::SaveContext(void* pData, uint mode, uint maxSize)
+{
+	S_SAVE_CLASS_MINI_GAME* pSaveData = static_cast<S_SAVE_CLASS_MINI_GAME*>(pData);
+	int iVar3;
+
+	iVar3 = 0;
+	if (0 < this->scoreList.nbScores) {
+		do {
+			pSaveData->trainingScores[iVar3].score = this->scoreList.aScores[iVar3].score;
+			memcpy(pSaveData->trainingScores[iVar3].name, this->scoreList.aScores[iVar3].name, 4);
+			pSaveData->trainingScores[iVar3].name[3] = 0;
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < this->scoreList.nbScores);
+	}
 	return;
 }
 
@@ -407,57 +852,57 @@ void CBehaviourMiniGameMulti::Init(CActor* pOwner)
 	char local_2;
 
 	this->pOwner = static_cast<CActorMiniGame*>(pOwner);
-	this->nbScores = 5;
-	if (this->nbScores != 0) {
-		this->aScores = new S_MINI_GAME_SCORE[this->nbScores];
+	this->scoreList.nbScores = 5;
+	if (this->scoreList.nbScores != 0) {
+		this->scoreList.aScores = new S_MINI_GAME_SCORE[this->scoreList.nbScores];
 	}
 
 	iVar8 = 0;
-	if (0 < this->nbScores) {
+	if (0 < this->scoreList.nbScores) {
 		do {
-			this->aScores[iVar8].score = -1.0f;
-			this->aScores[iVar8].name[0] = CHighScoreArray::_STRING_Init[0];
-			this->aScores[iVar8].name[1] = CHighScoreArray::_STRING_Init[1];
-			this->aScores[iVar8].name[2] = CHighScoreArray::_STRING_Init[2];
-			this->aScores[iVar8].name[3] = CHighScoreArray::_STRING_Init[3];
-			this->aScores[iVar8].name[3] = 0;
+			this->scoreList.aScores[iVar8].score = -1.0f;
+			this->scoreList.aScores[iVar8].name[0] = CHighScoreArray::_STRING_Init[0];
+			this->scoreList.aScores[iVar8].name[1] = CHighScoreArray::_STRING_Init[1];
+			this->scoreList.aScores[iVar8].name[2] = CHighScoreArray::_STRING_Init[2];
+			this->scoreList.aScores[iVar8].name[3] = CHighScoreArray::_STRING_Init[3];
+			this->scoreList.aScores[iVar8].name[3] = 0;
 			iVar8 = iVar8 + 1;
-		} while (iVar8 < this->nbScores);
+		} while (iVar8 < this->scoreList.nbScores);
 	}
 
 	iVar7 = 0;
 	while (true) {
 		if ((this->pOwner->nbScores <= iVar7) || (4 < iVar7)) break;
 		pScore = this->pOwner->aScores + iVar7;
-		if (iVar7 <= this->nbScores) {
-			local_4 = this->aScores[iVar7].name[0];
-			local_3 = this->aScores[iVar7].name[1];
-			local_2 = this->aScores[iVar7].name[2];
-			local_8 = this->aScores[iVar7].score;
-			this->aScores[iVar7].score = pScore->score;
+		if (iVar7 <= this->scoreList.nbScores) {
+			local_4 = this->scoreList.aScores[iVar7].name[0];
+			local_3 = this->scoreList.aScores[iVar7].name[1];
+			local_2 = this->scoreList.aScores[iVar7].name[2];
+			local_8 = this->scoreList.aScores[iVar7].score;
+			this->scoreList.aScores[iVar7].score = pScore->score;
 			if (pScore->name != (char*)0x0) {
-				memcpy(this->aScores[iVar7].name, pScore->name, 4);
-				this->aScores[iVar7].name[3] = 0;
+				memcpy(this->scoreList.aScores[iVar7].name, pScore->name, 4);
+				this->scoreList.aScores[iVar7].name[3] = 0;
 			}
 
 			iVar6 = iVar7 + 1;
-			if (iVar6 < this->nbScores) {
+			if (iVar6 < this->scoreList.nbScores) {
 				do {
-					cVar1 = this->aScores[iVar6].name[0];
-					cVar2 = this->aScores[iVar6].name[1];
-					cVar3 = this->aScores[iVar6].name[2];
-					fVar13 = this->aScores[iVar6].score;
-					this->aScores[iVar6].name[0] = local_4;
-					this->aScores[iVar6].name[1] = local_3;
-					this->aScores[iVar6].name[2] = local_2;
-					this->aScores[iVar6].name[3] = 0;
-					this->aScores[iVar6].score = local_8;
+					cVar1 = this->scoreList.aScores[iVar6].name[0];
+					cVar2 = this->scoreList.aScores[iVar6].name[1];
+					cVar3 = this->scoreList.aScores[iVar6].name[2];
+					fVar13 = this->scoreList.aScores[iVar6].score;
+					this->scoreList.aScores[iVar6].name[0] = local_4;
+					this->scoreList.aScores[iVar6].name[1] = local_3;
+					this->scoreList.aScores[iVar6].name[2] = local_2;
+					this->scoreList.aScores[iVar6].name[3] = 0;
+					this->scoreList.aScores[iVar6].score = local_8;
 					local_8 = fVar13;
 					local_4 = cVar1;
 					local_3 = cVar2;
 					local_2 = cVar3;
 					iVar6 = iVar6 + 1;
-				} while (iVar6 < this->nbScores);
+				} while (iVar6 < this->scoreList.nbScores);
 			}
 		}
 
