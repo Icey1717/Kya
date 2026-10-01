@@ -1646,7 +1646,7 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_TermState(int ol
 		local_4[1] = this->field_0x9ac[1][0];
 		local_4[2] = this->field_0x9ac[2][0];
 		local_4[3] = 0;
-		GetMiniGame(this->field_0x920)->SetScoreName(local_4);
+		GetMiniGame(this->field_0x920)->UpdateCurHighScoreName(local_4);
 		this->flags = this->flags & 0xfffffffc;
 		this->flags = this->flags & 0xffffff5f;
 		EvaluateDisplayState();
@@ -2704,7 +2704,7 @@ void CActorMiniGamesOrganizer::ManageMenuResult()
 				local_8[2] = this->field_0x9ac[2][0];
 				local_8[3] = 0;
 				pAVar2 = GetMiniGame(this->field_0x920);
-				pAVar2->SetScoreName(local_8);
+				pAVar2->UpdateCurHighScoreName(local_8);
 				local_c = 0;
 				DoMessage(pAVar2, (ACTOR_MESSAGE)0x56, local_c);
 				this->field_0x93c = 5;
@@ -2721,8 +2721,8 @@ void CActorMiniGamesOrganizer::ManageMenuResult()
 							(edsound_3d_data*)0x0, &this->field_0xa00, (uint*)0x0, &this->field_0xa00.soundId);
 						this->field_0xa00.soundId = uVar4;
 					}
-					local_28.pLocation = &pMiniGame->field_0x18c.Get()->location;
-					local_28.pRotation = &pMiniGame->field_0x18c.Get()->rotation;
+					local_28.pLocation = &pMiniGame->wayPointRef.Get()->location;
+					local_28.pRotation = &pMiniGame->wayPointRef.Get()->rotation;
 					local_28.sectorId = pMiniGame->field_0x190;
 					if (local_28.sectorId == -1) {
 						local_28.sectorId = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
@@ -2732,7 +2732,7 @@ void CActorMiniGamesOrganizer::ManageMenuResult()
 					local_4[2] = this->field_0x9ac[2][0];
 					local_4[3] = 0;
 					pAVar2 = GetMiniGame(this->field_0x920);
-					pAVar2->SetScoreName(local_4);
+					pAVar2->UpdateCurHighScoreName(local_4);
 					local_10 = &local_28;
 					pAVar2->DoMessage(this->field_0x9f0, (ACTOR_MESSAGE)0x5b, local_10);
 					local_14 = 0;
@@ -3793,11 +3793,11 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 		pcVar5 = gMessageManager.get_message(0x1e161c0c040e1f01);
 		auStack5584.FormatString(pcVar5);
 		auStack5584.Display((float)gVideoConfig.screenWidth * 0.47f, (float)gVideoConfig.screenHeight * 0.42f);
-		if (0 < piVar1->field_0x17c) {
+		if (0 < piVar1->nbScores) {
 			eStack192.SetScale(1.5f, 1.5f);
 			eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 			eStack192.SetRotation(0);
-			FormatMiniGameScore(piVar1->field_0x184, piVar1, &auStack5584, "");
+			FormatMiniGameScore(piVar1->defaultScore, piVar1, &auStack5584, "");
 			auStack5584.Display((float)gVideoConfig.screenWidth * 0.45f, (float)gVideoConfig.screenHeight * 0.51f);
 		}
 		eStack192.SetRotation(0);
