@@ -289,7 +289,77 @@ void CBehaviourMiniGameTraining::Create(ByteCode* pByteCode)
 
 void CBehaviourMiniGameTraining::Init(CActor* pOwner)
 {
-	IMPLEMENTATION_GUARD();
+	char cVar1;
+	char cVar2;
+	char cVar3;
+	S_MINI_GAME_SCORE* pScore;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	float fVar13;
+	float local_8;
+	char local_4;
+	char local_3;
+	char local_2;
+
+	this->pOwner = static_cast<CActorMiniGame*>(pOwner);
+	this->nbScores = 5;
+	if (this->nbScores != 0) {
+		this->aScores = new S_MINI_GAME_SCORE[this->nbScores];
+	}
+
+	iVar8 = 0;
+	if (0 < this->nbScores) {
+		do {
+			this->aScores[iVar8].score = -1.0f;
+			this->aScores[iVar8].name[0] = CHighScoreArray::_STRING_Init[0];
+			this->aScores[iVar8].name[1] = CHighScoreArray::_STRING_Init[1];
+			this->aScores[iVar8].name[2] = CHighScoreArray::_STRING_Init[2];
+			this->aScores[iVar8].name[3] = CHighScoreArray::_STRING_Init[3];
+			this->aScores[iVar8].name[3] = 0;
+			iVar8 = iVar8 + 1;
+		} while (iVar8 < this->nbScores);
+	}
+
+	iVar7 = 0;
+	while (true) {
+		if ((this->pOwner->nbScores <= iVar7) || (4 < iVar7)) break;
+		pScore = this->pOwner->aScores + iVar7;
+		if (iVar7 <= this->nbScores) {
+			local_4 = this->aScores[iVar7].name[0];
+			local_3 = this->aScores[iVar7].name[1];
+			local_2 = this->aScores[iVar7].name[2];
+			local_8 = this->aScores[iVar7].score;
+			this->aScores[iVar7].score = pScore->score;
+			if (pScore->name != (char*)0x0) {
+				memcpy(this->aScores[iVar7].name, pScore->name, 4);
+				this->aScores[iVar7].name[3] = 0;
+			}
+
+			iVar6 = iVar7 + 1;
+			if (iVar6 < this->nbScores) {
+				do {
+					cVar1 = this->aScores[iVar6].name[0];
+					cVar2 = this->aScores[iVar6].name[1];
+					cVar3 = this->aScores[iVar6].name[2];
+					fVar13 = this->aScores[iVar6].score;
+					this->aScores[iVar6].name[0] = local_4;
+					this->aScores[iVar6].name[1] = local_3;
+					this->aScores[iVar6].name[2] = local_2;
+					this->aScores[iVar6].name[3] = 0;
+					this->aScores[iVar6].score = local_8;
+					local_8 = fVar13;
+					local_4 = cVar1;
+					local_3 = cVar2;
+					local_2 = cVar3;
+					iVar6 = iVar6 + 1;
+				} while (iVar6 < this->nbScores);
+			}
+		}
+		iVar7 = iVar7 + 1;
+	}
+
+	return;
 }
 
 void CBehaviourMiniGameTraining::Manage()
@@ -390,8 +460,10 @@ void CBehaviourMiniGameMulti::Init(CActor* pOwner)
 				} while (iVar6 < this->nbScores);
 			}
 		}
+
 		iVar7 = iVar7 + 1;
 	}
+
 	this->nbPlayers = 2;
 
 	return;
