@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "CinematicManager.h"
 
 class CActorMiniGamesOrganizer;
 class CActorMiniGame;
@@ -71,6 +72,9 @@ public:
 	virtual CBehaviourMiniGameBetting* GetBhvBetting();
 	virtual CBehaviourMiniGameTraining* GetBhvTraining();
 	virtual CBehaviourMiniGameMulti* GetBhvMulti();
+	virtual int GetUnity();
+	virtual void SetYouAreChosen(byte param_2);
+	virtual bool MustStop();
 
 	// Recovered fields used by the organizer; remaining ranges retain their PS2 offsets.
 	ulong field_0x160;
@@ -83,11 +87,13 @@ public:
 	char field_0x188[4];
 	S_STREAM_REF<CWayPoint> field_0x18c;
 	int field_0x190;
-	undefined field_0x194[0x14];
+	
+	S_NTF_SWITCH field_0x19c;
 	ulong field_0x1a8;
 	int field_0x1b0;
 	int field_0x1b4;
-	undefined field_0x1b8[8];
+	byte field_0x1b8;
+	bool bMustStop;
 	CActorMiniGamesOrganizer* field_0x1c0;
 	undefined field_0x1c4[8];
 	int field_0x1cc;

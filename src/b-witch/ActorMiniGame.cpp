@@ -65,17 +65,35 @@ void CActorMiniGame::NextFinalAction()
 
 CBehaviourMiniGameBetting* CActorMiniGame::GetBhvBetting()
 {
-	return static_cast<CBehaviourMiniGameBetting*>(GetBehaviour(3));
+	return (CBehaviourMiniGameBetting*)0x0;
 }
 
 CBehaviourMiniGameTraining* CActorMiniGame::GetBhvTraining()
 {
-	return static_cast<CBehaviourMiniGameTraining*>(GetBehaviour(2));
+	return (CBehaviourMiniGameTraining*)0x0;
 }
 
 CBehaviourMiniGameMulti* CActorMiniGame::GetBhvMulti()
 {
-	return static_cast<CBehaviourMiniGameMulti*>(GetBehaviour(4));
+	return (CBehaviourMiniGameMulti*)0x0;
+}
+
+int CActorMiniGame::GetUnity()
+{
+	return 0;
+}
+
+void CActorMiniGame::SetYouAreChosen(byte param_2)
+{
+	this->field_0x1b8 = param_2;
+	this->field_0x19c.Switch(this);
+
+	return;
+}
+
+bool CActorMiniGame::MustStop()
+{
+	return this->bMustStop;
 }
 
 void CActorMiniGame::SetScoreName(char* pName)
@@ -109,6 +127,7 @@ void CActorMiniGame::SetScoreName(char* pName)
 			pSVar1->name[3] = 0;
 		}
 	}
+
 	return;
 }
 
