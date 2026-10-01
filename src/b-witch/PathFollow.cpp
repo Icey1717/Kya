@@ -1234,6 +1234,28 @@ int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 	return iVar4;
 }
 
+float CPathFollow::GetLength()
+{
+	float length = 0.0f;
+	edF32VECTOR4 segment;
+
+	for (int i = 0; i < this->splinePointCount - 1; i++) {
+		edF32VECTOR4* pPointA = this->aSplinePoints == (edF32VECTOR4*)0x0 ? &gF32Vertex4Zero : this->aSplinePoints + i;
+		edF32VECTOR4* pPointB = this->aSplinePoints == (edF32VECTOR4*)0x0 ? &gF32Vertex4Zero : this->aSplinePoints + i + 1;
+		edF32Vector4SubHard(&segment, pPointA, pPointB);
+		length = length + edF32Vector4GetDistHard(&segment);
+	}
+
+	if (this->type == 1) {
+		edF32VECTOR4* pPointA = this->aSplinePoints == (edF32VECTOR4*)0x0 ? &gF32Vertex4Zero : this->aSplinePoints;
+		edF32VECTOR4* pPointB = this->aSplinePoints == (edF32VECTOR4*)0x0 ? &gF32Vertex4Zero : this->aSplinePoints + this->splinePointCount - 1;
+		edF32Vector4SubHard(&segment, pPointA, pPointB);
+		length = length + edF32Vector4GetDistHard(&segment);
+	}
+
+	return length;
+}
+
 void CPathFollowReader::SetToClosestSplinePoint(edF32VECTOR4* pLocation)
 {
 	int iVar1;
@@ -1881,6 +1903,19 @@ void CPathPlane::ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPath
 	pOutData->field_0x0 = iVar5;
 
 	return;
+}
+
+CPathPlane::CPathPlane()
+{
+	this->aPlaneData = (PlaneData*)0x0;
+	this->outData.field_0x0 = -1;
+	this->outData.field_0x4 = 0.0f;
+	this->outData.field_0x8 = 0.0f;
+}
+
+CPathPlane::~CPathPlane()
+{
+	delete[] this->aPlaneData;
 }
 
 void CPathPlane::Init()

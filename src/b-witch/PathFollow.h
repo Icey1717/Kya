@@ -14,6 +14,7 @@ public:
 	virtual edF32VECTOR4* GetGoal();
 
 	void ComputeMatrix(edF32MATRIX4* pMatrix, int param_3);
+	float GetLength(); // 0x001c3400
 
 	static edF32VECTOR4 gPathDefQuat;
 
@@ -118,6 +119,9 @@ struct CPathPlaneOutData
 class CPathPlane
 {
 public:
+	CPathPlane(); // 0x001c0df0
+	~CPathPlane(); // 0x001c0d90
+
 	CPathFollowReader pathFollowReader;
 	CPathPlaneOutData outData;
 	PlaneData* aPlaneData;

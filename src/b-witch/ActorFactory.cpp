@@ -80,10 +80,6 @@ CActorFactory::CActorFactory()
 	edDebugPrintf("class CActorAutonomous has changed, have you checked it's still aligned on 64 bytes ? \n");
 }
 
-class CActorSKIP_HACK : public CActor {
-	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
-};
-
 CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, void* pAlloc)
 {
 	if (classId < 0x57) {
@@ -447,15 +443,6 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, voi
 			if (pAlloc != (void*)0x0) { CActorWantedZoo* pType = reinterpret_cast<CActorWantedZoo*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorWantedZoo, pType, count); return 0x0; }
 			*outSize = sizeof(CActorWantedZoo);
 			return NEW_ARRAY_POLYMORPHIC(CActorWantedZoo, count);
-			break;
-		default:
-			classId;
-			IMPLEMENTATION_GUARD();
-			ACTOR_LOG(LogLevel::Info, "Unimplemented class: 0x{:x} ({})", (int)classId, (int)classId);
-
-			if (pAlloc != (void*)0x0) { CActorSKIP_HACK* pType = reinterpret_cast<CActorSKIP_HACK*>(pAlloc); DELETE_ARRAY_POLYMORPHIC(CActorSKIP_HACK, pType, count); return 0x0; }
-			*outSize = sizeof(CActorSKIP_HACK);
-			return NEW_ARRAY_POLYMORPHIC(CActorSKIP_HACK, count);
 			break;
 		}
 	}
