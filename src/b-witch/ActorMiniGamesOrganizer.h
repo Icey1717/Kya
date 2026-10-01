@@ -114,6 +114,8 @@ public:
 	void DrawAllLetters();
 	void DrawLetterCursor(float x, float y, float halfWidth, float halfHeight);
 	CActorMiniGame* GetMiniGame(int index);
+	char* FUN_003b2a00();
+	char* GetCurNameLetter(int index);
 
 	CBehaviourMiniGamesOrganizerStand behaviourStand;
 	char* field_0x168;

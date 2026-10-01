@@ -29,6 +29,36 @@
 #include "WayPoint.h"
 #include "Rendering/edCTextFormat.h"
 
+char* CActorMiniGamesOrganizer::FUN_003b2a00()
+{
+	int iVar1;
+	char* pcVar2;
+
+	iVar1 = this->field_0x9b4;
+	if (iVar1 == 2) {
+		pcVar2 = "%s%s%[RED]k%s%[YELLOW]k     ";
+	}
+	else {
+		if (iVar1 == 1) {
+			pcVar2 = "%s%[RED]k%s%[YELLOW]k%s     ";
+		}
+		else {
+			if (iVar1 == 0) {
+				pcVar2 = "%[RED]k%s%[YELLOW]k%s%s     ";
+			}
+			else {
+				pcVar2 = "%s%s%s     ";
+			}
+		}
+	}
+	return pcVar2;
+}
+
+char* CActorMiniGamesOrganizer::GetCurNameLetter(int index)
+{
+	return this->field_0x9ac[index];
+}
+
 void astruct_22::MoveMenuArrow(bool bNext)
 {
 	float fVar1;

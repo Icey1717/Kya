@@ -1,5 +1,93 @@
 #include "edStr.h"
 #include "stdarg.h"
+#include <cstdio>
+
+void edFloat2Str(float param_1, int param_2, char* param_3, long param_4, char* param_5)
+{
+	int iVar1;
+	char* pcVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	char acStack32[32];
+
+	iVar1 = 0;
+	if (param_4 != 0) {
+		if (param_1 == 0.0f) {
+			param_4 = 0;
+		}
+		else {
+			if (param_1 < 0.1f) {
+				for (; param_1 < 1.0f; param_1 = param_1 * 10.0f) {
+					iVar1 = iVar1 + -1;
+				}
+			}
+			else {
+				if (10.0f <= param_1) {
+					for (; 10.0f <= param_1; param_1 = param_1 * 0.1f) {
+						iVar1 = iVar1 + 1;
+					}
+				}
+				else {
+					param_4 = 0;
+				}
+			}
+		}
+	}
+	fVar7 = param_1;
+	if (param_1 < 0.0f) {
+		fVar7 = -param_1;
+	}
+	fVar6 = 1.0f;
+	for (iVar3 = 0; iVar3 < param_2; iVar3 = iVar3 + 1) {
+		fVar6 = fVar6 * 10.0f;
+	}
+	if (2.147484e+09f < fVar7 * fVar6) {
+		sprintf(param_3, "%s", "ERROR");
+	}
+	else {
+		iVar4 = 0x13;
+		iVar3 = (int)(fVar7 * fVar6 + 0.5f);
+		for (iVar5 = 0; (0 < iVar4 && ((iVar3 != 0) || (iVar5 <= param_2))); iVar5 = iVar5 + 1) {
+			param_5 = acStack32 + iVar4;
+			iVar4 = iVar4 + -1;
+			*param_5 = (char)iVar3 + (char)(iVar3 / 10) * -10 + '0';
+			iVar3 = iVar3 / 10;
+		}
+		if (param_1 < 0.0f) {
+			*param_3 = '-';
+			param_3 = param_3 + 1;
+		}
+		for (iVar3 = 0; iVar3 < iVar5 - param_2; iVar3 = iVar3 + 1) {
+			*param_3 = *param_5;
+			param_5 = param_5 + 1;
+			param_3 = param_3 + 1;
+		}
+		*param_3 = '.';
+		for (iVar3 = 0; iVar3 < param_2; iVar3 = iVar3 + 1) {
+			param_3 = param_3 + 1;
+			*param_3 = *param_5;
+			param_5 = param_5 + 1;
+		}
+		pcVar2 = param_3 + 1;
+		if (param_4 == 0) {
+			*pcVar2 = '\0';
+		}
+		else {
+			*pcVar2 = 'e';
+			sprintf(param_3 + 2, "%d", iVar1);
+		}
+	}
+	return;
+}
+
+char* edFloat2String(float param_1, int param_2, char* param_3, long param_4, char* param_5)
+{
+	edFloat2Str(param_1, param_2, param_3, param_4, param_5);
+	return param_3;
+}
 
 char* edStrReturnEndPtr(char* str)
 {

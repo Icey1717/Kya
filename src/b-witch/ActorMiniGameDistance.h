@@ -11,7 +11,6 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
-	virtual int GetScoreType() { return 2; }
 };
 
 #endif //ACTOR_MINI_DISTANCE_H

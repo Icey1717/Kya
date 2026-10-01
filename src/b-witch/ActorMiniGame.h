@@ -53,6 +53,9 @@ public:
 class CBehaviourMiniGameBetting : public CBehaviourMiniGame
 {
 public:
+	CBehaviourMiniGameBetting();
+	virtual ~CBehaviourMiniGameBetting();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
@@ -74,6 +77,9 @@ struct S_MINI_GAME_SCORE_LIST
 class CBehaviourMiniGameTraining : public CBehaviourMiniGame
 {
 public:
+	CBehaviourMiniGameTraining();
+	virtual ~CBehaviourMiniGameTraining();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
@@ -88,6 +94,9 @@ public:
 class CBehaviourMiniGameMulti : public CBehaviourMiniGame
 {
 public:
+	CBehaviourMiniGameMulti();
+	virtual ~CBehaviourMiniGameMulti();
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Term();
@@ -120,14 +129,18 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-	virtual int GetScoreType() { return 0; }
 
 	virtual CBehaviourMiniGameBetting* GetBhvBetting();
 	virtual CBehaviourMiniGameTraining* GetBhvTraining();
 	virtual CBehaviourMiniGameMulti* GetBhvMulti();
 	virtual int GetUnity();
+	virtual ulong GetScoreLabelMessageHash();
+	virtual ulong GetHighScoreLabelMessageHash();
 	virtual void SetYouAreChosen(byte param_2);
 	virtual bool MustStop();
+	virtual float GetExtraHudHeight();
+	virtual void DrawExtraHud(float param_1, float param_2);
+	virtual void DrawScoreUnitLabel(float param_1, float param_2);
 
 	void FUN_003ace00();
 	void FUN_003ad480();
@@ -140,6 +153,17 @@ public:
 	void FormatScore(float param_1, edCTextFormat* pFormat, int param_4);
 
 	char* FUN_003ace10();
+
+	void FUN_003a9f70();
+	void FUN_003a9d80();
+	void StateMiniGameStandInit();
+	void StateMiniGameStand(CBehaviourMiniGame* pBehaviour, int param_3);
+	void FUN_003a9f30();
+	void FUN_003a9f80();
+	void FUN_003ac030(float param_1, int param_3, int param_4);
+	void FUN_003ac170(uint param_2);
+	void FUN_003a9d60();
+	void FUN_003a9f50();
 
 	ulong field_0x160;
 	uint field_0x168;

@@ -5,6 +5,9 @@
 #include "ActorMiniGamesManager.h"
 #include "ActorNativShop.h"
 #include "LargeObject.h"
+#include "Rendering/edCTextFormat.h"
+#include "edStr.h"
+#include "kya.h"
 
 char CHighScoreArray::_STRING_Init[4] = { 0, 0, 0, 0 };
 
@@ -90,6 +93,46 @@ int CActorMiniGame::GetUnity()
 	return 0;
 }
 
+ulong CActorMiniGame::GetScoreLabelMessageHash()
+{
+	return 0xffffffffffffffff;
+}
+
+ulong CActorMiniGame::GetHighScoreLabelMessageHash()
+{
+	return 0xffffffffffffffff;
+}
+
+float CActorMiniGame::GetExtraHudHeight()
+{
+	return -1.0f;
+}
+
+void CActorMiniGame::DrawExtraHud(float param_1, float param_2)
+{
+	return;
+}
+
+void CActorMiniGame::DrawScoreUnitLabel(float param_1, float param_2)
+{
+	long lVar1;
+	edCTextFormat textFormat;
+
+	lVar1 = GetUnity();
+	if (((lVar1 != 1) && (lVar1 != 3)) && (lVar1 == 2)) {
+		if (gVideoConfig.omode == 2) {
+			textFormat.FormatString("Y.");
+		}
+		else {
+			textFormat.FormatString("m");
+		}
+
+		textFormat.Display(param_1, param_2);
+	}
+
+	return;
+}
+
 void CActorMiniGame::SetYouAreChosen(byte param_2)
 {
 	this->field_0x1b8 = param_2;
@@ -139,15 +182,207 @@ void CActorMiniGame::UpdateCurHighScoreName(char* pName)
 }
 
 void CActorMiniGame::DrawHighScoreArray(float param_1, float param_2, float param_3, float param_4, S_MINI_GAME_SCORE_LIST* pList)
-{}
+{
+	S_MINI_GAME_SCORE* pScore;
+	int iVar3;
+
+	iVar3 = 0;
+	if (0 < pList->nbScores) {
+		do {
+			edCTextFormat auStack5392;
+			edCTextFormat auStack10784;
+			pScore = pList->aScores + iVar3;
+			GetUnity();
+			FormatScore(pScore->score, &auStack10784, pScore->name, 0, 1);
+			auStack10784.Display(param_1, param_2);
+			param_2 = param_2 + param_4 * auStack10784.field_0xc;
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < pList->nbScores);
+	}
+	return;
+}
 
 void CActorMiniGame::FormatScore(float param_1, edCTextFormat* pFormat, char* param_4, int unity, int param_6)
 {
+	char* pcVar1;
+	int iVar2;
+	char* pcVar3;
+	int iVar4;
+	int iVar5;
+	int hundredths;
+	int seconds;
+	char scoreBuffer[32];
 
+	if (unity == 0) {
+		unity = GetUnity();
+	}
+	if (unity == 3) {
+		if (param_1 == -1.0f) {
+			pFormat->FormatString("%s%s--", param_4, "     ");
+		}
+		else {
+			pFormat->FormatString("%s%s%d ", param_4, "     ", (int)param_1);
+		}
+	}
+	else {
+		if (unity == 2) {
+			if (gVideoConfig.omode == 2) {
+				pcVar3 = "Y.";
+			}
+			else {
+				pcVar3 = "m";
+			}
+			iVar2 = 2;
+			if (999.99f <= param_1 && param_1 <= 9999.99f) {
+				iVar2 = 1;
+			}
+			if (9999.99f <= param_1 && param_1 <= 99999.99f) {
+				iVar2 = 0;
+			}
+			if (param_1 == -1.0f) {
+				if (param_6 == 0) {
+					pFormat->FormatString("%s%s--", param_4, "   ");
+				}
+				else {
+					pFormat->FormatString("%s%s-- %s", param_4, "   ", pcVar3);
+				}
+			}
+			else {
+				if (param_6 == 0) {
+					pcVar3 = edFloat2String(param_1, iVar2, scoreBuffer, 0);
+					pFormat->FormatString("%s%s%s", param_4, "   ", pcVar3);
+				}
+				else {
+					pcVar1 = edFloat2String(param_1, iVar2, scoreBuffer, 0);
+					pFormat->FormatString("%s%s%s  %s", param_4, "   ", pcVar1, pcVar3);
+				}
+			}
+		}
+		else {
+			if (unity == 1) {
+				if (param_1 == -1.0f) {
+					pFormat->FormatString("%s%s--'--\"--", param_4, "     ");
+				}
+				else {
+					hundredths = (int)param_1 - (int)((float)(int)param_1 / 100.0f) * 100;
+					iVar5 = (int)((float)((int)param_1 - hundredths) / 100.0f);
+					iVar4 = (int)((float)iVar5 / 60.0f);
+					iVar2 = iVar4 + (int)((float)iVar4 / 10.0f) * -10;
+					seconds = iVar5 + iVar4 * -0x3c;
+					pFormat->FormatString("%s%s%d%d'%d%d\"%d%d ", param_4, "     ",
+						(int)((float)(iVar4 - iVar2) / 10.0f), iVar2,
+						(int)((float)((int)((float)seconds / 10.0f) * 10) / 10.0f),
+						seconds - (int)((float)seconds / 10.0f) * 10,
+						(int)((float)hundredths / 10.0f),
+						hundredths - (int)((float)hundredths / 10.0f) * 10);
+				}
+			}
+		}
+	}
+	return;
 }
 
 void CActorMiniGame::FormatScore(float param_1, edCTextFormat* pFormat, int param_4)
-{}
+{
+	char* pcVar1;
+	int iVar2;
+	char* pcVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	int hundredths;
+	int seconds;
+	char acStack128[128];
+	char scoreBuffer[32];
+	CActorMiniGamesOrganizer* pMiniGameOrganizer;
+	char* pLetter0;
+	char* pLetter1;
+	char* pLetter2;
+
+	if (param_4 == 0) {
+		param_4 = GetUnity();
+	}
+	pMiniGameOrganizer = this->field_0x1c0;
+	pcVar1 = pMiniGameOrganizer->FUN_003b2a00();
+	edStrCopy(acStack128, pcVar1);
+	if (param_4 == 3) {
+		if (param_1 == -1.0f) {
+			strcat(acStack128, " --");
+			pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+			pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+			pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+			pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2, 0x17);
+		}
+		else {
+			strcat(acStack128, " %d");
+			pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+			pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+			pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+			pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2, (int)param_1);
+		}
+	}
+	else {
+		if (param_4 == 2) {
+			if (gVideoConfig.omode == 2) {
+				pcVar1 = "Y.";
+			}
+			else {
+				pcVar1 = "m";
+			}
+			iVar2 = 2;
+			if (999.99f <= param_1 && param_1 <= 9999.99f) {
+				iVar2 = 1;
+			}
+			if (9999.99f <= param_1 && param_1 <= 99999.99f) {
+				iVar2 = 0;
+			}
+			if (param_1 == -1.0f) {
+				strcat(acStack128, " --  %s");
+				pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+				pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+				pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+				pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2, pcVar1);
+			}
+			else {
+				strcat(acStack128, " %s  %s");
+				pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+				pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+				pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+				pcVar5 = edFloat2String(param_1, iVar2, scoreBuffer, 0);
+				pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2, pcVar5, pcVar1);
+			}
+		}
+		else {
+			if (param_4 == 1) {
+				if (param_1 == -1.0f) {
+					strcat(acStack128, " --'--\"--\n");
+					pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+					pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+					pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+					pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2, 0x17);
+				}
+				else {
+					hundredths = (int)param_1 - (int)((float)(int)param_1 / 100.0f) * 100;
+					iVar8 = (int)((float)((int)param_1 - hundredths) / 100.0f);
+					iVar7 = (int)((float)iVar8 / 60.0f);
+					iVar6 = iVar7 + (int)((float)iVar7 / 10.0f) * -10;
+					seconds = iVar8 + iVar7 * -0x3c;
+					strcat(acStack128, "%d%d'%d%d\"%d%d");
+					pLetter0 = pMiniGameOrganizer->GetCurNameLetter(0);
+					pLetter1 = pMiniGameOrganizer->GetCurNameLetter(1);
+					pLetter2 = pMiniGameOrganizer->GetCurNameLetter(2);
+					pFormat->FormatString(acStack128, pLetter0, pLetter1, pLetter2,
+						(int)((float)(iVar7 - iVar6) / 10.0f), iVar6,
+						(int)((float)((int)((float)seconds / 10.0f) * 10) / 10.0f),
+						seconds - (int)((float)seconds / 10.0f) * 10,
+						(int)((float)hundredths / 10.0f),
+						hundredths - (int)((float)hundredths / 10.0f) * 10);
+				}
+			}
+		}
+	}
+	return;
+}
 
 
 char* CActorMiniGame::FUN_003ace10()
@@ -158,6 +393,86 @@ char* CActorMiniGame::FUN_003ace10()
 
 	return pcVar1;
 }
+
+void CActorMiniGame::FUN_003a9f70()
+{
+	return;
+}
+
+void CActorMiniGame::FUN_003a9d80()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorMiniGame::StateMiniGameStandInit()
+{
+	this->field_0x1b9 = 0;
+
+	return;
+}
+
+void CActorMiniGame::StateMiniGameStand(CBehaviourMiniGame* pBehaviour, int param_3)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+
+void CActorMiniGame::FUN_003a9f30()
+{
+	this->flags = this->flags | 2;
+	this->flags = this->flags & 0xfffffffe;
+
+	return;
+}
+
+void CActorMiniGame::FUN_003a9f80()
+{
+	int iVar1;
+	int iVar2;
+	CBehaviourMiniGameMulti* pMulti;
+
+	this->flags = this->flags | 2;
+	this->flags = this->flags & 0xfffffffe;
+
+	if (this->curBehaviourId == 4) {
+		pMulti = GetBhvMulti();
+		iVar1 = pMulti->winner;
+		iVar2 = pMulti->nbPlayers;
+		if (iVar2 == 0) {
+			trap(7);
+		}
+
+		pMulti = GetBhvMulti();
+		pMulti->winner = (iVar1 + 1) % iVar2;
+	}
+
+	return;
+}
+
+void CActorMiniGame::FUN_003ac030(float param_1, int param_3, int param_4)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorMiniGame::FUN_003ac170(uint param_2)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorMiniGame::FUN_003a9d60()
+{
+	this->flags = this->flags & 0xfffffffc;
+
+	return;
+}
+
+void CActorMiniGame::FUN_003a9f50()
+{
+	this->flags = this->flags & 0xfffffffc;
+
+	return;
+}
+
 
 CActorMiniGame::CActorMiniGame()
 {
@@ -629,6 +944,19 @@ int CBehaviourMiniGame::InterpretEvent(edCEventMessage* pEventMessage, undefined
 	return 0;
 }
 
+CBehaviourMiniGameBetting::CBehaviourMiniGameBetting()
+{
+	this->nbBets = 0;
+	this->aBets = (S_MINI_GAME_BET*)0x0;
+}
+
+CBehaviourMiniGameBetting::~CBehaviourMiniGameBetting()
+{
+	if (this->aBets != (S_MINI_GAME_BET*)0x0) {
+		delete[] this->aBets;
+	}
+}
+
 void CBehaviourMiniGameBetting::Create(ByteCode* pByteCode)
 {
 	uint count;
@@ -691,6 +1019,18 @@ int CBehaviourMiniGameBetting::InterpretMessage(CActor* pSender, int msg, void* 
 	}
 
 	return 0;
+}
+
+CBehaviourMiniGameTraining::CBehaviourMiniGameTraining()
+{
+	this->scoreList.nbScores = 0;
+}
+
+CBehaviourMiniGameTraining::~CBehaviourMiniGameTraining()
+{
+	if (this->scoreList.nbScores != 0) {
+		delete[] this->scoreList.aScores;
+	}
 }
 
 void CBehaviourMiniGameTraining::Create(ByteCode* pByteCode)
@@ -829,6 +1169,18 @@ int CBehaviourMiniGameTraining::InterpretMessage(CActor* pSender, int msg, void*
 	}
 
 	return 0;
+}
+
+CBehaviourMiniGameMulti::CBehaviourMiniGameMulti()
+{
+	this->scoreList.nbScores = 0;
+}
+
+CBehaviourMiniGameMulti::~CBehaviourMiniGameMulti()
+{
+	if (this->scoreList.nbScores != 0) {
+		delete[] this->scoreList.aScores;
+	}
 }
 
 void CBehaviourMiniGameMulti::Create(ByteCode* pByteCode)

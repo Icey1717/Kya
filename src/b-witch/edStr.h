@@ -20,6 +20,9 @@ char* edStrChr(char* inString, char searchChar);
 
 void edStrInt2Str(uint value, char* str, uint len, bool padWithSpaces);
 
+void edFloat2Str(float value, int decimals, char* pBuffer, long scientific, char* pDigits = nullptr);
+char* edFloat2String(float value, int decimals, char* pBuffer, long scientific, char* pDigits = nullptr);
+
 char* edStrFileNameBase(char* param_1);
 
 #endif //_ED_STR_H
