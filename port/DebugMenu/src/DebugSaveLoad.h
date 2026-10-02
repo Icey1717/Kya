@@ -5,5 +5,6 @@ namespace Debug {
 		void ShowMenu(bool* bOpen);
 		void Update();
 		void QueueAutosaveArchive(int slot);
+		void QueueSaveScreenshot(int slot);
 	}
 }

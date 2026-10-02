@@ -1395,12 +1395,13 @@ bool CLevelScheduler::IsACompatibleChunkRecurse(CChunk* pChunk)
 
 	CChunk* pCurChunk;
 	if ((bFoundLevelSaveData) && (pCurChunk = pChunk, pChunk->field_0x0 == 0x16660666)) {
-		while ((pBLHD = pCurChunk + 1, reinterpret_cast<char*>(pBLHD) < reinterpret_cast<char*>(pChunk) + pChunk->size + sizeof(CChunk)) && (bFoundLevelSaveData)) {
+		// size is a schema version; offset is the serialized payload extent.
+		while ((pBLHD = pCurChunk + 1, reinterpret_cast<char*>(pBLHD) < reinterpret_cast<char*>(pChunk) + pChunk->offset + sizeof(CChunk)) && (bFoundLevelSaveData)) {
 			if (IsACompatibleChunkRecurse(pBLHD) == 0) {
 				bFoundLevelSaveData = false;
 			}
 
-			pCurChunk = reinterpret_cast<CChunk*>(reinterpret_cast<char*>(pBLHD) + pBLHD->size);
+			pCurChunk = reinterpret_cast<CChunk*>(reinterpret_cast<char*>(pBLHD) + pBLHD->offset);
 		}
 	}
 

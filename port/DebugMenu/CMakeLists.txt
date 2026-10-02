@@ -69,6 +69,8 @@ set(SOURCES
 	"src/DebugSaveLoadPaths.h"
 	"src/DebugSaveCheckpoint.h"
 	"src/DebugSaveLoad.cpp"
+	"src/DebugSaveScreenshot.cpp"
+	"src/DebugSaveScreenshot.h"
 	"src/DebugTutorial.h"
 	"src/DebugTutorial.cpp"
 	"src/DebugInput.h"

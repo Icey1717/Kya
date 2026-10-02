@@ -11,6 +11,7 @@
 #include <iterator>
 #include <algorithm>
 #include <cstring>
+#include <cstdlib>
 #include <vector>
 
 namespace
@@ -852,56 +853,50 @@ TEST_F(SaveManagementStage, RejectsValidBSHDFollowedByOneTrailingByte)
 	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
 }
 
-TEST_F(SaveManagementStage, RejectsContainerChildWithOversizedSizeField)
+TEST_F(SaveManagementStage, AcceptsProductionChunkVersionTags)
 {
-	// CLevelScheduler::IsACompatibleChunkRecurse walks a container chunk's
-	// children by stepping CChunk::size (not CChunk::offset) directly onto
-	// each child's own header address. Here the grandchild's `offset` is
-	// perfectly well-formed (ValidateChunkTree's offset-based walk accepts
-	// the whole tree), but its `size` field is a huge, corrupt value; a
-	// validator that only checks `offset` would miss this and let the real
-	// loader's size-driven traversal read far past the staged buffer. Must
-	// be rejected with no mutation.
-	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x7fffffffu, std::string(4, '\0'));
-	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
-	const std::string rootPayload = SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper;
-	const auto bytes = BuildBackupSaveBytes(SaveChunk(SAVEGAME_CHUNK_BSAV, rootPayload));
-	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
-	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
-	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
-}
-
-TEST_F(SaveManagementStage, RejectsRootContainerWithOversizedChildSizeField)
-{
-	// Same corrupt-size attack as above, but the container itself is the
-	// BSAV root (which real production code always marks as a container -
-	// see CLevelScheduler::Levels_SaveDataToSavedGame) rather than a nested
-	// wrapper, so both root-level and nested container traversal safety
-	// are exercised.
-	const std::string corruptChild = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD, 0x7fffffffu, BSHDChunkData(3));
-	const auto bytes = BuildBackupSaveBytes(SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BSAV, 0x10000u, corruptChild));
-	const SaveDataHeader headerBefore = gSaveManagement.saveDataHeader;
-	const uint fileExistsFlagsBefore = gSaveManagement.fileExistsFlags;
-	EXPECT_FALSE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
-	ExpectUntouched(7, 0xdeadbeefu, fileExistsFlagsBefore, headerBefore);
-}
-
-TEST_F(SaveManagementStage, AcceptsContainerChildWithInBoundsSizeField)
-{
-	// Negative control for the two rejection tests above: the container's
-	// own `size` field is generously large (matching the real magnitude of
-	// CLevelScheduler::_gGameChunks entries, e.g. SAVEGAME_CHUNK_BLEV's
-	// 0x10000) and the single child's `size` field, while not equal to its
-	// `offset`, still lands well within the staged buffer once stepped. This
-	// must still be accepted and staged - the fix must not reject sizes
-	// merely because they differ from offset or exceed the child's own data,
-	// only because the size-driven traversal would escape the buffer.
-	const std::string grandchild = SaveChunkWithMarkerAndSize(0x06667666u, 0x33445566u, 0x10u, std::string(4, '\0'));
-	const std::string wrapper = SaveChunkWithMarkerAndSize(0x16660666u, 0x11223344u, 0x10000u, grandchild);
-	const std::string payload = SaveChunk(SAVEGAME_CHUNK_BSAV, SaveChunk(SAVEGAME_CHUNK_BSHD, BSHDChunkData(3)) + wrapper);
+	// Production size words are schema versions, much larger than the payload.
+	const auto bshd = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD,
+		CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BSHD)->size, BSHDChunkData(3));
+	const auto blev = SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BLEV,
+		CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BLEV)->size, bshd);
+	const auto payload = SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BSAV,
+		CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BSAV)->size, bshd + blev);
 	const auto bytes = BuildBackupSaveBytes(payload);
-	EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
+	ASSERT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size()));
 	EXPECT_EQ(gSaveManagement.saveSize_0x44, payload.size());
+	EXPECT_EQ(std::memcmp(stagingBuffer.data(), payload.data(), payload.size()), 0);
+	EXPECT_TRUE(CLevelScheduler::IsACompatibleChunkRecurse(reinterpret_cast<CChunk*>(stagingBuffer.data())));
+}
+
+TEST_F(SaveManagementStage, StagesExternalBackupsWhenRequested)
+{
+	// Optional read-only integration check against real checkpoint archives.
+	const char* directory = std::getenv("KYA_SAVE_TEST_DIRECTORY");
+	if (!directory) GTEST_SKIP() << "Set KYA_SAVE_TEST_DIRECTORY to check existing saves";
+	int checked = 0;
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(directory)) {
+		if (!entry.is_regular_file()) continue;
+		const auto name = entry.path().filename().string();
+		if (name.rfind("slot_", 0) != 0 && name.rfind("level_", 0) != 0) continue;
+		std::ifstream input(entry.path(), std::ios::binary);
+		const std::vector<char> bytes((std::istreambuf_iterator<char>(input)), {});
+		EXPECT_TRUE(gSaveManagement.stage_backup_save(bytes.data(), bytes.size())) << entry.path();
+		++checked;
+	}
+	EXPECT_GT(checked, 0);
+}
+
+TEST_F(SaveManagementStage, CompatibilityChecksSiblingsAfterVersionedChunks)
+{
+	const auto version = CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BSHD)->size;
+	const auto valid = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD, version, BSHDChunkData(3));
+	const auto incompatible = SaveChunkWithMarkerAndSize(0x06667666u, SAVEGAME_CHUNK_BSHD, version + 0x10000, BSHDChunkData(3));
+	const auto nested = SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BLEV,
+		CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BLEV)->size, valid + incompatible);
+	const auto payload = SaveChunkWithMarkerAndSize(0x16660666u, SAVEGAME_CHUNK_BSAV,
+		CLevelScheduler::GetChunkDesc(SAVEGAME_CHUNK_BSAV)->size, valid + nested);
+	std::vector<char> buffer(payload.begin(), payload.end());
+	EXPECT_FALSE(CLevelScheduler::IsACompatibleChunkRecurse(reinterpret_cast<CChunk*>(buffer.data())));
 }
 #endif

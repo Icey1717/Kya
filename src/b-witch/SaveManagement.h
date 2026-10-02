@@ -2127,6 +2127,8 @@ void SaveManagement_MemCardAutoSave(void);
 #ifdef PLATFORM_WIN
 // Notifies after an autosave is accepted; asynchronous file actions may still be pending.
 void SaveManagement_SetAutoSaveQueuedCallback(void (*callback)(int slot));
+// Also notifies for manual saves, so Windows can capture their backup thumbnails.
+void SaveManagement_SetSaveQueuedCallback(void (*callback)(int slot));
 #endif
 
 #endif // _SAVE_H

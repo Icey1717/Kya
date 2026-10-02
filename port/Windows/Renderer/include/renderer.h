@@ -580,6 +580,7 @@ namespace Renderer
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&, CommandBufferList&>;
 
 	RenderDelegate& GetRenderDelegate();
+	Multidelegate<>& GetCleanupDelegate();
 
 	void SetHeadless(bool bValue);
 
