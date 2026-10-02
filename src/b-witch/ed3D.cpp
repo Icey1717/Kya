@@ -1549,7 +1549,7 @@ void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode
 			if (v1_00->base.bSceneRender != 0) {
 				v1_01 = (ed_3d_hierarchy_node*)(v1_00->base).pLinkTransformData;
 				if (v1_01 == (ed_3d_hierarchy_node*)0x0) {
-					if (((v1_01->base).flags_0x9e & 1) == 0) {
+					if (((v1_00->base).flags_0x9e & 1) == 0) {
 						edF32Matrix4CopyHard(&(v1_00->base).transformB, &v1_00->base.transformA);
 					}
 				}
@@ -13670,8 +13670,7 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-			pHierarchyChunk = ed3DG3DHierarchyGetChunk(pMeshInfo, szString);)
+		pHierarchyChunk = ed3DG3DHierarchyGetChunk(pMeshInfo, szString);
 	}
 
 	edNODE* pRootNode = (edNODE*)0x0;

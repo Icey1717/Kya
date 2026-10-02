@@ -386,6 +386,50 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 	return;
 }
 
+ed_Chunck* ed3DG3DHierarchyGetChunk(ed_g3d_manager* pMeshInfo, char* szString)
+{
+	bool bVar1;
+	ed_hash_code* pHashCode;
+	ed_Chunck* pChunk;
+	size_t sVar2;
+	char cVar3;
+	uint uVar4;
+	ulong uVar5;
+	ulong local_8;
+
+	local_8 = 0;
+	sVar2 = strlen(szString);
+	uVar5 = 0;
+	while (true) {
+		uVar4 = (uint)uVar5;
+
+		if (sVar2 <= uVar5) break;
+
+		cVar3 = szString[uVar4];
+		bVar1 = false;
+		if (('`' < cVar3) && (cVar3 < '{')) {
+			bVar1 = true;
+		}
+
+		if (bVar1) {
+			cVar3 = cVar3 + -0x20;
+		}
+
+		uVar5 = uVar4 + 1;
+		*(char*)((uintptr_t)&local_8 + (uVar4 & 7)) = *(char*)((uintptr_t)&local_8 + (uVar4 & 7)) + cVar3;
+	}
+
+	pHashCode = edHashcodeGet(local_8, pMeshInfo->HALL + 1);
+	if (pHashCode == (ed_hash_code*)0x0) {
+		pChunk = (ed_Chunck*)0x0;
+	}
+	else {
+		pChunk = LOAD_POINTER_CAST(ed_Chunck*, pHashCode->pData);
+	}
+
+	return pChunk;
+}
+
 void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag)
 {
 	ed_g3d_hierarchy* peVar1;

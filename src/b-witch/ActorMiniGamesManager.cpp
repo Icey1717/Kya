@@ -30,6 +30,38 @@ bool CActorMiniGamesManager::PlaceBet(int cost)
 	return bVar1;
 }
 
+int CActorMiniGamesManager::FUN_003ad9f0(int param_2)
+{
+	int iVar2;
+	int iVar3;
+	CActorMiniGame* pMiniGame;
+
+	iVar3 = 0;
+	iVar2 = -1;
+	if (0 < this->nbMiniGames) {
+		do {
+			pMiniGame = this->aMiniGames[iVar3];
+			if (param_2 < pMiniGame->field_0x1d8) {
+				if (param_2 != -1) {
+					pMiniGame->FUN_003ace00();
+				}
+
+				if (iVar2 < pMiniGame->field_0x1d8) {
+					iVar2 = pMiniGame->field_0x1d8;
+				}
+			}
+
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < this->nbMiniGames);
+	}
+
+	this->nextMiniGameOrder = iVar2 + 1;
+
+	return this->nextMiniGameOrder;
+}
+
+
+
 CActorMiniGamesManager::CActorMiniGamesManager()
 {
 	this->aMiniGames = (CActorMiniGame**)0x0;

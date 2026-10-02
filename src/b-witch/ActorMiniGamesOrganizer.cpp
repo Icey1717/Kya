@@ -700,6 +700,7 @@ void CActorMiniGamesOrganizer::Draw()
 	}
 	else {
 		CActor::Draw();
+
 		if ((GameFlags & 0x1c) == 0) {
 			switch(this->actorState) {
 			case 6:
@@ -1457,32 +1458,14 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_InitState(int ne
 
 	InitMenuMeshes(newState);
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar5 = 0;
-	}
-	else {
-		pSVar3 = GetStateCfg(iVar1);
-		uVar5 = pSVar3->flags_0x4 & 0x200;
-	}
-
-	if ((((uVar5 != 0) && ((iVar1 = this->prevActorState, iVar1 != 0xe || (this->actorState != 0xf)))) &&
+	if (((((GetStateFlags(this->actorState) & 0x200) != 0) && ((iVar1 = this->prevActorState, iVar1 != 0xe || (this->actorState != 0xf)))) &&
 			((iVar1 != 0xf || (this->actorState != 0xe)))) &&
 		(this->field_0x941 == false)) {
 		Fade(0.1f, 1, 0);
 		this->field_0x944 = 1.0f;
 	}
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar5 = 0;
-	}
-	else {
-		pSVar3 = GetStateCfg(iVar1);
-		uVar5 = pSVar3->flags_0x4 & 0x200;
-	}
-
-	if (uVar5 != 0) {
+	if ((GetStateFlags(this->actorState) & 0x200) != 0) {
 		CallPauseChange(1);
 		GameFlags = GameFlags | 0x4080;
 		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
@@ -1643,18 +1626,13 @@ void CActorMiniGamesOrganizer::BehaviourMiniGamesOrganizerStand_TermState(int ol
 		(((oldState == 9 || (oldState == 7)) || ((oldState == 0xe || (oldState == 0xf)))))) {
 		TermMenuMeshes();
 	}
-	if (this->actorState == -1) {
-		uVar2 = 0;
-	}
-	else {
-		pSVar1 = GetStateCfg(this->actorState);
-		uVar2 = pSVar1->flags_0x4 & 0x200;
-	}
-	if (uVar2 != 0) {
+
+	if ((GetStateFlags(this->actorState) & 0x200) != 0) {
 		CallPauseChange(0);
 		GameFlags = GameFlags & 0xffffbf7f;
 		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
 	}
+
 	switch (oldState) {
 	case 6:
 		this->menuWheel.MoveWheel();
@@ -3299,57 +3277,110 @@ int CActorMiniGamesOrganizer::InterpretMessage(CActor* pSender, int msg, void* p
 		CCinematic* pCVar6 = g_CinematicManager_0048efc->GetCinematic(this->field_0x16c);
 		if ((this->field_0x9b8 != 0) && (pCVar6 == pParam->pCinematic)) {
 			if (pParam->action == 1) {
-				if (this->field_0x9bc == 0) return 0;
-				for (int i = 0; i < this->field_0x9bc; i++) edDListTermMaterial(this->field_0x9b8 + i);
+				if (this->field_0x9bc == 0) {
+					return 0;
+				}
+
+				for (int i = 0; i < this->field_0x9bc; i++) {
+					edDListTermMaterial(this->field_0x9b8 + i);
+				}
+
 				this->field_0x9bc = 0;
 				ed3DUnInstallG2D(&this->field_0x9c0);
 				return 1;
 			}
+
 			if (pParam->action == 0) {
 				edBANK_ENTRY_INFO eStack32;
 				int iStack4;
-				if (!pCVar6->LoadEntryByFile(&eStack32, "G2D", 0)) return 0;
-				ed3DInstallG2D((char*)eStack32.fileBufferStart, eStack32.size, &iStack4, &this->field_0x9c0, 1);
+
+				NAME_NEXT_OBJECT("MiniGameG2D");
+
+				if (!pCVar6->LoadEntryByFile(&eStack32, "G2D", 0)) {
+					return 0;
+				}
+
+				ed3DInstallG2D(eStack32.fileBufferStart, eStack32.size, &iStack4, &this->field_0x9c0, 1);
+
 				this->field_0x9bc = ed3DG2DGetG2DNbMaterials(&this->field_0x9c0);
-				int iVar8 = this->pMiniGameStreamRefs == 0 ? 0 : this->pMiniGameStreamRefs->entryCount;
-				if (iVar8 < this->field_0x9bc) this->field_0x9bc = iVar8;
-				for (int i = 0; i < this->field_0x9bc; i++)
+
+				int iVar8;
+				if (this->pMiniGameStreamRefs == (S_ACTOR_STREAM_REF*)0x0) {
+					iVar8 = 0;
+				}
+				else {
+					iVar8 = this->pMiniGameStreamRefs->entryCount;
+				}
+
+				if (iVar8 < this->field_0x9bc) {
+					if (this->pMiniGameStreamRefs == (S_ACTOR_STREAM_REF*)0x0) {
+						iVar8 = 0;
+					}
+					else {
+						iVar8 = this->pMiniGameStreamRefs->entryCount;
+					}
+				}
+
+				this->field_0x9bc = iVar8;
+
+				for (int i = 0; i < this->field_0x9bc; i++) {
 					edDListCreatMaterialFromIndex(this->field_0x9b8 + i, i, &this->field_0x9c0, 2);
+				}
+
 				return 1;
 			}
 		}
+
 		return 0;
 	}
+
 	if (msg == 0x24) {
 		SetState(5, -1);
 		return 0;
 	}
+
 	if (msg == 0x55) {
-		if (pMsgParam == 0) SetState(0xb, -1);
-		if (pMsgParam != (void*)1) return 0;
+		if (pMsgParam == 0) {
+			SetState(0xb, -1);
+		}
+		if (pMsgParam != (void*)1) {
+			return 0;
+		}
+
 		CActorMiniGame* pMiniGame = static_cast<CActorMiniGame*>(pSender);
 		if ((pMiniGame->curBehaviourId == 3) && (pMiniGame->field_0x1b0 == 0)) {
 			CBehaviourMiniGameBetting* pBehaviour = pMiniGame->GetBhvBetting();
-			if (this->field_0x924 < pBehaviour->nbBets)
+			if (this->field_0x924 < pBehaviour->nbBets) {
 				CScene::ptable.g_LevelScheduleManager_00451660->Money_TakeFromBet(pBehaviour->aBets[pBehaviour->curBet].reward);
+			}
 		}
+
 		SetState(0xd, -1);
 		return 0;
 	}
+
 	if (msg == 0x14) {
-		if (this->actorState != 5) return 0;
+		if (this->actorState != 5) {
+			return 0;
+		}
+
 		this->field_0x9f0 = pSender;
 		SetState(6, -1);
 		return 1;
 	}
+
 	if (msg == 0x12) {
 		float fVar1 = pSender->currentLocation.x - this->currentLocation.x;
 		float fVar2 = pSender->currentLocation.z - this->currentLocation.z;
 		if ((sqrtf(fVar1 * fVar1 + fVar2 * fVar2) < this->field_0x194) &&
 			((GetStateFlags(this->actorState) & 0x100) != 0) &&
-			(this->pMiniGameStreamRefs != 0) && (0 < this->pMiniGameStreamRefs->entryCount)) return 0xe;
+			(this->pMiniGameStreamRefs != 0) && (0 < this->pMiniGameStreamRefs->entryCount)) {
+			return 0xe;
+		}
+
 		return 0;
 	}
+
 	return CActor::InterpretMessage(pSender, msg, pMsgParam);
 }
 
@@ -3432,10 +3463,6 @@ void CActorMiniGamesOrganizer::DrawMenuChooseText()
 	float fVar6;
 	float angle;
 	float y;
-	edCTextFormat auStack21760;
-	edCTextFormat auStack16368;
-	edCTextFormat auStack10976;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	eStack192.Reset();
@@ -3457,13 +3484,21 @@ void CActorMiniGamesOrganizer::DrawMenuChooseText()
 	if (pCVar2 != (CBehaviour *)0x0) {
 		cVar4 = cVar4 + '\x01';
 	}
+
 	pCVar2 = pActor->GetBehaviour(2);
 	if (pCVar2 != (CBehaviour *)0x0) {
 		cVar4 = cVar4 + '\x01';
 	}
+
 	bVar1 = GuiDList_BeginCurrent();
 	if (bVar1 != false) {
 		pNewFont = edTextStyleSetCurrent(&eStack192);
+
+		edCTextFormat auStack21760;
+		edCTextFormat auStack16368;
+		edCTextFormat auStack10976;
+		edCTextFormat auStack5584;
+
 		this->menuWheel.Draw();
 		fVar5 = (float)(uint)this->field_0x94c / 2.0f;
 		if (fVar5 < 2.147484e+09f) {
@@ -3557,9 +3592,8 @@ void CActorMiniGamesOrganizer::DrawMenuChooseText()
 		auStack21760.Display((float)gVideoConfig.screenWidth * 0.88f, (float)gVideoConfig.screenHeight * 0.92f);
 		edTextStyleSetCurrent(pNewFont);
 		GuiDList_EndCurrent();
-
-
 	}
+
 	return;
 }
 
@@ -3571,7 +3605,6 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 	edCTextStyle *pNewFont;
 	char *pcVar3;
 	int iVar4;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	eStack192.Reset();
@@ -3588,6 +3621,7 @@ void CActorMiniGamesOrganizer::DrawMenuTrainText()
 	bVar2 = GuiDList_BeginCurrent();
 	if (bVar2 != false) {
 		pNewFont = edTextStyleSetCurrent(&eStack192);
+		edCTextFormat auStack5584;
 
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 		eStack192.SetScale(1.8f, 1.8f);

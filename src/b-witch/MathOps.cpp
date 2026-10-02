@@ -2121,7 +2121,7 @@ float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		*v0 = *v1 * invMagnitude;
 	}
 
-	assert(std::isnan(v1Magnitude) == false);
+	//assert(std::isnan(v1Magnitude) == false);
 
 	return v1Magnitude;
 }

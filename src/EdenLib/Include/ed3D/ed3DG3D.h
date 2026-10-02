@@ -23,6 +23,7 @@ ed_hash_code* ed3DG2DGetHashCode(ed_g2d_manager* pManager, ed_g2d_material* pMat
 int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck);
 ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int count);
 void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag);
+ed_Chunck* ed3DG3DHierarchyGetChunk(ed_g3d_manager* pMeshInfo, char* szString);
 void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag);
 
 extern int gCurTime;

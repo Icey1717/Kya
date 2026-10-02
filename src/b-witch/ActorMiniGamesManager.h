@@ -52,6 +52,8 @@ public:
 	bool IsBetAvailable(int cost, int reward);
 	bool PlaceBet(int cost);
 
+	int FUN_003ad9f0(int param_2);
+
 	CBehaviourMiniGamesManagerStand behaviourStand;
 	S_ACTOR_STREAM_REF* pOrganizerStreamRefs;
 	S_STREAM_REF<CActor> actorRef;

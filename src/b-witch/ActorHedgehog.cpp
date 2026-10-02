@@ -166,6 +166,333 @@ float CActorHedgehog::GetRunAcceleration()
 	return GetWalkAcceleration();
 }
 
+void CActorHedgehog::BehaviourGuardArea_Manage(CBehaviourHedgehogGuardArea* pBehaviour)
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	bool bVar3;
+	uint uVar5;
+	edF32VECTOR4* v0;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack240;
+	float local_e0;
+	float fStack220;
+	float fStack216;
+	float fStack212;
+	edF32VECTOR4 eStack208;
+	edF32VECTOR4 local_c0;
+	_msg_hit_param local_b0;
+	_msg_impulse_params local_30;
+
+	switch (this->actorState) {
+	case 6:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+		if ((this->field_0x350 & 0x10) == 0) {
+			if ((this->field_0x350 & 8) == 0) {
+				bVar3 = pBehaviour->pathFollowReader.AtGoal((pBehaviour->pathFollowReader).splinePointIndex, (pBehaviour->pathFollowReader).field_0xc);
+				if (bVar3 == false) {
+					SetState(0x10, -1);
+				}
+			}
+			else {
+				SetState(0x12, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 7:
+		StateGuardChase(pBehaviour);
+		break;
+	case 8:
+		StateGuardChaseStand(pBehaviour);
+		break;
+	case 9:
+		StateGuardComeBack(pBehaviour);
+		break;
+	case 10:
+		this->dynamic.speed = 0.0f;
+
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			SetState(0xb, -1);
+		}
+		break;
+	case 0xb:
+		StateGuardUpsideDown();
+		break;
+	case 0xc:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			this->field_0x350 = this->field_0x350 & 0xffffffee;
+			SetState(9, -1);
+		}
+		break;
+	case 0xd:
+		this->dynamic.speed = 0.0f;
+
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			local_30.field_0x10 = 500.0f;
+			local_30.field_0x0.y = 1.0f;
+			local_30.field_0x0.x = 0.0f;
+			local_30.field_0x0.z = 0.0f;
+			local_30.field_0x0.w = 0.0f;
+			DoMessage(CActorHero::_gThis, MESSAGE_IMPULSE, &local_30);
+			SetState(0xe, -1);
+		}
+		break;
+	case 0xe:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+		local_e0 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+		fStack220 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+		fStack216 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+		fStack212 = CActorHero::_gThis->currentLocation.w - this->currentLocation.w;
+		if (this->field_0x368 <= sqrtf(local_e0 * local_e0 + fStack220 * fStack220 + fStack216 * fStack216)) {
+			SetState(0xf, -1);
+		}
+		break;
+	case 0xf:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			this->field_0x350 = this->field_0x350 & 0xffffffee;
+			SetState(9, -1);
+		}
+		break;
+	case 0x10:
+		State_0x10(pBehaviour);
+		break;
+	case 0x11:
+		this->dynamic.speed = 0.0f;
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		if ((this->field_0x350 & 0x10) == 0) {
+			if ((this->field_0x350 & 8) == 0) {
+				fVar7 = this->timeInAir;
+				fVar6 = pBehaviour->pathFollowReader.GetDelay();
+				if (fVar6 < fVar7) {
+					bVar3 = pBehaviour->pathFollowReader.AtGoal(pBehaviour->pathFollowReader.splinePointIndex, pBehaviour->pathFollowReader.field_0xc);
+					if (bVar3 == false) {
+						pBehaviour->pathFollowReader.NextWayPoint();
+						SetState(0x10, -1);
+					}
+					else {
+						SetState(6, -1);
+					}
+				}
+			}
+			else {
+				SetState(0x12, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x12:
+		StateGuardSurprised(pBehaviour);
+		break;
+	case 0x13:
+		ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			SetState(7, -1);
+		}
+		break;
+	case 0x14:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		local_b0.projectileType = 0;
+		local_b0.flags = 1;
+		local_b0.damage = this->field_0x370;
+		DoMessage(this->field_0x354, MESSAGE_KICKED, &local_b0);
+		this->dynamic.speed = 0.0f;
+		SetState(0x15, -1);
+		break;
+	case 0x15:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+		if (1.0f <= this->timeInAir) {
+			this->field_0x350 = this->field_0x350 & 0xfffffffe;
+			if ((this->field_0x350 & 8) == 0) {
+				SetState(9, -1);
+			}
+			else {
+				SetState(7, -1);
+			}
+		}
+		else {
+			if ((this->field_0x350 & 0x10) != 0) {
+				uVar5 = TreatBoomyHit(pBehaviour);
+				SetState(uVar5, -1);
+			}
+		}
+		break;
+	case 0x16:
+		this->dynamic.speed = 0.0f;
+		if (this->field_0x354 != (CActor*)0x0) {
+			fVar6 = GetRunRotSpeed();
+			SV_UpdateOrientationToPosition2D(fVar6, &this->field_0x354->currentLocation);
+		}
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+				local_c0.z = this->rotationQuat.z;
+				local_c0.w = this->rotationQuat.w;
+				local_c0.x = (float)*(undefined8*)&this->rotationQuat;
+				local_c0.y = 0.0f;
+				edF32Vector4NormalizeHard(&local_c0, &local_c0);
+				local_c0.y = 1.5f;
+				edF32Vector4NormalizeHard(&local_c0, &local_c0);
+				edF32Vector4ScaleHard(600.0f, &eStack208, &local_c0);
+				this->dynamic.speed = 0.0f;
+				edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack240, &eStack208);
+				v0 = this->dynamicExt.aImpulseVelocities;
+				edF32Vector4AddHard(v0, v0, &eStack240);
+				fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+				this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar6;
+				SetState(0x17, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x17:
+		StateFly(pBehaviour);
+		break;
+	case 0x18:
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if ((((this->pCollisionData)->flags_0x4 & 2) != 0) && (fabsf(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) < 1.0f)) {
+				this->dynamic.speed = 0.0f;
+				SetState(0x19, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x19:
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+				SetState(7, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x1a:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (3.0f <= this->timeInAir) {
+				SetState(0x1c, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x1b:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (3.0f <= this->timeInAir) {
+				TieToActor((CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+				SetState(0x1c, -1);
+			}
+			else {
+				if ((this->field_0x37c->typeID == 0x35) && (this->field_0x37c->actorState == 0xd)) {
+					TieToActor((CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+					SetState(0x1c, -1);
+				}
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x1c:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+				SetState(0x1d, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x1d:
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		this->field_0x350 = this->field_0x350 & 0xfffffffe;
+		if ((this->field_0x350 & 0x10) == 0) {
+			if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+				SetState(0x18, -1);
+			}
+		}
+		else {
+			uVar5 = TreatBoomyHit(pBehaviour);
+			SetState(uVar5, -1);
+		}
+		break;
+	case 0x1e:
+		this->dynamic.speed = 0.0f;
+		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			SetState(0x1f, -1);
+		}
+	}
+
+	CheckArea();
+
+	uVar5 = this->field_0x350;
+	if ((uVar5 & 4) == 0) {
+		if ((uVar5 & 2) == 0) {
+			this->field_0x350 = uVar5 & 0xfffffff7;
+			this->field_0x354 = (CActor*)0x0;
+		}
+	}
+	else {
+		this->field_0x350 = uVar5 | 8;
+	}
+
+	return;
+}
+
 void CActorHedgehog::BehaviourWatchDog_Manage(CBehaviourHedgehogWatchDog* pBehaviour)
 {
 	CAnimation* pCVar1;
@@ -528,8 +855,8 @@ void CActorHedgehog::StateGuardChase(CBehaviourHedgehog* pBehaviour)
 	if (this->field_0x354 != 0) {
 		movParamsIn.rotSpeed = GetRunRotSpeed();
 		movParamsIn.flags = movParamsIn.flags | 2;
-		movParamsIn.acceleration = static_cast<float>(GetRunAcceleration());
-		movParamsIn.speed = static_cast<float>(GetRunSpeed());
+		movParamsIn.acceleration = GetRunAcceleration();
+		movParamsIn.speed = GetRunSpeed();
 		movParamsIn.flags = movParamsIn.flags | 0x400;
 		SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &this->field_0x354->currentLocation);
 	}
@@ -622,8 +949,8 @@ void CActorHedgehog::StateGuardComeBack(CBehaviourHedgehog* pBehaviour)
 	movParamsIn.speed = 0.0f;
 	movParamsIn.rotSpeed = GetWalkRotSpeed();
 	movParamsIn.flags = movParamsIn.flags | 2;
-	movParamsIn.acceleration = static_cast<float>(GetWalkAcceleration());
-	movParamsIn.speed = static_cast<float>(GetWalkSpeed());
+	movParamsIn.acceleration = GetWalkAcceleration();
+	movParamsIn.speed = GetWalkSpeed();
 	movParamsIn.flags = movParamsIn.flags | 0x400;
 	pMoveToPosition = pBehaviour->GetComeBackPosition();
 	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, pMoveToPosition);
@@ -848,7 +1175,7 @@ void CActorHedgehog::StateGuardUpsideDown()
 		coneInfluence.field_0xc = 1.0f;
 		coneInfluence.field_0x10 = 0.0f;
 		coneInfluence.field_0x14 = 1;
-		SV_AttractActorInAConeAboveMe(static_cast<CActorAutonomous*>(CActorHero::_gThis), &coneInfluence);
+		SV_AttractActorInAConeAboveMe(CActorHero::_gThis, &coneInfluence);
 		if (((pHero->dynamic.velocityDirectionEuler.y < 0.001f) &&
 			(this->currentLocation.y + ((this->pCollisionData)->pObbPrim->position).y < ((pHero->pCollisionData)->highestVertex).y)) &&
 			(lVar1 = SV_IsCylinderIntersect(0.15f, 0.0f, pHero), lVar1 != 0)) {
@@ -856,6 +1183,59 @@ void CActorHedgehog::StateGuardUpsideDown()
 			DoMessage(pHero, MESSAGE_ENTER_TRAMPO, (MSG_PARAM)local_4);
 			SetState(0xd, -1);
 		}
+	}
+
+	return;
+}
+
+void CActorHedgehog::State_0x10(CBehaviourHedgehogGuardArea* pBehaviour)
+{
+	edF32VECTOR4* peVar1;
+	uint uVar2;
+	edF32MATRIX4 eStack144;
+	edF32VECTOR4 eStack80;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	CActor* pOther;
+
+	movParamsOut.flags = 0;
+	movParamsIn.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	pOther = this->pTiedActor;
+	if (pOther == (CActor*)0x0) {
+		peVar1 = pBehaviour->pathFollowReader.GetWayPoint();
+	}
+	else {
+		pOther->SV_ComputeDiffMatrixFromInit(&eStack144);
+		peVar1 = pBehaviour->pathFollowReader.GetWayPoint();
+		edF32Matrix4MulF32Vector4Hard(&eStack80, &eStack144, peVar1);
+		peVar1 = &eStack80;
+	}
+
+	movParamsIn.flags = movParamsIn.flags | 0x10;
+	movParamsIn.rotSpeed = GetWalkRotSpeed();
+	movParamsIn.flags = movParamsIn.flags | 2;
+	movParamsIn.acceleration = GetWalkAcceleration();
+	movParamsIn.speed = GetWalkSpeed();
+	movParamsIn.flags = movParamsIn.flags | 0x400;
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, peVar1);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if ((this->field_0x350 & 0x10) == 0) {
+		if ((this->field_0x350 & 8) == 0) {
+			if (movParamsOut.moveVelocity < 0.5f) {
+				SetState(0x11, -1);
+			}
+		}
+		else {
+			SetState(0x12, -1);
+		}
+	}
+	else {
+		uVar2 = TreatBoomyHit(pBehaviour);
+		SetState(uVar2, -1);
 	}
 
 	return;
@@ -1212,7 +1592,8 @@ void CBehaviourHedgehogGuardArea::Init(CActor* pOwner)
 
 void CBehaviourHedgehogGuardArea::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourGuardArea_Manage(this);
+
 	return;
 }
 

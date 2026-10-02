@@ -3055,12 +3055,12 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	edColPRIM_OBJECT* peVar2;
 	CAnimation* pAnimationController;
 	CActor* pReceiver;
-	undefined* puVar3;
+	CFrontendLifeGauge* puVar3;
 	float* pfVar4;
 	undefined4* puVar5;
 	undefined8 uVar6;
 	CLevelScheduler* pLVar7;
-	//FrontendManager* pFVar8;
+	CFrontendDisplay* pFVar8;
 	bool bVar9;
 	uint uVar10;
 	CLifeInterface* pCVar11;
@@ -3294,6 +3294,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			FUN_001b9400((int)CScene::_pinstance, 1);)
 				goto LAB_00344ed0;
 		}
+
 		if (msg == 0x5b) {
 			_msg_mini_game_restart* pMsg = (_msg_mini_game_restart*)pMsgParam;
 			this->field_0xeb0.xyz = *pMsg->pLocation;
@@ -3305,44 +3306,47 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			CScene::_pinstance->InitiateCheckpointReset(1);
 			goto LAB_00344ed0;
 		}
+
 		if (msg == 0x57) {
-			IMPLEMENTATION_GUARD(
-				this->field_0xcbc = (int)pSender;
+			this->field_0xcbc = pSender;
+
 			if (((uint)pMsgParam & 1) == 0) {
 				this->field_0x1a48 = 0;
 			}
 			else {
 				this->field_0x1a48 = 1;
 			}
+
 			if (((uint)pMsgParam & 4) == 0) {
 				this->field_0x1a4c = 0;
 			}
 			else {
 				this->field_0x1a4c = 1;
 			}
+
 			if (((uint)pMsgParam & 2) == 0) {
 				this->field_0x1a50 = 0;
 			}
 			else {
 				this->field_0x1a50 = 1;
 			}
-			(*(code*)(CScene::ptable.g_FrontendManager_00451680)->pManagerFunctionData[1].field_0x0)
-				(CScene::ptable.g_FrontendManager_00451680, 0, &this->field_0xee4);
+
+			// Swap out health bar for mini game health bar.
+			CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_LIFE, &this->field_0xee4);
 			iVar13 = CLevelScheduler::ScenVar_Get(SCN_LEVEL_LIFE_GAUGE);
-			CLifeInterface::SetValueMax((float)iVar13, &this->field_0xee4);
-			(*(code*)(this->pVTable)->LifeRestore)(this);
+			this->field_0xee4.SetValueMax((float)iVar13);
+			LifeRestore();
 			pFVar8 = CScene::ptable.g_FrontendManager_00451680;
-			FUN_001d9df0((int)(CScene::ptable.g_FrontendManager_00451680)->pHealthBar, 1);
+			(CScene::ptable.g_FrontendManager_00451680)->pHealthBar->FUN_001d9df0(1);
 			puVar3 = pFVar8->pHealthBar;
-			uVar21 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
-			fVar25 = (float)(**(code**)(*(int*)uVar21 + 0x24))(uVar21);
-			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
-			fVar26 = CLifeInterface::GetValueMax(pCVar11);
-			FUN_001daa60(fVar25 / fVar26, (int)puVar3);
-			FUN_001daff0((long)(int)pFVar8->pHealthBar);
-			FUN_001da810(pFVar8->pHealthBar);)
-				goto LAB_00344ed0;
+			fVar25 = GetLifeInterfaceOther()->GetValue();
+			fVar26 = GetLifeInterfaceOther()->GetValueMax();
+			puVar3->UpdatePercent(fVar25 / fVar26);
+			pFVar8->pHealthBar->FUN_001daff0();
+			pFVar8->pHealthBar->ShowLife();
+			goto LAB_00344ed0;
 		}
+
 		if (msg == 0x50) {
 			IMPLEMENTATION_GUARD(
 				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);

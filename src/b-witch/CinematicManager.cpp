@@ -5171,18 +5171,16 @@ void CCinematicManagerB::Level_ManagePaused()
 			for (int i = 0; i < g_CinematicManager_0048efc->activeCinematicCount; i++) {
 				pCinematic = g_CinematicManager_0048efc->ppCinematicObjB_B[i];
 
-				IMPLEMENTATION_GUARD(
-					pCinematic->Level_ClearAll();)
-					if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER) != 0) {
-						bVar3 = false;
-					}
+				pCinematic->Level_ClearAll();
+				if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_CLEARALL_DEFER) != 0) {
+					bVar3 = false;
+				}
 			}
 		}
 
 		for (int i = 0; i < g_CinematicManager_0048efc->activeCinematicCount; i++) {
 			pCinematic = g_CinematicManager_0048efc->ppCinematicObjB_B[i];
-			IMPLEMENTATION_GUARD(
-				pCinematic->ConditionallyStartCinematic(bVar3);)
+			pCinematic->ConditionallyStartCinematic(bVar3);
 		}
 	}
 

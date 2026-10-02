@@ -7,6 +7,8 @@
 #include "LargeObject.h"
 #include "Rendering/edCTextFormat.h"
 #include "edStr.h"
+#include "BootData.h"
+#include "DlistManager.h"
 #include "kya.h"
 
 char CHighScoreArray::_STRING_Init[4] = { 0, 0, 0, 0 };
@@ -465,12 +467,188 @@ void CActorMiniGame::FUN_003a9f80()
 
 void CActorMiniGame::FUN_003ac030(float param_1, int param_3, int param_4)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	int iVar2;
+	CActorMiniGamesOrganizer* pOrganizer;
+
+	pOrganizer = this->field_0x1c0;
+	if (param_4 == 0) {
+		this->field_0x1b0 = 2;
+		param_3 = 6;
+		this->field_0x1b4 = -1;
+		goto LAB_003ac100;
+	}
+
+	iVar2 = FUN_003ac880(param_1);
+	this->field_0x1b0 = iVar2;
+	if (this->field_0x174 < 1) {
+	LAB_003ac0b0:
+		bVar1 = false;
+	}
+	else {
+		if (this->field_0x1c4 == 0) {
+			bVar1 = true;
+			if (*this->field_0x178 <= param_1) goto LAB_003ac0b0;
+		}
+		else {
+			bVar1 = true;
+			if (param_1 <= *this->field_0x178) goto LAB_003ac0b0;
+		}
+	}
+
+	if ((this->curBehaviourId == 3) && (bVar1)) {
+		iVar2 = pOrganizer->field_0x9f4->FUN_003ad9f0(this->field_0x1d8);
+		this->field_0x1d8 = iVar2;
+	}
+
+LAB_003ac100:
+	this->field_0x1cc = -1;
+	NextFinalAction();
+	DoMessage(this->field_0x1c0, (ACTOR_MESSAGE)0x55, (MSG_PARAM)1);
+	this->bMustStop = false;
+	SetState(param_3, -1);
+
+	return;
 }
+
+void FUN_003ac7a0(float param_1)
+{
+	float fVar1;
+	float fVar2;
+
+	CScene::_pinstance->FUN_001b92f0();
+	fVar1 = static_cast<float>(gVideoConfig.screenWidth);
+	fVar2 = static_cast<float>((int)(static_cast<float>(gVideoConfig.screenHeight) * 0.06f + param_1 / 2.0f));
+	CPauseManager::DrawRectangleBorder(fVar1 * 0.5f, fVar2 * 0.8f, fVar1 * 1.12f, fVar2 * 1.27f * 2.0f, fVar1 * 0.01f, static_cast<float>(gVideoConfig.screenHeight) * 0.01f, 0x40101030, 0, 0);
+
+	return;
+}
+
 
 void CActorMiniGame::FUN_003ac170(uint param_2)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	edCTextStyle* pNewFont;
+	CBehaviourMiniGameMulti* pCVar2;
+	char* pcVar3;
+	CBehaviourMiniGameMulti* pCVar4;
+	int iVar5;
+	ulong lVar6;
+	uint puVar7;
+	uint uVar7;
+	float fVar8;
+	uint uVar9;
+	float fVar10;
+	float puVar12;
+	edCTextStyle eStack192;
+
+	eStack192.Reset();
+	uVar9 = 0xff;
+	bVar1 = CScene::_pinstance->FUN_001b92f0();
+	if (bVar1 != false) {
+		fVar10 = 1.0f - CScene::_pinstance->timeInState;
+		fVar8 = 1.0f;
+		if ((fVar10 <= 1.0f) && (fVar8 = fVar10, fVar10 < 0.0f)) {
+			fVar8 = 0.0f;
+		}
+		fVar8 = fVar8 * 255.0f;
+		if (fVar8 < 2.147484e+09f) {
+			uVar9 = static_cast<uint>(fVar8);
+		}
+		else {
+			uVar9 = static_cast<uint>(fVar8 - 2.147484e+09f);
+		}
+	}
+	eStack192.SetFont(BootDataFont, false);
+	eStack192.SetVerticalAlignment(8);
+	uVar9 = uVar9 & 0xff;
+	uVar7 = uVar9 | param_2 & 0xffffff00;
+	eStack192.rgbaColour = uVar7;
+	eStack192.SetShadow(0x100);
+	pNewFont = edTextStyleSetCurrent(&eStack192);
+	bVar1 = GuiDList_BeginCurrent();
+
+	if (bVar1 == false) goto LAB_003ac640;
+
+	edCTextFormat auStack5584;
+	fVar8 = GetExtraHudHeight();
+	FUN_003ac7a0(fVar8);
+
+	if (this->curBehaviourId == 4) {
+		pCVar2 = static_cast<CBehaviourMiniGameMulti*>(GetBehaviour(this->curBehaviourId));
+		pcVar3 = gMessageManager.get_message(0x41584b48445d5a17);
+		pCVar4 = GetBhvMulti();
+		iVar5 = pCVar4->winner;
+
+		GetBhvMulti();
+		switch (iVar5) {
+		case 0:
+			puVar7 = 0xffff00ff;
+			break;
+		case 1:
+			puVar7 = 0xff0000ff;
+			break;
+		case 2:
+			puVar7 = 0xff00ffff;
+			break;
+		case 3:
+			puVar7 = 0x000ff00ff;
+			break;
+		case 4:
+			puVar7 = 0xffffff;
+			break;
+		case 5:
+			puVar7 = 0xff8000ff;
+			break;
+		default:
+			puVar7 = 0;
+		}
+		eStack192.rgbaColour = uVar9 | puVar7 & 0xffffff00;
+		auStack5584.FormatString(pcVar3, pCVar2->winner + 1);
+		auStack5584.Display(static_cast<float>(gVideoConfig.screenWidth) * 0.04f, static_cast<float>(gVideoConfig.screenHeight) * 0.06f);
+	}
+
+	eStack192.rgbaColour = uVar7;
+	lVar6 = GetScoreLabelMessageHash();
+	pcVar3 = gMessageManager.get_message(lVar6);
+	fVar8 = this->field_0x1d0;
+	iVar5 = GetUnity();
+	FormatScore(fVar8, &auStack5584, pcVar3, iVar5, 0);
+	auStack5584.Display(static_cast<float>(gVideoConfig.screenWidth) * 0.25f, static_cast<float>(gVideoConfig.screenHeight) * 0.06f);
+	eStack192.rgbaColour = uVar9 | 0xffffff00;
+	lVar6 = GetHighScoreLabelMessageHash();
+	pcVar3 = gMessageManager.get_message(lVar6);
+	iVar5 = this->curBehaviourId;
+	if (iVar5 == 2) {
+		CBehaviourMiniGameTraining* pTraining = static_cast<CBehaviourMiniGameTraining*>(GetBehaviour(this->curBehaviourId));
+		if (pTraining->scoreList.nbScores < 1) goto LAB_003ac578;
+		puVar12 = pTraining->scoreList.aScores[0].score;
+	}
+	else {
+		if (iVar5 == 4) {
+			CBehaviourMiniGameMulti* pMulti = static_cast<CBehaviourMiniGameMulti*>(GetBehaviour(this->curBehaviourId));
+			if (pMulti->scoreList.nbScores < 1) goto LAB_003ac578;
+			puVar12 = pMulti->scoreList.aScores[0].score;
+		}
+		else {
+			if (iVar5 == 3) {
+				puVar12 = (this->defaultScore).score;
+			}
+			else {
+			LAB_003ac578:
+				puVar12 = -1.0f;
+			}
+		}
+	}
+
+	FormatScore(puVar12, &auStack5584, pcVar3, 0, 1);
+	auStack5584.Display(static_cast<float>(gVideoConfig.screenWidth) * 0.56f, static_cast<float>(gVideoConfig.screenHeight) * 0.06f);
+	DrawExtraHud((static_cast<float>(gVideoConfig.screenWidth) * 0.25f), static_cast<float>(gVideoConfig.screenHeight) * 0.06f);
+	GuiDList_EndCurrent();
+LAB_003ac640:
+	edTextStyleSetCurrent(pNewFont);
+
+	return;
 }
 
 void CActorMiniGame::FUN_003a9d60()

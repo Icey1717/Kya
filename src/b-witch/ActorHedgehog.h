@@ -92,6 +92,7 @@ public:
 	virtual float GetRunRotSpeed();
 	virtual float GetRunAcceleration();
 
+	void BehaviourGuardArea_Manage(CBehaviourHedgehogGuardArea* pBehaviour);
 	void BehaviourWatchDog_Manage(CBehaviourHedgehogWatchDog* pBehaviour);
 
 	uint TreatBoomyHit(CBehaviourHedgehog* pBehaviour);
@@ -102,6 +103,8 @@ public:
 	void StateGuardSurprised(CBehaviourHedgehog* pBehaviour);
 	void StateFly(CBehaviourHedgehog* pBehaviour);
 	void StateGuardUpsideDown();
+
+	void State_0x10(CBehaviourHedgehogGuardArea* pBehaviour);
 
 	bool SV_IsCylinderIntersect(float param_1, float param_2, CActor* pOtherActor);
 	int CheckArea();

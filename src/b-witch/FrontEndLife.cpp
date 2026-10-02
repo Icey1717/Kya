@@ -471,6 +471,39 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 	return;
 }
 
+void CFrontendLifeGauge::FUN_001d9df0(int param_2)
+{
+	CDualSprite* pCVar1;
+	int iVar2;
+	byte bVar3;
+
+	this->field_0x3b8 = param_2;
+
+	bVar3 = 0x50;
+	if (this->field_0x3b8 == 0) {
+		bVar3 = 0x7f;
+	}
+
+	this->spriteFillLife.rgba[0] = bVar3;
+	this->spriteFillLife.rgba[1] = bVar3;
+	this->spriteFillLife.rgba[2] = bVar3;
+	this->spriteFillLife.rgba[3] = 0x7f;
+	iVar2 = 0;
+	pCVar1 = this->aDualSprites;
+	if (0 < this->nbExtraLifeGauges) {
+		do {
+			pCVar1->spriteFill.rgba[0] = bVar3;
+			pCVar1->spriteFill.rgba[1] = bVar3;
+			iVar2 = iVar2 + 1;
+			pCVar1->spriteFill.rgba[2] = bVar3;
+			pCVar1->spriteFill.rgba[3] = 0x7f;
+			pCVar1 = pCVar1 + 1;
+		} while (iVar2 < this->nbExtraLifeGauges);
+	}
+
+	return;
+}
+
 void CFrontendLifeGauge::FUN_001daff0()
 {
 	int iVar2;

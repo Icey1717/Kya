@@ -32,6 +32,7 @@ public:
 
 	void UpdatePercent(float value);
 
+	void FUN_001d9df0(int param_2);
 	void FUN_001daff0();
 	void ShowLife();
 
@@ -63,7 +64,7 @@ public:
 
 	int field_0x3b4;
 
-	undefined4 field_0x3b8;
+	int field_0x3b8;
 
 	CSprite spriteKimHead;
 	CSprite spriteGauge2;
