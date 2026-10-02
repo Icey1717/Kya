@@ -1219,7 +1219,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 	CPlayerInput* pCVar5;
 	float fVar6;
 	float puVar7;
-	BounceParams local_30;
+	_msg_impulse_params local_30;
 
 	this->dynamic.speed = 0.0f;
 	this->dynamicExt.normalizedTranslation.x = 0.0f;

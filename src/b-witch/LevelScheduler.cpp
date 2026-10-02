@@ -702,7 +702,7 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 				do {
 					curConditionIdentifier = *pCurConditionData;
 
-					ScenaricCondition cond;
+					CScenaricCondition cond;
 					cond.Create(pCurConditionData + 1);
 
 					if ((0 < curConditionIdentifier) && (curConditionIdentifier < 0x1e)) {
@@ -753,7 +753,7 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 				if (0 < nbTotalSimpleConditions) {
 					do {
 						curConditionIdentifier = *pCurConditionData;
-						ScenaricCondition cond;
+						CScenaricCondition cond;
 						cond.Create(pCurConditionData + 1);
 
 						if ((0 < curConditionIdentifier) && (curConditionIdentifier < 0x1e)) {

@@ -207,7 +207,7 @@ int CActorWoof::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	edF32VECTOR4 local_10;
 
 	if (msg == MESSAGE_IMPULSE) {
-		BounceParams* pBounceParams = reinterpret_cast<BounceParams*>(pMsgParam);
+		_msg_impulse_params* pBounceParams = reinterpret_cast<_msg_impulse_params*>(pMsgParam);
 
 		edF32Vector4ScaleHard(pBounceParams->field_0x10, &eStack32, &pBounceParams->field_0x0);
 		edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, &eStack64, &eStack32);

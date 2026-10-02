@@ -14,8 +14,9 @@ struct S_STREAM_SIMPLE_COND {
 
 static_assert(sizeof(S_STREAM_SIMPLE_COND) == 0x10);
 
-struct ScenaricCondition {
-	ScenaricCondition() : pData((int*)0x0) {}
+struct CScenaricCondition
+{
+	CScenaricCondition() : pData((int*)0x0) {}
 
 	int* pData;
 

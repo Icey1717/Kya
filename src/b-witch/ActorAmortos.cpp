@@ -301,7 +301,7 @@ void CActorAmortos::BehaviourAmortosStand_Manage()
 	long lVar7;
 	edF32VECTOR4 eStack96;
 	edF32VECTOR4 local_50;
-	BounceParams local_30;
+	_msg_impulse_params local_30;
 	edF32VECTOR4 local_20;
 	undefined4 local_8;
 	float* local_4;

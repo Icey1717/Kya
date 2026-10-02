@@ -816,7 +816,7 @@ void CActor::Create(ByteCode* pByteCode)
 	if ((this->actorFieldS & 0x80) != 0) {
 		FUN_00115ea0(0);
 	}
-	ScenaricCondition local_4;
+	CScenaricCondition local_4;
 	local_4.Create(pByteCode);
 	uVar6 = local_4.IsVerified();
 	if (uVar6 == 0) {

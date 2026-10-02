@@ -92,6 +92,20 @@ public:
 	virtual float GetRunRotSpeed();
 	virtual float GetRunAcceleration();
 
+	void BehaviourWatchDog_Manage(CBehaviourHedgehogWatchDog* pBehaviour);
+
+	uint TreatBoomyHit(CBehaviourHedgehog* pBehaviour);
+
+	void StateGuardChase(CBehaviourHedgehog* pBehaviour);
+	void StateGuardChaseStand(CBehaviourHedgehog* pBehaviour);
+	void StateGuardComeBack(CBehaviourHedgehog* pBehaviour);
+	void StateGuardSurprised(CBehaviourHedgehog* pBehaviour);
+	void StateFly(CBehaviourHedgehog* pBehaviour);
+	void StateGuardUpsideDown();
+
+	bool SV_IsCylinderIntersect(float param_1, float param_2, CActor* pOtherActor);
+	int CheckArea();
+
 	uint field_0x350;
 	CActor* field_0x354;
 	float walkSpeed;
@@ -103,6 +117,7 @@ public:
 	float field_0x370;
 	uint field_0x374;
 	uint field_0x378;
+	CActor* field_0x37c;
 	uint field_0x380;
 	edF32VECTOR4 field_0x390;
 	CBehaviourHedgehogWatchDog behaviourWatchDog;

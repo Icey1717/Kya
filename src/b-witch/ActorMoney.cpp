@@ -477,7 +477,9 @@ void CBehaviourMoneyFlock::SectorChange(int oldSectorId, int newSectorId)
 
 void CBehaviourMoneyFlock::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	this->instantFlares.Draw(this->pOwner->field_0x1d4);
+
+	return;
 }
 
 void CBehaviourMoneyFlock::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -621,11 +623,14 @@ void CInstantFlares::Create(float param_1, float param_2, int param_4)
 	this->field_0x8 = param_2;
 	this->field_0x10 = param_4;
 	this->field_0x14 = 0;
-	this->field_0xc = 0;
+	this->field_0xc = 0.0f;
 	this->field_0x0 = new CInstantFlares_8[param_4];
 
 	if (0 < param_4) {
-
+		for (int i = 0; i < param_4; ++i) {
+			this->field_0x0[i].field_0x0 = (CActInstance*)0x0;
+			this->field_0x0[i].field_0x4 = 0.0f;
+		}
 	}
 
 	return;
@@ -633,7 +638,195 @@ void CInstantFlares::Create(float param_1, float param_2, int param_4)
 
 void CInstantFlares::Manage(CActInstance* pInstances, int nbInstances)
 {
-	IMPLEMENTATION_GUARD_FX();
+	CInstantFlares_8* pCVar2;
+	CInstantFlares_8* piVar4;
+	int iVar3;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+
+	iVar4 = 0;
+	if (0 < this->field_0x10) {
+		do {
+			piVar4 = this->field_0x0 + iVar4;
+			if (piVar4->field_0x0 != (CActInstance*)0x0) {
+				fVar5 = piVar4->field_0x4 + GetTimer()->cutsceneDeltaTime;
+				piVar4->field_0x4 = fVar5;
+				if ((0.5f < fVar5) || ((piVar4->field_0x0->flags & 4) == 0)) {
+					piVar4->field_0x0 = (CActInstance*)0x0;
+					piVar4->field_0x4 = 0.0f;
+					this->field_0x14 = this->field_0x14 + -1;
+				}
+			}
+
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->field_0x10);
+	}
+
+	fVar5 = this->field_0xc - GetTimer()->cutsceneDeltaTime;
+	this->field_0xc = fVar5;
+	if (fVar5 < 0.0f) {
+		this->field_0xc = 0.0f;
+	}
+
+	iVar4 = this->field_0x10;
+	if ((((int)this->field_0x14 < iVar4) && (this->field_0xc == 0.0f)) && (iVar3 = 0, 0 < iVar4)) {
+		pCVar2 = this->field_0x0;
+		do {
+			if (pCVar2->field_0x0 == (CActInstance*)0x0) {
+				fVar5 = this->field_0x4;
+				fVar6 = this->field_0x8;
+				iVar4 = rand();
+				this->field_0xc = fVar5 + (fVar6 - fVar5) * (static_cast<float>(iVar4) / 2.147484e+09f);
+				_GenerateNewOne(pInstances, nbInstances);
+
+				return;
+			}
+
+			iVar3 = iVar3 + 1;
+			pCVar2 = pCVar2 + 1;
+		} while (iVar3 < iVar4);
+	}
+
+	return;
+}
+
+float DBG_TIME_IN1 = 0.25f;
+float DBG_LERP_OUT1 = 1.0f;
+float DBG_TIME_IN2 = 0.5f;
+float DBG_LERP_OUT2 = 0.25f;
+float DBG_TIME_IN3 = 0.75f;
+float DBG_LERP_OUT3 = 0.5f;
+float DBG_TIME_IN4 = 1.0f;
+float DBG_LERP_OUT4 = 0.0f;
+float DBG_SCALE_SIZE = 0.6f;
+
+edF32VECTOR4 DBG_voffset = { 0.12f, 0.12f, 0.035f, 0.0f };
+
+void CInstantFlares::Draw(int materialId)
+{
+	bool bVar1;
+	edDList_material* pMaterialInfo;
+	CInstantFlares_8* pInstance;
+	int iVar4;
+	float fVar5;
+	edF32VECTOR4 local_10;
+	C3DFileManager* pFileManager;
+
+	if ((this->field_0x10 != 0) && (bVar1 = GameDList_BeginCurrent(), pFileManager = CScene::ptable.g_C3DFileManager_00451664, bVar1 != false)) {
+		edDListLoadIdentity();
+		pMaterialInfo = pFileManager->GetMaterialFromId(materialId, 0);
+		edDListUseMaterial(pMaterialInfo);
+		iVar4 = 0;
+		if (0 < this->field_0x10) {
+			do {
+				pInstance = this->field_0x0 + iVar4;
+				if (pInstance->field_0x0 != (CActInstance*)0x0) {
+					fVar5 = pInstance->field_0x4 / 0.5f;
+					if (fVar5 < DBG_TIME_IN1) {
+						fVar5 = edFIntervalLERP(fVar5, 0.0f, DBG_TIME_IN1, 0.0f, DBG_LERP_OUT1);
+					}
+					else {
+						if (fVar5 < DBG_TIME_IN2) {
+							fVar5 = edFIntervalLERP(fVar5, DBG_TIME_IN1, DBG_TIME_IN2, DBG_LERP_OUT1, DBG_LERP_OUT2);
+						}
+						else {
+							if (fVar5 < DBG_TIME_IN3) {
+								fVar5 = edFIntervalLERP(fVar5, DBG_TIME_IN2, DBG_TIME_IN3, DBG_LERP_OUT2, DBG_LERP_OUT3);
+							}
+							else {
+								fVar5 = edFIntervalLERP(fVar5, DBG_TIME_IN3, DBG_TIME_IN4, DBG_LERP_OUT3, DBG_LERP_OUT4);
+							}
+						}
+					}
+
+					edF32Matrix4MulF32Vector4Hard(&local_10, &pInstance->field_0x0->pHierarchy->transformA, &DBG_voffset);
+					edF32Vector4AddHard(&local_10, &pInstance->field_0x0->currentPosition, &local_10);
+					edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+					edDListTexCoo2f(0.0f, 0.0f);
+					edDListTexCoo2f(1.0f, 1.0f);
+					edDListWidthHeight2f(DBG_SCALE_SIZE * fVar5, DBG_SCALE_SIZE * fVar5);
+					edDListColor4u8(0x80, 0x80, 0x80, (byte)static_cast<int>(fVar5 * 128.0f));
+					edDListVertex4f(local_10.x, local_10.y, local_10.z, 0.0f);
+					edDListEnd();
+				}
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->field_0x10);
+		}
+
+		GameDList_EndCurrent();
+	}
+
+	return;
+}
+
+
+
+void CInstantFlares::_GenerateNewOne(CActInstance* pInstances, int nbInstances)
+{
+	bool bVar1;
+	CInstantFlares_8* pCurFlare;
+	int iVar2;
+	int iVar3;
+	CActInstance* pCVar4;
+	CInstantFlares_8* pFreeFlare;
+	int iVar6;
+
+	iVar3 = 0;
+	bVar1 = false;
+	iVar6 = 0;
+	pFreeFlare = (CInstantFlares_8*)0x0;
+	while ((iVar3 < this->field_0x10 && (pFreeFlare == (CInstantFlares_8*)0x0))) {
+		pCurFlare = this->field_0x0 + iVar3;
+		if (pCurFlare->field_0x0 == (CActInstance*)0x0) {
+			pFreeFlare = pCurFlare;
+		}
+
+		iVar3 = iVar3 + 1;
+	}
+
+	if (pFreeFlare != (CInstantFlares_8*)0x0) {
+		iVar2 = 0;
+		pCVar4 = pInstances;
+		if (0 < nbInstances) {
+			do {
+				if (((pCVar4->flags & 1) != 0) && ((pCVar4->flags & 4) != 0)) {
+					iVar6 = iVar6 + 1;
+				}
+
+				iVar2 = iVar2 + 1;
+				pCVar4 = pCVar4 + 1;
+			} while (iVar2 < nbInstances);
+		}
+
+		if (iVar6 != 0) {
+			iVar2 = rand();
+			iVar2 = iVar2 % iVar6;
+
+			if (iVar6 == 0) {
+				trap(7);
+			}
+
+			iVar3 = 0;
+			while ((iVar3 < nbInstances && (!bVar1))) {
+				if (((pInstances->flags & 1) != 0) && ((pInstances->flags & 4) != 0)) {
+					if (iVar2 == 0) {
+						pFreeFlare->field_0x0 = pInstances;
+						bVar1 = true;
+						pFreeFlare->field_0x4 = 0.0f;
+						this->field_0x14 = this->field_0x14 + 1;
+					}
+					iVar2 = iVar2 + -1;
+				}
+
+				pInstances = pInstances + 1;
+				iVar3 = iVar3 + 1;
+			}
+		}
+	}
+
+	return;
 }
 
 void CMnyInstance::SetState(int newState)

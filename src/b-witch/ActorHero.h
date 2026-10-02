@@ -276,12 +276,6 @@ struct AnimResultHero : public StateConfig {
 
 #define ACTOR_HERO_LOG(level, format, ...) MY_LOG_CATEGORY("ActorHero", level, format, ##__VA_ARGS__)
 
-struct BounceParams
-{
-	edF32VECTOR4 field_0x0;
-	float field_0x10;
-};
-
 struct HeroActionStateCfg
 {
 	uint field_0x0;

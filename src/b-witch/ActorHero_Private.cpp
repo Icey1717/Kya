@@ -3648,7 +3648,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		if (msg == MESSAGE_IMPULSE) {
 			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage BOUNCE");
 
-			BounceParams* pBounceParams = reinterpret_cast<BounceParams*>(pMsgParam);
+			_msg_impulse_params* pBounceParams = reinterpret_cast<_msg_impulse_params*>(pMsgParam);
 			iVar13 = this->actorState;
 			if ((iVar13 == STATE_HERO_TRAMPOLINE_JUMP_1_2_A) || (iVar13 == STATE_HERO_TRAMPOLINE_JUMP_1_2_B)) {
 				edF32Vector4ScaleHard(pBounceParams->field_0x10, &eStack144, &pBounceParams->field_0x0);

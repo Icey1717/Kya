@@ -47,7 +47,7 @@ struct CompanionAlert
 	int field_0x58;
 	float field_0x5c;
 	float instanceIndex;
-	ScenaricCondition field_0x64;
+	CScenaricCondition field_0x64;
 	S_NTF_SWITCH targetSwitch;
 	ConditionedOperationArray field_0x70;
 	undefined field_0x74;

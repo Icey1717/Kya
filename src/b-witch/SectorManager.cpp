@@ -169,7 +169,7 @@ void CSectorManager::LevelLoading_Begin()
 			pCompanionInfo = pLVar1->aCompanionInfo;
 
 			for (iVar10 = pLVar1->nbSectorConditions; iVar10 != 0; iVar10 = iVar10 + -1) {
-				ScenaricCondition* pCond = &pCompanionInfo->cond;
+				CScenaricCondition* pCond = &pCompanionInfo->cond;
 
 				uVar4 = pCond->IsVerified();
 				if (uVar4 == 0) {
@@ -956,7 +956,7 @@ void CSectorManager::Level_AddAll(ByteCode* pMemoryStream)
 	int iVar3;
 	int iVar4;
 	int iVar5;
-	ScenaricCondition local_4;
+	CScenaricCondition local_4;
 
 	pMemoryStream->GetChunk();
 	iVar2 = pMemoryStream->GetS32();

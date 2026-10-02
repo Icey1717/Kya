@@ -3,13 +3,13 @@
 #include "LevelScheduler.h"
 #include <assert.h>
 
-void ScenaricCondition::Create(int* param_2)
+void CScenaricCondition::Create(int* param_2)
 {
 	this->pData = param_2;
 	return;
 }
 
-void ScenaricCondition::Create(ByteCode* pByteCode)
+void CScenaricCondition::Create(ByteCode* pByteCode)
 {
 	int* piVar1;
 
@@ -27,7 +27,7 @@ void ScenaricCondition::Create(ByteCode* pByteCode)
 	return;
 }
 
-ulong ScenaricCondition::IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2)
+ulong CScenaricCondition::IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2)
 {
 	int iVar1;
 	int iVar2;
@@ -77,7 +77,7 @@ ulong ScenaricCondition::IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2)
 	return uVar3;
 }
 
-ulong ScenaricCondition::IsVerified()
+ulong CScenaricCondition::IsVerified()
 {
 	ulong uVar1;
 	S_STREAM_SIMPLE_COND* pCond;
@@ -92,7 +92,7 @@ ulong ScenaricCondition::IsVerified()
 	return uVar1;
 }
 
-int ScenaricCondition::GetNumSimpleConds()
+int CScenaricCondition::GetNumSimpleConds()
 {
 	int iVar1;
 
@@ -106,22 +106,22 @@ int ScenaricCondition::GetNumSimpleConds()
 	return iVar1;
 }
 
-int ScenaricCondition::GetDataSize()
+int CScenaricCondition::GetDataSize()
 {
 	return *this->pData * 0x10 + 4;
 }
 
-int* ScenaricCondition::GetBeginPtr()
+int* CScenaricCondition::GetBeginPtr()
 {
 	return this->pData;
 }
 
-int* ScenaricCondition::GetEndPtr()
+int* CScenaricCondition::GetEndPtr()
 {
 	return this->pData + *this->pData * 4 + 1;
 }
 
-void ScenaricCondition::Invalidate()
+void CScenaricCondition::Invalidate()
 {
 	pData = (int*)0x0;
 	return;
@@ -237,7 +237,7 @@ void ConditionedOperationArray::Perform()
 				pCond = pCondHeader->aConds;
 
 				for (; 0 < condCount; condCount = condCount + -1) {
-					uVar2 = ScenaricCondition::IsVerified(pCond, uVar2);
+					uVar2 = CScenaricCondition::IsVerified(pCond, uVar2);
 					pCond = pCond + 1;
 				}
 

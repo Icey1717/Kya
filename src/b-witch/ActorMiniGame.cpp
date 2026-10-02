@@ -413,7 +413,21 @@ void CActorMiniGame::StateMiniGameStandInit()
 
 void CActorMiniGame::StateMiniGameStand(CBehaviourMiniGame* pBehaviour, int param_3)
 {
-	IMPLEMENTATION_GUARD();
+	long lVar1;
+
+	if (this->field_0x1b8 != 0) {
+		if (this->field_0x1b9 != 0) {
+			DoMessage(this->field_0x1c0, (ACTOR_MESSAGE)0x55, 0);
+			SetState(param_3, -1);
+		}
+
+		lVar1 = MustStop();
+		if (lVar1 != 0) {
+			FUN_003ac030(0.0f, 6, 0);
+		}
+	}
+
+	return;
 }
 
 

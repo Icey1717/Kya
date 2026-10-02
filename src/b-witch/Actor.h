@@ -375,6 +375,12 @@ struct CActorParamsIn
 #define HIT_VARIANT_BOOMY_SNIPE 0x3
 #define HIT_VARIANT_BOOMY_CONTROL 0x4
 
+struct _msg_impulse_params
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+};
+
 struct _msg_hit_param
 {
 	int projectileType;

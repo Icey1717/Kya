@@ -184,7 +184,7 @@ struct SaveBigAlloc {
 struct S_COMPANION_INFO
 {
 	uint conditionIdentifier;
-	ScenaricCondition cond;
+	CScenaricCondition cond;
 };
 
 struct S_LVLNFO_SECTOR_V7_V9

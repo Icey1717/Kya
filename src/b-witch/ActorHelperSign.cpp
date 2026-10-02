@@ -52,15 +52,16 @@ void CActorHelperSign::Draw()
 	CActor::Draw();
 
 	if (this->curBehaviourId == HELPER_SIGN_BEHAVIOUR_HIGHSCORE) {
-		IMPLEMENTATION_GUARD_LOG(
 		if ((this->actorState == HELPER_SIGN_STATE_SHOW) && (bVar2 = GuiDList_BeginCurrent(), bVar2 != false)) {
+			IMPLEMENTATION_GUARD_LOG(
 			FUN_00339ab0();
 			pCVar3 = static_cast<CBehaviourHelperSignHighScore*>(GetBehaviour(this->curBehaviourId));
 			pCVar3->menuWheel.Draw();
-			GuiDList_EndCurrent();
+			GuiDList_EndCurrent();)
 		}
 
 		if (this->actorState == 9) {
+			IMPLEMENTATION_GUARD_LOG(
 			bVar2 = Frontend2DDList_BeginCurrent();
 			if (bVar2 != false) {
 				pCVar4 = static_cast<CBehaviourHelperSignHighScore*>(GetBehaviour(this->curBehaviourId));
@@ -68,9 +69,9 @@ void CActorHelperSign::Draw()
 				FrontendDList_EndCurrent();
 			}
 
-			FUN_001b1830(0);
+			FUN_001b1830(0);)
 			return;
-		})
+		}
 	}
 
 	if (((GameFlags & 0x3c) == 0) && (this->curBehaviourId == HELPER_SIGN_BEHAVIOUR_STAND)) {

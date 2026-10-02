@@ -847,7 +847,7 @@ public:
 	CActor* pActor;
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
-	ScenaricCondition cond_0x248;
+	CScenaricCondition cond_0x248;
 
 	S_NTF_SWITCH switchListA;
 	S_NTF_SWITCH switchListB;

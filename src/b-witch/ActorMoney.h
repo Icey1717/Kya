@@ -23,7 +23,8 @@ public:
 
 struct CInstantFlares_8
 {
-
+	CActInstance* field_0x0;
+	float field_0x4;
 };
 
 class CInstantFlares
@@ -31,11 +32,13 @@ class CInstantFlares
 public:
 	void Create(float param_1, float param_2, int param_4);
 	void Manage(CActInstance* pInstances, int nbInstances);
+	void Draw(int materialId);
+	void _GenerateNewOne(CActInstance* pInstances, int nbInstances);
 
 	CInstantFlares_8* field_0x0;
 	float field_0x4;
 	float field_0x8;
-	undefined4 field_0xc;
+	float field_0xc;
 	int field_0x10;
 	undefined4 field_0x14;
 };
