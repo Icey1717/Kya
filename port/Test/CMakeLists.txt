@@ -13,6 +13,7 @@ target_sources(KyaPortTest PRIVATE "src/nativ_akasa_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/bone_physics_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/minigame_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/electrolla_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/wood_monster_tests.cpp")
 target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 
 target_compile_definitions(KyaPortTest PRIVATE TEST_DATA_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/data/")

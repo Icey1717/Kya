@@ -33,7 +33,7 @@ public:
 class CActorElectrolla : public CActor
 {
 public:
-	CActorElectrolla() : field_0x170(0) {}
+	CActorElectrolla();
 	virtual ~CActorElectrolla();
 
 	static StateConfig _gStateCfg_ELE[8];

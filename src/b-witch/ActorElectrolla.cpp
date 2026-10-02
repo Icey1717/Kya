@@ -63,6 +63,13 @@ static void CriterionElectrollaMovable(CActor* pActor, void* pParams)
 	}
 }
 
+CActorElectrolla::CActorElectrolla()
+{
+	this->field_0x170 = (CFxSparkNoAlloc<3, 12>*)0x0;
+
+	return;
+}
+
 CActorElectrolla::~CActorElectrolla()
 {
 	delete[] this->field_0x170;
@@ -522,6 +529,8 @@ void CBehaviourElectrolla::Create(ByteCode* pByteCode)
 void CBehaviourElectrolla::Manage()
 {
 	this->pOwner->BehaviourElectrolla_Manage();
+
+	return;
 }
 
 void CBehaviourElectrolla::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -533,11 +542,15 @@ void CBehaviourElectrolla::Begin(CActor* pOwner, int newState, int newAnimationT
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
 	}
+
+	return;
 }
 
 void CBehaviourElectrolla::InitState(int newState)
 {
 	this->pOwner->BehaviourElectrolla_InitState(newState);
+
+	return;
 }
 
 float GetActorsNearWithCriterion(float radius, CActor* pActor, CActorsTable* pTable, ColCallbackFuncPtr* pFunc)
