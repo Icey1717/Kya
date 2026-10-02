@@ -3681,7 +3681,6 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 	S_MINI_GAME_BET* piVar7;
 	float fVar8;
 	float fVar10;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	eStack192.Reset();
@@ -3698,6 +3697,7 @@ void CActorMiniGamesOrganizer::DrawMenuBetText()
 	bVar3 = GuiDList_BeginCurrent();
 	if (bVar3 != false) {
 		pNewFont = edTextStyleSetCurrent(&eStack192);
+		edCTextFormat auStack5584;
 
 		fVar8 = (float)(uint)this->field_0x94c / 2.0f;
 		if (fVar8 < 2.147484e+09f) {
@@ -3802,7 +3802,6 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 	uint uVar7;
 	float fVar8;
 	float fVar10;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	eStack192.Reset();
@@ -3829,7 +3828,7 @@ void CActorMiniGamesOrganizer::DrawMenuMultiText()
 		fVar10 = (float)gVideoConfig.screenHeight * 0.19f;
 		this->field_0x76c.FUN_002ef4e0(fVar8, (float)gVideoConfig.screenHeight * 0.08f, fVar8, fVar10, 0);
 		pNewFont = edTextStyleSetCurrent(&eStack192);
-
+		edCTextFormat auStack5584;
 		eStack192.rgbaColour = this->field_0x94c | 0xffff0000;
 		eStack192.SetScale(1.13f, 1.13f);
 		pcVar3 = gMessageManager.get_message(0x4753525818110104);
@@ -3925,7 +3924,6 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 	float y;
 	float fVar13;
 	float x;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	eStack192.Reset();
@@ -3944,7 +3942,7 @@ void CActorMiniGamesOrganizer::DrawMenuResultText()
 	bVar2 = GuiDList_BeginCurrent();
 	if (bVar2 != false) {
 		pNewFont = edTextStyleSetCurrent(&eStack192);
-
+		edCTextFormat auStack5584;
 		fVar12 = (float)(uint)this->field_0x94c / 2.0f;
 		if (fVar12 < 2.147484e+09f) {
 			this->field_0x76c.field_0x1a4 = (char)(int)fVar12;
@@ -4120,7 +4118,6 @@ void CActorMiniGamesOrganizer::DrawMenuEnterNameText()
 {
 	bool bVar1;
 	edCTextStyle *pNewFont;
-	edCTextFormat auStack5584;
 	edCTextStyle eStack192;
 
 	DrawMenuResultText();
@@ -4132,6 +4129,8 @@ void CActorMiniGamesOrganizer::DrawMenuEnterNameText()
 	eStack192.SetVerticalAlignment(8);
 	eStack192.SetShadow(0x100);
 	pNewFont = edTextStyleSetCurrent(&eStack192);
+
+	edCTextFormat auStack5584;
 
 	bVar1 = GuiDList_BeginCurrent();
 	if (bVar1 != false) {
@@ -4174,8 +4173,8 @@ void CActorMiniGamesOrganizer::DrawAllLetters()
 	eStack192.SetShadow(0x100);
 	float fVar7 = (float)gVideoConfig.screenWidth * 0.14f;
 	float y = (float)gVideoConfig.screenHeight * 0.67f;
-	edCTextFormat auStack5584;
 	edCTextStyle* pNewFont = edTextStyleSetCurrent(&eStack192);
+	edCTextFormat auStack5584;
 	int iVar5 = 0;
 	int iVar4 = 0;
 	float x = fVar7;

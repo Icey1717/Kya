@@ -3281,18 +3281,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	else {
 		if (msg == 0x58) {
-			IMPLEMENTATION_GUARD(
-				this->field_0x2e4 = 0.0;
+			this->field_0x2e4 = 0.0;
 			this->field_0xcbc = 0;
 			this->field_0x1a48 = 0;
 			this->field_0x1a4c = 0;
 			this->field_0x1a50 = 0;
 			pFVar8 = CScene::ptable.g_FrontendManager_00451680;
-			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
-			(*(code*)pFVar8->pManagerFunctionData[1].field_0x0)(pFVar8, 0, pCVar11);
-			FUN_001d9df0((int)(CScene::ptable.g_FrontendManager_00451680)->pHealthBar, 0);
-			FUN_001b9400((int)CScene::_pinstance, 1);)
-				goto LAB_00344ed0;
+			pCVar11 = GetLifeInterfaceOther();
+			pFVar8->DeclareInterface(FRONTEND_INTERFACE_LIFE, pCVar11);
+			(CScene::ptable.g_FrontendManager_00451680)->pHealthBar->FUN_001d9df0(0);
+			CScene::_pinstance->InitiateCheckpointReset(1);
+			goto LAB_00344ed0;
 		}
 
 		if (msg == 0x5b) {

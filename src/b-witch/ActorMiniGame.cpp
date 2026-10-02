@@ -403,7 +403,33 @@ void CActorMiniGame::FUN_003a9f70()
 
 void CActorMiniGame::FUN_003a9d80()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	uint uVar2;
+	float fVar3;
+
+	fVar3 = fabsf(cosf(this->timeInAir * 30.0f)) * 255.0f;
+	if (fVar3 < 2.147484e+09f) {
+		iVar1 = this->field_0x1b0;
+	}
+	else {
+		fVar3 = fVar3 - 2.147484e+09f;
+		iVar1 = this->field_0x1b0;
+	}
+
+	if (iVar1 < 2) {
+		uVar2 = (static_cast<uint>((int)fVar3 * 0xff) >> 8) << 0x10;
+	}
+	else {
+		uVar2 = (static_cast<uint>((int)fVar3 * 0xff) >> 8) << 0x18;
+	}
+
+	FUN_003ac170(uVar2 | 0xff);
+
+	if (0.5f < this->timeInAir) {
+		SetState(6, -1);
+	}
+
+	return;
 }
 
 void CActorMiniGame::StateMiniGameStandInit()
@@ -663,6 +689,65 @@ void CActorMiniGame::FUN_003a9f50()
 	this->flags = this->flags & 0xfffffffc;
 
 	return;
+}
+
+byte CActorMiniGame::FUN_003ac880(float param_1)
+{
+	byte result = 2;
+	S_MINI_GAME_SCORE_LIST* pScoreList;
+
+	this->field_0x1b4 = -1;
+	if (this->curBehaviourId == 3) {
+		if (this->field_0x1c4 == 0) {
+			if (this->defaultScore.score <= param_1) {
+				this->defaultScore.score = param_1;
+				result = 0;
+				this->field_0x1b4 = 0;
+			}
+		}
+		else {
+			if (param_1 <= this->defaultScore.score) {
+				this->defaultScore.score = param_1;
+				result = 0;
+				this->field_0x1b4 = 0;
+			}
+		}
+	}
+	else {
+		if ((this->curBehaviourId == 4) || (this->curBehaviourId == 2)) {
+			if (this->curBehaviourId == 4) {
+				pScoreList = &GetBhvMulti()->scoreList;
+			}
+			if (this->curBehaviourId == 2) {
+				pScoreList = &GetBhvTraining()->scoreList;
+			}
+
+			for (int scoreIndex = 0; scoreIndex < pScoreList->nbScores; scoreIndex = scoreIndex + 1) {
+				float score = pScoreList->aScores[scoreIndex].score;
+				if ((score == -1.0f) ||
+					((this->field_0x1c4 == 0) && (score <= param_1)) ||
+					((this->field_0x1c4 != 0) && (param_1 <= score))) {
+					S_MINI_GAME_SCORE displacedScore = pScoreList->aScores[scoreIndex];
+					pScoreList->aScores[scoreIndex].score = param_1;
+
+					for (int nextIndex = scoreIndex + 1; nextIndex < pScoreList->nbScores; nextIndex = nextIndex + 1) {
+						S_MINI_GAME_SCORE nextScore = pScoreList->aScores[nextIndex];
+						pScoreList->aScores[nextIndex].name[0] = displacedScore.name[0];
+						pScoreList->aScores[nextIndex].name[1] = displacedScore.name[1];
+						pScoreList->aScores[nextIndex].name[2] = displacedScore.name[2];
+						pScoreList->aScores[nextIndex].name[3] = '\0';
+						pScoreList->aScores[nextIndex].score = displacedScore.score;
+						displacedScore = nextScore;
+					}
+
+					this->field_0x1b4 = scoreIndex;
+					return scoreIndex != 0;
+				}
+			}
+		}
+	}
+
+	return result;
 }
 
 

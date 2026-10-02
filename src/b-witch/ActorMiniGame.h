@@ -164,6 +164,7 @@ public:
 	void FUN_003ac170(uint param_2);
 	void FUN_003a9d60();
 	void FUN_003a9f50();
+	byte FUN_003ac880(float param_1);
 
 	ulong field_0x160;
 	uint field_0x168;

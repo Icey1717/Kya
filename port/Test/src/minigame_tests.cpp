@@ -44,6 +44,61 @@ TEST_F(MiniGameTest, BehaviourIdsSelectTheEmbeddedSharedBaseBehaviours)
 	EXPECT_EQ(boomy.GetUnity(), 3);
 }
 
+TEST_F(MiniGameTest, DefaultHighScoreAcceptsTiesAndRespectsTheScoreDirection)
+{
+	CActorMiniGameBoxCounter game;
+	game.curBehaviourId = 3;
+	game.field_0x1c4 = 0;
+	game.defaultScore = { 10.0f, { 'A', 'B', 'C', '\0' } };
+	EXPECT_EQ(game.FUN_003ac880(9.0f), 2);
+	EXPECT_EQ(game.field_0x1b4, -1);
+	EXPECT_FLOAT_EQ(game.defaultScore.score, 10.0f);
+	EXPECT_EQ(game.FUN_003ac880(10.0f), 0);
+	EXPECT_EQ(game.field_0x1b4, 0);
+	EXPECT_EQ(game.FUN_003ac880(11.0f), 0);
+	game.field_0x1c4 = 1;
+	EXPECT_EQ(game.FUN_003ac880(12.0f), 2);
+	EXPECT_EQ(game.field_0x1b4, -1);
+	EXPECT_EQ(game.FUN_003ac880(11.0f), 0);
+	EXPECT_EQ(game.FUN_003ac880(9.0f), 0);
+	EXPECT_FLOAT_EQ(game.defaultScore.score, 9.0f);
+	EXPECT_STREQ(game.defaultScore.name, "ABC");
+}
+
+TEST_F(MiniGameTest, RankedHighScoresShiftNamesAndScoresAndAcceptEmptySlots)
+{
+	for (int behaviourId : { 2, 4 }) {
+		for (int direction : { 0, 1 }) {
+			CActorMiniGameBoxCounter game;
+			game.curBehaviourId = behaviourId;
+			game.field_0x1c4 = direction;
+			S_MINI_GAME_SCORE_LIST* pList = behaviourId == 2 ? &game.GetBhvTraining()->scoreList : &game.GetBhvMulti()->scoreList;
+			float bestScore = direction == 0 ? 30.0f : 10.0f;
+			float lastScore = direction == 0 ? 10.0f : 30.0f;
+			pList->nbScores = 3;
+			pList->aScores = new S_MINI_GAME_SCORE[3]{
+				{ bestScore, { 'A', 'A', 'A', '\0' } },
+				{ 20.0f, { 'B', 'B', 'B', 'X' } },
+				{ lastScore, { 'C', 'C', 'C', '\0' } }
+			};
+			EXPECT_EQ(game.FUN_003ac880(20.0f), 1);
+			EXPECT_EQ(game.field_0x1b4, 1);
+			EXPECT_FLOAT_EQ(pList->aScores[0].score, bestScore);
+			EXPECT_EQ(pList->aScores[1].name[3], 'X');
+			EXPECT_FLOAT_EQ(pList->aScores[2].score, 20.0f);
+			EXPECT_STREQ(pList->aScores[2].name, "BBB");
+			EXPECT_EQ(game.FUN_003ac880(lastScore), 2);
+			EXPECT_EQ(game.field_0x1b4, -1);
+			pList->aScores[2].score = -1.0f;
+			EXPECT_EQ(game.FUN_003ac880(lastScore), 1);
+			EXPECT_EQ(game.field_0x1b4, 2);
+			EXPECT_FLOAT_EQ(pList->aScores[2].score, lastScore);
+			EXPECT_EQ(game.FUN_003ac880(bestScore), 0);
+			EXPECT_EQ(game.field_0x1b4, 0);
+		}
+	}
+}
+
 TEST_F(MiniGameTest, BoxMessagesClampTheScoreAndTheCountdownUsesTheOriginalBoundary)
 {
 	CActorMiniGameBoxCounter game;
