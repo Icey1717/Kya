@@ -43,7 +43,7 @@ public:
 	void ChangeStallTime(float stalltime);
 	void ChangeDirection(edF32VECTOR4* pDirection);
 	void ChangeAlphaFactor(float alphaFactor);
-	bool Manage(edF32VECTOR4*, undefined4);
+	bool Manage(edF32VECTOR4* param_2, uint param_3);
 	void GenerateNewOne(edF32VECTOR4* param_2);
 	void Enable(int bEnable);
 	void ReleaseRays(int nbRays);
@@ -54,6 +54,8 @@ public:
 	int ManageSlice(RAY_DEF* pDefs, int param_3, edF32VECTOR4* param_4, uint param_5);
 
 	void Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* param_4);
+
+	void ChangeGenAtHand(int param_2);
 
 	RAY_DEF* pRayDef;
 	float alphaFactor;

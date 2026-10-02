@@ -286,15 +286,52 @@ void CFxLightEmitter::ChangeAlphaFactor(float alphaFactor)
 	return;
 }
 
-bool CFxLightEmitter::Manage(edF32VECTOR4*, undefined4)
+bool CFxLightEmitter::Manage(edF32VECTOR4* param_2, uint param_3)
 {
-	IMPLEMENTATION_GUARD_FX();
-	return true;
+	ManageSlice(this->pRayDef, this->nbRayDefs, param_2, param_3);
+
+	return this->field_0x54 == 0;
 }
 
 void CFxLightEmitter::GenerateNewOne(edF32VECTOR4* param_2)
 {
-	IMPLEMENTATION_GUARD_FX();
+	int iVar1;
+	RAY_DEF* pRayDef;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	if ((this->flags & 1) != 0) {
+		if (param_2 != (edF32VECTOR4*)0x0) {
+			this->field_0x10 = *param_2;
+		}
+
+		iVar1 = 0;
+		if (0 < (int)this->nbRayDefs) {
+			pRayDef = this->pRayDef;
+			do {
+				if (pRayDef->field_0x33 == 0xff) {
+					GenerateRay(pRayDef);
+
+					if (pRayDef->field_0x2c == -1) {
+						iVar1 = rand();
+						if (this->stallTime == 0) {
+							trap(7);
+						}
+						pRayDef->field_0x2c = (short)(iVar1 % this->stallTime);
+					}
+
+					this->field_0x50 = this->field_0x50 + 1;
+					return;
+				}
+
+				iVar1 = iVar1 + 1;
+				pRayDef = pRayDef + 1;
+			} while (iVar1 < (int)this->nbRayDefs);
+		}
+	}
+
+	return;
 }
 
 void CFxLightEmitter::Enable(int bEnable)
@@ -883,6 +920,18 @@ void CFxLightEmitter::Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* pa
 				} while (iVar9 < (int)this->nbRayDefs);
 			}
 		}
+	}
+
+	return;
+}
+
+void CFxLightEmitter::ChangeGenAtHand(int param_2)
+{
+	if (param_2 == 0) {
+		this->flags = this->flags & 0xfffffff7;
+	}
+	else {
+		this->flags = this->flags | 8;
 	}
 
 	return;

@@ -169,6 +169,17 @@ public:
 		return;
 	}
 
+	inline void SetRotationEuler(float x, float y, float z, float w)
+	{
+		if (IsValid()) {
+			pFx->rotationEuler.x = x;
+			pFx->rotationEuler.y = y;
+			pFx->rotationEuler.z = z;
+			pFx->rotationEuler.w = w;
+		}
+		return;
+	}
+
 	inline void SetScale(edF32VECTOR4* pNewScale)
 	{
 		if (IsValid()) {

@@ -1259,32 +1259,25 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 		}
 	}
 
-	fVar12 = gF32Vector4UnitY.w;
-	fVar11 = gF32Vector4UnitY.z;
-	fVar15 = gF32Vector4UnitY.y;
 	if (bVar8 == 2) {
-		IMPLEMENTATION_GUARD(
-			param_3->x = gF32Vector4UnitY.x;
-		param_3->y = fVar15;
-		param_3->z = fVar11;
-		param_3->w = fVar12;
-		if (fVar14 != 0.0) {
-			local_210 = GenRandomCentered01(pGeneratorParam) - 0.5;
-			local_20c = GenRandomCentered01(pGeneratorParam) - 0.5;
+		*param_3 = gF32Vector4UnitY;
+		if (fVar14 != 0.0f) {
+			local_210 = GenRandomCentered01(pGeneratorParam) - 0.5f;
+			local_20c = GenRandomCentered01(pGeneratorParam) - 0.5f;
 			local_204 = 0;
-			local_208 = GenRandom01(pGeneratorParam) - 0.5;
+			local_208 = GenRandom01(pGeneratorParam) - 0.5f;
 			local_220.x = param_3->y * local_208 - local_20c * param_3->z;
 			local_220.y = param_3->z * local_210 - local_208 * param_3->x;
 			local_220.z = param_3->x * local_20c - local_210 * param_3->y;
-			fVar15 = 1.0 / (sqrtf(local_220.x * local_220.x + local_220.y * local_220.y + local_220.z * local_220.z) + 0.0);
+			fVar15 = 1.0f / (sqrtf(local_220.x * local_220.x + local_220.y * local_220.y + local_220.z * local_220.z) + 0.0f);
 			local_220.x = local_220.x * fVar15;
 			local_220.y = local_220.y * fVar15;
 			local_220.z = local_220.z * fVar15;
-			local_220.w = 0.0;
+			local_220.w = 0.0f;
 			edF32Matrix4FromAngAxisSoft(fVar14, &eStack608, &local_220);
 			edF32Matrix4MulF32Vector4Hard(param_3, &eStack608, param_3);
-		})
-			LAB_0027ae10:
+		}
+		LAB_0027ae10:
 		bVar1 = pGeneratorParam->field_0x6;
 	}
 	else {

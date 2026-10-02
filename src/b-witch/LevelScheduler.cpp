@@ -2131,6 +2131,26 @@ void CLevelScheduler::SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size
 	return;
 }
 
+void CLevelScheduler::SaveGame_InitiateAutoSave(float time, int mode)
+{
+
+	if (((this->curAutoSaveTime == 0.0f) || (mode != 0)) || (180.0f < (time + GetTimer()->scaledTotalTime) - this->curAutoSaveTime)) {
+		if (time == 0.0f) {
+			time = 0.001f;
+		}
+
+		if (this->autoSaveTriggerTime < time) {
+			this->autoSaveTriggerTime = time;
+		}
+
+		if (mode != 0) {
+			this->curAutoSaveTime = 0.0f;
+		}
+	}
+
+	return;
+}
+
 void CLevelScheduler::Level_WolfenChanged()
 {
 	Level_UpdateCurLiveLevelInfo();

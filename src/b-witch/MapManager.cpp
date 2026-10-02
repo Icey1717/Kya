@@ -342,8 +342,7 @@ void CMapManager::Func_003f8d80()
 			this->field_0x338.hash = 0;
 			this->field_0x338.field_0x4 = 6;
 			if (10.0f < GetTimer()->scaledTotalTime) {
-				IMPLEMENTATION_GUARD(
-				pLevelScheduler->SaveGame_InitiateAutoSave(1.0f, 0);)
+				pLevelScheduler->SaveGame_InitiateAutoSave(1.0f, 0);
 			}
 		}
 		else {

@@ -25,6 +25,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include <stdexcept>
 
 namespace Debug::SaveLoad
@@ -81,6 +82,7 @@ namespace Debug::SaveLoad
 		std::chrono::steady_clock::time_point lastAutoLoadLog;
 		bool backupsOpen = false;
 		bool showAutosaves = false;
+		ImGuiTextFilter autosaveFilter;
 		int archiveRestoreSlot = 0;
 		int pendingArchiveSlot = -1;
 		std::vector<char> pendingArchiveData;
@@ -470,18 +472,127 @@ namespace Debug::SaveLoad
 			});
 		}
 
+		void DrawBackup(const SaveBackup& backup)
+		{
+			ImGui::PushID(backup.slot * 10 + backup.index);
+			ImGui::BeginGroup();
+			DrawScreenshot(backup.screenshot);
+			ImGui::EndGroup();
+			ImGui::SameLine();
+			ImGui::BeginGroup();
+			if (showAutosaves) ImGui::Text("Checkpoint autosave %d", backup.index + 1);
+			else ImGui::Text("Slot %d - backup %d%s", backup.slot, backup.index, backup.index == 1 ? " (newest)" : "");
+			if (!backup.error.empty()) ImGui::TextWrapped("%s", backup.error.c_str());
+			ImGui::BeginDisabled(!backup.error.empty() || !CanRestore());
+			const bool directLoad = ImGui::Button("Load");
+			ImGui::SameLine();
+			const bool restore = ImGui::Button("Restore");
+			ImGui::SameLine();
+			const bool load = ImGui::Button("Restore & Load");
+			if (restore || load || directLoad) {
+				auto selected = backup;
+				if (showAutosaves) {
+					selected.slot = archiveRestoreSlot;
+					selected.destination = std::filesystem::path(backupDirectory).parent_path() /
+						("slot_" + std::to_string(archiveRestoreSlot) + ".dat");
+				}
+				if (directLoad) QueueLoad(selected);
+				else QueueRestore(selected, load);
+			}
+			ImGui::EndDisabled();
+			if (!showAutosaves || ImGui::TreeNode("Details")) {
+				if (backup.modified.wYear) {
+					const auto& time = backup.modified;
+					ImGui::Text("Modified: %04d-%02d-%02d %02d:%02d:%02d (local)",
+						time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+				}
+				if (backup.error.empty()) {
+					DrawSaveInfo(backup.desc);
+					DrawCheckpoint(backup);
+				}
+				if (showAutosaves) ImGui::TreePop();
+			}
+			ImGui::EndGroup();
+			ImGui::Separator();
+			ImGui::PopID();
+		}
+
+		std::string ArchiveGroupLabel(int level, int sector = -1)
+		{
+			if (level < 0) return "Unrecognized saves";
+			const auto name = sector < 0 ? WorldNames::GetLevelName(level) : WorldNames::GetSectorName(level, sector);
+			return (sector < 0 ? "Level " + std::to_string(level) : "Sector " + std::to_string(sector)) +
+				(name.empty() ? "" : " - " + name);
+		}
+
+		void DrawAutosaveGroups(int expandGroups)
+		{
+			std::map<int, std::map<int, std::vector<const SaveBackup*>>> groups;
+			size_t visibleCount = 0;
+			for (const auto& backup : backups) {
+				const int level = backup.checkpointReadable ? backup.checkpoint.level :
+					(backup.error.empty() ? static_cast<int>(backup.desc.levelId) : -1);
+				const int sector = backup.checkpointReadable ? backup.checkpoint.sector : -1;
+				const auto label = ArchiveGroupLabel(level) + " / " +
+					(sector < 0 ? "Unknown sector" : ArchiveGroupLabel(level, sector));
+				if (!autosaveFilter.PassFilter(label.c_str())) continue;
+				groups[level][sector].push_back(&backup);
+				++visibleCount;
+			}
+			ImGui::Text("%zu / %zu autosaves", visibleCount, backups.size());
+			if (visibleCount == 0 && !backups.empty()) ImGui::TextUnformatted("No levels or sectors match the filter.");
+			for (const auto& [level, sectors] : groups) {
+				ImGui::PushID(level);
+				size_t count = 0;
+				for (const auto& entry : sectors) count += entry.second.size();
+				if (expandGroups >= 0) {
+					// Update sector nodes even when their parent level is collapsed.
+					ImGui::PushID("Level");
+					for (const auto& entry : sectors) {
+						ImGui::PushID(entry.first);
+						ImGui::GetStateStorage()->SetInt(ImGui::GetID("Sector"), expandGroups != 0);
+						ImGui::PopID();
+					}
+					ImGui::PopID();
+				}
+				if (expandGroups >= 0) ImGui::SetNextItemOpen(expandGroups != 0);
+				else ImGui::SetNextItemOpen(CLevelScheduler::gThis && CLevelScheduler::gThis->currentLevelID == level, ImGuiCond_Once);
+				if (ImGui::TreeNode("Level", "%s (%zu)", ArchiveGroupLabel(level).c_str(), count)) {
+					for (const auto& [sector, saves] : sectors) {
+						ImGui::PushID(sector);
+						if (expandGroups >= 0) ImGui::SetNextItemOpen(expandGroups != 0);
+						const auto label = sector < 0 ? "Unknown sector" : ArchiveGroupLabel(level, sector);
+						if (ImGui::TreeNode("Sector", "%s (%zu)", label.c_str(), saves.size())) {
+							for (const auto* backup : saves) DrawBackup(*backup);
+							ImGui::TreePop();
+						}
+						ImGui::PopID();
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+		}
+
 		void ShowBackups()
 		{
 			if (!backupsOpen) return;
 			if (refreshBackups && !restorePending) RefreshBackups();
 			ImGui::SetNextWindowSize(ImVec2(850, 550), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin(showAutosaves ? "Checkpoint Autosaves###SaveArchiveBrowser" : "Save Backups###SaveArchiveBrowser", &backupsOpen)) {
+				int expandGroups = -1;
 				ImGui::BeginDisabled(restorePending);
 				if (ImGui::Button("Refresh")) RefreshBackups();
 				ImGui::EndDisabled();
 				if (showAutosaves) {
 					ImGui::TextWrapped("First autosave per checkpoint. Restore replaces the selected slot and backs up its current save. Load starts it directly without touching any slot.");
 					ImGui::Combo("Restore into slot", &archiveRestoreSlot, "0\0" "1\0" "2\0" "3\0");
+					if (autosaveFilter.Draw("Search level / sector", 300.0f) && autosaveFilter.IsActive()) expandGroups = 1;
+					ImGui::SameLine();
+					if (ImGui::Button("Clear")) autosaveFilter.Clear();
+					if (ImGui::Button("Expand all")) expandGroups = 1;
+					ImGui::SameLine();
+					if (ImGui::Button("Collapse all")) expandGroups = 0;
 				}
 				else ImGui::TextWrapped("Newest first in each slot. Restore replaces that slot and backs up its current save. Load starts it directly without touching any slot.");
 				if (!backupDirectory.empty()) ImGui::TextWrapped("Directory: %s", backupDirectory.c_str());
@@ -490,46 +601,8 @@ namespace Debug::SaveLoad
 				if (!CanRestore()) ImGui::TextWrapped("Restore and Load are available when the title screen or gameplay is ready and no save/load is active.");
 				if (backups.empty()) ImGui::TextUnformatted(showAutosaves ? "No checkpoint autosaves archived yet." : "No backed up saves found. Autosaves create backups of existing slots.");
 				ImGui::BeginChild("Backups", ImVec2(0, 0), true);
-				for (const auto& backup : backups) {
-					ImGui::PushID(backup.slot * 10 + backup.index);
-					ImGui::BeginGroup();
-					DrawScreenshot(backup.screenshot);
-					ImGui::EndGroup();
-					ImGui::SameLine();
-					ImGui::BeginGroup();
-					if (showAutosaves) ImGui::Text("Checkpoint autosave %d", backup.index + 1);
-					else ImGui::Text("Slot %d - backup %d%s", backup.slot, backup.index, backup.index == 1 ? " (newest)" : "");
-					if (backup.modified.wYear) {
-						const auto& time = backup.modified;
-						ImGui::Text("Modified: %04d-%02d-%02d %02d:%02d:%02d (local)",
-							time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
-					}
-					if (backup.error.empty()) {
-						DrawSaveInfo(backup.desc);
-						DrawCheckpoint(backup);
-					}
-					else ImGui::TextWrapped("%s", backup.error.c_str());
-					ImGui::BeginDisabled(!backup.error.empty() || !CanRestore());
-					const bool restore = ImGui::Button("Restore");
-					ImGui::SameLine();
-					const bool load = ImGui::Button("Restore & Load");
-					ImGui::SameLine();
-					const bool directLoad = ImGui::Button("Load");
-					if (restore || load || directLoad) {
-						auto selected = backup;
-						if (showAutosaves) {
-							selected.slot = archiveRestoreSlot;
-							selected.destination = std::filesystem::path(backupDirectory).parent_path() /
-								("slot_" + std::to_string(archiveRestoreSlot) + ".dat");
-							}
-						if (directLoad) QueueLoad(selected);
-						else QueueRestore(selected, load);
-					}
-					ImGui::EndDisabled();
-					ImGui::EndGroup();
-					ImGui::Separator();
-					ImGui::PopID();
-				}
+				if (showAutosaves) DrawAutosaveGroups(expandGroups);
+				else for (const auto& backup : backups) DrawBackup(backup);
 				ImGui::EndChild();
 			}
 			ImGui::End();

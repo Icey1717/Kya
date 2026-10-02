@@ -458,6 +458,8 @@ public:
 	uint SaveGame_SaveToBuffer(SaveBigAlloc* pSaveData, SaveDataDesc* pSaveDesc);
 	void SaveGame_LoadFromBuffer(SaveBigAlloc* pSaveData, uint size);
 
+	void SaveGame_InitiateAutoSave(float time, int mode);
+
 	void Level_WolfenChanged();
 
 	static int MapFunc_002d8dc0(ObjectiveEntry* param_1);

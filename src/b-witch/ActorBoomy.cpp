@@ -210,12 +210,11 @@ void CActorBoomy::Draw()
 	if (6 < this->actorState) {
 		CActor::Draw();
 
-		IMPLEMENTATION_GUARD_FX(
 		this->fxLightEmitterB.Draw(0xffffffff, 0, 0);
 
 		if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
 			this->fxLightEmitterA.Draw(0xffffffff, 0, 0);
-		})
+		}
 	}
 
 	return;
@@ -355,10 +354,9 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					this->pShadow->field_0x50 = 0.75;
 				}
 
-				IMPLEMENTATION_GUARD_FX(
-				CFxLightEmitter::InitRays(&this->fxLightEmitterA, (this->fxLightEmitterA).field_0x4c);
-				CFxLightEmitter::InitRays(&this->fxLightEmitterB, (this->fxLightEmitterB).field_0x4c);
-				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitterB, 0);)
+				this->fxLightEmitterA.InitRays((this->fxLightEmitterA).nbRayDefs);
+				this->fxLightEmitterB.InitRays((this->fxLightEmitterB).nbRayDefs);
+				this->fxLightEmitterB.ChangeGenAtHand(0);
 				this->pTargetActor = (CActor*)0x0;
 			}
 			else {
@@ -372,8 +370,7 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					this->pShadow->field_0x50 = 0.3f;
 				}
 
-				IMPLEMENTATION_GUARD_FX(
-				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitterB, 1);)
+				this->fxLightEmitterB.ChangeGenAtHand(1);
 			}
 
 			this->hitActorsTable.nbEntries = 0;
@@ -420,10 +417,9 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 	bool bVar2;
 	int iVar3;
 
-	IMPLEMENTATION_GUARD_FX(
 	if (this->launchMode == BOOMY_LAUNCH_CONTROL) {
-		CFxLightEmitter::ChangeColors(&this->fxLightEmitterB, 0x80808080);
-	})
+		this->fxLightEmitterB.ChangeColors(0x80808080);
+	}
 
 	switch (this->actorState) {
 	case BOOMY_STATE_GET_TARGET:
@@ -1526,8 +1522,7 @@ void CActorBoomy::_BSpline_InitWhenHit(bool bNotTarget)
 	_msg_params_get_position local_60;
 	edF32VECTOR4 hitPointNormal;
 	edF32VECTOR4 hitPointPosition;
-	int local_10;
-	int* local_c;
+	CFxHandle local_10;
 
 	pCVar2 = this->pCollisionData;
 	bVar1 = pCVar2->flags_0x4;
@@ -1565,38 +1560,23 @@ void CActorBoomy::_BSpline_InitWhenHit(bool bNotTarget)
 	UpdatePosition(&hitPointPosition, true);
 
 	if ((bNotTarget != false) && ((this->pTargetActor == (CActor*)0x0 || (this->pTargetActor != this->pHero)))) {
-		local_10 = 0;
-		local_c = (int*)0x0;
+		local_10.id = 0;
+		local_10.pFx = (CNewFx*)0x0;
+
 		if (this->field_0x3cc != 0xffffffff) {
-			IMPLEMENTATION_GUARD_FX(
-			CFxManager::GetDynamicFx(CScene::ptable.g_EffectsManager_004516b8, &local_10, this->field_0x3cc, 0xffffffffffffffff);
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&local_10, this->field_0x3cc, FX_MATERIAL_SELECTOR_NONE);
 			fVar9 = gF32Vector4Zero.w;
 			fVar6 = gF32Vector4Zero.z;
-			if (((local_c == (int*)0x0) || (local_10 == 0)) || (local_10 != local_c[6])) {
-				bVar3 = false;
-			}
-			else {
-				bVar3 = true;
-			}
 
-			if (bVar3) {
+			if (local_10.IsValid()) {
 				fVar7 = GetAngleXFromVector(&hitPointNormal);
-				fVar7 = edF32Between_0_2Pi(fVar7 + 1.570796);
+				fVar7 = edF32Between_0_2Pi(fVar7 + 1.570796f);
 				fVar8 = GetAngleYFromVector(&hitPointNormal);
-				fVar8 = edF32Between_0_2Pi(fVar8 - 1.570796);
-				if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
-					(**(code**)(*local_c + 0x38))();
-				}
-				if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
-					local_c[0x14] = (int)fVar7;
-					local_c[0x15] = (int)fVar8;
-					local_c[0x16] = (int)fVar6;
-					local_c[0x17] = (int)fVar9;
-				}
-				if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
-					(**(code**)(*local_c + 0x10))(0, 0);
-				}
-			})
+				fVar8 = edF32Between_0_2Pi(fVar8 - 1.570796f);
+				local_10.SpatializeOnActor(3, this, 0);
+				local_10.SetRotationEuler(fVar7, fVar8, fVar6, fVar9);
+				local_10.Start();
+			}
 		}
 	}
 
