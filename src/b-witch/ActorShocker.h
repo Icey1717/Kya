@@ -9,7 +9,7 @@ class CActorShocker : public CActorAutonomous
 {
 public:
 	CActorShocker(){
-		IMPLEMENTATION_GUARD_LOG()
+		//IMPLEMENTATION_GUARD_LOG()
 	}
 
 	~CActorShocker();

@@ -147,6 +147,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Reset();
 	virtual void CheckpointReset();
+	virtual void SetSoundPosition();
 	virtual void SetState(int newState, int animType);
 	virtual void ChangeManageState(int state);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);

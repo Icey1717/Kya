@@ -236,6 +236,29 @@ void CActorMovable::CheckpointReset()
 	return;
 }
 
+void CActorMovable::SetSoundPosition()
+{
+	float linearAcceleration;
+
+	float x;
+	float y;
+	float z;
+
+	linearAcceleration = (this->dynamic).linearAcceleration;
+
+	x = (this->dynamic).velocityDirectionEuler.x;
+	y = (this->dynamic).velocityDirectionEuler.y;
+	z = (this->dynamic).velocityDirectionEuler.z;
+
+	this->vector_0x120.position = this->currentLocation.xyz;
+
+	this->vector_0x120.rotation.x = x * linearAcceleration;
+	this->vector_0x120.rotation.y = y * linearAcceleration;
+	this->vector_0x120.rotation.z = z * linearAcceleration;
+
+	return;
+}
+
 void CActorMovable::SetState(int newState, int animType)
 {
 	if (newState != this->actorState) {
