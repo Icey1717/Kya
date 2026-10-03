@@ -473,19 +473,14 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 		}
 	}
 
-	IMPLEMENTATION_GUARD_FX(
 	pCVar6 = CActorHero::_gThis;
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
-		//uVar4 = *(undefined8*)&this->currentLocation;
-		//fStack40 = this->currentLocation.z;
-		//fStack36 = this->currentLocation.w;
-		//local_30 = (undefined4)uVar4;
-		//local_2c = (float)((ulong)uVar4 >> 0x20);
-		//iVar10 = rand();
-		//local_2c = local_2c + ((float)iVar10 / 2.147484e+09) * 0.6 + 0.2;
-		//CActor::SV_GetBoneWorldPosition((CActor*)pCVar6, *(int*)(&this->field_0x1200 + iVar8 * 0xc), &someVector);
-		//CFxSpark::Manage(((int)(this->aFxSparks + iVar8), &local_30, (undefined4*)&someVector);
-	})
+		edF32VECTOR4 position = this->currentLocation;
+		iVar10 = rand();
+		position.y = position.y + ((float)iVar10 / 2.147484e+09f) * 0.6f + 0.2f;
+		pCVar6->SV_GetBoneWorldPosition(this->aFxSparkProps[iVar8].boneId, &someVector);
+		this->aFxSparks[iVar8].Manage(&position, &someVector);
+	}
 
 	return;
 }

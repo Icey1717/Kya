@@ -95,6 +95,8 @@ void CActorWoodMonster::StateWoodMonsterStand(CBehaviourWoodMonsterGet* pBehavio
 		this->field_0x170 = pHero;
 		SetState(WOODMONSTER_STATE_ATTRACT, -1);
 	}
+
+	return;
 }
 
 void CActorWoodMonster::StateWoodMonsterAttract()
