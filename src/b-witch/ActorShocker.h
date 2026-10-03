@@ -8,10 +8,7 @@
 class CActorShocker : public CActorAutonomous
 {
 public:
-	CActorShocker(){
-		//IMPLEMENTATION_GUARD_LOG()
-	}
-
+	CActorShocker();
 	~CActorShocker();
 
 	virtual void Create(ByteCode* pByteCode);
