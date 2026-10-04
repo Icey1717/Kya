@@ -6,6 +6,21 @@
 #include "profile.h"
 #include "CameraViewManager.h"
 
+bool FUN_0027dc70(_ed_particle_manager* pManager)
+{
+	bool uVar1;
+	int iVar2;
+	_ed_particle_group* p_Var3;
+
+	iVar2 = 0;
+	for (p_Var3 = pManager->aGroups.pData;
+		(uVar1 = true, iVar2 < pManager->nbTotalGroups &&
+		(uVar1 = false, (p_Var3->particleGroupFlags & 4) == 0)); p_Var3 = p_Var3 + 1) {
+		iVar2 = iVar2 + 1;
+	}
+	return uVar1;
+}
+
 #define PARTICLE_LOG(level, format, ...) MY_LOG_CATEGORY("Particle", level, format, ##__VA_ARGS__)
 
 #define VECTOR_NAN_SAFETY_CHECK(vec) \

@@ -84,7 +84,7 @@ public:
 	virtual void Hide();
 	virtual void Reveal();
 	virtual void Stop(float param_1);
-	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
+	virtual bool IsLooped() { IMPLEMENTATION_GUARD(); return false; }
 	virtual int GetType() = 0;
 	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int);
@@ -149,6 +149,11 @@ public:
 			type = 7;
 		}
 		return type;
+	}
+
+	inline bool IsLooped()
+	{
+		return IsValid() && pFx->IsLooped();
 	}
 
 	inline void SetPosition(edF32VECTOR4* pNewPosition)

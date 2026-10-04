@@ -16,7 +16,7 @@ public:
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
 	virtual void Stop(float param_1);
-	virtual void Func_0x28();
+	virtual bool IsLooped();
 	virtual int GetType();
 	virtual void NotifySonIsDead(CNewFx* pSon, int param_2);
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
@@ -27,7 +27,7 @@ public:
 	CFxRandomScenaricData* pScenariacData;
 	FX_MATERIAL_SELECTOR selector;
 	CFxHandle randFxHandle;
-	byte field_0x88;
+	bool bLooped;
 	void* spatializeActor;
 	uint spatializeFlags;
 	uint spatializeBone;

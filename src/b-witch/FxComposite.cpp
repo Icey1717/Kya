@@ -160,6 +160,44 @@ void CFxNewComposite::Stop(float param_1)
 	return;
 }
 
+bool CFxNewComposite::IsLooped()
+{
+	CNewFx* pCVar1;
+	bool bVar2;
+	long lVar3;
+	uint uVar4;
+	CFxHandle* pCVar5;
+
+	pCVar5 = this->aFxHandles;
+	uVar4 = this->nbComponentParticles;
+	do {
+		if (uVar4 == 0) {
+			return false;
+		}
+
+		uVar4 = uVar4 - 1;
+		pCVar1 = pCVar5->pFx;
+		if (((pCVar1 == (CNewFx*)0x0) || (pCVar5->id == 0)) || (bVar2 = true, pCVar5->id != pCVar1->id)) {
+			bVar2 = false;
+		}
+
+		if (bVar2) {
+			if (((pCVar1 == (CNewFx*)0x0) || (pCVar5->id == 0)) || (pCVar5->id != pCVar1->id)) {
+				lVar3 = 7;
+			}
+			else {
+				lVar3 = pCVar1->IsLooped();
+			}
+
+			if (lVar3 != 0) {
+				return true;
+			}
+		}
+
+		pCVar5 = pCVar5 + 1;
+	} while (true);
+}
+
 int CFxNewComposite::GetType()
 {
 	return FX_TYPE_COMPOSITE;

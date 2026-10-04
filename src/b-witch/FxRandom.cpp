@@ -163,7 +163,7 @@ LAB_0036ae68:
 				pCVar1->field_0x8 = 0;
 			}
 
-			this->field_0x88 = this->randFxHandle.GetType();
+			this->bLooped = this->randFxHandle.IsLooped();
 		}
 	}
 
@@ -202,10 +202,9 @@ void CRandomFx::Stop(float param_1)
 	return;
 }
 
-void CRandomFx::Func_0x28()
+bool CRandomFx::IsLooped()
 {
-	IMPLEMENTATION_GUARD(
-	return this->field_0x88;)
+	return this->bLooped;
 }
 
 int CRandomFx::GetType()
@@ -316,7 +315,7 @@ void* CFxRandomManager::InstanciateFx(uint scenaricDataIndex, FX_MATERIAL_SELECT
 		pNewRandomFx->selector = selector;
 		pNewRandomFx->randFxHandle.id = 0;
 		pNewRandomFx->randFxHandle.pFx = (CNewFx*)0x0;
-		pNewRandomFx->field_0x88 = 0;
+		pNewRandomFx->bLooped = 0;
 		pNewRandomFx->spatializeActor = (CActor*)0x0;
 		pNewRandomFx->spatializeFlags = 0;
 		pNewRandomFx->spatializeBone = 0;

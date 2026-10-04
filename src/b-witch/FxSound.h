@@ -19,7 +19,7 @@ public:
 	virtual void Pause();
 	virtual void Resume();
 	virtual void Stop(float param_1);
-	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
+	virtual bool IsLooped();
 	virtual int GetType();
 	virtual void Func_0x30(float param_1) { IMPLEMENTATION_GUARD(); }
 	virtual void SetTimeScaler(float);

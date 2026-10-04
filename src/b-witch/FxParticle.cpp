@@ -245,6 +245,18 @@ void CFxNewParticle::Stop(float param_1)
 	return;
 }
 
+bool CFxNewParticle::IsLooped()
+{
+	bool uVar1;
+
+	uVar1 = false;
+	if (this->pManager != (_ed_particle_manager*)0x0) {
+		uVar1 = FUN_0027dc70(this->pManager);
+	}
+
+	return uVar1;
+}
+
 int CFxNewParticle::GetType()
 {
 	return FX_TYPE_PARTICLE;

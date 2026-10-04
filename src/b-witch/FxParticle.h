@@ -16,7 +16,7 @@ public:
 	virtual void Draw();
 	virtual void Kill();
 	virtual void Stop(float param_1);
-	virtual void Func_0x28() { IMPLEMENTATION_GUARD(); }
+	virtual bool IsLooped();
 	virtual int GetType();
 	virtual void SetTimeScaler(float) { IMPLEMENTATION_GUARD(); }
 

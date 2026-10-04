@@ -658,6 +658,7 @@ _ed_particle_effector_param* edPartGetEffector(_ed_particle_manager* pManager, c
 void edPartSetRespawning(_ed_particle_manager* pManager, int bRespawning);
 
 void edPart_0027cd80(int param_1);
+bool FUN_0027dc70(_ed_particle_manager* pManager);
 
 template<typename T>
 T* _edPartGetEntityByHashcode(T* pEntities, int nbEntities, ulong* pHash)

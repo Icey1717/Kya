@@ -51,16 +51,163 @@ void CSprite::ClearLocalData()
 	return;
 }
 
-void CSprite::Draw(bool bUpdateMaterial)
+// Original validation routine at 0x0038bae0.
+void FUN_0038bae0(CSprite *pThis)
 {
-	CSprite* pCurParent = this->pParent;
+	CSprite *pCVar1;
+	CSprite *pCVar2;
+	CSprite *pCVar3;
+	CSprite *pCVar4;
+	CSprite *pCVar5;
+	CSprite *pCVar6;
+	bool bVar7;
+	CSprite *pSprite;
 
-	while (pCurParent != (CSprite*)0x0) {
-		if (pCurParent->bValid == false) {
-			pCurParent->Validate();
+	pCVar1 = pThis->pParent;
+	if ((pCVar1 != (CSprite *)0x0) && (pCVar1->bValid == false)) {
+		pCVar2 = pCVar1->pParent;
+		if ((pCVar2 != (CSprite *)0x0) && (pCVar2->bValid == false)) {
+			pCVar3 = pCVar2->pParent;
+			if ((pCVar3 != (CSprite *)0x0) && (pCVar3->bValid == false)) {
+				pCVar4 = pCVar3->pParent;
+				if ((pCVar4 != (CSprite *)0x0) && (pCVar4->bValid == false)) {
+					pCVar5 = pCVar4->pParent;
+					if ((pCVar5 != (CSprite *)0x0) && (pCVar5->bValid == false)) {
+						pCVar6 = pCVar5->pParent;
+						if ((pCVar6 != (CSprite *)0x0) && (pCVar6->bValid == false)) {
+							pSprite = pCVar6->pParent;
+							if ((pSprite != (CSprite *)0x0) && (pSprite->bValid == false)) {
+								if ((pSprite->pParent != (CSprite *)0x0) &&
+									 (bVar7 = pSprite->pParent->GetIsValid(), bVar7 == false)) {
+									FUN_0038bae0(pSprite->pParent);
+									pSprite->SetIsValid(false);
+								}
+
+								bVar7 = pSprite->GetIsValid();
+								if (bVar7 == false) {
+									pSprite->Validate();
+								}
+
+								pCVar6->bValid = false;
+							}
+
+							if (pCVar6->bValid == false) {
+								pCVar6->Validate();
+							}
+
+							pCVar5->bValid = false;
+						}
+
+						if (pCVar5->bValid == false) {
+							pCVar5->Validate();
+						}
+
+						pCVar4->bValid = false;
+					}
+
+					if (pCVar4->bValid == false) {
+						pCVar4->Validate();
+					}
+
+					pCVar3->bValid = false;
+				}
+
+				if (pCVar3->bValid == false) {
+					pCVar3->Validate();
+				}
+
+				pCVar2->bValid = false;
+			}
+
+			if (pCVar2->bValid == false) {
+				pCVar2->Validate();
+			}
+
+			pCVar1->bValid = false;
 		}
 
-		pCurParent = pCurParent->pParent;
+		if (pCVar1->bValid == false) {
+			pCVar1->Validate();
+		}
+
+		pThis->bValid = false;
+	}
+
+	if (pThis->bValid == false) {
+		pThis->Validate();
+	}
+	return;
+}
+
+void CSprite::Draw(bool bUpdateMaterial)
+{
+	CSprite *pCVar1;
+	CSprite *pCVar2;
+	CSprite *pCVar3;
+	CSprite *pCVar4;
+	CSprite *pCVar5;
+	CSprite *this_00;
+	bool bVar6;
+
+	pCVar1 = this->pParent;
+	if ((pCVar1 != (CSprite *)0x0) && (pCVar1->bValid == false)) {
+		pCVar2 = pCVar1->pParent;
+		if ((pCVar2 != (CSprite *)0x0) && (pCVar2->bValid == false)) {
+			pCVar3 = pCVar2->pParent;
+			if ((pCVar3 != (CSprite *)0x0) && (pCVar3->bValid == false)) {
+				pCVar4 = pCVar3->pParent;
+				if ((pCVar4 != (CSprite *)0x0) && (pCVar4->bValid == false)) {
+					pCVar5 = pCVar4->pParent;
+					if ((pCVar5 != (CSprite *)0x0) && (pCVar5->bValid == false)) {
+						this_00 = pCVar5->pParent;
+						if ((this_00 != (CSprite *)0x0) && (this_00->bValid == false)) {
+							if ((this_00->pParent != (CSprite *)0x0) &&
+								 (bVar6 = this_00->pParent->GetIsValid(), bVar6 == false)) {
+								FUN_0038bae0(this_00->pParent);
+								this_00->SetIsValid(false);
+							}
+
+							bVar6 = this_00->GetIsValid();
+							if (bVar6 == false) {
+								this_00->Validate();
+							}
+
+							pCVar5->bValid = false;
+						}
+
+						if (pCVar5->bValid == false) {
+							pCVar5->Validate();
+						}
+
+						pCVar4->bValid = false;
+					}
+
+					if (pCVar4->bValid == false) {
+						pCVar4->Validate();
+					}
+
+					pCVar3->bValid = false;
+				}
+
+				if (pCVar3->bValid == false) {
+					pCVar3->Validate();
+				}
+
+				pCVar2->bValid = false;
+			}
+
+			if (pCVar2->bValid == false) {
+				pCVar2->Validate();
+			}
+
+			pCVar1->bValid = false;
+		}
+
+		if (pCVar1->bValid == false) {
+			pCVar1->Validate();
+		}
+
+		this->bValid = false;
 	}
 
 	if (this->bValid == false) {

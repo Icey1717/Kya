@@ -281,13 +281,14 @@ void CEventTrack::Stop()
 		do {
 			uVar3 = uVar3 - 1;
 			if (pEvent->type == 0x39) {
-				lVar2 = UNPACK_HANDLE(pEvent).GetType();
+				lVar2 = UNPACK_HANDLE(pEvent).IsLooped();
 
 				if (((lVar2 != 0) && UNPACK_HANDLE(pEvent).IsValid())) {
 					UNPACK_HANDLE(pEvent).Stop();
 				}
 
-				UNPACK_HANDLE(pEvent).Reset();
+				pEvent->fxHandle.id = 0;
+				pEvent->fxHandle.pFx = 0x0;
 			}
 
 			pEvent->field_0x20 = 0;

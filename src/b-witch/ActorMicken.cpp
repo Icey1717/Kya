@@ -11,13 +11,6 @@
 #include "ActorHero_Private.h"
 #include "InputManager.h"
 
-CActorMicken::CActorMicken()
-{
-	this->field_0x360 = 0;
-	this->field_0x364 = 0;
-	this->followPathReader = CPathFollowReader();
-}
-
 void CActorMicken::Create(ByteCode* pByteCode)
 {
 	CBehaviour* pCVar5;
@@ -34,7 +27,7 @@ void CActorMicken::Create(ByteCode* pByteCode)
 		this->field_0x35c = 1.0f;
 	}
 
-	this->field_0x368 = pByteCode->GetS32();
+	this->field_0x360.type = pByteCode->GetS32();
 	this->field_0x3d0 = -1;
 
 	pCVar5 = CActor::GetBehaviour(5);
@@ -1257,31 +1250,16 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 			}
 		}
 
-		piVar1 = (int*)this->field_0x364;
-		if (((piVar1 == (int*)0x0) || (this->field_0x360 == 0)) || (bVar4 = true, this->field_0x360 != piVar1[6])) {
-			bVar4 = false;
+		if (this->field_0x360.IsValid()) {
+			this->field_0x360.Kill();
+			this->field_0x360.Reset();
 		}
 
-		if (bVar4) {
-			if (((piVar1 != (int*)0x0) && (this->field_0x360 != 0)) && (this->field_0x360 == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-				(**(code**)(*piVar1 + 0xc))();)
-			}
-			this->field_0x364 = 0;
-			this->field_0x360 = 0;
-		}
+		SV_FX_Start(&this->field_0x360);
 
-		IMPLEMENTATION_GUARD_FX(
-		CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x360);
+		this->field_0x360.Start();
 
-		piVar1 = (int*)this->field_0x364;
-		if (((piVar1 != (int*)0x0) && (this->field_0x360 != 0)) && (this->field_0x360 == piVar1[6])) {
-			(**(code**)(*piVar1 + 0x10))(0, 0);
-		}
-
-		if (((int*)this->field_0x364 != (int*)0x0) && (this->field_0x360 != 0)) {
-			(**(code**)(*(int*)this->field_0x364 + 0x40))(puVar7);
-		})
+		this->field_0x360.SetTimeScaler(puVar7);
 
 		local_30.field_0x0.y = 1.0f;
 		local_30.field_0x0.x = 0.0f;

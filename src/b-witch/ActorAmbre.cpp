@@ -140,7 +140,7 @@ void CActorAmbre::Term()
 
 void CActorAmbre::Draw()
 {
-	CFxSpark* pSpark;
+	CFxSparkNoAlloc<4, 16>* pSpark;
 	int iVar2;
 
 	CActor::Draw();

@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorAutonomous.h"
 #include "WayPoint.h"
+#include "Fx.h"
 
 #define MICKEN_BEHAVIOUR_EAT 4
 
@@ -68,10 +69,9 @@ public:
 
 #define NUM_MCK_STATES 26
 
-class CActorMicken : public CActorAutonomous {
+class CActorMicken : public CActorAutonomous
+{
 public:
-	CActorMicken();
-
 	static StateConfig _gStateCfg_MCK[NUM_MCK_STATES];
 
 	// CActor
@@ -109,9 +109,7 @@ public:
 	S_STREAM_REF<CActor> streamRefActor;
 	uint field_0x358;
 	float field_0x35c;
-	undefined4 field_0x360;
-	undefined4 field_0x364;
-	int field_0x368;
+	CFxHandleExt field_0x360;
 	undefined field_0x36c;
 	undefined field_0x36d;
 	undefined field_0x36e;
