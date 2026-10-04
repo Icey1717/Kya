@@ -1,4 +1,1 @@
-#ifndef ACTOR_SHOOT_SERVICE_CPP
-#define ACTOR_SHOOT_SERVICE_CPP
-
-#endif // ACTOR_SHOOT_SERVICE_CPP
+#include "ActorShootService.h"

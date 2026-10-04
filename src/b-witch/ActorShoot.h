@@ -6,6 +6,7 @@
 #include "StaticMeshComponent.h"
 #include "ActorBonusServices.h"
 #include "FireShot.h"
+#include "ActorShootService.h"
 
 #define SHOOT_BEHAVIOUR_FIRE 0x3
 #define SHOOT_BEHAVIOUR_FIRE_WAVE 0x4
@@ -49,6 +50,19 @@ public:
 class CBehaviourShootFireWave : public CBehaviourShoot
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Draw();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void Reset();
+	virtual void AltReset();
+
+	CConicalWaveShoot conicalWaveShoot;
 };
 
 class CActorShoot : public CActorAutonomous

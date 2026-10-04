@@ -454,12 +454,11 @@ void CBehaviourShootFire::InitState(int newState)
 			if (newState == 0xc) {
 				pShoot->pAnimationController->RegisterBone(this->field_0x2b0);
 
-				IMPLEMENTATION_GUARD(
-				pShoot->dynamicExt.rotationEuler.x = 0.0f;
-				pShoot->dynamicExt.rotationEuler.y = 0.0f;
-				pShoot->dynamicExt.rotationEuler.z = 0.0f;
-				pShoot->dynamicExt.rotationEuler.w = 0.0f;
-				pShoot->dynamicExt.scale.w = 0.0f;)
+				pShoot->dynamicExt.normalizedTranslation.x = 0.0f;
+				pShoot->dynamicExt.normalizedTranslation.y = 0.0f;
+				pShoot->dynamicExt.normalizedTranslation.z = 0.0f;
+				pShoot->dynamicExt.normalizedTranslation.w = 0.0f;
+				pShoot->dynamicExt.field_0x6c = 0.0f;
 				pShoot->dynamic.speed = 0.0f;
 			}
 			else {
@@ -549,6 +548,150 @@ int CBehaviourShootFire::InterpretMessage(CActor * pSender, int msg, void* pMsgP
 void CBehaviourShootFire::Reset()
 {
 	this->fireshot.Reset();
+
+	return;
+}
+
+void CBehaviourShootFireWave::Create(ByteCode* pByteCode)
+{
+	this->conicalWaveShoot.Create(pByteCode);
+
+	return;
+}
+
+void CBehaviourShootFireWave::Init(CActor* pOwner)
+{
+	this->conicalWaveShoot.Init(pOwner);
+
+	return;
+}
+
+void CBehaviourShootFireWave::Manage()
+{
+	this->pOwner->BehaviourFireWave_Manage(this);
+
+	return;
+}
+
+void CBehaviourShootFireWave::Draw()
+{
+	this->conicalWaveShoot.Draw();
+}
+
+void CBehaviourShootFireWave::Begin(CActor * pOwner, int newState, int newAnimationType)
+{
+	CActorShoot* pShoot;
+
+	this->pOwner = (CActorShoot*)pOwner;
+
+	AltReset();
+
+	if (newState == -1) {
+		pShoot = this->pOwner;
+		pShoot->SetState(6, -1);
+	}
+	else {
+		pShoot = this->pOwner;
+		pShoot->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourShootFireWave::InitState(int newState)
+{
+	int iVar1;
+	ed_3d_hierarchy_node* peVar2;
+	CCollision* pCVar3;
+	bool bVar4;
+	StateConfig* pSVar5;
+	edF32VECTOR4* peVar6;
+	uint uVar7;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+	CActorShoot* pShoot;
+
+	pShoot = this->pOwner;
+
+	if ((pShoot->GetStateFlags(newState) & 0x800) == 0) {
+		if ((pShoot->GetStateFlags(pShoot->prevActorState) & 0x800) != 0) {
+			pShoot->pAnimationController->UnRegisterBone(pShoot->field_0x350);
+			pShoot->pAnimationController->UnRegisterBone(pShoot->field_0x354);
+			pShoot->SetLookingAtOff();
+		}
+	}
+
+	if ((pShoot->GetStateFlags(newState) & 0x800) != 0) {
+		if ((pShoot->GetStateFlags(pShoot->prevActorState) & 0x800) == 0) {
+			pShoot->pAnimationController->RegisterBone(pShoot->field_0x350);
+			pShoot->pAnimationController->RegisterBone(pShoot->field_0x354);
+			pShoot->SetLookingAtBones(pShoot->field_0x354, pShoot->field_0x350);
+			pShoot->SetLookingAtBounds(-0.08726646f, 0.08726646f, -0.7853982f, 0.7853982f);
+		}
+	}
+
+	if (newState == 0xf) {
+		pCVar3 = pShoot->pCollisionData;
+		peVar6 = pShoot->GetBottomPosition();
+		edF32Vector4AddHard(&eStack16, &pCVar3->highestVertex, peVar6);
+		edF32Vector4ScaleHard(0.5f, &eStack16, &eStack16);
+		pShoot->addOnGenerator.Generate(&eStack16);
+	}
+	else {
+		if ((newState != 0xc) && (newState == 7)) {
+			if ((pShoot->field_0x3f0 & 1) != 0) {
+				pShoot->flags = pShoot->flags & 0xffffff7f;
+				pShoot->flags = pShoot->flags | 0x20;
+				pShoot->EvaluateDisplayState();
+			}
+
+			bVar4 = (pShoot->staticMeshComponent).textureIndex != -1;
+			if (bVar4) {
+				bVar4 = (pShoot->staticMeshComponent).meshIndex != -1;
+			}
+
+			if (bVar4) {
+				pShoot->staticMeshComponent.Init(CScene::_scene_handleA, (ed_g3d_manager*)0x0, &pShoot->altHierarchySetup, (char*)0x0);
+				eStack48 = gF32Vector4UnitY;
+				peVar6 = &pShoot->currentLocation;
+				bVar4 = ((StaticMeshComponentAdvanced*)&pShoot->staticMeshComponent)->HasMesh();
+				if ((bVar4 != false) && (peVar6 != (edF32VECTOR4*)0x0)) {
+					edFIntervalLERP(0.0f, 0.0f, 0.4f, 0.0f, 0.32f);
+					edF32Vector4ScaleHard(-0.32f, &eStack48, &eStack48);
+					edF32Vector4AddHard(&eStack32, peVar6, &eStack48);
+					peVar2 = (pShoot->staticMeshComponent).pMeshTransformData;
+					if (peVar2 != (ed_3d_hierarchy_node*)0x0) {
+						peVar2->base.transformA.rowT = eStack32;
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourShootFireWave::TermState(int oldState, int newState)
+{
+	return;
+}
+
+int CBehaviourShootFireWave::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+{
+	return 0;
+}
+
+void CBehaviourShootFireWave::Reset()
+{
+	this->conicalWaveShoot.Reset();
+
+	return;
+}
+
+void CBehaviourShootFireWave::AltReset()
+{
+	this->conicalWaveShoot.Reset();
 
 	return;
 }
