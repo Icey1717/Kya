@@ -88,6 +88,9 @@ public:
 
 	void ClearLocalData();
 
+	void BehaviourShootFire_Manage(CBehaviourShoot* pBehaviour);
+	void BehaviourFireWave_Manage(CBehaviourShoot* pBehaviour);
+
 	CAddOnGenerator addOnGenerator;
 	ed_3D_Light_Config lightingConfig;
 	CBehaviourShootFire behaviourShootFire;

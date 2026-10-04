@@ -647,6 +647,8 @@ set (actor_src
 	"${src_root}/b-witch/ActorFogManager.h"
 	"${src_root}/b-witch/ActorShoot.cpp"
 	"${src_root}/b-witch/ActorShoot.h"
+	"${src_root}/b-witch/ActorShootService.cpp"
+	"${src_root}/b-witch/ActorShootService.h"
 	"${src_root}/b-witch/ActorShocker.cpp"
 	"${src_root}/b-witch/ActorShocker.h"
 	"${src_root}/b-witch/ActorBlazer.cpp"
