@@ -3,12 +3,14 @@
 #include "NativeDebugShapes.h"
 #include "NativeDisplayList.h"
 #include "NativeFrameBufferCopy.h"
+#include "FlareDraw.h"
 #include "PostProcessing.h"
 #include "ScopedTimer.h"
 #include "VulkanRenderer.h"
 #include "profiling.h"
 
 #include "glm/gtc/type_ptr.inl"
+#include <atomic>
 
 namespace Renderer
 {
@@ -388,6 +390,30 @@ void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMod
 	if (clearMode != EClearMode::None) {
 		GetNativeRendererState().renderPassDirty = true;
 	}
+}
+
+namespace
+{
+	std::atomic<bool> flareOcclusionEnabled{ true };
+}
+
+void Renderer::Native::SetFlareOcclusionEnabled(bool enabled)
+{
+	flareOcclusionEnabled = enabled;
+}
+
+void Renderer::Native::SubmitFlare(const FlareDraw& flare)
+{
+	auto& state = GetNativeRendererState();
+	if (!state.renderThread || !flare.pTexture || state.cachedRenderPassKey.kind != ERenderPassKind::Main) return;
+	// Finish preceding geometry in this material batch before measuring flare visibility.
+	if (state.currentDraw) Renderer::Native::BindTexture(flare.pTexture);
+	FlareDraw submitted = flare;
+	submitted.occlusionEnabled = flareOcclusionEnabled.load();
+	AddRenderThreadFlare(state.renderThread, submitted, state.cachedRenderPassKey, state.renderPassDirty);
+	// Subsequent geometry resumes with LOAD, preserving the flare color and scene depth.
+	state.cachedRenderPassKey = RenderPassKey{ EClearMode::None, ERenderPassKind::Main };
+	state.renderPassDirty = true;
 }
 
 void Renderer::Native::CaptureFrameBuffer()

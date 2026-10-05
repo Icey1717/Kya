@@ -357,6 +357,7 @@ namespace Renderer
 		void AddRenderThreadShadowReceiver(RenderThread* renderThread, const ShadowReceiverViewport& viewport);
 		void AddRenderThreadShadowEnd(RenderThread* renderThread);
 		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending);
+		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending);
 
 		RenderThread* CreateRenderThread();
 		void DestroyRenderThread(RenderThread*& renderThread);

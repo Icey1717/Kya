@@ -12,7 +12,7 @@ Vector2f GetRTScale();
 
 namespace Renderer {
 	struct FrameBufferBase {
-		void SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment);
+		void SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment, VkImageUsageFlags depthUsage = 0);
 
 		VkImage colorImage;
 		VkImageView colorImageView;

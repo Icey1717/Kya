@@ -5,6 +5,7 @@
 #include "NativeDisplayList.h"
 #include "NativeShadow.h"
 #include "NativeFrameBufferCopy.h"
+#include "NativeFlare.h"
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
@@ -22,7 +23,7 @@ namespace Renderer
 
 		static void CreateFramebuffer()
 		{
-			GetNativeRendererState().frameBuffer.SetupBase({ gWidth, gHeight }, GetNativeRendererState().renderPass[RenderPassKey::Empty].gRenderPass, true);
+			GetNativeRendererState().frameBuffer.SetupBase({ gWidth, gHeight }, GetNativeRendererState().renderPass[RenderPassKey::Empty].gRenderPass, true, VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
 		static void CreateFramebufferSampler()
 		{
@@ -447,6 +448,7 @@ namespace Renderer
 
 			Shadow::Setup();
 			FrameBufferCopy::Setup();
+			Flare::Setup();
 
 			GetRenderDelegate() += Render;
 
@@ -467,6 +469,7 @@ namespace Renderer
 			DestroyRenderThread(GetNativeRendererState().renderThread);
 			Shadow::Cleanup();
 			FrameBufferCopy::Cleanup();
+			Flare::Cleanup();
 
 			GetNativeRendererState().modelBuffer.DestroyResources();
 			GetNativeRendererState().animationBuffer.DestroyResources();
@@ -507,6 +510,7 @@ namespace Renderer
 
 			DebugShapes::DestroyDedicatedPass();
 			Shadow::DestroyReceiverFramebuffer();
+			Flare::DestroyFramebuffer();
 
 			vkDestroyFramebuffer(GetDevice(), GetNativeRendererState().frameBuffer.framebuffer, GetAllocator());
 			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.colorImageView, GetAllocator());
@@ -522,6 +526,7 @@ namespace Renderer
 
 			CreateFramebuffer();
 			Shadow::CreateReceiverFramebuffer();
+			Flare::CreateFramebuffer();
 
 			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 

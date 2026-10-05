@@ -346,6 +346,9 @@ namespace Renderer
 			uint32_t textureWidth = 512;
 			uint32_t textureHeight = 512;
 		};
+		struct FlareDraw;
+		void SubmitFlare(const FlareDraw& flare);
+		void SetFlareOcclusionEnabled(bool enabled);
 		void CaptureFrameBuffer();
 		void SetFrameBufferMaterial(const FrameBufferMaterialSettings& settings);
 		void BindFrameBufferTexture();

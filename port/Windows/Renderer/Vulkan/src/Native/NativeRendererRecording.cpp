@@ -4,6 +4,7 @@
 #include "NativeDebugShapes.h"
 #include "NativeShadow.h"
 #include "NativeFrameBufferCopy.h"
+#include "NativeFlare.h"
 #include "Objects/VulkanImage.h"
 #include "profiling.h"
 
@@ -392,6 +393,7 @@ namespace Renderer
 		};
 		void RecordBeginCommandBuffer()
 		{
+			Flare::BeginFrame();
 			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			VkCommandBufferBeginInfo beginInfo{};
@@ -506,8 +508,9 @@ namespace Renderer
 
 			struct Command
 			{
-				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy } type = Type::Draw;
+				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy, Flare } type = Type::Draw;
 				Draw draw;
+				FlareDraw flare;
 				ShadowPassSettings settings;
 				ShadowReceiverViewport viewport;
 				RenderPassKey capturePassKey;
@@ -549,6 +552,11 @@ namespace Renderer
 						drawCommandRecorder.EndActivePass();
 						FrameBufferCopy::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()]);
 						break;
+					case Command::Type::Flare:
+						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
+						drawCommandRecorder.EndActivePass();
+						Flare::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.flare);
+						break;
 					}
 				}
 			}
@@ -578,6 +586,12 @@ namespace Renderer
 
 				if (!bRecordedCommands) {
 					return;
+				}
+
+				// The main thread can drain a short queue before Run acquires the mutex.
+				if (bShouldRecordBegin) {
+					RecordBeginCommandBuffer();
+					bShouldRecordBegin = false;
 				}
 
 				// Any leftover draws to process.
@@ -615,6 +629,16 @@ namespace Renderer
 			{
 				Command command;
 				command.type = Command::Type::FrameBufferCopy;
+				command.capturePassKey = key;
+				command.clearPending = clearPending;
+				AddCommand(command);
+			}
+
+			void AddFlare(const FlareDraw& flare, const RenderPassKey& key, bool clearPending)
+			{
+				Command command;
+				command.type = Command::Type::Flare;
+				command.flare = flare;
 				command.capturePassKey = key;
 				command.clearPending = clearPending;
 				AddCommand(command);
@@ -724,6 +748,11 @@ namespace Renderer
 		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending)
 		{
 			renderThread->AddFrameBufferCopy(key, clearPending);
+		}
+
+		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending)
+		{
+			renderThread->AddFlare(flare, key, clearPending);
 		}
 
 		void AddRenderThreadShadowBegin(RenderThread* renderThread, const ShadowPassSettings& settings)

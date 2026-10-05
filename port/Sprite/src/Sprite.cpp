@@ -326,11 +326,11 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 				}
 			}
 			else {
-				// Flare FX
+				// ed3DFlushSpriteFlareFX submits the native flare after PS2 projection and sizing.
 			}
 		}
 		else {
-			// Scale flare
+			// ed3DFlushSpriteScaleFlare applies orientation scaling before native submission.
 		}
 	}
 }

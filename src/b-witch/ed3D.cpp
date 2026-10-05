@@ -48,6 +48,7 @@
 #include "Mesh.h"
 #include "Sprite.h"
 #include "DrawTrace.h"
+#include "FlareDraw.h"
 #endif
 
 #include "ed3D/ed3DG2D.h"
@@ -5235,6 +5236,26 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 					if (fVar8 <= 2296.0f) {
 						fVar7 = fVar8;
 					}
+
+#ifdef PLATFORM_WIN
+					// Preserve the PS2 projection/sizing, then replace its GS passes with a native command.
+					const auto* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(*g_pCurFlareMaterial);
+					if (pMaterial != nullptr) {
+						Renderer::Native::FlareDraw flare;
+						flare.pTexture = pMaterial->FindRenderTextureFromBitmap(pBitmap);
+						const float nearClip = gRenderSceneConfig_SPR->nearClip;
+						const float farClip = gRenderSceneConfig_SPR->farClip;
+						const float gsNear = (CameraToScreen_Matrix->cc * nearClip + CameraToScreen_Matrix->dc) /
+							(CameraToScreen_Matrix->cd * nearClip + CameraToScreen_Matrix->dd);
+						const float gsFar = (CameraToScreen_Matrix->cc * farClip + CameraToScreen_Matrix->dc) /
+							(CameraToScreen_Matrix->cd * farClip + CameraToScreen_Matrix->dd);
+						if (Renderer::Native::ProjectFlare(local_10.x, local_10.y, fVar6, fVar7, param_1,
+							static_cast<float>(gSCRN_W), static_cast<float>(gSCRN_H), local_10.z, gsNear, gsFar, flare)) {
+							Renderer::Native::SubmitFlare(flare);
+						}
+					}
+					return pPkt;
+#endif
 
 					if (param_1 == 512.0f) {
 						pPkt->cmdA = 0xe10000002;

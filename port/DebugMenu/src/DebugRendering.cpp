@@ -31,6 +31,7 @@ namespace Debug {
 		static Debug::Setting<int> gRenderHeight = { "Render Resolution Height", Renderer::Native::kDefaultHeight };
 		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
 		static Debug::Setting<bool> gFullResolutionHeatCapture = { "Full Resolution Heat FX Capture", false };
+		static Debug::Setting<bool> gFlareOcclusion = { "Flare Occlusion", true };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -176,6 +177,12 @@ void Debug::Rendering::DrawContents()
 		const VkExtent2D captureSize = Renderer::Native::GetHeatCaptureSize();
 		ImGui::Text("Heat FX Capture: %u x %u", captureSize.width, captureSize.height);
 
+		if (gFlareOcclusion.DrawImguiControl()) {
+			gFlareOcclusion.UpdateValue();
+			Renderer::Native::SetFlareOcclusionEnabled(gFlareOcclusion.get());
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Disable to draw flares at full visibility for comparison.");
+
 		ImVec2 imageSize = Debug::GetGameViewportImageSize();
 		ImGui::Text("Viewport Image: %.0f x %.0f", imageSize.x, imageSize.y);
 
@@ -278,6 +285,7 @@ void Debug::Rendering::Init()
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
 	Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
+	Renderer::Native::SetFlareOcclusionEnabled(gFlareOcclusion.get());
 
 	if (gAutoApplyResolution) {
 		Renderer::Native::ResizeFrameBuffer(gRenderWidth.get(), gRenderHeight.get());

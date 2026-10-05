@@ -329,7 +329,7 @@ PS2::FrameBuffer::FrameBufferMap& PS2::FrameBuffer::GetAll()
 	return passes;
 }
 
-void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment)
+void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment, VkImageUsageFlags depthUsage)
 {
 	{
 		OwnedImage color = VulkanImage::CreateColor(size.x, size.y);
@@ -341,7 +341,7 @@ void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& ren
 
 	if (bDepthAttachment)
 	{
-		OwnedImage depth = VulkanImage::CreateDepth(size.x, size.y);
+		OwnedImage depth = VulkanImage::CreateDepth(size.x, size.y, depthUsage);
 		depthImage       = depth.image;
 		depthImageMemory = depth.memory;
 		depthImageView   = depth.view;
