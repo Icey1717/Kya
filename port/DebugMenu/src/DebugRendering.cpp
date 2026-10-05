@@ -98,7 +98,7 @@ namespace Debug {
 										}
 
 										// Display specific data based on type
-										if (pCmd->dataType == DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST ||
+										if (pCmd->dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP ||
 											pCmd->dataType == 2 ||
 											pCmd->dataType == 0) {
 											ed_3d_strip* pStrip = pCmd->pRenderInput.pStrip;
@@ -116,7 +116,7 @@ namespace Debug {
 												ImGui::TreePop();
 											}
 										}
-										else if (pCmd->dataType == DISPLAY_LIST_DATA_TYPE_SPRITE ||
+										else if (pCmd->dataType == DLIST_PRIM_TYPE_SPRITE ||
 											pCmd->dataType == 6) {
 											ed_3d_sprite* pSprite = pCmd->pRenderInput.pSprite;
 											if (pSprite && ImGui::TreeNode("Sprite Data")) {

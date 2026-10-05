@@ -1754,7 +1754,7 @@ float CSimpleMenu::draw_func(float param_2)
 			s = 1.0f;
 		}
 
-		edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		edDListTexCoo2f(s, s);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -2878,7 +2878,7 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 				edDListUseMaterial((edDList_material*)0x0);
 				edDListColor4u8(0, 0, 0, 0x80);
 				edDListLoadIdentity();
-				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_SPRITE, 2);
+				edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_SPRITE, 2);
 				edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 				edDListVertex4f(fVar13, fVar10, 0.0f, 0.0f);
 				edDListEnd();
@@ -2900,7 +2900,7 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 			if (iVar9 != 0) {
 				fVar18 = 0.0f;
 				do {
-					edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, iVar7 * 2);
+					edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0f;
 					iVar6 = iVar7;

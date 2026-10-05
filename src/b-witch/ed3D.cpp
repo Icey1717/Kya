@@ -2944,6 +2944,8 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_X_SPR, edF32VECTOR4*), &gCamNormal_X);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
+	
+	// Retain the original transform for flare sizing, even when VU flare setup uses identity.
 	*g_pCurFlareObj2WorldMtx = pObjToWorld;
 
 	if (((pDmaMatrix->pHierarchy == (ed_3d_hierarchy*)0x0) || (pHierarchySetup = pDmaMatrix->pHierarchy->pHierarchySetup, pHierarchySetup == (ed_3d_hierarchy_setup*)0x0))
@@ -2970,6 +2972,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 		}
 	}
 
+	// Camera rotation and enable sentinel passed to the PS2 VU flare computation.
 	edF32VECTOR4* pFlareSpr = SCRATCHPAD_ADDRESS_TYPE(FLARE_SPR, edF32VECTOR4*);
 
 	pFlareSpr->x = (gRenderCamera->calculatedRotation).x;
@@ -3144,6 +3147,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 #endif
 
 			pPKTMatrixCur = ed3DPKTCopyMatrixPacket(pPkt + 1, pDmaMatrix, bVar11);
+			// Flare projection uses the object-to-screen matrix at packet offset 0xa0.
 			*g_pCurFlareMtx = (edF32MATRIX4*)((char*)(pPkt + 1) + 0xa0);
 			
 			if (bVar11 != 0) {
@@ -3192,6 +3196,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	Renderer::Native::PushMatrixPacket(reinterpret_cast<Renderer::Native::MatrixPacket*>(pHierarchy->pMatrixPkt));
 #endif
 
+	// Use the cached hierarchy packet's object-to-screen matrix for flare projection.
 	*g_pCurFlareMtx = (edF32MATRIX4*)(reinterpret_cast<char*>(pDmaMatrix->pHierarchy->pMatrixPkt) + 0xa0);
 
 	// This will actually overwrite the cam normal X and Y from the global packet, as that writes from 0x0 -> 0x8, and this starts at 0x6.
@@ -4762,6 +4767,7 @@ bool g_bShowFlare = false;
 
 #define __fixunssfdi (uint)
 
+// Emit a depth-tested GS marker around the projected flare source.
 edpkt_data* ed3DFlushSunFlareCreateMarker(float param_1, float param_2, float param_3, float param_4, float param_5, edpkt_data* pPkt)
 {
 	ulong uVar1;
@@ -4809,6 +4815,7 @@ edpkt_data* ed3DFlushSunFlareCreateMarker(float param_1, float param_2, float pa
 	return pPkt + 9;
 }
 
+// Repeatedly reduce the marker region to a single flare-intensity sample on the GS.
 edpkt_data* ed3DFlushSunFlareDoMipmap(float param_1, float param_2, float param_3, edpkt_data* pPkt)
 {
 	ulong uVar1;
@@ -4936,6 +4943,7 @@ edpkt_data* ed3DFlushSunFlareDoMipmap(float param_1, float param_2, float param_
 
 uint gFlarePalAddr = 0x3e0;
 
+// Apply the reduced intensity to the flare palette or texture, according to bitmap format.
 edpkt_data* ed3DFlushSunFlareGetIntensity(edpkt_data* pPkt, ed_g2d_bitmap* pBitmap)
 {
 	ushort psm;
@@ -4990,6 +4998,7 @@ edpkt_data* ed3DFlushSunFlareGetIntensity(edpkt_data* pPkt, ed_g2d_bitmap* pBitm
 	return peVar2;
 }
 
+// Emit the final textured flare sprite at its projected screen position.
 edpkt_data* ed3DFlushSunFlare2Screen(float param_1, float param_2, float param_3, edpkt_data* pPkt, ed_g2d_bitmap* pBitmap, int param_6, uint param_7)
 {
 	ushort psm;
@@ -5164,6 +5173,7 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 			gDRAWBUF_BASE_BIS = gDRAWBUF_BASE;
 			gDRAWBUF_BASE_BIS_TEX = gDRAWBUF_TXBASE;
 
+			// Project the flare source into GS screen coordinates and divide by homogeneous W.
 			pVtx->w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&local_10, *g_pCurFlareMtx, pVtx);
 			local_10.w = 1.0f / local_10.w;
@@ -5174,6 +5184,7 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 			if (0.0f <= local_10.z) {
 				if (bCenterPos$1246 == 0) {
 					if (param_4 == 0) {
+						// Convert the world-space flare radius to pixels, capped at 120.
 						local_20.xyz = (*g_pCurFlareObj2WorldMtx)->rowT.xyz;
 						local_20.w = 1.0f;
 
@@ -5252,6 +5263,7 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 					pPkt[2].cmdA = 0x1000000000008042;
 					pPkt[2].cmdB = 0xe;
 
+					// Measure source visibility in an 8-pixel-radius marker before drawing the flare.
 					peVar4 = ed3DFlushSunFlareCreateMarker(fVar6, fVar7, local_10.z, 8.0f, fVar9, pPkt + 3);
 					peVar4 = ed3DFlushSunFlareDoMipmap(fVar6, fVar7, 8.0f, peVar4);
 					peVar4 = ed3DFlushSunFlareGetIntensity(peVar4, pBitmap);
@@ -5295,6 +5307,7 @@ edpkt_data* ed3DFlushSpriteScaleFlare(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 	for (uVar4 = 0; uVar4 < pSprite->field_0x36; uVar4 = uVar4 + 1) {
 		uVar1 = *puVar3;
 		peVar2 = *g_pCurFlareObj2WorldMtx;
+		// Fade the flare size using the object's Y axis relative to the camera normal.
 		local_10 = peVar2->rowY;
 		edF32Vector4NormalizeHard(&local_10, &local_10);
 		fVar5 = edF32Vector4DotProductHard(&local_10, &gCamNormal_Z);
@@ -5462,6 +5475,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 			}
 			else {
 				peVar7 = LOAD_POINTER_CAST(edF32VECTOR4*, pSprite->pVertexBuf);
+				// Flag 0x200 selects fixed-size flares; param_4 selects the fixed depth.
 				for (uVar8 = 0; uVar8 < pSprite->field_0x36; uVar8 = uVar8 + 1) {
 					pPkt = ed3DFlushSpriteFlareFX(512.0f, pPkt, peVar7, 1);
 					peVar7 = peVar7 + 1;
@@ -5469,6 +5483,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 			}
 		}
 		else {
+			// Flags 0x80 and 0x200 together select flares scaled by size and orientation.
 			pPkt = ed3DFlushSpriteScaleFlare(pSprite, g_VifRefPktCur);
 		}
 	}
@@ -6713,6 +6728,7 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 	else {
 		ed3DG2DMaterialGetLayerBitmap(pDmaMaterial, &gCurBitmap, &gCurLayer, 0);
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial gCurBitmap: 0x{:x} | gCurLayer: 0x{:x}", (uintptr_t)gCurBitmap, (uintptr_t)gCurLayer);
+		// The flare GS passes use the current material's first bitmap.
 		*g_pCurFlareMaterial = pDmaMaterial->pMaterial;
 		peVar4 = g_VifRefPktCur;
 
@@ -11644,6 +11660,7 @@ void ed3DRefreshSracthGlobalVar(void)
 	pAVar1->flags = 0;
 	pAVar1->field_0x8 = 0;
 	pAVar1->field_0xc = 0;
+	// Default flare projection points to OBJ_TO_SCREEN_MATRIX in the scratchpad packet.
 	*g_pCurFlareMtx = SCRATCHPAD_ADDRESS_TYPE(0x700008a0, edF32MATRIX4*);
 	memcpy(ed3DVU1Addr_Scratch, ed3DVU1Addr, sizeof(ed3DVU1Addr));
 	memcpy(ed3DVU1AddrWithBufCur_Scratch, ed3DVU1AddrWithBufCur, sizeof(ed3DVU1AddrWithBufCur));

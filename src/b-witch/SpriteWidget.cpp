@@ -419,7 +419,7 @@ void CSprite::DrawSprite()
 
 	edDListLoadIdentity();
 
-	edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_SPRITE, 2);
+	edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_SPRITE, 2);
 	edDListTexCoo2f(local_8, local_4);
 	edDListVertex4f((this->screenCoordsTL).x, (this->screenCoordsTL).y, 0.0f, 0.0f);
 	edDListTexCoo2f(local_10, local_c);
@@ -670,7 +670,7 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 		edDListBlendSet(1);
 		edDListBlendFunc50();
 		edDListColor4u8(0, 0, 0, 0x80);
-		edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		edDListTexCoo2f(local_8.x, local_8.y);
 		edDListVertex4f(x, y_00, 0.0f, 0.0f);
 		edDListTexCoo2f(local_18.x, local_18.y);
@@ -727,7 +727,7 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 
 	uVar1 = drawFlag & 0x30000;
 	if (uVar1 == 0) {
-		edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		edDListTexCoo2f(local_8.x, local_8.y);
 		edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 		edDListTexCoo2f(local_18.x, local_18.y);
@@ -740,7 +740,7 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 	}
 	else {
 		if (uVar1 == 0x20000) {
-			edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 8);
+			edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 8);
 			edDListTexCoo2f(local_8.x, local_8.y);
 			edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 			edDListTexCoo2f(local_18.x, local_18.y);
@@ -758,7 +758,7 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 		}
 		else {
 			if (uVar1 == 0x10000) {
-				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 6);
+				edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 6);
 				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
@@ -775,7 +775,7 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 				edDListEnd();
 			}
 			else {
-				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 0xb);
+				edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 0xb);
 				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);

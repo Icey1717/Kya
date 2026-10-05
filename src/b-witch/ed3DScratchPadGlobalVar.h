@@ -19,9 +19,11 @@ extern edF32MATRIX4* gLightDirections_Matrix_Scratch;
 extern edF32MATRIX4* gLightColor_Matrix_Scratch;
 extern edF32VECTOR4* gLightAmbiant_Scratch;
 extern edF32VECTOR4* gVU1_AnimST_NormalExtruder_Scratch;
-extern edF32MATRIX4** g_pCurFlareMtx;
+
+extern edF32MATRIX4** g_pCurFlareMtx; // Object-to-screen matrix in the current matrix packet.
 extern edF32MATRIX4** g_pCurFlareObj2WorldMtx;
 extern ed_g2d_material** g_pCurFlareMaterial;
+
 extern int* gShadowRenderMask;
 extern edFCamera* gRenderCamera;
 extern edF32MATRIX4* gF32Matrix4Unit_Scratch;

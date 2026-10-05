@@ -4147,7 +4147,7 @@ void CActorMiniGamesOrganizer::DrawLetterCursor(float x, float y, float halfWidt
 	edDList_material* pMaterialInfo = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId_0x178, 0);
 	edDListUseMaterial(pMaterialInfo);
 	edDListLoadIdentity();
-	edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
 	edDListTexCoo2f(0.0f, 0.0f);
 	edDListVertex4f(x - halfWidth, y - halfHeight, 0.0f, 0.0f);

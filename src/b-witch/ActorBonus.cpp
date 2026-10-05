@@ -503,6 +503,7 @@ bool CBehaviourBonusAlone::InitDlistPatchable(int patchId)
 	C3DFileManager* p3DManager = CScene::ptable.g_C3DFileManager_00451664;
 
 	if (patchId == this->bonusFlarePatchId) {
+		// Build the patchable flare sprite for this bonus instance.
 		edDListLoadIdentity();
 		pMaterial = p3DManager->GetMaterialFromId(this->pOwner->flareMaterialId, 0);
 		edDListUseMaterial(pMaterial);
@@ -1427,6 +1428,7 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 	CShadowShared* pShadowShared = this->aShadowShared;
 
 	if (patchId == this->flarePatchId) {
+		// Build one patchable flare sprite per bonus instance.
 		edDListLoadIdentity();
 		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->flareMaterialId, 0);
 		edDListUseMaterial(pMaterial);

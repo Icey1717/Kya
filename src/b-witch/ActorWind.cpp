@@ -3651,7 +3651,7 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 	if (patchId == this->outerPatchId) {
 		edDListLoadMatrix(&local_40);
 		edDListUseMaterial(&this->pOwner->aCombinedMaterials[0].material);
-		edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, (this->field_0x4 - 1) * 0x1c);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, (this->field_0x4 - 1) * 0x1c);
 		uVar16 = this->pOwner->flags_0x54;
 		_Create_SemiCylinder(pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0), 0);
 		this->outerStateA.index = 0;
@@ -3780,7 +3780,7 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 
 			edDListLoadMatrix(&local_40);
 			edDListUseMaterial(&this->pOwner->aCombinedMaterials[4].material);
-			edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, this->field_0x4 * 4 + 0x18);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, this->field_0x4 * 4 + 0x18);
 			this->whirlStateA.index = 0;
 			uVar16 = this->pOwner->flags_0x54;
 			_Create_FakePlane(0.0f, 0.5f, 1.0f, -0.05f, pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0));
@@ -3865,7 +3865,7 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 
 			edDListLoadMatrix(&local_40);
 			edDListUseMaterial(&this->pOwner->aCombinedMaterials[3].material);
-			edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, this->field_0x4 << 2);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, this->field_0x4 << 2);
 			this->fakePlaneState.index = 0;
 			uVar16 = this->pOwner->flags_0x54;
 			_Create_FakePlane(0.0f, 3.0f, 3.0f, 0.05f, pVtx, (uint)((uVar16 & 8) != 0), (uint)((uVar16 & 0x10) != 0));

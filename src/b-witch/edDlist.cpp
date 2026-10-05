@@ -374,13 +374,13 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 							}
 
 							dataType = pCurCommand->dataType;
-							if (dataType == DISPLAY_LIST_DATA_TYPE_PKT) {
+							if (dataType == DLIST_PRIM_TYPE_PKT) {
 								pPkt = pCurCommand->pRenderInput.pPkt;
 							LAB_002ce7c4:
 								nbMatrix = pCurCommand->nbMatrix;
 							}
 							else {
-								if (dataType == DISPLAY_LIST_DATA_TYPE_SPRITE) {
+								if (dataType == DLIST_PRIM_TYPE_SPRITE) {
 									if ((pParams->bIsShadowScene != 1) && (pCurCommand->bActive != 0)) {
 										ed3DLinkSpriteToViewport(pCurCommand->pRenderInput.pSprite, pMatrix, gBankMaterial, pPktToLink);
 										pPktToLink = (edpkt_data*)0x0;
@@ -389,7 +389,7 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 									goto LAB_002ce7c4;
 								}
 
-								if (((dataType == DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST) || (dataType == 2)) || (dataType == 0)) {
+								if (((dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP) || (dataType == 2)) || (dataType == 0)) {
 									if ((pDisplayList->pScene != DISPLAY_LIST_SCENE_ALWAYS) &&
 										(((pParams->bIsShadowScene == 1 && (pCurCommand->pRenderInput.pStrip->shadowReceiveFlags == 0)) ||
 											((pParams->bIsShadowScene != 1 && (pCurCommand->pRenderInput.pStrip->shadowReceiveFlags != 0))))))
@@ -889,7 +889,7 @@ void edDListSetState(ulong cmdA, ulong cmdB)
 				if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) != 0) {
 					uVar1 = gCurDList->nbCommands;
 					pDVar2 = gCurDList->aCommands;
-					pDVar2[uVar1].dataType = DISPLAY_LIST_DATA_TYPE_PKT;
+					pDVar2[uVar1].dataType = DLIST_PRIM_TYPE_PKT;
 					pDVar2[uVar1].pRenderInput.pPkt = pRVar6;
 				}
 
@@ -921,7 +921,7 @@ void edDListSetState(ulong cmdA, ulong cmdB)
 					if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) != 0) {
 						uVar1 = gCurDList->nbCommands;
 						pDVar2 = gCurDList->aCommands;
-						pDVar2[uVar1].dataType = DISPLAY_LIST_DATA_TYPE_PKT;
+						pDVar2[uVar1].dataType = DLIST_PRIM_TYPE_PKT;
 						pDVar2[uVar1].pRenderInput.pPkt = pRVar6;
 					}
 
@@ -1923,6 +1923,7 @@ void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
 	pSt = gCurWHBuf;
 	pVtx = gCurVertexBuf;
 	if (gCurPrimType == 0xc) {
+		// Primitive 0xc runs the PS2 flare rejection check before storing the sprite.
 		local_10.w = 1.0f;
 		local_10.x = x;
 		local_10.y = y;
@@ -2376,17 +2377,17 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 		case 1:
 		case 2:
 		case 3:
-		case DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST:
+		case DLIST_PRIM_TYPE_TRIANGLE_STRIP:
 		case 5:
-		case DISPLAY_LIST_DATA_TYPE_SPRITE:
+		case DLIST_PRIM_TYPE_SPRITE:
 			edDListBegin2D(primType & 0xff);
 			break;
 		default:
-			edDListBegin2D(DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST);
+			edDListBegin2D(DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 			break;
 		case 8:
 			g_Count_004495f8 = 0;
-			edDListBegin2D(DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST);
+			edDListBegin2D(DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 		}
 
 		gAddVertexFUNC = edDListVertex4f_2D;
@@ -2423,7 +2424,7 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 			break;
 		case 3:
 		case 8:
-			edDListBeginStrip(x, y, z, nbVertex, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST);
+			edDListBeginStrip(x, y, z, nbVertex, DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 			goto LAB_002ca38c;
 		default:
 			primType = 4;
@@ -2462,7 +2463,7 @@ edpkt_data* edDListCheckState(edpkt_data* pRenderCommand)
 		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) != 0) {
 			uVar1 = gCurDList->nbCommands;
 			pDVar2 = gCurDList->aCommands;
-			pDVar2[uVar1].dataType = DISPLAY_LIST_DATA_TYPE_PKT;
+			pDVar2[uVar1].dataType = DLIST_PRIM_TYPE_PKT;
 			pDVar2[uVar1].pRenderInput.pPkt = pRenderCommand;
 		}
 
@@ -3352,7 +3353,7 @@ void edDListEnd(void)
 				pCommand->pCurDListBuf = (edpkt_data*)gCurDListBuf;
 
 				dataType = pCommand->dataType;
-				if (dataType != DISPLAY_LIST_DATA_TYPE_PKT) {
+				if (dataType != DLIST_PRIM_TYPE_PKT) {
 					if ((((dataType == 0xc) || (dataType == 0xb)) || (dataType == 7)) || (dataType == 6)) {
 						if (gNbAddedVertex < 1) {
 							gCurDList->nbCommands = gCurDList->nbCommands - 1;

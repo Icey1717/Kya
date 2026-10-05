@@ -97,7 +97,7 @@ void edCTextFormat::DisplayDebugInfos(float x, float y)
 	fVar6 = fVar6 + 1.0f;
 	fVar7 = fVar7 + 1.0f;
 	edDListColor4u8(0xff, 0xff, 0xff, 0x40);
-	edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+	edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	edDListVertex4f(fVar5, fVar4, 0.0f, 0.0f);
 	edDListVertex4f(fVar6, fVar4, 0.0f, 0.0f);
 	edDListVertex4f(fVar5, fVar7, 0.0f, 0.0f);
@@ -115,7 +115,7 @@ void edCTextFormat::DisplayDebugInfos(float x, float y)
 			fVar4 = fVar6 + fVar4 + 1.0f;
 			fVar5 = fVar5 + 1.0f;
 			edDListColor4u8(0x7f, (char)((uVar3 & 1) << 7) + 0x7f, 0xff, 0x40);
-			edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
+			edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 			edDListVertex4f(fVar6, fVar7, 0.0f, 0.0f);
 			edDListVertex4f(fVar4, fVar7, 0.0f, 0.0f);
 			edDListVertex4f(fVar6, fVar5, 0.0f, 0.0f);

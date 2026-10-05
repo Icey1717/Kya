@@ -722,6 +722,7 @@ void CInstantFlares::Draw(int materialId)
 			do {
 				pInstance = this->field_0x0 + iVar4;
 				if (pInstance->field_0x0 != (CActInstance*)0x0) {
+					// Pulse the collectible flare's size and alpha over its half-second lifetime.
 					fVar5 = pInstance->field_0x4 / 0.5f;
 					if (fVar5 < DBG_TIME_IN1) {
 						fVar5 = edFIntervalLERP(fVar5, 0.0f, DBG_TIME_IN1, 0.0f, DBG_LERP_OUT1);
