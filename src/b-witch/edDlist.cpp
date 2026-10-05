@@ -2372,7 +2372,7 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 			pRVar1[-(cachedNbStateAdded + 1)].cmdB = SCE_GIF_PACKED_AD;
 			gNbStateAdded = 0;
 		}
-		switch ((int)(primType & 0xff)) {
+		switch (primType) {
 		case DLIST_PRIM_TYPE_POINT:
 		case DLIST_PRIM_TYPE_LINE:
 		case DLIST_PRIM_TYPE_LINE_STRIP:
@@ -2688,28 +2688,28 @@ void edDListSetProperty(uint type, uint value)
 	if ((gbInsideBegin == false) && (type < 7)) {
 		bVar1 = (byte)value;
 		switch (type) {
-		case 0:
+		case DLIST_PROPERTY_FOG:
 			IMPLEMENTATION_GUARD(
 			gbFog = bVar1;)
 			break;
-		case 1:
+		case DLIST_PROPERTY_FOG_ALPHA:
 			IMPLEMENTATION_GUARD(
 			gbFogAlpha = bVar1;)
 			break;
-		case 2:
+		case DLIST_PROPERTY_LIGHT:
 			gbLight = bVar1;
 			break;
-		case 3:
+		case DLIST_PROPERTY_SHADOW_CAST:
 			gShadowCast = (short)value;
 			break;
-		case 4:
+		case DLIST_PROPERTY_SHADOW_RECEIVE:
 			gShadowReceive = (short)value;
 			break;
-		case 5:
+		case DLIST_PROPERTY_SHAPE_SIZE:
 			IMPLEMENTATION_GUARD(
 			gShapeSize = value;)
 			break;
-		case 6:
+		case DLIST_PROPERTY_SUBDIVIDE_LEVEL:
 			gSubdivideLevel = value;
 		}
 	}

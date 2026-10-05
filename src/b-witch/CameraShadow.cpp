@@ -24,7 +24,7 @@ bool CCameraShadow::InitDlistPatchable(int)
 
 	edDListLoadIdentity();
 	edDListUseMaterial((edDList_material*)0x0);
-	edDListSetProperty(4, this->sceneFlags);
+	edDListSetProperty(DLIST_PROPERTY_SHADOW_RECEIVE, this->sceneFlags);
 	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE, 0x2ee);
 	edDListColor4u8(0, 0, 0, 0x7f);
 	curVtxIndex = 0;
@@ -36,7 +36,7 @@ bool CCameraShadow::InitDlistPatchable(int)
 	} while (curVtxIndex < 0xfa);
 
 	edDListEnd();
-	edDListSetProperty(4, 0);
+	edDListSetProperty(DLIST_PROPERTY_SHADOW_RECEIVE, 0);
 
 	pDlistmanager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
 	pDlistmanager->SetActive(this->patchRegister, 1);
