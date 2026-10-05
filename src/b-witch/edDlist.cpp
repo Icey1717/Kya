@@ -89,7 +89,7 @@ byte gbLight = 0;
 short gShadowCast = 0;
 short gShadowReceive = 0;
 
-int gCurPrimType = 0;
+int gCurPrimType = DLIST_PRIM_TYPE_POINT;
 int gNbAddedVertex = 0;
 int gMaxNbVertex = 0;
 int gNbDMAVertex = 0;
@@ -389,7 +389,7 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 									goto LAB_002ce7c4;
 								}
 
-								if (((dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP) || (dataType == 2)) || (dataType == 0)) {
+								if (((dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP) || (dataType == DLIST_PRIM_TYPE_LINE_STRIP)) || (dataType == DLIST_PRIM_TYPE_POINT)) {
 									if ((pDisplayList->pScene != DISPLAY_LIST_SCENE_ALWAYS) &&
 										(((pParams->bIsShadowScene == 1 && (pCurCommand->pRenderInput.pStrip->shadowReceiveFlags == 0)) ||
 											((pParams->bIsShadowScene != 1 && (pCurCommand->pRenderInput.pStrip->shadowReceiveFlags != 0))))))
@@ -691,7 +691,7 @@ void edDListInit(void)
 	//gbFlipDone = 0;
 	gCurRenderState = 0;
 	gCurFlushState = 0;
-	gCurPrimType = 0;
+	gCurPrimType = DLIST_PRIM_TYPE_POINT;
 	gNbUsedMaterial = 0;
 	//gbFog = 0;
 	//gbFogAlpha = 0;
@@ -1302,7 +1302,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float skip)
 	x = gIncViewportX + (int)(local_10.x * 16.0f);
 	y = gIncViewportY + (int)(local_10.y * 16.0f);
 
-	if (gCurPrimType == 8) {
+	if (gCurPrimType == DLIST_PRIM_TYPE_QUAD) {
 		g_Count_004495f8 = g_Count_004495f8 + 1;
 #ifdef PLATFORM_WIN
 		Renderer::SetVertexSkip((g_Count_004495f8 == 1) || (g_Count_004495f8 == 2));
@@ -1795,7 +1795,7 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	gEndSTBuf = gCurSTBuf + nbSt * 2;
 	gEndWHBuf = gCurWHBuf + nbWh * 2;
 	pCommand->pRenderInput.pSprite = pNewSprite;
-	pCommand->dataType = 6;
+	pCommand->dataType = DLIST_PRIM_TYPE_SPRITE;
 	pCommand->primType = gCurPrimType;
 
 	return;
@@ -1922,8 +1922,8 @@ void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
 	pRgba = gCurColorBuf;
 	pSt = gCurWHBuf;
 	pVtx = gCurVertexBuf;
-	if (gCurPrimType == 0xc) {
-		// Primitive 0xc runs the PS2 flare rejection check before storing the sprite.
+	if (gCurPrimType == DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT) {
+		// The flare-reject primitive runs the PS2 check before storing the sprite.
 		local_10.w = 1.0f;
 		local_10.x = x;
 		local_10.y = y;
@@ -1937,7 +1937,7 @@ void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
 		}
 	}
 
-	if ((gCurPrimType != 7) || (gNbAddedVertex == 0)) {
+	if ((gCurPrimType != DLIST_PRIM_TYPE_SPRITE_QUICK) || (gNbAddedVertex == 0)) {
 		pSt[0] = gCurWH[0];
 		pSt[1] = gCurWH[1];
 		if (gMaxSTNbInVertex == 4) {
@@ -1965,8 +1965,8 @@ void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
 		gCurWHBuf = pSt + 2;
 	}
 
-	if (gCurPrimType != 7) {
-		if (((gCurPrimType == 0xb) || (gCurPrimType == 0xc)) && (1 < gCurColorNbInVertex)) {
+	if (gCurPrimType != DLIST_PRIM_TYPE_SPRITE_QUICK) {
+		if (((gCurPrimType == DLIST_PRIM_TYPE_SPRITE_FLARE) || (gCurPrimType == DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT)) && (1 < gCurColorNbInVertex)) {
 			pRgba[0].r = gCurColor_SPR[0].r;
 			pRgba[0].g = gCurColor_SPR[0].g;
 			pRgba[0].b = gCurColor_SPR[0].b;
@@ -2373,19 +2373,19 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 			gNbStateAdded = 0;
 		}
 		switch ((int)(primType & 0xff)) {
-		case 0:
-		case 1:
-		case 2:
-		case 3:
+		case DLIST_PRIM_TYPE_POINT:
+		case DLIST_PRIM_TYPE_LINE:
+		case DLIST_PRIM_TYPE_LINE_STRIP:
+		case DLIST_PRIM_TYPE_TRIANGLE:
 		case DLIST_PRIM_TYPE_TRIANGLE_STRIP:
-		case 5:
+		case DLIST_PRIM_TYPE_TRIANGLE_FAN:
 		case DLIST_PRIM_TYPE_SPRITE:
 			edDListBegin2D(primType & 0xff);
 			break;
 		default:
 			edDListBegin2D(DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 			break;
-		case 8:
+		case DLIST_PRIM_TYPE_QUAD:
 			g_Count_004495f8 = 0;
 			edDListBegin2D(DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 		}
@@ -2399,7 +2399,7 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 
 	edDListPatchGifTag3D();
 
-	if (((0 < gSubdivideLevel) && ((primType & 0xff) == 0xb)) || ((primType & 0xff) == 0xc)) {
+	if (((0 < gSubdivideLevel) && ((primType & 0xff) == DLIST_PRIM_TYPE_SPRITE_FLARE)) || ((primType & 0xff) == DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT)) {
 		IMPLEMENTATION_GUARD(edDListSubDivBegin();)
 	}
 
@@ -2417,30 +2417,30 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 	}
 
 	switch (uVar5 & 0xff) {
-		case 0:
-		case 2:
-		case 4:
+		case DLIST_PRIM_TYPE_POINT:
+		case DLIST_PRIM_TYPE_LINE_STRIP:
+		case DLIST_PRIM_TYPE_TRIANGLE_STRIP:
 			edDListBeginStrip(x, y, z, nbVertex, (ushort)primType & 0xff);
 			break;
-		case 3:
-		case 8:
+		case DLIST_PRIM_TYPE_TRIANGLE:
+		case DLIST_PRIM_TYPE_QUAD:
 			edDListBeginStrip(x, y, z, nbVertex, DLIST_PRIM_TYPE_TRIANGLE_STRIP);
 			goto LAB_002ca38c;
 		default:
-			primType = 4;
+			primType = DLIST_PRIM_TYPE_TRIANGLE_STRIP;
 			break;
-		case 6:
-		case 7:
-		case 0xb:
-		case 0xc:
+		case DLIST_PRIM_TYPE_SPRITE:
+		case DLIST_PRIM_TYPE_SPRITE_QUICK:
+		case DLIST_PRIM_TYPE_SPRITE_FLARE:
+		case DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT:
 			gMaxNbVertex = gMaxNbVertex << 2;
 			edDListBeginSprite(nbVertex, uVar5 & 0xff);
 			break;
-		case 10:
+		case DLIST_PRIM_TYPE_LINE_LOOP:
 			nbVertex = nbVertex + 1;
 			gMaxNbVertex = gMaxNbVertex + 1;
-		case 1:
-			edDListBeginStrip(x, y, z, nbVertex, 2);
+		case DLIST_PRIM_TYPE_LINE:
+			edDListBeginStrip(x, y, z, nbVertex, DLIST_PRIM_TYPE_LINE_STRIP);
 	}
 
 	uVar5 = (uint)primType;
@@ -2496,11 +2496,11 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 		gCurColor_SPR[gCurColorNbInVertex].b = b;
 		gCurColor_SPR[gCurColorNbInVertex].a = a;
 
-		if (((gCurPrimType == 0xb) || (gCurPrimType == 0xc)) && (gCurColorNbInVertex < gEndColorNbInVertex)) {
+		if (((gCurPrimType == DLIST_PRIM_TYPE_SPRITE_FLARE) || (gCurPrimType == DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT)) && (gCurColorNbInVertex < gEndColorNbInVertex)) {
 			gCurColorNbInVertex = gCurColorNbInVertex + 1;
 		}
 
-		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) == 0) && (gCurPrimType == 7)) {
+		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_PATCHABLE) == 0) && (gCurPrimType == DLIST_PRIM_TYPE_SPRITE_QUICK)) {
 			gCurColorBuf->r = gCurColor_SPR->r;
 			gCurColorBuf->g = gCurColor_SPR->g;
 			gCurColorBuf->b = gCurColor_SPR->b;
@@ -2672,7 +2672,7 @@ void edDListWidthHeight2f(float width, float height)
 	gCurWH[0] = (short)tempWh.x;
 	gCurWH[1] = (short)tempWh.y;
 
-	if (gCurPrimType == 7) {
+	if (gCurPrimType == DLIST_PRIM_TYPE_SPRITE_QUICK) {
 		gCurWHBuf[0] = gCurWH[0];
 		gCurWHBuf[1] = gCurWH[1];
 		gCurWHBuf = gCurWHBuf + 2;
@@ -3341,7 +3341,7 @@ void edDListEnd(void)
 		}
 		else {
 			if (gCurDList->nbCommands != 0) {
-				if (gCurPrimType == 10) {
+				if (gCurPrimType == DLIST_PRIM_TYPE_LINE_LOOP) {
 					edDListVertex4f(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, FLOAT_0048d39c);
 				}
 
@@ -3354,7 +3354,7 @@ void edDListEnd(void)
 
 				dataType = pCommand->dataType;
 				if (dataType != DLIST_PRIM_TYPE_PKT) {
-					if ((((dataType == 0xc) || (dataType == 0xb)) || (dataType == 7)) || (dataType == 6)) {
+					if ((((dataType == DLIST_PRIM_TYPE_SPRITE_FLARE_REJECT) || (dataType == DLIST_PRIM_TYPE_SPRITE_FLARE)) || (dataType == DLIST_PRIM_TYPE_SPRITE_QUICK)) || (dataType == DLIST_PRIM_TYPE_SPRITE)) {
 						if (gNbAddedVertex < 1) {
 							gCurDList->nbCommands = gCurDList->nbCommands - 1;
 							gCurDListBuf = pCommand->pRenderInput.pStrip;
@@ -3368,7 +3368,7 @@ void edDListEnd(void)
 						}
 					}
 					else {
-						if (((dataType == 4) || (dataType == 2)) || (dataType == 0)) {
+						if (((dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP) || (dataType == DLIST_PRIM_TYPE_LINE_STRIP)) || (dataType == DLIST_PRIM_TYPE_POINT)) {
 							if (gNbAddedVertex < 2) {
 								gCurDList->nbCommands = gCurDList->nbCommands - 1;
 								gCurDListBuf = pCommand->pRenderInput.pStrip;
@@ -3478,7 +3478,7 @@ void edDListChangeMatrix(DisplayList* pDisplayList, uint nbMatrices, edF32MATRIX
 	if ((pDVar6->flags_0x0 & DISPLAY_LIST_FLAG_3D) != 0) {
 		for (; uVar5 != nbMatrices; uVar5 = uVar5 + 1) {
 			pDVar4 = pDVar6->aCommands + uVar5;
-			if (pDVar4->dataType == 4) {
+			if (pDVar4->dataType == DLIST_PRIM_TYPE_TRIANGLE_STRIP) {
 				do {
 					pDVar4->matrix = *aMatrices;
 				} while (0 < iVar2);
@@ -4013,7 +4013,7 @@ void edDListPatchVertex_Inline(edVertex* pVertexBuf, edF32VECTOR3* pXyz, float* 
 		pVertex->fSkip = *pSkip;
 	}
 	else {
-		if (gCurDListInfo3DPatchable->primType != 3) {
+		if (gCurDListInfo3DPatchable->primType != DLIST_PRIM_TYPE_TRIANGLE) {
 			pVertex->fSkip = *pSkip;
 		}
 
