@@ -88,8 +88,17 @@ public:
 
 	void ClearLocalData();
 
-	void BehaviourShootFire_Manage(CBehaviourShoot* pBehaviour);
-	void BehaviourFireWave_Manage(CBehaviourShoot* pBehaviour);
+	void BehaviourShootFire_Manage(CBehaviourShootFire* pBehaviour);
+	void BehaviourFireWave_Manage(CBehaviourShootFireWave* pBehaviour);
+
+	void ComputeInvincibility();
+	void ComputeTimeAndParamToShoot();
+	uint CheckArea();
+	int UpdateOrientationAndLookingAt(CActor* pLookAtActor);
+	void StateShootChase();
+	void StateShootFire(CBehaviourShootFire* pBehaviour);
+	void StateShootFireWave(CBehaviourShootFireWave* pBehaviour);
+	void StateShootComeBack();
 
 	CAddOnGenerator addOnGenerator;
 	ed_3D_Light_Config lightingConfig;
@@ -100,8 +109,18 @@ public:
 	uint field_0x350;
 	uint field_0x354;
 
+	float field_0x3c0;
+	float field_0x3c4;
+	float field_0x3c8;
 	float field_0x3cc;
+	uint field_0x3d0;
 	float field_0x3d4;
+	float field_0x3d8;
+	float field_0x3dc;
+	float field_0x3e0;
+	uint field_0x3e4;
+	uint field_0x3e8;
+	uint field_0x3ec;
 
 	uint field_0x3f0;
 	float field_0x3f4;
@@ -119,7 +138,10 @@ public:
 	edF32VECTOR4 lightAmbient;
 
 	ed_3d_hierarchy_setup altHierarchySetup;
+	edF32VECTOR4 cachedBoundingSphere;
+	float cachedClipping;
 
+	bool field_0x43d;
 	bool field_0x43e;
 	byte field_0x43f;
 };

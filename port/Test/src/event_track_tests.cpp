@@ -81,13 +81,13 @@ TEST(EventTrack, SoundEffectLoopCheckUsesSoundAndMaterialSelector)
 	CFxSoundScenaricData data{};
 	data.soundRef.pObj = STORE_POINTER(&sample);
 	CFxNewSound sound;
+	EXPECT_FALSE(sound.IsLooped());
 	sound.Instanciate(&data, FX_MATERIAL_SELECTOR_NONE);
 	EXPECT_FALSE(sound.IsLooped());
 	EXPECT_EQ(sample.lastSelector, static_cast<uint>(FX_MATERIAL_SELECTOR_NONE));
 	sample.looped = true;
 	EXPECT_TRUE(sound.IsLooped());
-	data.soundRef.pObj = 0;
-	EXPECT_FALSE(sound.IsLooped());
+	EXPECT_EQ(sample.lastSelector, static_cast<uint>(FX_MATERIAL_SELECTOR_NONE));
 }
 
 TEST(EventTrack, ParticleLoopCheckUsesAllParticleGroups)

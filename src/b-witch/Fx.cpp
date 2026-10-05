@@ -1150,6 +1150,11 @@ void CNewFx::UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition)
 
 }
 
+void CNewFx::SetTimeScaler(float)
+{
+	return;
+}
+
 void CNewFx::Manage()
 {
 	uint uVar1;
