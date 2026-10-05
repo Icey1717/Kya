@@ -910,7 +910,7 @@ void CSpriteWindow::DrawSprite()
 
 		edDListLoadIdentity();
 
-		edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+		edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_SPRITE, 2);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, 0.0f);
 		edDListTexCoo2f(local_10, local_c);

@@ -300,7 +300,7 @@ void CActorTeleporter::Draw()
 
 						if (pMaterialInfo != (edDList_material*)0x0) {
 							edDListUseMaterial(pMaterialInfo);
-							edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+							edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 
 							if (unlockedFlag == 0) {
 								edDListColor4u8(0x30, 0x30, 0x30, 0x80);
@@ -1061,7 +1061,7 @@ void CActorTeleporter::DisplayDigit(float param_2, float param_3, float param_4,
 	edDListBlendSet(1);
 	edDListBlendFunc_002ca830();
 	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
-	edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 	edDListTexCoo2f(0.0f, 1.0f);
 	y = param_3 - fVar1;
 	x_00 = param_2 - param_4 * 0.5f;

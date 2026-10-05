@@ -3166,7 +3166,7 @@ void Draw_DListMagnifier(float param_1, EmitterDrawState* param_2)
 		local_60.rowT = param_2->field_0x20;
 		edDListLoadMatrix(&local_60);
 		fVar9 = param_1 * 0.75f;
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, param_2->nextVertexOffset * ((int)param_2->nbVertices + -1) * 2);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, param_2->nextVertexOffset * ((int)param_2->nbVertices + -1) * 2);
 		edDListColor4u8((param_2->field_0xc).r, (param_2->field_0xc).g, (param_2->field_0xc).b, (param_2->field_0xc).a);
 		HEAT_FX_VDEF* pVtx = reinterpret_cast<HEAT_FX_VDEF*>(param_2 + 1);
 		for (iVar6 = 0; iVar6 < param_2->nbVertices + -1; iVar6 = iVar6 + 1) {

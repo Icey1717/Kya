@@ -488,7 +488,7 @@ void CFrontendMagicGauge::DrawMagic_BonusFlare()
 	if (isCoordinateComputed) {
 		edDListTranslate(sceneCoordinate.x, sceneCoordinate.y, sceneCoordinate.z);
 		edDListUseMaterial(&this->field_0x3d0.materialInfo);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		edDListTexCoo2f(0.0f, 0.0f);
 		edDListTexCoo2f(1.0f, 1.0f);
 		edDListWidthHeight2f(0.15f, 0.15f);
@@ -516,7 +516,7 @@ void CFrontendMagicGauge::DrawMagic_BonusFlare()
 		float textureOffsetY = static_cast<float>(textureRow >> 3) * 0.5f;
 
 		edDListUseMaterial(&this->field_0x490.materialInfo);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		edDListTexCoo2f(textureOffsetX, textureOffsetY);
 		edDListTexCoo2f(textureOffsetX + 0.125f, textureOffsetY + 0.5f);
 		edDListWidthHeight2f(FLOAT_00428e60, FLOAT_00428e60);

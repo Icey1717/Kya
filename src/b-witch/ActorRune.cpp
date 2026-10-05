@@ -51,7 +51,7 @@ void CActorRune::Draw()
 			if (this->materialIdA != -1) {
 				pDlistMaterial = pFileManager->GetMaterialFromId(this->materialIdA, 0);
 				edDListUseMaterial(pDlistMaterial);
-				edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 				edDListTexCoo2f(0.0f, 0.0f);
 				edDListTexCoo2f(1.0f, 1.0f);
 				iVar2 = rand();
@@ -66,7 +66,7 @@ void CActorRune::Draw()
 			if (this->materialIdB != -1) {
 				pDlistMaterial = pFileManager->GetMaterialFromId(this->materialIdB, 0);
 				edDListUseMaterial(pDlistMaterial);
-				edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 				edDListTexCoo2f(0.0f, 0.0f);
 				edDListTexCoo2f(1.0f, 1.0f);
 				edDListWidthHeight2f(1.48f, 1.48f);

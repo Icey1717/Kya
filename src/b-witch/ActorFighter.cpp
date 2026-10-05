@@ -10200,7 +10200,7 @@ void PlayerSubStruct_64::Draw()
 			edDListLoadIdentity();
 			edDListUseMaterial(this->pMaterial);
 			edDListBlendSet(1);
-			edDListBegin(0.0f, 0.0f, 0.0f, 4, nbVertex);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, nbVertex);
 			uVar6 = 0;
 			if ((this->flags & 0x20) == 0) {
 				fVar9 = this->field_0x38 * static_cast<float>(this->field_0x44.a);

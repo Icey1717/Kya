@@ -5768,7 +5768,7 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 					fVar13 = 0.0f;
 					iVar11 = 2;
 					do {
-						edDListBegin(0.0f, 0.0f, 0.0f, 4, ((iVar4 >> 5) + 1) * 2);
+						edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, ((iVar4 >> 5) + 1) * 2);
 						fVar14 = 0.0f;
 						for (iVar10 = iVar4 >> 5; iVar10 != 0; iVar10 = iVar10 + -1) {
 							edDListVertex4f(fVar14, fVar13, 0.0f, 0.0f);

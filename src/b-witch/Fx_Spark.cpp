@@ -30,7 +30,7 @@ bool CFxSpark::InitDlistPatchable(int)
 
 	edDListUseMaterial(CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->particleID, 0));
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, this->count_0xa0 * this->count_0x98 * 2);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, this->count_0xa0 * this->count_0x98 * 2);
 
 	outerLoopIndex = 0;
 	if (0 < this->count_0x98) {

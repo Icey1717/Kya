@@ -709,11 +709,11 @@ void CFxLightEmitter::Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* pa
 
 			if (((this->flags & 0x10) == 0) || ((this->flags & 0x20) != 0)) {
 				fVar17 = 0.0f;
-				edDListBegin(0.0f, 0.0f, 0.0f, 8, this->field_0x54 << 2);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, this->field_0x54 << 2);
 			}
 			else {
 				fVar17 = 0.0f;
-				edDListBegin(0.0f, 0.0f, 0.0f, 0xb, this->field_0x54);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, this->field_0x54);
 			}
 
 			if (param_4 == (edF32MATRIX4*)0x0) {

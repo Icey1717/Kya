@@ -42,7 +42,7 @@ bool CFxTail::InitDlistPatchable(int)
 
 	edDListUseMaterial(CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 0));
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, (this->nbSegments + 1) * 2);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, (this->nbSegments + 1) * 2);
 	s = -8.0f;
 	iVar2 = 0;
 	if (0 < this->nbSegments + 1) {

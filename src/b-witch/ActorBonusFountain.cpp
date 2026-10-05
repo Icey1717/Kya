@@ -131,7 +131,7 @@ void CActorBonusFountain::FUN_003ea280(edF32VECTOR4* pPosition, int index)
 		edF32Matrix4CopyHard(&eStack64, &pCameraManager->transMatrix_0x390);
 		eStack64.rowT = *pPosition;
 		edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &local_50);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		edDListTexCoo2f(0.0f, 0.0f);
 		edDListTexCoo2f(1.0f, 1.0f);
 		edDListWidthHeight2f(0.1714286f, 0.1714286f);
@@ -155,7 +155,7 @@ void CActorBonusFountain::FUN_003ea280(edF32VECTOR4* pPosition, int index)
 
 		fVar10 = (float)(iVar5 >> 3) * 0.5f;
 		edDListUseMaterial(&(pMagicOrbs->field_0x490).materialInfo);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		edDListTexCoo2f(s, fVar10);
 		edDListTexCoo2f(s + 0.125f, fVar10 + 0.5f);
 		edDListWidthHeight2f(FLOAT_00428e60, FLOAT_00428e60);

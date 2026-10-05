@@ -438,7 +438,7 @@ void edCTextFormat::SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderComma
 		edDListAlphaTestAndZTest(1, 7, 0, 0, 0, 0, 1, 1);
 		edDListBlendFuncNormal();
 		edDListBlendSet(1);
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, pTextRenderCommands->characterCount << 2);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, pTextRenderCommands->characterCount << 2);
 		pCharacterData = pTextRenderCommands->pCharacterData;
 		iVar1 = pTextRenderCommands->characterCount;
 		while (iVar1 != 0) {

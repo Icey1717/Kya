@@ -206,7 +206,7 @@ bool CShadow::InitDlistPatchable(int patchId)
 	edDListLoadIdentity();
 	pMaterialInfo = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 0);
 	edDListUseMaterial(pMaterialInfo);
-	edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 	edDListColor4u8(this->shadowColor.r, this->shadowColor.g, this->shadowColor.b, 0);
 	edDListTexCoo2f(0.0f, 0.0f);
 	edDListVertex4f(-1.0f, 0.01f, -1.0f, 1.0f);

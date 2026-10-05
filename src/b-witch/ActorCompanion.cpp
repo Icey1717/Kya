@@ -140,7 +140,7 @@ void CActorCompanion::Draw()
 				edDListLoadMatrix(&eStack96);
 				peVar6 = pFileManager->GetMaterialFromId(this->field_0x358, 0);
 				edDListUseMaterial(peVar6);
-				edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 
 				iVar7 = rand();
 				uVar11 = (uint)(this->field_0x354).a;
@@ -183,7 +183,7 @@ void CActorCompanion::Draw()
 
 								peVar6 = pFileManager->GetMaterialFromId(this->materialId_0x35c, this->behaviourCompanion.GetActiveAlert()->field_0x34[uVar11]);
 								edDListUseMaterial(peVar6);
-								edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+								edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 								edDListColor4u8(0x80, 0x80, 0x80, 0x80);
 
 								uVar9 = 8;
@@ -743,7 +743,7 @@ void CActorCompanion::FUN_001e82a0()
 		}
 
 		edDListColor4u8(_rgba_0042ca48.r, _rgba_0042ca48.g, _rgba_0042ca48.b, static_cast<byte>(static_cast<float>(_rgba_0042ca48.a) * fabs(fVar4)));
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 		edDListRotateZ(zRotation);
 		edDListTranslate(translation.x * (float)gVideoConfig.screenWidth, translation.y * (float)gVideoConfig.screenHeight, 0.0f);
 		edDListTexCoo2f(0.0f, 0.0f);
@@ -2300,7 +2300,7 @@ void CBehaviourCompanion::_Display_Text(float param_1, float param_2, float para
 
 	edDListUseMaterial(pManager->GetMaterialFromId(this->pOwner->field_0x360, internalId));
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	edDListColor4u8(0x80, 0x80, 0x80, 0x80 - (char)(int)((float)uVar1 * fVar3));
 	edDListTexCoo2f(0.0f, 0.0f);
 	edDListVertex4f(param_1 * (float)gVideoConfig.screenWidth, param_2 * (float)gVideoConfig.screenHeight, 0.0f, 0.0f);
@@ -2314,7 +2314,7 @@ void CBehaviourCompanion::_Display_Text(float param_1, float param_2, float para
 
 	if ((GetAlert(this->field_0x18)->flags_0x0 & 8) == 0) {
 		edDListUseMaterial(pManager->GetMaterialFromId(this->pOwner->field_0x358, 0));
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		edDListColor4u8(_rgba_0042ca50.r, _rgba_0042ca50.g, _rgba_0042ca50.b, _rgba_0042ca50.a - (char)(int)(fVar3 * (float)(uint)_rgba_0042ca50.a));
 		edDListTexCoo2f(0.0f, 0.0f);
 		edDListVertex4f((float)gVideoConfig.screenWidth * ((param_1 + 0.088f) - 0.02f), (float)gVideoConfig.screenHeight * ((param_2 + 0.192f) - 0.025f), 0.0f, 0.0f);

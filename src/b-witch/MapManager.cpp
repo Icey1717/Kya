@@ -576,7 +576,7 @@ void CMapManager::DrawObjectivePanel(float param_1)
 			local_30 = local_40;
 			local_1c = local_2c;
 			edDListUseMaterial(&MenuBitmaps[8].materialInfo);
-			edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 			edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
 			edDListLoadIdentity();
 			edDListTexCoo2f(local_48, local_44);
@@ -650,7 +650,7 @@ void CMapManager::DrawObjectivePanel(float param_1)
 		}
 
 		edDListUseMaterial(pMaterialInfo);
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 6);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 6);
 		edDListColor4u8(0x80, 0x80, 0x80, 0x80);
 		edDListLoadIdentity();
 		edDListTexCoo2f(fVar5, t);
@@ -1181,7 +1181,7 @@ void CMapManager::DrawSprite(edDList_material* pMaterial, S_2DRECT* pRect, uint 
 	byte a;
 
 	edDListUseMaterial(pMaterial);
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 
 	g = (byte)(color >> 8);
 	b = (byte)(color >> 0x10);
@@ -1218,7 +1218,7 @@ void CMapManager::DrawClippedSprite(edDList_material* pMaterial, S_2DRECT* pRect
 
 	if (nbVertices != 0) {
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 5, nbVertices);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_FAN, nbVertices);
 		edDListColor4u8(rgbColor.r, rgbColor.g, rgbColor.b, rgbColor.a);
 		edDListLoadIdentity();
 
@@ -1303,7 +1303,7 @@ void CMapManager::DrawButtons(char* pText)
 	local_30 = local_40;
 	local_1c = local_2c;
 	edDListUseMaterial(&MenuBitmaps[8].materialInfo);
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
 	edDListLoadIdentity();
 	edDListTexCoo2f(local_48, local_44);
@@ -1564,7 +1564,7 @@ void CObjectivesPanel::DrawTextRevealUnderline(float param_2, float param_3, flo
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListBlendSet(1);
 	edDListBlendFunc_002ca830();
-	edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 	bStack3 = (byte)(color >> 8);
 	bStack2 = (byte)(color >> 0x10);
 	bStack1 = (byte)(color >> 0x18);
@@ -2201,7 +2201,7 @@ void CLevelMap::DrawLegend(float param_1, float param_2)
 	local_161c = local_162c;
 	pDlistMaterial = pMapManager->GetDlistMaterial(0xb);
 	edDListUseMaterial(pDlistMaterial);
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 6);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 6);
 	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
 	edDListLoadIdentity();
 	edDListTexCoo2f(local_1648, local_1644);

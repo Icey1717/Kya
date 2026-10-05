@@ -186,7 +186,7 @@ void CConicalWaveShoot::DrawWavePart(float angle, int part)
 	edF32VECTOR4 directionA;
 	edF32VECTOR4 directionB;
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 6);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 6);
 
 	outerRadius = this->field_0x20;
 	innerRadius = outerRadius - this->field_0x4;

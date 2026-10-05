@@ -121,7 +121,7 @@ void DrawDisconnectedController(int param_1)
 			edDListUseMaterial((edDList_material*)0x0);
 			edDListColor4u8(0, 0, 0, 0x80);
 			edDListLoadIdentity();
-			edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+			edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_SPRITE, 2);
 			edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 			edDListVertex4f(static_cast<float>(gVideoConfig.screenWidth), static_cast<float>(gVideoConfig.screenHeight), 0.0f, 0.0f);
 			edDListEnd();

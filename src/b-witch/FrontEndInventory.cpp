@@ -1079,7 +1079,7 @@ void CSprite3D::DrawSprite()
 		}
 
 		edDListTranslatev(&eStack96);
-		edDListBegin(1.0f, 1.0f, 1.0f, 8, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, DLIST_PRIM_TYPE_QUAD, 4);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, 0.0f);
 		edDListTexCoo2f(local_10, local_4);

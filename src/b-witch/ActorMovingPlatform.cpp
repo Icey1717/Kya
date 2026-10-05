@@ -3685,7 +3685,7 @@ void CBehaviourSelector::Draw()
 
 		edDListLoadMatrix((edF32MATRIX4*)this->pOwner->pMeshTransform);
 		edDListUseMaterial(this->pParticleInfo->materialInfoArray_0x8);
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 0x1a);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 0x1a);
 		iVar3 = 0;
 		do {
 			iVar2 = iVar3;

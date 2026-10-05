@@ -195,7 +195,7 @@ void CPatternPart::DrawWithOneStripAndADCFlags()
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, (static_cast<int>(this->field_0x1c / (float)(int)(this->field_0x20 * 16.0f) + 1.0f) + this->field_0x50) * 8);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, (static_cast<int>(this->field_0x1c / (float)(int)(this->field_0x20 * 16.0f) + 1.0f) + this->field_0x50) * 8);
 
 	t = 0.0f;
 	fVar6 = 0.0f;

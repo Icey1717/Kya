@@ -573,7 +573,7 @@ void CActorRope::DrawTightened()
 		} while (iVar6 < iVar5);
 	}
 
-	edDListBegin(this->sphereCentre.x, this->sphereCentre.y, this->sphereCentre.z, 4, this->nbSegments << 1);
+	edDListBegin(this->sphereCentre.x, this->sphereCentre.y, this->sphereCentre.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, this->nbSegments << 1);
 	edDListColor4u8((this->ropeColor).r, (this->ropeColor).g, (this->ropeColor).b, (this->ropeColor).a);
 	fVar8 = -8.0f;
 	iVar6 = 0;
@@ -596,7 +596,7 @@ void CActorRope::DrawTightened()
 	}
 	edDListEnd();
 
-	edDListBegin(this->sphereCentre.x, this->sphereCentre.y, this->sphereCentre.z, 4, this->nbSegments << 1);
+	edDListBegin(this->sphereCentre.x, this->sphereCentre.y, this->sphereCentre.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, this->nbSegments << 1);
 	edDListColor4u8((this->ropeColor).r, (this->ropeColor).g, (this->ropeColor).b, (this->ropeColor).a);
 	fVar8 = -8.0f;
 	iVar6 = 0;

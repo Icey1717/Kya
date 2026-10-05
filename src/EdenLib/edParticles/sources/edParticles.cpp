@@ -3334,7 +3334,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 						edDListBlendSet(1);
 
 						if (pDrawData->drawMode == 1) {
-							edDListBegin(0.0f, 0.0f, 0.0f, 0xb, nbParticlesToDraw);
+							edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, nbParticlesToDraw);
 							bHasUVTransform = (uvFlags & 1) != 0;
 							bGroundPlane = '\0';
 							if ((bool)bHasUVTransform) {
@@ -3371,7 +3371,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 							cameraUpAxis = particleToCameraMatrix.rowY;
 						}
 						else {
-							edDListBegin(0.0f, 0.0f, 0.0f, 8, nbParticlesToDraw << 2);
+							edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, nbParticlesToDraw << 2);
 							uv0.u = 0.0f;
 							bGroundPlane = '\x01';
 							bHasTexCoords = '\x01';
@@ -3638,7 +3638,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 
 									edDListLoadMatrix(&pDrawData->worldMatrix);
 									edDListUseMaterial(pDrawData->aDlistMaterials.pData + iVar15);
-									edDListBegin(0.0f, 0.0f, 0.0f, 0xb, pGroup->particleCapacity);
+									edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, pGroup->particleCapacity);
 
 									for (iVar10 = 0; iVar10 < pGroup->particleCapacity; iVar10 = iVar10 + 1) {
 										edDListColor4u8((pDrawData->field_0x50).r, (pDrawData->field_0x50).g, (pDrawData->field_0x50).b, (pDrawData->field_0x50).a);

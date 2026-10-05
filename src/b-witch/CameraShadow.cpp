@@ -25,7 +25,7 @@ bool CCameraShadow::InitDlistPatchable(int)
 	edDListLoadIdentity();
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListSetProperty(4, this->sceneFlags);
-	edDListBegin(0.0f, 0.0f, 0.0f, 3, 0x2ee);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE, 0x2ee);
 	edDListColor4u8(0, 0, 0, 0x7f);
 	curVtxIndex = 0;
 	do {

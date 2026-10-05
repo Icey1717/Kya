@@ -1001,7 +1001,7 @@ void CBehaviourWeaponPistol::DrawBullets()
 				edDListUseMaterial(pMaterialInfo);
 				edDListLoadMatrix(&eStack128);
 				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, 4, 10);
+				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 10);
 				z = LENGTH_1;
 				z_00 = LENGTH_1 * 0.1f;
 				x_00 = WIDTH_1 * 0.8660254f;
@@ -1031,7 +1031,7 @@ void CBehaviourWeaponPistol::DrawBullets()
 				edDListEnd();
 				edDListUseMaterial(pMaterialInfo_00);
 				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, 4, 8);
+				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 8);
 				edDListTexCoo2f(0.0f, 0.0f);
 				edDListVertex4f(0.0f, WIDTH_0, OFFSET_TAIL, 0.0f);
 				edDListTexCoo2f(0.0f, 1.0f);
@@ -1171,7 +1171,7 @@ void CSniperBullet::Draw(float param_1, edF32VECTOR4* pPosition, edF32VECTOR4* p
 		edDListUseMaterial((edDList_material*)0x0);
 		edDListBlendSet(1);
 		edDListBlendFunc_002ca830();
-		edDListBegin(0.0, 0.0, 0.0, 4, 0x1a);
+		edDListBegin(0.0, 0.0, 0.0, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 0x1a);
 		bStack577 = (byte)(param_7 >> 0x18);
 		uVar2 = 0;
 		bStack578 = (byte)(param_7 >> 0x10);

@@ -3343,7 +3343,7 @@ void _SubDrawRay(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
 	local_30.y = 0.0f;
 	local_30.z = 0.0f;
 	local_30.x = param_1;
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, DBG_NB_SUBDIV * (iVar3 * 2 + 4));
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, DBG_NB_SUBDIV * (iVar3 * 2 + 4));
 	for (uVar1 = 1; y = local_30.y, x = local_30.x, uVar1 <= DBG_NB_SUBDIV; uVar1 = uVar1 + 1) {
 		if (static_cast<int>(uVar1) < 0) {
 			fVar4 = static_cast<float>(uVar1 >> 1 | uVar1 & 1);

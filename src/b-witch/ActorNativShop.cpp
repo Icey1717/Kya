@@ -1328,7 +1328,7 @@ void CBehaviourNativShopSell::Display_Cursor(float scale, _rgba color)
 
 	if (peVar4 != (edDList_material*)0x0) {
 		edDListUseMaterial(peVar4);
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, 0x10);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 0x10);
 		edDListColor4u8(local_54, bStack83, bStack82, bStack81);
 		edDListTexCoo2f(1.0f, 0.0f);
 		fVar5 = -fVar7;
@@ -1373,7 +1373,7 @@ void CBehaviourNativShopSell::Display_Cursor(float scale, _rgba color)
 	peVar4 = pFileManager->GetMaterialFromId(this->materialId, 2);
 	if (peVar4 != (edDList_material*)0x0) {
 		edDListUseMaterial(peVar4);
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, 0x10);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 0x10);
 		edDListColor4u8(local_54, bStack83, bStack82, bStack81);
 		edDListTexCoo2f(0.0f, 0.0f);
 		fVar6 = fVar5 + fVar7;
@@ -1449,7 +1449,7 @@ void CBehaviourNativShopSell::Display_BottomBackGround()
 		bVar2 = ed3DComputeScreenCoordinate(zCoord, &local_30, &local_10, CFrontend::_scene_handle);
 
 		if ((bVar1 & bVar2) != 0) {
-			edDListBegin(0.0f, 0.0f, 0.0f, 8, 8);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 8);
 			edDListColor4u8(BG_Color.r, BG_Color.g, BG_Color.b, BG_Color.a);
 			edDListTexCoo2f(0.0f, 0.0f);
 			edDListVertex4f(local_20.x, local_20.y, local_20.z, 0.0f);
@@ -1489,7 +1489,7 @@ void CBehaviourNativShopSell::Display_BottomBackGround()
 		bVar2 = ed3DComputeScreenCoordinate(zCoord - 0.5f, &local_30, &local_10, CFrontend::_scene_handle);
 
 		if ((bVar1 & bVar2) != 0) {
-			edDListBegin(0.0f, 0.0f, 0.0f, 8, 8);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 8);
 			edDListColor4u8(BG_Color.r, BG_Color.g, BG_Color.b, BG_Color.a);
 			edDListTexCoo2f(0.0f, 0.0f);
 			edDListVertex4f(local_20.x, local_20.y, local_20.z, 0.0f);
@@ -1540,7 +1540,7 @@ void CBehaviourNativShopSell::Display_Sprite(edDList_material* pMaterial, Rectan
 	x_00 = x + pRect->width * (float)gVideoConfig.screenWidth;
 	y_00 = y + pRect->height * (float)gVideoConfig.screenHeight;
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
 	edDListTexCoo2f(0.0f, 0.0f);
 	edDListVertex4f(x, y, 0.0f, 0.0f);

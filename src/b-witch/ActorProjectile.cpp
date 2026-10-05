@@ -108,7 +108,7 @@ void CActorProjectile::Draw()
 			edDListLoadMatrix(&eStack64);
 			pMaterialInfo = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->aProjectileSubObjs->materialId, static_cast<int>(fVar5) & 0xff);
 			edDListUseMaterial(pMaterialInfo);
-			edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 			fVar5 = (1.0f - fVar6) * 0.4f;
 			r = (byte)static_cast<int>(fVar6 * 255.0f);
 			edDListColor4u8(r, r, r, r);

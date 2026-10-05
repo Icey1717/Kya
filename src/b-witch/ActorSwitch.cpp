@@ -1780,7 +1780,7 @@ void CBehaviourSwitchWolfenCounter::Display_Digit(int param_2, float param_3, fl
 	edDListUseMaterial(this->field_0x8->materialInfoArray_0x8 + param_2);
 	edDListBlendSet(1);
 	edDListBlendFunc_002ca830();
-	edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
 	edDListColor4u8(0x80, 0x80, 0x80, 0x80);
 	edDListTexCoo2f(0.0f, 1.0f);
 	y = param_4 - fVar1;

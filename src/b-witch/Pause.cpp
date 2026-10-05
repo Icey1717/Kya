@@ -656,7 +656,7 @@ void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, flo
 
 	edDlistSetUseUV(1);
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	iVar1 = 0;
 	pCurrentIndex = aIndicesA;
 	do {
@@ -670,7 +670,7 @@ void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, flo
 	} while (iVar1 < 4);
 	edDListEnd();
 	
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 10);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 10);
 	iVar1 = 0;
 	pCurrentIndex = aIndicesB;
 	do {
@@ -1434,7 +1434,7 @@ void ClearDisplay(void)
 		
 		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
 		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f); // This is an error, it should be after edDListBegin, the correct color func is not bound here.
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 
 		edDListTexCoo2f(0.0f, 0.0f);
 		edDListVertex4f(tlScreen.x, tlScreen.y, tlScreen.z, 1.0f);

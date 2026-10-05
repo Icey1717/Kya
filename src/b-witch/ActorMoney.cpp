@@ -526,7 +526,7 @@ bool CBehaviourMoneyFlock::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		pMaterialInfo = pFileManager->GetMaterialFromId((this->pOwner->pShadow)->materialId, 0);
 		edDListUseMaterial(pMaterialInfo);
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, this->nbSharedShadows << 2);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, this->nbSharedShadows << 2);
 		iVar3 = 0;
 		if (0 < this->nbSharedShadows) {
 			do {
@@ -743,7 +743,7 @@ void CInstantFlares::Draw(int materialId)
 
 					edF32Matrix4MulF32Vector4Hard(&local_10, &pInstance->field_0x0->pHierarchy->transformA, &DBG_voffset);
 					edF32Vector4AddHard(&local_10, &pInstance->field_0x0->currentPosition, &local_10);
-					edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+					edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 					edDListTexCoo2f(0.0f, 0.0f);
 					edDListTexCoo2f(1.0f, 1.0f);
 					edDListWidthHeight2f(DBG_SCALE_SIZE * fVar5, DBG_SCALE_SIZE * fVar5);

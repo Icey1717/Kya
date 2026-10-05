@@ -4784,7 +4784,7 @@ void DrawInputBorder(edF32VECTOR2* v0, edF32VECTOR2* v1, _rgba* color, edDList_m
 	edDListLoadIdentity();
 
 	if (param_5 != 0) {
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		if (color != (_rgba*)0x0) {
 			edDListColor4u8(0, 0, 0, 0x80);
 		}
@@ -4800,7 +4800,7 @@ void DrawInputBorder(edF32VECTOR2* v0, edF32VECTOR2* v1, _rgba* color, edDList_m
 		edDListEnd();
 	}
 
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 	if (color != (_rgba*)0x0) {
 		edDListColor4u8(color->r, color->g, color->b, color->a);
 	}
@@ -5345,7 +5345,7 @@ void DrawSelectionMarker(edF32VECTOR2* param_1, edF32VECTOR2* param_2, int param
 	edDListUseMaterial(pMaterial);
 	edDListLoadIdentity();
 	if (param_3 == 3) {
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 		edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
 		edDListTexCoo2f(0.0f, 1.0f);
 		edDListVertex4f(x, y, 0.0f, 0.0f);
@@ -5359,7 +5359,7 @@ void DrawSelectionMarker(edF32VECTOR2* param_1, edF32VECTOR2* param_2, int param
 	}
 	else {
 		if (param_3 == 2) {
-			edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+			edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 			edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
 			edDListTexCoo2f(1.0f, 1.0f);
 			edDListVertex4f(x, y, 0.0f, 0.0f);
@@ -5373,7 +5373,7 @@ void DrawSelectionMarker(edF32VECTOR2* param_1, edF32VECTOR2* param_2, int param
 		}
 		else {
 			if (param_3 == 1) {
-				edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 				edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
 				edDListTexCoo2f(1.0f, 0.0f);
 				edDListVertex4f(x, y, 0.0f, 0.0f);
@@ -5387,7 +5387,7 @@ void DrawSelectionMarker(edF32VECTOR2* param_1, edF32VECTOR2* param_2, int param
 			}
 			else {
 				if (param_3 == 0) {
-					edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+					edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
 					edDListColor4u8(pColor->r, pColor->g, pColor->b, pColor->a);
 					edDListTexCoo2f(0.0f, 0.0f);
 					edDListVertex4f(x, y, 0.0f, 0.0f);

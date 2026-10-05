@@ -507,7 +507,7 @@ bool CBehaviourBonusAlone::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		pMaterial = p3DManager->GetMaterialFromId(this->pOwner->flareMaterialId, 0);
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		this->actInstance.InitDlistPatchable(0);
 		edDListEnd();
 		bSuccess = true;
@@ -516,7 +516,7 @@ bool CBehaviourBonusAlone::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		pMaterial = p3DManager->GetMaterialFromId(this->pOwner->animMaterialId, 0);
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, 1);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, 1);
 		this->actInstance.InitDlistPatchable(1);
 		edDListEnd();
 		bSuccess = true;
@@ -1432,7 +1432,7 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->flareMaterialId, 0);
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, this->nbInstances);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, this->nbInstances);
 		for (int i = 0; i < this->nbInstances; ++i) {
 			pInstance->InitDlistPatchable(0);
 			++pInstance;
@@ -1445,7 +1445,7 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->animMaterialId, 0);
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 0xb, this->nbInstances);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_SPRITE_FLARE, this->nbInstances);
 
 		for (int i = 0; i < this->nbInstances; ++i) {
 			pInstance->InitDlistPatchable(1);
@@ -1459,7 +1459,7 @@ bool CBehaviourBonusFlock::InitDlistPatchable(int patchId)
 		edDListLoadIdentity();
 		edDList_material* pMaterial = pFileManager->GetMaterialFromId(this->pOwner->pShadow->materialId, 0);
 		edDListUseMaterial(pMaterial);
-		edDListBegin(0.0f, 0.0f, 0.0f, 8, this->nbSharedShadows << 2);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, this->nbSharedShadows << 2);
 		for (int i = 0; i < this->nbSharedShadows; ++i) {
 			uint color = pShadowShared->shadowColor.rgba;
 			byte r = (byte)color;

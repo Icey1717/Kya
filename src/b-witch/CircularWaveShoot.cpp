@@ -225,7 +225,7 @@ void CCircularWaveShoot::Draw()
 
 void CCircularWaveShoot::DrawWavePart(float angle, int part)
 {
-	edDListBegin(0.0f, 0.0f, 0.0f, 4, 6);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 6);
 	float outerRadius = this->field_0x2c;
 	float innerRadius = outerRadius - this->field_0xc;
 	if (innerRadius < 0.0f) {
