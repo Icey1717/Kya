@@ -364,7 +364,17 @@ namespace Renderer
 		ShadowPassSettings GetShadowPassSettings();
 		void RequestShadowBufferDump();
 		std::string GetShadowBufferDumpStatus();
-		void SetShadowCasterDebugInfo(const std::string& info);
+		struct ShadowCasterDiagnostics
+		{
+			uint32_t renderMask = 0;
+			uint32_t hierarchyVisited = 0, hierarchyEligible = 0, missingLod = 0;
+			uint32_t objectCulled = 0, stripVisited = 0, maskRejected = 0, materialRejected = 0;
+			uint32_t animationRejected = 0, stripCulled = 0, casterLinked = 0, casterFlushed = 0;
+			float cameraPosition[3]{}, cameraTarget[3]{}, lightDirection[4]{};
+			float lightIntensity = 0;
+			uint32_t activeLights = 0;
+		};
+		void SetShadowCasterDiagnostics(const ShadowCasterDiagnostics& diagnostics);
 		std::string GetShadowCasterDebugInfo();
 		void RecordShadowMaskDraw();
 	}

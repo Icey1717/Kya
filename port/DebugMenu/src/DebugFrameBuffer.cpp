@@ -59,7 +59,6 @@ void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
 	ImGui::Begin("Native Shadow Buffers", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 	const bool hasShadowTarget = Renderer::Native::HasShadowTarget();
 	const auto settings = Renderer::Native::GetShadowPassSettings();
-	const auto casterDebugInfo = Renderer::Native::GetShadowCasterDebugInfo();
 	static bool copied = false;
 	if (ImGui::Button("Copy shadow debug info")) {
 		std::ostringstream report;
@@ -75,7 +74,7 @@ void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
 		}
 		else report << "No native shadow pass has rendered yet.\n";
 		report << "Settings and images describe the last shadow target; they do not confirm shadows rendered in the current frame.\n";
-		report << casterDebugInfo;
+		report << Renderer::Native::GetShadowCasterDebugInfo();
 		ImGui::SetClipboardText(report.str().c_str());
 		copied = true;
 	}
@@ -85,7 +84,10 @@ void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
 	ImGui::EndDisabled();
 	const auto dumpStatus = Renderer::Native::GetShadowBufferDumpStatus();
 	if (!dumpStatus.empty()) ImGui::TextWrapped("%s", dumpStatus.c_str());
-	if (!casterDebugInfo.empty()) ImGui::TextUnformatted(casterDebugInfo.c_str());
+	if (ImGui::CollapsingHeader("Traversal diagnostics")) {
+		const auto casterDebugInfo = Renderer::Native::GetShadowCasterDebugInfo();
+		ImGui::TextUnformatted(casterDebugInfo.c_str());
+	}
 	if (!hasShadowTarget) {
 		ImGui::TextUnformatted("No native shadow pass has rendered yet.");
 		ImGui::End();

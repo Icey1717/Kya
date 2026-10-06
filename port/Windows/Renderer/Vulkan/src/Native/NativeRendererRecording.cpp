@@ -382,17 +382,15 @@ namespace Renderer
 
                         if (TraceDraw(drawCommand, instance, true)) {
 #ifndef NDEBUG
-							// Diagnostic assertion: stop once on the first main-pass
-							// extrusion draw. Continuing in the debugger resumes rendering.
+							// Report activation once without interrupting rendering.
 							static bool normalExtrusionReported = false;
 							if (!normalExtrusionReported && currentRenderPassKey.kind == ERenderPassKind::Main &&
 								(instance.perDrawData.renderFlags & 0x100) != 0) {
 								normalExtrusionReported = true;
 								const float normalExtrusionAmount = GetNativeRendererState().animStBuffer.GetInstanceData(instance.perDrawData.animStDataIndex).z;
-								NATIVE_LOG(LogLevel::Warning, "Normal extrusion draw: mesh={} flags=0x{:x} amount={} animST={} indices={}",
+								NATIVE_LOG(LogLevel::Info, "Normal extrusion draw: mesh={} flags=0x{:x} amount={} animST={} indices={}",
 									instance.pMesh->GetName(), instance.perDrawData.renderFlags, normalExtrusionAmount,
 									instance.perDrawData.animStDataIndex, instance.indexCount);
-								if (IsDebuggerPresent()) DebugBreak();
 							}
 #endif
 						    vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);

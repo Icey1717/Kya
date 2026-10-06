@@ -19,7 +19,9 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -89,8 +91,36 @@ namespace Renderer::Native::Shadow
 		std::mutex gDebugTargetMutex;
 		bool gDumpRequested = false;
 		std::string gDumpStatus;
-		std::string gCasterDebugInfo;
+		ShadowCasterDiagnostics gCasterDiagnostics{};
+		bool gHasCasterDiagnostics = false;
 		uint32_t gMaskDrawCount = 0;
+
+		// Caller holds gDebugTargetMutex. Format only for UI/export requests.
+		std::string FormatCasterDebugInfo()
+		{
+			std::ostringstream report;
+			if (gHasCasterDiagnostics) {
+				const auto& counts = gCasterDiagnostics;
+				report << "Latest shadow traversal (CPU; counts do not prove visible pixels):\n"
+					<< "Render mask: 0x" << std::hex << counts.renderMask << std::dec
+					<< "\nHierarchies visited: " << counts.hierarchyVisited << "; eligible: " << counts.hierarchyEligible
+					<< "; missing LOD: " << counts.missingLod
+					<< "\nObjects culled: " << counts.objectCulled << "; strips visited: " << counts.stripVisited
+					<< "\nStrips rejected: mask " << counts.maskRejected << "; material " << counts.materialRejected
+					<< "; animation " << counts.animationRejected << "; culling " << counts.stripCulled
+					<< "\nCaster strips linked: " << counts.casterLinked << "; flushed: " << counts.casterFlushed
+					<< std::fixed << std::setprecision(3)
+					<< "\nShadow camera position: (" << counts.cameraPosition[0] << ", " << counts.cameraPosition[1] << ", " << counts.cameraPosition[2] << ')'
+					<< "\nShadow camera target: (" << counts.cameraTarget[0] << ", " << counts.cameraTarget[1] << ", " << counts.cameraTarget[2] << ')'
+					<< "\nShadow camera direction: (" << counts.cameraTarget[0] - counts.cameraPosition[0] << ", "
+					<< counts.cameraTarget[1] - counts.cameraPosition[1] << ", " << counts.cameraTarget[2] - counts.cameraPosition[2] << ')'
+					<< "\nLight manager shadow direction: (" << counts.lightDirection[0] << ", " << counts.lightDirection[1] << ", "
+					<< counts.lightDirection[2] << ", " << counts.lightDirection[3] << "); intensity " << counts.lightIntensity
+					<< "; active lights " << counts.activeLights << '\n';
+			}
+			report << "Latest mask pass recorded draw calls: " << gMaskDrawCount << '\n';
+			return report.str();
+		}
 
 		uint64_t GetTargetKey(uint32_t width, uint32_t height)
 		{
@@ -296,7 +326,8 @@ namespace Renderer::Native::Shadow
 		gpDebugTarget = nullptr;
 		gDumpRequested = false;
 		gDumpStatus.clear();
-		gCasterDebugInfo.clear();
+		gCasterDiagnostics = {};
+		gHasCasterDiagnostics = false;
 		gMaskDrawCount = 0;
 		gBlurPipeline.Destroy();
 		if (gBlurRenderPass != VK_NULL_HANDLE) vkDestroyRenderPass(GetDevice(), gBlurRenderPass, GetAllocator());
@@ -492,7 +523,7 @@ namespace Renderer::Native::Shadow
 				<< "\nAlpha (GS units): " << settings.alpha
 				<< "\nFormat: R8_UNORM; black = no coverage, white = full coverage.\n"
 				<< "Latest completed shadow target; may be retained from an earlier frame.\n";
-			report << gCasterDebugInfo << "Latest mask pass recorded draw calls: " << gMaskDrawCount << '\n';
+			report << FormatCasterDebugInfo();
 			report.close();
 			if (!report) throw std::runtime_error("Could not write shadow settings");
 			gDumpStatus = "Saved shadow buffers to " + directory.string();
@@ -516,16 +547,17 @@ std::string Renderer::Native::GetShadowBufferDumpStatus()
 	return Shadow::gDumpStatus;
 }
 
-void Renderer::Native::SetShadowCasterDebugInfo(const std::string& info)
+void Renderer::Native::SetShadowCasterDiagnostics(const ShadowCasterDiagnostics& diagnostics)
 {
 	std::lock_guard lock(Shadow::gDebugTargetMutex);
-	Shadow::gCasterDebugInfo = info;
+	Shadow::gCasterDiagnostics = diagnostics;
+	Shadow::gHasCasterDiagnostics = true;
 }
 
 std::string Renderer::Native::GetShadowCasterDebugInfo()
 {
 	std::lock_guard lock(Shadow::gDebugTargetMutex);
-	return Shadow::gCasterDebugInfo + "Latest mask pass recorded draw calls: " + std::to_string(Shadow::gMaskDrawCount) + "\n";
+	return Shadow::FormatCasterDebugInfo();
 }
 
 void Renderer::Native::RecordShadowMaskDraw()
