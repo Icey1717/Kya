@@ -1,26 +1,13 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#include "texture_sampling.glsl"
 
 layout(binding = 1) uniform sampler2D textureSampler;
 layout(location = 0) in vec2 fragTexCoord;
 layout(location = 1) in float fragAlpha;
 layout(location = 0) out float outCoverage;
 
-layout(push_constant) uniform PerDrawData
-{
-	mat4 projXView;
-	uint renderFlags;
-	uint alphaEnable;
-	int alphaAtst;
-	int alphaAref;
-	int alphaAfail;
-	uint modelMatrixIndex;
-	uint animStDataIndex;
-	uint animMatrixStart;
-	uint lightingDataIndex;
-	uint globalAlpha;
-	uint shadowProjectionIndex;
-	uint _pad[5];
-} perDrawData;
+#include "per_draw_data.glsl"
 
 bool AlphaTestPass(float alpha)
 {
@@ -41,7 +28,7 @@ bool AlphaTestPass(float alpha)
 
 void main()
 {
-	float alpha = texture(textureSampler, fragTexCoord).a * fragAlpha;
+	float alpha = SampleMaterialTexture(textureSampler, fragTexCoord, perDrawData.globalAlpha, perDrawData.gsTextureQScale).a * fragAlpha;
 	if (!AlphaTestPass(alpha)) discard;
 	outCoverage = 1.0;
 }

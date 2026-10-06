@@ -203,6 +203,12 @@ namespace Renderer {
 		PS2::GetGSState().TEST = test;
 	}
 
+	void SetTex1(GIFReg::GSTex1 tex1)
+	{
+		PS2_Internal::state.TEX1 = tex1;
+		PS2_Internal::state.tex1Set = true;
+	}
+
 	void SetClamp(GIFReg::GSClamp clamp)
 	{
 		PS2::GetGSState().CLAMP = clamp;

@@ -23,3 +23,6 @@ fonts/
 
 # ghidra module
 /tools/ghidra-module/totala/dist/
+
+#vs build logs
+/logs/

@@ -375,7 +375,7 @@ namespace Renderer
 							SetColorDepthDynamicState(cmd, drawCommand, instance);
 						}
 
-						const VkDescriptorSet* descriptorSet = drawCommand.pDescriptorSets;
+						const VkDescriptorSet* descriptorSet = instance.pDescriptorSets ? instance.pDescriptorSets : drawCommand.pDescriptorSets;
 						if (bShadowReceiver) descriptorSet = &Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
 						if (drawCommand.frameBufferMaterial) descriptorSet = &FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);

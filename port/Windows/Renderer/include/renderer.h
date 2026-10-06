@@ -180,6 +180,9 @@ namespace Renderer
 	};
 
 	struct TextureRegisters {
+		GIFReg::GSTex1 tex1 = {};
+		GIFReg::GSMipTbp1 mipTbp1 = {};
+		GIFReg::GSMipTbp2 mipTbp2 = {};
 		GIFReg::GSClamp clamp;
 		GIFReg::GSTex tex;
 		GIFReg::GSTest test;
@@ -589,6 +592,7 @@ namespace Renderer
 	void SetTEX(GIFReg::GSTex tex);
 	void SetTest(GIFReg::GSTest test);
 	void SetClamp(GIFReg::GSClamp clamp);
+	void SetTex1(GIFReg::GSTex1 tex1);
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void BindTexture(SimpleTexture* pNewTexture);
@@ -597,7 +601,7 @@ namespace Renderer
 	void BindNull();
 	void BindUntextured();
 
-	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
+	void PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj = nullptr);
 	void PushModelMatrix(float* pModel);
 	void StartAnimMatrix();
 	void PushAnimMatrix(float* pAnim);

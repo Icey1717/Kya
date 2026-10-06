@@ -155,12 +155,6 @@ namespace Renderer
 			}
 		};
 
-		// Matches the VU upload destination in ed3DFlushStripInit.
-		constexpr uint32_t GetAnimationBaseOffset(uint32_t stripFlags)
-		{
-			return (stripFlags & 0x8000000) != 0 ? 0x3dc : 0x394;
-		}
-
 		struct PerDrawData
 		{
 			glm::mat4 projXView;
@@ -173,16 +167,25 @@ namespace Renderer
 			uint32_t animStDataIndex = 0;
 			uint32_t animMatrixStart = 0;
 			uint32_t lightingDataIndex = 0;
-			uint32_t globalAlpha = 0x80;
+			// One 32-bit word, read as globalAlpha by the GLSL push-constant block.
+			uint32_t globalAlpha : 8 = 0x80;
+			int32_t textureLodBias : 12 = 0; // Signed TEX1.K, in units of 1/16.
+			uint32_t textureLodScale : 2 = 0;
+			uint32_t textureFixedLod : 1 = 0;
+			uint32_t textureMaxMipLevel : 3 = 0;
+			uint32_t textureLodPadding : 5 = 0;
+			uint32_t textureLodEnable : 1 = 0;
 			uint32_t shadowProjectionIndex = 0;
 			uint32_t frameBufferMode = 0; // 0: ordinary texture, 1: MODULATE, 2: DECAL
 			float frameBufferScaleX = 1.0f;
 			float frameBufferScaleY = 1.0f;
-			uint32_t animBaseOffset = 0x394; // VU address used only to decode bone indices.
 			uint32_t stripFlags = 0; // Authored geometry flags; distinct from VU renderFlags.
+			float gsTextureQScale = 1.0f; // Converts native reciprocal clip W to GS Q.
 		};
 		static_assert(sizeof(PerDrawData) == 128);
-		static_assert(offsetof(PerDrawData, stripFlags) == 124);
+		static_assert(offsetof(PerDrawData, shadowProjectionIndex) == 104);
+		static_assert(offsetof(PerDrawData, stripFlags) == 120);
+		static_assert(offsetof(PerDrawData, gsTextureQScale) == 124);
 
 		struct FadeConstantBuffer
 		{
@@ -258,6 +261,8 @@ namespace Renderer
 
 				GIFReg::GSAlpha gsAlpha = {};
 				GIFReg::GSTest gsTest = {};
+				GIFReg::GSTex1 gsTex1 = {};
+				const VkDescriptorSet* pDescriptorSets = nullptr;
 				bool bIsZMask = false;
 				PerDrawData perDrawData;
 			};
@@ -364,7 +369,7 @@ namespace Renderer
 		void RecordEndCommandBuffer();
 		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance);
 		void ApplyPendingResizeInternal();
-		void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
+		void PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj = nullptr);
 		void PushModelMatrix(float* pModel);
 		void StartAnimMatrix();
 		void PushAnimMatrix(float* pAnim);

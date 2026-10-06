@@ -1,4 +1,5 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
 
 float int12_to_float(int x) {
 	return float(x) * 0.000244140625;
@@ -12,31 +13,7 @@ layout(set = 0, binding = 3) readonly buffer AnimBuffer {
 	mat4 animMatrix[];
 } anim;
 
-//push constants block
-layout( push_constant ) uniform PerDrawData
-{
-	mat4 projXView;
-	uint renderFlags;
-	uint alphaEnable;
-	int  alphaAtst;
-	int  alphaAref;
-	int  alphaAfail;
-	uint modelMatrixIndex;
-	uint animStDataIndex;
-	uint animMatrixStart;
-	uint lightingDataIndex;
-	uint globalAlpha;
-	uint shadowProjectionIndex;
-	uint frameBufferMode;
-	float frameBufferScaleX;
-	float frameBufferScaleY;
-
-	// Equivalent of VU destination address for animation matrix data.
-	// Usually 0x394 or 0x3dc.
-	uint animBaseOffset;
-
-	uint stripFlags; // Authored geometry flags, separate from VU renderFlags.
-} perDrawData;
+#include "per_draw_data.glsl"
 
 struct LightingDataBlock {
 	mat4 lightDirection;
@@ -72,8 +49,9 @@ void main() {
 	fragColor = vec4(inColor) / 255.0;
 	bool hasNormals = (perDrawData.stripFlags & 0x8000000u) != 0;
 	bool rigidAnimation = (perDrawData.stripFlags & 0x10000u) != 0;
-	if (rigidAnimation && animFlags >= perDrawData.animBaseOffset) {
-		uint animIndex = (animFlags - perDrawData.animBaseOffset) / 4;
+	uint animBaseOffset = GetAnimationBaseOffset(perDrawData.stripFlags);
+	if (rigidAnimation && animFlags >= animBaseOffset) {
+		uint animIndex = (animFlags - animBaseOffset) / 4;
 
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		fixedPos = currentAnimMatrix * fixedPos;

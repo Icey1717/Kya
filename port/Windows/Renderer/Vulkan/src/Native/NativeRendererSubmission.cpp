@@ -8,6 +8,7 @@
 #include "ScopedTimer.h"
 #include "VulkanRenderer.h"
 #include "profiling.h"
+#include "TextureSampling.h"
 
 #include "glm/gtc/type_ptr.inl"
 #include <atomic>
@@ -48,6 +49,13 @@ namespace Renderer
 			instance.gsAlpha = PS2::GetGSState().ALPHA;
 			// Option packets and full-alpha masks can change within a material batch.
 			instance.gsTest = PS2::GetGSState().TEST;
+			// Linear base filtering for synthetic draws.
+			instance.gsTex1.MMAG = 1;
+			instance.gsTex1.MMIN = 1;
+			if (PS2::GetGSState().tex1Set) {
+				instance.gsTex1 = PS2::GetGSState().TEX1;
+			}
+
 			instance.bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 			assert(!instance.gsTest.DATE && "Native destination-alpha testing is not implemented");
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
@@ -60,7 +68,6 @@ namespace Renderer
 			}
 
 			instance.perDrawData.stripFlags = pMesh->GetStripFlags();
-			instance.perDrawData.animBaseOffset = GetAnimationBaseOffset(instance.perDrawData.stripFlags);
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
             if (DrawTrace::IsEnabled()) {
@@ -86,13 +93,14 @@ namespace Renderer
             }
 		}
 
-		void PushGlobalMatrices(float* pModel, float* pView, float* pProj)
+		void PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj)
 		{
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "PushGlobalMatrices");
 
 			// copy into model.
 			if (pProj) {
 				GetNativeRendererState().cachedProjMatrix = glm::make_mat4(pProj);
+				GetNativeRendererState().cachedPerDrawData.gsTextureQScale = TextureSampling::GetGsQScale(pProj, pGsProj);
 			}
 
 			if (pView) {
@@ -191,7 +199,7 @@ void Renderer::Native::ApplyPendingResizeIfNeeded()
 }
 
 
-void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
+void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture, uint32_t samplerKey)
 {
 	if (!pTexture) {
 		return;
@@ -207,14 +215,14 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	const Pipeline& pipeline = GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline();
 
-	if (pTextureData->HasDescriptorSets(pipeline)) {
+	if (pTextureData->HasDescriptorSets(pipeline, samplerKey)) {
 		// Already have descriptor sets, no need to initialize them.
 		return;
 	}
 
 	// Work out the sampler
-	auto& textureRegisters = pTexture->GetTextureRegisters();
-	PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
+	PS2::PSSamplerSelector selector;
+	selector.key = samplerKey;
 
 	VkSampler& sampler = PS2::GetSampler(selector);
 
@@ -240,7 +248,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 		writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
-		pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
+		pTextureData->UpdateDescriptorSets(pipeline, writeList, i, samplerKey);
 	}
 }
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList)
@@ -325,19 +333,27 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 		pTexture->GetName();
 	}
 
-	InitializeDescriptorsSets(pTexture);
-
 	if (GetNativeRendererState().currentDraw) {
 		GetNativeRendererState().currentDraw->pTexture = pTexture;
-
-		GetNativeRendererState().currentDraw->pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline()).GetSet(GetCurrentFrame());
 
 		GetNativeRendererState().currentDraw->projMatrix = GetNativeRendererState().cachedProjMatrix;
 		GetNativeRendererState().currentDraw->viewMatrix = GetNativeRendererState().cachedViewMatrix;
 
 		int instanceIndex = 0;
 		for (auto& instance : GetNativeRendererState().currentDraw->instances) {
+			const auto selector = PS2::GetTextureSamplerSelector(pTexture->GetTextureRegisters().clamp, instance.gsTex1, pTexture->GetRenderer()->mipLevels);
+			InitializeDescriptorsSets(pTexture, selector.key);
+			instance.pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline(), nullptr, selector.key).GetSet(GetCurrentFrame());
+			const auto settings = TextureSampling::Decode(instance.gsTex1);
+			instance.perDrawData.textureLodBias = settings.lodBias;
+			instance.perDrawData.textureLodScale = settings.lodScale;
+			instance.perDrawData.textureFixedLod = settings.fixedLod;
+			instance.perDrawData.textureMaxMipLevel = settings.maxLevel;
+			instance.perDrawData.textureLodEnable = 1;
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
+		}
+		if (!GetNativeRendererState().currentDraw->instances.empty()) {
+			GetNativeRendererState().currentDraw->pDescriptorSets = GetNativeRendererState().currentDraw->instances.front().pDescriptorSets;
 		}
 
 		if (!GetRenderThreadHasRecordedCommands(GetNativeRendererState().renderThread)) {

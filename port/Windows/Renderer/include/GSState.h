@@ -89,6 +89,8 @@ namespace PS2 {
 		GIFReg::GSPabe PABE;
 		GIFReg::GSFrame FRAME;
 		GIFReg::GSTex TEX;
+		GIFReg::GSTex1 TEX1 = {};
+		bool tex1Set = false;
 		GIFReg::GSXYOffset XY;
 		GIFReg::GSZBuf ZBUF;
 

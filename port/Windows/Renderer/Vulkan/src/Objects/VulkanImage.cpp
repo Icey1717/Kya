@@ -67,7 +67,7 @@ namespace
 	}
 } // anonymous namespace
 
-void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImageAspectFlags aspect, VkImageView& imageView)
+void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImageAspectFlags aspect, VkImageView& imageView, uint32_t mipLevels)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -76,7 +76,7 @@ void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImage
 	viewInfo.format = format;
 	viewInfo.subresourceRange.aspectMask = aspect;
 	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.levelCount = mipLevels;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
@@ -200,7 +200,7 @@ void VulkanImage::CreateTextureSampler()
 	}
 }
 
-void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t mipLevels)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -208,7 +208,7 @@ void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, 
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = 1;
+	imageInfo.mipLevels = mipLevels;
 	imageInfo.arrayLayers = 1;
 	imageInfo.format = format;
 	imageInfo.tiling = tiling;
@@ -236,7 +236,7 @@ void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, 
 	vkBindImageMemory(GetDevice(), image, imageMemory, 0);
 }
 
-void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectMask, VkCommandBuffer commandBuffer)
+void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectMask, VkCommandBuffer commandBuffer, uint32_t mipLevels)
 {
 	bool bEndCommands = false;
 	if (commandBuffer == VK_NULL_HANDLE) {
@@ -255,7 +255,7 @@ void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageL
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = aspectMask;
 	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.levelCount = mipLevels;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
 
@@ -378,7 +378,7 @@ OwnedImage VulkanImage::CreateDepth(uint32_t width, uint32_t height, VkImageUsag
 	return out;
 }
 
-void VulkanImage::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer) {
+void VulkanImage::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer, uint32_t mipLevel) {
 	bool bEndCommands = false;
 	if (commandBuffer == VK_NULL_HANDLE) {
 		commandBuffer = BeginSingleTimeCommands();
@@ -391,7 +391,7 @@ void VulkanImage::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t wid
 	region.bufferImageHeight = 0;
 
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.mipLevel = mipLevel;
 	region.imageSubresource.baseArrayLayer = 0;
 	region.imageSubresource.layerCount = 1;
 

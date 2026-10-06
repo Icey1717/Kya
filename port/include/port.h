@@ -355,11 +355,26 @@ inline void SendTextureCommandsFromPacked(ulong packed) {
 
 #define SCE_GS_SET_TEX1_1   SCE_GS_SET_TEX1
 #define SCE_GS_SET_TEX1_2   SCE_GS_SET_TEX1
-#define SCE_GS_SET_TEX1(lcm, mxl, mmag, mmin, mtba, l, k) \
+#define SCE_GS_PACK_TEX1(lcm, mxl, mmag, mmin, mtba, l, k) \
     ((ulong)(lcm)        | ((ulong)(mxl) << 2)  | \
     ((ulong)(mmag) << 5) | ((ulong)(mmin) << 6) | \
     ((ulong)(mtba) << 9) | ((ulong)(l) << 19) | \
     ((ulong)(k) << 32))
+
+#ifdef PLATFORM_WIN
+inline ulong SetTex1Win(ulong value)
+{
+	GIFReg::GSTex1 tex1{};
+	tex1.CMD = value;
+	Renderer::SetTex1(tex1);
+	return value;
+}
+#define SCE_GS_SET_TEX1(lcm, mxl, mmag, mmin, mtba, l, k) \
+	SetTex1Win(SCE_GS_PACK_TEX1(lcm, mxl, mmag, mmin, mtba, l, k))
+#else
+#define SCE_GS_SET_TEX1(lcm, mxl, mmag, mmin, mtba, l, k) \
+	SCE_GS_PACK_TEX1(lcm, mxl, mmag, mmin, mtba, l, k)
+#endif
 
 #define SCE_GS_SET_TEXA(ta0, aem, ta1) \
     ((ulong)(ta0) | ((ulong)(aem) << 15) | ((ulong)(ta1) << 32))

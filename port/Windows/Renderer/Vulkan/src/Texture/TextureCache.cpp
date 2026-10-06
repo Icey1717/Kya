@@ -1011,7 +1011,8 @@ std::unordered_map<uint32_t, VkSampler> gSamplerCache;
 
 VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
 {
-	if (gSamplerCache.find(selector.key) == gSamplerCache.end()) {
+	const uint32_t key = selector.key | (uint32_t(bPalette) << 8);
+	if (gSamplerCache.find(key) == gSamplerCache.end()) {
 		VkSamplerCreateInfo samplerInfo{};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
@@ -1024,7 +1025,7 @@ VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
 			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		}
 		else {
-			samplerInfo.magFilter = selector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+			samplerInfo.magFilter = selector.magPoint ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 			samplerInfo.minFilter = selector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 
 			samplerInfo.addressModeU = selector.tau ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -1046,18 +1047,18 @@ VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
 		samplerInfo.compareEnable = VK_FALSE;
 		samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
 
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		samplerInfo.mipmapMode = !bPalette && selector.mipLinear ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
 		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = -FLT_MAX;
-		samplerInfo.maxLod = FLT_MAX;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = bPalette ? 0.0f : float(selector.maxLevel);
 
 		VkSampler sampler;
 		CheckVk(vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler), "vkCreateSampler");
 
-		gSamplerCache[selector.key] = sampler;
+		gSamplerCache[key] = sampler;
 	}
 
-	return gSamplerCache[selector.key];
+	return gSamplerCache[key];
 }
 
 PS2::GSTexDescriptor::GSTexDescriptor()
@@ -1080,16 +1081,35 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.registers.tex.CMD);
 	}
 
-	bitmap.Log("Uploading texture TEX - ");
-	auto pBuffer = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
-
 	pRenderer = new PS2::GSSimpleTexture();
 	pRenderer->width = bitmap.canvasWidth;
 	pRenderer->height = bitmap.canvasHeight;
 	pRenderer->imageData = bitmap;
+	for (uint32_t level = 0; level < std::min(size_t(7), imageData.bitmaps.size()); ++level) {
+		const auto& mip = imageData.bitmaps[level];
+		if (!mip.pImage || (!mip.trxReg.RRW) || (!mip.trxReg.RRH)) break;
+		if (level && (bitmap.canvasWidth >> (level - 1)) <= 1 && (bitmap.canvasHeight >> (level - 1)) <= 1) break;
+		GIFReg::GSTex tex = imageData.registers.tex;
+		tex.TW = tex.TW > level ? tex.TW - level : 0;
+		tex.TH = tex.TH > level ? tex.TH - level : 0;
+		if (level) {
+			// MIPTBP carries texture pitch; the transfer PSM can differ.
+			const auto& mipTbp1 = imageData.registers.mipTbp1;
+			const auto& mipTbp2 = imageData.registers.mipTbp2;
+			const bool hasMipTbp = level <= 3 ? mipTbp1.CMD != 0 : mipTbp2.CMD != 0;
+			const uint32_t pitches[] = { uint32_t(mipTbp1.TBW1), uint32_t(mipTbp1.TBW2), uint32_t(mipTbp1.TBW3),
+				uint32_t(mipTbp2.TBW4), uint32_t(mipTbp2.TBW5), uint32_t(mipTbp2.TBW6) };
+			tex.TBP0 = mip.bitBltBuf.DBP;
+			tex.TBW = hasMipTbp ? pitches[level - 1] : std::max(1u, uint32_t(imageData.registers.tex.TBW) >> level);
+		}
+		auto buffer = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(mip.pImage), mip.bitBltBuf.CMD, mip.trxPos.CMD, mip.trxReg.CMD, tex.CMD);
+		if (!level) pRenderer->AssignUploadBuffer(std::move(buffer));
+		else pRenderer->mipUploadBuffers.push_back(std::move(buffer));
+	}
+	if (!pRenderer->pUploadBuffer) throw std::runtime_error("Texture has no base-level upload");
+	pRenderer->mipLevels = 1 + static_cast<uint32_t>(pRenderer->mipUploadBuffers.size());
 	pRenderer->CreateResources(false);
-	pRenderer->AssignUploadBuffer(std::move(pBuffer));
-	pRenderer->UploadDataFromBuffer();
+	pRenderer->UploadMipChain();
 }
 
 void Renderer::SimpleTexture::CreateRenderer(const Renderer::ImageData& bitmap)
@@ -1120,8 +1140,8 @@ void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
 	}
 	// else: width/height already set by the caller to the block-aligned upload dimensions
 
-	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
+	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory, mipLevels);
+	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView, mipLevels);
 	
 	SetObjectName(reinterpret_cast<uint64_t>(image), VK_OBJECT_TYPE_IMAGE, "GSTexImage Image (%d, %d) pallete: %d", width, height, bPalette);
 	SetObjectName(reinterpret_cast<uint64_t>(imageMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "GSTexImage Image Memory (%d, %d)  pallete: %d", width, height, bPalette);
@@ -1154,6 +1174,36 @@ void PS2::GSSimpleTexture::UploadDataFromBuffer()
 	}
 
 	UploadData(static_cast<int>(pUploadBuffer->Size()), pUploadBuffer->Get());
+}
+
+void PS2::GSSimpleTexture::UploadMipChain(const TextureUpload::UploadBuffer* replacementBase)
+{
+	constexpr VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	VulkanImage::TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, VK_NULL_HANDLE, mipLevels);
+	for (uint32_t level = 0; level < mipLevels; ++level) {
+		const auto& buffer = level ? *mipUploadBuffers[level - 1] : replacementBase ? *replacementBase : *pUploadBuffer;
+		const uint32_t mipWidth = std::max(1u, width >> level);
+		const uint32_t mipHeight = std::max(1u, height >> level);
+		const VkDeviceSize size = VkDeviceSize(mipWidth) * mipHeight * 4;
+		VulkanBuffer staging(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		void* data;
+		CheckVk(vkMapMemory(GetDevice(), staging.Memory(), 0, size, 0, &data), "vkMapMemory");
+		for (uint32_t y = 0; y < mipHeight; ++y) {
+			// Original levels are block padded. Texture replacements may resize
+			// the image; preserve each authored level in normalized coordinates.
+			const uint32_t sourceWidth = level ? std::max(1u, imageData.canvasWidth >> level) : replacementBase ? buffer.Width() : imageData.canvasWidth;
+			const uint32_t sourceHeight = level ? std::max(1u, imageData.canvasHeight >> level) : replacementBase ? buffer.Height() : imageData.canvasHeight;
+			if (sourceWidth > buffer.Width() || sourceHeight > buffer.Height()) throw std::runtime_error("Mip upload is smaller than its authored dimensions");
+			const uint32_t sourceY = uint64_t(y) * sourceHeight / mipHeight;
+			for (uint32_t x = 0; x < mipWidth; ++x) {
+				const uint32_t sourceX = uint64_t(x) * sourceWidth / mipWidth;
+				memcpy(static_cast<uint8_t*>(data) + (size_t(y) * mipWidth + x) * 4, buffer.Get() + (size_t(sourceY) * buffer.Width() + sourceX) * 4, 4);
+			}
+		}
+		vkUnmapMemory(GetDevice(), staging.Memory());
+		VulkanImage::CopyBufferToImage(staging.Get(), image, mipWidth, mipHeight, VK_NULL_HANDLE, level);
+	}
+	VulkanImage::TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, VK_NULL_HANDLE, mipLevels);
 }
 
 void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
@@ -1202,13 +1252,15 @@ void PS2::GSSimpleTexture::Resize(uint32_t newWidth, uint32_t newHeight, int buf
 	width = newWidth;
 	height = newHeight;
 	CreateResources(false);
-	UploadData(bufferSize, pixels);
+	TextureUpload::UploadBuffer replacement(bufferSize, gTextureAlignment, width, height);
+	memcpy(replacement.Get(), pixels, bufferSize);
+	UploadMipChain(&replacement);
 	RefreshDescriptors();
 }
 
 void PS2::GSSimpleTexture::RefreshDescriptors()
 {
-	for (auto& [pPipeline, descriptor] : descriptorMap)
+	for (auto& [descriptorKey, descriptor] : descriptorMap)
 	{
 		// Find the binding index used by this pipeline for the combined image sampler,
 		// rather than assuming a fixed index. Different pipelines (e.g. display list vs
@@ -1241,7 +1293,7 @@ void PS2::GSSimpleTexture::RefreshDescriptors()
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
-		imageInfo.sampler = GetSampler(samplerSelector);
+		imageInfo.sampler = descriptor.sampler;
 
 		for (size_t i = 0; i < descriptor.GetSetCount(); i++)
 		{
@@ -1252,9 +1304,12 @@ void PS2::GSSimpleTexture::RefreshDescriptors()
 	}
 }
 
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList)
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, uint32_t samplerKey)
 {
-	auto& descriptorSets = descriptorMap[&pipeline];
+	auto& descriptorSets = descriptorMap[{ &pipeline, samplerKey }];
+	for (const auto& write : writeList.writes) {
+		if (write.pImageInfo && write.pImageInfo->sampler) descriptorSets.sampler = write.pImageInfo->sampler;
+	}
 
 	// Create descriptor pool based on the descriptor set count from the shader
 	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorSets.descriptorPool);
@@ -1283,9 +1338,9 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 	return descriptorSets;
 }
 
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList)
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList, uint32_t samplerKey)
 {
-	auto& gsDescriptor = descriptorMap[&pipeline];
+	auto& gsDescriptor = descriptorMap[{ &pipeline, samplerKey }];
 
 	LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
 
@@ -1295,15 +1350,15 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 		// If the descriptor pool is not created, we need to create it and allocate descriptor sets, and we must provide the write list.
 		assert(pWriteList);
 
-		return AddDescriptorSets(pipeline, *pWriteList);
+		return AddDescriptorSets(pipeline, *pWriteList, samplerKey);
 	}
 
 	return gsDescriptor;
 }
 
-bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline) const
+bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline, uint32_t samplerKey) const
 {
-	const auto it = descriptorMap.find(&pipeline);
+	const auto it = descriptorMap.find({ &pipeline, samplerKey });
 
 	if (it == descriptorMap.end()) {
 		return false;
@@ -1312,9 +1367,9 @@ bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline)
 	return it->second.descriptorPool != VK_NULL_HANDLE;
 }
 
-void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex)
+void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex, uint32_t samplerKey)
 {
-	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList).GetSet(frameIndex), pipeline.descriptorSetLayoutBindings, writeList);
+	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList, samplerKey).GetSet(frameIndex), pipeline.descriptorSetLayoutBindings, writeList);
 }
 
 void PS2::GSSimpleTexture::UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList)

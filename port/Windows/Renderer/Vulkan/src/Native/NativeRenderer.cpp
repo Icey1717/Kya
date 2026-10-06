@@ -71,9 +71,9 @@ void Renderer::SetGlobalAlpha(uint32_t alpha)
 	Native::GetNativeRendererState().cachedPerDrawData.globalAlpha = alpha;
 }
 
-void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj)
+void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj)
 {
-	Native::PushGlobalMatrices(pModel, pView, pProj);
+	Native::PushGlobalMatrices(pModel, pView, pProj, pGsProj);
 }
 
 void Renderer::PushModelMatrix(float* pModel)

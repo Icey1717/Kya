@@ -1,4 +1,6 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#include "texture_sampling.glsl"
 
 layout(location = 0) in vec4 fragColor;
 layout(location = 1) in vec4 fragTexCoord;
@@ -9,31 +11,7 @@ layout(location = 0, index = 1) out vec4 outAlphaBlend;
 // Texture sampler
 layout(binding = 1) uniform sampler2D textureSampler;
 
-//push constants block
-layout( push_constant ) uniform PerDrawData
-{
-	mat4 projXView;
-	uint renderFlags;
-	uint alphaEnable;
-	int  alphaAtst;
-	int  alphaAref;
-	int  alphaAfail;
-	uint modelMatrixIndex;
-	uint animStDataIndex;
-	uint animMatrixStart;
-	uint lightingDataIndex;
-	uint globalAlpha;
-	uint shadowProjectionIndex;
-	uint frameBufferMode;
-	float frameBufferScaleX;
-	float frameBufferScaleY;
-
-	// Equivalent of VU destination address for animation matrix data.
-	// Usually 0x394 or 0x3dc.
-	uint animBaseOffset;
-
-	uint stripFlags;
-} perDrawData;
+#include "per_draw_data.glsl"
 
 #define ATST_NEVER 0
 #define ATST_ALWAYS 1
@@ -122,7 +100,8 @@ void main()
 	if (perDrawData.frameBufferMode != 0) {
 		uv *= vec2(perDrawData.frameBufferScaleX, perDrawData.frameBufferScaleY);
 	}
-	vec4 textureColor = texture(textureSampler, uv);
+	vec4 textureColor = perDrawData.frameBufferMode != 0 ? texture(textureSampler, uv)
+		: SampleMaterialTexture(textureSampler, uv, perDrawData.globalAlpha, perDrawData.gsTextureQScale);
 
 	// Combine texture color with fragment color
 	outColor = fragColor * textureColor / (128.0 / 255.0);
@@ -140,8 +119,8 @@ void main()
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
 	//if ((perDrawData.renderFlags & 0x20) != 0) {
-	if (perDrawData.globalAlpha < 0x80) {
-		alpha_blend = vec4(min(float(perDrawData.globalAlpha), 128.0) / 128.0);
+	if ((perDrawData.globalAlpha & 0xffu) < 0x80) {
+		alpha_blend = vec4(min(float(perDrawData.globalAlpha & 0xffu), 128.0) / 128.0);
 	}
 	outAlphaBlend = alpha_blend;
 }

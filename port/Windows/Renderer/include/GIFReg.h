@@ -131,6 +131,71 @@ namespace GIFReg
 		}
 	};
 
+	union GSTex1
+	{
+		struct
+		{
+			uint32_t LCM : 1;
+			uint32_t _PAD1 : 1;
+			uint32_t MXL : 3;
+			uint32_t MMAG : 1;
+			uint32_t MMIN : 3;
+			uint32_t MTBA : 1;
+			uint32_t _PAD2 : 9;
+			uint32_t L : 2;
+			uint32_t _PAD3 : 11;
+			int32_t K : 12;
+			uint32_t _PAD4 : 20;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	union GSMipTbp1
+	{
+		struct
+		{
+			uint64_t TBP1 : 14;
+			uint64_t TBW1 : 6;
+			uint64_t TBP2 : 14;
+			uint64_t TBW2 : 6;
+			uint64_t TBP3 : 14;
+			uint64_t TBW3 : 6;
+			uint64_t _PAD1 : 4;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	union GSMipTbp2
+	{
+		struct
+		{
+			uint64_t TBP4 : 14;
+			uint64_t TBW4 : 6;
+			uint64_t TBP5 : 14;
+			uint64_t TBW5 : 6;
+			uint64_t TBP6 : 14;
+			uint64_t TBW6 : 6;
+			uint64_t _PAD1 : 4;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	static_assert(sizeof(GSTex1) == sizeof(uint64_t));
+	static_assert(sizeof(GSMipTbp1) == sizeof(uint64_t));
+	static_assert(sizeof(GSMipTbp2) == sizeof(uint64_t));
+
 	struct GSXYOffset {
 		uint32_t X;
 		uint32_t Y;

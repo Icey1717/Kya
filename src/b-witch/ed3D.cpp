@@ -3018,7 +3018,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	*pObjToScreen = cameraToScreen * *pObjToCamera;
 
 #ifdef PLATFORM_WIN
-	Renderer::PushGlobalMatrices(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw);
+	Renderer::PushGlobalMatrices(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
 #endif
 
 	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
@@ -6588,7 +6588,9 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 			case SCE_GS_TEX1_1:
 			{
 				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-				
+				GIFReg::GSTex1 tex1{};
+				tex1.CMD = pkt.cmdA;
+				Renderer::SetTex1(tex1);
 			}
 			break;
 			case SCE_GS_MIPTBP1_1:
@@ -7563,7 +7565,7 @@ void ed3DFlushShadowList(void)
 
 #ifdef PLATFORM_WIN
 		gNativeProjectionMatrix = gShadowNativeProjectionMatrix;
-		Renderer::PushGlobalMatrices(gF32Matrix4Unit.raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw);
+		Renderer::PushGlobalMatrices(gF32Matrix4Unit.raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
 #endif
 
 		peVar4 = g_VifRefPktCur;

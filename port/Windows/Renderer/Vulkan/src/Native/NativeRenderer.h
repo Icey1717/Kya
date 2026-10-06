@@ -69,7 +69,7 @@ namespace Renderer
 		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state = {});
 
 		// Initializes and updates descriptor sets for the native pipeline.
-		void InitializeDescriptorsSets(SimpleTexture* pTexture);
+		void InitializeDescriptorsSets(SimpleTexture* pTexture, uint32_t samplerKey = 0);
 
 		FrameBufferBase& GetFrameBuffer();
 

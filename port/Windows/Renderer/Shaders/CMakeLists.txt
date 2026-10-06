@@ -42,7 +42,9 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 		OUTPUT ${SPIRV}
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_FOLDER}
 		COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV} -gVS
-		DEPENDS ${GLSL})
+		DEPENDS ${GLSL}
+			"${CMAKE_CURRENT_SOURCE_DIR}/src/texture_sampling.glsl"
+			"${CMAKE_CURRENT_SOURCE_DIR}/src/per_draw_data.glsl")
 	list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)
 

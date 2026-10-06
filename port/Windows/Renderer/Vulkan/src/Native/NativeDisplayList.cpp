@@ -443,6 +443,7 @@ namespace Renderer::Native::DisplayList
 		// Work out the sampler
 		auto& textureRegisters = pTexture->GetTextureRegisters();
 		PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
+		pTextureData->samplerSelector = selector;
 
 		VkSampler& sampler = PS2::GetSampler(selector);
 
