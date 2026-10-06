@@ -1100,8 +1100,8 @@ void CLightManager::BuildActiveList()
 					shifted = shifted >> 0x38;
 					byte a = (byte)((shifted & 0xf) << 4);
 
-					local_8.a = local_4.a | 0x80;
-					local_8.b = (0xffffff0f & local_4.b) | a;
+					// PS2 0x00216428: replace this light's slot nibble only.
+					local_8.b = (0x0f & local_8.b) | a;
 
 					(*ppSectorLights)->colour_0x4 = local_8;
 
@@ -1153,8 +1153,8 @@ void CLightManager::BuildActiveList()
 					shifted = shifted >> 0x38;
 					byte a = (byte)((shifted & 0xf) << 4);
 
-					local_8.a = local_4.a | 0x80;
-					local_8.b = (0xffffff0f & local_4.b) | a;
+					// PS2 0x002165d8: preserve this light's remaining flags.
+					local_8.b = (0x0f & local_8.b) | a;
 
 					(*ppSectorLights)->colour_0x4 = local_8;
 					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::BuildActiveList C Set flags light: {} flags: {:x}", (*ppSectorLights)->referencedLightIndex, (*ppSectorLights)->colour_0x4.rgba);
@@ -1438,8 +1438,8 @@ float CLightConfig::ComputeShadow(ed_3D_Light_Config* pConfig, edF32VECTOR4* par
 
 			param_2->x = param_2->x + pDirection->x * fVar7;
 			param_2->y = param_2->y + absY * fVar7;
-			param_2->z = param_2->z + pDirection->y * fVar7;
-			param_2->w = param_2->w + pDirection->z * fVar7;
+			param_2->z = param_2->z + pDirection->z * fVar7;
+			param_2->w = param_2->w + pDirection->w * fVar7;
 
 			fVar8 = fVar8 + fVar7;
 			if (fVar7 <= fVar9) {

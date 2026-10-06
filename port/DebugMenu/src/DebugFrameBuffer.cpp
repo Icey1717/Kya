@@ -5,6 +5,7 @@
 #include "DebugRenderer.h"
 #include "DebugRendering.h"
 #include "Objects/FrameBuffer.h"
+#include <sstream>
 
 namespace Debug {
 	namespace FrameBuffer {
@@ -56,14 +57,43 @@ void Debug::FrameBuffer::ShowNativeFrameBuffer(bool* bOpen) {
 void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
 {
 	ImGui::Begin("Native Shadow Buffers", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-	if (!Renderer::Native::HasShadowTarget()) {
+	const bool hasShadowTarget = Renderer::Native::HasShadowTarget();
+	const auto settings = Renderer::Native::GetShadowPassSettings();
+	const auto casterDebugInfo = Renderer::Native::GetShadowCasterDebugInfo();
+	static bool copied = false;
+	if (ImGui::Button("Copy shadow debug info")) {
+		std::ostringstream report;
+		report << "Native Shadow Buffers\n"
+			<< "Shadow target available: " << (hasShadowTarget ? "yes" : "no") << '\n';
+		if (hasShadowTarget) {
+			report << "Size: " << settings.width << 'x' << settings.height << '\n'
+				<< "Blur samples: " << settings.blurSamples << '\n'
+				<< "Blur radius: " << settings.blurRadius << '\n'
+				<< "Alpha (GS units): " << settings.alpha << " (0x" << std::hex << settings.alpha << std::dec << ")\n"
+				<< "Caster mask image available: " << (Renderer::Native::GetShadowMaskImageView() ? "yes" : "no") << '\n'
+				<< "Blur output image available: " << (Renderer::Native::GetShadowBlurImageView() ? "yes" : "no") << '\n';
+		}
+		else report << "No native shadow pass has rendered yet.\n";
+		report << "Settings and images describe the last shadow target; they do not confirm shadows rendered in the current frame.\n";
+		report << casterDebugInfo;
+		ImGui::SetClipboardText(report.str().c_str());
+		copied = true;
+	}
+	if (copied) { ImGui::SameLine(); ImGui::TextDisabled("Copied to clipboard"); }
+	ImGui::BeginDisabled(!hasShadowTarget);
+	if (ImGui::Button("Dump shadow buffers (PNG)")) Renderer::Native::RequestShadowBufferDump();
+	ImGui::EndDisabled();
+	const auto dumpStatus = Renderer::Native::GetShadowBufferDumpStatus();
+	if (!dumpStatus.empty()) ImGui::TextWrapped("%s", dumpStatus.c_str());
+	if (!casterDebugInfo.empty()) ImGui::TextUnformatted(casterDebugInfo.c_str());
+	if (!hasShadowTarget) {
 		ImGui::TextUnformatted("No native shadow pass has rendered yet.");
 		ImGui::End();
 		return;
 	}
 
-	const auto settings = Renderer::Native::GetShadowPassSettings();
 	ImGui::Text("%ux%u, %u samples, radius %u", settings.width, settings.height, settings.blurSamples, settings.blurRadius);
+	ImGui::Text("Alpha (GS units): %u (0x%X)", settings.alpha, settings.alpha);
 	const ImVec2 size(256.0f, 256.0f * static_cast<float>(settings.height) / static_cast<float>(settings.width));
 	ImGui::TextUnformatted("Caster mask");
 	ImGui::Image(DebugMenu::GetNativeShadowBuffer(false), size);

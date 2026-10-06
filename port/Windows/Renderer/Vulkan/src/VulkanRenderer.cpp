@@ -29,6 +29,7 @@
 #include "Objects/FrameBuffer.h"
 #include "log.h"
 #include "Native/NativeRenderer.h"
+#include "Native/NativeShadow.h"
 #include "Texture/TextureUpdate.h"
 #include "Texture/TextureUpscale.h"
 
@@ -987,6 +988,8 @@ public:
 
 			CheckVk(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]), "vkQueueSubmit");
 		}
+
+		Renderer::Native::Shadow::ProcessPendingDump();
 
 		{
 			ZONE_SCOPED_NAME("vkQueuePresentKHR");

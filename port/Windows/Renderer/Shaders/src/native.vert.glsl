@@ -74,6 +74,7 @@ void main() {
 	uint flags = baseFlags & 0xc000;
 
 	vec4 fixedPos = vec4(inPosition, 1.0);
+	vec3 extrusionNormal = inNormal.xyz;
 
 	if (animFlags > 0) {
 		uint animIndex = animFlags - perDrawData.animBaseOffset;
@@ -81,6 +82,7 @@ void main() {
 
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		fixedPos = currentAnimMatrix * fixedPos;
+		extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
 
 		if (perDrawData.animBaseOffset != 0x394) {
 			vec4 normal = currentAnimMatrix * inNormal;
@@ -123,6 +125,12 @@ void main() {
 		fragColor.y = inColor.y / 255.0;
 		fragColor.z = inColor.z / 255.0;
 		fragColor.w = inColor.w / 255.0;
+	}
+
+	// _$Normal_Extruder: displace in object space after rigid skinning.
+	// The VU adds only XYZ, using the decoded normal without normalization.
+	if ((perDrawData.renderFlags & 0x100) != 0) {
+		fixedPos.xyz += extrusionNormal * animStData.animST[perDrawData.animStDataIndex].z;
 	}
 
 	vec4 pos = perDrawData.projXView * model.modelMatrix[perDrawData.modelMatrixIndex] * fixedPos;

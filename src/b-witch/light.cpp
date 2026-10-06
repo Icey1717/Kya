@@ -271,21 +271,9 @@ void CLightSun::Manage()
 	if ((this->field_0x8 & 1) == 0) {
 		iVar2 = (int)(((long long)colour_0x4.b << 0x38) >> 0x3c);
 		pfVar2 = &((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightDirections->vector[iVar2];
-		fVar3 = (this->colorModel).ambientColor.x;
-		fVar4 = (this->colorModel).ambientColor.y;
-		fVar5 = (this->colorModel).ambientColor.z;
-		pfVar2->x = pfVar2->x + (this->baseShape).direction.w * -1.0f;
-		pfVar2->y = pfVar2->y + fVar3 * -1.0f;
-		pfVar2->z = pfVar2->z + fVar4 * -1.0f;
-		pfVar2->w = pfVar2->w + fVar5 * -1.0f;
+		*pfVar2 = *pfVar2 + (this->baseShape).direction * -1.0f;
 		pfVar3 = &((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightColorMatrix->vector[iVar2];
-		fVar3 = (this->colorModel).field_0x20.x;
-		fVar4 = (this->colorModel).field_0x20.y;
-		fVar5 = (this->colorModel).field_0x20.z;
-		pfVar3->x = pfVar3->x + (this->colorModel).color.w;
-		pfVar3->y = pfVar3->y + fVar3;
-		pfVar3->z = pfVar3->z + fVar4;
-		pfVar3->w = pfVar3->w + fVar5;
+		*pfVar3 = *pfVar3 + (this->colorModel).color;
 		pCVar1->field_0x104 = pCVar1->field_0x104 + 1;
 	}
 	return;

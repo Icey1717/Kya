@@ -59,6 +59,12 @@ namespace Renderer
 				return currentInstanceIndex;
 			}
 
+			const T& GetInstanceData(const uint32_t index) const
+			{
+				assert(index < static_cast<uint32_t>(currentInstanceIndex));
+				return *gStorageBuffer.GetInstancePtr(index);
+			}
+
             const T& GetLastInstance() const
             {
                 assert(currentInstanceIndex > 0);

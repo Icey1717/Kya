@@ -363,7 +363,7 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 					ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pHIER + 1);
 					while (pNewHier != (ed_g3d_hierarchy*)0x0) {
 						if (pNewHier == pHier) {
-							ed3DG3DHierarchyNodeSetAndClrStripFlag(pNewHier, flag, 1, 4);
+							ed3DG3DHierarchyNodeSetAndClrStripFlag(pNewHier, flag, 1, 2);
 							break;
 						}
 
@@ -379,7 +379,7 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 				pChunck = edChunckGetNext(pChunck, (char*)0x0);
 			}
 
-			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 4);
+			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 2);
 		}
 	}
 

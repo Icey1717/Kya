@@ -22,6 +22,8 @@ target_sources(KyaPortTest PRIVATE "src/flare_render_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/vertex_color_animation_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/material_layer_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/sprite_batch_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/shadow_buffer_dump_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/shadow_caster_flags_tests.cpp")
 target_include_directories(KyaPortTest PRIVATE "../Windows/Renderer/ext/glm")
 target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 

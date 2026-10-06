@@ -43,12 +43,25 @@
 #include "ActorHero.h"
 
 #ifdef PLATFORM_WIN
+#include "LightManager.h"
+#include "Light.h"
 #include "Texture.h"
 #include "port/NativeProjection.h"
 #include "Mesh.h"
 #include "Sprite.h"
 #include "DrawTrace.h"
 #include "FlareDraw.h"
+
+// Counts the latest projected-shadow traversal independently of Draw Inspector capture.
+static struct ShadowCasterDiagnostics
+{
+	uint renderMask;
+	uint hierarchyVisited, hierarchyEligible, missingLod;
+	uint hierarchyFlagRejected, hierarchyMaskRejected;
+	uint objectCulled, stripVisited, maskRejected, materialRejected, animationRejected;
+	uint stripCulled, casterLinked, casterFlushed;
+} gShadowCasterDiagnostics{};
+static std::string gShadowObjectDebugInfo;
 #endif
 
 #include "ed3D/ed3DG2D.h"
@@ -2372,6 +2385,58 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 		shadowSettings.blurRadius = (gRenderSceneConfig_SPR->pShadowConfig).blurRadius;
 		shadowSettings.alpha = (gRenderSceneConfig_SPR->pShadowConfig).field_0x22;
 		Renderer::Native::BeginShadowMask(shadowSettings);
+		gShadowCasterDiagnostics = {};
+		gShadowObjectDebugInfo.clear();
+		char cameraInfo[384];
+		const auto& cameraPosition = pScene->pCamera->position;
+		const auto& cameraTarget = pScene->pCamera->lookAt;
+		snprintf(cameraInfo, sizeof(cameraInfo),
+			"Shadow camera position: (%.3f, %.3f, %.3f)\n"
+			"Shadow camera target: (%.3f, %.3f, %.3f)\n"
+			"Shadow camera target minus position: (%.3f, %.3f, %.3f)\n",
+			cameraPosition.x, cameraPosition.y, cameraPosition.z, cameraTarget.x, cameraTarget.y, cameraTarget.z,
+			cameraTarget.x - cameraPosition.x, cameraTarget.y - cameraPosition.y, cameraTarget.z - cameraPosition.z);
+		gShadowObjectDebugInfo = cameraInfo;
+		if (auto* pLightManager = CScene::ptable.g_LightManager_004516b0) {
+			char lightingInfo[512];
+			const auto& direction = pLightManager->vector_0xf0;
+			snprintf(lightingInfo, sizeof(lightingInfo),
+				"Light manager shadow direction: (%.6f, %.6f, %.6f, %.6f); intensity %.3f\n"
+				"Active lights: %d; global sun contributions: %d\n",
+				direction.x, direction.y, direction.z, direction.w, pLightManager->shadowValue,
+				pLightManager->activeLightCount, pLightManager->field_0x104);
+			gShadowObjectDebugInfo += lightingInfo;
+			auto appendConfig = [&](const char* label, const ed_3D_Light_Config* pConfig) {
+				if (!pConfig || !pConfig->pLightDirections || !pConfig->pLightColorMatrix) return;
+				for (int slot = 0; slot < 4; ++slot) {
+					const auto& lightDirection = pConfig->pLightDirections->vector[slot];
+					const auto& color = pConfig->pLightColorMatrix->vector[slot];
+					snprintf(lightingInfo, sizeof(lightingInfo),
+						"%s slot %d: direction (%.6f, %.6f, %.6f, %.6f); RGB (%.3f, %.3f, %.3f)\n",
+						label, slot, lightDirection.x, lightDirection.y, lightDirection.z, lightDirection.w,
+						color.x, color.y, color.z);
+					gShadowObjectDebugInfo += lightingInfo;
+				}
+			};
+			appendConfig("Global lighting", &pLightManager->lightConfig);
+			if (CActorHero::_gThis && CActorHero::_gThis->p3DHierNode && CActorHero::_gThis->p3DHierNode->base.pHierarchySetup) {
+				appendConfig("Hero lighting", CActorHero::_gThis->p3DHierNode->base.pHierarchySetup->pLightData);
+			}
+			for (int lightIndex = 0; lightIndex < pLightManager->activeLightCount; ++lightIndex) {
+				auto* pLight = pLightManager->aActiveLights[lightIndex];
+				BaseShape* pShape = nullptr;
+				if (!pLight || pLight->GetBaseShape(&pShape) != 1 || !pShape) continue;
+				const auto* pColor = pLight->GetColour();
+				snprintf(lightingInfo, sizeof(lightingInfo),
+					"Active sun %d: flags 0x%X; colour flags 0x%X; direction (%.6f, %.6f, %.6f, %.6f); RGB (%.3f, %.3f, %.3f)\n",
+					lightIndex, pLight->field_0x8, pLight->colour_0x4.rgba,
+					pShape->direction.x, pShape->direction.y, pShape->direction.z, pShape->direction.w,
+					pColor ? pColor->x : 0.0f, pColor ? pColor->y : 0.0f, pColor ? pColor->z : 0.0f);
+				gShadowObjectDebugInfo += lightingInfo;
+				if (gShadowObjectDebugInfo.size() > 4096) break;
+			}
+		}
+		gShadowCasterDiagnostics.renderMask = *gShadowRenderMask;
 #endif
 	}
 	else {
@@ -3350,6 +3415,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit pPkt: 0x{:x} pNode: 0x{:x} flags: 0x{:x}", (uintptr_t)pPkt, (uintptr_t)pNode, pNode->header.typeField.flags);
 
 	p3dStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
+
+#ifdef PLATFORM_WIN
+	if (*gShadowRenderMask != 0 && gShadowFlushMode == 0) ++gShadowCasterDiagnostics.casterFlushed;
+#endif
 	uVar2 = pNode->header.typeField.flags;
 	PTR_AnimScratchpad_00449554->vuFlags = (int)(short)uVar2;
 	PTR_AnimScratchpad_00449554->flags = 0;
@@ -7553,12 +7622,9 @@ void ed3DFlushShadowList(void)
 		g_VifRefPktCur = ed3DJitterShadow(g_VifRefPktCur);
 #ifdef PLATFORM_WIN
 		Renderer::Native::ShadowReceiverViewport receiverViewport{};
-		if (gShadowRenderViewport != (ed_viewport*)0x0) {
-			receiverViewport.x = gShadowRenderViewport->posX;
-			receiverViewport.y = gShadowRenderViewport->posY;
-			receiverViewport.width = static_cast<uint32_t>(gShadowRenderViewport->screenWidth);
-			receiverViewport.height = static_cast<uint32_t>(gShadowRenderViewport->screenHeight);
-		}
+		// Receivers use the main scene projection across the native framebuffer.
+		// gShadowRenderViewport carries the PS2 shadow dimensions, not native pixels.
+		// Zero extents select the full native target, matching the main-pass viewport.
 		Renderer::Native::BeginShadowReceiver(receiverViewport);
 #endif
 		g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
@@ -7631,6 +7697,24 @@ void ed3DFlushShadowList(void)
 	}
 
 	gShadowFlushMode = 0;
+#ifdef PLATFORM_WIN
+	if (*gShadowRenderMask != 0) {
+		const auto& counts = gShadowCasterDiagnostics;
+		char report[1024];
+		snprintf(report, sizeof(report),
+			"Latest shadow traversal (CPU; counts do not prove visible pixels):\n"
+			"Render mask: 0x%X\nHierarchies visited: %u; eligible: %u; missing LOD: %u\n"
+			"Hierarchy rejections (can overlap): flags/empty LOD %u; mask %u\n"
+			"Objects culled: %u\nStrips visited: %u\n"
+			"Strips rejected: mask %u; material %u; animation %u; culling %u\n"
+			"Caster strips linked: %u; flushed: %u\n",
+			counts.renderMask, counts.hierarchyVisited, counts.hierarchyEligible, counts.missingLod,
+			counts.hierarchyFlagRejected, counts.hierarchyMaskRejected,
+			counts.objectCulled, counts.stripVisited, counts.maskRejected, counts.materialRejected,
+			counts.animationRejected, counts.stripCulled, counts.casterLinked, counts.casterFlushed);
+		Renderer::Native::SetShadowCasterDebugInfo(std::string(report) + gShadowObjectDebugInfo);
+	}
+#endif
 	*gShadowRenderMask = 0;
 
 #ifdef PLATFORM_WIN
@@ -10106,6 +10190,7 @@ bool ed3DLinkStripShadowManageMaterial(ed_3d_strip* pStrip, ed_g2d_material** pp
 void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode)
 {
 #ifdef PLATFORM_WIN
+    ++gShadowCasterDiagnostics.stripVisited;
     Renderer::DrawTrace::BankScope traceBank(reinterpret_cast<uintptr_t>(pHashCode));
 #endif
 	edF32MATRIX4* peVar1;
@@ -10127,6 +10212,9 @@ void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode
 
 	pStrip->pDMA_Matrix.pDMA_Matrix = 0x0;
 	if ((*gShadowRenderMask & (uint)(ushort)(pStrip->shadowCastFlags | pStrip->shadowReceiveFlags)) == 0) {
+#ifdef PLATFORM_WIN
+		++gShadowCasterDiagnostics.maskRejected;
+#endif
 		return;
 	}
 
@@ -10137,10 +10225,16 @@ void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode
 		pG2dMaterialCandidate = ed3DG2DGetG2DMaterialFromIndex(pHashCode, pStrip->materialIndex);
 
 		if ((pG2dMaterialCandidate != (ed_g2d_material*)0x0) && ((pG2dMaterialCandidate->flags & 1) != 0)) {
+#ifdef PLATFORM_WIN
+			++gShadowCasterDiagnostics.materialRejected;
+#endif
 			return;
 		}
 
 		if ((pG2dMaterialCandidate != (ed_g2d_material*)0x0) && (1 < pG2dMaterialCandidate->nbLayers)) {
+#ifdef PLATFORM_WIN
+			++gShadowCasterDiagnostics.materialRejected;
+#endif
 			return;
 		}
 	}
@@ -10148,6 +10242,9 @@ void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode
 	pG2dMaterial = pG2dMaterialCandidate;
 	if (((pStrip->flags & 0x10000) != 0) &&
 		(gRender_info_SPR->pMeshTransformData->pAnimMatrix == (edF32MATRIX4*)0x0)) {
+#ifdef PLATFORM_WIN
+		++gShadowCasterDiagnostics.animationRejected;
+#endif
 		return;
 	}
 	pStrip->pDMA_Matrix.pDMA_Matrix = 0x0;
@@ -10232,13 +10329,22 @@ void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode
 	bVar7 = true;
 
 LAB_00298420:
+#ifdef PLATFORM_WIN
+	if (!bVar7) ++gShadowCasterDiagnostics.stripCulled;
+#endif
 	if (bVar7) {
 		if ((*gShadowRenderMask & (uint)(ushort)pStrip->shadowCastFlags) != 0) {
 			if (ed3DLinkStripShadowManageMaterial(pStrip, &pG2dMaterialCandidate, &local_8, &local_c, &local_10) == false) {
+#ifdef PLATFORM_WIN
+				++gShadowCasterDiagnostics.materialRejected;
+#endif
 				return;
 			}
 
 			ed3DLinkStripManageLinkToDMA(pStrip, local_8, local_c, &eStack32, pG2dMaterialCandidate, local_10);
+#ifdef PLATFORM_WIN
+			++gShadowCasterDiagnostics.casterLinked;
+#endif
 		}
 
 		if ((*gShadowRenderMask & (uint)(ushort)pStrip->shadowReceiveFlags) != 0) {
@@ -11095,6 +11201,34 @@ LAB_002b0d68:
 	*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
 
 	uVar4 = ed3DTestBoundingSphereObject(pSphere);
+#ifdef PLATFORM_WIN
+	if (*gShadowRenderMask != 0) {
+		if (uVar4 == 4) ++gShadowCasterDiagnostics.objectCulled;
+		// Include caster flags even on culled objects, which never reach the strip linker.
+		uint castFlags = 0, receiveFlags = 0;
+		ed_3d_strip* pDebugStrip = pStrip;
+		for (int debugStripIndex = 0; debugStripIndex < meshCount && pDebugStrip; ++debugStripIndex) {
+			castFlags |= (ushort)pDebugStrip->shadowCastFlags;
+			receiveFlags |= (ushort)pDebugStrip->shadowReceiveFlags;
+			pDebugStrip = LOAD_POINTER_CAST(ed_3d_strip*, pDebugStrip->pNext);
+		}
+		if (gShadowObjectDebugInfo.size() < 8192) {
+			const bool hasActorClip = (gRender_info_SPR->flags & 0x10) != 0 &&
+				gRender_info_SPR->pHierarchySetup->clipping_0x0 != nullptr;
+			const float farPlane = hasActorClip ? -*gRender_info_SPR->pHierarchySetup->clipping_0x0 :
+				gRenderSceneConfig_SPR->frustumA.field_0x50.w;
+			char detail[512];
+			snprintf(detail, sizeof(detail),
+				"Object hash %016llX: %s; cast 0x%X receive 0x%X; strips %d\n"
+				"  Camera sphere (%.3f, %.3f, %.3f), radius %.3f; Z range [%.3f, %.3f]%s\n",
+				static_cast<unsigned long long>(pLOD->hash.number), uVar4 == 4 ? "CULLED" : "accepted",
+				castFlags, receiveFlags, meshCount, gBoundSphereCenter->x, gBoundSphereCenter->y,
+				gBoundSphereCenter->z, pSphere->w * gRender_info_SPR->biggerScale,
+				farPlane, gRenderSceneConfig_SPR->frustumA.field_0x40.w, hasActorClip ? " (actor far clip)" : "");
+			gShadowObjectDebugInfo += detail;
+		}
+	}
+#endif
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject ed3DTestBoundingSphereObject result: {} (x: {}, y: {} z: {}, w: {})", uVar4, pSphere->x, pSphere->y, pSphere->z, pSphere->w);
 	if (uVar4 != 4) {
 		if (uVar4 == 1) {
@@ -11196,6 +11330,9 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DHierarchy_ps2.cpp
 void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pHierarchy)
 {
+#ifdef PLATFORM_WIN
+	++gShadowCasterDiagnostics.hierarchyVisited;
+#endif
 	char cVar1;
 	ushort uVar2;
 	short sVar3;
@@ -11208,10 +11345,22 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pHierarchy)
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchyForShadow {}", pHierarchy->hash.ToString());
 
 	uVar2 = pHierarchy->flags_0x9e;
+#ifdef PLATFORM_WIN
+	if ((uVar2 & 0x200) == 0 || (uVar2 & 0x41) != 0 || pHierarchy->lodCount == 0)
+		++gShadowCasterDiagnostics.hierarchyFlagRejected;
+	if ((*gShadowRenderMask & (uint)pHierarchy->bRenderShadow) == 0)
+		++gShadowCasterDiagnostics.hierarchyMaskRejected;
+#endif
 	if (((((uVar2 & 0x200) != 0) &&
 		((*gShadowRenderMask & (uint)pHierarchy->bRenderShadow) != 0)) &&
 		((uVar2 & 0x41) == 0)) && (pHierarchy->lodCount != 0)) {
+#ifdef PLATFORM_WIN
+		++gShadowCasterDiagnostics.hierarchyEligible;
+#endif
 		pLod = ed3DChooseGoodLOD(pHierarchy);
+#ifdef PLATFORM_WIN
+		if (pLod == nullptr || pLod->pObj == 0) ++gShadowCasterDiagnostics.missingLod;
+#endif
 		if ((pHierarchy->flags_0x9e & 0x80) == 0) {
 			pHierarchy->desiredLod = 0xff;
 		}
@@ -11250,7 +11399,8 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pHierarchy)
 					else {
 						cVar1 = pHierarchy->GlobalAlhaON;
 						pHierarchy->GlobalAlhaON = -1;
-						ed3DLod* peVar3 = ed3DHierarcGetLOD((ed_g3d_hierarchy*)pHierarchy, pHierarchy->lodCount - 1);
+						// Live hierarchies contain native pointers on Windows; use their LOD layout.
+						ed3DLod* peVar3 = ed3DHierarcGetLOD(pHierarchy, pHierarchy->lodCount - 1);
 						if (peVar3 != (ed3DLod*)0x0) {
 							ed3DRenderObject((ed_hash_code*)LOAD_POINTER(peVar3->pObj), (ed_hash_code*)(pHierarchy->pTextureInfo + 1));
 						}

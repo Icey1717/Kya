@@ -17,6 +17,8 @@ namespace {
 namespace Trace = Renderer::DrawTrace;
 bool open = false, collectStacks = false, includeUnrecorded = false;
 int typeFilter = 0, passFilter = 0, matchMode = 0;
+bool highlightFlags = false;
+uint32_t highlightFlagMask = 0x100;
 ImGuiTextFilter meshFilter, textureFilter, ownerFilter;
 uint64_t selectedSource = 0, selectedSubmission = 0, selectedDraw = 0, snapshotFrame = 0;
 std::unordered_map<uint32_t, CallstackPreviewerEntry> stackViews;
@@ -43,6 +45,13 @@ const char* Stage(const Row& row) {
 }
 const char* MeshName(const Row& row) { return row.submission ? row.submission->mesh.data() : ""; }
 const char* TextureName(const Row& row) { return row.draw ? row.draw->texture.data() : ""; }
+bool MatchesHighlightFlags(const Row& row) {
+    // Submitted flags are what the native shader consumes; linked node flags
+    // are the fallback for sources that have not reached native submission.
+    const uint32_t flags = row.submission ? row.submission->flags : row.source->nodeFlags;
+    return row.source->kind == Trace::Kind::Strip && highlightFlagMask != 0 &&
+        (flags & highlightFlagMask) == highlightFlagMask;
+}
 void Select(const Row& row) {
     viewerMessage.clear();
     selectedSource = row.source->id;
@@ -257,6 +266,15 @@ void DrawWindow() {
     ownerFilter.Draw("Owner", 240); ImGui::SameLine(); ImGui::SetNextItemWidth(100); ImGui::Combo("Type", &typeFilter, "All\0Strip\0Sprite\0");
     ImGui::SameLine(); ImGui::SetNextItemWidth(145); ImGui::Combo("Pass", &passFilter, "All\0Main\0Shadow mask\0Shadow receiver\0");
     ImGui::Checkbox("Include linked/submitted sources without recorded draws", &includeUnrecorded);
+    ImGui::Checkbox("Highlight strips with flags", &highlightFlags);
+    ImGui::SameLine(); ImGui::SetNextItemWidth(110);
+    ImGui::InputScalar("Flag mask (hex)", ImGuiDataType_U32, &highlightFlagMask, nullptr, nullptr, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Highlight strips with every bit in this mask set in their submitted render flags. Unsubmitted strips use linked node flags. A zero mask matches nothing.");
+    ImGui::SameLine();
+    if (ImGui::Button("Normal extrusion (0x100)")) {
+        highlightFlagMask = 0x100;
+        highlightFlags = true;
+    }
 
     std::unordered_map<uint64_t, const Trace::Source*> sources;
     std::unordered_map<uint64_t, const Trace::Submission*> submissions;
@@ -283,6 +301,10 @@ void DrawWindow() {
         visible.push_back(i);
     }
     ImGui::Text("%zu matching rows", visible.size());
+    if (highlightFlags) {
+        const auto highlighted = std::count_if(visible.begin(), visible.end(), [&](size_t index) { return MatchesHighlightFlags(rows[index]); });
+        ImGui::SameLine(); ImGui::Text("/ %zu highlighted strips", static_cast<size_t>(highlighted));
+    }
     if (!selectedSource && !visible.empty()) Select(rows[visible.front()]);
     const float listWidth = std::max(350.0f, ImGui::GetContentRegionAvail().x * 0.52f);
     ImGui::BeginChild("Draw list", ImVec2(listWidth, 0), true);
@@ -319,6 +341,8 @@ void DrawWindow() {
         while (clipper.Step()) for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
             const auto& row = rows[visible[i]];
             ImGui::PushID(static_cast<int>(visible[i])); ImGui::TableNextRow(); ImGui::TableNextColumn();
+            if (highlightFlags && MatchesHighlightFlags(row))
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImVec4(1.0f, 0.65f, 0.15f, 0.25f)));
             char label[48]; std::snprintf(label, sizeof(label), "%zu%s", visible[i] + 1, row.draw && row.draw->suppressed ? " (hidden)" : "");
             if (ImGui::Selectable(label, Selected(row), ImGuiSelectableFlags_SpanAllColumns)) Select(row);
             ImGui::TableNextColumn(); ImGui::TextUnformatted(KindName(row.source->kind));

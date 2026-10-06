@@ -25,4 +25,6 @@ namespace Renderer::Native::Shadow
 	VkImageView GetMaskImageView();
 	VkImageView GetBlurImageView();
 	ShadowPassSettings GetSettings();
+	// Main thread, after the frame's command buffers have been submitted.
+	void ProcessPendingDump();
 }

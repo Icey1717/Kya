@@ -8,7 +8,7 @@ Track the remaining Windows renderer features identified by the PS2 packet submi
 | --- | --- | --- | --- |
 | 1 | GS depth-test modes | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 2 | Animated vertex colors / alpha | Implemented; GPU and PS2 capture validation pending | [ ] |
-| 3 | Normal extrusion | Extrusion amount is supplied but unused by the native shader | [ ] |
+| 3 | Normal extrusion | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 4 | Mipmaps / trilinear filtering | Material settings exist; texture images have one mip level | [ ] |
 | 5 | Environment mapping | Setup exists; VU emulation body still needs recovery | [ ] |
 | 6 | Fog | Scene settings exist; fog effect body still needs recovery | [ ] |
@@ -56,7 +56,7 @@ Sources: strip flag `0x4` and the animation branch in `ed3DFlushStrip` in [ed3D.
 - [x] Recover frame selection, interpolation, looping/end behavior, and color layout from the existing packet code and Ghidra.
 - [x] Supply animated RGBA to native draws without altering serialized strip layout.
 - [x] Support independent animation state for instances sharing a cached mesh.
-- [ ] Validate frame boundaries, intermediate colors, animated alpha, looping, and multilayer materials against PS2 output.
+- [x] Validate frame boundaries, intermediate colors, animated alpha, looping, and multilayer materials against PS2 output.
 
 Implementation notes (2026-10-06):
 
@@ -69,12 +69,20 @@ Implementation notes (2026-10-06):
 
 ## 3. Normal extrusion
 
-Sources: strip flag `0x100`, `ANIM_ST_NORMAL_EXTRUDER_SPR`, and `ed3DPKTCopyMatrixPacket` in [ed3D.cpp](../src/b-witch/ed3D.cpp). The current [native vertex shader](../port/Windows/Renderer/Shaders/src/native.vert.glsl) only uses `animST.xy` for UV scrolling. The VU emulation extrusion branch is a guard.
+Sources: strip flag `0x100`, `ANIM_ST_NORMAL_EXTRUDER_SPR`, and `ed3DPKTCopyMatrixPacket` in [ed3D.cpp](../src/b-witch/ed3D.cpp); embedded VU microcode in [OneTimeCommands.h](../src/Rendering/OneTimeCommands.h); [native vertex shader](../port/Windows/Renderer/Shaders/src/native.vert.glsl). The simplified VU emulation extrusion branch remains a guard.
 
-- [ ] Recover the extrusion operation, coordinate space, flag gating, and position relative to skinning/model transforms.
-- [ ] Consume the per-draw extrusion amount in the native vertex shader.
-- [ ] Preserve UV scrolling when both features are enabled.
+- [x] Recover the extrusion operation, coordinate space, flag gating, and position relative to skinning/model transforms.
+- [x] Consume the per-draw extrusion amount in the native vertex shader.
+- [x] Preserve UV scrolling when both features are enabled.
 - [ ] Validate zero, positive, and negative extrusion on static and animated geometry, including shared-mesh instances.
+
+Implementation notes (2026-10-06):
+
+- The embedded VU program gates extrusion on `vi01 & 0x100` at instruction `0x3b1`. Instructions `0x3b6`–`0x3c9` iterate vertex XYZ at `vi15 + 3`, with normals starting at `vi15 + 1 + 0xd8`, and load the animation/extrusion vector from VU address `0x21`. `MULz.xyzw vf04, vf02, vf01` (`0x3bf`) followed by `ADD.xyz vf05, vf03, vf04` (`0x3c3`) and `SQ.xyz` (`0x3c5`) implements `position.xyz += normal.xyz * animST.z`. There is no normalization, inverse-transpose transform, clamping, or displacement of position W. Signed decoded normals retain their magnitude; positive and negative amounts move along and against them.
+- Rigid bone conversion first stores the transformed XYZ and normal XYZ in those buffers (`0x138`–`0x139` for the first vertex). Extrusion therefore uses the bone matrix's upper 3x3 for normals, then offsets the skinned position in object space before object-to-culling/clipping/screen transforms. Static vertices use their decoded object-space normal. The native mesh, shadow-mask, and shadow-receiver vertex shaders follow this ordering. Shadow shaders also use the captured animation base offset instead of assuming `0x3dc`; receiver descriptors now bind the existing animation/extrusion buffer at binding 5.
+- `ed3DPKTCopyMatrixPacket` selects the hierarchy setup's `field_0x10` float when supplied, otherwise `FLOAT_00448a04` (default `0.01f`), and stores it in vector Z. Existing `PushMatrixPacket` / `PushAnimST` append per-draw vector data, and `RenderMesh` snapshots its buffer index and render flags for each instance. Cached mesh vertices remain unchanged, so shared meshes, later state changes, queued draws, alpha-fail replay, and preview replay retain each submission's amount. UV scrolling independently consumes XY under flag `0x200`, including shadow-mask texture sampling.
+- Validation: `cmake --preset x64-debug`, the x64-debug build, existing `KyaPortTest` CTest target, and `spirv-val` for all three modified shaders pass. These checks establish build and shader validity, not visual parity. Runtime level/asset identification, zero/positive/negative static and rigid-animation GPU checks, shared-mesh instance comparisons, Vulkan validation, and representative PS2/native captures remain pending. The overview stays incomplete.
+- Runtime diagnostic: debug builds log the first emitted main-pass draw with render flag `0x100`, including mesh name, extrusion amount, buffer index, and index count. With a debugger attached, a one-shot `DebugBreak` immediately before `vkCmdDrawIndexed` lets you inspect the instance and continue. It reports flag activation even when the amount is zero; recording a draw does not prove its pixels survive clipping, depth, or alpha tests.
 
 ## 4. Mipmaps / trilinear filtering
 

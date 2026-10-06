@@ -6,6 +6,8 @@ Paste mesh and texture names into the separate filters, for example `SECT5.g3d_1
 
 The table follows native draw-recording order. Sort columns or filter by type, pass and owner. Repeated PS2 nodes, material layers, sprite batches and copied depth-only draws retain separate identities. Enable **Include linked/submitted sources without recorded draws** to find incomplete submission chains. Objects rejected before list linking are not captured.
 
+Click **Normal extrusion (0x100)** to highlight matching strip rows in amber. **Highlight strips with flags** toggles the list highlight; **Flag mask (hex)** selects other flags. A strip matches when every mask bit is set in its submitted render flags (or linked node flags for unsubmitted sources); a zero mask matches nothing. The count covers currently visible rows. This list highlight does not change scene rendering or draw overrides.
+
 Select a row to inspect:
 
 Use **Open mesh viewer** to preview the selected strip and its requested texture layer, or **Open texture viewer** to select the bound material/layer/texture in the existing texture preview. These show current live assets, not frozen geometry or pixels. The mesh preview currently supports strips, not sprite batches. Missing/ambiguous texture assets and framebuffer captures cannot be opened through these shortcuts; unloaded source selections are disabled. Opened previews recheck the source lifetime each frame.

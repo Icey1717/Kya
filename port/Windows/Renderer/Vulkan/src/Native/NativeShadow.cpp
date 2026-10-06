@@ -5,10 +5,20 @@
 #include "Objects/VulkanImage.h"
 #include "Objects/VulkanRenderPass.h"
 #include "Objects/VulkanShader.h"
+#include "Objects/VulkanBuffer.h"
+#include "Objects/VulkanCommands.h"
 #include "VulkanRenderer.h"
+
+#define STB_IMAGE_WRITE_STATIC
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../../../ext/glfw/deps/stb_image_write.h"
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
@@ -77,6 +87,10 @@ namespace Renderer::Native::Shadow
 		ShadowPassSettings gSettings{};
 		ShadowReceiverViewport gReceiverViewport{};
 		std::mutex gDebugTargetMutex;
+		bool gDumpRequested = false;
+		std::string gDumpStatus;
+		std::string gCasterDebugInfo;
+		uint32_t gMaskDrawCount = 0;
 
 		uint64_t GetTargetKey(uint32_t width, uint32_t height)
 		{
@@ -226,12 +240,14 @@ namespace Renderer::Native::Shadow
 
 				const VkDescriptorBufferInfo modelInfo = GetNativeRendererState().modelBuffer.GetDescBufferInfo(i);
 				const VkDescriptorBufferInfo animInfo = GetNativeRendererState().animationBuffer.GetDescBufferInfo(i);
+				const VkDescriptorBufferInfo animStInfo = GetNativeRendererState().animStBuffer.GetDescBufferInfo(i);
 				const VkDescriptorBufferInfo projectionInfo = GetNativeRendererState().shadowProjectionBuffer.GetDescBufferInfo(i);
 				VkDescriptorImageInfo shadowInfo{ target.sampler, target.blur.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 				DescriptorWriteList receiverWrites;
 				receiverWrites.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &shadowInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 				receiverWrites.EmplaceWrite({ 2, EBindingStage::Vertex, &modelInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
 				receiverWrites.EmplaceWrite({ 3, EBindingStage::Vertex, &animInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
+				receiverWrites.EmplaceWrite({ 5, EBindingStage::Vertex, &animStInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
 				receiverWrites.EmplaceWrite({ 6, EBindingStage::Vertex, &projectionInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
 				auto receiverDescriptorWrites = receiverWrites.CreateWriteDescriptorSetList(target.receiverDescriptorSets[i], receiverPipeline.descriptorSetLayoutBindings);
 				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(receiverDescriptorWrites.size()), receiverDescriptorWrites.data(), 0, nullptr);
@@ -278,6 +294,10 @@ namespace Renderer::Native::Shadow
 		gTargets.clear();
 		gpActiveTarget = nullptr;
 		gpDebugTarget = nullptr;
+		gDumpRequested = false;
+		gDumpStatus.clear();
+		gCasterDebugInfo.clear();
+		gMaskDrawCount = 0;
 		gBlurPipeline.Destroy();
 		if (gBlurRenderPass != VK_NULL_HANDLE) vkDestroyRenderPass(GetDevice(), gBlurRenderPass, GetAllocator());
 		gBlurRenderPass = VK_NULL_HANDLE;
@@ -311,6 +331,7 @@ namespace Renderer::Native::Shadow
 		std::lock_guard lock(gDebugTargetMutex);
 		gpActiveTarget = &GetOrCreateTarget(normalized.width, normalized.height);
 		gSettings = normalized;
+		gMaskDrawCount = 0;
 		gpDebugTarget = gpActiveTarget;
 	}
 
@@ -416,6 +437,101 @@ namespace Renderer::Native::Shadow
 		std::lock_guard lock(gDebugTargetMutex);
 		return gSettings;
 	}
+
+	void ProcessPendingDump()
+	{
+		std::unique_lock lock(gDebugTargetMutex);
+		if (!gDumpRequested) return;
+		gDumpRequested = false;
+		if (!gpDebugTarget || !gpDebugTarget->blurOutputValid) {
+			gDumpStatus = "No completed shadow buffers available to dump.";
+			return;
+		}
+		try {
+			const auto settings = gSettings;
+			const auto extent = gpDebugTarget->extent;
+			const VkDeviceSize byteCount = VkDeviceSize(extent.width) * extent.height;
+			std::array<VulkanBuffer, 2> readback;
+			for (auto& buffer : readback) buffer.Create(byteCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			const std::array images{ gpDebugTarget->mask.image, gpDebugTarget->blur.image };
+			const auto cmd = BeginSingleTimeCommands();
+			for (size_t i = 0; i < images.size(); ++i) {
+				VulkanImage::TransitionImageLayout(images[i], kShadowFormat, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, cmd);
+				VkBufferImageCopy copy{};
+				copy.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+				copy.imageExtent = { extent.width, extent.height, 1 };
+				vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback[i].Get(), 1, &copy);
+				VulkanImage::TransitionImageLayout(images[i], kShadowFormat, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, cmd);
+			}
+			EndSingleTimeCommands(cmd); // Queue order and idle wait complete the frame and readback.
+			std::array<std::vector<unsigned char>, 2> pixels;
+			for (size_t i = 0; i < pixels.size(); ++i) {
+				pixels[i].resize(static_cast<size_t>(byteCount));
+				void* mapped = nullptr;
+				if (vkMapMemory(GetDevice(), readback[i].Memory(), 0, byteCount, 0, &mapped) != VK_SUCCESS)
+					throw std::runtime_error("Could not map shadow buffer pixels");
+				std::memcpy(pixels[i].data(), mapped, pixels[i].size());
+				vkUnmapMemory(GetDevice(), readback[i].Memory());
+			}
+			const auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count();
+			const auto directory = std::filesystem::absolute(std::filesystem::path("logs") / "shadows" / ("shadow-" + std::to_string(timestamp)));
+			std::filesystem::create_directories(directory);
+			const std::array names{ "caster-mask.png", "blur-output.png" };
+			for (size_t i = 0; i < pixels.size(); ++i) {
+				if (!stbi_write_png((directory / names[i]).string().c_str(), static_cast<int>(extent.width),
+					static_cast<int>(extent.height), 1, pixels[i].data(), static_cast<int>(extent.width)))
+					throw std::runtime_error("Could not write shadow PNG");
+			}
+			std::ofstream report(directory / "settings.txt");
+			report << "Native Shadow Buffers\nSize: " << extent.width << 'x' << extent.height
+				<< "\nBlur samples: " << settings.blurSamples << "\nBlur radius: " << settings.blurRadius
+				<< "\nAlpha (GS units): " << settings.alpha
+				<< "\nFormat: R8_UNORM; black = no coverage, white = full coverage.\n"
+				<< "Latest completed shadow target; may be retained from an earlier frame.\n";
+			report << gCasterDebugInfo << "Latest mask pass recorded draw calls: " << gMaskDrawCount << '\n';
+			report.close();
+			if (!report) throw std::runtime_error("Could not write shadow settings");
+			gDumpStatus = "Saved shadow buffers to " + directory.string();
+		}
+		catch (const std::exception& error) {
+			gDumpStatus = std::string("Shadow buffer dump failed: ") + error.what();
+		}
+	}
+}
+
+void Renderer::Native::RequestShadowBufferDump()
+{
+	std::lock_guard lock(Shadow::gDebugTargetMutex);
+	Shadow::gDumpRequested = true;
+	Shadow::gDumpStatus = "Shadow buffer dump queued for frame submission.";
+}
+
+std::string Renderer::Native::GetShadowBufferDumpStatus()
+{
+	std::lock_guard lock(Shadow::gDebugTargetMutex);
+	return Shadow::gDumpStatus;
+}
+
+void Renderer::Native::SetShadowCasterDebugInfo(const std::string& info)
+{
+	std::lock_guard lock(Shadow::gDebugTargetMutex);
+	Shadow::gCasterDebugInfo = info;
+}
+
+std::string Renderer::Native::GetShadowCasterDebugInfo()
+{
+	std::lock_guard lock(Shadow::gDebugTargetMutex);
+	return Shadow::gCasterDebugInfo + "Latest mask pass recorded draw calls: " + std::to_string(Shadow::gMaskDrawCount) + "\n";
+}
+
+void Renderer::Native::RecordShadowMaskDraw()
+{
+	std::lock_guard lock(Shadow::gDebugTargetMutex);
+	++Shadow::gMaskDrawCount;
 }
 
 Renderer::Native::ShadowPassSettings Renderer::Native::NormalizeShadowPassSettings(const ShadowPassSettings& settings)

@@ -29,7 +29,11 @@ layout(push_constant) uniform PerDrawData
 	uint lightingDataIndex;
 	uint globalAlpha;
 	uint shadowProjectionIndex;
-	uint _pad[5];
+	uint frameBufferMode;
+	float frameBufferScaleX;
+	float frameBufferScaleY;
+	uint animBaseOffset;
+	uint _pad[1];
 } perDrawData;
 
 layout(location = 0) in ivec2 inST;
@@ -45,12 +49,21 @@ layout(location = 1) out float fragAlpha;
 void main()
 {
 	vec4 position = vec4(inPosition, 1.0);
+	vec3 extrusionNormal = inNormal.xyz;
 	uint animFlags = inFlags & 0x7ff;
 	if (animFlags > 0) {
-		uint animIndex = (animFlags - 0x3dc) / 4;
-		position = anim.animMatrix[perDrawData.animMatrixStart + animIndex] * position;
+		uint animIndex = (animFlags - perDrawData.animBaseOffset) / 4;
+		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
+		position = currentAnimMatrix * position;
+		extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
+	}
+	if ((perDrawData.renderFlags & 0x100) != 0) {
+		position.xyz += extrusionNormal * animStData.animST[perDrawData.animStDataIndex].z;
 	}
 	gl_Position = perDrawData.projXView * model.modelMatrix[perDrawData.modelMatrixIndex] * position;
 	fragTexCoord = vec2(inST) * 0.000244140625;
+	if ((perDrawData.renderFlags & 0x200) != 0) {
+		fragTexCoord += animStData.animST[perDrawData.animStDataIndex].xy;
+	}
 	fragAlpha = float(inColor.a) / 255.0;
 }

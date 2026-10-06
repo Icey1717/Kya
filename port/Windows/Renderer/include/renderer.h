@@ -362,6 +362,11 @@ namespace Renderer
 		VkImageView GetShadowMaskImageView();
 		VkImageView GetShadowBlurImageView();
 		ShadowPassSettings GetShadowPassSettings();
+		void RequestShadowBufferDump();
+		std::string GetShadowBufferDumpStatus();
+		void SetShadowCasterDebugInfo(const std::string& info);
+		std::string GetShadowCasterDebugInfo();
+		void RecordShadowMaskDraw();
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
