@@ -24,7 +24,7 @@ namespace Renderer
 			GetNativeRendererState().renderPassDirty = false;
 		}
 
-		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
+		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags, const uint32_t* pColors)
 		{
 			GetNativeRendererState().cachedPerDrawData.renderFlags = renderFlags;
 
@@ -42,17 +42,14 @@ namespace Renderer
 			auto& instance = GetNativeRendererState().currentDraw->instances.emplace_back();
 			instance.animationMatrixStart = GetNativeRendererState().currentAnimMatrixIndex;
 			instance.pMesh = pMesh;
+			if (pColors) {
+				instance.vertexColors.assign(pColors, pColors + pMesh->GetVertexBufferData().GetVertexTail());
+			}
 			instance.gsAlpha = PS2::GetGSState().ALPHA;
 			// Option packets and full-alpha masks can change within a material batch.
 			instance.gsTest = PS2::GetGSState().TEST;
 			instance.bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
-			if (instance.gsTest.DATE) {
-				static bool bReportedDate = false;
-				if (!bReportedDate) {
-					NATIVE_LOG(LogLevel::Warning, "Native mesh uses GS destination-alpha testing (DATM {}); DATE is not implemented", static_cast<uint32_t>(instance.gsTest.DATM));
-					bReportedDate = true;
-				}
-			}
+			assert(!instance.gsTest.DATE && "Native destination-alpha testing is not implemented");
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
 			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
 			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);

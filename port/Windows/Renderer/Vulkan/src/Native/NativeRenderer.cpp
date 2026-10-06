@@ -59,10 +59,10 @@ bool& Renderer::GetForceAnimMatrixIdentity()
 	return Native::GetNativeRendererState().forceAnimMatrixIdentity;
 }
 
-void Renderer::RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags)
+void Renderer::RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags, const uint32_t* pColors)
 {
 	assert(pNewMesh);
-	Native::RenderMesh(pNewMesh, renderFlags);
+	Native::RenderMesh(pNewMesh, renderFlags, pColors);
 }
 
 

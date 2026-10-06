@@ -44,6 +44,15 @@ namespace Renderer
 
 			// Copy into the real buffer.
 			GetNativeRendererState().nativeVertexBuffer.MergeData(vertexBufferData);
+			if (!instance.vertexColors.empty()) {
+				assert(instance.vertexColors.size() == vertexBufferData.GetVertexTail());
+				auto* pVertices = GetNativeRendererState().nativeVertexBuffer.GetDrawBufferData().vertex.buff + instance.vertexStart;
+				for (size_t i = 0; i < instance.vertexColors.size(); ++i) {
+					for (uint32_t channel = 0; channel < 4; ++channel) {
+						pVertices[i].RGBA[channel] = (instance.vertexColors[i] >> (channel * 8)) & 0xff;
+					}
+				}
+			}
 		}
 
 		static void UpdateInstanceData(Draw& draw)

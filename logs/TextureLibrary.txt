@@ -1,0 +1,18 @@
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: CBP: 0x40 CLD: 0 CPSM: 0 CSA: 0 CSM: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: PSM: 0 TBP0: 0x0 TBW: 0 TCC: 0 TFX: 0 TW: 8 TH: 8
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: WMS: 0 WMT: 0 MINU: 0 MAXU: 0 MAXV: 0 MINV: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: ATE: 0 ATST: 0 AREF: 0 AFAIL: 0 DATE: 0 DATM: 0 ZTE: 0 ZTST: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_ALPHA_1: A: 0 B: 0 C: 0 D: 0 FIX: 0
+A: Cs
+B: Cs
+C: As
+D: Cs
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: CBP: 0x80 CLD: 0 CPSM: 0 CSA: 0 CSM: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: PSM: 0 TBP0: 0x0 TBW: 0 TCC: 0 TFX: 1 TW: 6 TH: 6
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: WMS: 1 WMT: 1 MINU: 0 MAXU: 0 MAXV: 0 MINV: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: ATE: 1 ATST: 6 AREF: 64 AFAIL: 0 DATE: 0 DATM: 0 ZTE: 0 ZTST: 0
+Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_ALPHA_1: A: 0 B: 1 C: 2 D: 1 FIX: 96
+A: Cs
+B: Cd
+C: FIX
+D: Cd

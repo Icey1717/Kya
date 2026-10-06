@@ -235,6 +235,7 @@ namespace Renderer
 			struct Instance {
                 uint64_t traceSubmission = 0;
 				SimpleMesh* pMesh = nullptr;
+				std::vector<uint32_t> vertexColors;
 				int indexStart = 0;
 				int indexCount = 0;
 				int vertexStart = 0;

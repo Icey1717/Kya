@@ -1,0 +1,10 @@
+[1/7] Running utility command for Shaders
+[2/7] C:\WINDOWS\system32\cmd.exe /C "cd /D G:\repos\Kya\out\build\x64-debug && "C:\Program Files\Microsoft Visual Studio\18\Insiders\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "Syncing files using robocopy..." && G:\repos\Kya\DoRobo G:/repos/Kya/assets/ G:/repos/Kya/bin/WIN/"
+Syncing files using robocopy...
+
+G:\repos\Kya\out\build\x64-debug>echo off 
+[3/7] Linking CXX static library port\KyaTexture\Texture.lib
+[4/7] Linking CXX static library Kya.lib
+[5/7] Linking CXX executable G:\repos\Kya\bin\WIN\Kya_Debug.exe
+[6/7] Building CXX object port/Test/CMakeFiles/KyaPortTest.dir/src/material_layer_tests.cpp.obj
+[7/7] Linking CXX executable G:\repos\Kya\bin\WIN\KyaPortTest.exe

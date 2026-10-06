@@ -7,7 +7,7 @@ Track the remaining Windows renderer features identified by the PS2 packet submi
 | Order | Feature | Current finding | Complete |
 | --- | --- | --- | --- |
 | 1 | GS depth-test modes | Implemented; GPU and PS2 capture validation pending | [ ] |
-| 2 | Animated vertex colors / alpha | Native mesh submission bypasses the animation packet path | [ ] |
+| 2 | Animated vertex colors / alpha | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 3 | Normal extrusion | Extrusion amount is supplied but unused by the native shader | [ ] |
 | 4 | Mipmaps / trilinear filtering | Material settings exist; texture images have one mip level | [ ] |
 | 5 | Environment mapping | Setup exists; VU emulation body still needs recovery | [ ] |
@@ -39,24 +39,33 @@ Sources: `SCE_GS_SET_TEST` / `SetTestWin` in [port.h](../port/include/port.h), `
 - [x] Implement the GS comparison modes with the native reversed-Z convention, including disabled depth testing.
 - [x] Preserve depth-write masking and alpha-fail behavior; audit full-alpha batch boundaries.
 - [ ] Validate never, always, greater-or-equal, and greater with equal-depth and overlapping geometry.
-- [ ] Audit destination-alpha testing (`DATE` / `DATM`) separately and record whether game packets use it; implement if exercised.
+- [x] Audit destination-alpha testing (`DATE` / `DATM`) separately and record whether game packets use it; implement if exercised.
 
 Implementation notes (2026-10-06):
 
 - `RenderMesh` snapshots the current GS `TEST` and `ZBUF.ZMSK` in each native instance before material binding queues its batch. Later option changes, full-alpha init/term, and render-thread or preview replay cannot change that instance's depth state. Existing material alpha-test/alpha-fail handling is retained; this change does not establish full alpha-fail parity.
 - With `ZTE=1`, `ZTST=0/1/2/3` maps to Vulkan `NEVER` / `ALWAYS` / `GREATER_OR_EQUAL` / `GREATER`. GS depth and native reversed-Z both increase toward the camera. `ZTE=0` disables testing and depth writes, consistent with [PCSX2's GS depth implementation](https://github.com/PCSX2/pcsx2/blob/master/pcsx2/GS/Renderers/HW/GSRendererHW.cpp). `ZMSK` still suppresses writes, including the existing alpha-fail depth-only replay. Framebuffer materials use the captured comparison instead of a special hardcoded comparison.
 - `ed3DFlushOptionState` calls `Renderer::ApplyOptionDepthState` in `port/src/rendering_helpers.cpp` to apply `TEST_1` and `ZBUF_1` from the referenced packed A+D option packet produced by `edDListPatchGifTag3D`. The reference now stores the packet pointer, rather than the address of its pointer variable. Multilayer native submission replays each layer's material register packet before capturing instance state.
-- Source audit: the literal `SCE_GS_SET_TEST` calls in `ed3D.cpp`, viewport/video setup, and the found `edDListAlphaTestAndZTest` callers disable `DATE`. Material packets can carry authored `DATE`/`DATM`; runtime asset usage remains unverified. A native submission warning reports the first mesh with `DATE=1`. Destination-alpha testing is not implemented.
+- Source audit: the literal `SCE_GS_SET_TEST` calls in `ed3D.cpp`, viewport/video setup, and the found `edDListAlphaTestAndZTest` callers disable `DATE`. Material packets can carry authored `DATE`/`DATM`; runtime asset usage remains unverified. Native mesh submission asserts whenever `DATE=1`, for either `DATM` value. Destination-alpha testing is not implemented.
 - Validation: the x64-debug incremental build and existing `KyaPortTest` CTest target pass. Equal-depth/overlap GPU checks, Vulkan validation, and representative PS2/native capture comparisons remain pending; the overview stays incomplete.
 
 ## 2. Animated vertex colors / alpha
 
 Sources: strip flag `0x4` and the animation branch in `ed3DFlushStrip` in [ed3D.cpp](../src/b-witch/ed3D.cpp); fixed `pColorBuf` loading in `Strip::PreProcessVertices` in [Mesh.cpp](../port/KyaMesh/src/Mesh.cpp).
 
-- [ ] Recover frame selection, interpolation, looping/end behavior, and color layout from the existing packet code and Ghidra.
-- [ ] Supply animated RGBA to native draws without altering serialized strip layout.
-- [ ] Support independent animation state for instances sharing a cached mesh.
+- [x] Recover frame selection, interpolation, looping/end behavior, and color layout from the existing packet code and Ghidra.
+- [x] Supply animated RGBA to native draws without altering serialized strip layout.
+- [x] Support independent animation state for instances sharing a cached mesh.
 - [ ] Validate frame boundaries, intermediate colors, animated alpha, looping, and multilayer materials against PS2 output.
+
+Implementation notes (2026-10-06):
+
+- Ghidra's `ed3DFlushStrip` (`002a5630`) confirms a four-word color header: base stride in quadwords, serialized animation-controller pointer, base count, and a fourth header word. Bases contain packed RGBA bytes, with each mesh section occupying 72 colors and the final section padded to a multiple of four. Frame addresses are `header + 16 + frame * stride * 16`; section addresses advance by 72 packed colors. The native loader skips the header and records original color indices through `KickVertex` compaction instead of assuming cached vertices remain contiguous in the source.
+- `ed3DManageAnim` (`0029eca0`) already produces `field_0x10` from authored integer time/frame keys. Flags `0x1`, `0x2`, `0x4`, `0x8`, and `0x10` control looping, direction changes, forward playback, reverse playback, and integer-frame stepping. Native submission consumes that value without advancing the shared controller again. Packet selection interpolates adjacent bases with the fractional frame value; both playback directions use the same selection. The final base holds, including the controller's base-count endpoint. Native selection also clamps invalid/out-of-range frame values safely.
+- `MeshLibrary::RenderNode` interpolates all four channels in GS byte units and supplies one packed RGBA value per compacted vertex. `RenderMesh` copies those values into each draw instance before queueing. The render thread applies them to the uploaded vertex copy, preserving cached geometry and colors, later submissions, alpha-fail replay, and preview replay. Material layers retain strip flags and their own source-index mapping. Serialized strip and GPU vertex layouts are unchanged; the existing native shaders consume the resulting RGBA through their lighting, global-alpha, material-alpha-test, and blend paths.
+- Validation: `cmake --preset x64-debug`, the x64-debug build, four targeted `VertexColorAnimation` tests, and the existing CTest target pass. Tests cover frame boundaries/end holding, intermediate RGB/alpha, existing controller looping/non-looping/reverse playback, and padded section indexing through compaction and multilayer mesh creation. GPU validation, runtime scene/asset identification, shared-instance visual checks, lighting/global-alpha ordering, and PS2/native capture comparisons remain pending. CPU interpolation currently truncates each channel to a byte; exact VU interpolation/rounding still needs microcode or capture confirmation. The overview stays incomplete.
+- Follow-up: a RenderDoc draw for `parchemin_medaillon.g3d_0_0_0_layer_1` exposed incorrect multilayer ST section indexing. Later layers used a 20-entry UV stride, confusing the PS2 0x50-byte VIF command-block stride with the packed ST payload. Ghidra's `ed3DStripPreparePacket` (`002a16f0`) advances each layer's payload by `gNbVertexDMA` packed ST entries, matching the section vertex count (72 with normals, 96 without). All layers now use the cumulative section vertex index. The regression test uses distinct UVs across a full 72-vertex section and a final short section; it fails with the old stride and passes with the corrected indexing. Vertex initialization also clears the unused Q padding seen as an indeterminate `inQ.y` in the CSV. A fresh capture is still needed to confirm the parchment's appearance.
+- The follow-up vertex CSVs (2026-10-06, 14:50) contain 441 indexed vertices, no conflicting ST values at matching positions, and ST-to-UV conversion matching within CSV rounding. The user reports changed but still incorrect visuals. A separate texture-loading audit found that `G2D::Layer::ProcessTexture` decoded layer 0's material registers for every layer. It now selects the requested layer's command block before texture upload and caching, preserving that layer's TEX0, CLAMP, TEST, and ALPHA. A new `MaterialLayers` test verifies distinct texture/palette, sampler, alpha-test, and blend registers across two passes; the build and CTest pass. Runtime confirmation of this second fix is pending.
 
 ## 3. Normal extrusion
 

@@ -77,7 +77,7 @@ namespace Renderer
 
 		void BindTexture(SimpleTexture* pTexture);
 		void BindUntextured();
-		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags);
+		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags, const uint32_t* pColors = nullptr);
 
 		const VkSampler& GetSampler();
 		const VkImageView& GetColorImageView();

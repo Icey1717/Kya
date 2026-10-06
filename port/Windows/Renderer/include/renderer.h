@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cassert>
 #include <string>
+#include <vector>
 #include "delegate.h"
 #include "GIFReg.h"
 #include "GSState.h"
@@ -251,6 +252,7 @@ namespace Renderer
 
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData() { return vertexBufferData; }
+		std::vector<uint32_t>& GetColorSourceIndices() { return colorSourceIndices; }
 
 		const GIFReg::GSPrim& GetPrim() const { return prim; }
 
@@ -265,6 +267,8 @@ namespace Renderer
 		GIFReg::GSPrim prim;
 
 		NativeVertexBufferData vertexBufferData;
+		// Original packed RGBA index for each vertex after strip compaction.
+		std::vector<uint32_t> colorSourceIndices;
 
 		uint32_t stripFlags;
 
@@ -571,7 +575,8 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void BindTexture(SimpleTexture* pNewTexture);
-	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags);
+	// Optional packed RGBA array has one entry per cached vertex and is copied at submission.
+	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags, const uint32_t* pColors = nullptr);
 	void BindNull();
 	void BindUntextured();
 
