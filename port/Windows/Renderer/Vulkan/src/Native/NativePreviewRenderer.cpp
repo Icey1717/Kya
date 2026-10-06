@@ -107,14 +107,13 @@ namespace Renderer
 					continue;
 				}
 
-				SetColorDepthDynamicState(cmd, draw);
-
 				for (auto& instance : draw.instances) {
 					if (instance.indexCount == 0) {
 						continue;
 					}
 
 					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, draw.pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
+					SetColorDepthDynamicState(cmd, draw, instance);
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
 					previewPerDrawData.projXView = previewProjXView;

@@ -198,7 +198,8 @@ void Details(const Trace::Snapshot& snapshot, const Row& row, const std::vector<
                 ImGui::Text("Bound material/layer: %d / %d", d.material, d.layer);
                 ImGui::Text("Index start/count: %d / %d   Vertex offset: %d", d.indexStart, d.indexCount, d.vertexStart);
                 ImGui::Text("Blend: %s   Depth write: %s", d.blend ? "on" : "off", d.depthWrite ? "on" : "off");
-                ImGui::Text("Depth compare: %s", d.depthGreaterEqual ? "Greater or equal" : "Greater");
+                static constexpr const char* depthModes[] = { "Never", "Always", "Greater or equal", "Greater" };
+                ImGui::Text("Depth test: %s   Compare: %s", d.depthTest ? "on" : "off", depthModes[d.depthMode & 3]);
                 ImGui::Text("Color write: %s   RGBA mask: 0x%X", d.colorWrite ? "on" : "off", d.colorMask);
                 ImGui::Text("Alpha test: %s   ATST/AREF/AFAIL: %u / %u / %u", d.alphaTest ? "on" : "off", d.alphaAtst, d.alphaAref, d.alphaAfail);
                 ImGui::Text("Framebuffer material: %s   Depth-only copy: %s", d.framebuffer ? "yes" : "no", d.zOnly ? "yes" : "no");

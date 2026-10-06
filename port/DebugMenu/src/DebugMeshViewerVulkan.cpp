@@ -306,6 +306,8 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 	vkCmdSetDepthWriteEnable(cmd, true);
+	vkCmdSetDepthTestEnable(cmd, VK_TRUE);
+	vkCmdSetDepthCompareOp(cmd, VK_COMPARE_OP_GREATER);
 
 	const VkBool32 colorWriteEnable = VK_TRUE;
 

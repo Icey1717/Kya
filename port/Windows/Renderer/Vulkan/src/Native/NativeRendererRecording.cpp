@@ -175,7 +175,7 @@ namespace Renderer
 			GetNativeRendererState().hasActiveRenderPass = false;
 		}
 
-		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, Draw& drawCommand)
+		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance)
 		{
 			VkBool32 colorWriteEnable = VK_TRUE;
 			VkBool32 depthWriteEnable = drawCommand.pTexture->GetTextureRegisters().test.AFAIL != AFAIL_FB_ONLY ? VK_TRUE : VK_FALSE;
@@ -186,13 +186,19 @@ namespace Renderer
 				colorWriteEnable = VK_FALSE;
 			}
 
-			if (drawCommand.bIsZMask) {
+			if (instance.bIsZMask || !instance.gsTest.ZTE) {
 				depthWriteEnable = VK_FALSE;
 			}
 
 			// Depth.
+			// Both GS and native reversed-Z use larger values for nearer fragments.
+			static constexpr VkCompareOp depthCompareOps[] = {
+				VK_COMPARE_OP_NEVER, VK_COMPARE_OP_ALWAYS,
+				VK_COMPARE_OP_GREATER_OR_EQUAL, VK_COMPARE_OP_GREATER
+			};
+			vkCmdSetDepthTestEnable(cmd, instance.gsTest.ZTE ? VK_TRUE : VK_FALSE);
 			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
-			vkCmdSetDepthCompareOp(cmd, drawCommand.frameBufferMaterial ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_GREATER);
+			vkCmdSetDepthCompareOp(cmd, depthCompareOps[instance.gsTest.ZTST]);
 
 			// Color.
 			GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
@@ -236,18 +242,24 @@ namespace Renderer
                 const auto& registers = draw.pTexture->GetTextureRegisters();
                 trace.alpha = (data.renderFlags & 0x20) ? instance.gsAlpha.CMD : registers.alpha.CMD;
                 if (draw.frameBufferMaterial) trace.alpha = draw.frameBufferMaterial->alpha;
-                trace.test = registers.test.CMD;
+                auto effectiveTest = registers.test;
+                effectiveTest.ZTE = instance.gsTest.ZTE;
+                effectiveTest.ZTST = instance.gsTest.ZTST;
+                effectiveTest.DATE = instance.gsTest.DATE;
+                effectiveTest.DATM = instance.gsTest.DATM;
+                trace.test = effectiveTest.CMD;
                 trace.tex = registers.tex.CMD;
                 trace.clamp = registers.clamp.CMD;
                 trace.blend = instance.pMesh->GetPrim().ABE || (data.renderFlags & 0x20);
                 trace.depthWrite = registers.test.AFAIL != AFAIL_FB_ONLY || trace.framebuffer;
                 if (draw.bIsAfailZOnly) { trace.depthWrite = true; trace.colorWrite = false; }
-                if (draw.bIsZMask) trace.depthWrite = false;
+                if (instance.bIsZMask || !instance.gsTest.ZTE) trace.depthWrite = false;
                 if (!trace.framebuffer && registers.test.AFAIL == AFAIL_RGB_ONLY) trace.colorMask = 7;
-                trace.depthGreaterEqual = trace.framebuffer;
+                trace.depthTest = instance.gsTest.ZTE != 0;
+                trace.depthMode = instance.gsTest.ZTST;
                 if (draw.renderPassKey.kind == ERenderPassKind::ShadowReceiver) {
                     trace.depthWrite = false; trace.colorWrite = true; trace.colorMask = 15;
-                    trace.blend = true; trace.depthGreaterEqual = false;
+                    trace.blend = true; trace.depthTest = true; trace.depthMode = 3;
                 }
                 if (draw.renderPassKey.kind == ERenderPassKind::ShadowMask) trace.blend = false;
             }
@@ -342,6 +354,8 @@ namespace Renderer
 						}
 
 						if (bShadowReceiver) {
+							vkCmdSetDepthTestEnable(cmd, VK_TRUE);
+							vkCmdSetDepthCompareOp(cmd, VK_COMPARE_OP_GREATER);
 							vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
 							VkBool32 colorWriteEnable = VK_TRUE;
 							GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
@@ -349,7 +363,7 @@ namespace Renderer
 							GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &colorWriteMask);
 						}
 						else {
-							SetColorDepthDynamicState(cmd, drawCommand);
+							SetColorDepthDynamicState(cmd, drawCommand, instance);
 						}
 
 						const VkDescriptorSet* descriptorSet = drawCommand.pDescriptorSets;

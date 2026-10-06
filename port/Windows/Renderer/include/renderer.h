@@ -15,6 +15,7 @@ typedef struct VkCommandBuffer_T* VkCommandBuffer;
 typedef struct VkSampler_T* VkSampler;
 typedef struct VkImageView_T* VkImageView;
 struct VkExtent2D;
+union edpkt_data;
 
 namespace PS2 {
 	struct GSSimpleTexture;
@@ -394,6 +395,7 @@ namespace Renderer
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
 	void SetZbuf(uint32_t zmask);
+	void ApplyOptionDepthState(const edpkt_data* pPkt);
 
 	void SetPrim(GIFReg::GSPrim prim, PS2::DrawBufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);

@@ -6,7 +6,7 @@ Track the remaining Windows renderer features identified by the PS2 packet submi
 
 | Order | Feature | Current finding | Complete |
 | --- | --- | --- | --- |
-| 1 | GS depth-test modes | Native draws hardcode the depth comparison | [ ] |
+| 1 | GS depth-test modes | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 2 | Animated vertex colors / alpha | Native mesh submission bypasses the animation packet path | [ ] |
 | 3 | Normal extrusion | Extrusion amount is supplied but unused by the native shader | [ ] |
 | 4 | Mipmaps / trilinear filtering | Material settings exist; texture images have one mip level | [ ] |
@@ -35,11 +35,19 @@ Follow each feature from producer to consumer:
 
 Sources: `SCE_GS_SET_TEST` / `SetTestWin` in [port.h](../port/include/port.h), `SetTest` in [VulkanPS2.cpp](../port/Windows/Renderer/Vulkan/src/VulkanPS2.cpp), and `SetColorDepthDynamicState` in [NativeRendererRecording.cpp](../port/Windows/Renderer/Vulkan/src/Native/NativeRendererRecording.cpp).
 
-- [ ] Trace `TEST.ZTE` and `TEST.ZTST` into immutable native draw state.
-- [ ] Implement the GS comparison modes with the native reversed-Z convention, including disabled depth testing.
-- [ ] Preserve depth-write masking and alpha-fail behavior; audit full-alpha batch boundaries.
+- [x] Trace `TEST.ZTE` and `TEST.ZTST` into immutable native draw state.
+- [x] Implement the GS comparison modes with the native reversed-Z convention, including disabled depth testing.
+- [x] Preserve depth-write masking and alpha-fail behavior; audit full-alpha batch boundaries.
 - [ ] Validate never, always, greater-or-equal, and greater with equal-depth and overlapping geometry.
 - [ ] Audit destination-alpha testing (`DATE` / `DATM`) separately and record whether game packets use it; implement if exercised.
+
+Implementation notes (2026-10-06):
+
+- `RenderMesh` snapshots the current GS `TEST` and `ZBUF.ZMSK` in each native instance before material binding queues its batch. Later option changes, full-alpha init/term, and render-thread or preview replay cannot change that instance's depth state. Existing material alpha-test/alpha-fail handling is retained; this change does not establish full alpha-fail parity.
+- With `ZTE=1`, `ZTST=0/1/2/3` maps to Vulkan `NEVER` / `ALWAYS` / `GREATER_OR_EQUAL` / `GREATER`. GS depth and native reversed-Z both increase toward the camera. `ZTE=0` disables testing and depth writes, consistent with [PCSX2's GS depth implementation](https://github.com/PCSX2/pcsx2/blob/master/pcsx2/GS/Renderers/HW/GSRendererHW.cpp). `ZMSK` still suppresses writes, including the existing alpha-fail depth-only replay. Framebuffer materials use the captured comparison instead of a special hardcoded comparison.
+- `ed3DFlushOptionState` calls `Renderer::ApplyOptionDepthState` in `port/src/rendering_helpers.cpp` to apply `TEST_1` and `ZBUF_1` from the referenced packed A+D option packet produced by `edDListPatchGifTag3D`. The reference now stores the packet pointer, rather than the address of its pointer variable. Multilayer native submission replays each layer's material register packet before capturing instance state.
+- Source audit: the literal `SCE_GS_SET_TEST` calls in `ed3D.cpp`, viewport/video setup, and the found `edDListAlphaTestAndZTest` callers disable `DATE`. Material packets can carry authored `DATE`/`DATM`; runtime asset usage remains unverified. A native submission warning reports the first mesh with `DATE=1`. Destination-alpha testing is not implemented.
+- Validation: the x64-debug incremental build and existing `KyaPortTest` CTest target pass. Equal-depth/overlap GPU checks, Vulkan validation, and representative PS2/native capture comparisons remain pending; the overview stays incomplete.
 
 ## 2. Animated vertex colors / alpha
 

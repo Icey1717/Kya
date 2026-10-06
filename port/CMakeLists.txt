@@ -42,13 +42,16 @@ set(SOURCES
 	"Windows/Input/gamepad.cpp"
 	"src/object_naming.cpp"
 	"src/input_functions.cpp"
+	"src/rendering_helpers.cpp"
 	"include/port.h"
 	"include/gamepad.h"
 )
 
 add_library(Port ${SOURCES})
+set_source_files_properties("src/rendering_helpers.cpp" PROPERTIES COMPILE_DEFINITIONS PLATFORM_WIN)
 
 target_include_directories(Port PUBLIC "include")
+target_include_directories(Port PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/src/b-witch")
 
 target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture Mesh Sprite Audio)
 

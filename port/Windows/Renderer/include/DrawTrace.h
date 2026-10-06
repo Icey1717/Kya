@@ -45,7 +45,9 @@ struct Draw {
     uint64_t alpha = 0, test = 0, tex = 0, clamp = 0;
     uint32_t alphaAtst = 0, alphaAref = 0, alphaAfail = 0, colorMask = 15;
     bool alphaTest = false, blend = false, depthWrite = false, colorWrite = true;
-    bool depthGreaterEqual = false, framebuffer = false, zOnly = false, suppressed = false, recorded = false;
+    bool depthTest = true;
+    uint32_t depthMode = 3;
+    bool framebuffer = false, zOnly = false, suppressed = false, recorded = false;
     Matrix view{}, projection{};
 };
 struct Stack { std::array<uint64_t, 64> addresses{}; uint32_t count = 0; };

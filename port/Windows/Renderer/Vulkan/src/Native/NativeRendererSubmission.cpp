@@ -43,6 +43,16 @@ namespace Renderer
 			instance.animationMatrixStart = GetNativeRendererState().currentAnimMatrixIndex;
 			instance.pMesh = pMesh;
 			instance.gsAlpha = PS2::GetGSState().ALPHA;
+			// Option packets and full-alpha masks can change within a material batch.
+			instance.gsTest = PS2::GetGSState().TEST;
+			instance.bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
+			if (instance.gsTest.DATE) {
+				static bool bReportedDate = false;
+				if (!bReportedDate) {
+					NATIVE_LOG(LogLevel::Warning, "Native mesh uses GS destination-alpha testing (DATM {}); DATE is not implemented", static_cast<uint32_t>(instance.gsTest.DATM));
+					bReportedDate = true;
+				}
+			}
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
 			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
 			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
@@ -334,8 +344,6 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
 		}
 
-		GetNativeRendererState().currentDraw->bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
-
 		if (!GetRenderThreadHasRecordedCommands(GetNativeRendererState().renderThread)) {
 			GetNativeRendererState().initialViewMatrix = GetNativeRendererState().cachedViewMatrix;
 			GetNativeRendererState().initialProjMatrix = GetNativeRendererState().cachedProjMatrix;
@@ -492,8 +500,8 @@ void Renderer::Native::BindShadowReceiver()
 	draw.pDescriptorSets = nullptr;
 	draw.projMatrix = GetNativeRendererState().cachedProjMatrix;
 	draw.viewMatrix = GetNativeRendererState().cachedViewMatrix;
-	draw.bIsZMask = true;
 	for (auto& instance : draw.instances) {
+		instance.bIsZMask = true;
 		instance.perDrawData.globalAlpha = GetNativeRendererState().shadowAlpha;
 	}
 	AddRenderThreadDraw(GetNativeRendererState().renderThread, draw);

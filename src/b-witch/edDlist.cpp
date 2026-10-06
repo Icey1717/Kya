@@ -1460,7 +1460,7 @@ void edDListPatchGifTag3D(void)
 		iVar3 = gCurStatePKTSize - 1;
 
 		pRVar2->asU32[0] = ED_VIF1_SET_TAG_REF(gCurStatePKTSize, 0);
-		pRVar2->asU32[1] = STORE_POINTER(&gCurStatePKT);
+		pRVar2->asU32[1] = STORE_POINTER(gCurStatePKT);
 
 		pRVar2->asU32[2] = SCE_VIF1_SET_ITOP(0x03dc, 0);
 		pRVar2->asU32[3] = SCE_VIF1_SET_UNPACK(0x03dc, iVar3, UNPACK_V4_32, 0);

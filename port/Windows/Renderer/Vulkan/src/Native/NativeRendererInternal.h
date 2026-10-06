@@ -241,13 +241,14 @@ namespace Renderer
 				int animationMatrixStart = 0;
 
 				GIFReg::GSAlpha gsAlpha = {};
+				GIFReg::GSTest gsTest = {};
+				bool bIsZMask = false;
 				PerDrawData perDrawData;
 			};
 
 			std::vector<Instance> instances;
 
 			bool bIsAfailZOnly = false;
-			bool bIsZMask = false;
 			std::optional<FrameBufferMaterialSettings> frameBufferMaterial;
 
 			const VkDescriptorSet* pDescriptorSets = nullptr;
@@ -345,7 +346,7 @@ namespace Renderer
 		void RecordEndRenderPass();
 		void RecordBeginCommandBuffer();
 		void RecordEndCommandBuffer();
-		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, Draw& drawCommand);
+		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance);
 		void ApplyPendingResizeInternal();
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 		void PushModelMatrix(float* pModel);

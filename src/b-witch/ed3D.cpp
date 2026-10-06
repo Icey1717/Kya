@@ -3613,11 +3613,20 @@ static void ed3DApplyMultiTextureLayerRenderFlags(edNODE* pNode, ed_g2d_material
 	}
 }
 
+void ProcessTextureCommands(edpkt_data* aPkt, int size);
+
 static void ed3DRenderMultiTextureNodeWindows(edpkt_data* pCurPkt, edNODE* pNode, ed_g2d_material* pMaterial, ulong mode, bool bApplyLayerRenderFlags)
 {
 	// The PS2 path emits one pass per material layer. Each pass binds that layer's texture state
 	// and references that layer's ST stream, so the native path must not replay layer 0 UVs for all layers.
 	for (uint layerIndex = 0; layerIndex < mode; layerIndex = layerIndex + 1) {
+		// The PS2 layer pass replays its material registers before drawing.
+		// Capture that layer's TEST, rather than retaining the previous layer's depth mode.
+		if (pMaterial->commandBufferTextureSize > 2) {
+			edpkt_data* pLayerPkt = LOAD_POINTER_CAST(edpkt_data*, pMaterial->pCommandBufferTexture) +
+				(gVRAMBufferFlush * pMaterial->nbLayers + layerIndex) * pMaterial->commandBufferTextureSize;
+			ProcessTextureCommands(pLayerPkt, pMaterial->commandBufferTextureSize);
+		}
 		if (bApplyLayerRenderFlags) {
 			ed3DApplyMultiTextureLayerRenderFlags(pNode, pMaterial, layerIndex);
 		}
@@ -5509,6 +5518,9 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 void ed3DFlushOptionState(edNODE* pNode)
 {
 	edpkt_data* pPkt = (edpkt_data*)pNode->pData;
+#ifdef PLATFORM_WIN
+	Renderer::ApplyOptionDepthState(pPkt);
+#endif
 	*g_VifRefPktCur = *pPkt;
 	g_VifRefPktCur = g_VifRefPktCur + 1;
 }
@@ -12111,7 +12123,7 @@ void ed3DFlushFogFX(void)
 	return;
 }
 
-edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
+edpkt_data* ed3DFlushAAEffect(edpkt_data* pPkt)
 {
 	ulong* puVar1;
 	ushort** ppuVar2;
@@ -12122,7 +12134,8 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 		((gCurRectViewport.h == 0x200 || (gCurRectViewport.h == 0x1c0)))) {
 		IMPLEMENTATION_GUARD();
 	}
-	return pRenderCommand;
+
+	return pPkt;
 }
 
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRenderList.c
