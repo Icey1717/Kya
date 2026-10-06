@@ -21,7 +21,7 @@ namespace Renderer::Kya::Sprite
 		{
 			for (auto& sprite : sprites)
 			{
-				GIFReg::GSPrim prim;
+				GIFReg::GSPrim prim{};
 				prim.ABE = 1;
 				sprite = std::make_unique<SimpleMesh>("Sprite", prim, 0);
 				sprite->GetVertexBufferData().Init(gMaxSpriteVertices, 0x1000);
@@ -175,8 +175,6 @@ namespace Renderer::Kya::Sprite
 		GSVertexUnprocessed::Vertex* pVertex = reinterpret_cast<GSVertexUnprocessed::Vertex*>(vtxStagingBuff);
 		WidthHeightData* pWh = LOAD_POINTER_CAST(WidthHeightData*, pSprite->pWHBuf);
 
-		// This increases by 2 every loop because we start the next vtx at the end of the previous vtx.
-		int vtxOffset = 0;
 		int meshOffset = 0;
 
 		for (int batchIndex = 0; batchIndex < pSprite->nbBatches; batchIndex++) {
@@ -207,14 +205,17 @@ namespace Renderer::Kya::Sprite
 			for (int i = 0; i < vtxCount; i += 4) {
 				const int index = i + meshOffset;
 
-				assert(index < nbStagingVertices);
+				assert(index + 3 < nbStagingVertices);
 
 				assert(pVectorVertex[index + 0].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 1].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 2].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 3].wi != gGifTagCopyCode);
 
-				WidthHeightData whi = pWh[index / 4];
+				// PS2 batches hold 18 quads, but each WH block is padded to
+				// 20 entries (0x50 bytes). Bit 0 selects one shared size.
+				const int whIndex = (pSprite->pRenderFrame30 & 1) != 0 ? 0 : batchIndex * 20 + i / 4;
+				WidthHeightData whi = pWh[whIndex];
 				edF32VECTOR4 vtx = pVectorVertex[index];
 
 				edF32VECTOR2 whf;
@@ -243,7 +244,7 @@ namespace Renderer::Kya::Sprite
 			for (int i = 0; i < vtxCount; i++) {
 				const int index = i + meshOffset;
 
-				Renderer::GSVertexUnprocessedNormal vtx;
+				Renderer::GSVertexUnprocessedNormal vtx{};
 				vtx.RGBA[0] = pRgba[index].r;
 				vtx.RGBA[1] = pRgba[index].g;
 				vtx.RGBA[2] = pRgba[index].b;
@@ -280,57 +281,29 @@ namespace Renderer::Kya::Sprite
 
 void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 {
-	short sVar1;
-	ushort uVar2;
-	ushort uVar3;
-	ed_3d_sprite* pSprite;
-	uint uVar8;
+	auto* pSprite = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
+	// Flare paths submit separately in ed3DFlushSpriteFlareFX/ScaleFlare.
+	if (pSprite->nbBatches == 0 || (pSprite->pRenderFrame30 & 0x200) != 0) return;
 
-	pSprite = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
+	SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::RenderNode Rendering sprite with count: 0x{:x}", pSprite->nbBatches);
+	auto* pSimpleMesh = gSpritePool.GetSimpleMesh();
+	pSimpleMesh->GetVertexBufferData().ResetAfterDraw();
+	// ProcessVertices already expands every PS2 batch into this one mesh.
+	ProcessVertices(pSprite, pSimpleMesh);
 
-	sVar1 = pNode->header.typeField.flags;
-	uVar2 = pSprite->nbBatches;
-
-	if (uVar2 != 0) {
-		uVar3 = pSprite->pRenderFrame30;
-		if (((uVar3 & 0x80) == 0) || ((uVar3 & 0x200) == 0)) {
-			SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::RenderNode Rendering sprite with count: 0x{:x}", uVar2);
-
-			if ((uVar3 & 0x200) == 0) {
-				for (uVar8 = 0; uVar8 < uVar2; uVar8 = uVar8 + 1) {
-					auto* pSimpleMesh = gSpritePool.GetSimpleMesh();
-					pSimpleMesh->GetVertexBufferData().ResetAfterDraw();
-					ProcessVertices(pSprite, pSimpleMesh);
-
-					auto* pMaterial = ed3DG2DGetG2DMaterialFromIndex(gBankMaterial, pSprite->materialIndex);
-					
-					std::string newName = "Sprite - Material Index: " + std::to_string(pSprite->materialIndex);
-
-					if (pMaterial) {
-						if (const Renderer::Kya::G2D::Material* pLibTexture = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterial)) {
-							for (auto& layer : pLibTexture->layers) {
-								for (auto& texture : layer.textures) {
-									if (texture.pSimpleTexture) {
-										newName += " Texture: " + texture.pSimpleTexture->GetName();
-									}
-								}
-							}
-						}
+	auto* pMaterial = ed3DG2DGetG2DMaterialFromIndex(gBankMaterial, pSprite->materialIndex);
+	std::string newName = "Sprite - Material Index: " + std::to_string(pSprite->materialIndex);
+	if (pMaterial) {
+		if (const auto* pLibTexture = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterial)) {
+			for (auto& layer : pLibTexture->layers) {
+				for (auto& texture : layer.textures) {
+					if (texture.pSimpleTexture) {
+						newName += " Texture: " + texture.pSimpleTexture->GetName();
 					}
-
-					pSimpleMesh->SetName(newName);
-
-					uint execCode = ExtractExecCodeFromVifList(pSprite);
-
-					Renderer::RenderMesh(pSimpleMesh, pNode->header.typeField.flags);
 				}
 			}
-			else {
-				// ed3DFlushSpriteFlareFX submits the native flare after PS2 projection and sizing.
-			}
-		}
-		else {
-			// ed3DFlushSpriteScaleFlare applies orientation scaling before native submission.
 		}
 	}
+	pSimpleMesh->SetName(newName);
+	Renderer::RenderMesh(pSimpleMesh, pNode->header.typeField.flags);
 }

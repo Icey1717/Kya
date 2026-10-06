@@ -1,0 +1,7 @@
+[1/4] Running utility command for Shaders
+[2/4] C:\WINDOWS\system32\cmd.exe /C "cd /D G:\repos\Kya\out\build\x64-debug && "C:\Program Files\Microsoft Visual Studio\18\Insiders\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "Syncing files using robocopy..." && G:\repos\Kya\DoRobo G:/repos/Kya/assets/ G:/repos/Kya/bin/WIN/"
+Syncing files using robocopy...
+
+G:\repos\Kya\out\build\x64-debug>echo off 
+[3/4] Building CXX object port/Test/CMakeFiles/KyaPortTest.dir/src/sprite_batch_tests.cpp.obj
+[4/4] Linking CXX executable G:\repos\Kya\bin\WIN\KyaPortTest.exe
