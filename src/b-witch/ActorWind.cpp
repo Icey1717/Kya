@@ -1412,8 +1412,7 @@ void CBehaviourWind::ManageFrozen()
 	fxIndex = 0;
 	if (pActorWind->nbFxWind != 0) {
 		do {
-			IMPLEMENTATION_GUARD_WIND_FX(
-			pActorWind->aFxWind[fxIndex]->ManageFrozen();)
+			pActorWind->aFxWind[fxIndex].ManageFrozen();
 			pActorWind = this->pOwner;
 			fxIndex = fxIndex + 1;
 		} while (fxIndex < pActorWind->nbFxWind);
@@ -1911,6 +1910,37 @@ void CFxWind::Manage(int param_2)
 	}
 
 	gpWIND_PartPool->Manage(this);
+
+	return;
+}
+
+void CFxWind::ManageFrozen()
+{
+	CFxEmitterPool* pCVar1;
+	ed_g2d_texture* peVar2;
+	WindAnimST* pWVar4;
+	int iVar5;
+
+	if (((this->flags_0x54 & 0x100) == 0) || ((this->flags_0x54 & 2) != 0)) {
+		iVar5 = 0;
+		pWVar4 = gUseAnimST;
+		do {
+			peVar2 = ed3DG2DGetTextureFromMaterial(this->aCombinedMaterials[iVar5].material.pMaterial, 0);
+			if ((peVar2->pAnimSpeedNormalExtruder != 0x0) && (pWVar4->field_0x0 != 0)) {
+				LOAD_POINTER_CAST(edF32VECTOR4*, peVar2->pAnimSpeedNormalExtruder)->x = 0.0f;
+				LOAD_POINTER_CAST(edF32VECTOR4*, peVar2->pAnimSpeedNormalExtruder)->y = 0.0f;
+			}
+
+			iVar5 = iVar5 + 1;
+			pWVar4 = pWVar4 + 1;
+		} while (iVar5 < 5);
+	}
+
+	pCVar1 = gpWIND_PartPool;
+	if (pCVar1->field_0x8 != GetTimer()->totalTime) {
+		pCVar1->field_0x8 = GetTimer()->totalTime;
+		pCVar1->field_0x4 = 0;
+	}
 
 	return;
 }

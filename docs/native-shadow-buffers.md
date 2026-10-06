@@ -2,6 +2,8 @@
 
 Open **Native Shadow Buffers** in the debug menu. The panel previews the latest completed caster mask and blur output and shows their dimensions, blur samples/radius, and GS alpha.
 
+**Shadow resolution** selects 1x (original), 2x, 4x, or 8x in each dimension. A 512x256 target becomes 1024x512, 2048x1024, or 4096x2048. Changes apply to the next shadow pass. The `Debug::ComboSetting` saves the selection in `settings.json` and applies it during debug-menu startup, even if the shadow panel stays closed. The renderer scales both axes together, preserving the projection and aspect ratio, and scales the blur radius to maintain its apparent softness. The actual resolution is reduced if necessary to fit the GPU's image/framebuffer limits. Previews and PNG exports use the actual target size. This affects projected shadow buffers; ordinary radial actor shadows retain their material textures.
+
 - **Copy shadow debug info** copies the displayed settings and image availability to the clipboard. It also works when no shadow target exists.
 - **Dump shadow buffers (PNG)** saves `caster-mask.png`, `blur-output.png`, and `settings.txt` in a timestamped `logs/shadows/shadow-<timestamp>/` directory under the game's working directory. The panel displays the absolute output path or an error. The button is disabled until a completed shadow target exists.
 
@@ -33,7 +35,7 @@ The temporary per-object reports and full lighting-slot/sun dumps used during in
 
 These buffers belong to the projected shadow path used by `CCameraShadow` for its target actor. `CCameraShadow::SetTarget` disables that actor's ordinary `CShadow` while it is the target, and restores it when the target changes. Ordinary actor shadows (`CShadow` and `CShadowShared`) use material-backed display-list quads in the main scene; their soft appearance comes from the material rather than this blur buffer. To inspect those draws, select the main pass rather than Shadow mask. Empty mask rows and black buffers do not diagnose missing ordinary actor shadows.
 
-Validation: the x64-debug build and CTest pass. The opt-in `ShadowBufferDump.DISABLED_GpuReadbackPreservesPixelsAndLayouts` test renders known coverage at odd dimensions, exports and decodes both PNGs, checks every pixel, then repeats with different coverage to verify subsequent rendering and layout restoration. Run it alone from `bin/WIN`:
+Validation: the x64-debug build and CTest pass. The opt-in `ShadowBufferDump.DISABLED_GpuReadbackPreservesPixelsAndLayouts` test renders known coverage at odd dimensions, switches resolution 1x -> 2x -> 1x, exports and decodes both PNGs, and checks every pixel to verify resizing, cached target reuse, and layout restoration. Run it alone from `bin/WIN`:
 
 ```powershell
 .\KyaPortTest.exe --gtest_also_run_disabled_tests --gtest_filter=ShadowBufferDump.DISABLED_GpuReadbackPreservesPixelsAndLayouts

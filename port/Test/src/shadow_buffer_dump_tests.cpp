@@ -28,18 +28,25 @@ TEST(ShadowBufferDump, DISABLED_GpuReadbackPreservesPixelsAndLayouts)
 	Renderer::Setup();
 	Renderer::Native::Setup();
 	struct Cleanup { ~Cleanup() { Renderer::Native::Cleanup(); } } cleanup;
+	const uint32_t previousScale = GetShadowResolutionScale();
+	struct RestoreScale { uint32_t scale; ~RestoreScale() { SetShadowResolutionScale(scale); } } restoreScale{previousScale};
 
-	// Odd dimensions exercise tightly packed R8 rows. Render and dump twice to
-	// verify that readback restores layouts and later frames still replace pixels.
-	for (int iteration = 0; iteration < 2; ++iteration) {
+	// Odd dimensions exercise tightly packed R8 rows. Switch 1x -> 2x -> 1x
+	// to verify resizing, cached target reuse, and readback layout restoration.
+	for (int iteration = 0; iteration < 3; ++iteration) {
+		const uint32_t scale = iteration == 1 ? 2 : 1;
+		SetShadowResolutionScale(scale);
+		const int expectedWidth = 19 * scale, expectedHeight = 11 * scale;
 		Shadow::BeginMask({19, 11, 0, 0, 0x30});
+		EXPECT_EQ(GetShadowPassSettings().width, expectedWidth);
+		EXPECT_EQ(GetShadowPassSettings().height, expectedHeight);
 		RecordBeginCommandBuffer();
 		RecordBeginRenderPass({ EClearMode::ColorDepth, ERenderPassKind::ShadowMask });
 		const auto cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 		VkClearAttachment attachment{};
 		attachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		attachment.clearValue.color.float32[0] = 1.0f;
-		VkClearRect rect{ {{iteration ? 10 : 0, 0}, {9, 11}}, 0, 1 };
+		VkClearRect rect{ {{iteration ? int32_t(10 * scale) : 0, 0}, {9 * scale, 11 * scale}}, 0, 1 };
 		vkCmdClearAttachments(cmd, 1, &attachment, 1, &rect);
 		RecordEndRenderPass();
 		Shadow::RecordBlur(cmd);
@@ -60,10 +67,10 @@ TEST(ShadowBufferDump, DISABLED_GpuReadbackPreservesPixelsAndLayouts)
 			int width = 0, height = 0, channels = 0;
 			auto* pixels = stbi_load((directory / name).string().c_str(), &width, &height, &channels, 1);
 			ASSERT_NE(pixels, nullptr) << name;
-			EXPECT_EQ(width, 19); EXPECT_EQ(height, 11); EXPECT_EQ(channels, 1);
-			if (width == 19 && height == 11) {
+			EXPECT_EQ(width, expectedWidth); EXPECT_EQ(height, expectedHeight); EXPECT_EQ(channels, 1);
+			if (width == expectedWidth && height == expectedHeight) {
 				for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x)
-					EXPECT_EQ(pixels[y * width + x], (iteration ? x >= 10 : x < 9) ? 255 : 0) << name << " at " << x << ',' << y;
+					EXPECT_EQ(pixels[y * width + x], (iteration ? x >= int(10 * scale) : x < int(9 * scale)) ? 255 : 0) << name << " at " << x << ',' << y;
 			}
 			stbi_image_free(pixels);
 			std::filesystem::remove(directory / name);

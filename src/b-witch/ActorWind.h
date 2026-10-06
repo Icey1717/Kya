@@ -239,6 +239,7 @@ public:
 	void Init(edF32MATRIX4* pMatrix);
 	void SectorChange(int oldSectorId, int newSectorId);
 	void Manage(int param_2);
+	void ManageFrozen();
 	void Draw();
 	void Reset();
 

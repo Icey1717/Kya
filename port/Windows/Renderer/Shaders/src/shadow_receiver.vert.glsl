@@ -23,7 +23,7 @@ layout(push_constant) uniform PerDrawData
 	float frameBufferScaleX;
 	float frameBufferScaleY;
 	uint animBaseOffset;
-	uint _pad[1];
+	uint stripFlags; // Authored geometry flags, separate from VU renderFlags.
 } perDrawData;
 
 layout(location = 0) in ivec2 inST;
@@ -39,11 +39,13 @@ void main()
 	vec4 position = vec4(inPosition, 1.0);
 	vec3 extrusionNormal = inNormal.xyz;
 	uint animFlags = inFlags & 0x7ff;
-	if (animFlags > 0) {
+	if ((perDrawData.stripFlags & 0x10000u) != 0 && animFlags >= perDrawData.animBaseOffset) {
 		uint animIndex = (animFlags - perDrawData.animBaseOffset) / 4;
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		position = currentAnimMatrix * position;
-		extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
+		if ((perDrawData.stripFlags & 0x8000000u) != 0) {
+			extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
+		}
 	}
 	if ((perDrawData.renderFlags & 0x100) != 0) {
 		position.xyz += extrusionNormal * animStData.animST[perDrawData.animStDataIndex].z;

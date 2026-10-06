@@ -32,7 +32,7 @@ layout( push_constant ) uniform PerDrawData
 	// Usually 0x394 or 0x3dc.
 	uint animBaseOffset;
 
-	uint _pad[1];
+	uint stripFlags;
 } perDrawData;
 
 #define ATST_NEVER 0

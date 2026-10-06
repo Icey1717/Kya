@@ -59,9 +59,8 @@ namespace Renderer
 				instance.perDrawData.globalAlpha = 0x80;
 			}
 
-			const bool bOffsetType = (pMesh->GetStripFlags() & 0x8000000) == 0;
-
-			instance.perDrawData.animBaseOffset = bOffsetType ? 0x394 : 0x3dc;
+			instance.perDrawData.stripFlags = pMesh->GetStripFlags();
+			instance.perDrawData.animBaseOffset = GetAnimationBaseOffset(instance.perDrawData.stripFlags);
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
             if (DrawTrace::IsEnabled()) {

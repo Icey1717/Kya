@@ -155,6 +155,12 @@ namespace Renderer
 			}
 		};
 
+		// Matches the VU upload destination in ed3DFlushStripInit.
+		constexpr uint32_t GetAnimationBaseOffset(uint32_t stripFlags)
+		{
+			return (stripFlags & 0x8000000) != 0 ? 0x3dc : 0x394;
+		}
+
 		struct PerDrawData
 		{
 			glm::mat4 projXView;
@@ -172,8 +178,11 @@ namespace Renderer
 			uint32_t frameBufferMode = 0; // 0: ordinary texture, 1: MODULATE, 2: DECAL
 			float frameBufferScaleX = 1.0f;
 			float frameBufferScaleY = 1.0f;
-			uint animBaseOffset;
+			uint32_t animBaseOffset = 0x394; // VU address used only to decode bone indices.
+			uint32_t stripFlags = 0; // Authored geometry flags; distinct from VU renderFlags.
 		};
+		static_assert(sizeof(PerDrawData) == 128);
+		static_assert(offsetof(PerDrawData, stripFlags) == 124);
 
 		struct FadeConstantBuffer
 		{

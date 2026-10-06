@@ -15,11 +15,13 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
@@ -27,11 +29,17 @@
 
 namespace Renderer::Native::Shadow
 {
-	ShadowPassSettings NormalizeSettings(const ShadowPassSettings& settings)
+	ShadowPassSettings NormalizeSettings(const ShadowPassSettings& settings, uint32_t resolutionScale = 1)
 	{
 		ShadowPassSettings normalized = settings;
-		normalized.width = std::max(normalized.width, 1u);
-		normalized.height = std::max(normalized.height, 1u);
+		resolutionScale = std::clamp(resolutionScale, 1u, 8u);
+		auto scale = [resolutionScale](uint32_t value) {
+			return static_cast<uint32_t>(std::min(uint64_t(value) * resolutionScale,
+				uint64_t(std::numeric_limits<uint32_t>::max())));
+		};
+		normalized.width = scale(std::max(normalized.width, 1u));
+		normalized.height = scale(std::max(normalized.height, 1u));
+		normalized.blurRadius = scale(normalized.blurRadius);
 		normalized.blurSamples = std::min(normalized.blurSamples, 32u);
 		return normalized;
 	}
@@ -94,6 +102,7 @@ namespace Renderer::Native::Shadow
 		ShadowCasterDiagnostics gCasterDiagnostics{};
 		bool gHasCasterDiagnostics = false;
 		uint32_t gMaskDrawCount = 0;
+		std::atomic<uint32_t> gResolutionScale{1};
 
 		// Caller holds gDebugTargetMutex. Format only for UI/export requests.
 		std::string FormatCasterDebugInfo()
@@ -358,7 +367,15 @@ namespace Renderer::Native::Shadow
 
 	void BeginMask(const ShadowPassSettings& settings)
 	{
-		const ShadowPassSettings normalized = NormalizeSettings(settings);
+		uint32_t scale = gResolutionScale.load(std::memory_order_relaxed);
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+		const uint32_t maxDimension = std::min({ properties.limits.maxImageDimension2D,
+			properties.limits.maxFramebufferWidth, properties.limits.maxFramebufferHeight });
+		// Reduce both axes together to preserve the authored aspect ratio.
+		while (scale > 1 && (uint64_t(std::max(settings.width, 1u)) * scale > maxDimension ||
+			uint64_t(std::max(settings.height, 1u)) * scale > maxDimension)) scale /= 2;
+		const ShadowPassSettings normalized = NormalizeSettings(settings, scale);
 		std::lock_guard lock(gDebugTargetMutex);
 		gpActiveTarget = &GetOrCreateTarget(normalized.width, normalized.height);
 		gSettings = normalized;
@@ -519,6 +536,7 @@ namespace Renderer::Native::Shadow
 			}
 			std::ofstream report(directory / "settings.txt");
 			report << "Native Shadow Buffers\nSize: " << extent.width << 'x' << extent.height
+				<< "\nRequested resolution scale: " << gResolutionScale.load(std::memory_order_relaxed) << 'x'
 				<< "\nBlur samples: " << settings.blurSamples << "\nBlur radius: " << settings.blurRadius
 				<< "\nAlpha (GS units): " << settings.alpha
 				<< "\nFormat: R8_UNORM; black = no coverage, white = full coverage.\n"
@@ -566,9 +584,21 @@ void Renderer::Native::RecordShadowMaskDraw()
 	++Shadow::gMaskDrawCount;
 }
 
-Renderer::Native::ShadowPassSettings Renderer::Native::NormalizeShadowPassSettings(const ShadowPassSettings& settings)
+void Renderer::Native::SetShadowResolutionScale(uint32_t scale)
 {
-	return Shadow::NormalizeSettings(settings);
+	// The menu exposes powers of two, keeping the target cache bounded.
+	scale = scale >= 8 ? 8 : scale >= 4 ? 4 : scale >= 2 ? 2 : 1;
+	Shadow::gResolutionScale.store(scale, std::memory_order_relaxed);
+}
+
+uint32_t Renderer::Native::GetShadowResolutionScale()
+{
+	return Shadow::gResolutionScale.load(std::memory_order_relaxed);
+}
+
+Renderer::Native::ShadowPassSettings Renderer::Native::NormalizeShadowPassSettings(const ShadowPassSettings& settings, uint32_t resolutionScale)
+{
+	return Shadow::NormalizeSettings(settings, resolutionScale);
 }
 
 bool Renderer::Native::HasShadowTarget()

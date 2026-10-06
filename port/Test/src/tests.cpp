@@ -122,6 +122,20 @@ TEST(NativeShadowSettings, NormalizesExtentAndSampleBudget)
 	EXPECT_EQ(normalized.blurRadius, 7u);
 }
 
+TEST(NativeShadowSettings, ResolutionScalingPreservesAspectAndBlurFootprint)
+{
+	Renderer::Native::ShadowPassSettings settings{512, 256, 12, 3, 0x32};
+	for (uint32_t scale : {1u, 2u, 4u, 8u}) {
+		const auto scaled = Renderer::Native::NormalizeShadowPassSettings(settings, scale);
+		EXPECT_EQ(scaled.width, 512u * scale);
+		EXPECT_EQ(scaled.height, 256u * scale);
+		EXPECT_EQ(scaled.blurRadius, 3u * scale);
+		EXPECT_EQ(scaled.blurSamples, settings.blurSamples);
+		EXPECT_EQ(scaled.alpha, settings.alpha);
+		EXPECT_FLOAT_EQ(float(scaled.blurRadius) / float(scaled.width), float(settings.blurRadius) / float(settings.width));
+	}
+}
+
 TEST(AudioTransferService, OwnsDataAndReturnsSoundHandle)
 {
 	Audio::Reset();

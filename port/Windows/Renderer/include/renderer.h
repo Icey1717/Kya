@@ -337,7 +337,9 @@ namespace Renderer
 		};
 
 		void UpdateRenderPassKey(EClearMode clearMode);
-		ShadowPassSettings NormalizeShadowPassSettings(const ShadowPassSettings& settings);
+		ShadowPassSettings NormalizeShadowPassSettings(const ShadowPassSettings& settings, uint32_t resolutionScale = 1);
+		void SetShadowResolutionScale(uint32_t scale);
+		uint32_t GetShadowResolutionScale();
 		void BeginShadowMask(const ShadowPassSettings& settings);
 		void BlurShadowMask();
 		void BeginShadowReceiver(const ShadowReceiverViewport& viewport);

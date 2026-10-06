@@ -35,7 +35,7 @@ layout( push_constant ) uniform PerDrawData
 	// Usually 0x394 or 0x3dc.
 	uint animBaseOffset;
 
-	uint _pad[1];
+	uint stripFlags; // Authored geometry flags, separate from VU renderFlags.
 } perDrawData;
 
 struct LightingDataBlock {
@@ -64,67 +64,37 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 fragTexCoord;
 
 void main() {
-	// _$XYZW_16_Conv_EndBones_Rigid
-
-	uint baseFlags = inFlags & 0xFFFF;
-
-	uint stripIndex = inFlags >> 16;
-
-	uint animFlags = baseFlags & 0x7ff;
-	uint flags = baseFlags & 0xc000;
+	uint animFlags = inFlags & 0x7ff;
 
 	vec4 fixedPos = vec4(inPosition, 1.0);
 	vec3 extrusionNormal = inNormal.xyz;
 
-	if (animFlags > 0) {
-		uint animIndex = animFlags - perDrawData.animBaseOffset;
-		animIndex = animIndex / 4;
+	fragColor = vec4(inColor) / 255.0;
+	bool hasNormals = (perDrawData.stripFlags & 0x8000000u) != 0;
+	bool rigidAnimation = (perDrawData.stripFlags & 0x10000u) != 0;
+	if (rigidAnimation && animFlags >= perDrawData.animBaseOffset) {
+		uint animIndex = (animFlags - perDrawData.animBaseOffset) / 4;
 
 		mat4 currentAnimMatrix = anim.animMatrix[perDrawData.animMatrixStart + animIndex];
 		fixedPos = currentAnimMatrix * fixedPos;
-		extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
-
-		if (perDrawData.animBaseOffset != 0x394) {
-			vec4 normal = currentAnimMatrix * inNormal;
-
-			normal = (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightDirection[0] * normal.x);
-
-			normal.x = max(normal.x, 0.0);
-			normal.y = max(normal.y, 0.0);
-			normal.z = max(normal.z, 0.0);
-			normal.w = max(normal.w, 0.0);
-
-			vec4 lightAmbientAdjusted = vec4(lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.x, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.y, lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.z, 0.0f);
-
-			normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[3] * normal.w) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[2] * normal.z) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[1] * normal.y) + (lightingBuf.lightData[perDrawData.lightingDataIndex].lightColor[0] * normal.x);
-
-			normal.x = min(normal.x, 255.0);
-			normal.y = min(normal.y, 255.0);
-			normal.z = min(normal.z, 255.0);
-			normal.w = min(normal.w, 255.0);
-
-			vec4 color = vec4(inColor.x, inColor.y, inColor.z, inColor.w);
-			color = color * lightingBuf.lightData[perDrawData.lightingDataIndex].lightAmbient.w;
-		
-			color = color * normal;
-
-			fragColor.x = color.x / 255.0;
-			fragColor.y = color.y / 255.0;
-			fragColor.z = color.z / 255.0; 
-			fragColor.w = inColor.w / 255.0;
-		}
-		else {
-			fragColor.x = inColor.x / 255.0;
-			fragColor.y = inColor.y / 255.0;
-			fragColor.z = inColor.z / 255.0;
-			fragColor.w = inColor.w / 255.0;
-		}
+		if (hasNormals) extrusionNormal = mat3(currentAnimMatrix) * extrusionNormal;
 	}
-	else {
-		fragColor.x = inColor.x / 255.0;
-		fragColor.y = inColor.y / 255.0;
-		fragColor.z = inColor.z / 255.0;
-		fragColor.w = inColor.w / 255.0;
+
+	// Lighting is independent of animation and of the VU bone-table address.
+	if (hasNormals && (perDrawData.renderFlags & 0x10) != 0) {
+		LightingDataBlock lighting = lightingBuf.lightData[perDrawData.lightingDataIndex];
+		vec4 weights = lighting.lightDirection[2] * extrusionNormal.z
+			+ lighting.lightDirection[1] * extrusionNormal.y
+			+ lighting.lightDirection[0] * extrusionNormal.x;
+		weights = max(weights, vec4(0.0));
+		vec4 lightColor = vec4(lighting.lightAmbient.xyz, 1.0)
+			+ lighting.lightColor[3] * weights.w
+			+ lighting.lightColor[2] * weights.z
+			+ lighting.lightColor[1] * weights.y
+			+ lighting.lightColor[0] * weights.x;
+		lightColor = min(lightColor, vec4(255.0));
+		vec4 color = vec4(inColor) * lighting.lightAmbient.w;
+		fragColor.rgb = (color * lightColor).rgb / 255.0;
 	}
 
 	// _$Normal_Extruder: displace in object space after rigid skinning.

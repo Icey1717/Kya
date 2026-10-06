@@ -5,11 +5,23 @@
 #include "DebugRenderer.h"
 #include "DebugRendering.h"
 #include "Objects/FrameBuffer.h"
+#include <algorithm>
 #include <sstream>
 
 namespace Debug {
 	namespace FrameBuffer {
 		static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
+		static Debug::ComboSetting gShadowResolution = { "Shadow resolution", 0, { "1x (Original)", "2x", "4x", "8x" } };
+
+		static void ApplyShadowResolution()
+		{
+			Renderer::Native::SetShadowResolutionScale(1u << std::clamp(gShadowResolution.get(), 0, 3));
+		}
+
+		static Debug::StartupRegisterer gShadowResolutionStartup([] {
+			gShadowResolution.Init();
+			ApplyShadowResolution();
+		});
 
 		void DrawContents() {
 			gDisplyScale.DrawImguiControl();
@@ -59,11 +71,17 @@ void Debug::FrameBuffer::ShowNativeShadowBuffers(bool* bOpen)
 	ImGui::Begin("Native Shadow Buffers", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 	const bool hasShadowTarget = Renderer::Native::HasShadowTarget();
 	const auto settings = Renderer::Native::GetShadowPassSettings();
+	ImGui::SetNextItemWidth(180.0f);
+	if (gShadowResolution.DrawImguiControl()) {
+		ApplyShadowResolution();
+	}
+	ImGui::TextDisabled("Applies next shadow pass; preserves aspect ratio and blur softness.");
 	static bool copied = false;
 	if (ImGui::Button("Copy shadow debug info")) {
 		std::ostringstream report;
 		report << "Native Shadow Buffers\n"
-			<< "Shadow target available: " << (hasShadowTarget ? "yes" : "no") << '\n';
+			<< "Shadow target available: " << (hasShadowTarget ? "yes" : "no") << '\n'
+			<< "Requested resolution scale: " << Renderer::Native::GetShadowResolutionScale() << "x\n";
 		if (hasShadowTarget) {
 			report << "Size: " << settings.width << 'x' << settings.height << '\n'
 				<< "Blur samples: " << settings.blurSamples << '\n'

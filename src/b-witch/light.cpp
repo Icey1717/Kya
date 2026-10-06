@@ -612,8 +612,67 @@ void CLightOmni::Activate()
 
 bool CLightOmni::DoLighting(LightingContext* pContext)
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	edF32VECTOR4* peVar1;
+	float fVar2;
+	bool bVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+
+	fVar6 = (pContext->position).x - this->baseShape.position.x;
+	fVar9 = (pContext->position).y - this->baseShape.position.y;
+	fVar10 = (pContext->position).z - this->baseShape.position.z;
+	fVar5 = fVar6 * fVar6 + fVar9 * fVar9 + fVar10 * fVar10;
+	fVar8 = (this->baseShape).fallout1 * (this->baseShape).fallout1;
+	if (fVar8 < fVar5) {
+		bVar3 = false;
+	}
+	else {
+		fVar7 = (this->baseShape).fallout0 * (this->baseShape).fallout0;
+		fVar4 = 1.0f / sqrtf(fVar5);
+		fVar2 = ((pContext->position).w - this->baseShape.position.w) * fVar4;
+		if (fVar5 < fVar7) {
+			pContext->colorMultiplier = 1.0f;
+			peVar1 = pContext->pLightDirection;
+			peVar1->x = peVar1->x + fVar6 * fVar4 * -1.0f;
+			peVar1->y = peVar1->y + fVar9 * fVar4 * -1.0f;
+			peVar1->z = peVar1->z + fVar10 * fVar4 * -1.0f;
+			peVar1->w = peVar1->w + fVar2 * -1.0f;
+		}
+		else {
+			pContext->colorMultiplier = 1.0f - (fVar5 - fVar7) / (fVar8 - fVar7);
+			peVar1 = pContext->pLightDirection;
+			fVar5 = -pContext->colorMultiplier;
+			peVar1->x = peVar1->x + fVar6 * fVar4 * fVar5;
+			peVar1->y = peVar1->y + fVar9 * fVar4 * fVar5;
+			peVar1->z = peVar1->z + fVar10 * fVar4 * fVar5;
+			peVar1->w = peVar1->w + fVar2 * fVar5;
+		}
+		bVar3 = true;
+	}
+	if (bVar3 != false) {
+		if (pContext->colorMultiplier == 1.0f) {
+			peVar1 = pContext->pLightAmbient;
+			*peVar1 = *peVar1 + this->colorModel.ambientColor;
+			peVar1 = pContext->pLightColor;
+			*peVar1 = *peVar1 + this->colorModel.color;
+		}
+		else {
+			peVar1 = pContext->pLightAmbient;
+			fVar6 = pContext->colorMultiplier;
+			*peVar1 = *peVar1 + this->colorModel.ambientColor * fVar6;
+
+			fVar6 = pContext->colorMultiplier;
+			peVar1 = pContext->pLightColor;
+			*peVar1 = *peVar1 + this->colorModel.color * fVar6;
+		}
+	}
+
+	return bVar3;
 }
 
 int CLightOmni::GetBaseShape(BaseShape** ppBaseShape)
