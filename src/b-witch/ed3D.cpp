@@ -225,7 +225,7 @@ edF32VECTOR4 gClipAddVector = { 0 };
 edF32VECTOR4 gClipXY = { 0 };
 
 byte BYTE_00448a70 = 1;
-byte BYTE_00449418 = 0;
+byte gAALiasON = 0;
 edpkt_data* gpPKTDataRefMasPath3 = NULL;
 
 //uint g_StaticVideoList_00489590[0xB20] = { 0 };
@@ -245,10 +245,6 @@ byte BYTE_00449424 = 0;
 ed_viewport* gCurViewportUsed = NULL;
 
 uint gZBUF_BASE = 0;
-
-ed_g2d_material ed_g2d_material_0048c3b0 = { 0 };
-ed_g2d_material ed_g2d_material_0048c3c0 = { 0 };
-
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*, std::string> onTextureLoadedDelegate;
@@ -333,8 +329,6 @@ edSurface* edVideoGetDrawSurface(void)
 }
 
 edpkt_data gRefOptionsforVU1Buf[3];
-
-edF32VECTOR4 Vector_00424ff0 = { 0 };
 
 int CurBFCFlag$1277 = 0;
 int CurBFCFlagTest$1278 = 0;
@@ -1438,9 +1432,6 @@ ed_g2d_bitmap* ed3DGetG2DPalette(ed_dma_material* pMaterial, uint index)
 	}
 	return pBitmap;
 }
-
-char DAT_0048c3b0[200] = { 0 };
-char DAT_0048c3c0[200] = { 0 };
 
 ed_dma_matrix* pprevious_shadow_dma_matrix = NULL;
 
@@ -11579,8 +11570,6 @@ edpkt_data* ed3DAddViewport2DAfter3D(edpkt_data* param_1)
 	return pRVar3;
 }
 
-uint UINT_00425000 = 0;
-
 edpkt_data* ed3DDMAAddFinish(edpkt_data* param_1)
 {
 	param_1->cmdA = ED_VIF1_SET_TAG_CNT(3);
@@ -11606,16 +11595,79 @@ edpkt_data* ed3DDMAAddFinish(edpkt_data* param_1)
 	return param_1 + 4;
 }
 
+int gSpriteFog[4];
+
 void ed3DFlushFogFX(void)
 {
-	ushort** ppuVar1;
-	ulong* puVar2;
+	edSurface* pSurf;
+	edpkt_data* peVar2;
 	int iVar3;
-	edpkt_data* pRVar4;
+	edpkt_data* pPkt;
 
-	pRVar4 = g_VifRefPktCur;
-	if (((UINT_00425000 & 1) != 0) && (gCurViewportUsed != (ed_viewport*)0x0)) {
-		IMPLEMENTATION_GUARD();
+	pPkt = g_VifRefPktCur;
+	if (((g3DFXFog.field_0x0 & 1) != 0) && (gCurViewportUsed != (ed_viewport*)0x0)) {
+		pSurf = edVideoGetDrawSurface();
+		if (pSurf != (edSurface*)0x0) {
+			gOFFX = (static_cast<int>(0x1000 - (uint)pSurf->pSurfaceDesc->screenWidth) >> 1) << 4;
+			gOFFY = (static_cast<int>(0x1000 - (uint)pSurf->pSurfaceDesc->screenHeight) >> 1) << 4;
+			gDRAWBUF_BASE = pSurf->frameBasePtr;
+			iVar3 = (pSurf->pSurfaceDesc->screenHeight - 0x40) * 0x200;
+			if (iVar3 < 0) {
+				iVar3 = iVar3 + 0x7ff;
+			}
+
+			gDRAWBUF_BASE_BIS = gDRAWBUF_BASE + (iVar3 >> 0xb);
+			gDRAWBUF_TXBASE = gDRAWBUF_BASE << 5;
+			gDRAWBUF_BASE_BIS_TEX = gDRAWBUF_BASE_BIS * 0x20;
+			gZBUF_BASE = gCurViewportUsed->pZBuffer->frameBasePtr;
+			gZBUF_BASE_BIS = 0x40;
+			gZBUF_BASE_BIS_TEX = 0x800;
+			gZBUF_TEXBASE = gZBUF_BASE << 5;
+			gSCRN_W = static_cast<uint>(pSurf->pSurfaceDesc->screenWidth);
+			gSCRN_H = static_cast<uint>(pSurf->pSurfaceDesc->screenHeight);
+			if (g3DFXFog.field_0x4 != 0) {
+				pPkt->cmdA = 0x30000000;
+				pPkt->cmdB = 0x1100000011000000;
+				ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H - 1, 1);
+				gSpriteFog[0] = 0x80;
+				gSpriteFog[1] = 0x80;
+				gSpriteFog[2] = 0x80;
+				gSpriteFog[3] = 0x80;
+				peVar2 = ed3DFlushAAEffectPlane(pPkt + 1, g3DFXFog.field_0x4);
+				peVar2->cmdA = 0x30000000;
+				pPkt = peVar2 + 1;
+				peVar2->cmdB = 0x1100000011000000;
+			}
+			iVar3 = gSCRN_H * 2 + -2;
+			ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, iVar3, 8, 0, gSCRN_W, iVar3, 1);
+			gSpriteFog[0] = 0x80;
+			gSpriteFog[1] = 0x80;
+			gSpriteFog[2] = 0x80;
+			gSpriteFog[3] = 0x80;
+			pPkt = ed3DMoveRG2BA(pPkt, true);
+			ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H, 1);
+			if ((g3DFXFog.field_0x0 & 4) == 0) {
+				gSpriteFog[0] = ZEXT14((byte)g3DFXFog.field_0x8);
+				gSpriteFog[1] = ZEXT14((byte)g3DFXFog.field_0xc);
+				gSpriteFog[2] = ZEXT14((byte)g3DFXFog.field_0x10);
+				gSpriteFog[3] = ZEXT14((byte)g3DFXFog.field_0x14);
+				pPkt = ed3DFogScreen(pPkt, zvert);
+			}
+			pPkt->cmdA = 0x30000000;
+			pPkt->cmdB = 0x1100000011000000;
+			pPkt = pPkt + 1;
+			if ((g3DFXFog.field_0x0 & 0x20) != 0) {
+				ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H - 1, 1);
+				gSpriteFog[0] = 0x80;
+				gSpriteFog[1] = 0x80;
+				gSpriteFog[2] = 0x80;
+				gSpriteFog[3] = 0x80;
+				pPkt = ed3DFlushAAEffectPlane(pPkt, g3DFXFog.field_0x4);
+			}
+			pPkt->cmdA = 0x30000000;
+			g_VifRefPktCur = pPkt + 1;
+			pPkt->cmdB = 0x1100000011000000;
+		}
 	}
 	return;
 }
@@ -11626,7 +11678,7 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 	ushort** ppuVar2;
 	int iVar3;
 
-	if (((((BYTE_00448a70 != 0) && (BYTE_00449418 != 0)) && (gCurViewportUsed != (ed_viewport*)0x0)) &&
+	if (((((BYTE_00448a70 != 0) && (gAALiasON != 0)) && (gCurViewportUsed != (ed_viewport*)0x0)) &&
 		(gCurRectViewport.w == 0x200)) &&
 		((gCurRectViewport.h == 0x200 || (gCurRectViewport.h == 0x1c0)))) {
 		IMPLEMENTATION_GUARD();
@@ -11646,7 +11698,7 @@ void ed3DPrimlistTermMaterialRenderList(void)
 }
 
 edF32VECTOR4 Vector_0048c3d0 = { 0 };
-byte BYTE_0044941c = 0;
+byte gbTrilinear = 0;
 
 int ed3DVU1Addr[3] = { 0x76, 0x198, 0x2BA };
 int ed3DVU1AddrWithBufCur[3][3] = { { 0x76, 0x198, 0x2BA }, {0x198, 0x2BA, 0x76}, {0x2BA, 0x76, 0x198} };
@@ -11675,7 +11727,7 @@ void ed3DRefreshSracthGlobalVar(void)
 	*gbDoMipmap_SPR = (uint)gbDoMipmap;
 	*gMipmapL_SPR = gMipmapL;
 	*gMipmapK_SPR = gMipmapK;
-	*gbTrilinear_SPR = (uint)BYTE_0044941c;
+	*gbTrilinear_SPR = (uint)gbTrilinear;
 	pAVar1 = PTR_AnimScratchpad_00449554;
 	PTR_AnimScratchpad_00449554->vuFlags = 0;
 	pAVar1->flags = 0;
@@ -13002,7 +13054,6 @@ struct ed_prepare_Strip_Def
 	short field_0x24;
 };
 
-int INT_0044935c = 0;
 bool BOOL_00449370 = false;
 
 ed_3d_sprite* ed3DPrepareAllSprite(ed_Chunck* pSPRA, ed_prepare_Sprite_Def* pDef, ed_hash_code* pHashCode, uint param_4)
@@ -13065,7 +13116,7 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 				uVar7 = uVar6;
 			} while (uVar6 < 0xd);
 
-			INT_0044935c = 0x60;
+			gNbVertexDMA = 0x60;
 			stripDef.field_0xc = '\0';
 			stripDef.clusterDetails = pCluster->clusterDetails;
 			piVar4 = LOAD_POINTER_CAST(ed_Chunck*, pCluster->clusterDetails.pMBNK);
@@ -13100,7 +13151,7 @@ void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* 
 					uVar7 = uVar7 + pCluster->aClusterStripCounts[uVar8];
 					uVar8 = uVar6;
 				} while (uVar6 < 0xd);
-				INT_0044935c = 0x60;
+				gNbVertexDMA = 0x60;
 				for (uVar8 = 0; uVar8 < uVar7; uVar8 = uVar8 + 1 & 0xffff) {
 					if ((long)(int)puVar5[0xf] != 0) {
 						ed3DStripPrepareSpherePacket((int)puVar5, (long)(int)puVar5[0xf], (int)(piVar4 + 1));

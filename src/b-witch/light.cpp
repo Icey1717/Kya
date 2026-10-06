@@ -367,8 +367,101 @@ void CLightSpot::Manage()
 
 bool CLightSpot::DoLighting(LightingContext* pContext)
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	edF32VECTOR4* peVar1;
+	float fVar2;
+	bool bVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+
+	fVar9 = (pContext->position).w;
+	fVar11 = this->baseShape.position.w;
+	fVar6 = (pContext->position).x - this->baseShape.position.x;
+	fVar10 = (pContext->position).y - this->baseShape.position.y;
+	fVar12 = (pContext->position).z - this->baseShape.position.z;
+	fVar8 = fVar6 * fVar6 + fVar10 * fVar10 + fVar12 * fVar12;
+	fVar7 = this->baseShape.fallout1 * this->baseShape.fallout1;
+
+	if (fVar7 < fVar8) {
+		bVar3 = false;
+	}
+	else {
+		fVar4 = 1.0f / sqrtf(fVar8);
+		fVar2 = fVar6 * fVar4 * this->baseShape.direction.x + fVar10 * fVar4 * this->baseShape.direction.y + fVar12 * fVar4 * this->baseShape.direction.z;
+		bVar3 = false;
+		if ((this->baseShape).fov0 < fVar2) {
+			fVar5 = this->baseShape.fallout0;
+			fVar5 = fVar5 * fVar5;
+			if (fVar8 < fVar5) {
+				pContext->colorMultiplier = 1.0f;
+			}
+			else {
+				pContext->colorMultiplier = 1.0f - (fVar8 - fVar5) / (fVar7 - fVar5);
+			}
+
+			fVar8 = (this->baseShape).fov1;
+			if (fVar2 < fVar8) {
+				pContext->colorMultiplier = pContext->colorMultiplier * (1.0f - (fVar8 - fVar2) / (fVar8 - (this->baseShape).fov0));
+			}
+
+			peVar1 = pContext->pLightDirection;
+			fVar8 = -pContext->colorMultiplier;
+			peVar1->x = peVar1->x + fVar6 * fVar4 * fVar8;
+			peVar1->y = peVar1->y + fVar10 * fVar4 * fVar8;
+			peVar1->z = peVar1->z + fVar12 * fVar4 * fVar8;
+			peVar1->w = peVar1->w + (fVar9 - fVar11) * fVar4 * fVar8;
+			bVar3 = true;
+		}
+	}
+
+	if (bVar3) {
+		if (pContext->colorMultiplier == 1.0f) {
+			peVar1 = pContext->pLightAmbient;
+			fVar6 = this->colorModel.ambientColor.y;
+			fVar8 = this->colorModel.ambientColor.z;
+			fVar10 = this->colorModel.ambientColor.w;
+			peVar1->x = peVar1->x + this->colorModel.ambientColor.x;
+			peVar1->y = peVar1->y + fVar6;
+			peVar1->z = peVar1->z + fVar8;
+			peVar1->w = peVar1->w + fVar10;
+			peVar1 = pContext->pLightColor;
+			fVar6 = this->colorModel.color.y;
+			fVar8 = this->colorModel.color.z;
+			fVar10 = this->colorModel.color.w;
+			peVar1->x = peVar1->x + this->colorModel.color.x;
+			peVar1->y = peVar1->y + fVar6;
+			peVar1->z = peVar1->z + fVar8;
+			peVar1->w = peVar1->w + fVar10;
+		}
+		else {
+			peVar1 = pContext->pLightAmbient;
+			fVar6 = pContext->colorMultiplier;
+			fVar8 = this->colorModel.ambientColor.y;
+			fVar10 = this->colorModel.ambientColor.z;
+			fVar12 = this->colorModel.ambientColor.w;
+			peVar1->x = peVar1->x + this->colorModel.ambientColor.x * fVar6;
+			peVar1->y = peVar1->y + fVar8 * fVar6;
+			peVar1->z = peVar1->z + fVar10 * fVar6;
+			peVar1->w = peVar1->w + fVar12 * fVar6;
+			fVar6 = pContext->colorMultiplier;
+			peVar1 = pContext->pLightColor;
+			fVar8 = this->colorModel.color.y;
+			fVar10 = this->colorModel.color.z;
+			fVar12 = this->colorModel.color.w;
+			peVar1->x = peVar1->x + this->colorModel.color.x * fVar6;
+			peVar1->y = peVar1->y + fVar8 * fVar6;
+			peVar1->z = peVar1->z + fVar10 * fVar6;
+			peVar1->w = peVar1->w + fVar12 * fVar6;
+		}
+	}
+
+	return bVar3;
 }
 
 void CLightSpot::Activate()
