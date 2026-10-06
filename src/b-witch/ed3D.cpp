@@ -4788,21 +4788,21 @@ edpkt_data* ed3DFlushSunFlareCreateMarker(float param_1, float param_2, float pa
 	uVar2 = __fixunssfdi((uint)((param_2 - param_4) * 16.0f));
 	uVar1 = uVar1 | uVar2 << 0x10;
 	pPkt[4].cmdA = uVar1 | 0xffffffff00000000;
-	pPkt[4].cmdB = 5;
+	pPkt[4].cmdB = SCE_GS_XYZ2;
 
 	uVar2 = __fixunssfdi((uint)((param_1 + param_4) * 16.0f));
 	uVar3 = __fixunssfdi((uint)((param_2 + param_4) * 16.0f));
 	uVar2 = uVar2 | uVar3 << 0x10;
 	pPkt[5].cmdA = uVar2 | 0xffffffff00000000;
-	pPkt[5].cmdB = 5;
+	pPkt[5].cmdB = SCE_GS_XYZ2;
 	pPkt[6].cmdA = (ulong)(uint)param_5 << 0x20 | 0xffffffff;
 	pPkt[6].cmdB = 1;
 
 	uVar3 = __fixunssfdi((uint)param_3);
 	pPkt[7].cmdA = uVar3 << 0x20 | uVar1;
-	pPkt[7].cmdB = 5;
+	pPkt[7].cmdB = SCE_GS_XYZ2;
 	pPkt[8].cmdA = uVar3 << 0x20 | uVar2;
-	pPkt[8].cmdB = 5;
+	pPkt[8].cmdB = SCE_GS_XYZ2;
 
 	return pPkt + 9;
 }
@@ -4854,18 +4854,18 @@ edpkt_data* ed3DFlushSunFlareDoMipmap(float param_1, float param_2, float param_
 	uVar1 = __fixunssfdi((uint)(((param_1 - param_3) - 1792.0f) * 16.0f));
 	uVar2 = __fixunssfdi((uint)(((param_2 - param_3) - 1792.0f) * 16.0f));
 	pPkt[10].cmdA = uVar1 | uVar2 << 0x10;
-	pPkt[10].cmdB = 3;
+	pPkt[10].cmdB = SCE_GS_UV;
 
 	pPkt[0xb].cmdA = 0x4000000;
-	pPkt[0xb].cmdB = 5;
+	pPkt[0xb].cmdB = SCE_GS_XYZ2;
 
 	uVar1 = __fixunssfdi((uint)(((param_1 + param_3) - 1792.0f) * 16.0f));
 	uVar2 = __fixunssfdi((uint)(((param_2 + param_3) - 1792.0f) * 16.0f));
 	pPkt[0xc].cmdA = uVar1 | uVar2 << 0x10;
-	pPkt[0xc].cmdB = 3;
+	pPkt[0xc].cmdB = SCE_GS_UV;
 
 	pPkt[0xd].cmdA = 0x6000200;
-	pPkt[0xd].cmdB = 5;
+	pPkt[0xd].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0xe].cmdA = uVar3 | 0xe64020000;
 	pPkt[0xe].cmdB = 7;
@@ -4874,61 +4874,61 @@ edpkt_data* ed3DFlushSunFlareDoMipmap(float param_1, float param_2, float param_
 	pPkt[0xf].cmdB = 0x3f;
 
 	pPkt[0x10].cmdA = 0x4100010;
-	pPkt[0x10].cmdB = 3;
+	pPkt[0x10].cmdB = SCE_GS_UV;
 
 	pPkt[0x11].cmdA = 0x7000000;
-	pPkt[0x11].cmdB = 5;
+	pPkt[0x11].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x12].cmdA = 0x6100210;
-	pPkt[0x12].cmdB = 3;
+	pPkt[0x12].cmdB = SCE_GS_UV;
 
 	pPkt[0x13].cmdA = 0x8000100;
-	pPkt[0x13].cmdB = 5;
+	pPkt[0x13].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x14].cmdA = 0;
 	pPkt[0x14].cmdB = 0x3f;
 
 	pPkt[0x15].cmdA = 0x7100010;
-	pPkt[0x15].cmdB = 3;
+	pPkt[0x15].cmdB = SCE_GS_UV;
 
 	pPkt[0x16].cmdA = 0x9000000;
-	pPkt[0x16].cmdB = 5;
+	pPkt[0x16].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x17].cmdA = 0x8100110;
-	pPkt[0x17].cmdB = 3;
+	pPkt[0x17].cmdB = SCE_GS_UV;
 
 	pPkt[0x18].cmdA = 0x9800080;
-	pPkt[0x18].cmdB = 5;
+	pPkt[0x18].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x19].cmdA = 0;
 	pPkt[0x19].cmdB = 0x3f;
 
 	pPkt[0x1a].cmdA = 0x9100010;
-	pPkt[0x1a].cmdB = 3;
+	pPkt[0x1a].cmdB = SCE_GS_UV;
 
 	pPkt[0x1b].cmdA = 0xa000000;
-	pPkt[0x1b].cmdB = 5;
+	pPkt[0x1b].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x1c].cmdA = 0x9900090;
-	pPkt[0x1c].cmdB = 3;
+	pPkt[0x1c].cmdB = SCE_GS_UV;
 
 	pPkt[0x1d].cmdA = 0xa400040;
-	pPkt[0x1d].cmdB = 5;
+	pPkt[0x1d].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x1e].cmdA = 0;
 	pPkt[0x1e].cmdB = 0x3f;
 
 	pPkt[0x1f].cmdA = 0xa100010;
-	pPkt[0x1f].cmdB = 3;
+	pPkt[0x1f].cmdB = SCE_GS_UV;
 
 	pPkt[0x20].cmdA = 0xc000000;
-	pPkt[0x20].cmdB = 5;
+	pPkt[0x20].cmdB = SCE_GS_XYZ2;
 
 	pPkt[0x21].cmdA = 0xa500050;
-	pPkt[0x21].cmdB = 3;
+	pPkt[0x21].cmdB = SCE_GS_UV;
 
 	pPkt[0x22].cmdA = 0xc200020;
-	pPkt[0x22].cmdB = 5;
+	pPkt[0x22].cmdB = SCE_GS_XYZ2;
 
 	return pPkt + 0x23;
 }
@@ -4962,26 +4962,26 @@ edpkt_data* ed3DFlushSunFlareGetIntensity(edpkt_data* pPkt, ed_g2d_bitmap* pBitm
 		}
 	}
 	peVar3->cmdA = 0xc100010;
-	peVar3->cmdB = 3;
+	peVar3->cmdB = SCE_GS_UV;
 
 	peVar3[1].cmdA = 0;
-	peVar3[1].cmdB = 5;
+	peVar3[1].cmdB = SCE_GS_XYZ2;
 
 	peVar3[2].cmdA = 0xc100010;
-	peVar3[2].cmdB = 3;
+	peVar3[2].cmdB = SCE_GS_UV;
 
 	psm = pBitmap->psm;
 	peVar2 = peVar3 + 3;
 	if (psm != 4) {
 		if (psm == 8) {
 			peVar2->cmdA = 0x1000100;
-			peVar3[3].cmdB = 5;
+			peVar3[3].cmdB = SCE_GS_XYZ2;
 			peVar2 = peVar3 + 4;
 		}
 		else {
 			if ((psm == 0x18) || (psm == 0x20)) {
 				peVar2->cmdA = (ulong)(int)((uint)pBitmap->width << 4) | (ulong)(int)((uint)pBitmap->height << 4) << 0x10;
-				peVar3[3].cmdB = 5;
+				peVar3[3].cmdB = SCE_GS_XYZ2;
 				peVar2 = peVar3 + 4;
 			}
 		}
@@ -5052,7 +5052,7 @@ edpkt_data* ed3DFlushSunFlare2Screen(float param_1, float param_2, float param_3
 
 	pNxtPkt->cmdA = 0;
 LAB_002b03a4:
-	pNxtPkt->cmdB = 3;
+	pNxtPkt->cmdB = SCE_GS_UV;
 
 	if ((int)param_7 < 0) {
 		fVar8 = (float)(param_7 >> 1 | param_7 & 1);
@@ -5075,10 +5075,10 @@ LAB_002b03a4:
 	uVar4 = uVar4 | uVar5 << 0x10;
 
 	pNxtPkt[1].cmdA = (ulong)param_6 << 0x20 | uVar4;
-	pNxtPkt[1].cmdB = 5;
+	pNxtPkt[1].cmdB = SCE_GS_XYZ2;
 
 	pNxtPkt[2].cmdA = (ulong)(int)((uint)pBitmap->width << 4) | (ulong)(int)((uint)pBitmap->height << 4) << 0x10;
-	pNxtPkt[2].cmdB = 3;
+	pNxtPkt[2].cmdB = SCE_GS_UV;
 
 	if ((int)param_7 < 0) {
 		fVar8 = (float)(param_7 >> 1 | param_7 & 1);
@@ -5100,7 +5100,7 @@ LAB_002b03a4:
 	uVar5 = uVar5 | uVar6 << 0x10;
 
 	pNxtPkt[3].cmdA = (ulong)param_6 << 0x20 | uVar5;
-	pNxtPkt[3].cmdB = 5;
+	pNxtPkt[3].cmdB = SCE_GS_XYZ2;
 
 	pNxtPkt[4].cmdA = 0x8000000048;
 	pNxtPkt[4].cmdB = 0x42;
@@ -5109,16 +5109,16 @@ LAB_002b03a4:
 	pNxtPkt[5].cmdB = 1;
 
 	pNxtPkt[6].cmdA = 0;
-	pNxtPkt[6].cmdB = 3;
+	pNxtPkt[6].cmdB = SCE_GS_UV;
 
 	pNxtPkt[7].cmdA = uVar4 | 0xffffffff00000000;
-	pNxtPkt[7].cmdB = 5;
+	pNxtPkt[7].cmdB = SCE_GS_XYZ2;
 
 	pNxtPkt[8].cmdA = (ulong)(int)((uint)pBitmap->width << 4) | (ulong)(int)((uint)pBitmap->height << 4) << 0x10;
-	pNxtPkt[8].cmdB = 3;
+	pNxtPkt[8].cmdB = SCE_GS_UV;
 
 	pNxtPkt[9].cmdA = uVar5 | 0xffffffff00000000;
-	pNxtPkt[9].cmdB = 5;
+	pNxtPkt[9].cmdB = SCE_GS_XYZ2;
 
 	return pNxtPkt + 10;
 }
@@ -7204,44 +7204,48 @@ edpkt_data* ed3DFlushFrameBufferMaterial(edpkt_data* pPkt)
 	return pPkt;
 }
 
-int INT_0048c630;
-int INT_0048c634;
-int INT_0048c638;
-int INT_0048c63c;
+struct SpriteFog
+{
+	int gSpriteFog[4];
+	int field_0x10;
+	int field_0x14;
+	int field_0x18;
+	int field_0x1c;
+	int field_0x20;
+	int field_0x24;
+	int field_0x28;
+	int field_0x2c;
+	int field_0x30;
+	int field_0x34;
+	int field_0x38;
+	int field_0x3c;
+};
 
-int INT_0048c640;
-int INT_0048c644;
-int INT_0048c648;
-int INT_0048c64c;
-
-int INT_0048c650;
-int INT_0048c654;
-int INT_0048c658;
-int INT_0048c65c;
+SpriteFog gSpriteFog;
 
 void ed3DSetSpriteCoords(int param_1, int param_2, int param_3, int param_4, int param_5, int param_6, int param_7, int param_8, int param_9)
 {
-	INT_0048c640 = param_1 * 0x10;
-	INT_0048c644 = param_2 * 0x10;
-	INT_0048c648 = param_3 * 0x10;
-	INT_0048c64c = param_4 * 0x10;
+	gSpriteFog.field_0x20 = param_1 * 0x10;
+	gSpriteFog.field_0x24 = param_2 * 0x10;
+	gSpriteFog.field_0x28 = param_3 * 0x10;
+	gSpriteFog.field_0x2c = param_4 * 0x10;
 
 	if (param_9 != 0) {
-		INT_0048c640 = INT_0048c640 + 8;
-		INT_0048c648 = INT_0048c648 + 8;
-		INT_0048c644 = INT_0048c644 + 8;
-		INT_0048c64c = INT_0048c64c + 8;
+		gSpriteFog.field_0x20 = gSpriteFog.field_0x20 + 8;
+		gSpriteFog.field_0x28 = gSpriteFog.field_0x28 + 8;
+		gSpriteFog.field_0x24 = gSpriteFog.field_0x24 + 8;
+		gSpriteFog.field_0x2c = gSpriteFog.field_0x2c + 8;
 	}
 
-	INT_0048c630 = gOFFX + param_5 * 0x10;
-	INT_0048c634 = gOFFY + param_6 * 0x10;
-	INT_0048c638 = INT_0048c630 + param_7 * 0x10;
-	INT_0048c63c = INT_0048c634 + param_8 * 0x10;
+	gSpriteFog.field_0x10 = gOFFX + param_5 * 0x10;
+	gSpriteFog.field_0x14 = gOFFY + param_6 * 0x10;
+	gSpriteFog.field_0x18 = gSpriteFog.field_0x10 + param_7 * 0x10;
+	gSpriteFog.field_0x1c = gSpriteFog.field_0x14 + param_8 * 0x10;
 
-	INT_0048c650 = param_7 * 0x10;
-	INT_0048c654 = param_8 * 0x10;
-	INT_0048c658 = param_5 * 0x10;
-	INT_0048c65c = param_6 * 0x10;
+	gSpriteFog.field_0x30 = param_7 * 0x10;
+	gSpriteFog.field_0x34 = param_8 * 0x10;
+	gSpriteFog.field_0x38 = param_5 * 0x10;
+	gSpriteFog.field_0x3c = param_6 * 0x10;
 
 	return;
 }
@@ -7391,16 +7395,16 @@ edpkt_data* ed3DFlushFrameBufferCopy(edpkt_data* pPkt)
 			iVar6 = iVar6 + 0x20;
 			iVar5 = iVar5 + 0x20;
 
-			pSpritePkt->cmdA = (long)INT_0048c640 | (long)INT_0048c644 << 0x10;
+			pSpritePkt->cmdA = (ulong)gSpriteFog.field_0x20 | (ulong)gSpriteFog.field_0x24 << 0x10;
 			pSpritePkt->cmdB = SCE_GS_UV;
 
-			pSpritePkt[1].cmdA = SCE_GS_SET_XYZ2(INT_0048c630, INT_0048c634, 0);
+			pSpritePkt[1].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
 			pSpritePkt[1].cmdB = SCE_GS_XYZ2;
 
-			pSpritePkt[2].cmdA = (long)INT_0048c648 | (long)INT_0048c64c << 0x10;
+			pSpritePkt[2].cmdA = (ulong)gSpriteFog.field_0x28 | (ulong)gSpriteFog.field_0x2c << 0x10;
 			pSpritePkt[2].cmdB = SCE_GS_UV;
 
-			pSpritePkt[3].cmdA = SCE_GS_SET_XYZ2(INT_0048c638, INT_0048c63c, 0);
+			pSpritePkt[3].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
 			pSpritePkt[3].cmdB = SCE_GS_XYZ2;
 			pSpritePkt = pSpritePkt + 4;
 		}
@@ -11595,7 +11599,427 @@ edpkt_data* ed3DDMAAddFinish(edpkt_data* param_1)
 	return param_1 + 4;
 }
 
-int gSpriteFog[4];
+uint UINT_00449478 = 0;
+
+edpkt_data* ed3DFlushAAEffectPlane(edpkt_data* pPkt, int param_2)
+{
+	uint uVar1;
+	int iVar2;
+	ulong uVar3;
+	int iVar4;
+	uint uVar5;
+	int iVar6;
+	int iVar7;
+	edpkt_data* pNextPkt;
+
+	iVar7 = 0;
+	iVar6 = 0;
+	uVar5 = gSCRN_W >> 3;
+	iVar4 = gSCRN_H + -1;
+	iVar2 = uVar5 * 2;
+	uVar1 = iVar2 + 7;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(uVar1);
+	pPkt->cmdB = SCE_VIF1_SET_NOP(0);
+	pPkt->asU32[2] = 0;
+	pPkt->asU32[3] = SCE_VIF1_SET_DIRECT(uVar1, 0);
+
+	pPkt[1].cmdA = SCE_GIF_SET_TAG(iVar2 + 6, SCE_GS_TRUE, SCE_GS_FALSE, 0, SCE_GIF_PACKED, 1); // | 0x1000000000008000;
+	pPkt[1].cmdB = SCE_GIF_PACKED_AD;
+
+	pPkt[2].cmdA = SCE_GS_SET_FRAME(gZBUF_BASE, gSCRN_W >> 6, SCE_GS_PSMZ32, 0xffff00ff);
+	pPkt[2].cmdB = SCE_GS_FRAME_1;
+
+	pPkt[3].cmdA = SCE_GS_SET_ZBUF(gZBUF_BASE, SCE_GS_PSMZ24, 1);
+	pPkt[3].cmdB = SCE_GS_ZBUF_1;
+
+	pPkt[4].cmdA = SCE_GS_SET_TEST(1, 6, UINT_00449478, 0, 0, 0, 0, 0);
+	pPkt[4].cmdB = SCE_GS_TEST_1;
+
+	pPkt[5].cmdA = SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_PRIM_CTXT1, SCE_GS_FALSE);
+	pPkt[5].cmdB = SCE_GS_PRIM;
+
+	if (param_2 < 0) {
+		uVar3 = -param_2;
+		pPkt[6].cmdA = SCE_GS_SET_ALPHA_1(SCE_GS_ALPHA_ZERO, SCE_GS_ALPHA_CS, SCE_GS_ALPHA_FIX, SCE_GS_ALPHA_AD, 0x80);
+		pPkt[6].cmdB = SCE_GS_ALPHA_1;
+
+		pPkt[7].cmdA = SCE_GS_SET_RGBAQ(uVar3, uVar3, uVar3, uVar3, 0x3f800000);
+		pPkt[7].cmdB = SCE_GS_RGBAQ;
+	}
+	else {
+		uVar3 = param_2;
+		pPkt[6].cmdA = SCE_GS_SET_ALPHA_1(SCE_GS_ALPHA_CS, SCE_GS_ALPHA_ZERO, SCE_GS_ALPHA_FIX, SCE_GS_ALPHA_AD, 0x80);
+		pPkt[6].cmdB = SCE_GS_ALPHA_1;
+
+		pPkt[7].cmdA = SCE_GS_SET_RGBAQ(uVar3, uVar3, uVar3, uVar3, 0x3f800000);
+		pPkt[7].cmdB = SCE_GS_RGBAQ;
+	}
+
+	pNextPkt = pPkt + 8;
+	for (uVar1 = 0; uVar1 < uVar5; uVar1 = uVar1 + 1) {
+		ed3DSetSpriteCoords(iVar7, 0, iVar7 + 8, iVar4, iVar6, 0, 8, iVar4, 1);
+		iVar7 = iVar7 + 8;
+		iVar6 = iVar6 + 8;
+
+		pNextPkt->cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		pNextPkt->cmdB = SCE_GS_XYZ2;
+
+		pNextPkt[1].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		pNextPkt[1].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt = pNextPkt + 2;
+	}
+
+	return pNextPkt;
+}
+
+edpkt_data* ed3DMoveRG2BA(edpkt_data* pPkt, bool param_2)
+{
+	uint uVar1;
+	int iVar2;
+	long lVar3;
+	uint uVar4;
+	int iVar5;
+	int iVar6;
+	edpkt_data* peVar7;
+	int iVar8;
+
+	iVar6 = 0;
+	iVar5 = 8;
+	uVar4 = gSCRN_W >> 3;
+	iVar8 = gSCRN_H * 2 + -1;
+	iVar2 = (gSCRN_W >> 4) * 4;
+	uVar1 = iVar2 + 0xc;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(uVar1);
+	pPkt->cmdB = SCE_VIF1_SET_NOP(0);
+
+	pPkt->asU32[2] = 0;
+	pPkt->asU32[3] = SCE_VIF1_SET_DIRECT(uVar1, 0);
+
+	pPkt[1].cmdA = SCE_GIF_SET_TAG(iVar2 + 0xb, SCE_GS_TRUE, SCE_GS_FALSE, 0, SCE_GIF_PACKED, 1);
+	pPkt[1].cmdB = SCE_GIF_PACKED_AD;
+
+	lVar3 = (long)(int)(gSCRN_W >> 6);
+	iVar2 = gSCRN_W - 1;
+
+	static uint Mask = 0x3fff;
+	pPkt[2].cmdA = SCE_GS_SET_FRAME((uint)gDRAWBUF_BASE, lVar3, SCE_GS_PSMCT16, Mask);
+	pPkt[2].cmdB = SCE_GS_FRAME_1;
+
+	pPkt[3].cmdA = SCE_GS_SET_ZBUF(gZBUF_BASE, SCE_GS_PSMZ24, 1);
+	pPkt[3].cmdB = SCE_GS_ZBUF_1;
+
+	pPkt[4].cmdA = SCE_GS_SET_TEST(0, 0, 0, 0, 0, 0, 0, 0);
+	pPkt[4].cmdB = SCE_GS_TEST_1;
+
+	pPkt[5].cmdA = SCE_GS_SET_XYOFFSET(gOFFX, gOFFY);
+	pPkt[5].cmdB = SCE_GS_XYOFFSET_1;
+
+	pPkt[6].cmdA = SCE_GS_SET_SCISSOR(0, iVar2, 0, gSCRN_H * 2 - 2);
+	pPkt[6].cmdB = SCE_GS_SCISSOR_1;
+
+	pPkt[7].cmdA = SCE_GS_SET_TEXA(0, 0, 0);
+	pPkt[7].cmdB = SCE_GS_TEXA;
+
+	pPkt[8].cmdA = SCE_GS_SET_TEX1(0, 0, 0, 0, 0, 0, 0);
+	pPkt[8].cmdB = SCE_GS_TEX1_1;
+
+	if (param_2 == false) {
+		pPkt[9].cmdA = SCE_GS_SET_TEX0(gZBUF_TEXBASE, lVar3, SCE_GS_PSMCT16, 10, 10, 1, 1, 0, 0, 0, 0, 0);
+		pPkt[9].cmdB = SCE_GS_TEX0_1;
+	}
+	else {
+		pPkt[9].cmdA = SCE_GS_SET_TEX0(gZBUF_TEXBASE, lVar3, SCE_GS_PSMZ16, 10, 10, 1, 1, 0, 0, 0, 0, 0);
+		pPkt[9].cmdB = SCE_GS_TEX0_1;
+	}
+
+	pPkt[10].cmdA = SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_PRIM_CTXT1, SCE_GS_FALSE);
+	pPkt[10].cmdB = SCE_GS_PRIM;
+
+	peVar7 = pPkt + 0xb;
+	for (uVar1 = 0; uVar1 < uVar4; uVar1 = uVar1 + 2) {
+		ed3DSetSpriteCoords(iVar6, 0, iVar6 + 8, iVar8, iVar5, 0, 8, iVar8, 1);
+		iVar6 = iVar6 + 0x10;
+		iVar5 = iVar5 + 0x10;
+
+		peVar7->cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x20, gSpriteFog.field_0x24);
+		peVar7->cmdB = SCE_GS_UV;
+
+		peVar7[1].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		peVar7[1].cmdB = SCE_GS_XYZ2;
+
+		peVar7[2].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x28, gSpriteFog.field_0x2c);
+		peVar7[2].cmdB = SCE_GS_UV;
+
+		peVar7[3].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		peVar7[3].cmdB = SCE_GS_XYZ2;
+
+		peVar7 = peVar7 + 4;
+	}
+	uVar1 = gSCRN_W >> 6;
+	peVar7->cmdA = SCE_GS_SET_SCISSOR(0, gSCRN_W - 1, 0, gSCRN_H - 1);
+	peVar7->cmdB = SCE_GS_SCISSOR_1;
+
+	peVar7[1].cmdA = SCE_GS_SET_FRAME((uint)gDRAWBUF_BASE, uVar1, SCE_GS_PSMCT32, 0);
+	peVar7[1].cmdB = SCE_GS_FRAME_1;
+
+	return peVar7 + 2;
+}
+
+edpkt_data* ed3DCorrectAlpha(edpkt_data* pPkt)
+{
+	int iVar1;
+	undefined4 uVar2;
+	uint uVar3;
+	int iVar4;
+	int iVar5;
+	uint uVar6;
+	int iVar7;
+	int iVar8;
+	edpkt_data* pNextPkt;
+	uint uVar9;
+
+	uVar2 = gOFFY;
+	iVar1 = gOFFX;
+	iVar8 = 0x38;
+	iVar4 = 0x38;
+	pNextPkt = pPkt + 10;
+	uVar9 = gSCRN_W >> 6;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	pPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+	pPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
+	iVar5 = uVar9 * 0x10;
+	uVar6 = iVar5 + 0xd;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(uVar6);
+	pPkt->cmdB = SCE_VIF1_SET_NOP(0);
+
+	pPkt->asU32[2] = 0;
+	pPkt->asU32[3] = SCE_VIF1_SET_DIRECT(uVar6, 0);
+
+	pPkt[2].cmdA = SCE_GIF_SET_TAG(iVar5 + 0xc, SCE_GS_TRUE, SCE_GS_FALSE, 0, SCE_GIF_PACKED, 1);
+	pPkt[2].cmdB = SCE_GIF_PACKED_AD;
+
+	uVar6 = gSCRN_W >> 6;
+
+	static int MaskFog$2189 = 0xffffff;
+
+	pPkt[3].cmdA = SCE_GS_SET_FRAME((uint)gDRAWBUF_BASE_BIS, uVar6, SCE_GS_PSMCT32, (uint)MaskFog$2189);
+	pPkt[3].cmdB = SCE_GS_FRAME_1;
+
+	pPkt[4].cmdA = SCE_GS_SET_ZBUF((uint)gZBUF_BASE_BIS, SCE_GS_PSMZ24, 1);
+	pPkt[4].cmdB = SCE_GS_ZBUF_1;
+
+	pPkt[5].cmdA = SCE_GS_SET_XYOFFSET(gOFFX, gOFFY);
+	pPkt[5].cmdB = SCE_GS_XYOFFSET_1;
+
+	pPkt[6].cmdA = SCE_GS_SET_TEST(0, 0, 0, 0, 0, 0, 0, 0);
+	pPkt[6].cmdB = SCE_GS_TEST_1;
+
+	static bool bModulate$2190 = true;
+
+	pPkt[7].cmdA = SCE_GS_SET_TEX0(gDRAWBUF_BASE_BIS_TEX, uVar6, SCE_GS_PSMCT32, 9, 6, 1, bModulate$2190, 0, 0, 0, 0, 0);
+	pPkt[7].cmdB = SCE_GS_TEX0_1;
+
+	pPkt[8].cmdA = SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_PRIM_CTXT1, SCE_GS_FALSE);
+	pPkt[8].cmdB = SCE_GS_PRIM;
+
+	pPkt[9].cmdA = SCE_GS_SET_RGBAQ(0x80, 0, 0, 0x80, 0x3f800000);
+	pPkt[9].cmdB = SCE_GS_RGBAQ;
+
+	static int _Y$2195 = 0x26;
+	static int _YOffset$2196 = 0x8;
+	static int _YSize$2197 = 0x2;
+	static int _Y1$2199 = 0x26;
+	static int _YOffset1$2200 = 0x8;
+	static int _YSize1$2201 = 0x2;
+
+	for (uVar6 = 0; uVar3 = gSCRN_W, uVar6 < uVar9; uVar6 = uVar6 + 1) {
+		iVar7 = iVar8 + -8;
+		ed3DSetSpriteCoords(iVar7, _Y$2195, iVar8, _Y$2195 + _YSize$2197, iVar4, _Y$2195, 8, _YSize$2197, 1);
+
+		pNextPkt->cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x20, gSpriteFog.field_0x24);
+		pNextPkt->cmdB = SCE_GS_UV;
+
+		pNextPkt[1].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		pNextPkt[1].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt[2].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x28, gSpriteFog.field_0x2c);
+		pNextPkt[2].cmdB = SCE_GS_UV;
+
+		pNextPkt[3].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		pNextPkt[3].cmdB = SCE_GS_XYZ2;
+
+		iVar5 = _Y$2195 + _YOffset$2196;
+		ed3DSetSpriteCoords(iVar7, iVar5, iVar8, _YSize$2197 + iVar5, iVar4, iVar5, 8, _YSize$2197, 1);
+		pNextPkt[4].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x20, gSpriteFog.field_0x24);
+		pNextPkt[4].cmdB = SCE_GS_UV;
+
+		pNextPkt[5].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		pNextPkt[5].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt[6].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x28, gSpriteFog.field_0x2c);
+		pNextPkt[6].cmdB = SCE_GS_UV;
+
+		pNextPkt[7].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		pNextPkt[7].cmdB = SCE_GS_XYZ2;
+
+		iVar5 = _Y$2195 + _YOffset$2196 * 2;
+		ed3DSetSpriteCoords(iVar7, iVar5, iVar8, _YSize$2197 + iVar5, iVar4, iVar5, 8, _YSize$2197, 1);
+
+		pNextPkt[8].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x20, gSpriteFog.field_0x24);
+		pNextPkt[8].cmdB = SCE_GS_UV;
+
+		pNextPkt[9].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		pNextPkt[9].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt[10].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x28, gSpriteFog.field_0x2c);
+		pNextPkt[10].cmdB = SCE_GS_UV;
+
+		pNextPkt[0xb].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		pNextPkt[0xb].cmdB = SCE_GS_XYZ2;
+
+		iVar5 = _Y$2195 + _YOffset$2196 * 3;
+		ed3DSetSpriteCoords(iVar7, iVar5, iVar8, _YSize$2197 + iVar5, iVar4, iVar5, 8, _YSize$2197, 1);
+		iVar8 = iVar8 + 0x40;
+		iVar4 = iVar4 + 0x40;
+
+		pNextPkt[0xc].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x20, gSpriteFog.field_0x24);
+		pNextPkt[0xc].cmdB = SCE_GS_UV;
+
+		pNextPkt[0xd].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+		pNextPkt[0xd].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt[0xe].cmdA = SCE_GS_SET_UV(gSpriteFog.field_0x28, gSpriteFog.field_0x2c);
+		pNextPkt[0xe].cmdB = SCE_GS_UV;
+
+		pNextPkt[0xf].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+		pNextPkt[0xf].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt = pNextPkt + 0x10;
+	}
+
+	iVar4 = gSCRN_W - 1;
+
+	pNextPkt->cmdA = SCE_GS_SET_FRAME((uint)gDRAWBUF_BASE_BIS, gSCRN_W >> 6, SCE_GS_PSMCT32, 0);
+	pNextPkt->cmdB = SCE_GS_FRAME_1;
+
+	pNextPkt[1].cmdA = SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_PRIM_CTXT1, SCE_GS_FALSE);
+	pNextPkt[1].cmdB = SCE_GS_PRIM;
+
+	pNextPkt[2].cmdA = SCE_GS_SET_RGBAQ(0, 0, 0, 0x80, 0x3f800000);
+	pNextPkt[2].cmdB = SCE_GS_RGBAQ;
+
+	iVar5 = _Y1$2199 + _YOffset1$2200 * 3;
+	ed3DSetSpriteCoords(0, iVar5, iVar4, _YSize1$2201 + iVar5, 0, iVar5, uVar3, _YSize1$2201, 1);
+
+	pNextPkt[3].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x10, gSpriteFog.field_0x14, 0);
+	pNextPkt[3].cmdB = SCE_GS_XYZ2;
+
+	pNextPkt[4].cmdA = SCE_GS_SET_XYZ2(gSpriteFog.field_0x18, gSpriteFog.field_0x1c, 0);
+	pNextPkt[4].cmdB = SCE_GS_XYZ2;
+
+	pNextPkt[5].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	pNextPkt[5].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+	pNextPkt[5].asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
+	gOFFX = iVar1;
+	gOFFY = uVar2;
+
+	return pNextPkt + 6;
+}
+
+edpkt_data* ed3DFogScreen(edpkt_data* pPkt, int zvert)
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	edpkt_data* pNextPkt;
+	ulong uVar5;
+	uint uVar6;
+	int iVar7;
+	uint uVar8;
+	int iVar9;
+
+	iVar9 = 0;
+	uVar8 = gSCRN_W >> 5;
+	iVar4 = uVar8 * 2;
+	static bool bCorrectA = true;
+	if (bCorrectA != false) {
+		pPkt = ed3DCorrectAlpha(pPkt);
+	}
+
+	uVar6 = iVar4 + 9;
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(uVar6);
+	pPkt->cmdB = SCE_VIF1_SET_NOP(0);
+
+	pPkt->asU32[2] = 0;
+	pPkt->asU32[3] = SCE_VIF1_SET_DIRECT(uVar6, 0);
+
+	pPkt[1].cmdA = SCE_GIF_SET_TAG(iVar4 + 8, SCE_GS_TRUE, SCE_GS_FALSE, 0, SCE_GIF_PACKED, 1);
+	pPkt[1].cmdB = SCE_GIF_PACKED_AD;
+
+	pPkt[2].cmdA = SCE_GS_SET_FRAME((uint)gDRAWBUF_BASE, gSCRN_W >> 6, SCE_GS_PSMCT32, 0);
+	pPkt[2].cmdB = SCE_GS_FRAME_1;
+
+	pPkt[3].cmdA = SCE_GS_SET_ZBUF(gZBUF_BASE, SCE_GS_PSMZ24, 1);
+	pPkt[3].cmdB = SCE_GS_ZBUF_1;
+
+	pPkt[4].cmdA = SCE_GS_SET_TEST(SCE_GS_FALSE, 0, 0, 0, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, 2);
+	pPkt[4].cmdB = SCE_GS_TEST_1;
+
+	iVar1 = gOFFY;
+	iVar4 = gOFFX;
+	uVar5 = gOFFY;
+	pPkt[5].cmdA = SCE_GS_SET_XYOFFSET(gOFFX, gOFFY);
+	pPkt[5].cmdB = SCE_GS_XYOFFSET_1;
+
+	pPkt[6].cmdA = SCE_GS_SET_SCISSOR(
+		gCurRectViewport.x,
+		(int)gCurRectViewport.w + (int)gCurRectViewport.x - 1,
+		gCurRectViewport.y,
+		(int)gCurRectViewport.h + (int)gCurRectViewport.y - 1
+	);
+	pPkt[6].cmdB = SCE_GS_SCISSOR_1;
+
+	pPkt[7].cmdA = SCE_GS_SET_ALPHA_1(SCE_GS_ALPHA_CD, SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, SCE_GS_ALPHA_CS, 0);
+	pPkt[7].cmdB = SCE_GS_ALPHA_1;
+
+	pPkt[8].cmdA = SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_TRUE, SCE_GS_FALSE, SCE_GS_FALSE, SCE_GS_PRIM_CTXT1, SCE_GS_FALSE);
+	pPkt[8].cmdB = SCE_GS_PRIM;
+
+	pPkt[9].cmdA = SCE_GS_SET_RGBAQ(
+		gSpriteFog.gSpriteFog[0],
+		gSpriteFog.gSpriteFog[1],
+		gSpriteFog.gSpriteFog[2],
+		gSpriteFog.gSpriteFog[3],
+		(uint)(1.0f / (float)zvert)
+	);
+	pPkt[9].cmdB = SCE_GS_RGBAQ;
+
+	pNextPkt = pPkt + 10;
+	iVar2 = gSCRN_H * 0x10;
+	for (iVar7 = 0; iVar7 < (int)uVar8; iVar7 = iVar7 + 1) {
+		iVar3 = iVar9 + 0x20;
+
+		pNextPkt->cmdA = SCE_GS_SET_XYZ2(iVar4 + iVar9 * 0x10, uVar5, zvert);
+		pNextPkt->cmdB = SCE_GS_XYZ2;
+
+		iVar9 = iVar9 + 0x20;
+
+		pNextPkt[1].cmdA = SCE_GS_SET_XYZ2(iVar4 + iVar3 * 0x10, iVar1 + iVar2, zvert);
+		pNextPkt[1].cmdB = SCE_GS_XYZ2;
+
+		pNextPkt = pNextPkt + 2;
+	}
+
+	return pNextPkt;
+}
 
 void ed3DFlushFogFX(void)
 {
@@ -11625,50 +12049,65 @@ void ed3DFlushFogFX(void)
 			gZBUF_TEXBASE = gZBUF_BASE << 5;
 			gSCRN_W = static_cast<uint>(pSurf->pSurfaceDesc->screenWidth);
 			gSCRN_H = static_cast<uint>(pSurf->pSurfaceDesc->screenHeight);
+
 			if (g3DFXFog.field_0x4 != 0) {
-				pPkt->cmdA = 0x30000000;
-				pPkt->cmdB = 0x1100000011000000;
+				pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				pPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+				pPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 				ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H - 1, 1);
-				gSpriteFog[0] = 0x80;
-				gSpriteFog[1] = 0x80;
-				gSpriteFog[2] = 0x80;
-				gSpriteFog[3] = 0x80;
+				gSpriteFog.gSpriteFog[0] = 0x80;
+				gSpriteFog.gSpriteFog[1] = 0x80;
+				gSpriteFog.gSpriteFog[2] = 0x80;
+				gSpriteFog.gSpriteFog[3] = 0x80;
 				peVar2 = ed3DFlushAAEffectPlane(pPkt + 1, g3DFXFog.field_0x4);
-				peVar2->cmdA = 0x30000000;
+
+				peVar2->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				peVar2->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+				peVar2->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 				pPkt = peVar2 + 1;
-				peVar2->cmdB = 0x1100000011000000;
 			}
+
 			iVar3 = gSCRN_H * 2 + -2;
 			ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, iVar3, 8, 0, gSCRN_W, iVar3, 1);
-			gSpriteFog[0] = 0x80;
-			gSpriteFog[1] = 0x80;
-			gSpriteFog[2] = 0x80;
-			gSpriteFog[3] = 0x80;
+			gSpriteFog.gSpriteFog[0] = 0x80;
+			gSpriteFog.gSpriteFog[1] = 0x80;
+			gSpriteFog.gSpriteFog[2] = 0x80;
+			gSpriteFog.gSpriteFog[3] = 0x80;
 			pPkt = ed3DMoveRG2BA(pPkt, true);
 			ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H, 1);
 			if ((g3DFXFog.field_0x0 & 4) == 0) {
-				gSpriteFog[0] = ZEXT14((byte)g3DFXFog.field_0x8);
-				gSpriteFog[1] = ZEXT14((byte)g3DFXFog.field_0xc);
-				gSpriteFog[2] = ZEXT14((byte)g3DFXFog.field_0x10);
-				gSpriteFog[3] = ZEXT14((byte)g3DFXFog.field_0x14);
+				gSpriteFog.gSpriteFog[0] = g3DFXFog.field_0x8;
+				gSpriteFog.gSpriteFog[1] = g3DFXFog.field_0xc;
+				gSpriteFog.gSpriteFog[2] = g3DFXFog.field_0x10;
+				gSpriteFog.gSpriteFog[3] = g3DFXFog.field_0x14;
+				static int zvert = 0x7fff;
 				pPkt = ed3DFogScreen(pPkt, zvert);
 			}
-			pPkt->cmdA = 0x30000000;
-			pPkt->cmdB = 0x1100000011000000;
+
+			pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 			pPkt = pPkt + 1;
 			if ((g3DFXFog.field_0x0 & 0x20) != 0) {
 				ed3DSetSpriteCoords(0, 0, gSCRN_W - 1, gSCRN_H - 1, 0, 0, gSCRN_W, gSCRN_H - 1, 1);
-				gSpriteFog[0] = 0x80;
-				gSpriteFog[1] = 0x80;
-				gSpriteFog[2] = 0x80;
-				gSpriteFog[3] = 0x80;
+				gSpriteFog.gSpriteFog[0] = 0x80;
+				gSpriteFog.gSpriteFog[1] = 0x80;
+				gSpriteFog.gSpriteFog[2] = 0x80;
+				gSpriteFog.gSpriteFog[3] = 0x80;
 				pPkt = ed3DFlushAAEffectPlane(pPkt, g3DFXFog.field_0x4);
 			}
-			pPkt->cmdA = 0x30000000;
+
+			pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 			g_VifRefPktCur = pPkt + 1;
-			pPkt->cmdB = 0x1100000011000000;
 		}
 	}
+
 	return;
 }
 
