@@ -123,8 +123,9 @@ namespace Renderer
 					vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
 					vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 
-					const VkDescriptorSet* descriptorSet = instance.pDescriptorSets ? instance.pDescriptorSets : draw.pDescriptorSets;
-					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);
+					const VkDescriptorSet descriptorSet = instance.descriptorSet ? instance.descriptorSet : draw.descriptorSet;
+					const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
+					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
 					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 				}
 			}

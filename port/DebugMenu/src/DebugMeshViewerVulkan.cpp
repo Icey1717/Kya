@@ -108,40 +108,17 @@ namespace DebugMeshViewer {
 			return gPipelines[pipelineKey.key];
 		}
 
-		void UpdateDescriptors(Renderer::SimpleTexture* pTexture)
+		void InitializeFrameDescriptors()
 		{
-			auto& pipeline = GetPipeline();
-
-			gVertexConstantBuffer.Map(GetCurrentFrame());
-
-			if (!pTexture) {
-				return;
+			for (auto& [key, pipeline] : gPipelines) {
+				for (int frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame) {
+					const auto buffer = gVertexConstantBuffer.GetDescBufferInfo(frame);
+					Renderer::DescriptorWriteList writes;
+					writes.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &buffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+					const auto updates = writes.CreateWriteDescriptorSetList(pipeline.descriptorSets[frame], pipeline.descriptorSetLayoutBindings);
+					vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(updates.size()), updates.data(), 0, nullptr);
+				}
 			}
-
-			PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-
-			if (pTextureData->HasDescriptorSets(pipeline)) {
-				return;
-			}
-
-			VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
-
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = pTextureData->imageView;
-			imageInfo.sampler = sampler;
-
-			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(i);
-
-				Renderer::DescriptorWriteList writeList;
-
-				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-				writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-
-				pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
-			}
-
 		}
 	} // Vulkan
 
@@ -156,7 +133,7 @@ namespace DebugMeshViewer {
 		Vulkan::pBoundTexture = pTexture;
 		Vulkan::pBoundMesh = pMesh;
 
-		Vulkan::UpdateDescriptors(pTexture);
+		Vulkan::gVertexConstantBuffer.Map(GetCurrentFrame());
 
 		Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 
@@ -249,6 +226,7 @@ void DebugMeshViewer::Vulkan::Setup()
 	CreatePipelineGlsl();
 
 	gVertexConstantBuffer.Init();
+	InitializeFrameDescriptors();
 
 	for (auto& drawBuffer : gPreviewerDrawCommands) {
 		drawBuffer.second.Init(0x12000, 0x12000);
@@ -341,8 +319,9 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		if (bufferData.index.tail > 0) {
 			vertexBuffer.MapAndBindData(cmd);
 
-			PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
+			const std::array sets{ pipeline.descriptorSets[GetCurrentFrame()],
+				pTexture->GetRenderer()->GetOrCreateTextureBinding(PS2::GetPreviewSamplerDescription()) };
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);
 		}

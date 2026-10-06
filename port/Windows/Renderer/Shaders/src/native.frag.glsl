@@ -9,7 +9,7 @@ layout(location = 0, index = 0) out vec4 outColor;
 layout(location = 0, index = 1) out vec4 outAlphaBlend;
 
 // Texture sampler
-layout(binding = 1) uniform sampler2D textureSampler;
+layout(set = 1, binding = 0) uniform sampler2D textureSampler;
 
 #include "per_draw_data.glsl"
 

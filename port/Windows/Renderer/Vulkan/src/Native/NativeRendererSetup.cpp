@@ -262,7 +262,7 @@ namespace Renderer
 			stage.gBlendPipelines.emplace(blendKey, blendPipeline);
 			return blendPipeline;
 		}
-		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state)
+		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state, bool nativeFrameBindings)
 		{
 			pipeline.debugName = name;
 
@@ -273,12 +273,21 @@ namespace Renderer
 
 			pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
 			pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
+			pipeline.descriptorSetLayoutBindings[1] = PS2::GetTextureLayoutBindings();
+			if (nativeFrameBindings) {
+				auto& bindings = pipeline.descriptorSetLayoutBindings[0][EBindingStage::Vertex];
+				bindings.clear();
+				for (uint32_t binding = 2; binding <= 6; ++binding)
+					bindings.push_back({ binding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
+			}
 			pipeline.CreateDescriptorSetLayouts();
 
 			pipeline.CreateLayout();
 
-			pipeline.CreateDescriptorPool();
-			pipeline.CreateDescriptorSets();
+			if (!nativeFrameBindings) {
+				pipeline.CreateDescriptorPool();
+				pipeline.CreateDescriptorSets();
+			}
 
 			VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 
@@ -448,6 +457,31 @@ namespace Renderer
 			GetNativeRendererState().shadowProjectionBuffer.Init();
 			GetNativeRendererState().shadowProjectionBuffer.AddInstanceData(glm::mat4(1.0f));
 
+			// One frame set serves every native pipeline and every material.
+			auto& renderer = GetNativeRendererState();
+			const auto& pipeline = renderer.renderPass.at(RenderPassKey::Empty).GetPipeline();
+			CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, renderer.frameDescriptorPool);
+			std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> layouts;
+			layouts.fill(pipeline.descriptorSetLayouts.at(0));
+			VkDescriptorSetAllocateInfo allocation{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+			allocation.descriptorPool = renderer.frameDescriptorPool;
+			allocation.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
+			allocation.pSetLayouts = layouts.data();
+			if (vkAllocateDescriptorSets(GetDevice(), &allocation, renderer.frameDescriptorSets.data()) != VK_SUCCESS)
+				throw std::runtime_error("failed to allocate native frame descriptors");
+			for (int frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame) {
+				const std::array buffers{
+					renderer.modelBuffer.GetDescBufferInfo(frame), renderer.animationBuffer.GetDescBufferInfo(frame),
+					renderer.lightingDynamicBuffer.GetDescBufferInfo(frame), renderer.animStBuffer.GetDescBufferInfo(frame),
+					renderer.shadowProjectionBuffer.GetDescBufferInfo(frame),
+				};
+				DescriptorWriteList writes;
+				for (int index = 0; index < buffers.size(); ++index)
+					writes.EmplaceWrite({ index + 2, EBindingStage::Vertex, &buffers[index], nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
+				const auto updates = writes.CreateWriteDescriptorSetList(renderer.frameDescriptorSets[frame], pipeline.descriptorSetLayoutBindings);
+				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(updates.size()), updates.data(), 0, nullptr);
+			}
+
 			Shadow::Setup();
 			FrameBufferCopy::Setup();
 			Flare::Setup();
@@ -473,6 +507,10 @@ namespace Renderer
 			FrameBufferCopy::Cleanup();
 			Flare::Cleanup();
 
+			if (GetNativeRendererState().frameDescriptorPool)
+				vkDestroyDescriptorPool(GetDevice(), GetNativeRendererState().frameDescriptorPool, GetAllocator());
+			GetNativeRendererState().frameDescriptorPool = VK_NULL_HANDLE;
+			GetNativeRendererState().frameDescriptorSets.fill(VK_NULL_HANDLE);
 			GetNativeRendererState().modelBuffer.DestroyResources();
 			GetNativeRendererState().animationBuffer.DestroyResources();
 			GetNativeRendererState().lightingDynamicBuffer.DestroyResources();

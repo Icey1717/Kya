@@ -48,7 +48,7 @@ namespace Renderer
 			else {
 				gCreateInfo = { "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
 			}
-			Renderer::Native::CreatePipeline(gCreateInfo, gRenderPass, gPipeline, name, state);
+			Renderer::Native::CreatePipeline(gCreateInfo, gRenderPass, gPipeline, name, state, true);
 			gBlendPipelines.emplace(0, gPipeline.pipeline);
 		}
 	}

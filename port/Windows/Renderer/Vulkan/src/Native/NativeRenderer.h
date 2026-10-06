@@ -66,10 +66,7 @@ namespace Renderer
 
 		using PipelineMap = std::unordered_map<size_t, Renderer::Pipeline>;
 
-		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state = {});
-
-		// Initializes and updates descriptor sets for the native pipeline.
-		void InitializeDescriptorsSets(SimpleTexture* pTexture, uint32_t samplerKey = 0);
+		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name, const GraphicsPipelineState& state = {}, bool nativeFrameBindings = false);
 
 		FrameBufferBase& GetFrameBuffer();
 

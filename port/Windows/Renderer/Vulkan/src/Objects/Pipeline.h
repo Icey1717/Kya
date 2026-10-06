@@ -61,7 +61,7 @@ namespace Renderer {
 	using LayoutVector = std::vector<VkDescriptorSetLayout>;
 
 	std::vector<VkDescriptorSetLayoutBinding> CollectDescriptorSets(const LayoutStageMap& stageMap);
-	void CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap, VkDescriptorPool& descriptorPool);
+	void CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap, VkDescriptorPool& descriptorPool, int setIndex = 0);
 
 	struct Pipeline
 	{
@@ -109,7 +109,7 @@ namespace Renderer {
 			writes.push_back(write);
 		}
 
-		std::vector<VkWriteDescriptorSet> CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap) const;
+		std::vector<VkWriteDescriptorSet> CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap, int setIndex = 0) const;
 		std::vector<DescriptorWrite> writes;
 	};
 }

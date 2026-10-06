@@ -414,19 +414,18 @@ namespace Renderer {
 
 namespace PS2
 {
-	PSSamplerSelector EmulateTextureSampler(int width, int height)
+	SamplerDescription EmulateTextureSampler(int width, int height)
 	{
 		return EmulateTextureSampler(width, height, PS2_Internal::state.CLAMP, PS2_Internal::state.TEX, PS2_Internal::state.PRIM);
 	}
 
-	PSSamplerSelector EmulateTextureSampler(int width, int height, const GIFReg::GSClamp& CLAMP, const GIFReg::GSTex& TEX, const GIFReg::GSPrim& PRIM)
+	SamplerDescription EmulateTextureSampler(int width, int height, const GIFReg::GSClamp& CLAMP, const GIFReg::GSTex& TEX, const GIFReg::GSPrim& PRIM)
 	{
 		auto& vs_cb = PS2_Internal::gVertexConstBuffer.GetBufferData();
 		auto& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
 		const uint8_t wms = CLAMP.WMS;
 		const uint8_t wmt = CLAMP.WMT;
-		const bool bilinear = false;
 
 		const int tw = 1 << TEX.TW;
 		const int th = 1 << TEX.TH;
@@ -439,10 +438,10 @@ namespace PS2
 		ps_cb.WH = wh;
 		ps_cb.HalfTexel = GSVector4(-0.5f, 0.5f).xxyy() / wh.zwzw();
 
-		PSSamplerSelector selector{};
-		selector.tau = (wms != CLAMP_CLAMP);
-		selector.tav = (wmt != CLAMP_CLAMP);
-		selector.ltf = bilinear;
+		SamplerDescription selector{};
+		selector.addressU = wms != CLAMP_CLAMP ? TextureAddress::Repeat : TextureAddress::Clamp;
+		selector.addressV = wmt != CLAMP_CLAMP ? TextureAddress::Repeat : TextureAddress::Clamp;
+		selector.minFilter = selector.magFilter = TextureFilter::Linear;
 
 		return selector;
 	}

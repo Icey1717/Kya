@@ -98,7 +98,7 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 	float identity[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 	Renderer::SetTest(GIFReg::GSTest{});
 	auto render = [&](uint32_t filter, uint32_t maxLevel, uint32_t bias, uint32_t mag = 0,
-		bool fixedLod = true, float qScale = 1.0f, uint32_t lodScale = 0, float clipW = 1.0f) {
+		bool fixedLod = true, float qScale = 1.0f, uint32_t lodScale = 0, float clipW = 1.0f, bool queueOtherSampler = false) {
 		UpdateRenderPassKey(EClearMode::ColorDepth);
 		std::array<float, 16> nativeProjection;
 		for (size_t i = 0; i < nativeProjection.size(); ++i) nativeProjection[i] = identity[i] * clipW;
@@ -109,6 +109,18 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 		tex1.CMD = SCE_GS_PACK_TEX1(fixedLod, maxLevel, mag, filter, 0, lodScale, bias);
 		Renderer::SetTex1(tex1);
 		Renderer::Native::RenderMesh(&mesh, 0);
+		if (queueOtherSampler) {
+			// Queue another sampler for this texture in the same batch. Reject its
+			// fragments so readback still verifies the first instance's binding.
+			tex1.CMD = SCE_GS_PACK_TEX1(1, 2, 0, 5, 0, 0, 32);
+			Renderer::SetTex1(tex1);
+			GIFReg::GSTest reject{};
+			reject.ZTE = 1;
+			reject.ZTST = 0; // NEVER
+			Renderer::SetTest(reject);
+			Renderer::Native::RenderMesh(&mesh, 0);
+			Renderer::SetTest(GIFReg::GSTest{});
+		}
 		// A later option change must not overwrite the submitted instance.
 		state.cachedPerDrawData.gsTextureQScale = 1.0f;
 		tex1.CMD = SCE_GS_PACK_TEX1(1, 0, 1, 1, 0, 0, 0);
@@ -119,9 +131,19 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 		ResetRenderThread(state.renderThread);
 		return pixel;
 	};
-	const auto base = render(5, 0, 32);
+	const auto base = render(5, 0, 32, 0, true, 1.0f, 0, 1.0f, true);
 	const auto last = render(5, 2, 32);
 	const auto blend = render(5, 2, 8);
+	// Different LOD biases reuse the same image binding. Each sampler variant
+	// owns one set, while all native passes use the renderer's frame sets.
+	EXPECT_EQ(texture.GetRenderer()->textureBindings.size(), 2u);
+	for (const auto& [key, stage] : state.renderPass) {
+		const auto& pipeline = stage.GetPipeline();
+		ASSERT_EQ(pipeline.descriptorSetLayouts.size(), 2u);
+		EXPECT_EQ(pipeline.descriptorSets.size(), 0u);
+		EXPECT_EQ(pipeline.descriptorPool, VK_NULL_HANDLE);
+		EXPECT_EQ(pipeline.descriptorSetLayoutBindings.at(0).at(EBindingStage::Vertex).size(), 5u);
+	}
 	EXPECT_EQ(base[0], 200);
 	EXPECT_EQ(base[1], 0);
 	EXPECT_EQ(base[2], 0);

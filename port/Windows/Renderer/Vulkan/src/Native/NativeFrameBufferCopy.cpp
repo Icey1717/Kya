@@ -60,9 +60,9 @@ namespace Renderer::Native::FrameBufferCopy
 		if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create framebuffer capture sampler");
 		}
-		CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorPool);
+		CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorPool, 1);
 		std::array<VkDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT> layouts;
-		layouts.fill(pipeline.descriptorSetLayouts.at(0));
+		layouts.fill(pipeline.descriptorSetLayouts.at(1));
 		VkDescriptorSetAllocateInfo allocation{};
 		allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocation.descriptorPool = descriptorPool;
@@ -78,17 +78,9 @@ namespace Renderer::Native::FrameBufferCopy
 				"Native Framebuffer Capture %u (%u x %u)", i, captureExtent.width, captureExtent.height);
 			SetObjectName(reinterpret_cast<uint64_t>(descriptors[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "Native Framebuffer Material %u", i);
 			const VkDescriptorImageInfo imageInfo{ sampler, images[i].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-			const auto modelInfo = state.modelBuffer.GetDescBufferInfo(i);
-			const auto animationInfo = state.animationBuffer.GetDescBufferInfo(i);
-			const auto lightingInfo = state.lightingDynamicBuffer.GetDescBufferInfo(i);
-			const auto animStInfo = state.animStBuffer.GetDescBufferInfo(i);
 			DescriptorWriteList writes;
-			writes.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-			writes.EmplaceWrite({ 2, EBindingStage::Vertex, &modelInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-			writes.EmplaceWrite({ 3, EBindingStage::Vertex, &animationInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-			writes.EmplaceWrite({ 4, EBindingStage::Vertex, &lightingInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-			writes.EmplaceWrite({ 5, EBindingStage::Vertex, &animStInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-			auto descriptorWrites = writes.CreateWriteDescriptorSetList(descriptors[i], pipeline.descriptorSetLayoutBindings);
+			writes.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+			auto descriptorWrites = writes.CreateWriteDescriptorSetList(descriptors[i], pipeline.descriptorSetLayoutBindings, 1);
 			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
 	}

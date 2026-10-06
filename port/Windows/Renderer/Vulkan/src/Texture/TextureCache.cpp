@@ -1007,65 +1007,52 @@ namespace PS2_Internal {
 	}
 }
 
-std::unordered_map<uint32_t, VkSampler> gSamplerCache;
+static std::unordered_map<uint32_t, VkSampler> gSamplerCache;
+static VkDescriptorSetLayout gTextureLayout = VK_NULL_HANDLE;
 
-VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
+Renderer::LayoutStageMap PS2::GetTextureLayoutBindings()
 {
-	const uint32_t key = selector.key | (uint32_t(bPalette) << 8);
-	if (gSamplerCache.find(key) == gSamplerCache.end()) {
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-		if (bPalette) {
-			samplerInfo.magFilter = VK_FILTER_NEAREST;
-			samplerInfo.minFilter = VK_FILTER_NEAREST;
-
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		}
-		else {
-			samplerInfo.magFilter = selector.magPoint ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
-			samplerInfo.minFilter = selector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
-
-			samplerInfo.addressModeU = selector.tau ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeV = selector.tav ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		}
-
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
-
-		//samplerInfo.anisotropyEnable = VK_TRUE;
-		//samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-
-		samplerInfo.anisotropyEnable = VK_FALSE;
-		samplerInfo.maxAnisotropy = 0.0f;
-
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-
-		samplerInfo.mipmapMode = !bPalette && selector.mipLinear ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = bPalette ? 0.0f : float(selector.maxLevel);
-
-		VkSampler sampler;
-		CheckVk(vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler), "vkCreateSampler");
-
-		gSamplerCache[key] = sampler;
-	}
-
-	return gSamplerCache[key];
+	return { { Renderer::EBindingStage::Fragment, {
+		{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr }
+	} } };
 }
 
-PS2::GSTexDescriptor::GSTexDescriptor()
+VkDescriptorSetLayout PS2::GetTextureLayout()
 {
-	descriptorPool = VK_NULL_HANDLE;
-	vertexConstBuffer.Init();
-	pixelConstBuffer.Init();
+	if (!gTextureLayout) {
+		const auto bindings = Renderer::CollectDescriptorSets(GetTextureLayoutBindings());
+		VkDescriptorSetLayoutCreateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+		info.bindingCount = static_cast<uint32_t>(bindings.size());
+		info.pBindings = bindings.data();
+		CheckVk(vkCreateDescriptorSetLayout(GetDevice(), &info, GetAllocator(), &gTextureLayout), "texture binding layout");
+	}
+	return gTextureLayout;
+}
+
+void PS2::CleanupSamplerCache()
+{
+	for (const auto& [key, sampler] : gSamplerCache) vkDestroySampler(GetDevice(), sampler, GetAllocator());
+	gSamplerCache.clear();
+	if (gTextureLayout) vkDestroyDescriptorSetLayout(GetDevice(), gTextureLayout, GetAllocator());
+	gTextureLayout = VK_NULL_HANDLE;
+}
+
+VkSampler PS2::GetSampler(const SamplerDescription& description)
+{
+	const uint32_t key = description.GetKey();
+	if (const auto it = gSamplerCache.find(key); it != gSamplerCache.end()) return it->second;
+	VkSamplerCreateInfo info{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+	info.magFilter = description.magFilter == TextureFilter::Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+	info.minFilter = description.minFilter == TextureFilter::Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+	info.addressModeU = description.addressU == TextureAddress::Repeat ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	info.addressModeV = description.addressV == TextureAddress::Repeat ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	info.mipmapMode = description.mipFilter == TextureFilter::Linear ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	info.maxLod = float(description.maxLod);
+	VkSampler sampler;
+	CheckVk(vkCreateSampler(GetDevice(), &info, GetAllocator(), &sampler), "vkCreateSampler");
+	gSamplerCache.emplace(key, sampler);
+	return sampler;
 }
 
 using namespace PS2_Internal;
@@ -1258,125 +1245,49 @@ void PS2::GSSimpleTexture::Resize(uint32_t newWidth, uint32_t newHeight, int buf
 	RefreshDescriptors();
 }
 
+namespace
+{
+	void WriteTextureBinding(VkDescriptorSet set, VkImageView view, VkSampler sampler)
+	{
+		const VkDescriptorImageInfo imageInfo{ sampler, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		VkWriteDescriptorSet write{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+		write.dstSet = set;
+		write.dstBinding = 0;
+		write.descriptorCount = 1;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write.pImageInfo = &imageInfo;
+		vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
+	}
+}
+
 void PS2::GSSimpleTexture::RefreshDescriptors()
 {
-	for (auto& [descriptorKey, descriptor] : descriptorMap)
-	{
-		// Find the binding index used by this pipeline for the combined image sampler,
-		// rather than assuming a fixed index. Different pipelines (e.g. display list vs
-		// native renderer) use different binding slots for their texture sampler.
-		int textureBindingIndex = -1;
-		for (auto& [setIndex, stageMap] : descriptor.layoutBindingMap)
-		{
-			const auto it = stageMap.find(Renderer::EBindingStage::Fragment);
-			if (it != stageMap.end())
-			{
-				for (const auto& layoutBinding : it->second)
-				{
-					if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					{
-						textureBindingIndex = static_cast<int>(layoutBinding.binding);
-						break;
-					}
-				}
-			}
-
-			if (textureBindingIndex >= 0)
-			{
-				break;
-			}
-		}
-
-		// All should have a combined image sampler binding, if not this function needs to be updated to handle these.
-		assert(textureBindingIndex >= 0);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = imageView;
-		imageInfo.sampler = descriptor.sampler;
-
-		for (size_t i = 0; i < descriptor.GetSetCount(); i++)
-		{
-			Renderer::DescriptorWriteList writeList;
-			writeList.EmplaceWrite({ textureBindingIndex, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-			UpdateDescriptorSets(descriptor.GetSet(static_cast<int>(i)), descriptor.layoutBindingMap, writeList);
-		}
-	}
+	for (const auto& [key, binding] : textureBindings) WriteTextureBinding(binding.set, imageView, binding.sampler);
 }
 
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, uint32_t samplerKey)
+VkDescriptorSet PS2::GSSimpleTexture::GetOrCreateTextureBinding(const SamplerDescription& description)
 {
-	auto& descriptorSets = descriptorMap[{ &pipeline, samplerKey }];
-	for (const auto& write : writeList.writes) {
-		if (write.pImageInfo && write.pImageInfo->sampler) descriptorSets.sampler = write.pImageInfo->sampler;
+	const uint32_t key = description.GetKey();
+	if (const auto it = textureBindings.find(key); it != textureBindings.end()) return it->second.set;
+	TextureBinding binding;
+	binding.sampler = GetSampler(description);
+	const VkDescriptorPoolSize size{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 };
+	VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+	poolInfo.maxSets = 1;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &size;
+	CheckVk(vkCreateDescriptorPool(GetDevice(), &poolInfo, GetAllocator(), &binding.pool), "texture binding pool");
+	const VkDescriptorSetLayout layout = GetTextureLayout();
+	VkDescriptorSetAllocateInfo allocation{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+	allocation.descriptorPool = binding.pool;
+	allocation.descriptorSetCount = 1;
+	allocation.pSetLayouts = &layout;
+	const VkResult result = vkAllocateDescriptorSets(GetDevice(), &allocation, &binding.set);
+	if (result != VK_SUCCESS) {
+		vkDestroyDescriptorPool(GetDevice(), binding.pool, GetAllocator());
+		CheckVk(result, "texture binding allocation");
 	}
-
-	// Create descriptor pool based on the descriptor set count from the shader
-	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorSets.descriptorPool);
-
-	assert(pipeline.descriptorSetLayouts.size() == 1);
-
-	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts[0]);
-
-	VkDescriptorSetAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorSets.descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-	allocInfo.pSetLayouts = layouts.data();
-
-	descriptorSets.layoutBindingMap = pipeline.descriptorSetLayoutBindings;
-
-	descriptorSets.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	CheckVk(vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()), "vkAllocateDescriptorSets");
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		SetObjectName(reinterpret_cast<uint64_t>(descriptorSets.descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "GSTexImage descriptor set %d", i);
-
-		UpdateDescriptorSets(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings, writeList);
-	}
-
-	return descriptorSets;
-}
-
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList, uint32_t samplerKey)
-{
-	auto& gsDescriptor = descriptorMap[{ &pipeline, samplerKey }];
-
-	LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
-
-	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
-		LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
-		
-		// If the descriptor pool is not created, we need to create it and allocate descriptor sets, and we must provide the write list.
-		assert(pWriteList);
-
-		return AddDescriptorSets(pipeline, *pWriteList, samplerKey);
-	}
-
-	return gsDescriptor;
-}
-
-bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline, uint32_t samplerKey) const
-{
-	const auto it = descriptorMap.find({ &pipeline, samplerKey });
-
-	if (it == descriptorMap.end()) {
-		return false;
-	}
-
-	return it->second.descriptorPool != VK_NULL_HANDLE;
-}
-
-void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex, uint32_t samplerKey)
-{
-	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList, samplerKey).GetSet(frameIndex), pipeline.descriptorSetLayoutBindings, writeList);
-}
-
-void PS2::GSSimpleTexture::UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList)
-{
-	std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSet, layoutBindingMap);
-
-	if (descriptorWrites.size() > 0) {
-		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-	}
+	WriteTextureBinding(binding.set, imageView, binding.sampler);
+	textureBindings.emplace(key, binding);
+	return binding.set;
 }

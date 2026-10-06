@@ -287,10 +287,6 @@ const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 
 void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData) {
 	for (auto& layout : reflectData.GetLayouts()) {
-		if (layout.setNumber != 0) {
-			throw std::runtime_error("only descriptor set 0 is currently supported");
-		}
-
 		descriptorSetLayoutBindings[layout.setNumber][bindingStage] = layout.bindings;
 	}
 
@@ -301,12 +297,12 @@ void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const Ref
 
 void Renderer::Pipeline::CreateDescriptorSetLayouts()
 {
-	descriptorSetLayouts.resize(descriptorSetLayoutBindings.empty() ? 0 : 1);
+	size_t setCount = 0;
+	for (const auto& [index, bindings] : descriptorSetLayoutBindings) setCount = std::max(setCount, size_t(index + 1));
+	descriptorSetLayouts.resize(setCount);
 
-	for (auto& layoutSet : descriptorSetLayoutBindings) {
-		const int layoutSetIndex = layoutSet.first;
-
-		const auto& layoutMap = layoutSet.second;
+	for (int layoutSetIndex = 0; layoutSetIndex < descriptorSetLayouts.size(); ++layoutSetIndex) {
+		const auto& layoutMap = descriptorSetLayoutBindings[layoutSetIndex];
 
 		auto descriptorSet = Renderer::CollectDescriptorSets(layoutMap);
 
@@ -387,14 +383,14 @@ void Renderer::Pipeline::CreateLayout()
 
 void Renderer::Pipeline::CreateDescriptorPool()
 {
-	if (descriptorSetLayoutBindings.size() > 0) {
+	if (descriptorSetLayoutBindings.contains(0) && !descriptorSetLayoutBindings.at(0).empty()) {
 		Renderer::CreateDescriptorPool(descriptorSetLayoutBindings, descriptorPool);
 	}
 }
 
 void Renderer::Pipeline::CreateDescriptorSets()
 {
-	if (descriptorSetLayoutBindings.size() > 0) {
+	if (descriptorSetLayoutBindings.contains(0) && !descriptorSetLayoutBindings.at(0).empty()) {
 		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -426,10 +422,10 @@ std::vector<VkDescriptorSetLayoutBinding> Renderer::CollectDescriptorSets(const 
 	return bindings;
 }
 
-void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap, VkDescriptorPool& descriptorPool) {
+void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap, VkDescriptorPool& descriptorPool, int setIndex) {
 	// Create descriptor pool based on the descriptor set count from the shader
 
-	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(0);
+	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(setIndex);
 	std::vector<VkDescriptorPoolSize> poolSizes;
 
 	auto descriptorSets = CollectDescriptorSets(descriptorSetLayoutBindings);
@@ -472,12 +468,12 @@ std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Rend
 	return std::nullopt;
 }
 
-std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap) const
+std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap, int setIndex) const
 {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	for (auto& bindingSet : layoutBindingMap) {
-		for (auto& binding : bindingSet.second) {
+	if (const auto set = layoutBindingMap.find(setIndex); set != layoutBindingMap.end()) {
+		for (auto& binding : set->second) {
 			for (auto& write : binding.second) {
 				auto maybeDescriptorSet = AddWrite(binding.first, write.descriptorType, dstSet, write.binding);
 

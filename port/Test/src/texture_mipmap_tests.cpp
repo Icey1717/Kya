@@ -9,6 +9,50 @@
 #include "../../Windows/Renderer/Vulkan/src/VulkanPS2.h"
 #include "../../Windows/Renderer/Vulkan/src/Native/NativeRendererInternal.h"
 #include <array>
+#include <set>
+
+TEST(TextureMipmaps, SamplerKeysDistinguishAllFilterAndAddressCombinations)
+{
+	std::set<uint32_t> keys;
+	for (uint32_t bits = 0; bits < 32; ++bits) {
+		for (uint32_t lod = 0; lod <= 6; ++lod) {
+			PS2::SamplerDescription sampler;
+			sampler.addressU = PS2::TextureAddress(bits & 1);
+			sampler.addressV = PS2::TextureAddress((bits >> 1) & 1);
+			sampler.minFilter = PS2::TextureFilter((bits >> 2) & 1);
+			sampler.magFilter = PS2::TextureFilter((bits >> 3) & 1);
+			sampler.mipFilter = PS2::TextureFilter((bits >> 4) & 1);
+			sampler.maxLod = lod;
+			EXPECT_TRUE(keys.insert(sampler.GetKey()).second);
+		}
+	}
+	const auto nearest = PS2::GetPreviewSamplerDescription(false);
+	EXPECT_EQ(nearest.minFilter, PS2::TextureFilter::Nearest);
+	EXPECT_EQ(nearest.magFilter, PS2::TextureFilter::Nearest);
+	EXPECT_EQ(nearest.maxLod, 0u);
+}
+
+TEST(TextureMipmaps, DescriptorWritesSelectOnlyTheRequestedSet)
+{
+	using namespace Renderer;
+	LayoutBindingMap layout;
+	layout[0][EBindingStage::Fragment] = { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr } };
+	layout[1] = PS2::GetTextureLayoutBindings();
+	const VkDescriptorBufferInfo buffer{};
+	const VkDescriptorImageInfo image{};
+	DescriptorWriteList buffers;
+	buffers.EmplaceWrite({ 0, EBindingStage::Fragment, &buffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+	const auto frameWrites = buffers.CreateWriteDescriptorSetList(VK_NULL_HANDLE, layout, 0);
+	ASSERT_EQ(frameWrites.size(), 1u);
+	EXPECT_EQ(frameWrites.front().descriptorType, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+	EXPECT_EQ(frameWrites.front().pBufferInfo, &buffer);
+	DescriptorWriteList images;
+	images.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &image, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+	const auto textureWrites = images.CreateWriteDescriptorSetList(VK_NULL_HANDLE, layout, 1);
+	ASSERT_EQ(textureWrites.size(), 1u);
+	EXPECT_EQ(textureWrites.front().descriptorType, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	EXPECT_EQ(textureWrites.front().pImageInfo, &image);
+}
 
 TEST(TextureMipmaps, RecoversGsQScaleFromProjection)
 {
@@ -87,16 +131,49 @@ TEST(TextureMipmaps, IndependentMinificationMagnificationAndMipFilters)
 		for (uint32_t mag = 0; mag < 2; ++mag) {
 			GIFReg::GSTex1 tex1{};
 			tex1.CMD = SCE_GS_PACK_TEX1(0, 6, mag, filter, 0, 0, 0);
-			const auto selector = PS2::GetTextureSamplerSelector(clamp, tex1, 4);
-			EXPECT_EQ(selector.ltf, !linearMin[filter]);
-			EXPECT_EQ(selector.magPoint, !mag);
-			EXPECT_EQ(selector.mipLinear, linearMip[filter]);
-			EXPECT_EQ(selector.maxLevel, filter < 2 ? 0u : 3u);
-			EXPECT_EQ(selector.tau, 0u);
-			EXPECT_EQ(selector.tav, 1u);
-			EXPECT_EQ(PS2::GetTextureSamplerSelector(clamp, tex1, 1).maxLevel, 0u);
+			const auto selector = PS2::ResolveTextureSampling(clamp, tex1, 4).sampler;
+			EXPECT_EQ(selector.minFilter == PS2::TextureFilter::Linear, linearMin[filter]);
+			EXPECT_EQ(selector.magFilter == PS2::TextureFilter::Linear, bool(mag));
+			EXPECT_EQ(selector.mipFilter == PS2::TextureFilter::Linear, linearMip[filter]);
+			EXPECT_EQ(selector.maxLod, filter < 2 ? 0u : 3u);
+			EXPECT_EQ(selector.addressU, PS2::TextureAddress::Clamp);
+			EXPECT_EQ(selector.addressV, PS2::TextureAddress::Repeat);
+			EXPECT_EQ(PS2::ResolveTextureSampling(clamp, tex1, 1).sampler.maxLod, 0u);
 		}
 	}
+}
+
+TEST(TextureMipmaps, ResolvesOverridesWithoutChangingAuthoredRegisters)
+{
+	GIFReg::GSClamp clamp{};
+	GIFReg::GSTex1 tex1{};
+	tex1.CMD = SCE_GS_PACK_TEX1(0, 6, 1, 1, 0, 2, uint32_t(-24));
+	const auto authored = tex1.CMD;
+	const auto normal = PS2::ResolveTextureSampling(clamp, tex1, 3);
+	EXPECT_EQ(normal.sampler.maxLod, 0u);
+	EXPECT_EQ(normal.lod.lodBias, -24);
+	EXPECT_FALSE(normal.lod.fixedLod);
+	for (auto overrideMode : { PS2::MipOverride::Highest, PS2::MipOverride::Lowest }) {
+		const auto resolved = PS2::ResolveTextureSampling(clamp, tex1, 3, overrideMode);
+		const uint32_t expectedLevel = overrideMode == PS2::MipOverride::Highest ? 2 : 0;
+		EXPECT_EQ(resolved.sampler.maxLod, expectedLevel);
+		EXPECT_EQ(resolved.lod.maxLevel, expectedLevel);
+		EXPECT_EQ(resolved.lod.lodBias, expectedLevel * 16);
+		EXPECT_TRUE(resolved.lod.fixedLod);
+		EXPECT_EQ(resolved.sampler.mipFilter, PS2::TextureFilter::Nearest);
+		EXPECT_EQ(resolved.sampler.minFilter, normal.sampler.minFilter);
+		EXPECT_EQ(resolved.sampler.magFilter, normal.sampler.magFilter);
+		EXPECT_EQ(resolved.lod.lodScale, normal.lod.lodScale);
+	}
+	EXPECT_EQ(tex1.CMD, authored);
+	EXPECT_EQ(PS2::ResolveTextureSampling(clamp, tex1, 0, PS2::MipOverride::Highest).sampler.maxLod, 0u);
+	EXPECT_EQ(PS2::ResolveTextureSampling(clamp, tex1, 32, PS2::MipOverride::Highest).sampler.maxLod, 6u);
+
+	// Shader-only LOD settings must reuse the same sampler variant.
+	tex1.CMD = SCE_GS_PACK_TEX1(1, 6, 1, 1, 0, 0, 48);
+	const auto otherLod = PS2::ResolveTextureSampling(clamp, tex1, 3);
+	EXPECT_EQ(otherLod.sampler.GetKey(), normal.sampler.GetKey());
+	EXPECT_NE(otherLod.lod.lodBias, normal.lod.lodBias);
 }
 
 TEST(TextureMipmaps, SignedBiasFixedLodAndAlphaPacking)

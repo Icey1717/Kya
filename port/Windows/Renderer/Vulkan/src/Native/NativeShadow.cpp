@@ -139,10 +139,10 @@ namespace Renderer::Native::Shadow
 		std::vector<VkDescriptorSet> AllocateDescriptorSets(
 			const Pipeline& pipeline,
 			VkDescriptorPool& descriptorPool,
-			const char* debugName)
+			const char* debugName, int setIndex = 0)
 		{
-			CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorPool);
-			std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts.at(0));
+			CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorPool, setIndex);
+			std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts.at(setIndex));
 			std::vector<VkDescriptorSet> sets(MAX_FRAMES_IN_FLIGHT);
 
 			VkDescriptorSetAllocateInfo allocInfo{};
@@ -268,7 +268,7 @@ namespace Renderer::Native::Shadow
 		{
 			const Pipeline& receiverPipeline = GetNativeRendererState().renderPass.at(RenderPassKey{ EClearMode::None, ERenderPassKind::ShadowReceiver }).GetPipeline();
 			target.blurDescriptorSets = AllocateDescriptorSets(gBlurPipeline, target.blurDescriptorPool, "Shadow Blur Descriptor");
-			target.receiverDescriptorSets = AllocateDescriptorSets(receiverPipeline, target.receiverDescriptorPool, "Shadow Receiver Descriptor");
+			target.receiverDescriptorSets = AllocateDescriptorSets(receiverPipeline, target.receiverDescriptorPool, "Shadow Receiver Descriptor", 1);
 
 			for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 				VkDescriptorImageInfo maskInfo{ target.sampler, target.mask.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
@@ -277,18 +277,10 @@ namespace Renderer::Native::Shadow
 				auto blurDescriptorWrites = blurWrites.CreateWriteDescriptorSetList(target.blurDescriptorSets[i], gBlurPipeline.descriptorSetLayoutBindings);
 				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(blurDescriptorWrites.size()), blurDescriptorWrites.data(), 0, nullptr);
 
-				const VkDescriptorBufferInfo modelInfo = GetNativeRendererState().modelBuffer.GetDescBufferInfo(i);
-				const VkDescriptorBufferInfo animInfo = GetNativeRendererState().animationBuffer.GetDescBufferInfo(i);
-				const VkDescriptorBufferInfo animStInfo = GetNativeRendererState().animStBuffer.GetDescBufferInfo(i);
-				const VkDescriptorBufferInfo projectionInfo = GetNativeRendererState().shadowProjectionBuffer.GetDescBufferInfo(i);
 				VkDescriptorImageInfo shadowInfo{ target.sampler, target.blur.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 				DescriptorWriteList receiverWrites;
-				receiverWrites.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &shadowInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-				receiverWrites.EmplaceWrite({ 2, EBindingStage::Vertex, &modelInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-				receiverWrites.EmplaceWrite({ 3, EBindingStage::Vertex, &animInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-				receiverWrites.EmplaceWrite({ 5, EBindingStage::Vertex, &animStInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-				receiverWrites.EmplaceWrite({ 6, EBindingStage::Vertex, &projectionInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-				auto receiverDescriptorWrites = receiverWrites.CreateWriteDescriptorSetList(target.receiverDescriptorSets[i], receiverPipeline.descriptorSetLayoutBindings);
+				receiverWrites.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &shadowInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+				auto receiverDescriptorWrites = receiverWrites.CreateWriteDescriptorSetList(target.receiverDescriptorSets[i], receiverPipeline.descriptorSetLayoutBindings, 1);
 				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(receiverDescriptorWrites.size()), receiverDescriptorWrites.data(), 0, nullptr);
 			}
 		}

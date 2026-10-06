@@ -366,10 +366,9 @@ namespace Renderer::Native::DisplayList
 			pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
 		}
 
+		pipeline.descriptorSetLayoutBindings[1] = PS2::GetTextureLayoutBindings();
 		pipeline.CreateDescriptorSetLayouts();
 		pipeline.CreateLayout();
-		pipeline.CreateDescriptorPool();
-		pipeline.CreateDescriptorSets();
 	}
 
 	static VkPipeline GetBlendPipeline()
@@ -428,36 +427,12 @@ namespace Renderer::Native::DisplayList
 		assert(properties.limits.maxPushConstantsSize >= sizeof(DisplayListFragmentState));
 	}
 
-	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture, const Renderer::Pipeline& pipeline)
+	static VkDescriptorSet GetTextureDescriptorSet(Renderer::SimpleTexture& texture)
 	{
-		if (!pTexture) {
-			return;
-		}
-
-		if (pTexture->GetRenderer()->HasDescriptorSets(pipeline)) {
-			return;
-		}
-
-		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-
-		// Work out the sampler
-		auto& textureRegisters = pTexture->GetTextureRegisters();
-		PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
-		pTextureData->samplerSelector = selector;
-
-		VkSampler& sampler = PS2::GetSampler(selector);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = pTextureData->imageView;
-		imageInfo.sampler = sampler;
-
-		DescriptorWriteList writeList;
-		writeList.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-
-		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
-		}
+		auto* textureData = texture.GetRenderer();
+		const auto& registers = texture.GetTextureRegisters();
+		const auto selector = PS2::EmulateTextureSampler(textureData->width, textureData->height, registers.clamp, registers.tex, {});
+		return textureData->GetOrCreateTextureBinding(selector);
 	}
 
 	static void FinalizeDraw()
@@ -483,8 +458,8 @@ namespace Renderer::Native::DisplayList
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline());
 
 			if (gBoundTexture) {
-				InitializeDescriptorsSets(gBoundTexture, pipeline);
-				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, NULL);
+				const VkDescriptorSet descriptorSet = GetTextureDescriptorSet(*gBoundTexture);
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 1, 1, &descriptorSet, 0, NULL);
 			}
 
 			vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragmentState), &fragmentState);
@@ -542,8 +517,7 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 
 	// Need to do this after we have updated prim.
 	if (gBoundTexture) {
-		auto& pipeline = GetPipelineState().pipeline;
-		InitializeDescriptorsSets(gBoundTexture, pipeline);
+		GetTextureDescriptorSet(*gBoundTexture);
 	}
 
 	gBoundPipeline = nullptr;
@@ -618,8 +592,7 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	gBoundTexture = pNewTexture;
 
 	if (gBoundTexture) {
-		auto& pipeline = GetPipelineState().pipeline;
-		InitializeDescriptorsSets(gBoundTexture, pipeline);
+		GetTextureDescriptorSet(*gBoundTexture);
 	}
 
 	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture ? gBoundTexture->GetName().c_str() : "No Texture Binding");

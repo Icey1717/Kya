@@ -262,7 +262,7 @@ namespace Renderer
 				GIFReg::GSAlpha gsAlpha = {};
 				GIFReg::GSTest gsTest = {};
 				GIFReg::GSTex1 gsTex1 = {};
-				const VkDescriptorSet* pDescriptorSets = nullptr;
+				VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 				bool bIsZMask = false;
 				PerDrawData perDrawData;
 			};
@@ -272,7 +272,7 @@ namespace Renderer
 			bool bIsAfailZOnly = false;
 			std::optional<FrameBufferMaterialSettings> frameBufferMaterial;
 
-			const VkDescriptorSet* pDescriptorSets = nullptr;
+			VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 		};
 
 		class NativePreviewRenderer
@@ -315,6 +315,8 @@ namespace Renderer
 			bool forceAnimMatrixIdentity = false;
 			SimpleTexture* whiteTexture = nullptr;
 
+			VkDescriptorPool frameDescriptorPool = VK_NULL_HANDLE;
+			std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> frameDescriptorSets{};
 			VkSampler frameBufferSampler = VK_NULL_HANDLE;
 			FrameBufferBase frameBuffer;
 			std::unordered_map<RenderPassKey, RenderStage, RenderPassKeyHash> renderPass;

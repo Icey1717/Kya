@@ -375,10 +375,11 @@ namespace Renderer
 							SetColorDepthDynamicState(cmd, drawCommand, instance);
 						}
 
-						const VkDescriptorSet* descriptorSet = instance.pDescriptorSets ? instance.pDescriptorSets : drawCommand.pDescriptorSets;
-						if (bShadowReceiver) descriptorSet = &Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
-						if (drawCommand.frameBufferMaterial) descriptorSet = &FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, descriptorSet, 0, nullptr);
+						VkDescriptorSet descriptorSet = instance.descriptorSet ? instance.descriptorSet : drawCommand.descriptorSet;
+						if (bShadowReceiver) descriptorSet = Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
+						if (drawCommand.frameBufferMaterial) descriptorSet = FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
+						const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
+						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
 
                         if (TraceDraw(drawCommand, instance, true)) {
 #ifndef NDEBUG

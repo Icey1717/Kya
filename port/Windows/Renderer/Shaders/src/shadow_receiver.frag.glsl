@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-layout(binding = 1) uniform sampler2D shadowMask;
+layout(set = 1, binding = 0) uniform sampler2D shadowMask;
 layout(location = 0) in vec4 shadowCoord;
 layout(location = 0) out vec4 outColor;
 

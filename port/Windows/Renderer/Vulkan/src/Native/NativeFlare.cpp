@@ -184,9 +184,8 @@ namespace Renderer::Native::Flare
 		const auto* texture = flare.pTexture->GetRenderer();
 		if (!texture || texture->imageView == VK_NULL_HANDLE) return;
 		const VkDescriptorSet set = AllocateDescriptor();
-		PS2::PSSamplerSelector textureSampler;
-		textureSampler.tau = textureSampler.tav = 1;
-		textureSampler.ltf = 0; // GetSampler maps 0 to linear filtering, 1 to nearest.
+		PS2::SamplerDescription textureSampler;
+		textureSampler.addressU = textureSampler.addressV = PS2::TextureAddress::Repeat;
 		const std::array imageInfo{
 			VkDescriptorImageInfo{ PS2::GetSampler(textureSampler), texture->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
 			VkDescriptorImageInfo{ sampler, GetNativeRendererState().frameBuffer.depthImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL },

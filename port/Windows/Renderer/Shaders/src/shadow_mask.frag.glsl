@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "texture_sampling.glsl"
 
-layout(binding = 1) uniform sampler2D textureSampler;
+layout(set = 1, binding = 0) uniform sampler2D textureSampler;
 layout(location = 0) in vec2 fragTexCoord;
 layout(location = 1) in float fragAlpha;
 layout(location = 0) out float outCoverage;

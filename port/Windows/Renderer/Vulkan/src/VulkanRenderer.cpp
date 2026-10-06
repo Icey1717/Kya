@@ -533,6 +533,7 @@ private:
 
 		PS2::Cleanup();
 		Renderer::Native::Cleanup();
+		PS2::CleanupSamplerCache();
 
 		vkDestroyPipeline(device, graphicsPipeline, GetAllocator());
 		vkDestroyPipelineLayout(device, pipelineLayout, GetAllocator());

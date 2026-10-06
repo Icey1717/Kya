@@ -17,7 +17,7 @@ namespace Renderer
 {
 	namespace Native
 	{
-		enum class MipOverride { None, Highest, Lowest };
+		using PS2::MipOverride;
 		static std::atomic<MipOverride> gMipOverride = MipOverride::None;
 
 		void SetForceHighestMipLevel(bool enabled)
@@ -220,58 +220,6 @@ void Renderer::Native::ApplyPendingResizeIfNeeded()
 }
 
 
-void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture, uint32_t samplerKey)
-{
-	if (!pTexture) {
-		return;
-	}
-
-	NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
-
-	if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
-		pTexture->GetName();
-	}
-
-	PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-
-	const Pipeline& pipeline = GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline();
-
-	if (pTextureData->HasDescriptorSets(pipeline, samplerKey)) {
-		// Already have descriptor sets, no need to initialize them.
-		return;
-	}
-
-	// Work out the sampler
-	PS2::PSSamplerSelector selector;
-	selector.key = samplerKey;
-
-	VkSampler& sampler = PS2::GetSampler(selector);
-
-	VkDescriptorImageInfo imageInfo{};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = pTextureData->imageView;
-	imageInfo.sampler = sampler;
-
-	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		const VkDescriptorBufferInfo modelDescBufferInfo = GetNativeRendererState().modelBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animDescBufferInfo = GetNativeRendererState().animationBuffer.GetDescBufferInfo(i);
-
-		const VkDescriptorBufferInfo lightingDescBufferInfo = GetNativeRendererState().lightingDynamicBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animStDescBufferInfo = GetNativeRendererState().animStBuffer.GetDescBufferInfo(i);
-
-		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
-
-		DescriptorWriteList writeList;
-		writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-		writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-		writeList.EmplaceWrite({ 4, EBindingStage::Vertex, &lightingDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-		writeList.EmplaceWrite({ 5, EBindingStage::Vertex, &animStDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER });
-
-		writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-
-		pTextureData->UpdateDescriptorSets(pipeline, writeList, i, samplerKey);
-	}
-}
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent, Renderer::CommandBufferList& commandBufferList)
 {
 	ZONE_SCOPED;
@@ -363,18 +311,10 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 		int instanceIndex = 0;
 		const auto mipOverride = gMipOverride.load(std::memory_order_relaxed);
 		for (auto& instance : GetNativeRendererState().currentDraw->instances) {
-			auto tex1 = instance.gsTex1;
-			if (mipOverride != MipOverride::None) {
-				const uint32_t maxLevel = mipOverride == MipOverride::Highest ? std::min(pTexture->GetRenderer()->mipLevels - 1, 6u) : 0;
-				tex1.MMIN = TextureSampling::Decode(tex1).minLinear ? 4 : 2;
-				tex1.MXL = maxLevel;
-				tex1.LCM = 1;
-				tex1.K = maxLevel * 16;
-			}
-			const auto selector = PS2::GetTextureSamplerSelector(pTexture->GetTextureRegisters().clamp, tex1, pTexture->GetRenderer()->mipLevels);
-			InitializeDescriptorsSets(pTexture, selector.key);
-			instance.pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline(), nullptr, selector.key).GetSet(GetCurrentFrame());
-			const auto settings = TextureSampling::Decode(tex1);
+			const auto sampling = PS2::ResolveTextureSampling(pTexture->GetTextureRegisters().clamp, instance.gsTex1,
+				pTexture->GetRenderer()->mipLevels, mipOverride);
+			instance.descriptorSet = pTexture->GetRenderer()->GetOrCreateTextureBinding(sampling.sampler);
+			const auto& settings = sampling.lod;
 			instance.perDrawData.textureLodBias = settings.lodBias;
 			instance.perDrawData.textureLodScale = settings.lodScale;
 			instance.perDrawData.textureFixedLod = settings.fixedLod;
@@ -383,7 +323,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
 		}
 		if (!GetNativeRendererState().currentDraw->instances.empty()) {
-			GetNativeRendererState().currentDraw->pDescriptorSets = GetNativeRendererState().currentDraw->instances.front().pDescriptorSets;
+			GetNativeRendererState().currentDraw->descriptorSet = GetNativeRendererState().currentDraw->instances.front().descriptorSet;
 		}
 
 		if (!GetRenderThreadHasRecordedCommands(GetNativeRendererState().renderThread)) {
@@ -539,7 +479,7 @@ void Renderer::Native::BindShadowReceiver()
 	if (!GetNativeRendererState().currentDraw) return;
 	Draw& draw = *GetNativeRendererState().currentDraw;
 	draw.pTexture = GetNativeRendererState().whiteTexture;
-	draw.pDescriptorSets = nullptr;
+	draw.descriptorSet = VK_NULL_HANDLE;
 	draw.projMatrix = GetNativeRendererState().cachedProjMatrix;
 	draw.viewMatrix = GetNativeRendererState().cachedViewMatrix;
 	for (auto& instance : draw.instances) {

@@ -578,11 +578,7 @@ namespace Debug
 					pRenderer = pCurrentRenderer;
 					lastImageView = pRenderer->imageView;
 
-					PS2::PSSamplerSelector sel;
-
-					sel.ltf = bLinearSampler;
-
-					VkSampler& sampler = PS2::GetSampler(sel);
+					const VkSampler sampler = PS2::GetSampler(PS2::GetPreviewSamplerDescription(bLinearSampler));
 
 					textureId = ImGui_ImplVulkan_AddTexture(sampler, pRenderer->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				}
@@ -740,9 +736,6 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 				for (const auto& layer : material.layers) {
 					for (const auto& texEntry : layer.textures) {
 						if (texEntry.pSimpleTexture) {
-							// Skip textures using a linear sampler — these are likely palettes.
-							if (texEntry.pSimpleTexture->GetRenderer()->samplerSelector.ltf)
-								continue;
 							Renderer::Native::UpscaleTexture(texEntry.pSimpleTexture.get());
 						}
 					}
