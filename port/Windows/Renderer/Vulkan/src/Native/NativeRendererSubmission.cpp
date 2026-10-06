@@ -17,6 +17,27 @@ namespace Renderer
 {
 	namespace Native
 	{
+		enum class MipOverride { None, Highest, Lowest };
+		static std::atomic<MipOverride> gMipOverride = MipOverride::None;
+
+		void SetForceHighestMipLevel(bool enabled)
+		{
+			if (enabled) gMipOverride.store(MipOverride::Highest, std::memory_order_relaxed);
+			else {
+				auto expected = MipOverride::Highest;
+				gMipOverride.compare_exchange_strong(expected, MipOverride::None, std::memory_order_relaxed);
+			}
+		}
+
+		void SetForceLowestMipLevel(bool enabled)
+		{
+			if (enabled) gMipOverride.store(MipOverride::Lowest, std::memory_order_relaxed);
+			else {
+				auto expected = MipOverride::Lowest;
+				gMipOverride.compare_exchange_strong(expected, MipOverride::None, std::memory_order_relaxed);
+			}
+		}
+
 		static void CreateDraw()
 		{
 			GetNativeRendererState().currentDraw = Draw{};
@@ -340,11 +361,20 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 		GetNativeRendererState().currentDraw->viewMatrix = GetNativeRendererState().cachedViewMatrix;
 
 		int instanceIndex = 0;
+		const auto mipOverride = gMipOverride.load(std::memory_order_relaxed);
 		for (auto& instance : GetNativeRendererState().currentDraw->instances) {
-			const auto selector = PS2::GetTextureSamplerSelector(pTexture->GetTextureRegisters().clamp, instance.gsTex1, pTexture->GetRenderer()->mipLevels);
+			auto tex1 = instance.gsTex1;
+			if (mipOverride != MipOverride::None) {
+				const uint32_t maxLevel = mipOverride == MipOverride::Highest ? std::min(pTexture->GetRenderer()->mipLevels - 1, 6u) : 0;
+				tex1.MMIN = TextureSampling::Decode(tex1).minLinear ? 4 : 2;
+				tex1.MXL = maxLevel;
+				tex1.LCM = 1;
+				tex1.K = maxLevel * 16;
+			}
+			const auto selector = PS2::GetTextureSamplerSelector(pTexture->GetTextureRegisters().clamp, tex1, pTexture->GetRenderer()->mipLevels);
 			InitializeDescriptorsSets(pTexture, selector.key);
 			instance.pDescriptorSets = &pTexture->GetRenderer()->GetDescriptorSets(GetNativeRendererState().renderPass[GetNativeRendererState().cachedRenderPassKey].GetPipeline(), nullptr, selector.key).GetSet(GetCurrentFrame());
-			const auto settings = TextureSampling::Decode(instance.gsTex1);
+			const auto settings = TextureSampling::Decode(tex1);
 			instance.perDrawData.textureLodBias = settings.lodBias;
 			instance.perDrawData.textureLodScale = settings.lodScale;
 			instance.perDrawData.textureFixedLod = settings.fixedLod;

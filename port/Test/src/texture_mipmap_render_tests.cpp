@@ -136,6 +136,15 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 	EXPECT_NEAR(blend[3], 96, 1);
 	const auto nearest = render(4, 2, 4);
 	EXPECT_EQ(nearest, base);
+	Renderer::Native::SetForceHighestMipLevel(true);
+	EXPECT_EQ(render(1, 0, 0), last); // Override both base-only filtering and MXL=0.
+	Renderer::Native::SetForceLowestMipLevel(true); // Replaces the highest override.
+	EXPECT_EQ(render(5, 2, 32), base);
+	Renderer::Native::SetForceHighestMipLevel(false);
+	EXPECT_EQ(render(5, 2, 32), base); // Disabling the inactive override leaves lowest active.
+	Renderer::Native::SetForceLowestMipLevel(false);
+	EXPECT_EQ(render(5, 2, 32), last);
+	EXPECT_EQ(render(1, 0, 0), base);
 	// Constant UVs deliberately have no derivatives. Automatic LOD must use
 	// GS Q, including the projection scale, signed authored K, and 2^L.
 	EXPECT_EQ(render(5, 2, 0, 0, false), base);

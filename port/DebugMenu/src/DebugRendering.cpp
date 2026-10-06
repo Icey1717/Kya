@@ -32,6 +32,8 @@ namespace Debug {
 		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
 		static Debug::Setting<bool> gFullResolutionHeatCapture = { "Full Resolution Heat FX Capture", false };
 		static Debug::Setting<bool> gFlareOcclusion = { "Flare Occlusion", true };
+		static Debug::Setting<bool> gForceHighestMipLevel = { "Force Highest Mip Level", false };
+		static Debug::Setting<bool> gForceLowestMipLevel = { "Force Lowest Mip Level", false };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -234,6 +236,16 @@ void Debug::Rendering::DrawContents()
 		}
 		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
+		if (gForceHighestMipLevel.DrawImguiControl()) {
+			if (gForceHighestMipLevel.get()) gForceLowestMipLevel = false;
+			Renderer::Native::SetForceHighestMipLevel(gForceHighestMipLevel.get());
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force the smallest authored mip on textured meshes, overriding material LOD and mip limits. Textures with one level stay unchanged.");
+		if (gForceLowestMipLevel.DrawImguiControl()) {
+			if (gForceLowestMipLevel.get()) gForceHighestMipLevel = false;
+			Renderer::Native::SetForceLowestMipLevel(gForceLowestMipLevel.get());
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force mip 0 (the full-resolution base texture) on textured meshes, overriding material LOD.");
 
 		if (gDisableClusterRendering.DrawImguiControl()) {
 			ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
@@ -286,6 +298,9 @@ void Debug::Rendering::Init()
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
 	Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
 	Renderer::Native::SetFlareOcclusionEnabled(gFlareOcclusion.get());
+	if (gForceLowestMipLevel.get() && gForceHighestMipLevel.get()) gForceHighestMipLevel = false;
+	Renderer::Native::SetForceHighestMipLevel(gForceHighestMipLevel.get());
+	Renderer::Native::SetForceLowestMipLevel(gForceLowestMipLevel.get());
 
 	if (gAutoApplyResolution) {
 		Renderer::Native::ResizeFrameBuffer(gRenderWidth.get(), gRenderHeight.get());

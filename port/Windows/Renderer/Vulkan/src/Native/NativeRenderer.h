@@ -90,6 +90,8 @@ namespace Renderer
 		void ApplyPendingResizeIfNeeded();
 		VkExtent2D GetFrameBufferSize();
 		void SetFullResolutionHeatCapture(bool enabled);
+		void SetForceHighestMipLevel(bool enabled);
+		void SetForceLowestMipLevel(bool enabled);
 		VkExtent2D GetHeatCaptureSize();
 		void Cleanup();
 		const glm::mat4& GetInitialViewMatrix();
