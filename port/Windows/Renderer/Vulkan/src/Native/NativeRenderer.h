@@ -84,6 +84,7 @@ namespace Renderer
 		double GetRenderTime();
 		double GetRenderWaitTime();
 		double GetRenderThreadTime();
+		double GetAlphaTestSlowPathTime();
 
 		void ResizeFrameBuffer(int width, int height);
 		void ApplyPendingResizeIfNeeded();

@@ -58,18 +58,20 @@ TEST(GsBlendingRendering, DISABLED_AlphaFailMasksGlobalAlphaAndFixedBlend)
 	}
 	vertices.vertex.tail = vertices.vertex.next = vertices.index.tail = 3;
 	glm::mat4 identity(1);
+	for (const auto testMode : { ATST_GEQUAL, ATST_NEVER }) {
+	for (bool depthMask : { false, true }) {
 	for (uint32_t vertexAlpha : { 128u, 64u }) {
 		for (uint32_t globalAlpha : { 128u, 64u }) {
 			for (uint32_t factor : { 0u, 2u }) {
 			for (uint32_t fail = 0; fail < 4; ++fail) {
-				SCOPED_TRACE(::testing::Message() << "vertex=" << vertexAlpha << " global=" << globalAlpha << " C=" << factor << " AFAIL=" << fail);
+				SCOPED_TRACE(::testing::Message() << "vertex=" << vertexAlpha << " global=" << globalAlpha << " C=" << factor << " AFAIL=" << fail << " ATST=" << testMode << " ZMSK=" << depthMask);
 				CombinedImageData image{};
 				image.bitmaps.resize(1);
 				image.registers.tex.TW = 1;
 				image.registers.tex.TBW = 1;
 				image.registers.tex.TBP0 = 0x100;
 				image.registers.test.ATE = 1;
-				image.registers.test.ATST = ATST_GEQUAL;
+				image.registers.test.ATST = testMode;
 				image.registers.test.AREF = 96 * vertexAlpha * globalAlpha / (128 * 128);
 				image.registers.test.AFAIL = fail;
 				image.registers.alpha.CMD = SCE_GS_SET_ALPHA_1(0, 1, 2, 1, 64);
@@ -87,6 +89,7 @@ TEST(GsBlendingRendering, DISABLED_AlphaFailMasksGlobalAlphaAndFixedBlend)
 				GIFReg::GSTest test{};
 				test.ZTE = 1; test.ZTST = 1;
 				Renderer::SetTest(test);
+				Renderer::SetZbuf(depthMask ? 1 : 0);
 				Renderer::SetAlpha(0, 1, factor, 1, 64);
 				Renderer::SetGlobalAlpha(globalAlpha);
 				const uint32_t color = (vertexAlpha << 24) | 0x00808080;
@@ -95,6 +98,10 @@ TEST(GsBlendingRendering, DISABLED_AlphaFailMasksGlobalAlphaAndFixedBlend)
 				Renderer::Native::BindTexture(&texture);
 				Renderer::SetGlobalAlpha(0); // Queued state must survive later changes.
 				MainThreadEndCommands(state.renderThread);
+				const bool slowPath = testMode != ATST_NEVER && fail != AFAIL_KEEP &&
+					(fail == AFAIL_RGB_ONLY || !depthMask);
+				if (slowPath) EXPECT_GT(state.accumulatedAlphaTestSlowPathTime, 0.0);
+				else EXPECT_DOUBLE_EQ(state.accumulatedAlphaTestSlowPathTime, 0.0);
 				const auto cmd = state.commandBuffers[GetCurrentFrame()];
 				VulkanBuffer readback(16, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 				for (bool depth : { false, true }) {
@@ -125,20 +132,26 @@ TEST(GsBlendingRendering, DISABLED_AlphaFailMasksGlobalAlphaAndFixedBlend)
 				const uint32_t alphaScale = vertexAlpha * globalAlpha;
 				const uint32_t passAlpha = 128 * alphaScale / (128 * 128);
 				const uint32_t failAlpha = 64 * alphaScale / (128 * 128);
-				EXPECT_NEAR(bytes[4], factor == 2 ? 64 : passAlpha, 1);
-				EXPECT_NEAR(bytes[7], 128 * alphaScale / (128 * 128), 1);
-				EXPECT_NEAR(bytes[0], fail == AFAIL_FB_ONLY || fail == AFAIL_RGB_ONLY ? (factor == 2 ? 64 : failAlpha) : 0, 1);
-				EXPECT_NEAR(bytes[3], fail == AFAIL_FB_ONLY ? 64 * alphaScale / (128 * 128) : 255, 1);
 				float depths[2]; memcpy(depths, bytes + 8, sizeof(depths));
-				EXPECT_FLOAT_EQ(depths[0], fail == AFAIL_ZB_ONLY ? 0.5f : 0.0f);
-				EXPECT_FLOAT_EQ(depths[1], 0.5f);
+				for (uint32_t side = 0; side < 2; ++side) {
+					const bool passes = side == 1 && testMode != ATST_NEVER;
+					const bool colorWrites = passes || fail == AFAIL_FB_ONLY || fail == AFAIL_RGB_ONLY;
+					const bool alphaWrites = passes || fail == AFAIL_FB_ONLY;
+					const auto alpha = side ? passAlpha : failAlpha;
+					EXPECT_NEAR(bytes[side * 4], colorWrites ? (factor == 2 ? 64 : alpha) : 0, 1);
+					EXPECT_NEAR(bytes[side * 4 + 3], alphaWrites ? alpha : 255, 1);
+					EXPECT_FLOAT_EQ(depths[side], !depthMask && (passes || fail == AFAIL_ZB_ONLY) ? 0.5f : 0.0f);
+				}
 				vkUnmapMemory(GetDevice(), readback.Memory());
 				ResetRenderThread(state.renderThread);
+				state.accumulatedAlphaTestSlowPathTime = 0.0;
 				state.nativeVertexBuffer.Reset();
 				texture.GetRenderer()->DestroyImageResources();
 			}
 			}
 		}
+	}
+	}
 	}
 	Renderer::Native::Cleanup();
 }

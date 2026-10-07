@@ -308,6 +308,10 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 		GetNativeRendererState().vkCmdSetColorWriteEnableEXT,
 		GetNativeRendererState().vkCmdSetColorWriteMaskEXT);
 	GetNativeRendererState().preview.ClearSavedDraws();
+	// Render-thread recording has finished, including any main-thread queue drain.
+	// Include preview replay, and retain a completed-frame value for the stats UI.
+	GetNativeRendererState().alphaTestSlowPathTime = GetNativeRendererState().accumulatedAlphaTestSlowPathTime;
+	GetNativeRendererState().accumulatedAlphaTestSlowPathTime = 0.0;
 
 	GetNativeRendererState().nativeVertexBuffer.Reset();
 	GetNativeRendererState().animationMatrices.clear();

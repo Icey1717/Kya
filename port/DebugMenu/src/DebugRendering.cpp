@@ -164,6 +164,8 @@ void Debug::Rendering::DrawContents()
 		ImGui::Text("Render:        %.1f ms", Renderer::Native::GetRenderTime());
 		ImGui::Text("Render Wait:   %.1f ms", Renderer::Native::GetRenderWaitTime());
 		ImGui::Text("Render Thread: %.1f ms", Renderer::Native::GetRenderThreadTime());
+		ImGui::Text("Alpha Slow Path: %.3f ms", Renderer::Native::GetAlphaTestSlowPathTime());
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Total CPU time recording per-triangle alpha-test replays in the last completed frame, including preview. GPU time is not measured.");
 	}
 
 	// --- Resolution Info ---

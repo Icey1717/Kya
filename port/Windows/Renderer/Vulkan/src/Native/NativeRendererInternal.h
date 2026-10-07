@@ -327,6 +327,9 @@ namespace Renderer
 		{
 			double renderTime = 0.0;
 			double renderWaitTime = 0.0;
+			double alphaTestSlowPathTime = 0.0;
+			// Accumulated while recording; published and reset after main/preview work completes.
+			double accumulatedAlphaTestSlowPathTime = 0.0;
 
 			bool forceAnimMatrixIdentity = false;
 			SimpleTexture* whiteTexture = nullptr;

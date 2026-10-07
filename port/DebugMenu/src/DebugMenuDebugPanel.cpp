@@ -33,6 +33,8 @@ namespace Debug {
 		ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
 		ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
 		ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
+		ImGui::Text("Alpha Slow Path Time: %.3f ms", Renderer::Native::GetAlphaTestSlowPathTime());
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Total CPU time recording per-triangle alpha-test replays in the last completed frame, including preview. GPU time is not measured.");
 
 		if (auto* pTimer = GetTimer(); pTimer != nullptr) {
 			ImGui::Separator();

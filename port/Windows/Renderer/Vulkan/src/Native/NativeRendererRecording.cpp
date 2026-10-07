@@ -35,6 +35,11 @@ namespace Renderer
 			return GetNativeRendererState().renderWaitTime;
 		}
 
+		double GetAlphaTestSlowPathTime()
+		{
+			return GetNativeRendererState().alphaTestSlowPathTime;
+		}
+
 		static void FillIndexData(Draw::Instance& instance)
 		{
 			auto& vertexBufferData = instance.pMesh->GetVertexBufferData();
@@ -230,16 +235,50 @@ namespace Renderer
 			auto push = [&](const PerDrawData& values) {
 				vkCmdPushConstants(cmd, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(values), &values);
 			};
+			auto record = [&]() {
+				vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+			};
+			auto setFailureWrites = [&]() {
+				const VkBool32 colorWrite = data.alphaAfail != AFAIL_ZB_ONLY;
+				GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWrite);
+				const VkColorComponentFlags mask = data.alphaAfail == AFAIL_RGB_ONLY ? 7 : 15;
+				GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &mask);
+				vkCmdSetDepthWriteEnable(cmd, data.alphaAfail == AFAIL_ZB_ONLY && !instance.bIsZMask && instance.gsTest.ZTE);
+			};
 
-			const bool bReplay = data.alphaEnable && data.alphaAtst != ATST_ALWAYS && data.alphaAfail != AFAIL_KEEP;
+			const bool depthWrites = !instance.bIsZMask && instance.gsTest.ZTE;
+			if (data.alphaEnable && data.alphaAtst == ATST_NEVER) {
+				// Every fragment takes the same failure path. Preserve mesh batching.
+				if (data.alphaAfail == AFAIL_KEEP || (data.alphaAfail == AFAIL_ZB_ONLY && !depthWrites)) return;
+				PerDrawData failure = data;
+				failure.alphaAfail |= 16;
+				push(failure);
+				setFailureWrites();
+				record();
+				SetColorDepthDynamicState(cmd, draw, instance);
+				return;
+			}
+
+			if (data.alphaEnable && !depthWrites && data.alphaAfail == AFAIL_FB_ONLY) {
+				// Pass and fail both write RGBA and neither can write depth.
+				PerDrawData allFragments = data;
+				allFragments.alphaEnable = VK_FALSE;
+				push(allFragments);
+				record();
+				return;
+			}
+
+			const bool bReplay = data.alphaEnable && data.alphaAtst != ATST_ALWAYS && data.alphaAfail != AFAIL_KEEP &&
+				(data.alphaAfail != AFAIL_ZB_ONLY || depthWrites);
 			if (!bReplay) {
 				ZONE_SCOPED_NAME("No Replay");
 				push(data);
-				vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+				record();
 				return;
 			}
 
 			ZONE_SCOPED_NAME("Replay");
+			const auto slowPathStart = std::chrono::steady_clock::now();
 
 			// Keep primitive order: a whole-mesh replay changes blending/depth for overlapping triangles.
 			assert(instance.indexCount % 3 == 0);
@@ -252,11 +291,7 @@ namespace Renderer
 				PerDrawData failure = data;
 				failure.alphaAfail |= 16;
 				push(failure);
-				const VkBool32 colorWrite = data.alphaAfail != AFAIL_ZB_ONLY;
-				GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWrite);
-				const VkColorComponentFlags mask = data.alphaAfail == AFAIL_RGB_ONLY ? 7 : 15;
-				GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &mask);
-				vkCmdSetDepthWriteEnable(cmd, data.alphaAfail == AFAIL_ZB_ONLY && !instance.bIsZMask && instance.gsTest.ZTE);
+				setFailureWrites();
 				vkCmdDrawIndexed(cmd, 3, 1, instance.indexStart + index, instance.vertexStart, 0);
 			}
 
@@ -264,55 +299,79 @@ namespace Renderer
 				ZONE_SCOPED_NAME("SetColorDepthDynamicState");
 				SetColorDepthDynamicState(cmd, draw, instance);
 			}
+
+			GetNativeRendererState().accumulatedAlphaTestSlowPathTime +=
+				std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - slowPathStart).count();
 		}
 
-        static bool TraceDraw(const Draw& draw, const Draw::Instance& instance, bool canRecord)
-        {
-            if (!instance.traceSubmission) return true;
-            DrawTrace::Draw trace;
-            trace.recorded = canRecord;
-            trace.pass = static_cast<int>(draw.renderPassKey.kind);
-            trace.indexStart = instance.indexStart;
-            trace.indexCount = instance.indexCount;
-            trace.vertexStart = instance.vertexStart;
-            trace.framebuffer = draw.frameBufferMaterial.has_value();
-            trace.zOnly = draw.bIsAfailZOnly;
-            memcpy(trace.view.data(), &draw.viewMatrix, sizeof(float) * 16);
-            memcpy(trace.projection.data(), &draw.projMatrix, sizeof(float) * 16);
-            const auto& data = instance.perDrawData;
-            trace.alphaTest = data.alphaEnable != 0;
-            trace.alphaAtst = data.alphaAtst;
-            trace.alphaAref = data.alphaAref;
-            trace.alphaAfail = data.alphaAfail;
-            if (draw.pTexture) {
-                DrawTrace::CopyName(trace.texture, draw.pTexture->GetName().c_str());
-                trace.material = draw.pTexture->GetMaterialIndex();
-                trace.layer = draw.pTexture->GetLayerIndex();
-                const auto& registers = draw.pTexture->GetTextureRegisters();
-                trace.alpha = (data.renderFlags & 0x20) ? instance.gsAlpha.CMD : registers.alpha.CMD;
-                if (draw.frameBufferMaterial) trace.alpha = draw.frameBufferMaterial->alpha;
-                auto effectiveTest = registers.test;
-                effectiveTest.ZTE = instance.gsTest.ZTE;
-                effectiveTest.ZTST = instance.gsTest.ZTST;
-                effectiveTest.DATE = instance.gsTest.DATE;
-                effectiveTest.DATM = instance.gsTest.DATM;
-                trace.test = effectiveTest.CMD;
-                trace.tex = registers.tex.CMD;
-                trace.clamp = registers.clamp.CMD;
-                trace.blend = instance.pMesh->GetPrim().ABE || (data.renderFlags & 0x20);
-                trace.depthWrite = true;
-                if (draw.bIsAfailZOnly) { trace.depthWrite = true; trace.colorWrite = false; }
-                if (instance.bIsZMask || !instance.gsTest.ZTE) trace.depthWrite = false;
-                trace.depthTest = instance.gsTest.ZTE != 0;
-                trace.depthMode = instance.gsTest.ZTST;
-                if (draw.renderPassKey.kind == ERenderPassKind::ShadowReceiver) {
-                    trace.depthWrite = false; trace.colorWrite = true; trace.colorMask = 15;
-                    trace.blend = true; trace.depthTest = true; trace.depthMode = 3;
-                }
-                if (draw.renderPassKey.kind == ERenderPassKind::ShadowMask) trace.blend = false;
-            }
-            return DrawTrace::Record(instance.traceSubmission, trace);
-        }
+		static bool TraceDraw(const Draw& draw, const Draw::Instance& instance, bool canRecord)
+		{
+			if (!instance.traceSubmission) {
+				return true;
+			}
+
+			DrawTrace::Draw trace;
+			trace.recorded = canRecord;
+			trace.pass = static_cast<int>(draw.renderPassKey.kind);
+			trace.indexStart = instance.indexStart;
+			trace.indexCount = instance.indexCount;
+			trace.vertexStart = instance.vertexStart;
+			trace.framebuffer = draw.frameBufferMaterial.has_value();
+			trace.zOnly = draw.bIsAfailZOnly;
+
+			memcpy(trace.view.data(), &draw.viewMatrix, sizeof(float) * 16);
+			memcpy(trace.projection.data(), &draw.projMatrix, sizeof(float) * 16);
+
+			const auto& data = instance.perDrawData;
+			trace.alphaTest = data.alphaEnable != 0;
+			trace.alphaAtst = data.alphaAtst;
+			trace.alphaAref = data.alphaAref;
+			trace.alphaAfail = data.alphaAfail;
+
+			if (draw.pTexture) {
+				DrawTrace::CopyName(trace.texture, draw.pTexture->GetName().c_str());
+				trace.material = draw.pTexture->GetMaterialIndex();
+				trace.layer = draw.pTexture->GetLayerIndex();
+				const auto& registers = draw.pTexture->GetTextureRegisters();
+				trace.alpha = (data.renderFlags & 0x20) ? instance.gsAlpha.CMD : registers.alpha.CMD;
+
+				if (draw.frameBufferMaterial) {
+					trace.alpha = draw.frameBufferMaterial->alpha;
+				}
+
+				auto effectiveTest = registers.test;
+				effectiveTest.ZTE = instance.gsTest.ZTE;
+				effectiveTest.ZTST = instance.gsTest.ZTST;
+				effectiveTest.DATE = instance.gsTest.DATE;
+				effectiveTest.DATM = instance.gsTest.DATM;
+				trace.test = effectiveTest.CMD;
+				trace.tex = registers.tex.CMD;
+				trace.clamp = registers.clamp.CMD;
+				trace.blend = instance.pMesh->GetPrim().ABE || (data.renderFlags & 0x20);
+				trace.depthWrite = true;
+				if (draw.bIsAfailZOnly) {
+					trace.depthWrite = true; trace.colorWrite = false;
+				}
+
+				if (instance.bIsZMask || !instance.gsTest.ZTE) {
+					trace.depthWrite = false;
+				}
+
+				trace.depthTest = instance.gsTest.ZTE != 0;
+				trace.depthMode = instance.gsTest.ZTST;
+
+				if (draw.renderPassKey.kind == ERenderPassKind::ShadowReceiver) {
+					trace.depthWrite = false; trace.colorWrite = true; trace.colorMask = 15;
+					trace.blend = true; trace.depthTest = true; trace.depthMode = 3;
+				}
+
+				if (draw.renderPassKey.kind == ERenderPassKind::ShadowMask) {
+					trace.blend = false;
+				}
+			}
+
+			return DrawTrace::Record(instance.traceSubmission, trace);
+		}
 
 		class DrawCommandRecorder
 		{
