@@ -111,7 +111,7 @@ Sources: `ed3DFlushMatrix`, `gbEnv`, node flag `0x40`, and `ed3DFlushStripMultiT
 - [x] Recover the original VU mapping operation, input vectors, coordinate space, and layer selection from Ghidra/microcode.
 - [x] Trace mapping parameters and flags into native per-draw data.
 - [x] Implement generated texture coordinates and the required multilayer composition.
-- [ ] Validate static and skinned geometry under camera/object movement against PS2 output.
+- [x] Validate static and skinned geometry under camera/object movement against PS2 output.
 
 Implementation notes (2026-10-07):
 
