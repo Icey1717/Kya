@@ -7,6 +7,8 @@
 #include "NativeFrameBufferCopy.h"
 #include "NativeFlare.h"
 #include "NativeFog.h"
+#include "NativeAntiAliasing.h"
+#include "NativeMSAA.h"
 #include "Objects/VulkanImage.h"
 #include "profiling.h"
 
@@ -129,11 +131,12 @@ namespace Renderer
 			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			const RenderStage& stage = GetNativeRendererState().renderPass[key];
+			if (key.multisampled) MSAA::Seed(cmd, key);
 
 			VkRenderPassBeginInfo renderPassInfo{};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = stage.gRenderPass;
-			renderPassInfo.framebuffer = Shadow::GetFramebuffer(key.kind);
+			renderPassInfo.framebuffer = key.multisampled ? MSAA::GetFramebuffer() : Shadow::GetFramebuffer(key.kind);
 			renderPassInfo.renderArea.offset = { 0, 0 };
 			renderPassInfo.renderArea.extent = Shadow::GetExtent(key.kind);
 
@@ -290,7 +293,7 @@ namespace Renderer
 
 			void RecordDrawCommand(Draw& drawCommand)
 			{
-				if (!bInRenderPass || drawCommand.bRenderPassDirty) {
+				if (!bInRenderPass || drawCommand.bRenderPassDirty || currentRenderPassKey.multisampled != drawCommand.renderPassKey.multisampled) {
 					if (bInRenderPass) {
 						const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 						Debug::Reset(cmd);
@@ -443,6 +446,7 @@ namespace Renderer
 		{
 			Flare::BeginFrame();
 			Fog::BeginFrame();
+			AntiAliasing::BeginFrame();
 			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			VkCommandBufferBeginInfo beginInfo{};
@@ -557,10 +561,11 @@ namespace Renderer
 
 			struct Command
 			{
-				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy, Flare, Fog } type = Type::Draw;
+				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy, Flare, Fog, AntiAliasing } type = Type::Draw;
 				Draw draw;
 				FlareDraw flare;
 				FogDraw fog;
+				AntiAliasingDraw aa;
 				ShadowPassSettings settings;
 				ShadowReceiverViewport viewport;
 				RenderPassKey capturePassKey;
@@ -611,6 +616,11 @@ namespace Renderer
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Fog::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.fog);
+						break;
+					case Command::Type::AntiAliasing:
+						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
+						drawCommandRecorder.EndActivePass();
+						AntiAliasing::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.aa);
 						break;
 					}
 				}
@@ -694,6 +704,16 @@ namespace Renderer
 				Command command;
 				command.type = Command::Type::Fog;
 				command.fog = fog;
+				command.capturePassKey = key;
+				command.clearPending = clearPending;
+				AddCommand(command);
+			}
+
+			void AddAntiAliasing(const AntiAliasingDraw& aa, const RenderPassKey& key, bool clearPending)
+			{
+				Command command;
+				command.type = Command::Type::AntiAliasing;
+				command.aa = aa;
 				command.capturePassKey = key;
 				command.clearPending = clearPending;
 				AddCommand(command);
@@ -818,6 +838,11 @@ namespace Renderer
 		void AddRenderThreadFog(RenderThread* renderThread, const FogDraw& fog, const RenderPassKey& key, bool clearPending)
 		{
 			renderThread->AddFog(fog, key, clearPending);
+		}
+
+		void AddRenderThreadAntiAliasing(RenderThread* renderThread, const AntiAliasingDraw& aa, const RenderPassKey& key, bool clearPending)
+		{
+			renderThread->AddAntiAliasing(aa, key, clearPending);
 		}
 
 		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending)

@@ -17,10 +17,9 @@ layout(push_constant) uniform PerDrawData
 	uint globalAlpha; // Packed C++ alpha/texture-LOD bitfields; alpha occupies the low byte.
 	uint shadowProjectionIndex;
 	uint frameBufferMode;
-	float frameBufferScaleX;
-	float frameBufferScaleY;
+	vec2 samplingParams; // GS Q denominator, or framebuffer UV scale when frameBufferMode != 0.
 	uint stripFlags; // Authored geometry flags, separate from VU renderFlags.
-	float gsTextureQScale;
+	uint samplingPadding;
 } perDrawData;
 
 // Matches the VU upload destination in ed3DFlushStripInit.

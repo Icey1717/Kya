@@ -1,8 +1,11 @@
 #include "NativeRendererInternal.h"
+#include "AntiAliasingDraw.h"
+#include "GsProjection.h"
 
 #include "NativeDebugShapes.h"
 #include "NativeDisplayList.h"
 #include "NativeFrameBufferCopy.h"
+#include "NativeMSAA.h"
 #include "FlareDraw.h"
 #include "PostProcessing.h"
 #include "ScopedTimer.h"
@@ -41,6 +44,9 @@ namespace Renderer
 
 		static void CreateDraw()
 		{
+			auto& state = GetNativeRendererState();
+			state.cachedRenderPassKey.multisampled = !state.msaaSceneEnded && state.cachedRenderPassKey.kind == ERenderPassKind::Main
+				&& GetAntiAliasingMode() == AntiAliasingMode::MSAA && MSAA::GetSamples() != VK_SAMPLE_COUNT_1_BIT;
 			GetNativeRendererState().currentDraw = Draw{};
 			GetNativeRendererState().currentDraw->renderPassKey = GetNativeRendererState().cachedRenderPassKey;
 			GetNativeRendererState().currentDraw->bRenderPassDirty = GetNativeRendererState().renderPassDirty;
@@ -132,7 +138,11 @@ namespace Renderer
 			// copy into model.
 			if (pProj) {
 				GetNativeRendererState().cachedProjMatrix = glm::make_mat4(pProj);
-				GetNativeRendererState().cachedPerDrawData.gsTextureQScale = TextureSampling::GetGsQScale(pProj, pGsProj);
+				GetNativeRendererState().cachedGsProjection = pGsProj
+					? std::optional<glm::mat4>(glm::make_mat4(pGsProj)) : std::nullopt;
+				const auto projection = BuildGsProjection(pProj, pGsProj);
+				GetNativeRendererState().cachedPerDrawData.samplingParams =
+					glm::vec2(projection.reciprocalW[0], projection.reciprocalW[1]);
 			}
 
 			if (pView) {
@@ -230,6 +240,7 @@ namespace Renderer
 void Renderer::Native::OnVideoFlip()
 {
 	SignalRenderThreadEndCommands(GetNativeRendererState().renderThread);
+	GetNativeRendererState().msaaSceneEnded = false;
 }
 
 void Renderer::Native::ApplyPendingResizeIfNeeded()
@@ -326,6 +337,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		GetNativeRendererState().currentDraw->projMatrix = GetNativeRendererState().cachedProjMatrix;
 		GetNativeRendererState().currentDraw->viewMatrix = GetNativeRendererState().cachedViewMatrix;
+		GetNativeRendererState().currentDraw->gsProjection = GetNativeRendererState().cachedGsProjection;
 
 		int instanceIndex = 0;
 		const auto mipOverride = gMipOverride.load(std::memory_order_relaxed);
@@ -395,6 +407,8 @@ void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMod
 	}
 
 	GetNativeRendererState().cachedRenderPassKey.clearMode = clearMode;
+	GetNativeRendererState().cachedRenderPassKey.multisampled = !GetNativeRendererState().msaaSceneEnded
+		&& GetAntiAliasingMode() == AntiAliasingMode::MSAA && MSAA::GetSamples() != VK_SAMPLE_COUNT_1_BIT;
 
 	if (clearMode != EClearMode::None) {
 		GetNativeRendererState().renderPassDirty = true;
@@ -405,6 +419,9 @@ namespace
 {
 	std::atomic<bool> flareOcclusionEnabled{ true };
 	std::atomic<bool> fogEnabled{ true };
+	std::atomic<Renderer::Native::AntiAliasingMode> antiAliasingMode{ Renderer::Native::AntiAliasingMode::PS2Approximation };
+	std::atomic<uint32_t> fxaaQualityMultiplier{ 1 };
+	std::atomic<bool> fullResolutionPS2AACapture{ false };
 }
 
 void Renderer::Native::SetFlareOcclusionEnabled(bool enabled)
@@ -441,6 +458,47 @@ void Renderer::Native::SetFogEnabled(bool enabled)
 	fogEnabled = enabled;
 }
 
+bool Renderer::Native::GetFogEnabled()
+{
+	return fogEnabled.load();
+}
+
+void Renderer::Native::SetAntiAliasingMode(AntiAliasingMode mode)
+{
+	if (mode > AntiAliasingMode::MSAA) mode = AntiAliasingMode::PS2Approximation;
+	antiAliasingMode = mode;
+}
+
+Renderer::Native::AntiAliasingMode Renderer::Native::GetAntiAliasingMode()
+{
+	return antiAliasingMode.load();
+}
+
+void Renderer::Native::SetFXAAQualityMultiplier(uint32_t multiplier)
+{
+	fxaaQualityMultiplier = multiplier == 2 || multiplier == 4 ? multiplier : 1;
+}
+
+void Renderer::Native::SetFullResolutionPS2AACapture(bool enabled)
+{
+	fullResolutionPS2AACapture = enabled;
+}
+
+void Renderer::Native::SubmitAntiAliasing(const AntiAliasingDraw& aa)
+{
+	if (aa.mode == AntiAliasingMode::Off) return;
+	auto& state = GetNativeRendererState();
+	if (!state.renderThread) return;
+	assert(!state.currentDraw);
+	AntiAliasingDraw submitted = aa;
+	submitted.fxaaQualityMultiplier = fxaaQualityMultiplier.load();
+	submitted.fullResolutionPS2Capture = fullResolutionPS2AACapture.load();
+	AddRenderThreadAntiAliasing(state.renderThread, submitted, state.cachedRenderPassKey, state.renderPassDirty);
+	state.msaaSceneEnded = true;
+	state.cachedRenderPassKey = RenderPassKey{ EClearMode::None, ERenderPassKind::Main };
+	state.renderPassDirty = true;
+}
+
 void Renderer::Native::SubmitFog(const FogDraw& fog)
 {
 	if (!fogEnabled.load()) return;
@@ -466,8 +524,8 @@ void Renderer::Native::BindFrameBufferTexture()
 	draw.frameBufferMaterial = state.frameBufferMaterial;
 	for (auto& instance : draw.instances) {
 		instance.perDrawData.frameBufferMode = state.frameBufferMaterial.textureFunction == 1 ? 2 : 1;
-		instance.perDrawData.frameBufferScaleX = state.frameBufferMaterial.textureWidth / 512.0f;
-		instance.perDrawData.frameBufferScaleY = state.frameBufferMaterial.textureHeight / 512.0f;
+		instance.perDrawData.samplingParams = glm::vec2(state.frameBufferMaterial.textureWidth / 512.0f,
+			state.frameBufferMaterial.textureHeight / 512.0f);
 	}
 	// Reuse normal submission and buffer bindings; recording substitutes the capture descriptor.
 	Renderer::Native::BindTexture(state.whiteTexture);

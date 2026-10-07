@@ -125,7 +125,7 @@ namespace Renderer
 			uint32_t GetKey() const
 			{
 				return static_cast<uint32_t>(clearMode) |
-					(static_cast<uint32_t>(kind) << 8);
+					(static_cast<uint32_t>(kind) << 8) | (multisampled ? 1u << 16 : 0);
 			}
 
 			bool operator==(const RenderPassKey& other) const
@@ -142,10 +142,12 @@ namespace Renderer
 			{
 				clearMode = EClearMode::None;
 				kind = ERenderPassKind::Main;
+				multisampled = false;
 			}
 
 			EClearMode clearMode = EClearMode::None;
 			ERenderPassKind kind = ERenderPassKind::Main;
+			bool multisampled = false;
 		};
 
 		struct RenderPassKeyHash
@@ -178,15 +180,16 @@ namespace Renderer
 			uint32_t textureLodEnable : 1 = 0;
 			uint32_t shadowProjectionIndex = 0;
 			uint32_t frameBufferMode = 0; // 0: ordinary texture, 1: MODULATE, 2: DECAL
-			float frameBufferScaleX = 1.0f;
-			float frameBufferScaleY = 1.0f;
+			// Ordinary materials: GS Q denominator coefficients (u*n+v).
+			// Framebuffer materials: UV scale. These sampling modes are exclusive.
+			glm::vec2 samplingParams{ 0.0f, 1.0f };
 			uint32_t stripFlags = 0; // Authored geometry flags; distinct from VU renderFlags.
-			float gsTextureQScale = 1.0f; // Converts native reciprocal clip W to GS Q.
+			uint32_t samplingPadding = 0;
 		};
 		static_assert(sizeof(PerDrawData) == 128);
 		static_assert(offsetof(PerDrawData, shadowProjectionIndex) == 104);
 		static_assert(offsetof(PerDrawData, stripFlags) == 120);
-		static_assert(offsetof(PerDrawData, gsTextureQScale) == 124);
+		static_assert(offsetof(PerDrawData, samplingParams) == 112);
 
 		struct FadeConstantBuffer
 		{
@@ -199,6 +202,7 @@ namespace Renderer
 
 		struct RenderStage
 		{
+			VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 			ERenderPassKind kind = ERenderPassKind::Main;
 			VkRenderPass gRenderPass = VK_NULL_HANDLE;
 
@@ -257,6 +261,7 @@ namespace Renderer
 
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
+			std::optional<glm::mat4> gsProjection; // Retained for projection changes during preview replay.
 
 			RenderPassKey renderPassKey;
 			bool bRenderPassDirty = true;
@@ -351,6 +356,7 @@ namespace Renderer
 
 			RenderPassKey cachedRenderPassKey;
 			bool renderPassDirty = true;
+			bool msaaSceneEnded = false;
 			RenderPassKey activeRenderPassKey;
 			bool hasActiveRenderPass = false;
 
@@ -361,6 +367,7 @@ namespace Renderer
 
 			glm::mat4 cachedViewMatrix = glm::mat4(1.0f);
 			glm::mat4 cachedProjMatrix = glm::mat4(1.0f);
+			std::optional<glm::mat4> cachedGsProjection;
 			glm::mat4 initialViewMatrix = glm::mat4(1.0f);
 			glm::mat4 initialProjMatrix = glm::mat4(1.0f);
 
@@ -396,6 +403,7 @@ namespace Renderer
 		void AddRenderThreadShadowEnd(RenderThread* renderThread);
 		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending);
 		void AddRenderThreadFog(RenderThread* renderThread, const FogDraw& fog, const RenderPassKey& key, bool clearPending);
+		void AddRenderThreadAntiAliasing(RenderThread* renderThread, const AntiAliasingDraw& aa, const RenderPassKey& key, bool clearPending);
 		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending);
 
 		RenderThread* CreateRenderThread();

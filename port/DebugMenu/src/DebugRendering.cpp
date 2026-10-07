@@ -13,6 +13,7 @@
 #include "edDlist.h"
 #include "Rendering/DisplayList.h"
 #include "VulkanRenderer.h"
+#include "AntiAliasingDraw.h"
 #include <algorithm>
 
 // Make sure these external variables are accessible
@@ -33,8 +34,10 @@ namespace Debug {
 		static Debug::Setting<bool> gFullResolutionHeatCapture = { "Full Resolution Heat FX Capture", false };
 		static Debug::Setting<bool> gFlareOcclusion = { "Flare Occlusion", true };
 		static Debug::Setting<bool> gFogEnabled = { "Enable Fog", true };
-		static Debug::Setting<bool> gForceHighestMipLevel = { "Force Highest Mip Level", false };
-		static Debug::Setting<bool> gForceLowestMipLevel = { "Force Lowest Mip Level", false };
+		static Debug::ComboSetting gAntiAliasing = { "Anti-Aliasing", 1, { "Off", "PS2 approximation", "FXAA", "MSAA (4x)" } };
+		static Debug::ComboSetting gFxaaQualityMultiplier = { "FXAA Quality Multiplier", 0, { "1x", "2x", "4x" } };
+		static Debug::Setting<bool> gFullResolutionPS2AACapture = { "Full Resolution PS2 AA Capture", false };
+		static Debug::ComboSetting gMipLevelOverride = { "Mip Level Override", 0, { "Automatic", "Highest (smallest texture)", "Lowest (mip 0, full resolution)" } };
 
 		// In DebugRendering.cpp, add this function:
 		void ShowDisplayListViewer(bool* bOpen)
@@ -232,6 +235,23 @@ void Debug::Rendering::DrawContents()
 
 	// --- Pipeline ---
 	if (ImGui::CollapsingHeader("Pipeline")) {
+		if (gAntiAliasing.DrawImguiControl()) {
+			Renderer::Native::SetAntiAliasingMode(static_cast<Renderer::Native::AntiAliasingMode>(gAntiAliasing.get()));
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Scene anti-aliasing before HUD rendering. PS2 approximation uses a depth-weighted blur; FXAA filters color edges; MSAA smooths geometry edges with 4 samples (2 on devices without 4x support).");
+		if (gAntiAliasing.get() == static_cast<int>(Renderer::Native::AntiAliasingMode::FXAA)) {
+			if (gFxaaQualityMultiplier.DrawImguiControl()) {
+				Renderer::Native::SetFXAAQualityMultiplier(1u << gFxaaQualityMultiplier.get());
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Increase FXAA edge-search effort: 1x = 12, 2x = 24, 4x = 48 steps per direction. Higher settings can improve long edges at extra GPU cost. This is not an MSAA sample count.");
+		}
+		if (gAntiAliasing.get() == static_cast<int>(Renderer::Native::AntiAliasingMode::PS2Approximation)) {
+			if (gFullResolutionPS2AACapture.DrawImguiControl()) {
+				gFullResolutionPS2AACapture.UpdateValue();
+				Renderer::Native::SetFullResolutionPS2AACapture(gFullResolutionPS2AACapture.get());
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Filter the PS2 AA blur at render-buffer resolution instead of 256 x 256. The one-texel blur radius produces finer smoothing with less softness at higher resolutions. Applies to newly submitted frames.");
+		}
 		if (gFogEnabled.DrawImguiControl()) {
 			gFogEnabled.UpdateValue();
 			Renderer::Native::SetFogEnabled(gFogEnabled.get());
@@ -242,16 +262,11 @@ void Debug::Rendering::DrawContents()
 		}
 		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
-		if (gForceHighestMipLevel.DrawImguiControl()) {
-			if (gForceHighestMipLevel.get()) gForceLowestMipLevel = false;
-			Renderer::Native::SetForceHighestMipLevel(gForceHighestMipLevel.get());
+		if (gMipLevelOverride.DrawImguiControl()) {
+			Renderer::Native::SetForceHighestMipLevel(gMipLevelOverride.get() == 1);
+			Renderer::Native::SetForceLowestMipLevel(gMipLevelOverride.get() == 2);
 		}
-		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force the smallest authored mip on textured meshes, overriding material LOD and mip limits. Textures with one level stay unchanged.");
-		if (gForceLowestMipLevel.DrawImguiControl()) {
-			if (gForceLowestMipLevel.get()) gForceHighestMipLevel = false;
-			Renderer::Native::SetForceLowestMipLevel(gForceLowestMipLevel.get());
-		}
-		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Force mip 0 (the full-resolution base texture) on textured meshes, overriding material LOD.");
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Automatic uses material LOD. Highest forces the smallest authored mip, overriding mip limits. Lowest forces mip 0 (full resolution). Textures with one level stay unchanged.");
 
 		if (gDisableClusterRendering.DrawImguiControl()) {
 			ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
@@ -305,9 +320,14 @@ void Debug::Rendering::Init()
 	Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
 	Renderer::Native::SetFlareOcclusionEnabled(gFlareOcclusion.get());
 	Renderer::Native::SetFogEnabled(gFogEnabled.get());
-	if (gForceLowestMipLevel.get() && gForceHighestMipLevel.get()) gForceHighestMipLevel = false;
-	Renderer::Native::SetForceHighestMipLevel(gForceHighestMipLevel.get());
-	Renderer::Native::SetForceLowestMipLevel(gForceLowestMipLevel.get());
+	if (gAntiAliasing.get() < 0 || gAntiAliasing.get() > 3) static_cast<Debug::Setting<int>&>(gAntiAliasing) = 1;
+	Renderer::Native::SetAntiAliasingMode(static_cast<Renderer::Native::AntiAliasingMode>(gAntiAliasing.get()));
+	if (gFxaaQualityMultiplier.get() < 0 || gFxaaQualityMultiplier.get() > 2) static_cast<Debug::Setting<int>&>(gFxaaQualityMultiplier) = 0;
+	Renderer::Native::SetFXAAQualityMultiplier(1u << gFxaaQualityMultiplier.get());
+	Renderer::Native::SetFullResolutionPS2AACapture(gFullResolutionPS2AACapture.get());
+	if (gMipLevelOverride.get() < 0 || gMipLevelOverride.get() > 2) static_cast<Debug::Setting<int>&>(gMipLevelOverride) = 0;
+	Renderer::Native::SetForceHighestMipLevel(gMipLevelOverride.get() == 1);
+	Renderer::Native::SetForceLowestMipLevel(gMipLevelOverride.get() == 2);
 
 	if (gAutoApplyResolution) {
 		Renderer::Native::ResizeFrameBuffer(gRenderWidth.get(), gRenderHeight.get());

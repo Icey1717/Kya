@@ -98,10 +98,10 @@ void main()
 	// Sample texture color using fragTexCoord
 	vec2 uv = fragTexCoord.xy;
 	if (perDrawData.frameBufferMode != 0) {
-		uv *= vec2(perDrawData.frameBufferScaleX, perDrawData.frameBufferScaleY);
+		uv *= perDrawData.samplingParams;
 	}
 	vec4 textureColor = perDrawData.frameBufferMode != 0 ? texture(textureSampler, uv)
-		: SampleMaterialTexture(textureSampler, uv, perDrawData.globalAlpha, perDrawData.gsTextureQScale);
+		: SampleMaterialTexture(textureSampler, uv, perDrawData.globalAlpha, perDrawData.samplingParams);
 
 	// Combine texture color with fragment color
 	outColor = fragColor * textureColor / (128.0 / 255.0);

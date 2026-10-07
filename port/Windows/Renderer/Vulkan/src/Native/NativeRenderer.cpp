@@ -30,6 +30,7 @@ namespace Renderer
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
 			GraphicsPipelineState state{};
+			state.samples = samples;
 			const char* name = "Native Renderer GLSL";
 			if (kind == ERenderPassKind::ShadowMask) {
 				gCreateInfo = { "shaders/shadow_mask.vert.spv", "shaders/shadow_mask.frag.spv", "", key };

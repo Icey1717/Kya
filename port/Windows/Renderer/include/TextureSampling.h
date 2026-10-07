@@ -8,18 +8,6 @@ namespace Renderer
 	// TEX1 keeps signed K in units of 1/16. Keep decoding independent of Vulkan.
 	struct TextureSampling
 	{
-		// Native and GS projections have proportional W rows. Q_GS is the
-		// native reciprocal clip W multiplied by this ratio (also for orthographic draws).
-		static float GetGsQScale(const float* nativeProjection, const float* gsProjection)
-		{
-			if (!gsProjection) return 1.0f;
-			int component = 3;
-			for (int i = 7; i < 16; i += 4) {
-				if (gsProjection[i] * gsProjection[i] > gsProjection[component] * gsProjection[component]) component = i;
-			}
-			return gsProjection[component] != 0.0f ? nativeProjection[component] / gsProjection[component] : 1.0f;
-		}
-
 		bool fixedLod;
 		uint32_t maxLevel;
 		bool magLinear;

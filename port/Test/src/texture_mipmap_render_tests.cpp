@@ -8,6 +8,7 @@
 #include "../../Windows/Renderer/Vulkan/src/Objects/VulkanImage.h"
 #include <GLFW/glfw3.h>
 #include <array>
+#include <cmath>
 
 namespace
 {
@@ -98,12 +99,14 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 	float identity[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 	Renderer::SetTest(GIFReg::GSTest{});
 	auto render = [&](uint32_t filter, uint32_t maxLevel, uint32_t bias, uint32_t mag = 0,
-		bool fixedLod = true, float qScale = 1.0f, uint32_t lodScale = 0, float clipW = 1.0f, bool queueOtherSampler = false) {
+		bool fixedLod = true, float qScale = 1.0f, uint32_t lodScale = 0, float clipW = 1.0f,
+		bool queueOtherSampler = false, float gsWZ = 0.0f) {
 		UpdateRenderPassKey(EClearMode::ColorDepth);
 		std::array<float, 16> nativeProjection;
 		for (size_t i = 0; i < nativeProjection.size(); ++i) nativeProjection[i] = identity[i] * clipW;
 		auto gsProjection = nativeProjection;
 		gsProjection[15] = clipW / qScale;
+		gsProjection[11] = gsWZ;
 		Renderer::Native::PushGlobalMatrices(identity, identity, nativeProjection.data(), gsProjection.data());
 		GIFReg::GSTex1 tex1{};
 		tex1.CMD = SCE_GS_PACK_TEX1(fixedLod, maxLevel, mag, filter, 0, lodScale, bias);
@@ -122,7 +125,7 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 			Renderer::SetTest(GIFReg::GSTest{});
 		}
 		// A later option change must not overwrite the submitted instance.
-		state.cachedPerDrawData.gsTextureQScale = 1.0f;
+		state.cachedPerDrawData.samplingParams = glm::vec2(0.0f, 1.0f);
 		tex1.CMD = SCE_GS_PACK_TEX1(1, 0, 1, 1, 0, 0, 0);
 		Renderer::SetTex1(tex1);
 		Renderer::Native::BindTexture(&texture);
@@ -178,6 +181,15 @@ TEST(TextureMipmapRendering, DISABLED_AuthoredAlphaTrilinearQueuedStateAndResize
 	EXPECT_NEAR(automatic[2], 50, 1);
 	EXPECT_NEAR(automatic[3], 144, 1);
 	EXPECT_EQ(render(5, 2, uint32_t(-140), 0, false, 1.0f / 1024.0f, 1), last);
+
+	// Nonproportional W rows: native W=1, GS W=1+cameraZ. At Z=0.5,
+	// Q=2/3 and LOD=log2(1.5). A constant W ratio incorrectly gives LOD=0.
+	const auto gsOffset = render(5, 2, 0, 0, false, 1.0f, 0, 1.0f, false, 1.0f);
+	const float gsLod = std::log2(1.5f);
+	EXPECT_NEAR(gsOffset[0], 200.0f * (1.0f - gsLod), 1);
+	EXPECT_NEAR(gsOffset[1], 200.0f * gsLod, 1);
+	EXPECT_EQ(gsOffset[2], 0);
+	EXPECT_NEAR(gsOffset[3], 64.0f + 64.0f * gsLod, 1);
 	// Replacement/revert must retain the authored lower levels and descriptors.
 	std::vector<uint32_t> replacement(16 * 8, 0x40000032);
 	texture.GetRenderer()->Resize(16, 8, int(replacement.size() * 4), reinterpret_cast<uint8_t*>(replacement.data()));

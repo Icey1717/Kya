@@ -361,6 +361,14 @@ namespace Renderer
 		struct FogDraw;
 		void SubmitFog(const FogDraw& fog);
 		void SetFogEnabled(bool enabled);
+		bool GetFogEnabled();
+		enum class AntiAliasingMode : uint32_t;
+		struct AntiAliasingDraw;
+		void SetAntiAliasingMode(AntiAliasingMode mode);
+		void SetFXAAQualityMultiplier(uint32_t multiplier);
+		void SetFullResolutionPS2AACapture(bool enabled);
+		AntiAliasingMode GetAntiAliasingMode();
+		void SubmitAntiAliasing(const AntiAliasingDraw& aa);
 		void SubmitFlare(const FlareDraw& flare);
 		void SetFlareOcclusionEnabled(bool enabled);
 		void CaptureFrameBuffer();

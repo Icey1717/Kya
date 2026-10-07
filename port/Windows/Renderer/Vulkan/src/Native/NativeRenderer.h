@@ -53,6 +53,7 @@ namespace Renderer
 
 		struct GraphicsPipelineState
 		{
+			VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 			bool depthTestEnable = true;
 			bool depthWriteEnable = true;
 			bool blendEnable = false;

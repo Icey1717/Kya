@@ -51,7 +51,8 @@
 #include "DrawTrace.h"
 #include "FlareDraw.h"
 #include "FogDraw.h"
-#include "FogProjection.h"
+#include "GsProjection.h"
+#include "AntiAliasingDraw.h"
 
 // Counts the latest projected-shadow traversal independently of Draw Inspector capture.
 static Renderer::Native::ShadowCasterDiagnostics gShadowCasterDiagnostics{};
@@ -5268,14 +5269,9 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 					if (pMaterial != nullptr) {
 						Renderer::Native::FlareDraw flare;
 						flare.pTexture = pMaterial->FindRenderTextureFromBitmap(pBitmap);
-						const float nearClip = gRenderSceneConfig_SPR->nearClip;
-						const float farClip = gRenderSceneConfig_SPR->farClip;
-						const float gsNear = (CameraToScreen_Matrix->cc * nearClip + CameraToScreen_Matrix->dc) /
-							(CameraToScreen_Matrix->cd * nearClip + CameraToScreen_Matrix->dd);
-						const float gsFar = (CameraToScreen_Matrix->cc * farClip + CameraToScreen_Matrix->dc) /
-							(CameraToScreen_Matrix->cd * farClip + CameraToScreen_Matrix->dd);
+						const auto projection = Renderer::Native::BuildGsProjection(gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
 						if (Renderer::Native::ProjectFlare(local_10.x, local_10.y, fVar6, fVar7, param_1,
-							static_cast<float>(gSCRN_W), static_cast<float>(gSCRN_H), local_10.z, gsNear, gsFar, flare)) {
+							static_cast<float>(gSCRN_W), static_cast<float>(gSCRN_H), local_10.z, projection, flare)) {
 							Renderer::Native::SubmitFlare(flare);
 						}
 					}
@@ -12120,7 +12116,7 @@ void ed3DFlushFogFX(void)
 		fog.color[3] = g3DFXFog.field_0x14;
 		fog.gsNear = (float)gRenderSceneConfig_SPR->projectionScaleFactorB;
 		fog.gsFar = (float)gRenderSceneConfig_SPR->projectionScaleFactorA;
-		Renderer::Native::BuildFogDepthProjection(fog.depthProjection, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
+		Renderer::Native::BuildGsDepthProjection(fog.depthProjection, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
 		const float width = (float)pDrawSurface->pSurfaceDesc->screenWidth;
 		const float height = (float)pDrawSurface->pSurfaceDesc->screenHeight;
 		if (width > 0.0f && height > 0.0f) {
@@ -12224,6 +12220,30 @@ void ed3DFlushFogFX(void)
 
 edpkt_data* ed3DFlushAAEffect(edpkt_data* pPkt)
 {
+#ifdef PLATFORM_WIN
+	// The port's explicit AA choice replaces the original disabled global and
+	// 512-wide hardware restriction. Scene flags and dispatch order remain intact.
+	if (BYTE_00448a70 == 0 || gCurViewportUsed == nullptr) return pPkt;
+	const auto mode = Renderer::Native::GetAntiAliasingMode();
+	if (mode == Renderer::Native::AntiAliasingMode::Off) return pPkt;
+	edSurface* pDrawSurface = edVideoGetDrawSurface();
+	if (pDrawSurface == nullptr) return pPkt;
+	const float width = (float)pDrawSurface->pSurfaceDesc->screenWidth;
+	const float height = (float)pDrawSurface->pSurfaceDesc->screenHeight;
+	if (width <= 0.0f || height <= 0.0f) return pPkt;
+	Renderer::Native::AntiAliasingDraw aa;
+	aa.mode = mode;
+	Renderer::Native::BuildGsDepthProjection(aa.depthProjection, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
+	if (gCurScene != nullptr && (gCurScene->flags & SCENE_FLAG_FOG_PROPERTY) != 0 &&
+		(g3DFXFog.field_0x0 & 1) != 0 && Renderer::Native::GetFogEnabled()) {
+		aa.fogDepthOffset = g3DFXFog.field_0x4;
+	}
+	aa.viewport[0] = gCurRectViewport.x / width;
+	aa.viewport[1] = gCurRectViewport.y / height;
+	aa.viewport[2] = gCurRectViewport.w / width;
+	aa.viewport[3] = gCurRectViewport.h / height;
+	Renderer::Native::SubmitAntiAliasing(aa);
+#else
 	ulong* puVar1;
 	ushort** ppuVar2;
 	int iVar3;
@@ -12233,7 +12253,7 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pPkt)
 		((gCurRectViewport.h == 0x200 || (gCurRectViewport.h == 0x1c0)))) {
 		IMPLEMENTATION_GUARD();
 	}
-
+#endif
 	return pPkt;
 }
 

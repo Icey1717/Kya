@@ -28,7 +28,7 @@ bool AlphaTestPass(float alpha)
 
 void main()
 {
-	float alpha = SampleMaterialTexture(textureSampler, fragTexCoord, perDrawData.globalAlpha, perDrawData.gsTextureQScale).a * fragAlpha;
+	float alpha = SampleMaterialTexture(textureSampler, fragTexCoord, perDrawData.globalAlpha, perDrawData.samplingParams).a * fragAlpha;
 	if (!AlphaTestPass(alpha)) discard;
 	outCoverage = 1.0;
 }

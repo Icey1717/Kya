@@ -2,6 +2,7 @@
 
 #include "Texture.h"
 #include "TextureSampling.h"
+#include "GsProjection.h"
 #include "renderer.h"
 #include "port.h"
 #include "ed3D.h"
@@ -54,18 +55,20 @@ TEST(TextureMipmaps, DescriptorWritesSelectOnlyTheRequestedSet)
 	EXPECT_EQ(textureWrites.front().pImageInfo, &image);
 }
 
-TEST(TextureMipmaps, RecoversGsQScaleFromProjection)
+TEST(TextureMipmaps, RecoversGsQFromProportionalAndOrthographicProjection)
 {
 	std::array<float, 16> native{};
 	std::array<float, 16> gs{};
 	native[11] = -1.0f;
+	native[14] = 1.0f;
 	gs[11] = -1.0f / 0.03f;
-	EXPECT_FLOAT_EQ(Renderer::TextureSampling::GetGsQScale(native.data(), gs.data()), 0.03f);
-	EXPECT_FLOAT_EQ(Renderer::TextureSampling::GetGsQScale(native.data(), nullptr), 1.0f);
+	EXPECT_FLOAT_EQ(Renderer::Native::BuildGsProjection(native.data(), gs.data()).ToGsQ(0.1f, 1.0f), 0.03f);
+	EXPECT_FLOAT_EQ(Renderer::Native::BuildGsProjection(native.data(), nullptr).ToGsQ(0.1f, 1.0f), 1.0f);
 	native[11] = gs[11] = 0.0f;
+	native[10] = 1.0f;
 	native[15] = 1.0f;
 	gs[15] = 4.0f;
-	EXPECT_FLOAT_EQ(Renderer::TextureSampling::GetGsQScale(native.data(), gs.data()), 0.25f);
+	EXPECT_FLOAT_EQ(Renderer::Native::BuildGsProjection(native.data(), gs.data()).ToGsQ(0.1f, 1.0f), 0.25f);
 }
 
 TEST(TextureMipmaps, PreservesExtraAuthoredLevelsAndSeparatesPalette)

@@ -45,6 +45,8 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 		DEPENDS ${GLSL}
 			"${CMAKE_CURRENT_SOURCE_DIR}/src/environment_mapping.glsl"
 			"${CMAKE_CURRENT_SOURCE_DIR}/src/texture_sampling.glsl"
+			"${CMAKE_CURRENT_SOURCE_DIR}/src/gs_projection.glsl"
+			"${CMAKE_CURRENT_SOURCE_DIR}/src/gs_depth.glsl"
 			"${CMAKE_CURRENT_SOURCE_DIR}/src/per_draw_data.glsl")
 	list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)

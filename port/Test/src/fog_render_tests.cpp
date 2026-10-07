@@ -8,7 +8,8 @@
 #include <array>
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
-#include "FogProjection.h"
+#include "GsProjection.h"
+#include "FlareProjection.h"
 #include "MathOps.h"
 #include "../../../src/port/NativeProjection.h"
 
@@ -104,7 +105,10 @@ TEST(FogProjection, OriginalCameraWOffsetAndRoundTrip)
 	const auto& native = matrices[0];
 	const auto& gs = matrices[1];
 	float p[4];
-	Renderer::Native::BuildFogDepthProjection(p, native.raw, gs.raw);
+	Renderer::Native::BuildGsDepthProjection(p, native.raw, gs.raw);
+	const auto conversion = Renderer::Native::BuildGsProjection(native.raw, gs.raw);
+	const auto previewNative = BuildNativeProjection(1.0f, 1.0f, 2.0f, -0.1f, -1000.0f);
+	const auto previewConversion = Renderer::Native::BuildGsProjection(previewNative.raw, gs.raw);
 	for (float cameraZ : { -0.01f, -1.0f, -20.0f, -150.0f, -249.0f }) {
 		const float nativeDepth = (native.cc * cameraZ + native.dc) / (native.cd * cameraZ + native.dd);
 		const float expectedGsDepth = (gs.cc * cameraZ + gs.dc) / (gs.cd * cameraZ + gs.dd);
@@ -112,6 +116,16 @@ TEST(FogProjection, OriginalCameraWOffsetAndRoundTrip)
 		EXPECT_NEAR(converted, expectedGsDepth, 0.5f) << cameraZ;
 		const float recovered = (p[1] - converted * p[3]) / (converted * p[2] - p[0]);
 		EXPECT_NEAR(recovered, nativeDepth, 0.000001f);
+		const float nativeQ = 1.0f / (native.cd * cameraZ + native.dd);
+		const float expectedGsQ = 1.0f / (gs.cd * cameraZ + gs.dd);
+		EXPECT_NEAR(conversion.ToGsQ(nativeDepth, nativeQ), expectedGsQ, expectedGsQ * 0.00001f);
+		const float previewDepth = (previewNative.cc * cameraZ + previewNative.dc) / (previewNative.cd * cameraZ + previewNative.dd);
+		const float previewQ = 1.0f / (previewNative.cd * cameraZ + previewNative.dd);
+		EXPECT_NEAR(previewConversion.ToGsQ(previewDepth, previewQ), expectedGsQ, expectedGsQ * 0.00001f);
+		Renderer::Native::FlareScreenData flare;
+		ASSERT_TRUE(Renderer::Native::ProjectFlare(2048, 2048, 2048, 2048, 32, 512, 512,
+			expectedGsDepth, conversion, flare));
+		EXPECT_NEAR(flare.depth, nativeDepth, 0.000001f);
 	}
 	// At camera Z=-20, the previous near/far lerp produced about 97 instead
 	// of the original projection's roughly 175000, incorrectly fogging foreground.
@@ -120,6 +134,26 @@ TEST(FogProjection, OriginalCameraWOffsetAndRoundTrip)
 	const float gsDepth = (p[0] * nativeDepth + p[1]) / (p[2] * nativeDepth + p[3]);
 	EXPECT_GT(gsDepth, 0x7fff);
 	EXPECT_LT(nativeDepth * float(0xffffef >> 3), 256);
+}
+
+TEST(GsProjection, OrthographicNativeRetainsGsWOffset)
+{
+	edF32MATRIX4 native = gF32Matrix4Unit;
+	edF32MATRIX4 gs = gF32Matrix4Unit;
+	gs.cc = 3.0f;
+	gs.dc = 7.0f;
+	gs.cd = 0.5f;
+	gs.dd = 2.0f;
+	const auto conversion = Renderer::Native::BuildGsProjection(native.raw, gs.raw);
+	for (float cameraZ : { -0.5f, 0.0f, 0.5f, 1.0f }) {
+		const float expectedDepth = (3.0f * cameraZ + 7.0f) / (0.5f * cameraZ + 2.0f);
+		EXPECT_FLOAT_EQ(conversion.ToGsDepth(cameraZ), expectedDepth);
+		EXPECT_NEAR(conversion.ToNativeDepth(expectedDepth), cameraZ, 0.000001f);
+		EXPECT_FLOAT_EQ(conversion.ToGsQ(cameraZ, 1.0f), 1.0f / (0.5f * cameraZ + 2.0f));
+	}
+	const auto fallback = Renderer::Native::BuildGsProjection(native.raw, nullptr);
+	EXPECT_FLOAT_EQ(fallback.ToGsDepth(0.25f), 0.25f);
+	EXPECT_FLOAT_EQ(fallback.ToGsQ(0.25f, 0.5f), 0.5f);
 }
 
 
@@ -299,7 +333,7 @@ TEST(FogRendering, DISABLED_DepthColorFlagsQueueViewportAndResize)
 	// Use the game's original GS camera projection, including W's constant term.
 	// The foreground is clear; sufficiently distant geometry receives fog.
 	const auto projections = FogSceneProjections();
-	BuildFogDepthProjection(fog.depthProjection, projections[0].raw, projections[1].raw);
+	BuildGsDepthProjection(fog.depthProjection, projections[0].raw, projections[1].raw);
 	auto projectedZ = [&](float cameraZ) {
 		const auto& native = projections[0];
 		return uint32_t(((native.cc * cameraZ + native.dc) / (native.cd * cameraZ + native.dd)) * fog.gsNear);

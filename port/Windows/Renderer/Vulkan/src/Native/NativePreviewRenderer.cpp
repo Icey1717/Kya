@@ -1,4 +1,5 @@
 #include "NativeRendererInternal.h"
+#include "GsProjection.h"
 #include "Blending.h"
 
 #include "NativeDebug.h"
@@ -119,6 +120,11 @@ namespace Renderer
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
 					previewPerDrawData.projXView = previewProjXView;
+					if (!draw.frameBufferMaterial) {
+						const auto conversion = BuildGsProjection(&projMatrix[0][0],
+							draw.gsProjection ? &(*draw.gsProjection)[0][0] : nullptr);
+						previewPerDrawData.samplingParams = glm::vec2(conversion.reciprocalW[0], conversion.reciprocalW[1]);
+					}
 					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
 
 					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;

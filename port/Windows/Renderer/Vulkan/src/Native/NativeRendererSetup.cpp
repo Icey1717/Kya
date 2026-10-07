@@ -7,6 +7,8 @@
 #include "NativeFrameBufferCopy.h"
 #include "NativeFlare.h"
 #include "NativeFog.h"
+#include "NativeAntiAliasing.h"
+#include "NativeMSAA.h"
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
@@ -74,6 +76,7 @@ namespace Renderer
 		{
 			RenderStage& stage = GetNativeRendererState().renderPass[key];
 			stage.kind = key.kind;
+			stage.samples = key.multisampled ? MSAA::GetSamples() : VK_SAMPLE_COUNT_1_BIT;
 
 			const bool bClearColor = key.kind == ERenderPassKind::ShadowMask || (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Depth);
 			const bool bClearDepth = key.kind == ERenderPassKind::ShadowMask || (key.clearMode != EClearMode::None && key.clearMode != EClearMode::Color);
@@ -125,11 +128,11 @@ namespace Renderer
 			const std::span<const VkSubpassDependency> dependencies = key.kind == ERenderPassKind::Main
 				? std::span<const VkSubpassDependency>(&mainDependency, 1)
 				: std::span<const VkSubpassDependency>(shadowDependencies);
-			stage.gRenderPass = Renderer::CreateRenderPass2D({ &colorInfo, 1 }, depthInfo, dependencies, name);
+			stage.gRenderPass = key.multisampled ? MSAA::CreateRenderPass(key) : Renderer::CreateRenderPass2D({ &colorInfo, 1 }, depthInfo, dependencies, name);
 
 			stage.CreatePipeline();
 
-			if (key.kind == ERenderPassKind::Main) {
+			if (key.kind == ERenderPassKind::Main && !key.multisampled) {
 				std::string debugLineName = std::string(name) + " Debug Lines";
 				DebugShapes::CreatePipeline(stage.gRenderPass, stage.gDebugLinePipeline, debugLineName.c_str());
 			}
@@ -186,7 +189,7 @@ namespace Renderer
 			VkPipelineMultisampleStateCreateInfo multisampling{};
 			multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampling.sampleShadingEnable = VK_FALSE;
-			multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+			multisampling.rasterizationSamples = stage.samples;
 
 			VkPipelineColorBlendAttachmentState colorBlendAttachment = blendState.colorBlendAttachment;
 
@@ -329,7 +332,7 @@ namespace Renderer
 			VkPipelineMultisampleStateCreateInfo multisampling{};
 			multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampling.sampleShadingEnable = VK_FALSE;
-			multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+			multisampling.rasterizationSamples = state.samples;
 
 			VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -420,6 +423,7 @@ namespace Renderer
 		void Setup()
 		{
 			CheckBufferSizes();
+			MSAA::Setup();
 
 			GetNativeRendererState().vkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
 			GetNativeRendererState().vkCmdSetColorWriteMaskEXT   = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
@@ -444,6 +448,15 @@ namespace Renderer
 			CreateRenderStage(key, "Native Shadow Receiver Render Pass");
 
 			CreateFramebuffer();
+			if (MSAA::GetSamples() != VK_SAMPLE_COUNT_1_BIT) {
+				key.kind = ERenderPassKind::Main;
+				key.multisampled = true;
+				for (auto clear : { EClearMode::None, EClearMode::Depth, EClearMode::Color, EClearMode::ColorDepth }) {
+					key.clearMode = clear;
+					CreateRenderStage(key, "Native MSAA Render Pass");
+				}
+				MSAA::CreateFramebuffer();
+			}
 			CreateFramebufferSampler();
 			GetNativeRendererState().commandPool = CreateCommandPool("Native Renderer Command Pool");
 			CreateCommandBuffers(GetNativeRendererState().commandPool, GetNativeRendererState().commandBuffers, "Native Renderer Command Buffer");
@@ -489,6 +502,7 @@ namespace Renderer
 			FrameBufferCopy::Setup();
 			Flare::Setup();
 			Fog::Setup();
+			AntiAliasing::Setup();
 
 			GetRenderDelegate() += Render;
 
@@ -511,6 +525,8 @@ namespace Renderer
 			FrameBufferCopy::Cleanup();
 			Flare::Cleanup();
 			Fog::Cleanup();
+			AntiAliasing::Cleanup();
+			MSAA::Cleanup();
 
 			if (GetNativeRendererState().frameDescriptorPool)
 				vkDestroyDescriptorPool(GetDevice(), GetNativeRendererState().frameDescriptorPool, GetAllocator());
@@ -557,6 +573,8 @@ namespace Renderer
 			Shadow::DestroyReceiverFramebuffer();
 			Flare::DestroyFramebuffer();
 			Fog::DestroyFramebuffer();
+			AntiAliasing::DestroyFramebuffer();
+			MSAA::DestroyFramebuffer();
 
 			vkDestroyFramebuffer(GetDevice(), GetNativeRendererState().frameBuffer.framebuffer, GetAllocator());
 			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.colorImageView, GetAllocator());
@@ -574,6 +592,8 @@ namespace Renderer
 			Shadow::CreateReceiverFramebuffer();
 			Flare::CreateFramebuffer();
 			Fog::CreateFramebuffer();
+			AntiAliasing::CreateFramebuffer();
+			MSAA::CreateFramebuffer();
 
 			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 
