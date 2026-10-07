@@ -13,6 +13,7 @@
 #include "Objects/VulkanRenderPass.h"
 #include "VulkanRenderer.h"
 #include "renderer.h"
+#include "renderer_debug.h"
 #include "NativeDebug.h"
 #include "glm/glm.hpp"
 

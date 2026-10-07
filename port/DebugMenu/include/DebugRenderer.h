@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer.h"
+#include "renderer_debug.h"
 
 typedef uint64_t ImTextureID;
 

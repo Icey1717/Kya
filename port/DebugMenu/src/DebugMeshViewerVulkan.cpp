@@ -3,6 +3,7 @@
 #include "Objects/UniformBuffer.h"
 #include "Objects/Pipeline.h"
 #include "Native/NativeRenderer.h"
+#include "renderer_debug.h"
 #include "Native/Blending.h"
 #include "Types.h"
 #include "Objects/FrameBuffer.h"

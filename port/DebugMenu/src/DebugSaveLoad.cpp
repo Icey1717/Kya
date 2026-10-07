@@ -3,6 +3,7 @@
 #include "DebugSaveLoadPaths.h"
 #include "DebugSaveScreenshot.h"
 #include "renderer.h"
+#include "renderer_debug.h"
 #include "DebugSaveCheckpoint.h"
 #include "DebugWorldNames.h"
 #include "ActorManager.h"

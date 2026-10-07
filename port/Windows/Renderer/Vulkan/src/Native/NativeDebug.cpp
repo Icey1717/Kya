@@ -1,5 +1,6 @@
 #include "NativeDebug.h"
 #include "renderer.h"
+#include "renderer_debug.h"
 
 
 namespace Renderer

@@ -6,6 +6,7 @@
 #include "DebugSetting.h"
 #include "port/vu1_emu.h"
 #include "Native/NativeRenderer.h"
+#include "renderer_debug.h"
 #include "Native/NativeDebugShapes.h"
 #include "DebugMeshViewer.h"
 #include "DebugMenuLayout.h"

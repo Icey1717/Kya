@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "renderer.h"
+#include "renderer_debug.h"
 #include "../../Windows/Renderer/Vulkan/src/Native/NativeShadow.h"
 #include "../../Windows/Renderer/Vulkan/src/Native/NativeRendererInternal.h"
 #include <GLFW/glfw3.h>

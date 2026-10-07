@@ -92,6 +92,7 @@ set (SOURCES
 	"Vulkan/src/Texture/TextureUpscale.cpp"
 
 	"include/renderer.h"
+	"include/renderer_debug.h"
 	"include/displaylist.h"
 	"include/GIFReg.h"
 	"include/delegate.h"

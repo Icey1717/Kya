@@ -9,6 +9,7 @@
 #include "VulkanIncludes.h"
 
 #include "renderer.h"
+#include "renderer_debug.h"
 
 #include <glm/glm.hpp>
 

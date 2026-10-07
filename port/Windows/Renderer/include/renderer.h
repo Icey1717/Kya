@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <cassert>
+#include <cstdio>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "delegate.h"
 #include "GIFReg.h"
@@ -10,7 +12,7 @@
 #define int12_to_float(x)	(float)((float)x * 0.000244140625f)
 #define int15_to_float(x)	(float)((float)x * 0.000030517578125)
 
-// Forward decs for RenderDelegate
+// Forward declarations for Vulkan render handles.
 typedef struct VkFramebuffer_T* VkFramebuffer;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;
 typedef struct VkSampler_T* VkSampler;
@@ -342,8 +344,6 @@ namespace Renderer
 
 		void UpdateRenderPassKey(EClearMode clearMode);
 		ShadowPassSettings NormalizeShadowPassSettings(const ShadowPassSettings& settings, uint32_t resolutionScale = 1);
-		void SetShadowResolutionScale(uint32_t scale);
-		uint32_t GetShadowResolutionScale();
 		void BeginShadowMask(const ShadowPassSettings& settings);
 		void BlurShadowMask();
 		void BeginShadowReceiver(const ShadowReceiverViewport& viewport);
@@ -360,27 +360,15 @@ namespace Renderer
 		struct FlareDraw;
 		struct FogDraw;
 		void SubmitFog(const FogDraw& fog);
-		void SetFogEnabled(bool enabled);
 		bool GetFogEnabled();
 		enum class AntiAliasingMode : uint32_t;
 		struct AntiAliasingDraw;
-		void SetAntiAliasingMode(AntiAliasingMode mode);
-		void SetFXAAQualityMultiplier(uint32_t multiplier);
-		void SetFullResolutionPS2AACapture(bool enabled);
 		AntiAliasingMode GetAntiAliasingMode();
 		void SubmitAntiAliasing(const AntiAliasingDraw& aa);
 		void SubmitFlare(const FlareDraw& flare);
-		void SetFlareOcclusionEnabled(bool enabled);
 		void CaptureFrameBuffer();
 		void SetFrameBufferMaterial(const FrameBufferMaterialSettings& settings);
 		void BindFrameBufferTexture();
-		bool HasShadowTarget();
-		VkSampler GetShadowSampler();
-		VkImageView GetShadowMaskImageView();
-		VkImageView GetShadowBlurImageView();
-		ShadowPassSettings GetShadowPassSettings();
-		void RequestShadowBufferDump();
-		std::string GetShadowBufferDumpStatus();
 		struct ShadowCasterDiagnostics
 		{
 			uint32_t renderMask = 0;
@@ -392,8 +380,6 @@ namespace Renderer
 			uint32_t activeLights = 0;
 		};
 		void SetShadowCasterDiagnostics(const ShadowCasterDiagnostics& diagnostics);
-		std::string GetShadowCasterDebugInfo();
-		void RecordShadowMaskDraw();
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
@@ -407,8 +393,6 @@ namespace Renderer
 		ImageData image;
 		PaletteMap palettes;
 	};
-
-	bool& GetForceAnimMatrixIdentity();
 
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
@@ -620,15 +604,7 @@ namespace Renderer
 	void PushAnimST(float* pAnimST);
 
 	using CommandBufferList = std::vector<VkCommandBuffer>;
-	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&, CommandBufferList&>;
-
-	RenderDelegate& GetRenderDelegate();
-	Multidelegate<>& GetCleanupDelegate();
-
 	void SetHeadless(bool bValue);
-
-	bool& GetUseComplexBlending();
-	void ResetRenderer();
 
 	namespace Debug {
 		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);
@@ -640,14 +616,14 @@ namespace Renderer
 		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* format, Args... args) {
 			char buffer[512];
 			sprintf_s(buffer, 512, format, args...);
-			BeginLabel(cmdBuffer, static_cast<const char*>(buffer));  // Explicitly call non-template version
+			BeginLabel(cmdBuffer, static_cast<const char*>(buffer));
 		}
 
 		template<typename... Args>
 		void BeginLabel(const char* format, Args... args) {
 			char buffer[512];
 			sprintf_s(buffer, 512, format, args...);
-			BeginLabel(static_cast<const char*>(buffer));  // Explicitly call non-template version
+			BeginLabel(static_cast<const char*>(buffer));
 		}
 	}
 }

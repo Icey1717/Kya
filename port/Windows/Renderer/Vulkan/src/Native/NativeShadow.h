@@ -28,3 +28,8 @@ namespace Renderer::Native::Shadow
 	// Main thread, after the frame's command buffers have been submitted.
 	void ProcessPendingDump();
 }
+
+namespace Renderer::Native
+{
+	void RecordShadowMaskDraw();
+}

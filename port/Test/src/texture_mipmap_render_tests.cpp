@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "renderer.h"
+#include "renderer_debug.h"
 #include "port.h"
 #include "../../Windows/Renderer/Vulkan/src/Native/NativeRendererInternal.h"
 #include "../../Windows/Renderer/Vulkan/src/Objects/VulkanBuffer.h"
