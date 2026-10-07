@@ -5,6 +5,60 @@ int gCurTime = 0;
 int gCurFrame = 0;
 int gStepTime = 0;
 
+// Recovered from FUN_0029f640. Static hierarchy links point to HIER chunks,
+// and descendants follow their parent in the chunk stream.
+void SetG3DHierarchyFlag(ed_g3d_hierarchy* pHierarchy, ushort flag, bool enabled)
+{
+	if (pHierarchy == (ed_g3d_hierarchy*)0x0) {
+		return;
+	}
+
+	ed_Chunck* pChunk = reinterpret_cast<ed_Chunck*>(pHierarchy) - 1;
+	if (pChunk->hash != HASH_CODE_HIER) {
+		return;
+	}
+
+	for (; pChunk != (ed_Chunck*)0x0 && pChunk->hash == HASH_CODE_HIER;
+		pChunk = edChunckGetNext(pChunk, (char*)0x0)) {
+		ed_g3d_hierarchy* pChild = reinterpret_cast<ed_g3d_hierarchy*>(pChunk + 1);
+		ed_Chunck* pParentChunk = LOAD_POINTER_CAST(ed_Chunck*, pChild->pLinkTransformData);
+		while (pParentChunk != (ed_Chunck*)0x0) {
+			ed_g3d_hierarchy* pParent = reinterpret_cast<ed_g3d_hierarchy*>(pParentChunk + 1);
+			if (pParent == pHierarchy) {
+				if (enabled) {
+					pChild->flags_0x9e = pChild->flags_0x9e | flag;
+				}
+				else {
+					pChild->flags_0x9e = pChild->flags_0x9e & ~flag;
+				}
+				break;
+			}
+			pParentChunk = LOAD_POINTER_CAST(ed_Chunck*, pParent->pLinkTransformData);
+		}
+	}
+
+	if (enabled) {
+		pHierarchy->flags_0x9e = pHierarchy->flags_0x9e | flag;
+	}
+	else {
+		pHierarchy->flags_0x9e = pHierarchy->flags_0x9e & ~flag;
+	}
+}
+
+void SetG3DHierarchyOn(ed_g3d_hierarchy* pHierarchy, ushort flag)
+{
+	SetG3DHierarchyFlag(pHierarchy, flag, true);
+
+	return;
+}
+
+void SetG3DHierarchyOff(ed_g3d_hierarchy * pHierarchy, ushort flag)
+{
+	SetG3DHierarchyFlag(pHierarchy, flag, false);
+
+	return;
+}
+
 void ed3DResetTime(void)
 {
 	gCurTime = 0;

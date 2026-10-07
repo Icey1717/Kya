@@ -26,6 +26,10 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 ed_Chunck* ed3DG3DHierarchyGetChunk(ed_g3d_manager* pMeshInfo, char* szString);
 void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag);
 
+void SetG3DHierarchyFlag(ed_g3d_hierarchy* pHierarchy, ushort flag, bool enabled);
+void SetG3DHierarchyOn(ed_g3d_hierarchy* pHierarchy, ushort flag);
+void SetG3DHierarchyOff(ed_g3d_hierarchy* pHierarchy, ushort flag);
+
 extern int gCurTime;
 extern int gCurFrame;
 extern int gStepTime;

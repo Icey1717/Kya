@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include <stddef.h>
 
 class CActorClusteriser;
 class CCluster;
@@ -12,11 +13,13 @@ class CCamera;
 struct S_LIGHT_STREAM_REF;
 struct S_CAMERA_STREAM_REF;
 
-struct S_HASH_STREAM_REF
+PACK(struct S_HASH_STREAM_REF
 {
 	int entryCount;
 	ulong aEntries[];
-};
+});
+
+static_assert(offsetof(S_HASH_STREAM_REF, aEntries) == 4, "Invalid hash stream layout");
 
 class CBehaviourClusteriserZones : public CBehaviour
 {

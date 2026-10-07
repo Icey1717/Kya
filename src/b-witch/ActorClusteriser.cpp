@@ -9,6 +9,7 @@
 #include "EventManager.h"
 #include "MathOps.h"
 #include "PoolAllocators.h"
+#include "ed3D/ed3DG3D.h"
 
 void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 {
@@ -734,7 +735,7 @@ void CBehaviourClusteriserZones::TriggerManageClusterOn(_S_ZONE_CLUSTER* pZoneCl
 void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster, int param_3)
 {
 	ulong hash;
-	ed_g3d_hierarchy* peVar1;
+	ed_g3d_hierarchy* pHierarchy;
 	ed_g3d_manager* peVar2;
 	int iVar3;
 	int iVar4;
@@ -760,14 +761,14 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 		pSectorMesh = &((CScene::ptable.g_SectorManager_00451670)->baseSector).sectorMesh;
 
 		do {
-			peVar1 = (ed_g3d_hierarchy*)0x0;
+			pHierarchy = (ed_g3d_hierarchy*)0x0;
 
 			hash = pZoneCluster->field_0x34->aEntries[iVar7];
 			if (pFileManager->pMeshInfo != (ed_g3d_manager*)0x0) {
-				peVar1 = ed3DG3DHierarchyGetFromHashcode(pFileManager->pMeshInfo, hash);
+				pHierarchy = ed3DG3DHierarchyGetFromHashcode(pFileManager->pMeshInfo, hash);
 			}
 
-			if (peVar1 == (ed_g3d_hierarchy*)0x0) {
+			if (pHierarchy == (ed_g3d_hierarchy*)0x0) {
 				iVar6 = (pSectorManager->baseSector).loadStage_0x8;
 				peVar2 = pSectorMesh;
 				if ((iVar6 != 2) && ((iVar6 != 1 || ((pSectorManager->baseSector).sectorIndex != -1)))) {
@@ -775,12 +776,12 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 				}
 
 				if (peVar2 != (ed_g3d_manager*)0x0) {
-					peVar1 = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
+					pHierarchy = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
 				}
 
-				if (peVar1 == (ed_g3d_hierarchy*)0x0) {
+				if (pHierarchy == (ed_g3d_hierarchy*)0x0) {
 					iVar6 = pSectorManager->nbSectors;
-					while ((iVar6 != 0 && (peVar1 == (ed_g3d_hierarchy*)0x0))) {
+					while ((iVar6 != 0 && (pHierarchy == (ed_g3d_hierarchy*)0x0))) {
 						iVar6 = iVar6 + -1;
 						CSector* pSector = pSectorManager->aSectors + iVar6;
 
@@ -792,20 +793,19 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 						}
 
 						if (peVar2 != (ed_g3d_manager*)0x0) {
-							peVar1 = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
+							pHierarchy = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
 						}
 					}
 				}
 			}
 
-			if (peVar1 != (ed_g3d_hierarchy*)0x0) {
-				IMPLEMENTATION_GUARD(
+			if (pHierarchy != (ed_g3d_hierarchy*)0x0) {
 				if (param_3 == 0) {
-					FUN_0029f630(peVar1, 0x40);
+					SetG3DHierarchyOn(pHierarchy, 0x40);
 				}
 				else {
-					FUN_0029f620(peVar1, 0x40);
-				})
+					SetG3DHierarchyOff(pHierarchy, 0x40);
+				}
 			}
 
 			iVar7 = iVar7 + 1;
