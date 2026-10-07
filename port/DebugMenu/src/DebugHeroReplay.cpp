@@ -10,6 +10,7 @@
 
 #include "DebugHelpers.h"
 #include "DebugSetting.h"
+#include "DebugUi.h"
 #include "input_functions.h"
 #include "EdenLib/edDev/Sources/edDev.h"
 #include "LevelScheduler.h"
@@ -286,7 +287,7 @@ void DrawContents()
 	if (gState == State::Replaying) stateStr = "Replaying";
 
 	ImGui::Text("State: %s", stateStr);
-	ImGui::Text("Recorded frames: %d  (%.1f s at 60 fps)",
+	ImGui::TextWrapped("Recorded frames: %d  (%.1f s at 60 fps)",
 		gRecording.frameCount,
 		(float)gRecording.frameCount / 60.0f);
 
@@ -296,7 +297,7 @@ void DrawContents()
 
 	if (gState == State::Recording) {
 		const int framesUntilSave = AUTO_SAVE_INTERVAL_FRAMES - (gCurrentFrame % AUTO_SAVE_INTERVAL_FRAMES);
-		ImGui::TextDisabled("Auto-save in %d frames  (file: recordings/%s.rec)", framesUntilSave, LAST_RECORDING_NAME);
+		ImGui::TextWrapped("Auto-save in %d frames  (file: recordings/%s.rec)", framesUntilSave, LAST_RECORDING_NAME);
 	}
 
 	ImGui::Separator();
@@ -310,8 +311,7 @@ void DrawContents()
 		auto backupPath = GetRecordingsDir() / (std::string(LAST_RECORDING_NAME) + "_backup.rec");
 		if (std::filesystem::exists(backupPath)) {
 			static char backupDupName[256] = "recording";
-			ImGui::InputText("Name##backup_dup", backupDupName, IM_ARRAYSIZE(backupDupName));
-			ImGui::SameLine();
+			Ui::Field("Backup name", [&](const char* id) { return ImGui::InputText(id, backupDupName, IM_ARRAYSIZE(backupDupName)); });
 			if (ImGui::Button("Save Backup As")) {
 				auto dest = GetRecordingsDir() / (std::string(backupDupName) + ".rec");
 				std::filesystem::copy_file(backupPath, dest, std::filesystem::copy_options::overwrite_existing);
@@ -359,7 +359,7 @@ void DrawContents()
 		// Save
 		if (gRecording.frameCount > 0 && gState == State::Idle) {
 			static char saveName[256] = "recording";
-			ImGui::InputText("Name##save", saveName, IM_ARRAYSIZE(saveName));
+			Ui::Field("Name", [&](const char* id) { return ImGui::InputText(id, saveName, IM_ARRAYSIZE(saveName)); });
 			if (ImGui::Button("Save Recording")) {
 				SaveRecording(saveName);
 			}
@@ -379,21 +379,23 @@ void DrawContents()
 				return true;
 			};
 
-			ImGui::Combo("File##load", &selectedIdx, itemGetter, &recordings, static_cast<int>(recordings.size()));
+			Ui::Field("File", [&](const char* id) { return ImGui::Combo(id, &selectedIdx, itemGetter, &recordings, static_cast<int>(recordings.size())); });
 
 			if (ImGui::Button("Load Recording")) {
 				auto path = GetRecordingsDir() / recordings[selectedIdx];
 				LoadRecording(path);
 			}
 		} else {
-			ImGui::TextDisabled("No recordings found in recordings/");
+			ImGui::TextWrapped("No recordings found in recordings/");
 		}
 	}
 }
 
 void ShowMenu(bool* bOpen)
 {
-	ImGui::Begin("Hero Replay", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetFontSize() * 30, ImGui::GetFontSize() * 24), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(ImGui::GetFontSize() * 18, ImGui::GetFontSize() * 12), ImVec2(FLT_MAX, FLT_MAX));
+	ImGui::Begin("Hero Replay", bOpen);
 	DrawContents();
 	ImGui::End();
 }

@@ -22,6 +22,7 @@ public:
 
 	// Snap position and yaw/pitch from another camera (call before pushing to stack).
 	void SetPositionFromCamera(CCamera* pFrom);
+	void FocusPoint(const edF32VECTOR4& target, float radius);
 	void SetInputEnabled(bool bEnabled);
 
 	// GLFW scroll callback (speed control). Mouse delta is fed via AccumulateRawDelta

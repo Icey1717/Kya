@@ -1,10 +1,15 @@
 #include "DebugMenuWorld.h"
-#include "DebugMenuWorld.h"
+#include "DebugWatch.h"
+#include "DebugUi.h"
+#include "DebugMenuLayout.h"
+#include "DebugProjection.h"
+#include "DebugCamera.h"
 
 #include <profiling.h>
 #include <imgui.h>
 #include <map>
 #include <vector>
+#include <cstdio>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -73,9 +78,24 @@ namespace Debug {
 	};
 
 	static InspectorSelection gInspectorSelection;
+
+	CActor* GetInspectedActor()
+	{
+		if (gInspectorSelection.type != InspectorSelectionType::Actor) return nullptr;
+		auto* manager = CScene::ptable.g_ActorManager_004516a4;
+		if (!manager || !manager->aActors) return nullptr;
+		for (int i = 0; i < manager->nbActors; ++i) {
+			if (manager->aActors[i] == gInspectorSelection.pActor) return manager->aActors[i];
+		}
+		return nullptr;
+	}
 	static Debug::Setting<bool> gShowWorldPanel("Show World Panel", true);
 	static Debug::Setting<bool> gShowInspectorPanel("Show Inspector Panel", true);
 	static int gSectorFilter = -1;
+	static ImGuiTextFilter gActorSearch;
+	static bool gActiveActorsOnly = false;
+	static bool gCurrentSectorOnly = false;
+	static bool gShowSelectionMarker = true;
 	static Debug::Setting<int> gActorInspectorMessageValue("Actor Inspector Message Value", 0);
 
 	// Visual detection points settings
@@ -121,6 +141,8 @@ namespace Debug {
 	}
 
 	static void FocusInspector() {
+		SetShowInspectorPanel(true);
+		RevealDockWindow(kInspectorWindowName, DockRegion::Right);
 		ImGui::SetWindowFocus(kInspectorWindowName);
 	}
 
@@ -166,7 +188,19 @@ namespace Debug {
 	}
 
 	static void DrawVector4(const char* label, const edF32VECTOR4& value) {
-		ImGui::Text("%s: %.2f, %.2f, %.2f, %.2f", label, value.x, value.y, value.z, value.w);
+		Ui::Field(label, [&](const char*) {
+			const float right = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
+			const float components[] = { value.x, value.y, value.z, value.w };
+			const char* names[] = { "X", "Y", "Z", "W" };
+			for (int i = 0; i < 4; ++i) {
+				char text[64];
+				snprintf(text, sizeof(text), "%s %.3f", names[i], components[i]);
+				if (i > 0 && ImGui::GetItemRectMax().x + ImGui::GetStyle().ItemSpacing.x + ImGui::CalcTextSize(text).x <= right)
+					ImGui::SameLine();
+				ImGui::TextUnformatted(text);
+			}
+			return false;
+		});
 	}
 
 	static int GetCurrentLevelId()
@@ -184,8 +218,10 @@ namespace Debug {
 		auto* pSectorManager = CScene::ptable.g_SectorManager_00451670;
 
 		if (ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen)) {
+			Watch::DrawReadout("Scene.Level");
+			Watch::DrawReadout("Scene.Sector");
+			Watch::DrawReadout("Scene.Actors");
 			if (pSectorManager != nullptr) {
-				ImGui::BulletText("Current Sector: %d", pSectorManager->baseSector.currentSectorID);
 				ImGui::BulletText("Loaded Sectors: %d", pSectorManager->nbSectors);
 			}
 
@@ -193,9 +229,6 @@ namespace Debug {
 				ImGui::BulletText("Actors: %d total / %d active / %d in sector", pActorManager->nbActors, pActorManager->nbActiveActors, pActorManager->nbSectorActors);
 			}
 
-			if (CLevelScheduler::gThis != nullptr) {
-				ImGui::BulletText("Level: %d", CLevelScheduler::gThis->currentLevelID);
-			}
 
 			ImGui::TreePop();
 		}
@@ -226,20 +259,23 @@ namespace Debug {
 			return;
 		}
 
+		gActorSearch.Draw("Search name or type", -1.0f);
+		ImGui::Checkbox("Active only", &gActiveActorsOnly);
+		ImGui::SameLine();
+		ImGui::Checkbox("Current sector", &gCurrentSectorOnly);
 		// Sector filter controls
+		ImGui::BeginDisabled(gCurrentSectorOnly);
 		ImGui::Text("Sector Filter:");
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(100);
 		ImGui::InputInt("##SectorFilter", &gSectorFilter);
+		ImGui::EndDisabled();
 		ImGui::SameLine();
-		if (ImGui::Button("Clear Filter")) {
+		if (ImGui::Button("All sectors")) {
 			gSectorFilter = -1;
+			gCurrentSectorOnly = false;
 		}
-		ImGui::SameLine();
 		auto* pSectorManager = CScene::ptable.g_SectorManager_00451670;
-		if (pSectorManager != nullptr && ImGui::Button("Current")) {
-			gSectorFilter = pSectorManager->baseSector.currentSectorID;
-		}
 
 		ImGui::Separator();
 
@@ -254,20 +290,28 @@ namespace Debug {
 			CActor* pActor = pActorManager->aActors[i];
 			if (pActor != nullptr) {
 				// Apply sector filter
-				if (gSectorFilter >= 0 && pActor->sectorId != gSectorFilter) {
+				const int sector = gCurrentSectorOnly && pSectorManager ? pSectorManager->baseSector.currentSectorID : gSectorFilter;
+				if (sector >= 0 && pActor->sectorId != sector) {
 					continue;
 				}
+				if (gActiveActorsOnly && (pActor->flags & 4) == 0) continue;
+				const std::string searchable = std::string(pActor->name) + " " + Debug::Actor::GetActorTypeString(pActor->typeID);
+				if (!gActorSearch.PassFilter(searchable.c_str())) continue;
 				actorsByType[pActor->typeID].push_back(pActor);
 			}
 		}
 
+		if (actorsByType.empty()) ImGui::TextDisabled("No actors match these filters.");
 		for (auto& [typeId, actors] : actorsByType) {
 			const char* pTypeName = Debug::Actor::GetActorTypeString(typeId);
+			if (gActorSearch.IsActive()) ImGui::SetNextItemOpen(true, ImGuiCond_Always);
 			if (ImGui::TreeNodeEx((void*)(intptr_t)typeId, ImGuiTreeNodeFlags_None, "%s (%d)", pTypeName, static_cast<int>(actors.size()))) {
 				for (CActor* pActor : actors) {
 					const bool isSelected = gInspectorSelection.type == InspectorSelectionType::Actor && gInspectorSelection.pActor == pActor;
 					ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | (isSelected ? ImGuiTreeNodeFlags_Selected : 0);
+					if (isSelected) ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
 					ImGui::TreeNodeEx((void*)pActor, flags, "%s [sector %d]", pActor->name, pActor->sectorId);
+					if (isSelected) ImGui::PopStyleColor();
 					if (ImGui::IsItemClicked()) {
 						SelectActor(pActor);
 					}
@@ -344,9 +388,11 @@ namespace Debug {
 			std::string sectorName = WorldNames::GetSectorName(GetCurrentLevelId(), sectorId);
 
 			if (!isLoaded) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+			if (selected) ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
 			const bool open = sectorName.empty()
 				? ImGui::TreeNodeEx((void*)(intptr_t)sectorId, sectorFlags, "Sector %d%s", sectorId, suffix)
 				: ImGui::TreeNodeEx((void*)(intptr_t)sectorId, sectorFlags, "%s (Sector %d)%s", sectorName.c_str(), sectorId, suffix);
+			if (selected) ImGui::PopStyleColor();
 			if (!isLoaded) ImGui::PopStyleColor();
 
 			if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
@@ -702,36 +748,39 @@ namespace Debug {
 
 		ImGui::Text("%s", pActor->name);
 		ImGui::TextDisabled("%s", Debug::Actor::GetActorTypeString(pActor->typeID));
+		if (ImGui::Button("Focus camera")) Camera::FocusActor(pActor);
+		ImGui::SetItemTooltip("Frame this actor with the free camera. F8 returns to the game camera; F9 enables camera input.");
+		ImGui::Checkbox("Selection marker", &gShowSelectionMarker);
 
 		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-			DrawVector4("Position", pActor->currentLocation);
+			Watch::DrawReadout("Selection.Position");
 			DrawVector4("Rotation Euler", pActor->rotationEuler);
 			DrawVector4("Rotation Quaternion", pActor->rotationQuat);
 			DrawVector4("Scale", pActor->scale);
 		}
 
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Current Animation: %d", pActor->currentAnimType);
-			ImGui::Text("Current State: %s (%d)", Debug::Actor::State::GetActorStateName(pActor).c_str(), pActor->actorState);
-			ImGui::Text("Previous State: %d", pActor->prevActorState);
-			ImGui::Text("Current Behaviour: %s (%d)", Debug::Actor::Behaviour::GetActorBehaviourName(pActor).c_str(), pActor->curBehaviourId);
-			ImGui::Text("Previous Behaviour: %d", pActor->prevBehaviourId);
-			ImGui::Text("Distance To Camera: %.2f", pActor->distanceToCamera);
-			ImGui::Text("Distance To Ground: %.2f", pActor->distanceToGround);
+			Ui::Readoutf("Current Animation", "%d", pActor->currentAnimType);
+			Watch::DrawReadout("Selection.State");
+			Ui::Readoutf("Previous State", "%d", pActor->prevActorState);
+			Ui::Readoutf("Current Behaviour", "%s (%d)", Debug::Actor::Behaviour::GetActorBehaviourName(pActor).c_str(), pActor->curBehaviourId);
+			Ui::Readoutf("Previous Behaviour", "%d", pActor->prevBehaviourId);
+			Ui::Readoutf("Distance To Camera", "%.2f", pActor->distanceToCamera);
+			Ui::Readoutf("Distance To Ground", "%.2f", pActor->distanceToGround);
 		}
 
 		if (ImGui::CollapsingHeader("Debug Info", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Sector ID: %d", pActor->sectorId);
-			ImGui::Text("Actor Manager Index: %d", pActor->actorManagerIndex);
-			ImGui::Text("Flags: 0x%08X", pActor->flags);
-			ImGui::Text("Actor FieldS: 0x%08X", pActor->actorFieldS);
-			ImGui::Text("Mesh Node: 0x%p", pActor->pMeshNode);
+			Ui::Readoutf("Sector ID", "%d", pActor->sectorId);
+			Ui::Readoutf("Actor Manager Index", "%d", pActor->actorManagerIndex);
+			Ui::Readoutf("Flags", "0x%08X", pActor->flags);
+			Ui::Readoutf("Actor FieldS", "0x%08X", pActor->actorFieldS);
+			Ui::Readoutf("Mesh Node", "0x%p", pActor->pMeshNode);
 
 			ImGui::Spacing();
 			if (pActor->pTiedActor != nullptr) {
-				ImGui::Text("Tied Actor: %s", pActor->pTiedActor->name);
+				Ui::Readoutf("Tied Actor", "%s", pActor->pTiedActor->name);
 			} else {
-				ImGui::TextDisabled("Tied Actor: (none)");
+				Ui::Readout("Tied Actor", "(none)");
 			}
 			if (ImGui::Button("Show Tied Actor Chain")) {
 				gShowTiedActorChainWindow = true;
@@ -740,10 +789,10 @@ namespace Debug {
 		}
 
 		if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("state_0x10: %u", pActor->state_0x10);
-			ImGui::Text("field_0x11: %u", pActor->field_0x11);
-			ImGui::Text("Macro Anim Table: 0x%p", pActor->pMacroAnimTable);
-			ImGui::Text("Hierarchy: 0x%p", pActor->pHier);
+			Ui::Readoutf("state_0x10", "%u", pActor->state_0x10);
+			Ui::Readoutf("field_0x11", "%u", pActor->field_0x11);
+			Ui::Readoutf("Macro Anim Table", "0x%p", pActor->pMacroAnimTable);
+			Ui::Readoutf("Hierarchy", "0x%p", pActor->pHier);
 		}
 
 		if (ImGui::CollapsingHeader("Collision")) {
@@ -767,7 +816,7 @@ namespace Debug {
 			gVisualDetectionPointsColor.DrawImguiControl();
 
 			const int numPoints = pActor->GetNumVisualDetectionPoints();
-			ImGui::Text("Count: %d", numPoints);
+			Ui::Readoutf("Count", "%d", numPoints);
 
 			if (gShowVisualDetectionPoints) {
 				for (int i = 0; i < numPoints; ++i) {
@@ -941,10 +990,10 @@ namespace Debug {
 
 		if (ImGui::IsItemHovered()) {
 			ImGui::BeginTooltip();
-			ImGui::Text("Position: (%.2f, %.2f, %.2f)", pNode->currentLocation.x, pNode->currentLocation.y, pNode->currentLocation.z);
-			ImGui::Text("Type: %s", Debug::Actor::GetActorTypeString(pNode->typeID));
-			ImGui::Text("Actor Manager Index: %d", pNode->actorManagerIndex);
-			ImGui::Text("Tied to: %s", pNode->pTiedActor ? pNode->pTiedActor->name : "(none)");
+			Ui::Readoutf("Position", "(%.2f, %.2f, %.2f)", pNode->currentLocation.x, pNode->currentLocation.y, pNode->currentLocation.z);
+			Ui::Readoutf("Type", "%s", Debug::Actor::GetActorTypeString(pNode->typeID));
+			Ui::Readoutf("Actor Manager Index", "%d", pNode->actorManagerIndex);
+			Ui::Readoutf("Tied to", "%s", pNode->pTiedActor ? pNode->pTiedActor->name : "(none)");
 			ImGui::EndTooltip();
 		}
 
@@ -1033,21 +1082,21 @@ namespace Debug {
 		}
 
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Desired Sector ID: %d", pSelectedSector->desiredSectorID);
-			ImGui::Text("Current Sector ID: %d", pSelectedSector->currentSectorID);
-			ImGui::Text("Sector Index: %d", pSelectedSector->sectorIndex);
-			ImGui::Text("Load Stage: %d", pSelectedSector->loadStage_0x8);
+			Ui::Readoutf("Desired Sector ID", "%d", pSelectedSector->desiredSectorID);
+			Ui::Readoutf("Current Sector ID", "%d", pSelectedSector->currentSectorID);
+			Ui::Readoutf("Sector Index", "%d", pSelectedSector->sectorIndex);
+			Ui::Readoutf("Load Stage", "%d", pSelectedSector->loadStage_0x8);
 		}
 
 		if (ImGui::CollapsingHeader("Debug Info", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Mesh: 0x%p", &pSelectedSector->sectorMesh);
-			ImGui::Text("Texture: 0x%p", &pSelectedSector->sectorTexture);
-			ImGui::Text("OBB Tree: 0x%p", pSelectedSector->pObbTree);
+			Ui::Readoutf("Mesh", "0x%p", &pSelectedSector->sectorMesh);
+			Ui::Readoutf("Texture", "0x%p", &pSelectedSector->sectorTexture);
+			Ui::Readoutf("OBB Tree", "0x%p", pSelectedSector->pObbTree);
 		}
 
 		if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Sector Root: %s", pSectorManager->szSectorFileRoot);
-			ImGui::Text("Total Loaded Sectors: %d", pSectorManager->nbSectors);
+			Ui::Readoutf("Sector Root", "%s", pSectorManager->szSectorFileRoot);
+			Ui::Readoutf("Total Loaded Sectors", "%d", pSectorManager->nbSectors);
 		}
 	}
 
@@ -1059,14 +1108,14 @@ namespace Debug {
 
 		ImGui::Text("%s", pManager->name);
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Checkpoint Count: %d", pManager->checkpointCount);
-			ImGui::Text("Current Checkpoint Index: %d", pManager->currentCheckpointIndex);
+			Ui::Readoutf("Checkpoint Count", "%d", pManager->checkpointCount);
+			Ui::Readoutf("Current Checkpoint Index", "%d", pManager->currentCheckpointIndex);
 		}
 
 		if (ImGui::CollapsingHeader("Debug Info", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Sector ID: %d", pManager->sectorId);
-			ImGui::Text("Type: %s", Debug::Actor::GetActorTypeString(pManager->typeID));
-			ImGui::Text("Flags: 0x%08X", pManager->flags);
+			Ui::Readoutf("Sector ID", "%d", pManager->sectorId);
+			Ui::Readoutf("Type", "%s", Debug::Actor::GetActorTypeString(pManager->typeID));
+			Ui::Readoutf("Flags", "0x%08X", pManager->flags);
 		}
 	}
 
@@ -1091,19 +1140,19 @@ namespace Debug {
 		}
 
 		if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Sector ID: %d", checkpoint.sectorId);
-			ImGui::Text("Flags: 0x%08X", checkpoint.flags);
-			ImGui::Text("Actor Waypoints: %d", checkpoint.actorWaypointsCount);
+			Ui::Readoutf("Sector ID", "%d", checkpoint.sectorId);
+			Ui::Readoutf("Flags", "0x%08X", checkpoint.flags);
+			Ui::Readoutf("Actor Waypoints", "%d", checkpoint.actorWaypointsCount);
 		}
 
 		if (ImGui::CollapsingHeader("Debug Info", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Zone: 0x%p", checkpoint.pZone.Get());
-			ImGui::Text("Waypoint A: 0x%p", checkpoint.pWayPointA.Get());
-			ImGui::Text("Waypoint B: 0x%p", checkpoint.pWayPointB.Get());
+			Ui::Readoutf("Zone", "0x%p", checkpoint.pZone.Get());
+			Ui::Readoutf("Waypoint A", "0x%p", checkpoint.pWayPointA.Get());
+			Ui::Readoutf("Waypoint B", "0x%p", checkpoint.pWayPointB.Get());
 		}
 
 		if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Manager Current Checkpoint: %d", pManager->currentCheckpointIndex);
+			Ui::Readoutf("Manager Current Checkpoint", "%d", pManager->currentCheckpointIndex);
 		}
 
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -1127,6 +1176,29 @@ namespace Debug {
 				pHeroPrivate->ProcessDeath();
 			}
 		}
+	}
+
+	void DrawSelectedActorMarker()
+	{
+		CActor* actor = GetInspectedActor();
+		if (!actor || !gShowSelectionMarker) return;
+		ImVec2 position;
+		if (!Projection::WorldToScreenAbsolute(actor->sphereCentre, position)) return;
+		const ImVec2 origin = GetGameViewportImagePosition();
+		const ImVec2 size = GetGameViewportImageSize();
+		ImDrawList* draw = ImGui::GetWindowDrawList();
+		draw->PushClipRect(origin, ImVec2(origin.x + size.x, origin.y + size.y), true);
+		const ImU32 color = IM_COL32(255, 205, 80, 255);
+		draw->AddCircle(position, 11.0f, IM_COL32(0, 0, 0, 220), 24, 4.0f);
+		draw->AddCircle(position, 11.0f, color, 24, 2.0f);
+		draw->AddLine(ImVec2(position.x - 16, position.y), ImVec2(position.x + 16, position.y), color);
+		draw->AddLine(ImVec2(position.x, position.y - 16), ImVec2(position.x, position.y + 16), color);
+		const ImVec2 textSize = ImGui::CalcTextSize(actor->name);
+		const float textX = std::max(origin.x + 4, std::min(position.x + 18, origin.x + size.x - textSize.x - 4));
+		const float textY = std::max(origin.y + 4, std::min(position.y - textSize.y * 0.5f, origin.y + size.y - textSize.y - 4));
+		draw->AddRectFilled(ImVec2(textX - 3, textY - 2), ImVec2(textX + textSize.x + 3, textY + textSize.y + 2), IM_COL32(0, 0, 0, 200));
+		draw->AddText(ImVec2(textX, textY), color, actor->name);
+		draw->PopClipRect();
 	}
 
 	void DrawInspectorPanel() {
@@ -1155,7 +1227,7 @@ namespace Debug {
 		ImGui::Begin(kInspectorWindowName, &bOpen);
 		switch (gInspectorSelection.type) {
 		case InspectorSelectionType::Actor:
-			DrawActorInspector(gInspectorSelection.pActor);
+			DrawActorInspector(GetInspectedActor());
 			break;
 
 		case InspectorSelectionType::Sector:

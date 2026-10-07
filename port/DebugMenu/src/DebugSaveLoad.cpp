@@ -1,5 +1,6 @@
 ﻿#include "DebugMenu.h"
 #include "DebugSaveLoad.h"
+#include "DebugUi.h"
 #include "DebugSaveLoadPaths.h"
 #include "DebugSaveScreenshot.h"
 #include "renderer.h"
@@ -717,12 +718,12 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 		ImGui::TextWrapped("Auto-load: %s (slot %d)", autoLoadStatus, autoLoadSlot);
 
 		ImGui::TextWrapped("Press F5 to save, F7 to load");
-		if (ImGui::Button("Browse Backed Up Saves")) {
+		if (Ui::ActionButton("Browse Backed Up Saves")) {
 			showAutosaves = false;
 			backupsOpen = true;
 			refreshBackups = true;
 		}
-		if (ImGui::Button("Browse Checkpoint Autosaves")) {
+		if (Ui::ActionButton("Browse Checkpoint Autosaves")) {
 			showAutosaves = true;
 			backupsOpen = true;
 			refreshBackups = true;

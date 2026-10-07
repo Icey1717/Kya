@@ -2,6 +2,8 @@
 
 #include "Types.h"
 #include "imgui.h"
+#include "DebugUi.h"
+#include <cstdio>
 #include <fstream>
 #include "ed3D.h"
 #include <iostream>
@@ -10,11 +12,15 @@
 namespace DebugHelpers {
 	namespace ImGui {
 		static inline void TextVector4(const char* name, const edF32VECTOR4& v) {
-			::ImGui::Text("%s: x: %.3f, y: %.3f, z: %.3f, w: %.3f", name, v.x, v.y, v.z, v.w);
+			char value[192];
+			std::snprintf(value, sizeof(value), "X %.3f  Y %.3f  Z %.3f  W %.3f", v.x, v.y, v.z, v.w);
+			Debug::Ui::Readout(name, value);
 		}
 
 		static inline void TextVector3(const char* name, const edF32VECTOR3& v) {
-			::ImGui::Text("%s: x: %.3f, y: %.3f, z: %.3f", name, v.x, v.y, v.z);
+			char value[144];
+			std::snprintf(value, sizeof(value), "X %.3f  Y %.3f  Z %.3f", v.x, v.y, v.z);
+			Debug::Ui::Readout(name, value);
 		}
 
 		static inline void TextHash4(const char* name, const uint& hash) {

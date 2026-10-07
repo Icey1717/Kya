@@ -1,6 +1,7 @@
 ﻿#include "DebugMenuDebugPanel.h"
 #include "DebugMenuLog.h"
 #include "DebugMenu.h"
+#include "DebugWatch.h"
 
 #include <profiling.h>
 #include <imgui.h>
@@ -25,12 +26,10 @@ namespace Debug {
 	static constexpr const char* kDebugWindowName = "Debug";
 
 	static void DrawPerformanceContents() {
-		const double deltaTime = DebugMenu::GetDeltaTime();
-		const double fps = deltaTime > 0.0 ? (1.0 / deltaTime) : 0.0;
-		ImGui::Text("FPS: %.1f", fps);
-		ImGui::Text("Frame Time: %.3f ms", deltaTime * 1000.0);
+		Watch::DrawReadout("Performance.Fps");
+		Watch::DrawReadout("Performance.Frame");
 		ImGui::Separator();
-		ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
+		Watch::DrawReadout("Performance.Render");
 		ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
 		ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
 		ImGui::Text("Alpha Slow Path Time: %.3f ms", Renderer::Native::GetAlphaTestSlowPathTime());

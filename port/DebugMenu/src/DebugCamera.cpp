@@ -341,6 +341,15 @@ namespace Debug::Camera {
 		SetFreeCameraInputCapture(true);
 	}
 
+	void FocusActor(CActor* actor)
+	{
+		if (!actor || !CCameraManager::_gThis) return;
+		ActivateFreeCamera();
+		pFreeCamera->FocusPoint(actor->sphereCentre, actor->otherSectionStart.boundingSphere.w);
+		// Keep the UI usable after focusing; F9 explicitly captures camera input.
+		SetFreeCameraInputEnabled(false);
+	}
+
 	static void DeactivateFreeCamera()
 	{
 		if (!pFreeCamera) {

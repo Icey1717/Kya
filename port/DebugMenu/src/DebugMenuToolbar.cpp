@@ -35,6 +35,7 @@ namespace Debug {
 	static float gMinisculeTimeScale = 0.00001f;
 
 	bool GetShowCameraWindow() { return gShowCameraWindow; }
+	void SetShowCameraWindow(bool show) { gShowCameraWindow = show; }
 
 	void UpdateSingleStepState() {
 		if (gStepFramesPending <= 0) {
@@ -67,25 +68,29 @@ namespace Debug {
 			ZONE_SCOPED_NAME("MenuBar");
 			bool bPaused = pTimer != nullptr && pTimer->timeScale <= gMinisculeTimeScale;
 
-			bool bWorld = Debug::GetShowWorldPanel();
-			bool bInspector = Debug::GetShowInspectorPanel();
-			bool bDebug = Debug::GetShowDebugPanel();
+			bool bWorld = Debug::GetShowWorldPanel() && ShouldDrawDockWindow("World", DockRegion::Left);
+			bool bInspector = Debug::GetShowInspectorPanel() && ShouldDrawDockWindow("Inspector", DockRegion::Right);
+			bool bDebug = Debug::GetShowDebugPanel() && ShouldDrawDockWindow("Debug", DockRegion::Bottom);
 
 			if (ImGui::Checkbox("World", &bWorld)) {
+				if (bWorld) RevealDockWindow("World", DockRegion::Left);
 				Debug::SetShowWorldPanel(bWorld);
 			}
 			ImGui::SameLine();
 			if (ImGui::Checkbox("Inspector", &bInspector)) {
+				if (bInspector) RevealDockWindow("Inspector", DockRegion::Right);
 				Debug::SetShowInspectorPanel(bInspector);
 			}
 			ImGui::SameLine();
 			if (ImGui::Checkbox("Debug", &bDebug)) {
+				if (bDebug) RevealDockWindow("Debug", DockRegion::Bottom);
 				Debug::SetShowDebugPanel(bDebug);
 			}
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Reset Layout")) {
 				Debug::RequestResetDockLayout();
 			}
+			DrawWorkspaceMenu();
 
 			ImGui::SameLine();
 			ImGui::Separator();
@@ -146,7 +151,9 @@ namespace Debug {
 
 				ImGui::SameLine();
 				float toolbarTimeScale = bPaused ? gResumeTimeScale : pTimer->timeScale;
-				ImGui::SetNextItemWidth(155.0f);
+				const ImGuiStyle& style = ImGui::GetStyle();
+				ImGui::SetNextItemWidth(ImGui::CalcTextSize("-0.000").x + style.FramePadding.x * 2.0f
+					+ (ImGui::GetFrameHeight() + style.ItemInnerSpacing.x) * 2.0f);
 				if (ImGui::InputFloat("Time Scale##Toolbar", &toolbarTimeScale, 0.05f, 0.25f, "%.3f")) {
 					if (toolbarTimeScale < gMinisculeTimeScale) {
 						toolbarTimeScale = gMinisculeTimeScale;
@@ -181,6 +188,7 @@ namespace Debug {
 
 			ImGui::EndMainMenuBar();
 		}
+		DrawTaskToolbar();
 	}
 
 	void DrawCameraWindow() {

@@ -2,6 +2,7 @@
 
 namespace Debug {
 	bool GetShowCameraWindow();
+	void SetShowCameraWindow(bool show);
 
 	void UpdateSingleStepState();
 	void DrawToolbar();

@@ -1,5 +1,7 @@
 ﻿#include "DebugMenu.h"
 #include "DebugHero.h"
+#include "DebugWatch.h"
+#include "DebugUi.h"
 
 #include <imgui.h>
 #include <filesystem>
@@ -234,12 +236,12 @@ namespace Debug {
 						}();
 
 					// Create the dropdown box
-					if (ImGui::Combo("Select a Checkpoint", &selectedOption, itemGetter, &options, options.size(), -1))
+					if (Ui::Field("Checkpoint", [&](const char* id) { return ImGui::Combo(id, &selectedOption, itemGetter, &options, options.size(), -1); }))
 					{
 						gLastCheckpoint = std::string(options[selectedOption]);
 					}
 
-					if (ImGui::Button("Load Checkpoint")) {
+					if (Ui::ActionButton("Load Checkpoint")) {
 						std::filesystem::path chkptPath = path / options[selectedOption];
 						Checkpoint checkpoint;
 						DebugHelpers::LoadTypeFromFile(chkptPath, checkpoint);
@@ -268,7 +270,7 @@ namespace Debug {
 
 				static Checkpoint sNewCheckpoint;
 
-				if (ImGui::Button("Save Checkpoint")) {
+				if (Ui::ActionButton("Save Checkpoint")) {
 					auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
 
 					assert(pActorManager->nbActors <= nbCheckpointMaxActors);
@@ -321,7 +323,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 	if (pActorHero) {
 		ImGui::Text("Behaviour: %s", Debug::Actor::Behaviour::GetActorBehaviourName(pActorHero).c_str());
-		ImGui::Text("State: %s", Debug::Actor::State::GetActorStateName(pActorHero).c_str());
+		Watch::DrawReadout("Hero.State");
 		
 
 		if (ImGui::Button("Reset State")) {
@@ -353,9 +355,9 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 		ImGui::Spacing();
 		ImGui::Spacing();
 
-		DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
+		Watch::DrawReadout("Hero.Position");
 		DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
-		ImGui::InputFloat("Effort", &pActorHero->effort);
+		Ui::InputFloat("Effort", &pActorHero->effort);
 
 		ImGui::Spacing();
 		ImGui::Spacing();
@@ -367,7 +369,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("Time in air: %.3f", pActorHero->timeInAir);
+			Watch::DrawReadout("Hero.TimeInAir");
 		}
 
 		if (ImGui::CollapsingHeader("Dynamic", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -378,11 +380,11 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 
 			ImGui::Text("Flags: %x", pActorHero->flags);
 
-			ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
-			ImGui::InputFloat("Linear Speed", &pActorHero->dynamic.horizontalLinearSpeed);
-			ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
-			ImGui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
-			ImGui::InputFloat("Weight A", &pActorHero->dynamic.weightA);
+			Watch::DrawFloatEditor("Hero.Speed", "Speed", &pActorHero->dynamic.speed);
+			Ui::InputFloat("Linear Speed", &pActorHero->dynamic.horizontalLinearSpeed);
+			Ui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
+			Ui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
+			Ui::InputFloat("Weight A", &pActorHero->dynamic.weightA);
 		}
 
 		ImGui::Spacing();
@@ -392,7 +394,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			DebugHelpers::ImGui::TextVector4("Gravity", pActorHero->dynamicExt.gForceGravity);
 			DebugHelpers::ImGui::TextVector4("Translation", pActorHero->dynamicExt.normalizedTranslation);
 
-			ImGui::InputFloat("Gravity Scale", &pActorHero->dynamicExt.gravityScale);
+			Watch::DrawFloatEditor("Hero.Gravity", "Gravity Scale", &pActorHero->dynamicExt.gravityScale);
 		}
 
 		ImGui::Spacing();

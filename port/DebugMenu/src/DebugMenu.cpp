@@ -27,6 +27,7 @@
 #include "DebugMenuDebugPanel.h"
 #include "DebugMenuLayout.h"
 #include "DebugMenuToolbar.h"
+#include "DebugWatch.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -207,17 +208,19 @@ namespace Debug {
 			return;
 		}
 
+		UpdateTaskLayout();
 		DrawToolbar();
+		Watch::Update();
 
 		const ImGuiID dockspaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 		BuildDefaultDockLayout(dockspaceId);
 
-		DrawWorldPanel();
-		DrawInspectorPanel();
+		if (ShouldDrawDockWindow("World", DockRegion::Left)) DrawWorldPanel();
+		if (ShouldDrawDockWindow("Inspector", DockRegion::Right)) DrawInspectorPanel();
 		DrawGameViewportWindow();
-		DrawDebugPanel();
+		if (ShouldDrawDockWindow("Debug", DockRegion::Bottom)) DrawDebugPanel();
 		DrawLegacyMenus();
-		DrawCameraWindow();
+		if (ShouldDrawDockWindow("Camera", DockRegion::Right)) DrawCameraWindow();
 	}
 }
 

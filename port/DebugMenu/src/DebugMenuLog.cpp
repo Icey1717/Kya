@@ -2,6 +2,7 @@
 #include "DebugMenuLog.h"
 
 #include <imgui.h>
+#include <cfloat>
 #include "log.h"
 
 #include <algorithm>
@@ -123,44 +124,73 @@ namespace Debug {
 
 	void ShowLogWindow(bool* bOpen)
 	{
-		ImGui::Begin("Log Window", bOpen);
-
-		for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level)
-		{
-			LogLevel logLevel = static_cast<LogLevel>(level);
-			if (ImGui::Selectable(LogLevelToString(logLevel).c_str())) {
-			}
+		static bool expanded = false;
+		// Keep the original window docked. Undocking it can destroy an empty
+		// split, so restoring just its DockId cannot reliably restore the layout.
+		if (ImGui::Begin("Log Window", bOpen) && !expanded) {
+			if (ImGui::Button("Expand")) expanded = true;
+			ImGui::SameLine();
+			DrawLogContents();
 		}
-
-		sLogCache.Refresh(Log::GetInstance().logs);
-		for (auto& [pName, pEntry] : sLogCache.entries)
-		{
-			if (ImGui::Checkbox(pName->c_str(), &pEntry->bEnabled)) {
-				UpdateCategoryInConfigFile(*pName, pEntry->bEnabled);
-			}
-		}
-
 		ImGui::End();
+		if (!*bOpen) expanded = false;
+		if (expanded) {
+			const auto* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
+			const auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+			if (ImGui::Begin("Log Window (Expanded)", &expanded, flags)) {
+				if (ImGui::Button("Restore")) expanded = false;
+				ImGui::SameLine();
+				DrawLogContents();
+			}
+			ImGui::End();
+		}
 	}
 
 	void DrawLogContents()
 	{
-		ImGui::Text("Log Categories");
-		ImGui::Separator();
-
-		for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level) {
-			LogLevel logLevel = static_cast<LogLevel>(level);
-			ImGui::BulletText("%s", LogLevelToString(logLevel).c_str());
-		}
-
-		ImGui::Separator();
-
-		sLogCache.Refresh(Log::GetInstance().logs);
-		for (auto& [pName, pEntry] : sLogCache.entries) {
-			if (ImGui::Checkbox(pName->c_str(), &pEntry->bEnabled)) {
-				UpdateCategoryInConfigFile(*pName, pEntry->bEnabled);
+		static ImGuiTextFilter filter;
+		static ImGuiTextFilter categoryFilter;
+		static bool paused = false;
+		static bool follow = true;
+		static double nextRefresh = 0.0;
+		static std::vector<std::string> messages;
+		if (ImGui::Button("Capture categories")) ImGui::OpenPopup("Categories");
+		if (ImGui::BeginPopup("Categories")) {
+			ImGui::TextWrapped("Controls which categories are written to the UI and log files.");
+			categoryFilter.Draw("Find category", ImGui::GetFontSize() * 16);
+			ImGui::BeginChild("CategoryList", ImVec2(ImGui::GetFontSize() * 24, ImGui::GetFontSize() * 15));
+			sLogCache.Refresh(Log::GetInstance().logs);
+			for (auto& [pName, pEntry] : sLogCache.entries) {
+				if (categoryFilter.PassFilter(pName->c_str()) && ImGui::Checkbox(pName->c_str(), &pEntry->bEnabled)) {
+					UpdateCategoryInConfigFile(*pName, pEntry->bEnabled);
+				}
 			}
+			ImGui::EndChild();
+			ImGui::EndPopup();
 		}
+		ImGui::SameLine();
+		ImGui::Checkbox("Pause", &paused);
+		ImGui::SameLine();
+		ImGui::Checkbox("Follow", &follow);
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		filter.Draw("##Search", -1.0f);
+		ImGui::SetItemTooltip("Filter messages. Commas separate terms; prefix a term with - to exclude it.");
+		if (!paused && ImGui::GetTime() >= nextRefresh) {
+			messages = Log::GetRecentMessages();
+			nextRefresh = ImGui::GetTime() + 0.25;
+		}
+		ImGui::TextDisabled("Latest %zu / 512 messages%s", messages.size(), paused ? " (paused)" : "");
+		ImGui::BeginChild("Messages", ImVec2(0, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
+		const bool atBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
+		if (messages.empty()) ImGui::TextDisabled("No captured messages yet. Enable a category to capture its output.");
+		for (const auto& message : messages) {
+			if (filter.PassFilter(message.c_str())) ImGui::TextUnformatted(message.c_str());
+		}
+		if (follow && atBottom && !paused) ImGui::SetScrollHereY(1.0f);
+		ImGui::EndChild();
 	}
 
 } // namespace Debug

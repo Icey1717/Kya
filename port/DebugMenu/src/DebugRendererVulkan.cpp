@@ -8,7 +8,11 @@
 #include "GoogleFontLoader.h"
 #endif
 #include "DebugMenu.h"
+#include "DebugSetting.h"
 
+#include <algorithm>
+#include <cfloat>
+#include <cmath>
 #include <stdexcept>
 
 #include "renderer.h"
@@ -96,6 +100,53 @@ namespace DebugRendererImgui {
 	VkRenderPass gImguiRenderPass;
 	Renderer::CommandBufferVector gCommandBuffers;
 
+	static Debug::Setting<float> gUiScale("Debug UI Scale", 1.25f);
+	static ImGuiStyle gBaseStyle;
+	static float gAppliedUiScale = 0.0f;
+
+	static void ApplyUiScale()
+	{
+		const float savedScale = gUiScale.get();
+		const float scale = std::isfinite(savedScale) ? std::clamp(savedScale, 1.0f, 2.0f) : 1.25f;
+		if (scale == gAppliedUiScale) return;
+
+		// Always scale from the baseline to avoid accumulating rounding errors.
+		ImGuiStyle& style = ImGui::GetStyle();
+		const float fontSizeBase = style.FontSizeBase;
+		const float fontScaleDpi = style.FontScaleDpi;
+		ImVec4 colors[ImGuiCol_COUNT];
+		std::copy_n(style.Colors, ImGuiCol_COUNT, colors);
+		style = gBaseStyle;
+		style.ScaleAllSizes(scale);
+		style.FontSizeBase = fontSizeBase;
+		style.FontScaleDpi = fontScaleDpi;
+		style.FontScaleMain = scale;
+		std::copy_n(colors, ImGuiCol_COUNT, style.Colors);
+		gAppliedUiScale = scale;
+	}
+
+	static void ShowAppearanceMenu(bool* pOpen)
+	{
+		const float fontSize = ImGui::GetFontSize();
+		ImGui::SetNextWindowSize(ImVec2(fontSize * 22.0f, fontSize * 9.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSizeConstraints(ImVec2(fontSize * 18.0f, fontSize * 8.0f), ImVec2(FLT_MAX, FLT_MAX));
+		if (ImGui::Begin("Appearance", pOpen)) {
+			float scale = gAppliedUiScale;
+			ImGui::TextUnformatted("UI scale");
+			ImGui::SetNextItemWidth(-FLT_MIN);
+			if (ImGui::SliderFloat("##UiScale", &scale, 1.0f, 2.0f, "%.2fx", ImGuiSliderFlags_AlwaysClamp)) {
+				gUiScale = scale;
+			}
+			ImGui::TextWrapped("Scales text, controls, and spacing. Changes apply immediately and are saved.");
+			if (ImGui::Button("Reset to 125%")) {
+				gUiScale = 1.25f;
+			}
+		}
+		ImGui::End();
+	}
+
+	static Debug::MenuRegisterer gAppearanceMenu("Appearance", ShowAppearanceMenu);
+
 	static ImTextureID ToImTextureID(VkDescriptorSet descriptorSet)
 	{
 		return (ImTextureID)(uintptr_t)descriptorSet;
@@ -177,10 +228,44 @@ namespace DebugRendererImgui {
 		SetObjectName(reinterpret_cast<uint64_t>(gImguiRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Imgui Render Pass");
 
 		ImGui::CreateContext();
+		bool fontLoaded = false;
 #ifdef ENABLE_GOOGLE_FONT_LOADER
-		GoogleFontLoader::LoadIntoImGui("Roboto", "regular", 16.0f);
+		fontLoaded = GoogleFontLoader::LoadIntoImGui("Roboto", "regular", 16.0f);
 #endif
+		if (!fontLoaded) {
+			ImFontConfig fontConfig;
+			fontConfig.SizePixels = 18.0f;
+			ImGui::GetIO().Fonts->AddFontDefault(&fontConfig);
+		}
 		ImGui::StyleColorsDark();
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.Colors[ImGuiCol_WindowBg] = ImVec4(0.078f, 0.098f, 0.122f, 1.0f);
+		style.Colors[ImGuiCol_ChildBg] = ImVec4(0.078f, 0.098f, 0.122f, 1.0f);
+		style.Colors[ImGuiCol_PopupBg] = ImVec4(0.110f, 0.141f, 0.176f, 1.0f);
+		style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.62f, 0.68f, 0.74f, 1.0f);
+		style.Colors[ImGuiCol_Border] = ImVec4(0.24f, 0.30f, 0.36f, 1.0f);
+		style.Colors[ImGuiCol_FrameBg] = ImVec4(0.055f, 0.075f, 0.10f, 1.0f);
+		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.14f, 0.21f, 0.28f, 1.0f);
+		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.18f, 0.29f, 0.40f, 1.0f);
+		style.Colors[ImGuiCol_Header] = ImVec4(0.15f, 0.19f, 0.24f, 1.0f);
+		style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.23f, 0.33f, 0.44f, 1.0f);
+		style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.21f, 0.39f, 0.55f, 1.0f);
+		style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.21f, 0.39f, 0.55f, 0.85f);
+		style.Colors[ImGuiCol_TabSelected] = ImVec4(0.21f, 0.39f, 0.55f, 1.0f);
+		style.Colors[ImGuiCol_TabSelectedOverline] = ImVec4(0.53f, 0.73f, 0.90f, 1.0f);
+		style.Colors[ImGuiCol_Button] = ImVec4(0.20f, 0.28f, 0.36f, 1.0f);
+		style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.39f, 0.52f, 1.0f);
+		style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.21f, 0.39f, 0.55f, 1.0f);
+		style.FrameBorderSize = 1.0f;
+		style.FrameRounding = 2.0f;
+		style.GrabRounding = 2.0f;
+		gBaseStyle = ImGui::GetStyle();
+		gBaseStyle.WindowPadding = ImVec2(10.0f, 10.0f);
+		gBaseStyle.FramePadding = ImVec2(6.0f, 4.0f);
+		gBaseStyle.ItemSpacing = ImVec2(8.0f, 6.0f);
+		gBaseStyle.CellPadding = ImVec2(4.0f, 3.0f);
+		gAppliedUiScale = 0.0f;
+		ApplyUiScale();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		ImGui_ImplVulkan_InitInfo initInfo = {};
@@ -242,6 +327,7 @@ namespace DebugRendererImgui {
 		// Start the Dear ImGui frame
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
+		ApplyUiScale();
 		ImGui::NewFrame();
 
 		DebugMenu::BuildImguiCommands();

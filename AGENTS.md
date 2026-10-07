@@ -14,6 +14,12 @@ This repository is an ongoing Windows-focused decompilation and PC port of *Kya:
 - `linux-debug` is for the PS2 GCC toolchain, not the normal PC build.
 - Test builds define `HEADLESS` for the renderer.
 
+## Capturing The Running App
+
+- Run `& ./tools/capture-window.ps1` in PowerShell to capture the main Kya window, including the debug UI, to `out/screenshots/latest.png`, then inspect it with `view_image`.
+- Desktop access may require running the capture command outside the sandbox. Kya must be running and not minimized.
+- Use `-ProcessId <pid>` when multiple builds are running. Capture uses passive screen copying; the window must be fully visible. Avoid `-PrintWindow` for Vulkan because it can cause visible flashing. See `tools/capture-window.md`.
+
 ## Repository Shape
 
 - `src/b-witch/`: decompiled main game code. Preserve original layout-sensitive structure, naming, and manual memory model.

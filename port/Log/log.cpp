@@ -2,11 +2,27 @@
 
 #include "spdlog/async.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/ringbuffer_sink.h"
 #include "spdlog/include/spdlog/sinks/stdout_color_sinks.h"
 
 #include <fstream>
 
 static const std::string gLogPath = "logs/";
+
+static std::shared_ptr<spdlog::sinks::ringbuffer_sink_mt> GetUiSink()
+{
+	static auto sink = [] {
+		auto result = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(512);
+		result->set_pattern("[%H:%M:%S] [%l] [%n] %v");
+		return result;
+	}();
+	return sink;
+}
+
+std::vector<std::string> Log::GetRecentMessages()
+{
+	return GetUiSink()->last_formatted();
+}
 //constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
 constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
 
@@ -33,6 +49,8 @@ LogPtr Log::CreateLog(const std::string& category)
 	const std::string path = gLogPath + category + ".txt";
 	auto pNewLog = spdlog::basic_logger_mt<spdlog::async_factory_nonblock>(category.c_str(), path.c_str(), true);
 	InitLog(pNewLog);
+	// Shared by category loggers so each message appears once, with its category.
+	pNewLog->sinks().push_back(GetUiSink());
 	return pNewLog;
 }
 

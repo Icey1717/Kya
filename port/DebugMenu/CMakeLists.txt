@@ -9,6 +9,9 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 set(SOURCES 
+	"src/DebugWatch.cpp"
+	"src/DebugWatch.h"
+	"src/DebugUi.h"
     "src/DebugDrawInspector.cpp"
     "src/DebugDrawInspector.h"
 	"src/DebugMaterialPreviewer.h"

@@ -1,6 +1,9 @@
 ﻿#pragma once
 
+class CActor;
+
 namespace Debug {
+	CActor* GetInspectedActor();
 	bool GetShowWorldPanel();
 	void SetShowWorldPanel(bool bShow);
 
@@ -9,4 +12,5 @@ namespace Debug {
 
 	void DrawWorldPanel();
 	void DrawInspectorPanel();
+	void DrawSelectedActorMarker();
 }

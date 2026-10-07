@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include "spdlog/logger.h"
 
 using LogPtr = std::shared_ptr<spdlog::logger>;
@@ -103,6 +104,8 @@ public:
 	inline LogMap& GetLogs() { return logs; }
 
 	void ForceFlush();
+	// Bounded, thread-safe snapshot for the debug UI; existing file logs are unchanged.
+	static std::vector<std::string> GetRecentMessages();
 
 	static LogPtr CreateLog(const std::string& category);
 

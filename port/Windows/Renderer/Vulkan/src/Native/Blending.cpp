@@ -190,6 +190,7 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 	if (!bAlphaBlendEnabled) {
 		return blendState;
 	}
+
 	if (const char* reason = GetUnsupportedBlendReason(alpha)) {
 #ifndef NDEBUG
 		// Once per register value, so continuing from the breakpoint remains useful.
@@ -207,7 +208,9 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 		}
 #endif
 		// Preserve the previous approximation while collecting runtime evidence.
-		if (alpha.A > 2 || alpha.B > 2 || alpha.C > 2 || alpha.D > 2) return blendState;
+		if (alpha.A > 2 || alpha.B > 2 || alpha.C > 2 || alpha.D > 2) {
+			return blendState;
+		}
 	}
 
 	blendState.blendIndex = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
@@ -219,6 +222,7 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 		VK_BLEND_FACTOR_DST_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_FACTOR_SRC1_ALPHA, VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA,
 		VK_BLEND_FACTOR_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO
 	} };
+
 	static constexpr std::array<VkBlendOp, 3> vk_blend_ops = { {
 			VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT
 	} };

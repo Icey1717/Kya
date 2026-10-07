@@ -3,6 +3,7 @@
 #include <fstream>
 #include <optional>
 #include <imgui.h>
+#include "DebugUi.h"
 
 namespace Debug {
 	const char* gSettingsFile = "settings.json";
@@ -37,7 +38,7 @@ Debug::Settings Debug::LoadSettings(bool bCreateIfNotExisting /*= false*/)
 bool Debug::ComboSetting::DrawImguiControl()
 {
 	int current = value;
-	if (ImGui::Combo(name.c_str(), &current, labels.data(), static_cast<int>(labels.size()))) {
+	if (Ui::Field(name.c_str(), [&](const char* id) { return ImGui::Combo(id, &current, labels.data(), static_cast<int>(labels.size())); })) {
 		value = current;
 		return UpdateValue();
 	}
@@ -57,7 +58,7 @@ bool Debug::Setting<bool>::DrawImguiControl()
 template<>
 bool Debug::Setting<float>::DrawImguiControl()
 {
-	if (ImGui::InputFloat(name.c_str(), &value)) {
+	if (Ui::InputFloat(name.c_str(), &value)) {
 		return UpdateValue();
 	}
 
@@ -67,7 +68,7 @@ bool Debug::Setting<float>::DrawImguiControl()
 template<>
 bool Debug::Setting<int>::DrawImguiControl()
 {
-	if (ImGui::InputInt(name.c_str(), &value)) {
+	if (Ui::Field(name.c_str(), [&](const char* id) { return ImGui::InputInt(id, &value); })) {
 		return UpdateValue();
 	}
 	return false;
@@ -89,7 +90,7 @@ bool Debug::Setting<std::string>::DrawImguiControl()
 	strncpy(buffer, value.c_str(), sizeof(buffer) - 1);
 	buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
 
-	if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer))) {
+	if (Ui::Field(name.c_str(), [&](const char* id) { return ImGui::InputText(id, buffer, sizeof(buffer)); })) {
 		value = std::string(buffer);
 		return UpdateValue();
 	}
