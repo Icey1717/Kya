@@ -6080,6 +6080,12 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 				edF32Matrix4GetInverseOrthoHard(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 				edF32Matrix4GetTransposeHard(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 
+#ifdef PLATFORM_WIN
+				// Preserve the six vectors uploaded to VU memory 0x3fa..0x3ff.
+				Renderer::Native::PushEnvironmentMapping(pVifPkt[1].asVector.raw,
+					pVifPkt[2].asVector.raw, pObjToWorldPktBuffer->raw);
+#endif
+
 				// Set obj to world.
 				pVifPkt = pVifPkt + 7;
 				break;

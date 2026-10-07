@@ -26,6 +26,7 @@ namespace Renderer
 		};
 
 		ResolvedBlendState ResolveBlendState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled);
+		void SetBlendConstants(const GIFReg::GSAlpha& alpha, VkCommandBuffer cmd);
 
 		BlendingState SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);
 		BlendingState SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);

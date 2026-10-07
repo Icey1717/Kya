@@ -275,6 +275,11 @@ void DrawWindow() {
         highlightFlagMask = 0x100;
         highlightFlags = true;
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Environment mapping (0x40)")) {
+        highlightFlagMask = 0x40;
+        highlightFlags = true;
+    }
 
     std::unordered_map<uint64_t, const Trace::Source*> sources;
     std::unordered_map<uint64_t, const Trace::Submission*> submissions;

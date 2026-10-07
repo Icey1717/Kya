@@ -321,6 +321,7 @@ namespace Renderer
 		static_assert(sizeof(MatrixPacket) == 0x1c0, "Invalid Native::MatrixPacket size");
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt);
+		void PushEnvironmentMapping(const float* cameraX, const float* cameraY, const float* normalTransform);
 
 		void OnVideoFlip();
 

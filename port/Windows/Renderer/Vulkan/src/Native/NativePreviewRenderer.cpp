@@ -1,4 +1,5 @@
 #include "NativeRendererInternal.h"
+#include "Blending.h"
 
 #include "NativeDebug.h"
 #include "VulkanRenderer.h"
@@ -113,6 +114,7 @@ namespace Renderer
 					}
 
 					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, draw.pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
+					SetBlendConstants(draw.pTexture->GetTextureRegisters().alpha, cmd);
 					SetColorDepthDynamicState(cmd, draw, instance);
 
 					PerDrawData previewPerDrawData = instance.perDrawData;

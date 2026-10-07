@@ -2323,7 +2323,20 @@ namespace VU1Emu {
 			vi04 = vi04 & vi01;
 
 			if (vi04 != 0) {
-				IMPLEMENTATION_GUARD();
+				// Normals follow the 72 interleaved ST/RGBA/XYZ entries.
+				const auto cameraX = VIF_LOAD_F(0x3fa, 0);
+				const auto cameraY = VIF_LOAD_F(0x3fb, 0);
+				const auto colX = VIF_LOAD_F(0x3fc, 0);
+				const auto colY = VIF_LOAD_F(0x3fd, 0);
+				const auto colZ = VIF_LOAD_F(0x3fe, 0);
+				const auto colT = VIF_LOAD_F(0x3ff, 0);
+				for (int i = 0; i < vi14; ++i) {
+					const auto normal = VIF_LOAD_F(vi15 + 1 + 0xd8 + i, 0);
+					const auto mapped = colT + colZ * normal.z + colY * normal.y + colX * normal.x;
+					auto* st = VIF_AS_F(vi15 + 1 + i * 3, 0);
+					st->x = (1.0f + (cameraX.x * mapped.x + cameraX.y * mapped.y + cameraX.z * mapped.z)) * 0.5f;
+					st->y = (1.0f - (cameraY.x * mapped.x + cameraY.y * mapped.y + cameraY.z * mapped.z)) * 0.5f;
+				}
 			}
 		}
 

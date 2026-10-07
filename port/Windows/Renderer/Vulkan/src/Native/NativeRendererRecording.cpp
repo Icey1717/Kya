@@ -1,4 +1,5 @@
 #include "NativeRendererInternal.h"
+#include "Blending.h"
 
 #include "NativeDebug.h"
 #include "NativeDebugShapes.h"
@@ -347,6 +348,7 @@ namespace Renderer
 							effectiveAlpha = instance.gsAlpha;
 						}
 						if (drawCommand.frameBufferMaterial) effectiveAlpha.CMD = drawCommand.frameBufferMaterial->alpha;
+						SetBlendConstants(effectiveAlpha, cmd);
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
 						if (bShadowReceiver || bShadowMask) {
@@ -384,6 +386,14 @@ namespace Renderer
                         if (TraceDraw(drawCommand, instance, true)) {
 #ifndef NDEBUG
 							// Report activation once without interrupting rendering.
+							static bool environmentMappingReported = false;
+							if (!environmentMappingReported && currentRenderPassKey.kind == ERenderPassKind::Main &&
+								(instance.perDrawData.renderFlags & 0x40) != 0 && (instance.perDrawData.stripFlags & 0x8000000) != 0) {
+								environmentMappingReported = true;
+								NATIVE_LOG(LogLevel::Info, "Environment mapping draw: mesh={} texture={} layer={} flags=0x{:x} data={} indices={}",
+									instance.pMesh->GetName(), pTexture->GetName(), pTexture->GetLayerIndex(), instance.perDrawData.renderFlags,
+									instance.perDrawData.lightingDataIndex, instance.indexCount);
+							}
 							static bool normalExtrusionReported = false;
 							if (!normalExtrusionReported && currentRenderPassKey.kind == ERenderPassKind::Main &&
 								(instance.perDrawData.renderFlags & 0x100) != 0) {

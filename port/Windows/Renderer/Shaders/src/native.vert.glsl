@@ -15,12 +15,7 @@ layout(set = 0, binding = 3) readonly buffer AnimBuffer {
 
 #include "per_draw_data.glsl"
 
-struct LightingDataBlock {
-	mat4 lightDirection;
-	mat4 lightColor;
-	vec4 lightAmbient;
-	vec4 flare;
-};
+#include "environment_mapping.glsl"
 
 layout(set = 0, binding = 4) readonly buffer LightingData {
 	LightingDataBlock lightData[];
@@ -88,6 +83,9 @@ void main() {
 	gl_Position = pos;
 
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
+	if (hasNormals && (perDrawData.renderFlags & 0x40) != 0) {
+		outST = GetEnvironmentST(lightingBuf.lightData[perDrawData.lightingDataIndex], extrusionNormal);
+	}
 
 	if ((perDrawData.renderFlags & 0x200) != 0) {
 		outST.x += animStData.animST[perDrawData.animStDataIndex].x;

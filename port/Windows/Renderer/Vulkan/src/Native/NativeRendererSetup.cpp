@@ -201,6 +201,7 @@ namespace Renderer
 			colorBlending.blendConstants[3] = 0.0f;
 
 			std::vector<VkDynamicState> dynamicStates = {
+				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
@@ -351,6 +352,7 @@ namespace Renderer
 			colorBlending.blendConstants[3] = 0.0f;
 
 			std::vector<VkDynamicState> dynamicStates = {
+				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,

@@ -4,12 +4,7 @@
 layout(set = 0, binding = 2) readonly buffer ModelBuffer { mat4 modelMatrix[]; } model;
 layout(set = 0, binding = 3) readonly buffer AnimBuffer { mat4 animMatrix[]; } anim;
 
-struct LightingDataBlock {
-	mat4 lightDirection;
-	mat4 lightColor;
-	vec4 lightAmbient;
-	vec4 flare;
-};
+#include "environment_mapping.glsl"
 
 // Caster draws reuse the material descriptor set created for the main native
 // pipeline, so keep the otherwise-unused bindings layout-compatible.
@@ -47,6 +42,9 @@ void main()
 	}
 	gl_Position = perDrawData.projXView * model.modelMatrix[perDrawData.modelMatrixIndex] * position;
 	fragTexCoord = vec2(inST) * 0.000244140625;
+	if ((perDrawData.stripFlags & 0x8000000u) != 0 && (perDrawData.renderFlags & 0x40) != 0) {
+		fragTexCoord = GetEnvironmentST(lightingBuf.lightData[perDrawData.lightingDataIndex], extrusionNormal);
+	}
 	if ((perDrawData.renderFlags & 0x200) != 0) {
 		fragTexCoord += animStData.animST[perDrawData.animStDataIndex].xy;
 	}

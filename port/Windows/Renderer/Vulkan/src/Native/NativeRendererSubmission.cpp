@@ -80,6 +80,16 @@ namespace Renderer
 			instance.bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 			assert(!instance.gsTest.DATE && "Native destination-alpha testing is not implemented");
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
+			if ((renderFlags & 0x40) != 0 && (pMesh->GetStripFlags() & 0x8000000) != 0) {
+				// Mapping setup can change without a new hierarchy lighting packet.
+				// Append an immutable combined block before capturing this draw's index.
+				auto& state = GetNativeRendererState();
+				auto data = state.lightingDynamicBuffer.GetLastInstance();
+				data.environmentNormalTransform = state.environmentNormalTransform;
+				data.environmentCameraX = state.environmentCameraX;
+				data.environmentCameraY = state.environmentCameraY;
+				state.lightingDynamicBuffer.AddInstanceData(data);
+			}
 			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
 			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
 			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(GetNativeRendererState().lightingDynamicBuffer.GetInstanceIndex());
@@ -161,6 +171,14 @@ namespace Renderer
 		void SetAnimStInstanceData(const glm::vec4& data)
 		{
 			GetNativeRendererState().animStBuffer.AddInstanceData(data);
+		}
+
+		void PushEnvironmentMapping(const float* cameraX, const float* cameraY, const float* normalTransform)
+		{
+			auto& state = GetNativeRendererState();
+			state.environmentCameraX = glm::make_vec4(cameraX);
+			state.environmentCameraY = glm::make_vec4(cameraY);
+			state.environmentNormalTransform = glm::make_mat4(normalTransform);
 		}
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt)

@@ -225,18 +225,28 @@ namespace Renderer
 			glm::mat4 lightColor;
 			glm::vec4 lightAmbient;
 			glm::vec4 flare;
+			glm::mat4 environmentNormalTransform = glm::mat4(1.0f);
+			glm::vec4 environmentCameraX = glm::vec4(0.0f);
+			glm::vec4 environmentCameraY = glm::vec4(0.0f);
 
 			bool operator==(const LightingDynamicBufferData& other) const
 			{
 				for (int i = 0; i < 4; ++i) {
 					if (!glm::all(glm::equal(lightDirection[i], other.lightDirection[i]))) return false;
 					if (!glm::all(glm::equal(lightColor[i], other.lightColor[i]))) return false;
+					if (!glm::all(glm::equal(environmentNormalTransform[i], other.environmentNormalTransform[i]))) return false;
 				}
 				if (!glm::all(glm::equal(lightAmbient, other.lightAmbient))) return false;
 				if (!glm::all(glm::equal(flare, other.flare))) return false;
+				if (!glm::all(glm::equal(environmentCameraX, other.environmentCameraX))) return false;
+				if (!glm::all(glm::equal(environmentCameraY, other.environmentCameraY))) return false;
 				return true;
 			}
 		};
+		static_assert(sizeof(LightingDynamicBufferData) == 256);
+		static_assert(offsetof(LightingDynamicBufferData, environmentNormalTransform) == 160);
+		static_assert(offsetof(LightingDynamicBufferData, environmentCameraX) == 224);
+		static_assert(offsetof(LightingDynamicBufferData, environmentCameraY) == 240);
 
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 
@@ -328,6 +338,9 @@ namespace Renderer
 			bool fadeActive = false;
 
 			StorageDynamicBuffer<LightingDynamicBufferData, gMaxLightingData> lightingDynamicBuffer;
+			glm::mat4 environmentNormalTransform = glm::mat4(1.0f);
+			glm::vec4 environmentCameraX = glm::vec4(0.0f);
+			glm::vec4 environmentCameraY = glm::vec4(0.0f);
 			StorageDynamicBuffer<glm::vec4, gMaxInstances> animStBuffer;
 			StorageDynamicBuffer<glm::mat4, gMaxInstances> shadowProjectionBuffer;
 			NativeVertexBuffer nativeVertexBuffer;

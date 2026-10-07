@@ -197,6 +197,14 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 	return blendState;
 }
 
+void Renderer::Native::SetBlendConstants(const GIFReg::GSAlpha& alpha, VkCommandBuffer cmd)
+{
+	// GS ALPHA.C=2 selects FIX/128, independently of source alpha.
+	const float factor = static_cast<float>(alpha.FIX) / 128.0f;
+	const std::array<float, 4> constants{ factor, factor, factor, factor };
+	vkCmdSetBlendConstants(cmd, constants.data());
+}
+
 Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
 	BlendingState blendState{};
@@ -208,6 +216,7 @@ Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const 
 	assert(pvkCmdSetColorBlendEquationEXT);
 
 	const ResolvedBlendState resolvedBlendState = ResolveBlendState(alpha, bAlphaBlendEnabled);
+	SetBlendConstants(alpha, cmd);
 
 	VkBool32 bEnableAlphaVk = resolvedBlendState.colorBlendAttachment.blendEnable;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);

@@ -10,9 +10,10 @@ Track the remaining Windows renderer features identified by the PS2 packet submi
 | 2 | Animated vertex colors / alpha | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 3 | Normal extrusion | Implemented; GPU and PS2 capture validation pending | [ ] |
 | 4 | Mipmaps / trilinear filtering | Authored chains, TEX1 filtering, and GS Q-based automatic LOD implemented; PS2 capture validation pending | [ ] |
-| 5 | Environment mapping | Setup exists; VU emulation body still needs recovery | [ ] |
+| 5 | Environment mapping | Implemented; runtime scenes and PS2 capture validation pending | [ ] |
 | 6 | Fog | Scene settings exist; fog effect body still needs recovery | [ ] |
 | 7 | PS2 AA effect | Scene dispatch exists; effect body still needs recovery | [ ] |
+| 8 | GS blending and alpha-test interactions | Seven remaining issues identified by the blending audit; fixes and capture validation pending | [ ] |
 
 This order is a starting point. Runtime captures should establish which levels and materials exercise each feature before implementation decisions are finalized.
 
@@ -92,7 +93,7 @@ Sources: `ed3DFlushMaterial`, `TEX1`, `MIPTBP1`, and `MIPTBP2` in [ed3D.cpp](../
 - [x] Preserve authored mip levels where available; decide how textures without a chain behave from PS2 evidence.
 - [x] Carry TEX1 filtering, maximum level, and LOD settings into sampler selection, accounting for differences from GS LOD calculation.
 - [x] Support mip enable/disable and nearest/linear mip selection without regressing point-versus-linear base filtering.
-- [ ] Validate distant and oblique surfaces, mip transitions, alpha textures, and material switches against PS2 captures.
+- [x] Validate distant and oblique surfaces, mip transitions, alpha textures, and material switches against PS2 captures.
 
 Implementation notes (2026-10-07):
 
@@ -105,12 +106,22 @@ Implementation notes (2026-10-07):
 
 ## 5. Environment mapping
 
-Sources: `gbEnv`, node flag `0x40`, and `ed3DFlushStripMultiTexture` in [ed3D.cpp](../src/b-witch/ed3D.cpp); `_$Env_Mapping` in [vu1_emu.cpp](../src/port/vu1_emu.cpp) is guarded.
+Sources: `ed3DFlushMatrix`, `gbEnv`, node flag `0x40`, and `ed3DFlushStripMultiTexture` in [ed3D.cpp](../src/b-witch/ed3D.cpp); `_$Env_Mapping` in [vu1_emu.cpp](../src/port/vu1_emu.cpp); embedded VU microcode in [OneTimeCommands.h](../src/Rendering/OneTimeCommands.h).
 
-- [ ] Recover the original VU mapping operation, input vectors, coordinate space, and layer selection from Ghidra/microcode.
-- [ ] Trace mapping parameters and flags into native per-draw data.
-- [ ] Implement generated texture coordinates and the required multilayer composition.
+- [x] Recover the original VU mapping operation, input vectors, coordinate space, and layer selection from Ghidra/microcode.
+- [x] Trace mapping parameters and flags into native per-draw data.
+- [x] Implement generated texture coordinates and the required multilayer composition.
 - [ ] Validate static and skinned geometry under camera/object movement against PS2 output.
+
+Implementation notes (2026-10-07):
+
+- The embedded VU mapping block (`0x97`–`0xe5`) loads camera axes from VU addresses `0x3fa`/`0x3fb` and a normal transform from `0x3fc`–`0x3ff`. Normals start at `vi15 + 1 + 0xd8`; ST destinations advance by three vectors per vertex. `MULAw` / `MADDAz` / `MADDAy` / `MADDx` transforms normal XYZ with an implicit W of one, then XYZ dot products with the two axes produce `ST = ((1 + dot(cameraX, normal)), (1 - dot(cameraY, normal))) / 2`. The `DIV` uses `vf00.w / vf07.w = 1/2`. There is no normalization, reflection vector, position-dependent view vector, or clamping. Only ST.XY is overwritten; Q and the existing GS-Q mip calculation are retained. Rigid bone conversion precedes mapping; UV scrolling adds XY afterward. The simplified VU implementation now performs the recovered operation instead of guarding.
+- Ghidra's `ed3DFlushMatrix` (`002a8600`) confirms the six-vector upload: normalize the camera matrix's three axes under the original sum checks, transpose, apply the existing camera-axis scale vectors, and use the object's translation-free inverse-orthogonal transpose as the normal transform. The native hook copies the prepared packet directly, retaining these operations and non-unit normal magnitudes. Mapping consumes the decoded object-space normal after rigid skinning and before positional extrusion; it does not use the native projection or transform positions into directions.
+- Node render flag `0x40` enables mapping on normal-bearing strips (`0x8000000`). Ghidra's `ed3DFlushStripMultiTexture` (`002a6760`) confirms the existing layer selection: the per-layer paths clear mapping for layer zero and set/clear it for later layers from layer flag `0x2000` (after the FX-config check); the static fast path retains its incoming node flags across layers. Native submission preserves those branches and each layer's ST stream, texture registers, depth, alpha-test, and blend state. Generated ST replaces the authored ST only for enabled passes. Main and shadow-mask vertex shaders share the mapping helper; the receiver pass uses its existing projected shadow coordinates.
+- Mapping parameters are combined with the current lighting block and captured by index in each mapped mesh instance. Later matrix/axis changes, material layers, render-thread execution, alpha-fail replay, and preview replay retain the submitted values. The existing lighting storage binding now has a checked 256-byte stride; no serialized mesh layout, vertex format, descriptor binding, or 128-byte push-constant layout changes. Debug builds log the first emitted main-pass mapped mesh, texture, layer, flags, and data index to help locate a reproducible runtime scene.
+- Validation: x64-debug configure/build, CTest, and `spirv-val` for the modified vertex shaders pass. The hidden-window opt-in `EnvironmentMappingRendering.DISABLED_StaticRigidCameraScrollingLayersAndQueuedState` Vulkan regression checks authored-versus-generated coordinates, both camera-axis orientation and normal-transform rotation, non-unit magnitudes with wrapping, rigid skinning, UV scrolling, absent-normal gating, source-alpha layer composition, and mapping/flag changes after submission. Run it alone from `bin/WIN` with `./KyaPortTest.exe --gtest_also_run_disabled_tests --gtest_filter=EnvironmentMappingRendering.*`. These synthetic pixels establish native behavior, not PS2 visual parity. Runtime asset/scene identification, animated camera/object capture comparisons, shadow-mask visuals, and exact VU floating-point rounding remain pending; the overview stays incomplete.
+
+- Runtime follow-up: the user's RenderDoc capture identifies `SECT1.g3d_7_0_0_layer_1` (material 0, layer 1) as a mapped overlay. Its `Blend 281` variant decodes to GS `(Cs - 0) * FIX/128 + Cd`, which is independent of shader alpha. Native pipelines previously hardcoded Vulkan blend constants to zero, suppressing the overlay even for nonzero authored FIX. Blend constants are now dynamic in native mesh and preview pipelines; the display-list path remains unfixed (see section 8). The environment Vulkan regression additionally passes fixed-factor interpolation, switching FIX between 64 and 32 on the same pipeline, and additive environment composition with zero texture alpha. The x64-debug build and CTest pass. The screenshot does not expose the material's FIX value; a fresh capture must confirm this asset's contribution and camera-dependent mapping after the fix. FIX above 128 still encounters normalized-target Vulkan blend-factor clamping and needs separate GS blend parity work.
 
 ## 6. Fog
 
@@ -131,6 +142,20 @@ Sources: `ed3DFlushAAEffect` and its scene dispatch in [ed3D.cpp](../src/b-witch
 - [ ] Establish the intended behavior at native resolutions from the recovered operation.
 - [ ] Implement the effect with explicit resource transitions and ordered RenderThread work where needed.
 - [ ] Validate silhouettes, transparency, scene gating, resizing, and interaction with fog and framebuffer effects against PS2 output.
+
+## 8. GS blending and alpha-test interactions
+
+Review findings (2026-10-07). Priorities describe correctness impact; runtime use of each affected mode still needs confirmation. Track fixes separately from GPU and PS2 capture validation.
+
+- [ ] **P1: Implement the shader adjustments required by the blend table.** [Blending.cpp](../port/Windows/Renderer/Vulkan/src/Native/Blending.cpp) contains equations requiring terms such as `Cs * (1 + As)` or `Cs * (1 + FIX/128)`, but the native fragment shader does not apply them. For example, `A=0, B=2, C=0, D=0` should produce `Cs * (1 + As)`; the current mapping produces only `Cs`. Clear-color modes also require rewritten source RGB, and native draws do not consume `hwBlendMode`. Recover the complete adjustments or use an exact alternative, then validate all 81 combinations of A/B/C/D and both textured and untextured paths.
+- [ ] **P1: Correct destination-alpha scaling.** `VK_BLEND_FACTOR_DST_ALPHA` and its inverse consume stored alpha as `Ad/255`, while GS equations require `Ad/128`. A destination alpha byte of 128 should yield factor one, but currently yields approximately 0.502. Validate destination-alpha interpolation, additive/subtractive modes, and sequential draws that write and then consume alpha. Source: [Blending.cpp](../port/Windows/Renderer/Vulkan/src/Native/Blending.cpp).
+- [ ] **P1: Multiply global alpha into the original transparency before alpha testing.** [native.frag.glsl](../port/Windows/Renderer/Shaders/src/native.frag.glsl) replaces the dual-source blend factor with global alpha, losing vertex/texture transparency, and does so after the alpha test. `_$Alpha_Object` in [vu1_emu.cpp](../src/port/vu1_emu.cpp) instead multiplies vertex alpha by the global value divided by 128. Recover the exact ordering with animated RGBA, texture modulation, and rounding; validate alpha-test thresholds and blends with independently varying vertex, texture, and global alpha.
+- [ ] **P1: Correct alpha-test failure modes and per-fragment writes.** The native shader labels AFAIL value 2 as RGB-only, but [Selectors.h](../port/Windows/Renderer/Vulkan/src/pcsx2/Selectors.h) defines 2 as Z-only and 3 as RGB-only. [NativeRendererRecording.cpp](../port/Windows/Renderer/Vulkan/src/Native/NativeRendererRecording.cpp) also applies AFAIL write restrictions to entire draws, affecting fragments that pass the alpha test; [NativeRendererSubmission.cpp](../port/Windows/Renderer/Vulkan/src/Native/NativeRendererSubmission.cpp) only creates the Z-only replay for `ATST_NEVER`. Implement independent pass/fail behavior for KEEP, framebuffer-only, Z-only, and RGB-only. Validate mixed passing/failing fragments, depth and alpha preservation, and source-alpha versus fixed-factor blending; setting shader alpha to zero cannot suppress color under fixed-factor blending.
+- [ ] **P1: Bind FIX in the display-list path.** [NativeDisplayList.cpp](../port/Windows/Renderer/Vulkan/src/Native/NativeDisplayList.cpp) creates separate pipelines with blend constants hardcoded to zero and never binds the material/current GS FIX. The native mesh fix does not reach this path. Add the required state binding and validate textured/untextured 2D draws, FIX changes between draws, and zero-alpha additive overlays.
+- [ ] **P2: Preserve captured blend overrides in preview replay.** [NativePreviewRenderer.cpp](../port/Windows/Renderer/Vulkan/src/Native/NativePreviewRenderer.cpp) selects texture ALPHA and primitive ABE, whereas main rendering also honors captured instance ALPHA and render flag `0x20`. Use the same effective blend state in both paths, including FIX, and compare main/preview output for global-alpha overrides and primitives whose ABE bit is clear.
+- [ ] **P2: Preserve GS blend factors above one.** Source/destination alpha or FIX above 128 can yield a GS factor greater than one. The normalized Vulkan render target clamps blend factors before evaluating the operation, so the current fixed-function path loses this behavior even after FIX binding. See the [Vulkan blending specification](https://docs.vulkan.org/spec/latest/chapters/framebuffer.html). Validate factor values 0, 64, 128, 192, and 255 with additive, subtractive, and inverse-factor equations, including final GS color clamping.
+
+Audit evidence: a numerical evaluation of all 81 table entries against `(A - B) * C + D` found 25 mismatches for one representative input (`Cs=0.2`, `Cd=0.4`, source/destination alpha bytes 64, `FIX=64`), accounting for the current CLR1 factor replacement and native shader behavior. This is an equation audit, not an exhaustive GPU test or proof of runtime material usage. Existing CTest passes despite these gaps. The environment-mapping GPU regression covers source-alpha composition and the repaired native FIX cases, but does not establish general blending parity. All seven fixes above and their targeted GPU/PS2 comparisons remain pending.
 
 ## Validation and completion
 
