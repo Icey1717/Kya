@@ -184,7 +184,7 @@ namespace Renderer
 			// Framebuffer materials: UV scale. These sampling modes are exclusive.
 			glm::vec2 samplingParams{ 0.0f, 1.0f };
 			uint32_t stripFlags = 0; // Authored geometry flags; distinct from VU renderFlags.
-			uint32_t samplingPadding = 0;
+			uint32_t blendMode = 0; // Matches ResolvedBlendState::hwBlendMode.
 		};
 		static_assert(sizeof(PerDrawData) == 128);
 		static_assert(offsetof(PerDrawData, shadowProjectionIndex) == 104);

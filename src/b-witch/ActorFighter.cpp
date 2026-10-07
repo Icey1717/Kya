@@ -10055,7 +10055,7 @@ void PlayerSubStruct_64::UpdateTrailFromEndpoints(float param_1, edF32VECTOR4* p
 
 float FLOAT_ARRAY_0049cb68[10];
 edF32VECTOR4 edF32VECTOR4_ARRAY_0049cb90[8];
-edF32VECTOR4 edF32VECTOR4_ARRAY_0049cc10[32];
+edF32VECTOR4 edF32VECTOR4_ARRAY_0049cc10[256];
 
 void PlayerSubStruct_64::BuildSplineCoefficients()
 {

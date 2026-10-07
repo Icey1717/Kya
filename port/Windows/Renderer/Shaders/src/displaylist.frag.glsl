@@ -78,4 +78,7 @@ void main() {
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
 	outAlphaBlend = alpha_blend;
+	if (blendState.blendMode == 1) {
+		outColor.rgb = vec3(1.0);
+	}
 }

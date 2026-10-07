@@ -166,6 +166,8 @@ const char* Renderer::Native::GetUnsupportedBlendReason(const GIFReg::GSAlpha& a
 	if (alpha.A == alpha.B) return nullptr; // The factor cancels entirely.
 	if (alpha.C == 1) return "GS destination alpha /128 requires destination reads";
 	if (alpha.C == 2 && alpha.FIX > 128) return "FIX above 128 requires unclamped blend factors";
+	// Cd * (1 + As): the shader supplies white RGB and As as the dual source factor.
+	if (alpha.A == 1 && alpha.B == 2 && alpha.C == 0 && alpha.D == 1) return nullptr;
 	const auto index = ((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D;
 	const auto blend = GetBlend(index);
 	if ((blend.flags & (BLEND_A_MAX | BLEND_MIX2 | BLEND_HW_CLR1 | BLEND_HW_CLR2 | BLEND_HW_CLR3)) ||

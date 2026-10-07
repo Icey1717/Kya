@@ -100,4 +100,8 @@ void main()
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
 	outAlphaBlend = alpha_blend;
+	if (perDrawData.blendMode == 1u) {
+		// DST_COLOR * 1 + destination * SRC1_COLOR = Cd * (1 + As).
+		outColor.rgb = vec3(1.0);
+	}
 }

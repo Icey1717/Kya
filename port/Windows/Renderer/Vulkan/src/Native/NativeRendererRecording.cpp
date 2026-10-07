@@ -443,7 +443,6 @@ namespace Renderer
 						
 						instance.perDrawData.projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
 
-						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 						GIFReg::GSAlpha effectiveAlpha = pTexture->GetTextureRegisters().alpha;
 						if ((instance.perDrawData.renderFlags & 0x20) != 0) {
 							effectiveAlpha = instance.gsAlpha;
@@ -456,6 +455,8 @@ namespace Renderer
 						SetBlendConstants(effectiveAlpha, cmd);
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
+						instance.perDrawData.blendMode = (bShadowReceiver || bShadowMask) ? 0 : ResolveBlendState(effectiveAlpha, bAlphaBlendEnabled).hwBlendMode;
+						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 						if (bShadowReceiver || bShadowMask) {
 							if (!primState.has_value()) {
 								vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);

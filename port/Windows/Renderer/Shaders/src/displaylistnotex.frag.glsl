@@ -70,13 +70,12 @@ bool atst(vec4 color)
 void main() {
 	outColor = fragColor;
 
-	if (blendState.blendMode == 1) {
-		outColor.rgb = vec3(1.0);
-	}
-
 	if (atst(outColor) == ((blendState.alphaAfail & 16) != 0)) discard;
 
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
 	outAlphaBlend = alpha_blend;
+	if (blendState.blendMode == 1) {
+		outColor.rgb = vec3(1.0);
+	}
 }

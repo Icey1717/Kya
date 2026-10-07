@@ -118,6 +118,7 @@ namespace Renderer
 					SetColorDepthDynamicState(cmd, draw, instance);
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
+					previewPerDrawData.blendMode = ResolveBlendState(effectiveAlpha, blendEnabled).hwBlendMode;
 					previewPerDrawData.projXView = previewProjXView;
 					if (!draw.frameBufferMaterial) {
 						const auto conversion = BuildGsProjection(&projMatrix[0][0],

@@ -19,7 +19,7 @@ layout(push_constant) uniform PerDrawData
 	uint frameBufferMode;
 	vec2 samplingParams; // GS Q denominator, or framebuffer UV scale when frameBufferMode != 0.
 	uint stripFlags; // Authored geometry flags, separate from VU renderFlags.
-	uint samplingPadding;
+	uint blendMode;
 } perDrawData;
 
 // Matches the VU upload destination in ed3DFlushStripInit.

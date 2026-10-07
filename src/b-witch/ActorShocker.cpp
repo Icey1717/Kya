@@ -498,14 +498,18 @@ void CActorShocker::BehaviourShockerFireWave_Manage(CBehaviourShockerFireWave* p
 			SetState(this->actorState, -1);
 		}
 	}
+
 	pBehaviour->circularWaveShoot.UpdateWaveLife();
+
 	ManageSparksBoomy();
 	FUN_003d1b10();
+
 	if (this->field_0x464.IsValid()) {
 		edF32Vector4ScaleHard(1.0f, &local_690, &this->pMeshTransform->base.transformA.rowY);
 		edF32Vector4AddHard(&local_690, &this->pMeshTransform->base.transformA.rowT, &local_690);
 		this->field_0x464.SetPosition(&local_690);
 	}
+
 	return;
 }
 
