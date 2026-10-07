@@ -32,6 +32,7 @@ namespace Debug {
 		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
 		static Debug::Setting<bool> gFullResolutionHeatCapture = { "Full Resolution Heat FX Capture", false };
 		static Debug::Setting<bool> gFlareOcclusion = { "Flare Occlusion", true };
+		static Debug::Setting<bool> gFogEnabled = { "Enable Fog", true };
 		static Debug::Setting<bool> gForceHighestMipLevel = { "Force Highest Mip Level", false };
 		static Debug::Setting<bool> gForceLowestMipLevel = { "Force Lowest Mip Level", false };
 
@@ -231,6 +232,11 @@ void Debug::Rendering::DrawContents()
 
 	// --- Pipeline ---
 	if (ImGui::CollapsingHeader("Pipeline")) {
+		if (gFogEnabled.DrawImguiControl()) {
+			gFogEnabled.UpdateValue();
+			Renderer::Native::SetFogEnabled(gFogEnabled.get());
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Enable the native scene fog pass. Disable for comparison; applies to newly submitted frames.");
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}
@@ -298,6 +304,7 @@ void Debug::Rendering::Init()
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
 	Renderer::Native::SetFullResolutionHeatCapture(gFullResolutionHeatCapture.get());
 	Renderer::Native::SetFlareOcclusionEnabled(gFlareOcclusion.get());
+	Renderer::Native::SetFogEnabled(gFogEnabled.get());
 	if (gForceLowestMipLevel.get() && gForceHighestMipLevel.get()) gForceHighestMipLevel = false;
 	Renderer::Native::SetForceHighestMipLevel(gForceHighestMipLevel.get());
 	Renderer::Native::SetForceLowestMipLevel(gForceLowestMipLevel.get());

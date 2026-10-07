@@ -50,6 +50,8 @@
 #include "Sprite.h"
 #include "DrawTrace.h"
 #include "FlareDraw.h"
+#include "FogDraw.h"
+#include "FogProjection.h"
 
 // Counts the latest projected-shadow traversal independently of Draw Inspector capture.
 static Renderer::Native::ShadowCasterDiagnostics gShadowCasterDiagnostics{};
@@ -12103,6 +12105,34 @@ edpkt_data* ed3DFogScreen(edpkt_data* pPkt, int zvert)
 
 void ed3DFlushFogFX(void)
 {
+#ifdef PLATFORM_WIN
+	// The GS packet below is a screen/depth operation, not per-material vertex fog.
+	// Submit once at the original scene boundary, before AA and later scenes.
+	edSurface* pDrawSurface = edVideoGetDrawSurface();
+	if (((g3DFXFog.field_0x0 & 1) != 0) && gCurViewportUsed && gCurViewportUsed->pZBuffer &&
+		pDrawSurface && pDrawSurface->pSurfaceDesc && gRenderSceneConfig_SPR) {
+		Renderer::Native::FogDraw fog;
+		fog.flags = g3DFXFog.field_0x0;
+		fog.depthOffset = g3DFXFog.field_0x4;
+		fog.color[0] = g3DFXFog.field_0x8;
+		fog.color[1] = g3DFXFog.field_0xc;
+		fog.color[2] = g3DFXFog.field_0x10;
+		fog.color[3] = g3DFXFog.field_0x14;
+		fog.gsNear = (float)gRenderSceneConfig_SPR->projectionScaleFactorB;
+		fog.gsFar = (float)gRenderSceneConfig_SPR->projectionScaleFactorA;
+		Renderer::Native::BuildFogDepthProjection(fog.depthProjection, gNativeProjectionMatrix.raw, CameraToScreen_Matrix->raw);
+		const float width = (float)pDrawSurface->pSurfaceDesc->screenWidth;
+		const float height = (float)pDrawSurface->pSurfaceDesc->screenHeight;
+		if (width > 0.0f && height > 0.0f) {
+			fog.viewport[0] = gCurRectViewport.x / width;
+			fog.viewport[1] = gCurRectViewport.y / height;
+			fog.viewport[2] = gCurRectViewport.w / width;
+			fog.viewport[3] = gCurRectViewport.h / height;
+			Renderer::Native::SubmitFog(fog);
+		}
+	}
+	return;
+#else
 	edSurface* pSurf;
 	edpkt_data* peVar2;
 	int iVar3;
@@ -12189,6 +12219,7 @@ void ed3DFlushFogFX(void)
 	}
 
 	return;
+#endif
 }
 
 edpkt_data* ed3DFlushAAEffect(edpkt_data* pPkt)

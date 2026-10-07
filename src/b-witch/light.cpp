@@ -789,8 +789,193 @@ void CLightTorch::Activate()
 
 bool CLightTorch::DoLighting(LightingContext* pContext)
 {
-	IMPLEMENTATION_GUARD();
-	return false;
+	int iVar1;
+	edF32VECTOR4* peVar2;
+	bool bVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+
+	iVar1 = this->lightType;
+	if (iVar1 == 4) {
+		fVar5 = (pContext->position).w;
+		fVar4 = this->baseShape.position.w;
+		fVar8 = (pContext->position).x - this->baseShape.position.x;
+		fVar12 = (pContext->position).y - this->baseShape.position.y;
+		fVar13 = (pContext->position).z - this->baseShape.position.z;
+		fVar11 = fVar8 * fVar8 + fVar12 * fVar12 + fVar13 * fVar13;
+		fVar10 = this->baseShape.fallout1 * this->baseShape.fallout1;
+		bVar3 = false;
+		if (fVar11 <= fVar10) {
+			fVar6 = 1.0f / sqrtf(fVar11);
+			fVar9 = fVar8 * fVar6 * this->baseShape.direction.x + fVar12 * fVar6 * this->baseShape.direction.y + fVar13 * fVar6 * this->baseShape.direction.z;
+			bVar3 = false;
+			if ((this->baseShape).fov0 < fVar9) {
+				fVar7 = this->baseShape.fallout0;
+				fVar7 = fVar7 * fVar7;
+				if (fVar11 < fVar7) {
+					pContext->colorMultiplier = 1.0f;
+				}
+				else {
+					pContext->colorMultiplier = 1.0f - (fVar11 - fVar7) / (fVar10 - fVar7);
+				}
+				fVar11 = (this->baseShape).fov1;
+				if (fVar9 < fVar11) {
+					pContext->colorMultiplier = pContext->colorMultiplier * (1.0f - (fVar11 - fVar9) / (fVar11 - (this->baseShape).fov0));
+				}
+				peVar2 = pContext->pLightDirection;
+				fVar11 = -pContext->colorMultiplier;
+				peVar2->x = peVar2->x + fVar8 * fVar6 * fVar11;
+				peVar2->y = peVar2->y + fVar12 * fVar6 * fVar11;
+				peVar2->z = peVar2->z + fVar13 * fVar6 * fVar11;
+				peVar2->w = peVar2->w + (fVar5 - fVar4) * fVar6 * fVar11;
+				bVar3 = true;
+			}
+		}
+	}
+	else {
+		if (iVar1 == 1) {
+			peVar2 = pContext->pLightDirection;
+			fVar8 = this->baseShape.direction.y;
+			fVar11 = this->baseShape.direction.z;
+			fVar12 = this->baseShape.direction.w;
+			peVar2->x = peVar2->x + this->baseShape.direction.x * -1.0f;
+			peVar2->y = peVar2->y + fVar8 * -1.0f;
+			peVar2->z = peVar2->z + fVar11 * -1.0f;
+			peVar2->w = peVar2->w + fVar12 * -1.0f;
+			bVar3 = true;
+			pContext->colorMultiplier = 1.0f;
+		}
+		else {
+			if (iVar1 == 2) {
+				fVar8 = (pContext->position).x - this->baseShape.position.x;
+				fVar12 = (pContext->position).y - this->baseShape.position.y;
+				fVar13 = (pContext->position).z - this->baseShape.position.z;
+				fVar11 = fVar8 * this->baseShape.direction.x + fVar12 * this->baseShape.direction.y + fVar13 * this->baseShape.direction.z;
+				bVar3 = false;
+				if (0.0f <= fVar11) {
+					fVar10 = this->baseShape.fallout1;
+					bVar3 = false;
+					if (fVar11 <= fVar10) {
+						fVar8 = (fVar8 * fVar8 + fVar12 * fVar12 + fVar13 * fVar13) - fVar11 * fVar11;
+						fVar12 = (this->baseShape).fov1 * (this->baseShape).fov1;
+						bVar3 = false;
+						if (fVar8 <= fVar12) {
+							fVar5 = this->baseShape.fallout0;
+							fVar13 = 1.0f;
+							if (fVar5 <= fVar11) {
+								fVar13 = 1.0f - (fVar11 - fVar5) / (fVar10 - fVar5);
+							}
+							fVar11 = (this->baseShape).fov0;
+							fVar11 = fVar11 * fVar11;
+							if (fVar11 < fVar8) {
+								fVar13 = fVar13 * (1.0f - (fVar8 - fVar11) / (fVar12 - fVar11));
+							}
+							pContext->colorMultiplier = fVar13;
+							peVar2 = pContext->pLightDirection;
+							fVar13 = -fVar13;
+							fVar8 = this->baseShape.direction.y;
+							fVar11 = this->baseShape.direction.z;
+							fVar12 = this->baseShape.direction.w;
+							peVar2->x = peVar2->x + this->baseShape.direction.x * fVar13;
+							peVar2->y = peVar2->y + fVar8 * fVar13;
+							peVar2->z = peVar2->z + fVar11 * fVar13;
+							peVar2->w = peVar2->w + fVar12 * fVar13;
+							bVar3 = true;
+						}
+					}
+				}
+			}
+			else {
+				if (iVar1 == 3) {
+					fVar8 = (pContext->position).x - this->baseShape.position.x;
+					fVar12 = (pContext->position).y - this->baseShape.position.y;
+					fVar13 = (pContext->position).z - this->baseShape.position.z;
+					fVar11 = fVar8 * fVar8 + fVar12 * fVar12 + fVar13 * fVar13;
+					fVar10 = this->baseShape.fallout1 * this->baseShape.fallout1;
+					if (fVar10 < fVar11) {
+						bVar3 = false;
+					}
+					else {
+						fVar9 = this->baseShape.fallout0 * this->baseShape.fallout0;
+						fVar4 = 1.0f / sqrtf(fVar11);
+						fVar5 = ((pContext->position).w - this->baseShape.position.w) * fVar4;
+						if (fVar11 < fVar9) {
+							pContext->colorMultiplier = 1.0f;
+							peVar2 = pContext->pLightDirection;
+							peVar2->x = peVar2->x + fVar8 * fVar4 * -1.0f;
+							peVar2->y = peVar2->y + fVar12 * fVar4 * -1.0f;
+							peVar2->z = peVar2->z + fVar13 * fVar4 * -1.0f;
+							peVar2->w = peVar2->w + fVar5 * -1.0f;
+						}
+						else {
+							pContext->colorMultiplier = 1.0f - (fVar11 - fVar9) / (fVar10 - fVar9);
+							peVar2 = pContext->pLightDirection;
+							fVar11 = -pContext->colorMultiplier;
+							peVar2->x = peVar2->x + fVar8 * fVar4 * fVar11;
+							peVar2->y = peVar2->y + fVar12 * fVar4 * fVar11;
+							peVar2->z = peVar2->z + fVar13 * fVar4 * fVar11;
+							peVar2->w = peVar2->w + fVar5 * fVar11;
+						}
+						bVar3 = true;
+					}
+				}
+				else {
+					bVar3 = false;
+				}
+			}
+		}
+	}
+
+	if (bVar3) {
+		if (pContext->colorMultiplier == 1.0f) {
+			peVar2 = pContext->pLightAmbient;
+			fVar8 = this->colorModel.ambientColor.y;
+			fVar11 = this->colorModel.ambientColor.z;
+			fVar12 = this->colorModel.ambientColor.w;
+			peVar2->x = peVar2->x + this->colorModel.ambientColor.x;
+			peVar2->y = peVar2->y + fVar8;
+			peVar2->z = peVar2->z + fVar11;
+			peVar2->w = peVar2->w + fVar12;
+			peVar2 = pContext->pLightColor;
+			fVar8 = this->colorModel.color.y;
+			fVar11 = this->colorModel.color.z;
+			fVar12 = this->colorModel.color.w;
+			peVar2->x = peVar2->x + this->colorModel.color.x;
+			peVar2->y = peVar2->y + fVar8;
+			peVar2->z = peVar2->z + fVar11;
+			peVar2->w = peVar2->w + fVar12;
+		}
+		else {
+			peVar2 = pContext->pLightAmbient;
+			fVar8 = pContext->colorMultiplier;
+			fVar11 = this->colorModel.ambientColor.y;
+			fVar12 = this->colorModel.ambientColor.z;
+			fVar13 = this->colorModel.ambientColor.w;
+			peVar2->x = peVar2->x + this->colorModel.ambientColor.x * fVar8;
+			peVar2->y = peVar2->y + fVar11 * fVar8;
+			peVar2->z = peVar2->z + fVar12 * fVar8;
+			peVar2->w = peVar2->w + fVar13 * fVar8;
+			fVar8 = pContext->colorMultiplier;
+			peVar2 = pContext->pLightColor;
+			fVar11 = this->colorModel.color.y;
+			fVar12 = this->colorModel.color.z;
+			fVar13 = this->colorModel.color.w;
+			peVar2->x = peVar2->x + this->colorModel.color.x * fVar8;
+			peVar2->y = peVar2->y + fVar11 * fVar8;
+			peVar2->z = peVar2->z + fVar12 * fVar8;
+			peVar2->w = peVar2->w + fVar13 * fVar8;
+		}
+	}
+
+	return bVar3;
 }
 
 int CLightTorch::GetBaseShape(BaseShape** ppBaseShape)

@@ -12,6 +12,7 @@
 
 #include "glm/gtc/type_ptr.inl"
 #include <atomic>
+#include <cmath>
 
 namespace Renderer
 {
@@ -403,6 +404,7 @@ void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMod
 namespace
 {
 	std::atomic<bool> flareOcclusionEnabled{ true };
+	std::atomic<bool> fogEnabled{ true };
 }
 
 void Renderer::Native::SetFlareOcclusionEnabled(bool enabled)
@@ -430,6 +432,23 @@ void Renderer::Native::CaptureFrameBuffer()
 	if (!state.renderThread) return;
 	assert(!state.currentDraw); // Materials must submit their geometry before this boundary.
 	AddRenderThreadFrameBufferCopy(state.renderThread, state.cachedRenderPassKey, state.renderPassDirty);
+	state.cachedRenderPassKey = RenderPassKey{ EClearMode::None, ERenderPassKind::Main };
+	state.renderPassDirty = true;
+}
+
+void Renderer::Native::SetFogEnabled(bool enabled)
+{
+	fogEnabled = enabled;
+}
+
+void Renderer::Native::SubmitFog(const FogDraw& fog)
+{
+	if (!fogEnabled.load()) return;
+	if ((fog.flags & 1) == 0 || !std::isfinite(fog.gsNear) || !std::isfinite(fog.gsFar) || fog.gsNear == fog.gsFar) return;
+	auto& state = GetNativeRendererState();
+	if (!state.renderThread) return;
+	assert(!state.currentDraw);
+	AddRenderThreadFog(state.renderThread, fog, state.cachedRenderPassKey, state.renderPassDirty);
 	state.cachedRenderPassKey = RenderPassKey{ EClearMode::None, ERenderPassKind::Main };
 	state.renderPassDirty = true;
 }

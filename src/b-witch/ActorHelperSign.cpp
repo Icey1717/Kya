@@ -10,6 +10,7 @@
 #include "TimeController.h"
 #include "BootData.h"
 #include "TranslatedTextData.h"
+#include "InputManager.h"
 
 void CActorHelperSign::Create(ByteCode* pByteCode)
 {
@@ -400,7 +401,7 @@ void CActorHelperSign::DrawHelpText()
 	bool bVar1;
 	edCTextStyle* pNewFont;
 	char* pMsg;
-	long lVar2;
+	CPlayerInput* pPlayerInput;
 	float fVar3;
 	float fVar4;
 	float fVar5;
@@ -472,22 +473,21 @@ void CActorHelperSign::DrawHelpText()
 			astruct_22_0048fa40.field_0xc0.iHeight = static_cast<ushort>((int)(fVar3 - 2.147484e+09f));
 		}
 
-		IMPLEMENTATION_GUARD_LOG(
-		if (((this->actorState == 6) && (*(int**)&this->field_0x170 != (int*)0x0)) && (lVar2 = (**static_cast<code**>(**(int**)&this->field_0x170 + 200))(), lVar2 != 0)) {
-			if (0.0f < *static_cast<float*>((int)lVar2 + 0x5f8)) {
-				astruct_22_0048fa40.FUN_002ef920(false);
+		if (((this->actorState == 6) && (this->field_0x170 != (CActor*)0x0)) && (pPlayerInput = this->field_0x170->GetInputManager(0, 0), pPlayerInput != (CPlayerInput*)0x0)) {
+			if (0.0f < pPlayerInput->aAnalogSticks[0].y) {
+				astruct_22_0048fa40.MoveMenuArrow(false);
 				if (fVar9 + this->field_0x174 * this->field_0x18c < fVar9 - static_cast<float>(gVideoConfig.screenHeight) * 0.01f) {
 					this->field_0x174 = this->field_0x174 + 3.0f;
 				}
 			}
 
-			if (*static_cast<float*>((int)lVar2 + 0x5f8) < 0.0f) {
-				astruct_22_0048fa40.FUN_002ef920(true);
+			if (pPlayerInput->aAnalogSticks[0].y < 0.0f) {
+				astruct_22_0048fa40.MoveMenuArrow(true);
 				if (fVar10 + static_cast<float>(gVideoConfig.screenHeight) * 0.01f < fVar9 + this->field_0x174 * this->field_0x18c + textFormat.field_0xc) {
 					this->field_0x174 = this->field_0x174 - 3.0f;
 				}
 			}
-		})
+		}
 
 		fVar7 = this->field_0x188;
 		fVar8 = this->field_0x180 - fVar7 * (static_cast<float>(gVideoConfig.screenWidth) * 0.17f - static_cast<float>(gVideoConfig.screenWidth) * 0.05f) * 0.5f;

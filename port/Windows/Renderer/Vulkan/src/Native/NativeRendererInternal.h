@@ -2,6 +2,7 @@
 
 #include "NativeRenderer.h"
 #include "DrawTrace.h"
+#include "FogDraw.h"
 
 #include "VulkanRenderer.h"
 #include "Objects/UniformBuffer.h"
@@ -394,6 +395,7 @@ namespace Renderer
 		void AddRenderThreadShadowReceiver(RenderThread* renderThread, const ShadowReceiverViewport& viewport);
 		void AddRenderThreadShadowEnd(RenderThread* renderThread);
 		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending);
+		void AddRenderThreadFog(RenderThread* renderThread, const FogDraw& fog, const RenderPassKey& key, bool clearPending);
 		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending);
 
 		RenderThread* CreateRenderThread();

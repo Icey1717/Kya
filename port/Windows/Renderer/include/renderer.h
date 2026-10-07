@@ -358,6 +358,9 @@ namespace Renderer
 			uint32_t textureHeight = 512;
 		};
 		struct FlareDraw;
+		struct FogDraw;
+		void SubmitFog(const FogDraw& fog);
+		void SetFogEnabled(bool enabled);
 		void SubmitFlare(const FlareDraw& flare);
 		void SetFlareOcclusionEnabled(bool enabled);
 		void CaptureFrameBuffer();

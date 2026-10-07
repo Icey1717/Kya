@@ -6,6 +6,7 @@
 #include "NativeShadow.h"
 #include "NativeFrameBufferCopy.h"
 #include "NativeFlare.h"
+#include "NativeFog.h"
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
@@ -487,6 +488,7 @@ namespace Renderer
 			Shadow::Setup();
 			FrameBufferCopy::Setup();
 			Flare::Setup();
+			Fog::Setup();
 
 			GetRenderDelegate() += Render;
 
@@ -508,6 +510,7 @@ namespace Renderer
 			Shadow::Cleanup();
 			FrameBufferCopy::Cleanup();
 			Flare::Cleanup();
+			Fog::Cleanup();
 
 			if (GetNativeRendererState().frameDescriptorPool)
 				vkDestroyDescriptorPool(GetDevice(), GetNativeRendererState().frameDescriptorPool, GetAllocator());
@@ -553,6 +556,7 @@ namespace Renderer
 			DebugShapes::DestroyDedicatedPass();
 			Shadow::DestroyReceiverFramebuffer();
 			Flare::DestroyFramebuffer();
+			Fog::DestroyFramebuffer();
 
 			vkDestroyFramebuffer(GetDevice(), GetNativeRendererState().frameBuffer.framebuffer, GetAllocator());
 			vkDestroyImageView(GetDevice(), GetNativeRendererState().frameBuffer.colorImageView, GetAllocator());
@@ -569,6 +573,7 @@ namespace Renderer
 			CreateFramebuffer();
 			Shadow::CreateReceiverFramebuffer();
 			Flare::CreateFramebuffer();
+			Fog::CreateFramebuffer();
 
 			DebugShapes::SetupDedicatedPass(GetNativeRendererState().frameBuffer.colorImageView, gWidth, gHeight);
 

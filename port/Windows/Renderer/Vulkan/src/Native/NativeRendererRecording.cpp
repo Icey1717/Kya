@@ -6,6 +6,7 @@
 #include "NativeShadow.h"
 #include "NativeFrameBufferCopy.h"
 #include "NativeFlare.h"
+#include "NativeFog.h"
 #include "Objects/VulkanImage.h"
 #include "profiling.h"
 
@@ -441,6 +442,7 @@ namespace Renderer
 		void RecordBeginCommandBuffer()
 		{
 			Flare::BeginFrame();
+			Fog::BeginFrame();
 			const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
 
 			VkCommandBufferBeginInfo beginInfo{};
@@ -555,9 +557,10 @@ namespace Renderer
 
 			struct Command
 			{
-				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy, Flare } type = Type::Draw;
+				enum class Type { Draw, ShadowBegin, ShadowBlur, ShadowReceiver, ShadowEnd, FrameBufferCopy, Flare, Fog } type = Type::Draw;
 				Draw draw;
 				FlareDraw flare;
+				FogDraw fog;
 				ShadowPassSettings settings;
 				ShadowReceiverViewport viewport;
 				RenderPassKey capturePassKey;
@@ -603,6 +606,11 @@ namespace Renderer
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Flare::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.flare);
+						break;
+					case Command::Type::Fog:
+						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
+						drawCommandRecorder.EndActivePass();
+						Fog::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.fog);
 						break;
 					}
 				}
@@ -676,6 +684,16 @@ namespace Renderer
 			{
 				Command command;
 				command.type = Command::Type::FrameBufferCopy;
+				command.capturePassKey = key;
+				command.clearPending = clearPending;
+				AddCommand(command);
+			}
+
+			void AddFog(const FogDraw& fog, const RenderPassKey& key, bool clearPending)
+			{
+				Command command;
+				command.type = Command::Type::Fog;
+				command.fog = fog;
 				command.capturePassKey = key;
 				command.clearPending = clearPending;
 				AddCommand(command);
@@ -795,6 +813,11 @@ namespace Renderer
 		void AddRenderThreadFrameBufferCopy(RenderThread* renderThread, const RenderPassKey& key, bool clearPending)
 		{
 			renderThread->AddFrameBufferCopy(key, clearPending);
+		}
+
+		void AddRenderThreadFog(RenderThread* renderThread, const FogDraw& fog, const RenderPassKey& key, bool clearPending)
+		{
+			renderThread->AddFog(fog, key, clearPending);
 		}
 
 		void AddRenderThreadFlare(RenderThread* renderThread, const FlareDraw& flare, const RenderPassKey& key, bool clearPending)
