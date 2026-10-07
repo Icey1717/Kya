@@ -3537,6 +3537,12 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		}
 	}
 
+#ifdef PLATFORM_WIN
+	// Capture the flush-time decision: the queued node predates this flag update.
+	Renderer::SetBackfaceCulling((p3dStrip->flags & 8) != 0,
+		(bNegBFC$1276 != 0) || ((gCurScene->flags & 0x200) != 0));
+#endif
+
 	if (((p3dStrip->flags & 0x100) != 0) || (gFushListCounter == 0xe)) {
 		pNextPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 		pNextPkt->cmdB = 0;
@@ -5480,6 +5486,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 	pPkt = g_VifRefPktCur;
 
 #ifdef PLATFORM_WIN
+	Renderer::SetBackfaceCulling(false, false);
 	Renderer::Kya::Sprite::RenderNode(pNode);
 #endif
 

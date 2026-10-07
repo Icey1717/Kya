@@ -72,6 +72,12 @@ void Renderer::SetGlobalAlpha(uint32_t alpha)
 	Native::GetNativeRendererState().cachedPerDrawData.globalAlpha = alpha;
 }
 
+void Renderer::SetBackfaceCulling(bool enabled, bool reversed)
+{
+	Native::GetNativeRendererState().cachedCullMode = !enabled ? VK_CULL_MODE_NONE
+		: reversed ? VK_CULL_MODE_FRONT_BIT : VK_CULL_MODE_BACK_BIT;
+}
+
 void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj)
 {
 	Native::PushGlobalMatrices(pModel, pView, pProj, pGsProj);

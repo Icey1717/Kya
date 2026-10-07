@@ -280,6 +280,7 @@ namespace Renderer
 				GIFReg::GSTex1 gsTex1 = {};
 				VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 				bool bIsZMask = false;
+				VkCullModeFlags cullMode = VK_CULL_MODE_NONE;
 				PerDrawData perDrawData;
 			};
 
@@ -375,6 +376,7 @@ namespace Renderer
 			glm::mat4 initialProjMatrix = glm::mat4(1.0f);
 
 			PerDrawData cachedPerDrawData;
+			VkCullModeFlags cachedCullMode = VK_CULL_MODE_NONE;
 			uint32_t shadowAlpha = 0x30;
 			FrameBufferMaterialSettings frameBufferMaterial;
 			int currentAnimMatrixIndex = 0;

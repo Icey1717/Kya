@@ -71,6 +71,10 @@ namespace Renderer
 			auto& instance = GetNativeRendererState().currentDraw->instances.emplace_back();
 			instance.animationMatrixStart = GetNativeRendererState().currentAnimMatrixIndex;
 			instance.pMesh = pMesh;
+			const auto prim = pMesh->GetPrim().PRIM;
+			if (prim == GS_TRIANGLELIST || prim == GS_TRIANGLESTRIP || prim == GS_TRIANGLEFAN) {
+				instance.cullMode = GetNativeRendererState().cachedCullMode;
+			}
 			if (pColors) {
 				instance.vertexColors.assign(pColors, pColors + pMesh->GetVertexBufferData().GetVertexTail());
 			}

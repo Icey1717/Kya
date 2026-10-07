@@ -97,6 +97,7 @@ namespace Renderer
 
 			const Pipeline& pipeline = renderPasses[RenderPassKey::Empty].GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+			vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
 
 			const glm::mat4 previewProjXView = projMatrix * viewMatrix;
 

@@ -471,6 +471,7 @@ namespace Renderer
 						}
 
 						if (bShadowReceiver) {
+							vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
 							vkCmdSetDepthTestEnable(cmd, VK_TRUE);
 							vkCmdSetDepthCompareOp(cmd, VK_COMPARE_OP_GREATER);
 							vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
@@ -481,6 +482,13 @@ namespace Renderer
 						}
 						else {
 							SetColorDepthDynamicState(cmd, drawCommand, instance);
+							vkCmdSetCullMode(cmd, bShadowMask ? VK_CULL_MODE_NONE : instance.cullMode);
+#ifndef NDEBUG
+							// Review the mesh and cull mode on a submitted scene draw.
+							if (!bShadowMask && instance.cullMode != VK_CULL_MODE_NONE && IsDebuggerPresent()) {
+								__debugbreak();
+							}
+#endif
 						}
 
 						VkDescriptorSet descriptorSet = instance.descriptorSet ? instance.descriptorSet : drawCommand.descriptorSet;

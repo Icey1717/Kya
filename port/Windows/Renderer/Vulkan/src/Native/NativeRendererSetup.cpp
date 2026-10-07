@@ -205,6 +205,7 @@ namespace Renderer
 			colorBlending.blendConstants[3] = 0.0f;
 
 			std::vector<VkDynamicState> dynamicStates = {
+				VK_DYNAMIC_STATE_CULL_MODE,
 				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,
@@ -325,7 +326,7 @@ namespace Renderer
 			rasterizer.rasterizerDiscardEnable = VK_FALSE;
 			rasterizer.polygonMode = createInfo.key.options.bWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
 			rasterizer.lineWidth = 1.0f;
-			rasterizer.cullMode = VK_CULL_MODE_NONE; //VK_CULL_MODE_BACK_BIT;
+			rasterizer.cullMode = VK_CULL_MODE_NONE;
 			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 			rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -356,6 +357,7 @@ namespace Renderer
 			colorBlending.blendConstants[3] = 0.0f;
 
 			std::vector<VkDynamicState> dynamicStates = {
+				VK_DYNAMIC_STATE_CULL_MODE,
 				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_VIEWPORT,
 				VK_DYNAMIC_STATE_SCISSOR,

@@ -551,8 +551,10 @@ namespace Renderer
 				head = next;
 				drawBuffer.vertex.tail = next + 3;
 			}
-			buff[0] = head + 0;
-			buff[1] = head + 1;
+			// Preserve strip winding when expanding to a triangle list. Count
+			// input vertices, including ADC skips, rather than emitted triangles.
+			buff[0] = head + (((xy_tail - 3) & 1) ? 1 : 0);
+			buff[1] = head + (((xy_tail - 3) & 1) ? 0 : 1);
 			buff[2] = head + 2;
 			drawBuffer.vertex.head = head + 1;
 			drawBuffer.vertex.next = head + 3;
@@ -594,6 +596,7 @@ namespace Renderer
 	void BindTexture(SimpleTexture* pNewTexture);
 	// Optional packed RGBA array has one entry per cached vertex and is copied at submission.
 	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags, const uint32_t* pColors = nullptr);
+	void SetBackfaceCulling(bool enabled, bool reversed);
 	void BindNull();
 	void BindUntextured();
 
