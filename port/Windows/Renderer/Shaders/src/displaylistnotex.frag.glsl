@@ -67,22 +67,6 @@ bool atst(vec4 color)
 	return true;
 }
 
-void afail()
-{
-	switch (blendState.alphaAfail) {
-		case 0:
-			discard;
-
-		case 2:
-			outColor.a = 0.0;
-		break;
-
-		case 1:
-		case 3:
-		break;
-	}
-}
-
 void main() {
 	outColor = fragColor;
 
@@ -90,11 +74,9 @@ void main() {
 		outColor.rgb = vec3(1.0);
 	}
 
-	if (!atst(outColor)) {
-		afail();
-	}
+	if (atst(outColor) == ((blendState.alphaAfail & 16) != 0)) discard;
 
 	// For dual source blending
-	vec4 alpha_blend = vec4(outColor.a);
+	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
 	outAlphaBlend = alpha_blend;
 }

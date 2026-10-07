@@ -365,12 +365,6 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
 
-		// If the texture is expecting to do a Z only draw, need to duplicate it.
-		if (pTexture->GetTextureRegisters().test.AFAIL == AFAIL_ZB_ONLY && pTexture->GetTextureRegisters().test.ATST == ATST_NEVER) {
-			GetNativeRendererState().currentDraw->bIsAfailZOnly = true;
-			AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
-		}
-
 		GetNativeRendererState().currentDraw.reset();
 	}
 

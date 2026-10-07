@@ -1,6 +1,11 @@
 #include "Blending.h"
 
 #include <array>
+#include <mutex>
+#include <set>
+#include <windows.h>
+#include "log.h"
+#include "logging.h"
 
 #include "VulkanRenderer.h"
 #include "renderer.h"
@@ -155,6 +160,19 @@ namespace Renderer
 	} // Native
 } // Renderer
 
+const char* Renderer::Native::GetUnsupportedBlendReason(const GIFReg::GSAlpha& alpha)
+{
+	if (alpha.A > 2 || alpha.B > 2 || alpha.C > 2 || alpha.D > 2) return "Reserved ALPHA selector";
+	if (alpha.A == alpha.B) return nullptr; // The factor cancels entirely.
+	if (alpha.C == 1) return "GS destination alpha /128 requires destination reads";
+	if (alpha.C == 2 && alpha.FIX > 128) return "FIX above 128 requires unclamped blend factors";
+	const auto index = ((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D;
+	const auto blend = GetBlend(index);
+	if ((blend.flags & (BLEND_A_MAX | BLEND_MIX2 | BLEND_HW_CLR1 | BLEND_HW_CLR2 | BLEND_HW_CLR3)) ||
+		(alpha.A == 0 && alpha.B == 2 && alpha.D == 0)) return "Blend equation requires an unimplemented shader adjustment";
+	return nullptr;
+}
+
 Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled)
 {
 	ResolvedBlendState blendState{};
@@ -169,6 +187,25 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 
 	if (!bAlphaBlendEnabled) {
 		return blendState;
+	}
+	if (const char* reason = GetUnsupportedBlendReason(alpha)) {
+#ifndef NDEBUG
+		// Once per register value, so continuing from the breakpoint remains useful.
+		static std::mutex mutex;
+		static std::set<uint64_t> reported;
+		bool first;
+		{
+			std::lock_guard lock(mutex);
+			first = reported.insert(alpha.CMD).second;
+		}
+		if (first) {
+			MY_LOG_CATEGORY("NativeRenderer", LogLevel::Info, "Unsupported GS blend: A={} B={} C={} D={} FIX={} ALPHA=0x{:x}: {}",
+				uint32_t(alpha.A), uint32_t(alpha.B), uint32_t(alpha.C), uint32_t(alpha.D), uint32_t(alpha.FIX), alpha.CMD, reason);
+			if (IsDebuggerPresent()) __debugbreak();
+		}
+#endif
+		// Preserve the previous approximation while collecting runtime evidence.
+		if (alpha.A > 2 || alpha.B > 2 || alpha.C > 2 || alpha.D > 2) return blendState;
 	}
 
 	blendState.blendIndex = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);

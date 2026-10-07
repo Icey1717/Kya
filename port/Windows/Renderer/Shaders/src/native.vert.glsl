@@ -42,6 +42,10 @@ void main() {
 	vec3 extrusionNormal = inNormal.xyz;
 
 	fragColor = vec4(inColor) / 255.0;
+	// _$Alpha_Object runs on packed vertex alpha before interpolation and TFX.
+	if ((perDrawData.renderFlags & 0x20u) != 0) {
+		fragColor.a = floor(float(inColor.a) * float(perDrawData.globalAlpha & 0xffu) / 128.0) / 255.0;
+	}
 	bool hasNormals = (perDrawData.stripFlags & 0x8000000u) != 0;
 	bool rigidAnimation = (perDrawData.stripFlags & 0x10000u) != 0;
 	uint animBaseOffset = GetAnimationBaseOffset(perDrawData.stripFlags);

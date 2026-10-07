@@ -98,10 +98,6 @@ namespace Renderer
 			const Pipeline& pipeline = renderPasses[RenderPassKey::Empty].GetPipeline();
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-			const std::array<VkBool32, 1> colorWriteMasks = {
-				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-			};
-
 			const glm::mat4 previewProjXView = projMatrix * viewMatrix;
 
 			for (auto& draw : savedDraws) {
@@ -114,8 +110,11 @@ namespace Renderer
 						continue;
 					}
 
-					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, draw.pTexture->GetTextureRegisters().alpha, instance.pMesh->GetPrim().ABE));
-					SetBlendConstants(draw.pTexture->GetTextureRegisters().alpha, cmd);
+					auto effectiveAlpha = (instance.perDrawData.renderFlags & 0x20) ? instance.gsAlpha : draw.pTexture->GetTextureRegisters().alpha;
+					if (draw.frameBufferMaterial) effectiveAlpha.CMD = draw.frameBufferMaterial->alpha;
+					const bool blendEnabled = instance.pMesh->GetPrim().ABE || (instance.perDrawData.renderFlags & 0x20);
+					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(RenderPassKey::Empty, effectiveAlpha, blendEnabled));
+					SetBlendConstants(effectiveAlpha, cmd);
 					SetColorDepthDynamicState(cmd, draw, instance);
 
 					PerDrawData previewPerDrawData = instance.perDrawData;
@@ -127,14 +126,10 @@ namespace Renderer
 					}
 					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &previewPerDrawData);
 
-					const VkBool32 colorWriteEnable = draw.bIsAfailZOnly ? VK_FALSE : VK_TRUE;
-					vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
-					vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
-
 					const VkDescriptorSet descriptorSet = instance.descriptorSet ? instance.descriptorSet : draw.descriptorSet;
 					const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
 					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
-					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+					RecordAlphaTestedDraw(cmd, pipeline.layout, draw, instance, previewPerDrawData);
 				}
 			}
 

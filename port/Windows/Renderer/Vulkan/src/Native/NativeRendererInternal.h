@@ -391,6 +391,7 @@ namespace Renderer
 		void RecordBeginCommandBuffer();
 		void RecordEndCommandBuffer();
 		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance);
+		void RecordAlphaTestedDraw(VkCommandBuffer cmd, VkPipelineLayout layout, const Draw& draw, const Draw::Instance& instance, const PerDrawData& data);
 		void ApplyPendingResizeInternal();
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj = nullptr);
 		void PushModelMatrix(float* pModel);

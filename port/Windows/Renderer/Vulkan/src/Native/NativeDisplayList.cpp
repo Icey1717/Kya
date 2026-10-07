@@ -40,7 +40,7 @@ namespace Renderer::Native::DisplayList
 	{
 		Renderer::Pipeline pipeline;
 		PipelineCreateInfo<DisplayListPipelineKey> createInfo;
-		std::unordered_map<uint8_t, VkPipeline> blendPipelines;
+		std::unordered_map<uint16_t, VkPipeline> blendPipelines;
 	};
 
 	static std::unordered_map<size_t, DisplayListPipelineState> gPipelines;
@@ -308,6 +308,7 @@ namespace Renderer::Native::DisplayList
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR,
+			VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 		};
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -371,12 +372,14 @@ namespace Renderer::Native::DisplayList
 		pipeline.CreateLayout();
 	}
 
-	static VkPipeline GetBlendPipeline()
+	static VkPipeline GetBlendPipeline(bool rgbOnly = false)
 	{
 		DisplayListPipelineState& pipelineState = GetPipelineState();
-		const Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
+		Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
+		if (rgbOnly) blendState.colorBlendAttachment.colorWriteMask = 7;
+		const uint16_t key = blendState.blendIndex | (rgbOnly ? 0x100 : 0);
 
-		auto it = pipelineState.blendPipelines.find(blendState.blendIndex);
+		auto it = pipelineState.blendPipelines.find(key);
 		if (it != pipelineState.blendPipelines.end()) {
 			return it->second;
 		}
@@ -396,7 +399,7 @@ namespace Renderer::Native::DisplayList
 		pipelineName += std::to_string(blendState.blendIndex);
 
 		VkPipeline blendPipeline = CreateBlendPipeline(pipelineState, blendState, gRenderPass, pipelineName.c_str());
-		pipelineState.blendPipelines.emplace(blendState.blendIndex, blendPipeline);
+		pipelineState.blendPipelines.emplace(key, blendPipeline);
 		return blendPipeline;
 	}
 
@@ -444,7 +447,7 @@ namespace Renderer::Native::DisplayList
 
 			const Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
 			const GIFReg::GSTest testState = PS2::GetGSState().TEST;
-			const DisplayListFragmentState fragmentState{
+			DisplayListFragmentState fragmentState{
 				.blendMode = blendState.hwBlendMode,
 				.alphaEnable = testState.ATE,
 				.alphaAtst = static_cast<int32_t>(testState.ATST),
@@ -456,6 +459,7 @@ namespace Renderer::Native::DisplayList
 			auto& pipeline = *gBoundPipeline;
 
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline());
+			Native::SetBlendConstants(GetBlendAlpha(), cmd);
 
 			if (gBoundTexture) {
 				const VkDescriptorSet descriptorSet = GetTextureDescriptorSet(*gBoundTexture);
@@ -464,7 +468,22 @@ namespace Renderer::Native::DisplayList
 
 			vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragmentState), &fragmentState);
 
-			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
+			const bool replay = testState.ATE && testState.ATST != ATST_ALWAYS &&
+				(testState.AFAIL == AFAIL_FB_ONLY || testState.AFAIL == AFAIL_RGB_ONLY);
+			if (replay) {
+				const uint32_t primitiveSize = GetPipelineKey().options.topology == topologyLineList ? 2 : 3;
+				for (uint32_t index = 0; index < indexCount; index += primitiveSize) {
+					fragmentState.alphaAfail = testState.AFAIL;
+					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline());
+					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragmentState), &fragmentState);
+					vkCmdDrawIndexed(cmd, primitiveSize, 1, gIndexStart + index, 0, 0);
+					fragmentState.alphaAfail |= 16;
+					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(testState.AFAIL == AFAIL_RGB_ONLY));
+					vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(fragmentState), &fragmentState);
+					vkCmdDrawIndexed(cmd, primitiveSize, 1, gIndexStart + index, 0, 0);
+				}
+			}
+			else vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}
 
 		if (gDrawLabelActive) {

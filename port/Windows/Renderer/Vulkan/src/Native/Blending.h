@@ -26,6 +26,7 @@ namespace Renderer
 		};
 
 		ResolvedBlendState ResolveBlendState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled);
+		const char* GetUnsupportedBlendReason(const GIFReg::GSAlpha& alpha);
 		void SetBlendConstants(const GIFReg::GSAlpha& alpha, VkCommandBuffer cmd);
 
 		BlendingState SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);

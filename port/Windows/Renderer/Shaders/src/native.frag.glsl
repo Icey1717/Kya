@@ -75,24 +75,6 @@ bool atst(vec4 outColor)
 	return true;
 }
 
-void afail()
-{
-	// afail registers determine what we do when the alpha test fails
-	switch (perDrawData.alphaAfail) {
-		case 0: // AFAIL_KEEP
-			discard;
-
-		case 2: // AFAIL_RGB_ONLY
-			outColor.a = 0.0; // Set alpha to zero
-		break;
-
-		case 1: // AFAIL_FB_ONLY
-		case 3: // AFAIL_Z_ONLY
-		// Let Vulkan handle write masks dynamically
-		break;
-	}
-}
-
 void main() 
 {
 	// Sample texture color using fragTexCoord
@@ -112,15 +94,10 @@ void main()
 
 	bool atst_pass = atst(outColor);
 
-	if (!atst_pass) {
-		afail();
-	}
+	// Bit 4 selects the failure replay; write masks are set independently.
+	if (atst_pass == ((perDrawData.alphaAfail & 16) != 0)) discard;
 
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
-	//if ((perDrawData.renderFlags & 0x20) != 0) {
-	if ((perDrawData.globalAlpha & 0xffu) < 0x80) {
-		alpha_blend = vec4(min(float(perDrawData.globalAlpha & 0xffu), 128.0) / 128.0);
-	}
 	outAlphaBlend = alpha_blend;
 }

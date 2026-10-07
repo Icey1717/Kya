@@ -71,11 +71,6 @@ namespace Renderer
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
-			if (draw.bIsAfailZOnly) {
-				static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
-				textureRegisters.test.ATST = inverted_atst[textureRegisters.test.ATST];
-			}
-
 			for (auto& instance : draw.instances) {
 				instance.perDrawData.alphaEnable = draw.frameBufferMaterial ? VK_FALSE : textureRegisters.test.ATE;
 				instance.perDrawData.alphaAtst   = textureRegisters.test.ATST;
@@ -192,8 +187,7 @@ namespace Renderer
 		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance)
 		{
 			VkBool32 colorWriteEnable = VK_TRUE;
-			VkBool32 depthWriteEnable = drawCommand.pTexture->GetTextureRegisters().test.AFAIL != AFAIL_FB_ONLY ? VK_TRUE : VK_FALSE;
-			if (drawCommand.frameBufferMaterial) depthWriteEnable = VK_TRUE;
+			VkBool32 depthWriteEnable = VK_TRUE;
 
 			if (drawCommand.bIsAfailZOnly) {
 				depthWriteEnable = VK_TRUE;
@@ -221,7 +215,7 @@ namespace Renderer
 				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
 			};
 
-			if (!drawCommand.frameBufferMaterial && drawCommand.pTexture->GetTextureRegisters().test.AFAIL == AFAIL_RGB_ONLY) {
+			if ((instance.perDrawData.alphaAfail & 16) != 0 && (instance.perDrawData.alphaAfail & 3) == AFAIL_RGB_ONLY) {
 				// Enable only RGB channels (disable alpha write)
 				colorWriteMasks[0] = {
 					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
@@ -229,6 +223,47 @@ namespace Renderer
 			}
 
 			GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+		}
+
+		void RecordAlphaTestedDraw(VkCommandBuffer cmd, VkPipelineLayout layout, const Draw& draw, const Draw::Instance& instance, const PerDrawData& data)
+		{
+			auto push = [&](const PerDrawData& values) {
+				vkCmdPushConstants(cmd, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(values), &values);
+			};
+
+			const bool bReplay = data.alphaEnable && data.alphaAtst != ATST_ALWAYS && data.alphaAfail != AFAIL_KEEP;
+			if (!bReplay) {
+				ZONE_SCOPED_NAME("No Replay");
+				push(data);
+				vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
+				return;
+			}
+
+			ZONE_SCOPED_NAME("Replay");
+
+			// Keep primitive order: a whole-mesh replay changes blending/depth for overlapping triangles.
+			assert(instance.indexCount % 3 == 0);
+
+			for (uint32_t index = 0; index < instance.indexCount; index += 3) {
+				ZONE_SCOPED_NAME("Replay Iteration");
+				SetColorDepthDynamicState(cmd, draw, instance);
+				push(data);
+				vkCmdDrawIndexed(cmd, 3, 1, instance.indexStart + index, instance.vertexStart, 0);
+				PerDrawData failure = data;
+				failure.alphaAfail |= 16;
+				push(failure);
+				const VkBool32 colorWrite = data.alphaAfail != AFAIL_ZB_ONLY;
+				GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWrite);
+				const VkColorComponentFlags mask = data.alphaAfail == AFAIL_RGB_ONLY ? 7 : 15;
+				GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &mask);
+				vkCmdSetDepthWriteEnable(cmd, data.alphaAfail == AFAIL_ZB_ONLY && !instance.bIsZMask && instance.gsTest.ZTE);
+				vkCmdDrawIndexed(cmd, 3, 1, instance.indexStart + index, instance.vertexStart, 0);
+			}
+
+			{
+				ZONE_SCOPED_NAME("SetColorDepthDynamicState");
+				SetColorDepthDynamicState(cmd, draw, instance);
+			}
 		}
 
         static bool TraceDraw(const Draw& draw, const Draw::Instance& instance, bool canRecord)
@@ -265,10 +300,9 @@ namespace Renderer
                 trace.tex = registers.tex.CMD;
                 trace.clamp = registers.clamp.CMD;
                 trace.blend = instance.pMesh->GetPrim().ABE || (data.renderFlags & 0x20);
-                trace.depthWrite = registers.test.AFAIL != AFAIL_FB_ONLY || trace.framebuffer;
+                trace.depthWrite = true;
                 if (draw.bIsAfailZOnly) { trace.depthWrite = true; trace.colorWrite = false; }
                 if (instance.bIsZMask || !instance.gsTest.ZTE) trace.depthWrite = false;
-                if (!trace.framebuffer && registers.test.AFAIL == AFAIL_RGB_ONLY) trace.colorMask = 7;
                 trace.depthTest = instance.gsTest.ZTE != 0;
                 trace.depthMode = instance.gsTest.ZTST;
                 if (draw.renderPassKey.kind == ERenderPassKind::ShadowReceiver) {
@@ -293,6 +327,7 @@ namespace Renderer
 
 			void RecordDrawCommand(Draw& drawCommand)
 			{
+				ZONE_SCOPED_NAME("DrawCommandRecorder::RecordDrawCommand");
 				if (!bInRenderPass || drawCommand.bRenderPassDirty || currentRenderPassKey.multisampled != drawCommand.renderPassKey.multisampled) {
 					if (bInRenderPass) {
 						const VkCommandBuffer& cmd = GetNativeRendererState().commandBuffers[GetCurrentFrame()];
@@ -308,9 +343,9 @@ namespace Renderer
 				}
 
 				SimpleTexture* pTexture = drawCommand.pTexture;
-                if (!pTexture) {
-                    for (const auto& instance : drawCommand.instances) TraceDraw(drawCommand, instance, false);
-                }
+				if (!pTexture) {
+					for (const auto& instance : drawCommand.instances) TraceDraw(drawCommand, instance, false);
+				}
 
 				if (pTexture && !drawCommand.instances.empty()) {
 					NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand {}", pTexture->GetName());
@@ -322,7 +357,9 @@ namespace Renderer
 					const bool bShadowMask = currentRenderPassKey.kind == ERenderPassKind::ShadowMask;
 
 					Debug::UpdateLabel(pTexture, cmd);
-					if (drawCommand.frameBufferMaterial) Renderer::Debug::BeginLabel(cmd, "Framebuffer Material TFX %u", drawCommand.frameBufferMaterial->textureFunction);
+					if (drawCommand.frameBufferMaterial) {
+						Renderer::Debug::BeginLabel(cmd, "Framebuffer Material TFX %u", drawCommand.frameBufferMaterial->textureFunction);
+					}
 
 					PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
@@ -335,8 +372,9 @@ namespace Renderer
 					}
 
 					for (auto& instance : drawCommand.instances) {
+						ZONE_SCOPED_NAME("Instance");
 						if (instance.indexCount == 0) {
-                            TraceDraw(drawCommand, instance, false);
+							TraceDraw(drawCommand, instance, false);
 							continue;
 						}
 
@@ -351,7 +389,11 @@ namespace Renderer
 						if ((instance.perDrawData.renderFlags & 0x20) != 0) {
 							effectiveAlpha = instance.gsAlpha;
 						}
-						if (drawCommand.frameBufferMaterial) effectiveAlpha.CMD = drawCommand.frameBufferMaterial->alpha;
+
+						if (drawCommand.frameBufferMaterial) {
+							effectiveAlpha.CMD = drawCommand.frameBufferMaterial->alpha;
+						}
+
 						SetBlendConstants(effectiveAlpha, cmd);
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
@@ -382,12 +424,18 @@ namespace Renderer
 						}
 
 						VkDescriptorSet descriptorSet = instance.descriptorSet ? instance.descriptorSet : drawCommand.descriptorSet;
-						if (bShadowReceiver) descriptorSet = Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
-						if (drawCommand.frameBufferMaterial) descriptorSet = FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
+						if (bShadowReceiver) {
+							descriptorSet = Shadow::GetReceiverDescriptorSet(GetCurrentFrame());
+						}
+
+						if (drawCommand.frameBufferMaterial) {
+							descriptorSet = FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
+						}
+
 						const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
 
-                        if (TraceDraw(drawCommand, instance, true)) {
+						if (TraceDraw(drawCommand, instance, true)) {
 #ifndef NDEBUG
 							// Report activation once without interrupting rendering.
 							static bool environmentMappingReported = false;
@@ -408,15 +456,28 @@ namespace Renderer
 									instance.perDrawData.animStDataIndex, instance.indexCount);
 							}
 #endif
-						    vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
-							if (bShadowMask) Renderer::Native::RecordShadowMaskDraw();
-                        }
+							if (bShadowMask || bShadowReceiver) { 
+								vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0); 
+							}
+							else {
+								ZONE_SCOPED_NAME("RecordAlphaTestedDraw");
+								RecordAlphaTestedDraw(cmd, pipeline.layout, drawCommand, instance, instance.perDrawData);
+							}
+
+							if (bShadowMask) {
+								ZONE_SCOPED_NAME("RecordShadowMaskDraw");
+								Renderer::Native::RecordShadowMaskDraw();
+							}
+						}
 
 						Renderer::Debug::EndLabel(cmd);
 
 						instanceIndex++;
 					}
-					if (drawCommand.frameBufferMaterial) Renderer::Debug::EndLabel(cmd);
+
+					if (drawCommand.frameBufferMaterial) {
+						Renderer::Debug::EndLabel(cmd);
+					}
 				}
 			}
 
@@ -578,50 +639,81 @@ namespace Renderer
 				while (commands.try_dequeue(command)) {
 					switch (command.type) {
 					case Command::Type::Draw:
-						UpdateInstanceDataForDraw(command.draw);
+					{
+						ZONE_SCOPED_NAME("Draw");
+						{
+							ZONE_SCOPED_NAME("Update Instance Data");
+							UpdateInstanceDataForDraw(command.draw);
+						}
 						// The second-camera preview has no matching scene-color capture.
 						if (GetNativeRendererState().preview.IsSetup() && command.draw.renderPassKey.kind == ERenderPassKind::Main && !command.draw.frameBufferMaterial) {
+							ZONE_SCOPED_NAME("Save Preview Draw");
 							GetNativeRendererState().preview.SaveDraw(command.draw);
 						}
 						RecordDrawCommands(command.draw);
 						break;
+					}
 					case Command::Type::ShadowBegin:
+					{
+						ZONE_SCOPED_NAME("Shadow Begin");
 						drawCommandRecorder.EndActivePass();
 						Shadow::BeginMask(command.settings);
 						drawCommandRecorder.BeginPass(RenderPassKey{ EClearMode::ColorDepth, ERenderPassKind::ShadowMask });
 						break;
+					}
 					case Command::Type::ShadowBlur:
+					{
+						ZONE_SCOPED_NAME("Shadow Blur");
 						drawCommandRecorder.EndActivePass();
 						Shadow::RecordBlur(GetNativeRendererState().commandBuffers[GetCurrentFrame()]);
 						break;
+					}
 					case Command::Type::ShadowReceiver:
+					{
+						ZONE_SCOPED_NAME("Shadow Receiver");
 						drawCommandRecorder.EndActivePass();
 						Shadow::BeginReceiver(command.viewport);
 						break;
+					}
 					case Command::Type::ShadowEnd:
+					{
+						ZONE_SCOPED_NAME("Shadow End");
 						drawCommandRecorder.EndActivePass();
 						Shadow::End();
 						break;
+					}
 					case Command::Type::FrameBufferCopy:
+					{
+						ZONE_SCOPED_NAME("Frame Buffer Copy");
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						FrameBufferCopy::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()]);
 						break;
+					}
 					case Command::Type::Flare:
+					{
+						ZONE_SCOPED_NAME("Flare");
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Flare::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.flare);
 						break;
+					}
 					case Command::Type::Fog:
+					{
+						ZONE_SCOPED_NAME("Fog");
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Fog::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.fog);
 						break;
+					}
 					case Command::Type::AntiAliasing:
+					{
+						ZONE_SCOPED_NAME("Anti-Aliasing");
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						AntiAliasing::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.aa);
 						break;
+					}
 					}
 				}
 			}
@@ -637,11 +729,17 @@ namespace Renderer
 					if (bShouldStop) break;
 
 					if (bShouldRecordBegin) {
-						RecordBeginCommandBuffer();
+						{
+							ZONE_SCOPED_NAME("Record Begin Command Buffer");
+							RecordBeginCommandBuffer();
+						}
 						bShouldRecordBegin = false;
 					}
 
-					ProcessCommands();
+					{
+						ZONE_SCOPED_NAME("Process Commands");
+						ProcessCommands();
+					}
 				}
 			}
 
