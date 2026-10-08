@@ -6033,6 +6033,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 
 #ifdef PLATFORM_WIN
 	Renderer::PushModelMatrix(pObjToWorld->raw);
+	Renderer::Kya::Sprite::SetTransform(*pObjToWorld, pDmaMatrix->normalScale);
 #endif // PLATFORM_WIN
 
 	if (((1 < pMaterial->nbLayers) || (pObjToWorld == &gF32Matrix4Unit)) && (curLayerIndex = 0, gFushListCounter != 0xe))	{

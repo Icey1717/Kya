@@ -2865,8 +2865,7 @@ void CActorWolfen::BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour)
 														}
 														else {
 															if (iVar11 == 0x90) {
-																IMPLEMENTATION_GUARD(
-																StateGuardAreaWP_OrientPath(this, (int)pBehaviour);)
+																StateGuardAreaWP_OrientPath(pBehaviour);
 															}
 															else {
 																if (iVar11 == WOLFEN_STATE_GUARD_WAIT) {

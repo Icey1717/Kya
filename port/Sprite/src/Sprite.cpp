@@ -3,6 +3,7 @@
 #include "ed3D/ed3DG2D.h"
 #include "renderer.h"
 #include "Texture.h"
+#include "MathOps.h"
 #include <memory>
 #include <array>
 
@@ -12,6 +13,14 @@
 namespace Renderer::Kya::Sprite
 {
 	constexpr uint32_t gMaxSpriteVertices = 0x400; // 1024 vertices max for a sprite, enough for a 32x32 sprite with 4 vertices per quad.
+	static edF32MATRIX4 spriteModel = gF32Matrix4Unit;
+	static float spriteNormalScale = 1.0f;
+
+	void SetTransform(const edF32MATRIX4& model, float normalScale)
+	{
+		spriteModel = model;
+		spriteNormalScale = normalScale;
+	}
 
 	// Circular pool of simple meshes to avoid having to allocate a new one for every sprite. The pool is large enough to hold all sprites in a scene, but can be reset when needed.
 	class SpritePool
@@ -102,7 +111,7 @@ namespace Renderer::Kya::Sprite
 		return pPkt[-1].asU32[3] & gExecCodeAddr;
 	}
 
-	void ProcessVertices(ed_3d_sprite* pSprite, SimpleMesh* pMesh)
+	void ProcessVertices(ed_3d_sprite* pSprite, SimpleMesh* pMesh, const edF32MATRIX4* model, float normalScale)
 	{
 		const Gif_Tag firstGifTag = ExtractGifTagFromVifList(pSprite);
 
@@ -217,13 +226,19 @@ namespace Renderer::Kya::Sprite
 				const int whIndex = (pSprite->pRenderFrame30 & 1) != 0 ? 0 : batchIndex * 20 + i / 4;
 				WidthHeightData whi = pWh[whIndex];
 				edF32VECTOR4 vtx = pVectorVertex[index];
+				if (model) {
+					// VU sprite flare setup transforms the center before adding camera axes.
+					// The fourth component in the source buffer stores vertex flags.
+					vtx.w = 1.0f;
+					vtx = vtx * *model;
+				}
 
 				edF32VECTOR2 whf;
 				whf.x = int12_to_float(whi.w) * 2.0f;
 				whf.y = int12_to_float(whi.h) * 2.0f;
 
-				const edF32VECTOR4 normalizedX = gCamNormal_X * whf.x;
-				const edF32VECTOR4 normalizedY = gCamNormal_Y * whf.y;
+				const edF32VECTOR4 normalizedX = gCamNormal_X * (whf.x * normalScale);
+				const edF32VECTOR4 normalizedY = gCamNormal_Y * (whf.y * normalScale);
 
 				const edF32VECTOR4 tl = vtx - normalizedX + normalizedY;
 				const edF32VECTOR4 bl = vtx - normalizedX - normalizedY;
@@ -289,7 +304,9 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 	auto* pSimpleMesh = gSpritePool.GetSimpleMesh();
 	pSimpleMesh->GetVertexBufferData().ResetAfterDraw();
 	// ProcessVertices already expands every PS2 batch into this one mesh.
-	ProcessVertices(pSprite, pSimpleMesh);
+	const bool worldSpaceBillboard = (pSprite->pRenderFrame30 & 0x280) == 0;
+	ProcessVertices(pSprite, pSimpleMesh, worldSpaceBillboard ? &spriteModel : nullptr,
+		worldSpaceBillboard ? spriteNormalScale : 1.0f);
 
 	auto* pMaterial = ed3DG2DGetG2DMaterialFromIndex(gBankMaterial, pSprite->materialIndex);
 	std::string newName = "Sprite - Material Index: " + std::to_string(pSprite->materialIndex);
@@ -305,5 +322,7 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 		}
 	}
 	pSimpleMesh->SetName(newName);
+	if (worldSpaceBillboard) Renderer::PushModelMatrix(gF32Matrix4Unit.raw);
 	Renderer::RenderMesh(pSimpleMesh, pNode->header.typeField.flags);
+	if (worldSpaceBillboard) Renderer::PushModelMatrix(spriteModel.raw);
 }

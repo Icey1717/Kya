@@ -31,7 +31,7 @@ TEST(ActorFxPath, DrawsAtWorldSpaceKeysAndHidesFromGlobalPass)
 	path.splinePointCount = 2;
 	path.aSplinePoints = positions;
 	path.aSplineRotationsEuler = rotations;
-	path.field_0x28 = reinterpret_cast<char*>(scales);
+	path.field_0x28 = scales;
 	CActorFx::CBhvPath behaviour;
 	behaviour.field_0xc = 1;
 	behaviour.field_0x14 = 0;

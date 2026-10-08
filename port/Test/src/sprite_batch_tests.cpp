@@ -122,3 +122,26 @@ TEST_F(SpriteBatches, SingleBatchUsesOnlyItsRemainderQuads)
 	EXPECT_EQ(mesh.GetVertexBufferData().GetVertexTail(), 8u);
 	EXPECT_EQ(mesh.GetVertexBufferData().GetIndexTail(), 12u);
 }
+
+TEST_F(SpriteBatches, RotatedNonuniformModelKeepsBillboardsFacingCamera)
+{
+	// A 90-degree rotation and nonuniform scale must affect centers, not camera axes.
+	edF32MATRIX4 model = { 0, 2, 0, 0, -3, 0, 0, 0, 0, 0, 4, 0, 100, 200, 300, 1 };
+	GIFReg::GSPrim prim{};
+	prim.PRIM = Renderer::GS_TRIANGLESTRIP;
+	Renderer::SimpleMesh mesh("transformed sprite test", prim, 0);
+	mesh.GetVertexBufferData().Init(156, 228);
+	Renderer::Kya::Sprite::ProcessVertices(&data.sprite, &mesh, &model, 4.0f);
+	const auto& buffer = mesh.GetVertexBufferData();
+	ASSERT_EQ(buffer.GetVertexTail(), 152u);
+	for (size_t quad = 0; quad < 38; ++quad) {
+		const float width = static_cast<float>(1024 + quad * 16) / 2048.0f * 4;
+		const float height = static_cast<float>(512 + quad * 8) / 2048.0f * 4;
+		for (size_t corner = 0; corner < 4; ++corner) {
+			const auto& vertex = buffer.vertex.buff[quad * 4 + corner];
+			EXPECT_FLOAT_EQ(vertex.XYZFlags.fXYZ[0], 100 + (corner < 2 ? -width : width));
+			EXPECT_FLOAT_EQ(vertex.XYZFlags.fXYZ[1], 200 + static_cast<float>(quad * 20) + (corner % 2 == 0 ? height : -height));
+			EXPECT_FLOAT_EQ(vertex.XYZFlags.fXYZ[2], 300);
+		}
+	}
+}
