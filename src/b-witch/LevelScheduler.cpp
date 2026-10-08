@@ -2719,6 +2719,10 @@ bool BnkInstallAnimMacro(char* pFileData, int length)
 {
 	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallAnimMacro\n");
 
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+	DebugSnapshotAnimMacroBank(pFileData, length);
+#endif
+
 	if (*(int*)pFileData != 0) {
 		(CScene::ptable.g_AnimManager_00451668)->pAnimKeyEntryData = pFileData + 4;
 	}

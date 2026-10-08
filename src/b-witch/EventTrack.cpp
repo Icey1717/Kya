@@ -2,6 +2,10 @@
 #include "MemoryStream.h"
 #include "CollisionManager.h"
 #include "port/pointer_conv.h"
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+#include <cassert>
+#include <cstdlib>
+#endif
 
 bool BnkInstallTrack(char* pFileData, int length)
 {
@@ -302,6 +306,17 @@ void CEventTrack::Stop()
 CEventTrack* CTrackManager::GetTrack(int index)
 {
 	CEventTrack* pEventTrack;
+
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+	if (index != -1 && (index < 0 || index >= this->trackCount || !this->aTracks)) {
+		MY_LOG_CATEGORY("Animation", LogLevel::Error,
+			"CTrackManager::GetTrack invalid index=0x{:x} trackCount={} manager=0x{:x} tracks=0x{:x}",
+			index, this->trackCount, (uintptr_t)this, (uintptr_t)this->aTracks);
+		FLUSH_LOG();
+		assert(false && "Invalid event track index; inspect Animation log");
+		std::abort();
+	}
+#endif
 
 	pEventTrack = (CEventTrack*)0x0;
 	if (index != -1) {

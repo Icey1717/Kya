@@ -8,6 +8,118 @@
 #include <assert.h>
 #include "EventTrack.h"
 
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+#include <cstring>
+#include <cstdlib>
+#include <vector>
+
+namespace {
+const int* pDebugAnimMacroBank = nullptr;
+std::vector<int> debugAnimMacroSnapshot;
+
+struct DebugAnimTrackLookup {
+	const edAnmBinMetaAnimator* pAnimator;
+	const CActor* pActor;
+	int layerIndex;
+	int animType;
+	int offset;
+	int trackId;
+};
+
+DebugAnimTrackLookup debugAnimTrackHistory[32] = {};
+unsigned int debugAnimTrackLookupCount = 0;
+
+[[noreturn]] void DebugAnimTrackFailure(const char* reason, const edAnmBinMetaAnimator* pAnimator, int layerIndex, int animType)
+{
+	ANIMATION_LOG(LogLevel::Error,
+		"ANIM TRACK FAILURE: {} animator=0x{:x} layers=0x{:x} layer={}/{} animType=0x{:x} bank=0x{:x} loadedBank=0x{:x} bankWords={}",
+		reason, (uintptr_t)pAnimator, (uintptr_t)pAnimator->aAnimData, layerIndex, pAnimator->layerCount,
+		animType, (uintptr_t)pAnimator->pAnimKeyEntryData, (uintptr_t)pDebugAnimMacroBank, debugAnimMacroSnapshot.size());
+	if (pAnimator->aAnimData && layerIndex >= 0 && layerIndex < pAnimator->layerCount) {
+		const edAnmLayer* pLayer = pAnimator->aAnimData + layerIndex;
+		const CActor* pActor = pLayer->pActor;
+		ANIMATION_LOG(LogLevel::Error,
+			"actor=0x{:x} name={} layer=0x{:x} animTypeAddress=0x{:x} playState={} current=0x{:x} next=0x{:x} original=0x{:x}",
+			(uintptr_t)pActor, pActor ? pActor->name : "<null>", (uintptr_t)pLayer,
+			(uintptr_t)&pLayer->currentAnimDesc.animType, pLayer->animPlayState,
+			pLayer->currentAnimDesc.animType, pLayer->nextAnimDesc.animType, pLayer->currentAnimDesc.origAnimType);
+		if (pActor && pActor->pAnimationController) {
+			ANIMATION_LOG(LogLevel::Error, "actorState={} controller=0x{:x} currentAnimType=0x{:x} layerMask=0x{:x}",
+				(int)pActor->actorState, (uintptr_t)pActor->pAnimationController,
+				pActor->pAnimationController->currentAnimType, pActor->pAnimationController->count_0x2c);
+		}
+	}
+	const unsigned int historySize = sizeof(debugAnimTrackHistory) / sizeof(debugAnimTrackHistory[0]);
+	const unsigned int count = debugAnimTrackLookupCount < historySize ? debugAnimTrackLookupCount : historySize;
+	for (unsigned int i = 0; i < count; i++) {
+		const DebugAnimTrackLookup& entry = debugAnimTrackHistory[(debugAnimTrackLookupCount - count + i) % historySize];
+		ANIMATION_LOG(LogLevel::Error,
+			"recent lookup {}: animator=0x{:x} actor=0x{:x} layer={} animType=0x{:x} offset=0x{:x} trackId=0x{:x}",
+			i, (uintptr_t)entry.pAnimator, (uintptr_t)entry.pActor, entry.layerIndex, entry.animType, entry.offset, entry.trackId);
+	}
+	FLUSH_LOG();
+	assert(false && "Animation track diagnostics: inspect Animation log and set a 4-byte data breakpoint on the reported address");
+	std::abort();
+}
+
+// Validate before following either level of indirection. The snapshot distinguishes
+// modified bank words from a bad layer animation type selecting unchanged data.
+int* DebugValidateAnimTrackData(const edAnmBinMetaAnimator* pAnimator, int layerIndex, int animType)
+{
+	if (!pAnimator->aAnimData || layerIndex < 0 || layerIndex >= pAnimator->layerCount) {
+		DebugAnimTrackFailure("layer index outside layer array", pAnimator, layerIndex, animType);
+	}
+	if (!pAnimator->pAnimKeyEntryData || pAnimator->pAnimKeyEntryData != pDebugAnimMacroBank || debugAnimMacroSnapshot.empty()) {
+		DebugAnimTrackFailure("bank pointer does not match the loaded bank", pAnimator, layerIndex, animType);
+	}
+	if (animType < 0 || (size_t)animType >= debugAnimMacroSnapshot.size()) {
+		DebugAnimTrackFailure("animation type outside bank", pAnimator, layerIndex, animType);
+	}
+	const int offset = pAnimator->pAnimKeyEntryData[animType];
+	const int originalOffset = debugAnimMacroSnapshot[animType];
+	if (offset != originalOffset || offset < 0 || (offset % sizeof(int)) != 0 || (size_t)offset / sizeof(int) >= debugAnimMacroSnapshot.size()) {
+		ANIMATION_LOG(LogLevel::Error, "offset slot=0x{:x} offset=0x{:x} loadedOffset=0x{:x}",
+			(uintptr_t)&pAnimator->pAnimKeyEntryData[animType], offset, originalOffset);
+		DebugAnimTrackFailure("offset changed or outside bank", pAnimator, layerIndex, animType);
+	}
+	int* pTrackData = (int*)((char*)pAnimator->pAnimKeyEntryData + offset);
+	const int trackId = *pTrackData;
+	const int originalTrackId = debugAnimMacroSnapshot[offset / sizeof(int)];
+	const CActor* pActor = layerIndex >= 0 && layerIndex < pAnimator->layerCount ? pAnimator->aAnimData[layerIndex].pActor : nullptr;
+	debugAnimTrackHistory[debugAnimTrackLookupCount++ % 32] = { pAnimator, pActor, layerIndex, animType, offset, trackId };
+	const CTrackManager* pTrackManager = CScene::ptable.g_TrackManager_004516b4;
+	if (trackId != originalTrackId || (trackId != -1 && (!pTrackManager || trackId < 0 || trackId >= pTrackManager->trackCount))) {
+		ANIMATION_LOG(LogLevel::Error,
+			"track slot=0x{:x} trackId=0x{:x} loadedTrackId=0x{:x} offset slot=0x{:x} offset=0x{:x} trackCount={} (0x3f000000 is float 0.5)",
+			(uintptr_t)pTrackData, trackId, originalTrackId, (uintptr_t)&pAnimator->pAnimKeyEntryData[animType], offset,
+			pTrackManager ? pTrackManager->trackCount : -1);
+		const size_t wordIndex = offset / sizeof(int);
+		const size_t first = wordIndex > 4 ? wordIndex - 4 : 0;
+		for (size_t i = first; i < debugAnimMacroSnapshot.size() && i <= wordIndex + 4; i++) {
+			ANIMATION_LOG(LogLevel::Error, "bank word address=0x{:x} live=0x{:08x} loaded=0x{:08x}",
+				(uintptr_t)&pDebugAnimMacroBank[i], (uint)pDebugAnimMacroBank[i], (uint)debugAnimMacroSnapshot[i]);
+		}
+		DebugAnimTrackFailure(trackId != originalTrackId ? "track ID changed since bank load" : "track ID invalid in unchanged bank data", pAnimator, layerIndex, animType);
+	}
+	return pTrackData;
+}
+}
+
+void DebugSnapshotAnimMacroBank(const char* pFileData, int length)
+{
+	pDebugAnimMacroBank = nullptr;
+	debugAnimMacroSnapshot.clear();
+	debugAnimTrackLookupCount = 0;
+	if (pFileData && length >= 4 && *(const int*)pFileData != 0) {
+		pDebugAnimMacroBank = (const int*)(pFileData + 4);
+		debugAnimMacroSnapshot.resize((length - 4) / sizeof(int));
+		std::memcpy(debugAnimMacroSnapshot.data(), pDebugAnimMacroBank, debugAnimMacroSnapshot.size() * sizeof(int));
+		ANIMATION_LOG(LogLevel::Info, "Animation macro snapshot bank=0x{:x} bytes={} headerWord=0x{:x}",
+			(uintptr_t)pDebugAnimMacroBank, length - 4, *(const int*)pFileData);
+	}
+}
+#endif
+
 edAnmStage TheAnimStage;
 
 edAnmStage::edAnmStage()
@@ -2190,6 +2302,10 @@ void edAnmBinMetaAnimator::SetAnim(int animType, int origAnimType)
 	edAnmStateDesc NewAnimation;
 	edAnmStateParser anmStateParser;
 
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+	DebugValidateAnimTrackData(this, 0, animType);
+#endif
+
 	anmStateParser = edAnmStateParser(reinterpret_cast<int*>(reinterpret_cast<char*>(this->pAnimKeyEntryData) + this->pAnimKeyEntryData[animType] + 4));
 	anmStateParser.BuildDesc(&NewAnimation, animType, origAnimType);
 
@@ -2231,13 +2347,23 @@ int edAnmBinMetaAnimator::GetAnimEventTrackID(int index)
 	edAnmLayer* pLayer;
 	int animType;
 
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+	if (!this->aAnimData || index < 0 || index >= this->layerCount) {
+		DebugAnimTrackFailure("layer index outside layer array", this, index, -1);
+	}
+#endif
+
 	pLayer = this->aAnimData + index;
 	trackId = -1;
 	if (pLayer->animPlayState != STATE_ANIM_NONE) {
 		animType = (pLayer->currentAnimDesc).animType;
 		trackId = -1;
 		if ((animType & 0x80000000) == 0) {
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+			pTrackData = DebugValidateAnimTrackData(this, index, animType);
+#else
 			pTrackData = (int*)((char*)this->pAnimKeyEntryData + this->pAnimKeyEntryData[animType]);
+#endif
 			if (pTrackData == (int*)0x0) {
 				trackId = -1;
 			}
@@ -2318,6 +2444,15 @@ void edAnmBinMetaAnimator::SetAnimOnLayer(int macroAnimId, int layerIndex, int p
 	edAnmLayer* pLayer;
 	edAnmStateDesc anmStateDesc;
 	edAnmStateParser anmStateParser;
+
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+	if (!this->aAnimData || layerIndex < 0 || layerIndex >= this->layerCount) {
+		DebugAnimTrackFailure("layer index outside layer array", this, layerIndex, macroAnimId);
+	}
+	if (macroAnimId != -1) {
+		DebugValidateAnimTrackData(this, layerIndex, macroAnimId);
+	}
+#endif
 
 	pLayer = this->aAnimData + layerIndex;
 	if (macroAnimId == -1) {

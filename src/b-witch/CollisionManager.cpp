@@ -1956,7 +1956,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 
 							edF32Matrix4MulF32Vector4Hard(&local_170, &pPrim->worldTransform, pQuad);
 							edColGetNormalInWorldFromLocal(&local_170, &pPrim->worldTransform, &local_170);
-							local_180.xyz = local_170.xyz;
+							local_180 = local_170;
 							local_180.y = 0.0f;
 							edF32Vector4SafeNormalize1Hard(&local_180, &local_180);
 							fVar18 = -pColDbObj->depth * 0.9f;

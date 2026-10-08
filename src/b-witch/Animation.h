@@ -240,4 +240,9 @@ public:
 
 extern edAnmStage TheAnimStage;
 
+#if defined(PLATFORM_WIN) && !defined(NDEBUG)
+// Keep diagnostics outside the original animation/actor layouts.
+void DebugSnapshotAnimMacroBank(const char* pFileData, int length);
+#endif
+
 #endif // ANIMATION_H
