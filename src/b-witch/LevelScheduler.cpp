@@ -1485,6 +1485,9 @@ void CLevelScheduler::Game_LoadInventory(CInventoryInterface* pInventory)
 	InventorySlot* pSlot;
 	int slotIndex;
 
+	// Restore the saved inventory rather than adding it to the current contents.
+	pInventory->Clear();
+
 	epIndex = 0;
 	pEpisode = _gGameNfo.aEpisodes;
 	do {
