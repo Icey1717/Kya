@@ -1217,6 +1217,7 @@ public:
 	void StateWolfenBoomyHit();
 	void StateWolfenBreakObject();
 
+	void StateGuardAreaWP_OrientPath(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWP_Wait(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWP_OrientWP(CBehaviourGuardArea* pBehaviour);
 	void StateGuardAreaWP_Stop(CBehaviourGuardArea* pBehaviour);
