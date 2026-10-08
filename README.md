@@ -57,10 +57,11 @@ To begin working with the decompiled code:
    To enable AddressSanitizer in a CMake build, configure with:
 
    ```bash
-   cmake --preset x64-debug -DENABLE_ADDRESS_SANITIZER=ON
+   cmake --preset x64-debug-asan
+   cmake --build out/build/x64-debug-asan
    ```
 
-   The Windows ASan runtime DLL is copied next to the generated executable automatically.
+   Both builds share assets in `bin/WIN`. ASan executables use distinct names (`Kya_Debug_ASan.exe` and `KyaPortTest_ASan.exe`) so they and their debug symbols do not overwrite the normal build. Run them from `bin/WIN`, or use `ctest --test-dir out/build/x64-debug-asan` for tests. The Windows ASan runtime DLL is copied next to the generated executable automatically.
 
 4. **Run and Test**
 

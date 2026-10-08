@@ -690,7 +690,7 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 	uint uVar12;
 	MapPosition aMStack4144[128];
 	MapPosition aMStack2096[128];
-	MapDataSizes local_30;
+	MapDataSizes local_30[2];
 	MapDataSizes local_20;
 	MapPosition* local_8[2];
 
@@ -704,6 +704,7 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 	bVar10 = false;
 	pMarkerCounts->nbWolfen = 0;
 	pMarkerCounts->nbRunes = 0;
+
 	if (iVar8 == levelId) {
 		if (levelId == CLevelScheduler::gThis->currentLevelID) {
 			GetMarkerPositions(pMarkerCounts, pMarkerBuffer);
@@ -726,16 +727,16 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 	else {
 		bVar3 = false;
 		if (levelId == CLevelScheduler::gThis->currentLevelID) {
-			GetMarkerPositions(&local_30, aMStack4144);
+			GetMarkerPositions(&local_30[0], aMStack4144);
 			bVar3 = true;
 		}
 		else {
 			pCVar4 = CLevelScheduler::gThis->LoadMapSaveChunk(levelId);
 			if (pCVar4 != (SaveDataChunk_BLMP*)0x0) {
-				local_30.field_0x0 = pCVar4->mapDataSizes.field_0x0;
-				local_30.nbTeleporters = pCVar4->mapDataSizes.nbTeleporters;
-				local_30.nbWolfen = pCVar4->mapDataSizes.nbWolfen;
-				local_30.nbRunes = pCVar4->mapDataSizes.nbRunes;
+				local_30[0].field_0x0 = pCVar4->mapDataSizes.field_0x0;
+				local_30[0].nbTeleporters = pCVar4->mapDataSizes.nbTeleporters;
+				local_30[0].nbWolfen = pCVar4->mapDataSizes.nbWolfen;
+				local_30[0].nbRunes = pCVar4->mapDataSizes.nbRunes;
 				iVar9 = pCVar4->mapDataSizes.field_0x0 + pCVar4->mapDataSizes.nbTeleporters + pCVar4->mapDataSizes.nbWolfen + pCVar4->mapDataSizes.nbRunes;
 				if (0x80 < iVar9) {
 					iVar9 = 0x80;
@@ -748,16 +749,16 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 
 		bVar2 = 0;
 		if (iVar8 == CLevelScheduler::gThis->currentLevelID) {
-			GetMarkerPositions(&local_20, aMStack2096);
+			GetMarkerPositions(&local_30[1], aMStack2096);
 			bVar2 = 1;
 		}
 		else {
 			pCVar4 = CLevelScheduler::gThis->LoadMapSaveChunk(iVar8);
 			if (pCVar4 != (SaveDataChunk_BLMP*)0x0) {
-				local_20.field_0x0 = pCVar4->mapDataSizes.field_0x0;
-				local_20.nbTeleporters = pCVar4->mapDataSizes.nbTeleporters;
-				local_20.nbWolfen = pCVar4->mapDataSizes.nbWolfen;
-				local_20.nbRunes = pCVar4->mapDataSizes.nbRunes;
+				local_30[1].field_0x0 = pCVar4->mapDataSizes.field_0x0;
+				local_30[1].nbTeleporters = pCVar4->mapDataSizes.nbTeleporters;
+				local_30[1].nbWolfen = pCVar4->mapDataSizes.nbWolfen;
+				local_30[1].nbRunes = pCVar4->mapDataSizes.nbRunes;
 				iVar8 = pCVar4->mapDataSizes.field_0x0 + pCVar4->mapDataSizes.nbTeleporters + pCVar4->mapDataSizes.nbWolfen + pCVar4->mapDataSizes.nbRunes;
 				if (0x80 < iVar8) {
 					iVar8 = 0x80;
@@ -768,10 +769,10 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 		}
 
 		if (bVar3 && bVar2) {
-			if (local_30.field_0x0 == local_20.field_0x0) {
-				if (local_30.nbTeleporters == local_20.nbTeleporters) {
-					if (local_30.nbWolfen == local_20.nbWolfen) {
-						if (local_30.nbRunes == local_20.nbRunes) {
+			if (local_30[0].field_0x0 == local_30[1].field_0x0) {
+				if (local_30[0].nbTeleporters == local_30[1].nbTeleporters) {
+					if (local_30[0].nbWolfen == local_30[1].nbWolfen) {
+						if (local_30[0].nbRunes == local_30[1].nbRunes) {
 							iVar8 = 0;
 							while (iVar8 < 128) {
 								if ((aMStack4144[iVar8].position.x != aMStack2096[iVar8].position.x) || (aMStack4144[iVar8].position.y != aMStack2096[iVar8].position.y)) {
@@ -783,10 +784,10 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 
 							if (iVar8 == 128) {
 								memcpy(pMarkerBuffer, aMStack4144, 128 << 4);
-								pMarkerCounts->field_0x0 = local_30.field_0x0;
-								pMarkerCounts->nbTeleporters = local_30.nbTeleporters;
-								pMarkerCounts->nbWolfen = local_30.nbWolfen;
-								pMarkerCounts->nbRunes = local_30.nbRunes;
+								pMarkerCounts->field_0x0 = local_30[0].field_0x0;
+								pMarkerCounts->nbTeleporters = local_30[0].nbTeleporters;
+								pMarkerCounts->nbWolfen = local_30[0].nbWolfen;
+								pMarkerCounts->nbRunes = local_30[0].nbRunes;
 								bVar10 = true;
 							}
 						}
@@ -797,19 +798,18 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 
 		if (static_cast<bool>(bVar3 | bVar2)) {
 			if (static_cast<bool>(bVar3 & bVar2)) {
-				IMPLEMENTATION_GUARD(
 				local_8[0] = aMStack4144;
 				iVar8 = 0;
 				local_8[1] = aMStack2096;
-				iVar9 = 0;
+				int* pSize = pMarkerCounts->aSizes;
 				do {
-					pMarkerCounts->field_0x0 = 0;
+					*pSize = 0;
 					iVar7 = 0;
-					piVar6 = static_cast<int*>((int)&local_30.field_0x0 + iVar9);
+					piVar6 = local_30[0].aSizes + iVar8;
 					ppMVar5 = local_8;
 					do {
-						pMarkerCounts->field_0x0 = pMarkerCounts->field_0x0 + *piVar6;
-						memcpy(pMarkerBuffer, *ppMVar5, *piVar6 << 4);
+						*pSize = *pSize + *piVar6;
+						memcpy(pMarkerBuffer, *ppMVar5, *piVar6 * sizeof(MapPosition));
 						iVar7 = iVar7 + 1;
 						*ppMVar5 = *ppMVar5 + *piVar6;
 						iVar1 = *piVar6;
@@ -817,18 +817,18 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 						piVar6 = piVar6 + 4;
 						pMarkerBuffer = pMarkerBuffer + iVar1;
 					} while (iVar7 < 2);
+
 					iVar8 = iVar8 + 1;
-					pMarkerCounts = (MapDataSizes*)&pMarkerCounts->nbTeleporters;
-					iVar9 = iVar9 + 4;
-				} while (iVar8 < 4);)
+					pSize = pSize + 1;
+				} while (iVar8 < 4);
 			}
 			else {
 				if (bVar3) {
-					pMarkerCounts->field_0x0 = local_30.field_0x0;
-					pMarkerCounts->nbTeleporters = local_30.nbTeleporters;
-					pMarkerCounts->nbWolfen = local_30.nbWolfen;
-					pMarkerCounts->nbRunes = local_30.nbRunes;
-					iVar8 = local_30.field_0x0 + local_30.nbTeleporters + local_30.nbWolfen + local_30.nbRunes;
+					pMarkerCounts->field_0x0 = local_30[0].field_0x0;
+					pMarkerCounts->nbTeleporters = local_30[0].nbTeleporters;
+					pMarkerCounts->nbWolfen = local_30[0].nbWolfen;
+					pMarkerCounts->nbRunes = local_30[0].nbRunes;
+					iVar8 = local_30[0].field_0x0 + local_30[0].nbTeleporters + local_30[0].nbWolfen + local_30[0].nbRunes;
 					if (param_5 < iVar8) {
 						iVar8 = param_5;
 					}
@@ -836,11 +836,11 @@ bool CMapManager::LoadMarkerPositionsForLevel(int levelId, MapDataSizes* pMarker
 					memcpy(pMarkerBuffer, aMStack4144, iVar8 * sizeof(MapPosition));
 				}
 				else {
-					pMarkerCounts->field_0x0 = local_20.field_0x0;
-					pMarkerCounts->nbTeleporters = local_20.nbTeleporters;
-					pMarkerCounts->nbWolfen = local_20.nbWolfen;
-					pMarkerCounts->nbRunes = local_20.nbRunes;
-					iVar8 = local_20.field_0x0 + local_20.nbTeleporters + local_20.nbWolfen + local_20.nbRunes;
+					pMarkerCounts->field_0x0 = local_30[1].field_0x0;
+					pMarkerCounts->nbTeleporters = local_30[1].nbTeleporters;
+					pMarkerCounts->nbWolfen = local_30[1].nbWolfen;
+					pMarkerCounts->nbRunes = local_30[1].nbRunes;
+					iVar8 = local_30[1].field_0x0 + local_30[1].nbTeleporters + local_30[1].nbWolfen + local_30[1].nbRunes;
 					if (param_5 < iVar8) {
 						iVar8 = param_5;
 					}

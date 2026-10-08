@@ -12,6 +12,9 @@
 #include "MathOps.h"
 #include "CameraViewManager.h"
 #include "TimeController.h"
+#include "FileManager3D.h"
+#include "DlistManager.h"
+#include <math.h>
 
 CFxHandle::CFxHandle()
 {
@@ -1352,6 +1355,208 @@ CFxDigits::CFxDigits()
 	: field_0x0((ParticleInfo*)0x0)
 {
 
+}
+
+void CFxDigits::Init(int materialId)
+{
+	ParticleInfo* pParticleInfo;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	if (materialId == -1) {
+		this->field_0x0 = (ParticleInfo*)0x0;
+	}
+	else {
+		pFileManager->InstanciateG2D(materialId);
+		pParticleInfo = pFileManager->GetG2DInfo(materialId);
+		this->field_0x0 = pParticleInfo;
+	}
+
+	return;
+}
+
+void CFxDigits::Draw(float requiredMagic, float consumedMagic, float size, float alpha, edF32VECTOR4* pPosition, int bFading)
+{
+	Timer* pTimer;
+	float remainingMagic;
+	float fVar1;
+	uint color;
+	edF32VECTOR4 direction;
+	edF32VECTOR4 position;
+
+	if (consumedMagic < requiredMagic) {
+		pTimer = Timer::GetTimer();
+		position = *pPosition;
+		position.y = pPosition->y + cosf(pTimer->scaledTotalTime * 8.0f - 1.570796f) * 0.05f;
+		direction.x = position.x - CCameraManager::_gThis->transformationMatrix.rowT.x;
+		direction.y = position.y - CCameraManager::_gThis->transformationMatrix.rowT.y;
+		direction.z = position.z - CCameraManager::_gThis->transformationMatrix.rowT.z;
+		direction.w = position.w - CCameraManager::_gThis->transformationMatrix.rowT.w;
+		edF32Vector4SafeNormalize0Hard(&direction, &direction);
+		direction.x = direction.x * -1.5f;
+		direction.y = direction.y * -1.5f;
+		direction.z = direction.z * -1.5f;
+		direction.w = direction.w * -1.5f;
+		position.x = position.x + direction.x;
+		position.y = position.y + direction.y;
+		position.z = position.z + direction.z;
+		position.w = position.w + direction.w;
+
+		remainingMagic = 1.0f;
+		fVar1 = (requiredMagic - consumedMagic) + 0.5f;
+		if (1.0f <= fVar1) {
+			remainingMagic = fVar1;
+		}
+
+		color = ((uint)(alpha * 128.0f) << 24) | 0x808080;
+		if (bFading == 0) {
+			DrawU32((uint)remainingMagic, &position, size, size, color);
+		}
+		else {
+			DrawFadingF32(remainingMagic, &position, size, size, color);
+		}
+	}
+
+	return;
+}
+
+int CFxDigits::DrawU32(uint value, edF32VECTOR4* pPosition, float width, float height, uint color)
+{
+	CCameraManager* pCameraManager;
+	bool bVar1;
+	byte* pDigit;
+	int digitIndex;
+	int nbDigits;
+	float x;
+	float y;
+	float x_00;
+	byte digits[16];
+	edF32MATRIX4 matrix;
+
+	pCameraManager = CCameraManager::_gThis;
+	if (this->field_0x0 == (ParticleInfo*)0x0) {
+		nbDigits = 0;
+	}
+	else {
+		nbDigits = 0;
+		bVar1 = GameDList_BeginCurrent();
+		if (bVar1 != false) {
+			edF32Matrix4CopyHard(&matrix, &pCameraManager->transMatrix_0x390);
+			matrix.rowT = *pPosition;
+			pDigit = digits;
+			do {
+				nbDigits = nbDigits + 1;
+				*pDigit = (byte)(value % 10);
+				value = value / 10;
+				pDigit = pDigit + 1;
+			} while (value != 0);
+
+			edDListLoadMatrix(&matrix);
+			digitIndex = 0;
+			if (0 < nbDigits) {
+				y = height * 0.5f;
+				do {
+					edDListUseMaterial(this->field_0x0->materialInfoArray_0x8 + digits[nbDigits - digitIndex - 1]);
+					edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
+					edDListColor4u8((byte)color, (byte)(color >> 8), (byte)(color >> 16), (byte)(color >> 24));
+					x_00 = (float)digitIndex * width - (float)nbDigits * width * 0.5f;
+					edDListTexCoo2f(0.0f, 0.0f);
+					edDListVertex4f(x_00, y, 0.0f, 0.0f);
+					edDListTexCoo2f(1.0f, 0.0f);
+					x = x_00 + width;
+					edDListVertex4f(x, y, 0.0f, 0.0f);
+					edDListTexCoo2f(0.0f, 1.0f);
+					edDListVertex4f(x_00, -height * 0.5f, 0.0f, 0.0f);
+					edDListTexCoo2f(1.0f, 1.0f);
+					edDListVertex4f(x, -height * 0.5f, 0.0f, 0.0f);
+					edDListEnd();
+					digitIndex = digitIndex + 1;
+				} while (digitIndex < nbDigits);
+			}
+			GameDList_EndCurrent();
+		}
+	}
+
+	return nbDigits;
+}
+
+int CFxDigits::DrawFadingF32(float value, edF32VECTOR4* pPosition, float width, float height, uint color)
+{
+	bool bVar1;
+	int digitIndex;
+	int nbDigits;
+	byte digitAlpha;
+	uint digit;
+	float fraction;
+	float alpha;
+	float widthScale;
+	float heightScale;
+	float digitWidth;
+	float digitHeight;
+	float x;
+	float digits[17];
+	edF32MATRIX4 matrix;
+
+	if (this->field_0x0 == (ParticleInfo*)0x0) {
+		nbDigits = 0;
+	}
+	else {
+		nbDigits = 0;
+		bVar1 = GameDList_BeginCurrent();
+		if (bVar1 != false) {
+			edF32Matrix4CopyHard(&matrix, &CCameraManager::_gThis->transMatrix_0x390);
+			matrix.rowT = *pPosition;
+			digitIndex = nbDigits;
+			do {
+				fraction = fmodf(value, 10.0f);
+				nbDigits = digitIndex + 1;
+				digits[digitIndex + 1] = fraction;
+				value = value / 10.0f;
+				digitIndex = nbDigits;
+			} while (1.0f <= value);
+
+			edDListLoadMatrix(&matrix);
+			for (digitIndex = 0; digitIndex < nbDigits; digitIndex = digitIndex + 1) {
+				digit = (uint)digits[nbDigits - digitIndex];
+				fraction = digits[nbDigits - digitIndex] - (float)digit;
+				heightScale = 0.5f;
+				widthScale = 1.0f;
+				alpha = (float)(color >> 24) / 128.0f;
+				if (fraction < 0.3f) {
+					fraction = cosf((fraction * 1.570796f) / 0.3f - 1.570796f);
+					alpha = alpha * fraction;
+					heightScale = (1.0f - fraction * fraction) + 0.5f;
+					widthScale = 1.0f - (1.0f - fraction * fraction);
+				}
+				else {
+					if (0.7f < fraction) {
+						alpha = alpha * ((1.0f - fraction) / 0.3f);
+						widthScale = 1.0f;
+						heightScale = 0.5f;
+					}
+				}
+				edDListUseMaterial(this->field_0x0->materialInfoArray_0x8 + digit);
+				edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_QUAD, 4);
+				digitAlpha = (byte)(alpha * 128.0f);
+				edDListColor4u8((byte)color, (byte)(color >> 8), (byte)(color >> 16), digitAlpha);
+				digitWidth = width * widthScale;
+				digitHeight = height * heightScale;
+				x = (width - digitWidth) * 0.5f + ((float)digitIndex * width - (float)nbDigits * width * 0.5f);
+				edDListTexCoo2f(0.0f, 0.0f);
+				edDListVertex4f(x, digitHeight, 0.0f, 0.0f);
+				edDListTexCoo2f(1.0f, 0.0f);
+				edDListVertex4f(x + digitWidth, digitHeight, 0.0f, 0.0f);
+				edDListTexCoo2f(0.0f, 1.0f);
+				edDListVertex4f(x, -digitHeight, 0.0f, 0.0f);
+				edDListTexCoo2f(1.0f, 1.0f);
+				edDListVertex4f(x + digitWidth, -digitHeight, 0.0f, 0.0f);
+				edDListEnd();
+			}
+			GameDList_EndCurrent();
+		}
+	}
+
+	return nbDigits;
 }
 
 void CFxHandleExt::Create(ByteCode* pByteCode)

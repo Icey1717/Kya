@@ -669,8 +669,10 @@ class CFxDigits
 {
 public:
 	CFxDigits();
-	void Init(int param_2) {}
-	void Draw(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, int param_7) {}
+	void Init(int materialId);
+	void Draw(float requiredMagic, float consumedMagic, float size, float alpha, edF32VECTOR4* pPosition, int bFading);
+	int DrawU32(uint value, edF32VECTOR4* pPosition, float width, float height, uint color);
+	int DrawFadingF32(float value, edF32VECTOR4* pPosition, float width, float height, uint color);
 
 	ParticleInfo* field_0x0;
 };

@@ -12056,7 +12056,7 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 										iVar2 = this->pOwner->actorState;
 										if (((iVar2 == 0x66) || (iVar2 == 0x6e)) && (this->field_0xb8 != 0)) {
 											s_fighter_combo* pCombo = this->pActiveCombo;
-											if ((iVar2 == 0) || (pCombo->nbBranches == 0)) {
+											if ((pCombo == (s_fighter_combo*)0x0) || (pCombo->nbBranches == 0)) {
 												this->pActiveCombo = (s_fighter_combo*)0x0;
 												this->pActiveBlow = (s_fighter_blow*)0x0;
 												this->field_0x70 = 0;

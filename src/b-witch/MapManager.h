@@ -17,10 +17,17 @@ struct MapPosition
 
 struct MapDataSizes
 {
-	int field_0x0;
-	int nbTeleporters;
-	int nbWolfen;
-	int nbRunes;
+	union
+	{
+		struct {
+			int field_0x0;
+			int nbTeleporters;
+			int nbWolfen;
+			int nbRunes;
+		};
+
+		int aSizes[4];
+	};
 };
 
 struct MapSaveChunk

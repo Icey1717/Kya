@@ -1302,7 +1302,12 @@ void CamUpdate::FUN_003c4a40(edF32VECTOR4* pPosition)
 		this->aSubObjA[this->field_0x20].field_0x2 = 0;
 		this->aSubObjA[this->field_0x20].field_0x4 = uVar6;
 		pCVar5 = pCVar4;
+#ifdef PLATFORM_WIN
+		// The PS2 code reads sample 35 before checking the bound; guard the read on PC.
+		for (; ((uVar6 < 0x23) && (bVar2 == (pCVar5->intersectionDistance < this->field_0x18))); uVar6 = uVar6 + 1) {
+#else
 		for (; (bVar2 == pCVar5->intersectionDistance < this->field_0x18 && (uVar6 < 0x23)); uVar6 = uVar6 + 1) {
+#endif
 			pCVar5 = pCVar5 + 1;
 			pCVar4 = pCVar4 + 1;
 		}

@@ -11,6 +11,7 @@ add_executable(KyaPortTest "src/tests.cpp" "src/audio_sample_tests.cpp" "src/aud
 target_sources(KyaPortTest PRIVATE "src/draw_trace_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/nativ_akasa_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/bone_physics_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/camera_fight_data_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/minigame_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/electrolla_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/shocker_tests.cpp")
@@ -44,6 +45,7 @@ target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 target_compile_definitions(KyaPortTest PRIVATE TEST_DATA_DIRECTORY="${CMAKE_CURRENT_LIST_DIR}/data/")
 
 if (ENABLE_ADDRESS_SANITIZER)
+	set_target_properties(KyaPortTest PROPERTIES OUTPUT_NAME "KyaPortTest_ASan")
 	add_custom_command(TARGET KyaPortTest POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${KYA_ASAN_RUNTIME_DLL}"
