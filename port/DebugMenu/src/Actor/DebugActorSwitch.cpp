@@ -14,7 +14,7 @@ namespace Debug::Actor::Switch
 		case SWITCH_BEHAVIOUR_MULTI_CONDITION:  return "MultiCondition (5)";
 		case SWITCH_BEHAVIOUR_TARGET:           return "Target (6)";
 		case SWITCH_BEHAVIOUR_SEQUENCE:         return "Sequence (7)";
-		case SWITCH_BEHAVIOUR_NEW:              return "New/Target (8)";
+		case SWITCH_BEHAVIOUR_TIMED:            return "Timed (8)";
 		default:                                return "Unknown";
 		}
 	}
@@ -158,8 +158,17 @@ namespace Debug::Actor::Switch
 				ShowMultiConditionBehaviour(&pSwitch->behaviourSwitchMultiCondition);
 				break;
 			case SWITCH_BEHAVIOUR_TARGET:
-			case SWITCH_BEHAVIOUR_NEW:
 				ShowTargetBehaviour(static_cast<CBehaviourSwitchTarget*>(pSwitch->GetBehaviour(pSwitch->curBehaviourId)));
+				break;
+			case SWITCH_BEHAVIOUR_TIMED:
+				if (auto* pTimed = static_cast<CBehaviourSwitchTimed*>(pSwitch->GetBehaviour(SWITCH_BEHAVIOUR_TIMED))) {
+					ImGui::Text("Entry: %d / %d", pTimed->currentEntry + 1, pTimed->entryCount);
+					ImGui::Text("Elapsed: %.3f", pTimed->elapsedTime);
+					ImGui::Text("Playing: %s  Finished: %s", pTimed->bPlaying ? "yes" : "no", pTimed->bFinished ? "yes" : "no");
+					if (pTimed->currentEntry >= 0 && pTimed->currentEntry < pTimed->entryCount) {
+						ImGui::Text("Delay: %.3f", pTimed->aEntries[pTimed->currentEntry].delay);
+					}
+				}
 				break;
 			case SWITCH_BEHAVIOUR_SEQUENCE:
 				ShowSequenceBehaviour(&pSwitch->behaviourSwitchSequence);

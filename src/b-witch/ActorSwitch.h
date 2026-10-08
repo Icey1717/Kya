@@ -13,7 +13,7 @@
 #define SWITCH_BEHAVIOUR_MULTI_CONDITION	0x5
 #define SWITCH_BEHAVIOUR_TARGET				0x6
 #define SWITCH_BEHAVIOUR_SEQUENCE			0x7
-#define SWITCH_BEHAVIOUR_NEW 0x8
+#define SWITCH_BEHAVIOUR_TIMED 0x8
 
 #define SWITCH_STATE_MAGIC_STATE_OFF_2_ON 0x6
 #define SWITCH_STATE_LEVER_STATE_OFF_2_ON 0x6
@@ -159,9 +159,37 @@ public:
 	S_OSCILLATING_VALUE oscValue;
 };
 
-class CBehaviourSwitchNew : public CBehaviourSwitchTarget
+struct S_SWITCH_TIMED_ENTRY
+{
+	S_NTF_SWITCH targetSwitch;
+	float delay;
+};
+
+class CBehaviourSwitchTimed : public CBehaviourSwitch
 {
 public:
+	CBehaviourSwitchTimed();
+	virtual ~CBehaviourSwitchTimed();
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void SaveContext(S_SAVE_CLASS_SWITCH* pData) {}
+	virtual void LoadContext(S_SAVE_CLASS_SWITCH* pData) {}
+
+	void AdvanceEntry(int direction);
+
+	float baseDelay;
+	int entryCount;
+	S_SWITCH_TIMED_ENTRY* aEntries;
+	uint playbackMode;
+	uint flags;
+	float elapsedTime;
+	int currentEntry;
+	byte bPlaying;
+	byte bFinished;
+	byte bStarted;
 };
 
 class CBehaviourSwitchMultiCondition : public CBehaviourSwitch

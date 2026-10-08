@@ -1082,8 +1082,8 @@ namespace Switch
 			return "Target";
 		case SWITCH_BEHAVIOUR_SEQUENCE:
 			return "Sequence";
-		case SWITCH_BEHAVIOUR_NEW:
-			return "New";
+		case SWITCH_BEHAVIOUR_TIMED:
+			return "Timed";
 		default:
 			return "Unknown";
 			break;

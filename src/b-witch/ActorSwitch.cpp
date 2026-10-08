@@ -155,8 +155,8 @@ CBehaviour* CActorSwitch::BuildBehaviour(int behaviourType)
 		case SWITCH_BEHAVIOUR_SEQUENCE:
 			pBehaviour = &this->behaviourSwitchSequence;
 			break;
-		case SWITCH_BEHAVIOUR_NEW:
-			pBehaviour = new CBehaviourSwitchNew;
+		case SWITCH_BEHAVIOUR_TIMED:
+			pBehaviour = new CBehaviourSwitchTimed;
 			break;
 		}
 
@@ -1230,6 +1230,149 @@ void CBehaviourSwitchLever::SaveContext(S_SAVE_CLASS_SWITCH* pData)
 void CBehaviourSwitchLever::LoadContext(S_SAVE_CLASS_SWITCH* pData)
 {
 	return;
+}
+
+// Behaviour 8 uses the separate timed-switch vtable at PS2 address 0x0043c1b0.
+CBehaviourSwitchTimed::CBehaviourSwitchTimed()
+{
+	this->entryCount = 0;
+	this->aEntries = (S_SWITCH_TIMED_ENTRY*)0x0;
+}
+
+CBehaviourSwitchTimed::~CBehaviourSwitchTimed()
+{
+	delete[] this->aEntries;
+}
+
+void CBehaviourSwitchTimed::Create(ByteCode* pByteCode)
+{
+	this->baseDelay = pByteCode->GetF32();
+	this->entryCount = pByteCode->GetS32();
+	if (this->entryCount != 0) {
+		this->aEntries = new S_SWITCH_TIMED_ENTRY[this->entryCount];
+	}
+
+	for (int i = 0; i < this->entryCount; i++) {
+		this->aEntries[i].targetSwitch.Create(pByteCode);
+		this->aEntries[i].delay = pByteCode->GetF32() + this->baseDelay;
+		if (this->aEntries[i].delay < 0.0f) {
+			this->aEntries[i].delay = 0.0f;
+		}
+	}
+
+	this->playbackMode = pByteCode->GetU32();
+	this->flags = pByteCode->GetU32();
+}
+
+void CBehaviourSwitchTimed::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorSwitch*>(pOwner);
+	this->elapsedTime = 0.0f;
+	this->currentEntry = 0;
+	this->bPlaying = 0;
+	for (int i = 0; i < this->entryCount; i++) {
+		this->aEntries[i].targetSwitch.Init();
+	}
+}
+
+void CBehaviourSwitchTimed::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->bPlaying = 0;
+	this->bFinished = 0;
+	this->bStarted = 0;
+	this->elapsedTime = 0.0f;
+	this->currentEntry = 0;
+	this->pOwner->SetState(newState == -1 ? SWITCH_STATE_TARGET_IDLE : newState, newAnimationType);
+}
+
+void CBehaviourSwitchTimed::AdvanceEntry(int direction)
+{
+	this->bPlaying = 1;
+	if (this->playbackMode == 3) {
+		uint randomValue = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+		CScene::_pinstance->field_0x38 = randomValue;
+		this->currentEntry = (this->entryCount * ((randomValue >> 16) & 0x7fff)) >> 15;
+	}
+	else if (this->playbackMode == 2 && this->entryCount != 0) {
+		this->currentEntry = (this->currentEntry + this->entryCount + direction) % this->entryCount;
+	}
+	else if (this->playbackMode == 1) {
+		this->currentEntry += direction;
+		if (this->currentEntry < 0 || this->entryCount <= this->currentEntry) {
+			this->bFinished = 1;
+			this->bPlaying = 0;
+		}
+	}
+}
+
+void CBehaviourSwitchTimed::Manage()
+{
+	if (!this->bPlaying || !this->bStarted || this->bFinished) {
+		this->pOwner->flags &= 0xfffffffc;
+	}
+	else if (0 <= this->currentEntry && this->currentEntry < this->entryCount) {
+		this->elapsedTime += GetTimer()->cutsceneDeltaTime;
+		S_SWITCH_TIMED_ENTRY* pEntry = &this->aEntries[this->currentEntry];
+		if (pEntry->delay < this->elapsedTime) {
+			pEntry->targetSwitch.Switch(this->pOwner);
+			pEntry->targetSwitch.PostSwitch(this->pOwner);
+			if ((this->flags & 1) == 0) {
+				AdvanceEntry(1);
+			}
+			else {
+				this->bPlaying = 0;
+			}
+			this->pOwner->targetSwitch.Switch(this->pOwner);
+			this->pOwner->targetSwitch.PostSwitch(this->pOwner);
+			this->elapsedTime = 0.0f;
+		}
+	}
+
+	// Flag 2 keeps the original timer's debug display actor active.
+	if ((this->flags & 2) != 0) {
+		this->pOwner->flags = (this->pOwner->flags | 2) & 0xfffffffe;
+	}
+	this->pOwner->targetSwitch.pStreamEventCamera->Manage(this->pOwner);
+}
+
+int CBehaviourSwitchTimed::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int entryParam = static_cast<int>(reinterpret_cast<intptr_t>(pMsgParam));
+	switch (msg) {
+	case 0x68:
+		AdvanceEntry(-1);
+		return 1;
+	case 0x67:
+		AdvanceEntry(1);
+		return 1;
+	case 0xe:
+		if (this->bPlaying) {
+			this->bPlaying = 0;
+			return 1;
+		}
+		// Fall through to resume playback.
+	case 0xf:
+		this->bPlaying = 1;
+		if (entryParam != 0) {
+			this->currentEntry = entryParam - 1;
+		}
+		return 1;
+	case 0x10:
+		this->bPlaying = 0;
+		return 1;
+	case 0x50:
+		this->bFinished = 1;
+		this->bPlaying = 0;
+		break;
+	case 0x4f:
+		this->bFinished = 0;
+		this->bStarted = 1;
+		this->bPlaying = 1;
+		this->elapsedTime = 0.0f;
+		this->currentEntry = entryParam == 0 ? 0 : entryParam - 1;
+		break;
+	}
+	return 0;
 }
 
 void CBehaviourSwitchMultiCondition::Create(ByteCode* pByteCode)
