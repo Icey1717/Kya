@@ -1,6 +1,9 @@
 #include "DebugActorWind.h"
 #include "ActorWind.h"
+#include "MathOps.h"
+#include "Native/NativeDebugShapes.h"
 #include <imgui.h>
+#include <cmath>
 #include <sstream>
 #include <iomanip>
 
@@ -144,6 +147,65 @@ namespace Debug::Actor::Wind
 		}
 	}
 
+	static void ShowWindEmitterInfo(CFxWind* pFxWind, bool drawPositions)
+	{
+		auto* pPool = gpWIND_PartPool;
+		if (pPool == nullptr) {
+			ImGui::TextDisabled("Wind emitter pool unavailable.");
+			return;
+		}
+		ImGui::Text("Wind pool: %d registered, %d near, %d holders in use",
+			pPool->nbHandles, pPool->field_0xc, pPool->field_0x14);
+		int handleIndex = -1;
+		for (int index = 0; index < 64; ++index) {
+			if (pPool->aWindHandles[index].pFxWind == pFxWind) {
+				handleIndex = index;
+				ImGui::Text("Registered handle: %d; pool distance: %.3f (eligible below 0.3)",
+					index, pPool->aWindHandles[index].field_0x4);
+			}
+		}
+		if (handleIndex < 0) ImGui::TextDisabled("Wind FX is not registered with the emitter pool.");
+		bool hasHolder = false;
+		for (int holderIndex = 0; holderIndex < 4; ++holderIndex) {
+			auto& holder = pPool->aHolders[holderIndex];
+			if (holder.pFxWind != pFxWind) continue;
+			hasHolder = true;
+			ImGui::Text("Holder: %d; fade: %.3f; ray share: %.3f", holderIndex, holder.field_0x2b0, holder.field_0x2b4);
+			if (pPool->aWindHandles[holderIndex].pFxWind != pFxWind) {
+				ImGui::TextColored(ImVec4(1, 0.5f, 0.2f, 1), "Holder differs from draw-loop handle at this slot.");
+			}
+			for (int emitterIndex = 0; emitterIndex < 3; ++emitterIndex) {
+				auto& emitter = holder.aFxLightEmitters[emitterIndex];
+				int owned = 0, alive = 0, invalid = 0;
+				edF32MATRIX4 displayMatrix = pFxWind->windMatrix;
+				if (emitterIndex == 2 && (pFxWind->flags_0x54 & 0x20) == 0) {
+					edF32Matrix4RotateYHard(pPool->field_0xd20[emitterIndex], &displayMatrix, &gF32Matrix4Unit);
+					edF32Matrix4MulF32Matrix4Hard(&displayMatrix, &displayMatrix, &pFxWind->windMatrix);
+				}
+				for (int rayIndex = 0; emitter.pRayDef != nullptr && rayIndex < pPool->field_0xd5c[emitterIndex].nbRays; ++rayIndex) {
+					const auto& ray = emitter.pRayDef[rayIndex];
+					if (ray.field_0x33 != emitter.countId) continue;
+					++owned;
+					if ((ray.field_0x30 & 1) == 0) continue;
+					++alive;
+					edF32VECTOR4 worldPosition;
+					edF32VECTOR4 localPosition = ray.field_0x0;
+					edF32Matrix4MulF32Vector4Hard(&worldPosition, &displayMatrix, &localPosition);
+					if (!std::isfinite(worldPosition.x) || !std::isfinite(worldPosition.y) || !std::isfinite(worldPosition.z)) {
+						++invalid;
+						continue;
+					}
+					if (drawPositions) Renderer::Native::DebugShapes::AddSphere(worldPosition.x, worldPosition.y, worldPosition.z,
+						0.06f, emitterIndex == 1 ? 1.0f : 0.2f, 1.0f, emitterIndex == 0 ? 1.0f : 0.2f, 1.0f);
+				}
+				ImGui::Text("Emitter %d: %d owned, %d alive (counter %d), %d invalid", emitterIndex, owned, alive, emitter.field_0x54, invalid);
+				ImGui::Text("  Flags: 0x%X; alpha: %.3f; lifetime: %.3f; material: %d / %d",
+					emitter.flags, emitter.alphaFactor, emitter.field_0x60, emitter.materialId, emitter.field_0x98);
+			}
+		}
+		if (!hasHolder) ImGui::TextDisabled("No emitter holder assigned to this wind FX.");
+	}
+
 	static void ShowFxWindInfo(CFxWind* pFxWind, int index)
 	{
 		if (!pFxWind) {
@@ -156,6 +218,18 @@ namespace Debug::Actor::Wind
 			ImGui::Text("Owner: %p", pFxWind->pOwner);
 			
 			ImGui::Text("Flags (0x%x): %s", pFxWind->flags_0x54, GetFxWindFlagsString(pFxWind->flags_0x54).c_str());
+			static bool drawBounds = false;
+			static bool drawPositions = false;
+			ImGui::Checkbox("Draw wind bounds", &drawBounds);
+			ImGui::Checkbox("Draw wind ray positions", &drawPositions);
+			ImGui::TextDisabled("Shared toggles apply to expanded wind FX. Ray colors: cyan / yellow / green by emitter.");
+			if (drawBounds) {
+				Renderer::Native::DebugShapes::AddSphere(pFxWind->field_0x140.x, pFxWind->field_0x140.y,
+					pFxWind->field_0x140.z, pFxWind->field_0x160, 1.0f, 0.5f, 0.0f, 1.0f);
+				Renderer::Native::DebugShapes::AddOBB(pFxWind->windMatrix.raw, pFxWind->field_0x130.x,
+					pFxWind->field_0x130.y * 0.5f, pFxWind->field_0x130.x, 0.2f, 0.8f, 1.0f, 1.0f);
+			}
+			ShowWindEmitterInfo(pFxWind, drawPositions);
 			ImGui::Text("Field 0x58: 0x%x", pFxWind->field_0x58);
 			ImGui::Text("Field 0x5c: %p", pFxWind->field_0x5c);
 

@@ -486,7 +486,7 @@ namespace Renderer
 #ifndef NDEBUG
 							// Review the mesh and cull mode on a submitted scene draw.
 							if (!bShadowMask && instance.cullMode != VK_CULL_MODE_NONE && IsDebuggerPresent()) {
-								__debugbreak();
+								//__debugbreak();
 							}
 #endif
 						}

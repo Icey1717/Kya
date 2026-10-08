@@ -28,7 +28,7 @@ public:
 	edF32VECTOR4* aSplinePoints;
 	edF32VECTOR4* aSplineRotationsEuler;
 	edF32VECTOR4* aSplineRotationsQuat;
-	char* field_0x28;
+	edF32VECTOR4* field_0x28;
 	float* aDelays;
 	uint* field_0x30;
 	float* field_0x34;

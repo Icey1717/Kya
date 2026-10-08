@@ -735,6 +735,8 @@ void CFxLightEmitter::Draw(uint param_2, edF32MATRIX4* param_3, edF32MATRIX4* pa
 				do {
 					if ((pRVar11->field_0x33 == this->countId) && ((pRVar11->field_0x30 & 1) != 0)) {
 						*pScratchRayDef = *pRVar11;
+						// Start each ray's lifetime fade from the emitter alpha.
+						fVar18 = this->alphaFactor;
 						
 						fVar14 = this->field_0x60;
 						fVar15 = pScratchRayDef->field_0x28;

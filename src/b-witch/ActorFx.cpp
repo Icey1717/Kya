@@ -3,6 +3,7 @@
 #include "MiscFunctions.h"
 #include "TimeController.h"
 #include "PathManager.h"
+#include "MathOps.h"
 
 void CActorFx::Create(ByteCode* pByteCode)
 {
@@ -424,7 +425,71 @@ void CActorFx::CBhvPath::Manage()
 }
 
 void CActorFx::CBhvPath::Draw()
-{}
+{
+	int iVar1;
+	CPathFollow* pCVar2;
+	CNewFx* pCVar5;
+	uint uVar6;
+	edF32VECTOR4* peVar7;
+	edF32VECTOR4* peVar8;
+	edF32VECTOR4* peVar9;
+	int iVar11;
+	static edF32VECTOR4 unitScale = { 1.0f, 1.0f, 1.0f, 1.0f }; // 0x0042b4e0
+
+	if ((this->field_0xc != 0) && (this->field_0x14 != -1)) {
+		if (this->fxHandle.IsValid()) {
+			this->fxHandle.pFx->Reveal();
+		}
+
+		iVar1 = this->pPathFollow->splinePointCount;
+		iVar11 = 0;
+		if (0 < iVar1) {
+			do {
+				pCVar2 = this->pPathFollow;
+				if (pCVar2->aSplinePoints == (edF32VECTOR4*)0x0) {
+					peVar9 = &gF32Vertex4Zero;
+				}
+				else {
+					peVar9 = pCVar2->aSplinePoints + iVar11;
+				}
+
+				if (pCVar2->aSplineRotationsEuler == (edF32VECTOR4*)0x0) {
+					peVar8 = &gF32Vector4Zero;
+				}
+				else {
+					peVar8 = pCVar2->aSplineRotationsEuler + iVar11;
+				}
+
+				if (pCVar2->field_0x28 == (edF32VECTOR4*)0x0) {
+					peVar7 = &unitScale;
+				}
+				else {
+					peVar7 = pCVar2->field_0x28 + iVar11;
+				}
+
+				this->fxHandle.SetPosition(peVar9);
+				this->fxHandle.SetRotationEuler(peVar8);
+				this->fxHandle.SetScale(peVar7);
+
+				pCVar5 = this->fxHandle.pFx;
+				uVar6 = this->fxHandle.id & 0x7fffffff;
+				if (((pCVar5 == (CNewFx*)0x0) || (uVar6 == 0)) || (uVar6 != pCVar5->id)) {
+					pCVar5 = (CNewFx*)0x0;
+				}
+
+				if (pCVar5 != (CNewFx*)0x0) {
+					pCVar5->Draw();
+				}
+
+				iVar11 = iVar11 + 1;
+			} while (iVar11 < iVar1);
+		}
+
+		this->fxHandle.Hide();
+	}
+
+	return;
+}
 
 void CActorFx::CBhvPath::Begin(CActor * pOwner, int newState, int newAnimationType)
 {

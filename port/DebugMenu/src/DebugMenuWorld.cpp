@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include <cstdio>
+#include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -434,24 +435,30 @@ namespace Debug {
 
 	static void DrawParticleShaperInfo(_ed_particle_manager* pManager)
 	{
+		if (pManager->aShaperParams.pData.Get() == nullptr) return;
 		if (ImGui::TreeNodeEx("Shapers", ImGuiTreeNodeFlags_None)) {
 			for (int shaperIndex = 0; shaperIndex < pManager->nbShaperParams; ++shaperIndex) {
 				ImGui::PushID(shaperIndex);
 
 				auto* pShaper = pManager->aShaperParams.pData + shaperIndex;
-				if (pShaper != nullptr) {
+				if (pShaper != nullptr && pShaper->aDlistMaterials.pData.Get() != nullptr) {
 					for (int shaperMaterialIndex = 0; shaperMaterialIndex < pShaper->nbMaterials; ++shaperMaterialIndex) {
 						ImGui::PushID(shaperMaterialIndex);
 						auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 						edDList_material* pMaterial = pShaper->aDlistMaterials.pData + shaperMaterialIndex;
 
 						auto* pRenderMaterial = textureLibrary.FindMaterial(pMaterial->pMaterial);
+						if (pRenderMaterial == nullptr) {
+							ImGui::TextDisabled("Material %d unavailable in renderer", shaperMaterialIndex);
+							ImGui::PopID();
+							continue;
+						}
 
 						for (auto& layer : pRenderMaterial->layers) {
 							ImGui::PushID(&layer);
 							for (auto& texture : layer.textures) {
 								ImGui::PushID(&texture);
-								if (ImGui::Selectable(texture.pSimpleTexture->GetName().c_str(), false)) {
+								if (texture.pSimpleTexture != nullptr && ImGui::Selectable(texture.pSimpleTexture->GetName().c_str(), false)) {
 									//texture.pSimpleTexture->DebugShow();
 								}
 
@@ -472,6 +479,88 @@ namespace Debug {
 		}
 	}
 
+	static bool IsFiniteParticlePosition(const glm::vec3& position)
+	{
+		return std::isfinite(position.x) && std::isfinite(position.y) && std::isfinite(position.z);
+	}
+
+	static void DrawParticleGroups(_ed_particle_manager* pManager, bool showDetails, bool drawBounds, bool drawPositions)
+	{
+		auto* pGroups = pManager->aGroups.pData.Get();
+		auto* pParticles = pManager->aParticles.pData.Get();
+		auto* pPositions = pManager->aVectors.pData.Get();
+		if (pGroups == nullptr) return;
+
+		for (int groupIndex = 0; groupIndex < pManager->nbGroups; ++groupIndex) {
+			auto& group = pGroups[groupIndex];
+			ImGui::PushID(groupIndex);
+			const bool expanded = showDetails && ImGui::TreeNode("Group", "Group [%d]: initialized %u, enabled %u, live %d, radius %.3f",
+				groupIndex, group.bInitialized, group.bEnabled, group.nbLiveParticles, group.boundingSphereRadius);
+			if (expanded) {
+				ImGui::Text("Generators: %d active / %d; shapers: %d active / %d",
+					group.nbActiveGenerators, group.nbGeneratorParams, group.nbActiveShapers, group.nbShaperParams);
+				ImGui::Text("Capacity: %d; available: %d; simulation: %u; time scale: %.3f",
+					group.particleCapacity, group.nbAvailableParticles, group.hasParticleSimulation, group.timeScale);
+				if (group.boundingSphereRadius == -1.0f) ImGui::TextDisabled("No drawable group bounds (radius = -1).");
+			}
+
+			auto* pShapers = group.aShaperParams.pData.Get();
+			for (int shaperIndex = 0; pShapers != nullptr && shaperIndex < group.nbActiveShapers; ++shaperIndex) {
+				auto* pShaper = pShapers[shaperIndex].pData.Get();
+				if (pShaper == nullptr) continue;
+				if (expanded) {
+					ImGui::Text("Shaper [%d]: enabled %u, mode %u, materials %d, alpha %.3f, sort 0x%02X",
+						shaperIndex, pShaper->field_0x2, pShaper->drawMode, pShaper->nbMaterials, pShaper->globalAlpha, pShaper->sortFlags);
+				}
+				// Match the shaper's display transform; positions can already be in world space.
+				const glm::mat4 world = glm::make_mat4(pShaper->worldMatrix.raw);
+				const glm::vec3 center = glm::vec3(world * glm::vec4(group.boundingSphereCenter.x,
+					group.boundingSphereCenter.y, group.boundingSphereCenter.z, 1.0f));
+				const float aspect = pShaper->aspectRatio > 1.0f ? pShaper->aspectRatio : 1.0f;
+				const float radius = group.boundingSphereRadius * aspect;
+				if (drawBounds && IsFiniteParticlePosition(center) && std::isfinite(radius) && radius >= 0.0f) {
+					// Transform three great circles so nonuniform FX scale is preserved.
+					for (int axis = 0; axis < 3; ++axis) {
+						for (int segment = 0; segment < 24; ++segment) {
+							glm::vec4 ends[2];
+							for (int end = 0; end < 2; ++end) {
+								const float angle = static_cast<float>(segment + end) * (6.2831853f / 24.0f);
+								glm::vec4 offset(0.0f);
+								offset[(axis + 1) % 3] = radius * std::cos(angle);
+								offset[(axis + 2) % 3] = radius * std::sin(angle);
+								ends[end] = glm::vec4(center, 1.0f) + world * offset;
+							}
+							Renderer::Native::DebugShapes::AddLine(ends[0].x, ends[0].y, ends[0].z,
+								ends[1].x, ends[1].y, ends[1].z, 1.0f, 0.7f, 0.1f, 1.0f);
+						}
+					}
+				}
+				int invalidPositions = 0;
+				const auto* pFirstParticle = group.pParticle.pData.Get();
+				const int start = pFirstParticle != nullptr ? pFirstParticle->poolIndex : -1;
+				const bool validRange = start >= 0 && group.particleCapacity >= 0 &&
+					start <= pManager->nbParticles && group.particleCapacity <= pManager->nbParticles - start &&
+					start <= pManager->nbVectors && group.particleCapacity <= pManager->nbVectors - start;
+				if (validRange && pParticles != nullptr && pPositions != nullptr) {
+					for (int index = start; index < start + group.particleCapacity; ++index) {
+						if (pParticles[index].state != PARTICLE_STATE_ALIVE) continue;
+						const auto& position = pPositions[index];
+						const glm::vec3 worldPosition = glm::vec3(world * glm::vec4(position.x, position.y, position.z, position.w));
+						if (!IsFiniteParticlePosition(worldPosition)) { ++invalidPositions; continue; }
+						if (drawPositions) {
+							const glm::vec4 color = pParticles[index].visible ? glm::vec4(0.2f, 1.0f, 0.2f, 1.0f) : glm::vec4(1.0f, 0.2f, 0.3f, 1.0f);
+							Renderer::Native::DebugShapes::AddSphere(worldPosition.x, worldPosition.y, worldPosition.z,
+								0.06f, color.r, color.g, color.b, color.a);
+						}
+					}
+				}
+				if (expanded) ImGui::Text("Particle range: %d + %d (%s); invalid positions: %d", start, group.particleCapacity, validRange ? "valid" : "invalid", invalidPositions);
+			}
+			if (expanded) ImGui::TreePop();
+			ImGui::PopID();
+		}
+	}
+
 	static void DrawParticlesTab()
 	{
 		auto* pFxManager = CScene::ptable.g_EffectsManager_004516b8;
@@ -486,17 +575,22 @@ namespace Debug {
 			}
 		}
 
-		for (uint particleTypeIndex = 0; particleTypeIndex < FX_TYPE_MAX; ++particleTypeIndex) {
+		static bool drawBounds = false;
+		static bool drawPositions = false;
+		static bool expandedOnly = true;
+		ImGui::Checkbox("Draw group bounds (orange)", &drawBounds);
+		ImGui::Checkbox("Draw live particle positions", &drawPositions);
+		ImGui::Checkbox("Only expanded effects", &expandedOnly);
+		ImGui::TextDisabled("Markers: green = visible flag, red = flag cleared. Flag can be stale after group culling.");
+		ImGui::TextDisabled("Bounds/markers use the last shaper display matrix; hidden effects may have stale transforms.");
+
+		// Other categories have different pool layouts and cannot be inspected as particles.
+		const uint particleTypeIndex = FX_TYPE_PARTICLE;
+		{
 			if (pFxManager->aEffectCategory[particleTypeIndex] != nullptr &&
 				ImGui::CollapsingHeader(gParticleCategoryNames[particleTypeIndex], ImGuiTreeNodeFlags_None)) {
 				ImGui::PushID(gParticleCategoryNames[particleTypeIndex]);
 				auto* pParticleManager = static_cast<CFxParticleManager*>(pFxManager->aEffectCategory[particleTypeIndex]);
-
-				if (pParticleManager == nullptr) {
-					ImGui::TextDisabled("Particle manager unavailable.");
-					ImGui::PopID();
-					continue;
-				}
 
 				// Count active effects (those with an installed manager).
 				int nbActive = 0;
@@ -540,7 +634,7 @@ namespace Debug {
 
 					ImGui::PushID(&fx);
 
-					// Count alive and visible (render-path eligible) particles for this effect instance.
+					// Visibility is the last shaper result, not confirmation of a submitted draw.
 					int nbAlive = 0;
 					int nbVisible = 0;
 					auto* pParticles = pManager->aParticles.pData.Get();
@@ -549,7 +643,7 @@ namespace Debug {
 							if (pParticles[p].state == PARTICLE_STATE_ALIVE) {
 								++nbAlive;
 							}
-							if (pParticles[p].visible) {
+							if (pParticles[p].state == PARTICLE_STATE_ALIVE && pParticles[p].visible) {
 								++nbVisible;
 							}
 						}
@@ -558,14 +652,18 @@ namespace Debug {
 					const bool bPaused = (fx.flags & FX_FLAG_PAUSED) != 0;
 					const bool bHidden = (fx.flags & FX_FLAG_HIDDEN) != 0;
 
-					if (ImGui::TreeNodeEx((void*)(uintptr_t)index, ImGuiTreeNodeFlags_None,
-						"Effect [%u]  %s%s(%d/%d particles, %d visible, %d groups)",
+					const bool effectExpanded = ImGui::TreeNodeEx((void*)(uintptr_t)index, ImGuiTreeNodeFlags_None,
+						"Effect [%u]  %s%s(%d/%d particles, %d visibility flags, %d groups)",
 						index,
 						bPaused ? "[paused] " : "",
 						bHidden ? "[hidden] " : "",
 						nbAlive, pManager->nbParticles,
 						nbVisible,
-						pManager->nbGroups))
+						pManager->nbGroups);
+					if (effectExpanded || (!expandedOnly && (drawBounds || drawPositions))) {
+						DrawParticleGroups(pManager, effectExpanded, drawBounds, drawPositions);
+					}
+					if (effectExpanded)
 					{
 						Renderer::Native::DebugShapes::AddSphere(fx.position.x, fx.position.y, fx.position.z, 0.5f, 1.0f, 0.5f, 0.0f, 1.0f);
 

@@ -48,8 +48,8 @@ void CPathFollow::Create(ByteCode* pByteCode)
 
 	if ((flags & 4) != 0) {
 		pcVar1 = pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * 0x10;
-		this->field_0x28 = pcVar1;
+		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * sizeof(edF32VECTOR4);
+		this->field_0x28 = reinterpret_cast<edF32VECTOR4*>(pcVar1);
 	}
 
 	if ((flags & 8) != 0) {

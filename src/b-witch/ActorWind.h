@@ -141,6 +141,8 @@ public:
 	FASTRAM_MNG field_0xd74;
 };
 
+extern CFxEmitterPool* gpWIND_PartPool;
+
 struct NotifyWindParam
 {
 	edF32VECTOR4 field_0x0;
