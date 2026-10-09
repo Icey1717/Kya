@@ -108,7 +108,11 @@ struct AnalogStickData {
 
 class CIniFile;
 
-struct CPlayerInputSubObj {
+struct CVibrationEnvelope
+{
+	void StartVibrationEnvelope(float param_1, float param_2, float param_3, float param_4, int param_6);
+	bool UpdateVibrationEnvelope();
+
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
@@ -127,13 +131,14 @@ public:
 	static void Update(float delta);
 	static void InitDev();
 
-	static void FUN_001b66f0(float param_1, float param_2, float param_3, float param_4, CPlayerInputSubObj* param_5, int param_6);
+	static void StartVibrationEnvelope(float param_1, float param_2, float param_3, float param_4, CVibrationEnvelope* param_5, int param_6);
 
 	static int RegisterControllerDisconectedHandler(uint index, ControllerConnectedFuncPtr pNewHandler);
 	static int RegisterControllerConnectedHandler(uint index, ControllerConnectedFuncPtr pNewHandler);
 
 	void Init(int bInitialActive);
 	void ScanPorts();
+	void ReadInput();
 	bool SoftReset();
 	float GetAngleWithPlayerStick(edF32VECTOR4* param_2);
 	void GetPadRelativeToNormal2D(edF32VECTOR4* param_2, float* param_3, float* param_4, float* param_5);
@@ -142,7 +147,8 @@ public:
 
 	void ComputeForce3D(edF32VECTOR4* pOutForce);
 
-	void FUN_001b6e20(float param_1, float param_2);
+	void UpdateControllerConnectionState();
+	void ApplyVibration(float param_1, float param_2);
 	void SetVibrationEnabled(int param_2);
 
 	static void Reset();
@@ -154,8 +160,8 @@ public:
 	float floatFieldA;
 	int bEnableVibration;
 	uint portIndex;
-	CPlayerInputSubObj field_0x1c;
-	CPlayerInputSubObj field_0x40;
+	CVibrationEnvelope field_0x1c;
+	CVibrationEnvelope field_0x40;
 	EDDEV_ROUTE aRoutes[32];
 	uint aRouteIndexes[32];
 	InputTest aButtons[32];

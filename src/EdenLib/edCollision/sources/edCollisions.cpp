@@ -2802,18 +2802,6 @@ void edColIntersectSphereSphere(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_SPH
 		gColNbSphereVertices = iVar6;
 	}
 
-#if 0
-	peVar3 = (edF32VECTOR4*)&DAT_00000010;
-	peVar4 = &local_90;
-	peVar2 = peVar4;
-	while (peVar2 != (edF32VECTOR4*)0x0) {
-		*(undefined*)&peVar4->x = 0;
-		peVar4 = (edF32VECTOR4*)((int)&peVar4->x + 1);
-		peVar3 = (edF32VECTOR4*)((int)&peVar3[-1].w + 3);
-		peVar2 = peVar3;
-	}
-#endif
-
 	pColInfoOut->result = 0;
 	iVar6 = 0;
 

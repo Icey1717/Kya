@@ -1590,7 +1590,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 	if ((1.0f <= this->hitDamage) && (this->typeID == ACTOR_HERO_PRIVATE)) {
 		pCVar5 = GetInputManager(1, 0);
 		if (pCVar5 != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.03f, 0.0f, &pCVar5->field_0x1c, 0);
+			pCVar5->field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, 0.03f, 0.0f, 0);
 		}
 	}
 

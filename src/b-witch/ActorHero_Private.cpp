@@ -1154,7 +1154,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 			if ((this->field_0x155c <= pTVar3->scaledTotalTime) && (0.0f < pHitParam->damage)) {
 				pCVar4 = GetInputManager(1, 0);
 				if (pCVar4 != (CPlayerInput*)0x0) {
-					CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &pCVar4->field_0x1c, 0);
+					pPlayerInput->field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, 0.1f, 0.0f, 0);
 				}
 
 				LifeDecrease(pHitParam->damage);
@@ -3525,7 +3525,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
 				CPlayerInput* pInput = GetInputManager(1, 0);
 				if (pInput != (CPlayerInput*)0x0) {
-					pInput->FUN_001b6e20(0.0f, 0.0f);
+					pInput->ApplyVibration(0.0f, 0.0f);
 				}
 
 				this->heroActionParams.actionId = 0;
@@ -3604,7 +3604,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				(this->field_0x1558 <= 0.0f)) {
 				lVar22 = GetInputManager(1, 0);
 				if (lVar22 != (CPlayerInput*)0x0) {
-					lVar22->FUN_001b6e20(0.0f, 0.0f);
+					lVar22->ApplyVibration(0.0f, 0.0f);
 				}
 
 				this->heroActionParams.actionId = 0;
@@ -4258,7 +4258,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9e, 0xffffffff);
 					pInputManager = GetInputManager(1, 0);
 					if (pInputManager != 0) {
-						CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &pInputManager->field_0x40, 0);
+						pInputManager->field_0x40.StartVibrationEnvelope(1.0f, 0.0f, 0.2f, 0.0f, 0);
 					}
 
 					iVar9 = 1;
@@ -4269,7 +4269,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 						SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9d, 0xffffffff);
 						pInputManager = GetInputManager(1, 0);
 						if (pInputManager != 0) {
-							CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &pInputManager->field_0x40, 0);
+							pInputManager->field_0x40.StartVibrationEnvelope(1.0f, 0.0f, 0.2f, 0.0f, 0);
 						}
 
 						iVar9 = 1;
@@ -6049,7 +6049,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	StateConfig* pSVar3;
 	undefined4 uVar4;
 	int iVar5;
-	CPlayerInputSubObj* pCVar6;
+	CVibrationEnvelope* pCVar6;
 	CPlayerInput* uVar6;
 	Timer* pTVar7;
 	uint uVar8;
@@ -6197,21 +6197,21 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_90:
 		pCVar1 = this->pPlayerInput;
-		pCVar6 = (CPlayerInputSubObj*)0x0;
+		pCVar6 = (CVibrationEnvelope*)0x0;
 		if (pCVar1 != (CPlayerInput*)0x0) {
 			pCVar6 = &pCVar1->field_0x1c;
 		}
-		if (pCVar6 == (CPlayerInputSubObj*)0x0) {
+		if (pCVar6 == (CVibrationEnvelope*)0x0) {
 		LAB_0033f240:
 			if (0.2f < GetTimer()->scaledTotalTime - this->time_0x153c) {
 				uVar6 = GetInputManager(1, 0);
 				if (uVar6 != (CPlayerInput*)0x0) {
-					CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &uVar6->field_0x1c, 0);
+					uVar6->field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, 0.1f, 0.0f, 0);
 				}
 			}
 		}
 		else {
-			pCVar6 = (CPlayerInputSubObj*)0x0;
+			pCVar6 = (CVibrationEnvelope*)0x0;
 			if (pCVar1 != (CPlayerInput*)0x0) {
 				pCVar6 = &pCVar1->field_0x1c;
 			}
@@ -6225,7 +6225,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		StateHeroBasic(-1.0f, 1.0f, STATE_HERO_STAND);
 		if ((iVar5 != this->actorState) &&
 			(uVar6 = GetInputManager(1, 0), uVar6 != 0)) {
-			CPlayerInput::FUN_001b66f0(0.0f, 0.0f, 0.0f, 0.0f, &uVar6->field_0x1c, 0);
+			uVar6->field_0x1c.StartVibrationEnvelope(0.0f, 0.0f, 0.0f, 0.0f, 0);
 		}
 		break;
 	case STATE_HERO_WIND_HURT_A:
@@ -14284,7 +14284,7 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 	if ((this->field_0x10c0 + this->field_0x10c4) * 0.5f < this->field_0xa80) {
 		uVar2 = GetInputManager(1, 0);
 		if (uVar2 != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.2f, 0.0f, &uVar2->field_0x40, 0);
+			uVar2->field_0x40.StartVibrationEnvelope(1.0f, 0.0f, 0.2f, 0.0f, 0);
 		}
 
 		SetState(STATE_HERO_TOBOGGAN_CRASH, 0xffffffff);
@@ -14292,7 +14292,7 @@ bool CActorHeroPrivate::TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4
 	else {
 		uVar3 = GetInputManager(1, 0);
 		if (uVar3 != (CPlayerInput*)0x0) {
-			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &uVar3->field_0x40, 0);
+			uVar3->field_0x40.StartVibrationEnvelope(1.0f, 0.0f, 0.1f, 0.0f, 0);
 		}
 
 		SetState(STATE_HERO_TOBOGGAN_JUMP_2, 0xffffffff);

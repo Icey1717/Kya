@@ -576,6 +576,29 @@ namespace Debug::SaveLoad
 			}
 		}
 
+		void DrawBackupSlots()
+		{
+			if (!ImGui::BeginTabBar("BackupSlots")) return;
+			for (int slot = 0; slot < 4; ++slot) {
+				const auto count = std::count_if(backups.begin(), backups.end(), [slot](const SaveBackup& backup) {
+					return backup.slot == slot;
+				});
+				const auto label = "Slot " + std::to_string(slot) + " (" + std::to_string(count) + ")###Slot" + std::to_string(slot);
+				if (ImGui::BeginTabItem(label.c_str())) {
+					ImGui::PushID(slot);
+					ImGui::BeginChild("Backups", ImVec2(0, 0), true);
+					if (count == 0) ImGui::TextUnformatted("No backups for this slot. Autosaves back up its existing save.");
+					for (const auto& backup : backups) {
+						if (backup.slot == slot) DrawBackup(backup);
+					}
+					ImGui::EndChild();
+					ImGui::PopID();
+					ImGui::EndTabItem();
+				}
+			}
+			ImGui::EndTabBar();
+		}
+
 		void ShowBackups()
 		{
 			if (!backupsOpen) return;
@@ -602,10 +625,12 @@ namespace Debug::SaveLoad
 				ImGui::TextWrapped("In game, these actions exit the current save first. Unsaved progress is discarded.");
 				if (!CanRestore()) ImGui::TextWrapped("Restore and Load are available when the title screen or gameplay is ready and no save/load is active.");
 				if (backups.empty()) ImGui::TextUnformatted(showAutosaves ? "No checkpoint autosaves archived yet." : "No backed up saves found. Autosaves create backups of existing slots.");
-				ImGui::BeginChild("Backups", ImVec2(0, 0), true);
-				if (showAutosaves) DrawAutosaveGroups(expandGroups);
-				else for (const auto& backup : backups) DrawBackup(backup);
-				ImGui::EndChild();
+				if (showAutosaves) {
+					ImGui::BeginChild("Backups", ImVec2(0, 0), true);
+					DrawAutosaveGroups(expandGroups);
+					ImGui::EndChild();
+				}
+				else DrawBackupSlots();
 			}
 			ImGui::End();
 		}

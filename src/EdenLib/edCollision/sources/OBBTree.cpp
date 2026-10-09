@@ -13,9 +13,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 	bool lVar6;
 	uint uVar7;
 	int iVar8;
-#if 0
-	ProfileObject* pPVar9;
-#endif
+	//ProfileObject* pPVar9;
 	uint uVar10;
 	undefined4* puVar11;
 	edColPrimEntry* puVar12;

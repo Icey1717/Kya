@@ -496,6 +496,101 @@ void CBehaviourBonusAlone::Begin(CActor* pOwner, int newState, int newAnimationT
 	return;
 }
 
+void CBehaviourBonusAlone::Draw()
+{
+	CGlobalDListManager* pDlist;
+	CGlobalDListPatch* pPatch;
+	CCameraManager* pCameraManager;
+	edVertex* pVertex;
+	_rgba* pRgba;
+	short* pSt;
+	uint flags;
+	uint frame;
+	uint column;
+	int row;
+	int instanceIndex;
+	int randValue;
+	float s;
+	float t;
+	edF32VECTOR4 offset;
+	edF32MATRIX4 matrix;
+	_rgba color;
+
+	pDlist = (CGlobalDListManager*)CScene::GetManager(MO_GlobalDListManager);
+	pPatch = GameDListPatch_BeginCurrent(this->bonusFlarePatchId);
+	pCameraManager = CCameraManager::_gThis;
+	if (pPatch != (CGlobalDListPatch*)0x0) {
+		flags = this->actInstance.flags;
+		if ((flags & 4) == 0) {
+			if ((flags & 2) != 0) {
+				pDlist->_AddCallFuncElement(this->bonusFlarePatchId, CALL_ELEMENT_HIDE_SPRITE, 0);
+				pDlist->_AddCallFuncElement(this->bonusAnimPatchId, CALL_ELEMENT_HIDE_SPRITE, 0);
+			}
+		}
+		else {
+			this->actInstance.field_0x90 = edF32Between_0_2Pi(this->actInstance.field_0x90 + GetTimer()->cutsceneDeltaTime * 7.0f);
+			offset.x = cosf(this->actInstance.field_0x90) * 0.05f;
+			offset.y = sinf(this->actInstance.field_0x90) * 0.05f;
+			offset.z = 0.0f;
+			offset.w = 1.0f;
+			edF32Matrix4CopyHard(&matrix, &pCameraManager->transMatrix_0x390);
+			matrix.rowT = this->actInstance.currentPosition;
+			edF32Matrix4MulF32Vector4Hard(&offset, &matrix, &offset);
+			pVertex = pPatch->pCurrentPatch->pVertex + this->actInstance.instanceIndex * 4;
+			pVertex->x = offset.x;
+			pVertex->y = offset.y;
+			pVertex->z = offset.z;
+			instanceIndex = this->actInstance.instanceIndex;
+			randValue = rand();
+			pRgba = pPatch->pCurrentPatch->pRgba;
+			color.rgba = (pRgba[instanceIndex * 4].rgba & 0xffffff) |
+				(int)(((float)randValue / 2.147484e+09f) * 96.0f + 64.0f) << 24;
+			gpCurPatchRGBABuf = 0;
+			edDListPatchRGBASprite_Inline(pRgba, &color, instanceIndex);
+		}
+		GameDListPatch_EndCurrent(-1, 0);
+	}
+
+	pPatch = GameDListPatch_BeginCurrent(this->bonusAnimPatchId);
+	if (pPatch != (CGlobalDListPatch*)0x0) {
+		if ((this->actInstance.flags & 4) != 0) {
+			frame = (uint)this->actInstance.angleRotY;
+			column = frame & 7;
+			if (((int)frame < 0) && (column != 0)) {
+				column = column - 8;
+			}
+			s = (float)column * 0.125f;
+			row = (int)this->actInstance.angleRotY;
+			if (row < 0) {
+				row = row + 7;
+			}
+			instanceIndex = this->actInstance.instanceIndex;
+			t = (float)(row >> 3) * 0.5f;
+			pSt = (short*)(pPatch->pCurrentPatch->pSt + instanceIndex * 4);
+			pSt[0] = (short)(int)((s + 0.125f) * 4096.0f);
+			pSt[1] = (short)(int)((t + 0.5f) * 4096.0f);
+			pSt[2] = (short)(int)(s * 4096.0f);
+			pSt[3] = pSt[1];
+			pSt[4] = pSt[0];
+			pSt[5] = (short)(int)(t * 4096.0f);
+			pSt[6] = pSt[2];
+			pSt[7] = pSt[5];
+			pVertex = pPatch->pCurrentPatch->pVertex + this->actInstance.instanceIndex * 4;
+			pVertex->x = this->actInstance.currentPosition.x;
+			pVertex->y = this->actInstance.currentPosition.y;
+			pVertex->z = this->actInstance.currentPosition.z;
+			instanceIndex = this->actInstance.instanceIndex;
+			pRgba = pPatch->pCurrentPatch->pRgba;
+			color.rgba = (pRgba[instanceIndex * 4].rgba & 0xffffff) | 0x80000000;
+			gpCurPatchRGBABuf = 0;
+			edDListPatchRGBASprite_Inline(pRgba, &color, instanceIndex);
+		}
+		GameDListPatch_EndCurrent(-1, 0);
+	}
+
+	return;
+}
+
 bool CBehaviourBonusAlone::InitDlistPatchable(int patchId)
 {
 	bool bSuccess = false;
@@ -675,7 +770,7 @@ void CBehaviourBonusTurn::Manage()
 		}
 
 		pBonus = this->pOwner;
-		if ((reinterpret_cast<CActor*>(pBonus->pFxTail)->state_0x10 & 0x1000) == 0) {
+		if ((pBonus->pFxTail->flags & 0x1000) == 0) {
 			pBonus->SetState(6, -1);
 			pBonus->flags = (pBonus->flags & 0xfffffffd) | 1;
 			pBonus->flags = (pBonus->flags & 0xffffff7f) | 0x20;
@@ -790,7 +885,7 @@ void CBehaviourBonusPath::Manage()
 			}
 
 			pBonus = this->pOwner;
-			if ((reinterpret_cast<CActor*>(pBonus->pFxTail)->state_0x10 & 0x1000) == 0) {
+			if ((pBonus->pFxTail->flags & 0x1000) == 0) {
 				pBonus->SetState(6, -1);
 				pBonus->flags = (pBonus->flags & 0xfffffffd) | 1;
 				pBonus->flags = (pBonus->flags & 0xffffff7f) | 0x20;

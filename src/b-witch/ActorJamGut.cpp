@@ -1384,7 +1384,7 @@ int CActorJamGut::AccomplishHit(CActorAutonomous* pActor, CActor* pSender, _msg_
 	if (((pActor != (CActor*)0x0) && (this->field_0x4fc <= Timer::GetTimer()->scaledTotalTime)) && (pActor->curBehaviourId == HERO_BEHAVIOUR_RIDE_JAMGUT)) {
 		pPlayerInput = GetInputManager(0, 0);
 		if (pPlayerInput != (CPlayerInput*)0x0) {
-	CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &pPlayerInput->field_0x1c, 0);
+			pPlayerInput->field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, 0.1f, 0.0f, 0);
 		}
 
 		pActor->LifeDecrease(pParams->damage);

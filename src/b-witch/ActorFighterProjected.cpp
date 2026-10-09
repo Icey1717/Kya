@@ -841,7 +841,7 @@ void CBehaviourFighterProjected::InitState(int newState)
 		if ((pFighter->typeID == ACTOR_HERO_PRIVATE) && (pCVar3 = pFighter->GetInputManager(1, 0), pCVar3 != (CPlayerInput*)0x0)) {
 			fVar7 = edFIntervalUnitDstLERP(pFighter->dynamicExt.field_0x6c, 2.0f, 12.0f);
 			fVar6 = edFIntervalUnitSrcLERP(fVar7, 0.2f, 0.1f);
-			CPlayerInput::FUN_001b66f0(fVar7, 0.0f, fVar6, 0.0f, &pCVar3->field_0x40, 0);
+			pCVar3->field_0x40.StartVibrationEnvelope(fVar7, 0.0f, fVar6, 0.0f, 0);
 		}
 
 		pCVar2 = pFighter->pCollisionData;

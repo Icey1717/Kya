@@ -192,16 +192,16 @@ int edDevInitPort(uint port, int slot, uint type)
 				}
 
 				pPVar2 = pController->pPad180;
-#if 0
+				IMPLEMENTATION_GUARD_PS2(
 				puVar5 = &edDevRoot.field_0x4c;
 				piVar4 = &local_20.number;
 				iVar3 = 10;
-#endif
+				)
 				pPVar2->port = port;
 				pPVar2->slot = slot;
 				pPVar2->field_0x8 = 0;
 				pPVar2->state = 0;
-#if 0
+				IMPLEMENTATION_GUARD_PS2(
 				local_20.option = edDevRoot.g_PadOption_00426860;
 				do {
 					iVar3 = iVar3 + -1;
@@ -215,7 +215,7 @@ int edDevInitPort(uint port, int slot, uint type)
 				local_20.slot = slot;
 				iVar3 = scePad2CreateSocket(&local_20, pPVar2->padBuffer);
 				pPVar2->socketNumber = iVar3;
-#endif
+					)
 #ifdef PLATFORM_PS2
 				pController->pEventFunc = _edDevDualShock2;
 				pController->maxControlId = (*pController->pEventFunc)(EVENT_GET_NUM_BUTTONS, pController, (InputEventData*)0x0);

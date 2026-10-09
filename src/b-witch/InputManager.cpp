@@ -344,6 +344,11 @@ void CPlayerInput::ScanPorts()
 	return;
 }
 
+void CPlayerInput::ReadInput()
+{
+	IMPLEMENTATION_GUARD_PS2();
+}
+
 
 // Should be in: D:/Projects/b-witch/PlayerInput.cpp
 bool CPlayerInput::SoftReset()
@@ -762,18 +767,17 @@ void CPlayerInput::UpdateOne(float delta)
 
 	ComputeForce();
 
-#if 0
-	bVar1 = FUN_001b6540(&this->field_0x1c);
-	bVar2 = FUN_001b6540(&this->field_0x40);
+	bVar1 = this->field_0x1c.UpdateVibrationEnvelope();
+	bVar2 = this->field_0x40.UpdateVibrationEnvelope();
 	if ((bVar1 < '\0') || (bVar2 < '\0')) {
-		InputManagerFloatFunc_001b6e20(0.0f, 0.0f, this);
+		ApplyVibration(0.0f, 0.0f);
 	}
 	else {
 		if ((bVar1 != false) || (bVar2 != false)) {
-			InputManagerFloatFunc_001b6e20(this->field_0x30, this->field_0x54, this);
+			ApplyVibration((this->field_0x1c).field_0x14, (this->field_0x40).field_0x14);
 		}
 	}
-#endif
+
 	return;
 }
 
@@ -795,7 +799,41 @@ void CPlayerInput::ComputeForce3D(edF32VECTOR4* pOutForce)
 	return;
 }
 
-void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
+void CPlayerInput::UpdateControllerConnectionState()
+{
+	float fVar2;
+
+	if (this->disconnectedController == 0) {
+		if (this->bDisconnected == 0) {
+			this->floatFieldA = 0.0f;
+		}
+		else {
+			fVar2 = this->floatFieldA + GetTimer()->lastFrameTime;
+			this->floatFieldA = fVar2;
+			if (0.05f < fVar2) {
+				this->disconnectedController = 1;
+				this->floatFieldA = 0.0f;
+			}
+		}
+	}
+	else {
+		if (this->bDisconnected == 0) {
+			fVar2 = this->floatFieldA + GetTimer()->lastFrameTime;
+			this->floatFieldA = fVar2;
+			if (0.05f < fVar2) {
+				this->disconnectedController = 0;
+				this->floatFieldA = 0.0f;
+			}
+		}
+		else {
+			this->floatFieldA = 0.0f;
+		}
+	}
+
+	return;
+}
+
+void CPlayerInput::ApplyVibration(float param_1, float param_2)
 {
 	float fVar1;
 	//InputEventData local_4;
@@ -851,7 +889,7 @@ void CPlayerInput::SetVibrationEnabled(int param_2)
 		(this->field_0x40).field_0x14 = 0.0f;
 		(this->field_0x40).field_0x18 = 4;
 		(this->field_0x40).field_0x20 = 0;
-		FUN_001b6e20(0.0f, 0.0f);
+		ApplyVibration(0.0f, 0.0f);
 	}
 
 	this->bEnableVibration = param_2;
@@ -880,7 +918,7 @@ void CPlayerInput::Reset()
 	gPlayerInput.field_0x40.field_0x20 = 0;
 
 	if (gPlayerInput.bActive != 0) {
-		gPlayerInput.FUN_001b6e20(0.0f, 0.0f);
+		gPlayerInput.ApplyVibration(0.0f, 0.0f);
 	}
 
 	if (gPlayerInput_2.bActive != 0) {
@@ -900,7 +938,7 @@ void CPlayerInput::Reset()
 		gPlayerInput_2.field_0x40.field_0x14 = 0.0f;
 		gPlayerInput_2.field_0x40.field_0x18 = 4;
 		gPlayerInput_2.field_0x40.field_0x20 = 0;
-		gPlayerInput_2.FUN_001b6e20(0.0f, 0.0f);
+		gPlayerInput_2.ApplyVibration(0.0f, 0.0f);
 	}
 
 	return;
@@ -964,28 +1002,29 @@ void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 void CPlayerInput::Update(float delta)
 {
 	edDevReadUpdate();
-	//FUN_001b6fe0(&gPlayerInput);
+	gPlayerInput.UpdateControllerConnectionState();
 	if ((gPlayerInput.bActive != 0) && (gPlayerInput.disconnectedController == 0)) {
 		if (gPlayerInput.bConnected == 0) {
 			gPlayerInput.ScanPorts();
-			//ReadInput?(&gPlayerInput);
+			gPlayerInput.ReadInput();
 		}
 		else {
 			gPlayerInput.UpdateOne(delta);
 		}
 	}
-#if 0
-	FUN_001b6fe0(&gPlayerInput_2);
+
+	gPlayerInput_2.UpdateControllerConnectionState();
+
 	if ((gPlayerInput_2.bActive != 0) && (gPlayerInput_2.disconnectedController == 0)) {
 		if (gPlayerInput_2.bConnected == 0) {
-			ScanPorts(&gPlayerInput_2);
-			ReadInput?(&gPlayerInput_2);
+			gPlayerInput_2.ScanPorts();
+			gPlayerInput_2.ReadInput();
 		}
 		else {
-			UpdateOne(delta, &gPlayerInput_2);
+			gPlayerInput_2.UpdateOne(delta);
 		}
 	}
-#endif
+
 	return;
 }
 
@@ -1121,7 +1160,7 @@ void CPlayerInput::InitDev()
 	return;
 }
 
-void CPlayerInput::FUN_001b66f0(float param_1, float param_2, float param_3, float param_4, CPlayerInputSubObj* param_5, int param_6)
+void CVibrationEnvelope::StartVibrationEnvelope(float param_1, float param_2, float param_3, float param_4, int param_6)
 {
 	Timer* pTVar1;
 	float fVar2;
@@ -1136,45 +1175,104 @@ void CPlayerInput::FUN_001b66f0(float param_1, float param_2, float param_3, flo
 			param_4 = param_4 * fVar2;
 		}
 
-		param_5->field_0x0 = param_1;
-		param_5->field_0x4 = param_2;
-		param_5->field_0x8 = param_3;
-		param_5->field_0xc = param_4;
+		this->field_0x0 = param_1;
+		this->field_0x4 = param_2;
+		this->field_0x8 = param_3;
+		this->field_0xc = param_4;
 
 		if ((GameFlags & 0x20) == 0) {
 			pTVar1 = GetTimer();
-			param_5->field_0x10 = pTVar1->scaledTotalTime;
-			param_5->field_0x20 = 0;
+			this->field_0x10 = pTVar1->scaledTotalTime;
+			this->field_0x20 = 0;
 		}
 		else {
 			pTVar1 = GetTimer();
-			param_5->field_0x10 = pTVar1->totalTime;
-			param_5->field_0x20 = 1;
+			this->field_0x10 = pTVar1->totalTime;
+			this->field_0x20 = 1;
 		}
 
-		param_5->field_0x18 = 0;
+		this->field_0x18 = 0;
 
 		if (param_6 == 0) {
-			param_5->field_0x14 = 0.0f;
+			this->field_0x14 = 0.0f;
 		}
 		else {
-			fVar2 = edFIntervalLERP(param_5->field_0x14, 0.0f, param_1, 0.0f, param_2);
-			param_5->field_0x10 = param_5->field_0x10 - fVar2;
+			fVar2 = edFIntervalLERP(this->field_0x14, 0.0f, param_1, 0.0f, param_2);
+			this->field_0x10 = this->field_0x10 - fVar2;
 
-			if (param_5->field_0x14 == param_5->field_0x0) {
+			if (this->field_0x14 == this->field_0x0) {
 				if ((GameFlags & 0x20) == 0) {
 					pTVar1 = GetTimer();
-					param_5->field_0x10 = pTVar1->scaledTotalTime;
+					this->field_0x10 = pTVar1->scaledTotalTime;
 				}
 				else {
 					pTVar1 = GetTimer();
-					param_5->field_0x10 = pTVar1->totalTime;
+					this->field_0x10 = pTVar1->totalTime;
 				}
 
-				param_5->field_0x18 = 1;
+				this->field_0x18 = 1;
 			}
 		}
 	}
 
 	return;
+}
+
+bool CVibrationEnvelope::UpdateVibrationEnvelope()
+{
+	int iVar1;
+	bool bVar2;
+	float fVar4;
+	float fVar5;
+
+	bVar2 = this->field_0x18 != 4;
+	if (bVar2) {
+		if (this->field_0x20 == 0) {
+			if ((GameFlags & 0x20) != 0) {
+				return true;
+			}
+			fVar5 = GetTimer()->scaledTotalTime;
+		}
+		else {
+			fVar5 = GetTimer()->totalTime;
+		}
+
+		iVar1 = this->field_0x18;
+		if (iVar1 == 2) {
+			fVar4 = edFIntervalLERP(fVar5 - this->field_0x10, 0.0f, this->field_0xc, this->field_0x0, 0.0f);
+			this->field_0x14 = fVar4;
+			if (this->field_0xc <= fVar5 - this->field_0x10) {
+				this->field_0x10 = 0.0f;
+				this->field_0x14 = 0.0f;
+				this->field_0x0 = 0.0f;
+				this->field_0x18 = 3;
+			}
+		}
+		else {
+			if (iVar1 == 1) {
+				if (this->field_0x8 <= fVar5 - this->field_0x10) {
+					this->field_0x10 = fVar5;
+					this->field_0x14 = this->field_0x0;
+					this->field_0x18 = 2;
+				}
+			}
+			else {
+				if (iVar1 == 0) {
+					fVar4 = edFIntervalLERP(fVar5 - this->field_0x10, 0.0f, this->field_0x4, 0.0f, this->field_0x0);
+					this->field_0x14 = fVar4;
+					if (this->field_0x4 <= fVar5 - this->field_0x10) {
+						this->field_0x10 = fVar5;
+						this->field_0x14 = this->field_0x0;
+						this->field_0x18 = 1;
+					}
+				}
+			}
+		}
+
+		if (this->field_0x18 == 3) {
+			this->field_0x18 = 4;
+		}
+	}
+
+	return bVar2;
 }

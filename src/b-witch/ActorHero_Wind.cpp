@@ -167,7 +167,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 			if (0.0f < fVar11 - fVar12) {
 				pInput = GetInputManager(1, 0);
 				if (pInput != 0) {
-					CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.1f, 0.0f, &pInput->field_0x40, 0);
+					pInput->field_0x40.StartVibrationEnvelope(1.0f, 0.0f, 0.1f, 0.0f, 0);
 				}
 
 				LifeDecrease(fVar12);
@@ -1028,7 +1028,7 @@ LAB_0014a028:
 				this->windBoostStrength = -1.0f;
 				pInput = GetInputManager(1, 0);
 				if (pInput != (CPlayerInput*)0x0) {
-					CPlayerInput::FUN_001b66f0(0.6f, 0.0f, 0.2f, 0.0f, &pInput->field_0x40, 0);
+					pInput->field_0x40.StartVibrationEnvelope(0.6f, 0.0f, 0.2f, 0.0f, 0);
 				}
 			}
 		}

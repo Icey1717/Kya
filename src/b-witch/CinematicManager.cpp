@@ -1574,7 +1574,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	outMeshInfo = (ed_g3d_manager*)0x0;
 	/* Does not go in here for the air tunnel cutscene */
 	if (objectType == (edResCollection::RES_TYPE)10) {
-#if 0
+	IMPLEMENTATION_GUARD(
 		if (type2 == 0) {
 			counter = 0;
 			if (this->soundCount_0x2b8 != 0) {
@@ -1591,8 +1591,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 		}
 		else {
 			outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)Scene::ptable.g_GlobalSoundPtr_00451698, (byte*)fileName);
-		}
-#endif
+		})
 	}
 	else {
 		/* Drops in here for the air tunnel cutscene */

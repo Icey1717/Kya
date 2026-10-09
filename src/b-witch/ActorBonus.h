@@ -76,6 +76,7 @@ public:
 	virtual void Init(CActor* pOwner);
 	virtual void Term();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void Draw();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual bool InitDlistPatchable(int patchId);
 

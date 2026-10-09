@@ -27,10 +27,9 @@ uint _edDevDualShock2(uint eventID, EDDEV_PORT* pController, void* param_3)
 	case 0x90000001:
 		uVar6 = 0;
 		pController->flags = 0x108;
-#if 0
+		IMPLEMENTATION_GUARD_PS2(
 		pController->pControllerDisconnectedHandler = (ControllerEventFunc*)0x0;
-		pController->pControllerReconnectedHandler = (ControllerEventFunc*)0x0;
-#endif
+		pController->pControllerReconnectedHandler = (ControllerEventFunc*)0x0;)
 		pController->field_0x2c = 0;
 
 		pPVar5 = pController->pPadD;

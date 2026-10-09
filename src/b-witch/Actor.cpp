@@ -1441,7 +1441,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 		lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
 		if (lVar5 != 0) {
-			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, local_18, 0.0f, (float*)((int)lVar5 + 0x1c), 0);
+			pPlayerInput->field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, local_18, 0.0f, (float*)((int)lVar5 + 0x1c), 0);
 		}
 		bVar4 = true;)
 	}
@@ -1506,7 +1506,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
 			if (lVar5 != 0) {
-				CPlayerInput::FUN_001b66f0(local_c, 0.0, local_8, 0.0, (float*)((int)lVar5 + 0x40), 0);
+				pInput->field_0x40.StartVibrationEnvelope(local_c, 0.0, local_8, 0.0, (float*)((int)lVar5 + 0x40), 0);
 			}
 			bVar4 = true;)
 		}
@@ -1516,10 +1516,10 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				if (pInput != 0) {
 					_msg_input_param* pMsgParamInput = reinterpret_cast<_msg_input_param*>(pMsgParam);
 					if (pMsgParamInput->field_0x0 == 0) {
-						CPlayerInput::FUN_001b66f0(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, &pInput->field_0x1c, 0);
+						pInput->field_0x1c.StartVibrationEnvelope(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, 0);
 					}
 					else {
-						CPlayerInput::FUN_001b66f0(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, &pInput->field_0x40, 0);
+						pInput->field_0x40.StartVibrationEnvelope(pMsgParamInput->field_0x4, 0.0f, pMsgParamInput->field_0x8, 0.0f, 0);
 					}
 				}
 				bVar4 = true;
