@@ -1,5 +1,5 @@
 #include "ActorHero_Inventory.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "InventoryInfo.h"
 #include "ActorHero.h"
 #include "ActorManager.h"

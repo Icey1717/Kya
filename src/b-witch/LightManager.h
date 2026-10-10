@@ -2,7 +2,7 @@
 #define LIGHT_MANAGER
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "ed3D/ed3DSceneManager.h"
 #include "Light.h"
 

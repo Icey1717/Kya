@@ -11,7 +11,6 @@
 #ifdef PLATFORM_WIN
 #include "profiling.h"
 #include "DrawTrace.h"
-#include "ActorHero.h"
 #endif
 #include "LevelScheduler.h"
 
@@ -47,25 +46,13 @@ void CActorManager::Level_Init()
 	return;
 }
 
+#ifndef PLATFORM_WIN
 void CActorManager::Level_Term()
 {
-#ifdef PLATFORM_WIN
-	Level_TermActors();
-	Level_FreeActors();
-}
-
-void CActorManager::Level_TermActors()
-{
-#endif
-#ifdef PLATFORM_WIN
-    Renderer::DrawTrace::InvalidateSources();
-#endif
-#ifndef PLATFORM_WIN
 	edAnmLayer* peVar1;
 	int iVar2;
 	uint classId;
 	CClassInfo* pCVar4;
-#endif
 	int iVar3;
 
 	iVar3 = this->nbActors + -1;
@@ -84,28 +71,13 @@ void CActorManager::Level_TermActors()
 		} while (-1 < iVar3);
 	}
 
-#ifdef PLATFORM_WIN
-	return;
-}
-
-void CActorManager::Level_FreeActors()
-{
-	edAnmLayer* peVar1;
-	uint classId;
-	CClassInfo* pCVar4;
-#endif
 
 	classId = 0;
 	pCVar4 = this->aClassInfo;
 	do {
 		if (pCVar4->aActors != (CActor*)0x0) {
-#ifdef PLATFORM_WIN
-			// The Windows polymorphic array helper needs the count to run every destructor.
-			CActorFactory::Factory((ACTOR_CLASS)classId, pCVar4->totalCount, (int*)0x0, pCVar4->aActors);
-#else
 			// PS2 delete[] reads the count from the array allocation, so the factory receives 0.
 			CActorFactory::Factory((ACTOR_CLASS)classId, 0, (int*)0x0, pCVar4->aActors);
-#endif
 		}
 
 		pCVar4->aActors = (CActor*)0x0;
@@ -117,11 +89,6 @@ void CActorManager::Level_FreeActors()
 		pCVar4 = pCVar4 + 1;
 	} while ((int)classId < 0x57);
 
-#ifdef PLATFORM_WIN
-	// The next level's loading camera and debug UI can still read this pointer.
-	// Clear it after the hero actor array has been destroyed.
-	CActorHero::_gThis = (CActorHero*)0x0;
-#endif
 
 	this->cluster.Term();
 	
@@ -148,6 +115,7 @@ void CActorManager::Level_FreeActors()
 
 	return;
 }
+#endif
 
 void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 {

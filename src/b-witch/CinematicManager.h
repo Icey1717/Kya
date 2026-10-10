@@ -2,7 +2,7 @@
 #define _CINEMATICMANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Actor.h"
 #include "edBank/edBankBuffer.h"
 

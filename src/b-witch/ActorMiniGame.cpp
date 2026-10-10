@@ -4,7 +4,7 @@
 #include "ActorMiniGamesOrganizer.h"
 #include "ActorMiniGamesManager.h"
 #include "ActorNativShop.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Rendering/edCTextFormat.h"
 #include "edStr.h"
 #include "BootData.h"

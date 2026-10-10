@@ -2,7 +2,7 @@
 #define _PATH_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "MemoryStream.h"
 #include "PathFollow.h"
 #include "PathFinder.h"

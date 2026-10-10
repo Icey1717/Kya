@@ -9,7 +9,7 @@
 #include "CompatibilityHandlingPS2.h"
 #include "InputManager.h"
 #include <assert.h>
-#include "LargeObject.h"
+#include "Scene.h"
 #include "LocalizationManager.h"
 #include "edDlist.h"
 #include "profile.h"

@@ -2,7 +2,7 @@
 #define _ANM_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 
 struct edAnmMacroAnimator;
 class CActor;

@@ -1,5 +1,5 @@
 #include "FxLightEmitter.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "FileManager3D.h"
 #include "TimeController.h"
 #include "DlistManager.h"

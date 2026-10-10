@@ -1,5 +1,5 @@
 #include "MenuMessageBox.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Rendering/edCTextStyle.h"
 #include "TimeController.h"
 #include "edVideo/Viewport.h"

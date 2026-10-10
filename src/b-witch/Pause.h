@@ -6,7 +6,7 @@
 #ifdef PLATFORM_PS2
 #include <libvu0.h>
 #endif
-#include "LargeObject.h"
+#include "Scene.h"
 #include "ed3D.h"
 #include "edDlist.h"
 #include "Settings.h"

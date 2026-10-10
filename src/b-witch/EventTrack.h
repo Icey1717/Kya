@@ -2,7 +2,7 @@
 #define EVENT_TRACK_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Fx.h"
 
 struct ByteCode;

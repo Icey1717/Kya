@@ -1,6 +1,6 @@
 #include "InventoryInfo.h"
 #include "MemoryStream.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Actor.h"
 #include "ActorBoomy.h"
 #include "ActorAutonomous.h"

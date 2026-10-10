@@ -14,7 +14,7 @@
 #include "ed3D/ed3DG2D.h"
 #include "ed3D/ed3DG3D.h"
 #include "DlistManager.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/Viewport.h"

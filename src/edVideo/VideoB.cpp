@@ -1,6 +1,6 @@
 #include "VideoB.h"
 #include "VideoA.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include <assert.h>
 #include <string.h>
 #include "VideoC.h"

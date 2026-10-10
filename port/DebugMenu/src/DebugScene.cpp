@@ -3,7 +3,7 @@
 
 #include "imgui.h"
 
-#include "LargeObject.h"
+#include "Scene.h"
 #include "DebugSetting.h"
 #include "ed3D.h"
 #include "Rendering/DisplayList.h"

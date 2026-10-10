@@ -2,7 +2,7 @@
 #define _COLLISION_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "edCollision/edCollisions.h"
 #include "edCollision/OBBTree.h"
 

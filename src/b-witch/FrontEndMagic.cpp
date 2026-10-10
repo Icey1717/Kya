@@ -4,7 +4,7 @@
 #include "FrontendBank.h"
 #include "FrontendDisp.h"
 #include "Pause.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "DlistManager.h"
 #include "edStr.h"
 #include "MathOps.h"

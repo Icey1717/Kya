@@ -2,7 +2,7 @@
 #include "MemoryStream.h"
 #include "CinematicManager.h"
 #include "ActorHero.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "FileManager3D.h"
 #include "MathOps.h"
 #include "TimeController.h"

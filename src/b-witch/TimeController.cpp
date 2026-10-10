@@ -1,6 +1,6 @@
 #include "TimeController.h"
 #include "EdenLib/edSys/sources/EdSystem.h"
-#include "LargeObject.h"
+#include "Scene.h"
 
 float g_DesiredFrameTime_00483824;
 

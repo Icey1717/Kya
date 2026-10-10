@@ -187,8 +187,8 @@ set(main_src
 	"${src_root}/b-witch/Debug.cpp"
 	"${src_root}/b-witch/Debug.h"
 	"${src_root}/b-witch/PackedFont.h"
-	"${src_root}/b-witch/LargeObject.cpp"
-	"${src_root}/b-witch/LargeObject.h"
+	"${src_root}/b-witch/scene.cpp"
+	"${src_root}/b-witch/Scene.h"
 	"${src_root}/b-witch/BootData.cpp"
 	"${src_root}/b-witch/BootData.h"
 	"${src_root}/b-witch/SaveManagement.cpp"
@@ -840,6 +840,10 @@ if (PS2)
 else()
 	target_compile_features(Kya PUBLIC cxx_std_17)
 	target_compile_definitions(Kya PUBLIC "PLATFORM_WIN")
+	target_sources(Kya PRIVATE
+		"port/Windows/ActorManager.cpp"
+		"port/Windows/scene.cpp"
+	)
 
 	# MathOps.h enables the PS2 trig macros only while compiling this library.
 	target_compile_definitions(Kya PRIVATE KYA_USE_PS2_TRIG)

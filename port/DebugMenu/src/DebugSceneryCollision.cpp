@@ -1,7 +1,7 @@
 #include "DebugSceneryCollision.h"
 
 #include "CollisionManager.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "MathOps.h"
 #include "port/pointer_conv.h"
 #include "edCollision/edCollisions.h"

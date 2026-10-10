@@ -2,7 +2,7 @@
 #define LOCALIZATION_MANAGER
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "TranslatedTextData.h"
 
 class CLanguageManager : public CObjectManager

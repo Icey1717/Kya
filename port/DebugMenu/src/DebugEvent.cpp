@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include "Types.h"
 #include "EventManager.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "DebugSetting.h"
 #include "DebugProjection.h"
 #include "DebugMenuLayout.h"

@@ -2,7 +2,7 @@
 #define FRONTEND_BANK_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "edBank/edBankBuffer.h"
 #include "ed3D.h"
 

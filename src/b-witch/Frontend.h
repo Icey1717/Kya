@@ -2,7 +2,7 @@
 #define FRONTEND_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 
 #include "edSound/edSoundPlay.h"
 

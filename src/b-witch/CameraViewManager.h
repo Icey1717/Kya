@@ -2,7 +2,7 @@
 #define _CAMERA_VIEW_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Actor.h"
 #include "edVideo/CameraStack.h"
 #include "camera.h"

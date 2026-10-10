@@ -5,7 +5,7 @@
 #include "DlistManager.h"
 #include "TimeController.h"
 #include "LightManager.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "FileManager3D.h"
 #include "Fx.h"
 #include "ActorManager.h"

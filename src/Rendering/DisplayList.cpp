@@ -8,7 +8,7 @@
 #endif
 #include "edDlist.h"
 #include <assert.h>
-#include "LargeObject.h"
+#include "Scene.h"
 #include "FrontendDisp.h"
 #include "DlistManager.h"
 #include "Actor.h"

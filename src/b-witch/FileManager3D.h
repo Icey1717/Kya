@@ -2,7 +2,7 @@
 #define FILE_MANAGER_3D_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "ed3D.h"
 
 #define NAME_MESH 1

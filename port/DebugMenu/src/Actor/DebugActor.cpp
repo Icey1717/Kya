@@ -8,7 +8,7 @@
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "DebugMenuLayout.h"
 #include "DebugActorWind.h"
 #include "ActorHero.h"

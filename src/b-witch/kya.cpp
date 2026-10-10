@@ -53,7 +53,7 @@ extern "C" {
 #include "edPacket.h"
 #include "EdenLib/edSys/sources/EdSystem.h"
 #include "edSys/ps2/edSysRPC.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "TimeController.h"
 #include "LevelScheduler.h"
 #include "edText.h"

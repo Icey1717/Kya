@@ -2,7 +2,7 @@
 #define WAYPOINT_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 
 PACK(
 class CWayPoint {

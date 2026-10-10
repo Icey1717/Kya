@@ -2,7 +2,7 @@
 #define DLIST_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "DlistManager.h"
 
 #define IMPLEMENTATION_GUARD_DLIST_PATCH(x) assert(false);

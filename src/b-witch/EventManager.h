@@ -2,7 +2,7 @@
 #define EVENT_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 
 struct ed_event_chunk;
 class CActor;

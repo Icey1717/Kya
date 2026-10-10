@@ -1,6 +1,6 @@
 #include "ActorPatternService.h"
 #include "MemoryStream.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Actor.h"
 #include "MathOps.h"
 #include "FileManager3D.h"

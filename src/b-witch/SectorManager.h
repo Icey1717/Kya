@@ -2,7 +2,7 @@
 #define _SECTORMANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "FileManager3D.h"
 #include "ed3D.h"
 #include "edCollision/edCollisions.h"

@@ -1,5 +1,5 @@
 #include "StaticMeshComponent.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "MathOps.h"
 #include "FileManager3D.h"
 

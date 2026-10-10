@@ -32,7 +32,7 @@
 #include "ActorSwitch.h"
 #include "ActorMovingPlatform.h"
 #include "ActorDCA.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
 #include "SectorManager.h"

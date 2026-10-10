@@ -1,7 +1,7 @@
 #ifndef LIPSYNC_H
 #define LIPSYNC_H
 
-#include "LargeObject.h"
+#include "Scene.h"
 
 struct ByteCode;
 

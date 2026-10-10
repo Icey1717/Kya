@@ -2,7 +2,7 @@
 #define _MAP_MANAGER_H
 
 #include "Types.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "ed3D.h"
 #include "edBank/edBankBuffer.h"
 

@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "Frontend.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "Actor.h"
 
 class CInterface;

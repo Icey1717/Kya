@@ -7,7 +7,7 @@
 #endif
 
 #include "MathOps.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "CameraViewManager.h"
 #include "IniFile.h"
 #include "edVideo/VideoD.h"

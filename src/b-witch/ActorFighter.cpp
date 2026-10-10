@@ -8,7 +8,7 @@
 #include "ActorManager.h"
 #include "ActorWind.h"
 #include "ActorHero.h"
-#include "LargeObject.h"
+#include "Scene.h"
 #include "CameraViewManager.h"
 #include "ActorWeapon.h"
 #include "DlistManager.h"
