@@ -50,13 +50,23 @@ void CActorManager::Level_Init()
 void CActorManager::Level_Term()
 {
 #ifdef PLATFORM_WIN
+	Level_TermActors();
+	Level_FreeActors();
+}
+
+void CActorManager::Level_TermActors()
+{
+#endif
+#ifdef PLATFORM_WIN
     Renderer::DrawTrace::InvalidateSources();
 #endif
+#ifndef PLATFORM_WIN
 	edAnmLayer* peVar1;
 	int iVar2;
 	uint classId;
-	int iVar3;
 	CClassInfo* pCVar4;
+#endif
+	int iVar3;
 
 	iVar3 = this->nbActors + -1;
 	if (-1 < iVar3) {
@@ -73,6 +83,17 @@ void CActorManager::Level_Term()
 			iVar3 = iVar3 + -1;
 		} while (-1 < iVar3);
 	}
+
+#ifdef PLATFORM_WIN
+	return;
+}
+
+void CActorManager::Level_FreeActors()
+{
+	edAnmLayer* peVar1;
+	uint classId;
+	CClassInfo* pCVar4;
+#endif
 
 	classId = 0;
 	pCVar4 = this->aClassInfo;

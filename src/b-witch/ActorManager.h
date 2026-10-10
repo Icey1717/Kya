@@ -105,6 +105,10 @@ public:
 	virtual char* ProfileGetName();
 
 	void Level_ClearInternalData();
+#ifdef PLATFORM_WIN
+	void Level_TermActors();
+	void Level_FreeActors();
+#endif
 
 	void PrecomputeSectorsBoundindBoxes();
 	bool HasAnyLinkedActors();
