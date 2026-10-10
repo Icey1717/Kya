@@ -1440,7 +1440,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 	CActor* pCVar1;
 	bool bVar2;
 	bool bVar3;
-	int iVar4;
+	int curState;
 	CPlayerInput* pCVar5;
 	StateConfig* pSVar6;
 	uint uVar7;
@@ -1456,10 +1456,11 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 	s_fighter_action local_8;
 	uint local_4;
 
-	bVar8 = (GetStateFlags(this->actorState) & 0x2000000) != 0;
+	curState = this->actorState;
+	bVar8 = (GetStateFlags(curState) & 0x2000000) != 0;
 	bVar2 = false;
 
-	if ((iVar4 - 0x3fU < 7) && ((1 << (iVar4 - 0x3fU & 0x1f) & 99U) != 0)) {
+	if ((curState - 0x3fU < 7) && ((1 << (curState - 0x3fU & 0x1f) & 99U) != 0)) {
 		bVar2 = true;
 	}
 
@@ -1467,12 +1468,12 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 		bVar8 = bVar8 | 2;
 	}
 
-	if (iVar4 - 0x17U < 5) {
+	if (curState - 0x17U < 5) {
 		bVar8 = bVar8 | 4;
 	}
 
 	bVar2 = false;
-	if ((iVar4 - 0x1cU < 4) && ((1 << (iVar4 - 0x1cU & 0x1f) & 0xbU) != 0)) {
+	if ((curState - 0x1cU < 4) && ((1 << (curState - 0x1cU & 0x1f) & 0xbU) != 0)) {
 		bVar2 = true;
 	}
 
@@ -1507,9 +1508,10 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 
 		fVar9 = edF32Vector4DotProductHard(&local_20, &local_30);
 		if (fVar9 < 0.5f) {
-			bVar8 = (GetStateFlags(this->actorState) & 0x2000000) != 0;
+			curState = this->actorState;
+			bVar8 = (GetStateFlags(curState) & 0x2000000) != 0;
 			bVar2 = false;
-			if ((iVar4 - 0x3fU < 7) && ((1 << (iVar4 - 0x3fU & 0x1f) & 99U) != 0)) {
+			if ((curState - 0x3fU < 7) && ((1 << (curState - 0x3fU & 0x1f) & 99U) != 0)) {
 				bVar2 = true;
 			}
 
@@ -1517,12 +1519,12 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 				bVar8 = bVar8 | 2;
 			}
 
-			if (iVar4 - 0x17U < 5) {
+			if (curState - 0x17U < 5) {
 				bVar8 = bVar8 | 4;
 			}
 
 			bVar2 = false;
-			if ((iVar4 - 0x1cU < 4) && ((1 << (iVar4 - 0x1cU & 0x1f) & 0xbU) != 0)) {
+			if ((curState - 0x1cU < 4) && ((1 << (curState - 0x1cU & 0x1f) & 0xbU) != 0)) {
 				bVar2 = true;
 			}
 
@@ -1534,13 +1536,13 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 				if ((this->hitFlags & 0x20U) == 0) {
 					this->field_0x474 = 0.0f;
 					DoMessage(this->field_0x634, (ACTOR_MESSAGE)100, &this->field_0x6c4);
-					iVar4 = GetIdMacroAnim(0x2c);
+					curState = GetIdMacroAnim(0x2c);
 
-					if (iVar4 < 0) {
+					if (curState < 0) {
 						fVar9 = 0.0f;
 					}
 					else {
-						fVar9 = this->pAnimationController->GetAnimLength(iVar4, 1);
+						fVar9 = this->pAnimationController->GetAnimLength(curState, 1);
 					}
 
 					edF32Vector4SubHard(&local_40, &this->currentLocation, &this->field_0x634->currentLocation);
@@ -1599,24 +1601,24 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 
 	if ((this->hitFlags & 1U) == 0) {
 		if ((GetStateFlags(this->actorState) & 0x100) != 0) {
-			iVar4 = this->actorState;
+			curState = this->actorState;
 			bVar3 = true;
-			uVar7 = iVar4 - 0x49;
+			uVar7 = curState - 0x49;
 			bVar2 = false;
 
 			if ((uVar7 < 0x20) && ((1 << (uVar7 & 0x1f) & 0xf000003fU) != 0)) {
 				bVar2 = true;
 			}
 
-			if ((!bVar2) && (6 < iVar4 - 0x69U)) {
+			if ((!bVar2) && (6 < curState - 0x69U)) {
 				bVar3 = false;
 			}
 
 			if ((!bVar3) || (this->distanceToGround <= 0.4)) {
 				if ((this->hitFlags & 8U) != 0) {
-					iVar4 = this->actorState;
+					curState = this->actorState;
 					bVar2 = true;
-					if ((iVar4 != 0x52) && (iVar4 != 0x53)) {
+					if ((curState != 0x52) && (curState != 0x53)) {
 						bVar2 = false;
 					}
 

@@ -1129,6 +1129,11 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 
 bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4)
 {
+	ACTOR_HERO_LOG(LogLevel::Info, "AccomplishHit sender: {} type: {} flags: 0x{:x} damage: {} force: {} direction: ({}, {}, {}) normal: {} state: 0x{:x} impulse: ({}, {}, {})",
+		pHitBy != nullptr ? pHitBy->name : "(null)", pHitParam->projectileType, pHitParam->flags, pHitParam->damage, pHitParam->field_0x30,
+		pHitParam->field_0x20.x, pHitParam->field_0x20.y, pHitParam->field_0x20.z, param_4 != nullptr ? param_4->ToString() : "(null)", (int)this->actorState,
+		this->dynamicExt.aImpulseVelocities[0].x, this->dynamicExt.aImpulseVelocities[0].y, this->dynamicExt.aImpulseVelocities[0].z);
+
 	uint uVar1;
 	CLifeInterface* uVar2;
 	Timer* pTVar3;
@@ -1257,6 +1262,9 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 				}
 
 				iVar6 = ChooseStateHit(pHitBy, pHitParam, param_4, (fVar8 < fVar7) ^ 1);
+				ACTOR_HERO_LOG(LogLevel::Info, "AccomplishHit selected state: 0x{:x} impulse: ({}, {}, {}) magnitude: {}",
+					iVar6, this->dynamicExt.aImpulseVelocities[0].x, this->dynamicExt.aImpulseVelocities[0].y,
+					this->dynamicExt.aImpulseVelocities[0].z, this->dynamicExt.aImpulseVelocityMagnitudes[0]);
 				if (iVar6 == this->actorState) {
 					uVar2 = GetLifeInterface();
 					fVar7 = uVar2->GetValue();
@@ -4744,6 +4752,9 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 					}
 
 					if (bVar4) {
+						ACTOR_HERO_LOG(LogLevel::Info, "ChooseStateHit type: {} knockback: ({}, {}, {}) rotation: ({}, {}, {}) delta: {} previous impulse: ({}, {}, {})",
+							iVar1, local_30.x, local_30.y, local_30.z, this->rotationQuat.x, this->rotationQuat.y, this->rotationQuat.z, GetTimer()->cutsceneDeltaTime,
+							this->dynamicExt.aImpulseVelocities[0].x, this->dynamicExt.aImpulseVelocities[0].y, this->dynamicExt.aImpulseVelocities[0].z);
 						pTVar7 = GetTimer();
 						edF32Vector4ScaleHard(0.02f / pTVar7->cutsceneDeltaTime, &eStack112, &local_30);
 						peVar8 = this->dynamicExt.aImpulseVelocities;

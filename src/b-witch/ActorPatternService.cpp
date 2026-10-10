@@ -789,7 +789,14 @@ bool CPatternPart::UpdatePatternPartLife()
 	edF32VECTOR4 local_c0;
 	edF32VECTOR4 local_b0;
 	edF32VECTOR4 local_a0;
+
+	// The PS2 routine only fills type, damage and direction. Zero force selects
+	// the Hero's default knockback instead of interpreting unused stack data.
 	_msg_hit_param local_90;
+
+#ifdef PLATFORM_WIN
+	local_90 = {};
+#endif // PLATFORM_WIN
 
 	bVar1 = false;
 	iVar11 = this->field_0x50;
@@ -924,6 +931,7 @@ bool CPatternPart::UpdatePatternPartLife()
 					}
 
 					local_90.field_0x20 = local_c0;
+					ACTOR_LOG(LogLevel::Info, "CPatternPart::UpdatePatternPartLife hit sender: {} force: {}", this->pOwner->name, local_90.field_0x30);
 					this->pOwner->DoMessage(this->field_0x40, MESSAGE_KICKED, &local_90);
 
 					break;

@@ -1,6 +1,22 @@
 #include <gtest/gtest.h>
 #include "ActorHero_Inventory.h"
 #include "LevelScheduler.h"
+#include "ActorNativ.h"
+#include "InventoryInfo.h"
+
+TEST(InventoryPurchase, BraceletsSelectTheirSellerCutsceneSlots)
+{
+	CBehaviourNativSeller seller;
+	// Original PS2 jump table at 0x00437f30, entries 5 through 12.
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_WHITE_BRACELET), 0x9);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_YELLOW_BRACELET), 0xa);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_GREEN_BRACELET), 0xb);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_BLUE_BRACELET), 0xc);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_BROWN_BRACELET), 0xd);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_BLACK_BRACELET), 0xe);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_SILVER_BRACELET), 0xf);
+	EXPECT_EQ(seller.GetPurchaseCutsceneId(INVENTORY_ITEM_GOLD_BRACELET), 0x10);
+}
 
 namespace {
 class InventoryRestore : public testing::Test

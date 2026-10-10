@@ -626,8 +626,7 @@ void CBehaviourCinematic::Manage()
 		pCVar2 = this->pOwner;
 		pCVar2->previousLocation = pCVar2->currentLocation.xyz;
 		if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
-			IMPLEMENTATION_GUARD_LIP(
-			ManageLipsync(this);)
+			ManageLipsync();
 		}
 	}
 	else {
@@ -840,3 +839,33 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	}
 	return bVar3;
 }
+
+
+void CBehaviourCinematic::ManageLipsync()
+{
+	int iVar1;
+	float* pfVar3;
+	float fVar4;
+	CAnimation* pAnim;
+
+	pAnim = this->pOwner->pAnimationController;
+	iVar1 = pAnim->PhysicalLayerFromLayerId(4);
+	pfVar3 = &(pAnim->anmBinMetaAnimator).aAnimData[iVar1].blendWeight;
+	if (this->field_0x178 == 3) {
+		fVar4 = *pfVar3 - Timer::GetTimer()->cutsceneDeltaTime / 0.5f;
+		*pfVar3 = fVar4;
+		if (fVar4 <= 0.0f) {
+			*pfVar3 = 0.0f;
+			this->field_0x178 = 1;
+		}
+	}
+	else {
+		if ((this->field_0x178 == 2) && (fVar4 = *pfVar3 + Timer::GetTimer()->cutsceneDeltaTime / 0.5f, *pfVar3 = fVar4, 1.0f <= fVar4)) {
+			*pfVar3 = 1.0f;
+			this->field_0x178 = 0;
+		}
+	}
+
+	return;
+}
+

@@ -31,6 +31,7 @@ struct CBehaviourCinematic : public CBehaviour
 	virtual void InitState(int newState);
 
 	bool CinematicMode_InterpreteCinMessage(int param_2, int param_3);
+	void ManageLipsync();
 };
 
 struct CActorCinematic : public CActor

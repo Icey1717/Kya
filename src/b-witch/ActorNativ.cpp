@@ -6614,13 +6614,13 @@ int CBehaviourNativSeller::GetPurchaseCutsceneId(int objectId)
 		case 6:
 			return 0xa;
 		case 7:
-			return 0xe;
-		case 8:
 			return 0xb;
-		case 9:
+		case 8:
 			return 0xc;
-		case 10:
+		case 9:
 			return 0xd;
+		case 10:
+			return 0xe;
 		case 11:
 			return 0xf;
 		case 12:

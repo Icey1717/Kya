@@ -1961,8 +1961,11 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 			}
 
 			fVar5 = acosf(puVar7);
-			auStack160.field_0x20.y = cosf(fVar5);
+			auStack160.field_0x20.y = sinf(fVar5);
 			edF32Vector4NormalizeHard(&auStack160.field_0x20, &auStack160.field_0x20);
+			ACTOR_HERO_LOG(LogLevel::Info, "HitActor receiver: {} explode: {} radius: {} damage: {} force: {} direction: ({}, {}, {}) projectile position: {} receiver position: {}",
+				pHitActor->name, explode, pSphere->w, auStack160.damage, auStack160.field_0x30, auStack160.field_0x20.x, auStack160.field_0x20.y,
+				auStack160.field_0x20.z, this->currentLocation.ToString(), pHitActor->currentLocation.ToString());
 			DoMessage(pHitActor, (ACTOR_MESSAGE)hitMsgId, &auStack160);
 		}
 	}
