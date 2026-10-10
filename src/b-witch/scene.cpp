@@ -75,68 +75,62 @@ ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 {
 	edSurface* pVidModeDataA;
 	edSurface* pVidModeDataB;
-	CameraObjParams* pCVar1;
-	uint uVar2;
-	uint uVar3;
-	edSurface* pVidModeDataA_00;
-	ed_viewport* pViewport;
-	ed_viewport* pCVar5;
-	ed_3D_Scene* pStaticMeshMaster;
-	SceneConfig* pCVar6;
-	CameraObjParams* pCVar7;
-	CameraObjParams* pCVar8;
-	ed_surface_desc local_20;
-	CameraObjParams local_8;
+	uint newWidth;
+	uint newHeight;
+	edSurface* pShadowSurf;
+	ed_viewport* pViewportA;
+	ed_viewport* pViewportB;
+	ed_3D_Scene* pScene;
+	SceneConfig* pSceneConfig;
+	ed_surface_desc surfaceDesc;
+	CameraObjParams cameraObjParams{};
 
 	pVidModeDataA = pTemplate->pViewport->pColorBuffer;
 	pVidModeDataB = pTemplate->pViewport->pZBuffer;
 	if (0x100 < (uint)(pTemplate->sceneConfig).pShadowConfig.texHeight) {
 		(pTemplate->sceneConfig).pShadowConfig.texHeight = 0x100;
 	}
-	uVar2 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texWidth);
-	uVar3 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texHeight);
-	pCVar7 = (CameraObjParams*)0x8;
-	pCVar8 = &local_8;
-	pCVar1 = pCVar8;
-	//while (pCVar1 != (CameraObjParams*)0x0) {
-	//	*(undefined*)&pCVar8->field_0x0 = 0;
-	//	pCVar8 = (CameraObjParams*)((int)&pCVar8->field_0x0 + 1);
-	//	pCVar7 = (CameraObjParams*)((int)&pCVar7[-1].screenHeight + 1);
-	//	pCVar1 = pCVar7;
-	//}
-	local_20.field_0x6 = 0x10;
-	local_20.flags_0x8 = 4;
-	local_20.frameBufferCount = 1;
-	local_20.screenHeight = (ushort)uVar3;
-	local_20.screenWidth = (ushort)uVar2;
-	local_20.pixelStoreMode = SCE_GS_PSMCT32;
-	local_20.bUseGlobalFrameBuffer = false;
-	local_8.screenWidth = local_20.screenWidth;
-	local_8.screenHeight = local_20.screenHeight;
-	pVidModeDataA_00 = ed3DShadowSurfaceNew(&local_20);
-	pViewport = edViewportNew(&local_8, pVidModeDataA_00, pVidModeDataB, 1);
-	edViewportSetBackgroundColor(pViewport, 0, 0, 0);
-	pCVar5 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 0);
-	pStaticMeshMaster = ed3DSceneCreate(pCamera, pViewport, 1);
-	pStaticMeshMaster->bShadowScene = 1;
-	pCVar6 = ed3DSceneGetConfig(pStaticMeshMaster);
-	pCVar6->clipValue_0x4 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
-	pCVar6->clipValue_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
-	pCVar6->farClip = (pTemplate->sceneConfig).pShadowConfig.field_0xc;
-	pCVar6->nearClip = (pTemplate->sceneConfig).pShadowConfig.field_0x8;
-	pCVar6->projectionScaleFactorB = (pTemplate->sceneConfig).field_0x12c;
-	pCVar6->projectionScaleFactorA = (pTemplate->sceneConfig).field_0x128;
-	(pCVar6->pShadowConfig).pCamera_0x10 = pViewport;
-	(pCVar6->pShadowConfig).pViewport = pCVar5;
-	(pCVar6->pShadowConfig).renderMask = (pTemplate->sceneConfig).pShadowConfig.renderMask;
-	(pCVar6->pShadowConfig).nbBlurSamples = (pTemplate->sceneConfig).pShadowConfig.nbBlurSamples;
-	(pCVar6->pShadowConfig).field_0x22 = (pTemplate->sceneConfig).pShadowConfig.field_0x22;
-	(pCVar6->pShadowConfig).blurRadius = (pTemplate->sceneConfig).pShadowConfig.blurRadius;
-	(pCVar6->pShadowConfig).texWidth = (pTemplate->sceneConfig).pShadowConfig.texWidth;
-	(pCVar6->pShadowConfig).texHeight = (pTemplate->sceneConfig).pShadowConfig.texHeight;
-	(pTemplate->sceneConfig).pShadowConfig.renderMask = 0;
-	gShadowScene = pStaticMeshMaster;
-	return pStaticMeshMaster;
+	newWidth = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texWidth);
+	newHeight = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texHeight);
+
+	surfaceDesc.field_0x6 = 0x10;
+	surfaceDesc.flags_0x8 = 4;
+	surfaceDesc.frameBufferCount = 1;
+	surfaceDesc.screenHeight = (ushort)newHeight;
+	surfaceDesc.screenWidth = (ushort)newWidth;
+	surfaceDesc.pixelStoreMode = SCE_GS_PSMCT32;
+	surfaceDesc.bUseGlobalFrameBuffer = false;
+	cameraObjParams.screenWidth = surfaceDesc.screenWidth;
+	cameraObjParams.screenHeight = surfaceDesc.screenHeight;
+
+	pShadowSurf = ed3DShadowSurfaceNew(&surfaceDesc);
+	pViewportA = edViewportNew(&cameraObjParams, pShadowSurf, pVidModeDataB, 1);
+	edViewportSetBackgroundColor(pViewportA, 0, 0, 0);
+
+	pViewportB = edViewportNew(&cameraObjParams, pVidModeDataA, pVidModeDataB, 0);
+	pScene = ed3DSceneCreate(pCamera, pViewportA, 1);
+	pScene->bShadowScene = 1;
+
+	pSceneConfig = ed3DSceneGetConfig(pScene);
+	pSceneConfig->clipValue_0x4 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
+	pSceneConfig->clipValue_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
+	pSceneConfig->farClip = (pTemplate->sceneConfig).pShadowConfig.field_0xc;
+	pSceneConfig->nearClip = (pTemplate->sceneConfig).pShadowConfig.field_0x8;
+	pSceneConfig->projectionScaleFactorB = (pTemplate->sceneConfig).field_0x12c;
+	pSceneConfig->projectionScaleFactorA = (pTemplate->sceneConfig).field_0x128;
+	pSceneConfig->pShadowConfig.pCamera_0x10 = pViewportA;
+	pSceneConfig->pShadowConfig.pViewport = pViewportB;
+	pSceneConfig->pShadowConfig.renderMask = (pTemplate->sceneConfig).pShadowConfig.renderMask;
+	pSceneConfig->pShadowConfig.nbBlurSamples = (pTemplate->sceneConfig).pShadowConfig.nbBlurSamples;
+	pSceneConfig->pShadowConfig.field_0x22 = (pTemplate->sceneConfig).pShadowConfig.field_0x22;
+	pSceneConfig->pShadowConfig.blurRadius = (pTemplate->sceneConfig).pShadowConfig.blurRadius;
+	pSceneConfig->pShadowConfig.texWidth = (pTemplate->sceneConfig).pShadowConfig.texWidth;
+	pSceneConfig->pShadowConfig.texHeight = (pTemplate->sceneConfig).pShadowConfig.texHeight;
+
+	pTemplate->sceneConfig.pShadowConfig.renderMask = 0;
+	gShadowScene = pScene;
+
+	return pScene;
 }
 
 ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
@@ -145,7 +139,8 @@ ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 
 	p3DScene->flags = p3DScene->flags | SCENE_FLAG_CAST_SHADOW;
 	pDisplayList = ed3DShadowCreateScene(p3DScene, pCamera);
-	edListAddNode(&p3DScene->meshClusterShadowList, (DisplayList*)pDisplayList);
+	edListAddNode(&p3DScene->meshClusterShadowList, pDisplayList);
+
 	return pDisplayList;
 }
 
@@ -301,9 +296,11 @@ CScene::CScene()
 		pCVar21 = pCVar21 + 1;
 		ppSVar20 = ppSVar20 + 1;
 	} while (iVar19 < 10);
+
 	this->count_0x120 = 0;
 	this->field_0x11c = 0;
 	CScene::_pinstance = this;
+
 	return;
 }
 
@@ -322,7 +319,7 @@ void S_ELEVATOR_CUTSCENE_LIST::Create(S_ELEVATOR_CUTSCENE_LIST** ppList, ByteCod
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::CreateScene(void)
 {
 	new CScene;
@@ -346,7 +343,7 @@ void Game_Init(void)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::LevelLoading_Draw(void)
 {
 	CObjectManager** ppMVar1;
@@ -365,7 +362,7 @@ void CScene::LevelLoading_Draw(void)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::LevelLoading_Begin(void)
 {
 	Timer* pTimeController;
@@ -387,7 +384,7 @@ void CScene::LevelLoading_Begin(void)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 bool CScene::LevelLoading_Manage()
 {
 	bool bVar1;
@@ -409,7 +406,7 @@ bool CScene::LevelLoading_Manage()
 	return bVar3;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::LevelLoading_End(void)
 {
 	CObjectManager** ppMVar1;
@@ -427,7 +424,7 @@ void CScene::LevelLoading_End(void)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_Install(void)
 {
 	CObjectManager** ppMVar1;
@@ -446,7 +443,7 @@ void CScene::Level_Install(void)
 }
 
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_PauseChange(int bPaused)
 {
 	CObjectManager** ppMVar1;
@@ -488,7 +485,7 @@ void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_Init()
 {
 	undefined4* puVar1;
@@ -636,7 +633,7 @@ void CScene::SetState(int state)
 	}
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::HandleCurState()
 {
 	HandleFogAndClippingSettings();
@@ -688,7 +685,7 @@ void CScene::HandleCurState()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_CheckpointReset(void)
 {
 	S_STREAM_FOG_DEF* pSVar1;
@@ -750,7 +747,7 @@ bool CScene::FUN_001b92f0()
 	return this->curState != 0;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_SaveContext()
 {
 	CObjectManager** ppManager;
@@ -770,7 +767,7 @@ void CScene::Level_SaveContext()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_LoadContext()
 {
 	CObjectManager** ppManager;
@@ -789,8 +786,10 @@ void CScene::Level_LoadContext()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 #ifndef PLATFORM_WIN
+// PS2 implementation. See port/Windows/scene.cpp for the Windows implementation,
+// which runs actor cleanup before FX teardown and releases actor memory afterward.
 void CScene::Level_Term(void)
 {
 	FxFogProp* pFVar2;
@@ -853,13 +852,13 @@ void CScene::Level_Term(void)
 }
 #endif
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_Reset()
 {
 	IMPLEMENTATION_GUARD();
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_Manage()
 {
 	CObjectManager** ppManager;
@@ -918,7 +917,7 @@ void CScene::Level_Manage()
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::Level_Draw(void)
 {
 	CObjectManager** ppManager;
@@ -1176,7 +1175,7 @@ void _rgba::LerpRGBA(float alpha, uint src, uint dst)
 	return;
 }
 
-// Should be in: D:/Projects/b-witch/scene.cpp
+
 void CScene::HandleFogAndClippingSettings()
 {
 	S_STREAM_FOG_DEF* pSVar1;

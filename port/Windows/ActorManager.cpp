@@ -7,6 +7,10 @@
 #include "ActorHero.h"
 #include "DrawTrace.h"
 
+// PS2 CActorManager::Level_Term (0x00107370) performs Term(), Destroy(), and
+// allocation release in one call. Windows exposes the two phases so CScene
+// can terminate FX between actor cleanup and actor/animation deallocation.
+// Direct callers still get the complete teardown through Level_Term().
 void CActorManager::Level_Term()
 {
 	Level_TermActors();
@@ -15,6 +19,7 @@ void CActorManager::Level_Term()
 
 void CActorManager::Level_TermActors()
 {
+    // Windows draw tracing can retain references to this level's actor data.
     Renderer::DrawTrace::InvalidateSources();
 	int iVar3;
 
@@ -37,6 +42,8 @@ void CActorManager::Level_TermActors()
 	return;
 }
 
+// CScene calls this at the actor manager's original position in the reverse
+// manager walk, after FX have unregistered bones through pAnimationController.
 void CActorManager::Level_FreeActors()
 {
 	edAnmLayer* peVar1;
@@ -47,7 +54,8 @@ void CActorManager::Level_FreeActors()
 	pCVar4 = this->aClassInfo;
 	do {
 		if (pCVar4->aActors != (CActor*)0x0) {
-			// The Windows polymorphic array helper needs the count to run every destructor.
+			// PS2 passes zero: delete[] obtains the count from its array cookie.
+			// Windows uses an explicit destructor loop and needs the stored count.
 			CActorFactory::Factory((ACTOR_CLASS)classId, pCVar4->totalCount, (int*)0x0, pCVar4->aActors);
 		}
 
@@ -60,8 +68,8 @@ void CActorManager::Level_FreeActors()
 		pCVar4 = pCVar4 + 1;
 	} while ((int)classId < 0x57);
 
-	// The next level's loading camera and debug UI can still read this pointer.
-	// Clear it after the hero actor array has been destroyed.
+	// Windows addition: the loading camera and debug UI can read the global hero
+	// between levels. Clear it once the hero actor array has been destroyed.
 	CActorHero::_gThis = (CActorHero*)0x0;
 
 	this->cluster.Term();

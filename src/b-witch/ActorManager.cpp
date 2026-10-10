@@ -47,6 +47,8 @@ void CActorManager::Level_Init()
 }
 
 #ifndef PLATFORM_WIN
+// PS2 implementation. See port/Windows/ActorManager.cpp for the Windows
+// implementation, which separates actor cleanup from allocation release.
 void CActorManager::Level_Term()
 {
 	edAnmLayer* peVar1;

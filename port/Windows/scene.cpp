@@ -11,6 +11,8 @@
 #include "ed3D.h"
 #include "port/pointer_conv.h"
 
+// Windows counterpart of PS2 CScene::Level_Term (0x001b9460). The original
+// reverse manager walk terminates FX before entering CActorManager::Level_Term.
 void CScene::Level_Term(void)
 {
 	FxFogProp* pFVar2;
@@ -21,9 +23,10 @@ void CScene::Level_Term(void)
 
 	CLevelScheduler::gThis->Level_PreTerm();
 
-	// Actor behaviours still hold FX pool handles on Windows. Terminate them
-	// while the pools exist, but retain actors and animations until FX have
-	// unregistered their bones (PS2 Level_Term at 0x001b9460 frees FX first).
+	// Windows divergence: actor Term()/Destroy() run before the manager walk,
+	// because behaviour cleanup still accesses FX pool handles. Keep the actor
+	// and animation allocations alive: CNewFx::Kill (0x001a2b00) unregisters bones
+	// through pActor->pAnimationController when the FX manager terminates.
 	if (CScene::ptable.g_ActorManager_004516a4 != (CActorManager*)0x0) {
 		CScene::ptable.g_ActorManager_004516a4->Level_TermActors();
 	}
@@ -31,7 +34,8 @@ void CScene::Level_Term(void)
 	curIndex = 0;
 	CObjectManager** ppManager = CScene::ptable.IterateBackwards();
 	do {
-		// Actor cleanup already ran; release its memory at the original position.
+		// Skip a second Term()/Destroy() pass. Release actor/animation memory here,
+		// after FX teardown, preserving the original manager order for deallocation.
 		if (*ppManager != (CObjectManager*)0x0 &&
 			*ppManager == (CObjectManager*)CScene::ptable.g_ActorManager_004516a4) {
 			CScene::ptable.g_ActorManager_004516a4->Level_FreeActors();
@@ -64,7 +68,7 @@ void CScene::Level_Term(void)
 
 	GlobalDList_AddToView();
 
-
+	// PS2 calls edVideoFlip() here; the Windows renderer owns presentation.
 	curIndex = 0;
 	ppManager = CScene::ptable.IterateBackwards();
 	do {
@@ -75,6 +79,8 @@ void CScene::Level_Term(void)
 		ppManager = ppManager - 1;
 	} while (curIndex < 0x18);
 
+	// Windows-only PS2 pointer handles must remain resolvable until every
+	// manager has finished Level_ClearAll(); discard them before freeing pools.
 	POINTERCONV_RESET_TRANSIENT();
 
 	FreeAllAllocators();

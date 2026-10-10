@@ -3147,23 +3147,10 @@ void CBehaviourNativSpeak::TermState(int oldState, int newState)
 int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	CActorNativ* pNativ;
-	//CBehaviourFighterVTable* pCVar2;
-	float* pfVar3;
 	bool bVar4;
-	StateConfig* pSVar5;
 	uint uVar6;
 	int iVar7;
-	CBehaviour* pCVar8;
-	CTakePutTrajectoryParam* pCVar9;
-	CPathFollowReader* pPathFollowReader;
-	//CBehaviourFighterVTable* pCVar10;
-	float fVar11;
-	//CBehaviourFighterVTable* pCVar12;
-	float fVar13;
-	//CBehaviourFighterVTable* pCVar14;
-	float fVar15;
 	CActorNativMsgParam_0xe local_20;
-	undefined4* local_4;
 
 	if (msg == 0x4e) {
 		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
@@ -3200,65 +3187,36 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 			}
 			break;
 		case 4:
-			pNativ->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
+			this->pOwner->behaviourTakeAndPut.curTrajectoryParamIndex = pParams->field_0x4;
+			this->pOwner->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
 			this->pOwner->SetBehaviour(NATIVE_BEHAVIOUR_TAKE_AND_PUT, -1, -1);
 			break;
 		case 5:
-			IMPLEMENTATION_GUARD(
-			this->field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-			pfVar3 = *(float**)((int)pMsgParam + 0x18);
-			fVar15 = pfVar3[1];
-			fVar11 = pfVar3[2];
-			fVar13 = pfVar3[3];
-			(this->field_0x10).x = *pfVar3;
-			(this->field_0x10).y = fVar15;
-			(this->field_0x10).z = fVar11;
-			(this->field_0x10).w = fVar13;
-			this->field_0x24 = *(int*)((int)pMsgParam + 8);
-			this->field_0x28 = *(float*)((int)pMsgParam + 0x14);
+			this->field_0x20 = pParams->field_0x4;
+			this->field_0x10 = *pParams->field_0x18;
+			this->field_0x24 = pParams->field_0x8;
+			this->field_0x28 = pParams->field_0x14;
 			this->pOwner->SetState(0xb, -1);
 			pNativ = this->pOwner;
-			(pNativ->field_0x570).x = (pNativ->base).base.base.currentLocation.x;
-			(pNativ->field_0x570).y = (pNativ->base).base.base.currentLocation.y;
-			(pNativ->field_0x570).z = (pNativ->base).base.base.currentLocation.z;
-			(pNativ->field_0x570).w = (pNativ->base).base.base.currentLocation.w;)
+			pNativ->field_0x570 = pNativ->currentLocation;
 			break;
 		case 6:
-			IMPLEMENTATION_GUARD(
-			this->field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-			pfVar3 = *(float**)((int)pMsgParam + 0x18);
-			fVar15 = pfVar3[1];
-			fVar11 = pfVar3[2];
-			fVar13 = pfVar3[3];
-			(this->field_0x10).x = *pfVar3;
-			(this->field_0x10).y = fVar15;
-			(this->field_0x10).z = fVar11;
-			(this->field_0x10).w = fVar13;
+			this->field_0x20 = pParams->field_0x4;
+			this->field_0x10 = *pParams->field_0x18;
 			pNativ = this->pOwner;
-			(pNativ->field_0x570).x = (pNativ->base).base.base.currentLocation.x;
-			(pNativ->field_0x570).y = (pNativ->base).base.base.currentLocation.y;
-			(pNativ->field_0x570).z = (pNativ->base).base.base.currentLocation.z;
-			(pNativ->field_0x570).w = (pNativ->base).base.base.currentLocation.w;
-			this->field_0x24 = *(int*)((int)pMsgParam + 8);
-			this->pOwner->SetState(10, -1);)
+			pNativ->field_0x570 = pNativ->currentLocation;
+			this->field_0x24 = pParams->field_0x8;
+			this->pOwner->SetState(10, -1);
 			break;
 		case 7:
 			this->pOwner->SetState(10, -1);
 			break;
 		case 9:
-			IMPLEMENTATION_GUARD(
-			this->field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-			pfVar3 = *(float**)((int)pMsgParam + 0x18);
-			fVar15 = pfVar3[1];
-			fVar11 = pfVar3[2];
-			fVar13 = pfVar3[3];
-			(this->field_0x10).x = *pfVar3;
-			(this->field_0x10).y = fVar15;
-			(this->field_0x10).z = fVar11;
-			(this->field_0x10).w = fVar13;
-			this->field_0x24 = *(int*)((int)pMsgParam + 8);
-			this->field_0x28 = *(float*)((int)pMsgParam + 0x14);
-			this->pOwner->SetState(9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
+			this->field_0x20 = pParams->field_0x4;
+			this->field_0x10 = *pParams->field_0x18;
+			this->field_0x24 = pParams->field_0x8;
+			this->field_0x28 = pParams->field_0x14;
+			this->pOwner->SetState(9, pParams->field_0xc + 0xd);
 			break;
 		case NATIVE_MESSAGE_FACE_TOWARDS:
 			bVar4 = this->pOwner->CanSpeak();
@@ -3293,49 +3251,35 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 			this->pOwner->SetBehaviour(NATIVE_BEHAVIOUR_LIVE, 7, -1);
 			break;
 		case 0xd:
-			IMPLEMENTATION_GUARD(
 			this->pOwner->field_0x4f8 = this->pOwner->curBehaviourId;
 			this->pOwner->field_0x4fc = this->pOwner->actorState;
 			this->pOwner->field_0x500 = this->pOwner->currentAnimType;
-			pfVar3 = *(float**)((int)pMsgParam + 0x18);
-			fVar15 = pfVar3[1];
-			fVar11 = pfVar3[2];
-			fVar13 = pfVar3[3];
-			(this->field_0x10).x = *pfVar3;
-			(this->field_0x10).y = fVar15;
-			(this->field_0x10).z = fVar11;
-			(this->field_0x10).w = fVar13;
-			this->field_0x24 = *(int*)((int)pMsgParam + 8);
-			this->field_0x28 = *(float*)((int)pMsgParam + 0x14);
+			this->field_0x10 = *pParams->field_0x18;
+			this->field_0x24 = pParams->field_0x8;
+			this->field_0x28 = pParams->field_0x14;
 			pNativ = this->pOwner;
-			iVar7 = *(int*)((int)pMsgParam + 0xc);
-			(pNativ->field_0x570).x = (pNativ->base).base.base.currentLocation.x;
-			(pNativ->field_0x570).y = (pNativ->base).base.base.currentLocation.y;
-			(pNativ->field_0x570).z = (pNativ->base).base.base.currentLocation.z;
-			(pNativ->field_0x570).w = (pNativ->base).base.base.currentLocation.w;
+			iVar7 = pParams->field_0xc;
+			pNativ->field_0x570 = pNativ->currentLocation;
 			this->pOwner->SetState(9, iVar7 + 0xd);
-			this->pOwner->field_0x530 = 0;)
+			this->pOwner->field_0x530 = 0;
 			break;
 		case 0x10:
-			IMPLEMENTATION_GUARD(
-			pCVar8 = CActor::GetBehaviour((CActor*)this->pOwner, 9);
-			pCVar2 = pCVar8[1].pVTable;
-			if (((pCVar2[0xd].SetInitialState == (undefined*)0xffffffff) &&
-				(pCVar2[0xd].Execute == (ExecuteFunc*)0xffffffff)) && (pCVar2[0xd]._ManageHit == (undefined*)0xffffffff)) {
-				pCVar2[0xd].SetInitialState = pCVar2[2].InitDlistPatchable;
-				pCVar8[1].pVTable[0xd].Execute = (ExecuteFunc*)pCVar8[1].pVTable[2].SetInitialState;
-				pCVar8[1].pVTable[0xd]._ManageHit = pCVar8[1].pVTable[3]._dt;
-				pCVar2 = pCVar8[1].pVTable;
-				pCVar14 = (CBehaviourFighterVTable*)pCVar2->InitState;
-				pCVar10 = (CBehaviourFighterVTable*)pCVar2->TermState;
-				pCVar12 = (CBehaviourFighterVTable*)pCVar2->InterpretMessage;
-				pCVar8[4].pVTable = (CBehaviourFighterVTable*)pCVar2->End;
-				pCVar8[5].pVTable = pCVar14;
-				pCVar8[6].pVTable = pCVar10;
-				pCVar8[7].pVTable = pCVar12;
-			})
+		{
+			// Behaviour 9 uses the same owner and field_0x10 vector layout as speak.
+			CBehaviourNativSpeak* pBehaviour = reinterpret_cast<CBehaviourNativSpeak*>(this->pOwner->GetBehaviour(9));
+			if (pBehaviour != (CBehaviourNativSpeak*)0x0) {
+				pNativ = pBehaviour->pOwner;
+				if (((pNativ->field_0x4f8 == -1) && (pNativ->field_0x4fc == -1)) && (pNativ->field_0x500 == -1)) {
+					pNativ->field_0x4f8 = pNativ->curBehaviourId;
+					pNativ->field_0x4fc = pNativ->actorState;
+					pNativ->field_0x500 = pNativ->currentAnimType;
+					pBehaviour->field_0x10 = pNativ->currentLocation;
+				}
+			}
 
 			this->pOwner->SetBehaviour(9, 0x3a, -1);
+			break;
+		}
 		}
 		iVar7 = 0;
 	}
