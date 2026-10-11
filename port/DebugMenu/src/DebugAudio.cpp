@@ -197,18 +197,21 @@ namespace Debug::Audio
 			});
 			ImGui::Text("Playing: %d    Registered: %d", static_cast<int>(playingMusic), static_cast<int>(musicStreams.size()));
 			ImGui::Checkbox("Show inactive music", &showInactiveMusic);
+			ImGui::TextWrapped("Master gain is shared by all music. Stream and channel gains use 128 as unity and 0 as mute. Channels are listed from 1 to 16.");
 			const size_t visibleMusic = showInactiveMusic ? musicStreams.size() : static_cast<size_t>(playingMusic);
 			if (visibleMusic == 0) {
 				ImGui::TextDisabled(showInactiveMusic ? "No registered music." : "No active music.");
 			}
-			if (visibleMusic > 0 && ImGui::BeginTable("##AudioMusic", 6, flags, GetTableSize(visibleMusic, 6))) {
+			if (visibleMusic > 0 && ImGui::BeginTable("##AudioMusic", 8, flags, GetTableSize(visibleMusic, 6))) {
 				ImGui::TableSetupScrollFreeze(1, 1);
 				ImGui::TableSetupColumn("Stream");
 				ImGui::TableSetupColumn("State");
 				ImGui::TableSetupColumn("Song");
 				ImGui::TableSetupColumn("Bank");
-				ImGui::TableSetupColumn("Volume");
+				ImGui::TableSetupColumn("Master gain");
+				ImGui::TableSetupColumn("Stream gain");
 				ImGui::TableSetupColumn("Tempo");
+				ImGui::TableSetupColumn("Channel gains");
 				ImGui::TableHeadersRow();
 				for (const auto& music : musicStreams) {
 					if (!showInactiveMusic && !music.playing) { continue; }
@@ -218,7 +221,13 @@ namespace Debug::Audio
 					ImGui::TableSetColumnIndex(2); if (music.song == UINT32_MAX) ImGui::TextUnformatted("-"); else ImGui::Text("%u", music.song);
 					ImGui::TableSetColumnIndex(3); if (music.bank == UINT32_MAX) ImGui::TextUnformatted("-"); else ImGui::Text("%u", music.bank);
 					ImGui::TableSetColumnIndex(4); ImGui::Text("%.2f", music.volume);
-					ImGui::TableSetColumnIndex(5); ImGui::Text("%.2f%s", music.tempo, music.looping ? " (loop)" : "");
+					ImGui::TableSetColumnIndex(5); ImGui::Text("%u", music.streamVolume);
+					ImGui::TableSetColumnIndex(6); ImGui::Text("%.2f%s", music.tempo, music.looping ? " (loop)" : "");
+					ImGui::TableSetColumnIndex(7);
+					for (size_t channel = 0; channel < music.channelVolumes.size(); ++channel) {
+						if (channel != 0) { ImGui::SameLine(); }
+						ImGui::Text("%u%s", music.channelVolumes[channel], channel + 1 < music.channelVolumes.size() ? "," : "");
+					}
 				}
 				ImGui::EndTable();
 			}

@@ -5,6 +5,49 @@
 #include "ed3D.h"
 #include "port.h"
 
+TEST(MaterialLayers, HierarchyBankSwitchesMatchingMaterialsAndPreservesUnmatchedEntries)
+{
+	struct MaterialBank
+	{
+		ed_Chunck header;
+		ed_hash_code entries[3];
+	};
+	MaterialBank bank{};
+	MaterialBank enabled{};
+	MaterialBank disabled{};
+	bank.header.hash = HASH_CODE_MBNK;
+	bank.header.size = sizeof(bank);
+	for (MaterialBank* pMaterials : { &enabled, &disabled }) {
+		pMaterials->header.hash = HASH_CODE_HASH;
+		pMaterials->header.size = sizeof(*pMaterials);
+		pMaterials->header.nextChunckOffset = sizeof(*pMaterials);
+		for (int i = 0; i < 3; ++i) {
+			pMaterials->entries[i].hash = 10 + i * 10;
+		}
+	}
+	bank.entries[0].hash = 10;
+	bank.entries[1].hash = 25; // No replacement for this material.
+	bank.entries[2].hash = 30;
+	for (int i = 0; i < 3; ++i) {
+		bank.entries[i].pData = STORE_POINTER(&enabled.entries[i]);
+	}
+	ed_3d_hierarchy hierarchy{};
+	hierarchy.pTextureInfo = &bank.header;
+	ed_g2d_manager textures{};
+	textures.pMATA_HASH = &disabled.header;
+
+	ed3DHierarchyBankMatLinkG2D(&hierarchy, &textures);
+	EXPECT_EQ(LOAD_POINTER(bank.entries[0].pData), &disabled.entries[0]);
+	EXPECT_EQ(LOAD_POINTER(bank.entries[1].pData), &enabled.entries[1]);
+	EXPECT_EQ(LOAD_POINTER(bank.entries[2].pData), &disabled.entries[2]);
+
+	textures.pMATA_HASH = &enabled.header;
+	ed3DHierarchyBankMatLinkG2D(&hierarchy, &textures);
+	for (int i = 0; i < 3; ++i) {
+		EXPECT_EQ(LOAD_POINTER(bank.entries[i].pData), &enabled.entries[i]);
+	}
+}
+
 TEST(MaterialLayers, DecodesEachLayersTextureSamplerAlphaTestAndBlendRegisters)
 {
 	// Two material passes with deliberately distinct authored state.

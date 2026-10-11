@@ -643,6 +643,8 @@ class CBehaviourWolfenWeapon : public CBehaviourWolfen
 public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
+
+	edF32VECTOR4 aimTarget;
 };
 
 class CWolfenHaloAgent
@@ -697,8 +699,6 @@ public:
 
 	void ProjectTargetOnScenery(edF32VECTOR4* pOutPosition, edF32VECTOR4* pOutIntersection, edF32VECTOR4* pSource, edF32VECTOR4* pDestination);
 	void ProjectHaloOnScenery(edF32VECTOR4* pSource, edF32VECTOR4* pPosition);
-
-	edF32VECTOR4 field_0x80;
 
 	S_STREAM_REF<CActor> field_0x90;
 	float field_0x94;
@@ -766,8 +766,6 @@ public:
 	virtual void Func_0x80(int* param_2, int* param_3, CActor* pTarget);
 
 	int FUN_002faf40();
-
-	edF32VECTOR4 field_0x80;
 
 	float field_0x90;
 	int field_0x94;

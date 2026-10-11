@@ -906,13 +906,13 @@ void CActorWolfen::UpdateLookingAt()
 		if (iVar1 == WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE) {
 			CBehaviourTrackWeaponSnipe* pTrackWeaponSnipeBehaviour = static_cast<CBehaviourTrackWeaponSnipe*>(GetBehaviour(this->curBehaviourId));
 			CBehaviourSnipe* pSnipeBehaviour = pTrackWeaponSnipeBehaviour->pBehaviourSnipe;
-			edF32VECTOR4 position = pSnipeBehaviour->field_0x80;
+			edF32VECTOR4 position = pSnipeBehaviour->aimTarget;
 			SetLookingAtRotationHeight(1.570796f, &position);
 		}
 		else {
 			if (iVar1 == WOLFEN_BEHAVIOUR_SNIPE) {
 				CBehaviourSnipe* pSnipeBehaviour = static_cast<CBehaviourSnipe*>(GetBehaviour(this->curBehaviourId));
-				edF32VECTOR4 position = pSnipeBehaviour->field_0x80;
+				edF32VECTOR4 position = pSnipeBehaviour->aimTarget;
 				SetLookingAtRotationHeight(1.570796f, &position);
 			}
 		}
@@ -2007,8 +2007,8 @@ void CActorWolfen::AnimEvaluate_0017c930(uint layerId, edAnmMacroAnimator* pAnim
 		CActor::SV_GetActorColCenter(&eStack32);
 		iVar4 = this->curBehaviourId;
 		if ((((iVar4 == WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND) || (iVar4 == WOLFEN_BEHAVIOUR_TRACK_WEAPON)) || (iVar4 == WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE)) || (iVar4 == WOLFEN_BEHAVIOUR_SNIPE)) {
-			CBehaviourWolfen* pWolfenBehaviour = static_cast<CBehaviourWolfen*>(GetBehaviour(iVar4));
-			edF32Vector4SubHard(&local_10, &pWolfenBehaviour->rotationEuler, &eStack32);
+			edF32VECTOR4* pAimTarget = &static_cast<CBehaviourWolfenWeapon*>(GetBehaviour(iVar4))->aimTarget;
+			edF32Vector4SubHard(&local_10, pAimTarget, &eStack32);
 		}
 		else {
 			if (this->pTargetActor_0xc80 == (CActorFighter*)0x0) {
@@ -2068,12 +2068,14 @@ void CActorWolfen::AnimEvaluate_0017c930(uint layerId, edAnmMacroAnimator* pAnim
 		uVar3 = 0;
 		if (peVar1->keyIndex_0x8.asKey != 0) {
 			do {
-				pAnimValues[uVar3];
+				pAnimValues[uVar3] = 0.0f;
 				uVar3 = uVar3 + 1;
 			} while (uVar3 < peVar1->keyIndex_0x8.asKey);
 		}
 
-		pAnimValues[uVar6] = fVar7;
+		if (uVar6 + 1 < peVar1->keyIndex_0x8.asKey) {
+			pAnimValues[uVar6 + 1] = fVar7;
+		}
 		pAnimValues[uVar6] = (1.0f - fVar7);
 	}
 
@@ -3574,7 +3576,7 @@ void CActorWolfen::BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* 
 							if ((state == 0x92) || (state == WOLFEN_STATE_TRACK_DEFEND)) {
 								pBehaviour->NewFunc(this->pCommander);
 
-								edF32Vector4SubHard(&eStack16, &pBehaviour->field_0x80, &this->pCommander->targetPosition);
+								edF32Vector4SubHard(&eStack16, &pBehaviour->aimTarget, &this->pCommander->targetPosition);
 
 								fVar11 = edF32Vector4GetDistHard(&eStack16);
 								if (fVar11 < 0.001f) {
@@ -4137,7 +4139,7 @@ void CActorWolfen::StateTrackWeaponStandFire(CBehaviourTrackWeaponStand* pBehavi
 		local_50 = local_20;
 
 		if ((pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x0 & 2) != 0) {
-			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->field_0x80);
+			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->aimTarget);
 			fVar12 = edF32Vector4GetDistHard(&eStack64);
 			pTVar7 = Timer::GetTimer();
 			fVar11 = fVar11 * pTVar7->cutsceneDeltaTime;
@@ -4148,11 +4150,11 @@ void CActorWolfen::StateTrackWeaponStandFire(CBehaviourTrackWeaponStand* pBehavi
 			fVar11 = edF32Vector4SafeNormalize0Hard(&eStack64, &eStack64);
 			if (fVar11 != 0.0f) {
 				edF32Vector4ScaleHard(fVar12, &eStack64, &eStack64);
-				edF32Vector4AddHard(&local_50, &pBehaviour->field_0x80, &eStack64);
+				edF32Vector4AddHard(&local_50, &pBehaviour->aimTarget, &eStack64);
 			}
 		}
 
-		pBehaviour->field_0x80 = local_50;
+		pBehaviour->aimTarget = local_50;
 	}
 
 	this->dynamic.speed = 0.0f;
@@ -4293,7 +4295,7 @@ void CActorWolfen::StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour)
 		if ((pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x0 & 2) != 0) {
 			local_10 = local_70;
 
-			edF32Vector4SubHard(&eStack96, &local_70, &pBehaviour->field_0x80);
+			edF32Vector4SubHard(&eStack96, &local_70, &pBehaviour->aimTarget);
 			fVar14 = edF32Vector4GetDistHard(&eStack96);
 			fVar13 = fVar13 * Timer::GetTimer()->cutsceneDeltaTime;
 			if (fVar13 <= fVar14) {
@@ -4303,12 +4305,12 @@ void CActorWolfen::StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour)
 			fVar13 = edF32Vector4SafeNormalize0Hard(&eStack96, &eStack96);
 			if (fVar13 != 0.0f) {
 				edF32Vector4ScaleHard(fVar14, &eStack96, &eStack96);
-				edF32Vector4AddHard(&local_70, &pBehaviour->field_0x80, &eStack96);
+				edF32Vector4AddHard(&local_70, &pBehaviour->aimTarget, &eStack96);
 			}
 		}
 
 		local_10 = local_70;
-		pBehaviour->field_0x80 = local_70;
+		pBehaviour->aimTarget = local_70;
 
 		fVar14 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x4;
 		GetWeapon();
@@ -4503,7 +4505,7 @@ void CActorWolfen::StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour
 		local_50 = local_20;
 
 		if ((pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x0 & 2) != 0) {
-			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->field_0x80);
+			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->aimTarget);
 			fVar12 = edF32Vector4GetDistHard(&eStack64);
 			pTVar7 = Timer::GetTimer();
 			fVar11 = fVar11 * pTVar7->cutsceneDeltaTime;
@@ -4514,11 +4516,11 @@ void CActorWolfen::StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour
 			fVar11 = edF32Vector4SafeNormalize0Hard(&eStack64, &eStack64);
 			if (fVar11 != 0.0f) {
 				edF32Vector4ScaleHard(fVar12, &eStack64, &eStack64);
-				edF32Vector4AddHard(&local_50, &pBehaviour->field_0x80, &eStack64);
+				edF32Vector4AddHard(&local_50, &pBehaviour->aimTarget, &eStack64);
 			}
 		}
 
-		pBehaviour->field_0x80 = local_50;
+		pBehaviour->aimTarget = local_50;
 	}
 
 	this->dynamic.speed = 0.0f;
@@ -5380,7 +5382,7 @@ void CActorWolfen::StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour)
 		if ((pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x0 & 2) != 0) {
 			local_10 = local_70;
 
-			edF32Vector4SubHard(&eStack96, &local_70, &pBehaviour->field_0x80);
+			edF32Vector4SubHard(&eStack96, &local_70, &pBehaviour->aimTarget);
 			fVar14 = edF32Vector4GetDistHard(&eStack96);
 			fVar13 = fVar13 * Timer::GetTimer()->cutsceneDeltaTime;
 			if (fVar13 <= fVar14) {
@@ -5390,12 +5392,12 @@ void CActorWolfen::StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour)
 			fVar13 = edF32Vector4SafeNormalize0Hard(&eStack96, &eStack96);
 			if (fVar13 != 0.0f) {
 				edF32Vector4ScaleHard(fVar14, &eStack96, &eStack96);
-				edF32Vector4AddHard(&local_70, &pBehaviour->field_0x80, &eStack96);
+				edF32Vector4AddHard(&local_70, &pBehaviour->aimTarget, &eStack96);
 			}
 		}
 
 		local_10 = local_70;
-		pBehaviour->field_0x80 = local_70;
+		pBehaviour->aimTarget = local_70;
 
 		fVar14 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x4;
 		GetWeapon();
@@ -6921,7 +6923,7 @@ void CActorWolfen::StateSnipeScan(CBehaviourSnipe* pBehaviour)
 	local_40.y = (pScanTarget->currentLocation).y;
 	local_40.z = (pScanTarget->currentLocation).z;
 	local_40.w = (pScanTarget->currentLocation).w;
-	edF32Vector4SubHard(&eStack48, &local_40, &pBehaviour->field_0x80);
+	edF32Vector4SubHard(&eStack48, &local_40, &pBehaviour->aimTarget);
 	fVar6 = edF32Vector4GetDistHard(&eStack48);
 
 	fVar7 = fVar7 * Timer::GetTimer()->cutsceneDeltaTime;
@@ -6932,11 +6934,11 @@ void CActorWolfen::StateSnipeScan(CBehaviourSnipe* pBehaviour)
 	fVar7 = edF32Vector4SafeNormalize0Hard(&eStack48, &eStack48);
 	if (fVar7 != 0.0f) {
 		edF32Vector4ScaleHard(fVar6, &eStack48, &eStack48);
-		edF32Vector4AddHard(&local_40, &pBehaviour->field_0x80, &eStack48);
+		edF32Vector4AddHard(&local_40, &pBehaviour->aimTarget, &eStack48);
 	}
 
 	local_10 = local_40;
-	pBehaviour->field_0x80 = local_40;
+	pBehaviour->aimTarget = local_40;
 
 	pBehaviour->ProjectTargetOnScenery(&eStack32, 0, &pVision->location, &local_10);
 	pBehaviour->ProjectHaloOnScenery(&pVision->location, &eStack32);
@@ -7099,7 +7101,7 @@ void CActorWolfen::StateTrackWeaponFire(CBehaviourTrackWeaponSnipe* pBehaviour)
 		local_50 = local_20;
 
 		if ((pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x0 & 2) != 0) {
-			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->field_0x80);
+			edF32Vector4SubHard(&eStack64, &local_50, &pBehaviour->aimTarget);
 			fVar10 = edF32Vector4GetDistHard(&eStack64);
 			fVar9 = fVar9 * Timer::GetTimer()->cutsceneDeltaTime;
 			if (fVar9 <= fVar10) {
@@ -7109,11 +7111,11 @@ void CActorWolfen::StateTrackWeaponFire(CBehaviourTrackWeaponSnipe* pBehaviour)
 			fVar9 = edF32Vector4SafeNormalize0Hard(&eStack64, &eStack64);
 			if (fVar9 != 0.0f) {
 				edF32Vector4ScaleHard(fVar10, &eStack64, &eStack64);
-				edF32Vector4AddHard(&local_50, &pBehaviour->field_0x80, &eStack64);
+				edF32Vector4AddHard(&local_50, &pBehaviour->aimTarget, &eStack64);
 			}
 		}
 
-		pBehaviour->field_0x80 = local_50;
+		pBehaviour->aimTarget = local_50;
 	}
 
 	this->dynamic.speed = 0.0f;
@@ -7198,7 +7200,7 @@ void CActorWolfen::StateTrackWeaponSnipe_Lost(CBehaviourTrackWeaponSnipe* pBehav
 	edF32Vector4ScaleHard(fVar7 * fVar6, &local_20, &local_20);
 	edF32Vector4AddHard(&local_30, &local_10, &local_20);
 	edF32Vector4AddHard(&local_30, &local_30, &this->pCommander->targetPosition);
-	pBehaviour->field_0x80 = local_30;
+	pBehaviour->aimTarget = local_30;
 	pCVar4 = GetVision();
 	pBehaviour->pBehaviourSnipe->ProjectTargetOnScenery(&local_40, (edF32VECTOR4*)0x0, &pCVar4->location, &local_30);
 	pCVar4 = GetVision();
@@ -7338,7 +7340,7 @@ void CActorWolfen::StateTrackWeaponSnipe_Track(CBehaviourTrackWeaponSnipe* pBeha
 	CActorWolfen* pWolfen;
 
 	iVar13 = -1;
-	peVar11 = &pBehaviour->field_0x80;
+	peVar11 = &pBehaviour->aimTarget;
 	bVar6 = pBehaviour->NewFunc(this->pCommander);
 	fVar17 = GetRunRotSpeed();
 	edF32Vector4SubHard(&eStack64, &this->pCommander->targetPosition, &this->currentLocation);
@@ -7375,7 +7377,7 @@ void CActorWolfen::StateTrackWeaponSnipe_Track(CBehaviourTrackWeaponSnipe* pBeha
 				} while (pCVar12 != (CActorFighter*)0x0);
 			}
 
-			peVar11 = &pBehaviour->field_0x80;
+			peVar11 = &pBehaviour->aimTarget;
 			local_80 = local_50;
 			fVar17 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x8;
 
@@ -7397,7 +7399,7 @@ void CActorWolfen::StateTrackWeaponSnipe_Track(CBehaviourTrackWeaponSnipe* pBeha
 			}
 
 			local_10 = local_80;
-			pBehaviour->field_0x80 = local_80;
+			pBehaviour->aimTarget = local_80;
 			fVar14 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x4;
 			GetWeapon();
 			fVar17 = fVar14 * 0.5f;
@@ -10463,7 +10465,7 @@ void CBehaviourTrackWeaponStand::Begin(CActor* pOwner, int newState, int newAnim
 	if (pOtherActor == (CActor*)0x0) {
 		edF32Vector4ScaleHard(3.0f, &local_10, &pCVar1->rotationQuat);
 		edF32Vector4AddHard(&local_10, &local_10, &this->pOwner->currentLocation);
-		this->field_0x80 = local_10;
+		this->aimTarget = local_10;
 	}
 	else {
 		uVar2 = this->aSubObjs[this->field_0xe8].field_0x4.field_0x0;
@@ -10492,7 +10494,7 @@ void CBehaviourTrackWeaponStand::Begin(CActor* pOwner, int newState, int newAnim
 		}
 
 		local_10 = local_20;
-		this->field_0x80 = local_10;
+		this->aimTarget = local_10;
 	}
 
 	GetNotificationTargetArray()->FUN_003c3a30();
@@ -15018,7 +15020,7 @@ void CBehaviourSnipe::Begin(CActor * pOwner, int newState, int newAnimationType)
 
 	if (this->pOwner->prevBehaviourId == -1) {
 		pCVar2 = (this->field_0x90).Get();
-		this->field_0x80 = pCVar2->currentLocation;
+		this->aimTarget = pCVar2->currentLocation;
 		(this->wolfenHaloAgent).field_0x1c = DBG_COLOR_REST;
 		this->wolfenHaloAgent.Reset(&this->field_0x90.Get()->currentLocation, &gF32Vector4UnitY);
 	}
@@ -15686,7 +15688,7 @@ void CBehaviourTrackWeaponSnipe::Begin(CActor * pOwner, int newState, int newAni
 	CActorWolfen* pWolfen;
 
 	pSnipe = this->pBehaviourSnipe;
-	this->field_0x100 = pSnipe->field_0x80;
+	this->field_0x100 = pSnipe->aimTarget;
 
 	CBehaviourTrackWeaponStand::Begin(pOwner, newState, newAnimationType);
 
@@ -15716,17 +15718,17 @@ void CBehaviourTrackWeaponSnipe::Begin(CActor * pOwner, int newState, int newAni
 	pWolfen = this->pOwner;
 	if (pWolfen->prevBehaviourId == WOLFEN_BEHAVIOUR_SNIPE) {
 		pSnipe = this->pBehaviourSnipe;
-		this->field_0x80 = pSnipe->field_0x80;
+		this->aimTarget = pSnipe->aimTarget;
 	}
 	else {
 		pTarget = pWolfen->pTargetActor_0xc80;
 		if (pTarget == (CActorFighter*)0x0) {
 			edF32Vector4ScaleHard(4.0, &local_10, &pWolfen->rotationQuat);
 			edF32Vector4AddHard(&local_10, &local_10, &this->pOwner->currentLocation);
-			this->field_0x80 = local_10;
+			this->aimTarget = local_10;
 		}
 		else {
-			this->field_0x80 = pTarget->currentLocation;
+			this->aimTarget = pTarget->currentLocation;
 		}
 
 		(this->pBehaviourSnipe->wolfenHaloAgent).field_0x14 = 0.0f;
@@ -15756,7 +15758,7 @@ void CBehaviourTrackWeaponSnipe::End(int newBehaviourId)
 	}
 
 	pBehaviourSnipe = this->pBehaviourSnipe;
-	pBehaviourSnipe->field_0x80 = this->field_0x80;
+	pBehaviourSnipe->aimTarget = this->aimTarget;
 	this->pBehaviourSnipe->wolfenHaloAgent.SetVisible(false);
 	pWolfen = this->pOwner;
 	pWolfen->flags = pWolfen->flags & 0xfffff7ff;
@@ -15821,7 +15823,7 @@ bool CBehaviourTrackWeaponSnipe::NewFunc(CActorCommander* pCommander)
 	CActorFighter* pTarget;
 	bool bVar3;
 
-	peVar7 = &this->field_0x80;
+	peVar7 = &this->aimTarget;
 	fVar11 = this->aSubObjs[this->field_0xe8].field_0x4.field_0x8;
 	local_e0 = (pCommander->targetPosition);
 
@@ -15840,7 +15842,7 @@ bool CBehaviourTrackWeaponSnipe::NewFunc(CActorCommander* pCommander)
 	}
 
 	local_50 = local_e0;
-	this->field_0x80 = local_e0;
+	this->aimTarget = local_e0;
 	pWolfen = this->pOwner;
 	pVision = pWolfen->GetVision();
 	this->pBehaviourSnipe->ProjectTargetOnScenery(&local_40, (edF32VECTOR4*)0x0, &pVision->location, &local_50);

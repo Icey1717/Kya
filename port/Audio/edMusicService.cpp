@@ -132,7 +132,8 @@ std::vector<MusicStreamInfo> GetMusicStreams()
 	for (unsigned index = 0; index < service.streams.size(); ++index) {
 		const auto& stream = service.streams[index];
 		result.push_back({index, stream.song, stream.bank, stream.controls.volume,
-			stream.controls.tempo, stream.playing, stream.synth != nullptr, stream.controls.looping});
+			stream.controls.tempo, stream.playing, stream.synth != nullptr, stream.controls.looping,
+			stream.controls.streamVolume, stream.controls.channels});
 	}
 	return result;
 }

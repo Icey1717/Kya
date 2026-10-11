@@ -16153,16 +16153,16 @@ void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy* pHier, ed_g2d_manager* pTextur
 
 	if (puVar4->hash == HASH_CODE_MBNK) {
 		uVar3 = puVar4->size - 0x10U >> 4;
+		ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(puVar4 + 1);
 		while (true) {
-			ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(puVar4 + 1);
-
 			if (uVar3 == 0) break;
 
-			peVar2 = edHashcodeGet(puVar4->hash, pTexture->pMATA_HASH);
+			peVar2 = edHashcodeGet(pHashCode->hash, pTexture->pMATA_HASH);
 			uVar3 = uVar3 - 1;
 			if (peVar2 != (ed_hash_code*)0x0) {
 				pHashCode->pData = STORE_POINTER(peVar2);
 			}
+			pHashCode = pHashCode + 1;
 		}
 	}
 

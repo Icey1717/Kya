@@ -13,6 +13,8 @@ struct MusicStreamInfo
 	unsigned index = 0, song = 0, bank = 0;
 	float volume = 0.0f, tempo = 0.0f;
 	bool playing = false, prepared = false, looping = false;
+	unsigned streamVolume = 128;
+	std::array<unsigned, 16> channelVolumes{};
 };
 class MusicOutput
 {

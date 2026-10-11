@@ -71,7 +71,8 @@ bool atst(vec4 color)
 
 void main() {
 	vec4 textureColor = texture(textureSampler, fragTexCoord.xy);
-	outColor = textureColor * fragColor;
+	// GS MODULATE multiplies texture and vertex bytes, then divides by 128.
+	outColor = textureColor * fragColor / (128.0 / 255.0);
 
 	if (atst(outColor) == ((blendState.alphaAfail & 16) != 0)) discard;
 

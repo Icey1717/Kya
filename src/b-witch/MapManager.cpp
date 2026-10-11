@@ -2494,7 +2494,7 @@ bool CLevelMap::LoadMapBank(int levelId)
 	}
 	else {
 		/* map_%d.bnk */
-		sprintf(mapFileName, "map_%d.bnk");
+		sprintf(mapFileName, "map_%d.bnk", iVar9);
 		edStrCatMulti(mapFilePath, pCVar3->levelPath, pCVar3->aLevelInfo[this->levelId].levelName, "/", mapFileName, NULL);
 	}
 

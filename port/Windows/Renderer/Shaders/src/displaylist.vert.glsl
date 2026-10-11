@@ -10,6 +10,8 @@ layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
 	gl_Position = vec4(inXYZ, 1.0);
-	fragColor = vec4(inColor.rgb / 127.0, inColor.a / 128.0);
+	// Keep GS color bytes normalized here. Texture modulation and the /128
+	// blend factor are applied independently in the fragment shaders.
+	fragColor = vec4(inColor) / 255.0;
 	fragTexCoord = inST;
 }

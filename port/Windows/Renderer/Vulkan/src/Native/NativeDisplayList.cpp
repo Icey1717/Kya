@@ -20,6 +20,8 @@ namespace Renderer::Native::DisplayList
 	static bool gDrawLabelActive = false;
 
 	static SimpleTexture* gBoundTexture = nullptr;
+	// Display-list draws can remain queued while the native renderer changes GS state.
+	static GIFReg::GSPrim gPrimitive;
 
 	static VkRenderPass gRenderPass;
 
@@ -49,7 +51,7 @@ namespace Renderer::Native::DisplayList
 	{
 		DisplayListPipelineKey pipelineKey;
 		pipelineKey.options.bBoundTexture = gBoundTexture != nullptr;
-		pipelineKey.options.topology = (PS2::GetGSState().PRIM.PRIM == 6) ? topologyLineList : topologyTriangleList;
+		pipelineKey.options.topology = (gPrimitive.PRIM == Renderer::GS_SPRITE) ? topologyLineList : topologyTriangleList;
 
 		return pipelineKey;
 	}
@@ -513,6 +515,12 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 		BeginCommandBufferRecording();
 	}
 
+	if ((gPrimitive.PRIM == Renderer::GS_SPRITE) != (mode == Renderer::GS_SPRITE)) {
+		FinalizeDraw();
+		gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
+		gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();
+	}
+
 	gViewport.width = viewportWidth;
 	gViewport.height = viewportHeight;
 
@@ -528,6 +536,7 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	// We also need to apply prim here
 	// Based on GSState::ApplyPRIM
 	PS2::GetGSState().PRIM.PRIM = mode;
+	gPrimitive = PS2::GetGSState().PRIM;
 	if (gVertexBuffers.GetDrawBufferData().index.tail == 0) {
 		gVertexBuffers.GetDrawBufferData().vertex.next = 0;
 	}
@@ -586,7 +595,7 @@ void Renderer::DisplayList::SetVertex(float x, float y, float z, uint32_t skip)
 	vertex.XYZ[1] = newy;
 	vertex.XYZ[2] = z;
 
-	KickVertex<DisplayListVertex, uint16_t>(vertex, PS2::GetGSState().PRIM, skip, gVertexBuffers.GetDrawBufferData());
+	KickVertex<DisplayListVertex, uint16_t>(vertex, gPrimitive, skip, gVertexBuffers.GetDrawBufferData());
 }
 
 void Renderer::DisplayList::End2D()
