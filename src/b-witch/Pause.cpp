@@ -470,7 +470,7 @@ void CPauseManager::Level_Init()
 	UINT_00448eac = 0;
 
 	if ((GameFlags & 0x40) != 0) {
-		pSimpleMenu = new CSimpleMenu();
+		pSimpleMenu = new CSimpleMenuSound();
 		if (pSimpleMenu != (CSimpleMenu*)0x0) {
 			this->pSimpleMenu = pSimpleMenu;
 			this->pSimpleMenu->reset();
@@ -2679,6 +2679,21 @@ void CSimpleMenu::on_cancel()
 void CSimpleMenu::on_change_selection()
 {
 
+}
+
+void CSimpleMenuSound::on_validate()
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
+}
+
+void CSimpleMenuSound::on_cancel()
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
+}
+
+void CSimpleMenuSound::on_change_selection()
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
 }
 
 float CSimpleMenu::get_time_in_state()

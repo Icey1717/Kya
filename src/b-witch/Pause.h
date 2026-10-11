@@ -187,7 +187,10 @@ public:
 
 class CSimpleMenuSound : public CSimpleMenu
 {
-
+public:
+	virtual void on_validate() override;
+	virtual void on_cancel() override;
+	virtual void on_change_selection() override;
 };
 
 class CPauseManager : public CObjectManager
@@ -304,7 +307,7 @@ void UpdateForFreedWolfen(int nbFreedWolfen);
 
 extern CSettings gSettings;
 
-class CSimpleMenuPause : public CSimpleMenu
+class CSimpleMenuPause : public CSimpleMenuSound
 {
 public:
 	virtual bool disappear_draw();
