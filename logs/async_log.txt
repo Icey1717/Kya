@@ -1,0 +1,2 @@
+Renderer::Kya::G3D::Object::Strip::PreProcessVertices Processing strip name: animated colors test
+Renderer::Kya::G3D::Object::Strip::PreProcessVertices Processing strip name: animated colors test_layer_1

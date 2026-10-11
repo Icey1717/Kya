@@ -1,5 +1,6 @@
 #include "ed3D/ed3DG3D.h"
 #include "ed3D.h"
+#include <cstring>
 
 int gCurTime = 0;
 int gCurFrame = 0;
@@ -190,7 +191,12 @@ void ed3DManageAnim(ed_g3d_Anim_def* pAnimDef)
 		else {
 			fVar10 = (float)uVar3;
 		}
-		pAnimDef->field_0x10 = (float)puVar1[1] + (fVar9 / fVar10) * ((float)puVar2[1] - (float)puVar1[1]);
+		// Keys store an integer time followed by a floating-point frame value.
+		float firstFrame;
+		float secondFrame;
+		std::memcpy(&firstFrame, puVar1 + 1, sizeof(firstFrame));
+		std::memcpy(&secondFrame, puVar2 + 1, sizeof(secondFrame));
+		pAnimDef->field_0x10 = firstFrame + (fVar9 / fVar10) * (secondFrame - firstFrame);
 		if ((pAnimDef->field_0x8 == pAnimDef->field_0x0) &&
 			((uVar3 = pAnimDef->field_0x4, (uVar3 & 1) != 0 || ((uVar3 & 2) != 0)))) {
 			if ((uVar3 & 2) == 0) {
@@ -254,7 +260,11 @@ void ed3DManageAnim(ed_g3d_Anim_def* pAnimDef)
 		else {
 			fVar10 = (float)uVar3;
 		}
-		pAnimDef->field_0x10 = (float)puVar8[1] - (fVar9 / fVar10) * ((float)puVar8[1] - (float)puVar2[1]);
+		float firstFrame;
+		float secondFrame;
+		std::memcpy(&firstFrame, puVar2 + 1, sizeof(firstFrame));
+		std::memcpy(&secondFrame, puVar8 + 1, sizeof(secondFrame));
+		pAnimDef->field_0x10 = secondFrame - (fVar9 / fVar10) * (secondFrame - firstFrame);
 	}
 
 	if ((pAnimDef->field_0x4 & 0x10) != 0) {

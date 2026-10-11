@@ -52,9 +52,8 @@ TEST(VertexColorAnimation, ExistingControllerProvidesLoopClampAndReverseFrames)
 	animation.field_0x20 = 0;
 	animation.field_0x24 = 0.0f;
 	animation.field_0x30 = 100;
-	// Authored key values are integer words; the recovered structure currently
-	// labels these two fields as floats, but ed3DManageAnim reads uint keys.
-	animation.field_0x34 = std::bit_cast<float>(2u);
+	// Authored frame values are floats, not integer words.
+	animation.field_0x34 = 2.0f;
 	gCurTime = 126;
 	gCurFrame = 1;
 	ed3DManageAnim(&animation);
