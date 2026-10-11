@@ -14,7 +14,7 @@ struct CActorCinematic;
 
 struct CBehaviourCinematic : public CBehaviour
 {
-	CActorCinematic* pOwner;
+	CActor* pOwner;
 	CBWCinActor cinActor;
 	int leaveCinematicBehaviourId;
 

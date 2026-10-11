@@ -301,14 +301,14 @@ void CBehaviourCinematic::Create(ByteCode* pByteCode)
 
 void CBehaviourCinematic::Init(CActor* pOwner)
 {
-	CActorCinematic* pActor;
+	CActor* pActor;
 	CAnimation* pAnimationController;
 	edAnmLayer* pAVar1;
 	bool bVar2;
 	int physLayer;
 	float fVar3;
 
-	this->pOwner = (CActorCinematic*)pOwner;
+	this->pOwner = pOwner;
 	(this->cinActor).pParent = this->pOwner;
 
 	physLayer = this->pOwner->GetIdMacroAnim(0x3);
@@ -419,12 +419,12 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 
 	bVar2 = this->pOwner->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (bVar2 != false) {
-		pCVar1 = this->pOwner;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.flags = 0;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.pSound = (CSound*)0x0;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.soundId = 0;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.pSound3dData = (edsound_3d_data*)0x0;
-		(pCVar1->behaviourCinematic).cinActor.soundInstance.field_0x24 = 0;
+		CActorAutonomous* pAutonomous = static_cast<CActorAutonomous*>(this->pOwner);
+		(pAutonomous->dynamicExt).normalizedTranslation.x = 0.0f;
+		(pAutonomous->dynamicExt).normalizedTranslation.y = 0.0f;
+		(pAutonomous->dynamicExt).normalizedTranslation.z = 0.0f;
+		(pAutonomous->dynamicExt).normalizedTranslation.w = 0.0f;
+		(pAutonomous->dynamicExt).field_0x6c = 0.0f;
 	}
 
 	this->field_0x178 = 0;
@@ -465,7 +465,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 {
 	edNODE* pNode;
 	CinNamedObject30* pCVar1;
-	CActorCinematic* pCVar2;
+	CActor* pCVar2;
 	bool bVar3;
 	ed_3D_Scene* pScene;
 	CCinematic* pCinematic;
@@ -583,7 +583,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 void CBehaviourCinematic::Manage()
 {
 	ed_3d_hierarchy_node* peVar1;
-	CActorCinematic* pCVar2;
+	CActor* pCVar2;
 	EActorState AVar3;
 	bool bVar4;
 	CCinematic* pCinematic;

@@ -25,7 +25,7 @@ ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);
 
 ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash);
 
-ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, ed_g2d_manager* pG2d);
+ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, ed_g2d_manager* pG2d, const char* pDebugName = nullptr);
 
 ed_hash_code* ed3DG2DGetHASHFromMat(ed_g2d_manager* pManager, ed_g2d_material* pMaterial);
 

@@ -2022,11 +2022,10 @@ void CCameraGame::_Normal_ManageIdle()
 		this->cameraConfig.field_0xbc = 1.0f;
 		this->field_0x50.z = 0.0f;
 		this->field_0x50.x = 0.0f;
-		// Might not be cosf
-		this->field_0x50.y = cosf(this->field_0x450.w) * 0.3f + 1.2f;
+		this->field_0x50.y = sinf(this->field_0x450.w) * 0.3f + 1.2f;
 		fVar4 = edF32Between_2Pi((this->field_0x450).w + CCamera::_gpcam_man->time_0x4 * 0.25f);
 		(this->field_0x450).w = fVar4;
-		this->cameraConfig.targetPitch = cosf((this->field_0x450).z) * 0.3926991f;
+		this->cameraConfig.targetPitch = sinf((this->field_0x450).z) * 0.3926991f;
 		fVar4 = edF32Between_2Pi((this->field_0x450).z + CCamera::_gpcam_man->time_0x4 * 0.25f);
 		(this->field_0x450).z = fVar4;
 	}

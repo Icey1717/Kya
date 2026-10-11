@@ -545,7 +545,6 @@ void CBehaviourNativShopSell::Draw()
 		}
 		else {
 			gSHO_Cursor1OffsetX = sinf(gSHO_Cursor1OffsetXTime) * 0.05f + 1.05f;
-			gSHO_Cursor1OffsetX = cosf(gSHO_Cursor1OffsetXTime) * 0.05f + 1.05f;
 			gSHO_Cursor1OffsetXTime = edF32Between_2Pi(gSHO_Cursor1OffsetXTime + GetTimer()->cutsceneDeltaTime * 9.424778f);
 		}
 	Display_Cursor(-0.25f, gCursorColorA);

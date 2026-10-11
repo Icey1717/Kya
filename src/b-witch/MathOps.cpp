@@ -931,12 +931,13 @@ void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrd
 	cVar2 = rotationOrder[2];
 	iVar5 = cVar2 + -0x58;
 	pfVar6 = &rotatedMatrix[-0x16].aa + *rotationOrder * 4;
-	fVar7 = sinf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(fabs(*rotationAngles * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar11 = cosf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(fabs((*rotationAngles - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar12 = sinf(rotationAngles[1]); //g_FloatSineCurve_00472260[(int)(fabs(rotationAngles[1] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar10 = cosf(rotationAngles[1]); //g_FloatSineCurve_00472260 [(int)(fabs((rotationAngles[1] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar8 = sinf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(fabs(rotationAngles[2] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar9 = cosf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(fabs((rotationAngles[2] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	// SLES_514.73 0x00263ea0: unshifted cosine table, then angle - pi/2 (sine).
+	fVar7 = cosf(rotationAngles[0]);
+	fVar11 = sinf(rotationAngles[0]);
+	fVar12 = cosf(rotationAngles[1]);
+	fVar10 = sinf(rotationAngles[1]);
+	fVar8 = cosf(rotationAngles[2]);
+	fVar9 = sinf(rotationAngles[2]);
 	pfVar6[iVar3] = fVar12 * fVar8;
 	pfVar6[iVar4] = fVar12 * fVar9;
 	pfVar6[iVar5] = -fVar10;

@@ -16,6 +16,11 @@
 #include "ed3D/ed3DG2D.h"
 #include "edDList/edDList.inl"
 
+#ifdef PLATFORM_WIN
+#include "Mesh.h"
+#include <cstdio>
+#endif
+
 CActorWind::~CActorWind()
 {
 	if (this->aFxWind != (CFxWind*)0x0) {
@@ -1172,7 +1177,8 @@ void ComputeDimensionsAndBase(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* 
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	local_10.x = -1.0f;
+	// The PS2 constant 0xbf000000 is -0.5f: measure the unit primitive end to end.
+	local_10.x = -0.5f;
 	local_10.y = 0.0f;
 	local_10.z = 0.0f;
 	local_10.w = 1.0f;
@@ -1186,7 +1192,7 @@ void ComputeDimensionsAndBase(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* 
 	fVar1 = edF32Vector4NormalizeHard(&local_10, &local_10);
 	v0->x = fVar1;
 	local_10.x = 0.0f;
-	local_10.y = -1.0f;
+	local_10.y = -0.5f;
 	local_10.z = 0.0f;
 	local_10.w = 1.0f;
 	local_20.x = 0.0f;
@@ -1200,7 +1206,7 @@ void ComputeDimensionsAndBase(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* 
 	v0->y = fVar1;
 	local_10.x = 0.0f;
 	local_10.y = 0.0f;
-	local_10.z = -1.0f;
+	local_10.z = -0.5f;
 	local_10.w = 1.0f;
 	local_20.x = 0.0f;
 	local_20.y = 0.0f;
@@ -1638,7 +1644,14 @@ void CFxWind::Init(edF32MATRIX4* pMatrix)
 				pMaterialIt->manager = *(pMaterialIt->material).pManager;
 			}
 			else {
+#ifdef PLATFORM_WIN
+				char materialName[256];
+				std::snprintf(materialName, sizeof(materialName), "Wind %s [primitive %d] %s", this->pOwner->name,
+					this->field_0x164, index == 0 ? "Outer Shell" : "Fake Plane");
+				pDuplicatedManager = ed3DG2DDuplicateMaterial(*pHashCodeIt, pManagerBuffer, &pMaterialIt->manager, materialName);
+#else
 				pDuplicatedManager = ed3DG2DDuplicateMaterial(*pHashCodeIt, pManagerBuffer, &pMaterialIt->manager);
+#endif
 				ed3DG2DGetG2DMaterial(pDuplicatedManager, (*pHashCodeIt)->hash.number);
 				edDListCreatMaterialFromHashCode(&pMaterialIt->material, (*pHashCodeIt)->hash.number, pDuplicatedManager, 0);
 				peVar10 = ed3DG2DGetTextureFromMaterial((pMaterialIt->material).pMaterial, 0);
@@ -3504,10 +3517,10 @@ void CFxWindSolid::_Create_SemiCylinder(_wind_fx_vtx* pVtx, int param_3, int par
 			pVtx->field_0x0 = cosf(fVar8);
 			pVtx->field_0x4 = (float)iVar4 / (float)(this->field_0x4 - 1) + -0.5f;
 			if (param_5 == 0) {
-				pVtx->field_0x8 = -cosf(fVar8);
+				pVtx->field_0x8 = -sinf(fVar8);
 			}
 			else {
-				pVtx->field_0x8 = cosf(fVar8);
+				pVtx->field_0x8 = sinf(fVar8);
 			}
 
 			pVtx->field_0x10 = fVar10;
@@ -3934,6 +3947,19 @@ bool CFxWindSolid::CreatePatchableDlist(int patchId)
 // HACK
 extern ed_3d_strip* gCurStripPatchable;
 
+#ifdef PLATFORM_WIN
+static void NameWindStrip(CFxWind* pWind, const char* pComponent)
+{
+	const auto* pStrip = Renderer::Kya::GetMeshLibrary().FindStrip(gCurStripPatchable);
+	if (pStrip != nullptr) {
+		char meshName[256];
+		std::snprintf(meshName, sizeof(meshName), "Wind %s [primitive %d] %s", pWind->pOwner->name,
+			pWind->field_0x164, pComponent);
+		pStrip->pSimpleMesh->SetName(meshName);
+	}
+}
+#endif
+
 void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 {
 	CGlobalDListPatch* pPatch;
@@ -4023,6 +4049,9 @@ void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 		}
 
 		GameDListPatch_EndCurrent(iVar2, 0);
+#ifdef PLATFORM_WIN
+		NameWindStrip(this->pOwner, "Outer Shell");
+#endif
 	}
 
 	uVar6 = this->fakePlanePatchId;
@@ -4061,6 +4090,9 @@ void CFxWindSolid::Draw(edF32MATRIX4* pMatrix)
 		}
 
 		GameDListPatch_EndCurrent(-(uint)(this->fakePlaneState.alpha != 0.0f), 0);
+#ifdef PLATFORM_WIN
+		NameWindStrip(this->pOwner, "Fake Plane");
+#endif
 	}
 
 	uVar6 = this->whirlPatchId;
@@ -4114,6 +4146,9 @@ LAB_0020d2a0:
 		}
 
 		GameDListPatch_EndCurrent(iVar2, 0);
+#ifdef PLATFORM_WIN
+		NameWindStrip(this->pOwner, "Whirl");
+#endif
 	}
 
 	return;

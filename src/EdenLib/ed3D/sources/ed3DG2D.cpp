@@ -250,7 +250,7 @@ struct dummy_built_g2d_source
 	ed_g2d_material material;
 };
 
-ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, ed_g2d_manager* pG2d)
+ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, ed_g2d_manager* pG2d, const char* pDebugName)
 {
 	bool bValidPalette;
 	undefined uVar2;
@@ -377,8 +377,13 @@ ed_g2d_manager* ed3DG2DDuplicateMaterial(ed_hash_code* pHashCode, char* pData, e
 	pG2d->textureFileLengthA = pNewG2d->fileHeader.field_0x8;
 
 #ifdef PLATFORM_WIN
-	ObjectNaming::SetNextObjectName("Dupe");
-	ed3DGetTextureLoadedDelegate()(pG2d, "Dupe");
+	if (pDebugName != nullptr) {
+		ObjectNaming::SetNextObjectName("%s", pDebugName);
+	}
+	else {
+		ObjectNaming::SetNextObjectName("Duplicated Material %08x", pHashCode->hash.number);
+	}
+	ed3DGetTextureLoadedDelegate()(pG2d, ObjectNaming::CopyObjectName());
 #endif
 
 	return pG2d;

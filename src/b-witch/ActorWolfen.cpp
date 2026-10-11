@@ -18,6 +18,10 @@
 #include "LevelScheduler.h"
 #include "ed3D/ed3DG2D.h"
 
+#ifdef PLATFORM_WIN
+#include <cstdio>
+#endif
+
 struct WolfenAnimMatrixData
 {
 	void Init()
@@ -14759,7 +14763,14 @@ void astruct_5::Create(ByteCode* pByteCode)
 						pMBNK = ed3DHierarchyGetMaterialBank(pHier);
 						pHashCode = LOAD_POINTER_CAST(ed_hash_code*, pMBNK->pData);
 						ed3DHierarchyBankMatInstanciate(pHier, reinterpret_cast<char*>(pvVar7) + iVar14);
+#ifdef PLATFORM_WIN
+						char materialName[256];
+						std::snprintf(materialName, sizeof(materialName), "Wolfen [mesh %d texture %d] Material Instance %u",
+							meshIndex, textureIndex, uVar13);
+						ed3DG2DDuplicateMaterial(pHashCode, reinterpret_cast<char*>(pvVar2) + local_80, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData), materialName);
+#else
 						ed3DG2DDuplicateMaterial(pHashCode, reinterpret_cast<char*>(pvVar2) + local_80, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));
+#endif
 						ed3DHierarchyBankMatLinkG2D(pHier, reinterpret_cast<ed_g2d_manager*>(this->field_0x0[uVar10]->pData));
 						aStaticMeshComponents[uVar10].SetNode(*ppeVar8);
 						uVar13 = uVar13 + 1;
