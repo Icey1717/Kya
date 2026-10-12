@@ -2982,6 +2982,16 @@ void CBehaviourPlatformSlab::Manage()
 	this->pOwner->BehaviourSlab_Manage(this);
 }
 
+void CBehaviourPlatformSlab::ManageFrozen()
+{
+	if ((GameFlags & 0x20) == 0) {
+		this->pOwner->Slab_MoveAndDetectCarriedObject(this, 0);
+		this->pOwner->GenericManage(1, 0, -1, -1);
+	}
+
+	return;
+}
+
 void CBehaviourPlatformSlab::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	switchOnOff.Reset(pOwner);

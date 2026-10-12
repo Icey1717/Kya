@@ -37,6 +37,8 @@ struct SaveDataHeader
 
 static_assert(sizeof(SaveDataHeader) == 0x1c, "Incorrect padding in SaveDataHeader structure");
 
+struct SettingsSaveData;
+
 class CSaveManagement
 {
 public:
@@ -91,7 +93,7 @@ public:
 	undefined field_0x32;
 	undefined field_0x33;
 	struct SaveBigAlloc* pBigAlloc_0x34;
-	void* pSettings_0x38;
+	SettingsSaveData* pSettings_0x38;
 	int gameSaveMaxBufferSize;
 	int settingsSize_0x40;
 	uint saveSize_0x44;

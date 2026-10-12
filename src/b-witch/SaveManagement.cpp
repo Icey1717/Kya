@@ -71,9 +71,9 @@ void SaveManagementBootCheck(void)
 		gSaveManagement.gameSaveMaxBufferSize = 0;
 	}
 
-	gSaveManagement.pSettings_0x38 = edMemAlloc(TO_HEAP(H_MAIN), CSettings::GetMaxSaveBufferSize());
-	if (gSaveManagement.pSettings_0x38 == (void*)0x0) {
-		gSaveManagement.pSettings_0x38 = (void*)0x0;
+	gSaveManagement.pSettings_0x38 = (SettingsSaveData*)edMemAlloc(TO_HEAP(H_MAIN), CSettings::GetMaxSaveBufferSize());
+	if (gSaveManagement.pSettings_0x38 == (SettingsSaveData*)0x0) {
+		gSaveManagement.pSettings_0x38 = (SettingsSaveData*)0x0;
 	}
 
 	gSaveManagement.settingsSize_0x40 = gSaveManagement.settingsSize_0x40;

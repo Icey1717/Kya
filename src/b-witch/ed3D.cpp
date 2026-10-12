@@ -10113,8 +10113,6 @@ bool ed3DLinkStripShadowManageMaterial(ed_3d_strip* pStrip, ed_g2d_material** pp
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
 
 			if (pTexture->bHasPalette == 0) {
-				IMPLEMENTATION_GUARD();
-				// Check
 				pTextureHashCode = LOAD_POINTER_CAST(ed_hash_code*, pTexture->hashCode.pData);
 
 				if (pTextureHashCode != (ed_hash_code*)0x0) {

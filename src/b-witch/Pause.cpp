@@ -21,6 +21,7 @@
 #include "Audio.h"
 #include "edSound/edSoundPlay.h"
 #include <math.h>
+#include <stdarg.h>
 
 #include "edFile/edFile.h"
 
@@ -40,14 +41,20 @@
 #include "edFile/edFileNoWaitStack.h"
 #include "edVideo/Viewport.h"
 #include "edVideo/VideoD.h"
+#include "edVideo/VideoA.h"
 #include "ed3D/ed3DG2D.h"
 #include "ed3D/ed3DG3D.h"
+
+// Working menu settings at 0x00450930; gSettings is the saved copy at 0x0049c9d0.
+static CSettings menuSettings = { true, 0, 0, 0, (LANGUAGE)0, true, 1, 0, 0, 10, 0, (AUDIO_MODE)1, 6, 6 };
 
 CSimpleMenuPause gPauseMenu;
 
 uint UINT_00448eac;
 
 edF32VECTOR4 edF32VECTOR4_00438120 = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+void MenuFrameOption_Draw(CSimpleMenu* pMenu);
 
 CInstance3D::CInstance3D()
 {
@@ -130,7 +137,7 @@ struct SliderParams
 
 	edDList_material* pMaterial;
 	uint field_0x4;
-	undefined4 field_0x8;
+	edDList_material* field_0x8;
 	uint field_0xc;
 	int field_0x10;
 	int field_0x14;
@@ -205,6 +212,7 @@ void PauseEnter(EPauseMenu mode)
 
 		gPauseMenu.set_mode(mode);
 		gSettings.StoreGlobalSettings();
+		menuSettings = gSettings;
 
 		iVar3 = CLevelScheduler::gThis->GetNbAreas(CLevelScheduler::gThis->currentLevelID);
 		piVar6 = &pCVar2->currentAreaIndex;
@@ -254,15 +262,15 @@ void PauseLeave()
 {
 	gSettings.SetSettingsToGlobal();
 
-	gSettings.bEnableVibration = gSettings.bEnableVibration;
-	gSettings.languageID = gSettings.languageID;
-	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
-	gSettings.bWidescreen = gSettings.bWidescreen;
-	gSettings.setOffsetX = gSettings.setOffsetX;
-	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.audioMode = gSettings.audioMode;
-	gSettings.musicVolume = gSettings.musicVolume;
-	gSettings.sfxVolume = gSettings.sfxVolume;
+	menuSettings.bEnableVibration = gSettings.bEnableVibration;
+	menuSettings.languageID = gSettings.languageID;
+	menuSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
+	menuSettings.bWidescreen = gSettings.bWidescreen;
+	menuSettings.setOffsetX = gSettings.setOffsetX;
+	menuSettings.setOffsetY = gSettings.setOffsetY;
+	menuSettings.audioMode = gSettings.audioMode;
+	menuSettings.musicVolume = gSettings.musicVolume;
+	menuSettings.sfxVolume = gSettings.sfxVolume;
 
 	CScene::_pinstance->Level_PauseChange(0);
 	CScene::_pinstance->SetGlobalPaused_001b8c30(0);
@@ -439,6 +447,79 @@ void CSettings::StoreGlobalSettings()
 	return;
 }
 
+uint CSettings::FUN_003c87f0(SettingsSaveData* param_2)
+{
+	bool bVar1;
+	uint uVar2;
+
+	bVar1 = param_2->field_0x0 != 0x53544753;
+	if (bVar1) {
+		param_2->field_0x0 = 0x53544753;
+	}
+
+	uVar2 = (uint)bVar1;
+	if (param_2->field_0x4 != 3) {
+		param_2->field_0x4 = 3;
+		uVar2 = 1;
+	}
+
+	if (param_2->languageID != this->languageID) {
+		param_2->languageID = this->languageID;
+		uVar2 = 1;
+	}
+
+	if (param_2->audioMode != this->audioMode) {
+		param_2->audioMode = this->audioMode;
+		uVar2 = 1;
+	}
+
+	if (param_2->musicVolume != this->musicVolume) {
+		param_2->musicVolume = this->musicVolume;
+		uVar2 = 1;
+	}
+
+	if (param_2->sfxVolume != this->sfxVolume) {
+		param_2->sfxVolume = this->sfxVolume;
+		uVar2 = 1;
+	}
+
+	if (param_2->field_0x18 != 0) {
+		param_2->field_0x18 = 0;
+		uVar2 = 1;
+	}
+
+	if (param_2->setOffsetX != this->setOffsetX) {
+		param_2->setOffsetX = this->setOffsetX;
+		uVar2 = 1;
+	}
+
+	if (param_2->setOffsetY != this->setOffsetY) {
+		param_2->setOffsetY = this->setOffsetY;
+		uVar2 = 1;
+	}
+
+	if (param_2->bEnableVibration != this->bEnableVibration) {
+		param_2->bEnableVibration = this->bEnableVibration;
+		uVar2 = 1;
+	}
+
+	if (param_2->bEnableSubtitles != this->bEnableSubtitles) {
+		param_2->bEnableSubtitles = this->bEnableSubtitles;
+		uVar2 = 1;
+	}
+
+	if (param_2->field_0x26 != false) {
+		param_2->field_0x26 = false;
+		uVar2 = 1;
+	}
+
+	if (param_2->field_0x27 != (bool)this->bWidescreen) {
+		param_2->field_0x27 = (bool)this->bWidescreen;
+		uVar2 = 1;
+	}
+	return uVar2;
+}
+
 void CPauseManager::Level_Init()
 {
 	CActorHero* pAVar1;
@@ -492,6 +573,7 @@ void CPauseManager::Level_Init()
 	}
 	this->field_0x34 = 1;
 	gSettings.StoreGlobalSettings();
+	menuSettings = gSettings;
 	this->field_0x24 = 0;
 	return;
 }
@@ -844,15 +926,15 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	pPauseMenu->draw_action(0x31a0b0d16194149, ExitLevel, 0, -3);
 
 	gSettings.SetSettingsToGlobal();
-	gSettings.bEnableVibration = gSettings.bEnableVibration;
-	gSettings.languageID = gSettings.languageID;
-	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
-	gSettings.bWidescreen = gSettings.bWidescreen;
-	gSettings.setOffsetX = gSettings.setOffsetX;
-	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.audioMode = gSettings.audioMode;
-	gSettings.musicVolume = gSettings.musicVolume;
-	gSettings.sfxVolume = gSettings.sfxVolume;
+	menuSettings.bEnableVibration = gSettings.bEnableVibration;
+	menuSettings.languageID = gSettings.languageID;
+	menuSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
+	menuSettings.bWidescreen = gSettings.bWidescreen;
+	menuSettings.setOffsetX = gSettings.setOffsetX;
+	menuSettings.setOffsetY = gSettings.setOffsetY;
+	menuSettings.audioMode = gSettings.audioMode;
+	menuSettings.musicVolume = gSettings.musicVolume;
+	menuSettings.sfxVolume = gSettings.sfxVolume;
 
 	//PauseDrawInterface(bShowLevelSwitchUI);
 
@@ -1313,6 +1395,36 @@ bool MenuFrameLoad_Draw(CSimpleMenu* pMenu)
 	return bSuccess;
 }
 
+void FUN_002f33e0(int)
+{
+	bool bVar1;
+	int iVar2;
+	ulong uVar3;
+
+	if (gSaveManagement.pFile_0x2c == (edFILEH*)0x0) {
+		bVar1 = false;
+	}
+	else {
+		if ((gSaveManagement.pFile_0x2c)->nbQueuedActions == 0) {
+			bVar1 = false;
+		}
+		else {
+			bVar1 = true;
+		}
+	}
+	if (!bVar1) {
+		if (((gSaveManagement.field_0x0 == 0) && (iVar2 = gSaveManagement.test_device_has_enough_room(), iVar2 == 3)) && (gSaveManagement.fileExistsFlags == 0x1ff)) {
+			gSaveManagement.field_0x0 = 1;
+		}
+		if (((gSaveManagement.field_0x0 != 0) && (iVar2 = gSaveManagement.test_device_has_enough_room(), iVar2 == 3)) &&
+			((gSaveManagement.fileExistsFlags == 0x1ff &&
+				((uVar3 = gSettings.FUN_003c87f0(gSaveManagement.pSettings_0x38), uVar3 != 0 && (bVar1 = gSaveManagement.save(1), bVar1 == false)))))) {
+			gSaveManagement.field_0x0 = 0;
+		}
+	}
+	return;
+}
+
 uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 {
 	CFrontendDisplay* this_00;
@@ -1337,9 +1449,8 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 			MenuFramePause_Draw(pMenu);
 			pCVar1 = CScene::ptable.g_PauseManager_00451688;
 			if ((CScene::ptable.g_PauseManager_00451688)->field_0x24 != 0) {
-				IMPLEMENTATION_GUARD(
-				FUN_002f1b50(pMenu, FUN_002f33e0, 0);
-				pCVar1->field_0x24 = 0;)
+				pMenu->FUN_002f1b50(FUN_002f33e0, 0);
+				pCVar1->field_0x24 = 0;
 			}
 
 			gToggleShrinkJamgutCheatCode_004a5720.Update();
@@ -1379,7 +1490,7 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 			bResult = MenuFrameLoad_Draw(pMenu);
 			break;
 		case PM_OptionsMenu:
-			//MenuFrameOption_Draw(pMenu);
+			MenuFrameOption_Draw(pMenu);
 			break;
 		case PM_DisplayOptions:
 			IMPLEMENTATION_GUARD(
@@ -1656,6 +1767,13 @@ void CSimpleMenu::set_justification_right()
 	return;
 }
 
+void CSimpleMenu::set_justification_center()
+{
+	this->horizontalPos = GetScreenWidthSafe() >> 1;
+	this->horizontalAllignment = 0;
+	return;
+}
+
 float CSimpleMenu::draw_func(float param_2)
 {
 	edDList_material* pMaterialInfo;
@@ -1875,6 +1993,237 @@ void CSimpleMenu::draw_option(char* pMessage, uint color)
 	textFormat.Display(fVar3, (float)this->verticalPos);
 	edTextStyleSetCurrent(pNewFont);
 	this->field_0x20 = this->field_0x20 + 1;
+	return;
+}
+
+bool CSimpleMenu::draw_option_type_switch(byte* pValue, ulong helpMsgId, ulong offMsgId, ulong onMsgId)
+{
+	int itemIndex;
+	char* pMessage;
+	ulong msgId;
+
+	itemIndex = this->field_0x20;
+	if ((*pValue == 1) || (*pValue == 0)) {
+		msgId = *pValue == 1 ? onMsgId : offMsgId;
+		if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+			pMessage = gMessageManager.get_message(msgId);
+		}
+		else {
+			pMessage = this->pTranslatedTextData->get_message(msgId, 0);
+		}
+		draw_option(pMessage, 0);
+	}
+
+	if (itemIndex == this->selectedIndex) {
+		DrawInitialSaveMenuHelp(helpMsgId, 0xffffffff);
+		if ((this->lastInput_0x14 == MENU_INPUT_LEFT) || (this->lastInput_0x14 == MENU_INPUT_RIGHT)) {
+			*pValue = *pValue == 0;
+			OnChangeValue();
+		}
+		return true;
+	}
+	return false;
+}
+
+bool CSimpleMenu::draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, ...)
+{
+	char* pMessage;
+	ulong msgId;
+	uint index;
+	va_list args;
+
+	index = 0;
+	pMessage = "";
+	va_start(args, nbValues);
+	if (nbValues != 0) {
+		do {
+			msgId = va_arg(args, ulong);
+			if (index == *pValue) {
+				if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+					pMessage = gMessageManager.get_message(msgId);
+				}
+				else {
+					pMessage = this->pTranslatedTextData->get_message(msgId, 0);
+				}
+				break;
+			}
+			index = index + 1;
+		} while (index < (uint)nbValues);
+	}
+	va_end(args);
+	return draw_option_type_list(pValue, helpMsgId, nbValues, pMessage);
+}
+
+bool CSimpleMenu::draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, char* pMessage)
+{
+	int itemIndex;
+
+	itemIndex = this->field_0x20;
+	draw_option(pMessage, 0);
+	if (itemIndex == this->selectedIndex) {
+		DrawInitialSaveMenuHelp(helpMsgId, 0xffffffff);
+		if (this->lastInput_0x14 == MENU_INPUT_LEFT) {
+			if (*pValue == 0) {
+				*pValue = nbValues - 1;
+			}
+			else {
+				*pValue = *pValue - 1;
+			}
+			OnChangeValue();
+		}
+		else {
+			if (this->lastInput_0x14 == MENU_INPUT_RIGHT) {
+				if (*pValue < nbValues - 1U) {
+					*pValue = *pValue + 1;
+				}
+				else {
+					*pValue = 0;
+				}
+				OnChangeValue();
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool CSimpleMenu::draw_slider(uint* pValue, ulong helpMsgId, ulong msgId, SliderParams* pParams)
+{
+	int itemIndex;
+	char* pMessage;
+
+	itemIndex = this->field_0x20;
+	if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+		pMessage = gMessageManager.get_message(msgId);
+	}
+	else {
+		pMessage = this->pTranslatedTextData->get_message(msgId, 0);
+	}
+	draw_option(pMessage, 0);
+	draw_slider((long)(itemIndex == this->selectedIndex), (long)(int)*pValue, pParams);
+	if (itemIndex == this->selectedIndex) {
+		DrawInitialSaveMenuHelp(helpMsgId, 0xffffffff);
+		if (this->lastInput_0x14 == MENU_INPUT_LEFT) {
+			if (*pValue != 0) {
+				*pValue = *pValue - 1;
+				OnChangeSlider((float)*pValue / (float)(uint)(pParams->field_0x10 - 1));
+			}
+		}
+		else {
+			if ((this->lastInput_0x14 == MENU_INPUT_RIGHT) && (*pValue < pParams->field_0x10 - 1U)) {
+				*pValue = *pValue + 1;
+				OnChangeSlider((float)*pValue / (float)(uint)(pParams->field_0x10 - 1));
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+byte sliderUseBorder = 1;
+uint sliderBorderColor = 0x40ffffff;
+float sliderBorderWidth = 4.0f;
+byte sliderColorInitialized = 0;
+uint sliderBackgroundColor;
+
+void CSimpleMenu::draw_slider(long bSelected, long value, SliderParams* pParams)
+{
+	uint color;
+	uint width;
+	int halfArrowHeight;
+	edDList_material* pMaterial;
+	float sliderWidth;
+	float halfCursorWidth;
+	float sliderHeight;
+	float centerY;
+	float left;
+	float right;
+	float top;
+	float bottom;
+	float cursorX;
+
+	width = pParams->field_0x14 * pParams->field_0x10 + pParams->field_0x1c * (pParams->field_0x10 - 1);
+	sliderWidth = (float)width;
+	this->verticalPos = this->verticalPos + pParams->field_0x18;
+	halfCursorWidth = (float)pParams->field_0x14 / 2.0f;
+	sliderHeight = (float)pParams->field_0x18;
+	centerY = ((float)this->verticalPos + sliderHeight * 0.5f) - 10.0f;
+	left = (float)gVideoConfig.screenWidth * 0.5f - sliderWidth * 0.5f;
+	right = (float)gVideoConfig.screenWidth * 0.5f + sliderWidth * 0.5f;
+	top = centerY - sliderHeight / 2.0f;
+	bottom = centerY + sliderHeight / 2.0f;
+	cursorX = edFIntervalLERP((float)(uint)value, 0.0f, (float)(uint)(pParams->field_0x10 - 1),
+		left + sliderWidth / (float)(uint)pParams->field_0x10, right - sliderWidth / (float)(uint)pParams->field_0x10);
+	edDListLoadIdentity();
+	if (sliderUseBorder == 0) {
+		color = pParams->field_0xc;
+		edDListColor4u8((byte)color, (byte)(color >> 8), (byte)(color >> 16), (byte)(color >> 24));
+		edDListUseMaterial(pParams->field_0x8);
+		edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
+		edDListTexCoo2f(0.0f, 0.0f);
+		edDListVertex4f(left, top, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 0.0f);
+		edDListVertex4f(right, top, 0.0f, 0.0f);
+		edDListTexCoo2f(0.0f, 1.0f);
+		edDListVertex4f(left, bottom, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 1.0f);
+		edDListVertex4f(right, bottom, 0.0f, 0.0f);
+		edDListEnd();
+	}
+	else {
+		if (sliderColorInitialized == 0) {
+			sliderColorInitialized = 1;
+			sliderBackgroundColor = (pParams->field_0xc & 0xff000000) | 0xffffff;
+		}
+		CPauseManager::DrawRectangleBorder((float)gVideoConfig.screenWidth * 0.5f, centerY, sliderWidth, sliderHeight - 14.0f,
+			sliderBorderWidth, sliderBorderWidth, sliderBackgroundColor, sliderBorderColor, 0);
+	}
+	color = pParams->field_0x4;
+	edDListColor4u8((byte)color, (byte)(color >> 8), (byte)(color >> 16), (byte)(color >> 24));
+	edDListUseMaterial(pParams->pMaterial);
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
+	edDListTexCoo2f(0.0f, 0.0f);
+	edDListVertex4f(cursorX - halfCursorWidth, top, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(cursorX + halfCursorWidth, top, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 1.0f);
+	edDListVertex4f(cursorX - halfCursorWidth, bottom, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	edDListVertex4f(cursorX + halfCursorWidth, bottom, 0.0f, 0.0f);
+	edDListEnd();
+	if (bSelected == 0) {
+		pMaterial = (edDList_material*)this->field_0x104;
+	}
+	else {
+		pMaterial = (edDList_material*)this->field_0x100;
+	}
+	edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+	edDListUseMaterial(pMaterial);
+	halfArrowHeight = this->field_0xfc;
+	if (halfArrowHeight < 0) {
+		halfArrowHeight = halfArrowHeight + 1;
+	}
+	halfArrowHeight = halfArrowHeight >> 1;
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
+	edDListTexCoo2f(0.0f, 0.0f);
+	edDListVertex4f(left - (float)this->field_0xf8, centerY - (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(left, centerY - (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 1.0f);
+	edDListVertex4f(left - (float)this->field_0xf8, centerY + (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	edDListVertex4f(left, centerY + (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListEnd();
+	edDListBegin(0.0f, 0.0f, 0.0f, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 4);
+	edDListTexCoo2f(0.0f, 0.0f);
+	edDListVertex4f(right + (float)this->field_0xf8, centerY + (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(right, centerY + (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 1.0f);
+	edDListVertex4f(right + (float)this->field_0xf8, centerY - (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	edDListVertex4f(right, centerY - (float)halfArrowHeight, 0.0f, 0.0f);
+	edDListEnd();
 	return;
 }
 
@@ -2288,22 +2637,21 @@ void CSimpleMenu::DrawMainMenu()
 	draw_option_type_page(0, 0x18164e555f424f4e, PM_Bonus, 0, 0);
 
 	if (pCVar1->field_0x24 != 0) {
-		IMPLEMENTATION_GUARD(
 		FUN_002f1b50(FUN_002f33e0, 0);
-		pCVar1->field_0x24 = 0;)
+		pCVar1->field_0x24 = 0;
 	}
 
 	gSettings.SetSettingsToGlobal();
 
-	gSettings.bEnableVibration = gSettings.bEnableVibration;
-	gSettings.languageID = gSettings.languageID;
-	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
-	gSettings.bWidescreen = gSettings.bWidescreen;
-	gSettings.setOffsetX = gSettings.setOffsetX;
-	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.audioMode = gSettings.audioMode;
-	gSettings.musicVolume = gSettings.musicVolume;
-	gSettings.sfxVolume = gSettings.sfxVolume;
+	menuSettings.bEnableVibration = gSettings.bEnableVibration;
+	menuSettings.languageID = gSettings.languageID;
+	menuSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
+	menuSettings.bWidescreen = gSettings.bWidescreen;
+	menuSettings.setOffsetX = gSettings.setOffsetX;
+	menuSettings.setOffsetY = gSettings.setOffsetY;
+	menuSettings.audioMode = gSettings.audioMode;
+	menuSettings.musicVolume = gSettings.musicVolume;
+	menuSettings.sfxVolume = gSettings.sfxVolume;
 	return;
 }
 
@@ -2451,6 +2799,146 @@ bool CSimpleMenu::MenuFrameNewGame_Draw()
 	return bResult;
 }
 
+static CSettings initialSettings = { true, 0, 0, 0, (LANGUAGE)0, true, 1, 0, 0, 10, 0, (AUDIO_MODE)1, 6, 6 };
+
+void CommitMenuSettings(int param_1)
+{
+	gSettings.bEnableVibration = menuSettings.bEnableVibration;
+	gSettings.languageID = menuSettings.languageID;
+	gSettings.bEnableSubtitles = menuSettings.bEnableSubtitles;
+	gSettings.bWidescreen = menuSettings.bWidescreen;
+	gSettings.setOffsetX = menuSettings.setOffsetX;
+	gSettings.setOffsetY = menuSettings.setOffsetY;
+	gSettings.audioMode = menuSettings.audioMode;
+	gSettings.musicVolume = menuSettings.musicVolume;
+	gSettings.sfxVolume = menuSettings.sfxVolume;
+	CScene::ptable.g_PauseManager_00451688->field_0x24 = 1;
+	return;
+}
+
+float optionsPalFrontEndVolumeBoxOffsetX = 0.0f;
+float optionsPalFrontEndVolumeBoxOffsetY = 100.0f;
+float optionsVolumeBoxOffsetX = 0.0f;
+float optionsVolumeBoxOffsetY = 67.0f;
+float optionsPalFrontEndDecorationOffsetX = 0.0f;
+float optionsPalFrontEndDecorationOffsetY = 185.0f;
+float optionsDecorationOffsetX = 0.0f;
+float optionsDecorationOffsetY = 150.0f;
+
+float optionsTitleBoxWidth = 300.0f;
+float optionsTitleBoxHeight = 36.0f;
+float optionsTitleBoxOffsetX = 0.0f;
+float optionsTitleBoxOffsetY = -170.0f;
+float optionsVolumeBoxWidth = 320.0f;
+float optionsVolumeBoxHeight = 120.0f;
+
+float optionsLeftDecorationScaleX = 0.6f;
+float optionsLeftDecorationScaleY = 0.15f;
+float optionsLeftDecorationOffsetX = -80.0f;
+float optionsLeftDecorationOffsetY = 0.0f;
+float optionsRightDecorationScaleX = 0.6f;
+float optionsRightDecorationScaleY = 0.15f;
+float optionsRightDecorationOffsetX = 80.0f;
+float optionsRightDecorationOffsetY = 0.0f;
+
+void MenuFrameOption_Draw(CSimpleMenu* pMenu)
+{
+	bool bEnableVibration;
+	float rectOffsetY;
+	float rectOffsetX;
+	float spriteOffsetX;
+	float spriteOffsetY;
+	uint languageId;
+	uint audioMode;
+	byte vibration;
+	byte subtitles;
+
+	CPauseManager::DrawRectangleBorder((float)(GetScreenWidthSafe() >> 1) + optionsTitleBoxOffsetX, (float)(GetScreenHeightSafe() >> 1) + optionsTitleBoxOffsetY,
+		optionsTitleBoxWidth, optionsTitleBoxHeight, 4.0f, 4.0f, 0x407f7f7f, 0x007f7f7f, 1);
+
+	rectOffsetY = optionsVolumeBoxOffsetY;
+	rectOffsetX = optionsVolumeBoxOffsetX;
+	spriteOffsetX = optionsDecorationOffsetX;
+	spriteOffsetY = optionsDecorationOffsetY;
+	if ((gVideoConfig.omode == 3) && ((GameFlags & 0x40) != 0)) {
+		rectOffsetY = optionsPalFrontEndVolumeBoxOffsetY;
+		rectOffsetX = optionsPalFrontEndVolumeBoxOffsetX;
+		spriteOffsetX = optionsPalFrontEndDecorationOffsetX;
+		spriteOffsetY = optionsPalFrontEndDecorationOffsetY;
+	}
+
+	CPauseManager::DrawRectangleBorder((float)(GetScreenWidthSafe() >> 1) + rectOffsetX, (float)(GetScreenHeightSafe() >> 1) + rectOffsetY,
+		optionsVolumeBoxWidth, optionsVolumeBoxHeight, 4.0f, 4.0f, 0x407f7f7f, 0x007f7f7f, 1);
+	MenuBitmaps[12].rgba[0] = 0x7f;
+	MenuBitmaps[12].rgba[1] = 0x69;
+	MenuBitmaps[12].rgba[2] = 0x5f;
+	MenuBitmaps[12].rgba[3] = 0x4d;
+	MenuBitmaps[12].Draw(optionsLeftDecorationScaleX, optionsLeftDecorationScaleY, optionsLeftDecorationOffsetX + (float)(GetScreenWidthSafe() >> 1) + spriteOffsetX,
+		optionsLeftDecorationOffsetY + (float)(GetScreenHeightSafe() >> 1) + spriteOffsetY, 0x12);
+	MenuBitmaps[12].Draw(optionsRightDecorationScaleX, optionsRightDecorationScaleY, optionsRightDecorationOffsetX + (float)(GetScreenWidthSafe() >> 1) + spriteOffsetX,
+		optionsRightDecorationOffsetY + (float)(GetScreenHeightSafe() >> 1) + spriteOffsetY, 0x1012);
+
+	pMenu->draw_title(0x40a00065f4f5054, -0xaa);
+	pMenu->field_0xd8 = 0x82;
+	pMenu->set_justification_left();
+	pMenu->field_0xf4 = 1;
+	if ((gVideoConfig.omode == 2) || ((GameFlags & 0x40) == 0)) {
+		pMenu->set_vertical_spacing(0x23);
+	}
+
+	bEnableVibration = menuSettings.bEnableVibration;
+	vibration = menuSettings.bEnableVibration;
+	pMenu->draw_option_type_switch(&vibration, 0, 0x352424547524842, 0x455242454752484a);
+	menuSettings.bEnableVibration = vibration;
+	if (bEnableVibration != menuSettings.bEnableVibration) {
+		if ((bEnableVibration == false) && (menuSettings.bEnableVibration != false)) {
+			gPlayerInput.field_0x1c.StartVibrationEnvelope(1.0f, 0.0f, 0.2f, 0.0f, 0);
+			gPlayerInput.field_0x40.StartVibrationEnvelope(0.8f, 0.5f, 0.2f, 0.0f, 0);
+		}
+		else {
+			gPlayerInput.ApplyVibration(0.0f, 0.0f);
+		}
+	}
+
+	pMenu->set_vertical_spacing(0x1c);
+	if ((gVideoConfig.omode == 3) && ((GameFlags & 0x40) != 0)) {
+		languageId = menuSettings.languageID;
+		pMenu->draw_option_type_list(&languageId, 0, 5, (ulong)0x4d5c464152130400, (ulong)0x4f5e4c5a1a13071c,
+			(ulong)0x585d4e5c1a13060b, (ulong)0x4b5e46415213121e, (ulong)0x4b5c46535413081a);
+		menuSettings.languageID = (LANGUAGE)languageId;
+	}
+	subtitles = menuSettings.bEnableSubtitles;
+	pMenu->draw_option_type_switch(&subtitles, 0, 0x5f4a1a191a000a0d, 0x570c1a191a000a0d);
+	menuSettings.bEnableSubtitles = subtitles;
+	pMenu->draw_option_type_page(0, 0x494c5d454e400c1d, PM_DisplayOptions, 0, 0);
+	pMenu->draw_option_type_switch(&menuSettings.bWidescreen, 0, 0x151a191c14475255, 0x30b091612054244);
+	audioMode = menuSettings.audioMode;
+	pMenu->draw_option_type_list(&audioMode, 0, 3, (ulong)0x575e5c5544481f00, (ulong)0x575e424e4f555a4f, (ulong)0x191a424f58555055);
+	menuSettings.audioMode = (AUDIO_MODE)audioMode;
+	pMenu->field_0xf4 = 0;
+	pMenu->set_justification_center();
+	pMenu->set_vertical_spacing(0x24);
+	pMenu->draw_slider(&menuSettings.musicVolume, 0, 0x410611031001001e, &SliderParams_00450900);
+	pMenu->set_vertical_spacing(0x12);
+	pMenu->draw_slider(&menuSettings.sfxVolume, 0, 0x45431a0a090a0a13, &SliderParams_00450900);
+	pMenu->set_vertical_spacing(0x24);
+	pMenu->field_0xf4 = 1;
+	pMenu->set_vertical_spacing(0x2d);
+	pMenu->draw_action(0x6454e555f424143, CommitMenuSettings, 0, PM_None);
+	menuSettings.SetSettingsToGlobal();
+	menuSettings.setOffsetX = gSettings.setOffsetX;
+	menuSettings.setOffsetY = gSettings.setOffsetY;
+	if ((gVideoConfig.offsetX != menuSettings.setOffsetX) || (gVideoConfig.offsetY != menuSettings.setOffsetY)) {
+		gVideoConfig.offsetX = menuSettings.setOffsetX;
+		gVideoConfig.offsetY = menuSettings.setOffsetY;
+		edVideoSetOffset((short)menuSettings.setOffsetX, (short)menuSettings.setOffsetY);
+	}
+
+	pMenu->field_0xf4 = 0;
+
+	return;
+}
+
 void CSimpleMenu::DrawInitialSaveMenuHelp(ulong helpMsgId, uint color)
 {
 	int xOffset;
@@ -2491,8 +2979,7 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 			}
 			else {
 				if (EVar4 == PM_OptionsMenu) {
-					IMPLEMENTATION_GUARD(
-					CSimpleMenu::MenuFrameOption_Draw(pMenu);)
+					MenuFrameOption_Draw(pMenu);
 				}
 				else {
 					if (EVar4 == PM_LoadMenu) {
@@ -2680,6 +3167,18 @@ void CSimpleMenu::on_change_selection()
 
 }
 
+void CSimpleMenu::OnChangeValue()
+{
+}
+
+void CSimpleMenu::OnChangeWheel()
+{
+}
+
+void CSimpleMenu::OnChangeSlider(float value)
+{
+}
+
 void CSimpleMenuSound::on_validate()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
@@ -2693,6 +3192,21 @@ void CSimpleMenuSound::on_cancel()
 void CSimpleMenuSound::on_change_selection()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+}
+
+void CSimpleMenuSound::OnChangeValue()
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 2, 0);
+}
+
+void CSimpleMenuSound::OnChangeWheel()
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+}
+
+void CSimpleMenuSound::OnChangeSlider(float value)
+{
+	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(value, 1, 1);
 }
 
 float CSimpleMenu::get_time_in_state()

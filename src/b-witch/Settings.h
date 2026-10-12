@@ -4,6 +4,23 @@
 #include "Types.h"
 #include "edSound/edSoundPlay.h"
 
+struct SettingsSaveData
+{
+	int field_0x0;
+	int field_0x4;
+	int languageID;
+	int audioMode;
+	int musicVolume;
+	int sfxVolume;
+	int field_0x18;
+	int setOffsetX;
+	int setOffsetY;
+	bool bEnableVibration;
+	bool bEnableSubtitles;
+	bool field_0x26;
+	bool field_0x27;
+};
+
 class CSettings
 {
 public:
@@ -12,6 +29,8 @@ public:
 	bool LoadFromBuffer(void* pDataV);
 	void SetSettingsToGlobal();
 	void StoreGlobalSettings();
+	uint FUN_003c87f0(SettingsSaveData* param_2);
+
 	bool bEnableVibration;
 	undefined field_0x1;
 	undefined field_0x2;

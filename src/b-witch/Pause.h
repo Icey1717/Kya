@@ -97,6 +97,7 @@ public:
 
 	void set_justification_left();
 	void set_justification_right();
+	void set_justification_center();
 
 	float draw_func(float param_2);
 
@@ -106,6 +107,11 @@ public:
 	bool draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int param_5);
 
 	bool draw_action(ulong actionMsgId, ActionFuncPtr pFunc, int slotID, int param_5);
+	bool draw_option_type_switch(byte* pValue, ulong helpMsgId, ulong offMsgId, ulong onMsgId);
+	bool draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, ...);
+	bool draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, char* pMessage);
+	bool draw_slider(uint* pValue, ulong helpMsgId, ulong msgId, struct SliderParams* pParams);
+	void draw_slider(long bSelected, long value, struct SliderParams* pParams);
 
 	void set_font_help(struct edCTextFont* pFont);
 	void set_font_message(struct edCTextFont* pFont);
@@ -119,6 +125,7 @@ public:
 	void draw_help_line(ulong msgId, int x, int y, uint color);
 
 	void DrawMainMenu();
+	void MenuFrameOption_Draw();
 	bool MenuFrameNewGame_Draw();
 	void DrawInitialSaveMenuHelp(ulong helpMsgId, uint color);
 
@@ -132,6 +139,9 @@ public:
 	virtual void on_validate();
 	virtual void on_cancel();
 	virtual void on_change_selection();
+	virtual void OnChangeValue();
+	virtual void OnChangeWheel();
+	virtual void OnChangeSlider(float value);
 
 	float get_time_in_state();
 
@@ -191,6 +201,9 @@ public:
 	virtual void on_validate() override;
 	virtual void on_cancel() override;
 	virtual void on_change_selection() override;
+	virtual void OnChangeValue() override;
+	virtual void OnChangeWheel() override;
+	virtual void OnChangeSlider(float value) override;
 };
 
 class CPauseManager : public CObjectManager

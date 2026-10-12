@@ -1071,14 +1071,12 @@ void CActorBrazul::FUN_003e87e0(int nextState, int param_3)
 
 void astruct_19::Create(int param_2, int param_3, int param_4)
 {
-	// THIS IS LIKELY AN FX_SPARK_NO_ALLOC
-	// aka a spark with 3 data sections following it in the struct.
-	this->field_0x40.Create(3, 0xc, this->field_0x130, this->field_0x154, param_2);
-	//(this->field_0x40).field_0xe4 = &this->field_0x190;
+	this->field_0x40.Create(3, 0xc, this->field_0x40.aVectorData, this->field_0x40.aFloatData, param_2);
+	this->field_0x40.field_0xe4 = this->field_0x40.aUnknown;
 	this->field_0x3d0.Init(param_3);
 	this->field_0x3dc.Init(param_4);
-	//(this->field_0x40).field_0x90 = &DAT_00a6a500;
-	//(this->field_0x40).field_0x94 = &DAT_00a6a500;
+	(this->field_0x40).field_0x90 = 0x00a6a500;
+	(this->field_0x40).field_0x94 = 0x00a6a500;
 
 	return;
 }
@@ -1189,28 +1187,27 @@ void astruct_19::Reset(float param_1)
 void astruct_19::Draw()
 {
 	int iVar1;
-	undefined* puVar2;
-	long lVar3;
+	uint color;
+	bool bActive;
 	float fVar4;
 	int iVar5;
 
-	IMPLEMENTATION_GUARD_FX(
 	iVar1 = this->field_0x4;
-	lVar3 = 0;
+	bActive = false;
 	iVar5 = 0x7f;
 	if (iVar1 != 0) {
 		if (iVar1 != 2) {
 			if (iVar1 != 3) goto LAB_003e53e8;
 			fVar4 = (this->field_0x34 / this->field_0x38) * 127.0f;
-			iVar5 = static_cast<int>(float)(static_cast<int>(fVar4) * static_cast<uint>(0.0f < fVar4));
+			iVar5 = (0.0f < fVar4) ? static_cast<int>(fVar4) : 0;
 		}
-		puVar2 = static_cast<undefined*>(iVar5 << 0x18 | 0xa6a500);
-		lVar3 = 1;
-		(this->field_0x40).field_0x90 = puVar2;
-		(this->field_0x40).field_0x94 = puVar2;
+		color = static_cast<uint>(iVar5) << 0x18 | 0x00a6a500;
+		bActive = true;
+		(this->field_0x40).field_0x90 = color;
+		(this->field_0x40).field_0x94 = color;
 	}
 LAB_003e53e8:
-	this->field_0x40.Draw(lVar3);)
+	this->field_0x40.Draw(bActive);
 
 	return;
 }

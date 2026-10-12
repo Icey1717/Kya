@@ -140,6 +140,7 @@ void CMusicManager::CancelStop(float fadeInTime, int handle)
 		if ((stateFlags & 1) == 0) {
 			if ((stateFlags & 4) == 0) {
 				if ((stateFlags & 8) == 0) {
+					pCell->stateFlags &= ~2u;
 					pCell->transitionDuration = fadeInTime;
 					pCell->transitionRemaining = fadeInTime;
 					pCell->targetVolume = pCell->initialVolume;
@@ -253,15 +254,9 @@ int CMusicManager::Start(float priority, float initialVolume, float fadeInTime, 
 
 bool CMusicManager::IsActive(int handle)
 {
-	bool bVar1;
-
-	bVar1 = false;
-	IMPLEMENTATION_GUARD(
-	if ((handle != -1) && ((this->aMusicCells[handle].pMusic == (CMusic*)0x0 || (bVar1 = true, (static_cast<uint>(&this->aMusicCells[handle].pMusic)[3] & 2) == 0)))) {
-		bVar1 = false;
-	})
-
-	return bVar1;
+	// This query tests the pending stop state, not the playback options.
+	return handle != -1 && aMusicCells[handle].pMusic != nullptr &&
+		(aMusicCells[handle].stateFlags & 2) != 0;
 }
 
 uint CMusicManager::_ManageCell(float param_1, float param_2, CAudioManager* pAudioManager, CMusicManager::s_music_cell* pMusicCell, int* pStart, int* pStop, int* pClearCell, int* pResume,
@@ -1455,9 +1450,7 @@ void CAudioManager::Level_Manage()
 			}
 		}
 
-		if (((bVar1) && (unaff_s0 = 0, iVar2 != -1)) && ((pMusicManager->aMusicCells[iVar2].pMusic == (CMusic*)0x0 || (unaff_s0 = 1, (pMusicManager->aMusicCells[iVar2].flags & 2) == 0)))) {
-			unaff_s0 = 0;
-		}
+		unaff_s0 = bVar1 && pMusicManager->IsActive(iVar2);
 
 		if (this->count_0x274 == 0) {
 			if ((bVar1) && (unaff_s0 == 0)) {
@@ -1488,9 +1481,7 @@ void CAudioManager::Level_Manage()
 			}
 		}
 
-		if (((bVar1) && (unaff_s0 = 0, iVar2 != -1)) && ((pMusicManager->aMusicCells[iVar2].pMusic == (CMusic*)0x0 || (unaff_s0 = 1, (pMusicManager->aMusicCells[iVar2].flags & 2) == 0)))) {
-			unaff_s0 = 0;
-		}
+		unaff_s0 = bVar1 && pMusicManager->IsActive(iVar2);
 
 		if (this->field_0x294 == 0) {
 			if ((bVar1) && (unaff_s0 == 0)) {

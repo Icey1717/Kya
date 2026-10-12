@@ -4,6 +4,8 @@
 #include "edMusicService.h"
 #include "edSysTransferService.h"
 #include "edMusic/edMusic.h"
+#include "Audio.h"
+#include "TimeController.h"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -122,6 +124,59 @@ protected:
 		Audio::ServiceMusic();
 	}
 };
+}
+
+class MusicSchedulerTest : public testing::Test
+{
+protected:
+	CMusicManager manager;
+	CMusic background{0, 0, 1, 1.0f}, combat{0, 1, 1, 1.0f};
+	int previousNoAudio;
+	float previousDelta;
+	int combatHandle;
+	void SetUp() override
+	{
+		previousNoAudio = NoAudio;
+		previousDelta = GetTimer()->lastFrameTime;
+		NoAudio = 1;
+		GetTimer()->lastFrameTime = 0.1f;
+		manager.Start(1.0f, 1.0f, 0.0f, 0.0f, &background, 0x7a);
+		combatHandle = manager.Start(3.0f, 1.0f, 0.5f, 0.5f, &combat, 0x19);
+		for (int i = 0; i < 10; ++i) manager.Manage(nullptr);
+	}
+	void TearDown() override
+	{
+		NoAudio = previousNoAudio;
+		GetTimer()->lastFrameTime = previousDelta;
+	}
+};
+
+TEST_F(MusicSchedulerTest, CombatStopCompletesAndReleasesBackground)
+{
+	for (int i = 0; i < 20; ++i) {
+		// Match the per-frame combat request handling in Level_Manage.
+		if (manager.IsMusic(combatHandle, &combat) && !manager.IsActive(combatHandle)) {
+			manager.Stop(0.5f, 0.0f, combatHandle);
+		}
+		manager.Manage(nullptr);
+	}
+	EXPECT_FALSE(manager.IsMusic(combatHandle, &combat));
+	EXPECT_EQ(manager.aStreamUsed[manager.aMusicCells[combatHandle].streamIndex], 0);
+	EXPECT_EQ(manager.aMusicCells[9].pMusic, &background);
+	EXPECT_GT(manager.aMusicCells[9].volume, 0.0f);
+}
+
+TEST_F(MusicSchedulerTest, ReturningToCombatCancelsPendingStop)
+{
+	manager.Stop(0.5f, 0.0f, combatHandle);
+	manager.Manage(nullptr);
+	manager.Manage(nullptr);
+	ASSERT_TRUE(manager.IsActive(combatHandle));
+	manager.CancelStop(0.5f, combatHandle);
+	EXPECT_FALSE(manager.IsActive(combatHandle));
+	for (int i = 0; i < 20; ++i) manager.Manage(nullptr);
+	EXPECT_TRUE(manager.IsMusic(combatHandle, &combat));
+	EXPECT_FLOAT_EQ(manager.aMusicCells[combatHandle].volume, 1.0f);
 }
 
 TEST(AudioMusic, ParsesCompressedEventTimingAndRejectsTruncation)

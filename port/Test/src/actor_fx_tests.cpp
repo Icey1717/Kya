@@ -7,6 +7,8 @@
 #include "Animation.h"
 #include "AnmManager.h"
 #include "FxComposite.h"
+#include "ActorBrazul.h"
+#include "DlistManager.h"
 
 namespace {
 	struct FxDrawSample {
@@ -97,6 +99,76 @@ TEST(ActorFxTeardown, RetainsAnimationUntilCompositeUnregistersBone)
 	delete[] actors.aLinkedActorData;
 }
 #endif
+
+TEST(BrazulSpark, InitializesAllEightSparksWithoutOverwritingEffectHandles)
+{
+	CActorBrazul actor;
+	actor.sectorId = 0;
+	CGlobalDListPatch patch{ 0 };
+	GlobalDlistEntry entry{};
+	entry.pDlistPatch = &patch;
+	CGlobalDListManager manager;
+	manager.ppGlobalDlist = &entry;
+	auto* previousManager = CScene::ptable.g_GlobalDListManager_004516bc;
+	CScene::ptable.g_GlobalDListManager_004516bc = &manager;
+
+	for (auto& spark : actor.field_0x1070) {
+		spark.Create(13, 42, 43);
+		EXPECT_EQ(spark.field_0x40.field_0x90, 0x00a6a500u);
+		EXPECT_EQ(spark.field_0x40.field_0x94, 0x00a6a500u);
+		spark.Init(&actor);
+		EXPECT_EQ(spark.pOwner, &actor);
+		EXPECT_EQ(spark.field_0x3d0.type, 42u);
+		EXPECT_EQ(spark.field_0x3dc.type, 43u);
+		for (int i = 0; i < 12; ++i) {
+			EXPECT_FLOAT_EQ(spark.field_0x40.pFloat_0x10[i], 0.025f);
+		}
+		for (int i = 0; i < 3; ++i) {
+			const auto& first = spark.field_0x40.field_0xe4[i * 12];
+			const auto& last = spark.field_0x40.field_0xe4[i * 12 + 11];
+			EXPECT_FLOAT_EQ(first.x, 0.0f);
+			EXPECT_FLOAT_EQ(first.z, 0.0f);
+			EXPECT_FLOAT_EQ(first.w, 1.0f);
+			EXPECT_FLOAT_EQ(last.x, 0.0f);
+			EXPECT_FLOAT_EQ(last.z, 1.0f);
+			EXPECT_FLOAT_EQ(last.w, 1.0f);
+		}
+	}
+	EXPECT_EQ(patch.nbTotalPatches, 8);
+	EXPECT_EQ(entry.nbMatrices, 8 * 3 * 12 * 2);
+	CScene::ptable.g_GlobalDListManager_004516bc = previousManager;
+}
+
+TEST(BrazulSpark, DrawPreservesRgbAndFadesAlphaDuringReset)
+{
+	astruct_19 spark{};
+	// Exercise the actor's draw states without requiring renderer packets.
+	spark.Create(-1, -1, -1);
+	spark.field_0x4 = 2;
+	spark.Draw();
+	EXPECT_EQ(spark.field_0x40.field_0x90, 0x7fa6a500u);
+	EXPECT_EQ(spark.field_0x40.field_0x94, 0x7fa6a500u);
+
+	spark.Reset(2.0f);
+	spark.Draw();
+	EXPECT_EQ(spark.field_0x40.field_0x90, 0x7fa6a500u);
+	spark.field_0x34 = 1.0f;
+	spark.Draw();
+	EXPECT_EQ(spark.field_0x40.field_0x90, 0x3fa6a500u);
+	EXPECT_EQ(spark.field_0x40.field_0x94, 0x3fa6a500u);
+	for (float remaining : { 0.0f, -1.0f }) {
+		spark.field_0x34 = remaining;
+		spark.Draw();
+		EXPECT_EQ(spark.field_0x40.field_0x90, 0x00a6a500u);
+		EXPECT_EQ(spark.field_0x40.field_0x94, 0x00a6a500u);
+	}
+	for (int state : { 0, 1, 4 }) {
+		spark.field_0x4 = state;
+		spark.Draw();
+		EXPECT_EQ(spark.field_0x40.field_0x90, 0x00a6a500u);
+		EXPECT_EQ(spark.field_0x40.field_0x94, 0x00a6a500u);
+	}
+}
 
 TEST(ActorFxPath, DrawsAtWorldSpaceKeysAndHidesFromGlobalPass)
 {
