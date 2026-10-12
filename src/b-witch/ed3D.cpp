@@ -2232,6 +2232,7 @@ void ed3DFrustumCompute(SceneConfig* pSceneConfig, edFCamera* pCamera, edSurface
 
 int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 {
+	ZONE_SCOPED;
 	uint uVar1;
 	edF32VECTOR4* v0;
 	float projectionScaleFactorB;
@@ -2563,6 +2564,7 @@ edpkt_data* ed3DFlushResetOffset(edpkt_data* pPkt, edRECT16* pRect)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DClusterManager.c
 void ed3DClustersRenderComputeSceneHierarchyList(ed_3D_Scene* pStaticMeshMaster)
 {
+	ZONE_SCOPED;
 	int iVar1;
 	int iVar2;
 	int* piVar3;
@@ -2635,6 +2637,7 @@ uint ed3DClusterGetEdgeWithSon(uint param_1, uchar param_2)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ed3DSceneManager.c
 void ed3DSceneSortClusters(ed_3D_Scene* pScene)
 {
+	ZONE_SCOPED;
 	edNODE* peVar1;
 	bool bListNotSorted;
 	edNODE* pPrevNode;
@@ -3245,7 +3248,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedS
 
 	incPacket = pStrip->cachedIncPacket;
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripGetIncPacket 0x{:x} flags: {:x} initial incPacket: {:x}", (uintptr_t)pStrip, pStrip->flags, incPacket);
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripGetIncPacket 0x{:x} flags: {:x} initial incPacket: {:x}", (uintptr_t)pStrip, pStrip->flags, incPacket);
 
 	if ((incPacket == 0) || (bCachedSizeDirty != false)) {
 		stripFlags = pStrip->flags;
@@ -3304,7 +3307,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedS
 		}
 	}
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripGetIncPacket 0x{:x} final incPacket: {:x}", (uintptr_t)pStrip, incPacket);
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripGetIncPacket 0x{:x} final incPacket: {:x}", (uintptr_t)pStrip, incPacket);
 
 	return incPacket;
 }
@@ -3314,32 +3317,32 @@ ed_3D_Scene* gCurScene = NULL;
 void DebugDumpStripFlagInfo(uint flags)
 {
 	if ((flags & 0x8) != 0) {
-		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$BF_Culling");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$BF_Culling");
 	}
 
 	if ((flags & 0x20) != 0) {
-		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Alpha_Object");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Alpha_Object");
 	}
 
 	if ((flags & 0x100) != 0) {
-		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Normal_Extruder");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Normal_Extruder");
 	}
 
 	if ((flags & 0x4) != 0) {
-		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_RGBA");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_RGBA");
 	}
 
 	if ((flags & RENDER_STRIP_FLAG_ANIM_ST) != 0) {
-		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_ST");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_ST");
 	}
 
 	if ((flags & 0x1) != 0) {
 		if ((flags & 0x2) != 0) {
-			ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo Culling");
+			ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo Culling");
 
 		}
 		else {
-			ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$NoClipCulling_12_1");
+			ED3D_LOG_SLOW(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$NoClipCulling_12_1");
 		}
 	}
 
@@ -3369,7 +3372,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	edpkt_data* pTempPkt;
 	edF32VECTOR4* qwc;
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit pPkt: 0x{:x} pNode: 0x{:x} flags: 0x{:x}", (uintptr_t)pPkt, (uintptr_t)pNode, pNode->header.typeField.flags);
+	ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripInit pPkt: 0x{:x} pNode: 0x{:x} flags: 0x{:x}", (uintptr_t)pPkt, (uintptr_t)pNode, pNode->header.typeField.flags);
 
 	p3dStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
 
@@ -3449,7 +3452,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		pNextPkt = pTempPkt;
 
 #ifdef PLATFORM_WIN
-		ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit PTR_AnimScratchpad_00449554 upload");
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripInit PTR_AnimScratchpad_00449554 upload");
 		VU1Emu::UpdateMemory(pPkt, pNextPkt);
 #endif
 
@@ -3462,7 +3465,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			gStartPKT_SPR = pTempPkt;
 		}
 
-		ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit Building anim matrix transfer pkts count: {}", maxAnimMatrixCount);
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripInit Building anim matrix transfer pkts count: {}", maxAnimMatrixCount);
 
 #ifdef PLATFORM_WIN
 		Renderer::StartAnimMatrix();
@@ -3485,7 +3488,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		}
 
 #ifdef PLATFORM_WIN
-		ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit Processing anim matrix transfer pkts remainder: {}", maxAnimMatrixCount);
+		ED3D_LOG_SLOW(LogLevel::VeryVerbose, "ed3DFlushStripInit Processing anim matrix transfer pkts remainder: {}", maxAnimMatrixCount);
 		VU1Emu::UpdateMemory(SCRATCHPAD_ADDRESS(0x70000800), pNextPkt);
 #endif
 
@@ -4188,7 +4191,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	pVifRefPktCur = g_VifRefPktCur;
 	p3dStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
+	ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
 	ZONE_SCOPED;
 
 	assert(p3dStrip->meshCount > 0);
@@ -4211,12 +4214,12 @@ void ed3DFlushStrip(edNODE* pNode)
 	}
 
 	if (pNextNode == (edNODE*)0x0) {
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip No next node");
+		ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushStrip No next node");
 
 		partialMeshSectionCount = p3dStrip->meshCount % 3;
 		fullMeshSectionCount = p3dStrip->meshCount - partialMeshSectionCount;
 
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip partial: {} full: {}", partialMeshSectionCount, fullMeshSectionCount);
+		ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushStrip partial: {} full: {}", partialMeshSectionCount, fullMeshSectionCount);
 
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
@@ -4248,7 +4251,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				pPktBufferB->asU32[2] = SCE_VIF1_SET_BASE((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1, 0);
 				pPktBufferB->asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 
-				ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list Partial: 0x{:x} / {}", (uintptr_t)pVifList, partialMeshSectionCount);
+				ED3D_LOG_SLOW(LogLevel::VeryVerbose, "Send strip Vif list Partial: 0x{:x} / {}", (uintptr_t)pVifList, partialMeshSectionCount);
 
 				// Send strip Vif list.
 				pPktBufferB[1].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
@@ -4279,7 +4282,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				pVifListB = pVifList + incPacketSize * 0x10;
 				pVifListC = pVifList + incPacketSize * 0x20;
 
-				ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list Full: 0x{:x} / {}", (uintptr_t)pVifList, fullMeshSectionCount);
+				ED3D_LOG_SLOW(LogLevel::VeryVerbose, "Send strip Vif list Full: 0x{:x} / {}", (uintptr_t)pVifList, fullMeshSectionCount);
 
 				pPktBufferB->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				pPktBufferB->asU32[2] = SCE_VIF1_SET_BASE((*ed3DVU1AddrWithBufCur_Scratch)[ed3DVU1BufferCur][0] + 1, 0);
@@ -4455,7 +4458,7 @@ void ed3DFlushStrip(edNODE* pNode)
 		}
 	}
 	else {
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip With next node");
+		ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushStrip With next node");
 		uint stripFlags = p3dStrip->flags;
 		pRVar25 = 0;
 		uVar23 = 0;
@@ -4511,7 +4514,7 @@ void ed3DFlushStrip(edNODE* pNode)
 
 
 
-					ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list Section: 0x{:x} / {}", (uintptr_t)pVifList, meshSectionCount);
+					ED3D_LOG_SLOW(LogLevel::VeryVerbose, "Send strip Vif list Section: 0x{:x} / {}", (uintptr_t)pVifList, meshSectionCount);
 
 					// Send strip Vif list.
 					pPktBufferB[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
@@ -5808,12 +5811,13 @@ edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial
 
 void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 {
+	ZONE_SCOPED;
 	short listNodeType;
 	undefined4* puVar2;
 	bool bVar3;
 	edNODE* pNode;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStripList pList: 0x{:x} pMaterial: 0x{:x}", (uintptr_t)pList, (uintptr_t)pMaterial);
+	ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushStripList pList: 0x{:x} pMaterial: 0x{:x}", (uintptr_t)pList, (uintptr_t)pMaterial);
 
 #ifdef PLATFORM_WIN
 	// Do an update now as we swap out our vif ref.
@@ -5997,6 +6001,7 @@ edF32VECTOR4 Vector_004489cc = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 {
+	ZONE_SCOPED;
 	byte nbLayers;
 	ed_3d_hierarchy* pHierarchy;
 	edNODE_MANAGER* pNodeManager;
@@ -6190,7 +6195,7 @@ void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 	edNODE_MANAGER* pNodeManager;
 	edNODE* pNode;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialNode");
+	ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterialNode");
 
 	if ((pMaterial->flags & 1) == 0) {
 		pNode = pMaterial->list.pPrev;
@@ -6385,7 +6390,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 			peVar5 = LOAD_POINTER_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
 
 			if (((layerFlags & LAYER_FLAG_ANIM_ST_UPDATED) == 0) && (gStepTime != 0)) {
-				ED3D_LOG(LogLevel::Verbose, "ed3DLinkStripToViewport tex: {} Updating ANIM ST", pTexture->hashCode.hash.ToString());
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DLinkStripToViewport tex: {} Updating ANIM ST", pTexture->hashCode.hash.ToString());
 
 				peVar5->z = peVar5->z + peVar5->x;
 				peVar5->w = peVar5->w + peVar5->y;
@@ -6554,6 +6559,7 @@ edpkt_data* ed3DFlushMaterialMipMapOff(edpkt_data* pPkt)
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size)
 {
+	ZONE_SCOPED;
 	bool bBeganGIFTag = false;
 
 	for (int i = 0; i < size; i++) {
@@ -6566,40 +6572,40 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 			{
 				Gif_Tag gifTag;
 				gifTag.setTag((u8*)&pkt, false);
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TAG: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TAG: Loop: {}", gifTag.nLoop);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TAG: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TAG: Loop: {}", gifTag.nLoop);
 			}
 			break;
 			case SCE_GS_TEX0_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				SendTextureCommandsFromPacked(pkt.cmdA);
 			}
 			break;
 			case SCE_GS_ALPHA_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands ALPHA: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands ALPHA: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				GIFReg::GSAlpha alpha = *reinterpret_cast<GIFReg::GSAlpha*>(&pkt.cmdA);
 				Renderer::SetAlpha(alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
 			}
 			break;
 			case SCE_GS_COLCLAMP:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands COLCLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands COLCLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				GIFReg::GSColClamp colClamp = *reinterpret_cast<GIFReg::GSColClamp*>(&pkt.cmdA);
 				Renderer::SetColClamp(colClamp);
 			}
 			break;
 			case SCE_GS_TEST_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEST: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEST: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pkt.cmdA);
 				Renderer::SetTest(test);
 			}
 			break;
 			case SCE_GS_TEX1_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				GIFReg::GSTex1 tex1{};
 				tex1.CMD = pkt.cmdA;
 				Renderer::SetTex1(tex1);
@@ -6607,26 +6613,26 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 			break;
 			case SCE_GS_MIPTBP1_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				
 			}
 			break;
 			case SCE_GS_MIPTBP2_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP2: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP2: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				
 			}
 			break;
 			case SCE_GS_CLAMP_1:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands CLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands CLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 				const GIFReg::GSClamp clamp = *reinterpret_cast<GIFReg::GSClamp*>(&pkt.cmdA);
 				Renderer::SetClamp(clamp);
 			}
 			break;
 			default:
 			{
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands UNKNOWN ({:x}): {:x} ({:x})", pkt.asU32[2], pkt.cmdA, pkt.cmdB);
+				ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands UNKNOWN ({:x}): {:x} ({:x})", pkt.asU32[2], pkt.cmdA, pkt.cmdB);
 			}
 			break;
 			}
@@ -6646,7 +6652,7 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 			DoVif(opCodeL);
 			DoVif(opCodeH);
 
-			ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands Updating VIF Memory");
+			ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands Updating VIF Memory");
 			VU1Emu::UpdateMemory(&pkt, &pkt + 1);
 		}
 	}
@@ -6658,6 +6664,7 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DFlushMaterial.c
 void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 {
+	ZONE_SCOPED;
 	ed_g2d_material* peVar1;
 	ulong* puVar2;
 	edpkt_data* peVar3;
@@ -6673,7 +6680,7 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 	int iVar9;
 	ed_g2d_material* pTVar1;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial pMaterial: 0x{:x} | pBitmap: 0x{:x}", (uintptr_t)pDmaMaterial->pMaterial, (uintptr_t)pDmaMaterial->pBitmap);
+	ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial pMaterial: 0x{:x} | pBitmap: 0x{:x}", (uintptr_t)pDmaMaterial->pMaterial, (uintptr_t)pDmaMaterial->pBitmap);
 
 	peVar6 = gpPKTDataRefMasPath3;
 	peVar5 = g_GifRefPktCur;
@@ -6788,7 +6795,7 @@ void ed3DFlushMaterial(ed_dma_material* pDmaMaterial)
 	}
 	else {
 		ed3DG2DMaterialGetLayerBitmap(pDmaMaterial, &gCurBitmap, &gCurLayer, 0);
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial gCurBitmap: 0x{:x} | gCurLayer: 0x{:x}", (uintptr_t)gCurBitmap, (uintptr_t)gCurLayer);
+		ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushMaterial gCurBitmap: 0x{:x} | gCurLayer: 0x{:x}", (uintptr_t)gCurBitmap, (uintptr_t)gCurLayer);
 		// The flare GS passes use the current material's first bitmap.
 		*g_pCurFlareMaterial = pDmaMaterial->pMaterial;
 		peVar4 = g_VifRefPktCur;
@@ -6911,7 +6918,7 @@ void ed3DFlushList(void)
 	ed_dma_material* pvVar7;
 	int materialCounter;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushList");
+	ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushList");
 	ZONE_SCOPED;
 
 	RENDER_LABEL_BEGIN("ed3DFlushList");
@@ -6925,8 +6932,8 @@ void ed3DFlushList(void)
 			return;
 		}
 
-		ED3D_LOG(LogLevel::Verbose, "\n-------------");
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Processing: {}", gFushListCounter);
+		ED3D_LOG_SLOW(LogLevel::Verbose, "\n-------------");
+		ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushList Processing: {}", gFushListCounter);
 		RENDER_LABEL_BEGIN("ed3DFlushList process list %d", gFushListCounter);
 
 		/* Get the camera type, and then add the flip index as there is two per type. */
@@ -6945,8 +6952,8 @@ void ed3DFlushList(void)
 				materialCounter = 0;
 
 				while (peVar3 = pPrevList, peVar3 != pCurrentList) {
-					ED3D_LOG(LogLevel::Verbose, "");
-					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
+					ED3D_LOG_SLOW(LogLevel::Verbose, "");
+					ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
 
 					ed3DFlushMaterial((ed_dma_material*)(peVar3)->pData);
 					pLastFlushed = peVar3;
@@ -6968,8 +6975,8 @@ void ed3DFlushList(void)
 				materialCounter = 0;
 
 				for (; pPrevList != pCurrentList; pPrevList = (pPrevList)->pPrev) {
-					ED3D_LOG(LogLevel::Verbose, "");
-					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
+					ED3D_LOG_SLOW(LogLevel::Verbose, "");
+					ED3D_LOG_SLOW(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
 
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
 					pLastFlushed = pPrevList;
@@ -9043,6 +9050,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 // Should be in: D:/Projects/EdenLib/ed3D/sources/ps2/ed3DRender.c
 bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 {
+	ZONE_SCOPED;
 #ifdef PLATFORM_WIN
     Renderer::DrawTrace::OwnerScope traceCluster(reinterpret_cast<uintptr_t>(pMeshInfo), "Scenery cluster", -1, -1, -1);
 #endif

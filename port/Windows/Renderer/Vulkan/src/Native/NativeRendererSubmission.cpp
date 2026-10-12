@@ -55,6 +55,7 @@ namespace Renderer
 
 		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags, const uint32_t* pColors)
 		{
+			ZONE_SCOPED;
 			GetNativeRendererState().cachedPerDrawData.renderFlags = renderFlags;
 
 			if (pMesh->GetName() == DEBUG_MESH_NAME) {
@@ -75,9 +76,11 @@ namespace Renderer
 			if (prim == GS_TRIANGLELIST || prim == GS_TRIANGLESTRIP || prim == GS_TRIANGLEFAN) {
 				instance.cullMode = GetNativeRendererState().cachedCullMode;
 			}
+
 			if (pColors) {
 				instance.vertexColors.assign(pColors, pColors + pMesh->GetVertexBufferData().GetVertexTail());
 			}
+
 			instance.gsAlpha = PS2::GetGSState().ALPHA;
 			// Option packets and full-alpha masks can change within a material batch.
 			instance.gsTest = PS2::GetGSState().TEST;
@@ -91,6 +94,7 @@ namespace Renderer
 			instance.bIsZMask = PS2::GetGSState().ZBUF.ZMSK != 0;
 			assert(!instance.gsTest.DATE && "Native destination-alpha testing is not implemented");
 			instance.perDrawData = GetNativeRendererState().cachedPerDrawData;
+
 			if ((renderFlags & 0x40) != 0 && (pMesh->GetStripFlags() & 0x8000000) != 0) {
 				// Mapping setup can change without a new hierarchy lighting packet.
 				// Append an immutable combined block before capturing this draw's index.
@@ -101,10 +105,11 @@ namespace Renderer
 				data.environmentCameraY = state.environmentCameraY;
 				state.lightingDynamicBuffer.AddInstanceData(data);
 			}
-			instance.perDrawData.modelMatrixIndex  = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
-			instance.perDrawData.animMatrixStart   = static_cast<uint32_t>(instance.animationMatrixStart);
+
+			instance.perDrawData.modelMatrixIndex = static_cast<uint32_t>(GetNativeRendererState().modelBuffer.GetInstanceIndex());
+			instance.perDrawData.animMatrixStart = static_cast<uint32_t>(instance.animationMatrixStart);
 			instance.perDrawData.lightingDataIndex = static_cast<uint32_t>(GetNativeRendererState().lightingDynamicBuffer.GetInstanceIndex());
-			instance.perDrawData.animStDataIndex   = static_cast<uint32_t>(GetNativeRendererState().animStBuffer.GetInstanceIndex());
+			instance.perDrawData.animStDataIndex = static_cast<uint32_t>(GetNativeRendererState().animStBuffer.GetInstanceIndex());
 			if ((renderFlags & 0x20) == 0) {
 				instance.perDrawData.globalAlpha = 0x80;
 			}
@@ -112,27 +117,27 @@ namespace Renderer
 			instance.perDrawData.stripFlags = pMesh->GetStripFlags();
 
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.perDrawData.modelMatrixIndex, instance.animationMatrixStart);
-            if (DrawTrace::IsEnabled()) {
-                DrawTrace::Submission trace;
-                DrawTrace::CopyName(trace.mesh, pMesh->GetName().c_str());
-                trace.assetKey = DrawTrace::AssetKey(pMesh->GetName().c_str());
-                trace.flags = renderFlags;
-                trace.primitive = pMesh->GetPrim().CMD;
-                trace.modelIndex = instance.perDrawData.modelMatrixIndex;
-                trace.animationIndex = instance.perDrawData.animMatrixStart;
-                trace.lightingIndex = instance.perDrawData.lightingDataIndex;
-                trace.animStIndex = instance.perDrawData.animStDataIndex;
-                trace.globalAlpha = instance.perDrawData.globalAlpha;
-                memcpy(trace.model.data(), &GetNativeRendererState().modelBuffer.GetLastInstance(), sizeof(float) * 16);
-                instance.traceSubmission = DrawTrace::Submit(trace);
-                DrawTrace::Source source;
-                if (DrawTrace::Highlight(instance.traceSubmission, source)) {
-                    const glm::mat4 model = glm::make_mat4(source.model.data());
-                    const glm::vec3 center = glm::vec3(model * glm::vec4(source.bounds[0], source.bounds[1], source.bounds[2], 1.0f));
-                    const float scale = std::max({glm::length(glm::vec3(model[0])), glm::length(glm::vec3(model[1])), glm::length(glm::vec3(model[2]))});
-                    DebugShapes::AddSphere(center, std::abs(source.bounds[3]) * scale, glm::vec4(1.0f, 0.75f, 0.15f, 1.0f));
-                }
-            }
+			if (DrawTrace::IsEnabled()) {
+				DrawTrace::Submission trace;
+				DrawTrace::CopyName(trace.mesh, pMesh->GetName().c_str());
+				trace.assetKey = DrawTrace::AssetKey(pMesh->GetName().c_str());
+				trace.flags = renderFlags;
+				trace.primitive = pMesh->GetPrim().CMD;
+				trace.modelIndex = instance.perDrawData.modelMatrixIndex;
+				trace.animationIndex = instance.perDrawData.animMatrixStart;
+				trace.lightingIndex = instance.perDrawData.lightingDataIndex;
+				trace.animStIndex = instance.perDrawData.animStDataIndex;
+				trace.globalAlpha = instance.perDrawData.globalAlpha;
+				memcpy(trace.model.data(), &GetNativeRendererState().modelBuffer.GetLastInstance(), sizeof(float) * 16);
+				instance.traceSubmission = DrawTrace::Submit(trace);
+				DrawTrace::Source source;
+				if (DrawTrace::Highlight(instance.traceSubmission, source)) {
+					const glm::mat4 model = glm::make_mat4(source.model.data());
+					const glm::vec3 center = glm::vec3(model * glm::vec4(source.bounds[0], source.bounds[1], source.bounds[2], 1.0f));
+					const float scale = std::max({ glm::length(glm::vec3(model[0])), glm::length(glm::vec3(model[1])), glm::length(glm::vec3(model[2])) });
+					DebugShapes::AddSphere(center, std::abs(source.bounds[3]) * scale, glm::vec4(1.0f, 0.75f, 0.15f, 1.0f));
+				}
+			}
 		}
 
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj, const float* pGsProj)
@@ -334,7 +339,8 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
-	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
+	ZONE_SCOPED;
+	NATIVE_LOG_VERBOSE(LogLevel::Info, "BindTexture: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
 	if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 		pTexture->GetName();
@@ -349,17 +355,20 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		int instanceIndex = 0;
 		const auto mipOverride = gMipOverride.load(std::memory_order_relaxed);
-		for (auto& instance : GetNativeRendererState().currentDraw->instances) {
-			const auto sampling = PS2::ResolveTextureSampling(pTexture->GetTextureRegisters().clamp, instance.gsTex1,
-				pTexture->GetRenderer()->mipLevels, mipOverride);
-			instance.descriptorSet = pTexture->GetRenderer()->GetOrCreateTextureBinding(sampling.sampler);
-			const auto& settings = sampling.lod;
-			instance.perDrawData.textureLodBias = settings.lodBias;
-			instance.perDrawData.textureLodScale = settings.lodScale;
-			instance.perDrawData.textureFixedLod = settings.fixedLod;
-			instance.perDrawData.textureMaxMipLevel = settings.maxLevel;
-			instance.perDrawData.textureLodEnable = 1;
-			NATIVE_LOG(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
+		{
+			ZONE_SCOPED_NAME("Native Texture Instance Setup");
+			for (auto& instance : GetNativeRendererState().currentDraw->instances) {
+				const auto sampling = PS2::ResolveTextureSampling(pTexture->GetTextureRegisters().clamp, instance.gsTex1,
+					pTexture->GetRenderer()->mipLevels, mipOverride);
+				instance.descriptorSet = pTexture->GetRenderer()->GetOrCreateTextureBinding(sampling.sampler);
+				const auto& settings = sampling.lod;
+				instance.perDrawData.textureLodBias = settings.lodBias;
+				instance.perDrawData.textureLodScale = settings.lodScale;
+				instance.perDrawData.textureFixedLod = settings.fixedLod;
+				instance.perDrawData.textureMaxMipLevel = settings.maxLevel;
+				instance.perDrawData.textureLodEnable = 1;
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "BindTexture: instance ({}) anim start: {}", instanceIndex++, instance.animationMatrixStart);
+			}
 		}
 		if (!GetNativeRendererState().currentDraw->instances.empty()) {
 			GetNativeRendererState().currentDraw->descriptorSet = GetNativeRendererState().currentDraw->instances.front().descriptorSet;
@@ -371,12 +380,15 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 			DebugShapes::SetInitialViewProjection(GetNativeRendererState().cachedViewMatrix, GetNativeRendererState().cachedProjMatrix);
 		}
 
-		AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
+		{
+			ZONE_SCOPED_NAME("Native Draw Enqueue");
+			AddRenderThreadDraw(GetNativeRendererState().renderThread, *GetNativeRendererState().currentDraw);
+		}
 
 		GetNativeRendererState().currentDraw.reset();
 	}
 
-	NATIVE_LOG(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
+	NATIVE_LOG_VERBOSE(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
 }
 
 void Renderer::Native::BindUntextured()

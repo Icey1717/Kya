@@ -3233,6 +3233,7 @@ void VU1Emu::SetVifItop(uint newItop)
 
 void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 {
+	ZONE_SCOPED;
 	VU_VTX_TRACE_LOG("VU1Emu::UpdateMemory Begin 0x{:x} 0x{:x}", (uintptr_t)pVifPkt, (uintptr_t)pEnd);
 
 	while (pVifPkt < pEnd) {
