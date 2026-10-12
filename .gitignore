@@ -12,7 +12,7 @@ cmake-build-debug/
 .gradle
 __pycache__
 upscaling/
-profiler/
+/profiler/
 fonts/
 
 # Local renamer runtime state

@@ -94,7 +94,23 @@ TEST(GsBlendingRendering, DISABLED_AlphaFailMasksGlobalAlphaAndFixedBlend)
 				Renderer::SetGlobalAlpha(globalAlpha);
 				const uint32_t color = (vertexAlpha << 24) | 0x00808080;
 				const uint32_t colors[3] = { color, color, color };
+				// Offscreen instances share this draw group with the visible instance.
+				// Exercise changed depth state, then identical state after alpha-failure
+				// restoration, without changing the expected readback pixels.
+				glm::mat4 offscreen = identity;
+				offscreen[3].x = 8.0f;
+				Renderer::Native::PushModelMatrix(glm::value_ptr(offscreen));
+				GIFReg::GSTest disabledDepth{};
+				Renderer::SetTest(disabledDepth);
+				Renderer::SetZbuf(depthMask ? 0 : 1);
 				Renderer::Native::RenderMesh(&mesh, 0x20, colors);
+				Renderer::SetTest(test);
+				Renderer::SetZbuf(depthMask ? 1 : 0);
+				Renderer::Native::RenderMesh(&mesh, 0x20, colors);
+				Renderer::Native::PushModelMatrix(glm::value_ptr(identity));
+				Renderer::Native::RenderMesh(&mesh, 0x20, colors);
+				ASSERT_TRUE(state.currentDraw.has_value());
+				ASSERT_EQ(state.currentDraw->instances.size(), 3u);
 				Renderer::Native::BindTexture(&texture);
 				Renderer::SetGlobalAlpha(0); // Queued state must survive later changes.
 				MainThreadEndCommands(state.renderThread);

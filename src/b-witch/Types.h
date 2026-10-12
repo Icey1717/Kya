@@ -447,7 +447,8 @@ union
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-		char buff[128];
+		// Four fixed-point float values, including their signs and separators.
+		char buff[192];
 		char* ptr = buff;
 		const float vals[4] = { x, y, z, w };
 		*ptr++ = '(';
@@ -642,14 +643,20 @@ union alignas(16)
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-		char buff[512];
-		sprintf_s(buff, sizeof(buff),
-			"(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)\n(%.2f, %.2f, %.2f, %.2f)",
-			aa, ab, ac, ad,
-			ba, bb, bc, bd,
-			ca, cb, cc, cd,
-			da, db, dc, dd);
-		return buff;
+		// Enough room even when every component is a negative maximum float.
+		char buff[768];
+		char* ptr = buff;
+		for (int row = 0; row < 4; ++row) {
+			*ptr++ = '(';
+			for (int column = 0; column < 4; ++column) {
+				auto [end, ec] = std::to_chars(ptr, buff + sizeof(buff), raw[row * 4 + column], std::chars_format::fixed, 2);
+				ptr = end;
+				if (column < 3) { *ptr++ = ','; *ptr++ = ' '; }
+			}
+			*ptr++ = ')';
+			if (row < 3) { *ptr++ = '\n'; }
+		}
+		return std::string(buff, ptr);
 	}
 #endif
 };

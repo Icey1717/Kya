@@ -189,7 +189,16 @@ namespace Renderer
 			GetNativeRendererState().hasActiveRenderPass = false;
 		}
 
-		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance)
+		struct ColorDepthDynamicState
+		{
+			VkBool32 depthTestEnable;
+			VkBool32 depthWriteEnable;
+			VkCompareOp depthCompareOp;
+			VkBool32 colorWriteEnable;
+			VkColorComponentFlags colorWriteMask;
+		};
+
+		static ColorDepthDynamicState GetColorDepthDynamicState(const Draw& drawCommand, const Draw::Instance& instance)
 		{
 			VkBool32 colorWriteEnable = VK_TRUE;
 			VkBool32 depthWriteEnable = VK_TRUE;
@@ -209,25 +218,36 @@ namespace Renderer
 				VK_COMPARE_OP_NEVER, VK_COMPARE_OP_ALWAYS,
 				VK_COMPARE_OP_GREATER_OR_EQUAL, VK_COMPARE_OP_GREATER
 			};
-			vkCmdSetDepthTestEnable(cmd, instance.gsTest.ZTE ? VK_TRUE : VK_FALSE);
-			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
-			vkCmdSetDepthCompareOp(cmd, depthCompareOps[instance.gsTest.ZTST]);
-
-			// Color.
-			GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
-
-			std::array<VkBool32, 1> colorWriteMasks = {
-				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-			};
+			VkColorComponentFlags colorWriteMask =
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
 			if ((instance.perDrawData.alphaAfail & 16) != 0 && (instance.perDrawData.alphaAfail & 3) == AFAIL_RGB_ONLY) {
 				// Enable only RGB channels (disable alpha write)
-				colorWriteMasks[0] = {
-					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
-				};
+				colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT;
 			}
 
-			GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
+			return { instance.gsTest.ZTE ? VK_TRUE : VK_FALSE, depthWriteEnable,
+				depthCompareOps[instance.gsTest.ZTST], colorWriteEnable, colorWriteMask };
+		}
+
+		static void ApplyColorDepthDynamicState(const VkCommandBuffer& cmd, const ColorDepthDynamicState& state,
+			const ColorDepthDynamicState* previous = nullptr)
+		{
+			if (!previous || previous->depthTestEnable != state.depthTestEnable)
+				vkCmdSetDepthTestEnable(cmd, state.depthTestEnable);
+			if (!previous || previous->depthWriteEnable != state.depthWriteEnable)
+				vkCmdSetDepthWriteEnable(cmd, state.depthWriteEnable);
+			if (!previous || previous->depthCompareOp != state.depthCompareOp)
+				vkCmdSetDepthCompareOp(cmd, state.depthCompareOp);
+			if (!previous || previous->colorWriteEnable != state.colorWriteEnable)
+				GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &state.colorWriteEnable);
+			if (!previous || previous->colorWriteMask != state.colorWriteMask)
+				GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &state.colorWriteMask);
+		}
+
+		void SetColorDepthDynamicState(const VkCommandBuffer& cmd, const Draw& drawCommand, const Draw::Instance& instance)
+		{
+			ApplyColorDepthDynamicState(cmd, GetColorDepthDynamicState(drawCommand, instance));
 		}
 
 		void RecordAlphaTestedDraw(VkCommandBuffer cmd, VkPipelineLayout layout, const Draw& draw, const Draw::Instance& instance, const PerDrawData& data)
@@ -425,6 +445,13 @@ namespace Renderer
 					std::optional<uint> primState;
 					std::optional<bool> alphaBlendState;
 					std::optional<uint64_t> effectiveAlphaState;
+					// Keep caches local to this draw: other queued commands can change Vulkan state.
+					std::optional<uint> blendConstantState;
+					std::optional<VkCullModeFlags> cullState;
+					std::optional<ColorDepthDynamicState> colorDepthState;
+					VkDescriptorSet boundDescriptorSet = VK_NULL_HANDLE;
+					bool shadowReceiverStateSet = false;
+					const glm::mat4 projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
 
 					if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 						pTexture->GetName();
@@ -441,7 +468,7 @@ namespace Renderer
 
 						Renderer::Debug::BeginLabel(cmd, "%s", instance.pMesh->GetName().c_str());
 						
-						instance.perDrawData.projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
+						instance.perDrawData.projXView = projXView;
 
 						GIFReg::GSAlpha effectiveAlpha = pTexture->GetTextureRegisters().alpha;
 						if ((instance.perDrawData.renderFlags & 0x20) != 0) {
@@ -452,11 +479,13 @@ namespace Renderer
 							effectiveAlpha.CMD = drawCommand.frameBufferMaterial->alpha;
 						}
 
-						SetBlendConstants(effectiveAlpha, cmd);
+						if (!blendConstantState.has_value() || blendConstantState.value() != effectiveAlpha.FIX) {
+							SetBlendConstants(effectiveAlpha, cmd);
+							blendConstantState = effectiveAlpha.FIX;
+						}
 
 						const bool bAlphaBlendEnabled = instance.pMesh->GetPrim().ABE || ((instance.perDrawData.renderFlags & 0x20) != 0);
 						instance.perDrawData.blendMode = (bShadowReceiver || bShadowMask) ? 0 : ResolveBlendState(effectiveAlpha, bAlphaBlendEnabled).hwBlendMode;
-						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 						if (bShadowReceiver || bShadowMask) {
 							if (!primState.has_value()) {
 								vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -470,8 +499,13 @@ namespace Renderer
 							vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBlendPipeline(currentRenderPassKey, effectiveAlpha, bAlphaBlendEnabled));
 						}
 
-						if (bShadowReceiver) {
-							vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
+						const VkCullModeFlags cullMode = (bShadowReceiver || bShadowMask) ? VK_CULL_MODE_NONE : instance.cullMode;
+						if (!cullState.has_value() || cullState.value() != cullMode) {
+							vkCmdSetCullMode(cmd, cullMode);
+							cullState = cullMode;
+						}
+
+						if (bShadowReceiver && !shadowReceiverStateSet) {
 							vkCmdSetDepthTestEnable(cmd, VK_TRUE);
 							vkCmdSetDepthCompareOp(cmd, VK_COMPARE_OP_GREATER);
 							vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
@@ -479,10 +513,13 @@ namespace Renderer
 							GetNativeRendererState().vkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
 							const VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 							GetNativeRendererState().vkCmdSetColorWriteMaskEXT(cmd, 0, 1, &colorWriteMask);
+							shadowReceiverStateSet = true;
 						}
-						else {
-							SetColorDepthDynamicState(cmd, drawCommand, instance);
-							vkCmdSetCullMode(cmd, bShadowMask ? VK_CULL_MODE_NONE : instance.cullMode);
+						else if (!bShadowReceiver) {
+							const auto state = GetColorDepthDynamicState(drawCommand, instance);
+							ApplyColorDepthDynamicState(cmd, state, colorDepthState ? &*colorDepthState : nullptr);
+							// Alpha-failure/replay paths restore this baseline before returning.
+							colorDepthState = state;
 #ifndef NDEBUG
 							// Review the mesh and cull mode on a submitted scene draw.
 							if (!bShadowMask && instance.cullMode != VK_CULL_MODE_NONE && IsDebuggerPresent()) {
@@ -500,8 +537,11 @@ namespace Renderer
 							descriptorSet = FrameBufferCopy::GetDescriptorSet(GetCurrentFrame());
 						}
 
-						const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
+						if (boundDescriptorSet != descriptorSet) {
+							const std::array sets{ GetNativeRendererState().frameDescriptorSets[GetCurrentFrame()], descriptorSet };
+							vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
+							boundDescriptorSet = descriptorSet;
+						}
 
 						if (TraceDraw(drawCommand, instance, true)) {
 #ifndef NDEBUG
@@ -525,6 +565,8 @@ namespace Renderer
 							}
 #endif
 							if (bShadowMask || bShadowReceiver) { 
+								// Main draws push their constants inside RecordAlphaTestedDraw.
+								vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 								vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0); 
 							}
 							else {
