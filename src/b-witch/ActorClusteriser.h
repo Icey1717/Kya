@@ -9,9 +9,22 @@ class CActorClusteriser;
 class CCluster;
 class CClusterNode;
 class CCamera;
+struct CEventManager;
 
 struct S_LIGHT_STREAM_REF;
 struct S_CAMERA_STREAM_REF;
+
+struct ClusterizerCallbackParams {
+	CEventManager* pEventManager;
+	ed_zone_3d* pZone;
+	CActor** ppActors;
+	int count;
+	S_ACTOR_STREAM_REF** field_0x10;
+	uint objId;
+};
+
+void gClusterCallback_Clusteriser_All(CActor* pActor, void* pData);
+void gClusterCallback_Clusteriser_Sector(CActor* pActor, void* pData);
 
 PACK(struct S_HASH_STREAM_REF
 {

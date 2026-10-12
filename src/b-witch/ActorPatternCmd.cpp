@@ -63,11 +63,11 @@ CBehaviour* CActorPatternCmd::BuildBehaviour(int behaviourType)
 }
 
 StateConfig CActorPatternCmd::_gStateCfg_PTC[5] = {
-	StateConfig(0x0, 0x0),
-	StateConfig(0x6, 0x0),
-	StateConfig(0x0, 0x0),
-	StateConfig(0x0, 0x0),
-	StateConfig(0x0, 0x1),
+	StateConfig(0x0, 0x0), // PATTERN_CMD_STAND_STATE_STAND
+	StateConfig(0x6, 0x0), // PATTERN_CMD_STAND_STATE_CHASE
+	StateConfig(0x0, 0x0), // PATTERN_CMD_STAND_STATE_FIRE
+	StateConfig(0x0, 0x0), // PATTERN_CMD_STAND_STATE_DECELERATE
+	StateConfig(0x0, 0x1), // PATTERN_CMD_STAND_STATE_UNKNOWN
 };
 
 
@@ -75,12 +75,12 @@ StateConfig* CActorPatternCmd::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;
 
-	if (state < 5) {
+	if (state < PATTERN_CMD_STAND_STATE_STAND) {
 		pStateConfig = CActor::GetStateCfg(state);
 	}
 	else {
-		assert((state - 5) < 5);
-		pStateConfig = _gStateCfg_PTC + state + -5;
+		assert((state - PATTERN_CMD_STAND_STATE_STAND) < 5);
+		pStateConfig = _gStateCfg_PTC + state - PATTERN_CMD_STAND_STATE_STAND;
 	}
 
 	return pStateConfig;
@@ -198,6 +198,8 @@ void CActorPatternCmd::StatePatternCmdStand()
 	float fVar6;
 	_msg_params_0x54 local_20;
 	CActorPatternCmd* pPatternCmd;
+
+	pCVar2 = CScene::ptable.g_CameraManager_0045167c;
 
 	if (iVar3 = CheckArea(), iVar3 == 1) {
 		if (this->nbStreamRefEntries == 2) {
@@ -428,8 +430,8 @@ void CActorPatternCmd::StatePatternCmdFire()
 			}
 
 			if (iVar3 <= iVar4) break;
-			IMPLEMENTATION_GUARD();
-			//fVar8 = this->pActorStreamRef->aEntries[iVar4].pActor[1].rotationQuat.y;
+
+			fVar8 = static_cast<CActorMovable*>(this->pActorStreamRef->aEntries[iVar4].Get())->dynamic.linearAcceleration;
 			if (fVar8 <= local_a0.field_0x8) {
 				fVar8 = local_a0.field_0x8;
 			}

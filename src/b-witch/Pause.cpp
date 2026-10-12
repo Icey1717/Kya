@@ -1379,8 +1379,7 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 			bResult = MenuFrameLoad_Draw(pMenu);
 			break;
 		case PM_OptionsMenu:
-			IMPLEMENTATION_GUARD(
-			MenuFrameOption_Draw(pMenu);)
+			//MenuFrameOption_Draw(pMenu);
 			break;
 		case PM_DisplayOptions:
 			IMPLEMENTATION_GUARD(

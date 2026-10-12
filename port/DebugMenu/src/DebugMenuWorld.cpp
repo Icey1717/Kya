@@ -32,6 +32,7 @@
 #include "ActorSwitch.h"
 #include "ActorMovingPlatform.h"
 #include "ActorDCA.h"
+#include "ActorPattern.h"
 #include "Scene.h"
 #include "ActorHero.h"
 #include "ActorHero_Private.h"
@@ -818,6 +819,56 @@ namespace Debug {
 
 	static constexpr int kActorMessageCount = static_cast<int>(std::size(kActorMessages));
 
+	static void CopyActorDetails(CActor* pActor) {
+		ImGuiTextBuffer report;
+		report.appendf("Actor: %s\nType: %s (%d)\nIndex: %d\nSector: %d\n",
+			pActor->name, Debug::Actor::GetActorTypeString(pActor->typeID), pActor->typeID,
+			pActor->actorManagerIndex, pActor->sectorId);
+		report.appendf("State: 0x%x (previous: 0x%x)\nBehaviour: %d (previous: %d)\nAnimation: %d\nFlags: 0x%08x\n",
+			pActor->actorState, pActor->prevActorState, pActor->curBehaviourId, pActor->prevBehaviourId,
+			pActor->currentAnimType, pActor->flags);
+		report.appendf("state_0x10 (active cluster count): %d\ndistanceToCamera: %.6f\n",
+			static_cast<int>(pActor->state_0x10), pActor->distanceToCamera);
+		if (pActor->subObjA) {
+			report.appendf("visibilityDistance (manage range): %.6f\n", pActor->subObjA->visibilityDistance);
+		}
+		const auto appendVector = [&report](const char* label, const edF32VECTOR4& value) {
+			report.appendf("%s: (%.6f, %.6f, %.6f, %.6f)\n", label, value.x, value.y, value.z, value.w);
+		};
+		appendVector("currentLocation", pActor->currentLocation);
+		appendVector("baseLocation", pActor->baseLocation);
+		appendVector("rotationQuat", pActor->rotationQuat);
+		appendVector("rotationEuler", pActor->rotationEuler);
+		report.appendf("distanceToGround: %.6f\nfield_0xf0 (ground probe range): %.6f\ntimeInAir: %.6f\n",
+			pActor->distanceToGround, pActor->field_0xf0, pActor->timeInAir);
+		if (pActor->IsKindOfObject(2)) {
+			const auto* pMovable = static_cast<CActorMovable*>(pActor);
+			report.appendf("dynamic.speed: %.6f\ndynamic.linearAcceleration: %.6f\ndynamic.horizontalLinearSpeed: %.6f\n",
+				pMovable->dynamic.speed, pMovable->dynamic.linearAcceleration, pMovable->dynamic.horizontalLinearSpeed);
+			appendVector("dynamic.rotationQuat", pMovable->dynamic.rotationQuat);
+		}
+		if (pActor->typeID == PATTERN_CON) {
+			const auto* pPattern = static_cast<CActorPattern*>(pActor);
+			report.appendf("field_0x350 (chase speed): %.6f\nfield_0x360 (hover height): %.6f\nfield_0x368 (probe range): %.6f\n",
+				pPattern->field_0x350, pPattern->field_0x360, pPattern->field_0x368);
+			appendVector("dynamicExt.normalizedTranslation", pPattern->dynamicExt.normalizedTranslation);
+			report.appendf("dynamicExt.field_0x6c: %.6f\n", pPattern->dynamicExt.field_0x6c);
+		}
+		if (const auto* pCollision = pActor->pCollisionData) {
+			report.appendf("collision.flags_0x0: 0x%08x\ncollision.flags_0x4: 0x%08x\n",
+				pCollision->flags_0x0, pCollision->flags_0x4);
+			appendVector("collision.highestVertex (minimum Y)", pCollision->highestVertex);
+			appendVector("collision.lowestVertex (maximum Y)", pCollision->lowestVertex);
+			appendVector("collision.groundNormal", pCollision->aCollisionContact[1].location);
+			appendVector("collision.groundPosition", pCollision->aCollisionContact[1].field_0x10);
+			if (const auto* pPrim = pCollision->pObbPrim) {
+				appendVector("collision.prim.position", pPrim->position);
+				appendVector("collision.prim.scale", pPrim->scale);
+			}
+		}
+		ImGui::SetClipboardText(report.c_str());
+	}
+
 	static void DrawActorInspector(CActor* pActor) {
 		if (pActor == nullptr) {
 			Renderer::Native::ClearPreviewCamera();
@@ -846,12 +897,15 @@ namespace Debug {
 
 		ImGui::Text("%s", pActor->name);
 		ImGui::TextDisabled("%s", Debug::Actor::GetActorTypeString(pActor->typeID));
+		if (ImGui::Button("Copy actor details")) CopyActorDetails(pActor);
+		ImGui::SetItemTooltip("Copy this actor's state, transforms, movement, and collision values as text.");
 		if (ImGui::Button("Focus camera")) Camera::FocusActor(pActor);
 		ImGui::SetItemTooltip("Frame this actor with the free camera. F8 returns to the game camera; F9 enables camera input.");
 		ImGui::Checkbox("Selection marker", &gShowSelectionMarker);
 
 		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Watch::DrawReadout("Selection.Position");
+			DrawVector4("Base Location", pActor->baseLocation);
 			DrawVector4("Rotation Euler", pActor->rotationEuler);
 			DrawVector4("Rotation Quaternion", pActor->rotationQuat);
 			DrawVector4("Scale", pActor->scale);
@@ -865,6 +919,10 @@ namespace Debug {
 			Ui::Readoutf("Previous Behaviour", "%d", pActor->prevBehaviourId);
 			Ui::Readoutf("Distance To Camera", "%.2f", pActor->distanceToCamera);
 			Ui::Readoutf("Distance To Ground", "%.2f", pActor->distanceToGround);
+			Ui::Readoutf("Ground Probe Range", "%.2f", pActor->field_0xf0);
+			if (pActor->typeID == PATTERN_CON) {
+				Ui::Readoutf("Hover Height", "%.2f", static_cast<CActorPattern*>(pActor)->field_0x360);
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Debug Info", ImGuiTreeNodeFlags_DefaultOpen)) {

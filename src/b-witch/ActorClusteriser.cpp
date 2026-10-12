@@ -875,15 +875,6 @@ void CActorClusteriser::Sector_Enter()
 	return;
 }
 
-struct ClusterizerCallbackParams {
-	CEventManager* pEventManager;
-	ed_zone_3d* pZone;
-	CActor** ppActors;
-	int count;
-	S_ACTOR_STREAM_REF** field_0x10;
-	uint objId;
-};
-
 void gClusterCallback_Clusteriser_All(CActor* pActor, void* pData)
 {
 	bool bVar1;
@@ -895,11 +886,12 @@ void gClusterCallback_Clusteriser_All(CActor* pActor, void* pData)
 	iVar2 = edEventComputeZoneAgainstVertex(pClusterizerCallbackParams->pEventManager->activeChunkId, pClusterizerCallbackParams->pZone, &pActor->currentLocation, 0);
 	if (iVar2 != 2) {
 		S_ACTOR_STREAM_REF* pStream = *pClusterizerCallbackParams->field_0x10;
+		pCVar3 = pStream->aEntries;
 
 		for (iVar2 = pStream->entryCount; iVar2 != 0; iVar2 = iVar2 + -1) {
-			pCVar3 = pStream->aEntries;
 			bVar1 = true;
 			if (pActor == pCVar3->Get()) goto LAB_001e4e80;
+			pCVar3 = pCVar3 + 1;
 		}
 
 		bVar1 = false;
@@ -924,11 +916,12 @@ void gClusterCallback_Clusteriser_Sector(CActor* pActor, void* pData)
 
 	if (iVar2 != 2) {
 		S_ACTOR_STREAM_REF* pStream = *pClusterizerCallbackParams->field_0x10;
+		pCVar3 = pStream->aEntries;
 
 		for (iVar2 = pStream->entryCount; iVar2 != 0; iVar2 = iVar2 + -1) {
-			pCVar3 = pStream->aEntries;
 			bVar1 = true;
 			if (pActor == pCVar3->Get()) goto LAB_001e4da0;
+			pCVar3 = pCVar3 + 1;
 		}
 
 		bVar1 = false;

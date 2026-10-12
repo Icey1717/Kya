@@ -82,21 +82,21 @@ CBehaviour* CActorPattern::BuildBehaviour(int behaviourType)
 }
 
 StateConfig CActorPattern::_gStateCfg_PAT[15] = {
-	StateConfig(0xD,  0x4),      // [0]
-	StateConfig(0x10, 0x804),    // [1]
-	StateConfig(0xE,  0x804),    // [2]
-	StateConfig(0xF,  0x804),    // [3]
-	StateConfig(0x10, 0x844),    // [4]
-	StateConfig(0x11, 0x844),    // [5]
-	StateConfig(0x12, 0x1844),   // [6]
-	StateConfig(0x12, 0x1844),   // [7]
-	StateConfig(0x12, 0x1844),   // [8]
-	StateConfig(0x12, 0x844),    // [9]
-	StateConfig(0xF,  0x844),    // [10]
-	StateConfig(0x10, 0x804),    // [11]
-	StateConfig(0x14, 0x804),    // [12]
-	StateConfig(0x15, 0x4),      // [13]
-	StateConfig(0x16, 0x1),      // [14]
+	StateConfig(0xD,  0x4),      // PATTERN_STATE_ALONE_STAND
+	StateConfig(0x10, 0x804),    // PATTERN_STATE_ALONE_UNKNOWN_07
+	StateConfig(0xE,  0x804),    // PATTERN_STATE_ALONE_TAKEOFF
+	StateConfig(0xF,  0x804),    // PATTERN_STATE_ALONE_ASCEND
+	StateConfig(0x10, 0x844),    // PATTERN_STATE_ALONE_CHASE
+	StateConfig(0x11, 0x844),    // PATTERN_STATE_ALONE_DECELERATE
+	StateConfig(0x12, 0x1844),   // PATTERN_STATE_ALONE_FIRE_FIRST
+	StateConfig(0x12, 0x1844),   // PATTERN_STATE_ALONE_FIRE_SECOND
+	StateConfig(0x12, 0x1844),   // PATTERN_STATE_MULTIPLE_UNKNOWN_0E
+	StateConfig(0x12, 0x844),    // PATTERN_STATE_MULTIPLE_UNKNOWN_0F
+	StateConfig(0xF,  0x844),    // PATTERN_STATE_ALONE_RECOVER
+	StateConfig(0x10, 0x804),    // PATTERN_STATE_RETURN_BASE
+	StateConfig(0x14, 0x804),    // PATTERN_STATE_ALONE_COMEBACK_ALT
+	StateConfig(0x15, 0x4),      // PATTERN_STATE_ALONE_COMEBACK
+	StateConfig(0x16, 0x1),      // PATTERN_STATE_DEAD
 };
 
 
@@ -104,12 +104,12 @@ StateConfig* CActorPattern::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;
 
-	if (state < 6) {
-		pStateConfig = CActor::GetStateCfg(state);
+	if (state < PATTERN_STATE_ALONE_STAND) {
+		pStateConfig = CActorAutonomous::GetStateCfg(state);
 	}
 	else {
-		assert((state - 6) < 15);
-		pStateConfig = _gStateCfg_PAT + state + -6;
+		assert((state - PATTERN_STATE_ALONE_STAND) < 15);
+		pStateConfig = _gStateCfg_PAT + state - PATTERN_STATE_ALONE_STAND;
 	}
 
 	return pStateConfig;
@@ -151,17 +151,17 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			this->dynamic.speed = 10.0f;
 			pfVar1 = pCastParam->field_0xc;
 			this->field_0x440 = *pfVar1;
-			SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, 0xf, -1);
+			SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, PATTERN_STATE_MULTIPLE_UNKNOWN_0F, -1);
 		}
 		else {
 			if (iVar4 == 2) {
-				SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, 0xe, -1);
+				SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, PATTERN_STATE_MULTIPLE_UNKNOWN_0E, -1);
 				pfVar1 = pCastParam->field_0xc;
 				this->field_0x440 = *pfVar1;
 			}
 			else {
 				if (iVar4 == 1) {
-					SetState(0x11, -1);
+					SetState(PATTERN_STATE_RETURN_BASE, -1);
 
 					return 1;
 				}
@@ -171,8 +171,8 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						this->field_0x430 = 1;
 
 						iVar4 = this->actorState;
-						if ((iVar4 == 6) || (iVar4 == 7)) {
-							SetBehaviour(PATTERN_BEHAVIOUR_ALONE, 8, -1);
+						if ((iVar4 == PATTERN_STATE_ALONE_STAND) || (iVar4 == PATTERN_STATE_ALONE_UNKNOWN_07)) {
+							SetBehaviour(PATTERN_BEHAVIOUR_ALONE, PATTERN_STATE_ALONE_TAKEOFF, -1);
 						}
 						else {
 							if (this->curBehaviourId == PATTERN_BEHAVIOUR_ALONE) {
@@ -202,7 +202,7 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							this->field_0x430 = (byte)static_cast<int>(fVar5 - 2.147484e+09f);
 						}
 
-						SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, 10, -1);
+						SetBehaviour(PATTERN_BEHAVIOUR_MULTIPLE, PATTERN_STATE_ALONE_CHASE, -1);
 
 						pfVar1 = pCastParam->field_0xc;
 						this->field_0x440 = *pfVar1;
@@ -225,7 +225,7 @@ int CActorPattern::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 			fVar5 = GetLifeInterface()->GetValue();
 			if (fVar5 <= 0.0f) {
-				SetState(0x14, -1);
+				SetState(PATTERN_STATE_DEAD, -1);
 			}
 			else {
 				PlayAnim(0x13);
@@ -300,7 +300,7 @@ void CBehaviourPatternAlone::Begin(CActor* pOwner, int newState, int newAnimatio
 		if (((pPattern->pCollisionData)->flags_0x4 & 2) == 0) {
 			fVar2 = pPattern->distanceToGround;
 			if (pPattern->field_0xf0 < fVar2) {
-				pPattern->SetState(7, -1);
+				pPattern->SetState(PATTERN_STATE_ALONE_UNKNOWN_07, -1);
 			}
 			else {
 				if (0.5f < fVar2) {
@@ -314,7 +314,7 @@ void CBehaviourPatternAlone::Begin(CActor* pOwner, int newState, int newAnimatio
 			}
 		}
 		else {
-			pPattern->SetState(6, -1);
+			pPattern->SetState(PATTERN_STATE_ALONE_STAND, -1);
 		}
 	}
 	else {
@@ -364,7 +364,7 @@ void CBehaviourPatternMultiple::Begin(CActor* pOwner, int newState, int newAnima
 	CBehaviourPattern::Begin(pOwner, newState, newAnimationType);
 
 	if (newState == -1) {
-		this->pOwner->SetState(0x11, -1);
+		this->pOwner->SetState(PATTERN_STATE_RETURN_BASE, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -424,7 +424,7 @@ void CActorPattern::BehaviourPatternAlone_InitState(int newState)
 			}
 		}
 		else {
-			if (newState == 0x14) {
+			if (newState == PATTERN_STATE_DEAD) {
 				if (this->curBehaviourId == 4) {
 					local_20.field_0x0 = 5;
 					this->DoMessage(this->field_0x37c, (ACTOR_MESSAGE)0x54, &local_20);
@@ -480,21 +480,26 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 	ManageFx();
 
 	switch (this->actorState) {
-	case 6:
+	case PATTERN_STATE_ALONE_STAND:
+#if 0
+		// Fixes idle drift from retained landing speed, also confirmed on PS2.
+		// Disabled to preserve the original behavior.
+		this->dynamic.speed = 0.0f;
+#endif
 		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 		break;
-	case 8:
+	case PATTERN_STATE_ALONE_TAKEOFF:
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			SetState(9, -1);
+			SetState(PATTERN_STATE_ALONE_ASCEND, -1);
 		}
 		break;
-	case 9:
+	case PATTERN_STATE_ALONE_ASCEND:
 		FUN_003a1ad0();
 		break;
 	case PATTERN_STATE_ALONE_CHASE:
 		StatePatternChase(pBehaviour);
 		break;
-	case 0xb:
+	case PATTERN_STATE_ALONE_DECELERATE:
 		SV_MOV_DecreaseSpeedIntensity(this->field_0x35c);
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
 
@@ -515,7 +520,7 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 	case PATTERN_STATE_ALONE_FIRE_SECOND:
 		StatePatternFireSecond(pBehaviour);
 		break;
-	case 0x10:
+	case PATTERN_STATE_ALONE_RECOVER:
 		SV_MOV_DecreaseSpeedIntensity(this->field_0x35c);
 
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
@@ -531,7 +536,7 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 			if (this->curBehaviourId == PATTERN_BEHAVIOUR_ALONE) {
 				CBehaviourPatternAlone* pAlone = (CBehaviourPatternAlone*)GetBehaviour(this->curBehaviourId);
 				CActor* pHero = this->field_0x37c->field_0x280;
-				if ((fVar1 != 0.0f) &&
+				if ((pHero != (CActor*)0x0) &&
 					(fVar3 = pHero->currentLocation.x - this->currentLocation.x,
 						fVar4 = pHero->currentLocation.y - this->currentLocation.y,
 						fVar1 = pHero->currentLocation.z - this->currentLocation.z,
@@ -545,7 +550,7 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 			SetState(PATTERN_STATE_ALONE_CHASE, -1);
 		}
 		break;
-	case 0x11:
+	case PATTERN_STATE_RETURN_BASE:
 		FUN_003a1370();
 		break;
 	case PATTERN_STATE_ALONE_COMEBACK_ALT:
@@ -554,7 +559,7 @@ void CActorPattern::BehaviourPatternAlone_Manage(CBehaviourPatternAlone* pBehavi
 	case PATTERN_STATE_ALONE_COMEBACK:
 		StatePatternComeBack();
 		break;
-	case 0x14:
+	case PATTERN_STATE_DEAD:
 		if ((this->pAnimationController->IsCurrentLayerAnimEndReached(0)) && ((pBehaviour->patternPart).field_0x50 < 1)) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
@@ -582,11 +587,11 @@ void CActorPattern::BehaviourPatternMultiple_InitState(int newState)
 	_msg_params_0x54 local_20;
 	CCollision* pCol;
 
-	if (newState == 0xe) {
+	if (newState == PATTERN_STATE_MULTIPLE_UNKNOWN_0E) {
 		this->dynamic.speed = 2.0f;
 	}
 	else {
-		if (newState == 0x14) {
+		if (newState == PATTERN_STATE_DEAD) {
 			if (this->curBehaviourId == 4) {
 				local_20.field_0x0 = 5;
 				DoMessage(this->field_0x37c, (ACTOR_MESSAGE)0x54, &local_20);
@@ -633,26 +638,26 @@ void CActorPattern::ComputeInvincibility()
 	}
 	else {
 		switch (this->actorState) {
-		case 6:
+		case PATTERN_STATE_ALONE_STAND:
 			this->bInvincible = false;
 			break;
-		case 8:
+		case PATTERN_STATE_ALONE_TAKEOFF:
 			this->bInvincible = false;
 			break;
-		case 9:
+		case PATTERN_STATE_ALONE_ASCEND:
 			this->bInvincible = false;
 			break;
 		case PATTERN_STATE_ALONE_CHASE:
 			this->bInvincible = false;
 			break;
-		case 0xb:
+		case PATTERN_STATE_ALONE_DECELERATE:
 			this->bInvincible = true;
 			break;
-		case 0xf:
-		case 0x10:
+		case PATTERN_STATE_MULTIPLE_UNKNOWN_0F:
+		case PATTERN_STATE_ALONE_RECOVER:
 			this->bInvincible = true;
 			break;
-		case 0x11:
+		case PATTERN_STATE_RETURN_BASE:
 			this->bInvincible = false;
 			break;
 		case PATTERN_STATE_ALONE_COMEBACK_ALT:
@@ -661,13 +666,13 @@ void CActorPattern::ComputeInvincibility()
 		case PATTERN_STATE_ALONE_COMEBACK:
 			this->bInvincible = false;
 			break;
-		case 0x14:
+		case PATTERN_STATE_DEAD:
 			this->bInvincible = false;
 		}
 
 		iVar1 = this->curBehaviourId;
 		if (iVar1 == PATTERN_BEHAVIOUR_MULTIPLE) {
-			if (this->actorState == 0xe) {
+			if (this->actorState == PATTERN_STATE_MULTIPLE_UNKNOWN_0E) {
 				this->bInvincible = true;
 			}
 		}
@@ -758,6 +763,7 @@ void CActorPattern::StatePatternComeBack()
 	movLevitateParamIn.field_0x20 = 0.0f;
 	movLevitateParamIn.flags = 0x456;
 	local_70 = this->currentLocation;
+	local_70.y -= this->distanceToGround;
 
 	SV_MOV_MoveInLevitation(&movLevitateParamOut, &movLevitateParamIn, &local_70);
 
@@ -767,7 +773,7 @@ void CActorPattern::StatePatternComeBack()
 		fVar5 = this->distanceToGround;
 
 		if (this->field_0xf0 < fVar5) {
-			SetState(7, -1);
+			SetState(PATTERN_STATE_ALONE_UNKNOWN_07, -1);
 		}
 		else {
 			if (0.5f < fVar5) {
@@ -781,11 +787,11 @@ void CActorPattern::StatePatternComeBack()
 		}
 	}
 	else {
-		SetState(6, -1);
+		SetState(PATTERN_STATE_ALONE_STAND, -1);
 	}
 
 	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-		SetState(6, -1);
+		SetState(PATTERN_STATE_ALONE_STAND, -1);
 	}
 
 	return;
@@ -856,7 +862,7 @@ void CActorPattern::StatePatternChase(CBehaviourPatternAlone* pBehaviour)
 
 	if (this->field_0x37c->field_0x280 == (CActorHero*)0x0) {
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
-		SetState(0x11, -1);
+		SetState(PATTERN_STATE_RETURN_BASE, -1);
 	}
 	else {
 		movLevitateParamIn.pRotation = (edF32VECTOR4*)0x0;
@@ -871,7 +877,7 @@ void CActorPattern::StatePatternChase(CBehaviourPatternAlone* pBehaviour)
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
 		fVar1 = FUN_00120250(pBehaviour->field_0x90);
 		if (movLevitateParamOut.moveVelocity <= fVar1) {
-			SetState(0xb, -1);
+			SetState(PATTERN_STATE_ALONE_DECELERATE, -1);
 		}
 	}
 
@@ -887,7 +893,7 @@ void CActorPattern::StatePatternFireFirst(CBehaviourPatternAlone* pBehaviour)
 
 	if (this->field_0x37c->field_0x280 == (CActorHero*)0x0) {
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
-		SetState(0x11, -1);
+		SetState(PATTERN_STATE_RETURN_BASE, -1);
 	}
 	else {
 		ComputeFireFirstPoints(&eStack16, pBehaviour);
@@ -928,7 +934,7 @@ void CActorPattern::StatePatternFireSecond(CBehaviourPatternAlone* pBehaviour)
 
 	if (this->field_0x37c->field_0x280 == (CActorHero*)0x0) {
 		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
-		SetState(0x11, -1);
+		SetState(PATTERN_STATE_RETURN_BASE, -1);
 	}
 	else {
 		movLevitateParamIn.pRotation = (edF32VECTOR4*)0x0;
@@ -950,7 +956,7 @@ void CActorPattern::StatePatternFireSecond(CBehaviourPatternAlone* pBehaviour)
 		fVar1 = FUN_00120250(0.3f);
 		if ((movLevitateParamOut.moveVelocity <= fVar1) ||
 			(((this->pCollisionData)->flags_0x4 & 7) != 0)) {
-			SetState(0x10, -1);
+			SetState(PATTERN_STATE_ALONE_RECOVER, -1);
 		}
 	}
 
@@ -993,7 +999,7 @@ void CActorPattern::FUN_003a1370()
 		if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
 			fVar4 = this->distanceToGround;
 			if (this->field_0xf0 < fVar4) {
-				SetState(7, -1);
+				SetState(PATTERN_STATE_ALONE_UNKNOWN_07, -1);
 			}
 			else {
 				if (0.5f < fVar4) {
@@ -1007,7 +1013,7 @@ void CActorPattern::FUN_003a1370()
 			}
 		}
 		else {
-			SetState(6, -1);
+			SetState(PATTERN_STATE_ALONE_STAND, -1);
 		}
 	}
 
@@ -1040,7 +1046,7 @@ void CActorPattern::StatePatternComeBackAlt()
 	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
 		fVar2 = this->distanceToGround;
 		if (this->field_0xf0 < fVar2) {
-			SetState(7, -1);
+			SetState(PATTERN_STATE_ALONE_UNKNOWN_07, -1);
 		}
 		else {
 			if (0.5f < fVar2) {
@@ -1054,7 +1060,7 @@ void CActorPattern::StatePatternComeBackAlt()
 		}
 	}
 	else {
-		SetState(6, -1);
+		SetState(PATTERN_STATE_ALONE_STAND, -1);
 	}
 
 	return;
@@ -1096,7 +1102,7 @@ void CActorPattern::ComputeFireFirstPoints(edF32VECTOR4* param_2, CBehaviourPatt
 	else {
 		local_40.x = pCVar1->rotationQuat.z;
 		local_40.y = 0.0f;
-		local_40.z = -this->field_0x37c->rotationQuat.x;
+		local_40.z = -pCVar1->rotationQuat.x;
 	}
 
 	edF32Vector4NormalizeHard(&local_40, &local_40);
@@ -1159,7 +1165,7 @@ void CActorPattern::ComputeFireSecondPoints(edF32VECTOR4* param_2, CBehaviourPat
 	else {
 		local_40.x = pCVar1->rotationQuat.z;
 		local_40.y = 0.0f;
-		local_40.z = -this->field_0x37c->rotationQuat.x;
+		local_40.z = -pCVar1->rotationQuat.x;
 	}
 
 	edF32Vector4NormalizeHard(&local_40, &local_40);
