@@ -11,6 +11,7 @@
 #include "DebugHelpers.h"
 #include "DebugSetting.h"
 #include "DebugUi.h"
+#include "DebugFileList.h"
 #include "input_functions.h"
 #include "EdenLib/edDev/Sources/edDev.h"
 #include "LevelScheduler.h"
@@ -58,6 +59,7 @@ static Debug::Setting<bool>   gAutoRecord("HeroReplay_AutoRecord", false);
 // Auto-save the in-progress recording every N frames so a crash doesn't lose it.
 constexpr int  AUTO_SAVE_INTERVAL_FRAMES = 300; // ~5 s at 60 fps
 constexpr auto LAST_RECORDING_NAME       = "last_recording";
+static FileList gRecordingFiles("recordings", ".rec");
 
 // -----------------------------------------------------------------------
 // Forward declarations
@@ -178,9 +180,9 @@ static void StopReplay()
 // File I/O
 // -----------------------------------------------------------------------
 
-static std::filesystem::path GetRecordingsDir()
+static const std::filesystem::path& GetRecordingsDir()
 {
-	return std::filesystem::path("recordings");
+	return gRecordingFiles.GetDirectory();
 }
 
 static void BackupLastRecording()
@@ -190,6 +192,7 @@ static void BackupLastRecording()
 	if (std::filesystem::exists(source)) {
 		auto dest = dir / (std::string(LAST_RECORDING_NAME) + "_backup.rec");
 		std::filesystem::copy_file(source, dest, std::filesystem::copy_options::overwrite_existing);
+		gRecordingFiles.Invalidate();
 	}
 }
 
@@ -200,6 +203,7 @@ static void SaveRecording(const std::string& name)
 		std::filesystem::create_directory(dir);
 	}
 	DebugHelpers::SaveTypeToFile(dir / (name + ".rec"), gRecording);
+	gRecordingFiles.Invalidate();
 }
 
 static bool LoadRecording(const std::filesystem::path& path)
@@ -214,21 +218,6 @@ static bool LoadRecording(const std::filesystem::path& path)
 
 	gRecording = loaded;
 	return true;
-}
-
-static std::vector<std::string> EnumerateRecordings()
-{
-	std::vector<std::string> names;
-	auto dir = GetRecordingsDir();
-	if (!std::filesystem::exists(dir)) {
-		return names;
-	}
-	for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-		if (entry.path().extension() == ".rec") {
-			names.emplace_back(entry.path().filename().string());
-		}
-	}
-	return names;
 }
 
 // -----------------------------------------------------------------------
@@ -281,6 +270,8 @@ void Update()
 
 void DrawContents()
 {
+	if (ImGui::Button("Refresh Files")) gRecordingFiles.Invalidate();
+	const auto& recordings = gRecordingFiles.GetFiles();
 	// ---- Status --------------------------------------------------------
 	const char* stateStr = "Idle";
 	if (gState == State::Recording) stateStr = "Recording";
@@ -308,13 +299,14 @@ void DrawContents()
 	}
 
 	{
-		auto backupPath = GetRecordingsDir() / (std::string(LAST_RECORDING_NAME) + "_backup.rec");
-		if (std::filesystem::exists(backupPath)) {
+		if (std::binary_search(recordings.begin(), recordings.end(), "last_recording_backup.rec")) {
 			static char backupDupName[256] = "recording";
 			Ui::Field("Backup name", [&](const char* id) { return ImGui::InputText(id, backupDupName, IM_ARRAYSIZE(backupDupName)); });
 			if (ImGui::Button("Save Backup As")) {
 				auto dest = GetRecordingsDir() / (std::string(backupDupName) + ".rec");
+				auto backupPath = GetRecordingsDir() / (std::string(LAST_RECORDING_NAME) + "_backup.rec");
 				std::filesystem::copy_file(backupPath, dest, std::filesystem::copy_options::overwrite_existing);
+				gRecordingFiles.Invalidate();
 			}
 		}
 	}
@@ -368,18 +360,21 @@ void DrawContents()
 		ImGui::Spacing();
 
 		// Load
-		auto recordings = EnumerateRecordings();
 		if (!recordings.empty()) {
-			static int selectedIdx = 0;
-			selectedIdx = std::clamp(selectedIdx, 0, static_cast<int>(recordings.size()) - 1);
+			static std::string selectedFile;
+			const auto selected = std::find(recordings.begin(), recordings.end(), selectedFile);
+			int selectedIdx = selected == recordings.end() ? 0 : static_cast<int>(selected - recordings.begin());
+			selectedFile = recordings[selectedIdx];
 
 			auto itemGetter = [](void* data, int idx, const char** out) {
-				auto& v = *static_cast<std::vector<std::string>*>(data);
+				const auto& v = *static_cast<const std::vector<std::string>*>(data);
 				*out = v[idx].c_str();
 				return true;
 			};
 
-			Ui::Field("File", [&](const char* id) { return ImGui::Combo(id, &selectedIdx, itemGetter, &recordings, static_cast<int>(recordings.size())); });
+			if (Ui::Field("File", [&](const char* id) { return ImGui::Combo(id, &selectedIdx, itemGetter, const_cast<std::vector<std::string>*>(&recordings), static_cast<int>(recordings.size())); })) {
+				selectedFile = recordings[selectedIdx];
+			}
 
 			if (ImGui::Button("Load Recording")) {
 				auto path = GetRecordingsDir() / recordings[selectedIdx];

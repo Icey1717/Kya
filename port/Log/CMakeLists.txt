@@ -5,6 +5,7 @@ add_subdirectory("spdlog")
 set(SOURCES
 	"log.cpp"
 	"log.h"
+	"log_categories.h"
 )
 
 add_library(${TargetName} ${SOURCES})

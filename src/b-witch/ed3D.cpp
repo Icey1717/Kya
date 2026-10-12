@@ -2052,7 +2052,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 		computedVerticalHalfFOV, nearClip, farClip);
 #endif
 
-	MY_LOG_CATEGORY("Viewport", LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, finalHorizontalHalfFOV: {}, baseHorizontalHalfFOV: {}, computedVerticalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n",
+	MY_LOG_NAMED_CATEGORY(Viewport, LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, finalHorizontalHalfFOV: {}, baseHorizontalHalfFOV: {}, computedVerticalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n",
 		screenWidth, screenHeight, finalHorizontalHalfFOV, baseHorizontalHalfFOV, computedVerticalHalfFOV, targetWidth, targetHeight, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
 
 	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, computedVerticalHalfFOV, 0.0f, &projectionMatrix);

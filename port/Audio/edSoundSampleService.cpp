@@ -3,6 +3,7 @@
 #include "edSoundDevice.h"
 #include "edSysTransferService.h"
 #include "log.h"
+#include "log_categories.h"
 
 #include <algorithm>
 #include <cmath>
@@ -194,7 +195,7 @@ void FlushSampleCommands()
 			if (instance.decoded) instance.voice = CreateVoice(*instance.decoded);
 			success = instance.voice && instance.voice->SetControls(command.controls);
 			if (success) instances.emplace(id, std::move(instance));
-			Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances",
+			MY_LOG_NAMED_CATEGORY(AudioInstances, LogLevel::Info,
 				"host-create id=0x{:08x} handle={} success={} left={} right={} pitch={}",
 				id, command.sample.handle, success, command.controls.left, command.controls.right, command.controls.pitch);
 		}
@@ -208,7 +209,7 @@ void FlushSampleCommands()
 				success = instance.voice->SetPlaying(true);
 				instance.started = success;
 				instance.playing = success;
-				Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances", "host-start id=0x{:08x} success={}", id, success);
+				MY_LOG_NAMED_CATEGORY(AudioInstances, LogLevel::Info, "host-start id=0x{:08x} success={}", id, success);
 				break;
 			case SampleCommandType::Pause: success = instance.voice->SetPlaying(false); if (success) instance.playing = false; break;
 			case SampleCommandType::Update: success = instance.voice->SetControls(command.controls); if (success) instance.controls = command.controls; break;
@@ -218,7 +219,7 @@ void FlushSampleCommands()
 		if (!success) {
 			DestroySample(id);
 			failedInstances.push_back(id);
-			Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Sample command {} failed (instance {}, handle {})",
+			MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "Sample command {} failed (instance {}, handle {})",
 				static_cast<unsigned>(command.type), id, command.sample.handle);
 		}
 	}
@@ -230,7 +231,7 @@ std::vector<std::uint32_t> PollFinishedSamples()
 	failedInstances.clear();
 	for (auto it = instances.begin(); it != instances.end();) {
 		if (it->second.started && it->second.voice->IsFinished()) {
-			Log::GetInstance().AddLog(LogLevel::Info, "AudioInstances", "host-finished id=0x{:08x}", it->first);
+			MY_LOG_NAMED_CATEGORY(AudioInstances, LogLevel::Info, "host-finished id=0x{:08x}", it->first);
 			finished.push_back(it->first);
 			it = instances.erase(it);
 		}

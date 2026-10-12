@@ -32,7 +32,7 @@
 #include "Mesh.h"
 #endif
 
-#define EDDLIST_LOG(level, format, ...) MY_LOG_CATEGORY("edDList", level, format, ##__VA_ARGS__)
+#define EDDLIST_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(EdDList, level, format, ##__VA_ARGS__)
 
 edLIST* gDList_2D[2] = { 0 };
 edLIST* gDList_2D_Before3D[2] = { 0 };

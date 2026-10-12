@@ -239,6 +239,7 @@ void edVideoWaitVsync(byte param_1)
 	do {
 	} while (VideoManager.bWaitingForVSync != 0);
 #else
+	ZONE_SCOPED;
 	static const auto kFrameDuration = std::chrono::duration<long long, std::ratio<1, 60>>{1};
 	static auto sDeadline = std::chrono::steady_clock::now() + kFrameDuration;
 
@@ -261,7 +262,7 @@ void edVideoWaitVsync(byte param_1)
 
 void edVideoFlip(void)
 {
-	MY_LOG_CATEGORY("Video", LogLevel::VeryVerbose, "edVideoFlip\n");
+	MY_LOG_NAMED_CATEGORY(Video, LogLevel::VeryVerbose, "edVideoFlip\n");
 	ZONE_SCOPED;
 
 	/* Render scene */

@@ -4,6 +4,7 @@
 #include "edSoundDevice.h"
 #include "edMusicService.h"
 #include "log.h"
+#include "log_categories.h"
 #include <cstring>
 #include <deque>
 #include <unordered_map>
@@ -41,7 +42,7 @@ std::uint32_t nextIndex = 1, nextHandle = 1, completed = 0;
 
 void Error(const char* message, int id)
 {
-	Log::GetInstance().AddLog(LogLevel::Error, "Audio", "%s (callback id %d)", message, id);
+	MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "%s (callback id %d)", message, id);
 }
 
 std::uint32_t NewHandle()

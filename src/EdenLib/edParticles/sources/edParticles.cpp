@@ -21,7 +21,7 @@ bool FUN_0027dc70(_ed_particle_manager* pManager)
 	return uVar1;
 }
 
-#define PARTICLE_LOG(level, format, ...) MY_LOG_CATEGORY("Particle", level, format, ##__VA_ARGS__)
+#define PARTICLE_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Particle, level, format, ##__VA_ARGS__)
 
 #define VECTOR_NAN_SAFETY_CHECK(vec) \
 	if (std::isnan(vec.x) || std::isnan(vec.y) || std::isnan(vec.z) || std::isnan(vec.w)) { \

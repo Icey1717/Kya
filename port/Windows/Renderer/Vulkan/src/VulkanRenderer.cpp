@@ -1219,7 +1219,7 @@ public:
 	static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationErrorCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && messageType > VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
 			std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-			MY_LOG_CATEGORY("Validation", LogLevel::Info, "{}", pCallbackData->pMessage);
+			MY_LOG_NAMED_CATEGORY(Validation, LogLevel::Info, "{}", pCallbackData->pMessage);
 			FLUSH_LOG();
 		}
 		return VK_FALSE;

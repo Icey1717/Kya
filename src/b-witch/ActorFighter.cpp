@@ -14,7 +14,7 @@
 #include "DlistManager.h"
 #include "ed3D/ed3DG2D.h"
 
-#define FIGHTER_LOG(level, format, ...) MY_LOG_CATEGORY("Fighter", level, format, ##__VA_ARGS__)
+#define FIGHTER_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Fighter, level, format, ##__VA_ARGS__)
 
 static std::unordered_map<uint, std::string> gDebugActionHashToFullName;
 

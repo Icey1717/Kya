@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-#define AUDIO_INSTANCE_LOG(level, format, ...) MY_LOG_CATEGORY("AudioInstances", level, format, ##__VA_ARGS__)
+#define AUDIO_INSTANCE_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(AudioInstances, level, format, ##__VA_ARGS__)
 
 struct edsound_listener;
 struct edsound_3d_data;

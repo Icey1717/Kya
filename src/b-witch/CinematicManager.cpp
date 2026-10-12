@@ -54,7 +54,7 @@ CCinematicManager* g_CinematicManager_0048efc;
 
 #define CUTSCENE_MAX_LOAD_TIME 15.0f
 
-#define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
+#define CUTSCENE_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Cutscene, level, format, ##__VA_ARGS__)
 
 struct CinematicOption {
 	char* name;

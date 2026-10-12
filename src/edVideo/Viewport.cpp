@@ -12,7 +12,7 @@
 #endif
 #include "Rendering/CustomShell.h"
 
-#define VIEWPORT_LOG(level, format, ...) MY_LOG_CATEGORY("Viewport", level, format, ##__VA_ARGS__)
+#define VIEWPORT_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Viewport, level, format, ##__VA_ARGS__)
 
 ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha)
 {

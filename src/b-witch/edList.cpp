@@ -1,7 +1,7 @@
 #include "edList.h"
 #include <string.h>
 
-#define ED_LIST_LOG(level, format, ...) MY_LOG_CATEGORY("edList", level, format, ##__VA_ARGS__)
+#define ED_LIST_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(EdList, level, format, ##__VA_ARGS__)
 
 edNODE* edlistClear(edLIST* pList, edNODE* pNode)
 {

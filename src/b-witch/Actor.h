@@ -21,7 +21,7 @@
 	(static_cast<unsigned long long>(str[6]) << 48) | \
 	(static_cast<unsigned long long>(str[7]) << 56))
 
-#define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
+#define ACTOR_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Actor, level, format, ##__VA_ARGS__)
 
 // Bit in CActor::actorFieldS meaning "include in save"
 constexpr uint32_t SAVE_FLAG = 0x10;

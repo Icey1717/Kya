@@ -13,7 +13,7 @@
 
 int INT_00448e08 = 0;
 
-#define AUTONOMOUS_LOG(level, format, ...) MY_LOG_CATEGORY("Autonomous", level, format, ##__VA_ARGS__)
+#define AUTONOMOUS_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Autonomous, level, format, ##__VA_ARGS__)
 
 void CActorWindState::AddWind(_wind_param_in* pParams)
 {

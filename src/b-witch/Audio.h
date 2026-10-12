@@ -7,7 +7,7 @@
 #include "edSound/edSoundInstance.h"
 #include "Scene.h"
 
-#define AUDIO_LOG(level, format, ...) MY_LOG_CATEGORY("Audio", level, format, ##__VA_ARGS__)
+#define AUDIO_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Audio, level, format, ##__VA_ARGS__)
 
 class CActor;
 class CAudioManager;

@@ -2,6 +2,7 @@
 #include "DebugHero.h"
 #include "DebugWatch.h"
 #include "DebugUi.h"
+#include "DebugFileList.h"
 
 #include <imgui.h>
 #include <filesystem>
@@ -198,45 +199,30 @@ namespace Debug {
 					int sectorId;
 				};
 
-				// Find all files with the extension .chkp and display them in a dropdown
-				std::vector<std::string> options;
-
-				std::filesystem::path path = "checkpoints";
-
+				static FileList checkpointFiles("checkpoints", ".chkp");
+				static int cachedLevelId = -1;
 				auto* pLevelScheduleManager = CScene::ptable.g_LevelScheduleManager_00451660;
-		
-				// Append the level name.
-				path /= pLevelScheduleManager->aLevelInfo[pLevelScheduleManager->currentLevelID].levelName;
-
-				if (std::filesystem::exists(path)) {
-					for (const auto& entry : std::filesystem::directory_iterator(path)) {
-						if (entry.path().extension() == ".chkp") {
-							options.emplace_back(entry.path().filename().string());
-						}
-					}
+				if (cachedLevelId != pLevelScheduleManager->currentLevelID) {
+					cachedLevelId = pLevelScheduleManager->currentLevelID;
+					checkpointFiles.SetDirectory(std::filesystem::path("checkpoints") /
+						pLevelScheduleManager->aLevelInfo[cachedLevelId].levelName);
 				}
+				if (Ui::ActionButton("Refresh Checkpoints")) checkpointFiles.Invalidate();
+				const auto& path = checkpointFiles.GetDirectory();
+				const auto& options = checkpointFiles.GetFiles();
 
 				if (options.size() > 0) {
 					auto itemGetter = [](void* data, int index, const char** out_text) {
-						auto& options = *static_cast<std::vector<std::string>*>(data);
+						const auto& options = *static_cast<const std::vector<std::string>*>(data);
 						*out_text = options[index].c_str();
 						return true;
 						};
 
-					static int selectedOption = [options]() {
-						const std::string lastCheckpoint = gLastCheckpoint;
-
-						for (int i = 0; i < options.size(); i++) {
-							if (std::string(options[i]) == lastCheckpoint) {
-								return i;
-							}
-						}
-
-						return 0;
-						}();
+					const auto selected = std::find(options.begin(), options.end(), gLastCheckpoint.get());
+					int selectedOption = selected == options.end() ? 0 : static_cast<int>(selected - options.begin());
 
 					// Create the dropdown box
-					if (Ui::Field("Checkpoint", [&](const char* id) { return ImGui::Combo(id, &selectedOption, itemGetter, &options, options.size(), -1); }))
+					if (Ui::Field("Checkpoint", [&](const char* id) { return ImGui::Combo(id, &selectedOption, itemGetter, const_cast<std::vector<std::string>*>(&options), options.size(), -1); }))
 					{
 						gLastCheckpoint = std::string(options[selectedOption]);
 					}
@@ -304,6 +290,7 @@ namespace Debug {
 
 						std::filesystem::path chkptPath = path / (std::string(checkpointName) + ".chkp");
 						DebugHelpers::SaveTypeToFile(chkptPath, sNewCheckpoint);
+						checkpointFiles.Invalidate();
 						ImGui::CloseCurrentPopup();
 					}
 

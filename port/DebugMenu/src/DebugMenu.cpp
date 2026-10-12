@@ -29,7 +29,7 @@
 #include "DebugMenuToolbar.h"
 #include "DebugWatch.h"
 
-#define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
+#define DEBUG_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Debug, level, format, ##__VA_ARGS__)
 
 std::unique_ptr<std::vector<Debug::Menu>> Debug::MenuRegisterer::gMenus;
 std::unique_ptr<std::vector<std::function<void()>>> Debug::UpdateRegisterer::gCallbacks;

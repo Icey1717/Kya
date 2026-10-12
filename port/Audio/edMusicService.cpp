@@ -3,6 +3,7 @@
 #include "edSysTransferService.h"
 #include "edSoundDevice.h"
 #include "log.h"
+#include "log_categories.h"
 #include <chrono>
 #include <deque>
 #include <mutex>
@@ -81,7 +82,7 @@ Service service;
 
 void Error(const std::string& error, unsigned index)
 {
-	Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Music {}: {}", index, error);
+	MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "Music {}: {}", index, error);
 }
 void Fail(Stream& stream, unsigned index)
 {

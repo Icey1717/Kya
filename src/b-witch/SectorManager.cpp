@@ -21,7 +21,7 @@
 #include "ActorClusteriser.h"
 #include "EdFileBase.h"
 
-#define SECTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Sector", level, format, ##__VA_ARGS__)
+#define SECTOR_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Sector, level, format, ##__VA_ARGS__)
 
 CSectorManager::CSectorManager()
 {

@@ -5,7 +5,7 @@
 #include "edMem.h"
 
 #define IO_LOG_DISABLED(...)
-#define IO_LOG(level, format, ...) MY_LOG_CATEGORY("io", level, format, ##__VA_ARGS__)
+#define IO_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Io, level, format, ##__VA_ARGS__)
 
 struct edFILEH;
 

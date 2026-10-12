@@ -25,7 +25,7 @@
 #define JAMGUT_CMD_JUMP 5
 #define JAMGUT_CMD_ATTACK 8
 
-#define JAMGUT_LOG(level, format, ...) MY_LOG_CATEGORY("JamGut", level, format, ##__VA_ARGS__)
+#define JAMGUT_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(JamGut, level, format, ##__VA_ARGS__)
 
 class CActorHero;
 class CActorJamGut;

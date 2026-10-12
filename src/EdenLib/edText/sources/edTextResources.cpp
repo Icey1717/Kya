@@ -1,7 +1,7 @@
 #include "edTextResources.h"
 #include "edMem.h"
 
-#define TEXT_RESOURCES_LOG(level, format, ...) MY_LOG_CATEGORY("textresources", level, format, ##__VA_ARGS__)
+#define TEXT_RESOURCES_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(TextResources, level, format, ##__VA_ARGS__)
 
 edCTextResourcePool edTextResources;
 

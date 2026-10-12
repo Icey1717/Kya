@@ -31,7 +31,7 @@
 #define HASH_CODE_T2D 0x4432472e
 #define HASH_CODE_PA32 0x32334150
 
-#define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
+#define ED3D_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Ed3D, level, format, ##__VA_ARGS__)
 #define ED3D_LOG_SLOW(level, format, ...)
 
 // Scratchpad addresses										Offset		VRAM

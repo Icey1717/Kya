@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include <mutex>
 #include "spdlog/logger.h"
 
 using LogPtr = std::shared_ptr<spdlog::logger>;
@@ -78,27 +80,28 @@ public:
 	static LogPtr asyncLog;
 	LogMap logs;
 
+	LogEntry& GetCategory(const std::string& category) {
+		std::lock_guard<std::mutex> lock(categoryMutex);
+		return logs.try_emplace(category, category).first->second;
+	}
+
 	template <typename... Args>
 	void AddLog(const LogLevel level, const std::string& category, const char* format, Args &&...args) {
-		
-		// Find the log for the specified category.
-		auto pLog = logs.find(category);
+		AddLog(level, GetCategory(category), format, std::forward<Args>(args)...);
+	}
 
-		// Create the log if it does not exist.
-		if (pLog == logs.end()) {
-			logs.emplace(category, category);
-			pLog = logs.find(category);
-		}
-
+	// The macros check the entry before evaluating arguments and reuse that lookup.
+	template <typename... Args>
+	void AddLog(const LogLevel level, LogEntry& entry, const char* format, Args &&...args) {
 		// Early exit if the log is not enabled.
-		if (!pLog->second.bEnabled) {
+		if (!entry.bEnabled) {
 			return;
 		}
 
 		// Log to async log and the specified log.
 		// Use fmt::runtime to wrap the runtime format string
 		asyncLog->log(LogLevelToSpdLog(level), fmt::runtime(format), std::forward<Args>(args)...);
-		pLog->second.logPtr->log(LogLevelToSpdLog(level), fmt::runtime(format), std::forward<Args>(args)...);
+		entry.logPtr->log(LogLevelToSpdLog(level), fmt::runtime(format), std::forward<Args>(args)...);
 	}
 
 	inline LogMap& GetLogs() { return logs; }
@@ -111,6 +114,7 @@ public:
 
 
 private:
+	std::mutex categoryMutex;
 	Log();
 	Log(const Log&) = delete;
 	Log& operator=(const Log&) = delete;

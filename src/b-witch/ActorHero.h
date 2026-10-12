@@ -274,7 +274,7 @@ struct AnimResultHero : public StateConfig {
 #define HERO_STATE_COUNT 194
 #define HERO_BHVR_COUNT 14
 
-#define ACTOR_HERO_LOG(level, format, ...) MY_LOG_CATEGORY("ActorHero", level, format, ##__VA_ARGS__)
+#define ACTOR_HERO_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(ActorHero, level, format, ##__VA_ARGS__)
 
 struct HeroActionStateCfg
 {

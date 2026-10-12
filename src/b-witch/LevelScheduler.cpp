@@ -51,7 +51,7 @@
 #include "InventoryInfo.h"
 #include "ActorWolfen.h"
 
-#define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
+#define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(LevelScheduler, level, format, ##__VA_ARGS__)
 
 struct ScenarioVariable {
 	int defaultValue;

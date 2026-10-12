@@ -123,7 +123,7 @@ void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest)
 #else
 	memcpy(pDest, pSrc, qwc);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", qwc, (uintptr_t)pSrc, (uintptr_t)pDest);
+	MY_LOG_NAMED_CATEGORY(CustomShell, LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", qwc, (uintptr_t)pSrc, (uintptr_t)pDest);
 	return;
 }
 
@@ -150,7 +150,7 @@ bool edDmaLoadFromFastRam(void* pSrc, uint size, void* pDest)
 #else
 	memcpy(pDest, pSrc, size);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying 0x%X (src: %p | dst: %p)", size, (void*)pSrc, (void*)pDest);
+	MY_LOG_NAMED_CATEGORY(CustomShell, LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying 0x%X (src: %p | dst: %p)", size, (void*)pSrc, (void*)pDest);
 	bVar2 = edDmaWaitDma(madr);
 	return bVar2;
 }
@@ -177,7 +177,7 @@ void edDmaLoadToFastRam_nowait(void* pSrc, uint size, void* pDst)
 #else
 	memcpy(pDst, pSrc, size);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadToFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
+	MY_LOG_NAMED_CATEGORY(CustomShell, LogLevel::VeryVerbose, "edDmaLoadToFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
 }
 
 bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
@@ -215,7 +215,7 @@ bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
 #else
 	memcpy(pDst, pSrc, size);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadToFastRam: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
+	MY_LOG_NAMED_CATEGORY(CustomShell, LogLevel::VeryVerbose, "edDmaLoadToFastRam: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
 	bVar2 = edDmaWaitDma(madr);
 	return bVar2;
 }

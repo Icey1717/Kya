@@ -8,7 +8,7 @@
 #include <array>
 
 #define SPRITE_LOG_TRACE(level, format, ...)
-#define SPRITE_LOG(level, format, ...) MY_LOG_CATEGORY("Sprite", level, format, ##__VA_ARGS__)
+#define SPRITE_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Sprite, level, format, ##__VA_ARGS__)
 
 namespace Renderer::Kya::Sprite
 {

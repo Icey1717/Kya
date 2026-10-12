@@ -2,6 +2,7 @@
 #include "edSoundDevice.h"
 
 #include "log.h"
+#include "log_categories.h"
 
 #include <algorithm>
 #include <chrono>
@@ -56,7 +57,7 @@ bool audioOwnsCom = false;
 
 void LogAudioError(const char* message, HRESULT result)
 {
-	Log::GetInstance().AddLog(LogLevel::Error, "Audio", "{} (HRESULT 0x{:08x})", message,
+	MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "{} (HRESULT 0x{:08x})", message,
 		static_cast<unsigned long>(result));
 }
 
@@ -394,10 +395,10 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 		file.clear();
 	}
 	if (!file) {
-		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not open stream file '{}'", path);
+		MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "Could not open stream file '{}'", path);
 		return false;
 	}
-	Log::GetInstance().AddLog(LogLevel::Info, "Audio", "Loaded stream '{}' as '{}'", path, resolvedPath);
+	MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Info, "Loaded stream '{}' as '{}'", path, resolvedPath);
 
 	const std::streamoff fileSize = file.tellg();
 	if (fileSize <= 0 || static_cast<std::uintmax_t>(fileSize) > static_cast<std::uintmax_t>(SIZE_MAX))
@@ -416,7 +417,7 @@ bool LoadStream(std::uint32_t streamId, const char* path)
 		? DecodeVag(data.data(), data.size(), samples, sampleRate)
 		: DecodeMib(data.data(), data.size(), stream.info.channels, stream.info.blockSize, sampleRate, samples);
 	if (!decoded) {
-		Log::GetInstance().AddLog(LogLevel::Error, "Audio", "Could not decode stream '{}'", path);
+		MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Error, "Could not decode stream '{}'", path);
 		return false;
 	}
 

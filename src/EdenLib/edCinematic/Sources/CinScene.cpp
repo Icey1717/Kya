@@ -6,10 +6,10 @@
 #include <string>
 #include "Cinematic.h"
 
-#define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
+#define CUTSCENE_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Cutscene, level, format, ##__VA_ARGS__)
 
 #ifdef PLATFORM_WIN
-#define CUTSCENE_LOG_WIN(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
+#define CUTSCENE_LOG_WIN(level, format, ...) MY_LOG_NAMED_CATEGORY(Cutscene, level, format, ##__VA_ARGS__)
 #else
 #define CUTSCENE_LOG_WIN(...)
 #endif

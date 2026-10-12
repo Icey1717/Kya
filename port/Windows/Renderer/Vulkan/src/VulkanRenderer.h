@@ -6,7 +6,7 @@
 
 #include "logging.h"
 
-#define VULKAN_LOG(level, format, ...) MY_LOG_CATEGORY("Vulkan", level, format, ##__VA_ARGS__)
+#define VULKAN_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Vulkan, level, format, ##__VA_ARGS__)
 
 struct UniformBufferObject
 {

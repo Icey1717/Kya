@@ -309,7 +309,7 @@ CEventTrack* CTrackManager::GetTrack(int index)
 
 #if defined(PLATFORM_WIN) && !defined(NDEBUG)
 	if (index != -1 && (index < 0 || index >= this->trackCount || !this->aTracks)) {
-		MY_LOG_CATEGORY("Animation", LogLevel::Error,
+		MY_LOG_NAMED_CATEGORY(Animation, LogLevel::Error,
 			"CTrackManager::GetTrack invalid index=0x{:x} trackCount={} manager=0x{:x} tracks=0x{:x}",
 			index, this->trackCount, (uintptr_t)this, (uintptr_t)this->aTracks);
 		FLUSH_LOG();

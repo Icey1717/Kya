@@ -9,17 +9,25 @@
 
 #ifdef ENABLE_MY_LOG
 #if defined(PLATFORM_WIN)
-#define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
-#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
+#include "log_categories.h"
+#define scePrintf(format, ...) MY_LOG_NAMED_CATEGORY(PS2, LogLevel::Info, format, ##__VA_ARGS__)
+#define MY_LOG(format, ...) MY_LOG_NAMED_CATEGORY(General, LogLevel::Info, format, ##__VA_ARGS__)
 
 #define FLUSH_LOG(...) Log::GetInstance().ForceFlush()
 
-#define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
+#define MY_LOG_CATEGORY(category, level, format, ...) do { \
+	auto& kyaLogInstance = Log::GetInstance(); \
+	auto& kyaLogEntry = kyaLogInstance.GetCategory(category); \
+	if (kyaLogEntry.bEnabled) { \
+		kyaLogInstance.AddLog(level, kyaLogEntry, format, ##__VA_ARGS__); \
+	} \
+} while (false)
 
 #else
 #include <eekernel.h>
 #define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
 #define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
+#define MY_LOG_NAMED_CATEGORY(category, level, format, ...) MY_LOG_CATEGORY(#category, level, format, ##__VA_ARGS__)
 #endif
 
 #include <stdio.h>
@@ -29,6 +37,7 @@
 #else
 #define MY_LOG(...)
 #define MY_LOG_CATEGORY(...)
+#define MY_LOG_NAMED_CATEGORY(...)
 #define FLUSH_LOG(...)
 
 #ifdef PLATFORM_WIN

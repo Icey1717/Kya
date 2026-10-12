@@ -15,7 +15,7 @@
 #include "profiling.h"
 #endif
 
-#define ED_MEM_LOG(level, format, ...) MY_LOG_CATEGORY("edMem", level, format, ##__VA_ARGS__)
+#define ED_MEM_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(EdMem, level, format, ##__VA_ARGS__)
 
 struct HeapFuncTable
 {

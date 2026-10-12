@@ -5,7 +5,7 @@
 #include "AnmManager.h"
 #include "EdenLib/edAnim/AnmSkeleton.h"
 
-#define ANIMATION_LOG(level, format, ...) MY_LOG_CATEGORY("Animation", level, format, ##__VA_ARGS__)
+#define ANIMATION_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Animation, level, format, ##__VA_ARGS__)
 #define ANIMATION_LOG_VERBOSE(level, format, ...)
 
 #define STATE_ANIM_NONE		0

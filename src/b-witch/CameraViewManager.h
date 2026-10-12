@@ -7,7 +7,7 @@
 #include "edVideo/CameraStack.h"
 #include "camera.h"
 
-#define CAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("Camera", level, format, ##__VA_ARGS__)
+#define CAMERA_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Camera, level, format, ##__VA_ARGS__)
 
 class CCameraMouseQuake;
 class CCameraShadow;

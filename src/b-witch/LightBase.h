@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-#define LIGHT_MANAGER_LOG(level, format, ...) MY_LOG_CATEGORY("LightManager", level, format, ##__VA_ARGS__)
+#define LIGHT_MANAGER_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(LightManager, level, format, ##__VA_ARGS__)
 
 struct ByteCode;
 

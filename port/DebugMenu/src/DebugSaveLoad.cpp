@@ -224,7 +224,7 @@ namespace Debug::SaveLoad
 				capturePending = false;
 				try { pendingScreenshot = CaptureScreenshot(); }
 				catch (const std::exception& error) {
-					MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "Screenshot capture failed: {}", error.what());
+					MY_LOG_NAMED_CATEGORY(SaveLoad, LogLevel::Error, "Screenshot capture failed: {}", error.what());
 				}
 			}
 			if (pendingArchiveSlot < 0 || gSaveManagement.has_queued_file_action()) return;
@@ -250,7 +250,7 @@ namespace Debug::SaveLoad
 							throw std::runtime_error("Could not write screenshot");
 					}
 					catch (const std::exception& error) {
-						MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "Screenshot save failed: {}", error.what());
+						MY_LOG_NAMED_CATEGORY(SaveLoad, LogLevel::Error, "Screenshot save failed: {}", error.what());
 					}
 				}
 				if (pendingCheckpointArchive) {
@@ -273,7 +273,7 @@ namespace Debug::SaveLoad
 			}
 			catch (const std::exception& error) {
 				archiveStatus = std::string("Autosave archive: ") + error.what();
-				MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "{}", archiveStatus);
+				MY_LOG_NAMED_CATEGORY(SaveLoad, LogLevel::Error, "{}", archiveStatus);
 			}
 			pendingArchiveData.clear();
 			pendingScreenshot.clear();
@@ -640,7 +640,7 @@ namespace Debug::SaveLoad
 			const auto now = std::chrono::steady_clock::now();
 			// Repeat waiting diagnostics occasionally, but never use elapsed time for readiness.
 			if (state != autoLoadState || status != autoLoadStatus || now - lastAutoLoadLog >= std::chrono::seconds(5)) {
-				MY_LOG_CATEGORY("AutoLoad", LogLevel::Info, "AutoLoad: slot={} {}", autoLoadSlot, status);
+				MY_LOG_NAMED_CATEGORY(AutoLoad, LogLevel::Info, "AutoLoad: slot={} {}", autoLoadSlot, status);
 				// Preserve the last operation in the log even if the subsequent load hangs.
 				Log::GetInstance().ForceFlush();
 				lastAutoLoadLog = now;
@@ -678,7 +678,7 @@ namespace Debug::SaveLoad
 			// Mark Loading before entering code that can render nested frames/message boxes.
 			SetAutoLoadStatus(AutoLoadState::Loading, "Checking save metadata");
 			const int deviceState = gSaveManagement.test_device_has_enough_room();
-			MY_LOG_CATEGORY("AutoLoad", LogLevel::Info,
+			MY_LOG_NAMED_CATEGORY(AutoLoad, LogLevel::Info,
 				"AutoLoad: slot={} level={} nextLevel={} flags={:#x} titleState={} device={} files={:#x}",
 				autoLoadSlot, scheduler->currentLevelID, scheduler->nextLevelID, GameFlags,
 				pause->field_0x34, deviceState, gSaveManagement.fileExistsFlags);
@@ -695,7 +695,7 @@ namespace Debug::SaveLoad
 			SetAutoLoadStatus(AutoLoadState::Loading, "Calling MemCardLoad0");
 			MemCardLoad0(autoLoadSlot);
 			const bool requested = scheduler->bShouldLoad && scheduler->nextLevelID != 0x10 && scene->IsFadeTermActive();
-			MY_LOG_CATEGORY("AutoLoad", LogLevel::Info,
+			MY_LOG_NAMED_CATEGORY(AutoLoad, LogLevel::Info,
 				"AutoLoad: load returned; slot={} shouldLoad={} nextLevel={} fadeTerm={} flags={:#x}",
 				autoLoadSlot, scheduler->bShouldLoad, scheduler->nextLevelID, scene->IsFadeTermActive(), GameFlags);
 			SetAutoLoadStatus(requested ? AutoLoadState::Done : AutoLoadState::Failed,
@@ -794,7 +794,7 @@ void Debug::SaveLoad::QueueSaveScreenshot(int slot)
 	catch (const std::exception& error) {
 		pendingArchiveSlot = -1;
 		capturePending = false;
-		MY_LOG_CATEGORY("SaveLoad", LogLevel::Error, "Could not queue autosave archive: {}", error.what());
+		MY_LOG_NAMED_CATEGORY(SaveLoad, LogLevel::Error, "Could not queue autosave archive: {}", error.what());
 	}
 }
 

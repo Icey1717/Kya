@@ -22,8 +22,8 @@
 #endif
 #include "MathOps.h"
 
-#define VU_VTX_LOG(format, ...) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
-#define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
+#define VU_VTX_LOG(format, ...) { MY_LOG_NAMED_CATEGORY(VtxTrace, LogLevel::Verbose, format, ##__VA_ARGS__); }
+#define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_NAMED_CATEGORY(VtxTrace, LogLevel::Verbose, format, ##__VA_ARGS__); }
 
 #define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
 

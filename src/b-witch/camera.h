@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "Actor.h"
 
-#define EDFCAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("edFCamera", level, format, ##__VA_ARGS__)
+#define EDFCAMERA_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(EdFCamera, level, format, ##__VA_ARGS__)
 
 class CCameraManager;
 

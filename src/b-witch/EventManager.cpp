@@ -14,8 +14,8 @@ CEventManagerInternal CEventManager::callbackFunctions = {};
 
 EventQueue EventQueue_00448fbc;
 
-#define EVENT_LOG(level, format, ...) MY_LOG_CATEGORY("event", level, format, ##__VA_ARGS__)
-#define EVENT_LOG_SLOW(level, format, ...) MY_LOG_CATEGORY("event", level, format, ##__VA_ARGS__)
+#define EVENT_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(Event, level, format, ##__VA_ARGS__)
+#define EVENT_LOG_SLOW(level, format, ...) MY_LOG_NAMED_CATEGORY(Event, level, format, ##__VA_ARGS__)
 
 void edEventSetCallbackFunctions(EventCallbackGetActor* param_1, EventGetActorPositionFunc* param_2, void* param_3, EventSendAllMsgs* param_4)
 {

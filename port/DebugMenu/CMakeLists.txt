@@ -12,6 +12,7 @@ set(SOURCES
 	"src/DebugWatch.cpp"
 	"src/DebugWatch.h"
 	"src/DebugUi.h"
+	"src/DebugFileList.h"
     "src/DebugDrawInspector.cpp"
     "src/DebugDrawInspector.h"
 	"src/DebugMaterialPreviewer.h"

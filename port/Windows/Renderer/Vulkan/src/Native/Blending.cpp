@@ -202,7 +202,7 @@ Renderer::Native::ResolvedBlendState Renderer::Native::ResolveBlendState(const G
 			first = reported.insert(alpha.CMD).second;
 		}
 		if (first) {
-			MY_LOG_CATEGORY("NativeRenderer", LogLevel::Info, "Unsupported GS blend: A={} B={} C={} D={} FIX={} ALPHA=0x{:x}: {}",
+			MY_LOG_NAMED_CATEGORY(NativeRenderer, LogLevel::Info, "Unsupported GS blend: A={} B={} C={} D={} FIX={} ALPHA=0x{:x}: {}",
 				uint32_t(alpha.A), uint32_t(alpha.B), uint32_t(alpha.C), uint32_t(alpha.D), uint32_t(alpha.FIX), alpha.CMD, reason);
 			if (IsDebuggerPresent()) __debugbreak();
 		}

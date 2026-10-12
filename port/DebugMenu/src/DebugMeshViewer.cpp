@@ -25,7 +25,7 @@
 #include "Texture.h"
 #include "Mesh.h"
 
-#define MESH_PREVIEWER_LOG(level, format, ...) MY_LOG_CATEGORY("Mesh Previewer", level, format, ##__VA_ARGS__)
+#define MESH_PREVIEWER_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(MeshPreviewer, level, format, ##__VA_ARGS__)
 
 namespace DebugMeshViewer {
 	bool gAnimate = false;
