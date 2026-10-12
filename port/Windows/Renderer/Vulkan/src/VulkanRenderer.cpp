@@ -934,9 +934,16 @@ public:
 		glfwPollEvents();
 
 		// Wait for the GPU to finish work on this frame
-		CheckVk(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX), "vkWaitForFences");
+		{
+			ZONE_SCOPED_NAME("vkWaitForFences");
+			CheckVk(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX), "vkWaitForFences");
+		}
 
-		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
+		VkResult result;
+		{
+			ZONE_SCOPED_NAME("vkAcquireNextImageKHR");
+			result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
+		}
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 			recreateSwapChain();

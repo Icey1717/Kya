@@ -21,6 +21,62 @@
 
 #include <chrono>
 #include <thread>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+
+namespace
+{
+	class FrameLimiterTimer
+	{
+	public:
+		FrameLimiterTimer()
+			: timer(CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+				TIMER_MODIFY_STATE | SYNCHRONIZE))
+		{
+		}
+
+		~FrameLimiterTimer()
+		{
+			if (timer) {
+				CloseHandle(timer);
+			}
+		}
+
+		FrameLimiterTimer(const FrameLimiterTimer&) = delete;
+		FrameLimiterTimer& operator=(const FrameLimiterTimer&) = delete;
+
+		template<typename Duration>
+		void SleepUntil(std::chrono::time_point<std::chrono::steady_clock, Duration> deadline)
+		{
+			const auto remaining = deadline - std::chrono::steady_clock::now();
+			if (remaining <= std::chrono::steady_clock::duration::zero()) {
+				return;
+			}
+
+			// Windows timer absolute times use UTC, so convert the steady-clock
+			// deadline to a relative, one-shot delay in 100 ns units instead.
+			using TimerDuration = std::chrono::duration<long long, std::ratio<1, 10000000>>;
+			LARGE_INTEGER dueTime;
+			dueTime.QuadPart = -std::chrono::duration_cast<TimerDuration>(remaining).count();
+			if (dueTime.QuadPart == 0) {
+				return;
+			}
+
+			if (timer && SetWaitableTimer(timer, &dueTime, 0, nullptr, nullptr, FALSE) &&
+				WaitForSingleObject(timer, INFINITE) == WAIT_OBJECT_0) {
+				return;
+			}
+
+			// Retain pacing if high-resolution timers are unavailable or fail.
+			std::this_thread::sleep_until(deadline);
+		}
+
+	private:
+		HANDLE timer;
+	};
+}
 #endif
 
 #include "CameraViewManager.h"
@@ -240,16 +296,23 @@ void edVideoWaitVsync(byte param_1)
 	} while (VideoManager.bWaitingForVSync != 0);
 #else
 	ZONE_SCOPED;
+	static FrameLimiterTimer frameLimiterTimer;
 	static const auto kFrameDuration = std::chrono::duration<long long, std::ratio<1, 60>>{1};
 	static auto sDeadline = std::chrono::steady_clock::now() + kFrameDuration;
 
-	// Sleep for most of the frame budget so the CPU can do useful work elsewhere,
-	// then busy-spin only for the final 0.5 ms to hit the deadline precisely.
-	// The previous implementation busy-spun the entire frame, which wasted ~20%
-	// of frame time calling QueryPerformanceCounter in a tight loop.
+	// Use a high-resolution one-shot timer for most of the frame budget,
+	// then spin for the final 0.5 ms to absorb timer and scheduler jitter.
 	const auto sleepUntil = sDeadline - std::chrono::microseconds(500);
-	std::this_thread::sleep_until(sleepUntil);
-	while (std::chrono::steady_clock::now() < sDeadline) {}
+	{
+		ZONE_SCOPED_NAME("Frame limiter sleep");
+		frameLimiterTimer.SleepUntil(sleepUntil);
+	}
+	{
+		ZONE_SCOPED_NAME("Frame limiter spin");
+		while (std::chrono::steady_clock::now() < sDeadline) {
+			YieldProcessor();
+		}
+	}
 
 	// A debugger break (or any long frame) can leave the deadline far in the
 	// past. Skip the missed frame slots instead of running uncapped until the
@@ -281,14 +344,15 @@ void edVideoFlip(void)
 	Renderer::Native::OnVideoFlip();
 #endif
 
+#ifndef PLATFORM_WIN
 	edVideoWaitVsync(1);
+#endif
 
 #ifdef PLATFORM_WIN
 	{
 		ZONE_SCOPED_NAME("Win Begin");
 		VU1Emu::BeginFrame();
 		Renderer::Present();
-		FRAME_MARK;
 	}
 #endif
 
@@ -303,6 +367,13 @@ void edVideoFlip(void)
 #ifdef PLATFORM_WIN
 	VU1Emu::EndFrame();
 	gOnVideoFlip();
+
+	// Submit and queue presentation before pacing the next game frame. FIFO
+	// may already have consumed the budget; the limiter only waits if needed.
+	edVideoWaitVsync(1);
+	// Include presentation, flip callbacks and the cap in the paced CPU frame.
+	// This marks CPU cadence, not the time the image reaches the display.
+	FRAME_MARK;
 #endif // PLATFORM_WIN
 
 	return;
