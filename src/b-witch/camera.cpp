@@ -343,7 +343,8 @@ bool CCamera::AlertCamera(int param_2, void* pParams, CCamera* param_4)
 
 					if (iVar2 <= iVar5) break;
 
-					this->field_0x84->aEntries[iVar5].Get()->DoMessage(this->field_0x84->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar6));
+					// PS2 00199f70: first zone actor sends to each event recipient.
+					this->field_0x84->aEntries[0].Get()->DoMessage(piVar1->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar6));
 					iVar5 = iVar5 + 1;
 				}
 		}
@@ -363,7 +364,7 @@ bool CCamera::AlertCamera(int param_2, void* pParams, CCamera* param_4)
 
 					if (iVar2 <= iVar5) break;
 
-					this->field_0x84->aEntries[iVar5].Get()->DoMessage(this->field_0x84->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar6));
+					this->field_0x84->aEntries[0].Get()->DoMessage(piVar1->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar6));
 					iVar5 = iVar5 + 1;
 				}
 			}
@@ -470,7 +471,8 @@ void CCamera::LeaveManagedCluster()
 
 					if (iVar3 <= iVar6) break;
 
-					piVar1->aEntries[iVar6].Get()->DoMessage(piVar1->aEntries[iVar6].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar7));
+					// PS2 00199d50: preserve the first zone actor as the sender.
+					this->field_0x84->aEntries[0].Get()->DoMessage(piVar1->aEntries[iVar6].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar7));
 
 					iVar6 = iVar6 + 1;
 				}
@@ -582,7 +584,8 @@ void CCamera::ManageEvents()
 
 				if (iVar7 <= iVar11) break;
 
-				this->field_0x84->aEntries[iVar11].Get()->DoMessage(this->field_0x84->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar12));
+				// PS2 0019a120: sender and recipients come from separate lists.
+				this->field_0x84->aEntries[0].Get()->DoMessage(pSVar2->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar12));
 				iVar11 = iVar11 + 1;
 			}
 		}
@@ -604,7 +607,7 @@ void CCamera::ManageEvents()
 
 					if (iVar7 <= iVar11) break;
 
-					this->field_0x84->aEntries[iVar11].Get()->DoMessage(this->field_0x84->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar12));
+					this->field_0x84->aEntries[0].Get()->DoMessage(pSVar2->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar12));
 					iVar11 = iVar11 + 1;
 				}
 			}

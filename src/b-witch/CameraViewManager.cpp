@@ -3,6 +3,7 @@
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include <math.h>
+#include <string.h>
 
 #ifdef PLATFORM_PS2
 #include <libvu0.h>
@@ -39,6 +40,21 @@ edFCamera _gDisplayCamera = { 0 };
 edFCamera gSceneCameras[10] = { 0 };
 
 edFCamera CCameraManager::_gFrontEndCamera = { 0 };
+
+struct CamFloatTable
+{
+	int nbEntries;
+	float aEntries[64];
+};
+
+struct CameraCallback_AAA
+{
+	CCameraManager* pCameraManager;
+	CActor* pActor;
+	float distance;
+	CActorsTable table;
+	CamFloatTable field_0x110;
+} CameraCallback_AAA_00449ee0;
 
 CCameraManager::CCameraManager()
 {
@@ -678,20 +694,8 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	edF32Matrix4SetIdentityHard(&this->matrix_0x10);
 	this->activeCamManager.ClearActiveCam();
 	this->field_0xa78 = 0;
-	//iVar5 = 0;
-	//pCVar7 = this;
-	//do {
-	//	*(undefined4*)&pCVar7->field_0xa38 = 0;
-	//	*(undefined4*)&pCVar7->field_0xa3c = 0;
-	//	iVar5 = iVar5 + 8;
-	//	*(undefined4*)&pCVar7->field_0xa40 = 0;
-	//	*(undefined4*)&pCVar7->field_0xa44 = 0;
-	//	*(undefined4*)&pCVar7->field_0xa48 = 0;
-	//	*(undefined4*)&pCVar7->field_0xa4c = 0;
-	//	*(undefined4*)&pCVar7->field_0xa50 = 0;
-	//	*(undefined4*)&pCVar7->field_0xa54 = 0;
-	//	pCVar7 = (CameraManager*)&(pCVar7->matrix_0x10).ba;
-	//} while (iVar5 < 0x10);
+	// PS2 00197520: clear the 16 serialized slots at 0xa38..0xa74.
+	memset(&this->field_0xa38, 0, 0x40);
 	iVar5 = 0;
 	if (0 < this->loadedCameraCount_0x9f0) {
 		do {
@@ -720,10 +724,11 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 		} while (iVar5 < this->loadedCameraCount_0x9f0);
 	}
 	BuildDisplayMatrix();
-	//PTR_CameraManager_00449ee0 = (CameraManager*)0x0;
-	//PTR_Singleton_00449ee4 = (AActorBase*)0x0;
-	//DAT_00449eec = 0;
-	//DAT_00449ff0 = 0;
+	// PS2 00197638..00197658: reset the callback context between levels.
+	CameraCallback_AAA_00449ee0.pCameraManager = NULL;
+	CameraCallback_AAA_00449ee0.pActor = NULL;
+	CameraCallback_AAA_00449ee0.table.nbEntries = 0;
+	CameraCallback_AAA_00449ee0.field_0x110.nbEntries = 0;
 	return;
 }
 
@@ -848,21 +853,6 @@ void CCameraManager::KeepSameParam(CCamera* pNewCamera, uint flag)
 
 	return;
 }
-
-struct CamFloatTable
-{
-	int nbEntries;
-	float aEntries[64];
-};
-
-struct CameraCallback_AAA
-{
-	CCameraManager* pCameraManager;
-	CActor* pActor;
-	float distance;
-	CActorsTable table;
-	CamFloatTable field_0x110;
-} CameraCallback_AAA_00449ee0;
 
 void FUN_00198530(float param_1, CamFloatTable* param_2)
 {
@@ -1563,6 +1553,8 @@ void CCameraManager::Level_ClearInternalData()
 		(m0->lookAt).y = 0.0f;
 		(m0->lookAt).z = 1.0f;
 		(m0->lookAt).w = 1.0f;
+		// PS2 001978f4: clear roll before rebuilding the scene-camera matrix.
+		m0->rotationZ = 0.0f;
 		edFCameraSetSizeRatioFov(0.0001875f, 1.333333f, 0.25f, m0);
 		CameraSet3DPos(m0);
 		this->aCameraShadow[iVar2] = (CCameraShadow*)0x0;
