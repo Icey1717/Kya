@@ -32,6 +32,7 @@ This repository is an ongoing Windows-focused decompilation and PC port of *Kya:
 
 ## Coding Expectations
 
+- Compare every change to `src/b-witch/` against the original PS2 code using the Ghidra MCP. Check the relevant decompilation and disassembly before changing behavior, and record the function addresses used for comparison.
 - In decompiled `src/` code, avoid modernizing for style. Keep layout and offset-sensitive fields intact, including `field_0xNN`, `undefined*`, original-style names, and manual allocation.
 - In `port/` code, prefer existing local patterns. Vulkan renderer code currently uses exceptions for hard Vulkan setup failures even though other port layers often prefer logged early returns.
 - Use the pointer conversion macros (`STORE_POINTER`, `LOAD_POINTER`, related helpers) for serialized PS2 pointer fields.

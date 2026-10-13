@@ -20,6 +20,7 @@
 #include "ActorManager.h"
 #include "Actor/DebugActorBehaviour.h"
 #include "LevelScheduler.h"
+#include "CameraViewManager.h"
 #include "Native/NativeDebugShapes.h"
 
 namespace Debug {
@@ -197,6 +198,13 @@ namespace Debug {
 
 					int version = 1;
 					int sectorId;
+
+					// Append camera data so version 1 checkpoints retain their original layout.
+					edF32MATRIX4 cameraTransform{};
+					edF32VECTOR4 cameraLookAt{};
+					edF32VECTOR3 cameraAngles{};
+					float cameraDistance = 0.0f;
+					bool hasCamera = false;
 				};
 
 				static FileList checkpointFiles("checkpoints", ".chkp");
@@ -251,6 +259,18 @@ namespace Debug {
 						if (CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID != checkpoint.sectorId) {
 							CScene::ptable.g_SectorManager_00451670->SwitchToSector(checkpoint.sectorId, true);
 						}
+
+						auto* pCameraManager = CCameraManager::_gThis;
+						if (checkpoint.version == 2 && checkpoint.hasCamera && pCameraManager && pCameraManager->pActiveCamera) {
+							auto* pCamera = pCameraManager->pActiveCamera;
+							pCamera->transformationMatrix = checkpoint.cameraTransform;
+							pCamera->lookAt = checkpoint.cameraLookAt;
+							pCamera->SetAngleAlpha(checkpoint.cameraAngles.alpha);
+							pCamera->SetAngleBeta(checkpoint.cameraAngles.beta);
+							pCamera->SetAngleGamma(checkpoint.cameraAngles.gamma);
+							pCamera->SetDistance(checkpoint.cameraDistance);
+							pCameraManager->ApplyActiveCamera();
+						}
 					}
 				}
 
@@ -269,6 +289,18 @@ namespace Debug {
 					}
 
 					sNewCheckpoint.sectorId = CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID;
+					sNewCheckpoint.version = 2;
+					auto* pCameraManager = CCameraManager::_gThis;
+					sNewCheckpoint.hasCamera = pCameraManager && pCameraManager->pActiveCamera;
+					if (sNewCheckpoint.hasCamera) {
+						auto* pCamera = pCameraManager->pActiveCamera;
+						sNewCheckpoint.cameraTransform = pCamera->transformationMatrix;
+						sNewCheckpoint.cameraLookAt = pCamera->lookAt;
+						sNewCheckpoint.cameraAngles.alpha = pCamera->GetAngleAlpha();
+						sNewCheckpoint.cameraAngles.beta = pCamera->GetAngleBeta();
+						sNewCheckpoint.cameraAngles.gamma = pCamera->GetAngleGamma();
+						sNewCheckpoint.cameraDistance = pCamera->GetDistance();
+					}
 					ImGui::OpenPopup("Save Checkpoint");
 				}
 

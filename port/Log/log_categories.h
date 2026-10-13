@@ -52,6 +52,7 @@ namespace LogCategories
 	DEFINE_LOG_CATEGORY(SaveLoad, "SaveLoad")
 	DEFINE_LOG_CATEGORY(Sector, "Sector")
 	DEFINE_LOG_CATEGORY(Sprite, "Sprite")
+	DEFINE_LOG_CATEGORY(TargetPuzzle, "TargetPuzzle")
 	DEFINE_LOG_CATEGORY(TextResources, "textresources")
 	DEFINE_LOG_CATEGORY(TextureCache, "TextureCache")
 	DEFINE_LOG_CATEGORY(TextureLibrary, "TextureLibrary")

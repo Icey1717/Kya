@@ -154,13 +154,6 @@ CPathFollowReaderAbsolute::CPathFollowReaderAbsolute()
 
 float dot_quat(edF32VECTOR4* a, edF32VECTOR4* b)
 {
-	if (a->x == b->x && a->y == b->y && a->z == b->z && a->w == b->w) {
-		// The dot product of two identical quaternions is 1, but due to floating point precision, it might be slightly less than 1. So we return a value that is very close to 1.
-		// On PS2 this returns 0.99999994, which is the closest representable float to 1 that is less than 1.
-		const uint almostOne = 0x3F7FFFFE;
-		return *reinterpret_cast<const float*>(&almostOne);
-	}
-
 	return a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
 }
 
@@ -553,6 +546,24 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				this->aSegmentDurations[iVar6] = (fVar12 * this->aSegmentDurations[iVar6]) / fVar10;
 			}
 		}
+#ifdef PLATFORM_WIN
+		// SLES_514.73 0x001c1d00/0x001c13a0 uses a 0.0001s endpoint
+		// sampling margin. Native quaternion math can collapse repeated rotations
+		// to zero time, merging an intermediate target waypoint with the alarm
+		// endpoint. Keep distinct waypoints beyond that margin on open rotation
+		// paths without a lead-in; retain the original PS2 timing below.
+		if ((timing == 1) && (this->type == 0) && (this->mode == 0) && (iVar8 == 0) && (count > 2)) {
+			for (int segmentIndex = 0; segmentIndex < count - 1; segmentIndex++) {
+				const float duration = this->aSegmentDurations[segmentIndex];
+				if ((0.0f <= duration) && (duration <= 0.0001f)) {
+					this->aSegmentDurations[segmentIndex] = 0.001f;
+					this->field_0x4 += 0.001f - duration;
+					MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Windows rotation waypoint timing segment={} duration={:.6f}->0.001000 pathTime={:.6f}",
+						segmentIndex, duration, this->field_0x4);
+				}
+			}
+		}
+#endif
 
 		do {
 			iVar7 = iVar7 + -1;

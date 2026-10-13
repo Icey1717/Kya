@@ -719,6 +719,9 @@ void CActorBoomy::StateBoomyGotoTarget()
 		msgHitParams.field_0x30 = this->field_0x2c0 * 0.25f;
 		msgHitParams.field_0x20 = this->field_0x210;
 		edF32Vector4NormalizeHard(&msgHitParams.field_0x20, &msgHitParams.field_0x20);
+		MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Boomy outgoing receiver={} selectedTarget={} launchMode={} variant={} reachedTarget={} collisionFlags=0x{:x}",
+			this->hitActorsTable.aEntries[0]->name, this->pTargetActor ? this->pTargetActor->name : "<null>",
+			this->launchMode, msgHitParams.hitVariant, bHitTarget, this->pCollisionData->flags_0x4);
 		DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_KICKED, &msgHitParams);
 		bCanPassThrough = this->hitActorsTable.aEntries[0]->CanPassThrough();
 		if (bCanPassThrough == false) {
@@ -874,6 +877,8 @@ void CActorBoomy::StateBoomyGotoLauncher()
 		while (actorsTable.nbEntries != 0) {
 			pCVar4 = actorsTable.PopCurrent();
 			if (pCVar4 != this->pHero) {
+				MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Boomy returning receiver={} launchMode={} variant={} collisionFlags=0x{:x}",
+					pCVar4->name, this->launchMode, msgHitParams.hitVariant, this->pCollisionData->flags_0x4);
 				DoMessage(pCVar4, MESSAGE_KICKED, &msgHitParams);
 			}
 		}
