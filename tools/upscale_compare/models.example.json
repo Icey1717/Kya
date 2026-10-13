@@ -1,0 +1,30 @@
+{
+  "models": {
+    "ultrasharp": {
+      "kind": "onnx",
+      "path": "../../upscaling/models/4x-UltraSharpV2_fp32_op17.onnx",
+      "scale": 4,
+      "input_range": [0.0, 1.0],
+      "output_range": [0.0, 1.0],
+      "execution_provider": "auto"
+    },
+    "span": {
+      "kind": "torch",
+      "path": "../../out/upscale-compare/models/4xNomosUni_span_multijpg.safetensors",
+      "expected_architecture": "SPAN",
+      "scale": 4
+    },
+    "realplksr": {
+      "kind": "torch",
+      "path": "../../out/upscale-compare/models/4x-RealPLKSR_Pretrain_V4.pth",
+      "expected_architecture": "RealPLKSR",
+      "scale": 4
+    },
+    "hat": {
+      "kind": "torch",
+      "path": "../../out/upscale-compare/models/HAT_SRx4_ImageNet-pretrain.pth",
+      "expected_architecture": "HAT",
+      "scale": 4
+    }
+  }
+}

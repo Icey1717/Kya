@@ -1359,11 +1359,6 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 			}
 			else {
 				if (trajResult == 2) {
-					MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-						"Trajectory endpoint t={:.3f} actor={} state={} position={:.6f} requestedWaypointTime={:.6f} leadInTime={:.6f} pathTime={:.6f} currentSegment={} prevSegment={}",
-						GetTimer()->scaledTotalTime, this->name, (int)this->actorState, currentFillAmount, pBehaviour->pathLength,
-						pBehaviour->pathFollowReaderAbs.totalTraversalTime, pBehaviour->pathFollowReaderAbs.field_0x4,
-						pBehaviour->trajPos.currentSegment, pBehaviour->trajPos.prevSegment);
 					uVar2 = this->pProperties->flags_0x24;
 					bBarDepleted = false;
 
@@ -1775,11 +1770,6 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	else {
 		if (msg == MESSAGE_KICKED) {
 			_msg_hit_param* pHitMessageParams = reinterpret_cast<_msg_hit_param*>(pMsgParam);
-			MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-				"Hit t={:.3f} actor={} sender={} state={} behaviour={} projectile={} variant={} damage={} contact={} actorPosition={} propertyFlags=0x{:x}",
-				GetTimer()->scaledTotalTime, this->name, pSender ? pSender->name : "<null>",
-				(int)this->actorState, this->curBehaviourId, pHitMessageParams->projectileType, pHitMessageParams->hitVariant,
-				pHitMessageParams->damage, pHitMessageParams->field_0x40.ToString(), this->currentLocation.ToString(), this->pProperties->flags_0x24);
 			switch (pHitMessageParams->projectileType) {
 			case HIT_TYPE_BOOMY:
 				hitVariant = pHitMessageParams->hitVariant;
@@ -2518,8 +2508,6 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 	}
 
 	ACTOR_LOG(LogLevel::Info, "CActorMovingPlatform::TriggerSwitches {} (0x{:x}) nbEntries: {}", this->name, conditionType, nbEntries);
-	MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Trigger t={:.3f} actor={} condition=0x{:x} entries={} (Boomy: default=0xb snipe/melee=0xc control=0xd)",
-		GetTimer()->scaledTotalTime, this->name, conditionType, nbEntries);
 
 	int curEntryIndex = 0;
 	if (0 < nbEntries) {
@@ -2527,7 +2515,6 @@ void CActorMovingPlatform::TriggerSwitches(int conditionType)
 			S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[curEntryIndex];
 
 			if (pEntry->field_0x0 == conditionType) {
-				MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Trigger matched actor={} entry={} condition=0x{:x}", this->name, curEntryIndex, conditionType);
 				ACTOR_LOG(LogLevel::Info, "CActorMovingPlatform::TriggerSwitches - Triggering entry {} for condition 0x{:x}", curEntryIndex, conditionType);
 				pEntry->streamTarget.Switch(this);
 				pEntry->streamTarget.PostSwitch(this);
@@ -2821,15 +2808,7 @@ int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, voi
 				}
 
 				this->pathFollowReaderAbs.GetClosestTimeToReachWaypoint((this->trajPos).pathPosition, local_4, &this->pathLength, &this->trajPos.pathPosition);
-				MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-					"Next waypoint t={:.3f} actor={} waypoint={} fraction={:.6f} position={:.6f} destinationTime={:.6f} points={} leadInPoints={} readerType={} readerMode={} pathTime={:.6f}",
-					GetTimer()->scaledTotalTime, this->pOwner->name, local_4, local_c, this->trajPos.pathPosition, this->pathLength,
-					pCVar1->splinePointCount, pCVar1->nbLeadInPoints, this->pathFollowReaderAbs.type, this->pathFollowReaderAbs.mode,
-					this->pathFollowReaderAbs.field_0x4);
-				for (int segmentIndex = 0; segmentIndex < pCVar1->splinePointCount; segmentIndex++) {
-					MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Waypoint segment actor={} index={} duration={:.6f}",
-						this->pOwner->name, segmentIndex, this->pathFollowReaderAbs.aSegmentDurations[segmentIndex]);
-				}
+
 				this->pOwner->SetState(MOVING_PLATFORM_STATE_TRANSITION_B, -1);
 				fVar4 = (this->trajPos).pathPosition;
 				if (fVar4 <= this->pathLength) {

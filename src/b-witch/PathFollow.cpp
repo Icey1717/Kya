@@ -558,8 +558,6 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				if ((0.0f <= duration) && (duration <= 0.0001f)) {
 					this->aSegmentDurations[segmentIndex] = 0.001f;
 					this->field_0x4 += 0.001f - duration;
-					MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Windows rotation waypoint timing segment={} duration={:.6f}->0.001000 pathTime={:.6f}",
-						segmentIndex, duration, this->field_0x4);
 				}
 			}
 		}

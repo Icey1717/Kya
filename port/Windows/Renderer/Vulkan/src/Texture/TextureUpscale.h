@@ -1,24 +1,31 @@
 #pragma once
-
 #include "renderer.h"
 
 namespace Renderer::Native
 {
-	// ncnn / Real-ESRGAN backend: load a .param + .bin model pair.
-	// No-op when built without ENABLE_UPSCALING.
+	enum class TextureUpscaleModel { UltraSharp, SPAN };
+	struct TextureUpscaleStatus {
+		bool ready = false, loading = false;
+		std::string backend, error;
+	};
+	struct TextureUpscaleProgress {
+		size_t pending = 0, completed = 0, failed = 0;
+		size_t cacheHits = 0, cacheMisses = 0, cacheErrors = 0;
+		std::string lastResult;
+	};
+	void InitTextureUpscalers();
+	void ShutdownTextureUpscalers();
+	void InitUpscalerONNX(const char* modelPath, int scaleFactor = 4, TextureUpscaleModel model = TextureUpscaleModel::UltraSharp);
 	void InitUpscaler(const char* paramPath, const char* binPath, int scaleFactor = 4);
-
-	// ONNX Runtime backend: load a .onnx model file directly.
-	// No-op when built without ENABLE_UPSCALING_ONNX.
-	// ONNX is preferred over ncnn when both backends are ready.
-	void InitUpscalerONNX(const char* modelPath, int scaleFactor = 4);
-
-	// Returns true when at least one backend has been successfully initialised.
+	TextureUpscaleStatus GetTextureUpscaleStatus(TextureUpscaleModel model);
+	TextureUpscaleProgress GetTextureUpscaleProgress();
+	void SetTextureUpscaleModel(TextureUpscaleModel model);
+	TextureUpscaleModel GetTextureUpscaleModel();
 	bool IsUpscalerReady();
-
-	// Submits a background upscale job for pTexture.
-	// ONNX is used if ready, otherwise ncnn. The upscaled result is applied
-	// via RequestTextureUpdate at the next frame boundary.
-	// A second call for the same in-flight texture is silently ignored.
+	void SetTextureUpscaleCacheLoading(bool enabled);
+	// Cache-only request: missing entries leave the texture untouched.
+	bool LoadTextureUpscaleFromCache(SimpleTexture* pTexture);
+	// Call on the game/UI thread. Copies original pixels; the single worker
+	// never dereferences SimpleTexture. Revert/unload invalidates older results.
 	void UpscaleTexture(SimpleTexture* pTexture);
 }

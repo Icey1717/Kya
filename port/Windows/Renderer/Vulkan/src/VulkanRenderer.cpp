@@ -283,7 +283,7 @@ public:
 	void setup() {
 		initWindow();
 		initVulkan();
-		Renderer::Native::InitUpscalerONNX("../../upscaling/models/4x-UltraSharpV2_fp32_op17.onnx");
+		Renderer::Native::InitTextureUpscalers();
 	}
 
 	void run() {
@@ -519,6 +519,7 @@ private:
 	}
 
 	void cleanup() {
+		Renderer::Native::ShutdownTextureUpscalers();
 		if (device != VK_NULL_HANDLE) {
 			vkDeviceWaitIdle(device);
 		}

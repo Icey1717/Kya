@@ -1,7 +1,12 @@
 ﻿#include "DebugMenu.h"
 #include "DebugTexture.h"
+#include "DebugSetting.h"
 #include "DrawTrace.h"
 #include <optional>
+#include <chrono>
+#include <cstdlib>
+#include <fstream>
+#include <map>
 
 #include <imgui.h>
 
@@ -21,6 +26,65 @@ namespace Debug
 {
 	namespace Texture
 	{
+		static Debug::Setting<bool> gLoadUpscaleCache = { "Load Upscaled Textures From Cache", false };
+		static Debug::Setting<int> gUpscaleModelSetting = { "Texture Upscale Model", 0 };
+		static void LoadCachedTextures()
+		{
+			using namespace Renderer::Native;
+			static const bool initializedModel = [] {
+				SetTextureUpscaleModel(static_cast<TextureUpscaleModel>(std::clamp(gUpscaleModelSetting.get(), 0, 1)));
+				return true;
+			}();
+			(void)initializedModel;
+			using WeakState = std::weak_ptr<Renderer::TextureUpdateState>;
+			static std::map<WeakState, bool, std::owner_less<WeakState>> attempted;
+			static auto lastModel = GetTextureUpscaleModel();
+			const auto model = GetTextureUpscaleModel();
+			SetTextureUpscaleCacheLoading(gLoadUpscaleCache.get());
+			if (!gLoadUpscaleCache.get() || model != lastModel) { attempted.clear(); lastModel = model; }
+			if (!gLoadUpscaleCache.get() || !GetTextureUpscaleStatus(model).ready) return;
+			for (auto it = attempted.begin(); it != attempted.end(); ) {
+				if (it->first.expired()) it = attempted.erase(it); else ++it;
+			}
+			size_t queued = 0;
+			Renderer::Kya::GetTextureLibrary().ForEach([&](const Renderer::Kya::G2D& file) {
+				for (const auto& material : file.GetMaterials())
+					for (const auto& layer : material.layers)
+						for (const auto& entry : layer.textures) {
+							if (queued >= 16 || !entry.pSimpleTexture) continue;
+							const WeakState state = entry.pSimpleTexture->GetUpdateState();
+							if (attempted.find(state) == attempted.end() && LoadTextureUpscaleFromCache(entry.pSimpleTexture.get())) {
+								attempted.emplace(state, true); ++queued;
+							}
+						}
+			});
+		}
+		static void DrawUpscaleControls()
+		{
+			using namespace Renderer::Native;
+			const auto progress = GetTextureUpscaleProgress();
+			int selected = static_cast<int>(GetTextureUpscaleModel());
+			ImGui::BeginDisabled(progress.pending != 0);
+			if (ImGui::Combo("Upscale model", &selected, "UltraSharp\0SPAN\0")) {
+				SetTextureUpscaleModel(static_cast<TextureUpscaleModel>(selected));
+				gUpscaleModelSetting = selected;
+			}
+			ImGui::EndDisabled();
+			if (gLoadUpscaleCache.DrawImguiControl()) {
+				gLoadUpscaleCache.UpdateValue();
+				SetTextureUpscaleCacheLoading(gLoadUpscaleCache.get());
+			}
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Apply cached textures for the selected model as they load. Upscale also reuses cached results; misses run inference only when you click Upscale. Fresh results are always saved in bin/WIN/texture-upscale-cache. Revert stays in effect until you toggle this option or change model.");
+			const auto status = GetTextureUpscaleStatus(GetTextureUpscaleModel());
+			if (status.loading) ImGui::TextDisabled("Loading model...");
+			else if (status.ready) ImGui::Text("4x upscale (%s)", status.backend.c_str());
+			else ImGui::TextWrapped("Upscaler unavailable: %s", status.error.c_str());
+			if (progress.pending || progress.completed || progress.failed || progress.cacheHits || progress.cacheMisses || progress.cacheErrors) {
+				ImGui::Text("Pending: %zu  Completed: %zu  Failed: %zu", progress.pending, progress.completed, progress.failed);
+				ImGui::Text("Cache hits: %zu  Misses: %zu  Errors: %zu", progress.cacheHits, progress.cacheMisses, progress.cacheErrors);
+				ImGui::TextWrapped("%s", progress.lastResult.c_str());
+			}
+		}
 		static const Renderer::Kya::G2D* gSelectedTexture = nullptr;
 
 		static const ed_g2d_material* gSelectedMaterial = nullptr;
@@ -33,6 +97,69 @@ namespace Debug
 			Renderer::DrawTrace::Draw draw;
 		};
 		static std::optional<DrawSelection> gDrawSelection;
+
+		// Opt-in running-game smoke check. Uses a texture from the loaded game
+		// library, goes through the same APIs as the buttons, and leaves SPAN on.
+		static void ValidateUpscaling()
+		{
+			using namespace Renderer::Native;
+			static const char* reportPath = std::getenv("KYA_UPSCALE_VERIFY");
+			if (!reportPath || !*reportPath) return;
+			static int phase = 0;
+			static Renderer::SimpleTexture* texture = nullptr;
+			static std::weak_ptr<Renderer::TextureUpdateState> lifetime;
+			static uint32_t width = 0, height = 0;
+			static auto started = std::chrono::steady_clock::now();
+			static auto deadline = started;
+			auto report = [&](const std::string& message) { std::ofstream(reportPath, std::ios::app) << message << '\n'; };
+			if (phase == 7) return;
+			if (std::chrono::steady_clock::now() - started > std::chrono::minutes(3)) {
+				report("FAIL: running-game upscaling validation timed out"); phase = 7; return;
+			}
+			if (phase == 0) {
+				for (auto model : {TextureUpscaleModel::UltraSharp, TextureUpscaleModel::SPAN}) {
+					const auto status = GetTextureUpscaleStatus(model);
+					if (!status.ready) {
+						if (!status.loading && !status.error.empty()) { report("FAIL: " + status.error); phase = 7; }
+						return;
+					}
+				}
+				Renderer::Kya::GetTextureLibrary().ForEach([&](const Renderer::Kya::G2D& file) {
+					if (texture || file.GetName().find("KIM") == std::string::npos) return;
+					for (const auto& material : file.GetMaterials())
+						for (size_t layer = 0; layer < material.layers.size(); ++layer)
+							for (const auto& entry : material.layers[layer].textures) {
+								if (texture || !entry.pSimpleTexture || !entry.pSimpleTexture->GetRenderer()) continue;
+								auto* renderer = entry.pSimpleTexture->GetRenderer();
+								if (renderer->imageData.canvasWidth < 128 || renderer->imageData.canvasHeight < 128) continue;
+								texture = entry.pSimpleTexture.get(); lifetime = texture->GetUpdateState();
+								width = renderer->imageData.canvasWidth; height = renderer->imageData.canvasHeight;
+								gSelectedTexture = &file; gSelectedMaterial = material.pMaterial; gSelectedLayer = static_cast<int>(layer);
+							}
+				});
+				if (!texture) return;
+				report("Game texture: " + texture->GetName() + " " + std::to_string(width) + "x" + std::to_string(height));
+				SetTextureUpscaleModel(TextureUpscaleModel::UltraSharp); UpscaleTexture(texture); phase = 1;
+				return;
+			}
+			if (lifetime.expired()) { report("FAIL: validation texture unloaded"); phase = 7; return; }
+			const auto* renderer = texture->GetRenderer();
+			if (phase == 1 || phase == 4 || phase == 6) {
+				if (GetTextureUpscaleProgress().pending || renderer->width != width * 4 || renderer->height != height * 4) return;
+				const auto status = GetTextureUpscaleStatus(GetTextureUpscaleModel());
+				report(std::string(phase == 1 ? "UltraSharp" : "SPAN") + " PASS: live Vulkan image " + std::to_string(renderer->width) + "x" + std::to_string(renderer->height) + " (" + status.backend + ")");
+				if (phase == 6) { report("PASS: both models and Revert verified in the running game"); phase = 7; return; }
+				deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+				phase = phase == 1 ? 2 : 5;
+			} else if (phase == 2 || phase == 5) {
+				if (std::chrono::steady_clock::now() < deadline) return;
+				RevertTexture(texture); phase = phase == 2 ? 3 : 8;
+			} else if (phase == 3 || phase == 8) {
+				if (renderer->width != width || renderer->height != height) return;
+				report("Revert PASS: original dimensions restored");
+				SetTextureUpscaleModel(TextureUpscaleModel::SPAN); UpscaleTexture(texture); phase = phase == 3 ? 4 : 6;
+			}
+		}
 		struct ResolvedDrawTexture {
 			const Renderer::Kya::G2D* file = nullptr;
 			const Renderer::Kya::G2D::Material* material = nullptr;
@@ -564,9 +691,12 @@ namespace Debug
 
 				ImGui::SameLine();
 
+				ImGui::BeginDisabled(!Renderer::Native::IsUpscalerReady());
 				if (ImGui::Button("Upscale")) {
 					Renderer::Native::UpscaleTexture(pSimpleTexture);
 				}
+				ImGui::EndDisabled();
+				DrawUpscaleControls();
 
 
 				PS2::GSSimpleTexture* pCurrentRenderer = pSimpleTexture->GetRenderer();
@@ -715,6 +845,7 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 
 	auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 	ImGui::Text("Count: %d", textureLibrary.GetTextureCount());
+	DrawUpscaleControls();
 
 	ImGui::Spacing();
 	ImGui::Spacing();
@@ -759,6 +890,8 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 
 void Debug::Texture::Update()
 {
+	LoadCachedTextures();
+	ValidateUpscaling();
 	if (gDrawSelection) {
 		const auto resolved = ResolveDrawTexture(gDrawSelection->source, gDrawSelection->draw);
 		gSelectedTexture = resolved.file;

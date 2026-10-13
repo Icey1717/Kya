@@ -1119,7 +1119,7 @@ void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
 {
 	const VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	if (bPalette) {
 		width = imageData.trxReg.RRW;

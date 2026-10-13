@@ -19,6 +19,18 @@
 
 namespace Renderer::Native
 {
+	struct TextureUpdateTarget
+	{
+		PS2::GSSimpleTexture* pTexture = nullptr;
+		std::weak_ptr<TextureUpdateState> state;
+		uint64_t revision = 0;
+		bool IsCurrent() const;
+	};
+
+	// Capture on the game/UI thread before dispatching a job. Later requests,
+	// including Revert, invalidate older results; unloading expires the state.
+	TextureUpdateTarget CaptureTextureUpdateTarget(SimpleTexture* pTexture);
+	void RequestTextureUpdate(const TextureUpdateTarget& target, uint32_t newWidth, uint32_t newHeight, std::vector<uint8_t> pixels);
 	// Queue a texture resize + data upload to be applied at the next safe frame boundary
 	// (after vkWaitForFences, before any rendering). Safe to call from any thread at any time.
 	// Pixel data must be RGBA8, row-major. It is copied into the queue immediately.

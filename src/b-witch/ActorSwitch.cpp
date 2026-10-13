@@ -1411,8 +1411,6 @@ void CBehaviourSwitchMultiCondition::Manage()
 void CBehaviourSwitchMultiCondition::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	this->field_0x10 = this->field_0x8;
-	MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "MultiCondition begin actor={} initial=0x{:x} required=0x{:x} flags=0x{:x}",
-		this->pOwner->name, this->field_0x8, this->field_0xc, this->field_0x14);
 
 	if (newState == -1) {
 		if (this->field_0x10 == this->field_0xc) {
@@ -1440,16 +1438,6 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 	int iVar6;
 
 	const uint msgParam = reinterpret_cast<uint>(pMsgParam);
-	if ((msg == 0xe) || (msg == 0xf) || (msg == 0x10)) {
-		const uint conditionBit = 1U << (msgParam & 0x1f);
-		const uint nextConditions = msg == 0xf ? this->field_0x10 | conditionBit :
-			(msg == 0x10 ? this->field_0x10 & ~conditionBit : this->field_0x10 ^ conditionBit);
-		MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-			"MultiCondition t={:.3f} actor={} sender={} msg=0x{:x} param=0x{:x} bit={} conditions=0x{:x}->0x{:x} required=0x{:x} matched={}->{} resetOnMatch={} initial=0x{:x}",
-			GetTimer()->scaledTotalTime, this->pOwner->name, pSender ? pSender->name : "<null>", msg, msgParam, msgParam & 0x1f,
-			this->field_0x10, nextConditions, this->field_0xc, this->field_0x10 == this->field_0xc,
-			nextConditions == this->field_0xc, (this->field_0x14 & 1) != 0, this->field_0x8);
-	}
 
 	if (msg != 0xe) {
 		if (msg != 0x10) {

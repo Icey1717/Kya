@@ -2008,10 +2008,6 @@ bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
 	if (((uVar1 & 1) != 0) && ((uVar1 & 0x80000000) != 0)) {
 		bVar2 = false;
 	}
-	MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-		"PostSwitch sender={} receiver={} cinematic={} msg=0x{:x} sentParam=0x{:x} streamFlags=0x{:x} allowed={}",
-		pActor ? pActor->name : "<null>", LOAD_POINTER_CAST(CActor*, this->pRef) ? LOAD_POINTER_CAST(CActor*, this->pRef)->name : "<null>",
-		this->cutsceneId, this->field_0x14, this->flags | 0x80000000, this->flags, bVar2);
 
 	if (bVar2) {
 		this->flags = this->flags | 0x80000000;
@@ -3468,10 +3464,6 @@ bool S_STREAM_NTF_TARGET_SWITCH::Switch(CActor* pActor)
 	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
 		bVar2 = false;
 	}
-	MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info,
-		"Switch sender={} receiver={} cinematic={} msg=0x{:x} sentParam=0x{:x} streamFlags=0x{:x} allowed={}",
-		pActor ? pActor->name : "<null>", LOAD_POINTER_CAST(CActor*, this->pRef) ? LOAD_POINTER_CAST(CActor*, this->pRef)->name : "<null>",
-		this->cutsceneId, this->messageId, this->messageFlags, this->flags, bVar2);
 
 	if (bVar2) {
 		this->flags = this->flags | 0x40000000;

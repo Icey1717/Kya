@@ -14,7 +14,7 @@ public:
 class CActorShockerCmd : public CActor {
 public:
 	CActorShockerCmd(){
-		IMPLEMENTATION_GUARD_LOG()
+		//IMPLEMENTATION_GUARD_LOG()
 	}
 
 	virtual void Create(ByteCode* pByteCode);

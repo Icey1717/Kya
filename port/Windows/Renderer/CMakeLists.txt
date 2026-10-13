@@ -90,6 +90,8 @@ set (SOURCES
 	"Vulkan/src/Texture/TextureUpdate.cpp"
 	"Vulkan/src/Texture/TextureUpscale.h"
 	"Vulkan/src/Texture/TextureUpscale.cpp"
+	"Vulkan/src/Texture/TextureUpscaleDiskCache.cpp"
+	"Vulkan/src/Texture/TextureUpscaleDiskCache.h"
 
 	"include/renderer.h"
 	"include/renderer_debug.h"
@@ -151,17 +153,30 @@ if (ENABLE_UPSCALING)
 	target_link_libraries(Renderer PRIVATE ncnn)
 endif()
 
-option(ENABLE_UPSCALING_ONNX "Enable AI texture upscaling via ONNX Runtime (.onnx model)" OFF)
+option(ENABLE_UPSCALING_ONNX "Enable AI texture upscaling via ONNX Runtime (.onnx model)" ON)
+option(ENABLE_UPSCALING_DIRECTML "Use DirectML GPU inference for ONNX texture upscaling" ON)
 
 if (ENABLE_UPSCALING_ONNX)
 	include(FetchContent)
 
 	set(ORT_VERSION "1.20.1")
-	FetchContent_Declare(
-		onnxruntime
-		URL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-win-x64-${ORT_VERSION}.zip"
-		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-	)
+	if (ENABLE_UPSCALING_DIRECTML)
+		FetchContent_Declare(onnxruntime
+			URL "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime.directml/${ORT_VERSION}/microsoft.ml.onnxruntime.directml.${ORT_VERSION}.nupkg"
+			DOWNLOAD_NAME onnxruntime-directml.zip
+			URL_HASH SHA256=6763468507b7cfc777b1334b3e174c11a540ddacb7bd4354bc2e0ec89e56eec2
+			DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+		FetchContent_Declare(directml
+			URL "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.2/microsoft.ai.directml.1.15.2.nupkg"
+			DOWNLOAD_NAME directml.zip
+			URL_HASH SHA256=9f07482559087088a4dba4ae76eeee1fad3f7077a92ccfbdb439c6bc2964c09
+			DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+		FetchContent_MakeAvailable(directml)
+	else()
+		FetchContent_Declare(onnxruntime
+			URL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-win-x64-${ORT_VERSION}.zip"
+			DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+	endif()
 	FetchContent_MakeAvailable(onnxruntime)
 
 	# The zip may or may not have an outer versioned subdirectory; search for
@@ -173,15 +188,24 @@ if (ENABLE_UPSCALING_ONNX)
 	list(GET _ORT_CXX_API_H 0 _ORT_CXX_API_H)
 	get_filename_component(_ORT_INCLUDE_DIR "${_ORT_CXX_API_H}" DIRECTORY)
 	get_filename_component(_ORT_ROOT       "${_ORT_INCLUDE_DIR}" DIRECTORY)
+	if (ENABLE_UPSCALING_DIRECTML)
+		set(_ORT_LIBRARY_DIR "${onnxruntime_SOURCE_DIR}/runtimes/win-x64/native")
+		target_compile_definitions(Renderer PRIVATE UPSCALING_DIRECTML_ENABLED)
+		target_include_directories(Renderer PRIVATE "${directml_SOURCE_DIR}/include")
+		add_custom_command(TARGET Renderer POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${directml_SOURCE_DIR}/bin/x64-win/DirectML.dll" "${CMAKE_SOURCE_DIR}/bin/WIN/DirectML.dll")
+	else()
+		set(_ORT_LIBRARY_DIR "${_ORT_ROOT}/lib")
+	endif()
 
 	target_compile_definitions(Renderer PRIVATE UPSCALING_ONNX_ENABLED)
 	target_include_directories(Renderer PRIVATE "${_ORT_INCLUDE_DIR}")
-	target_link_libraries(Renderer PRIVATE "${_ORT_ROOT}/lib/onnxruntime.lib")
+	target_link_libraries(Renderer PRIVATE "${_ORT_LIBRARY_DIR}/onnxruntime.lib")
 
 	# Copy the runtime DLL next to the executable so Windows can find it.
 	add_custom_command(TARGET Renderer POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${_ORT_ROOT}/lib/onnxruntime.dll"
+			"${_ORT_LIBRARY_DIR}/onnxruntime.dll"
 			"${CMAKE_SOURCE_DIR}/bin/WIN/onnxruntime.dll"
 		COMMENT "Copying onnxruntime.dll to bin/WIN"
 	)
@@ -197,7 +221,7 @@ add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
-target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue Tracy::TracyClient glm)
+target_link_libraries(Renderer PRIVATE bcrypt glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue Tracy::TracyClient glm)
 target_link_libraries(Renderer PUBLIC TextureUpload)
 
 target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src" "${CMAKE_SOURCE_DIR}/port/include")

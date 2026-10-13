@@ -1,316 +1,364 @@
 #include "TextureUpscale.h"
 #include "TextureUpdate.h"
 #include "TextureCache.h"
-
+#include "TextureUpscaleDiskCache.h"
+#include "log.h"
+#include "log_categories.h"
 #include <algorithm>
 #include <array>
-#include <cassert>
-#include <chrono>
+#include <cmath>
+#include <condition_variable>
+#include <deque>
 #include <filesystem>
-#include <future>
+#include <functional>
 #include <mutex>
-#include <unordered_set>
-#include <vector>
-
+#include <thread>
+#include <unordered_map>
+#include <windows.h>
 #ifdef UPSCALING_ONNX_ENABLED
 #include <onnxruntime_cxx_api.h>
+#ifdef UPSCALING_DIRECTML_ENABLED
+#include <dml_provider_factory.h>
 #endif
-
+#endif
 #ifdef UPSCALING_ENABLED
 #include "net.h"
 #endif
 
 namespace
 {
-	// -------------------------------------------------------------------------
-	// Per-backend state
-	// -------------------------------------------------------------------------
-
+	using namespace Renderer::Native;
+	size_t Index(TextureUpscaleModel model) { return model == TextureUpscaleModel::SPAN ? 1 : 0; }
+	const char* Name(TextureUpscaleModel model) { return model == TextureUpscaleModel::SPAN ? "SPAN" : "UltraSharp"; }
+	struct Job {
+		TextureUpdateTarget target;
+		TextureUpscaleModel model;
+		uint32_t width, height;
+		std::string name;
+		std::vector<uint8_t> pixels;
+		bool readCache = false, cacheOnly = false;
+	};
+	struct Upscalers {
+		std::mutex mutex;
+		std::condition_variable wake;
+		std::thread worker;
+		bool stopping = false;
+		std::deque<std::function<void()>> loads;
+		std::deque<Job> jobs;
+		struct Inflight { uint64_t revision; bool cacheOnly; };
+		std::unordered_map<PS2::GSSimpleTexture*, Inflight> inflight;
+		size_t queuedBytes = 0;
+		std::array<TextureUpscaleStatus, 2> status;
+		TextureUpscaleProgress progress;
+		TextureUpscaleModel selected = TextureUpscaleModel::UltraSharp;
+		bool loadCache = false;
+		std::array<std::string, 2> modelHashes;
+		std::array<uint32_t, 2> cacheScales{4, 4};
 #ifdef UPSCALING_ONNX_ENABLED
-	std::unique_ptr<Ort::Env>     gOrtEnv;
-	std::unique_ptr<Ort::Session> gOrtSession;
-	int                           gOnnxScaleFactor = 4;
-	std::atomic<bool>             gOnnxReady{false};
-	std::future<void>             gOnnxLoadFuture;
+		std::unique_ptr<Ort::Env> environment;
+		std::array<std::unique_ptr<Ort::Session>, 2> sessions;
+		std::array<int, 2> scales{4, 4};
 #endif
-
 #ifdef UPSCALING_ENABLED
-	ncnn::Net         gNet;
-	std::atomic<bool> gNetLoaded{false};
-	int               gNcnnScaleFactor = 4;
-	std::future<void> gNcnnLoadFuture;
+		ncnn::Net net;
+		bool ncnnReady = false;
+		int ncnnScale = 4;
 #endif
-
-	// -------------------------------------------------------------------------
-	// Shared job infrastructure
-	// -------------------------------------------------------------------------
-
-	std::mutex                                gInflightMutex;
-	std::unordered_set<PS2::GSSimpleTexture*> gInflightTextures;
-
-	std::mutex                     gFuturesMutex;
-	std::vector<std::future<void>> gPendingFutures;
-
-	void StoreFuture(std::future<void>&& f)
-	{
-		std::lock_guard<std::mutex> lock(gFuturesMutex);
-		gPendingFutures.erase(
-			std::remove_if(gPendingFutures.begin(), gPendingFutures.end(),
-				[](std::future<void>& fut) {
-					return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-				}),
-			gPendingFutures.end());
-		gPendingFutures.push_back(std::move(f));
-	}
-
-	// Nearest-neighbour upscale of the alpha channel from src into an
-	// already-sized dst buffer (alpha byte is at offset +3 per pixel).
-	void UpscaleAlpha(
-		const std::vector<uint8_t>& src, uint32_t srcW, uint32_t srcH,
-		std::vector<uint8_t>&       dst, uint32_t dstW, uint32_t dstH)
-	{
-		for (uint32_t dy = 0; dy < dstH; ++dy)
-		{
-			const uint32_t sy = (dy * srcH) / dstH;
-			for (uint32_t dx = 0; dx < dstW; ++dx)
-			{
-				const uint32_t sx              = (dx * srcW) / dstW;
-				dst[(dy * dstW + dx) * 4 + 3] = src[(sy * srcW + sx) * 4 + 3];
-			}
-		}
-	}
-
-	// -------------------------------------------------------------------------
-	// ONNX Runtime backend
-	// -------------------------------------------------------------------------
-
+		~Upscalers() { Stop(); }
+		void Start();
+		void Stop() {
+			{ std::lock_guard<std::mutex> lock(mutex); stopping = true; jobs.clear(); loads.clear(); }
+			wake.notify_all();
+			if (worker.joinable()) worker.join();
+			std::lock_guard<std::mutex> lock(mutex);
+			inflight.clear(); queuedBytes = 0;
 #ifdef UPSCALING_ONNX_ENABLED
-	void RunOnnxUpscale(
-		Renderer::SimpleTexture* pTexture,
-		PS2::GSSimpleTexture*    pRenderer,
-		uint32_t                 srcWidth,
-		uint32_t                 srcHeight,
-		std::vector<uint8_t>     pixels)
-	{
-		const size_t pixelCount = static_cast<size_t>(srcWidth) * srcHeight;
-
-		// RGBA8 HWC → float32 RGB NCHW, normalised [0, 1]
-		std::vector<float> inputData(3 * pixelCount);
-		for (size_t i = 0; i < pixelCount; ++i)
-		{
-			inputData[0 * pixelCount + i] = pixels[i * 4 + 0] / 255.0f;
-			inputData[1 * pixelCount + i] = pixels[i * 4 + 1] / 255.0f;
-			inputData[2 * pixelCount + i] = pixels[i * 4 + 2] / 255.0f;
+			for (auto& session : sessions) session.reset();
+			environment.reset();
+#endif
+			status = {};
+			modelHashes = {};
 		}
-
-		const std::array<int64_t, 4> inputShape = {
-			1, 3,
-			static_cast<int64_t>(srcHeight),
-			static_cast<int64_t>(srcWidth)
-		};
-		Ort::MemoryInfo memInfo    = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-		Ort::Value      inputTensor = Ort::Value::CreateTensor<float>(
-			memInfo, inputData.data(), inputData.size(),
-			inputShape.data(), inputShape.size());
-
-		Ort::AllocatorWithDefaultOptions allocator;
-		auto inputName  = gOrtSession->GetInputNameAllocated(0, allocator);
-		auto outputName = gOrtSession->GetOutputNameAllocated(0, allocator);
-		const char* inputNames[]  = { inputName.get() };
-		const char* outputNames[] = { outputName.get() };
-
-		auto outputTensors = gOrtSession->Run(
-			Ort::RunOptions{ nullptr },
-			inputNames,  &inputTensor, 1,
-			outputNames, 1);
-
-		const auto     outputShape = outputTensors[0].GetTensorTypeAndShapeInfo().GetShape();
-		const uint32_t dstHeight   = static_cast<uint32_t>(outputShape[2]);
-		const uint32_t dstWidth    = static_cast<uint32_t>(outputShape[3]);
-		const float*   outputData  = outputTensors[0].GetTensorMutableData<float>();
-		const size_t   dstCount    = static_cast<size_t>(dstWidth) * dstHeight;
-
-		// float32 NCHW → RGBA8 HWC; alpha via nearest-neighbour upscale
-		std::vector<uint8_t> outPixels(dstCount * 4);
-		for (size_t i = 0; i < dstCount; ++i)
-		{
-			outPixels[i * 4 + 0] = static_cast<uint8_t>(std::clamp(outputData[0 * dstCount + i], 0.0f, 1.0f) * 255.0f + 0.5f);
-			outPixels[i * 4 + 1] = static_cast<uint8_t>(std::clamp(outputData[1 * dstCount + i], 0.0f, 1.0f) * 255.0f + 0.5f);
-			outPixels[i * 4 + 2] = static_cast<uint8_t>(std::clamp(outputData[2 * dstCount + i], 0.0f, 1.0f) * 255.0f + 0.5f);
-		}
-		UpscaleAlpha(pixels, srcWidth, srcHeight, outPixels, dstWidth, dstHeight);
-
-		Renderer::Native::RequestTextureUpdate(pTexture, dstWidth, dstHeight, std::move(outPixels));
-
-		{
-			std::lock_guard<std::mutex> lock(gInflightMutex);
-			gInflightTextures.erase(pRenderer);
-		}
+	};
+	Upscalers& GetUpscalers() {
+		// Construct after logging so worker shutdown precedes logger teardown.
+		LogCategories::TextureUpscale();
+		static Upscalers instance;
+		return instance;
 	}
-#endif // UPSCALING_ONNX_ENABLED
-
-	// -------------------------------------------------------------------------
-	// ncnn backend
-	// -------------------------------------------------------------------------
-
+	void LogResult(const std::string& message) {
+		MY_LOG_NAMED_CATEGORY(TextureUpscale, LogLevel::Info, "{}", message);
+		OutputDebugStringA((message + "\n").c_str());
+	}
+	std::vector<uint8_t> Infer(const Job& job, uint32_t& width, uint32_t& height)
+	{
+		std::vector<uint8_t> output;
+#ifdef UPSCALING_ONNX_ENABLED
+		if (auto* session = GetUpscalers().sessions[Index(job.model)].get()) {
+			const size_t count = size_t(job.width) * job.height;
+			std::vector<float> input(count * 3);
+			for (size_t i = 0; i < count; ++i)
+				for (size_t channel = 0; channel < 3; ++channel)
+					input[channel * count + i] = job.pixels[i * 4 + channel] / 255.0f;
+			const std::array<int64_t, 4> shape{1, 3, job.height, job.width};
+			auto memory = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+			auto tensor = Ort::Value::CreateTensor<float>(memory, input.data(), input.size(), shape.data(), shape.size());
+			Ort::AllocatorWithDefaultOptions allocator;
+			auto inputName = session->GetInputNameAllocated(0, allocator);
+			auto outputName = session->GetOutputNameAllocated(0, allocator);
+			const char* inputs[]{inputName.get()};
+			const char* outputs[]{outputName.get()};
+			auto tensors = session->Run(Ort::RunOptions{nullptr}, inputs, &tensor, 1, outputs, 1);
+			const auto info = tensors[0].GetTensorTypeAndShapeInfo();
+			const auto dimensions = info.GetShape();
+			const int scale = GetUpscalers().scales[Index(job.model)];
+			if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT || dimensions.size() != 4 ||
+				dimensions[0] != 1 || dimensions[1] != 3 || dimensions[2] != int64_t(job.height) * scale || dimensions[3] != int64_t(job.width) * scale)
+				throw std::runtime_error("Expected float32 RGB NCHW output at the configured scale");
+			width = static_cast<uint32_t>(dimensions[3]); height = static_cast<uint32_t>(dimensions[2]);
+			const size_t outCount = size_t(width) * height;
+			output.resize(outCount * 4);
+			const float* values = tensors[0].GetTensorData<float>();
+			for (size_t i = 0; i < outCount; ++i)
+				for (size_t channel = 0; channel < 3; ++channel) {
+					const float value = values[channel * outCount + i];
+					if (!std::isfinite(value)) throw std::runtime_error("Model produced non-finite pixels");
+					output[i * 4 + channel] = static_cast<uint8_t>(std::clamp(value, 0.0f, 1.0f) * 255.0f + 0.5f);
+				}
+		} else
+#endif
+		{
 #ifdef UPSCALING_ENABLED
-	void RunNcnnUpscale(
-		Renderer::SimpleTexture* pTexture,
-		PS2::GSSimpleTexture*    pRenderer,
-		uint32_t                 srcWidth,
-		uint32_t                 srcHeight,
-		std::vector<uint8_t>     pixels)
-	{
-		ncnn::Mat in = ncnn::Mat::from_pixels(
-			pixels.data(),
-			ncnn::Mat::PIXEL_RGBA2RGB,
-			static_cast<int>(srcWidth),
-			static_cast<int>(srcHeight));
-
-		ncnn::Extractor ex = gNet.create_extractor();
-		ex.input("data", in);
-
-		ncnn::Mat out;
-		ex.extract("output", out);
-
-		const uint32_t dstWidth  = static_cast<uint32_t>(out.w);
-		const uint32_t dstHeight = static_cast<uint32_t>(out.h);
-		std::vector<uint8_t> outPixels(dstWidth * dstHeight * 4);
-		out.to_pixels(outPixels.data(), ncnn::Mat::PIXEL_RGB2RGBA);
-		UpscaleAlpha(pixels, srcWidth, srcHeight, outPixels, dstWidth, dstHeight);
-
-		Renderer::Native::RequestTextureUpdate(pTexture, dstWidth, dstHeight, std::move(outPixels));
-
-		{
-			std::lock_guard<std::mutex> lock(gInflightMutex);
-			gInflightTextures.erase(pRenderer);
-		}
-	}
-#endif // UPSCALING_ENABLED
-
-} // anonymous namespace
-
-// -----------------------------------------------------------------------------
-// Public API
-// -----------------------------------------------------------------------------
-
-void Renderer::Native::InitUpscalerONNX(const char* modelPath, int scaleFactor)
-{
-#ifdef UPSCALING_ONNX_ENABLED
-	gOnnxScaleFactor = scaleFactor;
-
-	const auto path = std::filesystem::path(modelPath);
-
-	// Check it exists before trying to load, to avoid a long delay followed by an opaque error from ONNX Runtime.
-	if (!std::filesystem::exists(path))
-	{
-		OutputDebugStringA(("Upscaling model not found at: " + path.string() + "\n").c_str());
-		return;
-	}
-
-	// Load the model asynchronously so startup isn't blocked.
-	// std::filesystem::path::c_str() returns wchar_t* on Windows, matching ORTCHAR_T.
-	gOnnxLoadFuture = std::async(std::launch::async, [nativePath = path.wstring()]()
-	{
-		auto env = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "TextureUpscale");
-
-		Ort::SessionOptions sessionOptions;
-		sessionOptions.SetIntraOpNumThreads(1);
-		sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-
-		auto session = std::make_unique<Ort::Session>(*env, nativePath.c_str(), sessionOptions);
-
-		gOrtEnv     = std::move(env);
-		gOrtSession = std::move(session);
-		gOnnxReady.store(true);
-	});
+			if (job.model != TextureUpscaleModel::UltraSharp || !GetUpscalers().ncnnReady) throw std::runtime_error("Model is unavailable");
+			auto input = ncnn::Mat::from_pixels(job.pixels.data(), ncnn::Mat::PIXEL_RGBA2RGB, job.width, job.height);
+			auto extractor = GetUpscalers().net.create_extractor();
+			ncnn::Mat result;
+			if (extractor.input("data", input) || extractor.extract("output", result) || result.w != int(job.width) * GetUpscalers().ncnnScale || result.h != int(job.height) * GetUpscalers().ncnnScale)
+				throw std::runtime_error("ncnn inference failed or returned an unexpected scale");
+			width = result.w; height = result.h;
+			output.resize(size_t(width) * height * 4);
+			result.to_pixels(output.data(), ncnn::Mat::PIXEL_RGB2RGBA);
 #else
-	(void)modelPath; (void)scaleFactor;
+			throw std::runtime_error("ONNX upscaling was not enabled at build time");
 #endif
+		}
+		for (uint32_t y = 0; y < height; ++y)
+			for (uint32_t x = 0; x < width; ++x)
+				output[(size_t(y) * width + x) * 4 + 3] = job.pixels[(size_t(y * job.height / height) * job.width + x * job.width / width) * 4 + 3];
+		return output;
+	}
+	void Upscalers::Start()
+	{
+		// Caller holds mutex. One worker bounds inference concurrency and obeys
+		// DirectML's restriction on concurrent Run calls on the same session.
+		if (worker.joinable()) return;
+		stopping = false;
+		worker = std::thread([this] {
+			for (;;) {
+				Job job{};
+				std::function<void()> load;
+				{
+					std::unique_lock<std::mutex> lock(mutex);
+					wake.wait(lock, [this] { return stopping || !loads.empty() || !jobs.empty(); });
+					if (stopping) return;
+					if (!loads.empty()) { load = std::move(loads.front()); loads.pop_front(); }
+					else { job = std::move(jobs.front()); jobs.pop_front(); queuedBytes -= job.pixels.size(); }
+				}
+				if (load) { load(); continue; }
+				bool failed = false;
+				bool cacheHit = false, cacheMiss = false, cacheError = false;
+				std::string message;
+				try {
+					if (job.target.IsCurrent()) {
+						uint32_t width = 0, height = 0;
+						std::vector<uint8_t> pixels;
+						std::string key;
+						std::filesystem::path directory;
+						try {
+							key = UpscaleDiskCache::Key(modelHashes[Index(job.model)], job.width, job.height, cacheScales[Index(job.model)], job.pixels);
+							directory = UpscaleDiskCache::Directory();
+							if (job.readCache) {
+								width = job.width * cacheScales[Index(job.model)]; height = job.height * cacheScales[Index(job.model)];
+								cacheHit = UpscaleDiskCache::Read(directory, key, width, height, pixels);
+								cacheMiss = !cacheHit;
+								}
+						} catch (const std::exception& error) { cacheError = true; key.clear(); LogResult(std::string("Cache read unavailable: ") + error.what()); }
+						if (!job.cacheOnly || cacheHit) {
+							if (!cacheHit) {
+								pixels = Infer(job, width, height);
+								if (!key.empty()) {
+									try { UpscaleDiskCache::Write(directory, key, width, height, pixels); }
+									catch (const std::exception& error) { cacheError = true; LogResult(std::string("Cache write failed: ") + error.what()); }
+								}
+							}
+							RequestTextureUpdate(job.target, width, height, std::move(pixels));
+							message = std::string(Name(job.model)) + (cacheHit ? " (cache): " : ": ") + job.name + " " + std::to_string(job.width) + "x" + std::to_string(job.height) + " -> " + std::to_string(width) + "x" + std::to_string(height);
+						}
+					}
+				} catch (const std::exception& error) { failed = true; message = std::string(Name(job.model)) + ": " + error.what(); }
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					const auto inflightJob = inflight.find(job.target.pTexture);
+					if (inflightJob != inflight.end() && inflightJob->second.revision == job.target.revision)
+						inflight.erase(inflightJob);
+					if (failed) ++progress.failed; else if (!message.empty()) ++progress.completed;
+					if (cacheHit) ++progress.cacheHits;
+					if (cacheMiss) ++progress.cacheMisses;
+					if (cacheError) ++progress.cacheErrors;
+					if (!message.empty()) progress.lastResult = message;
+				}
+				if (!message.empty()) LogResult(message);
+			}
+		});
+	}
+	std::filesystem::path ModelDirectory()
+	{
+		wchar_t executable[32768];
+		const DWORD length = GetModuleFileNameW(nullptr, executable, 32768);
+		const auto directory = std::filesystem::path(std::wstring(executable, length)).parent_path();
+		const auto packaged = directory / "upscaling" / "models";
+		if (std::filesystem::exists(packaged)) return packaged;
+		return directory / ".." / ".." / "upscaling" / "models";
+	}
 }
 
+void Renderer::Native::InitTextureUpscalers()
+{
+	const auto directory = ModelDirectory();
+	const auto ultra = (directory / "4x-UltraSharpV2_fp32_op17.onnx").string();
+	const auto span = (directory / "4xNomosUni_span_multijpg_fp32_opset17.onnx").string();
+	InitUpscalerONNX(ultra.c_str(), 4, TextureUpscaleModel::UltraSharp);
+	InitUpscalerONNX(span.c_str(), 4, TextureUpscaleModel::SPAN);
+}
+void Renderer::Native::InitUpscalerONNX(const char* modelPath, int scaleFactor, TextureUpscaleModel model)
+{
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+	auto& state = GetUpscalers().status[Index(model)];
+#ifdef UPSCALING_ONNX_ENABLED
+	if (state.loading || state.ready) return;
+	state.loading = true; state.error.clear();
+	const auto path = std::filesystem::path(modelPath);
+	GetUpscalers().Start();
+	GetUpscalers().loads.push_back([path, scaleFactor, model] {
+		TextureUpscaleStatus result;
+		try {
+			if (!std::filesystem::is_regular_file(path)) throw std::runtime_error("Model file missing: " + path.string());
+			if (scaleFactor < 1 || scaleFactor > 8) throw std::runtime_error("Invalid scale factor");
+			const auto modelHash = UpscaleDiskCache::HashFile(path);
+			if (!GetUpscalers().environment) GetUpscalers().environment = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "TextureUpscale");
+			auto create = [&](bool gpu) {
+				Ort::SessionOptions options;
+				options.SetIntraOpNumThreads(4);
+				options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+#ifdef UPSCALING_DIRECTML_ENABLED
+				if (gpu) {
+					options.DisableMemPattern(); options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+					Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_DML(options, 0));
+				}
+#endif
+				return std::make_unique<Ort::Session>(*GetUpscalers().environment, path.c_str(), options);
+			};
+			std::unique_ptr<Ort::Session> session;
+#ifdef UPSCALING_DIRECTML_ENABLED
+			try { session = create(true); result.backend = "DirectML GPU"; }
+			catch (const std::exception& error) { LogResult(std::string(Name(model)) + " GPU unavailable, using CPU: " + error.what()); }
+#endif
+			if (!session) { session = create(false); result.backend = "CPU"; }
+			// Keep TypeInfo alive while using its unowned tensor metadata.
+			const auto type = session->GetInputTypeInfo(0);
+			const auto input = type.GetTensorTypeAndShapeInfo();
+			const auto shape = input.GetShape();
+			if (input.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT || shape.size() != 4 || shape[1] != 3)
+				throw std::runtime_error("Expected a float32 RGB NCHW model");
+			GetUpscalers().scales[Index(model)] = scaleFactor;
+			GetUpscalers().sessions[Index(model)] = std::move(session);
+			GetUpscalers().modelHashes[Index(model)] = modelHash;
+			GetUpscalers().cacheScales[Index(model)] = static_cast<uint32_t>(scaleFactor);
+			result.ready = true;
+			LogResult(std::string(Name(model)) + " ready (" + result.backend + ")");
+		} catch (const std::exception& error) { result.error = error.what(); LogResult(std::string(Name(model)) + ": " + result.error); }
+		std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+		GetUpscalers().status[Index(model)] = std::move(result);
+	});
+	GetUpscalers().wake.notify_one();
+#else
+	(void)modelPath; (void)scaleFactor;
+	state.error = "Enable ENABLE_UPSCALING_ONNX and rebuild";
+#endif
+}
 void Renderer::Native::InitUpscaler(const char* paramPath, const char* binPath, int scaleFactor)
 {
 #ifdef UPSCALING_ENABLED
-	gNcnnScaleFactor = scaleFactor;
-
-	// Load the model asynchronously so startup isn't blocked.
-	gNcnnLoadFuture = std::async(std::launch::async,
-		[param = std::string(paramPath), bin = std::string(binPath)]()
-	{
-		gNet.load_param(param.c_str());
-		gNet.load_model(bin.c_str());
-		gNetLoaded.store(true);
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+	GetUpscalers().Start();
+	GetUpscalers().loads.push_back([param = std::string(paramPath), bin = std::string(binPath), scaleFactor] {
+		const bool ready = !GetUpscalers().net.load_param(param.c_str()) && !GetUpscalers().net.load_model(bin.c_str());
+		std::string modelHash;
+		if (ready) {
+			try {
+				const auto binHash = UpscaleDiskCache::HashFile(bin);
+				modelHash = UpscaleDiskCache::Key(UpscaleDiskCache::HashFile(param), 16, 1, scaleFactor, std::vector<uint8_t>(binHash.begin(), binHash.end()));
+			} catch (const std::exception& error) { LogResult(std::string("ncnn cache unavailable: ") + error.what()); }
+		}
+		std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+		GetUpscalers().ncnnReady = ready; GetUpscalers().ncnnScale = scaleFactor;
+		if (ready && !GetUpscalers().status[0].ready) {
+			GetUpscalers().status[0] = {true, false, "ncnn", ""};
+			GetUpscalers().modelHashes[0] = modelHash;
+			GetUpscalers().cacheScales[0] = scaleFactor;
+		}
 	});
+	GetUpscalers().wake.notify_one();
 #else
 	(void)paramPath; (void)binPath; (void)scaleFactor;
 #endif
 }
-
-bool Renderer::Native::IsUpscalerReady()
-{
-#ifdef UPSCALING_ONNX_ENABLED
-	if (gOnnxReady) return true;
-#endif
-#ifdef UPSCALING_ENABLED
-	if (gNetLoaded) return true;
-#endif
-	return false;
+void Renderer::Native::ShutdownTextureUpscalers() { GetUpscalers().Stop(); }
+Renderer::Native::TextureUpscaleStatus Renderer::Native::GetTextureUpscaleStatus(TextureUpscaleModel model) {
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex); return GetUpscalers().status[Index(model)];
 }
-
-void Renderer::Native::UpscaleTexture(SimpleTexture* pTexture)
+Renderer::Native::TextureUpscaleProgress Renderer::Native::GetTextureUpscaleProgress() {
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+	auto result = GetUpscalers().progress; result.pending = GetUpscalers().inflight.size(); return result;
+}
+void Renderer::Native::SetTextureUpscaleModel(TextureUpscaleModel model) {
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex); GetUpscalers().selected = model;
+}
+Renderer::Native::TextureUpscaleModel Renderer::Native::GetTextureUpscaleModel() {
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex); return GetUpscalers().selected;
+}
+bool Renderer::Native::IsUpscalerReady() { return GetTextureUpscaleStatus(GetTextureUpscaleModel()).ready; }
+void Renderer::Native::SetTextureUpscaleCacheLoading(bool enabled) {
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex); GetUpscalers().loadCache = enabled;
+}
+namespace {
+bool QueueTexture(Renderer::SimpleTexture* texture, bool cacheOnly)
 {
-	assert(pTexture && pTexture->GetRenderer());
-
-#if !defined(UPSCALING_ONNX_ENABLED) && !defined(UPSCALING_ENABLED)
-	return;
-#else
-	// Determine which backend to use; ONNX takes priority over ncnn.
-#if defined(UPSCALING_ONNX_ENABLED) && defined(UPSCALING_ENABLED)
-	const bool bUseOnnx = gOnnxReady;
-	if (!bUseOnnx && !gNetLoaded)
-		return;
-#elif defined(UPSCALING_ONNX_ENABLED)
-	if (!gOnnxReady)
-		return;
-#else // UPSCALING_ENABLED only
-	if (!gNetLoaded)
-		return;
-#endif
-
-	PS2::GSSimpleTexture* pRenderer = pTexture->GetRenderer();
-	{
-		std::lock_guard<std::mutex> lock(gInflightMutex);
-		if (!gInflightTextures.insert(pRenderer).second)
-			return;
+	if (!texture || !texture->GetRenderer()) return false;
+	std::lock_guard<std::mutex> lock(GetUpscalers().mutex);
+	const auto model = GetUpscalers().selected;
+	const auto inflight = GetUpscalers().inflight.find(texture->GetRenderer());
+	// A user-requested Upscale supersedes a background cache-only probe, so
+	// clicking Upscale during automatic cache loading cannot become a no-op.
+	if (GetUpscalers().stopping || !GetUpscalers().status[Index(model)].ready ||
+		(inflight != GetUpscalers().inflight.end() && (cacheOnly || !inflight->second.cacheOnly)) ||
+		(cacheOnly && !GetUpscalers().loadCache)) return false;
+	const auto* renderer = texture->GetRenderer();
+	const auto& source = renderer->GetUploadBuffer();
+	const uint32_t width = renderer->imageData.canvasWidth, height = renderer->imageData.canvasHeight;
+	const size_t size = size_t(width) * height * 4;
+	if (!width || !height || width > source.Width() || height > source.Height() || size > 8 * 1024 * 1024 ||
+		GetUpscalers().queuedBytes + size > 128 * 1024 * 1024 || GetUpscalers().jobs.size() >= 2048) {
+		GetUpscalers().progress.lastResult = "Texture queue is full or source dimensions are invalid"; return false;
 	}
-
-	const TextureUpload::UploadBuffer& uploadBuffer = pRenderer->GetUploadBuffer();
-	const uint32_t srcWidth  = uploadBuffer.Width();
-	const uint32_t srcHeight = uploadBuffer.Height();
-	std::vector<uint8_t> srcPixels(uploadBuffer.Get(), uploadBuffer.Get() + uploadBuffer.Size());
-
-#if defined(UPSCALING_ONNX_ENABLED) && defined(UPSCALING_ENABLED)
-	StoreFuture(std::async(std::launch::async,
-		[pTexture, pRenderer, srcWidth, srcHeight, bUseOnnx, pixels = std::move(srcPixels)]() mutable
-		{
-			if (bUseOnnx)
-				RunOnnxUpscale(pTexture, pRenderer, srcWidth, srcHeight, std::move(pixels));
-			else
-				RunNcnnUpscale(pTexture, pRenderer, srcWidth, srcHeight, std::move(pixels));
-		}));
-#elif defined(UPSCALING_ONNX_ENABLED)
-	StoreFuture(std::async(std::launch::async,
-		[pTexture, pRenderer, srcWidth, srcHeight, pixels = std::move(srcPixels)]() mutable
-		{
-			RunOnnxUpscale(pTexture, pRenderer, srcWidth, srcHeight, std::move(pixels));
-		}));
-#else
-	StoreFuture(std::async(std::launch::async,
-		[pTexture, pRenderer, srcWidth, srcHeight, pixels = std::move(srcPixels)]() mutable
-		{
-			RunNcnnUpscale(pTexture, pRenderer, srcWidth, srcHeight, std::move(pixels));
-		}));
-#endif
-#endif // !defined(UPSCALING_ONNX_ENABLED) && !defined(UPSCALING_ENABLED)
+	Job job{CaptureTextureUpdateTarget(texture), model, width, height, texture->GetName(), std::vector<uint8_t>(size)};
+	job.readCache = GetUpscalers().loadCache; job.cacheOnly = cacheOnly;
+	for (uint32_t y = 0; y < height; ++y)
+		memcpy(job.pixels.data() + size_t(y) * width * 4, source.Get() + size_t(y) * source.Width() * 4, size_t(width) * 4);
+	GetUpscalers().inflight[texture->GetRenderer()] = {job.target.revision, job.cacheOnly}; GetUpscalers().queuedBytes += size;
+	GetUpscalers().jobs.push_back(std::move(job)); GetUpscalers().wake.notify_one();
+	return true;
 }
+}
+void Renderer::Native::UpscaleTexture(SimpleTexture* texture) { QueueTexture(texture, false); }
+bool Renderer::Native::LoadTextureUpscaleFromCache(SimpleTexture* texture) { return QueueTexture(texture, true); }

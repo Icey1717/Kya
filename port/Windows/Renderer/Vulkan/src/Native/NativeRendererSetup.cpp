@@ -12,6 +12,7 @@
 #include "Objects/VulkanRenderPass.h"
 #include "PostProcessing.h"
 #include "VulkanRenderer.h"
+#include "Texture/TextureUpscale.h"
 
 #include <stdexcept>
 
@@ -522,6 +523,7 @@ namespace Renderer
 
 		void Cleanup()
 		{
+			ShutdownTextureUpscalers();
 			DestroyRenderThread(GetNativeRendererState().renderThread);
 			Shadow::Cleanup();
 			FrameBufferCopy::Cleanup();

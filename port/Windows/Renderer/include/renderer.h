@@ -5,6 +5,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <atomic>
+#include <memory>
 #include "delegate.h"
 #include "GIFReg.h"
 #include "GSState.h"
@@ -209,6 +211,11 @@ namespace Renderer
 		std::string name;
 	};
 
+	struct TextureUpdateState
+	{
+		std::atomic<uint64_t> revision{0};
+	};
+
 	struct SimpleTexture : public RendererObject
 	{
 		struct Details {
@@ -230,6 +237,7 @@ namespace Renderer
 		void CreateRenderer(const CombinedImageData& inImageData);
 		void CreateRenderer(const Renderer::ImageData& bitmap);
 		PS2::GSSimpleTexture* GetRenderer() const { return pRenderer; };
+		const std::shared_ptr<TextureUpdateState>& GetUpdateState() const { return updateState; }
 
 		int GetLayerIndex() const { return details.layerIndex; }
 		int GetMaterialIndex() const { return details.materialIndex; }
@@ -240,7 +248,8 @@ namespace Renderer
 		const TextureRegisters& GetTextureRegisters() const { return registers; }
 	private:
 
-		PS2::GSSimpleTexture* pRenderer;
+		PS2::GSSimpleTexture* pRenderer = nullptr;
+		std::shared_ptr<TextureUpdateState> updateState = std::make_shared<TextureUpdateState>();
 		Details details;
 		TextureRegisters registers;
 	};

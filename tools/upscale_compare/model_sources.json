@@ -1,0 +1,29 @@
+{
+  "note": "These are specific trained checkpoints, not controlled architecture benchmarks. UltraSharp uses the model already present in this repository.",
+  "models": {
+    "span": {
+      "filename": "4xNomosUni_span_multijpg.safetensors",
+      "url": "https://github.com/Phhofm/models/releases/download/4xNomosUni_span_multijpg/4xNomosUni_span_multijpg.safetensors",
+      "sha256": "3bedff643a1ba51b12e0174ebca62649a930ae3e7b0868be9706d8659d4d32a2",
+      "author": "Philip Hofmann (Phhofm)",
+      "license": "CC-BY-4.0",
+      "description": "Universal 4x SPAN checkpoint trained with multiscale and JPEG degradations."
+    },
+    "realplksr": {
+      "filename": "4x-RealPLKSR_Pretrain_V4.pth",
+      "url": "https://github.com/Kim2091/Kim2091-Models/releases/download/4x-RealPLKSR_Pretrain_V4/4x-RealPLKSR_Pretrain_V4.pth",
+      "sha256": "7d67b22f0c5b60f4167d94e89b7b56f74bdf994bb8fb199769b9d945c681a1ae",
+      "author": "Kim2091",
+      "license": "CC0-1.0",
+      "description": "4x reconstruction pretrain; not a perceptual GAN fine-tune."
+    },
+    "hat": {
+      "filename": "HAT_SRx4_ImageNet-pretrain.pth",
+      "url": "https://huggingface.co/Acly/hat/resolve/main/HAT_SRx4_ImageNet-pretrain.pth",
+      "sha256": "4ee053c42461187846dc0e93aa5abd34591c0725a8e044a59000e92ee215e833",
+      "author": "XPixelGroup; hosted by Acly",
+      "license": "Apache-2.0",
+      "description": "Official 4x HAT ImageNet-pretrained reconstruction checkpoint, downloaded from a mirror."
+    }
+  }
+}

@@ -3270,12 +3270,6 @@ void CActor::SetupLighting()
 int CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
 {
 	int uVar1;
-	if ((type == MESSAGE_TOGGLE) || (type == MESSAGE_ACTIVATE) || (type == MESSAGE_DEACTIVATE)) {
-		MY_LOG_NAMED_CATEGORY(TargetPuzzle, LogLevel::Info, "Message sender={} receiver={} msg=0x{:x} param=0x{:x} receiverState={} behaviour={} disabled={}",
-			this->name, pReceiver ? pReceiver->name : "<null>", (int)type, reinterpret_cast<uintptr_t>(flags),
-			pReceiver ? (int)pReceiver->actorState : -1, pReceiver ? pReceiver->curBehaviourId : -1,
-			pReceiver ? (pReceiver->flags & 0x2000000) != 0 : true);
-	}
 
 	if ((pReceiver == (CActor*)0x0) || ((pReceiver->flags & 0x2000000) != 0)) {
 		uVar1 = false;

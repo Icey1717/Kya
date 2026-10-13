@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <mutex>
+#include <stdexcept>
 
 #include "Texture/TextureCache.h"
 #include "VulkanRenderer.h"
@@ -10,7 +11,7 @@ namespace
 {
 	struct PendingTextureUpdate
 	{
-		PS2::GSSimpleTexture* pTexture;
+		Renderer::Native::TextureUpdateTarget target;
 		uint32_t newWidth;
 		uint32_t newHeight;
 		std::vector<uint8_t> pixels;
@@ -22,9 +23,29 @@ namespace
 
 void Renderer::Native::RequestTextureUpdate(SimpleTexture* pTexture, uint32_t newWidth, uint32_t newHeight, std::vector<uint8_t> pixels)
 {
+	RequestTextureUpdate(CaptureTextureUpdateTarget(pTexture), newWidth, newHeight, std::move(pixels));
+}
+
+bool Renderer::Native::TextureUpdateTarget::IsCurrent() const
+{
+	const auto live = state.lock();
+	return pTexture && live && live->revision.load() == revision;
+}
+
+Renderer::Native::TextureUpdateTarget Renderer::Native::CaptureTextureUpdateTarget(SimpleTexture* pTexture)
+{
 	assert(pTexture && pTexture->GetRenderer());
+	const auto& state = pTexture->GetUpdateState();
+	return { pTexture->GetRenderer(), state, ++state->revision };
+}
+
+void Renderer::Native::RequestTextureUpdate(const TextureUpdateTarget& target, uint32_t newWidth, uint32_t newHeight, std::vector<uint8_t> pixels)
+{
+	if (!target.IsCurrent()) return;
+	if (!newWidth || !newHeight || uint64_t(newWidth) * newHeight * 4 != pixels.size())
+		throw std::invalid_argument("Texture update must contain tightly packed RGBA8 pixels");
 	std::lock_guard<std::mutex> lock(gPendingTextureUpdatesMutex);
-	gPendingTextureUpdates.push_back({ pTexture->GetRenderer(), newWidth, newHeight, std::move(pixels) });
+	gPendingTextureUpdates.push_back({ target, newWidth, newHeight, std::move(pixels) });
 }
 
 void Renderer::Native::RevertTexture(SimpleTexture* pTexture)
@@ -34,8 +55,12 @@ void Renderer::Native::RevertTexture(SimpleTexture* pTexture)
 
 	const TextureUpload::UploadBuffer& originalData = pRenderer->GetUploadBuffer();
 
-	std::vector<uint8_t> originalPixels(originalData.Get(), originalData.Get() + originalData.Size());
-	RequestTextureUpdate(pTexture, originalData.Width(), originalData.Height(), std::move(originalPixels));
+	const uint32_t width = pRenderer->imageData.canvasWidth;
+	const uint32_t height = pRenderer->imageData.canvasHeight;
+	std::vector<uint8_t> pixels(size_t(width) * height * 4);
+	for (uint32_t y = 0; y < height; ++y)
+		memcpy(pixels.data() + size_t(y) * width * 4, originalData.Get() + size_t(y) * originalData.Width() * 4, size_t(width) * 4);
+	RequestTextureUpdate(pTexture, width, height, std::move(pixels));
 }
 
 void Renderer::Native::TurnTextureWhite(SimpleTexture* pTexture)
@@ -72,7 +97,8 @@ void Renderer::Native::DrainPendingTextureUpdates()
 
 	for (auto& update : updates)
 	{
-		update.pTexture->Resize(update.newWidth, update.newHeight, static_cast<int>(update.pixels.size()), update.pixels.data());
+		if (update.target.IsCurrent())
+			update.target.pTexture->Resize(update.newWidth, update.newHeight, static_cast<int>(update.pixels.size()), update.pixels.data());
 	}
 
 	vkDeviceWaitIdle(GetDevice());
