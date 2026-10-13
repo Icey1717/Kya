@@ -69,11 +69,12 @@ public:
 
 	void Create(ByteCode* pByteCode);
 	void IsValid(undefined4 param_2);
+	void UpdateMainCameraFlags(int alertType);
 	void SetBoundingSphere(ed_Bound_Sphere* pBoundSphere);
 	void SetAdversaryPos(edF32VECTOR4* pPosition);
 	void SetPosParam(edF32VECTOR4* pPosition);
 	void Cam_SetDefault(float param_1, float param_2, CCameraGame* pCamera);
-	void Reset() {}
+	void Reset();
 	cam_temp_struct* Cam_Update(edF32VECTOR4* param_2, int param_3);
 	void ComputeData();
 	void DetermineBetaAndWay();

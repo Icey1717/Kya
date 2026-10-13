@@ -1055,7 +1055,8 @@ void CActorNativ::BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBe
 		ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
 
 		if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-			bVar4 = this->behaviourTakeAndPut.GetCurrentPathFollowReader()->AtGoal(pCVar7->splinePointIndex, pCVar7->field_0xc);
+			pCVar7 = this->behaviourTakeAndPut.GetCurrentPathFollowReader();
+			bVar4 = pCVar7->AtGoal(pCVar7->splinePointIndex, pCVar7->field_0xc);
 			if (bVar4 == false) {
 				SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
 			}

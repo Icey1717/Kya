@@ -1322,7 +1322,7 @@ bool CCameraGame::AlertCamera(int alertType, void* pParams, CCamera* pOtherCamer
 
 					if ((bVar1) && ((pOtherCamera == 0 || (pOtherCamera->GetMode() != CT_Fight)))) {
 						if (_pfig_data != (CCamFigData*)0x0) {
-							_pfig_data->IsValid(1);
+							_pfig_data->UpdateMainCameraFlags(1); // PS2: 0x002c0c24 -> 0x003c7e40.
 						}
 
 						CCameraGame::_b_use_fig_data = 0;
@@ -1379,7 +1379,7 @@ bool CCameraGame::AlertCamera(int alertType, void* pParams, CCamera* pOtherCamer
 
 	if (GetMode() == CT_Fight) {
 		if (_pfig_data != (CCamFigData*)0x0) {
-			_pfig_data->IsValid(2);
+			_pfig_data->UpdateMainCameraFlags(2); // PS2: 0x002c0e7c -> 0x003c7e40.
 		}
 
 		CCamera::_gpcam_man->KeepSameParam(this, 0x77);

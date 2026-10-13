@@ -6,6 +6,7 @@
 #include "CollisionRay.h"
 #include "InputManager.h"
 #include "ActorCommander.h"
+#include "ActorHero.h"
 
 CamUpdate CamUpdate_0049c760;
 
@@ -136,6 +137,75 @@ void CCamFigData::Create(ByteCode* pByteCode)
 void CCamFigData::IsValid(undefined4 param_2)
 {
 	this->field_0x2a0 = param_2;
+	return;
+}
+
+// PS2: 0x003c7e40. Separate from the validity setter at 0x003c7e30.
+void CCamFigData::UpdateMainCameraFlags(int alertType)
+{
+	CCamera* pMainCamera;
+	uint* pFlags;
+
+	if ((CActorHero::_gThis != (CActorHero*)0x0) &&
+		(pMainCamera = CActorHero::_gThis->pMainCamera, pMainCamera != (CCamera*)0x0)) {
+		if ((alertType == 2) && (this->field_0x2a0 == 0)) {
+			this->field_0x2a8 = (uint)((pMainCamera->flags_0xc & 1) != 0);
+			pMainCamera->flags_0xc = pMainCamera->flags_0xc | 1;
+		}
+		else {
+			if ((alertType == 1) && (this->field_0x2a0 != 0)) {
+				pFlags = &pMainCamera->flags_0xc;
+				if (this->field_0x2a8 == 0) {
+					*pFlags = *pFlags & 0xfffffffe;
+				}
+				else {
+					*pFlags = *pFlags | 1;
+				}
+			}
+		}
+	}
+	return;
+}
+
+// PS2: 0x003c84b0.
+void CCamFigData::Reset()
+{
+	uint uVar2;
+
+	this->field_0x2c0 = 0.0f;
+	this->field_0x2b8 = 1;
+	this->field_0x2bc = 1;
+	this->field_0x2b4 = 0;
+	this->field_0x2b0 = 0;
+	this->field_0x2ac = 0;
+	this->field_0x2a8 = 0;
+	this->field_0x2a4 = 0;
+	uVar2 = 0;
+	this->field_0x2d0 = 0;
+	this->field_0x304 = 6;
+	this->field_0x28c = 1e+30f;
+	this->field_0x288 = 1e+30f;
+	this->field_0x280 = 1e+30f;
+	this->field_0x284 = 1e+30f;
+
+	CamUpdate_0049c760.aSubObjA[0].field_0x6 = 0x23;
+	CamUpdate_0049c760.activeIndex = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x0 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x2 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x4 = 0;
+
+	do {
+		CamUpdate_0049c760.aSubObjB[uVar2 + 0].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 1].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 2].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 3].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 4].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 5].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 6].intersectionDistance = 1e+30f;
+		uVar2 = uVar2 + 7;
+	} while (uVar2 < 0x23);
+
+	this->field_0x2a0 = 0;
 	return;
 }
 
@@ -438,7 +508,8 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 						uVar11 = CamUpdate_0049c760.aSubObjA[uVar16].field_0x0;
 						while (uVar16 < uVar15) {
 							uVar16 = uVar16 + 1;
-							uVar11 = uVar11 | CamUpdate_0049c760.aSubObjA[uVar16 + 1].field_0x0;
+							// PS2: 0x003c70e8-0x003c70f8 loads the incremented index.
+							uVar11 = uVar11 | CamUpdate_0049c760.aSubObjA[uVar16].field_0x0;
 						}
 
 						if (uVar11 == 0) {
@@ -742,7 +813,8 @@ void CCamFigData::DetermineBetaAndWay()
 	float fVar10;
 	float fVar11;
 	float fVar12;
-	float unaff_f20;
+	// PS2: Cam_Update calls 0x003c6300 only with f20 == 0 (0x003c6cf0-0x003c6d30).
+	float unaff_f20 = 0.0f;
 	CCollisionRay CStack624;
 	edF32VECTOR4 local_250;
 	edF32MATRIX4 auStack576;
