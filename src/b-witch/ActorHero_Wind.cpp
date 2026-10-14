@@ -454,8 +454,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 	}
 	else {
 		if (2.0f < this->timeInAir) {
-			IMPLEMENTATION_GUARD(
-				(*(code*)(this->pVTable)->field_0x16c)(this);)
+			ProcessDeath();
 		}
 	}
 

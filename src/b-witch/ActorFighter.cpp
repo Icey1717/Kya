@@ -1124,9 +1124,32 @@ bool CActorFighter::Func_0x1c0(s_fighter_combo* pCombo)
 
 int CActorFighter::InterpretSlaveMessage(int msg, void* pParams)
 {
+	_msg_hit_param auStack272;
+	edF32VECTOR4* pMsgParams;
+
+	int result = 0;
+
 	switch (msg) {
 	case 0:
 		SetState(0x37, -1);
+		break;
+	case 4:
+		if ((this->fightFlags & 0x400) != 0) {
+			pMsgParams = reinterpret_cast<edF32VECTOR4*>(pParams);
+			auStack272.flags = 1;
+			auStack272.projectileType = 7;
+			auStack272.field_0x20 = *pMsgParams;
+			auStack272.field_0x52 = 0;
+			auStack272.field_0x50 = 0xe;
+			auStack272.field_0x30 = (fabsf(this->field_0xa5c) / 14.13717f) * 8.0f;
+			auStack272.damage = 5.0f;
+			auStack272.field_0x10 = 0.0f;
+			DoMessage(this->field_0x354, MESSAGE_KICKED, &auStack272);
+			this->field_0x354 = (CActorFighter*)0x0;
+			EnableFightCamera();;
+			SetState(0x37, -1);
+		}
+		result = 1;
 		break;
 	case 0xb:
 		SetState(6, this->standAnim);
@@ -1135,7 +1158,7 @@ int CActorFighter::InterpretSlaveMessage(int msg, void* pParams)
 		IMPLEMENTATION_GUARD();
 	}
 
-	return 0;
+	return result;
 }
 
 int CActorFighter::NotifyMaster(int msg, void* pParams)
@@ -1385,8 +1408,7 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 				else {
 					if (uVar11 == 2) {
 						if ((pAction->actionByte & 0xf) == 0) {
-							IMPLEMENTATION_GUARD(
-							iVar8 = _SV_ANM_GetMultiWaysAnim2D(this, (s_fighter_multiways_anim*)&this->field_0x484, this->field_0x44c & 0xf);
+							iVar8 = _SV_ANM_GetMultiWaysAnim2D(&this->field_0x484, this->field_0x44c & 0xf);
 							fVar13 = _GetFighterAnimationLength(iVar8);
 							bVar1 = this->field_0x44c;
 							uVar12 = bVar1 & 0xf;
@@ -1405,17 +1427,22 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 								else {
 									this->field_0x44c = bVar1 & 0xf0 | 2;
 								}
-								if (this->adversaryDistance < 0.75) {
-									distance = this->adversaryDistance * 1.570796;
+
+								if (this->adversaryDistance < 0.75f) {
+									distance = this->adversaryDistance * 1.570796f;
 								}
 								else {
 									distance = this->field_0x4c8;
 								}
 							}
+
+							static float v1$12742 = 9.0f;
+							static float v2$12743 = 0.0f;
 							this->scalarDynForward.BuildFromSpeedDistTime(v1$12742, v2$12743, distance, fVar13);
-							CScalarDyn::Reset(&this->scalarDynLateral);
-							this->field_0x474 = 0.0;
-							SetState(7, iVar8);)
+
+							this->scalarDynLateral.Reset();
+							this->field_0x474 = 0.0f;
+							SetState(7, iVar8);
 						}
 						else {
 							this->field_0x44c = this->field_0x44c & 0xf;
@@ -5958,6 +5985,11 @@ void CActorFighter::_SV_VOLDYN_GetCollisionPosFromVector(edF32VECTOR4* v0, edF32
 	edF32Matrix4MulF32Vector4Hard(v0, &this->pCollisionData->pObbPrim->localToWorld, v0);
 
 	return;
+}
+
+int CActorFighter::_SV_ANM_GetMultiWaysAnim2D(s_fighter_multiways_anim* pAnimation, uint param_3)
+{
+	return (int)(pAnimation->field_0x4 + (pAnimation->all >> ((param_3 - 1) * 4 & 0x1f) & 0xf));
 }
 
 int CActorFighter::_SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* pAnimation, edF32VECTOR4* param_3, edF32VECTOR4* param_4)

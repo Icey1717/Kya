@@ -60,6 +60,7 @@ public:
 
 	void ApplyHit(_msg_hit_param** ppHitParam);
 	void FUN_0036fb80();
+	bool CaculHitFace(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
 
 	int field_0x350;
 	float field_0x354;
@@ -88,6 +89,7 @@ public:
 	float field_0x3e0;
 
 	edF32VECTOR4 field_0x4a0;
+	edF32VECTOR4 field_0x4b0;
 	edF32VECTOR4 field_0x490;
 
 	CVibrationDyn vibrationDyn;

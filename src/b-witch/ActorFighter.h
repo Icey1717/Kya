@@ -79,7 +79,10 @@ struct s_fighter_anatomy_zones
 
 struct s_fighter_multiways_anim
 {
-	byte field_0x0[4];
+	union {
+		byte field_0x0[4];
+		uint all;
+	};
 	uint field_0x4;
 };
 
@@ -735,6 +738,7 @@ public:
 	void _SV_VOLDYN_PointSpeedFromVolumeSpeed(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, edF32VECTOR4* param_7);
 	void _SV_VOLDYN_GetCollisionPosFromVector(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
+	int _SV_ANM_GetMultiWaysAnim2D(s_fighter_multiways_anim* pAnimation, uint param_3);
 	int _SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* pAnimation, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	int _SV_ANM_GetTwoSidedAnim(int param_2, int param_3);
 
@@ -851,6 +855,7 @@ public:
 	float field_0x474;
 	float field_0x47c;
 	int standAnim;
+	s_fighter_multiways_anim field_0x484;
 
 	float field_0x4c0;
 	float field_0x4c4;
