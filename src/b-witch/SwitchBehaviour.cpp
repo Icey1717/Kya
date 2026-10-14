@@ -386,3 +386,30 @@ void CondSeeActorInArea::Manage(CActor* pOwner)
 	}
 	return;
 }
+
+void CCondition::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
+void CCondition::Init(CActor* pOwner)
+{
+	return;
+}
+
+void CCondition::Begin(CActor* pOwner)
+{
+	this->field_0x4 = 0;
+
+	return;
+}
+
+void CCondition::Manage(CActor * pOwner)
+{
+	return;
+}
+
+int CCondition::InterpretMessage(CActor * pOwner, CActor * pSender, int msg, void* pMsgParam)
+{
+	return 0;
+}

@@ -1070,7 +1070,8 @@ float CCamFigData::SV_TestCollisionSphere(ParCamFigLAB* param_2, edF32VECTOR4* p
 	local_10.y = param_2->field_0x8;
 
 	edF32Matrix4FromEulerSoft(&auStack128, &local_10, "XYZ");
-	edF32VECTOR4* v0 = &auStack128.rowY;
+	// PS2: 0x0034198c-0x003419bc uses matrix + 0x20 (rowZ) for the backward probe.
+	edF32VECTOR4* v0 = &auStack128.rowZ;
 	edF32Vector4SubHard(v0, &gF32Vector4Zero, v0);
 
 	if (param_2->field_0x0 == 0) {

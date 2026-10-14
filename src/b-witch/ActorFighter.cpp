@@ -1414,10 +1414,10 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 							uVar12 = bVar1 & 0xf;
 							if ((uVar12 == 3) || (uVar12 == 6)) {
 								if (uVar12 < 6) {
-									distance = (float)this->field_0x4c0;
+									distance = this->field_0x4c0;
 								}
 								else {
-									distance = (float)this->field_0x4c4;
+									distance = this->field_0x4c4;
 								}
 							}
 							else {

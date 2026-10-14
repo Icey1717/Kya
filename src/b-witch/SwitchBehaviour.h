@@ -8,11 +8,11 @@ struct ByteCode;
 class CCondition
 {
 public:
-	virtual void Create(ByteCode* pByteCode) {}
-	virtual void Init(CActor* pOwner) {}
-	virtual void Begin(CActor* pOwner) {}
-	virtual void Manage(CActor* pOwner) {}
-	virtual int InterpretMessage(CActor* pOwner, CActor* pSender, int msg, void* pMsgParam) { return 0; }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Begin(CActor* pOwner);
+	virtual void Manage(CActor* pOwner);
+	virtual int InterpretMessage(CActor* pOwner, CActor* pSender, int msg, void* pMsgParam);
 
 	byte field_0x4;
 };
