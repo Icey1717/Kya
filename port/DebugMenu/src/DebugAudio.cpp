@@ -1,6 +1,7 @@
 #include "DebugAudio.h"
 #include "DebugMenu.h"
 #include "Audio.h"
+#include "Settings.h"
 
 #include "../../Audio/edSoundStreamService.h"
 #include "../../Audio/edSoundSampleService.h"
@@ -8,10 +9,35 @@
 
 #include <imgui.h>
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 namespace Debug::Audio
 {
+	static void DrawVolumeControls()
+	{
+		if (!ImGui::CollapsingHeader("Volume", ImGuiTreeNodeFlags_DefaultOpen)) { return; }
+		auto* manager = CScene::ptable.g_AudioManager_00451698;
+		if (!manager) {
+			ImGui::TextDisabled("Audio manager is not available.");
+			return;
+		}
+
+		// Match the options menu's twelve volume steps and use the live values so
+		// changes made in the options menu are reflected here too.
+		int musicVolume = static_cast<int>(std::lround(manager->musicVolume * 12.0f));
+		int sfxVolume = static_cast<int>(std::lround(manager->sfxVolume * 12.0f));
+		if (ImGui::SliderInt("Music volume", &musicVolume, 0, 12, "%d / 12", ImGuiSliderFlags_AlwaysClamp)) {
+			gSettings.musicVolume = static_cast<uint>(musicVolume);
+			manager->SetMusicVolume(static_cast<float>(musicVolume) / 12.0f);
+		}
+		if (ImGui::SliderInt("Sound effects volume", &sfxVolume, 0, 12, "%d / 12", ImGuiSliderFlags_AlwaysClamp)) {
+			gSettings.sfxVolume = static_cast<uint>(sfxVolume);
+			manager->SetSfxVolume(static_cast<float>(sfxVolume) / 12.0f);
+		}
+		if (NoAudio) { ImGui::TextDisabled("Audio is disabled."); }
+	}
+
 	static ImVec2 GetTableSize(size_t rowCount, int maxRows)
 	{
 		const auto& style = ImGui::GetStyle();
@@ -133,6 +159,8 @@ namespace Debug::Audio
 			ImGui::EndChild();
 			return;
 		}
+
+		DrawVolumeControls();
 
 		auto streams = ::Audio::GetStreams();
 		std::sort(streams.begin(), streams.end(), [](const auto& left, const auto& right) {

@@ -129,7 +129,7 @@ namespace Renderer
 				trace.animStIndex = instance.perDrawData.animStDataIndex;
 				trace.globalAlpha = instance.perDrawData.globalAlpha;
 				memcpy(trace.model.data(), &GetNativeRendererState().modelBuffer.GetLastInstance(), sizeof(float) * 16);
-				instance.traceSubmission = DrawTrace::Submit(trace);
+                instance.traceSubmission = DrawTrace::Submit(trace, reinterpret_cast<uintptr_t>(pMesh));
 				DrawTrace::Source source;
 				if (DrawTrace::Highlight(instance.traceSubmission, source)) {
 					const glm::mat4 model = glm::make_mat4(source.model.data());

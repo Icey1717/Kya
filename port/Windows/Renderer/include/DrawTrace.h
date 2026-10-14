@@ -10,8 +10,8 @@ namespace Renderer::DrawTrace {
 using Address = uintptr_t;
 using Name = std::array<char, 256>;
 using Matrix = std::array<float, 16>;
-enum class Kind { Strip, Sprite };
-enum class Action { None, Hide, Isolate, Highlight };
+enum class Kind { Strip, Sprite, Native };
+enum class Action { None, Hide, Isolate, Highlight, DrawUpTo };
 enum class Match { Source, Asset };
 
 struct Source {
@@ -39,6 +39,7 @@ struct Submission {
 };
 struct Draw {
     uint64_t id = 0, submissionId = 0;
+    uint64_t order = 0; // One-based draw attempt order within the frame.
     Name texture{};
     int material = -1, layer = -1, pass = 0;
     int indexStart = 0, indexCount = 0, vertexStart = 0;
@@ -64,10 +65,13 @@ struct Status {
     Action action = Action::None;
     uint32_t matches = 0;
     uint64_t generation = 0;
+    uint64_t drawLimit = 0;
 };
 void CopyName(Name& target, const char* name);
 uint64_t AssetKey(const char* name);
 bool IsEnabled();
+bool IsDrawLimitActive();
+bool IsDrawLimitReached();
 void RequestCapture(bool stacks);
 void ClearSnapshot();
 std::shared_ptr<const Snapshot> GetSnapshot();
@@ -109,11 +113,13 @@ private:
     uint64_t previous;
     int previousLayer;
 };
-uint64_t Submit(Submission submission);
+// nativeMesh supplies an identity when no linked game source is available.
+uint64_t Submit(Submission submission, Address nativeMesh = 0);
 // Returns whether this draw should be emitted. Recorded copies get distinct IDs.
 bool Record(uint64_t submissionId, Draw draw);
 bool Highlight(uint64_t submissionId, Source& source);
 void SetOverride(const Source& source, const Submission* submission, Action action, Match match);
+void SetDrawLimit(const Snapshot& snapshot, const Draw& draw);
 void ClearOverrides();
 bool IsSourceLive(const Source& source);
 }

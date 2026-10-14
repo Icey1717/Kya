@@ -18,8 +18,26 @@ TEST(DisplayListRendering, DISABLED_QueuedSpritesRetainTopology)
 	Renderer::Setup();
 	Renderer::Native::Setup();
 
-	for (bool mixedTopology : { false, true }) {
+	for (int scenario = 0; scenario < 4; ++scenario) {
+		const bool mixedTopology = (scenario & 1) != 0;
+		const bool cutoff = scenario >= 2;
 		SCOPED_TRACE(mixedTopology);
+		SCOPED_TRACE(cutoff);
+		DrawTrace::InvalidateSources();
+		DrawTrace::AdvanceFrame();
+		if (cutoff) {
+			DrawTrace::RequestCapture(false);
+			DrawTrace::AdvanceFrame();
+			const auto submission = DrawTrace::Submit({}, 700);
+			DrawTrace::Draw draw;
+			draw.recorded = true;
+			DrawTrace::Record(submission, draw);
+			DrawTrace::AdvanceFrame();
+			const auto snapshot = DrawTrace::GetSnapshot();
+			ASSERT_EQ(snapshot->draws.size(), 1u);
+			DrawTrace::SetDrawLimit(*snapshot, snapshot->draws[0]);
+			DrawTrace::AdvanceFrame();
+		}
 		RecordBeginCommandBuffer();
 		RecordBeginRenderPass(RenderPassKey{ EClearMode::ColorDepth });
 		RecordEndRenderPass();
@@ -92,10 +110,14 @@ TEST(DisplayListRendering, DISABLED_QueuedSpritesRetainTopology)
 		// The framebuffer stores BGRA bytes.
 		EXPECT_EQ(pixels[0], 0);
 		EXPECT_EQ(pixels[1], 0);
-		EXPECT_GT(pixels[2], 240); // Red sprite survives the later GS primitive change.
+		if (cutoff) EXPECT_EQ(pixels[2], 0); // Later game overlays must not cover the partial scene.
+		else EXPECT_GT(pixels[2], 240); // Red sprite survives the later GS primitive change.
 		EXPECT_EQ(pixels[4], 0);
-		EXPECT_EQ(pixels[5], mixedTopology ? 255 : 0);
+		EXPECT_EQ(pixels[5], mixedTopology && !cutoff ? 255 : 0);
 		EXPECT_EQ(pixels[6], 0);
 	}
+	DrawTrace::InvalidateSources();
+	DrawTrace::AdvanceFrame();
+	DrawTrace::ClearSnapshot();
 	Renderer::Native::Cleanup();
 }

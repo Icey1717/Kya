@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "renderer_debug.h"
 #include "DebugSaveCheckpoint.h"
+#include "DebugMemoryCard.h"
 #include "DebugWorldNames.h"
 #include "ActorManager.h"
 #include "ActorCheckpointManager.h"
@@ -21,12 +22,14 @@
 #include "DebugSetting.h"
 #include "edFile/edFileCRC32.h"
 #include "EdenLib/edFile/sources/ps2/WinSaveFile.h"
+#include "DebugMemoryCardFile.h"
 
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <array>
 #include <map>
 #include <stdexcept>
 
@@ -97,6 +100,113 @@ namespace Debug::SaveLoad
 		bool refreshBackups = false;
 		std::string backupStatus;
 		std::string backupDirectory;
+		Debug::Setting<std::string> memoryCardDirectory = { "PCSX2 Memory Card Folder", "C:\\Users\\icey1\\Documents\\PCSX2\\memcards" };
+		bool memoryCardExportOpen = false;
+		int exportSourceSlot = 0;
+		int exportTargetSlot = 0;
+		std::vector<char> exportData;
+		std::string exportSerial;
+		std::string exportStatus;
+		std::vector<std::filesystem::path> memoryCards;
+		std::vector<std::array<std::string, 4>> memoryCardErrors;
+		int exportCard = -1;
+
+		struct CardHandle
+		{
+			HANDLE handle = INVALID_HANDLE_VALUE;
+			~CardHandle() { if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle); }
+		};
+
+		std::vector<char> ReadCard(const std::filesystem::path& path, bool lockForExport = false, CardHandle* lock = nullptr)
+		{
+			CardHandle local;
+			auto& file = lock ? *lock : local;
+			// Permit atomic rename while preventing another writer (including PCSX2)
+			// from opening the card between reading it and publishing the replacement.
+			file.handle = CreateFileW(path.c_str(), GENERIC_READ,
+				FILE_SHARE_READ | (lockForExport ? FILE_SHARE_DELETE : FILE_SHARE_WRITE),
+				nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			if (file.handle == INVALID_HANDLE_VALUE) throw std::runtime_error("Cannot open card; close PCSX2 before exporting");
+			LARGE_INTEGER size;
+			if (!GetFileSizeEx(file.handle, &size) || size.QuadPart < 512 || size.QuadPart > 64 * 1056 * 1024)
+				throw std::runtime_error("Invalid card image size");
+			std::vector<char> bytes(static_cast<size_t>(size.QuadPart));
+			DWORD read = 0;
+			if (!ReadFile(file.handle, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) || read != bytes.size())
+				throw std::runtime_error("Could not read card image");
+			return bytes;
+		}
+
+		void RefreshMemoryCards()
+		{
+			memoryCards.clear();
+			memoryCardErrors.clear();
+			exportCard = -1;
+			try {
+				for (const auto& entry : std::filesystem::directory_iterator(memoryCardDirectory.get())) {
+					if (entry.is_regular_file() && _wcsicmp(entry.path().extension().c_str(), L".ps2") == 0)
+						memoryCards.push_back(entry.path());
+				}
+				std::sort(memoryCards.begin(), memoryCards.end());
+				for (const auto& path : memoryCards) {
+					std::array<std::string, 4> errors;
+					try {
+						MemoryCard card(ReadCard(path));
+						for (int slot = 0; slot < 4; ++slot) {
+							try { card.ReadSlot(exportSerial, slot); }
+							catch (const std::exception& error) { errors[slot] = error.what(); }
+						}
+					}
+					catch (const std::exception& error) { errors.fill(error.what()); }
+					memoryCardErrors.push_back(std::move(errors));
+				}
+				if (!memoryCards.empty()) exportCard = 0;
+				exportStatus.clear();
+			}
+			catch (const std::exception& error) { exportStatus = error.what(); }
+		}
+
+		void OpenMemoryCardExport(const std::vector<char>& data = {})
+		{
+			exportData = data;
+			const auto serial = std::string_view(gSaveManagement.serialNumber, sizeof(gSaveManagement.serialNumber));
+			exportSerial = std::string(serial.substr(0, serial.find('\0')));
+			memoryCardExportOpen = true;
+			RefreshMemoryCards();
+		}
+
+		void ExportMemoryCard(const std::vector<char>& save)
+		{
+			try {
+				const auto path = memoryCards.at(exportCard);
+				CardHandle lock;
+				const auto original = ReadCard(path, true, &lock);
+				MemoryCard card(original);
+				card.ReplaceSlot(exportSerial, exportTargetSlot, std::string_view(save.data(), save.size()));
+				MemoryCard verify(card.GetBytes());
+				if (verify.ReadSlot(exportSerial, exportTargetSlot) != std::string(save.data(), save.size()))
+					throw std::runtime_error("Card export failed verification");
+				// Create a unique full-card backup without overwriting any earlier backup.
+				std::filesystem::path backup;
+				CardHandle backupFile;
+				for (int index = 1; index <= 10000; ++index) {
+					backup = path;
+					backup += L".kya-export.bak." + std::to_wstring(index);
+					backupFile.handle = CreateFileW(backup.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+					if (backupFile.handle != INVALID_HANDLE_VALUE) break;
+					if (GetLastError() != ERROR_FILE_EXISTS) throw std::runtime_error("Could not create card backup");
+				}
+				DWORD written = 0;
+				if (backupFile.handle == INVALID_HANDLE_VALUE ||
+					!WriteFile(backupFile.handle, original.data(), static_cast<DWORD>(original.size()), &written, nullptr) ||
+					written != original.size() || !FlushFileBuffers(backupFile.handle))
+					throw std::runtime_error("Could not write complete card backup; card was not changed");
+				PublishMemoryCard(path, std::string_view(card.GetBytes().data(), card.GetBytes().size()));
+				exportStatus = "Exported to " + path.filename().string() + ", slot " + std::to_string(exportTargetSlot) +
+					". Backup: " + backup.filename().string();
+			}
+			catch (const std::exception& error) { exportStatus = std::string("Export failed: ") + error.what(); }
+		}
 
 		struct SaveBackup
 		{
@@ -169,6 +279,46 @@ namespace Debug::SaveLoad
 				backup.checkpointReadable = ReadSavedCheckpoint(
 					std::string_view(backup.data.data() + prefixSize, header.mainBlockSize), backup.checkpoint);
 			}
+		}
+
+		void ShowMemoryCardExport()
+		{
+			if (!memoryCardExportOpen) return;
+			ImGui::SetNextWindowSize(ImVec2(650, 400), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Export to PS2 Memory Card", &memoryCardExportOpen)) {
+				if (memoryCardDirectory.DrawImguiControl()) RefreshMemoryCards();
+				if (ImGui::Button("Refresh cards")) RefreshMemoryCards();
+				ImGui::TextWrapped("Close PCSX2 before exporting. Replaces an existing Kya slot and creates a full-card backup alongside the card.");
+				ImGui::Text("Kya directory: %s", exportSerial.c_str());
+				SaveBackup source{};
+				if (exportData.empty()) {
+					ImGui::Combo("Saved PC slot", &exportSourceSlot, "0\0" "1\0" "2\0" "3\0");
+					std::filesystem::path directory;
+					if (GetSaveDirectory(directory)) ReadBackup(source, directory / ("slot_" + std::to_string(exportSourceSlot) + ".dat"));
+					else source.error = "PC save directory is unavailable";
+					ImGui::TextWrapped("Exports the saved file on disk. Press F5 first to include current progress.");
+					if (!source.error.empty()) ImGui::TextWrapped("%s", source.error.c_str());
+					else DrawSaveInfo(source.desc);
+				}
+				else ImGui::TextUnformatted("Source: selected save from the backup / autosave browser");
+				// Keep the combo label storage alive through BeginCombo.
+				const auto label = exportCard >= 0 ? memoryCards[exportCard].filename().string() : std::string("No cards found");
+				if (ImGui::BeginCombo("Memory card", label.c_str())) {
+					for (int i = 0; i < static_cast<int>(memoryCards.size()); ++i) {
+						if (ImGui::Selectable(memoryCards[i].filename().string().c_str(), exportCard == i)) exportCard = i;
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::Combo("PS2 destination slot", &exportTargetSlot, "0\0" "1\0" "2\0" "3\0");
+				const auto targetError = exportCard >= 0 ? memoryCardErrors[exportCard][exportTargetSlot] : "No card selected";
+				if (!targetError.empty()) ImGui::TextWrapped("%s", targetError.c_str());
+				ImGui::BeginDisabled(!targetError.empty() || (exportData.empty() &&
+					(!source.error.empty() || gSaveManagement.has_queued_file_action())));
+				if (ImGui::Button("Export and replace PS2 slot")) ExportMemoryCard(exportData.empty() ? source.data : exportData);
+				ImGui::EndDisabled();
+				if (!exportStatus.empty()) ImGui::TextWrapped("%s", exportStatus.c_str());
+			}
+			ImGui::End();
 		}
 
 		void DrawCheckpoint(const SaveBackup& backup)
@@ -502,6 +652,9 @@ namespace Debug::SaveLoad
 				else QueueRestore(selected, load);
 			}
 			ImGui::EndDisabled();
+			ImGui::BeginDisabled(!backup.error.empty());
+			if (ImGui::Button("Export to PS2 card")) OpenMemoryCardExport(backup.data);
+			ImGui::EndDisabled();
 			if (!showAutosaves || ImGui::TreeNode("Details")) {
 				if (backup.modified.wYear) {
 					const auto& time = backup.modified;
@@ -743,6 +896,7 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 		ImGui::TextWrapped("Auto-load: %s (slot %d)", autoLoadStatus, autoLoadSlot);
 
 		ImGui::TextWrapped("Press F5 to save, F7 to load");
+		if (Ui::ActionButton("Export to PS2 Memory Card")) OpenMemoryCardExport();
 		if (Ui::ActionButton("Browse Backed Up Saves")) {
 			showAutosaves = false;
 			backupsOpen = true;
@@ -768,6 +922,7 @@ void Debug::SaveLoad::ShowMenu(bool* bOpen)
 
 	ImGui::End();
 	ShowBackups();
+	ShowMemoryCardExport();
 }
 
 void Debug::SaveLoad::QueueAutosaveArchive(int slot)

@@ -182,6 +182,113 @@ TEST_F(DrawTraceTest, AssetIsolationHighlightAndInvalidation) {
     EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
 }
 
+TEST_F(DrawTraceTest, DrawLimitIncludesSelectedDrawAcrossSourcesPassesAndFrames) {
+    Capture();
+    Trace::Link(Source());
+    auto sprite = Source(101, 201); sprite.kind = Trace::Kind::Sprite;
+    Trace::Link(sprite);
+    const auto first = Submit();
+    const auto second = Submit(101, 1);
+    Record(first); Record(second); Record(second); Record(first);
+    Trace::AdvanceFrame();
+    const auto snapshot = Trace::GetSnapshot();
+    ASSERT_EQ(snapshot->draws.size(), 4u);
+    for (size_t i = 0; i < snapshot->draws.size(); ++i) EXPECT_EQ(snapshot->draws[i].order, i + 1);
+    Trace::SetDrawLimit(*snapshot, snapshot->draws[1]);
+    EXPECT_FALSE(Trace::IsEnabled()); // Overrides take effect at the next frame boundary.
+    EXPECT_EQ(Trace::GetStatus().drawLimit, 2u);
+    for (int frame = 0; frame < 2; ++frame) {
+        Capture();
+        Trace::Link(Source()); Trace::Link(sprite);
+        const auto a = Submit(), b = Submit(101, 1);
+        EXPECT_TRUE(Record(a));
+        EXPECT_FALSE(Record(0)); // Missing native provenance cannot bypass the cutoff.
+        Trace::Draw shadow;
+        shadow.recorded = true; shadow.pass = 1;
+        EXPECT_TRUE(Trace::Record(b, shadow));
+        shadow.pass = 2;
+        EXPECT_FALSE(Trace::Record(b, shadow)); // Copies of the same submission remain distinct.
+        EXPECT_FALSE(Record(a));
+        Trace::AdvanceFrame();
+        const auto limited = Trace::GetSnapshot();
+        ASSERT_EQ(limited->draws.size(), 4u);
+        EXPECT_GT(limited->draws[0].id, snapshot->draws.back().id);
+        for (size_t i = 0; i < limited->draws.size(); ++i) {
+            EXPECT_EQ(limited->draws[i].order, i + 1);
+            EXPECT_EQ(limited->draws[i].suppressed, i >= 2);
+            EXPECT_EQ(limited->draws[i].recorded, i < 2);
+        }
+        EXPECT_EQ(Trace::GetStatus().matches, 2u);
+    }
+    Trace::ClearOverrides(); Trace::AdvanceFrame();
+    EXPECT_EQ(Trace::GetStatus().drawLimit, 0u);
+    EXPECT_FALSE(Trace::IsEnabled());
+    EXPECT_TRUE(Record(0));
+}
+
+TEST_F(DrawTraceTest, DrawLimitHandlesFirstLastSelectionAndRejectsStaleSnapshots) {
+    Capture(); Trace::Link(Source());
+    const auto submission = Submit();
+    Record(submission); Record(submission); Record(submission);
+    Trace::AdvanceFrame();
+    const auto snapshot = Trace::GetSnapshot();
+    ASSERT_EQ(snapshot->draws.size(), 3u);
+    for (const size_t selected : {size_t{0}, size_t{2}}) {
+        Trace::SetDrawLimit(*snapshot, snapshot->draws[selected]);
+        Trace::AdvanceFrame();
+        Trace::Link(Source());
+        const auto current = Submit();
+        for (size_t i = 0; i < 3; ++i) EXPECT_EQ(Record(current), i <= selected);
+        Trace::AdvanceFrame();
+        EXPECT_EQ(Trace::GetStatus().matches, selected + 1);
+    }
+    Trace::InvalidateSource(300); // A frame position has no dependency on a live object.
+    EXPECT_EQ(Trace::GetStatus().action, Trace::Action::DrawUpTo);
+    Trace::ClearOverrides();
+    Trace::Draw missing;
+    Trace::SetDrawLimit(*snapshot, missing);
+    EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+    Trace::SetDrawLimit(*snapshot, snapshot->draws[0]);
+    Trace::InvalidateSources();
+    EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+    Trace::SetDrawLimit(*snapshot, snapshot->draws[0]);
+    EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+}
+
+TEST_F(DrawTraceTest, NativeMeshesWithoutLinkedSourcesAreCapturedAndLimited) {
+    Capture();
+    Trace::Submission native;
+    Trace::CopyName(native.mesh, "Persistent scenery");
+    const auto unlinked = Trace::Submit(native, 700);
+    ASSERT_NE(unlinked, 0u);
+    EXPECT_TRUE(Record(unlinked));
+    Trace::Link(Source()); EXPECT_TRUE(Record(Submit()));
+    const auto later = Trace::Submit(native, 701);
+    ASSERT_NE(later, 0u);
+    EXPECT_TRUE(Record(later));
+    Trace::AdvanceFrame();
+    const auto snapshot = Trace::GetSnapshot();
+    ASSERT_EQ(snapshot->sources.size(), 3u);
+    ASSERT_EQ(snapshot->draws.size(), 3u);
+    EXPECT_EQ(snapshot->sources[0].kind, Trace::Kind::Native);
+    EXPECT_EQ(snapshot->sources[0].object, 700u);
+    EXPECT_EQ(snapshot->draws[1].order, 2u);
+    Trace::SetDrawLimit(*snapshot, snapshot->draws[0]);
+    EXPECT_FALSE(Trace::IsDrawLimitActive());
+    Trace::AdvanceFrame();
+    EXPECT_TRUE(Trace::IsDrawLimitActive()); // Also gates the later display-list command buffer.
+    EXPECT_FALSE(Trace::IsDrawLimitReached());
+    EXPECT_TRUE(Record(Trace::Submit(native, 700)));
+    EXPECT_TRUE(Trace::IsDrawLimitReached()); // Later fog/flare commands must not cover the partial frame.
+    Trace::Link(Source()); EXPECT_FALSE(Record(Submit()));
+    EXPECT_FALSE(Record(Trace::Submit(native, 701)));
+    EXPECT_FALSE(Record(0));
+    EXPECT_FALSE(Record(unlinked)); // A stale submission cannot bypass it either.
+    Trace::ClearOverrides(); Trace::AdvanceFrame();
+    EXPECT_FALSE(Trace::IsDrawLimitActive());
+    EXPECT_TRUE(Record(0));
+}
+
 TEST_F(DrawTraceTest, CollectionBudgetReportsTruncationWithoutBreakingSubmission) {
     Capture();
     for (uintptr_t i = 1; i <= 100000; ++i) Trace::Link(Source(i));
@@ -258,6 +365,10 @@ TEST_F(DrawTraceTest, InspectorBuildsEmptyAndPopulatedImguiFramesWithoutGamePoin
     for (int frame = 0; frame < 3; ++frame) {
         if (frame == 1) {
             Capture(); Trace::Link(Source()); Record(Submit()); Trace::AdvanceFrame();
+        }
+        if (frame == 2) {
+            const auto snapshot = Trace::GetSnapshot();
+            Trace::SetDrawLimit(*snapshot, snapshot->draws[0]);
         }
         ImGui::NewFrame();
         Debug::DrawInspector::ShowMenu(&inspectorOpen);

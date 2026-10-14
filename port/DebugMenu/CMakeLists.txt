@@ -71,6 +71,8 @@ set(SOURCES
 	"src/DebugMesh.cpp"
 	"src/DebugSaveLoad.h"
 	"src/DebugSaveLoadPaths.h"
+	"src/DebugMemoryCard.h"
+	"src/DebugMemoryCardFile.h"
 	"src/DebugSaveCheckpoint.h"
 	"src/DebugSaveLoad.cpp"
 	"src/DebugSaveScreenshot.cpp"

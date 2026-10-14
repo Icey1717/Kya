@@ -28,7 +28,9 @@ struct Row {
     const Trace::Submission* submission;
     const Trace::Draw* draw;
 };
-const char* KindName(Trace::Kind kind) { return kind == Trace::Kind::Strip ? "Strip" : "Sprite"; }
+const char* KindName(Trace::Kind kind) {
+    switch (kind) { case Trace::Kind::Strip: return "Strip"; case Trace::Kind::Sprite: return "Sprite"; default: return "Native"; }
+}
 const char* PassName(int pass) {
     switch (pass) { case 0: return "Main"; case 1: return "Shadow mask"; case 2: return "Shadow receiver"; default: return "Unknown"; }
 }
@@ -158,8 +160,15 @@ void Details(const Trace::Snapshot& snapshot, const Row& row, const std::vector<
     ImGui::SameLine();
     if (ImGui::Button("Isolate")) Trace::SetOverride(source, row.submission, Trace::Action::Isolate, match);
     ImGui::SameLine();
+    ImGui::BeginDisabled(source.kind == Trace::Kind::Native);
     if (ImGui::Button("Highlight bounds")) Trace::SetOverride(source, row.submission, Trace::Action::Highlight, match);
     ImGui::EndDisabled();
+    ImGui::EndDisabled();
+    ImGui::BeginDisabled(!row.draw || snapshot.generation != Trace::GetStatus().generation);
+    if (ImGui::Button("Draw up to this point")) Trace::SetDrawLimit(snapshot, *row.draw);
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("Keep native scene draws through this draw, inclusive, in original frame order. Suppress later native draws and game display-list overlays, regardless of filters or Match mode. Shortcut: middle-click a draw row. Post-processing still runs; pause the game for a stable cutoff.");
     if (!live) ImGui::TextDisabled("Source unavailable. Capture again to refresh.");
     ImGui::TextWrapped("Source matching includes every layer, pass and viewport of this object/hierarchy in its source scene. Repeated submissions with that identity are grouped; the live match count shows native draw instances.");
     ImGui::TextDisabled("Bounds are an approximation, not a skinned silhouette.");
@@ -177,7 +186,8 @@ void Details(const Trace::Snapshot& snapshot, const Row& row, const std::vector<
                 ImGui::Text("Meshes: %d   Shadow cast/receive: 0x%X / 0x%X", source.meshCount, source.shadowCast, source.shadowReceive);
                 if (source.flags & 0x10000) ImGui::TextUnformatted("Animated strip (0x10000)");
             }
-            else ImGui::Text("Batches: %d   Remainder rectangles: %d", source.batches, source.remainder);
+            else if (source.kind == Trace::Kind::Sprite) ImGui::Text("Batches: %d   Remainder rectangles: %d", source.batches, source.remainder);
+            else ImGui::TextWrapped("Native mesh without linked game-source metadata. Source matching groups uses of this native mesh.");
             ImGui::Text("Local bounds: %.3f %.3f %.3f / radius %.3f", source.bounds[0], source.bounds[1], source.bounds[2], source.bounds[3]);
             if (ImGui::TreeNode("Related draws from this source instance")) {
                 for (const auto& related : rows) {
@@ -237,7 +247,10 @@ void DrawWindow() {
     const auto status = Trace::GetStatus();
     if (status.action != Trace::Action::None) {
         ImGui::Begin("Draw overrides", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("Overrides active: %s / %u matching draws", status.action == Trace::Action::Hide ? "Hide" : status.action == Trace::Action::Isolate ? "Isolate" : "Highlight bounds", status.matches);
+        if (status.action == Trace::Action::DrawUpTo)
+            ImGui::Text("Draw through #%llu / %u kept draws", status.drawLimit, status.matches);
+        else
+            ImGui::Text("Overrides active: %s / %u matching draws", status.action == Trace::Action::Hide ? "Hide" : status.action == Trace::Action::Isolate ? "Isolate" : "Highlight bounds", status.matches);
         if (ImGui::Button("Open inspector")) open = true;
         ImGui::SameLine(); if (ImGui::Button("Clear overrides")) Trace::ClearOverrides();
         ImGui::End();
@@ -263,7 +276,7 @@ void DrawWindow() {
     ImGui::Text("Frame %llu: %zu sources / %zu submissions / %zu draw attempts", snapshot->frame, snapshot->sources.size(), snapshot->submissions.size(), snapshot->draws.size());
     if (snapshot->truncated) ImGui::TextColored(ImVec4(1, 0.65f, 0.15f, 1), "Capture truncated at the 64 MiB collection budget. Missing rows may be incomplete.");
     meshFilter.Draw("Mesh", 240); ImGui::SameLine(); textureFilter.Draw("Texture", 280);
-    ownerFilter.Draw("Owner", 240); ImGui::SameLine(); ImGui::SetNextItemWidth(100); ImGui::Combo("Type", &typeFilter, "All\0Strip\0Sprite\0");
+    ownerFilter.Draw("Owner", 240); ImGui::SameLine(); ImGui::SetNextItemWidth(100); ImGui::Combo("Type", &typeFilter, "All\0Strip\0Sprite\0Native\0");
     ImGui::SameLine(); ImGui::SetNextItemWidth(145); ImGui::Combo("Pass", &passFilter, "All\0Main\0Shadow mask\0Shadow receiver\0");
     ImGui::Checkbox("Include linked/submitted sources without recorded draws", &includeUnrecorded);
     ImGui::Checkbox("Highlight strips with flags", &highlightFlags);
@@ -306,6 +319,11 @@ void DrawWindow() {
         visible.push_back(i);
     }
     ImGui::Text("%zu matching rows", visible.size());
+    const bool showDrawLimit = status.action == Trace::Action::DrawUpTo && snapshot->generation == status.generation;
+    if (showDrawLimit) {
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.35f, 0.85f, 1.0f, 1.0f), "* Cutoff: draw %llu", status.drawLimit);
+    }
     if (highlightFlags) {
         const auto highlighted = std::count_if(visible.begin(), visible.end(), [&](size_t index) { return MatchesHighlightFlags(rows[index]); });
         ImGui::SameLine(); ImGui::Text("/ %zu highlighted strips", static_cast<size_t>(highlighted));
@@ -348,8 +366,18 @@ void DrawWindow() {
             ImGui::PushID(static_cast<int>(visible[i])); ImGui::TableNextRow(); ImGui::TableNextColumn();
             if (highlightFlags && MatchesHighlightFlags(row))
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImVec4(1.0f, 0.65f, 0.15f, 0.25f)));
-            char label[48]; std::snprintf(label, sizeof(label), "%zu%s", visible[i] + 1, row.draw && row.draw->suppressed ? " (hidden)" : "");
+            const bool atDrawLimit = showDrawLimit && row.draw && row.draw->order == status.drawLimit;
+            if (atDrawLimit)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImVec4(0.15f, 0.65f, 0.85f, 0.35f)));
+            char label[48]; std::snprintf(label, sizeof(label), "%zu%s%s", visible[i] + 1, atDrawLimit ? " *" : "", row.draw && row.draw->suppressed ? " (hidden)" : "");
             if (ImGui::Selectable(label, Selected(row), ImGuiSelectableFlags_SpanAllColumns)) Select(row);
+            if (row.draw && snapshot->generation == status.generation) {
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Middle)) {
+                    Select(row);
+                    Trace::SetDrawLimit(*snapshot, *row.draw);
+                }
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("Middle-click to draw up to this point.");
+            }
             ImGui::TableNextColumn(); ImGui::TextUnformatted(KindName(row.source->kind));
             ImGui::TableNextColumn(); ImGui::TextUnformatted(MeshName(row));
             ImGui::TableNextColumn(); ImGui::TextUnformatted(TextureName(row));

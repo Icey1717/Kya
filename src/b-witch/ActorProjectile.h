@@ -64,6 +64,15 @@ public:
 
 class CBehaviourProjectileLavaBall : public CBehaviour
 {
+public:
+	//virtual void Create(ByteCode* pByteCode);
+	//virtual void Init(CActor* pOwner);
+	//virtual void Term();
+	//virtual void Manage();
+	//virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	//virtual void InitState(int newState);
+	//virtual void TermState(int oldState, int newState);
+	//virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 };
 

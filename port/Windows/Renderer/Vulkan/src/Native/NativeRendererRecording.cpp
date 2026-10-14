@@ -327,7 +327,7 @@ namespace Renderer
 		static bool TraceDraw(const Draw& draw, const Draw::Instance& instance, bool canRecord)
 		{
 			if (!instance.traceSubmission) {
-				return true;
+				return DrawTrace::Record(0, {});
 			}
 
 			DrawTrace::Draw trace;
@@ -803,6 +803,7 @@ namespace Renderer
 					case Command::Type::Flare:
 					{
 						ZONE_SCOPED_NAME("Flare");
+						if (DrawTrace::IsDrawLimitReached()) break;
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Flare::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.flare);
@@ -811,6 +812,7 @@ namespace Renderer
 					case Command::Type::Fog:
 					{
 						ZONE_SCOPED_NAME("Fog");
+						if (DrawTrace::IsDrawLimitReached()) break;
 						if (command.clearPending) drawCommandRecorder.BeginPass(command.capturePassKey);
 						drawCommandRecorder.EndActivePass();
 						Fog::Record(GetNativeRendererState().commandBuffers[GetCurrentFrame()], command.fog);

@@ -17,6 +17,7 @@ Snapshot working;
 std::shared_ptr<const Snapshot> published;
 bool pending = false, pendingStacks = false, capturing = false;
 uint64_t frame = 0, generation = 1, nextSource = 0, nextSubmission = 0, nextDraw = 0;
+uint64_t frameDraw = 0;
 size_t bytes = 0;
 std::unordered_map<Address, size_t> nodes;
 std::unordered_map<uint64_t, size_t> sourceIndices, submissionIndices;
@@ -30,7 +31,7 @@ thread_local Address currentScene = 0, currentViewport = 0;
 thread_local Name currentSceneName{};
 thread_local uint64_t currentSource = 0;
 thread_local int currentLayer = 0;
-struct Override { Source source; uint64_t assetKey = 0; Action action = Action::None; Match match = Match::Source; };
+struct Override { Source source; uint64_t assetKey = 0; Action action = Action::None; Match match = Match::Source; uint64_t drawLimit = 0; };
 Override requested, active;
 uint32_t matches = 0, lastMatches = 0;
 
@@ -90,6 +91,8 @@ void CopyName(Name& target, const char* name) {
     }
 }
 bool IsEnabled() { return enabled.load(std::memory_order_relaxed); }
+bool IsDrawLimitActive() { std::lock_guard lock(mutex); return active.action == Action::DrawUpTo; }
+bool IsDrawLimitReached() { std::lock_guard lock(mutex); return active.action == Action::DrawUpTo && frameDraw >= active.drawLimit; }
 uint64_t AssetKey(const char* name) {
     uint64_t hash = 14695981039346656037ull;
     if (name) while (*name) { hash ^= static_cast<unsigned char>(*name++); hash *= 1099511628211ull; }
@@ -98,12 +101,13 @@ uint64_t AssetKey(const char* name) {
 void RequestCapture(bool stacks) { std::lock_guard lock(mutex); pending = true; pendingStacks = stacks; }
 void ClearSnapshot() { std::lock_guard lock(mutex); published.reset(); }
 std::shared_ptr<const Snapshot> GetSnapshot() { std::lock_guard lock(mutex); return published; }
-Status GetStatus() { std::lock_guard lock(mutex); return {pending, capturing, requested.action, lastMatches, generation}; }
+Status GetStatus() { std::lock_guard lock(mutex); return {pending, capturing, requested.action, lastMatches, generation, requested.drawLimit}; }
 
 void AdvanceFrame() {
     std::lock_guard lock(mutex);
     lastMatches = matches;
     matches = 0;
+    frameDraw = 0;
     // Store lightweight identities for safe UI actions, not live game pointers.
     if (capturing || active.action != Action::None) {
         liveSources.clear();
@@ -212,12 +216,27 @@ FlushScope::FlushScope(Address node, int layer) : previous(currentSource), previ
 }
 FlushScope::~FlushScope() { currentSource = previous; currentLayer = previousLayer; }
 
-uint64_t Submit(Submission submission) {
-    if (!IsEnabled() || !currentSource) return 0;
+uint64_t Submit(Submission submission, Address nativeMesh) {
+    if (!IsEnabled()) return 0;
     std::lock_guard lock(mutex);
-    if (!FindSource(currentSource) || !Reserve(sizeof(Submission))) return 0;
+    uint64_t sourceId = currentSource;
+    if (!FindSource(sourceId)) {
+        if (!nativeMesh || !Reserve(sizeof(Source))) return 0;
+        Source source;
+        source.id = ++nextSource;
+        source.generation = generation;
+        source.kind = Kind::Native;
+        source.object = nativeMesh;
+        source.flushed = true;
+        source.model = submission.model;
+        source.hasModel = true;
+        sourceId = source.id;
+        sourceIndices[source.id] = working.sources.size();
+        working.sources.push_back(source);
+    }
+    if (!Reserve(sizeof(Submission))) return 0;
     submission.id = ++nextSubmission;
-    submission.sourceId = currentSource;
+    submission.sourceId = sourceId;
     submission.layer = currentLayer;
     if (!submission.assetKey) submission.assetKey = AssetKey(submission.mesh.data());
     submissionIndices[submission.id] = working.submissions.size();
@@ -226,16 +245,17 @@ uint64_t Submit(Submission submission) {
 }
 
 bool Record(uint64_t submissionId, Draw draw) {
-    if (!submissionId) return true;
     std::lock_guard lock(mutex);
     auto it = submissionIndices.find(submissionId);
-    if (it == submissionIndices.end()) return true;
+    // Missing provenance or exhausted capture storage must not bypass a scene cutoff.
+    if (it == submissionIndices.end()) return active.action != Action::DrawUpTo;
+    draw.order = ++frameDraw;
     const auto& submission = working.submissions[it->second];
     const auto* source = FindSource(submission.sourceId);
-    const bool match = source && Matches(*source, submission);
+    const bool match = active.action == Action::DrawUpTo ? draw.order <= active.drawLimit : source && Matches(*source, submission);
     if (match && active.action != Action::None) ++matches;
-    const bool suppress = source && active.action != Action::None &&
-        ((active.action == Action::Hide && match) || (active.action == Action::Isolate && !match));
+    const bool suppress = (active.action == Action::DrawUpTo && !match) || (source &&
+        ((active.action == Action::Hide && match) || (active.action == Action::Isolate && !match)));
     if (capturing && Reserve(sizeof(Draw))) {
         draw.id = ++nextDraw;
         draw.submissionId = submissionId;
@@ -268,9 +288,21 @@ bool IsSourceLive(const Source& source) {
 }
 void SetOverride(const Source& source, const Submission* submission, Action action, Match match) {
     std::lock_guard lock(mutex);
-    if (source.generation != generation || Retired(source) || (match == Match::Asset && !submission)) return;
+    if (action == Action::DrawUpTo || source.generation != generation || Retired(source) || (match == Match::Asset && !submission)) return;
+    requested = {};
     requested.source = source; requested.action = action; requested.match = match;
     requested.assetKey = submission ? submission->assetKey : 0;
+}
+void SetDrawLimit(const Snapshot& snapshot, const Draw& draw) {
+    std::lock_guard lock(mutex);
+    if (snapshot.generation != generation) return;
+    const auto found = std::find_if(snapshot.draws.begin(), snapshot.draws.end(),
+        [&](const Draw& candidate) { return candidate.id == draw.id; });
+    if (found == snapshot.draws.end() || !found->order) return;
+    requested = {};
+    requested.source.generation = snapshot.generation;
+    requested.action = Action::DrawUpTo;
+    requested.drawLimit = found->order;
 }
 void ClearOverrides() { std::lock_guard lock(mutex); requested = {}; }
 }

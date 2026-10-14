@@ -10,6 +10,7 @@
 #include "Objects/UniformBuffer.h"
 #include "Texture/TextureCache.h"
 #include "Blending.h"
+#include "DrawTrace.h"
 
 namespace Renderer::Native::DisplayList
 {
@@ -444,7 +445,9 @@ namespace Renderer::Native::DisplayList
 	{
 		const int indexCount = gVertexBuffers.GetDrawBufferData().GetIndexTail() - gIndexStart;
 
-		if (indexCount > 0) {
+		// This command buffer executes after all native scene draws. Its game overlays
+		// are beyond any native draw selected in the inspector; ImGui uses its own pass.
+		if (indexCount > 0 && !DrawTrace::IsDrawLimitActive()) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
 			const Renderer::Native::ResolvedBlendState blendState = Native::ResolveBlendState(GetBlendAlpha(), true);
