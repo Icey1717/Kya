@@ -169,7 +169,7 @@ if (ENABLE_UPSCALING_ONNX)
 		FetchContent_Declare(directml
 			URL "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.2/microsoft.ai.directml.1.15.2.nupkg"
 			DOWNLOAD_NAME directml.zip
-			URL_HASH SHA256=9f07482559087088a4dba4ae76eeee1fad3f7077a92ccfbdb439c6bc2964c09
+			URL_HASH SHA256=9f07482559087088a4dba4ae76eeeee1fad3f7077a92ccfbdb439c6bc2964c09
 			DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 		FetchContent_MakeAvailable(directml)
 	else()

@@ -1,6 +1,7 @@
 #include "ActorProjectile.h"
 #include "ActorElectrolla.h"
 #include "MemoryStream.h"
+#include "EventManager.h"
 #include "MathOps.h"
 #include "DlistManager.h"
 #include "TimeController.h"
@@ -1192,6 +1193,253 @@ void CActorProjectile::BehaviourProjectileStraight_Manage(CBehaviourProjectileSt
 	return;
 }
 
+void CActorProjectile::BehaviourProjectileLavaBall_InitState(int newState, CBehaviourProjectileLavaBall* pBehaviour)
+{
+	CCollision* pCVar1;
+	edF32VECTOR4* v0;
+
+	if (newState == 0xd) {
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		pCVar1 = this->pCollisionData;
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffefff;
+	}
+	else {
+		if (newState == 8) {
+			this->flags = this->flags & 0xffffff5f;
+			EvaluateDisplayState();
+			FUN_00205e10(pBehaviour);
+		}
+		else {
+			if (newState == 0x15) {
+				this->field_0x570 = 0.0f;
+				if ((pBehaviour->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+					v0 = pBehaviour->pathFollowReader.GetWayPoint();
+					UpdatePosition(v0, true);
+					pBehaviour->pathFollowReader.NextWayPoint();
+				}
+			}
+			else {
+				if (newState == 6) {
+					this->field_0x3f4 = 0;
+					this->dynamic.speed = 0.0f;
+					this->dynamicExt.normalizedTranslation.x = 0.0f;
+					this->dynamicExt.normalizedTranslation.y = 0.0f;
+					this->dynamicExt.normalizedTranslation.z = 0.0f;
+					this->dynamicExt.normalizedTranslation.w = 0.0f;
+					this->dynamicExt.field_0x6c = 0.0f;
+					this->flags = this->flags & 0xffffff7f;
+					this->flags = this->flags | 0x20;
+					EvaluateDisplayState();
+					pCVar1 = this->pCollisionData;
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffefff;
+					pCVar1 = this->pCollisionData;
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7ffff;
+				}
+				else {
+					pBehaviour->pOwner->BehaviourProjectile_InitState(newState);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorProjectile::BehaviourProjectileLavaBall_Manage(CBehaviourProjectileLavaBall* pBehaviour)
+{
+	undefined8 uVar1;
+	bool bVar2;
+	CEventManager* pCVar3;
+	bool cVar4;
+	uint uVar4;
+	edF32VECTOR4* v0;
+	ed_zone_3d* pZone;
+	int iVar5;
+	StateConfig* pSVar6;
+	uint uVar8;
+	float fVar9;
+	CActorsTable local_170;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 auStack64;
+
+	cVar4 = false;
+	if ((this->aProjectileSubObjs->flags & 0x100000) != 0) {
+		iVar5 = this->actorState;
+		if (iVar5 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar6 = GetStateCfg(iVar5);
+			uVar4 = pSVar6->flags_0x4 & 0x800;
+		}
+
+		if (uVar4 != 0) {
+			iVar5 = this->actorState;
+			if (iVar5 == -1) {
+				uVar4 = 0;
+			}
+			else {
+				pSVar6 = GetStateCfg(iVar5);
+				uVar4 = pSVar6->flags_0x4 & 0x800;
+			}
+
+			if ((uVar4 != 0) && (&pBehaviour->pathFollowReader != (CPathFollowReader*)0x0)) {
+				v0 = pBehaviour->pathFollowReader.GetWayPointAngles();
+				edF32Matrix4FromEulerSoft(&auStack64, &v0->xyz, "XYZ");
+				if ((this->aProjectileSubObjs->flags & 0x80000) == 0) {
+					this->patternPart.FireContinue(CActorHero::_gThis, &auStack64.rowY);
+				}
+				else {
+					local_50 = this->currentLocation;
+					fVar9 = this->distanceToGround;
+					if (fVar9 < this->field_0xf0) {
+						local_50.y = local_50.y - fVar9;
+						this->patternPart.FireContinue(CActorHero::_gThis, &auStack64.rowY, &local_50);
+					}
+				}
+			}
+		}
+
+		cVar4 = this->patternPart.UpdatePatternPartLife();
+		this->patternPart.Draw();
+	}
+
+	iVar5 = this->actorState;
+	uVar8 = 0x1002023b;
+	if (iVar5 == -1) {
+		uVar4 = 0;
+	}
+	else {
+		pSVar6 = GetStateCfg(iVar5);
+		uVar4 = pSVar6->flags_0x4 & 0x1000;
+	}
+
+	pCVar3 = CScene::ptable.g_EventManager_006f5080;
+	if (uVar4 != 0) {
+		uVar8 = 0x41920;
+	}
+
+	uVar4 = this->aProjectileSubObjs->flags;
+	if ((uVar4 & 0x2000) != 0) {
+		uVar8 = uVar8 & 0xfffbe7ff;
+	}
+
+	if (((uVar4 & 0x200) != 0) && ((uVar4 & 0x800000) == 0)) {
+		uVar8 = uVar8 & 0xffffffdf;
+	}
+
+	if ((uVar4 & 0x400) != 0) {
+		uVar8 = uVar8 & 0xfffffeff;
+	}
+
+	iVar5 = this->actorState;
+	if (iVar5 == 0x1e) {
+		if (cVar4 == false) {
+			this->flags = this->flags & 0xffffff7f;
+			this->flags = this->flags | 0x20;
+
+			EvaluateDisplayState();
+
+			iVar5 = this->curBehaviourId;
+			if (iVar5 == 10) {
+				SetState(6, -1);
+			}
+			else {
+				if (iVar5 == 4) {
+					ClearLocalData();
+					SetBehaviour(-1, -1, -1);
+					SetBehaviour(4, -1, -1);
+				}
+				else {
+					PreReset();
+					Reset();
+				}
+			}
+		}
+	}
+	else {
+		if (iVar5 == 0xd) {
+			StateDie(0, pBehaviour->field_0xc, pBehaviour->behaviourId);
+		}
+		else {
+			if (iVar5 == 8) {
+				StateProjectileLavaBall(uVar8, pBehaviour);
+			}
+			else {
+				if (iVar5 == 0x15) {
+					if (pBehaviour->field_0x18 < this->timeInAir) {
+						SetState(8, -1);
+					}
+				}
+				else {
+					if (iVar5 == 6) {
+						pZone = (ed_zone_3d*)0x0;
+						if (pBehaviour->field_0x2c != 0xffffffff) {
+							pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pBehaviour->field_0x2c);
+						}
+						if ((((pBehaviour->pathFollowReader).pPathFollow != (CPathFollow*)0x0) && (pZone != (ed_zone_3d*)0x0)) &&
+							(iVar5 = edEventComputeZoneAgainstVertex(pCVar3->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0), iVar5 == 1)) {
+							SetState(0x15, -1);
+						}
+					}
+					else {
+						if (iVar5 == 0xc) {
+							StateLiving(uVar8, pBehaviour->field_0xc);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	iVar5 = this->actorState;
+	if (iVar5 == -1) {
+		uVar4 = 0;
+	}
+	else {
+		pSVar6 = GetStateCfg(iVar5);
+		uVar4 = pSVar6->flags_0x4 & 0x800;
+	}
+
+	if ((uVar4 != 0) && (this->curBehaviourId == 10)) {
+		bVar2 = false;
+		if (0.0f < this->aProjectileSubObjs->timeToExplode) {
+			fVar9 = this->timeToExplode - GetTimer()->cutsceneDeltaTime;
+			this->timeToExplode = fVar9;
+			if (fVar9 <= 0.0f) {
+				bVar2 = true;
+			}
+		}
+
+		if (!bVar2) {
+			bVar2 = false;
+			if (0.0f < this->aProjectileSubObjs->explosionRange) {
+				local_170.nbEntries = 0;
+				local_60 = this->currentLocation;
+				local_60.w = this->aProjectileSubObjs->explosionRange;
+				(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_170, &local_60, Projectile_CriterionExploder, this);
+				if (0 < local_170.nbEntries) {
+					bVar2 = true;
+				}
+			}
+
+			if (!bVar2) {
+				return;
+			}
+		}
+
+		SetState(0xd, -1);
+	}
+
+	return;
+}
+
 void CActorProjectile::AppearToDie()
 {
 	this->flags = this->flags & 0xffffff5f;
@@ -2228,9 +2476,201 @@ void CActorProjectile::StateProjectileFlyingStraight(CBehaviourProjectileStraigh
 				}
 
 			} while ((uVar6 & 0x800) == 0);
+
 			this->dynamic.speed = 0.0f;
 			SetState(0xd, -1);
 		}
+	}
+
+	return;
+}
+
+void CActorProjectile::StateProjectileLavaBall(uint dynFlags, CBehaviourProjectileLavaBall* pBehaviour)
+{
+	byte bVar1;
+	CCollision* pCVar2;
+	int index;
+	float* pfVar3;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+	bool bVar7;
+	edF32VECTOR4* v2;
+	edF32VECTOR4* peVar8;
+	CActor* pHitActor;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_180;
+	edF32VECTOR4 local_170;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	edF32VECTOR4 eStack288;
+	CFixedTable<CActor*, 64> actorsTable;
+
+	actorsTable.nbEntries = 0;
+	pCVar2 = this->pCollisionData;
+	pBehaviour->pathFollowReader.GetWayPoint();
+	index = (pBehaviour->pathFollowReader).field_0x8;
+	movParamsIn.speed = pBehaviour->field_0x10;
+	if (index != -1) {
+		pfVar3 = ((pBehaviour->pathFollowReader).pPathFollow)->aDelays;
+		if (pfVar3 == (float*)0x0) {
+			fVar12 = 0.0f;
+		}
+		else {
+			fVar12 = pfVar3[index];
+		}
+		if (fVar12 != 0.0f) {
+			peVar8 = pBehaviour->pathFollowReader.GetWayPoint(index);
+			v2 = pBehaviour->pathFollowReader.GetWayPoint();
+			edF32Vector4SubHard(&eStack288, peVar8, v2);
+			movParamsIn.speed = edF32Vector4GetDistHard(&eStack288);
+			movParamsIn.speed = movParamsIn.speed / fVar12;
+		}
+	}
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = pBehaviour->field_0x14;
+	movParamsIn.acceleration = 500.0f;
+	movParamsIn.flags = 0x45e;
+
+	peVar8 = pBehaviour->pathFollowReader.GetWayPoint();
+	SV_AUT_MoveTo(&movParamsOut, &movParamsIn, peVar8);
+	if ((this->aProjectileSubObjs->flags & 0x20) != 0) {
+		edF32Vector4NormalizeHard(&local_170, &this->dynamic.velocityDirectionEuler);
+		this->rotationQuat = local_170;
+	}
+
+	peVar8 = pBehaviour->pathFollowReader.GetWayPoint();
+	fVar12 = peVar8->x - this->currentLocation.x;
+	fVar5 = peVar8->y - this->currentLocation.y;
+	fVar6 = peVar8->z - this->currentLocation.z;
+
+	if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
+		ManageDyn(4.0f, 0x40000, (CActorsTable*)0x0);
+	}
+	else {
+		ManageDyn(4.0f, 0x40000, (CActorsTable*)&actorsTable);
+	}
+
+	fVar11 = 0.4f;
+	fVar10 = this->dynamic.linearAcceleration * GetTimer()->cutsceneDeltaTime;
+	if (0.4f <= fVar10) {
+		fVar11 = fVar10;
+	}
+
+	if (sqrtf(fVar12 * fVar12 + fVar5 * fVar5 + fVar6 * fVar6) < fVar11) {
+		bVar7 = pBehaviour->pathFollowReader.AtGoal((pBehaviour->pathFollowReader).splinePointIndex, (pBehaviour->pathFollowReader).field_0xc);
+		if (bVar7 != false) {
+			this->dynamic.speed = 0.0f;
+			SetState(0xd, -1);
+			return;
+		}
+
+		pBehaviour->pathFollowReader.NextWayPoint();
+	}
+
+	if ((this->aProjectileSubObjs->flags & 0x4800) == 0) {
+	LAB_00205d20:
+		bVar1 = pCVar2->flags_0x4;
+		if ((bVar1 & 7) != 0) {
+			if ((this->aProjectileSubObjs->flags & 4) == 0) {
+				if ((bVar1 & 2) != 0) {
+					fVar12 = fabsf(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
+					if (6.0f < fVar12) {
+						fVar12 = edFIntervalUnitDstLERP(fVar12, 0.0f, 10.0f);
+						this->field_0x3f0 = -fVar12 * 0.5f;
+					}
+					else {
+						PlayAnim(0);
+					}
+				}
+			}
+			else {
+				this->dynamic.speed = 0.0f;
+				SetState(0xd, -1);
+			}
+		}
+	}
+	else {
+		do {
+			if (actorsTable.nbEntries == 0) goto LAB_00205d20;
+			pHitActor = actorsTable.PopCurrent();
+			uVar4 = this->aProjectileSubObjs->flags;
+			if ((uVar4 & 0x4000) != 0) {
+				local_180 = this->currentLocation;
+				local_180.w = 3.402823e+38f;
+				if (pHitActor->typeID == 0x1c) {
+					if ((this->aProjectileSubObjs->flags & 0x40000) != 0) {
+						pHitActor->SetState(0xd, -1);
+					}
+				}
+				else {
+					HitActor(&local_180, pHitActor, pBehaviour->field_0xc, 0);
+					this->dynamic.speed = 0.0f;
+
+					uVar4 = this->aProjectileSubObjs->flags;
+					if ((uVar4 & 0x2000) != 0) {
+						this->aProjectileSubObjs->flags = uVar4 | 0x800000;
+					}
+				}
+
+				this->dynamic.speed = 0.0f;
+				SetState(0xd, -1);
+				return;
+			}
+		} while ((uVar4 & 0x800) == 0);
+
+		this->dynamic.speed = 0.0f;
+		SetState(0xd, -1);
+	}
+
+	return;
+}
+
+void CActorProjectile::FUN_00205e10(CBehaviourProjectileLavaBall* pBehaviour)
+{
+	uint scenaricDataIndex;
+	CNewFx* pCVar1;
+	int iVar2;
+	CCollision* pCVar3;
+	bool bVar4;
+	edF32VECTOR4* peVar5;
+	float fVar6;
+	float fVar7;
+
+	GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
+
+	this->flags = this->flags | 0x1000;
+	this->field_0x570 = 0.0f;
+	peVar5 = pBehaviour->pathFollowReader.GetWayPointAngles();
+	this->rotationEuler.xyz = peVar5->xyz;
+	UpdatePosition(&this->currentLocation, false);
+	scenaricDataIndex = this->aProjectileSubObjs->field_0x3c;
+	if (scenaricDataIndex != 0xffffffff) {
+		CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x354, scenaricDataIndex, FX_MATERIAL_SELECTOR_NONE);
+
+		if (this->field_0x354.IsValid()) {
+			if (this->pAnimationController == (CAnimation*)0x0) {
+				this->field_0x354.SpatializeOnActor(0xe, 0, 0);
+			}
+			else {
+				this->field_0x354.SpatializeOnActor(0xe, 0, 0x686365d2);
+			}
+
+			this->field_0x354.Start();
+		}
+	}
+
+	pCVar3 = this->pCollisionData;
+	if (pCVar3 != (CCollision*)0x0) {
+		pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x20000;
+		pCVar3 = this->pCollisionData;
+		pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xfffffffe;
+		pCVar3 = this->pCollisionData;
+		pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xfffffffb;
 	}
 
 	return;
@@ -2878,6 +3318,378 @@ void CBehaviourProjectileNew::End(int newBehaviourId)
 	pProjectile->flags = pProjectile->flags | 0x20;
 
 	pProjectile->EvaluateDisplayState();
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::Create(ByteCode* pByteCode)
+{
+	int iVar1;
+	uint uVar2;
+	float fVar3;
+
+	this->behaviourId = pByteCode->GetS32();
+	this->field_0xc = pByteCode->GetS32();
+	this->field_0x10 = pByteCode->GetF32();
+	this->field_0x14 = pByteCode->GetF32();
+	this->field_0x30 = pByteCode->GetS32();
+
+	if (CScene::_pinstance->field_0x1c < 2.18f) {
+		this->field_0x18 = 0.0f;
+	}
+	else {
+		this->field_0x18 = pByteCode->GetF32();
+	}
+
+	this->pathFollowReader.Create(pByteCode);
+
+	this->field_0x2c = pByteCode->GetU32();
+	this->field_0x34 = pByteCode->GetS32();
+	this->field_0x38 = pByteCode->GetS32();
+	this->field_0x3c = pByteCode->GetS32();
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::Init(CActor* pOwner)
+{
+	float* pfVar1;
+	int iVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+
+	this->pathFollowReader.Init();
+
+	this->pOwner = static_cast<CActorProjectile*>(pOwner);
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		this->pathFollowReader.Reset();
+	}
+
+	if (((this->pOwner)->aProjectileSubObjs->flags & 0x100000) != 0) {
+		fVar4 = this->field_0x10;
+		iVar2 = 0;
+
+		if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+			for (; iVar2 < ((this->pathFollowReader).pPathFollow)->splinePointCount + -1; iVar2 = iVar2 + 1) {
+				pfVar1 = ((this->pathFollowReader).pPathFollow)->aDelays;
+				if (pfVar1 == (float*)0x0) {
+					fVar5 = 0.0f;
+				}
+				else {
+					fVar5 = pfVar1[iVar2];
+				}
+
+				if ((fVar5 != 0.0f) && (this->field_0x30 < iVar2)) {
+					fVar3 = this->pathFollowReader.FUN_001c2b50(iVar2, iVar2 + 1);
+					fVar3 = fVar3 / fVar5;
+					fVar4 = (fVar4 < fVar3) ? fVar3 : fVar4;
+				}
+			}
+		}
+
+		this->pOwner->patternPart.FUN_003a7cc0(fVar4);
+	}
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::Term()
+{
+	return;
+}
+
+void CBehaviourProjectileLavaBall::Manage()
+{
+	this->pOwner->BehaviourProjectileLavaBall_Manage(this);
+	ManageSound();
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorProjectile* pProjectile;
+
+	if (newState == -1) {
+		pProjectile = this->pOwner;
+		if ((pProjectile->prevBehaviourId == 9) || (pProjectile->aProjectileSubObjs->timeToExplode == 0.0f)) {
+			pProjectile->SetState(0xc, -1);
+		}
+		else {
+			pProjectile->SetState(6, -1);
+		}
+	}
+	else {
+		pProjectile = this->pOwner;
+		pProjectile->SetState(newState, newAnimationType);
+	}
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		this->pathFollowReader.Reset();
+	}
+
+	this->pOwner = static_cast<CActorProjectile*>(pOwner);
+	if (newState == -1) {
+		pProjectile = this->pOwner;
+		pProjectile->SetState(6, -1);
+	}
+	else {
+		pProjectile = this->pOwner;
+		pProjectile->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::InitState(int newState)
+{
+	this->pOwner->BehaviourProjectileLavaBall_InitState(newState, this);
+
+	return;
+}
+
+void CBehaviourProjectileLavaBall::TermState(int oldState, int newState)
+{
+	CNewFx* pCVar1;
+	int iVar2;
+	CCollision* pCVar3;
+	bool bVar4;
+	CAnimation* pAnim;
+	CActorProjectile* pProjectile;
+
+	pProjectile = this->pOwner;
+	if (oldState == 8) {
+		SetVectorFromAngles(&pProjectile->rotationQuat, (edF32VECTOR3*)&pProjectile->rotationEuler);
+		pProjectile->flags = pProjectile->flags & 0xffffefff;
+		if (pProjectile->aProjectileSubObjs->field_0x3c != 0xffffffff) {
+			if (pProjectile->field_0x354.IsValid()) {
+				pProjectile->field_0x354.Stop();
+			}
+			else {
+				edDebugPrintf("this is it\n");
+			}
+		}
+
+		pCVar3 = pProjectile->pCollisionData;
+		if (pCVar3 != (CCollision*)0x0) {
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 & 0xfffdffff;
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 1;
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 4;
+		}
+	}
+	else {
+		if (oldState == 6) {
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x1000;
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x80000;
+			pProjectile->timeToExplode = pProjectile->aProjectileSubObjs->timeToExplode;
+			pProjectile->flags = pProjectile->flags & 0xfffffffc;
+			return;
+		}
+	}
+
+	pProjectile = this->pOwner;
+	if (oldState == 0xd) {
+		pAnim = pProjectile->pAnimationController;
+		if (pAnim != (CAnimation*)0x0) {
+			pAnim->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		}
+
+		pProjectile->field_0x5a8 = 0;
+	}
+	else {
+		if (oldState == 6) {
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x1000;
+			pCVar3 = pProjectile->pCollisionData;
+			pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x80000;
+			pProjectile->timeToExplode = pProjectile->aProjectileSubObjs->timeToExplode;
+			pProjectile->flags = pProjectile->flags & 0xfffffffc;
+			pProjectile->flags = pProjectile->flags & 0xffffff5f;
+			pProjectile->EvaluateDisplayState();
+		}
+	}
+
+	return;
+}
+
+int CBehaviourProjectileLavaBall::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	CActorProjectile* pProjectile;
+
+	if (msg == 0x67) {
+		if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+			pProjectile = this->pOwner;
+			iVar1 = pProjectile->actorState;
+			if (iVar1 == -1) {
+				uVar3 = 0;
+			}
+			else {
+				pSVar2 = pProjectile->GetStateCfg(iVar1);
+				uVar3 = pSVar2->flags_0x4 & 0x800;
+			}
+
+			if (uVar3 == 0) {
+				this->pathFollowReader.Reset();
+				pProjectile = this->pOwner;
+				pProjectile->SetState(8, -1);
+				return 1;
+			}
+		}
+	}
+	else {
+		if (msg != 0xf) {
+			return 0;
+		}
+
+		if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+			pProjectile = this->pOwner;
+			iVar1 = pProjectile->actorState;
+			if (iVar1 == -1) {
+				uVar3 = 0;
+			}
+			else {
+				pSVar2 = pProjectile->GetStateCfg(iVar1);
+				uVar3 = pSVar2->flags_0x4 & 0x800;
+			}
+
+			if (uVar3 == 0) {
+				this->pathFollowReader.Reset();
+				pProjectile = this->pOwner;
+				pProjectile->SetState(0x15, -1);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+void CBehaviourProjectileLavaBall::ManageSound()
+{
+	CNewFx* pCVar1;
+	int iVar2;
+	CActorProjectile* pCVar3;
+	int* piVar5;
+	bool bVar6;
+	StateConfig* pSVar7;
+	uint uVar8;
+	CFxManager* pFxManager;
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+
+	if (this->field_0x40.IsValid()) {
+		if ((this == reinterpret_cast<CBehaviourProjectileLavaBall*>(0xffffffe4)) || (bVar6 = true, (this->pathFollowReader).splinePointIndex <= this->field_0x30)) {
+			bVar6 = false;
+		}
+
+		if (!bVar6) {
+			pCVar3 = this->pOwner;
+			iVar2 = pCVar3->actorState;
+			if (iVar2 == -1) {
+				uVar8 = 0;
+			}
+			else {
+				pSVar7 = pCVar3->GetStateCfg(iVar2);
+				uVar8 = pSVar7->flags_0x4 & 0x800;
+			}
+
+			if (uVar8 != 0) goto LAB_00201f98;
+		}
+
+		(this->field_0x40).pFx->Kill();
+
+		this->field_0x40.Reset();
+	}
+	else {
+		if ((this == reinterpret_cast<CBehaviourProjectileLavaBall*>(0xffffffe4)) || (bVar6 = true, (this->pathFollowReader).splinePointIndex <= this->field_0x30)) {
+			bVar6 = false;
+		}
+
+		if (!bVar6) {
+			pCVar3 = this->pOwner;
+			iVar2 = pCVar3->actorState;
+			if (iVar2 == -1) {
+				uVar8 = 0;
+			}
+			else {
+				pSVar7 = pCVar3->GetStateCfg(iVar2);
+				uVar8 = pSVar7->flags_0x4 & 0x800;
+			}
+
+			if ((uVar8 != 0) && (this->field_0x34 != 0xffffffff)) {
+				pFxManager->GetDynamicFx(&this->field_0x40, this->field_0x34, FX_MATERIAL_SELECTOR_NONE);
+
+				this->field_0x40.SpatializeOnActor(6, (CActor*)this->pOwner, 0);
+				this->field_0x40.Start();
+			}
+		}
+	}
+
+LAB_00201f98:
+	if (this->field_0x50.IsValid()) {
+		if ((this == reinterpret_cast<CBehaviourProjectileLavaBall*>(0xffffffe4)) || (bVar6 = true, (this->pathFollowReader).splinePointIndex <= this->field_0x30)) {
+			bVar6 = false;
+		}
+
+		if (bVar6) {
+			pCVar3 = this->pOwner;
+			iVar2 = pCVar3->actorState;
+			if (iVar2 == -1) {
+				uVar8 = 0;
+			}
+			else {
+				pSVar7 = pCVar3->GetStateCfg(iVar2);
+				uVar8 = pSVar7->flags_0x4 & 0x800;
+			}
+
+			if (uVar8 != 0) {
+				return;
+			}
+		}
+
+		this->field_0x50.Stop();
+	}
+	else {
+		if ((this == reinterpret_cast<CBehaviourProjectileLavaBall*>(0xffffffe4)) || (bVar6 = true, (this->pathFollowReader).splinePointIndex <= this->field_0x30)) {
+			bVar6 = false;
+		}
+
+		if (bVar6) {
+			pCVar3 = this->pOwner;
+			iVar2 = pCVar3->actorState;
+			if (iVar2 == -1) {
+				uVar8 = 0;
+			}
+			else {
+				pSVar7 = pCVar3->GetStateCfg(iVar2);
+				uVar8 = pSVar7->flags_0x4 & 0x800;
+			}
+
+			if (uVar8 != 0) {
+				if (this->field_0x38 != 0xffffffff) {
+					pFxManager->GetDynamicFx(&this->field_0x48, this->field_0x38, FX_MATERIAL_SELECTOR_NONE);
+
+					this->field_0x48.SetPosition(&pCVar3->currentLocation);
+					this->field_0x48.Start();
+				}
+
+				if (this->field_0x3c != 0xffffffff) {
+					pFxManager->GetDynamicFx(&this->field_0x50, this->field_0x3c, FX_MATERIAL_SELECTOR_NONE);
+					this->field_0x50.SpatializeOnActor(6, (CActor*)this->pOwner, 0);
+					this->field_0x50.Start();					
+				}
+			}
+		}
+	}
 
 	return;
 }

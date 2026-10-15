@@ -62,18 +62,37 @@ public:
 	CFxSparkNoAlloc<3, 12>* aSparks;
 };
 
-class CBehaviourProjectileLavaBall : public CBehaviour
+class CBehaviourProjectileLavaBall : public CBehaviourProjectile
 {
 public:
-	//virtual void Create(ByteCode* pByteCode);
-	//virtual void Init(CActor* pOwner);
-	//virtual void Term();
-	//virtual void Manage();
-	//virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	//virtual void InitState(int newState);
-	//virtual void TermState(int oldState, int newState);
-	//virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	void ManageSound();
+
+	int field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+
+	CPathFollowReader pathFollowReader;
+
+	uint field_0x2c;
+
+	int field_0x30;
+	int field_0x34;
+	int field_0x38;
+	int field_0x3c;
+
+	CFxHandle field_0x40;
+	CFxHandle field_0x48;
+	CFxHandle field_0x50;
 };
 
 class CBehaviourProjectileStraight : public CBehaviourProjectile
@@ -192,6 +211,9 @@ public:
 	void BehaviourProjectileStraight_InitState(int newState, CBehaviourProjectileStraight* pBehaviourStraight);
 	void BehaviourProjectileStraight_Manage(CBehaviourProjectileStraight* pBehaviour);
 
+	void BehaviourProjectileLavaBall_InitState(int newState, CBehaviourProjectileLavaBall* pBehaviour);
+	void BehaviourProjectileLavaBall_Manage(CBehaviourProjectileLavaBall* pBehaviour);
+
 	void AppearToDie();
 	void GoToSleep();
 	void Die();
@@ -217,6 +239,9 @@ public:
 	void StopAllFx();
 
 	void StateProjectileFlyingStraight(CBehaviourProjectileStraight* pBehaviour);
+	void StateProjectileLavaBall(uint dynFlags, CBehaviourProjectileLavaBall* pBehaviour);
+
+	void FUN_00205e10(CBehaviourProjectileLavaBall* pBehaviour);
 
 	CBehaviourProjectileStand behaviourProjectileStand;
 
