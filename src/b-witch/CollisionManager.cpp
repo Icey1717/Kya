@@ -1649,6 +1649,14 @@ void gClusterCallback_Collision(CActor* pActor, void* pInParams)
 
 	ClusterCallbackParams* pParams = (ClusterCallbackParams*)pInParams;
 
+	if ((pActor == CActorHero::_gThis) && (pActor != (CActor*)0x0)) {
+		// PS2 candidate filters: gClusterCallback_Collision, 0x0019d810.
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "Hero collision filter source: {} source flags: 0x{:x} hero flags: 0x{:x} excluded actor: {} self: {}",
+			pParams->pActor->name, pParams->pActor->pCollisionData->flags_0x0,
+			pActor->pCollisionData != (CCollision*)0x0 ? pActor->pCollisionData->flags_0x0 : 0,
+			pParams->pActor->pCollisionData->actorFieldA == pActor, pParams->pActor == pActor);
+	}
+
 	if ((((pActor != pParams->pActor) && (pCollisionData = pActor->pCollisionData, pCollisionData != (CCollision*)0x0)) &&
 		(overlapColFlags = pCollisionData->flags_0x0, (overlapColFlags & 0x1000) != 0)) &&
 		(pCollisionData = pParams->pActor->pCollisionData, pCollisionData->actorFieldA != pActor)) {
@@ -1656,6 +1664,9 @@ void gClusterCallback_Collision(CActor* pActor, void* pInParams)
 		if (((overlapColFlags & actorColFlags & 0x800000) == 0) &&
 			((((overlapColFlags & 0x2000) == 0 || ((overlapColFlags & 0x8000) != 0)) || ((actorColFlags & 0x4000) == 0)))) {
 			pParams->pTable->Add(pActor);
+			if (pActor == CActorHero::_gThis) {
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "Hero collision filter accepted source: {}", pParams->pActor->name);
+			}
 		}
 	}
 	return;
@@ -1691,9 +1702,16 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 		(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&worldBoundingSphere, gClusterCallback_Collision, &clusterCallbackParams);
 	}
 	else {
-		if ((CActorHero::_gThis != (CActorHero*)0x0) &&
-			(lastResult = CActorHero::_gThis->SV_IsWorldBoundingSphereIntersectingSphere(&worldBoundingSphere), lastResult != 0)) {
-			gClusterCallback_Collision(pActorHero, &clusterCallbackParams);
+		if (pActorHero != (CActorHero*)0x0) {
+			// PS2 hero-only sphere gate: CheckCollisionsWithActors, 0x0019d690.
+			lastResult = pActorHero->SV_IsWorldBoundingSphereIntersectingSphere(&worldBoundingSphere);
+			COLLISION_LOG(LogLevel::VeryVerbose, "Hero collision sphere source: {} flags: 0x{:x} position: {} scale: {} local sphere: {} world sphere: {} hero position: {} hero sphere: {} intersects: {}",
+				pActor->name, this->flags_0x0, pActor->currentLocation.ToString(), pActor->scale.ToString(),
+				pActor->subObjA->boundingSphere.ToString(), worldBoundingSphere.ToString(),
+				pActorHero->currentLocation.ToString(), pActorHero->sphereCentre.ToString(), lastResult != 0);
+			if (lastResult != 0) {
+				gClusterCallback_Collision(pActorHero, &clusterCallbackParams);
+			}
 		}
 	}
 

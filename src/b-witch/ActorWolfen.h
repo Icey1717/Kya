@@ -891,6 +891,12 @@ public:
 class CBehaviourUnknown : public CBehaviour
 {
 public:
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
 };
 
 class CFightContext

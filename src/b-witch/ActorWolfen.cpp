@@ -16021,3 +16021,33 @@ void CBehaviourWolfenFighterSlave::SetInitialState(int newState)
 
 	return;
 }
+
+void CBehaviourUnknown::Init(CActor* pOwner)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourUnknown::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourUnknown::Begin(CActor * pOwner, int newState, int newAnimationType)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourUnknown::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourUnknown::InitState(int newState)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourUnknown::TermState(int oldState, int newState)
+{
+	IMPLEMENTATION_GUARD();
+}

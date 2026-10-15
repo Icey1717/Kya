@@ -3,7 +3,10 @@
 
 #include "Types.h"
 
-class CPath {
+class CPath
+{
+public:
+	virtual ~CPath();
 };
 
 class CPathNode

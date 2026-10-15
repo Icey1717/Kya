@@ -47,6 +47,16 @@ public:
 class CBehaviourCommanderBeatUp : public CBehaviourCommander
 {
 public:
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual bool CanReleaseSemaphore(int, CActorWolfen*);
+	virtual CActorFighter* GetFocus();
+	virtual bool UpdateTeamAnim();
 };
 
 class CBehaviourCommanderDefault : public CBehaviourCommander

@@ -981,7 +981,10 @@ bool CPatternPart::FUN_003a7190(int param_2)
 	undefined4 local_4;
 
 	fVar6 = this->field_0x0;
-	fVar6 = static_cast<float>((uint)(fVar6 < 0.25f) * 0x3e800000 | (int)fVar6 * (uint)(fVar6 >= 0.25f));
+	// PS2 0x003a71cc: max.s f20, f0, f1 (minimum trail collision width).
+	if (fVar6 < 0.25f) {
+		fVar6 = 0.25f;
+	}
 	iVar1 = (param_2 + 1) % this->nbPointPatterns;
 	if (this->nbPointPatterns == 0) {
 		trap(7);

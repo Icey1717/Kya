@@ -1762,3 +1762,55 @@ bool CBehaviourCommanderDefault::UpdateTeamAnim()
 
 	return true;
 }
+
+void CBehaviourCommanderBeatUp::Init(CActor* pOwner)
+{
+	this->pMagicalSwitch1C_0x10->Init();
+	this->pMagicalSwitch20_0x14->Init();
+
+	return;
+}
+
+void CBehaviourCommanderBeatUp::Term()
+{
+	return;
+}
+
+void CBehaviourCommanderBeatUp::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourCommanderBeatUp::Begin(CActor * pOwner, int newState, int newAnimationType)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourCommanderBeatUp::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+int CBehaviourCommanderBeatUp::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+    return 0;
+}
+
+bool CBehaviourCommanderBeatUp::CanReleaseSemaphore(int, CActorWolfen*)
+{
+	IMPLEMENTATION_GUARD();
+    return false;
+}
+
+CActorFighter* CBehaviourCommanderBeatUp::GetFocus()
+{
+	IMPLEMENTATION_GUARD();
+    return nullptr;
+}
+
+bool CBehaviourCommanderBeatUp::UpdateTeamAnim()
+{
+	IMPLEMENTATION_GUARD();
+    return false;
+}

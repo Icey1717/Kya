@@ -25,3 +25,8 @@ void CPathNode::Reset()
 
 	return;
 }
+
+CPath::~CPath()
+{
+	return;
+}

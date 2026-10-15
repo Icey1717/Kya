@@ -2654,10 +2654,10 @@ void CActorProjectile::FUN_00205e10(CBehaviourProjectileLavaBall* pBehaviour)
 
 		if (this->field_0x354.IsValid()) {
 			if (this->pAnimationController == (CAnimation*)0x0) {
-				this->field_0x354.SpatializeOnActor(0xe, 0, 0);
+				this->field_0x354.SpatializeOnActor(0xe, this, 0);
 			}
 			else {
-				this->field_0x354.SpatializeOnActor(0xe, 0, 0x686365d2);
+				this->field_0x354.SpatializeOnActor(0xe, this, 0x686365d2);
 			}
 
 			this->field_0x354.Start();

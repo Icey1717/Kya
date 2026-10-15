@@ -260,6 +260,53 @@ TEST(PatternHit, UnspecifiedForceUsesTheDefaultHeroKnockback)
 	EXPECT_TRUE(std::isfinite(edF32Vector4GetDistHard(&hero.dynamicExt.aImpulseVelocities[0])));
 }
 
+TEST(PatternHit, FractionalWidthsPreserveTrailDamageAndRejectOutsideReceivers)
+{
+	for (float configuredWidth : { 0.1f, 0.25f, 0.5f, 1.5f }) {
+		SCOPED_TRACE(configuredWidth);
+		CActor owner;
+		ProjectileHitReceiver receiver;
+		receiver.flags = 0;
+		receiver.pCollisionData = nullptr;
+		CPointPattern points[3]{};
+		for (int i = 0; i < 3; i++) {
+			points[i].field_0x0 = edF32VECTOR4{ 2.0f * i, 0.0f, 0.0f, 1.0f };
+			points[i].field_0x10 = gF32Vector4UnitY;
+			points[i].field_0x20 = 1.0f;
+			points[i].field_0x24 = 1;
+		}
+		CPatternPart pattern;
+		pattern.field_0x0 = configuredWidth;
+		pattern.field_0x8 = 2.0f;
+		pattern.field_0xc = 2.0f;
+		pattern.field_0x10 = 2.0f;
+		pattern.field_0x20 = 1.0f;
+		pattern.field_0x40 = &receiver;
+		pattern.field_0x48 = 1.0f;
+		pattern.field_0x4c = 0;
+		pattern.field_0x50 = 3;
+		pattern.field_0x5c = -1;
+		pattern.field_0x60 = points[0].field_0x0;
+		pattern.field_0x70 = 1.0f;
+		pattern.pOwner = &owner;
+		pattern.nbPointPatterns = 3;
+		pattern.aPointPatterns = points;
+
+		const float width = configuredWidth < 0.25f ? 0.25f : configuredWidth;
+		receiver.currentLocation = edF32VECTOR4{ 0.0f, 0.5f, width + 0.1f, 1.0f };
+		EXPECT_FALSE(pattern.FUN_003a7190(0));
+		receiver.currentLocation.z = width * 0.9f;
+		EXPECT_TRUE(pattern.FUN_003a7190(0));
+
+		const float previousDelta = GetTimer()->cutsceneDeltaTime;
+		GetTimer()->cutsceneDeltaTime = 0.02f;
+		EXPECT_TRUE(pattern.UpdatePatternPartLife());
+		GetTimer()->cutsceneDeltaTime = previousDelta;
+		EXPECT_EQ(receiver.lastMessage, MESSAGE_KICKED);
+		EXPECT_FLOAT_EQ(receiver.hit.damage, 2.0f);
+	}
+}
+
 TEST_F(ShootTest, ShotDelayStartsAfterBothCooldownsAndUsesAStrictBoundary)
 {
 	actor.field_0x3f8 = 0.375f;
