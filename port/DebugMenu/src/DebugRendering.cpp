@@ -29,6 +29,7 @@ namespace Debug {
 		static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 		static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
 		static Debug::Setting<bool> gShowCollisionRays = { "Show Collision Rays", false };
+		static Debug::Setting<bool> gRenderWhenMinimized = { "Render When Minimized", false };
 		static Debug::Setting<int> gRenderWidth = { "Render Resolution Width", Renderer::Native::kDefaultWidth };
 		static Debug::Setting<int> gRenderHeight = { "Render Resolution Height", Renderer::Native::kDefaultHeight };
 		static Debug::Setting<bool> gAutoApplyResolution = { "Auto Apply Resolution", false };
@@ -238,6 +239,10 @@ void Debug::Rendering::DrawContents()
 
 	// --- Pipeline ---
 	if (ImGui::CollapsingHeader("Pipeline")) {
+		if (gRenderWhenMinimized.DrawImguiControl()) {
+			Renderer::SetRenderWhenMinimized(gRenderWhenMinimized.get());
+		}
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Keep the game rendering to its framebuffer while minimized, without presenting the debug UI. Uses the last render resolution and continues game simulation.");
 		if (gAntiAliasing.DrawImguiControl()) {
 			Renderer::Native::SetAntiAliasingMode(static_cast<Renderer::Native::AntiAliasingMode>(gAntiAliasing.get()));
 		}
@@ -317,6 +322,7 @@ void Debug::Rendering::ShowMenu(bool* bOpen)
 
 void Debug::Rendering::Init()
 {
+	Renderer::SetRenderWhenMinimized(gRenderWhenMinimized.get());
 	ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;

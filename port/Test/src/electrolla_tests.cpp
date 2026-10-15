@@ -58,6 +58,20 @@ namespace
 	};
 }
 
+TEST(ElectrollaGlow, ScanningInterpolatesDownwardColorChannels)
+{
+	_rgba color;
+	color.LerpRGBA(0.5f, 0x3060a080, 0x80408080);
+	EXPECT_EQ(color.rgba, 0x58509080u);
+	color.LerpRGBA(1.0f, 0x3060a080, 0x80408080);
+	EXPECT_EQ(color.rgba, 0x80408080u);
+	// Returning to idle also decreases alpha and must preserve its faint glow.
+	color.LerpRGBA(0.5f, 0x80408080, 0x3060a080);
+	EXPECT_EQ(color.rgba, 0x58509080u);
+	color.LerpRGBA(1.0f, 0x80408080, 0x3060a080);
+	EXPECT_EQ(color.rgba, 0x3060a080u);
+}
+
 TEST_F(ElectrollaTest, HitsStartChargingAndDoNotRestartProtectedStates)
 {
 	actor.actorState = static_cast<EActorState>(ELECTROLLA_STATE_SCAN);

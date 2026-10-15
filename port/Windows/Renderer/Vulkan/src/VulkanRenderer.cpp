@@ -64,6 +64,7 @@ const std::vector<const char*> instanceExtensions = {
 
 namespace Renderer {
 	bool gHeadless = false;
+	static bool gRenderWhenMinimized = false;
 }
 
 void Renderer::CreateCommandBuffers(CommandBufferVector& commandBuffers, const char* name /*= nullptr*/) {
@@ -576,6 +577,11 @@ private:
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
+			// Keep the last usable swapchain while the native framebuffer renders offscreen.
+			if (Renderer::gRenderWhenMinimized || glfwWindowShouldClose(window)) {
+				framebufferResized = true;
+				return;
+			}
 			glfwGetFramebufferSize(window, &width, &height);
 			glfwWaitEvents();
 		}
@@ -923,9 +929,17 @@ public:
 	Renderer::RenderDelegate renderDelegate;
 	Multidelegate<> cleanupDelegate;
 	bool frameReady = false;
+	bool offscreenFrame = false;
+
+	bool isWindowMinimized() {
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+		return glfwGetWindowAttrib(window, GLFW_ICONIFIED) || width == 0 || height == 0;
+	}
 
 	void waitUntilReady() {
 		frameReady = false;
+		offscreenFrame = false;
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 		if (glfwWindowShouldClose(window)) {
@@ -933,6 +947,11 @@ public:
 		}
 
 		glfwPollEvents();
+		if (Renderer::gRenderWhenMinimized && isWindowMinimized()) {
+			// Offscreen frames have no presentation/VSync wait. Still process restore/close events.
+			glfwWaitEventsTimeout(1.0 / 60.0);
+		}
+		if (glfwWindowShouldClose(window)) return;
 
 		// Wait for the GPU to finish work on this frame
 		{
@@ -940,18 +959,34 @@ public:
 			CheckVk(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX), "vkWaitForFences");
 		}
 
-		VkResult result;
-		{
-			ZONE_SCOPED_NAME("vkAcquireNextImageKHR");
-			result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
-		}
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-			recreateSwapChain();
+		if (Renderer::gRenderWhenMinimized && isWindowMinimized()) {
+			offscreenFrame = true;
+			frameReady = true;
 			return;
 		}
-		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-			throw std::runtime_error("failed to acquire swap chain image!");
+
+		for (;;) {
+			VkResult result;
+			{
+				ZONE_SCOPED_NAME("vkAcquireNextImageKHR");
+				result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &presentImageIndex);
+			}
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				recreateSwapChain();
+				if (glfwWindowShouldClose(window)) return;
+				if (Renderer::gRenderWhenMinimized && isWindowMinimized()) {
+					offscreenFrame = true;
+					frameReady = true;
+					return;
+				}
+				// Retry on this frame after restoring, before the game queues more rendering work.
+				continue;
+			}
+			if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+				throw std::runtime_error("failed to acquire swap chain image!");
+			}
+			break;
 		}
 
 		frameReady = true;
@@ -970,11 +1005,19 @@ public:
 
 		{
 			ZONE_SCOPED_NAME("renderDelegate");
-			renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent, commandBufferList);
+			if (offscreenFrame) {
+				// Native rendering already targets its own image. The debug UI targets the window.
+				Renderer::Native::Render(VK_NULL_HANDLE, swapChainExtent, commandBufferList);
+			}
+			else {
+				renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent, commandBufferList);
+			}
 		}
 
 		// rotate the commandBufferList, hack so that we process the native render, then debug UI
-		std::rotate(commandBufferList.begin(), commandBufferList.begin() + 1, commandBufferList.end());
+		if (!offscreenFrame && !commandBufferList.empty()) {
+			std::rotate(commandBufferList.begin(), commandBufferList.begin() + 1, commandBufferList.end());
+		}
 
 		VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -984,14 +1027,14 @@ public:
 
 			VkSubmitInfo submitInfo{};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.waitSemaphoreCount = offscreenFrame ? 0 : 1;
 			submitInfo.pWaitSemaphores = waitSemaphores;
 			submitInfo.pWaitDstStageMask = waitStages;
 			submitInfo.commandBufferCount = commandBufferList.size();
 			submitInfo.pCommandBuffers = commandBufferList.data();
-			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.signalSemaphoreCount = offscreenFrame ? 0 : 1;
 			// Use the renderFinished semaphore for the current swapchain image
-			submitInfo.pSignalSemaphores = &renderFinishedSemaphores[presentImageIndex];
+			submitInfo.pSignalSemaphores = offscreenFrame ? nullptr : &renderFinishedSemaphores[presentImageIndex];
 
 			CheckVk(vkResetFences(device, 1, &inFlightFences[currentFrame]), "vkResetFences");
 
@@ -999,6 +1042,10 @@ public:
 		}
 
 		Renderer::Native::Shadow::ProcessPendingDump();
+		if (offscreenFrame) {
+			frameReady = false;
+			return;
+		}
 
 		{
 			ZONE_SCOPED_NAME("vkQueuePresentKHR");
@@ -1017,7 +1064,12 @@ public:
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
 				framebufferResized = false;
-				recreateSwapChain();
+				if (Renderer::gRenderWhenMinimized && isWindowMinimized()) {
+					framebufferResized = true;
+				}
+				else {
+					recreateSwapChain();
+				}
 			}
 			else if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to present swap chain image!");
@@ -1345,6 +1397,16 @@ namespace Renderer
 		if (!gHeadless) {
 			app.present();
 		}
+	}
+
+	void SetRenderWhenMinimized(bool enabled)
+	{
+		gRenderWhenMinimized = enabled;
+	}
+
+	bool IsRenderingOffscreen()
+	{
+		return app.offscreenFrame;
 	}
 
 	RenderDelegate& GetRenderDelegate()

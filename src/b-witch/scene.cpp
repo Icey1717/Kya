@@ -1161,17 +1161,18 @@ void CScene::LoadFunc_001b87b0()
 
 void _rgba::LerpRGBA(float alpha, uint src, uint dst)
 {
+	// PS2 0x001932f0: SUBU is followed by CVT.S.W, so channel deltas are signed.
 	byte bStack11;
 	byte bStack10;
 	byte bStack9;
 
-	this->r = (byte)(int)((float)(src & 0xff) + alpha * (float)((dst & 0xff) - (src & 0xff)));
+	this->r = (byte)(int)((float)(src & 0xff) + alpha * (float)((int)(dst & 0xff) - (int)(src & 0xff)));
 	bStack11 = (byte)(src >> 8);
-	this->g = (byte)(int)((float)(uint)bStack11 + alpha * (float)((dst >> 8 & 0xff) - (uint)bStack11));
+	this->g = (byte)(int)((float)(uint)bStack11 + alpha * (float)((int)(dst >> 8 & 0xff) - (int)bStack11));
 	bStack10 = (byte)(src >> 0x10);
-	this->b = (byte)(int)((float)(uint)bStack10 + alpha * (float)((dst >> 0x10 & 0xff) - (uint)bStack10));
+	this->b = (byte)(int)((float)(uint)bStack10 + alpha * (float)((int)(dst >> 0x10 & 0xff) - (int)bStack10));
 	bStack9 = (byte)(src >> 0x18);
-	this->a = (byte)(int)((float)(uint)bStack9 + alpha * (float)((dst >> 0x18) - (uint)bStack9));
+	this->a = (byte)(int)((float)(uint)bStack9 + alpha * (float)((int)(dst >> 0x18) - (int)bStack9));
 	return;
 }
 

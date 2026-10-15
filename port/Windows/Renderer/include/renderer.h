@@ -407,6 +407,10 @@ namespace Renderer
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();
 	void Present();
+	// Keep native framebuffer rendering while minimized, without acquiring/presenting window images.
+	void SetRenderWhenMinimized(bool enabled);
+	// Mode selected by the most recent WaitUntilReady().
+	bool IsRenderingOffscreen();
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
 	void Draw(PS2::DrawBufferBase& drawBuffer);
