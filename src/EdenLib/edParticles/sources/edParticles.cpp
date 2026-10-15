@@ -5,6 +5,7 @@
 #include "MathOps.h"
 #include "profile.h"
 #include "CameraViewManager.h"
+#include <cstring>
 
 bool FUN_0027dc70(_ed_particle_manager* pManager)
 {
@@ -55,18 +56,25 @@ static float FLOAT_00448590 = 1.0E-4f;
 static float FLOAT_00448594 = 14.999999f;
 static float gParticleSizeScale = 0.003921569f;
 
+static float ParticleRandom01FromBits(uint randomBits)
+{
+	// PS2 0x00279610/0x0027a370/0x0027b5bc: OR bits, store, then lwc1.
+	const uint value = (randomBits & 0x7fffff) | 0x3f800000;
+	float result;
+	std::memcpy(&result, &value, sizeof(result));
+	return result - 1.0f;
+}
+
 float GenRandom01(_ed_particle_generator_param* pParam)
 {
 	pParam->field_0x21c = pParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-	const uint value = (pParam->field_0x21c & 0x7fffff) | 0x3f800000;
-	return *reinterpret_cast<const float*>(&value) - 1.0f;
+	return ParticleRandom01FromBits(pParam->field_0x21c);
 }
 
 float GenRandomCentered01(_ed_particle_generator_param* pParam)
 {
 	pParam->field_0x21c = pParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-	const uint value = ((((uint64_t)pParam->field_0x21c) << 0x29) >> 0x29) | 0x3F800000;
-	return *reinterpret_cast<const float*>(&value) - 1.0f;
+	return ParticleRandom01FromBits(pParam->field_0x21c);
 }
 
 float RandFloat(void)
@@ -959,7 +967,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 					pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 					uVar6 = pGeneratorParam->field_0x21c & 3;
 					pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-	fVar16 = (float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) | 0x3f800000) - 1.0f;
+					fVar16 = ParticleRandom01FromBits(pGeneratorParam->field_0x21c);
 					fStack252 = edF32VECTOR4_0041ed10.y;
 					fStack244 = edF32VECTOR4_0041ed10.w;
 					local_100 = FLOAT_ARRAY_ARRAY_00431990[INT_ARRAY_ARRAY_004319b0[uVar6][0]][0];
@@ -1160,7 +1168,7 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 						pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 						iVar3 = iVar5 * 0x10;
 						iVar4 = iVar7 * 0x10;
-						fVar15 = (float)(pGeneratorParam->field_0x21c & 0x7fffff | 0x3f800000) - 1.0;
+						fVar15 = ParticleRandom01FromBits(pGeneratorParam->field_0x21c);
 						fVar11 = *(float*)(&DAT_004318b4 + iVar3);
 						fVar12 = *(float*)(&DAT_004318b8 + iVar3);
 						fVar9 = *(float*)(&DAT_004318bc + iVar3);
@@ -1573,9 +1581,7 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 							if (bVar1 == 2) {
 								IMPLEMENTATION_GUARD(
 									pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
-								fVar12 = logf(FLOAT_00448588 + FLOAT_00448584 *
-									((float)((uint)((ulong)((long)(int)pGeneratorParam->field_0x21c << 0x29) >> 0x29) |
-										0x3f800000) - 1.0));
+									fVar12 = logf(FLOAT_00448588 + FLOAT_00448584 * ParticleRandom01FromBits(pGeneratorParam->field_0x21c));
 								fVar12 = fVar18 + fVar15 * -fVar12;)
 							}
 							else {
@@ -1585,8 +1591,8 @@ void edPartGeneratorNewParticle(_ed_particle_group* pGroup, _ed_particle_generat
 									uVar6 = pGeneratorParam->field_0x21c;
 									pGeneratorParam->field_0x21c = pGeneratorParam->field_0x21c * 0x19660d + 0x3c6ef35f;
 									uVar3 = pGeneratorParam->field_0x21c;
-									fVar12 = logf(1.0 - ((float)((uint)((ulong)((long)(int)uVar6 << 0x29) >> 0x29) | 0x3f800000) - 1.0));
-									fVar14 = cosf(M_2_PI * ((float)((uint)((ulong)((long)(int)uVar3 << 0x29) >> 0x29) | 0x3f800000) - 1.0));
+									fVar12 = logf(1.0f - ParticleRandom01FromBits(uVar6));
+									fVar14 = cosf(M_2_PI * ParticleRandom01FromBits(uVar3));
 									fVar14 = FLOAT_00448580 * sqrtf(fVar12 * -2.0) * fVar14 + 0.5;
 									fVar12 = 1.0;
 									if (fVar14 < 0.0) {

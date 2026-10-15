@@ -4294,7 +4294,8 @@ void CBehaviourNativAkasa::ArenaUpdateDisplayBorderSize()
 						totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.08f;
 					}
 					GetComboButtonDisplaySize(this, pCurrentCombo, &local_10, &local_c);
-					fVar7 = (float)((int)fVar7 * (uint)(local_c < fVar7) | (int)local_c * (uint)(local_c >= fVar7));
+					// PS2 0x003ed380: max.s f20, f20, f0.
+					fVar7 = (local_c < fVar7) ? fVar7 : local_c;
 					totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.05f + local_10;
 				}
 			})

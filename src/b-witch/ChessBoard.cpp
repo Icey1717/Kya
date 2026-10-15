@@ -1176,7 +1176,8 @@ float CChessBoard::_PermutPawns(float param_1, CChessBoardPawnsRefTable* pTable,
 			fVar11 = CoordinateToFloat(this->nbRows);
 
 			fVar11 = fabs(fVar10 - fVar11 * (float)iVar6);
-			fVar13 = fVar13 + (float)((int)fVar9 * (uint)(fVar9 < fVar11) | (int)fVar11 * (uint)(fVar9 >= fVar11));
+			// PS2 0x00352c54: min.s f3, f2, f0.
+			fVar13 = fVar13 + ((fVar9 < fVar11) ? fVar9 : fVar11);
 			fVar13 = fVar13 * fVar13;
 		}
 

@@ -1097,11 +1097,12 @@ struct ed_Bound_Sphere
 	float radius;
 };
 
-const float INT32_LIMIT = 2147484000.0f; // ~INT32_MAX
+// PS2 0x00288adc: lui 0x4f00 produces exactly 2^31, not an approximation.
+const float INT32_LIMIT = 2147483648.0f;
 
 inline uint EncodeFloat(float value)
 {
-	// If value fits in 31 bits, just cast. Otherwise, encode overflow with high bit.
+	// Unsigned numeric conversion, split at 2^31 to match the PS2 sequence.
 	if (value < INT32_LIMIT) {
 		return static_cast<uint>(value);
 	}
@@ -1112,8 +1113,10 @@ inline uint EncodeFloat(float value)
 
 inline float DecodeFloat(uint32_t value) {
 	if ((int32_t)value < 0) {
-		// High bit set: decode overflowed value
-		return float((value & 0x7FFFFFFF)) + INT32_LIMIT;
+		// PS2 0x00288b3c-0x00288b50: preserve rounding when converting uint to float.
+		const uint32_t halfValue = (value >> 1) | (value & 1);
+		const float converted = static_cast<float>(halfValue);
+		return converted + converted;
 	}
 	else {
 		// Normal value

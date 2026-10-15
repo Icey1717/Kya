@@ -334,7 +334,8 @@ LAB_003a63a8:
 		fVar6 = 0.0f;
 	}
 
-	return static_cast<float>((int)fVar8 * (uint)(fVar8 < fVar6) | (int)fVar6 * (uint)(fVar8 >= fVar6));
+	// PS2 0x003a64d4: min.s f0, f5, f1.
+	return (fVar8 < fVar6) ? fVar8 : fVar6;
 }
 
 

@@ -1,0 +1,40 @@
+{
+  "reviewed": [
+    {
+      "path": "src/b-witch/ActorHero_Wind.cpp",
+      "expression": "(float)((uint)fVar28 >> 1 | (uint)fVar28 & 1)",
+      "reason": "PS2 unsigned integer click count to float conversion (cvt.s.w and doubling).",
+      "ps2_functions": ["0x00149a10"]
+    },
+    {
+      "path": "src/b-witch/ActorHero_Wind.cpp",
+      "expression": "(float)((uint)fVar6 >> 1 | (uint)fVar6 & 1)",
+      "reason": "PS2 unsigned integer click count to float conversion (cvt.s.w and doubling).",
+      "ps2_functions": ["0x0014b6d0"]
+    },
+    {
+      "path": "src/b-witch/ActorHero_Wind.cpp",
+      "expression": "(float)((uint)fVar7 >> 1 | (uint)fVar7 & 1)",
+      "reason": "PS2 unsigned integer click count to float conversion (cvt.s.w and doubling).",
+      "ps2_functions": ["0x0014b6d0"]
+    },
+    {
+      "path": "src/b-witch/ActorProjectile.cpp",
+      "expression": "static_cast<float>((int)fVar5 & 0xff)",
+      "reason": "PS2 explosion display quantizes to an integer, masks 0xff, then converts to float.",
+      "ps2_functions": ["0x002099a0"]
+    },
+    {
+      "path": "src/b-witch/ActorWolfen.cpp",
+      "expression": "(float)((int)fVar6 + (iVar3 >> 0xf))",
+      "reason": "Integer random count calculation; the port stores the result as a numeric float.",
+      "ps2_functions": ["0x001fb840"]
+    },
+    {
+      "path": "src/b-witch/InputManager.cpp",
+      "expression": "(float)((int)(fVar7 - 2.147484e+09f) | 0x80000000)",
+      "reason": "PS2 float-to-unsigned click count conversion with high-bit reconstruction.",
+      "ps2_functions": ["0x001b7350"]
+    }
+  ]
+}
