@@ -230,7 +230,7 @@ namespace Debug::Audio
 			if (visibleMusic == 0) {
 				ImGui::TextDisabled(showInactiveMusic ? "No registered music." : "No active music.");
 			}
-			if (visibleMusic > 0 && ImGui::BeginTable("##AudioMusic", 8, flags, GetTableSize(visibleMusic, 6))) {
+			if (visibleMusic > 0 && ImGui::BeginTable("##AudioMusic", 12, flags, GetTableSize(visibleMusic, 6))) {
 				ImGui::TableSetupScrollFreeze(1, 1);
 				ImGui::TableSetupColumn("Stream");
 				ImGui::TableSetupColumn("State");
@@ -240,6 +240,10 @@ namespace Debug::Audio
 				ImGui::TableSetupColumn("Stream gain");
 				ImGui::TableSetupColumn("Tempo");
 				ImGui::TableSetupColumn("Channel gains");
+				ImGui::TableSetupColumn("Scheduler owner");
+				ImGui::TableSetupColumn("Priority");
+				ImGui::TableSetupColumn("Flags / state");
+				ImGui::TableSetupColumn("Transition remaining");
 				ImGui::TableHeadersRow();
 				for (const auto& music : musicStreams) {
 					if (!showInactiveMusic && !music.playing) { continue; }
@@ -256,6 +260,33 @@ namespace Debug::Audio
 						if (channel != 0) { ImGui::SameLine(); }
 						ImGui::Text("%u%s", music.channelVolumes[channel], channel + 1 < music.channelVolumes.size() ? "," : "");
 					}
+					auto* audioManager = CScene::ptable.g_AudioManager_00451698;
+					const CMusicManager::s_music_cell* cell = nullptr;
+					int handle = -1;
+					if (audioManager && audioManager->field_0x38) {
+						for (int index = 0; index < 10; ++index) {
+							const auto& candidate = audioManager->field_0x38->aMusicCells[index];
+							if (candidate.pMusic && candidate.streamIndex == static_cast<int>(music.index)) {
+								cell = &candidate;
+								handle = index;
+								break;
+							}
+						}
+					}
+					ImGui::TableSetColumnIndex(8);
+					if (cell) {
+						const char* owner = handle == audioManager->field_0xf0 ? "Background" :
+							handle == audioManager->cellIndex_0x270 ? "Combat" :
+							handle == audioManager->field_0x298 ? "Secondary" : "Previous track";
+						ImGui::Text("%s (cell %d)", owner, handle);
+					}
+					else { ImGui::TextUnformatted("Unowned"); }
+					ImGui::TableSetColumnIndex(9);
+					if (cell) ImGui::Text("%.2f", cell->priority); else ImGui::TextUnformatted("-");
+					ImGui::TableSetColumnIndex(10);
+					if (cell) ImGui::Text("0x%02X / 0x%02X", cell->flags, cell->stateFlags); else ImGui::TextUnformatted("-");
+					ImGui::TableSetColumnIndex(11);
+					if (cell) ImGui::Text("%.2f s", cell->transitionRemaining); else ImGui::TextUnformatted("-");
 				}
 				ImGui::EndTable();
 			}

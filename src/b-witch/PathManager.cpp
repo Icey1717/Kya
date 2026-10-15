@@ -39,7 +39,7 @@ void CPathManager::Level_AddAll(ByteCode* pByteCode)
 	this->pathFollowCount = iVar1;
 	count = this->pathFollowCount;
 	if (count != 0) {
-		pAVar3 = new CPathFollow[count];
+		pAVar3 = NEW_ARRAY_POLYMORPHIC(CPathFollow, count);
 		this->aPathFollow = pAVar3;
 
 		for (int i = 0; i < this->pathFollowCount; i++) {
@@ -57,7 +57,7 @@ void CPathManager::Level_ClearAll()
 	CBasicPathFinder* pCVar1;
 
 	if (this->aPathFollow != (CPathFollow*)0x0) {
-		delete[] this->aPathFollow;
+		DELETE_ARRAY_POLYMORPHIC(CPathFollow, this->aPathFollow, this->pathFollowCount);
 	}
 
 	if ((this->pBasicPathFinder != (CBasicPathFinder*)0x0) && (this->pBasicPathFinder != (CBasicPathFinder*)0x0)) {

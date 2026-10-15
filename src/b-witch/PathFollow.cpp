@@ -17,6 +17,13 @@ CPathFollow::CPathFollow()
 	this->field_0x30 = 0;
 	this->field_0x34 = 0;
 	this->field_0x38 = 0;
+
+	return;
+}
+
+CPathFollow::~CPathFollow()
+{
+	return;
 }
 
 void CPathFollow::Create(ByteCode* pByteCode)

@@ -75,6 +75,7 @@ struct Service
 	std::unordered_map<unsigned, std::shared_ptr<MusicBank>> banks;
 	unsigned voices = 32;
 	MusicOutputFactory factory = nullptr;
+	bool loggingEnabled = false;
 	// Destroy the worker before any state it uses, including the mutex.
 	std::jthread worker;
 };
@@ -88,6 +89,19 @@ void Fail(Stream& stream, unsigned index)
 {
 	stream.Clear(); stream.completed = true;
 	Error("playback failed", index);
+}
+const char* CommandName(MusicCommandType type)
+{
+	switch (type) {
+	case MusicCommandType::Song: return "SetSong";
+	case MusicCommandType::Bank: return "SetBank";
+	case MusicCommandType::Restart: return "Restart";
+	case MusicCommandType::Resume: return "Resume";
+	case MusicCommandType::Pause: return "Pause";
+	case MusicCommandType::Mute: return "Mute";
+	case MusicCommandType::ChannelVolume: return "ChannelVolume";
+	}
+	return "Unknown";
 }
 bool Prepare(Stream& stream)
 {
@@ -121,6 +135,7 @@ void ServiceMusic()
 			++queued;
 		}
 		if (stream.playing && queued == 0 && stream.synth->Finished()) {
+			MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Info, "Music stream {} completed: song={} bank={}", index, stream.song, stream.bank);
 			stream.Clear(); stream.completed = true;
 		}
 	}
@@ -204,6 +219,18 @@ std::vector<unsigned> FlushMusicCommands(const std::vector<MusicControls>& contr
 	std::vector<unsigned> finished;
 	{
 		std::lock_guard lock(service.mutex);
+		const bool loggingEnabled = LogCategories::Audio().bEnabled;
+		if (loggingEnabled && !service.loggingEnabled) {
+			for (unsigned i = 0; i < service.streams.size(); ++i) {
+				const auto& stream = service.streams[i];
+				if (stream.song == UINT32_MAX) continue;
+				MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Info,
+					"Music stream {} snapshot: song={} bank={} playing={} prepared={} looping={} gain={} master={}",
+					i, stream.song, stream.bank, stream.playing, stream.synth != nullptr,
+					stream.controls.looping, stream.controls.streamVolume, stream.controls.volume);
+			}
+		}
+		service.loggingEnabled = loggingEnabled;
 		for (unsigned i = 0; i < service.streams.size() && i < controls.size(); ++i) {
 			const auto channels = service.streams[i].controls.channels;
 			service.streams[i].controls = controls[i];
@@ -238,6 +265,12 @@ std::vector<unsigned> FlushMusicCommands(const std::vector<MusicControls>& contr
 				stream.playing = true;
 				if (!stream.output->Play(true)) Fail(stream, command.stream);
 				break;
+			}
+			if (command.type != MusicCommandType::ChannelVolume) {
+				MY_LOG_NAMED_CATEGORY(Audio, LogLevel::Info,
+					"Music stream {} {} value={}: song={} bank={} playing={} prepared={} looping={} gain={}",
+					command.stream, CommandName(command.type), command.value, stream.song, stream.bank,
+					stream.playing, stream.synth != nullptr, stream.controls.looping, stream.controls.streamVolume);
 			}
 		}
 		service.commands.clear();

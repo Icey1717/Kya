@@ -9,6 +9,7 @@ class CPathFollow : public CPath
 {
 public:
 	CPathFollow();
+	~CPathFollow();
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual edF32VECTOR4* GetGoal();
