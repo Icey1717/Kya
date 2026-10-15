@@ -928,6 +928,7 @@ public:
 	uint32_t presentImageIndex = 0;
 	Renderer::RenderDelegate renderDelegate;
 	Multidelegate<> cleanupDelegate;
+	Multidelegate<> frameSubmittedDelegate;
 	bool frameReady = false;
 	bool offscreenFrame = false;
 
@@ -1042,6 +1043,7 @@ public:
 		}
 
 		Renderer::Native::Shadow::ProcessPendingDump();
+		frameSubmittedDelegate();
 		if (offscreenFrame) {
 			frameReady = false;
 			return;
@@ -1417,6 +1419,11 @@ namespace Renderer
 	Multidelegate<>& GetCleanupDelegate()
 	{
 		return app.cleanupDelegate;
+	}
+
+	Multidelegate<>& GetFrameSubmittedDelegate()
+	{
+		return app.frameSubmittedDelegate;
 	}
 
 	void SetHeadless(bool bValue) {

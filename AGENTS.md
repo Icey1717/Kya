@@ -16,6 +16,11 @@ This repository is an ongoing Windows-focused decompilation and PC port of *Kya:
 
 ## Capturing The Running App
 
+- Prefer the debug socket for game screenshots, including while minimized. In the **Debug Socket** debug menu, enable **Enable Debug Socket**; for minimized capture, also enable **Rendering > Pipeline > Render When Minimized**. These settings persist in `settings.json` in the game's working directory.
+- From the repository root, run `python tools/debug_socket/client.py status` to check the connection, frame number, render dimensions, and `offscreen` state.
+- Run `python tools/debug_socket/client.py screenshot` to save a full-resolution game PNG to `out/screenshots/latest.png`, then inspect it with `view_image`. Use `--output out/screenshots/<name>.png` to retain a named capture.
+- The default endpoint is `127.0.0.1:18438`. For multiple instances, set **Debug Socket Port** in each game's debug menu and pass `--port <port>` to the client. Requests require the game frame loop to run; a stopped debugger or blocking load can cause a timeout. See [debug socket commands and protocol](tools/debug_socket/README.md).
+- Socket screenshots exclude the debug UI. To inspect the debug UI, use desktop capture:
 - Run `& ./tools/capture-window.ps1` in PowerShell to capture the main Kya window, including the debug UI, to `out/screenshots/latest.png`, then inspect it with `view_image`.
 - Desktop access may require running the capture command outside the sandbox. Kya must be running and not minimized.
 - Use `-ProcessId <pid>` when multiple builds are running. Capture uses passive screen copying; the window must be fully visible. Avoid `-PrintWindow` for Vulkan because it can cause visible flashing. See `tools/capture-window.md`.

@@ -27,8 +27,8 @@ the existing render-buffer resolution and waits briefly for window events each
 frame instead of relying on presentation/VSync for pacing.
 
 This supports GPU screenshot readback through `Debug::SaveLoad::CaptureScreenshot()`;
-the desktop-copy script above still requires a visible window. No remote screenshot
-endpoint is provided by this setting.
+the desktop-copy script above still requires a visible window. For full-resolution
+PNG captures over localhost, enable the separate [debug socket](debug_socket/README.md).
 
 The standalone Vulkan regression test exercises minimize/restore cycles and checks
 fresh screenshot pixels while minimized:

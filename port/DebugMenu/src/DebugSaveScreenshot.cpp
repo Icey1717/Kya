@@ -13,6 +13,10 @@
 #include <memory>
 #include <stdexcept>
 
+#define STB_IMAGE_WRITE_STATIC
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../../Windows/Renderer/ext/glfw/deps/stb_image_write.h"
+
 namespace Debug::SaveLoad
 {
 	namespace
@@ -22,7 +26,7 @@ namespace Debug::SaveLoad
 		constexpr int maxHeight = 640;
 	}
 
-	std::vector<char> CaptureScreenshot()
+	static std::vector<char> CaptureScreenshotImpl(bool fullResolution)
 	{
 		if (Renderer::gHeadless || !GetDevice()) return {};
 		const auto extent = Renderer::Native::GetFrameBufferSize();
@@ -32,7 +36,8 @@ namespace Debug::SaveLoad
 		if (!source || !extent.width || !extent.height) return {};
 		if (!bgra && format != VK_FORMAT_R8G8B8A8_SRGB && format != VK_FORMAT_R8G8B8A8_UNORM)
 			throw std::runtime_error("Unsupported screenshot framebuffer format");
-		const int height = std::clamp(int(uint64_t(thumbnailWidth) * extent.height / extent.width), 1, maxHeight);
+		const int width = fullResolution ? int(extent.width) : thumbnailWidth;
+		const int height = fullResolution ? int(extent.height) : std::clamp(int(uint64_t(width) * extent.height / extent.width), 1, maxHeight);
 		const VkDeviceSize byteCount = VkDeviceSize(extent.width) * extent.height * 4;
 		VulkanBuffer readback(byteCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -51,13 +56,13 @@ namespace Debug::SaveLoad
 		BITMAPINFOHEADER info{};
 		file.bfType = 0x4d42;
 		file.bfOffBits = sizeof(file) + sizeof(info);
-		file.bfSize = file.bfOffBits + thumbnailWidth * height * 4;
+		file.bfSize = file.bfOffBits + width * height * 4;
 		info.biSize = sizeof(info);
-		info.biWidth = thumbnailWidth;
+		info.biWidth = width;
 		info.biHeight = -height; // top-down
 		info.biPlanes = 1;
 		info.biBitCount = 32;
-		info.biSizeImage = thumbnailWidth * height * 4;
+		info.biSizeImage = width * height * 4;
 		std::vector<char> bytes(file.bfSize);
 		std::memcpy(bytes.data(), &file, sizeof(file));
 		std::memcpy(bytes.data() + sizeof(file), &info, sizeof(info));
@@ -66,14 +71,39 @@ namespace Debug::SaveLoad
 			throw std::runtime_error("Could not map screenshot pixels");
 		const auto* pixels = static_cast<const unsigned char*>(mapped);
 		for (int y = 0; y < height; ++y) {
-			for (int x = 0; x < thumbnailWidth; ++x) {
-				const auto* src = pixels + (size_t(y * extent.height / height) * extent.width + x * extent.width / thumbnailWidth) * 4;
-				auto* dst = bytes.data() + file.bfOffBits + (y * thumbnailWidth + x) * 4;
+			for (int x = 0; x < width; ++x) {
+				const auto* src = pixels + (size_t(y * extent.height / height) * extent.width + x * extent.width / width) * 4;
+				auto* dst = bytes.data() + file.bfOffBits + (y * width + x) * 4;
 				dst[0] = src[bgra ? 0 : 2]; dst[1] = src[1]; dst[2] = src[bgra ? 2 : 0]; dst[3] = char(255);
 			}
 		}
 		vkUnmapMemory(GetDevice(), readback.Memory());
 		return bytes;
+	}
+
+	std::vector<char> CaptureScreenshot()
+	{
+		return CaptureScreenshotImpl(false);
+	}
+
+	std::vector<char> CaptureScreenshotPng()
+	{
+		auto bitmap = CaptureScreenshotImpl(true);
+		if (bitmap.empty()) return {};
+		BITMAPINFOHEADER info;
+		std::memcpy(&info, bitmap.data() + sizeof(BITMAPFILEHEADER), sizeof(info));
+		auto* pixels = bitmap.data() + sizeof(BITMAPFILEHEADER) + sizeof(info);
+		const int height = -info.biHeight;
+		for (size_t i = 0; i < size_t(info.biWidth) * height; ++i) std::swap(pixels[i * 4], pixels[i * 4 + 2]);
+		std::vector<char> png;
+		auto write = [](void* context, void* data, int size) {
+			auto& bytes = *static_cast<std::vector<char>*>(context);
+			const auto* begin = static_cast<const char*>(data);
+			bytes.insert(bytes.end(), begin, begin + size);
+		};
+		if (!stbi_write_png_to_func(write, &png, info.biWidth, height, 4, pixels, info.biWidth * 4))
+			throw std::runtime_error("Could not encode screenshot PNG");
+		return png;
 	}
 
 	void ClearScreenshots()

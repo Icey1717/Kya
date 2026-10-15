@@ -12,6 +12,8 @@ namespace Renderer
 
 	RenderDelegate& GetRenderDelegate();
 	Multidelegate<>& GetCleanupDelegate();
+	// Called on the main thread after submitting the game framebuffer, including minimized frames.
+	Multidelegate<>& GetFrameSubmittedDelegate();
 
 	bool& GetForceAnimMatrixIdentity();
 	bool& GetUseComplexBlending();

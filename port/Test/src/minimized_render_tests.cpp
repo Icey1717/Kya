@@ -1,3 +1,4 @@
+#include <winsock2.h>
 #include <gtest/gtest.h>
 
 #include "renderer.h"
@@ -5,9 +6,16 @@
 #include "Native/NativeRenderer.h"
 #include "displaylist.h"
 #include "../../DebugMenu/src/DebugSaveScreenshot.h"
+#include "../../DebugMenu/src/DebugSocket.h"
+#include <nlohmann/json.hpp>
 #include <GLFW/glfw3.h>
 #include <array>
 #include <chrono>
+
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#include "../../ext/tracy/test/stb_image.h"
 
 namespace
 {
@@ -80,6 +88,8 @@ TEST(MinimizedRendering, DISABLED_FreshScreenshotsAndRestoreAcrossFrameFenceReus
 	Renderer::GetRenderDelegate() += RenderWindow;
 	Renderer::Native::Setup();
 	Renderer::SetRenderWhenMinimized(true);
+	ASSERT_TRUE(::Debug::Socket::Start(0));
+	Renderer::GetFrameSubmittedDelegate() += ::Debug::Socket::Poll;
 	windowFrames = 0;
 
 	for (int cycle = 0; cycle < 2; ++cycle) {
@@ -89,6 +99,17 @@ TEST(MinimizedRendering, DISABLED_FreshScreenshotsAndRestoreAcrossFrameFenceReus
 			SCOPED_TRACE(frame);
 			Renderer::WaitUntilReady();
 			ASSERT_TRUE(Renderer::IsRenderingOffscreen());
+			const auto client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			ASSERT_NE(client, INVALID_SOCKET);
+			sockaddr_in address{};
+			address.sin_family = AF_INET;
+			address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			address.sin_port = htons(::Debug::Socket::GetPort());
+			ASSERT_EQ(connect(client, reinterpret_cast<sockaddr*>(&address), sizeof(address)), 0);
+			const std::string request = "{\"command\":\"screenshot\",\"id\":123}\n";
+			ASSERT_EQ(send(client, request.data(), int(request.size()), 0), request.size());
+			u_long nonblocking = 1;
+			ASSERT_EQ(ioctlsocket(client, FIONBIO, &nonblocking), 0);
 			const uint8_t shade = frame % 2 ? 192 : 64;
 			Renderer::SetTest(GIFReg::GSTest{});
 			Renderer::SetAlpha(0, 1, 2, 1, 128);
@@ -102,6 +123,32 @@ TEST(MinimizedRendering, DISABLED_FreshScreenshotsAndRestoreAcrossFrameFenceReus
 			Renderer::DisplayList::End2D();
 			Renderer::Native::OnVideoFlip();
 			Renderer::Present();
+			std::string wire;
+			for (int attempt = 0; attempt < 100; ++attempt) {
+				char buffer[65536];
+				const int count = recv(client, buffer, sizeof(buffer), 0);
+				if (count > 0) wire.append(buffer, count);
+				if (count == 0) break;
+				::Debug::Socket::Poll();
+				Sleep(1);
+			}
+			closesocket(client);
+			const auto newline = wire.find('\n');
+			ASSERT_NE(newline, std::string::npos);
+			const auto response = nlohmann::json::parse(wire.substr(0, newline));
+			ASSERT_EQ(response["ok"], true) << response.dump();
+			EXPECT_EQ(response["offscreen"], true);
+			EXPECT_EQ(response["id"], 123);
+			EXPECT_EQ(response["bytes"], wire.size() - newline - 1);
+			int width, height, components;
+			auto* pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(wire.data() + newline + 1),
+				int(wire.size() - newline - 1), &width, &height, &components, 4);
+			ASSERT_NE(pixels, nullptr);
+			EXPECT_EQ(width, response["width"]);
+			EXPECT_EQ(height, response["height"]);
+			EXPECT_EQ(width, Renderer::Native::GetFrameBufferSize().width);
+			for (int channel = 0; channel < 3; ++channel) EXPECT_NEAR(pixels[channel], shade, 1);
+			stbi_image_free(pixels);
 			const auto screenshot = ::Debug::SaveLoad::CaptureScreenshot();
 			ASSERT_GT(screenshot.size(), 58u);
 			// CaptureScreenshot returns a top-down BMP with a 54-byte header.
@@ -121,5 +168,6 @@ TEST(MinimizedRendering, DISABLED_FreshScreenshotsAndRestoreAcrossFrameFenceReus
 	}
 	ASSERT_EQ(vkDeviceWaitIdle(GetDevice()), VK_SUCCESS);
 	vkDestroyRenderPass(GetDevice(), windowPass, GetAllocator());
+	::Debug::Socket::Stop();
 	Renderer::Native::Cleanup();
 }

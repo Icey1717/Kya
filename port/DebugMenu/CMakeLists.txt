@@ -86,6 +86,8 @@ set(SOURCES
 	"src/Actor/DebugActorWolfen.h"
 	"src/Actor/DebugActorWolfen.cpp"
 	"src/DebugSetting.cpp"
+	"src/DebugSocket.cpp"
+	"src/DebugSocket.h"
 	"src/DebugSetting.h"
 	"src/Actor/DebugActor.h"
 	"src/Actor/DebugActor.cpp"
@@ -139,6 +141,7 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("ext/json")
 
 target_link_libraries(${TargetName} PRIVATE Renderer Port Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json glm)
+target_link_libraries(${TargetName} PRIVATE ws2_32)
 
 if(ENABLE_GOOGLE_FONT_LOADER)
 	target_sources(${TargetName} PRIVATE "src/GoogleFontLoader.h" "src/GoogleFontLoader.cpp")
