@@ -357,31 +357,25 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int subsect
 
 void CLevelScheduler::Level_LoadObjectives(ByteCode* pMemoryStream)
 {
+	ObjectiveStreamEntry* pEntry;
 	int* piVar1;
-	int iVar2;
 	uint uVar3;
 
-	piVar1 = (int*)pMemoryStream->currentSeekPos;
-	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
-	this->pObjectiveStreamBegin = piVar1;
+	this->pObjectiveStreamBegin = reinterpret_cast<ObjectiveStream*>(pMemoryStream->currentSeekPos);
+	pMemoryStream->currentSeekPos = (char*)this->pObjectiveStreamBegin + sizeof(ObjectiveStream);
 	uVar3 = 0;
-	if (*this->pObjectiveStreamBegin != 0) {
+	if (this->pObjectiveStreamBegin->nbEntries != 0) {
 		do {
-			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + 0x1c;
-			piVar1 = (int*)pMemoryStream->currentSeekPos;
-			pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
-			iVar2 = *piVar1;
-			if (iVar2 != 0) {
-				pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + iVar2 * 0x10;
-			}
+			pEntry = reinterpret_cast<ObjectiveStreamEntry*>(pMemoryStream->currentSeekPos);
+			pMemoryStream->currentSeekPos = (char*)pEntry->aTargets + pEntry->nbTargets * sizeof(ObjectiveStreamTarget);
 			uVar3 = uVar3 + 1;
-		} while (uVar3 < (uint)*this->pObjectiveStreamBegin);
+		} while (uVar3 < (uint)this->pObjectiveStreamBegin->nbEntries);
 	}
 
 	piVar1 = (int*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar1 * 8;
+		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar1 * sizeof(uint) * 2;
 	}
 	this->pObjectiveStreamEnd = piVar1;
 
@@ -2887,172 +2881,172 @@ void CLevelScheduler::Level_Install()
 	return;
 }
 
-
+// PS2: CLevelScheduler::Level_Init (0x002dd460).
 void CLevelScheduler::Level_Init()
 {
-	uint** ppuVar1;
+	ed_zone_3d* pZone;
 	float fVar2;
 	float fVar3;
 	float fVar4;
-	//sceVu0FMATRIX* m2;
+	edF32MATRIX4* m2;
 	ulong uVar5;
 	int iVar6;
 	int* piVar7;
+	ObjectiveStream* pStream;
+	ObjectiveStreamEntry* pEntry;
+	ObjectiveStreamTarget* pTarget;
 	ObjectiveEntry* pLVar8;
 	uint uVar9;
 	int* piVar10;
-	float afStack144[16];
-	undefined auStack80[48];
-	float local_20;
-	float local_1c;
-	float local_18;
-	float local_14;
-	uint uStack4;
+	edF32MATRIX4 eStack144;
+	edF32MATRIX4 eStack80;
+	e_ed_event_prim3d_type eStack4;
 	int episodeNumber;
 
-	//piVar7 = (int*)this->field_0x5b58;
-	//if (piVar7 != (int*)0x0) {
-	//	piVar10 = piVar7 + 1;
-	//	uVar9 = 0;
-	//	if (*piVar7 != 0) {
-	//		do {
-	//			episodeNumber = 0;
-	//			if (0 < piVar10[7]) {
-	//				piVar7 = piVar10 + 7;
-	//				do {
-	//					FUN_00119a40(piVar7 + 3);
-	//					FUN_00119940(piVar7 + 4);
-	//					episodeNumber = episodeNumber + 1;
-	//					piVar7 = piVar7 + 4;
-	//				} while (episodeNumber < piVar10[7]);
-	//			}
-	//			if (*piVar10 != 0x62) {
-	//				episodeNumber = 0;
-	//				pLVar8 = LevelScheduleManager::gThis->field_0x4220;
-	//				if (0 < LevelScheduleManager::gThis->objCount_0x4218) {
-	//					do {
-	//						if (pLVar8->field_0x0 == *piVar10) goto LAB_002dd540;
-	//						episodeNumber = episodeNumber + 1;
-	//						pLVar8 = pLVar8 + 1;
-	//					} while (episodeNumber < LevelScheduleManager::gThis->objCount_0x4218);
-	//				}
-	//				pLVar8 = (LoadLoopObject_50*)0x0;
-	//			LAB_002dd540:
-	//				if (pLVar8 != (LoadLoopObject_50*)0x0) {
-	//					pLVar8->field_0x24 = piVar10[5];
-	//					pLVar8->field_0x28 = piVar10[6];
-	//					if ((int)pLVar8->field_0x2c < piVar10[7]) {
-	//						piVar7 = piVar10 + pLVar8->field_0x2c * 4;
-	//						if (piVar7 + 8 == (int*)0x0) {
-	//							pLVar8->field_0x40 = 0;
-	//							fVar4 = gF32Vertex4Zero.w;
-	//							fVar3 = gF32Vertex4Zero.z;
-	//							fVar2 = gF32Vertex4Zero.y;
-	//							pLVar8->field_0x30 = gF32Vertex4Zero.x;
-	//							pLVar8->field_0x34 = fVar2;
-	//							pLVar8->field_0x38 = fVar3;
-	//							pLVar8->field_0x3c = fVar4;
-	//						}
-	//						else {
-	//							uVar5 = FUN_00189a30(piVar7[8], piVar7[9]);
-	//							pLVar8->field_0x40 = uVar5;
-	//							fVar4 = gF32Vertex4Zero.w;
-	//							fVar3 = gF32Vertex4Zero.z;
-	//							fVar2 = gF32Vertex4Zero.y;
-	//							ppuVar1 = (uint**)piVar7[0xb];
-	//							if (ppuVar1 == (uint**)0x0) {
-	//								pLVar8->field_0x30 = gF32Vertex4Zero.x;
-	//								pLVar8->field_0x34 = fVar2;
-	//								pLVar8->field_0x38 = fVar3;
-	//								pLVar8->field_0x3c = fVar4;
-	//							}
-	//							else {
-	//								m2 = (sceVu0FMATRIX*)
-	//									FUN_002596a0((Scene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8,
-	//										ppuVar1, 0, &uStack4);
-	//								if ((sceVu0FMATRIX*)ppuVar1[8] != (sceVu0FMATRIX*)0x0) {
-	//									sceVu0MulMatrix((sceVu0FMATRIX*)afStack144, (sceVu0FMATRIX*)ppuVar1[8], m2);
-	//									FUN_00264910((int)auStack80, (int)afStack144);
-	//									m2 = (sceVu0FMATRIX*)afStack144;
-	//								}
-	//								FUN_00264910((int)auStack80, (int)m2);
-	//								pLVar8->field_0x30 = local_20;
-	//								pLVar8->field_0x34 = local_1c;
-	//								pLVar8->field_0x38 = local_18;
-	//								pLVar8->field_0x3c = local_14;
-	//								pLVar8->field_0x3c = 1.0;
-	//							}
-	//						}
-	//					}
-	//					else {
-	//						pLVar8->field_0x40 = 0;
-	//						fVar4 = gF32Vertex4Zero.w;
-	//						fVar3 = gF32Vertex4Zero.z;
-	//						fVar2 = gF32Vertex4Zero.y;
-	//						pLVar8->field_0x30 = gF32Vertex4Zero.x;
-	//						pLVar8->field_0x34 = fVar2;
-	//						pLVar8->field_0x38 = fVar3;
-	//						pLVar8->field_0x3c = fVar4;
-	//					}
-	//				}
-	//			}
-	//			uVar9 = uVar9 + 1;
-	//			piVar10 = piVar10 + piVar10[7] * 4 + 8;
-	//		} while (uVar9 < *(uint*)this->field_0x5b58);
-	//	}
-	//}
-	//piVar7 = (int*)this->field_0x5b5c;
-	//episodeNumber = 0;
-	//if (piVar7 != (int*)0x0) {
-	//	episodeNumber = *piVar7;
-	//}
-	//if (episodeNumber != 0) {
-	//	piVar10 = piVar7 + 1;
-	//	for (episodeNumber = *piVar7; episodeNumber != 0; episodeNumber = episodeNumber + -1) {
-	//		FUN_00119940(piVar10 + 1);
-	//		piVar10 = piVar10 + 2;
-	//	}
-	//}
-	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, _gGameNfo.count <= g_Count_00425404)) {
-	//	episodeNumber = _gGameNfo.count + -1;
-	//}
-	//episodeNumber = _gGameNfo.monster - g_EpisodeDataArray_0048eb0[episodeNumber].monster;
-	//if (episodeNumber < 1) {
-	//	if (episodeNumber < 0) {
-	//		iVar6 = _gGameNfo.field_0x1c;
-	//		if (-episodeNumber <= _gGameNfo.field_0x1c) {
-	//			iVar6 = -episodeNumber;
-	//		}
-	//		if (0 < _gGameNfo.field_0x1c) {
-	//			_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - iVar6;
-	//			_gGameNfo.monster = _gGameNfo.monster + iVar6;
-	//		}
-	//	}
-	//}
-	//else {
-	//	_gGameNfo.monster = _gGameNfo.monster - episodeNumber;
-	//	_gGameNfo.field_0x1c = _gGameNfo.field_0x1c + episodeNumber;
-	//}
-	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, _gGameNfo.count <= g_Count_00425404)) {
-	//	episodeNumber = _gGameNfo.count + -1;
-	//}
-	//episodeNumber = _gGameNfo.bet - g_EpisodeDataArray_0048eb0[episodeNumber].bet;
-	//if (episodeNumber < 1) {
-	//	if (episodeNumber < 0) {
-	//		iVar6 = _gGameNfo.field_0x1c;
-	//		if (-episodeNumber <= _gGameNfo.field_0x1c) {
-	//			iVar6 = -episodeNumber;
-	//		}
-	//		if (0 < _gGameNfo.field_0x1c) {
-	//			_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - iVar6;
-	//			_gGameNfo.bet = _gGameNfo.bet + iVar6;
-	//		}
-	//	}
-	//}
-	//else {
-	//	_gGameNfo.bet = _gGameNfo.bet - episodeNumber;
-	//	_gGameNfo.field_0x1c = _gGameNfo.field_0x1c + episodeNumber;
-	//}
+	pStream = this->pObjectiveStreamBegin;
+	if (pStream != (ObjectiveStream*)0x0) {
+		pEntry = pStream->aEntries;
+		uVar9 = 0;
+		if (pStream->nbEntries != 0) {
+			do {
+				episodeNumber = 0;
+				if (0 < pEntry->nbTargets) {
+					pTarget = pEntry->aTargets;
+					do {
+						pTarget->actorRef.Init();
+						pTarget->zoneRef.Init();
+						episodeNumber = episodeNumber + 1;
+						pTarget = pTarget + 1;
+					} while (episodeNumber < pEntry->nbTargets);
+				}
+				if (pEntry->scenVarId != 0x62) {
+					episodeNumber = 0;
+					pLVar8 = CLevelScheduler::gThis->field_0x4220;
+					if (0 < CLevelScheduler::gThis->objCount_0x4218) {
+						do {
+							if (pLVar8->field_0x0 == pEntry->scenVarId) goto LAB_002dd540;
+							episodeNumber = episodeNumber + 1;
+							pLVar8 = pLVar8 + 1;
+						} while (episodeNumber < CLevelScheduler::gThis->objCount_0x4218);
+					}
+					pLVar8 = (ObjectiveEntry*)0x0;
+				LAB_002dd540:
+					if (pLVar8 != (ObjectiveEntry*)0x0) {
+						pLVar8->field_0x24 = pEntry->field_0x14;
+						pLVar8->field_0x28 = pEntry->field_0x18;
+						if ((int)pLVar8->field_0x2c < pEntry->nbTargets) {
+							pTarget = pEntry->aTargets + pLVar8->field_0x2c;
+							if (pTarget == (ObjectiveStreamTarget*)0x0) {
+								pLVar8->field_0x40 = 0;
+								fVar4 = gF32Vertex4Zero.w;
+								fVar3 = gF32Vertex4Zero.z;
+								fVar2 = gF32Vertex4Zero.y;
+								(pLVar8->field_0x30).x = gF32Vertex4Zero.x;
+								(pLVar8->field_0x30).y = fVar2;
+								(pLVar8->field_0x30).z = fVar3;
+								(pLVar8->field_0x30).w = fVar4;
+							}
+							else {
+								uVar5 = ByteCode::BuildU64(pTarget->messageKeyA, pTarget->messageKeyB);
+								pLVar8->field_0x40 = uVar5;
+								fVar4 = gF32Vertex4Zero.w;
+								fVar3 = gF32Vertex4Zero.z;
+								fVar2 = gF32Vertex4Zero.y;
+								pZone = pTarget->zoneRef.Get();
+								if (pZone == (ed_zone_3d*)0x0) {
+									(pLVar8->field_0x30).x = gF32Vertex4Zero.x;
+									(pLVar8->field_0x30).y = fVar2;
+									(pLVar8->field_0x30).z = fVar3;
+									(pLVar8->field_0x30).w = fVar4;
+								}
+								else {
+									m2 = edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
+										pZone, 0, &eStack4);
+									if (pZone->pMatrix != 0) {
+										edF32Matrix4MulF32Matrix4Hard(&eStack144, LOAD_POINTER_CAST(edF32MATRIX4*, pZone->pMatrix), m2);
+										edF32Matrix4GetInverseGaussSoft(&eStack80, &eStack144);
+										m2 = &eStack144;
+									}
+									edF32Matrix4GetInverseGaussSoft(&eStack80, m2);
+									(pLVar8->field_0x30).x = eStack80.da;
+									(pLVar8->field_0x30).y = eStack80.db;
+									(pLVar8->field_0x30).z = eStack80.dc;
+									(pLVar8->field_0x30).w = eStack80.dd;
+									(pLVar8->field_0x30).w = 1.0;
+								}
+							}
+						}
+						else {
+							pLVar8->field_0x40 = 0;
+							fVar4 = gF32Vertex4Zero.w;
+							fVar3 = gF32Vertex4Zero.z;
+							fVar2 = gF32Vertex4Zero.y;
+							(pLVar8->field_0x30).x = gF32Vertex4Zero.x;
+							(pLVar8->field_0x30).y = fVar2;
+							(pLVar8->field_0x30).z = fVar3;
+							(pLVar8->field_0x30).w = fVar4;
+						}
+					}
+				}
+				uVar9 = uVar9 + 1;
+				pEntry = reinterpret_cast<ObjectiveStreamEntry*>(pEntry->aTargets + pEntry->nbTargets);
+			} while (uVar9 < (uint)this->pObjectiveStreamBegin->nbEntries);
+		}
+	}
+	piVar7 = this->pObjectiveStreamEnd;
+	episodeNumber = 0;
+	if (piVar7 != (int*)0x0) {
+		episodeNumber = *piVar7;
+	}
+	if (episodeNumber != 0) {
+		piVar10 = piVar7 + 1;
+		for (episodeNumber = *piVar7; episodeNumber != 0; episodeNumber = episodeNumber + -1) {
+			reinterpret_cast<S_STREAM_REF<ed_zone_3d>*>(piVar10 + 1)->Init();
+			piVar10 = piVar10 + 2;
+		}
+	}
+	if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+		(episodeNumber = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
+		episodeNumber = _gGameNfo.nbEpisodes + -1;
+	}
+	episodeNumber = _gGameNfo.monster - g_EpisodeDataArray_0048eb0[episodeNumber].monster;
+	if (episodeNumber < 1) {
+		if (episodeNumber < 0) {
+			iVar6 = _gGameNfo.bank;
+			if (-episodeNumber <= _gGameNfo.bank) {
+				iVar6 = -episodeNumber;
+			}
+			if (0 < _gGameNfo.bank) {
+				_gGameNfo.bank = _gGameNfo.bank - iVar6;
+				_gGameNfo.monster = _gGameNfo.monster + iVar6;
+			}
+		}
+	}
+	else {
+		_gGameNfo.monster = _gGameNfo.monster - episodeNumber;
+		_gGameNfo.bank = _gGameNfo.bank + episodeNumber;
+	}
+	if ((_gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue < 0) ||
+		(episodeNumber = _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[SCN_GAME_CURRENT_EPISODE].currentValue)) {
+		episodeNumber = _gGameNfo.nbEpisodes + -1;
+	}
+	episodeNumber = _gGameNfo.bet - g_EpisodeDataArray_0048eb0[episodeNumber].bet;
+	if (episodeNumber < 1) {
+		if (episodeNumber < 0) {
+			iVar6 = _gGameNfo.bank;
+			if (-episodeNumber <= _gGameNfo.bank) {
+				iVar6 = -episodeNumber;
+			}
+			if (0 < _gGameNfo.bank) {
+				_gGameNfo.bank = _gGameNfo.bank - iVar6;
+				_gGameNfo.bet = _gGameNfo.bet + iVar6;
+			}
+		}
+	}
+	else {
+		_gGameNfo.bet = _gGameNfo.bet - episodeNumber;
+		_gGameNfo.bank = _gGameNfo.bank + episodeNumber;
+	}
 
 	if (this->currentLevelID == 0xe) {
 		GameFlags = GameFlags | 0x40;
@@ -3097,7 +3091,7 @@ void CLevelScheduler::Level_ClearAll()
 	this->currentLevelID = 0x10;
 	this->autoSaveTriggerTime = 0.0f;
 	this->curAutoSaveTime = 0.0f;
-	this->pObjectiveStreamBegin = (int*)0x0;
+	this->pObjectiveStreamBegin = (ObjectiveStream*)0x0;
 	this->pObjectiveStreamEnd = (int*)0x0;
 
 	if (this->bShouldLoad != 0) {
@@ -3172,6 +3166,144 @@ void EnqueueLevelManageTask(std::function<void()> task)
 #endif
 
 
+// PS2: FUN_002d8970 (0x002d8970).
+static void ManageObjective(ObjectiveStreamEntry* pEntry)
+{
+	int scenVarId;
+	ed_zone_3d* peVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	uint uVar6;
+	edF32MATRIX4* peVar7;
+	ulong uVar8;
+	CActor* pActor;
+	ObjectiveStreamTarget* pTarget;
+	int iVar11;
+	ObjectiveEntry* pOVar12;
+	edF32MATRIX4 eStack400;
+	edF32MATRIX4 aeStack336[3];
+	edF32MATRIX4 eStack144;
+	edF32MATRIX4 eStack80;
+	e_ed_event_prim3d_type aeStack12[2];
+	e_ed_event_prim3d_type eStack4;
+
+	scenVarId = pEntry->scenVarId;
+	if ((scenVarId != 0x62) && (_gScenVarInfo[scenVarId].currentValue == 1)) {
+		pOVar12 = CLevelScheduler::gThis->field_0x4220;
+		iVar11 = 0;
+		if (0 < CLevelScheduler::gThis->objCount_0x4218) {
+			do {
+				if (pOVar12->field_0x0 == scenVarId) goto LAB_002d89f8;
+				iVar11 = iVar11 + 1;
+				pOVar12 = pOVar12 + 1;
+			} while (iVar11 < CLevelScheduler::gThis->objCount_0x4218);
+		}
+		pOVar12 = (ObjectiveEntry*)0x0;
+LAB_002d89f8:
+		if ((pOVar12 != (ObjectiveEntry*)0x0) && ((int)pOVar12->field_0x2c < pEntry->nbTargets)) {
+			peVar2 = pEntry->aTargets[pOVar12->field_0x2c].zoneRef.Get();
+			if (peVar2 != (ed_zone_3d*)0x0) {
+				pActor = pEntry->aTargets[pOVar12->field_0x2c].actorRef.Get();
+				if (pActor == (CActor*)0x0) {
+					pActor = CActorHero::_gThis;
+				}
+				if (pActor != (CActor*)0x0) {
+					uVar6 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
+						peVar2, &pActor->currentLocation, 0);
+					fVar5 = gF32Vertex4Zero.w;
+					fVar4 = gF32Vertex4Zero.z;
+					fVar3 = gF32Vertex4Zero.y;
+					if ((uVar6 & 1) == 0) {
+						if (((pEntry->aTargets + pOVar12->field_0x2c != (ObjectiveStreamTarget*)0x0) &&
+								(peVar2 = pEntry->aTargets[pOVar12->field_0x2c].zoneRef.Get(),
+								peVar2 != (ed_zone_3d*)0x0)) && (peVar2->pMatrix != 0)) {
+							if (peVar2 == (ed_zone_3d*)0x0) {
+								(pOVar12->field_0x30).x = gF32Vertex4Zero.x;
+								(pOVar12->field_0x30).y = fVar3;
+								(pOVar12->field_0x30).z = fVar4;
+								(pOVar12->field_0x30).w = fVar5;
+							}
+							else {
+								peVar7 = edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
+									peVar2, 0, aeStack12);
+								if (peVar2->pMatrix != 0) {
+									edF32Matrix4MulF32Matrix4Hard(&eStack400, LOAD_POINTER_CAST(edF32MATRIX4*, peVar2->pMatrix), peVar7);
+									edF32Matrix4GetInverseGaussSoft(aeStack336, &eStack400);
+									peVar7 = &eStack400;
+								}
+								edF32Matrix4GetInverseGaussSoft(aeStack336, peVar7);
+								(pOVar12->field_0x30).x = aeStack336[0].da;
+								(pOVar12->field_0x30).y = aeStack336[0].db;
+								(pOVar12->field_0x30).z = aeStack336[0].dc;
+								(pOVar12->field_0x30).w = aeStack336[0].dd;
+								(pOVar12->field_0x30).w = 1.0;
+							}
+						}
+					}
+					else {
+						pOVar12->field_0x2c = pOVar12->field_0x2c + 1;
+						if ((int)pOVar12->field_0x2c < pEntry->nbTargets) {
+							pTarget = pEntry->aTargets + pOVar12->field_0x2c;
+							if (pTarget == (ObjectiveStreamTarget*)0x0) {
+								pOVar12->field_0x40 = 0;
+								fVar5 = gF32Vertex4Zero.w;
+								fVar4 = gF32Vertex4Zero.z;
+								fVar3 = gF32Vertex4Zero.y;
+								(pOVar12->field_0x30).x = gF32Vertex4Zero.x;
+								(pOVar12->field_0x30).y = fVar3;
+								(pOVar12->field_0x30).z = fVar4;
+								(pOVar12->field_0x30).w = fVar5;
+							}
+							else {
+								uVar8 = ByteCode::BuildU64(pTarget->messageKeyA, pTarget->messageKeyB);
+								pOVar12->field_0x40 = uVar8;
+								fVar5 = gF32Vertex4Zero.w;
+								fVar4 = gF32Vertex4Zero.z;
+								fVar3 = gF32Vertex4Zero.y;
+								peVar2 = pTarget->zoneRef.Get();
+								if (peVar2 == (ed_zone_3d*)0x0) {
+									(pOVar12->field_0x30).x = gF32Vertex4Zero.x;
+									(pOVar12->field_0x30).y = fVar3;
+									(pOVar12->field_0x30).z = fVar4;
+									(pOVar12->field_0x30).w = fVar5;
+								}
+								else {
+									peVar7 = edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
+										peVar2, 0, &eStack4);
+									if (peVar2->pMatrix != 0) {
+										edF32Matrix4MulF32Matrix4Hard(&eStack144, LOAD_POINTER_CAST(edF32MATRIX4*, peVar2->pMatrix), peVar7);
+										edF32Matrix4GetInverseGaussSoft(&eStack80, &eStack144);
+										peVar7 = &eStack144;
+									}
+									edF32Matrix4GetInverseGaussSoft(&eStack80, peVar7);
+									(pOVar12->field_0x30).x = eStack80.da;
+									(pOVar12->field_0x30).y = eStack80.db;
+									(pOVar12->field_0x30).z = eStack80.dc;
+									(pOVar12->field_0x30).w = eStack80.dd;
+									(pOVar12->field_0x30).w = 1.0;
+								}
+							}
+						}
+						else {
+							pOVar12->field_0x40 = 0;
+							fVar5 = gF32Vertex4Zero.w;
+							fVar4 = gF32Vertex4Zero.z;
+							fVar3 = gF32Vertex4Zero.y;
+							(pOVar12->field_0x30).x = gF32Vertex4Zero.x;
+							(pOVar12->field_0x30).y = fVar3;
+							(pOVar12->field_0x30).z = fVar4;
+							(pOVar12->field_0x30).w = fVar5;
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+// PS2: CLevelScheduler::Level_Manage (0x002dc5c0).
 void CLevelScheduler::Level_Manage()
 {
 	int* piVar1;
@@ -3184,7 +3316,8 @@ void CLevelScheduler::Level_Manage()
 	uint uVar8;
 	uint* puVar9;
 	CActorsTable* pCVar10;
-	uint** ppuVar11;
+	ObjectiveStream* pStream;
+	ObjectiveStreamEntry* pEntry;
 	int iVar12;
 	int iVar13;
 	float fVar14;
@@ -3202,17 +3335,16 @@ void CLevelScheduler::Level_Manage()
 	fVar15 = pTVar4->cutsceneDeltaTime;
 	this->gameTime = this->gameTime + pTVar4->lastFrameTime;
 
-	IMPLEMENTATION_GUARD_OBJECTIVE(
-	piVar1 = this->pObjectiveStreamBegin;
-	if (piVar1 != (int*)0x0) {
-		ppuVar11 = (uint**)(piVar1 + 1);
+	pStream = this->pObjectiveStreamBegin;
+	if (pStream != (ObjectiveStream*)0x0) {
+		pEntry = pStream->aEntries;
 		uVar8 = 0;
-		if (*piVar1 != 0) {
+		if (pStream->nbEntries != 0) {
 			do {
-				FUN_002d8970(ppuVar11);
+				ManageObjective(pEntry);
 				uVar8 = uVar8 + 1;
-				ppuVar11 = ppuVar11 + (int)ppuVar11[7] * 4 + 8;
-			} while (uVar8 < (uint)*this->pObjectiveStreamBegin);
+				pEntry = reinterpret_cast<ObjectiveStreamEntry*>(pEntry->aTargets + pEntry->nbTargets);
+			} while (uVar8 < (uint)this->pObjectiveStreamBegin->nbEntries);
 		}
 	}
 
@@ -3225,17 +3357,17 @@ void CLevelScheduler::Level_Manage()
 	if (iVar12 != 0) {
 		puVar9 = (uint*)(piVar1 + 1);
 		for (iVar12 = *piVar1; iVar12 != 0; iVar12 = iVar12 + -1) {
-			if ((((*puVar9 != 0x20) && ((ed_zone_3d*)puVar9[1] != (ed_zone_3d*)0x0)) &&
+			if ((((*puVar9 != 0x20) && (puVar9[1] != 0)) &&
 				(CActorHero::_gThis != (CActorHero*)0x0)) &&
 				(uVar8 = edEventComputeZoneAgainstVertex
-				((CScene::ptable.g_EventManager_006f5080)->activeChunkId, (ed_zone_3d*)puVar9[1],
+				((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_POINTER_CAST(ed_zone_3d*, puVar9[1]),
 					&CActorHero::_gThis->currentLocation, 0),
 					(uVar8 & 1) != 0)) {
-				gThis->field_0x5b30 = gThis->field_0x5b30 | 1 << (*puVar9 & 0x1f);
+				gThis->field_0x5b30 = gThis->field_0x5b30 | 1U << (*puVar9 & 0x1f);
 			}
 			puVar9 = puVar9 + 2;
 		}
-	})
+	}
 
 	if (this->currentLevelID == 0) {
 		local_110.nbEntries = 0;
@@ -3726,6 +3858,92 @@ int CLevelScheduler::GetNbAreas(int currentLevelID)
 	}
 
 	return nbAreas;
+}
+
+// Original PS2: 0x002d9890.
+edDList_material* CLevelScheduler::GetAreaMaterial(int levelId, int areaId)
+{
+	CActorManager* pActorManager;
+	CActorTeleporter* pTeleporter;
+	edDList_material* pMaterial;
+	S_SUBSECTOR_INFO* pSubSectorInfo;
+	int subSectorIndex;
+
+	pActorManager = CScene::ptable.g_ActorManager_004516a4;
+	pMaterial = this->aLevelInfo[levelId].aSubSectorInfo[areaId].field_0x20;
+	if (pMaterial == (edDList_material*)0x0) {
+		pSubSectorInfo = this->aLevelInfo[levelId].aSubSectorInfo;
+		subSectorIndex = 0;
+		while ((subSectorIndex < 0xc) && (pMaterial == (edDList_material*)0x0)) {
+			if ((pSubSectorInfo->teleporterActorHashCode != 0xffffffff) &&
+				(pTeleporter = (CActorTeleporter*)pActorManager->GetActorByHashcode(pSubSectorInfo->teleporterActorHashCode), pTeleporter != (CActorTeleporter*)0x0)) {
+				pMaterial = pTeleporter->GetMySubSectorMaterial(levelId, areaId);
+			}
+
+			subSectorIndex = subSectorIndex + 1;
+			pSubSectorInfo = pSubSectorInfo + 1;
+		}
+	}
+
+	return pMaterial;
+}
+
+// Original PS2: 0x002d9980.
+void CLevelScheduler::GetAreaWolfenCounts(int levelId, int areaId, int* pTotalWolfen, int* pFreedWolfen)
+{
+	int linkedLevelIdA;
+	int linkedLevelIdB;
+	bool bWholeLevel;
+	S_LEVEL_INFO* pLevelInfo;
+	int subSectorIndex;
+
+	linkedLevelIdA = INT_ARRAY_0048ed60[levelId];
+	linkedLevelIdB = INT_ARRAY_0048eda0[levelId];
+	bWholeLevel = this->currentLevelID == 0 || this->currentLevelID == INT_ARRAY_0048ed60[0];
+	if (this->currentLevelID != 0 && this->currentLevelID != INT_ARRAY_0048ed60[0]) {
+		bWholeLevel = INT_ARRAY_0048ed60[this->currentLevelID] == 0;
+	}
+
+	if (bWholeLevel) {
+		*pTotalWolfen = 0;
+		*pFreedWolfen = 0;
+		pLevelInfo = this->aLevelInfo + levelId;
+		for (subSectorIndex = 1; subSectorIndex <= pLevelInfo->maxElevatorId; subSectorIndex = subSectorIndex + 1) {
+			*pTotalWolfen = *pTotalWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbMaxExorcisedWolfen;
+			*pFreedWolfen = *pFreedWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbExorcisedWolfen;
+		}
+
+		if (linkedLevelIdA != levelId) {
+			pLevelInfo = this->aLevelInfo + linkedLevelIdA;
+			for (subSectorIndex = 1; subSectorIndex <= pLevelInfo->maxElevatorId; subSectorIndex = subSectorIndex + 1) {
+				*pTotalWolfen = *pTotalWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbMaxExorcisedWolfen;
+				*pFreedWolfen = *pFreedWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbExorcisedWolfen;
+			}
+		}
+
+		if (linkedLevelIdB != levelId) {
+			pLevelInfo = this->aLevelInfo + linkedLevelIdB;
+			for (subSectorIndex = 1; subSectorIndex <= pLevelInfo->maxElevatorId; subSectorIndex = subSectorIndex + 1) {
+				*pTotalWolfen = *pTotalWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbMaxExorcisedWolfen;
+				*pFreedWolfen = *pFreedWolfen + pLevelInfo->aSubSectorInfo[subSectorIndex].nbExorcisedWolfen;
+			}
+		}
+	}
+	else {
+		*pTotalWolfen = this->aLevelInfo[levelId].aSubSectorInfo[areaId].nbMaxExorcisedWolfen;
+		*pFreedWolfen = this->aLevelInfo[levelId].aSubSectorInfo[areaId].nbExorcisedWolfen;
+		if (linkedLevelIdA != levelId) {
+			*pTotalWolfen = *pTotalWolfen + this->aLevelInfo[linkedLevelIdA].aSubSectorInfo[areaId].nbMaxExorcisedWolfen;
+			*pFreedWolfen = *pFreedWolfen + this->aLevelInfo[linkedLevelIdA].aSubSectorInfo[areaId].nbExorcisedWolfen;
+		}
+
+		if (linkedLevelIdB != levelId) {
+			*pTotalWolfen = *pTotalWolfen + this->aLevelInfo[linkedLevelIdB].aSubSectorInfo[areaId].nbMaxExorcisedWolfen;
+			*pFreedWolfen = *pFreedWolfen + this->aLevelInfo[linkedLevelIdB].aSubSectorInfo[areaId].nbExorcisedWolfen;
+		}
+	}
+
+	return;
 }
 
 void CLevelScheduler::ExitLevel(int param_2)

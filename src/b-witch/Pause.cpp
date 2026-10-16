@@ -833,6 +833,104 @@ int GetScreenHeightSafe()
 	return screenHeight;
 }
 
+static float areaPreviewScaleX = 1.0f;
+static float areaPreviewScaleY = 0.8f;
+
+// Original PS2: 0x001b5780.
+void PauseDrawInterface(bool bShowLevelSwitchUI)
+{
+	CLevelScheduler* pLevelScheduler;
+	CPauseManager* pPauseManager;
+	edCTextStyle* pPreviousStyle;
+	edDList_material* pMaterial;
+	edCTextStyle textStyle;
+	int progressX;
+	int progressY;
+	int totalWolfen;
+	int freedWolfen;
+	int remainingWolfen;
+	int areaTotalWolfen;
+	int areaFreedWolfen;
+
+	textStyle.Reset();
+	textStyle.SetShadow(0x100);
+	textStyle.rgbaColour = 0xffffffff;
+	textStyle.alpha = 0xff;
+	textStyle.SetHorizontalAlignment(2);
+	textStyle.SetVerticalAlignment(8);
+	textStyle.SetFont(BootDataFont, false);
+	pPreviousStyle = edTextStyleSetCurrent(&textStyle);
+
+	pLevelScheduler = CLevelScheduler::gThis;
+	progressX = (GetScreenWidthSafe() >> 1) + 200;
+	static int progressTopY = (GetScreenHeightSafe() >> 1) - 160;
+	static int progressBottomY = (GetScreenHeightSafe() >> 1) + 160;
+	progressY = (progressTopY + progressBottomY * 3) / 4;
+	int progressEndY = (progressBottomY + progressTopY * 3) / 4;
+
+	totalWolfen = pLevelScheduler->field_0x4210;
+	freedWolfen = CLevelScheduler::ScenVar_Get(0);
+	if (freedWolfen != 0) {
+		progressY = (int)edFIntervalLERP((float)freedWolfen, 0.0f, (float)totalWolfen, (float)progressY, (float)progressEndY);
+	}
+
+	MenuBitmaps[0].Draw(1.0f, (float)progressX, (float)progressTopY, 0x12);
+	MenuBitmaps[12].rgba[0] = 0x7f;
+	MenuBitmaps[12].rgba[1] = 0x69;
+	MenuBitmaps[12].rgba[2] = 0x5f;
+	MenuBitmaps[12].rgba[3] = 0x4d;
+	MenuBitmaps[12].Draw(0.3f, 2.0f, (float)progressX, (float)((progressBottomY + progressTopY) / 2), 0xc012);
+	MenuBitmaps[1].Draw(1.0f, (float)progressX, (float)progressBottomY, 0x12);
+	MenuBitmaps[5].Draw(0.7f, (float)progressX, (float)progressY, 0x12);
+
+	remainingWolfen = totalWolfen - freedWolfen;
+	if (totalWolfen != 0) {
+		if (remainingWolfen < 0) {
+			remainingWolfen = 0;
+		}
+
+		edTextDraw((float)progressX, (float)(progressTopY + 40), "%3d", remainingWolfen);
+		edTextDraw((float)progressX, (float)(progressY + 20), "%3d%%", (freedWolfen * 100) / totalWolfen);
+		edTextDraw((float)progressX, (float)(progressBottomY + 40), "%3d", freedWolfen);
+	}
+
+	pPauseManager = CScene::ptable.g_PauseManager_00451688;
+	pMaterial = pLevelScheduler->GetAreaMaterial(pLevelScheduler->currentLevelID, pPauseManager->currentAreaIndex + 1);
+	textStyle.SetHorizontalAlignment(2);
+	static int areaPreviewX = GetScreenWidthSafe() >> 1;
+	static int areaPreviewY = (GetScreenHeightSafe() >> 1) - 10;
+
+	if ((0 < pPauseManager->totalAreaCount) && (pMaterial != (edDList_material*)0x0)) {
+		CSprite areaSprite;
+		areaSprite.Install(pMaterial);
+		if (bShowLevelSwitchUI == false) {
+			areaSprite.rgba[0] = 0x40;
+			areaSprite.rgba[1] = 0x40;
+			areaSprite.rgba[2] = 0x40;
+		}
+		else {
+			areaSprite.rgba[0] = 0x7f;
+			areaSprite.rgba[1] = 0x7f;
+			areaSprite.rgba[2] = 0x7f;
+		}
+
+		areaSprite.rgba[3] = 0x7f;
+		areaSprite.Draw(areaPreviewScaleX, areaPreviewScaleY, (float)areaPreviewX, (float)areaPreviewY, 0x12);
+		areaSprite.Remove();
+	}
+
+	if (bShowLevelSwitchUI != false) {
+		MenuBitmaps[9].Draw(0.5f, (float)areaPreviewX - 120.0f, (float)areaPreviewY, 0x12);
+		MenuBitmaps[9].Draw(0.5f, (float)areaPreviewX + 120.0f, (float)areaPreviewY, 0x1012);
+		MenuBitmaps[2].Draw(0.7f, (float)areaPreviewX, (float)areaPreviewY + 43.0f, 0x12);
+		pLevelScheduler->GetAreaWolfenCounts(pLevelScheduler->currentLevelID, pPauseManager->currentAreaIndex + 1, &areaTotalWolfen, &areaFreedWolfen);
+		edTextDraw((float)areaPreviewX + 35.0f, (float)areaPreviewY + 43.0f, "x%d", areaTotalWolfen - areaFreedWolfen);
+	}
+
+	edTextStyleSetCurrent(pPreviousStyle);
+	return;
+}
+
 float FLOAT_00448670 = 0.25f;
 float FLOAT_00448674 = 0.5f;
 
@@ -904,11 +1002,11 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	}
 	pPauseMenu->set_vertical_position(INT_00448ed0);
 
-	//iVar2 = pCVar1->totalAreaCount;
-	//bShowLevelSwitchUI = false;
-	//if (0 < iVar2) {
-	//	bShowLevelSwitchUI = pPauseMenu->draw_option_type_wheel(&pCVar1->currentAreaIndex, 0, iVar2);
-	//}
+	int iVar2 = pCVar1->totalAreaCount;
+	bShowLevelSwitchUI = false;
+	if (0 < iVar2) {
+		bShowLevelSwitchUI = pPauseMenu->draw_option_type_wheel(&pCVar1->currentAreaIndex, 0, iVar2);
+	}
 
 	/*Resume Button*/
 	pPauseMenu->draw_action(0x31a1c100c180c0c, ResumeGame, 0, -2);
@@ -936,7 +1034,7 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	menuSettings.musicVolume = gSettings.musicVolume;
 	menuSettings.sfxVolume = gSettings.sfxVolume;
 
-	//PauseDrawInterface(bShowLevelSwitchUI);
+	PauseDrawInterface(bShowLevelSwitchUI);
 
 	if (pPauseMenu->lastInput_0x14 == MENU_INPUT_CANCEL) {
 		ResumeGame(0);
@@ -2060,6 +2158,7 @@ bool CSimpleMenu::draw_option_type_list(uint* pValue, ulong helpMsgId, int nbVal
 
 	itemIndex = this->field_0x20;
 	draw_option(pMessage, 0);
+
 	if (itemIndex == this->selectedIndex) {
 		DrawInitialSaveMenuHelp(helpMsgId, 0xffffffff);
 		if (this->lastInput_0x14 == MENU_INPUT_LEFT) {
@@ -2082,9 +2181,61 @@ bool CSimpleMenu::draw_option_type_list(uint* pValue, ulong helpMsgId, int nbVal
 				OnChangeValue();
 			}
 		}
+
 		return true;
 	}
+
 	return false;
+}
+
+bool CSimpleMenu::draw_option_type_wheel(int* param_2, ulong param_3, int param_4)
+{
+	bool bVar1;
+	int iVar2;
+
+	iVar2 = this->field_0x20;
+	this->field_0x20 = iVar2 + 1;
+	if (iVar2 == this->selectedIndex) {
+		if (param_3 != 0) {
+			iVar2 = 0xc2;
+			if (gVideoConfig.omode == 3) {
+				iVar2 = 0xe0;
+			}
+
+			draw_help_line(param_3, 0, iVar2 + this->counter_0x24 * -0x20, 0xffffffff);
+			this->counter_0x24 = this->counter_0x24 + 1;
+		}
+
+		if (this->lastInput_0x14 == 3) {
+			if (*param_2 < 1) {
+				*param_2 = param_4 + -1;
+			}
+			else {
+				*param_2 = *param_2 + -1;
+			}
+
+			Func_0x28();
+		}
+		else {
+			if (this->lastInput_0x14 == 4) {
+				if (*param_2 < param_4 + -1) {
+					*param_2 = *param_2 + 1;
+				}
+				else {
+					*param_2 = 0;
+				}
+
+				Func_0x28();
+			}
+		}
+
+		bVar1 = true;
+	}
+	else {
+		bVar1 = false;
+	}
+
+	return bVar1;
 }
 
 bool CSimpleMenu::draw_slider(uint* pValue, ulong helpMsgId, ulong msgId, SliderParams* pParams)
@@ -3152,61 +3303,88 @@ bool CSimpleMenu::disappear_draw()
 // Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_validate()
 {
-
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_cancel()
 {
-
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/MenuElements.h
 void CSimpleMenu::on_change_selection()
 {
-
+	return;
 }
 
 void CSimpleMenu::OnChangeValue()
 {
+	return;
 }
 
 void CSimpleMenu::OnChangeWheel()
 {
+	return;
 }
 
 void CSimpleMenu::OnChangeSlider(float value)
 {
+	return;
+}
+
+void CSimpleMenu::Func_0x28()
+{
+	return;
 }
 
 void CSimpleMenuSound::on_validate()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 0, 0);
+
+	return;
 }
 
 void CSimpleMenuSound::on_cancel()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 3, 0);
+
+	return;
 }
 
 void CSimpleMenuSound::on_change_selection()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+
+	return;
 }
 
 void CSimpleMenuSound::OnChangeValue()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 2, 0);
+
+	return;
 }
 
 void CSimpleMenuSound::OnChangeWheel()
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+
+	return;
 }
 
 void CSimpleMenuSound::OnChangeSlider(float value)
 {
 	CScene::ptable.g_FrontendManager_00451680->pFrontendSamplePlayer->PlaySample(value, 1, 1);
+
+	return;
+}
+
+void CSimpleMenuSound::Func_0x28()
+{
+	(CScene::ptable.g_FrontendManager_00451680)->pFrontendSamplePlayer->PlaySample(1.0f, 1, 0);
+
+	return;
 }
 
 float CSimpleMenu::get_time_in_state()

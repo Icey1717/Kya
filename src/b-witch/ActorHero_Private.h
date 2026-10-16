@@ -40,6 +40,39 @@ class CBehaviourHeroRideJamGut;
 
 struct _ray_info_out;
 
+struct S_NTF_TARGET_STREAM_REF;
+struct S_STREAM_EVENT_CAMERA;
+
+// PS2: Create (0x0034bfb0), ActorFunc_00347660 (0x00347660).
+struct HeroTutorialZone
+{
+	S_STREAM_REF<ed_zone_3d> zoneRef;
+	undefined4 field_0x4;
+	ulong messageKey;
+	uint flags;
+	uint action;
+	float duration;
+	strd_ptr(S_NTF_TARGET_STREAM_REF*) pTargetStreamRef;
+	strd_ptr(S_STREAM_EVENT_CAMERA*) pCameraEvent;
+	undefined4 field_0x24;
+};
+
+static_assert(sizeof(HeroTutorialZone) == 0x28);
+
+// PS2: Create (0x0034bfb0), ActorFunc_00347290 (0x00347290).
+struct HeroProjectileZone
+{
+	S_STREAM_REF<ed_zone_3d> zoneRef;
+	uint projectileType;
+	float damage;
+	int waypointIndex;
+	float force;
+	int nbSamples;
+	int sectorId;
+};
+
+static_assert(sizeof(HeroProjectileZone) == 0x1c);
+
 struct AdversaryEntry
 {
 	CActorFighter* pActorFighter;
@@ -188,6 +221,10 @@ class CActorHeroPrivate : public CActorHero
 {
 public:
 	CActorHeroPrivate();
+	virtual ~CActorHeroPrivate();
+
+	void ActorFunc_00347660();
+	void ActorFunc_00347290();
 
 	// CActor
 	virtual void Create(ByteCode* pByteCode);
@@ -195,6 +232,7 @@ public:
 	virtual void Term();
 	virtual void Manage();
 	virtual void Draw();
+	virtual void ComputeLighting();
 
 	virtual void PreCheckpointReset();
 	virtual void CheckpointReset();
@@ -714,8 +752,13 @@ public:
 	CActor* field_0xf54;
 	CActor* field_0xf58;
 
-	int field_0xd28;
+	int field_0xd20;
+	HeroTutorialZone* pEventChunk24_0xd24;
+	HeroTutorialZone* field_0xd28;
+	float field_0xd2c;
 	int field_0xd30;
+	int checkpointCount;
+	HeroProjectileZone* field_0xe38;
 
 	int field_0x1a48;
 	int field_0x1a4c;
@@ -944,6 +987,11 @@ public:
 	CBehaviourHeroUnknown behaviour_0x1c50;
 	CBehaviourHeroUnknown behaviour_0x1e10;
 	CBehaviourHeroUnknown behaviour_0x1fd0;
+
+	edF32VECTOR4 field_0x18f0;
+	edF32MATRIX4 field_0x1900;
+	edF32MATRIX4 field_0x1940;
+	ed_3D_Light_Config field_0x1980;
 };
 
 class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut

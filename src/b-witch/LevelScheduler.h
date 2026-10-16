@@ -15,8 +15,6 @@
 #include <future>
 #endif
 
-#define IMPLEMENTATION_GUARD_OBJECTIVE(x)
-
 #define SCN_GAME_NUM_FREED_WOLFENS		0x0
 #define SCN_GAME_COMPANION				0x3
 #define SCN_GAME_CURRENT_EPISODE		0x6
@@ -79,7 +77,41 @@ struct SaveDataChunk_BSHD
 	int musicId;
 };
 
-static_assert(sizeof(SaveDataChunk_BSHD) == 0x14);	
+static_assert(sizeof(SaveDataChunk_BSHD) == 0x14);
+
+struct ObjectiveStreamTarget
+{
+	uint messageKeyA;
+	uint messageKeyB;
+	S_STREAM_REF<CActor> actorRef;
+	S_STREAM_REF<ed_zone_3d> zoneRef;
+};
+
+static_assert(sizeof(ObjectiveStreamTarget) == 0x10);
+
+struct ObjectiveStreamEntry
+{
+	int scenVarId;
+	undefined4 field_0x4;
+	undefined4 field_0x8;
+	undefined4 field_0xc;
+	undefined4 field_0x10;
+	undefined4 field_0x14;
+	undefined4 field_0x18;
+	int nbTargets;
+	ObjectiveStreamTarget aTargets[];
+};
+
+static_assert(sizeof(ObjectiveStreamEntry) == 0x20);
+
+struct ObjectiveStream
+{
+	int nbEntries;
+	// Variable-length records follow; advance past each entry's targets.
+	ObjectiveStreamEntry aEntries[];
+};
+
+static_assert(sizeof(ObjectiveStream) == 4);
 
 struct ObjectiveEntry
 {
@@ -428,6 +460,8 @@ public:
 	static float autoSaveCooldown;
 #endif
 	int GetNbAreas(int currentLevelID);
+	edDList_material* GetAreaMaterial(int levelId, int areaId);
+	void GetAreaWolfenCounts(int levelId, int areaId, int* pTotalWolfen, int* pFreedWolfen);
 	void ExitLevel(int param_2);
 	void ManageLoadElevator(int elevatorId, int levelId, int param_4);
 
@@ -580,7 +614,7 @@ public:
 	int currentElevatorID;
 	int level_0x5b50;
 	int level_0x5b54;
-	int* pObjectiveStreamBegin;
+	ObjectiveStream* pObjectiveStreamBegin;
 	int* pObjectiveStreamEnd;
 	edCBankBuffer levelBank;
 	edCBankBufferEntry* pLevelBankBufferEntry;

@@ -36,6 +36,21 @@ struct WolfenAnimMatrixData
 		return;
 	}
 
+	void Free()
+	{
+		if (this->aMatrices != (edF32MATRIX3*)0x0) {
+			if ((this->pWolfen != (CActorWolfen*)0x0) && (this->aMatrices != (edF32MATRIX3*)0x0)) {
+				this->pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+				this->pWolfen = (CActorWolfen*)0x0;
+			}
+
+			delete(this->aMatrices);
+			this->aMatrices = (edF32MATRIX3*)0x0;
+		}
+
+		return;
+	}
+
 	edF32MATRIX3* aMatrices;
 	int nbBones;
 	CActorWolfen* pWolfen;
@@ -510,9 +525,9 @@ void CActorWolfen::Term()
 		this->aComboMatchValues = (edF32VECTOR4*)0x0;
 	}
 
-	//if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
-	//	FreeFunc_001fba40((int*)&gWolfenAnimMatrixData);
-	//}
+	if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
+		gWolfenAnimMatrixData.Free();
+	}
 
 	uVar1 = this->field_0xb74;
 	if (uVar1 == 3) {

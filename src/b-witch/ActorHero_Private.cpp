@@ -33,6 +33,12 @@ CActorHeroPrivate::CActorHeroPrivate()
 {
 	int* piVar1;
 	undefined4* puVar2;
+
+	this->field_0xd20 = 0;
+	this->pEventChunk24_0xd24 = (HeroTutorialZone*)0x0;
+	this->field_0xd28 = (HeroTutorialZone*)0x0;
+	this->checkpointCount = 0;
+	this->field_0xe38 = (HeroProjectileZone*)0x0;
 		
 	//piVar1 = &(this->character).field_0x550;
 	//this->pVTable = &CActorFighter::_vt;
@@ -85,6 +91,21 @@ CActorHeroPrivate::CActorHeroPrivate()
 	return;
 }
 
+// PS2: ~CActorHeroPrivate (0x0034b2d0), owned tutorial and projectile arrays.
+CActorHeroPrivate::~CActorHeroPrivate()
+{
+	if (this->pEventChunk24_0xd24 != (HeroTutorialZone*)0x0) {
+		delete[] this->pEventChunk24_0xd24;
+		this->pEventChunk24_0xd24 = (HeroTutorialZone*)0x0;
+		this->field_0xd20 = 0;
+	}
+	if (this->field_0xe38 != (HeroProjectileZone*)0x0) {
+		delete[] this->field_0xe38;
+		this->field_0xe38 = (HeroProjectileZone*)0x0;
+		this->checkpointCount = 0;
+	}
+}
+
 void CActorHeroPrivate::Create(ByteCode* pByteCode)
 {
 	char* pcVar1;
@@ -92,7 +113,6 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	CCamera* pCVar3;
 	//ed_zone_3d* peVar4;
 	int piVar5;
-	S_CHECKPOINT* pSVar6;
 	int* piVar7;
 	int iVar8;
 	CCameraManager* pOther;
@@ -136,81 +156,60 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 
 	memset(this->field_0xd34, 0, sizeof(this->field_0xd34));
 
-	iVar11 = pByteCode->GetS32();
-	//this->field_0xd20 = iVar11;
-	//this->pEventChunk24_0xd24 = (ed_zone_3d*)0x0;
-	//iVar11 = this->field_0xd20;
-	if (iVar11 != 0) {
-		//piVar5 = (int*)operator.new.array((long)((int)peVar4 * 0x28 + 0x10));
-		//piVar5 = __construct_new_array(piVar5, (ActorConstructorA*)&LAB_0034c690, FUN_0034b6b0, 0x28, (uint)peVar4);
-		//*(int**)&this->field_0xd24 = piVar5;
-		//piVar5 = *(int**)&this->field_0xd24;
-		int count = iVar11;
+	// PS2: Create (0x0034bfb0), tutorial and projectile zone records.
+	this->field_0xd20 = pByteCode->GetS32();
+	this->pEventChunk24_0xd24 = (HeroTutorialZone*)0x0;
+	if (this->field_0xd20 != 0) {
+		this->pEventChunk24_0xd24 = new HeroTutorialZone[this->field_0xd20];
+		HeroTutorialZone* pTutorial = this->pEventChunk24_0xd24;
 		iVar11 = 0;
-		if (0 < count) {
+		if (0 < this->field_0xd20) {
 			do {
-				iVar10 = pByteCode->GetS32();
-				//*piVar5 = iVar10;
-				uVar9 = pByteCode->GetU64();
-				//*(ulong*)(piVar5 + 2) = uVar9;
-				uVar2 = pByteCode->GetU32();
-				//piVar5[4] = uVar2;
-				uVar2 = pByteCode->GetU32();
-				//piVar5[5] = uVar2;
-				fVar13 = pByteCode->GetF32();
-				//piVar5[6] = (int)fVar13;
+				pTutorial->zoneRef.index = pByteCode->GetS32();
+				pTutorial->messageKey = pByteCode->GetU64();
+				pTutorial->flags = pByteCode->GetU32();
+				pTutorial->action = pByteCode->GetU32();
+				pTutorial->duration = pByteCode->GetF32();
 				if (2.24f <= CScene::_pinstance->field_0x1c) {
-					piVar7 = (int*)pByteCode->currentSeekPos;
-					pByteCode->currentSeekPos = (char*)(piVar7 + 1);
-					if (*piVar7 != 0) {
-						pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar7 * 0x1c;
+					S_NTF_TARGET_STREAM_REF* pTargets = reinterpret_cast<S_NTF_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+					pByteCode->currentSeekPos = (char*)pTargets->aEntries;
+					if (pTargets->entryCount != 0) {
+						pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargets->entryCount * 0x1c;
 					}
-					//piVar5[7] = (int)piVar7;
-					pcVar1 = pByteCode->currentSeekPos;
-					pByteCode->currentSeekPos = pcVar1 + 0x20;
-					//piVar5[8] = (int)pcVar1;
+					pTutorial->pTargetStreamRef = STORE_POINTER(pTargets);
+					pTutorial->pCameraEvent = STORE_POINTER(pByteCode->currentSeekPos);
+					pByteCode->currentSeekPos = pByteCode->currentSeekPos + 0x20;
 				}
 				iVar11 = iVar11 + 1;
-				piVar5 = piVar5 + 10;
-			} while (iVar11 < count);
+				pTutorial = pTutorial + 1;
+			} while (iVar11 < this->field_0xd20);
 		}
 	}
 
-	int count = pByteCode->GetS32();
-	//this->pCheckpointManagerSubObjA_0xe38 = pSVar6;
-	//this->field_0xe38 = 0;
-	//pSVar6 = this->pCheckpointManagerSubObjA_0xe38;
-	if (count != 0x0) {
-	//	piVar5 = (int*)operator.new.array((long)((int)pSVar6 * 0x1c + 0x10));
-	//	piVar5 = __construct_new_array(piVar5, (ActorConstructorA*)&LAB_0034c680, FUN_0034b660, 0x1c, (uint)pSVar6);
-	//	this->field_0xe38 = (uint)piVar5;
-	//	piVar5 = (int*)this->field_0xe38;
+	this->checkpointCount = pByteCode->GetS32();
+	this->field_0xe38 = (HeroProjectileZone*)0x0;
+	if (this->checkpointCount != 0) {
+		this->field_0xe38 = new HeroProjectileZone[this->checkpointCount];
+		HeroProjectileZone* pProjectileZone = this->field_0xe38;
 		iVar11 = 0;
-		if (0 < count) {
+		if (0 < this->checkpointCount) {
 			do {
-				iVar10 = pByteCode->GetS32();
-				//*piVar5 = iVar10;
-				iVar10 = pByteCode->GetS32();
-				//piVar5[1] = iVar10;
-				fVar13 = pByteCode->GetF32();
-				//piVar5[2] = (int)fVar13;
-				iVar10 = pByteCode->GetS32();
-				//piVar5[3] = iVar10;
-				fVar13 = pByteCode->GetF32();
-				//piVar5[4] = (int)fVar13;
-				iVar10 = pByteCode->GetS32();
-				//piVar5[5] = iVar10;
-				//if (piVar5[5] < 1) {
-				//	piVar5[5] = 1;
-				//}
-				//if (5 < piVar5[5]) {
-				//	piVar5[5] = 5;
-				//}
-				iVar10 = pByteCode->GetS32();
-				//piVar5[6] = iVar10;
+				pProjectileZone->zoneRef.index = pByteCode->GetS32();
+				pProjectileZone->projectileType = pByteCode->GetS32();
+				pProjectileZone->damage = pByteCode->GetF32();
+				pProjectileZone->waypointIndex = pByteCode->GetS32();
+				pProjectileZone->force = pByteCode->GetF32();
+				pProjectileZone->nbSamples = pByteCode->GetS32();
+				if (pProjectileZone->nbSamples < 1) {
+					pProjectileZone->nbSamples = 1;
+				}
+				if (5 < pProjectileZone->nbSamples) {
+					pProjectileZone->nbSamples = 5;
+				}
+				pProjectileZone->sectorId = pByteCode->GetS32();
 				iVar11 = iVar11 + 1;
-				piVar5 = piVar5 + 7;
-			} while (iVar11 < count);
+				pProjectileZone = pProjectileZone + 1;
+			} while (iVar11 < this->checkpointCount);
 		}
 	}
 
@@ -372,38 +371,37 @@ void CActorHeroPrivate::Init()
 		this->pClimbZoneStreamRef->aEntries[i].Init();
 	}
 
-	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0xd24;
-	//iVar12 = 0;
-	//if (0 < (int)this->pEventChunk24_0xd24) {
-	//	do {
-	//		S_STREAM_REF<ed_zone_3d>::Init(pSVar13);
-	//		if (2.24 <= CScene::_pinstance->field_0x1c) {
-	//			peVar8 = pSVar13[7].pZone;
-	//			iVar10 = 0;
-	//			if (0 < (int)peVar8->field_0x0[0]) {
-	//				iVar9 = 0;
-	//				do {
-	//					S_STREAM_NTF_TARGET_BASE::Init((S_STREAM_NTF_TARGET_BASE*)((int)peVar8->field_0x0 + iVar9 + 4));
-	//					peVar8 = pSVar13[7].pZone;
-	//					iVar10 = iVar10 + 1;
-	//					iVar9 = iVar9 + 0x1c;
-	//				} while (iVar10 < (int)peVar8->field_0x0[0]);
-	//			}
-	//			S_STREAM_EVENT_CAMERA::Init((S_STREAM_EVENT_CAMERA*)pSVar13[8].pZone);
-	//		}
-	//		iVar12 = iVar12 + 1;
-	//		pSVar13 = pSVar13 + 10;
-	//	} while (iVar12 < (int)this->pEventChunk24_0xd24);
-	//}
-	//pSVar13 = (S_STREAM_REF<ed_zone_3d> *)this->field_0xe38;
-	//iVar12 = 0;
-	//if (0 < (int)this->pCheckpointManagerSubObjA_0xe38) {
-	//	do {
-	//		S_STREAM_REF<ed_zone_3d>::Init(pSVar13);
-	//		iVar12 = iVar12 + 1;
-	//		pSVar13 = pSVar13 + 7;
-	//	} while (iVar12 < (int)this->pCheckpointManagerSubObjA_0xe38);
-	//}
+	// PS2: Init (0x0034b850).
+	HeroTutorialZone* pTutorial = this->pEventChunk24_0xd24;
+	int tutorialIndex = 0;
+	if (0 < this->field_0xd20) {
+		do {
+			pTutorial->zoneRef.Init();
+			if (2.24f <= CScene::_pinstance->field_0x1c) {
+				S_NTF_TARGET_STREAM_REF* pTargets = LOAD_POINTER_CAST(S_NTF_TARGET_STREAM_REF*, pTutorial->pTargetStreamRef);
+				int targetIndex = 0;
+				if (0 < pTargets->entryCount) {
+					do {
+						pTargets->aEntries[targetIndex].Init();
+						targetIndex = targetIndex + 1;
+					} while (targetIndex < pTargets->entryCount);
+				}
+				LOAD_POINTER_CAST(S_STREAM_EVENT_CAMERA*, pTutorial->pCameraEvent)->Init();
+			}
+			tutorialIndex = tutorialIndex + 1;
+			pTutorial = pTutorial + 1;
+		} while (tutorialIndex < this->field_0xd20);
+	}
+
+	HeroProjectileZone* pProjectileZone = this->field_0xe38;
+	int projectileIndex = 0;
+	if (0 < this->checkpointCount) {
+		do {
+			pProjectileZone->zoneRef.Init();
+			projectileIndex = projectileIndex + 1;
+			pProjectileZone = pProjectileZone + 1;
+		} while (projectileIndex < this->checkpointCount);
+	}
 
 	if (2.24f <= CScene::_pinstance->field_0x1c) {
 		for (int i = 0; i < this->field_0xe48->entryCount; i++) {
@@ -2648,9 +2646,8 @@ void CActorHeroPrivate::Manage()
 							}
 						}
 
-						IMPLEMENTATION_GUARD_OBJECTIVE(
-						ActorFunc_00347660((CActorHero*)this);
-						ActorFunc_00347290((CActorHero*)this);)
+						ActorFunc_00347660();
+						ActorFunc_00347290();
 					}
 				}
 			}
@@ -2693,6 +2690,32 @@ void CActorHeroPrivate::Draw()
 			GuiDList_EndCurrent();
 		}
 	}
+
+	return;
+}
+
+void CActorHeroPrivate::ComputeLighting()
+{
+	CScene::ptable.g_LightManager_004516b0->ComputeLighting(this->lightingFloat_0xe0, this, this->lightingFlags, &this->field_0x1980);
+
+	if (this != CActorHero::_gThis) {
+		this->field_0x18f0.x = 100.0f;
+		this->field_0x18f0.y = 100.0f;
+		this->field_0x18f0.z = 100.0f;
+	}
+
+	if (this->field_0x1560 == 1) {
+		this->field_0x18f0.x = 255.0f;
+		this->field_0x18f0.y = 255.0f;
+		this->field_0x18f0.z = 255.0f;
+	}
+
+	if (this->field_0x156c == 1) {
+		this->field_0x18f0.x = 0.0f;
+		this->field_0x18f0.y = 255.0f;
+		this->field_0x18f0.z = 0.0f;
+	}
+
 	return;
 }
 
@@ -3191,24 +3214,22 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 
 	if (msg == 0x7e) {
-		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+		// PS2: InterpretMessage (0x003421b0), restart the current tutorial.
+		pCVar11 = GetLifeInterface();
+		fVar25 = pCVar11->GetValue();
+		bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 		if (!bVar9) {
 			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
 
-		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
-			iVar13 = this->field_0xd28;
-			if (iVar13 != 0) {
+		if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
+			if (this->field_0xd28 != (HeroTutorialZone*)0x0) {
 				iVar14 = CLevelScheduler::gThis->currentLevelID;
-				*(undefined4*)&this->field_0xd30 = 1;
-				*(undefined*)
-					(&this->field_0xd34 + (iVar13 - (int)this->pEventChunk24_0xd24) / 0x28 + iVar14 * 0x10) = 3;
+				this->field_0xd30 = 1;
+				this->field_0xd34[iVar14][this->field_0xd28 - this->pEventChunk24_0xd24] = 3;
 			}
 			return 1;
-		})
+		}
 		return 0;
 	}
 
@@ -3800,20 +3821,19 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 
 		if (msg == 10) {
-			IMPLEMENTATION_GUARD(
-				pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+			fVar25 = GetLifeInterface()->GetValue();
+			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
 				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
-			if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
+			if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
 				pTVar15 = Timer::GetTimer();
 				this->field_0x155c = (float)(int)pMsgParam + pTVar15->scaledTotalTime;
 				return 1;
-			})
-				return 0;
+			}
+
+			return 0;
 		}
 
 		if (msg == MESSAGE_NEW_LIFE_GAUGE) {
@@ -5040,42 +5060,22 @@ void CActorHeroPrivate::ClearLocalData()
 	this->mountDyn.Reset();
 	SetJumpCfg(0.1f, this->runSpeed, this->field_0x1158, this->field_0x1150, this->field_0x1154, 1, (edF32VECTOR4*)0x0);
 	this->pKickedActor = (CActorMovable*)0x0;
-	//fVar4 = gF32Vector4Zero.w;
-	//fVar3 = gF32Vector4Zero.z;
-	//fVar1 = gF32Vector4Zero.y;
-	//peVar11 = &gF32Matrix4Unit;
-	//pfVar9 = &this->field_0x18fc.ab;
-	//iVar8 = 8;
-	//this->field_0x18ec.y = gF32Vector4Zero.x;
-	//this->field_0x18ec.z = fVar1;
-	//this->field_0x18ec.w = fVar3;
-	//this->field_0x18fc.aa = fVar4;
-	//do {
-	//	iVar8 = iVar8 + -1;
-	//	fVar1 = peVar11->ab;
-	//	*pfVar9 = peVar11->aa;
-	//	peVar11 = (edF32MATRIX4*)&peVar11->ac;
-	//	pfVar9[1] = fVar1;
-	//	pfVar9 = pfVar9 + 2;
-	//} while (0 < iVar8);
-	//pfVar9 = &this->field_0x193c.ab;
-	//peVar11 = &gF32Matrix4Unit;
-	//iVar8 = 8;
-	//do {
-	//	iVar8 = iVar8 + -1;
-	//	fVar1 = peVar11->ab;
-	//	*pfVar9 = peVar11->aa;
-	//	peVar11 = (edF32MATRIX4*)&peVar11->ac;
-	//	pfVar9[1] = fVar1;
-	//	pfVar9 = pfVar9 + 2;
-	//} while (0 < iVar8);
-	//this->field_0x197c.pLightDirections = (edF32MATRIX4*)&this->field_0x18ec.y;
-	//this->field_0x197c.pLightColorMatrix = (edF32MATRIX4*)&this->field_0x18fc.ab;
-	//this->field_0x1988 = (float)&this->field_0x193c.ab;
-	//CActor::SetAlpha(this, 0x80);
+
+	this->field_0x18f0 = gF32Vector4Zero;
+	this->field_0x1900 = gF32Matrix4Unit;
+	this->field_0x1940 = gF32Matrix4Unit;
+
+	this->field_0x1980.pLightAmbient = &this->field_0x18f0;
+	this->field_0x1980.pLightDirections = &this->field_0x1900;
+	this->field_0x1980.pLightColorMatrix = &this->field_0x1940;
+
+	SetAlpha(0x80);
+
 	this->animKey_0x157c = this->currentLocation.y + 20.0f;
 	this->lastKnowGroundY = this->currentLocation.y;
+
 	_ResetHeroFight();
+
 	CCollision* pCollision = this->pCollisionData;
 	if (pCollision != (CCollision*)0x0) {
 		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x10000;
@@ -5103,7 +5103,7 @@ void CActorHeroPrivate::ClearLocalData()
 
 	this->field_0xd28 = 0;
 	this->field_0xd30 = 0;
-	//this->mode_0xd30 = 0;
+	this->field_0xd2c = 0.0f;
 	this->field_0x18dc = 1;
 	if (this == CActorHero::_gThis) {
 		pIVar6 = GetPlayerInput(0);
@@ -15091,12 +15091,48 @@ CHero_InputRotationAnalyser_Data CHero_InputRotationAnalyser_Data_ARRAY_004257e0
 	{ 5.5f, 3.402823E38f, 1.0471976f, 1.0f,  8.0f, 14.0f },
 };
 
+void FUN_003273a0(CActorFighter* param_1, int param_2)
+{
+	if (param_2 == 3) {
+		static_cast<CActorHeroPrivate*>(param_1)->SetBoomyState(0);
+	}
+	else {
+		if (param_2 == 1) {
+			static_cast<CActorHeroPrivate*>(param_1)->SetBoomyState(0xb);
+		}
+	}
+
+	return;
+}
+
+void FUN_00327370(CActorFighter* param_1, int param_2)
+{
+	if (param_2 == 3) {
+		static_cast<CActorHeroPrivate*>(param_1)->SetBoomyState(0xc);
+	}
+
+	return;
+}
+
+void FUN_00327320(CActorFighter* param_1, int param_2)
+{
+	if (param_2 == 0) {
+		static_cast<CActorHeroPrivate*>(param_1)->SetBoomyState(0xd);
+	}
+	else {
+		if ((param_2 == 3) || (param_2 == 1)) {
+			static_cast<CActorHeroPrivate*>(param_1)->SetBoomyState(0);
+		}
+	}
+
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
 void CActorHeroPrivate::_InitHeroFight()
 {
 	void* pvVar1;
 	undefined* puVar2;
-	uint* puVar3;
 	int iVar4;
 	CHero_InputRotationAnalyser_Data* __src;
 	uint uVar5;
@@ -15138,25 +15174,30 @@ void CActorHeroPrivate::_InitHeroFight()
 	this->fightLock.aInferenceRules[3].pFunc = CFightLock_SE::_Rule_DangerMax;
 	this->fightLock.aInferenceRules[6].pFunc = CFightLock_SE::_Rule_DistMin;
 	this->fightLock.bUseOcclusion = 1;
-	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_LOAD_00434830);
-	//if (puVar3 != (uint*)0x0) {
-	//	puVar3[0x34] = (uint)FUN_003273a0;
-	//}
-	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_LOAD_LOOP_00434850);
-	//if (puVar3 != (uint*)0x0) {
-	//	puVar3[0x34] = (uint)FUN_00327370;
-	//}
-	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_00434868);
-	//if (puVar3 != (uint*)0x0) {
-	//	puVar3[0x34] = (uint)FUN_00327320;
-	//}
-	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_SALTO_KICK_BACK_AIR_00434880);
-	//if (puVar3 != (uint*)0x0) {
-	//	puVar3[3] = 0x3e000000;
-	//	puVar3[10] = 0x3e800000;
-	//}
-	//this->field_0x187c = 0;
-	//this->field_0x1618 = (CActorFighter*)0x0;
+
+	s_fighter_blow* puVar3 = FindBlowByName("BOOMY_STORM_LOAD");
+	if (puVar3 != (s_fighter_blow*)0x0) {
+		puVar3->field_0xd0 = FUN_003273a0;
+	}
+
+	puVar3 = FindBlowByName("BOOMY_STORM_LOAD_LOOP");
+	if (puVar3 != (s_fighter_blow*)0x0) {
+		puVar3->field_0xd0 = FUN_00327370;
+	}
+
+	puVar3 = FindBlowByName("BOOMY_STORM");
+	if (puVar3 != (s_fighter_blow*)0x0) {
+		puVar3->field_0xd0 = FUN_00327320;
+	}
+
+	puVar3 = FindBlowByName("SALTO_KICK_BACK_AIR");
+	if (puVar3 != (s_fighter_blow*)0x0) {
+		puVar3->field_0xc = 0.125f;
+		puVar3->field_0x20.z = 0.25f;
+	}
+
+	this->field_0x187c = 0;
+	this->field_0x1618 = (CActorFighter*)0x0;
 
 	this->inputRotationAnalyser.Reset();
 	this->inputAngleAnalyser.Reset();
@@ -15423,6 +15464,247 @@ void CActorHeroPrivate::TermInputAnalyzers()
 	return;
 }
 
+// PS2: ActorFunc_00347290 (0x00347290).
+void CActorHeroPrivate::ActorFunc_00347290()
+{
+	CSectorManager* pSectorManager;
+	CEventManager* pEventManager;
+	edF32VECTOR4* pBottomPosition;
+	uint uVar3;
+	int sampleIndex;
+	int zoneIndex;
+	HeroProjectileZone* pZone;
+	uint aEventData[5];
+	edF32VECTOR4 sampleStep;
+	edF32VECTOR4 samplePosition;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pSectorManager = CScene::ptable.g_SectorManager_00451670;
+	pZone = this->field_0xe38;
+	zoneIndex = 0;
+	if (0 < this->checkpointCount) {
+		do {
+			if (pZone->sectorId == pSectorManager->baseSector.desiredSectorID) {
+				samplePosition = this->currentLocation;
+				pBottomPosition = GetBottomPosition();
+				edF32Vector4SubHard(&sampleStep, pBottomPosition, &this->currentLocation);
+				if (1 < pZone->nbSamples) {
+					edF32Vector4ScaleHard(1.0f / (float)(pZone->nbSamples + -1), &sampleStep, &sampleStep);
+				}
+				sampleIndex = 0;
+				if (0 < pZone->nbSamples) {
+					do {
+						uVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone->zoneRef.Get(), &samplePosition, 0);
+						if ((uVar3 & 1) != 0) {
+							aEventData[0] = EVENT_PRIM_ZONE_PROJECTILE;
+							memcpy(aEventData + 1, &pZone->projectileType, 4 * sizeof(uint));
+							ReceiveEvent((edCEventMessage*)0x0, 0x16, 5, aEventData);
+							break;
+						}
+						edF32Vector4AddHard(&samplePosition, &samplePosition, &sampleStep);
+						sampleIndex = sampleIndex + 1;
+					} while (sampleIndex < pZone->nbSamples);
+				}
+			}
+			zoneIndex = zoneIndex + 1;
+			pZone = pZone + 1;
+		} while (zoneIndex < this->checkpointCount);
+	}
+	return;
+}
+
+// PS2: ActorFunc_00347660 (0x00347660).
+void CActorHeroPrivate::ActorFunc_00347660()
+{
+	byte bVar1;
+	bool bVar2;
+	CEventManager* pCVar3;
+	uint uVar4;
+	StateConfig* pSVar5;
+	Timer* pTVar6;
+	int iVar7;
+	int iVar8;
+	int iVar9;
+	HeroTutorialZone* pTutorial;
+	float fVar11;
+
+	pCVar3 = CScene::ptable.g_EventManager_006f5080;
+	iVar9 = 0;
+	pTutorial = this->pEventChunk24_0xd24;
+	iVar7 = CLevelScheduler::gThis->currentLevelID;
+	do {
+		if (this->field_0xd20 <= iVar9) {
+			this->field_0xd28 = 0;
+			this->field_0xd30 = 0;
+			this->field_0xd2c = 0.0f;
+			return;
+		}
+		if (2.24f <= CScene::_pinstance->field_0x1c) {
+			LOAD_POINTER_CAST(S_STREAM_EVENT_CAMERA*, pTutorial->pCameraEvent)->Manage(this);
+		}
+		bVar1 = this->field_0xd34[iVar7][iVar9];
+		if ((bVar1 != 1) && (bVar1 != 2)) {
+			uVar4 = edEventComputeZoneAgainstVertex(pCVar3->activeChunkId, pTutorial->zoneRef.Get(),
+				&this->currentLocation, 0);
+			if ((uVar4 & 1) != 0) {
+				uVar4 = pTutorial->flags;
+				if (((uVar4 & 2) == 0) && ((uVar4 & 1) == 0)) {
+					this->field_0xd34[iVar7][iVar9] = 3;
+				}
+				if ((this->field_0xd28 != (HeroTutorialZone*)0x0) &&
+					(this->field_0xd28 != pTutorial)) {
+					this->field_0xd28 = 0;
+					this->field_0xd30 = 0;
+					this->field_0xd2c = 0.0f;
+				}
+				if (this->field_0xd28 == 0) {
+					this->field_0xd28 = pTutorial;
+					if ((pTutorial->flags & 1) != 0) {
+						return;
+					}
+					this->field_0xd30 = 1;
+					return;
+				}
+				if ((this->field_0xd30 != 1) || (uVar4 = pTutorial->action, uVar4 == 0)) {
+					if (this->field_0xd30 != 2) {
+						return;
+					}
+					pTVar6 = Timer::GetTimer();
+					fVar11 = this->field_0xd2c + pTVar6->cutsceneDeltaTime;
+					this->field_0xd2c = fVar11;
+					if (fVar11 <= 1.0f) {
+						return;
+					}
+					this->field_0xd30 = 0;
+					iVar8 = 0;
+					if (2.24f <= CScene::_pinstance->field_0x1c) {
+						S_NTF_TARGET_STREAM_REF* pTargets = LOAD_POINTER_CAST(S_NTF_TARGET_STREAM_REF*, pTutorial->pTargetStreamRef);
+						for (; iVar8 < pTargets->entryCount; iVar8 = iVar8 + 1) {
+							pTargets->aEntries[iVar8].Switch(this);
+						}
+						LOAD_POINTER_CAST(S_STREAM_EVENT_CAMERA*, pTutorial->pCameraEvent)->SwitchOn(this);
+					}
+					if (this->field_0xd34[iVar7][iVar9] != 3) {
+						return;
+					}
+					this->field_0xd34[iVar7][iVar9] = 2;
+					return;
+				}
+				bVar2 = false;
+				switch (uVar4) {
+				case 1:
+					iVar7 = this->actorState;
+					if ((iVar7 == 0x79) || (iVar7 == 0x7c)) {
+						bVar2 = true;
+					}
+					break;
+				case 2:
+					if (this->actorState == 0xa7) {
+						this->field_0xd30 = 2;
+					}
+					break;
+				case 3:
+					uVar4 = TestState_IsCrouched(0xffffffff);
+					if (uVar4 != 0) {
+						bVar2 = true;
+					}
+					break;
+				case 4:
+					if (this->actorState == 0x86) {
+						bVar2 = true;
+					}
+					break;
+				case 5:
+					iVar7 = this->actorState;
+					if (((iVar7 == 0xf0) || (iVar7 == 0xf2)) && (0.3f < this->glideEffort)) {
+						this->field_0xd30 = 2;
+					}
+					break;
+				case 6:
+					if ((this->actorState == 0xe0) &&
+						(1.0f < this->timeInAir)) {
+						this->field_0xd30 = 2;
+					}
+					break;
+				case 8:
+					uVar4 = TestState_IsOnAToboggan(0xffffffff);
+					if (uVar4 != 0) {
+						iVar7 = this->actorState;
+						uVar4 = 0;
+						if (iVar7 != -1) {
+							pSVar5 = GetStateCfg(iVar7);
+							uVar4 = pSVar5->flags_0x4;
+						}
+						if ((uVar4 & 0x100) != 0) {
+							if ((this->pPlayerInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+								fVar11 = 0.0f;
+							}
+							else {
+								fVar11 = this->pPlayerInput->aAnalogSticks[0].y;
+							}
+							if (fVar11 < -0.3f) {
+								bVar2 = true;
+							}
+						}
+					}
+					break;
+				case 9:
+					if (this->actorState == 0x101) {
+						this->field_0xd30 = 2;
+					}
+					break;
+				case 11:
+					if ((this->pPlayerInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+						fVar11 = 0.0f;
+					}
+					else {
+						fVar11 = this->pPlayerInput->aAnalogSticks[1].x;
+					}
+					if (fabsf(fVar11) <= 0.5f) {
+						if ((this->pPlayerInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+							fVar11 = 0.0f;
+						}
+						else {
+							fVar11 = this->pPlayerInput->aAnalogSticks[1].y;
+						}
+						if (fabsf(fVar11) <= 0.5f) break;
+					}
+					bVar2 = true;
+					break;
+				case 12:
+					if ((this->pPlayerInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+						uVar4 = 0;
+					}
+					else {
+						uVar4 = this->pPlayerInput->pressedBitfield & 0x800;
+					}
+					if (uVar4 != 0) {
+						this->field_0xd30 = 2;
+					}
+				}
+				if (!bVar2) {
+					return;
+				}
+				pTVar6 = Timer::GetTimer();
+				fVar11 = this->field_0xd2c + pTVar6->cutsceneDeltaTime;
+				this->field_0xd2c = fVar11;
+				if (fVar11 <= pTutorial->duration) {
+					return;
+				}
+				this->field_0xd30 = 2;
+				this->field_0xd2c = 0.0f;
+				return;
+			}
+			if ((((pTutorial->flags & 2) == 0) &&
+					(this->field_0xd34[iVar7][iVar9] == 3)) && (pTutorial->action == 0)) {
+				this->field_0xd34[iVar7][iVar9] = 2;
+			}
+		}
+		iVar9 = iVar9 + 1;
+		pTutorial = pTutorial + 1;
+	} while (true);
+}
+
 void CActorHeroPrivate::FUN_00347480()
 {
 	int iVar1;
@@ -15453,8 +15735,7 @@ void CActorHeroPrivate::FUN_00347480()
 			eStack192.SetVerticalAlignment(8);
 			pNewFont = edTextStyleGetCurrent();
 			edTextStyleSetCurrent(&eStack192);
-			IMPLEMENTATION_GUARD(
-			pText = gMessageManager.get_message(*static_cast<long*>(*(int*)&this->field_0xd28 + 8));)
+			pText = gMessageManager.get_message(this->field_0xd28->messageKey);
 			edCTextFormat auStack5584;
 			auStack5584.FormatString(pText, uVar3);
 			CPauseManager::DrawRectangleBorder((static_cast<float>(gVideoConfig.screenWidth) + 6.0f) * 0.5f, 100.0f, auStack5584.field_0x8 + 6.0f, auStack5584.field_0xc + 6.0f, 3.0f, 3.0f, 0x40101030, 0, 0);

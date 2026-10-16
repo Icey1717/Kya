@@ -1788,11 +1788,7 @@ void CAudioManager::ClearInternalData()
 {
 	bool bVar1;
 	CDoubleLinkedList<s_sound_3d_data>* pCVar2;
-	float* pfVar3;
-	float* pfVar4;
 	CDoubleLinkedNode<CMusic*>* pCVar5;
-	undefined4* puVar6;
-	float* pfVar7;
 	int iVar8;
 
 	this->nbMaxSamples = 0;
@@ -1858,16 +1854,11 @@ void CAudioManager::ClearInternalData()
 		}
 	}
 
-	//puVar6 = (undefined4*)&this->field_0x268;
-	//pfVar4 = this->field_0x1e8 + 0xf;
-	//pfVar7 = (float*)this->field_0x228;
-	//while (pfVar3 = pfVar4, this->field_0x1e8 < pfVar7) {
-	//	*pfVar3 = 1.0f;
-	//	puVar6 = puVar6 + -1;
-	//	*puVar6 = 4;
-	//	pfVar4 = pfVar3 + -1;
-	//	pfVar7 = pfVar3;
-	//}
+	// PS2 ClearInternalData (0x00185ec0), loop at 0x00186038-0x00186078.
+	for (iVar8 = 0xf; iVar8 >= 0; iVar8 = iVar8 - 1) {
+		this->field_0x1e8[iVar8] = 1.0f;
+		this->field_0x228[iVar8] = 4;
+	}
 
 	this->field_0x26c = 0;
 	this->cellIndex_0x270 = -1;

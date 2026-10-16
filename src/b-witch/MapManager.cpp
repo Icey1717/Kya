@@ -2799,12 +2799,11 @@ void CLevelMap::SetupMatrices()
 		for (currentLevelID = 0; currentLevelID < 0x10; currentLevelID = currentLevelID + 1) {
 			SaveDataChunk_BLMP* pSaveDataChunk_BLMP;
 			if (((currentLevelID != this->field_0x0) && (pSaveDataChunk_BLMP = pLevelScheduler->LoadMapSaveChunk(currentLevelID), pSaveDataChunk_BLMP != (SaveDataChunk_BLMP*)0x0)) && (0 < pSaveDataChunk_BLMP->mapDataSizes.nbRunes)) {
-				IMPLEMENTATION_GUARD(
 				pMVar8 = FindMarkerForLevel(currentLevelID, &local_c0, aMStack2240, 0);
 				if ((pMVar8 != (MapPosition*)0x0) && (static_cast<int>(uVar17) < 0x10)) {
 					local_b0[uVar17] = pMVar8;
 					uVar17 = uVar17 + 1;
-				})
+				}
 			}
 		}
 	}

@@ -110,6 +110,7 @@ public:
 	bool draw_option_type_switch(byte* pValue, ulong helpMsgId, ulong offMsgId, ulong onMsgId);
 	bool draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, ...);
 	bool draw_option_type_list(uint* pValue, ulong helpMsgId, int nbValues, char* pMessage);
+	bool draw_option_type_wheel(int* param_2, ulong param_3, int param_4);
 	bool draw_slider(uint* pValue, ulong helpMsgId, ulong msgId, struct SliderParams* pParams);
 	void draw_slider(long bSelected, long value, struct SliderParams* pParams);
 
@@ -142,6 +143,7 @@ public:
 	virtual void OnChangeValue();
 	virtual void OnChangeWheel();
 	virtual void OnChangeSlider(float value);
+	virtual void Func_0x28();
 
 	float get_time_in_state();
 
@@ -198,12 +200,13 @@ public:
 class CSimpleMenuSound : public CSimpleMenu
 {
 public:
-	virtual void on_validate() override;
-	virtual void on_cancel() override;
-	virtual void on_change_selection() override;
-	virtual void OnChangeValue() override;
-	virtual void OnChangeWheel() override;
-	virtual void OnChangeSlider(float value) override;
+	virtual void on_validate();
+	virtual void on_cancel();
+	virtual void on_change_selection();
+	virtual void OnChangeValue();
+	virtual void OnChangeWheel();
+	virtual void OnChangeSlider(float value);
+	virtual void Func_0x28();
 };
 
 class CPauseManager : public CObjectManager
