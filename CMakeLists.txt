@@ -209,6 +209,8 @@ set(main_src
 	"${src_root}/b-witch/FireShot.h"
 	"${src_root}/b-witch/FrontEndDisp.cpp"
 	"${src_root}/b-witch/FrontEndDisp.h"
+	"${src_root}/b-witch/FrontEndBinoculars.cpp"
+	"${src_root}/b-witch/FrontEndBinoculars.h"
 	"${src_root}/b-witch/FrontEndLife.cpp"
 	"${src_root}/b-witch/FrontEndLife.h"
     "${src_root}/b-witch/FrontEndMagic.cpp"

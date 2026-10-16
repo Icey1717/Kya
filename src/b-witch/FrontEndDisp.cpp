@@ -21,6 +21,7 @@
 #include "FrontEndMoney.h"
 #include "FrontEndEnemy.h"
 #include "FrontEndInventory.h"
+#include "FrontEndBinoculars.h"
 
 struct Bank {
 	Bank() {}
@@ -120,6 +121,7 @@ CFrontendMoney gFrontendMoney;
 CFrontendEnemyCount gFrontendEnemyCount;
 CFrontendEnemyList gFrontendEnemyList;
 CFrontendInventory gFrontendInventory;
+CFrontendBinoculars gFrontendBinoculars;
 
 CFrontendSamplePlayer gFrontendSamplePlayer;
 
@@ -132,7 +134,7 @@ CFrontendDisplay::CFrontendDisplay()
 	this->pFreedWolfun = &gFrontendEnemyCount;
 	this->pFrontendAction = &gFrontendAction;
 	this->pInventory = &gFrontendInventory;
-	//this->pMenuObj_0x74 = (undefined*)&PTR_DAT_004544c0;
+	this->pFrontendBinoculars = &gFrontendBinoculars;
 	this->pFrontendEnemyList = &gFrontendEnemyList;
 	this->pFrontendSamplePlayer = &gFrontendSamplePlayer;
 }
@@ -203,7 +205,7 @@ void CFrontendDisplay::Game_Init()
 	this->pFrontendAction->Init();
 	this->pFrontendEnemyList->Init();
 	this->pInventory->Init();
-	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
+	this->pFrontendBinoculars->Init();
 
 	if (this->bHideHUD == 0) {
 		this->bHideHUD = 1;
@@ -214,6 +216,42 @@ void CFrontendDisplay::Game_Init()
 
 void CFrontendDisplay::Game_Term()
 {
+	CSprite* this_00;
+	int iVar1;
+	ed_sound_sample* pCVar2;
+
+	this->pFrontendBinoculars->Term();
+	this->pInventory->Term();
+	this->pFrontendEnemyList->Term();
+	this->pFrontendAction->Term();
+	this->pFreedWolfun->Term();
+	this->pMoney->Term();
+	this->pMagicOrbs->Term();
+	this->pHealthBar->Term();
+
+	iVar1 = 0;
+	this_00 = MenuBitmaps;
+	do {
+		this_00->Remove();
+		iVar1 = iVar1 + 1;
+		this_00 = this_00 + 1;
+	} while (iVar1 < 0xd);
+
+	ed3DSceneTerm(CFrontend::_scene_handle);
+
+	CFrontend::_scene_handle = reinterpret_cast<ed_3D_Scene*>(0xffffffff);
+
+	edViewportDel(this->pViewport, false);
+
+	this->pViewport = (ed_viewport*)0x0;
+	iVar1 = 0;
+	pCVar2 = this->pFrontendSamplePlayer->aSamples;
+	do {
+		edSoundSampleFree(pCVar2);
+		iVar1 = iVar1 + 1;
+		pCVar2 = pCVar2 + 1;
+	} while (iVar1 < 5);
+
 	return;
 }
 
@@ -235,7 +273,7 @@ void CFrontendDisplay::Level_Init()
 	}
 
 	this->pInventory->Level_Init();
-	//FUN_003c9370((long)(int)this->pMenuObj_0x74);
+	this->pFrontendBinoculars->Level_Init();
 
 	DeclareInterface(FRONTEND_INTERFACE_FREED_WOLFEN, &this->interfaceEnemyCount);
 
@@ -255,7 +293,7 @@ void CFrontendDisplay::Level_Term()
 
 	this->pInventory->Level_Term();
 	this->pFrontendEnemyList->Level_Term();
-	//FUN_003c9330((int)this->pMenuObj_0x74);
+	this->pFrontendBinoculars->Level_Term();
 
 	return;
 }
@@ -273,7 +311,7 @@ void CFrontendDisplay::Level_Manage()
 		this->pFrontendAction->Update(fVar2);
 		this->pFrontendEnemyList->Update(fVar2);
 		this->pInventory->Update(fVar2);
-		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x38))(fVar2);
+		this->pFrontendBinoculars->Update(fVar2);
 	}
 
 	return;
@@ -290,7 +328,7 @@ void CFrontendDisplay::Level_ManagePaused()
 void CFrontendDisplay::Level_Draw()
 {
 	if (this->bHideHUD == 0) {
-		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x3c))();
+		this->pFrontendBinoculars->Draw();
 		this->pHealthBar->Draw();
 		this->pMagicOrbs->Draw();
 		this->pMoney->Draw();
@@ -312,7 +350,7 @@ void CFrontendDisplay::Level_Reset()
 	this->pFrontendAction->Reset();
 	this->pFrontendEnemyList->Reset();
 	this->pInventory->Reset();
-	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x18))();
+	this->pFrontendBinoculars->Reset();
 
 	return;
 }
@@ -331,7 +369,7 @@ void CFrontendDisplay::Level_CheckpointReset()
 	this->pFrontendAction->Reset();
 	this->pFrontendEnemyList->Reset();
 	this->pInventory->CheckpointReset();
-	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x1c))();
+	this->pFrontendBinoculars->CheckpointReset();
 
 	return;
 }
@@ -391,6 +429,9 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 		break;
 	case FRONTEND_INTERFACE_MENU_INVENTORY:
 		this->pInventory->SetInterface(pInterface);
+		break;
+	case FRONTEND_INTERFACE_MENU_0x74:
+		this->pFrontendBinoculars->SetInterface(pInterface);
 		break;
 	default:
 		//IMPLEMENTATION_GUARD();

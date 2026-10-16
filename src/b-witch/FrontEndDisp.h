@@ -88,7 +88,7 @@ struct CFrontendDisplay : public CFrontend
 	class CFrontendAction* pFrontendAction;
 	class CFrontendInventory* pInventory;
 	class CFrontendEnemyList* pFrontendEnemyList;
-	char* pMenuObj_0x74;
+	class CFrontendBinoculars* pFrontendBinoculars;
 	CFrontendSamplePlayer* pFrontendSamplePlayer;
 	undefined field_0x7c;
 	undefined field_0x7d;
