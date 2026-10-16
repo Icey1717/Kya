@@ -2,6 +2,8 @@
 #include "DebugMenu.h"
 #include "Audio.h"
 #include "Settings.h"
+#include "Pause.h"
+#include "SaveManagement.h"
 
 #include "../../Audio/edSoundStreamService.h"
 #include "../../Audio/edSoundSampleService.h"
@@ -11,6 +13,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+
+// The options menu's settings-only save action.
+void FUN_002f33e0(int);
 
 namespace Debug::Audio
 {
@@ -27,13 +32,25 @@ namespace Debug::Audio
 		// changes made in the options menu are reflected here too.
 		int musicVolume = static_cast<int>(std::lround(manager->musicVolume * 12.0f));
 		int sfxVolume = static_cast<int>(std::lround(manager->sfxVolume * 12.0f));
+		bool volumeChanged = false;
 		if (ImGui::SliderInt("Music volume", &musicVolume, 0, 12, "%d / 12", ImGuiSliderFlags_AlwaysClamp)) {
 			gSettings.musicVolume = static_cast<uint>(musicVolume);
 			manager->SetMusicVolume(static_cast<float>(musicVolume) / 12.0f);
+			volumeChanged = true;
 		}
+		bool volumeEditFinished = ImGui::IsItemDeactivatedAfterEdit();
 		if (ImGui::SliderInt("Sound effects volume", &sfxVolume, 0, 12, "%d / 12", ImGuiSliderFlags_AlwaysClamp)) {
 			gSettings.sfxVolume = static_cast<uint>(sfxVolume);
 			manager->SetSfxVolume(static_cast<float>(sfxVolume) / 12.0f);
+			volumeChanged = true;
+		}
+		volumeEditFinished |= ImGui::IsItemDeactivatedAfterEdit();
+		if (volumeChanged && CScene::ptable.g_PauseManager_00451688) {
+			CScene::ptable.g_PauseManager_00451688->field_0x24 = 1;
+		}
+		// Save once the slider is released, rather than writing on every drag frame.
+		if (volumeEditFinished && gSaveManagement.pSettings_0x38) {
+			FUN_002f33e0(0);
 		}
 		if (NoAudio) { ImGui::TextDisabled("Audio is disabled."); }
 	}

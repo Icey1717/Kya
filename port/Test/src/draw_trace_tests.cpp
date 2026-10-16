@@ -4,6 +4,9 @@
 #include "../../DebugMenu/src/DebugTexture.h"
 #include "../../DebugMenu/src/DebugMeshViewer.h"
 #include "imgui.h"
+#include "edDlist.h"
+#include "Rendering/DisplayList.h"
+#include <cstddef>
 #include <thread>
 
 namespace {
@@ -315,6 +318,140 @@ TEST_F(DrawTraceTest, RetiredAddressCannotReactivateOldSelectionAndUnrelatedDest
     EXPECT_TRUE(Trace::IsSourceLive(Trace::GetSnapshot()->sources[0]));
     Trace::SetOverride(old->sources[0], &old->submissions[0], Trace::Action::Isolate, Trace::Match::Source);
     EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+}
+
+TEST_F(DrawTraceTest, SavedStripAndSpriteSelectionsStayLiveAcrossAlternatingBuffersAndDrawCutoff) {
+    for (auto kind : {Trace::Kind::Strip, Trace::Kind::Sprite}) {
+        // Pair registration happens at construction, even before tracing is enabled.
+        Trace::RegisterSourcePair(1000, 300, 301);
+        auto source = Source(); source.kind = kind; source.hierarchy = 0;
+        Capture(); Trace::Link(source); Record(Submit()); Trace::AdvanceFrame();
+        const auto snapshot = Trace::GetSnapshot();
+        ASSERT_NE(snapshot->sources[0].lifetime, 0u);
+        const auto selected = snapshot->sources[0];
+        Trace::SetDrawLimit(*snapshot, snapshot->draws[0]);
+        Trace::AdvanceFrame();
+        for (int frame = 0; frame < 6; ++frame) {
+            source.object = frame % 2 ? 300 : 301;
+            source.node = 110 + frame; // List nodes are transient provenance, not identity.
+            Trace::Link(source);
+            EXPECT_TRUE(Record(Submit(source.node)));
+            EXPECT_FALSE(Record(Submit(source.node)));
+            Trace::AdvanceFrame();
+            EXPECT_TRUE(Trace::IsSourceLive(selected));
+            Trace::Source resolved;
+            ASSERT_TRUE(Trace::ResolveSource(selected, resolved));
+            EXPECT_EQ(resolved.object, source.object);
+            EXPECT_EQ(resolved.lifetime, selected.lifetime);
+        }
+        // Allocation lifetime also survives culling and switching collection off.
+        Trace::AdvanceFrame();
+        EXPECT_TRUE(Trace::IsSourceLive(selected));
+        Trace::Source resolved;
+        EXPECT_FALSE(Trace::ResolveSource(selected, resolved)); // No recent instance to access.
+        Trace::ClearOverrides(); Trace::AdvanceFrame();
+        EXPECT_TRUE(Trace::IsSourceLive(selected));
+        Trace::InvalidateSource(1000);
+        EXPECT_FALSE(Trace::IsSourceLive(selected));
+    }
+}
+
+TEST_F(DrawTraceTest, SavedSourceOverridesMatchBothCopiesButKeepOtherCommandsAndMaterialsSeparate) {
+    Trace::RegisterSourcePair(1000, 300, 301);
+    Trace::RegisterSourcePair(1000, 302, 303);
+    Capture(); Trace::Link(Source()); Record(Submit()); Trace::AdvanceFrame();
+    const auto snapshot = Trace::GetSnapshot();
+    const auto selected = snapshot->sources[0];
+    for (auto action : {Trace::Action::Hide, Trace::Action::Isolate, Trace::Action::Highlight}) {
+        Trace::SetOverride(selected, &snapshot->submissions[0], action, Trace::Match::Source);
+        Trace::AdvanceFrame();
+        for (uintptr_t address : {300, 301, 302, 303}) {
+            auto source = Source(); source.object = address;
+            Trace::Link(source);
+            const auto submission = Submit();
+            const bool match = address == 300 || address == 301;
+            EXPECT_EQ(Record(submission), action == Trace::Action::Hide ? !match : action == Trace::Action::Isolate ? match : true);
+            Trace::Source highlighted;
+            EXPECT_EQ(Trace::Highlight(submission, highlighted), action == Trace::Action::Highlight && match);
+        }
+        auto otherMaterial = Source(); otherMaterial.object = 301; otherMaterial.material = 9;
+        Trace::Link(otherMaterial);
+        EXPECT_EQ(Record(Submit()), action != Trace::Action::Isolate);
+        Trace::AdvanceFrame();
+        EXPECT_EQ(Trace::GetStatus().matches, 2u);
+    }
+    Trace::InvalidateSource(1000);
+}
+
+TEST_F(DrawTraceTest, SavedSourceRetiresOnEitherCopyOrContainerAndCannotReviveAfterReuse) {
+    for (uintptr_t retired : {300, 301, 1000}) {
+        Trace::RegisterSourcePair(1000, 300, 301);
+        Capture(); Trace::Link(Source()); Record(Submit()); Trace::AdvanceFrame();
+        const auto old = Trace::GetSnapshot();
+        Trace::SetOverride(old->sources[0], &old->submissions[0], Trace::Action::Hide, Trace::Match::Source);
+        Trace::AdvanceFrame();
+        // Invalidate after linking too: publishing this frame must not resurrect it.
+        auto peer = Source(); peer.object = 301;
+        Trace::Link(peer); Record(Submit());
+        Trace::InvalidateSource(retired);
+        EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+        Trace::AdvanceFrame();
+        EXPECT_FALSE(Trace::IsSourceLive(old->sources[0]));
+        Trace::Source resolved;
+        EXPECT_FALSE(Trace::ResolveSource(old->sources[0], resolved));
+        Trace::RegisterSourcePair(1000, 300, 301);
+        Capture(); Trace::Link(peer); Record(Submit()); Trace::AdvanceFrame();
+        EXPECT_TRUE(Trace::IsSourceLive(Trace::GetSnapshot()->sources[0]));
+        EXPECT_FALSE(Trace::IsSourceLive(old->sources[0]));
+        Trace::SetOverride(old->sources[0], &old->submissions[0], Trace::Action::Hide, Trace::Match::Source);
+        EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+        Trace::InvalidateSource(1000);
+    }
+}
+
+TEST_F(DrawTraceTest, RebuildingPairAndSceneInvalidationRejectOldSelectionEvenWhenTracingIsOff) {
+    Trace::RegisterSourcePair(1000, 300, 301);
+    Capture();
+    { Trace::SceneScope scene(900, "Scene", 400); Trace::Link(Source()); Record(Submit()); }
+    Trace::AdvanceFrame();
+    const auto old = Trace::GetSnapshot();
+    ASSERT_FALSE(Trace::IsEnabled());
+    Trace::RegisterSourcePair(1000, 300, 301); // Same addresses, new command lifetime.
+    EXPECT_FALSE(Trace::IsSourceLive(old->sources[0]));
+    Capture();
+    { Trace::SceneScope scene(900, "Scene", 400); Trace::Link(Source()); Record(Submit()); }
+    Trace::AdvanceFrame();
+    const auto current = Trace::GetSnapshot();
+    Trace::InvalidateSource(900);
+    EXPECT_FALSE(Trace::IsSourceLive(current->sources[0]));
+    Trace::SetOverride(current->sources[0], &current->submissions[0], Trace::Action::Hide, Trace::Match::Asset);
+    EXPECT_EQ(Trace::GetStatus().action, Trace::Action::None);
+    Trace::InvalidateSources();
+    EXPECT_FALSE(Trace::IsSourceLive(current->sources[0]));
+    Trace::InvalidateSource(1000);
+}
+
+TEST_F(DrawTraceTest, GameSavedListResetAndInPlaceRecreationRetireSelections) {
+    const uint flags = 0x101; // 3D saved commands, with two primitive buffers.
+    const auto bytes = edDListGetBufSizeNeeded(flags, 4, 4, 1, nullptr, nullptr);
+    std::vector<std::max_align_t> storage((bytes + sizeof(std::max_align_t) - 1) / sizeof(std::max_align_t));
+    auto* list = edDListNew(TO_HEAP(H_MAIN), flags, 4, 4, 1, 0, storage.data());
+    const auto container = reinterpret_cast<uintptr_t>(list);
+    for (bool recreate : {false, true}) {
+        const auto first = reinterpret_cast<uintptr_t>(list[0].pCommandBuffer);
+        const auto second = reinterpret_cast<uintptr_t>(list[1].pCommandBuffer);
+        Trace::RegisterSourcePair(container, first, second);
+        auto source = Source(); source.object = first;
+        Capture(); Trace::Link(source); Record(Submit()); Trace::AdvanceFrame();
+        const auto old = Trace::GetSnapshot();
+        EXPECT_TRUE(Trace::IsSourceLive(old->sources[0]));
+        if (recreate) edDListNew(TO_HEAP(H_MAIN), flags, 4, 4, 1, 0, storage.data());
+        else edDListPatchableReset(list, 0xffffffff, 0xffffffff, 0xffffffff);
+        EXPECT_FALSE(Trace::IsSourceLive(old->sources[0]));
+        Trace::Source resolved;
+        EXPECT_FALSE(Trace::ResolveSource(old->sources[0], resolved));
+    }
+    Trace::InvalidateSource(container);
 }
 
 TEST_F(DrawTraceTest, SceneContextRestoresAndSourceOverrideIncludesOtherViewports) {

@@ -87,7 +87,7 @@ class CActorCommander;
 class CActorProjectile;
 class CActorHero;
 
-struct StaticEnemy90
+struct BonePhysicsEntry
 {
 	uint boneHash;
 	uint flags;
@@ -136,7 +136,7 @@ struct CActorBonePhysics
 	virtual void Func_0x18();
 	virtual void Func_0x1c();
 	virtual void Func_0x20();
-	virtual StaticEnemy90* allocateA(uint index);
+	virtual BonePhysicsEntry* allocateA(uint index);
 	virtual ActorBonePhysicsLink* allocateB(uint index);
 	virtual void* Func_0x2c();
 	virtual void Func_0x30();
@@ -154,7 +154,7 @@ struct CActorBonePhysics
 	void ApplyToAnimation();
 	void TransformPoints(edF32MATRIX4* pTransform);
 
-	StaticEnemy90** field_0x0 = nullptr;
+	BonePhysicsEntry** field_0x0 = nullptr;
 	ActorBonePhysicsLink** field_0x4 = nullptr;
 	uint count_0x8 = 0;
 	uint count_0xc = 0;

@@ -94,7 +94,7 @@ void CActorBonePhysics::SetObjCounts(int countA, int countB)
 {
 	count_0x8 = countA;
 	count_0xc = countB == 0 ? countA - 1 : countB;
-	field_0x0 = new StaticEnemy90*[count_0x8]();
+	field_0x0 = new BonePhysicsEntry*[count_0x8]();
 	field_0x4 = new ActorBonePhysicsLink*[count_0xc]();
 	Func_0x1c();
 }
@@ -123,7 +123,7 @@ void CActorBonePhysics::Func_0x18()
 {
 	edF32VECTOR4* pLocation = pEnemy_0x60 == nullptr ? nullptr : &pEnemy_0x60->currentLocation;
 	for (uint i = 0; i < count_0x8; i++) {
-		StaticEnemy90* pPoint = field_0x0[i];
+		BonePhysicsEntry* pPoint = field_0x0[i];
 		pPoint->boneHash = 0;
 		pPoint->flags = 0;
 		pPoint->inverseMass = 0.0f;
@@ -156,7 +156,7 @@ void CActorBonePhysics::Func_0x14(uint flags)
 	}
 	CAnimation* pAnimation = pEnemy_0x60->pAnimationController;
 	for (uint i = 0; i < count_0x8; i++) {
-		StaticEnemy90* pPoint = field_0x0[i];
+		BonePhysicsEntry* pPoint = field_0x0[i];
 		int index = pAnimation->GetBoneIndex(pPoint->boneHash);
 		if (index < 0) continue;
 		edF32MATRIX4 boneMatrix;
@@ -206,9 +206,9 @@ void CActorBonePhysics::Func_0x20()
 }
 
 // 0035b070 / 0035b0a0 / 0035b0d0
-StaticEnemy90* CActorBonePhysics::allocateA(uint)
+BonePhysicsEntry* CActorBonePhysics::allocateA(uint)
 {
-	return new StaticEnemy90{};
+	return new BonePhysicsEntry{};
 }
 
 ActorBonePhysicsLink* CActorBonePhysics::allocateB(uint)
@@ -228,7 +228,7 @@ void CActorBonePhysics::Func_0x3c(int, edF32VECTOR4*, edF32VECTOR4*) {}
 void CActorBonePhysics::TransformPoints(edF32MATRIX4* pTransform)
 {
 	for (uint i = 0; i < count_0x8; i++) {
-		StaticEnemy90* pPoint = field_0x0[i];
+		BonePhysicsEntry* pPoint = field_0x0[i];
 		edF32Matrix4MulF32Vector4Hard(&pPoint->position, pTransform, &pPoint->position);
 		edF32Matrix4MulF32Vector4Hard(&pPoint->previousPosition, pTransform, &pPoint->previousPosition);
 	}
@@ -238,8 +238,8 @@ void CActorBonePhysics::TransformPoints(edF32MATRIX4* pTransform)
 void CActorBonePhysics::Func_0x34(int index)
 {
 	ActorBonePhysicsLink* pLink = field_0x4[index];
-	StaticEnemy90* pA = field_0x0[pLink->pointA];
-	StaticEnemy90* pB = field_0x0[pLink->pointB];
+	BonePhysicsEntry* pA = field_0x0[pLink->pointA];
+	BonePhysicsEntry* pB = field_0x0[pLink->pointB];
 	edF32VECTOR4 direction;
 	edF32Vector4SubHard(&direction, &pB->position, &pA->position);
 	float distance = edF32Vector4SafeNormalize0Hard(&direction, &direction);
@@ -269,7 +269,7 @@ void CActorBonePhysics::Simulate(uint iterations)
 {
 	float dt = GetTimer()->cutsceneDeltaTime;
 	for (uint i = 0; i < count_0x8; i++) {
-		StaticEnemy90* pPoint = field_0x0[i];
+		BonePhysicsEntry* pPoint = field_0x0[i];
 		edF32VECTOR4 velocity;
 		edF32VECTOR4 force;
 		AddVector(&force, &pPoint->acceleration, &pPoint->gravity);
@@ -299,7 +299,7 @@ void CActorBonePhysics::ApplyToAnimation()
 		field_0x14 == 0.0f) return;
 	CAnimation* pAnimation = pEnemy_0x60->pAnimationController;
 	for (uint i = 0; i < count_0x8; i++) {
-		StaticEnemy90* pPoint = field_0x0[i];
+		BonePhysicsEntry* pPoint = field_0x0[i];
 		if ((pPoint->flags & 1) != 0 || pPoint->inverseMass == 0.0f) continue;
 		int index = pAnimation->GetBoneIndex(pPoint->boneHash);
 		if (index < 0) continue;
@@ -529,8 +529,8 @@ void CWolfenSharedBonePhysics::Func_0x30()
 {
 	for (uint i = 0; i < count_0xc; i++) {
 		ActorBonePhysicsLink* pLink = field_0x4[i];
-		StaticEnemy90* pA = field_0x0[pLink->pointA];
-		StaticEnemy90* pB = field_0x0[pLink->pointB];
+		BonePhysicsEntry* pA = field_0x0[pLink->pointA];
+		BonePhysicsEntry* pB = field_0x0[pLink->pointB];
 		edF32VECTOR4 direction;
 		edF32Vector4SubHard(&direction, &pB->position, &pA->position);
 		float distance = edF32Vector4SafeNormalize0Hard(&direction, &direction);
@@ -617,8 +617,8 @@ void CWolfenFullBodyPhysics::Func_0x34(int index)
 	CActorBonePhysics::Func_0x34(index);
 	ActorBonePhysicsLink* pLink = field_0x4[index];
 	if (pLink->constraintType == 0 || pLink->constraintType > 4) return;
-	StaticEnemy90* pA = field_0x0[pLink->pointA];
-	StaticEnemy90* pB = field_0x0[pLink->pointB];
+	BonePhysicsEntry* pA = field_0x0[pLink->pointA];
+	BonePhysicsEntry* pB = field_0x0[pLink->pointB];
 	edF32VECTOR4 direction;
 	edF32Vector4SubHard(&direction, &pA->position, &pB->position);
 	float length = edF32Vector4SafeNormalize0Hard(&direction, &direction);
@@ -652,7 +652,7 @@ void CWolfenFullBodyPhysics::Func_0x34(int index)
 // 003c1180: keep mobile points outside the reference body's unit sphere.
 void CWolfenFullBodyPhysics::Func_0x38(int index)
 {
-	StaticEnemy90* pPoint = field_0x0[index];
+	BonePhysicsEntry* pPoint = field_0x0[index];
 	pPoint->flags &= ~2u;
 	if (pPoint->inverseMass == 0.0f || pEnemy_0x60 == nullptr ||
 		pEnemy_0x60->pMeshTransform == nullptr) return;
@@ -767,7 +767,7 @@ void CBrazulBonePhysics::ChangeState(const BrazulStateStruct* pState)
 			uint group = pNewState->field_0x6;
 			for (uint i = 0; i < count_0x8; i++) {
 				const uint32_t* pData = gBrazulPointStates + group * 256 + i * 16;
-				StaticEnemy90* pPoint = field_0x0[i];
+				BonePhysicsEntry* pPoint = field_0x0[i];
 				std::memcpy(&pPoint->rotation, pData, 16);
 				std::memcpy(&pPoint->field_0x30, pData + 8, 16);
 				std::memcpy(&pPoint->scale, pData + 12, 16);
@@ -855,8 +855,8 @@ void CBrazulBonePhysics::Func_0x34(int index)
 	CActorBonePhysics::Func_0x34(index);
 	ActorBonePhysicsLink* pLink = field_0x4[index];
 	if (pLink->parentLink == 0xffff && (pLink->constraintType & 1) == 0) return;
-	StaticEnemy90* pA = field_0x0[pLink->pointA];
-	StaticEnemy90* pB = field_0x0[pLink->pointB];
+	BonePhysicsEntry* pA = field_0x0[pLink->pointA];
+	BonePhysicsEntry* pB = field_0x0[pLink->pointB];
 	edF32VECTOR4 localDirection;
 	edF32Vector4SubHard(&localDirection, &pB->position, &pA->position);
 	float length = edF32Vector4SafeNormalize0Hard(&localDirection, &localDirection);

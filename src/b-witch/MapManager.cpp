@@ -1393,6 +1393,29 @@ void CMapManager::Func_003f81c0()
 	return;
 }
 
+void CMapManager::SetupFunc_003f8150()
+{
+	(this->field_0x338).field_0x0 = 0x62;
+	(this->field_0x338).field_0x4 = 6;
+	(this->field_0x338).hash = 0;
+	(this->field_0x338).field_0x10 = 0x10;
+	(this->field_0x338).field_0x14 = 0;
+	(this->field_0x338).hash_2 = 0;
+
+	(this->field_0x358).field_0x0 = (this->field_0x338).field_0x0;
+	(this->field_0x358).field_0x4 = (this->field_0x338).field_0x4;
+	(this->field_0x358).hash = (this->field_0x338).hash;
+	(this->field_0x358).field_0x10 = (this->field_0x338).field_0x10;
+	(this->field_0x358).field_0x14 = (this->field_0x338).field_0x14;
+	(this->field_0x358).hash_2 = (this->field_0x338).hash_2;
+
+	this->field_0x334 = 0;
+	this->field_0x330 = 0.0f;
+	this->field_0x37c = 0.0f;
+
+	return;
+}
+
 void CMapManager::Game_Init()
 {
 	(this->field_0x58).field_0x0.x = 0.0f;

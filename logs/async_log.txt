@@ -1,0 +1,4 @@
+edDListNew heapID=0x1 flags=0x101 nbCommands=4 param_4=4 nbMatrices=1 param_6=0 pInBuffer=0x181f36225a0 displayListMemSize=9136
+
+edDListNew heapID=0x1 flags=0x101 nbCommands=4 param_4=4 nbMatrices=1 param_6=0 pInBuffer=0x181f36225a0 displayListMemSize=9136
+

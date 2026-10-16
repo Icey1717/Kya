@@ -147,6 +147,20 @@ TEST_F(ElectrollaTest, ChargingUpdatesTheBonePositionAndWaitsForItsDelay)
 	EXPECT_LE(actor.field_0x18c, 0.6f);
 }
 
+TEST_F(ElectrollaTest, ChargingRandomScaleStaysWithinThePs2RangeAcrossSamples)
+{
+	actor.actorState = static_cast<EActorState>(ELECTROLLA_STATE_CHARGE);
+	actor.field_0x1a0 = 0.0f;
+	actor.field_0x194 = 1.0f;
+	GetTimer()->cutsceneDeltaTime = 0.0f;
+	// The first PS2 RNG sample can be zero, hiding a host RAND_MAX mismatch.
+	for (int i = 0; i < 64; ++i) {
+		actor.behaviourStand.Manage();
+		ASSERT_GE(actor.field_0x18c, 0.36f);
+		ASSERT_LE(actor.field_0x18c, 0.6f);
+	}
+}
+
 TEST_F(ElectrollaTest, CooldownUsesTheOriginalBoundaryAndRestoresTheBoundingSphere)
 {
 	actor.actorState = static_cast<EActorState>(ELECTROLLA_STATE_COOLDOWN);

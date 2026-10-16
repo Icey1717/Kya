@@ -23,6 +23,11 @@ std::unordered_map<Address, size_t> nodes;
 std::unordered_map<uint64_t, size_t> sourceIndices, submissionIndices;
 std::unordered_map<Address, Source> owners;
 std::vector<Source> liveSources;
+struct SourcePair { uint64_t lifetime; Address container, peer; };
+// One entry per live saved primitive copy, removed on overwrite/reset/delete.
+// Unlike per-frame provenance these registrations must survive tracing being off.
+std::unordered_map<Address, SourcePair> sourcePairs;
+uint64_t nextLifetime = 0;
 // Tombstones distinguish a freed address from a later allocation at the same address.
 std::unordered_map<Address, uint64_t> retiredAt;
 thread_local Source currentOwner;
@@ -43,13 +48,19 @@ bool Reserve(size_t size) {
     return true;
 }
 bool SameSource(const Source& a, const Source& b) {
-    return a.generation == b.generation && a.kind == b.kind && a.object == b.object &&
+    const bool sameObject = a.lifetime || b.lifetime ? a.lifetime && a.lifetime == b.lifetime : a.object == b.object;
+    return a.generation == b.generation && a.kind == b.kind && sameObject &&
         a.hierarchy == b.hierarchy && a.owner == b.owner && a.scene == b.scene && a.material == b.material;
 }
 bool UsesAddress(const Source& source, Address address) {
-    return address && (source.object == address || source.hierarchy == address || source.owner == address || source.scene == address);
+    return address && (source.object == address || source.hierarchy == address || source.owner == address || source.scene == address ||
+        source.container == address || source.peer == address);
 }
 bool Retired(const Source& source) {
+    if (source.lifetime) {
+        auto pair = sourcePairs.find(source.object);
+        if (pair == sourcePairs.end() || pair->second.lifetime != source.lifetime) return true;
+    }
     for (const auto address : {source.object, source.hierarchy, source.owner, source.scene}) {
         auto found = retiredAt.find(address);
         if (found != retiredAt.end() && source.id <= found->second) return true;
@@ -57,6 +68,7 @@ bool Retired(const Source& source) {
     return false;
 }
 bool Matches(const Source& source, const Submission& submission) {
+    if (Retired(source) || Retired(active.source)) return false;
     if (active.match == Match::Source) return SameSource(source, active.source);
     return source.generation == active.source.generation && source.kind == active.source.kind &&
         submission.assetKey == active.assetKey;
@@ -142,6 +154,11 @@ void InvalidateSource(Address address) {
         ++generation; retiredAt.clear(); liveSources.clear(); requested = {}; active = {};
     }
     retiredAt[address] = nextSource;
+    for (auto it = sourcePairs.begin(); it != sourcePairs.end();) {
+        if (it->first == address || it->second.peer == address || it->second.container == address)
+            it = sourcePairs.erase(it);
+        else ++it;
+    }
     if (UsesAddress(requested.source, address)) requested = {};
     if (UsesAddress(active.source, address)) active = {};
     liveSources.erase(std::remove_if(liveSources.begin(), liveSources.end(),
@@ -153,6 +170,17 @@ void InvalidateSource(Address address) {
         if (it->first == address || it->second.owner == address) it = owners.erase(it); else ++it;
     }
     enabled.store(capturing || active.action != Action::None, std::memory_order_relaxed);
+}
+
+void RegisterSourcePair(Address container, Address first, Address second) {
+    if (!container || !first || !second || first == second) return;
+    // Also retires any earlier occupant of these addresses and its overrides.
+    InvalidateSource(first);
+    InvalidateSource(second);
+    std::lock_guard lock(mutex);
+    const auto lifetime = ++nextLifetime;
+    sourcePairs[first] = {lifetime, container, second};
+    sourcePairs[second] = {lifetime, container, first};
 }
 
 void RegisterOwner(Address hierarchy, Address owner, const char* name, int index, int type, int sector) {
@@ -186,6 +214,12 @@ void Link(Source source) {
     if (!Reserve(sizeof(Source))) return;
     source.id = ++nextSource;
     source.generation = generation;
+    source.lifetime = 0; source.container = source.peer = 0;
+    if (auto pair = sourcePairs.find(source.object); pair != sourcePairs.end()) {
+        source.lifetime = pair->second.lifetime;
+        source.container = pair->second.container;
+        source.peer = pair->second.peer;
+    }
     source.bank = currentBank;
     source.scene = currentScene;
     source.sceneName = currentSceneName;
@@ -282,9 +316,19 @@ bool Highlight(uint64_t submissionId, Source& source) {
 }
 bool IsSourceLive(const Source& source) {
     std::lock_guard lock(mutex);
-    // Fresh snapshots can be acted on while collection is off. Destruction hooks invalidate the generation.
-    return source.generation == generation && !Retired(source) && std::any_of(liveSources.begin(), liveSources.end(),
-        [&](const Source& other) { return SameSource(source, other); });
+    // Registered pairs have an explicit lifetime independent of visibility or buffer parity.
+    // Other sources require a matching linked identity as well as destruction tombstones.
+    return source.generation == generation && !Retired(source) && (source.lifetime ||
+        std::any_of(liveSources.begin(), liveSources.end(),
+            [&](const Source& other) { return !Retired(other) && SameSource(source, other); }));
+}
+bool ResolveSource(const Source& source, Source& resolved) {
+    std::lock_guard lock(mutex);
+    if (source.generation != generation || Retired(source)) return false;
+    for (const auto& other : liveSources) {
+        if (!Retired(other) && SameSource(source, other)) { resolved = other; return true; }
+    }
+    return false;
 }
 void SetOverride(const Source& source, const Submission* submission, Action action, Match match) {
     std::lock_guard lock(mutex);

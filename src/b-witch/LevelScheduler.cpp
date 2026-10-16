@@ -494,7 +494,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	float fVar1;
 	float fVar2;
 	float fVar3;
-	//MapManager* pMVar4;
+	CMapManager* pMVar4;
 	ScenarioVariable* pSVar5;
 	int iVar6;
 	ObjectiveEntry* pLVar7;
@@ -591,8 +591,8 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 		} while (iVar9 < this->nbNativShopSubObjs);
 	}
 
-	//pMVar4 = (MapManager*)CScene::GetManager(MO_Map);
-	//MapManager::SetupFunc_003f8150(pMVar4);
+	pMVar4 = (CMapManager*)CScene::GetManager(MO_Map);
+	pMVar4->SetupFunc_003f8150();
 
 	return;
 }

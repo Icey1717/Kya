@@ -16,6 +16,9 @@ enum class Match { Source, Asset };
 
 struct Source {
     uint64_t id = 0, generation = 0;
+    // Explicitly paired saved display-list primitives share an allocation lifetime.
+    uint64_t lifetime = 0;
+    Address container = 0, peer = 0;
     Kind kind = Kind::Strip;
     Address node = 0, object = 0, hierarchy = 0, viewport = 0, scene = 0, list = 0, bank = 0, owner = 0;
     int material = -1, ownerIndex = -1, ownerType = -1, sector = -1, renderList = -1;
@@ -80,6 +83,8 @@ Status GetStatus();
 void AdvanceFrame();
 void InvalidateSources();
 void InvalidateSource(Address address);
+// Called even while tracing is off. Rebuilding either primitive retires the pair.
+void RegisterSourcePair(Address container, Address first, Address second);
 void Link(Source source);
 void RegisterOwner(Address hierarchy, Address owner, const char* name, int index, int type, int sector);
 
@@ -122,4 +127,6 @@ void SetOverride(const Source& source, const Submission* submission, Action acti
 void SetDrawLimit(const Snapshot& snapshot, const Draw& draw);
 void ClearOverrides();
 bool IsSourceLive(const Source& source);
+// Resolve snapshot metadata to a validated, recently linked physical instance.
+bool ResolveSource(const Source& source, Source& resolved);
 }

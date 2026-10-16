@@ -205,6 +205,7 @@ struct CMapManager : public CObjectManager
 	edDList_material* GetDlistMaterial(int index);
 	void DrawButtons(char* pText);
 	void Func_003f81c0();
+	void SetupFunc_003f8150();
 
 #ifdef PLATFORM_WIN
 	virtual char* ProfileGetName() { return "Map"; }

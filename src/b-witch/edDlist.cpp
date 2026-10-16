@@ -30,6 +30,7 @@
 #include "Texture.h"
 #include "displaylist.h"
 #include "Mesh.h"
+#include "DrawTrace.h"
 #endif
 
 #define EDDLIST_LOG(level, format, ...) MY_LOG_NAMED_CATEGORY(EdDList, level, format, ##__VA_ARGS__)
@@ -2330,6 +2331,10 @@ DisplayListSTFunc gTableAddSTFUNC_3D[13] =
 
 void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 {
+#ifdef PLATFORM_WIN
+	// PS2 edDListBegin (0x002ca170) constructs both saved-command copies here.
+	uintptr_t tracePeer = 0;
+#endif
 	edpkt_data* pRVar1;
 	int cachedNbStateAdded;
 	void* pCachedDListBuf;
@@ -2345,6 +2350,11 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 		gCurDList = pDisplayList;
 
 		edDListBegin(x, y, z, primType, nbVertex);
+#ifdef PLATFORM_WIN
+		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_3D) && gCurInfPosForBegin < gCurDList->nbCommands) {
+			tracePeer = reinterpret_cast<uintptr_t>(gCurDList->aCommands[gCurInfPosForBegin].pRenderInput.pStrip);
+		}
+#endif
 		gCurDList->field_0x10 = (edpkt_data*)gCurDListBuf;
 
 		gbInsideBegin = false;
@@ -2404,6 +2414,10 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 	}
 
 	pCommand = gCurDList->aCommands + gCurDList->nbCommands;
+#ifdef PLATFORM_WIN
+	// A newly built primitive replaces the previous occupant, even with tracing off.
+	Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(gCurDListBuf));
+#endif
 
 	if (gNbMatrixInArray < 1) {
 		pCommand->nbMatrix = 0;
@@ -2451,6 +2465,13 @@ LAB_002ca38c:
 	gAddColorFUNC = gTableAddColorFUNC_3D[uVar5];
 	gAddSTFUNC = gTableAddSTFUNC_3D[uVar5];
 
+#ifdef PLATFORM_WIN
+	if (tracePeer && gCurInfPosForBegin < gCurDList->nbCommands &&
+		pCommand == gCurDList->aCommands + gCurInfPosForBegin) {
+		Renderer::DrawTrace::RegisterSourcePair(reinterpret_cast<uintptr_t>(gCurDListHandle),
+			reinterpret_cast<uintptr_t>(pCommand->pRenderInput.pStrip), tracePeer);
+	}
+#endif
 	return;
 }
 
@@ -3403,6 +3424,10 @@ void edDListEnd(void)
 
 void edDListPatchableReset(DisplayList* pList, uint nbCommands, uint nbInstances, uint nbMatrices)
 {
+#ifdef PLATFORM_WIN
+	// PS2 0x002d0dd0: reset rewinds both command/data buffers.
+	Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pList));
+#endif
 	ed_3D_Scene* pStaticMeshMaster;
 	DisplayList* pDVar1;
 	uint uVar2;
@@ -3556,6 +3581,10 @@ DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList)
 
 void edDListSetBuffer(DisplayList* aDisplayLists, uint* pDataBuf, uint dataBufferSize, ushort flags, void* pCommandBuf, uint commandBufferSize, uint nbMaxCommands, uint bAllScenes)
 {
+#ifdef PLATFORM_WIN
+	// PS2 0x002cad90: both buffers are rebound, including in-place recreation.
+	Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(aDisplayLists));
+#endif
 	int iVar1;
 	DisplayList* pCurDisplayList;
 	uint dblBufferIndex;
@@ -3672,6 +3701,10 @@ DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int nbInstance
 
 void edDListDelete(DisplayList* pDisplayList)
 {
+#ifdef PLATFORM_WIN
+	// PS2 0x002cb160: retire before either buffer can be freed.
+	Renderer::DrawTrace::InvalidateSource(reinterpret_cast<uintptr_t>(pDisplayList));
+#endif
 	ushort dlistFlags;
 	DisplayList* __dest;
 	int __n;

@@ -13,6 +13,11 @@
 static float scanDelay = 2.0f;
 static float scanUp = 2.0f;
 static float scanDown = 0.5f;
+// PS2 Draw (0x0013133c) and Manage (0x00130688, 0x001307dc,
+// 0x00130894, 0x001308dc, 0x00130a38, 0x00130b7c, 0x00130d4c,
+// 0x00130d98) load 0x4f000000. randImpl returns 31 bits on PC too;
+// the host CRT's RAND_MAX can describe a different RNG range.
+static const float randomMax = 2147483648.0f;
 
 StateConfig CActorElectrolla::_gStateCfg_ELE[8] =
 {
@@ -274,7 +279,7 @@ void CActorElectrolla::Draw()
 		if (pPatch != (CGlobalDListPatch*)0x0) {
 			edF32Matrix4CopyHard(&pPatch->pCurrentPatch->pDisplayListCommand->matrix, &transform);
 			_rgba color = this->field_0x190;
-			color.a = static_cast<byte>(this->field_0x190.a * 0.5f + this->field_0x190.a * (static_cast<float>(rand()) / RAND_MAX) * 0.4f);
+			color.a = static_cast<byte>(this->field_0x190.a * 0.5f + this->field_0x190.a * (static_cast<float>(rand()) / randomMax) * 0.4f);
 
 			for (int i = 0; i < 4; i++) {
 				pPatch->pCurrentPatch->pRgba[i] = color;
@@ -386,7 +391,7 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 	case ELECTROLLA_STATE_CHARGE:
 		this->field_0x188 = 1.0f;
 		this->field_0x190 = _rgba(0x80f09614);
-		this->field_0x18c = (static_cast<float>(rand()) / RAND_MAX) * 0.4f * 0.6f + 0.36f;
+		this->field_0x18c = (static_cast<float>(rand()) / randomMax) * 0.4f * 0.6f + 0.36f;
 		if (this->field_0x194 <= this->field_0x1a0) {
 			hitParams.projectileType = 5;
 			hitParams.field_0x30 = 0.0f;
@@ -406,7 +411,7 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 						}
 						else {
 							target = pActor->currentLocation;
-							target.y = target.y + (static_cast<float>(rand()) / RAND_MAX) * 0.5f + 0.5f;
+							target.y = target.y + (static_cast<float>(rand()) / randomMax) * 0.5f + 0.5f;
 						}
 
 						this->field_0x170[this->field_0x1a4].Reset();
@@ -418,9 +423,9 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 			}
 
 			while (this->field_0x1a4 < this->field_0x174) {
-				target.x = (this->field_0x160.x + (static_cast<float>(rand()) / RAND_MAX) * 3.0f) - 1.5f;
+				target.x = (this->field_0x160.x + (static_cast<float>(rand()) / randomMax) * 3.0f) - 1.5f;
 				target.y = this->currentLocation.y;
-				target.z = (this->field_0x160.z + (static_cast<float>(rand()) / RAND_MAX) * 3.0f) - 1.5f;
+				target.z = (this->field_0x160.z + (static_cast<float>(rand()) / randomMax) * 3.0f) - 1.5f;
 				target.w = 1.0f;
 				this->field_0x170[this->field_0x1a4].Reset();
 				i = this->field_0x1a4;
@@ -437,7 +442,7 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 	case ELECTROLLA_STATE_DISCHARGE:
 		this->field_0x188 = 1.0f;
 		this->field_0x190 = _rgba(0x80f09614);
-		this->field_0x18c = (static_cast<float>(rand()) / RAND_MAX) * 0.4f * 0.6f + 0.36f;
+		this->field_0x18c = (static_cast<float>(rand()) / randomMax) * 0.4f * 0.6f + 0.36f;
 
 		if (this->field_0x1a0 < this->field_0x198) {
 			_gELE_Lights.Update(reinterpret_cast<CActInstance*>(this), &this->field_0x160);
@@ -461,7 +466,7 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 					}
 					else {
 						target = pActor->currentLocation;
-						target.y = target.y + (static_cast<float>(rand()) / RAND_MAX) * 0.5f + 0.5f;
+							target.y = target.y + (static_cast<float>(rand()) / randomMax) * 0.5f + 0.5f;
 					}
 
 					i = this->field_0x1a4;
@@ -483,9 +488,9 @@ void CActorElectrolla::BehaviourElectrolla_Manage()
 			}
 
 			while (this->field_0x1a4 < this->field_0x174) {
-				target.x = (this->field_0x160.x + (static_cast<float>(rand()) / RAND_MAX) * 3.0f) - 1.5f;
+				target.x = (this->field_0x160.x + (static_cast<float>(rand()) / randomMax) * 3.0f) - 1.5f;
 				target.y = this->currentLocation.y;
-				target.z = (this->field_0x160.z + (static_cast<float>(rand()) / RAND_MAX) * 3.0f) - 1.5f;
+				target.z = (this->field_0x160.z + (static_cast<float>(rand()) / randomMax) * 3.0f) - 1.5f;
 				target.w = 1.0f;
 				i = this->field_0x1a4;
 				this->field_0x1a4 = i + 1;

@@ -278,10 +278,12 @@ namespace DebugMeshViewer {
 	{
 		if (!gDrawSelection) return;
 		const auto& selection = *gDrawSelection;
+		Renderer::DrawTrace::Source currentSource;
+		if (!Renderer::DrawTrace::ResolveSource(selection.source, currentSource)) { gDrawSelection.reset(); return; }
 		auto* texture = Debug::Texture::FindDrawTexture(selection.source, selection.draw);
 		if (!texture) { gDrawSelection.reset(); return; }
 		// The lifetime check above precedes the cache lookup and any source access.
-		auto* strip = Renderer::Kya::GetMeshLibrary().FindStrip(reinterpret_cast<const ed_3d_strip*>(selection.source.object));
+		auto* strip = Renderer::Kya::GetMeshLibrary().FindStrip(reinterpret_cast<const ed_3d_strip*>(currentSource.object));
 		auto* mesh = strip ? strip->GetSimpleMesh(selection.submission.layer) : nullptr;
 		if (!mesh || Renderer::DrawTrace::AssetKey(mesh->GetName().c_str()) != selection.submission.assetKey) {
 			gDrawSelection.reset(); return;

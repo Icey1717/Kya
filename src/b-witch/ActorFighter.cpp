@@ -8056,6 +8056,17 @@ void CBehaviourFighter::Manage()
 	case 0x6b:
 		pFighter->_StateFighterExecuteGrab();
 		break;
+	case 0x6c:
+		pFighter->_ManageFighterDyn((pFighter->pExecutingGrab->field_0xa0).flags, 0x40323, (CActorsTable*)0x0);
+		
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			CBehaviourFighter* pBehaviourFighter = static_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+			pFighter->scalarDynForward.Reset();
+			pFighter->scalarDynLateral.Reset();
+			pFighter->scalarDynJump.Reset();
+			pBehaviourFighter->SetInitialState();
+		}
+		break;
 	case 0x6d:
 		pFighter->_ManageFighterDyn(0xd, 0x1002023b, (CActorsTable*)0x0);
 
