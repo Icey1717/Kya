@@ -663,6 +663,11 @@ CPathFinderClient* CActorNativ::GetPathfinderClient()
 	return &this->pathFinderClient;
 }
 
+CPathFinderClient* CActorNativ::GetPathfinderClientAlt()
+{
+	return &this->pathFinderClient;
+}
+
 void CActorNativ::InitActionsTable()
 {
 	CBehaviour* pCVar1;

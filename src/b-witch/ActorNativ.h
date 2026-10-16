@@ -369,6 +369,7 @@ public:
 
 	// CActorAutonomous
 	virtual CPathFinderClient* GetPathfinderClient();
+	virtual CPathFinderClient* GetPathfinderClientAlt();
 
 	void InitActionsTable();
 	void ClearLocalData();

@@ -233,6 +233,7 @@ public:
 	virtual void Manage();
 	virtual void Draw();
 	virtual void ComputeLighting();
+	virtual bool Can_0x9c();
 
 	virtual void PreCheckpointReset();
 	virtual void CheckpointReset();
@@ -249,9 +250,11 @@ public:
 
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 
+	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);
 
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+	virtual CPlayerInput* GetInputManager(int, int);
 
 	virtual bool IsMakingNoise();
 
@@ -277,7 +280,9 @@ public:
 
 	// CActorFighter
 	virtual void SetInitialState();
+	virtual float GetRunSpeed();
 	virtual void ProcessDeath();
+	virtual bool IsAlive();
 	virtual void EnableFightCamera(int bEnable);
 	virtual void AcquireAdversary();
 	virtual edF32VECTOR4* GetAdversaryPos();
@@ -288,6 +293,7 @@ public:
 	virtual bool Func_0x1a8();
 	virtual bool Func_0x1b0(CActor* pOther);
 	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
+	virtual void _Std_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 	virtual void _Execute_Hold(s_fighter_action* pAction, s_fighter_action_param* pParam);
 

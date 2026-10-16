@@ -1862,6 +1862,9 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	//int local_c0[48];
 
 	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} pTranslation: {}", pActor->name, pTranslation->ToString());
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} begin collisionFlags: 0x{:x} contactFlags: 0x{:x} updateContacts: {} highestVertexY: {:.6f} translation: ({:.6f}, {:.6f}, {:.6f}) entries: {}",
+		pActor->name, this->flags_0x0, this->flags_0x4, param_4, this->highestVertex.y,
+		pTranslation->x, pTranslation->y, pTranslation->z, gColData.pActiveDatabase->curDbEntryCount);
 
 	ColHeapEntryB stack0xfffffdb0[2][3];
 
@@ -1928,6 +1931,12 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 		}
 
 		primFlags = pColDbObj->flags;
+		COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} contact {} aType: 0x{:x} bType: 0x{:x} otherActor: {} flags: 0x{:x} depth: {:.6f} location: ({:.6f}, {:.6f}, {:.6f}) normal: ({:.6f}, {:.6f}, {:.6f}) polygonNormal: ({:.6f}, {:.6f}, {:.6f})",
+			pActor->name, pColDbObj - gColData.pActiveDatabase->aDbEntries, pColDbObj->aType, pColDbObj->bType,
+			pColDbObj->pOtherColObj && pColDbObj->pOtherColObj->pActor ? LOAD_POINTER_CAST(CActor*, pColDbObj->pOtherColObj->pActor)->name : "scenery/no actor",
+			primFlags, pColDbObj->depth, pColDbObj->location.x, pColDbObj->location.y, pColDbObj->location.z,
+			pColDbObj->field_0x40.x, pColDbObj->field_0x40.y, pColDbObj->field_0x40.z,
+			pColDbObj->field_0x50.x, pColDbObj->field_0x50.y, pColDbObj->field_0x50.z);
 
 		if (pColDbObj->depth < 0.0f) {
 			pReceiver = (CActor*)0x0;
@@ -1997,6 +2006,10 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 			}
 
 			materialIndex = primFlags & 0xf;
+			if (pColDbObj->depth >= 0.0f) {
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} contact {} depth cleared before classification: {:.6f}",
+					pActor->name, pColDbObj - gColData.pActiveDatabase->aDbEntries, pColDbObj->depth);
+			}
 
 			if (pColDbObj->depth < 0.0f) {
 				if (materialIndex == 0) {
@@ -2048,6 +2061,13 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 						}
 					}
 				}
+
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} classify contact {} material: {} slopeLimit: {:.6f} heightDelta: {:.6f} heightLimit: {:.6f} normalDot: {:.6f} polygonNormalY: {:.6f} contactCategory: {} responseCategory: {} source: {} (0=wall 1=ground 2=ceiling 3=rejected)",
+					pActor->name, pColDbObj - gColData.pActiveDatabase->aDbEntries, materialIndex,
+					CCollisionManager::_material_table[materialIndex].field_0x8, pColDbObj->location.y - this->highestVertex.y,
+					(this->flags_0x0 & 0x10) != 0 ? 0.205f : 0.05f,
+					pColDbObj->field_0x40.x * pColDbObj->field_0x50.x + pColDbObj->field_0x40.y * pColDbObj->field_0x50.y + pColDbObj->field_0x40.z * pColDbObj->field_0x50.z,
+					pColDbObj->field_0x50.y, uVar10, uVar17, iVar14 == 0 ? "scenery" : "actor");
 
 				if ((uVar10 < 3) && (param_4 != 0)) {
 					s_collision_contact* pCollisionContact = this->aCollisionContact + uVar10;
@@ -2167,6 +2187,9 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 
 			fVar18 = edF32Vector4GetDistHard(&local_e0);
 			if (1e-06f <= fVar18) {
+				COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} average count: {} sceneryCount: {} correctionBefore: ({:.6f}, {:.6f}, {:.6f}) length: {:.6f} multiplier: {:.6f}",
+					pActor->name, iVar14, stack0xfffffdb0[0][0].field_0x10 + stack0xfffffdb0[0][1].field_0x10 + stack0xfffffdb0[0][2].field_0x10,
+					local_e0.x, local_e0.y, local_e0.z, fVar18, 1.0f / (float)iVar14 - 0.002f / fVar18);
 				fVar18 = 1.0f / (float)iVar14 + -0.002f / fVar18;
 				local_e0 = local_e0 * fVar18;
 				COLLISION_LOG(LogLevel::Verbose, "CCollision::ResolveContacts D local_e0: {}", local_e0.ToString());
@@ -2190,6 +2213,8 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 		}
 	}
 
+	COLLISION_LOG_VERBOSE(LogLevel::VeryVerbose, "CCollision::ResolveContacts {} end contactFlags: 0x{:x} result: {} correction: ({:.6f}, {:.6f}, {:.6f}) translation: ({:.6f}, {:.6f}, {:.6f})",
+		pActor->name, this->flags_0x4, local_1a0, local_e0.x, local_e0.y, local_e0.z, pTranslation->x, pTranslation->y, pTranslation->z);
 	return local_1a0;
 }
 

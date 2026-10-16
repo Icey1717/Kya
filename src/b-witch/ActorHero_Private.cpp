@@ -2719,6 +2719,17 @@ void CActorHeroPrivate::ComputeLighting()
 	return;
 }
 
+bool CActorHeroPrivate::Can_0x9c()
+{
+	bool bVar1;
+
+	if ((this == CActorHero::_gThis) || (bVar1 = true, (this->flags & 4) == 0)) {
+		bVar1 = false;
+	}
+
+	return bVar1;
+}
+
 CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pNewBehaviour;
@@ -2941,6 +2952,27 @@ void FindJamGut(CActor* pActor, void* pData)
 	return;
 }
 
+void CActorHeroPrivate::CinematicMode_Enter(bool bSetState)
+{
+	int iVar1;
+	edAnmLayer* peVar3;
+	CAnimation* pAnim;
+
+	CinematicMode_Enter(bSetState);
+	this->field_0x1000 = 0.0f;
+
+	pAnim = this->pAnimationController;
+	iVar1 = pAnim->PhysicalLayerFromLayerId(8);
+	peVar3 = pAnim->anmBinMetaAnimator.aAnimData + iVar1;
+	peVar3->blendOp = ANM_BLEND_OP_WEIGHTED;
+	peVar3->blendWeight = 0.0f;
+	this->field_0x19b1 = 0;
+	this->field_0x155c = GetTimer()->scaledTotalTime;
+	this->field_0x1560 = 0;
+
+	return;
+}
+
 void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 {
 	CBehaviourHeroRideJamGut* pCVar1;
@@ -3011,6 +3043,38 @@ bool CActorHeroPrivate::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	pCVar1->field_0x610 = *m0;
 
 	return true;
+}
+
+
+CPlayerInput* CActorHeroPrivate::GetInputManager(int param_2, int param_3)
+{
+	CPlayerInput* pInput;
+
+	if (param_2 == 0) {
+		if (param_3 == 0) {
+			pInput = (CPlayerInput*)0x0;
+			if (this->field_0x18dc == 0) {
+				pInput = this->pPlayerInput;
+			}
+		}
+		else {
+			pInput = (CPlayerInput*)0x0;
+			 
+			if (this->field_0x1610 == 0) {
+				if ((CActorHero*)this == CActorHero::_gThis) {
+					pInput = GetPlayerInput(0);
+				}
+				else {
+					pInput = GetPlayerInput(1);
+				}
+			}
+		}
+	}
+	else {
+		pInput = this->pPlayerInput;
+	}
+
+	return pInput;
 }
 
 bool CActorHeroPrivate::IsMakingNoise()
@@ -16503,6 +16567,10 @@ void CActorHeroPrivate::SetInitialState()
 	return;
 }
 
+float CActorHeroPrivate::GetRunSpeed()
+{
+	return this->runSpeed;
+}
 
 void CActorHeroPrivate::ProcessDeath()
 {
@@ -16604,6 +16672,24 @@ void CActorHeroPrivate::ProcessDeath()
 	}
 
 	return;
+}
+
+bool CActorHeroPrivate::IsAlive()
+{
+	bool bAlive;
+	CLifeInterface* pCVar1;
+	float fVar2;
+
+	if ((0.0f < this->field_0x1558) || (this->field_0x1018 != 0)) {
+		bAlive = false;
+	}
+	else {
+		pCVar1 = GetLifeInterface();
+		fVar2 = pCVar1->GetValue();
+		bAlive = 0.0f < fVar2;
+	}
+
+	return bAlive;
 }
 
 // Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp
@@ -16724,6 +16810,121 @@ bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
 
 	uVar1 = CLevelScheduler::ScenVar_Get(SCN_ABILITY_FIGHT);
 	return (pCombo->field_0x4.field_0x0byte & uVar1) != 0;
+}
+
+void CActorHeroPrivate::_Std_GetPossibleExit()
+{
+	int iVar1;
+	CPlayerInput* pCVar2;
+	undefined8 uVar3;
+	bool bVar4;
+	CBehaviourFighter* pCVar5;
+	uint uVar6;
+	StateConfig* pSVar8;
+	long lVar9;
+	float fVar10;
+	edF32VECTOR4 local_10;
+
+	iVar1 = this->actorState;
+	if (iVar1 == -1) {
+		uVar6 = 0;
+	}
+	else {
+		pSVar8 = GetStateCfg(iVar1);
+		uVar6 = pSVar8->flags_0x4;
+	}
+	if ((uVar6 & 0x100000) != 0) {
+		lVar9 = Func_0x1a8();
+		if ((lVar9 == 0) && ((this->fightFlags & 1) == 0)) {
+			pCVar5 = static_cast<CBehaviourFighter*>(GetBehaviour(this->curBehaviourId));
+			SetBehaviour(pCVar5->behaviourId, 0xffffffff, 0xffffffff);
+		}
+		else {
+			bVar4 = FUN_0031b5d0(this->actorState);
+			if ((bVar4 == false) && (AcquireAdversary(), this->pAdversary == (CActorFighter*)0x0)) {
+				SetBehaviour(7, 0xffffffff, 0xffffffff);
+			}
+			else {
+				iVar1 = this->actorState;
+				if (iVar1 == -1) {
+					uVar6 = 0;
+				}
+				else {
+					pSVar8 = GetStateCfg(iVar1);
+					uVar6 = pSVar8->flags_0x4 & 0x100;
+				}
+				if (uVar6 == 0) {
+					local_10 = this->dynamic.rotationQuat;
+
+					if ((local_10.x == 0.0f) && (local_10.z == 0.0f)) {
+						if ((this->flags & 0x1000) == 0) {
+							local_10 = this->rotationQuat;
+						}
+						else {
+							SetVectorFromAngleY(this->rotationEuler.y, &local_10);
+						}
+					}
+					else {
+						local_10.y = 0.0f;
+						edF32Vector4NormalizeHard(&local_10, &local_10);
+					}
+
+					uVar6 = CanGrip(1, &local_10);
+					if (uVar6 != 0) {
+						SetBehaviour(7, 0xbc, 0xffffffff);
+						return;
+					}
+				}
+
+				if ((this->fightFlags & 2) != 0) {
+					bVar4 = DetectGripablePrecipice();
+					if (bVar4 != false) {
+						SetBehaviour(7, 200, 0xffffffff);
+						return;
+					}
+
+					if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+						fVar10 = this->field_0x478 + GetTimer()->cutsceneDeltaTime;
+						this->field_0x478 = fVar10;
+						if (0.3f < fVar10) {
+							SetBehaviour(7, 0xffffffff, 0xffffffff);
+							return;
+						}
+					}
+					else {
+						this->field_0x478 = 0.0f;
+					}
+				}
+
+				if (this->heroActionParams.actionId == 0xd) {
+					iVar1 = this->actorState;
+					if (iVar1 == -1) {
+						uVar6 = 0;
+					}
+					else {
+						pSVar8 = GetStateCfg(iVar1);
+						uVar6 = pSVar8->flags_0x4 & 0x100;
+					}
+
+					if (uVar6 == 0) {
+						pCVar2 = this->pPlayerInput;
+						if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+							fVar10 = 0.0f;
+						}
+						else {
+							fVar10 = pCVar2->aButtons[4].clickValue;
+						}
+
+						if (fVar10 == 0.0f) {
+							AccomplishAction(0);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorHero_Fight.cpp

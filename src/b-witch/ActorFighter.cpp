@@ -7981,6 +7981,13 @@ void CBehaviourFighter::Manage()
 	case FIGHTER_HIT_PUSHED:
 		this->pOwner->_StateFighterHitPushed();
 		break;
+	case 0x51:
+		this->pOwner->_ManageFighterDyn(0x19, 0x1002023b, (CActorsTable*)0x0);
+
+		if (this->pOwner->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			this->pOwner->SetState(6, iVar9);
+		}
+		break;
 	case FIGHTER_BLOW_BEGIN:
 		this->pOwner->_ManageFighterDyn((this->pOwner->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
 

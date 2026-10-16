@@ -246,6 +246,41 @@ StateConfig* CActorMicken::GetStateCfg(int state)
 	return pStateConfig;
 }
 
+void CActorMicken::Func_0xd4(ed_zone_3d* pZone)
+{
+	ed_zone_3d** pCVar1;
+	int iVar2;
+
+	iVar2 = 0;
+	pCVar1 = this->field_0x404;
+	do {
+		if (*pCVar1 == (ed_zone_3d*)0x0) {
+			this->field_0x404[iVar2] = pZone;
+			return;
+		}
+		iVar2 = iVar2 + 1;
+		pCVar1 = pCVar1 + 1;
+	} while (iVar2 < 3);
+
+	return;
+}
+
+void CActorMicken::Func_0xd8(ed_zone_3d * pZone)
+{
+	int iVar1;
+
+	iVar1 = 0;
+	do {
+		if (this->field_0x404[iVar1] == pZone) {
+			return;
+		}
+
+		iVar1 = iVar1 + 1;
+	} while (iVar1 < 3);
+
+	return;
+}
+
 int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	byte bVar1;
@@ -560,6 +595,12 @@ int CActorMicken::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 	}
 
 	return result;
+}
+
+// PS2 0x00151a60, virtual table slot at 0x0043b8c0.
+CActorWindState* CActorMicken::GetWindState()
+{
+	return &this->windState;
 }
 
 void CActorMicken::StoreCollisionSphere()

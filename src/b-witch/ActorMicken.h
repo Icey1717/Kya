@@ -18,7 +18,8 @@
 class CActorMicken;
 class CActorHeroPrivate;
 
-class CBehaviourMicken : public CBehaviour {
+class CBehaviourMicken : public CBehaviour
+{
 public:
 	CActorMicken* pOwner;
 
@@ -28,7 +29,8 @@ public:
 	virtual void InitState(int newState);
 };
 
-class CBehaviourMickenEat : public CBehaviourMicken {
+class CBehaviourMickenEat : public CBehaviourMicken
+{
 public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
@@ -45,7 +47,8 @@ public:
 	CPathFollowReader pathFollowReader;
 };
 
-class CBehaviourMickenKicked : public CBehaviourMicken {
+class CBehaviourMickenKicked : public CBehaviourMicken
+{
 public:
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Manage();
@@ -55,7 +58,8 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
-class CBehaviourMickenSquashed : public CBehaviourMicken {
+class CBehaviourMickenSquashed : public CBehaviourMicken
+{
 public:
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Manage();
@@ -80,10 +84,13 @@ public:
 	virtual void Reset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
+	virtual void Func_0xd4(ed_zone_3d* pZone);
+	virtual void Func_0xd8(ed_zone_3d* pZone);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	// CActorAutonomous
+	virtual CActorWindState* GetWindState() override;
 	virtual void StoreCollisionSphere();
 
 	void StateMickenStand(CBehaviourMickenEat* pBehaviour);
@@ -115,86 +122,7 @@ public:
 	undefined field_0x36e;
 	undefined field_0x36f;
 	edF32VECTOR4 field_0x370;
-	undefined field_0x380;
-	undefined field_0x381;
-	undefined field_0x382;
-	undefined field_0x383;
-	undefined field_0x384;
-	undefined field_0x385;
-	undefined field_0x386;
-	undefined field_0x387;
-	undefined field_0x388;
-	undefined field_0x389;
-	undefined field_0x38a;
-	undefined field_0x38b;
-	undefined field_0x38c;
-	undefined field_0x38d;
-	undefined field_0x38e;
-	undefined field_0x38f;
-	undefined field_0x390;
-	undefined field_0x391;
-	undefined field_0x392;
-	undefined field_0x393;
-	undefined field_0x394;
-	undefined field_0x395;
-	undefined field_0x396;
-	undefined field_0x397;
-	undefined field_0x398;
-	undefined field_0x399;
-	undefined field_0x39a;
-	undefined field_0x39b;
-	undefined field_0x39c;
-	undefined field_0x39d;
-	undefined field_0x39e;
-	undefined field_0x39f;
-	undefined field_0x3a0;
-	undefined field_0x3a1;
-	undefined field_0x3a2;
-	undefined field_0x3a3;
-	undefined field_0x3a4;
-	undefined field_0x3a5;
-	undefined field_0x3a6;
-	undefined field_0x3a7;
-	undefined field_0x3a8;
-	undefined field_0x3a9;
-	undefined field_0x3aa;
-	undefined field_0x3ab;
-	undefined field_0x3ac;
-	undefined field_0x3ad;
-	undefined field_0x3ae;
-	undefined field_0x3af;
-	undefined field_0x3b0;
-	undefined field_0x3b1;
-	undefined field_0x3b2;
-	undefined field_0x3b3;
-	undefined field_0x3b4;
-	undefined field_0x3b5;
-	undefined field_0x3b6;
-	undefined field_0x3b7;
-	undefined field_0x3b8;
-	undefined field_0x3b9;
-	undefined field_0x3ba;
-	undefined field_0x3bb;
-	undefined field_0x3bc;
-	undefined field_0x3bd;
-	undefined field_0x3be;
-	undefined field_0x3bf;
-	undefined field_0x3c0;
-	undefined field_0x3c1;
-	undefined field_0x3c2;
-	undefined field_0x3c3;
-	undefined field_0x3c4;
-	undefined field_0x3c5;
-	undefined field_0x3c6;
-	undefined field_0x3c7;
-	undefined field_0x3c8;
-	undefined field_0x3c9;
-	undefined field_0x3ca;
-	undefined field_0x3cb;
-	undefined field_0x3cc;
-	undefined field_0x3cd;
-	undefined field_0x3ce;
-	undefined field_0x3cf;
+	CActorWindState windState; // PS2 0x380..0x3cf.
 	int field_0x3d0;
 	int field_0x3d4;
 	CActorHeroPrivate* field_0x3d8;
