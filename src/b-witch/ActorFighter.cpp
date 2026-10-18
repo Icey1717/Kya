@@ -10967,6 +10967,13 @@ int CBehaviourFighterSlave::InterpretMessage(CActor * pSender, int msg, void* pM
 	return 1;
 }
 
+void CBehaviourFighterSlave::SetInitialState()
+{
+	this->pOwner->SetState(0x3b, -1);
+
+	return;
+}
+
 bool CBehaviourFighterSlave::Execute(s_fighter_action* pAction, s_fighter_action_param* pParam)
 {
 	uint uVar1;

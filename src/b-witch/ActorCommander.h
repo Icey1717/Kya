@@ -28,7 +28,6 @@ class CBehaviourCommander : public CBehaviour
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Init(CActor* pOwner);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
 	virtual bool CanReleaseSemaphore(int, CActorWolfen*);
@@ -64,6 +63,7 @@ public:
 class CBehaviourCommanderDefault : public CBehaviourCommander
 {
 public:
+	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);

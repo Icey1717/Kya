@@ -1524,13 +1524,6 @@ void CBehaviourCommander::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourCommander::Init(CActor* pOwner)
-{
-	this->onOffSwitch.Init();
-
-	return;
-}
-
 void CBehaviourCommander::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	this->pOwner = static_cast<CActorCommander*>(pOwner);
@@ -1624,6 +1617,13 @@ bool CBehaviourCommander::UpdateTeamAnim()
 	}
 
 	return bVar3;
+}
+
+void CBehaviourCommanderDefault::Init(CActor* pOwner)
+{
+	this->onOffSwitch.Init();
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorCmd.cpp

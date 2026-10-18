@@ -377,19 +377,23 @@ struct CinematicFileDataHeader {
 	undefined field_0x8c;
 };
 
-struct CinFileContainer {
+struct CinFileContainer
+{
 	edResCollection::RES_TYPE type;
 	char* pData;
 };
 
-enum ECinematicState {
+enum ECinematicState
+{
 	CS_Stopped,
 	CS_Interpolate,
 	CS_Playing
 };
 
-struct CCineActorConfig {
+struct CCineActorConfig
+{
 	CCineActorConfig();
+
 	S_STREAM_REF<CActor> pActor;
 	uint flags;
 	float field_0x8;

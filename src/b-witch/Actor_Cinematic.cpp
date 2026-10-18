@@ -637,14 +637,10 @@ void CBehaviourCinematic::Manage()
 	else {
 		if (((AVar3 != 2) && (AVar3 == 1)))
 		{
-			// Guard hack check src.
-			IMPLEMENTATION_GUARD(
 			if (((AVar3 != 2) && (AVar3 == 1)) &&
-				(lVar5 = (*(code*)pCVar2->pVTable->CinematicMode_InterpolateTo)
-					(pCVar2, pConfig, &(this->cinActor).vectorFieldA, &pCinematic->matrix_0x120), fVar6 = extraout_f0
-					, lVar5 != 0)) {
+				(lVar5 = (pCVar2->CinematicMode_InterpolateTo(pConfig, &this->cinActor.position, &pCinematic->matrix_0x120), lVar5 != 0))) {
 				this->pOwner->SetState(2, -1);
-			})
+			}
 		}
 	}
 	bVar4 = this->pOwner->IsKindOfObject(2);

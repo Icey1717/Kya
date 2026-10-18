@@ -12,7 +12,8 @@
 class CCameraMouseQuake;
 class CCameraShadow;
 
-struct edFCamera {
+struct edFCamera
+{
 	edF32VECTOR4 position;
 	edF32VECTOR4 lookAt;
 	undefined field_0x20;
@@ -76,7 +77,8 @@ struct edFCamera {
 	undefined field_0x12f;
 };
 
-struct CAMERA_CONFIG {
+struct CAMERA_CONFIG
+{
 	void Create(struct ByteCode* pMemoryStream);
 	uint flags;
 	S_STREAM_REF<CActor> pActorRefA;
@@ -99,7 +101,8 @@ struct CAMERA_CONFIG {
 	float field_0x6c;
 };
 
-struct astruct_12 {
+struct astruct_12
+{
 	bool Init(struct ByteCode* pMemoryStream);
 	float field_0x0;
 	float field_0x4;
@@ -113,7 +116,8 @@ struct astruct_12 {
 };
 
 
-struct CCamConfig : public CAMERA_CONFIG {
+struct CCamConfig : public CAMERA_CONFIG
+{
 	uint flags_0x70;
 	float field_0x74;
 	float field_0x78;
@@ -151,7 +155,8 @@ void edFCameraSetSizeRatioFov(float baseHorizontalHalfFOV, float aspectRatio, fl
 float edFCameraGetFov(edFCamera* pCamera);
 float edFCameraGetRatio(edFCamera* pCamera);
 
-struct ActiveCamManagerProps {
+struct ActiveCamManagerProps
+{
 	edF32VECTOR4 lookAt;
 	edF32VECTOR4 location;
 	float alpha;
@@ -161,7 +166,8 @@ struct ActiveCamManagerProps {
 	float fov;
 };
 
-struct ActiveCamManagerEntry {
+struct ActiveCamManagerEntry
+{
 	ActiveCamManagerProps props;
 	undefined field_0x34;
 	undefined field_0x35;
@@ -181,7 +187,8 @@ struct ActiveCamManagerEntry {
 	float blendAlpha;
 };
 
-struct ActiveCamManager {
+struct ActiveCamManager
+{
 	void SetActiveCam(CCamera* pCamera);
 	void ClearActiveCam();
 	bool FUN_003feb30();
@@ -208,7 +215,6 @@ struct ActiveCamManager {
 
 	bool SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_MODE switchMode);
 };
-
 
 struct CAM_QUAKE
 {

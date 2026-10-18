@@ -4,6 +4,7 @@
 #include "TimeController.h"
 #include "EventManager.h"
 #include "ActorHero.h"
+#include "CameraGame.h"
 #include "CinematicManager.h"
 
 CActorEventGenerator* CActorEventGenerator::gGlobalEvG = NULL;
@@ -1071,13 +1072,11 @@ int CBehaviourEventGen::ManageCamera(BHVR_PTMF* pPMTF, EVG_PHASE phase, void* pD
 				CCamera* pCVar6 = (this->cameraRef).Get();
 				bool bVar5 = pCVar6->IsKindOfObject(0x80);
 				if (bVar5 != false) {
-					IMPLEMENTATION_GUARD(
-						pCVar6 = (this->cameraRef).Get();
+					CCameraGame* pCameraGame = static_cast<CCameraGame*>((this->cameraRef).Get());
 					pCVar6->flags_0xc = pCVar6->flags_0xc & 0xfffffffe;
 					pCVar6->field_0x50 = edF32VECTOR4_00426730;
-					pCVar6[1].transformationMatrix.ca =
-						(float)((uint)pCVar6[1].transformationMatrix.ca & 0xffffdfff);
-					pCVar6[1].field_0x50.z = 0.25;);
+					pCameraGame->cameraConfig.flags = pCameraGame->cameraConfig.flags & 0xffffdfff;
+					pCameraGame->cameraConfig.baseTargetPitch = 0.25f;
 				}
 
 				CActorEventGenerator* pCVar1 = this->pOwner;

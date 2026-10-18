@@ -108,6 +108,8 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 
+	virtual uint Func_0x98();
+
 	CBehaviourTrapStand_ActorTrap trapStandActorTrap;
 
 	undefined4 field_0x2dc;

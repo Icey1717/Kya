@@ -214,7 +214,7 @@ public:
 	edF32VECTOR4 field_0x20;
 };
 
-class CBehaviour : public CObject
+class CBehaviour
 {
 public:
 	virtual ~CBehaviour() {}
@@ -569,7 +569,7 @@ public:
 	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
-	virtual void CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32MATRIX4* param_3, edF32MATRIX4* param_4);
+	virtual bool CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32VECTOR4* pPosition, edF32MATRIX4* param_4);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);

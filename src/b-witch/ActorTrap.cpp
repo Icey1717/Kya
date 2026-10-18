@@ -94,6 +94,22 @@ StateConfig* CActorTrap::GetStateCfg(int state)
 	return pStateCfg;
 }
 
+uint CActorTrap::Func_0x98()
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+
+	iVar1 = this->actorState;
+	uVar3 = 0;
+	if (iVar1 != -1) {
+		pSVar2 = GetStateCfg(iVar1);
+		uVar3 = pSVar2->flags_0x4;
+	}
+
+	return (uint)((uVar3 & 2) != 0);
+}
+
 CBehaviourTrapStand_ActorTrap::CBehaviourTrapStand_ActorTrap()
 {
 	this->field_0x6c = (CinNamedObject30*)0x0;

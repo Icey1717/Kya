@@ -1044,6 +1044,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	// 
+	virtual void SetInitialState();
 	virtual bool Execute(s_fighter_action* pAction, s_fighter_action_param* pParam);
 
 	// 

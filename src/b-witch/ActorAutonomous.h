@@ -121,6 +121,7 @@ public:
 	virtual void Term();
 	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual bool CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32VECTOR4* pPosition, edF32MATRIX4* param_4);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CVision* GetVision() { return (CVision*)0x0; }
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);

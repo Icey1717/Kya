@@ -4329,9 +4329,10 @@ void CActor::SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation)
 	return;
 }
 
-void CActor::CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32MATRIX4* param_3, edF32MATRIX4* param_4)
+bool CActor::CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32VECTOR4* pPosition, edF32MATRIX4* param_4)
 {
 	IMPLEMENTATION_GUARD();
+	return true;
 }
 
 bool CActor::ColWithAToboggan()

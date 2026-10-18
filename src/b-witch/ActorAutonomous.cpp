@@ -6,6 +6,7 @@
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "MathOps.h"
+#include "CinematicManager.h"
 #include "CollisionManager.h"
 #include "ActorManager.h"
 #include "Vision.h"
@@ -324,7 +325,26 @@ CBehaviour* CActorAutonomous::BuildBehaviour(int behaviourType)
 	else {
 		pNewBehaviour = CActor::BuildBehaviour(behaviourType);
 	}
+
 	return pNewBehaviour;
+}
+
+bool CActorAutonomous::CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32VECTOR4* pPosition, edF32MATRIX4* param_4)
+{
+	edF32VECTOR4 eStack80;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = pConfig->field_0x8;
+	movParamsIn.rotSpeed = pConfig->field_0xc;
+	movParamsIn.flags = 2;
+	edF32Matrix4MulF32Vector4Hard(&eStack80, param_4, pPosition);
+	CActorMovable::SV_MOV_MoveTo(&movParamsOut, &movParamsIn, &eStack80);
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	return movParamsOut.moveVelocity <= 0.05f;
 }
 
 bool CActorAutonomous::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
