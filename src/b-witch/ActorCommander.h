@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Actor.h"
 #include "CameraViewManager.h"
+#include "CinematicManager.h"
 #include "Squad.h"
 #include "ChessBoard.h"
 #include "CameraFightData.h"
@@ -27,6 +28,7 @@ class CBehaviourCommander : public CBehaviour
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
 	virtual bool CanReleaseSemaphore(int, CActorWolfen*);
@@ -38,8 +40,8 @@ public:
 
 	CSquadConfig squadConfig;
 
-	S_TARGET_ON_OFF_STREAM_REF* pMagicalSwitch1C_0x10;
-	S_STREAM_EVENT_CAMERA* pMagicalSwitch20_0x14;
+	S_NTF_SWITCH_ONOFF onOffSwitch;
+
 	int field_0x18;
 	float healthRatio;
 };

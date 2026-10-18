@@ -233,6 +233,7 @@ public:
 	virtual void Manage();
 	virtual void Draw();
 	virtual void ComputeLighting();
+	virtual void Reset();
 	virtual bool Can_0x9c();
 
 	virtual void PreCheckpointReset();
@@ -282,6 +283,7 @@ public:
 	virtual void SetInitialState();
 	virtual float GetRunSpeed();
 	virtual void ProcessDeath();
+	virtual void Func_0x170();
 	virtual bool IsAlive();
 	virtual void EnableFightCamera(int bEnable);
 	virtual void AcquireAdversary();

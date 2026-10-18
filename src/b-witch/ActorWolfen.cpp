@@ -1794,11 +1794,25 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	return;
 }
 
+void CActorWolfen::AcquireAdversary()
+{
+	return;
+}
+
+// Should be in: D:/Projects/b-witch/ActorWolfen.h
+void CActorWolfen::SetRunSpeed(float param_1)
+{
+	this->runSpeed = param_1;
+
+	return;
+}
+
 bool CActorWolfen::AcquireAdversary(CActorFighter* pTarget)
 {
 	float fVar1;
 	bool bVar2;
 	CBehaviour* pCVar3;
+	CLifeInterface* pCVar4;
 	bool bSuccess;
 	float fVar6;
 
@@ -1819,18 +1833,21 @@ bool CActorWolfen::AcquireAdversary(CActorFighter* pTarget)
 				fVar1 = pTarget->currentLocation.z - this->currentLocation.z;
 				bVar2 = this->field_0xb94 <= sqrtf(fVar6 * fVar6 + 0.0f + fVar1 * fVar1);
 				if (!bVar2) {
-					bVar2 = this->field_0xb98 < fabs((this->distanceToGround + this->currentLocation.y) - (pTarget->distanceToGround + pTarget->currentLocation.y));
+					bVar2 = this->field_0xb98 <
+						fabsf((this->distanceToGround + this->currentLocation.y) -
+							(pTarget->distanceToGround + pTarget->currentLocation.y));
 				}
+
 				if (bVar2) {
 					bSuccess = true;
 				}
 				else {
 					bVar2 = false;
-					if (((pTarget != (CActorFighter*)0x0) && (pTarget->typeID == ACTOR_HERO_PRIVATE)) && (pTarget->curBehaviourId == 8)) {
+					if (((pTarget != (CActorFighter*)0x0) && (pTarget->typeID == 6)) && (pTarget->curBehaviourId == 8)) {
 						bVar2 = true;
 					}
 
-					if ((bVar2) && (pCVar3 = GetBehaviour(0x18), pCVar3 != (CBehaviour*)0x0)) {
+					if ((bVar2) && (pCVar3 = GetBehaviour(WOLFEN_BEHAVIOUR_AVOID), pCVar3 != (CBehaviour*)0x0)) {
 						bSuccess = true;
 					}
 					else {
@@ -1849,83 +1866,6 @@ bool CActorWolfen::AcquireAdversary(CActorFighter* pTarget)
 	}
 
 	return bSuccess;
-}
-
-void CActorWolfen::AcquireAdversary()
-{
-	return;
-}
-
-// Should be in: D:/Projects/b-witch/ActorWolfen.h
-void CActorWolfen::SetRunSpeed(float param_1)
-{
-	this->runSpeed = param_1;
-
-	return;
-}
-
-bool CActorWolfen::AcquireAdversaryB(CActorFighter* pTarget)
-{
-	float fVar1;
-	bool bVar2;
-	CBehaviour* pCVar3;
-	CLifeInterface* pCVar4;
-	bool bVar5;
-	float fVar6;
-
-	bVar5 = false;
-	if (((pTarget == CActorHero::_gThis) && (this->pTargetActor_0xc80 == (CActorFighter*)0x0)) && ((~this->combatFlags_0xb78 & 0x30) == 0x30)) {
-		bVar5 = true;
-	}
-	else {
-		if ((this->pTargetActor_0xc80 == pTarget) && ((int)this->combatMode_0xb7c < 1)) {
-			bVar5 = true;
-		}
-		else {
-			if ((this->combatFlags_0xb78 & 0x200) == 0) {
-				bVar5 = true;
-			}
-			else {
-				fVar6 = pTarget->currentLocation.x - this->currentLocation.x;
-				fVar1 = pTarget->currentLocation.z - this->currentLocation.z;
-				bVar2 = this->field_0xb94 <= sqrtf(fVar6 * fVar6 + 0.0f + fVar1 * fVar1);
-				if (!bVar2) {
-					bVar2 = this->field_0xb98 <
-						fabsf((this->distanceToGround + this->currentLocation.y) -
-							(pTarget->distanceToGround + pTarget->currentLocation.y));
-				}
-
-				if (bVar2) {
-					bVar5 = true;
-				}
-				else {
-					bVar2 = false;
-					if (((pTarget != (CActorFighter*)0x0) && (pTarget->typeID == 6)) && (pTarget->curBehaviourId == 8)) {
-						bVar2 = true;
-					}
-
-					if ((bVar2) && (pCVar3 = GetBehaviour(WOLFEN_BEHAVIOUR_AVOID), pCVar3 != (CBehaviour*)0x0)) {
-						bVar5 = true;
-					}
-					else {
-						if (((this->combatFlags_0xb78 & 7) == 0) && (bVar2 = SV_AUT_CanMoveTo(&pTarget->currentLocation), bVar2 == false)) {
-							bVar5 = true;
-						}
-						else {
-							pCVar4 = pTarget->GetLifeInterface();
-							fVar6 = pCVar4->GetValue();
-
-							if (fVar6 <= 0.0f) {
-								bVar5 = true;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return bVar5;
 }
 
 bool CActorWolfen::IsCurrentPositionValid()
@@ -4676,7 +4616,7 @@ void CActorWolfen::StateTrackSupporter()
 	}
 
 	if (pTarget != (CActorFighter*)0x0) {
-		bVar2 = AcquireAdversaryB(pTarget);
+		bVar2 = AcquireAdversary(pTarget);
 
 		if (bVar2 == false) {
 			bVar2 = CanSwitchToFight_Area(pTarget);
@@ -13336,6 +13276,7 @@ public:
 		this->pMeshTransformData = reinterpret_cast<ed_3d_hierarchy_node*>(pMeshTransformParent->pData);
 		this->instanceIndex = 1;
 		this->field_0x61 = 0;
+
 		return;
 	}
 
@@ -13354,6 +13295,42 @@ public:
 		this->nbMatrices = 0;
 
 		StaticMeshComponent::Term();
+
+		return;
+	}
+
+	virtual void Reset()
+	{
+		bool bVar1;
+		edF32VECTOR4* peVar2;
+
+		if ((this->field_0x64 == 1) && (peVar2 = StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder(), peVar2 != (edF32VECTOR4*)0x0)) {
+			peVar2->x = this->field_0x74;
+			peVar2->y = this->field_0x78;
+		}
+
+		this->field_0x64 = 0;
+		this->field_0x70 = 0.0f;
+		this->field_0x6c = 0.0f;
+		this->field_0x68 = 0.0f;
+
+		if (this->instanceIndex == 0) {
+			bVar1 = HasMesh();
+			if (bVar1 != false) {
+				StaticMeshComponent::Term((ed_3D_Scene*)0x0);
+			}
+
+			this->pMeshTransformParent = (edNODE*)0x0;
+			this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
+		}
+		else {
+			SetVisible((ed_3D_Scene*)0x0);
+		}
+
+		this->field_0x80 = this->field_0x80 & 0xfffffffe;
+		this->activeMatrixIndex = 0;
+		this->field_0x90 = 0.0f;
+		edF32Matrix4CopyHard(&this->field_0xa0, &gF32Matrix4Unit);
 
 		return;
 	}
@@ -16027,7 +16004,7 @@ void CBehaviourWolfenFighterSlave::End(int newBehaviourId)
 	return;
 }
 
-void CBehaviourWolfenFighterSlave::SetInitialState(int newState)
+void CBehaviourWolfenFighterSlave::SetInitialState()
 {
 	CActorFighter* pFighter;
 	

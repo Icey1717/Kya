@@ -218,7 +218,7 @@ class CBehaviour : public CObject
 {
 public:
 	virtual ~CBehaviour() {}
-	virtual void Create(ByteCode* pByteCode) {}
+	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner) {}
 	virtual void Term() {}
 	virtual void Manage() {}

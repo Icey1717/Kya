@@ -2719,6 +2719,75 @@ void CActorHeroPrivate::ComputeLighting()
 	return;
 }
 
+void CActorHeroPrivate::Reset()
+{
+	CCamera* pCamera;
+	CCameraManager* pCameraManager;
+	int* piVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	HeroTutorialZone* pTutorialZone;
+
+	this->bIsSettingUp = 1;
+	this->field_0xcc0 = 0;
+	this->effort = 0.0f;
+	this->field_0xcbc = 0;
+	this->field_0x1a48 = 0;
+	this->field_0x1a4c = 0;
+	this->field_0x1a50 = 0;
+
+	CActorFighter::Reset();
+
+	this->field_0xe50 = this->currentLocation;
+
+	this->field_0xe60 = this->rotationEuler.xyz;
+	this->lastCheckPointSector = ((CScene::ptable.g_SectorManager_00451670)->baseSector).sectID;
+	this->field_0xe80 = this->field_0xe50;
+	this->field_0xe90 = this->field_0xe60;
+	this->levelDataField1C_0xe9c = this->levelDataField1C_0xe6c;
+	this->field_0xea0 = this->lastCheckPointSector;
+
+	ResetStdDefaultSettings();
+	ResetSlideDefaultSettings();
+	ResetBoomyDefaultSettings();
+	ResetGripClimbDefaultSettings();
+	ResetWindDefaultSettings();
+	ResetJamGutSettings();
+
+	ClearLocalData();
+
+	this->magicInterface.SetTransit(0.0f);
+	this->magicInterface.SetValue((float)CLevelScheduler::_gGameNfo.nbMagic);
+
+	if ((CActorHero*)this == CActorHero::_gThis) {
+		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+		pCameraManager->SetMainCamera(this->pMainCamera);
+		pCamera = this->pMainCamera;
+		pCamera->SetTarget(this);
+		pCameraManager->AlertCamera(2, (void*)1);
+	}
+
+	pTutorialZone = this->pEventChunk24_0xd24;
+	iVar5 = 0;
+	if (0 < this->field_0xd20) {
+		do {
+			if (2.24f <= CScene::_pinstance->field_0x1c) {
+				LOAD_POINTER_CAST(S_NTF_TARGET_STREAM_REF*, pTutorialZone->pTargetStreamRef)->Reset();
+				LOAD_POINTER_CAST(S_STREAM_EVENT_CAMERA*, pTutorialZone->pCameraEvent)->Reset(this);
+			}
+
+			iVar5 = iVar5 + 1;
+			pTutorialZone = pTutorialZone + 1;
+		} while (iVar5 < this->field_0xd20);
+	}
+
+	CPlayerInput::Reset();
+	this->bIsSettingUp = 0;
+
+	return;
+}
+
 bool CActorHeroPrivate::Can_0x9c()
 {
 	bool bVar1;
@@ -16670,6 +16739,13 @@ void CActorHeroPrivate::ProcessDeath()
 	else {
 		this->bUnknownBool = 0;
 	}
+
+	return;
+}
+
+void CActorHeroPrivate::Func_0x170()
+{
+	ProcessDeath();
 
 	return;
 }

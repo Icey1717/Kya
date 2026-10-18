@@ -218,6 +218,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Term();
+	virtual void Reset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(void* pData, uint mode, uint maxSize);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);

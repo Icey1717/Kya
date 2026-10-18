@@ -38,7 +38,7 @@ class SymbolIndexTests(unittest.TestCase):
     def test_static_and_ambiguous_methods(self):
         for source in [
             "Service::StaticRun(globalPointer);",
-            "Service *local;\nService::StaticRun(local);",
+            "Service* local;\nService::StaticRun(local);",
             "Service::Mixed(globalPointer,2);",
             "Service::Unknown(globalPointer);",
             "Service::Run(&globalPointer,2);",
@@ -57,6 +57,22 @@ class SymbolIndexTests(unittest.TestCase):
         index = BuildIndex(["class Service { void Run(); }; Service* object; Other* object;"])
         source = "Service::Run(object);"
         self.assertEqual(transform(source, index), source)
+
+    def test_instance_members_bases_and_packed_structs(self):
+        index = BuildIndex(['''
+            PACK(struct Properties { edF32VECTOR3 offset; });
+            class Base { edF32VECTOR4 location; };
+            class Derived : public Base {
+                Properties* properties;
+                volatile edF32VECTOR4 observed;
+            };
+        '''])
+        self.assertEqual(index['members']['Properties::offset'], [['edF32VECTOR3', False]])
+        self.assertEqual(index['members']['Base::location'], [['edF32VECTOR4', False]])
+        self.assertEqual(index['members']['Derived::properties'], [['Properties', True]])
+        self.assertEqual(index['bases']['Derived'], ['Base'])
+        self.assertEqual(index['members']['Derived::observed'], [['__volatile__', False]])
+        self.assertNotIn('Base::location', index['symbols'])
 
 
 if __name__ == "__main__":

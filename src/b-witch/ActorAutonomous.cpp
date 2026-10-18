@@ -404,6 +404,25 @@ StateConfig* CActorAutonomous::GetStateCfg(int state)
 	return pStateConfig;
 }
 
+uint CActorAutonomous::_gBehaviourFlags_AUT[1] = {
+	0x0,
+};
+
+uint CActorAutonomous::GetBehaviourFlags(int state)
+{
+	uint behaviourFlags;
+
+	if (state < 2) {
+		behaviourFlags = CActor::GetBehaviourFlags(state);
+	}
+	else {
+		assert(state == 2);
+		behaviourFlags = _gBehaviourFlags_AUT[state - 2];
+	}
+
+	return behaviourFlags;
+}
+
 void CActorAutonomous::ChangeManageState(int state)
 {
 	int iVar1;
@@ -433,6 +452,27 @@ bool CActorAutonomous::IsLockable()
 	}
 
 	return bLockable;
+}
+
+bool CActorAutonomous::IsProjectionAim()
+{
+	bool bVar1;
+	CLifeInterface* pCVar2;
+	bool bIsProjectionAim;
+	float fVar4;
+
+	bIsProjectionAim = false;
+
+	bVar1 = CActor::IsProjectionAim();
+	if (bVar1 != false) {
+		pCVar2 = GetLifeInterface();
+		fVar4 = pCVar2->GetValue();
+		if (0.0f < fVar4) {
+			bIsProjectionAim = true;
+		}
+	}
+
+	return bIsProjectionAim;
 }
 
 void CActorAutonomous::SetLookingAtOn(float param_1)

@@ -1519,11 +1519,14 @@ void CBehaviourCommander::Create(ByteCode* pByteCode)
 
 	this->squadConfig.Create(pByteCode);
 
-	S_TARGET_ON_OFF_STREAM_REF::Create(&this->pMagicalSwitch1C_0x10, pByteCode);
+	this->onOffSwitch.Create(pByteCode);
 
-	pSVar3 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar3 + 1);
-	this->pMagicalSwitch20_0x14 = pSVar3;
+	return;
+}
+
+void CBehaviourCommander::Init(CActor* pOwner)
+{
+	this->onOffSwitch.Init();
 
 	return;
 }
@@ -1637,7 +1640,7 @@ void CBehaviourCommanderDefault::Manage()
 
 	TestSwitch();
 
-	this->pMagicalSwitch20_0x14->Manage(this->pOwner);
+	this->onOffSwitch.pStreamEventCamera->Manage(this->pOwner);
 
 	UpdateTeamAnim();
 
@@ -1650,8 +1653,7 @@ void CBehaviourCommanderDefault::Begin(CActor* pOwner, int newState, int newAnim
 
 	this->field_0x20 = 0;
 
-	this->pMagicalSwitch1C_0x10->Reset();
-	this->pMagicalSwitch20_0x14->Reset(this->pOwner);
+	this->onOffSwitch.Reset(this->pOwner);
 
 	return;
 }
@@ -1720,12 +1722,11 @@ void CBehaviourCommanderDefault::TestSwitch()
 
 	if (this->field_0x20 != bVar7) {
 		if ((this->field_0x20 == 1) && (bVar7 == 0)) {
-			this->pMagicalSwitch1C_0x10->SwitchOff(pCommander);
+			this->onOffSwitch.SwitchOff(pCommander);
 		}
 
 		if ((this->field_0x20 == 0) && (bVar7 == 1)) {
-			this->pMagicalSwitch1C_0x10->SwitchOn(pCommander);
-			this->pMagicalSwitch20_0x14->SwitchOn(pCommander);
+			this->onOffSwitch.SwitchOn(pCommander);
 		}
 
 		this->field_0x20 = bVar7;
@@ -1765,8 +1766,7 @@ bool CBehaviourCommanderDefault::UpdateTeamAnim()
 
 void CBehaviourCommanderBeatUp::Init(CActor* pOwner)
 {
-	this->pMagicalSwitch1C_0x10->Init();
-	this->pMagicalSwitch20_0x14->Init();
+	this->onOffSwitch.Init();
 
 	return;
 }

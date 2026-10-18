@@ -247,6 +247,11 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	return;
 }
 
+void CActorCinematic::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
 void CActorCinematic::Init()
 {
 	CActor::Init();

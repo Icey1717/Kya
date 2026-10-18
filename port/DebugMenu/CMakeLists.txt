@@ -132,7 +132,11 @@ set(SOURCES
 	"include/DebugPathDrawing.h"
 )
 
-add_library(${TargetName} OBJECT ${SOURCES})
+add_library(${TargetName} STATIC ${SOURCES})
+
+# Keep every menu's static registration, including objects with no referenced symbols.
+# A static archive also gives Visual Studio a library context instead of .obj contexts.
+target_link_options(${TargetName} INTERFACE "LINKER:/WHOLEARCHIVE:$<TARGET_FILE:${TargetName}>")
 
 add_subdirectory("ext/gizmo")
 add_subdirectory("ext/magic_enum")

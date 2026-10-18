@@ -286,18 +286,7 @@ struct CActorMovingPlatform_SubObj
 {
 	CFxSoundScenaricData field_0x0;
 	CFxSoundScenaricData field_0x8;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
+	edF32VECTOR3 field_0x10;
 	uint field_0x1c;
 	uint field_0x20;
 	uint flags_0x24;
@@ -365,6 +354,7 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);
 	virtual StateConfig* GetStateCfg(int state);
+	virtual void SetSoundPosition();
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();
 	virtual void CinematicMode_Manage();

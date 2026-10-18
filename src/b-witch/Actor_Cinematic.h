@@ -41,7 +41,7 @@ struct CActorCinematic : public CActor
 	void PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	void Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene);
 
-	virtual void Create(ByteCode* pByteCode) {}
+	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);

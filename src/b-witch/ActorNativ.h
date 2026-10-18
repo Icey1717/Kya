@@ -40,11 +40,19 @@ class CActorNativShop;
 class CBehaviourNativ : public CBehaviour
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);	
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
+
 	CActorNativ* pOwner;
 };
 
 class CBehaviourNativExorcisme : public CBehaviourNativ
 {
+public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void InitState(int newState);

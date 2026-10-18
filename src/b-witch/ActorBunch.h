@@ -197,7 +197,7 @@ public:
 	virtual bool Can_0x9c();
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int Func_0x18c();
-	virtual bool AcquireAdversaryB(CActorFighter* pTarget);
+	virtual bool AcquireAdversary(CActorFighter* pTarget);
 
 	void FUN_003ded20(bool bPlayImpact);
 

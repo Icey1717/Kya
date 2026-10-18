@@ -330,7 +330,7 @@ int CActorBunch::Func_0x18c()
 	return iVar1;
 }
 
-bool CActorBunch::AcquireAdversaryB(CActorFighter* pTarget)
+bool CActorBunch::AcquireAdversary(CActorFighter* pTarget)
 {
 	bool bVar1;
 	CLifeInterface* pCVar2;

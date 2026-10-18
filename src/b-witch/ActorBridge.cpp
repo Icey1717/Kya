@@ -562,6 +562,474 @@ void CActorBridge::Term()
 	return;
 }
 
+void CActorBridge::Reset()
+{
+	bool bVar1;
+	edF32VECTOR4* v2;
+	int iVar2;
+	edF32VECTOR4* peVar3;
+	edF32VECTOR4* peVar4;
+	int iVar5;
+	int iVar6;
+	CVParticleInfo* pCVar7;
+	S_LINK_SUB_OBJ* pSVar8;
+	edF32VECTOR4* peVar9;
+	edF32VECTOR4* peVar10;
+	S_LINK_SUB_OBJ* pSVar11;
+	int iVar12;
+	S_LINK_SUB_OBJ* pSVar13;
+	edF32VECTOR4* v1;
+	int unaff_s7_lo;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	int iVar17;
+	float fVar18;
+	float fVar19;
+	float fVar20;
+	float fVar21;
+	edF32VECTOR4 eStack336;
+	edF32VECTOR4 eStack320;
+	edF32VECTOR4 eStack304;
+	edF32VECTOR4 eStack288;
+	edF32VECTOR4 eStack272;
+	edF32VECTOR4 eStack256;
+	edF32VECTOR4 eStack240;
+	edF32VECTOR4 eStack224;
+	edF32VECTOR4 local_d0;
+	edF32VECTOR4 local_c0;
+	edF32VECTOR4 local_b0;
+	edF32VECTOR4 local_a0;
+	edF32VECTOR4 local_90;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	CActor::Reset();
+
+	ApplyStepsCollisionScale(0);
+
+	v2 = &(this->verletBridgeConfig).field_0x10;
+	v1 = &(this->verletBridgeConfig).field_0x20;
+	edF32Vector4SubHard(&eStack16, v1, v2);
+	pSVar8 = (this->verletBridge).linkConstraint.aLinkInfo;
+	fVar14 = edF32Vector4GetLengthSoft(&eStack16);
+	local_20 = gF32Vector4Zero;
+	fVar20 = fVar14 + fVar14 * (this->verletBridgeConfig).field_0x38;
+	edF32Vector4ScaleHard(1.0f / (float)(this->verletBridge).altStepCount, &local_20, &eStack16);
+	peVar10 = this->verletBridge.pBridgeMem;
+	peVar9 = this->verletBridge.field_0x1c;
+	pCVar7 = this->verletBridge.aParticleInfo;
+	local_30 = gF32Vector4Zero;
+	edF32Vector4AddHard(&local_30, v2, v1);
+	edF32Vector4ScaleHard(0.5f, &local_30, &local_30);
+
+	fVar14 = fVar14 / fVar20;
+	fVar21 = sqrtf(6.0f - fVar14 * 6.0f);
+	iVar17 = 5;
+	do {
+		fVar15 = sinf(fVar21);
+		fVar15 = fVar15 - fVar14 * fVar21;
+		fVar16 = cosf(fVar21);
+		bVar1 = 0 < iVar17;
+		fVar21 = fVar21 - fVar15 / (fVar16 - fVar14);
+		iVar17 = iVar17 + -1;
+	} while (bVar1);
+
+	fVar21 = fVar21 + fVar21;
+	fVar14 = cosf(fVar21 / 2.0f);
+	local_30.y = local_30.y + (fVar20 / fVar21) * fVar14;
+	iVar17 = (this->verletBridge).altStepCount;
+	fVar15 = 0.0f;
+	edF32Vector4SubHard(&local_40, v2, &local_30);
+
+	fVar14 = fVar15;
+	fVar20 = fVar15;
+	if ((this->verletBridge).field_0x68 == false) {
+		fVar20 = (this->verletBridgeConfig).field_0x30;
+		fVar14 = fVar20 * 0.5f;
+		fVar20 = -fVar20 * 0.5f;
+	}
+
+	iVar12 = 0;
+	if (0 < (this->verletBridge).altStepCount) {
+		do {
+			fVar16 = cosf(fVar15);
+			fVar18 = sinf(fVar15);
+			local_50.w = gF32Vector4Zero.w;
+			local_50.x = local_40.x;
+			local_50.y = local_40.y * fVar16 + local_40.z * fVar18;
+			local_50.z = local_40.z * fVar16 - local_40.y * fVar18;
+			edF32Vector4AddHard(&local_50, &local_50, &local_30);
+			local_60.y = 0.0f;
+			local_60.z = 0.0f;
+			local_60.w = 0.0f;
+			local_60.x = fVar20;
+			edF32Vector4AddHard(peVar10, &local_50, &local_60);
+			fVar19 = peVar10->y;
+			fVar16 = peVar10->z;
+			fVar18 = peVar10->w;
+			peVar9->x = peVar10->x;
+			peVar9->y = fVar19;
+			peVar9->z = fVar16;
+			peVar9->w = fVar18;
+
+			if ((this->verletBridge).field_0x68 == false) {
+				local_70.y = 0.0f;
+				local_70.z = 0.0f;
+				local_70.w = 0.0f;
+				local_70.x = fVar14;
+				edF32Vector4AddHard(peVar10 + (this->verletBridge).altStepCount + 1, &local_50, &local_70);
+				iVar2 = (this->verletBridge).altStepCount + 1;
+				peVar4 = peVar10 + iVar2;
+				peVar3 = peVar9 + iVar2;
+				fVar19 = peVar4->y;
+				fVar16 = peVar4->z;
+				fVar18 = peVar4->w;
+				peVar3->x = peVar4->x;
+				peVar3->y = fVar19;
+				peVar3->z = fVar16;
+				peVar3->w = fVar18;
+			}
+
+			iVar12 = iVar12 + 1;
+			pCVar7->inverseMass = 0.03333334f;
+			fVar15 = fVar15 + fVar21 / (float)iVar17;
+			peVar9 = peVar9 + 1;
+			pCVar7 = pCVar7 + 1;
+			peVar10 = peVar10 + 1;
+		} while (iVar12 < (this->verletBridge).altStepCount);
+	}
+
+	local_80.y = 0.0f;
+	local_80.z = 0.0f;
+	local_80.w = 0.0f;
+	local_80.x = fVar20;
+	edF32Vector4AddHard(peVar10, v1, &local_80);
+	fVar16 = peVar10->y;
+	fVar21 = peVar10->z;
+	fVar15 = peVar10->w;
+	peVar9->x = peVar10->x;
+	peVar9->y = fVar16;
+	peVar9->z = fVar21;
+	peVar9->w = fVar15;
+
+	if ((this->verletBridge).field_0x68 == false) {
+		local_90.y = 0.0f;
+		local_90.z = 0.0f;
+		local_90.w = 0.0f;
+		local_90.x = fVar14;
+		edF32Vector4AddHard(peVar10 + (this->verletBridge).altStepCount + 1, v1, &local_90);
+		iVar17 = (this->verletBridge).altStepCount + 1;
+		peVar10 = peVar10 + iVar17;
+		peVar9 = peVar9 + iVar17;
+		fVar16 = peVar10->y;
+		fVar21 = peVar10->z;
+		fVar15 = peVar10->w;
+		peVar9->x = peVar10->x;
+		peVar9->y = fVar16;
+		peVar9->z = fVar21;
+		peVar9->w = fVar15;
+	}
+
+	if ((this->verletBridge).field_0x69 != false) {
+		if ((this->verletBridge).field_0x68 == false) {
+			unaff_s7_lo = ((this->verletBridge).altStepCount + 1) * 2;
+		}
+		else {
+			unaff_s7_lo = (this->verletBridge).altStepCount + 1;
+		}
+
+		peVar9 = this->verletBridge.pBridgeMem + unaff_s7_lo;
+		peVar10 = this->verletBridge.field_0x1c + unaff_s7_lo;
+		local_a0.y = (this->verletBridgeConfig).field_0x34;
+		local_a0.z = 0.0f;
+		local_a0.w = 0.0f;
+		local_a0.x = fVar20;
+		edF32Vector4AddHard(peVar9, v2, &local_a0);
+		fVar16 = peVar9->y;
+		fVar21 = peVar9->z;
+		fVar15 = peVar9->w;
+		peVar10->x = peVar9->x;
+		peVar10->y = fVar16;
+		peVar10->z = fVar21;
+		peVar10->w = fVar15;
+		local_b0.y = (this->verletBridgeConfig).field_0x34;
+		local_b0.z = 0.0f;
+		local_b0.w = 0.0f;
+		local_b0.x = fVar20;
+		edF32Vector4AddHard(peVar9 + 1, v1, &local_b0);
+		fVar15 = peVar9[1].y;
+		fVar21 = peVar9[1].z;
+		fVar20 = peVar9[1].w;
+		peVar10[1].x = peVar9[1].x;
+		peVar10[1].y = fVar15;
+		peVar10[1].z = fVar21;
+		peVar10[1].w = fVar20;
+
+		if ((this->verletBridge).field_0x68 == false) {
+			local_c0.y = (this->verletBridgeConfig).field_0x34;
+			local_c0.z = 0.0f;
+			local_c0.w = 0.0f;
+			local_c0.x = fVar14;
+			edF32Vector4AddHard(peVar9 + 2, v2, &local_c0);
+			fVar15 = peVar9[2].y;
+			fVar21 = peVar9[2].z;
+			fVar20 = peVar9[2].w;
+			peVar10[2].x = peVar9[2].x;
+			peVar10[2].y = fVar15;
+			peVar10[2].z = fVar21;
+			peVar10[2].w = fVar20;
+			local_d0.y = (this->verletBridgeConfig).field_0x34;
+			local_d0.z = 0.0f;
+			local_d0.w = 0.0f;
+			local_d0.x = fVar14;
+			edF32Vector4AddHard(peVar9 + 3, v1, &local_d0);
+			fVar20 = peVar9[3].y;
+			fVar14 = peVar9[3].z;
+			fVar21 = peVar9[3].w;
+			peVar10[3].x = peVar9[3].x;
+			peVar10[3].y = fVar20;
+			peVar10[3].z = fVar14;
+			peVar10[3].w = fVar21;
+		}
+	}
+
+	iVar17 = (this->verletBridge).altStepCount;
+	iVar12 = 0;
+	if (0 < iVar17) {
+		pSVar11 = pSVar8;
+		do {
+			peVar10 = this->verletBridge.pBridgeMem;
+			pSVar11->particleIndexA = iVar12;
+			pSVar11->particleIndexB = iVar12 + 1;
+			if (peVar10 != (edF32VECTOR4*)0x0) {
+				edF32Vector4SubHard(&eStack224, peVar10 + iVar12, peVar10 + iVar12 + 1);
+				fVar14 = edF32Vector4DotProductHard(&eStack224, &eStack224);
+				pSVar11->squaredRestDistance = fVar14;
+			}
+
+			pSVar11->iterationCount = 3;
+			if ((this->verletBridge).field_0x68 == false) {
+				iVar17 = (this->verletBridge).altStepCount;
+				peVar10 = this->verletBridge.pBridgeMem;
+				iVar5 = iVar17 + 2 + iVar12;
+				iVar6 = iVar17 + 1 + iVar12;
+				pSVar13 = pSVar8 + iVar12 + iVar17;
+				pSVar13->particleIndexA = iVar6;
+				pSVar13->particleIndexB = iVar5;
+				if (peVar10 != (edF32VECTOR4*)0x0) {
+					edF32Vector4SubHard(&eStack240, peVar10 + iVar6, peVar10 + iVar5);
+					fVar14 = edF32Vector4DotProductHard(&eStack240, &eStack240);
+					pSVar13->squaredRestDistance = fVar14;
+				}
+
+				pSVar13->iterationCount = 3;
+				if (iVar12 != 0) {
+					iVar17 = (this->verletBridge).altStepCount;
+					peVar10 = this->verletBridge.pBridgeMem;
+					iVar5 = iVar17 + 1 + iVar12;
+					pSVar13 = pSVar8 + iVar12 + iVar17 * 2 + -1;
+					pSVar13->particleIndexA = iVar12;
+					pSVar13->particleIndexB = iVar5;
+					if (peVar10 != (edF32VECTOR4*)0x0) {
+						edF32Vector4SubHard(&eStack256, peVar10 + iVar12, peVar10 + iVar5);
+						fVar14 = edF32Vector4DotProductHard(&eStack256, &eStack256);
+						pSVar13->squaredRestDistance = fVar14;
+					}
+					pSVar13->iterationCount = 3;
+				}
+
+				if (0 < iVar12) {
+					iVar17 = (this->verletBridge).altStepCount;
+					if (iVar12 < iVar17 + -1) {
+						iVar5 = iVar17 + 2 + iVar12;
+						peVar10 = this->verletBridge.pBridgeMem;
+						pSVar13 = pSVar8 + iVar12 + iVar17 * 3 + -2;
+						pSVar13->particleIndexA = iVar12;
+						pSVar13->particleIndexB = iVar5;
+						if (peVar10 != (edF32VECTOR4*)0x0) {
+							edF32Vector4SubHard(&eStack272, peVar10 + iVar12, peVar10 + iVar5);
+							fVar14 = edF32Vector4DotProductHard(&eStack272, &eStack272);
+							pSVar13->squaredRestDistance = fVar14;
+						}
+
+						pSVar13->iterationCount = 3;
+					}
+				}
+			}
+
+			iVar17 = (this->verletBridge).altStepCount;
+			iVar12 = iVar12 + 1;
+			pSVar11 = pSVar11 + 1;
+		} while (iVar12 < iVar17);
+	}
+
+	if ((this->verletBridge).field_0x69 != false) {
+		if ((this->verletBridge).field_0x68 == false) {
+			iVar17 = iVar17 * 4 + -3;
+			peVar10 = this->verletBridge.pBridgeMem;
+		}
+		else {
+			peVar10 = this->verletBridge.pBridgeMem;
+		}
+
+		pSVar11 = pSVar8 + iVar17;
+		pSVar11->particleIndexA = unaff_s7_lo;
+		pSVar11->particleIndexB = 1;
+		if (peVar10 != (edF32VECTOR4*)0x0) {
+			edF32Vector4SubHard(&eStack288, peVar10 + unaff_s7_lo, peVar10 + 1);
+			fVar14 = edF32Vector4DotProductHard(&eStack288, &eStack288);
+			pSVar11->squaredRestDistance = fVar14;
+		}
+
+		pSVar11->iterationCount = 3;
+		peVar10 = this->verletBridge.pBridgeMem;
+		pSVar11 = pSVar8 + iVar17 + 1;
+		iVar12 = (this->verletBridge).altStepCount + -1;
+		pSVar11->particleIndexA = unaff_s7_lo + 1;
+		pSVar11->particleIndexB = iVar12;
+		if (peVar10 != (edF32VECTOR4*)0x0) {
+			edF32Vector4SubHard(&eStack304, peVar10 + unaff_s7_lo + 1, peVar10 + iVar12);
+			fVar14 = edF32Vector4DotProductHard(&eStack304, &eStack304);
+			pSVar11->squaredRestDistance = fVar14;
+		}
+
+		pSVar11->iterationCount = 3;
+		if ((this->verletBridge).field_0x68 == false) {
+			peVar10 = this->verletBridge.pBridgeMem;
+			pSVar11 = pSVar8 + iVar17 + 2;
+			iVar12 = (this->verletBridge).altStepCount + 2;
+			pSVar11->particleIndexA = unaff_s7_lo + 2;
+			pSVar11->particleIndexB = iVar12;
+			if (peVar10 != (edF32VECTOR4*)0x0) {
+				edF32Vector4SubHard(&eStack320, peVar10 + unaff_s7_lo + 2, peVar10 + iVar12);
+				fVar14 = edF32Vector4DotProductHard(&eStack320, &eStack320);
+				pSVar11->squaredRestDistance = fVar14;
+			}
+
+			pSVar11->iterationCount = 3;
+			peVar10 = this->verletBridge.pBridgeMem;
+			iVar12 = (this->verletBridge).altStepCount;
+			pSVar8 = pSVar8 + iVar17 + 3;
+			pSVar8->particleIndexA = unaff_s7_lo + 3;
+			pSVar8->particleIndexB = iVar12 * 2;
+			if (peVar10 != (edF32VECTOR4*)0x0) {
+				edF32Vector4SubHard(&eStack336, peVar10 + unaff_s7_lo + 3, peVar10 + iVar12 * 2);
+				fVar14 = edF32Vector4DotProductHard(&eStack336, &eStack336);
+				pSVar8->squaredRestDistance = fVar14;
+			}
+
+			pSVar8->iterationCount = 3;
+		}
+	}
+
+	(this->verletBridge.aParticleInfo)->inverseMass = 0.0f;
+	peVar10 = this->verletBridge.pBridgeMem;
+	peVar9 = this->verletBridge.field_0x1c;
+	fVar20 = peVar10->y;
+	fVar14 = peVar10->z;
+	fVar21 = peVar10->w;
+	peVar9->x = peVar10->x;
+	peVar9->y = fVar20;
+	peVar9->z = fVar14;
+	peVar9->w = fVar21;
+	iVar17 = (this->verletBridge).altStepCount;
+	this->verletBridge.aParticleInfo[iVar17].inverseMass = 0.0f;
+	peVar9 = this->verletBridge.pBridgeMem + iVar17;
+	peVar10 = this->verletBridge.field_0x1c + iVar17;
+	fVar20 = peVar9->y;
+	fVar14 = peVar9->z;
+	fVar21 = peVar9->w;
+	peVar10->x = peVar9->x;
+	peVar10->y = fVar20;
+	peVar10->z = fVar14;
+	peVar10->w = fVar21;
+
+	if ((this->verletBridge).field_0x69 != false) {
+		iVar17 = unaff_s7_lo + 1;
+		this->verletBridge.aParticleInfo[unaff_s7_lo].inverseMass = 0.0f;
+		peVar9 = this->verletBridge.pBridgeMem + unaff_s7_lo;
+		peVar10 = this->verletBridge.field_0x1c + unaff_s7_lo;
+		fVar20 = peVar9->y;
+		fVar14 = peVar9->z;
+		fVar21 = peVar9->w;
+		peVar10->x = peVar9->x;
+		peVar10->y = fVar20;
+		peVar10->z = fVar14;
+		peVar10->w = fVar21;
+		this->verletBridge.aParticleInfo[iVar17].inverseMass = 0.0f;
+		peVar9 = this->verletBridge.pBridgeMem + iVar17;
+		peVar10 = this->verletBridge.field_0x1c + iVar17;
+		fVar20 = peVar9->y;
+		fVar14 = peVar9->z;
+		fVar21 = peVar9->w;
+		peVar10->x = peVar9->x;
+		peVar10->y = fVar20;
+		peVar10->z = fVar14;
+		peVar10->w = fVar21;
+	}
+
+	if ((this->verletBridge).field_0x68 == false) {
+		iVar17 = (this->verletBridge).altStepCount + 1;
+		this->verletBridge.aParticleInfo[iVar17].inverseMass = 0.0f;
+		peVar9 = this->verletBridge.pBridgeMem + iVar17;
+		peVar10 = this->verletBridge.field_0x1c + iVar17;
+		fVar20 = peVar9->y;
+		fVar14 = peVar9->z;
+		fVar21 = peVar9->w;
+		peVar10->x = peVar9->x;
+		peVar10->y = fVar20;
+		peVar10->z = fVar14;
+		peVar10->w = fVar21;
+		iVar17 = (this->verletBridge).altStepCount * 2 + 1;
+		this->verletBridge.aParticleInfo[iVar17].inverseMass = 0.0f;
+		peVar9 = this->verletBridge.pBridgeMem + iVar17;
+		peVar10 = this->verletBridge.field_0x1c + iVar17;
+		fVar20 = peVar9->y;
+		fVar14 = peVar9->z;
+		fVar21 = peVar9->w;
+		peVar10->x = peVar9->x;
+		peVar10->y = fVar20;
+		peVar10->z = fVar14;
+		peVar10->w = fVar21;
+		iVar17 = unaff_s7_lo + 2;
+		if ((this->verletBridge).field_0x69 != false) {
+			iVar12 = unaff_s7_lo + 3;
+			this->verletBridge.aParticleInfo[iVar17].inverseMass = 0.0f;
+			peVar9 = this->verletBridge.pBridgeMem + iVar17;
+			peVar10 = this->verletBridge.field_0x1c + iVar17;
+			fVar20 = peVar9->y;
+			fVar14 = peVar9->z;
+			fVar21 = peVar9->w;
+			peVar10->x = peVar9->x;
+			peVar10->y = fVar20;
+			peVar10->z = fVar14;
+			peVar10->w = fVar21;
+			this->verletBridge.aParticleInfo[iVar12].inverseMass = 0.0f;
+			peVar9 = this->verletBridge.pBridgeMem + iVar12;
+			peVar10 = this->verletBridge.field_0x1c + iVar12;
+			fVar20 = peVar9->y;
+			fVar14 = peVar9->z;
+			fVar21 = peVar9->w;
+			peVar10->x = peVar9->x;
+			peVar10->y = fVar20;
+			peVar10->z = fVar14;
+			peVar10->w = fVar21;
+		}
+	}
+
+	BehaviourManage(1, (CWindForce*)0x0);
+	this->field_0x354 = -1;
+
+	return;
+}
+
 struct S_SAVE_CLASS_BRIDGE
 {
 	int field_0x0;

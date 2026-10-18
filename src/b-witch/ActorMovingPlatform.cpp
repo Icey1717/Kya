@@ -168,9 +168,9 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	this->field_0x1e0 = (PLATFORM_SOUND_STREAM*)piVar5;
 
 	CActorMovingPlatform_SubObj* pCVar3 = this->pProperties;
-	float fVar17 = pCVar3->field_0x14;
-	pCVar3->field_0x14 = pCVar3->field_0x18;
-	this->pProperties->field_0x18 = -fVar17;
+	float fVar17 = pCVar3->field_0x10.y;
+	pCVar3->field_0x10.y = pCVar3->field_0x10.z;
+	this->pProperties->field_0x10.z = -fVar17;
 
 	CCollision* pCVar4 = this->pCollisionData;
 	if (pCVar4 != (CCollision*)0x0) {
@@ -811,6 +811,35 @@ StateConfig* CActorMovingPlatform::GetStateCfg(int state)
 		pAVar1 = gStateCfg_MPF + state + -5;
 	}
 	return pAVar1;
+}
+
+void CActorMovingPlatform::SetSoundPosition()
+{
+	CActorMovingPlatform_SubObj* pCVar1;
+	Timer* pTVar2;
+	float fVar3;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->pProperties;
+
+	local_10.xyz = pCVar1->field_0x10;
+	local_10.w = 1.0f;
+
+	edF32Matrix4MulF32Vector4Hard(&local_10, &this->pMeshTransform->base.transformA, &local_10);
+	local_20.xyz = this->vector_0x120.position;
+	local_20.w = 1.0f;
+	edF32Vector4SubHard(&local_20, &local_10, &local_20);
+
+	if (Timer::GetTimer()->cutsceneDeltaTime != 0.0f) {
+		fVar3 = 1.0f / Timer::GetTimer()->cutsceneDeltaTime;
+		local_20.xyz = local_20.xyz * fVar3;
+	}
+
+	this->vector_0x120.position = local_10.xyz;
+	this->vector_0x120.rotation = local_20.xyz;
+
+	return;
 }
 
 void CActorMovingPlatform::GenericManage(int param_2, int param_3, int currentSegment, int prevSegment)

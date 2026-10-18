@@ -5,7 +5,7 @@
 ; Setup:
 ;   1. Install AutoHotkey v2  (https://www.autohotkey.com/)
 ;   2. Ensure Python 3 is on your PATH
-;   3. Keep this file, transform.py and symbol_index.py in tools/special_paste
+;   3. Keep this file, transform.py, symbol_index.py and vector_assignments.py together
 ;   4. Double-click this script (or run: AutoHotkey64.exe special_paste.ahk)
 ;
 ; Add a new transform: edit transform.py and add a function to the TRANSFORMS list.
@@ -27,17 +27,22 @@
         f.Close()
 
         scriptDir := A_ScriptDir
-        RunWait('cmd.exe /c python.exe -X utf8 "' scriptDir '\transform.py" < "' tempIn '" > "' tempOut '" 2> "' tempErr '"',, "Hide")
+        exitCode := RunWait('cmd.exe /c python.exe -X utf8 "' scriptDir '\transform.py" < "' tempIn '" > "' tempOut '" 2> "' tempErr '"',, "Hide")
 
         errText := FileRead(tempErr, "UTF-8")
-        if (errText != "") {
-            MsgBox "Python error:`n" errText, "Special Paste", "Icon!"
+        if (exitCode != 0 || errText != "") {
+            MsgBox "Python failed (exit " exitCode "):`n" errText, "Special Paste", "Icon!"
             return
         }
 
         result := FileRead(tempOut, "UTF-8")
+        if (text != "" && result == "") {
+            throw Error("Transformer returned empty output; paste cancelled.")
+        }
         A_Clipboard := result
-        ClipWait(2)
+        if (!ClipWait(2)) {
+            throw Error("Timed out waiting for the transformed clipboard.")
+        }
         Send "^v"
         TrayTip "Transformed!", "Special Paste OK", "Mute"
     } catch Error as e {

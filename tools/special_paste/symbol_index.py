@@ -6,12 +6,14 @@ from pathlib import Path
 import re
 import tempfile
 
-VERSION = 1
+VERSION = 3
 
 
 def BuildIndex(sources):
     symbols = {}
     methods = {}
+    members = {}
+    bases = {}
 
     def Add(mapping, name, value):
         values = mapping.setdefault(name, [])
@@ -33,10 +35,16 @@ def BuildIndex(sources):
                 while end < len(text) and depth:
                     depth += (text[end] == "{") - (text[end] == "}")
                     end += 1
-                container = re.fullmatch(r"(?:class|struct)\s+(\w+)(?:\s*:[^{]+)?", statement)
+                # PACK(...) wraps several serialized repository structures.
+                container = re.fullmatch(r"(?:PACK\s*\(\s*)?(?:class|struct)\s+(\w+)(?:\s*:(?P<bases>[^{]+))?", statement)
                 namespace = re.fullmatch(r"namespace\s+(\w+)", statement)
                 if container or namespace:
                     name = (container or namespace).group(1)
+                    if container and container['bases']:
+                        for base in container['bases'].split(','):
+                            base = re.sub(r"\b(?:public|protected|private|virtual)\b", "", base).strip()
+                            if re.fullmatch(r"\w+(?:::\w+)*", base):
+                                Add(bases, scope + name, base)
                     Scan(text[pos + 1:end - 1], scope + name + "::", bool(container))
                 else:
                     Record(statement, scope, inClass)
@@ -57,8 +65,6 @@ def BuildIndex(sources):
         if inClass and method:
             Add(methods, scope + method.group(1), "static" if re.search(r"\bstatic\b", statement) else "member")
             return
-        if inClass and not re.search(r"\bstatic\b", statement):
-            return
         declaration = re.fullmatch(
             r"(?:(?:extern|static|inline|constexpr|const|volatile|struct|class)\s+)*"
             r"(?P<type>\w+(?:::\w+)*)\s*(?P<pointer>\*)?\s*(?:const\s+)?"
@@ -66,14 +72,16 @@ def BuildIndex(sources):
             statement,
         )
         if declaration:
-            Add(symbols, scope + declaration['name'], [declaration['type'], bool(declaration['pointer'])])
+            target = members if inClass and not re.search(r"\bstatic\b", statement) else symbols
+            typeName = "__volatile__" if re.search(r"\bvolatile\b", statement) else declaration['type']
+            Add(target, scope + declaration['name'], [typeName, bool(declaration['pointer'])])
 
     for source in sources:
         # Hide comments, literals and preprocessing directives before scanning.
         source = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', " ", source)
         source = re.sub(r"^[ \t]*#(?:[^\n]*\\\n)*[^\n]*", "", source, flags=re.MULTILINE)
         Scan(source)
-    return {"symbols": symbols, "methods": methods}
+    return {"symbols": symbols, "methods": methods, "members": members, "bases": bases}
 
 
 def LoadIndex():

@@ -376,6 +376,11 @@ void CCameraGame::Reset()
 	return;
 }
 
+bool CCameraGame::IsKindOfObject(ulong kind)
+{
+	return (kind & 0xe0) != 0;
+}
+
 void CCameraGame::Init()
 {
 	float fVar1;

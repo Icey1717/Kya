@@ -114,10 +114,10 @@ TEST_F(BinocularHudTest, WidescreenUsesCameraAspectAndDetachedInterfaceStopsUpda
 TEST(BinocularHud, DisplayRoutesHeroInterfaceAndGameCleanupToTheWidget)
 {
 	CFrontendDisplay display;
-	ASSERT_NE(display.pMenuObj_0x74, nullptr);
+	ASSERT_NE(display.pFrontendBinoculars, nullptr);
 	CFrontendBinoculars widget;
 	OtherInterface interface;
-	display.pMenuObj_0x74 = &widget;
+	display.pFrontendBinoculars = &widget;
 	display.DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, &interface);
 	EXPECT_EQ(widget.GetInterface(), &interface);
 	display.DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, nullptr);

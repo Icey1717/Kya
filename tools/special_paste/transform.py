@@ -4,12 +4,10 @@ Special Paste transformer for Ghidra-decompiled Kya C++ output.
 
 Reads text from stdin, applies transforms, writes to stdout.
 
-Transforms (in order applied):
-  1. Vtable dereferences  -> member calls
-  2. Free-function calls  -> member calls (first arg is object)
-  3. Base chain stripping -> (this->base).base.field -> this->field
-  4. C-style casts        -> static_cast<T>(x)
-  5. Double literals      -> append f suffix (0.0 -> 0.0f)
+Protect literals/comments/directives, recover member calls and PS2 base chains,
+normalize Ghidra float/math expressions, and apply repository formatting.
+Preserve explicit base dispatch, C-style casts and timer locals. Recover vector
+assignments only when the source and destination types are known.
 """
 
 import re
@@ -18,6 +16,7 @@ import sys
 from functools import lru_cache
 
 from symbol_index import LoadIndex
+from vector_assignments import CollapseVectorAssignments
 
 
 @lru_cache(maxsize=1)
@@ -64,6 +63,36 @@ def split_top_level_args(args_text: str) -> list[str]:
     return args
 
 
+def ProtectNonCode(text: str):
+    """Hide literals, comments and directives from the lightweight C++ rewrites."""
+    prefix = "__KYA_PASTE_OPAQUE_"
+    while prefix in text:
+        prefix += "X"
+    saved = {}
+    pattern = re.compile(
+        r'(?:u8|u|U|L)?R"(?P<delimiter>[^ ()\\\t\r\n]{0,16})\([\s\S]*?\)(?P=delimiter)"'
+        r'|(?:u8|u|U|L)?"(?:\\[\s\S]|[^"\\])*"'
+        r"|(?:u8|u|U|L)?'(?:\\[\s\S]|[^'\\])*'"
+        r'|//(?:\\\r?\n|[^\r\n])*|/\*[\s\S]*?(?:\*/|\Z)'
+        r'|^[ \t]*\#(?:[^\r\n\\]|\\[^\r\n]|\\\r?\n)*',
+        re.MULTILINE,
+    )
+
+    def Save(match):
+        key = f"{prefix}{len(saved)}__"
+        saved[key] = match.group(0)
+        return key
+
+    return pattern.sub(Save, text), saved
+
+
+def RestoreNonCode(text: str, saved) -> str:
+    if not saved:
+        return text
+    return re.sub("|".join(re.escape(key) for key in saved),
+                  lambda match: saved[match.group(0)], text)
+
+
 def strip_base_chain_in(expr: str) -> str:
     """
     Strip base-class navigation chains of any form:
@@ -103,18 +132,9 @@ def strip_base_chain_in(expr: str) -> str:
 # Individual transforms
 # ---------------------------------------------------------------------------
 
-def _is_object_arg(arg: str) -> bool:
-    """Return True if arg looks like a this-pointer/object rather than a scalar."""
-    arg = arg.strip()
-    # Numeric literal (int, float, hex)
-    if re.match(r"^-?(?:0[xX][\da-fA-F]+|\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)[fFlLuU]*$", arg):
-        return False
-    return True
-
-
 def _strip_leading_cast(arg: str) -> str:
     """Strip one leading C-style cast from an argument when present."""
-    return re.sub(r"^\s*\([\w\s*:]+\)\s*", "", arg).strip()
+    return re.sub(r"^\s*\((?:const\s+)?[\w:]+\s*\*+\s*\)\s*", "", arg).strip()
 
 
 def _strip_wrapping_parens(expr: str) -> str:
@@ -151,9 +171,8 @@ def t_vtable_calls(text: str) -> str:
     (*pVTableExpr.Method)(maybeScalars..., thisArg, rest...)
         ->  (thisArg)->Method(maybeScalars..., rest...)
 
-    Scans arguments left-to-right and picks the first one that looks like an
-    object/pointer (not a numeric literal) as the this-pointer. Any arguments
-    before it are moved to after the method name.
+    Match the object argument against the owner of the vtable. Ambiguous calls
+    and ordinary function pointers stay unchanged.
     """
     vtable_inner_re = re.compile(r"^\*(.*)(?:->|\.)(\w+)$")
     result: list[str] = []
@@ -173,35 +192,38 @@ def t_vtable_calls(text: str) -> str:
                         args = split_top_level_args(args_text)
                         method = m.group(2)
 
+                        # Parentheses and PS2 base fields are artifacts here;
+                        # the remaining prefix identifies the vtable owner.
+                        table = strip_base_chain_in(m.group(1))
+                        table = table.replace("(", "").replace(")", "")
+                        owner_match = re.fullmatch(
+                            r"(?P<owner>\w+(?:(?:->|\.)\w+)*)->pVtable(?:->base|\.base)*",
+                            table, re.IGNORECASE,
+                        )
+                        if owner_match is None:
+                            i += 1
+                            continue
+                        owner = owner_match['owner']
+                        matches = [
+                            idx for idx, arg in enumerate(args)
+                            if _strip_wrapping_parens(_strip_leading_cast(
+                                strip_base_chain_in(arg))) == owner
+                        ]
+                        if len(matches) != 1:
+                            i += 1
+                            continue
+
                         result.append(text[pos:i])
                         if args:
-                            # Prefer an explicit this/this->... argument when present.
-                            stripped_args = [
-                                re.sub(r"^\s*\([\w\s*:]+\)\s*", "", a).strip()
-                                for a in args
-                            ]
-                            this_idx = next(
-                                (
-                                    idx
-                                    for idx, bare_arg in enumerate(stripped_args)
-                                    if bare_arg == "this" or bare_arg.startswith("this->")
-                                ),
-                                -1,
-                            )
-                            if this_idx == -1:
-                                # Fallback: first non-scalar argument.
-                                this_idx = next(
-                                    (idx for idx, a in enumerate(args) if _is_object_arg(a)),
-                                    0,
-                                )
+                            this_idx = matches[0]
                             this_arg = args[this_idx]
                             leading = args[:this_idx]
                             trailing = args[this_idx + 1:]
                             rest_parts = leading + trailing
                             rest_str = ", ".join(rest_parts)
 
-                            # If the object arg is just `this` (possibly cast), use implicit this
-                            bare = re.sub(r"^\s*\([\w\s*:]+\)\s*", "", this_arg).strip()
+                            # If the object is `this`, use implicit this.
+                            bare = owner
                             if bare == "this":
                                 result.append(f"{method}({rest_str})")
                             elif re.match(r"^[\w][\w\->]*$", bare):
@@ -267,7 +289,7 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
     ):
         pointer_types.setdefault(declaration.group(2), set()).add(declaration.group(1))
 
-    call_re = re.compile(r"\b(\w+)::(\w+)\(")
+    call_re = re.compile(r"(?<![\w:])(\w+(?:::\w+)*)::(\w+)\(")
     result: list[str] = []
     pos = 0
 
@@ -304,7 +326,8 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
             )
             if this_idx != -1:
                 rest_str = ", ".join(args[:this_idx] + args[this_idx + 1 :])
-                result.append(f"{fn_name}({rest_str})")
+                # Qualification can explicitly select a base implementation.
+                result.append(f"{class_name}::{fn_name}({rest_str})")
                 pos = call_end + 1
                 continue
 
@@ -342,11 +365,13 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
                 pos = call_end + 1
                 continue
             elif bare == "this":
-                # Object is this (possibly cast) — use implicit this
-                result.append(f"{fn_name}({rest_str})")
+                # Preserve explicit dispatch when removing the object argument.
+                result.append(f"{class_name}::{fn_name}({rest_str})")
                 pos = call_end + 1
                 continue
-            elif re.match(r"^\w+$", bare) and (stripped != first_arg or bare != first_arg):
+            elif re.match(r"^\w+$", bare) and re.match(
+                r"^\(\s*" + re.escape(class_name) + r"\s*\*\s*\)", stripped
+            ):
                 # Object is a cast of a simple variable — use explicit arrow
                 if rest_str:
                     result.append(f"{bare}->{fn_name}({rest_str})")
@@ -425,77 +450,6 @@ def t_collapse_anim_end_reached_block(text: str) -> str:
     return pattern.sub(_replace, text)
 
 
-def t_c_casts_to_static_cast(text: str) -> str:
-    """
-    Convert C-style casts to static_cast:
-        (Type *)(expr)  ->  static_cast<Type *>(expr)
-        (Type *)word    ->  static_cast<Type *>(word)
-
-    Matches pointer casts (type ending with *) and plain type casts where
-    the type looks like a class name (starts with uppercase) or known primitive.
-    """
-    PRIMITIVES = {"int", "unsigned", "char", "short", "long", "float",
-                  "double", "bool", "void", "uint", "ulong", "uchar", "ushort"}
-
-    NULL_EXPRS = re.compile(r"^(0x0+|0|NULL|nullptr)$")
-
-    type_pat = r"(?:const\s+)?[\w:]+(?:\s*\*+)?"
-    cast_re = re.compile(r"\((" + type_pat + r")\)")
-
-    result: list[str] = []
-    pos = 0
-    i = 0
-
-    while i < len(text):
-        m = cast_re.match(text, i)
-        if m:
-            type_part = m.group(1).strip()
-            base_type = type_part.lstrip("const ").split("::")[-1].rstrip("* ").strip()
-            is_pointer = "*" in type_part
-            is_class = base_type[:1].isupper() if base_type else False
-            is_primitive = base_type in PRIMITIVES
-
-            if (is_pointer or is_class or is_primitive) and base_type:
-                after = m.end()
-                if after < len(text) and text[after] == "(":
-                    close = find_matching_paren(text, after)
-                    if close != -1:
-                        expr = text[after + 1 : close]
-                        if NULL_EXPRS.match(expr.strip()):
-                            i = close + 1
-                            continue
-                        result.append(text[pos:i])
-                        result.append(f"static_cast<{type_part}>({expr})")
-                        pos = close + 1
-                        i = pos
-                        continue
-                else:
-                    word_m = re.match(r"[\w:]+", text[after:])
-                    if word_m:
-                        expr_end = after + word_m.end()
-                        expr = word_m.group(0)
-                        # Handle cast followed by function call target:
-                        # (Type *)Class::Func(args) -> static_cast<Type *>(Class::Func(args))
-                        if expr_end < len(text) and text[expr_end] == "(":
-                            call_close = find_matching_paren(text, expr_end)
-                            if call_close != -1:
-                                expr = text[after : call_close + 1]
-                                expr_end = call_close + 1
-                        if NULL_EXPRS.match(expr.strip()) or expr.strip() == "this":
-                            i = expr_end
-                            continue
-                        result.append(text[pos:i])
-                        result.append(f"static_cast<{type_part}>({expr})")
-                        pos = expr_end
-                        i = pos
-                        continue
-
-        i += 1
-
-    result.append(text[pos:])
-    return "".join(result)
-
-
 def t_float_literals(text: str) -> str:
     """
     Append 'f' suffix to unqualified floating-point literals:
@@ -537,7 +491,6 @@ def t_inline_bytecode_temps(text: str) -> str:
             use_re = re.compile(
                 r"^(\s*)(.+?)\s*=\s*" + re.escape(var) + r"\s*;\s*$"
             )
-            use_m = use_re.match(lines[i + 1])
             use_m = use_re.match(lines[i + 1])
             # Scan forward from i+2: if var is read before its next reassignment,
             # inlining is NOT safe (the value would be lost).
@@ -622,104 +575,6 @@ def t_math_macros(text: str) -> str:
     return text
 
 
-def t_collapse_vector_assignment(text: str) -> str:
-    """
-    Collapse successive x/y/z/w (or x/y/z) component assignments into one vector assignment.
-
-        base.vec.x = rhs.x;
-        base.vec.y = rhs.y;
-        base.vec.z = rhs.z;
-        base.vec.w = rhs.w;
-    ->  base.vec = rhs;
-    """
-    lines = text.split("\n")
-    result = []
-    i = 0
-    while i < len(lines):
-        matched = False
-        for components, count in [("xyzw", 4), ("xyz", 3)]:
-            if i + count > len(lines):
-                continue
-            m0 = re.match(
-                r"^(\s*)(.+?)\." + components[0] + r"\s*=\s*(.+?)\." + components[0] + r"\s*;\s*$",
-                lines[i],
-            )
-            if not m0:
-                continue
-            indent, lhs_base, rhs_base = m0.group(1), m0.group(2), m0.group(3)
-            ok = True
-            for j, c in enumerate(components[1:], 1):
-                mj = re.match(
-                    r"^"
-                    + re.escape(indent)
-                    + re.escape(lhs_base)
-                    + r"\."
-                    + c
-                    + r"\s*=\s*"
-                    + re.escape(rhs_base)
-                    + r"\."
-                    + c
-                    + r"\s*;\s*$",
-                    lines[i + j],
-                )
-                if not mj:
-                    ok = False
-                    break
-            if ok:
-                result.append(f"{indent}{lhs_base} = {rhs_base};")
-                i += count
-                matched = True
-                break
-        if not matched:
-            result.append(lines[i])
-            i += 1
-    return "\n".join(result)
-
-
-def t_remove_timer_vars(text: str) -> str:
-    """
-    Remove Timer variable declarations and assignments, replacing usages with GetTimer().
-
-    For each variable declared as Timer (or Timer*):
-      - Remove the declaration line:  Timer *pTVar1;  or  Timer tVar;
-      - Remove any assignment lines:  pTVar1 = ...;
-      - Replace remaining uses of that variable with GetTimer()
-    """
-    lines = text.split("\n")
-
-    # Find all Timer variable names from declaration lines.
-    decl_re = re.compile(r"^\s*Timer\s*\*?\s*(\w+)\s*;")
-    timer_vars: set[str] = set()
-    for line in lines:
-        m = decl_re.match(line)
-        if m:
-            timer_vars.add(m.group(1))
-
-    if not timer_vars:
-        return text
-
-    result = []
-    for line in lines:
-        # Drop declaration lines
-        if decl_re.match(line):
-            continue
-
-        # Drop pure assignment lines: <indent>varName = ...;
-        assign_re = re.compile(
-            r"^\s*(?:" + "|".join(re.escape(v) for v in timer_vars) + r")\s*=.*;\s*$"
-        )
-        if assign_re.match(line):
-            continue
-
-        # Replace remaining references with GetTimer()
-        for var in timer_vars:
-            line = re.sub(r"\b" + re.escape(var) + r"\b", "GetTimer()", line)
-
-        result.append(line)
-
-    return "\n".join(result)
-
-
 def t_function_header_newline(text: str) -> str:
     """Place a function's opening brace exactly one newline after its header."""
     header_re = re.compile(
@@ -745,14 +600,67 @@ def t_function_header_newline(text: str) -> str:
     return text
 
 
+def FormatCode(text: str) -> str:
+    """Apply the small subset of repository formatting needed for Ghidra pastes.
+
+    Keep existing line breaks, use tabs for indentation, attach pointer stars to
+    declaration types, and separate declarations/initialization/final returns.
+    Non-code has already been replaced by opaque tokens.
+    """
+    from math import gcd
+
+    lines = text.splitlines(keepends=True)
+    unit = 0
+    for line in lines:
+        indent = re.match(r" *", line).group(0)
+        if line.strip() and indent and not line[len(indent):].startswith("\t"):
+            unit = gcd(unit, len(indent))
+    unit = unit or 2
+    newline = "\r\n" if "\r\n" in text else "\n"
+    declaration = re.compile(r"^[\w:*&<>]+(?:[ \t]+[\w:*&<>]+)*[ \t]+\w+\s*;$")
+    pointer = re.compile(
+        r"^([ \t]*(?:(?:const|static|unsigned|signed|long)\s+)*"
+        r"(?:[A-Z]\w*(?:::\w+)*|bool|char|short|int|float|double|void|uint|ulong|undefined\d*))"
+        r"[ \t]*(\*+)[ \t]*(\w+)"
+    )
+    out = []
+    depth = 0
+    in_function = False
+    previous = ""
+    for raw in lines:
+        eol = "\r\n" if raw.endswith("\r\n") else "\n" if raw.endswith("\n") else ""
+        line = raw.removesuffix(eol) if eol else raw
+        line = line.rstrip()
+        line = pointer.sub(r"\1\2 \3", line)
+        indent = re.match(r"[ \t]*", line).group(0)
+        # Existing tabs represent repository indentation; convert spaces only.
+        if "\t" not in indent:
+            count = len(indent)
+            line = "\t" * (count // unit) + " " * (count % unit) + line[count:]
+        code = line.strip()
+        if depth == 0 and code == "{":
+            in_function = bool(re.match(r"(?:[\w:*&<>]+\s+)+[\w:~]+\s*\(", previous))
+        if in_function and depth == 1 and code and out and out[-1].strip():
+            after_decls = bool(declaration.fullmatch(previous)) and not declaration.fullmatch(code)
+            before_return = code.startswith("return") and previous != "{"
+            after_init = bool(re.fullmatch(r"\w+(?:->\w+)*\s*=\s*[^();]+;", previous)) and bool(
+                re.match(r"\w+\s*=\s*[\w:]+\(", code))
+            if (after_decls or before_return or after_init) and code != "}":
+                out.append(newline)
+        out.append(line + eol)
+        if code:
+            previous = code
+        depth += code.count("{") - code.count("}")
+        if depth == 0:
+            in_function = False
+    return "".join(out)
+
+
 TRANSFORMS = [
-    t_collapse_vector_assignment,
     t_vtable_calls,
     t_free_to_member_calls,
     t_remove_base_chains,
     t_collapse_anim_end_reached_block,
-    t_remove_timer_vars,
-    t_c_casts_to_static_cast,
     t_dat_float_literals,
     t_float_literals,
     t_math_macros,
@@ -763,9 +671,13 @@ TRANSFORMS = [
 
 
 def transform(text: str, symbol_index=None) -> str:
+    text, protected = ProtectNonCode(text)
+    if symbol_index is None:
+        symbol_index = GetRepositoryIndex()
     for fn in TRANSFORMS:
         text = fn(text, symbol_index) if fn is t_free_to_member_calls else fn(text)
-    return text
+    text = CollapseVectorAssignments(text, symbol_index)
+    return RestoreNonCode(FormatCode(text), protected)
 
 
 # ---------------------------------------------------------------------------
@@ -1012,10 +924,10 @@ def _run_tests() -> None:
             "CActor::DoMessage((CActor *)pHunter,pHunter->field_0x364,0x27,0);",
             "pHunter->DoMessage(pHunter->field_0x364, 0x27, 0);",
         ),
-        # free-function with cast-of-this — use implicit this
+        # Direct base-class calls preserve their qualifier.
         (
             "CActor::RestartCurAnim((CActor *)this);",
-            "RestartCurAnim();",
+            "CActor::RestartCurAnim();",
         ),
         # free-function to member
         (
@@ -1042,10 +954,10 @@ def _run_tests() -> None:
             "(*((this->pOwner->base).base.pVTable)->SetState)((CActor *)this->pOwner,9,-1);",
             "this->pOwner->SetState(9, -1);",
         ),
-        # vtable call - scalar-like temp before casted this (prefer this arg)
+        # Unresolved named inheritance chains do not guess a receiver.
         (
             "(*((this->extendedBase).base.camera.objBase.pVTable)->SetAngleAlpha)(fVar7,(CCamera *)this);",
-            "SetAngleAlpha(fVar7);",
+            "(*(this->extendedBase.camera.objBase.pVTable)->SetAngleAlpha)(fVar7,(CCamera *)this);",
         ),
         # vtable call - method selected with dot on vtable base
         (
@@ -1054,34 +966,34 @@ def _run_tests() -> None:
         ),
         # C-style cast of `this` alone — must NOT be transformed (never cast this)
         ("(CActor *)this", "(CActor *)this"),
-        # C-style cast of non-this pointer — still transforms
-        ("(CActor *)pActor", "static_cast<CActor *>(pActor)"),
+        # Preserve casts: this scanner cannot establish legal C++ cast kinds.
+        ("(CActor *)pActor", "(CActor *)pActor"),
         # C-style cast of function-call result
         (
             "pCameraManager = (CCameraManager *)CScene::GetManager(MO_Camera);",
-            "pCameraManager = static_cast<CCameraManager *>(CScene::GetManager(MO_Camera));",
+            "pCameraManager = (CCameraManager *)CScene::GetManager(MO_Camera);",
         ),
         # C-style cast - parenthesised expr
-        ("(int *)(ptr)", "static_cast<int *>(ptr)"),
+        ("(int *)(ptr)", "(int *)(ptr)"),
         # C-style null casts — must NOT be transformed
         ("(CActorsTable *)0x0", "(CActorsTable *)0x0"),
         ("(CActor *)0", "(CActor *)0"),
         ("(void *)NULL", "(void *)NULL"),
         ("(CActor *)nullptr", "(CActor *)nullptr"),
-        # vector component collapse — vec4
+        # Component assignments remain explicit (including all four components).
         (
             "    (this->base).base.dynamic.rotationQuat.x = local_20.x;\n    (this->base).base.dynamic.rotationQuat.y = local_20.y;\n    (this->base).base.dynamic.rotationQuat.z = local_20.z;\n    (this->base).base.dynamic.rotationQuat.w = local_20.w;",
-            "    this->dynamic.rotationQuat = local_20;",
+            "    this->dynamic.rotationQuat.x = local_20.x;\n    this->dynamic.rotationQuat.y = local_20.y;\n    this->dynamic.rotationQuat.z = local_20.z;\n    this->dynamic.rotationQuat.w = local_20.w;",
         ),
-        # vector component collapse — vec3
+        # Three writes must not overwrite a fourth component.
         (
             "this->pos.x = src.x;\nthis->pos.y = src.y;\nthis->pos.z = src.z;",
-            "this->pos = src;",
+            "this->pos.x = src.x;\nthis->pos.y = src.y;\nthis->pos.z = src.z;",
         ),
-        # vector component collapse — incomplete (only xyz present, not w), vec3 still collapses
+        # Preserve whole four-component sequences too.
         (
             "this->vel.x = v.x;\nthis->vel.y = v.y;\nthis->vel.z = v.z;\nthis->vel.w = v.w;",
-            "this->vel = v;",
+            "this->vel.x = v.x;\nthis->vel.y = v.y;\nthis->vel.z = v.z;\nthis->vel.w = v.w;",
         ),
         # vector component collapse — different LHS bases, no collapse
         (
@@ -1093,30 +1005,30 @@ def _run_tests() -> None:
             "this->pos.x = a.x;\nthis->pos.y = b.y;\nthis->pos.z = a.z;",
             "this->pos.x = a.x;\nthis->pos.y = b.y;\nthis->pos.z = a.z;",
         ),
-        # Timer var removal — declaration removed, usage replaced
+        # Timer acquisition must not be discarded or replaced.
         (
             "Timer *pTVar1;\npTVar1 = GetSomeTimer();\nfoo(pTVar1->elapsed);",
-            "foo(GetTimer()->elapsed);",
+            "Timer *pTVar1;\npTVar1 = GetSomeTimer();\nfoo(pTVar1->elapsed);",
         ),
-        # Timer var — declaration only line removed
+        # Keep timer declarations, even when unused.
         (
             "Timer *pTVar1;\nbar();",
-            "bar();",
+            "Timer *pTVar1;\nbar();",
         ),
-        # Timer var — pointer decl and value decl both handled
+        # Keep value snapshots distinct from pointers.
         (
             "Timer tVar;\ntVar = *GetSomeTimer();\nreturn tVar.elapsed;",
-            "return GetTimer().elapsed;",
+            "Timer tVar;\ntVar = *GetSomeTimer();\nreturn tVar.elapsed;",
         ),
         # Timer var — multiple Timer vars
         (
             "Timer *pTVar1;\nTimer *pTVar2;\npTVar1 = a;\npTVar2 = b;\nuse(pTVar1, pTVar2);",
-            "use(GetTimer(), GetTimer());",
+            "Timer *pTVar1;\nTimer *pTVar2;\npTVar1 = a;\npTVar2 = b;\nuse(pTVar1, pTVar2);",
         ),
-        # Timer var — no-pointer decl with arrow access after replacement
+        # Do not infer timer rewrites from decompiler type inconsistencies.
         (
             "Timer pTVar1;\npTVar1 = GetTimer();\nfvar6 = pTVar1->currentTime;",
-            "fvar6 = GetTimer()->currentTime;",
+            "Timer pTVar1;\npTVar1 = GetTimer();\nfvar6 = pTVar1->currentTime;",
         ),
         # non-Timer type must not be affected
         (
@@ -1127,6 +1039,9 @@ def _run_tests() -> None:
 
     failures = 0
     for src, expected in cases:
+        # These legacy fixtures exercise rewrites. Exact formatting and protected
+        # text preservation have separate end-to-end unittest coverage.
+        expected = FormatCode(expected)
         got = transform(src)
         status = "OK" if got == expected else "FAIL"
         if status == "FAIL":
@@ -1144,6 +1059,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
         _run_tests()
     else:
-        input_text = sys.stdin.read()
-        input_text = input_text.lstrip("\ufeff")  # strip UTF-8 BOM if present
-        sys.stdout.write(transform(input_text))
+        # Binary streams avoid Windows newline translation (including CRCRLF).
+        input_text = sys.stdin.buffer.read().decode("utf-8-sig")
+        sys.stdout.buffer.write(transform(input_text).encode("utf-8"))

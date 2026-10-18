@@ -2,7 +2,41 @@
 
 Run `special_paste.ahk` with AutoHotkey v2, then press Ctrl+E to transform and
 paste clipboard text. Python must be on PATH. Keep `transform.py` and
-`symbol_index.py` beside the AutoHotkey script.
+`symbol_index.py` and `vector_assignments.py` beside the AutoHotkey script.
+
+Pastes use tabs, `Type* variable` pointer declarations, and a single newline
+between function headers and opening braces. Whole functions get blank lines
+after declarations, between initial values and following calls, and before
+final returns. Existing LF/CRLF line endings are retained. Strings (including
+raw strings), character literals, comments, and preprocessor directives are
+protected from code rewrites.
+
+Explicit calls on `this` retain their class qualifier, so
+`CActor::IsProjectionAim((CActor*)this)` becomes `CActor::IsProjectionAim()`.
+Virtual calls require one argument matching the owner of `pVTable`/`pVtable`;
+ordinary function pointers and ambiguous receivers are left alone.
+
+C-style casts are preserved: choosing `static_cast` versus `reinterpret_cast`
+requires type information this scanner does not have. Timer locals and their
+assignments are preserved.
+
+Consecutive x/y/z assignments collapse contextually using local declarations,
+parameters, repository fields, and base classes. Each `edF32VECTOR3` operand
+stays a whole object; each `edF32VECTOR4` operand uses its `.xyz` view so `w`
+is preserved:
+
+```cpp
+// edF32VECTOR4 local; edF32VECTOR3 position;
+local.xyz = position;
+position = local.xyz;
+local.xyz = local.xyz * scale; // scale is a known float
+```
+
+Four matching x/y/z/w writes between known `edF32VECTOR4` objects collapse to
+whole-object assignment. Unknown/conflicting types, calls, subscripts, comments
+between writes, and mismatching components stay explicit. No names or vector
+dimensions are guessed. The index recognizes repository `PACK(struct ...)`
+declarations as well as ordinary class/struct declarations.
 
 The transformer indexes declarations in the repository's `src/` headers and
 C++ sources. This lets it convert explicit object arguments without requiring
@@ -13,7 +47,8 @@ Service::Run(&globalObject, 2);      // globalObject.Run(2);
 Service::Run(Service::instance, 2); // Service::instance->Run(2);
 ```
 
-The index records global values, global pointers, static data members, and
+The index records global values, global pointers, static/instance data members,
+base classes, and
 whether class methods are static or non-static. New indexed conversions require
 a matching object type and a known non-static method. Conflicting declarations
 or a mixture of static and non-static overloads prevent conversion. Simple local
@@ -25,7 +60,7 @@ source file paths, sizes, or modification times change. Deleting it forces a
 rebuild on the next invocation. A new Python process runs for every paste.
 
 This is a lightweight declaration scanner, not a C++ compiler. Macro-generated
-declarations, complex templates, inherited-method lookup, and general expression
+declarations (apart from `PACK`), complex templates, inherited-method lookup, and general expression
 type inference are not supported. Existing decompiler-specific cast/base-chain
 and known-class heuristics still apply when indexed information is unavailable;
 known static methods are excluded from those conversions too.
@@ -34,5 +69,5 @@ Checks:
 
 ```powershell
 python -B tools/special_paste/transform.py --test
-python -B -m unittest discover -s tools/special_paste -p test_symbol_index.py
+python -B -m unittest discover -s tools/special_paste -p 'test_*.py'
 ```

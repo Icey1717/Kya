@@ -1008,7 +1008,7 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
-	virtual void SetInitialState(int newState);
+	virtual void SetInitialState();
 
 	uint field_0xc;
 };
@@ -1150,10 +1150,9 @@ public:
 	virtual void _EndFighterHold();
 
 	virtual void Func_0x204(CActorFighter* pOther);
-	virtual bool AcquireAdversary(CActorFighter* pTarget);
 	virtual void SetRunSpeed(float param_1);
 
-	virtual bool AcquireAdversaryB(CActorFighter* pTarget);
+	virtual bool AcquireAdversary(CActorFighter* pTarget);
 
 	bool IsCurrentPositionValid();
 

@@ -125,8 +125,10 @@ public:
 	virtual CVision* GetVision() { return (CVision*)0x0; }
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual StateConfig* GetStateCfg(int state);
+	virtual uint GetBehaviourFlags(int state);
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();
+	virtual bool IsProjectionAim();
 	virtual void SetLookingAtOn();
 	virtual void SetLookingAtOff();
 	virtual void UpdateLookingAt();
@@ -170,6 +172,7 @@ public:
 
 	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	
+	static uint _gBehaviourFlags_AUT[1];
 	static StateConfig gStateCfg_AUT[1];
 
 	void ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4);

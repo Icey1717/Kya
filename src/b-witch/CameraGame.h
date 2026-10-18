@@ -18,6 +18,8 @@ struct _camera_alert_params
 struct CCameraGame : public CCameraExt
 {
 	CCameraGame(ECameraType type, struct ByteCode* pMemoryStream);
+
+	virtual bool IsKindOfObject(ulong kind);
 	virtual void Init();
 	virtual bool Manage();
 	virtual void Reset();

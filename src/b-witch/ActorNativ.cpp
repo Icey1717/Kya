@@ -6619,3 +6619,37 @@ int CBehaviourNativSeller::GetPurchaseCutsceneId(int objectId)
 
 	return -1;
 }
+
+void CBehaviourNativ::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
+void CBehaviourNativ::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	return;
+}
+
+void CBehaviourNativ::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	return;
+}
+
+void CBehaviourNativ::End(int newBehaviourId)
+{
+	return;
+}
+
+int CBehaviourNativ::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+{
+	return 0;
+}
+
+int CBehaviourNativ::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	return 0;
+}

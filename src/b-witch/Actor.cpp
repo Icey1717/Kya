@@ -2834,6 +2834,11 @@ void CActor::LoadContext(void* pData, uint mode, uint maxSize)
 	return;
 }
 
+void CBehaviour::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
 // Should be in: D:/Projects/b-witch/Actor.h
 bool CBehaviour::InitDlistPatchable(int patchId)
 {
