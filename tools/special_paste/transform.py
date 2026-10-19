@@ -16,7 +16,7 @@ import sys
 from functools import lru_cache
 
 from symbol_index import LoadIndex
-from vector_assignments import CollapseVectorAssignments
+from vector_assignments import CollapseVectorAssignments, NormalizePath, VectorTypes
 
 
 @lru_cache(maxsize=1)
@@ -157,7 +157,9 @@ def _extract_address_of_object_expr(arg: str) -> str | None:
     if not arg.startswith("&"):
         return None
 
-    expr = _strip_wrapping_parens(arg[1:])
+    expr = NormalizePath(_strip_wrapping_parens(arg[1:]))
+    if expr is None:
+        return None
     if not re.match(r"^(?:this|[A-Za-z_]\w*)(?:::\w+)*(?:->\w+|\.\w+)*$", expr):
         return None
     if expr.startswith("DAT_"):
@@ -174,7 +176,7 @@ def t_vtable_calls(text: str) -> str:
     Match the object argument against the owner of the vtable. Ambiguous calls
     and ordinary function pointers stay unchanged.
     """
-    vtable_inner_re = re.compile(r"^\*(.*)(?:->|\.)(\w+)$")
+    vtable_inner_re = re.compile(r"^\*(?:\(\s*code\s*\*\s*\)\s*)?(.*)(?:->|\.)(\w+)$")
     result: list[str] = []
     pos = 0
     i = 0
@@ -271,6 +273,23 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
     """
     if symbol_index is None:
         symbol_index = GetRepositoryIndex()
+    # Keep receiver types local to the function being pasted. In particular,
+    # `this` can have different types in adjacent functions.
+    contexts = []
+    header = re.compile(
+        r"^[ \t]*(?:[\w:*&<>]+[ \t]+)+(?P<name>[\w:~]+)\s*"
+        r"\((?P<parameters>[^{};]*)\)\s*\{", re.MULTILINE,
+    )
+    for function in header.finditer(text):
+        end, depth = function.end(), 1
+        while end < len(text) and depth:
+            depth += (text[end] == '{') - (text[end] == '}')
+            end += 1
+        if depth == 0:
+            contexts.append((function.start(), end, VectorTypes(
+                text[function.start():end], symbol_index,
+                function['name'].rpartition('::')[0] or None, function['parameters'])))
+    snippetTypes = VectorTypes(text, symbol_index)
     pointer_types: dict[str, set[str]] = {}
     local_types = {}
     for declaration in re.finditer(
@@ -318,6 +337,32 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
             continue
 
         if args:
+            types = next((types for start, end, types in contexts
+                          if start <= m.start() < end), snippetTypes)
+            if method_kinds == ["member"]:
+                receivers = []
+                for idx, arg in enumerate(args):
+                    candidate = strip_base_chain_in(arg.strip())
+                    cast = re.fullmatch(r"\(\s*" + re.escape(class_name) + r"\s*\*\s*\)\s*(.+)", candidate)
+                    if cast:
+                        candidate = cast[1]
+                    address = _extract_address_of_object_expr(candidate)
+                    path = address if address is not None else NormalizePath(candidate)
+                    if path is not None and (types.Resolve(path) == [class_name, address is None]
+                                             or cast and path == 'this' and address is None):
+                        receivers.append((idx, path, address is not None))
+                if len(receivers) == 1:
+                    idx, path, address = receivers[0]
+                    rest = ", ".join(args[:idx] + args[idx + 1:])
+                    # Keep explicit base dispatch on this.
+                    target = class_name + '::' if path == 'this' else path + ('.' if address else '->')
+                    result.append(f"{target}{fn_name}({rest})")
+                    pos = call_end + 1
+                    continue
+                if len(receivers) > 1:
+                    result.append(text[m.start():call_end + 1])
+                    pos = call_end + 1
+                    continue
             stripped_args = [_strip_leading_cast(strip_base_chain_in(a)) for a in args]
 
             this_idx = next(
@@ -409,6 +454,16 @@ def t_free_to_member_calls(text: str, symbol_index=None) -> str:
 def t_remove_base_chains(text: str) -> str:
     """Strip all remaining (X->base).base*.field patterns."""
     return strip_base_chain_in(text)
+
+
+def t_member_path_parens(text: str) -> str:
+    """Remove grouping around simple member paths, never casts or operators."""
+    path = r"\w+(?:(?:->|\.)\w+)+"
+    previous = None
+    while previous != text:
+        previous = text
+        text = re.sub(r"(?<![\w)\]])\((" + path + r")\)(?=\s*(?:\.|->))", r"\1", text)
+    return text
 
 
 def t_collapse_anim_end_reached_block(text: str) -> str:
@@ -632,6 +687,7 @@ def FormatCode(text: str) -> str:
         line = raw.removesuffix(eol) if eol else raw
         line = line.rstrip()
         line = pointer.sub(r"\1\2 \3", line)
+        line = re.sub(r",[ \t]*(?=\S)", ", ", line)
         indent = re.match(r"[ \t]*", line).group(0)
         # Existing tabs represent repository indentation; convert spaces only.
         if "\t" not in indent:
@@ -661,6 +717,7 @@ TRANSFORMS = [
     t_free_to_member_calls,
     t_remove_base_chains,
     t_collapse_anim_end_reached_block,
+    t_member_path_parens,
     t_dat_float_literals,
     t_float_literals,
     t_math_macros,
@@ -768,7 +825,7 @@ def _run_tests() -> None:
         ("x = 1.5e3;", "x = 1.5e3f;"),
         ("x = 0.0f;", "x = 0.0f;"),  # already suffixed, no change
         # number embedded in identifier must not be treated as float literal
-        ("auStack64.ba = (this->field_0x20).x;", "auStack64.ba = (this->field_0x20).x;"),
+        ("auStack64.ba = (this->field_0x20).x;", "auStack64.ba = this->field_0x20.x;"),
         # base chain stripping
         ("(this->base).base.base.pAnim", "this->pAnim"),
         # ->base inside parens, field directly after (no .base. outside)
@@ -957,7 +1014,7 @@ def _run_tests() -> None:
         # Unresolved named inheritance chains do not guess a receiver.
         (
             "(*((this->extendedBase).base.camera.objBase.pVTable)->SetAngleAlpha)(fVar7,(CCamera *)this);",
-            "(*(this->extendedBase.camera.objBase.pVTable)->SetAngleAlpha)(fVar7,(CCamera *)this);",
+            "(*this->extendedBase.camera.objBase.pVTable->SetAngleAlpha)(fVar7,(CCamera *)this);",
         ),
         # vtable call - method selected with dot on vtable base
         (

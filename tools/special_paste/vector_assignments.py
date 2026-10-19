@@ -5,11 +5,11 @@ import re
 
 def NormalizePath(expression):
     expression = re.sub(r"\s*(->|\.)\s*", r"\1", expression.strip())
-    path = r"\w+(?:(?:->|\.)\w+)*"
+    path = r"\w+(?:::\w+)*(?:(?:->|\.)\w+)*"
     previous = None
     while previous != expression:
         previous = expression
-        expression = re.sub(r"\((" + path + r")\)", r"\1", expression)
+        expression = re.sub(r"(?<![\w)\]])\((" + path + r")\)", r"\1", expression)
     return expression if re.fullmatch(path, expression) else None
 
 
@@ -83,8 +83,92 @@ class VectorTypes:
         return None
 
 
+def CollapseTemporaryCopies(text, types):
+    """Recover full vector copies expanded through dead scalar temporaries.
+
+    Only adjacent loads and writes qualify. Process backwards so a temporary
+    reused by a later recovered copy can become dead in the preceding copy.
+    Any remaining later reference or escaped address prevents its removal.
+    """
+    lines = text.splitlines(keepends=True)
+    load = re.compile(r"^(?P<indent>[ \t]*)(?P<temp>\w+)\s*=\s*"
+                      r"(?P<src>.+)\.(?P<component>[xyzw]);[ \t]*(?:\r?\n)?$")
+    write = re.compile(r"^(?P<indent>[ \t]*)(?P<dst>.+)\.(?P<component>[xyzw])"
+                       r"\s*=\s*(?P<rhs>[^;]+);[ \t]*(?:\r?\n)?$")
+    removed = set()
+    for start in range(len(lines) - 1, -1, -1):
+        loads = []
+        pos = start
+        while pos < len(lines) and len(loads) < 4:
+            match = load.fullmatch(lines[pos])
+            if match is None or types.locals.get(match['temp']) != [['float', False]]:
+                break
+            loads.append(match)
+            pos += 1
+        if not loads or pos + 4 > len(lines):
+            continue
+        source = NormalizePath(loads[0]['src'])
+        temps = {item['temp']: item['component'] for item in loads}
+        if (source is None or len(temps) != len(loads)
+                or types.Resolve(source) != ['edF32VECTOR4', False]
+                or any(NormalizePath(item['src']) != source
+                       or item['indent'] != loads[0]['indent'] for item in loads)):
+            continue
+        writes = [write.fullmatch(line) for line in lines[pos:pos + 4]]
+        if any(item is None for item in writes):
+            continue
+        destination = NormalizePath(writes[0]['dst'])
+        if destination is None or types.Resolve(destination) != ['edF32VECTOR4', False]:
+            continue
+        used = set()
+        valid = True
+        for component, item in zip('xyzw', writes):
+            rhs = item['rhs'].strip()
+            if (item['component'] != component or NormalizePath(item['dst']) != destination
+                    or item['indent'] != loads[0]['indent']):
+                valid = False
+                break
+            if rhs in temps and temps[rhs] == component:
+                used.add(rhs)
+            elif NormalizePath(rhs) != source + '.' + component:
+                valid = False
+                break
+        tail = ''.join(lines[pos + 4:])
+        # An earlier nontrivial use could bind a C++ reference to a local.
+        # Allow only declarations and the simple scalar copies we recognize.
+        priorUsesSafe = True
+        for line in lines[:start]:
+            for temp in temps:
+                if not re.search(r'\b' + re.escape(temp) + r'\b', line):
+                    continue
+                priorLoad, priorWrite = load.fullmatch(line), write.fullmatch(line)
+                if (re.fullmatch(r'\s*float\s+' + re.escape(temp) + r'\s*;\s*', line)
+                        or priorLoad and priorLoad['temp'] == temp
+                        or priorWrite and priorWrite['rhs'].strip() == temp):
+                    continue
+                priorUsesSafe = False
+        if (not valid or used != set(temps)
+                or not priorUsesSafe
+                or any(re.search(r'\b' + re.escape(temp) + r'\b', tail)
+                       or re.search(r'&\s*\(*\s*' + re.escape(temp) + r'\b', text)
+                       for temp in temps)):
+            continue
+        # Preserve the copy's existing indentation and final line ending.
+        eol = '\r\n' if lines[pos + 3].endswith('\r\n') else '\n' if lines[pos + 3].endswith('\n') else ''
+        lines[start:pos + 4] = [loads[0]['indent'] + destination + ' = ' + source + ';' + eol]
+        removed.update(temps)
+    text = ''.join(lines)
+    for temp in removed:
+        declaration = re.compile(r'^[ \t]*float\s+' + re.escape(temp) + r'\s*;[ \t]*(?:\r?\n|$)', re.MULTILINE)
+        withoutDeclaration = declaration.sub('', text)
+        if not re.search(r'\b' + re.escape(temp) + r'\b', withoutDeclaration):
+            text = withoutDeclaration
+    return text
+
+
 def CollapseBlock(text, index, thisType=None, parameters=""):
     types = VectorTypes(text, index, thisType, parameters)
+    text = CollapseTemporaryCopies(text, types)
     lines = text.splitlines(keepends=True)
     assignment = re.compile(
         r"^(?P<indent>[ \t]*)(?P<lhs>.+?)\.(?P<component>[xyzw])\s*=\s*"

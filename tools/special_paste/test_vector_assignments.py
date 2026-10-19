@@ -85,6 +85,37 @@ class VectorAssignmentTests(unittest.TestCase):
         source = 'Object* obj;\nedF32VECTOR4 dst;\n' + self.componentCopy(rhs='obj->value')
         self.assertEqual(CollapseVectorAssignments(source, index), source)
 
+    def test_copies_through_dead_scalar_temporaries(self):
+        declarations = 'edF32VECTOR4 dst;\nedF32VECTOR4 src;\nfloat a;\nfloat b;\nfloat c;\n'
+        copies = ('b = src.z;\na = src.y;\nc = src.w;\n'
+                  'dst.x = src.x;\ndst.y = a;\ndst.z = b;\ndst.w = c;')
+        expected = 'edF32VECTOR4 dst;\nedF32VECTOR4 src;\ndst = src;'
+        self.assertEqual(CollapseVectorAssignments(declarations + copies, self.index), expected)
+        self.assertEqual(CollapseVectorAssignments(declarations + copies + '\n' + copies, self.index),
+                         expected + '\ndst = src;')
+
+    def test_live_escaped_or_mismatched_temporaries_stay_explicit(self):
+        declarations = 'edF32VECTOR4 dst;\nedF32VECTOR4 src;\nfloat a;\nfloat b;\nfloat c;\n'
+        copies = ('a = src.y;\nb = src.z;\nc = src.w;\n'
+                  'dst.x = src.x;\ndst.y = a;\ndst.z = b;\ndst.w = c;')
+        cases = [
+            declarations + copies + '\nUse(a);',
+            declarations + 'Escape(&a);\n' + copies,
+            declarations + 'BindReference(a);\n' + copies,
+            declarations + copies.replace('dst.y = a;', 'dst.y = b;'),
+            declarations + copies.replace('b = src.z;', 'b = other.z;'),
+            declarations + copies.replace('dst.x = src.x;', 'Touch();\ndst.x = src.x;'),
+            declarations + copies.replace('dst.w = c;', 'dst.w = 1.0f;'),
+            declarations.replace('float a;', 'volatile float a;') + copies,
+        ]
+        for source in cases:
+            with self.subTest(source=source):
+                self.assertEqual(CollapseVectorAssignments(source, self.index), source)
+
+        index = BuildIndex(['float a; float b; float c;'])
+        source = 'edF32VECTOR4 dst;\nedF32VECTOR4 src;\n' + copies
+        self.assertEqual(CollapseVectorAssignments(source, index), source)
+
     def test_moving_platform_with_repository_types(self):
         source = Path(__file__).with_name('fixtures').joinpath('moving_platform.cpp').read_text()
         result = transform(source, LoadIndex())

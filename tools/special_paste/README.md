@@ -15,6 +15,8 @@ Explicit calls on `this` retain their class qualifier, so
 `CActor::IsProjectionAim((CActor*)this)` becomes `CActor::IsProjectionAim()`.
 Virtual calls require one argument matching the owner of `pVTable`/`pVtable`;
 ordinary function pointers and ambiguous receivers are left alone.
+Ghidra's `(code *)` casts on virtual calls are supported. Simple member-path
+parentheses are removed and commas get a following space.
 
 C-style casts are preserved: choosing `static_cast` versus `reinterpret_cast`
 requires type information this scanner does not have. Timer locals and their
@@ -33,7 +35,10 @@ local.xyz = local.xyz * scale; // scale is a known float
 ```
 
 Four matching x/y/z/w writes between known `edF32VECTOR4` objects collapse to
-whole-object assignment. Unknown/conflicting types, calls, subscripts, comments
+whole-object assignment. Adjacent component loads through float temporaries
+also collapse when those temporaries have no remaining later references or
+escaped addresses; declarations that become unused are removed.
+Unknown/conflicting types, calls, subscripts, comments
 between writes, and mismatching components stay explicit. No names or vector
 dimensions are guessed. The index recognizes repository `PACK(struct ...)`
 declarations as well as ordinary class/struct declarations.
@@ -53,6 +58,9 @@ whether class methods are static or non-static. New indexed conversions require
 a matching object type and a known non-static method. Conflicting declarations
 or a mixture of static and non-static overloads prevent conversion. Simple local
 declarations in the clipboard take precedence over indexed globals.
+Typed receiver lookup also covers parameters and nested member paths, and the
+receiver may appear after scalar arguments (as in Ghidra's float-first calls).
+Multiple matching receivers prevent conversion.
 
 The generated JSON cache lives in the Windows temporary directory under
 `kya_special_paste_symbols_<repository-id>.json`. It refreshes automatically when

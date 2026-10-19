@@ -3,7 +3,7 @@ import subprocess
 import sys
 import unittest
 
-from transform import transform
+from transform import transform, GetRepositoryIndex
 
 
 EMPTY_INDEX = {"symbols": {}, "methods": {}}
@@ -117,6 +117,55 @@ class TransformTests(unittest.TestCase):
     def test_float_suffixes(self):
         self.assertEqual(self.convert("x = 0.0; y = 1.25f; z = 2.50L;"),
                          "x = 0.0f; y = 1.25f; z = 2.50L;")
+
+    def test_member_path_parentheses_and_call_spacing(self):
+        cases = [
+            ('p = &(this->squad).chessboard;', 'p = &this->squad.chessboard;'),
+            ('x = ((obj->member).nested).x;', 'x = obj->member.nested.x;'),
+            ('x = Read(obj->member).x;', 'x = Read(obj->member).x;'),
+            ('x = (left + right).x;', 'x = (left + right).x;'),
+            ('Call(&a,&b,  c);', 'Call(&a, &b, c);'),
+            ('Call("a,b",&b);', 'Call("a,b", &b);'),
+        ]
+        for source, expected in cases:
+            with self.subTest(source=source):
+                self.assertEqual(self.convert(source), expected)
+
+    def test_code_cast_virtual_calls(self):
+        cases = [
+            ('(*(code *)this->pVTable->_UpdatePattern)(this);', '_UpdatePattern();'),
+            ('(*(code *)obj->pVTable->Visit)(obj, 2);', 'obj->Visit(2);'),
+            ('(*(code *)obj->pVTable->Visit)(other);', '(*(code *)obj->pVTable->Visit)(other);'),
+            ('(*(code *)callbacks->Visit)(obj);', '(*(code *)callbacks->Visit)(obj);'),
+        ]
+        for source, expected in cases:
+            with self.subTest(source=source):
+                self.assertEqual(self.convert(source), expected)
+
+    def test_commander_example_with_repository_types(self):
+        source = Path(__file__).with_name('fixtures').joinpath('commander_beat_up.cpp').read_text()
+        index = GetRepositoryIndex()
+        result = transform(source, index)
+        for expected in [
+            'void CActorCommander::StateCommanderBeatUp()\n{',
+            'iVar1 = this->squad.NbElt();',
+            'pChessboard = &this->squad.chessboard;',
+            'this->squad.chessboard.field_0x230 = pFighter->currentLocation;',
+            'this->squad.chessboard.field_0x240 = gF32Vector4UnitZ;',
+            'local_10 = pFighter->rotationQuat;',
+            'pChessboard->InvalidateSection(1.570796f, &local_10);',
+            'pChessboard->InvalidateSection(3.141593f, &local_10);',
+            'pPathFinderClient = this->field_0x9f4->GetPathfinderClient();',
+            'pChessboard->InvalidateByZone(this->guardAreaZoneId);',
+            'pChessboard->InvalidateByPath(pPathFinderClient);',
+            '_UpdatePattern();',
+        ]:
+            self.assertIn(expected, result)
+        for obsolete in ['fVar2', 'fVar3', 'fVar4', '(this->squad)', 'pVTable']:
+            self.assertNotIn(obsolete, result)
+        self.assertEqual(transform(result, index), result)
+        self.assertEqual(transform(source.replace('\n', '\r\n'), index),
+                         result.replace('\n', '\r\n'))
 
     def test_cli_utf8_bom_and_line_endings(self):
         script = Path(__file__).with_name("transform.py")

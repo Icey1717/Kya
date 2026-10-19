@@ -451,7 +451,7 @@ void CActorCommander::ClearLocalData()
 	this->camFigData.pCommanderRef_0x230 = this;
 	this->camFigData.Reset();
 	this->field_0x9f0 = (CActorFighter*)0x0;
-	//this->field_0x9f4 = 0;
+	this->field_0x9f4 = (CActorFighter*)0x0;
 	//this->field_0x164 = 0;
 	//this->field_0x160 = 0;
 	this->field_0x168 = 0;
@@ -955,6 +955,131 @@ bool CActorCommander::FUN_001710c0()
 	}
 
 	return bVar4;
+}
+
+void CActorCommander::StateCommanderWaitReorganize(int param_2, int param_3)
+{
+	CActorFighter* pCVar1;
+	CTeamElt* pCVar2;
+	bool bVar3;
+	int iVar4;
+	int iVar5;
+	long lVar6;
+	CTeamElt** pCVar7;
+	CTeamElt* pCVar8;
+	CTeamElt* pCVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_10;
+
+	StateCommanderBeatUp();
+
+	iVar4 = this->squad.NbElt();
+	if ((iVar4 != 0) && (lVar6 = this->squad.HasActiveSemaphore(0), lVar6 == 0)) {
+		pCVar1 = this->field_0x9f4;
+		fVar11 = 1.0f;
+		iVar4 = 0;
+		bVar3 = false;
+		pCVar9 = (CTeamElt*)0x0;
+		pCVar7 = (this->squad).eltTable.aEntries;
+		if ((pCVar1->flags & 0x1000) == 0) {
+			local_10 = pCVar1->rotationQuat;
+		}
+		else {
+			SetVectorFromAngleY(pCVar1->rotationEuler.y, &local_10);
+		}
+		for (; iVar5 = this->squad.NbElt(), iVar4 < iVar5; iVar4 = iVar4 + 1) {
+			pCVar2 = *pCVar7;
+			fVar10 = fVar11;
+			pCVar8 = pCVar9;
+			if (pCVar2->pEnemyActor->curBehaviourId == 3) {
+				fVar10 = edF32Vector4DotProductHard(&local_10, &pCVar2->pEnemyActor->rotationQuat);
+				pCVar8 = pCVar2;
+				if (fVar11 <= fVar10) {
+					fVar10 = fVar11;
+					pCVar8 = pCVar9;
+				}
+
+				if (!bVar3) {
+					bVar3 = this->squad.chessboard.PawnShallMove(pCVar2->pawnId);
+					bVar3 = bVar3 != false;
+				}
+			}
+
+			fVar11 = fVar10;
+			pCVar7 = pCVar7 + 1;
+			pCVar9 = pCVar8;
+		}
+
+		if (((pCVar9 != (CTeamElt*)0x0) && (((fVar11 < -0.866f || (param_3 == 0)) || (!bVar3)))) && (static_cast<CActorWolfen*>(pCVar9->pEnemyActor)->ForceFightAction(0, false), param_2 != -1)) {
+			SetState(param_2, -1);
+		}
+	}
+
+	return;
+}
+
+void CActorCommander::StateCommanderBeatUp()
+{
+	int iVar1;
+	CCameraManager* pCameraManager;
+	CPathFinderClient* pPathFinderClient;
+	CChessBoard* pChessboard;
+	edF32VECTOR4 local_10;
+	CActorFighter* pFighter;
+
+	iVar1 = this->squad.NbElt();
+	if (iVar1 != 0) {
+		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+		local_10 = pCameraManager->transformationMatrix.rowZ;
+
+		pChessboard = &this->squad.chessboard;
+		pFighter = this->field_0x9f4->field_0x354;
+
+		this->squad.chessboard.field_0x230 = pFighter->currentLocation;
+		this->squad.chessboard.field_0x240 = gF32Vector4UnitZ;
+
+		this->squad.chessboard.writeLayerMask = 3;
+		this->squad.chessboard.readLayerMask = 3;
+
+		pChessboard->ValidateAll();
+		local_10.y = 0.0f;
+		edF32Vector4GetNegHard(&local_10, &local_10);
+		edF32Vector4NormalizeHard(&local_10, &local_10);
+
+		this->squad.chessboard.writeLayerMask = 1;
+		this->squad.chessboard.readLayerMask = 1;
+		pChessboard->InvalidateSection(1.570796f, &local_10);
+		pFighter = this->field_0x9f4;
+		if ((pFighter->flags & 0x1000) == 0) {
+			local_10 = pFighter->rotationQuat;
+		}
+		else {
+			SetVectorFromAngleY(pFighter->rotationEuler.y, &local_10);
+		}
+
+		edF32Vector4GetNegHard(&local_10, &local_10);
+
+		this->squad.chessboard.writeLayerMask = 1;
+		this->squad.chessboard.readLayerMask = 1;
+		pChessboard->InvalidateSection(3.141593f, &local_10);
+		pPathFinderClient = this->field_0x9f4->GetPathfinderClient();
+
+		if (pPathFinderClient->id == -1) {
+			this->squad.chessboard.writeLayerMask = 2;
+			this->squad.chessboard.readLayerMask = 2;
+			pChessboard->InvalidateByZone(this->guardAreaZoneId);
+		}
+		else {
+			this->squad.chessboard.writeLayerMask = 2;
+			this->squad.chessboard.readLayerMask = 2;
+			pChessboard->InvalidateByPath(pPathFinderClient);
+		}
+
+		_UpdatePattern();
+	}
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorCmd.cpp
@@ -1778,39 +1903,232 @@ void CBehaviourCommanderBeatUp::Term()
 
 void CBehaviourCommanderBeatUp::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	CActorCommander* pCommander;
+
+	pCommander = this->pOwner;
+
+	if (pCommander->actorState == 7) {
+		pCommander->StateCommanderWaitReorganize(-1, 0);
+	}
+	else {
+		if (pCommander->actorState == 6) {
+			pCommander->StateCommanderWaitReorganize(7, 1);
+		}
+	}
+
+	UpdateTeamAnim();
+
+	return;
 }
 
 void CBehaviourCommanderBeatUp::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	CActorCommander* pCommander;
+
+	this->pOwner = static_cast<CActorCommander*>(pOwner);
+
+	if (newState == -1) {
+		pCommander = this->pOwner;
+		pCommander->SetState(5, -1);
+	}
+	else {
+		pCommander = this->pOwner;
+		pCommander->SetState(newState, newAnimationType);
+	}
+
+	this->pOwner->squad.InitSemaphores(&this->squadConfig);
+
+	if (newState == -1) {
+		pCommander = this->pOwner;
+		pCommander->SetState(6, -1);
+	}
+	else {
+		pCommander = this->pOwner;
+		pCommander->SetState(newState, newAnimationType);
+	}
+
+	this->pOwner->squad.ForceReleaseSemaphore(0, (CTeamElt*)0x0, true);
+
+	return;
 }
 
 void CBehaviourCommanderBeatUp::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	return;
 }
 
 int CBehaviourCommanderBeatUp::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
-    return 0;
+	undefined uVar1;
+	CTeamElt* pCVar2;
+	CTeamElt* pTeamElt;
+	int iVar3;
+	CActorHero* pCVar4;
+	CActorCommander* pCommander;
+	CActorFighter* pFighter;
+
+	if (msg == 0x1b) {
+		if (*reinterpret_cast<int*>(pMsgParam) == 2) {
+			iVar3 = 0;
+		}
+		else {
+			if (*reinterpret_cast<int*>(pMsgParam) == 3) {
+				pCommander = this->pOwner;
+				pCVar4 = (CActorHero*)(pCommander->actorRef).Get();
+				if (pCVar4 == (CActorHero*)0x0) {
+					pCVar4 = CActorHero::_gThis;
+				}
+				pFighter = pCommander->field_0x9f4;
+				uVar1 = pCVar4->IsKindOfObject(8);
+				if (uVar1 != 0) {
+					iVar3 = 0;
+					pTeamElt = (CTeamElt*)0x0;
+					if (0 < pCommander->nbTeams) {
+						pCVar2 = pCommander->aTeamElt;
+						do {
+							pTeamElt = pCVar2;
+							if (pTeamElt->pEnemyActor == pFighter) break;
+							iVar3 = iVar3 + 1;
+							pCVar2 = pTeamElt + 1;
+							pTeamElt = (CTeamElt*)0x0;
+						} while (iVar3 < pCommander->nbTeams);
+					}
+
+					pCommander->squad.AddFighter(pTeamElt);
+					pFighter->SetStandAnim(0xe2);
+				}
+
+				(this->pOwner)->field_0x9f4 = (CActorFighter*)0x0;
+				pCommander = this->pOwner;
+				pCommander->SetBehaviour(2, -1, -1);
+				iVar3 = 1;
+			}
+			else {
+				iVar3 = 0;
+			}
+		}
+	}
+	else {
+		iVar3 = 0;
+	}
+
+	return iVar3;
 }
 
-bool CBehaviourCommanderBeatUp::CanReleaseSemaphore(int, CActorWolfen*)
+bool CBehaviourCommanderBeatUp::CanReleaseSemaphore(int param_2, CActorWolfen*)
 {
-	IMPLEMENTATION_GUARD();
-    return false;
+	return param_2 != 0;
 }
 
 CActorFighter* CBehaviourCommanderBeatUp::GetFocus()
 {
-	IMPLEMENTATION_GUARD();
-    return nullptr;
+	int iVar2;
+	CActorFighter* pFocus;
+	int iVar5;
+	CTeamElt* iVar1;
+
+	iVar5 = 0;
+	pFocus = (CActorFighter*)0x0;
+	while ((iVar2 = this->pOwner->squad.NbElt(), iVar5 < iVar2 && (pFocus == (CActorFighter*)0x0))) {
+		iVar1 = (this->pOwner->squad).eltTable.aEntries[iVar5];
+		if (iVar1->field_0x14 == 0) {
+			pFocus = iVar1->pEnemyActor;
+		}
+
+		iVar5 = iVar5 + 1;
+	}
+
+	return pFocus;
 }
 
 bool CBehaviourCommanderBeatUp::UpdateTeamAnim()
 {
-	IMPLEMENTATION_GUARD();
-    return false;
+	CTeamElt* pCVar1;
+	bool bVar2;
+	CScene* pCVar3;
+	int iVar4;
+	int iVar5;
+	ulong uVar6;
+	CSquad* pCVar7;
+	CSquad* pCVar8;
+	int iVar9;
+	uint uVar10;
+	float fVar11;
+	InitPathfindingClientMsgParams local_20;
+
+	pCVar7 = &this->pOwner->squad;
+	if (this->field_0x18 == 0) {
+		bVar2 = false;
+	}
+	else {
+		local_20.msgId = 0xf;
+		iVar9 = 0;
+		iVar4 = pCVar7->NbElt();
+		if (0 < iVar4) {
+			CTeamElt** ppTeam = pCVar7->eltTable.aEntries;
+			do {
+				pCVar3 = CScene::_pinstance;
+				pCVar1 = *ppTeam;
+
+				if (pCVar1->field_0x14 == -1) {
+					uVar6 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+					CScene::_pinstance->field_0x38 = uVar6;
+
+					if ((int)((uint)(uVar6 >> 0x10) & 0x7fff) < 0) {
+						bVar2 = false;
+					}
+					else {
+						uVar6 = pCVar3->field_0x38 * 0x343fd + 0x269ec3;
+						pCVar3->field_0x38 = uVar6;
+						fVar11 = this->healthRatio * 32767.0f;
+						if (fVar11 < 2.147484e+09f) {
+							uVar10 = (uint)fVar11;
+						}
+						else {
+							uVar10 = (int)(fVar11 - 2.147484e+09f) | 0x80000000;
+						}
+
+						bVar2 = ((uint)(uVar6 >> 0x10) & 0x7fff) <= uVar10;
+					}
+
+					if (bVar2) {
+						this->pOwner->DoMessage(pCVar1->pEnemyActor, (ACTOR_MESSAGE)0x1a, &local_20);
+					}
+				}
+
+				ppTeam = ppTeam + 1;
+				iVar9 = iVar9 + 1;
+				iVar4 = pCVar7->NbElt();
+			} while (iVar9 < iVar4);
+		}
+
+		this->field_0x18 = 0;
+		bVar2 = true;
+	}
+
+	if (!bVar2) {
+		iVar9 = 0;
+		pCVar8 = &this->pOwner->squad;
+		iVar4 = pCVar8->NbElt();
+		CTeamElt** ppTeam = pCVar8->eltTable.aEntries;
+		if (0 < iVar4) {
+			do {
+				pCVar1 = *ppTeam;
+
+				if ((pCVar1->field_0x14 == -1) && (pCVar1->pEnemyActor->actorState == 6)) {
+					iVar4 = rand();
+					fVar11 = ((float)iVar4 / 2.147484e+09f) * 2.0f + 3.0f;
+					iVar4 = rand();
+					iVar5 = rand();
+					pCVar1->pEnemyActor->PlayWaitingAnimation(((float)iVar5 / 2.147484e+09f) * 1.0f + 1.0f, ((float)iVar4 / 2.147484e+09f) * 0.8f + 0.6f, 0xe4, -1, (char)(int)fVar11);
+				}
+
+				ppTeam = ppTeam + 1;
+				iVar9 = iVar9 + 1;
+				iVar4 = pCVar8->NbElt();
+			} while (iVar9 < iVar4);
+		}
+	}
+
+	return true;
 }

@@ -140,6 +140,9 @@ public:
 	void FUN_001717b0(CCameraGame* pCamera);
 	bool FUN_001710c0();
 
+	void StateCommanderWaitReorganize(int param_2, int param_3);
+	void StateCommanderBeatUp();
+
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
 

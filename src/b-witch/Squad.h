@@ -9,6 +9,9 @@ class CActorFighter;
 
 struct ByteCode;
 
+#define SEMAPHORE_FLAG_ACTIVE 1
+#define SEMAPHORE_FLAG_FIGHT_ACTIVE 2
+
 class CSquadConfig
 {
 public:
@@ -83,6 +86,7 @@ public:
 	void ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4);
 	bool QuerySemaphoreCold(int index, CTeamElt* pTeamElt);
 	bool QuerySemaphoreWarm(int index, CTeamElt* pTeamElt);
+	bool HasActiveSemaphore(int index);
 
 	CSquadTeam eltTable;
 	CChessBoard chessboard;

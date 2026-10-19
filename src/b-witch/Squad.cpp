@@ -131,7 +131,7 @@ void CSquad::Clear()
 
 		if (pSemaphoreManager->nbSemaphores != 0) {
 			do {
-				uVar2 = pSemaphore->flags & 1;
+				uVar2 = pSemaphore->flags & SEMAPHORE_FLAG_ACTIVE;
 				if (((uVar2 != 0) && (uVar4 != 0xffffffff)) && (uVar2 != 0)) {
 					CTeamElt* pWolfen = pSemaphore->pTeamElt;
 					if (pWolfen != (CTeamElt*)0x0) {
@@ -412,7 +412,7 @@ void CSquad::InitSemaphores(CSquadConfig* pConfig)
 		uVar5 = 0;
 		if (this->aSemaphores[uVar6].nbSemaphores != 0) {
 			do {
-				uVar3 = this->aSemaphores[uVar6].aSemaphores[uVar5].flags & 1;
+				uVar3 = this->aSemaphores[uVar6].aSemaphores[uVar5].flags & SEMAPHORE_FLAG_ACTIVE;
 				if (((uVar3 != 0) && (uVar5 != 0xffffffff)) && (uVar3 != 0)) {
 					pCVar2 = this->aSemaphores[uVar6].aSemaphores[uVar5].pTeamElt;
 					if (pCVar2 != (CTeamElt*)0x0) {
@@ -682,7 +682,7 @@ void CSquad::ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4)
 		pSVar5 = this->aSemaphores + index;
 		SquadSemaphore* pSemaphore = pSVar5->aSemaphores;
 		while ((uVar6 < pSVar5->nbSemaphores && (!bVar2))) {
-			if (((pSemaphore->flags & 1) == 0) || (pSemaphore->pTeamElt != pTeamElt)) {
+			if (((pSemaphore->flags & SEMAPHORE_FLAG_ACTIVE) == 0) || (pSemaphore->pTeamElt != pTeamElt)) {
 				pSemaphore = pSemaphore + 1;
 				uVar6 = uVar6 + 1;
 			}
@@ -698,7 +698,7 @@ void CSquad::ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4)
 		if (uVar6 != 0xffffffff) {
 			SquadSemaphore* pSemaphore = &this->aSemaphores[index].aSemaphores[uVar6];
 
-			if ((pSemaphore->flags & 1) != 0) {
+			if ((pSemaphore->flags & SEMAPHORE_FLAG_ACTIVE) != 0) {
 				if (pSemaphore->pTeamElt != (CTeamElt*)0x0) {
 					pSemaphore->pTeamElt->DisableFightAction();
 				}
@@ -739,6 +739,20 @@ bool CSquad::QuerySemaphoreWarm(int index, CTeamElt* pTeamElt)
 	return this->aSemaphores[index].ForceGetToken(pTeamElt, 1) != 0xffffffff;
 }
 
+
+bool CSquad::HasActiveSemaphore(int index)
+{
+	SquadSemaphoreManager* pManager = this->aSemaphores + index;
+
+	for (uint i = 0; i < pManager->nbSemaphores; ++i) {
+		uint flags = pManager->aSemaphores[i].flags;
+		if ((flags & SEMAPHORE_FLAG_ACTIVE) && !(flags & SEMAPHORE_FLAG_FIGHT_ACTIVE))
+			return true;
+	}
+
+	return false;
+}
+
 void SquadSemaphoreManager::ManageSemaphore()
 {
 	uint uVar1;
@@ -754,7 +768,7 @@ void SquadSemaphoreManager::ManageSemaphore()
 	if (this->nbSemaphores != 0) {
 		do {
 			uVar1 = pSemaphore->flags;
-			if ((uVar1 & 1) == 0) {
+			if ((uVar1 & SEMAPHORE_FLAG_ACTIVE) == 0) {
 				if ((uVar1 & 4) != 0) {
 					fVar7 = pSemaphore->duration - GetTimer()->cutsceneDeltaTime;
 					pSemaphore->duration = fVar7;
@@ -765,7 +779,7 @@ void SquadSemaphoreManager::ManageSemaphore()
 				}
 			}
 			else {
-				if ((uVar1 & 2) == 0) {
+				if ((uVar1 & SEMAPHORE_FLAG_FIGHT_ACTIVE) == 0) {
 					CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pSemaphore->pTeamElt->pEnemyActor);
 					if (pWolfen->SemaphoreKeepIt() == false) {
 						pSemaphore->pTeamElt->DisableFightAction();
@@ -837,7 +851,7 @@ uint SquadSemaphoreManager::GetToken(CTeamElt* pTeamElt, int param_3)
 		bVar1 = false;
 		pSVar6 = this->aSemaphores;
 		while ((uVar7 < this->nbSemaphores && (!bVar1))) {
-			if (((pSVar6->flags & 1) == 0) || (pSVar6->pTeamElt != pTeamElt)) {
+			if (((pSVar6->flags & SEMAPHORE_FLAG_ACTIVE) == 0) || (pSVar6->pTeamElt != pTeamElt)) {
 				pSVar6 = pSVar6 + 1;
 				uVar7 = uVar7 + 1;
 			}
@@ -896,7 +910,7 @@ uint SquadSemaphoreManager::GetToken(CTeamElt* pTeamElt, int param_3)
 		do {
 			fVar9 = fVar10;
 			uVar7 = uVar8;
-			if (((pSVar6->flags & 2) != 0) &&
+			if (((pSVar6->flags & SEMAPHORE_FLAG_FIGHT_ACTIVE) != 0) &&
 				(fVar9 = pSVar6->field_0x8, uVar7 = uVar5, fVar10 <= fVar9)) {
 				fVar9 = fVar10;
 				uVar7 = uVar8;
@@ -968,7 +982,7 @@ uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
 		pCVar4 = this->aSemaphores;
 
 		while ((uVar5 < this->nbSemaphores && (!bVar2))) {
-			if (((pCVar4->flags & 1) == 0) ||
+			if (((pCVar4->flags & SEMAPHORE_FLAG_ACTIVE) == 0) ||
 				(pCVar4->pTeamElt != pTeamElt)) {
 				pCVar4 = pCVar4 + 1;
 				uVar5 = uVar5 + 1;
@@ -992,7 +1006,7 @@ uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
 	pCVar4 = this->aSemaphores;
 	if (uVar5 != 0) {
 		do {
-			if ((pCVar4->flags & 1) == 0) {
+			if ((pCVar4->flags & SEMAPHORE_FLAG_ACTIVE) == 0) {
 				pfVar3 = &this->aSemaphores[uVar6];
 				fVar13 = SemaphoreEval(pTeamElt, pfVar3->field_0x4);
 				pfVar4 = &this->aSemaphores[uVar6];
@@ -1030,7 +1044,7 @@ uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
 			fVar14 = fVar16;
 			uVar6 = uVar7;
 			uVar11 = uVar10;
-			if ((pCVar4->flags & 2) == 0) {
+			if ((pCVar4->flags & SEMAPHORE_FLAG_FIGHT_ACTIVE) == 0) {
 				fVar15 = pCVar4->field_0x8;
 				uVar11 = uVar3;
 				if (fVar13 <= fVar15) {
@@ -1066,7 +1080,7 @@ uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
 			pSVar12 = pfVar7;
 			pCVar4 = this->aSemaphores;
 			while ((uVar5 < this->nbSemaphores && (!bVar2))) {
-				if (((pCVar4->flags & 1) == 0) || (pCVar4->pTeamElt != pfVar7->pTeamElt)) {
+				if (((pCVar4->flags & SEMAPHORE_FLAG_ACTIVE) == 0) || (pCVar4->pTeamElt != pfVar7->pTeamElt)) {
 					pCVar4 = pCVar4 + 1;
 					uVar5 = uVar5 + 1;
 				}
@@ -1082,7 +1096,7 @@ uint SquadSemaphoreManager::ForceGetToken(CTeamElt* pTeamElt, int param_3)
 			if (uVar5 != 0xffffffff) {
 				pfVar6 = &this->aSemaphores[uVar5];
 				puVar8 = &pfVar6->flags;
-				if ((pfVar6->flags & 1) != 0) {
+				if ((pfVar6->flags & SEMAPHORE_FLAG_ACTIVE) != 0) {
 					pCVar1 = pfVar6->pTeamElt;
 					pSVar9 = pfVar6;
 					if (pCVar1 != (CTeamElt*)0x0) {
