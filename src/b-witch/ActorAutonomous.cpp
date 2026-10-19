@@ -1732,7 +1732,7 @@ void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CAc
 		this->field_0x344 = this->field_0x344 & 0xfe;
 	}
 	else {
-		if (((this->field_0x344 & 1) == 0) || (-1 < (long)((ulong)this->field_0x344 << 0x3e))) {
+		if (((this->field_0x344 & 1) == 0) || ((this->field_0x344 & 2) == 0)) {
 			this->field_0x344 = this->field_0x344 & 0xfe | 1;
 			this->field_0x340 = 0;
 		}
@@ -1741,8 +1741,6 @@ void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CAc
 				this->field_0x340 = 0;
 			}
 			else {
-				// Where is vector_0x2f0 set?
-				IMPLEMENTATION_GUARD();
 				if (this->field_0x340 == 0) {
 					if (0.0f < this->rotationQuat.x * this->vector_0x2f0 - this->field_0x2e8 * this->rotationQuat.z) {
 						this->field_0x340 = 1;

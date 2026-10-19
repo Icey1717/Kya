@@ -244,6 +244,8 @@ public:
 
 	CActorWolfenKnowledge_0x14* _AddComboRoot(s_fighter_combo* pFighterCombo);
 
+	ushort GetStageData();
+
 	CActorWolfenKnowledge_0x14* aSubObjs;
 	int field_0x4;
 	uint nbSubObjs;
@@ -936,6 +938,7 @@ public:
 	void UpdateFightContext(CFightContext* pFightContext);
 	void ManageWFigState(uint commandId);
 	bool TreatContext(CFightContext* pFightContext);
+	bool TreatContext_Attacked(CFightContext* pFightContext, int* param_3);
 
 	void InitCommand(uint commandId);
 	void ExecuteCommand(uint param_2, uint param_3);
@@ -1380,7 +1383,7 @@ public:
 	uint field_0xb60;
 	WolfenComboData* field_0xb64;
 
-	undefined4 field_0xb6c;
+	int field_0xb6c;
 	int field_0xb70;
 
 	uint field_0xb74;

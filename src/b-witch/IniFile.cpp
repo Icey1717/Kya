@@ -89,12 +89,12 @@ bool CIniFile::ReadHexValueFromFile(int* hexValue)
 			if (('`' < currentCharB) && (currentCharB < '{')) {
 				currentCharB = currentCharB + -0x20;
 			}
-			tempHexChar = ((long)currentCharB << 0x38) >> 0x38;
+			tempHexChar = (signed char)currentCharB;
 			isValidChar = false;
 			if ((0x2f < tempHexChar) && (tempHexChar < 0x3a)) {
 				isValidChar = true;
 			}
-			tempHexValue = (int)(((long)currentCharB << 0x38) >> 0x38);
+			tempHexValue = (signed char)currentCharB;
 			tempValue = tempHexValue + -0x37;
 			if (isValidChar) {
 				tempValue = tempHexValue + -0x30;

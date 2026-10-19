@@ -2849,7 +2849,7 @@ edpkt_data* ed3DHierachyCheckForGlobalAlphaSetPKT_(edpkt_data* pPkt, ed_g2d_laye
 			pPkt[3].cmdB = SCE_GS_TEST_1;
 
 			IMPLEMENTATION_GUARD();
-			pPkt[4].cmdA = ((long)((int)((uint)bVar1 * (uint)bVar2) >> 7) & 0xffU) << 0x20 |
+			pPkt[4].cmdA = (ulong)(((uint)bVar1 * (uint)bVar2 >> 7) & 0xffU) << 0x20 |
 				lVar5 << 6 | uVar4 | lVar3 << 2 | 0x20;
 			pPkt[4].cmdA = SCE_GS_SET_ALPHA_1(
 				0,	// A
@@ -3801,7 +3801,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 					if (mode != 1) {
 						IMPLEMENTATION_GUARD(
 						pCurPkt->cmdA =
-							((long)(int)pTexturePkt & 0xfffffffU) << 0x20 |
+							(ulong)(uint)STORE_POINTER(PKT_TO_SCRATCHPAD(pTexturePkt)) << 0x20 |
 							(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;)
 						pCurPkt->cmdB = 0;
 						pCurPkt = pCurPkt + bVar1;
@@ -3826,7 +3826,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 						pCurPkt->cmdB = (long)iVar21 & 0xffffffffU | 0x200000003000000;
 						peVar27 = pCurPkt + 1;
 						if (uVar25 == 0) {
-							peVar27->cmdA = ((long)(int)pVfiListA & 0xfffffffU) << 0x20 | 0x50000000;
+							peVar27->cmdA = (ulong)(uint)STORE_POINTER(PKT_TO_SCRATCHPAD(pVfiListA)) << 0x20 | 0x50000000;
 							pCurPkt[1].cmdB = 0;
 							uVar30 = pVfiListA + iVar20 * 0x10;
 							peVar27 = pCurPkt + 2;
@@ -3834,7 +3834,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 						uVar22 = uVar28 & 0xfffffff;
 						uVar28 = uVar28 + 0x50;
 						peVar27->cmdA = (ulong)uVar22 << 0x20 | 0x50000000;
-						peVar27->cmdB = ((long)iVar21 & 0xffffffffU | 0x4000000) << 0x20;
+						peVar27->cmdB = (ulong)((uint)iVar21 | 0x4000000) << 0x20;
 						pCurPkt = peVar27 + 1;
 					}
 
@@ -3853,7 +3853,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 						uVar22 = uVar28 & 0xfffffff;
 						uVar28 = uVar28 + 0x50;
 						peVar27->cmdA = (ulong)uVar22 << 0x20 | 0x50000000;
-						peVar27->cmdB = ((long)iVar21 & 0xffffffffU | 0x4000000) << 0x20;
+						peVar27->cmdB = (ulong)((uint)iVar21 | 0x4000000) << 0x20;
 						pCurPkt = peVar27 + 1;
 					}
 					else {
@@ -3873,7 +3873,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 							peVar27 = pCurPkt + 2;
 						}
 						peVar27->cmdA = (ulong)(uVar28 & 0xfffffff) << 0x20 | 0x50000000;
-						peVar27->cmdB = ((long)iVar21 & 0xffffffffU | 0x4000000) << 0x20;
+						peVar27->cmdB = (ulong)((uint)iVar21 | 0x4000000) << 0x20;
 						pCurPkt = peVar27 + 1;
 					}
 					else {
@@ -3936,7 +3936,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 
 				peVar18 = ed3DFlushStripInit(pCurPkt, pNode, mode);
 				pCurPkt = peVar18 + bVar1;
-				peVar18->cmdA = ((long)(int)pTexturePkt & 0xfffffffU) << 0x20 |
+				peVar18->cmdA = (ulong)(uint)STORE_POINTER(PKT_TO_SCRATCHPAD(pTexturePkt)) << 0x20 |
 					(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;
 				peVar18->cmdB = 0;
 
@@ -4056,7 +4056,7 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 				}
 			})
 
-			peVar27->cmdA = ((long)(int)(peVar18 + iVar7 + curStripIndex * iVar21) & 0xfffffffU) << 0x20 |
+			peVar27->cmdA = (ulong)(uint)STORE_POINTER(PKT_TO_SCRATCHPAD(peVar18 + iVar7 + curStripIndex * iVar21)) << 0x20 |
 				(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;
 
 			pCurPkt[2].cmdB = 0;
@@ -4662,7 +4662,7 @@ void ed3DFlushStrip(edNODE* pNode)
 					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar19 + 4) {
 						IMPLEMENTATION_GUARD();
 						pVifRefPktCur = (edpkt_data*)((int)ppuVar19 - (int)gStartPKT_SPR);
-						edDmaLoadFromFastRam(gStartPKT_SPR, (uint)pVifRefPktCur, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+						edDmaLoadFromFastRam(gStartPKT_SPR, (uint)pVifRefPktCur, PKT_TO_SCRATCHPAD(gBackupPKT));
 						ppuVar19 = edpkt_data_ARRAY_70001000;
 						gStartPKT_SPR = edpkt_data_ARRAY_70001000;
 						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pVifRefPktCur & 0xfffffff0));
@@ -4706,14 +4706,14 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar19[3].cmdB = (long)(*piVar14 + 1) & 0xffffffffU | 0x200000003000000;
 					ppuVar19[4].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_POINTER(&g_stVertexRGBAHeader));
 					ppuVar19[4].cmdB = 0;
-					ppuVar19[5].cmdA = ((long)(int)local_30 & 0xfffffffU) << 0x20 | uVar10;
-					ppuVar19[5].cmdB = ((long)(int)(local_20 << 0x10) & 0xffffffffU | 0x7e00c002) << 0x20;
+					ppuVar19[5].cmdA = (ulong)(uint)STORE_POINTER(PKT_TO_SCRATCHPAD(local_30)) << 0x20 | uVar10;
+					ppuVar19[5].cmdB = (ulong)((local_20 << 0x10) | 0x7e00c002U) << 0x20;
 					ppuVar19[6].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_POINTER(&g_stNormalHeader));
 					ppuVar19[6].cmdB = 0;
 					ppuVar19[7].cmdA = (ulong)((uint)piVar21 & 0xfffffff) << 0x20 | uVar10;
-					ppuVar19[7].cmdB = ((long)(int)(local_20 << 0x10) & 0xffffffffU | 0x7e00c0d9) << 0x20;
+					ppuVar19[7].cmdB = (ulong)((local_20 << 0x10) | 0x7e00c0d9U) << 0x20;
 					ppuVar19[8].cmdA = (ulong)(pVifList & 0xfffffff) << 0x20 | 0x50000000;
-					ppuVar19[8].cmdB = ((long)(*piVar14 + 1) & 0xffffffffU | 0x4000000) << 0x20;
+					ppuVar19[8].cmdB = (ulong)((uint)(*piVar14 + 1) | 0x4000000) << 0x20;
 					ppuVar19 = ppuVar19 + 9;
 					if (ed3DVU1BufferCur == 2) {
 						ed3DVU1BufferCur = 0;
@@ -5760,7 +5760,7 @@ edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial
 	if ((edpkt_data*)SCRATCHPAD_ADDRESS(0x70003000) < pNextPkt + (uint)(ushort)pStrip->meshCount * 2) {
 		IMPLEMENTATION_GUARD(
 		qwc = (edpkt_data*)((int)pNextPkt - (int)gStartPKT_SPR);
-		bVar6 = edDmaLoadFromFastRam(gStartPKT_SPR, (uint)qwc, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+		bVar6 = edDmaLoadFromFastRam(gStartPKT_SPR, (uint)qwc, PKT_TO_SCRATCHPAD(gBackupPKT));
 		pPkt = (edpkt_data*)(int)bVar6;
 		pNextPkt = SCRATCHPAD_ADDRESS(0x70001000);
 		gStartPKT_SPR = SCRATCHPAD_ADDRESS(70001000);
@@ -12868,8 +12868,8 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 							uVar7 = ed3DSetBasicTexPacket(pStripBuf + 2, &local_30, peVar12, pLayer);
 						}
 						puVar6 = (ulong*)ed3DSetAlphaPacket(uVar7, (uVar2 & 0x2000) != 0, pLayer, uVar11);
-						*puVar6 = (long)(int)gMipmapK << 0x20 |
-							(long)(int)(peVar12->field_0x6 - 1) << 2 | 0x60U | (ulong)gMipmapL << 0x13;
+						*puVar6 = (ulong)(uint)(int)gMipmapK << 0x20 |
+							(ulong)(int)(peVar12->field_0x6 - 1) << 2 | 0x60U | (ulong)gMipmapL << 0x13;
 						puVar6[1] = 0x14;
 						puVar6 = ed3DSetMipmapPacket(puVar6 + 2, (int)&local_20, (ushort*)peVar12);
 						pStripBuf = (edpkt_data*)(puVar6 + 2);

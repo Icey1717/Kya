@@ -214,7 +214,7 @@ void edPacketFunc_0026a440(edPacket* pPacket, long param_2, uint param_3, uint p
 		*(byte*)((int)pPacket->field_0xc + 3) = *(byte*)((int)pPacket->field_0xc + 3) & 0x8f | 0x30;
 		*(byte*)((int)pPacket->field_0xc + 3) = *(byte*)((int)pPacket->field_0xc + 3) & 0x7f | (byte)((param_4 & 1) << 7);
 		pPacket->seekPos = pPacket->seekPos + 2;
-		*(uint*)(pPacket->field_0xc + 2) = *(uint*)(pPacket->field_0xc + 2) & 0x80000000 | (uint)((ulong)(param_2 << 0x21) >> 0x21);
+		*(uint*)(pPacket->field_0xc + 2) = *(uint*)(pPacket->field_0xc + 2) & 0x80000000 | ((uint)param_2 & 0x7fffffff);
 		*pPacket->field_0xc = (short)(param_3 >> 4);
 	}
 	return;

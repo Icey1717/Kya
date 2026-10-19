@@ -269,7 +269,7 @@ void CLightSun::Manage()
 
 	pCVar1 = CScene::ptable.g_LightManager_004516b0;
 	if ((this->field_0x8 & 1) == 0) {
-		iVar2 = (int)(((long long)colour_0x4.b << 0x38) >> 0x3c);
+		iVar2 = ((colour_0x4.b >> 4) & 7) - ((colour_0x4.b >> 4) & 8);
 		pfVar2 = &((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightDirections->vector[iVar2];
 		*pfVar2 = *pfVar2 + (this->baseShape).direction * -1.0f;
 		pfVar3 = &((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightColorMatrix->vector[iVar2];
@@ -758,7 +758,7 @@ void CLightTorch::Manage()
 	pCVar1 = CScene::ptable.g_LightManager_004516b0;
 	if (((this->field_0x8 & 1) == 0) && (this->lightType == 1)) {
 		IMPLEMENTATION_GUARD(
-			iVar3 = (int)(((long)(char)(this->light).colour_0x4.b << 0x38) >> 0x3c);
+			iVar3 = ((this->light.colour_0x4.b >> 4) & 7) - ((this->light.colour_0x4.b >> 4) & 8);
 		pfVar4 = &(((CScene::ptable.g_LightManager_004516b0)->lightConfig).pLightDirections)->aa + iVar3 * 4;
 		fVar5 = (this->baseShape).base.direction.y;
 		fVar6 = (this->baseShape).base.direction.z;

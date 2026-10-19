@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fstream>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "edC/edCBank.h"
@@ -24,8 +25,40 @@
 #include "edSoundStreamService.h"
 #include "port/NativeProjection.h"
 #include "CameraViewManager.h"
+#include "CinematicManager.h"
+#include "IniFile.h"
 #include "ed3D.h"
 #include "ed3D/ed3DSceneManager.h"
+
+TEST(IniFile, ReadsHexDigitsWithoutWideSignedShifts)
+{
+	for (const auto& entry : { std::pair{ "0", 0 }, { "9", 9 }, { "1a2B", 0x1a2b }, { "7FFFFFFF", 0x7fffffff } }) {
+		std::string input = entry.first;
+		CIniFile file;
+		file.Load_001ab200("hex", input.data(), static_cast<int>(input.size()));
+		int value = -1;
+		ASSERT_TRUE(file.ReadHexValueFromFile(&value)) << entry.first;
+		EXPECT_EQ(value, entry.second) << entry.first;
+	}
+}
+
+TEST(CameraEvent, InitClearsRuntimeFlagsAndPreservesConfiguration)
+{
+	for (uint flags : { 0xe0000000U, 0xe1234567U, 0xffffffffU }) {
+		S_STREAM_EVENT_CAMERA event{};
+		event.flags = flags;
+		event.field_0x8 = 3.0f;
+		event.field_0x1c = 1.0f;
+		event.pActor = -1;
+		event.pZone = -1;
+		event.Init();
+		EXPECT_EQ(event.flags, flags & 0x1fffffffU);
+		EXPECT_FLOAT_EQ(event.field_0x8, 9.0f);
+		EXPECT_FLOAT_EQ(event.field_0x1c, 0.0f);
+		EXPECT_EQ(event.pActor, 0);
+		EXPECT_EQ(event.pZone, 0);
+	}
+}
 
 TEST(QuaternionInterpolation, NearbyRotationsPreserveUnitLength)
 {

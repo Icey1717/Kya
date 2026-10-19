@@ -4912,7 +4912,7 @@ void S_STREAM_EVENT_CAMERA::Init()
 	CActor* pCVar2;
 
 	this->field_0x8 = this->field_0x8 * this->field_0x8;
-	this->flags = (uint)((ulong)((long)this->flags << 0x23) >> 0x23);
+	this->flags = this->flags & 0x1fffffff;
 	this->field_0x1c = 0;
 
 	if (this->pActor == -1) {

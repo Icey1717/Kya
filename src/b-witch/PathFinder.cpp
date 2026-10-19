@@ -761,7 +761,7 @@ void CBasicPathFinder::ComputeSubTarget(float param_1, edF32VECTOR4* param_3, ed
 
 		uVar13 = 0xffffffffffffffff;
 		if ((pPathDynamic->field_0x30 & 1) != 0) {
-			uVar13 = (ulong)((long)*(int*)&pPathDynamic->field_0x30 << 0x2f) >> 0x30;
+			uVar13 = (pPathDynamic->field_0x30_uint >> 1) & 0xffff;
 		}
 
 		if (((uVar13 == 0xffffffffffffffff) || (uVar15 == uVar13)) || (uVar14 == uVar13)) {

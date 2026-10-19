@@ -1781,7 +1781,7 @@ void CBehaviourCommanderBeatUp::Manage()
 	IMPLEMENTATION_GUARD();
 }
 
-void CBehaviourCommanderBeatUp::Begin(CActor * pOwner, int newState, int newAnimationType)
+void CBehaviourCommanderBeatUp::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	IMPLEMENTATION_GUARD();
 }
@@ -1791,7 +1791,7 @@ void CBehaviourCommanderBeatUp::End(int newBehaviourId)
 	IMPLEMENTATION_GUARD();
 }
 
-int CBehaviourCommanderBeatUp::InterpretMessage(CActor * pSender, int msg, void* pMsgParam)
+int CBehaviourCommanderBeatUp::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	IMPLEMENTATION_GUARD();
     return 0;

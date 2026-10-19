@@ -1193,9 +1193,9 @@ void SplashFunc_002ba880(SplashParams* pParams, long param_2, uint param_3)
 			if (paVar2->width < 0) {
 				iVar5 = iVar5 + 0x3f;
 			}
-			edPacketWriteLong_0026a000(&packet, param_2 << 0x38 | (ulong)param_3 << 0x20 | (long)(iVar5 >> 6) << 0x30);
+			edPacketWriteLong_0026a000(&packet, (ulong)param_2 << 0x38 | (ulong)param_3 << 0x20 | (ulong)(iVar5 >> 6) << 0x30);
 			edPacketWriteLong_0026a000(&packet, 0x50);
-			edPacketWriteLong_0026a000(&packet, (long)paVar2->field_0x0 << 0x20 | (long)(paVar2->field_0x2 + iVar9) << 0x30);
+			edPacketWriteLong_0026a000(&packet, (ulong)paVar2->field_0x0 << 0x20 | (ulong)(paVar2->field_0x2 + iVar9) << 0x30);
 			edPacketWriteLong_0026a000(&packet, 0x51);
 			edPacketWriteLong_0026a000(&packet, (long)paVar2->width | (ulong)uVar10 << 0x20);
 			edPacketWriteLong_0026a000(&packet, 0x52);
