@@ -174,8 +174,13 @@ typedef uint e_ed_event_prim3d_type;
 #define EVENT_PRIM_ZONE_PROJECTILE    0x16 // Zone trigger: hit actor with a projectile (MESSAGE_KICKED)
 
 // Kill sub-types — used in pEventData[1] when pEventData[0] == EVENT_PRIM_KILL.
+// PS2 InterpretEvent: HeroPrivate 0x00341c70, JamGut 0x003667c0,
+// Wolfen 0x0017c720, Micken 0x00150670, MovingPlatform 0x00157cc0.
+// Only 0..3 are explicitly distinguished; other values use the hero's wall-death fallback.
 #define EVENT_PRIM_KILL_FALL  0 // Fall to death
 #define EVENT_PRIM_KILL_DROWN 1 // Drown
+#define EVENT_PRIM_KILL_CRASH 2 // Hero STATE_HERO_DEAD_CRASH; JamGut state 0x13
+#define EVENT_PRIM_KILL_GRIND 3 // Hero STATE_HERO_GRIND_DEATH_A; Wolfen behaviour 0x19
 
 struct MapInitParams
 {

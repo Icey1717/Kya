@@ -3027,7 +3027,8 @@ void CActorHeroPrivate::CinematicMode_Enter(bool bSetState)
 	edAnmLayer* peVar3;
 	CAnimation* pAnim;
 
-	CinematicMode_Enter(bSetState);
+	CActor::CinematicMode_Enter(bSetState);
+
 	this->field_0x1000 = 0.0f;
 
 	pAnim = this->pAnimationController;
@@ -4414,7 +4415,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 			break;
 		case EVENT_PRIM_KILL:
 			if ((param_3 == 2) && (bVar1 = TestState_IsInCheatMode(), bVar1 == false)) {
-				if (levelId == 3) {
+				if (levelId == EVENT_PRIM_KILL_GRIND) {
 					this->field_0x2e4 = 10.0f;
 					SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9e, 0xffffffff);
 					pInputManager = GetInputManager(1, 0);
@@ -4425,7 +4426,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 					iVar9 = 1;
 				}
 				else {
-					if (levelId == 2) {
+					if (levelId == EVENT_PRIM_KILL_CRASH) {
 						this->field_0x2e4 = 10.0f;
 						SetBehaviour(HERO_BEHAVIOUR_DEFAULT, 0x9d, 0xffffffff);
 						pInputManager = GetInputManager(1, 0);

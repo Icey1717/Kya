@@ -616,65 +616,67 @@ void CSquad::ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4)
 {
 	CTeamElt* pCVar1;
 	bool bVar2;
-	undefined4* puVar3;
 	uint uVar4;
 	SquadSemaphoreManager* pSVar5;
 	uint uVar6;
-	int* piVar7;
-	float* pfVar8;
-	float* pfVar9;
 
 	if (pTeamElt == (CTeamElt*)0x0) {
-		IMPLEMENTATION_GUARD(
+		// PS2: CSquad::ForceReleaseSemaphore, 0x002bd910 (release-all branch: 0x002bdab0).
 		pSVar5 = this->aSemaphores + index;
 		uVar6 = 0;
-		if ((&pSVar5->field_0x0)[2] != 0) {
-			pfVar9 = (float*)(&pSVar5->field_0x0 + 1);
-			piVar7 = &pSVar5->field_0x0 + 3;
-			puVar3 = &pSVar5->field_0x0;
+		SquadSemaphore* pSemaphore = pSVar5->aSemaphores;
+		if (pSVar5->nbSemaphores != 0) {
 			do {
-				uVar4 = (&pSVar5->field_0x0)[7] & 1;
+				uVar4 = pSemaphore->flags & SEMAPHORE_FLAG_ACTIVE;
 				if (((uVar4 != 0) && (uVar6 != 0xffffffff)) && (uVar4 != 0)) {
-					if ((CActorWolfen*)(&pSVar5->field_0x0)[4] != (CActorWolfen*)0x0) {
-						CActorWolfen::DisableFightAction((CActorWolfen*)(&pSVar5->field_0x0)[4]);
+					if (pSemaphore->pTeamElt != (CTeamElt*)0x0) {
+						pSemaphore->pTeamElt->DisableFightAction();
 					}
-					if ((&pSVar5->field_0x0)[4] != 0) {
-						(&pSVar5->field_0x0)[5] = (&pSVar5->field_0x0)[4];
+
+					if (pSemaphore->pTeamElt != (CTeamElt*)0x0) {
+						pSemaphore->field_0x4 = pSemaphore->pTeamElt;
 					}
-					if ((*pfVar9 == 0.0) || (param_4 == false)) {
-						if (((&pSVar5->field_0x0)[7] & 5) != 0) {
-							*piVar7 = *piVar7 + 1;
+
+					if ((pSVar5->field_0x4 == 0.0f) || (param_4 == false)) {
+						if ((pSemaphore->flags & 5) != 0) {
+							pSVar5->field_0xc = pSVar5->field_0xc + 1;
 						}
-						(&pSVar5->field_0x0)[7] = 0;
-						(&pSVar5->field_0x0)[8] = 0;
+
+						pSemaphore->flags = 0;
+						pSemaphore->duration = 0.0f;
 					}
 					else {
-						(&pSVar5->field_0x0)[7] = 4;
-						(&pSVar5->field_0x0)[8] = *pfVar9;
+						pSemaphore->flags = 4;
+						pSemaphore->duration = pSVar5->field_0x4;
 					}
-					(&pSVar5->field_0x0)[4] = 0;
-					(&pSVar5->field_0x0)[6] = 0;
+
+					pSemaphore->pTeamElt = (CTeamElt*)0x0;
+					pSemaphore->field_0x8 = 0.0f;
 				}
-				if ((&pSVar5->field_0x0)[4] != 0) {
-					(&pSVar5->field_0x0)[5] = (&pSVar5->field_0x0)[4];
+
+				if (pSemaphore->pTeamElt != (CTeamElt*)0x0) {
+					pSemaphore->field_0x4 = pSemaphore->pTeamElt;
 				}
-				if ((*pfVar9 == 0.0) || (param_4 == false)) {
-					if (((&pSVar5->field_0x0)[7] & 5) != 0) {
-						*piVar7 = *piVar7 + 1;
+
+				if ((pSVar5->field_0x4 == 0.0f) || (param_4 == false)) {
+					if ((pSemaphore->flags & 5) != 0) {
+						pSVar5->field_0xc = pSVar5->field_0xc + 1;
 					}
-					(&pSVar5->field_0x0)[7] = 0;
-					(&pSVar5->field_0x0)[8] = 0;
+
+					pSemaphore->flags = 0;
+					pSemaphore->duration = 0.0f;
 				}
 				else {
-					(&pSVar5->field_0x0)[7] = 4;
-					(&pSVar5->field_0x0)[8] = *pfVar9;
+					pSemaphore->flags = 4;
+					pSemaphore->duration = pSVar5->field_0x4;
 				}
-				(&pSVar5->field_0x0)[4] = 0;
-				(&pSVar5->field_0x0)[6] = 0;
+
+				pSemaphore->pTeamElt = (CTeamElt*)0x0;
+				pSemaphore->field_0x8 = 0.0f;
 				uVar6 = uVar6 + 1;
-				pSVar5 = (SquadSemaphoreManager*)(&pSVar5->field_0x0 + 8);
-			} while (uVar6 < (uint)puVar3[2]);
-		})
+				pSemaphore = pSemaphore + 1;
+			} while (uVar6 < pSVar5->nbSemaphores);
+		}
 	}
 	else {
 		uVar6 = 0;

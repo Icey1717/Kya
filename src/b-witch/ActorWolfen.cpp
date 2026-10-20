@@ -838,8 +838,8 @@ CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 	case WOLFEN_BEHAVIOUR_AVOID:
 		pBehaviour = new CBehaviourAvoid;
 		break;
-	case WOLFEN_BEHAVIOUR_UNKNOWN:
-		pBehaviour = new CBehaviourUnknown;
+	case WOLFEN_BEHAVIOUR_GRIND_DEATH:
+		pBehaviour = new CBehaviourWolfenGrindDeath;
 		break;
 	case WOLFEN_BEHAVIOUR_TRACK_STAND:
 		pBehaviour = new CBehaviourTrackStand;
@@ -1521,16 +1521,16 @@ int CActorWolfen::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 	CBehaviourExorcism* pExorcism;
 	int iVar2;
 
-	if (*param_5 != 1) {
+	if (*param_5 != EVENT_PRIM_KILL) {
 		iVar2 = InterpretEvent(pEventMessage, static_cast<uint>(param_3), param_4, param_5);
 		return iVar2;
 	}
 
 	if ((param_3 == 2) && ((this->flags & 0x800000) == 0)) {
-		if (param_5[1] == 3) {
+		if (param_5[1] == EVENT_PRIM_KILL_GRIND) {
 			LifeAnnihilate();
 
-			bVar1 = SetBehaviour(WOLFEN_BEHAVIOUR_UNKNOWN, -1, -1);
+			bVar1 = SetBehaviour(WOLFEN_BEHAVIOUR_GRIND_DEATH, -1, -1);
 			if (bVar1 == false) {
 				SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 99, -1);
 			}
@@ -1538,7 +1538,7 @@ int CActorWolfen::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 			return 1;
 		}
 
-		if (param_5[1] == 0) {
+		if (param_5[1] == EVENT_PRIM_KILL_FALL) {
 			LifeAnnihilate();
 			iVar2 = this->curBehaviourId;
 			pExorcism = static_cast<CBehaviourExorcism*>(GetBehaviour(WOLFEN_BEHAVIOUR_EXORCISM));
@@ -3716,6 +3716,24 @@ void CActorWolfen::BehaviourEscape_Manage(CBehaviourEscape* pBehaviour)
 	PostManageC(pBehaviour);
 
 	PostManageD(pBehaviour);
+}
+
+void CActorWolfen::BehaviourWolfenGrindDeath_InitState()
+{
+	this->flags = this->flags & 0xffffff7f;
+	this->flags = this->flags | 0x20;
+
+	EvaluateDisplayState();
+
+	return;
+}
+
+void CActorWolfen::BehaviourWolfenGrindDeath_TermState()
+{
+	this->flags = this->flags & 0xffffff5f;
+	EvaluateDisplayState();
+
+	return;
 }
 
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
@@ -7906,6 +7924,24 @@ void CActorWolfen::StateAvoidDefend(CBehaviourAvoid* pBehaviour)
 	fVar3 = pBehaviour->GetDangerWay2D(&eStack16);
 	if ((fVar3 <= 9.0f) && (iVar2 = pBehaviour->GetEscapePosition((edF32VECTOR4*)0x0, &eStack16), iVar2 != 0)) {
 		SetState(0x8b, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateGrindDeathHidden()
+{
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	return;
+}
+
+void CActorWolfen::StateGrindDeath()
+{
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		SetState(WOLFEN_STATE_GRIND_DEATH_HIDDEN, -1);
 	}
 
 	return;
@@ -16240,32 +16276,82 @@ void CBehaviourWolfenFighterSlave::SetInitialState()
 	return;
 }
 
-void CBehaviourUnknown::Init(CActor* pOwner)
+void CBehaviourWolfenGrindDeath::Init(CActor* pOwner)
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner = static_cast<CActorWolfen*>(pOwner);
+
+	return;
 }
 
-void CBehaviourUnknown::Manage()
+void CBehaviourWolfenGrindDeath::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	CActorWolfen* pWolfen;
+
+	pWolfen = this->pOwner;
+	iVar1 = pWolfen->actorState;
+	if (iVar1 == WOLFEN_STATE_GRIND_DEATH_HIDDEN) {
+		pWolfen->StateGrindDeathHidden();
+	}
+	else {
+		if (iVar1 == WOLFEN_STATE_GRIND_DEATH) {
+			pWolfen->StateGrindDeath();
+		}
+	}
+
+	return;
 }
 
-void CBehaviourUnknown::Begin(CActor * pOwner, int newState, int newAnimationType)
+void CBehaviourWolfenGrindDeath::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	CCollision* pCol;
+	CActorWolfen* pWolfen;
+
+	pCol = this->pOwner->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 & 0xfff7efff;
+	this->pOwner->dynamic.speed = 0.0f;
+	pWolfen = this->pOwner;
+
+	pWolfen->dynamicExt.normalizedTranslation.x = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.y = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.z = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.w = 0.0f;
+	pWolfen->dynamicExt.field_0x6c = 0.0f;
+
+	if (newState == -1) {
+		this->pOwner->SetState(WOLFEN_STATE_GRIND_DEATH, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
 }
 
-void CBehaviourUnknown::End(int newBehaviourId)
+void CBehaviourWolfenGrindDeath::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	CCollision* pCol;
+
+	pCol = this->pOwner->pCollisionData;
+	pCol->flags_0x0 = pCol->flags_0x0 | 0x81000;
+
+	return;
 }
 
-void CBehaviourUnknown::InitState(int newState)
+void CBehaviourWolfenGrindDeath::InitState(int newState)
 {
-	IMPLEMENTATION_GUARD();
+	if (newState == WOLFEN_STATE_GRIND_DEATH_HIDDEN) {
+		this->pOwner->BehaviourWolfenGrindDeath_InitState();
+	}
+
+	return;
 }
 
-void CBehaviourUnknown::TermState(int oldState, int newState)
+void CBehaviourWolfenGrindDeath::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	if (oldState == WOLFEN_STATE_GRIND_DEATH_HIDDEN) {
+		this->pOwner->BehaviourWolfenGrindDeath_TermState();
+	}
+
+	return;
 }

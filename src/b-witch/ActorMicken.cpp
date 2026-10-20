@@ -579,7 +579,7 @@ int CActorMicken::InterpretEvent(edCEventMessage* pEventMessage, undefined8 para
 			}
 
 			if (uVar3 == 0) {
-				if (uVar1 == 0) {
+				if (uVar1 == EVENT_PRIM_KILL_FALL) {
 					SetBehaviour(MICKEN_BEHAVIOUR_EAT, 0xc, -1);
 				}
 				else {

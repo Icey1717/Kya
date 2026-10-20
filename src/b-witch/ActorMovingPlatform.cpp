@@ -1941,8 +1941,8 @@ int CActorMovingPlatform::InterpretEvent(edCEventMessage* pEventMessage, undefin
 {
 	int iVar1;
 
-	if ((pEventData[0] == 1) && (param_3 == 2)) {
-		if (pEventData[1] == 0) {
+	if ((pEventData[0] == EVENT_PRIM_KILL) && (param_3 == 2)) {
+		if (pEventData[1] == EVENT_PRIM_KILL_FALL) {
 			Die(1);
 		}
 

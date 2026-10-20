@@ -1604,9 +1604,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 						return;
 					}
 
-					IMPLEMENTATION_GUARD_FX(
-					PlayImpactFx(this, (long)(int)&this->field_0x690, &this->field_0x6a0, (ulong)((this->hitFlags & 1U) != 0),
-						'\x01');)
+					PlayImpactFx(&this->field_0x690, &this->field_0x6a0, ((this->hitFlags & 1U) != 0), true);
 
 					return;
 				}
@@ -7935,6 +7933,9 @@ void CBehaviourFighter::Manage()
 	case 0x17:
 		this->pOwner->FUN_00318db0();
 		break;
+	case FIGHTER_STATE_STEP_BACK_A:
+		this->pOwner->_StateFighterHitStepBack(0x17, -1, 1);
+		break;
 	case FIGHTER_STATE_19:
 		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		if (((pFighter->pCollisionData)->flags_0x4 & 2) == 0) {
@@ -8361,6 +8362,10 @@ void CBehaviourFighter::InitState(int newState)
 		}
 	}
 
+	uint uVar7;
+	int iVar8;
+	CCollision* pCVar1;
+
 	switch (newState) {
 	case FIGHTER_DEFAULT_STATE_IDLE:
 		pFighter = this->pOwner;
@@ -8422,20 +8427,49 @@ void CBehaviourFighter::InitState(int newState)
 			pFighter->fightFlags = pFighter->fightFlags | 0x1000;
 		}
 		break;
-	case 0x18:
-		IMPLEMENTATION_GUARD();
+	case FIGHTER_STATE_STEP_BACK_A:
+		pFighter = this->pOwner;
+
+		if ((pFighter->field_0x684 & 8U) == 0) {
+			uVar7 = pFighter->_SV_HIT_GetHitZoneFromImpact(&pFighter->fighterAnatomyZones, &pFighter->field_0x690, &pFighter->currentLocation);
+		}
+		else {
+			uVar7 = (uint)pFighter->field_0x686;
+		}
+
+		iVar8 = pFighter->_SV_ANM_GetMultiWaysAnim3D(pFighter->field_0x6d0 + uVar7 + 9, &pFighter->field_0x6a0, (edF32VECTOR4*)0x0);
+		pFighter->_StateFighterHitStepBackInit(iVar8, 1);
 		break;
 	case 0x1a:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pCVar1 = pFighter->pCollisionData;
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x30;
+		pFighter->scalarDynForward.Reset();
+		pFighter->scalarDynLateral.Reset();
+		pFighter->scalarDynJump.Reset();
+		pFighter->field_0x474 = 0.0f;
 		break;
 	case 0x1b:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		edF32Vector4SubHard(&local_30, &pFighter->currentLocation, &pFighter->field_0x634->currentLocation);
+		local_30.y = 0.0f;
+		edF32Vector4NormalizeHard(&local_30, &local_30);
+		pFighter->_BuildCommandFromAbsoluteVector(&local_30, &local_4, &eStack32);
+		pFighter->field_0x44c = pFighter->field_0x44c & 0xf0 | local_4.moveByte & 0xf;
+		pFighter->field_0x36c = pFighter->field_0x36c & 0xfffffffe;
+		edF32Vector4ScaleHard(1.0f, &local_30, &eStack32);
+		edF32Vector4ScaleHard(12.0f, &local_40, &eStack32);
+		pFighter->scalarDynForward.BuildFromSpeedDistTime(fabsf(local_40.z), 0.0f, fabsf(local_30.z), 0.1f);
+		pFighter->scalarDynLateral.BuildFromSpeedDistTime(fabsf(local_40.x), 0.0f, fabsf(local_30.x), 0.1f);
+		pFighter->scalarDynJump.Reset();
 		break;
 	case 0x1c:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->scalarDynForward.Reset();
+		pFighter->scalarDynLateral.Reset();
 		break;
 	case FIGHTER_STATE_RIDE_EXIT:
-		IMPLEMENTATION_GUARD(CActorFighter::_StateFighterRideExitInit(this->pOwner));
+		IMPLEMENTATION_GUARD(this->pOwner->_StateFighterRideExitInit());
 		break;
 	case FIGHTER_HOLD_STAND:
 		this->pOwner->_StateFighterHoldStandInit();
@@ -8479,7 +8513,7 @@ void CBehaviourFighter::InitState(int newState)
 		this->pOwner->_StateFighterHitPushedInit();
 		break;
 	case FIGHTER_HIT_STEP_BACK_B:
-		IMPLEMENTATION_GUARD(CActorFighter::_StateFighterHitStepBackInit(this->pOwner, 0x5e, 0));
+		this->pOwner->_StateFighterHitStepBackInit(0x5e, 0);
 		break;
 	case 0x53:
 		IMPLEMENTATION_GUARD();
@@ -8596,8 +8630,9 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	case FIGHTER_FLIP_OFF_ME_B:
 		this->pOwner->_StateFighterFlipOffMeTerm(newState);
 		break;
-	case 0x18:
-		IMPLEMENTATION_GUARD();
+	case FIGHTER_STATE_STEP_BACK_A:
+		pFighter = this->pOwner;
+		pFighter->field_0x6bc = GetTimer()->cutsceneDeltaTime;
 		break;
 	case FIGHTER_STATE_19:
 	{

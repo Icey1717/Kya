@@ -1326,6 +1326,7 @@ void CSector::Level_Manage(int sectID, int param_3)
 		if (this->pBackgroundNode != (edNODE*)0x0) {
 			CScene::ptable.g_C3DFileManager_00451664->ManageBackground(this->pBackgroundNode, *puVar2);
 		}
+
 		if (this->desiredSectorID != sectID) {
 			Flush();
 			this->loadStage_0x8 = 0;
@@ -1336,11 +1337,13 @@ void CSector::Level_Manage(int sectID, int param_3)
 			if (param_3 == 0) {
 				this->pBankBufferEntry->wait();
 			}
+
 			pBank = this->pBankBufferEntry;
 			bVar3 = false;
 			if ((pBank != (edCBankBufferEntry*)0x0) && (bVar4 = pBank->is_loaded(), bVar4 != false)) {
 				bVar3 = true;
 			}
+
 			if (bVar3) {
 				this->loadStage_0x8 = 2;
 			}
@@ -1351,6 +1354,7 @@ void CSector::Level_Manage(int sectID, int param_3)
 			}
 		}
 	}
+
 	return;
 }
 

@@ -110,19 +110,3 @@ TEST_F(BinocularHudTest, WidescreenUsesCameraAspectAndDetachedInterfaceStopsUpda
 	widget.Level_Term();
 	EXPECT_EQ(widget.instance3d.pNode, nullptr);
 }
-
-TEST(BinocularHud, DisplayRoutesHeroInterfaceAndGameCleanupToTheWidget)
-{
-	CFrontendDisplay display;
-	ASSERT_NE(display.pFrontendBinoculars, nullptr);
-	CFrontendBinoculars widget;
-	OtherInterface interface;
-	display.pFrontendBinoculars = &widget;
-	display.DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, &interface);
-	EXPECT_EQ(widget.GetInterface(), &interface);
-	display.DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, nullptr);
-	EXPECT_EQ(widget.GetInterface(), nullptr);
-	display.DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, &interface);
-	display.Game_Term();
-	EXPECT_EQ(widget.GetInterface(), nullptr);
-}

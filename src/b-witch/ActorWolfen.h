@@ -28,7 +28,7 @@
 #define WOLFEN_BEHAVIOUR_LOST 0x16
 #define WOLFEN_BEHAVIOUR_WOLFEN_DCA 0x17
 #define WOLFEN_BEHAVIOUR_AVOID 0x18
-#define WOLFEN_BEHAVIOUR_UNKNOWN 0x19
+#define WOLFEN_BEHAVIOUR_GRIND_DEATH 0x19
 
 // <ACTOR_NAME>_STATE_<BEHAVIOUR_NAME>_<STATE_NAME>
 
@@ -79,6 +79,9 @@
 #define WOLFEN_STATE_TRACK_GO_TO_POSITION 0xaa
 
 #define WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION 0xab
+
+#define WOLFEN_STATE_GRIND_DEATH 0xae
+#define WOLFEN_STATE_GRIND_DEATH_HIDDEN 0xaf
 
 struct S_STREAM_EVENT_CAMERA;
 
@@ -890,7 +893,7 @@ public:
 	edF32VECTOR4 angleRotY;
 };
 
-class CBehaviourUnknown : public CBehaviour
+class CBehaviourWolfenGrindDeath : public CBehaviour
 {
 public:
 	virtual void Init(CActor* pOwner);
@@ -899,6 +902,8 @@ public:
 	virtual void End(int newBehaviourId);
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
+
+	CActorWolfen* pOwner;
 };
 
 class CFightContext
@@ -1182,6 +1187,8 @@ public:
 	void BehaviourSnipe_Draw(CBehaviourSnipe* pBehaviour);
 	void BehaviourTrackWeaponSnipe_Manage(CBehaviourTrackWeaponSnipe* pBehaviour);
 	void BehaviourEscape_Manage(CBehaviourEscape* pBehaviour);
+	void BehaviourWolfenGrindDeath_InitState();
+	void BehaviourWolfenGrindDeath_TermState();
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -1278,6 +1285,9 @@ public:
 
 	void StateAvoidEscape(CBehaviourAvoid* pBehaviour);
 	void StateAvoidDefend(CBehaviourAvoid* pBehaviour);
+
+	void StateGrindDeathHidden();
+	void StateGrindDeath();
 
 	int SV_WLF_CheckBoxOnWay(CActorsTable* pTable);
 	void SV_WLF_ExorcismComputeCenter(edF32VECTOR4* pCenter);

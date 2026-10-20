@@ -801,8 +801,8 @@ namespace Wolfen
 			return "Wolfen DCA";
 		case WOLFEN_BEHAVIOUR_AVOID:
 			return "Avoid";
-		case WOLFEN_BEHAVIOUR_UNKNOWN:
-			return "Unkown";
+		case WOLFEN_BEHAVIOUR_GRIND_DEATH:
+			return "Grind Death";
 		default:
 			return "Unknown";
 		}
