@@ -8,8 +8,6 @@
 #include "Fx.h"
 #include "Dynamic.h"
 
-#define IMPLEMENTATION_GUARD_FIGHT(x)
-
 #define FIGHTER_BEHAVIOUR_DEFAULT	0x3
 #define FIGHTER_BEHAVIOUR_PROJECTED 0x4
 #define FIGHTER_BEHAVIOUR_RIDDEN	0x5
@@ -711,6 +709,8 @@ public:
 
 	void _StateFighterExecuteGrab();
 
+	void FUN_00319460();
+
 	void FUN_00312370();
 
 	void FUN_00318db0();
@@ -802,7 +802,9 @@ public:
 	edF32VECTOR4 logicalPosition;
 
 	float field_0x358;
+	float field_0x35c;
 	float field_0x360;
+	float field_0x364;
 	int field_0x36c;
 	float adversaryDistance;
 	undefined4 field_0x374;
@@ -857,6 +859,7 @@ public:
 	float field_0x47c;
 	int standAnim;
 	s_fighter_multiways_anim field_0x484;
+	s_fighter_multiways_anim field_0x48c;
 
 	float field_0x4c0;
 	float field_0x4c4;

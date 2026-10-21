@@ -488,31 +488,30 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	INT_00449738 = INT_00449738 + 1;
 	ClearLocalData();
 
-	this->field_0x358 = 5.5;
-	IMPLEMENTATION_GUARD_FIGHT(
-	this->field_0x35c = 2.5;)
+	this->field_0x358 = 5.5f;
+	this->field_0x35c = 2.5f;
 	this->field_0x360 = 5.0f;
-	IMPLEMENTATION_GUARD_FIGHT(
-	this->field_0x364 = 2.0;
-	this->field_0x488 = 0xd;
-	this->field_0x484 = this->field_0x484 & 0xf0;
-	this->field_0x484 = this->field_0x484 & 0xf | 0x10;
-	this->field_0x485 = this->field_0x485 & 0xf0 | 2;
-	this->field_0x485 = this->field_0x485 & 0xf;
-	this->field_0x486 = this->field_0x486 & 0xf0 | 1;
-	this->field_0x486 = this->field_0x486 & 0xf | 0x30;
-	this->field_0x487 = this->field_0x487 & 0xf0;
-	this->field_0x487 = this->field_0x487 & 0xf | 0x10;
-	this->field_0x490 = 0x11;
-	this->field_0x48c = this->field_0x48c & 0xf0;
-	this->field_0x48c = this->field_0x48c & 0xf | 0x10;
-	this->field_0x48d = this->field_0x48d & 0xf0 | 2;
-	this->field_0x48d = this->field_0x48d & 0xf;
-	this->field_0x48e = this->field_0x48e & 0xf0 | 1;
-	this->field_0x48e = this->field_0x48e & 0xf | 0x30;
-	this->field_0x48f = this->field_0x48f & 0xf0;
-	this->field_0x48f = this->field_0x48f & 0xf | 0x10;
-	this->field_0x6d4 = 0x60;)
+	this->field_0x364 = 2.0f;
+
+	(this->field_0x484).field_0x4 = 0xd;
+	(this->field_0x484).field_0x0[0] = (this->field_0x484).field_0x0[0] & 0xf0;
+	(this->field_0x484).field_0x0[0] = (this->field_0x484).field_0x0[0] & 0xf | 0x10;
+	(this->field_0x484).field_0x0[1] = (this->field_0x484).field_0x0[1] & 0xf0 | 2;
+	(this->field_0x484).field_0x0[1] = (this->field_0x484).field_0x0[1] & 0xf;
+	(this->field_0x484).field_0x0[2] = (this->field_0x484).field_0x0[2] & 0xf0 | 1;
+	(this->field_0x484).field_0x0[2] = (this->field_0x484).field_0x0[2] & 0xf | 0x30;
+	(this->field_0x484).field_0x0[3] = (this->field_0x484).field_0x0[3] & 0xf0;
+	(this->field_0x484).field_0x0[3] = (this->field_0x484).field_0x0[3] & 0xf | 0x10;
+
+	(this->field_0x48c).field_0x4 = 0x11;
+	(this->field_0x48c).field_0x0[0] = (this->field_0x48c).field_0x0[0] & 0xf0;
+	(this->field_0x48c).field_0x0[0] = (this->field_0x48c).field_0x0[0] & 0xf | 0x10;
+	(this->field_0x48c).field_0x0[1] = (this->field_0x48c).field_0x0[1] & 0xf0 | 2;
+	(this->field_0x48c).field_0x0[1] = (this->field_0x48c).field_0x0[1] & 0xf;
+	(this->field_0x48c).field_0x0[2] = (this->field_0x48c).field_0x0[2] & 0xf0 | 1;
+	(this->field_0x48c).field_0x0[2] = (this->field_0x48c).field_0x0[2] & 0xf | 0x30;
+	(this->field_0x48c).field_0x0[3] = (this->field_0x48c).field_0x0[3] & 0xf0;
+	(this->field_0x48c).field_0x0[3] = (this->field_0x48c).field_0x0[3] & 0xf | 0x10;
 
 	this->field_0x6d0[0].field_0x4 = 0x60;
 	this->field_0x6d0[0].field_0x0[0] = this->field_0x6d0[0].field_0x0[0] & 0xf0;
@@ -4778,6 +4777,50 @@ void CActorFighter::_StateFighterExecuteGrab()
 	return;
 }
 
+void CActorFighter::FUN_00319460()
+{
+	CActorFighter* pCVar1;
+	uint uVar2;
+	edF32VECTOR4 local_10;
+
+	this->field_0x4a0 = this->currentLocation;
+
+	pCVar1 = this->pAdversary;
+	this->field_0x4b0 = pCVar1->currentLocation;
+	this->fightFlags = this->fightFlags | 0x1000;
+	if (this->field_0x54c != 0xffffffff) {
+		uVar2 = this->field_0x44c & 0xf;
+		if ((uVar2 == 2) || (uVar2 == 1)) {
+			if (uVar2 % 3 == 1) {
+				local_10.x = -this->rotationQuat.z;
+				local_10.y = 0.0f;
+				local_10.z = this->rotationQuat.x;
+				local_10.w = 0.0f;
+			}
+			else {
+				local_10.x = this->rotationQuat.z;
+				local_10.y = 0.0f;
+				local_10.z = -this->rotationQuat.x;
+				local_10.w = 0.0f;
+			}
+		}
+		else {
+			if (uVar2 < 6) {
+				local_10 = this->rotationQuat;
+			}
+			else {
+				edF32Vector4GetNegHard(&local_10, &this->rotationQuat);
+			}
+		}
+
+		PlayOrientedFx(&this->currentLocation, &local_10, this->field_0x54c, (CFxHandle*)0x0);
+	}
+
+	SetLookingAtOff();
+
+	return;
+}
+
 void CActorFighter::FUN_00312370()
 {
 	CActorFighter* pActor;
@@ -7914,6 +7957,14 @@ void CBehaviourFighter::Manage()
 
 		pFighter->_ManageFighterDyn(uVar14, 0x100a023b, 0);
 		break;
+	case 0x7:
+		this->pOwner->_ManageFighterDyn(0xd, 0x1002023b, (CActorsTable*)0x0);
+		bVar8 = this->pOwner->scalarDynForward.OnLastValidSample();
+		if (bVar8 != false) {
+			iVar9 = this->pOwner->_SV_ANM_GetMultiWaysAnim2D(&this->pOwner->field_0x48c, this->pOwner->field_0x44c & 0xf);
+			this->pOwner->SetState(8, iVar9);
+		}
+		break;
 	case FIGHTER_DEFAULT_STATE_RUN:
 		this->pOwner->_StateFighterRun((CActorsTable*)0x0);
 		break;
@@ -8388,7 +8439,7 @@ void CBehaviourFighter::InitState(int newState)
 		pFighter->field_0x4e0 = gF32Vector4Zero;
 		break;
 	case 0x7:
-		IMPLEMENTATION_GUARD(CActorFighter::FUN_00319460(this->pOwner);)
+		this->pOwner->FUN_00319460();
 		break;
 	case 0xa:
 		this->pOwner->_StateFighter_0xaInit();

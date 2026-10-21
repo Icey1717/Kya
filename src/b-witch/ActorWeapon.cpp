@@ -612,6 +612,7 @@ void CBehaviourWeaponBullets::Begin(CActor* pOwner, int newState, int newAnimati
 	CBehaviourWeaponBurst::Begin(pOwner, newState, newAnimationType);
 
 	this->field_0x48 = -1;
+	iVar4 = 0;
 	pBullet = this->aBullets;
 	do {
 		pBullet->pInstance3d = (CInstance3D*)0x0;
@@ -993,15 +994,15 @@ void CBehaviourWeaponPistol::DrawBullets()
 		edDListLoadIdentity();
 		iVar3 = 0;
 		do {
-			pBVar2 = this->aBullets;
-			if (this->aBullets[iVar3].bulletState == 1) {
-				BuildRotationMatrixFromVectorNormalized(&eStack128, &this->aBullets[iVar3].field_0x10);
+			pBVar2 = this->aBullets + iVar3;
+			if (pBVar2->bulletState == 1) {
+				BuildRotationMatrixFromVectorNormalized(&eStack128, &pBVar2->field_0x10);
 				edF32Matrix4MulF32Matrix4Hard(&eStack128, &eStack64, &eStack128);
 				eStack128.rowT = pBVar2->position;
 				edDListUseMaterial(pMaterialInfo);
 				edDListLoadMatrix(&eStack128);
 				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 10);
+				edDListBegin(pBVar2->position.x, pBVar2->position.y, pBVar2->position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 10);
 				z = LENGTH_1;
 				z_00 = LENGTH_1 * 0.1f;
 				x_00 = WIDTH_1 * 0.8660254f;
@@ -1031,7 +1032,7 @@ void CBehaviourWeaponPistol::DrawBullets()
 				edDListEnd();
 				edDListUseMaterial(pMaterialInfo_00);
 				edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-				edDListBegin((pBVar2->position).x, this->aBullets[iVar3].position.y, this->aBullets[iVar3].position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 8);
+				edDListBegin(pBVar2->position.x, pBVar2->position.y, pBVar2->position.z, DLIST_PRIM_TYPE_TRIANGLE_STRIP, 8);
 				edDListTexCoo2f(0.0f, 0.0f);
 				edDListVertex4f(0.0f, WIDTH_0, OFFSET_TAIL, 0.0f);
 				edDListTexCoo2f(0.0f, 1.0f);
@@ -1071,7 +1072,7 @@ void CSniperBullet::FUN_002d3be0(float param_1)
 
 	this->field_0xc4 = param_1;
 
-	const float sign = (rand2 & 0x10000) ? -1.0f : 1.0f;
+	const float sign = (rand2 & 1) ? -1.0f : 1.0f;
 	const float polarAngle = (static_cast<float>(rand0) * (M_PI / 4.0f)) / 32767.0f + (3.0f * M_PI / 4.0f); // [3π/4, π]
 	const float azimuthAngle = (static_cast<float>(rand1) * (2.0f * M_PI)) / 32767.0f + M_PI;                  // [π, 3π]
 
@@ -1082,8 +1083,8 @@ void CSniperBullet::FUN_002d3be0(float param_1)
 		const float theta = azimuthAngle * t * sign;
 
 		const float sinPhi = sinf(phi);
-		this->field_0x0[i].x = sinPhi * cosf(theta);
-		this->field_0x0[i].y = sinPhi * sinf(theta);
+		this->field_0x0[i].x = sinPhi * sinf(theta);
+		this->field_0x0[i].y = sinPhi * cosf(theta);
 		this->field_0x0[i].z = param_1 + t * (1.0f - param_1);
 		this->field_0x0[i].w = 1.0f;
 	}

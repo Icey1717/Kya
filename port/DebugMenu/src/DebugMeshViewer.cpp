@@ -231,6 +231,17 @@ namespace DebugMeshViewer {
 
 			ImGui::SameLine();
 			ImGui::Checkbox("Gizmo", &gUseGizmo);
+			ImGui::SameLine();
+			static std::string exportResult;
+			if (ImGui::Button("Export OBJ")) {
+				exportResult = ExportPreviewerMeshes();
+			}
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Export queued preview meshes in raw object coordinates, without animation, gizmo, or camera transforms. Includes mesh names and bounds.");
+			}
+			if (!exportResult.empty()) {
+				ImGui::TextWrapped("%s", exportResult.c_str());
+			}
 
 			if (gUseGizmo) {
 				static Gizmo::Widget gizmo = Gizmo::Widget("##giz");

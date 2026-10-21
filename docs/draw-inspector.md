@@ -12,6 +12,15 @@ Select a row to inspect:
 
 Use **Open mesh viewer** to preview the selected strip and its requested texture layer, or **Open texture viewer** to select the bound material/layer/texture in the existing texture preview. These show current live assets, not frozen geometry or pixels. The mesh preview currently supports strips, not sprite batches. Missing/ambiguous texture assets and framebuffer captures cannot be opened through these shortcuts; unloaded source selections are disabled. Opened previews recheck the source lifetime each frame.
 
+In **Mesh Previewer**, **Export OBJ** saves the currently queued preview meshes to
+`logs/mesh-exports/preview_<timestamp>.obj` under the game's working directory
+(normally `bin/WIN/logs/mesh-exports`). A matching `.txt` records mesh names,
+vertex/triangle counts, local XYZ bounds, and animation-reference counts. Multiple
+preview meshes become separate OBJ groups. Coordinates retain the game's raw
+object-space axes and units; actor placement, animation, gizmo rotation, camera,
+and projection are not baked in. Export is geometry-only, without textures.
+The resulting absolute path or an error is shown beside the preview controls.
+
 - **Source:** copied PS2 addresses, flags, bounds, counts, material bank, scene and available actor or scenery-cluster ownership. Right-click an address to copy it. Unknown ownership is not inferred from asset names.
 - **Material/state:** actual texture binding, requested and bound layers, native indices, effective alpha/blend/depth/color-write state and raw GS registers.
 - **Transforms:** model at linking, submitted model, and recorded view/projection matrices, displayed in storage order.

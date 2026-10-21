@@ -664,6 +664,9 @@ namespace Hero
 		case STATE_HERO_MOUNT_HIT_A:
 			return "StateHeroMountHitA";
 			break;
+		case 0x12c:
+			return "StateHeroMountDie";
+			break;
 		case STATE_HERO_MOUNT_FALL:
 			return "StateHeroMountFall";
 			break;

@@ -179,6 +179,7 @@ public:
 	void StateJamGutHit();
 	void StateJamGutFall();
 	void StateJamGutJumpBefore(CBehaviourJamGut*);
+	void StateJamGutDuration(float param_1, CBehaviourJamGut* pBehaviour, int nextState);
 
 	void StateJamGutJumpInit();
 	void StateJamGutJump();

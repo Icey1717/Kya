@@ -1459,8 +1459,8 @@ int CActorJamGut::ChooseStateDead(int param_2, int param_3, int param_4)
 {
 	int deadState;
 
-	IMPLEMENTATION_GUARD(
-	FUN_00366500(2.0f, 0);)
+	SetHitInvincibility(2.0f, 0);
+
 	if (param_4 == 0) {
 		if (param_3 == 1) {
 			deadState = 0x13;
@@ -1965,23 +1965,19 @@ void CActorJamGut::BehaviourJamGutRidden_Manage(CBehaviourJamGutRidden* pBehavio
 		StateJamGutHit();
 		break;
 	case 0x12:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDuration(-1.0f, this, (CBehaviourJamGut*)pBehaviour, JAMGUT_RIDE_STATE_STAND);)
+		StateJamGutDuration(-1.0f, pBehaviour, JAMGUT_RIDE_STATE_STAND);
 		break;
 	case 0x13:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(-1.0f, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
+		StateJamGutDead(-1.0f, pBehaviour, 0, 1);
 		break;
 	case 0x14:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(-1.0f, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
+		StateJamGutDead(-1.0f, pBehaviour, 0, 1);
 		break;
 	case 0x15:
 		StateJamGutDead(2.0f, pBehaviour, 1, 1);
 		break;
 	case 0x16:
-		IMPLEMENTATION_GUARD(
-		StateJamGutDead(2.0, this, (CBehaviourJamGut*)pBehaviour, 0, 1);)
+		StateJamGutDead(2.0f, pBehaviour, 0, 1);
 	}
 
 	pHero = this->pRider;
@@ -2709,6 +2705,64 @@ void CActorJamGut::StateJamGutJumpBefore(CBehaviourJamGut*)
 	if (0.05f < GetTimer()->scaledTotalTime - this->field_0x3a4) {
 		SetState(JAMGUT_RIDE_STATE_JUMP, -1);
 	}
+
+	return;
+}
+
+void CActorJamGut::StateJamGutDuration(float param_1, CBehaviourJamGut* pBehaviour, int nextState)
+{
+	CCollision* pCVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+
+	pCVar1 = this->pCollisionData;
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if ((pCVar1->flags_0x4 & 2) == 0) {
+		if (0.1f < this->timeInAir) {
+			SetState(0xf, -1);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (param_1 < 0.0f) {
+		pCVar2 = this->pAnimationController;
+		peVar3 = pCVar2->anmBinMetaAnimator.aAnimData;
+		bVar4 = false;
+		if (peVar3->currentAnimDesc.animType == pCVar2->currentAnimType) {
+			if (peVar3->animPlayState == 0) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = (peVar3->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (bVar4) goto LAB_00376390;
+	}
+
+	if (param_1 <= 0.0f) {
+		return;
+	}
+
+	if (GetTimer()->scaledTotalTime - this->field_0x3a4 < param_1) {
+		return;
+	}
+
+LAB_00376390:
+	SetState(nextState, -1);
 
 	return;
 }

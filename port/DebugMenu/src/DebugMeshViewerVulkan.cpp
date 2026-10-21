@@ -13,6 +13,13 @@
 
 #include <array>
 #include <optional>
+#include <chrono>
+#include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <limits>
+#include <locale>
 #include "Texture/TextureCache.h"
 
 namespace DebugMeshViewer {
@@ -34,6 +41,7 @@ namespace DebugMeshViewer {
 		using PreviewerVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessedNormal, uint16_t>;
 		using PreviewerDrawCommandArray = std::array<std::pair<Renderer::SimpleTexture*, PreviewerVertexBuffer>, maxDrawCommands>;
 		PreviewerDrawCommandArray gPreviewerDrawCommands;
+		std::array<std::string, maxDrawCommands> gPreviewerMeshNames;
 
 		Renderer::SimpleTexture* pBoundTexture = nullptr;
 		Renderer::SimpleMesh* pBoundMesh = nullptr;
@@ -137,6 +145,7 @@ namespace DebugMeshViewer {
 		Vulkan::gVertexConstantBuffer.Map(GetCurrentFrame());
 
 		Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
+		Vulkan::gPreviewerMeshNames[Vulkan::drawCounter] = pMesh->GetName();
 
 		return Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter++].second.GetDrawBufferData();
 	}
@@ -152,6 +161,90 @@ namespace DebugMeshViewer {
 		}
 
 		return count;
+	}
+
+	std::string ExportPreviewerMeshes()
+	{
+		// Read the same decoded buffers queued for this preview frame. Keep raw
+		// object coordinates so camera/gizmo transforms cannot obscure the axes.
+		size_t totalVertices = 0;
+		size_t totalFaces = 0;
+		for (int i = 0; i < Vulkan::drawCounter; ++i) {
+			auto& data = Vulkan::gPreviewerDrawCommands[i].second.GetDrawBufferData();
+			if (data.index.tail == 0) continue;
+			if ((data.index.tail % 3) != 0) return "Export failed: preview indices are not triangles.";
+			for (size_t j = 0; j < data.vertex.tail; ++j) {
+				for (int axis = 0; axis < 3; ++axis) {
+					if (!std::isfinite(data.vertex.buff[j].XYZFlags.fXYZ[axis])) return "Export failed: non-finite vertex coordinate.";
+				}
+			}
+			for (size_t j = 0; j < data.index.tail; ++j) {
+				if (data.index.buff[j] >= data.vertex.tail) return "Export failed: vertex index is out of range.";
+			}
+			totalVertices += data.vertex.tail;
+			totalFaces += data.index.tail / 3;
+		}
+		if (totalFaces == 0) return "Export failed: no preview triangles are queued.";
+
+		std::error_code error;
+		const auto directory = std::filesystem::absolute("logs/mesh-exports", error);
+		if (error) return "Export failed: " + error.message();
+		std::filesystem::create_directories(directory, error);
+		if (error) return "Export failed: " + error.message();
+		const auto stamp = std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count();
+		const auto base = directory / ("preview_" + std::to_string(stamp));
+		const auto objPath = std::filesystem::path(base.string() + ".obj");
+		const auto infoPath = std::filesystem::path(base.string() + ".txt");
+		std::ofstream obj(objPath);
+		std::ofstream info(infoPath);
+		if (!obj || !info) return "Export failed: could not open output files in " + directory.string();
+		obj.imbue(std::locale::classic());
+		info.imbue(std::locale::classic());
+		obj << std::setprecision(std::numeric_limits<float>::max_digits10);
+		info << std::setprecision(std::numeric_limits<float>::max_digits10);
+		obj << "# Kya mesh preview: raw object-space XYZ, triangle-list faces.\n"
+			<< "# No animation, actor, gizmo, camera, or axis conversion applied.\n";
+		info << "Raw object-space geometry; units and XYZ axes preserved.\n"
+			<< "No textures or transforms exported. Skinned meshes retain unposed vertex coordinates.\n"
+			<< "Meshes queued in the preview are separate OBJ groups.\n"
+			<< "Vertices: " << totalVertices << "\nTriangles: " << totalFaces << "\n";
+		size_t vertexOffset = 0;
+		for (int i = 0; i < Vulkan::drawCounter; ++i) {
+			auto& data = Vulkan::gPreviewerDrawCommands[i].second.GetDrawBufferData();
+			if (data.index.tail == 0) continue;
+			const std::string& name = Vulkan::gPreviewerMeshNames[i];
+			// Mesh names are comments/metadata, not filenames or OBJ identifiers.
+			obj << "\ng preview_" << i << "\n";
+			info << "\nGroup preview_" << i << "\nMesh: " << name
+				<< "\nVertices: " << data.vertex.tail << "\nTriangles: " << data.index.tail / 3 << "\n";
+			float minimum[3] = { INFINITY, INFINITY, INFINITY };
+			float maximum[3] = { -INFINITY, -INFINITY, -INFINITY };
+			size_t animatedVertices = 0;
+			for (size_t j = 0; j < data.vertex.tail; ++j) {
+				const auto& vertex = data.vertex.buff[j];
+				const float* xyz = vertex.XYZFlags.fXYZ;
+				obj << "v " << xyz[0] << ' ' << xyz[1] << ' ' << xyz[2] << '\n';
+				for (int axis = 0; axis < 3; ++axis) {
+					minimum[axis] = std::min(minimum[axis], xyz[axis]);
+					maximum[axis] = std::max(maximum[axis], xyz[axis]);
+				}
+				if ((vertex.XYZFlags.flags & 0x7ff) != 0) ++animatedVertices;
+			}
+			for (size_t j = 0; j < data.index.tail; j += 3) {
+				obj << "f " << vertexOffset + data.index.buff[j] + 1 << ' '
+					<< vertexOffset + data.index.buff[j + 1] + 1 << ' '
+					<< vertexOffset + data.index.buff[j + 2] + 1 << '\n';
+			}
+			info << "Minimum XYZ: " << minimum[0] << ' ' << minimum[1] << ' ' << minimum[2]
+				<< "\nMaximum XYZ: " << maximum[0] << ' ' << maximum[1] << ' ' << maximum[2]
+				<< "\nVertices with animation references: " << animatedVertices << '\n';
+			vertexOffset += data.vertex.tail;
+		}
+		obj.close();
+		info.close();
+		if (!obj || !info) return "Export failed while writing " + base.string();
+		return "Exported " + objPath.string() + " (mesh names and bounds in matching .txt)";
 	}
 
 	static void CreateRenderPass(VkRenderPass& renderPass, const char* name)

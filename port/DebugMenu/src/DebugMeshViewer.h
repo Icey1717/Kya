@@ -35,6 +35,7 @@ namespace DebugMeshViewer {
 
 	Renderer::NativeVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh);
 	int GetPreviewerDrawCommandCount();
+	std::string ExportPreviewerMeshes();
 
 	// Implented via renderer backend.
 	VertexConstantBuffer& GetVertexConstantBuffer();
