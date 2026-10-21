@@ -717,11 +717,10 @@ void CPlayerInput::UpdateOne(float delta)
 					}
 					else {
 						// Left only
-
-						// BUG!?
-
-#ifdef PLATFORM_PS2
+						// PS2 UpdateOne (0x001b7350) clears Y at 0x001b7ab0.
+						// Keep that reset when applying the Windows left-axis sign correction.
 						pAnalog->y = 0.0f;
+#ifdef PLATFORM_PS2
 						fVar7 = pAnalog->x;
 						if (0.0f < fVar7) {
 							fVar7 = edFIntervalUnitDstLERP(fVar7, 0.4f, 0.9f);

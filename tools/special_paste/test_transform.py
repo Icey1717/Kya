@@ -96,6 +96,43 @@ class TransformTests(unittest.TestCase):
         ]:
             self.assertEqual(self.convert(source), source)
 
+    def test_inlines_timer_lookup_for_bounce_speed(self):
+        for lookup in ['GetTimer()', 'Timer::GetTimer()']:
+            source = ('  Timer *pTVar1;\n  float fVar2;\n  float fVar4;\n\n'
+                      '  CActor::SV_UpdateOrientation2D(*(float *)&(this->base).field_0x1520, (CActor *)this, &local_20, 0);\n'
+                      '  fVar4 = edF32Vector4SafeNormalize0Hard(&this->dynamic, &local_10);\n'
+                      f'  pTVar1 = {lookup};\n'
+                      '  fVar2 = fVar4 / pTVar1->cutsceneDeltaTime;\n'
+                      '  fVar3 = 2.0;\n'
+                      '  if (fVar2 < 2.0) {\n    fVar3 = fVar2;\n  }')
+            for newline in ['\n', '\r\n']:
+                result = self.convert(source.replace('\n', newline))
+                self.assertNotIn('pTVar1', result)
+                self.assertIn(f'fVar2 = fVar4 / {lookup}->cutsceneDeltaTime;', result)
+                self.assertEqual(self.convert(result), result)
+                if newline == '\r\n':
+                    self.assertNotIn('\n', result.replace('\r\n', ''))
+
+    def test_timer_lookup_keeps_ambiguous_or_mutated_locals(self):
+        for body in [
+            'Use(pTimer);',
+            'if (ready) {\nUse(pTimer->elapsed);\n}',
+            'pTimer = AcquireTimer();\nUse(pTimer->elapsed);',
+            'pTimer->elapsed = 2;',
+            'pTimer->elapsed++;',
+            '++pTimer->elapsed;',
+            'Use(&pTimer->elapsed);',
+        ]:
+            source = 'Timer* pTimer;\npTimer = GetTimer();\n' + body
+            with self.subTest(body=body):
+                self.assertEqual(self.convert(source), source)
+
+    def test_timer_lookup_preserves_protected_text(self):
+        source = ('Timer* pTimer;\npTimer = GetTimer();\n'
+                  'Use(pTimer->elapsed);\n// pTimer\nPrint("pTimer");')
+        self.assertEqual(self.convert(source),
+                         'Use(GetTimer()->elapsed);\n// pTimer\nPrint("pTimer");')
+
     def test_protects_non_code(self):
         cases = [
             'Print("version 1.0, ABS(x), CActor::Run((CActor *)this)");',

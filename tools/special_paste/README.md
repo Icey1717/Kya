@@ -19,8 +19,10 @@ Ghidra's `(code *)` casts on virtual calls are supported. Simple member-path
 parentheses are removed and commas get a following space.
 
 C-style casts are preserved: choosing `static_cast` versus `reinterpret_cast`
-requires type information this scanner does not have. Timer locals and their
-assignments are preserved.
+requires type information this scanner does not have. Timer pointer locals
+assigned once from `GetTimer()` or `Timer::GetTimer()` are replaced with that
+lookup when all uses are member reads in the same straight-line block. Other
+timer sources, value snapshots, and escaped pointers are preserved.
 
 Consecutive x/y/z assignments collapse contextually using local declarations,
 parameters, repository fields, and base classes. Each `edF32VECTOR3` operand

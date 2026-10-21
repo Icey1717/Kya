@@ -2469,12 +2469,58 @@ void CActorHeroPrivate::StateHeroCeilingClimb(int param_2, int param_3, int para
 
 void CActorHeroPrivate::StateHeroGrip2Ceiling()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 local_10;
+
+	local_10 = this->field_0x1490 - this->currentLocation;
+	fVar4 = edF32Vector4SafeNormalize0Hard(&this->dynamic.rotationQuat, &local_10);
+	fVar2 = fVar4 / GetTimer()->cutsceneDeltaTime;
+	fVar3 = 2.0f;
+	if (fVar2 < 2.0f) {
+		fVar3 = fVar2;
+	}
+	this->dynamic.speed = fVar3;
+
+	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+	if ((fVar4 <= 0.03f) || (1.0f <= this->timeInAir)) {
+		SetState(0x10f, 0xffffffff);
+	}
+
+	return;
 }
 
 void CActorHeroPrivate::StateHeroCeiling2Grip()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_20.w = this->bounceLocation.w;
+	local_20.x = 0.0f - this->bounceLocation.x;
+	local_20.y = 0.0f - this->bounceLocation.y;
+	local_20.z = 0.0f - this->bounceLocation.z;
+	CActor::SV_UpdateOrientation2D(this->field_0x1520, &local_20, 0);
+	local_10 = this->field_0x1490 - this->currentLocation;
+	fVar4 = edF32Vector4SafeNormalize0Hard(&this->dynamic.rotationQuat, &local_10);
+	fVar2 = fVar4 / GetTimer()->cutsceneDeltaTime;
+	fVar3 = 2.0f;
+	if (fVar2 < 2.0f) {
+		fVar3 = fVar2;
+	}
+	this->dynamic.speed = fVar3;
+
+	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+
+	if ((fVar4 <= 0.03f) || (1.0f <= this->timeInAir)) {
+		SetState(0xbe, 0xffffffff);
+	}
+
+	return;
 }
 
 void CActorHeroPrivate::GripObject(CActor* pOtherActor)

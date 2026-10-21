@@ -6,7 +6,7 @@ Reads text from stdin, applies transforms, writes to stdout.
 
 Protect literals/comments/directives, recover member calls and PS2 base chains,
 normalize Ghidra float/math expressions, and apply repository formatting.
-Preserve explicit base dispatch, C-style casts and timer locals. Recover vector
+Preserve explicit base dispatch and C-style casts. Inline known timer lookups. Recover vector
 assignments only when the source and destination types are known.
 """
 
@@ -630,6 +630,48 @@ def t_math_macros(text: str) -> str:
     return text
 
 
+def t_remove_timer_vars(text: str) -> str:
+    """Inline singleton Timer pointers used only for member reads in one block.
+
+    Require a single GetTimer assignment before all uses. Leave arbitrary timer
+    sources, value snapshots, escaped pointers and control-flow crossings alone.
+    """
+    declaration = re.compile(r"^[ \t]*Timer[ \t]*\*[ \t]*(\w+)[ \t]*;[ \t]*(?:\r?\n|$)",
+                             re.MULTILINE)
+    boundary = re.compile(
+        r"[{}?]|(?<!:):(?!:)|\b(?:if|else|for|while|do|switch|case|goto|return|throw)\b")
+    for declared in reversed(list(declaration.finditer(text))):
+        name = re.escape(declared[1])
+        references = list(re.finditer(r"\b" + name + r"\b", text))
+        # A repeated declaration or another use before initialization is ambiguous.
+        if len(references) < 3 or references[0].start() < declared.start():
+            continue
+        assignment = re.compile(
+            r"^[ \t]*" + name + r"[ \t]*=[ \t]*((?:Timer::)?GetTimer\(\))[ \t]*;[ \t]*(?:\r?\n|$)",
+            re.MULTILINE,
+        ).search(text, declared.end())
+        if assignment is None or not (assignment.start() <= references[1].start() < assignment.end()):
+            continue
+        uses = references[2:]
+        if any(not re.match(r"\s*->\s*\w+", text[use.end():]) for use in uses):
+            continue
+        # Keep the acquisition and reads in the same straight-line block.
+        if boundary.search(text[declared.end():assignment.start()]) or boundary.search(
+                text[assignment.end():uses[-1].start()]):
+            continue
+        # Do not turn writes (or potential member-address escapes) into lookups.
+        if any(re.search(r"(?:\+\+|--|(?:[+*/%&|^\-]|<<|>>)?=(?!=))",
+                         text[use.end():text.find(';', use.end())])
+               or re.search(r"(?:&|\+\+|--)\s*$", text[:use.start()]) for use in uses):
+            continue
+        edits = [(declared.start(), declared.end(), ''),
+                 (assignment.start(), assignment.end(), '')]
+        edits.extend((use.start(), use.end(), assignment[1]) for use in uses)
+        for start, end, replacement in sorted(edits, reverse=True):
+            text = text[:start] + replacement + text[end:]
+    return text
+
+
 def t_function_header_newline(text: str) -> str:
     """Place a function's opening brace exactly one newline after its header."""
     header_re = re.compile(
@@ -723,6 +765,7 @@ TRANSFORMS = [
     t_math_macros,
     t_remove_this_param,
     t_inline_bytecode_temps,
+    t_remove_timer_vars,
     t_function_header_newline,
 ]
 
