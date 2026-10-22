@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "program": "SLES_514.73",
+  "imageBase": "00100000",
+  "reviews": [
+    {
+      "name": "CActorCommander::FUN_001710c0",
+      "address": "001710c0",
+      "sourceSha256": "a164b1b05a1a71d287df03961d6586b9515367d5f4eddc9d4b66ea81ecaf8bfd",
+      "ps2Sha256": "a2524762feb8d6ff743d1ac8e8faf3764f651abd18b3ae0ff84730c5eca042ee",
+      "findings": [
+        { "kind": "constant_count", "detail": "Literal 24: port 0, PS2 1." }
+      ],
+      "reason": "Ghidra CTeamElt has size 24 and pEnemyActor at offset 16. PS2 00171140 advances the byte offset by 0x18; the port uses aTeamElt[iVar3].pEnemyActor. Branches, per-enemy call and early return match. Reviewed against decompilation and disassembly on 2026-10-22.",
+      "dependencies": [
+        { "path": "src/b-witch/Squad.h", "sha256": "0a06c4a66e0fc59e06fef15ae5a998fb6ffd65050277d57f3666ae2fb7be7adf" },
+        { "path": "src/b-witch/ActorCommander.h", "sha256": "5b3124a29fd7e86ff5a4f9d19c4b3d44e26c1ceeb5d7c7bdc0361d4ff310a50f" }
+      ]
+    },
+    {
+      "name": "CFxNewParticle::SetTimeScaler",
+      "address": "0032cff0",
+      "sourceSha256": "37deb23d4755730849d25dc75f3f59770047e2fc74a7f191798bc94601a3170c",
+      "ps2Sha256": "a2c97e26055433c87cc803266f298ec914b799cb03c9b481382017c60cd45840",
+      "findings": [
+        { "kind": "constant_count", "detail": "Literal 128: port 0, PS2 1." }
+      ],
+      "reason": "PS2 0032cff4 stores the incoming float f12 to this+0x80 in the return delay slot. The fixed port assigns the incoming timeScale to float field_0x80. The raw offset is represented by the named field. Reviewed against decompilation and disassembly on 2026-10-22.",
+      "dependencies": [
+        { "path": "src/b-witch/FxParticle.h", "sha256": "0fcda1bd2c4525d4c2caab73e07e7c4edbc5c47e2cd8b63f713e03997ceb0892" }
+      ]
+    }
+  ]
+}

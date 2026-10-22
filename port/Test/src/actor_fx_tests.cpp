@@ -11,6 +11,21 @@
 #include "DlistManager.h"
 #include "FxLightEmitter.h"
 #include "TimeController.h"
+#include "FxParticle.h"
+
+TEST(ParticleFx, HandleTimeScaleDispatchUpdatesParticlePlaybackRate)
+{
+	CFxNewParticle particle;
+	particle.id = 7;
+	particle.field_0x80 = 1.0f;
+	CFxHandle handle;
+	handle.pFx = &particle;
+	handle.id = particle.id;
+	for (float timeScale : { 0.0f, 0.25f, 2.0f, 1.0f }) {
+		handle.SetTimeScaler(timeScale);
+		EXPECT_FLOAT_EQ(particle.field_0x80, timeScale);
+	}
+}
 
 TEST(BoomyTrail, CreationRestoresDefaultOpacityForBothControlledFlightEmitters)
 {

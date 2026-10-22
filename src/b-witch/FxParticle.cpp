@@ -262,6 +262,11 @@ int CFxNewParticle::GetType()
 	return FX_TYPE_PARTICLE;
 }
 
+void CFxNewParticle::SetTimeScaler(float timeScale)
+{
+	this->field_0x80 = timeScale;
+}
+
 void CFxNewParticle::Manage()
 {
 	uint uVar1;

@@ -7907,6 +7907,14 @@ void CBehaviourFighter::Manage()
 	pFighter = this->pOwner;
 	
 	switch (this->pOwner->actorState) {
+	case 0x8:
+		pFighter->_ManageFighterDyn(0xd, 0x1002023b, (CActorsTable*)0x0);
+		pCVar5 = pFighter->pAnimationController;
+
+		if (pCVar5->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(6, pFighter->standAnim);
+		}
+		break;
 	case 0xc:
 		pCVar5 = pFighter->pAnimationController;
 
@@ -8663,7 +8671,11 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	switch (oldState)
 	{
 	case 0x7:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->scalarDynForward.Reset();
+		pFighter->fightFlags = (uint)((uint)pFighter->fightFlags & 0xffffefff);
+		pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		pFighter->SetLookingAtOn();
 		break;
 	case 0xa:
 	case 0xb:

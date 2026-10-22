@@ -18,7 +18,7 @@ public:
 	virtual void Stop(float param_1);
 	virtual bool IsLooped();
 	virtual int GetType();
-	virtual void SetTimeScaler(float) { IMPLEMENTATION_GUARD(); }
+	virtual void SetTimeScaler(float timeScale);
 
 	void Manage();
 	void Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector);

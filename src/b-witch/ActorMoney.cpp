@@ -1146,6 +1146,9 @@ void CBehaviourMoneyAddOn::SaveContext(void* pData, uint mode, uint maxSize)
 
 void CBehaviourMoneyAddOn::LoadContext(void* pData, uint mode, uint maxSize)
 {
+	// PS2 003615d0: tail-call virtual CheckpointReset (slot 0x54).
+	CheckpointReset();
+
 	return;
 }
 

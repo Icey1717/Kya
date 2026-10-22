@@ -12928,6 +12928,8 @@ void CBehaviourFighterWolfen::GrabCommand()
 
 void CBehaviourFighterWolfen::FunReset()
 {
+	// PS2 InitCommand (001f87c0), reset after FlushInput at 001f8bb0:
+	// the cancel action is issued separately before this reset, not with the dodge.
 	this->field_0x70 = 1;
 	this->field_0x71 = 0;
 	this->field_0x74.all = 0x0;
@@ -12935,9 +12937,6 @@ void CBehaviourFighterWolfen::FunReset()
 	this->field_0x80 = gF32Vector4Zero;
 	(this->field_0x90).field_0x4 = 0;
 	(this->field_0x90).field_0x0 = (edF32VECTOR4*)0x0;
-
-	(this->field_0x74).actionByte = (this->field_0x74).actionByte & 0xf0 | 8;
-	this->field_0x70 = 1;
 
 	return;
 }
