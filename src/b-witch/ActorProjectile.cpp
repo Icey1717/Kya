@@ -1899,9 +1899,9 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 		fVar6 = (this->vectorDyn).field_0x60.z;
 		dynFlags = dynFlags | 0x1c000;
 
-		this->dynamicExt.instanceIndex.x = (this->vectorDyn).field_0x60.x;
-		this->dynamicExt.instanceIndex.y = fVar5;
-		this->dynamicExt.instanceIndex.z = fVar6;
+		this->dynamicExt.field_0x60.x = (this->vectorDyn).field_0x60.x;
+		this->dynamicExt.field_0x60.y = fVar5;
+		this->dynamicExt.field_0x60.z = fVar6;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	}
 	else {

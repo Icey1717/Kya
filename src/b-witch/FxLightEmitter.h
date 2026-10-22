@@ -10,7 +10,7 @@ struct RAY_DEF
 	float field_0x20;
 	float field_0x24;
 	float field_0x28;
-	ushort field_0x2c;
+	short field_0x2c;
 	ushort field_0x2e;
 	ushort field_0x30;
 	byte field_0x32;
@@ -76,12 +76,8 @@ public:
 	float field_0x44;
 	byte countId;
 
-	float instanceIndex;
-
 	undefined4 field_0x50;
 	int field_0x54;
-
-	float field_0x5c;
 
 	float field_0x60;
 

@@ -141,7 +141,7 @@ struct Pad_180 {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	undefined instanceIndex;
+	undefined field_0x60;
 	undefined field_0x61;
 	undefined field_0x62;
 	undefined field_0x63;

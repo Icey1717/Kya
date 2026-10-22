@@ -103,7 +103,7 @@ public:
 	edF32VECTOR4 aImpulseVelocities[3];
 	edF32VECTOR4 normalizedTranslation;
 
-	edF32VECTOR3 instanceIndex;
+	edF32VECTOR3 field_0x60;
 	float field_0x6c;
 
 	float scaledTotalTime;

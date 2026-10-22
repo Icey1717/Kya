@@ -7500,7 +7500,7 @@ void CActorWolfen::StateExorcizeInit(CBehaviourExorcism* pBehaviour)
 	CAnimation* pAnim;
 
 	this->scalarDynJump.BuildFromDistTimeNoAccel(1.5f, pBehaviour->field_0x10);
-	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+	this->dynamicExt.field_0x60 = gF32Vector4Zero.xyz;
 
 	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
@@ -7563,7 +7563,7 @@ void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
 
 	if (this->timeInAir <= pBehaviour->field_0x10) {
 		this->scalarDynJump.Integrate(GetTimer()->cutsceneDeltaTime);
-		this->dynamicExt.instanceIndex.y = this->scalarDynJump.field_0x20;
+		this->dynamicExt.field_0x60.y = this->scalarDynJump.field_0x20;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 		fVar4 = this->field_0x7b0 + this->field_0x7b4 * GetTimer()->cutsceneDeltaTime;
 		this->field_0x7b0 = fVar4;
@@ -7582,7 +7582,7 @@ void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
 			this->scalarDynJump.Reset();
 			this->field_0x7b4 = 0.0f;
 			this->dynamic.speed = 0.0f;
-			this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+			this->dynamicExt.field_0x60 = gF32Vector4Zero.xyz;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 			bVar2 = pBehaviour->FUN_001edbe0();
 			if (bVar2 == true) {
@@ -7602,7 +7602,7 @@ void CActorWolfen::StateExorcize(CBehaviourExorcism* pBehaviour)
 void CActorWolfen::StateExorciseTerm()
 {
 	this->dynamic.speed = 0.0f;
-	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+	this->dynamicExt.field_0x60 = gF32Vector4Zero.xyz;
 	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 
@@ -7611,7 +7611,7 @@ void CActorWolfen::StateExorciseTerm()
 
 void CActorWolfen::StateExorcizeTransformInit()
 {
-	this->dynamicExt.instanceIndex = gF32Vector4Zero.xyz;
+	this->dynamicExt.field_0x60 = gF32Vector4Zero.xyz;
 	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 
 	return;
@@ -13536,7 +13536,7 @@ public:
 	{
 		this->pMeshTransformParent = pNode;
 		this->pMeshTransformData = reinterpret_cast<ed_3d_hierarchy_node*>(pMeshTransformParent->pData);
-		this->instanceIndex = 1;
+		this->field_0x60 = 1;
 		this->field_0x61 = 0;
 
 		return;
@@ -13576,7 +13576,7 @@ public:
 		this->field_0x6c = 0.0f;
 		this->field_0x68 = 0.0f;
 
-		if (this->instanceIndex == 0) {
+		if (this->field_0x60 == 0) {
 			bVar1 = HasMesh();
 			if (bVar1 != false) {
 				StaticMeshComponent::Term((ed_3D_Scene*)0x0);

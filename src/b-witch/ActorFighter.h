@@ -180,7 +180,7 @@ public:
 
 	edF32VECTOR4* GetTextureAnimSpeedNormalExtruder();
 
-	byte instanceIndex;
+	byte field_0x60;
 	byte field_0x61;
 
 	int field_0x64;

@@ -4094,8 +4094,8 @@ int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 
 				if (iVar2 == 1) {
 					IMPLEMENTATION_GUARD(
-					this->instanceIndex.FUN_003fff90();
-					if (this->instanceIndex.FUN_003ffea0(this->field_0x16b0) == 0) {
+					this->field_0x60.FUN_003fff90();
+					if (this->field_0x60.FUN_003ffea0(this->field_0x16b0) == 0) {
 						return 0;
 					})
 				}

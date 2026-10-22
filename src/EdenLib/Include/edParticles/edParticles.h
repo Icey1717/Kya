@@ -216,7 +216,7 @@ struct _ed_particle_shaper_param
 	float field_0x54;          // 0x54: Mode 3 UV1.x
 	float field_0x58;          // 0x58: Mode 3 UV1.y
 	float field_0x5c;          // 0x5c: Mode 3 UV2.x
-	float instanceIndex;       // 0x60: Mode 3 UV2.y / instance index
+	float field_0x60;          // 0x60: Mode 3 UV2.y
 	float field_0x64;          // 0x64: Mode 3 particle width
 	float field_0x68;          // 0x68: Mode 3 particle height
 	byte field_0x6c;           // 0x6c: Mode 2 patch positions enabled

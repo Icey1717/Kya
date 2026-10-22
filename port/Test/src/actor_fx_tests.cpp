@@ -9,6 +9,68 @@
 #include "FxComposite.h"
 #include "ActorBrazul.h"
 #include "DlistManager.h"
+#include "FxLightEmitter.h"
+#include "TimeController.h"
+
+TEST(BoomyTrail, CreationRestoresDefaultOpacityForBothControlledFlightEmitters)
+{
+	// PS2 CFxLightEmitter::Create (003a9a70) initializes the same factor
+	// that ChangeAlphaFactor (003a97e0) controls and Draw (003a80c0) reads.
+	for (uint emitterFlags : { 0x10u, 0x18u }) {
+		CFxLightEmitter emitter;
+		for (float previousAlpha : { 0.0f, 0.25f }) {
+			emitter.alphaFactor = previousAlpha;
+			emitter.Create(0.4f, 0x80, emitterFlags);
+			EXPECT_FLOAT_EQ(emitter.alphaFactor, 1.0f);
+			emitter.ChangeAlphaFactor(0.5f);
+			EXPECT_FLOAT_EQ(emitter.alphaFactor, 0.5f);
+			delete[] emitter.pRayDef;
+			emitter.pRayDef = nullptr;
+		}
+	}
+}
+
+TEST(BoomyTrail, AutomaticEmissionStaggersParticlesAndRemainsVisibleAcrossLifetimes)
+{
+	const float previousFrameTime = GetTimer()->frameTime;
+	const float previousDelta = GetTimer()->cutsceneDeltaTime;
+	GetTimer()->frameTime = 1.0f / 60.0f;
+	GetTimer()->cutsceneDeltaTime = 1.0f / 60.0f;
+	CFxLightEmitter emitter;
+	emitter.Create(0.4f, 0x80, 0x10);
+	emitter.ChangeStallTime(emitter.field_0x60);
+	emitter.ChangeRadius(0.1f, 0.2f);
+	emitter.ChangeLengthAndWidth(1.0f, 0.2f, 0.2f, 0.2f);
+	emitter.ChangeSpeedAndAccel(3.0f, 4.0f, 5.0f, -8.0f);
+	emitter.field_0x40 = 0.0f;
+	emitter.field_0x44 = 0.0f;
+	edF32VECTOR4 position = { 0.0f, 0.0f, 0.0f, 1.0f };
+	emitter.Manage(&position, 0xffffffff);
+	int earliest = emitter.stallTime;
+	int latest = -1;
+	for (uint i = 0; i < emitter.nbRayDefs; ++i) {
+		const int delay = emitter.pRayDef[i].field_0x2c;
+		EXPECT_GE(delay, 0);
+		EXPECT_LT(delay, emitter.stallTime);
+		earliest = std::min(earliest, delay);
+		latest = std::max(latest, delay);
+	}
+	EXPECT_LT(earliest, latest);
+	for (int frame = 0; frame < 240; ++frame) {
+		emitter.Manage(&position, 0xffffffff);
+		if (frame < 30) continue; // Let the initial delayed particles enter the trail.
+		int visibleParticles = 0;
+		for (uint i = 0; i < emitter.nbRayDefs; ++i) {
+			const auto& ray = emitter.pRayDef[i];
+			if ((ray.field_0x30 & 1) && ray.field_0x28 >= 0.1f && ray.field_0x28 <= 0.3f) ++visibleParticles;
+		}
+		EXPECT_GT(visibleParticles, 0) << "frame " << frame;
+	}
+	delete[] emitter.pRayDef;
+	emitter.pRayDef = nullptr;
+	GetTimer()->frameTime = previousFrameTime;
+	GetTimer()->cutsceneDeltaTime = previousDelta;
+}
 
 namespace {
 	struct FxDrawSample {

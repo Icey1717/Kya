@@ -46,7 +46,7 @@ struct CompanionAlert
 	int levelStringLen;
 	int field_0x58;
 	float field_0x5c;
-	float instanceIndex;
+	float field_0x60;
 	CScenaricCondition field_0x64;
 	S_NTF_SWITCH targetSwitch;
 	ConditionedOperationArray field_0x70;

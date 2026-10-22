@@ -1208,7 +1208,7 @@ void CActorWoof::BehaviourWoofGuard_Manage()
 		if (bVar6 == false) {
 			pTVar7 = GetTimer();
 			this->field_0x5a0.Integrate(pTVar7->cutsceneDeltaTime);
-			this->dynamicExt.instanceIndex.y = (this->field_0x5a0).field_0x20;
+			this->dynamicExt.field_0x60.y = (this->field_0x5a0).field_0x20;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 			ManageDyn(4.0f, 0x129, (CActorsTable*)0x0);
 		}
@@ -2343,7 +2343,7 @@ void CActorWoof::StateWoofAttackHero_2_4()
 	}
 
 	this->field_0x5a0.Integrate(GetTimer()->cutsceneDeltaTime);
-	this->dynamicExt.instanceIndex.y = this->field_0x5a0.field_0x20;
+	this->dynamicExt.field_0x60.y = this->field_0x5a0.field_0x20;
 	this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 	ManageDyn(4.0f, 0x40129, (CActorsTable*)0x0);
 	pCol = this->pCollisionData;
@@ -2440,7 +2440,7 @@ void CActorWoof::StateWoofJump_2_4()
 	bVar1 = this->field_0x5a0.IsFinished();
 	if (bVar1 == false) {
 		this->field_0x5a0.Integrate(GetTimer()->cutsceneDeltaTime);
-		this->dynamicExt.instanceIndex.y = (this->field_0x5a0).field_0x20;
+		this->dynamicExt.field_0x60.y = (this->field_0x5a0).field_0x20;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 	}
 	else {

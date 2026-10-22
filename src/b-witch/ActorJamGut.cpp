@@ -2804,7 +2804,7 @@ void CActorJamGut::StateJamGutJump()
 		(bVar1 = this->field_0x4c4.IsFinished(), bVar1 == false)) {
 		fVar4 = GetTimer()->cutsceneDeltaTime;
 		this->field_0x4c4.Integrate(this->field_0x4c0 * this->field_0x4bc * GetTimer()->cutsceneDeltaTime, this->field_0x4c0 * fVar4);
-		this->dynamicExt.instanceIndex.y = (this->field_0x4c4).field_0x20;
+		this->dynamicExt.field_0x60.y = (this->field_0x4c4).field_0x20;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 		this->field_0x3a4 = GetTimer()->scaledTotalTime;
 	}

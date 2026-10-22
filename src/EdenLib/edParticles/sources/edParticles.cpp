@@ -3649,7 +3649,7 @@ void edPartDrawShaper(float alpha, _ed_particle_group* pGroup, _ed_particle_shap
 									for (iVar10 = 0; iVar10 < pGroup->particleCapacity; iVar10 = iVar10 + 1) {
 										edDListColor4u8((pDrawData->field_0x50).r, (pDrawData->field_0x50).g, (pDrawData->field_0x50).b, (pDrawData->field_0x50).a);
 										edDListTexCoo2f(pDrawData->field_0x54, pDrawData->field_0x58);
-										edDListTexCoo2f(pDrawData->field_0x5c, pDrawData->instanceIndex);
+										edDListTexCoo2f(pDrawData->field_0x5c, pDrawData->field_0x60);
 										edDListWidthHeight2f(pDrawData->field_0x64, pDrawData->field_0x68);
 										edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 									}

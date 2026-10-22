@@ -865,7 +865,7 @@ CNewFx::CNewFx()
 	this->scale.y = 1.0f;
 	this->scale.x = 1.0f;
 
-	this->instanceIndex = gF32Vector4Zero;
+	this->field_0x60 = gF32Vector4Zero;
 
 	Func_0x30(1.0f);
 
@@ -1055,10 +1055,10 @@ void CNewFx::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 
 			if ((this->flags & 0x8000) != 0) {
 				pActor->GetPosition_00101130(&local_50);
-				this->instanceIndex = local_50;
+				this->field_0x60 = local_50;
 
 				if ((this->flags & 0x1000) != 0) {
-					edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->instanceIndex);
+					edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->field_0x60);
 					edF32Vector4SubHard(&this->position, &this->position, &eStack96);
 				}
 			}
@@ -1082,7 +1082,7 @@ void CNewFx::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
 
 			if ((this->flags & 0x8000) != 0) {
 				pCurSon = this->pSon;
-				this->instanceIndex = pCurSon->instanceIndex;
+				this->field_0x60 = pCurSon->field_0x60;
 			}
 		}
 	}
@@ -1143,7 +1143,7 @@ void CNewFx::UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition)
 
 		if ((this->flags & 0x8000) != 0) {
 			pFx = this->pSon;
-			this->instanceIndex = pFx->instanceIndex;
+			this->field_0x60 = pFx->field_0x60;
 		}
 	}
 
@@ -1276,7 +1276,7 @@ void CNewFx::Manage()
 			}
 
 			if ((this->flags & 0x10000) != 0) {
-				edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->instanceIndex);
+				edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->field_0x60);
 				edF32Vector4AddHard(&this->position, &this->position, &eStack96);
 			}
 		}
@@ -1300,7 +1300,7 @@ void CNewFx::Manage()
 		}
 		if ((this->flags & 0x8000) != 0) {
 			pCVar2 = this->pSon;
-			this->instanceIndex = pCVar2->instanceIndex;
+			this->field_0x60 = pCVar2->field_0x60;
 		}
 	}
 

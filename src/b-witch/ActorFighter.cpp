@@ -2809,7 +2809,7 @@ void CActorFighter::_ManageFighterDyn(uint flags, uint dynFlags, CActorsTable* p
 				}
 			}
 
-			this->dynamicExt.instanceIndex.y = (this->scalarDynJump).field_0x20 * this->field_0x3f4;
+			this->dynamicExt.field_0x60.y = (this->scalarDynJump).field_0x20 * this->field_0x3f4;
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 		}
 
@@ -9524,9 +9524,9 @@ void StaticMeshComponentAdvanced::Create(ByteCode* pByteCode)
 		peVar3->y = peVar3->y * 0.8333333f;
 	}
 
-	this->instanceIndex = 0;
+	this->field_0x60 = 0;
 	this->field_0x61 = 0;
-	this->instanceIndex = 0;
+	this->field_0x60 = 0;
 	this->field_0x61 = 0;
 
 	return;
@@ -9547,7 +9547,7 @@ void StaticMeshComponentAdvanced::ResetInternal(int textureIndex, int meshIndex)
 		peVar1->y = peVar1->y * 0.8333333f;
 	}
 
-	this->instanceIndex = 0;
+	this->field_0x60 = 0;
 	this->field_0x61 = 0;
 	return;
 }
@@ -9566,7 +9566,7 @@ void StaticMeshComponentAdvanced::Reset()
 	this->field_0x6c = 0;
 	this->field_0x68 = 0;
 
-	if (this->instanceIndex == 0) {
+	if (this->field_0x60 == 0) {
 		if (HasMesh() != false) {
 			Term((ed_3D_Scene*)0x0);
 		}
@@ -9601,7 +9601,7 @@ bool StaticMeshComponentAdvanced::HasMesh()
 {
 	bool bVar1;
 
-	if (this->instanceIndex == 1) {
+	if (this->field_0x60 == 1) {
 		bVar1 = false;
 		if (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
 			bVar1 = this->field_0x61 == 0;
@@ -9674,7 +9674,7 @@ void StaticMeshComponentAdvanced::Func_0x28(float param_1, float param_2)
 		this->field_0x70 = param_2;
 		this->field_0x68 = 0.0f;
 
-		if (this->instanceIndex == 0) {
+		if (this->field_0x60 == 0) {
 			Init((ed_3D_Scene*)0x0, (ed_g3d_manager*)0x0, (ed_3d_hierarchy_setup*)0x0, (char*)0x0);
 		}
 		else {
@@ -9699,7 +9699,7 @@ void StaticMeshComponentAdvanced::Func_0x2c(float param_1)
 
 	if (HasMesh() == true) {
 		if (param_1 == 0.0f) {
-			if (this->instanceIndex == 0) {
+			if (this->field_0x60 == 0) {
 				if (HasMesh() != false) {
 					Term((ed_3D_Scene*)0x0);
 				}
@@ -9755,7 +9755,7 @@ void StaticMeshComponentAdvanced::Func_0x30(edF32MATRIX4* pMatrix, float param_3
 				this->field_0x64 = 0;
 				fVar7 = 0.0f;
 
-				if (this->instanceIndex == 0) {
+				if (this->field_0x60 == 0) {
 					if (HasMesh() != false) {
 						Term((ed_3D_Scene*)0x0);
 					}
@@ -9855,7 +9855,7 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 	edF32VECTOR4* peVar4;
 
 	peVar1 = (ed_g2d_material*)0x0;
-	if (this->instanceIndex == 0) {
+	if (this->field_0x60 == 0) {
 		index = this->textureIndex;
 		if ((index != -1) && (pManager = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(index), pManager != (ed_g2d_manager*)0x0)) {
 			peVar1 = ed3DG2DGetG2DMaterialFromIndex(pManager, 0);
@@ -11245,7 +11245,7 @@ void CActorFighter::_StateFighterMasterSaidDownRotate()
 			if (fabsf(eStack368.y) + ((this->pCollisionData)->pObbPrim->scale).z / local_80.field_0x0.y < fabsf(local_80.field_0x10)) {
 				bVar1 = true;
 				if ((this->fightFlags & 0x100) == 0) {
-					this->dynamicExt.instanceIndex.y = 0.0f;
+					this->dynamicExt.field_0x60.y = 0.0f;
 					this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 					this->fightFlags = this->fightFlags | 0x100;
 				}
@@ -11265,7 +11265,7 @@ void CActorFighter::_StateFighterMasterSaidDownRotate()
 	local_60.field_0x0.y = 0.0f;
 	fVar9 = ((this->pCollisionData)->pObbPrim->scale).z / local_80.field_0x0.y;
 	if ((this->fightFlags & 0x100) == 0) {
-		this->dynamicExt.instanceIndex.y = (((fVar7 + fVar10) - local_e0.y) + fVar9) / GetTimer()->cutsceneDeltaTime;
+		this->dynamicExt.field_0x60.y = (((fVar7 + fVar10) - local_e0.y) + fVar9) / GetTimer()->cutsceneDeltaTime;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 	}
 
@@ -11603,9 +11603,9 @@ void CBehaviourFighterSlave::ManageByMaster(s_fighter_action* pAction, s_fighter
 		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
 			edF32Vector4SubHard(&local_1a0, &pFighter->currentLocation, &pFighter->field_0x740);
 			edF32Vector4ScaleHard(1.0f / GetTimer()->cutsceneDeltaTime, &local_1a0, &local_1a0);
-			pFighter->dynamicExt.instanceIndex.x = local_1a0.x;
-			pFighter->dynamicExt.instanceIndex.y = local_1a0.y;
-			pFighter->dynamicExt.instanceIndex.z = local_1a0.z;
+			pFighter->dynamicExt.field_0x60.x = local_1a0.x;
+			pFighter->dynamicExt.field_0x60.y = local_1a0.y;
+			pFighter->dynamicExt.field_0x60.z = local_1a0.z;
 			pFighter->dynamic.field_0x4c = pFighter->dynamic.field_0x4c | 0x1c000;
 			pFighter->NotifyMaster(0xb, (void*)0x0);
 			pFighter->SetBehaviour(3, -1, -1);

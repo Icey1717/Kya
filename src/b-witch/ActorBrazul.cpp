@@ -1051,9 +1051,9 @@ void CActorBrazul::FUN_003e87e0(int nextState, int param_3)
 		fVar6 = (this->field_0xfd0).field_0x60.y;
 		fVar7 = (this->field_0xfd0).field_0x60.z;
 		dynFlags = dynFlags | 0x1c000;
-		this->dynamicExt.instanceIndex.x = (this->field_0xfd0).field_0x60.x;
-		this->dynamicExt.instanceIndex.y = fVar6;
-		this->dynamicExt.instanceIndex.z = fVar7;
+		this->dynamicExt.field_0x60.x = (this->field_0xfd0).field_0x60.x;
+		this->dynamicExt.field_0x60.y = fVar6;
+		this->dynamicExt.field_0x60.z = fVar7;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	}
 	else {

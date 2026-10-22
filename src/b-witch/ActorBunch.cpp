@@ -544,9 +544,9 @@ void CActorBunch::FUN_003de8e0(int nextState, int param_3)
 		fVar4 = (this->field_0xfe0).field_0x60.y;
 		fVar5 = (this->field_0xfe0).field_0x60.z;
 		dynFlags = dynFlags | 0x1c000;
-		this->dynamicExt.instanceIndex.x = (this->field_0xfe0).field_0x60.x;
-		this->dynamicExt.instanceIndex.y = fVar4;
-		this->dynamicExt.instanceIndex.z = fVar5;
+		this->dynamicExt.field_0x60.x = (this->field_0xfe0).field_0x60.x;
+		this->dynamicExt.field_0x60.y = fVar4;
+		this->dynamicExt.field_0x60.z = fVar5;
 		this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x1c000;
 	}
 	else {

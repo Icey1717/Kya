@@ -160,7 +160,7 @@ void CActorBoomy::Init()
 	this->fxLightEmitterA.ChangeSpeedAndAccel(3.0f, 4.0f, 5.0f, -8.0f);
 	this->fxLightEmitterA.field_0x20 = edF32VECTOR4_0040e200;
 	this->fxLightEmitterA.ChangeColors(0x20406040);
-	this->fxLightEmitterA.ChangeStallTime(this->fxLightEmitterA.instanceIndex);
+	this->fxLightEmitterA.ChangeStallTime(this->fxLightEmitterA.field_0x60);
 
 	this->fxLightEmitterB.Create(0.54f, 0x80, 0x18);
 	this->fxLightEmitterB.ChangeMaterialId(this->particleID_0x3d4, 1);
@@ -169,7 +169,7 @@ void CActorBoomy::Init()
 	this->fxLightEmitterB.ChangeSpeedAndAccel(4.0f, 5.0f, 6.0f, -9.0f);
 	this->fxLightEmitterB.field_0x20 = edF32VECTOR4_0040e210;
 	this->fxLightEmitterB.ChangeColors(0x80808080);
-	this->fxLightEmitterB.ChangeStallTime(this->fxLightEmitterB.instanceIndex);
+	this->fxLightEmitterB.ChangeStallTime(this->fxLightEmitterB.field_0x60);
 
 	bVar3 = (this->staticMeshComponent).textureIndex != -1;
 	if (bVar3) {

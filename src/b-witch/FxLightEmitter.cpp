@@ -63,7 +63,7 @@ void CFxLightEmitter::Create(float param_1, uint param_3, uint param_4)
 				iVar11 = iVar11 + 1;
 
 				pRayDef->field_0x10 = gF32Vector4UnitZ;
-				pRayDef->field_0x2c = 0xffff;
+				pRayDef->field_0x2c = -1;
 				pRayDef->field_0x2e = 0x3039;
 				pRayDef->field_0x30 = 0;
 				pRayDef->field_0x33 = 0xff;
@@ -75,7 +75,7 @@ void CFxLightEmitter::Create(float param_1, uint param_3, uint param_4)
 	
 	this->flags = this->flags | 1;
 	
-	this->field_0x5c = 1.0f;
+	this->alphaFactor = 1.0f;
 	
 	this->field_0x20 = gF32Vector4Zero;
 	
@@ -121,7 +121,7 @@ void CFxLightEmitter::InitRays(int nbRays)
 			RAY_DEF* pRayDef = &this->pRayDef[iVar6];
 			iVar6 = iVar6 + 1;
 			pRayDef->field_0x10 = gF32Vector4UnitZ;
-			pRayDef->field_0x2c = 0xffff;
+			pRayDef->field_0x2c = -1;
 			pRayDef->field_0x2e = 0x3039;
 			pRayDef->field_0x30 = 0;
 			pRayDef->field_0x33 = 0xff;
@@ -153,7 +153,7 @@ void CFxLightEmitter::ResetRays()
 				if (this->countId == *(char*)&pRayDef->field_0x33) {
 					pRayDef->field_0x30 = 0;
 					pRayDef->field_0x33 = 0xff;
-					pRayDef->field_0x2c = 0xffff;
+					pRayDef->field_0x2c = -1;
 				}
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < (int)uVar1);
@@ -361,7 +361,7 @@ void CFxLightEmitter::ReleaseRays(int nbRays)
 			if (this->countId == iVar1->field_0x33) {
 				iVar1->field_0x30 = 0;
 				iVar1->field_0x33 = 0xff;
-				iVar1->field_0x2c = 0xffff;
+				iVar1->field_0x2c = -1;
 			}
 
 			iVar3 = iVar3 + 1;

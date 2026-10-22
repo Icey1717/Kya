@@ -1050,7 +1050,7 @@ void CBehaviourCompanion::Manage()
 									this->field_0x1c = 0;
 									this->displayTime = 0.0;
 									this->field_0x10 = iVar8;
-									this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].field_0x5c;
+									this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x5c;
 									pCVar14 = this->aSubObjs + this->field_0x10;
 									if ((((pCVar14->flags_0x2 & 0x100) == 0) && ((pCVar14->flags_0x0 & 2) != 0)) &&
 										((pCVar14->flags_0x4 & 1) == 0)) {
@@ -1158,9 +1158,9 @@ void CBehaviourCompanion::Manage()
 		}
 
 		if ((this->aSubObjs[this->field_0x10].flags_0x2 & 0x100) != 0) {
-			this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].instanceIndex - GetTimer()->cutsceneDeltaTime;
+			this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x60 - GetTimer()->cutsceneDeltaTime;
 
-			if (0.0f < this->aSubObjs[this->field_0x10].instanceIndex) goto LAB_001e7598;
+			if (0.0f < this->aSubObjs[this->field_0x10].field_0x60) goto LAB_001e7598;
 		}
 
 		FUN_001e58e0();
@@ -1327,7 +1327,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 		do {
 			this->aSubObjs[iVar4].flags_0x4 = this->aSubObjs[iVar4].flags_0x4 & 0xfff4;
 			this->aSubObjs[iVar4].flags_0x4 = this->aSubObjs[iVar4].flags_0x4 | 4;
-			this->aSubObjs[iVar4].instanceIndex = this->aSubObjs[iVar4].field_0x5c;
+			this->aSubObjs[iVar4].field_0x60 = this->aSubObjs[iVar4].field_0x5c;
 
 			iVar9 = this->aSubObjs + iVar4;
 			if ((iVar9->flags_0x2 & 2) != 0) {
@@ -1413,7 +1413,7 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				this->field_0x1c = 0;
 				this->displayTime = 0.0f;
 				this->field_0x10 = (int)pMsgParam;
-				this->aSubObjs[this->field_0x10].instanceIndex = this->aSubObjs[this->field_0x10].field_0x5c;
+				this->aSubObjs[this->field_0x10].field_0x60 = this->aSubObjs[this->field_0x10].field_0x5c;
 
 				pCVar8 = this->aSubObjs + this->field_0x10;
 				if ((((pCVar8->flags_0x2 & 0x100) == 0) && ((pCVar8->flags_0x0 & 2) != 0)) && ((pCVar8->flags_0x4 & 1) == 0)) {
