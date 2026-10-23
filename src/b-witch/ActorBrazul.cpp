@@ -948,8 +948,8 @@ void CActorBrazul::FUN_003e62d0(float param_1)
 void CActorBrazul::FUN_003e5f40(float param_1)
 {
 	this->field_0x31e0.Func_0x2c(param_1);
-	this->field_0x3260.Reset();
-	this->field_0x326c.Reset();
+	this->field_0x3260.Stop();
+	this->field_0x326c.Stop();
 
 	return;
 }
@@ -978,7 +978,7 @@ void CActorBrazul::FUN_003e5f80(float param_1, float param_2, float param_3, flo
 	this->field_0x3260.InitPositionRotation(&auStack64.rowT, &gF32Vector4Zero);
 	edF32Matrix4TranslateHard(&auStack64, &gF32Matrix4Unit, param_6);
 	edF32Matrix4MulF32Matrix4Hard(&auStack64, &auStack64, &this->pMeshTransform->base.transformA);
-	this->field_0x3260.InitPositionRotation(&auStack64.rowT, &gF32Vector4Zero);
+	this->field_0x326c.InitPositionRotation(&auStack64.rowT, &gF32Vector4Zero);
 
 	return;
 }
@@ -1569,9 +1569,8 @@ void CBehaviourBrazulA::InitState(int newState)
 		if (iVar4 == 0xb9) {
 			uVar8 = 0;
 			do {
-				pCVar7->field_0x1070->Reset(1.0f);
+				pCVar7->field_0x1070[uVar8].Reset(1.0f);
 				uVar8 = uVar8 + 1;
-				pCVar7 = (CActorBrazul*)&pCVar7->scalarDynJump.field_0x24;
 			} while (uVar8 < 8);
 		}
 		else {
