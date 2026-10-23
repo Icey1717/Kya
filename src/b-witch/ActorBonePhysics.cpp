@@ -223,7 +223,7 @@ void* CActorBonePhysics::Func_0x2c()
 
 void CActorBonePhysics::Func_0x30() {}
 void CActorBonePhysics::Func_0x38(int) {}
-void CActorBonePhysics::Func_0x3c(int, edF32VECTOR4*, edF32VECTOR4*) {}
+void CActorBonePhysics::Func_0x3c(int, edF32VECTOR4*, edF32VECTOR4*, edF32VECTOR4*, edF32VECTOR4*) {}
 
 void CActorBonePhysics::TransformPoints(edF32MATRIX4* pTransform)
 {
@@ -306,10 +306,13 @@ void CActorBonePhysics::ApplyToAnimation()
 		edF32MATRIX4* pFrame = TheAnimStage.pFrameMatrixData + index;
 		edF32VECTOR4 rotation = pPoint->rotation;
 		edF32VECTOR4 scale = pPoint->scale;
-		Func_0x3c(i, &rotation, &scale);
+		edF32VECTOR4 position = pPoint->position;
+		edF32VECTOR4 localOffset = pPoint->field_0x30;
+		// PS2 0x003fd2fc..0x003fd3cc: rotation, world position, local offset, scale.
+		Func_0x3c(i, &rotation, &position, &localOffset, &scale);
 		edF32VECTOR4 localPosition;
-		edF32Matrix4MulF32Vector4Hard(&localPosition, &matrix_0x20, &pPoint->position);
-		AddVector(&localPosition, &localPosition, &pPoint->field_0x30);
+		edF32Matrix4MulF32Vector4Hard(&localPosition, &matrix_0x20, &position);
+		AddVector(&localPosition, &localPosition, &localOffset);
 		if (field_0x14 != 1.0f) {
 			edF32MATRIX4 animatedMatrix;
 			pAnimation->anmSkeleton.UnskinNMatrices(&animatedMatrix, pFrame, index, 1);
@@ -411,6 +414,9 @@ int CActorBonePhysics::UpdateFullBodyPostAnimEffects()
 	if (index >= 0) {
 		edF32MATRIX4 collisionBone;
 		pAnimation->anmSkeleton.UnskinNMatrices(&collisionBone, TheAnimStage.pFrameMatrixData, index, 1);
+		// PS2 0x003c1400: heading uses the object-space bone, before the
+		// collision frame is combined with the actor's world transform.
+		edF32VECTOR4 axis = collisionBone.v2;
 		edF32Matrix4MulF32Matrix4Hard(&collisionBone, &collisionBone,
 			&pEnemy_0x60->pMeshTransform->base.transformA);
 		edF32VECTOR4 collisionScale = {0.5f, 0.4f, 0.35f, 1.0f};
@@ -420,7 +426,6 @@ int CActorBonePhysics::UpdateFullBodyPostAnimEffects()
 		edF32Matrix4MulF32Matrix4Hard(&gWolfenCollisionFrame, &gWolfenCollisionFrame, &collisionBone);
 		edF32Matrix4GetInverseSoft(&gWolfenCollisionInverse, &gWolfenCollisionFrame);
 		gWolfenCollisionFrameValid = true;
-		edF32VECTOR4 axis = collisionBone.v2;
 		if (edF32Vector4NormalizeHard(&axis, &axis) == 0.0f) axis = gF32Vector4UnitZ;
 		float angle = GetAngleYFromVector(&axis);
 		edF32MATRIX4 rotationMatrix;
@@ -445,9 +450,12 @@ int CActorBonePhysics::UpdateLinkedPostAnimEffects()
 		Func_0x14(1);
 		if (count_0x8 > 1)
 			field_0x0[1]->gravity = {0.0f, -10.0f, 0.0f, 0.0f};
+		// PS2 0x003c2b20: shared Wolfen drives both middle points with gravity.
+		if (count_0x8 == 4) field_0x0[2]->gravity = field_0x0[1]->gravity;
 		field_0x70 = 1;
 		return 1;
 	}
+	if (field_0x70 != 1) return 0;
 	UpdateInverseMatrix(this);
 	if (pEnemy_0x60 != nullptr && pEnemy_0x60->pAnimationController != nullptr &&
 		pEnemy_0x60->pMeshTransform != nullptr && count_0x8 > 0) {
@@ -491,18 +499,22 @@ void CPunchingBallBonePhysics::SetupObjects(CActor* pOwner)
 	field_0x70 = 0;
 }
 
-void CPunchingBallBonePhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction)
+// PS2 0x0035b0e0: aim the animated bone and stretch its local Z axis.
+void CPunchingBallBonePhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4*, edF32VECTOR4*, edF32VECTOR4* scale)
 {
-	if (index != 1 || rotation == nullptr || direction == nullptr) return;
+	if (index != 1 || rotation == nullptr || scale == nullptr) return;
 	ActorBonePhysicsLink* pLink = field_0x4[index];
 	edF32VECTOR4 axis;
 	edF32Vector4SubHard(&axis, &field_0x0[pLink->pointB]->position,
 		&field_0x0[pLink->pointA]->position);
+	edF32Matrix4MulF32Vector4Hard(&axis, &matrix_0x20, &axis);
 	float length = edF32Vector4SafeNormalize0Hard(&axis, &axis);
-	if (length != 0.0f) {
-		*direction = axis;
-		field_0x0[pLink->pointB]->scale = {1.0f, 1.0f, length / 0.3f, 1.0f};
-	}
+	edF32VECTOR4 negativeZ = {0.0f, 0.0f, -1.0f, 0.0f};
+	edF32VECTOR4 rotationAxis;
+	edF32Vector4CrossProductHard(&rotationAxis, &axis, &negativeZ);
+	float sine = edF32Vector4SafeNormalize0Hard(&rotationAxis, &rotationAxis);
+	edQuatFromAngAxis(std::asin(std::clamp(sine, -1.0f, 1.0f)), rotation, &rotationAxis);
+	*scale = {1.0f, 1.0f, length / 0.3f, 1.0f};
 }
 
 // 003c2cc0, vtable 00446100
@@ -559,18 +571,20 @@ void CWolfenFullBodyPhysics::SetupObjects(CActor* pOwner)
 		0x463c1970, 0x463c1970, 0x463c1970, 0x463c1970, 0x463c1970,
 		0xcae60310, 0xcae70310, 0xcae80310, 0xcae90310, 0,
 		0xc290efdb, 0xc290f0db, 0xc290f1db, 0, 0xc28cefdb,
-		0xc28cf0db, 0xc28cf1db, 0xd18defe7, 0xd18df0e7, 0xd18df1e7,
-		0, 0xd189efe7, 0xd189f0e7, 0xd189f1e7, 0, 0
+		0xc28cf0db, 0xc28cf1db, 0, 0xd18defe7, 0xd18df0e7,
+		0xd18df1e7, 0, 0xd189efe7, 0xd189f0e7, 0xd189f1e7, 0
 	};
 	static const float weights[26] = {
 		0, 0, 0, 0, 0, 0.001f, 1.0f, 1.25f, 1.5f, 1.75f,
-		0.001f, 1.0f, 1.25f, 1.5f, 0.001f, 1.0f, 1.25f,
-		0.001f, 1.0f, 1.25f, 1.5f, 1.75f, 0.001f, 1.0f, 1.25f, 1.5f
+		0.001f, 1.0f, 1.25f, 1.5f, 0.001f, 1.0f, 1.25f, 1.5f,
+		0.001f, 1.0f, 1.25f, 1.5f, 0.001f, 1.0f, 1.25f, 1.5f
 	};
 	for (uint i = 0; i < 26; i++) {
 		field_0x0[i]->boneHash = boneHashes[i];
 		field_0x0[i]->inverseMass = weights[i];
 	}
+	// PS2 0x003c1810: each chain ends in a simulated point without a bone.
+	for (uint i : {9u, 13u, 17u, 21u, 25u}) field_0x0[i]->flags |= 1;
 	static const uint links[29][2] = {
 		{0, 5}, {1, 10}, {2, 14}, {3, 18}, {4, 22},
 		{5, 6}, {6, 7}, {7, 8}, {8, 9},
@@ -616,7 +630,7 @@ void CWolfenFullBodyPhysics::Func_0x34(int index)
 {
 	CActorBonePhysics::Func_0x34(index);
 	ActorBonePhysicsLink* pLink = field_0x4[index];
-	if (pLink->constraintType == 0 || pLink->constraintType > 4) return;
+	if (pLink->constraintType != 1 && pLink->constraintType != 2) return;
 	BonePhysicsEntry* pA = field_0x0[pLink->pointA];
 	BonePhysicsEntry* pB = field_0x0[pLink->pointB];
 	edF32VECTOR4 direction;
@@ -633,16 +647,39 @@ void CWolfenFullBodyPhysics::Func_0x34(int index)
 	else if (pEnemy_0x60 != nullptr && pEnemy_0x60->pMeshTransform != nullptr) {
 		edF32Matrix4MulF32Vector4Hard(&axis, &pEnemy_0x60->pMeshTransform->base.transformA, &axis);
 	}
-	float cosine = std::clamp(edF32Vector4DotProductHard(&axis, &direction), -1.0f, 1.0f);
-	float angle = std::acos(cosine);
-	float maxAngle = pLink->field_0x30.y;
-	if (maxAngle <= 0.0f || angle <= maxAngle) return;
-	edF32VECTOR4 normal;
-	edF32Vector4CrossProductHard(&normal, &axis, &direction);
-	if (edF32Vector4SafeNormalize0Hard(&normal, &normal) == 0.0f) return;
 	edF32MATRIX4 rotation;
-	edF32Matrix4FromAngAxisSoft(maxAngle - angle, &rotation, &normal);
-	edF32Matrix4MulF32Vector4Hard(&direction, &rotation, &direction);
+	// PS2 0x003c0cc0: type 2 projects onto the reference's vertical plane;
+	// type 1 bends toward the parent by half the excess angle.
+	if (pLink->constraintType == 2) {
+		edF32MATRIX4 reference;
+		reference.rowX = {axis.z, 0.0f, -axis.x, 0.0f};
+		if (edF32Vector4NormalizeHard(&reference.rowX, &reference.rowX) == 0.0f)
+			reference.rowX = gF32Vector4UnitX;
+		reference.rowZ = axis;
+		edF32Vector4CrossProductHard(&reference.rowY, &reference.rowZ, &reference.rowX);
+		reference.rowT = gF32Vertex4Zero;
+		edF32MATRIX4 transpose;
+		edF32Matrix4GetTransposeHard(&transpose, &reference);
+		edF32VECTOR4 localDirection;
+		edF32Matrix4MulF32Vector4Hard(&localDirection, &transpose, &direction);
+		float angle = std::acos(std::clamp(localDirection.z, -1.0f, 1.0f));
+		if (angle > pLink->field_0x30.y)
+			angle -= 0.5f * (angle - pLink->field_0x30.y);
+		else if (localDirection.y < 0.0f)
+			angle *= 0.85f;
+		edF32Matrix4RotateXHard(localDirection.y < 0.0f ? angle : -angle, &rotation, &gF32Matrix4Unit);
+		edF32Matrix4MulF32Vector4Hard(&direction, &rotation, &gF32Vector4UnitZ);
+		edF32Matrix4MulF32Vector4Hard(&direction, &reference, &direction);
+	}
+	else {
+		edF32VECTOR4 normal;
+		edF32Vector4CrossProductHard(&normal, &axis, &direction);
+		edF32Vector4SafeNormalize0Hard(&normal, &normal);
+		float angle = std::acos(std::clamp(edF32Vector4DotProductHard(&axis, &direction), -1.0f, 1.0f));
+		if (angle <= pLink->field_0x30.y) return;
+		edF32Matrix4FromAngAxisSoft(-(angle - (angle - pLink->field_0x30.y) / 2.0f), &rotation, &normal);
+		edF32Matrix4MulF32Vector4Hard(&direction, &rotation, &axis);
+	}
 	ScaleVector(&direction, &direction, length);
 	pB->position.x = pA->position.x - direction.x;
 	pB->position.y = pA->position.y - direction.y;
@@ -673,7 +710,7 @@ void CWolfenFullBodyPhysics::Func_0x38(int index)
 }
 
 // 003c0b60: orientation of the link starting at the requested point.
-void CWolfenFullBodyPhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4*)
+void CWolfenFullBodyPhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4*, edF32VECTOR4*, edF32VECTOR4*)
 {
 	if (rotation == nullptr) return;
 	for (uint i = 0; i < count_0xc; i++) {
@@ -824,6 +861,7 @@ void CBrazulBonePhysics::Func_0x18()
 {
 	CActorBonePhysics::Func_0x18();
 	field_0x70 = 0;
+	pCurrentState = nullptr;
 	field_0x74 = 0.0f;
 }
 
@@ -836,11 +874,10 @@ void CBrazulBonePhysics::Func_0x14(uint)
 			pLink->axis = gF32Vector4UnitZ;
 			continue;
 		}
-		uint parent = pLink->parentLink;
-		while (parent < count_0xc && (field_0x0[field_0x4[parent]->pointA]->flags & 1) != 0)
-			parent = field_0x4[parent]->parentLink;
-		if (parent >= count_0xc) continue;
-		ActorBonePhysicsLink* pParent = field_0x4[parent];
+		// PS2 0x003e4b80: begin at this link, then skip unbound source points.
+		ActorBonePhysicsLink* pParent = pLink;
+		while ((field_0x0[pParent->pointA]->flags & 1) != 0 && pParent->parentLink < count_0xc)
+			pParent = field_0x4[pParent->parentLink];
 		edF32Vector4SubHard(&pLink->axis, &field_0x0[pLink->pointB]->position,
 			&field_0x0[pParent->pointA]->position);
 		edF32Matrix4MulF32Vector4Hard(&pLink->axis, &matrix_0x20, &pLink->axis);
@@ -854,36 +891,108 @@ void CBrazulBonePhysics::Func_0x34(int index)
 {
 	CActorBonePhysics::Func_0x34(index);
 	ActorBonePhysicsLink* pLink = field_0x4[index];
-	if (pLink->parentLink == 0xffff && (pLink->constraintType & 1) == 0) return;
 	BonePhysicsEntry* pA = field_0x0[pLink->pointA];
 	BonePhysicsEntry* pB = field_0x0[pLink->pointB];
-	edF32VECTOR4 localDirection;
-	edF32Vector4SubHard(&localDirection, &pB->position, &pA->position);
-	float length = edF32Vector4SafeNormalize0Hard(&localDirection, &localDirection);
-	if (length == 0.0f) return;
-	edF32Matrix4MulF32Vector4Hard(&localDirection, &matrix_0x20, &localDirection);
-	float yaw = edF32Between_0_2Pi(std::atan2(localDirection.x, localDirection.z));
-	float pitch = std::asin(std::clamp(-localDirection.y, -1.0f, 1.0f));
-	float clampedYaw = std::clamp(yaw, pLink->field_0x40, pLink->field_0x44);
-	float clampedPitch = std::clamp(pitch, pLink->field_0x48, pLink->field_0x4c);
-	if (clampedYaw == yaw && clampedPitch == pitch) return;
-	edF32VECTOR4 corrected = {
-		std::sin(clampedYaw) * std::cos(clampedPitch) * length,
-		-std::sin(clampedPitch) * length,
-		std::cos(clampedYaw) * std::cos(clampedPitch) * length, 0.0f
-	};
-	if (pEnemy_0x60 != nullptr && pEnemy_0x60->pMeshTransform != nullptr)
-		edF32Matrix4MulF32Vector4Hard(&corrected,
-			&pEnemy_0x60->pMeshTransform->base.transformA, &corrected);
-	pB->position.x = pA->position.x + corrected.x;
-	pB->position.y = pA->position.y + corrected.y;
-	pB->position.z = pA->position.z + corrected.z;
+	// PS2 0x003e3c30: bend in a frame aligned with the nearest bound parent.
+	if (pLink->parentLink != 0xffff || (pLink->constraintType & 1) != 0) {
+		edF32VECTOR4 direction;
+		edF32Vector4SubHard(&direction, &pA->position, &pB->position);
+		float length = edF32Vector4SafeNormalize0Hard(&direction, &direction);
+		edF32MATRIX4 actorMatrix = gF32Matrix4Unit;
+		if (pEnemy_0x60 != nullptr && pEnemy_0x60->pMeshTransform != nullptr)
+			actorMatrix = pEnemy_0x60->pMeshTransform->base.transformA;
+		edF32VECTOR4 parentDirection;
+		if ((pLink->constraintType & 1) != 0) {
+			parentDirection = actorMatrix.rowY;
+		}
+		else {
+			ActorBonePhysicsLink* pParent = field_0x4[pLink->parentLink];
+			while ((field_0x0[pParent->pointB]->flags & 1) != 0 && pParent->parentLink < count_0xc)
+				pParent = field_0x4[pParent->parentLink];
+			edF32Vector4SubHard(&parentDirection, &field_0x0[pParent->pointA]->position,
+				&field_0x0[pParent->pointB]->position);
+			edF32Vector4SafeNormalize0Hard(&parentDirection, &parentDirection);
+		}
+		edF32MATRIX4 reference;
+		reference.rowY = gF32Vector4UnitY;
+		reference.rowZ = pLink->axis;
+		edF32Vector4CrossProductHard(&reference.rowX, &reference.rowY, &reference.rowZ);
+		reference.rowT = gF32Vertex4Zero;
+		edF32Matrix4MulF32Matrix4Hard(&reference, &reference, &actorMatrix);
+		reference.rowT = gF32Vertex4Zero;
+		edF32VECTOR4 rotationAxis;
+		edF32Vector4CrossProductHard(&rotationAxis, &reference.rowY, &parentDirection);
+		float sine = edF32Vector4SafeNormalize0Hard(&rotationAxis, &rotationAxis);
+		edF32MATRIX4 alignment;
+		edF32Matrix4FromAngAxisSoft(-std::asin(std::clamp(sine, -1.0f, 1.0f)), &alignment, &rotationAxis);
+		edF32Matrix4MulF32Matrix4Hard(&reference, &reference, &alignment);
+		edF32MATRIX4 transpose;
+		edF32Matrix4GetTransposeHard(&transpose, &reference);
+		edF32VECTOR4 localDirection;
+		edF32Matrix4MulF32Vector4Hard(&localDirection, &transpose, &direction);
+		edF32VECTOR4 horizontal = localDirection;
+		horizontal.y = 0.0f;
+		if (edF32Vector4NormalizeHard(&horizontal, &horizontal) == 0.0f)
+			horizontal = gF32Vector4UnitZ;
+		float yaw = edF32Between_0_2Pi((horizontal.x < 0.0f ? -1.0f : 1.0f) *
+			std::acos(std::clamp(horizontal.z, -1.0f, 1.0f)));
+		float pitch = std::asin(std::clamp(-localDirection.y, -1.0f, 1.0f));
+		bool changed = false;
+		if (pitch < pLink->field_0x48 || pitch > pLink->field_0x4c) {
+			pitch = std::clamp(pitch, pLink->field_0x48, pLink->field_0x4c);
+			changed = true;
+		}
+		float minimumYaw = pLink->field_0x40;
+		float maximumYaw = pLink->field_0x44;
+		float testYaw = yaw;
+		if (maximumYaw < minimumYaw) {
+			minimumYaw = edF32Between_Pi(minimumYaw);
+			maximumYaw = edF32Between_Pi(maximumYaw);
+			testYaw = edF32Between_Pi(testYaw);
+		}
+		if (testYaw < minimumYaw || testYaw > maximumYaw) {
+			float targetYaw = minimumYaw <= yaw ? maximumYaw : minimumYaw;
+			yaw += (targetYaw - yaw) * 0.5f;
+			changed = true;
+		}
+		if (changed) {
+			edF32VECTOR3 angles = {pitch, yaw, 0.0f};
+			edF32MATRIX4 rotation;
+			edF32Matrix4FromEulerSoft(&rotation, &angles, "XYZ");
+			edF32Matrix4MulF32Vector4Hard(&direction, &rotation, &gF32Vector4UnitZ);
+			edF32Matrix4MulF32Vector4Hard(&direction, &reference, &direction);
+			ScaleVector(&direction, &direction, length);
+			edF32Vector4SubHard(&pB->position, &pA->position, &direction);
+		}
+	}
+	// PS2 0x003e4280: all links collide with the floor, including the outer ring.
+	// Restore their previous distance by spreading the points horizontally.
+	edF32VECTOR4 separation;
+	edF32Vector4SubHard(&separation, &pB->position, &pA->position);
+	float previousLength = edF32Vector4GetDistHard(&separation);
+	pA->position.y = std::max(pA->position.y, field_0x74);
+	pB->position.y = std::max(pB->position.y, field_0x74);
+	edF32Vector4SubHard(&separation, &pB->position, &pA->position);
+	float currentLength = edF32Vector4GetDistHard(&separation);
+	separation.y = 0.0f;
+	float horizontalLength = edF32Vector4SafeNormalize0Hard(&separation, &separation);
+	float displacement = std::sqrt(std::max(0.0f, horizontalLength * horizontalLength -
+		(currentLength * currentLength - previousLength * previousLength))) - horizontalLength;
+	ScaleVector(&separation, &separation, displacement);
+	float totalWeight = pA->inverseMass + pB->inverseMass;
+	if (totalWeight != 0.0f) {
+		edF32VECTOR4 correction;
+		ScaleVector(&correction, &separation, pA->inverseMass / totalWeight);
+		edF32Vector4SubHard(&pA->position, &pA->position, &correction);
+		ScaleVector(&correction, &separation, pB->inverseMass / totalWeight);
+		AddVector(&pB->position, &pB->position, &correction);
+	}
 }
 
 // 003e3ad0
-void CBrazulBonePhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction)
+void CBrazulBonePhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4*, edF32VECTOR4* localOffset, edF32VECTOR4*)
 {
-	if (index == 0 || rotation == nullptr || direction == nullptr ||
+	if (index == 0 || rotation == nullptr || localOffset == nullptr ||
 		(uint)(index - 1) >= count_0xc) return;
 	ActorBonePhysicsLink* pLink = field_0x4[index - 1];
 	edF32VECTOR4 linkDirection;
@@ -900,7 +1009,8 @@ void CBrazulBonePhysics::Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTO
 	edQuatMul(rotation, rotation, &adjustment);
 	edF32MATRIX4 rotationMatrix;
 	edF32Matrix4FromAngAxisSoft(angle, &rotationMatrix, &axis);
-	edF32Matrix4MulF32Vector4Hard(direction, &rotationMatrix, direction);
+	// PS2 0x003e3ad0: rotate the bone's local pivot offset, preserving its scale.
+	edF32Matrix4MulF32Vector4Hard(localOffset, &rotationMatrix, localOffset);
 }
 
 int CBrazulBonePhysics::UpdatePostAnimEffects()

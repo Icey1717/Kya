@@ -13,7 +13,7 @@ class CActorPunchingBall;
 struct CPunchingBallBonePhysics : public CActorBonePhysics
 {
 	void SetupObjects(CActor* pOwner) override;
-	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* position, edF32VECTOR4* localOffset, edF32VECTOR4* scale) override;
 };
 
 struct S_TRAP_STREAM_REF;

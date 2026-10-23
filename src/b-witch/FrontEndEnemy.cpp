@@ -525,7 +525,7 @@ LAB_001d8578:
 			else {
 				if (pWidget != (CFrontendEnemy*)0x0) {
 					pCVar7 = (CLifeInterface*)pWidget->GetInterface();
-					iVar12 = pCVar7->GetPriority();
+					iVar11 = pCVar7->GetPriority();
 
 					if (iVar11 < iVar12) goto LAB_001d85d8;
 				}
@@ -538,8 +538,9 @@ LAB_001d8578:
 					// Swap.
 					CFrontendEnemy** pWidgeA = this->aWidgets + iVar13;
 					CFrontendEnemy** pWidgeB = this->aWidgets + iVar8;
+					CFrontendEnemy* pPreviousWidget = *pWidgeB;
 					*pWidgeB = *pWidgeA;
-					*pWidgeA = *pWidgeB;
+					*pWidgeA = pPreviousWidget;
 					(*pWidgeB)->UpdateSpecial(this->aSlots + iVar8, iVar8 == 0);
 					if ((*pWidgeA) != (CFrontendEnemy*)0x0) {
 						(*pWidgeA)->UpdateSpecial(this->aSlots + iVar13, iVar13 == 0);
@@ -562,7 +563,7 @@ LAB_001d8578:
 			if (pCVar9 == (CInterface*)0x0) goto LAB_001d8750;
 
 			iVar12 = iVar12 + 1;
-			pEnemyWidgetIt = pEnemyWidgetIt + 1;
+			pEnemyIt = pEnemyIt + 1;
 		} while (iVar12 < 5);
 		iVar12 = -1;
 

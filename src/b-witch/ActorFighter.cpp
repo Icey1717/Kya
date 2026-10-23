@@ -8001,6 +8001,31 @@ void CBehaviourFighter::Manage()
 			pFighter->SetState(0x1a, -1);
 		}
 		break;
+	case 0x1a:
+		pFighter->_ManageFighterDyn(9, 0x1002023b, (CActorsTable*)0x0);
+
+		if (pFighter->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+			pFighter->SetState(0x17, -1);
+		}
+		break;
+	case 0x1b:
+		pFighter->_ManageFighterDyn(0x19, 0x1002023b, (CActorsTable*)0x0);
+
+		if ((pFighter->pCollisionData->flags_0x4 & 2) == 0) {
+			pFighter->field_0x4fc = (pFighter->dynamic.linearAcceleration *
+					fabsf(pFighter->dynamic.velocityDirectionEuler.y)) / 8.0f;
+			if (1.0f < pFighter->field_0x4fc) {
+				pFighter->field_0x4fc = 1.0f;
+			}
+
+			if (pFighter->currentLocation.y < pFighter->field_0x4f0) {
+				pFighter->fightFlags = pFighter->fightFlags | 2;
+			}
+		}
+		else {
+			pFighter->SetState(0x1a, -1);
+		}
+		break;
 	case FIGHTER_RIDE:
 		this->pOwner->_StateFighterRide();
 		break;

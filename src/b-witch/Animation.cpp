@@ -1321,9 +1321,10 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					ushort* pTrack = (ushort*)pfVar2;
 					fVar12 = pfVar2[0];
 					fVar11 = pfVar2[1] / 65535.0f;
-					pAnimMatrix->ba = fVar12 + fVar11 * (float)(uint)pTrack[0];
-					pAnimMatrix->bb = fVar12 + fVar11 * (float)(uint)pTrack[1];
-					pAnimMatrix->bc = fVar12 + fVar11 * (float)(uint)pTrack[2];
+					// PS2 0x0023f440: packed XYZ follows the two-float range header.
+					pAnimMatrix->ba = fVar12 + fVar11 * (float)(uint)pTrack[4];
+					pAnimMatrix->bb = fVar12 + fVar11 * (float)(uint)pTrack[5];
+					pAnimMatrix->bc = fVar12 + fVar11 * (float)(uint)pTrack[6];
 				}
 			}
 			pAnimMatrix->bd = 1.0f;
@@ -1527,9 +1528,10 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					ushort* pTrack = (ushort*)pfVar2;
 					fVar12 = *pfVar2;
 					fVar11 = pfVar2[1] / 65535.0f;
-					pAnimMatrix->ca = fVar12 + fVar11 * (float)(uint)pTrack[0];
-					pAnimMatrix->cb = fVar12 + fVar11 * (float)(uint)pTrack[1];
-					pAnimMatrix->cc = fVar12 + fVar11 * (float)(uint)pTrack[2];
+					// PS2 0x0023fc80: same range header as the translation track.
+					pAnimMatrix->ca = fVar12 + fVar11 * (float)(uint)pTrack[4];
+					pAnimMatrix->cb = fVar12 + fVar11 * (float)(uint)pTrack[5];
+					pAnimMatrix->cc = fVar12 + fVar11 * (float)(uint)pTrack[6];
 				}
 			}
 			pAnimMatrix->cd = 1.0f;

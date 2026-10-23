@@ -145,7 +145,7 @@ struct CActorBonePhysics
 	virtual void Func_0x30();
 	virtual void Func_0x34(int index);
 	virtual void Func_0x38(int index);
-	virtual void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction);
+	virtual void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* position, edF32VECTOR4* localOffset, edF32VECTOR4* scale);
 
 	void FUN_003c2910();
 	void FUN_003c28a0();
@@ -178,7 +178,7 @@ struct CWolfenFullBodyPhysics : public CActorBonePhysics
 	ActorBonePhysicsLink* allocateB(uint index) override;
 	void Func_0x34(int index) override;
 	void Func_0x38(int index) override;
-	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* position, edF32VECTOR4* localOffset, edF32VECTOR4* scale) override;
 };
 
 // Vtable at 00446100; shared by Wolfen variants 0 and 1.

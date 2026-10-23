@@ -25,7 +25,7 @@ struct CBrazulBonePhysics : public CActorBonePhysics
 	void Func_0x18() override;
 	ActorBonePhysicsLink* allocateB(uint index) override;
 	void Func_0x34(int index) override;
-	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* direction) override;
+	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* position, edF32VECTOR4* localOffset, edF32VECTOR4* scale) override;
 
 	int UpdatePostAnimEffects();
 	void ChangeState(const BrazulStateStruct* pState);
