@@ -73,7 +73,7 @@ public:
 struct EnemyInterfaceTable
 {
 	int nbEntries;
-	CInterface* aEntries[5];
+	CInterface* aEntries[16];
 
 	bool Contains(CInterface* pInterface);
 	void Add(CInterface* pInterface);
