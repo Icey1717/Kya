@@ -301,6 +301,9 @@ namespace Hero
 		case STATE_HERO_COL_WALL_DEAD:
 			return "StateHeroColWallDead";
 			break;
+		case STATE_HERO_COL_WALL_DEAD_ELECTROCUTE:
+			return "StateHeroColWallDeadElectrocute";
+			break;
 		case STATE_HERO_COL_WALL_DEAD_C:
 			return "StateHeroColWallDeadC";
 			break;

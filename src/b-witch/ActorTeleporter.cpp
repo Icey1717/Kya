@@ -343,7 +343,8 @@ void CActorTeleporter::Draw()
 
 					if (this->field_0x1dc != 0) {
 						nbMaxExorcisedWolfen = nbMaxExorcisedWolfen - nbExorcisedWolfen;
-						if (pDestEntry->field_0x8 < 1) {
+						// PS2 0x002ee084 reads destination offset 4 (elevator ID).
+						if (pDestEntry->elevatorId < 1) {
 							nbMaxExorcisedWolfen = 0;
 						}
 						if (nbMaxExorcisedWolfen < 1) {
@@ -673,7 +674,8 @@ void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
 				if (iVar7 <= iVar3) break;
 
 				S_DESTINATION_ENTRY* pEntry = pSVar2->aEntries + iVar3;
-				if ((pEntry->elevatorId == levelId) && (pEntry->field_0x8 == param_3)) {
+				// PS2 0x002ed9e0 / 0x002ed9ec compare level and elevator, not cutscene.
+				if ((pEntry->levelId == levelId) && (pEntry->elevatorId == param_3)) {
 					this->field_0x298 = iVar3;
 				}
 
@@ -723,8 +725,8 @@ bool CActorTeleporter::LevelHasTeleporters()
 			if (iVar3 <= curIndex) break;
 
 			iVar2 = pSVar1->aEntries + curIndex;
-			iVar3 = iVar2->elevatorId;
-			if (((iVar3 != 0x10) && (iVar4 = iVar2->field_0x8, 0 < iVar4)) && (pLevel->Level_GetSubSectorInfo(iVar3, iVar4, &SStack48), (SStack48.flags & 1) != 0)) {
+			iVar3 = iVar2->levelId;
+			if (((iVar3 != 0x10) && (iVar4 = iVar2->elevatorId, 0 < iVar4)) && (pLevel->Level_GetSubSectorInfo(iVar3, iVar4, &SStack48), (SStack48.flags & 1) != 0)) {
 				bHasTeleporters = true;
 			}
 

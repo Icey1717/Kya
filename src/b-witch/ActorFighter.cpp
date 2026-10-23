@@ -8998,17 +8998,17 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 
 				if (msg == 0x16) {
-					IMPLEMENTATION_GUARD(
+					NotifyWindParam* pNotifyParams = reinterpret_cast<NotifyWindParam*>(pMsgParam);
 					uVar5 = this->pOwner->GetStateFlags(this->pOwner->actorState);
-					edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x10), &eStack16, (edF32VECTOR4*)pMsgParam);
+					edF32Vector4ScaleHard(pNotifyParams->field_0x10, &eStack16, &pNotifyParams->field_0x0);
 					pCVar1 = this->pOwner;
-					v0 = (pCVar1->characterBase).dynamicExt.aImpulseVelocities + 2;
+					v0 = pCVar1->dynamicExt.aImpulseVelocities + 2;
 					edF32Vector4AddHard(v0, v0, &eStack16);
 					fVar6 = edF32Vector4GetDistHard(v0);
-					(pCVar1->characterBase).dynamicExt.aImpulseVelocityMagnitudes[2] = fVar6;
-					(*(this->pOwner->pVTable)->SetBehaviour)
-						((CActor*)this->pOwner, this->behaviourId, -1, -1);
-					return 1;)
+					pCVar1->dynamicExt.aImpulseVelocityMagnitudes[2] = fVar6;
+					this->pOwner->SetBehaviour(this->behaviourId, -1, -1);
+
+					return 1;
 				}
 
 				if (msg == MESSAGE_KICKED) {

@@ -4991,7 +4991,7 @@ int CActorHeroPrivate::ChooseStateDead(int hitType, int dieType, int param_4)
 		else {
 			deadState = 0x9f;
 			if (((dieType != 2) && (deadState = STATE_HERO_EAT_DEATH, dieType != 3)) && (deadState = -1, hitType == 5)) {
-				deadState = 0x98;
+				deadState = STATE_HERO_COL_WALL_DEAD_ELECTROCUTE;
 			}
 		}
 	}
@@ -5522,6 +5522,7 @@ LAB_00341590:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
+	case STATE_HERO_COL_WALL_DEAD_ELECTROCUTE:
 	case STATE_HERO_COL_WALL_DEAD_C:
 	case STATE_HERO_COL_WALL_DEAD_D:
 	case STATE_HERO_COL_WALL_DEAD_E:
@@ -5840,6 +5841,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_2_CROUCH:
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
+	case STATE_HERO_COL_WALL_DEAD_ELECTROCUTE:
 	case STATE_HERO_COL_WALL_DEAD_C:
 	case STATE_HERO_COL_WALL_DEAD_D:
 	case STATE_HERO_COL_WALL_DEAD_E:
@@ -6392,6 +6394,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		StateHeroColWall();
 		break;
 	case STATE_HERO_COL_WALL_DEAD:
+		StateHeroDead(-1.0f);
+		break;
+	case STATE_HERO_COL_WALL_DEAD_ELECTROCUTE:
 		StateHeroDead(-1.0f);
 		break;
 	case STATE_HERO_COL_WALL_DEAD_C:
