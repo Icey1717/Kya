@@ -17,8 +17,9 @@ struct BrazulStateStruct
 	float field_0x8;
 };
 
-struct CBrazulBonePhysics : public CActorBonePhysics
+class CBrazulBonePhysics : public CActorBonePhysics
 {
+public:
 	void SetupObjects(CActor* pOwner) override;
 	void Term() override;
 	void Func_0x14(uint flags) override;
@@ -33,8 +34,9 @@ struct CBrazulBonePhysics : public CActorBonePhysics
 	const BrazulStateStruct* pCurrentState = nullptr;
 };
 
-struct astruct_19
+class CBrazulSparkAttack
 {
+public:
 	void Create(int param_2, int param_3, int param_4);
 	void Init(CActorBrazul* param_2);
 	void Manage(edF32VECTOR4* v0);
@@ -159,8 +161,8 @@ public:
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	void FUN_003e60c0();
-	void FUN_003e59e0();
+	void ManageTornadoRay();
+	void ManageDirectRay();
 	void FUN_003e62d0(float param_1);
 	void FUN_003e5f40(float param_1);
 	void FUN_003e87e0(int nextState, int param_3);
@@ -178,7 +180,7 @@ public:
 	uint field_0x1060;
 	edF32VECTOR4* field_0x1064;
 
-	astruct_19 field_0x1070[8];
+	CBrazulSparkAttack field_0x1070[8];
 
 	float field_0x2ff0;
 	float field_0x2ff4;
@@ -199,8 +201,6 @@ public:
 	float field_0x318c;
 	float field_0x3190;
 	edF32MATRIX4 field_0x31a0;
-	edF32VECTOR4 field_0x31d0;
-
 	StaticMeshComponentAdvanced field_0x31e0;
 
 	CFxHandleExt field_0x3260;

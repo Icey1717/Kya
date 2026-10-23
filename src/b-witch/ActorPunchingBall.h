@@ -10,8 +10,9 @@
 
 class CActorPunchingBall;
 
-struct CPunchingBallBonePhysics : public CActorBonePhysics
+class CPunchingBallBonePhysics : public CActorBonePhysics
 {
+public:
 	void SetupObjects(CActor* pOwner) override;
 	void Func_0x3c(int index, edF32VECTOR4* rotation, edF32VECTOR4* position, edF32VECTOR4* localOffset, edF32VECTOR4* scale) override;
 };

@@ -129,8 +129,9 @@ struct ActorBonePhysicsLink
 };
 
 // Base vtable at 00447ec0 in the PS2 executable.
-struct CActorBonePhysics
+class CActorBonePhysics
 {
+public:
 	virtual ~CActorBonePhysics() = default;
 	virtual void SetObjCounts(int countA, int countB);
 	virtual void SetupObjects(CActor* pOwner);
@@ -172,8 +173,9 @@ struct CActorBonePhysics
 };
 
 // Vtable at 004460b0; used by Wolfen variant 3.
-struct CWolfenFullBodyPhysics : public CActorBonePhysics
+class CWolfenFullBodyPhysics : public CActorBonePhysics
 {
+public:
 	void SetupObjects(CActor* pOwner) override;
 	ActorBonePhysicsLink* allocateB(uint index) override;
 	void Func_0x34(int index) override;
@@ -182,8 +184,9 @@ struct CWolfenFullBodyPhysics : public CActorBonePhysics
 };
 
 // Vtable at 00446100; shared by Wolfen variants 0 and 1.
-struct CWolfenSharedBonePhysics : public CActorBonePhysics
+class CWolfenSharedBonePhysics : public CActorBonePhysics
 {
+public:
 	void SetupObjects(CActor* pOwner) override;
 	void Func_0x30() override;
 };

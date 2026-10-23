@@ -11,7 +11,7 @@ void CActorBrazul::Create(ByteCode* pByteCode)
 	int materialId;
 	uint uVar2;
 	uint uVar3;
-	astruct_19* pCVar4;
+	CBrazulSparkAttack* pCVar4;
 	float fVar5;
 
 	CActorWolfen::Create(pByteCode);
@@ -110,7 +110,7 @@ void CActorBrazul::Init()
 	CBehaviour* pCVar2;
 	s_fighter_blow* psVar3;
 	int iVar4;
-	astruct_19* pCVar5;
+	CBrazulSparkAttack* pCVar5;
 	uint uVar6;
 	float fVar7;
 
@@ -235,7 +235,7 @@ void CActorBrazul::Manage()
 	CLifeInterface* uVar5;
 	CBehaviour* pCVar5;
 	edF32VECTOR4* peVar6;
-	astruct_19* pCVar7;
+	CBrazulSparkAttack* pCVar7;
 	uint uVar8;
 	uint* puVar9;
 	float fVar10;
@@ -284,8 +284,8 @@ LAB_003e8da8:
 		pCVar7 = pCVar7 + 1;
 	} while (uVar8 < 8);
 
-	FUN_003e60c0();
-	FUN_003e59e0();
+	ManageTornadoRay();
+	ManageDirectRay();
 
 	pCVar1 = (this->field_0x30a0).pFx;
 	if (((pCVar1 == (CNewFx*)0x0) || (iVar2 = (this->field_0x30a0).id, iVar2 == 0)) || (iVar2 != pCVar1->id)) {
@@ -389,7 +389,7 @@ void CActorBrazul::Reset()
 {
 	CBehaviour* pCVar2;
 	CBehaviourBrazulA* pCVar1;
-	astruct_19* pCVar3;
+	CBrazulSparkAttack* pCVar3;
 	uint uVar4;
 
 	CActorWolfen::Reset();
@@ -772,7 +772,7 @@ bool FUN_003e6410(CActor* pActor, void* pParams)
 	return false;
 }
 
-void CActorBrazul::FUN_003e60c0()
+void CActorBrazul::ManageTornadoRay()
 {
 	CActorManager* pCVar1;
 	bool bVar2;
@@ -794,12 +794,13 @@ void CActorBrazul::FUN_003e60c0()
 		if (0.0f < fVar4) {
 			local_150.nbEntries = 0;
 			this->field_0x3184 = this->field_0x3184 + this->field_0x3188 * GetTimer()->cutsceneDeltaTime;
-			local_10.xyz = this->field_0x31d0.xyz;
+			local_10.xyz = this->field_0x31a0.rowT.xyz;
 			local_10.w = sqrtf(this->field_0x3184 * this->field_0x3184 + this->field_0x318c * this->field_0x318c);
-			local_40.field_0x10 = this->field_0x31d0;
+			local_40.field_0x10 = this->field_0x31a0.rowT;
 			fVar4 = this->field_0x3184 - this->field_0x3190;
 			fVar5 = this->field_0x3184 - this->field_0x3190;
-			local_40.field_0x20.x = (float)((int)fVar4 * (uint)(0.0 < fVar4)) * (float)((int)fVar5 * (uint)(0.0 < fVar5));
+			// PS2 0x003e61a4/0x003e61b8 use floating-point max.S, retaining the fractional radius.
+			local_40.field_0x20.x = std::max(0.0f, fVar4) * std::max(0.0f, fVar5);
 			local_40.field_0x20.y = this->field_0x3184 * this->field_0x3184;
 			local_40.field_0x20.z = this->field_0x318c;
 			local_40.field_0x0 = this;
@@ -814,7 +815,7 @@ void CActorBrazul::FUN_003e60c0()
 			local_1a0.y = local_1a0.x;
 			local_1a0.z = local_1a0.x;
 			edF32Matrix4ScaleHard(&eStack400, &gF32Matrix4Unit, &local_1a0);
-			edF32Matrix4MulF32Matrix4Hard(&eStack400, &eStack400, (edF32MATRIX4*)&this->field_0x31a0);
+			edF32Matrix4MulF32Matrix4Hard(&eStack400, &eStack400, &this->field_0x31a0);
 			pTVar3 = GetTimer();
 			this->field_0x3100.Func_0x30(&eStack400, GetTimer()->cutsceneDeltaTime);
 		}
@@ -826,7 +827,7 @@ void CActorBrazul::FUN_003e60c0()
 	return;
 }
 
-void CActorBrazul::FUN_003e59e0()
+void CActorBrazul::ManageDirectRay()
 {
 	CActorFighter* pCVar1;
 	CNewFx* pCVar2;
@@ -1069,7 +1070,7 @@ void CActorBrazul::FUN_003e87e0(int nextState, int param_3)
 	return;
 }
 
-void astruct_19::Create(int param_2, int param_3, int param_4)
+void CBrazulSparkAttack::Create(int param_2, int param_3, int param_4)
 {
 	this->field_0x40.Create(3, 0xc, this->field_0x40.aVectorData, this->field_0x40.aFloatData, param_2);
 	this->field_0x40.field_0xe4 = this->field_0x40.aUnknown;
@@ -1081,7 +1082,7 @@ void astruct_19::Create(int param_2, int param_3, int param_4)
 	return;
 }
 
-void astruct_19::Init(CActorBrazul* param_2)
+void CBrazulSparkAttack::Init(CActorBrazul* param_2)
 {
 	this->pOwner = param_2;
 	this->field_0x40.Init(this->pOwner->sectorId);
@@ -1094,7 +1095,7 @@ void astruct_19::Init(CActorBrazul* param_2)
 	return;
 }
 
-void astruct_19::Manage(edF32VECTOR4* v0)
+void CBrazulSparkAttack::Manage(edF32VECTOR4* v0)
 {
 	int iVar1;
 	CNewFx* pCVar2;
@@ -1173,7 +1174,7 @@ void astruct_19::Manage(edF32VECTOR4* v0)
 	return;
 }
 
-void astruct_19::Reset(float param_1)
+void CBrazulSparkAttack::Reset(float param_1)
 {
 	if ((this->field_0x4 != 0) && (this->field_0x4 != 3)) {
 		this->field_0x4 = 3;
@@ -1184,7 +1185,7 @@ void astruct_19::Reset(float param_1)
 	return;
 }
 
-void astruct_19::Draw()
+void CBrazulSparkAttack::Draw()
 {
 	int iVar1;
 	uint color;
@@ -1212,7 +1213,7 @@ LAB_003e53e8:
 	return;
 }
 
-void astruct_19::FUN_003e56f0(float param_1, float param_2, CActor* param_4)
+void CBrazulSparkAttack::FUN_003e56f0(float param_1, float param_2, CActor* param_4)
 {
 	CActor* pCVar1;
 	CShadow* pCVar2;
@@ -1517,7 +1518,7 @@ void CBehaviourBrazulA::InitState(int newState)
 	StateConfig* pSVar3;
 	int iVar4;
 	CPathFollowReader* pCVar5;
-	astruct_19* paVar6;
+	CBrazulSparkAttack* paVar6;
 	CActorBrazul* pCVar7;
 	uint uVar8;
 	float fVar9;
@@ -1545,12 +1546,12 @@ void CBehaviourBrazulA::InitState(int newState)
 			pCVar7->field_0x2ff8 = pCVar7->field_0x2ff8 - fVar10;
 		}
 
-		astruct_19* pData = this->pOwner->field_0x1070;
+		CBrazulSparkAttack* pData = this->pOwner->field_0x1070;
 		pCVar2 = pCVar7->pTargetActor_0xc80;
-		paVar6 = (astruct_19*)0x0;
+		paVar6 = (CBrazulSparkAttack*)0x0;
 		if (pCVar2 != (CActorFighter*)0x0) {
 			uVar8 = 0;
-			while ((uVar8 < 8 && (paVar6 == (astruct_19*)0x0))) {
+			while ((uVar8 < 8 && (paVar6 == (CBrazulSparkAttack*)0x0))) {
 				if (pData->field_0x4 == 0) {
 					paVar6 = pData;
 				}
@@ -1560,7 +1561,7 @@ void CBehaviourBrazulA::InitState(int newState)
 				}
 			}
 
-			if (paVar6 != (astruct_19*)0x0) {
+			if (paVar6 != (CBrazulSparkAttack*)0x0) {
 				paVar6->FUN_003e56f0(this->aSubObjs[this->field_0x10].field_0x8, fVar9, pCVar2);
 			}
 		}
