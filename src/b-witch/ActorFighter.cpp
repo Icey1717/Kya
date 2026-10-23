@@ -1779,16 +1779,8 @@ void CActorFighter::_Hold_GetPossibleExit()
 	StateConfig* pSVar5;
 	edF32VECTOR4* v1;
 	uint uVar6;
-	undefined4 local_a0[2];
-	undefined4 local_98;
-	undefined4 local_94;
-	undefined4 local_90;
-	edF32VECTOR4 eStack128;
-	undefined4 local_70;
-	undefined2 local_50;
-	undefined2 local_4e;
+	_msg_hit_param local_a0;
 	edF32VECTOR4 local_20;
-	undefined4* local_4;
 
 	if ((GetStateFlags(this->actorState) & 0x100000) != 0) {
 		pCVar2 = this->field_0x354;
@@ -1812,19 +1804,17 @@ void CActorFighter::_Hold_GetPossibleExit()
 
 		if (bVar3) {
 			if (bVar4) {
-				IMPLEMENTATION_GUARD(
-				local_a0[0] = 7;
-				local_98 = 1;
+				local_a0.projectileType = 7;
+				local_a0.flags = 1;
 				v1 = GetAdversaryHeldPos();
-				edF32Vector4SubHard(&eStack128, v1, &this->currentLocation);
-				edF32Vector4NormalizeHard(&eStack128, &eStack128);
-				local_4e = 0;
-				local_70 = 0x40800000;
-				local_94 = 0;
-				local_50 = 0xe;
-				local_90 = 0;
-				local_4 = local_a0;
-				CActor::DoMessage((CActor*)this, (CActor*)this->field_0x354, 2, (uint)local_4);)
+				edF32Vector4SubHard(&local_a0.field_0x20, v1, &this->currentLocation);
+				edF32Vector4NormalizeHard(&local_a0.field_0x20, &local_a0.field_0x20);
+				local_a0.field_0x52 = 0;
+				local_a0.field_0x30 = 4.0f;
+				local_a0.damage = 0.0f;
+				local_a0.field_0x50 = 0xe;
+				local_a0.field_0x10 = 0.0f;
+				DoMessage(this->field_0x354, MESSAGE_KICKED, &local_a0);
 			}
 
 			SetState(0x37, -1);

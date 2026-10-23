@@ -3531,11 +3531,9 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 	int iVar3;
 	CActor* pCVar4;
 	CActor* pCVar5;
-	float local_18;
-	uint local_14;
+	_msg_analog_params local_18;
 	uint local_c;
 	uint local_8;
-	float* local_4;
 
 	iVar3 = 0;
 
@@ -3568,15 +3566,14 @@ int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActo
 			pCVar4 = (CActor*)param_5;
 			pCVar5 = param_4;
 			if (iVar1 == 0) {
-				local_14 = this->field_0x10;
+				local_18.field_0x4 = this->field_0x10;
 				if (param_4 == (CActor*)0x0) {
 					param_4 = LOAD_POINTER_CAST(CActor*, this->pRef);
 				}
 
-				local_18 = param_2;
+				local_18.value = param_2;
 				if (param_4 != (CActor*)0x0) {
-					local_4 = &local_18;
-					iVar3 = param_4->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
+					iVar3 = param_4->DoMessage(LOAD_POINTER_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)0x11, &local_18);
 				}
 
 				pCVar4 = (CActor*)1;

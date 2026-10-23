@@ -1,8 +1,71 @@
 import { describe, expect, it } from "vitest";
 import { auditSourceHash, compareFunction, expandHelpers, extractFunctions, fingerprint, matchFunctions } from "../src/functionAudit.js";
 import { createAuditContext, normalizeAuditSource } from "../src/auditNormalization.js";
+import { renderAuditReports } from "../src/auditReport.js";
 
 describe("function audit", () => {
+  it("compares floating intrinsics without dropping changed or missing operations", () => {
+    const fn = extractFunctions("a.cpp", "void F() { x = fabs(y - 2.0f); z = sqrtf(GetValue() + 3.0f); }")[0];
+    const original = { function: { name: "F", namespace: "Global", entry: "1" }, c: "void F() { x = ABS(y - 2.0f); z = SQRT(GetValue() + 3.0f); }" };
+    expect(compareFunction(fn, original, [fn]).findings).toEqual([]);
+    for (const source of [
+      fn.source.replace("3.0f", "4.0f"),
+      fn.source.replace("sqrtf(GetValue() + 3.0f)", "GetValue() + 3.0f"),
+      fn.source.replace("GetValue()", "OtherValue()"),
+      fn.source.replace("sqrtf", "sqrt"),
+      fn.source.replace("fabs", "abs")
+    ]) expect(compareFunction({ ...fn, source }, original, [fn]).findings.length).toBeGreaterThan(0);
+    expect(normalizeAuditSource("void F() { obj.ABS(x); Custom::SQRT(x); }", createAuditContext([])).source).toBe("void F() { obj.ABS(x); Custom::SQRT(x); }");
+  });
+
+  it("resolves global enum values and preserves wrong message IDs", () => {
+    const context = createAuditContext(["enum Message { FIRST = 6, POINT, NEXT, LAST = NEXT + 2 };\n"]);
+    expect(context.constants.get("POINT")).toBe(7n);
+    expect(context.constants.get("NEXT")).toBe(8n);
+    expect(context.constants.get("LAST")).toBe(10n);
+    const fn = extractFunctions("a.cpp", "void F() { DoMessage(POINT); }")[0];
+    const original = { function: { name: "F", namespace: "Global", entry: "1" }, c: "void F() { DoMessage(7); }" };
+    const result = compareFunction(fn, original, [fn], context);
+    expect(result.findings).toEqual([]);
+    expect(result.normalizations).toContain("Resolved numeric enum POINT = 7.");
+    expect(compareFunction({ ...fn, source: "void F() { DoMessage(NEXT); }" }, original, [fn], context).findings.some(f => f.kind === "constant_count")).toBe(true);
+  });
+
+  it("does not guess scoped, conflicting, dependent or shadowed enums", () => {
+    const context = createAuditContext([
+      "enum E { GLOBAL = 7, CONFLICT = 8, UNKNOWN = Runtime(), DEPENDENT }; enum class S { SCOPED = 9 }; namespace N { enum E { NESTED = 10 }; }",
+      "enum E2 { CONFLICT = 9 };"
+    ]);
+    for (const name of ["CONFLICT", "UNKNOWN", "DEPENDENT", "SCOPED", "NESTED"]) expect(context.constants.has(name)).toBe(false);
+    for (const source of ["void F(int GLOBAL) { DoMessage(GLOBAL); }", "void F() { int GLOBAL = Runtime(); DoMessage(GLOBAL); }"]) {
+      expect(normalizeAuditSource(source, context).source).toBe(source);
+    }
+    const collision = createAuditContext(["enum E { SHARED = 7 }; class C { enum E { SHARED = 8 }; };"]);
+    expect(collision.constants.has("SHARED")).toBe(false);
+  });
+
+  it("keeps long implicit enum sequences rather than truncating at eight passes", () => {
+    const names = Array.from({ length: 20 }, (_, i) => `VALUE_${i}`);
+    const context = createAuditContext([`enum E { ${names.join(", ")} };`]);
+    expect(context.constants.get("VALUE_19")).toBe(19n);
+  });
+
+  it("omits expected rows from the queue but preserves coverage and partial reviews", () => {
+    const reason = { finding: { kind: "constant_count", detail: "Expected offset" }, reason: "Verified layout" };
+    const row = { name: "Expected", path: "a.cpp", line: 1, status: "reviewed", findings: [], reviewedFindings: [reason] };
+    const reports = renderAuditReports([row,
+      { ...row, name: "BrokenDestructor", status: "candidate", findings: [{ kind: "indirect_call_count", detail: "Missing destructor call" }] },
+      { ...row, name: "Unparsed", status: "parse_error", reviewedFindings: [] }
+    ], { reviewed: 1, candidate: 1, parse_error: 1 });
+    expect(reports.report).not.toContain("| Expected |");
+    expect(reports.report).not.toContain("| Unparsed |");
+    expect(reports.report).toContain("| BrokenDestructor |");
+    expect(reports.coverage).toContain("| Unparsed |");
+    expect(reports.reviewed).toContain("| Expected |");
+    expect(reports.reviewed).toContain("| BrokenDestructor |");
+    expect(reports.reviewed).toContain("Verified layout");
+  });
+
   it("inventories member, free, inline and no-local functions without renamer exclusions", () => {
     const fns = extractFunctions("a.cpp", "namespace N { class A { void Inline() {} }; }\nvoid A::F() {}\nint Free() { return 2; }");
     expect(fns.map(fn => fn.name)).toEqual(["N::A::Inline", "A::F", "Free"]);

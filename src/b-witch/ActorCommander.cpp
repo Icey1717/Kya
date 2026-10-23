@@ -68,32 +68,7 @@ void CActorCommander::Create(ByteCode* pByteCode)
 	this->flags_0x18c = 0;
 	this->curPathFindingId = -1;
 
-	this->count_0x16c = pByteCode->GetS32();
-	if (this->count_0x16c == 0) {
-		this->aComponent_0x170 = (ACommanderComponent_10*)0x0;
-	}
-	else {
-		this->aComponent_0x170 = new ACommanderComponent_10[this->count_0x16c];
-		iVar9 = 0;
-		iVar12 = 0;
-		iVar6 = 0;
-		if (0 < this->count_0x16c) {
-			iVar13 = 0;
-			do {
-				iVar11 = pByteCode->GetS32();
-				//*(int*)(&this->field_0x170->field_0x0 + iVar13) = iVar11;
-				iVar11 = pByteCode->GetS32();
-				iVar6 = iVar6 + 1;
-				//*(int*)(&this->field_0x170->field_0x8 + iVar13) = iVar11;
-				//piVar7 = (int*)(&this->field_0x170->field_0x0 + iVar13);
-				//iVar9 = iVar9 + *piVar7;
-				//piVar7[1] = iVar9;
-				//iVar12 = iVar12 + piVar7[2];
-				//*(int*)(&this->field_0x170->field_0xc + iVar13) = iVar12;
-				//iVar13 = iVar13 + 0x10;
-			} while (iVar6 < this->count_0x16c);
-		}
-	}
+	CreateSequence(pByteCode);
 
 	this->camFigData.Create(pByteCode);
 
@@ -101,6 +76,36 @@ void CActorCommander::Create(ByteCode* pByteCode)
 
 	this->camFigData.field_0x290 = edF32VECTOR4_0040e720;
 	this->camFigData.IsValid(0);
+
+	return;
+}
+
+void CActorCommander::CreateSequence(ByteCode* pByteCode)
+{
+	// Extracted from PS2 Create, 0x00172a28-0x00172ad0.
+	int iVar9 = 0;
+	int iVar12 = 0;
+	int iVar6 = 0;
+
+	this->count_0x16c = pByteCode->GetS32();
+	if (this->count_0x16c == 0) {
+		this->aComponent_0x170 = (ACommanderComponent_10*)0x0;
+	}
+	else {
+		this->aComponent_0x170 = new ACommanderComponent_10[this->count_0x16c];
+		if (0 < this->count_0x16c) {
+			do {
+				ACommanderComponent_10* pComponent = this->aComponent_0x170 + iVar6;
+				pComponent->field_0x0 = pByteCode->GetS32();
+				pComponent->field_0x8 = pByteCode->GetS32();
+				iVar9 = iVar9 + pComponent->field_0x0;
+				pComponent->field_0x4 = iVar9;
+				iVar12 = iVar12 + pComponent->field_0x8;
+				pComponent->field_0xc = iVar12;
+				iVar6 = iVar6 + 1;
+			} while (iVar6 < this->count_0x16c);
+		}
+	}
 	return;
 }
 
@@ -1573,7 +1578,8 @@ bool CActorCommander::UpdateKilled()
 
 	this->field_0x168 = 0;
 
-	while ((this->aComponent_0x170[this->field_0x168].field_0x4 <= this->field_0x164 && (this->field_0x168 < this->count_0x16c))) {
+	// Check the bound before reading the sentinel after the final wave.
+	while ((this->field_0x168 < this->count_0x16c) && (this->aComponent_0x170[this->field_0x168].field_0x4 <= this->field_0x164)) {
 		this->field_0x168 = this->field_0x168 + 1;
 	}
 
@@ -1590,10 +1596,8 @@ void CActorCommander::UpdateAttack()
 	CTeamElt* pCVar4;
 	int iVar6;
 	int iVar7;
-	undefined4 local_60[3];
-	CActorHero* local_54;
+	InitPathfindingClientMsgParams local_60;
 	CFixedTable<CTeamElt*, 16> local_50;
-	undefined4* local_4;
 
 	if (this->field_0x160 < this->aComponent_0x170[this->field_0x168].field_0xc) {
 		local_50.nbEntries = 0;
@@ -1616,15 +1620,14 @@ void CActorCommander::UpdateAttack()
 			do {
 				pCVar4 = local_50.PopCurrent();
 				if (pCVar4 != (CTeamElt*)0x0) {
-					local_60[0] = 5;
+					local_60.msgId = 5;
 
-					local_54 = static_cast<CActorHero*>(this->actorRef.Get());
-					if (local_54 == (CActorHero*)0x0) {
-						local_54 = CActorHero::_gThis;
+					local_60.pActor = static_cast<CActorFighter*>(this->actorRef.Get());
+					if (local_60.pActor == (CActorFighter*)0x0) {
+						local_60.pActor = CActorHero::_gThis;
 					}
 
-					local_4 = local_60;
-					DoMessage(pCVar4->pEnemyActor, (ACTOR_MESSAGE)0x1a, local_4);
+					DoMessage(pCVar4->pEnemyActor, (ACTOR_MESSAGE)0x1a, &local_60);
 					this->field_0x160 = this->field_0x160 + 1;
 				}
 

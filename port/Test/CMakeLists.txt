@@ -11,6 +11,7 @@ add_executable(KyaPortTest "src/tests.cpp" "src/audio_sample_tests.cpp" "src/aud
 target_sources(KyaPortTest PRIVATE "src/memory_card_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/draw_trace_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/nativ_akasa_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/message_parameter_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/bone_physics_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/camera_fight_data_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/camera_event_tests.cpp")

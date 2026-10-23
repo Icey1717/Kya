@@ -17,9 +17,13 @@ class CActorCommander;
 
 struct ACommanderComponent_10
 {
+	int field_0x0;
 	int field_0x4;
+	int field_0x8;
 	int field_0xc;
 };
+
+static_assert(sizeof(ACommanderComponent_10) == 0x10);
 
 struct S_TARGET_ON_OFF_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -97,6 +101,7 @@ public:
 
 	bool UpdateKilled();
 	void UpdateAttack();
+	void CreateSequence(ByteCode* pByteCode);
 
 	void ClearLocalData();
 

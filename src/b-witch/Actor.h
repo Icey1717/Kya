@@ -111,6 +111,14 @@ struct _msg_params_boost
 	float field_0x14;
 };
 
+struct _msg_analog_params
+{
+	float value;
+	uint field_0x4;
+};
+
+static_assert(sizeof(_msg_analog_params) == 8);
+
 struct _msg_5e_param
 {
 	int field_0x0;

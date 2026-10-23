@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import Parser, { type SyntaxNode } from "tree-sitter";
 import Cpp from "tree-sitter-cpp";
 import { auditCallName, normalizeAuditSource, type AuditContext } from "./auditNormalization.js";
+import { expandTransparentHelpers, modelConstructor } from "./auditStructure.js";
 
 const parser = new Parser();
 parser.setLanguage(Cpp);
@@ -216,11 +217,26 @@ function counts(values: string[]) {
 
 export function compareFunction(fn: AuditFunction, original: SnapshotEntry, functions: AuditFunction[], context: AuditContext = { constants: new Map() }) {
   const expanded = expandHelpers(fn, functions);
+  const structureNotes: string[] = [];
+  if (context.structure) {
+    const helpers = expandTransparentHelpers(expanded.source, fn.name, context.structure, new Set(fingerprint(original.c ?? "").calls.map(name => name.split("::").at(-1)!)));
+    const constructor = modelConstructor(helpers.source, fn.name, original.c ?? "", context.structure);
+    expanded.source = constructor.source;
+    structureNotes.push(...helpers.notes, ...constructor.notes);
+    expanded.helpers.push(...helpers.notes);
+  }
   const normalizedPort = normalizeAuditSource(expanded.source, context);
-  const normalizedPs2 = normalizeAuditSource(original.c ?? "", context);
+  // Build-active source macros must never rewrite original libc calls.
+  const sqrtMacro = context.macros?.get("sqrtf");
+  const sqrtBody = sqrtMacro?.body.replace(/\s/g, "");
+  const sqrtParameter = sqrtMacro?.parameters.length === 1 ? sqrtMacro.parameters[0] : undefined;
+  const magnitudeShim = sqrtParameter !== undefined && [
+    `std::sqrtf(std::fabs(${sqrtParameter}))`, `(std::sqrtf(std::fabs(${sqrtParameter})))`
+  ].includes(sqrtBody ?? "");
+  const normalizedPs2 = normalizeAuditSource(original.c ?? "", { ...context, macros: undefined, ps2SqrtMagnitude: magnitudeShim });
   const port = fingerprint(normalizedPort.source);
   const ps2 = fingerprint(normalizedPs2.source);
-  const normalizations = [...new Set([...normalizedPort.notes, ...normalizedPs2.notes, ...port.ignored.map(name => `Excluded diagnostic/instrumentation call ${name} and its arguments.`)])];
+  const normalizations = [...new Set([...structureNotes, ...normalizedPort.notes, ...normalizedPs2.notes, ...port.ignored.map(name => `Excluded diagnostic/instrumentation call ${name} and its arguments.`)])];
   const normalized = { port: normalizedPort.source, ps2: normalizedPs2.source };
   const findings: Finding[] = [];
   const reviewedFindings: { finding: Finding; reason: string }[] = [];

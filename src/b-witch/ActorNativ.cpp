@@ -646,6 +646,7 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					pReceiver = this->field_0x3f0;
 					if ((((pReceiver != (CActor*)0x0) && (pReceiver != pSender)) && (this->curBehaviourId == 3)) && ((this->behaviourSpeak).field_0x24 != -1)) {
 						local_20.type = 7;
+						local_20.field_0x8 = this->behaviourSpeak.field_0x24;
 						DoMessage(pReceiver, MESSAGE_NATIV_CMD, &local_20);
 					}
 
@@ -2813,9 +2814,7 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 	undefined4 uVar13;
 	//CBehaviourMovingPlatformVTable* pCVar14;
 	undefined4 uVar15;
-	undefined4 local_20[4];
-	int local_10;
-	undefined4* local_4;
+	CActorNativMsgParam_0xe local_20;
 
 	if (msg == 0x4e) {
 		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
@@ -3000,11 +2999,11 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 	else {
 		if (msg == 0x14) {
 			IMPLEMENTATION_GUARD(
-			local_20[0] = 9;
-			local_10 = CActorNativ::FUN_00162a70(this->pOwner);
+			// PS2 0x003f3998: subtype and cinematic ID share one payload.
+			local_20.type = 9;
+			local_20.field_0x10 = this->pOwner->FUN_00162a70();
 			pNativ = this->pOwner;
-			local_4 = local_20;
-			iVar7 = CActor::DoMessage((CActor*)pNativ, (CActor*)pNativ->field_0x3f0, 0x4e, (uint)local_4);
+			iVar7 = pNativ->DoMessage(pNativ->field_0x3f0, MESSAGE_NATIV_CMD, &local_20);
 			if (iVar7 != 0) {
 				pNativ = this->pOwner;
 				pNativ->cinematicCachedBehaviour = pNativ->curBehaviourId;
@@ -3666,9 +3665,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	undefined4 uVar13;
 	//CBehaviourMovingPlatformVTable* pCVar14;
 	undefined4 uVar15;
-	undefined4 local_20[4];
-	int local_10;
-	undefined4* local_4;
+	CActorNativMsgParam_0xe local_20;
 
 	if (msg == 0x4e) {
 		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
@@ -3850,11 +3847,11 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	else {
 		if (msg == 0x14) {
 			IMPLEMENTATION_GUARD(
-			local_20[0] = 9;
-			local_10 = CActorNativ::FUN_00162a70(this->pOwner);
+			// PS2 0x003f41c8: subtype and cinematic ID share one payload.
+			local_20.type = 9;
+			local_20.field_0x10 = this->pOwner->FUN_00162a70();
 			pNativ = this->pOwner;
-			local_4 = local_20;
-			iVar7 = CActor::DoMessage((CActor*)pNativ, pNativ->field_0x3f0, 0x4e, (uint)local_4);
+			iVar7 = pNativ->DoMessage(pNativ->field_0x3f0, MESSAGE_NATIV_CMD, &local_20);
 			if (iVar7 != 0) {
 				pNativ = this->pOwner;
 				pNativ->cinematicCachedBehaviour = pNativ->curBehaviourId;

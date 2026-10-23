@@ -226,18 +226,11 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 			iVar6 = pParams->type;
 			if (iVar6 == 7) {
-				local_40.type = pParams->type;
-				local_40.field_0x4 = pParams->field_0x4;
-				local_40.field_0x8 = pParams->field_0x8;
-				local_40.field_0xc = pParams->field_0xc;
-				local_40.field_0x10 = pParams->field_0x10;
-				local_40.field_0x14 = pParams->field_0x14;
-				local_40.field_0x18 = pParams->field_0x18;
-
-				pTalkParam = (CTalkParam*)0x0;
-				if (local_40.field_0x8 < this->nbTalkParams) {
-					pTalkParam = this->aTalkParams + local_40.field_0x8;
+				if ((pParams->field_0x8 < 0) || (this->nbTalkParams <= pParams->field_0x8) ||
+					(this->aTalkParams == (CTalkParam*)0x0)) {
+					return 0;
 				}
+				pTalkParam = this->aTalkParams + pParams->field_0x8;
 
 				iVar6 = pTalkParam->nbSubObj;
 				iVar2 = 0;

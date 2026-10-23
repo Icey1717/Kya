@@ -1,5 +1,7 @@
 import Parser, { type SyntaxNode } from "tree-sitter";
 import Cpp from "tree-sitter-cpp";
+import { expandExpressionMacros, type AuditMacro } from "./auditBuildMacros.js";
+import type { AuditStructureContext } from "./auditStructure.js";
 
 const parser = new Parser();
 parser.setLanguage(Cpp);
@@ -12,7 +14,7 @@ export interface ReviewedAuditFinding {
   reason: string;
   dependencies: { path: string; sha256: string }[];
 }
-export interface AuditContext { constants: Map<string, bigint>; reviewed?: ReviewedAuditFinding[] }
+export interface AuditContext { constants: Map<string, bigint>; enumNames?: Set<string>; reviewed?: ReviewedAuditFinding[]; macros?: Map<string, AuditMacro>; structure?: AuditStructureContext; ps2SqrtMagnitude?: boolean }
 
 function parse(source: string) { return parser.parse(offset => source.slice(offset, offset + 16_384)); }
 
@@ -63,16 +65,41 @@ function integer(node: SyntaxNode, constants: Map<string, bigint>): bigint | und
 
 export function createAuditContext(sources: string[], reviewed: ReviewedAuditFinding[] = []): AuditContext {
   const definitions = new Map<string, Set<string>>();
+  const enumNames = new Set<string>();
+  const excludedEnums = new Set<string>();
+  function define(name: string, value: string) {
+    const values = definitions.get(name) ?? new Set<string>();
+    values.add(value);
+    definitions.set(name, values);
+  }
   for (const source of sources) walk(parse(source).rootNode, node => {
+    if (node.type === "enum_specifier") {
+      const entries = node.childForFieldName("body")?.namedChildren.filter(child => child.type === "enumerator") ?? [];
+      // Only globally visible unscoped enums. Do not guess name lookup across
+      // classes/namespaces or merge scoped constants into a global dictionary.
+      let global = !node.children.some(child => ["class", "struct"].includes(child.type));
+      for (let parent = node.parent; parent; parent = parent.parent) {
+        if (["class_specifier", "struct_specifier", "namespace_definition", "function_definition"].includes(parent.type)) global = false;
+      }
+      let previous: string | undefined;
+      for (const entry of entries) {
+        const name = entry.childForFieldName("name")?.text;
+        if (!name) continue;
+        if (!global) { excludedEnums.add(name); continue; }
+        enumNames.add(name);
+        define(name, entry.childForFieldName("value")?.text ?? (previous ? `(${previous}) + 1` : "0"));
+        previous = name;
+      }
+      return false;
+    }
     if (node.type !== "preproc_def") return;
     const name = node.childForFieldName("name")?.text;
     const value = node.childForFieldName("value")?.text.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "").trim();
     if (!name || !value) return false;
-    const values = definitions.get(name) ?? new Set<string>();
-    values.add(value);
-    definitions.set(name, values);
+    define(name, value);
     return false;
   });
+  for (const name of excludedEnums) definitions.delete(name);
   const constants = new Map<string, bigint>();
   const expressions = new Map<string, SyntaxNode[]>();
   for (const [name, values] of definitions) {
@@ -90,7 +117,7 @@ export function createAuditContext(sources: string[], reviewed: ReviewedAuditFin
     }
     if (nodes.length === values.size) expressions.set(name, nodes);
   }
-  for (let pass = 0; pass < 8; pass++) {
+  for (let pass = 0; pass <= expressions.size; pass++) {
     let changed = false;
     for (const [name, nodes] of expressions) {
       if (constants.has(name)) continue;
@@ -102,7 +129,7 @@ export function createAuditContext(sources: string[], reviewed: ReviewedAuditFin
     }
     if (!changed) break;
   }
-  return { constants, reviewed };
+  return { constants, enumNames: new Set([...enumNames].filter(name => constants.has(name))), reviewed };
 }
 
 export function auditCallName(node: SyntaxNode): string | undefined {
@@ -136,6 +163,23 @@ function floatLiteral(bits: string): string | undefined {
 
 export function normalizeAuditSource(source: string, context: AuditContext) {
   const notes = new Set<string>();
+  if (context.macros) {
+    const expanded = expandExpressionMacros(source, context.macros);
+    source = expanded.source;
+    for (const note of expanded.notes) notes.add(note);
+  }
+  const shadowedEnums = new Set<string>();
+  walk(parse(source).rootNode, node => {
+    if (!["declaration", "parameter_declaration", "optional_parameter_declaration"].includes(node.type)) return;
+    for (const declarator of node.childrenForFieldName("declarator")) walk(declarator, child => {
+      if (child.type === "init_declarator") {
+        const binding = child.childForFieldName("declarator");
+        if (binding) walk(binding, name => { if (name.type === "identifier") shadowedEnums.add(name.text); });
+        return false;
+      }
+      if (child.type === "identifier") shadowedEnums.add(child.text);
+    });
+  });
   function transform(visit: (node: SyntaxNode) => string | undefined) {
     const edits: { start: number; end: number; text: string }[] = [];
     walk(parse(source).rootNode, node => {
@@ -146,7 +190,46 @@ export function normalizeAuditSource(source: string, context: AuditContext) {
     });
     for (const edit of edits.sort((a, b) => b.start - a.start)) source = source.slice(0, edit.start) + edit.text + source.slice(edit.end);
   }
+  if (context.ps2SqrtMagnitude) transform(node => {
+    if (node.type !== "call_expression" || node.childForFieldName("function")?.text !== "SQRT") return;
+    const args = node.childForFieldName("arguments")?.namedChildren;
+    if (args?.length !== 1) return;
+    // EE SQRT.S takes the magnitude for negative finite operands. Model that
+    // operation explicitly when comparing the build's matching magnitude shim;
+    // do not remove fabs globally or rewrite original libc sqrt calls.
+    notes.add("Modeled PS2 SQRT magnitude operation against the active sqrtf shim (FPU flags/edge cases remain outside lexical triage).");
+    return `sqrtf(fabsf(${args[0].text}))`;
+  });
   transform(node => {
+    // Ghidra prints floating-point p-code operations as ABS/SQRT. Compare
+    // operation counts rather than compiler-specific names; keep arguments,
+    // nested calls and constants intact. Do not alias integer abs or double sqrt.
+    if (!["identifier", "qualified_identifier"].includes(node.type)) return;
+    const call = node.parent;
+    if (call?.type !== "call_expression" || call.childForFieldName("function")?.id !== node.id ||
+        call.childForFieldName("arguments")?.namedChildren.length !== 1) return;
+    const name = node.text.replace(/^std::/, "");
+    const canonical = name === "ABS" || name === "fabs" || name === "fabsf" ? "fabsf"
+      : name === "SQRT" || name === "sqrtf" ? "sqrtf" : undefined;
+    if (!canonical || canonical === node.text) return;
+    notes.add(`Canonicalized floating-point operation ${node.text} as ${canonical}.`);
+    return canonical;
+  });
+  transform(node => {
+    if (node.type === "number_literal") {
+      const hex = /^0x([\da-f]+)(?:\.([\da-f]*))?p([+-]?\d+)(f?)$/i.exec(node.text);
+      if (hex) {
+        const fraction = [...(hex[2] ?? "")].reduce((sum, digit, index) => sum + parseInt(digit, 16) / 16 ** (index + 1), 0);
+        const value = (parseInt(hex[1], 16) + fraction) * 2 ** Number(hex[3]);
+        if (!Number.isFinite(value)) return;
+        if (hex[4]) {
+          const data = new DataView(new ArrayBuffer(4));
+          data.setFloat32(0, value);
+          const literal = floatLiteral(data.getUint32(0).toString(16).padStart(8, "0"));
+          if (literal) { notes.add("Decoded hexadecimal float literal without dropping its value."); return literal; }
+        } else return String(value);
+      }
+    }
     if (node.type === "cast_expression") {
       const bits = /^\(\s*float\s*\)\s*&DAT_([\da-fA-F]{8})$/.exec(node.text)?.[1];
       const literal = bits ? floatLiteral(bits) : undefined;
@@ -174,10 +257,11 @@ export function normalizeAuditSource(source: string, context: AuditContext) {
     if (node.type !== "identifier") return;
     const value = context.constants.get(node.text);
     if (value === undefined) return;
+    if (context.enumNames?.has(node.text) && shadowedEnums.has(node.text)) return;
     // Only expression uses; never change declarations, names, types or fields.
-    if (!node.parent || node.parent.type.endsWith("declarator") || ["function_definition", "parameter_declaration", "qualified_identifier"].includes(node.parent.type)) return;
+    if (!node.parent || node.parent.type.endsWith("declarator") || ["function_definition", "parameter_declaration", "qualified_identifier", "enumerator"].includes(node.parent.type)) return;
     if (node.parent.type === "call_expression" && node.parent.childForFieldName("function")?.id === node.id) return;
-    notes.add(`Resolved numeric macro ${node.text} = ${value}.`);
+    notes.add(`Resolved numeric ${context.enumNames?.has(node.text) ? "enum" : "macro"} ${node.text} = ${value}.`);
     return value < 0n ? `(${value})` : String(value);
   });
   transform(node => {

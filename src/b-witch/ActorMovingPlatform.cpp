@@ -2416,9 +2416,7 @@ bool CActorMovingPlatform::StateWeighingMaster(CBehaviourWeighingMachineMaster* 
 	float fVar5;
 	float puVar7;
 	float fVar6;
-	float local_10;
-	undefined4 local_c;
-	float* local_4;
+	_msg_analog_params local_10;
 
 	pTVar2 = GetTimer();
 
@@ -2459,10 +2457,9 @@ bool CActorMovingPlatform::StateWeighingMaster(CBehaviourWeighingMachineMaster* 
 		}
 	}
 
-	local_4 = &local_10;
-	local_10 = -pBehaviour->trajPos.pathPosition;
-	local_c = 0;
-	DoMessage(pRefActor, (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
+	local_10.value = -pBehaviour->trajPos.pathPosition;
+	local_10.field_0x4 = 0;
+	DoMessage(pRefActor, (ACTOR_MESSAGE)0x11, &local_10);
 
 	fVar4 = pBehaviour->trajPos.pathPosition;
 
@@ -2476,6 +2473,7 @@ bool CActorMovingPlatform::StateWeighingMaster(CBehaviourWeighingMachineMaster* 
 	Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, bVar4, 1, &pBehaviour->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
 	pBehaviour->trajPos.pathPosition = pBehaviour->trajPos.pathPosition - 1.0f;
+	
 	return bVar4;
 }
 

@@ -6,13 +6,17 @@ import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import { auditSourceHash, compareFunction, extractFunctions, matchFunctions, qualifiedName, type AuditFunction, type Ps2Function, type SnapshotEntry } from "./functionAudit.js";
 import { createAuditContext, type ReviewedAuditFinding } from "./auditNormalization.js";
+import { renderAuditReports } from "./auditReport.js";
+import { createAuditStructure } from "./auditStructure.js";
+import { AuditBuildMacros } from "./auditBuildMacros.js";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   root: { type: "string", default: "src/b-witch" }, out: { type: "string", default: "out/function-audit" },
   snapshot: { type: "string" }, filter: { type: "string", default: "" }, limit: { type: "string", default: "0" },
   port: { type: "string", default: "18437" }, refresh: { type: "boolean", default: false }, help: { type: "boolean" },
-  reviews: { type: "string", default: "tools/function-audit-reviewed.json" }
+  reviews: { type: "string", default: "tools/function-audit-reviewed.json" },
+  "build-dir": { type: "string", default: "out/build/x64-debug" }, "no-build-macros": { type: "boolean", default: false }
 } });
 
 async function atomicJson(path: string, value: unknown) {
@@ -110,12 +114,10 @@ async function capture(functions: AuditFunction[], out: string): Promise<{ progr
   return { program, entries: [...entries.values()] };
 }
 
-function markdown(value: string) { return value.replace(/[|\r\n]/g, " "); }
-
 async function main() {
   const command = positionals[0];
   if (values.help || !command) {
-    console.log("Usage: npm run audit -- inventory|capture|compare [--root src/b-witch] [--out out/function-audit] [--filter Class::] [--limit N] [--snapshot path] [--reviews path] [--refresh]\nPaths are relative to the repository. capture uses the local Ghidra bridge; compare makes no network/model requests.");
+    console.log("Usage: npm run audit -- inventory|capture|compare [--root src/b-witch] [--out out/function-audit] [--filter Class::] [--limit N] [--snapshot path] [--reviews path] [--refresh] [--build-dir out/build/x64-debug] [--no-build-macros]\nPaths are relative to the repository. capture uses the local Ghidra bridge; compare makes no network/model requests.");
     return;
   }
   if (!["inventory", "capture", "compare"].includes(command)) throw new Error(`Unknown command ${command}`);
@@ -164,12 +166,19 @@ async function main() {
     }
   }
   const context = createAuditContext(all.sources, reviews);
+  context.structure = createAuditStructure(all.sources, all.functions);
+  let buildMacros: AuditBuildMacros | undefined;
+  if (!values["no-build-macros"]) {
+    try { buildMacros = await AuditBuildMacros.open(resolve(repo, values["build-dir"]!)); }
+    catch (error) { console.log(`Build macro expansion unavailable: ${String(error)}`); }
+  }
   const results = [];
   await mkdir(join(out, "packets"), { recursive: true });
   for (const fn of selected) {
     const matches = matchFunctions(fn, originals);
     const original = matches.length === 1 ? entries.find(entry => entry.function.entry === matches[0].entry) : undefined;
-    const comparison = original?.c ? compareFunction(fn, original, all.functions, context) : undefined;
+    const macroStates = original?.c && buildMacros ? await buildMacros.forFile(resolve(repo, fn.path), selected.filter(entry => entry.path === fn.path).map(entry => entry.line)) : undefined;
+    const comparison = original?.c ? compareFunction(fn, original, all.functions, { ...context, macros: macroStates?.get(fn.line) }) : undefined;
     const status = matches.length === 0 ? "unmatched" : matches.length > 1 ? "ambiguous" : !original?.c ? "decompile_failed" : !comparison?.compared ? "parse_error" : comparison.findings.length ? "candidate" : comparison.reviewedFindings.length ? "reviewed" : "no_findings";
     const result = { id: fn.id, name: fn.name, path: fn.path, line: fn.line, status, address: original?.function.entry, findings: comparison?.findings ?? [], reviewedFindings: comparison?.reviewedFindings ?? [], normalizations: comparison?.normalizations ?? [], error: original?.error };
     results.push(result);
@@ -182,10 +191,11 @@ async function main() {
   }
   const counts: Record<string, number> = {};
   for (const result of results) counts[result.status] = (counts[result.status] ?? 0) + 1;
-  await atomicJson(join(out, "report.json"), { schema: 1, filtersVersion: 3, numericMacroCount: context.constants.size, program: identity.program, counts, results });
-  const rows = results.filter(r => r.status !== "no_findings").sort((a, b) => Number(b.status === "candidate") - Number(a.status === "candidate"));
-  const report = ["# Function audit", "", "Read-only heuristic triage. A candidate is not a confirmed bug; no_findings does not establish equivalence.", "", `Coverage: ${JSON.stringify(counts)}`, "", "| Function | Source | PS2 address | Status | Signals |", "|---|---|---|---|---|", ...rows.map(r => `| ${markdown(r.name)} | ${r.path}:${r.line} | ${r.address ?? ""} | ${r.status} | ${markdown(r.findings.length ? r.findings.slice(0, 8).map(f => f.detail).join(" ") : r.reviewedFindings.map(review => `Reviewed: ${review.reason}`).join(" "))} |`)];
-  await writeFile(join(out, "report.md"), report.join("\n") + "\n");
+  await atomicJson(join(out, "report.json"), { schema: 1, filtersVersion: 5, numericMacroCount: context.constants.size - (context.enumNames?.size ?? 0), numericEnumCount: context.enumNames?.size ?? 0, buildMacros: buildMacros?.describe(repo) ?? null, program: identity.program, counts, results });
+  const reports = renderAuditReports(results, counts);
+  await writeFile(join(out, "report.md"), reports.report);
+  await writeFile(join(out, "coverage.md"), reports.coverage);
+  await writeFile(join(out, "reviewed.md"), reports.reviewed);
   console.log(`Report: ${join(out, "report.md")}\n${JSON.stringify(counts)}`);
 }
 
