@@ -6,6 +6,8 @@
 #include "../../DebugMenu/src/DebugSaveCheckpoint.h"
 #include "edFile/edFilePath.h"
 #include "SaveManagement.h"
+#include "Settings.h"
+#include "edFile/ps2/_edFileFilerMCard.h"
 #include "LevelScheduler.h"
 #include "edFile/edFileCRC32.h"
 #include <iterator>
@@ -13,6 +15,59 @@
 #include <cstring>
 #include <cstdlib>
 #include <vector>
+
+TEST(WindowsSettings, SavesValidHeaderAndReloadsOptions)
+{
+	// PS2 comparisons: SaveManagementBootCheck 0x002f3550, save_settings 0x002f4880.
+	const auto directory = std::filesystem::current_path() /
+		("kya-options-test-" + std::to_string(GetCurrentProcessId()));
+	std::filesystem::create_directories(directory);
+	edCFiler_MemoryCard filer{};
+	ASSERT_TRUE(filer.initialize());
+	filer.pDriveName_0x0 = "<OPTIONS>";
+	edFilerList.add_filer(&filer);
+	struct Cleanup {
+		edCFiler* filer;
+		std::filesystem::path directory;
+		~Cleanup() {
+			edFilerList.remove_filer(filer);
+			std::filesystem::remove(directory / "settings.dat");
+			std::filesystem::remove(directory);
+		}
+	} cleanup{ &filer, directory };
+
+	std::vector<char> payload(CSettings::GetMaxSaveBufferSize(), 0);
+	CSettings options{};
+	options.musicVolume = 3;
+	options.sfxVolume = 9;
+	options.bEnableVibration = true;
+	options.bEnableSubtitles = true;
+	options.bWidescreen = 1;
+	ASSERT_NE(options.FUN_003c87f0(reinterpret_cast<SettingsSaveData*>(payload.data())), 0u);
+	CSaveManagement writer{};
+	std::strcpy(writer.memCardDriveString, "<OPTIONS>");
+	std::strcpy(writer.memCardPathEnd, "0:\\");
+	std::strcpy(writer.serialNumber, directory.filename().string().c_str());
+	writer.settingsSize_0x40 = static_cast<int>(payload.size());
+	writer.pSettings_0x38 = reinterpret_cast<SettingsSaveData*>(payload.data());
+	ASSERT_TRUE(writer.save_settings());
+	EXPECT_EQ(std::filesystem::file_size(directory / "settings.dat"), sizeof(SaveDataHeader) + payload.size());
+	EXPECT_EQ(writer.saveDataHeader.initialBlockSize, payload.size());
+	EXPECT_EQ(writer.saveDataHeader.headerCrc, edFileComputeCRC32(&writer.saveDataHeader.headerSize, 0x14));
+
+	// Reopen with a fresh buffer, as on the next launch.
+	CSaveManagement reader = writer;
+	std::vector<char> loaded(payload.size(), 0);
+	reader.pSettings_0x38 = reinterpret_cast<SettingsSaveData*>(loaded.data());
+	ASSERT_TRUE(reader.load_settings());
+	CSettings restored{};
+	ASSERT_TRUE(restored.LoadFromBuffer(loaded.data()));
+	EXPECT_EQ(restored.musicVolume, 3u);
+	EXPECT_EQ(restored.sfxVolume, 9u);
+	EXPECT_TRUE(restored.bEnableVibration);
+	EXPECT_TRUE(restored.bEnableSubtitles);
+	EXPECT_EQ(restored.bWidescreen, 1);
+}
 
 namespace
 {

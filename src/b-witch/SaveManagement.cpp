@@ -54,32 +54,35 @@ char gDumpedSettings[256] = {0x53, 0x47, 0x54, 0x53, 0x03, 0x00, 0x00, 0x00, 0x0
 
 void SaveManagementBootCheck(void)
 {
+	// PS2: 0x002f3550; allocation flow checked against 0x002f3584-0x002f360c.
 	bool bVar1;
 	int iVar2;
 	uint uVar3;
-	long lVar4;
-	uint uVar5;
+	uint uVar4;
 	char acStack512[512];
 
 	BootData_GetResource("icon.sys", &gSaveManagementInfoIconSys);
 	BootData_GetResource("KYA.ICO", &gSaveManagementInfoFileIco);
 
+	iVar2 = CLevelScheduler::SaveGame_GetMaxBufferSize();
 	gSaveManagement.pBigAlloc_0x34 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
-	gSaveManagement.gameSaveMaxBufferSize = CLevelScheduler::SaveGame_GetMaxBufferSize();
+	gSaveManagement.gameSaveMaxBufferSize = iVar2;
 
 	if (gSaveManagement.pBigAlloc_0x34 == (SaveBigAlloc*)0x0) {
 		gSaveManagement.gameSaveMaxBufferSize = 0;
 	}
 
-	gSaveManagement.pSettings_0x38 = (SettingsSaveData*)edMemAlloc(TO_HEAP(H_MAIN), CSettings::GetMaxSaveBufferSize());
+	iVar2 = CSettings::GetMaxSaveBufferSize();
+	gSaveManagement.pSettings_0x38 = (SettingsSaveData*)edMemAlloc(TO_HEAP(H_MAIN), iVar2);
 	if (gSaveManagement.pSettings_0x38 == (SettingsSaveData*)0x0) {
 		gSaveManagement.pSettings_0x38 = (SettingsSaveData*)0x0;
+		iVar2 = gSaveManagement.settingsSize_0x40;
 	}
-
-	gSaveManagement.settingsSize_0x40 = gSaveManagement.settingsSize_0x40;
-	uVar5 = gSaveManagementInfoIconSys.size + 0x3ff;
+	gSaveManagement.settingsSize_0x40 = iVar2;
+	uVar4 = gSaveManagementInfoIconSys.size + 0x3ff;
 	uVar3 = gSaveManagementInfoFileIco.size + 0x3ff;
-	sprintf(gSaveManagementSaveGameSize, "%d KB", ((uVar5 >> 10) + 0x10b + (uVar3 >> 10) + (CSettings::GetMaxSaveBufferSize() + 0x41bU >> 10)) * 0x400 + 0x3ff >> 10);
+	iVar2 = CSettings::GetMaxSaveBufferSize();
+	sprintf(gSaveManagementSaveGameSize, "%d KB", ((uVar4 >> 10) + 0x10b + (uVar3 >> 10) + (iVar2 + 0x41bU >> 10)) * 0x400 + 0x3ff >> 10);
 
 	edTextResources.TextAdd("SAVESIZE", gSaveManagementSaveGameSize);
 	edFilePathSplit(gSaveManagement.memCardDriveString, gSaveManagement.memCardPathEnd, (char*)0x0, (char*)0x0, "<mc>0:\\");
@@ -92,11 +95,13 @@ void SaveManagementBootCheck(void)
 		edStrCopy(gSaveManagement.serialNumber, "BASLUS-20440-KYA");
 	}
 
-	if ((gSaveManagement.boot_check_load()) != 0) {
+	bVar1 = gSaveManagement.boot_check_load();
+	if (bVar1 != false) {
 		gSaveManagement.field_0x0 = 0;
-		const int deviceRoomCheckResult = gSaveManagement.test_device_has_enough_room();
-		if (((deviceRoomCheckResult == 3) || (deviceRoomCheckResult == 2)) && (gSaveManagement.load_settings() != false)) {
-			if (gSettings.LoadFromBuffer(gSaveManagement.pSettings_0x38) != false) {
+		iVar2 = gSaveManagement.test_device_has_enough_room();
+		if (((iVar2 == 3) || (iVar2 == 2)) && (bVar1 = gSaveManagement.load_settings(), bVar1 != false)) {
+			bVar1 = gSettings.LoadFromBuffer(gSaveManagement.pSettings_0x38);
+			if (bVar1 != false) {
 				gSettings.SetSettingsToGlobal();
 			}
 			gSaveManagement.field_0x0 = 1;
@@ -1565,10 +1570,17 @@ bool CSaveManagement::save_settings()
 		(this->saveDataHeader).hash = 0x4544454e;
 		(this->saveDataHeader).headerSize = 0x1c;
 
-		(this->saveDataHeader).headerCrc = edFileComputeCRC32(&(this->saveDataHeader).headerSize, sizeof(SaveDataHeader));
+		// PS2 save_settings (0x002f4880) checksums the five words after headerCrc.
+		(this->saveDataHeader).headerCrc = edFileComputeCRC32(&(this->saveDataHeader).headerSize, 0x14);
 		bVar1 = edFileWrite(pFile, &this->saveDataHeader, 0x1c);
 		if (bVar1 != false) {
+#ifdef PLATFORM_WIN
+			// The PS2 routine writes an extra 0x1c bytes beyond the allocation.
+			// Write only the payload on Windows, matching file_exists and load_settings.
+			bVar1 = edFileWrite(pFile, this->pSettings_0x38, this->settingsSize_0x40);
+#else
 			bVar1 = edFileWrite(pFile, this->pSettings_0x38, CSettings::GetMaxSaveBufferSize() + 0x1c);
+#endif
 			if (bVar1 != false) {
 				bSuccess = true;
 			}
