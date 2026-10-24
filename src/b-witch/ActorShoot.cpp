@@ -166,8 +166,8 @@ StateConfig* CActorShoot::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;
 
-	if (state < 5) {
-		pStateConfig = CActor::GetStateCfg(state);
+	if (state < 6) {
+		pStateConfig = CActorAutonomous::GetStateCfg(state);
 	}
 	else {
 		assert((state - 6) < 10);
@@ -218,7 +218,8 @@ int CActorShoot::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 	else {
 		if (msg != 2) {
-			iVar3 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+			// PS2 0x0039e140: preserve autonomous messages, including trap capture (0x3f).
+			iVar3 = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
 			return iVar3;
 		}
 

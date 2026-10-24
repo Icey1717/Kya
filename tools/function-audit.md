@@ -84,6 +84,15 @@ version 5 queue of 2,148 candidates, found a missing quaternion restoration in
 explained by helpers, virtual dispatch, allocator naming and Windows bookkeeping.
 The report records PS2 instruction evidence; no game fixes or exceptions were added.
 
+The [orchestrated audit](../docs/function-audit/README.md), started on 24 October,
+reviews the remaining queue with three Luna agents. Its refreshed comparison has
+2,144 candidate functions. The index tracks completed checkpoints and unresolved
+signals; each function has a separate report with instruction evidence and a
+suggested fix where supported. These reviews do not apply game fixes or suppress
+the deterministic findings. See the linked original-program integrity report:
+three switch instructions and seventeen data words in the selected Ghidra program
+differ from the executable supplied for verification.
+
 ## Reviewing the remaining queue
 
 Use the report's result IDs to select packets. For example, this lists candidates

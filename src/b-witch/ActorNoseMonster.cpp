@@ -377,7 +377,7 @@ StateConfig* CActorNoseMonster::GetStateCfg(int state)
 	StateConfig* pStateConfig;
 
 	if (state < 5) {
-		pStateConfig = CActor::GetStateCfg(state);
+		pStateConfig = CActorAutonomous::GetStateCfg(state);
 	}
 	else {
 		pStateConfig = _gStateCfg_NoseMonster + state + -5;

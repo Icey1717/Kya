@@ -381,7 +381,7 @@ CBehaviour* CActorCompanion::BuildBehaviour(int behaviourType)
 		pBehaviour = &this->behaviourCompanion;
 	}
 	else {
-		pBehaviour = CActor::BuildBehaviour(behaviourType);
+		pBehaviour = CActorAutonomous::BuildBehaviour(behaviourType);
 	}
 
 	return pBehaviour;

@@ -50,7 +50,7 @@ CBehaviour* CActorHunter::BuildBehaviour(int behaviourType)
 		pBehaviour = &this->behaviourWatch;
 	}
 	else {
-		pBehaviour = CActor::BuildBehaviour(behaviourType);
+		pBehaviour = CActorAutonomous::BuildBehaviour(behaviourType);
 	}
 
 	return pBehaviour;
@@ -68,12 +68,13 @@ StateConfig* CActorHunter::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;
 
-	if (state < 5) {
-		pStateConfig = CActorMovable::GetStateCfg(state);
+	// PS2 0x003ba2b0: state 5 belongs to CBehaviourCatchByTrap.
+	if (state < 6) {
+		pStateConfig = CActorAutonomous::GetStateCfg(state);
 	}
 	else {
-		assert((state - 5) < 5);
-		pStateConfig = _gStateCfg_HTR + state + -5;
+		assert((state - 6) < 5);
+		pStateConfig = _gStateCfg_HTR + state + -6;
 	}
 
 	return pStateConfig;
