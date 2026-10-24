@@ -3990,8 +3990,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg != 9) {
 			if (msg == 8) {
-				IMPLEMENTATION_GUARD(
-					CLevelScheduler::FUN_002dadd0(CLevelScheduler::gThis, (int)pMsgParam);)
+				CLevelScheduler::gThis->Money_TakeFromBet((int)pMsgParam);
 			}
 			else {
 				if (msg == 0x8b) {
@@ -4372,8 +4371,8 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 	float fVar12;
 	edF32VECTOR4 eStack112;
 	edF32VECTOR4 eStack96;
-	undefined auStack80[76];
-	//e_ed_event_prim3d_type eStack4;
+	edF32MATRIX4 inverseZoneMatrix;
+	e_ed_event_prim3d_type primitiveType;
 	int iVar9;
 
 	CPlayerInput* pInputManager;
@@ -4506,27 +4505,25 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 			iVar9 = 1;
 			break;
 		case EVENT_PRIM_ZONE_MESSAGE:
-			IMPLEMENTATION_GUARD(
 			if (levelId == 0x7f) {
-				peVar7 = (edF32MATRIX4*)
-					edEventGetChunkZonePrimitive
-					((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
-						param_2->pEventCollider->field_0x1c->pZone, 0, &eStack4);
-				edF32Matrix4GetInverseGaussSoft((edF32MATRIX4*)auStack80, peVar7);
-				edF32Vector4NormalizeHard(&eStack112, (edF32VECTOR4*)(auStack80 + 0x10));
+				ed_event* pEvent = LOAD_POINTER_CAST(ed_event*, param_2->pEventCollider->field_0x1c);
+				peVar7 = edEventGetChunkZonePrimitive(CScene::ptable.g_EventManager_006f5080->activeChunkId,
+					LOAD_POINTER_CAST(ed_zone_3d*, pEvent->pZone), 0, &primitiveType);
+				edF32Matrix4GetInverseGaussSoft(&inverseZoneMatrix, peVar7);
+				edF32Vector4NormalizeHard(&eStack112, &inverseZoneMatrix.rowY);
 				fVar12 = this->dynamic.horizontalLinearSpeed;
-				fVar11 = 2.0;
-				if (2.0 <= fVar12) {
+				fVar11 = 2.0f;
+				if (2.0f <= fVar12) {
 					fVar11 = fVar12;
 				}
 				pTVar8 = GetTimer();
-				edF32Vector4ScaleHard((fVar11 * -1.5) / pTVar8->cutsceneDeltaTime, &eStack96, &eStack112);
+				edF32Vector4ScaleHard((fVar11 * -1.5f) / pTVar8->cutsceneDeltaTime, &eStack96, &eStack112);
 				v0 = this->dynamicExt.aImpulseVelocities;
 				edF32Vector4AddHard(v0, v0, &eStack96);
 				fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 				this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar11;
 			}
-			iVar9 = 0;)
+			iVar9 = 0;
 		}
 	}
 	return iVar9;

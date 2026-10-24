@@ -162,7 +162,7 @@ CBehaviourCinematic* NewPool_CBehaviourCinematic(int count)
 			pPVar4 = g_CBehaviourCinematic_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = 0x20;
-				pPVar5->pValue = new CBehaviourCinematic[pPVar5->size];
+				pPVar5->pValue = NEW_ARRAY_POLYMORPHIC(CBehaviourCinematic, pPVar5->size);
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -172,7 +172,7 @@ CBehaviourCinematic* NewPool_CBehaviourCinematic(int count)
 			pPVar4 = g_CBehaviourCinematic_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = count;
-				pPVar5->pValue = new CBehaviourCinematic[pPVar5->size];
+				pPVar5->pValue = NEW_ARRAY_POLYMORPHIC(CBehaviourCinematic, pPVar5->size);
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -633,7 +633,7 @@ void FreeAllAllocators()
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				if (pPVar5->pValue != (void*)0x0) {
 					CBehaviourCinematic* pOriginalPtr = (CBehaviourCinematic*)pPVar5->pValue;
-					delete[] pOriginalPtr;
+					DELETE_ARRAY_POLYMORPHIC(CBehaviourCinematic, pOriginalPtr, pPVar5->size);
 				}
 
 				delete pPVar5;

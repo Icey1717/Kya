@@ -278,14 +278,10 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 	float fVar10;
 	float fVar11;
 	edF32VECTOR4 local_70;
-	float local_60;
-	float local_5c;
-	float local_58;
-	float local_54;
+	edF32VECTOR4 effectPosition;
 	CActorMovParamsIn movParamsIn;
 	CActorMovParamsOut movParamsOut;
-	int local_8;
-	int* local_4;
+	CFxHandle catchEffect;
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
 		movParamsOut.flags = 0;
@@ -335,43 +331,27 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 			this->pOwner->SetState(nextState, -1);
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			if ((ConditionedOperationArray*)(pCVar9 + 3) != (ConditionedOperationArray*)0x0) {
-				ConditionedOperationArray::Perform((ConditionedOperationArray*)(pCVar9 + 3));
-				pCVar4 = this->pCaughtActor;
-				pCVar4->flags = pCVar4->flags & 0xffffff7f;
-				pCVar4->flags = pCVar4->flags | 0x20;
-				CActor::EvaluateDisplayState(pCVar4);
-				pCVar4 = this->pCaughtActor;
-				pCVar4->flags = pCVar4->flags & 0xfffffffd;
-				pCVar4->flags = pCVar4->flags | 1;
-			}
+			CBehaviourCatchByTrap* pCatchByTrap = static_cast<CBehaviourCatchByTrap*>(pCVar9);
+			pCatchByTrap->condOpArray.Perform();
+			pCVar4 = this->pCaughtActor;
+			pCVar4->flags = pCVar4->flags & 0xffffff7f;
+			pCVar4->flags = pCVar4->flags | 0x20;
+			pCVar4->EvaluateDisplayState();
+			pCVar4 = this->pCaughtActor;
+			pCVar4->flags = pCVar4->flags & 0xfffffffd;
+			pCVar4->flags = pCVar4->flags | 1;
+
 			if (this->catchEffectId != 0xffffffff) {
-				local_8 = 0;
-				local_4 = (int*)0x0;
-				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->catchEffectId, 0xffffffffffffffff);
-				if (((local_4 == (int*)0x0) || (local_8 == 0)) || (bVar6 = true, local_8 != local_4[6])) {
-					bVar6 = false;
-				}
-				if (bVar6) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&catchEffect, this->catchEffectId, FX_MATERIAL_SELECTOR_NONE);
+				if (catchEffect.IsValid()) {
 					pOwningActor = this->pOwner;
-					local_60 = pOwningActor->currentLocation.x;
-					local_58 = pOwningActor->currentLocation.z;
-					local_54 = pOwningActor->currentLocation.w;
-					local_5c = pOwningActor->currentLocation.y + 1.58f;
-					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-						local_4[0xc] = (int)local_60;
-						local_4[0xd] = (int)local_5c;
-						local_4[0xe] = (int)local_58;
-						local_4[0xf] = (int)local_54;
-					}
-					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
-						(**(code**)(*local_4 + 0x10))(0, 0);
-					}
+					effectPosition = pOwningActor->currentLocation;
+					effectPosition.y = effectPosition.y + 1.58f;
+					catchEffect.SetPosition(&effectPosition);
+					catchEffect.Start();
 				}
 			}
-			(*((this->pOwner->base).base.pVTable)->SetState)(this->pOwner, param_2, -1);)
+			this->pOwner->SetState(param_2, -1);
 		}
 	}
 

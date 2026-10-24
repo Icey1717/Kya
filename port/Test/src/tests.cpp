@@ -26,9 +26,33 @@
 #include "port/NativeProjection.h"
 #include "CameraViewManager.h"
 #include "CinematicManager.h"
+#include "Actor_Cinematic.h"
+#include "PoolAllocators.h"
 #include "IniFile.h"
 #include "ed3D.h"
 #include "ed3D/ed3DSceneManager.h"
+
+TEST(CinematicBehaviourPool, ConstructsAndFreesChainedBlocksAcrossLevelLoads)
+{
+	// PS2: NewPool_CBehaviourCinematic 0x003604a0, ctor 0x00360650,
+	// destructor 0x0011df90, FreeAllAllocators 0x00360de0.
+	for (int level = 0; level < 2; ++level) {
+		CBehaviourCinematic* pFirst = NewPool_CBehaviourCinematic(1);
+		CBehaviourCinematic* pRemaining = NewPool_CBehaviourCinematic(31);
+		EXPECT_EQ(pRemaining, pFirst + 1);
+		EXPECT_EQ(pFirst->leaveCinematicBehaviourId, -1);
+		EXPECT_EQ(pRemaining[30].leaveCinematicBehaviourId, -1);
+
+		// Exercise a partially used default block and the large-block branch.
+		CBehaviourCinematic* pNext = NewPool_CBehaviourCinematic(1);
+		CBehaviourCinematic* pLarge = NewPool_CBehaviourCinematic(33);
+		EXPECT_EQ(pNext->leaveCinematicBehaviourId, -1);
+		EXPECT_EQ(pLarge[32].leaveCinematicBehaviourId, -1);
+
+		FreeAllAllocators();
+		FreeAllAllocators();
+	}
+}
 
 TEST(IniFile, ReadsHexDigitsWithoutWideSignedShifts)
 {
