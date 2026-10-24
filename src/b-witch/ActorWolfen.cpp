@@ -508,7 +508,8 @@ void CActorWolfen::Init()
 	this->exorcisedState = 1;
 	this->nbConsumedMagicForExorcism = 0;
 	pCVar4 = GetLifeInterfaceOther();
-	//pCVar4->field_0x10 = this;
+	// PS2 Init (0x0017dc50): owner assignment at 0x0017e150.
+	pCVar4->field_0x10 = this;
 	ClearLocalData();
 	return;
 }

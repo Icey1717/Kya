@@ -212,6 +212,8 @@ public:
 	CWayPoint* GetWindWayPoint();
 	edF32VECTOR4* GetWindImpulseVelocity();
 
+	int StateAutSquashed(float param_1, float param_2, CActor* param_4, int param_5, int param_6);
+
 	float field_0x2e4;
 
 	CLifeInterface lifeInterface;

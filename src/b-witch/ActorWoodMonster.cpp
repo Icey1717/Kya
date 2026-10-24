@@ -75,9 +75,9 @@ void CActorWoodMonster::StateWoodMonsterStand(CBehaviourWoodMonsterGet* pBehavio
 	CActorHero* pHero = CActorHero::_gThis;
 	CActorConeInfluence coneInfluence;
 
-	coneInfluence.field_0x8 = this->field_0x160.x;
-	coneInfluence.field_0x0 = this->field_0x160.z;
-	coneInfluence.field_0x4 = this->field_0x160.z * 1.5f;
+	coneInfluence.height = this->field_0x160.x;
+	coneInfluence.radiusMin = this->field_0x160.z;
+	coneInfluence.radiusMax = this->field_0x160.z * 1.5f;
 	coneInfluence.field_0xc = this->field_0x160.w;
 	coneInfluence.field_0x10 = this->field_0x160.w * 0.5f;
 	coneInfluence.field_0x14 = 2;
@@ -104,9 +104,9 @@ void CActorWoodMonster::StateWoodMonsterAttract()
 	CActorConeInfluence coneInfluence;
 	_msg_enter_shop shopParams;
 
-	coneInfluence.field_0x8 = this->field_0x160.x;
-	coneInfluence.field_0x0 = this->field_0x160.z;
-	coneInfluence.field_0x4 = this->field_0x160.z * 1.5f;
+	coneInfluence.height = this->field_0x160.x;
+	coneInfluence.radiusMin = this->field_0x160.z;
+	coneInfluence.radiusMax = this->field_0x160.z * 1.5f;
 	coneInfluence.field_0xc = this->field_0x160.w;
 	coneInfluence.field_0x10 = this->field_0x160.w * 0.5f;
 	coneInfluence.field_0x14 = 2;

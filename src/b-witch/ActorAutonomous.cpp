@@ -2074,6 +2074,47 @@ edF32VECTOR4* CActorAutonomous::GetWindImpulseVelocity()
 	}
 }
 
+
+int CActorAutonomous::StateAutSquashed(float param_1, float param_2, CActor* param_4, int param_5, int param_6)
+{
+	bool bVar3;
+	bool bVar4;
+	_msg_impulse_params impulseParams;
+
+	this->dynamic.speed = 0.0f;
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	bVar4 = false;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if ((param_5 == 0) && (param_1 < this->timeInAir)) {
+		bVar4 = true;
+		param_5 = 1;
+	}
+
+	if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
+		if (param_5 == 0) {
+			bVar4 = true;
+			param_5 = 1;
+		}
+
+		SetState(param_6, -1);
+	}
+
+	if (bVar4) {
+		impulseParams.field_0x0 = gF32Vector4UnitY;
+		impulseParams.field_0x10 = param_2;
+		DoMessage(param_4, MESSAGE_IMPULSE, &impulseParams);
+	}
+
+	return param_5;
+}
+
 // Should be in: D:/Projects/b-witch/ActorAutonomous.h
 void CActorAutonomous::LifeRestore()
 {

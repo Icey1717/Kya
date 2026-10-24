@@ -32,6 +32,8 @@ public:
 	virtual void Manage();
 	virtual void Draw();
 
+	void FUN_00404a70(bool param_2);
+
 	int field_0x160;
 	edF32VECTOR2* field_0x164;
 	int field_0x168;

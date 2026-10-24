@@ -214,6 +214,8 @@ public:
 	void BehaviourProjectileLavaBall_InitState(int newState, CBehaviourProjectileLavaBall* pBehaviour);
 	void BehaviourProjectileLavaBall_Manage(CBehaviourProjectileLavaBall* pBehaviour);
 
+	void BehaviourProjectilePortable_Manage(CBehaviourProjectilePortable* pBehaviour);
+
 	void AppearToDie();
 	void GoToSleep();
 	void Die();
@@ -229,6 +231,9 @@ public:
 	void StateFlying(float param_1, uint dynFlags, int nextState, int param_5);
 	void StateFlyingDirected(ulong flags, int param_3);
 	void StateDie(uint dynFlags, int param_3, int param_4);
+
+	void StatePortableFlying(float param_1, uint dynFlags, int nextState);
+	void StatePortableLiving(uint dynFlags, CBehaviourProjectilePortable* pBehaviour);
 
 	void HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int explode, int param_5);
 

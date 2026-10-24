@@ -164,3 +164,23 @@ void CActorWantedZoo::Draw()
 
 	return;
 }
+
+void CActorWantedZoo::FUN_00404a70(bool param_2)
+{
+	if (this->field_0x238 != param_2) {
+		if (param_2 == 0) {
+			this->flags = this->flags & 0xffffff5f;
+			EvaluateDisplayState();
+		}
+		else {
+			this->flags = this->flags | 0x80;
+			this->flags = this->flags & 0xffffffdf;
+			EvaluateDisplayState();
+		}
+
+		this->field_0x238 = param_2;
+	}
+
+	return;
+}
+

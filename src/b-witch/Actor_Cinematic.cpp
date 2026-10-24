@@ -10,38 +10,8 @@
 #include "ActorFactory.h"
 #include "ActorHero.h"
 #include "LevelScheduler.h"
+#include "ActorWantedZoo.h"
 
-
-CActorCinematic::CActorCinematic()
-{
-	//CSound* pSound;
-	//
-	//CActor::CActor(this);
-	//this->pVTable = &_vt;
-	//pSound = &(this->behaviourCinematic).cinActor.soundStruct;
-	//(this->behaviourCinematic).pVtable = &CBehaviour::_vt;
-	//(this->behaviourCinematic).pVtable = &CBehaviourCinematic::_vt;
-	//(this->behaviourCinematic).cinActor.pVTable = &edCinActorInterface::_vt;
-	//(this->behaviourCinematic).cinActor.pVTable = (undefined*)&CBWCinActor::_vt;
-	//(this->behaviourCinematic).cinActor.pParent = (CActor*)0x0;
-	//CSound::CSound(pSound);
-	//pSound->vt = &CSoundSample::_vt;
-	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct = 0;
-	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x4 = 0;
-	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x8 = 0;
-	//(this->behaviourCinematic).cinActor.soundInternalStruct.SoundStructPtr = (CSound*)0x0;
-	//(this->behaviourCinematic).cinActor.soundInternalStruct.SoundID = 0;
-	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x14 = 0;
-	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x18 = 0.0;
-	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x1c = 0.0;
-	//(this->behaviourCinematic).cinActor.usedInInstCreate = -1;
-	//(this->behaviourCinematic).cinActor.field_0xbc = 0;
-	//(this->behaviourCinematic).cinActor.field_0xc0 = 0;
-	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
-	//(this->behaviourCinematic).field_0x140 = -1;
-
-	return;
-}
 
 ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 {
@@ -292,6 +262,13 @@ void CActorCinematic::CinematicMode_Leave(int behaviourId)
 	return;
 }
 
+CBehaviourCinematic::CBehaviourCinematic()
+{
+	this->leaveCinematicBehaviourId = -1;
+
+	return;
+}
+
 void CBehaviourCinematic::Create(ByteCode* pByteCode)
 {
 	int iVar1;
@@ -320,52 +297,52 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 	if (physLayer != -1) {
 		pActor = this->pOwner;
 		physLayer = this->pOwner->GetIdMacroAnim(0x3);
-		this->field_0x144.macroAnimId = physLayer;
+		this->emotionInfo.macroAnimId = physLayer;
 
-		if ((this->field_0x144).macroAnimId != -1) {
-			(this->field_0x144).field_0x8 = -1;
-			(this->field_0x144).field_0x4 = -1;
-			(this->field_0x144).field_0x1c = 0.0f;
-			(this->field_0x144).field_0xc = 0.0f;
-			(this->field_0x144).field_0x10 = 0.0f;
-			(this->field_0x144).field_0x14 = 0.0f;
-			(this->field_0x144).field_0x18 = 1.0f;
+		if ((this->emotionInfo).macroAnimId != -1) {
+			(this->emotionInfo).field_0x8 = -1;
+			(this->emotionInfo).field_0x4 = -1;
+			(this->emotionInfo).field_0x1c = 0.0f;
+			(this->emotionInfo).field_0xc = 0.0f;
+			(this->emotionInfo).field_0x10 = 0.0f;
+			(this->emotionInfo).field_0x14 = 0.0f;
+			(this->emotionInfo).field_0x18 = 1.0f;
 
-			if ((this->field_0x144).macroAnimId != -1) {
-				(this->field_0x144).field_0x28 = 1.0f;
-				(this->field_0x144).field_0x2c = 2.0f;
-				(this->field_0x144).field_0x24 = 0.0f;
-				(this->field_0x144).field_0x30 = 0.3f;
+			if ((this->emotionInfo).macroAnimId != -1) {
+				(this->emotionInfo).field_0x28 = 1.0f;
+				(this->emotionInfo).field_0x2c = 2.0f;
+				(this->emotionInfo).field_0x24 = 0.0f;
+				(this->emotionInfo).field_0x30 = 0.3f;
 
-				if (((this->field_0x144).macroAnimId != -1) && (physLayer = (this->field_0x144).field_0x4, physLayer != 0)) {
-					(this->field_0x144).field_0x8 = physLayer;
-					(this->field_0x144).field_0x4 = 0;
-					(this->field_0x144).field_0x1c = 0.0f;
-					(this->field_0x144).field_0x20 = 0.5f;
+				if (((this->emotionInfo).macroAnimId != -1) && (physLayer = (this->emotionInfo).field_0x4, physLayer != 0)) {
+					(this->emotionInfo).field_0x8 = physLayer;
+					(this->emotionInfo).field_0x4 = 0;
+					(this->emotionInfo).field_0x1c = 0.0f;
+					(this->emotionInfo).field_0x20 = 0.5f;
 
-					if ((this->field_0x144).field_0x4 == -1) {
+					if ((this->emotionInfo).field_0x4 == -1) {
 						fVar3 = 0.0f;
 					}
 					else {
 						fVar3 = 0.3f;
 
-						if ((this->field_0x144).field_0x8 == -1) {
-							(this->field_0x144).field_0x10 = 0.0f;
+						if ((this->emotionInfo).field_0x8 == -1) {
+							(this->emotionInfo).field_0x10 = 0.0f;
 							fVar3 = 0.3f;
 						}
 					}
 
-					if ((this->field_0x144).macroAnimId != -1) {
-						(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
-						(this->field_0x144).field_0x14 = fVar3;
-						(this->field_0x144).field_0x18 = 0.5f;
+					if ((this->emotionInfo).macroAnimId != -1) {
+						(this->emotionInfo).field_0xc = (this->emotionInfo).field_0x10;
+						(this->emotionInfo).field_0x14 = fVar3;
+						(this->emotionInfo).field_0x18 = 0.5f;
 					}
 				}
 			}
 
 			pAnimationController = pActor->pAnimationController;
 			if (pAnimationController->IsLayerActive(2) == false) {
-				this->field_0x144.macroAnimId = -1;
+				this->emotionInfo.macroAnimId = -1;
 			}
 			else {
 				physLayer = pAnimationController->PhysicalLayerFromLayerId(2);
@@ -434,33 +411,33 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 
 	this->field_0x178 = 0;
 
-	bool bVar3 = this->field_0x144.macroAnimId != -1;
+	bool bVar3 = this->emotionInfo.macroAnimId != -1;
 	if (bVar3) {
-		if ((bVar3) && ((this->field_0x144).field_0x4 != -1)) {
-			(this->field_0x144).field_0x8 = this->field_0x144.field_0x4;
-			(this->field_0x144).field_0x4 = -1;
-			(this->field_0x144).field_0x1c = 0.0f;
-			(this->field_0x144).field_0x20 = 0.5f;
+		if ((bVar3) && ((this->emotionInfo).field_0x4 != -1)) {
+			(this->emotionInfo).field_0x8 = this->emotionInfo.field_0x4;
+			(this->emotionInfo).field_0x4 = -1;
+			(this->emotionInfo).field_0x1c = 0.0f;
+			(this->emotionInfo).field_0x20 = 0.5f;
 
-			if ((this->field_0x144).field_0x4 == -1) {
+			if ((this->emotionInfo).field_0x4 == -1) {
 				fVar4 = 0.0f;
 			}
 			else {
 				fVar4 = 1.0f;
-				if ((this->field_0x144).field_0x8 == -1) {
-					(this->field_0x144).field_0x10 = 0.0f;
+				if ((this->emotionInfo).field_0x8 == -1) {
+					(this->emotionInfo).field_0x10 = 0.0f;
 					fVar4 = 1.0f;
 				}
 			}
 
-			if ((this->field_0x144).macroAnimId != -1) {
-				(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
-				(this->field_0x144).field_0x14 = fVar4;
-				(this->field_0x144).field_0x18 = 0.5f;
+			if ((this->emotionInfo).macroAnimId != -1) {
+				(this->emotionInfo).field_0xc = (this->emotionInfo).field_0x10;
+				(this->emotionInfo).field_0x14 = fVar4;
+				(this->emotionInfo).field_0x18 = 0.5f;
 			}
 		}
 
-		(this->field_0x144).field_0x24 = -1.0f;
+		(this->emotionInfo).field_0x24 = -1.0f;
 	}
 
 	return;
@@ -482,33 +459,33 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	CAnimation* pAnimation;
 	int iVar1;
 
-	bVar3 = (this->field_0x144).macroAnimId != -1;
+	bVar3 = (this->emotionInfo).macroAnimId != -1;
 	if (bVar3) {
-		if ((bVar3) && (iVar1 = (this->field_0x144).field_0x4, iVar1 != -1)) {
-			(this->field_0x144).field_0x8 = iVar1;
-			(this->field_0x144).field_0x4 = -1;
-			(this->field_0x144).field_0x1c = 0.0f;
-			(this->field_0x144).field_0x20 = 0.5f;
+		if ((bVar3) && (iVar1 = (this->emotionInfo).field_0x4, iVar1 != -1)) {
+			(this->emotionInfo).field_0x8 = iVar1;
+			(this->emotionInfo).field_0x4 = -1;
+			(this->emotionInfo).field_0x1c = 0.0f;
+			(this->emotionInfo).field_0x20 = 0.5f;
 
-			if ((this->field_0x144).field_0x4 == -1) {
+			if ((this->emotionInfo).field_0x4 == -1) {
 				fVar7 = 0.0f;
 			}
 			else {
 				fVar7 = 1.0f;
-				if ((this->field_0x144).field_0x8 == -1) {
-					(this->field_0x144).field_0x10 = 0.0f;
+				if ((this->emotionInfo).field_0x8 == -1) {
+					(this->emotionInfo).field_0x10 = 0.0f;
 					fVar7 = 1.0f;
 				}
 			}
 
-			if ((this->field_0x144).macroAnimId != -1) {
-				(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
-				(this->field_0x144).field_0x14 = fVar7;
-				(this->field_0x144).field_0x18 = 0.5f;
+			if ((this->emotionInfo).macroAnimId != -1) {
+				(this->emotionInfo).field_0xc = (this->emotionInfo).field_0x10;
+				(this->emotionInfo).field_0x14 = fVar7;
+				(this->emotionInfo).field_0x18 = 0.5f;
 			}
 		}
 
-		(this->field_0x144).field_0x24 = -1.0f;
+		(this->emotionInfo).field_0x24 = -1.0f;
 	}
 
 	if ((this->cinActor).pAltModelManager != (ed_g3d_manager*)0x0) {
@@ -687,7 +664,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	switch (param_2) {
 	case 6:
 		IMPLEMENTATION_GUARD(
-		bVar3 = this->field_0x144 != -1;
+		bVar3 = this->emotionInfo != -1;
 		if (bVar3) {
 			if ((bVar3) && (this->field_0x148 != -1)) {
 				this->field_0x14c = this->field_0x148;
@@ -704,7 +681,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 						fVar4 = 1.0;
 					}
 				}
-				if (this->field_0x144 != -1) {
+				if (this->emotionInfo != -1) {
 					this->field_0x150 = this->field_0x154;
 					this->field_0x158 = fVar4;
 					this->field_0x15c = 0.5;
@@ -743,7 +720,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 			iVar2 = 4;
 		}
 		IMPLEMENTATION_GUARD(
-		bVar1 = this->field_0x144 != -1;
+		bVar1 = this->emotionInfo != -1;
 		bVar3 = true;
 		if (bVar1) {
 			if ((bVar1) && (this->field_0x148 != -1)) {
@@ -761,7 +738,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 						fVar4 = 1.0;
 					}
 				}
-				if (this->field_0x144 != -1) {
+				if (this->emotionInfo != -1) {
 					this->field_0x150 = this->field_0x154;
 					this->field_0x158 = fVar4;
 					this->field_0x15c = 0.5;
@@ -769,7 +746,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 			}
 			this->field_0x168 = -1.0f;
 		}
-		if ((this->field_0x144 != -1) && (iVar2 != this->field_0x148)) {
+		if ((this->emotionInfo != -1) && (iVar2 != this->field_0x148)) {
 			this->field_0x14c = this->field_0x148;
 			this->field_0x148 = iVar2;
 			this->field_0x160 = 0.0;
@@ -784,7 +761,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 					fVar4 = 1.0;
 				}
 			}
-			if (this->field_0x144 != -1) {
+			if (this->emotionInfo != -1) {
 				this->field_0x150 = this->field_0x154;
 				this->field_0x158 = fVar4;
 				this->field_0x15c = 0.5;
@@ -812,10 +789,10 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		bVar3 = true;)
 		break;
 	case 0xe:
-		IMPLEMENTATION_GUARD(
 		if (this->pOwner->typeID == 0x54) {
-			FUN_00404a70((int*)this->pOwner, (long)param_3 & 0xff);
-		})
+			CActorWantedZoo* pActorWantedZoo = static_cast<CActorWantedZoo*>(this->pOwner);
+			pActorWantedZoo->FUN_00404a70((bool)param_3);
+		}
 		break;
 	case 0xf:
 	case 0x10:

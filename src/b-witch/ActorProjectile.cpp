@@ -1440,6 +1440,146 @@ void CActorProjectile::BehaviourProjectileLavaBall_Manage(CBehaviourProjectileLa
 	return;
 }
 
+int modLow = 20;
+int modHigh = 4;
+float PRJ_SPEED_JUMP = 500.0f;
+float PRJ_DELAY_BEFORE_SQUASHED = 0.16f;
+
+void CActorProjectile::BehaviourProjectilePortable_Manage(CBehaviourProjectilePortable* pBehaviour)
+{
+	CAnimation* pCVar1;
+
+	edAnmLayer* peVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	int iVar5;
+	uint uVar6;
+	uint dynFlags;
+
+	iVar5 = this->actorState;
+	dynFlags = 0x1002023b;
+	if (iVar5 == -1) {
+		uVar6 = 0;
+	}
+	else {
+		pSVar4 = GetStateCfg(iVar5);
+		uVar6 = pSVar4->flags_0x4;
+	}
+
+	if ((uVar6 & 0x1000) != 0) {
+		dynFlags = 0x41920;
+	}
+
+	uVar6 = this->aProjectileSubObjs->flags;
+	if ((uVar6 & 0x2000) != 0) {
+		dynFlags = dynFlags & 0xfffbe7ff;
+	}
+
+	if (((uVar6 & 0x200) != 0) && ((uVar6 & 0x800000) == 0)) {
+		dynFlags = dynFlags & 0xffffffdf;
+	}
+
+	if ((uVar6 & 0x400) != 0) {
+		dynFlags = dynFlags & 0xfffffeff;
+	}
+
+	if (iVar5 != 0x1d) {
+		if (iVar5 == 0x11) {
+			StateAutRollOnGround(8.0f, 2.0f, 0.3f, 0xc, 8);
+		}
+		else {
+			if (iVar5 == 0x10) {
+				StateAutSoccer(0.0f, 0, 0, this->pKickedByActor);
+			}
+			else {
+				if (iVar5 == 0xf) {
+					StateAutSoccer(4.0f, 1, 9, this->pSoccerActor);
+				}
+				else {
+					if (iVar5 == 0xd) {
+						ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+
+						pCVar1 = this->pAnimationController;
+						if (pCVar1 == (CAnimation*)0x0) {
+							SetState(0x17, -1);
+						}
+						else {
+							if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
+								SetState(0x17, -1);
+							}
+						}
+
+						SetState(0x14, -1);
+					}
+					else {
+						if (iVar5 == 0x17) {
+							this->dynamic.speed = 0.0f;
+							ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+							this->field_0x410 = this->field_0x410 + 1;
+							iVar5 = modHigh + (int)((1.0f - this->timeInAir / pBehaviour->field_0x10) * (float)(modLow - modHigh));
+							if (iVar5 == 0) {
+								trap(7);
+							}
+							this->field_0x410 = (int)this->field_0x410 % iVar5;
+							if (pBehaviour->field_0x10 <= this->timeInAir) {
+								SetState(0x1d, -1);
+							}
+						}
+						else {
+							if (iVar5 == 0x14) {
+								ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+
+								pCVar1 = this->pAnimationController;
+								if (pCVar1 == (CAnimation*)0x0) {
+									SetState(0x17, -1);
+								}
+								else {
+									if (pCVar1->IsCurrentLayerAnimEndReached(0)) {
+										SetState(0x17, -1);
+									}
+								}
+							}
+							else {
+								if (iVar5 == 0x13) {
+									iVar5 = StateAutSquashed(PRJ_DELAY_BEFORE_SQUASHED, PRJ_SPEED_JUMP, pBehaviour->field_0x14, pBehaviour->field_0x18, 0x14);
+									pBehaviour->field_0x18 = iVar5;
+								}
+								else {
+									if (iVar5 == 8) {
+										StatePortableFlying(0.0f, dynFlags, -1);
+									}
+									else {
+										if (iVar5 == 7) {
+											StatePortableFlying(0.2f, dynFlags, 8);
+										}
+										else {
+											if (iVar5 == 0xc) {
+												StatePortableLiving(dynFlags, pBehaviour);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (this->actorState == 0x1d) {
+		this->timeToExplode = this->aProjectileSubObjs->timeToExplode;
+		if (pBehaviour->behaviourId == 3) {
+			SetBehaviour(3, 0xc, -1);
+		}
+		else {
+			SetBehaviour(pBehaviour->behaviourId, -1, -1);
+		}
+	}
+
+	return;
+}
+
 void CActorProjectile::AppearToDie()
 {
 	this->flags = this->flags & 0xffffff5f;
@@ -2104,6 +2244,136 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 	return;
 }
 
+void CActorProjectile::StatePortableFlying(float param_1, uint dynFlags, int nextState)
+{
+	CCollision* pCVar1;
+	bool bVar2;
+	uint uVar3;
+	float fVar4;
+	float value;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->pCollisionData;
+
+	value = fabsf(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y);
+
+	ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+
+	if ((this->aProjectileSubObjs->flags & 0x20) != 0) {
+		edF32Vector4NormalizeHard(&local_10, &this->dynamic.velocityDirectionEuler);
+		this->rotationQuat = local_10;
+	}
+
+	if ((pCVar1->flags_0x4 & 7) != 0) {
+		if ((this->aProjectileSubObjs->flags & 0x2000) != 0) {
+			local_20 = gF32Vector4Zero;
+
+			bVar2 = (pCVar1->flags_0x4 & 2) != 0;
+			if (bVar2) {
+				edF32Vector4AddHard(&local_20, &local_20, &pCVar1->aCollisionContact[1].field_0x10);
+			}
+
+			uVar3 = (uint)bVar2;
+			if ((pCVar1->flags_0x4 & 1) != 0) {
+				edF32Vector4AddHard(&local_20, &local_20, &pCVar1->aCollisionContact[0].field_0x10);
+				uVar3 = uVar3 + 1;
+			}
+
+			if ((pCVar1->flags_0x4 & 4) != 0) {
+				edF32Vector4AddHard(&local_20, &local_20, &pCVar1->aCollisionContact[2].field_0x10);
+				uVar3 = uVar3 + 1;
+			}
+
+			if (uVar3 != 0) {
+				edF32Vector4ScaleHard(1.0f / (float)uVar3, &local_20, &local_20);
+			}
+
+			this->dynamic.speed = 0.0f;
+			UpdatePosition(&local_20, true);
+			SetState(0xc, -1);
+
+			return;
+		}
+
+		if ((pCVar1->flags_0x4 & 2) != 0) {
+			if (6.0f < value) {
+				fVar4 = edFIntervalUnitDstLERP(value, 0.0f, 10.0f);
+				this->field_0x3f0 = -fVar4 * 0.5f;
+			}
+			else {
+				PlayAnim(0);
+			}
+
+			if (value < 1.0f) {
+				this->field_0x3f0 = 0.0f;
+				this->dynamic.speed = 0.0f;
+				SetState(0xc, -1);
+				return;
+			}
+		}
+	}
+
+	if ((nextState != -1) && (param_1 < this->timeInAir)) {
+		SetState(nextState, -1);
+	}
+
+	return;
+}
+
+float PRJ_MINE_INFLUENCE_CONE_HEIGHT = 3.0f;
+float PRJ_MINE_INFLUENCE_CONE_RADIUS_MIN = 0.4f;
+float PRJ_MINE_INFLUENCE_CONE_RADIUS_MAX = 1.2f;
+float PRJ_MINE_HEIGHT_SQUASHED = 0.6f;
+
+void CActorProjectile::StatePortableLiving(uint dynFlags, CBehaviourProjectilePortable* pBehaviour)
+{
+	int iVar1;
+	float fVar2;
+	CActorConeInfluence actorConeInfluence;
+	uint local_4;
+	CActorHero* pHero;
+
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, dynFlags, (CActorsTable*)0x0);
+
+	if (((this->pCollisionData->flags_0x4 & 7) == 0) && ((this->aProjectileSubObjs->flags & 0x2000) == 0)) {
+		if (0.2f < this->timeInAir) {
+			SetState(8, -1);
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	pHero = CActorHero::_gThis;
+	actorConeInfluence.field_0x20.x = 0.0f;
+	actorConeInfluence.field_0x20.y = 0.0f;
+	actorConeInfluence.field_0x20.z = 0.0f;
+	actorConeInfluence.field_0x20.w = 0.0f;
+
+	actorConeInfluence.height = PRJ_MINE_INFLUENCE_CONE_HEIGHT;
+
+	actorConeInfluence.radiusMin = PRJ_MINE_INFLUENCE_CONE_RADIUS_MIN;
+	actorConeInfluence.radiusMax = PRJ_MINE_INFLUENCE_CONE_RADIUS_MAX;
+
+	actorConeInfluence.field_0xc = 1.0f;
+	actorConeInfluence.field_0x10 = 0.0f;
+	actorConeInfluence.field_0x14 = 2;
+
+	fVar2 = SV_AttractActorInAConeAboveMe((CActorAutonomous*)CActorHero::_gThis, &actorConeInfluence);
+	if (fVar2 < PRJ_MINE_HEIGHT_SQUASHED) {
+		local_4 = pBehaviour->field_0xc;
+		iVar1 = DoMessage(pHero, (ACTOR_MESSAGE)0x1d, (MSG_PARAM)local_4);
+		if (iVar1 != 0) {
+			pBehaviour->field_0x14 = pHero;
+			SetState(0x13, -1);
+		}
+	}
+
+	return;
+}
 
 void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int explode, int param_5)
 {
@@ -3173,13 +3443,33 @@ void CBehaviourProjectileExcuse::Init(CActor* pOwner)
 // Should be in: D:/Projects/b-witch/ActorProjectile.h
 void CBehaviourProjectileExcuse::Manage()
 {
-	IMPLEMENTATION_GUARD();
-
+	return;
 }
 
 void CBehaviourProjectileExcuse::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pActor;
+	CActorProjectile* pProjectile;
+
+	if (newState == -1) {
+		pProjectile = this->pOwner;
+		if ((pProjectile->prevBehaviourId == 9) || (pProjectile->timeToExplode == 0.0f)) {
+			pProjectile->SetState(0xc, -1);
+		}
+		else {
+			pProjectile->SetState(6, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	pActor = this->actorRef.Get();
+	pActor->UpdatePosition(&this->pOwner->currentLocation, true);
+	this->pOwner->DoMessage(pActor, (ACTOR_MESSAGE)this->field_0xc, 0);
+	this->pOwner->SetBehaviour(this->behaviourId, -1, -1);
+
+	return;
 
 }
 
@@ -3201,7 +3491,9 @@ void CBehaviourProjectilePortable::Init(CActor* pOwner)
 
 void CBehaviourProjectilePortable::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourProjectilePortable_Manage(this);
+
+	return;
 }
 
 void CBehaviourProjectilePortable::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -3249,7 +3541,38 @@ void CBehaviourProjectilePortable::InitState(int newState)
 
 void CBehaviourProjectilePortable::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	CCollision* pCVar1;
+	CAnimation* pAnim;
+	CActorProjectile* pProjectile;
+
+	if (oldState == 0x13) {
+		this->pOwner->pCollisionData->actorFieldA = (CActor*)0x0;
+	}
+	else {
+		pProjectile = this->pOwner;
+		if (oldState == 0xd) {
+			pAnim = pProjectile->pAnimationController;
+			if (pAnim != (CAnimation*)0x0) {
+				pAnim->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+			}
+
+			pProjectile->field_0x5a8 = 0;
+		}
+		else {
+			if (oldState == 6) {
+				pCVar1 = pProjectile->pCollisionData;
+				pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
+				pCVar1 = pProjectile->pCollisionData;
+				pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x80000;
+				pProjectile->timeToExplode = (((ed_g3d_hierarchy*)pProjectile->aProjectileSubObjs)->transformA).aa;
+				pProjectile->flags = pProjectile->flags & 0xfffffffc;
+				pProjectile->flags = pProjectile->flags & 0xffffff5f;
+				pProjectile->EvaluateDisplayState();
+			}
+		}
+	}
+
+	return;
 }
 
 void CBehaviourProjectileNew::Create(ByteCode* pByteCode)

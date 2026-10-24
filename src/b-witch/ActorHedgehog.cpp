@@ -1169,9 +1169,9 @@ void CActorHedgehog::StateGuardUpsideDown()
 		coneInfluence.field_0x20.y = 0.0f;
 		coneInfluence.field_0x20.z = 0.0f;
 		coneInfluence.field_0x20.w = 0.0f;
-		coneInfluence.field_0x8 = 3.0f;
-		coneInfluence.field_0x0 = 0.80000001f;
-		coneInfluence.field_0x4 = 0.80000001f;
+		coneInfluence.height = 3.0f;
+		coneInfluence.radiusMin = 0.80000001f;
+		coneInfluence.radiusMax = 0.80000001f;
 		coneInfluence.field_0xc = 1.0f;
 		coneInfluence.field_0x10 = 0.0f;
 		coneInfluence.field_0x14 = 1;

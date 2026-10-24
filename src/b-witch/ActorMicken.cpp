@@ -1399,9 +1399,9 @@ void CActorMicken::BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviou
 
 		pHero = CActorHero::_gThis;
 		if ((uVar2 & 0x800) != 0) {
-			actorConeInfluence.field_0x8 = this->scale.y * 3.0f;
-			actorConeInfluence.field_0x0 = this->scale.y * 0.4f;
-			actorConeInfluence.field_0x4 = this->scale.y * 1.2f;
+			actorConeInfluence.height = this->scale.y * 3.0f;
+			actorConeInfluence.radiusMin = this->scale.y * 0.4f;
+			actorConeInfluence.radiusMax = this->scale.y * 1.2f;
 			actorConeInfluence.field_0xc = 1.0f;
 			actorConeInfluence.field_0x10 = 0.0f;
 			actorConeInfluence.field_0x20.x = 0.0f;

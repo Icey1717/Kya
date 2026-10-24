@@ -205,9 +205,9 @@ struct _msg_spawn_params
 
 class CActorConeInfluence {
 public:
-	float field_0x0;
-	float field_0x4;
-	float field_0x8;
+	float radiusMin;
+	float radiusMax;
+	float height;
 	float field_0xc;
 	float field_0x10;
 	int field_0x14;
@@ -457,6 +457,8 @@ struct _msg_hit_param
 class CActorAlternateModel
 {
 public:
+	CActorAlternateModel();
+
 	edF32VECTOR4 cachedBoundingSphere;
 	ed_3d_hierarchy_node* pHierarchy;
 };

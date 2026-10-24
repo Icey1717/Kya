@@ -1344,7 +1344,7 @@ void CActor::UpdateAnimEffects()
 
 	if (((this->flags & 0x800000) != 0) && (pBehaviour = GetBehaviour(1), pBehaviour != (CBehaviour*)0x0)) {
 		CBehaviourCinematic* pCinematicBehaviour = reinterpret_cast<CBehaviourCinematic*>(pBehaviour);
-		pCinematicBehaviour->field_0x144.DoAnimation(Timer::GetTimer()->cutsceneDeltaTime, 1.0f, pCinematicBehaviour->pOwner);
+		pCinematicBehaviour->emotionInfo.DoAnimation(Timer::GetTimer()->cutsceneDeltaTime, 1.0f, pCinematicBehaviour->pOwner);
 	}
 	return;
 }
@@ -3378,14 +3378,14 @@ float CActor::SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence*
 	peVar1 = pActor->GetTopPosition();
 	edF32Vector4SubHard(&local_20, peVar1, &eStack16);
 
-	if ((local_20.y < -0.01f) || (pActorConeInfluence->field_0x8 < local_20.y)) {
-		fVar5 = pActorConeInfluence->field_0x8 + 0.001f;
+	if ((local_20.y < -0.01f) || (pActorConeInfluence->height < local_20.y)) {
+		fVar5 = pActorConeInfluence->height + 0.001f;
 	}
 	else {
-		fVar3 = edFIntervalLERP(local_20.y, 0.0f, pActorConeInfluence->field_0x8, pActorConeInfluence->field_0x0, pActorConeInfluence->field_0x4);
+		fVar3 = edFIntervalLERP(local_20.y, 0.0f, pActorConeInfluence->height, pActorConeInfluence->radiusMin, pActorConeInfluence->radiusMax);
 		fVar5 = local_20.y;
 		if (fVar3 * fVar3 < local_20.z * local_20.z + local_20.x * local_20.x) {
-			fVar5 = pActorConeInfluence->field_0x8 + 0.001f;
+			fVar5 = pActorConeInfluence->height + 0.001f;
 		}
 		else {
 			CActorAutonomous* pActorAutonomous = (CActorAutonomous*)pActor;
@@ -3395,7 +3395,7 @@ float CActor::SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence*
 
 				fVar3 = edF32Vector4DotProductHard(&pActorAutonomous->dynamic.horizontalVelocityDirectionEuler, &local_20);
 				if (fVar3 < 0.0f) {
-					fVar4 = edFIntervalLERP(fVar5, 0.0f, pActorConeInfluence->field_0x8, pActorConeInfluence->field_0xc, pActorConeInfluence->field_0x10);
+					fVar4 = edFIntervalLERP(fVar5, 0.0f, pActorConeInfluence->height, pActorConeInfluence->field_0xc, pActorConeInfluence->field_0x10);
 					pTVar2 = GetTimer();
 					fVar3 = pTVar2->cutsceneDeltaTime;
 					pTVar2 = GetTimer();
@@ -6205,5 +6205,10 @@ CActorSoundNode::CActorSoundNode()
 	this->node.aSoundInstances = (CSoundInstance*)0x0;
 	this->pNext = (CSimpleLinkedNode<CActorSound> *)0x0;
 
+	return;
+}
+
+CActorAlternateModel::CActorAlternateModel()
+{
 	return;
 }

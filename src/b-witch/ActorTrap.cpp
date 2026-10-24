@@ -1156,9 +1156,9 @@ bool gTrpDetectCallback(CActor* pActor, void* pParams)
 		actorConeInfluence.field_0x20.z = 0.0f;
 		actorConeInfluence.field_0x20.w = 0.0f;
 
-		actorConeInfluence.field_0x8 = 3.0f;
-		actorConeInfluence.field_0x0 = 1.2f;
-		actorConeInfluence.field_0x4 = 1.5f;
+		actorConeInfluence.height = 3.0f;
+		actorConeInfluence.radiusMin = 1.2f;
+		actorConeInfluence.radiusMax = 1.5f;
 		actorConeInfluence.field_0xc = 0.2f;
 
 		actorConeInfluence.field_0x10 = 0.2f;

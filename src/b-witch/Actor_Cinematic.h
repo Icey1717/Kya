@@ -17,10 +17,11 @@ struct CBehaviourCinematic : public CBehaviour
 	CActor* pOwner;
 	CBWCinActor cinActor;
 	int leaveCinematicBehaviourId;
-
-	CEmotionInfo field_0x144;
+	CEmotionInfo emotionInfo;
 
 	int field_0x178;
+
+	CBehaviourCinematic();
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
@@ -36,8 +37,6 @@ struct CBehaviourCinematic : public CBehaviour
 
 struct CActorCinematic : public CActor
 {
-	CActorCinematic();
-
 	void PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	void Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene);
 

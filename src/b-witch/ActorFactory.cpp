@@ -444,6 +444,9 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize, voi
 			*outSize = sizeof(CActorWantedZoo);
 			return NEW_ARRAY_POLYMORPHIC(CActorWantedZoo, count);
 			break;
+		default:
+			assert(false); // Missing case for actor type
+			break;
 		}
 	}
 	*outSize = 0;
