@@ -15,6 +15,7 @@ namespace Debug
 		void Update();
 
 		void ShowMaterialDetails(const ed_g2d_material* pMaterial);
+		void ShowPreview(const Renderer::SimpleTexture* pTexture, float width);
 		Renderer::SimpleTexture* FindDrawTexture(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Draw& draw);
 		bool OpenDraw(const Renderer::DrawTrace::Source& source, const Renderer::DrawTrace::Draw& draw);
 	}

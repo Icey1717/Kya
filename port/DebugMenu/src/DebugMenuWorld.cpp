@@ -32,6 +32,7 @@
 #include "ActorSwitch.h"
 #include "ActorMovingPlatform.h"
 #include "ActorDCA.h"
+#include "ActorWantedZoo.h"
 #include "ActorPattern.h"
 #include "Scene.h"
 #include "ActorHero.h"
@@ -53,6 +54,7 @@
 #include "Actor/DebugActorSwitch.h"
 #include "Actor/DebugActorMovingPlatform.h"
 #include "Actor/DebugActorDCA.h"
+#include "Actor/DebugActorWantedZoo.h"
 #include "DebugRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Native/NativeDebugShapes.h"
@@ -1110,6 +1112,11 @@ namespace Debug {
 			CActorDCA* pDCAActor = static_cast<CActorDCA*>(pActor);
 			ImGui::Separator();
 			Debug::Actor::DCA::ShowActorDetails(pDCAActor);
+		}
+
+		if (pActor->typeID == WANTED_ZOO) {
+			ImGui::Separator();
+			Debug::Actor::WantedZoo::ShowActorDetails(static_cast<CActorWantedZoo*>(pActor));
 		}
 	}
 

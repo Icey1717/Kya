@@ -79,7 +79,7 @@ namespace
 			actor.field_0x3188 = 5.0f;
 			actor.field_0x318c = 0.3f;
 			actor.field_0x3190 = 1.0f;
-			actor.FUN_003e60c0(); // Radius 2.75, inner radius 1.75.
+			actor.ManageTornadoRay(); // Radius 2.75, inner radius 1.75.
 		}
 
 		CActorManager manager;

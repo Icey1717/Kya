@@ -230,6 +230,35 @@ namespace Debug
 			gPendingRemovedTextures.push_back({ descriptorSet, MAX_FRAMES_IN_FLIGHT + 1 });
 		}
 
+		struct InlinePreview {
+			VkDescriptorSet descriptor = VK_NULL_HANDLE;
+			int lastFrame = 0;
+			std::weak_ptr<Renderer::TextureUpdateState> owner;
+		};
+		static std::map<VkImageView, InlinePreview> gInlinePreviews;
+
+		void ShowPreview(const Renderer::SimpleTexture* pTexture, float width)
+		{
+			auto* pRenderer = pTexture ? pTexture->GetRenderer() : nullptr;
+			if (!pRenderer || !pRenderer->imageView || !pRenderer->width || !pRenderer->height) {
+				ImGui::TextDisabled("Texture unavailable.");
+				return;
+			}
+			auto& preview = gInlinePreviews[pRenderer->imageView];
+			if (preview.descriptor && preview.owner.lock() != pTexture->GetUpdateState()) {
+				AddPendingRemovedTexture(preview.descriptor);
+				preview.descriptor = VK_NULL_HANDLE;
+			}
+			if (!preview.descriptor) {
+				preview.descriptor = ImGui_ImplVulkan_AddTexture(PS2::GetSampler(PS2::GetPreviewSamplerDescription(true)),
+					pRenderer->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				preview.owner = pTexture->GetUpdateState();
+			}
+			preview.lastFrame = ImGui::GetFrameCount();
+			ImGui::Image((ImTextureID)(uintptr_t)preview.descriptor,
+				ImVec2(width, width * float(pRenderer->height) / float(pRenderer->width)));
+		}
+
 		static void ShowSortModeControls()
 		{
 			ImGui::SameLine(0.0f, 3.0f);
@@ -890,6 +919,13 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 
 void Debug::Texture::Update()
 {
+	for (auto it = gInlinePreviews.begin(); it != gInlinePreviews.end(); ) {
+		if (it->second.owner.expired() || ImGui::GetFrameCount() - it->second.lastFrame > MAX_FRAMES_IN_FLIGHT + 1) {
+			AddPendingRemovedTexture(it->second.descriptor);
+			it = gInlinePreviews.erase(it);
+		}
+		else ++it;
+	}
 	LoadCachedTextures();
 	ValidateUpscaling();
 	if (gDrawSelection) {

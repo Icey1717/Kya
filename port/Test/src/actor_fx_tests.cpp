@@ -218,7 +218,7 @@ TEST(BrazulSpark, InitializesAllEightSparksWithoutOverwritingEffectHandles)
 
 TEST(BrazulSpark, DrawPreservesRgbAndFadesAlphaDuringReset)
 {
-	astruct_19 spark{};
+	CBrazulSparkAttack spark{};
 	// Exercise the actor's draw states without requiring renderer packets.
 	spark.Create(-1, -1, -1);
 	spark.field_0x4 = 2;
