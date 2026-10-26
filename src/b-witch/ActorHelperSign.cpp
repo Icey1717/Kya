@@ -12,6 +12,140 @@
 #include "BootData.h"
 #include "TranslatedTextData.h"
 #include "InputManager.h"
+#include "CompatibilityHandlingPS2.h"
+#include "Frontend.h"
+#include "FrontEndDisp.h"
+#include "Audio.h"
+
+static void DrawHighScoreWheel(int curIndex, int nextIndex, S_MENU_WHEEL_DRAW* pDraw, void** pContext);
+
+// PS2: gCallbackWheelElt 0033c8b0.
+static void DrawHighScoreWheel(int curIndex, int nextIndex, S_MENU_WHEEL_DRAW* pDraw, void** pContext)
+{
+	CActorHelperSign* pSign = static_cast<CActorHelperSign*>(*pContext);
+	CBehaviourHelperSignHighScore* pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+	CActorMiniGamesOrganizer* pOrganizer = static_cast<CActorMiniGamesOrganizer*>(pBehaviour->field_0x8.Get());
+	edCTextStyle style;
+	style.Reset();
+
+	uint alpha = pDraw->alpha < pOrganizer->field_0x94c ? pDraw->alpha : pOrganizer->field_0x94c;
+	style.rgbaColour = alpha | 0xffff0000;
+	style.alpha = pDraw->alpha;
+	style.SetScale(1.5f, 1.5f);
+	style.SetHorizontalAlignment(2);
+	style.SetVerticalAlignment(8);
+	style.SetShadow(0x100);
+	style.SetFont(BootDataFont, false);
+
+	edCTextStyle* pOldStyle = edTextStyleSetCurrent(&style);
+	if (*pContext != 0) {
+		edCTextFormat format;
+		CActorMiniGame* pCur = pOrganizer->GetMiniGame(curIndex);
+		CActorMiniGame* pNext = pOrganizer->GetMiniGame(nextIndex);
+		if (pCur != 0) {
+			pSign->DrawHighScoreText(curIndex, pDraw->alpha);
+			format.FormatString(pCur->FUN_003ace10());
+			format.Display(pDraw->x, pDraw->y);
+		}
+
+		if (pNext != 0) {
+			pSign->DrawHighScoreText(nextIndex, 255 - pDraw->alpha);
+			alpha = (byte)((255.0f - (float)pDraw->alpha) / 2.0f);
+			style.rgbaColour = alpha | 0xffff0000;
+			style.alpha = alpha | 0x80808000;
+			format.FormatString(pNext->FUN_003ace10());
+			format.Display(pDraw->x, pDraw->y);
+		}
+	}
+
+	edTextStyleSetCurrent(pOldStyle);
+
+	return;
+}
+
+// PS2: DrawHighScoreText 00339360, FUN_003aad80.
+void CActorHelperSign::DrawHighScoreText(int index, uint alpha)
+{
+	CBehaviourHelperSignHighScore* pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(GetBehaviour(this->curBehaviourId));
+	CActorMiniGamesOrganizer* pOrganizer = static_cast<CActorMiniGamesOrganizer*>(pBehaviour->field_0x8.Get());
+	CActorMiniGame* pGame = pOrganizer->GetMiniGame(index);
+	edCTextStyle style;
+	style.Reset();
+	style.SetFont(BootDataFont, false);
+	style.SetEolAutomatic(0x80);
+	style.SetHorizontalAlignment(2);
+	style.SetVerticalAlignment(8);
+	style.rgbaColour = 0xffff00ff;
+	style.SetShadow(0x100);
+	alpha &= 0xff;
+	style.alpha = alpha;
+	edCTextStyle* pOldStyle = edTextStyleSetCurrent(&style);
+	edCTextFormat format;
+	float width = (float)gVideoConfig.screenWidth;
+	float height = (float)gVideoConfig.screenHeight;
+	style.SetScale(1.0f, 1.0f);
+	style.SetRotation(0.2f);
+	style.SetHorizontalSize(width * 0.25f);
+	style.rgbaColour = alpha | 0xf0000000;
+	format.FormatString(gMessageManager.get_message(0x5d59544553091216));
+	format.Display(width * 0.16f, height * 0.37f);
+	style.SetRotation(0.0f);
+	style.rgbaColour = alpha | 0xffff0000;
+	style.SetEolAutomatic(0);
+	uint count = pGame->GetNbAvailableMode();
+	float x = -0.67f;
+	if (count == 3) {
+		x = width * 0.16f;
+	}
+	else if (count == 2) {
+		x = width * 0.16f + width * 0.325f / 2.0f;
+	}
+	else if (count == 1) {
+		x = width * 0.325f + width * 0.16f;
+	}
+	style.SetHorizontalJustification(0x10);
+	style.SetEolAutomatic(0x80);
+	style.SetScale(0.87f, 0.87f);
+	style.SetHorizontalSize(width * 0.33f);
+	if (pGame->GetBehaviour(3) != 0) {
+		style.SetRotation(-0.03f);
+		format.FormatString(gMessageManager.get_message(0x1e160c0c13414d45));
+		format.Display(x, height * 0.63f);
+		style.SetRotation(0.0f);
+		pGame->GetUnity();
+		pGame->FormatScore(pGame->defaultScore.score, &format, pGame->defaultScore.name, 0, 1);
+		format.Display(x, height * 0.73f);
+		x += width * 0.325f;
+	}
+	if (pGame->GetBehaviour(4) != 0) {
+		style.SetRotation(-0.13f);
+		style.rgbaColour = alpha | 0xf0008000;
+		format.FormatString(gMessageManager.get_message(0x52575a5959150415));
+		format.Display(x, height * 0.4f);
+		style.SetRotation(0.0f);
+		style.rgbaColour = alpha | 0xffff0000;
+		pGame->DrawHighScoreArray(x, height * 0.52f, width * 0.1f, 0.9f, &pGame->GetBhvMulti()->scoreList);
+		x += width * 0.325f + 0.005f;
+	}
+	if (pGame->GetBehaviour(2) != 0) {
+		style.SetRotation(0.13f);
+		format.FormatString(gMessageManager.get_message(0x50511a1b0608030c));
+		format.Display(x, height * 0.4f);
+		style.SetRotation(0.0f);
+		pGame->DrawHighScoreArray(x, height * 0.52f, width * 0.1f, 0.9f, &pGame->GetBhvTraining()->scoreList);
+	}
+	style.SetHorizontalJustification(0);
+	style.SetEolAutomatic(0);
+	style.SetVerticalAlignment(8);
+	style.rgbaColour = alpha | 0xffffff00;
+	style.altColour = style.rgbaColour;
+	style.SetScale(0.8f, 0.8f);
+	format.FormatString(gMessageManager.get_message(0x4b425f5e40151207));
+	format.Display(width * 0.5f, height * 0.95f);
+	edTextStyleSetCurrent(pOldStyle);
+
+	return;
+}
 
 void CActorHelperSign::Create(ByteCode* pByteCode)
 {
@@ -518,6 +652,333 @@ int CBehaviourHelperSign::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 void CBehaviourHelperSignStand::Create(ByteCode* pByteCode)
 {
 	return;
+}
+
+void CBehaviourHelperSignHighScore::Create(ByteCode* pByteCode)
+{
+	this->field_0x8.index = pByteCode->GetS32();
+
+	return;
+}
+
+// PS2: Init 0033b7c0; mesh setup is also used by InitState 0033b2e0.
+void CBehaviourHelperSignHighScore::Init(CActor* pOwner)
+{
+	this->field_0x8.Init();
+	this->field_0xc = 0;
+
+	CActorMiniGamesOrganizer* pOrganizer = static_cast<CActorMiniGamesOrganizer*>(this->field_0x8.Get());
+	CActor::SV_InstallMaterialId(pOrganizer->materialId_0x178);
+
+	this->menuWheel.Init(0, &MenuBitmaps[9].materialInfo, &MenuBitmaps[10].materialInfo);
+	this->menuWheel.field_0x278 = 1;
+	this->menuWheel.field_0x274 = pOrganizer->pMiniGameStreamRefs == 0 ? 0 : pOrganizer->pMiniGameStreamRefs->entryCount;
+	this->menuWheel.field_0x28c = 1020.0f;
+	this->menuWheel.pFunc = DrawHighScoreWheel;
+	this->menuWheel.field_0x298 = &this->field_0x590;
+	this->menuWheel.field_0xc0.field_0x0.color = 0x8000005d;
+	this->menuWheel.field_0xc0.field_0xc0.color = 0x8000626a;
+	this->menuWheel.field_0xc0.field_0x0.iWidth = (ushort)(int)((float)gVideoConfig.screenWidth * 0.06f);
+	this->menuWheel.field_0xc0.field_0x0.iHeight = (ushort)(int)((float)gVideoConfig.screenHeight * 0.06f);
+	this->menuWheel.field_0xc0.field_0xc0.iWidth = this->menuWheel.field_0xc0.field_0x0.iWidth;
+	this->menuWheel.field_0xc0.field_0xc0.iHeight = this->menuWheel.field_0xc0.field_0x0.iHeight;
+
+	edF32VECTOR2 left, right;
+	left.x = (float)gVideoConfig.screenWidth * 0.5f - (float)gVideoConfig.screenWidth * 0.58f / 2.0f;
+	left.y = (float)gVideoConfig.screenHeight * 0.13f;
+	right.x = (float)gVideoConfig.screenWidth * 0.5f + (float)gVideoConfig.screenWidth * 0.58f / 2.0f;
+	right.y = left.y;
+	this->menuWheel.FUN_002efa80((float)(int)((float)gVideoConfig.screenWidth * 0.5f), (float)(int)left.y, &right, &left);
+	memset(&this->field_0x10, 0, sizeof(this->field_0x10));
+
+	this->field_0x30.x = 0.0f;
+	this->field_0x30.y = 0.0f;
+	this->field_0x30.z = 0.0f;
+	this->field_0x30.w = 100.0f;
+	this->field_0x40 = 150.0f;
+	this->field_0x10.pBoundingSphere = &this->field_0x30;
+	this->field_0x10.clipping_0x0 = &this->field_0x40;
+
+	StaticMeshComponent* meshes[] = {
+		&this->field_0x50, &this->field_0xb0, &this->field_0x110, &this->field_0x170,
+		&this->field_0x1d0, &this->field_0x230, &this->field_0x290
+	};
+
+	for (int i = 0; i < 7; i++) {
+		StaticMeshComponent* pMesh = meshes[i];
+		pMesh->textureIndex = pOrganizer->textureIndex_0x170;
+		pMesh->meshIndex = pOrganizer->field_0x174;
+		pMesh->Reset();
+	}
+
+	return;
+}
+
+void CBehaviourHelperSignHighScore::InitMeshes(bool all)
+{
+	StaticMeshComponent* meshes[] = {
+		&this->field_0x50, &this->field_0xb0, &this->field_0x110, &this->field_0x170,
+		&this->field_0x1d0, &this->field_0x230, &this->field_0x290
+	};
+
+	char* names[] = {
+		(char*)"Gam_back_01", (char*)"Gam_03_pan_02", (char*)"Gam_03_pan_03", (char*)"Gam_06_pan_01",
+		(char*)"Gam_06_pan_02", (char*)"Gam_06_pan_03", (char*)"Gam_Symbole_01"
+	};
+
+	for (int i = 0; i < 7; i++) {
+		StaticMeshComponent* pMesh = meshes[i];
+		if ((pMesh->textureIndex == -1) || (pMesh->meshIndex == -1)) {
+			return;
+		}
+	}
+
+	for (int i = 0; i < (all ? 7 : 1); i++) {
+		meshes[i]->Init(CFrontend::_scene_handle, 0, &this->field_0x10, names[i]);
+	}
+
+	return;
+}
+
+// PS2: StateHelperSignHighScoreTerm 0033a5a0.
+void CBehaviourHelperSignHighScore::TermMeshes()
+{
+	StaticMeshComponent* meshes[] = {
+		&this->field_0x50, &this->field_0xb0, &this->field_0x110, &this->field_0x170,
+		&this->field_0x1d0, &this->field_0x230, &this->field_0x290
+	};
+
+	for (int i = 0; i < 7; i++) {
+		StaticMeshComponent* pMesh = meshes[i];
+		if (pMesh->HasMesh()) {
+			pMesh->Term(CFrontend::_scene_handle);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourHelperSignHighScore::Term()
+{
+	return;
+}
+
+// PS2: Manage 0033bbc0, ManageFrozen 0033bbb0, shared routine 0033ae90.
+void CBehaviourHelperSignHighScore::Manage()
+{
+	CActorHelperSign* pSign = this->pOwner;
+	if (!gCompatibilityHandlingPtr->HandleDisconnectedDevices(0) || ((GameFlags & 0x1c) != 0)) {
+		if (pSign->actorState == 9) {
+			pSign->SetState(pSign->prevActorState, -1);
+		}
+	}
+	else if (pSign->actorState == HELPER_SIGN_STATE_SHOW) {
+		pSign->SetState(9, -1);
+	}
+
+	if (pSign->actorState == HELPER_SIGN_STATE_CLOSE) {
+		this->menuWheel.MoveWheel();
+		pSign->SetState(HELPER_SIGN_STATE_STAND, -1);
+	}
+	else if (pSign->actorState == HELPER_SIGN_STATE_OPEN) {
+		pSign->GetBehaviour(pSign->curBehaviourId);
+		pSign->SetState(HELPER_SIGN_STATE_SHOW, -1);
+	}
+	else if (pSign->actorState == HELPER_SIGN_STATE_SHOW) {
+		ManageHighScore();
+	}
+
+	if (pSign->pTiedActor != 0) {
+		edF32VECTOR4 location = pSign->baseLocation;
+		pSign->SV_UpdatePosition_Rel(&location, 0, 0, 0, 0);
+	}
+
+	return;
+}
+
+void CBehaviourHelperSignHighScore::ManageFrozen()
+{
+	CBehaviourHelperSignHighScore::Manage();
+
+	return;
+}
+
+// PS2: InitState 0033b2e0, TermState 0033b1f0.
+void CBehaviourHelperSignHighScore::InitState(int newState)
+{
+	CActorHelperSign* pSign = this->pOwner;
+	if ((newState == HELPER_SIGN_STATE_STAND) || (newState == HELPER_SIGN_STATE_CLOSE) || (newState == HELPER_SIGN_STATE_OPEN)) {
+		pSign->flags = (pSign->flags | 0x80) & 0xffffffdf;
+		pSign->EvaluateDisplayState();
+	}
+	else if (newState == HELPER_SIGN_STATE_SHOW) {
+		CBehaviourHelperSignHighScore* pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->InitMeshes(true);
+		pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->field_0x590 = pSign;
+		_msg_enter_shop message = { 0, 1, 1, 1 };
+		pSign->DoMessage(pSign->field_0x170, MESSAGE_ENTER_SHOP, &message);
+		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
+		GameFlags |= 0x80;
+		CallPauseChange(1);
+	}
+	else if (newState == 9) {
+		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
+		GameFlags |= 0x80;
+		CallPauseChange(1);
+		CBehaviourHelperSignHighScore* pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->InitMeshes(false);
+	}
+
+	return;
+}
+
+void CBehaviourHelperSignHighScore::TermState(int oldState, int newState)
+{
+	CActorHelperSign* pSign = this->pOwner;
+	CBehaviourHelperSignHighScore* pBehaviour;
+
+	if (oldState == 9) {
+		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+		GameFlags &= ~0x80;
+		pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->TermMeshes();
+		CallPauseChange(0);
+	}
+	else if (oldState == HELPER_SIGN_STATE_SHOW) {
+		pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->TermMeshes();
+		pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pBehaviour->menuWheel.MoveWheel();
+		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+		CallPauseChange(0);
+		GameFlags &= ~0x80;
+		pSign->DoMessage(pSign->field_0x170, (ACTOR_MESSAGE)0x24, 0);
+	}
+
+	return;
+}
+
+// PS2: FUN_003b7b90.
+static void PlayHighScoreSound(CActorMiniGamesOrganizer* pOrganizer, uint soundId)
+{
+	CSoundInstance* pInstance = &pOrganizer->field_0xa00;
+	pInstance->pSound = CScene::ptable.g_AudioManager_00451698->GetSound(soundId);
+	if ((NoAudio == 0) && (pInstance->pSound3dData = 0, pInstance->pSound != 0)) {
+		pInstance->field_0x20 = 0xffffffff;
+		pInstance->soundId = pInstance->pSound->Play(pInstance->soundId, pInstance->field_0x20, 0, pInstance, 0, &pInstance->soundId);
+	}
+
+	return;
+}
+
+// PS2: StateHelperSignHighScore 0033a6e0.
+void CBehaviourHelperSignHighScore::ManageHighScore()
+{
+	CActorHelperSign* pSign = this->pOwner;
+	CPlayerInput* pInput = pSign->field_0x170->GetInputManager(0, 0);
+	CBehaviourHelperSignHighScore* pBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+	CBehaviourHelperSignHighScore* pCurrentBehaviour;
+	CActorMiniGamesOrganizer* pOrganizer = static_cast<CActorMiniGamesOrganizer*>(pBehaviour->field_0x8.Get());
+	pBehaviour->menuWheel.Manage();
+	if (pInput == 0) {
+		return;
+	}
+
+	if (((pInput->pressedBitfield & 0x800000) != 0) || ((pInput->pressedBitfield & 2) != 0)) {
+		PlayHighScoreSound(pOrganizer, pOrganizer->field_0x190);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->TermMeshes();
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->menuWheel.MoveWheel();
+		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+		CallPauseChange(0);
+		GameFlags &= ~0x80;
+		pSign->DoMessage(pSign->field_0x170, (ACTOR_MESSAGE)0x24, 0);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->InitMeshes(true);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->field_0x590 = pSign;
+		_msg_enter_shop message = { 0, 1, 1, 1 };
+		pSign->DoMessage(pSign->field_0x170, MESSAGE_ENTER_SHOP, &message);
+		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
+		GameFlags |= 0x80;
+		CallPauseChange(1);
+		pBehaviour->field_0x5a0 = 0.1f;
+		pBehaviour->menuWheel.MoveWheel(true);
+		int count = pOrganizer->pMiniGameStreamRefs == 0 ? 0 : pOrganizer->pMiniGameStreamRefs->entryCount;
+		assert(count != 0);
+		pBehaviour->field_0xc = (pBehaviour->field_0xc + 1) % count;
+	}
+
+	if (((pInput->pressedBitfield & 0x400000) != 0) || ((pInput->pressedBitfield & 1) != 0)) {
+		PlayHighScoreSound(pOrganizer, pOrganizer->field_0x190);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->TermMeshes();
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->menuWheel.MoveWheel();
+		CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+		CallPauseChange(0);
+		GameFlags &= ~0x80;
+		pSign->DoMessage(pSign->field_0x170, (ACTOR_MESSAGE)0x24, 0);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->InitMeshes(true);
+		pCurrentBehaviour = static_cast<CBehaviourHelperSignHighScore*>(pSign->GetBehaviour(pSign->curBehaviourId));
+		pCurrentBehaviour->field_0x590 = pSign;
+		_msg_enter_shop message = { 0, 1, 1, 1 };
+		pSign->DoMessage(pSign->field_0x170, MESSAGE_ENTER_SHOP, &message);
+		CScene::ptable.g_FrontendManager_00451680->SetActive(false);
+		GameFlags |= 0x80;
+		CallPauseChange(1);
+		pBehaviour->field_0x59c = 0.1f;
+		pBehaviour->menuWheel.MoveWheel(false);
+		int count = pOrganizer->pMiniGameStreamRefs == 0 ? 0 : pOrganizer->pMiniGameStreamRefs->entryCount;
+		assert(count != 0);
+		pBehaviour->field_0xc = (pBehaviour->field_0xc - 1 + count) % count;
+	}
+
+	if ((pInput->pressedBitfield & 0x4000000) != 0) {
+		PlayHighScoreSound(pOrganizer, pOrganizer->field_0x18c);
+		pSign->SetState(HELPER_SIGN_STATE_CLOSE, -1);
+	}
+
+	return;
+}
+
+void CBehaviourHelperSignHighScore::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorHelperSign*>(pOwner);
+	this->field_0x50.Reset();
+	this->field_0xb0.Reset();
+	this->field_0x110.Reset();
+	this->field_0x170.Reset();
+	this->field_0x1d0.Reset();
+	this->field_0x230.Reset();
+	this->field_0x290.Reset();
+
+	if (newState == -1) {
+		this->pOwner->SetState(HELPER_SIGN_STATE_STAND, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+int CBehaviourHelperSignHighScore::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	if (msg == 0x12) {
+		return this->pOwner->DetectTrigger(pSender) ? 9 : 0;
+	}
+
+	if ((msg == 0x14) && ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x100) == 0)) {
+		this->pOwner->field_0x170 = pSender;
+		this->pOwner->SetState(HELPER_SIGN_STATE_OPEN, -1);
+		return 1;
+	}
+
+	return 0;
 }
 
 void CBehaviourHelperSignStand::Init(CActor * pOwner)

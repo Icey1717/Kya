@@ -44,8 +44,21 @@ public:
 class CBehaviourHelperSignHighScore : public CBehaviourHelperSign
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
 	S_STREAM_REF<CActor> field_0x8;
 	int field_0xc;
+	ed_3d_hierarchy_setup field_0x10;
+	edF32VECTOR4 field_0x30;
+	float field_0x40;
 	StaticMeshComponent field_0x50;
 	StaticMeshComponent field_0xb0;
 	StaticMeshComponent field_0x110;
@@ -55,6 +68,15 @@ public:
 	StaticMeshComponent field_0x290;
 
 	CMenuWheel menuWheel;
+	void* field_0x590;
+	float field_0x594;
+	float field_0x598;
+	float field_0x59c;
+	float field_0x5a0;
+
+	void InitMeshes(bool all);
+	void TermMeshes();
+	void ManageHighScore();
 };
 
 class CActorHelperSign : public CActor
@@ -72,6 +94,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void DrawHelpText();
+	void DrawHighScoreText(int index, uint alpha);
 
 	bool CloseEffect();
 	bool OpenEffect();
