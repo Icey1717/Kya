@@ -990,6 +990,9 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	this->defaultMaterialIndex = pMemoryStream->GetS32();
 	CScene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
 
+	// PS2 Level_Setup 0x001b8920: apply the level's scenario updates before loading
+	// objectives. All passing blocks run in order; their variable/state meanings
+	// are supplied by the level bank, not fixed by this setup routine.
 	ConditionedOperationArray local_4;
 	local_4.Create(pMemoryStream);
 	local_4.Perform();

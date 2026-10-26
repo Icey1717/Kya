@@ -835,6 +835,9 @@ void CBehaviourCompanion::Create(ByteCode* pByteCode)
 
 		pCVar9 = this->aSubObjs;
 		for (iVar3 = 0; iVar3 < this->nbSubObjs; iVar3 = iVar3 + 1) {
+			// PS2 Create 0x001e7f30: each alert has a scenario eligibility gate and
+			// separate activation operations (field_0x70).
+			// The bank defines the variable IDs/constants; their story meanings are unresolved.
 			pCVar9->field_0x64.Create(pByteCode);
 
 			pCVar9->flags_0x0 = (ushort)pByteCode->GetU32() & 0xf;
@@ -907,6 +910,7 @@ void CBehaviourCompanion::Create(ByteCode* pByteCode)
 			}
 
 			pCVar9->targetSwitch.Create(pByteCode);
+			// Applied when this alert becomes active in FUN_001e58e0, not while scanning.
 			pCVar9->field_0x70.Create(pByteCode);
 
 			pCVar9 = pCVar9 + 1;
@@ -1014,6 +1018,9 @@ void CBehaviourCompanion::Manage()
 
 				iVar8 = 0;
 				if (0 < this->nbSubObjs) {
+					// PS2 Manage 0x001e6e50: scenario eligibility precedes the hero's
+					// zone-entry test. The scan does not break after selecting an alert;
+					// a later eligible zone entry can replace field_0x10.
 					do {
 						iVar16 = this->aSubObjs + iVar8;
 						bVar5 = false;
@@ -1039,6 +1046,7 @@ void CBehaviourCompanion::Manage()
 								if (((pSubObj->flags_0x4 & 4) != 0) &&
 									(((pSubObj->flags_0x2 & 0x40) == 0 ||
 										(bVar5 = false, pSubObj->pActor.Get()->flags & 0x2000001) == 0))) {
+									// Recheck the same gate on zone entry before selecting the alert.
 									uVar13 = pSubObj->field_0x64.IsVerified();
 									bVar5 = false;
 									if (uVar13 != 0) {
@@ -1396,6 +1404,8 @@ int CBehaviourCompanion::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	}
 	else {
 		if (msg == 0x7b) {
+			// PS2 InterpretMessage 0x001e7680: a requested alert must still pass
+			// its scenario/actor checks; the message selects an index without a scan.
 			pCVar7 = this->aSubObjs + (int)pMsgParam;
 			bVar4 = false;
 			if (((pCVar7->flags_0x4 & 4) != 0) &&
@@ -1837,6 +1847,9 @@ void CBehaviourCompanion::FUN_001e58e0()
 	pCVar4 = this->pOwner;
 	pCVar6 = this->aSubObjs + this->activeSubObjId;
 	pCVar6->targetSwitch.Switch(pCVar4);
+	// PS2 FUN_001e58e0 0x001e58e0: commit this alert's conditional scenario
+	// updates on activation, after its switches/camera and before entering state 8.
+	// Every passing block runs; operation targets and state meanings are bank-defined.
 	this->aSubObjs[this->activeSubObjId].field_0x70.Perform();
 
 	this->pOwner->SetState(8, -1);

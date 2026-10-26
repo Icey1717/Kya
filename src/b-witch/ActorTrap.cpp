@@ -332,6 +332,10 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 		}
 		else {
 			CBehaviourCatchByTrap* pCatchByTrap = static_cast<CBehaviourCatchByTrap*>(pCVar9);
+			// PS2 StateTrapCatch_2_2 0x00350970: after the catch animation, apply
+			// the non-hero victim's conditional scenario writes before hiding it.
+			// The victim's behaviour data defines the targets/constants; their
+			// story meanings are unresolved. All passing operation blocks run.
 			pCatchByTrap->condOpArray.Perform();
 			pCVar4 = this->pCaughtActor;
 			pCVar4->flags = pCVar4->flags & 0xffffff7f;

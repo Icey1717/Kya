@@ -36,6 +36,7 @@ void CActorWantedZoo::Create(ByteCode* pByteCode)
 	else {
 		this->field_0x234 = new Zoo_14[this->field_0x230];
 		for (int i = 0; i < this->field_0x230; i++) {
+			// PS2 Create 0x00404c20: retain each entry's bank-authored display gate.
 			Zoo_14* pEntry = &this->field_0x234[i];
 			pEntry->scenaricCondition.Create(pByteCode);
 			pEntry->field_0x4.field_0x0 = pByteCode->GetS32();
@@ -125,6 +126,11 @@ void CActorWantedZoo::Draw()
 
 	if (0.0f < this->field_0x23c) {
 		Zoo_10* pEntry = (Zoo_10*)0x0;
+		// PS2 Draw 0x00404810: the first passing gate supplies both translated text
+		// and numeric labels; stream order is priority, and no match draws no labels.
+		// An empty condition list is an unconditional fallback that shadows later entries.
+		// Tests read global scenario state, not the numeric labels below. Specific
+		// quest/state meanings of the bank's variable IDs and constants are unresolved.
 		for (int i = 0; i < this->field_0x230; i++) {
 			Zoo_14* pCond = this->field_0x234 + i;
 			if (pCond->scenaricCondition.IsVerified() != 0) {

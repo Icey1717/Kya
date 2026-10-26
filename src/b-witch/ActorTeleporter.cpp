@@ -65,6 +65,8 @@ void CActorTeleporter::Create(ByteCode* pByteCode)
 
 	ACTOR_WAYPOINT_LIST::Create(&this->pActorWaypointList, pByteCode);
 
+	// PS2 Create 0x002ef160: departure-time scenario updates, not destination
+	// availability tests. Variable IDs/constants come from this teleporter's bank.
 	this->condOpArray.Create(pByteCode);
 
 	if (this->cinematicId != -1) {
@@ -608,6 +610,9 @@ void CActorTeleporter::StateTeleporterActive()
 				this->field_0x2ac = CScene::ptable.g_AudioManager_00451698->GetAmbianceIndex_001819b0();
 				this->field_0x2b0 = CScene::ptable.g_AudioManager_00451698->GetMusicId();
 
+				// PS2 StateTeleporterActive 0x002ed090: apply all passing scenario
+				// updates after destination/cutscene selection and before Level_Teleport.
+				// These writes do not gate departure; their story meanings are unresolved.
 				this->condOpArray.Perform();
 				CLevelScheduler::gThis->Level_Teleport(this, levelId, iVar8, cutsceneId, this->subsectorMaterialId);
 			}

@@ -169,6 +169,9 @@ void CSectorManager::LevelLoading_Begin()
 			pCompanionInfo = pLVar1->aCompanionInfo;
 
 			for (iVar10 = pLVar1->nbSectorConditions; iVar10 != 0; iVar10 = iVar10 + -1) {
+				// PS2 LevelLoading_Begin 0x001ff710: reject this dependency bit only;
+				// keep testing the remaining links. Empty gates were left unconditional
+				// by LevelsInfo_ReadSectors_V7_V9; this is not first-match selection.
 				CScenaricCondition* pCond = &pCompanionInfo->cond;
 
 				uVar4 = pCond->IsVerified();
@@ -977,6 +980,8 @@ void CSectorManager::Level_AddAll(ByteCode* pMemoryStream)
 					pMemoryStream->GetS32();
 					//local_4 = {};
 					local_4.Create(pMemoryStream);
+					// PS2 Level_AddAll 0x001ff160 also discards this result. Consume the
+					// embedded gates here; dependency filtering uses the level-info copy.
 					local_4.IsVerified();
 					iVar4 = iVar4 + 1;
 				} while (iVar4 < iVar3);

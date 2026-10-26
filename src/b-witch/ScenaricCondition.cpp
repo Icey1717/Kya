@@ -5,6 +5,7 @@
 
 void CScenaricCondition::Create(int* param_2)
 {
+	// PS2 0x001174b0: borrow the existing condition data without normalizing its first combiner.
 	this->pData = param_2;
 	return;
 }
@@ -21,7 +22,8 @@ void CScenaricCondition::Create(ByteCode* pByteCode)
 	this->pData = piVar1;
 
 	if (*this->pData != 0) {
-		this->pData[1] = 0;
+		// PS2 0x001174c0: make the first test AND the initial true accumulator.
+		this->pData[1] = SCENARIC_COMBINE_AND;
 	}
 
 	return;
@@ -34,42 +36,44 @@ ulong CScenaricCondition::IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2)
 	ulong uVar3;
 
 	iVar2 = CLevelScheduler::ScenVar_Get(pCond->variable);
+	// PS2 0x001175e0 (comparison jump table 0x004288d0): signed comparisons;
+	// the variable is a global scenario-table index, not an actor-local value.
 	iVar1 = pCond->field_0xc;
 	switch (pCond->field_0x8) {
-	case 0:
+	case SCENARIC_COMPARE_ALWAYS:
 		uVar3 = 1;
 		break;
-	case 1:
+	case SCENARIC_COMPARE_LESS:
 		uVar3 = (ulong)(iVar2 < iVar1);
 		break;
-	case 2:
+	case SCENARIC_COMPARE_LESS_EQUAL:
 		uVar3 = (ulong)(iVar1 < iVar2) ^ 1;
 		break;
-	case 3:
+	case SCENARIC_COMPARE_EQUAL:
 		uVar3 = (ulong)(iVar2 == iVar1);
 		break;
-	case 4:
+	case SCENARIC_COMPARE_GREATER_EQUAL:
 		uVar3 = (ulong)(iVar2 < iVar1) ^ 1;
 		break;
-	case 5:
+	case SCENARIC_COMPARE_GREATER:
 		uVar3 = (ulong)(iVar1 < iVar2);
 		break;
-	case 6:
+	case SCENARIC_COMPARE_NOT_EQUAL:
 		uVar3 = (ulong)(iVar2 != iVar1);
 		break;
 	default:
 		uVar3 = 1;
 	}
 	iVar1 = pCond->field_0x0;
-	if (iVar1 == 2) {
+	if (iVar1 == SCENARIC_COMBINE_XOR) {
 		uVar3 = uVar3 ^ param_2;
 	}
 	else {
-		if (iVar1 == 1) {
+		if (iVar1 == SCENARIC_COMBINE_OR) {
 			uVar3 = uVar3 | param_2;
 		}
 		else {
-			if (iVar1 == 0) {
+			if (iVar1 == SCENARIC_COMBINE_AND) {
 				uVar3 = uVar3 & param_2;
 			}
 		}
@@ -83,6 +87,9 @@ ulong CScenaricCondition::IsVerified()
 	S_STREAM_SIMPLE_COND* pCond;
 	int iVar2;
 
+	// PS2 0x00117440: fold in stream order from true, without short-circuiting
+	// or AND/OR precedence. XOR toggles the accumulated truth value on a true test.
+	// An empty list passes; pData must still point to a count word.
 	uVar1 = 1;
 	pCond = reinterpret_cast<S_STREAM_SIMPLE_COND*>(this->pData + 1);
 	for (iVar2 = *this->pData; 0 < iVar2; iVar2 = iVar2 + -1) {
@@ -134,6 +141,8 @@ void ConditionedOperationArray::Create(ByteCode* pByteCode)
 	uint uVar4;
 
 	puVar1 = (CND_OP_HEADER*)pByteCode->currentSeekPos;
+	// PS2 0x00117330: each block stores operations before its conditions.
+	// Unlike CScenaricCondition::Create(ByteCode*), this preserves every combiner.
 	pByteCode->currentSeekPos = (char*)(puVar1 + 1);
 	this->pHeader = puVar1;
 
@@ -151,7 +160,7 @@ void ConditionedOperationArray::Create(ByteCode* pByteCode)
 			// Verify
 			for (int i = 0; i < pOpHeader->opCount; i++) {
 				auto* pOp = pOpHeader->aOps + i;
-				if (pOp->opType == 4) {
+				if (pOp->opType == SCENARIC_OP_DIVIDE) {
 					assert(pOp->value != 0);
 				}
 			}
@@ -179,26 +188,26 @@ void S_STREAM_SIMPLE_OPERATION::Perform()
 
 	scenVarValue = CLevelScheduler::ScenVar_Get(this->scenVarId);
 	type = this->opType;
-	if (type == 4) {
+	if (type == SCENARIC_OP_DIVIDE) {
 		scenVarValue = scenVarValue / this->value;
 		if (this->value == 0) {
 			trap(7);
 		}
 	}
 	else {
-		if (type == 3) {
+		if (type == SCENARIC_OP_MULTIPLY) {
 			scenVarValue = scenVarValue * this->value;
 		}
 		else {
-			if (type == 2) {
+			if (type == SCENARIC_OP_SUBTRACT) {
 				scenVarValue = scenVarValue - this->value;
 			}
 			else {
-				if (type == 1) {
+				if (type == SCENARIC_OP_ADD) {
 					scenVarValue = scenVarValue + this->value;
 				}
 				else {
-					if (type == 0) {
+					if (type == SCENARIC_OP_ASSIGN) {
 						scenVarValue = this->value;
 					}
 				}
@@ -206,6 +215,8 @@ void S_STREAM_SIMPLE_OPERATION::Perform()
 		}
 	}
 	CLevelScheduler::ScenVar_Set(this->scenVarId, scenVarValue);
+	// PS2 0x00117510 -> 0x002db5b0: notify after each write, even if unchanged;
+	// the hero/Boomy receive ability updates, rather than one notification per array.
 	CLevelScheduler::OnSceneVarSet();
 	return;
 }
@@ -222,6 +233,10 @@ void ConditionedOperationArray::Perform()
 	CND_OP_HEADER* pCndOpHeader;
 
 	pCndOpHeader = this->pHeader;
+	// PS2 0x00117210: run every passing block, in order, not just the first match.
+	// Each block folds its conditions from true (empty = unconditional), then runs
+	// its operations in order. Later blocks see earlier writes to scenario variables.
+	// A leading OR yields true; a leading XOR negates its comparison.
 	if (pCndOpHeader != (CND_OP_HEADER*)0x0) {
 		uVar3 = 0;
 

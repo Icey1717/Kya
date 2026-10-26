@@ -808,6 +808,10 @@ void CCinematic::Create(ByteCode* pByteCode)
 		}
 	}
 
+	// PS2 Create 0x001cb480: cache this cinematic's scenario eligibility as a
+	// start blocker (CanBePlayed 0x001c9500); forced triggers can bypass it.
+	// The bank supplies variable IDs and comparison constants; their particular
+	// quest/state meanings are unresolved here, not universal played/unplayed flags.
 	this->cond_0x248.Create(pByteCode);
 	uVar11 = this->cond_0x248.IsVerified();
 	if (uVar11 == 0) {
@@ -846,6 +850,8 @@ void CCinematic::Create(ByteCode* pByteCode)
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 	}
 	this->field_0x25c = piVar2;
+	// Scenario writes for Stop and the failed-load path in Start; loading this
+	// array does not execute it. All passing blocks run in their authored order.
 	this->condArray_0x244.Create(pByteCode);
 
 	this->switchListA.Create(pByteCode);
@@ -1266,6 +1272,9 @@ void CCinematic::Start()
 				}
 
 				if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
+					// PS2 Start 0x001c8950: even when the cinematic bank fails to load,
+					// apply its scenario updates before end switches/level transition.
+					// Forced playback skips these writes, as it does in Stop.
 					this->condArray_0x244.Perform();
 
 					if (this->switchListB.IsValid()) {
@@ -2404,6 +2413,9 @@ void CCinematic::Stop()
 
 		pCinematicManager->pCurCinematic = (CCinematic*)0x0;
 		if ((this->flags_0x8 & CINEMATIC_RUNTIME_FLAG_FORCED_TRIGGER) == 0) {
+			// PS2 Stop 0x001c84a0: apply the cinematic's conditional scenario writes
+			// after cleanup, before end switches/teleport. Targets/constants are
+			// bank-defined; this call alone does not establish a quest-completion value.
 			this->condArray_0x244.Perform();
 
 			if (this->switchListB.IsValid()) {
@@ -3823,6 +3835,9 @@ void CCinematic::Level_ClearAll()
 	ulong uVar3;
 
 	if (((this->flags_0x4 & CINEMATIC_FLAG_RECHECK_CONDITION_ON_CLEAR) != 0) && (this->field_0x4c != 0)) {
+		// PS2 Level_ClearAll 0x001c75d0: opted-in cinematics refresh the cached
+		// start blocker from current scenario state, allowing it to clear as well
+		// as set. Rechecking eligibility does not execute the operation array.
 		uVar3 = this->cond_0x248.IsVerified();
 		if (uVar3 == 0) {
 			this->flags_0x8 = this->flags_0x8 | CINEMATIC_RUNTIME_FLAG_CONDITION_BLOCKED;

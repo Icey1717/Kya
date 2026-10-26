@@ -660,6 +660,15 @@ void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(S_LVLNFO_LEVEL_HEADER_V7* pLev
 
 int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNfoSector, int nbSectors, S_LEVEL_INFO* pLevelInfo)
 {
+	// PS2 0x002e1750: conditionIdentifier is a sector dependency bit (1..29),
+	// not a scenario-variable ID. Empty gates leave that link unconditional;
+	// nonempty gates are copied for LevelLoading_Begin to test independently.
+	// Retail INFO/LEVEL_4.BIN uses variable 0 (freed Wolfen total) with paired
+	// >= / < thresholds 10, 25, 40, 33, 20 to choose dependency links.
+	// INFO/NATIV.BIN instead uses variable 6 (zero-based episode) at 1..7.
+	// These are population/episode thresholds, not Boolean flags. Meanings checked
+	// in Episode_ComputeCurrent 0x002daf70 and Level_UpdateCurLiveLevelInfo 0x002dbfb0;
+	// the contents selected by each sector link remain unresolved.
 	int curConditionIdentifier;
 	S_LEVEL_INFO* pLVar3;
 	SectorManagerSubObjOther* pCurSectorSubObj;

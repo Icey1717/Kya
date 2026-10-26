@@ -160,15 +160,15 @@ namespace Debug::Actor::WantedZoo
 	{
 		auto& condition = entry.scenaricCondition;
 		if (condition.pData) {
-			static const char* comparisons[] = { "always", "<", "<=", "==", ">=", ">", "!=" };
-			static const char* operations[] = { "AND", "OR", "XOR" };
+			static const char* comparisons[SCENARIC_COMPARE_COUNT] = { "always", "<", "<=", "==", ">=", ">", "!=" };
+			static const char* operations[SCENARIC_COMBINE_COUNT] = { "AND", "OR", "XOR" };
 			const auto* conditions = reinterpret_cast<const S_STREAM_SIMPLE_COND*>(condition.pData + 1);
 			if (condition.GetNumSimpleConds() == 0) ImGui::TextUnformatted("Always eligible.");
 			for (int i = 0; i < condition.GetNumSimpleConds(); ++i) {
 				const auto& cond = conditions[i];
 				ImGui::Text("%s variable 0x%X %s %d (current: %d)",
-					cond.field_0x0 >= 0 && cond.field_0x0 < 3 ? operations[cond.field_0x0] : "?", cond.variable,
-					cond.field_0x8 >= 0 && cond.field_0x8 < 7 ? comparisons[cond.field_0x8] : "?", cond.field_0xc,
+					cond.field_0x0 >= SCENARIC_COMBINE_AND && cond.field_0x0 < SCENARIC_COMBINE_COUNT ? operations[cond.field_0x0] : "?", cond.variable,
+					cond.field_0x8 >= SCENARIC_COMPARE_ALWAYS && cond.field_0x8 < SCENARIC_COMPARE_COUNT ? comparisons[cond.field_0x8] : "?", cond.field_0xc,
 					CLevelScheduler::ScenVar_Get(cond.variable));
 			}
 		}

@@ -2186,6 +2186,8 @@ void CBehaviourAutonomous::Init(CActor* pOwner)
 
 void CBehaviourCatchByTrap::Create(ByteCode* pByteCode)
 {
+	// PS2 0x00121530: load the caught actor's scenario updates; the trap runs
+	// them when capture finishes (CBehaviourTrapStand::StateTrapCatch_2_2).
 	this->condOpArray.Create(pByteCode);
 	return;
 }
