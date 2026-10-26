@@ -751,6 +751,27 @@ byte CActorMiniGame::FUN_003ac880(float param_1)
 }
 
 
+uint CActorMiniGame::GetNbAvailableMode()
+{
+	CBehaviour* pCVar1;
+	uint uVar2;
+
+	pCVar1 = GetBehaviour(MINI_GAME_BEHAVIOUR_MULTI);
+	uVar2 = (uint)(pCVar1 != (CBehaviour*)0x0);
+
+	pCVar1 = GetBehaviour(MINI_GAME_BEHAVIOUR_BETTING);
+	if (pCVar1 != (CBehaviour*)0x0) {
+		uVar2 = uVar2 + 1;
+	}
+
+	pCVar1 = GetBehaviour(MINI_GAME_BEHAVIOUR_TRAINING);
+	if (pCVar1 != (CBehaviour*)0x0) {
+		uVar2 = uVar2 + 1;
+	}
+
+	return uVar2;
+}
+
 CActorMiniGame::CActorMiniGame()
 {
 	this->field_0x174 = 0;
@@ -959,11 +980,6 @@ void CActorMiniGame::LoadContext(void* pData, uint mode, uint maxSize)
 		}
 	}
 	return;
-}
-
-CBehaviour* CActorMiniGame::BuildBehaviour(int behaviourType)
-{
-	return CActor::BuildBehaviour(behaviourType);
 }
 
 StateConfig CActorMiniGame::_gStateCfg_MIG[4] =

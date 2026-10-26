@@ -5,44 +5,11 @@
 #include "Actor.h"
 #include "ActorHelperSign.h"
 #include "Audio.h"
+#include "MenuElements.h"
 
 class CActorMiniGamesOrganizer;
 class CActorMiniGamesManager;
 class CActorMiniGame;
-
-struct S_MENU_WHEEL_DRAW
-{
-	float x;
-	float y;
-	byte alpha;
-};
-
-class CMenuWheel
-{
-public:
-	CMenuWheel();
-	void Init(edDList_material* pMaterial, edDList_material* pArrow, edDList_material* pArrowHighlight);
-	void Reset();
-	bool Manage();
-	void Draw();
-	void MoveWheel(bool bNext);
-	void MoveWheel();
-	void FUN_002efa80(float x, float y, edF32VECTOR2* pRight, edF32VECTOR2* pLeft);
-
-	CSprite field_0x0;
-	astruct_22 field_0xc0;
-	float field_0x270;
-	int field_0x274;
-	byte field_0x278;
-	int field_0x27c;
-	float field_0x280;
-	float field_0x284;
-	bool field_0x288;
-	float field_0x28c;
-	bool field_0x290;
-	void (*pFunc)(int, int, S_MENU_WHEEL_DRAW*, void**);
-	void** field_0x298;
-};
 
 #define MINI_GAMES_ORGANIZER_BEHAVIOUR_STAND 2
 
@@ -116,6 +83,7 @@ public:
 	CActorMiniGame* GetMiniGame(int index);
 	char* FUN_003b2a00();
 	char* GetCurNameLetter(int index);
+	void FUN_003b4f30(float param_1, float param_2, float param_3, StaticMeshComponent* pStaticMeshComponent);
 
 	CBehaviourMiniGamesOrganizerStand behaviourStand;
 	char* field_0x168;
@@ -142,7 +110,7 @@ public:
 	StaticMeshComponent field_0x410;
 	StaticMeshComponent field_0x470;
 	CMenuWheel menuWheel;
-	astruct_22 field_0x76c;
+	CMenuArrows field_0x76c;
 	int field_0x91c;
 	int field_0x920;
 	int field_0x924;
@@ -174,5 +142,7 @@ public:
 	int field_0x9fc;
 	CSoundInstance field_0xa00;
 };
+
+void DrawDisconnectedController(int param_1);
 
 #endif //ACTOR_MINI_GAME_ORGANIZER_H

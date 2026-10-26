@@ -383,6 +383,8 @@ set(main_src
 	"${src_root}/b-witch/LightBase.cpp"
 	"${src_root}/b-witch/LightBase.h"
 	"${src_root}/b-witch/SharedLights.h"
+	"${src_root}/b-witch/MenuElements.cpp"
+	"${src_root}/b-witch/MenuElements.h"
 
 	"${src_root}/edC/edCFiler_BNK.cpp"
 	"${src_root}/edC/edCFiler_BNK.h"

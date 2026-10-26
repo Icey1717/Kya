@@ -247,15 +247,15 @@ void CActorMiniGameBoomy::CheckpointReset()
 
 CBehaviour* CActorMiniGameBoomy::BuildBehaviour(int behaviourType)
 {
-	if (behaviourType == 4) {
+	if (behaviourType == MINI_GAME_BEHAVIOUR_MULTI) {
 		return &this->multiBehaviour;
 	}
 
-	if (behaviourType == 3) {
+	if (behaviourType == MINI_GAME_BEHAVIOUR_BETTING) {
 		return &this->bettingBehaviour;
 	}
 
-	if (behaviourType == 2) {
+	if (behaviourType == MINI_GAME_BEHAVIOUR_TRAINING) {
 		return &this->trainingBehaviour;
 	}
 

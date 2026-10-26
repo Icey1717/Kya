@@ -8,6 +8,10 @@
 class CActorMiniGamesOrganizer;
 class CActorMiniGame;
 
+#define MINI_GAME_BEHAVIOUR_TRAINING 2
+#define MINI_GAME_BEHAVIOUR_BETTING 3
+#define MINI_GAME_BEHAVIOUR_MULTI 4
+
 struct S_MINI_GAME_SCORE
 {
 	float score;
@@ -126,7 +130,6 @@ public:
 	virtual void CheckpointReset();
 	virtual void SaveContext(void* pData, uint mode, uint maxSize);
 	virtual void LoadContext(void* pData, uint mode, uint maxSize);
-	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
@@ -165,6 +168,7 @@ public:
 	void FUN_003a9d60();
 	void FUN_003a9f50();
 	byte FUN_003ac880(float param_1);
+	uint GetNbAvailableMode();
 
 	ulong field_0x160;
 	uint field_0x168;

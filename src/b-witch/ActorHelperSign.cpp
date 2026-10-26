@@ -2,6 +2,7 @@
 #include "MemoryStream.h"
 #include "DlistManager.h"
 #include "ActorHero.h"
+#include "ActorMiniGame.h"
 #include "ActorMiniGamesOrganizer.h"
 #include "kya.h"
 #include "Pause.h"
@@ -54,23 +55,22 @@ void CActorHelperSign::Draw()
 
 	if (this->curBehaviourId == HELPER_SIGN_BEHAVIOUR_HIGHSCORE) {
 		if ((this->actorState == HELPER_SIGN_STATE_SHOW) && (bVar2 = GuiDList_BeginCurrent(), bVar2 != false)) {
-			IMPLEMENTATION_GUARD_LOG(
 			FUN_00339ab0();
 			pCVar3 = static_cast<CBehaviourHelperSignHighScore*>(GetBehaviour(this->curBehaviourId));
 			pCVar3->menuWheel.Draw();
-			GuiDList_EndCurrent();)
+			GuiDList_EndCurrent();
 		}
 
 		if (this->actorState == 9) {
-			IMPLEMENTATION_GUARD_LOG(
 			bVar2 = Frontend2DDList_BeginCurrent();
 			if (bVar2 != false) {
 				pCVar4 = static_cast<CBehaviourHelperSignHighScore*>(GetBehaviour(this->curBehaviourId));
-				FUN_003b4f30(0.0f, 0, 104.0f, static_cast<CActorMiniGamesOrganizer*>(pCVar4->field_0x8.Get()), &pCVar4->field_0x50);
+				static_cast<CActorMiniGamesOrganizer*>(pCVar4->field_0x8.Get())->FUN_003b4f30(0.0f, 0.0f, 104.0f, &pCVar4->field_0x50);
 				FrontendDList_EndCurrent();
 			}
 
-			FUN_001b1830(0);)
+			DrawDisconnectedController(0);
+
 			return;
 		}
 	}
@@ -89,6 +89,7 @@ void CActorHelperSign::Draw()
 			}
 		}
 	}
+
 	return;
 }
 
@@ -216,185 +217,7 @@ int CActorHelperSign::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	return result;
 }
 
-astruct_22 astruct_22_0048fa40;
-
-bool astruct_22::FUN_002ef890()
-{
-	bool bVar1;
-
-	if (0.0f < this->field_0x198) {
-		this->field_0x198 = this->field_0x198 - GetTimer()->lastFrameTime;
-		if (this->field_0x180 < this->field_0x198) {
-			this->field_0x198 = this->field_0x180;
-		}
-		else {
-			if (this->field_0x198 < 0.0f) {
-				this->field_0x198 = 0.0f;
-			}
-		}
-		bVar1 = true;
-	}
-	else {
-		bVar1 = false;
-	}
-
-	return bVar1;
-}
-
-void astruct_22::FUN_002ef4e0(float param_1, float param_2, float param_3, float param_4, byte param_6)
-{
-	this->field_0x184 = param_1;
-	this->field_0x188 = param_2;
-	this->field_0x18c = param_3;
-	this->field_0x190 = param_4;
-	this->field_0x194 = param_6;
-
-	FUN_002ef500();
-
-	return;
-}
-
-void astruct_22::FUN_002ef500()
-{
-	bool cVar1;
-	byte bVar2;
-	uint uVar3;
-	uint uVar4;
-	int uVar5;
-	float fVar6;
-	float fVar7;
-
-	fVar7 = ((this->field_0x180 - this->field_0x198) / this->field_0x180) * 2.0f;
-	fVar6 = 1.0f;
-	if ((fVar7 <= 1.0f) && (fVar6 = fVar7, fVar7 < 0.0f)) {
-		fVar6 = 0.0f;
-	}
-
-	fVar6 = fVar6 * 128.0f;
-	if (fVar6 < 2.147484e+09f) {
-		cVar1 = this->field_0x19d;
-	}
-	else {
-		fVar6 = fVar6 - 2.147484e+09f;
-		cVar1 = this->field_0x19d;
-	}
-
-	uVar4 = static_cast<uint>(fVar6);
-	uVar5 = 0x292;
-	if (cVar1 != false) {
-		if (this->field_0x194 == 0) {
-			uVar5 = 0xc292;
-		}
-
-		if ((this->field_0x1a0 & 1) == 0) {
-			if ((this->field_0x198 <= 0.0f) || (this->field_0x19c == false)) {
-				bVar2 = this->field_0x1a4;
-				if (0x80 < bVar2) {
-					bVar2 = 0x80;
-				}
-
-				(this->field_0x0).rgba[3] = bVar2;
-				this->field_0x0.Draw(1.0f, this->field_0x184, this->field_0x188, uVar5);
-			}
-			else {
-				bVar2 = this->field_0x1a4;
-				if ((uVar4 & 0xff) < static_cast<uint>(bVar2)) {
-					bVar2 = (byte)(uVar4 & 0xff);
-				}
-
-				(this->field_0xc0).rgba[3] = bVar2;
-				(this->field_0x0).rgba[3] = 0x80 - (byte)uVar4;
-				this->field_0x0.Draw(1.0f, this->field_0x184, this->field_0x188, uVar5);
-				this->field_0xc0.Draw(1.0f, this->field_0x184, this->field_0x188, uVar5);
-			}
-		}
-
-		uVar5 = 0x8292;
-		if (this->field_0x194 == 0) {
-			uVar5 = 0x4292;
-		}
-
-		if ((this->field_0x1a0 & 2) == 0) {
-			if ((this->field_0x198 <= 0.0f) || (this->field_0x19c != false)) {
-				bVar2 = this->field_0x1a4;
-				if (0x80 < bVar2) {
-					bVar2 = 0x80;
-				}
-
-				(this->field_0x0).rgba[3] = bVar2;
-				this->field_0x0.Draw(1.0f, this->field_0x18c, this->field_0x190, uVar5);
-			}
-			else {
-				(this->field_0xc0).rgba[3] = (byte)uVar4;
-
-				uVar3 = (uint)this->field_0x1a4;
-				uVar4 = 0x80 - (uVar4 & 0xff);
-				if (static_cast<int>(uVar4) < static_cast<int>(uVar3)) {
-					uVar3 = uVar4;
-				}
-				(this->field_0x0).rgba[3] = (byte)uVar3;
-
-				this->field_0x0.Draw(1.0f, this->field_0x18c, this->field_0x190, uVar5);
-				this->field_0xc0.Draw(1.0f, this->field_0x18c, this->field_0x190, uVar5);
-			}
-		}
-	}
-
-	return;
-}
-
-void astruct_22::Init(edDList_material* param_2, edDList_material* param_3)
-{
-	if (this->field_0x1ac == 0) {
-		this->field_0x1ac = 1;
-
-		FUN_002ef9b0(param_2, param_3);
-	}
-
-	return;
-}
-
-void astruct_22::FUN_002ef9b0(edDList_material* param_2, edDList_material* param_3)
-{
-	if (this->field_0x1a8 == 0) {
-		this->field_0x1a8 = 1;
-		this->field_0x19d = false;
-
-		if (param_2 != (edDList_material*)0x0) {
-			this->field_0x0.Install(param_2);
-		}
-
-		if (param_3 != (edDList_material*)0x0) {
-			this->field_0xc0.Install(param_3);
-		}
-
-		this->field_0x19d = param_2 != (edDList_material*)0x0 && param_3 != (edDList_material*)0x0;
-		this->field_0x180 = 0.1f;
-		this->field_0x184 = 0;
-		this->field_0x188 = 0;
-		this->field_0x18c = 0;
-		this->field_0x190 = 0;
-		this->field_0x198 = 0.0f;
-		this->field_0x194 = 1;
-		this->field_0x1a0 = 0;
-		this->field_0x1a4 = 0x80;
-	}
-
-	return;
-}
-
-
-void astruct_22::Term()
-{
-	if (this->field_0x1ac == 1) {
-		this->field_0x1ac = 0;
-
-		this->field_0x0.Remove();
-		this->field_0xc0.Remove();
-	}
-
-	return;
-}
+CMenuArrows astruct_22_0048fa40;
 
 void CActorHelperSign::DrawHelpText()
 {
@@ -936,4 +759,55 @@ bool CActorHelperSign::DetectTrigger(CActor* pSender)
 	}
 
 	return false;
+}
+
+void CActorHelperSign::FUN_00339ab0()
+{
+	CActorMiniGamesOrganizer* pMiniGamesOrganizer;
+	CActorMiniGame* pMiniGame;
+	CBehaviourHelperSignHighScore* pBehaviourHelperSignHighScore;
+	uint uVar1;
+	CBehaviour* pCVar2;
+	float fVar3;
+
+	pBehaviourHelperSignHighScore = (CBehaviourHelperSignHighScore*)CActor::GetBehaviour(this->curBehaviourId);
+	pMiniGamesOrganizer = (CActorMiniGamesOrganizer*)(pBehaviourHelperSignHighScore->field_0x8).Get();
+	pMiniGame = (CActorMiniGame*)pMiniGamesOrganizer->pMiniGameStreamRefs->aEntries[pBehaviourHelperSignHighScore->field_0xc].Get();
+	uVar1 = pMiniGame->GetNbAvailableMode();
+	fVar3 = -0.67f;
+	if (uVar1 != 3) {
+		if (uVar1 == 2) {
+			fVar3 = -0.3375f;
+		}
+		else {
+			fVar3 = -0.67f;
+			if (uVar1 == 1) {
+				fVar3 = -0.004999995f;
+			}
+		}
+	}
+	pMiniGamesOrganizer->FUN_003b4f30(0.0f, 0.0f, 104.0f, &pBehaviourHelperSignHighScore->field_0x50);
+	pMiniGamesOrganizer->FUN_003b4f30(0.0f, 0.745f, 103.0f, &pBehaviourHelperSignHighScore->field_0xb0);
+	pMiniGamesOrganizer->FUN_003b4f30(-0.58f, 0.2f, 103.0f, &pBehaviourHelperSignHighScore->field_0x110);
+
+	pCVar2 = pMiniGame->GetBehaviour(MINI_GAME_BEHAVIOUR_BETTING);
+	if (pCVar2 != (CBehaviour*)0x0) {
+		pMiniGamesOrganizer->FUN_003b4f30(fVar3, -0.19f, 103.0f, &pBehaviourHelperSignHighScore->field_0x170);
+		fVar3 = fVar3 + 0.665f;
+	}
+
+	pCVar2 = pMiniGame->GetBehaviour(MINI_GAME_BEHAVIOUR_MULTI);
+	if (pCVar2 != (CBehaviour*)0x0) {
+		pMiniGamesOrganizer->FUN_003b4f30(fVar3, -0.19f, 103.0f, &pBehaviourHelperSignHighScore->field_0x1d0);
+		fVar3 = fVar3 + 0.665f;
+	}
+
+	pCVar2 = pMiniGame->GetBehaviour(MINI_GAME_BEHAVIOUR_TRAINING);
+	if (pCVar2 != (CBehaviour*)0x0) {
+		pMiniGamesOrganizer->FUN_003b4f30(fVar3, -0.19f, 103.0f, &pBehaviourHelperSignHighScore->field_0x230);
+	}
+
+	pMiniGamesOrganizer->FUN_003b4f30(0.0f, 0.0f, 99.0f, &pBehaviourHelperSignHighScore->field_0x290);
+
+	return;
 }

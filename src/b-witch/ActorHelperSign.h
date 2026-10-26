@@ -6,6 +6,7 @@
 #include "StaticMeshComponent.h"
 #include "Fx.h"
 #include "SpriteWidget.h"
+#include "MenuElements.h"
 
 #define HELPER_SIGN_BEHAVIOUR_STAND 2
 #define HELPER_SIGN_STATE_STAND 5
@@ -16,40 +17,6 @@
 #define HELPER_SIGN_BEHAVIOUR_HIGHSCORE 3
 
 class CActorHelperSign;
-
-struct astruct_22
-{
-	bool FUN_002ef890();
-	void FUN_002ef4e0(float param_1, float param_2, float param_3, float param_4, byte param_6);
-	void FUN_002ef500();
-	void Init(edDList_material* param_2, edDList_material* param_3);
-	void FUN_002ef9b0(edDList_material* param_2, edDList_material* param_3);
-	void MoveMenuArrow(bool bNext);
-	void Reset();
-	void Term();
-
-	CSprite field_0x0;
-	CSprite field_0xc0;
-
-	float field_0x180;
-	float field_0x184;
-	float field_0x188;
-	float field_0x18c;
-	float field_0x190;
-	byte field_0x194;
-	float field_0x198;
-	bool field_0x19c;
-	bool field_0x19d;
-
-	uint field_0x1a0;
-	byte field_0x1a4;
-	int field_0x1a8;
-	union {
-		int field_0x1ac;
-		float centerX;
-		void* pContext;
-	};
-};
 
 class CBehaviourHelperSign : public CBehaviour
 {
@@ -78,7 +45,16 @@ class CBehaviourHelperSignHighScore : public CBehaviourHelperSign
 {
 public:
 	S_STREAM_REF<CActor> field_0x8;
+	int field_0xc;
 	StaticMeshComponent field_0x50;
+	StaticMeshComponent field_0xb0;
+	StaticMeshComponent field_0x110;
+	StaticMeshComponent field_0x170;
+	StaticMeshComponent field_0x1d0;
+	StaticMeshComponent field_0x230;
+	StaticMeshComponent field_0x290;
+
+	CMenuWheel menuWheel;
 };
 
 class CActorHelperSign : public CActor
@@ -101,6 +77,8 @@ public:
 	bool OpenEffect();
 
 	bool DetectTrigger(CActor* pSender);
+
+	void FUN_00339ab0();
 
 	ulong field_0x160;
 	int field_0x168;
