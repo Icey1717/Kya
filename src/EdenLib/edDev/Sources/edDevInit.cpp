@@ -21,7 +21,7 @@ void _edDevScanPorts(uint flags)
 	edDevRoot.field_0x3c = 0;
 
 	if ((flags & 0xcaca0001) != 0xcaca0001) {
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_PS2(
 		_edDevScanPsxPorts();)
 	}
 

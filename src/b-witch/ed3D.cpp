@@ -1039,8 +1039,8 @@ void ed3DFlushTexReset(edLIST* pList)
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD_LOG(
-			peVar2 = ed3DFlushMultiTexture(pMVar1, (edpkt_data*)gPKTMultiTex, 1, gVRAMBufferDMA);
+		IMPLEMENTATION_GUARD(
+		peVar2 = ed3DFlushMultiTexture(pMVar1, (edpkt_data*)gPKTMultiTex, 1, gVRAMBufferDMA);
 		if (peVar2 != (edpkt_data*)0x0) {
 			edDmaFlushCache();
 			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, gPKTMultiTex);

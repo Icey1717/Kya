@@ -72,16 +72,13 @@ public:
 	bool field_0x69;
 	undefined field_0x6a;
 	undefined field_0x6b;
-	CinNamedObject30* field_0x6c;
-	CActor* field_0x70;
-	CinNamedObject30* field_0x74;
-	CActor* field_0x78;
+	CFxHandle field_0x6c;
+	CFxHandle field_0x74;
 };
 
 class CBehaviourTrapStand_ActorTrap : public CBehaviourTrapStand 
 {
 public:
-	CBehaviourTrapStand_ActorTrap();
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);

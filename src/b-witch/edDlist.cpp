@@ -212,7 +212,7 @@ LAB_002ce9d4:
 			}
 			else {
 				if (uVar1 == LM_FUNC) {
-					IMPLEMENTATION_GUARD_LOG(
+					IMPLEMENTATION_GUARD(
 					pCommandBuffer = edDList2DUseFrameMaterial(pCommandBuffer);
 					)
 				}

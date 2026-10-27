@@ -158,18 +158,19 @@ LAB_001c2930:
 			uVar3 = this->pPathFollow->mode;
 
 			if (uVar3 == 2) {
-				IMPLEMENTATION_GUARD(
 				puVar8 = &CScene::_pinstance->field_0x38;
 				do {
 					uVar6 = *puVar8 * 0x343fd + 0x269ec3;
 					*puVar8 = uVar6;
+
 					iVar7 = this->pPathFollow->splinePointCount + -1;
 					iVar5 = (int)((uint)(uVar6 >> 0x10) & 0x7fff) % iVar7;
 					if (iVar7 == 0) {
 						trap(7);
 					}
 				} while (iVar5 == this->splinePointIndex);
-				this->splinePointIndex = iVar5;)
+
+				this->splinePointIndex = iVar5;
 			}
 			else {
 				if (uVar3 == 1) {
@@ -1179,16 +1180,14 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 					pComponent->Begin(this, newState, animationType);
 
 					if (this->dlistPatchId != -1) {
-						IMPLEMENTATION_GUARD(
-						iVar4 = GetManagerObject(MO_17);
-						ActorFunc_002d79e0(iVar4, this->dlistPatchId, 0, (Actor*)this));
+						static_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager))->_AddCallFuncElement(this->dlistPatchId, 0, (int)this);
 					}
 				}
+
 				bVar2 = true;
 			}
 			else {
-				// Missing behaviour!
-				// assert(false);
+				__debugbreak();
 				ACTOR_LOG(LogLevel::Info, "CActor::SetBehaviour Missing Behaviour {} bhvr: {} state: {} anim: {} (cur bhvr: {})", this->name, behaviourId, newState, animationType, this->curBehaviourId);
 				bVar2 = false;
 			}

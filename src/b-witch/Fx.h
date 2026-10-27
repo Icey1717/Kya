@@ -165,6 +165,17 @@ public:
 		return;
 	}
 
+	inline void SetPosition(float x, float y, float z, float w)
+	{
+		if (IsValid()) {
+			pFx->position.x = x;
+			pFx->position.y = y;
+			pFx->position.z = z;
+			pFx->position.w = w;
+		}
+		return;
+	}
+
 	inline void SetRotationEuler(edF32VECTOR4* pNewRotationEuler)
 	{
 		if (IsValid()) {

@@ -64,7 +64,7 @@ uint _edDevDualShock2(uint eventID, EDDEV_PORT* pController, void* param_3)
 			pPVar1->field_0x8 = 0;
 		}
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_PS2(
 		_edDevAttachPsxPort(pController);)
 		break;
 	case 0x90000003:

@@ -110,14 +110,6 @@ uint CActorTrap::Func_0x98()
 	return (uint)((uVar3 & 2) != 0);
 }
 
-CBehaviourTrapStand_ActorTrap::CBehaviourTrapStand_ActorTrap()
-{
-	this->field_0x6c = (CinNamedObject30*)0x0;
-	this->field_0x70 = (CActor*)0x0;
-	this->field_0x74 = (CinNamedObject30*)0x0;
-	this->field_0x78 = (CActor*)0x0;
-}
-
 void CBehaviourTrapStand_ActorTrap::Create(ByteCode* pByteCode)
 {
 	this->flags = pByteCode->GetU32();
@@ -355,6 +347,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 					catchEffect.Start();
 				}
 			}
+
 			this->pOwner->SetState(param_2, -1);
 		}
 	}
@@ -487,17 +480,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 	pTrap = this->pOwner;
 
 	if (pTrap->pTiedActor != (CActor*)0x0) {
-		iVar14 = pTrap->actorState;
-
-		if (iVar14 == -1) {
-			uVar11 = 0;
-		}
-		else {
-			pAVar9 = pTrap->GetStateCfg(iVar14);
-			uVar11 = pAVar9->flags_0x4;
-		}
-
-		if ((uVar11 & 0x20000) != 0) {
+		if ((pTrap->GetStateFlags(pTrap->actorState) & 0x20000) != 0) {
 			pTrap = this->pOwner;
 			local_20 = pTrap->baseLocation;
 			this->pOwner->SV_UpdatePosition_Rel(&local_20, 0, 1, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
@@ -559,6 +542,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			else {
 				fVar17 = (float)uVar3;
 			}
+
 			if ((int)uVar11 < 0) {
 				fVar16 = (float)(uVar11 >> 1 | uVar11 & 1);
 				fVar16 = fVar16 + fVar16;
@@ -566,6 +550,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			else {
 				fVar16 = (float)uVar11;
 			}
+
 			if ((fVar17 * this->field_0x4c) / fVar16 < fVar15) {
 				pTrap->SetState(TRAP_STATE_CATCH_STAND_2_2, -1);
 			}
@@ -600,14 +585,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		}
 		break;
 	case 0x12:
-		if (((this->field_0x78 == (CActor*)0x0) || (this->field_0x74 == (CinNamedObject30*)0x0)) ||
-			(this->field_0x74 != this->field_0x78->pCinData)) {
-			bVar8 = false;
-		}
-		else {
-			bVar8 = true;
-		}
-		if ((!bVar8) && (1.0 < pTrap->timeInAir)) {
+		if ((!this->field_0x74.IsValid()) && (1.0f < pTrap->timeInAir)) {
 			if (this->defaultBehaviourId == pTrap->curBehaviourId) {
 				pTrap->UpdatePosition(&pTrap->baseLocation, true);
 				pTrap = this->pOwner;
@@ -626,59 +604,21 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		}
 	}
 
-	if (((this->field_0x70 == (CActor*)0x0) || (this->field_0x6c == (CinNamedObject30*)0x0)) ||
-		(this->field_0x6c != this->field_0x70->pCinData)) {
-		bVar8 = false;
+	if (this->field_0x6c.IsValid()) {
+		pTrap = this->pOwner;
+
+		if ((((pTrap->GetStateFlags(pTrap->actorState) & 0x2000) == 0) && this->field_0x6c.IsValid())) {
+			this->field_0x6c.Stop();
+		}
 	}
 	else {
-		bVar8 = true;
-	}
-
-	if (bVar8) {
 		pTrap = this->pOwner;
-		iVar14 = pTrap->actorState;
-		if (iVar14 == -1) {
-			uVar11 = 0;
-		}
-		else {
-			pAVar9 = pTrap->GetStateCfg(iVar14);
-			uVar11 = pAVar9->flags_0x4 & 0x2000;
-		}
 
-		CActor* pOtherActor;
-		if (((uVar11 == 0) && (pOtherActor = this->field_0x70, pOtherActor != (CActor*)0x0)) &&
-			((this->field_0x6c != (CinNamedObject30*)0x0 && (this->field_0x6c == pOtherActor->pCinData)))) {
-			pOtherActor->Manage();
-		}
-		else {
-			pTrap = this->pOwner;
-			iVar14 = pTrap->actorState;
-			if (iVar14 == -1) {
-				uVar11 = 0;
-			}
-			else {
-				pAVar9 = pTrap->GetStateCfg(iVar14);
-				uVar11 = pAVar9->flags_0x4 & 0x2000;
-			}
+		if ((pTrap->GetStateFlags(pTrap->actorState) & 0x2000) != 0) {
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x6c, this->field_0x20, FX_MATERIAL_SELECTOR_NONE);
 
-			if (uVar11 != 0) {
-				IMPLEMENTATION_GUARD_FX(
-					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, (undefined4*)&this->field_0x6c, this->field_0x20,
-						0xffffffffffffffff);)
-
-					CActor* pOtherActor = this->field_0x70;
-				if (((pOtherActor != (CActor*)0x0) && (this->field_0x6c != (CinNamedObject30*)0x0)) &&
-					(this->field_0x6c == pOtherActor->pCinData)) {
-					IMPLEMENTATION_GUARD(
-						pOtherActor->CheckpointReset(2, this->pOwner, 0);)
-				}
-				pOtherActor = this->field_0x70;
-				if (((pOtherActor != (CActor*)0x0) && (this->field_0x6c != (CinNamedObject30*)0x0)) &&
-					(this->field_0x6c == pOtherActor->pCinData)) {
-					pOtherActor->InitDlistPatchable(0);
-				}
-			}
+			this->field_0x6c.SpatializeOnActor(2, this->pOwner, 0);
+			this->field_0x6c.Start();
 		}
 	}
 
@@ -945,25 +885,14 @@ void CBehaviourTrapStand::InitState(int newState)
 		pTrap->flags = pTrap->flags | 0x20;
 		pTrap->EvaluateDisplayState();
 		if ((this->field_0x24 != 0xffffffff) && (this->pOwner->prevActorState == TRAP_STATE_IDLE)) {
-			IMPLEMENTATION_GUARD_FX(
-			CParticlesManager::GetDynamicFx(CScene::ptable.g_EffectsManager_004516b8, (undefined4*)(this + 1), this->field_0x24, 0xffffffffffffffff);)
+			CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x74, this->field_0x24, FX_MATERIAL_SELECTOR_NONE);
 
 			pTrap = this->pOwner;
-			pCVar5 = this->field_0x78;
-			if ((pCVar5 != (CActorTrap*)0x0) && (this->field_0x74 != (CinNamedObject30*)0x0) &&	(this->field_0x74 == pCVar5->pCinData)) {
-				pCVar5->currentLocation.x = pTrap->currentLocation.x;
-				pCVar5->currentLocation.y = pTrap->currentLocation.y - 2.0f;
-				pCVar5->currentLocation.z = pTrap->currentLocation.z;
-				pCVar5->currentLocation.w = pTrap->currentLocation.w;
-			}
-
-			pCVar5 = this->field_0x78;
-			if (((pCVar5 != (CActorTrap*)0x0) && (this->field_0x74 != (CinNamedObject30*)0x0) &&
-				(this->field_0x74 == pCVar5->pCinData))) {
-				pCVar5->InitDlistPatchable(0);
-			}
+			this->field_0x74.SetPosition(pTrap->currentLocation.x, pTrap->currentLocation.y - 2.0f, pTrap->currentLocation.z, pTrap->currentLocation.w);
+			this->field_0x74.Start();
 		}
 	}
+
 	return;
 }
 

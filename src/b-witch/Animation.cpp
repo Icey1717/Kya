@@ -1943,8 +1943,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 #ifdef PLATFORM_WIN
 			if ((this->anmSkeleton).pTag == 0x0 && ((bHasFlag != 0) && (((pActor->p3DHierNode->base).flags_0x9e & 0x100) != 0))) {
 				Log::GetInstance().ForceFlush();
-				IMPLEMENTATION_GUARD_LOG();
-				assert(false);
+				__debugbreak();
 			}
 #endif
 
@@ -2055,7 +2054,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 					if (index != -1) {
 						if (index > 0x3000) {
 							Log::GetInstance().ForceFlush();
-							IMPLEMENTATION_GUARD_LOG();
+							__debugbreak();
 						}
 
 						assert(index < 0x3000);
