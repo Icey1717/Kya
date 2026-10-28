@@ -5331,7 +5331,6 @@ void CCinematicManager::Level_SaveContext()
 void CCinematicManager::Level_LoadContext()
 {
 	bool bVar1;
-	SaveDataChunk_BLCI* pBLCI;
 	CCinematic* pFoundCinematic;
 	int curCutsceneIndex;
 	SaveDataChunk_BLCI::CutsceneData* pData;
@@ -5340,8 +5339,9 @@ void CCinematicManager::Level_LoadContext()
 	CLevelScheduler* pLevel;
 
 	pLevel = CLevelScheduler::gThis;
-	pBLCI = reinterpret_cast<SaveDataChunk_BLCI*>(CLevelScheduler::gThis->SaveGame_OpenChunk(0x49434c42) + 1);
-	if (pBLCI != (SaveDataChunk_BLCI*)0x0) {
+	CChunk* pChunk = CLevelScheduler::gThis->SaveGame_OpenChunk(SAVEGAME_CHUNK_BLCI);
+	if (pChunk != (CChunk*)0x0) {
+		SaveDataChunk_BLCI* pBLCI = reinterpret_cast<SaveDataChunk_BLCI*>(pChunk + 1);
 		nbCutscenes = pBLCI->nbCutscenes;
 		pData = pBLCI->data;
 

@@ -8,10 +8,19 @@
 #include "ed3D.h"
 #include "Rendering/DisplayList.h"
 #include "LevelScheduler.h"
+#include <chrono>
 
 namespace Debug {
 	namespace Scene {
 		Debug::Setting<int> gAutoLoadLevelId = { "Auto Load Level ID", -1 };
+		static bool gSweepActive = false;
+		static bool gSweepWaiting = false;
+		static bool gSweepTransitionStarted = false;
+		static int gSweepLevel = -1;
+		static int gSweepGeneration = 0;
+		static float gSweepDelay = 2.0f;
+		static const char* gSweepStatus = "Idle";
+		static std::chrono::steady_clock::time_point gSweepTime;
 
 		void Startup()
 		{
@@ -36,6 +45,27 @@ namespace Debug {
 
 			if (ImGui::Button("Reset")) {
 				gAutoLoadLevelId = -1;
+			}
+
+			if (ImGui::CollapsingHeader("Load All Levels")) {
+				ImGui::InputFloat("Seconds per level", &gSweepDelay, 1.0f);
+				if (gSweepDelay < 0.0f) gSweepDelay = 0.0f;
+				if (!gSweepActive) {
+					if (ImGui::Button("Start Level Sweep")) {
+						++gSweepGeneration;
+						gSweepActive = true;
+						gSweepWaiting = false;
+						gSweepLevel = -1;
+						gSweepStatus = "Starting";
+						gSweepTime = std::chrono::steady_clock::now();
+					}
+				}
+				else if (ImGui::Button("Stop Level Sweep")) {
+					++gSweepGeneration;
+					gSweepActive = false;
+					gSweepStatus = "Stopped";
+				}
+				ImGui::Text("%s (level %d)", gSweepStatus, gSweepLevel);
 			}
 
 			if (ImGui::CollapsingHeader("Teleport", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -127,9 +157,50 @@ namespace Debug {
 
 		void Update()
 		{
+			auto* pScheduler = CScene::ptable.g_LevelScheduleManager_00451660;
+			if (gSweepActive && pScheduler && CScene::_pinstance) {
+				const auto now = std::chrono::steady_clock::now();
+				const double elapsed = std::chrono::duration<double>(now - gSweepTime).count();
+				if (gSweepWaiting) {
+					if (gSweepTransitionStarted && pScheduler->currentLevelID == gSweepLevel && pScheduler->nextLevelID == 0x10 &&
+						!CScene::_pinstance->IsFadeTermActive()) {
+						gSweepWaiting = false;
+						gSweepStatus = "Loaded";
+						gSweepTime = now;
+					}
+					else if (elapsed > 60.0) {
+						++gSweepGeneration;
+						gSweepActive = false;
+						gSweepStatus = "Timed out waiting for level";
+					}
+				}
+				else if ((gSweepLevel == -1 || elapsed >= gSweepDelay) && pScheduler->nextLevelID == 0x10 &&
+					!CScene::_pinstance->IsFadeTermActive()) {
+					int nextLevel = gSweepLevel + 1;
+					while (nextLevel < 16 && pScheduler->aLevelInfo[nextLevel].levelName[0] == '\0') ++nextLevel;
+					if (nextLevel == 16) {
+						gSweepActive = false;
+						gSweepStatus = "Complete";
+					}
+					else {
+						gSweepLevel = nextLevel;
+						gSweepWaiting = true;
+						gSweepTransitionStarted = false;
+						gSweepStatus = "Loading";
+						gSweepTime = now;
+						const int generation = gSweepGeneration;
+						EnqueueLevelManageTask([nextLevel, generation]() {
+							if (!gSweepActive || generation != gSweepGeneration || !CLevelScheduler::gThis || !CScene::_pinstance) return;
+							CLevelScheduler::gThis->Level_FillRunInfo(nextLevel, -1, -1);
+							CScene::_pinstance->SetFadeStateTerm(false);
+							gSweepTransitionStarted = true;
+						});
+					}
+				}
+			}
 			static bool bSuccesfullyLoaded = false;
 
-			if (!bSuccesfullyLoaded) {
+			if (!bSuccesfullyLoaded && pScheduler) {
 				if (CScene::ptable.g_LevelScheduleManager_00451660->currentLevelID == gDebugLevelLoadOverride) {
 					bSuccesfullyLoaded = true;
 					gAutoLoadLevelId = gDebugLevelLoadOverride;

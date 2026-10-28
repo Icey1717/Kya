@@ -412,7 +412,7 @@ public:
 	float field_0x1544;
 	float currentGlideTime;
 	float field_0x1550;
-	float field_0x1554;
+	int field_0x1554;
 	float field_0xa80;
 	float field_0xa84;
 	float field_0xa88;

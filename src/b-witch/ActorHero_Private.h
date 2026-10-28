@@ -824,6 +824,7 @@ public:
 	edF32VECTOR4 controlDirection;
 
 	uint boomyState_0x1b70;
+	float field_0x1b84;
 
 	float targetBoomyLayerOverlayWeight;
 

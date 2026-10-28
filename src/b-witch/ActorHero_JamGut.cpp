@@ -234,7 +234,7 @@ void CBehaviourHeroRideJamGut::ManageInput()
 	}
 
 	if ((bVar1) && (pHero->bCanUseCheats == 1)) {
-		pHero->field_0x1554 = 0.0f;
+		pHero->field_0x1554 = 0;
 		pHero->field_0x1550 = 0.0f;
 		this->aCommands[10] = 1;
 	}

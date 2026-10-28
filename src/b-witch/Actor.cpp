@@ -1290,9 +1290,8 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 			fVar4 = pTag->srcAnim.field_0x4;
 			fVar6 = pTag->dstAnim.field_0x4;
 			peVar3->animPlayState = STATE_ANIM_NONE;
-			IMPLEMENTATION_GUARD(
-			peVar3->SetRawAnim(pDstHdr, (uint)(cVar1 != '\0'), (int)&pDstHdr->flags + 1);
-			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar2 != '\0'), (int)&pSrcHdr->flags + 2);)
+			peVar3->SetRawAnim(pDstHdr, (uint)(cVar1 != '\0'), (int)&pDstHdr->count_0x0 + 1);
+			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar2 != '\0'), (int)&pSrcHdr->count_0x0 + 2);
 			peVar3->field_0xbc = 1.0f;
 			peVar3->MorphingStartDT();
 			(peVar3->currentAnimDesc).morphDuration = 1.0f;
@@ -1305,6 +1304,7 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 			(peVar3->nextAnimDesc).state.time_0xc = local_30[1];
 		}
 	}
+
 	return;
 }
 
@@ -2245,9 +2245,9 @@ void CActor::RestoreInitData()
 	float fVar5;
 
 	if (((this->actorFieldS & 4) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
-		IMPLEMENTATION_GUARD(
-		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x20000;)
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x20000;
 	}
+
 	pCVar2 = this->pCinData;
 	this->scale.xyz = pCVar2->scale;
 	this->scale.w = 1.0f;

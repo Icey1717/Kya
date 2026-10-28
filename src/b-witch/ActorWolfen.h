@@ -1349,6 +1349,8 @@ public:
 
 	bool IsSnipeOccludedByScenery(float param_1, CActorFighter* pTarget);
 
+	void PossessByPlayer(int param_2);
+
 	// New
 	void PostManageA();
 	void PostManageB(CBehaviourWolfen* pBehaviour);

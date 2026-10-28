@@ -146,6 +146,7 @@ struct CInputAnalyser
 	void Reset();
 	static bool Compare(s_input_pattern* pPatternA, s_input_pattern* pPatternB, s_input_pattern_cmp* pPatternCmp);
 	void _SV_RotatePattern(int index);
+	uint FUN_003381b0(CPlayerInput* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
 	s_input_pattern patternA;
 	s_input_pattern patternB;
@@ -179,6 +180,9 @@ public:
 	void ResetInternal(int textureIndex, int meshIndex);
 
 	edF32VECTOR4* GetTextureAnimSpeedNormalExtruder();
+
+	void FUN_00406ff0(ed_3D_Scene* pScene, ed_g3d_manager* pManager, ed_3d_hierarchy_setup* pSetup, char* szName);
+	void FUN_00406f90();
 
 	byte field_0x60;
 	byte field_0x61;
@@ -688,10 +692,15 @@ public:
 	void _StateFighterHoldThrowTerm();
 
 	void _StateFighterHoldFollowStd(int nextState);
+	void _StateFighterHoldFollowWait();
+	void _StateFighterHoldHit();
 	void StateFighterHoldStd(int nextState, int nextAnim);
 
 	void _StateFighterRide();
 	void _StateFighterRideBlow();
+	void _StateFighterRidePrepareExit();
+	void _StateFighterRideExit();
+	void FUN_00318400();
 
 	void _StateFighterPrepareFightAction(int nextState);
 	void _StateFighterReturnFromFightAction();
@@ -796,6 +805,8 @@ public:
 	void _UpdateDynForHit(float maxDuration, _msg_hit_param* pHitParams);
 
 	void UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int param_3);
+
+	void FUN_0031aea0(CActorFighter* param_2, edF32VECTOR4* param_3, uint scenaricDataIndex, CFxHandle* pFxHandle, uint boneId);
 
 	CActorFighter* pAdversary;
 	CActorFighter* field_0x354;

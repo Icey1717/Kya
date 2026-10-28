@@ -5,7 +5,9 @@
 
 struct _eddebug_module;
 
-struct _eddebug {
+struct _eddebug
+{
+	char g_DebugTextBuffer_00468ef0[32];
 	_eddebug_module* curModule;
 	uint KeyboardID_00468f24;
 };

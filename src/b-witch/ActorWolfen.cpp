@@ -22,6 +22,8 @@
 #include <cstdio>
 #endif
 
+CActorWolfen* gWolfenPtr;
+
 struct WolfenAnimMatrixData
 {
 	void Init()
@@ -1230,17 +1232,15 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	_msg_hit_param _Stack144;
 
 	if (msg == 0x25) {
-		IMPLEMENTATION_GUARD(
-		FUN_001fbaf0(this, 0);)
+		PossessByPlayer(0);
 	LAB_0017c6e8:
 		iVar15 = CActorFighter::InterpretMessage(pSender, msg, pMsgParam);
 		return iVar15;
 	}
 
 	if (msg == 0x26) {
-		IMPLEMENTATION_GUARD(
-		FUN_001fbaf0(this, 1);
-		goto LAB_0017c6e8;)
+		PossessByPlayer(1);
+		goto LAB_0017c6e8;
 	}
 
 	if (msg != 0x1a) {
@@ -9133,6 +9133,43 @@ bool CActorWolfen::IsSnipeOccludedByScenery(float param_1, CActorFighter* pTarge
 	return bIsOccluded;
 }
 
+void CActorWolfen::PossessByPlayer(int param_2)
+{
+	CPlayerInput* pCVar1;
+
+	if (this->pInputAnalyser != (CInputAnalyser*)0x0) {
+		if (param_2 == 1) {
+			gWolfenPtr = this;
+			pCVar1 = GetPlayerInput(1);
+			pCVar1->bActive = 1;
+			this->fightFlags = this->fightFlags | 0x8000;
+			this->fightFlags = this->fightFlags & 0xfffeffff;
+			if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
+				if (gWolfenAnimMatrixData.pWolfen != (CActorWolfen*)0x0) {
+					gWolfenAnimMatrixData.pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+				}
+				gWolfenAnimMatrixData.pWolfen = this;
+				this->pAnimationController->SetBoneMatrixData(gWolfenAnimMatrixData.aMatrices, gWolfenAnimMatrixData.nbBones);
+			}
+		}
+		else {
+			if (this == gWolfenPtr) {
+				gWolfenPtr = (CActorWolfen*)0x0;
+				pCVar1 = GetPlayerInput(1);
+				pCVar1->bActive = 0;
+				this->fightFlags = this->fightFlags & 0xffff7fff;
+				this->fightFlags = this->fightFlags | 0x10000;
+				if ((gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) && (gWolfenAnimMatrixData.pWolfen == this)) {
+					gWolfenAnimMatrixData.pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+					gWolfenAnimMatrixData.pWolfen = (CActorWolfen*)0x0;
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 void CActorWolfen::PostManageA()
 {
 	if (((this->combatFlags_0xb78 & 0x800) != 0) && ((this->GetStateWolfenFlags(this->actorState) & 2) == 0)) {
@@ -10848,8 +10885,6 @@ void CBehaviourFighterWolfen::Init(CActor* pOwner)
 
 	return;
 }
-
-CActorWolfen* gWolfenPtr;
 
 // Should be in: D:/Projects/b-witch/ActorWolfen_Fight.cpp
 void CBehaviourFighterWolfen::Manage()
