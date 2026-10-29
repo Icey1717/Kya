@@ -80,10 +80,10 @@ TEST_F(FighterManageTest, IdleKeepsAnimationRateWhenOnlyUnrelatedFlagsAreSet)
 TEST_F(FighterManageTest, PendingGrabContinuationUpdatesDynamicsOnce)
 {
 	s_fighter_grab grab{};
-	fighter.actorState = static_cast<EActorState>(0x6e);
+	fighter.actorState = static_cast<EActorState>(FIGHTER_GRAB_ACTION_CONNECTED);
 	fighter.pExecutingGrab = &grab;
 	layer.animPlayState = 0;
 	behaviour.Manage();
-	EXPECT_EQ(fighter.actorState, 0x6e);
+	EXPECT_EQ(fighter.actorState, FIGHTER_GRAB_ACTION_CONNECTED);
 	EXPECT_EQ(fighter.dynCount, 1);
 }

@@ -1,0 +1,121 @@
+{
+  "program": "SLES_514.73",
+  "language": "r5900:LE:32:default",
+  "captured": "2026-10-29",
+  "functions": [
+    {
+      "address": "00100460",
+      "disassembly": {
+        "instructions": [
+          {
+            "address": "00100460",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "andi",
+            "operands": "andi v0,a1,0x1",
+            "references": []
+          },
+          {
+            "address": "00100464",
+            "flow_type": "TERMINATOR",
+            "mnemonic": "jr",
+            "operands": "jr ra",
+            "references": []
+          },
+          {
+            "address": "00100468",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "_sltu",
+            "operands": "_sltu v0,zero,v0",
+            "references": []
+          }
+        ]
+      },
+      "decompilation": {
+        "c": "\r\nbool CActor::IsKindOfObject(CActor *pActor,ulong kind)\r\n\r\n{\r\n  return (kind & 1) != 0;\r\n}\r\n\r\n",
+        "function": {
+          "body": "[[00100460, 0010046b] ]",
+          "entry": "00100460",
+          "name": "IsKindOfObject",
+          "namespace": "CActor",
+          "signature": "bool stdcall IsKindOfObject(CActor * pActor, ulong kind)"
+        }
+      }
+    },
+    {
+      "address": "0011e060",
+      "disassembly": {
+        "instructions": [
+          {
+            "address": "0011e060",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "andi",
+            "operands": "andi v0,a1,0x3",
+            "references": []
+          },
+          {
+            "address": "0011e064",
+            "flow_type": "TERMINATOR",
+            "mnemonic": "jr",
+            "operands": "jr ra",
+            "references": []
+          },
+          {
+            "address": "0011e068",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "_sltu",
+            "operands": "_sltu v0,zero,v0",
+            "references": []
+          }
+        ]
+      },
+      "decompilation": {
+        "c": "\r\nbool CActorMovable::IsKindOfObject(undefined8 param_1,ulong kind)\r\n\r\n{\r\n  return (kind & 3) != 0;\r\n}\r\n\r\n",
+        "function": {
+          "body": "[[0011e060, 0011e06b] ]",
+          "entry": "0011e060",
+          "name": "IsKindOfObject",
+          "namespace": "CActorMovable",
+          "signature": "undefined stdcall IsKindOfObject(undefined8 param_1, undefined8 kind)"
+        }
+      }
+    },
+    {
+      "address": "00124180",
+      "disassembly": {
+        "instructions": [
+          {
+            "address": "00124180",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "andi",
+            "operands": "andi v0,a1,0x7",
+            "references": []
+          },
+          {
+            "address": "00124184",
+            "flow_type": "TERMINATOR",
+            "mnemonic": "jr",
+            "operands": "jr ra",
+            "references": []
+          },
+          {
+            "address": "00124188",
+            "flow_type": "FALL_THROUGH",
+            "mnemonic": "_sltu",
+            "operands": "_sltu v0,zero,v0",
+            "references": []
+          }
+        ]
+      },
+      "decompilation": {
+        "c": "\r\nbool CActorAutonomous::IsKindOfObject(undefined8 param_1,ulong kind)\r\n\r\n{\r\n  return (kind & 7) != 0;\r\n}\r\n\r\n",
+        "function": {
+          "body": "[[00124180, 0012418b] ]",
+          "entry": "00124180",
+          "name": "IsKindOfObject",
+          "namespace": "CActorAutonomous",
+          "signature": "undefined stdcall IsKindOfObject(undefined8 param_1, undefined8 kind)"
+        }
+      }
+    }
+  ]
+}

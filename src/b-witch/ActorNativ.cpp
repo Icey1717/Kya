@@ -2488,14 +2488,14 @@ void CActorNativ::State_0x22(CBehaviourNativAkasa* pBehaviour)
 	pSubObjA = pBehaviour->GetActiveComboTutorial();
 
 	if (((pBehaviour->field_0x16ac != 2) &&
-		(bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		(bVar3 = CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 		pBehaviour->FUN_003f1da0(pCombo);
 	}
 
-	bVar3 = pHero->FUN_0031b790(pHero->actorState);
+	bVar3 = pHero->IsAttackingState(pHero->actorState);
 	if (bVar3 != false) {
 		if (((pBehaviour->field_0x16ac != 2) &&
-			(bVar3 = pHero->FUN_0031b790(pHero->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			(bVar3 = pHero->IsAttackingState(pHero->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 			pBehaviour->FUN_003f1da0(pCombo);
 		}
 
@@ -2528,7 +2528,7 @@ void CActorNativ::State_0x23(CBehaviourNativAkasa* pBehaviour)
 	pHero = CActorHero::_gThis;
 	pTutorial = pBehaviour->GetActiveComboTutorial();
 
-	if (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) == false) {
+	if (CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState) == false) {
 		pBehaviour->FUN_003ebd90();
 	}
 	else {
@@ -2568,12 +2568,12 @@ void CActorNativ::State_0x25(CBehaviourNativAkasa* pBehaviour)
 
 	pHero = CActorHero::_gThis;
 
-	if (((pBehaviour->field_0x16ac != 2) && (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) != false)) &&
+	if (((pBehaviour->field_0x16ac != 2) && (CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState) != false)) &&
 		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 		pBehaviour->FUN_003f1da0(pCombo);
 	}
 
-	bVar1 = pHero->FUN_0031b790(pHero->actorState);
+	bVar1 = pHero->IsAttackingState(pHero->actorState);
 	if (bVar1 == false) {
 		pBehaviour->field_0x16a4 = 0;
 		(pBehaviour->field_0x60).activeSubObjIndex = 0;
@@ -2593,19 +2593,19 @@ void CActorNativ::StateInputFailed(CBehaviourNativAkasa* pBehaviour)
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
-	if (((pBehaviour->field_0x16ac != 2) && (bVar2 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar2 != false)) &&
+	if (((pBehaviour->field_0x16ac != 2) && (bVar2 = CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState), bVar2 != false)) &&
 		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 		pBehaviour->FUN_003f1da0(pCombo);
 	}
 
-	bVar2 = pHero->FUN_0031b790(pHero->actorState);
-	if (((bVar2 == false) && (iVar1 = pHero->actorState, iVar1 != 0x68)) && ((iVar1 != 0x69 && (iVar1 != NATIVE_STATE_SELLER_INPUT_FAILED)))) {
+	bVar2 = pHero->IsAttackingState(pHero->actorState);
+	if (((bVar2 == false) && (iVar1 = pHero->actorState, iVar1 != FIGHTER_GRAB_BEGIN)) && ((iVar1 != FIGHTER_EXECUTE_GRAB && (iVar1 != FIGHTER_HOLD_THROW)))) {
 		uVar4 = GetStateFlags(iVar1);
 
 		if ((uVar4 & 0x8000) == 0) {
 			uVar4 = GetStateFlags(iVar1) & 0x4000;
 
-			if (((uVar4 == 0) && ((iVar1 = pHero->actorState, iVar1 != 10 || (pHero->prevActorState != 0x20)))) && (iVar1 != 0x23)) {
+			if (((uVar4 == 0) && ((iVar1 = pHero->actorState, iVar1 != FIGHTER_JUMP || (pHero->prevActorState != FIGHTER_RIDE)))) && (iVar1 != FIGHTER_STATE_RIDE_EXIT)) {
 				pBehaviour->activeSubObjBIndex = 0;
 				pBehaviour->FUN_003ebd90();
 			}
@@ -2623,7 +2623,7 @@ void CActorNativ::State_0x38(CBehaviourNativAkasa* pBehaviour)
 
 	pHero = CActorHero::_gThis;
 
-	if (((pBehaviour->field_0x16ac != 2) && (bVar1 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar1 != false)) &&
+	if (((pBehaviour->field_0x16ac != 2) && (bVar1 = CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState), bVar1 != false)) &&
 		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 		pBehaviour->FUN_003f1da0(pCombo);
 	}
@@ -4204,8 +4204,8 @@ void CBehaviourNativAkasa::ManageComboTutorial()
 	}
 
 	if (((this->field_0x16a4 == 0) && (this->field_0x16ac == 2)) && ((((CActorHero::_gThis->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0 ||
-			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == 0x6f || (iVar6 == 0x34)) || (iVar6 == NATIVE_STATE_SELLER_INPUT_FAILED)) || ((iVar6 == 10 &&
-				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
+			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == FIGHTER_GRAB_ACTION_END || (iVar6 == FIGHTER_HOLD_PUSH_PREPARE)) || (iVar6 == FIGHTER_HOLD_THROW)) || ((iVar6 == FIGHTER_JUMP &&
+				(CActorHero::_gThis->prevActorState == FIGHTER_RIDE)))))) || (iVar6 == FIGHTER_RIDE_PREPARE_EXIT)))) {
 		pNativ = this->pOwner;
 
 		this->field_0x38.Switch(pNativ);
@@ -4617,7 +4617,7 @@ int CBehaviourNativAkasa::GetInputState(int currentIndex, int param_3)
 					}
 
 					if ((inputState == 0x25) || (inputState == 0x2b)) {
-						lVar5 = CActorHero::_gThis->FUN_0031c9e0();
+						lVar5 = CActorHero::_gThis->IsComboInputWindowOpen();
 						if (lVar5 != 0) {
 							return INPUT_STATE_NORMAL;
 						}
@@ -4627,8 +4627,8 @@ int CBehaviourNativAkasa::GetInputState(int currentIndex, int param_3)
 				}
 
 				if (currentIndex == iVar1 + 1) {
-					bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState);
-					if (((bVar3 == false) || (lVar5 = pCVar2->FUN_0031c9e0(), lVar5 == 0)) || (inputState = 1, param_3 != 0)) {
+					bVar3 = CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState);
+					if (((bVar3 == false) || (lVar5 = pCVar2->IsComboInputWindowOpen(), lVar5 == 0)) || (inputState = 1, param_3 != 0)) {
 						inputState = 0;
 					}
 				}

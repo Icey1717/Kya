@@ -357,7 +357,7 @@ void CActorBunch::FUN_003ded20(bool bPlayImpact)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	uVar2 = FUN_0031b4d0(this->actorState);
+	uVar2 = GetDefenceStateFlags(this->actorState);
 
 	if ((uVar2 == 4) && ((this->hitFlags & 0x10) == 0)) {
 		if ((this->flags & 0x1000) == 0) {
@@ -389,10 +389,10 @@ void CActorBunch::FUN_003ded20(bool bPlayImpact)
 		fVar3 = edF32Vector4DotProductHard(&local_10, &local_20);
 		if (fVar3 < 0.5f) {
 			if (this->distanceToGround <= 0.3f) {
-				SetState(0x18, -1);
+				SetState(FIGHTER_STATE_STEP_BACK_A, -1);
 			}
 			else {
-				SetState(0x1b, -1);
+				SetState(FIGHTER_DEFEND_HIT_FALL, -1);
 			}
 
 			if (bPlayImpact != true) {
@@ -490,7 +490,7 @@ void CActorBunch::FUN_003dea20()
 
 		if ((this->combatFlags_0xb78 & 0x20) == 0) {
 			pFighter = this->pAdversary;
-			if ((pFighter != (CActorFighter*)0x0) && (bVar3 = pFighter->FUN_0031b790(pFighter->actorState), bVar3 != false)) {
+			if ((pFighter != (CActorFighter*)0x0) && (bVar3 = pFighter->IsAttackingState(pFighter->actorState), bVar3 != false)) {
 				pFighter = this->pAdversary;
 				pFighterCombo = pFighter->pFighterCombo;
 				if ((pFighterCombo != (s_fighter_combo*)0x0) &&
@@ -913,7 +913,7 @@ int CBehaviourBunchFighterProjected::InterpretMessage(CActor* pSender, int msg, 
 
 	_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
 
-	if (((msg == 2) && (((result = pHitParam->projectileType, result == 10 || (result == 8)) || (result == 7)))) && (this->pOwner->FUN_0031cdb0() != false)) {
+	if (((msg == 2) && (((result = pHitParam->projectileType, result == 10 || (result == 8)) || (result == 7)))) && (this->pOwner->IsInStaggerSequence() != false)) {
 		this->pOwner->PlayImpactFx(&pHitParam->field_0x40, &pHitParam->field_0x20, (pHitParam->flags & 1) != 0, false);
 		result = 1;
 	}

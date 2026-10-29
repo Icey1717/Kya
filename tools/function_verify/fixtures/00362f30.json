@@ -1,0 +1,427 @@
+{
+  "schema": "kya.raw-pcode.v1",
+  "program": "SLES_514.73",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "language": "r5900:LE:32:default",
+  "compiler": "default",
+  "big_endian": false,
+  "entry": "00362f30",
+  "name": "CActorMoney::GetType",
+  "instructions": [
+    {
+      "address": "00362f30",
+      "text": "lw v0,0x1d0(a0)",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "1d0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "unique",
+            "offset": "4000",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "4000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f34",
+      "text": "sltiu at,v0,0x2",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_LESS",
+          "output": {
+            "space": "unique",
+            "offset": "7300",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "2",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "register",
+            "offset": "10",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "7300",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f38",
+      "text": "beq at,zero,0x00362f48",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_EQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "a00",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "10",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "362f48",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "a00",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f40",
+      "text": "b 0x00362f60",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "BRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "362f60",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f48",
+      "text": "sltiu at,v0,0x6",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_LESS",
+          "output": {
+            "space": "unique",
+            "offset": "7300",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "6",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "register",
+            "offset": "10",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "7300",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f4c",
+      "text": "beq at,zero,0x00362f5c",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_EQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "a00",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "10",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "362f5c",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "a00",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f54",
+      "text": "b 0x00362f60",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1",
+              "size": 2,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "BRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "362f60",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f5c",
+      "text": "li v0,0x2",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "2",
+              "size": 2,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00362f60",
+      "text": "jr ra",
+      "delay_slots": 1,
+      "flow": "TERMINATOR",
+      "ops": [
+        {
+          "opcode": "RETURN",
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1f0",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operation_count": 19,
+  "complete": true
+}

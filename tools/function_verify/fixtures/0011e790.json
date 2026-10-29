@@ -1,0 +1,33 @@
+{
+  "schema": "kya.raw-pcode.v1",
+  "program": "SLES_514.73",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "language": "r5900:LE:32:default",
+  "compiler": "default",
+  "big_endian": false,
+  "entry": "0011e790",
+  "name": "CActor::GetBehaviourFlags",
+  "instructions": [
+    {
+      "address": "0011e790",
+      "text": "j 0x001022b0",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "BRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "1022b0",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operation_count": 1,
+  "complete": true
+}

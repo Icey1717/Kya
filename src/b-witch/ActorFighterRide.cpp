@@ -299,7 +299,7 @@ void CBehaviourFighterRidden::_ManageExit()
 		}
 		else {
 			pFighter = this->pOwner->field_0x354;
-			pFighter->SetState(0x22, -1);
+			pFighter->SetState(FIGHTER_RIDE_PREPARE_EXIT, -1);
 			this->pOwner->SetState(0x26, -1);
 		}
 	}
@@ -364,7 +364,7 @@ void CActorFighter::BehaviourFighterRidden_Manage()
 				ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 				if (this->pAnimationController->IsCurrentLayerAnimEndReached(0)) {
-					this->field_0x354->SetState(0x23, -1);
+					this->field_0x354->SetState(FIGHTER_STATE_RIDE_EXIT, -1);
 					this->field_0x684 = 1;
 					SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x5f, -1);
 				}
@@ -378,11 +378,11 @@ void CActorFighter::BehaviourFighterRidden_Manage()
 						fVar7 = pCVar5->GetValue();
 
 						if ((fVar7 <= 0.0f) || (pCVar6 = static_cast<CBehaviourFighterRidden*>(this->GetBehaviour(this->curBehaviourId)), 2 < pCVar6->field_0x18)) {
-							this->field_0x354->SetState(0x22, -1);
+							this->field_0x354->SetState(FIGHTER_RIDE_PREPARE_EXIT, -1);
 							this->SetState(0x26, -1);
 						}
 						else {
-							this->field_0x354->SetState(0x20, -1);
+							this->field_0x354->SetState(FIGHTER_RIDE, -1);
 							SetState(FIGHTER_RIDDEN_RUN, -1);
 						}
 					}

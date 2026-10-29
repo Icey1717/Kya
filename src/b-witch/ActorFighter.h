@@ -14,7 +14,13 @@
 #define FIGHTER_BEHAVIOUR_SLAVE		0x6
 
 #define FIGHTER_DEFAULT_STATE_IDLE 0x6
+#define FIGHTER_STEP 0x7
+#define FIGHTER_STEP_END 0x8
 #define FIGHTER_DEFAULT_STATE_RUN 0x9
+#define FIGHTER_JUMP 0xa
+#define FIGHTER_JUMP_FORWARD 0xb
+#define FIGHTER_JUMP_LAND 0xc
+#define FIGHTER_JUMP_FALL 0xd
 
 #define FIGHTER_JUMP_FALL_TO_FLIP 0xe
 #define FIGHTER_JUMP_FLIP_IMPULSE 0xf
@@ -25,10 +31,21 @@
 #define FIGHTER_FLIP_ON_ME 0x14
 #define FIGHTER_FLIP_OFF_ME_A 0x15
 #define FIGHTER_FLIP_OFF_ME_B 0x16
+// Inferred defensive states: _Execute_Std and FUN_00318db0 (PS2 0x0031a000/0x00318db0).
+#define FIGHTER_DEFEND 0x17
 #define FIGHTER_STATE_STEP_BACK_A 0x18
-#define FIGHTER_STATE_19 0x19
+#define FIGHTER_DEFEND_FALL 0x19
+#define FIGHTER_STATE_19 FIGHTER_DEFEND_FALL
+#define FIGHTER_DEFEND_LAND 0x1a
+#define FIGHTER_DEFEND_HIT_FALL 0x1b
+// The exact move for this defensive animation sequence is still uncertain.
+#define FIGHTER_DEFENCE_ACTION_BEGIN 0x1c
+#define FIGHTER_DEFENCE_ACTION_EXECUTE 0x1d
+#define FIGHTER_DEFENCE_ACTION_END 0x1e
+#define FIGHTER_DEFENCE_ACTION_HIT 0x1f
 #define FIGHTER_STATE_RIDE_BLOW 0x21
 #define FIGHTER_RIDE 0x20
+#define FIGHTER_RIDE_PREPARE_EXIT 0x22
 #define FIGHTER_STATE_RIDE_EXIT 0x23
 #define FIGHTER_RIDDEN_RUN 0x24
 #define FIGHTER_RIDDEN_EJECT 0x28
@@ -36,16 +53,31 @@
 #define FIGHTER_HOLD_STAND 0x29
 #define FIGHTER_HOLD_RUN 0x2a
 #define FIGHTER_HOLD_ROTATE 0x2b
+// Provisional A/B/C variants describe the follow/wait transitions, not specific moves.
+// PS2 Manage: 0x00314d80; follow/wait handlers: 0x00311630/0x00311590.
+#define FIGHTER_HOLD_FOLLOW_BEGIN_A 0x2c
+#define FIGHTER_HOLD_FOLLOW_ENTER_WAIT_A 0x2d
+#define FIGHTER_HOLD_FOLLOW_WAIT_A 0x2e
+#define FIGHTER_HOLD_FOLLOW_END_PREPARE_A 0x2f
+#define FIGHTER_HOLD_FOLLOW_END_A 0x30
+#define FIGHTER_HOLD_FOLLOW_ENTER_WAIT_B 0x31
+#define FIGHTER_HOLD_FOLLOW_WAIT_B 0x32
+#define FIGHTER_HOLD_FOLLOW_END_B 0x33
 #define FIGHTER_HOLD_PUSH_PREPARE 0x34
 #define FIGHTER_HOLD_THROW_PREPARE 0x35
 #define FIGHTER_HOLD_THROW 0x36
 #define FIGHTER_STATE_HOLD_ESCAPE 0x37
 #define FIGHTER_STATE_HOLD_HIT 0x38
+#define FIGHTER_HOLD_FOLLOW_END_C 0x39
+#define FIGHTER_HOLD_FOLLOW_WAIT_C 0x3a
 
 #define FIGHTER_HIT_STEP_BACK 0x4f
 
 #define FIGHTER_HIT_PUSHED 0x50
+#define FIGHTER_HIT_PUSHED_END 0x51
 #define FIGHTER_HIT_STEP_BACK_B 0x52
+// Inferred from the alternating movement in FUN_00318400 (PS2 0x00318400).
+#define FIGHTER_HIT_SWAY 0x53
 
 #define FIGHTER_PROJECTED_HIT_FLY 0x55
 #define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
@@ -60,6 +92,19 @@
 #define FIGHTER_GRAB_BEGIN 0x68
 #define FIGHTER_EXECUTE_GRAB 0x69
 #define FIGHTER_GRAB_END 0x6a
+
+// pExecutingGrab action stages, distinct from the pBlow catch sequence at 0x68-0x6a.
+// _StateFighterExecuteGrab (PS2 0x00312670) branches to miss-end or approach.
+#define FIGHTER_GRAB_ACTION_EXECUTE 0x6b
+#define FIGHTER_GRAB_ACTION_MISS_END 0x6c
+#define FIGHTER_GRAB_ACTION_APPROACH 0x6d
+#define FIGHTER_GRAB_ACTION_CONNECTED 0x6e
+#define FIGHTER_GRAB_ACTION_END 0x6f
+#define FIGHTER_GRAB_REACT_APPROACH 0x70
+#define FIGHTER_GRAB_REACT_EXECUTE 0x71
+
+// Derived hero and Wolfen state tables begin immediately after the shared fighter states.
+#define FIGHTER_STATE_LAST FIGHTER_GRAB_REACT_EXECUTE
 
 #define FIGHTER_EXECUTE_FLAGS_STD 0x800
 #define FIGHTER_EXECUTE_FLAGS_FLIP 0x2000
@@ -603,7 +648,7 @@ public:
 
 	edF32VECTOR4* GetAdversaryHeldPos();
 
-	bool FUN_0031cdb0();
+	bool IsInStaggerSequence();
 
 	void _BeginFighterFlip();
 	void _Execute_Flip(s_fighter_action* pAction, s_fighter_action_param* pParam);
@@ -700,7 +745,7 @@ public:
 	void _StateFighterRideBlow();
 	void _StateFighterRidePrepareExit();
 	void _StateFighterRideExit();
-	void FUN_00318400();
+	void _StateFighterHitSway();
 
 	void _StateFighterPrepareFightAction(int nextState);
 	void _StateFighterReturnFromFightAction();
@@ -711,18 +756,20 @@ public:
 
 	void _StateFighterMasterSaidDownRotate();
 
-	void _StateFighter_0xaInit();
+	void _StateFighterJumpInit();
 
-	void _StateFighter_0xbInit(float param_1);
-	void _StateFighter_0xb();
+	void _StateFighterJumpForwardInit(float param_1);
+
+	// Inlined - new.
+	void _StateFighterJumpForward();
 
 	void _StateFighterExecuteGrab();
 
-	void FUN_00319460();
+	void _StateFighterStepInit();
 
-	void FUN_00312370();
+	void _StateFighterGrabConnectedInit();
 
-	void FUN_00318db0();
+	void _StateFighterDefend();
 
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
@@ -762,19 +809,19 @@ public:
 
 	void SetStandAnim(int newStandAnim);
 
-	bool FUN_0031b5d0(int state);
-	void FUN_0031a7c0(int inState);
+	bool IsDefendingState(int state);
+	void UpdateFighterEffects(int inState);
 
-	void FUN_0031aad0(float animLength, s_fighter_blow* pBlow);
-	bool FUN_0031b790(int state);
-	uint FUN_0031b4d0(int state);
-	bool FUN_0031ac10(float param_1, s_fighter_blow* pBlow);
+	void FadeOutBlowTrails(float animLength, s_fighter_blow* pBlow);
+	bool IsAttackingState(int state);
+	uint GetDefenceStateFlags(int state);
+	bool StartBlowTrails(float param_1, s_fighter_blow* pBlow);
 	int GetProjectedBehaviour();
-	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
-	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
-	bool FUN_001740a0();
-	void FUN_00312130(edF32VECTOR4* param_2, float* param_3, float* param_4, _msg_params_0x65* param_5);
-	void FUN_00311f80(_msg_params_0x65* pParams, CActorFighter* param_3);
+	bool CanBufferAction(s_fighter_action* pFighterAction, float* param_3);
+	bool UpdateBufferedAction(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
+	bool IsBeingExorcised();
+	void ComputeGrabApproach(edF32VECTOR4* param_2, float* param_3, float* param_4, _msg_params_0x65* param_5);
+	void InitGrabReactionApproach(_msg_params_0x65* pParams, CActorFighter* param_3);
 	void UpdateScale_0030ac50(edF32VECTOR3* param_2);
 
 	void PlayOrientedFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, uint hitZone, CFxHandle* pOutHandle);
@@ -806,7 +853,7 @@ public:
 
 	void UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int param_3);
 
-	void FUN_0031aea0(CActorFighter* param_2, edF32VECTOR4* param_3, uint scenaricDataIndex, CFxHandle* pFxHandle, uint boneId);
+	void PlayOrientedFxOnActor(CActorFighter* param_2, edF32VECTOR4* param_3, uint scenaricDataIndex, CFxHandle* pFxHandle, uint boneId);
 
 	CActorFighter* pAdversary;
 	CActorFighter* field_0x354;

@@ -1,0 +1,127 @@
+{
+  "schema": "kya.raw-pcode.v1",
+  "program": "SLES_514.73",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "language": "r5900:LE:32:default",
+  "compiler": "default",
+  "big_endian": false,
+  "entry": "001003f0",
+  "name": "CActor::IsLookingAt",
+  "instructions": [
+    {
+      "address": "001003f0",
+      "text": "lw v0,0x8(a0)",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "8",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "unique",
+            "offset": "4000",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "4000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "001003f4",
+      "text": "jr ra",
+      "delay_slots": 1,
+      "flow": "TERMINATOR",
+      "ops": [
+        {
+          "opcode": "INT_AND",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "2000",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "RETURN",
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1f0",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operation_count": 5,
+  "complete": true
+}

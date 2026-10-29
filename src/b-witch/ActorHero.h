@@ -516,7 +516,7 @@ public:
 	uint FUN_00132910(uint param_2);
 	uint FUN_00132f00(uint param_2);
 	bool FUN_0014cb60(edF32VECTOR4* v0);
-	bool FUN_0031c9e0();
+	bool IsComboInputWindowOpen();
 	CActor* GetTalkingToActor();
 
 	float GetMagicalForce();

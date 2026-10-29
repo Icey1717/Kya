@@ -48,6 +48,8 @@ final class GhidraMcpCommandHandler {
 				case "references_to" -> referencesTo(program, request);
 				case "inspect_data" -> inspectData(program, request);
 				case "disassemble" -> disassemble(program, request);
+				case "export_pcode" -> PcodeExporter.export(program, findFunction(program, request),
+					boundedInt(request, "limit", 4096, 1, 65536));
 				case "references_from" -> referencesFrom(program, request);
 				case "decompile_context" -> decompile(program, request);
 				case "search_strings" -> searchStrings(program, request);

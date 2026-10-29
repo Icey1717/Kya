@@ -947,7 +947,7 @@ bool CActorCommander::FUN_001710c0()
 
 		if (0 < this->nbTeams) {
 			do {
-				bVar1 = this->aTeamElt[iVar3].pEnemyActor->FUN_001740a0();
+				bVar1 = this->aTeamElt[iVar3].pEnemyActor->IsBeingExorcised();
 				if (bVar1 != false) {
 					return true;
 				}
@@ -1182,7 +1182,7 @@ void CActorCommander::_UpdateCamera()
 	
 		CActorHero* pCVar1 = CActorHero::_gThis;
 		if ((((CActorHero::_gThis != (CActorHero*)0x0) && (pCurAdversary = CActorHero::_gThis->pAdversary, pCurAdversary != (CActorFighter*)0x0)) &&
-			(pCurAdversary != this->field_0x9f0)) && ((bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false &&
+			(pCurAdversary != this->field_0x9f0)) && ((bVar3 = CActorHero::_gThis->IsAttackingState(CActorHero::_gThis->actorState), bVar3 != false &&
 				((pCVar1->fightFlags & FIGHT_FLAG_ATTACK_CONNECTED) != 0)))) {
 			pCurAdversary = pCVar1->pAdversary;
 			fVar16 = pCurAdversary->GetLifeInterface()->GetValue();
@@ -1478,7 +1478,7 @@ void CActorCommander::_UpdateSquad()
 	if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 		this_00 = (this->squad).eltTable.aEntries[0]->pEnemyActor->pAdversary;
 		if ((this_00 != (CActorFighter*)0x0) &&
-			(bVar1 = this_00->FUN_0031b790(this_00->actorState), bVar1 != false)) {
+			(bVar1 = this_00->IsAttackingState(this_00->actorState), bVar1 != false)) {
 			bVar1 = false;
 			if ((this_00->pFighterCombo != (s_fighter_combo*)0x0) && ((this_00->pFighterCombo->field_0x4.field_0x0ushort & 0x100U) != 0)) {
 				bVar1 = true;

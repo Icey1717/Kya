@@ -695,7 +695,7 @@ void CBehaviourPunchingBallDefault::Manage()
 	pCVar1 = (CActorPunchingBall*)this->pOwner;
 	iVar1 = pCVar1->actorState;
 	if ((iVar1 == 0x16) || (iVar1 == 0x15)) {
-		pCVar1->FUN_0031a7c0(pCVar1->actorState);
+		pCVar1->UpdateFighterEffects(pCVar1->actorState);
 		this->pOwner->UpdateFightCommand();
 		this->pOwner->dynamic.speed = 0.0f;
 		this->pOwner->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);

@@ -15983,7 +15983,7 @@ uint CActorHeroPrivate::FUN_00132c60(uint state)
 	if (state == 0xffffffff) {
 		iVar1 = this->actorState;
 		state = 0;
-		if ((iVar1 != -1) && (state = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (state = 0, FIGHTER_STATE_LAST < iVar1)) {
 			state = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -16016,7 +16016,7 @@ uint CActorHeroPrivate::FUN_00132790(uint param_2)
 		iVar1 = this->actorState;
 		param_2 = 0;
 
-		if ((iVar1 != -1) && (param_2 = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (param_2 = 0, FIGHTER_STATE_LAST < iVar1)) {
 			param_2 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -16619,7 +16619,7 @@ void CActorHeroPrivate::SetInitialState()
 
 	else {
 		if (this->scalarDynJump.IsFinished() == false) {
-			SetState(0xb, -1);
+			SetState(FIGHTER_JUMP_FORWARD, -1);
 		}
 		else {
 			CActorFighter::SetInitialState();
@@ -16909,7 +16909,7 @@ void CActorHeroPrivate::_Std_GetPossibleExit()
 			SetBehaviour(pCVar5->behaviourId, 0xffffffff, 0xffffffff);
 		}
 		else {
-			bVar4 = FUN_0031b5d0(this->actorState);
+			bVar4 = IsDefendingState(this->actorState);
 			if ((bVar4 == false) && (AcquireAdversary(), this->pAdversary == (CActorFighter*)0x0)) {
 				SetBehaviour(7, 0xffffffff, 0xffffffff);
 			}
@@ -18051,7 +18051,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 	this->field_0x214 = 0;
 
 	int actorState = this->pOwner->actorState;
-	if ((((actorState == 0xf) || (actorState - 0x10U < 4)) || (actorState - 0x1cU < 2)) || ((actorState == 7 || (actorState == 8)))) {
+	if ((((actorState == FIGHTER_JUMP_FLIP_IMPULSE) || (actorState - (uint)FIGHTER_JUMP_FLIP_PREPARE_FALL < 4)) || (actorState - (uint)FIGHTER_DEFENCE_ACTION_BEGIN < 2)) || ((actorState == FIGHTER_STEP || (actorState == FIGHTER_STEP_END)))) {
 		bUseAimHeuristic = false;
 	}
 	else {
@@ -18187,8 +18187,8 @@ void CFightLock_SE::_Heuristic_Aim(edF32VECTOR4* pDirection)
 			if (fVar7 != 0.0f) {
 				edF32Matrix4MulF32Vector4Hard(&local_b0, &eStack144, &pAdversary->pActorFighter->currentLocation);
 				if (local_b0.z < puVar9) {
-					bVar2 = this->pOwner->FUN_0031b790(this->pOwner->actorState);
-					if ((bVar2 == false) && (this->pOwner->FUN_0031b4d0(this->pOwner->actorState) == 0)) {
+					bVar2 = this->pOwner->IsAttackingState(this->pOwner->actorState);
+					if ((bVar2 == false) && (this->pOwner->GetDefenceStateFlags(this->pOwner->actorState) == 0)) {
 						puVar9 = -1.0f;
 					}
 				}

@@ -1,0 +1,627 @@
+{
+  "schema": "kya.raw-pcode.v1",
+  "program": "SLES_514.73",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "language": "r5900:LE:32:default",
+  "compiler": "default",
+  "big_endian": false,
+  "entry": "00123c50",
+  "name": "CActorAutonomous::GetBehaviourFlags",
+  "instructions": [
+    {
+      "address": "00123c50",
+      "text": "addiu sp,sp,-0x10",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "1d0",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "fffffff0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "1d0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c54",
+      "text": "slti v0,a1,0x2",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_SLESS",
+          "output": {
+            "space": "unique",
+            "offset": "7200",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "50",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "2",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "7200",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c58",
+      "text": "bne v0,zero,0x00123c78",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_NOTEQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "1900",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "STORE",
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "1f0",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "123c78",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "1900",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c60",
+      "text": "lui v0,0x43",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_LEFT",
+          "output": {
+            "space": "unique",
+            "offset": "3f00",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "43",
+              "size": 4,
+              "constant": true
+            },
+            {
+              "space": "const",
+              "offset": "10",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "3f00",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c64",
+      "text": "sll v1,a1,0x2",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_LEFT",
+          "output": {
+            "space": "register",
+            "offset": "30",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "50",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "2",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "30",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "30",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c68",
+      "text": "addiu v0,v0,-0x71e8",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "ffff8e18",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c6c",
+      "text": "addu v0,v0,v1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "30",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c70",
+      "text": "b 0x00123c80",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "unique",
+            "offset": "4000",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "4000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "BRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "123c80",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c78",
+      "text": "jal 0x0011e790",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_CALL",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "1f0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "123c80",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "CALL",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "11e790",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c80",
+      "text": "ld ra,0x0(sp)",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "register",
+            "offset": "1f0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00123c84",
+      "text": "jr ra",
+      "delay_slots": 1,
+      "flow": "TERMINATOR",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "1d0",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "10",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "1d0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1d0",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "RETURN",
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1f0",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operation_count": 27,
+  "complete": true
+}

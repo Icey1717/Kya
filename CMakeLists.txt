@@ -127,6 +127,7 @@ else()
 	endif()
 
 	enable_testing()
+	include(cmake/FunctionVerification.cmake)
 
 	add_subdirectory("port")
 

@@ -30,7 +30,7 @@ int PTMF_Ext::CheckComboA(EVC_PHASE phase, undefined8 param_3, void* pData)
 		}
 		else {
 			if ((phase == EVC_PHASE_MANAGE) && (pAdversary = CActorHero::_gThis->pAdversary, pAdversary != (CActorFighter*)0x0)) {
-				if ((pAdversary->GetLifeInterface()->GetValue() <= 0.0f) && (pHero->FUN_0031b790(pHero->actorState) != false)) {
+				if ((pAdversary->GetLifeInterface()->GetValue() <= 0.0f) && (pHero->IsAttackingState(pHero->actorState) != false)) {
 					psVar2 = pHero->pFighterCombo;
 					bVar3 = false;
 					if (psVar2 != (s_fighter_combo*)0x0) {
@@ -93,7 +93,7 @@ int PTMF_Ext::ManageActorB(EVC_PHASE phase, undefined8 param_3, void* pData)
 	if (phase == EVC_PHASE_MANAGE) {
 		const bool bWolfen = pParams->actorRef.Get()->IsKindOfObject(OBJ_TYPE_WOLFEN);
 		if (bWolfen != false) {
-			const bool bVar1 = static_cast<CActorFighter*>(pParams->actorRef.Get())->FUN_001740a0();
+			const bool bVar1 = static_cast<CActorFighter*>(pParams->actorRef.Get())->IsBeingExorcised();
 			if (bVar1 == false) {
 				pParams->bActive = 0;
 			}

@@ -1,0 +1,612 @@
+{
+  "schema": "kya.raw-pcode.v1",
+  "program": "SLES_514.73",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "language": "r5900:LE:32:default",
+  "compiler": "default",
+  "big_endian": false,
+  "entry": "00131f10",
+  "name": "CFixedTable<CActor,4>::IsInList",
+  "instructions": [
+    {
+      "address": "00131f10",
+      "text": "lw v1,0x0(a0)",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "unique",
+            "offset": "4000",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "30",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "4000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f14",
+      "text": "slt at,zero,v1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_SLESS",
+          "output": {
+            "space": "unique",
+            "offset": "7100",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "register",
+              "offset": "30",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "register",
+            "offset": "10",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "7100",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f18",
+      "text": "beq at,zero,0x00131f48",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_EQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "a00",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "10",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "60",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "131f48",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "a00",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f20",
+      "text": "lw v0,0x4(a0)",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "unique",
+            "offset": "200",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "4",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "LOAD",
+          "output": {
+            "space": "unique",
+            "offset": "4000",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1a1",
+              "size": 8,
+              "constant": true
+            },
+            {
+              "space": "unique",
+              "offset": "200",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "4000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f24",
+      "text": "bne a1,v0,0x00131f38",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_NOTEQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "1900",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "50",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "1",
+              "size": 2,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "131f38",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "1900",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f2c",
+      "text": "b 0x00131f50",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "BRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "131f50",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f34",
+      "text": "nop",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": []
+    },
+    {
+      "address": "00131f38",
+      "text": "addiu a2,a2,0x1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "60",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "60",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "1",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "60",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "60",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f3c",
+      "text": "slt v0,a2,v1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_SLESS",
+          "output": {
+            "space": "unique",
+            "offset": "7100",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "60",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "30",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "7100",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f40",
+      "text": "bne v0,zero,0x00131f20",
+      "delay_slots": 1,
+      "flow": "CONDITIONAL_JUMP",
+      "ops": [
+        {
+          "opcode": "INT_NOTEQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "1900",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "20",
+              "size": 8,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ADD",
+          "output": {
+            "space": "register",
+            "offset": "40",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "4",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_SEXT",
+          "output": {
+            "space": "register",
+            "offset": "40",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "40",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CBRANCH",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "131f20",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "1900",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f48",
+      "text": "move v0,zero",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "20",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "0",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "00131f4c",
+      "text": "nop",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": []
+    },
+    {
+      "address": "00131f50",
+      "text": "jr ra",
+      "delay_slots": 1,
+      "flow": "TERMINATOR",
+      "ops": [
+        {
+          "opcode": "RETURN",
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1f0",
+              "size": 8,
+              "constant": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operation_count": 26,
+  "complete": true
+}

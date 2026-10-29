@@ -1277,7 +1277,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				iVar15 = this->actorState;
 				uVar12 = 0;
 	
-				if ((iVar15 != -1) && (uVar12 = 0, 0x71 < iVar15)) {
+				if ((iVar15 != -1) && (uVar12 = 0, FIGHTER_STATE_LAST < iVar15)) {
 					uVar12 = _gStateCfg_WLF[iVar15 + -0x72].field_0x8;
 				}
 
@@ -2236,7 +2236,7 @@ void CActorWolfen::ManageKnowledge()
 
 	if (((this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) && (pAdv = this->pAdversary, pAdv != (CActorFighter*)0x0)) && (pAdv->pAdversary == this)) {
 		if (((pAdv->pFighterCombo != (s_fighter_combo*)0x0) &&
-			(bVar3 = pAdv->FUN_0031b790(pAdv->actorState), bVar3 != false)) &&
+			(bVar3 = pAdv->IsAttackingState(pAdv->actorState), bVar3 != false)) &&
 			(pFighterCombo = pAdv->pFighterCombo,
 				fVar1 = pAdv->currentLocation.x - this->currentLocation.x,
 				fVar2 = pAdv->currentLocation.z - this->currentLocation.z,
@@ -2257,7 +2257,7 @@ void CActorWolfen::ManageKnowledge()
 			}
 		}
 
-		if ((this->pWolfenKnowledge->field_0x1c != 0) && (pAdv->FUN_0031b790(pAdv->actorState) == false)) {
+		if ((this->pWolfenKnowledge->field_0x1c != 0) && (pAdv->IsAttackingState(pAdv->actorState) == false)) {
 			this->pWolfenKnowledge->EndMemory();
 		}
 	}
@@ -8279,7 +8279,7 @@ bool CActorWolfen::SV_WLF_IsIntruderInVision(CActor* pActor)
 	if (pActor != (CActor*)0x0) {
 		iVar1 = this->actorState;
 		uVar2 = 0;
-		if ((iVar1 != -1) && (uVar2 = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (uVar2 = 0, FIGHTER_STATE_LAST < iVar1)) {
 			uVar2 = _gStateCfg_WLF[iVar1 + -0x72].field_0x8;
 		}
 
@@ -11238,7 +11238,7 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfd | 2;
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfe;
 
-					bVar3 = this->pOwner->FUN_0031b5d0(this->pOwner->actorState);
+					bVar3 = this->pOwner->IsDefendingState(this->pOwner->actorState);
 					if (bVar3 == false) {
 			
 						if ((pHitParams->flags & 8) == 0) {
@@ -11585,14 +11585,14 @@ void CBehaviourFighterWolfen::UpdateFightContext(CFightContext* pFightContext)
 
 		iVar7 = pWolfen->field_0xb44;
 		if (iVar7 == 0) {
-			bVar8 = pFighter->FUN_0031b5d0(pFighter->actorState);
+			bVar8 = pFighter->IsDefendingState(pFighter->actorState);
 			if ((bVar8 != false) && ((uint)this->field_0x34 <= (uint)this->field_0x38)) {
 				pFightContext->field_0x0 = pFightContext->field_0x0 & 0xef | 0x10;
 			}
 		}
 		else {
 			if (iVar7 == 1) {
-				bVar8 = pFighter->FUN_0031b5d0(pFighter->actorState);
+				bVar8 = pFighter->IsDefendingState(pFighter->actorState);
 				if (bVar8 == false) {
 					this->field_0x38 = (int)GetTimer()->scaledTotalTime;
 				}
@@ -11610,7 +11610,7 @@ void CBehaviourFighterWolfen::UpdateFightContext(CFightContext* pFightContext)
 		}
 
 		bVar3 = pFightContext->field_0x0;
-		bVar8 = pFighter->FUN_0031b790(pFighter->actorState);
+		bVar8 = pFighter->IsAttackingState(pFighter->actorState);
 		if (((bVar8 != true) || (pFighter->pBlow == (s_fighter_blow*)0x0)) || (pFighter->pBlow->canActivateRange < fVar12 - 0.5))
 		{
 			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfd;
@@ -11865,7 +11865,7 @@ LAB_001f66f8:
 					uVar4 = pWolfen->field_0xb64[iVar1].field_0x0;
 				}
 				if (uVar4 == 0x80000) {
-					if (pWolfen->prevActorState == 8) {
+					if (pWolfen->prevActorState == FIGHTER_STEP_END) {
 						(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfb | 4;
 					}
 				}
@@ -11876,7 +11876,7 @@ LAB_001f66f8:
 							(((((uVar4 == 0xa0 || (uVar4 == 0x140)) || (uVar4 == 0xc0)) || ((uVar4 == 0x60 || (uVar4 == 0x100)))) || ((uVar4 == 0x80 || ((uVar4 == 0x40 || (uVar4 == 0x20)))))))))) {
 						this->field_0x28 = this->field_0x28 + 1;
 						if (((pWolfen->fightFlags & 0x40) == 0) &&
-							((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->FUN_0031b5d0(pAdv->actorState), bSuccess != false)))) {
+							((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->IsDefendingState(pAdv->actorState), bSuccess != false)))) {
 							this->field_0x38 = this->field_0x38 + 1;
 						}
 					}
@@ -11912,7 +11912,7 @@ LAB_001f66f8:
 						uVar4 = pWolfen->field_0xb64[iVar1].field_0x0;
 					}
 					if (uVar4 == 0x80000) {
-						if (pWolfen->prevActorState == 8) {
+						if (pWolfen->prevActorState == FIGHTER_STEP_END) {
 							(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfb | 4;
 						}
 					}
@@ -11923,7 +11923,7 @@ LAB_001f66f8:
 								(((uVar4 == 0xa0 || (uVar4 == 0x140)) || ((uVar4 == 0xc0 || ((((uVar4 == 0x60 || (uVar4 == 0x100)) || (uVar4 == 0x80)) || ((uVar4 == 0x40 || (uVar4 == 0x20)))))))))))) {
 							this->field_0x28 = this->field_0x28 + 1;
 							if (((pWolfen->fightFlags & 0x40) == 0) &&
-								((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->FUN_0031b5d0(pAdv->actorState), bSuccess != false)))) {
+								((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->IsDefendingState(pAdv->actorState), bSuccess != false)))) {
 								this->field_0x38 = this->field_0x38 + 1;
 							}
 						}
@@ -11952,7 +11952,7 @@ LAB_001f66f8:
 				}
 
 				if (uVar4 == 0x80000) {
-					if (pWolfen->prevActorState == 8) {
+					if (pWolfen->prevActorState == FIGHTER_STEP_END) {
 						(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfb | 4;
 					}
 				}
@@ -11965,7 +11965,7 @@ LAB_001f66f8:
 						this->field_0x28 = this->field_0x28 + 1;
 
 						if (((pWolfen->fightFlags & 0x40) == 0) &&
-							((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->FUN_0031b5d0(pAdv->actorState), bSuccess != false)))) {
+							((pAdv = pWolfen->pAdversary, pAdv != (CActorFighter*)0x0 && (bSuccess = pAdv->IsDefendingState(pAdv->actorState), bSuccess != false)))) {
 							this->field_0x38 = this->field_0x38 + 1;
 						}
 					}
@@ -12202,7 +12202,7 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 			if (param_2 == 0x80000) {
 				IMPLEMENTATION_GUARD(
 				if (((((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c != 2) &&
-					(this->pOwner->prevActorState != 8)) &&
+					(this->pOwner->prevActorState != FIGHTER_STEP_END)) &&
 					(pTVar7 = Timer::GetTimer(), this->adversaryBlowDuration <= pTVar7->scaledTotalTime)) {
 					this->field_0x70 = 1;
 					this->field_0x71 = 0;
@@ -12306,12 +12306,12 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 												((param_2 == 0x60 || (((param_2 == 0x100 || (param_2 == 0x80)) || (param_2 == 0x40)))))))) ||
 											(param_2 == 0x20)))) {
 										iVar2 = this->pOwner->actorState;
-										if ((iVar2 == 0x65) || (iVar2 == 0x6d)) {
+										if ((iVar2 == FIGHTER_BLOW_BEGIN) || (iVar2 == FIGHTER_GRAB_ACTION_APPROACH)) {
 											this->field_0xb8 = 1;
 										}
 
 										iVar2 = this->pOwner->actorState;
-										if (((iVar2 == 0x66) || (iVar2 == 0x6e)) && (this->field_0xb8 != 0)) {
+										if (((iVar2 == FIGHTER_EXECUTE_BLOW) || (iVar2 == FIGHTER_GRAB_ACTION_CONNECTED)) && (this->field_0xb8 != 0)) {
 											s_fighter_combo* pCombo = this->pActiveCombo;
 											if ((pCombo == (s_fighter_combo*)0x0) || (pCombo->nbBranches == 0)) {
 												this->pActiveCombo = (s_fighter_combo*)0x0;
@@ -12376,7 +12376,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 	uVar10 = pWolfen->GetStateFlags(pWolfen->actorState);
 	if ((uVar10 & 8) == 0) {
 		if ((param_2 == 0x80000) || (param_2 == 0x40000)) {
-			if (this->pOwner->prevActorState == 8) {
+			if (this->pOwner->prevActorState == FIGHTER_STEP_END) {
 				bVar7 = true;
 			}
 		}
@@ -12384,7 +12384,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 			if (param_2 == 0x20000) {
 				pCVar3 = this->pOwner->pAdversary;
 				if ((pCVar3 == (CActorFighter*)0x0) ||
-					(bVar8 = pCVar3->FUN_0031b790(pCVar3->actorState), bVar8 == false)) {
+					(bVar8 = pCVar3->IsAttackingState(pCVar3->actorState), bVar8 == false)) {
 					bVar7 = true;
 				}
 			}
@@ -12462,7 +12462,7 @@ bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
 											((((param_2 == 0x120 || (param_2 == 0xa0)) ||
 												((param_2 == 0x140 || (((param_2 == 0xc0 || (param_2 == 0x60)) || (param_2 == 0x100)))))) ||
 												((param_2 == 0x80 || (param_2 == 0x40)))))) || (param_2 == 0x20)) {
-											bVar8 = this->pOwner->FUN_0031b790(this->pOwner->actorState);
+											bVar8 = this->pOwner->IsAttackingState(this->pOwner->actorState);
 											if ((bVar8 == false) && ((this->pOwner->field_0x44d & 0xf) == 0)) {
 												bVar7 = true;
 											}
@@ -12535,7 +12535,7 @@ void CBehaviourFighterWolfen::ValidateCommand()
 		}
 
 		if (iVar5 == 0x80000) {
-			if (this->pOwner->prevActorState == 8) {
+			if (this->pOwner->prevActorState == FIGHTER_STEP_END) {
 				(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfb | 4;
 			}
 		}
@@ -12547,7 +12547,7 @@ void CBehaviourFighterWolfen::ValidateCommand()
 				this->field_0x28 = this->field_0x28 + 1;
 
 				if (((this->pOwner->fightFlags & 0x40) == 0) && ((pCVar2 = this->pOwner->pAdversary, pCVar2 != (CActorFighter*)0x0 &&
-					(bVar4 = pCVar2->FUN_0031b5d0(pCVar2->actorState), bVar4 != false)))) {
+					(bVar4 = pCVar2->IsDefendingState(pCVar2->actorState), bVar4 != false)))) {
 					this->field_0x38 = this->field_0x38 + 1;
 				}
 			}

@@ -1244,7 +1244,7 @@ uint CActorHero::TestState_IsInHit(uint inFlags)
 		currentState = this->actorState;
 		inFlags = 0;
 
-		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
+		if ((currentState != AS_None) && (inFlags = 0, FIGHTER_STATE_LAST < (int)currentState)) {
 			assert(currentState - 0x72 < HERO_STATE_COUNT);
 
 			inFlags = _gStateCfg_HRO[currentState - 0x72].heroFlags;
@@ -1274,7 +1274,7 @@ uint CActorHero::TestState_IsOnAToboggan(uint inFlags)
 		currentState = this->actorState;
 		inFlags = 0;
 
-		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
+		if ((currentState != AS_None) && (inFlags = 0, FIGHTER_STATE_LAST < (int)currentState)) {
 			assert(currentState - 0x72 < HERO_STATE_COUNT);
 
 			inFlags = _gStateCfg_HRO[currentState - 0x72].heroFlags;
@@ -1292,7 +1292,7 @@ uint CActorHero::TestState_IsGrippedOrClimbing(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1323,7 +1323,7 @@ uint CActorHero::TestState_IsFalling(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1339,7 +1339,7 @@ uint CActorHero::TestState_IsInTheWind(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1355,7 +1355,7 @@ uint CActorHero::TestState_BounceWalls(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1371,7 +1371,7 @@ uint CActorHero::TestState_AllowAction(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1387,7 +1387,7 @@ uint CActorHero::TestState_IsSliding(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1403,7 +1403,7 @@ uint CActorHero::TestState_IsFlying(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1418,7 +1418,7 @@ uint CActorHero::TestState_NoMoreHit(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1434,7 +1434,7 @@ uint CActorHero::TestState_IsCrouched(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1450,7 +1450,7 @@ uint CActorHero::TestState_AllowMagic(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1466,7 +1466,7 @@ uint CActorHero::TestState_IsOnCeiling(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1482,7 +1482,7 @@ uint CActorHero::TestState_IsGripped(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1498,7 +1498,7 @@ uint CActorHero::TestState_AllowAttack(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1513,7 +1513,7 @@ uint CActorHero::TestState_001328a0(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1528,7 +1528,7 @@ uint CActorHero::TestState_00132830(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1544,7 +1544,7 @@ uint CActorHero::TestState_00132b90(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1560,7 +1560,7 @@ uint CActorHero::TestState_CheckFight(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1579,7 +1579,7 @@ uint CActorHero::TestState_AllowFight(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1602,7 +1602,7 @@ uint CActorHero::TestState_CanPlaySoccer(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1618,7 +1618,7 @@ uint CActorHero::TestState_WindWall(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1637,7 +1637,7 @@ uint CActorHero::TestState_AllowInternalView(uint inFlags)
 		iVar1 = this->actorState;
 		inFlags = 0;
 
-		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (inFlags = 0, FIGHTER_STATE_LAST < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1672,7 +1672,7 @@ uint CActorHero::FUN_00132910(uint param_2)
 	if (param_2 == 0xffffffff) {
 		iVar1 = this->actorState;
 		param_2 = 0;
-		if ((iVar1 != -1) && (param_2 = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (param_2 = 0, FIGHTER_STATE_LAST < iVar1)) {
 			param_2 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1687,7 +1687,7 @@ uint CActorHero::FUN_00132f00(uint param_2)
 	if (param_2 == 0xffffffff) {
 		iVar1 = this->actorState;
 		param_2 = 0;
-		if ((iVar1 != -1) && (param_2 = 0, 0x71 < iVar1)) {
+		if ((iVar1 != -1) && (param_2 = 0, FIGHTER_STATE_LAST < iVar1)) {
 			param_2 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
@@ -1734,7 +1734,7 @@ bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
 	return ret;
 }
 
-bool CActorHero::FUN_0031c9e0()
+bool CActorHero::IsComboInputWindowOpen()
 {
 	s_fighter_combo* pCombo;
 	bool bVar2;
@@ -1755,11 +1755,11 @@ bool CActorHero::FUN_0031c9e0()
 		if (pCombo != (s_fighter_combo*)0x0) {
 			if ((this->nextActionType & 0x400) == 0) {
 				iVar5 = this->actorState;
-				if ((iVar5 == 0x65) || (iVar5 == 0x66)) {
+				if ((iVar5 == FIGHTER_BLOW_BEGIN) || (iVar5 == FIGHTER_EXECUTE_BLOW)) {
 					return true;
 				}
 
-				if (iVar5 == 0x67) {
+				if (iVar5 == FIGHTER_BLOW_END) {
 					if (this->timeInAir <= pCombo->field_0x8 * _GetFighterAnimationLength(this->currentAnimType)) {
 						return true;
 					}
@@ -1767,7 +1767,7 @@ bool CActorHero::FUN_0031c9e0()
 			}
 			else {
 				iVar5 = this->actorState;
-				if ((iVar5 == 0x6d) || (iVar5 == 0x6e)) {
+				if ((iVar5 == FIGHTER_GRAB_ACTION_APPROACH) || (iVar5 == FIGHTER_GRAB_ACTION_CONNECTED)) {
 					return true;
 				}
 			}
