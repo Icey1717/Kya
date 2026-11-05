@@ -1,0 +1,481 @@
+{
+  "scope": "Actual fighter InitState COP1 instructions, including checked JAL delay slots; not whole-function equivalence",
+  "entry": "00313d80",
+  "name": "CBehaviourFighter::InitState",
+  "executable_sha256": "d7d85d0fc342f8f8f684aac6ebbea938cc3f1d9f063d071796f76dbf18b7c0cb",
+  "instructions": [
+    {
+      "address": "00313e54",
+      "text": "div.S f0,f1,f0",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "FLOAT_DIV",
+          "output": {
+            "space": "register",
+            "offset": "1004",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1000",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "03080046",
+      "length": 4,
+      "mnemonic": "div.S",
+      "delay_slot_instructions": []
+    },
+    {
+      "address": "00313e58",
+      "text": "mul.S f0,f0,f2",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "FLOAT_MULT",
+          "output": {
+            "space": "register",
+            "offset": "1004",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "100c",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "02000246",
+      "length": 4,
+      "mnemonic": "mul.S",
+      "delay_slot_instructions": []
+    },
+    {
+      "address": "00314634",
+      "text": "c.eq.S f0,f1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "INT_AND",
+          "output": {
+            "space": "unique",
+            "offset": "25700",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1210",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "ff7fffff",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "FLOAT_EQUAL",
+          "output": {
+            "space": "unique",
+            "offset": "25680",
+            "size": 1,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "1000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_ZEXT",
+          "output": {
+            "space": "unique",
+            "offset": "25780",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "25680",
+              "size": 1,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "INT_LEFT",
+          "output": {
+            "space": "unique",
+            "offset": "25800",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "25780",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "const",
+              "offset": "17",
+              "size": 4,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "INT_OR",
+          "output": {
+            "space": "register",
+            "offset": "1210",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "unique",
+              "offset": "25700",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "unique",
+              "offset": "25800",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "32000146",
+      "length": 4,
+      "mnemonic": "c.eq.S",
+      "delay_slot_instructions": []
+    },
+    {
+      "address": "00314804",
+      "text": "abs.S f12,f0",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "FLOAT_ABS",
+          "output": {
+            "space": "register",
+            "offset": "1034",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "05030046",
+      "length": 4,
+      "mnemonic": "abs.S",
+      "delay_slot_instructions": []
+    },
+    {
+      "address": "00314820",
+      "text": "jal 0x00200780",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_CALL",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "1f0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "314828",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "FLOAT_ABS",
+          "output": {
+            "space": "register",
+            "offset": "103c",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CALL",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "200780",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "e001080c",
+      "length": 4,
+      "mnemonic": "jal",
+      "delay_slot_instructions": [
+        {
+          "address": "00314824",
+          "bytes": "85030046",
+          "length": 4
+        }
+      ]
+    },
+    {
+      "address": "00314844",
+      "text": "abs.S f12,f1",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "FLOAT_ABS",
+          "output": {
+            "space": "register",
+            "offset": "1034",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1000",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "050b0046",
+      "length": 4,
+      "mnemonic": "abs.S",
+      "delay_slot_instructions": []
+    },
+    {
+      "address": "00314848",
+      "text": "jal 0x00200780",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_CALL",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "1f0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "314850",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "FLOAT_ABS",
+          "output": {
+            "space": "register",
+            "offset": "103c",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CALL",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "200780",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "e001080c",
+      "length": 4,
+      "mnemonic": "jal",
+      "delay_slot_instructions": [
+        {
+          "address": "0031484c",
+          "bytes": "85030046",
+          "length": 4
+        }
+      ]
+    },
+    {
+      "address": "00314a3c",
+      "text": "jal 0x00200780",
+      "delay_slots": 1,
+      "flow": "UNCONDITIONAL_CALL",
+      "ops": [
+        {
+          "opcode": "COPY",
+          "output": {
+            "space": "register",
+            "offset": "1f0",
+            "size": 8,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "const",
+              "offset": "314a44",
+              "size": 8,
+              "constant": true
+            }
+          ]
+        },
+        {
+          "opcode": "FLOAT_ABS",
+          "output": {
+            "space": "register",
+            "offset": "103c",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        },
+        {
+          "opcode": "CALL",
+          "inputs": [
+            {
+              "space": "ram",
+              "offset": "200780",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "e001080c",
+      "length": 4,
+      "mnemonic": "jal",
+      "delay_slot_instructions": [
+        {
+          "address": "00314a40",
+          "bytes": "85030046",
+          "length": 4
+        }
+      ]
+    },
+    {
+      "address": "00314af0",
+      "text": "sub.S f0,f1,f0",
+      "delay_slots": 0,
+      "flow": "FALL_THROUGH",
+      "ops": [
+        {
+          "opcode": "FLOAT_SUB",
+          "output": {
+            "space": "register",
+            "offset": "1004",
+            "size": 4,
+            "constant": false
+          },
+          "inputs": [
+            {
+              "space": "register",
+              "offset": "1000",
+              "size": 4,
+              "constant": false
+            },
+            {
+              "space": "register",
+              "offset": "1004",
+              "size": 4,
+              "constant": false
+            }
+          ]
+        }
+      ],
+      "bytes": "01080046",
+      "length": 4,
+      "mnemonic": "sub.S",
+      "delay_slot_instructions": []
+    }
+  ]
+}

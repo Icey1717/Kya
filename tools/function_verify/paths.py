@@ -3,7 +3,7 @@ import copy
 from verify import Unsupported
 
 
-def expand(export, max_paths=32, max_instructions=128, loop_visits=None):
+def expand(export, max_paths=32, max_instructions=128, loop_visits=None, prefix_feasible=None):
     if loop_visits is not None and not 1 <= loop_visits <= 16:
         raise Unsupported('Loop visit bound must be between 1 and 16')
     instructions = export['instructions']
@@ -17,6 +17,10 @@ def expand(export, max_paths=32, max_instructions=128, loop_visits=None):
     cutoffs = []
 
     def walk(index, prefix, visited):
+        if (prefix_feasible is not None and prefix
+                and any(op['opcode'] == 'PATH_GUARD' for op in prefix[-1]['ops'])
+                and prefix_feasible(prefix) is False):
+            return
         if index in visited and loop_visits is None:
             raise Unsupported('Cycle detected; loops are not supported')
         if loop_visits is not None and visited.get(index, 0) >= loop_visits:
@@ -35,10 +39,13 @@ def expand(export, max_paths=32, max_instructions=128, loop_visits=None):
         for op in ops:
             if op['opcode'] == 'PATH_GUARD':
                 raise Unsupported('Synthetic opcode in raw export')
-        controls = [i for i, op in enumerate(ops) if op['opcode'] in ('BRANCH', 'CBRANCH', 'RETURN')]
-        if controls and controls != [len(ops) - 1]:
+        controls = [i for i, op in enumerate(ops) if op['opcode'] in ('BRANCH', 'CBRANCH', 'RETURN', 'UNRESOLVED_TRANSFER')]
+        two_targets = (len(controls) == 2 and controls == [len(ops) - 2, len(ops) - 1]
+                       and [ops[c]['opcode'] for c in controls] == ['CBRANCH', 'BRANCH'])
+        if controls and not two_targets and (len(controls) != 1 or
+                         (controls[0] != len(ops) - 1 and ops[controls[0]]['opcode'] != 'CBRANCH')):
             raise Unsupported('Control transfer must end instruction; internal P-code flow unsupported')
-        if controls and ops[-1]['opcode'] == 'RETURN':
+        if controls and ops[-1]['opcode'] in ('RETURN', 'UNRESOLVED_TRANSFER'):
             results.append(prefix + [instruction])
             if len(results) + len(cutoffs) > max_paths:
                 raise Unsupported('Path count limit exceeded')
@@ -46,7 +53,10 @@ def expand(export, max_paths=32, max_instructions=128, loop_visits=None):
         visited = dict(visited)
         visited[index] = visited.get(index, 0) + 1
         if controls:
-            branch = ops.pop()
+            branch_index = controls[0]
+            branch = ops[branch_index]
+            suffix = ops[branch_index + 1:]
+            del ops[branch_index:]
             target = branch['inputs'][0]
             if target['space'] != 'ram' or target['constant'] or int(target['offset'], 16) not in indexes:
                 raise Unsupported('Branch target outside function or internal P-code branch')
@@ -56,9 +66,22 @@ def expand(export, max_paths=32, max_instructions=128, loop_visits=None):
             else:
                 if len(branch['inputs']) != 2:
                     raise Unsupported('Invalid conditional branch')
-                for taken, next_index in [(True, destination), (False, index + 1)]:
+                fallthrough = index + 1
+                if two_targets:
+                    alternative = suffix[0]['inputs'][0]
+                    if (alternative['space'] != 'ram' or alternative['constant']
+                            or int(alternative['offset'], 16) not in indexes):
+                        raise Unsupported('Invalid alternate conditional target')
+                    fallthrough = indexes[int(alternative['offset'], 16)]
+                    suffix = []
+                for taken, next_index in [(True, destination), (False, fallthrough)]:
                     selected = copy.deepcopy(instruction)
                     selected['ops'].append(dict(opcode='PATH_GUARD', inputs=[branch['inputs'][1]], taken=taken))
+                    if not taken:
+                        # Conditional moves can branch to the next machine
+                        # instruction before their COPY. Keep the untaken suffix
+                        # in this instruction so its unique temporaries survive.
+                        selected['ops'].extend(copy.deepcopy(suffix))
                     walk(next_index, prefix + [selected], visited)
         else:
             walk(index + 1, prefix + [instruction], visited)

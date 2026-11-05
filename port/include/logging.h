@@ -13,6 +13,7 @@
 #define scePrintf(format, ...) MY_LOG_NAMED_CATEGORY(PS2, LogLevel::Info, format, ##__VA_ARGS__)
 #define MY_LOG(format, ...) MY_LOG_NAMED_CATEGORY(General, LogLevel::Info, format, ##__VA_ARGS__)
 
+#if KYA_ENABLE_GAME_LOGGING
 #define FLUSH_LOG(...) Log::GetInstance().ForceFlush()
 
 #define MY_LOG_CATEGORY(category, level, format, ...) do { \
@@ -22,6 +23,10 @@
 		kyaLogInstance.AddLog(level, kyaLogEntry, format, ##__VA_ARGS__); \
 	} \
 } while (false)
+#else
+#define FLUSH_LOG(...) do {} while (false)
+#define MY_LOG_CATEGORY(...) do {} while (false)
+#endif
 
 #else
 #include <eekernel.h>

@@ -83,7 +83,9 @@ def extract(data):
 
 
 def main():
+    from build_config import arguments, identity
     parser = argparse.ArgumentParser(description=__doc__)
+    arguments(parser)
     parser.add_argument('--ghidra', type=Path, default=Path('G:/FromGamesAndDev/Ghidra/ghidra_10.0_PUBLIC_20210621/ghidra_10.0_PUBLIC'))
     parser.add_argument('--java', type=Path, default=Path('G:/jdk/jdk-21.0.9/bin/java.exe'))
     parser.add_argument('--ninja', default='C:/Program Files/Microsoft Visual Studio/18/Insiders/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe')
@@ -91,11 +93,12 @@ def main():
     parser.add_argument('--port', type=int, default=18437)
     parser.add_argument('--export-only', action='store_true', help='Build/lift without querying the live PS2 bridge')
     args = parser.parse_args()
-    build = ROOT / 'out/build/x64-debug'
+    build = args.build_dir.resolve()
+    configuration = identity(build)
     target = 'CMakeFiles/Kya.dir/src/b-witch/Actor.cpp.obj'
     subprocess.run([args.ninja, '-C', str(build), target], check=True)
     command = subprocess.check_output([args.ninja, '-C', str(build), '-t', 'commands', target], text=True).splitlines()[-1]
-    output = ROOT / ('out/verification/compiled-mutant' if args.mutate_mask else 'out/verification/compiled')
+    output = args.output_root.resolve() / ('compiled-mutant' if args.mutate_mask else 'compiled')
     output.mkdir(parents=True, exist_ok=True)
     object_path = build / target
     compiled_source = ROOT / 'src/b-witch/Actor.cpp'
@@ -122,7 +125,7 @@ def main():
                     source_sha256=hashlib.sha256((ROOT / 'src/b-witch/Actor.cpp').read_bytes()).hexdigest(),
                     compiled_source=str(compiled_source), compiled_source_sha256=hashlib.sha256(compiled_source.read_bytes()).hexdigest(),
                     compile_command=compiled_command, mutation=args.mutate_mask,
-                    build='x64-debug Actor.cpp translation unit', functions=functions)
+                    build=configuration, functions=functions)
     manifest['compiler_version'] = subprocess.check_output([command.split()[0], '--version'], text=True)
     layout_source = output / 'layout.cpp'
     layout_object = output / 'layout.obj'

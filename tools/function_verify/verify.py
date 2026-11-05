@@ -22,7 +22,9 @@ def node_key(node):
 
 def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
             memory_base=0x1000, precondition=None, regions=None, call_mode=False, loop_mode=False,
-            second_argument=None, vu_mode=False, graph_mode=False):
+            second_argument=None, vu_mode=False, graph_mode=False, float_argument=None,
+            state_in=None, return_state=False, this_argument=None, guard_trace=None, fp_mode=False, store_trace=None,
+            regional_initial_stores=False):
     """All paths supported by this pilot are straight-line, with one return.
 
     ABI: R5900 low 64-bit a1 at 0x50; v0 at 0x20; ra at 0x1f0.
@@ -33,7 +35,9 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
             export.get('language') != 'r5900:LE:32:default' or
             export.get('big_endian') is not False or export.get('complete') is not True):
         raise Unsupported('Unsupported or incomplete export')
-    state = {('register', 0x50, 8): argument}
+    if export['operation_count'] != sum(len(i['ops']) for i in export['instructions']):
+        raise Unsupported('Inconsistent operation count')
+    state = {} if argument is None else {('register', 0x50, 8): argument}
     if memory is not None:
         state = {('register', 0x40, 4): z3.BitVecVal(0x1000, 32)}
         if argument is not None:
@@ -44,13 +48,76 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
     returned = False
     if second_argument is not None:
         state[('register', 0x60, 8)] = second_argument
+    if float_argument is not None:
+        if float_argument.size() != 32:
+            raise Unsupported('Expected raw binary32 argument')
+        state[('register', 0x1034, 4)] = float_argument  # R5900 f12.
     if graph_mode:
         state[('register', 0x40, 8)] = z3.BitVecVal(0x1000, 64)
         state[('register', 0x100, 16)] = z3.BitVec('incoming_s0', 128)
     if vu_mode:
         state[('register', 0x4100, 16)] = z3.BitVecVal(0x3f800000 << 96, 128)
+    if state_in is not None:
+        state_in.validate('ps2')
+        if regions is None:
+            raise Unsupported('Composable PS2 execution requires absolute memory regions')
+        memory = state_in.memory
+        if graph_mode:
+            # Entry snapshots may contain fragmented restored registers. Merge
+            # their bytes without retaining a stale full-register default.
+            for key, value in state_in.registers.items():
+                for old in list(state):
+                    if old[0] == key[0] and old[1] < key[1] + key[2] and key[1] < old[1] + old[2]:
+                        prior = state.pop(old)
+                        for byte in range(old[2]):
+                            offset = old[1] + byte
+                            if not key[1] <= offset < key[1] + key[2]:
+                                state[(old[0], offset, 1)] = z3.Extract(byte * 8 + 7, byte * 8, prior)
+                state[key] = value
+        else:
+            state.update(state_in.registers)
+        if argument is not None:
+            state[('register', 0x50, 8)] = argument
+        if second_argument is not None:
+            state[('register', 0x60, 8)] = second_argument
+        if float_argument is not None:
+            state[('register', 0x1034, 4)] = float_argument
+    if this_argument is not None:
+        for key in list(state):
+            if key[0] == 'register' and key[1] < 0x40 + this_argument.size() // 8 and 0x40 < key[1] + key[2]:
+                del state[key]
+        state[('register', 0x40, this_argument.size() // 8)] = this_argument
+    baseline = memory
     count = 0
-    condition = z3.BoolVal(True)
+    condition = state_in.condition if state_in is not None else z3.BoolVal(True)
+    processor = dict(state_in.processor) if state_in else {}
+    heap = None
+    if memory is not None and regions is not None:
+        from region_memory import RegionMemory
+        heap = RegionMemory(memory, regions, precondition if precondition is not None else z3.BoolVal(True),
+                            prune_initial_stores=regional_initial_stores)
+    if fp_mode:
+        control = processor.get('fcr31', 0x01000001)
+        state[('register', 0x1210, 4)] = z3.BitVecVal(control, 32) if isinstance(control, int) else control
+
+    def prove(claim, reason):
+        claim = z3.simplify(claim)
+        if z3.is_true(claim):
+            return
+        solver = z3.Solver()
+        solver.set(timeout=5000)
+        solver.add(precondition if precondition is not None else z3.BoolVal(True), condition, z3.Not(claim))
+        if solver.check() != z3.unsat:
+            raise Unsupported(reason)
+
+    def outcome(value=None, returned=True):
+        from execution_state import ExecutionState, ExecutionOutcome
+        provenance = {i['address']: i.get('original_address', i['address']) for i in export['instructions']}
+        return ExecutionOutcome(ExecutionState('ps2', memory,
+            {k: v for k, v in state.items() if k[0] == 'register'}, condition,
+            dict(processor)), value, baseline, returned,
+            tuple((provenance[address], taken) for address, taken in (guard_trace or ())),
+            writes=tuple(store_trace or ()))
 
     def read(node):
         if node['constant']:
@@ -80,13 +147,12 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
             raise Unsupported('Unsupported memory space (expected audited R5900 ram ID 0x1a1)')
         address = z3.simplify(read(inputs[1]))
         if regions is not None:
-            solver = z3.Solver()
-            solver.set(timeout=5000)
-            solver.add(precondition, condition, z3.Not(z3.Or(*[
+            location = instruction.get('original_address', instruction['address'])
+            detail = hex(address.as_long()) if z3.is_bv_value(address) else 'symbolic address'
+            prove(z3.Or(*[
                 z3.And(z3.UGE(address, base), z3.ULE(address, base + length - size))
-                for base, length in regions if length >= size])))
-            if solver.check() != z3.unsat:
-                raise Unsupported('Region bounds not proven')
+                for base, length in regions if length >= size]),
+                'Region bounds not proven at ' + location + ' (' + detail + ', ' + str(size) + ' bytes)')
             return address
         if z3.is_bv_value(address):
             if not memory_base <= address.as_long() <= memory_base + object_size - size:
@@ -106,38 +172,80 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
     def index(offset):
         return z3.BitVecVal(offset, 32) if isinstance(offset, int) else offset
 
+    saved_offsets = [0x100]
+    if graph_mode:
+        # Additional saved registers are enabled only with complete incoming
+        # storage, and each becomes a mandatory ABI preservation obligation.
+        saved_offsets += [offset for offset in range(0x110, 0x180, 16)
+                          if all(any(key[0] == 'register' and key[1] <= byte < key[1] + key[2]
+                                     for key in state) for byte in range(offset, offset + 16))]
+        incoming_saved = {(offset, 16): read(dict(space='register', offset=hex(offset)[2:], size=16, constant=False))
+                          for offset in saved_offsets}
+        for offset in range(0x1050, 0x1080, 4):
+            if all(any(key[0] == 'register' and key[1] <= byte < key[1] + key[2]
+                       for key in state) for byte in range(offset, offset + 4)):
+                incoming_saved[(offset, 4)] = read(dict(space='register', offset=hex(offset)[2:], size=4, constant=False))
+
     for instruction in export['instructions']:
+        if path_mode and instruction['address'] == 'cutoff':
+            if return_state:
+                return outcome(returned=False)
+            raise Unsupported('Loop bound insufficient: reachable PS2 cutoff')
         # Unique temporaries are local to an instruction (including its slot).
         state = {key: value for key, value in state.items() if key[0] != 'unique'}
+        if fp_mode:
+            from processor_fp import validate_instruction
+            validate_instruction(instruction, 'ps2')
         for op in instruction['ops']:
             count += 1
             if returned:
                 raise Unsupported('Operations after RETURN')
             code = op['opcode']
+            if code == 'UNRESOLVED_TRANSFER':
+                raise Unsupported(op.get('reason', 'Reachable unresolved transfer'))
             inputs = op['inputs']
             if code == 'CALLOTHER' and vu_mode:
                 from vu_identity import evaluate
                 value = evaluate(op, instruction['text'], read)
                 state[node_key(op['output'])] = value
                 continue
-            if code == 'CHECK_TARGET' and call_mode:
+            if code in ('CHECK_TARGET', 'CHECK_DISPATCH') and call_mode:
                 solver = z3.Solver()
                 solver.set(timeout=5000)
-                solver.add(precondition, condition, read(inputs[0]) != op['expected'])
+                targets = op['expected'] if isinstance(op['expected'], list) else [op['expected']]
+                solver.add(precondition, condition, z3.Not(z3.Or(*[read(inputs[0]) == target for target in targets])))
                 if solver.check() != z3.unsat:
-                    raise Unsupported('Call return target not proven')
+                    raise Unsupported('Indirect dispatch target not proven' if code == 'CHECK_DISPATCH' else 'Call return target not proven')
                 continue
             if code == 'PATH_GUARD' and path_mode:
+                if guard_trace is not None:
+                    guard_trace.append((instruction['address'], op['taken']))
                 condition = z3.And(condition, (read(inputs[0]) != 0) == op['taken'])
+                solver = z3.Solver()
+                solver.set(timeout=5000)
+                solver.add(precondition if precondition is not None else z3.BoolVal(True), condition)
+                feasibility = solver.check()
+                if feasibility == z3.unsat:
+                    if return_state:
+                        return outcome(returned=False)
+                    return z3.BitVecVal(0, 64), memory, z3.BoolVal(False)
+                if feasibility == z3.unknown:
+                    raise Unsupported('PS2 path feasibility inconclusive')
                 continue
             if code == 'STORE':
                 if len(inputs) != 3:
                     raise Unsupported('Invalid STORE')
                 value = read(inputs[2])
                 offset = memory_address(inputs, value.size() // 8)
-                for byte in range(value.size() // 8):
-                    memory = z3.Store(memory, index(offset + byte),
-                                      z3.Extract(byte * 8 + 7, byte * 8, value))
+                if store_trace is not None:
+                    store_trace.append((z3.simplify(index(offset)), value))
+                if heap is not None:
+                    heap.store(index(offset), value, condition)
+                    memory = heap.memory
+                else:
+                    for byte in range(value.size() // 8):
+                        memory = z3.Store(memory, index(offset + byte),
+                                          z3.Extract(byte * 8 + 7, byte * 8, value))
                 continue
             if code == 'RETURN':
                 if len(inputs) != 1 or node_key(inputs[0]) != ('register', 0x1f0, 8):
@@ -152,9 +260,11 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                 if graph_mode:
                     solver = z3.Solver()
                     solver.set(timeout=5000)
-                    solver.add(precondition, condition, read(dict(space='register', offset='100', size=16, constant=False)) != z3.BitVec('incoming_s0', 128))
+                    solver.add(precondition, condition, z3.Or(*[
+                        read(dict(space='register', offset=hex(offset)[2:], size=size, constant=False)) != value
+                        for (offset, size), value in incoming_saved.items()]))
                     if solver.check() != z3.unsat:
-                        raise Unsupported('PS2 s0 preservation failed')
+                        raise Unsupported('PS2 callee-saved register preservation failed')
                 returned = True
                 continue
             output = op.get('output')
@@ -170,8 +280,16 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
             if loop_mode or second_argument is not None:
                 allowed += [('register', offset, size) for offset in (0x40, 0x60) for size in (4, 8)]
             if graph_mode:
-                allowed += [('register', offset, size) for offset in (0x40, 0x100) for size in (4, 8)]
-                allowed += [('register', offset, 4) for offset in (0x104, 0x108, 0x10c)]
+                allowed += [('register', 0x40, size) for size in (4, 8)]
+                allowed += [('register', offset, size) for offset in saved_offsets
+                            for size in (4, 8, 16)]
+                allowed += [('register', offset + lane, 4) for offset in saved_offsets
+                            for lane in (4, 8, 12)]
+                allowed += [('register', offset, size) for offset in list(range(0x10, 0x100, 0x10)) + [0x180, 0x190]
+                            for size in (4, 8)]
+            if fp_mode:
+                allowed += [('register', offset, 4) for offset in range(0x1000, 0x1080, 4)]
+                allowed += [('register', 0x1210, 4)]
             if key[0] != 'unique' and key not in allowed:
                 raise Unsupported(f'Unmodeled register or memory effect: {key}')
             bits = output['size'] * 8
@@ -179,18 +297,27 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                 if len(inputs) != 2:
                     raise Unsupported('Invalid LOAD')
                 offset = memory_address(inputs, output['size'])
-                parts = [z3.Select(memory, index(offset + byte)) for byte in reversed(range(output['size']))]
-                values = [z3.Concat(*parts) if len(parts) > 1 else parts[0]]
+                if heap is not None:
+                    values = [heap.load(index(offset), output['size'], condition)]
+                else:
+                    parts = [z3.Select(memory, index(offset + byte)) for byte in reversed(range(output['size']))]
+                    values = [z3.Concat(*parts) if len(parts) > 1 else parts[0]]
                 code = 'COPY'
             else:
                 values = [read(value) for value in inputs]
-            if code == 'COPY' and len(values) == 1:
+            if (code.startswith('FLOAT_') or code == 'INT2FLOAT') and fp_mode:
+                from processor_fp import ProcessorFP
+                value = ProcessorFP('ps2', processor, prove).evaluate(instruction, op, values, bits)
+            elif code == 'COPY' and len(values) == 1:
                 value = values[0]
             elif code in ('INT_ZEXT', 'INT_SEXT') and len(values) == 1:
                 extra = bits - values[0].size()
                 if extra < 0:
                     raise Unsupported('Invalid extension width')
                 value = (z3.ZeroExt if code == 'INT_ZEXT' else z3.SignExt)(extra, values[0])
+            elif code == 'SUBPIECE' and len(values) == 2 and z3.is_bv_value(values[1]):
+                low = values[1].as_long() * 8
+                value = z3.Extract(low + bits - 1, low, values[0])
             elif len(values) == 2 and values[0].size() == values[1].size():
                 a, b = values
                 arithmetic = {'INT_AND': lambda: a & b, 'INT_OR': lambda: a | b,
@@ -200,6 +327,8 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                                   INT_SRIGHT=lambda: a >> b)
                 comparisons = {'INT_LESS': lambda: z3.ULT(a, b),
                                'INT_SLESS': lambda: a < b,
+                               'INT_LESSEQUAL': lambda: z3.ULE(a, b),
+                               'INT_SLESSEQUAL': lambda: a <= b,
                                'INT_EQUAL': lambda: a == b,
                                'INT_NOTEQUAL': lambda: a != b}
                 if code in arithmetic:
@@ -212,6 +341,9 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                 raise Unsupported(f'Unsupported operation or widths: {code}')
             if value.size() != bits:
                 raise Unsupported('Output width mismatch')
+            # Match the Windows executor: keep equivalent expressions compact
+            # before register alias splitting and subsequent prefix replays.
+            value = z3.simplify(value)
             # Never retain stale aliases after a write.
             for old in list(state):
                 if old[0] == key[0] and old[1] < key[1] + key[2] and key[1] < old[1] + old[2]:
@@ -222,8 +354,14 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                                 state[(old[0], offset, 1)] = z3.Extract(byte * 8 + 7, byte * 8, state[old])
                     del state[old]
             state[key] = value
+            if fp_mode and (code.startswith('FLOAT_') or code == 'INT2FLOAT') and 'fcr31' in processor:
+                state[('register', 0x1210, 4)] = processor['fcr31']
+            if fp_mode and key == ('register', 0x1210, 4):
+                processor['fcr31'] = value
     if not returned or count != export['operation_count']:
         raise Unsupported('Missing return/value or inconsistent operation count')
+    if return_state:
+        return outcome(state.get(('register', 0x20, 8)))
     if memory is not None:
         if path_mode:
             return state.get(('register', 0x20, 8)), memory, condition

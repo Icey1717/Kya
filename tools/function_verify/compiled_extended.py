@@ -18,13 +18,60 @@ CASES = [
 ]
 TABLES = {'?_gBehaviourFlags_ACT@CActor@@2PAIA': ('Actor', 8),
           '?_gBehaviourFlags_AUT@CActorAutonomous@@2PAIA': ('ActorAutonomous', 4)}
+# Trap storage only, never executable contracts. Reaching one remains unsupported.
+FAILURE_IMPORTS = {'__imp__wassert', '__imp__CrtDbgReport', '__imp_abort'}
 
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def bundle(objects, cases=None, tables=None):
+class UnapprovedRelocations(ValueError):
+    def __init__(self, targets):
+        self.targets = sorted(set(targets))
+        super().__init__('Unapproved relocation target: ' + '; '.join(self.targets))
+
+
+def bundle_closure(objects, cases, tables=None, max_functions=256, globals=None):
+    """Include complete compiled direct callees; never synthesize missing bodies.
+
+    Returns the remaining dependency frontier as data, without claiming a
+    successful bundle. Globals/imports require explicit mappings or analysis.
+    """
+    if not isinstance(max_functions, int) or not 1 <= len(cases) <= max_functions:
+        raise ValueError('Invalid direct dependency function bound or initial roots')
+    if len({c[3] for c in cases}) != len(cases):
+        raise ValueError('Duplicate direct dependency root symbol')
+    definitions = {}
+    for source, data in objects.items():
+        for symbol, _, section, kind in coff_symbols(data)[0]:
+            if section > 0 and kind == 0x20:
+                definitions.setdefault(symbol, []).append(source)
+    selected = list(cases)
+    while True:
+        try:
+            prepared = (bundle(objects, selected, tables, globals=globals) if globals is not None
+                        else bundle(objects, selected, tables))
+            return selected, prepared, []
+        except UnapprovedRelocations as error:
+            pending = error.targets
+            additions = []
+            for target in pending:
+                sources = definitions.get(target, [])
+                if len(sources) > 1:
+                    from coff_data import identical_comdat
+                    source = identical_comdat(objects, sources, target)
+                    sources = [source] if source is not None else sources
+                if len(sources) == 1:
+                    additions.append((sources[0], None, 'Dependency' + str(len(selected) + len(additions)), target))
+            if not additions:
+                return selected, None, pending
+            if len(selected) + len(additions) > max_functions:
+                raise ValueError('Direct dependency closure exceeds explicit function bound')
+            selected.extend(additions)
+
+
+def bundle(objects, cases=None, tables=None, *, globals=None, deferred_functions=(), jump_tables=False):
     """Resolve only AMD64 REL32 in allow-listed production slices.
 
     Assertion strings/imports receive trap placeholders. They are never modeled
@@ -32,6 +79,11 @@ def bundle(objects, cases=None, tables=None):
     """
     cases = CASES if cases is None else cases
     tables = TABLES if tables is None else tables
+    deferred_functions = set(deferred_functions)
+    declared_functions = {name for data in objects.values() for name, _, _, kind in coff_symbols(data)[0]
+                          if kind == 0x20}
+    if not deferred_functions <= declared_functions or deferred_functions & {case[3] for case in cases}:
+        raise ValueError('Deferred targets must be declared functions without selected bodies')
     blob, functions, addresses, pending = bytearray(), [], {}, []
     for file, ps2, name, symbol in cases:
         data = objects[file]
@@ -57,7 +109,8 @@ def bundle(objects, cases=None, tables=None):
         body = data[raw + start:raw + end]
         blob.extend(body)
         item = dict(name=name, symbol=symbol, ps2_entry=ps2, source=file,
-                    blob_offset=base, size=len(body), original_sha256=sha(body), relocations=[])
+                    blob_offset=base, size=len(body), coff_section=section, coff_offset=start,
+                    original_sha256=sha(body), relocations=[])
         functions.append(item)
         symoff, nsyms = struct.unpack_from('<II', data, 8)
         for i in range(count):
@@ -74,35 +127,74 @@ def bundle(objects, cases=None, tables=None):
                 target = name_raw.rstrip(b'\0').decode()
             position = base + offset - start
             addend = struct.unpack_from('<i', blob, position)[0]
+            if name_raw.rstrip(b'\0') == b'.rdata' and jump_tables:
+                from coff_jump_tables import recover
+                table = recover(data, file, item, offset, index)
+                target, addend = table['symbol'], 0
+                item.setdefault('jump_tables', []).append(table)
             pending.append((position, target, addend))
             item['relocations'].append(dict(offset=offset-start, symbol=target, addend=addend))
     for symbol, (_, size) in tables.items():
+        if symbol in addresses:
+            raise ValueError('Duplicate bundled symbol: ' + symbol)
         while len(blob) % 16:
             blob.append(0xcc)
         addresses[symbol] = len(blob)
         # Globals are deliberately symbolic at execution time on both sides.
         blob.extend(bytes(size))
+    data_fixups = []
+    for symbol, (source, size) in (globals or {}).items():
+        from coff_data import extract as extract_data
+        if symbol in addresses:
+            raise ValueError('Duplicate bundled global: ' + symbol)
+        item = extract_data(objects[source], symbol, size)
+        while len(blob) % 16:
+            blob.append(0xcc)
+        addresses[symbol] = len(blob)
+        blob.extend(item['bytes'])
+        data_fixups.extend((addresses[symbol] + r['offset'], r['symbol'], r['addend'])
+                           for r in item['relocations'])
+    for item in functions:
+        if item.get('jump_tables'):
+            from coff_jump_tables import append
+            item['jump_tables'] = [append(blob, table, item) for table in item['jump_tables']]
+            for table in item['jump_tables']:
+                if table['symbol'] in addresses:
+                    raise ValueError('Duplicate jump table identity')
+                addresses[table['symbol']] = table['address']
+    unresolved = sorted({target for _, target, _ in pending if target not in addresses
+                         and not re.fullmatch(r'__(?:real@[0-9a-fA-F]{8}|xmm@[0-9a-fA-F]{32})', target)
+                         and not target.startswith('??_C@') and target not in FAILURE_IMPORTS
+                         and target not in deferred_functions})
+    unresolved = sorted(set(unresolved) | {target for _, target, _ in data_fixups if target not in addresses})
+    if unresolved:
+        raise UnapprovedRelocations(unresolved)
     for position, target, addend in pending:
         if target not in addresses:
-            literal = re.fullmatch(r'__real@([0-9a-fA-F]{8})', target)
+            literal = re.fullmatch(r'__(?:real@([0-9a-fA-F]{8})|xmm@([0-9a-fA-F]{32}))', target)
             if literal:
-                expected = struct.pack('<I', int(literal[1], 16))
+                expected = int(literal[1] or literal[2], 16).to_bytes(4 if literal[1] else 16, 'little')
                 definitions = []
                 for data in objects.values():
                     for symbol, offset, section, _ in coff_symbols(data)[0]:
                         if symbol == target and section > 0:
                             raw = struct.unpack_from('<I', data, 20 + (section-1)*40 + 20)[0]
-                            definitions.append(data[raw+offset:raw+offset+4])
+                            definitions.append(data[raw+offset:raw+offset+len(expected)])
                 if not definitions or any(value != expected for value in definitions):
                     raise ValueError('Missing/conflicting float literal definition')
                 addresses[target] = len(blob)
                 blob.extend(expected)
-            elif not (target.startswith('??_C@') or target == '__imp__wassert'):
+            elif not (target.startswith('??_C@') or target in FAILURE_IMPORTS or target in deferred_functions):
                 raise ValueError('Unapproved relocation target: ' + target)
             else:
                 addresses[target] = len(blob)
                 blob.extend(b'\xcc' * 16)
         struct.pack_into('<i', blob, position, addresses[target] + addend - (position + 4))
+    for position, target, addend in data_fixups:
+        value = addresses[target] + addend
+        if not 0 <= value < 1 << 64:
+            raise ValueError('ADDR64 global relocation overflow')
+        struct.pack_into('<Q', blob, position, value)
     for item in functions:
         start = item['blob_offset']
         item['bytes_sha256'] = sha(blob[start:start + item['size']])
@@ -110,7 +202,9 @@ def bundle(objects, cases=None, tables=None):
 
 
 def main():
+    from build_config import arguments, identity
     parser = argparse.ArgumentParser(description=__doc__)
+    arguments(parser)
     parser.add_argument('--ghidra', type=Path, default=Path('G:/FromGamesAndDev/Ghidra/ghidra_10.0_PUBLIC_20210621/ghidra_10.0_PUBLIC'))
     parser.add_argument('--java', type=Path, default=Path('G:/jdk/jdk-21.0.9/bin/java.exe'))
     parser.add_argument('--ninja', default='C:/Program Files/Microsoft Visual Studio/18/Insiders/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe')
@@ -127,8 +221,9 @@ def main():
         from combat_cases import CASES as selected_cases, LAYOUT_SOURCE, LAYOUT_KEYS
     else:
         selected_cases = CASES
-    build = ROOT / 'out/build/x64-debug'
-    output = ROOT / ('out/verification/' + {'subsystems': 'compiled-subsystems', 'combat': 'compiled-combat', 'control-flow': 'compiled-extended'}[args.suite] + ('-mutant-' + args.mutate if args.mutate else ''))
+    build = args.build_dir.resolve()
+    configuration = identity(build)
+    output = args.output_root.resolve() / ({'subsystems': 'compiled-subsystems', 'combat': 'compiled-combat', 'control-flow': 'compiled-extended'}[args.suite] + ('-mutant-' + args.mutate if args.mutate else ''))
     output.mkdir(parents=True, exist_ok=True)
     targets = {f: 'CMakeFiles/Kya.dir/src/b-witch/' + f + '.cpp.obj' for f, _, _, _ in selected_cases}
     subprocess.run([args.ninja, '-C', str(build), *targets.values()], check=True)
@@ -199,7 +294,7 @@ def main():
     command = command.replace(target, layout_object.as_posix())
     subprocess.run(command, cwd=build, check=True)
     layout = {key: constant(layout_object.read_bytes(), key) for key in layout_keys}
-    manifest = dict(functions=functions, addresses=addresses, provenance=provenance, layout=layout, mutation=args.mutate, suite=args.suite,
+    manifest = dict(build=configuration, functions=functions, addresses=addresses, provenance=provenance, layout=layout, mutation=args.mutate, suite=args.suite,
                     layout_command=command, compiler_version=subprocess.check_output([commands[layout_file].split()[0], '--version'], text=True))
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2))
     lift(output, args.ghidra, args.java)

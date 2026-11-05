@@ -1,0 +1,39 @@
+{
+  "revision": "1f67c53b6723fcd6a90041a5b296f0e34a6a3222",
+  "files": [
+    {
+      "path": "pcsx2/FPU.cpp",
+      "url": "https://raw.githubusercontent.com/PCSX2/pcsx2/1f67c53b6723fcd6a90041a5b296f0e34a6a3222/pcsx2/FPU.cpp",
+      "sha256": "204dcb290f9f56e9112622ab313ef12d2192eda5b43d24efcf2dbc8ca3fa7344"
+    },
+    {
+      "path": "pcsx2/x86/iFPU.cpp",
+      "url": "https://raw.githubusercontent.com/PCSX2/pcsx2/1f67c53b6723fcd6a90041a5b296f0e34a6a3222/pcsx2/x86/iFPU.cpp",
+      "sha256": "03cb72f88bf612d676a111614b18bc3cf3b4fd1cd2d6976aa45a1bf8e3ed5ea1"
+    },
+    {
+      "path": "pcsx2/x86/iFPUd.cpp",
+      "url": "https://raw.githubusercontent.com/PCSX2/pcsx2/1f67c53b6723fcd6a90041a5b296f0e34a6a3222/pcsx2/x86/iFPUd.cpp",
+      "sha256": "b6c19019b9693a4d48da71d99c08d14790bddfadee3fbed746035ccaa7c14cae"
+    },
+    {
+      "path": "pcsx2/x86/microVU_Upper.inl",
+      "url": "https://raw.githubusercontent.com/PCSX2/pcsx2/1f67c53b6723fcd6a90041a5b296f0e34a6a3222/pcsx2/x86/microVU_Upper.inl",
+      "sha256": "1e47ab5161369c72f765f57e43fcd67d72268605390dc759ad1785cc67170f9b"
+    },
+    {
+      "path": "pcsx2/x86/microVU_Misc.inl",
+      "url": "https://raw.githubusercontent.com/PCSX2/pcsx2/1f67c53b6723fcd6a90041a5b296f0e34a6a3222/pcsx2/x86/microVU_Misc.inl",
+      "sha256": "95b093363a4de55e3303eb89b2b9e39825fab7d8e4dcb30478d3235400bc2774"
+    }
+  ],
+  "scope": "Pinned upstream reference audit; not PS2 hardware validation",
+  "unconditional_hardware_proof": false,
+  "findings": {
+    "corrected_add_sub": "Executable reference model available through explicit opt-in; report remains conditional",
+    "multiply": "Upstream extended-FPU source documents incorrect mantissa results",
+    "divide_sqrt_rsqrt": "Upstream extended-FPU source documents incorrect rounding results",
+    "underflow_add_sub": "Upstream says retained normalized fraction behavior is not thoroughly tested",
+    "vu": "Arithmetic and clamping paths are distinct from EE and require independent validation"
+  }
+}

@@ -10,16 +10,19 @@ class CLodFx : public CNewFx
 {
 public:
 	virtual void Draw();
-	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual void Kill();
 	virtual void Start(float param_1, float param_2) { IMPLEMENTATION_GUARD(); }
-	virtual void Stop(float param_1) { IMPLEMENTATION_GUARD(); }
-	virtual bool IsLooped() { IMPLEMENTATION_GUARD(); return false; }
+	virtual void Stop(float param_1);
+	virtual bool IsLooped();
 	virtual int GetType();
 	virtual void NotifySonIsDead(CNewFx* pSon, int) { IMPLEMENTATION_GUARD(); }
 	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId) { IMPLEMENTATION_GUARD(); }
 	virtual void UpdateSpatializeActor(uint newFlags, edF32VECTOR4 *pNewPosition) { IMPLEMENTATION_GUARD(); }
 
 	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+
+	CFxHandle field_0x80;
+	bool field_0x88;
 };
 
 class CFxLodScenaricData

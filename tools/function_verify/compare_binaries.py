@@ -91,7 +91,7 @@ def run(path, port=18437):
         except (Unsupported, z3.Z3Exception, KeyError, ValueError) as error:
             report.update(result='inconclusive', reason=str(error))
         reports.append(report)
-    document = dict(scope='Production Windows x64 COFF machine code versus original PS2 machine-code P-code',
+    document = dict(build=manifest.get('build'), scope='Production Windows x64 COFF machine code versus original PS2 machine-code P-code',
                     mutation=manifest['mutation'],
                     windows_object_sha256=manifest['object_sha256'], compiler_command=manifest['compile_command'],
                     compiler_version=manifest.get('compiler_version', 'See recorded compiler command'),

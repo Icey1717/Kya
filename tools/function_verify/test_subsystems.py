@@ -81,7 +81,7 @@ class IntegrationTests(unittest.TestCase):
                 path = output / folder / 'report.json'
                 path.parent.mkdir()
                 path.write_text(json.dumps({'functions': [{'ps2_entry': a, 'result': 'equivalent'} for a in expected]}))
-            args = SimpleNamespace(offline=False, ninja='ninja', port=18437, ghidra=None, java=None)
+            args = SimpleNamespace(offline=False, ninja='ninja', port=18437, ghidra=None, java=None, build_dir=output / 'build')
             with patch.object(check.subprocess, 'run', return_value=SimpleNamespace(returncode=0)), patch('builtins.print'):
                 self.assertEqual(check.run_checks(args, output), 1)
             status = json.loads((output / 'check-status.json').read_text())

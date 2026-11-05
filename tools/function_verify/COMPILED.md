@@ -9,7 +9,11 @@ the expected output in this workflow.
 
 ## Run
 
-Use the configured `out/build/x64-debug` build and the installed Ghidra 10.0,
+Use `cmake --preset x64-verify` in a Visual Studio x64 developer shell to configure
+the logging-disabled build. The scripts default to `out/build/x64-verify` and
+`out/verification/x64-verify`; override with `--build-dir` and `--output-root`.
+Results record this build identity and apply to that configuration.
+Use the installed Ghidra 10.0,
 JDK 21, and Totala extension from this pilot. Python and Z3 dependencies are the
 same as the original suite. From the repository root:
 

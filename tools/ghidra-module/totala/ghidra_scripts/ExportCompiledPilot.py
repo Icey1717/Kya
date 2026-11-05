@@ -3,6 +3,7 @@
 from java.nio.file import Files, Paths
 from com.google.gson import JsonParser, JsonArray, GsonBuilder
 from totala import PcodeExporter
+from ghidra.program.model.address import AddressSet
 
 args = getScriptArgs()
 manifest = JsonParser.parseString(Files.readString(Paths.get(args[0]))).getAsJsonObject()
@@ -16,6 +17,26 @@ for value in manifest.getAsJsonArray('functions'):
     if function is None:
         raise RuntimeError('Function creation failed at ' + str(address))
     end = address.add(item.get('size').getAsLong() - 1)
+    if item.has('jump_tables'):
+        for table in item.getAsJsonArray('jump_tables'):
+            for target in table.getAsJsonObject().getAsJsonArray('targets'):
+                destination = toAddr(target.getAsLong())
+                if destination.compareTo(address) < 0 or destination.compareTo(end) > 0:
+                    raise RuntimeError('Jump table target leaves COFF slice')
+                if not disassemble(destination) or currentProgram.getListing().getInstructionAt(destination) is None:
+                    raise RuntimeError('Jump table target is not an instruction boundary')
+        # Entry flow alone stops at computed switches. Include the decoded
+        # case blocks reached from every checked COFF relocation target.
+        body = AddressSet()
+        instructions = currentProgram.getListing().getInstructions(address, True)
+        while instructions.hasNext():
+            instruction = instructions.next()
+            if instruction.getAddress().compareTo(end) > 0:
+                break
+            if instruction.getMaxAddress().compareTo(end) > 0:
+                raise RuntimeError('Instruction crosses COFF function boundary')
+            body.addRange(instruction.getAddress(), instruction.getMaxAddress())
+        function.setBody(body)
     if function.getBody().getMinAddress().compareTo(address) < 0 or function.getBody().getMaxAddress().compareTo(end) > 0:
         raise RuntimeError('Function escaped COFF slice')
     exported = PcodeExporter.export(currentProgram, function, 4096)

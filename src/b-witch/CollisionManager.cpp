@@ -822,7 +822,8 @@ void CCollision::Reset()
 {
 	ClearInternalData();
 
-	this->flags_0x4 = this->flags_0x4 & 0xe8;
+	// PS2 0019dbb4..0019dbbc masks only the low byte (lbu/andi/sb).
+	this->flags_0x4 = this->flags_0x4 & 0xffffffe8;
 
 	return;
 }

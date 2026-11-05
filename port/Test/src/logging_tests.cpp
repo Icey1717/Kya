@@ -2,6 +2,7 @@
 #include "log.h"
 #include "logging.h"
 
+#if KYA_ENABLE_GAME_LOGGING
 TEST(Logging, NamedHandleSharesEntryAndHonorsRuntimeToggleAfterRehash)
 {
 	auto& log = Log::GetInstance();
@@ -97,3 +98,23 @@ TEST(Logging, MacroWithoutArgumentsIsSafeInIfElse)
 	EXPECT_FALSE(tookElse);
 	entry.bEnabled = previousEnabled;
 }
+#else
+TEST(Logging, CompiledOutCallsDoNotEvaluateAnyArgumentsOrCreateCategories)
+{
+	auto& log = Log::GetInstance();
+	const auto categories = log.logs.size();
+	int evaluations = 0;
+	MY_LOG_NAMED_CATEGORY(Actor, (++evaluations, LogLevel::Info), (++evaluations, "{}"), ++evaluations);
+	MY_LOG_CATEGORY((++evaluations, "VerificationMustNotExist"), (++evaluations, LogLevel::Info), (++evaluations, "{}"), ++evaluations);
+	MY_LOG((++evaluations, "{}"), ++evaluations);
+	scePrintf((++evaluations, "{}"), ++evaluations);
+	bool tookElse = false;
+	if (true)
+		FLUSH_LOG();
+	else
+		tookElse = true;
+	EXPECT_FALSE(tookElse);
+	EXPECT_EQ(evaluations, 0);
+	EXPECT_EQ(log.logs.size(), categories);
+}
+#endif

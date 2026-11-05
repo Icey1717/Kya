@@ -34,6 +34,15 @@
 			"cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
 		},
 		{
+			"name": "x64-verify",
+			"displayName": "x64 Verification (game logging disabled)",
+			"inherits": "x64-debug",
+			"cacheVariables": {
+				"KYA_ENABLE_GAME_LOGGING": "OFF",
+				"KYA_ENABLE_FUNCTION_VERIFICATION_TESTS": "ON"
+			}
+		},
+		{
 			"name": "x64-debug-asan",
 			"displayName": "x64 Debug (AddressSanitizer)",
 			"description": "Target Windows (64-bit) with Clang and AddressSanitizer. (Debug)",

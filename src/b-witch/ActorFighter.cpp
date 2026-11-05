@@ -8971,11 +8971,15 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 			pFighter->fightFlags = pFighter->fightFlags | 2;
 		}
 	}
+		break;
 	case FIGHTER_DEFEND_LAND:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->field_0x6bc = GetTimer()->cutsceneDeltaTime;
 		break;
 	case FIGHTER_STATE_RIDE_EXIT:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->pCollisionData->actorFieldA = (CActor*)0x0;
+		pFighter->pAdversary->pCollisionData->actorFieldA = (CActor*)0x0;
 		break;
 	case FIGHTER_HOLD_PUSH_PREPARE:
 		this->pOwner->_StateFighterHoldPushPrepareTerm();
@@ -8984,10 +8988,13 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 		this->pOwner->_StateFighterHoldThrowTerm();
 		break;
 	case FIGHTER_STATE_HOLD_HIT:
-		IMPLEMENTATION_GUARD();
+		/* Original callee FUN_00310620 is a return-only function. */
 		break;
 	case FIGHTER_HIT_SWAY:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->fightFlags = pFighter->fightFlags & 0xfffffffe;
+		pFighter->SetLookingAtOn();
+		pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		break;
 	case FIGHTER_BLOW_BEGIN:
 	case FIGHTER_GRAB_BEGIN:
@@ -9113,7 +9120,10 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 		pFighter->field_0x47c = 23.56194f;
 	break;
 	case FIGHTER_GRAB_ACTION_MISS_END:
-		IMPLEMENTATION_GUARD();
+		pFighter = this->pOwner;
+		pFighter->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		pFighter->field_0x36c = pFighter->field_0x36c | 1;
+		pFighter->field_0x47c = 23.56194f;
 		break;
 	case FIGHTER_GRAB_ACTION_APPROACH:
 		pFighter = this->pOwner;
@@ -9182,10 +9192,8 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 			}
 			else {
 				if (uVar13 == FIGHTER_EXECUTE_FLAGS_FLIP) {
-					if (newState == -1) {
-						if ((this->pOwner->GetStateFlags(newState) & 0xff800) != FIGHTER_EXECUTE_FLAGS_FLIP) {
-							this->pOwner->_EndFighterFlip();
-						}
+					if ((this->pOwner->GetStateFlags(newState) & 0xff800) != FIGHTER_EXECUTE_FLAGS_FLIP) {
+						this->pOwner->_EndFighterFlip();
 					}
 				}
 			}

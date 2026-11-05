@@ -1,0 +1,9583 @@
+{
+  "scope": "Native x64 SSE oracle; exact bits, EFLAGS and MXCSR",
+  "oracle_sha256": "425bb4944b97922c220ecea1393a6de915f7f9bacc1648a566a2fad641446f3e",
+  "source_sha256": "755c7309113ad4399104d7553e8da924f517ed80bb3adeefa7f4763afbb4ca40",
+  "vectors": [
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 1082130432,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 1056964608,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 1065353215,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2139095039,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8098,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 4290772992,
+      "mxcsr": 8065,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1073741824,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 1065353215,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 954616997,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 891263290,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 1816852248,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 1911350246,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 1650242139,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 879959078,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 948274008,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 1620086610,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 1759871028,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 902808482,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 1985298005,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 1719497762,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 1082130432,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 1056964608,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 1065353215,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16290,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 4290772992,
+      "mxcsr": 16257,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1073741824,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 1065353215,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 954616997,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 891263290,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 1816852248,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 1911350246,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 1650242139,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 879959077,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 948274008,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 1620086610,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 1759871028,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 902808482,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 1985298005,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 1719497762,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 1082130432,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 1056964609,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24482,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 4290772992,
+      "mxcsr": 24449,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1073741825,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 954616998,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 891263291,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 1816852249,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 1911350247,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 1650242140,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 879959078,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 948274009,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 1620086611,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 1759871029,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 902808483,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 1985298006,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 1719497763,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 1082130432,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 1056964608,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 1065353215,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32674,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 4290772992,
+      "mxcsr": 32641,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1073741824,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 1065353215,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 954616997,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 891263290,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 1816852248,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 1911350246,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 1650242139,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 879959077,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 948274008,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 1620086610,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 1759871028,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 902808482,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 1985298005,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 1719497762,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 1082130432,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 1056964608,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 1065353215,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2139095039,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 4290772992,
+      "mxcsr": 40897,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1073741824,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 1065353215,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 954616997,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 891263290,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 1816852248,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 1911350246,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 1650242139,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 879959078,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 948274008,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 1620086610,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 1759871028,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 902808482,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 1985298005,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 1719497762,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 1082130432,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 1056964608,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 1065353215,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2139095039,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40866,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 4290772992,
+      "mxcsr": 40833,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1073741824,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 1065353215,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 954616997,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 891263290,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 1816852248,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 1911350246,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 1650242139,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 879959078,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 948274008,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 1620086610,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 1759871028,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 902808482,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 1985298005,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 1719497762,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 1082130432,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 1056964608,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 1065353215,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2139095039,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 4290772992,
+      "mxcsr": 8129,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1073741824,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 1065353215,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 954616997,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 891263290,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 1816852248,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 1911350246,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 1650242139,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 879959078,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 948274008,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 1620086610,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 1759871028,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 902808482,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 1985298005,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "ADDSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 1719497762,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 1065353215,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 3221225472,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 3204448256,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 3212836863,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2139095039,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 2147483648,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 3212836864,
+      "mxcsr": 8098,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 872415232,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 3212836863,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 954616997,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 891263290,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 1816852248,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 4058833894,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 1650242139,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 3027354788,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 948274008,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 3767570258,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 1759871028,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 902808482,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 1985298005,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 3866981410,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 1065353215,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 3221225472,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 3204448256,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 3212836863,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2139095038,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 3212836864,
+      "mxcsr": 16290,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 2139095040,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 872415232,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 3212836863,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 954616996,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 891263289,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 1816852247,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 4058833894,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 1650242138,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 3027354789,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 948274007,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 3767570258,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 1759871027,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 902808481,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 1985298004,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 3866981410,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 1065353215,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 3221225472,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 3204448255,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 3212836862,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2139095039,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 2147483648,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 3212836863,
+      "mxcsr": 24482,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 872415232,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 3212836862,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 954616997,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 891263290,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 1816852248,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 4058833893,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 1650242139,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 3027354788,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 948274008,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 3767570257,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 1759871028,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 902808482,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 1985298005,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 3866981409,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 1065353215,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 3221225472,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 3204448255,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 3212836862,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2139095038,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 2147483648,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 3212836863,
+      "mxcsr": 32674,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 2139095040,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 872415232,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 3212836862,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 954616996,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 891263289,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 1816852247,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 4058833893,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 1650242138,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 3027354788,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 948274007,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 3767570257,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 1759871027,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 902808481,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 1985298004,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 3866981409,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 1065353215,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 3221225472,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 3204448256,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 3212836863,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2139095039,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 2147483648,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 3212836864,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 872415232,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 3212836863,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 954616997,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 891263290,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 1816852248,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 4058833894,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 1650242139,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 3027354788,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 948274008,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 3767570258,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 1759871028,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 902808482,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 1985298005,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 3866981410,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 1065353215,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 3221225472,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 3204448256,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 3212836863,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2139095039,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 2147483648,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 3212836864,
+      "mxcsr": 40866,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 872415232,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 3212836863,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 954616997,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 891263290,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 1816852248,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 4058833894,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 1650242139,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 3027354788,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 948274008,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 3767570258,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 1759871028,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 902808482,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 1985298005,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 3866981410,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 1065353215,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 3221225472,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 3204448256,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 3212836863,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2139095039,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 2147483648,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 3212836864,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 872415232,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 3212836863,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 954616997,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 891263290,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 1816852248,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 4058833894,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 1650242139,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 3027354788,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 948274008,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 3767570258,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 1759871028,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 902808482,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 1985298005,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "SUBSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 3866981410,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 864026624,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 1077936128,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 4194304,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8112,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8104,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 2147483648,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8066,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 4286578688,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1065353217,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 323727145,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 397419871,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 1371732094,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 1518544652,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 1124150467,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 623028072,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 157414,
+      "mxcsr": 8112,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 839231585,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 1331851450,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 327544058,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8104,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 1477652696,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 864026624,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 1077936128,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 4194304,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388607,
+      "mxcsr": 16304,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16296,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16258,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 4286578688,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1065353217,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 323727145,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 397419871,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 1371732093,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 1518544652,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 1124150467,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 623028071,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 157414,
+      "mxcsr": 16304,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 839231584,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 1331851449,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 327544057,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16296,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 1477652696,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 864026624,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 1077936128,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 4194304,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388608,
+      "mxcsr": 24496,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 2147483648,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24450,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 4286578688,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388609,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 323727146,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 397419872,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 1371732094,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 1518544653,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 1124150468,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 623028072,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 157415,
+      "mxcsr": 24496,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 839231585,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 1331851450,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 327544058,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 1477652697,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 864026624,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 1077936128,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 4194304,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388607,
+      "mxcsr": 32688,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32680,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 2147483648,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32642,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 4286578688,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1065353217,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 323727145,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 397419871,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 1371732093,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 1518544652,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 1124150467,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 623028071,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 157414,
+      "mxcsr": 32688,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 839231584,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 1331851449,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 327544057,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32680,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 1477652696,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 864026624,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 1077936128,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40944,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40944,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40936,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 2147483648,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 4286578688,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1065353217,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388608,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 323727145,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 397419871,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 1371732094,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 1518544652,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 1124150467,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 623028072,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40944,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 839231585,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 1331851450,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 327544058,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40936,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 1477652696,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 864026624,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 1077936128,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40880,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40880,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40872,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 2147483648,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40882,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 4286578688,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1065353217,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388608,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 323727145,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 397419871,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 1371732094,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 1518544652,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 1124150467,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 623028072,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40880,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 839231585,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 1331851450,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 327544058,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40872,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 1477652696,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 864026624,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 1077936128,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 4194304,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8176,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8168,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 2147483648,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 4286578688,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1065353217,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 323727145,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 397419871,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 1371732094,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 1518544652,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 1124150467,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 623028072,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 157414,
+      "mxcsr": 8176,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 839231585,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 1331851450,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 327544058,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8168,
+      "flags": 0
+    },
+    {
+      "mnemonic": "MULSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 1477652696,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 1266679808,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 1051372203,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 16777216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388609,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2130706431,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 4290772992,
+      "mxcsr": 8065,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8066,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8068,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 4290772992,
+      "mxcsr": 8065,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 4290772992,
+      "mxcsr": 8065,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1065353217,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388610,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 1585590840,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 1385208584,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8104,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 2,
+      "mxcsr": 8112,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8104,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 993352686,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 1936190171,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8112,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8104,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 1478567945,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 1406096489,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 169224647,
+      "mxcsr": 8096,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 1266679808,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 1051372202,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 16777216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2130706431,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 4290772992,
+      "mxcsr": 16257,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16258,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 2139095040,
+      "mxcsr": 16260,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 4290772992,
+      "mxcsr": 16257,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 4290772992,
+      "mxcsr": 16257,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1065353217,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388609,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 1585590839,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 1385208583,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16296,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 2,
+      "mxcsr": 16304,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16296,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 993352686,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 1936190170,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16304,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16296,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 1478567945,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 1406096488,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 169224647,
+      "mxcsr": 16288,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 1266679808,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 1051372203,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 16777216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388609,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2130706431,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 4290772992,
+      "mxcsr": 24449,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24450,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24452,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 4290772992,
+      "mxcsr": 24449,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 4290772992,
+      "mxcsr": 24449,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388610,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 1585590840,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 1385208584,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 3,
+      "mxcsr": 24496,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 993352687,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 1936190171,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24496,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24488,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 1478567946,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 1406096489,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 169224648,
+      "mxcsr": 24480,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 1266679808,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 1051372202,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 16777216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2130706431,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 4290772992,
+      "mxcsr": 32641,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32642,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 2139095040,
+      "mxcsr": 32644,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 4290772992,
+      "mxcsr": 32641,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 4290772992,
+      "mxcsr": 32641,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1065353217,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388609,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 1585590839,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 1385208583,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32680,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 2,
+      "mxcsr": 32688,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32680,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 993352686,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 1936190170,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32688,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32680,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 1478567945,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 1406096488,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 169224647,
+      "mxcsr": 32672,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 1266679808,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 1051372203,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 16777216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388609,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2130706431,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 4290772992,
+      "mxcsr": 40897,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40900,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 4290772992,
+      "mxcsr": 40897,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 4290772992,
+      "mxcsr": 40897,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1065353217,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388610,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 1585590840,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 1385208584,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40936,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40944,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40936,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 993352686,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 1936190171,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40944,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40936,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 1478567945,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 1406096489,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 169224647,
+      "mxcsr": 40928,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 1266679808,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 1051372203,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 16777216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388609,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2130706431,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 4290772992,
+      "mxcsr": 40833,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40882,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40836,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 4290772992,
+      "mxcsr": 40833,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 4290772992,
+      "mxcsr": 40833,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1065353217,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388610,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 1585590840,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 1385208584,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40872,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40880,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40872,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 993352686,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 1936190171,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40880,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40872,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 1478567945,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 1406096489,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 169224647,
+      "mxcsr": 40864,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 1266679808,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 1051372203,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 16777216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388609,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2130706431,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 4290772992,
+      "mxcsr": 8129,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8132,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 4290772992,
+      "mxcsr": 8129,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 4290772992,
+      "mxcsr": 8129,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1065353217,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388610,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 1585590840,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 1385208584,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8168,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 2,
+      "mxcsr": 8176,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8168,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 993352686,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 1936190171,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8176,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8168,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 1478567945,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 1406096489,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "DIVSS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 169224647,
+      "mxcsr": 8160,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2139095039,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 2147483648,
+      "mxcsr": 8064,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8066,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1065353217,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388609,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 954616997,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 891263290,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 1816852248,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 671988614,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 1650242139,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 808173703,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 948274008,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 283947402,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 1759871028,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 902808482,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 1985298005,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 823438185,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 8064,
+      "bits": 2143289345,
+      "mxcsr": 8065,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 8064,
+      "bits": 2139095041,
+      "mxcsr": 8065,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8065,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 2143289345,
+      "mxcsr": 8065,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16258,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16256,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 2139095040,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1065353217,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388609,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 954616997,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 891263290,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 1816852248,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 671988614,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 1650242139,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 808173703,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 948274008,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 283947402,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 1759871028,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 902808482,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 1985298005,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 823438185,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 16256,
+      "bits": 2143289345,
+      "mxcsr": 16257,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 16256,
+      "bits": 2139095041,
+      "mxcsr": 16257,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16257,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 2143289345,
+      "mxcsr": 16257,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 8388608,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388608,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2139095039,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 2147483648,
+      "mxcsr": 24448,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24450,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388609,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 954616997,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 891263290,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 1816852248,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 671988614,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 1650242139,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 808173703,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 948274008,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 283947402,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 1759871028,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 902808482,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 1985298005,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 823438185,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 24448,
+      "bits": 2143289345,
+      "mxcsr": 24449,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 24448,
+      "bits": 2139095041,
+      "mxcsr": 24449,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24449,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 2143289345,
+      "mxcsr": 24449,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 2147483648,
+      "mxcsr": 32640,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32642,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 2139095040,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1065353217,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388609,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 954616997,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 891263290,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 1816852248,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 671988614,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 1650242139,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 808173703,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 948274008,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 283947402,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 1759871028,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 902808482,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 1985298005,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 823438185,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 32640,
+      "bits": 2143289345,
+      "mxcsr": 32641,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 32640,
+      "bits": 2139095041,
+      "mxcsr": 32641,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32641,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 2143289345,
+      "mxcsr": 32641,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 8388608,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388608,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2139095039,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 2147483648,
+      "mxcsr": 40896,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1065353217,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388609,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 954616997,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 891263290,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 1816852248,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 671988614,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 1650242139,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 808173703,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 948274008,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 283947402,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 1759871028,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 902808482,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 1985298005,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 823438185,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 40896,
+      "bits": 2143289345,
+      "mxcsr": 40897,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 40896,
+      "bits": 2139095041,
+      "mxcsr": 40897,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 40896,
+      "bits": 1,
+      "mxcsr": 40897,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 2143289345,
+      "mxcsr": 40897,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 8388608,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388608,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2139095039,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 2147483648,
+      "mxcsr": 40832,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1,
+      "mxcsr": 40834,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1065353217,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388609,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 954616997,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 891263290,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 1816852248,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 671988614,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 1650242139,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 808173703,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 948274008,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 283947402,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 1759871028,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 902808482,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 1985298005,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 823438185,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 40832,
+      "bits": 2143289345,
+      "mxcsr": 40833,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 40832,
+      "bits": 2139095041,
+      "mxcsr": 40833,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 40832,
+      "bits": 1,
+      "mxcsr": 40833,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 2143289345,
+      "mxcsr": 40833,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2139095039,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 2147483648,
+      "mxcsr": 8128,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 64
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1065353217,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388609,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 954616997,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 891263290,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 1816852248,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 671988614,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 1650242139,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 808173703,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 948274008,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 283947402,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 1759871028,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 902808482,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 1985298005,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 823438185,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 8128,
+      "bits": 2143289345,
+      "mxcsr": 8129,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 8128,
+      "bits": 2139095041,
+      "mxcsr": 8129,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 8128,
+      "bits": 1,
+      "mxcsr": 8129,
+      "flags": 69
+    },
+    {
+      "mnemonic": "COMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 2143289345,
+      "mxcsr": 8129,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388608,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8064,
+      "bits": 2139095039,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8064,
+      "bits": 2147483648,
+      "mxcsr": 8064,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8066,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8064,
+      "bits": 1065353216,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 8064,
+      "bits": 0,
+      "mxcsr": 8064,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8064,
+      "bits": 2139095040,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 1065353217,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8064,
+      "bits": 8388609,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8064,
+      "bits": 954616997,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8064,
+      "bits": 891263290,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8064,
+      "bits": 1816852248,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8064,
+      "bits": 671988614,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8064,
+      "bits": 1650242139,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8064,
+      "bits": 808173703,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8064,
+      "bits": 948274008,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8064,
+      "bits": 283947402,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8064,
+      "bits": 1759871028,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8064,
+      "bits": 902808482,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8064,
+      "bits": 1985298005,
+      "mxcsr": 8064,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8064,
+      "bits": 823438185,
+      "mxcsr": 8064,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 8064,
+      "bits": 2143289345,
+      "mxcsr": 8064,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 8064,
+      "bits": 2139095041,
+      "mxcsr": 8065,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 8064,
+      "bits": 1,
+      "mxcsr": 8064,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 8064,
+      "bits": 2143289345,
+      "mxcsr": 8064,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388608,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 16256,
+      "bits": 2139095039,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 16256,
+      "bits": 2147483648,
+      "mxcsr": 16256,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16258,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 16256,
+      "bits": 1065353216,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 16256,
+      "bits": 0,
+      "mxcsr": 16256,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 16256,
+      "bits": 2139095040,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 1065353217,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 16256,
+      "bits": 8388609,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 16256,
+      "bits": 954616997,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 16256,
+      "bits": 891263290,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 16256,
+      "bits": 1816852248,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 16256,
+      "bits": 671988614,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 16256,
+      "bits": 1650242139,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 16256,
+      "bits": 808173703,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 16256,
+      "bits": 948274008,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 16256,
+      "bits": 283947402,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 16256,
+      "bits": 1759871028,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 16256,
+      "bits": 902808482,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 16256,
+      "bits": 1985298005,
+      "mxcsr": 16256,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 16256,
+      "bits": 823438185,
+      "mxcsr": 16256,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 16256,
+      "bits": 2143289345,
+      "mxcsr": 16256,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 16256,
+      "bits": 2139095041,
+      "mxcsr": 16257,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 16256,
+      "bits": 1,
+      "mxcsr": 16256,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 16256,
+      "bits": 2143289345,
+      "mxcsr": 16256,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 24448,
+      "bits": 8388608,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388608,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 24448,
+      "bits": 2139095039,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 24448,
+      "bits": 2147483648,
+      "mxcsr": 24448,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24450,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 24448,
+      "bits": 1065353216,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 24448,
+      "bits": 0,
+      "mxcsr": 24448,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 24448,
+      "bits": 2139095040,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 1065353217,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 24448,
+      "bits": 8388609,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 24448,
+      "bits": 954616997,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 24448,
+      "bits": 891263290,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 24448,
+      "bits": 1816852248,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 24448,
+      "bits": 671988614,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 24448,
+      "bits": 1650242139,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 24448,
+      "bits": 808173703,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 24448,
+      "bits": 948274008,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 24448,
+      "bits": 283947402,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 24448,
+      "bits": 1759871028,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 24448,
+      "bits": 902808482,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 24448,
+      "bits": 1985298005,
+      "mxcsr": 24448,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 24448,
+      "bits": 823438185,
+      "mxcsr": 24448,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 24448,
+      "bits": 2143289345,
+      "mxcsr": 24448,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 24448,
+      "bits": 2139095041,
+      "mxcsr": 24449,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 24448,
+      "bits": 1,
+      "mxcsr": 24448,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 24448,
+      "bits": 2143289345,
+      "mxcsr": 24448,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388608,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 32640,
+      "bits": 2139095039,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 32640,
+      "bits": 2147483648,
+      "mxcsr": 32640,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32642,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 32640,
+      "bits": 1065353216,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 32640,
+      "bits": 0,
+      "mxcsr": 32640,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 32640,
+      "bits": 2139095040,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 1065353217,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 32640,
+      "bits": 8388609,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 32640,
+      "bits": 954616997,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 32640,
+      "bits": 891263290,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 32640,
+      "bits": 1816852248,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 32640,
+      "bits": 671988614,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 32640,
+      "bits": 1650242139,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 32640,
+      "bits": 808173703,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 32640,
+      "bits": 948274008,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 32640,
+      "bits": 283947402,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 32640,
+      "bits": 1759871028,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 32640,
+      "bits": 902808482,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 32640,
+      "bits": 1985298005,
+      "mxcsr": 32640,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 32640,
+      "bits": 823438185,
+      "mxcsr": 32640,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 32640,
+      "bits": 2143289345,
+      "mxcsr": 32640,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 32640,
+      "bits": 2139095041,
+      "mxcsr": 32641,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 32640,
+      "bits": 1,
+      "mxcsr": 32640,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 32640,
+      "bits": 2143289345,
+      "mxcsr": 32640,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40896,
+      "bits": 8388608,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388608,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40896,
+      "bits": 2139095039,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40896,
+      "bits": 2147483648,
+      "mxcsr": 40896,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40896,
+      "bits": 1065353216,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 40896,
+      "bits": 0,
+      "mxcsr": 40896,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40896,
+      "bits": 2139095040,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 1065353217,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40896,
+      "bits": 8388609,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40896,
+      "bits": 954616997,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40896,
+      "bits": 891263290,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40896,
+      "bits": 1816852248,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40896,
+      "bits": 671988614,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40896,
+      "bits": 1650242139,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40896,
+      "bits": 808173703,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40896,
+      "bits": 948274008,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40896,
+      "bits": 283947402,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40896,
+      "bits": 1759871028,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40896,
+      "bits": 902808482,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40896,
+      "bits": 1985298005,
+      "mxcsr": 40896,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40896,
+      "bits": 823438185,
+      "mxcsr": 40896,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 40896,
+      "bits": 2143289345,
+      "mxcsr": 40896,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 40896,
+      "bits": 2139095041,
+      "mxcsr": 40897,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 40896,
+      "bits": 1,
+      "mxcsr": 40896,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 40896,
+      "bits": 2143289345,
+      "mxcsr": 40896,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 40832,
+      "bits": 8388608,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388608,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 40832,
+      "bits": 2139095039,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 40832,
+      "bits": 2147483648,
+      "mxcsr": 40832,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1,
+      "mxcsr": 40834,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 40832,
+      "bits": 1065353216,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 40832,
+      "bits": 0,
+      "mxcsr": 40832,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 40832,
+      "bits": 2139095040,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 1065353217,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 40832,
+      "bits": 8388609,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 40832,
+      "bits": 954616997,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 40832,
+      "bits": 891263290,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 40832,
+      "bits": 1816852248,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 40832,
+      "bits": 671988614,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 40832,
+      "bits": 1650242139,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 40832,
+      "bits": 808173703,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 40832,
+      "bits": 948274008,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 40832,
+      "bits": 283947402,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 40832,
+      "bits": 1759871028,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 40832,
+      "bits": 902808482,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 40832,
+      "bits": 1985298005,
+      "mxcsr": 40832,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 40832,
+      "bits": 823438185,
+      "mxcsr": 40832,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 40832,
+      "bits": 2143289345,
+      "mxcsr": 40832,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 40832,
+      "bits": 2139095041,
+      "mxcsr": 40833,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 40832,
+      "bits": 1,
+      "mxcsr": 40832,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 40832,
+      "bits": 2143289345,
+      "mxcsr": 40832,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 864026624,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 1077936128,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1056964608,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388608,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388608,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095039,
+      "b": 1073741824,
+      "control": 8128,
+      "bits": 2139095039,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2147483648,
+      "b": 0,
+      "control": 8128,
+      "bits": 2147483648,
+      "mxcsr": 8128,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353216,
+      "b": 0,
+      "control": 8128,
+      "bits": 1065353216,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 0,
+      "b": 0,
+      "control": 8128,
+      "bits": 0,
+      "mxcsr": 8128,
+      "flags": 64
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095040,
+      "b": 4286578688,
+      "control": 8128,
+      "bits": 2139095040,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1065353217,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 1065353217,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 8388609,
+      "b": 1065353215,
+      "control": 8128,
+      "bits": 8388609,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 954616997,
+      "b": 434268712,
+      "control": 8128,
+      "bits": 954616997,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 891263290,
+      "b": 571295089,
+      "control": 8128,
+      "bits": 891263290,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1816852248,
+      "b": 620096159,
+      "control": 8128,
+      "bits": 1816852248,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 671988614,
+      "b": 1911350246,
+      "control": 8128,
+      "bits": 671988614,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1650242139,
+      "b": 538302090,
+      "control": 8128,
+      "bits": 1650242139,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 808173703,
+      "b": 879915109,
+      "control": 8128,
+      "bits": 808173703,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 948274008,
+      "b": 76767378,
+      "control": 8128,
+      "bits": 948274008,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 283947402,
+      "b": 1620086610,
+      "control": 8128,
+      "bits": 283947402,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1759871028,
+      "b": 637310479,
+      "control": 8128,
+      "bits": 1759871028,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 902808482,
+      "b": 488965321,
+      "control": 8128,
+      "bits": 902808482,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1985298005,
+      "b": 1644406440,
+      "control": 8128,
+      "bits": 1985298005,
+      "mxcsr": 8128,
+      "flags": 0
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 823438185,
+      "b": 1719497762,
+      "control": 8128,
+      "bits": 823438185,
+      "mxcsr": 8128,
+      "flags": 1
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1,
+      "control": 8128,
+      "bits": 2143289345,
+      "mxcsr": 8128,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2139095041,
+      "b": 1,
+      "control": 8128,
+      "bits": 2139095041,
+      "mxcsr": 8129,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 1,
+      "b": 2143289345,
+      "control": 8128,
+      "bits": 1,
+      "mxcsr": 8128,
+      "flags": 69
+    },
+    {
+      "mnemonic": "UCOMISS",
+      "a": 2143289345,
+      "b": 1065353216,
+      "control": 8128,
+      "bits": 2143289345,
+      "mxcsr": 8128,
+      "flags": 69
+    }
+  ]
+}

@@ -2,12 +2,20 @@
 
 #include "log.h"
 
+#ifndef KYA_ENABLE_GAME_LOGGING
+#define KYA_ENABLE_GAME_LOGGING 1
+#endif
+
+#if KYA_ENABLE_GAME_LOGGING
 #define MY_LOG_NAMED_CATEGORY(category, level, format, ...) do { \
 	auto& kyaLogEntry = LogCategories::category(); \
 	if (kyaLogEntry.bEnabled) { \
 		Log::GetInstance().AddLog(level, kyaLogEntry, format, ##__VA_ARGS__); \
 	} \
 } while (false)
+#else
+#define MY_LOG_NAMED_CATEGORY(...) do {} while (false)
+#endif
 
 // One lazily resolved handle per category, shared across translation units.
 // Entries must not be erased: the debug menu and these handles retain references.

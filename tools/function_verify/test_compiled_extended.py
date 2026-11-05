@@ -107,7 +107,48 @@ class RelocationTests(unittest.TestCase):
                 compiled_extended.bundle({'file': bytes(data)})
 
 
+class DependencyClosureTests(unittest.TestCase):
+    def test_complete_callee_is_included_before_missing_global_is_reported(self):
+        cases = [('file', '1', 'root', 'root')]
+        with patch.object(compiled_extended, 'coff_symbols', return_value=([('callee', 0, 1, 0x20)], 1)), \
+             patch.object(compiled_extended, 'bundle', side_effect=[compiled_extended.UnapprovedRelocations(['callee']),
+                                                                    compiled_extended.UnapprovedRelocations(['global'])]):
+            selected, prepared, frontier = compiled_extended.bundle_closure({'file': b'object'}, cases)
+        self.assertIsNone(prepared)
+        self.assertEqual(frontier, ['global'])
+        self.assertEqual([c[3] for c in selected], ['root', 'callee'])
+
+    def test_ambiguous_callee_does_not_choose_arbitrary_definition(self):
+        with patch.object(compiled_extended, 'coff_symbols', return_value=([('callee', 0, 1, 0x20)], 1)), \
+             patch.object(compiled_extended, 'bundle', side_effect=compiled_extended.UnapprovedRelocations(['callee'])):
+            selected, prepared, frontier = compiled_extended.bundle_closure({'one': b'1', 'two': b'2'}, [('one', '1', 'root', 'root')])
+        self.assertIsNone(prepared)
+        self.assertEqual(frontier, ['callee'])
+        self.assertEqual(len(selected), 1)
+
+    def test_dependency_bound_is_failure(self):
+        with patch.object(compiled_extended, 'coff_symbols', return_value=([('callee', 0, 1, 0x20)], 1)), \
+             patch.object(compiled_extended, 'bundle', side_effect=compiled_extended.UnapprovedRelocations(['callee'])):
+            with self.assertRaisesRegex(ValueError, 'function bound'):
+                compiled_extended.bundle_closure({'file': b'object'}, [('file', '1', 'root', 'root')], max_functions=1)
+
+
 class WatchInputsTests(unittest.TestCase):
+    def test_registry_source_and_transition_helpers_are_watched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pointer = root / 'src/port/pointer_conv.cpp'
+            pointer.parent.mkdir(parents=True)
+            pointer.write_text('before')
+            with patch.object(check, 'ROOT', root), patch.object(check.subprocess, 'check_output', return_value='') as deps:
+                before = check.snapshot('ninja', root / 'build')
+                pointer.write_text('after')
+                after = check.snapshot('ninja', root / 'build')
+            self.assertNotEqual(before, after)
+            arguments = deps.call_args.args[0]
+            self.assertIn('CMakeFiles/Kya.dir/src/port/pointer_conv.cpp.obj', arguments)
+            self.assertIn('CMakeFiles/Kya.dir/src/b-witch/scene.cpp.obj', arguments)
+
     def test_local_dependency_edits_and_deletions_change_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -116,11 +157,11 @@ class WatchInputsTests(unittest.TestCase):
             header.write_text('initial')
             dependencies = 'target: deps\n    ' + str(header) + '\n    C:/external/sdk.h\n'
             with patch.object(check, 'ROOT', root), patch.object(check.subprocess, 'check_output', return_value=dependencies):
-                initial = check.snapshot('ninja')
+                initial = check.snapshot('ninja', root / 'build')
                 header.write_text('edited')
-                edited = check.snapshot('ninja')
+                edited = check.snapshot('ninja', root / 'build')
                 header.unlink()
-                deleted = check.snapshot('ninja')
+                deleted = check.snapshot('ninja', root / 'build')
             self.assertNotEqual(initial, edited)
             self.assertNotEqual(edited, deleted)
             self.assertFalse(any('external' in p for p in initial))

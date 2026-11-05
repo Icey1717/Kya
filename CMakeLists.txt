@@ -19,6 +19,7 @@ if(NOT DEFINED ENABLE_MEMORY_PROFILING)
 endif()
 
 option(ENABLE_ADDRESS_SANITIZER "Enable AddressSanitizer on supported Windows Clang builds" OFF)
+option(KYA_ENABLE_GAME_LOGGING "Compile game logging calls and their arguments" ON)
 
 option(ENABLE_STRICT_FLOAT_CONVERSION_ERRORS "Treat implicit float conversions as build errors" ON)
 
@@ -810,6 +811,9 @@ if (PS2)
 	)
 else()
 	set(KYA_EXECUTABLE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
+	if (NOT KYA_ENABLE_GAME_LOGGING)
+		set(KYA_EXECUTABLE_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+	endif()
 	message("Making Exe")
 
 	add_custom_target(sync_files
@@ -845,6 +849,7 @@ if (PS2)
 else()
 	target_compile_features(Kya PUBLIC cxx_std_17)
 	target_compile_definitions(Kya PUBLIC "PLATFORM_WIN")
+	target_compile_definitions(Kya PUBLIC KYA_ENABLE_GAME_LOGGING=$<BOOL:${KYA_ENABLE_GAME_LOGGING}>)
 	target_sources(Kya PRIVATE
 		"port/Windows/ActorManager.cpp"
 		"port/Windows/scene.cpp"

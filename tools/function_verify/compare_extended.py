@@ -223,7 +223,7 @@ def run(path, port=18437):
         result.update(function=identities[pc['name']], ps2_entry=pc['coff']['ps2_entry'])
         reports.append(result)
         print(json.dumps(result), flush=True)
-    document = dict(scope='Production x64 object code versus original PS2 P-code', suite=manifest.get('suite', 'control-flow'),
+    document = dict(build=manifest.get('build'), scope='Production x64 object code versus original PS2 P-code', suite=manifest.get('suite', 'control-flow'),
                     functions=reports, compiled_layout=manifest['layout'], provenance=manifest['provenance'],
                     compiler_version=manifest['compiler_version'], solver=z3.get_version_string(),
                     ps2_executable_sha256=next(iter(originals.values()))['executable_sha256'],
@@ -245,7 +245,9 @@ def run(path, port=18437):
             'VU support restricted to decoded full-lane zero move/rotate and proven +0 + +1 in identity initialization',
             'Compiler-probed Windows fields; audited PS2 offsets and zero-extended pointer identities',
             'EndFlip: aligned, non-null, disjoint collision object pointer in 0x4000..0x5000',
-            'CollisionReset: initial contact flags restricted to 0..255; broader domain is a known mismatch',
+            'CollisionReset: arbitrary uint32 initial contact flags; upper bytes preserved',
+            'Audio helpers: arbitrary uint32 counter and zero-extended music pointer identity; no pointee dereference',
+            'LayerTimeWarper: index 0, valid disjoint layer at 0x4000; raw binary32 copies only, no FP arithmetic approximation',
             'Windows stack 0x7e00..0x7fff and PS2 graph stack 0x7f00..0x800f private',
             'PS2 s0 (128 bits), stack, and return address preserved; Windows frame/stack/return preserved']
     (path.parent / 'report.json').write_text(json.dumps(document, indent=2) + '\n')

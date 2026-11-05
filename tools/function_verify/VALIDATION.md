@@ -1,8 +1,10 @@
 # Broader compiled validation
 
-The initial control-flow pilot has expanded to 22 compiled functions across
-eleven production translation units. The four suites are actor flags (4),
-branches/calls/loop (5), bytecode/save/HUD (8), and collision/combat (5). All compare real Windows
+The initial control-flow pilot has expanded to 26 compiled function/domain checks.
+The four comparison suites are actor flags (4), branches/calls/loop (5),
+bytecode/save/HUD (8), and collision/combat (9). The SetStandAnim check has a
+restricted non-dispatch domain; full transition coverage remains required
+separately and currently fails. All compare real Windows
 object-code P-code against the original PS2 executable; none use C++ source
 behavior expressions as their expected result.
 
@@ -14,9 +16,16 @@ its translation-unit list from the selected cases and follows Ninja's local
 header dependencies, build settings, verification scripts, and fixtures.
 See [build and watcher instructions](COMPILED.md) for paths and overrides.
 
-Read `out/verification/coverage.md` for a combined function/domain table, or
+Configure `cmake --preset x64-verify` in a Visual Studio x64 developer shell.
+Python tools default to that logging-disabled build and artifacts under
+`out/verification/x64-verify`; CMake targets write inside their build directory.
+Use `--build-dir` and `--output-root` for explicit alternatives. Reports identify
+the logging setting and build cache hash.
+
+Read `coverage.md` in the selected output root for a combined function/domain table, or
 `coverage.json` for automation. `check-status.json` describes the current/last
-live run. The checker requires all 22 expected entries to be present and
+live run. The checker requires the 26 function/domain proofs and two complete combat-transition
+targets to be present and
 equivalent; missing reports, missing functions, mismatches, unsupported behavior,
 and incomplete proofs fail. Old reports are removed before each suite starts.
 Runs use a process lock to prevent manual and watcher jobs mixing their artifacts.
@@ -36,6 +45,13 @@ Use those two commands in CI and retain `out/verification/offline.log` and
 passed; it does not prove that newly edited C++ still matches PS2 code.
 It never overwrites live coverage/status with fixture-only results.
 
+For a shorter edit/check cycle use `--offline --regression-tier fast`.
+`--offline --regression-tier retained` selects the expensive fighter runtime,
+animation and state-entry replays. These tiers form a disjoint, exhaustive
+partition; omitting the option still runs everything. Tier-specific status/log
+files include `-fast` or `-retained` and cannot replace the complete offline
+status. Tier selection is rejected for live runs.
+
 To include offline regressions in the normal CTest workflow:
 
 ```powershell
@@ -43,13 +59,16 @@ cmake --preset x64-debug -DKYA_ENABLE_FUNCTION_VERIFICATION_TESTS=ON
 ctest --test-dir out/build/x64-debug -L verification --output-on-failure
 ```
 
-This option is enabled in the current local build. Tests are named
-`FunctionVerifyOffline` and labeled `verification;offline`.
+This option registers `FunctionVerifyOffline` (`verification;offline;fast`) and
+`FunctionVerifyRetained` (`verification;offline;retained`), using separate output
+directories so CTest can schedule them independently. Run the `verification`
+label to include both tiers.
 `KYA_ENABLE_LIVE_FUNCTION_VERIFICATION_TESTS=ON` additionally registers
 `FunctionVerifyLive`, labeled `verification;live`. Enable that only on workers
 with the configured Windows compiler/build, Ghidra 10.0, JDK, extension, and
 running PS2 bridge. Live runs rebuild and relift current production objects.
-Live tests have a 600-second timeout; offline tests have a 120-second timeout.
+Live tests have an 1800-second timeout; fast offline tests have a 900-second
+timeout, and retained replays have a 1200-second timeout.
 Stop an active watcher before running the live CTest job to avoid contention.
 Offline jobs use their own artifact lock and can run while the live watcher is
 working. Restart the watcher after changing its orchestration or case registry
