@@ -16,6 +16,7 @@ export interface AuditFunction {
   body: string;
   noArguments: boolean;
   parseError: boolean;
+  parseDiagnostics?: Array<{ type: string; text: string; line: number; column: number; missing: boolean }>;
 }
 export interface Ps2Function {
   entry: string;
@@ -50,7 +51,7 @@ function parse(source: string) {
   return parser.parse(offset => input.slice(offset, offset + 16_384));
 }
 
-export function extractFunctions(path: string, source: string): AuditFunction[] {
+export function extractFunctions(path: string, source: string, options: { diagnostics?: boolean } = {}): AuditFunction[] {
   const functions: AuditFunction[] = [];
   walk(parse(source).rootNode, node => {
     if (node.type !== "function_definition") return;
@@ -74,12 +75,29 @@ export function extractFunctions(path: string, source: string): AuditFunction[] 
     }
     const parameters = declarator?.childForFieldName("parameters");
     const text = source.slice(node.startIndex, node.endIndex);
+    const diagnostics: NonNullable<AuditFunction['parseDiagnostics']> = [];
+    if (options.diagnostics && node.hasError) {
+      const pending = [node];
+      while (pending.length && diagnostics.length < 16) {
+        const current = pending.pop()!;
+        if (current.type === 'ERROR' || current.isMissing) {
+          diagnostics.push({ type: current.type, text: current.text.slice(0, 160),
+            line: current.startPosition.row + 1, column: current.startPosition.column + 1,
+            missing: current.isMissing });
+        }
+        // Missing punctuation can be unnamed, so namedChildren is insufficient.
+        for (const child of [...current.children].reverse()) {
+          if (child.hasError || child.isMissing || child.type === 'ERROR') pending.push(child);
+        }
+      }
+    }
     functions.push({
       id: createHash("sha256").update(`${path}\0${node.startIndex}\0${text}`).digest("hex").slice(0, 20),
       name, path, line: node.startPosition.row + 1, source: text,
       body: source.slice(body.startIndex, body.endIndex),
       noArguments: /^\(\s*(?:void\s*)?\)$/.test(parameters?.text ?? "?"),
-      parseError: node.hasError
+      parseError: node.hasError,
+      ...(options.diagnostics && node.hasError ? { parseDiagnostics: diagnostics } : {})
     });
     return false;
   });

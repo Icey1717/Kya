@@ -72,6 +72,20 @@ describe("function audit", () => {
     expect(fns.every(fn => !fn.parseError)).toBe(true);
   });
 
+  it("records bounded parser diagnostics without accepting malformed functions", () => {
+    const source = "void Bad() { if (x) return }\nvoid Good() { return; }";
+    const fns = extractFunctions("a.cpp", source, { diagnostics: true });
+    expect(fns[0].parseError).toBe(true);
+    expect(fns[0].parseDiagnostics?.some(diagnostic => diagnostic.missing && diagnostic.type === ";")).toBe(true);
+    expect(fns[0].parseDiagnostics?.every(diagnostic => diagnostic.line >= 1 && diagnostic.column >= 1)).toBe(true);
+    expect(fns[1].parseError).toBe(false);
+    expect(fns[1].parseDiagnostics).toBeUndefined();
+    expect(extractFunctions("a.cpp", source)[0].parseDiagnostics).toBeUndefined();
+    const many = extractFunctions("a.cpp", `void Bad() { ${"if (a && (b = c, b != 0)) {} ".repeat(40)} }`, { diagnostics: true });
+    expect(many[0].parseError).toBe(true);
+    expect(many[0].parseDiagnostics!.length).toBeLessThanOrEqual(16);
+  });
+
   it("does not silently select an overload or a different class", () => {
     const fn = extractFunctions("a.cpp", "void A::F() {}")[0];
     const originals = [

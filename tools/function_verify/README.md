@@ -1,5 +1,10 @@
 # Function verification pilot
 
+For a codebase-wide inventory and compiled survey of functions below 20 source
+lines, see [the short-function batch runner](SMALL_FUNCTIONS.md). Its report
+separates proved matches, inferred field correspondences, counterexamples and
+unsupported functions.
+
 **Compiled Windows comparison now covers twenty-two functions**, including
 branches, direct calls, a bounded loop, bytecode readers, save state, and HUD
 fields, collision reset, and fighter cleanup/state predicates. Full combat

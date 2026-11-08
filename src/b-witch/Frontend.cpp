@@ -101,7 +101,7 @@ bool CMagicInterface::CanActivate()
 	return bSuccess;
 }
 
-bool CMagicInterface::IsActive()
+int CMagicInterface::IsActive()
 {
 	return this->bActive;
 }
@@ -307,7 +307,7 @@ bool OtherInterface::CanActivate()
 	return this->field_0x4 == 0;
 }
 
-bool OtherInterface::IsActive()
+int OtherInterface::IsActive()
 {
 	return this->field_0x4;
 }

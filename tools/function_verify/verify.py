@@ -24,7 +24,7 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
             memory_base=0x1000, precondition=None, regions=None, call_mode=False, loop_mode=False,
             second_argument=None, vu_mode=False, graph_mode=False, float_argument=None,
             state_in=None, return_state=False, this_argument=None, guard_trace=None, fp_mode=False, store_trace=None,
-            regional_initial_stores=False):
+            regional_initial_stores=False, access_trace=None):
     """All paths supported by this pilot are straight-line, with one return.
 
     ABI: R5900 low 64-bit a1 at 0x50; v0 at 0x20; ra at 0x1f0.
@@ -237,6 +237,8 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                     raise Unsupported('Invalid STORE')
                 value = read(inputs[2])
                 offset = memory_address(inputs, value.size() // 8)
+                if access_trace is not None:
+                    access_trace.append((z3.simplify(index(offset)), value.size() // 8))
                 if store_trace is not None:
                     store_trace.append((z3.simplify(index(offset)), value))
                 if heap is not None:
@@ -297,6 +299,8 @@ def execute(export, argument, memory=None, *, object_size=16, path_mode=False,
                 if len(inputs) != 2:
                     raise Unsupported('Invalid LOAD')
                 offset = memory_address(inputs, output['size'])
+                if access_trace is not None:
+                    access_trace.append((z3.simplify(index(offset)), output['size']))
                 if heap is not None:
                     values = [heap.load(index(offset), output['size'], condition)]
                 else:

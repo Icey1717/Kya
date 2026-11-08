@@ -9,11 +9,6 @@ void StaticEdFileBase::Remove()
 {
 	this->nbActiveUsers = this->nbActiveUsers + -1;
 
-	// HACK
-	if (this->nbActiveUsers < 0) {
-		this->nbActiveUsers = 0;
-	}
-
 	return;
 }
 

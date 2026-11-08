@@ -6,7 +6,8 @@ from region_memory import RegionMemory
 
 def execute(export, argument, initial, *, path_mode=False, precondition=None, regions=None,
             second_argument=None, float_argument=None, this_argument=None, write_regions=None, store_trace=None,
-            guard_trace=None, state_in=None, return_state=False, fp_mode=False, regional_initial_stores=False):
+            guard_trace=None, state_in=None, return_state=False, fp_mode=False, regional_initial_stores=False,
+            access_trace=None):
     if export.get('language') != 'x86:LE:64:default' or export.get('compiler') != 'windows' or not export.get('complete'):
         raise Unsupported('Expected complete Windows x64 export')
     registers, temporaries = {}, {}
@@ -105,6 +106,8 @@ def execute(export, argument, initial, *, path_mode=False, precondition=None, re
               instruction.get('original_address', instruction['address']) +
               (' (store ' if store else ' (load ') + str(size) + ' bytes' +
               (', address ' + hex(value.as_long()) if z3.is_bv_value(value) else ', symbolic address') + ')')
+        if access_trace is not None:
+            access_trace.append((z3.simplify(value), size))
         return value
     def boolbits(value, bits):
         return z3.If(value, z3.BitVecVal(1, bits), z3.BitVecVal(0, bits))

@@ -27,3 +27,5 @@ fonts/
 
 #vs build logs
 /logs/
+
+tools/function_verify/fixtures

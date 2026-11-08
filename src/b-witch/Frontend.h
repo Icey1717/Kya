@@ -22,7 +22,7 @@ class CInterface
 public:
 	virtual bool Activate(int bActive) { return true; }
 	virtual bool CanActivate() { return true; }
-	virtual bool IsActive() { return true; }
+	virtual int IsActive() { return 1; }
 	virtual bool Manage() { return true; }
 
 	virtual void Draw() = 0;
@@ -37,7 +37,7 @@ public:
 	// CInterface
 	virtual bool Activate(int bActive);
 	virtual bool CanActivate();
-	virtual bool IsActive();
+	virtual int IsActive();
 	virtual bool Manage();
 	virtual void Draw();
 	virtual void Reset() {}
@@ -85,7 +85,7 @@ public:
 
 	virtual bool Activate(int bActive);
 	virtual bool CanActivate();
-	virtual bool IsActive();
+	virtual int IsActive();
 	virtual bool Manage();
 
 	virtual void Draw();

@@ -36,7 +36,7 @@ bool CInventoryInterface::CanActivate()
 	return this->bActive == 0;
 }
 
-bool CInventoryInterface::IsActive()
+int CInventoryInterface::IsActive()
 {
 	return this->bActive;
 }

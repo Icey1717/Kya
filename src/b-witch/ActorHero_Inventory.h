@@ -38,7 +38,7 @@ public:
 	// CInterface
 	virtual bool Activate(int bActive);
 	virtual bool CanActivate();
-	virtual bool IsActive();
+	virtual int IsActive();
 	virtual void Draw() {}
 	virtual void Reset() {}
 	virtual void SetValue(float value) {}
