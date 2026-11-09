@@ -29,3 +29,6 @@ fonts/
 /logs/
 
 tools/function_verify/fixtures
+
+unreal/KyaLevelEditor/Intermediate
+unreal/KyaLevelEditor/Binaries

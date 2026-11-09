@@ -1,0 +1,14 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1",
+  "FriendlyName": "Kya Level Editor",
+  "Description": "Native editing tools for Kya level data.",
+  "Category": "Editor",
+  "CanContainContent": true,
+  "Plugins": [ { "Name": "ProceduralMeshComponent", "Enabled": true } ],
+  "Modules": [
+    { "Name": "KyaLevel", "Type": "Runtime", "LoadingPhase": "Default" },
+    { "Name": "KyaLevelEditor", "Type": "Editor", "LoadingPhase": "Default" }
+  ]
+}

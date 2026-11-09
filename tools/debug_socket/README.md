@@ -18,6 +18,7 @@ From the repository root:
 python tools/debug_socket/client.py status
 python tools/debug_socket/client.py screenshot
 python tools/debug_socket/client.py screenshot --output out/screenshots/electrolla.png
+python tools/debug_socket/client.py screenshot --output out/screenshots/reference.png --metadata out/screenshots/reference.json
 ```
 
 The default screenshot destination is `out/screenshots/latest.png`. Screenshots
@@ -55,6 +56,13 @@ Status returns `ok`, `id`, `protocol`, `pid`, `frame`, `offscreen`, `width`,
 (not the game's simulation tick). Screenshots return the same metadata plus
 `encoding: "png"` and a PNG payload. Errors return `ok: false`, `error`, and
 `bytes: 0` (and `id` if it could be parsed).
+
+When the camera manager is available, responses also include `camera` with the
+game-space position, forward and up vectors, and horizontal FOV in radians. The camera
+metadata and screenshot are collected in the same frame callback. Consumers
+should still verify projection, aspect ratio, and roll when matching views.
+When a scene is active, `base_sector` and `loaded_sectors` identify the game
+sector indices, load stages, and installed state at capture time. Sector index N uses `SECTN.BNK`.
 
 The Python client has no external dependencies and can also be imported through
 its `request()` function. This protocol can be wrapped in MCP later.

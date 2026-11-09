@@ -8,9 +8,12 @@
 #include "renderer.h"
 #include "VulkanRenderer.h"
 #include "Native/NativeRenderer.h"
+#include "CameraViewManager.h"
+#include "SectorManager.h"
 #include "imgui.h"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <deque>
 #include <stdexcept>
 #include <string>
@@ -100,6 +103,27 @@ namespace Debug::Socket
 				nlohmann::json response = { {"ok", true}, {"id", id}, {"protocol", 1},
 					{"pid", GetCurrentProcessId()}, {"frame", frame}, {"offscreen", Renderer::IsRenderingOffscreen()},
 					{"width", extent.width}, {"height", extent.height} };
+				if (const CCameraManager* camera = CCameraManager::_gThis) {
+					const auto& transform = camera->displayTransformMatrix;
+					response["camera"] = {
+						{"position", {transform.rowT.x, transform.rowT.y, transform.rowT.z}},
+						{"forward", {transform.rowZ.x, transform.rowZ.y, transform.rowZ.z}},
+						{"up", {transform.rowY.x, transform.rowY.y, transform.rowY.z}},
+						{"horizontal_fov_radians", 2.0 * std::atan2(double(_gDisplayCamera.finalHorizontalHalfFOV), double(_gDisplayCamera.computedVerticalHalfFOV))}
+					};
+				}
+				if (CScene::_pinstance && CScene::ptable.g_SectorManager_00451670) {
+					const CSectorManager* sectors = CScene::ptable.g_SectorManager_00451670;
+					response["base_sector"] = sectors->baseSector.sectID;
+					response["loaded_sectors"] = nlohmann::json::array();
+					auto addSector = [&](const CSector& sector) {
+						if (sector.sectID >= 0)
+							response["loaded_sectors"].push_back({{"id", sector.sectID}, {"stage", sector.loadStage_0x8},
+								{"installed", sector.sectorMesh.fileBufferStart != nullptr}});
+					};
+					addSector(sectors->baseSector);
+					for (int i = 0; sectors->aSectors && i < sectors->nbSectors; ++i) addSector(sectors->aSectors[i]);
+				}
 				if (command == "status") {
 					Reply(client, response);
 				}

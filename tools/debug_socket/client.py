@@ -33,6 +33,7 @@ def main():
     parser.add_argument("--timeout", type=float, default=15)
     parser.add_argument("--output", type=Path,
                         default=Path(__file__).resolve().parents[2] / "out/screenshots/latest.png")
+    parser.add_argument("--metadata", type=Path, help="Write the response header, including camera data, as JSON")
     args = parser.parse_args()
     try:
         header, payload = request(args.command, args.port, args.timeout)
@@ -42,6 +43,9 @@ def main():
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_bytes(payload)
             header["path"] = str(args.output.resolve())
+        if args.metadata:
+            args.metadata.parent.mkdir(parents=True, exist_ok=True)
+            args.metadata.write_text(json.dumps(header, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(header, indent=2))
     except (OSError, ValueError, RuntimeError) as error:
         print(f"Debug socket: {error}", file=sys.stderr)
