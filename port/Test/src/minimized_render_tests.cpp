@@ -7,6 +7,10 @@
 #include "displaylist.h"
 #include "../../DebugMenu/src/DebugSaveScreenshot.h"
 #include "../../DebugMenu/src/DebugSocket.h"
+#include "../../DebugMenu/src/DebugMeshViewer.h"
+#include "../../DebugMenu/src/DebugMeshViewerVulkan.h"
+#include "../../DebugMenu/include/DebugRenderer.h"
+#include "DrawTrace.h"
 #include <nlohmann/json.hpp>
 #include <GLFW/glfw3.h>
 #include <array>
@@ -51,6 +55,86 @@ namespace
 		}
 		return true;
 	}
+}
+
+// Run alone: needs a Vulkan device and desktop. Read back actual viewer pixels,
+// exercising the native fragment shader and native alpha-test recording together.
+TEST(MeshViewerRendering, DISABLED_NativeMaterialAlphaAndColor)
+{
+	ASSERT_TRUE(glfwInit());
+	Renderer::SetHeadless(false);
+	Renderer::Setup();
+	Renderer::Native::Setup();
+	DebugMenu::SetupRenderer();
+	Renderer::CommandBufferList commands;
+	struct Case { bool blend; int atst; int afail; int expectedRed; bool captured = false; };
+	for (const auto test : { Case{false, 1, 0, 255}, Case{true, 1, 0, 128},
+		Case{false, 0, 0, 0}, Case{false, 0, 1, 255},
+		Case{false, 0, 2, 0}, Case{false, 0, 3, 255},
+		Case{false, 6, 0, 0}, Case{true, 6, 1, 128},
+		Case{false, 6, 2, 0}, Case{false, 6, 3, 255}, Case{false, 1, 0, 64, true} }) {
+		SCOPED_TRACE(test.expectedRed);
+		Renderer::TextureRegisters registers{};
+		registers.test.ZTE = 1;
+		registers.test.ZTST = 2;
+		registers.test.ATE = 1;
+		registers.test.ATST = test.atst;
+		registers.test.AREF = 96;
+		registers.test.AFAIL = test.afail;
+		registers.alpha.A = 0;
+		registers.alpha.B = 1;
+		registers.alpha.C = 0;
+		registers.alpha.D = 1;
+		Renderer::SimpleTexture texture("viewer test", {}, registers);
+		std::array<uint8_t, 4> texel{255, 255, 255, 64};
+		Renderer::ImageData image{};
+		image.pImage = texel.data();
+		image.canvasWidth = image.canvasHeight = 1;
+		texture.CreateRenderer(image);
+		GIFReg::GSPrim prim{};
+		prim.ABE = test.blend;
+		Renderer::SimpleMesh mesh("viewer triangle", prim, 0);
+		auto& data = DebugMeshViewer::AddPreviewerDrawCommand(&texture, &mesh);
+		for (int i = 0; i < 3; ++i) {
+			auto& vertex = data.vertex.buff[i];
+			vertex = {};
+			vertex.XYZFlags.fXYZ[0] = i == 0 ? -1.0f : i == 1 ? 1.0f : 0.0f;
+			vertex.XYZFlags.fXYZ[1] = i == 2 ? 1.0f : -1.0f;
+			vertex.RGBA[0] = vertex.RGBA[3] = 128;
+			data.index.buff[i] = i;
+		}
+		data.vertex.tail = data.index.tail = 3;
+		if (test.captured) {
+			Renderer::DrawTrace::Submission submission;
+			submission.flags = 0x20;
+			submission.globalAlpha = 64;
+			Renderer::DrawTrace::Draw draw;
+			draw.alpha = registers.alpha.CMD;
+			draw.test = registers.test.CMD;
+			draw.blend = true;
+			draw.depthWrite = true;
+			DebugMeshViewer::SetPreviewerDrawState(submission, draw);
+		}
+		// A later command with a different ABE must not affect the first mesh.
+		prim.ABE = !test.blend;
+		Renderer::SimpleMesh emptyMesh("different blend state", prim, 0);
+		DebugMeshViewer::AddPreviewerDrawCommand(&texture, &emptyMesh);
+		DebugMeshViewer::Vulkan::Render({}, {}, commands);
+		const auto png = Debug::SaveLoad::CaptureScreenshotPng(true);
+		ASSERT_FALSE(png.empty());
+		int width, height, components;
+		auto* pixels = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(png.data()),
+			int(png.size()), &width, &height, &components, 4);
+		ASSERT_NE(pixels, nullptr);
+		ASSERT_EQ(width, DebugMeshViewer::gWidth);
+		ASSERT_EQ(height, DebugMeshViewer::gHeight);
+		const auto* center = pixels + (height / 2 * width + width / 2) * 4;
+		EXPECT_NEAR(center[0], test.expectedRed, 2);
+		EXPECT_EQ(center[1], 0);
+		EXPECT_EQ(center[2], 0);
+		stbi_image_free(pixels);
+	}
+	ASSERT_EQ(vkDeviceWaitIdle(GetDevice()), VK_SUCCESS);
 }
 
 // Run alone: creates and minimizes a Vulkan window; requires an interactive desktop.

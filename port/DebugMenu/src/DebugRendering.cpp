@@ -268,7 +268,6 @@ void Debug::Rendering::DrawContents()
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}
-		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
 		if (gMipLevelOverride.DrawImguiControl()) {
 			Renderer::Native::SetForceHighestMipLevel(gMipLevelOverride.get() == 1);

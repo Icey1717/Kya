@@ -5,6 +5,7 @@
 #include "DebugMenu.h"
 #include "DebugSetting.h"
 #include "DebugSaveScreenshot.h"
+#include "DebugMeshViewer.h"
 #include "renderer.h"
 #include "VulkanRenderer.h"
 #include "Native/NativeRenderer.h"
@@ -128,8 +129,17 @@ namespace Debug::Socket
 					Reply(client, response);
 				}
 				else if (command == "screenshot") {
-					auto png = SaveLoad::CaptureScreenshotPng();
-					if (png.empty()) throw std::runtime_error("Game framebuffer is unavailable");
+					const auto target = request.value("target", std::string("game"));
+					if (target != "game" && target != "mesh") throw std::runtime_error("Unknown screenshot target: " + target);
+					const bool mesh = target == "mesh";
+					auto png = SaveLoad::CaptureScreenshotPng(mesh);
+					if (png.empty()) throw std::runtime_error(mesh ? "Mesh viewer is unavailable; select a mesh first" : "Game framebuffer is unavailable");
+					response["target"] = target;
+					if (mesh) {
+						response["width"] = DebugMeshViewer::gWidth;
+						response["height"] = DebugMeshViewer::gHeight;
+						response.erase("camera");
+					}
 					response["encoding"] = "png";
 					Reply(client, response, png);
 				}
@@ -159,7 +169,7 @@ namespace Debug::Socket
 			if (boundPort) ImGui::Text("Listening on 127.0.0.1:%u (%zu clients)", boundPort, clients.size());
 			else ImGui::TextUnformatted("Stopped");
 			if (!lastError.empty()) ImGui::TextWrapped("%s", lastError.c_str());
-			ImGui::TextWrapped("Commands: status, screenshot. Enable Render When Minimized to service requests while minimized. Screenshots contain the game view without the debug overlay.");
+			ImGui::TextWrapped("Commands: status, screenshot (target: game or mesh). Enable Render When Minimized to service requests while minimized. Screenshots exclude the debug overlay.");
 			ImGui::Separator();
 			ImGui::Text("Connections: %llu   Completed: %llu   Errors: %llu   Dropped: %llu   Sent: %.1f KiB",
 				connections, completed, errors, dropped, double(bytesSent) / 1024.0);

@@ -17,6 +17,7 @@ From the repository root:
 ```powershell
 python tools/debug_socket/client.py status
 python tools/debug_socket/client.py screenshot
+python tools/debug_socket/client.py screenshot --target mesh --output out/screenshots/mesh.png
 python tools/debug_socket/client.py screenshot --output out/screenshots/electrolla.png
 python tools/debug_socket/client.py screenshot --output out/screenshots/reference.png --metadata out/screenshots/reference.json
 ```
@@ -26,6 +27,29 @@ are full-resolution PNGs from the game's render buffer, without the debug UI.
 Enable **Rendering > Pipeline > Render When Minimized** to receive fresh frames
 and service requests while minimized. Requests require the game frame loop to
 run; a stopped debugger or blocking load can cause a client timeout.
+
+Use `--target mesh` to capture the open mesh preview at 1024 × 768, excluding
+its controls. Select a mesh first; an inactive viewer returns an error. Mesh
+captures report their own dimensions and omit the game camera metadata. The
+viewer automatically frames each new selection; **Frame mesh** resets the zoom
+and angle, with **Zoom** and **View angle** controls for inspection.
+
+Mesh previews use the native scene fragment shader, GS blend equations, alpha
+test/failure replay, and material texture sampling. Each strip keeps its own
+blend state, and all material layers are previewed. Opening a draw from the
+draw inspector also retains its captured alpha and depth settings and object
+alpha. The preview camera and unposed mesh geometry remain independent of the
+game scene.
+
+To check actual Vulkan preview pixels (run alone from `bin/WIN`):
+
+```powershell
+.\KyaPortTest.exe --gtest_also_run_disabled_tests --gtest_filter=MeshViewerRendering.*
+```
+
+This checks colour scaling, translucent blending, alpha rejection and all four
+alpha-failure modes, per-mesh blend isolation, and captured object alpha. It is
+disabled in the default headless suite because it requires a Vulkan desktop.
 
 The socket lives in the DebugMenu library. It polls nonblocking Winsock sockets
 on the main thread after frame submission, including minimized frames. Network
@@ -44,6 +68,7 @@ Requests are limited to 8192 bytes, including the newline. Optional `id` is echo
 ```json
 {"command":"status","id":1}
 {"command":"screenshot","id":2}
+{"command":"screenshot","target":"mesh","id":3}
 ```
 
 The response starts with a UTF-8 JSON header and newline. `bytes` gives the exact

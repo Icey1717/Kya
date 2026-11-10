@@ -35,12 +35,13 @@ namespace DebugMeshViewer {
 
 	Renderer::NativeVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh);
 	int GetPreviewerDrawCommandCount();
+	void SetPreviewerDrawState(const Renderer::DrawTrace::Submission& submission, const Renderer::DrawTrace::Draw& draw);
 	std::string ExportPreviewerMeshes();
+	void UpdateCamera(const float* minimumXYZ, const float* maximumXYZ, bool selectionChanged);
 
 	// Implented via renderer backend.
 	VertexConstantBuffer& GetVertexConstantBuffer();
 
-	bool& GetUseGlslPipeline();
 	bool& GetWireframe();
 
 	void OnFrameBufferCreated(const ImTextureID& image);

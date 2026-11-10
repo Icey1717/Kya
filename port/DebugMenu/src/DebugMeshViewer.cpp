@@ -3,6 +3,8 @@
 #include "DebugTexture.h"
 #include "DrawTrace.h"
 #include <optional>
+#include <cmath>
+#include <glm/ext/matrix_clip_space.hpp>
 
 #include "ed3D.h"
 #include "ed3D/ed3DG2D.h"
@@ -30,7 +32,6 @@
 namespace DebugMeshViewer {
 	bool gAnimate = false;
 	bool gRotate = false;
-	bool gUseGlslPipeline = true;
 	bool gWireframe = false;
 	bool gUseGizmo = false;
 	glm::mat4 gGizmoMatrix;
@@ -41,6 +42,39 @@ namespace DebugMeshViewer {
 	int gIsolateStripIndex = -1;
 	int gHighlightStripIndex = -1;
 	int gHighlightAnimMatrixIndex = -1;
+	static float gZoom = 1.0f;
+	static float gYaw = 0.0f;
+	static bool gResetCamera = false;
+
+	void UpdateCamera(const float* minimumXYZ, const float* maximumXYZ, bool selectionChanged)
+	{
+		const glm::vec3 minimum(minimumXYZ[0], minimumXYZ[1], minimumXYZ[2]);
+		const glm::vec3 maximum(maximumXYZ[0], maximumXYZ[1], maximumXYZ[2]);
+		if (selectionChanged || gResetCamera) {
+			gZoom = 1.0f;
+			gYaw = 0.0f;
+			gResetCamera = false;
+		}
+
+		const auto center = (minimum + maximum) * 0.5f;
+		const float radius = std::max(glm::length(maximum - minimum) * 0.5f, 0.001f);
+		const float halfFov = glm::radians(30.0f) * 0.5f;
+		const float distance = radius / std::sin(halfFov) * 1.1f * gZoom;
+		const float yaw = glm::radians(gYaw) + (gRotate ? float(ImGui::GetTime()) * glm::radians(45.0f) : 0.0f);
+		const auto position = center + glm::vec3(std::sin(yaw), 0.0f, std::cos(yaw)) * distance;
+		const auto model = glm::mat4(1.0f);
+		const auto view = glm::lookAt(position, center, glm::vec3(0, 1, 0));
+
+		// Reversed Vulkan depth: near maps to 1, far maps to 0.
+		auto proj = glm::perspectiveRH_ZO(halfFov * 2.0f, float(gWidth) / gHeight,
+			distance + radius * 2.0f, std::max(radius * 0.001f, distance - radius * 1.5f));
+		proj[1][1] *= -1;
+		auto& constants = GetVertexConstantBuffer();
+		const auto centeredGizmo = glm::translate(glm::mat4(1), center) * gGizmoMatrix * glm::translate(glm::mat4(1), -center);
+		memcpy(&constants.model, gUseGizmo ? &centeredGizmo : &model, sizeof(edF32MATRIX4));
+		memcpy(&constants.view, &view, sizeof(edF32MATRIX4));
+		memcpy(&constants.proj, &proj, sizeof(edF32MATRIX4));
+	}
 
 	void FillVertexBufferData(const Renderer::NativeVertexBufferData& pCachedStripBuffer, Renderer::NativeVertexBufferData& newBuffer)
 	{
@@ -69,46 +103,6 @@ namespace DebugMeshViewer {
 		uint mode = 1;
 		uint maxAnimMatrixCount = 0;
 
-		static auto startTime = std::chrono::high_resolution_clock::now();
-		static auto lastTime = std::chrono::high_resolution_clock::now();
-
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-		float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
-		lastTime = currentTime;
-
-		auto model = glm::rotate(glm::mat4(1.0f), gRotate ? (time * glm::radians(90.0f)) : 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-
-		if (gUseGizmo) {
-			model = gGizmoMatrix;
-		}
-
-		static glm::vec3 cameraPos = glm::vec3(0.0f, 1.2f, 3.8f);
-		static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-		static glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-		const float cameraSpeed = 30.f * deltaTime; // adjust accordingly
-		if (ImGui::IsKeyPressed(ImGuiKey_Comma)) {
-			cameraPos += cameraSpeed * cameraFront;
-		}
-		if (ImGui::IsKeyPressed(ImGuiKey_O)) {
-			cameraPos -= cameraSpeed * cameraFront;
-		}
-
-		if (ImGui::IsKeyPressed(ImGuiKey_A)) {
-			cameraPos -= cameraSpeed * cameraUp;
-		}
-		if (ImGui::IsKeyPressed(ImGuiKey_E)) {
-			cameraPos += cameraSpeed * cameraUp;
-		}
-
-		auto view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		auto proj = glm::perspective(glm::radians(45.0f), (float)gWidth / (float)gHeight, 0.1f, 100.0f);
-		proj[1][1] *= -1;
-
-		memcpy(&vertexConstantBuffer.model, &model, sizeof(edF32MATRIX4));
-		memcpy(&vertexConstantBuffer.view, &view, sizeof(edF32MATRIX4));
-		memcpy(&vertexConstantBuffer.proj, &proj, sizeof(edF32MATRIX4));
 
 		if (bAnimate) {
 			assert(stripIndex < gMaxStripIndex);
@@ -144,38 +138,6 @@ namespace DebugMeshViewer {
 		if (auto* mesh = pMesh->GetSimpleMesh(textureLayer)) FillVertexBufferData(mesh->GetVertexBufferData(), vertexBufferData);
 	}
 
-	Renderer::NativeVertexBufferData* UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
-	{
-		ed_g2d_material* pStripMaterial;
-
-		if (pStrip->materialIndex == -1) {
-			pStripMaterial = (ed_g2d_material*)0x0;
-		}
-		else {
-			pStripMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, pStrip->materialIndex);
-			if ((pStripMaterial != (ed_g2d_material*)0x0) && ((pStripMaterial->flags & 1) != 0)) {
-				return nullptr;
-			}
-		}
-
-		if (!pStripMaterial) {
-			return nullptr;
-		}
-
-		const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pStripMaterial);
-		const Renderer::Kya::G3D::Strip* pMeshStrip = Renderer::Kya::GetMeshLibrary().FindStrip(pStrip);
-
-		assert(pMeshStrip);
-
-		if (pMaterial) {
-			// Check layers and textures to make sure they are size 1
-			assert(pMaterial->layers.size() > 0);
-			assert(pMaterial->layers.begin()->textures.size() > 0);
-			return &AddPreviewerDrawCommand(pMaterial->layers.begin()->textures.begin()->pSimpleTexture.get(), pMeshStrip->pSimpleMesh.get());
-		}
-
-		return nullptr;
-	}
 
 	bool UpdateDrawBuffer(ed_3d_strip* pStrip, Renderer::NativeVertexBufferData& vertexBufferData, int textureLayer = 0)
 	{
@@ -204,6 +166,13 @@ namespace DebugMeshViewer {
 			ImGui::Checkbox("Rotate", &gRotate);
 			ImGui::SameLine();
 			ImGui::Checkbox("Wireframe", &GetWireframe());
+
+			if (ImGui::Button("Frame mesh")) {
+				gResetCamera = true; 
+			}
+
+			ImGui::SliderFloat("Zoom", &gZoom, 0.5f, 5.0f);
+			ImGui::SliderFloat("View angle", &gYaw, -180.0f, 180.0f, "%.0f degrees");
 
 			ImGui::SameLine();
 			if (ImGui::BeginCombo("Isolate Strip", gIsolateStripIndex == -1 ? "None" : std::to_string(gIsolateStripIndex).c_str())) {
@@ -300,6 +269,7 @@ namespace DebugMeshViewer {
 			gDrawSelection.reset(); return;
 		}
 		auto& vertices = AddPreviewerDrawCommand(texture, mesh);
+		SetPreviewerDrawState(selection.submission, selection.draw);
 		UpdateDrawBuffer(strip->pStrip, vertices, selection.submission.layer);
 		bool open = true;
 		if (gFocusDraw) { ImGui::SetNextWindowFocus(); gFocusDraw = false; }
@@ -309,11 +279,6 @@ namespace DebugMeshViewer {
 	static Debug::UpdateRegisterer drawPreviewUpdate(UpdateDrawPreview);
 } // DebugMeshViewer
 
-
-bool& DebugMeshViewer::GetUseGlslPipeline()
-{
-	return gUseGlslPipeline;
-}
 
 bool& DebugMeshViewer::GetWireframe()
 {
@@ -327,10 +292,30 @@ void DebugMeshViewer::OnFrameBufferCreated(const ImTextureID& image)
 
 void DebugMeshViewer::AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 {
-	auto* pVertexBufferData = UpdateMaterial(pStrip, pMBNK);
+	if (pStrip->materialIndex == -1) {
+		return;
+	}
 
-	if (pVertexBufferData) {
-		UpdateDrawBuffer(pStrip, *pVertexBufferData);
+	auto* material = ed3DG2DGetG2DMaterialFromIndex(pMBNK, pStrip->materialIndex);
+	if (!material || (material->flags & 1) != 0) {
+		return;
+	}
+
+	const auto* cachedMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(material);
+	const auto* strip = Renderer::Kya::GetMeshLibrary().FindStrip(pStrip);
+	if (!cachedMaterial || !strip) {
+		return;
+	}
+
+	for (int layer = 0; layer < static_cast<int>(cachedMaterial->layers.size()); ++layer) {
+		auto* texture = cachedMaterial->FindRenderTextureFromLayer(layer);
+		auto* mesh = strip->GetSimpleMesh(layer);
+		if (!texture || !mesh) {
+			continue;
+		}
+
+		auto& vertices = AddPreviewerDrawCommand(texture, mesh);
+		UpdateDrawBuffer(pStrip, vertices, layer);
 	}
 }
 

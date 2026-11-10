@@ -27,12 +27,28 @@ struct FKyaG3DVertexAttributes
     FColor Color = FColor::White;
 };
 
+/** One Eden 3D sprite (SPR.) record: a billboard definition inside a G3D file. */
+struct FKyaG3DSprite
+{
+    int32 Offset = 0;
+    int32 MaterialIndex = 0;
+    int32 Flags = 0;
+    int32 RectCount = 0;
+    int32 ShadowFlag = 0;
+    int32 RenderFrame = 0;
+    FVector4f BoundingSphere = FVector4f(0, 0, 0, 0);
+    TArray<uint32> ChunkTags;
+    TArray<int32> ChunkSizes;
+};
+
 struct FKyaG3DDecodedStrip
 {
     int32 HierarchyOffset = 0;
     int32 MaterialIndex = INDEX_NONE;
     uint64 MaterialHash = 0;
     TArray<FKyaG3DVertex> Vertices;
+    /** Stored model-space normals, one per expanded vertex; may be empty. */
+    TArray<FVector3f> Normals;
     TArray<FKyaG3DVertexAttributes> Attributes;
     TArray<uint32> Indices;
 };
@@ -72,6 +88,8 @@ namespace KyaG3D
         TArray<FKyaG3DVertexAttributes>& OutAttributes);
     KYALEVEL_API bool BuildStripTriangles(TConstArrayView<FKyaG3DVertex> Vertices,
         TConstArrayView<uint32> SectionCounts, uint32 Primitive, TArray<uint32>& OutIndices);
+    /** Enumerate SPR. billboard records; sprite geometry is index-based and not decoded yet. */
+    KYALEVEL_API bool ReadSprites(TConstArrayView<uint8> Data, TArray<FKyaG3DSprite>& Out);
     /** Decode hierarchy strips; fails if any strip uses an unsupported format. */
     KYALEVEL_API bool DecodeHierarchyStrips(TConstArrayView<uint8> Data,
         TArray<FKyaG3DDecodedStrip>& OutStrips);

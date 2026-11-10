@@ -7,9 +7,12 @@ import socket
 import sys
 
 
-def request(command, port=18438, timeout=15):
+def request(command, port=18438, timeout=15, target=None):
     with socket.create_connection(("127.0.0.1", port), timeout=timeout) as connection:
-        connection.sendall(json.dumps({"command": command, "id": 1}).encode() + b"\n")
+        message = {"command": command, "id": 1}
+        if target is not None:
+            message["target"] = target
+        connection.sendall(json.dumps(message).encode() + b"\n")
         with connection.makefile("rb") as stream:
             line = stream.readline(65537)
             if not line.endswith(b"\n") or len(line) > 65536:
@@ -30,13 +33,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("status", "screenshot"))
     parser.add_argument("--port", type=int, default=18438)
+    parser.add_argument("--target", choices=("game", "mesh"), default="game")
     parser.add_argument("--timeout", type=float, default=15)
     parser.add_argument("--output", type=Path,
                         default=Path(__file__).resolve().parents[2] / "out/screenshots/latest.png")
     parser.add_argument("--metadata", type=Path, help="Write the response header, including camera data, as JSON")
     args = parser.parse_args()
     try:
-        header, payload = request(args.command, args.port, args.timeout)
+        header, payload = request(args.command, args.port, args.timeout, args.target)
         if args.command == "screenshot":
             if header.get("encoding") != "png" or not payload.startswith(b"\x89PNG\r\n\x1a\n"):
                 raise RuntimeError("Server did not return a PNG")

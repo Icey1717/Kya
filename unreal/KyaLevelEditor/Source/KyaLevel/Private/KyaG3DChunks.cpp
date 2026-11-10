@@ -1,5 +1,51 @@
 #include "KyaG3DChunks.h"
 
+bool KyaG3D::ReadSprites(TConstArrayView<uint8> Data, TArray<FKyaG3DSprite>& Out)
+{
+    Out.Reset();
+    auto U32 = [&Data](int64 Offset) -> uint32 {
+        const uint8* P = Data.GetData() + Offset;
+        return uint32(P[0]) | uint32(P[1]) << 8 | uint32(P[2]) << 16 | uint32(P[3]) << 24;
+    };
+    auto F32 = [&U32](int64 Offset) {
+        const uint32 Bits = U32(Offset);
+        float Value;
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    };
+    constexpr uint32 SpriteTag = 0x2e525053; // 'SPR.'
+    for (int64 Offset = 0; Offset + 36 <= Data.Num(); ++Offset)
+    {
+        if (U32(Offset) != SpriteTag) continue;
+        const uint32 Size = U32(Offset + 8);
+        const int64 Payload = Offset + 16;
+        if (Size < 32 || Payload > Data.Num() || int64(Size) > Data.Num() - Payload) continue;
+        FKyaG3DSprite Sprite;
+        Sprite.Offset = int32(Offset);
+        Sprite.MaterialIndex = int32(U32(Payload));
+        Sprite.Flags = int32(U32(Payload + 4) & 0xffff);
+        Sprite.RectCount = int32((U32(Payload + 4) >> 16) & 0xffff);
+        Sprite.ShadowFlag = int32(U32(Payload + 8) & 0xffff);
+        Sprite.RenderFrame = int32(U32(Payload + 12) & 0xffff);
+        Sprite.BoundingSphere = FVector4f(F32(Payload + 16), F32(Payload + 20), F32(Payload + 24), F32(Payload + 28));
+        // Nested attribute chunks follow the 32-byte header: tag, 1, total size, data size.
+        // The total size includes the 16-byte header (SIV. stride 0x30, SIUV/SIRG/U16. 0x20).
+        int64 Chunk = Payload + 32;
+        while (Chunk + 16 <= Payload + Size)
+        {
+            const uint32 Tag = U32(Chunk);
+            const uint32 ChunkSize = U32(Chunk + 8);
+            if (ChunkSize < 16 || ChunkSize > uint32(Payload + Size - Chunk)) break;
+            Sprite.ChunkTags.Add(Tag);
+            Sprite.ChunkSizes.Add(int32(ChunkSize));
+            Chunk += int64(ChunkSize);
+        }
+        Out.Add(MoveTemp(Sprite));
+        Offset += 15;
+    }
+    return !Out.IsEmpty();
+}
+
 bool KyaG3D::ReadChunks(TConstArrayView<uint8> Data, TArray<FKyaG3DChunk>& OutChunks)
 {
     OutChunks.Reset();
@@ -534,14 +580,14 @@ bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDe
         TArray<uint32> Sections;
         FKyaG3DDecodedStrip Strip;
         Strip.HierarchyOffset = Reference.HierarchyOffset;
+        auto U32 = [&Data](int32 Offset) -> uint32 {
+            const uint8* P = Data.GetData() + Offset;
+            return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
+        };
         Strip.MaterialIndex = int16(uint16(Data[Reference.StripOffset + 4]) |
             (uint16(Data[Reference.StripOffset + 5]) << 8));
         if (Strip.MaterialIndex >= 0)
         {
-            auto U32 = [&Data](int32 Offset) -> uint32 {
-                const uint8* P = Data.GetData() + Offset;
-                return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
-            };
             const uint32 Bank = U32(Reference.HierarchyOffset + 0x98);
             if (Bank > uint32(Data.Num()) || uint32(Data.Num()) - Bank < 16 || U32(Bank) != 0x4b4e424d) return false;
             const uint32 BankSize = U32(Bank + 8);
@@ -552,17 +598,40 @@ bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDe
         if (!ReadFirstStripGifTag(Data, Reference.StripOffset, Count, Primitive) ||
             !ReadStripVertices(Data, Reference.StripOffset, Strip.Vertices, Sections) ||
             !ReadStripAttributes(Data, Reference.StripOffset, Strip.Attributes)) return false;
+        // Stored normals are per unique vertex, in the same order as the position buffer.
+        TArray<FVector3f> UniqueNormals;
+        {
+            const uint32 NormalBase = U32(Reference.StripOffset + 0x2c);
+            if (NormalBase)
+            {
+                if (NormalBase > uint32(Data.Num()) || uint64(Strip.Vertices.Num()) * 8 > uint64(Data.Num()) - NormalBase)
+                    return false;
+                UniqueNormals.Reserve(Strip.Vertices.Num());
+                for (int32 Index = 0; Index < Strip.Vertices.Num(); ++Index)
+                {
+                    const uint8* P = Data.GetData() + NormalBase + Index * 8;
+                    auto S16 = [P](int32 Offset) { return int16(uint16(P[Offset]) | (uint16(P[Offset + 1]) << 8)); };
+                    UniqueNormals.Add(FVector3f(S16(0), S16(2), S16(4)) / 32768.0f);
+                }
+            }
+        }
         TArray<FKyaG3DVertex> Expanded;
+        TArray<FVector3f> ExpandedNormals;
         uint32 Base = 0;
         for (int32 Section = 0; Section < Sections.Num(); ++Section)
         {
             for (uint32 Index = 0; Index < Sections[Section]; ++Index)
+            {
                 Expanded.Add(Strip.Vertices[Base + Index]);
+                if (UniqueNormals.Num() == Strip.Vertices.Num())
+                    ExpandedNormals.Add(UniqueNormals[Base + Index]);
+            }
             Base += Sections[Section];
             if (Section + 1 < Sections.Num()) Base -= 2;
         }
         if (Expanded.Num() != Strip.Attributes.Num()) return false;
         Strip.Vertices = MoveTemp(Expanded);
+        if (ExpandedNormals.Num() == Strip.Vertices.Num()) Strip.Normals = MoveTemp(ExpandedNormals);
         const uint32 ExpandedCount = Strip.Vertices.Num();
         if (!BuildStripTriangles(Strip.Vertices, MakeArrayView(&ExpandedCount, 1), Primitive, Strip.Indices)) return false;
         Decoded.Add(MoveTemp(Strip));

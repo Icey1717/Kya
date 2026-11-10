@@ -31,9 +31,24 @@ AKyaLevelPreview::AKyaLevelPreview()
     Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+#if WITH_EDITOR
+void AKyaLevelPreview::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+    // Editor edits (bank, sectors, colour space, actor meshes, markers) must rebuild
+    // the procedural mesh; otherwise property changes are silently ignored.
+    if (bIsRebuildingPreview) return;
+    TGuardValue<bool> Guard(bIsRebuildingPreview, true);
+    OnConstruction(GetActorTransform());
+}
+#endif
+
 void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
+    if (Bank && !Bank->HasCurrentImportSchema())
+        UE_LOG(LogTemp, Warning, TEXT("KYA_PREVIEW_STALE_SCHEMA bank=%s version=%d current=%d; reimport the bank to refresh typed data"),
+            *Bank->GetName(), Bank->ImportSchemaVersion, UKyaLevelBank::CurrentImportSchemaVersion);
     Mesh->ClearAllMeshSections();
     BackgroundRanges.Reset();
     BackgroundBasePositions.Reset();
@@ -134,19 +149,45 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     {
         GeneratedPreviewMaterial = nullptr;
         GeneratedMaskedPreviewMaterial = nullptr;
+        GeneratedUntexturedMaterial = nullptr;
         bGeneratedRawColorModulation = bRawColorModulation;
     }
+    // The game multiplies 8-bit texture and vertex values in their encoded colour space. Decode
+    // the product so Unreal's linear output transform re-encodes it to the original value.
+    auto AddColorOutput = [this](UMaterial* Material, UMaterialExpression* EncodedColor)
+    {
+        if (bRawColorModulation)
+        {
+            UMaterialExpressionCustom* Convert = NewObject<UMaterialExpressionCustom>(Material);
+            Convert->OutputType = CMOT_Float3;
+            Convert->Code = TEXT("float3 c = saturate(encoded.rgb); return lerp(c / 12.92, pow((c + 0.055) / 1.055, 2.4), step(0.04045, c));");
+            FCustomInput Input;
+            Input.InputName = TEXT("encoded");
+            Input.Input.Connect(0, EncodedColor);
+            Convert->Inputs.Add(Input);
+            Material->GetExpressionCollection().AddExpression(Convert);
+            Material->GetEditorOnlyData()->EmissiveColor.Connect(0, Convert);
+        }
+        else Material->GetEditorOnlyData()->EmissiveColor.Connect(0, EncodedColor);
+    };
     if (!GeneratedUntexturedMaterial)
     {
         GeneratedUntexturedMaterial = NewObject<UMaterial>(this, NAME_None, RF_Transient);
         GeneratedUntexturedMaterial->SetShadingModel(MSM_Unlit);
         GeneratedUntexturedMaterial->TwoSided = true;
         UMaterialExpressionVertexColor* VertexColor = NewObject<UMaterialExpressionVertexColor>(GeneratedUntexturedMaterial);
+        UMaterialExpressionConstant* Scale = NewObject<UMaterialExpressionConstant>(GeneratedUntexturedMaterial);
+        Scale->R = 255.0f / 128.0f;
+        UMaterialExpressionMultiply* Normalize = NewObject<UMaterialExpressionMultiply>(GeneratedUntexturedMaterial);
         GeneratedUntexturedMaterial->GetExpressionCollection().AddExpression(VertexColor);
-        GeneratedUntexturedMaterial->GetEditorOnlyData()->EmissiveColor.Connect(0, VertexColor);
+        GeneratedUntexturedMaterial->GetExpressionCollection().AddExpression(Scale);
+        GeneratedUntexturedMaterial->GetExpressionCollection().AddExpression(Normalize);
+        Normalize->A.Connect(0, VertexColor);
+        Normalize->B.Connect(0, Scale);
+        AddColorOutput(GeneratedUntexturedMaterial, Normalize);
         GeneratedUntexturedMaterial->PostEditChange();
     }
-    auto CreateTexturedMaterial = [this](bool Masked) -> UMaterial*
+    auto CreateTexturedMaterial = [this, &AddColorOutput](bool Masked) -> UMaterial*
     {
         UMaterial* Material = NewObject<UMaterial>(this, NAME_None, RF_Transient);
         Material->SetShadingModel(MSM_Unlit);
@@ -177,19 +218,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         Modulate->B.Connect(0, VertexColor);
         Normalize->A.Connect(0, Modulate);
         Normalize->B.Connect(0, Scale);
-        if (bRawColorModulation)
-        {
-            UMaterialExpressionCustom* Convert = NewObject<UMaterialExpressionCustom>(Material);
-            Convert->OutputType = CMOT_Float3;
-            Convert->Code = TEXT("float3 c = saturate(encoded.rgb); return lerp(c / 12.92, pow((c + 0.055) / 1.055, 2.4), step(0.04045, c));");
-            FCustomInput Input;
-            Input.InputName = TEXT("encoded");
-            Input.Input.Connect(0, Normalize);
-            Convert->Inputs.Add(Input);
-            Material->GetExpressionCollection().AddExpression(Convert);
-            Material->GetEditorOnlyData()->EmissiveColor.Connect(0, Convert);
-        }
-        else Material->GetEditorOnlyData()->EmissiveColor.Connect(0, Normalize);
+        AddColorOutput(Material, Normalize);
         if (Masked)
         {
             UMaterialExpressionMultiply* Alpha = NewObject<UMaterialExpressionMultiply>(Material);
@@ -310,7 +339,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     TArray<int32> CommonCameraRelative;
     if ((Bank->SceneEnvironment.BackgroundFlags & 1) && !bHasSectorBackground)
         KyaG3D::ReadCameraRelativeBackgroundHierarchies(CommonBackgroundData, CommonCameraRelative);
-    if (!bHasSectorBackground) for (const FKyaG3DDecodedStrip& Strip : Strips)
+    if (bShowBackgroundMeshes && !bHasSectorBackground) for (const FKyaG3DDecodedStrip& Strip : Strips)
     {
         FSectionData* Textured = GetTexturedSection(Strip.MaterialHash, TextureData, MaterialOffsets, MaterialSections);
         TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
@@ -347,11 +376,86 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 Candidate->Offset > Bank->BankBytes.Num() || Candidate->Size > Bank->BankBytes.Num() - Candidate->Offset) return {};
             return MakeArrayView(Bank->BankBytes.GetData() + Candidate->Offset, int32(Candidate->Size));
         };
-        const auto DefaultTextures = EntryData(FindEntry(5, Bank->SceneEnvironment.AlternateTextureIndex));
-        TMap<uint64, int32> DefaultMaterials, DefaultSections;
-        KyaG2D::ReadMaterials(DefaultTextures, DefaultMaterials);
+        // Native links the shared actor-material bank after the model's own bank and
+        // replaces any material whose hash also exists there (ed3D.cpp:16152). The
+        // shared bank therefore wins over the actor's 8x8/64x64 colour atlas; actor
+        // model patches are applied last, as in SV_SetModel (Actor.cpp:2771).
+        const auto SharedTextures = EntryData(FindEntry(5, Bank->SceneEnvironment.AlternateTextureIndex));
+        TMap<uint64, int32> SharedMaterials, SharedSections;
+        KyaG2D::ReadMaterials(SharedTextures, SharedMaterials);
         TMap<int32, TMap<uint64, int32>> MaterialsByTexture, SectionsByTexture;
         TMap<int32, TArray<FKyaG3DDecodedStrip>> StripsByMesh;
+        // Level sun/ambient lights, used to relight actor models the way the game's
+        // CLightManager recomputes their vertex colours. Torches are local and skipped.
+        // Sun/directional entries contribute diffuse light; plain light-shape entries
+        // contribute ambient only. CLightManager would bucket them into four slots
+        // (LightManager.cpp:626), but the serialized slot index is not decoded, so the
+        // measurements use independent per-light contributions (closer to the game than
+        // combining the two suns, which nearly cancels their directions).
+        TArray<const FKyaLight*> DirectionalLights;
+        FLinearColor ActorAmbient = FLinearColor::Black;
+        if (bApplyActorLighting)
+            for (const FKyaLight& Light : Bank->Lights)
+            {
+                if (Light.LightType == 2 || Light.ShapeType == 4) continue;
+                if ((Light.ShapeType == 1 || Light.ShapeType == 2) && !Light.Color.Equals(FLinearColor::Black))
+                    DirectionalLights.Add(&Light);
+                ActorAmbient += FLinearColor(Light.AmbientColor.R, Light.AmbientColor.G, Light.AmbientColor.B, 0);
+            }
+        auto RelightStrip = [this, &DirectionalLights, &ActorAmbient](const FKyaG3DDecodedStrip& Strip,
+            const TArray<FVector3f>& WorldNormals, int64 LightingFlags, float LightingValue) -> TArray<FColor>
+        {
+            TArray<FColor> Colours;
+            Colours.Reserve(Strip.Vertices.Num());
+            // `pHier->pHierarchySetup->pLightData = &this->lightConfig` runs regardless of
+            // the actor's lighting flags (LightManager.cpp:371), so actors that skip their
+            // own ComputeLighting still render with the shared global config. Apply the
+            // shared sun/ambient config to every actor model.
+            if (!bApplyActorLighting || WorldNormals.Num() != Strip.Vertices.Num())
+            {
+                for (const FKyaG3DVertexAttributes& Attribute : Strip.Attributes) Colours.Add(Attribute.Color);
+                return Colours;
+            }
+            Colours.Reserve(Strip.Vertices.Num());
+            const float Gain = LightingValue > 0.0f ? LightingValue : 1.0f;
+            for (int32 Index = 0; Index < Strip.Vertices.Num(); ++Index)
+            {
+                FLinearColor Lighting = ActorAmbient * Gain;
+                for (const FKyaLight* Light : DirectionalLights)
+                {
+                    const FVector3f ToLight(-Light->Direction.X, -Light->Direction.Y, -Light->Direction.Z);
+                    const float Dot = FMath::Max(0.0f, FVector3f::DotProduct(WorldNormals[Index], ToLight));
+                    if (Dot <= 0.0f) continue;
+                    Lighting.R += Light->Color.R * Dot * Gain;
+                    Lighting.G += Light->Color.G * Dot * Gain;
+                    Lighting.B += Light->Color.B * Dot * Gain;
+                }
+                Colours.Add(FColor(
+                    uint8(FMath::Clamp(Lighting.R, 0.0f, 1.0f) * 255.0f),
+                    uint8(FMath::Clamp(Lighting.G, 0.0f, 1.0f) * 255.0f),
+                    uint8(FMath::Clamp(Lighting.B, 0.0f, 1.0f) * 255.0f),
+                    Strip.Attributes[Index].Color.A));
+            }
+            return Colours;
+        };
+        // Actors with TextureIndex == -1 do not name a texture bank, but every one of
+        // their material hashes exists somewhere in the bank. Index every texture bank
+        // by material hash so those actors still receive their real textures instead of
+        // the alternate bank or an untextured fallback.
+        TMap<uint64, int32> TextureBankByHash;
+        TMap<int32, TConstArrayView<uint8>> TextureBankData;
+        TMap<int32, TMap<uint64, int32>> TextureBankMaterials, TextureBankSections;
+        for (int32 EntryIndex = 0; EntryIndex < Bank->Entries.Num(); ++EntryIndex)
+        {
+            const FKyaBankEntry& Candidate = Bank->Entries[EntryIndex];
+            if (Candidate.Type != 5 || Candidate.Subtype != 1) continue;
+            const TConstArrayView<uint8> CandidateData = EntryData(&Candidate);
+            if (CandidateData.IsEmpty()) continue;
+            TMap<uint64, int32>& CandidateMaterials = TextureBankMaterials.Add(EntryIndex);
+            KyaG2D::ReadMaterials(CandidateData, CandidateMaterials);
+            TextureBankData.Add(EntryIndex, CandidateData);
+            for (const auto& Pair : CandidateMaterials) TextureBankByHash.FindOrAdd(Pair.Key, EntryIndex);
+        }
         for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
         {
         if (!bShowAllActorMeshes && ActorIndex != PreviewActorIndex) continue;
@@ -370,24 +474,40 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         for (const FKyaActorModelReference& Patch : Actor.Models)
         {
             const uint64 Replacement = KyaG2D::HashName(Patch.TextureName);
-            if (DefaultMaterials.Contains(Replacement)) MaterialPatches.Add(KyaG2D::HashName(Patch.MeshName), Replacement);
+            if (SharedMaterials.Contains(Replacement)) MaterialPatches.Add(KyaG2D::HashName(Patch.MeshName), Replacement);
         }
         if (!StripsByMesh.Contains(Actor.MeshIndex))
         {
             TArray<FKyaG3DDecodedStrip>& ModelStrips = StripsByMesh.Add(Actor.MeshIndex);
             KyaG3D::DecodeHierarchyStrips(ModelData, ModelStrips);
         }
+        int32 ActorStripIndex = 0;
         for (const FKyaG3DDecodedStrip& Strip : StripsByMesh[Actor.MeshIndex])
             {
+                const int32 StripIndex = ActorStripIndex++;
+                if (PreviewActorStripIndex >= 0 && StripIndex != PreviewActorStripIndex) continue;
+                if (bLogSectorDiagnostics)
+                    UE_LOG(LogTemp, Display, TEXT("KYA_PREVIEW_ACTOR_STRIP actor=%s index=%d material=%d hash=%016llx vertices=%d attributes=%d triangles=%d"),
+                        *Actor.Name, StripIndex, Strip.MaterialIndex, Strip.MaterialHash,
+                        Strip.Vertices.Num(), Strip.Attributes.Num(), Strip.Indices.Num() / 3);
                 FMatrix HierarchyTransform;
                 if (!KyaG3D::ReadHierarchyWorldMatrix(ModelData, Strip.HierarchyOffset, HierarchyTransform)) continue;
                 FSectionData* Textured = nullptr;
                 if (const uint64* Replacement = MaterialPatches.Find(Strip.MaterialHash))
-                    Textured = GetTexturedSection(*Replacement, DefaultTextures, DefaultMaterials, DefaultSections);
+                    Textured = GetTexturedSection(*Replacement, SharedTextures, SharedMaterials, SharedSections);
+                else if (SharedMaterials.Contains(Strip.MaterialHash))
+                    Textured = GetTexturedSection(Strip.MaterialHash, SharedTextures, SharedMaterials, SharedSections);
                 else if (ModelMaterials.Contains(Strip.MaterialHash))
                     Textured = GetTexturedSection(Strip.MaterialHash, ModelTextures, ModelMaterials, ModelSections);
-                else
-                    Textured = GetTexturedSection(Strip.MaterialHash, DefaultTextures, DefaultMaterials, DefaultSections);
+                else if (TextureBankByHash.Contains(Strip.MaterialHash))
+                {
+                    const int32 OwnerEntry = TextureBankByHash[Strip.MaterialHash];
+                    Textured = GetTexturedSection(Strip.MaterialHash, TextureBankData[OwnerEntry],
+                        TextureBankMaterials[OwnerEntry], TextureBankSections[OwnerEntry]);
+                }
+                else if (bLogSectorDiagnostics)
+                    UE_LOG(LogTemp, Warning, TEXT("KYA_ACTOR_MATERIAL_MISSING actor=%s strip=%d hash=%016llx"),
+                        *Actor.Name, StripIndex, Strip.MaterialHash);
                 TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
                 TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                 TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
@@ -400,13 +520,33 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     P += Actor.Position;
                     TargetPositions.Add(FVector(P.X, P.Z, P.Y) * 100.0);
                 }
-                for (const FKyaG3DVertexAttributes& Attribute : Strip.Attributes)
+                TArray<FVector3f> WorldNormals;
+                if (Strip.Normals.Num() == Strip.Vertices.Num())
                 {
-                    TargetUVs.Add(FVector2D(Attribute.UV));
-                    TargetColors.Add(Attribute.Color);
+                    WorldNormals.Reserve(Strip.Normals.Num());
+                    for (const FVector3f& Normal : Strip.Normals)
+                    {
+                        FVector N = HierarchyTransform.TransformVector(FVector(Normal));
+                        N = KyaActorTransform::ApplyClassRotation(N, Actor.Rotation, Actor.ClassId);
+                        if (!N.Normalize()) N = FVector::UpVector;
+                        WorldNormals.Add(FVector3f(N));
+                    }
+                }
+                const TArray<FColor> Relit = RelightStrip(Strip, WorldNormals, Actor.LightingFlags, Actor.LightingValue);
+                for (int32 AttributeIndex = 0; AttributeIndex < Strip.Attributes.Num(); ++AttributeIndex)
+                {
+                    TargetUVs.Add(FVector2D(Strip.Attributes[AttributeIndex].UV));
+                    TargetColors.Add(AttributeIndex < Relit.Num() ? Relit[AttributeIndex] : Strip.Attributes[AttributeIndex].Color);
                 }
                 for (uint32 Index : Strip.Indices) TargetTriangles.Add(Base + int32(Index));
             }
+        }
+        if (bShowAllActorMeshes && bLogSectorDiagnostics)
+        {
+            int32 ActorStrips = 0;
+            for (const auto& Pair : StripsByMesh) ActorStrips += Pair.Value.Num();
+            UE_LOG(LogTemp, Display, TEXT("KYA_PREVIEW_ACTORS actors=%d meshes=%d strips=%d positions=%d triangles=%d"),
+                Bank->SceneEnvironment.Actors.Num(), StripsByMesh.Num(), ActorStrips, Positions.Num(), Triangles.Num());
         }
     }
     // The common scene mesh is a static cluster, just like sector clusters.
@@ -554,6 +694,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                         if (Textured) ++TexturedCount;
                         VertexCount += Expanded.Num();
                         TriangleCount += Indices.Num() / 3;
+                        if (!bShowClusterMeshes) continue;
                         TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
                         TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                         TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
@@ -587,6 +728,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     if (Parsed)
                         for (const FKyaG3DDecodedStrip& Strip : HierarchyStrips)
                         {
+                            if (!bShowClusterMeshes) continue;
                             if (!ExpandedHierarchies.Contains(Strip.HierarchyOffset)) continue;
                             const uint16 Flags = uint16(Data[Strip.HierarchyOffset + 0x9e]) | (uint16(Data[Strip.HierarchyOffset + 0x9f]) << 8);
                             if (Flags & 0x40) continue;
@@ -644,6 +786,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 if (Textured) ++BackgroundTextured;
                 BackgroundVertices += Strip.Vertices.Num();
                 BackgroundTriangles += Strip.Indices.Num() / 3;
+                if (!bShowBackgroundMeshes) continue;
                 TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
                 TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                 TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;

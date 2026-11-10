@@ -1,8 +1,10 @@
 #include "DebugMeshViewerVulkan.h"
 #include "DebugMeshViewer.h"
+#include "DrawTrace.h"
 #include "Objects/UniformBuffer.h"
 #include "Objects/Pipeline.h"
 #include "Native/NativeRenderer.h"
+#include "Native/NativeRendererInternal.h"
 #include "renderer_debug.h"
 #include "Native/Blending.h"
 #include "Types.h"
@@ -42,10 +44,16 @@ namespace DebugMeshViewer {
 		using PreviewerDrawCommandArray = std::array<std::pair<Renderer::SimpleTexture*, PreviewerVertexBuffer>, maxDrawCommands>;
 		PreviewerDrawCommandArray gPreviewerDrawCommands;
 		std::array<std::string, maxDrawCommands> gPreviewerMeshNames;
+		std::array<Renderer::SimpleMesh*, maxDrawCommands> gPreviewerMeshes{};
+		struct DrawState {
+			Renderer::DrawTrace::Submission submission;
+			Renderer::DrawTrace::Draw draw;
+		};
+		std::array<std::optional<DrawState>, maxDrawCommands> gPreviewerDrawStates;
 
 		Renderer::SimpleTexture* pBoundTexture = nullptr;
-		Renderer::SimpleMesh* pBoundMesh = nullptr;
 		int drawCounter = 0;		
+		bool screenshotAvailable = false;
 
 		void CreateFramebuffer()
 		{
@@ -58,28 +66,13 @@ namespace DebugMeshViewer {
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo<PipelineKey> createInfo { "shaders/meshviewer.vert.spv" , "shaders/meshviewer.frag.spv", "", key};
+			PipelineCreateInfo<PipelineKey> createInfo { "shaders/meshviewer.vert.spv" , "shaders/native.frag.spv", "", key};
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer GLSL");
 
 			createInfo.key.options.bWireframe = true;
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer GLSL Wireframe");
 		}
 
-		void CreatePipelineHlsl()
-		{
-			Shader::CompileShader("vs_6_0", "vs_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.vert.spv", "");
-			Shader::CompileShader("ps_6_0", "ps_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.frag.spv", "");
-
-			PipelineKey key;
-			key.options.bGlsl = false;
-			key.options.bWireframe = false;
-			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo<PipelineKey> createInfo{ "shaders/meshviewer_hlsl.vert.spv" , "shaders/meshviewer_hlsl.frag.spv", "", key};
-			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer HLSL");
-
-			createInfo.key.options.bWireframe = true;
-			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer HLSL Wireframe");
-		}
 
 		void CreateFramebufferSampler() 
 		{
@@ -107,26 +100,43 @@ namespace DebugMeshViewer {
 			}
 		}
 
-		Renderer::Pipeline& GetPipeline() {
+		void InitializeFrameDescriptors(Renderer::Pipeline& pipeline);
+
+		Renderer::Pipeline& GetPipeline(const ResolvedBlendState& blend) {
 			PipelineKey pipelineKey;
 			pipelineKey.options.bWireframe = GetWireframe();
-			pipelineKey.options.bGlsl = GetUseGlslPipeline();
+			pipelineKey.options.bGlsl = true;
 			pipelineKey.options.topology = topologyTriangleList;
 
-			assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
-			return gPipelines[pipelineKey.key];
+			const uint32_t key = pipelineKey.key | (uint32_t(blend.blendIndex) << 8) |
+				(uint32_t(blend.colorBlendAttachment.blendEnable != 0) << 16);
+
+			if (gPipelines.find(key) == gPipelines.end()) {
+				GraphicsPipelineState state;
+				const auto& attachment = blend.colorBlendAttachment;
+				state.blendEnable = attachment.blendEnable;
+				state.srcColorBlendFactor = attachment.srcColorBlendFactor;
+				state.dstColorBlendFactor = attachment.dstColorBlendFactor;
+				state.colorBlendOp = attachment.colorBlendOp;
+				state.srcAlphaBlendFactor = attachment.srcAlphaBlendFactor;
+				state.dstAlphaBlendFactor = attachment.dstAlphaBlendFactor;
+				state.alphaBlendOp = attachment.alphaBlendOp;
+				PipelineCreateInfo<PipelineKey> info{ "shaders/meshviewer.vert.spv", "shaders/native.frag.spv", "", pipelineKey };
+				CreatePipeline(info, gRenderPass, gPipelines[key], "Mesh Previewer material", state);
+				InitializeFrameDescriptors(gPipelines[key]);
+			}
+
+			return gPipelines[key];
 		}
 
-		void InitializeFrameDescriptors()
+		void InitializeFrameDescriptors(Renderer::Pipeline& pipeline)
 		{
-			for (auto& [key, pipeline] : gPipelines) {
-				for (int frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame) {
-					const auto buffer = gVertexConstantBuffer.GetDescBufferInfo(frame);
-					Renderer::DescriptorWriteList writes;
-					writes.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &buffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-					const auto updates = writes.CreateWriteDescriptorSetList(pipeline.descriptorSets[frame], pipeline.descriptorSetLayoutBindings);
-					vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(updates.size()), updates.data(), 0, nullptr);
-				}
+			for (int frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame) {
+				const auto buffer = gVertexConstantBuffer.GetDescBufferInfo(frame);
+				Renderer::DescriptorWriteList writes;
+				writes.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &buffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+				const auto updates = writes.CreateWriteDescriptorSetList(pipeline.descriptorSets[frame], pipeline.descriptorSetLayoutBindings);
+				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(updates.size()), updates.data(), 0, nullptr);
 			}
 		}
 	} // Vulkan
@@ -135,19 +145,31 @@ namespace DebugMeshViewer {
 		return Vulkan::gVertexConstantBuffer.GetBufferData();
 	}
 
+	VkImage GetScreenshotImage()
+	{
+		return Vulkan::screenshotAvailable ? Vulkan::gFrameBuffer.colorImage : VK_NULL_HANDLE;
+	}
+
 	Renderer::NativeVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh)
 	{
 		assert(Vulkan::drawCounter < Vulkan::maxDrawCommands);
 
 		Vulkan::pBoundTexture = pTexture;
-		Vulkan::pBoundMesh = pMesh;
 
 		Vulkan::gVertexConstantBuffer.Map(GetCurrentFrame());
 
 		Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 		Vulkan::gPreviewerMeshNames[Vulkan::drawCounter] = pMesh->GetName();
+		Vulkan::gPreviewerMeshes[Vulkan::drawCounter] = pMesh;
+		Vulkan::gPreviewerDrawStates[Vulkan::drawCounter].reset();
 
 		return Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter++].second.GetDrawBufferData();
+	}
+
+	void SetPreviewerDrawState(const Renderer::DrawTrace::Submission& submission, const Renderer::DrawTrace::Draw& draw)
+	{
+		assert(Vulkan::drawCounter > 0);
+		Vulkan::gPreviewerDrawStates[Vulkan::drawCounter - 1] = Vulkan::DrawState{submission, draw};
 	}
 
 	int GetPreviewerDrawCommandCount()
@@ -316,11 +338,10 @@ void DebugMeshViewer::Vulkan::Setup()
 	CreateFramebuffer();
 	CreateFramebufferSampler();
 	Renderer::CreateCommandBuffers(gCommandBuffers);
-	CreatePipelineHlsl();
 	CreatePipelineGlsl();
 
 	gVertexConstantBuffer.Init();
-	InitializeFrameDescriptors();
+	for (auto& [key, pipeline] : gPipelines) InitializeFrameDescriptors(pipeline);
 
 	for (auto& drawBuffer : gPreviewerDrawCommands) {
 		drawBuffer.second.Init(0x12000, 0x12000);
@@ -334,8 +355,32 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	ZONE_SCOPED;
 
 	if (!pBoundTexture) {
+		screenshotAvailable = false;
 		return;
 	}
+
+	std::vector<Renderer::SimpleMesh*> selection;
+	glm::vec3 minimum(INFINITY), maximum(-INFINITY);
+	for (int i = 0; i < drawCounter; ++i) {
+		selection.push_back(gPreviewerMeshes[i]);
+		const auto& data = gPreviewerDrawCommands[i].second.GetDrawBufferData();
+
+		for (size_t j = 0; j < data.vertex.tail; ++j) {
+			const auto* xyz = data.vertex.buff[j].XYZFlags.fXYZ;
+			const glm::vec3 position(xyz[0], xyz[1], xyz[2]);
+			if (!std::isfinite(xyz[0]) || !std::isfinite(xyz[1]) || !std::isfinite(xyz[2])) continue;
+			minimum = glm::min(minimum, position);
+			maximum = glm::max(maximum, position);
+		}
+	}
+
+	static std::vector<Renderer::SimpleMesh*> previousSelection;
+
+	if (std::isfinite(minimum.x)) {
+		UpdateCamera(&minimum.x, &maximum.x, selection != previousSelection);
+	}
+	
+	previousSelection = std::move(selection);
 
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
@@ -374,8 +419,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-	auto& pipeline = GetPipeline();
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+	vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
 
 	vkCmdSetDepthWriteEnable(cmd, true);
 	vkCmdSetDepthTestEnable(cmd, VK_TRUE);
@@ -404,7 +448,18 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 			break;
 		}
 
-		Renderer::Native::SetBlendingDynamicState(pTexture, Vulkan::pBoundMesh, cmd);
+		const auto drawIndex = &drawCommand - gPreviewerDrawCommands.data();
+		auto* mesh = gPreviewerMeshes[drawIndex];
+		const auto& captured = gPreviewerDrawStates[drawIndex];
+		auto alpha = pTexture->GetTextureRegisters().alpha;
+		if (captured) {
+			alpha.CMD = captured->draw.alpha;
+		}
+
+		const auto blend = ResolveBlendState(alpha, captured ? captured->draw.blend : mesh->GetPrim().ABE);
+		auto& pipeline = GetPipeline(blend);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+		SetBlendConstants(alpha, cmd);
 
 		PreviewerVertexBuffer& vertexBuffer = drawCommand.second;
 
@@ -413,11 +468,50 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		if (bufferData.index.tail > 0) {
 			vertexBuffer.MapAndBindData(cmd);
 
+			const auto& registers = pTexture->GetTextureRegisters();
+			const auto sampling = PS2::ResolveTextureSampling(registers.clamp, registers.tex1, pTexture->GetRenderer()->mipLevels);
 			const std::array sets{ pipeline.descriptorSets[GetCurrentFrame()],
-				pTexture->GetRenderer()->GetOrCreateTextureBinding(PS2::GetPreviewSamplerDescription()) };
+				pTexture->GetRenderer()->GetOrCreateTextureBinding(sampling.sampler) };
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
 
-			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);
+			Draw draw;
+			Draw::Instance instance;
+			instance.pMesh = mesh;
+			instance.indexCount = static_cast<int>(bufferData.index.tail);
+			instance.gsTest = registers.test;
+
+			if (captured) {
+				instance.gsTest.CMD = captured->draw.test;
+				instance.gsTest.ZTE = captured->draw.depthTest;
+				instance.gsTest.ZTST = captured->draw.depthMode;
+				instance.bIsZMask = !captured->draw.depthWrite;
+			}
+
+			auto& data = instance.perDrawData;
+			data.alphaEnable = registers.test.ATE;
+			data.alphaAtst = registers.test.ATST;
+			data.alphaAref = registers.test.AREF;
+			data.alphaAfail = registers.test.AFAIL;
+			data.stripFlags = mesh->GetStripFlags();
+			data.blendMode = blend.hwBlendMode;
+			data.textureLodBias = sampling.lod.lodBias;
+			data.textureLodScale = sampling.lod.lodScale;
+			data.textureFixedLod = sampling.lod.fixedLod;
+			data.textureMaxMipLevel = sampling.lod.maxLevel;
+			data.textureLodEnable = 1;
+
+			if (captured) {
+				data.renderFlags = captured->submission.flags;
+				data.globalAlpha = captured->submission.globalAlpha;
+				data.alphaEnable = captured->draw.alphaTest;
+				data.alphaAtst = captured->draw.alphaAtst;
+				data.alphaAref = captured->draw.alphaAref;
+				data.alphaAfail = captured->draw.alphaAfail;
+				draw.bIsAfailZOnly = captured->draw.zOnly;
+			}
+
+			SetColorDepthDynamicState(cmd, draw, instance);
+			RecordAlphaTestedDraw(cmd, pipeline.layout, draw, instance, data);
 		}
 	}
 
@@ -433,6 +527,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 
 	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(GetGraphicsQueue());
+	screenshotAvailable = std::isfinite(minimum.x);
 
 	for (auto& drawCommand : gPreviewerDrawCommands) {
 		drawCommand.first = nullptr;

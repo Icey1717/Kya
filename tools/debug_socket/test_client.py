@@ -7,7 +7,7 @@ from client import request
 
 
 class DebugSocketClientTest(unittest.TestCase):
-    def exchange(self, response, command="status"):
+    def exchange(self, response, command="status", target=None):
         listener = socket.socket()
         listener.bind(("127.0.0.1", 0))
         listener.listen(1)
@@ -29,11 +29,20 @@ class DebugSocketClientTest(unittest.TestCase):
         thread = threading.Thread(target=serve, daemon=True)
         thread.start()
         try:
-            return request(command, port=port, timeout=3)
+            return request(command, port=port, timeout=3, target=target)
         finally:
             thread.join(timeout=4)
             self.assertFalse(thread.is_alive())
-            self.assertEqual(received, [{"command": command, "id": 1}])
+            expected = {"command": command, "id": 1}
+            if target is not None:
+                expected["target"] = target
+            self.assertEqual(received, [expected])
+
+    def test_mesh_screenshot_target(self):
+        header, payload = self.exchange(b'{"ok":true,"bytes":3,"target":"mesh"}\nabc',
+                                        command="screenshot", target="mesh")
+        self.assertEqual(header["target"], "mesh")
+        self.assertEqual(payload, b"abc")
 
     def test_fragmented_image_payload_is_read_exactly(self):
         payload = b"\x89PNG\r\n\x1a\n\x00\xff\n"

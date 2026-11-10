@@ -25,6 +25,8 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 #if WITH_EDITOR
     virtual bool ShouldTickIfViewportsOnly() const override { return true; }
+    /** Rebuild the preview mesh when an editable property changes. */
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
     /** Update camera-relative background geometry using an editor camera position in world centimetres. */
     UFUNCTION(BlueprintCallable, Category="Kya|Preview")
@@ -48,9 +50,13 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Materials")
     TObjectPtr<UMaterialInterface> TextureMaterial;
 
-    /** Experimental: combine texture and vertex colours in the game's encoded colour space. */
-    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
-    bool bRawColorModulation = false;
+    /**
+     * Combine texture and vertex colours in the game's encoded colour space, then decode the
+     * result for Unreal's linear output. This matches the game's vertex shading; disable it to
+     * compare against Unreal's normal sRGB texture sampling.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Materials", meta=(DisplayName="Game Colour Space"))
+    bool bRawColorModulation = true;
 
     UPROPERTY(EditAnywhere, Category="Kya|Waypoints")
     bool bShowWaypoints = true;
@@ -64,8 +70,27 @@ public:
     int32 PreviewActorIndex = -1;
 
     /** Experimental static model preview using the actor's initial class transform. */
+    /** Render the common and sector background meshes. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    bool bShowBackgroundMeshes = true;
+    /** Render the common and sector static cluster meshes. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    bool bShowClusterMeshes = true;
+
     UPROPERTY(EditAnywhere, Category="Kya|Actors")
     bool bShowActorMesh = false;
+
+    /** Render only one strip of the previewed actor model; -1 renders every strip. */
+    UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
+    int32 PreviewActorStripIndex = -1;
+
+    /**
+     * Apply the level light archive (sun/ambient entries) to actor-model vertex
+     * colours using each strip's stored model normals, transformed by the hierarchy
+     * and placement. Strips without stored normals keep their baked colours.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Actors")
+    bool bApplyActorLighting = true;
 
     /** Preview all actor models in their initial placement (experimental). */
     UPROPERTY(EditAnywhere, Category="Kya|Actors")
@@ -89,6 +114,7 @@ private:
     FVector LastBackgroundCamera = FVector::ZeroVector;
     bool bHasBackgroundCamera = false;
     bool bGeneratedRawColorModulation = false;
+    bool bIsRebuildingPreview = false;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTexture2D>> PreviewTextures;
 

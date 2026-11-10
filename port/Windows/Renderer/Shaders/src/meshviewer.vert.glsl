@@ -1,4 +1,6 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#include "per_draw_data.glsl"
 
 float int12_to_float(int x) {
 	return float(x) * 0.000244140625;
@@ -32,11 +34,12 @@ void main() {
 
 	vec4 fixedPos = vec4(inPosition, 1.0);
 
-	if (anim > 0) {
-		uint animIndex = anim - 0x3dc;
+	uint animBase = GetAnimationBaseOffset(perDrawData.stripFlags);
+	if ((perDrawData.stripFlags & 0x10000u) != 0 && anim >= animBase && stripIndex < 0x20u) {
+		uint animIndex = anim - animBase;
 		animIndex = animIndex / 4;
-
-		uint intoAnimMatrices = ubo.animStripToIndex[stripIndex][animIndex];
+		uint intoAnimMatrices = animIndex < 0x20u ? ubo.animStripToIndex[stripIndex][animIndex] : 0u;
+		intoAnimMatrices = min(intoAnimMatrices, 0x5fu);
 
 		mat4 animMatrix = ubo.animMatrices[intoAnimMatrices];
 
@@ -52,6 +55,9 @@ void main() {
 	fragColor.y = inColor.y / 255.0;
 	fragColor.z = inColor.z / 255.0;
 	fragColor.w = inColor.w / 255.0;
+	if ((perDrawData.renderFlags & 0x20u) != 0) {
+		fragColor.a = floor(float(inColor.a) * float(perDrawData.globalAlpha & 0xffu) / 128.0) / 255.0;
+	}
 
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
 

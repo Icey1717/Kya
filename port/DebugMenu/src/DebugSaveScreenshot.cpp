@@ -1,4 +1,6 @@
 #include "DebugSaveScreenshot.h"
+#include "DebugMeshViewer.h"
+#include "DebugMeshViewerVulkan.h"
 #include "VulkanRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "Objects/VulkanBuffer.h"
@@ -26,11 +28,11 @@ namespace Debug::SaveLoad
 		constexpr int maxHeight = 640;
 	}
 
-	static std::vector<char> CaptureScreenshotImpl(bool fullResolution)
+	static std::vector<char> CaptureScreenshotImpl(bool fullResolution, bool meshViewer = false)
 	{
 		if (Renderer::gHeadless || !GetDevice()) return {};
-		const auto extent = Renderer::Native::GetFrameBufferSize();
-		const auto source = Renderer::Native::GetFrameBuffer().colorImage;
+		const auto extent = meshViewer ? VkExtent2D{DebugMeshViewer::gWidth, DebugMeshViewer::gHeight} : Renderer::Native::GetFrameBufferSize();
+		const auto source = meshViewer ? DebugMeshViewer::GetScreenshotImage() : Renderer::Native::GetFrameBuffer().colorImage;
 		const auto format = GetSwapchainImageFormat();
 		const bool bgra = format == VK_FORMAT_B8G8R8A8_SRGB || format == VK_FORMAT_B8G8R8A8_UNORM;
 		if (!source || !extent.width || !extent.height) return {};
@@ -86,9 +88,9 @@ namespace Debug::SaveLoad
 		return CaptureScreenshotImpl(false);
 	}
 
-	std::vector<char> CaptureScreenshotPng()
+	std::vector<char> CaptureScreenshotPng(bool meshViewer)
 	{
-		auto bitmap = CaptureScreenshotImpl(true);
+		auto bitmap = CaptureScreenshotImpl(true, meshViewer);
 		if (bitmap.empty()) return {};
 		BITMAPINFOHEADER info;
 		std::memcpy(&info, bitmap.data() + sizeof(BITMAPFILEHEADER), sizeof(info));
