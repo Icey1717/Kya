@@ -16,6 +16,7 @@
 #include "Components/SplineComponent.h"
 #include "Engine/World.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
 #include "Serialization/MemoryWriter.h"
@@ -1774,6 +1775,9 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             SectorInput.GetData() + SectorInput.Num(), GWarn));
         if (TestNotNull(TEXT("Import sector bank"), Sector))
         {
+            // Direct FactoryCreateBinary bypasses the import pipeline's filename;
+            // sector render settings are keyed by the actual SECTn source path.
+            Sector->SourceFilename = SectorFilename;
             const FKyaBankEntry* SectorMesh = Sector->Entries.FindByPredicate([](const FKyaBankEntry& Entry) {
                 return Entry.Type == 4 && Entry.Subtype == 1;
             });
@@ -1876,7 +1880,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             if (TestEqual(TEXT("Camera movement preserves vertex count"), AtCamera.Num(), AtOrigin.Num()))
                 for (int32 Index = 0; Index < AtCamera.Num(); ++Index)
                     if (!AtOrigin[Index].Equals(AtCamera[Index], 0.01)) ++MovedVertices;
-            TestTrue(TEXT("Camera-follow background moves"), MovedVertices > 0 && MovedVertices < AtCamera.Num());
+            TestEqual(TEXT("Sector one's own flag keeps its background fixed despite common follow flag"), MovedVertices, 0);
             Bank->SceneEnvironment.BackgroundFlags &= ~int64(1);
             Preview->OnConstruction(FTransform::Identity);
             const TArray<FVector> FixedBackground = CollectPreviewPositions();
@@ -1886,10 +1890,24 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             Bank->SceneEnvironment.BackgroundFlags = OriginalBackgroundFlags;
             Preview->OnConstruction(FTransform::Identity);
             bool HasMaskedMaterial = false;
+            bool HasTranslucentMaterial = false;
             for (int32 Section = 1; Section < Preview->Mesh->GetNumSections(); ++Section)
                 if (UMaterialInterface* Material = Preview->Mesh->GetMaterial(Section))
+                {
                     HasMaskedMaterial |= Material->GetBlendMode() == BLEND_Masked;
+                    HasTranslucentMaterial |= Material->GetBlendMode() == BLEND_AlphaComposite;
+                    if (Material->GetBlendMode() == BLEND_Additive)
+                        if (const auto* Instance = Cast<UMaterialInstanceDynamic>(Material))
+                        {
+                            float Factor = 0, SourceAlpha = 0;
+                            Instance->GetScalarParameterValue(FMaterialParameterInfo(TEXT("BlendFactor")), Factor);
+                            Instance->GetScalarParameterValue(FMaterialParameterInfo(TEXT("UseSourceAlpha")), SourceAlpha);
+                            TestEqual(TEXT("Level-one ALPHA 0x48 uses source alpha"), SourceAlpha, 1.0f);
+                            TestEqual(TEXT("Unused FIX=30 must not dim ALPHA 0x48"), Factor, 1.0f);
+                        }
+                }
             TestTrue(TEXT("Alpha-tested sector materials use masked preview"), HasMaskedMaterial);
+            TestTrue(TEXT("Source-alpha level surfaces retain transparency"), HasTranslucentMaterial);
             Preview->TextureMaterial = UMaterial::GetDefaultMaterial(MD_Surface);
             Preview->OnConstruction(FTransform::Identity);
             TestTrue(TEXT("Supported background textures create material sections"), Preview->Mesh->GetNumSections() > 1);
@@ -1964,6 +1982,74 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             const auto TextureData = MakeArrayView(Bytes.GetData() + TextureEntry->Offset, int32(TextureEntry->Size));
             TMap<uint64, int32> Materials;
             KyaG2D::ReadMaterials(TextureData, Materials);
+            if (SectorNumber == 2)
+            {
+                TArray<FKyaG3DPreparedSprite> Sprites;
+                const bool bSprites = KyaG3D::ReadClusterSprites(MeshData, Sprites);
+                int32 SpriteRects = 0;
+                for (const FKyaG3DPreparedSprite& Sprite : Sprites) SpriteRects += Sprite.Rects.Num();
+                AddInfo(FString::Printf(TEXT("SECT2 sprites: ok=%d sprites=%d rects=%d"), bSprites, Sprites.Num(), SpriteRects));
+                TestTrue(TEXT("Read SECT2 prepared sprites"), bSprites);
+                TestEqual(TEXT("SECT2 sprite count"), Sprites.Num(), 3);
+                {
+                    int32 SpriteBlended = 0, SpriteMasked = 0;
+                    for (const FKyaG3DPreparedSprite& Sprite : Sprites)
+                    {
+                        const int32* Offset = Materials.Find(Sprite.MaterialHash);
+                        if (!Offset) continue;
+                        uint64 Prim = 0, Test = 0;
+                        if (KyaG2D::ReadMaterialRegister(TextureData, *Offset, 0, 0x00, Prim) && ((Prim >> 6) & 1)) ++SpriteBlended;
+                        if (KyaG2D::ReadMaterialRegister(TextureData, *Offset, 0, 0x47, Test) && (Test & 1)) ++SpriteMasked;
+                    }
+                    AddInfo(FString::Printf(TEXT("SECT2 sprite materials: blended=%d masked=%d"), SpriteBlended, SpriteMasked));
+                    TestEqual(TEXT("SECT2 sprite materials are opaque"), SpriteBlended, 0);
+                    TestTrue(TEXT("SECT2 sprite materials use alpha test"), SpriteMasked > 0);
+                }
+                if (Sprites.Num() >= 3)
+                {
+                    TestEqual(TEXT("SECT2 sprite 0 rects"), Sprites[0].Rects.Num(), 2);
+                    TestEqual(TEXT("SECT2 sprite 1 rects"), Sprites[1].Rects.Num(), 1);
+                    TestEqual(TEXT("SECT2 sprite 2 rects"), Sprites[2].Rects.Num(), 2);
+                    if (Sprites[0].Rects.Num() > 0)
+                    {
+                        const FKyaG3DSpriteRect& Rect = Sprites[0].Rects[0];
+                        AddInfo(FString::Printf(TEXT("SECT2 sprite 0 center=(%.3f,%.3f,%.3f) half=(%.4f,%.4f) hash=%016llx"),
+                            Rect.Center.X, Rect.Center.Y, Rect.Center.Z, Rect.HalfSize.X, Rect.HalfSize.Y,
+                            Sprites[0].MaterialHash));
+                        TestTrue(TEXT("SECT2 sprite 0 center x"), FMath::Abs(Rect.Center.X + 90.836f) < 0.05f);
+                        TestTrue(TEXT("SECT2 sprite 0 center y"), FMath::Abs(Rect.Center.Y + 311.572f) < 0.05f);
+                        TestTrue(TEXT("SECT2 sprite 0 center z"), FMath::Abs(Rect.Center.Z + 687.901f) < 0.05f);
+                        TestTrue(TEXT("SECT2 sprite 0 half width"), FMath::Abs(Rect.HalfSize.X - 0.0415f) < 0.002f);
+                        TestTrue(TEXT("SECT2 sprite 0 half height"), FMath::Abs(Rect.HalfSize.Y - 0.0698f) < 0.002f);
+                        TestTrue(TEXT("SECT2 sprite material resolves"), Materials.Contains(Sprites[0].MaterialHash));
+                    }
+                }
+            }
+            if (SectorNumber == 4)
+            {
+                TArray<FKyaG3DPreparedSprite> Sprites;
+                const bool bSprites = KyaG3D::ReadClusterSprites(MeshData, Sprites);
+                int32 SpriteRects = 0;
+                for (const FKyaG3DPreparedSprite& Sprite : Sprites) SpriteRects += Sprite.Rects.Num();
+                AddInfo(FString::Printf(TEXT("SECT4 sprites: ok=%d sprites=%d rects=%d"), bSprites, Sprites.Num(), SpriteRects));
+                TestTrue(TEXT("Read SECT4 prepared sprites"), bSprites);
+                TestEqual(TEXT("SECT4 sprite count"), Sprites.Num(), 5);
+                TestEqual(TEXT("SECT4 sprite rect count"), SpriteRects, 7);
+                {
+                    int32 SpriteBlended = 0, SpriteMasked = 0;
+                    for (const FKyaG3DPreparedSprite& Sprite : Sprites)
+                    {
+                        const int32* Offset = Materials.Find(Sprite.MaterialHash);
+                        if (!Offset) continue;
+                        uint64 Prim = 0, Test = 0;
+                        if (KyaG2D::ReadMaterialRegister(TextureData, *Offset, 0, 0x00, Prim) && ((Prim >> 6) & 1)) ++SpriteBlended;
+                        if (KyaG2D::ReadMaterialRegister(TextureData, *Offset, 0, 0x47, Test) && (Test & 1)) ++SpriteMasked;
+                    }
+                    AddInfo(FString::Printf(TEXT("SECT4 sprite materials: blended=%d masked=%d"), SpriteBlended, SpriteMasked));
+                    TestEqual(TEXT("SECT4 sprite materials are opaque"), SpriteBlended, 0);
+                    TestTrue(TEXT("SECT4 sprite materials use alpha test"), SpriteMasked > 0);
+                }
+            }
             TArray<KyaG3D::FClusterStripReference> Strips;
             TMap<FString, int32> BackgroundBlends;
             {
@@ -1975,7 +2061,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
                         uint32 VertexCount = 0, Primitive = 0;
                         if (!KyaG3D::ReadFirstStripGifTag(MeshData, Ref.StripOffset, VertexCount, Primitive)) continue;
                         ++BackgroundBlends.FindOrAdd(FString::Printf(TEXT("ABE=%d prim=%x verts=%d"),
-                            int32(Primitive & 1), Primitive & ~1u, VertexCount));
+                            int32((Primitive >> 6) & 1), Primitive & ~0x40u, VertexCount));
                     }
                 }
                 for (const auto& Blend : BackgroundBlends)
@@ -2006,11 +2092,11 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
                 else ++AlphaTests.FindOrAdd(TEXT("no TEST register"));
                 {
                     uint64 Alpha1 = 0, Alpha2 = 0;
-                    const bool bHasAlpha1 = KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x00, Alpha1);
-                    const bool bHasAlpha2 = KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x01, Alpha2);
+                    const bool bHasAlpha1 = KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x42, Alpha1);
+                    const bool bHasAlpha2 = KyaG2D::ReadMaterialRegister(Source, *Offset, 0, 0x43, Alpha2);
                     uint32 VertexCount = 0, Primitive = 0;
                     const bool bHasPrim = KyaG3D::ReadFirstStripGifTag(MeshData, Strip.StripOffset, VertexCount, Primitive);
-                    const uint32 Abe = bHasPrim ? (Primitive & 1) : 2;
+                    const uint32 Abe = bHasPrim ? ((Primitive >> 6) & 1) : 2;
                     const uint32 A1 = uint32(Alpha1 & 3), B1 = uint32((Alpha1 >> 2) & 3);
                     const uint32 C1 = uint32((Alpha1 >> 4) & 3), D1 = uint32((Alpha1 >> 6) & 3);
                     const uint32 A2 = uint32(Alpha2 & 3), B2 = uint32((Alpha2 >> 2) & 3);
@@ -2109,7 +2195,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
                     {
                         uint32 VertexCount = 0, Primitive = 0;
                         if (!KyaG3D::ReadFirstStripGifTag(BackgroundData, Ref.StripOffset, VertexCount, Primitive)) continue;
-                        ++CommonBlends.FindOrAdd(FString::Printf(TEXT("ABE=%d prim=%x"), int32(Primitive & 1), Primitive & ~1u));
+                        ++CommonBlends.FindOrAdd(FString::Printf(TEXT("ABE=%d prim=%x"), int32((Primitive >> 6) & 1), Primitive & ~0x40u));
                     }
                 }
                 AddInfo(FString::Printf(TEXT("Common background: refs_ok=%d refs=%d decoded_ok=%d decoded=%d"),
@@ -2306,7 +2392,7 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
                                 uint32 VertexCount = 0, Primitive = 0;
                                 if (KyaG3D::ReadFirstStripGifTag(MeshView, RockRefs[0].StripOffset, VertexCount, Primitive))
                                     AddInfo(FString::Printf(TEXT("Rock primitive: prim=%x abe=%d verts=%d"),
-                                        Primitive & ~1u, int32(Primitive & 1), VertexCount));
+                                        Primitive & ~0x40u, int32((Primitive >> 6) & 1), VertexCount));
                             }
                         }
                         {

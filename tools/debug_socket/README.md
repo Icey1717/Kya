@@ -184,3 +184,25 @@ python -c "import json; from pathlib import Path; p = Path('out/screenshots/acto
 The screenshot and draw trace are separate requests. Check the screenshot's
 `frame` against `actor_capture.draw_capture_frame` when the actor or camera can
 move during the capture, such as in a cutscene.
+
+## Scripted sector captures
+
+The socket can activate a checkpoint manager record and place the free camera
+explicitly, which is useful for matching a native sector view against the editor
+preview:
+
+```powershell
+python tools/debug_socket/client.py checkpoint --manager CHECKPOINT_MANAGER --checkpoint-index 3
+python tools/debug_socket/client.py camera --camera-position -90.836 -311.572 -687.3 --camera-yaw 3.14159265 --camera-pitch 0
+python tools/debug_socket/client.py pause
+python tools/debug_socket/client.py screenshot --output out/screenshots/native.png --metadata out/screenshots/native.json
+```
+
+`checkpoint` activates the record through `CActorCheckpointManager::ActivateCheckpoint`,
+so the actor/sector stream loads normally. `camera` pushes the free camera and sets
+its game-space position and yaw/pitch in radians. Use `camera_reset` to return to
+the gameplay camera.
+
+`actor_info --name ROLLINGROCK` returns an actor's runtime scale, position,
+sector and type. It is useful for validating that an edited bank field reached
+the game without relying on a screenshot.

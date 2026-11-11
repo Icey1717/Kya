@@ -174,8 +174,18 @@ void CFreeCamera::SetPositionFromCamera(CCamera* pFrom)
 	SetAngleGamma(0.f);
 }
 
-void CFreeCamera::FocusPoint(const edF32VECTOR4& target, float radius)
+void CFreeCamera::SetPose(const edF32VECTOR4& position, float newYaw, float newPitch)
 {
+	transformationMatrix.rowT = position;
+	transformationMatrix.rowT.w = 1.0f;
+	yaw = newYaw;
+	pitch = newPitch;
+	SetAngleAlpha(pitch);
+	SetAngleBeta(yaw);
+	SetAngleGamma(0.0f);
+}
+
+void CFreeCamera::FocusPoint(const edF32VECTOR4& target, float radius){
 	const float distance = std::max(radius, 1.0f) * 3.0f;
 	transformationMatrix.rowT = target;
 	transformationMatrix.rowT.y += distance * 0.35f;

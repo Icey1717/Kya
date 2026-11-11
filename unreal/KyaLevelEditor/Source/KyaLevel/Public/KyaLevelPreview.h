@@ -13,6 +13,8 @@ class UKyaWaypointComponent;
 class USplineComponent;
 class UKyaPathPointComponent;
 class UKyaActorMarkerComponent;
+class UPostProcessComponent;
+class UMaterialInstanceDynamic;
 
 /** Experimental level geometry preview. */
 UCLASS()
@@ -31,6 +33,10 @@ public:
     /** Update camera-relative background geometry using an editor camera position in world centimetres. */
     UFUNCTION(BlueprintCallable, Category="Kya|Preview")
     void SetBackgroundCameraPosition(const FVector& WorldCameraPosition);
+    /** Lock the preview to a capture camera, including screen-space flare sizing. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Preview")
+    void SetPreviewCamera(const FVector& Position, const FVector& Forward, const FVector& Up,
+        float HorizontalFovDegrees, int32 Width, int32 Height);
 #if WITH_EDITOR
     void UpdatePathGuidePoint(int32 PathIndex, int32 PointIndex, const FVector& Position);
 #endif
@@ -41,6 +47,10 @@ public:
     /** Optional imported SECT*.BNK assets; their background meshes are previewed. */
     UPROPERTY(EditAnywhere, Category="Kya")
     TArray<TObjectPtr<UKyaLevelBank>> SectorBanks;
+
+    /** Native active sector for distance clipping; -1 uses the first sector bank. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    int32 PreviewBaseSector = -1;
 
     /** Log per-sector entry, decoding, material and world-space bounds diagnostics on construction. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
@@ -85,6 +95,22 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Visibility")
     bool bShowClusterMeshes = true;
 
+    /** Render prepared cluster sprite billboards. */
+    UPROPERTY(EditAnywhere, Category="Kya|Visibility")
+    bool bShowSprites = true;
+
+    /** Camera forward used to expand sprite billboards, in game axes (Y up). */
+    UPROPERTY(EditAnywhere, Category="Kya|Sprites")
+    FVector SpriteCameraForward = FVector(1.0, 0.0, 0.0);
+
+    /** Camera up used to expand sprite billboards, in game axes (Y up). */
+    UPROPERTY(EditAnywhere, Category="Kya|Sprites")
+    FVector SpriteCameraUp = FVector(0.0, 1.0, 0.0);
+
+    /** GS draw-surface dimensions, independent of the PC framebuffer (PAL 512x512, NTSC 512x448). */
+    UPROPERTY(EditAnywhere, Category="Kya|Sprites", meta=(ClampMin="1"))
+    FIntPoint NativeSurfaceSize = FIntPoint(512, 512);
+
     UPROPERTY(EditAnywhere, Category="Kya|Actors")
     bool bShowActorMesh = false;
 
@@ -108,6 +134,38 @@ public:
     TObjectPtr<UProceduralMeshComponent> Mesh;
 
 private:
+    void UpdatePreviewCamera(const FVector& Position, const FVector& Forward, const FVector& Up,
+        float HorizontalFovDegrees, int32 Width, int32 Height);
+    void UpdateClusterVisibility(const FVector& Position, const FVector& Forward, const FVector& Right,
+        const FVector& Up, double TanX, double TanY);
+    struct FClusterVisibilityRange
+    {
+        int32 Section = 0;
+        int32 Start = 0;
+        int32 Count = 0;
+        FVector4f ObjectSphere = FVector4f(0, 0, 0, 0);
+        FVector4f StripSphere = FVector4f(0, 0, 0, 0);
+        FVector4f LodSphere = FVector4f(0, 0, 0, 0);
+        double MinLodBiasSquared = 0;
+        double MaxLodBiasSquared = DBL_MAX;
+        bool bVisible = true;
+    };
+    TArray<FClusterVisibilityRange> ClusterVisibilityRanges;
+    TMap<int32, TArray<uint32>> ClusterBaseIndices;
+    float ActiveClipDistance = 500;
+    struct FBackgroundFlare
+    {
+        FVector Position = FVector::ZeroVector;
+        int32 MaterialIndex = INDEX_NONE;
+    };
+    TArray<FBackgroundFlare> BackgroundFlares;
+    bool bExplicitPreviewCamera = false;
+    UPROPERTY(Transient)
+    TObjectPtr<UPostProcessComponent> FlarePostProcess;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterial> GeneratedFlareMaterial;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> FlareMaterials;
     struct FBackgroundRange
     {
         int32 Section = 0;
@@ -131,6 +189,10 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedMaskedPreviewMaterial;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterial> GeneratedAdditivePreviewMaterial;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterial> GeneratedTranslucentPreviewMaterial;
 
     UPROPERTY(Transient)
     TObjectPtr<UMaterial> GeneratedUntexturedMaterial;

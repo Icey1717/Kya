@@ -32,7 +32,8 @@ def request(command, port=18438, timeout=15, target=None, **fields):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("status", "screenshot", "pause", "resume", "step",
-                                            "capture_draws", "actors", "actor_override", "focus_actor", "actor_lighting", "camera_reset"))
+                                            "capture_draws", "actors", "actor_override", "focus_actor", "actor_lighting",
+                                            "actor_info", "camera_reset", "camera", "checkpoint"))
     parser.add_argument("--port", type=int, default=18438)
     parser.add_argument("--target", choices=("game", "mesh"), default="game")
     parser.add_argument("--timeout", type=float, default=15)
@@ -41,6 +42,13 @@ def main():
     parser.add_argument("--metadata", type=Path, help="Write the response header, including camera data, as JSON")
     parser.add_argument("--mode", choices=("none", "bind_pose", "texture_only", "isolate_bind_pose"))
     parser.add_argument("--actor", type=int, help="Actor index returned by the actors command")
+    parser.add_argument("--manager", help="Checkpoint manager name for the checkpoint command")
+    parser.add_argument("--checkpoint-index", type=int, help="Checkpoint index for the checkpoint command")
+    parser.add_argument("--name", help="Actor name for the actor_info command")
+    parser.add_argument("--camera-position", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                        help="Game-space camera position for the camera command")
+    parser.add_argument("--camera-yaw", type=float, help="Camera yaw in radians for the camera command")
+    parser.add_argument("--camera-pitch", type=float, help="Camera pitch in radians for the camera command")
     args = parser.parse_args()
     fields = {}
     if args.command == "actor_override":
@@ -53,6 +61,21 @@ def main():
         if args.actor is None:
             parser.error(f"{args.command} requires --actor")
         fields["actor"] = args.actor
+    elif args.command == "checkpoint":
+        if args.manager is None or args.checkpoint_index is None:
+            parser.error("checkpoint requires --manager and --checkpoint-index")
+        fields["manager"] = args.manager
+        fields["index"] = args.checkpoint_index
+    elif args.command == "actor_info":
+        if args.name is None:
+            parser.error("actor_info requires --name")
+        fields["name"] = args.name
+    elif args.command == "camera":
+        if args.camera_position is None or args.camera_yaw is None or args.camera_pitch is None:
+            parser.error("camera requires --camera-position, --camera-yaw and --camera-pitch")
+        fields["position"] = list(args.camera_position)
+        fields["yaw"] = args.camera_yaw
+        fields["pitch"] = args.camera_pitch
     try:
         header, payload = request(args.command, args.port, args.timeout, args.target, **fields)
         if args.command == "screenshot":

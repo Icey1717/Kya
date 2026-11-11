@@ -22,6 +22,8 @@ public:
 
 	// Snap position and yaw/pitch from another camera (call before pushing to stack).
 	void SetPositionFromCamera(CCamera* pFrom);
+	// Set an explicit game-space position and yaw/pitch (radians) for scripted captures.
+	void SetPose(const edF32VECTOR4& position, float yaw, float pitch);
 	void FocusPoint(const edF32VECTOR4& target, float radius);
 	void SetInputEnabled(bool bEnabled);
 

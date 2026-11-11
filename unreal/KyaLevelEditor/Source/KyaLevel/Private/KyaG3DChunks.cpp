@@ -171,9 +171,10 @@ bool KyaG3D::ExpandClusterHierarchies(TConstArrayView<uint8> Data, TConstArrayVi
     return true;
 }
 
-bool KyaG3D::ReadHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DStripReference>& OutStrips)
+bool KyaG3D::ReadHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DStripReference>& OutStrips, int32 LodIndex)
 {
     OutStrips.Reset();
+    if (LodIndex < 0) return false;
     TArray<int32> Hierarchies;
     if (!ReadHierarchyOffsets(Data, Hierarchies)) return false;
     auto Fits = [&Data](uint32 Offset, uint32 Size) { return Offset <= uint32(Data.Num()) && Size <= uint32(Data.Num()) - Offset; };
@@ -185,13 +186,14 @@ bool KyaG3D::ReadHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DStri
     for (int32 Hierarchy : Hierarchies)
     {
         const uint32 LodCount = uint32(Data[Hierarchy + 0x9c]) | (uint32(Data[Hierarchy + 0x9d]) << 8);
-        if (!LodCount) continue;
-        if (!Fits(Hierarchy + 0xb0, 8)) return false;
-        const uint32 RenderType = uint32(Data[Hierarchy + 0xb4]) | (uint32(Data[Hierarchy + 0xb5]) << 8);
+        if (uint32(LodIndex) >= LodCount) continue;
+        if (!Fits(Hierarchy + 0xb0, LodCount * 8)) return false;
+        const int32 Lod = Hierarchy + 0xb0 + LodIndex * 8;
+        const uint32 RenderType = uint32(Data[Lod + 4]) | (uint32(Data[Lod + 5]) << 8);
         // Type 3 points to ed_3d_sprite, not ed_3d_strip; types 1 and 2
         // are not submitted by ed3DRenderSonHierarchy.
         if (RenderType != 0) continue;
-        const uint32 Hash = U32(Hierarchy + 0xb0);
+        const uint32 Hash = U32(Lod);
         if (!Hash) continue;
         if (!Fits(Hash, 16)) return false;
         const uint32 Object = U32(Hash + 8);
@@ -211,6 +213,57 @@ bool KyaG3D::ReadHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DStri
         }
     }
     OutStrips = MoveTemp(Strips);
+    return true;
+}
+
+bool KyaG3D::ReadBackgroundFlares(TConstArrayView<uint8> Data, TArray<FKyaG3DBackgroundFlare>& OutFlares)
+{
+    OutFlares.Reset();
+    TArray<int32> Hierarchies;
+    TArray<FKyaG3DChunk> Chunks;
+    if (!ReadHierarchyOffsets(Data, Hierarchies) || !ReadChunks(Data, Chunks)) return false;
+    const FKyaG3DChunk* Hall = Chunks.FindByPredicate([](const FKyaG3DChunk& C) { return C.Tag == 0x4c4c4148; });
+    if (!Hall) return false;
+    auto Fits = [&Data](uint64 P, uint64 N) { return P <= uint64(Data.Num()) && N <= uint64(Data.Num()) - P; };
+    auto U32 = [&Data](int32 P) { uint32 V; FMemory::Memcpy(&V, Data.GetData() + P, 4); return V; };
+    auto U16 = [&Data](int32 P) { uint16 V; FMemory::Memcpy(&V, Data.GetData() + P, 2); return V; };
+    TArray<FKyaG3DBackgroundFlare> Result;
+    for (int32 Index = 0; Index < Hierarchies.Num(); ++Index)
+    {
+        const int32 H = Hierarchies[Index], Hash = Hall->Offset + 32 + Index * 16;
+        if (!Fits(Hash, 16)) return false;
+        // SetupBackground overrides this sprite's render-frame flags with 0x200.
+        if ((uint64(U32(Hash)) | (uint64(U32(Hash + 4)) << 32)) != 0x4c464e99b2a49e87ULL) continue;
+        if (!Fits(H, 0xb8) || U16(H + 0x9c) == 0 || U16(H + 0xb4) != 3) return false;
+        const uint32 ObjectHash = U32(H + 0xb0);
+        if (!Fits(ObjectHash, 16)) return false;
+        const uint32 Object = U32(ObjectHash + 8);
+        if (!Fits(Object, 48)) return false;
+        const uint32 Count = U32(Object + 20), Bank = U32(H + 0x98);
+        uint32 Sprite = U32(Object + 44);
+        if (Count > uint32(Data.Num()) / 64) return false;
+        TSet<uint32> Seen;
+        for (uint32 I = 0; I < Count; ++I)
+        {
+            if (!Fits(Sprite, 64) || Seen.Contains(Sprite)) return false;
+            Seen.Add(Sprite);
+            uint64 MaterialHash = 0;
+            if (!ReadStripMaterialHash(Data, int32(Sprite), int32(Bank), MaterialHash)) return false;
+            const uint32 Vertices = U32(Sprite + 40), VertexCount = U16(Sprite + 0x36);
+            if (!Fits(Vertices, uint64(VertexCount) * 16)) return false;
+            if (U16(Sprite + 0x3c)) for (uint32 V = 0; V < VertexCount; ++V)
+            {
+                FKyaG3DBackgroundFlare Flare;
+                Flare.HierarchyOffset = H;
+                Flare.MaterialHash = MaterialHash;
+                FMemory::Memcpy(&Flare.Center, Data.GetData() + Vertices + V * 16, 12);
+                if (Flare.Center.ContainsNaN()) return false;
+                Result.Add(Flare);
+            }
+            Sprite = U32(Sprite + 12);
+        }
+    }
+    OutFlares = MoveTemp(Result);
     return true;
 }
 
@@ -297,6 +350,139 @@ bool KyaG3D::ReadClusterTreeStrips(TConstArrayView<uint8> Data, TArray<FClusterS
     }
     OutStrips = MoveTemp(Result);
     if (OutHierarchies) *OutHierarchies = MoveTemp(HierarchyResult);
+    return true;
+}
+
+bool KyaG3D::ReadClusterSprites(TConstArrayView<uint8> Data, TArray<FKyaG3DPreparedSprite>& Out)
+{
+    Out.Reset();
+    TArray<FKyaG3DChunk> Chunks;
+    if (!ReadChunks(Data, Chunks)) return false;
+    const FKyaG3DChunk* Csta = Chunks.FindByPredicate([](const FKyaG3DChunk& Chunk) { return Chunk.Tag == 0x41545343; });
+    if (!Csta) return true;
+    auto U32 = [&Data](int64 Offset) -> uint32 {
+        const uint8* P = Data.GetData() + Offset;
+        return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
+    };
+    auto S16 = [&Data](int64 Offset) -> int16 {
+        const uint8* P = Data.GetData() + Offset;
+        return int16(uint16(P[0]) | (uint16(P[1]) << 8));
+    };
+    auto F32 = [&U32](int64 Offset) -> float {
+        const uint32 Bits = U32(Offset);
+        float Value;
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    };
+    auto Fits = [&Data](int64 Offset, int64 Size) {
+        return Offset >= 0 && Offset <= Data.Num() && Size >= 0 && Size <= Data.Num() - Offset;
+    };
+    TSet<int32> SeenSprites;
+    auto ReadSpriteChain = [&](int32 First, int32 MaterialBank) {
+        int32 Sprite = First;
+        for (int32 Chain = 0; Chain < 0x100 && Sprite; ++Chain)
+        {
+            if (SeenSprites.Contains(Sprite)) break;
+            SeenSprites.Add(Sprite);
+            if (Sprite < 16 || !Fits(Sprite, 0x40)) break;
+            const int32 MaterialIndex = S16(Sprite + 4);
+            const int32 RenderFrame = int32(uint16(U32(Sprite + 0x34) & 0xffff));
+            const int32 Batches = int32(uint16(U32(Sprite + 0x3c) & 0xffff));
+            const int32 RemainderRects = S16(Sprite + 0x38);
+            const int32 RemainderVertices = S16(Sprite + 0x3a);
+            if (Batches < 1 || Batches > 0x100 || RemainderRects < 0 || RemainderRects > 18 ||
+                RemainderVertices != RemainderRects * 4) break;
+            const int32 VertexBase = int32(U32(Sprite + 0x28));
+            const int32 STBase = int32(U32(Sprite + 0x20));
+            const int32 ColorBase = int32(U32(Sprite + 0x24));
+            const int32 WHBase = int32(U32(Sprite + 0x2c));
+            const int32 TotalRects = (Batches - 1) * 18 + RemainderRects;
+            const int32 TotalVertices = (Batches - 1) * 72 + RemainderVertices;
+            if (TotalRects <= 0 || TotalVertices != TotalRects * 4) break;
+            if (!Fits(VertexBase, int64(TotalVertices) * 16) || !Fits(STBase, int64(TotalVertices) * 4) ||
+                !Fits(ColorBase, int64(TotalVertices) * 4)) break;
+            const int32 WHCount = (Batches - 1) * 20 + ((RenderFrame & 1) ? 1 : RemainderRects);
+            if (!Fits(WHBase, int64(WHCount) * 4)) break;
+            FKyaG3DPreparedSprite Result;
+            Result.StructOffset = Sprite;
+            Result.MaterialIndex = MaterialIndex;
+            Result.RenderFrame = RenderFrame;
+            if (MaterialBank && MaterialIndex >= 0 && Fits(MaterialBank, 16) && U32(MaterialBank) == 0x4b4e424d)
+            {
+                const uint32 BankSize = U32(MaterialBank + 8);
+                const uint64 HashOffset = uint64(MaterialBank) + 16 + uint64(MaterialIndex) * 16;
+                if (BankSize >= 16 && uint64(MaterialBank) + BankSize <= uint64(Data.Num()) &&
+                    HashOffset + 16 <= uint64(MaterialBank) + BankSize)
+                    Result.MaterialHash = uint64(U32(int32(HashOffset))) | (uint64(U32(int32(HashOffset + 4))) << 32);
+            }
+            for (int32 Rect = 0; Rect < TotalRects; ++Rect)
+            {
+                const int32 Batch = Rect / 18;
+                const int32 InBatch = Rect - Batch * 18;
+                const int32 Vertex = Batch * 72 + InBatch * 4;
+                if (Vertex + 3 >= TotalVertices) break;
+                FKyaG3DSpriteRect RectData;
+                RectData.Center = FVector3f(F32(VertexBase + int64(Vertex) * 16),
+                    F32(VertexBase + int64(Vertex) * 16 + 4), F32(VertexBase + int64(Vertex) * 16 + 8));
+                const int32 WhIndex = (RenderFrame & 1) ? 0 : Batch * 20 + InBatch;
+                if (WhIndex >= 0 && WhIndex < WHCount)
+                    RectData.HalfSize = FVector2f(S16(WHBase + int64(WhIndex) * 4) / 4096.0f,
+                        S16(WHBase + int64(WhIndex) * 4 + 2) / 4096.0f);
+                for (int32 Corner = 0; Corner < 4; ++Corner)
+                {
+                    const int32 Attribute = Vertex + Corner;
+                    RectData.UV[Corner] = FVector2f(S16(STBase + int64(Attribute) * 4) / 4096.0f,
+                        S16(STBase + int64(Attribute) * 4 + 2) / 4096.0f);
+                    const uint8* Color = Data.GetData() + ColorBase + int64(Attribute) * 4;
+                    RectData.Color[Corner] = FColor(Color[0], Color[1], Color[2], Color[3]);
+                }
+                Result.Rects.Add(RectData);
+            }
+            if (Result.Rects.Num() == TotalRects) Out.Add(MoveTemp(Result));
+            Sprite = int32(U32(Sprite + 0x0c));
+        }
+    };
+    TFunction<bool(int64, int64, int32)> ReadNode;
+    ReadNode = [&](int64 Chunk, int64 ParentEnd, int32 Depth) -> bool {
+        if (Depth > 64 || !Fits(Chunk, 80) || Chunk + 80 > ParentEnd) return false;
+        const uint32 Size = U32(Chunk + 8);
+        if (Size < 80 || Size > uint64(ParentEnd - Chunk)) return false;
+        const int64 Payload = Chunk + 16;
+        const int64 End = Chunk + Size;
+        const int32 MaterialBank = int32(U32(Payload + 0x30));
+        ReadSpriteChain(int32(U32(Payload + 0x3c)), MaterialBank);
+        int64 Child = Payload + 64;
+        while (Child < End)
+        {
+            if (End - Child < 16) return false;
+            const uint32 Tag = U32(Child), ChildSize = U32(Child + 8);
+            if (ChildSize < 16 || ChildSize > uint64(End - Child)) return false;
+            if ((Tag == 0x55514443 || Tag == 0x434f4443) && !ReadNode(Child, End, Depth + 1)) return false;
+            Child += ChildSize;
+        }
+        return true;
+    };
+    const int64 CstaEnd = int64(Csta->Offset) + Csta->Size;
+    for (int64 Tree = int64(Csta->Offset) + 16; Tree < CstaEnd;)
+    {
+        if (CstaEnd - Tree < 16) return false;
+        const uint32 Tag = U32(Tree), Size = U32(Tree + 8);
+        if (Size < 16 || Size > uint64(CstaEnd - Tree)) return false;
+        if (Tag == 0x41514443 || Tag == 0x414f4443)
+        {
+            if (Size < 48) return false;
+            const int64 End = Tree + Size;
+            for (int64 Root = Tree + 48; Root < End;)
+            {
+                if (End - Root < 16) return false;
+                const uint32 RootTag = U32(Root), RootSize = U32(Root + 8);
+                if (RootSize < 16 || RootSize > uint64(End - Root)) return false;
+                if ((RootTag == 0x55514443 || RootTag == 0x434f4443) && !ReadNode(Root, End, 0)) return false;
+                Root += RootSize;
+            }
+        }
+        Tree += Size;
+    }
     return true;
 }
 
@@ -568,11 +754,11 @@ bool KyaG3D::BuildStripTriangles(TConstArrayView<FKyaG3DVertex> Vertices,
     return true;
 }
 
-bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDecodedStrip>& OutStrips)
+bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDecodedStrip>& OutStrips, int32 LodIndex)
 {
     OutStrips.Reset();
     TArray<FKyaG3DStripReference> References;
-    if (!ReadHierarchyStrips(Data, References)) return false;
+    if (!ReadHierarchyStrips(Data, References, LodIndex)) return false;
     TArray<FKyaG3DDecodedStrip> Decoded;
     for (const FKyaG3DStripReference& Reference : References)
     {
@@ -584,6 +770,19 @@ bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDe
             const uint8* P = Data.GetData() + Offset;
             return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
         };
+        Strip.LodIndex = LodIndex;
+        auto Bias = [&Data](int32 P) { int16 V; FMemory::Memcpy(&V, Data.GetData() + P, 2); return float(V); };
+        const int32 Lod = Reference.HierarchyOffset + 0xb0 + LodIndex * 8;
+        Strip.LodMaxSizeBias = Bias(Lod + 6);
+        Strip.LodMinSizeBias = LodIndex ? Bias(Lod - 2) : 0.0f;
+        const uint32 Object = U32(int32(U32(Lod)) + 8);
+        FMemory::Memcpy(&Strip.ObjectSphere, Data.GetData() + Object + 24, 16);
+        const uint32 FirstHash = U32(Reference.HierarchyOffset + 0xb0);
+        if (!FirstHash || FirstHash > uint32(Data.Num() - 16)) return false;
+        const uint32 FirstObject = U32(int32(FirstHash) + 8);
+        if (FirstObject > uint32(Data.Num() - 48)) return false;
+        FMemory::Memcpy(&Strip.FirstLodSphere, Data.GetData() + FirstObject + 24, 16);
+        FMemory::Memcpy(&Strip.StripSphere, Data.GetData() + Reference.StripOffset + 16, 16);
         Strip.MaterialIndex = int16(uint16(Data[Reference.StripOffset + 4]) |
             (uint16(Data[Reference.StripOffset + 5]) << 8));
         if (Strip.MaterialIndex >= 0)
@@ -598,6 +797,7 @@ bool KyaG3D::DecodeHierarchyStrips(TConstArrayView<uint8> Data, TArray<FKyaG3DDe
         if (!ReadFirstStripGifTag(Data, Reference.StripOffset, Count, Primitive) ||
             !ReadStripVertices(Data, Reference.StripOffset, Strip.Vertices, Sections) ||
             !ReadStripAttributes(Data, Reference.StripOffset, Strip.Attributes)) return false;
+        Strip.Primitive = Primitive;
         // Stored normals are per unique vertex, in the same order as the position buffer.
         TArray<FVector3f> UniqueNormals;
         {
@@ -736,4 +936,52 @@ bool KyaG3D::ReadBackgroundWorldMatrix(TConstArrayView<uint8> Data, int32 Hierar
 bool KyaG3D::ReadHierarchyWorldMatrix(TConstArrayView<uint8> Data, int32 HierarchyOffset, FMatrix& OutMatrix)
 {
     return ReadBackgroundWorldMatrix(Data, HierarchyOffset, {}, FVector::ZeroVector, OutMatrix);
+}
+
+bool KyaG3D::ReadSectorSceneHierarchies(TConstArrayView<uint8> Data,
+    TConstArrayView<uint8> AnimationData, TArray<int32>& OutOffsets)
+{
+    OutOffsets.Reset();
+    TArray<int32> Hierarchies;
+    if (!ReadHierarchyOffsets(Data, Hierarchies)) return false;
+    auto U32 = [](TConstArrayView<uint8> Bytes, int32 P) { uint32 V; FMemory::Memcpy(&V, Bytes.GetData() + P, 4); return V; };
+    auto U64 = [](TConstArrayView<uint8> Bytes, int32 P) { uint64 V; FMemory::Memcpy(&V, Bytes.GetData() + P, 8); return V; };
+    TSet<uint64> RootHashes;
+    RootHashes.Add(0x43494d414e5944ULL); // DYNAMIC: CSector::Init installs this root independently.
+    if (!AnimationData.IsEmpty())
+    {
+        if (AnimationData.Num() < 16 || U32(AnimationData, 0) != 0x52484e41) return false;
+        const uint32 Count = U32(AnimationData, 8);
+        if (Count > uint32((AnimationData.Num() - 16) / 4)) return false;
+        for (uint32 I = 0; I < Count; ++I)
+        {
+            const uint32 P = U32(AnimationData, 16 + I * 4);
+            if (P < 16 + Count * 4 || AnimationData.Num() < 56 || P > uint32(AnimationData.Num() - 56)) return false;
+            RootHashes.Add(U64(AnimationData, int32(P)));
+        }
+    }
+    TSet<int32> Roots;
+    TArray<FKyaG3DChunk> Chunks;
+    if (!ReadChunks(Data, Chunks)) return false;
+    const FKyaG3DChunk* Hall = Chunks.FindByPredicate([](const FKyaG3DChunk& C) { return C.Tag == 0x4c4c4148; });
+    if (!Hall) return false;
+    for (int32 I = 0; I < Hierarchies.Num(); ++I)
+        if (RootHashes.Contains(U64(Data, Hall->Offset + 32 + I * 16))) Roots.Add(Hierarchies[I]);
+    TArray<int32> Result;
+    for (int32 H : Hierarchies)
+    {
+        int32 Current = H;
+        TSet<int32> Seen;
+        while (Current != INDEX_NONE)
+        {
+            if (!Hierarchies.Contains(Current) || Seen.Contains(Current)) return false;
+            if (Roots.Contains(Current)) { Result.Add(H); break; }
+            Seen.Add(Current);
+            const uint32 Parent = U32(Data, Current + 0x90);
+            if (Parent > uint32(MAX_int32 - 16)) return false;
+            Current = Parent ? int32(Parent + 16) : INDEX_NONE;
+        }
+    }
+    OutOffsets = MoveTemp(Result);
+    return true;
 }

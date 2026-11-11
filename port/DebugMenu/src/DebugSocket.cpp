@@ -15,6 +15,7 @@
 #include "CameraViewManager.h"
 #include "ActorManager.h"
 #include "Actor.h"
+#include "ActorCheckpointManager.h"
 #include "SectorManager.h"
 #include "imgui.h"
 #include <algorithm>
@@ -157,6 +158,65 @@ namespace Debug::Socket
 				}
 				else if (command == "camera_reset") {
 					Camera::ResetFreeCamera();
+					Reply(client, response);
+				}
+				else if (command == "camera") {
+					const auto position = request.at("position");
+					edF32VECTOR4 pose = {};
+					pose.x = position.at(0).get<float>();
+					pose.y = position.at(1).get<float>();
+					pose.z = position.at(2).get<float>();
+					pose.w = 1.0f;
+					const float yaw = request.at("yaw").get<float>();
+					const float pitch = request.at("pitch").get<float>();
+					Camera::SetFreeCameraPose(pose, yaw, pitch);
+					response["camera_set"] = true;
+					response["camera_position"] = { pose.x, pose.y, pose.z };
+					response["camera_yaw"] = yaw;
+					response["camera_pitch"] = pitch;
+					Reply(client, response);
+				}
+				else if (command == "checkpoint") {
+					const std::string managerName = request.at("manager").get<std::string>();
+					const int checkpointIndex = request.at("index").get<int>();
+					CActorCheckpointManager* pManager = nullptr;
+					const auto* manager = CScene::_pinstance ? CScene::ptable.g_ActorManager_004516a4 : nullptr;
+					if (manager && manager->aActors)
+						for (int actorIndex = 0; actorIndex < manager->nbActors; ++actorIndex)
+						{
+							CActor* pActor = manager->aActors[actorIndex];
+							if (pActor && pActor->typeID == CHECKPOINT_MANAGER && managerName == pActor->name)
+							{
+								pManager = dynamic_cast<CActorCheckpointManager*>(pActor);
+								break;
+							}
+						}
+					if (!pManager) throw std::runtime_error("Checkpoint manager not found: " + managerName);
+					if (checkpointIndex < 0 || checkpointIndex >= pManager->checkpointCount)
+						throw std::runtime_error("Checkpoint index out of range");
+					const int sectorId = pManager->aCheckpoints[checkpointIndex].sectorId;
+					pManager->ActivateCheckpoint(checkpointIndex);
+					response["checkpoint_manager"] = managerName;
+					response["checkpoint_index"] = checkpointIndex;
+					response["checkpoint_sector"] = sectorId;
+					Reply(client, response);
+				}
+				else if (command == "actor_info") {
+					const std::string actorName = request.at("name").get<std::string>();
+					const auto* manager = CScene::_pinstance ? CScene::ptable.g_ActorManager_004516a4 : nullptr;
+					CActor* found = nullptr;
+					if (manager && manager->aActors)
+						for (int actorIndex = 0; actorIndex < manager->nbActors; ++actorIndex)
+						{
+							CActor* pActor = manager->aActors[actorIndex];
+							if (pActor && actorName == pActor->name) { found = pActor; break; }
+						}
+					if (!found) throw std::runtime_error("Actor not found: " + actorName);
+					response["actor_name"] = actorName;
+					response["actor_type"] = int(found->typeID);
+					response["actor_sector"] = found->sectorId;
+					response["actor_scale"] = { found->scale.x, found->scale.y, found->scale.z };
+					response["actor_position"] = { found->currentLocation.x, found->currentLocation.y, found->currentLocation.z };
 					Reply(client, response);
 				}
 				else if (command == "focus_actor") {

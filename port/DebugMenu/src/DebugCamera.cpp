@@ -355,6 +355,14 @@ namespace Debug::Camera {
 		SetFreeCameraInputEnabled(false);
 	}
 
+	void SetFreeCameraPose(const edF32VECTOR4& position, float yaw, float pitch)
+	{
+		if (!CCameraManager::_gThis) return;
+		ActivateFreeCamera(true);
+		pFreeCamera->SetPose(position, yaw, pitch);
+		SetFreeCameraInputEnabled(false);
+	}
+
 	static void DeactivateFreeCamera()
 	{
 		if (!pFreeCamera) {

@@ -21,7 +21,8 @@ sector_override = os.environ.get('KYA_CAPTURE_SECTORS')
 sector_directory = os.environ.get('KYA_CAPTURE_SECTOR_DIRECTORY',
                                   'G:/repos/Kya/assets/CDEURO/LEVEL/LEVEL_1')
 
-unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(level)
+if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(level):
+    raise RuntimeError('Could not load capture map %s; refusing to capture the default scene' % level)
 world = unreal.EditorLevelLibrary.get_editor_world()
 actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 preview_class = unreal.load_class(None, '/Script/KyaLevel.KyaLevelPreview')
@@ -37,6 +38,7 @@ raw_color = os.environ.get('KYA_CAPTURE_RAW_COLOR', '1') == '1'
 preview.set_editor_property('raw_color_modulation', raw_color)
 preview.set_editor_property('texture_only_actor_index', int(os.environ.get('KYA_CAPTURE_TEXTURE_ONLY_ACTOR', '-1')))
 preview.set_editor_property('show_waypoints', False)
+preview.set_editor_property('preview_base_sector', int(metadata.get('base_sector', -1)))
 preview.set_editor_property('show_all_actor_meshes', os.environ.get('KYA_CAPTURE_ACTORS', '1') == '1')
 preview.set_editor_property('show_background_meshes', os.environ.get('KYA_CAPTURE_BACKGROUND', '1') == '1')
 preview.set_editor_property('show_cluster_meshes', os.environ.get('KYA_CAPTURE_CLUSTERS', '1') == '1')
@@ -111,6 +113,10 @@ camera_component.set_editor_property('aspect_ratio', metadata['width'] / metadat
 camera_component.set_editor_property('constrain_aspect_ratio', True)
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).pilot_level_actor(capture_camera)
 preview.set_background_camera_position(location)
+preview.set_editor_property('sprite_camera_forward', unreal.Vector(*camera['forward']))
+preview.set_editor_property('sprite_camera_up', unreal.Vector(*camera['up']))
+preview.set_preview_camera(location, forward, up, math.degrees(camera['horizontal_fov_radians']),
+                           metadata['width'], metadata['height'])
 if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER') == '1':
     unreal.SystemLibrary.execute_console_command(world, 'Kya.ViewportTonemapper 0')
 unreal.EditorLevelLibrary.editor_invalidate_viewports()

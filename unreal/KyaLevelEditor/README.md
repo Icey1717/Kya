@@ -5,7 +5,8 @@ the original bytes are retained. The initial scene configuration, collision bank
 values, animation allocation count, actor class allocations, and the scene's
 initial fog, clipping, mipmap settings and basic main camera fields can be edited on
 the asset and exported to an uncompressed bank. Array sizes are fixed. The export path is
-experimental and has not yet been verified in the game. Assets imported before
+experimental; a fixed-size actor scale edit has been verified in the running game,
+while count- or size-changing edits are rejected. Assets imported before
 the scene and actor Create fields were expanded must be reimported to populate
 the new fixed-size arrays before export. Moving-platform actors expose typed
 weight, carried-actor, zone, no-friction, camera/notification, sound and
@@ -74,10 +75,23 @@ A preview warns with `KYA_PREVIEW_STALE_SCHEMA` when its bank predates the curre
 schema; reimport the bank to refresh typed data. The bank also exposes the level's light
 archive (sun, spot and torch entries) and `Apply Actor Lighting` relights actor models from
 the sun entries using each strip's stored model normals, transformed by the hierarchy and
-actor placement. Strips without stored normals keep their baked vertex colours. `Show Background Meshes` and
-`Show Cluster Meshes` isolate those layers for inspection. Level geometry never alpha-blends: all
-level 1 cluster and background strips use disabled blend (`ABE=0`), so opaque/masked
-materials are faithful for this content.
+actor placement. Strips without stored normals keep their baked vertex colours. `Show Background Meshes`,
+`Show Cluster Meshes` and `Show Sprites` isolate those layers for inspection. Sprites use the prepared
+packet centers, UVs, colours and width/height data stored in the cluster, expanded with
+`Sprite Camera Forward` and `Sprite Camera Up`. Level 1's sector 2 and 4 sprite packets
+use alpha-tested opaque materials (`ABE=0`); no additive or blended sprite materials are
+present in those sectors. Hierarchy type-3 background objects are also inspected:
+the fixed sun flare configured by native `SetupBackground` is projected at the
+current camera and composited with the native tint and 16-by-16 depth-visibility
+marker. Such sprites need not have a `SPR.` chunk. Additive mesh materials use
+the strip GIF primitive's ABE bit (bit 6) and GS `ALPHA` register (`0x42`), including
+the source-alpha or fixed blend selector. `ALPHA=0x48` uses source alpha; its
+stored FIX value is unused. Level 1's sector 1 background contains three strips
+using an additive material; these are not ordinary opaque surfaces.
+Sector scene instances are submitted separately from CSTA references: the
+`DYNAMIC` root and its children, plus roots referenced by the ANHR entry. Sector
+1 has eleven ray strips and ten tree strips on this path. These scene instances
+use their hierarchy transforms; animated trees currently show their stored pose.
 The editor generates a basic unlit texture material with vertex-colour modulation automatically. By default it
 combines texture and vertex colours in the game's encoded colour space and then decodes the product for Unreal's
 linear output; this reproduces the game's vertex shading much more closely than Unreal's normal sRGB sampling.
@@ -85,7 +99,7 @@ Disable `Game Colour Space` only to compare against Unreal's own conversion. To 
 assign `Texture Material` a material with a Texture2D parameter named `KyaTexture`.
 Supported
 indexed and direct-colour textures on main and sector backgrounds are decoded automatically when supported; unsupported
-materials and unsupported cluster geometry remain untextured and use their vertex colours. Supported cluster strips resolve sector and common textures. Sprites and some scene geometry
+materials and unsupported cluster geometry remain untextured and use their vertex colours. Supported cluster strips resolve sector and common textures. General sprite lighting/blending and some scene geometry
 are missing, and the preview is not a faithful level render. The runtime module is separated from editor tooling so that level
 data and rendering can also be used by a future playable Unreal project.
 
@@ -146,6 +160,18 @@ capture, save a game screenshot with `python tools/debug_socket/client.py screen
 that JSON file, then run `Tools/capture_matched_view.py` in Unreal. The script
 loads the sector IDs reported by the game, importing missing sector assets
 without saving them. Set `KYA_CAPTURE_ACTORS=0` to inspect level geometry alone.
+The script also copies the recorded camera's forward and up vectors into
+`Sprite Camera Forward`/`Sprite Camera Up` so captured sprites face the camera.
+`Tools/capture_scene_offscreen.py` renders the same metadata through an
+off-screen `SceneCapture2D` and works while the editor is backgrounded. It sets
+manual exposure; `KYA_CAPTURE_DISABLE_TONEMAPPER=1` also disables tone mapping,
+eye adaptation, colour grading and bloom for colour comparisons. Both capture
+scripts explicitly set the preview camera and render dimensions for background
+following and fixed-size flares. Set `KYA_CAPTURE_SPRITES=0` in the off-screen
+script to isolate the scene without sprites or the background flare.
+`KYA_CAPTURE_VERIFY_OMISSIONS=1` additionally writes captures with flares disabled,
+additive coefficients zeroed, an explicit 1,000,000-metre draw range, and forced
+visible/occluded flare markers. These are diagnostic controls, not saved asset changes.
 If the loaded bank has no imported actors (a stale asset), the script reimports `LEVEL.BNK`
 into `/Game/__KyaCapture` for the capture.
 The script removes existing `KyaLevelPreview` actors from the loaded map before it spawns the
@@ -158,11 +184,30 @@ still differ in rendering, resolution and dynamic scene state. Run
 `python Tools/compare_capture_colors.py <game.png> <capture.png> [...]` to print
 whole-frame mean RGB, mean absolute error and RMS against the game capture.
 
-When the scene background flag enables camera following, the preview updates
+Each sector background uses its own CSBS background flags; the common background
+uses the scene flags. Sector 1 is fixed even though Level 1's common flag is set.
+When a background flag enables camera following, the preview updates
 the relevant background hierarchy vertices using the current level-editing
 viewport camera. A fixed-background hierarchy remains in place. This uses one
 editor camera for the preview, so simultaneous viewports do not each get an
 independent background transform.
+`SetPreviewCamera` supplies an explicit camera for captures and prevents the
+editor viewport from overwriting it; spawn a new preview to resume viewport following.
+
+`Preview Base Sector` selects the sector's native clipping distance (or defaults
+to the first sector bank). Cluster objects and strips use native sphere tests,
+including the far-only parent intersection exception, and distance-based hierarchy
+LOD selection. This differs from setting an Unreal per-pixel far plane. Background
+geometry keeps its independent native range. Generated textures preserve the
+material's clamp/repeat addressing.
+
+Additive and source-alpha meshes match encoded-colour blending against Unreal's opaque scene
+colour. Overlapping translucent surfaces still use Unreal's translucency ordering
+and scene-colour copy, so arbitrary GS blend equations and layered translucency
+are not fully reproduced. The fixed flare uses the native main scene's default
+depth projection; custom native near/far or depth-range settings are not imported.
+`Native Surface Size` controls GS flare sizing independently of framebuffer
+resolution: 512 by 512 for PAL, or 512 by 448 for NTSC.
 
 ## Validation
 
