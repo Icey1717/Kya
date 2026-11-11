@@ -69,6 +69,14 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
     int32 PreviewActorIndex = -1;
 
+    /** Optional native capture basis X/Y/Z and translation in game coordinates. */
+    UPROPERTY(EditAnywhere, Transient, Category="Kya|Actors")
+    TArray<FVector> PreviewActorNativeTransform;
+
+    /** Bank actor index whose textured strips bypass RGB modulation for capture. */
+    UPROPERTY(EditAnywhere, Category="Kya|Actors", meta=(ClampMin="-1"))
+    int32 TextureOnlyActorIndex = -1;
+
     /** Experimental static model preview using the actor's initial class transform. */
     /** Render the common and sector background meshes. */
     UPROPERTY(EditAnywhere, Category="Kya|Visibility")

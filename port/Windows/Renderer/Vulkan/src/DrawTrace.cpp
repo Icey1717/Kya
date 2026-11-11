@@ -70,6 +70,10 @@ bool Retired(const Source& source) {
 bool Matches(const Source& source, const Submission& submission) {
     if (Retired(source) || Retired(active.source)) return false;
     if (active.match == Match::Source) return SameSource(source, active.source);
+    if (active.match == Match::Actor)
+        return source.generation == active.source.generation &&
+            source.owner && source.owner == active.source.owner &&
+            source.ownerIndex == active.source.ownerIndex && source.scene == active.source.scene;
     return source.generation == active.source.generation && source.kind == active.source.kind &&
         submission.assetKey == active.assetKey;
 }
@@ -117,7 +121,7 @@ Status GetStatus() { std::lock_guard lock(mutex); return {pending, capturing, re
 
 void AdvanceFrame() {
     std::lock_guard lock(mutex);
-    lastMatches = matches;
+    lastMatches = active.action == requested.action && active.source.id == requested.source.id ? matches : 0;
     matches = 0;
     frameDraw = 0;
     // Store lightweight identities for safe UI actions, not live game pointers.
@@ -282,13 +286,13 @@ bool Record(uint64_t submissionId, Draw draw) {
     std::lock_guard lock(mutex);
     auto it = submissionIndices.find(submissionId);
     // Missing provenance or exhausted capture storage must not bypass a scene cutoff.
-    if (it == submissionIndices.end()) return active.action != Action::DrawUpTo;
+    if (it == submissionIndices.end()) return active.action != Action::DrawUpTo && active.action != Action::IsolateBindPose;
     draw.order = ++frameDraw;
     const auto& submission = working.submissions[it->second];
     const auto* source = FindSource(submission.sourceId);
     const bool match = active.action == Action::DrawUpTo ? draw.order <= active.drawLimit : source && Matches(*source, submission);
     if (match && active.action != Action::None) ++matches;
-    const bool suppress = (active.action == Action::DrawUpTo && !match) || (source &&
+    const bool suppress = ((active.action == Action::DrawUpTo || active.action == Action::IsolateBindPose) && !match) || (source &&
         ((active.action == Action::Hide && match) || (active.action == Action::Isolate && !match)));
     if (capturing && Reserve(sizeof(Draw))) {
         draw.id = ++nextDraw;
@@ -298,6 +302,18 @@ bool Record(uint64_t submissionId, Draw draw) {
         working.draws.push_back(draw);
     }
     return !suppress;
+}
+
+Action GetActorCaptureOverride(uint64_t submissionId) {
+    if (!submissionId) return Action::None;
+    std::lock_guard lock(mutex);
+    if (active.action != Action::BindPose && active.action != Action::BindPoseTextureOnly &&
+        active.action != Action::IsolateBindPose) return Action::None;
+    const auto it = submissionIndices.find(submissionId);
+    if (it == submissionIndices.end()) return Action::None;
+    const auto& submission = working.submissions[it->second];
+    const auto* source = FindSource(submission.sourceId);
+    return source && Matches(*source, submission) ? active.action : Action::None;
 }
 
 bool Highlight(uint64_t submissionId, Source& source) {
@@ -334,6 +350,7 @@ void SetOverride(const Source& source, const Submission* submission, Action acti
     std::lock_guard lock(mutex);
     if (action == Action::DrawUpTo || source.generation != generation || Retired(source) || (match == Match::Asset && !submission)) return;
     requested = {};
+    lastMatches = 0;
     requested.source = source; requested.action = action; requested.match = match;
     requested.assetKey = submission ? submission->assetKey : 0;
 }
@@ -348,5 +365,5 @@ void SetDrawLimit(const Snapshot& snapshot, const Draw& draw) {
     requested.action = Action::DrawUpTo;
     requested.drawLimit = found->order;
 }
-void ClearOverrides() { std::lock_guard lock(mutex); requested = {}; }
+void ClearOverrides() { std::lock_guard lock(mutex); requested = {}; lastMatches = 0; }
 }

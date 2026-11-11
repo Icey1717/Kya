@@ -37,6 +37,28 @@ namespace Debug {
 	bool GetShowCameraWindow() { return gShowCameraWindow; }
 	void SetShowCameraWindow(bool show) { gShowCameraWindow = show; }
 
+	bool IsSimulationPaused() {
+		const auto* timer = GetTimer();
+		return timer && timer->timeScale <= gMinisculeTimeScale;
+	}
+
+	bool SetSimulationPaused(bool paused) {
+		auto* timer = GetTimer();
+		if (!timer) return false;
+		if (!gStepFramesPending && timer->timeScale > gMinisculeTimeScale)
+			gResumeTimeScale = timer->timeScale;
+		gStepFramesPending = 0;
+		if (gResumeTimeScale <= gMinisculeTimeScale) gResumeTimeScale = 1.0f;
+		timer->timeScale = paused ? 0.0f : gResumeTimeScale;
+		return true;
+	}
+
+	bool StepSimulationFrame() {
+		if (!IsSimulationPaused() || !SetSimulationPaused(false)) return false;
+		gStepFramesPending = 1;
+		return true;
+	}
+
 	void UpdateSingleStepState() {
 		if (gStepFramesPending <= 0) {
 			return;
@@ -45,7 +67,7 @@ namespace Debug {
 		--gStepFramesPending;
 		if (gStepFramesPending == 0) {
 			if (auto* pTimer = GetTimer(); pTimer != nullptr) {
-				pTimer->timeScale = gMinisculeTimeScale;
+				pTimer->timeScale = 0.0f;
 			}
 		}
 	}
@@ -134,19 +156,14 @@ namespace Debug {
 				}
 
 				if (ImGui::SmallButton(bPaused ? "Unpause" : "Pause")) {
-					if (bPaused) {
-						if (gResumeTimeScale <= gMinisculeTimeScale) {
-							gResumeTimeScale = 1.0f;
-						}
-						pTimer->timeScale = gResumeTimeScale;
-					}
-					else {
-						if (pTimer->timeScale > gMinisculeTimeScale) {
-							gResumeTimeScale = pTimer->timeScale;
-						}
-						pTimer->timeScale = gMinisculeTimeScale;
-					}
-					bPaused = pTimer->timeScale <= gMinisculeTimeScale;
+					SetSimulationPaused(!bPaused);
+					bPaused = IsSimulationPaused();
+				}
+
+				if (bPaused) {
+					ImGui::SameLine();
+					// The toolbar is rendered before this frame's submission callback.
+					if (ImGui::SmallButton("Step Frame") && StepSimulationFrame()) gStepFramesPending = 2;
 				}
 
 				ImGui::SameLine();

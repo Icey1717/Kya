@@ -11,8 +11,8 @@ using Address = uintptr_t;
 using Name = std::array<char, 256>;
 using Matrix = std::array<float, 16>;
 enum class Kind { Strip, Sprite, Native };
-enum class Action { None, Hide, Isolate, Highlight, DrawUpTo };
-enum class Match { Source, Asset };
+enum class Action { None, Hide, Isolate, Highlight, DrawUpTo, BindPose, BindPoseTextureOnly, IsolateBindPose };
+enum class Match { Source, Asset, Actor };
 
 struct Source {
     uint64_t id = 0, generation = 0;
@@ -39,6 +39,12 @@ struct Submission {
     uint32_t flags = 0, primitive = 0, modelIndex = 0, animationIndex = 0, lightingIndex = 0, animStIndex = 0;
     uint32_t globalAlpha = 0;
     Matrix model{};
+    uint32_t stripFlags = 0;
+    std::array<float, 4> lightAmbient{};
+    Matrix lightDirections{}, lightColors{};
+    std::array<uint32_t, 4> firstVertexColor{};
+    std::array<float, 3> firstVertexNormal{};
+    uint32_t firstVertexFlags = 0;
 };
 struct Draw {
     uint64_t id = 0, submissionId = 0;
@@ -123,6 +129,7 @@ uint64_t Submit(Submission submission, Address nativeMesh = 0);
 // Returns whether this draw should be emitted. Recorded copies get distinct IDs.
 bool Record(uint64_t submissionId, Draw draw);
 bool Highlight(uint64_t submissionId, Source& source);
+Action GetActorCaptureOverride(uint64_t submissionId);
 void SetOverride(const Source& source, const Submission* submission, Action action, Match match);
 void SetDrawLimit(const Snapshot& snapshot, const Draw& draw);
 void ClearOverrides();

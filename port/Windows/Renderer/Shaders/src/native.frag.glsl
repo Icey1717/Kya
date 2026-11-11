@@ -87,6 +87,10 @@ void main()
 
 	// Combine texture color with fragment color
 	outColor = fragColor * textureColor / (128.0 / 255.0);
+	// Actor capture override keeps GS alpha testing and blending inputs intact.
+	if ((perDrawData.renderFlags & 0x80000000u) != 0) {
+		outColor.rgb = textureColor.rgb;
+	}
 	if (perDrawData.frameBufferMode == 2) {
 		// GS DECAL with TCC enabled takes both RGB and alpha from the texture.
 		outColor = textureColor;

@@ -105,3 +105,82 @@ Pop-Location
 ```
 
 Run that test alone; it requires an interactive desktop and Vulkan.
+
+## Matched actor scene captures
+
+Once the listener is enabled, the native workflow can run through the socket.
+Pause and request a draw capture, then poll `status` until
+`draw_capture_pending` is false before listing actors:
+
+```powershell
+python tools/debug_socket/client.py pause
+python tools/debug_socket/client.py capture_draws
+python tools/debug_socket/client.py status
+python tools/debug_socket/client.py actors
+```
+
+Use the actor's returned `index` in `focus_actor --actor <index>` if you want the
+debug camera to frame it. Apply `actor_override --actor <index> --mode bind_pose`
+or `--mode texture_only`. Poll `status` until `actor_override_matches` is greater
+than zero before requesting a screenshot. Run `step` while paused to advance one
+frame and poll until `simulation_paused` is true again. To restore gameplay,
+run `actor_override --mode none`, `camera_reset` if you used focus, and `resume`.
+Use `--mode isolate_bind_pose` to suppress other scene draws while preserving
+the selected actor's native lighting.
+
+The JSON protocol uses the same command names, with integer `actor` and string
+`mode` fields where applicable. The index returned by `actors` is a native
+runtime index. Unreal's texture-only setting takes the index in the imported bank.
+
+In the game's debug toolbar, use **Pause** to set the simulation time scale to
+zero. **Step Frame** advances one frame at the previous time scale and pauses
+again. The game keeps rendering and servicing screenshot requests. Systems
+that update independently of the simulation time scale can still advance.
+
+In **Draw Inspector**, capture a frame, select one of the actor's draws, and
+choose **Actor bind pose**. This bypasses rigid skinning for that actor's scene
+draws. Use **Actor bind pose + texture only** to also bypass RGB modulation on
+its textured draws. Both modes retain the scene camera, material bindings, and
+alpha handling. The **Draw overrides** window shows the number of matching
+draws and lets you clear the override.
+
+After the matching draw count is visible, save the scene and its camera data
+from the repository root:
+
+```powershell
+python tools/debug_socket/client.py screenshot --output out/screenshots/actor-native.png --metadata out/screenshots/actor-native.json
+```
+
+Use that metadata with the Unreal plugin's `Tools/capture_matched_view.py`
+via `KYA_CAMERA_METADATA`. Set `KYA_CAPTURE_TEXTURE_ONLY_ACTOR` to the Unreal
+bank actor index for the texture-only comparison. The default is `-1`, which
+keeps normal vertex modulation on all actors.
+
+### How the bind pose works
+
+The native mesh already contains positions and normals in its stored rest pose.
+The vertex shader normally applies the current bone matrix to both when the
+strip has rigid animation enabled (`stripFlags & 0x10000`). The draw override
+matches the runtime actor that owns each submission and clears that bit on the
+matching draw's copy of the flags. The shader then uses the stored positions
+and normals directly. The draw keeps its object-to-world matrix, material,
+alpha handling, and resolved scene light packet.
+
+`isolate_bind_pose` also suppresses other scene draws. `texture_only` uses the
+same rest pose and samples texture RGB directly on textured draws, which helps
+separate texture and display color differences from vertex lighting.
+
+For an isolated Unreal comparison, apply `isolate_bind_pose`, wait for
+`actor_override_matches` to become positive, and request a fresh `capture_draws`.
+Once it finishes, save the actor draw data and screenshot as close together as
+possible. Replace `439` with the runtime index returned by `actors`.
+
+```powershell
+python tools/debug_socket/client.py actor_lighting --actor 439 --metadata out/screenshots/actor-draws.json
+python tools/debug_socket/client.py screenshot --output out/screenshots/actor-native.png --metadata out/screenshots/actor-native.json
+python -c "import json; from pathlib import Path; p = Path('out/screenshots/actor-native.json'); m = json.loads(p.read_text(encoding='utf-8')); m['actor_capture'] = json.loads(Path('out/screenshots/actor-draws.json').read_text(encoding='utf-8')); p.write_text(json.dumps(m, indent=2), encoding='utf-8')"
+```
+
+The screenshot and draw trace are separate requests. Check the screenshot's
+`frame` against `actor_capture.draw_capture_frame` when the actor or camera can
+move during the capture, such as in a cutscene.

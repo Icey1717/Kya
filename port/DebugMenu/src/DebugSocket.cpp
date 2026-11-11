@@ -3,6 +3,9 @@
 
 #include "DebugSocket.h"
 #include "DebugMenu.h"
+#include "DebugMenuToolbar.h"
+#include "DebugCamera.h"
+#include "DrawTrace.h"
 #include "DebugSetting.h"
 #include "DebugSaveScreenshot.h"
 #include "DebugMeshViewer.h"
@@ -10,12 +13,15 @@
 #include "VulkanRenderer.h"
 #include "Native/NativeRenderer.h"
 #include "CameraViewManager.h"
+#include "ActorManager.h"
+#include "Actor.h"
 #include "SectorManager.h"
 #include "imgui.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <deque>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -104,6 +110,14 @@ namespace Debug::Socket
 				nlohmann::json response = { {"ok", true}, {"id", id}, {"protocol", 1},
 					{"pid", GetCurrentProcessId()}, {"frame", frame}, {"offscreen", Renderer::IsRenderingOffscreen()},
 					{"width", extent.width}, {"height", extent.height} };
+				namespace Trace = Renderer::DrawTrace;
+				const auto drawStatus = Trace::GetStatus();
+				response["simulation_paused"] = IsSimulationPaused();
+				response["draw_capture_pending"] = drawStatus.pending || drawStatus.capturing;
+				response["actor_override_matches"] = drawStatus.matches;
+				response["actor_override"] = drawStatus.action == Trace::Action::BindPose ? "bind_pose" :
+					drawStatus.action == Trace::Action::BindPoseTextureOnly ? "texture_only" :
+					drawStatus.action == Trace::Action::IsolateBindPose ? "isolate_bind_pose" : "none";
 				if (const CCameraManager* camera = CCameraManager::_gThis) {
 					const auto& transform = camera->displayTransformMatrix;
 					response["camera"] = {
@@ -126,6 +140,105 @@ namespace Debug::Socket
 					for (int i = 0; sectors->aSectors && i < sectors->nbSectors; ++i) addSector(sectors->aSectors[i]);
 				}
 				if (command == "status") {
+					Reply(client, response);
+				}
+				else if (command == "pause" || command == "resume" || command == "step") {
+					if (command == "step") {
+						if (!StepSimulationFrame()) throw std::runtime_error("Pause simulation before stepping");
+					}
+					else if (!SetSimulationPaused(command == "pause")) throw std::runtime_error("Simulation timer unavailable");
+					response["simulation_paused"] = IsSimulationPaused();
+					Reply(client, response);
+				}
+				else if (command == "capture_draws") {
+					Trace::RequestCapture(false);
+					response["draw_capture_pending"] = true;
+					Reply(client, response);
+				}
+				else if (command == "camera_reset") {
+					Camera::ResetFreeCamera();
+					Reply(client, response);
+				}
+				else if (command == "focus_actor") {
+					const int index = request.at("actor").get<int>();
+					const auto* manager = CScene::_pinstance ? CScene::ptable.g_ActorManager_004516a4 : nullptr;
+					CActor* actor = manager && manager->aActors && index >= 0 && index < manager->nbActors
+						? manager->aActors[index] : nullptr;
+					if (!actor || !CCameraManager::_gThis)
+						throw std::runtime_error("Actor or camera is no longer available");
+					Camera::FocusActor(actor);
+					response["actor"] = index;
+					Reply(client, response);
+				}
+				else if (command == "actors" || command == "actor_override" || command == "actor_lighting") {
+					const auto snapshot = Trace::GetSnapshot();
+					if (command == "actor_override" && request.at("mode") == "none") {
+						Trace::ClearOverrides();
+						response["actor_override"] = "none";
+						response["actor_override_matches"] = 0;
+					}
+					else {
+						if (drawStatus.pending || drawStatus.capturing || !snapshot || snapshot->generation != drawStatus.generation)
+							throw std::runtime_error("Request capture_draws and wait for draw_capture_pending to clear");
+						response["draw_capture_frame"] = snapshot->frame;
+						if (command == "actors") {
+							std::map<int, const Trace::Source*> actors;
+							for (const auto& source : snapshot->sources)
+								if (source.flushed && source.owner && source.ownerIndex >= 0)
+									actors.try_emplace(source.ownerIndex, &source);
+							response["actors"] = nlohmann::json::array();
+							for (const auto& [index, source] : actors)
+								response["actors"].push_back({{"index", index}, {"name", source->ownerName.data()},
+									{"type", source->ownerType}, {"sector", source->sector}});
+							response["draw_capture_truncated"] = snapshot->truncated;
+						}
+						else {
+							const int index = request.at("actor").get<int>();
+							const auto source = std::find_if(snapshot->sources.begin(), snapshot->sources.end(), [&](const auto& candidate) {
+								return candidate.flushed && candidate.owner && candidate.ownerIndex == index && Trace::IsSourceLive(candidate);
+							});
+							if (index < 0 || source == snapshot->sources.end())
+								throw std::runtime_error("Actor has no live draw in the capture");
+							if (command == "actor_lighting") {
+								const auto* manager = CScene::_pinstance ? CScene::ptable.g_ActorManager_004516a4 : nullptr;
+								const CActor* actor = manager && manager->aActors && index < manager->nbActors ? manager->aActors[index] : nullptr;
+								if (actor && reinterpret_cast<uintptr_t>(actor) == source->owner) {
+									response["actor_position"] = {actor->currentLocation.x, actor->currentLocation.y, actor->currentLocation.z};
+									response["actor_lighting_flags"] = actor->lightingFlags;
+									response["actor_lighting_multiplier"] = actor->lightingFloat_0xe0;
+									response["actor_ground_light"] = actor->field_0xf4;
+								}
+								response["submissions"] = nlohmann::json::array();
+								std::map<uint64_t, const Trace::Draw*> draws;
+								for (const auto& draw : snapshot->draws)
+									if (draw.recorded) draws.try_emplace(draw.submissionId, &draw);
+								for (const auto& submission : snapshot->submissions) {
+									const auto owner = std::find_if(snapshot->sources.begin(), snapshot->sources.end(),
+										[&](const auto& candidate) { return candidate.id == submission.sourceId; });
+									if (owner == snapshot->sources.end() || owner->owner != source->owner) continue;
+									const auto draw = draws.find(submission.id);
+									response["submissions"].push_back({{"mesh", submission.mesh.data()},
+										{"texture", draw == draws.end() ? "" : draw->second->texture.data()},
+										{"model", submission.model},
+										{"render_flags", submission.flags}, {"strip_flags", submission.stripFlags},
+										{"ambient", submission.lightAmbient}, {"directions", submission.lightDirections},
+										{"colors", submission.lightColors}, {"first_vertex_color", submission.firstVertexColor},
+										{"first_vertex_normal", submission.firstVertexNormal}, {"first_vertex_flags", submission.firstVertexFlags}});
+								}
+							}
+							else {
+								const auto mode = request.at("mode").get<std::string>();
+								if (mode != "bind_pose" && mode != "texture_only" && mode != "isolate_bind_pose")
+									throw std::runtime_error("Unknown actor override mode: " + mode);
+								const auto action = mode == "bind_pose" ? Trace::Action::BindPose :
+									mode == "texture_only" ? Trace::Action::BindPoseTextureOnly : Trace::Action::IsolateBindPose;
+								Trace::SetOverride(*source, nullptr, action, Trace::Match::Actor);
+								response["actor_override"] = mode;
+								response["actor_override_matches"] = 0;
+							}
+							response["actor"] = index;
+						}
+					}
 					Reply(client, response);
 				}
 				else if (command == "screenshot") {
@@ -169,7 +282,7 @@ namespace Debug::Socket
 			if (boundPort) ImGui::Text("Listening on 127.0.0.1:%u (%zu clients)", boundPort, clients.size());
 			else ImGui::TextUnformatted("Stopped");
 			if (!lastError.empty()) ImGui::TextWrapped("%s", lastError.c_str());
-			ImGui::TextWrapped("Commands: status, screenshot (target: game or mesh). Enable Render When Minimized to service requests while minimized. Screenshots exclude the debug overlay.");
+			ImGui::TextWrapped("Commands: status, screenshot, pause, resume, step, capture_draws, actors, actor_override, focus_actor, camera_reset. Enable Render When Minimized to service requests while minimized.");
 			ImGui::Separator();
 			ImGui::Text("Connections: %llu   Completed: %llu   Errors: %llu   Dropped: %llu   Sent: %.1f KiB",
 				connections, completed, errors, dropped, double(bytesSent) / 1024.0);
@@ -223,7 +336,10 @@ namespace Debug::Socket
 
 		void Init()
 		{
-			Renderer::GetFrameSubmittedDelegate() += Poll;
+			Renderer::GetFrameSubmittedDelegate() += [] {
+				UpdateSingleStepState();
+				Poll();
+			};
 			Renderer::GetCleanupDelegate() += Stop;
 			if (enabled.get()) Start(static_cast<uint16_t>(std::clamp(configuredPort.get(), 1, 65535)));
 		}

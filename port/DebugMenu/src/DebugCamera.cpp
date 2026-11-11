@@ -322,7 +322,7 @@ namespace Debug::Camera {
 		SetFreeCameraInputCapture(bEnable);
 	}
 
-	static void ActivateFreeCamera()
+	static void ActivateFreeCamera(bool force = false)
 	{
 		if (pFreeCamera) {
 			return;
@@ -335,7 +335,7 @@ namespace Debug::Camera {
 			pFreeCamera->SetPositionFromCamera(pActiveCamera);
 		}
 
-		CCameraManager::_gThis->PushCamera(pFreeCamera, 0);
+		CCameraManager::_gThis->PushCamera(pFreeCamera, force ? 1 : 0);
 		gFreeCameraInputEnabled = true;
 		pFreeCamera->SetInputEnabled(true);
 		SetFreeCameraInputCapture(true);
@@ -344,7 +344,12 @@ namespace Debug::Camera {
 	void FocusActor(CActor* actor)
 	{
 		if (!actor || !CCameraManager::_gThis) return;
-		ActivateFreeCamera();
+		auto* manager = CCameraManager::_gThis;
+		if (pFreeCamera && manager->pActiveCamera != pFreeCamera) {
+			manager->PopCamera(pFreeCamera);
+			manager->PushCamera(pFreeCamera, 1);
+		}
+		ActivateFreeCamera(true);
 		pFreeCamera->FocusPoint(actor->sphereCentre, actor->otherSectionStart.boundingSphere.w);
 		// Keep the UI usable after focusing; F9 explicitly captures camera input.
 		SetFreeCameraInputEnabled(false);
@@ -373,6 +378,11 @@ namespace Debug::Camera {
 		// Make sure the existing bActive state is cleared so the old
 		// "Debug Camera" checkbox doesn't think the cursor is still locked.
 		bActive = false;
+	}
+
+	void ResetFreeCamera()
+	{
+		if (CCameraManager::_gThis) DeactivateFreeCamera();
 	}
 
 	static void HandleFreeCameraHotkeys()

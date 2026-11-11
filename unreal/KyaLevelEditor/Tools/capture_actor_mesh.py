@@ -7,11 +7,17 @@ Run from the Unreal Python console, or launch the editor with
 * ``KYA_CAPTURE_MAP``   map to load (default ``/Game/Empty``)
 * ``KYA_ACTOR_NAME``    actor name to isolate (default ``GRUNTNATIV``)
 * ``KYA_ACTOR_SHOTS``   number of orbit views (default ``4``)
+* ``KYA_ACTOR_SECTORS`` comma-separated sector asset paths for ground lighting
+* ``KYA_ACTOR_TEXTURE_ONLY`` set to ``1`` to bypass RGB vertex modulation
+* ``KYA_ACTOR_DISABLE_TONEMAPPER`` set to ``1`` to disable capture tone mapping
+* ``KYA_ACTOR_NATIVE_CAPTURE`` native screenshot JSON with camera and actor draw data
+* ``KYA_ACTOR_NATIVE_VIEW_HEIGHT`` height of the native picture excluding letterbox bars
 
 The preview hides level geometry and every other actor, so the capture matches
 the game's mesh viewer rather than a full scene. Screenshots are written to the
 editor's Saved/Screenshots/WindowsEditor directory.
 """
+import json
 import math
 import os
 import unreal
@@ -80,6 +86,26 @@ for model in actor.get_editor_property('models'):
     unreal.log('KYA_ACTOR_MODEL %s -> %s' % (
         model.get_editor_property('mesh_name'), model.get_editor_property('texture_name')))
 
+sector_assets = []
+for path in filter(None, os.environ.get('KYA_ACTOR_SECTORS', '').split(',')):
+    sector = unreal.load_asset(path.strip())
+    if sector is None:
+        raise RuntimeError('Missing sector asset %s' % path)
+    sector_assets.append(sector)
+preview.set_editor_property('sector_banks', sector_assets)
+native_metadata = None
+native_path = os.environ.get('KYA_ACTOR_NATIVE_CAPTURE')
+if native_path:
+    with open(native_path, encoding='utf-8') as metadata_file:
+        native_metadata = json.load(metadata_file)
+    submissions = native_metadata['actor_capture']['submissions']
+    model = submissions[0]['model']
+    if any(submission['model'] != model for submission in submissions):
+        raise RuntimeError('Native capture requires a common model matrix for all actor submissions')
+    preview.set_editor_property('preview_actor_native_transform', [
+        unreal.Vector(*model[offset:offset + 3]) for offset in range(0, 16, 4)])
+if os.environ.get('KYA_ACTOR_TEXTURE_ONLY') == '1':
+    preview.set_editor_property('texture_only_actor_index', index)
 preview.set_editor_property('bank', bank_asset)
 preview.set_editor_property('preview_actor_index', index)
 environment = bank_asset.get_editor_property('scene_environment')
@@ -98,17 +124,29 @@ target = to_unreal(position, 100.0) + unreal.Vector(0.0, 0.0, 110.0)
 distance = 480.0
 height = 40.0
 width, height_px = 1024, 768
+if native_metadata:
+    width = native_metadata['width']
+    height_px = int(os.environ.get('KYA_ACTOR_NATIVE_VIEW_HEIGHT', native_metadata['height']))
+    shot_count = 1
+disable_tonemapper = os.environ.get('KYA_ACTOR_DISABLE_TONEMAPPER') == '1'
+target_format = (unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB if disable_tonemapper
+                 else unreal.TextureRenderTargetFormat.RTF_RGBA8)
 render_target = unreal.RenderingLibrary.create_render_target2d(
-    world, width, height_px, unreal.TextureRenderTargetFormat.RTF_RGBA8,
+    world, width, height_px, target_format,
     unreal.LinearColor(0.0, 0.0, 0.0, 1.0))
 capture = unreal.EditorLevelLibrary.spawn_actor_from_class(
     unreal.SceneCapture2D, unreal.Vector(), unreal.Rotator())
 capture_component = capture.get_component_by_class(unreal.SceneCaptureComponent2D)
 capture_component.set_editor_property('texture_target', render_target)
 capture_component.set_editor_property('capture_source', unreal.SceneCaptureSource.SCS_FINAL_COLOR_LDR)
+if disable_tonemapper:
+    capture_component.set_editor_property('show_flag_settings', [
+        unreal.EngineShowFlagsSetting(show_flag_name='Tonemapper', enabled=False),
+    ])
 capture_component.set_editor_property('capture_every_frame', False)
 capture_component.set_editor_property('capture_on_movement', False)
-capture_component.set_editor_property('fov_angle', 40.0)
+capture_component.set_editor_property('fov_angle', math.degrees(
+    native_metadata['camera']['horizontal_fov_radians']) if native_metadata else 40.0)
 capture_component.set_editor_property('projection_type', unreal.CameraProjectionMode.PERSPECTIVE)
 unreal.log('KYA_ACTOR_CAPTURE target=%s shots=%d' % (target, shot_count))
 
@@ -121,11 +159,18 @@ strip_count = int(os.environ.get('KYA_ACTOR_STRIP_COUNT', '20'))
 
 
 def set_shot(shot):
-    yaw = math.radians(shot * (360.0 / shot_count))
-    location = unreal.Vector(target.x + math.sin(yaw) * distance,
-                             target.y - math.cos(yaw) * distance,
-                             target.z + height)
-    rotation = unreal.MathLibrary.find_look_at_rotation(location, target)
+    if native_metadata:
+        camera = native_metadata['camera']
+        location = to_unreal(unreal.Vector(*camera['position']), 100.0)
+        forward = to_unreal(unreal.Vector(*camera['forward']), 1.0)
+        up = to_unreal(unreal.Vector(*camera['up']), 1.0)
+        rotation = unreal.MathLibrary.make_rot_from_xz(forward, up)
+    else:
+        yaw = math.radians(shot * (360.0 / shot_count))
+        location = unreal.Vector(target.x + math.sin(yaw) * distance,
+                                 target.y - math.cos(yaw) * distance,
+                                 target.z + height)
+        rotation = unreal.MathLibrary.find_look_at_rotation(location, target)
     capture.set_actor_location(location, False, False)
     capture.set_actor_rotation(rotation, False)
     capture_component.capture_scene()

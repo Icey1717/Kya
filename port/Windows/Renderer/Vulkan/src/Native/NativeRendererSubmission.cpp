@@ -128,8 +128,45 @@ namespace Renderer
 				trace.lightingIndex = instance.perDrawData.lightingDataIndex;
 				trace.animStIndex = instance.perDrawData.animStDataIndex;
 				trace.globalAlpha = instance.perDrawData.globalAlpha;
+				trace.stripFlags = instance.perDrawData.stripFlags;
+				const auto& vertices = pMesh->GetVertexBufferData();
+				if (vertices.GetVertexTail() != 0) {
+					const auto& vertex = vertices.vertex.buff[0];
+					memcpy(trace.firstVertexColor.data(), vertex.RGBA, sizeof(vertex.RGBA));
+					if (pColors)
+						for (unsigned channel = 0; channel < 4; ++channel)
+							trace.firstVertexColor[channel] = (pColors[0] >> (channel * 8)) & 0xff;
+					trace.firstVertexFlags = vertex.XYZFlags.flags;
+					if (trace.stripFlags & 0x8000000u) {
+						auto normal = glm::make_vec3(vertex.normal.fNormal);
+						// Normal-bearing strips start their VU bone table at 0x3dc.
+						constexpr uint32_t animationBase = 0x3dc;
+						if ((trace.stripFlags & 0x10000u) && trace.firstVertexFlags >= animationBase) {
+							const auto& matrices = GetNativeRendererState().animationMatrices;
+							const auto index = instance.animationMatrixStart + (trace.firstVertexFlags - animationBase) / 4;
+							if (index < matrices.size())
+								normal = glm::mat3(matrices[index]) * normal;
+						}
+						memcpy(trace.firstVertexNormal.data(), &normal, sizeof(float) * 3);
+					}
+				}
+				if ((renderFlags & 0x10u) && (trace.stripFlags & 0x8000000u)) {
+					const auto& lighting = GetNativeRendererState().lightingDynamicBuffer.GetLastInstance();
+					memcpy(trace.lightAmbient.data(), &lighting.lightAmbient, sizeof(float) * 4);
+					memcpy(trace.lightDirections.data(), &lighting.lightDirection, sizeof(float) * 16);
+					memcpy(trace.lightColors.data(), &lighting.lightColor, sizeof(float) * 16);
+				}
 				memcpy(trace.model.data(), &GetNativeRendererState().modelBuffer.GetLastInstance(), sizeof(float) * 16);
                 instance.traceSubmission = DrawTrace::Submit(trace, reinterpret_cast<uintptr_t>(pMesh));
+				const auto captureOverride = DrawTrace::GetActorCaptureOverride(instance.traceSubmission);
+				if (captureOverride != DrawTrace::Action::None) {
+					// The stored vertices are in the rest pose before rigid animation.
+					instance.perDrawData.stripFlags &= ~0x10000u;
+					if (captureOverride == DrawTrace::Action::BindPoseTextureOnly && pMesh->GetPrim().TME) {
+						instance.perDrawData.renderFlags &= ~0x10u;
+						instance.perDrawData.renderFlags |= 0x80000000u;
+					}
+				}
 				DrawTrace::Source source;
 				if (DrawTrace::Highlight(instance.traceSubmission, source)) {
 					const glm::mat4 model = glm::make_mat4(source.model.data());

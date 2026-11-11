@@ -189,7 +189,6 @@ namespace Debug {
 		}
 
 		static bool bRunningTerm = false;
-		UpdateSingleStepState();
 
 		for (auto& cb : UpdateRegisterer::GetCallbacks()) {
 			cb();

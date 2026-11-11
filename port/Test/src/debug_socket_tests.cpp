@@ -1,6 +1,8 @@
 #include <winsock2.h>
 #include <gtest/gtest.h>
 #include "../../DebugMenu/src/DebugSocket.h"
+#include "../../DebugMenu/src/DebugMenuToolbar.h"
+#include "TimeController.h"
 #include "renderer.h"
 #include "VulkanRenderer.h"
 #include <nlohmann/json.hpp>
@@ -79,6 +81,21 @@ TEST_F(DebugSocketTest, FragmentedStatusRequestRetainsId)
 TEST_F(DebugSocketTest, MalformedJsonReturnsError)
 {
 	EXPECT_EQ(Exchange("not json\n")["ok"], false);
+}
+
+TEST_F(DebugSocketTest, PauseAndStepUseTheSharedSimulationControls)
+{
+	const float previousScale = GetTimer()->timeScale;
+	GetTimer()->timeScale = 0.5f;
+	EXPECT_EQ(Exchange("{\"command\":\"pause\"}\n")["simulation_paused"], true);
+	EXPECT_FLOAT_EQ(GetTimer()->timeScale, 0.0f);
+	EXPECT_TRUE(Debug::StepSimulationFrame());
+	EXPECT_FLOAT_EQ(GetTimer()->timeScale, 0.5f);
+	Debug::UpdateSingleStepState();
+	EXPECT_FLOAT_EQ(GetTimer()->timeScale, 0.0f);
+	Debug::SetSimulationPaused(false);
+	EXPECT_FLOAT_EQ(GetTimer()->timeScale, 0.5f);
+	GetTimer()->timeScale = previousScale;
 }
 
 TEST_F(DebugSocketTest, UnknownCommandReturnsErrorAndId)

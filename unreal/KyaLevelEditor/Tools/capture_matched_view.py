@@ -35,6 +35,7 @@ preview = unreal.EditorLevelLibrary.spawn_actor_from_class(preview_class, unreal
 raw_color = os.environ.get('KYA_CAPTURE_RAW_COLOR', '1') == '1'
 # Set every option before the bank so the first construction already uses them.
 preview.set_editor_property('raw_color_modulation', raw_color)
+preview.set_editor_property('texture_only_actor_index', int(os.environ.get('KYA_CAPTURE_TEXTURE_ONLY_ACTOR', '-1')))
 preview.set_editor_property('show_waypoints', False)
 preview.set_editor_property('show_all_actor_meshes', os.environ.get('KYA_CAPTURE_ACTORS', '1') == '1')
 preview.set_editor_property('show_background_meshes', os.environ.get('KYA_CAPTURE_BACKGROUND', '1') == '1')
@@ -110,6 +111,8 @@ camera_component.set_editor_property('aspect_ratio', metadata['width'] / metadat
 camera_component.set_editor_property('constrain_aspect_ratio', True)
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).pilot_level_actor(capture_camera)
 preview.set_background_camera_position(location)
+if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER') == '1':
+    unreal.SystemLibrary.execute_console_command(world, 'Kya.ViewportTonemapper 0')
 unreal.EditorLevelLibrary.editor_invalidate_viewports()
 unreal.log('KYA_MATCHED_CAMERA location=%s rotation=%s fov=%.3f aspect=%.6f source=%s' %
            (location, rotation, math.degrees(camera['horizontal_fov_radians']),

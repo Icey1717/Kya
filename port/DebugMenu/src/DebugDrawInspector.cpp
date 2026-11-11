@@ -164,6 +164,13 @@ void Details(const Trace::Snapshot& snapshot, const Row& row, const std::vector<
     if (ImGui::Button("Highlight bounds")) Trace::SetOverride(source, row.submission, Trace::Action::Highlight, match);
     ImGui::EndDisabled();
     ImGui::EndDisabled();
+    ImGui::BeginDisabled(!live || !source.owner);
+    if (ImGui::Button("Actor bind pose"))
+        Trace::SetOverride(source, row.submission, Trace::Action::BindPose, Trace::Match::Actor);
+    ImGui::SameLine();
+    if (ImGui::Button("Actor bind pose + texture only"))
+        Trace::SetOverride(source, row.submission, Trace::Action::BindPoseTextureOnly, Trace::Match::Actor);
+    ImGui::EndDisabled();
     ImGui::BeginDisabled(!row.draw || snapshot.generation != Trace::GetStatus().generation);
     if (ImGui::Button("Draw up to this point")) Trace::SetDrawLimit(snapshot, *row.draw);
     ImGui::EndDisabled();
@@ -249,8 +256,18 @@ void DrawWindow() {
         ImGui::Begin("Draw overrides", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
         if (status.action == Trace::Action::DrawUpTo)
             ImGui::Text("Draw through #%llu / %u kept draws", status.drawLimit, status.matches);
-        else
-            ImGui::Text("Overrides active: %s / %u matching draws", status.action == Trace::Action::Hide ? "Hide" : status.action == Trace::Action::Isolate ? "Isolate" : "Highlight bounds", status.matches);
+        else {
+            const char* action = "Highlight bounds";
+            switch (status.action) {
+            case Trace::Action::Hide: action = "Hide"; break;
+            case Trace::Action::Isolate: action = "Isolate"; break;
+            case Trace::Action::BindPose: action = "Actor bind pose"; break;
+            case Trace::Action::BindPoseTextureOnly: action = "Actor bind pose + texture only"; break;
+            case Trace::Action::IsolateBindPose: action = "Isolate actor bind pose"; break;
+            default: break;
+            }
+            ImGui::Text("Overrides active: %s / %u matching draws", action, status.matches);
+        }
         if (ImGui::Button("Open inspector")) open = true;
         ImGui::SameLine(); if (ImGui::Button("Clear overrides")) Trace::ClearOverrides();
         ImGui::End();

@@ -23,6 +23,67 @@
 #include "Materials/MaterialExpressionCustom.h"
 #endif
 
+namespace
+{
+// Sector COL entries store vertices and primitive tables as file-relative offsets.
+void FindSceneryGroundLight(const UKyaLevelBank& Sector, const FVector& Position, double& Height, uint16& Sample)
+{
+    for (const FKyaBankEntry& Entry : Sector.Entries)
+    {
+        if (Entry.Type != 7 || Entry.Subtype != 1 || Entry.Offset < 0 || Entry.Size < 88 ||
+            Entry.Offset > Sector.BankBytes.Num() || Entry.Size > Sector.BankBytes.Num() - Entry.Offset)
+            continue;
+        const uint8* Data = Sector.BankBytes.GetData() + Entry.Offset;
+        if (FMemory::Memcmp(Data + 12, ".COLCOLI", 8) != 0) continue;
+        const auto ReadWord = [Data](int64 Offset) {
+            uint32 Word;
+            FMemory::Memcpy(&Word, Data + Offset, sizeof(Word));
+            return Word;
+        };
+        const int64 Vertices = ReadWord(72);
+        if (Vertices < 88 || Vertices >= Entry.Size) continue;
+        const auto TestTriangle = [&](const FVector3f& A, const FVector3f& B, const FVector3f& C, uint32 Flags) {
+            const double BX = B.X - A.X, BZ = B.Z - A.Z;
+            const double CX = C.X - A.X, CZ = C.Z - A.Z;
+            const double Determinant = BX * CZ - BZ * CX;
+            if (FMath::IsNearlyZero(Determinant)) return;
+            const double X = Position.X - A.X, Z = Position.Z - A.Z;
+            const double U = (X * CZ - Z * CX) / Determinant;
+            const double V = (BX * Z - BZ * X) / Determinant;
+            if (U < 0.0 || V < 0.0 || U + V > 1.0) return;
+            const double Y = A.Y + U * (B.Y - A.Y) + V * (C.Y - A.Y);
+            if (Y > Height && Y <= Position.Y + 0.3)
+            {
+                Height = Y;
+                Sample = uint16(Flags >> 16);
+            }
+        };
+        const auto TestTable = [&](int64 Count, int64 Table, int32 Points) {
+            const int64 Stride = (Points + 1) * 4;
+            if (Table < 88 || Table > Entry.Size || Count > (Entry.Size - Table) / Stride) return;
+            for (int64 Index = 0; Index < Count; ++Index)
+            {
+                const int64 Record = Table + Index * Stride;
+                FVector3f V[4];
+                bool bValid = true;
+                for (int32 Point = 0; Point < Points; ++Point)
+                {
+                    const int64 Offset = Vertices + int64(ReadWord(Record + Point * 4)) * 16;
+                    if (Offset > Entry.Size - 12) { bValid = false; break; }
+                    FMemory::Memcpy(&V[Point], Data + Offset, 12);
+                }
+                if (!bValid) continue;
+                const uint32 Flags = ReadWord(Record + Points * 4);
+                TestTriangle(V[0], V[1], V[2], Flags);
+                if (Points == 4) TestTriangle(V[0], V[2], V[3], Flags);
+            }
+        };
+        TestTable(ReadWord(40), ReadWord(76), 3);
+        TestTable(ReadWord(48), ReadWord(84), 4);
+    }
+}
+}
+
 AKyaLevelPreview::AKyaLevelPreview()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -265,7 +326,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     struct FSectionData { int32 Section = 0; TArray<FVector> Positions; TArray<int32> Triangles; TArray<FVector2D> UVs; TArray<FColor> Colors; };
     TMap<int32, FSectionData> TexturedSections;
     auto GetTexturedSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
-        const TMap<uint64, int32>& Offsets, TMap<uint64, int32>& Sections) -> FSectionData*
+        const TMap<uint64, int32>& Offsets, TMap<uint64, int32>& Sections,
+        const TCHAR* SourceLabel) -> FSectionData*
     {
         const int32* Offset = Offsets.Find(Hash);
         if (!EffectiveMaterial || !Offset) return nullptr;
@@ -296,9 +358,15 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                         Section = NextSection++;
                         Mesh->SetMaterial(Section, Material);
                         PreviewTextures.Add(Texture);
+                        if (bLogSectorDiagnostics)
+                            UE_LOG(LogTemp, Display, TEXT("KYA_TEXTURE_SECTION hash=%016llx source=%s width=%d height=%d section=%d masked=%d"),
+                                Hash, SourceLabel, Width, Height, Section, Masked ? 1 : 0);
                     }
                 }
             }
+            if (bLogSectorDiagnostics && Section == INDEX_NONE)
+                UE_LOG(LogTemp, Warning, TEXT("KYA_TEXTURE_DECODE_FAILED hash=%016llx source=%s width=%d height=%d"),
+                    Hash, SourceLabel, Width, Height);
             Found = &Sections.Add(Hash, Section);
         }
         if (*Found == INDEX_NONE) return nullptr;
@@ -341,7 +409,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         KyaG3D::ReadCameraRelativeBackgroundHierarchies(CommonBackgroundData, CommonCameraRelative);
     if (bShowBackgroundMeshes && !bHasSectorBackground) for (const FKyaG3DDecodedStrip& Strip : Strips)
     {
-        FSectionData* Textured = GetTexturedSection(Strip.MaterialHash, TextureData, MaterialOffsets, MaterialSections);
+        FSectionData* Textured = GetTexturedSection(Strip.MaterialHash, TextureData, MaterialOffsets, MaterialSections, TEXT("Background"));
         TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
         TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
         TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
@@ -385,25 +453,39 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         KyaG2D::ReadMaterials(SharedTextures, SharedMaterials);
         TMap<int32, TMap<uint64, int32>> MaterialsByTexture, SectionsByTexture;
         TMap<int32, TArray<FKyaG3DDecodedStrip>> StripsByMesh;
-        // Level sun/ambient lights, used to relight actor models the way the game's
-        // CLightManager recomputes their vertex colours. Torches are local and skipped.
-        // Sun/directional entries contribute diffuse light; plain light-shape entries
-        // contribute ambient only. CLightManager would bucket them into four slots
-        // (LightManager.cpp:626), but the serialized slot index is not decoded, so the
-        // measurements use independent per-light contributions (closer to the game than
-        // combining the two suns, which nearly cancels their directions).
+        // Shared ambient and diffuse lights are selected per actor sector below.
         TArray<const FKyaLight*> DirectionalLights;
+        TMap<int32, FLinearColor> SectorAmbient;
         FLinearColor ActorAmbient = FLinearColor::Black;
         if (bApplyActorLighting)
             for (const FKyaLight& Light : Bank->Lights)
             {
                 if (Light.LightType == 2 || Light.ShapeType == 4) continue;
-                if ((Light.ShapeType == 1 || Light.ShapeType == 2) && !Light.Color.Equals(FLinearColor::Black))
+                const bool bHasDiffuse = FMath::Max3(FMath::Abs(Light.Color.R), FMath::Abs(Light.Color.G),
+                    FMath::Abs(Light.Color.B)) >= 1.e-6f;
+                if ((Light.ShapeType == 1 || Light.ShapeType == 2) && bHasDiffuse)
                     DirectionalLights.Add(&Light);
-                ActorAmbient += FLinearColor(Light.AmbientColor.R, Light.AmbientColor.G, Light.AmbientColor.B, 0);
+                // Only ambient-only lights add to the shared ambient in Level_Manage.
+                if (!bHasDiffuse)
+                {
+                    const int32 LightSector = Light.TrailingValues.IsEmpty() ? -1 : Light.TrailingValues[0];
+                    FLinearColor& Ambient = LightSector == -1 ? ActorAmbient
+                        : SectorAmbient.FindOrAdd(LightSector, FLinearColor::Transparent);
+                    Ambient += FLinearColor(Light.AmbientColor.R, Light.AmbientColor.G, Light.AmbientColor.B, 0.0f);
+                }
+                if (bLogSectorDiagnostics)
+                    UE_LOG(LogTemp, Display,
+                        TEXT("KYA_PREVIEW_LIGHT type=%d shape=%d ambient=(%.3f,%.3f,%.3f,%.3f) color=(%.3f,%.3f,%.3f,%.3f) dir=(%.3f,%.3f,%.3f) multiplier=%.3f"),
+                        Light.LightType, Light.ShapeType,
+                        Light.AmbientColor.R, Light.AmbientColor.G, Light.AmbientColor.B, Light.AmbientColor.A,
+                        Light.Color.R, Light.Color.G, Light.Color.B, Light.Color.A,
+                        Light.Direction.X, Light.Direction.Y, Light.Direction.Z, Light.Multiplier);
             }
-        auto RelightStrip = [this, &DirectionalLights, &ActorAmbient](const FKyaG3DDecodedStrip& Strip,
-            const TArray<FVector3f>& WorldNormals, int64 LightingFlags, float LightingValue) -> TArray<FColor>
+        if (bLogSectorDiagnostics)
+            UE_LOG(LogTemp, Display, TEXT("KYA_PREVIEW_LIGHT_TOTAL ambient=(%.3f,%.3f,%.3f) directional=%d"),
+                ActorAmbient.R, ActorAmbient.G, ActorAmbient.B, DirectionalLights.Num());
+        auto RelightStrip = [this, &DirectionalLights, &ActorAmbient, &SectorAmbient](const FKyaG3DDecodedStrip& Strip,
+            const TArray<FVector3f>& WorldNormals, int32 SectorId, float Gain) -> TArray<FColor>
         {
             TArray<FColor> Colours;
             Colours.Reserve(Strip.Vertices.Num());
@@ -416,25 +498,73 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 for (const FKyaG3DVertexAttributes& Attribute : Strip.Attributes) Colours.Add(Attribute.Color);
                 return Colours;
             }
-            Colours.Reserve(Strip.Vertices.Num());
-            const float Gain = LightingValue > 0.0f ? LightingValue : 1.0f;
+            // ed3DPKTCopyMatrixPacket sets ambient W to 1/128. LightColor below
+            // uses 0..1 units, so convert the packet's scale for normalized RGB.
+            constexpr float AmbientScale = 255.0f / 128.0f;
+            FLinearColor Ambient = ActorAmbient;
+            if (const FLinearColor* LocalAmbient = SectorAmbient.Find(SectorId)) Ambient += *LocalAmbient;
+            Ambient *= Gain;
+            struct FDiffuse
+            {
+                FVector3f Direction = FVector3f::ZeroVector;
+                FLinearColor Color = FLinearColor::Transparent;
+                float CollisionCost = 0.0f;
+            };
+            FDiffuse Diffuse[4];
+            TArray<const FKyaLight*, TInlineAllocator<4>> AutomaticLights;
+            const auto AddLight = [&Diffuse](int32 Slot, const FKyaLight& Light) {
+                Diffuse[Slot].Direction -= FVector3f(Light.Direction);
+                Diffuse[Slot].Color += Light.Color;
+                Diffuse[Slot].CollisionCost += 1.0f;
+            };
+            for (const FKyaLight* Light : DirectionalLights)
+            {
+                if (Light->TrailingValues.IsValidIndex(0) && Light->TrailingValues[0] != -1 &&
+                    Light->TrailingValues[0] != SectorId) continue;
+                const int32 Slot = Light->TrailingValues.IsValidIndex(1) ? Light->TrailingValues[1] : -1;
+                if (Slot >= 0 && Slot < UE_ARRAY_COUNT(Diffuse)) AddLight(Slot, *Light);
+                else if (Slot == -1) AutomaticLights.Add(Light);
+            }
+            // Native assigns unbound suns to the slot with the lowest summed
+            // angular collision cost, including lights with explicit slots.
+            for (const FKyaLight* Light : AutomaticLights)
+            {
+                int32 Slot = 0;
+                const FVector3f Direction(-Light->Direction);
+                float LowestCost = TNumericLimits<float>::Max();
+                for (int32 Index = 0; Index < UE_ARRAY_COUNT(Diffuse); ++Index)
+                {
+                    const FDiffuse& Candidate = Diffuse[Index];
+                    const float Cost = (Candidate.CollisionCost -
+                        FVector3f::DotProduct(Candidate.Direction, Direction)) * 0.5f;
+                    if (Cost < LowestCost) { LowestCost = Cost; Slot = Index; }
+                }
+                AddLight(Slot, *Light);
+            }
+            for (FDiffuse& Light : Diffuse)
+            {
+                Light.Direction = Light.Direction.GetSafeNormal();
+                Light.Color *= Gain;
+            }
             for (int32 Index = 0; Index < Strip.Vertices.Num(); ++Index)
             {
-                FLinearColor Lighting = ActorAmbient * Gain;
-                for (const FKyaLight* Light : DirectionalLights)
+                FLinearColor LightColor = Ambient;
+                for (const FDiffuse& Light : Diffuse)
                 {
-                    const FVector3f ToLight(-Light->Direction.X, -Light->Direction.Y, -Light->Direction.Z);
-                    const float Dot = FMath::Max(0.0f, FVector3f::DotProduct(WorldNormals[Index], ToLight));
-                    if (Dot <= 0.0f) continue;
-                    Lighting.R += Light->Color.R * Dot * Gain;
-                    Lighting.G += Light->Color.G * Dot * Gain;
-                    Lighting.B += Light->Color.B * Dot * Gain;
+                    const float Dot = FMath::Max(0.0f, FVector3f::DotProduct(WorldNormals[Index], Light.Direction));
+                    LightColor += Light.Color * Dot;
                 }
+                // Native caps the accumulated light colour at 255 before multiplying
+                // by the authored vertex colour (native.vert.glsl: min(lightColor, 255)).
+                LightColor.R = FMath::Min(LightColor.R, 1.0f);
+                LightColor.G = FMath::Min(LightColor.G, 1.0f);
+                LightColor.B = FMath::Min(LightColor.B, 1.0f);
+                const FColor& Original = Strip.Attributes[Index].Color;
                 Colours.Add(FColor(
-                    uint8(FMath::Clamp(Lighting.R, 0.0f, 1.0f) * 255.0f),
-                    uint8(FMath::Clamp(Lighting.G, 0.0f, 1.0f) * 255.0f),
-                    uint8(FMath::Clamp(Lighting.B, 0.0f, 1.0f) * 255.0f),
-                    Strip.Attributes[Index].Color.A));
+                    uint8(FMath::Clamp(Original.R / 255.0f * AmbientScale * LightColor.R, 0.0f, 1.0f) * 255.0f),
+                    uint8(FMath::Clamp(Original.G / 255.0f * AmbientScale * LightColor.G, 0.0f, 1.0f) * 255.0f),
+                    uint8(FMath::Clamp(Original.B / 255.0f * AmbientScale * LightColor.B, 0.0f, 1.0f) * 255.0f),
+                    Original.A));
             }
             return Colours;
         };
@@ -460,6 +590,25 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         {
         if (!bShowAllActorMeshes && ActorIndex != PreviewActorIndex) continue;
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+        const bool bUseNativeTransform = ActorIndex == PreviewActorIndex && PreviewActorNativeTransform.Num() == 4;
+        const FVector ActorPosition = bUseNativeTransform ? PreviewActorNativeTransform[3] : Actor.Position;
+        const auto TransformActorVector = [&](const FVector& Vector) {
+            if (bUseNativeTransform)
+                return PreviewActorNativeTransform[0] * Vector.X + PreviewActorNativeTransform[1] * Vector.Y +
+                    PreviewActorNativeTransform[2] * Vector.Z;
+            return KyaActorTransform::ApplyClassRotation(Vector * Actor.Scale, Actor.Rotation, Actor.ClassId);
+        };
+        float LightingGain = Actor.LightingValue;
+        // SetupLighting enables ground modulation when serialized bit 1 is clear.
+        if (bApplyActorLighting && (Actor.LightingFlags & 2) == 0)
+        {
+            uint16 Sample = 0xffff;
+            double Height = -TNumericLimits<double>::Max();
+            for (const UKyaLevelBank* Sector : SectorBanks)
+                if (Sector) FindSceneryGroundLight(*Sector, ActorPosition, Height, Sample);
+            LightingGain *= FMath::Sqrt((Sample & 15) * 0.01328125f +
+                ((Sample >> 4) & 15) * 0.0447125f + ((Sample >> 8) & 15) * 0.00450625f);
+        }
         const auto ModelData = EntryData(FindEntry(4, Actor.MeshIndex));
         const int32 TextureIndex = Actor.TextureIndex == -1 ? Bank->SceneEnvironment.AlternateTextureIndex : Actor.TextureIndex;
         const auto ModelTextures = EntryData(FindEntry(5, TextureIndex));
@@ -493,19 +642,31 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 FMatrix HierarchyTransform;
                 if (!KyaG3D::ReadHierarchyWorldMatrix(ModelData, Strip.HierarchyOffset, HierarchyTransform)) continue;
                 FSectionData* Textured = nullptr;
+                // Native resolves a material hash against linked banks in order and stops
+                // at the first bank that yields a usable material. Try each candidate
+                // until one decodes, so a failed section does not fall back to untextured
+                // geometry.
+                auto TryActorSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
+                    const TMap<uint64, int32>& Offsets, TMap<uint64, int32>& Sections,
+                    const TCHAR* Label) -> bool
+                {
+                    if (!Offsets.Contains(Hash)) return false;
+                    Textured = GetTexturedSection(Hash, Source, Offsets, Sections, Label);
+                    return Textured != nullptr;
+                };
                 if (const uint64* Replacement = MaterialPatches.Find(Strip.MaterialHash))
-                    Textured = GetTexturedSection(*Replacement, SharedTextures, SharedMaterials, SharedSections);
-                else if (SharedMaterials.Contains(Strip.MaterialHash))
-                    Textured = GetTexturedSection(Strip.MaterialHash, SharedTextures, SharedMaterials, SharedSections);
-                else if (ModelMaterials.Contains(Strip.MaterialHash))
-                    Textured = GetTexturedSection(Strip.MaterialHash, ModelTextures, ModelMaterials, ModelSections);
-                else if (TextureBankByHash.Contains(Strip.MaterialHash))
+                    TryActorSection(*Replacement, SharedTextures, SharedMaterials, SharedSections, TEXT("ActorPatch"));
+                if (!Textured)
+                    TryActorSection(Strip.MaterialHash, SharedTextures, SharedMaterials, SharedSections, TEXT("Shared"));
+                if (!Textured)
+                    TryActorSection(Strip.MaterialHash, ModelTextures, ModelMaterials, ModelSections, TEXT("Model"));
+                if (!Textured && TextureBankByHash.Contains(Strip.MaterialHash))
                 {
                     const int32 OwnerEntry = TextureBankByHash[Strip.MaterialHash];
-                    Textured = GetTexturedSection(Strip.MaterialHash, TextureBankData[OwnerEntry],
-                        TextureBankMaterials[OwnerEntry], TextureBankSections[OwnerEntry]);
+                    TryActorSection(Strip.MaterialHash, TextureBankData[OwnerEntry],
+                        TextureBankMaterials[OwnerEntry], TextureBankSections[OwnerEntry], TEXT("Union"));
                 }
-                else if (bLogSectorDiagnostics)
+                if (!Textured && bLogSectorDiagnostics)
                     UE_LOG(LogTemp, Warning, TEXT("KYA_ACTOR_MATERIAL_MISSING actor=%s strip=%d hash=%016llx"),
                         *Actor.Name, StripIndex, Strip.MaterialHash);
                 TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
@@ -515,28 +676,45 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 const int32 Base = TargetPositions.Num();
                 for (const FKyaG3DVertex& Vertex : Strip.Vertices)
                 {
-                    FVector P = HierarchyTransform.TransformPosition(FVector(Vertex.Position)) * Actor.Scale;
-                    P = KyaActorTransform::ApplyClassRotation(P, Actor.Rotation, Actor.ClassId);
-                    P += Actor.Position;
+                    const FVector P = TransformActorVector(HierarchyTransform.TransformPosition(FVector(Vertex.Position))) + ActorPosition;
                     TargetPositions.Add(FVector(P.X, P.Z, P.Y) * 100.0);
                 }
                 TArray<FVector3f> WorldNormals;
                 if (Strip.Normals.Num() == Strip.Vertices.Num())
                 {
+                    // Native orthonormalizes object-to-world before transforming the
+                    // light directions. Apply the equivalent basis to the stored normals.
+                    const auto TransformAxis = [&](const FVector& Axis) {
+                        return TransformActorVector(HierarchyTransform.TransformVector(Axis));
+                    };
+                    const FVector X = TransformAxis(FVector::ForwardVector).GetSafeNormal();
+                    const FVector Z = FVector::CrossProduct(X, TransformAxis(FVector::RightVector)).GetSafeNormal();
+                    const FVector Y = FVector::CrossProduct(Z, X);
                     WorldNormals.Reserve(Strip.Normals.Num());
                     for (const FVector3f& Normal : Strip.Normals)
-                    {
-                        FVector N = HierarchyTransform.TransformVector(FVector(Normal));
-                        N = KyaActorTransform::ApplyClassRotation(N, Actor.Rotation, Actor.ClassId);
-                        if (!N.Normalize()) N = FVector::UpVector;
-                        WorldNormals.Add(FVector3f(N));
-                    }
+                        WorldNormals.Add(FVector3f(X * Normal.X + Y * Normal.Y + Z * Normal.Z));
                 }
-                const TArray<FColor> Relit = RelightStrip(Strip, WorldNormals, Actor.LightingFlags, Actor.LightingValue);
+                const TArray<FColor> Relit = RelightStrip(Strip, WorldNormals, Actor.SectorId, LightingGain);
+                if (bLogSectorDiagnostics && StripIndex < 3 && Strip.Attributes.Num() > 0 && Relit.Num() > 0)
+                {
+                    const FColor& Original = Strip.Attributes[0].Color;
+                    const FColor& Lit = Relit[0];
+                    const FVector3f N0 = WorldNormals.Num() > 0 ? WorldNormals[0] : FVector3f::ZeroVector;
+                    UE_LOG(LogTemp, Display,
+                        TEXT("KYA_ACTOR_RELIT actor=%s strip=%d vertex0 original=(%d,%d,%d,%d) relit=(%d,%d,%d,%d) normal=(%.3f,%.3f,%.3f) flags=%d value=%.3f"),
+                        *Actor.Name, StripIndex, Original.R, Original.G, Original.B, Original.A,
+                        Lit.R, Lit.G, Lit.B, Lit.A, N0.X, N0.Y, N0.Z,
+                        int32(Actor.LightingFlags), Actor.LightingValue);
+                }
                 for (int32 AttributeIndex = 0; AttributeIndex < Strip.Attributes.Num(); ++AttributeIndex)
                 {
                     TargetUVs.Add(FVector2D(Strip.Attributes[AttributeIndex].UV));
-                    TargetColors.Add(AttributeIndex < Relit.Num() ? Relit[AttributeIndex] : Strip.Attributes[AttributeIndex].Color);
+                    FColor Color = AttributeIndex < Relit.Num() ? Relit[AttributeIndex] : Strip.Attributes[AttributeIndex].Color;
+                    if (Textured && ActorIndex == TextureOnlyActorIndex)
+                    {
+                        Color.R = Color.G = Color.B = 128;
+                    }
+                    TargetColors.Add(Color);
                 }
                 for (uint32 Index : Strip.Indices) TargetTriangles.Add(Base + int32(Index));
             }
@@ -685,9 +863,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                         {
                             if (!ClusterMaterialOffsets.Contains(MaterialHash) && !CommonClusterMaterials.Contains(MaterialHash)) ++MissingMaterial;
                             if (ClusterMaterialOffsets.Contains(MaterialHash))
-                                Textured = GetTexturedSection(MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections);
+                                Textured = GetTexturedSection(MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections, TEXT("Cluster"));
                             else
-                                Textured = GetTexturedSection(MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections);
+                                Textured = GetTexturedSection(MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections, TEXT("CommonCluster"));
                         }
                         else ++MissingHash;
                         ++Decoded;
@@ -735,8 +913,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             FMatrix HierarchyTransform;
                             if (!KyaG3D::ReadHierarchyWorldMatrix(Data, Strip.HierarchyOffset, HierarchyTransform)) { ++TransformFailures; continue; }
                             FSectionData* Textured = ClusterMaterialOffsets.Contains(Strip.MaterialHash)
-                                ? GetTexturedSection(Strip.MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections)
-                                : GetTexturedSection(Strip.MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections);
+                                ? GetTexturedSection(Strip.MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections, TEXT("Cluster"))
+                                : GetTexturedSection(Strip.MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections, TEXT("CommonCluster"));
                             TArray<FVector>& TargetPositions = Textured ? Textured->Positions : Positions;
                             TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                             TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
@@ -782,7 +960,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 KyaG3D::ReadCameraRelativeBackgroundHierarchies(Data, SectorCameraRelative);
             for (const FKyaG3DDecodedStrip& Strip : SectorStrips)
             {
-                FSectionData* Textured = GetTexturedSection(Strip.MaterialHash, SectorTextureData, SectorMaterialOffsets, SectorMaterialSections);
+                FSectionData* Textured = GetTexturedSection(Strip.MaterialHash, SectorTextureData, SectorMaterialOffsets, SectorMaterialSections, TEXT("SectorBackground"));
                 if (Textured) ++BackgroundTextured;
                 BackgroundVertices += Strip.Vertices.Num();
                 BackgroundTriangles += Strip.Indices.Num() / 3;

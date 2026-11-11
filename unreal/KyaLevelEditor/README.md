@@ -89,6 +89,11 @@ materials and unsupported cluster geometry remain untextured and use their verte
 are missing, and the preview is not a faithful level render. The runtime module is separated from editor tooling so that level
 data and rendering can also be used by a future playable Unreal project.
 
+The editor goal is to select individual Kya actors by clicking them in the
+Unreal viewport and edit their properties through the World Outliner and
+Details panel or a custom editor panel. World geometry should support the same
+workflow at the smallest practical piece granularity.
+
 The preview creates editor-only waypoint markers. Moving a marker updates its
 position in the referenced bank asset; save the asset and export it to write the
 change to a bank. Marker orientation does not yet represent waypoint rotation.
@@ -110,6 +115,30 @@ increase editor load time and includes actors that the game may initially hide.
 capture (independent of editor focus). Set `KYA_ACTOR_NAME` to choose the actor and
 `KYA_ACTOR_LIGHTING=0` to compare baked vertex colours; `KYA_ACTOR_STRIP_SCAN=1`
 writes one image per strip using `KYA_ACTOR_STRIP_COUNT`.
+Set `KYA_ACTOR_DISABLE_TONEMAPPER=1` to export directly in sRGB for native
+color comparisons. Set `KYA_ACTOR_TEXTURE_ONLY=1` to bypass vertex RGB
+modulation, or supply `KYA_ACTOR_SECTORS=/Game/SECT1,/Game/SECT7` to include
+the corresponding ground-light data in a lit capture.
+Enter `Kya.ViewportTonemapper 0` in the editor console to inspect the preview
+without Unreal's tone curve, or `Kya.ViewportTonemapper 1` to enable it again.
+The camera-aligned capture script uses the same control when
+`KYA_CAPTURE_DISABLE_TONEMAPPER=1`.
+
+For an isolated bind-pose comparison, [capture the native actor and draw metadata](../../tools/debug_socket/README.md#how-the-bind-pose-works)
+and set `KYA_ACTOR_NATIVE_CAPTURE` to the combined screenshot JSON before
+running `Tools/capture_actor_mesh.py`. The preview already renders the stored
+mesh with its hierarchy transforms. In capture mode it uses the native
+object-to-world matrix in place of the actor's archive placement and uses the
+recorded camera position, orientation, and horizontal FOV. This mode requires
+the captured submissions to share one model matrix. Set
+`KYA_ACTOR_NATIVE_VIEW_HEIGHT` to the picture height excluding letterbox bars
+if present.
+
+For a lighting comparison, set `KYA_ACTOR_LIGHTING=1`,
+`KYA_ACTOR_DISABLE_TONEMAPPER=1`, and assign the relevant sector assets through
+`KYA_ACTOR_SECTORS`. Unreal computes lighting from its imported bank and sector
+data at the captured placement. The native light packet in the JSON is
+available for diagnosis.
 
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned

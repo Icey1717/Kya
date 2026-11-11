@@ -1,4 +1,4 @@
-"""Request game status or a full-resolution screenshot from Kya's debug socket."""
+"""Control scene captures through Kya's debug socket."""
 
 import argparse
 import json
@@ -7,9 +7,9 @@ import socket
 import sys
 
 
-def request(command, port=18438, timeout=15, target=None):
+def request(command, port=18438, timeout=15, target=None, **fields):
     with socket.create_connection(("127.0.0.1", port), timeout=timeout) as connection:
-        message = {"command": command, "id": 1}
+        message = {"command": command, "id": 1, **fields}
         if target is not None:
             message["target"] = target
         connection.sendall(json.dumps(message).encode() + b"\n")
@@ -31,16 +31,30 @@ def request(command, port=18438, timeout=15, target=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("status", "screenshot"))
+    parser.add_argument("command", choices=("status", "screenshot", "pause", "resume", "step",
+                                            "capture_draws", "actors", "actor_override", "focus_actor", "actor_lighting", "camera_reset"))
     parser.add_argument("--port", type=int, default=18438)
     parser.add_argument("--target", choices=("game", "mesh"), default="game")
     parser.add_argument("--timeout", type=float, default=15)
     parser.add_argument("--output", type=Path,
                         default=Path(__file__).resolve().parents[2] / "out/screenshots/latest.png")
     parser.add_argument("--metadata", type=Path, help="Write the response header, including camera data, as JSON")
+    parser.add_argument("--mode", choices=("none", "bind_pose", "texture_only", "isolate_bind_pose"))
+    parser.add_argument("--actor", type=int, help="Actor index returned by the actors command")
     args = parser.parse_args()
+    fields = {}
+    if args.command == "actor_override":
+        if args.mode is None or (args.mode != "none" and args.actor is None):
+            parser.error("actor_override requires --mode and an --actor for any active override")
+        fields["mode"] = args.mode
+        if args.actor is not None:
+            fields["actor"] = args.actor
+    elif args.command in ("focus_actor", "actor_lighting"):
+        if args.actor is None:
+            parser.error(f"{args.command} requires --actor")
+        fields["actor"] = args.actor
     try:
-        header, payload = request(args.command, args.port, args.timeout, args.target)
+        header, payload = request(args.command, args.port, args.timeout, args.target, **fields)
         if args.command == "screenshot":
             if header.get("encoding") != "png" or not payload.startswith(b"\x89PNG\r\n\x1a\n"):
                 raise RuntimeError("Server did not return a PNG")
