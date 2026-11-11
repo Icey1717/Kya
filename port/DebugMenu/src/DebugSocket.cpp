@@ -5,6 +5,7 @@
 #include "DebugMenu.h"
 #include "DebugMenuToolbar.h"
 #include "DebugCamera.h"
+#include "DebugCinematic.h"
 #include "DrawTrace.h"
 #include "DebugSetting.h"
 #include "DebugSaveScreenshot.h"
@@ -112,6 +113,7 @@ namespace Debug::Socket
 					{"pid", GetCurrentProcessId()}, {"frame", frame}, {"offscreen", Renderer::IsRenderingOffscreen()},
 					{"width", extent.width}, {"height", extent.height} };
 				namespace Trace = Renderer::DrawTrace;
+				response["actors_hidden"] = Trace::AreActorsHidden();
 				const auto drawStatus = Trace::GetStatus();
 				response["simulation_paused"] = IsSimulationPaused();
 				response["draw_capture_pending"] = drawStatus.pending || drawStatus.capturing;
@@ -199,6 +201,10 @@ namespace Debug::Socket
 					response["checkpoint_manager"] = managerName;
 					response["checkpoint_index"] = checkpointIndex;
 					response["checkpoint_sector"] = sectorId;
+					Reply(client, response);
+				}
+				else if (command == "skip_cutscene") {
+					response["skipped_cutscenes"] = Debug::Cinematic::SkipActiveCutscenes();
 					Reply(client, response);
 				}
 				else if (command == "actor_info") {
@@ -301,6 +307,11 @@ namespace Debug::Socket
 					}
 					Reply(client, response);
 				}
+				else if (command == "actor_visibility") {
+					Trace::SetActorsHidden(!request.at("visible").get<bool>());
+					response["actors_hidden"] = Trace::AreActorsHidden();
+					Reply(client, response);
+				}
 				else if (command == "screenshot") {
 					const auto target = request.value("target", std::string("game"));
 					if (target != "game" && target != "mesh") throw std::runtime_error("Unknown screenshot target: " + target);
@@ -342,7 +353,7 @@ namespace Debug::Socket
 			if (boundPort) ImGui::Text("Listening on 127.0.0.1:%u (%zu clients)", boundPort, clients.size());
 			else ImGui::TextUnformatted("Stopped");
 			if (!lastError.empty()) ImGui::TextWrapped("%s", lastError.c_str());
-			ImGui::TextWrapped("Commands: status, screenshot, pause, resume, step, capture_draws, actors, actor_override, focus_actor, camera_reset. Enable Render When Minimized to service requests while minimized.");
+			ImGui::TextWrapped("Commands: status, screenshot, pause, resume, step, capture_draws, actors, actor_visibility, actor_override, focus_actor, camera_reset. Enable Render When Minimized to service requests while minimized.");
 			ImGui::Separator();
 			ImGui::Text("Connections: %llu   Completed: %llu   Errors: %llu   Dropped: %llu   Sent: %.1f KiB",
 				connections, completed, errors, dropped, double(bytesSent) / 1024.0);

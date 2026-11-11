@@ -79,6 +79,8 @@ struct Status {
 void CopyName(Name& target, const char* name);
 uint64_t AssetKey(const char* name);
 bool IsEnabled();
+void SetActorsHidden(bool hidden);
+bool AreActorsHidden();
 bool IsDrawLimitActive();
 bool IsDrawLimitReached();
 void RequestCapture(bool stacks);

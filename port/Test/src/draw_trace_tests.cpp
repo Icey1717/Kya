@@ -14,12 +14,14 @@ namespace Trace = Renderer::DrawTrace;
 class DrawTraceTest : public testing::Test {
 protected:
     void SetUp() override {
+        Trace::SetActorsHidden(false);
         Trace::InvalidateSources();
         Trace::AdvanceFrame();
         Trace::AdvanceFrame();
         Trace::ClearSnapshot();
     }
     void TearDown() override {
+        Trace::SetActorsHidden(false);
         Trace::InvalidateSources();
         Trace::AdvanceFrame();
         Trace::ClearSnapshot();
@@ -137,6 +139,31 @@ TEST_F(DrawTraceTest, OwnerAndBankScopesRestoreAndHierarchyOwnershipResolves) {
     EXPECT_EQ(snapshot->sources[2].bank, 900u);
     EXPECT_EQ(snapshot->sources[3].bank, 0u);
     EXPECT_EQ(snapshot->sources[3].owner, 0u);
+}
+
+TEST_F(DrawTraceTest, HiddenActorsPreserveSceneryAndRestoreVisibility) {
+    Trace::SetActorsHidden(true);
+    Trace::AdvanceFrame();
+    ASSERT_TRUE(Trace::IsEnabled());
+    ASSERT_TRUE(Trace::AreActorsHidden());
+    Trace::RegisterOwner(200, 800, "Actor", 1, 2, 5);
+    Trace::Link(Source());
+    EXPECT_FALSE(Record(Submit()));
+    {
+        Trace::OwnerScope scenery(900, "Scenery cluster", -1, -1, -1);
+        Trace::Link(Source(101, 201));
+    }
+    EXPECT_TRUE(Record(Submit(101)));
+    Trace::Link(Source(102, 202));
+    EXPECT_TRUE(Record(Submit(102)));
+    Trace::InvalidateSources();
+    EXPECT_TRUE(Trace::IsEnabled());
+    EXPECT_TRUE(Trace::AreActorsHidden());
+    Trace::SetActorsHidden(false);
+    Capture();
+    Trace::RegisterOwner(200, 800, "Actor", 1, 2, 5);
+    Trace::Link(Source());
+    EXPECT_TRUE(Record(Submit()));
 }
 
 TEST_F(DrawTraceTest, SourceOverrideKeepsOtherInstancesAndChangesAtFrameBoundary) {

@@ -1,6 +1,7 @@
 ﻿#include "DebugMenu.h"
 #include "DebugRendering.h"
 #include "DebugDrawInspector.h"
+#include "DrawTrace.h"
 
 #include "imgui.h"
 #include "DebugSetting.h"
@@ -239,6 +240,9 @@ void Debug::Rendering::DrawContents()
 
 	// --- Pipeline ---
 	if (ImGui::CollapsingHeader("Pipeline")) {
+		bool actorsHidden = Renderer::DrawTrace::AreActorsHidden();
+		if (ImGui::Checkbox("Hide Actors", &actorsHidden)) Renderer::DrawTrace::SetActorsHidden(actorsHidden);
+		if (ImGui::IsItemHovered()) ImGui::SetTooltip("Hide actor-owned draws for scenery comparison captures. Actors continue updating; scenery and sector light rays remain visible.");
 		if (gRenderWhenMinimized.DrawImguiControl()) {
 			Renderer::SetRenderWhenMinimized(gRenderWhenMinimized.get());
 		}

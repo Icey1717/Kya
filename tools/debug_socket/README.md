@@ -20,6 +20,7 @@ python tools/debug_socket/client.py screenshot
 python tools/debug_socket/client.py screenshot --target mesh --output out/screenshots/mesh.png
 python tools/debug_socket/client.py screenshot --output out/screenshots/electrolla.png
 python tools/debug_socket/client.py screenshot --output out/screenshots/reference.png --metadata out/screenshots/reference.json
+python tools/debug_socket/client.py screenshot --hide-actors --output out/screenshots/scenery.png
 ```
 
 The default screenshot destination is `out/screenshots/latest.png`. Screenshots
@@ -27,6 +28,22 @@ are full-resolution PNGs from the game's render buffer, without the debug UI.
 Enable **Rendering > Pipeline > Render When Minimized** to receive fresh frames
 and service requests while minimized. Requests require the game frame loop to
 run; a stopped debugger or blocking load can cause a client timeout.
+
+`screenshot --hide-actors` hides actor-owned draws, waits three frame-loop ticks
+for rendering to advance, captures the game framebuffer, and restores the previous
+visibility setting even if readback fails. Actor simulation continues; scenery,
+sector backgrounds and light-ray hierarchies remain visible. The screenshot header
+records `actors_hidden: true`. Mesh-viewer screenshots do not support this option.
+The **Rendering > Pipeline > Hide Actors** checkbox also controls visibility for
+manual captures. It is a session-only setting. To control it through the socket:
+
+```powershell
+python tools/debug_socket/client.py actor_visibility --mode hide
+python tools/debug_socket/client.py actor_visibility --mode show
+```
+
+Protocol: `{"command":"actor_visibility","visible":false}` hides actor draws;
+`visible:true` restores them. Status and screenshot responses report `actors_hidden`.
 
 Use `--target mesh` to capture the open mesh preview at 1024 × 768, excluding
 its controls. Select a mesh first; an inactive viewer returns an error. Mesh
@@ -206,3 +223,27 @@ the gameplay camera.
 `actor_info --name ROLLINGROCK` returns an actor's runtime scale, position,
 sector and type. It is useful for validating that an edited bank field reached
 the game without relying on a screenshot.
+
+`skip_cutscene` jumps every playing cinematic to the end of its timeline (the same
+path as the **Skip Cutscenes** debug setting) and returns `skipped_cutscenes`.
+Call it again while a cutscene chains into another one. The free camera keeps the
+FOV of the active game camera, so a scenery comparison must wait until the
+cutscene has ended; level 1's gameplay FOV is 1.3959 radians.
+
+## Native scenery reference
+
+For a scenery-only comparison, skip the intro, place the free camera, then capture
+with actor draws hidden:
+
+```powershell
+python tools/debug_socket/client.py skip_cutscene
+python tools/debug_socket/client.py pause
+python tools/debug_socket/client.py camera --camera-position 24.469564 9.978571 7.639125 --camera-yaw 2.014 --camera-pitch 0.4155
+python tools/debug_socket/client.py screenshot --hide-actors --output out/screenshots/native-scenery.png --metadata out/screenshots/native-scenery.json
+```
+
+`--hide-actors` suppresses actor-owned draws only; terrain, sector backgrounds and
+light-ray hierarchies remain. A cutscene close-up can look mostly black because its
+backdrop is drawn by the cinematic scene rather than the sector scenery.
+`native-scenery.json` can be passed to the Unreal capture scripts through
+`KYA_CAMERA_METADATA` to compare the same view with `KYA_CAPTURE_ACTORS=0`.

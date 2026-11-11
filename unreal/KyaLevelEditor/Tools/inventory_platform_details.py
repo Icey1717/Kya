@@ -30,13 +30,25 @@ actors = objects[0].get_editor_property('scene_environment').get_editor_property
 
 platforms = prefixes = details = cameras = sounds_a = sounds_b = 0
 friction_zones = friction_actors = max_class_data = 0
+actor_streams = actor_refs = zone_refs = invalid_actor_refs = 0
 camera_actors = []
+stream_actors = []
 for actor in actors:
     if actor.get_editor_property('class_id') != 0x0d:
         continue
     platforms += 1
     prefixes += 1 if actor.get_editor_property('has_platform_prefix') else 0
     details += 1 if actor.get_editor_property('has_platform_details') else 0
+    carried = actor.get_editor_property('platform_actors')
+    actor_refs += len(carried)
+    zone_refs += len(actor.get_editor_property('platform_zones'))
+    if carried:
+        actor_streams += 1
+        stream_actors.append((actor.get_editor_property('name'), len(carried),
+                              [entry.get_editor_property('actor_ref') for entry in carried]))
+    for entry in carried:
+        if not 0 <= entry.get_editor_property('actor_ref') < len(actors):
+            invalid_actor_refs += 1
     camera_records = actor.get_editor_property('platform_cameras')
     sound_a = actor.get_editor_property('platform_sounds_a')
     sound_b = actor.get_editor_property('platform_sounds_b')
@@ -51,8 +63,12 @@ for actor in actors:
     if camera_records:
         camera_actors.append((actor.get_editor_property('index'),
                               actor.get_editor_property('name'), len(camera_records)))
-unreal.log('KYA_PLATFORM_DUMP actors=%d prefixes=%d details=%d cameras=%d soundsA=%d soundsB=%d frictionZones=%d frictionActors=%d maxClassData=%d' %
-           (platforms, prefixes, details, cameras, sounds_a, sounds_b,
-            friction_zones, friction_actors, max_class_data))
+unreal.log('KYA_PLATFORM_DUMP actors=%d prefixes=%d details=%d actorStreams=%d actorRefs=%d invalidActorRefs=%d zoneRefs=%d cameras=%d soundsA=%d soundsB=%d frictionZones=%d frictionActors=%d maxClassData=%d' %
+           (platforms, prefixes, details, actor_streams, actor_refs, invalid_actor_refs, zone_refs,
+            cameras, sounds_a, sounds_b, friction_zones, friction_actors, max_class_data))
 for item in camera_actors:
     unreal.log('KYA_PLATFORM_CAMERA_ACTOR %s' % (item,))
+for item in stream_actors:
+    unreal.log('KYA_PLATFORM_STREAM_ACTOR %s' % (item,))
+if invalid_actor_refs:
+    raise RuntimeError('Platform actor refs out of range: %d' % invalid_actor_refs)

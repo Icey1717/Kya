@@ -19,7 +19,301 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Serialization/MemoryWriter.h"
+
+namespace
+{
+    /**
+     * Builds a small but complete Kya bank in memory: header, entry/type tables,
+     * one scene entry with a single INST actor chunk, and empty mesh/texture
+     * entries. The actor is class 0x0d with one two-actor no-friction zone and a
+     * full platform details block, so optional layouts can be round-tripped
+     * without LEVEL_1.
+     */
+    struct FKyaSmallBankBuilder
+    {
+        TArray<uint8> Scene;
+
+        static void U32(TArray<uint8>& Out, uint32 Value)
+        {
+            for (int32 Shift = 0; Shift < 32; Shift += 8) Out.Add(uint8(Value >> Shift));
+        }
+        static void I32(TArray<uint8>& Out, int32 Value) { U32(Out, uint32(Value)); }
+        static void F32(TArray<uint8>& Out, float Value)
+        {
+            uint32 Bits = 0;
+            FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+            U32(Out, Bits);
+        }
+        static void Tag(TArray<uint8>& Out, const char* Text)
+        {
+            for (int32 Index = 0; Text[Index]; ++Index) Out.Add(uint8(Text[Index]));
+        }
+
+        TArray<uint8> Build()
+        {
+            Scene.Reset();
+            Scene.AddZeroed(16);
+            U32(Scene, 1);        // has cluster
+            U32(Scene, 0);        // scene mesh ordinal
+            U32(Scene, 0);        // scene texture ordinal
+            U32(Scene, 0);
+            I32(Scene, -1);       // no sector background
+            // CScene::Level_Setup: 20 unused bytes then flags/fog (112 bytes).
+            Scene.AddZeroed(20);
+            U32(Scene, 0);        // background flags
+            F32(Scene, 500.0f);   // clip distance
+            F32(Scene, 0.0f);     // fog parameter
+            Scene.AddZeroed(4);   // fog colour
+            U32(Scene, 0);        // fog flags
+            I32(Scene, 0);        // mipmap L
+            I32(Scene, 0);        // mipmap K
+            Scene.AddZeroed(64);  // camera fields
+            U32(Scene, 0);        // camera condition count
+            U32(Scene, 0);        // camera config flags
+            I32(Scene, -1);       // camera actor ref A
+            I32(Scene, -1);       // camera actor ref B
+            F32(Scene, 0.0f);     // camera config angle
+            U32(Scene, 0);        // camera config mode
+            Scene.AddZeroed(36);
+            U32(Scene, 0);        // astruct_12 extra flag
+            F32(Scene, 1.5f);     // field 118
+            U32(Scene, 0);        // field 11C
+            U32(Scene, 0);        // count 120
+            I32(Scene, 0);        // map field 04
+            U32(Scene, 0xABCD);   // map field 08
+            F32(Scene, 0.0f);     // map angle
+            U32(Scene, 0);        // map entry count
+            I32(Scene, 0);        // map field 14
+            I32(Scene, 0);        // map actor ref
+            I32(Scene, 0);        // default texture index
+            I32(Scene, 0);        // alternate texture index
+            I32(Scene, 0);        // default material index
+            for (int32 Pool = 0; Pool < 7; ++Pool) U32(Scene, 0);
+            U32(Scene, 0);        // conditioned operation blocks
+            U32(Scene, 0);        // objectives
+            U32(Scene, 0);        // objective zone entries
+            I32(Scene, 77);       // field 10C
+            I32(Scene, 0);        // field 110
+            U32(Scene, 0);        // elevator cutscenes
+            Tag(Scene, "ISOP");
+            U32(Scene, 12);       // waypoint chunk size
+            U32(Scene, 0);        // waypoint count
+            Tag(Scene, "HTAP");
+            U32(Scene, 12);       // path chunk size
+            U32(Scene, 0);        // path count
+
+            // Keep the INST chunk four-byte aligned relative to the scene entry.
+            const int32 ActorStart = Scene.Num() + 4;
+            if (ActorStart % 4) Scene.AddZeroed(4 - ActorStart % 4);
+            U32(Scene, 1);        // actor count
+
+            TArray<uint8> Actor;
+            Tag(Actor, "TSNI");
+            U32(Actor, 0);        // size placeholder
+            U32(Actor, 0);        // actor index
+            U32(Actor, 0x0d);     // class id
+            Tag(Actor, "PLATFORM");
+            Actor.Add(0);
+            const int32 AbsoluteNameEnd = Scene.Num() + Actor.Num();
+            if (AbsoluteNameEnd % 4) Actor.AddZeroed(4 - AbsoluteNameEnd % 4);
+            U32(Actor, 0);        // mesh index
+            U32(Actor, 0);        // texture index
+            U32(Actor, 0);        // collision index
+            for (const float Value : { 1.0f, 2.0f, 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f })
+                F32(Actor, Value);
+            U32(Actor, 0);        // macro animations
+            U32(Actor, 0);        // behaviours
+            U32(Actor, 0);        // models
+            const int32 Common = Actor.Num();
+            U32(Actor, 0);        // default behaviour
+            for (int32 Index = 0; Index < 4; ++Index) F32(Actor, 0.0f);
+            F32(Actor, 10.0f);    // clipping
+            F32(Actor, 75.0f);    // visibility distance
+            F32(Actor, 100.0f);   // culling distance
+            F32(Actor, 0.0f);     // field 20
+            U32(Actor, 1);        // sector id
+            U32(Actor, 0x1234);   // hash code
+            F32(Actor, 0.0f);     // lod bias min
+            F32(Actor, 0.0f);     // lod bias max
+            U32(Actor, 0);
+            U32(Actor, 0);        // actor flags
+            U32(Actor, 1);        // animation layers
+            U32(Actor, 0);        // field 40
+            U32(Actor, 0);
+            U32(Actor, 0);        // lighting flags
+            F32(Actor, 1.0f);     // lighting value
+            U32(Actor, 0);        // scenario conditions
+            check(Actor.Num() - Common == 84);
+            // Class 0x0d payload: weight, empty carried/zone lists, one no-friction
+            // zone with two carried actors, then full platform details.
+            F32(Actor, 1.0f);
+            U32(Actor, 0);
+            U32(Actor, 0);
+            U32(Actor, 1);
+            U32(Actor, 42);
+            U32(Actor, 2);
+            U32(Actor, 7);
+            U32(Actor, 8);
+            U32(Actor, 0);        // camera records
+            I32(Actor, -1);       // sound ref A
+            I32(Actor, -1);       // sample ref A
+            I32(Actor, -1);       // sound ref B
+            I32(Actor, -1);       // sample ref B
+            for (int32 Index = 0; Index < 3; ++Index) F32(Actor, 0.0f);
+            U32(Actor, 0);        // effect ref 1C
+            U32(Actor, 0);        // effect ref 20
+            U32(Actor, 14);       // platform flags
+            I32(Actor, -1);       // camera index
+            F32(Actor, 50.0f);    // tilt value
+            I32(Actor, -1);       // tilt mode
+            for (int32 Index = 0; Index < 4; ++Index) F32(Actor, 0.0f);
+            F32(Actor, 0.0f);     // push oscillation X
+            F32(Actor, 0.0f);     // push oscillation Y
+            U32(Actor, 0);        // sound list A
+            U32(Actor, 0);        // sound list B
+            check(Actor.Num() >= 4);
+            const uint32 ActorSize = uint32(Actor.Num());
+            for (int32 Byte = 0; Byte < 4; ++Byte) Actor[4 + Byte] = uint8(ActorSize >> (Byte * 8));
+            Scene.Append(Actor);
+
+            // Scene configuration (6/2): the exporter requires exactly one and
+            // patches it in place, so include a complete minimal block.
+            TArray<uint8> Config;
+            Config.AddZeroed(16);
+            F32(Config, 0.0f);    // field 1C
+            U32(Config, 1);       // field 20 must fit a u32
+            F32(Config, 0.0f);    // field 24
+            U32(Config, 0);       // header word 0
+            U32(Config, 0);       // header word 1
+            U32(Config, 0);       // common mesh count
+            I32(Config, 0);       // common texture count
+            I32(Config, 0);       // texture word
+            U32(Config, 0);       // collision bank count
+            I32(Config, 0);       // level animation count
+            for (int32 Index = 0; Index < 4; ++Index) U32(Config, 0);  // post-animation words
+            U32(Config, 0);       // actor class allocation count
+            U32(Config, 0);       // particle word
+
+            // Assemble header, entry table, type table and the two payloads.
+            const int32 HeaderSize = 0x48;
+            const int32 TableOffset = HeaderSize;
+            const int32 EntryCount = 4;
+            const int32 TypeOffset = TableOffset + EntryCount * 16;
+            const int32 SceneOffset = TypeOffset + EntryCount * 4;
+            const int32 ConfigOffset = SceneOffset + Scene.Num();
+            const int32 EmptyOffset = ConfigOffset + Config.Num();
+            TArray<uint8> Bytes;
+            Bytes.SetNumZeroed(HeaderSize);
+            Bytes[8] = 'K'; Bytes[9] = 'N'; Bytes[10] = 'A'; Bytes[11] = 'B';
+            auto WriteHeader = [&Bytes](int32 Offset, uint32 Value) {
+                for (int32 Byte = 0; Byte < 4; ++Byte) Bytes[Offset + Byte] = uint8(Value >> (Byte * 8));
+            };
+            WriteHeader(0x0c, 0);
+            WriteHeader(0x14, 0);
+            WriteHeader(0x28, EntryCount);
+            WriteHeader(0x30, uint32(TableOffset - 8));
+            WriteHeader(0x34, uint32(TypeOffset - 8));
+            Bytes.SetNum(SceneOffset);
+            auto WriteEntry = [&Bytes](int32 Entry, uint32 Offset, uint32 Size) {
+                for (int32 Byte = 0; Byte < 4; ++Byte) Bytes[Entry + Byte] = uint8(Offset >> (Byte * 8));
+                for (int32 Byte = 0; Byte < 4; ++Byte) Bytes[Entry + 4 + Byte] = uint8(Size >> (Byte * 8));
+            };
+            WriteEntry(TableOffset, uint32(SceneOffset), uint32(Scene.Num()));
+            WriteEntry(TableOffset + 16, uint32(ConfigOffset), uint32(Config.Num()));
+            WriteEntry(TableOffset + 32, uint32(EmptyOffset), 0);
+            WriteEntry(TableOffset + 48, uint32(EmptyOffset), 0);
+            const uint32 TypeWords[4] = {
+                (6u << 16) | 1u, (6u << 16) | 2u, (4u << 16) | 1u, (5u << 16) | 1u };
+            for (int32 Index = 0; Index < EntryCount; ++Index)
+                for (int32 Byte = 0; Byte < 4; ++Byte)
+                    Bytes[TypeOffset + Index * 4 + Byte] = uint8(TypeWords[Index] >> (Byte * 8));
+            Bytes.Append(Scene);
+            Bytes.Append(Config);
+            return Bytes;
+        }
+    };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSmallBankRoundTripTest, "Kya.Bank.SmallBankRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaSmallBankRoundTripTest::RunTest(const FString& Parameters)
+{
+    FKyaSmallBankBuilder Builder;
+    TArray<uint8> Input = Builder.Build();
+    // Emit the constructed asset so it can be imported for manual inspection.
+    const FString FixturePath = FPaths::ProjectSavedDir() / TEXT("KyaSmallBank.BNK");
+    if (TestTrue(TEXT("Write small bank asset"), FFileHelper::SaveArrayToFile(Input, *FixturePath)))
+        AddInfo(FString::Printf(TEXT("Small bank asset: %s (%d bytes)"), *FixturePath, Input.Num()));
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import small bank"), Bank)) return false;
+    TestEqual(TEXT("Small bank entry count"), Bank->Entries.Num(), 4);
+    TestEqual(TEXT("Small bank scene configuration"), Bank->SceneConfiguration.Field20, int64(1));
+    if (!TestEqual(TEXT("Small bank actor count"), Bank->SceneEnvironment.Actors.Num(), 1)) return false;
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Small bank actor name"), Actor.Name, FString(TEXT("PLATFORM")));
+    TestEqual(TEXT("Small bank actor class"), Actor.ClassId, int64(0x0d));
+    TestEqual(TEXT("Small bank actor position"), Actor.Position, FVector(1.0, 2.0, 3.0));
+    TestEqual(TEXT("Small bank actor sector"), Actor.SectorId, 1);
+    TestTrue(TEXT("Small bank platform prefix parses"), Actor.bHasPlatformPrefix);
+    TestTrue(TEXT("Small bank platform details parse"), Actor.bHasPlatformDetails);
+    TestEqual(TEXT("Small bank platform weight"), Actor.PlatformWeight, 1.0f);
+    TestEqual(TEXT("Small bank leaves no raw class data"), Actor.ClassData.Num(), 0);
+    TestEqual(TEXT("Small bank platform flags"), Actor.PlatformProperties.PlatformFlags, int64(14));
+    if (!TestEqual(TEXT("Small bank no-friction zones"), Actor.PlatformNoFrictionZones.Num(), 1)) return false;
+    TestEqual(TEXT("Small bank no-friction ref"), Actor.PlatformNoFrictionZones[0].ZoneRef, 42);
+    if (!TestEqual(TEXT("Small bank no-friction actors"), Actor.PlatformNoFrictionZones[0].Actors.Num(), 2)) return false;
+    TestEqual(TEXT("Small bank no-friction actor 0"), Actor.PlatformNoFrictionZones[0].Actors[0], 7);
+    TestEqual(TEXT("Small bank no-friction actor 1"), Actor.PlatformNoFrictionZones[0].Actors[1], 8);
+
+    UKyaLevelBankExporter* Exporter = NewObject<UKyaLevelBankExporter>();
+    TArray<uint8> Plain;
+    FMemoryWriter PlainWriter(Plain);
+    if (!TestTrue(TEXT("Export unedited small bank"), Exporter->ExportBinary(Bank, TEXT("bnk"), PlainWriter, GWarn))) return false;
+    TestEqual(TEXT("Unedited export keeps the file size"), Plain.Num(), Input.Num());
+    TestTrue(TEXT("Unedited export preserves every byte"), Plain == Input);
+
+    Actor.PlatformNoFrictionZones[0].ZoneRef = 99;
+    Actor.PlatformNoFrictionZones[0].Actors[0] = 1234;
+    Actor.PlatformWeight = 2.5f;
+    Actor.PlatformProperties.PlatformFlags = 99;
+    TArray<uint8> Edited;
+    FMemoryWriter EditedWriter(Edited);
+    if (!TestTrue(TEXT("Export edited small bank"), Exporter->ExportBinary(Bank, TEXT("bnk"), EditedWriter, GWarn))) return false;
+    TestEqual(TEXT("Edited export keeps the file size"), Edited.Num(), Input.Num());
+    int32 ChangedBytes = 0;
+    for (int32 Index = 0; Index < Input.Num(); ++Index)
+        if (Input[Index] != Edited[Index]) ++ChangedBytes;
+    // 2 bytes of weight, 1 of no-friction ref, 2 of the first carried actor and
+    // 1 of the platform flags differ; every other byte is untouched.
+    TestEqual(TEXT("Edited export touches only the edited fields"), ChangedBytes, 6);
+
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport edited small bank"), Reimported)) return false;
+    const FKyaActorPlacement& EditedActor = Reimported->SceneEnvironment.Actors[0];
+    TestEqual(TEXT("Edited no-friction ref"), EditedActor.PlatformNoFrictionZones[0].ZoneRef, 99);
+    TestEqual(TEXT("Edited no-friction actor"), EditedActor.PlatformNoFrictionZones[0].Actors[0], 1234);
+    TestEqual(TEXT("Edited platform weight"), EditedActor.PlatformWeight, 2.5f);
+    TestEqual(TEXT("Edited platform flags"), EditedActor.PlatformProperties.PlatformFlags, int64(99));
+
+    FKyaPlatformNoFrictionZone ExtraZone;
+    ExtraZone.ZoneRef = 5;
+    Actor.PlatformNoFrictionZones.Add(ExtraZone);
+    TArray<uint8> Rejected;
+    FMemoryWriter RejectedWriter(Rejected);
+    TestFalse(TEXT("Exporter rejects a changed no-friction zone count"),
+        Exporter->ExportBinary(Bank, TEXT("bnk"), RejectedWriter, GWarn));
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaBankRoundTripTest, "Kya.Bank.LevelOneRoundTrip",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -2831,6 +3125,8 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
     if (!TestEqual(TEXT("Actor count"), Bank->SceneEnvironment.Actors.Num(), 616)) return false;
     {
         int32 Platforms = 0, Prefixes = 0, Details = 0, Cameras = 0, SoundA = 0, SoundB = 0, Friction = 0, FrictionActors = 0;
+        int32 ActorStreams = 0, ActorRefs = 0, ZoneRefs = 0, InvalidActorRefs = 0;
+        TArray<FString> ActorStreamNames;
         for (const FKyaActorPlacement& Item : Bank->SceneEnvironment.Actors)
         {
             if (Item.ClassId != 0x0d) continue;
@@ -2840,11 +3136,24 @@ bool FKyaBankRoundTripTest::RunTest(const FString& Parameters)
             Cameras += Item.PlatformCameras.Num(); SoundA += Item.PlatformSoundsA.Num(); SoundB += Item.PlatformSoundsB.Num();
             Friction += Item.PlatformNoFrictionZones.Num();
             for (const FKyaPlatformNoFrictionZone& Zone : Item.PlatformNoFrictionZones) FrictionActors += Zone.Actors.Num();
+            ActorRefs += Item.PlatformActors.Num();
+            if (!Item.PlatformActors.IsEmpty())
+            {
+                ++ActorStreams;
+                ActorStreamNames.Add(FString::Printf(TEXT("%s:%d"), *Item.Name, Item.PlatformActors.Num()));
+            }
+            ZoneRefs += Item.PlatformZones.Num();
+            for (const FKyaPlatformActor& Ref : Item.PlatformActors)
+                if (Ref.ActorRef < 0 || Ref.ActorRef >= Bank->SceneEnvironment.Actors.Num()) ++InvalidActorRefs;
         }
-        AddInfo(FString::Printf(TEXT("Platform inventory: actors=%d prefixes=%d details=%d camera-records=%d sound-a=%d sound-b=%d friction-zones=%d friction-actors=%d"),
-            Platforms, Prefixes, Details, Cameras, SoundA, SoundB, Friction, FrictionActors));
-        UE_LOG(LogTemp, Display, TEXT("Kya platform inventory: actors=%d prefixes=%d details=%d camera-records=%d sound-a=%d sound-b=%d friction-zones=%d friction-actors=%d"),
-            Platforms, Prefixes, Details, Cameras, SoundA, SoundB, Friction, FrictionActors);
+        AddInfo(FString::Printf(TEXT("Platform inventory: actors=%d prefixes=%d details=%d actor-streams=%d actor-refs=%d invalid-actor-refs=%d zone-refs=%d camera-records=%d sound-a=%d sound-b=%d friction-zones=%d friction-actors=%d"),
+            Platforms, Prefixes, Details, ActorStreams, ActorRefs, InvalidActorRefs, ZoneRefs, Cameras, SoundA, SoundB, Friction, FrictionActors));
+        UE_LOG(LogTemp, Display, TEXT("Kya platform inventory: actors=%d prefixes=%d details=%d actor-streams=%d actor-refs=%d invalid-actor-refs=%d zone-refs=%d camera-records=%d sound-a=%d sound-b=%d friction-zones=%d friction-actors=%d"),
+            Platforms, Prefixes, Details, ActorStreams, ActorRefs, InvalidActorRefs, ZoneRefs, Cameras, SoundA, SoundB, Friction, FrictionActors);
+        TestEqual(TEXT("Platform actor stream refs resolve to placements"), InvalidActorRefs, 0);
+        TestTrue(TEXT("Level one exercises moving-platform actor streams"), ActorStreams > 0);
+        AddInfo(FString::Printf(TEXT("Platform actor streams: %s"), *FString::Join(ActorStreamNames, TEXT(","))));
+        UE_LOG(LogTemp, Display, TEXT("Kya platform actor streams: %s"), *FString::Join(ActorStreamNames, TEXT(",")));
     }
     Bank->SceneEnvironment.Actors[0].Position = FVector(4, 5, 6);
     Bank->SceneEnvironment.Actors[0].VisibilityDistance = 123.0f;

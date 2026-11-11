@@ -7,6 +7,8 @@
 #include "KyaWaypointComponent.h"
 #include "KyaPathPointComponent.h"
 #include "KyaActorMarkerComponent.h"
+#include "KyaActorHandle.h"
+#include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
 #include "ProceduralMeshComponent.h"
 #include "Components/SplineComponent.h"
@@ -161,6 +163,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     BackgroundFlares.Reset();
     ClusterVisibilityRanges.Reset();
     ClusterBaseIndices.Reset();
+    HierarchySelectionInfo.Reset();
     FlareMaterials.Reset();
     FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
 #if WITH_EDITOR
@@ -1265,7 +1268,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                         Parsed = KyaG3D::DecodeHierarchyStrips(Data, LodStrips, Lod);
                         HierarchyStrips.Append(MoveTemp(LodStrips));
                     }
-                    int32 Included = 0, HierarchyTextured = 0, TransformFailures = 0;
+                    int32 Included = 0, HierarchyTextured = 0, TransformFailures = 0, HiddenStrips = 0;
                     int64 HierarchyTriangles = 0;
                     FBox HierarchyBounds(ForceInit);
                     if (Parsed)
@@ -1279,6 +1282,22 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             if (Flags & 0x40) continue;
                             FMatrix HierarchyTransform;
                             if (!KyaG3D::ReadHierarchyWorldMatrix(Data, Strip.HierarchyOffset, HierarchyTransform)) { ++TransformFailures; continue; }
+                            // World geometry is selected and toggled per hierarchy: a cluster
+                            // node's strips share the serialized hierarchy transform, and a strip
+                            // has no independent editable state.
+                            const FString HierarchyKey = MakeHierarchyKey(Sector, Strip.HierarchyOffset);
+                            FHierarchySelectionInfo& HierarchyInfo = HierarchySelectionInfo.FindOrAdd(HierarchyKey);
+                            HierarchyInfo.Bank = const_cast<UKyaLevelBank*>(Sector);
+                            HierarchyInfo.SectorId = Sector == Bank ? -1 : GetSectorId(*Sector);
+                            HierarchyInfo.Offset = Strip.HierarchyOffset;
+                            HierarchyInfo.Origin = HierarchyTransform.GetOrigin();
+                            ++HierarchyInfo.Strips;
+                            HierarchyInfo.Triangles += Strip.Indices.Num() / 3;
+                            if (bSpawnHierarchyHandles && HiddenHierarchies.Contains(HierarchyKey))
+                            {
+                                ++HiddenStrips;
+                                continue;
+                            }
                             FSectionData* Textured = ClusterMaterialOffsets.Contains(Strip.MaterialHash)
                                 ? GetTexturedSection(Strip.MaterialHash, ClusterTextureData, ClusterMaterialOffsets, ClusterMaterialSections, TEXT("Cluster"), Strip.Primitive)
                                 : GetTexturedSection(Strip.MaterialHash, CommonClusterTextures, CommonClusterMaterials, CommonClusterSections, TEXT("CommonCluster"), Strip.Primitive);
@@ -1310,8 +1329,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     {
                         UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_SCENE_HIERARCHIES name=%s parsed=%d hierarchies=%d"),
                             *DiagnosticName, SceneParsed, SceneHierarchies.Num());
-                        UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_CLUSTER_HIERARCHY_RENDER name=%s parsed=%d roots=%d linked=%d strips=%d textured=%d transform_failures=%d triangles=%lld bounds_cm=%s"),
-                            *DiagnosticName, Parsed, ClusterHierarchies.Num(), ExpandedHierarchies.Num(), Included, HierarchyTextured, TransformFailures, HierarchyTriangles, *HierarchyBounds.ToString());
+                        UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_CLUSTER_HIERARCHY_RENDER name=%s parsed=%d roots=%d linked=%d strips=%d textured=%d transform_failures=%d hidden_strips=%d triangles=%lld bounds_cm=%s"),
+                            *DiagnosticName, Parsed, ClusterHierarchies.Num(), ExpandedHierarchies.Num(), Included, HierarchyTextured, TransformFailures, HiddenStrips, HierarchyTriangles, *HierarchyBounds.ToString());
                     }
                 }
             }
@@ -1395,7 +1414,174 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     if (bLogSectorDiagnostics)
         UE_LOG(LogTemp, Display, TEXT("KYA_BACKGROUND_FOLLOW flags=%lld ranges=%d sections=%d"),
             Bank->SceneEnvironment.BackgroundFlags, BackgroundRanges.Num(), BackgroundBasePositions.Num());
+    ++BuildCount;
+#if WITH_EDITOR
+    RefreshActorHandles();
+    RefreshHierarchyHandles();
+#endif
 }
+
+void AKyaLevelPreview::Destroyed()
+{
+    for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
+        if (IsValid(Pair.Value)) Pair.Value->Destroy();
+    ActorHandles.Reset();
+    for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
+        if (IsValid(Handle)) Handle->Destroy();
+    HierarchyHandles.Reset();
+    Super::Destroyed();
+}
+
+FString AKyaLevelPreview::MakeHierarchyKey(const UKyaLevelBank* InBank, int32 HierarchyOffset) const
+{
+    return FString::Printf(TEXT("%s:%d"), InBank ? *InBank->GetName() : TEXT("<none>"), HierarchyOffset);
+}
+
+void AKyaLevelPreview::SetHierarchyVisible(UKyaLevelBank* InBank, int32 HierarchyOffset, bool bVisible)
+{
+    const FString Key = MakeHierarchyKey(InBank, HierarchyOffset);
+    if (bVisible) HiddenHierarchies.Remove(Key);
+    else HiddenHierarchies.Add(Key);
+    RebuildFromBank();
+}
+
+UKyaPathPointComponent* AKyaLevelPreview::GetPathMarker(int32 MarkerIndex) const
+{
+    return PathMarkers.IsValidIndex(MarkerIndex) ? PathMarkers[MarkerIndex].Get() : nullptr;
+}
+
+AActor* AKyaLevelPreview::GetActorHandle(int32 ActorIndex) const
+{
+    const TObjectPtr<AKyaActorHandle>* Found = ActorHandles.Find(ActorIndex);
+    return Found ? Found->Get() : nullptr;
+}
+
+void AKyaLevelPreview::RebuildFromBank()
+{
+#if WITH_EDITOR
+    if (bIsRebuildingPreview) return;
+    TGuardValue<bool> Guard(bIsRebuildingPreview, true);
+    OnConstruction(GetActorTransform());
+#endif
+}
+
+#if WITH_EDITOR
+void AKyaLevelPreview::RefreshActorHandles()
+{
+    UWorld* World = GetWorld();
+    if (!bSpawnActorHandles || !Bank || !World || World->IsGameWorld())
+    {
+        for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
+            if (IsValid(Pair.Value)) Pair.Value->Destroy();
+        ActorHandles.Reset();
+        return;
+    }
+
+    TSet<int32> LoadedSectors;
+    for (const UKyaLevelBank* Sector : SectorBanks)
+        if (Sector && Sector != Bank) LoadedSectors.Add(GetSectorId(*Sector));
+
+    TSet<int32> Wanted;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
+        // Global actors (sector -1) always belong to the scene; sector actors only
+        // get a handle when their sector is loaded. Without sector banks, show all.
+        if (Placement.SectorId >= 0 && !LoadedSectors.IsEmpty() && !LoadedSectors.Contains(Placement.SectorId)) continue;
+        Wanted.Add(Index);
+        TObjectPtr<AKyaActorHandle>* Existing = ActorHandles.Find(Index);
+        if (Existing && IsValid(*Existing))
+        {
+            (*Existing)->Bank = Bank;
+            (*Existing)->Preview = this;
+            (*Existing)->ActorIndex = Index;
+            (*Existing)->SyncFromBank();
+            continue;
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        AKyaActorHandle* Handle = World->SpawnActor<AKyaActorHandle>(
+            AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+        if (!Handle)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("KYA_ACTOR_HANDLE_SPAWN_FAILED index=%d"), Index);
+            continue;
+        }
+        Handle->Initialize(this, Bank, Index);
+        ActorHandles.Add(Index, Handle);
+    }
+
+    for (auto It = ActorHandles.CreateIterator(); It; ++It)
+    {
+        if (Wanted.Contains(It.Key())) continue;
+        if (IsValid(It.Value())) It.Value()->Destroy();
+        It.RemoveCurrent();
+    }
+    if (bSpawnActorHandles)
+        UE_LOG(LogTemp, Display, TEXT("KYA_ACTOR_HANDLES wanted=%d handles=%d loaded_sectors=%d bank=%s world_game=%d"),
+            Wanted.Num(), ActorHandles.Num(), LoadedSectors.Num(), *GetNameSafe(Bank), World->IsGameWorld() ? 1 : 0);
+}
+
+void AKyaLevelPreview::RefreshHierarchyHandles()
+{
+    UWorld* World = GetWorld();
+    if (!bSpawnHierarchyHandles || !World || World->IsGameWorld())
+    {
+        for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
+            if (IsValid(Handle)) Handle->Destroy();
+        HierarchyHandles.Reset();
+        return;
+    }
+
+    const FTransform ActorTransform = GetActorTransform();
+    for (const TPair<FString, FHierarchySelectionInfo>& Pair : HierarchySelectionInfo)
+    {
+        const FHierarchySelectionInfo& Info = Pair.Value;
+        if (!Info.Bank) continue;
+        const FVector WorldOrigin = ActorTransform.TransformPosition(
+            FVector(Info.Origin.X, Info.Origin.Z, Info.Origin.Y) * 100.0);
+        AKyaHierarchyHandle* Existing = nullptr;
+        for (const TObjectPtr<AKyaHierarchyHandle>& Candidate : HierarchyHandles)
+        {
+            if (IsValid(Candidate) && Candidate->Bank == Info.Bank && Candidate->HierarchyOffset == Info.Offset)
+            {
+                Existing = Candidate;
+                break;
+            }
+        }
+        if (Existing)
+        {
+            Existing->Preview = this;
+            Existing->SectorId = Info.SectorId;
+            Existing->StripCount = Info.Strips;
+            Existing->TriangleCount = Info.Triangles;
+            Existing->bVisible = !HiddenHierarchies.Contains(Pair.Key);
+            Existing->SetActorLocation(WorldOrigin, false, nullptr, ETeleportType::TeleportPhysics);
+            continue;
+        }
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        AKyaHierarchyHandle* Handle = World->SpawnActor<AKyaHierarchyHandle>(
+            AKyaHierarchyHandle::StaticClass(), FTransform::Identity, Params);
+        if (!Handle) continue;
+        Handle->Initialize(this, Info.Bank, Info.SectorId, Info.Offset, WorldOrigin, Info.Strips, Info.Triangles,
+            !HiddenHierarchies.Contains(Pair.Key));
+        HierarchyHandles.Add(Handle);
+    }
+
+    for (auto It = HierarchyHandles.CreateIterator(); It; ++It)
+    {
+        AKyaHierarchyHandle* Handle = *It;
+        if (!IsValid(Handle) || !HierarchySelectionInfo.Contains(MakeHierarchyKey(Handle->Bank, Handle->HierarchyOffset)))
+        {
+            if (IsValid(Handle)) Handle->Destroy();
+            It.RemoveCurrent();
+        }
+    }
+    UE_LOG(LogTemp, Display, TEXT("KYA_HIERARCHY_HANDLES hierarchies=%d handles=%d hidden=%d"),
+        HierarchySelectionInfo.Num(), HierarchyHandles.Num(), HiddenHierarchies.Num());
+}
+#endif
 
 void AKyaLevelPreview::SetBackgroundCameraPosition(const FVector& WorldCameraPosition)
 {

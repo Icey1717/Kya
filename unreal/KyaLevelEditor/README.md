@@ -135,8 +135,8 @@ modulation, or supply `KYA_ACTOR_SECTORS=/Game/SECT1,/Game/SECT7` to include
 the corresponding ground-light data in a lit capture.
 Enter `Kya.ViewportTonemapper 0` in the editor console to inspect the preview
 without Unreal's tone curve, or `Kya.ViewportTonemapper 1` to enable it again.
-The camera-aligned capture script uses the same control when
-`KYA_CAPTURE_DISABLE_TONEMAPPER=1`.
+Both camera-aligned capture scripts disable the tone curve by default so their
+output matches native colour; set `KYA_CAPTURE_DISABLE_TONEMAPPER=0` to keep it.
 
 For an isolated bind-pose comparison, [capture the native actor and draw metadata](../../tools/debug_socket/README.md#how-the-bind-pose-works)
 and set `KYA_ACTOR_NATIVE_CAPTURE` to the combined screenshot JSON before
@@ -154,6 +154,34 @@ For a lighting comparison, set `KYA_ACTOR_LIGHTING=1`,
 data at the captured placement. The native light packet in the JSON is
 available for diagnosis.
 
+Enable `Spawn Actor Handles` on the preview to create one selectable
+`AKyaActorHandle` marker per actor placement in the loaded sectors. Each handle is
+labelled with the bank actor's name, can be clicked in the viewport or picked in
+the World Outliner, and mirrors the placement fields in its Details panel: name,
+mesh/texture index, position, rotation, scale, sector, default behaviour,
+visibility distance, lighting value and lighting flags. Edits write back to the
+bank asset with undo support and rebuild the preview; handles are editor-only and
+are destroyed with the preview or when the option is cleared. The preview's
+`Build Count` confirms a rebuild after an edit. `PreviewActorIndex`,
+`PreviewActorStripIndex`, `TextureOnlyActorIndex` and the capture scripts continue
+to work unchanged.
+
+Actor and hierarchy handles can also be selected from scripts through the editor
+selection API (`set_selected_level_actors` / `get_selected_level_actors`), which is
+how the selection state is verified.
+
+Path-point markers write their position back to the bank when moved (the editor move
+callback and the `SetMarkerLocation`/`WriteBackToBank` functions share the same
+code, including `Modify` for undo). `GetPathMarkerCount`/`GetPathMarker` expose the
+markers for scripted checks.
+
+Enable `Spawn Hierarchy Handles` to create one selectable handle per static
+cluster node (a hierarchy's strip group) instead of the thousands of individual
+strips. Handles are labelled with the bank name and hierarchy offset and expose
+sector, hierarchy offset, strip/triangle counts and a `Visible` toggle that hides
+the hierarchy in the preview and rebuilds it. The toggle is an editor inspection
+state (`Hidden Hierarchies` on the preview); it does not modify bank bytes.
+
 Enable `Log Sector Diagnostics` on the preview actor to log bank entries, cluster
 and hierarchy strip counts, material coverage, and bounds. For a camera-aligned
 capture, save a game screenshot with `python tools/debug_socket/client.py screenshot --metadata out/screenshots/matched-camera.json`, set `KYA_CAMERA_METADATA` to
@@ -164,14 +192,22 @@ The script also copies the recorded camera's forward and up vectors into
 `Sprite Camera Forward`/`Sprite Camera Up` so captured sprites face the camera.
 `Tools/capture_scene_offscreen.py` renders the same metadata through an
 off-screen `SceneCapture2D` and works while the editor is backgrounded. It sets
-manual exposure; `KYA_CAPTURE_DISABLE_TONEMAPPER=1` also disables tone mapping,
-eye adaptation, colour grading and bloom for colour comparisons. Both capture
+manual exposure and disables tone mapping, eye adaptation, colour grading and
+bloom by default for colour comparisons; set
+`KYA_CAPTURE_DISABLE_TONEMAPPER=0` to keep Unreal's tone curve. Both capture
 scripts explicitly set the preview camera and render dimensions for background
 following and fixed-size flares. Set `KYA_CAPTURE_SPRITES=0` in the off-screen
 script to isolate the scene without sprites or the background flare.
 `KYA_CAPTURE_VERIFY_OMISSIONS=1` additionally writes captures with flares disabled,
 additive coefficients zeroed, an explicit 1,000,000-metre draw range, and forced
 visible/occluded flare markers. These are diagnostic controls, not saved asset changes.
+For a scenery-only reference, capture the game with
+`python tools/debug_socket/client.py screenshot --hide-actors ...` after
+`skip_cutscene`, then run the off-screen capture with `KYA_CAPTURE_ACTORS=0` and the
+screenshot's own JSON as `KYA_CAMERA_METADATA`. The free camera keeps the active
+game camera's FOV, so skip the intro cutscene first; otherwise the reference is
+letterboxed and zoomed. Native actor shadows and the HUD are drawn even with actor
+draws hidden, so they remain in that reference.
 If the loaded bank has no imported actors (a stale asset), the script reimports `LEVEL.BNK`
 into `/Game/__KyaCapture` for the capture.
 The script removes existing `KyaLevelPreview` actors from the loaded map before it spawns the
@@ -231,9 +267,27 @@ Get-Item G:\repos\Kya\out\UnrealBankTest\Plugins\KyaLevelEditor |
   Format-List FullName,LinkType,Target
 ```
 
+`Kya.Bank.SmallBankRoundTrip` builds a small but complete bank in memory
+(`FKyaSmallBankBuilder` in `KyaLevelBankTests.cpp`): header and entry/type
+tables, a scene entry with one `INST` moving-platform actor chunk, and a scene
+configuration entry. The actor carries a full class-0x0d prefix with one
+two-actor no-friction zone plus a platform details block, so optional layouts can
+be exercised without LEVEL_1. The test checks that the unedited export is
+byte-identical, that no-friction ref/actor, weight and flag edits reimport with
+exactly those bytes changed, and that the exporter rejects a changed no-friction
+zone count. The test also writes the constructed asset to
+`<project>/Saved/KyaSmallBank.BNK` (864 bytes) so it can be imported for manual
+inspection; importing it yields four entries and one class-0x0d actor named
+`PLATFORM` with the no-friction zone and full typed class data. Run it with
+`-ExecCmds="Automation RunTests Kya.Bank.SmallBankRoundTrip"`.
+
 `Tools/inventory_actor_classes.py` lists remaining raw Create payloads by actor
-class. `Tools/inventory_platform_details.py` reports moving-platform camera,
-sound, and class-data coverage.
+class. `Tools/inventory_platform_details.py` reports moving-platform coverage:
+the carried-actor (bridge) stream with its target placements, zone refs,
+no-friction zones, camera/notification records, sounds and the remaining raw
+class-data size. Level 1 currently reports 166 platform actors with 9 carried-actor
+streams (19 refs, all resolving to placements), 3 zone refs, 54 camera records and
+no raw class-data suffix.
 
 ## Installation
 

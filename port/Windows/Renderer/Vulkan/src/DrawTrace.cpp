@@ -16,6 +16,7 @@ std::atomic<bool> enabled{false};
 Snapshot working;
 std::shared_ptr<const Snapshot> published;
 bool pending = false, pendingStacks = false, capturing = false;
+bool actorsHidden = false;
 uint64_t frame = 0, generation = 1, nextSource = 0, nextSubmission = 0, nextDraw = 0;
 uint64_t frameDraw = 0;
 size_t bytes = 0;
@@ -107,6 +108,12 @@ void CopyName(Name& target, const char* name) {
     }
 }
 bool IsEnabled() { return enabled.load(std::memory_order_relaxed); }
+void SetActorsHidden(bool hidden) {
+    std::lock_guard lock(mutex);
+    actorsHidden = hidden;
+    enabled.store(capturing || active.action != Action::None || actorsHidden, std::memory_order_relaxed);
+}
+bool AreActorsHidden() { std::lock_guard lock(mutex); return actorsHidden; }
 bool IsDrawLimitActive() { std::lock_guard lock(mutex); return active.action == Action::DrawUpTo; }
 bool IsDrawLimitReached() { std::lock_guard lock(mutex); return active.action == Action::DrawUpTo && frameDraw >= active.drawLimit; }
 uint64_t AssetKey(const char* name) {
@@ -139,7 +146,7 @@ void AdvanceFrame() {
     working.frame = ++frame;
     working.generation = generation;
     active = requested;
-    enabled.store(capturing || active.action != Action::None, std::memory_order_relaxed);
+    enabled.store(capturing || active.action != Action::None || actorsHidden, std::memory_order_relaxed);
 }
 
 void InvalidateSources() {
@@ -147,7 +154,7 @@ void InvalidateSources() {
     ++generation;
     requested = {}; active = {};
     liveSources.clear(); owners.clear(); nodes.clear(); retiredAt.clear();
-    enabled.store(capturing, std::memory_order_relaxed);
+    enabled.store(capturing || actorsHidden, std::memory_order_relaxed);
 }
 
 void InvalidateSource(Address address) {
@@ -173,7 +180,7 @@ void InvalidateSource(Address address) {
     for (auto it = owners.begin(); it != owners.end();) {
         if (it->first == address || it->second.owner == address) it = owners.erase(it); else ++it;
     }
-    enabled.store(capturing || active.action != Action::None, std::memory_order_relaxed);
+    enabled.store(capturing || active.action != Action::None || actorsHidden, std::memory_order_relaxed);
 }
 
 void RegisterSourcePair(Address container, Address first, Address second) {
@@ -292,7 +299,9 @@ bool Record(uint64_t submissionId, Draw draw) {
     const auto* source = FindSource(submission.sourceId);
     const bool match = active.action == Action::DrawUpTo ? draw.order <= active.drawLimit : source && Matches(*source, submission);
     if (match && active.action != Action::None) ++matches;
-    const bool suppress = ((active.action == Action::DrawUpTo || active.action == Action::IsolateBindPose) && !match) || (source &&
+    // Scenery also has an owner address, but uses ownerIndex=-1.
+    const bool suppress = (actorsHidden && source && source->owner && source->ownerIndex >= 0) ||
+        ((active.action == Action::DrawUpTo || active.action == Action::IsolateBindPose) && !match) || (source &&
         ((active.action == Action::Hide && match) || (active.action == Action::Isolate && !match)));
     if (capturing && Reserve(sizeof(Draw))) {
         draw.id = ++nextDraw;

@@ -124,7 +124,9 @@ try:
 except Exception as error:
     unreal.log_error('KYA_OFFSCREEN_EXPOSURE_FAILED %s' % error)
 
-if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER') == '1':
+# Native colour comparison needs the raw framebuffer, so tone mapping is off by
+# default. Set KYA_CAPTURE_DISABLE_TONEMAPPER=0 to keep Unreal's tone curve.
+if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER', '1') == '1':
     component.set_editor_property('show_flag_settings', [
         unreal.EngineShowFlagsSetting(show_flag_name=name, enabled=False)
         for name in ('Tonemapper', 'EyeAdaptation', 'ColorGrading', 'Bloom')])

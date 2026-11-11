@@ -117,7 +117,9 @@ preview.set_editor_property('sprite_camera_forward', unreal.Vector(*camera['forw
 preview.set_editor_property('sprite_camera_up', unreal.Vector(*camera['up']))
 preview.set_preview_camera(location, forward, up, math.degrees(camera['horizontal_fov_radians']),
                            metadata['width'], metadata['height'])
-if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER') == '1':
+# Match native colour: the viewport capture disables the tone curve by default.
+# Set KYA_CAPTURE_DISABLE_TONEMAPPER=0 to keep Unreal's tone mapper.
+if os.environ.get('KYA_CAPTURE_DISABLE_TONEMAPPER', '1') == '1':
     unreal.SystemLibrary.execute_console_command(world, 'Kya.ViewportTonemapper 0')
 unreal.EditorLevelLibrary.editor_invalidate_viewports()
 unreal.log('KYA_MATCHED_CAMERA location=%s rotation=%s fov=%.3f aspect=%.6f source=%s' %

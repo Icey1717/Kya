@@ -13,6 +13,8 @@ class UKyaWaypointComponent;
 class USplineComponent;
 class UKyaPathPointComponent;
 class UKyaActorMarkerComponent;
+class AKyaActorHandle;
+class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
 
@@ -25,6 +27,7 @@ public:
     AKyaLevelPreview();
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void Destroyed() override;
 #if WITH_EDITOR
     virtual bool ShouldTickIfViewportsOnly() const override { return true; }
     /** Rebuild the preview mesh when an editable property changes. */
@@ -130,6 +133,51 @@ public:
     UPROPERTY(EditAnywhere, Category="Kya|Actors")
     bool bShowAllActorMeshes = false;
 
+    /**
+     * Spawn transient, selectable handles for actor placements in the loaded sectors.
+     * Each handle appears in the World Outliner under the bank actor's name and exposes
+     * the placement fields in its Details panel; edits write back to the bank asset.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSpawnActorHandles = false;
+
+    /**
+     * Spawn selectable handles for static world-geometry hierarchies (the smallest
+     * practical unit: a cluster node's strip group in a sector or common mesh).
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bSpawnHierarchyHandles = false;
+
+    /** Hierarchy keys hidden from the preview by a hierarchy handle. */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    TSet<FString> HiddenHierarchies;
+
+    /** Hide or show one world-geometry hierarchy and rebuild the preview. */
+    void SetHierarchyVisible(UKyaLevelBank* InBank, int32 HierarchyOffset, bool bVisible);
+
+    /** Rebuild the preview after an external edit to the bank asset (such as a handle edit). */
+    void RebuildFromBank();
+
+    /** Number of completed preview builds; lets tests confirm that edits refresh the mesh. */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics")
+    int64 BuildCount = 0;
+
+    /** Number of path-point markers for the previewed path. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    int32 GetPathMarkerCount() const { return PathMarkers.Num(); }
+
+    /** Path-point marker by index, or null. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Paths")
+    UKyaPathPointComponent* GetPathMarker(int32 MarkerIndex) const;
+
+    /** Number of live selectable actor handles. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    int32 GetActorHandleCount() const { return ActorHandles.Num(); }
+
+    /** Handle for a bank actor index, or null. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Selection")
+    AActor* GetActorHandle(int32 ActorIndex) const;
+
     UPROPERTY(VisibleAnywhere, Category="Kya")
     TObjectPtr<UProceduralMeshComponent> Mesh;
 
@@ -210,6 +258,27 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UKyaLevelBank> PathMarkerBank;
     int32 PathMarkerIndex = INDEX_NONE;
+#if WITH_EDITOR
+    /** Create, update, or destroy the selectable actor handles after a rebuild. */
+    void RefreshActorHandles();
+    /** Create, update, or destroy the selectable world-geometry hierarchy handles. */
+    void RefreshHierarchyHandles();
+#endif
+    struct FHierarchySelectionInfo
+    {
+        UKyaLevelBank* Bank = nullptr;
+        int32 SectorId = -1;
+        int32 Offset = 0;
+        int32 Strips = 0;
+        int32 Triangles = 0;
+        FVector Origin = FVector::ZeroVector;
+    };
+    FString MakeHierarchyKey(const UKyaLevelBank* InBank, int32 HierarchyOffset) const;
+    TMap<FString, FHierarchySelectionInfo> HierarchySelectionInfo;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<AKyaHierarchyHandle>> HierarchyHandles;
+    UPROPERTY(Transient)
+    TMap<int32, TObjectPtr<AKyaActorHandle>> ActorHandles;
     UPROPERTY(Transient)
     TObjectPtr<UKyaActorMarkerComponent> ActorMarker;
     UPROPERTY(Transient)

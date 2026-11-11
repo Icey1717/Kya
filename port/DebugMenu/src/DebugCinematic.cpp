@@ -219,6 +219,31 @@ namespace Debug::Cinematic
 			(pCinematic->cinFileData.pCinTag != nullptr);
 	}
 
+	// "Skip Cutscenes" fast-forwards a playing cinematic by moving its delta to the
+	// end of the tag timeline. The socket uses the same path as the debug menu.
+	static bool SkipCinematic(CCinematic* pCinematic) {
+		if (pCinematic == nullptr || pCinematic->state != CS_Playing || !HasInitializedCinData(pCinematic)) {
+			return false;
+		}
+		pCinematic->totalCutsceneDelta = pCinematic->cinFileData.pCinTag->totalPlayTime;
+		return true;
+	}
+
+	int SkipActiveCutscenes()
+	{
+		auto* pCinematicManager = g_CinematicManager_0048efc;
+		if (pCinematicManager == nullptr || pCinematicManager->ppCinematicObjB_B == nullptr) {
+			return 0;
+		}
+		int skipped = 0;
+		for (int i = 0; i < pCinematicManager->activeCinematicCount; ++i) {
+			if (SkipCinematic(pCinematicManager->ppCinematicObjB_B[i])) {
+				++skipped;
+			}
+		}
+		return skipped;
+	}
+
 	static void SetCinematicTime(CCinematic* pCinematic, float time) {
 		if ((pCinematic->flags_0x8 & CINEMATIC_RUNTIME_FLAG_HAS_AUDIO_TRACK) != 0) {
 			CBWCinSourceAudio& audio = pCinematic->cinematicLoadObject.BWCinSourceAudio_Obj;
@@ -537,8 +562,8 @@ namespace Debug::Cinematic
 					ImGui::PopID();
 				}
 
-				if (gSkipCutscenes && pCinematic->state == CS_Playing && HasInitializedCinData(pCinematic)) {
-					pCinematic->totalCutsceneDelta = pCinematic->cinFileData.pCinTag->totalPlayTime;
+				if (gSkipCutscenes) {
+					SkipCinematic(pCinematic);
 				}
 			}
 		}

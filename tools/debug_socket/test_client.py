@@ -2,11 +2,30 @@ import json
 import socket
 import threading
 import unittest
+from unittest.mock import patch
 
-from client import request
+from client import request, screenshot_without_actors
 
 
 class DebugSocketClientTest(unittest.TestCase):
+    def test_actor_free_capture_restores_previous_visibility(self):
+        for was_hidden in (False, True):
+            with self.subTest(was_hidden=was_hidden), patch('client.request') as send:
+                send.side_effect = [({'actors_hidden': was_hidden}, b''),
+                                    ({'frame': 10}, b''), ({'frame': 13}, b''),
+                                    ({'actors_hidden': True}, b'png'), ({}, b'')]
+                self.assertEqual(screenshot_without_actors(18438, 3)[1], b'png')
+                self.assertEqual(send.call_args_list[-1].kwargs, {'visible': not was_hidden})
+                self.assertEqual(send.call_args_list[3].kwargs, {'target': 'game'})
+
+    def test_actor_free_capture_restores_visibility_on_readback_failure(self):
+        with patch('client.request') as send:
+            send.side_effect = [({'actors_hidden': False}, b''), ({'frame': 10}, b''),
+                                ({'frame': 13}, b''), RuntimeError('readback failed'), ({}, b'')]
+            with self.assertRaisesRegex(RuntimeError, 'readback failed'):
+                screenshot_without_actors(18438, 3)
+            self.assertEqual(send.call_args_list[-1].kwargs, {'visible': True})
+
     def exchange(self, response, command="status", target=None, **fields):
         listener = socket.socket()
         listener.bind(("127.0.0.1", 0))
