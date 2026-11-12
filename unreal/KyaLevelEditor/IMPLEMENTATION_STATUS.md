@@ -226,8 +226,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ActorTransformConversion`, `Kya.Editor.ActorEditService`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
 `Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,
-`Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords` and `Kya.Editor.ActorCatalog`
-all `Success`.
+`Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords`, `Kya.Editor.ActorCatalog`,
+`Kya.Editor.MultiEditBaseline`, `Kya.Editor.GeneratedActorLifecycle` and
+`Kya.Editor.StructuralCommands` all `Success`.
 
 Coverage added by the new tests:
 
@@ -262,7 +263,12 @@ Coverage added by the new tests:
   validation, numeric field get/set, Details-style Custom patches rejected when
   they introduce an unresolved reference, same-bucket name acceptance and
   smaller-bucket rejection, negative `LightingFlags` rejection, and int32 bit
-  patterns (`0x80000000`) preserved.
+  patterns (`0x80000000`) preserved;
+- generated lifetime and structural commands: transient/transactional/editor-only
+  flags, ownership checks, duplicate cleanup, independent previews, destroy/reload,
+  no generated actors in a game world, blocked delete with per-class reasons,
+  duplicate copies rejected from writing the bank, pasted-style copies swept
+  without a preselection, and owned handles surviving cleanup.
 
 ## 4. Not implemented yet
 
