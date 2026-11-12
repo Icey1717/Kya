@@ -11,6 +11,7 @@
 #include "EngineUtils.h"
 #include "IAssetTools.h"
 #include "KyaBankExport.h"
+#include "KyaSectorBankExport.h"
 #include "KyaBankStructuralWriter.h"
 #include "KyaActorCatalog.h"
 #include "KyaActorEditService.h"
@@ -384,7 +385,8 @@ FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank){
         Report.Issues.Add({INDEX_NONE, TEXT("geometry"), TEXT(
             "No bank bytes are retained, so geometry, textures and records cannot be decoded or exported."), true});
     }
-    else if (!Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
+    else if (FString SectorReason; !KyaSectorBankSupportsExport(*Bank, SectorReason) &&
+        !Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
     {
         Report.Issues.Add({INDEX_NONE, TEXT("geometry"), TEXT(
             "The scene background entry is missing or invalid; world geometry preview is incomplete."), false});
@@ -793,14 +795,11 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
         FString Reason;
         if (!KyaBankSupportsExport(Bank, Reason))
         {
-            // Discovered sector banks are dependencies whose typed layout the writer
-            // does not support yet. Report them as unchanged instead of failing the
-            // whole level export or rewriting them.
-            OutMessages.Add(FString::Printf(TEXT("%s: unchanged dependency, not written (%s)"),
+            bBlockingIssues = true;
+            OutMessages.Add(FString::Printf(TEXT("%s: not exportable (%s)"),
                 *Bank->GetName(), *Reason));
-            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Warning, Bank, FText::FromString(
-                FString::Printf(TEXT("Unchanged dependency: not written (%s)."), *Reason))));
-            UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT_SKIP %s %s"), *Bank->GetName(), *Reason);
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Error, Bank, FText::FromString(
+                FString::Printf(TEXT("Cannot export bank: %s."), *Reason))));
             continue;
         }
         FKyaBankExportRequest& Request = Requests.AddDefaulted_GetRef();

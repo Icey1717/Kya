@@ -53,5 +53,5 @@ struct FKyaBankExportOutcome
 KYALEVELEDITOR_API TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(
     const TArray<FKyaBankExportRequest>& Requests);
 
-/** True when the bank has a round-trip supported scene/actor layout for the writer. */
+/** True when the bank has a supported main scene layout or native sector entries. */
 KYALEVELEDITOR_API bool KyaBankSupportsExport(const UKyaLevelBank* Bank, FString& OutReason);

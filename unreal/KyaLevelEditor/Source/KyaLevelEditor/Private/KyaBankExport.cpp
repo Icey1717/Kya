@@ -1,6 +1,7 @@
 #include "KyaBankExport.h"
 
 #include "KyaLevelBank.h"
+#include "KyaSectorBankExport.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -18,6 +19,7 @@ FString FKyaBankExportDiagnostics::Summary() const
 
 bool KyaBankSupportsExport(const UKyaLevelBank* Bank, FString& OutReason)
 {
+    OutReason.Reset();
     if (!Bank)
     {
         OutReason = TEXT("The bank asset does not exist.");
@@ -33,8 +35,7 @@ bool KyaBankSupportsExport(const UKyaLevelBank* Bank, FString& OutReason)
         if (Entry.Type == 6 && Entry.Subtype == 2) bSceneConfig = true;
     if (!bSceneConfig)
     {
-        OutReason = TEXT("The bank has no scene configuration entry, so the current writer cannot export it.");
-        return false;
+        return KyaSectorBankSupportsExport(*Bank, OutReason);
     }
     return true;
 }
@@ -80,6 +81,7 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
         if (Request.DestinationFilename.IsEmpty())
         {
             Outcome.Errors.Add(TEXT("No destination filename was supplied."));
+            bStagingFailed = true;
             continue;
         }
         const FString Normalized = FPaths::ConvertRelativePathToFull(Request.DestinationFilename).ToLower();
@@ -87,6 +89,7 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
         {
             Outcome.Errors.Add(FString::Printf(
                 TEXT("Duplicate export destination %s; this bank was not written."), *Request.DestinationFilename));
+            bStagingFailed = true;
             continue;
         }
         Destinations.Add(Normalized);
@@ -95,6 +98,7 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
         if (!KyaBankSupportsExport(Request.Bank, Reason))
         {
             Outcome.Errors.Add(Reason);
+            bStagingFailed = true;
             continue;
         }
 
@@ -106,6 +110,7 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
                 ? TArray<FString>{TEXT("The bank writer rejected this bank.")} : Diagnostics.Errors);
             Outcome.Warnings = Diagnostics.Warnings;
             Outcome.SupportedEdits = Diagnostics.SupportedEdits;
+            bStagingFailed = true;
             continue;
         }
         Outcome.bValidated = true;

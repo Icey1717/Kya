@@ -251,6 +251,9 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
 
         IDetailPropertyRow* Row = Category.AddExternalStructureProperty(PlacementScope, Property->GetFName());
         if (!Row) continue;
+        // Class-specific fields should disappear with their empty categories when
+        // the placement's existing edit condition does not apply.
+        Row->EditConditionHides(true);
         Row->DisplayName(FText::FromString(Property->GetDisplayNameText().ToString()));
         Row->ToolTip(MakeFieldToolTip(Property, Capability));
         // Nested edits (array elements, sub-struct fields) notify the child handle.

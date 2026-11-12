@@ -1246,7 +1246,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     if (Owners)
                         for (int32 OwnerEntry : *Owners)
                             if (TryActorSection(Strip.MaterialHash, TextureBankData[OwnerEntry],
-                                TextureBankMaterials[OwnerEntry], TextureBankSections[OwnerEntry], TEXT("Union")))
+                                TextureBankMaterials[OwnerEntry], TextureBankSections.FindOrAdd(OwnerEntry), TEXT("Union")))
                                 break;
                 }
                 if (!Textured && bLogSectorDiagnostics)

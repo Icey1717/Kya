@@ -2,6 +2,7 @@
 #include "KyaLevelBank.h"
 #include "KyaActorCatalog.h"
 #include "KyaBankExport.h"
+#include "KyaSectorBankExport.h"
 #include "KyaCameraStream.h"
 #include "Misc/FeedbackContext.h"
 
@@ -16,6 +17,7 @@ UKyaLevelBankExporter::UKyaLevelBankExporter()
 bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     FKyaBankExportDiagnostics& Diagnostics)
 {
+    OutBytes.Reset();
     if (!Bank)
     {
         Diagnostics.Errors.Add(TEXT("No bank was supplied."));
@@ -45,6 +47,7 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             Scene = &Entry;
         }
     }
+    if (!Scene && !SceneData) return KyaBuildSectorBankExportBytes(*Bank, OutBytes, Diagnostics);
     if (!Scene || Scene->Size < 28 || Scene->Offset < 0 ||
         Scene->Offset > Bank->BankBytes.Num() || Scene->Size > Bank->BankBytes.Num() - Scene->Offset ||
         Bank->SceneConfiguration.Field20 < 0 || Bank->SceneConfiguration.Field20 > MAX_uint32 ||
@@ -3095,6 +3098,28 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
     }
     WriteU32(ClassDataPos + int64(ClassCount) * 8, uint32(Bank->SceneConfiguration.ParticleWord));
 
+    if (!KyaPatchBankLights(*Bank, Bytes, Diagnostics)) return false;
+
+    const bool bHasBaseline = HasKyaImportedBaseline(*Bank);
+    int32 ChangedActors = 0;
+    if (bHasBaseline)
+        for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
+            if (KyaActorDiffersFromImported(*Bank, ActorIndex)) ++ChangedActors;
+    Diagnostics.SupportedEdits.Add(FString::Printf(
+        TEXT("%d actor, %d waypoint, %d path and %d light record(s) patched in place; %s. Structural changes "
+            "(counts, names, arrays, classes) are rejected before writing."),
+        Bank->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Waypoints.Num(),
+        Bank->SceneEnvironment.Paths.Num(), Bank->Lights.Num(),
+        bHasBaseline ? *FString::Printf(TEXT("%d actor record(s) differ from the imported baseline"), ChangedActors)
+                     : TEXT("change count unavailable: no imported baseline")));
+
+    OutBytes = MoveTemp(Bytes);
+    return true;
+}
+
+bool KyaPatchBankLights(const UKyaLevelBank& Bank, TArray<uint8>& Bytes,
+    FKyaBankExportDiagnostics& Diagnostics)
+{
     // Light archive (THGL): patch the fixed records in place using the serialized
     // offset table, preserving any bytes the typed schema does not expose.
     auto WriteLightU32 = [&Bytes](int64 Offset, uint32 Value)
@@ -3127,26 +3152,56 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         // One byte per channel; adjacent channels must keep their original bytes.
         Bytes[Offset] = uint8(FMath::Clamp(FMath::RoundToInt(Raw), 0, 127));
     };
-    for (const FKyaBankEntry& LightEntry : Bank->Entries)
+    const auto ReadU32 = [&Bytes](int64 Offset) -> uint32
     {
-        if (LightEntry.Type != 16 || LightEntry.Subtype != 1 || LightEntry.Offset < 0 || LightEntry.Size < 32 ||
-            LightEntry.Offset > Bytes.Num() || LightEntry.Size > Bytes.Num() - LightEntry.Offset) continue;
+        const uint8* P = Bytes.GetData() + Offset;
+        return uint32(P[0]) | (uint32(P[1]) << 8) | (uint32(P[2]) << 16) | (uint32(P[3]) << 24);
+    };
+    bool bFoundArchive = false;
+    for (const FKyaBankEntry& LightEntry : Bank.Entries)
+    {
+        if (LightEntry.Type != 16 || LightEntry.Subtype != 1) continue;
+        if (LightEntry.Offset < 0 || LightEntry.Size < 32 || LightEntry.Offset > Bytes.Num() ||
+            LightEntry.Size > Bytes.Num() - LightEntry.Offset)
+        {
+            Diagnostics.Errors.Add(TEXT("The light archive lies outside the bank bytes or is truncated."));
+            return false;
+        }
         if (ReadU32(LightEntry.Offset) != 0xDEADBEEF ||
-            FMemory::Memcmp(Bytes.GetData() + LightEntry.Offset + 8, "THGL", 4) != 0) continue;
+            FMemory::Memcmp(Bytes.GetData() + LightEntry.Offset + 8, "THGL", 4) != 0)
+        {
+            Diagnostics.Errors.Add(TEXT("The light archive has an invalid THGL header."));
+            return false;
+        }
+        if (bFoundArchive)
+        {
+            Diagnostics.Errors.Add(TEXT("Multiple light archives cannot be exported."));
+            return false;
+        }
+        bFoundArchive = true;
         TArray<FKyaLightOffsets> Offsets;
         if (!KyaReadLightOffsets(MakeArrayView(Bytes.GetData(), Bytes.Num()), LightEntry.Offset + 16,
-            LightEntry.Size - 16, Offsets)) continue;
-        if (Offsets.Num() != Bank->Lights.Num())
+            LightEntry.Size - 16, Offsets))
+        {
+            Diagnostics.Errors.Add(TEXT("The light archive records are malformed or truncated."));
+            return false;
+        }
+        if (Offsets.Num() != Bank.Lights.Num())
         {
             Diagnostics.Errors.Add(FString::Printf(
                 TEXT("The light archive has %d records but the asset has %d; changing the light count is not supported."),
-                Offsets.Num(), Bank->Lights.Num()));
+                Offsets.Num(), Bank.Lights.Num()));
             return false;
         }
         for (int32 Index = 0; Index < Offsets.Num(); ++Index)
         {
-            const FKyaLight& Light = Bank->Lights[Index];
+            const FKyaLight& Light = Bank.Lights[Index];
             const FKyaLightOffsets& Off = Offsets[Index];
+            if (Light.TrailingValues.Num() != Off.TrailingCount)
+            {
+                Diagnostics.Errors.Add(FString::Printf(TEXT("Light %d trailing value count cannot be changed."), Index));
+                return false;
+            }
             // Direction/FOV presence is part of the serialized layout; a type/shape
             // change that alters it would make existing bytes parse differently.
             const auto HasDirection = [](int32 Type, int32 Shape)
@@ -3209,7 +3264,7 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         // write in a malformed record cannot corrupt the multiplier or type words.
         for (int32 Index = 0; Index < Offsets.Num(); ++Index)
         {
-            const FKyaLight& Light = Bank->Lights[Index];
+            const FKyaLight& Light = Bank.Lights[Index];
             const FKyaLightOffsets& Off = Offsets[Index];
             WriteLightU32(Off.Record, uint32(Light.LightType));
             WriteLightU32(Off.Record + 4, uint32(Light.ShapeType));
@@ -3217,20 +3272,11 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
         }
     }
 
-    const bool bHasBaseline = HasKyaImportedBaseline(*Bank);
-    int32 ChangedActors = 0;
-    if (bHasBaseline)
-        for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
-            if (KyaActorDiffersFromImported(*Bank, ActorIndex)) ++ChangedActors;
-    Diagnostics.SupportedEdits.Add(FString::Printf(
-        TEXT("%d actor, %d waypoint, %d path and %d light record(s) patched in place; %s. Structural changes "
-            "(counts, names, arrays, classes) are rejected before writing."),
-        Bank->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Waypoints.Num(),
-        Bank->SceneEnvironment.Paths.Num(), Bank->Lights.Num(),
-        bHasBaseline ? *FString::Printf(TEXT("%d actor record(s) differ from the imported baseline"), ChangedActors)
-                     : TEXT("change count unavailable: no imported baseline")));
-
-    OutBytes = MoveTemp(Bytes);
+    if (!bFoundArchive && !Bank.Lights.IsEmpty())
+    {
+        Diagnostics.Errors.Add(TEXT("The bank has no light archive to store its light records."));
+        return false;
+    }
     return true;
 }
 

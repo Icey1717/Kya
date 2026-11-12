@@ -733,6 +733,94 @@ bool FKyaActorOwnedGeometryTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMeshAssignmentTest, "Kya.Editor.MeshAssignment",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMeshAssignmentTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run mesh assignment regression coverage."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import bank"), Bank)) return false;
+
+    // Keep the real mesh/material bytes, but isolate assignment to one meshless actor.
+    Bank->SceneEnvironment.Actors.Reset();
+    FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors.AddDefaulted_GetRef();
+    Actor.Name = TEXT("MESH_ASSIGNMENT");
+    Actor.ClassId = 0;
+    Actor.Scale = FVector::OneVector;
+    Actor.MeshIndex = Actor.TextureIndex = -1;
+    Actor.SectorId = -1;
+    // Force material resolution through the union of texture banks. This used to
+    // assert on the first lookup in the initially empty TextureBankSections map.
+    Bank->SceneEnvironment.AlternateTextureIndex = -1;
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bAsyncDecodeMeshes = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->bShowActorMeshesOnHandles = true;
+    Preview->bShowAllActorMeshes = false;
+    Preview->bShowActorMesh = false;
+    Preview->OnConstruction(FTransform::Identity);
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.RegisterView(Bank, Preview);
+
+    auto Assign = [&](int32 MeshIndex)
+    {
+        FKyaActorPlacement Copy = Bank->SceneEnvironment.Actors[0];
+        Copy.MeshIndex = MeshIndex;
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(TEXT("Build the same property patch as the mesh picker"),
+            KyaMakePlacementPropertyPatch(Copy, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MeshIndex), Patch, &Error))) return;
+        TestTrue(FString::Printf(TEXT("Assign mesh %d and notify preview: %s"), MeshIndex, *Error),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Notify, &Error));
+        TestEqual(TEXT("Assignment stored"), Bank->SceneEnvironment.Actors[0].MeshIndex, MeshIndex);
+    };
+
+    int32 MeshCount = 0;
+    int32 RenderedCount = 0;
+    for (const FKyaBankEntry& Entry : Bank->Entries)
+    {
+        if (Entry.Type != 4 || Entry.Subtype != 1) continue;
+        AddInfo(FString::Printf(TEXT("Assigning mesh %d"), MeshCount));
+        Assign(MeshCount++);
+        const TArray<FKyaActorMeshSection>* Sections = Preview->FindActorMeshSections(0);
+        if (Sections && !Sections->IsEmpty()) ++RenderedCount;
+        Assign(-1);
+        Sections = Preview->FindActorMeshSections(0);
+        TestTrue(TEXT("Clearing mesh removes captured geometry"), !Sections || Sections->IsEmpty());
+    }
+    TestTrue(TEXT("Exercised real mesh assignments"), MeshCount > 0);
+    TestTrue(TEXT("Assigned meshes produced geometry"), RenderedCount > 0);
+    // Repeat in the diagnostic shared-mesh route, which uses the same resolver.
+    Preview->bShowAllActorMeshes = true;
+    Assign(0);
+    Assign(-1);
+    Service.UnregisterView(Preview);
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaExportValidationTest, "Kya.Editor.ExportValidation",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

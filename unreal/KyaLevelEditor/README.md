@@ -234,6 +234,16 @@ plus duplicate/paste cleanup and delete refusal. It asserts the world handle cou
 bank actor count, edited records and `EditGeneration` are unchanged, so unsupported
 structural commands cannot leave the map and bank out of sync.
 
+Sector banks can also be validated and exported. The sector writer identifies the
+native mesh and texture entries used by `CSector::InstallCallback` in
+`src/b-witch/SectorManager.cpp`; it does not require a `SECT<number>` asset name or
+a scene configuration. It preserves all retained entries and padding, including
+collision, background and animation data, byte for byte. If a sector contains a
+typed light archive, fixed-size light edits use the same writer as the main bank.
+Scene environment, configuration and actor edits belong to the main bank; the
+sector writer rejects them rather than silently dropping them. Hierarchy
+transforms remain presentation-only. Current-schema sector assets need no reimport.
+
 Validation, export and sector discovery report through the Message Log
 (`KyaLevelEditor` listing) as well as the dialog summary: one entry per bank or
 sector, with the asset path, the failure reason and any warnings. Entries are
@@ -243,10 +253,12 @@ level preview for sector/discovery problems). Each actor issue names the index, 
 serialized name, the recovered class and the property path (for example
 `Actor 3 "BRIDGE" (Bridge).TrapActorRef`), so selecting it opens that record in
 Details. `Export Kya Level` validates the linked set first and logs the same
-findings, plus an actionable entry for unsupported dependency banks, before any
+findings, plus an actionable entry for unsupported banks, before any
 output is replaced. A blocking issue (including a writer rejection attributed to an
 actor record and property, such as a name that no longer fits its serialized slot)
 stops the export before staging, so no destination is replaced.
+All linked sectors are written alongside the main bank. An unsupported or invalid
+bank stops the set export; dependencies are no longer silently skipped.
 
 `Kya.Editor.RunningPortExportValidation` closes the loop with the Windows port: it
 edits one real actor through the shared service in a transient validation copy,
@@ -623,6 +635,12 @@ resolution: 512 by 512 for PAL, or 512 by 448 for NTSC.
 
 ## Validation
 
+`Kya.Editor.MeshAssignment` assigns every actor mesh in `KYA_TEST_BANK` through
+the same property patch and preview notification as the mesh picker. It forces
+fallback texture-bank resolution, clears each mesh again, checks captured geometry,
+and exercises the shared-preview route. This covers the missing material-section
+map entry assertion during mesh assignment.
+
 Set `KYA_TEST_BANK` to a bank path before running `Kya.Bank.LevelOneRoundTrip`;
 without it the test only runs synthetic fixtures and logs a skip warning:
 
@@ -633,6 +651,24 @@ $env:KYA_TEST_BANK = 'G:\repos\Kya\assets\CDEURO\LEVEL\LEVEL_1\LEVEL.BNK'
   -nosplash -ExecCmds='Automation RunTests Kya.Bank.LevelOneRoundTrip' `
   '-TestExit=Automation Test Queue Empty' -log
 ```
+
+`Kya.Bank.SectorRoundTrip` covers sectors with and without collision/background/
+animation entries, opaque unknown entries and padding, plus fixed-size light edits.
+`Kya.Bank.SectorExportValidation` checks malformed tables, stale schema, unsupported
+scene edits and publication cancellation when any bank fails validation.
+`Kya.Bank.ActorMeshLevelExport` uses `KYA_TEST_BANK` to load the main BNK and all
+sibling sectors, select a meshed actor assigned to a loaded sector, and change its
+mesh through the mesh picker's property patch and edit service. It exports the
+whole level and compares the main file against the source with only that actor's
+four-byte mesh index replaced; every sector must remain byte-identical. Reimport
+also checks the new mesh and preserved sector assignment. Run it with the same
+automation command above, replacing the test name with `Kya.Bank.ActorMeshLevelExport`.
+
+`Kya.Bank.RealSectorExport` uses `KYA_TEST_BANK` to import the main bank and every
+sibling `SECT*.BNK`, validate and export the complete set, and reimport every output.
+Every sector output must match its input byte for byte.
+`Kya.Bank.SectorCorpusRoundTrip` recursively round-trips every `SECT*.BNK` beneath
+`KYA_TEST_SECTOR_ROOT`, including sectors without collision or background entries.
 
 The test project's `Plugins/KyaLevelEditor` must be a junction to this plugin
 directory, not a copied plugin. A stale copy can run old test binaries while the
