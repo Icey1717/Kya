@@ -262,7 +262,6 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 
 - Nested reference arrays and nested actor/zone reference pickers (top-level scalar
   references are covered; array elements still show raw ids).
-- Mixed-value multi-editing, reset-to-imported-value and property-copy actions.
 - Path timing/lead-in/loop visualization and selectable visualizers for lights,
   cameras, zones, trigger bounds and actor links.
 - `UKyaLevelSet` creation is a command/menu action rather than an asset-type
