@@ -109,6 +109,13 @@ Last updated: 2026-11-12.
   slot change before mutation (single and bulk edits), and the writer reports an
   explicit actor-count mismatch. Create/delete/duplicate/resize/class commands stay
   disabled until relocation and structural writeback exist.
+- Export acceptance (`Kya.Editor.ExportAcceptance`): the exporter reports its
+  supported edit scope (record counts, changed actors vs the imported baseline and
+  the in-place/structural-rejection policy) through `FKyaBankExportOutcome`, the
+  result messages and bank-linked Message Log entries; an untouched export is
+  byte-identical, a selected-actor edit reimports exact values with a bounded diff
+  and an unchanged neighbour, and a structural actor-count change fails before
+  staging while leaving unrelated and existing destination files untouched.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -344,8 +351,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
-`Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation` and
-`Kya.Editor.StructuralEditGate` all `Success`.
+`Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
+`Kya.Editor.StructuralEditGate` and `Kya.Editor.ExportAcceptance` all `Success`.
 
 Coverage added by the new tests:
 

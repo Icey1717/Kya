@@ -9,6 +9,8 @@ struct FKyaBankExportDiagnostics
 {
     TArray<FString> Errors;
     TArray<FString> Warnings;
+    /** Human-readable description of what the in-place writer actually emits. */
+    TArray<FString> SupportedEdits;
     /** When a writer check rejects one actor record, identify it for Message Log navigation. */
     int32 FailedActorIndex = INDEX_NONE;
     FString FailedProperty;
@@ -37,6 +39,8 @@ struct FKyaBankExportOutcome
     bool bPublished = false;
     TArray<FString> Errors;
     TArray<FString> Warnings;
+    /** Description of the in-place edits the writer emitted (counts/scope). */
+    TArray<FString> SupportedEdits;
 };
 
 /**

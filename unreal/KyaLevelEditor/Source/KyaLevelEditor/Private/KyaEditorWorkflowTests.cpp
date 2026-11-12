@@ -1638,6 +1638,135 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaExportAcceptanceTest, "Kya.Editor.ExportAcceptance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaExportAcceptanceTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the export acceptance test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read acceptance bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import acceptance bank"), Bank)) return false;
+    if (!TestTrue(TEXT("Acceptance bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    // A successful export describes what it actually writes and keeps an untouched
+    // bank byte-identical.
+    FKyaBankExportDiagnostics PlainDiagnostics;
+    TArray<uint8> Plain;
+    if (!TestTrue(TEXT("Build plain acceptance bytes"),
+        KyaBuildBankExportBytes(Bank, Plain, PlainDiagnostics))) return false;
+    TestTrue(TEXT("Plain export is byte-identical"), Plain == Input);
+    TestTrue(TEXT("Export describes the in-place edit scope"), PlainDiagnostics.SupportedEdits.Num() > 0 &&
+        PlainDiagnostics.SupportedEdits[0].Contains(TEXT("patched in place")));
+    TestTrue(TEXT("Untouched bank reports no changed actors"),
+        PlainDiagnostics.SupportedEdits[0].Contains(TEXT("0 actor record(s) differ")));
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    const FVector OriginalPosition = Bank->SceneEnvironment.Actors[0].Position;
+    FKyaActorEditPatch Patch;
+    Patch.Position = OriginalPosition + FVector(1.25, -2.5, 3.75);
+    Patch.VisibilityDistance = 4321.0f;
+    Patch.CullingDistance = 8765.0f;
+    FString Error;
+    if (!TestTrue(TEXT("Apply acceptance edit"),
+        Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Silent, &Error))) return false;
+
+    FKyaBankExportDiagnostics EditedDiagnostics;
+    TArray<uint8> Edited;
+    if (!TestTrue(TEXT("Build edited acceptance bytes"),
+        KyaBuildBankExportBytes(Bank, Edited, EditedDiagnostics))) return false;
+    TestTrue(TEXT("Edited export reports the changed actor"), EditedDiagnostics.SupportedEdits.Num() > 0 &&
+        EditedDiagnostics.SupportedEdits[0].Contains(TEXT("1 actor record(s) differ")));
+    TestEqual(TEXT("Edited export keeps the file size"), Edited.Num(), Input.Num());
+    int32 ChangedBytes = 0;
+    for (int32 Index = 0; Index < Input.Num(); ++Index)
+        if (Input[Index] != Edited[Index]) ++ChangedBytes;
+    TestTrue(TEXT("Accepts only the selected-actor edit"), ChangedBytes > 0 && ChangedBytes <= 40);
+
+    // Reimport compares typed values and unrelated records.
+    const FVector NeighbourPosition = Bank->SceneEnvironment.Actors.Num() > 1
+        ? Bank->SceneEnvironment.Actors[1].Position : FVector::ZeroVector;
+    const uint8* EditedCursor = Edited.GetData();
+    UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), EditedCursor,
+        Edited.GetData() + Edited.Num(), GWarn));
+    if (!TestNotNull(TEXT("Reimport acceptance bank"), Reimported)) return false;
+    TestTrue(TEXT("Acceptance position round trips"),
+        Reimported->SceneEnvironment.Actors[0].Position.Equals(Patch.Position.GetValue(), 1.0e-4));
+    TestTrue(TEXT("Acceptance visibility round trips"),
+        FMath::IsNearlyEqual(Reimported->SceneEnvironment.Actors[0].VisibilityDistance, 4321.0f, 1.0e-3f));
+    if (Reimported->SceneEnvironment.Actors.Num() > 1)
+        TestTrue(TEXT("Unrelated actor data is preserved"),
+            Reimported->SceneEnvironment.Actors[1].Position.Equals(NeighbourPosition));
+
+    // The export action surfaces the supported-edit description, not just a path.
+    TArray<FString> SuccessMessages;
+    const FString SuccessDestination = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaExportAcceptanceOk"));
+    TestTrue(TEXT("Acceptance export publishes"),
+        KyaExportLevelBanks({ Bank }, SuccessDestination, SuccessMessages));
+    TestTrue(TEXT("Export result describes its supported edits"),
+        SuccessMessages.ContainsByPredicate([](const FString& Message) { return Message.Contains(TEXT("edits:")); }));
+    TestTrue(TEXT("Export result names the in-place scope"),
+        SuccessMessages.ContainsByPredicate([](const FString& Message)
+        {
+            return Message.Contains(TEXT("patched in place"));
+        }));
+
+    // Unsupported structural edits fail before any output replacement.
+    Cursor = Input.GetData();
+    UKyaLevelBank* Structural = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (TestNotNull(TEXT("Import structural acceptance bank"), Structural))
+    {
+        FKyaActorPlacement StructuralCopy = Structural->SceneEnvironment.Actors[0];
+        Structural->SceneEnvironment.Actors.Add(StructuralCopy);
+        const FString Destination = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaExportAcceptance"));
+        IFileManager::Get().MakeDirectory(*Destination, true);
+        const FString SentinelPath = FPaths::Combine(Destination, TEXT("KEEP.txt"));
+        FFileHelper::SaveStringToFile(TEXT("SENTINEL"), *SentinelPath);
+        const FString BankDestination = FPaths::Combine(Destination, Structural->GetName() + TEXT(".bnk"));
+        FFileHelper::SaveStringToFile(TEXT("EXISTING"), *BankDestination);
+        FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
+        MessageLogModule.GetLogListing("KyaLevelEditor")->ClearMessages();
+        AddExpectedError(TEXT("actor count"), EAutomationExpectedErrorFlags::Contains, 0);
+        AddExpectedError(TEXT("Export stopped"), EAutomationExpectedErrorFlags::Contains, 0);
+        TArray<FString> Messages;
+        TestFalse(TEXT("Structural export fails"), KyaExportLevelBanks({ Structural }, Destination, Messages));
+        TestTrue(TEXT("Structural failure reports why"),
+            Messages.ContainsByPredicate([](const FString& Message)
+            {
+                return Message.Contains(TEXT("blocking validation issues"));
+            }));
+        FString Sentinel;
+        TestTrue(TEXT("Existing unrelated file is unchanged"),
+            FFileHelper::LoadFileToString(Sentinel, *SentinelPath) && Sentinel == TEXT("SENTINEL"));
+        FString ExistingBank;
+        TestTrue(TEXT("Existing destination bank is not replaced"),
+            FFileHelper::LoadFileToString(ExistingBank, *BankDestination) && ExistingBank == TEXT("EXISTING"));
+        TestFalse(TEXT("No staging file is left behind"),
+            [&Destination]()
+            {
+                TArray<FString> Files;
+                IFileManager::Get().FindFiles(Files, *(Destination / TEXT("*.kya-staging*")), true, false);
+                return Files.Num() > 0;
+            }());
+    }
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelActionsReportingTest, "Kya.Editor.LevelActionsReporting",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

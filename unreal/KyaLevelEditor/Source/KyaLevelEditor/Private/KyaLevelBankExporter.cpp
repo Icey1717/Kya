@@ -1,5 +1,6 @@
 #include "KyaLevelBankExporter.h"
 #include "KyaLevelBank.h"
+#include "KyaActorCatalog.h"
 #include "KyaBankExport.h"
 #include "KyaCameraStream.h"
 #include "Misc/FeedbackContext.h"
@@ -3216,6 +3217,19 @@ bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
             WriteLightFloat(Off.Multiplier, Light.Multiplier);
         }
     }
+
+    const bool bHasBaseline = HasKyaImportedBaseline(*Bank);
+    int32 ChangedActors = 0;
+    if (bHasBaseline)
+        for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
+            if (KyaActorDiffersFromImported(*Bank, ActorIndex)) ++ChangedActors;
+    Diagnostics.SupportedEdits.Add(FString::Printf(
+        TEXT("%d actor, %d waypoint, %d path and %d light record(s) patched in place; %s. Structural changes "
+            "(counts, names, arrays, classes) are rejected before writing."),
+        Bank->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Waypoints.Num(),
+        Bank->SceneEnvironment.Paths.Num(), Bank->Lights.Num(),
+        bHasBaseline ? *FString::Printf(TEXT("%d actor record(s) differ from the imported baseline"), ChangedActors)
+                     : TEXT("change count unavailable: no imported baseline")));
 
     OutBytes = MoveTemp(Bytes);
     return true;

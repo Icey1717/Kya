@@ -755,6 +755,12 @@ bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& Des
             *Outcome.DestinationFilename));
         for (const FString& Error : Outcome.Errors) OutMessages.Add(FString::Printf(TEXT("  error: %s"), *Error));
         for (const FString& Warning : Outcome.Warnings) OutMessages.Add(FString::Printf(TEXT("  warning: %s"), *Warning));
+        for (const FString& Edit : Outcome.SupportedEdits)
+        {
+            OutMessages.Add(FString::Printf(TEXT("  edits: %s"), *Edit));
+            Log.AddMessage(KyaMakeBankMessage(EMessageSeverity::Info, Outcome.Bank,
+                FText::FromString(Edit)));
+        }
         if (!Outcome.bPublished) bAllPublished = false;
         UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT %s %s"), *Outcome.DestinationFilename, State);
         if (Outcome.bPublished)

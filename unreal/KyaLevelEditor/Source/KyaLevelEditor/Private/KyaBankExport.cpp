@@ -12,6 +12,7 @@ FString FKyaBankExportDiagnostics::Summary() const
     TArray<FString> Lines;
     for (const FString& Error : Errors) Lines.Add(FString::Printf(TEXT("error: %s"), *Error));
     for (const FString& Warning : Warnings) Lines.Add(FString::Printf(TEXT("warning: %s"), *Warning));
+    for (const FString& Edit : SupportedEdits) Lines.Add(FString::Printf(TEXT("supported edit: %s"), *Edit));
     return FString::Join(Lines, TEXT("\n"));
 }
 
@@ -104,10 +105,12 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
             Outcome.Errors.Append(Diagnostics.Errors.IsEmpty()
                 ? TArray<FString>{TEXT("The bank writer rejected this bank.")} : Diagnostics.Errors);
             Outcome.Warnings = Diagnostics.Warnings;
+            Outcome.SupportedEdits = Diagnostics.SupportedEdits;
             continue;
         }
         Outcome.bValidated = true;
         Outcome.Warnings = Diagnostics.Warnings;
+        Outcome.SupportedEdits = Diagnostics.SupportedEdits;
         if (SlowTask && SlowTask->ShouldCancel())
         {
             Outcome.Errors.Add(TEXT("Export was cancelled after validating this bank; no file was written."));
