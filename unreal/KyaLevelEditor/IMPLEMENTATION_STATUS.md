@@ -232,6 +232,15 @@ Last updated: 2026-11-12.
   block through `ApplySceneSettings` (validation, one undo step, preview refresh);
   preview properties are split into `Kya|Authoring` and `Kya|Diagnostics|*` so
   comparison/capture options are separate from authoring.
+- Authoring visibility is separate from game-like culling: `bAuthoringVisibility`
+  (default on) keeps actors from unloaded sectors selectable
+  (`bAuthoringShowUnloadedSectors`, with `Authoring Only Handle Count`) and
+  `bAuthoringShowCulledGeometry` draws distance/LOD-culled cluster scenery. A locked
+  comparison/capture camera (`SetPreviewCamera`, which refreshes membership
+  immediately) or disabling the mode restores native culling; `ClearPreviewCamera`
+  (`Return to Editor Camera`, `Kya.ClearPreviewCamera`) resumes authoring discovery.
+  Game worlds never use the override. Enabling authoring visibility also clears the
+  capture-camera lock, and the menu/`Kya.AuthoringVisibility [1|0]` toggle it.
 - Imports, exports and preview rebuilds show cancellable progress in interactive
   sessions; cancellation discards an import, writes nothing on export and stops a
   rebuild at the next phase boundary (`RebuildStatus`) while restoring the previous
@@ -305,7 +314,7 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
-`Kya.Editor.MessageLogLinks` all `Success`.
+`Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility` all `Success`.
 
 Coverage added by the new tests:
 

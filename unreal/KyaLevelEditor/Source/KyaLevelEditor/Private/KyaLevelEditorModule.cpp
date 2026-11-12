@@ -276,6 +276,22 @@ void AddKyaMenuEntries(FToolMenuSection& Section)
         FText::FromString(TEXT("Stop drawing every path; the Empty Preview Path Index guide still applies.")),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAllPathsCommand({ TEXT("0") }); })));
+    Section.AddMenuEntry("KyaAuthoringVisibility",
+        FText::FromString(TEXT("Enable Authoring Visibility")),
+        FText::FromString(TEXT("Keep actors from unloaded sectors and distance-culled scenery visible for authoring. "
+            "A locked comparison/capture camera still uses native culling.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAuthoringVisibility(true); })));
+    Section.AddMenuEntry("KyaEditorCamera",
+        FText::FromString(TEXT("Return to Editor Camera")),
+        FText::FromString(TEXT("Clear the comparison/capture camera lock and resume authoring discovery.")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaClearPreviewCamera(); })));
+    Section.AddMenuEntry("KyaNativeVisibility",
+        FText::FromString(TEXT("Restore Native Visibility")),
+        FText::FromString(TEXT("Use game-like distance and sector culling (comparison/capture behavior).")),
+        FSlateIcon(),
+        FUIAction(FExecuteAction::CreateLambda([]() { KyaSetAuthoringVisibility(false); })));
     Section.AddMenuEntry("KyaLockGenerated",
         FText::FromString(TEXT("Toggle Generated Actor Selection Lock")),
         FText::FromString(TEXT("Prevent viewport picking of generated actors (they stay visible and editable).")),
@@ -505,6 +521,22 @@ FAutoConsoleCommand KyaClearIsolationConsoleCommand(
     FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
     {
         KyaClearGeneratedActorIsolation();
+    }));
+
+FAutoConsoleCommand KyaClearPreviewCameraConsoleCommand(
+    TEXT("Kya.ClearPreviewCamera"),
+    TEXT("Clear the comparison/capture camera lock and resume authoring discovery."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>&)
+    {
+        KyaClearPreviewCamera();
+    }));
+
+FAutoConsoleCommand KyaAuthoringVisibilityConsoleCommand(
+    TEXT("Kya.AuthoringVisibility"),
+    TEXT("Show (1, default) or hide (0) editor-only authoring discovery (unloaded-sector actors and culled scenery)."),
+    FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+    {
+        KyaSetAuthoringVisibility(Args.Num() == 0 || Args[0] != TEXT("0"));
     }));
 
 FAutoConsoleCommand KyaShowAllPathsConsoleCommand(

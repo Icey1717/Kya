@@ -1884,6 +1884,13 @@ AActor* AKyaLevelPreview::GetActorHandle(int32 ActorIndex) const
     return Found ? Found->Get() : nullptr;
 }
 
+bool AKyaLevelPreview::IsAuthoringVisibilityActive() const
+{
+    if (!bAuthoringVisibility || bExplicitPreviewCamera) return false;
+    const UWorld* World = GetWorld();
+    return !World || !World->IsGameWorld();
+}
+
 int32 AKyaLevelPreview::ResolveSectorId(const UKyaLevelBank& Sector) const
 {
     for (const TPair<int32, TObjectPtr<UKyaLevelBank>>& Pair : LevelSetSectors)
@@ -2258,6 +2265,8 @@ void AKyaLevelPreview::RefreshActorHandles()
     // Display labels are derived from the whole bank, not from the currently spawned
     // handles, so loading or unloading a sector cannot relabel a record. Serialized
     // names are never modified; duplicate names are disambiguated with the index.
+    AuthoringOnlyHandleCount = 0;
+    const bool bAuthoringUnloadedSectors = IsAuthoringVisibilityActive() && bAuthoringShowUnloadedSectors;
     TArray<FString> BaseNames;
     TArray<FString> Labels;
     TSet<FString> DuplicateNames;
@@ -2321,7 +2330,14 @@ void AKyaLevelPreview::RefreshActorHandles()
         const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
         // Global actors (sector -1) always belong to the scene; sector actors only
         // get a handle when their sector is loaded. Without sector banks, show all.
-        if (Placement.SectorId >= 0 && !LoadedSectors.IsEmpty() && !LoadedSectors.Contains(Placement.SectorId)) continue;
+        // Authoring discovery can keep unloaded-sector actors selectable in the editor.
+        const bool bSectorLoaded = Placement.SectorId < 0 || LoadedSectors.IsEmpty() ||
+            LoadedSectors.Contains(Placement.SectorId);
+        if (!bSectorLoaded)
+        {
+            if (!bAuthoringUnloadedSectors) continue;
+            ++AuthoringOnlyHandleCount;
+        }
         Wanted.Add(Index);
         const int32 GroupSector = Placement.SectorId < 0 ? 0 : Placement.SectorId;
         WantedSectors.Add(GroupSector);
@@ -2910,6 +2926,24 @@ void AKyaLevelPreview::SetPreviewCamera(const FVector& Position, const FVector& 
 {
     bExplicitPreviewCamera = true;
     UpdatePreviewCamera(Position, Forward, Up, HorizontalFovDegrees, Width, Height);
+#if WITH_EDITOR
+    // Capture/comparison mode must drop authoring-only handles immediately, without
+    // waiting for an unrelated rebuild.
+    RefreshActorHandles();
+#endif
+}
+
+void AKyaLevelPreview::ClearPreviewCamera()
+{
+    if (!bExplicitPreviewCamera) return;
+    bExplicitPreviewCamera = false;
+#if WITH_EDITOR
+    // Recompute culling from the current editor viewport camera on the next update.
+    if (GCurrentLevelEditingViewportClient && GCurrentLevelEditingViewportClient->GetWorld() == GetWorld())
+        SetBackgroundCameraPosition(GCurrentLevelEditingViewportClient->GetViewLocation());
+    // Authoring discovery can expose unloaded-sector actors again.
+    RefreshActorHandles();
+#endif
 }
 
 void AKyaLevelPreview::UpdatePreviewCamera(const FVector& Position, const FVector& Forward, const FVector& Up,
@@ -2961,12 +2995,15 @@ void AKyaLevelPreview::UpdateClusterVisibility(const FVector& Position, const FV
     };
     TSet<int32> Changed;
     int32 Hidden = 0;
+    // Authoring discovery draws culled cluster geometry so hidden scenery stays
+    // inspectable. A locked comparison/capture camera restores native culling.
+    const bool bShowAllAuthoring = IsAuthoringVisibilityActive() && bAuthoringShowCulledGeometry;
     for (FClusterVisibilityRange& Range : ClusterVisibilityRanges)
     {
         const FVector4f Lod = CameraSphere(Range.LodSphere);
         const double Factor = (FMath::Square(double(Lod.X)) + FMath::Square(double(Lod.Y)) + FMath::Square(double(Lod.Z))) * TanY * TanY;
-        const bool Visible = Factor >= Range.MinLodBiasSquared && Factor < Range.MaxLodBiasSquared &&
-            KyaScene::IsClusterStripVisible(CameraSphere(Range.ObjectSphere), CameraSphere(Range.StripSphere), TanX, TanY, ActiveClipDistance);
+        const bool Visible = bShowAllAuthoring || (Factor >= Range.MinLodBiasSquared && Factor < Range.MaxLodBiasSquared &&
+            KyaScene::IsClusterStripVisible(CameraSphere(Range.ObjectSphere), CameraSphere(Range.StripSphere), TanX, TanY, ActiveClipDistance));
         if (!Visible) ++Hidden;
         if (Range.bVisible != Visible) { Range.bVisible = Visible; Changed.Add(Range.Section); }
     }

@@ -166,6 +166,18 @@ are destroyed with the preview or when the option is cleared. The preview's
 `PreviewActorStripIndex`, `TextureOnlyActorIndex` and the capture scripts continue
 to work unchanged.
 
+**Authoring visibility.** By default the preview runs in authoring discovery mode:
+`Authoring Visibility` keeps actors whose sector bank is not loaded selectable
+(`Authoring Show Unloaded Sectors`, reported by the preview's `Authoring Only
+Handle Count`) and `Authoring Show Culled Geometry` draws cluster scenery that the
+native distance/LOD test would hide. This is separate from the game-like
+distance/sector culling used for comparison: setting a preview camera
+(`SetPreviewCamera`, used by the capture scripts) or disabling authoring visibility
+restores native culling, and game/PIE worlds never use the override. Setting that
+camera refreshes actor membership immediately, and `ClearPreviewCamera`
+(`Return to Editor Camera`, `Kya.ClearPreviewCamera`) restores authoring discovery.
+Toggle visibility from the Kya Level menu or with `Kya.AuthoringVisibility [1|0]`.
+
 `Spawn Actor Handles` and `Show Actor Meshes On Handles` are enabled by default:
 each handle owns that actor's game mesh (one procedural mesh section per resolved
 material), so clicking any strip selects the owning actor and shows its bounds for

@@ -640,6 +640,29 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
     return Result;
 }
 
+void KyaSetAuthoringVisibility(bool bEnabled)
+{
+    for (AKyaLevelPreview* Preview : KyaGetTargetPreviews())
+    {
+        if (!Preview) continue;
+        Preview->Modify();
+        Preview->bAuthoringVisibility = bEnabled;
+        // Enabling authoring also resumes the editor camera; otherwise the capture
+        // lock would keep native culling active and the toggle would appear inert.
+        if (bEnabled) Preview->ClearPreviewCamera();
+        Preview->RebuildFromBank();
+    }
+}
+
+void KyaClearPreviewCamera()
+{
+    for (AKyaLevelPreview* Preview : KyaGetTargetPreviews())
+    {
+        if (!Preview) continue;
+        Preview->ClearPreviewCamera();
+    }
+}
+
 bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError)
 {
     TArray<UPackage*> Packages;

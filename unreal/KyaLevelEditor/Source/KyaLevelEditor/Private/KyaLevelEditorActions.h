@@ -70,6 +70,16 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
 /** Save the packages that contain the given banks (and their previews' maps). */
 bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError);
 
+/**
+ * Toggle editor-only authoring discovery (unloaded-sector actors and distance-culled
+ * geometry remain visible). Disabling it restores game-like culling; a locked
+ * comparison/capture camera always uses native culling. Enabling it also clears the
+ * capture-camera lock so authoring can be resumed.
+ */
+void KyaSetAuthoringVisibility(bool bEnabled);
+/** Clear the comparison/capture camera lock on every target preview. */
+void KyaClearPreviewCamera();
+
 /** Export the banks to <ProjectSaved>/KyaExport/<level>/ and log per-file outcomes. */
 bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& DestinationDirectory,
     TArray<FString>& OutMessages);

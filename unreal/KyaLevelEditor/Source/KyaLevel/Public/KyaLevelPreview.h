@@ -68,6 +68,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="Kya|Preview")
     void SetPreviewCamera(const FVector& Position, const FVector& Forward, const FVector& Up,
         float HorizontalFovDegrees, int32 Width, int32 Height);
+    /** Return to the live editor camera (clears the comparison/capture camera lock). */
+    UFUNCTION(BlueprintCallable, Category="Kya|Preview")
+    void ClearPreviewCamera();
+    UFUNCTION(BlueprintCallable, Category="Kya|Preview")
+    bool HasExplicitPreviewCamera() const { return bExplicitPreviewCamera; }
 #if WITH_EDITOR
     void UpdatePathGuidePoint(int32 PathIndex, int32 PointIndex, const FVector& Position);
 #endif
@@ -174,6 +179,30 @@ public:
     /** Render the common and sector static cluster meshes. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
     bool bShowClusterMeshes = true;
+
+    /**
+     * Editor discovery mode (default). Keeps actors from unloaded sectors and
+     * distance-culled geometry visible for authoring while leaving game-like culling
+     * intact for comparison/capture: setting a preview camera or disabling this mode
+     * restores native visibility.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
+    bool bAuthoringVisibility = true;
+
+    /** Authoring only: spawn handles for actors whose sector bank is not loaded. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility", meta=(EditCondition="bAuthoringVisibility"))
+    bool bAuthoringShowUnloadedSectors = true;
+
+    /** Authoring only: draw cluster geometry regardless of native distance culling. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility", meta=(EditCondition="bAuthoringVisibility"))
+    bool bAuthoringShowCulledGeometry = true;
+
+#if WITH_EDITOR
+    /** Handles currently shown only because of authoring discovery (unloaded sector). */
+    int32 GetAuthoringOnlyHandleCount() const { return AuthoringOnlyHandleCount; }
+    /** True when authoring visibility overrides native culling right now. */
+    bool IsAuthoringVisibilityActive() const;
+#endif
 
     /** Render prepared cluster sprite billboards. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Visibility")
@@ -439,6 +468,8 @@ private:
     };
     TArray<FBackgroundFlare> BackgroundFlares;
     bool bExplicitPreviewCamera = false;
+    /** Number of handles shown only because their sector bank is not loaded. */
+    int32 AuthoringOnlyHandleCount = 0;
     UPROPERTY(Transient)
     TObjectPtr<UPostProcessComponent> FlarePostProcess;
     UPROPERTY(Transient)

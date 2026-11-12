@@ -1351,6 +1351,82 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAuthoringVisibilityTest, "Kya.Editor.AuthoringVisibility",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAuthoringVisibilityTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage(), 6);
+    Bank->SceneEnvironment.Actors[0].SectorId = -1;
+    Bank->SceneEnvironment.Actors[1].SectorId = 1;
+    FKyaActorPlacement& Unloaded = Bank->SceneEnvironment.Actors.AddDefaulted_GetRef();
+    Unloaded.Name = TEXT("THIRD");
+    Unloaded.ClassId = 6;
+    Unloaded.Position = FVector(9.0, 1.0, 2.0);
+    Unloaded.SectorId = 2;
+
+    UKyaLevelBank* SectorBank = MakeKyaTestBank(GetTransientPackage(), 6);
+    SectorBank->SourceFilename = TEXT("G:/tmp/SECT1.BNK");
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create authoring world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn authoring preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->SectorBanks.Add(SectorBank);
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+
+    // Native (comparison) visibility only surfaces actors of loaded sectors.
+    Preview->bAuthoringVisibility = false;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Native visibility hides unloaded-sector actors"), Preview->GetActorHandleCount(), 2);
+    TestNull(TEXT("Unloaded-sector actor has no native handle"), Preview->GetActorHandle(2));
+    TestEqual(TEXT("Native visibility reports no authoring-only handles"),
+        Preview->GetAuthoringOnlyHandleCount(), 0);
+    TestFalse(TEXT("Native visibility disables the authoring override"),
+        Preview->IsAuthoringVisibilityActive());
+
+    // Authoring discovery keeps every actor selectable even when its sector is not loaded.
+    Preview->bAuthoringVisibility = true;
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Authoring visibility keeps unloaded-sector actors discoverable"),
+        Preview->GetActorHandleCount(), 3);
+    TestNotNull(TEXT("Unloaded-sector actor gets an authoring handle"), Preview->GetActorHandle(2));
+    TestEqual(TEXT("Authoring visibility reports the authoring-only handle"),
+        Preview->GetAuthoringOnlyHandleCount(), 1);
+    TestTrue(TEXT("Authoring visibility is active"), Preview->IsAuthoringVisibilityActive());
+    if (AKyaActorHandle* Authored = Cast<AKyaActorHandle>(Preview->GetActorHandle(2)))
+    {
+        TestEqual(TEXT("Authoring handle keeps the sector grouping"), Authored->ActorSectorId, 2);
+        TestTrue(TEXT("Authoring handle is selectable"), Authored->IsSelectable());
+    }
+
+    // A locked comparison/capture camera always uses native culling and refreshes
+    // membership immediately (no extra rebuild required).
+    Preview->SetPreviewCamera(FVector(0.0, 0.0, 0.0), FVector::ForwardVector, FVector::UpVector,
+        70.0f, 1280, 720);
+    TestFalse(TEXT("Capture camera disables authoring discovery"),
+        Preview->IsAuthoringVisibilityActive());
+    TestEqual(TEXT("Capture camera hides unloaded-sector actors"), Preview->GetActorHandleCount(), 2);
+    TestEqual(TEXT("Capture camera reports no authoring-only handles"),
+        Preview->GetAuthoringOnlyHandleCount(), 0);
+
+    // Returning to the editor camera restores authoring discovery.
+    Preview->ClearPreviewCamera();
+    TestTrue(TEXT("Returning to the editor camera restores authoring discovery"),
+        Preview->IsAuthoringVisibilityActive());
+    TestEqual(TEXT("Editor camera shows unloaded-sector actors again"), Preview->GetActorHandleCount(), 3);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMessageLogLinksTest, "Kya.Editor.MessageLogLinks",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

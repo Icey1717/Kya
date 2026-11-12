@@ -106,7 +106,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Remove per-actor polling where change notifications suffice. Measure editor frame time, drag latency, rebuild time, memory and component count on a representative large level before choosing further batching work.
 - [x] Support progress and cancellation for expensive import/decode/rebuild operations. Keep UObject/editor mutations on the appropriate thread and discard stale background work after asset changes.
 - [x] Add actionable Message Log entries for missing sectors, stale schemas, missing references, unsupported geometry and export restrictions, with links to affected assets/actors.
-- [ ] Provide authoring visibility controls separate from game-like distance/sector culling, so an actor remains discoverable even when the native preview would hide it. Preserve comparison/capture modes.
+- [x] Provide authoring visibility controls separate from game-like distance/sector culling, so an actor remains discoverable even when the native preview would hide it. Preserve comparison/capture modes.
 - [ ] Acceptance: transform dragging does not decode the whole level, selection survives refresh, and missing content can be diagnosed without searching raw logs.
 
 ## 9. Export validation and structural editing roadmap
