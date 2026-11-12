@@ -753,12 +753,15 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         FinishBuildWithoutGeometry();
         return;
     }
-    TArray<FKyaG3DDecodedStrip> Strips;
-    if (!KyaG3D::DecodeHierarchyStrips(MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)), Strips))
+    TArray<FKyaG3DDecodedStrip> CommonStripScratch;
+    const TArray<FKyaG3DDecodedStrip>* CommonStrips = nullptr;
+    if (!GetDecodedGeometry(Bank, 0, Bank->BackgroundMeshEntry,
+        MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)), CommonStripScratch, CommonStrips))
     {
         FinishBuildWithoutGeometry();
         return;
     }
+    const TArray<FKyaG3DDecodedStrip>& Strips = *CommonStrips;
     TArray<FVector> Positions;
     TArray<int32> Triangles;
     TArray<FVector2D> UVs;
@@ -1581,7 +1584,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 }
                 if (ClusterParsed)
                 {
-                    TArray<FKyaG3DDecodedStrip> HierarchyStrips;
+                    TArray<FKyaG3DDecodedStrip> HierarchyStripScratch;
+                    const TArray<FKyaG3DDecodedStrip>* DecodedClusterStrips = nullptr;
                     TArray<int32> ExpandedHierarchies;
                     const bool LinksParsed = KyaG3D::ExpandClusterHierarchies(Data, ClusterHierarchies, ExpandedHierarchies);
                     TConstArrayView<uint8> AnimationData;
@@ -1602,17 +1606,14 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                     if (LinksParsed)
                         for (int32 Hierarchy : RenderHierarchies)
                             MaxLods = FMath::Max(MaxLods, int32(uint16(Data[Hierarchy + 0x9c]) | (uint16(Data[Hierarchy + 0x9d]) << 8)));
-                    for (int32 Lod = 0; Parsed && Lod < MaxLods; ++Lod)
-                    {
-                        TArray<FKyaG3DDecodedStrip> LodStrips;
-                        Parsed = KyaG3D::DecodeHierarchyStrips(Data, LodStrips, Lod);
-                        HierarchyStrips.Append(MoveTemp(LodStrips));
-                    }
+                    if (Parsed)
+                        Parsed = GetDecodedClusterGeometry(Sector, EntryIndex, Data, MaxLods,
+                            HierarchyStripScratch, DecodedClusterStrips);
                     int32 Included = 0, HierarchyTextured = 0, TransformFailures = 0, HiddenStrips = 0;
                     int64 HierarchyTriangles = 0;
                     FBox HierarchyBounds(ForceInit);
                     if (Parsed)
-                        for (const FKyaG3DDecodedStrip& Strip : HierarchyStrips)
+                        for (const FKyaG3DDecodedStrip& Strip : *DecodedClusterStrips)
                         {
                             if (!bShowClusterMeshes) continue;
                             if (!RenderHierarchies.Contains(Strip.HierarchyOffset)) continue;
@@ -1722,13 +1723,16 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             if (Sector == Bank || SectorEntry.Type != 4 || SectorEntry.Subtype != 2 || SectorEntry.Offset < 0 || SectorEntry.Size < 0 ||
                 SectorEntry.Offset > Sector->BankBytes.Num() || SectorEntry.Size > Sector->BankBytes.Num() - SectorEntry.Offset || SectorEntry.Size > MAX_int32) continue;
             const auto Data = MakeArrayView(Sector->BankBytes.GetData() + SectorEntry.Offset, int32(SectorEntry.Size));
-            TArray<FKyaG3DDecodedStrip> SectorStrips;
-            const bool BackgroundParsed = KyaG3D::DecodeHierarchyStrips(Data, SectorStrips);
+            TArray<FKyaG3DDecodedStrip> SectorStripScratch;
+            const TArray<FKyaG3DDecodedStrip>* SectorStripsPtr = nullptr;
+            const bool BackgroundParsed = GetDecodedGeometry(Sector, 0, EntryIndex, Data,
+                SectorStripScratch, SectorStripsPtr);
             if (!BackgroundParsed)
             {
                 if (bLogSectorDiagnostics) UE_LOG(LogTemp, Warning, TEXT("KYA_SECTOR_BACKGROUND name=%s entry=%d parsed=0"), *DiagnosticName, EntryIndex);
                 continue;
             }
+            const TArray<FKyaG3DDecodedStrip>& SectorStrips = *SectorStripsPtr;
             FBox BackgroundBounds(ForceInit);
             int32 BackgroundTextured = 0, BackgroundMissingTransform = 0;
             int64 BackgroundVertices = 0, BackgroundTriangles = 0;
@@ -1835,6 +1839,8 @@ void AKyaLevelPreview::Destroyed()
     // Stop any in-flight decode and wait for every worker before pooling its event.
     if (DecodeCancelToken.IsValid()) DecodeCancelToken->Increment();
     DrainAsyncDecodeEvents(true);
+    GeometryDecodeCache.Reset();
+    GeometryDecodeCacheGeneration.Reset();
     UnbindBankNotifications();
     for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
@@ -1945,6 +1951,68 @@ void AKyaLevelPreview::DrainAsyncDecodeEvents(bool bWait)
         DecodeEventHistory.RemoveAt(Index);
     }
     if (DecodeEventHistory.IsEmpty()) DecodeCompletionEvent = nullptr;
+}
+
+void AKyaLevelPreview::ResetGeometryDecodeCache(const UKyaLevelBank* Source)
+{
+    for (auto It = GeometryDecodeCache.CreateIterator(); It; ++It)
+        if (It.Key().Bank == Source) It.RemoveCurrent();
+}
+
+bool AKyaLevelPreview::GetDecodedGeometry(const UKyaLevelBank* Source, int32 Kind, int32 EntryIndex,
+    TConstArrayView<uint8> Data, TArray<FKyaG3DDecodedStrip>& Scratch,
+    const TArray<FKyaG3DDecodedStrip>*& OutStrips)
+{
+    OutStrips = nullptr;
+    if (Source && GeometryDecodeCacheGeneration.FindRef(Source) != Source->EditGeneration)
+    {
+        // A reimport/edit invalidates every cached strip for this bank.
+        ResetGeometryDecodeCache(Source);
+        GeometryDecodeCacheGeneration.Add(Source, Source->EditGeneration);
+    }
+    const FGeometryDecodeCacheKey Key{Source, Kind, EntryIndex};
+    if (const TSharedPtr<TArray<FKyaG3DDecodedStrip>>* Cached = GeometryDecodeCache.Find(Key))
+    {
+        ++CachedGeometryDecodes;
+        OutStrips = Cached->Get();
+        return true;
+    }
+    Scratch.Reset();
+    if (!KyaG3D::DecodeHierarchyStrips(Data, Scratch)) return false;
+    ++GeometryDecodes;
+    GeometryDecodeCache.Add(Key, MakeShared<TArray<FKyaG3DDecodedStrip>>(MoveTemp(Scratch)));
+    OutStrips = GeometryDecodeCache.FindChecked(Key).Get();
+    return true;
+}
+
+bool AKyaLevelPreview::GetDecodedClusterGeometry(const UKyaLevelBank* Source, int32 EntryIndex,
+    TConstArrayView<uint8> Data, int32 MaxLods, TArray<FKyaG3DDecodedStrip>& Scratch,
+    const TArray<FKyaG3DDecodedStrip>*& OutStrips)
+{
+    OutStrips = nullptr;
+    if (Source && GeometryDecodeCacheGeneration.FindRef(Source) != Source->EditGeneration)
+    {
+        ResetGeometryDecodeCache(Source);
+        GeometryDecodeCacheGeneration.Add(Source, Source->EditGeneration);
+    }
+    const FGeometryDecodeCacheKey Key{Source, 1, EntryIndex};
+    if (const TSharedPtr<TArray<FKyaG3DDecodedStrip>>* Cached = GeometryDecodeCache.Find(Key))
+    {
+        ++CachedGeometryDecodes;
+        OutStrips = Cached->Get();
+        return true;
+    }
+    Scratch.Reset();
+    for (int32 Lod = 0; Lod < MaxLods; ++Lod)
+    {
+        TArray<FKyaG3DDecodedStrip> LodStrips;
+        if (!KyaG3D::DecodeHierarchyStrips(Data, LodStrips, Lod)) return false;
+        ++GeometryDecodes;
+        Scratch.Append(MoveTemp(LodStrips));
+    }
+    GeometryDecodeCache.Add(Key, MakeShared<TArray<FKyaG3DDecodedStrip>>(MoveTemp(Scratch)));
+    OutStrips = GeometryDecodeCache.FindChecked(Key).Get();
+    return true;
 }
 
 void AKyaLevelPreview::StartAsyncActorDecode()
@@ -3038,3 +3106,4 @@ void AKyaLevelPreview::UpdatePathGuidePoint(int32 PathIndex, int32 PointIndex, c
         Guide->SetLocationAtSplinePoint(PointIndex, Position, ESplineCoordinateSpace::Local, true);
 }
 #endif
+

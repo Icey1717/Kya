@@ -27,7 +27,10 @@
 #include "HAL/FileManager.h"
 #include "Editor.h"
 #include "Engine/Selection.h"
+#include "IMessageLogListing.h"
 #include "Logging/TokenizedMessage.h"
+#include "MessageLogModule.h"
+#include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -1348,6 +1351,183 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Light multiplier survives export"),
             FMath::IsNearlyEqual(Reimported->Lights[0].Multiplier, Bank->Lights[0].Multiplier, 1.0e-3f));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaTargetedWorkflowAcceptanceTest, "Kya.Editor.TargetedWorkflowAcceptance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaTargetedWorkflowAcceptanceTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage(), 6);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create acceptance world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn acceptance preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    if (!TestNotNull(TEXT("Acceptance handle exists"), Handle))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    // --- Acceptance 1: dragging must not decode or rebuild the level ---------------
+    const int64 BuildsBeforeDrag = Preview->BuildCount;
+    const int32 SyncDecodesBeforeDrag = Preview->GetSynchronousActorDecodeCount();
+    Handle->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+    Handle->PostEditMove(false);
+    TestTrue(TEXT("Drag does not write the bank before commit"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(1.0, 2.0, 3.0)));
+    Handle->PostEditMove(true);
+    Service.FlushPendingNotifications();
+    TestTrue(TEXT("Drag commit writes the bank"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(2.0, 2.0, 3.0)));
+    TestEqual(TEXT("Drag commit does not rebuild or decode the level"),
+        Preview->BuildCount, BuildsBeforeDrag);
+    TestEqual(TEXT("Drag commit performs no synchronous actor decode"),
+        Preview->GetSynchronousActorDecodeCount(), SyncDecodesBeforeDrag);
+
+    // --- Acceptance 2: selection survives targeted refresh and full rebuilds --------
+    if (GEditor)
+    {
+        GEditor->SelectNone(false, true, false);
+        GEditor->SelectActor(Handle, true, true);
+        TestTrue(TEXT("Acceptance handle is selected"), Handle->IsSelected());
+
+        FKyaActorEditPatch Patch;
+        Patch.VisibilityDistance = 42.0f;
+        FString Error;
+        TestTrue(TEXT("Targeted edit applies"),
+            Service.Apply(Service.MakeKey(Bank, 0), Patch, EKyaEditNotify::Notify, &Error));
+        TestEqual(TEXT("Targeted edit preserves the handle object"), Preview->GetActorHandle(0),
+            static_cast<AActor*>(Handle));
+        TestTrue(TEXT("Targeted edit preserves selection"), Handle->IsSelected());
+
+        Bank->BumpEditGeneration();
+        Preview->OnConstruction(FTransform::Identity);
+        TestEqual(TEXT("Full rebuild preserves the handle object"), Preview->GetActorHandle(0),
+            static_cast<AActor*>(Handle));
+        TestTrue(TEXT("Full rebuild preserves selection"), Handle->IsSelected());
+    }
+
+    // --- Acceptance 3: missing content is diagnosable from structured messages ------
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x2c;
+    Bank->SceneEnvironment.Actors[0].TrapActorRef = 99;
+    Bank->ImportSchemaVersion = 0;
+    FMessageLogModule& MessageLogModule = FModuleManager::LoadModuleChecked<FMessageLogModule>("MessageLog");
+    const TSharedRef<IMessageLogListing> Listing = MessageLogModule.GetLogListing("KyaLevelEditor");
+    Listing->ClearMessages();
+    // The acceptance case intentionally produces blocking errors; whitelist them so
+    // the automation framework reports only the assertions below.
+    AddExpectedError(TEXT("cannot be exported"), EAutomationExpectedErrorFlags::Contains, 0);
+    AddExpectedError(TEXT("No bank bytes are retained"), EAutomationExpectedErrorFlags::Contains, 0);
+    AddExpectedError(TEXT("TrapActorRef"), EAutomationExpectedErrorFlags::Contains, 0);
+    const TArray<FKyaBankValidationReport> Reports = KyaValidateLevelBanks({ Bank });
+    TestTrue(TEXT("Validation produces a report"), Reports.Num() == 1);
+    const TArray<TSharedRef<FTokenizedMessage>> Messages = Listing->GetFilteredMessages();
+    TestTrue(TEXT("Validation writes to the Message Log"), Messages.Num() > 0);
+    bool bAssetLink = false;
+    bool bActorLink = false;
+    for (const TSharedRef<FTokenizedMessage>& Message : Messages)
+    {
+        for (const TSharedRef<IMessageToken>& Token : Message->GetMessageTokens())
+        {
+            if (Token->GetType() == EMessageToken::AssetName) bAssetLink = true;
+            if (Token->GetType() == EMessageToken::Action) bActorLink = true;
+        }
+    }
+    TestTrue(TEXT("Missing content entries link the affected asset"), bAssetLink);
+    TestTrue(TEXT("Missing content entries offer actor navigation"), bActorLink);
+
+    // --- Acceptance 1b: real-level transforms reuse decoded geometry ---------------
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the real-level transform acceptance cases."));
+    }
+    else
+    {
+        TArray<uint8> Input;
+        if (TestTrue(TEXT("Read real acceptance bank"), FFileHelper::LoadFileToArray(Input, *Filename)))
+        {
+            const uint8* Cursor = Input.GetData();
+            UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+            UKyaLevelBank* RealBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+                UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+                TEXT("bnk"), Cursor, Input.GetData() + Input.Num(), GWarn));
+            if (TestNotNull(TEXT("Import real acceptance bank"), RealBank) &&
+                TestTrue(TEXT("The real bank has actors"), RealBank->SceneEnvironment.Actors.Num() > 0))
+            {
+                UWorld* RealWorld = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+                if (TestNotNull(TEXT("Create real acceptance world"), RealWorld))
+                {
+                    AKyaLevelPreview* RealPreview = RealWorld->SpawnActor<AKyaLevelPreview>();
+                    if (TestNotNull(TEXT("Spawn real acceptance preview"), RealPreview))
+                    {
+                        RealPreview->Bank = RealBank;
+                        RealPreview->bShowRebuildProgress = false;
+                        RealPreview->bSpawnActorHandles = true;
+                        RealPreview->bShowActorMeshesOnHandles = true;
+                        RealPreview->OnConstruction(FTransform::Identity);
+                        TestTrue(TEXT("Real level decode is measured"), RealPreview->GetGeometryDecodeCount() > 0);
+
+                        AKyaActorHandle* RealHandle = Cast<AKyaActorHandle>(RealPreview->GetActorHandle(0));
+                        if (TestNotNull(TEXT("Real acceptance handle exists"), RealHandle))
+                        {
+                            const int32 GeometryDecodes = RealPreview->GetGeometryDecodeCount();
+                            int32 SyncDecodes = RealPreview->GetSynchronousActorDecodeCount();
+                            const auto CheckTransformAcceptance = [this, RealPreview, GeometryDecodes, &SyncDecodes](
+                                const TCHAR* Label)
+                            {
+                                FKyaLevelEditService::Get().FlushPendingNotifications();
+                                TestEqual(FString::Printf(TEXT("%s does not decode level geometry"), Label),
+                                    RealPreview->GetGeometryDecodeCount(), GeometryDecodes);
+                                const int32 CurrentSync = RealPreview->GetSynchronousActorDecodeCount();
+                                TestTrue(FString::Printf(TEXT("%s decodes at most the affected actor"), Label),
+                                    CurrentSync - SyncDecodes <= 1);
+                                SyncDecodes = CurrentSync;
+                            };
+
+                            RealHandle->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+                            RealHandle->PostEditMove(true);
+                            CheckTransformAcceptance(TEXT("Real-level translation"));
+
+                            RealHandle->SetActorRelativeRotation(FQuat(FVector::UpVector, 0.5));
+                            RealHandle->PostEditMove(true);
+                            CheckTransformAcceptance(TEXT("Real-level rotation"));
+
+                            const FVector Scale = KyaActorTransform::SwapGameAxes(FVector(1.5, 1.0, 1.0));
+                            RealHandle->SetActorRelativeScale3D(Scale);
+                            RealHandle->PostEditMove(true);
+                            CheckTransformAcceptance(TEXT("Real-level scale"));
+
+                            TestTrue(TEXT("Real-level transforms reused cached geometry"),
+                                RealPreview->GetCachedGeometryDecodeCount() > 0);
+                        }
+                        RealPreview->Destroy();
+                    }
+                    RealWorld->DestroyWorld(false);
+                }
+            }
+        }
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
     return true;
 }
 

@@ -258,6 +258,10 @@ Last updated: 2026-11-12.
   refresh scene visualizers only. A targeted edit's own transaction event is
   suppressed per preview, while undo/redo still rebuilds. `Silent` bulk edits keep
   deferred full-refresh semantics.
+- Rebuilds reuse decoded background, sector-background and cluster strips from a
+  per-bank, generation-validated cache, so rotation/scale/lighting fallbacks and
+  ground-lit translations re-decode only the affected actor
+  (`GetGeometryDecodeCount` vs `GetCachedGeometryDecodeCount`).
 - Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
@@ -314,7 +318,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
-`Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility` all `Success`.
+`Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility` and
+`Kya.Editor.TargetedWorkflowAcceptance` all `Success`.
 
 Coverage added by the new tests:
 
@@ -355,6 +360,13 @@ Coverage added by the new tests:
   no generated actors in a game world, blocked delete with per-class reasons,
   duplicate copies rejected from writing the bank, pasted-style copies swept
   without a preselection, and owned handles surviving cleanup.
+- Acceptance flow (`Kya.Editor.TargetedWorkflowAcceptance`): a committed drag leaves
+  `BuildCount` and synchronous actor decodes unchanged, a selected handle keeps its
+  object identity and selection through a targeted edit and a full rebuild, and a
+  stale-schema/missing-reference validation writes Message Log entries with asset and
+  actor navigation tokens. On a real bank, translation, rotation and scale reuse the
+  cached background/sector/cluster strips (`GetGeometryDecodeCount` stays unchanged)
+  and synchronously re-decode at most the affected actor.
 
 ## 4. Not implemented yet
 

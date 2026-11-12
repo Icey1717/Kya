@@ -301,6 +301,10 @@ resynchronized, labels/grouping and light/camera/link/trigger visualizers update
 and the level geometry is **not** decoded or rebuilt. Mesh/texture changes and level
 settings still rebuild the capture; undo/redo and reimports keep the full-refresh
 path. A multi-actor drag or waypoint edit therefore does not rebuild the level.
+`Kya.Editor.TargetedWorkflowAcceptance` exercises this acceptance path end to end:
+a drag writes the bank without rebuilding or decoding, a selected handle keeps its
+identity and selection through targeted and full refreshes, and stale/missing data
+produces navigable Message Log entries.
 
 Imports, exports and preview rebuilds show a cancellable progress dialog in
 interactive sessions. Cancelling an import discards it; cancelling an export writes

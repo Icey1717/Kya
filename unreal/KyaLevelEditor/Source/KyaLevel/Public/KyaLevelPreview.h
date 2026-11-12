@@ -11,6 +11,7 @@ class UKyaLevelBank;
 class UKyaLevelSet;
 class UKyaLevelSettings;
 struct FKyaActorDecodeCache;
+struct FKyaG3DDecodedStrip;
 class UProceduralMeshComponent;
 class UMaterialInterface;
 class UTexture2D;
@@ -139,6 +140,10 @@ public:
     int32 GetStaleAsyncDecodeCount() const { return StaleDecodeDiscards.GetValue(); }
     int32 GetCachedActorDecodeCount() const { return CachedActorDecodes.GetValue(); }
     int32 GetSynchronousActorDecodeCount() const { return SynchronousActorDecodes.GetValue(); }
+    /** Background/sector/cluster strip decodes performed by rebuilds. */
+    int32 GetGeometryDecodeCount() const { return GeometryDecodes; }
+    /** Rebuilds that reused cached background/sector/cluster strips. */
+    int32 GetCachedGeometryDecodeCount() const { return CachedGeometryDecodes; }
 #endif
 
     /** Optional override with a Texture2D parameter named KyaTexture. */
@@ -596,6 +601,39 @@ private:
     FThreadSafeCounter StaleDecodeDiscards;
     FThreadSafeCounter CachedActorDecodes;
     FThreadSafeCounter SynchronousActorDecodes;
+    /** Background/sector/cluster strip decodes performed by this preview. */
+    int32 GeometryDecodes = 0;
+    int32 CachedGeometryDecodes = 0;
+    /** Serialized strips keyed by bank, source kind (0 background, 1 cluster) and entry. */
+    struct FGeometryDecodeCacheKey
+    {
+        const UKyaLevelBank* Bank = nullptr;
+        int32 Kind = 0;
+        int32 EntryIndex = INDEX_NONE;
+        bool operator==(const FGeometryDecodeCacheKey& Other) const
+        {
+            return Bank == Other.Bank && Kind == Other.Kind && EntryIndex == Other.EntryIndex;
+        }
+        friend uint32 GetTypeHash(const FGeometryDecodeCacheKey& Key)
+        {
+            return HashCombine(HashCombine(::GetTypeHash(Key.Bank), Key.Kind), Key.EntryIndex);
+        }
+    };
+    TMap<FGeometryDecodeCacheKey, TSharedPtr<TArray<FKyaG3DDecodedStrip>>> GeometryDecodeCache;
+    TMap<const UKyaLevelBank*, int32> GeometryDecodeCacheGeneration;
+    /**
+     * Return cached decoded strips for this bank/entry, decoding only on a miss or a
+     * bank revision change. OutStrips points at the cache and must be consumed before
+     * another cache insert (map rehash).
+     */
+    bool GetDecodedGeometry(const UKyaLevelBank* Source, int32 Kind, int32 EntryIndex,
+        TConstArrayView<uint8> Data, TArray<FKyaG3DDecodedStrip>& Scratch,
+        const TArray<FKyaG3DDecodedStrip>*& OutStrips);
+    /** Concatenate one decode per LOD; cached as a single entry. */
+    bool GetDecodedClusterGeometry(const UKyaLevelBank* Source, int32 EntryIndex,
+        TConstArrayView<uint8> Data, int32 MaxLods, TArray<FKyaG3DDecodedStrip>& Scratch,
+        const TArray<FKyaG3DDecodedStrip>*& OutStrips);
+    void ResetGeometryDecodeCache(const UKyaLevelBank* Source);
     bool bCancelRebuildRequested = false;
     void StartAsyncActorDecode();
     /** Recycle decode events; only waits when bWait (shutdown), never in the editor. */
