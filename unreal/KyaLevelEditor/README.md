@@ -271,6 +271,11 @@ distinct value, must actually change the record, must be exposed by the panel's 
 row filter (`KyaGetActorDetailsProperties`) and must survive export/reimport;
 nested, reference-picker (through `KyaSetActorReferencePick`, including its
 out-of-range rejection) and multi-actor bulk edits round trip as well.
+`Kya.Editor.RepresentativeActorEdits` finds a moving platform, Wolfen, hero,
+checkpoint-manager trigger and meshless actor from their Outliner labels (never by
+scanning for a bank index), edits a nested leaf on each (carried-platform entry,
+Wolfen fight configuration, hero blow damage, checkpoint flags, meshless visibility
+distance), and checks every edited property after export/reimport.
 
 The identity section shows the recovered game class name and numeric id (forexample `Moving platform (13)`, `Unknown class 127`), with the recovered notes as a
 tooltip and a Browse button for the bank asset. Recovered class-specific behaviour

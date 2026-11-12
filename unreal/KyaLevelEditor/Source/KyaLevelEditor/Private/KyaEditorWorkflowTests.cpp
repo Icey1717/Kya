@@ -3208,6 +3208,298 @@ bool FKyaSectorIsolationTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaRepresentativeActorEditsTest, "Kya.Editor.RepresentativeActorEdits",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaRepresentativeActorEditsTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the representative-actor acceptance."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read the representative-actor bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import the representative-actor bank"), Bank)) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create the representative-actor world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn the representative-actor preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    enum class ERepKind : uint8 { Platform, Wolfen, Hero, Trigger, Meshless };
+    struct FRepSpec
+    {
+        const TCHAR* Label;
+        int64 ClassId;
+        ERepKind Kind;
+    };
+    // Representative classes from Types.h: moving platform, Wolfen, hero, checkpoint
+    // manager (the trigger records) and a meshless placement.
+    const FRepSpec Specs[] = {
+        { TEXT("platform"), 0x0d, ERepKind::Platform },
+        { TEXT("Wolfen"), 0x09, ERepKind::Wolfen },
+        { TEXT("hero"), 0x06, ERepKind::Hero },
+        { TEXT("trigger"), 0x1e, ERepKind::Trigger },
+        { TEXT("meshless"), INDEX_NONE, ERepKind::Meshless },
+    };
+
+    struct FRepEdit
+    {
+        FName Property;
+        FString Leaf;
+        TFunction<void(FKyaActorPlacement&)> Mutate;
+    };
+    const auto MakePlan = [](ERepKind Kind, const FKyaActorPlacement& Placement, FRepEdit& Out) -> bool
+    {
+        switch (Kind)
+        {
+        case ERepKind::Platform:
+            if (Placement.bHasPlatformPrefix && !Placement.PlatformActors.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformActors);
+                Out.Leaf = TEXT("PlatformActors[0].CarryMethod");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.PlatformActors[0].CarryMethod ^= 1; };
+                return true;
+            }
+            if (Placement.bHasPlatformDetails)
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformProperties);
+                Out.Leaf = TEXT("PlatformProperties.PlatformFlags");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.PlatformProperties.PlatformFlags ^= 1; };
+                return true;
+            }
+            if (Placement.bHasPlatformPrefix)
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformWeight);
+                Out.Leaf = TEXT("PlatformWeight");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.PlatformWeight += 3.25f; };
+                return true;
+            }
+            return false;
+        case ERepKind::Wolfen:
+            if (Placement.bHasWolfenData && !Placement.WolfenFightParamData.ConfigurationValues.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WolfenFightParamData);
+                Out.Leaf = TEXT("WolfenFightParamData.ConfigurationValues[0]");
+                Out.Mutate = [](FKyaActorPlacement& Copy)
+                { Copy.WolfenFightParamData.ConfigurationValues[0] += 4.5f; };
+                return true;
+            }
+            if (!Placement.WolfenFightParamData.TuningValues.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WolfenFightParamData);
+                Out.Leaf = TEXT("WolfenFightParamData.TuningValues[0]");
+                Out.Mutate = [](FKyaActorPlacement& Copy)
+                { Copy.WolfenFightParamData.TuningValues[0] += 2.25f; };
+                return true;
+            }
+            if (Placement.bHasWolfenData)
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, WolfenVisionRange);
+                Out.Leaf = TEXT("WolfenVisionRange");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.WolfenVisionRange += 6.0f; };
+                return true;
+            }
+            return false;
+        case ERepKind::Hero:
+            if (Placement.bHasKimData && !Placement.FighterBlows.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterBlows);
+                Out.Leaf = TEXT("FighterBlows[0].Damage");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.FighterBlows[0].Damage += 7.5f; };
+                return true;
+            }
+            if (Placement.bHasKimData && !Placement.KimCameras.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimCameras);
+                Out.Leaf = TEXT("KimCameras[0].Fov");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.KimCameras[0].Fov += 2.0f; };
+                return true;
+            }
+            if (Placement.bHasKimData && !Placement.KimBoneKeys.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, KimBoneKeys);
+                Out.Leaf = TEXT("KimBoneKeys[0]");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.KimBoneKeys[0] += 1; };
+                return true;
+            }
+            if (Placement.bHasKimData)
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, FighterWeightB);
+                Out.Leaf = TEXT("FighterWeightB");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.FighterWeightB += 1.25f; };
+                return true;
+            }
+            return false;
+        case ERepKind::Trigger:
+            if (Placement.bHasTypedCheckpoints && !Placement.Checkpoints.IsEmpty())
+            {
+                Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Checkpoints);
+                Out.Leaf = TEXT("Checkpoints[0].Flags");
+                Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.Checkpoints[0].Flags ^= 2; };
+                return true;
+            }
+            return false;
+        case ERepKind::Meshless:
+            if (!Placement.Models.IsEmpty() || Placement.MeshIndex >= 0) return false;
+            Out.Property = GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance);
+            Out.Leaf = TEXT("VisibilityDistance");
+            Out.Mutate = [](FKyaActorPlacement& Copy) { Copy.VisibilityDistance += 17.0f; };
+            return true;
+        }
+        return false;
+    };
+
+    struct FEditedRecord
+    {
+        int32 Index = INDEX_NONE;
+        FName Property;
+        FString Leaf;
+        FKyaActorPlacement Expected;
+    };
+    TArray<FEditedRecord> Edited;
+    int32 NestedEdits = 0;
+
+    for (const FRepSpec& Spec : Specs)
+    {
+        // Find the representative through its generated representation/Outliner label,
+        // never by scanning the bank's global actor array for a class id.
+        AKyaActorHandle* Found = nullptr;
+        FRepEdit Chosen;
+        if (Spec.ClassId != INDEX_NONE)
+        {
+            const FString ClassTag = FString::Printf(TEXT("[class %lld]"), Spec.ClassId);
+            for (TActorIterator<AKyaActorHandle> It(World); It; ++It)
+            {
+                if (!Bank->SceneEnvironment.Actors.IsValidIndex(It->ActorIndex)) continue;
+                if (!It->GetActorLabel().Contains(ClassTag)) continue;
+                FRepEdit Candidate;
+                if (!MakePlan(Spec.Kind, Bank->SceneEnvironment.Actors[It->ActorIndex], Candidate)) continue;
+                Found = *It;
+                Chosen = Candidate;
+                break;
+            }
+        }
+        else
+        {
+            for (TActorIterator<AKyaActorHandle> It(World); It; ++It)
+            {
+                if (!Bank->SceneEnvironment.Actors.IsValidIndex(It->ActorIndex)) continue;
+                if (It->GetRenderedSectionCount() != 0) continue;
+                FRepEdit Candidate;
+                if (!MakePlan(Spec.Kind, Bank->SceneEnvironment.Actors[It->ActorIndex], Candidate)) continue;
+                Found = *It;
+                Chosen = Candidate;
+                break;
+            }
+        }
+        if (!TestNotNull(FString::Printf(TEXT("The %s actor is discoverable from its Outliner label"), Spec.Label), Found))
+        {
+            int32 ClassCount = 0;
+            for (const FKyaActorPlacement& Placement : Bank->SceneEnvironment.Actors)
+                if (Spec.ClassId == INDEX_NONE ? Placement.Models.IsEmpty() : Placement.ClassId == Spec.ClassId)
+                    ++ClassCount;
+            AddInfo(FString::Printf(TEXT("No applicable %s representation (bank carries %d matching records)"),
+                Spec.Label, ClassCount));
+            continue;
+        }
+
+        const int32 Index = Found->ActorIndex;
+        const FKyaActorPlacement Before = Bank->SceneEnvironment.Actors[Index];
+        FKyaActorPlacement Copy = Before;
+        Chosen.Mutate(Copy);
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!TestTrue(FString::Printf(TEXT("The %s nested patch builds (%s)"), Spec.Label, *Chosen.Leaf),
+            KyaMakePlacementPropertyPatch(Copy, Chosen.Property, Patch, &Error)))
+        {
+            AddInfo(Error);
+            continue;
+        }
+        if (!TestTrue(FString::Printf(TEXT("The %s nested edit applies"), Spec.Label),
+            Service.Apply(Service.MakeKey(Bank, Index), Patch, EKyaEditNotify::Notify, &Error)))
+        {
+            AddInfo(Error);
+            continue;
+        }
+        Service.FlushPendingNotifications();
+        const FKyaActorPlacement& After = Bank->SceneEnvironment.Actors[Index];
+        FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(Chosen.Property);
+        if (TestNotNull(FString::Printf(TEXT("The %s edit targets a real property"), Spec.Label), Property))
+        {
+            TestFalse(FString::Printf(TEXT("The %s edit changes the nested value"), Spec.Label),
+                Property->Identical(Property->ContainerPtrToValuePtr<void>(&Before),
+                    Property->ContainerPtrToValuePtr<void>(&After), 0));
+            TestTrue(FString::Printf(TEXT("The %s edit preserves the placement"), Spec.Label),
+                After.Position.Equals(Before.Position, 1.0e-4) && After.ClassId == Before.ClassId);
+        }
+        TestTrue(FString::Printf(TEXT("The %s edit keeps the actor discoverable"), Spec.Label),
+            Found->GetActorLabel().Contains(FString::Printf(TEXT("[class %lld]"), Before.ClassId)));
+        if (Chosen.Leaf.Contains(TEXT(".")) || Chosen.Leaf.Contains(TEXT("["))) ++NestedEdits;
+        AddInfo(FString::Printf(TEXT("Edited %s actor %d (%s): %s"),
+            Spec.Label, Index, *Found->GetActorLabel(), *Chosen.Leaf));
+        Edited.Add({ Index, Chosen.Property, Chosen.Leaf, After });
+    }
+
+    TestEqual(TEXT("Every representative actor was found and edited"), Edited.Num(),
+        int32(UE_ARRAY_COUNT(Specs)));
+    TestTrue(TEXT("Most representative edits reach a nested leaf"), NestedEdits >= 3);
+
+    // --- verify the corresponding exported values --------------------------------
+    FKyaBankExportDiagnostics Diagnostics;
+    TArray<uint8> Exported;
+    if (TestTrue(TEXT("Export the representative-actor bank"),
+        KyaBuildBankExportBytes(Bank, Exported, Diagnostics)))
+    {
+        const uint8* ExportedCursor = Exported.GetData();
+        UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(
+            UKyaLevelBank::StaticClass(), GetTransientPackage(), NAME_None, RF_Transient, nullptr,
+            TEXT("bnk"), ExportedCursor, Exported.GetData() + Exported.Num(), GWarn));
+        if (TestNotNull(TEXT("Reimport the representative-actor bank"), Reimported))
+        {
+            TestEqual(TEXT("Export preserves the actor count"),
+                Reimported->SceneEnvironment.Actors.Num(), Bank->SceneEnvironment.Actors.Num());
+            for (const FEditedRecord& Edit : Edited)
+            {
+                if (!TestTrue(FString::Printf(TEXT("The exported bank keeps the %s actor"), *Edit.Leaf),
+                    Reimported->SceneEnvironment.Actors.IsValidIndex(Edit.Index))) continue;
+                FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(Edit.Property);
+                if (!TestNotNull(FString::Printf(TEXT("The %s property resolves"), *Edit.Leaf), Property)) continue;
+                const FKyaActorPlacement& ExportedActor = Reimported->SceneEnvironment.Actors[Edit.Index];
+                TestTrue(FString::Printf(TEXT("Export preserves the edited %s"), *Edit.Leaf),
+                    Property->Identical(Property->ContainerPtrToValuePtr<void>(&ExportedActor),
+                        Property->ContainerPtrToValuePtr<void>(&Edit.Expected), 0));
+                TestTrue(FString::Printf(TEXT("Export preserves the %s placement"), *Edit.Leaf),
+                    ExportedActor.Position.Equals(Edit.Expected.Position, 1.0e-4) &&
+                    ExportedActor.ClassId == Edit.Expected.ClassId);
+            }
+        }
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaGizmoAcceptanceTest, "Kya.Editor.GizmoAcceptance",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

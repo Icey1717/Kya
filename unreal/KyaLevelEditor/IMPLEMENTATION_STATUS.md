@@ -176,6 +176,12 @@ Last updated: 2026-11-12.
   yaw-only class (rejecting an unrepresentable pitch), scales with R, then saves,
   reopens and exports/reimports, checking the bank values and the recovered
   placement at every stage.
+- Representative-actor edits (`Kya.Editor.RepresentativeActorEdits`): a platform,
+  Wolfen, hero, checkpoint-manager trigger and meshless actor are found from their
+  Outliner labels and each gets a supported nested edit (carried-platform entry,
+  Wolfen fight configuration, hero blow damage, checkpoint flags, meshless
+  visibility distance); every edited property and the placement survive
+  export/reimport.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -416,7 +422,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate`,
 `Kya.Editor.MilestoneCGate`, `Kya.Editor.MilestoneDGate`,
 `Kya.Editor.ViewportClickSelection`, `Kya.Editor.SharedEditPath`,
-`Kya.Editor.SectorIsolation` and `Kya.Editor.GizmoAcceptance` all `Success`.
+`Kya.Editor.SectorIsolation`, `Kya.Editor.GizmoAcceptance` and
+`Kya.Editor.RepresentativeActorEdits` all `Success`.
 
 Coverage added by the new tests:
 
