@@ -4,6 +4,8 @@
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/ScopedSlowTask.h"
+#include "Misc/App.h"
 
 FString FKyaBankExportDiagnostics::Summary() const
 {
@@ -53,10 +55,24 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
     // Preflight and stage every bank before publishing any of them. Destinations must
     // be unique: publishing one file would otherwise move another bank's bytes.
     TSet<FString> Destinations;
+    TUniquePtr<FScopedSlowTask> SlowTask;
+    if (!FApp::IsUnattended())
+    {
+        SlowTask = MakeUnique<FScopedSlowTask>(float(Requests.Num()),
+            NSLOCTEXT("KyaLevelEditor", "KyaExport", "Exporting Kya banks"));
+        SlowTask->MakeDialog(true);
+    }
     for (int32 RequestIndex = 0; RequestIndex < Requests.Num(); ++RequestIndex)
     {
+        if (SlowTask) SlowTask->EnterProgressFrame();
         const FKyaBankExportRequest& Request = Requests[RequestIndex];
         FKyaBankExportOutcome& Outcome = Outcomes.AddDefaulted_GetRef();
+        if (SlowTask && SlowTask->ShouldCancel())
+        {
+            Outcome.Errors.Add(TEXT("Export was cancelled before this bank was written."));
+            bStagingFailed = true;
+            continue;
+        }
         Outcome.Bank = Request.Bank;
         Outcome.DestinationFilename = Request.DestinationFilename;
 
@@ -92,6 +108,12 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
         }
         Outcome.bValidated = true;
         Outcome.Warnings = Diagnostics.Warnings;
+        if (SlowTask && SlowTask->ShouldCancel())
+        {
+            Outcome.Errors.Add(TEXT("Export was cancelled after validating this bank; no file was written."));
+            bStagingFailed = true;
+            continue;
+        }
 
         const FString DestinationDirectory = FPaths::GetPath(Request.DestinationFilename);
         if (!DestinationDirectory.IsEmpty()) IFileManager::Get().MakeDirectory(*DestinationDirectory, true);
@@ -114,6 +136,16 @@ TArray<FKyaBankExportOutcome> KyaWriteValidatedExportSet(const TArray<FKyaBankEx
         for (FKyaBankExportOutcome& Outcome : Outcomes)
             if (Outcome.bValidated)
                 Outcome.Errors.Add(TEXT("Publishing was cancelled because another bank failed to stage."));
+        return Outcomes;
+    }
+
+    if (SlowTask && SlowTask->ShouldCancel())
+    {
+        for (const FStagedFile& File : Staged)
+            IFileManager::Get().Delete(*File.TemporaryFilename, false, true, true);
+        for (FKyaBankExportOutcome& Outcome : Outcomes)
+            if (Outcome.bValidated)
+                Outcome.Errors.Add(TEXT("Publishing was cancelled before any destination was replaced."));
         return Outcomes;
     }
 

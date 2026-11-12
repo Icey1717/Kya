@@ -104,7 +104,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Replace full preview rebuilds for simple transform/property changes with targeted invalidation. Cache decoded meshes/textures by source revision and refresh only affected geometry, materials, lighting or visualizers.
 - [x] Preserve selection and actor identity through refresh. A property edit should not collapse the Details panel, reset Outliner state or destroy the selected object.
 - [x] Remove per-actor polling where change notifications suffice. Measure editor frame time, drag latency, rebuild time, memory and component count on a representative large level before choosing further batching work.
-- [ ] Support progress and cancellation for expensive import/decode/rebuild operations. Keep UObject/editor mutations on the appropriate thread and discard stale background work after asset changes.
+- [x] Support progress and cancellation for expensive import/decode/rebuild operations. Keep UObject/editor mutations on the appropriate thread and discard stale background work after asset changes.
 - [ ] Add actionable Message Log entries for missing sectors, stale schemas, missing references, unsupported geometry and export restrictions, with links to affected assets/actors.
 - [ ] Provide authoring visibility controls separate from game-like distance/sector culling, so an actor remains discoverable even when the native preview would hide it. Preserve comparison/capture modes.
 - [ ] Acceptance: transform dragging does not decode the whole level, selection survives refresh, and missing content can be diagnosed without searching raw logs.

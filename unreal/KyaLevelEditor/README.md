@@ -285,6 +285,14 @@ and the level geometry is **not** decoded or rebuilt. Mesh/texture changes and l
 settings still rebuild the capture; undo/redo and reimports keep the full-refresh
 path. A multi-actor drag or waypoint edit therefore does not rebuild the level.
 
+Imports, exports and preview rebuilds show a cancellable progress dialog in
+interactive sessions. Cancelling an import discards it; cancelling an export writes
+nothing; cancelling a rebuild stops at the next sector/actor boundary and reports
+`RebuildStatus = Cancelled`. Actor mesh strips are also decoded on the thread pool
+into a data-only cache keyed by bank revision: UObject/material/mesh creation stays
+on the game thread, only the newest result is kept, and stale results after a
+reimport or newer request are discarded (counters are exposed for diagnostics).
+
 Renaming follows an explicit policy: the Outliner label is presentation and the
 serialized actor name is the edit. A rename strips the generated `[class <id>]` and
 duplicate `[<index>]` suffixes, then validates the result: single-byte ASCII, at

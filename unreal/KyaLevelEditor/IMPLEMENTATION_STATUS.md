@@ -232,6 +232,16 @@ Last updated: 2026-11-12.
   block through `ApplySceneSettings` (validation, one undo step, preview refresh);
   preview properties are split into `Kya|Authoring` and `Kya|Diagnostics|*` so
   comparison/capture options are separate from authoring.
+- Imports, exports and preview rebuilds show cancellable progress in interactive
+  sessions; cancellation discards an import, writes nothing on export and stops a
+  rebuild at the next phase boundary (`RebuildStatus`) while restoring the previous
+  mesh/presentation state (geometry, materials, flares, ranges, hierarchy metadata).
+  Actor mesh strips are decoded on the thread pool into a data-only cache keyed by
+  bank revision; requests use a bank-global id so a newer request from any preview
+  supersedes older data, stale results after a reimport/newer request are discarded,
+  older workers cancel cooperatively, and UObject/material/mesh creation stays on the
+  game thread. Counters expose async completions, stale discards, cache hits and
+  synchronous decodes.
 - Targeted invalidation: actor transform/property edits synchronize existing handles
   (`HandleActorEdited`) without re-decoding geometry or rebuilding the preview;
   mesh/texture edits and scene settings still take the rebuild path. Waypoint/path
@@ -290,7 +300,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.StructuralCommands`, `Kya.Editor.OutlinerPolicy`,
 `Kya.Editor.PathVisualization`, `Kya.Editor.WaypointOrientation`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
-`Kya.Editor.LightExport` and `Kya.Editor.LevelSettings` all `Success`.
+`Kya.Editor.LightExport`, `Kya.Editor.LevelSettings` and `Kya.Editor.AsyncDecode`
+all `Success`.
 
 Coverage added by the new tests:
 
@@ -343,7 +354,7 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
   limitations and visualizer semantics).
 - `UKyaLevelSet` creation is a command/menu action rather than an asset-type
   Content Browser action; it is not auto-created on import.
-- Progress/cancel UI for export; Message Log entries do not have navigation links.
+- Message Log entries do not yet have navigation links to affected assets/actors.
 - Bulk/scripted edits and reimports still rebuild the preview; per-record targeted
   invalidation is used for single actor/waypoint/path/light/camera edits.
 - Serialized hierarchy transform writeback (deliberately disabled until the writer

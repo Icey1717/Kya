@@ -3,6 +3,8 @@
 #include "KyaG2D.h"
 #include "KyaSceneRenderSettings.h"
 #include "Misc/Paths.h"
+#include "Misc/App.h"
+#include "Misc/ScopedSlowTask.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSettings.h"
@@ -20,6 +22,9 @@
 #include "UObject/UObjectGlobals.h"
 #include "Misc/TransactionObjectEvent.h"
 #include "EngineUtils.h"
+#include "Async/Async.h"
+#include "HAL/CriticalSection.h"
+#include "HAL/PlatformProcess.h"
 
 #include "ProceduralMeshComponent.h"
 #include "Components/SplineComponent.h"
@@ -46,6 +51,15 @@
 #include "Materials/MaterialExpressionScreenPosition.h"
 #endif
 
+/** Data-only actor mesh decode result, safe to build off the game thread. */
+struct FKyaActorDecodeCache
+{
+    TWeakObjectPtr<UKyaLevelBank> Bank;
+    int32 Generation = -1;
+    int32 Serial = 0;
+    TMap<int32, TArray<FKyaG3DDecodedStrip>> StripsByMesh;
+};
+
 namespace
 {
 struct FMaterialSectionKey
@@ -56,6 +70,10 @@ struct FMaterialSectionKey
     friend uint32 GetTypeHash(const FMaterialSectionKey& Key) { return HashCombine(GetTypeHash(Key.Hash), GetTypeHash(Key.bBlend)); }
 };
 using FMaterialSections = TMap<FMaterialSectionKey, int32>;
+
+FCriticalSection GActorDecodeLock;
+TMap<const UKyaLevelBank*, TSharedPtr<FKyaActorDecodeCache>> GActorDecodeCache;
+FThreadSafeCounter GActorDecodeRequestId;
 
 /** Hash the actor inputs that affect captured mesh sections and vertex lighting. */
 uint64 HashActorSectionRevision(const FKyaActorPlacement& Actor, const UKyaLevelBank* Bank, int32 Generation,
@@ -228,12 +246,74 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     if (Bank && !Bank->HasCurrentImportSchema())
         UE_LOG(LogTemp, Warning, TEXT("KYA_PREVIEW_STALE_SCHEMA bank=%s version=%d current=%d; reimport the bank to refresh typed data"),
             *Bank->GetName(), Bank->ImportSchemaVersion, UKyaLevelBank::CurrentImportSchemaVersion);
-    Mesh->ClearAllMeshSections();
+    // The mesh is cleared only at publication (after cancellation checks), so a
+    // cancelled rebuild leaves the previously displayed geometry intact. Presentation
+    // state (ranges, flares, textures, materials, hierarchy metadata) is staged and
+    // restored on cancellation as well.
+    struct FPresentationSnapshot
+    {
+        TArray<FBackgroundRange> BackgroundRanges;
+        TMap<int32, TArray<FVector>> BackgroundBasePositions;
+        bool bHasBackgroundCamera = false;
+        TArray<TObjectPtr<UTexture2D>> PreviewTextures;
+        TArray<FBackgroundFlare> BackgroundFlares;
+        TArray<FClusterVisibilityRange> ClusterVisibilityRanges;
+        TMap<int32, TArray<uint32>> ClusterBaseIndices;
+        TMap<FString, FHierarchySelectionInfo> HierarchySelectionInfo;
+        TArray<TObjectPtr<UMaterialInstanceDynamic>> FlareMaterials;
+        TArray<FWeightedBlendable> FlareBlendables;
+    } Snapshot;
+    Snapshot.BackgroundRanges = BackgroundRanges;
+    Snapshot.BackgroundBasePositions = BackgroundBasePositions;
+    Snapshot.bHasBackgroundCamera = bHasBackgroundCamera;
+    Snapshot.PreviewTextures = PreviewTextures;
+    Snapshot.BackgroundFlares = BackgroundFlares;
+    Snapshot.ClusterVisibilityRanges = ClusterVisibilityRanges;
+    Snapshot.ClusterBaseIndices = ClusterBaseIndices;
+    Snapshot.HierarchySelectionInfo = HierarchySelectionInfo;
+    Snapshot.FlareMaterials = FlareMaterials;
+    Snapshot.FlareBlendables = FlarePostProcess->Settings.WeightedBlendables.Array;
+    const auto RestorePresentation = [this, &Snapshot]()
+    {
+        BackgroundRanges = MoveTemp(Snapshot.BackgroundRanges);
+        BackgroundBasePositions = MoveTemp(Snapshot.BackgroundBasePositions);
+        bHasBackgroundCamera = Snapshot.bHasBackgroundCamera;
+        PreviewTextures = MoveTemp(Snapshot.PreviewTextures);
+        BackgroundFlares = MoveTemp(Snapshot.BackgroundFlares);
+        ClusterVisibilityRanges = MoveTemp(Snapshot.ClusterVisibilityRanges);
+        ClusterBaseIndices = MoveTemp(Snapshot.ClusterBaseIndices);
+        HierarchySelectionInfo = MoveTemp(Snapshot.HierarchySelectionInfo);
+        FlareMaterials = MoveTemp(Snapshot.FlareMaterials);
+        FlarePostProcess->Settings.WeightedBlendables.Array = MoveTemp(Snapshot.FlareBlendables);
+    };
+    RebuildStatus = TEXT("Building");
+    struct FCancelReset
+    {
+        bool& Value;
+        ~FCancelReset() { Value = false; }
+    } CancelReset{bCancelRebuildRequested};
+    TUniquePtr<FScopedSlowTask> SlowTask;
+    if (bShowRebuildProgress && !FApp::IsUnattended() && GetWorld() && !GetWorld()->IsGameWorld())
+    {
+        // Size the work to the number of phase checks below (sectors + actor batches +
+        // publication) so the progress dialog never overflows its range.
+        const int32 ActorBatches = Bank ? FMath::DivideAndRoundUp(Bank->SceneEnvironment.Actors.Num(), 32) : 0;
+        const float WorkUnits = float(FMath::Max(2, SectorBanks.Num() + 2 + ActorBatches + 1));
+        SlowTask = MakeUnique<FScopedSlowTask>(WorkUnits,
+            NSLOCTEXT("KyaLevelEditor", "KyaRebuild", "Decoding Kya level"));
+        SlowTask->MakeDialog(true);
+    }
+    const auto CheckRebuildCancel = [this, &SlowTask]()
+    {
+        if (bCancelRebuildRequested) return true;
+        if (!SlowTask) return false;
+        SlowTask->EnterProgressFrame();
+        if (SlowTask->ShouldCancel()) bCancelRebuildRequested = true;
+        return bCancelRebuildRequested;
+    };
     BackgroundRanges.Reset();
     BackgroundBasePositions.Reset();
     bHasBackgroundCamera = false;
-    PreviewTextures.Reset();
-    BackgroundFlares.Reset();
     ClusterVisibilityRanges.Reset();
     ClusterBaseIndices.Reset();
     HierarchySelectionInfo.Reset();
@@ -263,15 +343,32 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         if (bHasGroundLightData) break;
     }
+    StartAsyncActorDecode();
+    TSharedPtr<FKyaActorDecodeCache> DecodeCacheSnapshot;
+    {
+        FScopeLock Lock(&GActorDecodeLock);
+        if (const TSharedPtr<FKyaActorDecodeCache>* Found = GActorDecodeCache.Find(Bank))
+        {
+            if (Found->IsValid() && (*Found)->Generation == Bank->EditGeneration &&
+                (*Found)->Bank == Bank)
+                DecodeCacheSnapshot = *Found;
+            else
+                StaleDecodeDiscards.Increment();
+        }
+    }
     ActorLightingRevision = HashActorLighting(Bank, SectorBanks, bApplyActorLighting);
-    FlareMaterials.Reset();
-    FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
     BindBankNotifications();
     // Scene data can be incomplete (missing or invalid background entry) while actor
     // placements are still editable; keep the actor representation route alive.
     const auto FinishBuildWithoutGeometry = [this]()
     {
+        Mesh->ClearAllMeshSections();
+        PreviewTextures.Reset();
+        BackgroundFlares.Reset();
+        FlareMaterials.Reset();
+        FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
         ++BuildCount;
+        RebuildStatus = TEXT("Completed");
 #if WITH_EDITOR
         RefreshActorHandles();
         RefreshSpatialHandles();
@@ -648,7 +745,6 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         Material->PostEditChange();
     }
 #endif
-    if (GeneratedUntexturedMaterial) Mesh->SetMaterial(0, GeneratedUntexturedMaterial);
     UMaterialInterface* EffectiveMaterial = TextureMaterial ? TextureMaterial.Get() : GeneratedPreviewMaterial.Get();
     const FKyaBankEntry& Entry = Bank->Entries[Bank->BackgroundMeshEntry];
     if (Entry.Offset < 0 || Entry.Size < 0 || Entry.Offset > Bank->BankBytes.Num() ||
@@ -683,6 +779,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     FMaterialSections MaterialSections;
     struct FSectionData { int32 Section = 0; UMaterialInterface* Material = nullptr; TArray<FVector> Positions; TArray<int32> Triangles; TArray<FVector2D> UVs; TArray<FColor> Colors; };
     TMap<int32, FSectionData> TexturedSections;
+    TMap<int32, TObjectPtr<UMaterialInterface>> BuiltSectionMaterials;
+    TArray<TObjectPtr<UTexture2D>> BuiltPreviewTextures;
     auto GetTexturedSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
         const TMap<uint64, int32>& Offsets, FMaterialSections& Sections,
         const TCHAR* SourceLabel, uint32 Primitive) -> FSectionData*
@@ -735,8 +833,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                             Material->SetScalarParameterValue(TEXT("AlphaClip"), Masked ? 1.0f / 255.0f : -1.0f);
                         }
                         Section = NextSection++;
-                        Mesh->SetMaterial(Section, Material);
-                        PreviewTextures.Add(Texture);
+                        BuiltSectionMaterials.Add(Section, Material);
+                        BuiltPreviewTextures.Add(Texture);
                         if (bLogSectorDiagnostics)
                             UE_LOG(LogTemp, Display, TEXT("KYA_TEXTURE_SECTION hash=%016llx source=%s width=%d height=%d section=%d masked=%d additive=%d translucent=%d"),
                                 Hash, SourceLabel, Width, Height, Section, Masked ? 1 : 0, Additive ? 1 : 0, Translucent ? 1 : 0);
@@ -751,7 +849,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         if (*Found == INDEX_NONE) return nullptr;
         FSectionData& Result = TexturedSections.FindOrAdd(*Found);
         Result.Section = *Found;
-        Result.Material = Mesh->GetMaterial(*Found);
+        if (const TObjectPtr<UMaterialInterface>* Material = BuiltSectionMaterials.Find(*Found))
+            Result.Material = Material->Get();
         return &Result;
     };
     auto RegisterClusterRange = [&](const FKyaG3DDecodedStrip& Strip, const FMatrix& Transform,
@@ -802,6 +901,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             BackgroundRanges.Add(Range);
         return true;
     };
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> BuiltFlareMaterials;
+    TArray<FBackgroundFlare> BuiltBackgroundFlares;
     auto AddBackgroundFlares = [&](TConstArrayView<uint8> Data, TConstArrayView<uint8> Source,
         const TMap<uint64, int32>& Materials) {
         if (!bShowBackgroundMeshes || !bShowSprites || !GeneratedFlareMaterial) return;
@@ -831,10 +932,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
             const FVector P = Transform.TransformPosition(FVector(Flare.Center));
             FBackgroundFlare Item;
             Item.Position = FVector(P.X, P.Z, P.Y) * 100.0;
-            Item.MaterialIndex = FlareMaterials.Add(Material);
-            BackgroundFlares.Add(Item);
-            PreviewTextures.Add(Texture);
-            FlarePostProcess->Settings.AddBlendable(Material, 1.0f);
+            Item.MaterialIndex = BuiltFlareMaterials.Add(Material);
+            BuiltBackgroundFlares.Add(Item);
+            BuiltPreviewTextures.Add(Texture);
             if (bLogSectorDiagnostics)
                 UE_LOG(LogTemp, Display, TEXT("KYA_BACKGROUND_FLARE hash=%016llx center=%s texture=%dx%d"),
                     Flare.MaterialHash, *Item.Position.ToString(), Width, Height);
@@ -1032,6 +1132,12 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
         {
+        if ((ActorIndex & 31) == 0 && CheckRebuildCancel())
+        {
+            RestorePresentation();
+            RebuildStatus = TEXT("Cancelled");
+            return;
+        }
         if (!bShowAllActorMeshes && !bActorHandlesOwnGeometry && ActorIndex != PreviewActorIndex) continue;
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
         if (bActorHandlesOwnGeometry)
@@ -1084,7 +1190,17 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         if (!StripsByMesh.Contains(Actor.MeshIndex))
         {
             TArray<FKyaG3DDecodedStrip>& ModelStrips = StripsByMesh.Add(Actor.MeshIndex);
-            KyaG3D::DecodeHierarchyStrips(ModelData, ModelStrips);
+            if (DecodeCacheSnapshot.IsValid() &&
+                DecodeCacheSnapshot->StripsByMesh.Contains(Actor.MeshIndex))
+            {
+                ModelStrips = DecodeCacheSnapshot->StripsByMesh[Actor.MeshIndex];
+                CachedActorDecodes.Increment();
+            }
+            else
+            {
+                KyaG3D::DecodeHierarchyStrips(ModelData, ModelStrips);
+                SynchronousActorDecodes.Increment();
+            }
         }
         int32 ActorStripIndex = 0;
         for (const FKyaG3DDecodedStrip& Strip : StripsByMesh[Actor.MeshIndex])
@@ -1200,7 +1316,8 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 if (CapturedSections)
                 {
                     FKyaActorMeshSection& Section = CapturedSections->AddDefaulted_GetRef();
-                    Section.Material = Textured ? Textured->Material : Mesh->GetMaterial(0);
+                    Section.Material = Textured ? Textured->Material
+                        : (GeneratedUntexturedMaterial ? GeneratedUntexturedMaterial.Get() : Mesh->GetMaterial(0));
                     Section.MaterialHash = Strip.MaterialHash;
                     Section.StripIndex = StripIndex;
                     Section.Positions = MoveTemp(CapturedPositions);
@@ -1243,6 +1360,14 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 #endif
     for (const UKyaLevelBank* Sector : ClusterBanks)
     {
+        if (CheckRebuildCancel())
+        {
+            RestorePresentation();
+            RebuildStatus = TEXT("Cancelled");
+            UE_LOG(LogTemp, Display, TEXT("KYA_REBUILD_CANCELLED bank=%s sector=%s"), *GetNameSafe(Bank),
+                *GetNameSafe(Sector));
+            return;
+        }
         if (!Sector) continue;
         const FString DiagnosticName = Sector == Bank ? TEXT("<common>") : Sector->GetName();
         if (bLogSectorDiagnostics)
@@ -1653,11 +1778,31 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         if (bLogSectorDiagnostics) UE_LOG(LogTemp, Display, TEXT("KYA_SECTOR_END name=%s"), *DiagnosticName);
     }
+    if (CheckRebuildCancel())
+    {
+        RestorePresentation();
+        RebuildStatus = TEXT("Cancelled");
+        UE_LOG(LogTemp, Display, TEXT("KYA_REBUILD_CANCELLED bank=%s: keeping the previous geometry"), *GetNameSafe(Bank));
+        return;
+    }
+    PreviewTextures = MoveTemp(BuiltPreviewTextures);
+    BackgroundFlares = MoveTemp(BuiltBackgroundFlares);
+    FlareMaterials = MoveTemp(BuiltFlareMaterials);
+    FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
+    for (const TObjectPtr<UMaterialInstanceDynamic>& Material : FlareMaterials)
+        if (Material) FlarePostProcess->Settings.AddBlendable(Material, 1.0f);
+    Mesh->ClearAllMeshSections();
     Mesh->CreateMeshSection(0, Positions, Triangles, TArray<FVector>(), UVs,
         Colors, TArray<FProcMeshTangent>(), false);
+    if (GeneratedUntexturedMaterial) Mesh->SetMaterial(0, GeneratedUntexturedMaterial);
     for (const TPair<int32, FSectionData>& Pair : TexturedSections)
+    {
         Mesh->CreateMeshSection(Pair.Key, Pair.Value.Positions, Pair.Value.Triangles, TArray<FVector>(),
             Pair.Value.UVs, Pair.Value.Colors, TArray<FProcMeshTangent>(), false);
+        // Materials were assigned while the sections were only being described; after
+        // the clear/publish they must be applied explicitly.
+        if (Pair.Value.Material) Mesh->SetMaterial(Pair.Key, Pair.Value.Material);
+    }
     for (const FBackgroundRange& Range : BackgroundRanges)
         if (!BackgroundBasePositions.Contains(Range.Section))
         {
@@ -1675,6 +1820,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         UE_LOG(LogTemp, Display, TEXT("KYA_BACKGROUND_FOLLOW flags=%lld ranges=%d sections=%d"),
             Bank->SceneEnvironment.BackgroundFlags, BackgroundRanges.Num(), BackgroundBasePositions.Num());
     ++BuildCount;
+    RebuildStatus = TEXT("Completed");
 #if WITH_EDITOR
     RefreshActorHandles();
     RefreshSpatialHandles();
@@ -1686,6 +1832,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 
 void AKyaLevelPreview::Destroyed()
 {
+    // Stop any in-flight decode and wait for every worker before pooling its event.
+    if (DecodeCancelToken.IsValid()) DecodeCancelToken->Increment();
+    DrainAsyncDecodeEvents(true);
     UnbindBankNotifications();
     for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
@@ -1758,8 +1907,108 @@ void AKyaLevelPreview::ApplyLevelSet()
     }
 }
 
-UKyaLevelSettings* AKyaLevelPreview::GetOrCreateLevelSettings()
+void AKyaLevelPreview::RequestCancelRebuild()
 {
+    bCancelRebuildRequested = true;
+}
+
+#if WITH_EDITOR
+void AKyaLevelPreview::WaitForAsyncDecode()
+{
+    if (DecodeCompletionEvent) DecodeCompletionEvent->Wait();
+}
+#endif
+
+void AKyaLevelPreview::DrainAsyncDecodeEvents(bool bWait)
+{
+    for (int32 Index = DecodeEventHistory.Num() - 1; Index >= 0; --Index)
+    {
+        FEvent* Event = DecodeEventHistory[Index];
+        if (!Event)
+        {
+            DecodeEventHistory.RemoveAt(Index);
+            continue;
+        }
+        // Only recycle an event once its worker finished triggering it; waiting on a
+        // live event would block the editor (and the raw event must not be pooled while
+        // a worker may still touch it).
+        if (!bWait && !Event->Wait(0)) continue;
+        if (bWait) Event->Wait();
+        FPlatformProcess::ReturnSynchEventToPool(Event);
+        DecodeEventHistory.RemoveAt(Index);
+    }
+    if (DecodeEventHistory.IsEmpty()) DecodeCompletionEvent = nullptr;
+}
+
+void AKyaLevelPreview::StartAsyncActorDecode()
+{
+#if WITH_EDITOR
+    if (!bAsyncDecodeMeshes || !Bank) return;
+    {
+        FScopeLock Lock(&GActorDecodeLock);
+        if (const TSharedPtr<FKyaActorDecodeCache>* Found = GActorDecodeCache.Find(Bank))
+            if (Found->IsValid() && (*Found)->Generation == Bank->EditGeneration) return;
+    }
+    struct FRequest
+    {
+        const UKyaLevelBank* Bank = nullptr;
+        int32 Generation = 0;
+        int32 Serial = 0;
+        TMap<int32, TArray<uint8>> MeshData;
+    };
+    TSharedPtr<FRequest, ESPMode::ThreadSafe> Request = MakeShared<FRequest, ESPMode::ThreadSafe>();
+    Request->Bank = Bank;
+    Request->Generation = Bank->EditGeneration;
+    // A bank-global request id is comparable across every preview of the same bank;
+    // per-preview serials could never supersede each other's cache entries.
+    Request->Serial = GActorDecodeRequestId.Increment();
+    int32 MeshOrdinal = 0;
+    for (const FKyaBankEntry& Entry : Bank->Entries)
+    {
+        if (Entry.Type != 4 || Entry.Subtype != 1) continue;
+        const int32 Ordinal = MeshOrdinal++;
+        if (Entry.Offset < 0 || Entry.Size <= 0 || Entry.Offset > Bank->BankBytes.Num() ||
+            Entry.Size > Bank->BankBytes.Num() - Entry.Offset) continue;
+        Request->MeshData.Add(Ordinal,
+            TArray<uint8>(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)));
+    }
+    // Cancel any older worker cooperatively instead of blocking the editor on it.
+    if (DecodeCancelToken.IsValid()) DecodeCancelToken->Increment();
+    TSharedPtr<FThreadSafeCounter> CancelToken = MakeShared<FThreadSafeCounter>();
+    DecodeCancelToken = CancelToken;
+    // Recycle only completed events; a running worker may still trigger its event.
+    DrainAsyncDecodeEvents(false);
+    FEvent* Completion = FPlatformProcess::GetSynchEventFromPool(true);
+    DecodeEventHistory.Add(Completion);
+    DecodeCompletionEvent = Completion;
+    Async(EAsyncExecution::ThreadPool, [Request, Completion, CancelToken]()
+    {
+        TSharedPtr<FKyaActorDecodeCache> Result = MakeShared<FKyaActorDecodeCache>();
+        Result->Bank = const_cast<UKyaLevelBank*>(Request->Bank);
+        Result->Generation = Request->Generation;
+        Result->Serial = Request->Serial;
+        for (const TPair<int32, TArray<uint8>>& Pair : Request->MeshData)
+        {
+            if (CancelToken->GetValue() != 0) break;
+            TArray<FKyaG3DDecodedStrip> Strips;
+            if (KyaG3D::DecodeHierarchyStrips(MakeArrayView(Pair.Value.GetData(), Pair.Value.Num()), Strips))
+                Result->StripsByMesh.Add(Pair.Key, MoveTemp(Strips));
+        }
+        if (CancelToken->GetValue() == 0)
+        {
+            FScopeLock Lock(&GActorDecodeLock);
+            TSharedPtr<FKyaActorDecodeCache>& Slot = GActorDecodeCache.FindOrAdd(Request->Bank);
+            // Publish only when this request is newer than the cached one; an obsolete
+            // completion (newer request already stored) is discarded.
+            if (!Slot.IsValid() || Slot->Serial < Result->Serial) Slot = Result;
+        }
+        Completion->Trigger();
+    });
+    AsyncDecodeCompletions.Increment();
+#endif
+}
+
+UKyaLevelSettings* AKyaLevelPreview::GetOrCreateLevelSettings(){
     const bool bBankChanged = LevelSettings && LevelSettings->Bank != Bank;
     if (!LevelSettings)
     {

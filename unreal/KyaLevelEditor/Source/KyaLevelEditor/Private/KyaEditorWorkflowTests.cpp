@@ -1348,6 +1348,76 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaAsyncDecodeTest, "Kya.Editor.AsyncDecode",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaAsyncDecodeTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the async decode test."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read async bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import async bank"), Bank)) return false;
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create async world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn async preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bShowRebuildProgress = false;
+    Preview->bAsyncDecodeMeshes = true;
+    Preview->bSpawnActorHandles = true;
+    Preview->bShowActorMeshesOnHandles = true;
+
+    Preview->OnConstruction(FTransform::Identity);
+    Preview->WaitForAsyncDecode();
+    TestTrue(TEXT("Async actor decode completes"), Preview->GetAsyncDecodeCompletionCount() > 0);
+
+    // Clearing the per-actor capture cache and rebuilding again must reuse the
+    // background-decoded strips instead of synchronously decoding them.
+    Preview->bSpawnActorHandles = false;
+    Preview->OnConstruction(FTransform::Identity);
+    Preview->bSpawnActorHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+    TestTrue(TEXT("Rebuild uses the background decode cache"), Preview->GetCachedActorDecodeCount() > 0);
+
+    // A source revision change makes the old background result stale.
+    const int32 StaleBefore = Preview->GetStaleAsyncDecodeCount();
+    Bank->BumpEditGeneration();
+    Preview->OnConstruction(FTransform::Identity);
+    Preview->WaitForAsyncDecode();
+    TestTrue(TEXT("Stale background decode is discarded"),
+        Preview->GetStaleAsyncDecodeCount() > StaleBefore);
+
+    // Cancellation aborts the rebuild at a phase boundary and keeps the displayed
+    // geometry instead of publishing a partially built mesh.
+    Preview->RequestCancelRebuild();
+    const int64 BuildsBeforeCancel = Preview->BuildCount;
+    const int32 SectionsBeforeCancel = Preview->Mesh->GetNumSections();
+    Preview->OnConstruction(FTransform::Identity);
+    TestEqual(TEXT("Cancelled rebuild reports its status"), Preview->RebuildStatus, FString(TEXT("Cancelled")));
+    TestEqual(TEXT("Cancelled rebuild does not complete"), Preview->BuildCount, BuildsBeforeCancel);
+    TestEqual(TEXT("Cancelled rebuild preserves the previous geometry"),
+        Preview->Mesh->GetNumSections(), SectionsBeforeCancel);
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelSettingsTest, "Kya.Editor.LevelSettings",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

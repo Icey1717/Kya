@@ -1,6 +1,8 @@
 #include "KyaLevelBankFactory.h"
 #include "KyaActorCatalog.h"
 #include "KyaLevelBank.h"
+#include "Misc/ScopedSlowTask.h"
+#include "Misc/App.h"
 #include "KyaCameraStream.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Misc/FeedbackContext.h"
@@ -235,6 +237,22 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
     Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
     if (!CurrentFilename.IsEmpty()) Bank->AssetImportData->Update(CurrentFilename);
     Bank->EntryCount = int32(Count);
+    TUniquePtr<FScopedSlowTask> ImportProgress;
+    if (!FApp::IsUnattended())
+    {
+        ImportProgress = MakeUnique<FScopedSlowTask>(100.0f,
+            NSLOCTEXT("KyaLevelEditor", "KyaImport", "Importing Kya bank"));
+        ImportProgress->MakeDialog(true);
+    }
+    const auto ImportCancelled = [&ImportProgress, Warn]()
+    {
+        if (!ImportProgress) return false;
+        ImportProgress->EnterProgressFrame();
+        if (!ImportProgress->ShouldCancel()) return false;
+        if (Warn) Warn->Logf(ELogVerbosity::Warning, TEXT("Kya bank import was cancelled."));
+        return true;
+    };
+    if (ImportCancelled()) return nullptr;
     Bank->Entries = MoveTemp(Entries);
     auto FindTypedEntry = [&Bank](int32 TypeId, int32 Ordinal) -> int32 {
         if (Ordinal < 0) return INDEX_NONE;
@@ -2591,6 +2609,7 @@ if (Off.bTrajectory)
         }
     }
     Bank->BankBytes.Append(Buffer, int32(Size));
+    if (ImportCancelled()) return nullptr;
     Buffer = BufferEnd;
     const uint8* LightBuffer = Bank->BankBytes.GetData();
     // Light archive: CLightManager::Level_AddAll reads a count, a table of offsets,
@@ -2653,6 +2672,7 @@ if (Off.bTrajectory)
     }
     // Typed baseline for reset-to-imported and change detection; editor metadata
     // only, never written back to game banks.
+    if (ImportCancelled()) return nullptr;
     CaptureKyaImportedBaseline(*Bank);
     return Bank;
 }

@@ -2,11 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "HAL/Event.h"
+#include "HAL/ThreadSafeCounter.h"
+#include "HAL/CriticalSection.h"
 #include "KyaLevelPreview.generated.h"
 
 class UKyaLevelBank;
 class UKyaLevelSet;
 class UKyaLevelSettings;
+struct FKyaActorDecodeCache;
 class UProceduralMeshComponent;
 class UMaterialInterface;
 class UTexture2D;
@@ -106,6 +110,31 @@ public:
     /** Log per-sector entry, decoding, material and world-space bounds diagnostics on construction. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
     bool bLogSectorDiagnostics = false;
+
+    /** Decode actor mesh strips on a worker thread for the next rebuild (stale results are discarded). */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
+    bool bAsyncDecodeMeshes = true;
+
+    /** Show a cancellable progress dialog while decoding/rebuilding the preview. */
+    UPROPERTY(EditAnywhere, Category="Kya|Diagnostics")
+    bool bShowRebuildProgress = true;
+
+    /** Status of the last build ("Completed", "Cancelled", ...). */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Diagnostics")
+    FString RebuildStatus;
+
+    /** Cancels the in-progress rebuild at the next phase boundary. */
+    UFUNCTION(BlueprintCallable, Category="Kya|Diagnostics")
+    void RequestCancelRebuild();
+
+#if WITH_EDITOR
+    /** Blocks until the current async mesh decode finishes (tests/tooling). */
+    void WaitForAsyncDecode();
+    int32 GetAsyncDecodeCompletionCount() const { return AsyncDecodeCompletions.GetValue(); }
+    int32 GetStaleAsyncDecodeCount() const { return StaleDecodeDiscards.GetValue(); }
+    int32 GetCachedActorDecodeCount() const { return CachedActorDecodes.GetValue(); }
+    int32 GetSynchronousActorDecodeCount() const { return SynchronousActorDecodes.GetValue(); }
+#endif
 
     /** Optional override with a Texture2D parameter named KyaTexture. */
     UPROPERTY(EditAnywhere, Category="Kya|Diagnostics|Materials")
@@ -526,6 +555,20 @@ private:
     /** Actor positions used for the cached captured lighting. */
     TMap<int32, FVector> ActorCapturedPositions;
     bool bHasGroundLightData = false;
+    /** Data-only actor strip cache filled by a worker thread, keyed by bank revision. */
+    TSharedPtr<struct FKyaActorDecodeCache, ESPMode::ThreadSafe> ActorDecodeCache;
+    mutable FCriticalSection ActorDecodeCacheLock;
+    TSharedPtr<FThreadSafeCounter> DecodeCancelToken;
+    FEvent* DecodeCompletionEvent = nullptr;
+    TArray<FEvent*> DecodeEventHistory;
+    FThreadSafeCounter AsyncDecodeCompletions;
+    FThreadSafeCounter StaleDecodeDiscards;
+    FThreadSafeCounter CachedActorDecodes;
+    FThreadSafeCounter SynchronousActorDecodes;
+    bool bCancelRebuildRequested = false;
+    void StartAsyncActorDecode();
+    /** Recycle decode events; only waits when bWait (shutdown), never in the editor. */
+    void DrainAsyncDecodeEvents(bool bWait);
     /** Level-set sector ID mapping (descriptor-authoritative), bank to ID. */
     TMap<int32, TObjectPtr<UKyaLevelBank>> LevelSetSectors;
     /** Editor only: bank notification binding so asset edits and undo refresh the preview. */
