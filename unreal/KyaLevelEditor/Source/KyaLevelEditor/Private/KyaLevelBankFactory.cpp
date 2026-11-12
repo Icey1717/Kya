@@ -1,4 +1,5 @@
 #include "KyaLevelBankFactory.h"
+#include "KyaActorCatalog.h"
 #include "KyaLevelBank.h"
 #include "KyaCameraStream.h"
 #include "EditorFramework/AssetImportData.h"
@@ -2650,5 +2651,8 @@ if (Off.bTrajectory)
         Bank->bHasLights = !Bank->Lights.IsEmpty();
         break;
     }
+    // Typed baseline for reset-to-imported and change detection; editor metadata
+    // only, never written back to game banks.
+    CaptureKyaImportedBaseline(*Bank);
     return Bank;
 }

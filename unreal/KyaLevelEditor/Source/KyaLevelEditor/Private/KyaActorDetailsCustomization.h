@@ -49,5 +49,9 @@ private:
     bool BuildPatchForProperty(FName PropertyName, struct FKyaActorEditPatch& OutPatch);
     /** Apply a modified copy of the placement through the edit service. */
     void ApplyPlacementCopy(const struct FKyaActorPlacement& Modified, FName PropertyName);
-    FKyaActorPlacement* ScopeRecord() const;
+    /** Apply an already prepared patch (reset, copy, bulk) through the service. */
+    bool ApplyPreparedPatch(const struct FKyaActorEditPatch& Patch, const FString& Context);
+    /** Multi-selection panel: shared-field bulk editing and compatibility handling. */
+    void AddMultiEditSection(IDetailLayoutBuilder& DetailBuilder, const TArray<AKyaActorHandle*>& Handles);
+    struct FKyaActorPlacement* ScopeRecord() const;
 };

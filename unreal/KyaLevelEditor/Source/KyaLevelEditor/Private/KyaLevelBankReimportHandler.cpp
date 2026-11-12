@@ -26,6 +26,10 @@ void CopyTypedData(UKyaLevelBank& Target, const UKyaLevelBank& Source)
     Target.BackgroundMeshEntry = Source.BackgroundMeshEntry;
     Target.BackgroundTextureEntry = Source.BackgroundTextureEntry;
     Target.BankBytes = Source.BankBytes;
+    Target.bHasImportedBaseline = Source.bHasImportedBaseline;
+    Target.ImportedActors = Source.ImportedActors;
+    Target.ImportedWaypoints = Source.ImportedWaypoints;
+    Target.ImportedPaths = Source.ImportedPaths;
 }
 }
 

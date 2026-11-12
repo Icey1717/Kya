@@ -1,6 +1,8 @@
 #include "KyaActorCatalog.h"
 
+#include "KyaActorEditService.h"
 #include "KyaLevelBank.h"
+#include "UObject/UnrealType.h"
 
 namespace
 {
@@ -301,6 +303,46 @@ int64 GetKyaNumericField(const FKyaActorPlacement& Placement, FName PropertyName
     return 0;
 }
 
+bool GetKyaVectorField(const FKyaActorPlacement& Placement, FName PropertyName, FVector& Out)
+{
+    const FStructProperty* Property = CastField<FStructProperty>(
+        FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName));
+    if (!Property || Property->Struct != TBaseStructure<FVector>::Get()) return false;
+    Out = *Property->ContainerPtrToValuePtr<FVector>(&Placement);
+    return true;
+}
+
+bool SetKyaVectorField(FKyaActorPlacement& Placement, FName PropertyName, const FVector& Value)
+{
+    const FStructProperty* Property = CastField<FStructProperty>(
+        FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName));
+    if (!Property || Property->Struct != TBaseStructure<FVector>::Get()) return false;
+    *Property->ContainerPtrToValuePtr<FVector>(&Placement) = Value;
+    return true;
+}
+
+bool GetKyaFloatField(const FKyaActorPlacement& Placement, FName PropertyName, float& Out)
+{
+    FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
+    if (const FFloatProperty* Float = CastField<FFloatProperty>(Property))
+    {
+        Out = Float->GetPropertyValue_InContainer(&Placement);
+        return true;
+    }
+    return false;
+}
+
+bool SetKyaFloatField(FKyaActorPlacement& Placement, FName PropertyName, float Value)
+{
+    FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
+    if (const FFloatProperty* Float = CastField<FFloatProperty>(Property))
+    {
+        Float->SetPropertyValue_InContainer(&Placement, Value);
+        return true;
+    }
+    return false;
+}
+
 TArray<FKyaReferenceField> GetKyaReferenceFields()
 {
     TArray<FKyaReferenceField> Fields;
@@ -309,6 +351,185 @@ TArray<FKyaReferenceField> GetKyaReferenceFields()
         Fields.Add({FName(Row.Name), Row.Kind, Row.ClassId});
     return Fields;
 }
+
+bool HasKyaImportedBaseline(const UKyaLevelBank& Bank)
+{
+    return Bank.bHasImportedBaseline && Bank.ImportedActors.Num() == Bank.SceneEnvironment.Actors.Num();
+}
+
+void CaptureKyaImportedBaseline(UKyaLevelBank& Bank)
+{
+    Bank.ImportedActors = Bank.SceneEnvironment.Actors;
+    Bank.ImportedWaypoints = Bank.SceneEnvironment.Waypoints;
+    Bank.ImportedPaths = Bank.SceneEnvironment.Paths;
+    Bank.bHasImportedBaseline = true;
+}
+
+bool GetKyaImportedActor(const UKyaLevelBank& Bank, int32 Index, FKyaActorPlacement& Out)
+{
+    if (!HasKyaImportedBaseline(Bank) || !Bank.ImportedActors.IsValidIndex(Index)) return false;
+    Out = Bank.ImportedActors[Index];
+    return true;
+}
+
+bool KyaActorDiffersFromImported(const UKyaLevelBank& Bank, int32 Index)
+{
+    FKyaActorPlacement Imported;
+    if (!GetKyaImportedActor(Bank, Index, Imported)) return false;
+    if (!Bank.SceneEnvironment.Actors.IsValidIndex(Index)) return false;
+    UScriptStruct* Struct = FKyaActorPlacement::StaticStruct();
+    return !Struct->CompareScriptStruct(&Imported, &Bank.SceneEnvironment.Actors[Index], PPF_None);
+}
+
+bool BuildKyaActorResetPatch(const UKyaLevelBank& Bank, int32 Index, FKyaActorEditPatch& OutPatch)
+{
+    FKyaActorPlacement Imported;
+    if (!GetKyaImportedActor(Bank, Index, Imported)) return false;
+    OutPatch = FKyaActorEditPatch();
+    OutPatch.Custom = [Imported](FKyaActorPlacement& Record, FString& OutError) -> bool
+    {
+        Record = Imported;
+        return true;
+    };
+    return true;
+}
+
+bool BuildKyaActorFieldResetPatch(const UKyaLevelBank& Bank, int32 Index, FName PropertyName,
+    FKyaActorEditPatch& OutPatch)
+{
+    FKyaActorPlacement Imported;
+    if (!GetKyaImportedActor(Bank, Index, Imported)) return false;
+    return KyaMakePlacementPropertyPatch(Imported, PropertyName, OutPatch);
+}
+
+namespace
+{
+int32 Align4(int32 Value) { return (Value + 3) & ~3; }
+
+bool LayoutCompatible(FProperty* Property, const void* SourceValue, const void* DestValue, FString& OutError)
+{
+    if (const FStrProperty* String = CastField<FStrProperty>(Property))
+    {
+        const FString& SourceText = String->GetPropertyValue(SourceValue);
+        const FString& DestText = String->GetPropertyValue(DestValue);
+        if (Align4(SourceText.Len() + 1) != Align4(DestText.Len() + 1))
+        {
+            OutError = FString::Printf(
+                TEXT("%s changes the serialized string slot (%d -> %d aligned bytes)."),
+                *Property->GetDisplayNameText().ToString(), Align4(DestText.Len() + 1),
+                Align4(SourceText.Len() + 1));
+            return false;
+        }
+        return true;
+    }
+    if (const FArrayProperty* Array = CastField<FArrayProperty>(Property))
+    {
+        FScriptArrayHelper SourceHelper(Array, SourceValue);
+        FScriptArrayHelper DestHelper(Array, DestValue);
+        if (SourceHelper.Num() != DestHelper.Num())
+        {
+            OutError = FString::Printf(TEXT("%s has %d source element(s) but the destination has %d; "
+                "array counts are fixed by the writer."), *Property->GetDisplayNameText().ToString(),
+                SourceHelper.Num(), DestHelper.Num());
+            return false;
+        }
+        for (int32 Index = 0; Index < SourceHelper.Num(); ++Index)
+            if (!LayoutCompatible(Array->Inner, SourceHelper.GetRawPtr(Index), DestHelper.GetRawPtr(Index), OutError))
+                return false;
+        return true;
+    }
+    if (const FStructProperty* Struct = CastField<FStructProperty>(Property))
+    {
+        for (TFieldIterator<FProperty> It(Struct->Struct); It; ++It)
+        {
+            const FString FieldName = It->GetName();
+            // Nested presence flags and the behaviour discriminator change the
+            // serialized layout/payload interpretation; they must match exactly.
+            if (FieldName.StartsWith(TEXT("bHas")))
+            {
+                if (const FBoolProperty* Bool = CastField<FBoolProperty>(*It))
+                {
+                    if (Bool->GetPropertyValue_InContainer(SourceValue) !=
+                        Bool->GetPropertyValue_InContainer(DestValue))
+                    {
+                        OutError = FString::Printf(TEXT("%s: nested presence flag %s differs between source and "
+                            "destination."), *Property->GetDisplayNameText().ToString(), *FieldName);
+                        return false;
+                    }
+                }
+            }
+            if (FieldName == TEXT("Id"))
+            {
+                const FIntProperty* Int = CastField<FIntProperty>(*It);
+                if (Int && Int->GetPropertyValue_InContainer(SourceValue) !=
+                    Int->GetPropertyValue_InContainer(DestValue))
+                {
+                    OutError = FString::Printf(TEXT("%s: record ids differ between source and destination, so the "
+                        "payload layouts are incompatible."), *Property->GetDisplayNameText().ToString());
+                    return false;
+                }
+            }
+            if (!LayoutCompatible(*It, It->ContainerPtrToValuePtr<void>(SourceValue),
+                It->ContainerPtrToValuePtr<void>(DestValue), OutError))
+                return false;
+        }
+    }
+    return true;
+}
+
+bool PresenceSignatureMatches(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest)
+{
+    for (TFieldIterator<FBoolProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+    {
+        if (!It->GetName().StartsWith(TEXT("bHas"))) continue;
+        if (It->GetPropertyValue_InContainer(&Source) != It->GetPropertyValue_InContainer(&Dest)) return false;
+    }
+    return true;
+}
+}
+
+bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest, FName PropertyName,
+    FString& OutError)
+{
+    FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(PropertyName);
+    if (!Property)
+    {
+        OutError = TEXT("The property is not part of the actor placement schema.");
+        return false;
+    }
+    const FKyaFieldCapability Capability = GetKyaActorFieldCapability(PropertyName);
+    if (Capability.Kind != EKyaFieldCapability::EditableExportable)
+    {
+        OutError = Capability.Reason;
+        return false;
+    }
+    // Class-specific fields are those gated by a presence flag in the schema. They
+    // may only be copied between actors of the same class with the same optional
+    // records; generic settings and generic arrays only need a layout match.
+    const FString* Condition = Property->FindMetaData(TEXT("EditCondition"));
+    const bool bBehaviours = PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours);
+    const bool bClassData = PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ClassData);
+    const bool bClassSpecific = (Condition && Condition->Contains(TEXT("bHas"))) || bBehaviours || bClassData;
+    if (bClassSpecific)
+    {
+        if (Source.ClassId != Dest.ClassId)
+        {
+            OutError = FString::Printf(TEXT("%s is a class-specific record; source class %lld differs from "
+                "destination class %lld."), *Property->GetDisplayNameText().ToString(), Source.ClassId,
+                Dest.ClassId);
+            return false;
+        }
+        if (!PresenceSignatureMatches(Source, Dest))
+        {
+            OutError = FString::Printf(TEXT("%s: the actors have different optional records, so their serialized "
+                "layout is incompatible."), *Property->GetDisplayNameText().ToString());
+            return false;
+        }
+    }
+    return LayoutCompatible(Property, Property->ContainerPtrToValuePtr<void>(&Source),
+        Property->ContainerPtrToValuePtr<void>(&Dest), OutError);
+}
+
 
 TArray<FKyaActorReferenceIssue> ValidateKyaActorReferences(const UKyaLevelBank& Bank,
     const FKyaActorPlacement& Placement){

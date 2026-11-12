@@ -228,8 +228,7 @@ remain on the actor for script compatibility but are hidden from Details. Refere
 pickers, named behaviour labels, mixed-value multi-editing and reset-to-imported
 actions are not implemented yet.
 
-The identity section shows the recovered game class name and numeric id (for
-example `Moving platform (13)`, `Unknown class 127`), with the recovered notes as a
+The identity section shows the recovered game class name and numeric id (forexample `Moving platform (13)`, `Unknown class 127`), with the recovered notes as a
 tooltip and a Browse button for the bank asset. Recovered class-specific behaviour
 names appear in the default-behaviour picker and in a behaviour summary; ids without
 a recovered name are labelled `Behaviour N (unknown)` instead of being guessed. The
@@ -242,6 +241,22 @@ references are rejected before the bank changes when they would not resolve. Fla
 widgets show understood bits (for example lighting bit 1 = ignore ground lighting)
 and always display the raw value; unknown bits are preserved exactly. Fixed-layout
 arrays and nested reference arrays still expose raw element ids only.
+
+Selecting several actor handles switches Details to the multi-edit panel. It reports
+the shared class and whether the selection is compatible (same class and the same
+optional records); class-specific fields are hidden for incompatible selections
+while shared fields stay editable. Shared Transform and actor settings rows can be
+applied to the whole selection, show `Mixed` when values differ, and each bulk edit
+is one undo step and one preview refresh per bank. Rejected values leave every
+record unchanged and report the failing record inline.
+
+Each bank also keeps a typed **imported baseline** captured by the bank factory (and
+refreshed on reimport); it is editor metadata and never exported. Details shows
+whether the selected actor still matches the imported bank and offers `Reset to
+imported` for the whole record, `Reset field` for one property, and `Copy` to copy a
+chosen field from another actor in the same bank. `Reset all to imported` restores a
+whole multi-selection in one transaction. Reset and copy preserve identity and
+fixed layout; the baseline is separate from Unreal class defaults.
 
 Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and

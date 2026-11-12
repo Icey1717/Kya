@@ -7,6 +7,7 @@
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
@@ -146,23 +147,15 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
         BankEditedHandle.Reset();
     }
 
-    // The full placement surface is only shown for a single actor; multi-selection
-    // keeps the summary fields and avoids ambiguous mixed-value edits.
+    // The full placement surface is only shown for a single actor; multiple
+    // selections get the shared-field bulk editor.
     TArray<AKyaActorHandle*> Handles;
     for (const TWeakObjectPtr<UObject>& Object : Selected)
         if (AKyaActorHandle* Candidate = Cast<AKyaActorHandle>(Object.Get())) Handles.Add(Candidate);
     if (Handles.Num() != 1 || !Handles[0] || !Handles[0]->Bank ||
         !Handles[0]->Bank->SceneEnvironment.Actors.IsValidIndex(Handles[0]->ActorIndex))
     {
-        if (Handles.Num() > 1)
-        {
-            DetailBuilder.EditCategory("Kya|Bank record", FText::FromString(TEXT("Bank record")))
-                .AddCustomRow(FText::FromString(TEXT("Selection")))
-                .ValueContent()
-                [SNew(STextBlock)
-                    .Text(FText::FromString(TEXT("Select one actor to edit its full bank record.")))
-                    .ToolTipText(FText::FromString(TEXT("Multi-edit of class-specific fields is not implemented yet.")))];
-        }
+        if (Handles.Num() > 1) AddMultiEditSection(DetailBuilder, Handles);
         return;
     }
 
@@ -584,6 +577,167 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
     AddFlagRow(TEXT("Actor flags"), Record.ActorFlags, {},
         GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags),
         TEXT("No actor-flag bits are recovered; the raw value is preserved exactly."));
+
+    // --- Imported baseline: reset and property copy --------------------------------
+    IDetailCategoryBuilder& Baseline = DetailBuilder.EditCategory("Kya|Baseline",
+        FText::FromString(TEXT("Kya Baseline")), ECategoryPriority::Default);
+
+    Baseline.AddCustomRow(FText::FromString(TEXT("Imported state")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Imported state")))
+        ]
+        .ValueContent()
+        [
+            SNew(STextBlock)
+            .Text(FText::FromString(KyaActorDiffersFromImported(*Bank, Actor->ActorIndex)
+                ? TEXT("Modified from the imported bank") : TEXT("Matches the imported bank")))
+            .ToolTipText(FText::FromString(TEXT("Compares the current typed record with the baseline captured at import; "
+                "the baseline is separate from Unreal class defaults.")))
+        ];
+
+    Baseline.AddCustomRow(FText::FromString(TEXT("Reset actor")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Reset actor")))
+        ]
+        .ValueContent()
+        [
+            SNew(SButton)
+            .Text(FText::FromString(TEXT("Reset to imported")))
+            .ToolTipText(FText::FromString(TEXT("Restore every supported field of this actor from the imported baseline.")))
+            .OnClicked_Lambda([this, Actor]()
+            {
+                FKyaActorEditPatch Patch;
+                if (!BuildKyaActorResetPatch(*Actor->Bank, Actor->ActorIndex, Patch))
+                {
+                    InlineError = TEXT("No imported baseline is available for this bank; reimport the source bank.");
+                    return FReply::Handled();
+                }
+                ApplyPreparedPatch(Patch, TEXT("Reset actor"));
+                return FReply::Handled();
+            })
+        ];
+
+    // Field list shared by reset-field and copy-field actions.
+    TSharedPtr<TArray<FName>> FieldNames = MakeShared<TArray<FName>>();
+    TArray<TSharedPtr<FKyaPickerOption>> FieldOptions;
+    for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+    {
+        const FKyaFieldCapability Capability = GetKyaActorFieldCapability(It->GetFName());
+        if (Capability.Kind != EKyaFieldCapability::EditableExportable &&
+            Capability.Kind != EKyaFieldCapability::EditablePresentationOnly) continue;
+        FieldOptions.Add(MakePickerOption(FieldNames->Num(), It->GetDisplayNameText().ToString(),
+            Capability.Reason));
+        FieldNames->Add(It->GetFName());
+    }
+    TSharedPtr<int32> SelectedField = MakeShared<int32>(0);
+    TSharedPtr<int32> SourceIndex = MakeShared<int32>(Actor->ActorIndex);
+
+    Baseline.AddCustomRow(FText::FromString(TEXT("Reset field")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Reset field")))
+        ]
+        .ValueContent().MinDesiredWidth(420.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot().FillWidth(1.0f)
+            [
+                SNew(SKyaReferencePicker)
+                .Options(FieldOptions)
+                .CurrentValue(0)
+                .ResolvedLabel(FText::FromString(TEXT("Choose a field to restore from the imported baseline.")))
+                .OnValuePicked(FOnKyaPickerValuePicked::CreateLambda([SelectedField](int32 Value)
+                {
+                    *SelectedField = Value;
+                }))
+            ]
+            + SHorizontalBox::Slot().AutoWidth().Padding(4.0f, 0.0f)
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Reset field")))
+                .ToolTipText(FText::FromString(TEXT("Restore only this property from the imported baseline.")))
+                .OnClicked_Lambda([this, Actor, FieldNames, SelectedField]()
+                {
+                    if (!FieldNames->IsValidIndex(*SelectedField)) return FReply::Handled();
+                    const FName PropertyName = (*FieldNames)[*SelectedField];
+                    FKyaActorEditPatch Patch;
+                    if (!BuildKyaActorFieldResetPatch(*Actor->Bank, Actor->ActorIndex, PropertyName, Patch))
+                    {
+                        InlineError = FString::Printf(TEXT("%s: no imported value is available."),
+                            *PropertyName.ToString());
+                        return FReply::Handled();
+                    }
+                    ApplyPreparedPatch(Patch, FString::Printf(TEXT("Reset %s"), *PropertyName.ToString()));
+                    return FReply::Handled();
+                })
+            ]
+        ];
+
+    TArray<TSharedPtr<FKyaPickerOption>> CopySourceOptions = MakeIndexOptions(EKyaReferenceKind::Actor, *Bank);
+    Baseline.AddCustomRow(FText::FromString(TEXT("Copy field")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Copy field")))
+        ]
+        .ValueContent().MinDesiredWidth(420.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot().FillWidth(1.0f)
+            [
+                SNew(SKyaReferencePicker)
+                .Options(CopySourceOptions)
+                .CurrentValue(Actor->ActorIndex)
+                .ResolvedLabel(FText::FromString(TEXT("Source actor in this bank.")))
+                .OnValuePicked(FOnKyaPickerValuePicked::CreateLambda([SourceIndex](int32 Value)
+                {
+                    *SourceIndex = Value;
+                }))
+            ]
+            + SHorizontalBox::Slot().FillWidth(1.0f).Padding(4.0f, 0.0f)
+            [
+                SNew(SKyaReferencePicker)
+                .Options(FieldOptions)
+                .CurrentValue(0)
+                .ResolvedLabel(FText::FromString(TEXT("Field to copy from the source actor.")))
+                .OnValuePicked(FOnKyaPickerValuePicked::CreateLambda([SelectedField](int32 Value)
+                {
+                    *SelectedField = Value;
+                }))
+            ]
+            + SHorizontalBox::Slot().AutoWidth()
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Copy")))
+                .ToolTipText(FText::FromString(TEXT("Copy the chosen field from the source actor; identity and layout are preserved.")))
+                .OnClicked_Lambda([this, Actor, FieldNames, SelectedField, SourceIndex]()
+                {
+                    UKyaLevelBank* EditedBank = Actor->Bank;
+                    if (!EditedBank || !FieldNames->IsValidIndex(*SelectedField) ||
+                        !EditedBank->SceneEnvironment.Actors.IsValidIndex(*SourceIndex))
+                        return FReply::Handled();
+                    const FName PropertyName = (*FieldNames)[*SelectedField];
+                    const FKyaActorPlacement& SourceRecord = EditedBank->SceneEnvironment.Actors[*SourceIndex];
+                    const FKyaActorPlacement& DestRecord = EditedBank->SceneEnvironment.Actors[Actor->ActorIndex];
+                    FString CompatError;
+                    if (!CanCopyKyaActorField(SourceRecord, DestRecord, PropertyName, CompatError))
+                    {
+                        InlineError = FString::Printf(TEXT("Copy %s: %s"), *PropertyName.ToString(), *CompatError);
+                        return FReply::Handled();
+                    }
+                    FKyaActorEditPatch Patch;
+                    FString Error;
+                    if (!KyaMakePlacementPropertyPatch(SourceRecord, PropertyName, Patch, &Error))
+                    {
+                        InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+                        return FReply::Handled();
+                    }
+                    ApplyPreparedPatch(Patch, FString::Printf(TEXT("Copy %s"), *PropertyName.ToString()));
+                    return FReply::Handled();
+                })
+            ]
+        ];
 }
 
 void FKyaActorDetailsCustomization::ApplyPlacementCopy(const FKyaActorPlacement& Modified, FName PropertyName)
@@ -621,6 +775,402 @@ void FKyaActorDetailsCustomization::ApplyPlacementCopy(const FKyaActorPlacement&
     }
     InlineError.Reset();
     if (FKyaActorPlacement* Scope = ScopeRecord()) *Scope = Modified;
+}
+
+bool FKyaActorDetailsCustomization::ApplyPreparedPatch(const FKyaActorEditPatch& Patch, const FString& Context)
+{
+    AKyaActorHandle* Actor = Handle.Get();
+    if (!Actor || !Actor->Bank || !Actor->Bank->SceneEnvironment.Actors.IsValidIndex(Actor->ActorIndex))
+        return false;
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    FString Error;
+    TGuardValue<bool> Guard(bApplying, true);
+    bool bApplied = false;
+    if (GEditor && !GEditor->IsTransactionActive())
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaActorBaselineEdit", "Edit Kya Actor Baseline"));
+        bApplied = Service.Apply(Service.MakeKey(Actor->Bank, Actor->ActorIndex), Patch, EKyaEditNotify::Notify, &Error);
+    }
+    else
+    {
+        bApplied = Service.Apply(Service.MakeKey(Actor->Bank, Actor->ActorIndex), Patch, EKyaEditNotify::Notify, &Error);
+    }
+    if (!bApplied)
+    {
+        InlineError = FString::Printf(TEXT("%s: %s"), *Context, *Error);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_BASELINE_WRITE_FAILED bank=%s context=%s reason=%s"),
+            *GetNameSafe(Actor->Bank), *Context, *Error);
+        RefreshScopeFromBank();
+        return false;
+    }
+    InlineError.Reset();
+    RefreshScopeFromBank();
+    return true;
+}
+
+void FKyaActorDetailsCustomization::AddMultiEditSection(IDetailLayoutBuilder& DetailBuilder,
+    const TArray<AKyaActorHandle*>& Handles)
+{
+    TArray<AKyaActorHandle*> Usable;
+    for (AKyaActorHandle* Candidate : Handles)
+        if (Candidate && Candidate->Bank && Candidate->Bank->SceneEnvironment.Actors.IsValidIndex(Candidate->ActorIndex))
+            Usable.Add(Candidate);
+    if (Usable.IsEmpty()) return;
+
+    IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Kya|Multi-edit",
+        FText::FromString(TEXT("Kya Multi-edit")), ECategoryPriority::Important);
+
+    const FKyaActorPlacement& First = Usable[0]->Bank->SceneEnvironment.Actors[Usable[0]->ActorIndex];
+    const int64 ClassId = First.ClassId;
+    bool bSameClass = true;
+    for (int32 Index = 1; Index < Usable.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Other = Usable[Index]->Bank->SceneEnvironment.Actors[Usable[Index]->ActorIndex];
+        if (Other.ClassId != ClassId) bSameClass = false;
+    }
+    // Optional/class-specific records must match too, otherwise a class-specific field
+    // would be applied to an incompatible selection.
+    const auto PresenceSignature = [](const FKyaActorPlacement& Placement)
+    {
+        TArray<FString> Parts;
+        for (TFieldIterator<FBoolProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+        {
+            if (!It->GetName().StartsWith(TEXT("bHas"))) continue;
+            Parts.Add(FString::Printf(TEXT("%s=%d"), *It->GetName(),
+                It->GetPropertyValue_InContainer(&Placement) ? 1 : 0));
+        }
+        return FString::Join(Parts, TEXT(","));
+    };
+    const FString FirstSignature = PresenceSignature(First);
+    bool bCompatible = bSameClass;
+    for (int32 Index = 1; Index < Usable.Num(); ++Index)
+    {
+        const FKyaActorPlacement& Other = Usable[Index]->Bank->SceneEnvironment.Actors[Usable[Index]->ActorIndex];
+        if (PresenceSignature(Other) != FirstSignature) bCompatible = false;
+    }
+
+    TArray<FKyaActorRecordKey> Keys;
+    for (AKyaActorHandle* Candidate : Usable)
+        Keys.Add(FKyaLevelEditService::Get().MakeKey(Candidate->Bank, Candidate->ActorIndex));
+    TWeakObjectPtr<UKyaLevelBank> WeakFirstBank = Usable[0]->Bank;
+
+    Category.AddCustomRow(FText::FromString(TEXT("Selection")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Selection")))
+        ]
+        .ValueContent()
+        [
+            SNew(STextBlock)
+            .Text(FText::FromString(FString::Printf(TEXT("%d actors, class %s"), Usable.Num(),
+                *GetKyaActorClassLabel(ClassId))))
+            .AutoWrapText(true)
+            .ToolTipText(FText::FromString(bCompatible
+                ? TEXT("Shared fields can be edited for the whole selection; each edit is one undo step.")
+                : TEXT("Class-specific fields are hidden because the selection mixes classes or optional records. "
+                    "Shared transform and actor settings remain editable.")))
+        ];
+    if (!bCompatible)
+    {
+        Category.AddCustomRow(FText::FromString(TEXT("Compatibility")))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(TEXT("Class fields")))
+            ]
+            .ValueContent()
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString(TEXT("Hidden: the selection mixes classes or optional records. Shared fields only.")))
+                .ColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.75f, 0.2f, 1.0f)))
+                .AutoWrapText(true)
+            ];
+    }
+
+    // Bulk apply: one transaction, one validation pass, one refresh per bank.
+    const auto ApplyBulkField = [this, Keys](FName PropertyName, TFunction<void(FKyaActorPlacement&)> Mutate) -> bool
+    {
+        UKyaLevelBank* Bank = Keys[0].Bank.Get();
+        if (!Bank || !Bank->SceneEnvironment.Actors.IsValidIndex(Keys[0].RecordIndex)) return false;
+        FKyaActorPlacement Source = Bank->SceneEnvironment.Actors[Keys[0].RecordIndex];
+        Mutate(Source);
+        FKyaActorEditPatch Patch;
+        FString Error;
+        if (!KyaMakePlacementPropertyPatch(Source, PropertyName, Patch, &Error))
+        {
+            InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+            return false;
+        }
+        FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+        bool bApplied = false;
+        if (GEditor && !GEditor->IsTransactionActive())
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaActorBulkEdit", "Edit Kya Actors"));
+            bApplied = Service.ApplyBulk(Keys, Patch, EKyaEditNotify::Notify, &Error);
+        }
+        else
+        {
+            bApplied = Service.ApplyBulk(Keys, Patch, EKyaEditNotify::Notify, &Error);
+        }
+        if (!bApplied)
+        {
+            InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+            return false;
+        }
+        InlineError.Reset();
+        return true;
+    };
+
+    // Common-value helpers: an unset value marks a mixed selection.
+    const auto ReadVectorComponent = [Usable](FName PropertyName, int32 Component) -> TOptional<double>
+    {
+        double Common = 0.0;
+        bool bHas = false;
+        for (AKyaActorHandle* Candidate : Usable)
+        {
+            FVector Value;
+            if (!GetKyaVectorField(Candidate->Bank->SceneEnvironment.Actors[Candidate->ActorIndex], PropertyName, Value))
+                return TOptional<double>();
+            const double ComponentValue = Component == 0 ? Value.X : Component == 1 ? Value.Y : Value.Z;
+            if (!bHas) { Common = ComponentValue; bHas = true; }
+            else if (!FMath::IsNearlyEqual(Common, ComponentValue, 1.0e-4)) return TOptional<double>();
+        }
+        return bHas ? TOptional<double>(Common) : TOptional<double>();
+    };
+    const auto ReadFloatValue = [Usable](FName PropertyName) -> TOptional<double>
+    {
+        double Common = 0.0;
+        bool bHas = false;
+        for (AKyaActorHandle* Candidate : Usable)
+        {
+            float Value = 0.0f;
+            if (!GetKyaFloatField(Candidate->Bank->SceneEnvironment.Actors[Candidate->ActorIndex], PropertyName, Value))
+                return TOptional<double>();
+            if (!bHas) { Common = Value; bHas = true; }
+            else if (!FMath::IsNearlyEqual(Common, double(Value), 1.0e-4)) return TOptional<double>();
+        }
+        return bHas ? TOptional<double>(Common) : TOptional<double>();
+    };
+    const auto ReadIntValue = [Usable](FName PropertyName) -> TOptional<int64>
+    {
+        int64 Common = 0;
+        bool bHas = false;
+        for (AKyaActorHandle* Candidate : Usable)
+        {
+            const int64 Value = GetKyaNumericField(Candidate->Bank->SceneEnvironment.Actors[Candidate->ActorIndex],
+                PropertyName);
+            if (!bHas) { Common = Value; bHas = true; }
+            else if (Common != Value) return TOptional<int64>();
+        }
+        return bHas ? TOptional<int64>(Common) : TOptional<int64>();
+    };
+    const auto MixedText = [](const TOptional<double>& Value, const TOptional<int64>& IntValue) -> FText
+    {
+        const bool bMixed = IntValue.IsSet() ? false : !Value.IsSet();
+        return bMixed ? FText::FromString(TEXT("Mixed")) : FText::GetEmpty();
+    };
+
+    // Bulk apply with a per-record mutator (used where each record must keep its own
+    // untouched components, such as editing a single vector axis).
+    const auto ApplyBulkMutator = [this, Keys](FName PropertyName,
+        TFunction<bool(FKyaActorPlacement&, FString&)> Mutator) -> bool
+    {
+        FKyaActorEditPatch Patch;
+        Patch.Custom = MoveTemp(Mutator);
+        FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+        FString Error;
+        bool bApplied = false;
+        if (GEditor && !GEditor->IsTransactionActive())
+        {
+            FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaActorBulkEdit", "Edit Kya Actors"));
+            bApplied = Service.ApplyBulk(Keys, Patch, EKyaEditNotify::Notify, &Error);
+        }
+        else
+        {
+            bApplied = Service.ApplyBulk(Keys, Patch, EKyaEditNotify::Notify, &Error);
+        }
+        if (!bApplied)
+        {
+            InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+            return false;
+        }
+        InlineError.Reset();
+        return true;
+    };
+
+    const auto AddVectorRow = [this, &Category, ReadVectorComponent, ApplyBulkMutator, MixedText](const FString& Label,
+        FName PropertyName)
+    {
+        TSharedRef<SHorizontalBox> Box = SNew(SHorizontalBox);
+        for (int32 Component = 0; Component < 3; ++Component)
+        {
+            const TCHAR* Axis = Component == 0 ? TEXT("X") : Component == 1 ? TEXT("Y") : TEXT("Z");
+            Box->AddSlot().FillWidth(1.0f).Padding(2.0f, 0.0f)
+            [
+                SNew(SNumericEntryBox<double>)
+                .Label()
+                [
+                    SNew(STextBlock).Text(FText::FromString(Axis))
+                ]
+                .UndeterminedString(FText::FromString(TEXT("Mixed")))
+                .MinValue(-1.0e7).MaxValue(1.0e7)
+                .Value_Lambda([ReadVectorComponent, PropertyName, Component]() { return ReadVectorComponent(PropertyName, Component); })
+                .OnValueCommitted_Lambda([ApplyBulkMutator, PropertyName, Component](double Value, ETextCommit::Type)
+                {
+                    ApplyBulkMutator(PropertyName, [PropertyName, Component, Value](FKyaActorPlacement& Placement,
+                        FString& OutError) -> bool
+                    {
+                        FVector Vector;
+                        if (!GetKyaVectorField(Placement, PropertyName, Vector))
+                        {
+                            OutError = TEXT("The field is not a vector.");
+                            return false;
+                        }
+                        // Only the edited axis changes; every record keeps its other
+                        // components.
+                        if (Component == 0) Vector.X = Value;
+                        else if (Component == 1) Vector.Y = Value;
+                        else Vector.Z = Value;
+                        SetKyaVectorField(Placement, PropertyName, Vector);
+                        return true;
+                    });
+                })
+            ];
+        }
+        Box->AddSlot().AutoWidth().VAlign(VAlign_Center)
+        [
+            SNew(STextBlock).Text_Lambda([ReadVectorComponent, PropertyName, MixedText]()
+            {
+                const TOptional<double> Value = ReadVectorComponent(PropertyName, 0);
+                return MixedText(Value, TOptional<int64>());
+            })
+        ];
+        Category.AddCustomRow(FText::FromString(Label))
+            .NameContent()[SNew(STextBlock).Text(FText::FromString(Label))]
+            .ValueContent().MinDesiredWidth(360.0f)[Box];
+    };
+
+    const auto AddFloatRow = [this, &Category, ReadFloatValue, ApplyBulkField, MixedText](const FString& Label,
+        FName PropertyName)
+    {
+        Category.AddCustomRow(FText::FromString(Label))
+            .NameContent()[SNew(STextBlock).Text(FText::FromString(Label))]
+            .ValueContent().MinDesiredWidth(360.0f)
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().FillWidth(1.0f)
+                [
+                    SNew(SNumericEntryBox<double>)
+                    .MinValue(-1.0e7).MaxValue(1.0e7)
+                    .Value_Lambda([ReadFloatValue, PropertyName]() { return ReadFloatValue(PropertyName); })
+                    .OnValueCommitted_Lambda([ApplyBulkField, PropertyName](double Value, ETextCommit::Type)
+                    {
+                        ApplyBulkField(PropertyName, [PropertyName, Value](FKyaActorPlacement& Placement)
+                        {
+                            SetKyaFloatField(Placement, PropertyName, float(Value));
+                        });
+                    })
+                ]
+                + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+                [
+                    SNew(STextBlock).Text_Lambda([ReadFloatValue, PropertyName, MixedText]()
+                    {
+                        return MixedText(ReadFloatValue(PropertyName), TOptional<int64>());
+                    })
+                ]
+            ];
+    };
+
+    const auto AddIntRow = [this, &Category, ReadIntValue, ApplyBulkField, MixedText](const FString& Label,
+        FName PropertyName, bool bAllowNegative)
+    {
+        Category.AddCustomRow(FText::FromString(Label))
+            .NameContent()[SNew(STextBlock).Text(FText::FromString(Label))]
+            .ValueContent().MinDesiredWidth(360.0f)
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().FillWidth(1.0f)
+                [
+                    SNew(SNumericEntryBox<int64>)
+                    .MinValue(bAllowNegative ? -1 : 0)
+                    .MaxValue(TNumericLimits<int64>::Max())
+                    .Value_Lambda([ReadIntValue, PropertyName]() { return ReadIntValue(PropertyName); })
+                    .OnValueCommitted_Lambda([ApplyBulkField, PropertyName](int64 Value, ETextCommit::Type)
+                    {
+                        ApplyBulkField(PropertyName, [PropertyName, Value](FKyaActorPlacement& Placement)
+                        {
+                            SetKyaNumericField(Placement, PropertyName, Value);
+                        });
+                    })
+                ]
+                + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+                [
+                    SNew(STextBlock).Text_Lambda([ReadIntValue, PropertyName, MixedText]()
+                    {
+                        return MixedText(TOptional<double>(), ReadIntValue(PropertyName));
+                    })
+                ]
+            ];
+    };
+
+    AddVectorRow(TEXT("Position (metres)"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position));
+    AddVectorRow(TEXT("Rotation (radians)"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Rotation));
+    AddVectorRow(TEXT("Scale"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Scale));
+    AddIntRow(TEXT("Sector id"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, SectorId), true);
+    AddFloatRow(TEXT("Visibility distance"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance));
+    AddFloatRow(TEXT("Culling distance"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, CullingDistance));
+    AddFloatRow(TEXT("Lighting value"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, LightingValue));
+    AddIntRow(TEXT("Actor flags"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags), false);
+    AddIntRow(TEXT("Lighting flags"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, LightingFlags), false);
+    if (bCompatible)
+    {
+        AddIntRow(TEXT("Default behaviour"), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId), true);
+    }
+
+    // Reset the whole selection to its imported baseline in one transaction.
+    Category.AddCustomRow(FText::FromString(TEXT("Reset selection")))
+        .NameContent()[SNew(STextBlock).Text(FText::FromString(TEXT("Reset selection")))]
+        .ValueContent()
+        [
+            SNew(SButton)
+            .Text(FText::FromString(TEXT("Reset all to imported")))
+            .ToolTipText(FText::FromString(TEXT("Restore every selected actor from its imported baseline in one undo step.")))
+            .OnClicked_Lambda([this, Keys]()
+            {
+                FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+                FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaActorBulkReset", "Reset Kya Actors"));
+                FString FirstError;
+                for (const FKyaActorRecordKey& Key : Keys)
+                {
+                    UKyaLevelBank* Bank = Key.Bank.Get();
+                    FKyaActorEditPatch Patch;
+                    if (!Bank || !BuildKyaActorResetPatch(*Bank, Key.RecordIndex, Patch))
+                    {
+                        FirstError = TEXT("No imported baseline is available for this bank.");
+                        break;
+                    }
+                    FString Error;
+                    if (!Service.Apply(Key, Patch, EKyaEditNotify::Silent, &Error))
+                    {
+                        FirstError = Error;
+                        break;
+                    }
+                }
+                if (!FirstError.IsEmpty()) InlineError = FirstError;
+                else InlineError.Reset();
+                Service.FlushPendingNotifications();
+                return FReply::Handled();
+            })
+        ];
+
+    Category.AddCustomRow(FText::FromString(TEXT("Validation")))
+        .NameContent()[SNew(STextBlock).Text(FText::FromString(TEXT("Validation")))]
+        .ValueContent().MinDesiredWidth(320.0f)
+        [
+            SAssignNew(InlineErrorText, STextBlock)
+            .Text(this, &FKyaActorDetailsCustomization::GetInlineErrorText)
+            .AutoWrapText(true)
+            .ColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.65f, 0.2f, 1.0f)))
+        ];
 }
 
 void FKyaActorDetailsCustomization::RefreshScopeFromBank()

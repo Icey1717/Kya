@@ -65,8 +65,8 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Show class name plus numeric ID, named behaviours where recovered, unit tooltips, flag widgets for understood bits, and explicit unknown labels for unrecovered fields. Preserve unknown bits and do not invent semantics.
 - [x] Provide actor, waypoint, path, sector, mesh and material reference pickers with searchable labels, current raw IDs and unresolved-reference warnings. Add Browse/Select Referenced Object actions and retain raw ID access for advanced work.
 - [x] Validate ranges, reference scope, serialized widths, string byte lengths and layout-changing flags before committing. Explain the exact property and constraint inline instead of waiting for an export failure.
-- [ ] Support multi-edit of compatible shared fields, with mixed-value indicators. Prevent class-specific fields from being applied to incompatible selections and group each bulk edit into one undo action.
-- [ ] Add reset-to-imported-value and property-copy actions that preserve identity and layout. Define the imported baseline separately from Unreal class defaults.
+- [x] Support multi-edit of compatible shared fields, with mixed-value indicators. Prevent class-specific fields from being applied to incompatible selections and group each bulk edit into one undo action.
+- [x] Add reset-to-imported-value and property-copy actions that preserve identity and layout. Define the imported baseline separately from Unreal class defaults.
 - [ ] Acceptance: choose representative platform, Wolfen, hero, trigger and meshless actors and edit supported nested fields without navigating the bank's global actor array; verify corresponding exported values.
 
 ## 5. Reliable undo, saving and synchronization

@@ -4,6 +4,7 @@
 
 class UKyaLevelBank;
 struct FKyaActorPlacement;
+struct FKyaActorEditPatch;
 
 /** Recovered class information for a bank actor placement. */
 struct KYALEVEL_API FKyaActorClassInfo
@@ -86,6 +87,12 @@ KYALEVEL_API FText DescribeKyaReferenceKind(EKyaReferenceKind Kind);
 KYALEVEL_API bool SetKyaNumericField(FKyaActorPlacement& Placement, FName PropertyName, int64 Value);
 /** Read a scalar numeric placement field by name (int32 or int64). */
 KYALEVEL_API int64 GetKyaNumericField(const FKyaActorPlacement& Placement, FName PropertyName);
+/** Read/write an FVector placement field by name. */
+KYALEVEL_API bool GetKyaVectorField(const FKyaActorPlacement& Placement, FName PropertyName, FVector& Out);
+KYALEVEL_API bool SetKyaVectorField(FKyaActorPlacement& Placement, FName PropertyName, const FVector& Value);
+/** Read/write a float placement field by name. */
+KYALEVEL_API bool GetKyaFloatField(const FKyaActorPlacement& Placement, FName PropertyName, float& Out);
+KYALEVEL_API bool SetKyaFloatField(FKyaActorPlacement& Placement, FName PropertyName, float Value);
 
 struct KYALEVEL_API FKyaReferenceField
 {
@@ -96,3 +103,27 @@ struct KYALEVEL_API FKyaReferenceField
 };
 /** Top-level scalar reference fields, for building pickers and validation. */
 KYALEVEL_API TArray<FKyaReferenceField> GetKyaReferenceFields();
+
+// --- Imported baseline -----------------------------------------------------------
+
+/** True when the bank has typed imported values captured. */
+KYALEVEL_API bool HasKyaImportedBaseline(const UKyaLevelBank& Bank);
+/** Snapshot the current typed actor/waypoint/path records as the imported baseline. */
+KYALEVEL_API void CaptureKyaImportedBaseline(UKyaLevelBank& Bank);
+/** Imported actor placement, or false when no baseline exists or the index is invalid. */
+KYALEVEL_API bool GetKyaImportedActor(const UKyaLevelBank& Bank, int32 Index, FKyaActorPlacement& Out);
+/** True when the current actor record differs from the imported baseline. */
+KYALEVEL_API bool KyaActorDiffersFromImported(const UKyaLevelBank& Bank, int32 Index);
+/** Patch that restores one actor record (including nested records) to its imported value. */
+KYALEVEL_API bool BuildKyaActorResetPatch(const UKyaLevelBank& Bank, int32 Index, FKyaActorEditPatch& OutPatch);
+/** Patch that restores one top-level actor property to its imported value. */
+KYALEVEL_API bool BuildKyaActorFieldResetPatch(const UKyaLevelBank& Bank, int32 Index, FName PropertyName,
+    FKyaActorEditPatch& OutPatch);
+/**
+ * True when a property can be copied from Source to Dest without changing the
+ * destination's serialized layout: same class for class-specific fields, matching
+ * presence flags, array counts, nested record sizes and string-slot capacity.
+ */
+KYALEVEL_API bool CanCopyKyaActorField(const FKyaActorPlacement& Source, const FKyaActorPlacement& Dest,
+    FName PropertyName, FString& OutError);
+

@@ -146,20 +146,31 @@ Last updated: 2026-11-12.
   only offers editable rows and shows the capability description and reason as the
   row tooltip; patch construction rejects inspect-only/unsupported fields with that
   reason.
-- `KyaActorCatalog` supplies the recovered presentation data: class names/notes
-  (derived from the factory's class branches), class-specific behaviour names,
+- `KyaActorCatalog` supplies the recovered presentation data: class names/notes  (derived from the factory's class branches), class-specific behaviour names,
   bank-local mesh/texture reference resolution, sector labels, and a class-gated
   scalar reference-field table. `ValidateKyaActorReferences` reports blocking
   out-of-range mesh/texture/sector/actor/waypoint/path references and a non-blocking
   default-behaviour warning; `Apply` rejects a patched reference that does not
   resolve before mutating the bank.
 - The actor Details panel adds an Identity section (class label + numeric id, notes
-  tooltip, Browse bank), a References section with searchable pickers
-  (`SKyaReferencePicker`) for sector, mesh, texture bank, default behaviour and the
+  tooltip, Browse bank), a References section with searchable pickers  (`SKyaReferencePicker`) for sector, mesh, texture bank, default behaviour and the
   class-specific scalar actor/waypoint/path fields (raw ids always shown, Select
   button for actor references, inline unresolved-reference warnings), and a Flags
   section (`SKyaFlagBits`) with understood lighting bits plus raw values and an
   explicit "unknown bits preserved" note. Field tooltips document units.
+- Multi-selection switches Details to a `Kya Multi-edit` panel: it reports the shared
+  class, checks class and optional-record compatibility (class-specific fields are
+  hidden for incompatible selections), and offers shared numeric rows for Transform
+  and actor settings. Mixed values show `Mixed`; each row applies one bulk patch that
+  resolves and validates every record first, keeps per-record untouched vector
+  components, groups the edit into one undo step, and refreshes each bank once.
+  `Reset all to imported` restores a whole selection in one transaction.
+- `UKyaLevelBank` stores a typed imported baseline (actors, waypoints, paths) captured
+  by the factory and refreshed on reimport; it is editor metadata and never exported.
+  Details shows whether the actor still matches the baseline and offers `Reset to
+  imported`, per-field reset, and `Copy` from another actor. Copy validates class,
+  optional-record presence, array counts, nested record ids/presence flags and
+  string-slot capacity before applying, so it cannot change the destination layout.
 - Generated actors are grouped in the Outliner under one transient grouping actor
   per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from

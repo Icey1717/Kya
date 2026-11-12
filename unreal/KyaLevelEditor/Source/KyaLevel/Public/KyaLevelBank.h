@@ -1783,6 +1783,20 @@ public:
     /** Invalidate editor record keys after replacing the typed data. */
     void BumpEditGeneration() { ++EditGeneration; }
 
+    /**
+     * Typed placement values as imported, used by reset-to-imported and change
+     * detection. Captured by the bank factory and refreshed on reimport; it is editor
+     * metadata, not game bytes, and is never exported.
+     */
+    UPROPERTY(VisibleAnywhere, Category="Kya|Baseline")
+    bool bHasImportedBaseline = false;
+    UPROPERTY(VisibleAnywhere, Category="Kya|Baseline")
+    TArray<FKyaActorPlacement> ImportedActors;
+    UPROPERTY(VisibleAnywhere, Category="Kya|Baseline")
+    TArray<FKyaWaypoint> ImportedWaypoints;
+    UPROPERTY(VisibleAnywhere, Category="Kya|Baseline")
+    TArray<FKyaPath> ImportedPaths;
+
     /** Import provenance; lets the asset be reimported and moved like a normal asset. */
     UPROPERTY(VisibleAnywhere, Instanced, Category="Kya|Import")
     TObjectPtr<UAssetImportData> AssetImportData;

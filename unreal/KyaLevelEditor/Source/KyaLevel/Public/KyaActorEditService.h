@@ -152,6 +152,13 @@ public:
 
     bool Apply(const FKyaActorRecordKey& Key, const FKyaActorEditPatch& Patch, EKyaEditNotify Notify,
         FString* OutError = nullptr);
+    /**
+     * Apply one patch to several actor records. Every record is resolved and
+     * validated before any mutation; the caller's transaction provides a single undo
+     * step and each affected bank refreshes its previews once.
+     */
+    bool ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, const FKyaActorEditPatch& Patch, EKyaEditNotify Notify,
+        FString* OutError = nullptr);
     bool ApplyPosition(const FKyaActorRecordKey& Key, const FVector& Position, EKyaEditNotify Notify,
         FString* OutError = nullptr);
 

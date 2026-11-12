@@ -170,12 +170,6 @@ bool ValidateKyaActorPlacement(const FKyaActorPlacement& Placement, FString& Out
     return true;
 }
 
-FKyaLevelEditService& FKyaLevelEditService::Get()
-{
-    static FKyaLevelEditService Service;
-    return Service;
-}
-
 bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName PropertyName,
     FKyaActorEditPatch& OutPatch, FString* OutError)
 {
@@ -197,67 +191,8 @@ bool KyaMakePlacementPropertyPatch(const FKyaActorPlacement& Source, FName Prope
     return true;
 }
 
-FKyaFieldCapability GetKyaNestedFieldCapability(const FString& PropertyPath)
+FText DescribeKyaFieldCapability(EKyaFieldCapability Kind)
 {
-    FKyaFieldCapability Result;
-    FString TopLevel;
-    FString Nested;
-    if (!PropertyPath.Split(TEXT("."), &TopLevel, &Nested) || Nested.IsEmpty())
-    {
-        Result.Kind = EKyaFieldCapability::Unsupported;
-        Result.Reason = TEXT("Nested capability paths must be written as TopLevel.Field.");
-        return Result;
-    }
-    const FKyaFieldCapability TopCapability = GetKyaActorFieldCapability(FName(*TopLevel));
-    if (TopCapability.Kind != EKyaFieldCapability::EditableExportable)
-    {
-        Result = TopCapability;
-        Result.Reason = FString::Printf(TEXT("%s: %s"), *TopLevel, *TopCapability.Reason);
-        return Result;
-    }
-    const FProperty* TopProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(FName(*TopLevel));
-    const FProperty* NestedProperty = nullptr;
-    if (const FArrayProperty* Array = CastField<FArrayProperty>(TopProperty))
-    {
-        if (const FStructProperty* Inner = CastField<FStructProperty>(Array->Inner))
-            NestedProperty = Inner->Struct->FindPropertyByName(FName(*Nested));
-    }
-    else if (const FStructProperty* StructProperty = CastField<FStructProperty>(TopProperty))
-    {
-        NestedProperty = StructProperty->Struct->FindPropertyByName(FName(*Nested));
-    }
-    if (!NestedProperty)
-    {
-        Result.Kind = EKyaFieldCapability::Unsupported;
-        Result.Reason = FString::Printf(TEXT("%s is not a field of the %s record."), *Nested, *TopLevel);
-        return Result;
-    }
-    // Nested records follow the same rules as top-level ones: read-only serialized
-    // layout data and presence flags are not editable just because the parent is.
-    if (!NestedProperty->HasAnyPropertyFlags(CPF_Edit) ||
-        NestedProperty->HasAnyPropertyFlags(CPF_EditConst))
-    {
-        Result.Kind = EKyaFieldCapability::InspectOnly;
-        Result.Reason = TEXT("Read-only nested record data; the bank writer does not accept edits for this field.");
-        return Result;
-    }
-    if (NestedProperty->GetName().StartsWith(TEXT("bHas")))
-    {
-        Result.Kind = EKyaFieldCapability::InspectOnly;
-        Result.Reason = TEXT("Nested presence flag that controls the serialized layout; changing it would desynchronize the writer.");
-        return Result;
-    }
-    Result.Kind = EKyaFieldCapability::EditableExportable;
-    if (CastField<FStrProperty>(NestedProperty) || CastField<FNameProperty>(NestedProperty))
-        Result.Reason = TEXT("Fixed-length string record: the writer requires the aligned (4-byte) length to equal "
-            "the original serialized slot, so the value must stay in the same alignment bucket.");
-    else
-        Result.Reason = FString::Printf(TEXT("Nested typed field of %s; element edits are exported with the parent record."),
-            *TopLevel);
-    return Result;
-}
-
-FText DescribeKyaFieldCapability(EKyaFieldCapability Kind){
     switch (Kind)
     {
     case EKyaFieldCapability::EditableExportable:
@@ -330,6 +265,72 @@ FKyaFieldCapability GetKyaActorFieldCapability(FName PropertyName)
     return Result;
 }
 
+FKyaFieldCapability GetKyaNestedFieldCapability(const FString& PropertyPath)
+{
+    FKyaFieldCapability Result;
+    FString TopLevel;
+    FString Nested;
+    if (!PropertyPath.Split(TEXT("."), &TopLevel, &Nested) || Nested.IsEmpty())
+    {
+        Result.Kind = EKyaFieldCapability::Unsupported;
+        Result.Reason = TEXT("Nested capability paths must be written as TopLevel.Field.");
+        return Result;
+    }
+    const FKyaFieldCapability TopCapability = GetKyaActorFieldCapability(FName(*TopLevel));
+    if (TopCapability.Kind != EKyaFieldCapability::EditableExportable)
+    {
+        Result = TopCapability;
+        Result.Reason = FString::Printf(TEXT("%s: %s"), *TopLevel, *TopCapability.Reason);
+        return Result;
+    }
+    const FProperty* TopProperty = FKyaActorPlacement::StaticStruct()->FindPropertyByName(FName(*TopLevel));
+    const FProperty* NestedProperty = nullptr;
+    if (const FArrayProperty* Array = CastField<FArrayProperty>(TopProperty))
+    {
+        if (const FStructProperty* Inner = CastField<FStructProperty>(Array->Inner))
+            NestedProperty = Inner->Struct->FindPropertyByName(FName(*Nested));
+    }
+    else if (const FStructProperty* StructProperty = CastField<FStructProperty>(TopProperty))
+    {
+        NestedProperty = StructProperty->Struct->FindPropertyByName(FName(*Nested));
+    }
+    if (!NestedProperty)
+    {
+        Result.Kind = EKyaFieldCapability::Unsupported;
+        Result.Reason = FString::Printf(TEXT("%s is not a field of the %s record."), *Nested, *TopLevel);
+        return Result;
+    }
+    // Nested records follow the same rules as top-level ones: read-only serialized
+    // layout data and presence flags are not editable just because the parent is.
+    if (!NestedProperty->HasAnyPropertyFlags(CPF_Edit) ||
+        NestedProperty->HasAnyPropertyFlags(CPF_EditConst))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Read-only nested record data; the bank writer does not accept edits for this field.");
+        return Result;
+    }
+    if (NestedProperty->GetName().StartsWith(TEXT("bHas")))
+    {
+        Result.Kind = EKyaFieldCapability::InspectOnly;
+        Result.Reason = TEXT("Nested presence flag that controls the serialized layout; changing it would desynchronize the writer.");
+        return Result;
+    }
+    Result.Kind = EKyaFieldCapability::EditableExportable;
+    if (CastField<FStrProperty>(NestedProperty) || CastField<FNameProperty>(NestedProperty))
+        Result.Reason = TEXT("Fixed-length string record: the writer requires the aligned (4-byte) length to equal "
+            "the original serialized slot, so the value must stay in the same alignment bucket.");
+    else
+        Result.Reason = FString::Printf(TEXT("Nested typed field of %s; element edits are exported with the parent record."),
+            *TopLevel);
+    return Result;
+}
+
+FKyaLevelEditService& FKyaLevelEditService::Get()
+{
+    static FKyaLevelEditService Service;
+    return Service;
+}
+
 FKyaActorRecordKey FKyaLevelEditService::MakeKey(UKyaLevelBank* Bank, int32 ActorIndex) const
 {
     FKyaActorRecordKey Key;
@@ -366,6 +367,88 @@ bool FKyaLevelEditService::Resolve(const FKyaActorRecordKey& Key, FKyaActorPlace
     return true;
 }
 
+namespace
+{
+bool ValidateChangedReferences(const UKyaLevelBank& Bank, const FKyaActorPlacement& Original,
+    const FKyaActorPlacement& Candidate, FString& OutError)
+{
+    // Validate changed references independently of how the patch was built (typed
+    // fields or a Custom presentation patch from Details), so Details edits cannot
+    // commit an unresolved reference.
+    if (Candidate.MeshIndex != Original.MeshIndex)
+    {
+        const FKyaBankReference Mesh = ResolveKyaModelReference(Bank, Candidate.MeshIndex);
+        if (!Mesh.bResolved)
+        {
+            OutError = Mesh.Warning;
+            return false;
+        }
+    }
+    if (Candidate.TextureIndex != Original.TextureIndex)
+    {
+        const FKyaBankReference Texture = ResolveKyaTextureReference(Bank, Candidate.TextureIndex);
+        if (!Texture.bResolved)
+        {
+            OutError = Texture.Warning;
+            return false;
+        }
+    }
+    if (Candidate.SectorId != Original.SectorId && Candidate.SectorId < -1)
+    {
+        OutError = TEXT("Sector id must be -1 (global) or a non-negative sector id.");
+        return false;
+    }
+    if (Candidate.DefaultBehaviourId != Original.DefaultBehaviourId &&
+        (Candidate.DefaultBehaviourId < -1 || Candidate.DefaultBehaviourId >= Candidate.Behaviours.Num()))
+    {
+        OutError = FString::Printf(
+            TEXT("Default behaviour %d does not exist in this actor's %d behaviour record(s)."),
+            Candidate.DefaultBehaviourId, Candidate.Behaviours.Num());
+        return false;
+    }
+    for (const FKyaReferenceField& Field : GetKyaReferenceFields())
+    {
+        if (Field.Kind != EKyaReferenceKind::Actor && Field.Kind != EKyaReferenceKind::Waypoint &&
+            Field.Kind != EKyaReferenceKind::Path) continue;
+        if (Field.ClassId != -1 && Field.ClassId != Candidate.ClassId) continue;
+        const int64 OldValue = GetKyaNumericField(Original, Field.PropertyName);
+        const int64 NewValue = GetKyaNumericField(Candidate, Field.PropertyName);
+        if (OldValue == NewValue) continue;
+        int32 Limit = 0;
+        switch (Field.Kind)
+        {
+        case EKyaReferenceKind::Actor: Limit = Bank.SceneEnvironment.Actors.Num(); break;
+        case EKyaReferenceKind::Waypoint: Limit = Bank.SceneEnvironment.Waypoints.Num(); break;
+        default: Limit = Bank.SceneEnvironment.Paths.Num(); break;
+        }
+        if (NewValue != -1 && (NewValue < 0 || NewValue >= Limit))
+        {
+            OutError = FString::Printf(
+                TEXT("%s %s: %lld does not resolve to a %s in this bank (%d available)."),
+                *Field.PropertyName.ToString(), *DescribeKyaReferenceKind(Field.Kind).ToString(), NewValue,
+                Field.Kind == EKyaReferenceKind::Actor ? TEXT("actor") :
+                    Field.Kind == EKyaReferenceKind::Waypoint ? TEXT("waypoint") : TEXT("path"), Limit);
+            return false;
+        }
+    }
+    // The writer requires Align(length + 1, 4) to equal the original name-slot
+    // capacity, so a name that changes the 4-byte bucket cannot be exported.
+    if (Candidate.Name != Original.Name)
+    {
+        const auto Align4 = [](int32 Value) { return (Value + 3) & ~3; };
+        if (Align4(Candidate.Name.Len() + 1) != Align4(Original.Name.Len() + 1))
+        {
+            OutError = FString::Printf(
+                TEXT("Actor name changes the serialized 4-byte length bucket (%d -> %d); the writer requires "
+                    "Align(length + 1, 4) to equal the original slot capacity."),
+                Align4(Original.Name.Len() + 1), Align4(Candidate.Name.Len() + 1));
+            return false;
+        }
+    }
+    return true;
+}
+}
+
 bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorEditPatch& Patch,
     EKyaEditNotify Notify, FString* OutError)
 {
@@ -386,84 +469,11 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     // Validate the prospective record before touching the bank so a rejected edit
     // never leaves a partially modified record behind.
     FKyaActorPlacement Candidate = *Placement;
-    if (!ApplyPatchToRecord(Candidate, Patch, Error) || !ValidateKyaActorPlacement(Candidate, Error))
+    if (!ApplyPatchToRecord(Candidate, Patch, Error) || !ValidateKyaActorPlacement(Candidate, Error) ||
+        !ValidateChangedReferences(*Bank, *Placement, Candidate, Error))
     {
         if (OutError) *OutError = Error;
         return false;
-    }
-
-    // Validate changed references independently of how the patch was built (typed
-    // fields or a Custom presentation patch from Details), so Details edits cannot
-    // commit an unresolved reference.
-    if (Candidate.MeshIndex != Placement->MeshIndex)
-    {
-        const FKyaBankReference Mesh = ResolveKyaModelReference(*Bank, Candidate.MeshIndex);
-        if (!Mesh.bResolved)
-        {
-            if (OutError) *OutError = Mesh.Warning;
-            return false;
-        }
-    }
-    if (Candidate.TextureIndex != Placement->TextureIndex)
-    {
-        const FKyaBankReference Texture = ResolveKyaTextureReference(*Bank, Candidate.TextureIndex);
-        if (!Texture.bResolved)
-        {
-            if (OutError) *OutError = Texture.Warning;
-            return false;
-        }
-    }
-    if (Candidate.SectorId != Placement->SectorId && Candidate.SectorId < -1)
-    {
-        if (OutError) *OutError = TEXT("Sector id must be -1 (global) or a non-negative sector id.");
-        return false;
-    }
-    if (Candidate.DefaultBehaviourId != Placement->DefaultBehaviourId &&
-        (Candidate.DefaultBehaviourId < -1 || Candidate.DefaultBehaviourId >= Candidate.Behaviours.Num()))
-    {
-        if (OutError) *OutError = FString::Printf(
-            TEXT("Default behaviour %d does not exist in this actor's %d behaviour record(s)."),
-            Candidate.DefaultBehaviourId, Candidate.Behaviours.Num());
-        return false;
-    }
-    for (const FKyaReferenceField& Field : GetKyaReferenceFields())
-    {
-        if (Field.Kind != EKyaReferenceKind::Actor && Field.Kind != EKyaReferenceKind::Waypoint &&
-            Field.Kind != EKyaReferenceKind::Path) continue;
-        if (Field.ClassId != -1 && Field.ClassId != Candidate.ClassId) continue;
-        const int64 OldValue = GetKyaNumericField(*Placement, Field.PropertyName);
-        const int64 NewValue = GetKyaNumericField(Candidate, Field.PropertyName);
-        if (OldValue == NewValue) continue;
-        int32 Limit = 0;
-        switch (Field.Kind)
-        {
-        case EKyaReferenceKind::Actor: Limit = Bank->SceneEnvironment.Actors.Num(); break;
-        case EKyaReferenceKind::Waypoint: Limit = Bank->SceneEnvironment.Waypoints.Num(); break;
-        default: Limit = Bank->SceneEnvironment.Paths.Num(); break;
-        }
-        if (NewValue != -1 && (NewValue < 0 || NewValue >= Limit))
-        {
-            if (OutError) *OutError = FString::Printf(
-                TEXT("%s %s: %lld does not resolve to a %s in this bank (%d available)."),
-                *Field.PropertyName.ToString(), *DescribeKyaReferenceKind(Field.Kind).ToString(), NewValue,
-                Field.Kind == EKyaReferenceKind::Actor ? TEXT("actor") :
-                    Field.Kind == EKyaReferenceKind::Waypoint ? TEXT("waypoint") : TEXT("path"), Limit);
-            return false;
-        }
-    }
-    // The writer requires Align(length + 1, 4) to equal the original name-slot
-    // capacity, so a name that changes the 4-byte bucket cannot be exported.
-    if (Candidate.Name != Placement->Name)
-    {
-        const auto Align4 = [](int32 Value) { return (Value + 3) & ~3; };
-        if (Align4(Candidate.Name.Len() + 1) != Align4(Placement->Name.Len() + 1))
-        {
-            if (OutError) *OutError = FString::Printf(
-                TEXT("Actor name changes the serialized 4-byte length bucket (%d -> %d); the writer requires "
-                    "Align(length + 1, 4) to equal the original slot capacity."),
-                Align4(Placement->Name.Len() + 1), Align4(Candidate.Name.Len() + 1));
-            return false;
-        }
     }
 
     Bank->Modify();
@@ -477,6 +487,80 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     *Placement = Candidate;
     Bank->MarkPackageDirty();
     NotifyAfterEdit(*this, Bank, Notify);
+    return true;
+}
+
+bool FKyaLevelEditService::ApplyBulk(const TArray<FKyaActorRecordKey>& Keys, const FKyaActorEditPatch& Patch,
+    EKyaEditNotify Notify, FString* OutError)
+{
+    if (Keys.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("No records were supplied for the bulk edit.");
+        return false;
+    }
+    if (Patch.IsEmpty())
+    {
+        if (OutError) *OutError = TEXT("The bulk edit patch does not change any property.");
+        return false;
+    }
+
+    struct FEntry
+    {
+        FKyaActorRecordKey Key;
+        UKyaLevelBank* Bank = nullptr;
+        FKyaActorPlacement Candidate;
+    };
+    TArray<FEntry> Entries;
+    Entries.Reserve(Keys.Num());
+    TSet<UKyaLevelBank*> Banks;
+
+    // Pass 1: resolve and validate every record before mutating any of them, so a
+    // bulk edit either applies completely or not at all.
+    for (const FKyaActorRecordKey& Key : Keys)
+    {
+        FString Error;
+        FKyaActorPlacement* Placement = nullptr;
+        if (!Resolve(Key, Placement, &Error))
+        {
+            if (OutError) *OutError = Error;
+            return false;
+        }
+        FEntry& Entry = Entries.AddDefaulted_GetRef();
+        Entry.Key = Key;
+        Entry.Bank = Key.Bank.Get();
+        Entry.Candidate = *Placement;
+        if (!ApplyPatchToRecord(Entry.Candidate, Patch, Error) ||
+            !ValidateKyaActorPlacement(Entry.Candidate, Error) ||
+            !ValidateChangedReferences(*Entry.Bank, *Placement, Entry.Candidate, Error))
+        {
+            if (OutError) *OutError = FString::Printf(TEXT("Record %d: %s"), Key.RecordIndex, *Error);
+            return false;
+        }
+        Banks.Add(Entry.Bank);
+    }
+
+    // Pass 2: one Modify per record (inside the caller's transaction) and one dirty
+    // marker plus one refresh per affected bank.
+    for (FEntry& Entry : Entries)
+    {
+        Entry.Bank->Modify();
+        FKyaActorPlacement* Placement = nullptr;
+        if (!Resolve(Entry.Key, Placement, nullptr) || !Placement)
+        {
+            if (OutError) *OutError = FString::Printf(TEXT("Record %d became stale during the bulk edit."),
+                Entry.Key.RecordIndex);
+            return false;
+        }
+        *Placement = Entry.Candidate;
+    }
+    for (UKyaLevelBank* Bank : Banks)
+    {
+        Bank->MarkPackageDirty();
+        if (OnBankEdited.IsBound()) OnBankEdited.Broadcast(Bank);
+        if (Notify == EKyaEditNotify::Deferred) NotifyBankChangedDeferred(Bank);
+        else NotifyBankChanged(Bank, false);
+    }
+    if (Notify == EKyaEditNotify::Notify) FlushPendingNotifications();
     return true;
 }
 

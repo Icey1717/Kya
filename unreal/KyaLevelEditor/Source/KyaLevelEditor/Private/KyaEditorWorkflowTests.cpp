@@ -950,6 +950,187 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMultiEditBaselineTest, "Kya.Editor.MultiEditBaseline",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMultiEditBaselineTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    CaptureKyaImportedBaseline(*Bank);
+    if (!TestTrue(TEXT("Imported baseline is captured"), HasKyaImportedBaseline(*Bank))) return false;
+
+    const FKyaActorRecordKey Key0 = Service.MakeKey(Bank, 0);
+    const FKyaActorRecordKey Key1 = Service.MakeKey(Bank, 1);
+    FString Error;
+
+    // Reset-to-imported restores the whole record.
+    FKyaActorEditPatch Move;
+    Move.Position = FVector(9.0, 9.0, 9.0);
+    Move.VisibilityDistance = 42.0f;
+    TestTrue(TEXT("Edit applies before reset"), Service.Apply(Key0, Move, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Record is modified"), KyaActorDiffersFromImported(*Bank, 0));
+    TestFalse(TEXT("Untouched record matches baseline"), KyaActorDiffersFromImported(*Bank, 1));
+    FKyaActorEditPatch ResetActor;
+    TestTrue(TEXT("Reset patch builds"), BuildKyaActorResetPatch(*Bank, 0, ResetActor));
+    TestTrue(TEXT("Reset patch applies"), Service.Apply(Key0, ResetActor, EKyaEditNotify::Silent, &Error));
+    TestFalse(TEXT("Reset record matches baseline"), KyaActorDiffersFromImported(*Bank, 0));
+    TestTrue(TEXT("Reset restores position"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(1.0, 2.0, 3.0)));
+    TestEqual(TEXT("Reset restores visibility"), Bank->SceneEnvironment.Actors[0].VisibilityDistance, 0.0f);
+
+    // Field reset restores one property and leaves the other edit in place.
+    FKyaActorEditPatch EditTwo;
+    EditTwo.Position = FVector(5.0, 6.0, 7.0);
+    EditTwo.VisibilityDistance = 99.0f;
+    TestTrue(TEXT("Second edit applies"), Service.Apply(Key0, EditTwo, EKyaEditNotify::Silent, &Error));
+    FKyaActorEditPatch ResetField;
+    TestTrue(TEXT("Field reset patch builds"),
+        BuildKyaActorFieldResetPatch(*Bank, 0, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance),
+            ResetField));
+    TestTrue(TEXT("Field reset applies"), Service.Apply(Key0, ResetField, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Field reset restores the field"), Bank->SceneEnvironment.Actors[0].VisibilityDistance, 0.0f);
+    TestTrue(TEXT("Field reset keeps the other edit"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(5.0, 6.0, 7.0)));
+
+    // Property copy from another actor copies only the chosen field.
+    Bank->SceneEnvironment.Actors[1].VisibilityDistance = 77.0f;
+    Bank->SceneEnvironment.Actors[1].Position = FVector(0.0, 1.0, 0.0);
+    FKyaActorEditPatch CopyPatch;
+    TestTrue(TEXT("Copy patch builds"), KyaMakePlacementPropertyPatch(Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance), CopyPatch, &Error));
+    TestTrue(TEXT("Copy patch applies"), Service.Apply(Key0, CopyPatch, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Copy writes the field"), Bank->SceneEnvironment.Actors[0].VisibilityDistance, 77.0f);
+    TestTrue(TEXT("Copy keeps the target position"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(5.0, 6.0, 7.0)));
+
+    // Vector/float accessors used by the multi-edit panel.
+    FVector ReadVector;
+    TestTrue(TEXT("Vector accessor reads"), GetKyaVectorField(Bank->SceneEnvironment.Actors[0],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position), ReadVector) && ReadVector.Equals(FVector(5.0, 6.0, 7.0)));
+    FKyaActorPlacement VectorTarget = Bank->SceneEnvironment.Actors[0];
+    TestTrue(TEXT("Vector accessor writes"), SetKyaVectorField(VectorTarget,
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Rotation), FVector(0.3, 0.4, 0.5)));
+    FVector ReadRotation;
+    TestTrue(TEXT("Vector accessor round trips"), GetKyaVectorField(VectorTarget,
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Rotation), ReadRotation) &&
+        ReadRotation.Equals(FVector(0.3, 0.4, 0.5)));
+
+    // Bulk edit applies one patch to all records and is one undo step.
+    const int32 BeforeSector0 = Bank->SceneEnvironment.Actors[0].SectorId;
+    const int32 BeforeSector1 = Bank->SceneEnvironment.Actors[1].SectorId;
+    FKyaActorEditPatch Bulk;
+    Bulk.SectorId = 3;
+    TestTrue(TEXT("Bulk edit applies"), Service.ApplyBulk({Key0, Key1}, Bulk, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Bulk edit writes record 0"), Bank->SceneEnvironment.Actors[0].SectorId, 3);
+    TestEqual(TEXT("Bulk edit writes record 1"), Bank->SceneEnvironment.Actors[1].SectorId, 3);
+    TestTrue(TEXT("Bulk edit changed record 0"), BeforeSector0 != 3);
+    TestTrue(TEXT("Bulk edit changed record 1"), BeforeSector1 != 3);
+    FKyaActorEditPatch Bulk2;
+    Bulk2.SectorId = 5;
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaTests", "BulkEdit", "Bulk Edit"));
+        TestTrue(TEXT("Transactional bulk edit applies"),
+            Service.ApplyBulk({Key0, Key1}, Bulk2, EKyaEditNotify::Silent, &Error));
+    }
+    if (GEditor)
+    {
+        GEditor->UndoTransaction();
+        TestEqual(TEXT("Undo restores record 0"), Bank->SceneEnvironment.Actors[0].SectorId, 3);
+        TestEqual(TEXT("Undo restores record 1"), Bank->SceneEnvironment.Actors[1].SectorId, 3);
+    }
+
+    // A per-record bulk mutator edits one vector axis without overwriting the other
+    // components of the other selected records.
+    const FVector BeforeAxis0 = Bank->SceneEnvironment.Actors[0].Position;
+    const FVector BeforeAxis1 = Bank->SceneEnvironment.Actors[1].Position;
+    FKyaActorEditPatch AxisEdit;
+    AxisEdit.Custom = [](FKyaActorPlacement& Placement, FString& OutError) -> bool
+    {
+        FVector Vector;
+        if (!GetKyaVectorField(Placement, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position), Vector))
+        {
+            OutError = TEXT("Position is not a vector.");
+            return false;
+        }
+        Vector.X = 10.0;
+        SetKyaVectorField(Placement, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position), Vector);
+        return true;
+    };
+    TestTrue(TEXT("Axis bulk edit applies"),
+        Service.ApplyBulk({Key0, Key1}, AxisEdit, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Axis edit keeps record 0 Y/Z"),
+        Bank->SceneEnvironment.Actors[0].Position.Equals(FVector(10.0, BeforeAxis0.Y, BeforeAxis0.Z)));
+    TestTrue(TEXT("Axis edit keeps record 1 Y/Z"),
+        Bank->SceneEnvironment.Actors[1].Position.Equals(FVector(10.0, BeforeAxis1.Y, BeforeAxis1.Z)));
+
+    // Property copy validates serialized layout compatibility first.
+    const int64 SavedSecondClass = Bank->SceneEnvironment.Actors[1].ClassId;
+    Bank->SceneEnvironment.Actors[1].ClassId = Bank->SceneEnvironment.Actors[0].ClassId;
+    Bank->SceneEnvironment.Actors[0].Models.Reset();
+    Bank->SceneEnvironment.Actors[0].Models.AddDefaulted();
+    Bank->SceneEnvironment.Actors[0].Models[0].MeshName = TEXT("MESH");
+    Bank->SceneEnvironment.Actors[1].Models.Reset();
+    FString CopyError;
+    TestFalse(TEXT("Copy rejects different fixed array counts"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models), CopyError));
+    TestTrue(TEXT("Copy count rejection explains the layout"), CopyError.Contains(TEXT("fixed")));
+    TestTrue(TEXT("Copy accepts a compatible record"),
+        CanCopyKyaActorField(Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[0],
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models), CopyError));
+    Bank->SceneEnvironment.Actors[0].ClassId = 0x0d;
+    Bank->SceneEnvironment.Actors[1].ClassId = 0x0f;
+    TestFalse(TEXT("Copy rejects a class-specific record across classes"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, PlatformWeight), CopyError));
+    TestTrue(TEXT("Copy still allows shared settings across classes"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance), CopyError));
+    Bank->SceneEnvironment.Actors[0].ClassId = 0;
+    Bank->SceneEnvironment.Actors[1].ClassId = SavedSecondClass;
+
+    // Behaviour copies require identical ids, nested presence flags and class.
+    Bank->SceneEnvironment.Actors[0].Behaviours.Reset();
+    Bank->SceneEnvironment.Actors[1].Behaviours.Reset();
+    Bank->SceneEnvironment.Actors[0].Behaviours.AddDefaulted();
+    Bank->SceneEnvironment.Actors[1].Behaviours.AddDefaulted();
+    Bank->SceneEnvironment.Actors[0].Behaviours[0].Id = 3;
+    Bank->SceneEnvironment.Actors[1].Behaviours[0].Id = 4;
+    Bank->SceneEnvironment.Actors[1].ClassId = Bank->SceneEnvironment.Actors[0].ClassId;
+    TestFalse(TEXT("Copy rejects different behaviour ids"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
+    Bank->SceneEnvironment.Actors[1].Behaviours[0].Id = 3;
+    Bank->SceneEnvironment.Actors[0].Behaviours[0].bHasTypedFxBehaviour = true;
+    Bank->SceneEnvironment.Actors[1].Behaviours[0].bHasTypedFxBehaviour = false;
+    TestFalse(TEXT("Copy rejects different nested presence flags"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
+    Bank->SceneEnvironment.Actors[1].Behaviours[0].bHasTypedFxBehaviour = true;
+    TestTrue(TEXT("Copy accepts identical behaviour records"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
+    Bank->SceneEnvironment.Actors[1].ClassId = 6;
+    TestFalse(TEXT("Copy rejects behaviour records across classes"), CanCopyKyaActorField(
+        Bank->SceneEnvironment.Actors[0], Bank->SceneEnvironment.Actors[1],
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours), CopyError));
+    Bank->SceneEnvironment.Actors[1].ClassId = SavedSecondClass;
+
+    // A rejected bulk edit mutates nothing.
+    FKyaActorEditPatch BadBulk;
+    BadBulk.MeshIndex = 9;
+    TestFalse(TEXT("Bulk edit rejects unresolved references"),
+        Service.ApplyBulk({Key0, Key1}, BadBulk, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Rejected bulk edit leaves record 0"), Bank->SceneEnvironment.Actors[0].SectorId, 3);
+    TestEqual(TEXT("Rejected bulk edit leaves record 1"), Bank->SceneEnvironment.Actors[1].SectorId, 3);
+    TestTrue(TEXT("Rejected bulk edit reports the record"), Error.Contains(TEXT("Record")));
+
+    Service.Reset();
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaSpatialRecordsTest, "Kya.Editor.SpatialRecords",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
