@@ -121,6 +121,12 @@ Last updated: 2026-11-12.
   transaction with the bank write verified, undone/redone, saved to a canonical
   package, reloaded from disk with `UPackageTools::ReloadPackages`, and the
   reloaded asset is exported and reimported with the moved position intact.
+- Milestone B gate (`Kya.Editor.MilestoneBGate`): a uniquely named freshly imported
+  main bank in an empty setup creates a level-set descriptor with no sectors, sector
+  discovery performs fresh imports (`Imported > 0`, no reuse) into an isolated folder,
+  associations/provenance match, the scene publishes positive vertex/triangle counts,
+  repeated discovery is idempotent, and a safe sector reimport of that fresh asset
+  keeps the same association and descriptor rows while bumping the edit generation.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -357,8 +363,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
-`Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance` and
-`Kya.Editor.MilestoneAGate` all `Success`.
+`Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
+`Kya.Editor.MilestoneAGate` and `Kya.Editor.MilestoneBGate` all `Success`.
 
 Coverage added by the new tests:
 

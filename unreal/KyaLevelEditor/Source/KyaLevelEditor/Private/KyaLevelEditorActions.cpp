@@ -495,6 +495,15 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         Result.Messages.Add(FString::Printf(TEXT("Source directory %s does not exist."), *SourceDirectory));
         return Result;
     }
+    const auto SameSourcePath = [](const FString& A, const FString& B)
+    {
+        FString NormalizedA = A;
+        FString NormalizedB = B;
+        FPaths::NormalizeFilename(NormalizedA);
+        FPaths::NormalizeFilename(NormalizedB);
+        return FPaths::ConvertRelativePathToFull(NormalizedA).Equals(
+            FPaths::ConvertRelativePathToFull(NormalizedB), ESearchCase::IgnoreCase);
+    };
 
     TArray<FString> Files;
     IFileManager::Get().FindFiles(Files, *(FPaths::Combine(SourceDirectory, TEXT("SECT*.BNK"))), true, false);
@@ -577,7 +586,7 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
         // not silently associate the wrong sector.
         if (UKyaLevelBank* Occupied = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath))
         {
-            if (!Occupied->SourceFilename.Equals(Filename, ESearchCase::IgnoreCase))
+            if (!SameSourcePath(Occupied->SourceFilename, Filename))
             {
                 ++Result.Ambiguous;
                 Result.MissingIds.Add(SectorId);
@@ -601,7 +610,7 @@ FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bIm
             AssetTools.ImportAssetTasks({Task});
         }
         UKyaLevelBank* Imported = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath);
-        if (!Imported || !Imported->SourceFilename.Equals(Filename, ESearchCase::IgnoreCase))
+        if (!Imported || !SameSourcePath(Imported->SourceFilename, Filename))
         {
             Result.MissingIds.Add(SectorId);
             Result.Messages.Add(FString::Printf(TEXT("Failed to import %s (destination provenance does not match)."),

@@ -11,6 +11,8 @@
 #include "KyaLevelActorFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
+#include "KyaLevelBankReimportHandler.h"
+#include "EditorFramework/AssetImportData.h"
 #include "KyaCameraStream.h"
 #include "KyaLevelEditorActions.h"
 #include "KyaMessageLog.h"
@@ -1638,6 +1640,153 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
             }
         }
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneBGateTest, "Kya.Editor.MilestoneBGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMilestoneBGateTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the Milestone B gate."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read Milestone B bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* MainBank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Milestone B main bank"), MainBank)) return false;
+    // A unique object name gives discovery a unique destination folder, so this gate
+    // always exercises fresh imports and never touches another run's project assets.
+    MainBank->Rename(*FString::Printf(TEXT("KyaMilestoneB_%s"),
+        *FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+    // Copy the sector fixtures into a unique source directory so discovery cannot
+    // reuse or reimport another run's project assets.
+    const FString SourceRoot = FPaths::Combine(FPaths::ProjectSavedDir(), FString::Printf(
+        TEXT("KyaMilestoneBSource_%s"), *FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+    IFileManager::Get().MakeDirectory(*SourceRoot, true);
+    TArray<FString> SectorFiles;
+    IFileManager::Get().FindFiles(SectorFiles, *(FPaths::Combine(FPaths::GetPath(Filename), TEXT("SECT*.BNK"))),
+        true, false);
+    for (const FString& SectorFile : SectorFiles)
+        IFileManager::Get().Copy(*(FPaths::Combine(SourceRoot, SectorFile)),
+            *(FPaths::Combine(FPaths::GetPath(Filename), SectorFile)), true, true);
+    MainBank->SourceFilename = FPaths::Combine(SourceRoot, TEXT("LEVEL.BNK"));
+    if (!MainBank->AssetImportData) MainBank->AssetImportData = NewObject<UAssetImportData>(MainBank);
+    MainBank->AssetImportData->Update(MainBank->SourceFilename);
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create Milestone B world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn Milestone B preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = MainBank;
+    Preview->bShowRebuildProgress = false;
+    Preview->OnConstruction(FTransform::Identity);
+
+    // Empty-project setup: create the descriptor, then discover every sibling sector.
+    FString Error;
+    UKyaLevelSet* LevelSet = KyaCreateLevelSetFromPreview(Preview, Error);
+    if (!TestNotNull(TEXT("Create level-set descriptor"), LevelSet))
+    {
+        Preview->Destroy();
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->LevelSet = LevelSet;
+    TestEqual(TEXT("A fresh descriptor has no sector associations"), LevelSet->Sectors.Num(), 0);
+
+    const FKyaSectorDiscoveryResult Discovery = KyaDiscoverSectors(Preview, true);
+    TestEqual(TEXT("Discovery finds no missing sectors"), Discovery.MissingIds.Num(), 0);
+    TestEqual(TEXT("Discovery finds no ambiguous sectors"), Discovery.Ambiguous, 0);
+    TestTrue(TEXT("Discovery imports or reuses sector banks"), Discovery.Imported + Discovery.Reused > 0);
+    TestTrue(TEXT("The empty setup imports fresh sector assets"), Discovery.Imported > 0);
+    TestEqual(TEXT("The empty setup reuses no pre-existing sectors"), Discovery.Reused, 0);
+    TestTrue(TEXT("The preview has sector banks"), Preview->SectorBanks.Num() > 0);
+    TestEqual(TEXT("Descriptor matches preview associations"),
+        LevelSet->Sectors.Num(), Preview->SectorBanks.Num());
+
+    // Provenance and filename-to-sector identity for every association.
+    bool bProvenance = true;
+    for (const TObjectPtr<UKyaLevelBank>& SectorBank : Preview->SectorBanks)
+    {
+        if (!SectorBank) { bProvenance = false; continue; }
+        bProvenance &= !SectorBank->SourceFilename.IsEmpty();
+        FString ProvenancePath = SectorBank->AssetImportData
+            ? SectorBank->AssetImportData->GetFirstFilename() : FString();
+        FString SourcePath = SectorBank->SourceFilename;
+        FPaths::NormalizeFilename(ProvenancePath);
+        FPaths::NormalizeFilename(SourcePath);
+        bProvenance &= !ProvenancePath.IsEmpty() &&
+            FPaths::ConvertRelativePathToFull(ProvenancePath)
+                .Equals(FPaths::ConvertRelativePathToFull(SourcePath), ESearchCase::IgnoreCase);
+        bProvenance &= SectorBank->HasCurrentImportSchema();
+    }
+    TestTrue(TEXT("Sector banks carry matching import provenance"), bProvenance);
+
+    Preview->OnConstruction(FTransform::Identity);
+    const auto CountPreviewGeometry = [Preview](int32& OutVertices, int32& OutTriangles)
+    {
+        OutVertices = 0;
+        OutTriangles = 0;
+        for (int32 Section = 0; Section < Preview->Mesh->GetNumSections(); ++Section)
+        {
+            if (const FProcMeshSection* MeshSection = Preview->Mesh->GetProcMeshSection(Section))
+            {
+                OutVertices += MeshSection->ProcVertexBuffer.Num();
+                OutTriangles += MeshSection->ProcIndexBuffer.Num() / 3;
+            }
+        }
+    };
+    int32 SceneVertices = 0, SceneTriangles = 0;
+    CountPreviewGeometry(SceneVertices, SceneTriangles);
+    TestTrue(TEXT("Discovered level reaches a usable scene with geometry"),
+        SceneVertices > 0 && SceneTriangles > 0);
+
+    // Re-running discovery is idempotent and creates no duplicates.
+    const int32 SectorCount = Preview->SectorBanks.Num();
+    const int32 DescriptorCount = LevelSet->Sectors.Num();
+    const FKyaSectorDiscoveryResult Second = KyaDiscoverSectors(Preview, true);
+    TestEqual(TEXT("Repeated discovery imports nothing"), Second.Imported, 0);
+    TestTrue(TEXT("Repeated discovery reuses associations"), Second.Reused > 0);
+    TestEqual(TEXT("Repeated discovery keeps sector count"), Preview->SectorBanks.Num(), SectorCount);
+    TestEqual(TEXT("Repeated discovery keeps descriptor rows"), LevelSet->Sectors.Num(), DescriptorCount);
+
+    // Safe reimport: sector identity and preview association survive, typed data refreshes.
+    if (Preview->SectorBanks.Num() > 0 && Preview->SectorBanks[0])
+    {
+        UKyaLevelBank* SectorBank = Preview->SectorBanks[0];
+        UKyaLevelBank* SectorBefore = SectorBank;
+        const uint32 GenerationBefore = uint32(SectorBank->EditGeneration);
+        // Only the fresh, this-run destination is allowed to be reimported; never touch
+        // another project asset's unsaved state.
+        if (TestTrue(TEXT("Reimport target belongs to the fresh destination"),
+            SectorBank->GetOutermost()->GetName().Contains(MainBank->GetName())))
+        {
+            if (SectorBank->GetOutermost()) SectorBank->GetOutermost()->SetDirtyFlag(false);
+            FKyaLevelBankReimportHandler Handler;
+            TestEqual(TEXT("Safe sector reimport succeeds"), (int32)Handler.Reimport(SectorBank),
+                (int32)EReimportResult::Succeeded);
+            TestTrue(TEXT("Reimport keeps the same sector asset"), Preview->SectorBanks.Contains(SectorBefore));
+            TestTrue(TEXT("Reimport bumps the edit generation"),
+                uint32(SectorBank->EditGeneration) != GenerationBefore);
+            TestEqual(TEXT("Reimport keeps the descriptor association count"),
+                LevelSet->Sectors.Num(), DescriptorCount);
+        }
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    IFileManager::Get().DeleteDirectory(*SourceRoot, false, true);
     return true;
 }
 
