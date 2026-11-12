@@ -69,6 +69,7 @@ target_sources(KyaPortTest PRIVATE "src/logging_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/player_input_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/debug_file_list_tests.cpp")
 target_sources(KyaPortTest PRIVATE "src/debug_workspace_tests.cpp")
+target_sources(KyaPortTest PRIVATE "src/bank_export_validation_tests.cpp")
 target_include_directories(KyaPortTest PRIVATE "../Windows/Renderer/ext/glm")
 target_compile_features(KyaPortTest PRIVATE cxx_std_20)
 

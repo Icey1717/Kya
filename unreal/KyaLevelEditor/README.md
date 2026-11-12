@@ -227,7 +227,20 @@ Details. `Export Kya Level` validates the linked set first and logs the same
 findings, plus an actionable entry for unsupported dependency banks, before any
 output is replaced. A blocking issue (including a writer rejection attributed to an
 actor record and property, such as a name that no longer fits its serialized slot)
-stops the export before staging, so no destination is replaced. Missing sectors name the expected
+stops the export before staging, so no destination is replaced.
+
+`Kya.Editor.RunningPortExportValidation` closes the loop with the Windows port: it
+edits one real actor through the shared service in a transient validation copy,
+exports the bank, then runs the port's `RunningPortExport.ValidatesEditedBank` gtest.
+That test reads the file through the port's own `edBank` container structures,
+parses the actor layout in `CActorManager`/`CActor::Create` order, and constructs the
+actor through the native `CActorFactory`/`CActor::Create` path to inspect the
+resulting position and visibility/culling values. The validation copy clears that
+actor's mesh/texture/collision references (meshless native create needs no scene
+resources); the edit under test is position/visibility/culling and the source bank
+is untouched. The Unreal test requires proof from a gtest XML report (`tests=1`, no
+failures/errors/skips) in addition to a zero exit code, and skips with a warning when
+`bin/WIN/KyaPortTest.exe` is not present. Missing sectors name the expected
 `SECT<id>.BNK` file; stale schemas, missing references, unsupported/missing geometry
 and export restrictions are reported the same way, so a problem can be inspected
 without searching raw logs. Sector discovery shows a cancellable progress dialog and

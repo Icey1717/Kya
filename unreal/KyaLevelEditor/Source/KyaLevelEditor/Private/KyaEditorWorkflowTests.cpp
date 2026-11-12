@@ -25,6 +25,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformProcess.h"
 #include "Editor.h"
 #include "Engine/Selection.h"
 #include "IMessageLogListing.h"
@@ -1352,6 +1353,157 @@ bool FKyaLightExportTest::RunTest(const FString& Parameters)
             FMath::IsNearlyEqual(Reimported->Lights[0].Multiplier, Bank->Lights[0].Multiplier, 1.0e-3f));
     }
     return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaRunningPortExportValidationTest, "Kya.Editor.RunningPortExportValidation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaRunningPortExportValidationTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the running-port export validation."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read running-port bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import running-port bank"), Bank)) return false;
+    if (!TestTrue(TEXT("Running-port bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    const int32 PortActorIndex = 0;
+    if (!TestTrue(TEXT("Running-port bank has a first actor"), Bank->SceneEnvironment.Actors.Num() > 0))
+        return false;
+    // The validation copy clears the mesh/texture/collision references so the native
+    // Create path needs no scene/file-manager resources; the edit under test is the
+    // position/visibility/culling values. The source bank asset is not modified.
+    FKyaActorPlacement& PortRecord = Bank->SceneEnvironment.Actors[PortActorIndex];
+    PortRecord.MeshIndex = -1;
+    PortRecord.TextureIndex = 0;
+    PortRecord.CollisionIndex = -1;
+    const FKyaActorPlacement& Original = PortRecord;
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    FKyaActorEditPatch Patch;
+    Patch.Position = Original.Position + FVector(1.25, -2.5, 3.75);
+    Patch.VisibilityDistance = 4321.0f;
+    Patch.CullingDistance = 8765.0f;
+    FString Error;
+    if (!TestTrue(TEXT("Apply running-port validation edit"),
+        Service.Apply(Service.MakeKey(Bank, PortActorIndex), Patch, EKyaEditNotify::Silent, &Error))) return false;
+    const FKyaActorPlacement& Edited = Bank->SceneEnvironment.Actors[PortActorIndex];
+
+    // Locate actor 0's serialized chunk for the port parser.
+    auto ReadWord = [&Input](int64 Offset) -> uint32 {
+        return uint32(Input[Offset]) | (uint32(Input[Offset + 1]) << 8) |
+            (uint32(Input[Offset + 2]) << 16) | (uint32(Input[Offset + 3]) << 24);
+    };
+    const FKyaBankEntry* SceneData = Bank->Entries.FindByPredicate(
+        [](const FKyaBankEntry& Entry) { return Entry.Type == 6 && Entry.Subtype == 1; });
+    if (!TestNotNull(TEXT("Running-port scene data entry"), SceneData)) return false;
+    int64 SetupOffset = SceneData->Offset + 20;
+    if (ReadWord(SceneData->Offset + 16)) SetupOffset += 12;
+    const int32 BackgroundId = int32(ReadWord(SetupOffset));
+    SetupOffset += 4 + (BackgroundId != -1 ? 4 : 0);
+    int64 CameraConfigOffset = 0, SceneValuesOffset = 0, MapEndOffset = 0, ScenarioEndOffset = 0, ObjectiveEndOffset = 0;
+    int64 WaypointOffset = 0;
+    int32 WaypointCount = 0;
+    TArray<FKyaConditionedOffsets> ScenarioOffsets;
+    TArray<FKyaObjectiveOffsets> ObjectiveOffsets;
+    TArray<FKyaPathOffsets> PathOffsets;
+    TArray<FKyaActorOffsets> ActorOffsets;
+    if (!TestTrue(TEXT("Locate running-port camera config"), KyaFindCameraConfig(Input, SetupOffset, CameraConfigOffset)) ||
+        !TestTrue(TEXT("Locate running-port scene values"), KyaFindSceneAfterCamera(Input, CameraConfigOffset, SceneValuesOffset)) ||
+        !TestTrue(TEXT("Locate running-port map end"), KyaFindMapEnd(Input, SceneValuesOffset + 12, MapEndOffset)) ||
+        !TestTrue(TEXT("Locate running-port scenario"), KyaReadConditionedOffsets(Input, MapEndOffset + 48, ScenarioOffsets, ScenarioEndOffset)) ||
+        !TestTrue(TEXT("Locate running-port objectives"), KyaReadObjectiveOffsets(Input, ScenarioEndOffset, ObjectiveOffsets, ObjectiveEndOffset)) ||
+        !TestTrue(TEXT("Locate running-port waypoints"), KyaFindWaypoints(Input, ObjectiveEndOffset, WaypointOffset, WaypointCount)) ||
+        !TestTrue(TEXT("Locate running-port paths"), KyaReadPathOffsets(Input, WaypointOffset, WaypointCount, SceneData->Offset, PathOffsets)) ||
+        !TestTrue(TEXT("Locate running-port actors"), KyaReadActorOffsets(Input, WaypointOffset, SceneData->Offset, ActorOffsets)) ||
+        !TestTrue(TEXT("Running-port actor offsets exist"), ActorOffsets.Num() > 0))
+        return false;
+
+    TArray<uint8> Exported;
+    FKyaBankExportDiagnostics Diagnostics;
+    if (!TestTrue(TEXT("Build running-port validation bytes"),
+        KyaBuildBankExportBytes(Bank, Exported, Diagnostics))) return false;
+    const FString OutputDirectory = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaRunningPortValidation"));
+    IFileManager::Get().MakeDirectory(*OutputDirectory, true);
+    const FString OutputFilename = FPaths::Combine(OutputDirectory, TEXT("LEVEL.BNK"));
+    if (!TestTrue(TEXT("Write running-port validation bank"), FFileHelper::SaveArrayToFile(Exported, *OutputFilename)))
+        return false;
+
+    const FString PortTest = FPaths::ConvertRelativePathToFull(
+        FPaths::Combine(FPaths::ProjectDir(), TEXT("../../bin/WIN/KyaPortTest.exe")));
+    if (!FPaths::FileExists(PortTest))
+    {
+        AddWarning(FString::Printf(TEXT("Running-port validation skipped: %s does not exist."), *PortTest));
+        return true;
+    }
+
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_BANK"), *OutputFilename);
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_ACTOR_OFFSET"),
+        *FString::Printf(TEXT("%lld"), ActorOffsets[PortActorIndex].Chunk));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_ACTOR_INDEX"),
+        *FString::Printf(TEXT("%d"), PortActorIndex));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_ACTOR_TYPE"),
+        *FString::Printf(TEXT("%lld"), Edited.ClassId));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_ACTOR_NAME"), *Edited.Name);
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_POSITION_X"), *FString::SanitizeFloat(Edited.Position.X));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_POSITION_Y"), *FString::SanitizeFloat(Edited.Position.Y));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_POSITION_Z"), *FString::SanitizeFloat(Edited.Position.Z));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_VISIBILITY"), *FString::SanitizeFloat(Edited.VisibilityDistance));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_CULLING"), *FString::SanitizeFloat(Edited.CullingDistance));
+    FPlatformMisc::SetEnvironmentVar(TEXT("KYA_VALIDATION_NATIVE_CREATE"), TEXT("1"));
+    AddInfo(FString::Printf(TEXT("KYA_VALIDATION_BANK=%s OFFSET=%lld TYPE=%lld NAME=%s POS=(%f,%f,%f) VIS=%f CULL=%f"),
+        *OutputFilename, ActorOffsets[PortActorIndex].Chunk, Edited.ClassId, *Edited.Name,
+        Edited.Position.X, Edited.Position.Y, Edited.Position.Z,
+        Edited.VisibilityDistance, Edited.CullingDistance));
+
+    const FString ResultXml = FPaths::Combine(OutputDirectory, TEXT("port-result.xml"));
+    IFileManager::Get().Delete(*ResultXml, false, true, true);
+    uint32 ProcessId = 0;
+    const FString Arguments = FString::Printf(
+        TEXT("--gtest_filter=RunningPortExport.ValidatesEditedBank --gtest_output=xml:%s"), *ResultXml);
+    FProcHandle Process = FPlatformProcess::CreateProc(*PortTest, *Arguments, true, false, false, &ProcessId, 0,
+        *FPaths::GetPath(PortTest), nullptr, nullptr);
+    if (!TestTrue(TEXT("Start the port validation test"), Process.IsValid()))
+    {
+        Service.Reset();
+        return false;
+    }
+    int32 ReturnCode = -1;
+    FPlatformProcess::WaitForProc(Process);
+    FPlatformProcess::GetProcReturnCode(Process, &ReturnCode);
+    FPlatformProcess::CloseProc(Process);
+
+    // Exit code alone is not enough: a stale binary that lacks the test would also
+    // exit zero. Require XML evidence that exactly this test ran and passed.
+    FString Xml;
+    const bool bXmlRead = FFileHelper::LoadFileToString(Xml, *ResultXml);
+    const bool bRanAndPassed = bXmlRead &&
+        Xml.Contains(TEXT("tests=\"1\"")) && Xml.Contains(TEXT("failures=\"0\"")) &&
+        Xml.Contains(TEXT("errors=\"0\"")) && Xml.Contains(TEXT("skipped=\"0\"")) &&
+        Xml.Contains(TEXT("name=\"RunningPortExport\""));
+    if (ReturnCode != 0 || !bRanAndPassed)
+    {
+        AddError(FString::Printf(TEXT("The running port did not validate the exported bank (exit %d, xml=%s). Bank: %s"),
+            ReturnCode, bRanAndPassed ? TEXT("ok") : TEXT("missing/invalid"), *OutputFilename));
+    }
+    else
+    {
+        AddInfo(FString::Printf(TEXT("Running port loaded the exported bank: %s (actor %d chunk %lld, native create)"),
+            *OutputFilename, PortActorIndex, ActorOffsets[PortActorIndex].Chunk));
+    }
+    TestTrue(TEXT("Running port executes and passes the exported-edit test"), bRanAndPassed);
+    TestEqual(TEXT("Running port validates the exported edit"), ReturnCode, 0);
+    Service.Reset();
+    return ReturnCode == 0 && bRanAndPassed;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaLevelActionsReportingTest, "Kya.Editor.LevelActionsReporting",

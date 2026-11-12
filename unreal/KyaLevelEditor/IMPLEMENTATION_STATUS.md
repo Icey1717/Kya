@@ -94,6 +94,14 @@ Last updated: 2026-11-12.
   unedited byte identity, all-class edits with per-field offset checks, and a
   selected-actor edit-service patch whose changed bytes are confined to that
   actor's serialized record.
+- Running-port validation: `Kya.Editor.RunningPortExportValidation` exports a
+  selected-actor edit from a transient validation copy (mesh/texture/collision
+  references cleared so no scene resources are needed) and runs the port's
+  `RunningPortExport.ValidatesEditedBank` test. It checks the native `edBank`
+  container and `CActorManager`/`CActor::Create` layout, and constructs the actor
+  through `CActorFactory`/`CActor::Create` to inspect the resulting position and
+  visibility/culling values. The harness requires matching gtest XML evidence
+  (one test, no failures/errors/skips) so a stale binary cannot pass.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -328,8 +336,9 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.HierarchyGeometry`, `Kya.Editor.SceneVisualizers`,
 `Kya.Editor.LightExport`, `Kya.Editor.LevelSettings`, `Kya.Editor.AsyncDecode` and
 `Kya.Editor.MessageLogLinks`, `Kya.Editor.AuthoringVisibility`,
-`Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting` and
-`Kya.Bank.SelectedActorRoundTrip` all `Success`.
+`Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
+`Kya.Bank.SelectedActorRoundTrip` and `Kya.Editor.RunningPortExportValidation` all
+`Success`.
 
 Coverage added by the new tests:
 
