@@ -3,6 +3,7 @@
 #if WITH_EDITOR
 
 #include "KyaLevelPreview.h"
+#include "KyaActorCatalog.h"
 #include "KyaExportedActorFields.h"
 #include "Containers/Ticker.h"
 
@@ -148,11 +149,24 @@ bool ValidateKyaActorPlacement(const FKyaActorPlacement& Placement, FString& Out
         }
     }
     if (Placement.MeshIndex < -1 || Placement.TextureIndex < -1 || Placement.CollisionIndex < -1 ||
-        Placement.SectorId < -1)
+        Placement.SectorId < -1 || Placement.DefaultBehaviourId < -1)
     {
         OutError = TEXT("Actor references must be -1 (none) or a non-negative index.");
         return false;
     }
+    // Serialized widths: fields stored as int64 are written as unsigned 32-bit words,
+    // while int32 fields preserve their full bit pattern (0x80000000 imports as a
+    // negative int32 and must stay editable).
+    const auto RequireU32 = [&OutError](int64 Value, const TCHAR* Label) -> bool
+    {
+        if (Value >= 0 && Value <= MAX_uint32) return true;
+        OutError = FString::Printf(TEXT("%s must fit the serialized unsigned 32-bit field (0..%u)."), Label,
+            MAX_uint32);
+        return false;
+    };
+    if (!RequireU32(Placement.LightingFlags, TEXT("Lighting flags")) ||
+        !RequireU32(Placement.HashCode, TEXT("Hash code")))
+        return false;
     return true;
 }
 
@@ -376,6 +390,80 @@ bool FKyaLevelEditService::Apply(const FKyaActorRecordKey& Key, const FKyaActorE
     {
         if (OutError) *OutError = Error;
         return false;
+    }
+
+    // Validate changed references independently of how the patch was built (typed
+    // fields or a Custom presentation patch from Details), so Details edits cannot
+    // commit an unresolved reference.
+    if (Candidate.MeshIndex != Placement->MeshIndex)
+    {
+        const FKyaBankReference Mesh = ResolveKyaModelReference(*Bank, Candidate.MeshIndex);
+        if (!Mesh.bResolved)
+        {
+            if (OutError) *OutError = Mesh.Warning;
+            return false;
+        }
+    }
+    if (Candidate.TextureIndex != Placement->TextureIndex)
+    {
+        const FKyaBankReference Texture = ResolveKyaTextureReference(*Bank, Candidate.TextureIndex);
+        if (!Texture.bResolved)
+        {
+            if (OutError) *OutError = Texture.Warning;
+            return false;
+        }
+    }
+    if (Candidate.SectorId != Placement->SectorId && Candidate.SectorId < -1)
+    {
+        if (OutError) *OutError = TEXT("Sector id must be -1 (global) or a non-negative sector id.");
+        return false;
+    }
+    if (Candidate.DefaultBehaviourId != Placement->DefaultBehaviourId &&
+        (Candidate.DefaultBehaviourId < -1 || Candidate.DefaultBehaviourId >= Candidate.Behaviours.Num()))
+    {
+        if (OutError) *OutError = FString::Printf(
+            TEXT("Default behaviour %d does not exist in this actor's %d behaviour record(s)."),
+            Candidate.DefaultBehaviourId, Candidate.Behaviours.Num());
+        return false;
+    }
+    for (const FKyaReferenceField& Field : GetKyaReferenceFields())
+    {
+        if (Field.Kind != EKyaReferenceKind::Actor && Field.Kind != EKyaReferenceKind::Waypoint &&
+            Field.Kind != EKyaReferenceKind::Path) continue;
+        if (Field.ClassId != -1 && Field.ClassId != Candidate.ClassId) continue;
+        const int64 OldValue = GetKyaNumericField(*Placement, Field.PropertyName);
+        const int64 NewValue = GetKyaNumericField(Candidate, Field.PropertyName);
+        if (OldValue == NewValue) continue;
+        int32 Limit = 0;
+        switch (Field.Kind)
+        {
+        case EKyaReferenceKind::Actor: Limit = Bank->SceneEnvironment.Actors.Num(); break;
+        case EKyaReferenceKind::Waypoint: Limit = Bank->SceneEnvironment.Waypoints.Num(); break;
+        default: Limit = Bank->SceneEnvironment.Paths.Num(); break;
+        }
+        if (NewValue != -1 && (NewValue < 0 || NewValue >= Limit))
+        {
+            if (OutError) *OutError = FString::Printf(
+                TEXT("%s %s: %lld does not resolve to a %s in this bank (%d available)."),
+                *Field.PropertyName.ToString(), *DescribeKyaReferenceKind(Field.Kind).ToString(), NewValue,
+                Field.Kind == EKyaReferenceKind::Actor ? TEXT("actor") :
+                    Field.Kind == EKyaReferenceKind::Waypoint ? TEXT("waypoint") : TEXT("path"), Limit);
+            return false;
+        }
+    }
+    // The writer requires Align(length + 1, 4) to equal the original name-slot
+    // capacity, so a name that changes the 4-byte bucket cannot be exported.
+    if (Candidate.Name != Placement->Name)
+    {
+        const auto Align4 = [](int32 Value) { return (Value + 3) & ~3; };
+        if (Align4(Candidate.Name.Len() + 1) != Align4(Placement->Name.Len() + 1))
+        {
+            if (OutError) *OutError = FString::Printf(
+                TEXT("Actor name changes the serialized 4-byte length bucket (%d -> %d); the writer requires "
+                    "Align(length + 1, 4) to equal the original slot capacity."),
+                Align4(Placement->Name.Len() + 1), Align4(Candidate.Name.Len() + 1));
+            return false;
+        }
     }
 
     Bank->Modify();

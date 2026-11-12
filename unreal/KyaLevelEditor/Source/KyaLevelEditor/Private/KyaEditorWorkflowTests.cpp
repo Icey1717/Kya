@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #pragma warning(disable : 4883)
 #include "KyaActorEditService.h"
+#include "KyaActorCatalog.h"
 #include "KyaActorHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
@@ -768,6 +769,184 @@ bool FKyaExportValidationTest::RunTest(const FString& Parameters)
         AddWarning(TEXT("Set KYA_TEST_BANK to run the real-bank export validation."));
     }
     IFileManager::Get().DeleteDirectory(*TempDirectory, false, true);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaActorCatalogTest, "Kya.Editor.ActorCatalog",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
+{
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    for (int32 Index = 0; Index < 2; ++Index)
+    {
+        FKyaBankEntry& MeshEntry = Bank->Entries.AddDefaulted_GetRef();
+        MeshEntry.Type = 4;
+        MeshEntry.Subtype = 1;
+    }
+    for (int32 Index = 0; Index < 3; ++Index)
+    {
+        FKyaBankEntry& TextureEntry = Bank->Entries.AddDefaulted_GetRef();
+        TextureEntry.Type = 5;
+        TextureEntry.Subtype = 1;
+    }
+
+    // Recovered class and behaviour labels, with explicit unknown labels.
+    TestEqual(TEXT("Moving platform class label"), GetKyaActorClassLabel(0x0d), FString(TEXT("Moving platform (13)")));
+    TestTrue(TEXT("Unknown class is labelled"), GetKyaActorClassLabel(0x7f).Contains(TEXT("Unknown")));
+    TestTrue(TEXT("Class notes are recovered"), GetKyaActorClassInfo(0x0d).Notes.Contains(TEXT("carried actors")));
+    TestEqual(TEXT("Bridge wind behaviour label"), GetKyaBehaviourLabel(0x17, 3), FString(TEXT("Bridge wind (3)")));
+    TestEqual(TEXT("Switch multi-condition label"), GetKyaBehaviourLabel(0x11, 5),
+        FString(TEXT("Switch multi-condition (5)")));
+    TestTrue(TEXT("Unknown behaviour is labelled"), GetKyaBehaviourLabel(0x17, 4).Contains(TEXT("unknown")));
+
+    // Bank-local reference resolution and pickers.
+    TestEqual(TEXT("Model ordinals follow type-4 entries"), GetKyaModelOrdinals(*Bank).Num(), 2);
+    TestEqual(TEXT("Texture ordinals follow type-5 entries"), GetKyaTextureBankOrdinals(*Bank).Num(), 3);
+    const FKyaBankReference Mesh0 = ResolveKyaModelReference(*Bank, 0);
+    TestTrue(TEXT("Mesh 0 resolves"), Mesh0.bResolved);
+    TestEqual(TEXT("Mesh 0 label"), Mesh0.Label, FString(TEXT("Mesh #0")));
+    const FKyaBankReference MeshMissing = ResolveKyaModelReference(*Bank, 5);
+    TestFalse(TEXT("Mesh 5 does not resolve"), MeshMissing.bResolved);
+    TestTrue(TEXT("Unresolved mesh explains why"), MeshMissing.Warning.Contains(TEXT("no type-4 mesh entry")));
+    TestTrue(TEXT("Alternate texture bank resolves"), ResolveKyaTextureReference(*Bank, -1).bResolved);
+    TestEqual(TEXT("Texture bank label"), ResolveKyaTextureReference(*Bank, 1).Label, FString(TEXT("Texture bank #1")));
+    TestFalse(TEXT("Missing texture bank does not resolve"), ResolveKyaTextureReference(*Bank, 9).bResolved);
+
+    TMap<int32, FString> LoadedSectors;
+    LoadedSectors.Add(7, TEXT("SECT7"));
+    TestEqual(TEXT("Loaded sector label"), GetKyaSectorLabel(LoadedSectors, 7), FString(TEXT("Sector 7 (SECT7)")));
+    TestEqual(TEXT("Missing sector label"), GetKyaSectorLabel(LoadedSectors, 9), FString(TEXT("Sector 9 (not loaded)")));
+    TestEqual(TEXT("Global sector label"), GetKyaSectorLabel(LoadedSectors, -1), FString(TEXT("Global (no sector)")));
+
+    FKyaActorPlacement Placement = Bank->SceneEnvironment.Actors[0];
+    Placement.ClassId = 0x17;
+    Placement.Behaviours.Reset();
+    FKyaActorBehaviour& Behaviour = Placement.Behaviours.AddDefaulted_GetRef();
+    Behaviour.Id = 3;
+    const TArray<FKyaBehaviourOption> BehaviourOptions = GetKyaBehaviourOptions(Placement);
+    if (TestEqual(TEXT("Behaviour option count"), BehaviourOptions.Num(), 1))
+        TestEqual(TEXT("Behaviour option label"), BehaviourOptions[0].Label,
+            FString(TEXT("Behaviour 0: Bridge wind (3)")));
+
+    // Reference scope validation: mesh/texture/sector are blocking, behaviour is a
+    // warning shown inline in Details.
+    Placement.MeshIndex = 5;
+    Placement.TextureIndex = 9;
+    Placement.SectorId = -2;
+    Placement.DefaultBehaviourId = 4;
+    const TArray<FKyaActorReferenceIssue> Issues = ValidateKyaActorReferences(*Bank, Placement);
+    const auto FindIssue = [&Issues](const TCHAR* Field, bool bBlocking)
+    {
+        return Issues.ContainsByPredicate([Field, bBlocking](const FKyaActorReferenceIssue& Issue)
+        {
+            return Issue.Field == Field && Issue.bBlocking == bBlocking;
+        });
+    };
+    TestTrue(TEXT("Unresolved mesh is blocking"), FindIssue(TEXT("MeshIndex"), true));
+    TestTrue(TEXT("Unresolved texture is blocking"), FindIssue(TEXT("TextureIndex"), true));
+    TestTrue(TEXT("Invalid sector id is blocking"), FindIssue(TEXT("SectorId"), true));
+    TestTrue(TEXT("Out-of-range default behaviour is a warning"), FindIssue(TEXT("DefaultBehaviourId"), false));
+
+    // Scalar reference fields are class-gated and resolve inside the bank.
+    EKyaReferenceKind Kind = EKyaReferenceKind::Sector;
+    TestTrue(TEXT("Micken waypoint field is a waypoint reference"),
+        FindKyaReferenceField(TEXT("MickenWaypointIndex"), Kind) && Kind == EKyaReferenceKind::Waypoint);
+    TestTrue(TEXT("Bridge waypoint field is a waypoint reference"),
+        FindKyaReferenceField(TEXT("BridgeWaypointA"), Kind) && Kind == EKyaReferenceKind::Waypoint);
+    TestFalse(TEXT("Non-reference fields are not reference fields"), FindKyaReferenceField(TEXT("Position"), Kind));
+    TestTrue(TEXT("Reference kinds have descriptions"),
+        !DescribeKyaReferenceKind(EKyaReferenceKind::Actor).IsEmpty());
+
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+    FKyaActorPlacement ClassPlacement = Placement;
+    ClassPlacement.ClassId = 0x07;
+    ClassPlacement.MickenWaypointIndex = 5;
+    TestTrue(TEXT("Out-of-range class reference is reported"),
+        ValidateKyaActorReferences(*Bank, ClassPlacement).ContainsByPredicate(
+            [](const FKyaActorReferenceIssue& Issue)
+            {
+                return Issue.Field == TEXT("MickenWaypointIndex") && Issue.bBlocking;
+            }));
+    ClassPlacement.ClassId = 0x0d;
+    TestFalse(TEXT("Class-specific references are ignored for other classes"),
+        ValidateKyaActorReferences(*Bank, ClassPlacement).ContainsByPredicate(
+            [](const FKyaActorReferenceIssue& Issue)
+            {
+                return Issue.Field == TEXT("MickenWaypointIndex");
+            }));
+    TestTrue(TEXT("Numeric reference fields can be written"),
+        SetKyaNumericField(ClassPlacement, TEXT("MickenWaypointIndex"), 0));
+    TestEqual(TEXT("Numeric reference fields can be read"),
+        GetKyaNumericField(ClassPlacement, TEXT("MickenWaypointIndex")), int64(0));
+
+
+    // The edit service rejects bad references before mutating the record.
+    const FKyaActorRecordKey Key = Service.MakeKey(Bank, 0);
+    FString Error;
+    FKyaActorEditPatch Patch;
+    Patch.MeshIndex = 5;
+    TestFalse(TEXT("Service rejects an unresolved mesh"), Service.Apply(Key, Patch, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Mesh rejection explains scope"), Error.Contains(TEXT("type-4 mesh entry")));
+    Patch.MeshIndex = 0;
+    TestTrue(TEXT("Service accepts a resolved mesh"), Service.Apply(Key, Patch, EKyaEditNotify::Silent, &Error));
+    TestEqual(TEXT("Mesh index written"), Bank->SceneEnvironment.Actors[0].MeshIndex, 0);
+    FKyaActorEditPatch BadSector;
+    BadSector.SectorId = -2;
+    TestFalse(TEXT("Service rejects an invalid sector id"),
+        Service.Apply(Key, BadSector, EKyaEditNotify::Silent, &Error));
+    FKyaActorEditPatch BadBehaviour;
+    BadBehaviour.DefaultBehaviourId = 4;
+    TestFalse(TEXT("Service rejects an out-of-range default behaviour"),
+        Service.Apply(Key, BadBehaviour, EKyaEditNotify::Silent, &Error));
+
+    // Details edits arrive as Custom patches; changed references are still validated.
+    Bank->SceneEnvironment.Actors[0].MeshIndex = -1;
+    FKyaActorPlacement DetailsCopy = Bank->SceneEnvironment.Actors[0];
+    DetailsCopy.MeshIndex = 5;
+    FKyaActorEditPatch DetailsPatch;
+    TestTrue(TEXT("Details patch builds for a reference field"),
+        KyaMakePlacementPropertyPatch(DetailsCopy, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MeshIndex),
+            DetailsPatch, &Error));
+    TestFalse(TEXT("Service rejects a Details patch with an unresolved mesh"),
+        Service.Apply(Key, DetailsPatch, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Details reference rejection explains scope"), Error.Contains(TEXT("type-4 mesh entry")));
+
+    // Serialized widths and name-slot buckets are validated before mutation.
+    FKyaActorEditPatch NegativeFlags;
+    NegativeFlags.LightingFlags = -1;
+    TestFalse(TEXT("Service rejects a negative lighting-flags value"),
+        Service.Apply(Key, NegativeFlags, EKyaEditNotify::Silent, &Error));
+    Bank->SceneEnvironment.Actors[0].Name = TEXT("FIRST");
+    FKyaActorPlacement SameBucket = Bank->SceneEnvironment.Actors[0];
+    SameBucket.Name = TEXT("FIRS");
+    FKyaActorEditPatch SameBucketPatch;
+    TestTrue(TEXT("Same-bucket name patch builds"),
+        KyaMakePlacementPropertyPatch(SameBucket, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name),
+            SameBucketPatch, &Error));
+    TestTrue(TEXT("Service accepts a name in the same 4-byte bucket"),
+        Service.Apply(Key, SameBucketPatch, EKyaEditNotify::Silent, &Error));
+    FKyaActorPlacement SmallerBucket = Bank->SceneEnvironment.Actors[0];
+    SmallerBucket.Name = TEXT("FIR");
+    FKyaActorEditPatch SmallerBucketPatch;
+    TestTrue(TEXT("Smaller-bucket name patch builds"),
+        KyaMakePlacementPropertyPatch(SmallerBucket, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Name),
+            SmallerBucketPatch, &Error));
+    TestFalse(TEXT("Service rejects a name that changes the 4-byte bucket"),
+        Service.Apply(Key, SmallerBucketPatch, EKyaEditNotify::Silent, &Error));
+    TestTrue(TEXT("Name slot rejection explains the writer rule"), Error.Contains(TEXT("Align")));
+
+    // int32 serialized fields keep their full bit pattern (0x80000000 is a valid value).
+    FKyaActorPlacement HighBits = Bank->SceneEnvironment.Actors[0];
+    HighBits.ActorFlags = MIN_int32;
+    HighBits.AnimationLayers = MIN_int32;
+    HighBits.Field40 = MIN_int32;
+    FString WidthError;
+    TestTrue(TEXT("int32 bit patterns are accepted"), ValidateKyaActorPlacement(HighBits, WidthError));
+
+    Service.Reset();
     return true;
 }
 

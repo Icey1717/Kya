@@ -228,6 +228,21 @@ remain on the actor for script compatibility but are hidden from Details. Refere
 pickers, named behaviour labels, mixed-value multi-editing and reset-to-imported
 actions are not implemented yet.
 
+The identity section shows the recovered game class name and numeric id (for
+example `Moving platform (13)`, `Unknown class 127`), with the recovered notes as a
+tooltip and a Browse button for the bank asset. Recovered class-specific behaviour
+names appear in the default-behaviour picker and in a behaviour summary; ids without
+a recovered name are labelled `Behaviour N (unknown)` instead of being guessed. The
+References section provides searchable pickers for the sector (loaded sector ids),
+model mesh ordinals, texture banks, default behaviour, and the class-specific scalar
+actor/waypoint/path fields, always showing the raw serialized id. Actor references
+have a Select button that selects the referenced actor handle. Unresolved references
+are listed inline with the exact reason, and updates to mesh, texture or sector
+references are rejected before the bank changes when they would not resolve. Flag
+widgets show understood bits (for example lighting bit 1 = ignore ground lighting)
+and always display the raw value; unknown bits are preserved exactly. Fixed-layout
+arrays and nested reference arrays still expose raw element ids only.
+
 Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
 `CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while

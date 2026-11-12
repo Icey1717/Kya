@@ -6,15 +6,116 @@
 #include "IDetailPropertyRow.h"
 #include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Editor.h"
 #include "ScopedTransaction.h"
+#include "KyaActorCatalog.h"
 #include "KyaActorEditService.h"
 #include "KyaActorHandle.h"
+#include "KyaDetailsWidgets.h"
 #include "KyaLevelBank.h"
+#include "KyaLevelPreview.h"
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
 #include "Misc/TransactionObjectEvent.h"
+
+namespace
+{
+FText MakeFieldToolTip(const FProperty* Property, const FKyaFieldCapability& Capability)
+{
+    FString Unit;
+    const FName Name = Property->GetFName();
+    if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Position))
+        Unit = TEXT("Game-space position in metres; Y is up and Z is forward.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Rotation))
+        Unit = TEXT("Stored Euler angles in radians. Yaw-only classes ignore pitch and roll.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Scale))
+        Unit = TEXT("Per-axis game-space scale.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, VisibilityDistance) ||
+        Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, CullingDistance) ||
+        Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Clipping))
+        Unit = TEXT("Native distance in game units (metres).");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, SectorId))
+        Unit = TEXT("Sector bank id; -1 means global and no sector.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MeshIndex) ||
+        Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TextureIndex))
+        Unit = TEXT("Bank-local ordinal; -1 selects none/alternate.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId))
+        Unit = TEXT("Index into this actor's Behaviours array.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, LightingValue))
+        Unit = TEXT("Lighting multiplier applied by SetupLighting.");
+    else if (Name == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, BoundingSphere))
+        Unit = TEXT("Game-space bounding sphere (position + radius).");
+
+    FString Text = DescribeKyaFieldCapability(Capability.Kind).ToString();
+    if (!Unit.IsEmpty()) Text += TEXT("\n") + Unit;
+    if (!Capability.Reason.IsEmpty()) Text += TEXT("\n") + Capability.Reason;
+    return FText::FromString(Text);
+}
+
+TSharedPtr<FKyaPickerOption> MakePickerOption(int32 Value, const FString& Label, const FString& ToolTip = FString())
+{
+    TSharedPtr<FKyaPickerOption> Option = MakeShared<FKyaPickerOption>();
+    Option->Value = Value;
+    Option->Label = Label;
+    Option->ToolTip = ToolTip;
+    return Option;
+}
+
+TArray<TSharedPtr<FKyaPickerOption>> MakeIndexOptions(EKyaReferenceKind Kind, const UKyaLevelBank& Bank)
+{
+    TArray<TSharedPtr<FKyaPickerOption>> Options;
+    Options.Add(MakePickerOption(-1, TEXT("None"), TEXT("No reference.")));
+    switch (Kind)
+    {
+    case EKyaReferenceKind::Actor:
+        for (int32 Index = 0; Index < Bank.SceneEnvironment.Actors.Num(); ++Index)
+        {
+            const FKyaActorPlacement& Actor = Bank.SceneEnvironment.Actors[Index];
+            Options.Add(MakePickerOption(Index, FString::Printf(TEXT("Actor %d: %s [class %lld]"), Index,
+                Actor.Name.IsEmpty() ? TEXT("<unnamed>") : *Actor.Name, Actor.ClassId)));
+        }
+        break;
+    case EKyaReferenceKind::Waypoint:
+        for (int32 Index = 0; Index < Bank.SceneEnvironment.Waypoints.Num(); ++Index)
+        {
+            const FVector& Position = Bank.SceneEnvironment.Waypoints[Index].Position;
+            Options.Add(MakePickerOption(Index, FString::Printf(TEXT("Waypoint %d (%.1f, %.1f, %.1f)"), Index,
+                Position.X, Position.Y, Position.Z)));
+        }
+        break;
+    case EKyaReferenceKind::Path:
+        for (int32 Index = 0; Index < Bank.SceneEnvironment.Paths.Num(); ++Index)
+            Options.Add(MakePickerOption(Index, FString::Printf(TEXT("Path %d (%d points)"), Index,
+                Bank.SceneEnvironment.Paths[Index].Points.Num())));
+        break;
+    default:
+        break;
+    }
+    return Options;
+}
+
+FString MakeIndexTip(EKyaReferenceKind Kind, int64 Value, const UKyaLevelBank& Bank)
+{
+    if (Value == -1) return TEXT("No reference.");
+    int32 Limit = 0;
+    const TCHAR* Name = TEXT("record");
+    switch (Kind)
+    {
+    case EKyaReferenceKind::Actor: Limit = Bank.SceneEnvironment.Actors.Num(); Name = TEXT("actor"); break;
+    case EKyaReferenceKind::Waypoint: Limit = Bank.SceneEnvironment.Waypoints.Num(); Name = TEXT("waypoint"); break;
+    case EKyaReferenceKind::Path: Limit = Bank.SceneEnvironment.Paths.Num(); Name = TEXT("path"); break;
+    default: break;
+    }
+    return Value >= 0 && Value < Limit
+        ? FString::Printf(TEXT("%s %lld resolves."), Name, Value)
+        : FString::Printf(TEXT("%s %lld does not resolve to a %s in this bank (%d available)."),
+            Name, Value, Name, Limit);
+}
+}
 
 TSharedRef<IDetailCustomization> FKyaActorDetailsCustomization::MakeInstance()
 {
@@ -25,6 +126,12 @@ FKyaActorPlacement* FKyaActorDetailsCustomization::ScopeRecord() const
 {
     return PlacementScope.IsValid()
         ? reinterpret_cast<FKyaActorPlacement*>(PlacementScope->GetStructMemory()) : nullptr;
+}
+
+FText FKyaActorDetailsCustomization::GetInlineErrorText() const
+{
+    return FText::FromString(InlineError.IsEmpty()
+        ? TEXT("No validation errors for the last edit.") : InlineError);
 }
 
 void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
@@ -113,9 +220,7 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
         IDetailPropertyRow* Row = Category.AddExternalStructureProperty(PlacementScope, Property->GetFName());
         if (!Row) continue;
         Row->DisplayName(FText::FromString(Property->GetDisplayNameText().ToString()));
-        if (!Capability.Reason.IsEmpty())
-            Row->ToolTip(FText::FromString(FString::Printf(TEXT("%s\n%s"),
-                *DescribeKyaFieldCapability(Capability.Kind).ToString(), *Capability.Reason)));
+        Row->ToolTip(MakeFieldToolTip(Property, Capability));
         // Nested edits (array elements, sub-struct fields) notify the child handle.
         if (TSharedPtr<IPropertyHandle> PropertyHandle = Row->GetPropertyHandle())
         {
@@ -126,6 +231,396 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
                 this, &FKyaActorDetailsCustomization::OnPlacementPropertyChanged, PropertyName));
         }
     }
+
+    AKyaActorHandle* Actor = Handle.Get();
+    UKyaLevelBank* Bank = Actor->Bank;
+    const FKyaActorPlacement& Record = Bank->SceneEnvironment.Actors[Actor->ActorIndex];
+
+    // --- Class and identity -------------------------------------------------------
+    IDetailCategoryBuilder& Identity = DetailBuilder.EditCategory("Kya|Identity",
+        FText::FromString(TEXT("Kya Identity")), ECategoryPriority::Important);
+    const FKyaActorClassInfo ClassInfo = GetKyaActorClassInfo(Record.ClassId);
+    Identity.AddCustomRow(FText::FromString(TEXT("Class")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Game class")))
+        ]
+        .ValueContent()
+        [
+            SNew(STextBlock)
+            .Text(FText::FromString(GetKyaActorClassLabel(Record.ClassId)))
+            .ToolTipText(FText::FromString(ClassInfo.Notes.IsEmpty()
+                ? TEXT("Recovered game class name and numeric id.") : ClassInfo.Notes))
+        ];
+    Identity.AddCustomRow(FText::FromString(TEXT("Bank")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Bank asset")))
+        ]
+        .ValueContent()
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot().FillWidth(1.0f).VAlign(VAlign_Center)
+            [
+                SNew(STextBlock).Text(FText::FromString(Bank->GetPathName()))
+            ]
+            + SHorizontalBox::Slot().AutoWidth()
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Browse")))
+                .ToolTipText(FText::FromString(TEXT("Select the bank asset in the Content Browser.")))
+                .OnClicked_Lambda([Bank]()
+                {
+                    if (GEditor)
+                    {
+                        TArray<UObject*> Objects;
+                        Objects.Add(Bank);
+                        GEditor->SyncBrowserToObjects(Objects);
+                    }
+                    return FReply::Handled();
+                })
+            ]
+        ];
+
+    // --- References ---------------------------------------------------------------
+    IDetailCategoryBuilder& References = DetailBuilder.EditCategory("Kya|References",
+        FText::FromString(TEXT("Kya References")), ECategoryPriority::Important);
+
+    const auto AddPickerRow = [this, &References](const FString& Label, TArray<TSharedPtr<FKyaPickerOption>> Options,
+        int32 CurrentValue, const FString& Tip, FName PropertyName, TFunction<void(FKyaActorPlacement&, int32)> Mutate,
+        TFunction<void()> SelectReferenced = nullptr)
+    {
+        TSharedRef<SHorizontalBox> Row = SNew(SHorizontalBox);
+        Row->AddSlot().FillWidth(1.0f)
+        [
+            SNew(SKyaReferencePicker)
+            .Options(Options)
+            .CurrentValue(CurrentValue)
+            .GetCurrentValue([this, PropertyName]()
+            {
+                FKyaActorPlacement* Scope = ScopeRecord();
+                return Scope ? int32(GetKyaNumericField(*Scope, PropertyName)) : -1;
+            })
+            .ResolvedLabel(FText::FromString(Tip))
+            .OnValuePicked(FOnKyaPickerValuePicked::CreateLambda([this, PropertyName, Mutate](int32 Value)
+            {
+                if (FKyaActorPlacement* Scope = ScopeRecord())
+                {
+                    FKyaActorPlacement Modified = *Scope;
+                    Mutate(Modified, Value);
+                    ApplyPlacementCopy(Modified, PropertyName);
+                }
+            }))
+        ];
+        if (SelectReferenced)
+        {
+            Row->AddSlot().AutoWidth().Padding(4.0f, 0.0f)
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Select")))
+                .ToolTipText(FText::FromString(TEXT("Select the referenced actor in the viewport and Outliner.")))
+                .OnClicked_Lambda([SelectReferenced]()
+                {
+                    SelectReferenced();
+                    return FReply::Handled();
+                })
+            ];
+        }
+        References.AddCustomRow(FText::FromString(Label))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(Label)).ToolTipText(FText::FromString(Tip))
+            ]
+            .ValueContent().MinDesiredWidth(320.0f)
+            [
+                Row
+            ];
+    };
+
+    // Sector picker: loaded sector banks (descriptor-authoritative ids) plus the
+    // current value even when no bank provides it.
+    TArray<TSharedPtr<FKyaPickerOption>> SectorOptions;
+    SectorOptions.Add(MakePickerOption(-1, TEXT("Global (no sector)"),
+        TEXT("Actor belongs to the whole level rather than one sector.")));
+    TMap<int32, FString> SectorNames;
+    if (AKyaLevelPreview* Preview = Actor->Preview.Get())
+    {
+        for (const TObjectPtr<UKyaLevelBank>& Sector : Preview->SectorBanks)
+        {
+            if (!Sector) continue;
+            const int32 SectorId = Preview->ResolveSectorId(*Sector);
+            if (!SectorNames.Contains(SectorId)) SectorNames.Add(SectorId, Sector->GetName());
+        }
+    }
+    for (const TPair<int32, FString>& Pair : SectorNames)
+        SectorOptions.Add(MakePickerOption(Pair.Key, FString::Printf(TEXT("Sector %d (%s)"), Pair.Key, *Pair.Value)));
+    if (Record.SectorId >= 0 && !SectorNames.Contains(Record.SectorId))
+        SectorOptions.Add(MakePickerOption(Record.SectorId,
+            FString::Printf(TEXT("Sector %d (not loaded)"), Record.SectorId),
+            TEXT("No loaded sector bank claims this id; the association is kept as authored.")));
+    AddPickerRow(TEXT("Sector"), SectorOptions, Record.SectorId,
+        GetKyaSectorLabel(SectorNames, Record.SectorId), GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, SectorId),
+        [](FKyaActorPlacement& Placement, int32 Value) { Placement.SectorId = Value; });
+
+    // Mesh picker: bank-local type-4 mesh ordinals.
+    TArray<TSharedPtr<FKyaPickerOption>> MeshOptions;
+    MeshOptions.Add(MakePickerOption(-1, TEXT("None"), TEXT("This actor has no model mesh.")));
+    for (const int32 Ordinal : GetKyaModelOrdinals(*Bank))
+        MeshOptions.Add(MakePickerOption(Ordinal, FString::Printf(TEXT("Mesh #%d"), Ordinal)));
+    const FKyaBankReference Mesh = ResolveKyaModelReference(*Bank, Record.MeshIndex);
+    if (!Mesh.bResolved && Record.MeshIndex >= 0)
+        MeshOptions.Add(MakePickerOption(Record.MeshIndex, FString::Printf(TEXT("Mesh #%d (missing)"), Record.MeshIndex),
+            Mesh.Warning));
+    AddPickerRow(TEXT("Model mesh"), MeshOptions, Record.MeshIndex,
+        Mesh.bResolved ? FString::Printf(TEXT("%s (%d mesh entries)"), *Mesh.Label, Mesh.EntryCount) : Mesh.Warning,
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MeshIndex),
+        [](FKyaActorPlacement& Placement, int32 Value) { Placement.MeshIndex = Value; });
+
+    // Texture picker: bank-local type-5 texture banks, plus -1 for the alternate bank.
+    TArray<TSharedPtr<FKyaPickerOption>> TextureOptions;
+    TextureOptions.Add(MakePickerOption(-1, TEXT("Alternate texture bank"),
+        TEXT("Uses the scene's alternate actor-material bank.")));
+    for (const int32 Ordinal : GetKyaTextureBankOrdinals(*Bank))
+        TextureOptions.Add(MakePickerOption(Ordinal, FString::Printf(TEXT("Texture bank #%d"), Ordinal)));
+    const FKyaBankReference Texture = ResolveKyaTextureReference(*Bank, Record.TextureIndex);
+    if (!Texture.bResolved && Record.TextureIndex >= 0)
+        TextureOptions.Add(MakePickerOption(Record.TextureIndex,
+            FString::Printf(TEXT("Texture bank #%d (missing)"), Record.TextureIndex), Texture.Warning));
+    AddPickerRow(TEXT("Texture bank"), TextureOptions, Record.TextureIndex,
+        Texture.bResolved ? FString::Printf(TEXT("%s (%d texture banks)"), *Texture.Label, Texture.EntryCount) : Texture.Warning,
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TextureIndex),
+        [](FKyaActorPlacement& Placement, int32 Value) { Placement.TextureIndex = Value; });
+
+    // Default behaviour picker: recovered behaviour names.
+    TArray<TSharedPtr<FKyaPickerOption>> BehaviourOptions;
+    for (const FKyaBehaviourOption& Option : GetKyaBehaviourOptions(Record))
+        BehaviourOptions.Add(MakePickerOption(Option.Id, Option.Label));
+    AddPickerRow(TEXT("Default behaviour"), BehaviourOptions, Record.DefaultBehaviourId,
+        Record.Behaviours.IsValidIndex(Record.DefaultBehaviourId)
+            ? GetKyaBehaviourLabel(Record.ClassId, Record.Behaviours[Record.DefaultBehaviourId].Id)
+            : TEXT("The default behaviour index does not resolve to a behaviour record."),
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId),
+        [](FKyaActorPlacement& Placement, int32 Value) { Placement.DefaultBehaviourId = Value; });
+
+    // Named behaviour summary (recovered names, unknown ids labelled explicitly).
+    if (!Record.Behaviours.IsEmpty())
+    {
+        TArray<FString> BehaviourLines;
+        for (int32 Index = 0; Index < Record.Behaviours.Num(); ++Index)
+            BehaviourLines.Add(FString::Printf(TEXT("%d: %s"), Index,
+                *GetKyaBehaviourLabel(Record.ClassId, Record.Behaviours[Index].Id)));
+        References.AddCustomRow(FText::FromString(TEXT("Behaviours")))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(TEXT("Behaviours")))
+            ]
+            .ValueContent()
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString(FString::Join(BehaviourLines, TEXT("  |  "))))
+                .AutoWrapText(true)
+                .ToolTipText(FText::FromString(TEXT("Recovered behaviour names; ids without a recovered name are labelled unknown.")))
+            ];
+    }
+
+    // Remaining top-level scalar references (actor, waypoint and path indices) get
+    // the same searchable picker, with raw ids and inline range checks.
+    {
+        const TSet<FName> FixedFields = {
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, SectorId),
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, MeshIndex),
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TextureIndex),
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, DefaultBehaviourId),
+        };
+        TWeakObjectPtr<UKyaLevelBank> WeakBank = Bank;
+        for (const FKyaReferenceField& Field : GetKyaReferenceFields())
+        {
+            if (FixedFields.Contains(Field.PropertyName) || Field.Kind == EKyaReferenceKind::Zone) continue;
+            if (Field.ClassId != -1 && Field.ClassId != Record.ClassId) continue;
+            const FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(Field.PropertyName);
+            if (!Property || !Property->HasAnyPropertyFlags(CPF_Edit) ||
+                Property->HasAnyPropertyFlags(CPF_EditConst)) continue;
+            if (GetKyaActorFieldCapability(Field.PropertyName).Kind != EKyaFieldCapability::EditableExportable)
+                continue;
+            const int64 Raw = GetKyaNumericField(Record, Field.PropertyName);
+            const FString Label = FString::Printf(TEXT("%s (%s)"), *Property->GetDisplayNameText().ToString(),
+                *DescribeKyaReferenceKind(Field.Kind).ToString());
+            const FName PropertyName = Field.PropertyName;
+            const EKyaReferenceKind Kind = Field.Kind;
+            TFunction<void()> SelectReferenced;
+            if (Kind == EKyaReferenceKind::Actor || Kind == EKyaReferenceKind::Waypoint ||
+                Kind == EKyaReferenceKind::Path)
+            {
+                SelectReferenced = [this, PropertyName, Kind]()
+                {
+                    AKyaActorHandle* Source = Handle.Get();
+                    FKyaActorPlacement* Scope = ScopeRecord();
+                    if (!Source || !IsValid(Source->Preview) || !Scope || !GEditor) return;
+                    AKyaLevelPreview* Preview = Source->Preview.Get();
+                    const int32 Index = int32(GetKyaNumericField(*Scope, PropertyName));
+                    AActor* Target = nullptr;
+                    switch (Kind)
+                    {
+                    case EKyaReferenceKind::Actor: Target = Preview->GetActorHandle(Index); break;
+                    case EKyaReferenceKind::Waypoint: Target = Preview->GetWaypointHandle(Index); break;
+                    case EKyaReferenceKind::Path: Target = Preview->GetPathPointHandle(Index, 0); break;
+                    default: break;
+                    }
+                    if (!Target)
+                    {
+                        UE_LOG(LogTemp, Display, TEXT("KYA_REFERENCE_SELECT missing handle for %s %d; enable the "
+                            "corresponding Spawn ... Handles option on the preview to navigate to it."),
+                            *DescribeKyaReferenceKind(Kind).ToString(), Index);
+                        return;
+                    }
+                    GEditor->SelectNone(false, true);
+                    GEditor->SelectActor(Target, true, true);
+                };
+            }
+            AddPickerRow(Label, MakeIndexOptions(Kind, *Bank), int32(Raw),
+                MakeIndexTip(Kind, Raw, *Bank), PropertyName,
+                [PropertyName, Kind, WeakBank](FKyaActorPlacement& Placement, int32 Value)
+                {
+                    // Refuse out-of-range picks rather than storing a misleading reference.
+                    UKyaLevelBank* EditedBank = WeakBank.Get();
+                    if (!EditedBank) return;
+                    int32 Limit = 0;
+                    switch (Kind)
+                    {
+                    case EKyaReferenceKind::Actor: Limit = EditedBank->SceneEnvironment.Actors.Num(); break;
+                    case EKyaReferenceKind::Waypoint: Limit = EditedBank->SceneEnvironment.Waypoints.Num(); break;
+                    case EKyaReferenceKind::Path: Limit = EditedBank->SceneEnvironment.Paths.Num(); break;
+                    default: return;
+                    }
+                    if (Value != -1 && (Value < 0 || Value >= Limit)) return;
+                    SetKyaNumericField(Placement, PropertyName, Value);
+                }, SelectReferenced);
+        }
+    }
+
+    // Inline validation feedback for the last rejected edit.
+    References.AddCustomRow(FText::FromString(TEXT("Validation")))
+        .NameContent()
+        [
+            SNew(STextBlock).Text(FText::FromString(TEXT("Validation")))
+        ]
+        .ValueContent().MinDesiredWidth(320.0f)
+        [
+            SAssignNew(InlineErrorText, STextBlock)
+            .Text(this, &FKyaActorDetailsCustomization::GetInlineErrorText)
+            .AutoWrapText(true)
+            .ColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.65f, 0.2f, 1.0f)))
+        ];
+
+    // Unresolved-reference warnings, shown inline instead of waiting for export.
+    const TArray<FKyaActorReferenceIssue> Issues = ValidateKyaActorReferences(*Bank, Record);    if (!Issues.IsEmpty())
+    {
+        TArray<FString> Lines;
+        for (const FKyaActorReferenceIssue& Issue : Issues)
+            Lines.Add(FString::Printf(TEXT("%s: %s%s"), *Issue.Field, *Issue.Message,
+                Issue.bBlocking ? TEXT(" (blocks export)") : TEXT(" (warning)")));
+        References.AddCustomRow(FText::FromString(TEXT("Reference warnings")))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(TEXT("Warnings")))
+            ]
+            .ValueContent()
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString(FString::Join(Lines, TEXT("\n"))))
+                .ColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.75f, 0.2f, 1.0f)))
+                .AutoWrapText(true)
+            ];
+    }
+
+    // --- Flags -------------------------------------------------------------------
+    IDetailCategoryBuilder& Flags = DetailBuilder.EditCategory("Kya|Flags",
+        FText::FromString(TEXT("Kya Flags")), ECategoryPriority::Default);
+
+    const auto AddFlagRow = [this, &Flags](const FString& Label, int64 Value, TArray<TSharedPtr<FKyaFlagBit>> Bits,
+        FName PropertyName, const FString& Tip)
+    {
+        Flags.AddCustomRow(FText::FromString(Label))
+            .NameContent()
+            [
+                SNew(STextBlock).Text(FText::FromString(Label)).ToolTipText(FText::FromString(Tip))
+            ]
+            .ValueContent().MinDesiredWidth(320.0f)
+            [
+                SNew(SKyaFlagBits)
+                .Value(Value)
+                .Bits(Bits)
+                .GetCurrentValue([this, PropertyName]()
+                {
+                    FKyaActorPlacement* Scope = ScopeRecord();
+                    return Scope ? GetKyaNumericField(*Scope, PropertyName) : int64(0);
+                })
+                .OnValueChanged(FOnKyaFlagValueChanged::CreateLambda([this, PropertyName](int64 NewValue)
+                {
+                    if (FKyaActorPlacement* Scope = ScopeRecord())
+                    {
+                        FKyaActorPlacement Modified = *Scope;
+                        if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags))
+                            Modified.ActorFlags = int32(NewValue);
+                        else if (PropertyName == GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, LightingFlags))
+                            Modified.LightingFlags = NewValue;
+                        ApplyPlacementCopy(Modified, PropertyName);
+                    }
+                }))
+            ];
+    };
+
+    TArray<TSharedPtr<FKyaFlagBit>> LightingBits;
+    {
+        TSharedPtr<FKyaFlagBit> Bit = MakeShared<FKyaFlagBit>();
+        Bit->Mask = 2;
+        Bit->Label = TEXT("Ignore ground lighting");
+        Bit->ToolTip = TEXT("Serialized bit 1 disables the scenery ground-light modulation in SetupLighting.");
+        LightingBits.Add(Bit);
+    }
+    AddFlagRow(TEXT("Lighting flags"), Record.LightingFlags, LightingBits,
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, LightingFlags),
+        TEXT("Known lighting bits are shown as toggles; remaining bits are preserved."));
+    AddFlagRow(TEXT("Actor flags"), Record.ActorFlags, {},
+        GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, ActorFlags),
+        TEXT("No actor-flag bits are recovered; the raw value is preserved exactly."));
+}
+
+void FKyaActorDetailsCustomization::ApplyPlacementCopy(const FKyaActorPlacement& Modified, FName PropertyName)
+{
+    AKyaActorHandle* Actor = Handle.Get();
+    if (!Actor || !Actor->Bank || !Actor->Bank->SceneEnvironment.Actors.IsValidIndex(Actor->ActorIndex)) return;
+    FKyaActorEditPatch Patch;
+    FString Error;
+    if (!KyaMakePlacementPropertyPatch(Modified, PropertyName, Patch, &Error))
+    {
+        InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_DETAILS_FIELD_UNSUPPORTED field=%s reason=%s"),
+            *PropertyName.ToString(), *Error);
+        return;
+    }
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    TGuardValue<bool> Guard(bApplying, true);
+    bool bApplied = false;
+    if (GEditor && !GEditor->IsTransactionActive())
+    {
+        FScopedTransaction Transaction(NSLOCTEXT("KyaLevelEditor", "KyaActorReferenceEdit", "Edit Kya Actor Reference"));
+        bApplied = Service.Apply(Service.MakeKey(Actor->Bank, Actor->ActorIndex), Patch, EKyaEditNotify::Notify, &Error);
+    }
+    else
+    {
+        bApplied = Service.Apply(Service.MakeKey(Actor->Bank, Actor->ActorIndex), Patch, EKyaEditNotify::Notify, &Error);
+    }
+    if (!bApplied)
+    {
+        InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
+        UE_LOG(LogTemp, Warning, TEXT("KYA_DETAILS_REFERENCE_WRITE_FAILED bank=%s field=%s reason=%s"),
+            *GetNameSafe(Actor->Bank), *PropertyName.ToString(), *Error);
+        RefreshScopeFromBank();
+        return;
+    }
+    InlineError.Reset();
+    if (FKyaActorPlacement* Scope = ScopeRecord()) *Scope = Modified;
 }
 
 void FKyaActorDetailsCustomization::RefreshScopeFromBank()
@@ -144,6 +639,7 @@ bool FKyaActorDetailsCustomization::BuildPatchForProperty(FName PropertyName, FK
     FString Error;
     if (!KyaMakePlacementPropertyPatch(*Scope, PropertyName, OutPatch, &Error))
     {
+        InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
         UE_LOG(LogTemp, Warning, TEXT("KYA_DETAILS_FIELD_UNSUPPORTED field=%s reason=%s"),
             *PropertyName.ToString(), *Error);
         return false;
@@ -206,9 +702,14 @@ void FKyaActorDetailsCustomization::OnPlacementPropertyChanged(FName PropertyNam
     }
     if (!bApplied)
     {
+        InlineError = FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *Error);
         UE_LOG(LogTemp, Warning, TEXT("KYA_DETAILS_WRITE_FAILED bank=%s index=%d field=%s reason=%s"),
             *GetNameSafe(Actor->Bank), Actor->ActorIndex, *PropertyName.ToString(), *Error);
         RefreshScopeFromBank();
+    }
+    else
+    {
+        InlineError.Reset();
     }
 }
 

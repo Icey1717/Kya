@@ -100,7 +100,6 @@ Last updated: 2026-11-12.
   references that have no file.
 
 ### Waypoints and path points
-
 - `FKyaLevelEditService` now also owns waypoint and path-point records:
   bank + index/path/point + generation keys, per-field patches for the full waypoint
   triple (position, stored rotation, parameters) and the path point plus its
@@ -147,6 +146,20 @@ Last updated: 2026-11-12.
   only offers editable rows and shows the capability description and reason as the
   row tooltip; patch construction rejects inspect-only/unsupported fields with that
   reason.
+- `KyaActorCatalog` supplies the recovered presentation data: class names/notes
+  (derived from the factory's class branches), class-specific behaviour names,
+  bank-local mesh/texture reference resolution, sector labels, and a class-gated
+  scalar reference-field table. `ValidateKyaActorReferences` reports blocking
+  out-of-range mesh/texture/sector/actor/waypoint/path references and a non-blocking
+  default-behaviour warning; `Apply` rejects a patched reference that does not
+  resolve before mutating the bank.
+- The actor Details panel adds an Identity section (class label + numeric id, notes
+  tooltip, Browse bank), a References section with searchable pickers
+  (`SKyaReferencePicker`) for sector, mesh, texture bank, default behaviour and the
+  class-specific scalar actor/waypoint/path fields (raw ids always shown, Select
+  button for actor references, inline unresolved-reference warnings), and a Flags
+  section (`SKyaFlagBits`) with understood lighting bits plus raw values and an
+  explicit "unknown bits preserved" note. Field tooltips document units.
 - Generated actors are grouped in the Outliner under one transient grouping actor
   per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
@@ -193,8 +206,9 @@ $env:KYA_TEST_BANK = 'G:\repos\Kya\assets\CDEURO\LEVEL\LEVEL_1\LEVEL.BNK'
 Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.ActorTransformConversion`, `Kya.Editor.ActorEditService`,
 `Kya.Editor.ActorHandleTransform`, `Kya.Editor.ActorOwnedGeometry`,
-`Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement` and
-`Kya.Editor.LevelSet` all `Success`.
+`Kya.Editor.ExportValidation`, `Kya.Editor.LevelPreviewPlacement`,
+`Kya.Editor.LevelSet`, `Kya.Editor.SpatialRecords` and `Kya.Editor.ActorCatalog`
+all `Success`.
 
 Coverage added by the new tests:
 
@@ -223,24 +237,31 @@ Coverage added by the new tests:
   discovery-refresh preservation without filename-derived duplicates, and
   following a changed main bank on rebuild;
 - placement: the actor factory only accepts bank assets, spawns a preview that
-  uses the dragged bank and builds its scene and handles.
+  uses the dragged bank and builds its scene and handles;
+- catalog and references: recovered class/behaviour labels and unknown labels,
+  bank-local mesh/texture resolution, sector labels, class-gated scalar reference
+  validation, numeric field get/set, Details-style Custom patches rejected when
+  they introduce an unresolved reference, same-bucket name acceptance and
+  smaller-bucket rejection, negative `LightingFlags` rejection, and int32 bit
+  patterns (`0x80000000`) preserved.
 
 ## 4. Not implemented yet
 
 These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 
-- Reference pickers (actor/waypoint/path/sector/mesh/material), named behaviour
-  labels, flag widgets, unit tooltips, mixed-value multi-editing and
-  reset-to-imported actions in Details.
-- `UKyaLevelSet` asset and a normal Content Browser import/drag-drop flow; sector
-  discovery is driven by the selected preview instead.
-- Progress/cancel UI for import and export; Message Log integration with
-  navigation.
+- Nested reference arrays and nested actor/zone reference pickers (top-level scalar
+  references are covered; array elements still show raw ids).
+- Mixed-value multi-editing, reset-to-imported-value and property-copy actions.
+- Path timing/lead-in/loop visualization and selectable visualizers for lights,
+  cameras, zones, trigger bounds and actor links.
+- `UKyaLevelSet` creation is a command/menu action rather than an asset-type
+  Content Browser action; it is not auto-created on import.
+- Progress/cancel UI for export; Message Log entries do not have navigation links.
 - Targeted per-actor invalidation: a committed transform edit still rebuilds the
   preview once (the drag itself is live and does not rebuild).
-- Waypoint/path/hierarchy migration onto the edit service, waypoint orientation
-  editing, path playback.
+- Hierarchy transforms, waypoint orientation visualization, path playback.
 - Outliner structural command policies (delete/duplicate/structural edits) and
   rename policy.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,
-  export/reimport) in a live editor session.
+  export/reimport) in a live editor session, and Milestone A–E gates.
+

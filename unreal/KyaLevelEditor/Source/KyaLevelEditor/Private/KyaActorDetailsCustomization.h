@@ -6,7 +6,6 @@
 
 class AKyaActorHandle;
 class UKyaLevelBank;
-class IPropertyUtilities;
 struct FKyaActorPlacement;
 
 /**
@@ -16,6 +15,10 @@ struct FKyaActorPlacement;
  * copy and writes only the property that changed through the shared edit service,
  * so nested fields, fixed-size arrays and class-specific records are all reachable
  * with one undo step and without a hand-written mirror of the schema.
+ *
+ * It also presents recovered class/behaviour labels, bank/sector/mesh/texture/
+ * behaviour reference pickers with raw ids and unresolved-reference warnings, flag
+ * widgets for understood bits, and unit tooltips.
  */
 class FKyaActorDetailsCustomization : public IDetailCustomization
 {
@@ -30,6 +33,11 @@ private:
     TWeakPtr<IPropertyUtilities> PropertyUtilities;
     FDelegateHandle BankEditedHandle;
     bool bApplying = false;
+    /** Last rejected edit, shown inline beside the References section. */
+    FString InlineError;
+    TSharedPtr<class STextBlock> InlineErrorText;
+
+    FText GetInlineErrorText() const;
 
     void OnPlacementPropertyChanged(FName PropertyName);
     void OnBankEdited(UKyaLevelBank* Bank);
@@ -39,5 +47,7 @@ private:
     void RequestScopeRefresh(bool bRebuildPanel);
     /** Copy one top-level property from the scope into the bank record. */
     bool BuildPatchForProperty(FName PropertyName, struct FKyaActorEditPatch& OutPatch);
+    /** Apply a modified copy of the placement through the edit service. */
+    void ApplyPlacementCopy(const struct FKyaActorPlacement& Modified, FName PropertyName);
     FKyaActorPlacement* ScopeRecord() const;
 };
