@@ -55,3 +55,13 @@ private:
     void AddMultiEditSection(IDetailLayoutBuilder& DetailBuilder, const TArray<AKyaActorHandle*>& Handles);
     struct FKyaActorPlacement* ScopeRecord() const;
 };
+
+/** Placement properties the Details panel offers (shared with the UI filter). */
+KYALEVELEDITOR_API TArray<FName> KyaGetActorDetailsProperties();
+
+/**
+ * Commit one reference-picker choice, refusing ids outside the bank's record range.
+ * Shared by the Details pickers so the acceptance test exercises the same path.
+ */
+KYALEVELEDITOR_API bool KyaSetActorReferencePick(const UKyaLevelBank& Bank,
+    FKyaActorPlacement& Placement, FName PropertyName, int32 Value);

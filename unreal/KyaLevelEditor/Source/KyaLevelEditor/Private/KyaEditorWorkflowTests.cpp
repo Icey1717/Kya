@@ -12,6 +12,7 @@
 #include "KyaLevelBank.h"
 #include "KyaLevelBankFactory.h"
 #include "KyaLevelBankReimportHandler.h"
+#include "KyaActorDetailsCustomization.h"
 #include "EditorFramework/AssetImportData.h"
 #include "KyaCameraStream.h"
 #include "KyaLevelEditorActions.h"
@@ -1640,6 +1641,495 @@ bool FKyaStructuralEditGateTest::RunTest(const FString& Parameters)
             }
         }
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaMilestoneCGateTest, "Kya.Editor.MilestoneCGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaMilestoneCGateTest::RunTest(const FString& Parameters)
+{
+    const FString Filename = FPlatformMisc::GetEnvironmentVariable(TEXT("KYA_TEST_BANK"));
+    if (Filename.IsEmpty())
+    {
+        AddWarning(TEXT("Set KYA_TEST_BANK to run the Milestone C gate."));
+        return true;
+    }
+    TArray<uint8> Input;
+    if (!TestTrue(TEXT("Read Milestone C bank"), FFileHelper::LoadFileToArray(Input, *Filename))) return false;
+    const uint8* Cursor = Input.GetData();
+    UKyaLevelBankFactory* Factory = NewObject<UKyaLevelBankFactory>();
+    UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+        GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional, nullptr, TEXT("bnk"), Cursor,
+        Input.GetData() + Input.Num(), GWarn));
+    if (!TestNotNull(TEXT("Import Milestone C bank"), Bank)) return false;
+    if (!TestTrue(TEXT("Milestone C bank has actors"), Bank->SceneEnvironment.Actors.Num() > 0)) return false;
+
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.Reset();
+
+    // Accessibility audit: every export-supported property must have a working
+    // Details edit path, and every non-editable property must explain why.
+    int32 EditableCount = 0;
+    int32 InspectCount = 0;
+    int32 PresentationCount = 0;
+    bool bAuditOk = true;
+    FString AuditError;
+    TMap<FName, int32> FieldActors;
+    TMap<FName, FString> FieldTouchedPaths;
+    TMap<FName, FKyaActorPlacement> FieldBaselines;
+    TArray<FString> UncoveredFields;
+    TArray<FString> InapplicableFields;
+
+    // A class-specific field is only serialized when its presence record is set, so
+    // only records whose presence flags satisfy the schema's EditCondition can carry a
+    // meaningful edit. Unresolvable conditions are treated as applicable.
+    const auto ConditionHolds = [](const UScriptStruct* Struct, const void* Container,
+        const FString& Condition) -> bool
+    {
+        // Evaluate simple presence-flag conditions ("bHasX", "!bHasX",
+        // "bHasX && bHasY", "bHasX || bHasY"). Anything else is assumed applicable.
+        TArray<FString> Groups;
+        Condition.ParseIntoArray(Groups, TEXT("||"), true);
+        bool bFoundFlag = false;
+        for (FString Group : Groups)
+        {
+            TArray<FString> Terms;
+            Group.ParseIntoArray(Terms, TEXT("&&"), true);
+            bool bGroupTrue = true;
+            bool bGroupUsable = false;
+            for (FString Term : Terms)
+            {
+                Term.TrimStartAndEndInline();
+                bool bNegated = false;
+                if (Term.StartsWith(TEXT("!")))
+                {
+                    bNegated = true;
+                    Term = Term.Mid(1).TrimStartAndEnd();
+                }
+                const FBoolProperty* Flag = CastField<FBoolProperty>(
+                    Struct->FindPropertyByName(FName(*Term)));
+                if (!Flag)
+                {
+                    bGroupTrue = false;
+                    continue;
+                }
+                bGroupUsable = true;
+                bFoundFlag = true;
+                const bool bValue = Flag->GetPropertyValue_InContainer(Container);
+                if (bValue == bNegated) bGroupTrue = false;
+            }
+            if (bGroupUsable && bGroupTrue) return true;
+        }
+        return !bFoundFlag;
+    };
+    const auto IsFieldApplicable = [&ConditionHolds](const FKyaActorPlacement& Record,
+        const FProperty* Property) -> bool
+    {
+        const FString* Condition = Property->FindMetaData(TEXT("EditCondition"));
+        if (!Condition || Condition->IsEmpty()) return true;
+        return ConditionHolds(FKyaActorPlacement::StaticStruct(), &Record, *Condition);
+    };
+
+    // Nudge one serializable leaf so each field is applied with a distinct value.
+    int32 LeafSkipRemaining = 0;
+    TFunction<bool(FProperty*, void*, FString&)> MutateValue =
+        [&MutateValue, &LeafSkipRemaining, &ConditionHolds](FProperty* Property, void* Value, FString& OutPath) -> bool
+    {
+        OutPath = Property->GetName();
+        if (!CastField<FStructProperty>(Property) && !CastField<FArrayProperty>(Property) && LeafSkipRemaining > 0)
+        {
+            --LeafSkipRemaining;
+            return false;
+        }
+        if (FIntProperty* Int = CastField<FIntProperty>(Property))
+        {
+            const int32 Current = Int->GetPropertyValue(Value);
+            Int->SetPropertyValue(Value, Current == 0 ? 1 : 0);
+            return true;
+        }
+        if (FInt64Property* Int = CastField<FInt64Property>(Property))
+        {
+            const int64 Current = Int->GetPropertyValue(Value);
+            Int->SetPropertyValue(Value, Current == 0 ? 1 : 0);
+            return true;
+        }
+        if (FUInt32Property* Int = CastField<FUInt32Property>(Property))
+        {
+            const uint32 Current = Int->GetPropertyValue(Value);
+            Int->SetPropertyValue(Value, Current == 0 ? 1u : 0u);
+            return true;
+        }
+        if (FUInt64Property* Int = CastField<FUInt64Property>(Property))
+        {
+            const uint64 Current = Int->GetPropertyValue(Value);
+            Int->SetPropertyValue(Value, Current == 0 ? 1ull : 0ull);
+            return true;
+        }
+        if (FFloatProperty* Float = CastField<FFloatProperty>(Property))
+        {
+            // Integral values so fields the writer encodes as integers still round trip.
+            Float->SetPropertyValue(Value, Float->GetPropertyValue(Value) == 1.0f ? 2.0f : 1.0f);
+            return true;
+        }
+        if (FDoubleProperty* Float = CastField<FDoubleProperty>(Property))
+        {
+            Float->SetPropertyValue(Value, Float->GetPropertyValue(Value) == 1.0 ? 2.0 : 1.0);
+            return true;
+        }
+        if (FBoolProperty* Bool = CastField<FBoolProperty>(Property))
+        {
+            Bool->SetPropertyValue(Value, !Bool->GetPropertyValue(Value));
+            return true;
+        }
+        if (FByteProperty* Byte = CastField<FByteProperty>(Property))
+        {
+            Byte->SetPropertyValue(Value, Byte->GetPropertyValue(Value) == 0 ? 1 : 0);
+            return true;
+        }
+        if (FStrProperty* String = CastField<FStrProperty>(Property))
+        {
+            FString Text = String->GetPropertyValue(Value);
+            // An empty string cannot carry a distinct value in this bank.
+            if (Text.IsEmpty()) return false;
+            Text[0] = Text[0] == TEXT('A') ? TEXT('B') : TEXT('A');
+            String->SetPropertyValue(Value, Text);
+            return true;
+        }
+        if (FStructProperty* Struct = CastField<FStructProperty>(Property))
+        {
+            for (TFieldIterator<FProperty> It(Struct->Struct); It; ++It)
+            {
+                if (It->GetName().StartsWith(TEXT("bHas"))) continue;
+                // Id fields select the payload layout; changing one is not a
+                // layout-compatible edit (matching the Details layout gate).
+                if (It->GetName() == TEXT("Id")) continue;
+                if (!It->HasAnyPropertyFlags(CPF_Edit) || It->HasAnyPropertyFlags(CPF_EditConst)) continue;
+                const FString* Condition = It->FindMetaData(TEXT("EditCondition"));
+                if (Condition && !Condition->IsEmpty() &&
+                    !ConditionHolds(Struct->Struct, Value, *Condition)) continue;
+                FString NestedPath;
+                if (MutateValue(*It, It->ContainerPtrToValuePtr<void>(Value), NestedPath))
+                {
+                    OutPath = FString::Printf(TEXT("%s.%s"), *OutPath, *NestedPath);
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (FArrayProperty* Array = CastField<FArrayProperty>(Property))
+        {
+            FScriptArrayHelper Helper(Array, Value);
+            if (Helper.Num() == 0)
+            {
+                if (LeafSkipRemaining > 0) --LeafSkipRemaining;
+                return false;
+            }
+            FString NestedPath;
+            if (!MutateValue(Array->Inner, Helper.GetRawPtr(0), NestedPath)) return false;
+            OutPath = FString::Printf(TEXT("%s[0].%s"), *OutPath, *NestedPath);
+            return true;
+        }
+        return false;
+    };
+
+    for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+    {
+        const FName PropertyName = It->GetFName();
+        const FKyaFieldCapability Capability = GetKyaActorFieldCapability(PropertyName);
+        if (Capability.Kind == EKyaFieldCapability::Unsupported)
+        {
+            bAuditOk = false;
+            AuditError = FString::Printf(TEXT("%s is unsupported: %s"), *PropertyName.ToString(), *Capability.Reason);
+            break;
+        }
+        if (Capability.Kind != EKyaFieldCapability::EditableExportable)
+        {
+            if (Capability.Reason.IsEmpty())
+            {
+                bAuditOk = false;
+                AuditError = FString::Printf(TEXT("%s has no capability reason."), *PropertyName.ToString());
+                break;
+            }
+            if (Capability.Kind == EKyaFieldCapability::InspectOnly) ++InspectCount;
+            else ++PresentationCount;
+            continue;
+        }
+
+        // Apply a distinct value to a suitable record. Class-gated fields are tried
+        // against every actor until one with the required optional record accepts it.
+        bool bApplied = false;
+        bool bAnyApplicable = false;
+        bool bHasDistinctValue = false;
+        FString LastError;
+        for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num() && !bApplied; ++ActorIndex)
+        {
+            if (!IsFieldApplicable(Bank->SceneEnvironment.Actors[ActorIndex], *It)) continue;
+            bAnyApplicable = true;
+            const FKyaActorPlacement BaselineRecord = Bank->SceneEnvironment.Actors[ActorIndex];
+            FKyaActorPlacement EditedRecord = BaselineRecord;
+            void* Value = It->ContainerPtrToValuePtr<void>(&EditedRecord);
+            FString TouchedPath;
+            if (!MutateValue(*It, Value, TouchedPath)) continue;
+            // A distinct candidate exists; a rejection or a no-op commit from here on
+            // is an uncovered field, not an inapplicable one.
+            bHasDistinctValue = true;
+            FKyaActorEditPatch FieldPatch;
+            FString PatchError;
+            if (!KyaMakePlacementPropertyPatch(EditedRecord, PropertyName, FieldPatch, &PatchError))
+            {
+                LastError = PatchError;
+                continue;
+            }
+            if (Service.Apply(Service.MakeKey(Bank, ActorIndex), FieldPatch, EKyaEditNotify::Silent, &PatchError))
+            {
+                // The committed record must actually differ, otherwise the field is
+                // not proven editable just because the patch was accepted.
+                if (It->Identical_InContainer(&BaselineRecord, &Bank->SceneEnvironment.Actors[ActorIndex]))
+                {
+                    LastError = TEXT("the committed value is unchanged");
+                    continue;
+                }
+                bApplied = true;
+                FieldActors.Add(PropertyName, ActorIndex);
+                FieldTouchedPaths.Add(PropertyName, TouchedPath);
+                FieldBaselines.Add(PropertyName, BaselineRecord);
+            }
+            else
+            {
+                LastError = PatchError;
+            }
+        }
+        if (bApplied) ++EditableCount;
+        else if (!bAnyApplicable) InapplicableFields.Add(FString::Printf(TEXT("%s: no actor of a class carrying this record"),
+            *PropertyName.ToString()));
+        else if (!bHasDistinctValue) InapplicableFields.Add(FString::Printf(
+            TEXT("%s: no distinct serialized value to edit in this bank"), *PropertyName.ToString()));
+        else UncoveredFields.Add(FString::Printf(TEXT("%s: %s"), *PropertyName.ToString(), *LastError));
+    }
+    if (!bAuditOk) AddError(AuditError);
+    for (const FString& Uncovered : UncoveredFields) AddInfo(FString::Printf(TEXT("Uncovered field: %s"), *Uncovered));
+    for (const FString& Skipped : InapplicableFields) AddInfo(FString::Printf(TEXT("Not applicable: %s"), *Skipped));
+    TestTrue(TEXT("Every export-supported field is reachable through Details"), bAuditOk);
+    TestTrue(TEXT("Every applicable export-supported field accepts an edit"), UncoveredFields.Num() == 0);
+    TestTrue(TEXT("The audit finds editable export-supported fields"), EditableCount > 0);
+    TestTrue(TEXT("Non-editable fields are classified with reasons"), InspectCount + PresentationCount > 0);
+
+    // Details accessibility: the panel's own row filter must include every editable
+    // field, so a supported property cannot be missing from the selected actor's UI.
+    const TArray<FName> DetailsProperties = KyaGetActorDetailsProperties();
+    TArray<FString> MissingDetailsRows;
+    for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+    {
+        const EKyaFieldCapability Kind = GetKyaActorFieldCapability(It->GetFName()).Kind;
+        if (Kind != EKyaFieldCapability::EditableExportable &&
+            Kind != EKyaFieldCapability::EditablePresentationOnly) continue;
+        if (!DetailsProperties.Contains(It->GetFName())) MissingDetailsRows.Add(It->GetName());
+    }
+    for (const FString& Missing : MissingDetailsRows)
+        AddInfo(FString::Printf(TEXT("Missing Details row: %s"), *Missing));
+    TestEqual(TEXT("Details exposes a row for every editable actor field"), MissingDetailsRows.Num(), 0);
+
+    // A behaviour's raw payload array is a snapshot the writer regenerates from the
+    // typed fields, so compare typed content only.
+    const auto FieldMatches = [](FProperty* Property, const FKyaActorPlacement& A,
+        const FKyaActorPlacement& B) -> bool
+    {
+        if (!Property) return false;
+        if (Property->GetFName() != GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Behaviours))
+            return Property->Identical_InContainer(&A, &B);
+        const FArrayProperty* Array = CastField<FArrayProperty>(Property);
+        const FStructProperty* Inner = Array ? CastField<FStructProperty>(Array->Inner) : nullptr;
+        if (!Array || !Inner) return Property->Identical_InContainer(&A, &B);
+        FScriptArrayHelper HelperA(Array, Array->ContainerPtrToValuePtr<void>(&A));
+        FScriptArrayHelper HelperB(Array, Array->ContainerPtrToValuePtr<void>(&B));
+        if (HelperA.Num() != HelperB.Num()) return false;
+        for (int32 Index = 0; Index < HelperA.Num(); ++Index)
+            for (TFieldIterator<FProperty> It(Inner->Struct); It; ++It)
+            {
+                if (It->GetName() == TEXT("Data")) continue;
+                if (!It->Identical_InContainer(HelperA.GetRawPtr(Index), HelperB.GetRawPtr(Index)))
+                    return false;
+            }
+        return true;
+    };
+
+    // Persistence: export once and compare every edited field for its actor.
+    TArray<FName> MismatchedFields;
+    const auto ExportAndCompareFields = [&](TArray<FName>& OutMismatched) -> bool
+    {
+        OutMismatched.Reset();
+        FKyaBankExportDiagnostics Diagnostics;
+        TArray<uint8> Exported;
+        if (!KyaBuildBankExportBytes(Bank, Exported, Diagnostics))
+        {
+            for (const FString& Message : Diagnostics.Errors)
+                AddInfo(FString::Printf(TEXT("Export error: %s"), *Message));
+            return false;
+        }
+        const uint8* ExportedCursor = Exported.GetData();
+        UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+            Exported.GetData() + Exported.Num(), GWarn));
+        if (!Reimported) return false;
+        for (const TPair<FName, int32>& Pair : FieldActors)
+        {
+            FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(Pair.Key);
+            const FKyaActorPlacement& Source = Bank->SceneEnvironment.Actors[Pair.Value];
+            const FKyaActorPlacement& Dest = Reimported->SceneEnvironment.Actors[Pair.Value];
+            if (!FieldMatches(Property, Source, Dest))
+                OutMismatched.Add(Pair.Key);
+        }
+        return true;
+    };
+
+    bool bFieldExportOk = ExportAndCompareFields(MismatchedFields);
+    TestTrue(TEXT("Export Milestone C bank"), bFieldExportOk);
+
+    // Some nested leaves only exist for one serialized variant (for example a
+    // platform behaviour's stand record). Try the next layout-compatible leaf until
+    // the field accepts an edit that the writer actually emits.
+    for (int32 Attempt = 0; bFieldExportOk && !MismatchedFields.IsEmpty() && Attempt < 512; ++Attempt)
+    {
+        for (const FName Field : MismatchedFields)
+        {
+            const int32 ActorIndex = FieldActors.FindRef(Field);
+            FProperty* Property = FKyaActorPlacement::StaticStruct()->FindPropertyByName(Field);
+            if (!Property || !FieldBaselines.Contains(Field) ||
+                !Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex)) continue;
+            FKyaActorPlacement EditedRecord = FieldBaselines.FindRef(Field);
+            LeafSkipRemaining = Attempt + 1;
+            FString Path;
+            if (!MutateValue(Property, Property->ContainerPtrToValuePtr<void>(&EditedRecord), Path))
+                continue;
+            FKyaActorEditPatch Patch;
+            FString PatchError;
+            if (!KyaMakePlacementPropertyPatch(EditedRecord, Field, Patch, &PatchError)) continue;
+            if (!Service.Apply(Service.MakeKey(Bank, ActorIndex), Patch, EKyaEditNotify::Silent, &PatchError))
+                continue;
+            FieldTouchedPaths.Add(Field, Path);
+        }
+        LeafSkipRemaining = 0;
+        bFieldExportOk = ExportAndCompareFields(MismatchedFields);
+    }
+    LeafSkipRemaining = 0;
+    for (const FName Field : MismatchedFields)
+        AddInfo(FString::Printf(TEXT("Field did not persist: %s (touched %s)"),
+            *Field.ToString(), *FieldTouchedPaths.FindRef(Field)));
+    TestTrue(TEXT("Milestone C export succeeds after the per-field edits"), bFieldExportOk);
+    TestEqual(TEXT("Every edited export-supported field persists"), MismatchedFields.Num(), 0);
+    // Nested edit end-to-end: change a model name within its fixed slot.
+    int32 ModelActor = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+        if (!Bank->SceneEnvironment.Actors[Index].Models.IsEmpty())
+        {
+            ModelActor = Index;
+            break;
+        }
+    if (TestTrue(TEXT("A real actor has model references"), ModelActor != INDEX_NONE))
+    {
+        FKyaActorPlacement ModelsCopy = Bank->SceneEnvironment.Actors[ModelActor];
+        FString& MeshName = ModelsCopy.Models[0].MeshName;
+        if (!MeshName.IsEmpty()) MeshName[MeshName.Len() - 1] = MeshName[MeshName.Len() - 1] == TEXT('A') ? TEXT('B') : TEXT('A');
+        FKyaActorEditPatch ModelsPatch;
+        FString Error;
+        TestTrue(TEXT("Nested model-name patch builds"),
+            KyaMakePlacementPropertyPatch(ModelsCopy, GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, Models),
+                ModelsPatch, &Error));
+        TestTrue(TEXT("Nested model-name edit applies"),
+            Service.Apply(Service.MakeKey(Bank, ModelActor), ModelsPatch, EKyaEditNotify::Silent, &Error));
+    }
+
+    // Reference-picker end-to-end on a class-gated actor reference.
+    int32 ReferenceActor = INDEX_NONE;
+    for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
+        if (Bank->SceneEnvironment.Actors[Index].ClassId == 0x2c)
+        {
+            ReferenceActor = Index;
+            break;
+        }
+    if (!TestTrue(TEXT("The real bank has a TrapActorRef actor"), ReferenceActor != INDEX_NONE))
+    {
+        Service.Reset();
+        return false;
+    }
+    if (!TestTrue(TEXT("The real bank can supply a distinct reference target"),
+        Bank->SceneEnvironment.Actors.Num() > 1))
+    {
+        Service.Reset();
+        return false;
+    }
+    const int32 CurrentReference = Bank->SceneEnvironment.Actors[ReferenceActor].TrapActorRef;
+    const int32 TargetReference = CurrentReference == 0 ? 1 : 0;
+    FKyaActorPlacement ReferenceCopy = Bank->SceneEnvironment.Actors[ReferenceActor];
+    // Commit through the same helper the Details picker uses, including its
+    // out-of-range rejection.
+    TestTrue(TEXT("Reference picker commits a valid target"),
+        KyaSetActorReferencePick(*Bank, ReferenceCopy,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapActorRef), TargetReference));
+    TestEqual(TEXT("Reference picker sets the chosen id"), ReferenceCopy.TrapActorRef, TargetReference);
+    FKyaActorPlacement RejectedPick = ReferenceCopy;
+    TestFalse(TEXT("Reference picker rejects an out-of-range id"),
+        KyaSetActorReferencePick(*Bank, RejectedPick,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapActorRef),
+            Bank->SceneEnvironment.Actors.Num()));
+    TestEqual(TEXT("Rejected pick leaves the value untouched"),
+        RejectedPick.TrapActorRef, TargetReference);
+    FKyaActorEditPatch ReferencePatch;
+    FString ReferenceError;
+    TestTrue(TEXT("Reference picker patch builds"),
+        KyaMakePlacementPropertyPatch(ReferenceCopy,
+            GET_MEMBER_NAME_CHECKED(FKyaActorPlacement, TrapActorRef), ReferencePatch, &ReferenceError));
+    TestTrue(TEXT("Reference picker edit applies"),
+        Service.Apply(Service.MakeKey(Bank, ReferenceActor), ReferencePatch,
+            EKyaEditNotify::Silent, &ReferenceError));
+    TestEqual(TEXT("Reference picker commits a distinct value"),
+        Bank->SceneEnvironment.Actors[ReferenceActor].TrapActorRef, TargetReference);
+
+    // Multi-edit end-to-end: the same patch applies to several selected actors.
+    const int32 FirstActor = 0;
+    const int32 SecondActor = 1;
+    FKyaActorEditPatch MultiPatch;
+    MultiPatch.VisibilityDistance = 1234.0f;
+    if (TestTrue(TEXT("Milestone C has two actors"), Bank->SceneEnvironment.Actors.Num() > 1))
+    {
+        TArray<FKyaActorRecordKey> Keys;
+        Keys.Add(Service.MakeKey(Bank, FirstActor));
+        Keys.Add(Service.MakeKey(Bank, SecondActor));
+        FString Error;
+        TestTrue(TEXT("Multi-edit applies to the selected actors"),
+            Service.ApplyBulk(Keys, MultiPatch, EKyaEditNotify::Silent, &Error));
+        TestEqual(TEXT("Multi-edit writes actor 0"), Bank->SceneEnvironment.Actors[FirstActor].VisibilityDistance, 1234.0f);
+        TestEqual(TEXT("Multi-edit writes actor 1"), Bank->SceneEnvironment.Actors[SecondActor].VisibilityDistance, 1234.0f);
+    }
+
+    // Persistence: export and reimport, then compare the nested, reference and
+    // multi-edit values on the reimported typed schema.
+    FKyaBankExportDiagnostics Diagnostics2;
+    TArray<uint8> Exported2;
+    if (TestTrue(TEXT("Export Milestone C bank"), KyaBuildBankExportBytes(Bank, Exported2, Diagnostics2)))
+    {
+        const uint8* ExportedCursor = Exported2.GetData();
+        UKyaLevelBank* Reimported = Cast<UKyaLevelBank>(Factory->FactoryCreateBinary(UKyaLevelBank::StaticClass(),
+            GetTransientPackage(), NAME_None, RF_Transient, nullptr, TEXT("bnk"), ExportedCursor,
+            Exported2.GetData() + Exported2.Num(), GWarn));
+        if (TestNotNull(TEXT("Reimport Milestone C bank"), Reimported))
+        {
+            if (ModelActor != INDEX_NONE)
+                TestEqual(TEXT("Nested model name persists"),
+                    Reimported->SceneEnvironment.Actors[ModelActor].Models[0].MeshName,
+                    Bank->SceneEnvironment.Actors[ModelActor].Models[0].MeshName);
+            TestEqual(TEXT("Reference picker value persists"),
+                Reimported->SceneEnvironment.Actors[ReferenceActor].TrapActorRef, TargetReference);
+            TestEqual(TEXT("Multi-edit actor 0 persists"),
+                Reimported->SceneEnvironment.Actors[FirstActor].VisibilityDistance, 1234.0f);
+            if (Bank->SceneEnvironment.Actors.Num() > 1)
+                TestEqual(TEXT("Multi-edit actor 1 persists"),
+                    Reimported->SceneEnvironment.Actors[SecondActor].VisibilityDistance, 1234.0f);
+        }
+    }
+
+    Service.Reset();
     return true;
 }
 

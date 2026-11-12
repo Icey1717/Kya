@@ -261,9 +261,13 @@ raw class-payload size, `VisibleAnywhere` record data and the layout-controlling
 `bHas*` presence flags; `GetKyaNestedFieldCapability` applies the same rules to
 nested records such as `Models.MeshName`. The panel only offers editable fields and
 shows the capability reason as the row tooltip. The old hand-written mirror fields
-remain on the actor for script compatibility but are hidden from Details. Reference
-pickers, named behaviour labels, mixed-value multi-editing and reset-to-imported
-actions are not implemented yet.
+remain on the actor for script compatibility but are hidden from Details. The
+selected-actor gate (`Kya.Editor.MilestoneCGate`) verifies that surface end to end:
+every export-supported field is committed through the Details patch path with a
+distinct value, must actually change the record, must be exposed by the panel's own
+row filter (`KyaGetActorDetailsProperties`) and must survive export/reimport;
+nested, reference-picker (through `KyaSetActorReferencePick`, including its
+out-of-range rejection) and multi-actor bulk edits round trip as well.
 
 The identity section shows the recovered game class name and numeric id (forexample `Moving platform (13)`, `Unknown class 127`), with the recovered notes as a
 tooltip and a Browse button for the bank asset. Recovered class-specific behaviour

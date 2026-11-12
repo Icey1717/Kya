@@ -127,6 +127,17 @@ Last updated: 2026-11-12.
   associations/provenance match, the scene publishes positive vertex/triangle counts,
   repeated discovery is idempotent, and a safe sector reimport of that fresh asset
   keeps the same association and descriptor rows while bumping the edit generation.
+- Milestone C gate (`Kya.Editor.MilestoneCGate`): every export-supported property is
+  audited on the real bank - a distinct value is committed through the Details patch
+  path for a record whose presence flags make the field meaningful, the pre-edit
+  baseline must actually change, and each edited field must survive export/reimport
+  (variant-specific leaves are retried so a nested edit reaches the serialized
+  record). Fields with no distinct value in the bank are reported explicitly; any
+  applicable field that is rejected or commits unchanged fails. The panel's own row
+  filter (`KyaGetActorDetailsProperties`) must expose every editable field, and the
+  shared picker commit (`KyaSetActorReferencePick`) is exercised for both a valid and
+  an out-of-range choice. Nested model edits, the reference picker and a two-actor
+  bulk edit are exported and reimported with all values compared.
 - `FKyaLevelBankReimportHandler` implements `FReimportHandler`: parses into a
   temporary bank, only replaces the asset on success, asks before discarding dirty
   changes (refuses in unattended mode), updates provenance, bumps the edit
@@ -364,7 +375,8 @@ Results: `Kya.Bank.LevelOneRoundTrip`, `Kya.Bank.SmallBankRoundTrip`,
 `Kya.Editor.TargetedWorkflowAcceptance`, `Kya.Editor.LevelActionsReporting`,
 `Kya.Bank.SelectedActorRoundTrip`, `Kya.Editor.RunningPortExportValidation`,
 `Kya.Editor.StructuralEditGate`, `Kya.Editor.ExportAcceptance`,
-`Kya.Editor.MilestoneAGate` and `Kya.Editor.MilestoneBGate` all `Success`.
+`Kya.Editor.MilestoneAGate`, `Kya.Editor.MilestoneBGate` and
+`Kya.Editor.MilestoneCGate` all `Success`.
 
 Coverage added by the new tests:
 

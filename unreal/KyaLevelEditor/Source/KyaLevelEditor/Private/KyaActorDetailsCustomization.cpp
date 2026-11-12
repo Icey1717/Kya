@@ -25,6 +25,50 @@
 
 namespace
 {
+bool IsKyaActorDetailsProperty(const FProperty* Property)
+{
+    if (!Property->HasAnyPropertyFlags(CPF_Edit)) return false;
+    // Export capability metadata drives the UI: only editable fields with a writer
+    // path are offered, and the capability reason becomes the row tooltip.
+    const FKyaFieldCapability Capability = GetKyaActorFieldCapability(Property->GetFName());
+    return Capability.Kind == EKyaFieldCapability::EditableExportable ||
+        Capability.Kind == EKyaFieldCapability::EditablePresentationOnly;
+}
+
+int32 GetKyaReferenceLimit(const UKyaLevelBank& Bank, EKyaReferenceKind Kind)
+{
+    switch (Kind)
+    {
+    case EKyaReferenceKind::Actor: return Bank.SceneEnvironment.Actors.Num();
+    case EKyaReferenceKind::Waypoint: return Bank.SceneEnvironment.Waypoints.Num();
+    case EKyaReferenceKind::Path: return Bank.SceneEnvironment.Paths.Num();
+    default: return 0;
+    }
+}
+}
+
+TArray<FName> KyaGetActorDetailsProperties()
+{
+    TArray<FName> Names;
+    for (TFieldIterator<FProperty> It(FKyaActorPlacement::StaticStruct()); It; ++It)
+        if (IsKyaActorDetailsProperty(*It)) Names.Add(It->GetFName());
+    return Names;
+}
+
+bool KyaSetActorReferencePick(const UKyaLevelBank& Bank, FKyaActorPlacement& Placement,
+    FName PropertyName, int32 Value)
+{
+    const TArray<FKyaReferenceField> Fields = GetKyaReferenceFields();
+    const FKyaReferenceField* Field = Fields.FindByPredicate(
+        [PropertyName](const FKyaReferenceField& Candidate) { return Candidate.PropertyName == PropertyName; });
+    if (!Field) return false;
+    const int32 Limit = GetKyaReferenceLimit(Bank, Field->Kind);
+    if (Value != -1 && (Value < 0 || Value >= Limit)) return false;
+    return SetKyaNumericField(Placement, PropertyName, Value);
+}
+
+namespace
+{
 FText MakeFieldToolTip(const FProperty* Property, const FKyaFieldCapability& Capability)
 {
     FString Unit;
@@ -190,13 +234,8 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
     for (TFieldIterator<FProperty> It(PlacementStruct); It; ++It)
     {
         FProperty* Property = *It;
-        if (!Property->HasAnyPropertyFlags(CPF_Edit)) continue;
-        // Export capability metadata drives the UI: only editable fields with a writer
-        // path are offered, and the capability reason becomes the row tooltip.
+        if (!IsKyaActorDetailsProperty(Property)) continue;
         const FKyaFieldCapability Capability = GetKyaActorFieldCapability(Property->GetFName());
-        if (Capability.Kind != EKyaFieldCapability::EditableExportable &&
-            Capability.Kind != EKyaFieldCapability::EditablePresentationOnly)
-            continue;
 
         FString CategoryName = TEXT("Bank record");
         if (const FString* Metadata = Property->FindMetaData(TEXT("Category")))
@@ -472,21 +511,12 @@ void FKyaActorDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& Detai
             }
             AddPickerRow(Label, MakeIndexOptions(Kind, *Bank), int32(Raw),
                 MakeIndexTip(Kind, Raw, *Bank), PropertyName,
-                [PropertyName, Kind, WeakBank](FKyaActorPlacement& Placement, int32 Value)
+                [PropertyName, WeakBank](FKyaActorPlacement& Placement, int32 Value)
                 {
                     // Refuse out-of-range picks rather than storing a misleading reference.
                     UKyaLevelBank* EditedBank = WeakBank.Get();
                     if (!EditedBank) return;
-                    int32 Limit = 0;
-                    switch (Kind)
-                    {
-                    case EKyaReferenceKind::Actor: Limit = EditedBank->SceneEnvironment.Actors.Num(); break;
-                    case EKyaReferenceKind::Waypoint: Limit = EditedBank->SceneEnvironment.Waypoints.Num(); break;
-                    case EKyaReferenceKind::Path: Limit = EditedBank->SceneEnvironment.Paths.Num(); break;
-                    default: return;
-                    }
-                    if (Value != -1 && (Value < 0 || Value >= Limit)) return;
-                    SetKyaNumericField(Placement, PropertyName, Value);
+                    KyaSetActorReferencePick(*EditedBank, Placement, PropertyName, Value);
                 }, SelectReferenced);
         }
     }
