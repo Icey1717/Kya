@@ -63,3 +63,15 @@ bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError);
 /** Export the banks to <ProjectSaved>/KyaExport/<level>/ and log per-file outcomes. */
 bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& DestinationDirectory,
     TArray<FString>& OutMessages);
+
+/** True when the actor is a generated Kya editing representation (handle/group). */
+bool KyaIsGeneratedActor(const AActor* Actor);
+/** True when any actor in the list is a generated representation. */
+bool KyaContainsGeneratedActor(const TArray<AActor*>& Actors);
+/** True when the current editor selection contains a generated representation. */
+bool KyaSelectionContainsGeneratedActor();
+/**
+ * Destroy generated actors that no preview owns (duplicate/paste/alt-drag leftovers)
+ * and generated actors whose preview is gone. Returns the number of orphans removed.
+ */
+int32 KyaDestroyStrayGeneratedActors(UWorld* World);

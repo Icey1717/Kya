@@ -2,6 +2,7 @@
 #pragma warning(disable : 4883)
 #include "KyaActorEditService.h"
 #include "KyaActorCatalog.h"
+#include "KyaActorGroup.h"
 #include "KyaActorHandle.h"
 #include "KyaActorTransform.h"
 #include "KyaBankExport.h"
@@ -21,6 +22,7 @@
 #include "HAL/FileManager.h"
 #include "Editor.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/Package.h"
 #include "UObject/UnrealType.h"
@@ -947,6 +949,236 @@ bool FKyaActorCatalogTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("int32 bit patterns are accepted"), ValidateKyaActorPlacement(HighBits, WidthError));
 
     Service.Reset();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaGeneratedActorLifecycleTest, "Kya.Editor.GeneratedActorLifecycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaGeneratedActorLifecycleTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+    FKyaPath& Path = Bank->SceneEnvironment.Paths.AddDefaulted_GetRef();
+    Path.Points.Add(FVector4(1.0, 2.0, 3.0, 1.0));
+
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create lifecycle world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn lifecycle preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->bSpawnPathPointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Preview->GetActorHandle(0));
+    AKyaSpatialRecordHandle* Spatial = Cast<AKyaSpatialRecordHandle>(Preview->GetWaypointHandle(0));
+    if (TestNotNull(TEXT("Actor handle exists"), Handle) && TestNotNull(TEXT("Waypoint handle exists"), Spatial))
+    {
+        TestTrue(TEXT("Actor handles are transient"), Handle->HasAnyFlags(RF_Transient));
+        TestTrue(TEXT("Actor handles are transactional"), Handle->HasAnyFlags(RF_Transactional));
+        TestTrue(TEXT("Actor handles are editor-only"), Handle->IsEditorOnly());
+        TestFalse(TEXT("Actor handles are not templates"), Handle->IsTemplate());
+        TestTrue(TEXT("Spatial handles are transient"), Spatial->HasAnyFlags(RF_Transient));
+        TestTrue(TEXT("Spatial handles are editor-only"), Spatial->IsEditorOnly());
+        AActor* Group = Handle->GetAttachParentActor();
+        if (TestNotNull(TEXT("Sector grouping actor exists"), Group))
+        {
+            TestTrue(TEXT("Grouping actors are transient"), Group->HasAnyFlags(RF_Transient));
+            TestTrue(TEXT("Grouping actors are editor-only"), Group->IsEditorOnly());
+            TestFalse(TEXT("Preview owns its grouping actor"), !Preview->OwnsGeneratedActor(Group));
+        }
+        TestTrue(TEXT("Preview owns its handles"), Preview->OwnsGeneratedActor(Handle) &&
+            Preview->OwnsGeneratedActor(Spatial));
+
+        // A duplicated/pasted generated actor is not owned and is removed on rebuild.
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
+        AKyaActorHandle* Clone = World->SpawnActor<AKyaActorHandle>(
+            AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+        if (TestNotNull(TEXT("Duplicate handle spawns"), Clone))
+        {
+            Clone->Initialize(Preview, Bank, 0, true);
+            TestFalse(TEXT("Duplicate handle is not owned"), Preview->OwnsGeneratedActor(Clone));
+            Preview->OnConstruction(FTransform::Identity);
+            TestFalse(TEXT("Rebuild removes the duplicate handle"), IsValid(Clone));
+            TestTrue(TEXT("Rebuild keeps the owned handle"), IsValid(Preview->GetActorHandle(0)));
+        }
+    }
+
+    // A second preview of the same bank has its own independent representations.
+    AKyaLevelPreview* SecondPreview = World->SpawnActor<AKyaLevelPreview>();
+    if (TestNotNull(TEXT("Second preview spawns"), SecondPreview))
+    {
+        SecondPreview->Bank = Bank;
+        SecondPreview->OnConstruction(FTransform::Identity);
+        TestTrue(TEXT("Previews have independent handles"),
+            SecondPreview->GetActorHandle(0) != Preview->GetActorHandle(0));
+        TestTrue(TEXT("Each preview owns its own handle"),
+            Preview->OwnsGeneratedActor(Preview->GetActorHandle(0)) &&
+            SecondPreview->OwnsGeneratedActor(SecondPreview->GetActorHandle(0)) &&
+            !Preview->OwnsGeneratedActor(SecondPreview->GetActorHandle(0)));
+        SecondPreview->Destroy();
+    }
+
+    // Map reload: destroying the preview cleans up its representations, and a new
+    // preview in the same world recreates them without duplicates.
+    Preview->Destroy();
+    TestFalse(TEXT("Destroying the preview cleans up its generated actors"), IsValid(Handle));
+    Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (TestNotNull(TEXT("Reloaded preview spawns"), Preview))
+    {
+        Preview->Bank = Bank;
+        Preview->OnConstruction(FTransform::Identity);
+        TestEqual(TEXT("Reloading recreates one representation per actor"),
+            Preview->GetActorHandleCount(), Bank->SceneEnvironment.Actors.Num());
+        TestTrue(TEXT("Reloaded handles are new objects"), Preview->GetActorHandle(0) != Handle);
+    }
+
+    // Editor-generated representations must not exist in a game (PIE/packaged) world.
+    UWorld* GameWorld = UWorld::CreateWorld(EWorldType::Game, false);
+    if (TestNotNull(TEXT("Create game world"), GameWorld))
+    {
+        AKyaLevelPreview* GamePreview = GameWorld->SpawnActor<AKyaLevelPreview>();
+        if (TestNotNull(TEXT("Spawn game preview"), GamePreview))
+        {
+            GamePreview->Bank = Bank;
+            GamePreview->bSpawnWaypointHandles = true;
+            GamePreview->bSpawnPathPointHandles = true;
+            GamePreview->OnConstruction(FTransform::Identity);
+            TestEqual(TEXT("No actor handles in a game world"), GamePreview->GetActorHandleCount(), 0);
+            TestEqual(TEXT("No spatial handles in a game world"), GamePreview->GetSpatialHandleCount(), 0);
+            int32 GeneratedActors = 0;
+            for (TActorIterator<AActor> It(GameWorld); It; ++It)
+                if (KyaIsGeneratedActor(*It)) ++GeneratedActors;
+            TestEqual(TEXT("No generated actors in a game world"), GeneratedActors, 0);
+            GamePreview->Destroy();
+        }
+        GameWorld->DestroyWorld(false);
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKyaStructuralCommandsTest, "Kya.Editor.StructuralCommands",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FKyaStructuralCommandsTest::RunTest(const FString& Parameters)
+{
+    UKyaLevelBank* Bank = MakeKyaTestBank(GetTransientPackage());
+    Bank->SceneEnvironment.Waypoints.AddDefaulted();
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    if (!TestNotNull(TEXT("Create structural world"), World)) return false;
+    AKyaLevelPreview* Preview = World->SpawnActor<AKyaLevelPreview>();
+    if (!TestNotNull(TEXT("Spawn structural preview"), Preview))
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+    Preview->Bank = Bank;
+    Preview->bSpawnWaypointHandles = true;
+    Preview->OnConstruction(FTransform::Identity);
+
+    AActor* Handle = Preview->GetActorHandle(0);
+    AActor* Spatial = Preview->GetWaypointHandle(0);
+    AActor* Group = Handle ? Handle->GetAttachParentActor() : nullptr;
+    if (TestNotNull(TEXT("Actor handle exists"), Handle))
+    {
+        FText Reason;
+        TestFalse(TEXT("Delete is blocked for actor handles"),
+            Cast<AKyaActorHandle>(Handle)->CanDeleteSelectedActor(Reason));
+        TestFalse(TEXT("Delete rejection explains why"), Reason.IsEmpty());
+        TestTrue(TEXT("Actor handle is a generated actor"), KyaIsGeneratedActor(Handle));
+        TestFalse(TEXT("Preview is not a generated representation"), KyaIsGeneratedActor(Preview));
+        TestTrue(TEXT("Generated actors are detected in a selection"),
+            KyaContainsGeneratedActor({Handle}));
+        TestFalse(TEXT("Preview alone is not a generated selection"),
+            KyaContainsGeneratedActor({Preview}));
+    }
+    if (TestNotNull(TEXT("Spatial handle exists"), Spatial))
+    {
+        FText Reason;
+        TestFalse(TEXT("Delete is blocked for spatial handles"),
+            Cast<AKyaSpatialRecordHandle>(Spatial)->CanDeleteSelectedActor(Reason));
+        TestFalse(TEXT("Spatial delete rejection explains why"), Reason.IsEmpty());
+    }
+    if (TestNotNull(TEXT("Grouping actor exists"), Group))
+    {
+        FText Reason;
+        TestFalse(TEXT("Delete is blocked for grouping actors"),
+            Cast<AKyaActorGroup>(Group)->CanDeleteSelectedActor(Reason));
+    }
+
+    // Orphaned generated actors (for example from a copy/paste that lost its preview)
+    // are removed, while owned representations are kept.
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Params.ObjectFlags |= RF_Transient | RF_Transactional;
+    AKyaActorHandle* Orphan = World->SpawnActor<AKyaActorHandle>(
+        AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+    if (TestNotNull(TEXT("Orphan handle spawns"), Orphan))
+    {
+        TestTrue(TEXT("Orphan handle is a generated actor"), KyaIsGeneratedActor(Orphan));
+        TestTrue(TEXT("Stray cleanup removes at least the orphan"),
+            KyaDestroyStrayGeneratedActors(World) >= 1);
+        TestFalse(TEXT("Orphan handle is destroyed"), IsValid(Orphan));
+        TestTrue(TEXT("Owned handle survives stray cleanup"), IsValid(Handle));
+    }
+
+    // A duplicated handle must never write through the source identity, even before
+    // the command-end cleanup runs.
+    AKyaActorHandle* Clone = World->SpawnActor<AKyaActorHandle>(
+        AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+    if (TestNotNull(TEXT("Duplicate handle spawns"), Clone))
+    {
+        Clone->Initialize(Preview, Bank, 0, true);
+        const FVector BeforeCloneMove = Bank->SceneEnvironment.Actors[0].Position;
+        Clone->AddActorWorldOffset(FVector(100.0, 0.0, 0.0));
+        Clone->PostEditMove(true);
+        TestTrue(TEXT("Duplicate handle cannot write the bank"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(BeforeCloneMove));
+        Clone->ActorVisibilityDistance = 123.0f;
+        FPropertyChangedEvent CloneEvent(FindFProperty<FProperty>(AKyaActorHandle::StaticClass(),
+            GET_MEMBER_NAME_CHECKED(AKyaActorHandle, ActorVisibilityDistance)));
+        Clone->PostEditChangeProperty(CloneEvent);
+        TestEqual(TEXT("Duplicate handle Details edits are ignored"),
+            Bank->SceneEnvironment.Actors[0].VisibilityDistance, 0.0f);
+        Clone->ApplyToBank();
+        TestTrue(TEXT("Duplicate handle script write is ignored"),
+            Bank->SceneEnvironment.Actors[0].Position.Equals(BeforeCloneMove));
+    }
+
+    // The sort of copy/paste duplicate that arrives with no generated actor selected
+    // is still removed by the command-end sweep.
+    AKyaActorHandle* Pasted = World->SpawnActor<AKyaActorHandle>(
+        AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
+    if (TestNotNull(TEXT("Pasted handle spawns"), Pasted))
+    {
+        Pasted->Initialize(Preview, Bank, 1, true);
+        const int32 Removed = KyaDestroyStrayGeneratedActors(World);
+        TestTrue(TEXT("Paste cleanup removes the generated copy"), Removed >= 1);
+        TestFalse(TEXT("Pasted handle is destroyed"), IsValid(Pasted));
+        TestTrue(TEXT("Original handle survives paste cleanup"), IsValid(Handle));
+    }
+
+    if (GEditor && Handle)
+    {
+        GEditor->SelectNone(false, true);
+        GEditor->SelectActor(Handle, true, true);
+        TestTrue(TEXT("Selection reports generated actors"), KyaSelectionContainsGeneratedActor());
+        GEditor->SelectNone(false, true);
+        TestFalse(TEXT("Empty selection has no generated actors"), KyaSelectionContainsGeneratedActor());
+    }
+
+    Preview->Destroy();
+    World->DestroyWorld(false);
     return true;
 }
 

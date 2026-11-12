@@ -10,10 +10,14 @@
 #include "EngineUtils.h"
 #include "IAssetTools.h"
 #include "KyaBankExport.h"
+#include "KyaActorGroup.h"
+#include "KyaActorHandle.h"
+#include "KyaHierarchyHandle.h"
 #include "KyaLevelBank.h"
 #include "KyaLevelPreview.h"
 #include "KyaLevelSet.h"
 #include "KyaLevelSetFactory.h"
+#include "KyaSpatialRecordHandle.h"
 #include "Logging/MessageLog.h"
 #include "Misc/FileHelper.h"
 #include "Misc/MessageDialog.h"
@@ -110,6 +114,59 @@ TArray<AKyaLevelPreview*> KyaGetTargetPreviews()
     if (UWorld* World = GEditor->GetEditorWorldContext().World())
         for (TActorIterator<AKyaLevelPreview> It(World); It; ++It) Previews.Add(*It);
     return Previews;
+}
+
+bool KyaIsGeneratedActor(const AActor* Actor)
+{
+    return Cast<AKyaActorHandle>(Actor) || Cast<AKyaSpatialRecordHandle>(Actor) ||
+        Cast<AKyaActorGroup>(Actor) || Cast<AKyaHierarchyHandle>(Actor);
+}
+
+bool KyaContainsGeneratedActor(const TArray<AActor*>& Actors)
+{
+    for (const AActor* Actor : Actors)
+        if (KyaIsGeneratedActor(Actor)) return true;
+    return false;
+}
+
+bool KyaSelectionContainsGeneratedActor()
+{
+    if (!GEditor) return false;
+    TArray<AActor*> Selected;
+    GEditor->GetSelectedActors()->GetSelectedObjects(Selected);
+    return KyaContainsGeneratedActor(Selected);
+}
+
+int32 KyaDestroyStrayGeneratedActors(UWorld* World)
+{
+    if (!World) return 0;
+    int32 Destroyed = 0;
+    for (TActorIterator<AKyaLevelPreview> It(World); It; ++It)
+        Destroyed += It->DestroyStrayGeneratedActors();
+
+    TArray<AActor*> Orphans;
+    for (TActorIterator<AActor> It(World); It; ++It)
+    {
+        if (!KyaIsGeneratedActor(*It)) continue;
+        if (const AKyaActorHandle* Handle = Cast<AKyaActorHandle>(*It))
+        {
+            if (!IsValid(Handle->Preview)) Orphans.Add(*It);
+        }
+        else if (const AKyaSpatialRecordHandle* Spatial = Cast<AKyaSpatialRecordHandle>(*It))
+        {
+            if (!IsValid(Spatial->Preview)) Orphans.Add(*It);
+        }
+        else if (const AKyaHierarchyHandle* Hierarchy = Cast<AKyaHierarchyHandle>(*It))
+        {
+            if (!IsValid(Hierarchy->Preview)) Orphans.Add(*It);
+        }
+        else if (const AKyaActorGroup* Group = Cast<AKyaActorGroup>(*It))
+        {
+            if (!Cast<AKyaLevelPreview>(Group->GetAttachParentActor())) Orphans.Add(*It);
+        }
+    }
+    for (AActor* Orphan : Orphans) Orphan->Destroy();
+    return Destroyed + Orphans.Num();
 }
 
 TArray<UKyaLevelBank*> KyaCollectLevelBanks(const TArray<AKyaLevelPreview*>& Previews)

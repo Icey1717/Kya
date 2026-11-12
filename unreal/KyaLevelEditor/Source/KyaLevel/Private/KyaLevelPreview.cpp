@@ -16,6 +16,7 @@
 #include "KyaActorEditService.h"
 #include "UObject/UObjectGlobals.h"
 #include "Misc/TransactionObjectEvent.h"
+#include "EngineUtils.h"
 
 #include "ProceduralMeshComponent.h"
 #include "Components/SplineComponent.h"
@@ -160,6 +161,9 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
     ApplyLevelSet();
+#if WITH_EDITOR
+    DestroyStrayGeneratedActors();
+#endif
     if (Bank && !Bank->HasCurrentImportSchema())
         UE_LOG(LogTemp, Warning, TEXT("KYA_PREVIEW_STALE_SCHEMA bank=%s version=%d current=%d; reimport the bank to refresh typed data"),
             *Bank->GetName(), Bank->ImportSchemaVersion, UKyaLevelBank::CurrentImportSchemaVersion);
@@ -1820,6 +1824,51 @@ AActor* AKyaLevelPreview::GetPathPointHandle(int32 PathIndex, int32 PointIndex) 
     return Found ? Found->Get() : nullptr;
 }
 
+bool AKyaLevelPreview::OwnsGeneratedActor(const AActor* Actor) const
+{
+    if (!Actor) return false;
+    if (const AKyaActorHandle* Handle = Cast<AKyaActorHandle>(Actor))
+    {
+        const TObjectPtr<AKyaActorHandle>* Found = ActorHandles.Find(Handle->ActorIndex);
+        return Found && Found->Get() == Actor;
+    }
+    if (const AKyaSpatialRecordHandle* Spatial = Cast<AKyaSpatialRecordHandle>(Actor))
+    {
+        const FString Key = Spatial->Kind == EKyaSpatialRecordKind::Waypoint
+            ? FString::Printf(TEXT("W:%d"), Spatial->RecordIndex)
+            : FString::Printf(TEXT("P:%d:%d"), Spatial->RecordIndex, Spatial->PointIndex);
+        const TObjectPtr<AKyaSpatialRecordHandle>* Found = SpatialHandles.Find(Key);
+        return Found && Found->Get() == Actor;
+    }
+    for (const TPair<int32, TObjectPtr<AKyaActorGroup>>& Pair : ActorSectorGroups)
+        if (Pair.Value == Actor) return true;
+    for (const TObjectPtr<AKyaHierarchyHandle>& Handle : HierarchyHandles)
+        if (Handle == Actor) return true;
+    return false;
+}
+
+int32 AKyaLevelPreview::DestroyStrayGeneratedActors()
+{
+    UWorld* World = GetWorld();
+    if (!World) return 0;
+    TArray<AActor*> Strays;
+    for (TActorIterator<AKyaActorHandle> It(World); It; ++It)
+        if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
+    for (TActorIterator<AKyaSpatialRecordHandle> It(World); It; ++It)
+        if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
+    for (TActorIterator<AKyaHierarchyHandle> It(World); It; ++It)
+        if (It->Preview == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
+    for (TActorIterator<AKyaActorGroup> It(World); It; ++It)
+        if (It->GetAttachParentActor() == this && !OwnsGeneratedActor(*It)) Strays.Add(*It);
+    for (AActor* Stray : Strays)
+    {
+        UE_LOG(LogTemp, Display, TEXT("KYA_DESTROY_STRAY_GENERATED preview=%s actor=%s"),
+            *GetNameSafe(this), *GetNameSafe(Stray));
+        Stray->Destroy();
+    }
+    return Strays.Num();
+}
+
 void AKyaLevelPreview::RefreshSpatialHandles()
 {
     UWorld* World = GetWorld();
@@ -1923,9 +1972,11 @@ void AKyaLevelPreview::RefreshHierarchyHandles(){
         }
         FActorSpawnParameters Params;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
         AKyaHierarchyHandle* Handle = World->SpawnActor<AKyaHierarchyHandle>(
             AKyaHierarchyHandle::StaticClass(), FTransform::Identity, Params);
         if (!Handle) continue;
+        Handle->SetFlags(RF_Transient | RF_Transactional);
         Handle->Initialize(this, Info.Bank, Info.SectorId, Info.Offset, WorldOrigin, Info.Strips, Info.Triangles,
             !HiddenHierarchies.Contains(Pair.Key));
         HierarchyHandles.Add(Handle);

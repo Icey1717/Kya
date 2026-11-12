@@ -219,6 +219,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="Kya|Selection")
     AActor* GetPathPointHandle(int32 PathIndex, int32 PointIndex) const;
 
+#if WITH_EDITOR
+    /** True when Actor is one of this preview's generated representations. */
+    bool OwnsGeneratedActor(const AActor* Actor) const;
+    /**
+     * Destroy duplicated/pasted/alt-dragged generated actors that this preview does
+     * not own. Generated representations must not survive structural commands.
+     * Returns the number of actors destroyed.
+     */
+    int32 DestroyStrayGeneratedActors();
+#endif
+
     /** True when actor geometry belongs to the actor handles and must not enter the shared mesh. */
     bool ShouldActorHandlesRenderGeometry() const;
     bool ShouldShowActorIcon() const;

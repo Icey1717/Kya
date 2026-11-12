@@ -30,6 +30,8 @@ public:
 #if WITH_EDITOR
     virtual bool ShouldTickIfViewportsOnly() const override { return true; }
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    /** Generated hierarchy handles cannot be deleted independently of the preview. */
+    virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
 #endif
 
     void Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank* InBank, int32 InSectorId,

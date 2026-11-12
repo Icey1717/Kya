@@ -174,10 +174,40 @@ public:
 
         UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
             this, &FKyaLevelEditorModule::RegisterMenus));
+
+        // Structural commands are not cancelable per actor; block delete through
+        // AActor::CanDeleteSelectedActor and remove generated copies after duplicate,
+        // cut and paste so map and bank state cannot diverge.
+        StructuralBeginHandles.Add(FEditorDelegates::OnDuplicateActorsBegin.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandBegin));
+        StructuralBeginHandles.Add(FEditorDelegates::OnEditCutActorsBegin.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandBegin));
+        StructuralBeginHandles.Add(FEditorDelegates::OnEditPasteActorsBegin.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandBegin));
+        StructuralEndHandles.Add(FEditorDelegates::OnDuplicateActorsEnd.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandEnd));
+        StructuralEndHandles.Add(FEditorDelegates::OnEditCutActorsEnd.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandEnd));
+        StructuralEndHandles.Add(FEditorDelegates::OnEditPasteActorsEnd.AddRaw(
+            this, &FKyaLevelEditorModule::OnStructuralCommandEnd));
     }
 
     virtual void ShutdownModule() override
     {
+        for (const FDelegateHandle& Handle : StructuralBeginHandles)
+        {
+            FEditorDelegates::OnDuplicateActorsBegin.Remove(Handle);
+            FEditorDelegates::OnEditCutActorsBegin.Remove(Handle);
+            FEditorDelegates::OnEditPasteActorsBegin.Remove(Handle);
+        }
+        StructuralBeginHandles.Reset();
+        for (const FDelegateHandle& Handle : StructuralEndHandles)
+        {
+            FEditorDelegates::OnDuplicateActorsEnd.Remove(Handle);
+            FEditorDelegates::OnEditCutActorsEnd.Remove(Handle);
+            FEditorDelegates::OnEditPasteActorsEnd.Remove(Handle);
+        }
+        StructuralEndHandles.Reset();
         UToolMenus::UnRegisterStartupCallback(this);
         UToolMenus::UnregisterOwner(this);
         if (FPropertyEditorModule* PropertyModule =
@@ -196,9 +226,28 @@ public:
         FKyaLevelEditService::Get().Reset();
     }
 
-    void RegisterMenus()
+    void OnStructuralCommandBegin()
     {
-        if (!UToolMenus::IsToolMenuUIEnabled()) return;
+        bStructuralCommandHadGenerated = KyaSelectionContainsGeneratedActor();
+    }
+
+    void OnStructuralCommandEnd()
+    {
+        UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+        const bool bHadGenerated = bStructuralCommandHadGenerated;
+        bStructuralCommandHadGenerated = false;
+        // Always sweep: a paste can introduce generated copies even when the
+        // pre-command selection contained no generated actors.
+        const int32 Removed = KyaDestroyStrayGeneratedActors(World);
+        if (!bHadGenerated && Removed == 0) return;
+        KyaShowSummary(TEXT("Kya Level Editing"), FString::Printf(
+            TEXT("Generated Kya actors represent bank records and cannot be duplicated, cut or pasted.\n\n"
+                "%d generated cop%s removed. Edit the original actor or the bank asset instead. "
+                "Delete is blocked for generated actors."), Removed, Removed == 1 ? TEXT("y was") : TEXT("ies were")));
+    }
+
+    void RegisterMenus()
+    {        if (!UToolMenus::IsToolMenuUIEnabled()) return;
         UToolMenus* Menus = UToolMenus::Get();
         if (!Menus) return;
         // Own the entries so module shutdown removes them with the module's callbacks.
@@ -213,6 +262,9 @@ public:
 
 private:
     TUniquePtr<FKyaLevelBankReimportHandler> ReimportHandler;
+    bool bStructuralCommandHadGenerated = false;
+    TArray<FDelegateHandle> StructuralBeginHandles;
+    TArray<FDelegateHandle> StructuralEndHandles;
 };
 
 IMPLEMENT_MODULE(FKyaLevelEditorModule, KyaLevelEditor)

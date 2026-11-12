@@ -155,6 +155,13 @@ void AKyaActorHandle::PostEditMove(bool bFinished)
 void AKyaActorHandle::CommitTransformFromActor()
 {
     if (bSyncing || !Preview || !Bank || !Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex)) return;
+    if (!Preview->OwnsGeneratedActor(this))
+    {
+        // Duplicated/pasted representations must never write through the identity
+        // they copied from their source.
+        UE_LOG(LogTemp, Warning, TEXT("KYA_HANDLE_STRAY_WRITE_IGNORED bank=%s index=%d"), *GetNameSafe(Bank), ActorIndex);
+        return;
+    }
     const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[ActorIndex];
     const FTransform Local = GetActorTransform().GetRelativeTransform(Preview->GetActorTransform());
 
@@ -207,8 +214,15 @@ void AKyaActorHandle::CommitTransformFromActor()
     SyncFromBank();
 }
 
-void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+bool AKyaActorHandle::CanDeleteSelectedActor(FText& OutReason) const
 {
+    OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteActorHandle",
+        "Generated Kya actor handles represent bank records and cannot be deleted. "
+        "Edit the bank asset, or clear Spawn Actor Handles on the level preview.");
+    return false;
+}
+
+void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent){
     const FName CandidateNames[2] = {
         PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None,
         PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None };
@@ -218,7 +232,8 @@ void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChan
     {
         return CandidateNames[0] == Name || CandidateNames[1] == Name;
     };
-    if (!bSyncing && Bank && Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
+    if (!bSyncing && Preview && Bank && Preview->OwnsGeneratedActor(this) &&
+        Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
     {
         FKyaActorEditPatch Patch;
         if (Matches(GET_MEMBER_NAME_CHECKED(AKyaActorHandle, ActorName))) Patch.Name = ActorName;
@@ -254,7 +269,8 @@ void AKyaActorHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChan
 void AKyaActorHandle::ApplyToBank()
 {
 #if WITH_EDITOR
-    if (bSyncing || !Bank || !Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex))
+    if (bSyncing || !Bank || !Bank->SceneEnvironment.Actors.IsValidIndex(ActorIndex) ||
+        !Preview || !Preview->OwnsGeneratedActor(this))
     {
         UE_LOG(LogTemp, Warning, TEXT("KYA_HANDLE_APPLY_SKIP syncing=%d bank=%s index=%d"),
             bSyncing ? 1 : 0, *GetNameSafe(Bank), ActorIndex);

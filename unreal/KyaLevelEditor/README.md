@@ -258,6 +258,16 @@ chosen field from another actor in the same bank. `Reset all to imported` restor
 whole multi-selection in one transaction. Reset and copy preserve identity and
 fixed layout; the baseline is separate from Unreal class defaults.
 
+Generated representations are editor-only and transient, so they are never saved
+into a map or cooked into a packaged game, and opening the level in PIE or a game
+world creates none of them. Deleting a generated actor is blocked with an
+explanation from `CanDeleteSelectedActor`. Duplicate, cut, paste and Alt-drag are
+not silently allowed to create free-floating copies: at the end of the command any
+generated copies that no preview owns are removed and a dialog explains that these
+actors mirror bank records and must be edited through the original handle or the
+bank asset. Rebuilding or reloading the map recreates exactly one representation per
+bank record.
+
 Waypoints and path points have the same treatment. `Spawn Waypoint Handles` creates
 one transient `AKyaSpatialRecordHandle` per waypoint (position, stored rotation and
 `CWayPoint` parameter triple) and suppresses the diagnostic waypoint arrows while

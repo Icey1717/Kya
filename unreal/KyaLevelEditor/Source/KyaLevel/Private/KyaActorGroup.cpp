@@ -21,6 +21,13 @@ void AKyaActorGroup::ResetToLevelRoot()
     SetActorRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
 }
 
+bool AKyaActorGroup::CanDeleteSelectedActor(FText& OutReason) const
+{
+    OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteActorGroup",
+        "Kya sector grouping actors are created with the level preview and cannot be deleted independently.");
+    return false;
+}
+
 void AKyaActorGroup::PostEditMove(bool bFinished)
 {
     ResetToLevelRoot();

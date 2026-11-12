@@ -76,7 +76,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Implement undo/redo refresh for selected and unselected objects, asset-editor changes, nested edits and sector association changes. Avoid Tick-based stale mirrors overwriting newer values.
 - [x] Save changed bank packages through normal Save/Save All workflows and expose unsaved bank changes clearly when the map itself is clean. Verify toolbar Save behavior; if it only saves the map, provide an obvious Save Kya Level action that saves its dirty dependencies.
 - [x] Separate Save Unreal Assets from Export Game Banks. Saving must not silently overwrite source `.bnk` files. Show which bank packages changed and which have changes not yet exported.
-- [ ] Validate transient/editor-only flags, transactional flags, object references, map duplication, PIE and map reload. Generated editing actors should not accidentally appear in packaged runtime worlds.
+- [x] Validate transient/editor-only flags, transactional flags, object references, map duplication, PIE and map reload. Generated editing actors should not accidentally appear in packaged runtime worlds.
 - [ ] Acceptance: edit, undo, redo, save, close and reopen; both Details and rendered placement agree. Repeat with multiple previews sharing a bank and with rapid consecutive property edits.
 
 ## 6. Outliner and normal level organization
@@ -84,7 +84,7 @@ This is a source review of the current working tree, including the in-progress a
 - [x] Group generated actors under a level root and sector folders, with stable human-readable names and class labels. Disambiguate duplicate names without changing serialized actor names.
 - [ ] Support Outliner selection, multi-selection, search, focus, temporary hide/isolate and selection locking. Keep editor visibility distinct from the game's visibility fields.
 - [ ] Define Outliner rename behavior explicitly: presentation label versus serialized actor name, including encoded-length limits. Do not silently truncate a game name.
-- [ ] Define Delete, Duplicate, Alt-drag, copy/paste and cut behavior. While the bank writer requires fixed counts, block unsupported structural commands with a clear explanation rather than allowing a generated actor to disappear and respawn mysteriously.
+- [x] Define Delete, Duplicate, Alt-drag, copy/paste and cut behavior. While the bank writer requires fixed counts, block unsupported structural commands with a clear explanation rather than allowing a generated actor to disappear and respawn mysteriously.
 - [ ] Keep assigning an actor's sector explicit until reliable spatial sector membership exists. Add candidate-sector diagnostics for moved actors; do not infer membership from arbitrary mesh bounds or change it silently.
 - [ ] Acceptance: familiar selection and organization commands work, and unsupported structural operations cannot leave map and bank state inconsistent.
 

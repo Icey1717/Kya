@@ -35,6 +35,8 @@ public:
 #if WITH_EDITOR
     virtual void PostEditMove(bool bFinished) override;
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    /** Generated representations cannot be deleted; they mirror bank records. */
+    virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
 #endif
 
     /** Bind this handle to one bank actor placement and copy its fields. */

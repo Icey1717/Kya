@@ -51,10 +51,19 @@ void AKyaHierarchyHandle::Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank*
 }
 
 #if WITH_EDITOR
+bool AKyaHierarchyHandle::CanDeleteSelectedActor(FText& OutReason) const
+{
+    OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteHierarchyHandle",
+        "Generated Kya hierarchy handles represent preview world geometry and cannot be deleted. "
+        "Use the Visible toggle or clear Spawn Hierarchy Handles on the level preview.");
+    return false;
+}
+
 void AKyaHierarchyHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-    if (PropertyName == GET_MEMBER_NAME_CHECKED(AKyaHierarchyHandle, bVisible) && Preview && Bank)
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(AKyaHierarchyHandle, bVisible) && Preview && Bank &&
+        Preview->OwnsGeneratedActor(this))
         Preview->SetHierarchyVisible(Bank, HierarchyOffset, bVisible);
     Super::PostEditChangeProperty(PropertyChangedEvent);
 }

@@ -41,6 +41,8 @@ public:
 #if WITH_EDITOR
     virtual void PostEditMove(bool bFinished) override;
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    /** Generated representations cannot be deleted; they mirror bank records. */
+    virtual bool CanDeleteSelectedActor(FText& OutReason) const override;
 #endif
 
     void Initialize(AKyaLevelPreview* InPreview, UKyaLevelBank* InBank, EKyaSpatialRecordKind InKind,

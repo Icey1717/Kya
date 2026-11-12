@@ -171,8 +171,16 @@ Last updated: 2026-11-12.
   imported`, per-field reset, and `Copy` from another actor. Copy validates class,
   optional-record presence, array counts, nested record ids/presence flags and
   string-slot capacity before applying, so it cannot change the destination layout.
-- Generated actors are grouped in the Outliner under one transient grouping actor
-  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
+- Generated representations validate their lifetime: handles, spatial handles,
+  grouping actors and hierarchy handles are `RF_Transient | RF_Transactional` and
+  editor-only; a game world creates none; destroying a preview cleans them up; a
+  new preview re-creates one per record; duplicated previews get independent
+  representations; and duplicated/pasted/alt-dragged copies that no preview owns
+  are removed on the next build or at the end of the structural command.
+- `CanDeleteSelectedActor` blocks delete for every generated class with a
+  class-specific explanation, and the module explains duplicate/cut/paste/Alt-drag
+  behaviour in a dialog after removing the generated copies.
+- Generated actors are grouped in the Outliner under one transient grouping actor  per sector, attached to the preview. Labels are `<serialized name> [class <id>]`,
   disambiguated with the record index for duplicate names; labels are derived from
   the whole bank so sector load/unload cannot rename them, and serialized names are
   never modified.
@@ -270,8 +278,9 @@ These remain open in [the checklist](EDITOR_WORKFLOW_PLAN.md):
 - Targeted per-actor invalidation: a committed transform edit still rebuilds the
   preview once (the drag itself is live and does not rebuild).
 - Hierarchy transforms, waypoint orientation visualization, path playback.
-- Outliner structural command policies (delete/duplicate/structural edits) and
-  rename policy.
+- Outliner rename policy: deleting, duplicating, cutting and pasting generated
+  actors is blocked or cleaned up with an explanation, but renaming has no explicit
+  policy yet.
 - Interactive viewport acceptance pass (click a mesh, W/E/R, save/reopen,
   export/reimport) in a live editor session, and Milestone A–E gates.
 

@@ -131,6 +131,12 @@ void AKyaSpatialRecordHandle::PostEditMove(bool bFinished)
 void AKyaSpatialRecordHandle::CommitFromActor()
 {
     if (bSyncing || !Preview || !Bank) return;
+    if (!Preview->OwnsGeneratedActor(this))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KYA_SPATIAL_STRAY_WRITE_IGNORED bank=%s index=%d"),
+            *GetNameSafe(Bank), RecordIndex);
+        return;
+    }
     const FTransform Local = GetActorTransform().GetRelativeTransform(Preview->GetActorTransform());
     const FVector GamePosition = KyaActorTransform::SwapGameAxes(Local.GetLocation() / 100.0);
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
@@ -174,6 +180,14 @@ void AKyaSpatialRecordHandle::CommitFromActor()
     SyncFromBank();
 }
 
+bool AKyaSpatialRecordHandle::CanDeleteSelectedActor(FText& OutReason) const
+{
+    OutReason = NSLOCTEXT("KyaLevel", "CannotDeleteSpatialHandle",
+        "Generated Kya waypoint/path handles represent bank records and cannot be deleted. "
+        "Edit the bank asset, or clear the corresponding Spawn ... Handles option on the level preview.");
+    return false;
+}
+
 void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     const FName CandidateNames[2] = {
@@ -187,7 +201,7 @@ void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& Prop
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
     FString Error;
     bool bApplied = true;
-    if (!bSyncing && Bank)
+    if (!bSyncing && Bank && Preview && Preview->OwnsGeneratedActor(this))
     {
         const auto Run = [&](EKyaEditNotify Notify)
         {
@@ -233,7 +247,7 @@ void AKyaSpatialRecordHandle::PostEditChangeProperty(FPropertyChangedEvent& Prop
 void AKyaSpatialRecordHandle::ApplyToBank()
 {
 #if WITH_EDITOR
-    if (bSyncing || !Bank) return;
+    if (bSyncing || !Bank || !Preview || !Preview->OwnsGeneratedActor(this)) return;
     FKyaLevelEditService& Service = FKyaLevelEditService::Get();
     FString Error;
     if (Kind == EKyaSpatialRecordKind::Waypoint)
