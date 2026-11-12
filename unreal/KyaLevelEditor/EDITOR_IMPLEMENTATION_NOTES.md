@@ -2,6 +2,8 @@
 
 Companion to [the workflow checklist](EDITOR_WORKFLOW_PLAN.md). Investigated against the current working tree and local UE 5.8 headers on 2026-11-11. These are implementation recommendations, not completed changes. No plugin build or interactive editor test was performed. API declarations cited below were inspected locally; selection, transaction and save behavior still require the proposed integration tests.
 
+This work ports the existing implementation from this repository's source into `unreal/KyaLevelEditor`. Use that source as the reference for layouts and behavior; Ghidra comparisons and recording PS2 function addresses are not required for this Unreal porting work.
+
 ## 1. Split actor rendering from the shared preview
 
 ### Current path
@@ -198,7 +200,7 @@ Minimum manual gate: click the actual visible mesh, translate with snapping, edi
 - [ ] Prove transaction boundaries for numeric Details edits, interactive drags and Escape cancellation in UE 5.8.
 - [ ] Prove selected-object highlighting and selection through masked/translucent procedural geometry.
 - [ ] Establish export support per sector bank type and whether any sector records currently have writable typed counterparts.
-- [ ] Verify class rotation inverse conventions against native behavior before broad rotation support; record Ghidra addresses for any newly recovered semantics.
+- [ ] Verify class rotation inverse conventions against the existing repository source before broad rotation support; no Ghidra comparison is required for this Unreal port.
 - [ ] Measure actor-component cost and validate garbage collection/map reload before committing to large-scale per-actor rendering.
 - [ ] Decide whether full-schema Details can safely use external UObject properties or needs a typed presentation object after the nested-field undo prototype.
 

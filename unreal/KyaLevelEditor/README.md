@@ -155,7 +155,7 @@ data at the captured placement. The native light packet in the JSON is
 available for diagnosis.
 
 Enable `Spawn Actor Handles` on the preview to create one selectable
-`AKyaActorHandle` marker per actor placement in the loaded sectors. Each handle is
+`AKyaActorHandle` per actor placement in the loaded sectors. Each handle is
 labelled with the bank actor's name, can be clicked in the viewport or picked in
 the World Outliner, and mirrors the placement fields in its Details panel: name,
 mesh/texture index, position, rotation, scale, sector, default behaviour,
@@ -165,6 +165,55 @@ are destroyed with the preview or when the option is cleared. The preview's
 `Build Count` confirms a rebuild after an edit. `PreviewActorIndex`,
 `PreviewActorStripIndex`, `TextureOnlyActorIndex` and the capture scripts continue
 to work unchanged.
+
+`Spawn Actor Handles` and `Show Actor Meshes On Handles` are enabled by default:
+each handle owns that actor's game mesh (one procedural mesh section per resolved
+material), so clicking any strip selects the owning actor and shows its bounds for
+Focus Selected. Actor triangles are then not added to the shared preview mesh, so
+there is exactly one draw path. Diagnostic mesh modes (`Show Actor Mesh`,
+`Show All Actor Meshes`) keep the shared route and hide the handle meshes, so
+capture output is unchanged. Meshless actors keep a small icon marker instead of a
+mesh; that display scale is never written to the bank.
+
+Interactive moves (W/E/R) update the handle immediately. The bank placement is
+written once when the interaction ends, through the shared edit service
+(`KyaActorEditService.h`), which validates the record, calls `Modify()` before
+mutating, writes only the changed fields, marks the package dirty and refreshes
+every preview that displays the bank. A canceled drag restores the original
+transform before that point, so it does not dirty the bank. Rotation conversion
+uses the class rotation rules: yaw-only classes write yaw and clear pitch/roll
+(their native representation), and orientations that a class cannot represent are
+rejected with a log message and the visible transform is restored from the bank.
+Unreal axis edits are converted with the game's Y-up permutation; non-uniform
+scale is supported, while negative or zero scale is rejected instead of being
+stored as a misleading transform. Numeric Details edits use the same conversion
+and patch path.
+
+Actor records are identified by bank asset, actor index and a bank edit
+generation. Reimport or replacement bumps the generation, so a stale handle fails
+to resolve instead of editing a different record. Handles and other views
+subscribed to a bank refresh once per edit, including for undo/redo and for
+changes made in the bank's own asset editor.
+
+## Editor commands
+
+The plugin registers a `Kya Level` section in the editor's Tools menu and the
+following console commands. They operate on the selected `KyaLevelPreview`
+actors, or on every preview in the level when nothing is selected.
+
+| Command | Action |
+| --- | --- |
+| `Kya.Validate` | Validate every bank of the level set and report which banks the writer cannot export, without writing anything. |
+| `Kya.Export [dir]` | Validate, stage and publish the level's banks to `Saved/KyaExport/<BankName>.bnk` (or `dir`). Existing files are only replaced after every staged output validated. |
+| `Kya.DiscoverSectors [0]` | Find sibling `SECT<digits>.BNK` files next to the main bank's source, reuse already-imported assets by source provenance, and import missing ones into `/Game/KyaLevels/<Level>`. `0` disables importing. |
+| `Kya.SaveLevel` | Save the bank packages used by the preview (saving Unreal assets is separate from exporting game banks). |
+
+The bank assets record `UAssetImportData` provenance, so they can be reimported
+from the Content Browser. Reimport parses the new source into a temporary bank
+first and only replaces the asset when parsing succeeds; a dirty asset asks before
+discarding changes. `Kya.Export` writes `.bnk` files and never overwrites the
+original source bank.
+
 
 Actor and hierarchy handles can also be selected from scripts through the editor
 selection API (`set_selected_level_actors` / `get_selected_level_actors`), which is

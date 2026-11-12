@@ -10,6 +10,10 @@
 #include "KyaActorHandle.h"
 #include "KyaHierarchyHandle.h"
 #include "KyaActorTransform.h"
+#include "KyaActorEditService.h"
+#include "UObject/UObjectGlobals.h"
+#include "Misc/TransactionObjectEvent.h"
+
 #include "ProceduralMeshComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/PostProcessComponent.h"
@@ -164,8 +168,20 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     ClusterVisibilityRanges.Reset();
     ClusterBaseIndices.Reset();
     HierarchySelectionInfo.Reset();
+    ActorMeshSections.Reset();
     FlareMaterials.Reset();
     FlarePostProcess->Settings.WeightedBlendables.Array.Reset();
+    BindBankNotifications();
+    // Scene data can be incomplete (missing or invalid background entry) while actor
+    // placements are still editable; keep the actor representation route alive.
+    const auto FinishBuildWithoutGeometry = [this]()
+    {
+        ++BuildCount;
+#if WITH_EDITOR
+        RefreshActorHandles();
+        RefreshHierarchyHandles();
+#endif
+    };
 #if WITH_EDITOR
     const int32 DesiredMarkers = Bank && bShowWaypoints ? Bank->SceneEnvironment.Waypoints.Num() : 0;
     if (WaypointMarkerBank != Bank || WaypointMarkers.Num() != DesiredMarkers)
@@ -255,7 +271,11 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         ActorMarker->SetRelativeLocation(FVector(P.X, P.Z, P.Y) * 100.0);
     }
 #endif
-    if (!Bank || !Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry)) return;
+    if (!Bank || !Bank->Entries.IsValidIndex(Bank->BackgroundMeshEntry))
+    {
+        FinishBuildWithoutGeometry();
+        return;
+    }
     TMap<int32, FKyaSectorRenderSettings> SectorSettings;
     for (const FKyaBankEntry& SceneEntry : Bank->Entries)
         if (SceneEntry.Type == 6 && SceneEntry.Subtype == 1 && SceneEntry.Offset >= 0 && SceneEntry.Size >= 0 &&
@@ -500,9 +520,17 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     UMaterialInterface* EffectiveMaterial = TextureMaterial ? TextureMaterial.Get() : GeneratedPreviewMaterial.Get();
     const FKyaBankEntry& Entry = Bank->Entries[Bank->BackgroundMeshEntry];
     if (Entry.Offset < 0 || Entry.Size < 0 || Entry.Offset > Bank->BankBytes.Num() ||
-        Entry.Size > Bank->BankBytes.Num() - Entry.Offset || Entry.Size > MAX_int32) return;
+        Entry.Size > Bank->BankBytes.Num() - Entry.Offset || Entry.Size > MAX_int32)
+    {
+        FinishBuildWithoutGeometry();
+        return;
+    }
     TArray<FKyaG3DDecodedStrip> Strips;
-    if (!KyaG3D::DecodeHierarchyStrips(MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)), Strips)) return;
+    if (!KyaG3D::DecodeHierarchyStrips(MakeArrayView(Bank->BankBytes.GetData() + Entry.Offset, int32(Entry.Size)), Strips))
+    {
+        FinishBuildWithoutGeometry();
+        return;
+    }
     TArray<FVector> Positions;
     TArray<int32> Triangles;
     TArray<FVector2D> UVs;
@@ -521,7 +549,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
     }
     int32 NextSection = 1;
     FMaterialSections MaterialSections;
-    struct FSectionData { int32 Section = 0; TArray<FVector> Positions; TArray<int32> Triangles; TArray<FVector2D> UVs; TArray<FColor> Colors; };
+    struct FSectionData { int32 Section = 0; UMaterialInterface* Material = nullptr; TArray<FVector> Positions; TArray<int32> Triangles; TArray<FVector2D> UVs; TArray<FColor> Colors; };
     TMap<int32, FSectionData> TexturedSections;
     auto GetTexturedSection = [&](uint64 Hash, TConstArrayView<uint8> Source,
         const TMap<uint64, int32>& Offsets, FMaterialSections& Sections,
@@ -591,6 +619,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         if (*Found == INDEX_NONE) return nullptr;
         FSectionData& Result = TexturedSections.FindOrAdd(*Found);
         Result.Section = *Found;
+        Result.Material = Mesh->GetMaterial(*Found);
         return &Result;
     };
     auto RegisterClusterRange = [&](const FKyaG3DDecodedStrip& Strip, const FMatrix& Transform,
@@ -707,7 +736,11 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         AppendUnrealTriangles(TargetTriangles, Strip.Indices, Base);
     }
-    if (bShowAllActorMeshes || (bShowActorMesh && Bank->SceneEnvironment.Actors.IsValidIndex(PreviewActorIndex)))
+    // Actor geometry is built when a diagnostic mesh mode is active or when the
+    // per-actor handles own the actor meshes (the normal editing route).
+    const bool bActorHandlesOwnGeometry = ShouldActorHandlesRenderGeometry();
+    if (bShowAllActorMeshes || bActorHandlesOwnGeometry ||
+        (bShowActorMesh && Bank->SceneEnvironment.Actors.IsValidIndex(PreviewActorIndex)))
     {
         auto FindEntry = [&](int32 Type, int32 Ordinal) -> const FKyaBankEntry* {
             if (Ordinal < 0) return nullptr;
@@ -867,8 +900,10 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         }
         for (int32 ActorIndex = 0; ActorIndex < Bank->SceneEnvironment.Actors.Num(); ++ActorIndex)
         {
-        if (!bShowAllActorMeshes && ActorIndex != PreviewActorIndex) continue;
+        if (!bShowAllActorMeshes && !bActorHandlesOwnGeometry && ActorIndex != PreviewActorIndex) continue;
         const FKyaActorPlacement& Actor = Bank->SceneEnvironment.Actors[ActorIndex];
+        TArray<FKyaActorMeshSection>* CapturedSections =
+            bActorHandlesOwnGeometry ? &ActorMeshSections.FindOrAdd(ActorIndex) : nullptr;
         const bool bUseNativeTransform = ActorIndex == PreviewActorIndex && PreviewActorNativeTransform.Num() == 4;
         const FVector ActorPosition = bUseNativeTransform ? PreviewActorNativeTransform[3] : Actor.Position;
         const auto TransformActorVector = [&](const FVector& Vector) {
@@ -913,7 +948,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
         for (const FKyaG3DDecodedStrip& Strip : StripsByMesh[Actor.MeshIndex])
             {
                 const int32 StripIndex = ActorStripIndex++;
-                if (PreviewActorStripIndex >= 0 && StripIndex != PreviewActorStripIndex) continue;
+                if (ActorIndex == PreviewActorIndex && PreviewActorStripIndex >= 0 && StripIndex != PreviewActorStripIndex) continue;
                 if (bLogSectorDiagnostics)
                     UE_LOG(LogTemp, Display, TEXT("KYA_PREVIEW_ACTOR_STRIP actor=%s index=%d material=%d hash=%016llx vertices=%d attributes=%d triangles=%d"),
                         *Actor.Name, StripIndex, Strip.MaterialIndex, Strip.MaterialHash,
@@ -955,11 +990,32 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 TArray<int32>& TargetTriangles = Textured ? Textured->Triangles : Triangles;
                 TArray<FVector2D>& TargetUVs = Textured ? Textured->UVs : UVs;
                 TArray<FColor>& TargetColors = Textured ? Textured->Colors : Colors;
-                const int32 Base = TargetPositions.Num();
+                // A captured section belongs to one actor handle: it keeps preview-local
+                // vertices without actor translation and its own triangle base.
+                TArray<FVector> CapturedPositions;
+                TArray<int32> CapturedTriangles;
+                TArray<FVector2D> CapturedUVs;
+                TArray<FColor> CapturedColors;
+                TArray<FVector>& OutPositions = CapturedSections ? CapturedPositions : TargetPositions;
+                TArray<int32>& OutTriangles = CapturedSections ? CapturedTriangles : TargetTriangles;
+                TArray<FVector2D>& OutUVs = CapturedSections ? CapturedUVs : TargetUVs;
+                TArray<FColor>& OutColors = CapturedSections ? CapturedColors : TargetColors;
+                const int32 Base = OutPositions.Num();
                 for (const FKyaG3DVertex& Vertex : Strip.Vertices)
                 {
-                    const FVector P = TransformActorVector(HierarchyTransform.TransformPosition(FVector(Vertex.Position))) + ActorPosition;
-                    TargetPositions.Add(FVector(P.X, P.Z, P.Y) * 100.0);
+                    const FVector Local = TransformActorVector(HierarchyTransform.TransformPosition(FVector(Vertex.Position)));
+                    if (CapturedSections)
+                    {
+                        // Rotation and scale live on the handle transform, so captured
+                        // vertices keep only the native hierarchy transform.
+                        OutPositions.Add(KyaActorTransform::SwapGameAxes(
+                            HierarchyTransform.TransformPosition(FVector(Vertex.Position))) * 100.0);
+                    }
+                    else
+                    {
+                        const FVector P = Local + ActorPosition;
+                        OutPositions.Add(FVector(P.X, P.Z, P.Y) * 100.0);
+                    }
                 }
                 TArray<FVector3f> WorldNormals;
                 if (Strip.Normals.Num() == Strip.Vertices.Num())
@@ -990,15 +1046,26 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
                 }
                 for (int32 AttributeIndex = 0; AttributeIndex < Strip.Attributes.Num(); ++AttributeIndex)
                 {
-                    TargetUVs.Add(FVector2D(Strip.Attributes[AttributeIndex].UV));
+                    OutUVs.Add(FVector2D(Strip.Attributes[AttributeIndex].UV));
                     FColor Color = AttributeIndex < Relit.Num() ? Relit[AttributeIndex] : Strip.Attributes[AttributeIndex].Color;
                     if (Textured && ActorIndex == TextureOnlyActorIndex)
                     {
                         Color.R = Color.G = Color.B = 128;
                     }
-                    TargetColors.Add(Color);
+                    OutColors.Add(Color);
                 }
-                AppendUnrealTriangles(TargetTriangles, Strip.Indices, Base);
+                AppendUnrealTriangles(OutTriangles, Strip.Indices, Base);
+                if (CapturedSections)
+                {
+                    FKyaActorMeshSection& Section = CapturedSections->AddDefaulted_GetRef();
+                    Section.Material = Textured ? Textured->Material : Mesh->GetMaterial(0);
+                    Section.MaterialHash = Strip.MaterialHash;
+                    Section.StripIndex = StripIndex;
+                    Section.Positions = MoveTemp(CapturedPositions);
+                    Section.Triangles = MoveTemp(CapturedTriangles);
+                    Section.UVs = MoveTemp(CapturedUVs);
+                    Section.Colors = MoveTemp(CapturedColors);
+                }
             }
         }
         if (bShowAllActorMeshes && bLogSectorDiagnostics)
@@ -1423,6 +1490,7 @@ void AKyaLevelPreview::OnConstruction(const FTransform& Transform)
 
 void AKyaLevelPreview::Destroyed()
 {
+    UnbindBankNotifications();
     for (const TPair<int32, TObjectPtr<AKyaActorHandle>>& Pair : ActorHandles)
         if (IsValid(Pair.Value)) Pair.Value->Destroy();
     ActorHandles.Reset();
@@ -1456,6 +1524,100 @@ AActor* AKyaLevelPreview::GetActorHandle(int32 ActorIndex) const
     return Found ? Found->Get() : nullptr;
 }
 
+bool AKyaLevelPreview::ShouldActorHandlesRenderGeometry() const
+{
+    return bSpawnActorHandles && bShowActorMeshesOnHandles && !bShowAllActorMeshes && !bShowActorMesh;
+}
+
+bool AKyaLevelPreview::ShouldShowActorIcon() const
+{
+    return bSpawnActorHandles && bShowActorIcons && !bShowAllActorMeshes && !bShowActorMesh;
+}
+
+const TArray<FKyaActorMeshSection>* AKyaLevelPreview::FindActorMeshSections(int32 ActorIndex) const
+{
+    return ActorMeshSections.Find(ActorIndex);
+}
+
+void AKyaLevelPreview::HandleBankEdited(UKyaLevelBank* InBank)
+{
+    if (!InBank || (InBank != Bank && !SectorBanks.Contains(InBank))) return;
+    RebuildFromBank();
+}
+
+void AKyaLevelPreview::BindBankNotifications()
+{
+#if WITH_EDITOR
+    if (!BankChangedHandle.IsValid())
+        BankChangedHandle = FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(
+            this, &AKyaLevelPreview::OnMonitoredObjectChanged);
+    if (!BankTransactedHandle.IsValid())
+        BankTransactedHandle = FCoreUObjectDelegates::OnObjectTransacted.AddUObject(
+            this, &AKyaLevelPreview::OnMonitoredObjectTransacted);
+
+    // Register every bank this preview displays, including sector banks, so undo/redo
+    // and asset-editor changes refresh the geometry they affect.
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    TSet<TWeakObjectPtr<UKyaLevelBank>> Wanted;
+    if (Bank) Wanted.Add(Bank);
+    for (const TObjectPtr<UKyaLevelBank>& Sector : SectorBanks)
+        if (Sector) Wanted.Add(Sector);
+    for (auto It = BoundBanks.CreateIterator(); It; ++It)
+    {
+        if (Wanted.Contains(*It)) continue;
+        if (It->IsValid()) Service.UnregisterView(It->Get(), this);
+        It.RemoveCurrent();
+    }
+    for (const TWeakObjectPtr<UKyaLevelBank>& Entry : Wanted)
+    {
+        if (!Entry.IsValid()) continue;
+        Service.RegisterView(Entry.Get(), this);
+        BoundBanks.Add(Entry);
+    }
+#endif
+}
+
+void AKyaLevelPreview::UnbindBankNotifications()
+{
+#if WITH_EDITOR
+    if (BankChangedHandle.IsValid())
+    {
+        FCoreUObjectDelegates::OnObjectPropertyChanged.Remove(BankChangedHandle);
+        BankChangedHandle.Reset();
+    }
+    if (BankTransactedHandle.IsValid())
+    {
+        FCoreUObjectDelegates::OnObjectTransacted.Remove(BankTransactedHandle);
+        BankTransactedHandle.Reset();
+    }
+    FKyaLevelEditService& Service = FKyaLevelEditService::Get();
+    Service.UnregisterView(this);
+    for (const TWeakObjectPtr<UKyaLevelBank>& Entry : BoundBanks)
+        if (Entry.IsValid()) Service.UnregisterView(Entry.Get(), this);
+    BoundBanks.Reset();
+#endif
+}
+
+void AKyaLevelPreview::OnMonitoredObjectChanged(UObject* Object, FPropertyChangedEvent& Event)
+{
+    if (bIsRebuildingPreview) return;
+    UKyaLevelBank* ChangedBank = Cast<UKyaLevelBank>(Object);
+    if (ChangedBank && (ChangedBank == Bank || SectorBanks.Contains(ChangedBank))) RebuildFromBank();
+}
+
+void AKyaLevelPreview::OnMonitoredObjectTransacted(UObject* Object, const FTransactionObjectEvent& Event)
+{
+#if WITH_EDITOR
+    if (bIsRebuildingPreview) return;
+    UKyaLevelBank* ChangedBank = Cast<UKyaLevelBank>(Object);
+    if (!ChangedBank || (ChangedBank != Bank && !SectorBanks.Contains(ChangedBank))) return;
+    // Coalesce transaction notifications (including our own edit commits and undo)
+    // into one refresh at the end of the frame, so a multi-actor operation does not
+    // rebuild the whole preview once per record.
+    FKyaLevelEditService::Get().NotifyBankChangedDeferred(ChangedBank);
+#endif
+}
+
 void AKyaLevelPreview::RebuildFromBank()
 {
 #if WITH_EDITOR
@@ -1482,6 +1644,7 @@ void AKyaLevelPreview::RefreshActorHandles()
         if (Sector && Sector != Bank) LoadedSectors.Add(GetSectorId(*Sector));
 
     TSet<int32> Wanted;
+    const bool bShowIcon = ShouldShowActorIcon();
     for (int32 Index = 0; Index < Bank->SceneEnvironment.Actors.Num(); ++Index)
     {
         const FKyaActorPlacement& Placement = Bank->SceneEnvironment.Actors[Index];
@@ -1489,6 +1652,7 @@ void AKyaLevelPreview::RefreshActorHandles()
         // get a handle when their sector is loaded. Without sector banks, show all.
         if (Placement.SectorId >= 0 && !LoadedSectors.IsEmpty() && !LoadedSectors.Contains(Placement.SectorId)) continue;
         Wanted.Add(Index);
+        const TArray<FKyaActorMeshSection>* Sections = ActorMeshSections.Find(Index);
         TObjectPtr<AKyaActorHandle>* Existing = ActorHandles.Find(Index);
         if (Existing && IsValid(*Existing))
         {
@@ -1496,10 +1660,16 @@ void AKyaLevelPreview::RefreshActorHandles()
             (*Existing)->Preview = this;
             (*Existing)->ActorIndex = Index;
             (*Existing)->SyncFromBank();
+            (*Existing)->SetIconEnabled(bShowIcon);
+            if (Sections) (*Existing)->SetActorMeshSections(*Sections);
+            else (*Existing)->SetActorMeshSections(TArray<FKyaActorMeshSection>());
             continue;
         }
         FActorSpawnParameters Params;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        // Generated representations must never become part of a saved map. Explicit
+        // transient flags keep them out regardless of the handle's class defaults.
+        Params.ObjectFlags |= RF_Transient | RF_Transactional;
         AKyaActorHandle* Handle = World->SpawnActor<AKyaActorHandle>(
             AKyaActorHandle::StaticClass(), FTransform::Identity, Params);
         if (!Handle)
@@ -1507,7 +1677,12 @@ void AKyaLevelPreview::RefreshActorHandles()
             UE_LOG(LogTemp, Warning, TEXT("KYA_ACTOR_HANDLE_SPAWN_FAILED index=%d"), Index);
             continue;
         }
-        Handle->Initialize(this, Bank, Index);
+        Handle->SetFlags(RF_Transient | RF_Transactional);
+        // Group the representation under the level preview in the Outliner while
+        // keeping its transform relative to the preview.
+        Handle->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+        Handle->Initialize(this, Bank, Index, bShowIcon);
+        if (Sections) Handle->SetActorMeshSections(*Sections);
         ActorHandles.Add(Index, Handle);
     }
 

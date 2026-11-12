@@ -1,6 +1,7 @@
 #include "KyaLevelBankFactory.h"
 #include "KyaLevelBank.h"
 #include "KyaCameraStream.h"
+#include "EditorFramework/AssetImportData.h"
 #include "Misc/FeedbackContext.h"
 
 static bool KyaPopulateFighterPrefix(FKyaActorPlacement& Actor, const uint8* Data, int32 DataSize, const FKyaFighterPrefixOffsets& Offsets)
@@ -229,6 +230,9 @@ UObject* UKyaLevelBankFactory::FactoryCreateBinary(UClass* InClass, UObject* InP
     UKyaLevelBank* Bank = NewObject<UKyaLevelBank>(InParent, InClass, InName, Flags);
     Bank->ImportSchemaVersion = UKyaLevelBank::CurrentImportSchemaVersion;
     Bank->SourceFilename = CurrentFilename;
+    Bank->BumpEditGeneration();
+    Bank->AssetImportData = NewObject<UAssetImportData>(Bank);
+    if (!CurrentFilename.IsEmpty()) Bank->AssetImportData->Update(CurrentFilename);
     Bank->EntryCount = int32(Count);
     Bank->Entries = MoveTemp(Entries);
     auto FindTypedEntry = [&Bank](int32 TypeId, int32 Ordinal) -> int32 {

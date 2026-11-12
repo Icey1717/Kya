@@ -4,6 +4,8 @@
 #include "Engine/DataAsset.h"
 #include "KyaLevelBank.generated.h"
 
+class UAssetImportData;
+
 USTRUCT(BlueprintType)
 struct FKyaBankEntry
 {
@@ -1769,6 +1771,21 @@ public:
 
     UPROPERTY(VisibleAnywhere, Category="Kya")
     FString SourceFilename;
+
+    /**
+     * Editor session generation of the typed data. Bumped whenever the typed
+     * records are replaced (import/reimport), so editor record keys made before
+     * the replacement fail to resolve instead of editing a different actor.
+     */
+    UPROPERTY(VisibleAnywhere, Transient, Category="Kya")
+    int32 EditGeneration = 0;
+
+    /** Invalidate editor record keys after replacing the typed data. */
+    void BumpEditGeneration() { ++EditGeneration; }
+
+    /** Import provenance; lets the asset be reimported and moved like a normal asset. */
+    UPROPERTY(VisibleAnywhere, Instanced, Category="Kya|Import")
+    TObjectPtr<UAssetImportData> AssetImportData;
 
     /** Level light archive entries (THGL) in serialized order. */
     UPROPERTY(VisibleAnywhere, Category="Light")

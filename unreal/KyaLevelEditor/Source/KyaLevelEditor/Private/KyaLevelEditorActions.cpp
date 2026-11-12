@@ -1,0 +1,333 @@
+#include "KyaLevelEditorActions.h"
+
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "AssetImportTask.h"
+#include "Editor.h"
+#include "Editor/EditorEngine.h"
+#include "FileHelpers.h"
+#include "Engine/Selection.h"
+#include "EngineUtils.h"
+#include "IAssetTools.h"
+#include "KyaBankExport.h"
+#include "KyaLevelBank.h"
+#include "KyaLevelPreview.h"
+#include "Misc/FileHelper.h"
+#include "Misc/MessageDialog.h"
+#include "Misc/PackageName.h"
+#include "Misc/Paths.h"
+#include "UObject/SavePackage.h"
+
+FString FKyaBankValidationReport::Summary() const
+{
+    TArray<FString> Lines;
+    Lines.Add(FString::Printf(TEXT("%s: %s"), *AssetPath,
+        bBytesBuilt ? TEXT("exportable") : TEXT("not exportable")));
+    if (!UnsupportedReason.IsEmpty()) Lines.Add(FString::Printf(TEXT("  %s"), *UnsupportedReason));
+    for (const FString& Warning : Warnings) Lines.Add(FString::Printf(TEXT("  warning: %s"), *Warning));
+    return FString::Join(Lines, TEXT("\n"));
+}
+
+FString FKyaSectorDiscoveryResult::Summary() const
+{
+    TArray<FString> Lines = Messages;
+    Lines.Add(FString::Printf(TEXT("reused=%d imported=%d ambiguous=%d missing=%d"),
+        Reused, Imported, Ambiguous, MissingIds.Num()));
+    return FString::Join(Lines, TEXT("\n"));
+}
+
+namespace
+{
+bool IsSectorBankFilename(const FString& Filename, int32& OutSectorId, FString& OutDigits)
+{
+    FString Base = FPaths::GetBaseFilename(Filename);
+    if (!Base.RemoveFromStart(TEXT("SECT"), ESearchCase::IgnoreCase)) return false;
+    if (Base.IsEmpty() || !Base.IsNumeric()) return false;
+    OutDigits = Base;
+    OutSectorId = FCString::Atoi(*Base);
+    return true;
+}
+
+UKyaLevelBank* FindBankForSourceFile(const FString& SourceFile)
+{
+    const FString Normalized = FPaths::ConvertRelativePathToFull(SourceFile);
+    FAssetRegistryModule& RegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> Assets;
+    RegistryModule.Get().GetAssetsByClass(UKyaLevelBank::StaticClass()->GetClassPathName(), Assets, true);
+    for (const FAssetData& Asset : Assets)
+    {
+        UKyaLevelBank* Bank = Cast<UKyaLevelBank>(Asset.GetAsset());
+        if (!Bank || Bank->SourceFilename.IsEmpty()) continue;
+        if (FPaths::ConvertRelativePathToFull(Bank->SourceFilename).Equals(Normalized, ESearchCase::IgnoreCase))
+            return Bank;
+    }
+    return nullptr;
+}
+
+FString LevelExportDirectory(const TArray<UKyaLevelBank*>& Banks)
+{
+    FString LevelName = TEXT("KyaLevel");
+    for (const UKyaLevelBank* Bank : Banks)
+        if (Bank && Bank->Entries.ContainsByPredicate([](const FKyaBankEntry& Entry) {
+                return Entry.Type == 6 && Entry.Subtype == 2; }))
+        {
+            LevelName = Bank->GetName();
+            break;
+        }
+    return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("KyaExport"), LevelName);
+}
+}
+
+TArray<AKyaLevelPreview*> KyaGetSelectedPreviews()
+{
+    TArray<AKyaLevelPreview*> Previews;
+    if (!GEditor) return Previews;
+    TArray<AActor*> SelectedActors;
+    GEditor->GetSelectedActors()->GetSelectedObjects(SelectedActors);
+    for (AActor* Actor : SelectedActors)
+        if (AKyaLevelPreview* Preview = Cast<AKyaLevelPreview>(Actor)) Previews.AddUnique(Preview);
+    return Previews;
+}
+
+TArray<AKyaLevelPreview*> KyaGetTargetPreviews()
+{
+    TArray<AKyaLevelPreview*> Previews = KyaGetSelectedPreviews();
+    if (!Previews.IsEmpty() || !GEditor) return Previews;
+    if (UWorld* World = GEditor->GetEditorWorldContext().World())
+        for (TActorIterator<AKyaLevelPreview> It(World); It; ++It) Previews.Add(*It);
+    return Previews;
+}
+
+TArray<UKyaLevelBank*> KyaCollectLevelBanks(const TArray<AKyaLevelPreview*>& Previews)
+{
+    TArray<UKyaLevelBank*> Banks;
+    for (AKyaLevelPreview* Preview : Previews)
+    {
+        if (!Preview) continue;
+        if (Preview->Bank) Banks.AddUnique(Preview->Bank);
+        for (const TObjectPtr<UKyaLevelBank>& Sector : Preview->SectorBanks)
+            if (Sector) Banks.AddUnique(Sector);
+    }
+    return Banks;
+}
+
+FKyaBankValidationReport KyaValidateBank(UKyaLevelBank* Bank)
+{
+    FKyaBankValidationReport Report;
+    Report.Bank = Bank;
+    if (!Bank)
+    {
+        Report.UnsupportedReason = TEXT("The bank asset does not exist.");
+        return Report;
+    }
+    Report.AssetPath = Bank->GetPathName();
+    FString Reason;
+    Report.bExportSupported = KyaBankSupportsExport(Bank, Reason);
+    Report.UnsupportedReason = Reason;
+    if (!Report.bExportSupported) return Report;
+    FKyaBankExportDiagnostics Diagnostics;
+    TArray<uint8> Bytes;
+    Report.bBytesBuilt = KyaBuildBankExportBytes(Bank, Bytes, Diagnostics);
+    Report.Warnings = Diagnostics.Warnings;
+    if (!Report.bBytesBuilt)
+    {
+        for (const FString& Error : Diagnostics.Errors) Report.Warnings.Add(Error);
+        Report.UnsupportedReason = Diagnostics.Errors.IsEmpty() ? TEXT("The bank writer rejected this bank.") : Diagnostics.Errors[0];
+    }
+    return Report;
+}
+
+TArray<FKyaBankValidationReport> KyaValidateLevelBanks(const TArray<UKyaLevelBank*>& Banks)
+{
+    TArray<FKyaBankValidationReport> Reports;
+    for (UKyaLevelBank* Bank : Banks)
+    {
+        Reports.Add(KyaValidateBank(Bank));
+        UE_LOG(LogTemp, Display, TEXT("KYA_VALIDATE %s"), *Reports.Last().Summary());
+    }
+    return Reports;
+}
+
+FKyaSectorDiscoveryResult KyaDiscoverSectors(AKyaLevelPreview* Preview, bool bImportMissing)
+{
+    FKyaSectorDiscoveryResult Result;
+    if (!Preview || !Preview->Bank)
+    {
+        Result.Messages.Add(TEXT("Select a level preview with a main bank first."));
+        return Result;
+    }
+    UKyaLevelBank* MainBank = Preview->Bank;
+    if (MainBank->SourceFilename.IsEmpty())
+    {
+        Result.Messages.Add(FString::Printf(TEXT("%s has no source filename; import it from a .bnk file first."),
+            *MainBank->GetName()));
+        return Result;
+    }
+    const FString SourceDirectory = FPaths::GetPath(MainBank->SourceFilename);
+    if (SourceDirectory.IsEmpty() || !FPaths::DirectoryExists(SourceDirectory))
+    {
+        Result.Messages.Add(FString::Printf(TEXT("Source directory %s does not exist."), *SourceDirectory));
+        return Result;
+    }
+
+    TArray<FString> Files;
+    IFileManager::Get().FindFiles(Files, *(FPaths::Combine(SourceDirectory, TEXT("SECT*.BNK"))), true, false);
+    struct FCandidate
+    {
+        int32 SectorId = INDEX_NONE;
+        FString Filename;
+        FString Digits;
+    };
+    TArray<FCandidate> Candidates;
+    for (const FString& File : Files)
+    {
+        FCandidate Candidate;
+        if (!IsSectorBankFilename(File, Candidate.SectorId, Candidate.Digits)) continue;
+        Candidate.Filename = FPaths::Combine(SourceDirectory, File);
+        Candidates.Add(Candidate);
+    }
+    Candidates.Sort([](const FCandidate& A, const FCandidate& B) { return A.SectorId < B.SectorId; });
+
+    // Sector IDs must be unambiguous: SECT1 and SECT01 are not safe to merge silently.
+    TMap<int32, TArray<FString>> FilesBySector;
+    for (const FCandidate& Candidate : Candidates) FilesBySector.FindOrAdd(Candidate.SectorId).Add(Candidate.Filename);
+
+    const FString DestinationPath = FString::Printf(TEXT("/Game/KyaLevels/%s"), *MainBank->GetName());
+    for (const TPair<int32, TArray<FString>>& Pair : FilesBySector)
+    {
+        if (Pair.Value.Num() > 1)
+        {
+            ++Result.Ambiguous;
+            Result.Messages.Add(FString::Printf(TEXT("Sector %d is ambiguous: %s"), Pair.Key,
+                *FString::Join(Pair.Value, TEXT(", "))));
+            continue;
+        }
+        const FString& Filename = Pair.Value[0];
+        UKyaLevelBank* Existing = FindBankForSourceFile(Filename);
+        if (!Existing)
+        {
+            for (const TObjectPtr<UKyaLevelBank>& Assigned : Preview->SectorBanks)
+            {
+                if (!Assigned || Assigned->SourceFilename.IsEmpty()) continue;
+                if (FPaths::ConvertRelativePathToFull(Assigned->SourceFilename).Equals(
+                    FPaths::ConvertRelativePathToFull(Filename), ESearchCase::IgnoreCase))
+                {
+                    Existing = Assigned;
+                    break;
+                }
+            }
+        }
+        if (Existing)
+        {
+            ++Result.Reused;
+            if (!Preview->SectorBanks.Contains(Existing)) Preview->SectorBanks.Add(Existing);
+            continue;
+        }
+        if (!bImportMissing)
+        {
+            Result.MissingIds.Add(Pair.Key);
+            continue;
+        }
+        UAssetImportTask* Task = NewObject<UAssetImportTask>();
+        Task->Filename = Filename;
+        Task->DestinationPath = DestinationPath;
+        Task->DestinationName = FPaths::GetBaseFilename(Filename).ToUpper();
+        Task->bAutomated = true;
+        Task->bReplaceExisting = false;
+        Task->bSave = false;
+        Task->bAsync = false;
+        IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+        AssetTools.ImportAssetTasks({Task});
+        const FString ObjectPath = FString::Printf(TEXT("%s/%s.%s"), *DestinationPath,
+            *Task->DestinationName, *Task->DestinationName);
+        UKyaLevelBank* Imported = LoadObject<UKyaLevelBank>(nullptr, *ObjectPath);
+        if (!Imported)
+        {
+            Result.MissingIds.Add(Pair.Key);
+            Result.Messages.Add(FString::Printf(TEXT("Failed to import %s."), *Filename));
+            continue;
+        }
+        ++Result.Imported;
+        if (!Preview->SectorBanks.Contains(Imported)) Preview->SectorBanks.Add(Imported);
+    }
+
+    // Actor sector references suggest content that should exist but has no file.
+    TSet<int32> DiscoveredIds;
+    for (const TPair<int32, TArray<FString>>& Pair : FilesBySector) DiscoveredIds.Add(Pair.Key);
+    TSet<int32> ReferencedIds;
+    for (const FKyaActorPlacement& Actor : MainBank->SceneEnvironment.Actors)
+        if (Actor.SectorId >= 0) ReferencedIds.Add(Actor.SectorId);
+    for (const int32 Referenced : ReferencedIds)
+        if (!DiscoveredIds.Contains(Referenced) && !Result.MissingIds.Contains(Referenced))
+        {
+            Result.MissingIds.Add(Referenced);
+            Result.Messages.Add(FString::Printf(
+                TEXT("Actor placements reference sector %d but no SECT%d.BNK exists."), Referenced, Referenced));
+        }
+
+    if (Preview->Bank) Preview->SectorBanks.RemoveAll([](const TObjectPtr<UKyaLevelBank>& Bank) { return !Bank; });
+    Preview->RebuildFromBank();
+    UE_LOG(LogTemp, Display, TEXT("KYA_DISCOVER_SECTORS %s"), *Result.Summary());
+    return Result;
+}
+
+bool KyaSaveLevelBanks(const TArray<UKyaLevelBank*>& Banks, FString& OutError)
+{
+    TArray<UPackage*> Packages;
+    for (UKyaLevelBank* Bank : Banks)
+    {
+        if (!Bank) continue;
+        Bank->MarkPackageDirty();
+        Packages.AddUnique(Bank->GetOutermost());
+    }
+    if (Packages.IsEmpty())
+    {
+        OutError = TEXT("No banks to save.");
+        return false;
+    }
+    const bool bSaved = UEditorLoadingAndSavingUtils::SavePackages(Packages, true);
+    if (!bSaved) OutError = TEXT("Saving one or more bank packages failed.");
+    return bSaved;
+}
+
+bool KyaExportLevelBanks(const TArray<UKyaLevelBank*>& Banks, const FString& DestinationDirectory,
+    TArray<FString>& OutMessages)
+{
+    TArray<FKyaBankExportRequest> Requests;
+    for (UKyaLevelBank* Bank : Banks)
+    {
+        if (!Bank) continue;
+        FString Reason;
+        if (!KyaBankSupportsExport(Bank, Reason))
+        {
+            // Discovered sector banks are dependencies whose typed layout the writer
+            // does not support yet. Report them as unchanged instead of failing the
+            // whole level export or rewriting them.
+            OutMessages.Add(FString::Printf(TEXT("%s: unchanged dependency, not written (%s)"),
+                *Bank->GetName(), *Reason));
+            UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT_SKIP %s %s"), *Bank->GetName(), *Reason);
+            continue;
+        }
+        FKyaBankExportRequest& Request = Requests.AddDefaulted_GetRef();
+        Request.Bank = Bank;
+        Request.DestinationFilename = FPaths::Combine(DestinationDirectory, Bank->GetName() + TEXT(".bnk"));
+    }
+    if (Requests.IsEmpty())
+    {
+        OutMessages.Add(TEXT("No banks in this level can be exported by the current writer."));
+        return false;
+    }
+    const TArray<FKyaBankExportOutcome> Outcomes = KyaWriteValidatedExportSet(Requests);
+    bool bAllPublished = !Outcomes.IsEmpty();
+    for (const FKyaBankExportOutcome& Outcome : Outcomes)
+    {
+        const TCHAR* State = Outcome.bPublished ? TEXT("exported") : TEXT("not exported");
+        OutMessages.Add(FString::Printf(TEXT("%s: %s -> %s"), *GetNameSafe(Outcome.Bank), State,
+            *Outcome.DestinationFilename));
+        for (const FString& Error : Outcome.Errors) OutMessages.Add(FString::Printf(TEXT("  error: %s"), *Error));
+        for (const FString& Warning : Outcome.Warnings) OutMessages.Add(FString::Printf(TEXT("  warning: %s"), *Warning));
+        if (!Outcome.bPublished) bAllPublished = false;
+        UE_LOG(LogTemp, Display, TEXT("KYA_EXPORT %s %s"), *Outcome.DestinationFilename, State);
+    }
+    return bAllPublished;
+}

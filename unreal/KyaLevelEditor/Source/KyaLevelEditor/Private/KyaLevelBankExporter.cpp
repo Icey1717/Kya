@@ -1,5 +1,6 @@
 #include "KyaLevelBankExporter.h"
 #include "KyaLevelBank.h"
+#include "KyaBankExport.h"
 #include "KyaCameraStream.h"
 #include "Misc/FeedbackContext.h"
 
@@ -11,13 +12,17 @@ UKyaLevelBankExporter::UKyaLevelBankExporter()
     bText = false;
 }
 
-bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FArchive& Ar,
-    FFeedbackContext* Warn, int32 FileIndex, uint32 PortFlags)
+bool KyaBuildBankExportBytes(const UKyaLevelBank* Bank, TArray<uint8>& OutBytes,
+    FKyaBankExportDiagnostics& Diagnostics)
 {
-    const UKyaLevelBank* Bank = CastChecked<UKyaLevelBank>(Object);
+    if (!Bank)
+    {
+        Diagnostics.Errors.Add(TEXT("No bank was supplied."));
+        return false;
+    }
     if (!Bank->HasCurrentImportSchema())
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("This Kya bank asset uses an older import schema. Reimport the source bank before exporting."));
+        Diagnostics.Errors.Add(TEXT("This Kya bank asset uses an older import schema. Reimport the source bank before exporting."));
         return false;
     }
     const FKyaBankEntry* Scene = nullptr;
@@ -33,7 +38,7 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
         {
             if (Scene)
             {
-                Warn->Logf(ELogVerbosity::Error, TEXT("Multiple scene configuration entries cannot be exported."));
+                Diagnostics.Errors.Add(TEXT("Multiple scene configuration entries cannot be exported."));
                 return false;
             }
             Scene = &Entry;
@@ -44,7 +49,7 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
         Bank->SceneConfiguration.Field20 < 0 || Bank->SceneConfiguration.Field20 > MAX_uint32 ||
         Bank->BankBytes.Num() < 16 || (Bank->BankBytes[12] & 1))
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("Cannot export this bank's scene configuration."));
+        Diagnostics.Errors.Add(TEXT("Cannot export this bank's scene configuration."));
         return false;
     }
     TArray<uint8> Bytes = Bank->BankBytes;
@@ -75,7 +80,7 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
     // it without rebuilding the variable-length stream would corrupt the bank.
     if (((ReadU32(Setup + 96) ^ uint32(Bank->SceneEnvironment.CameraFlags)) & 2) != 0)
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("Changing camera flag 0x2 requires rebuilding its optional records."));
+        Diagnostics.Errors.Add(TEXT("Changing camera flag 0x2 requires rebuilding its optional records."));
         return false;
     }
     int64 Config = 0;
@@ -662,13 +667,13 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
     Pos += 4;
     if (CollisionCount > uint64(End - Pos) / 4 || CollisionCount != uint32(Bank->SceneConfiguration.CollisionBankValues.Num()))
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("Collision bank count cannot be changed."));
+        Diagnostics.Errors.Add(TEXT("Collision bank count cannot be changed."));
         return false;
     }
     const int64 AnimationCountPos = Pos + int64(CollisionCount) * 4;
     if (AnimationCountPos + 4 > End || Bank->SceneConfiguration.LevelAnimationCount < 0)
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("Invalid animation count or truncated scene configuration."));
+        Diagnostics.Errors.Add(TEXT("Invalid animation count or truncated scene configuration."));
         return false;
     }
     const int64 ClassCountPos = AnimationCountPos + 20;
@@ -678,7 +683,7 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
     if (ClassCount > uint64(End - ClassDataPos) / 8 || ClassCount != uint32(Bank->SceneConfiguration.ActorClassAllocations.Num()) ||
         ClassDataPos + int64(ClassCount) * 8 + 4 > End)
     {
-        Warn->Logf(ELogVerbosity::Error, TEXT("Actor class allocation count cannot be changed."));
+        Diagnostics.Errors.Add(TEXT("Actor class allocation count cannot be changed."));
         return false;
     }
     for (const FKyaActorClassAllocation& Allocation : Bank->SceneConfiguration.ActorClassAllocations)
@@ -3036,6 +3041,22 @@ bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FAr
         WriteU32(ClassDataPos + Index * 8 + 4, uint32(Allocation.Count));
     }
     WriteU32(ClassDataPos + int64(ClassCount) * 8, uint32(Bank->SceneConfiguration.ParticleWord));
+    OutBytes = MoveTemp(Bytes);
+    return true;
+}
+
+bool UKyaLevelBankExporter::ExportBinary(UObject* Object, const TCHAR* Type, FArchive& Ar,
+    FFeedbackContext* Warn, int32 FileIndex, uint32 PortFlags)
+{
+    const UKyaLevelBank* Bank = CastChecked<UKyaLevelBank>(Object);
+    TArray<uint8> Bytes;
+    FKyaBankExportDiagnostics Diagnostics;
+    if (!KyaBuildBankExportBytes(Bank, Bytes, Diagnostics))
+    {
+        if (Warn)
+            for (const FString& Error : Diagnostics.Errors) Warn->Logf(ELogVerbosity::Error, TEXT("%s"), *Error);
+        return false;
+    }
     Ar.Serialize(Bytes.GetData(), Bytes.Num());
     return !Ar.IsError();
 }

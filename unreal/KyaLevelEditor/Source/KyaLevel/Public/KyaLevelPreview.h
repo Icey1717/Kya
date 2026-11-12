@@ -18,6 +18,25 @@ class AKyaHierarchyHandle;
 class UPostProcessComponent;
 class UMaterialInstanceDynamic;
 
+/**
+ * One material batch of one bank actor's game mesh.
+ *
+ * Vertices are preview-local in Unreal axes: the native hierarchy transform and
+ * the actor's class rotation/scale are baked in, actor translation is not. The
+ * owning actor handle applies position/rotation/scale through its transform.
+ */
+struct KYALEVEL_API FKyaActorMeshSection
+{
+    UMaterialInterface* Material = nullptr;
+    TArray<FVector> Positions;
+    TArray<int32> Triangles;
+    TArray<FVector2D> UVs;
+    TArray<FColor> Colors;
+    uint64 MaterialHash = 0;
+    int32 StripIndex = INDEX_NONE;
+    int32 TriangleCount() const { return Triangles.Num() / 3; }
+};
+
 /** Experimental level geometry preview. */
 UCLASS()
 class KYALEVEL_API AKyaLevelPreview : public AActor
@@ -134,12 +153,36 @@ public:
     bool bShowAllActorMeshes = false;
 
     /**
-     * Spawn transient, selectable handles for actor placements in the loaded sectors.
-     * Each handle appears in the World Outliner under the bank actor's name and exposes
-     * the placement fields in its Details panel; edits write back to the bank asset.
+     * Spawn selectable actor representations for actor placements in the loaded
+     * sectors. Each representation appears in the World Outliner under the bank
+     * actor's name, renders the actor's own game mesh and exposes the placement
+     * fields in its Details panel; edits write back to the bank asset. Handles are
+     * editor-only and transient. Enabled by default so clicking visible actor
+     * geometry selects the actor without enabling diagnostics first.
      */
     UPROPERTY(EditAnywhere, Category="Kya|Selection")
-    bool bSpawnActorHandles = false;
+    bool bSpawnActorHandles = true;
+
+    /**
+     * Render each actor's game mesh on its own handle instead of the shared preview
+     * mesh. This is what makes clicking a strip select the owning actor. Diagnostic
+     * mesh modes (Show Actor Mesh / Show All Actor Meshes) keep the shared route so
+     * capture output is unchanged.
+     */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bShowActorMeshesOnHandles = true;
+
+    /** Show a small marker for actors that have no renderable mesh (or in mesh modes). */
+    UPROPERTY(EditAnywhere, Category="Kya|Selection")
+    bool bShowActorIcons = true;
+
+    /** True when actor geometry belongs to the actor handles and must not enter the shared mesh. */
+    bool ShouldActorHandlesRenderGeometry() const;
+    bool ShouldShowActorIcon() const;
+    /** Mesh sections captured for one bank actor during the last build, or null. */
+    const TArray<FKyaActorMeshSection>* FindActorMeshSections(int32 ActorIndex) const;
+    /** Refresh after an edit to a bank this preview displays; rebuilds once. */
+    void HandleBankEdited(UKyaLevelBank* InBank);
 
     /**
      * Spawn selectable handles for static world-geometry hierarchies (the smallest
@@ -283,4 +326,15 @@ private:
     TObjectPtr<UKyaActorMarkerComponent> ActorMarker;
     UPROPERTY(Transient)
     TObjectPtr<UKyaLevelBank> ActorMarkerBank;
+    /** Per-actor game mesh captured during the last build, keyed by bank actor index. */
+    TMap<int32, TArray<FKyaActorMeshSection>> ActorMeshSections;
+    /** Editor only: bank notification binding so asset edits and undo refresh the preview. */
+    void BindBankNotifications();
+    void UnbindBankNotifications();
+    void OnMonitoredObjectChanged(UObject* Object, FPropertyChangedEvent& Event);
+    void OnMonitoredObjectTransacted(UObject* Object, const FTransactionObjectEvent& Event);
+    FDelegateHandle BankChangedHandle;
+    FDelegateHandle BankTransactedHandle;
+    /** Banks this preview is currently registered against (main and sectors). */
+    TSet<TWeakObjectPtr<UKyaLevelBank>> BoundBanks;
 };
